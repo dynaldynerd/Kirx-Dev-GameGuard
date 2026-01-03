@@ -1,6 +1,7 @@
 using System;
 using System.Buffers.Binary;
 using System.Linq;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using RFNetworking;
@@ -13,10 +14,14 @@ namespace LoginServer.Handlers;
 public sealed class AccountPacketRouter
 {
     private readonly Action<string> _log;
+    private readonly Func<bool>? _shouldSendBlockIp;
+    private readonly Func<PacketEnvelope, CancellationToken, Task>? _sendToClients;
 
-    public AccountPacketRouter(Action<string> log)
+    public AccountPacketRouter(Action<string> log, Func<bool>? shouldSendBlockIp = null, Func<PacketEnvelope, CancellationToken, Task>? sendToClients = null)
     {
         _log = log;
+        _shouldSendBlockIp = shouldSendBlockIp;
+        _sendToClients = sendToClients;
     }
 
     public async Task<bool> HandleAsync(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
@@ -120,7 +125,24 @@ public sealed class AccountPacketRouter
         }
 
         _log($"WorldListResult: serviceWorldNum={serviceWorldNum} worldNum={worldNum}");
+
+        if (_shouldSendBlockIp?.Invoke() == true && _sendToClients != null)
+        {
+            // Mirror native behavior: send internal packet type 1/15 to client side.
+            var envelope = new PacketEnvelope { OpCode = 1, SubCode = 15, Payload = Array.Empty<byte>() };
+            return SendAndReturnTrue(envelope, cancellationToken);
+        }
+
         return Task.FromResult(true);
+    }
+
+    private async Task<bool> SendAndReturnTrue(PacketEnvelope envelope, CancellationToken cancellationToken)
+    {
+        if (_sendToClients != null)
+        {
+            await _sendToClients(envelope, cancellationToken).ConfigureAwait(false);
+        }
+        return true;
     }
 
     private Task<bool> InformOpenWorld(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)

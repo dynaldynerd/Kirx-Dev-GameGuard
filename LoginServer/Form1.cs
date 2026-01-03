@@ -50,7 +50,10 @@ public partial class Form1 : Form
         _clientListener = new NetworkListener(_clientHandler);
         _clientListener.Log += AppendLog;
 
-        _accountRouter = new AccountPacketRouter(AppendLog);
+        _accountRouter = new AccountPacketRouter(
+            AppendLog,
+            shouldSendBlockIp: () => false, // TODO: wire to authorizer when available
+            sendToClients: null);
         _accountHandler = new LoginHandler("Account", AppendLog, null, _accountRouter);
         _accountConnector = new NetworkConnector(_accountHandler);
         _accountConnector.Log += AppendLog;
