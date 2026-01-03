@@ -1,3 +1,4 @@
+using LoginServer.Handlers;
 using RFNetworking;
 
 namespace LoginServer;
@@ -9,6 +10,7 @@ public partial class Form1 : Form
     private CancellationTokenSource? _cts;
     private LoginHandler? _clientHandler;
     private LoginHandler? _accountHandler;
+    private ClientPacketRouter? _clientRouter;
 
     public Form1()
     {
@@ -42,11 +44,12 @@ public partial class Form1 : Form
 
         _cts = new CancellationTokenSource();
 
-        _clientHandler = new LoginHandler("Client", AppendLog);
+        _clientRouter = new ClientPacketRouter(AppendLog);
+        _clientHandler = new LoginHandler("Client", AppendLog, _clientRouter);
         _clientListener = new NetworkListener(_clientHandler);
         _clientListener.Log += AppendLog;
 
-        _accountHandler = new LoginHandler("Account", AppendLog);
+        _accountHandler = new LoginHandler("Account", AppendLog, null);
         _accountConnector = new NetworkConnector(_accountHandler);
         _accountConnector.Log += AppendLog;
 
@@ -108,6 +111,7 @@ public partial class Form1 : Form
         _accountConnector = null;
         _clientHandler = null;
         _accountHandler = null;
+        _clientRouter = null;
     }
 
     private void AppendLog(string message)
@@ -126,11 +130,13 @@ public partial class Form1 : Form
     {
         private readonly string _role;
         private readonly Action<string> _log;
+        private readonly ClientPacketRouter? _clientRouter;
 
-        public LoginHandler(string role, Action<string> log)
+        public LoginHandler(string role, Action<string> log, ClientPacketRouter? clientRouter)
         {
             _role = role;
             _log = log;
+            _clientRouter = clientRouter;
         }
 
         public override Task OnConnectedAsync(PublicConnection connection, CancellationToken cancellationToken)
@@ -147,6 +153,11 @@ public partial class Form1 : Form
 
         public override Task OnPacketAsync(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
         {
+            if (_clientRouter != null && packet.OpCode == 21)
+            {
+                return _clientRouter.HandleAsync(connection, packet, cancellationToken);
+            }
+
             _log($"{_role} data op={packet.OpCode} sub={packet.SubCode} len={packet.Payload.Length}");
             return Task.CompletedTask;
         }
