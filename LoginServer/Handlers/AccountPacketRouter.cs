@@ -1,4 +1,6 @@
 using System;
+using System.Buffers.Binary;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using RFNetworking;
@@ -69,7 +71,55 @@ public sealed class AccountPacketRouter
 
     private Task<bool> WorldListResult(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
     {
-        _log($"Account WorldListResult len={packet.Payload.Length}");
+        const int entrySize = 41; // bool + 33 name + 4 IP + 2 port + 1 type
+
+        var span = packet.Payload.AsSpan();
+        if (span.Length < 2)
+        {
+            _log("WorldListResult: payload too small");
+            return Task.FromResult(false);
+        }
+
+        byte serviceWorldNum = span[0];
+        byte worldNum = span[1];
+        if (worldNum > 40)
+        {
+            _log($"WorldListResult: invalid worldNum {worldNum}");
+            return Task.FromResult(false);
+        }
+
+        int required = 2 + worldNum * entrySize;
+        if (span.Length < required)
+        {
+            _log($"WorldListResult: payload length {span.Length} < required {required}");
+            return Task.FromResult(false);
+        }
+
+        int offset = 2;
+        for (int i = 0; i < worldNum; i++)
+        {
+            bool bOpen = span[offset] != 0;
+            var nameBytes = span.Slice(offset + 1, 33);
+            int zeroIdx = nameBytes.IndexOf((byte)0);
+            int nameLen = zeroIdx >= 0 ? zeroIdx : 33;
+            if (nameLen > 0x20)
+            {
+                _log($"WorldListResult: world {i} name too long ({nameLen})");
+                return Task.FromResult(false);
+            }
+
+            uint gateIp = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(offset + 34, 4));
+            ushort gatePort = BinaryPrimitives.ReadUInt16LittleEndian(span.Slice(offset + 38, 2));
+            byte type = span[offset + 40];
+
+            string name = System.Text.Encoding.ASCII.GetString(nameBytes.Slice(0, nameLen));
+            string ipStr = new System.Net.IPAddress(gateIp).ToString();
+            _log($"World {i}: open={bOpen} name='{name}' ip={ipStr}:{gatePort} type={type}");
+
+            offset += entrySize;
+        }
+
+        _log($"WorldListResult: serviceWorldNum={serviceWorldNum} worldNum={worldNum}");
         return Task.FromResult(true);
     }
 
