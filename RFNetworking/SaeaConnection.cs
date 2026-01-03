@@ -9,6 +9,7 @@ internal sealed class SaeaConnection : IAsyncDisposable
 {
     private readonly Socket _socket;
     private readonly INetworkHandler _handler;
+    private readonly InternalPacketProcessor _internalProcessor;
     private readonly byte[] _buffer;
     private readonly PublicConnection _publicConnection;
     private readonly SocketAsyncEventArgs _receiveArgs;
@@ -21,6 +22,7 @@ internal sealed class SaeaConnection : IAsyncDisposable
         ConnectionId = id;
         _socket = socket;
         _handler = handler;
+        _internalProcessor = new InternalPacketProcessor(log);
         Log = log;
 
         _buffer = BufferPool.Rent();
@@ -153,14 +155,19 @@ internal sealed class SaeaConnection : IAsyncDisposable
     {
         try
         {
-            if (packet.OpCode <= 100)
+            if (packet.OpCode > 100)
             {
-                await _handler.OnPacketAsync(_publicConnection, packet, CancellationToken.None).ConfigureAwait(false);
-            }
-            else
-            {
+                bool handled = await _internalProcessor.HandleAsync(_publicConnection, packet, CancellationToken.None).ConfigureAwait(false);
+                if (handled)
+                {
+                    return;
+                }
+
                 await _handler.OnInternalPacketAsync(_publicConnection, packet, CancellationToken.None).ConfigureAwait(false);
+                return;
             }
+
+            await _handler.OnPacketAsync(_publicConnection, packet, CancellationToken.None).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
