@@ -11,6 +11,7 @@ public partial class Form1 : Form
     private LoginHandler? _clientHandler;
     private LoginHandler? _accountHandler;
     private ClientPacketRouter? _clientRouter;
+    private AccountPacketRouter? _accountRouter;
 
     public Form1()
     {
@@ -45,11 +46,12 @@ public partial class Form1 : Form
         _cts = new CancellationTokenSource();
 
         _clientRouter = new ClientPacketRouter(AppendLog);
-        _clientHandler = new LoginHandler("Client", AppendLog, _clientRouter);
+        _clientHandler = new LoginHandler("Client", AppendLog, _clientRouter, null);
         _clientListener = new NetworkListener(_clientHandler);
         _clientListener.Log += AppendLog;
 
-        _accountHandler = new LoginHandler("Account", AppendLog, null);
+        _accountRouter = new AccountPacketRouter(AppendLog);
+        _accountHandler = new LoginHandler("Account", AppendLog, null, _accountRouter);
         _accountConnector = new NetworkConnector(_accountHandler);
         _accountConnector.Log += AppendLog;
 
@@ -112,6 +114,7 @@ public partial class Form1 : Form
         _clientHandler = null;
         _accountHandler = null;
         _clientRouter = null;
+        _accountRouter = null;
     }
 
     private void AppendLog(string message)
@@ -131,12 +134,14 @@ public partial class Form1 : Form
         private readonly string _role;
         private readonly Action<string> _log;
         private readonly ClientPacketRouter? _clientRouter;
+        private readonly AccountPacketRouter? _accountRouter;
 
-        public LoginHandler(string role, Action<string> log, ClientPacketRouter? clientRouter)
+        public LoginHandler(string role, Action<string> log, ClientPacketRouter? clientRouter, AccountPacketRouter? accountRouter)
         {
             _role = role;
             _log = log;
             _clientRouter = clientRouter;
+            _accountRouter = accountRouter;
         }
 
         public override Task OnConnectedAsync(PublicConnection connection, CancellationToken cancellationToken)
@@ -156,6 +161,11 @@ public partial class Form1 : Form
             if (_clientRouter != null && packet.OpCode == 21)
             {
                 return _clientRouter.HandleAsync(connection, packet, cancellationToken);
+            }
+
+            if (_accountRouter != null && packet.OpCode == 1)
+            {
+                return _accountRouter.HandleAsync(connection, packet, cancellationToken);
             }
 
             _log($"{_role} data op={packet.OpCode} sub={packet.SubCode} len={packet.Payload.Length}");
