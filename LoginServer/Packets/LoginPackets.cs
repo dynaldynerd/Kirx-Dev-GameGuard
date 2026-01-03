@@ -1,0 +1,231 @@
+using System.Runtime.InteropServices;
+
+namespace LoginServer.Packets;
+
+/// <summary>Client -> Login: select world request.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct _select_world_request_cllo
+{
+    public ushort wWorldIndex;
+}
+
+/// <summary>Login -> Client: close/push result.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct _push_close_result_locl
+{
+    public byte byRetCode;
+}
+
+/// <summary>Login -> Client: notify message.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct _server_notify_inform_locl
+{
+    public ushort wMsgCode;
+}
+
+/// <summary>Login -> Client: new agree (terms) result.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct _result_new_agree_locl
+{
+    public sbyte nRet;
+}
+
+/// <summary>Login -> Client: free server availability.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct _free_server_inform_locl
+{
+    public byte byServiceWorldNum;
+
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 40)]
+    public byte[] bFree;
+
+    public _free_server_inform_locl()
+    {
+        this = default;
+        bFree = new byte[40];
+    }
+}
+
+/// <summary>Login -> Client: MOTP validation reply.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct _motp_validation_reply_locl
+{
+    public byte byResult;
+
+    [MarshalAs(UnmanagedType.U1)]
+    public bool bDuple;
+}
+
+/// <summary>Client -> Login: account login request.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct _login_account_request_cllo
+{
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
+    public byte[] szAccountID;
+
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
+    public byte[] szPassword;
+
+    public byte byServerType;
+
+    public _login_account_request_cllo()
+    {
+        this = default;
+        szAccountID = new byte[13];
+        szPassword = new byte[13];
+    }
+}
+
+/// <summary>Client -> Login: account join/create request.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct _join_account_request_cllo
+{
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
+    public byte[] szAccountID;
+
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
+    public byte[] szPassword;
+
+    public _join_account_request_cllo()
+    {
+        this = default;
+        szAccountID = new byte[13];
+        szPassword = new byte[13];
+    }
+}
+
+/// <summary>Client -> Login: request new agree/terms.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct _request_new_agree_cllo
+{
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
+    public byte[] szID;
+
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
+    public byte[] nNewAgree;
+
+    public _request_new_agree_cllo()
+    {
+        this = default;
+        szID = new byte[13];
+        nNewAgree = new byte[2];
+    }
+}
+
+/// <summary>Login -> Client: world list result (list blob in sListData).</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct _world_list_result_locl
+{
+    public byte byRetCode;
+
+    public ushort wDataSize;
+
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4095)]
+    public byte[] sListData;
+
+    public _world_list_result_locl()
+    {
+        this = default;
+        sListData = new byte[4095];
+    }
+}
+
+/// <summary>Login -> Client: world selection result.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct _select_world_result_locl
+{
+    public byte byRetCode;
+    public uint dwWorldGateIP;
+    public ushort wWorldGatePort;
+
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+    public uint[] dwWorldMasterKey;
+
+    [MarshalAs(UnmanagedType.U1)]
+    public bool bAllowAltTab;
+
+    public _select_world_result_locl()
+    {
+        this = default;
+        dwWorldMasterKey = new uint[4];
+    }
+}
+
+/// <summary>Login -> Client: account join result.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct _join_account_result_locl
+{
+    public byte byRetCode;
+}
+
+/// <summary>Client -> Login: world list request.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct _world_list_request_cllo
+{
+    public uint dwClientVersion;
+}
+
+/// <summary>Client -> Login: MOTP validation request.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct _motp_validation_request_cllo
+{
+    public byte byType;
+
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
+    public byte[] szMOTP;
+
+    public _motp_validation_request_cllo()
+    {
+        this = default;
+        szMOTP = new byte[13];
+    }
+}
+
+/// <summary>Client -> Login: manage account auth request.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct _manage_account_auth_request_cllo
+{
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+    public byte[] byBin;
+
+    public _manage_account_auth_request_cllo()
+    {
+        this = default;
+        byBin = new byte[32];
+    }
+}
+
+/// <summary>Login -> Client: notify manage account auth info.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct _notify_manage_account_auth_info_locl
+{
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 149)]
+    public byte[] byKey;
+
+    public _notify_manage_account_auth_info_locl()
+    {
+        this = default;
+        byKey = new byte[149];
+    }
+}
+
+/// <summary>Login -> Client: force exit result.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct _manage_client_force_exit_result_locl
+{
+    public byte byRet;
+}
+
+/// <summary>Login -> Client: manage account auth result.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct _manage_account_auth_result_locl
+{
+    public byte byRet;
+}
+
+/// <summary>Login -> Client: limit run account result.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct _manage_client_limit_run_account_result_locl
+{
+    public byte byRet;
+}
