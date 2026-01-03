@@ -144,37 +144,128 @@ public sealed class AccountPacketRouter
 
     private Task<bool> InformCloseWorld(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
     {
-        _log($"Account InformCloseWorld len={packet.Payload.Length}");
+        if (packet.Payload.Length < 1)
+        {
+            _log("InformCloseWorld: payload too small");
+            return Task.FromResult(false);
+        }
+
+        byte worldIndex = packet.Payload[0];
+        _log($"InformCloseWorld: worldIndex={worldIndex}");
         return Task.FromResult(true);
     }
 
     private Task<bool> InformUserNumWorld(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
     {
-        _log($"Account InformUserNumWorld len={packet.Payload.Length}");
+        if (packet.Payload.Length < 1 + 40 * 2)
+        {
+            _log("InformUserNumWorld: payload too small");
+            return Task.FromResult(false);
+        }
+
+        byte serviceWorldNum = packet.Payload[0];
+        ushort[] userNums = new ushort[40];
+        var span = packet.Payload.AsSpan(1);
+        for (int i = 0; i < 40; i++)
+        {
+            userNums[i] = BinaryPrimitives.ReadUInt16LittleEndian(span.Slice(i * 2, 2));
+        }
+
+        _log($"InformUserNumWorld: serviceWorldNum={serviceWorldNum} users[0]={userNums[0]} ...");
         return Task.FromResult(true);
     }
 
     private Task<bool> JoinAccountResult(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
     {
-        _log($"Account JoinAccountResult len={packet.Payload.Length}");
+        if (packet.Payload.Length < 7)
+        {
+            _log("JoinAccountResult: payload too small");
+            return Task.FromResult(false);
+        }
+
+        ushort wIndex = BinaryPrimitives.ReadUInt16LittleEndian(packet.Payload.AsSpan(0, 2));
+        byte retCode = packet.Payload[6];
+
+        if (wIndex >= 0x1400)
+        {
+            _log($"JoinAccountResult: invalid index {wIndex}");
+            return Task.FromResult(false);
+        }
+
+        _log($"JoinAccountResult: index={wIndex} ret={retCode}");
         return Task.FromResult(true);
     }
 
     private Task<bool> LoginAccountResult(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
     {
-        _log($"Account LoginAccountResult len={packet.Payload.Length}");
+        if (packet.Payload.Length < 4 + 4 + 1 + 1 + 32 + 4 + 1 + 1)
+        {
+            _log("LoginAccountResult: payload too small");
+            return Task.FromResult(false);
+        }
+
+        var span = packet.Payload.AsSpan();
+        ushort wIndex = BinaryPrimitives.ReadUInt16LittleEndian(span);
+        if (wIndex >= 0x1400)
+        {
+            _log($"LoginAccountResult: invalid index {wIndex}");
+            return Task.FromResult(false);
+        }
+
+        byte retCode = span[6];
+        uint accountSerial = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(8));
+        byte userGrade = span[12];
+        byte subGrade = span[13];
+        int nTrans = BinaryPrimitives.ReadInt32LittleEndian(span.Slice(46)); // offset per struct layout
+
+        _log($"LoginAccountResult: index={wIndex} ret={retCode} accountSerial={accountSerial} grade={userGrade}/{subGrade} nTrans={nTrans}");
         return Task.FromResult(true);
     }
 
     private Task<bool> SelectWorldResult(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
     {
-        _log($"Account SelectWorldResult len={packet.Payload.Length}");
+        if (packet.Payload.Length < 7 + 16)
+        {
+            _log("SelectWorldResult: payload too small");
+            return Task.FromResult(false);
+        }
+
+        ushort wIndex = BinaryPrimitives.ReadUInt16LittleEndian(packet.Payload.AsSpan(0, 2));
+        if (wIndex >= 0x1400)
+        {
+            _log($"SelectWorldResult: invalid index {wIndex}");
+            return Task.FromResult(false);
+        }
+
+        byte retCode = packet.Payload[6];
+        uint[] masterKey = new uint[4];
+        var span = packet.Payload.AsSpan(7);
+        for (int i = 0; i < 4; i++)
+        {
+            masterKey[i] = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(i * 4, 4));
+        }
+
+        _log($"SelectWorldResult: index={wIndex} ret={retCode} masterKey[0]={masterKey[0]}");
         return Task.FromResult(true);
     }
 
     private Task<bool> PushCloseResult(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
     {
-        _log($"Account PushCloseResult len={packet.Payload.Length}");
+        if (packet.Payload.Length < 7)
+        {
+            _log("PushCloseResult: payload too small");
+            return Task.FromResult(false);
+        }
+
+        ushort wIndex = BinaryPrimitives.ReadUInt16LittleEndian(packet.Payload.AsSpan(0, 2));
+        if (wIndex >= 0x1400)
+        {
+            _log($"PushCloseResult: invalid index {wIndex}");
+            return Task.FromResult(false);
+        }
+
+        byte retCode = packet.Payload[6];
+        _log($"PushCloseResult: index={wIndex} ret={retCode}");
         return Task.FromResult(true);
     }
 
