@@ -28,220 +28,149 @@ partial class Form1
     /// </summary>
     private void InitializeComponent()
     {
-        this.startButton = new System.Windows.Forms.Button();
-        this.stopButton = new System.Windows.Forms.Button();
-        this.portLabel = new System.Windows.Forms.Label();
-        this.portTextBox = new System.Windows.Forms.TextBox();
-        this.accountHostLabel = new System.Windows.Forms.Label();
-        this.accountHostTextBox = new System.Windows.Forms.TextBox();
-        this.accountPortLabel = new System.Windows.Forms.Label();
-        this.accountPortTextBox = new System.Windows.Forms.TextBox();
-        this.statusLabel = new System.Windows.Forms.Label();
-        this.logTextBox = new System.Windows.Forms.RichTextBox();
-        this.menuStrip1 = new System.Windows.Forms.MenuStrip();
-        this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-        this.reloadSettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-        this.settingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-        this.openSettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-        this.logToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-        this.verboseLogToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-        this.menuStrip1.SuspendLayout();
-        this.SuspendLayout();
+        startButton = new Button();
+        stopButton = new Button();
+        statusLabel = new Label();
+        logTextBox = new RichTextBox();
+        menuStrip1 = new MenuStrip();
+        fileToolStripMenuItem = new ToolStripMenuItem();
+        reloadSettingsToolStripMenuItem = new ToolStripMenuItem();
+        settingsToolStripMenuItem = new ToolStripMenuItem();
+        openSettingsToolStripMenuItem = new ToolStripMenuItem();
+        logToolStripMenuItem = new ToolStripMenuItem();
+        verboseLogToolStripMenuItem = new ToolStripMenuItem();
+        menuStrip1.SuspendLayout();
+        SuspendLayout();
         // 
         // startButton
         // 
-        this.startButton.Location = new System.Drawing.Point(24, 24);
-        this.startButton.Name = "startButton";
-        this.startButton.Size = new System.Drawing.Size(120, 34);
-        this.startButton.TabIndex = 0;
-        this.startButton.Text = "Start Server";
-        this.startButton.UseVisualStyleBackColor = true;
-        this.startButton.Click += new System.EventHandler(this.OnStartClicked);
+        startButton.Location = new Point(17, 26);
+        startButton.Margin = new Padding(2);
+        startButton.Name = "startButton";
+        startButton.Size = new Size(84, 35);
+        startButton.TabIndex = 0;
+        startButton.Text = "Start Server";
+        startButton.UseVisualStyleBackColor = true;
+        startButton.Click += OnStartClicked;
         // 
         // stopButton
         // 
-        this.stopButton.Enabled = false;
-        this.stopButton.Location = new System.Drawing.Point(160, 24);
-        this.stopButton.Name = "stopButton";
-        this.stopButton.Size = new System.Drawing.Size(120, 34);
-        this.stopButton.TabIndex = 1;
-        this.stopButton.Text = "Stop Server";
-        this.stopButton.UseVisualStyleBackColor = true;
-        this.stopButton.Click += new System.EventHandler(this.OnStopClicked);
-        // 
-        // portLabel
-        // 
-        this.portLabel.AutoSize = true;
-        this.portLabel.Location = new System.Drawing.Point(24, 78);
-        this.portLabel.Name = "portLabel";
-        this.portLabel.Size = new System.Drawing.Size(167, 25);
-        this.portLabel.TabIndex = 2;
-        this.portLabel.Text = "Client Port (listen)";
-        // 
-        // portTextBox
-        // 
-        this.portTextBox.Location = new System.Drawing.Point(112, 74);
-        this.portTextBox.Name = "portTextBox";
-        this.portTextBox.Size = new System.Drawing.Size(136, 31);
-        this.portTextBox.TabIndex = 3;
-        this.portTextBox.Text = "10001";
-        // 
-        // accountHostLabel
-        // 
-        this.accountHostLabel.AutoSize = true;
-        this.accountHostLabel.Location = new System.Drawing.Point(280, 78);
-        this.accountHostLabel.Name = "accountHostLabel";
-        this.accountHostLabel.Size = new System.Drawing.Size(122, 25);
-        this.accountHostLabel.TabIndex = 6;
-        this.accountHostLabel.Text = "Account Host";
-        // 
-        // accountHostTextBox
-        // 
-        this.accountHostTextBox.Location = new System.Drawing.Point(408, 74);
-        this.accountHostTextBox.Name = "accountHostTextBox";
-        this.accountHostTextBox.Size = new System.Drawing.Size(176, 31);
-        this.accountHostTextBox.TabIndex = 7;
-        this.accountHostTextBox.Text = "127.0.0.1";
-        // 
-        // accountPortLabel
-        // 
-        this.accountPortLabel.AutoSize = true;
-        this.accountPortLabel.Location = new System.Drawing.Point(600, 78);
-        this.accountPortLabel.Name = "accountPortLabel";
-        this.accountPortLabel.Size = new System.Drawing.Size(43, 25);
-        this.accountPortLabel.TabIndex = 8;
-        this.accountPortLabel.Text = "Port";
-        // 
-        // accountPortTextBox
-        // 
-        this.accountPortTextBox.Location = new System.Drawing.Point(649, 74);
-        this.accountPortTextBox.Name = "accountPortTextBox";
-        this.accountPortTextBox.Size = new System.Drawing.Size(96, 31);
-        this.accountPortTextBox.TabIndex = 9;
-        this.accountPortTextBox.Text = "27000";
+        stopButton.Enabled = false;
+        stopButton.Location = new Point(112, 26);
+        stopButton.Margin = new Padding(2);
+        stopButton.Name = "stopButton";
+        stopButton.Size = new Size(84, 35);
+        stopButton.TabIndex = 1;
+        stopButton.Text = "Stop Server";
+        stopButton.UseVisualStyleBackColor = true;
+        stopButton.Click += OnStopClicked;
         // 
         // statusLabel
         // 
-        this.statusLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-        this.statusLabel.Location = new System.Drawing.Point(320, 24);
-        this.statusLabel.Name = "statusLabel";
-        this.statusLabel.Size = new System.Drawing.Size(256, 34);
-        this.statusLabel.TabIndex = 4;
-        this.statusLabel.Text = "Status: Stopped";
-        this.statusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        statusLabel.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        statusLabel.Location = new Point(228, 26);
+        statusLabel.Margin = new Padding(2, 0, 2, 0);
+        statusLabel.Name = "statusLabel";
+        statusLabel.Size = new Size(179, 35);
+        statusLabel.TabIndex = 4;
+        statusLabel.Text = "Status: Stopped";
+        statusLabel.TextAlign = ContentAlignment.MiddleLeft;
         // 
         // logTextBox
         // 
-        this.logTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-        this.logTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-        this.logTextBox.Location = new System.Drawing.Point(24, 128);
-        this.logTextBox.Name = "logTextBox";
-        this.logTextBox.ReadOnly = true;
-        this.logTextBox.Size = new System.Drawing.Size(880, 408);
-        this.logTextBox.TabIndex = 10;
-        this.logTextBox.Text = "";
-        this.logTextBox.WordWrap = false;
+        logTextBox.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+        logTextBox.BorderStyle = BorderStyle.FixedSingle;
+        logTextBox.Location = new Point(17, 65);
+        logTextBox.Margin = new Padding(2);
+        logTextBox.Name = "logTextBox";
+        logTextBox.ReadOnly = true;
+        logTextBox.Size = new Size(621, 283);
+        logTextBox.TabIndex = 4;
+        logTextBox.Text = "";
+        logTextBox.WordWrap = false;
         // 
         // menuStrip1
         // 
-        this.menuStrip1.ImageScalingSize = new System.Drawing.Size(24, 24);
-        this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.fileToolStripMenuItem,
-            this.settingsToolStripMenuItem,
-            this.logToolStripMenuItem});
-        this.menuStrip1.Location = new System.Drawing.Point(0, 0);
-        this.menuStrip1.Name = "menuStrip1";
-        this.menuStrip1.Size = new System.Drawing.Size(928, 33);
-        this.menuStrip1.TabIndex = 11;
-        this.menuStrip1.Text = "menuStrip1";
+        menuStrip1.ImageScalingSize = new Size(24, 24);
+        menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, settingsToolStripMenuItem, logToolStripMenuItem });
+        menuStrip1.Location = new Point(0, 0);
+        menuStrip1.Name = "menuStrip1";
+        menuStrip1.Padding = new Padding(4, 1, 0, 1);
+        menuStrip1.Size = new Size(654, 24);
+        menuStrip1.TabIndex = 11;
+        menuStrip1.Text = "menuStrip1";
         // 
         // fileToolStripMenuItem
         // 
-        this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.reloadSettingsToolStripMenuItem});
-        this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-        this.fileToolStripMenuItem.Size = new System.Drawing.Size(54, 29);
-        this.fileToolStripMenuItem.Text = "File";
+        fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { reloadSettingsToolStripMenuItem });
+        fileToolStripMenuItem.Name = "fileToolStripMenuItem";
+        fileToolStripMenuItem.Size = new Size(37, 22);
+        fileToolStripMenuItem.Text = "File";
         // 
         // reloadSettingsToolStripMenuItem
         // 
-        this.reloadSettingsToolStripMenuItem.Name = "reloadSettingsToolStripMenuItem";
-        this.reloadSettingsToolStripMenuItem.Size = new System.Drawing.Size(238, 34);
-        this.reloadSettingsToolStripMenuItem.Text = "Reload Settings";
-        this.reloadSettingsToolStripMenuItem.Click += new System.EventHandler(this.OnReloadSettings);
+        reloadSettingsToolStripMenuItem.Name = "reloadSettingsToolStripMenuItem";
+        reloadSettingsToolStripMenuItem.Size = new Size(155, 22);
+        reloadSettingsToolStripMenuItem.Text = "Reload Settings";
+        reloadSettingsToolStripMenuItem.Click += OnReloadSettings;
         // 
         // settingsToolStripMenuItem
         // 
-        this.settingsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.openSettingsToolStripMenuItem});
-        this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-        this.settingsToolStripMenuItem.Size = new System.Drawing.Size(92, 29);
-        this.settingsToolStripMenuItem.Text = "Settings";
+        settingsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { openSettingsToolStripMenuItem });
+        settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
+        settingsToolStripMenuItem.Size = new Size(61, 22);
+        settingsToolStripMenuItem.Text = "Settings";
         // 
         // openSettingsToolStripMenuItem
         // 
-        this.openSettingsToolStripMenuItem.Name = "openSettingsToolStripMenuItem";
-        this.openSettingsToolStripMenuItem.Size = new System.Drawing.Size(224, 34);
-        this.openSettingsToolStripMenuItem.Text = "Open Settings";
-        this.openSettingsToolStripMenuItem.Click += new System.EventHandler(this.OnOpenSettings);
+        openSettingsToolStripMenuItem.Name = "openSettingsToolStripMenuItem";
+        openSettingsToolStripMenuItem.Size = new Size(148, 22);
+        openSettingsToolStripMenuItem.Text = "Open Settings";
+        openSettingsToolStripMenuItem.Click += OnOpenSettings;
         // 
         // logToolStripMenuItem
         // 
-        this.logToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.verboseLogToolStripMenuItem});
-        this.logToolStripMenuItem.Name = "logToolStripMenuItem";
-        this.logToolStripMenuItem.Size = new System.Drawing.Size(58, 29);
-        this.logToolStripMenuItem.Text = "Log";
+        logToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { verboseLogToolStripMenuItem });
+        logToolStripMenuItem.Name = "logToolStripMenuItem";
+        logToolStripMenuItem.Size = new Size(39, 22);
+        logToolStripMenuItem.Text = "Log";
         // 
         // verboseLogToolStripMenuItem
         // 
-        this.verboseLogToolStripMenuItem.CheckOnClick = true;
-        this.verboseLogToolStripMenuItem.Name = "verboseLogToolStripMenuItem";
-        this.verboseLogToolStripMenuItem.Size = new System.Drawing.Size(213, 34);
-        this.verboseLogToolStripMenuItem.Text = "Verbose Log";
-        this.verboseLogToolStripMenuItem.Click += new System.EventHandler(this.OnToggleVerboseLog);
+        verboseLogToolStripMenuItem.CheckOnClick = true;
+        verboseLogToolStripMenuItem.Name = "verboseLogToolStripMenuItem";
+        verboseLogToolStripMenuItem.Size = new Size(138, 22);
+        verboseLogToolStripMenuItem.Text = "Verbose Log";
+        verboseLogToolStripMenuItem.Click += OnToggleVerboseLog;
         // 
         // Form1
         // 
-        this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 25F);
-        this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-        this.ClientSize = new System.Drawing.Size(928, 568);
-        this.Controls.Add(this.accountPortTextBox);
-        this.Controls.Add(this.accountPortLabel);
-        this.Controls.Add(this.accountHostTextBox);
-        this.Controls.Add(this.accountHostLabel);
-        this.Controls.Add(this.logTextBox);
-        this.Controls.Add(this.menuStrip1);
-        this.Controls.Add(this.statusLabel);
-        this.Controls.Add(this.portTextBox);
-        this.Controls.Add(this.portLabel);
-        this.Controls.Add(this.stopButton);
-        this.Controls.Add(this.startButton);
-        this.MinimumSize = new System.Drawing.Size(700, 400);
-        this.MainMenuStrip = this.menuStrip1;
-        this.Name = "Form1";
-        this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-        this.Text = "Login Server Control";
-        this.menuStrip1.ResumeLayout(false);
-        this.menuStrip1.PerformLayout();
-        this.ResumeLayout(false);
-        this.PerformLayout();
+        AutoScaleDimensions = new SizeF(7F, 15F);
+        AutoScaleMode = AutoScaleMode.Font;
+        ClientSize = new Size(654, 366);
+        Controls.Add(logTextBox);
+        Controls.Add(menuStrip1);
+        Controls.Add(statusLabel);
+        Controls.Add(stopButton);
+        Controls.Add(startButton);
+        MainMenuStrip = menuStrip1;
+        Margin = new Padding(2);
+        MinimumSize = new Size(495, 256);
+        Name = "Form1";
+        StartPosition = FormStartPosition.CenterScreen;
+        Text = "Login Server Control";
+        menuStrip1.ResumeLayout(false);
+        menuStrip1.PerformLayout();
+        ResumeLayout(false);
+        PerformLayout();
     }
 
     #endregion
 
     private System.Windows.Forms.Button startButton;
     private System.Windows.Forms.Button stopButton;
-    private System.Windows.Forms.Label portLabel;
-    private System.Windows.Forms.TextBox portTextBox;
     private System.Windows.Forms.Label statusLabel;
     private System.Windows.Forms.RichTextBox logTextBox;
-    private System.Windows.Forms.Label accountHostLabel;
-    private System.Windows.Forms.TextBox accountHostTextBox;
-    private System.Windows.Forms.Label accountPortLabel;
-    private System.Windows.Forms.TextBox accountPortTextBox;
     private System.Windows.Forms.MenuStrip menuStrip1;
     private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
     private System.Windows.Forms.ToolStripMenuItem reloadSettingsToolStripMenuItem;

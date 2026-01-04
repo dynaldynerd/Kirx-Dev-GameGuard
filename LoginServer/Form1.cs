@@ -24,9 +24,6 @@ public partial class Form1 : Form
 
     private void ApplySettingsToUi()
     {
-        portTextBox.Text = _settings.Network.ClientPort.ToString();
-        accountHostTextBox.Text = _settings.Network.AccountHost;
-        accountPortTextBox.Text = _settings.Network.AccountPort.ToString();
         verboseLogToolStripMenuItem.Checked = _verboseLog;
     }
 
@@ -39,33 +36,9 @@ public partial class Form1 : Form
 
     private async void OnStartClicked(object sender, EventArgs e)
     {
-        if (!int.TryParse(portTextBox.Text, out int clientPort) || clientPort < 1 || clientPort > 65535)
-        {
-            MessageBox.Show(this, "Enter a valid client TCP port (1-65535).", "Invalid Port", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-
-        if (!int.TryParse(accountPortTextBox.Text, out int accountPort) || accountPort < 1 || accountPort > 65535)
-        {
-            MessageBox.Show(this, "Enter a valid account TCP port (1-65535).", "Invalid Port", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-
-        string accountHost = accountHostTextBox.Text.Trim();
-        if (string.IsNullOrWhiteSpace(accountHost))
-        {
-            MessageBox.Show(this, "Enter an account server host.", "Invalid Host", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-
         startButton.Enabled = false;
         stopButton.Enabled = true;
         statusLabel.Text = "Status: Starting...";
-
-        _settings.Network.ClientPort = clientPort;
-        _settings.Network.AccountHost = accountHost;
-        _settings.Network.AccountPort = accountPort;
-        _settings.Save();
 
         _cts = new CancellationTokenSource();
 
@@ -81,9 +54,9 @@ public partial class Form1 : Form
 
         try
         {
-            await _clientListener.StartAsync(clientPort, _cts.Token);
-            await _accountConnector.ConnectAsync(accountHost, accountPort, _cts.Token);
-            statusLabel.Text = $"Status: Listening on {clientPort}, account {accountHost}:{accountPort}";
+            await _clientListener.StartAsync(_settings.Network.ClientPort, _cts.Token);
+            await _accountConnector.ConnectAsync(_settings.Network.AccountHost, _settings.Network.AccountPort, _cts.Token);
+            statusLabel.Text = $"Status: Listening on {_settings.Network.ClientPort}, account {_settings.Network.AccountHost}:{_settings.Network.AccountPort}";
         }
         catch (Exception ex)
         {
