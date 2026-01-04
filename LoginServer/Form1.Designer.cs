@@ -44,7 +44,7 @@ partial class Form1
         // 
         // startButton
         // 
-        startButton.Location = new Point(17, 26);
+        startButton.Location = new Point(17, 31);
         startButton.Margin = new Padding(2);
         startButton.Name = "startButton";
         startButton.Size = new Size(84, 35);
@@ -56,7 +56,7 @@ partial class Form1
         // stopButton
         // 
         stopButton.Enabled = false;
-        stopButton.Location = new Point(112, 26);
+        stopButton.Location = new Point(112, 31);
         stopButton.Margin = new Padding(2);
         stopButton.Name = "stopButton";
         stopButton.Size = new Size(84, 35);
@@ -68,7 +68,7 @@ partial class Form1
         // statusLabel
         // 
         statusLabel.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-        statusLabel.Location = new Point(228, 26);
+        statusLabel.Location = new Point(228, 31);
         statusLabel.Margin = new Padding(2, 0, 2, 0);
         statusLabel.Name = "statusLabel";
         statusLabel.Size = new Size(179, 35);
@@ -80,11 +80,11 @@ partial class Form1
         // 
         logTextBox.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
         logTextBox.BorderStyle = BorderStyle.FixedSingle;
-        logTextBox.Location = new Point(17, 65);
+        logTextBox.Location = new Point(17, 70);
         logTextBox.Margin = new Padding(2);
         logTextBox.Name = "logTextBox";
         logTextBox.ReadOnly = true;
-        logTextBox.Size = new Size(621, 283);
+        logTextBox.Size = new Size(621, 278);
         logTextBox.TabIndex = 4;
         logTextBox.Text = "";
         logTextBox.WordWrap = false;
