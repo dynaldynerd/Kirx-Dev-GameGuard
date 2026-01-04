@@ -30,6 +30,7 @@ public sealed class AccountPacketRouter
         byte sub = packet.SubCode;
         switch (sub)
         {
+            //account to login for server stat
             case 11:
                 return await WorldListResult(connection, packet, cancellationToken).ConfigureAwait(false);
             case 100:
@@ -46,6 +47,10 @@ public sealed class AccountPacketRouter
                 return await SelectWorldResult(connection, packet, cancellationToken).ConfigureAwait(false);
             case 8:
                 return await PushCloseResult(connection, packet, cancellationToken).ConfigureAwait(false);
+
+
+
+            //account to client
             case 200:
                 return await ForceCloseCommand(connection, packet, cancellationToken).ConfigureAwait(false);
             case 12:
@@ -271,19 +276,49 @@ public sealed class AccountPacketRouter
 
     private Task<bool> ForceCloseCommand(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
     {
-        _log($"Account ForceCloseCommand len={packet.Payload.Length}");
+        if (packet.Payload.Length < 2)
+        {
+            _log("ForceCloseCommand: payload too small");
+            return Task.FromResult(false);
+        }
+
+        ushort wIndex = BinaryPrimitives.ReadUInt16LittleEndian(packet.Payload.AsSpan(0, 2));
+        if (wIndex >= 0x1400)
+        {
+            _log($"ForceCloseCommand: invalid index {wIndex}");
+            return Task.FromResult(false);
+        }
+
+        _log($"ForceCloseCommand: index={wIndex}");
         return Task.FromResult(true);
     }
 
     private Task<bool> LoginStatRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
     {
-        _log($"Account LoginStatRequest len={packet.Payload.Length}");
+        if (packet.Payload.Length < 3)
+        {
+            _log("LoginStatRequest: payload too small");
+            return Task.FromResult(false);
+        }
+
+        byte byStat = packet.Payload[0];
+        ushort wClientIndex = BinaryPrimitives.ReadUInt16LittleEndian(packet.Payload.AsSpan(1, 2));
+
+        bool externalOpen = byStat switch
+        {
+            1 => true,
+            2 => false,
+            _ => false
+        };
+
+        _log($"LoginStatRequest: clientIndex={wClientIndex} stat={byStat} => externalOpen={externalOpen}");
+        // TODO: respond with _login_server_stat_result_loac (byRet 1=open, 2=closed) via client process.
         return Task.FromResult(true);
     }
 
     private Task<bool> HolyQuestNowStat(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
     {
-        _log($"Account HolyQuestNowStat len={packet.Payload.Length}");
+        _log("HolyQuestNowStat: no-op");
         return Task.FromResult(true);
     }
 
