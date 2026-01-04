@@ -1,10 +1,11 @@
 using System;
 using System.Buffers.Binary;
-using System.Linq;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using RFNetworking;
+using LoginServer.State;
 
 namespace LoginServer.Handlers;
 
@@ -101,6 +102,7 @@ public sealed class AccountPacketRouter
             return Task.FromResult(false);
         }
 
+        var worlds = new List<WorldData>(worldNum);
         int offset = 2;
         for (int i = 0; i < worldNum; i++)
         {
@@ -121,11 +123,20 @@ public sealed class AccountPacketRouter
             string name = System.Text.Encoding.ASCII.GetString(nameBytes.Slice(0, nameLen));
             string ipStr = new System.Net.IPAddress(gateIp).ToString();
             _log($"World {i}: open={bOpen} name='{name}' ip={ipStr}:{gatePort} type={type}");
+            worlds.Add(new WorldData
+            {
+                IsOpen = bOpen,
+                Name = name,
+                GateIp = new IPAddress(gateIp),
+                GatePort = gatePort,
+                Type = type
+            });
 
             offset += entrySize;
         }
 
         _log($"WorldListResult: serviceWorldNum={serviceWorldNum} worldNum={worldNum}");
+        MainContext.Instance.UpdateWorldList(serviceWorldNum, worlds);
         return Task.FromResult(true);
     }
 
@@ -144,6 +155,7 @@ public sealed class AccountPacketRouter
 
         string gateIpStr = new IPAddress(gateIp).ToString();
         _log($"InformOpenWorld: worldCode={worldCode} gate={gateIpStr}:{gatePort}");
+        MainContext.Instance.SetWorldOpen((int)worldCode, new IPAddress(gateIp), gatePort);
         return Task.FromResult(true);
     }
 
@@ -157,6 +169,7 @@ public sealed class AccountPacketRouter
 
         byte worldIndex = packet.Payload[0];
         _log($"InformCloseWorld: worldIndex={worldIndex}");
+        MainContext.Instance.SetWorldClosed(worldIndex);
         return Task.FromResult(true);
     }
 
@@ -177,6 +190,7 @@ public sealed class AccountPacketRouter
         }
 
         _log($"InformUserNumWorld: serviceWorldNum={serviceWorldNum} users[0]={userNums[0]} ...");
+        MainContext.Instance.UpdateUserCounts(serviceWorldNum, userNums);
         return Task.FromResult(true);
     }
 
@@ -198,6 +212,7 @@ public sealed class AccountPacketRouter
         }
 
         _log($"JoinAccountResult: index={wIndex} ret={retCode}");
+        MainContext.Instance.RecordJoinResult(wIndex, retCode);
         return Task.FromResult(true);
     }
 
@@ -224,6 +239,7 @@ public sealed class AccountPacketRouter
         int nTrans = BinaryPrimitives.ReadInt32LittleEndian(span.Slice(46)); // offset per struct layout
 
         _log($"LoginAccountResult: index={wIndex} ret={retCode} accountSerial={accountSerial} grade={userGrade}/{subGrade} nTrans={nTrans}");
+        MainContext.Instance.RecordLoginResult(wIndex, retCode, accountSerial, userGrade, subGrade, nTrans);
         return Task.FromResult(true);
     }
 
@@ -251,6 +267,7 @@ public sealed class AccountPacketRouter
         }
 
         _log($"SelectWorldResult: index={wIndex} ret={retCode} masterKey[0]={masterKey[0]}");
+        MainContext.Instance.RecordSelectWorldResult(wIndex, retCode, masterKey);
         return Task.FromResult(true);
     }
 
@@ -271,6 +288,7 @@ public sealed class AccountPacketRouter
 
         byte retCode = packet.Payload[6];
         _log($"PushCloseResult: index={wIndex} ret={retCode}");
+        MainContext.Instance.RecordPushCloseResult(wIndex, retCode);
         return Task.FromResult(true);
     }
 
@@ -290,6 +308,7 @@ public sealed class AccountPacketRouter
         }
 
         _log($"ForceCloseCommand: index={wIndex}");
+        MainContext.Instance.RecordForceClose(wIndex);
         return Task.FromResult(true);
     }
 
