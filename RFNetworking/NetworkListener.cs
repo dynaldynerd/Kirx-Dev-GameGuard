@@ -12,17 +12,22 @@ public sealed class NetworkListener : IAsyncDisposable
 {
     private readonly INetworkHandler _handler;
     private readonly ConcurrentDictionary<int, SaeaConnection> _connections = new();
+    private readonly ConcurrentQueue<int> _freeIds = new();
     private Socket? _listenSocket;
     private CancellationTokenSource? _cts;
     private Task? _acceptLoop;
     private int _nextId;
+    private readonly int _maxConnections;
 
-    public NetworkListener(INetworkHandler handler)
+    public NetworkListener(INetworkHandler handler, int maxConnections = -1)
     {
         _handler = handler;
+        _maxConnections = maxConnections;
     }
 
     public bool IsRunning => _listenSocket != null;
+
+    public int CurrentConnections => _connections.Count;
 
     public event Action<string>? Log;
 
@@ -81,7 +86,19 @@ public sealed class NetworkListener : IAsyncDisposable
             {
                 client = await _listenSocket!.AcceptAsync(cancellationToken).ConfigureAwait(false);
                 client.NoDelay = true;
-                int id = ++_nextId;
+                if (_maxConnections > 0 && _connections.Count >= _maxConnections && _freeIds.IsEmpty)
+                {
+                    Log?.Invoke($"Connection refused: limit {_maxConnections} reached.");
+                    client.Dispose();
+                    continue;
+                }
+
+                int id;
+                if (!_freeIds.TryDequeue(out id))
+                {
+                    id = Interlocked.Increment(ref _nextId);
+                }
+
                 var conn = new SaeaConnection(id, client, _handler, Log);
                 _connections[id] = conn;
                 Log?.Invoke($"Client {id} connected from {client.RemoteEndPoint}");
@@ -108,6 +125,7 @@ public sealed class NetworkListener : IAsyncDisposable
     private async Task OnClosedAsync(SaeaConnection connection, Exception? ex)
     {
         _connections.TryRemove(connection.ConnectionId, out _);
+        _freeIds.Enqueue(connection.ConnectionId);
         await _handler.OnDisconnectedAsync(connection.PublicConnection, CancellationToken.None).ConfigureAwait(false);
         await connection.DisposeAsync().ConfigureAwait(false);
         if (ex != null)
