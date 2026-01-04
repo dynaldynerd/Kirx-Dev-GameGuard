@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
+using RFNetworking;
 
 namespace LoginServer.State;
 
@@ -14,6 +15,7 @@ public sealed class MainContext
     private readonly object _lock = new();
     private readonly WorldData[] _worlds = new WorldData[40];
     private readonly ConcurrentDictionary<ushort, ClientSession> _clients = new();
+    private readonly ConcurrentDictionary<ushort, PublicConnection> _clientConnections = new();
 
     private MainContext()
     {
@@ -23,6 +25,9 @@ public sealed class MainContext
 
     public int WorldCount { get; private set; }
     public int ServiceWorldNum { get; private set; }
+    public bool ExternalOpen { get; set; }
+    public string? AccountDbName { get; set; }
+    public string? AccountDbIp { get; set; }
 
     public IReadOnlyList<WorldData> Worlds
     {
@@ -39,6 +44,24 @@ public sealed class MainContext
     {
         _clients.TryGetValue(index, out var session);
         return session;
+    }
+
+    public void RegisterClientConnection(PublicConnection connection)
+    {
+        ushort idx = (ushort)connection.ConnectionId;
+        _clientConnections[idx] = connection;
+    }
+
+    public void UnregisterClientConnection(PublicConnection connection)
+    {
+        ushort idx = (ushort)connection.ConnectionId;
+        _clientConnections.TryRemove(idx, out _);
+    }
+
+    public PublicConnection? GetClientConnection(ushort index)
+    {
+        _clientConnections.TryGetValue(index, out var conn);
+        return conn;
     }
 
     public void UpdateWorldList(byte serviceWorldNum, IReadOnlyList<WorldData> worlds)
@@ -127,6 +150,12 @@ public sealed class MainContext
         var session = _clients.GetOrAdd(index, _ => new ClientSession(index));
         session.ForcedClosed = true;
     }
+
+    public void RecordAccountDbInfo(string dbName, string dbIp)
+    {
+        AccountDbName = dbName;
+        AccountDbIp = dbIp;
+    }
 }
 
 public struct WorldData
@@ -158,4 +187,16 @@ public sealed class ClientSession
     public uint[]? WorldMasterKey { get; set; }
     public byte? PushCloseRetCode { get; set; }
     public bool ForcedClosed { get; set; }
+    public byte? ManageAccountAuthRet { get; set; }
+    public byte? ManageLimitRunAccountRet { get; set; }
+    public ManageLimitWorldInfo? ManageLimitWorld { get; set; }
+    public byte? ManageForceExitRet { get; set; }
+}
+
+public struct ManageLimitWorldInfo
+{
+    public uint Code;
+    public string Name;
+    public string DbName;
+    public byte Type;
 }

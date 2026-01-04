@@ -331,7 +331,24 @@ public sealed class AccountPacketRouter
         };
 
         _log($"LoginStatRequest: clientIndex={wClientIndex} stat={byStat} => externalOpen={externalOpen}");
-        // TODO: respond with _login_server_stat_result_loac (byRet 1=open, 2=closed) via client process.
+        MainContext.Instance.ExternalOpen = externalOpen;
+
+        // Send response to the client indexed by wClientIndex if connected.
+        var target = MainContext.Instance.GetClientConnection(wClientIndex);
+        if (target != null)
+        {
+            byte byRet = externalOpen ? (byte)1 : (byte)2;
+            Span<byte> payload = stackalloc byte[3];
+            payload[0] = byRet;
+            BinaryPrimitives.WriteUInt16LittleEndian(payload.Slice(1, 2), wClientIndex);
+            var env = new PacketEnvelope
+            {
+                OpCode = 1,
+                SubCode = 13,
+                Payload = payload.ToArray()
+            };
+            _ = target.SendAsync(env, cancellationToken);
+        }
         return Task.FromResult(true);
     }
 
@@ -343,37 +360,150 @@ public sealed class AccountPacketRouter
 
     private Task<bool> AccountDBInfoResult(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
     {
-        _log($"Account AccountDBInfoResult len={packet.Payload.Length}");
+        if (packet.Payload.Length < 48)
+        {
+            _log("AccountDBInfoResult: payload too small");
+            return Task.FromResult(false);
+        }
+
+        var span = packet.Payload.AsSpan();
+        string dbName = System.Text.Encoding.ASCII.GetString(span.Slice(0, 32)).TrimEnd('\0');
+        string ip = System.Text.Encoding.ASCII.GetString(span.Slice(32, 16)).TrimEnd('\0');
+
+        MainContext.Instance.RecordAccountDbInfo(dbName, ip);
+        _log($"AccountDBInfoResult: dbName={dbName} ip={ip}");
         return Task.FromResult(true);
     }
 
     private Task<bool> NotifyManageAccountAuthInfo(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
     {
-        _log($"Account NotifyManageAccountAuthInfo len={packet.Payload.Length}");
+        if (packet.Payload.Length < 3 + 149)
+        {
+            _log("NotifyManageAccountAuthInfo: payload too small");
+            return Task.FromResult(false);
+        }
+
+        ushort wIndex = BinaryPrimitives.ReadUInt16LittleEndian(packet.Payload.AsSpan(0, 2));
+        if (wIndex >= 0x1400)
+        {
+            _log($"NotifyManageAccountAuthInfo: invalid index {wIndex}");
+            return Task.FromResult(false);
+        }
+
+        byte retCode = packet.Payload[2];
+        _log($"NotifyManageAccountAuthInfo: index={wIndex} ret={retCode}");
         return Task.FromResult(true);
     }
 
     private Task<bool> ManageAccountAuthResult(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
     {
-        _log($"Account ManageAccountAuthResult len={packet.Payload.Length}");
+        if (packet.Payload.Length < 3)
+        {
+            _log("ManageAccountAuthResult: payload too small");
+            return Task.FromResult(false);
+        }
+
+        ushort wIndex = BinaryPrimitives.ReadUInt16LittleEndian(packet.Payload.AsSpan(0, 2));
+        if (wIndex >= 0x1400)
+        {
+            _log($"ManageAccountAuthResult: invalid index {wIndex}");
+            return Task.FromResult(false);
+        }
+
+        byte ret = packet.Payload[2];
+        _log($"ManageAccountAuthResult: index={wIndex} ret={ret}");
+        var session = MainContext.Instance.GetClient(wIndex);
+        if (session != null)
+        {
+            session.ManageAccountAuthRet = ret;
+        }
         return Task.FromResult(true);
     }
 
     private Task<bool> ManageClientLimitRunAccountResult(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
     {
-        _log($"Account ManageClientLimitRunAccountResult len={packet.Payload.Length}");
+        if (packet.Payload.Length < 3)
+        {
+            _log("ManageClientLimitRunAccountResult: payload too small");
+            return Task.FromResult(false);
+        }
+
+        ushort wIndex = BinaryPrimitives.ReadUInt16LittleEndian(packet.Payload.AsSpan(0, 2));
+        if (wIndex >= 0x1400)
+        {
+            _log($"ManageClientLimitRunAccountResult: invalid index {wIndex}");
+            return Task.FromResult(false);
+        }
+
+        byte ret = packet.Payload[2];
+        _log($"ManageClientLimitRunAccountResult: index={wIndex} ret={ret}");
+        var session = MainContext.Instance.GetClient(wIndex);
+        if (session != null)
+        {
+            session.ManageLimitRunAccountRet = ret;
+        }
         return Task.FromResult(true);
     }
 
     private Task<bool> ManageClientLimitRunWorldResult(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
     {
-        _log($"Account ManageClientLimitRunWorldResult len={packet.Payload.Length}");
+        if (packet.Payload.Length < 3 + 4 + 32 + 32 + 1)
+        {
+            _log("ManageClientLimitRunWorldResult: payload too small");
+            return Task.FromResult(false);
+        }
+
+        ushort wIndex = BinaryPrimitives.ReadUInt16LittleEndian(packet.Payload.AsSpan(0, 2));
+        if (wIndex >= 0x1400)
+        {
+            _log($"ManageClientLimitRunWorldResult: invalid index {wIndex}");
+            return Task.FromResult(false);
+        }
+
+        byte ret = packet.Payload[2];
+        var span = packet.Payload.AsSpan(3);
+        uint code = BinaryPrimitives.ReadUInt32LittleEndian(span);
+        string name = System.Text.Encoding.ASCII.GetString(span.Slice(4, 32)).TrimEnd('\0');
+        string dbName = System.Text.Encoding.ASCII.GetString(span.Slice(36, 32)).TrimEnd('\0');
+        byte type = span[68];
+
+        _log($"ManageClientLimitRunWorldResult: index={wIndex} ret={ret} code={code} name={name} db={dbName} type={type}");
+        var session = MainContext.Instance.GetClient(wIndex);
+        if (session != null)
+        {
+            session.ManageLimitWorld = new ManageLimitWorldInfo
+            {
+                Code = code,
+                Name = name,
+                DbName = dbName,
+                Type = type
+            };
+        }
         return Task.FromResult(true);
     }
 
     private Task<bool> ManageClientForceExitResult(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
     {
-        _log($"Account ManageClientForceExitResult len={packet.Payload.Length}");
+        if (packet.Payload.Length < 3)
+        {
+            _log("ManageClientForceExitResult: payload too small");
+            return Task.FromResult(false);
+        }
+
+        ushort wIndex = BinaryPrimitives.ReadUInt16LittleEndian(packet.Payload.AsSpan(0, 2));
+        if (wIndex >= 0x1400)
+        {
+            _log($"ManageClientForceExitResult: invalid index {wIndex}");
+            return Task.FromResult(false);
+        }
+
+        byte ret = packet.Payload[2];
+        _log($"ManageClientForceExitResult: index={wIndex} ret={ret}");
+        var session = MainContext.Instance.GetClient(wIndex);
+        if (session != null)
+        {
+            session.ManageForceExitRet = ret;
+        }
         return Task.FromResult(true);
     }
 }
