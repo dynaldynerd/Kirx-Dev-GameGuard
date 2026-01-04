@@ -4,7 +4,7 @@ namespace LoginServer.Packets;
 
 /// <summary>Client -> Login: select world request.</summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _select_world_request_cllo
+public partial struct _select_world_request_cllo
 {
     public ushort wWorldIndex;
 }
@@ -58,7 +58,7 @@ public struct _motp_validation_reply_locl
 
 /// <summary>Client -> Login: account login request.</summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _login_account_request_cllo
+public partial struct _login_account_request_cllo
 {
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
     public byte[] szAccountID;
@@ -78,7 +78,7 @@ public struct _login_account_request_cllo
 
 /// <summary>Client -> Login: account join/create request.</summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _join_account_request_cllo
+public partial struct _join_account_request_cllo
 {
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
     public byte[] szAccountID;
@@ -160,14 +160,14 @@ public struct _join_account_result_locl
 
 /// <summary>Client -> Login: world list request.</summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _world_list_request_cllo
+public partial struct _world_list_request_cllo
 {
     public uint dwClientVersion;
 }
 
 /// <summary>Client -> Login: MOTP validation request.</summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _motp_validation_request_cllo
+public partial struct _motp_validation_request_cllo
 {
     public byte byType;
 
@@ -183,7 +183,7 @@ public struct _motp_validation_request_cllo
 
 /// <summary>Client -> Login: manage account auth request.</summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _manage_account_auth_request_cllo
+public partial struct _manage_account_auth_request_cllo
 {
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
     public byte[] byBin;
@@ -193,6 +193,42 @@ public struct _manage_account_auth_request_cllo
         this = default;
         byBin = new byte[32];
     }
+}
+
+/// <summary>Client -> Login: push close request.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public partial struct _push_close_request_cllo
+{
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
+    public byte[] szAccountID;
+
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
+    public byte[] szPassword;
+
+    public _push_close_request_cllo()
+    {
+        this = default;
+        szAccountID = new byte[13];
+        szPassword = new byte[13];
+    }
+}
+
+/// <summary>Client -> Login: crypt key request.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public partial struct _crypty_key_request_cllo
+{
+}
+
+/// <summary>Client -> Login: manage client limit run request.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public partial struct _manage_client_limit_run_request_cllo
+{
+}
+
+/// <summary>Client -> Login: manage client force exit request.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public partial struct _manage_client_force_exit_request_cllo
+{
 }
 
 /// <summary>Login -> Client: notify manage account auth info.</summary>

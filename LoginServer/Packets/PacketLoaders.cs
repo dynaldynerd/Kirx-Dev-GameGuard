@@ -291,3 +291,95 @@ public partial struct _manage_client_force_exit_result_aclo
         return true;
     }
 }
+
+// ----- Client-line (cllo/locl) loaders -----
+
+public partial struct _join_account_request_cllo
+{
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 26) return false;
+        Buffer.BlockCopy(payload, 0, szAccountID, 0, 13);
+        Buffer.BlockCopy(payload, 13, szPassword, 0, 13);
+        return true;
+    }
+}
+
+public partial struct _login_account_request_cllo
+{
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 27) return false;
+        Buffer.BlockCopy(payload, 0, szAccountID, 0, 13);
+        Buffer.BlockCopy(payload, 13, szPassword, 0, 13);
+        byServerType = payload[26];
+        return true;
+    }
+}
+
+public partial struct _world_list_request_cllo
+{
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 4) return false;
+        dwClientVersion = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(0, 4));
+        return true;
+    }
+}
+
+public partial struct _select_world_request_cllo
+{
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 2) return false;
+        wWorldIndex = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(0, 2));
+        return true;
+    }
+}
+
+public partial struct _motp_validation_request_cllo
+{
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 14) return false;
+        byType = payload[0];
+        Buffer.BlockCopy(payload, 1, szMOTP, 0, 13);
+        return true;
+    }
+}
+
+public partial struct _manage_account_auth_request_cllo
+{
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 32) return false;
+        Buffer.BlockCopy(payload, 0, byBin, 0, 32);
+        return true;
+    }
+}
+
+public partial struct _push_close_request_cllo
+{
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 26) return false;
+        Buffer.BlockCopy(payload, 0, szAccountID, 0, 13);
+        Buffer.BlockCopy(payload, 13, szPassword, 0, 13);
+        return true;
+    }
+}
+
+public partial struct _crypty_key_request_cllo
+{
+    public bool Load(byte[] payload) => true; // no payload data
+}
+
+public partial struct _manage_client_limit_run_request_cllo
+{
+    public bool Load(byte[] payload) => true; // empty
+}
+
+public partial struct _manage_client_force_exit_request_cllo
+{
+    public bool Load(byte[] payload) => true; // empty
+}
