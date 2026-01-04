@@ -1,10 +1,12 @@
 using LoginServer.Handlers;
+using LoginServer.Settings;
 using RFNetworking;
 
 namespace LoginServer;
 
 public partial class Form1 : Form
 {
+    private AppSettings _settings = AppSettings.Load();
     private NetworkListener? _clientListener;
     private NetworkConnector? _accountConnector;
     private CancellationTokenSource? _cts;
@@ -16,6 +18,21 @@ public partial class Form1 : Form
     public Form1()
     {
         InitializeComponent();
+        ApplySettingsToUi();
+    }
+
+    private void ApplySettingsToUi()
+    {
+        portTextBox.Text = _settings.Network.ClientPort.ToString();
+        accountHostTextBox.Text = _settings.Network.AccountHost;
+        accountPortTextBox.Text = _settings.Network.AccountPort.ToString();
+    }
+
+    private void ReloadSettings()
+    {
+        _settings = AppSettings.Load();
+        ApplySettingsToUi();
+        AppendLog("Settings reloaded from disk.");
     }
 
     private async void OnStartClicked(object sender, EventArgs e)
@@ -43,11 +60,16 @@ public partial class Form1 : Form
         stopButton.Enabled = true;
         statusLabel.Text = "Status: Starting...";
 
+        _settings.Network.ClientPort = clientPort;
+        _settings.Network.AccountHost = accountHost;
+        _settings.Network.AccountPort = accountPort;
+        _settings.Save();
+
         _cts = new CancellationTokenSource();
 
         _clientRouter = new ClientPacketRouter(AppendLog);
         _clientHandler = new LoginHandler("Client", AppendLog, _clientRouter, null);
-        _clientListener = new NetworkListener(_clientHandler);
+        _clientListener = new NetworkListener(_clientHandler, _settings.Network.MaxConnections);
         _clientListener.Log += AppendLog;
 
         _accountRouter = new AccountPacketRouter(AppendLog);
@@ -127,6 +149,21 @@ public partial class Form1 : Form
 
         string line = $"[{DateTime.Now:HH:mm:ss}] {message}";
         logTextBox.AppendText(line + Environment.NewLine);
+    }
+
+    private void OnOpenSettings(object? sender, EventArgs e)
+    {
+        using var form = new SettingsForm(_settings);
+        if (form.ShowDialog(this) == DialogResult.OK)
+        {
+            ApplySettingsToUi();
+            AppendLog("Settings saved.");
+        }
+    }
+
+    private void OnReloadSettings(object? sender, EventArgs e)
+    {
+        ReloadSettings();
     }
 
     private sealed class LoginHandler : NetworkHandlerBase

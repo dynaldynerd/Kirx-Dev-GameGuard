@@ -38,6 +38,12 @@ partial class Form1
         this.accountPortTextBox = new System.Windows.Forms.TextBox();
         this.statusLabel = new System.Windows.Forms.Label();
         this.logTextBox = new System.Windows.Forms.RichTextBox();
+        this.menuStrip1 = new System.Windows.Forms.MenuStrip();
+        this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+        this.reloadSettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+        this.settingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+        this.openSettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+        this.menuStrip1.SuspendLayout();
         this.SuspendLayout();
         // 
         // startButton
@@ -136,6 +142,48 @@ partial class Form1
         this.logTextBox.Text = "";
         this.logTextBox.WordWrap = false;
         // 
+        // menuStrip1
+        // 
+        this.menuStrip1.ImageScalingSize = new System.Drawing.Size(24, 24);
+        this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.fileToolStripMenuItem,
+            this.settingsToolStripMenuItem});
+        this.menuStrip1.Location = new System.Drawing.Point(0, 0);
+        this.menuStrip1.Name = "menuStrip1";
+        this.menuStrip1.Size = new System.Drawing.Size(928, 33);
+        this.menuStrip1.TabIndex = 11;
+        this.menuStrip1.Text = "menuStrip1";
+        // 
+        // fileToolStripMenuItem
+        // 
+        this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.reloadSettingsToolStripMenuItem});
+        this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
+        this.fileToolStripMenuItem.Size = new System.Drawing.Size(54, 29);
+        this.fileToolStripMenuItem.Text = "File";
+        // 
+        // reloadSettingsToolStripMenuItem
+        // 
+        this.reloadSettingsToolStripMenuItem.Name = "reloadSettingsToolStripMenuItem";
+        this.reloadSettingsToolStripMenuItem.Size = new System.Drawing.Size(238, 34);
+        this.reloadSettingsToolStripMenuItem.Text = "Reload Settings";
+        this.reloadSettingsToolStripMenuItem.Click += new System.EventHandler(this.OnReloadSettings);
+        // 
+        // settingsToolStripMenuItem
+        // 
+        this.settingsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.openSettingsToolStripMenuItem});
+        this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
+        this.settingsToolStripMenuItem.Size = new System.Drawing.Size(92, 29);
+        this.settingsToolStripMenuItem.Text = "Settings";
+        // 
+        // openSettingsToolStripMenuItem
+        // 
+        this.openSettingsToolStripMenuItem.Name = "openSettingsToolStripMenuItem";
+        this.openSettingsToolStripMenuItem.Size = new System.Drawing.Size(224, 34);
+        this.openSettingsToolStripMenuItem.Text = "Open Settings";
+        this.openSettingsToolStripMenuItem.Click += new System.EventHandler(this.OnOpenSettings);
+        // 
         // Form1
         // 
         this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 25F);
@@ -146,15 +194,19 @@ partial class Form1
         this.Controls.Add(this.accountHostTextBox);
         this.Controls.Add(this.accountHostLabel);
         this.Controls.Add(this.logTextBox);
+        this.Controls.Add(this.menuStrip1);
         this.Controls.Add(this.statusLabel);
         this.Controls.Add(this.portTextBox);
         this.Controls.Add(this.portLabel);
         this.Controls.Add(this.stopButton);
         this.Controls.Add(this.startButton);
         this.MinimumSize = new System.Drawing.Size(700, 400);
+        this.MainMenuStrip = this.menuStrip1;
         this.Name = "Form1";
         this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
         this.Text = "Login Server Control";
+        this.menuStrip1.ResumeLayout(false);
+        this.menuStrip1.PerformLayout();
         this.ResumeLayout(false);
         this.PerformLayout();
     }
@@ -171,4 +223,9 @@ partial class Form1
     private System.Windows.Forms.TextBox accountHostTextBox;
     private System.Windows.Forms.Label accountPortLabel;
     private System.Windows.Forms.TextBox accountPortTextBox;
+    private System.Windows.Forms.MenuStrip menuStrip1;
+    private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
+    private System.Windows.Forms.ToolStripMenuItem reloadSettingsToolStripMenuItem;
+    private System.Windows.Forms.ToolStripMenuItem settingsToolStripMenuItem;
+    private System.Windows.Forms.ToolStripMenuItem openSettingsToolStripMenuItem;
 }
