@@ -42,7 +42,16 @@ public sealed class AppSettings
 
 public sealed class DatabaseSettings
 {
-    public string ConnectionString { get; set; } = "";
+    public string Host { get; set; } = "127.0.0.1";
+    public int Port { get; set; } = 1433;
+    public string Database { get; set; } = "RF_Account";
+    public string User { get; set; } = "";
+    public string Password { get; set; } = "";
+
+    public string BuildConnectionString()
+    {
+        return $"Server={Host},{Port};Database={Database};User ID={User};Password={Password};TrustServerCertificate=True;Encrypt=False;";
+    }
 }
 
 public sealed class NetworkSettings

@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using System.Windows.Forms;
+using LoginServer.Settings;
 
 namespace LoginServer.Settings;
 
@@ -17,7 +18,11 @@ public partial class SettingsForm : Form
 
     private void LoadFromSettings()
     {
-        txtConnection.Text = _settings.Database.ConnectionString;
+        txtDbHost.Text = _settings.Database.Host;
+        txtDbPort.Text = _settings.Database.Port.ToString(CultureInfo.InvariantCulture);
+        txtDbName.Text = _settings.Database.Database;
+        txtDbUser.Text = _settings.Database.User;
+        txtDbPass.Text = _settings.Database.Password;
         txtClientPort.Text = _settings.Network.ClientPort.ToString(CultureInfo.InvariantCulture);
         txtAccountHost.Text = _settings.Network.AccountHost;
         txtAccountPort.Text = _settings.Network.AccountPort.ToString(CultureInfo.InvariantCulture);
@@ -26,7 +31,16 @@ public partial class SettingsForm : Form
 
     private bool SaveToSettings()
     {
-        _settings.Database.ConnectionString = txtConnection.Text.Trim();
+        _settings.Database.Host = txtDbHost.Text.Trim();
+        if (!int.TryParse(txtDbPort.Text, out var dbPort) || dbPort < 1 || dbPort > 65535)
+        {
+            MessageBox.Show(this, "DB port must be 1-65535.", "Invalid Port", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return false;
+        }
+        _settings.Database.Port = dbPort;
+        _settings.Database.Database = txtDbName.Text.Trim();
+        _settings.Database.User = txtDbUser.Text.Trim();
+        _settings.Database.Password = txtDbPass.Text;
         if (!int.TryParse(txtClientPort.Text, out var cPort) || cPort < 1 || cPort > 65535)
         {
             MessageBox.Show(this, "Client port must be 1-65535.", "Invalid Port", MessageBoxButtons.OK, MessageBoxIcon.Warning);

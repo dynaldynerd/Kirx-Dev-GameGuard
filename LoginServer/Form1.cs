@@ -14,6 +14,7 @@ public partial class Form1 : Form
     private LoginHandler? _accountHandler;
     private ClientPacketRouter? _clientRouter;
     private AccountPacketRouter? _accountRouter;
+    private bool _verboseLog = true;
 
     public Form1()
     {
@@ -26,6 +27,7 @@ public partial class Form1 : Form
         portTextBox.Text = _settings.Network.ClientPort.ToString();
         accountHostTextBox.Text = _settings.Network.AccountHost;
         accountPortTextBox.Text = _settings.Network.AccountPort.ToString();
+        verboseLogToolStripMenuItem.Checked = _verboseLog;
     }
 
     private void ReloadSettings()
@@ -148,7 +150,17 @@ public partial class Form1 : Form
         }
 
         string line = $"[{DateTime.Now:HH:mm:ss}] {message}";
-        logTextBox.AppendText(line + Environment.NewLine);
+        if (_verboseLog || IsImportant(message))
+        {
+            logTextBox.AppendText(line + Environment.NewLine);
+        }
+    }
+
+    private bool IsImportant(string message)
+    {
+        // Simple heuristic: always show errors/warnings
+        return message.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0 ||
+               message.IndexOf("warn", StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
     private void OnOpenSettings(object? sender, EventArgs e)
@@ -164,6 +176,11 @@ public partial class Form1 : Form
     private void OnReloadSettings(object? sender, EventArgs e)
     {
         ReloadSettings();
+    }
+
+    private void OnToggleVerboseLog(object? sender, EventArgs e)
+    {
+        _verboseLog = verboseLogToolStripMenuItem.Checked;
     }
 
     private sealed class LoginHandler : NetworkHandlerBase

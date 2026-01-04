@@ -43,6 +43,8 @@ partial class Form1
         this.reloadSettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
         this.settingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
         this.openSettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+        this.logToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+        this.verboseLogToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
         this.menuStrip1.SuspendLayout();
         this.SuspendLayout();
         // 
@@ -147,7 +149,8 @@ partial class Form1
         this.menuStrip1.ImageScalingSize = new System.Drawing.Size(24, 24);
         this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
-            this.settingsToolStripMenuItem});
+            this.settingsToolStripMenuItem,
+            this.logToolStripMenuItem});
         this.menuStrip1.Location = new System.Drawing.Point(0, 0);
         this.menuStrip1.Name = "menuStrip1";
         this.menuStrip1.Size = new System.Drawing.Size(928, 33);
@@ -183,6 +186,22 @@ partial class Form1
         this.openSettingsToolStripMenuItem.Size = new System.Drawing.Size(224, 34);
         this.openSettingsToolStripMenuItem.Text = "Open Settings";
         this.openSettingsToolStripMenuItem.Click += new System.EventHandler(this.OnOpenSettings);
+        // 
+        // logToolStripMenuItem
+        // 
+        this.logToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.verboseLogToolStripMenuItem});
+        this.logToolStripMenuItem.Name = "logToolStripMenuItem";
+        this.logToolStripMenuItem.Size = new System.Drawing.Size(58, 29);
+        this.logToolStripMenuItem.Text = "Log";
+        // 
+        // verboseLogToolStripMenuItem
+        // 
+        this.verboseLogToolStripMenuItem.CheckOnClick = true;
+        this.verboseLogToolStripMenuItem.Name = "verboseLogToolStripMenuItem";
+        this.verboseLogToolStripMenuItem.Size = new System.Drawing.Size(213, 34);
+        this.verboseLogToolStripMenuItem.Text = "Verbose Log";
+        this.verboseLogToolStripMenuItem.Click += new System.EventHandler(this.OnToggleVerboseLog);
         // 
         // Form1
         // 
@@ -228,4 +247,6 @@ partial class Form1
     private System.Windows.Forms.ToolStripMenuItem reloadSettingsToolStripMenuItem;
     private System.Windows.Forms.ToolStripMenuItem settingsToolStripMenuItem;
     private System.Windows.Forms.ToolStripMenuItem openSettingsToolStripMenuItem;
+    private System.Windows.Forms.ToolStripMenuItem logToolStripMenuItem;
+    private System.Windows.Forms.ToolStripMenuItem verboseLogToolStripMenuItem;
 }
