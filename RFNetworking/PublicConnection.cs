@@ -24,4 +24,7 @@ public sealed class PublicConnection
     public bool IsConnected => _socket.Connected;
 
     public Task SendAsync(PacketEnvelope packet, CancellationToken cancellationToken) => _inner.SendAsync(packet, cancellationToken);
+
+    /// <summary>Request a clean disconnect for this connection.</summary>
+    public void Close() => _inner.RequestClose();
 }

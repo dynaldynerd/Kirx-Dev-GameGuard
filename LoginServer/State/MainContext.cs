@@ -28,6 +28,7 @@ public sealed class MainContext
     public bool ExternalOpen { get; set; }
     public string? AccountDbName { get; set; }
     public string? AccountDbIp { get; set; }
+    public int MaxConnections { get; set; }
 
     public IReadOnlyList<WorldData> Worlds
     {

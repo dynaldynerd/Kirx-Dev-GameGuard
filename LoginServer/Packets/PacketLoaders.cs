@@ -62,6 +62,17 @@ public partial struct _inform_close_world_aclo
     }
 }
 
+public partial struct _holy_quest_now_report_aclo
+{
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 3) return false;
+        wWorldCode = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(0, 2));
+        byMasterRaceCode = payload[2];
+        return true;
+    }
+}
+
 public partial struct _inform_usernum_world_aclo
 {
     public bool Load(byte[] payload)

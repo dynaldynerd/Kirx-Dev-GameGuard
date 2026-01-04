@@ -183,6 +183,11 @@ internal sealed class SaeaConnection : IAsyncDisposable
         Closed?.Invoke(this, ex);
     }
 
+    internal void RequestClose(Exception? ex = null)
+    {
+        Close(ex);
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_disposed) return;

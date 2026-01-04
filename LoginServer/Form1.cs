@@ -47,6 +47,7 @@ public partial class Form1 : Form
         _clientHandler = new LoginHandler("Client", AppendLog, _clientRouter, null);
         _clientListener = new NetworkListener(_clientHandler, _settings.Network.MaxConnections);
         _clientListener.Log += AppendLog;
+        MainContext.Instance.MaxConnections = _settings.Network.MaxConnections;
 
         _accountRouter = new AccountPacketRouter(AppendLog);
         _accountHandler = new LoginHandler("Account", AppendLog, null, _accountRouter);

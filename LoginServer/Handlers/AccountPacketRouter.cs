@@ -128,7 +128,14 @@ public sealed class AccountPacketRouter
                 return await LoginStatRequest(connection, req, cancellationToken).ConfigureAwait(false);
             }
             case 14:
-                return await HolyQuestNowStat(connection, cancellationToken).ConfigureAwait(false);
+            {
+                var report = new _holy_quest_now_report_aclo();
+                if (!report.Load(packet.Payload))
+                {
+                    return false;
+                }
+                return await HolyQuestNowStat(connection, report, cancellationToken).ConfigureAwait(false);
+            }
             case 16:
             {
                 var result = new _account_db_info_result_aclo();
@@ -240,6 +247,20 @@ public sealed class AccountPacketRouter
     {
         _log($"JoinAccountResult: index={result.idLocal.wIndex} ret={result.byRetCode}");
         MainContext.Instance.RecordJoinResult(result.idLocal.wIndex, result.byRetCode);
+
+        var client = MainContext.Instance.GetClientConnection(result.idLocal.wIndex);
+        if (client != null)
+        {
+            var send = new _join_account_result_locl { byRetCode = result.byRetCode };
+            var payload = new byte[1] { send.byRetCode };
+            var env = new PacketEnvelope
+            {
+                OpCode = 21,
+                SubCode = 2,
+                Payload = payload
+            };
+            _ = client.SendAsync(env, cancellationToken);
+        }
         return Task.FromResult(true);
     }
 
@@ -247,6 +268,20 @@ public sealed class AccountPacketRouter
     {
         _log($"LoginAccountResult: index={result.idLocal.wIndex} ret={result.byRetCode} accountSerial={result.dwAccountSerial} grade={result.byUserGrade}/{result.bySubGrade} nTrans={result.nTrans}");
         MainContext.Instance.RecordLoginResult(result.idLocal.wIndex, result.byRetCode, result.dwAccountSerial, result.byUserGrade, result.bySubGrade, result.nTrans);
+
+        var client = MainContext.Instance.GetClientConnection(result.idLocal.wIndex);
+        if (client != null)
+        {
+            // Native sends a richer structure; we forward at least the return code to the client.
+            var payload = new byte[1] { result.byRetCode };
+            var env = new PacketEnvelope
+            {
+                OpCode = 21,
+                SubCode = 4,
+                Payload = payload
+            };
+            _ = client.SendAsync(env, cancellationToken);
+        }
         return Task.FromResult(true);
     }
 
@@ -254,6 +289,33 @@ public sealed class AccountPacketRouter
     {
         _log($"SelectWorldResult: index={result.idLocal.wIndex} ret={result.byRetCode} masterKey[0]={result.dwWorldMasterKey[0]}");
         MainContext.Instance.RecordSelectWorldResult(result.idLocal.wIndex, result.byRetCode, result.dwWorldMasterKey);
+
+        var client = MainContext.Instance.GetClientConnection(result.idLocal.wIndex);
+        if (client != null)
+        {
+            var send = new _select_world_result_locl
+            {
+                byRetCode = result.byRetCode,
+                dwWorldGateIP = 0,
+                wWorldGatePort = 0,
+                dwWorldMasterKey = result.dwWorldMasterKey
+            };
+            var buffer = new byte[1 + 4 + 2 + 4 * 4];
+            buffer[0] = send.byRetCode;
+            BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(1, 4), send.dwWorldGateIP);
+            BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(5, 2), send.wWorldGatePort);
+            for (int i = 0; i < 4; i++)
+            {
+                BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(7 + i * 4, 4), send.dwWorldMasterKey[i]);
+            }
+            var env = new PacketEnvelope
+            {
+                OpCode = 21,
+                SubCode = 6,
+                Payload = buffer
+            };
+            _ = client.SendAsync(env, cancellationToken);
+        }
         return Task.FromResult(true);
     }
 
@@ -261,13 +323,60 @@ public sealed class AccountPacketRouter
     {
         _log($"PushCloseResult: index={result.idLocal.wIndex} ret={result.byRetCode}");
         MainContext.Instance.RecordPushCloseResult(result.idLocal.wIndex, result.byRetCode);
+
+        var client = MainContext.Instance.GetClientConnection(result.idLocal.wIndex);
+        if (client != null)
+        {
+            var send = new _push_close_result_locl { byRetCode = result.byRetCode };
+            var payload = new byte[1] { send.byRetCode };
+            var env = new PacketEnvelope
+            {
+                OpCode = 21,
+                SubCode = 8,
+                Payload = payload
+            };
+            _ = client.SendAsync(env, cancellationToken);
+        }
         return Task.FromResult(true);
     }
 
     private Task<bool> ForceCloseCommand(PublicConnection connection, _force_close_command_aclo cmd, CancellationToken cancellationToken)
     {
-        _log($"ForceCloseCommand: index={cmd.idLocal.wIndex}");
+        int maxConn = MainContext.Instance.MaxConnections;
+        if (maxConn > 0 && cmd.idLocal.wIndex >= maxConn)
+        {
+            _log($"ForceCloseCommand: invalid index {cmd.idLocal.wIndex}");
+            return Task.FromResult(false);
+        }
+
+        _log($"ForceCloseCommand: index={cmd.idLocal.wIndex} serial={cmd.idLocal.dwSerial}");
+
+        // Mark the session and actively drop the client connection if present.
         MainContext.Instance.RecordForceClose(cmd.idLocal.wIndex);
+        var target = MainContext.Instance.GetClientConnection(cmd.idLocal.wIndex);
+        if (target != null)
+        {
+            try
+            {
+                target.Close();
+            }
+            catch (Exception ex)
+            {
+                _log($"ForceCloseCommand: error closing connection {cmd.idLocal.wIndex}: {ex.Message}");
+            }
+        }
+        else
+        {
+            // If client is missing, notify account line that the close failed (native sends 1/18).
+            var reject = new PacketEnvelope
+            {
+                OpCode = 1,
+                SubCode = 18,
+                Payload = Array.Empty<byte>()
+            };
+            _ = connection.SendAsync(reject, cancellationToken);
+        }
+
         return Task.FromResult(true);
     }
 
@@ -302,9 +411,10 @@ public sealed class AccountPacketRouter
         return Task.FromResult(true);
     }
 
-    private Task<bool> HolyQuestNowStat(PublicConnection connection, CancellationToken cancellationToken)
+    private Task<bool> HolyQuestNowStat(PublicConnection connection, _holy_quest_now_report_aclo report, CancellationToken cancellationToken)
     {
-        _log("HolyQuestNowStat: no-op");
+        // Native implementation is a no-op; we just log receipt.
+        _log($"HolyQuestNowStat: worldCode={report.wWorldCode} masterRace={report.byMasterRaceCode}");
         return Task.FromResult(true);
     }
 
@@ -320,37 +430,125 @@ public sealed class AccountPacketRouter
     private Task<bool> NotifyManageAccountAuthInfo(PublicConnection connection, _notify_manage_account_auth_info_aclo result, CancellationToken cancellationToken)
     {
         _log($"NotifyManageAccountAuthInfo: index={result.idLocal.wIndex} ret={result.byRetCode}");
+
+        var session = MainContext.Instance.GetClient(result.idLocal.wIndex);
+        var target = MainContext.Instance.GetClientConnection(result.idLocal.wIndex);
+
+        if (session != null && target != null)
+        {
+            session.ManageAccountAuthRet = result.byRetCode;
+
+            // forward key blob to the client (op 21/19)
+            var sendPayload = new byte[result.byKey.Length];
+            Buffer.BlockCopy(result.byKey, 0, sendPayload, 0, sendPayload.Length);
+            var env = new PacketEnvelope
+            {
+                OpCode = 21,
+                SubCode = 19,
+                Payload = sendPayload
+            };
+            _ = target.SendAsync(env, cancellationToken);
+
+            if (result.byRetCode != 0)
+            {
+                session.ForcedClosed = true;
+            }
+            return Task.FromResult(true);
+        }
+
+        // Session not found or not connected: tell account line it failed (op 1/18).
+        var reject = new PacketEnvelope
+        {
+            OpCode = 1,
+            SubCode = 18,
+            Payload = Array.Empty<byte>()
+        };
+        _ = connection.SendAsync(reject, cancellationToken);
         return Task.FromResult(true);
     }
 
     private Task<bool> ManageAccountAuthResult(PublicConnection connection, _manage_account_auth_result_aclo result, CancellationToken cancellationToken)
     {
-        _log($"ManageAccountAuthResult: index={result.idLocal.wIndex} ret={result.byRet}");
+        int maxConn = MainContext.Instance.MaxConnections;
+        if (maxConn > 0 && result.idLocal.wIndex >= maxConn)
+        {
+            _log($"ManageAccountAuthResult: invalid index {result.idLocal.wIndex}");
+            return Task.FromResult(false);
+        }
+
         var session = MainContext.Instance.GetClient(result.idLocal.wIndex);
+        var clientConn = MainContext.Instance.GetClientConnection(result.idLocal.wIndex);
+
+        _log($"ManageAccountAuthResult: index={result.idLocal.wIndex} ret={result.byRet}");
+
         if (session != null)
         {
             session.ManageAccountAuthRet = result.byRet;
+            if (result.byRet != 0)
+            {
+                session.ForcedClosed = true;
+            }
         }
+
+        if (clientConn != null)
+        {
+            var env = new PacketEnvelope
+            {
+                OpCode = 21,
+                SubCode = 21,
+                Payload = new[] { result.byRet }
+            };
+            _ = clientConn.SendAsync(env, cancellationToken);
+        }
+
         return Task.FromResult(true);
     }
 
     private Task<bool> ManageClientLimitRunAccountResult(PublicConnection connection, _manage_client_limit_run_account_result_aclo result, CancellationToken cancellationToken)
     {
+        int maxConn = MainContext.Instance.MaxConnections;
+        if (maxConn > 0 && result.idLocal.wIndex >= maxConn)
+        {
+            _log($"ManageClientLimitRunAccountResult: invalid index {result.idLocal.wIndex}");
+            return Task.FromResult(false);
+        }
+
         _log($"ManageClientLimitRunAccountResult: index={result.idLocal.wIndex} ret={result.byRet}");
         var session = MainContext.Instance.GetClient(result.idLocal.wIndex);
+        var clientConn = MainContext.Instance.GetClientConnection(result.idLocal.wIndex);
+
         if (session != null)
         {
             session.ManageLimitRunAccountRet = result.byRet;
+        }
+
+        if (clientConn != null)
+        {
+            var env = new PacketEnvelope
+            {
+                OpCode = 21,
+                SubCode = 23,
+                Payload = new[] { result.byRet }
+            };
+            _ = clientConn.SendAsync(env, cancellationToken);
         }
         return Task.FromResult(true);
     }
 
     private Task<bool> ManageClientLimitRunWorldResult(PublicConnection connection, _manage_client_limit_run_world_result_aclo result, CancellationToken cancellationToken)
     {
+        int maxConn = MainContext.Instance.MaxConnections;
+        if (maxConn > 0 && result.idLocal.wIndex >= maxConn)
+        {
+            _log($"ManageClientLimitRunWorldResult: invalid index {result.idLocal.wIndex}");
+            return Task.FromResult(false);
+        }
+
         string name = PacketStringUtil.ToAscii(result.m_szName);
         string db = PacketStringUtil.ToAscii(result.m_szDBName);
         _log($"ManageClientLimitRunWorldResult: index={result.idLocal.wIndex} ret={result.byRet} code={result.m_dwCode} name={name} db={db} type={result.m_byType}");
         var session = MainContext.Instance.GetClient(result.idLocal.wIndex);
+        var clientConn = MainContext.Instance.GetClientConnection(result.idLocal.wIndex);
         if (session != null)
         {
             session.ManageLimitWorld = new ManageLimitWorldInfo
@@ -360,17 +558,74 @@ public sealed class AccountPacketRouter
                 DbName = db,
                 Type = result.m_byType
             };
+            session.ManageLimitRunAccountRet = result.byRet;
+        }
+
+        if (clientConn != null)
+        {
+            var payload = new byte[70];
+            payload[0] = result.byRet;
+            payload[1] = result.m_byType;
+            BinaryPrimitives.WriteUInt32LittleEndian(payload.AsSpan(2, 4), result.m_dwCode);
+            Buffer.BlockCopy(result.m_szName, 0, payload, 6, 32);
+            Buffer.BlockCopy(result.m_szDBName, 0, payload, 38, 32);
+
+            var env = new PacketEnvelope
+            {
+                OpCode = 21,
+                SubCode = 24,
+                Payload = payload
+            };
+            _ = clientConn.SendAsync(env, cancellationToken);
+        }
+        else
+        {
+            var reject = new PacketEnvelope
+            {
+                OpCode = 1,
+                SubCode = 18,
+                Payload = Array.Empty<byte>()
+            };
+            _ = connection.SendAsync(reject, cancellationToken);
         }
         return Task.FromResult(true);
     }
 
     private Task<bool> ManageClientForceExitResult(PublicConnection connection, _manage_client_force_exit_result_aclo result, CancellationToken cancellationToken)
     {
+        int maxConn = MainContext.Instance.MaxConnections;
+        if (maxConn > 0 && result.idLocal.wIndex >= maxConn)
+        {
+            _log($"ManageClientForceExitResult: invalid index {result.idLocal.wIndex}");
+            return Task.FromResult(false);
+        }
+
         _log($"ManageClientForceExitResult: index={result.idLocal.wIndex} ret={result.byRet}");
         var session = MainContext.Instance.GetClient(result.idLocal.wIndex);
+        var clientConn = MainContext.Instance.GetClientConnection(result.idLocal.wIndex);
         if (session != null)
         {
             session.ManageForceExitRet = result.byRet;
+        }
+        if (clientConn != null)
+        {
+            var env = new PacketEnvelope
+            {
+                OpCode = 21,
+                SubCode = 26,
+                Payload = new[] { result.byRet }
+            };
+            _ = clientConn.SendAsync(env, cancellationToken);
+        }
+        else
+        {
+            var reject = new PacketEnvelope
+            {
+                OpCode = 1,
+                SubCode = 18,
+                Payload = Array.Empty<byte>()
+            };
+            _ = connection.SendAsync(reject, cancellationToken);
         }
         return Task.FromResult(true);
     }
