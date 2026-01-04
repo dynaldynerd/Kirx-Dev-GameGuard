@@ -1,5 +1,6 @@
 using LoginServer.Handlers;
 using LoginServer.Settings;
+using LoginServer.State;
 using RFNetworking;
 
 namespace LoginServer;
@@ -174,29 +175,49 @@ public partial class Form1 : Form
         public override Task OnConnectedAsync(PublicConnection connection, CancellationToken cancellationToken)
         {
             _log($"{_role} connected {connection.RemoteEndPoint} (id {connection.ConnectionId})");
+            if (_clientRouter != null)
+            {
+                MainContext.Instance.RegisterClientConnection(connection);
+            }
             return Task.CompletedTask;
         }
 
         public override Task OnDisconnectedAsync(PublicConnection connection, CancellationToken cancellationToken)
         {
             _log($"{_role} disconnected (id {connection.ConnectionId})");
+            if (_clientRouter != null)
+            {
+                MainContext.Instance.UnregisterClientConnection(connection);
+            }
             return Task.CompletedTask;
         }
 
-        public override Task OnPacketAsync(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
+        public override async Task OnPacketAsync(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
         {
             if (_clientRouter != null && packet.OpCode == 21)
             {
-                return _clientRouter.HandleAsync(connection, packet, cancellationToken);
+                bool handled = await _clientRouter.HandleAsync(connection, packet, cancellationToken).ConfigureAwait(false);
+                if (!handled)
+                {
+                    _log($"{_role} invalid client packet 21/{packet.SubCode} len={packet.Payload.Length}");
+                    throw new InvalidOperationException($"Unhandled client packet 21/{packet.SubCode}");
+                }
+                return;
             }
 
             if (_accountRouter != null && packet.OpCode == 1)
             {
-                return _accountRouter.HandleAsync(connection, packet, cancellationToken);
+                bool handled = await _accountRouter.HandleAsync(connection, packet, cancellationToken).ConfigureAwait(false);
+                if (!handled)
+                {
+                    _log($"{_role} invalid account packet 1/{packet.SubCode} len={packet.Payload.Length}");
+                    throw new InvalidOperationException($"Unhandled account packet 1/{packet.SubCode}");
+                }
+                return;
             }
 
             _log($"{_role} data op={packet.OpCode} sub={packet.SubCode} len={packet.Payload.Length}");
-            return Task.CompletedTask;
+            throw new InvalidOperationException($"Unhandled packet op={packet.OpCode} sub={packet.SubCode}");
         }
 
         public override Task OnInternalPacketAsync(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)

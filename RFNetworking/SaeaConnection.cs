@@ -172,6 +172,7 @@ internal sealed class SaeaConnection : IAsyncDisposable
         catch (Exception ex)
         {
             Log?.Invoke($"Packet handler error: {ex.Message}");
+            Close(ex);
         }
     }
 

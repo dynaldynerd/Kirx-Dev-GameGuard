@@ -4,7 +4,7 @@ namespace LoginServer.Packets;
 
 /// <summary>Global ID (as seen in login/account exchange).</summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _GLBID
+public partial struct _GLBID
 {
     public uint dwIndex;
     public uint dwSerial;
@@ -12,7 +12,7 @@ public struct _GLBID
 
 /// <summary>Client ID (local to login server).</summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _CLID
+public partial struct _CLID
 {
     public ushort wIndex;
     public uint dwSerial;
@@ -20,7 +20,7 @@ public struct _CLID
 
 /// <summary>Win32 SYSTEMTIME equivalent.</summary>
 [StructLayout(LayoutKind.Sequential, Pack = 2)]
-public struct _SYSTEMTIME
+public partial struct _SYSTEMTIME
 {
     public ushort wYear;
     public ushort wMonth;
@@ -35,7 +35,7 @@ public struct _SYSTEMTIME
 #region Login -> Account (loac)
 
 [StructLayout(LayoutKind.Sequential, Pack = 2)]
-public struct _select_world_request_loac
+public partial struct _select_world_request_loac
 {
     public _GLBID gidGlobal;
     public ushort wWorldIndex;
@@ -56,7 +56,7 @@ public struct _select_world_request_loac
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 2)]
-public struct _login_account_request_loac
+public partial struct _login_account_request_loac
 {
     public _CLID idLocal;
     public byte byUserCode;
@@ -101,18 +101,18 @@ public struct _login_account_request_loac
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _logout_account_request_loac
+public partial struct _logout_account_request_loac
 {
     public _GLBID gidGlobal;
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _world_list_request_loac
+public partial struct _world_list_request_loac
 {
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _join_account_request_loac
+public partial struct _join_account_request_loac
 {
     public _CLID idLocal;
 
@@ -133,7 +133,7 @@ public struct _join_account_request_loac
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _push_close_request_loac
+public partial struct _push_close_request_loac
 {
     public _CLID idLocal;
     public byte byUserCode;
@@ -142,14 +142,14 @@ public struct _push_close_request_loac
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _login_server_stat_result_loac
+public partial struct _login_server_stat_result_loac
 {
     public byte byRet;
     public ushort wClientIndex;
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _update_user_login_failure_cnt_loac
+public partial struct _update_user_login_failure_cnt_loac
 {
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
     public byte[] szUserID;
@@ -164,7 +164,7 @@ public struct _update_user_login_failure_cnt_loac
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _manage_account_auth_request_loac
+public partial struct _manage_account_auth_request_loac
 {
     public _CLID idLocal;
 
@@ -179,13 +179,13 @@ public struct _manage_account_auth_request_loac
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _manage_client_force_exit_request_loac
+public partial struct _manage_client_force_exit_request_loac
 {
     public _CLID idLocal;
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _manage_client_limit_run_request_loac
+public partial struct _manage_client_limit_run_request_loac
 {
     public _CLID idLocal;
 }
@@ -195,21 +195,21 @@ public struct _manage_client_limit_run_request_loac
 #region Account -> Login (aclo)
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _join_account_result_aclo
+public partial struct _join_account_result_aclo
 {
     public _CLID idLocal;
     public byte byRetCode;
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _holy_quest_now_report_aclo
+public partial struct _holy_quest_now_report_aclo
 {
     public ushort wWorldCode;
     public byte byMasterRaceCode;
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 2)]
-public struct _inform_open_world_aclo
+public partial struct _inform_open_world_aclo
 {
     public uint dwWorldCode;
     public uint dwGateIP;
@@ -217,14 +217,14 @@ public struct _inform_open_world_aclo
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _login_server_stat_request_aclo
+public partial struct _login_server_stat_request_aclo
 {
     public byte byStat;
     public ushort wClientIndex;
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _inform_usernum_world_aclo
+public partial struct _inform_usernum_world_aclo
 {
     public byte byServiceWorldNum;
 
@@ -239,7 +239,7 @@ public struct _inform_usernum_world_aclo
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _login_account_result_aclo
+public partial struct _login_account_result_aclo
 {
     public _CLID idLocal;
     public byte byRetCode;
@@ -263,7 +263,7 @@ public struct _login_account_result_aclo
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _account_db_info_result_aclo
+public partial struct _account_db_info_result_aclo
 {
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
     public byte[] szDBName;
@@ -280,7 +280,7 @@ public struct _account_db_info_result_aclo
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _world_list_result_aclo
+public partial struct _world_list_result_aclo
 {
     public byte byServiceWorldNum;
     public byte byWorldNum;
@@ -295,7 +295,7 @@ public struct _world_list_result_aclo
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct _world_list_result_aclo__list
+    public partial struct _world_list_result_aclo__list
     {
         [MarshalAs(UnmanagedType.U1)]
         public bool bOpen;
@@ -316,26 +316,26 @@ public struct _world_list_result_aclo
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _force_close_command_aclo
+public partial struct _force_close_command_aclo
 {
     public _CLID idLocal;
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _push_close_result_aclo
+public partial struct _push_close_result_aclo
 {
     public _CLID idLocal;
     public byte byRetCode;
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _inform_close_world_aclo
+public partial struct _inform_close_world_aclo
 {
     public uint dwWorldCode;
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _select_world_result_aclo
+public partial struct _select_world_result_aclo
 {
     public _CLID idLocal;
     public byte byRetCode;
@@ -351,7 +351,7 @@ public struct _select_world_result_aclo
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _notify_manage_account_auth_info_aclo
+public partial struct _notify_manage_account_auth_info_aclo
 {
     public _CLID idLocal;
     public byte byRetCode;
@@ -367,21 +367,21 @@ public struct _notify_manage_account_auth_info_aclo
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _manage_client_limit_run_account_result_aclo
+public partial struct _manage_client_limit_run_account_result_aclo
 {
     public _CLID idLocal;
     public byte byRet;
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _manage_client_force_exit_result_aclo
+public partial struct _manage_client_force_exit_result_aclo
 {
     public _CLID idLocal;
     public byte byRet;
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _manage_client_limit_run_world_result_aclo
+public partial struct _manage_client_limit_run_world_result_aclo
 {
     public _CLID idLocal;
     public byte byRet;
@@ -404,10 +404,11 @@ public struct _manage_client_limit_run_world_result_aclo
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _manage_account_auth_result_aclo
+public partial struct _manage_account_auth_result_aclo
 {
     public _CLID idLocal;
     public byte byRet;
 }
 
 #endregion
+

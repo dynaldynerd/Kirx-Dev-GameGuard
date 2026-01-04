@@ -4,8 +4,9 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using RFNetworking;
+using LoginServer.Packets;
 using LoginServer.State;
+using RFNetworking;
 
 namespace LoginServer.Handlers;
 
@@ -33,314 +34,263 @@ public sealed class AccountPacketRouter
         {
             //account to login for server stat
             case 11:
-                return await WorldListResult(connection, packet, cancellationToken).ConfigureAwait(false);
+            {
+                var worldList = new _world_list_result_aclo();
+                if (!worldList.Load(packet.Payload))
+                {
+                    return false;
+                }
+                return await WorldListResult(connection, worldList, cancellationToken).ConfigureAwait(false);
+            }
             case 100:
-                return await InformOpenWorld(connection, packet, cancellationToken).ConfigureAwait(false);
+            {
+                var info = new _inform_open_world_aclo();
+                if (!info.Load(packet.Payload))
+                {
+                    return false;
+                }
+                return await InformOpenWorld(connection, info, cancellationToken).ConfigureAwait(false);
+            }
             case 101:
-                return await InformCloseWorld(connection, packet, cancellationToken).ConfigureAwait(false);
+            {
+                var info = new _inform_close_world_aclo();
+                if (!info.Load(packet.Payload))
+                {
+                    return false;
+                }
+                return await InformCloseWorld(connection, info, cancellationToken).ConfigureAwait(false);
+            }
             case 102:
-                return await InformUserNumWorld(connection, packet, cancellationToken).ConfigureAwait(false);
+            {
+                var info = new _inform_usernum_world_aclo();
+                if (!info.Load(packet.Payload))
+                {
+                    return false;
+                }
+                return await InformUserNumWorld(connection, info, cancellationToken).ConfigureAwait(false);
+            }
             case 2:
-                return await JoinAccountResult(connection, packet, cancellationToken).ConfigureAwait(false);
+            {
+                var result = new _join_account_result_aclo();
+                if (!result.Load(packet.Payload))
+                {
+                    return false;
+                }
+                return await JoinAccountResult(connection, result, cancellationToken).ConfigureAwait(false);
+            }
             case 4:
-                return await LoginAccountResult(connection, packet, cancellationToken).ConfigureAwait(false);
+            {
+                var result = new _login_account_result_aclo();
+                if (!result.Load(packet.Payload))
+                {
+                    return false;
+                }
+                return await LoginAccountResult(connection, result, cancellationToken).ConfigureAwait(false);
+            }
             case 6:
-                return await SelectWorldResult(connection, packet, cancellationToken).ConfigureAwait(false);
+            {
+                var result = new _select_world_result_aclo();
+                if (!result.Load(packet.Payload))
+                {
+                    return false;
+                }
+                return await SelectWorldResult(connection, result, cancellationToken).ConfigureAwait(false);
+            }
             case 8:
-                return await PushCloseResult(connection, packet, cancellationToken).ConfigureAwait(false);
+            {
+                var result = new _push_close_result_aclo();
+                if (!result.Load(packet.Payload))
+                {
+                    return false;
+                }
+                return await PushCloseResult(connection, result, cancellationToken).ConfigureAwait(false);
+            }
 
 
 
             //account to client
             case 200:
-                return await ForceCloseCommand(connection, packet, cancellationToken).ConfigureAwait(false);
+            {
+                var cmd = new _force_close_command_aclo();
+                if (!cmd.Load(packet.Payload))
+                {
+                    return false;
+                }
+                return await ForceCloseCommand(connection, cmd, cancellationToken).ConfigureAwait(false);
+            }
             case 12:
-                return await LoginStatRequest(connection, packet, cancellationToken).ConfigureAwait(false);
+            {
+                var req = new _login_server_stat_request_aclo();
+                if (!req.Load(packet.Payload))
+                {
+                    return false;
+                }
+                return await LoginStatRequest(connection, req, cancellationToken).ConfigureAwait(false);
+            }
             case 14:
-                return await HolyQuestNowStat(connection, packet, cancellationToken).ConfigureAwait(false);
+                return await HolyQuestNowStat(connection, cancellationToken).ConfigureAwait(false);
             case 16:
-                return await AccountDBInfoResult(connection, packet, cancellationToken).ConfigureAwait(false);
+            {
+                var result = new _account_db_info_result_aclo();
+                if (!result.Load(packet.Payload))
+                {
+                    return false;
+                }
+                return await AccountDBInfoResult(connection, result, cancellationToken).ConfigureAwait(false);
+            }
             case 19:
-                return await NotifyManageAccountAuthInfo(connection, packet, cancellationToken).ConfigureAwait(false);
+            {
+                var result = new _notify_manage_account_auth_info_aclo();
+                if (!result.Load(packet.Payload))
+                {
+                    return false;
+                }
+                return await NotifyManageAccountAuthInfo(connection, result, cancellationToken).ConfigureAwait(false);
+            }
             case 21:
-                return await ManageAccountAuthResult(connection, packet, cancellationToken).ConfigureAwait(false);
+            {
+                var result = new _manage_account_auth_result_aclo();
+                if (!result.Load(packet.Payload))
+                {
+                    return false;
+                }
+                return await ManageAccountAuthResult(connection, result, cancellationToken).ConfigureAwait(false);
+            }
             case 23:
-                return await ManageClientLimitRunAccountResult(connection, packet, cancellationToken).ConfigureAwait(false);
+            {
+                var result = new _manage_client_limit_run_account_result_aclo();
+                if (!result.Load(packet.Payload))
+                {
+                    return false;
+                }
+                return await ManageClientLimitRunAccountResult(connection, result, cancellationToken).ConfigureAwait(false);
+            }
             case 24:
-                return await ManageClientLimitRunWorldResult(connection, packet, cancellationToken).ConfigureAwait(false);
+            {
+                var result = new _manage_client_limit_run_world_result_aclo();
+                if (!result.Load(packet.Payload))
+                {
+                    return false;
+                }
+                return await ManageClientLimitRunWorldResult(connection, result, cancellationToken).ConfigureAwait(false);
+            }
             case 26:
-                return await ManageClientForceExitResult(connection, packet, cancellationToken).ConfigureAwait(false);
+            {
+                var result = new _manage_client_force_exit_result_aclo();
+                if (!result.Load(packet.Payload))
+                {
+                    return false;
+                }
+                return await ManageClientForceExitResult(connection, result, cancellationToken).ConfigureAwait(false);
+            }
             default:
                 _log($"Unhandled account opcode 1/{sub}");
                 return false;
         }
     }
 
-    private Task<bool> WorldListResult(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
+    private Task<bool> WorldListResult(PublicConnection connection, _world_list_result_aclo worldList, CancellationToken cancellationToken)
     {
-        const int entrySize = 41; // bool + 33 name + 4 IP + 2 port + 1 type
-
-        var span = packet.Payload.AsSpan();
-        if (span.Length < 2)
+        var worlds = new List<WorldData>(worldList.byWorldNum);
+        for (int i = 0; i < worldList.byWorldNum; i++)
         {
-            _log("WorldListResult: payload too small");
-            return Task.FromResult(false);
-        }
-
-        byte serviceWorldNum = span[0];
-        byte worldNum = span[1];
-        if (worldNum > 40)
-        {
-            _log($"WorldListResult: invalid worldNum {worldNum}");
-            return Task.FromResult(false);
-        }
-
-        int required = 2 + worldNum * entrySize;
-        if (span.Length < required)
-        {
-            _log($"WorldListResult: payload length {span.Length} < required {required}");
-            return Task.FromResult(false);
-        }
-
-        var worlds = new List<WorldData>(worldNum);
-        int offset = 2;
-        for (int i = 0; i < worldNum; i++)
-        {
-            bool bOpen = span[offset] != 0;
-            var nameBytes = span.Slice(offset + 1, 33);
-            int zeroIdx = nameBytes.IndexOf((byte)0);
-            int nameLen = zeroIdx >= 0 ? zeroIdx : 33;
-            if (nameLen > 0x20)
-            {
-                _log($"WorldListResult: world {i} name too long ({nameLen})");
-                return Task.FromResult(false);
-            }
-
-            uint gateIp = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(offset + 34, 4));
-            ushort gatePort = BinaryPrimitives.ReadUInt16LittleEndian(span.Slice(offset + 38, 2));
-            byte type = span[offset + 40];
-
-            string name = System.Text.Encoding.ASCII.GetString(nameBytes.Slice(0, nameLen));
-            string ipStr = new System.Net.IPAddress(gateIp).ToString();
-            _log($"World {i}: open={bOpen} name='{name}' ip={ipStr}:{gatePort} type={type}");
+            var w = worldList.WorldList[i];
+            string name = PacketStringUtil.ToAscii(w.szWorldName);
+            string ipStr = new IPAddress(w.dwGateIP).ToString();
+            _log($"World {i}: open={w.bOpen} name='{name}' ip={ipStr}:{w.wGatePort} type={w.byType}");
             worlds.Add(new WorldData
             {
-                IsOpen = bOpen,
+                IsOpen = w.bOpen,
                 Name = name,
-                GateIp = new IPAddress(gateIp),
-                GatePort = gatePort,
-                Type = type
+                GateIp = new IPAddress(w.dwGateIP),
+                GatePort = w.wGatePort,
+                Type = w.byType,
+                FreeServer = false
             });
-
-            offset += entrySize;
         }
 
-        _log($"WorldListResult: serviceWorldNum={serviceWorldNum} worldNum={worldNum}");
-        MainContext.Instance.UpdateWorldList(serviceWorldNum, worlds);
+        _log($"WorldListResult: serviceWorldNum={worldList.byServiceWorldNum} worldNum={worldList.byWorldNum}");
+        MainContext.Instance.UpdateWorldList(worldList.byServiceWorldNum, worlds);
         return Task.FromResult(true);
     }
 
-    private Task<bool> InformOpenWorld(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
+    private Task<bool> InformOpenWorld(PublicConnection connection, _inform_open_world_aclo info, CancellationToken cancellationToken)
     {
-        var span = packet.Payload.AsSpan();
-        if (span.Length < 10)
-        {
-            _log("InformOpenWorld: payload too small");
-            return Task.FromResult(false);
-        }
-
-        uint worldCode = BinaryPrimitives.ReadUInt32LittleEndian(span);
-        uint gateIp = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(4));
-        ushort gatePort = BinaryPrimitives.ReadUInt16LittleEndian(span.Slice(8));
-
-        string gateIpStr = new IPAddress(gateIp).ToString();
-        _log($"InformOpenWorld: worldCode={worldCode} gate={gateIpStr}:{gatePort}");
-        MainContext.Instance.SetWorldOpen((int)worldCode, new IPAddress(gateIp), gatePort);
+        string gateIpStr = new IPAddress(info.dwGateIP).ToString();
+        _log($"InformOpenWorld: worldCode={info.dwWorldCode} gate={gateIpStr}:{info.wGatePort}");
+        MainContext.Instance.SetWorldOpen((int)info.dwWorldCode, new IPAddress(info.dwGateIP), info.wGatePort);
         return Task.FromResult(true);
     }
 
-    private Task<bool> InformCloseWorld(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
+    private Task<bool> InformCloseWorld(PublicConnection connection, _inform_close_world_aclo info, CancellationToken cancellationToken)
     {
-        if (packet.Payload.Length < 1)
-        {
-            _log("InformCloseWorld: payload too small");
-            return Task.FromResult(false);
-        }
-
-        byte worldIndex = packet.Payload[0];
-        _log($"InformCloseWorld: worldIndex={worldIndex}");
-        MainContext.Instance.SetWorldClosed(worldIndex);
+        _log($"InformCloseWorld: worldCode={info.dwWorldCode}");
+        MainContext.Instance.SetWorldClosed((int)info.dwWorldCode);
         return Task.FromResult(true);
     }
 
-    private Task<bool> InformUserNumWorld(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
+    private Task<bool> InformUserNumWorld(PublicConnection connection, _inform_usernum_world_aclo info, CancellationToken cancellationToken)
     {
-        if (packet.Payload.Length < 1 + 40 * 2)
-        {
-            _log("InformUserNumWorld: payload too small");
-            return Task.FromResult(false);
-        }
-
-        byte serviceWorldNum = packet.Payload[0];
-        ushort[] userNums = new ushort[40];
-        var span = packet.Payload.AsSpan(1);
-        for (int i = 0; i < 40; i++)
-        {
-            userNums[i] = BinaryPrimitives.ReadUInt16LittleEndian(span.Slice(i * 2, 2));
-        }
-
-        _log($"InformUserNumWorld: serviceWorldNum={serviceWorldNum} users[0]={userNums[0]} ...");
-        MainContext.Instance.UpdateUserCounts(serviceWorldNum, userNums);
+        _log($"InformUserNumWorld: serviceWorldNum={info.byServiceWorldNum} users[0]={info.wUserNum[0]} ...");
+        MainContext.Instance.UpdateUserCounts(info.byServiceWorldNum, info.wUserNum);
         return Task.FromResult(true);
     }
 
-    private Task<bool> JoinAccountResult(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
+    private Task<bool> JoinAccountResult(PublicConnection connection, _join_account_result_aclo result, CancellationToken cancellationToken)
     {
-        if (packet.Payload.Length < 7)
-        {
-            _log("JoinAccountResult: payload too small");
-            return Task.FromResult(false);
-        }
-
-        ushort wIndex = BinaryPrimitives.ReadUInt16LittleEndian(packet.Payload.AsSpan(0, 2));
-        byte retCode = packet.Payload[6];
-
-        if (wIndex >= 0x1400)
-        {
-            _log($"JoinAccountResult: invalid index {wIndex}");
-            return Task.FromResult(false);
-        }
-
-        _log($"JoinAccountResult: index={wIndex} ret={retCode}");
-        MainContext.Instance.RecordJoinResult(wIndex, retCode);
+        _log($"JoinAccountResult: index={result.idLocal.wIndex} ret={result.byRetCode}");
+        MainContext.Instance.RecordJoinResult(result.idLocal.wIndex, result.byRetCode);
         return Task.FromResult(true);
     }
 
-    private Task<bool> LoginAccountResult(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
+    private Task<bool> LoginAccountResult(PublicConnection connection, _login_account_result_aclo result, CancellationToken cancellationToken)
     {
-        if (packet.Payload.Length < 4 + 4 + 1 + 1 + 32 + 4 + 1 + 1)
-        {
-            _log("LoginAccountResult: payload too small");
-            return Task.FromResult(false);
-        }
-
-        var span = packet.Payload.AsSpan();
-        ushort wIndex = BinaryPrimitives.ReadUInt16LittleEndian(span);
-        if (wIndex >= 0x1400)
-        {
-            _log($"LoginAccountResult: invalid index {wIndex}");
-            return Task.FromResult(false);
-        }
-
-        byte retCode = span[6];
-        uint accountSerial = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(8));
-        byte userGrade = span[12];
-        byte subGrade = span[13];
-        int nTrans = BinaryPrimitives.ReadInt32LittleEndian(span.Slice(46)); // offset per struct layout
-
-        _log($"LoginAccountResult: index={wIndex} ret={retCode} accountSerial={accountSerial} grade={userGrade}/{subGrade} nTrans={nTrans}");
-        MainContext.Instance.RecordLoginResult(wIndex, retCode, accountSerial, userGrade, subGrade, nTrans);
+        _log($"LoginAccountResult: index={result.idLocal.wIndex} ret={result.byRetCode} accountSerial={result.dwAccountSerial} grade={result.byUserGrade}/{result.bySubGrade} nTrans={result.nTrans}");
+        MainContext.Instance.RecordLoginResult(result.idLocal.wIndex, result.byRetCode, result.dwAccountSerial, result.byUserGrade, result.bySubGrade, result.nTrans);
         return Task.FromResult(true);
     }
 
-    private Task<bool> SelectWorldResult(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
+    private Task<bool> SelectWorldResult(PublicConnection connection, _select_world_result_aclo result, CancellationToken cancellationToken)
     {
-        if (packet.Payload.Length < 7 + 16)
-        {
-            _log("SelectWorldResult: payload too small");
-            return Task.FromResult(false);
-        }
-
-        ushort wIndex = BinaryPrimitives.ReadUInt16LittleEndian(packet.Payload.AsSpan(0, 2));
-        if (wIndex >= 0x1400)
-        {
-            _log($"SelectWorldResult: invalid index {wIndex}");
-            return Task.FromResult(false);
-        }
-
-        byte retCode = packet.Payload[6];
-        uint[] masterKey = new uint[4];
-        var span = packet.Payload.AsSpan(7);
-        for (int i = 0; i < 4; i++)
-        {
-            masterKey[i] = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(i * 4, 4));
-        }
-
-        _log($"SelectWorldResult: index={wIndex} ret={retCode} masterKey[0]={masterKey[0]}");
-        MainContext.Instance.RecordSelectWorldResult(wIndex, retCode, masterKey);
+        _log($"SelectWorldResult: index={result.idLocal.wIndex} ret={result.byRetCode} masterKey[0]={result.dwWorldMasterKey[0]}");
+        MainContext.Instance.RecordSelectWorldResult(result.idLocal.wIndex, result.byRetCode, result.dwWorldMasterKey);
         return Task.FromResult(true);
     }
 
-    private Task<bool> PushCloseResult(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
+    private Task<bool> PushCloseResult(PublicConnection connection, _push_close_result_aclo result, CancellationToken cancellationToken)
     {
-        if (packet.Payload.Length < 7)
-        {
-            _log("PushCloseResult: payload too small");
-            return Task.FromResult(false);
-        }
-
-        ushort wIndex = BinaryPrimitives.ReadUInt16LittleEndian(packet.Payload.AsSpan(0, 2));
-        if (wIndex >= 0x1400)
-        {
-            _log($"PushCloseResult: invalid index {wIndex}");
-            return Task.FromResult(false);
-        }
-
-        byte retCode = packet.Payload[6];
-        _log($"PushCloseResult: index={wIndex} ret={retCode}");
-        MainContext.Instance.RecordPushCloseResult(wIndex, retCode);
+        _log($"PushCloseResult: index={result.idLocal.wIndex} ret={result.byRetCode}");
+        MainContext.Instance.RecordPushCloseResult(result.idLocal.wIndex, result.byRetCode);
         return Task.FromResult(true);
     }
 
-    private Task<bool> ForceCloseCommand(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
+    private Task<bool> ForceCloseCommand(PublicConnection connection, _force_close_command_aclo cmd, CancellationToken cancellationToken)
     {
-        if (packet.Payload.Length < 2)
-        {
-            _log("ForceCloseCommand: payload too small");
-            return Task.FromResult(false);
-        }
-
-        ushort wIndex = BinaryPrimitives.ReadUInt16LittleEndian(packet.Payload.AsSpan(0, 2));
-        if (wIndex >= 0x1400)
-        {
-            _log($"ForceCloseCommand: invalid index {wIndex}");
-            return Task.FromResult(false);
-        }
-
-        _log($"ForceCloseCommand: index={wIndex}");
-        MainContext.Instance.RecordForceClose(wIndex);
+        _log($"ForceCloseCommand: index={cmd.idLocal.wIndex}");
+        MainContext.Instance.RecordForceClose(cmd.idLocal.wIndex);
         return Task.FromResult(true);
     }
 
-    private Task<bool> LoginStatRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
+    private Task<bool> LoginStatRequest(PublicConnection connection, _login_server_stat_request_aclo request, CancellationToken cancellationToken)
     {
-        if (packet.Payload.Length < 3)
-        {
-            _log("LoginStatRequest: payload too small");
-            return Task.FromResult(false);
-        }
-
-        byte byStat = packet.Payload[0];
-        ushort wClientIndex = BinaryPrimitives.ReadUInt16LittleEndian(packet.Payload.AsSpan(1, 2));
-
-        bool externalOpen = byStat switch
+        bool externalOpen = request.byStat switch
         {
             1 => true,
             2 => false,
             _ => false
         };
 
-        _log($"LoginStatRequest: clientIndex={wClientIndex} stat={byStat} => externalOpen={externalOpen}");
+        _log($"LoginStatRequest: clientIndex={request.wClientIndex} stat={request.byStat} => externalOpen={externalOpen}");
         MainContext.Instance.ExternalOpen = externalOpen;
 
         // Send response to the client indexed by wClientIndex if connected.
-        var target = MainContext.Instance.GetClientConnection(wClientIndex);
+        var target = MainContext.Instance.GetClientConnection(request.wClientIndex);
         if (target != null)
         {
             byte byRet = externalOpen ? (byte)1 : (byte)2;
             Span<byte> payload = stackalloc byte[3];
             payload[0] = byRet;
-            BinaryPrimitives.WriteUInt16LittleEndian(payload.Slice(1, 2), wClientIndex);
+            BinaryPrimitives.WriteUInt16LittleEndian(payload.Slice(1, 2), request.wClientIndex);
             var env = new PacketEnvelope
             {
                 OpCode = 1,
@@ -352,158 +302,77 @@ public sealed class AccountPacketRouter
         return Task.FromResult(true);
     }
 
-    private Task<bool> HolyQuestNowStat(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
+    private Task<bool> HolyQuestNowStat(PublicConnection connection, CancellationToken cancellationToken)
     {
         _log("HolyQuestNowStat: no-op");
         return Task.FromResult(true);
     }
 
-    private Task<bool> AccountDBInfoResult(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
+    private Task<bool> AccountDBInfoResult(PublicConnection connection, _account_db_info_result_aclo result, CancellationToken cancellationToken)
     {
-        if (packet.Payload.Length < 48)
-        {
-            _log("AccountDBInfoResult: payload too small");
-            return Task.FromResult(false);
-        }
-
-        var span = packet.Payload.AsSpan();
-        string dbName = System.Text.Encoding.ASCII.GetString(span.Slice(0, 32)).TrimEnd('\0');
-        string ip = System.Text.Encoding.ASCII.GetString(span.Slice(32, 16)).TrimEnd('\0');
-
+        string dbName = PacketStringUtil.ToAscii(result.szDBName);
+        string ip = PacketStringUtil.ToAscii(result.szIP);
         MainContext.Instance.RecordAccountDbInfo(dbName, ip);
         _log($"AccountDBInfoResult: dbName={dbName} ip={ip}");
         return Task.FromResult(true);
     }
 
-    private Task<bool> NotifyManageAccountAuthInfo(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
+    private Task<bool> NotifyManageAccountAuthInfo(PublicConnection connection, _notify_manage_account_auth_info_aclo result, CancellationToken cancellationToken)
     {
-        if (packet.Payload.Length < 3 + 149)
-        {
-            _log("NotifyManageAccountAuthInfo: payload too small");
-            return Task.FromResult(false);
-        }
-
-        ushort wIndex = BinaryPrimitives.ReadUInt16LittleEndian(packet.Payload.AsSpan(0, 2));
-        if (wIndex >= 0x1400)
-        {
-            _log($"NotifyManageAccountAuthInfo: invalid index {wIndex}");
-            return Task.FromResult(false);
-        }
-
-        byte retCode = packet.Payload[2];
-        _log($"NotifyManageAccountAuthInfo: index={wIndex} ret={retCode}");
+        _log($"NotifyManageAccountAuthInfo: index={result.idLocal.wIndex} ret={result.byRetCode}");
         return Task.FromResult(true);
     }
 
-    private Task<bool> ManageAccountAuthResult(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
+    private Task<bool> ManageAccountAuthResult(PublicConnection connection, _manage_account_auth_result_aclo result, CancellationToken cancellationToken)
     {
-        if (packet.Payload.Length < 3)
-        {
-            _log("ManageAccountAuthResult: payload too small");
-            return Task.FromResult(false);
-        }
-
-        ushort wIndex = BinaryPrimitives.ReadUInt16LittleEndian(packet.Payload.AsSpan(0, 2));
-        if (wIndex >= 0x1400)
-        {
-            _log($"ManageAccountAuthResult: invalid index {wIndex}");
-            return Task.FromResult(false);
-        }
-
-        byte ret = packet.Payload[2];
-        _log($"ManageAccountAuthResult: index={wIndex} ret={ret}");
-        var session = MainContext.Instance.GetClient(wIndex);
+        _log($"ManageAccountAuthResult: index={result.idLocal.wIndex} ret={result.byRet}");
+        var session = MainContext.Instance.GetClient(result.idLocal.wIndex);
         if (session != null)
         {
-            session.ManageAccountAuthRet = ret;
+            session.ManageAccountAuthRet = result.byRet;
         }
         return Task.FromResult(true);
     }
 
-    private Task<bool> ManageClientLimitRunAccountResult(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
+    private Task<bool> ManageClientLimitRunAccountResult(PublicConnection connection, _manage_client_limit_run_account_result_aclo result, CancellationToken cancellationToken)
     {
-        if (packet.Payload.Length < 3)
-        {
-            _log("ManageClientLimitRunAccountResult: payload too small");
-            return Task.FromResult(false);
-        }
-
-        ushort wIndex = BinaryPrimitives.ReadUInt16LittleEndian(packet.Payload.AsSpan(0, 2));
-        if (wIndex >= 0x1400)
-        {
-            _log($"ManageClientLimitRunAccountResult: invalid index {wIndex}");
-            return Task.FromResult(false);
-        }
-
-        byte ret = packet.Payload[2];
-        _log($"ManageClientLimitRunAccountResult: index={wIndex} ret={ret}");
-        var session = MainContext.Instance.GetClient(wIndex);
+        _log($"ManageClientLimitRunAccountResult: index={result.idLocal.wIndex} ret={result.byRet}");
+        var session = MainContext.Instance.GetClient(result.idLocal.wIndex);
         if (session != null)
         {
-            session.ManageLimitRunAccountRet = ret;
+            session.ManageLimitRunAccountRet = result.byRet;
         }
         return Task.FromResult(true);
     }
 
-    private Task<bool> ManageClientLimitRunWorldResult(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
+    private Task<bool> ManageClientLimitRunWorldResult(PublicConnection connection, _manage_client_limit_run_world_result_aclo result, CancellationToken cancellationToken)
     {
-        if (packet.Payload.Length < 3 + 4 + 32 + 32 + 1)
-        {
-            _log("ManageClientLimitRunWorldResult: payload too small");
-            return Task.FromResult(false);
-        }
-
-        ushort wIndex = BinaryPrimitives.ReadUInt16LittleEndian(packet.Payload.AsSpan(0, 2));
-        if (wIndex >= 0x1400)
-        {
-            _log($"ManageClientLimitRunWorldResult: invalid index {wIndex}");
-            return Task.FromResult(false);
-        }
-
-        byte ret = packet.Payload[2];
-        var span = packet.Payload.AsSpan(3);
-        uint code = BinaryPrimitives.ReadUInt32LittleEndian(span);
-        string name = System.Text.Encoding.ASCII.GetString(span.Slice(4, 32)).TrimEnd('\0');
-        string dbName = System.Text.Encoding.ASCII.GetString(span.Slice(36, 32)).TrimEnd('\0');
-        byte type = span[68];
-
-        _log($"ManageClientLimitRunWorldResult: index={wIndex} ret={ret} code={code} name={name} db={dbName} type={type}");
-        var session = MainContext.Instance.GetClient(wIndex);
+        string name = PacketStringUtil.ToAscii(result.m_szName);
+        string db = PacketStringUtil.ToAscii(result.m_szDBName);
+        _log($"ManageClientLimitRunWorldResult: index={result.idLocal.wIndex} ret={result.byRet} code={result.m_dwCode} name={name} db={db} type={result.m_byType}");
+        var session = MainContext.Instance.GetClient(result.idLocal.wIndex);
         if (session != null)
         {
             session.ManageLimitWorld = new ManageLimitWorldInfo
             {
-                Code = code,
+                Code = result.m_dwCode,
                 Name = name,
-                DbName = dbName,
-                Type = type
+                DbName = db,
+                Type = result.m_byType
             };
         }
         return Task.FromResult(true);
     }
 
-    private Task<bool> ManageClientForceExitResult(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
+    private Task<bool> ManageClientForceExitResult(PublicConnection connection, _manage_client_force_exit_result_aclo result, CancellationToken cancellationToken)
     {
-        if (packet.Payload.Length < 3)
-        {
-            _log("ManageClientForceExitResult: payload too small");
-            return Task.FromResult(false);
-        }
-
-        ushort wIndex = BinaryPrimitives.ReadUInt16LittleEndian(packet.Payload.AsSpan(0, 2));
-        if (wIndex >= 0x1400)
-        {
-            _log($"ManageClientForceExitResult: invalid index {wIndex}");
-            return Task.FromResult(false);
-        }
-
-        byte ret = packet.Payload[2];
-        _log($"ManageClientForceExitResult: index={wIndex} ret={ret}");
-        var session = MainContext.Instance.GetClient(wIndex);
+        _log($"ManageClientForceExitResult: index={result.idLocal.wIndex} ret={result.byRet}");
+        var session = MainContext.Instance.GetClient(result.idLocal.wIndex);
         if (session != null)
         {
-            session.ManageForceExitRet = ret;
+            session.ManageForceExitRet = result.byRet;
         }
         return Task.FromResult(true);
     }
+
 }
