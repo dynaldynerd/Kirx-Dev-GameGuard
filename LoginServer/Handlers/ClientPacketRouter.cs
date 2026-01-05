@@ -343,8 +343,8 @@ public sealed class ClientPacketRouter
             dwRTournamentCharacterSerialList = new uint[3]
         };
 
-        var payload = new byte[Marshal.SizeOf<_select_world_request_loac>()];
-        MemoryMarshal.Write(payload.AsSpan(), in send);
+        var sendBlit = _select_world_request_loac_blit.From(send);
+        var payload = sendBlit.ToArray();
         var env = new PacketEnvelope
         {
             OpCode = 1,
@@ -665,6 +665,8 @@ public sealed class ClientPacketRouter
                 session.BillType = 1;
                 session.RemainTime = 255;
                 session.IsPremium = true;
+                session.LoginCode = 1; // GM code
+                session.AgeLimit = true;
             }
             else
             {

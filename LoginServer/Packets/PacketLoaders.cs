@@ -8,6 +8,13 @@ internal static class PacketStringUtil
 {
     public static string ToAscii(byte[] bytes) => Encoding.ASCII.GetString(bytes).TrimEnd('\0');
 
+    public static string ToAsciiNullTerm(byte[] bytes)
+    {
+        int len = Array.IndexOf(bytes, (byte)0);
+        if (len < 0) len = bytes.Length;
+        return Encoding.ASCII.GetString(bytes, 0, len);
+    }
+
     public static void FillFixed(byte[] target, string value)
     {
         Array.Clear(target, 0, target.Length);

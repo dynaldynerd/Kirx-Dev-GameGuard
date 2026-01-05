@@ -203,7 +203,7 @@ public sealed class AccountPacketRouter
         for (int i = 0; i < worldList.byWorldNum; i++)
         {
             var w = worldList.WorldList[i];
-            string name = PacketStringUtil.ToAscii(w.szWorldName);
+            string name = PacketStringUtil.ToAsciiNullTerm(w.szWorldName);
             string ipStr = new IPAddress(w.dwGateIP).ToString();
             _log($"World {i}: open={w.bOpen} name='{name}' ip={ipStr}:{w.wGatePort} type={w.byType}");
             worlds.Add(new WorldData
@@ -272,7 +272,8 @@ public sealed class AccountPacketRouter
 
         var session = MainContext.Instance.GetClient(result.idLocal.wIndex);
         var client = session?.Connection;// ?? MainContext.Instance.GetClientConnection(result.idLocal.wIndex);
-
+        if (session == null || client == null)
+            return Task.FromResult(true);
         // If the serial mismatches current session, send a logout request to account server and skip replying to client.
         if (client != null && session?.ClidSerial != result.idLocal.dwSerial)
         {
@@ -315,7 +316,7 @@ public sealed class AccountPacketRouter
 
         if (client != null)
         {
-            var payload = _login_account_result_locl.FromAclos(result);
+            var payload = _login_account_result_locl.FromAclos(result, session!.BillType);
             var env = new PacketEnvelope
             {
                 OpCode = 21,
@@ -332,32 +333,44 @@ public sealed class AccountPacketRouter
         _log($"SelectWorldResult: index={result.idLocal.wIndex} ret={result.byRetCode} masterKey[0]={result.dwWorldMasterKey[0]}");
         MainContext.Instance.RecordSelectWorldResult(result.idLocal.wIndex, result.byRetCode, result.dwWorldMasterKey);
 
+        var session = MainContext.Instance.GetClient(result.idLocal.wIndex);
         var client = MainContext.Instance.GetClientConnection(result.idLocal.wIndex);
-        if (client != null)
+
+        if (session == null || client == null || session.ClidSerial != result.idLocal.dwSerial)
         {
-            var send = new _select_world_result_locl
-            {
-                byRetCode = result.byRetCode,
-                dwWorldGateIP = 0,
-                wWorldGatePort = 0,
-                dwWorldMasterKey = result.dwWorldMasterKey
-            };
-            var buffer = new byte[1 + 4 + 2 + 4 * 4];
-            buffer[0] = send.byRetCode;
-            BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(1, 4), send.dwWorldGateIP);
-            BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(5, 2), send.wWorldGatePort);
-            for (int i = 0; i < 4; i++)
-            {
-                BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(7 + i * 4, 4), send.dwWorldMasterKey[i]);
-            }
-            var env = new PacketEnvelope
-            {
-                OpCode = 21,
-                SubCode = 6,
-                Payload = buffer
-            };
-            _ = client.SendAsync(env, cancellationToken);
+            return Task.FromResult(true);
         }
+
+        uint gateIp = 0;
+        ushort gatePort = 0;
+        if (result.byRetCode == 0 && session.SelectedWorldCode >= 0)
+        {
+            var worlds = MainContext.Instance.Worlds;
+            if (session.SelectedWorldCode < worlds.Count)
+            {
+                var w = worlds[session.SelectedWorldCode];
+                gateIp = w.GateIp != null ? BitConverter.ToUInt32(w.GateIp.GetAddressBytes(), 0) : 0;
+                gatePort = w.GatePort;
+            }
+        }
+
+        var send = new _select_world_result_locl
+        {
+            byRetCode = result.byRetCode,
+            dwWorldGateIP = gateIp,
+            wWorldGatePort = gatePort,
+            dwWorldMasterKey = result.dwWorldMasterKey,
+            bAllowAltTab = false
+        };
+        var buffer = send.ToArray();
+        var env = new PacketEnvelope
+        {
+            OpCode = 21,
+            SubCode = 8,
+            Payload = buffer
+        };
+        _ = client.SendAsync(env, cancellationToken);
+
         return Task.FromResult(true);
     }
 
@@ -395,25 +408,24 @@ public sealed class AccountPacketRouter
 
         var session = MainContext.Instance.GetClient(cmd.idLocal.wIndex);
         var target = MainContext.Instance.GetClientConnection(cmd.idLocal.wIndex);
-        if (target == null)
+        if (session == null || target == null || session.ClidSerial != cmd.idLocal.dwSerial)
         {
-            // Missing client; notify account that close failed (1/18) and skip.
-            var reject = new PacketEnvelope
-            {
-                OpCode = 1,
-                SubCode = 18,
-                Payload = Array.Empty<byte>()
-            };
-            _ = connection.SendAsync(reject, cancellationToken);
+            // Serial mismatch or missing client: do nothing (native only closes on match).
             return Task.FromResult(true);
         }
 
-        if (session != null && session.ClidSerial != cmd.idLocal.dwSerial)
+        // Notify client and close.
+        var notify = new _server_notify_inform_locl { wMsgCode = 1 };
+        var payload = new byte[Marshal.SizeOf<_server_notify_inform_locl>()];
+        MemoryMarshal.Write(payload.AsSpan(), in notify);
+        var env = new PacketEnvelope
         {
-            _log($"ForceCloseCommand: serial mismatch session={session.ClidSerial} packet={cmd.idLocal.dwSerial}, closing anyway.");
-        }
+            OpCode = 21,
+            SubCode = 11,
+            Payload = payload
+        };
+        _ = target.SendAsync(env, cancellationToken);
 
-        // Mark the session and actively drop the client connection if present.
         MainContext.Instance.RecordForceClose(cmd.idLocal.wIndex);
         try
         {
@@ -423,7 +435,6 @@ public sealed class AccountPacketRouter
         {
             _log($"ForceCloseCommand: error closing connection {cmd.idLocal.wIndex}: {ex.Message}");
         }
-
         return Task.FromResult(true);
     }
 

@@ -1,3 +1,5 @@
+using System.Buffers.Binary;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace LoginServer.Packets;
@@ -165,6 +167,21 @@ public struct _select_world_result_locl
         this = default;
         dwWorldMasterKey = new uint[4];
     }
+
+    public byte[] ToArray()
+    {
+        // Pack=1 manual layout to ensure size stays correct (1+4+2+16+1=24 bytes).
+        var buffer = new byte[24];
+        buffer[0] = byRetCode;
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(1, 4), dwWorldGateIP);
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(5, 2), wWorldGatePort);
+        for (int i = 0; i < 4; i++)
+        {
+            BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(7 + i * 4, 4), dwWorldMasterKey[i]);
+        }
+        buffer[23] = bAllowAltTab ? (byte)1 : (byte)0;
+        return buffer;
+    }
 }
 
 /// <summary>Login -> Client: account login result.</summary>
@@ -172,27 +189,37 @@ public struct _select_world_result_locl
 public unsafe struct _login_account_result_locl
 {
     public byte byRetCode;
-    public _GLBID gidNewGlobal;
     public uint dwAccountSerial;
-    public byte byUserGrade;
-    public byte bySubGrade;
+    public uint dwBillingType;
+    public byte byBeChangedPass;
+    public fixed byte nNewAgree[2];
+    [MarshalAs(UnmanagedType.U1)] public bool bAdult;
+    public uint dwTime;
+    [MarshalAs(UnmanagedType.U1)] public bool bMOTPEntry;
     public fixed byte uszBlockReason[32];
-    public int nTrans;
-    public byte byBlockReasonType;
-    public byte byCancelUILockBlockRet;
 
-    public static unsafe byte[] FromAclos(_login_account_result_aclo src)
+    public byte[] ToArray()
+    {
+        int size = Marshal.SizeOf<_login_account_result_locl>();
+        var buffer = new byte[size];
+        fixed (byte* dst = buffer)
+        {
+            Unsafe.CopyBlockUnaligned(dst, Unsafe.AsPointer(ref this), (uint)size);
+        }
+        return buffer;
+    }
+
+    public static unsafe byte[] FromAclos(_login_account_result_aclo src, byte BillingType)
     {
         var dst = new _login_account_result_locl
         {
             byRetCode = src.byRetCode,
-            gidNewGlobal = src.gidNewGlobal,
             dwAccountSerial = src.dwAccountSerial,
-            byUserGrade = src.byUserGrade,
-            bySubGrade = src.bySubGrade,
-            nTrans = src.nTrans,
-            byBlockReasonType = src.byBlockReasonType,
-            byCancelUILockBlockRet = src.byCancelUILockBlockRet
+            dwBillingType = BillingType,
+            byBeChangedPass = 0,
+            bAdult = true,
+            dwTime = 0,
+            bMOTPEntry = false
         };
         for (int i = 0; i < 32 && i < src.uszBlockReason.Length; i++)
         {

@@ -57,6 +57,48 @@ public partial struct _select_world_request_loac
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
+public unsafe struct _select_world_request_loac_blit
+{
+    public _GLBID gidGlobal;
+    public ushort wWorldIndex;
+    public uint dwClientIP;
+    public fixed uint dwRequestMoveCharacterSerialList[3];
+    public fixed uint dwRTournamentCharacterSerialList[3];
+
+    public static _select_world_request_loac_blit From(_select_world_request_loac src)
+    {
+        var dst = new _select_world_request_loac_blit
+        {
+            gidGlobal = src.gidGlobal,
+            wWorldIndex = src.wWorldIndex,
+            dwClientIP = src.dwClientIP
+        };
+        for (int i = 0; i < 3; i++)
+        {
+            dst.dwRequestMoveCharacterSerialList[i] = src.dwRequestMoveCharacterSerialList != null && i < src.dwRequestMoveCharacterSerialList.Length
+                ? src.dwRequestMoveCharacterSerialList[i] : 0;
+            dst.dwRTournamentCharacterSerialList[i] = src.dwRTournamentCharacterSerialList != null && i < src.dwRTournamentCharacterSerialList.Length
+                ? src.dwRTournamentCharacterSerialList[i] : 0;
+        }
+        return dst;
+    }
+
+    public byte[] ToArray()
+    {
+        int size = Unsafe.SizeOf<_select_world_request_loac_blit>();
+        var buffer = new byte[size];
+        fixed (byte* dst = buffer)
+        {
+            fixed (_select_world_request_loac_blit* src = &this)
+            {
+                Unsafe.CopyBlockUnaligned(dst, src, (uint)size);
+            }
+        }
+        return buffer;
+    }
+}
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
 public partial struct _login_account_request_loac
 {
     public _CLID idLocal;
@@ -175,7 +217,7 @@ public unsafe struct _login_account_request_loac_blit
             authtype = 0,
             nTrans = session.Trans,
             bPrimium = (byte)(session.IsPremium ? 1 : 0),
-            bAgeLimit = 0,
+            bAgeLimit = session.AgeLimit? (byte)1:(byte)0,
             bCancelWebUILockBlock = 0
         };
 
