@@ -17,7 +17,7 @@ internal sealed class SaeaConnection : IAsyncDisposable
     private int _received;
     private bool _disposed;
 
-    public SaeaConnection(int id, Socket socket, INetworkHandler handler, Action<string>? log)
+    public SaeaConnection(ulong id, Socket socket, INetworkHandler handler, Action<string>? log)
     {
         ConnectionId = id;
         _socket = socket;
@@ -32,7 +32,7 @@ internal sealed class SaeaConnection : IAsyncDisposable
         _receiveArgs.Completed += OnReceiveCompleted;
     }
 
-    public int ConnectionId { get; }
+    public ulong ConnectionId { get; }
     public Action<string>? Log { get; }
     internal PublicConnection PublicConnection => _publicConnection;
     internal Socket Socket => _socket;

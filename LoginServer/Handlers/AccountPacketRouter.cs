@@ -2,6 +2,7 @@ using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Net;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using LoginServer.Packets;
@@ -266,14 +267,55 @@ public sealed class AccountPacketRouter
 
     private Task<bool> LoginAccountResult(PublicConnection connection, _login_account_result_aclo result, CancellationToken cancellationToken)
     {
-        _log($"LoginAccountResult: index={result.idLocal.wIndex} ret={result.byRetCode} accountSerial={result.dwAccountSerial} grade={result.byUserGrade}/{result.bySubGrade} nTrans={result.nTrans}");
+        //_log($"LoginAccountResult: index={result.idLocal.wIndex} ret={result.byRetCode} accountSerial={result.dwAccountSerial} grade={result.byUserGrade}/{result.bySubGrade} nTrans={result.nTrans}");
         MainContext.Instance.RecordLoginResult(result.idLocal.wIndex, result.byRetCode, result.dwAccountSerial, result.byUserGrade, result.bySubGrade, result.nTrans);
 
-        var client = MainContext.Instance.GetClientConnection(result.idLocal.wIndex);
+        var session = MainContext.Instance.GetClient(result.idLocal.wIndex);
+        var client = session?.Connection;// ?? MainContext.Instance.GetClientConnection(result.idLocal.wIndex);
+
+        // If the serial mismatches current session, send a logout request to account server and skip replying to client.
+        if (client != null && session.ClidSerial != result.idLocal.dwSerial)
+        {
+            var logout = new _logout_account_request_loac { gidGlobal = result.gidNewGlobal };
+            var payloadLogout = new byte[Marshal.SizeOf<_logout_account_request_loac>()];
+            MemoryMarshal.Write(payloadLogout.AsSpan(), in logout);
+            var envLogout = new PacketEnvelope
+            {
+                OpCode = 1,
+                SubCode = 9,
+                Payload = payloadLogout
+            };
+            _ = client.SendAsync(envLogout, cancellationToken);
+            return Task.FromResult(true);
+        }
+        if (session != null)
+        {
+            if (result.byRetCode == 5)
+            {
+                // SetOverlap
+                session.OverlapUser = true;
+                session.AccountSerial = result.dwAccountSerial;
+            }
+            else
+            {
+                // Mirror _CLIENT_DATA::Login state
+                session.IsLogin = true;
+                session.IsLoginChecked = true;
+                session.RegisteredWorld = false;
+                session.SelectedWorld = false;
+                session.OverlapUser = false;
+                session.SelectedWorldCode = -1;
+                session.GlobalId = result.gidNewGlobal;
+                session.AccountSerial = result.dwAccountSerial;
+                session.UserGrade = result.byUserGrade;
+                session.SubGrade = result.bySubGrade;
+                session.Trans = result.nTrans;
+            }
+        }
+
         if (client != null)
         {
-            // Native sends a richer structure; we forward at least the return code to the client.
-            var payload = new byte[1] { result.byRetCode };
+            var payload = _login_account_result_locl.FromAclos(result);
             var env = new PacketEnvelope
             {
                 OpCode = 21,

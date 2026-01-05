@@ -55,7 +55,7 @@ public partial struct _select_world_request_loac
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 2)]
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
 public partial struct _login_account_request_loac
 {
     public _CLID idLocal;
@@ -97,6 +97,30 @@ public partial struct _login_account_request_loac
         szAccountID = new byte[13];
         szPassword = new byte[13];
         szCMS = new byte[7];
+    }
+
+    public static _login_account_request_loac FromSession(State.ClientSession session)
+    {
+        var req = new _login_account_request_loac
+        {
+            idLocal = new _CLID { wIndex = session.Index, dwSerial = session.ClidSerial },
+            byUserCode = session.LoginCode,
+            dwClientIP = session.ClientIp,
+            bCheckDoubleIP = true,
+            iType = (short)session.BillType,
+            lRemainTime = session.RemainTime,
+            authtype = 0,
+            nTrans = session.Trans,
+            bPrimium = session.IsPremium,
+            bAgeLimit = false,
+            bCancelWebUILockBlock = false,
+            stEndDate = new _SYSTEMTIME()
+        };
+
+        PacketStringUtil.FillFixed(req.szAccountID, session.AccountId);
+        PacketStringUtil.FillFixed(req.szPassword, session.Password);
+        // szCMS left zeroed
+        return req;
     }
 }
 

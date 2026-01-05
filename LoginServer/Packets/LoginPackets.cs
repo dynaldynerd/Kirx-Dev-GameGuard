@@ -151,6 +151,45 @@ public struct _select_world_result_locl
     }
 }
 
+/// <summary>Login -> Client: account login result.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public unsafe struct _login_account_result_locl
+{
+    public byte byRetCode;
+    public _GLBID gidNewGlobal;
+    public uint dwAccountSerial;
+    public byte byUserGrade;
+    public byte bySubGrade;
+    public fixed byte uszBlockReason[32];
+    public int nTrans;
+    public byte byBlockReasonType;
+    public byte byCancelUILockBlockRet;
+
+    public static unsafe byte[] FromAclos(_login_account_result_aclo src)
+    {
+        var dst = new _login_account_result_locl
+        {
+            byRetCode = src.byRetCode,
+            gidNewGlobal = src.gidNewGlobal,
+            dwAccountSerial = src.dwAccountSerial,
+            byUserGrade = src.byUserGrade,
+            bySubGrade = src.bySubGrade,
+            nTrans = src.nTrans,
+            byBlockReasonType = src.byBlockReasonType,
+            byCancelUILockBlockRet = src.byCancelUILockBlockRet
+        };
+        for (int i = 0; i < 32 && i < src.uszBlockReason.Length; i++)
+        {
+            dst.uszBlockReason[i] = src.uszBlockReason[i];
+        }
+
+        int size = Marshal.SizeOf<_login_account_result_locl>();
+        var buffer = new byte[size];
+        MemoryMarshal.Write(buffer.AsSpan(), in dst);
+        return buffer;
+    }
+}
+
 /// <summary>Login -> Client: account join result.</summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public struct _join_account_result_locl
@@ -179,6 +218,14 @@ public partial struct _motp_validation_request_cllo
         this = default;
         szMOTP = new byte[13];
     }
+}
+
+/// <summary>Login -> Client: crypt key inform.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct _crypty_key_inform_locl
+{
+    public byte byPlus;
+    public ushort wKey;
 }
 
 /// <summary>Client -> Login: manage account auth request.</summary>

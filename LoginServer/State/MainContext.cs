@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
+using LoginServer.Packets;
 using RFNetworking;
 
 namespace LoginServer.State;
@@ -14,8 +15,7 @@ public sealed class MainContext
 {
     private readonly object _lock = new();
     private readonly WorldData[] _worlds = new WorldData[40];
-    private readonly ConcurrentDictionary<ushort, ClientSession> _clients = new();
-    private readonly ConcurrentDictionary<ushort, PublicConnection> _clientConnections = new();
+    private readonly ConcurrentDictionary<uint, ClientSession> _clients = new();
 
     private MainContext()
     {
@@ -29,6 +29,11 @@ public sealed class MainContext
     public string? AccountDbName { get; set; }
     public string? AccountDbIp { get; set; }
     public int MaxConnections { get; set; }
+    private int _curUserCount;
+    public int CurrentUserCount => _curUserCount;
+    public PublicConnection? AccountConnection { get; private set; }
+
+    public void IncrementUserCount() => Interlocked.Increment(ref _curUserCount);
 
     public IReadOnlyList<WorldData> Worlds
     {
@@ -41,28 +46,43 @@ public sealed class MainContext
         }
     }
 
-    public ClientSession? GetClient(ushort index)
+    public ClientSession? GetClient(uint index)
     {
         _clients.TryGetValue(index, out var session);
         return session;
     }
 
+    public ClientSession GetOrAddClient(uint index, Func<uint, ClientSession> factory)
+    {
+        return _clients.GetOrAdd(index, factory);
+    }
+
+    public void SetAccountConnection(PublicConnection? connection)
+    {
+        AccountConnection = connection;
+    }
+
     public void RegisterClientConnection(PublicConnection connection)
     {
-        ushort idx = (ushort)connection.ConnectionId;
-        _clientConnections[idx] = connection;
+        uint idx = (uint)connection.ConnectionId;
+        var session = _clients.GetOrAdd(idx, i => new ClientSession((ushort)i));
+        session.Connection = connection;
+        session.ClidSerial++;
     }
 
     public void UnregisterClientConnection(PublicConnection connection)
     {
-        ushort idx = (ushort)connection.ConnectionId;
-        _clientConnections.TryRemove(idx, out _);
+        uint idx = (uint)connection.ConnectionId;
+        _clients.TryRemove(idx, out _);
     }
 
-    public PublicConnection? GetClientConnection(ushort index)
+    public PublicConnection? GetClientConnection(uint index)
     {
-        _clientConnections.TryGetValue(index, out var conn);
-        return conn;
+        if (_clients.TryGetValue(index, out var session))
+        {
+            return session.Connection;
+        }
+        return null;
     }
 
     public void UpdateWorldList(byte serviceWorldNum, IReadOnlyList<WorldData> worlds)
@@ -192,6 +212,26 @@ public sealed class ClientSession
     public byte? ManageLimitRunAccountRet { get; set; }
     public ManageLimitWorldInfo? ManageLimitWorld { get; set; }
     public byte? ManageForceExitRet { get; set; }
+    public byte ServerType { get; set; }
+    public uint ClientIp { get; set; }
+    public uint ClidSerial { get; set; }
+    public string AccountId { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+    public PublicConnection? Connection { get; set; }
+    public byte PlusKey { get; set; }
+    public ushort XorKey { get; set; }
+    public bool HasCryptKeys { get; set; }
+    public byte BillType { get; set; }
+    public int RemainTime { get; set; }
+    public bool IsPremium { get; set; }
+    public byte LoginCode { get; set; }
+    public bool IsLogin { get; set; }
+    public bool IsLoginChecked { get; set; }
+    public bool RegisteredWorld { get; set; }
+    public bool SelectedWorld { get; set; }
+    public bool OverlapUser { get; set; }
+    public int SelectedWorldCode { get; set; } = -1;
+    public _GLBID GlobalId { get; set; }
 }
 
 public struct ManageLimitWorldInfo

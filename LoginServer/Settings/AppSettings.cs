@@ -47,10 +47,20 @@ public sealed class DatabaseSettings
     public string Database { get; set; } = "RF_Account";
     public string User { get; set; } = "";
     public string Password { get; set; } = "";
+    public string BillingHost { get; set; } = "127.0.0.1";
+    public int BillingPort { get; set; } = 1433;
+    public string BillingDatabase { get; set; } = "Billing";
+    public string BillingUser { get; set; } = "";
+    public string BillingPassword { get; set; } = "";
 
     public string BuildConnectionString()
     {
         return $"Server={Host},{Port};Database={Database};User ID={User};Password={Password};TrustServerCertificate=True;Encrypt=False;";
+    }
+
+    public string BuildBillingConnectionString()
+    {
+        return $"Server={BillingHost},{BillingPort};Database={BillingDatabase};User ID={BillingUser};Password={BillingPassword};TrustServerCertificate=True;Encrypt=False;";
     }
 }
 

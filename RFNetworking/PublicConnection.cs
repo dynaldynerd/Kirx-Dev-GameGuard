@@ -17,7 +17,7 @@ public sealed class PublicConnection
         _socket = socket;
     }
 
-    public int ConnectionId => _inner.ConnectionId;
+    public ulong ConnectionId => _inner.ConnectionId;
 
     public EndPoint? RemoteEndPoint => _socket.RemoteEndPoint;
 

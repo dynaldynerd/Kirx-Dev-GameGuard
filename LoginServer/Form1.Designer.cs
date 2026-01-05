@@ -1,6 +1,6 @@
 namespace LoginServer;
 
-partial class Form1
+partial class MainWindow
 {
     /// <summary>
     ///  Required designer variable.
@@ -156,7 +156,7 @@ partial class Form1
         MainMenuStrip = menuStrip1;
         Margin = new Padding(2);
         MinimumSize = new Size(495, 256);
-        Name = "Form1";
+        Name = "MainWindow";
         StartPosition = FormStartPosition.CenterScreen;
         Text = "Login Server Control";
         menuStrip1.ResumeLayout(false);

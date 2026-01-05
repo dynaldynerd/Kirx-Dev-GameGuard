@@ -29,6 +29,16 @@ partial class SettingsForm
         txtDbUser = new TextBox();
         lblDbPass = new Label();
         txtDbPass = new TextBox();
+        lblBillingHost = new Label();
+        txtBillingHost = new TextBox();
+        lblBillingPort = new Label();
+        txtBillingPort = new TextBox();
+        lblBillingDb = new Label();
+        txtBillingDb = new TextBox();
+        lblBillingUser = new Label();
+        txtBillingUser = new TextBox();
+        lblBillingPass = new Label();
+        txtBillingPass = new TextBox();
         lblClientPort = new Label();
         txtClientPort = new TextBox();
         lblAccountHost = new Label();
@@ -42,27 +52,27 @@ partial class SettingsForm
         // btnSave
         // 
         btnSave.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-        btnSave.Location = new Point(315, 196);
+        btnSave.Location = new Point(438, 255);
         btnSave.Margin = new Padding(2, 2, 2, 2);
         btnSave.Name = "btnSave";
         btnSave.Size = new Size(78, 20);
-        btnSave.TabIndex = 6;
+        btnSave.TabIndex = 14;
         btnSave.Text = "Save";
         btnSave.UseVisualStyleBackColor = true;
         btnSave.Click += OnSave;
-        // 
+        //
         // btnCancel
-        // 
+        //
         btnCancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-        btnCancel.Location = new Point(232, 196);
+        btnCancel.Location = new Point(355, 255);
         btnCancel.Margin = new Padding(2, 2, 2, 2);
         btnCancel.Name = "btnCancel";
         btnCancel.Size = new Size(78, 20);
-        btnCancel.TabIndex = 7;
+        btnCancel.TabIndex = 15;
         btnCancel.Text = "Cancel";
         btnCancel.UseVisualStyleBackColor = true;
         btnCancel.Click += OnCancel;
-        // 
+        //
         // lblDbHost
         // 
         lblDbHost.AutoSize = true;
@@ -153,9 +163,100 @@ partial class SettingsForm
         txtDbPass.Size = new Size(141, 23);
         txtDbPass.TabIndex = 5;
         txtDbPass.UseSystemPasswordChar = true;
-        // 
+        //
+        // lblBillingHost
+        //
+        lblBillingHost.AutoSize = true;
+        lblBillingHost.Location = new Point(231, 38);
+        lblBillingHost.Margin = new Padding(2, 0, 2, 0);
+        lblBillingHost.Name = "lblBillingHost";
+        lblBillingHost.Size = new Size(68, 15);
+        lblBillingHost.TabIndex = 16;
+        lblBillingHost.Text = "Billing Host";
+        //
+        // txtBillingHost
+        //
+        txtBillingHost.Location = new Point(313, 36);
+        txtBillingHost.Margin = new Padding(2, 2, 2, 2);
+        txtBillingHost.Name = "txtBillingHost";
+        txtBillingHost.Size = new Size(141, 23);
+        txtBillingHost.TabIndex = 6;
+        //
+        // lblBillingPort
+        //
+        lblBillingPort.AutoSize = true;
+        lblBillingPort.Location = new Point(465, 38);
+        lblBillingPort.Margin = new Padding(2, 0, 2, 0);
+        lblBillingPort.Name = "lblBillingPort";
+        lblBillingPort.Size = new Size(29, 15);
+        lblBillingPort.TabIndex = 18;
+        lblBillingPort.Text = "Port";
+        //
+        // txtBillingPort
+        //
+        txtBillingPort.Location = new Point(501, 36);
+        txtBillingPort.Margin = new Padding(2, 2, 2, 2);
+        txtBillingPort.Name = "txtBillingPort";
+        txtBillingPort.Size = new Size(57, 23);
+        txtBillingPort.TabIndex = 7;
+        //
+        // lblBillingDb
+        //
+        lblBillingDb.AutoSize = true;
+        lblBillingDb.Location = new Point(231, 65);
+        lblBillingDb.Margin = new Padding(2, 0, 2, 0);
+        lblBillingDb.Name = "lblBillingDb";
+        lblBillingDb.Size = new Size(64, 15);
+        lblBillingDb.TabIndex = 20;
+        lblBillingDb.Text = "Billing DB";
+        //
+        // txtBillingDb
+        //
+        txtBillingDb.Location = new Point(313, 62);
+        txtBillingDb.Margin = new Padding(2, 2, 2, 2);
+        txtBillingDb.Name = "txtBillingDb";
+        txtBillingDb.Size = new Size(141, 23);
+        txtBillingDb.TabIndex = 8;
+        //
+        // lblBillingUser
+        //
+        lblBillingUser.AutoSize = true;
+        lblBillingUser.Location = new Point(231, 91);
+        lblBillingUser.Margin = new Padding(2, 0, 2, 0);
+        lblBillingUser.Name = "lblBillingUser";
+        lblBillingUser.Size = new Size(72, 15);
+        lblBillingUser.TabIndex = 22;
+        lblBillingUser.Text = "Billing User";
+        //
+        // txtBillingUser
+        //
+        txtBillingUser.Location = new Point(313, 89);
+        txtBillingUser.Margin = new Padding(2, 2, 2, 2);
+        txtBillingUser.Name = "txtBillingUser";
+        txtBillingUser.Size = new Size(141, 23);
+        txtBillingUser.TabIndex = 9;
+        //
+        // lblBillingPass
+        //
+        lblBillingPass.AutoSize = true;
+        lblBillingPass.Location = new Point(231, 117);
+        lblBillingPass.Margin = new Padding(2, 0, 2, 0);
+        lblBillingPass.Name = "lblBillingPass";
+        lblBillingPass.Size = new Size(72, 15);
+        lblBillingPass.TabIndex = 24;
+        lblBillingPass.Text = "Billing Pass";
+        //
+        // txtBillingPass
+        //
+        txtBillingPass.Location = new Point(313, 115);
+        txtBillingPass.Margin = new Padding(2, 2, 2, 2);
+        txtBillingPass.Name = "txtBillingPass";
+        txtBillingPass.Size = new Size(141, 23);
+        txtBillingPass.TabIndex = 10;
+        txtBillingPass.UseSystemPasswordChar = true;
+        //
         // lblClientPort
-        // 
+        //
         lblClientPort.AutoSize = true;
         lblClientPort.Location = new Point(14, 120);
         lblClientPort.Margin = new Padding(2, 0, 2, 0);
@@ -171,7 +272,7 @@ partial class SettingsForm
         txtClientPort.Name = "txtClientPort";
         txtClientPort.Size = new Size(85, 23);
         txtClientPort.TabIndex = 3;
-        // 
+        //
         // lblAccountHost
         // 
         lblAccountHost.AutoSize = true;
@@ -189,7 +290,7 @@ partial class SettingsForm
         txtAccountHost.Name = "txtAccountHost";
         txtAccountHost.Size = new Size(113, 23);
         txtAccountHost.TabIndex = 4;
-        // 
+        //
         // lblAccountPort
         // 
         lblAccountPort.AutoSize = true;
@@ -207,7 +308,7 @@ partial class SettingsForm
         txtAccountPort.Name = "txtAccountPort";
         txtAccountPort.Size = new Size(64, 23);
         txtAccountPort.TabIndex = 5;
-        // 
+        //
         // lblMaxConn
         // 
         lblMaxConn.AutoSize = true;
@@ -217,20 +318,30 @@ partial class SettingsForm
         lblMaxConn.Size = new Size(99, 15);
         lblMaxConn.TabIndex = 8;
         lblMaxConn.Text = "Max Connections";
-        // 
+        //
         // txtMaxConn
-        // 
+        //
         txtMaxConn.Location = new Point(126, 170);
         txtMaxConn.Margin = new Padding(2, 2, 2, 2);
         txtMaxConn.Name = "txtMaxConn";
         txtMaxConn.Size = new Size(85, 23);
         txtMaxConn.TabIndex = 6;
-        // 
+        //
         // SettingsForm
-        // 
+        //
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(408, 224);
+        ClientSize = new Size(596, 286);
+        Controls.Add(txtBillingPass);
+        Controls.Add(lblBillingPass);
+        Controls.Add(txtBillingUser);
+        Controls.Add(lblBillingUser);
+        Controls.Add(txtBillingDb);
+        Controls.Add(lblBillingDb);
+        Controls.Add(txtBillingPort);
+        Controls.Add(lblBillingPort);
+        Controls.Add(txtBillingHost);
+        Controls.Add(lblBillingHost);
         Controls.Add(txtMaxConn);
         Controls.Add(lblMaxConn);
         Controls.Add(txtAccountPort);
@@ -285,4 +396,14 @@ partial class SettingsForm
     private System.Windows.Forms.TextBox txtDbUser;
     private System.Windows.Forms.Label lblDbPass;
     private System.Windows.Forms.TextBox txtDbPass;
+    private System.Windows.Forms.Label lblBillingHost;
+    private System.Windows.Forms.TextBox txtBillingHost;
+    private System.Windows.Forms.Label lblBillingPort;
+    private System.Windows.Forms.TextBox txtBillingPort;
+    private System.Windows.Forms.Label lblBillingDb;
+    private System.Windows.Forms.TextBox txtBillingDb;
+    private System.Windows.Forms.Label lblBillingUser;
+    private System.Windows.Forms.TextBox txtBillingUser;
+    private System.Windows.Forms.Label lblBillingPass;
+    private System.Windows.Forms.TextBox txtBillingPass;
 }

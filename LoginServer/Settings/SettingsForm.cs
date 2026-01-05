@@ -23,6 +23,11 @@ public partial class SettingsForm : Form
         txtDbName.Text = _settings.Database.Database;
         txtDbUser.Text = _settings.Database.User;
         txtDbPass.Text = _settings.Database.Password;
+        txtBillingHost.Text = _settings.Database.BillingHost;
+        txtBillingPort.Text = _settings.Database.BillingPort.ToString(CultureInfo.InvariantCulture);
+        txtBillingDb.Text = _settings.Database.BillingDatabase;
+        txtBillingUser.Text = _settings.Database.BillingUser;
+        txtBillingPass.Text = _settings.Database.BillingPassword;
         txtClientPort.Text = _settings.Network.ClientPort.ToString(CultureInfo.InvariantCulture);
         txtAccountHost.Text = _settings.Network.AccountHost;
         txtAccountPort.Text = _settings.Network.AccountPort.ToString(CultureInfo.InvariantCulture);
@@ -41,6 +46,16 @@ public partial class SettingsForm : Form
         _settings.Database.Database = txtDbName.Text.Trim();
         _settings.Database.User = txtDbUser.Text.Trim();
         _settings.Database.Password = txtDbPass.Text;
+        _settings.Database.BillingHost = txtBillingHost.Text.Trim();
+        if (!int.TryParse(txtBillingPort.Text, out var billingPort) || billingPort < 1 || billingPort > 65535)
+        {
+            MessageBox.Show(this, "Billing port must be 1-65535.", "Invalid Port", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return false;
+        }
+        _settings.Database.BillingPort = billingPort;
+        _settings.Database.BillingDatabase = txtBillingDb.Text.Trim();
+        _settings.Database.BillingUser = txtBillingUser.Text.Trim();
+        _settings.Database.BillingPassword = txtBillingPass.Text;
         if (!int.TryParse(txtClientPort.Text, out var cPort) || cPort < 1 || cPort > 65535)
         {
             MessageBox.Show(this, "Client port must be 1-65535.", "Invalid Port", MessageBoxButtons.OK, MessageBoxIcon.Warning);

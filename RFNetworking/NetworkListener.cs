@@ -11,12 +11,12 @@ namespace RFNetworking;
 public sealed class NetworkListener : IAsyncDisposable
 {
     private readonly INetworkHandler _handler;
-    private readonly ConcurrentDictionary<int, SaeaConnection> _connections = new();
-    private readonly ConcurrentQueue<int> _freeIds = new();
+    private readonly ConcurrentDictionary<ulong, SaeaConnection> _connections = new();
+    private readonly ConcurrentQueue<ulong> _freeIds = new();
     private Socket? _listenSocket;
     private CancellationTokenSource? _cts;
     private Task? _acceptLoop;
-    private int _nextId;
+    private long _nextId;
     private readonly int _maxConnections;
 
     public NetworkListener(INetworkHandler handler, int maxConnections = -1)
@@ -93,10 +93,10 @@ public sealed class NetworkListener : IAsyncDisposable
                     continue;
                 }
 
-                int id;
+                ulong id;
                 if (!_freeIds.TryDequeue(out id))
                 {
-                    id = Interlocked.Increment(ref _nextId);
+                    id = (ulong)Interlocked.Increment(ref _nextId);
                 }
 
                 var conn = new SaeaConnection(id, client, _handler, Log);
