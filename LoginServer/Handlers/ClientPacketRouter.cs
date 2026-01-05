@@ -358,7 +358,58 @@ public sealed class ClientPacketRouter
 
     private Task<bool> PushCloseRequest(PublicConnection connection, _push_close_request_cllo request, CancellationToken cancellationToken)
     {
-        _log($"PushCloseRequest from {connection.RemoteEndPoint}");
+        uint idx = (uint)connection.ConnectionId;
+        var session = MainContext.Instance.GetClient(idx);
+        if (session == null)
+        {
+            return Task.FromResult(false);
+        }
+
+        byte retCode = 0;
+        if (session.OverlapUser)
+        {
+            // No MOTP checks yet; always allow.
+        }
+        else
+        {
+            retCode = 200; // -56 in native (overflow)
+        }
+
+        if (retCode != 0)
+        {
+            // Nothing to send on client line; just record and return.
+            MainContext.Instance.RecordPushCloseResult(session.Index, retCode);
+            return Task.FromResult(true);
+        }
+
+        var accountConn = MainContext.Instance.AccountConnection;
+        if (accountConn == null)
+        {
+            return Task.FromResult(false);
+        }
+
+        var send = new _push_close_request_loac
+        {
+            idLocal = new _CLID { wIndex = session.Index, dwSerial = session.ClidSerial },
+            byUserCode = session.LoginCode,
+            dwAccountSerial = session.AccountSerial,
+            dwClientIP = session.ClientIp
+        };
+        byte[] payload = new byte[Marshal.SizeOf<_push_close_request_loac>()];
+        MemoryMarshal.Write(payload.AsSpan(), in send);
+        var env = new PacketEnvelope
+        {
+            OpCode = 1,
+            SubCode = 7,
+            Payload = payload
+        };
+        _ = accountConn.SendAsync(env, cancellationToken);
+
+        // Clear overlap flag as native does.
+        session.OverlapUser = false;
+        session.AccountSerial = uint.MaxValue;
+
+        _log($"PushCloseRequest forwarded for idx={session.Index} serial={session.ClidSerial}");
         return Task.FromResult(true);
     }
 
@@ -403,7 +454,10 @@ public sealed class ClientPacketRouter
         int offset = 0;
         if (buffer.Length < 3) return 0;
         buffer[offset++] = world.IsOpen ? (byte)1 : (byte)0;
-        var nameBytes = Encoding.ASCII.GetBytes(world.Name ?? string.Empty);
+        var name = world.Name ?? string.Empty;
+        int nullIdx = name.IndexOf('\0');
+        if (nullIdx >= 0) name = name.Substring(0, nullIdx);
+        var nameBytes = Encoding.ASCII.GetBytes(name);
         byte nameLen = (byte)Math.Min(255, nameBytes.Length + 1);
         buffer[offset++] = nameLen;
         int copyLen = Math.Min(nameBytes.Length, nameLen - 1);
@@ -711,9 +765,8 @@ public sealed class ClientPacketRouter
             return;
         }
 
-        var req = _login_account_request_loac.FromSession(session);
-        byte[] payload = new byte[Marshal.SizeOf<_login_account_request_loac>()];
-        MemoryMarshal.Write(payload, in req);
+        var req = _login_account_request_loac_blit.FromSession(session);
+        byte[] payload = req.ToArray();
         var env = new PacketEnvelope
         {
             OpCode = 1,

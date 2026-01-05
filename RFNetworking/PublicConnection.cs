@@ -18,6 +18,7 @@ public sealed class PublicConnection
     }
 
     public ulong ConnectionId => _inner.ConnectionId;
+    public uint Serial => _inner.Serial;
 
     public EndPoint? RemoteEndPoint => _socket.RemoteEndPoint;
 

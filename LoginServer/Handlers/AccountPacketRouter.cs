@@ -274,7 +274,7 @@ public sealed class AccountPacketRouter
         var client = session?.Connection;// ?? MainContext.Instance.GetClientConnection(result.idLocal.wIndex);
 
         // If the serial mismatches current session, send a logout request to account server and skip replying to client.
-        if (client != null && session.ClidSerial != result.idLocal.dwSerial)
+        if (client != null && session?.ClidSerial != result.idLocal.dwSerial)
         {
             var logout = new _logout_account_request_loac { gidGlobal = result.gidNewGlobal };
             var payloadLogout = new byte[Marshal.SizeOf<_logout_account_request_loac>()];
@@ -393,23 +393,11 @@ public sealed class AccountPacketRouter
 
         _log($"ForceCloseCommand: index={cmd.idLocal.wIndex} serial={cmd.idLocal.dwSerial}");
 
-        // Mark the session and actively drop the client connection if present.
-        MainContext.Instance.RecordForceClose(cmd.idLocal.wIndex);
+        var session = MainContext.Instance.GetClient(cmd.idLocal.wIndex);
         var target = MainContext.Instance.GetClientConnection(cmd.idLocal.wIndex);
-        if (target != null)
+        if (target == null)
         {
-            try
-            {
-                target.Close();
-            }
-            catch (Exception ex)
-            {
-                _log($"ForceCloseCommand: error closing connection {cmd.idLocal.wIndex}: {ex.Message}");
-            }
-        }
-        else
-        {
-            // If client is missing, notify account line that the close failed (native sends 1/18).
+            // Missing client; notify account that close failed (1/18) and skip.
             var reject = new PacketEnvelope
             {
                 OpCode = 1,
@@ -417,6 +405,23 @@ public sealed class AccountPacketRouter
                 Payload = Array.Empty<byte>()
             };
             _ = connection.SendAsync(reject, cancellationToken);
+            return Task.FromResult(true);
+        }
+
+        if (session != null && session.ClidSerial != cmd.idLocal.dwSerial)
+        {
+            _log($"ForceCloseCommand: serial mismatch session={session.ClidSerial} packet={cmd.idLocal.dwSerial}, closing anyway.");
+        }
+
+        // Mark the session and actively drop the client connection if present.
+        MainContext.Instance.RecordForceClose(cmd.idLocal.wIndex);
+        try
+        {
+            target.Close();
+        }
+        catch (Exception ex)
+        {
+            _log($"ForceCloseCommand: error closing connection {cmd.idLocal.wIndex}: {ex.Message}");
         }
 
         return Task.FromResult(true);

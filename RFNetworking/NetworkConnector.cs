@@ -12,6 +12,9 @@ public sealed class NetworkConnector : IAsyncDisposable
     private SaeaConnection? _connection;
     private CancellationTokenSource? _cts;
     private Task? _runTask;
+    private Task? _pingTask;
+    private TimeSpan _pingInterval = TimeSpan.FromSeconds(2.5);
+    private int _nextSerial;
 
     public NetworkConnector(INetworkHandler handler)
     {
@@ -19,6 +22,14 @@ public sealed class NetworkConnector : IAsyncDisposable
     }
 
     public bool IsConnected => _connection?.Socket.Connected == true;
+    /// <summary>Optional ping packet to send periodically while connected.</summary>
+    public PacketEnvelope PingPacket { get; set; } = new() { OpCode = 101, SubCode = 1, Payload = new byte[] { 0 } };
+    /// <summary>Ping interval (default 2.5s).</summary>
+    public TimeSpan PingInterval
+    {
+        get => _pingInterval;
+        set => _pingInterval = value <= TimeSpan.Zero ? TimeSpan.FromSeconds(2.5) : value;
+    }
 
     public event Action<string>? Log;
 
@@ -34,7 +45,8 @@ public sealed class NetworkConnector : IAsyncDisposable
         await socket.ConnectAsync(host, port, _cts.Token).ConfigureAwait(false);
         socket.NoDelay = true;
 
-        _connection = new SaeaConnection(1, socket, _handler, Log);
+        uint serial = (uint)Interlocked.Increment(ref _nextSerial);
+        _connection = new SaeaConnection(1, serial, socket, _handler, Log);
         _connection.Closed += async (c, ex) => await OnClosedAsync(c, ex).ConfigureAwait(false);
         Log?.Invoke($"Connected to {host}:{port}");
 
@@ -42,6 +54,7 @@ public sealed class NetworkConnector : IAsyncDisposable
         {
             await _connection.OnConnectedAsync(CancellationToken.None).ConfigureAwait(false);
             _connection.StartReceive();
+            StartPingLoop(_cts.Token);
         }, CancellationToken.None);
 
         await Task.Yield();
@@ -67,6 +80,11 @@ public sealed class NetworkConnector : IAsyncDisposable
             await _connection.DisposeAsync().ConfigureAwait(false);
             _connection = null;
         }
+        if (_pingTask != null)
+        {
+            try { await _pingTask.ConfigureAwait(false); } catch (OperationCanceledException) { }
+            _pingTask = null;
+        }
 
         _cts?.Dispose();
         _cts = null;
@@ -78,6 +96,11 @@ public sealed class NetworkConnector : IAsyncDisposable
     {
         await _handler.OnDisconnectedAsync(connection.PublicConnection, CancellationToken.None).ConfigureAwait(false);
         await connection.DisposeAsync().ConfigureAwait(false);
+        if (_pingTask != null)
+        {
+            try { await _pingTask.ConfigureAwait(false); } catch (OperationCanceledException) { }
+            _pingTask = null;
+        }
         if (ex != null)
         {
             Log?.Invoke($"Connector error: {ex.Message}");
@@ -86,6 +109,41 @@ public sealed class NetworkConnector : IAsyncDisposable
         {
             Log?.Invoke("Connector disconnected.");
         }
+    }
+
+    private void StartPingLoop(CancellationToken token)
+    {
+        if (_connection == null) return;
+        if (_pingTask != null && !_pingTask.IsCompleted) return;
+
+        var packet = PingPacket;
+        _pingTask = Task.Run(async () =>
+        {
+            while (!token.IsCancellationRequested && _connection != null)
+            {
+                try
+                {
+                    await _connection.SendAsync(packet, token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    Log?.Invoke($"Connector ping failed: {ex.Message}");
+                }
+
+                try
+                {
+                    await Task.Delay(_pingInterval, token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+            }
+        }, token);
     }
 
     public async ValueTask DisposeAsync()

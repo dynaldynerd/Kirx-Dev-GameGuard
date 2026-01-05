@@ -17,6 +17,7 @@ public sealed class NetworkListener : IAsyncDisposable
     private CancellationTokenSource? _cts;
     private Task? _acceptLoop;
     private long _nextId;
+    private int _nextSerial;
     private readonly int _maxConnections;
 
     public NetworkListener(INetworkHandler handler, int maxConnections = -1)
@@ -30,6 +31,8 @@ public sealed class NetworkListener : IAsyncDisposable
     public int CurrentConnections => _connections.Count;
 
     public event Action<string>? Log;
+    public PacketEnvelope PingPacket { get; set; } = new() { OpCode = 101, SubCode = 1, Payload = new byte[] { 0 } };
+    public TimeSpan PingInterval { get; set; } = TimeSpan.FromSeconds(2.5);
 
     public async Task StartAsync(int port, CancellationToken cancellationToken)
     {
@@ -99,12 +102,14 @@ public sealed class NetworkListener : IAsyncDisposable
                     id = (ulong)Interlocked.Increment(ref _nextId);
                 }
 
-                var conn = new SaeaConnection(id, client, _handler, Log);
+                uint serial = (uint)Interlocked.Increment(ref _nextSerial);
+                var conn = new SaeaConnection(id, serial, client, _handler, Log);
                 _connections[id] = conn;
                 Log?.Invoke($"Client {id} connected from {client.RemoteEndPoint}");
 
                 conn.Closed += async (c, ex) => await OnClosedAsync(c, ex).ConfigureAwait(false);
                 await conn.OnConnectedAsync(CancellationToken.None).ConfigureAwait(false);
+                StartPingLoop(conn);
                 conn.StartReceive();
             }
             catch (OperationCanceledException)
@@ -136,6 +141,11 @@ public sealed class NetworkListener : IAsyncDisposable
         {
             Log?.Invoke($"Client {connection.ConnectionId} disconnected.");
         }
+    }
+
+    private void StartPingLoop(SaeaConnection conn)
+    {
+        conn.StartPing(PingPacket, PingInterval, Log);
     }
 
     public async ValueTask DisposeAsync()

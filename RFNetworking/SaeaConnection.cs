@@ -16,10 +16,13 @@ internal sealed class SaeaConnection : IAsyncDisposable
     private readonly SemaphoreSlim _sendLock = new(1, 1);
     private int _received;
     private bool _disposed;
+    private Task? _pingTask;
+    private CancellationTokenSource? _pingCts;
 
-    public SaeaConnection(ulong id, Socket socket, INetworkHandler handler, Action<string>? log)
+    public SaeaConnection(ulong id, uint serial, Socket socket, INetworkHandler handler, Action<string>? log)
     {
         ConnectionId = id;
+        Serial = serial;
         _socket = socket;
         _handler = handler;
         _internalProcessor = new InternalPacketProcessor(log);
@@ -34,6 +37,7 @@ internal sealed class SaeaConnection : IAsyncDisposable
 
     public ulong ConnectionId { get; }
     public Action<string>? Log { get; }
+    public uint Serial { get; }
     internal PublicConnection PublicConnection => _publicConnection;
     internal Socket Socket => _socket;
 
@@ -188,10 +192,53 @@ internal sealed class SaeaConnection : IAsyncDisposable
         Close(ex);
     }
 
+    internal void StartPing(PacketEnvelope packet, TimeSpan interval, Action<string>? log)
+    {
+        if (_pingTask != null && !_pingTask.IsCompleted) return;
+        _pingCts?.Cancel();
+        _pingCts?.Dispose();
+        _pingCts = new CancellationTokenSource();
+        var token = _pingCts.Token;
+        _pingTask = Task.Run(async () =>
+        {
+            while (!token.IsCancellationRequested && !_disposed)
+            {
+                try
+                {
+                    await SendAsync(packet, token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    log?.Invoke($"Ping error: {ex.Message}");
+                    break;
+                }
+
+                try
+                {
+                    await Task.Delay(interval, token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+            }
+        }, token);
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_disposed) return;
         _disposed = true;
+        _pingCts?.Cancel();
+        if (_pingTask != null)
+        {
+            try { await _pingTask.ConfigureAwait(false); } catch (OperationCanceledException) { }
+        }
+        _pingCts?.Dispose();
         try { _socket.Shutdown(SocketShutdown.Both); } catch { }
         try { _socket.Dispose(); } catch { }
         BufferPool.Return(_buffer);

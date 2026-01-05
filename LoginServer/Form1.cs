@@ -1,7 +1,9 @@
 using LoginServer.Handlers;
+using LoginServer.Packets;
 using LoginServer.Settings;
 using LoginServer.State;
 using RFNetworking;
+using System.Runtime.InteropServices;
 
 namespace LoginServer;
 
@@ -17,7 +19,7 @@ public partial class MainWindow : Form
     private AccountPacketRouter? _accountRouter;
     private bool _verboseLog = true;
     private Task? _accountReconnectTask;
-    private Task? _accountPingTask;
+    private bool _isStopping;
 
     public MainWindow()
     {
@@ -41,8 +43,9 @@ public partial class MainWindow : Form
     {
         startButton.Enabled = false;
         stopButton.Enabled = true;
-        statusLabel.Text = "Status: Starting...";
+        UpdateStatus("Status: Starting...");
 
+        _isStopping = false;
         _cts = new CancellationTokenSource();
 
         _clientRouter = new ClientPacketRouter(AppendLog, _settings);
@@ -58,9 +61,7 @@ public partial class MainWindow : Form
 
         try
         {
-            await EnsureAccountConnectedAsync(_cts.Token).ConfigureAwait(true);
-            await StartClientListenerAsync(_cts.Token).ConfigureAwait(true);
-            statusLabel.Text = $"Status: Listening on {_settings.Network.ClientPort}, account {_settings.Network.AccountHost}:{_settings.Network.AccountPort}";
+            await ConnectAccountAsync(_cts.Token).ConfigureAwait(true);
         }
         catch (Exception ex)
         {
@@ -77,7 +78,7 @@ public partial class MainWindow : Form
         stopButton.Enabled = false;
         startButton.Enabled = true;
         await StopAllAsync();
-        statusLabel.Text = "Status: Stopped";
+        UpdateStatus("Status: Stopped");
     }
 
     private async Task StopAllAsync()
@@ -117,7 +118,6 @@ public partial class MainWindow : Form
         _clientRouter = null;
         _accountRouter = null;
         _accountReconnectTask = null;
-        _accountPingTask = null;
     }
 
     private void AppendLog(string message)
@@ -142,6 +142,16 @@ public partial class MainWindow : Form
                message.IndexOf("warn", StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
+    private void UpdateStatus(string text)
+    {
+        if (InvokeRequired)
+        {
+            BeginInvoke(() => UpdateStatus(text));
+            return;
+        }
+        statusLabel.Text = text;
+    }
+
     private void OnOpenSettings(object? sender, EventArgs e)
     {
         using var form = new SettingsForm(_settings);
@@ -162,34 +172,14 @@ public partial class MainWindow : Form
         _verboseLog = verboseLogToolStripMenuItem.Checked;
     }
 
-    private async Task EnsureAccountConnectedAsync(CancellationToken token)
+    private async Task ConnectAccountAsync(CancellationToken token)
     {
-        while (!token.IsCancellationRequested)
-        {
-            try
-            {
-                AppendLog($"Connecting to account server {_settings.Network.AccountHost}:{_settings.Network.AccountPort}...");
-                await _accountConnector!.ConnectAsync(_settings.Network.AccountHost, _settings.Network.AccountPort, token).ConfigureAwait(false);
-                statusLabel.Text = $"Status: Account connected {_settings.Network.AccountHost}:{_settings.Network.AccountPort}";
-                return;
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                AppendLog($"Account connect failed: {ex.Message}, retrying in 5s");
-                try
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(5), token).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException)
-                {
-                    throw;
-                }
-            }
-        }
+        if (_accountConnector == null || token.IsCancellationRequested) return;
+        if (_accountConnector.IsConnected) return;
+
+        AppendLog($"Connecting to account server {_settings.Network.AccountHost}:{_settings.Network.AccountPort}...");
+        await _accountConnector.ConnectAsync(_settings.Network.AccountHost, _settings.Network.AccountPort, token).ConfigureAwait(false);
+            UpdateStatus($"Status: Account connected {_settings.Network.AccountHost}:{_settings.Network.AccountPort}");
     }
 
     private async Task StartClientListenerAsync(CancellationToken token)
@@ -215,12 +205,12 @@ public partial class MainWindow : Form
 
     private async void OnAccountConnected()
     {
-        if (_cts == null) return;
+        if (_cts == null || _isStopping) return;
         try
         {
             await SendWorldListRequestAsync(_cts.Token).ConfigureAwait(false);
-            StartAccountPingLoop(_cts.Token);
             await StartClientListenerAsync(_cts.Token).ConfigureAwait(false);
+            UpdateStatus($"Status: Listening on {_settings.Network.ClientPort}, account {_settings.Network.AccountHost}:{_settings.Network.AccountPort}");
         }
         catch (Exception ex)
         {
@@ -231,6 +221,7 @@ public partial class MainWindow : Form
 
     private async void OnAccountDisconnected()
     {
+        if (_isStopping) return;
         AppendLog("Account server disconnected; stopping client listener and retrying...");
         await StopClientListenerAsync().ConfigureAwait(false);
 
@@ -243,10 +234,8 @@ public partial class MainWindow : Form
         {
             try
             {
-                await EnsureAccountConnectedAsync(_cts.Token).ConfigureAwait(false);
-                await SendWorldListRequestAsync(_cts.Token).ConfigureAwait(false);
-                StartAccountPingLoop(_cts.Token);
-                await StartClientListenerAsync(_cts.Token).ConfigureAwait(false);
+                await Task.Delay(TimeSpan.FromSeconds(1), _cts.Token).ConfigureAwait(false);
+                await ConnectAccountAsync(_cts.Token).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -278,49 +267,6 @@ public partial class MainWindow : Form
         {
             AppendLog($"World list request send failed: {ex.Message}");
         }
-    }
-
-    private void StartAccountPingLoop(CancellationToken token)
-    {
-        if (_accountPingTask != null && !_accountPingTask.IsCompleted) return;
-
-        _accountPingTask = Task.Run(async () =>
-        {
-            while (!token.IsCancellationRequested)
-            {
-                var conn = MainContext.Instance.AccountConnection;
-                if (conn == null)
-                {
-                    await Task.Delay(1000, token).ConfigureAwait(false);
-                    continue;
-                }
-
-                var env = new PacketEnvelope
-                {
-                    OpCode = 101,
-                    SubCode = 1,
-                    Payload = Array.Empty<byte>()
-                };
-
-                try
-                {
-                    await conn.SendAsync(env, token).ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    AppendLog($"Account ping failed: {ex.Message}");
-                }
-
-                try
-                {
-                    await Task.Delay(2500, token).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-            }
-        }, token);
     }
 
     private sealed class LoginHandler : NetworkHandlerBase
@@ -362,6 +308,25 @@ public partial class MainWindow : Form
             _log($"{_role} disconnected (id {connection.ConnectionId})");
             if (_clientRouter != null)
             {
+                var session = MainContext.Instance.GetClient((uint)connection.ConnectionId);
+                if (session != null && !session.SelectedWorld && session.GlobalId.dwSerial != uint.MaxValue)
+                {
+                    var accountConn = MainContext.Instance.AccountConnection;
+                    if (accountConn != null)
+                    {
+                        var logout = new _logout_account_request_loac { gidGlobal = session.GlobalId };
+                        var payload = new byte[Marshal.SizeOf<_logout_account_request_loac>()];
+                        MemoryMarshal.Write(payload.AsSpan(), in logout);
+                        var env = new PacketEnvelope
+                        {
+                            OpCode = 1,
+                            SubCode = 9,
+                            Payload = payload
+                        };
+                        _ = accountConn.SendAsync(env, cancellationToken);
+                    }
+                }
+
                 MainContext.Instance.UnregisterClientConnection(connection);
             }
             if (_accountRouter != null)

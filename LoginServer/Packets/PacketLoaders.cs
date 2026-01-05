@@ -121,7 +121,7 @@ public partial struct _login_account_result_aclo
 {
     public bool Load(byte[] payload)
     {
-        if (payload.Length < 60) return false;
+        if (payload.Length < 59) return false;
         idLocal = new _CLID
         {
             wIndex = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(0, 2)),

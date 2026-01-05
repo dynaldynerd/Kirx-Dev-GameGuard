@@ -67,7 +67,7 @@ public sealed class MainContext
         uint idx = (uint)connection.ConnectionId;
         var session = _clients.GetOrAdd(idx, i => new ClientSession((ushort)i));
         session.Connection = connection;
-        session.ClidSerial++;
+        session.ClidSerial = connection.Serial;
     }
 
     public void UnregisterClientConnection(PublicConnection connection)

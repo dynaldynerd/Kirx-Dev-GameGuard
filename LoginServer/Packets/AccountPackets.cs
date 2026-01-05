@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace LoginServer.Packets;
@@ -121,6 +122,93 @@ public partial struct _login_account_request_loac
         PacketStringUtil.FillFixed(req.szPassword, session.Password);
         // szCMS left zeroed
         return req;
+    }
+}
+
+/// <summary>
+/// Blittable form of login_account_request_loac for fast serialization.
+/// </summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public unsafe struct _login_account_request_loac_blit
+{
+    public _CLID idLocal;
+    public byte byUserCode;
+    public fixed byte szAccountID[13];
+    public fixed byte szPassword[13];
+    public uint dwClientIP;
+    public byte bCheckDoubleIP;
+    public short iType;
+    public fixed byte szCMS[7];
+    public int lRemainTime;
+    public ushort wYear;
+    public ushort wMonth;
+    public ushort wDayOfWeek;
+    public ushort wDay;
+    public ushort wHour;
+    public ushort wMinute;
+    public ushort wSecond;
+    public ushort wMilliseconds;
+    public int authtype;
+    public int nTrans;
+    public byte bPrimium;
+    public byte bAgeLimit;
+    public byte bCancelWebUILockBlock;
+
+    public static _login_account_request_loac_blit FromSession(State.ClientSession session)
+    {
+        var req = new _login_account_request_loac_blit
+        {
+            idLocal = new _CLID { wIndex = session.Index, dwSerial = session.ClidSerial },
+            byUserCode = session.LoginCode,
+            dwClientIP = session.ClientIp,
+            bCheckDoubleIP = 1,
+            iType = (short)session.BillType,
+            lRemainTime = session.RemainTime,
+            wYear = 0,
+            wMonth = 0,
+            wDayOfWeek = 0,
+            wDay = 0,
+            wHour = 0,
+            wMinute = 0,
+            wSecond = 0,
+            wMilliseconds = 0,
+            authtype = 0,
+            nTrans = session.Trans,
+            bPrimium = (byte)(session.IsPremium ? 1 : 0),
+            bAgeLimit = 0,
+            bCancelWebUILockBlock = 0
+        };
+
+        FillFixed(req.szAccountID, 13, session.AccountId);
+        FillFixed(req.szPassword, 13, session.Password);
+        // szCMS left zeroed
+        return req;
+    }
+
+    public byte[] ToArray()
+    {
+        var size = Unsafe.SizeOf<_login_account_request_loac_blit>();
+        var buffer = new byte[size];
+        fixed (byte* dst = buffer)
+        {
+            fixed (_login_account_request_loac_blit* src = &this)
+            {
+                Unsafe.CopyBlockUnaligned(dst, src, (uint)size);
+            }
+        }
+        return buffer;
+    }
+
+    private static void FillFixed(byte* target, int length, string value)
+    {
+        for (int i = 0; i < length; i++) target[i] = 0;
+        if (string.IsNullOrEmpty(value)) return;
+        var bytes = System.Text.Encoding.ASCII.GetBytes(value);
+        int copy = Math.Min(bytes.Length, length);
+        for (int i = 0; i < copy; i++)
+        {
+            target[i] = bytes[i];
+        }
     }
 }
 
