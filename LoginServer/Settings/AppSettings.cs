@@ -70,4 +70,9 @@ public sealed class NetworkSettings
     public string AccountHost { get; set; } = "127.0.0.1";
     public int AccountPort { get; set; } = 27000;
     public int MaxConnections { get; set; } = -1;
+
+    /// <summary>
+    /// User-count thresholds for load indicators (low/med/high). Length must be 3, ascending.
+    /// </summary>
+    public int[] UserLoadThresholds { get; set; } = new[] { 500, 1000, 1500 };
 }

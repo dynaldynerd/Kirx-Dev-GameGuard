@@ -32,6 +32,10 @@ public partial class SettingsForm : Form
         txtAccountHost.Text = _settings.Network.AccountHost;
         txtAccountPort.Text = _settings.Network.AccountPort.ToString(CultureInfo.InvariantCulture);
         txtMaxConn.Text = _settings.Network.MaxConnections.ToString(CultureInfo.InvariantCulture);
+        var loads = _settings.Network.UserLoadThresholds ?? Array.Empty<int>();
+        txtLoadLow.Text = (loads.Length > 0 ? loads[0] : 500).ToString(CultureInfo.InvariantCulture);
+        txtLoadMid.Text = (loads.Length > 1 ? loads[1] : 1000).ToString(CultureInfo.InvariantCulture);
+        txtLoadHigh.Text = (loads.Length > 2 ? loads[2] : 1500).ToString(CultureInfo.InvariantCulture);
     }
 
     private bool SaveToSettings()
@@ -76,6 +80,16 @@ public partial class SettingsForm : Form
         _settings.Network.AccountHost = txtAccountHost.Text.Trim();
         _settings.Network.AccountPort = aPort;
         _settings.Network.MaxConnections = maxConn;
+        if (!int.TryParse(txtLoadLow.Text, out var load0) ||
+            !int.TryParse(txtLoadMid.Text, out var load1) ||
+            !int.TryParse(txtLoadHigh.Text, out var load2) ||
+            load0 < 0 || load1 < 0 || load2 < 0 ||
+            !(load0 < load1 && load1 < load2))
+        {
+            MessageBox.Show(this, "User load thresholds must be ascending non-negative integers.", "Invalid Value", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return false;
+        }
+        _settings.Network.UserLoadThresholds = new[] { load0, load1, load2 };
         return true;
     }
 

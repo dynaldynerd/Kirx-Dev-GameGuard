@@ -46,6 +46,22 @@ public struct _free_server_inform_locl
     }
 }
 
+/// <summary>Login -> Client: user count indicator per world.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct _world_user_inform_locl
+{
+    public byte byServiceWorldNum;
+
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 40)]
+    public ushort[] wUserNum;
+
+    public _world_user_inform_locl()
+    {
+        this = default;
+        wUserNum = new ushort[40];
+    }
+}
+
 /// <summary>Login -> Client: MOTP validation reply.</summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public struct _motp_validation_reply_locl

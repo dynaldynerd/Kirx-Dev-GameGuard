@@ -47,6 +47,12 @@ partial class SettingsForm
         txtAccountPort = new TextBox();
         lblMaxConn = new Label();
         txtMaxConn = new TextBox();
+        lblLoadLow = new Label();
+        lblLoadMid = new Label();
+        lblLoadHigh = new Label();
+        txtLoadLow = new TextBox();
+        txtLoadMid = new TextBox();
+        txtLoadHigh = new TextBox();
         SuspendLayout();
         // 
         // btnSave
@@ -327,11 +333,71 @@ partial class SettingsForm
         txtMaxConn.Size = new Size(85, 23);
         txtMaxConn.TabIndex = 6;
         //
+        // lblLoadLow
+        //
+        lblLoadLow.AutoSize = true;
+        lblLoadLow.Location = new Point(14, 200);
+        lblLoadLow.Margin = new Padding(2, 0, 2, 0);
+        lblLoadLow.Name = "lblLoadLow";
+        lblLoadLow.Size = new Size(105, 15);
+        lblLoadLow.TabIndex = 25;
+        lblLoadLow.Text = "User load low/med/high";
+        //
+        // txtLoadLow
+        //
+        txtLoadLow.Location = new Point(126, 197);
+        txtLoadLow.Margin = new Padding(2, 2, 2, 2);
+        txtLoadLow.Name = "txtLoadLow";
+        txtLoadLow.Size = new Size(60, 23);
+        txtLoadLow.TabIndex = 7;
+        //
+        // lblLoadMid
+        //
+        lblLoadMid.AutoSize = true;
+        lblLoadMid.Location = new Point(190, 200);
+        lblLoadMid.Margin = new Padding(2, 0, 2, 0);
+        lblLoadMid.Name = "lblLoadMid";
+        lblLoadMid.Size = new Size(12, 15);
+        lblLoadMid.TabIndex = 26;
+        lblLoadMid.Text = "/";
+        //
+        // txtLoadMid
+        //
+        txtLoadMid.Location = new Point(206, 197);
+        txtLoadMid.Margin = new Padding(2, 2, 2, 2);
+        txtLoadMid.Name = "txtLoadMid";
+        txtLoadMid.Size = new Size(60, 23);
+        txtLoadMid.TabIndex = 8;
+        //
+        // lblLoadHigh
+        //
+        lblLoadHigh.AutoSize = true;
+        lblLoadHigh.Location = new Point(270, 200);
+        lblLoadHigh.Margin = new Padding(2, 0, 2, 0);
+        lblLoadHigh.Name = "lblLoadHigh";
+        lblLoadHigh.Size = new Size(12, 15);
+        lblLoadHigh.TabIndex = 27;
+        lblLoadHigh.Text = "/";
+        //
+        // txtLoadHigh
+        //
+        txtLoadHigh.Location = new Point(286, 197);
+        txtLoadHigh.Margin = new Padding(2, 2, 2, 2);
+        txtLoadHigh.Name = "txtLoadHigh";
+        txtLoadHigh.Size = new Size(60, 23);
+        txtLoadHigh.TabIndex = 9;
+        //
         // SettingsForm
         //
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(596, 286);
+        ClientSize = new Size(596, 312);
+        Controls.Add(txtLoadHigh);
+        Controls.Add(lblLoadHigh);
+        Controls.Add(txtLoadMid);
+        Controls.Add(lblLoadMid);
+        Controls.Add(txtLoadLow);
+        Controls.Add(lblLoadLow);
         Controls.Add(txtBillingPass);
         Controls.Add(lblBillingPass);
         Controls.Add(txtBillingUser);
@@ -406,4 +472,10 @@ partial class SettingsForm
     private System.Windows.Forms.TextBox txtBillingUser;
     private System.Windows.Forms.Label lblBillingPass;
     private System.Windows.Forms.TextBox txtBillingPass;
+    private System.Windows.Forms.Label lblLoadLow;
+    private System.Windows.Forms.Label lblLoadMid;
+    private System.Windows.Forms.Label lblLoadHigh;
+    private System.Windows.Forms.TextBox txtLoadLow;
+    private System.Windows.Forms.TextBox txtLoadMid;
+    private System.Windows.Forms.TextBox txtLoadHigh;
 }

@@ -1,7 +1,9 @@
 using System;
 using System.Buffers.Binary;
+using System.Collections.Generic;
 using System.Data;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using LoginServer.Data.Contexts;
@@ -20,10 +22,12 @@ namespace LoginServer.Handlers;
 public sealed class ClientPacketRouter
 {
     private readonly Action<string> _log;
+    private readonly AppSettings _settings;
 
-    public ClientPacketRouter(Action<string> log, int nationCode = 410)
+    public ClientPacketRouter(Action<string> log, AppSettings settings, int nationCode = 410)
     {
         _log = log;
+        _settings = settings;
         NationCode = nationCode;
     }
 
@@ -159,7 +163,101 @@ public sealed class ClientPacketRouter
 
     private Task<bool> WorldListRequest(PublicConnection connection, _world_list_request_cllo request, CancellationToken cancellationToken)
     {
-        _log($"WorldListRequest from {connection.RemoteEndPoint} clientVer={request.dwClientVersion}");
+        uint idx = (uint)connection.ConnectionId;
+        var session = MainContext.Instance.GetClient(idx);
+        if (session == null)
+        {
+            return Task.FromResult(false);
+        }
+
+        byte retCode = 0;
+
+        if (!session.IsLogin)
+        {
+            retCode = 3;
+        }
+        else if (session.RegisteredWorld)
+        {
+            retCode = 31;
+        }
+
+        session.RegisteredWorld = true;
+
+        var worlds = MainContext.Instance.Worlds;
+        int limit = MainContext.Instance.WorldCount;
+        if (MainContext.Instance.ServiceWorldNum > 0 && MainContext.Instance.ServiceWorldNum < limit)
+        {
+            limit = MainContext.Instance.ServiceWorldNum;
+        }
+
+        // Build list payload
+        Span<byte> listBuffer = stackalloc byte[4095];
+        int dataUsed = 0;
+        var userLevels = new List<ushort>();
+        var freeFlags = new List<byte>();
+
+        if (session.ServerType == 1)
+        {
+            var world = FindWorldByType(worlds, limit, 1);
+            if (world == null)
+            {
+                retCode = 31;
+            }
+            else
+            {
+                listBuffer[0] = 1; // world count
+                dataUsed = 1 + AppendWorldEntry(listBuffer.Slice(1), world.Value);
+                userLevels.Add(MapUserLoad(world.Value.UserCount));
+                freeFlags.Add((byte)(world.Value.FreeServer ? 1 : 0));
+            }
+        }
+        else
+        {
+            int included = 0;
+            listBuffer[0] = 0; // placeholder for count
+            int offset = 1;
+            for (int i = 0; i < limit && i < worlds.Count; i++)
+            {
+                var world = worlds[i];
+                if (world.Type == 1 || world.Type == 2)
+                {
+                    continue;
+                }
+                included++;
+                int written = AppendWorldEntry(listBuffer.Slice(offset), world);
+                offset += written;
+                userLevels.Add(MapUserLoad(world.UserCount));
+                freeFlags.Add((byte)(world.FreeServer ? 1 : 0));
+                if (offset >= listBuffer.Length) break;
+            }
+
+            if (included == 0)
+            {
+                retCode = 31;
+                offset = 0;
+            }
+            else
+            {
+                listBuffer[0] = (byte)included;
+            }
+            dataUsed = offset;
+        }
+
+        if (dataUsed > listBuffer.Length) dataUsed = listBuffer.Length;
+
+        var listPacket = new _world_list_result_locl
+        {
+            byRetCode = retCode,
+            wDataSize = (ushort)Math.Min(dataUsed, 4095)
+        };
+        if (listPacket.wDataSize > 0)
+        {
+            listBuffer.Slice(0, listPacket.wDataSize).CopyTo(listPacket.sListData);
+        }
+
+        _ = SendWorldListResultAsync(connection, listPacket, cancellationToken);
+        _ = SendWorldUserInformAsync(connection, (byte)userLevels.Count, userLevels, cancellationToken);
+        _ = SendFreeServerInformAsync(connection, (byte)freeFlags.Count, freeFlags, cancellationToken);
         return Task.FromResult(true);
     }
 
@@ -209,6 +307,109 @@ public sealed class ClientPacketRouter
         session.PlusKey = (byte)(plusKey + 1);
         session.XorKey = (ushort)(xorKey + 3);
         return Task.FromResult(true);
+    }
+
+    private static int AppendWorldEntry(Span<byte> buffer, WorldData world)
+    {
+        int offset = 0;
+        if (buffer.Length < 3) return 0;
+        buffer[offset++] = world.IsOpen ? (byte)1 : (byte)0;
+        var nameBytes = Encoding.ASCII.GetBytes(world.Name ?? string.Empty);
+        byte nameLen = (byte)Math.Min(255, nameBytes.Length + 1);
+        buffer[offset++] = nameLen;
+        int copyLen = Math.Min(nameBytes.Length, nameLen - 1);
+        copyLen = Math.Min(copyLen, buffer.Length - offset - 2);
+        if (copyLen > 0)
+        {
+            nameBytes.AsSpan(0, copyLen).CopyTo(buffer.Slice(offset));
+        }
+        offset += copyLen;
+        if (offset < buffer.Length) buffer[offset++] = 0;
+        if (offset < buffer.Length) buffer[offset++] = world.Type;
+        return offset;
+    }
+
+    private static WorldData? FindWorldByType(IReadOnlyList<WorldData> worlds, int limit, byte type)
+    {
+        for (int i = 0; i < limit && i < worlds.Count; i++)
+        {
+            if (worlds[i].Type == type)
+            {
+                return worlds[i];
+            }
+        }
+        return null;
+    }
+
+    private ushort MapUserLoad(int count)
+    {
+        var thresholds = _settings.Network.UserLoadThresholds ?? Array.Empty<int>();
+        int t0 = thresholds.Length > 0 ? thresholds[0] : 500;
+        int t1 = thresholds.Length > 1 ? thresholds[1] : 1000;
+        int t2 = thresholds.Length > 2 ? thresholds[2] : 1500;
+
+        if (count >= t2) return 3;
+        if (count >= t1) return 2;
+        if (count >= t0) return 1;
+        return 0;
+    }
+
+    private static Task SendWorldListResultAsync(PublicConnection connection, _world_list_result_locl data, CancellationToken token)
+    {
+        int size = 3 + data.wDataSize; // 4098 - (4095 - wDataSize)
+        var payload = new byte[size];
+        payload[0] = data.byRetCode;
+        BinaryPrimitives.WriteUInt16LittleEndian(payload.AsSpan(1, 2), data.wDataSize);
+        if (data.wDataSize > 0)
+        {
+            Buffer.BlockCopy(data.sListData, 0, payload, 3, data.wDataSize);
+        }
+
+        var env = new PacketEnvelope
+        {
+            OpCode = 21,
+            SubCode = 6,
+            Payload = payload
+        };
+        return connection.SendAsync(env, token);
+    }
+
+    private static Task SendWorldUserInformAsync(PublicConnection connection, byte serviceWorldNum, IReadOnlyList<ushort> userLevels, CancellationToken token)
+    {
+        int count = Math.Min(serviceWorldNum, userLevels.Count);
+        var payload = new byte[1 + count * 2];
+        payload[0] = serviceWorldNum;
+        for (int i = 0; i < count; i++)
+        {
+            BinaryPrimitives.WriteUInt16LittleEndian(payload.AsSpan(1 + i * 2, 2), userLevels[i]);
+        }
+
+        var env = new PacketEnvelope
+        {
+            OpCode = 21,
+            SubCode = 66,
+            Payload = payload
+        };
+        return connection.SendAsync(env, token);
+    }
+
+    private static Task SendFreeServerInformAsync(PublicConnection connection, byte serviceWorldNum, IReadOnlyList<byte> freeFlags, CancellationToken token)
+    {
+        int count = Math.Min(serviceWorldNum, freeFlags.Count);
+        var payload = new byte[1 + count];
+        payload[0] = serviceWorldNum;
+        for (int i = 0; i < count; i++)
+        {
+            payload[1 + i] = freeFlags[i];
+        }
+
+        var env = new PacketEnvelope
+        {
+            OpCode = 21,
+            SubCode = 67,
+            Payload = payload
+        };
+        return connection.SendAsync(env, token);
     }
 
     private Task<bool> MotpValidationRequest(PublicConnection connection, _motp_validation_request_cllo request, CancellationToken cancellationToken)

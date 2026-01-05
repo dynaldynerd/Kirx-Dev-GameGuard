@@ -45,7 +45,7 @@ public partial class MainWindow : Form
 
         _cts = new CancellationTokenSource();
 
-        _clientRouter = new ClientPacketRouter(AppendLog);
+        _clientRouter = new ClientPacketRouter(AppendLog, _settings);
         _clientHandler = new LoginHandler("Client", AppendLog, _clientRouter, null);
         _clientListener = new NetworkListener(_clientHandler, _settings.Network.MaxConnections);
         _clientListener.Log += AppendLog;
