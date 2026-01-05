@@ -360,7 +360,7 @@ public sealed class AccountPacketRouter
             dwWorldGateIP = gateIp,
             wWorldGatePort = gatePort,
             dwWorldMasterKey = result.dwWorldMasterKey,
-            bAllowAltTab = false
+            bAllowAltTab = true
         };
         var buffer = send.ToArray();
         var env = new PacketEnvelope
