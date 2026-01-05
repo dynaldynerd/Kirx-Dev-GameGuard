@@ -24,14 +24,11 @@ public sealed class ClientPacketRouter
     private readonly Action<string> _log;
     private readonly AppSettings _settings;
 
-    public ClientPacketRouter(Action<string> log, AppSettings settings, int nationCode = 410)
+    public ClientPacketRouter(Action<string> log, AppSettings settings)
     {
         _log = log;
         _settings = settings;
-        NationCode = nationCode;
     }
-
-    public int NationCode { get; set; }
 
     public async Task<bool> HandleAsync(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
     {
@@ -81,13 +78,9 @@ public sealed class ClientPacketRouter
                 return await CryptKeyRequest(connection, req, cancellationToken).ConfigureAwait(false);
             }
             case 15:
-                // Allowed no-op for nation 410 in the native implementation.
-                if (NationCode == 410)
-                {
-                    _log("Client opcode 21/15 accepted (nation 410 noop).");
-                    return true;
-                }
-                return false;
+                // Historically nation-specific noop; we accept it universally.
+                _log("Client opcode 21/15 accepted (noop).");
+                return true;
             case 17:
             {
                 var req = new _motp_validation_request_cllo();
@@ -263,7 +256,103 @@ public sealed class ClientPacketRouter
 
     private Task<bool> SelectWorldRequest(PublicConnection connection, _select_world_request_cllo request, CancellationToken cancellationToken)
     {
-        _log($"SelectWorldRequest from {connection.RemoteEndPoint} worldIndex={request.wWorldIndex}");
+        uint idx = (uint)connection.ConnectionId;
+        var session = MainContext.Instance.GetClient(idx);
+        if (session == null)
+        {
+            return Task.FromResult(false);
+        }
+
+        byte retCode = 0;
+        int worldIndex = request.wWorldIndex;
+
+        if (!session.IsLogin)
+        {
+            retCode = 3;
+        }
+        else if (!session.RegisteredWorld)
+        {
+            retCode = 32;
+        }
+        // No nation-specific gating.
+
+        var worlds = MainContext.Instance.Worlds;
+        int worldLimit = MainContext.Instance.WorldCount;
+
+        if (worldIndex >= worldLimit)
+        {
+            return Task.FromResult(false);
+        }
+
+        if (retCode == 0 && session.ServerType == 1)
+        {
+            int testIdx = FindTestWorld(worlds, worldLimit);
+            if (testIdx < 0)
+            {
+                retCode = 34;
+            }
+            else
+            {
+                worldIndex = testIdx;
+            }
+        }
+
+        if (retCode == 0)
+        {
+            if (worldIndex < 0 || worldIndex >= worldLimit || worldIndex >= worlds.Count)
+            {
+                retCode = 34;
+            }
+            else
+            {
+                var world = worlds[worldIndex];
+                if (!world.IsOpen)
+                {
+                    retCode = 29;
+                }
+                else if (world.Type == 3 && !session.IsAdult)
+                {
+                    retCode = 72;
+                }
+                // Skip nation-specific caps/billing rules.
+            }
+        }
+
+        if (retCode != 0)
+        {
+            SendSelectWorldResult(connection, retCode, cancellationToken);
+            return Task.FromResult(true);
+        }
+
+        var accountConn = MainContext.Instance.AccountConnection;
+        if (accountConn == null)
+        {
+            SendSelectWorldResult(connection, 24, cancellationToken);
+            return Task.FromResult(true);
+        }
+
+        session.SelectedWorld = true;
+        session.SelectedWorldCode = worldIndex;
+
+        var send = new _select_world_request_loac
+        {
+            gidGlobal = session.GlobalId,
+            wWorldIndex = (ushort)worldIndex,
+            dwClientIP = session.ClientIp,
+            dwRequestMoveCharacterSerialList = new uint[3],
+            dwRTournamentCharacterSerialList = new uint[3]
+        };
+
+        var payload = new byte[Marshal.SizeOf<_select_world_request_loac>()];
+        MemoryMarshal.Write(payload.AsSpan(), in send);
+        var env = new PacketEnvelope
+        {
+            OpCode = 1,
+            SubCode = 5,
+            Payload = payload
+        };
+        _ = accountConn.SendAsync(env, cancellationToken);
+        _log($"SelectWorldRequest from {connection.RemoteEndPoint} worldIndex={worldIndex}");
         return Task.FromResult(true);
     }
 
@@ -339,6 +428,39 @@ public sealed class ClientPacketRouter
             }
         }
         return null;
+    }
+
+    private static int FindTestWorld(IReadOnlyList<WorldData> worlds, int limit)
+    {
+        for (int i = 0; i < limit && i < worlds.Count; i++)
+        {
+            if (worlds[i].Type == 1)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void SendSelectWorldResult(PublicConnection connection, byte retCode, CancellationToken token)
+    {
+        var result = new _select_world_result_locl
+        {
+            byRetCode = retCode,
+            dwWorldGateIP = 0,
+            wWorldGatePort = 0,
+            dwWorldMasterKey = new uint[4],
+            bAllowAltTab = false
+        };
+        var buffer = new byte[Marshal.SizeOf<_select_world_result_locl>()];
+        MemoryMarshal.Write(buffer.AsSpan(), in result);
+        var env = new PacketEnvelope
+        {
+            OpCode = 21,
+            SubCode = 8,
+            Payload = buffer
+        };
+        _ = connection.SendAsync(env, token);
     }
 
     private ushort MapUserLoad(int count)

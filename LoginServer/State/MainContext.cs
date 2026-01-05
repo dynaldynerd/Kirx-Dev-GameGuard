@@ -232,6 +232,7 @@ public sealed class ClientSession
     public bool OverlapUser { get; set; }
     public int SelectedWorldCode { get; set; } = -1;
     public _GLBID GlobalId { get; set; }
+    public bool IsAdult { get; set; } = true;
 }
 
 public struct ManageLimitWorldInfo
