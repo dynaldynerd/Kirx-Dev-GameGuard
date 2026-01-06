@@ -6,9 +6,16 @@ namespace LoginServer.Packets;
 
 /// <summary>Client -> Login: select world request.</summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public partial struct _select_world_request_cllo
+public struct _select_world_request_cllo
 {
     public ushort wWorldIndex;
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 2) return false;
+        wWorldIndex = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(0, 2));
+        return true;
+    }
 }
 
 /// <summary>Login -> Client: close/push result.</summary>
@@ -107,7 +114,7 @@ public struct _motp_validation_reply_locl
 
 /// <summary>Client -> Login: account login request.</summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public partial struct _login_account_request_cllo
+public struct _login_account_request_cllo
 {
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
     public byte[] szAccountID;
@@ -123,11 +130,20 @@ public partial struct _login_account_request_cllo
         szAccountID = new byte[13];
         szPassword = new byte[13];
     }
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 27) return false;
+        Buffer.BlockCopy(payload, 0, szAccountID, 0, 13);
+        Buffer.BlockCopy(payload, 13, szPassword, 0, 13);
+        byServerType = payload[26];
+        return true;
+    }
 }
 
 /// <summary>Client -> Login: account join/create request.</summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public partial struct _join_account_request_cllo
+public struct _join_account_request_cllo
 {
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
     public byte[] szAccountID;
@@ -140,6 +156,14 @@ public partial struct _join_account_request_cllo
         this = default;
         szAccountID = new byte[13];
         szPassword = new byte[13];
+    }
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 26) return false;
+        Buffer.BlockCopy(payload, 0, szAccountID, 0, 13);
+        Buffer.BlockCopy(payload, 13, szPassword, 0, 13);
+        return true;
     }
 }
 
@@ -214,7 +238,6 @@ public struct _select_world_result_locl
 
     public byte[] ToArray()
     {
-        // Pack=1 manual layout to ensure size stays correct (1+4+2+16+1=24 bytes).
         var buffer = new byte[24];
         buffer[0] = byRetCode;
         BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(1, 4), dwWorldGateIP);
@@ -286,14 +309,21 @@ public struct _join_account_result_locl
 
 /// <summary>Client -> Login: world list request.</summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public partial struct _world_list_request_cllo
+public struct _world_list_request_cllo
 {
     public uint dwClientVersion;
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 4) return false;
+        dwClientVersion = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(0, 4));
+        return true;
+    }
 }
 
 /// <summary>Client -> Login: MOTP validation request.</summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public partial struct _motp_validation_request_cllo
+public struct _motp_validation_request_cllo
 {
     public byte byType;
 
@@ -304,6 +334,14 @@ public partial struct _motp_validation_request_cllo
     {
         this = default;
         szMOTP = new byte[13];
+    }
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 14) return false;
+        byType = payload[0];
+        Buffer.BlockCopy(payload, 1, szMOTP, 0, 13);
+        return true;
     }
 }
 
@@ -325,7 +363,7 @@ public struct _crypty_key_inform_locl
 
 /// <summary>Client -> Login: manage account auth request.</summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public partial struct _manage_account_auth_request_cllo
+public struct _manage_account_auth_request_cllo
 {
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
     public byte[] byBin;
@@ -335,11 +373,18 @@ public partial struct _manage_account_auth_request_cllo
         this = default;
         byBin = new byte[32];
     }
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 32) return false;
+        Buffer.BlockCopy(payload, 0, byBin, 0, 32);
+        return true;
+    }
 }
 
 /// <summary>Client -> Login: push close request.</summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public partial struct _push_close_request_cllo
+public struct _push_close_request_cllo
 {
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
     public byte[] szAccountID;
@@ -353,24 +398,35 @@ public partial struct _push_close_request_cllo
         szAccountID = new byte[13];
         szPassword = new byte[13];
     }
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 26) return false;
+        Buffer.BlockCopy(payload, 0, szAccountID, 0, 13);
+        Buffer.BlockCopy(payload, 13, szPassword, 0, 13);
+        return true;
+    }
 }
 
 /// <summary>Client -> Login: crypt key request.</summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public partial struct _crypty_key_request_cllo
+public struct _crypty_key_request_cllo
 {
+    public bool Load(byte[] payload) => true;
 }
 
 /// <summary>Client -> Login: manage client limit run request.</summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public partial struct _manage_client_limit_run_request_cllo
+public struct _manage_client_limit_run_request_cllo
 {
+    public bool Load(byte[] payload) => true;
 }
 
 /// <summary>Client -> Login: manage client force exit request.</summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public partial struct _manage_client_force_exit_request_cllo
+public struct _manage_client_force_exit_request_cllo
 {
+    public bool Load(byte[] payload) => true;
 }
 
 /// <summary>Login -> Client: notify manage account auth info.</summary>
