@@ -8,26 +8,40 @@ namespace LoginServer.Settings;
 public partial class SettingsForm : Form
 {
     private readonly AppSettings _settings;
+    private readonly DatabaseSnapshot _userDb;
+    private readonly DatabaseSnapshot _billingDb;
 
     public SettingsForm(AppSettings settings)
     {
         _settings = settings;
+        _userDb = new DatabaseSnapshot
+        {
+            Host = settings.Database.Host,
+            Port = settings.Database.Port,
+            Database = settings.Database.Database,
+            User = settings.Database.User,
+            Password = settings.Database.Password,
+            Trusted = settings.Database.TrustedConnection
+        };
+        _billingDb = new DatabaseSnapshot
+        {
+            Host = settings.Database.BillingHost,
+            Port = settings.Database.BillingPort,
+            Database = settings.Database.BillingDatabase,
+            User = settings.Database.BillingUser,
+            Password = settings.Database.BillingPassword,
+            Trusted = settings.Database.BillingTrustedConnection
+        };
         InitializeComponent();
         LoadFromSettings();
     }
 
     private void LoadFromSettings()
     {
-        txtDbHost.Text = _settings.Database.Host;
-        txtDbPort.Text = _settings.Database.Port.ToString(CultureInfo.InvariantCulture);
-        txtDbName.Text = _settings.Database.Database;
-        txtDbUser.Text = _settings.Database.User;
-        txtDbPass.Text = _settings.Database.Password;
-        txtBillingHost.Text = _settings.Database.BillingHost;
-        txtBillingPort.Text = _settings.Database.BillingPort.ToString(CultureInfo.InvariantCulture);
-        txtBillingDb.Text = _settings.Database.BillingDatabase;
-        txtBillingUser.Text = _settings.Database.BillingUser;
-        txtBillingPass.Text = _settings.Database.BillingPassword;
+        cboDbProfile.Items.Clear();
+        cboDbProfile.Items.AddRange(new object[] { "User DB", "Billing DB" });
+        cboDbProfile.SelectedIndex = 0;
+        LoadDbProfileToControls();
         txtClientPort.Text = _settings.Network.ClientPort.ToString(CultureInfo.InvariantCulture);
         txtAccountHost.Text = _settings.Network.AccountHost;
         txtAccountPort.Text = _settings.Network.AccountPort.ToString(CultureInfo.InvariantCulture);
@@ -40,26 +54,25 @@ public partial class SettingsForm : Form
 
     private bool SaveToSettings()
     {
-        _settings.Database.Host = txtDbHost.Text.Trim();
-        if (!int.TryParse(txtDbPort.Text, out var dbPort) || dbPort < 1 || dbPort > 65535)
+        if (!SaveCurrentDbProfile())
         {
-            MessageBox.Show(this, "DB port must be 1-65535.", "Invalid Port", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return false;
         }
-        _settings.Database.Port = dbPort;
-        _settings.Database.Database = txtDbName.Text.Trim();
-        _settings.Database.User = txtDbUser.Text.Trim();
-        _settings.Database.Password = txtDbPass.Text;
-        _settings.Database.BillingHost = txtBillingHost.Text.Trim();
-        if (!int.TryParse(txtBillingPort.Text, out var billingPort) || billingPort < 1 || billingPort > 65535)
-        {
-            MessageBox.Show(this, "Billing port must be 1-65535.", "Invalid Port", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return false;
-        }
-        _settings.Database.BillingPort = billingPort;
-        _settings.Database.BillingDatabase = txtBillingDb.Text.Trim();
-        _settings.Database.BillingUser = txtBillingUser.Text.Trim();
-        _settings.Database.BillingPassword = txtBillingPass.Text;
+
+        _settings.Database.Host = _userDb.Host;
+        _settings.Database.Port = _userDb.Port;
+        _settings.Database.Database = _userDb.Database;
+        _settings.Database.User = _userDb.User;
+        _settings.Database.Password = _userDb.Password;
+        _settings.Database.TrustedConnection = _userDb.Trusted;
+
+        _settings.Database.BillingHost = _billingDb.Host;
+        _settings.Database.BillingPort = _billingDb.Port;
+        _settings.Database.BillingDatabase = _billingDb.Database;
+        _settings.Database.BillingUser = _billingDb.User;
+        _settings.Database.BillingPassword = _billingDb.Password;
+        _settings.Database.BillingTrustedConnection = _billingDb.Trusted;
+
         if (!int.TryParse(txtClientPort.Text, out var cPort) || cPort < 1 || cPort > 65535)
         {
             MessageBox.Show(this, "Client port must be 1-65535.", "Invalid Port", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -93,6 +106,59 @@ public partial class SettingsForm : Form
         return true;
     }
 
+    private void LoadDbProfileToControls()
+    {
+        var db = cboDbProfile.SelectedIndex == 1 ? _billingDb : _userDb;
+        txtDbHost.Text = db.Host;
+        txtDbPort.Text = db.Port.ToString(CultureInfo.InvariantCulture);
+        txtDbName.Text = db.Database;
+        txtDbUser.Text = db.User;
+        txtDbPass.Text = db.Password;
+        radAuthTrusted.Checked = db.Trusted;
+        radAuthSql.Checked = !db.Trusted;
+        UpdateAuthFields();
+    }
+
+    private bool SaveCurrentDbProfile()
+    {
+        if (!int.TryParse(txtDbPort.Text, out var port) || port < 1 || port > 65535)
+        {
+            MessageBox.Show(this, "DB port must be 1-65535.", "Invalid Port", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return false;
+        }
+
+        var db = cboDbProfile.SelectedIndex == 1 ? _billingDb : _userDb;
+        db.Host = txtDbHost.Text.Trim();
+        db.Port = port;
+        db.Database = txtDbName.Text.Trim();
+        db.User = txtDbUser.Text.Trim();
+        db.Password = txtDbPass.Text;
+        db.Trusted = radAuthTrusted.Checked;
+        return true;
+    }
+
+    private void OnDbProfileChanged(object? sender, EventArgs e)
+    {
+        // Save current profile before switching
+        if (!SaveCurrentDbProfile())
+        {
+            return;
+        }
+        LoadDbProfileToControls();
+    }
+
+    private void OnAuthModeChanged(object? sender, EventArgs e)
+    {
+        UpdateAuthFields();
+    }
+
+    private void UpdateAuthFields()
+    {
+        bool sqlAuth = radAuthSql.Checked;
+        txtDbUser.Enabled = sqlAuth;
+        txtDbPass.Enabled = sqlAuth;
+    }
+
     private void OnSave(object? sender, EventArgs e)
     {
         if (!SaveToSettings())
@@ -109,4 +175,14 @@ public partial class SettingsForm : Form
         DialogResult = DialogResult.Cancel;
         Close();
     }
+}
+
+internal class DatabaseSnapshot
+{
+    public string Host { get; set; } = string.Empty;
+    public int Port { get; set; }
+    public string Database { get; set; } = string.Empty;
+    public string User { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+    public bool Trusted { get; set; }
 }

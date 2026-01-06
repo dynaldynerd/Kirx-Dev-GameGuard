@@ -17,465 +17,467 @@ partial class SettingsForm
 
     private void InitializeComponent()
     {
-        btnSave = new Button();
-        btnCancel = new Button();
-        lblDbHost = new Label();
-        txtDbHost = new TextBox();
-        lblDbPort = new Label();
-        txtDbPort = new TextBox();
-        lblDbName = new Label();
-        txtDbName = new TextBox();
-        lblDbUser = new Label();
-        txtDbUser = new TextBox();
-        lblDbPass = new Label();
-        txtDbPass = new TextBox();
-        lblBillingHost = new Label();
-        txtBillingHost = new TextBox();
-        lblBillingPort = new Label();
-        txtBillingPort = new TextBox();
-        lblBillingDb = new Label();
-        txtBillingDb = new TextBox();
-        lblBillingUser = new Label();
-        txtBillingUser = new TextBox();
-        lblBillingPass = new Label();
-        txtBillingPass = new TextBox();
-        lblClientPort = new Label();
-        txtClientPort = new TextBox();
-        lblAccountHost = new Label();
-        txtAccountHost = new TextBox();
-        lblAccountPort = new Label();
-        txtAccountPort = new TextBox();
-        lblMaxConn = new Label();
-        txtMaxConn = new TextBox();
-        lblLoadLow = new Label();
-        lblLoadMid = new Label();
-        lblLoadHigh = new Label();
-        txtLoadLow = new TextBox();
-        txtLoadMid = new TextBox();
-        txtLoadHigh = new TextBox();
+        tabMain = new System.Windows.Forms.TabControl();
+        tabDatabase = new System.Windows.Forms.TabPage();
+        grpAuth = new System.Windows.Forms.GroupBox();
+        radAuthTrusted = new System.Windows.Forms.RadioButton();
+        radAuthSql = new System.Windows.Forms.RadioButton();
+        lblDbPass = new System.Windows.Forms.Label();
+        txtDbPass = new System.Windows.Forms.TextBox();
+        lblDbUser = new System.Windows.Forms.Label();
+        txtDbUser = new System.Windows.Forms.TextBox();
+        lblDbName = new System.Windows.Forms.Label();
+        txtDbName = new System.Windows.Forms.TextBox();
+        lblDbPort = new System.Windows.Forms.Label();
+        txtDbPort = new System.Windows.Forms.TextBox();
+        lblDbHost = new System.Windows.Forms.Label();
+        txtDbHost = new System.Windows.Forms.TextBox();
+        lblDbProfile = new System.Windows.Forms.Label();
+        cboDbProfile = new System.Windows.Forms.ComboBox();
+        tabConnection = new System.Windows.Forms.TabPage();
+        lblLoadHighSep = new System.Windows.Forms.Label();
+        txtLoadHigh = new System.Windows.Forms.TextBox();
+        lblLoadMidSep = new System.Windows.Forms.Label();
+        txtLoadMid = new System.Windows.Forms.TextBox();
+        txtLoadLow = new System.Windows.Forms.TextBox();
+        lblLoadLow = new System.Windows.Forms.Label();
+        txtMaxConn = new System.Windows.Forms.TextBox();
+        lblMaxConn = new System.Windows.Forms.Label();
+        txtAccountPort = new System.Windows.Forms.TextBox();
+        lblAccountPort = new System.Windows.Forms.Label();
+        txtAccountHost = new System.Windows.Forms.TextBox();
+        lblAccountHost = new System.Windows.Forms.Label();
+        txtClientPort = new System.Windows.Forms.TextBox();
+        lblClientPort = new System.Windows.Forms.Label();
+        btnSave = new System.Windows.Forms.Button();
+        btnCancel = new System.Windows.Forms.Button();
+        tabMain.SuspendLayout();
+        tabDatabase.SuspendLayout();
+        grpAuth.SuspendLayout();
+        tabConnection.SuspendLayout();
         SuspendLayout();
         // 
-        // btnSave
+        // tabMain
         // 
-        btnSave.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-        btnSave.Location = new Point(438, 255);
-        btnSave.Margin = new Padding(2, 2, 2, 2);
-        btnSave.Name = "btnSave";
-        btnSave.Size = new Size(78, 20);
-        btnSave.TabIndex = 14;
-        btnSave.Text = "Save";
-        btnSave.UseVisualStyleBackColor = true;
-        btnSave.Click += OnSave;
-        //
-        // btnCancel
-        //
-        btnCancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-        btnCancel.Location = new Point(355, 255);
-        btnCancel.Margin = new Padding(2, 2, 2, 2);
-        btnCancel.Name = "btnCancel";
-        btnCancel.Size = new Size(78, 20);
-        btnCancel.TabIndex = 15;
-        btnCancel.Text = "Cancel";
-        btnCancel.UseVisualStyleBackColor = true;
-        btnCancel.Click += OnCancel;
-        //
-        // lblDbHost
+        tabMain.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+        tabMain.Controls.Add(tabDatabase);
+        tabMain.Controls.Add(tabConnection);
+        tabMain.Location = new System.Drawing.Point(10, 10);
+        tabMain.Margin = new System.Windows.Forms.Padding(2);
+        tabMain.Name = "tabMain";
+        tabMain.SelectedIndex = 0;
+        tabMain.Size = new System.Drawing.Size(520, 260);
+        tabMain.TabIndex = 0;
         // 
-        lblDbHost.AutoSize = true;
-        lblDbHost.Location = new Point(14, 12);
-        lblDbHost.Margin = new Padding(2, 0, 2, 0);
-        lblDbHost.Name = "lblDbHost";
-        lblDbHost.Size = new Size(50, 15);
-        lblDbHost.TabIndex = 0;
-        lblDbHost.Text = "DB Host";
+        // tabDatabase
         // 
-        // txtDbHost
+        tabDatabase.Controls.Add(grpAuth);
+        tabDatabase.Controls.Add(lblDbPass);
+        tabDatabase.Controls.Add(txtDbPass);
+        tabDatabase.Controls.Add(lblDbUser);
+        tabDatabase.Controls.Add(txtDbUser);
+        tabDatabase.Controls.Add(lblDbName);
+        tabDatabase.Controls.Add(txtDbName);
+        tabDatabase.Controls.Add(lblDbPort);
+        tabDatabase.Controls.Add(txtDbPort);
+        tabDatabase.Controls.Add(lblDbHost);
+        tabDatabase.Controls.Add(txtDbHost);
+        tabDatabase.Controls.Add(lblDbProfile);
+        tabDatabase.Controls.Add(cboDbProfile);
+        tabDatabase.Location = new System.Drawing.Point(4, 24);
+        tabDatabase.Margin = new System.Windows.Forms.Padding(2);
+        tabDatabase.Name = "tabDatabase";
+        tabDatabase.Padding = new System.Windows.Forms.Padding(8);
+        tabDatabase.Size = new System.Drawing.Size(512, 232);
+        tabDatabase.TabIndex = 0;
+        tabDatabase.Text = "Database";
+        tabDatabase.UseVisualStyleBackColor = true;
         // 
-        txtDbHost.Location = new Point(77, 10);
-        txtDbHost.Margin = new Padding(2, 2, 2, 2);
-        txtDbHost.Name = "txtDbHost";
-        txtDbHost.Size = new Size(141, 23);
-        txtDbHost.TabIndex = 1;
+        // grpAuth
         // 
-        // lblDbPort
+        grpAuth.Controls.Add(radAuthTrusted);
+        grpAuth.Controls.Add(radAuthSql);
+        grpAuth.Location = new System.Drawing.Point(11, 140);
+        grpAuth.Margin = new System.Windows.Forms.Padding(2);
+        grpAuth.Name = "grpAuth";
+        grpAuth.Padding = new System.Windows.Forms.Padding(8);
+        grpAuth.Size = new System.Drawing.Size(182, 78);
+        grpAuth.TabIndex = 12;
+        grpAuth.TabStop = false;
+        grpAuth.Text = "Authentication";
         // 
-        lblDbPort.AutoSize = true;
-        lblDbPort.Location = new Point(231, 12);
-        lblDbPort.Margin = new Padding(2, 0, 2, 0);
-        lblDbPort.Name = "lblDbPort";
-        lblDbPort.Size = new Size(29, 15);
-        lblDbPort.TabIndex = 2;
-        lblDbPort.Text = "Port";
+        // radAuthTrusted
         // 
-        // txtDbPort
+        radAuthTrusted.AutoSize = true;
+        radAuthTrusted.Location = new System.Drawing.Point(11, 49);
+        radAuthTrusted.Margin = new System.Windows.Forms.Padding(2);
+        radAuthTrusted.Name = "radAuthTrusted";
+        radAuthTrusted.Size = new System.Drawing.Size(118, 19);
+        radAuthTrusted.TabIndex = 1;
+        radAuthTrusted.TabStop = true;
+        radAuthTrusted.Text = "Trusted (Windows)";
+        radAuthTrusted.UseVisualStyleBackColor = true;
+        radAuthTrusted.CheckedChanged += OnAuthModeChanged;
         // 
-        txtDbPort.Location = new Point(266, 10);
-        txtDbPort.Margin = new Padding(2, 2, 2, 2);
-        txtDbPort.Name = "txtDbPort";
-        txtDbPort.Size = new Size(57, 23);
-        txtDbPort.TabIndex = 2;
+        // radAuthSql
         // 
-        // lblDbName
-        // 
-        lblDbName.AutoSize = true;
-        lblDbName.Location = new Point(14, 38);
-        lblDbName.Margin = new Padding(2, 0, 2, 0);
-        lblDbName.Name = "lblDbName";
-        lblDbName.Size = new Size(40, 15);
-        lblDbName.TabIndex = 3;
-        lblDbName.Text = "DB DB";
-        // 
-        // txtDbName
-        // 
-        txtDbName.Location = new Point(77, 36);
-        txtDbName.Margin = new Padding(2, 2, 2, 2);
-        txtDbName.Name = "txtDbName";
-        txtDbName.Size = new Size(141, 23);
-        txtDbName.TabIndex = 3;
-        // 
-        // lblDbUser
-        // 
-        lblDbUser.AutoSize = true;
-        lblDbUser.Location = new Point(14, 65);
-        lblDbUser.Margin = new Padding(2, 0, 2, 0);
-        lblDbUser.Name = "lblDbUser";
-        lblDbUser.Size = new Size(48, 15);
-        lblDbUser.TabIndex = 4;
-        lblDbUser.Text = "DB User";
-        // 
-        // txtDbUser
-        // 
-        txtDbUser.Location = new Point(77, 62);
-        txtDbUser.Margin = new Padding(2, 2, 2, 2);
-        txtDbUser.Name = "txtDbUser";
-        txtDbUser.Size = new Size(141, 23);
-        txtDbUser.TabIndex = 4;
+        radAuthSql.AutoSize = true;
+        radAuthSql.Location = new System.Drawing.Point(11, 23);
+        radAuthSql.Margin = new System.Windows.Forms.Padding(2);
+        radAuthSql.Name = "radAuthSql";
+        radAuthSql.Size = new System.Drawing.Size(99, 19);
+        radAuthSql.TabIndex = 0;
+        radAuthSql.TabStop = true;
+        radAuthSql.Text = "SQL username";
+        radAuthSql.UseVisualStyleBackColor = true;
+        radAuthSql.CheckedChanged += OnAuthModeChanged;
         // 
         // lblDbPass
         // 
         lblDbPass.AutoSize = true;
-        lblDbPass.Location = new Point(14, 91);
-        lblDbPass.Margin = new Padding(2, 0, 2, 0);
+        lblDbPass.Location = new System.Drawing.Point(221, 113);
+        lblDbPass.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
         lblDbPass.Name = "lblDbPass";
-        lblDbPass.Size = new Size(48, 15);
-        lblDbPass.TabIndex = 5;
-        lblDbPass.Text = "DB Pass";
+        lblDbPass.Size = new System.Drawing.Size(63, 15);
+        lblDbPass.TabIndex = 11;
+        lblDbPass.Text = "Password";
         // 
         // txtDbPass
         // 
-        txtDbPass.Location = new Point(77, 89);
-        txtDbPass.Margin = new Padding(2, 2, 2, 2);
+        txtDbPass.Location = new System.Drawing.Point(298, 110);
+        txtDbPass.Margin = new System.Windows.Forms.Padding(2);
         txtDbPass.Name = "txtDbPass";
-        txtDbPass.Size = new Size(141, 23);
-        txtDbPass.TabIndex = 5;
+        txtDbPass.Size = new System.Drawing.Size(191, 23);
+        txtDbPass.TabIndex = 10;
         txtDbPass.UseSystemPasswordChar = true;
-        //
-        // lblBillingHost
-        //
-        lblBillingHost.AutoSize = true;
-        lblBillingHost.Location = new Point(231, 38);
-        lblBillingHost.Margin = new Padding(2, 0, 2, 0);
-        lblBillingHost.Name = "lblBillingHost";
-        lblBillingHost.Size = new Size(68, 15);
-        lblBillingHost.TabIndex = 16;
-        lblBillingHost.Text = "Billing Host";
-        //
-        // txtBillingHost
-        //
-        txtBillingHost.Location = new Point(313, 36);
-        txtBillingHost.Margin = new Padding(2, 2, 2, 2);
-        txtBillingHost.Name = "txtBillingHost";
-        txtBillingHost.Size = new Size(141, 23);
-        txtBillingHost.TabIndex = 6;
-        //
-        // lblBillingPort
-        //
-        lblBillingPort.AutoSize = true;
-        lblBillingPort.Location = new Point(465, 38);
-        lblBillingPort.Margin = new Padding(2, 0, 2, 0);
-        lblBillingPort.Name = "lblBillingPort";
-        lblBillingPort.Size = new Size(29, 15);
-        lblBillingPort.TabIndex = 18;
-        lblBillingPort.Text = "Port";
-        //
-        // txtBillingPort
-        //
-        txtBillingPort.Location = new Point(501, 36);
-        txtBillingPort.Margin = new Padding(2, 2, 2, 2);
-        txtBillingPort.Name = "txtBillingPort";
-        txtBillingPort.Size = new Size(57, 23);
-        txtBillingPort.TabIndex = 7;
-        //
-        // lblBillingDb
-        //
-        lblBillingDb.AutoSize = true;
-        lblBillingDb.Location = new Point(231, 65);
-        lblBillingDb.Margin = new Padding(2, 0, 2, 0);
-        lblBillingDb.Name = "lblBillingDb";
-        lblBillingDb.Size = new Size(64, 15);
-        lblBillingDb.TabIndex = 20;
-        lblBillingDb.Text = "Billing DB";
-        //
-        // txtBillingDb
-        //
-        txtBillingDb.Location = new Point(313, 62);
-        txtBillingDb.Margin = new Padding(2, 2, 2, 2);
-        txtBillingDb.Name = "txtBillingDb";
-        txtBillingDb.Size = new Size(141, 23);
-        txtBillingDb.TabIndex = 8;
-        //
-        // lblBillingUser
-        //
-        lblBillingUser.AutoSize = true;
-        lblBillingUser.Location = new Point(231, 91);
-        lblBillingUser.Margin = new Padding(2, 0, 2, 0);
-        lblBillingUser.Name = "lblBillingUser";
-        lblBillingUser.Size = new Size(72, 15);
-        lblBillingUser.TabIndex = 22;
-        lblBillingUser.Text = "Billing User";
-        //
-        // txtBillingUser
-        //
-        txtBillingUser.Location = new Point(313, 89);
-        txtBillingUser.Margin = new Padding(2, 2, 2, 2);
-        txtBillingUser.Name = "txtBillingUser";
-        txtBillingUser.Size = new Size(141, 23);
-        txtBillingUser.TabIndex = 9;
-        //
-        // lblBillingPass
-        //
-        lblBillingPass.AutoSize = true;
-        lblBillingPass.Location = new Point(231, 117);
-        lblBillingPass.Margin = new Padding(2, 0, 2, 0);
-        lblBillingPass.Name = "lblBillingPass";
-        lblBillingPass.Size = new Size(72, 15);
-        lblBillingPass.TabIndex = 24;
-        lblBillingPass.Text = "Billing Pass";
-        //
-        // txtBillingPass
-        //
-        txtBillingPass.Location = new Point(313, 115);
-        txtBillingPass.Margin = new Padding(2, 2, 2, 2);
-        txtBillingPass.Name = "txtBillingPass";
-        txtBillingPass.Size = new Size(141, 23);
-        txtBillingPass.TabIndex = 10;
-        txtBillingPass.UseSystemPasswordChar = true;
-        //
-        // lblClientPort
-        //
-        lblClientPort.AutoSize = true;
-        lblClientPort.Location = new Point(14, 120);
-        lblClientPort.Margin = new Padding(2, 0, 2, 0);
-        lblClientPort.Name = "lblClientPort";
-        lblClientPort.Size = new Size(63, 15);
-        lblClientPort.TabIndex = 2;
-        lblClientPort.Text = "Client Port";
         // 
-        // txtClientPort
+        // lblDbUser
         // 
-        txtClientPort.Location = new Point(98, 118);
-        txtClientPort.Margin = new Padding(2, 2, 2, 2);
-        txtClientPort.Name = "txtClientPort";
-        txtClientPort.Size = new Size(85, 23);
-        txtClientPort.TabIndex = 3;
-        //
-        // lblAccountHost
+        lblDbUser.AutoSize = true;
+        lblDbUser.Location = new System.Drawing.Point(221, 83);
+        lblDbUser.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+        lblDbUser.Name = "lblDbUser";
+        lblDbUser.Size = new System.Drawing.Size(66, 15);
+        lblDbUser.TabIndex = 9;
+        lblDbUser.Text = "User name";
         // 
-        lblAccountHost.AutoSize = true;
-        lblAccountHost.Location = new Point(14, 146);
-        lblAccountHost.Margin = new Padding(2, 0, 2, 0);
-        lblAccountHost.Name = "lblAccountHost";
-        lblAccountHost.Size = new Size(80, 15);
-        lblAccountHost.TabIndex = 4;
-        lblAccountHost.Text = "Account Host";
+        // txtDbUser
         // 
-        // txtAccountHost
+        txtDbUser.Location = new System.Drawing.Point(298, 80);
+        txtDbUser.Margin = new System.Windows.Forms.Padding(2);
+        txtDbUser.Name = "txtDbUser";
+        txtDbUser.Size = new System.Drawing.Size(191, 23);
+        txtDbUser.TabIndex = 8;
         // 
-        txtAccountHost.Location = new Point(98, 144);
-        txtAccountHost.Margin = new Padding(2, 2, 2, 2);
-        txtAccountHost.Name = "txtAccountHost";
-        txtAccountHost.Size = new Size(113, 23);
-        txtAccountHost.TabIndex = 4;
-        //
-        // lblAccountPort
+        // lblDbName
         // 
-        lblAccountPort.AutoSize = true;
-        lblAccountPort.Location = new Point(224, 146);
-        lblAccountPort.Margin = new Padding(2, 0, 2, 0);
-        lblAccountPort.Name = "lblAccountPort";
-        lblAccountPort.Size = new Size(29, 15);
-        lblAccountPort.TabIndex = 6;
-        lblAccountPort.Text = "Port";
+        lblDbName.AutoSize = true;
+        lblDbName.Location = new System.Drawing.Point(8, 113);
+        lblDbName.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+        lblDbName.Name = "lblDbName";
+        lblDbName.Size = new System.Drawing.Size(77, 15);
+        lblDbName.TabIndex = 7;
+        lblDbName.Text = "Database DB";
         // 
-        // txtAccountPort
+        // txtDbName
         // 
-        txtAccountPort.Location = new Point(259, 144);
-        txtAccountPort.Margin = new Padding(2, 2, 2, 2);
-        txtAccountPort.Name = "txtAccountPort";
-        txtAccountPort.Size = new Size(64, 23);
-        txtAccountPort.TabIndex = 5;
-        //
+        txtDbName.Location = new System.Drawing.Point(93, 110);
+        txtDbName.Margin = new System.Windows.Forms.Padding(2);
+        txtDbName.Name = "txtDbName";
+        txtDbName.Size = new System.Drawing.Size(110, 23);
+        txtDbName.TabIndex = 6;
+        // 
+        // lblDbPort
+        // 
+        lblDbPort.AutoSize = true;
+        lblDbPort.Location = new System.Drawing.Point(221, 54);
+        lblDbPort.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+        lblDbPort.Name = "lblDbPort";
+        lblDbPort.Size = new System.Drawing.Size(29, 15);
+        lblDbPort.TabIndex = 5;
+        lblDbPort.Text = "Port";
+        // 
+        // txtDbPort
+        // 
+        txtDbPort.Location = new System.Drawing.Point(298, 51);
+        txtDbPort.Margin = new System.Windows.Forms.Padding(2);
+        txtDbPort.Name = "txtDbPort";
+        txtDbPort.Size = new System.Drawing.Size(74, 23);
+        txtDbPort.TabIndex = 4;
+        // 
+        // lblDbHost
+        // 
+        lblDbHost.AutoSize = true;
+        lblDbHost.Location = new System.Drawing.Point(8, 54);
+        lblDbHost.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+        lblDbHost.Name = "lblDbHost";
+        lblDbHost.Size = new System.Drawing.Size(64, 15);
+        lblDbHost.TabIndex = 3;
+        lblDbHost.Text = "DB Server";
+        // 
+        // txtDbHost
+        // 
+        txtDbHost.Location = new System.Drawing.Point(93, 51);
+        txtDbHost.Margin = new System.Windows.Forms.Padding(2);
+        txtDbHost.Name = "txtDbHost";
+        txtDbHost.Size = new System.Drawing.Size(110, 23);
+        txtDbHost.TabIndex = 2;
+        // 
+        // lblDbProfile
+        // 
+        lblDbProfile.AutoSize = true;
+        lblDbProfile.Location = new System.Drawing.Point(8, 19);
+        lblDbProfile.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+        lblDbProfile.Name = "lblDbProfile";
+        lblDbProfile.Size = new System.Drawing.Size(42, 15);
+        lblDbProfile.TabIndex = 1;
+        lblDbProfile.Text = "Profile";
+        // 
+        // cboDbProfile
+        // 
+        cboDbProfile.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+        cboDbProfile.FormattingEnabled = true;
+        cboDbProfile.Location = new System.Drawing.Point(93, 16);
+        cboDbProfile.Margin = new System.Windows.Forms.Padding(2);
+        cboDbProfile.Name = "cboDbProfile";
+        cboDbProfile.Size = new System.Drawing.Size(150, 23);
+        cboDbProfile.TabIndex = 0;
+        cboDbProfile.SelectedIndexChanged += OnDbProfileChanged;
+        // 
+        // tabConnection
+        // 
+        tabConnection.Controls.Add(lblLoadHighSep);
+        tabConnection.Controls.Add(txtLoadHigh);
+        tabConnection.Controls.Add(lblLoadMidSep);
+        tabConnection.Controls.Add(txtLoadMid);
+        tabConnection.Controls.Add(txtLoadLow);
+        tabConnection.Controls.Add(lblLoadLow);
+        tabConnection.Controls.Add(txtMaxConn);
+        tabConnection.Controls.Add(lblMaxConn);
+        tabConnection.Controls.Add(txtAccountPort);
+        tabConnection.Controls.Add(lblAccountPort);
+        tabConnection.Controls.Add(txtAccountHost);
+        tabConnection.Controls.Add(lblAccountHost);
+        tabConnection.Controls.Add(txtClientPort);
+        tabConnection.Controls.Add(lblClientPort);
+        tabConnection.Location = new System.Drawing.Point(4, 24);
+        tabConnection.Margin = new System.Windows.Forms.Padding(2);
+        tabConnection.Name = "tabConnection";
+        tabConnection.Padding = new System.Windows.Forms.Padding(8);
+        tabConnection.Size = new System.Drawing.Size(512, 232);
+        tabConnection.TabIndex = 1;
+        tabConnection.Text = "Connection";
+        tabConnection.UseVisualStyleBackColor = true;
+        // 
+        // lblLoadHighSep
+        // 
+        lblLoadHighSep.AutoSize = true;
+        lblLoadHighSep.Location = new System.Drawing.Point(266, 151);
+        lblLoadHighSep.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+        lblLoadHighSep.Name = "lblLoadHighSep";
+        lblLoadHighSep.Size = new System.Drawing.Size(12, 15);
+        lblLoadHighSep.TabIndex = 13;
+        lblLoadHighSep.Text = "/";
+        // 
+        // txtLoadHigh
+        // 
+        txtLoadHigh.Location = new System.Drawing.Point(282, 147);
+        txtLoadHigh.Margin = new System.Windows.Forms.Padding(2);
+        txtLoadHigh.Name = "txtLoadHigh";
+        txtLoadHigh.Size = new System.Drawing.Size(60, 23);
+        txtLoadHigh.TabIndex = 6;
+        // 
+        // lblLoadMidSep
+        // 
+        lblLoadMidSep.AutoSize = true;
+        lblLoadMidSep.Location = new System.Drawing.Point(190, 151);
+        lblLoadMidSep.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+        lblLoadMidSep.Name = "lblLoadMidSep";
+        lblLoadMidSep.Size = new System.Drawing.Size(12, 15);
+        lblLoadMidSep.TabIndex = 11;
+        lblLoadMidSep.Text = "/";
+        // 
+        // txtLoadMid
+        // 
+        txtLoadMid.Location = new System.Drawing.Point(206, 147);
+        txtLoadMid.Margin = new System.Windows.Forms.Padding(2);
+        txtLoadMid.Name = "txtLoadMid";
+        txtLoadMid.Size = new System.Drawing.Size(60, 23);
+        txtLoadMid.TabIndex = 5;
+        // 
+        // txtLoadLow
+        // 
+        txtLoadLow.Location = new System.Drawing.Point(124, 147);
+        txtLoadLow.Margin = new System.Windows.Forms.Padding(2);
+        txtLoadLow.Name = "txtLoadLow";
+        txtLoadLow.Size = new System.Drawing.Size(60, 23);
+        txtLoadLow.TabIndex = 4;
+        // 
+        // lblLoadLow
+        // 
+        lblLoadLow.AutoSize = true;
+        lblLoadLow.Location = new System.Drawing.Point(10, 151);
+        lblLoadLow.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+        lblLoadLow.Name = "lblLoadLow";
+        lblLoadLow.Size = new System.Drawing.Size(110, 15);
+        lblLoadLow.TabIndex = 9;
+        lblLoadLow.Text = "User load low/med/high";
+        // 
+        // txtMaxConn
+        // 
+        txtMaxConn.Location = new System.Drawing.Point(124, 105);
+        txtMaxConn.Margin = new System.Windows.Forms.Padding(2);
+        txtMaxConn.Name = "txtMaxConn";
+        txtMaxConn.Size = new System.Drawing.Size(85, 23);
+        txtMaxConn.TabIndex = 3;
+        // 
         // lblMaxConn
         // 
         lblMaxConn.AutoSize = true;
-        lblMaxConn.Location = new Point(14, 173);
-        lblMaxConn.Margin = new Padding(2, 0, 2, 0);
+        lblMaxConn.Location = new System.Drawing.Point(10, 108);
+        lblMaxConn.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
         lblMaxConn.Name = "lblMaxConn";
-        lblMaxConn.Size = new Size(99, 15);
-        lblMaxConn.TabIndex = 8;
-        lblMaxConn.Text = "Max Connections";
-        //
-        // txtMaxConn
-        //
-        txtMaxConn.Location = new Point(126, 170);
-        txtMaxConn.Margin = new Padding(2, 2, 2, 2);
-        txtMaxConn.Name = "txtMaxConn";
-        txtMaxConn.Size = new Size(85, 23);
-        txtMaxConn.TabIndex = 6;
-        //
-        // lblLoadLow
-        //
-        lblLoadLow.AutoSize = true;
-        lblLoadLow.Location = new Point(14, 200);
-        lblLoadLow.Margin = new Padding(2, 0, 2, 0);
-        lblLoadLow.Name = "lblLoadLow";
-        lblLoadLow.Size = new Size(105, 15);
-        lblLoadLow.TabIndex = 25;
-        lblLoadLow.Text = "User load low/med/high";
-        //
-        // txtLoadLow
-        //
-        txtLoadLow.Location = new Point(126, 197);
-        txtLoadLow.Margin = new Padding(2, 2, 2, 2);
-        txtLoadLow.Name = "txtLoadLow";
-        txtLoadLow.Size = new Size(60, 23);
-        txtLoadLow.TabIndex = 7;
-        //
-        // lblLoadMid
-        //
-        lblLoadMid.AutoSize = true;
-        lblLoadMid.Location = new Point(190, 200);
-        lblLoadMid.Margin = new Padding(2, 0, 2, 0);
-        lblLoadMid.Name = "lblLoadMid";
-        lblLoadMid.Size = new Size(12, 15);
-        lblLoadMid.TabIndex = 26;
-        lblLoadMid.Text = "/";
-        //
-        // txtLoadMid
-        //
-        txtLoadMid.Location = new Point(206, 197);
-        txtLoadMid.Margin = new Padding(2, 2, 2, 2);
-        txtLoadMid.Name = "txtLoadMid";
-        txtLoadMid.Size = new Size(60, 23);
-        txtLoadMid.TabIndex = 8;
-        //
-        // lblLoadHigh
-        //
-        lblLoadHigh.AutoSize = true;
-        lblLoadHigh.Location = new Point(270, 200);
-        lblLoadHigh.Margin = new Padding(2, 0, 2, 0);
-        lblLoadHigh.Name = "lblLoadHigh";
-        lblLoadHigh.Size = new Size(12, 15);
-        lblLoadHigh.TabIndex = 27;
-        lblLoadHigh.Text = "/";
-        //
-        // txtLoadHigh
-        //
-        txtLoadHigh.Location = new Point(286, 197);
-        txtLoadHigh.Margin = new Padding(2, 2, 2, 2);
-        txtLoadHigh.Name = "txtLoadHigh";
-        txtLoadHigh.Size = new Size(60, 23);
-        txtLoadHigh.TabIndex = 9;
-        //
+        lblMaxConn.Size = new System.Drawing.Size(99, 15);
+        lblMaxConn.TabIndex = 7;
+        lblMaxConn.Text = "Max connections";
+        // 
+        // txtAccountPort
+        // 
+        txtAccountPort.Location = new System.Drawing.Point(294, 64);
+        txtAccountPort.Margin = new System.Windows.Forms.Padding(2);
+        txtAccountPort.Name = "txtAccountPort";
+        txtAccountPort.Size = new System.Drawing.Size(74, 23);
+        txtAccountPort.TabIndex = 2;
+        // 
+        // lblAccountPort
+        // 
+        lblAccountPort.AutoSize = true;
+        lblAccountPort.Location = new System.Drawing.Point(259, 67);
+        lblAccountPort.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+        lblAccountPort.Name = "lblAccountPort";
+        lblAccountPort.Size = new System.Drawing.Size(29, 15);
+        lblAccountPort.TabIndex = 5;
+        lblAccountPort.Text = "Port";
+        // 
+        // txtAccountHost
+        // 
+        txtAccountHost.Location = new System.Drawing.Point(124, 64);
+        txtAccountHost.Margin = new System.Windows.Forms.Padding(2);
+        txtAccountHost.Name = "txtAccountHost";
+        txtAccountHost.Size = new System.Drawing.Size(121, 23);
+        txtAccountHost.TabIndex = 1;
+        // 
+        // lblAccountHost
+        // 
+        lblAccountHost.AutoSize = true;
+        lblAccountHost.Location = new System.Drawing.Point(10, 67);
+        lblAccountHost.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+        lblAccountHost.Name = "lblAccountHost";
+        lblAccountHost.Size = new System.Drawing.Size(80, 15);
+        lblAccountHost.TabIndex = 3;
+        lblAccountHost.Text = "Account host";
+        // 
+        // txtClientPort
+        // 
+        txtClientPort.Location = new System.Drawing.Point(124, 23);
+        txtClientPort.Margin = new System.Windows.Forms.Padding(2);
+        txtClientPort.Name = "txtClientPort";
+        txtClientPort.Size = new System.Drawing.Size(85, 23);
+        txtClientPort.TabIndex = 0;
+        // 
+        // lblClientPort
+        // 
+        lblClientPort.AutoSize = true;
+        lblClientPort.Location = new System.Drawing.Point(10, 26);
+        lblClientPort.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+        lblClientPort.Name = "lblClientPort";
+        lblClientPort.Size = new System.Drawing.Size(63, 15);
+        lblClientPort.TabIndex = 1;
+        lblClientPort.Text = "Client port";
+        // 
+        // btnSave
+        // 
+        btnSave.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+        btnSave.Location = new System.Drawing.Point(442, 278);
+        btnSave.Margin = new System.Windows.Forms.Padding(2);
+        btnSave.Name = "btnSave";
+        btnSave.Size = new System.Drawing.Size(88, 25);
+        btnSave.TabIndex = 2;
+        btnSave.Text = "Save";
+        btnSave.UseVisualStyleBackColor = true;
+        btnSave.Click += OnSave;
+        // 
+        // btnCancel
+        // 
+        btnCancel.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+        btnCancel.Location = new System.Drawing.Point(350, 278);
+        btnCancel.Margin = new System.Windows.Forms.Padding(2);
+        btnCancel.Name = "btnCancel";
+        btnCancel.Size = new System.Drawing.Size(88, 25);
+        btnCancel.TabIndex = 1;
+        btnCancel.Text = "Cancel";
+        btnCancel.UseVisualStyleBackColor = true;
+        btnCancel.Click += OnCancel;
+        // 
         // SettingsForm
-        //
-        AutoScaleDimensions = new SizeF(7F, 15F);
-        AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(596, 312);
-        Controls.Add(txtLoadHigh);
-        Controls.Add(lblLoadHigh);
-        Controls.Add(txtLoadMid);
-        Controls.Add(lblLoadMid);
-        Controls.Add(txtLoadLow);
-        Controls.Add(lblLoadLow);
-        Controls.Add(txtBillingPass);
-        Controls.Add(lblBillingPass);
-        Controls.Add(txtBillingUser);
-        Controls.Add(lblBillingUser);
-        Controls.Add(txtBillingDb);
-        Controls.Add(lblBillingDb);
-        Controls.Add(txtBillingPort);
-        Controls.Add(lblBillingPort);
-        Controls.Add(txtBillingHost);
-        Controls.Add(lblBillingHost);
-        Controls.Add(txtMaxConn);
-        Controls.Add(lblMaxConn);
-        Controls.Add(txtAccountPort);
-        Controls.Add(lblAccountPort);
-        Controls.Add(txtAccountHost);
-        Controls.Add(lblAccountHost);
-        Controls.Add(txtClientPort);
-        Controls.Add(lblClientPort);
-        Controls.Add(txtDbPass);
-        Controls.Add(lblDbPass);
-        Controls.Add(txtDbUser);
-        Controls.Add(lblDbUser);
-        Controls.Add(txtDbName);
-        Controls.Add(lblDbName);
-        Controls.Add(txtDbPort);
-        Controls.Add(lblDbPort);
-        Controls.Add(txtDbHost);
-        Controls.Add(lblDbHost);
+        // 
+        AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+        AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+        ClientSize = new System.Drawing.Size(540, 314);
         Controls.Add(btnCancel);
         Controls.Add(btnSave);
-        FormBorderStyle = FormBorderStyle.FixedDialog;
-        Margin = new Padding(2, 2, 2, 2);
+        Controls.Add(tabMain);
+        FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+        Margin = new System.Windows.Forms.Padding(2);
         MaximizeBox = false;
         MinimizeBox = false;
         Name = "SettingsForm";
-        StartPosition = FormStartPosition.CenterParent;
+        StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
         Text = "Settings";
+        tabMain.ResumeLayout(false);
+        tabDatabase.ResumeLayout(false);
+        tabDatabase.PerformLayout();
+        grpAuth.ResumeLayout(false);
+        grpAuth.PerformLayout();
+        tabConnection.ResumeLayout(false);
+        tabConnection.PerformLayout();
         ResumeLayout(false);
-        PerformLayout();
-
     }
 
     #endregion
 
-    private System.Windows.Forms.Button btnSave;
-    private System.Windows.Forms.Button btnCancel;
-    private System.Windows.Forms.Label lblClientPort;
-    private System.Windows.Forms.TextBox txtClientPort;
-    private System.Windows.Forms.Label lblAccountHost;
-    private System.Windows.Forms.TextBox txtAccountHost;
-    private System.Windows.Forms.Label lblAccountPort;
-    private System.Windows.Forms.TextBox txtAccountPort;
-    private System.Windows.Forms.Label lblMaxConn;
-    private System.Windows.Forms.TextBox txtMaxConn;
+    private System.Windows.Forms.TabControl tabMain;
+    private System.Windows.Forms.TabPage tabDatabase;
+    private System.Windows.Forms.TabPage tabConnection;
+    private System.Windows.Forms.ComboBox cboDbProfile;
+    private System.Windows.Forms.Label lblDbProfile;
     private System.Windows.Forms.Label lblDbHost;
     private System.Windows.Forms.TextBox txtDbHost;
     private System.Windows.Forms.Label lblDbPort;
     private System.Windows.Forms.TextBox txtDbPort;
     private System.Windows.Forms.Label lblDbName;
     private System.Windows.Forms.TextBox txtDbName;
+    private System.Windows.Forms.GroupBox grpAuth;
+    private System.Windows.Forms.RadioButton radAuthTrusted;
+    private System.Windows.Forms.RadioButton radAuthSql;
     private System.Windows.Forms.Label lblDbUser;
     private System.Windows.Forms.TextBox txtDbUser;
     private System.Windows.Forms.Label lblDbPass;
     private System.Windows.Forms.TextBox txtDbPass;
-    private System.Windows.Forms.Label lblBillingHost;
-    private System.Windows.Forms.TextBox txtBillingHost;
-    private System.Windows.Forms.Label lblBillingPort;
-    private System.Windows.Forms.TextBox txtBillingPort;
-    private System.Windows.Forms.Label lblBillingDb;
-    private System.Windows.Forms.TextBox txtBillingDb;
-    private System.Windows.Forms.Label lblBillingUser;
-    private System.Windows.Forms.TextBox txtBillingUser;
-    private System.Windows.Forms.Label lblBillingPass;
-    private System.Windows.Forms.TextBox txtBillingPass;
+    private System.Windows.Forms.TextBox txtClientPort;
+    private System.Windows.Forms.Label lblClientPort;
+    private System.Windows.Forms.Label lblAccountHost;
+    private System.Windows.Forms.TextBox txtAccountHost;
+    private System.Windows.Forms.TextBox txtAccountPort;
+    private System.Windows.Forms.Label lblAccountPort;
+    private System.Windows.Forms.TextBox txtMaxConn;
+    private System.Windows.Forms.Label lblMaxConn;
     private System.Windows.Forms.Label lblLoadLow;
-    private System.Windows.Forms.Label lblLoadMid;
-    private System.Windows.Forms.Label lblLoadHigh;
     private System.Windows.Forms.TextBox txtLoadLow;
+    private System.Windows.Forms.Label lblLoadMidSep;
     private System.Windows.Forms.TextBox txtLoadMid;
+    private System.Windows.Forms.Label lblLoadHighSep;
     private System.Windows.Forms.TextBox txtLoadHigh;
+    private System.Windows.Forms.Button btnSave;
+    private System.Windows.Forms.Button btnCancel;
 }
