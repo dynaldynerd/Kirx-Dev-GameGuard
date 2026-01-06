@@ -208,6 +208,7 @@ public partial class MainWindow : Form
         if (_cts == null || _isStopping) return;
         try
         {
+            await Task.Delay(100).ConfigureAwait(false); // slight delay to ensure readiness
             await SendWorldListRequestAsync(_cts.Token).ConfigureAwait(false);
             await StartClientListenerAsync(_cts.Token).ConfigureAwait(false);
             UpdateStatus($"Status: Listening on {_settings.Network.ClientPort}, account {_settings.Network.AccountHost}:{_settings.Network.AccountPort}");

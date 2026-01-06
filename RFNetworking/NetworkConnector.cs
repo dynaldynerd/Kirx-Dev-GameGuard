@@ -123,6 +123,15 @@ public sealed class NetworkConnector : IAsyncDisposable
             {
                 try
                 {
+                    await Task.Delay(_pingInterval, token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+
+                try
+                {
                     await _connection.SendAsync(packet, token).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
@@ -134,14 +143,6 @@ public sealed class NetworkConnector : IAsyncDisposable
                     Log?.Invoke($"Connector ping failed: {ex.Message}");
                 }
 
-                try
-                {
-                    await Task.Delay(_pingInterval, token).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
             }
         }, token);
     }
