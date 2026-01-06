@@ -316,13 +316,11 @@ public partial class MainWindow : Form
                     if (accountConn != null)
                     {
                         var logout = new _logout_account_request_loac { gidGlobal = session.GlobalId };
-                        var payload = new byte[Marshal.SizeOf<_logout_account_request_loac>()];
-                        MemoryMarshal.Write(payload.AsSpan(), in logout);
                         var env = new PacketEnvelope
                         {
                             OpCode = 1,
                             SubCode = 9,
-                            Payload = payload
+                            Payload = logout.ToArray()
                         };
                         _ = accountConn.SendAsync(env, cancellationToken);
                     }

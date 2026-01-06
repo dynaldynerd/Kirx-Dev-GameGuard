@@ -395,13 +395,11 @@ public sealed class ClientPacketRouter
             dwAccountSerial = session.AccountSerial,
             dwClientIP = session.ClientIp
         };
-        byte[] payload = new byte[Marshal.SizeOf<_push_close_request_loac>()];
-        MemoryMarshal.Write(payload.AsSpan(), in send);
         var env = new PacketEnvelope
         {
             OpCode = 1,
             SubCode = 7,
-            Payload = payload
+            Payload = send.ToArray()
         };
         _ = accountConn.SendAsync(env, cancellationToken);
 
@@ -431,15 +429,12 @@ public sealed class ClientPacketRouter
             byPlus = plusKey,
             wKey = xorKey
         };
-        Span<byte> payload = stackalloc byte[3];
-        payload[0] = send.byPlus;
-        BinaryPrimitives.WriteUInt16LittleEndian(payload.Slice(1, 2), send.wKey);
 
         var env = new PacketEnvelope
         {
             OpCode = 21,
             SubCode = 13,
-            Payload = payload.ToArray()
+            Payload = send.ToArray()
         };
         _ = connection.SendAsync(env, cancellationToken);
 
@@ -506,13 +501,11 @@ public sealed class ClientPacketRouter
             dwWorldMasterKey = new uint[4],
             bAllowAltTab = false
         };
-        var buffer = new byte[Marshal.SizeOf<_select_world_result_locl>()];
-        MemoryMarshal.Write(buffer.AsSpan(), in result);
         var env = new PacketEnvelope
         {
             OpCode = 21,
             SubCode = 8,
-            Payload = buffer
+            Payload = result.ToArray()
         };
         _ = connection.SendAsync(env, token);
     }
@@ -532,15 +525,7 @@ public sealed class ClientPacketRouter
 
     private static Task SendWorldListResultAsync(PublicConnection connection, _world_list_result_locl data, CancellationToken token)
     {
-        int size = 3 + data.wDataSize; // 4098 - (4095 - wDataSize)
-        var payload = new byte[size];
-        payload[0] = data.byRetCode;
-        BinaryPrimitives.WriteUInt16LittleEndian(payload.AsSpan(1, 2), data.wDataSize);
-        if (data.wDataSize > 0)
-        {
-            Buffer.BlockCopy(data.sListData, 0, payload, 3, data.wDataSize);
-        }
-
+        var payload = data.ToArray();
         var env = new PacketEnvelope
         {
             OpCode = 21,
@@ -553,12 +538,12 @@ public sealed class ClientPacketRouter
     private static Task SendWorldUserInformAsync(PublicConnection connection, byte serviceWorldNum, IReadOnlyList<ushort> userLevels, CancellationToken token)
     {
         int count = Math.Min(serviceWorldNum, userLevels.Count);
-        var payload = new byte[1 + count * 2];
-        payload[0] = serviceWorldNum;
+        var packet = new _world_user_inform_locl { byServiceWorldNum = serviceWorldNum };
         for (int i = 0; i < count; i++)
         {
-            BinaryPrimitives.WriteUInt16LittleEndian(payload.AsSpan(1 + i * 2, 2), userLevels[i]);
+            packet.wUserNum[i] = userLevels[i];
         }
+        var payload = packet.ToArray();
 
         var env = new PacketEnvelope
         {
@@ -572,12 +557,12 @@ public sealed class ClientPacketRouter
     private static Task SendFreeServerInformAsync(PublicConnection connection, byte serviceWorldNum, IReadOnlyList<byte> freeFlags, CancellationToken token)
     {
         int count = Math.Min(serviceWorldNum, freeFlags.Count);
-        var payload = new byte[1 + count];
-        payload[0] = serviceWorldNum;
+        var packet = new _free_server_inform_locl { byServiceWorldNum = serviceWorldNum, bFree = new byte[40] };
         for (int i = 0; i < count; i++)
         {
-            payload[1 + i] = freeFlags[i];
+            packet.bFree[i] = freeFlags[i];
         }
+        var payload = packet.ToArray();
 
         var env = new PacketEnvelope
         {

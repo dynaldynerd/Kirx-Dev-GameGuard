@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Buffers.Binary;
 using System.Runtime.InteropServices;
 
 namespace LoginServer.Packets;
@@ -258,6 +259,14 @@ public unsafe struct _login_account_request_loac_blit
 public partial struct _logout_account_request_loac
 {
     public _GLBID gidGlobal;
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[8];
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(0, 4), gidGlobal.dwIndex);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(4, 4), gidGlobal.dwSerial);
+        return buffer;
+    }
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -293,6 +302,17 @@ public partial struct _push_close_request_loac
     public byte byUserCode;
     public uint dwAccountSerial;
     public uint dwClientIP;
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[15];
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(0, 2), idLocal.wIndex);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(2, 4), idLocal.dwSerial);
+        buffer[6] = byUserCode;
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(7, 4), dwAccountSerial);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(11, 4), dwClientIP);
+        return buffer;
+    }
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -300,6 +320,14 @@ public partial struct _login_server_stat_result_loac
 {
     public byte byRet;
     public ushort wClientIndex;
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[3];
+        buffer[0] = byRet;
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(1, 2), wClientIndex);
+        return buffer;
+    }
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]

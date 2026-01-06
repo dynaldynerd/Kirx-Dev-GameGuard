@@ -278,13 +278,11 @@ public sealed class AccountPacketRouter
         if (client != null && session?.ClidSerial != result.idLocal.dwSerial)
         {
             var logout = new _logout_account_request_loac { gidGlobal = result.gidNewGlobal };
-            var payloadLogout = new byte[Marshal.SizeOf<_logout_account_request_loac>()];
-            MemoryMarshal.Write(payloadLogout.AsSpan(), in logout);
             var envLogout = new PacketEnvelope
             {
                 OpCode = 1,
                 SubCode = 9,
-                Payload = payloadLogout
+                Payload = logout.ToArray()
             };
             _ = client.SendAsync(envLogout, cancellationToken);
             return Task.FromResult(true);
@@ -416,13 +414,11 @@ public sealed class AccountPacketRouter
 
         // Notify client and close.
         var notify = new _server_notify_inform_locl { wMsgCode = 1 };
-        var payload = new byte[Marshal.SizeOf<_server_notify_inform_locl>()];
-        MemoryMarshal.Write(payload.AsSpan(), in notify);
         var env = new PacketEnvelope
         {
             OpCode = 21,
             SubCode = 11,
-            Payload = payload
+            Payload = notify.ToArray()
         };
         _ = target.SendAsync(env, cancellationToken);
 
@@ -455,14 +451,16 @@ public sealed class AccountPacketRouter
         if (target != null)
         {
             byte byRet = externalOpen ? (byte)1 : (byte)2;
-            Span<byte> payload = stackalloc byte[3];
-            payload[0] = byRet;
-            BinaryPrimitives.WriteUInt16LittleEndian(payload.Slice(1, 2), request.wClientIndex);
+            var packet = new _login_server_stat_result_loac
+            {
+                byRet = byRet,
+                wClientIndex = request.wClientIndex
+            };
             var env = new PacketEnvelope
             {
                 OpCode = 1,
                 SubCode = 13,
-                Payload = payload.ToArray()
+                Payload = packet.ToArray()
             };
             _ = target.SendAsync(env, cancellationToken);
         }
@@ -621,18 +619,22 @@ public sealed class AccountPacketRouter
 
         if (clientConn != null)
         {
-            var payload = new byte[70];
-            payload[0] = result.byRet;
-            payload[1] = result.m_byType;
-            BinaryPrimitives.WriteUInt32LittleEndian(payload.AsSpan(2, 4), result.m_dwCode);
-            Buffer.BlockCopy(result.m_szName, 0, payload, 6, 32);
-            Buffer.BlockCopy(result.m_szDBName, 0, payload, 38, 32);
+            var packet = new _manage_client_limit_run_world_result_locl
+            {
+                byRet = result.byRet,
+                m_dwCode = result.m_dwCode,
+                m_byType = result.m_byType,
+                m_szName = new byte[32],
+                m_szDBName = new byte[32]
+            };
+            Buffer.BlockCopy(result.m_szName, 0, packet.m_szName, 0, 32);
+            Buffer.BlockCopy(result.m_szDBName, 0, packet.m_szDBName, 0, 32);
 
             var env = new PacketEnvelope
             {
                 OpCode = 21,
                 SubCode = 24,
-                Payload = payload
+                Payload = packet.ToArray()
             };
             _ = clientConn.SendAsync(env, cancellationToken);
         }

@@ -16,6 +16,8 @@ public partial struct _select_world_request_cllo
 public struct _push_close_result_locl
 {
     public byte byRetCode;
+
+    public byte[] ToArray() => new[] { byRetCode };
 }
 
 /// <summary>Login -> Client: notify message.</summary>
@@ -23,6 +25,13 @@ public struct _push_close_result_locl
 public struct _server_notify_inform_locl
 {
     public ushort wMsgCode;
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[2];
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(0, 2), wMsgCode);
+        return buffer;
+    }
 }
 
 /// <summary>Login -> Client: new agree (terms) result.</summary>
@@ -46,6 +55,17 @@ public struct _free_server_inform_locl
         this = default;
         bFree = new byte[40];
     }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[1 + 40];
+        buffer[0] = byServiceWorldNum;
+        if (bFree != null)
+        {
+            Buffer.BlockCopy(bFree, 0, buffer, 1, Math.Min(40, bFree.Length));
+        }
+        return buffer;
+    }
 }
 
 /// <summary>Login -> Client: user count indicator per world.</summary>
@@ -61,6 +81,17 @@ public struct _world_user_inform_locl
     {
         this = default;
         wUserNum = new ushort[40];
+    }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[1 + 40 * 2];
+        buffer[0] = byServiceWorldNum;
+        for (int i = 0; i < 40; i++)
+        {
+            BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(1 + i * 2, 2), wUserNum?[i] ?? 0);
+        }
+        return buffer;
     }
 }
 
@@ -145,6 +176,19 @@ public struct _world_list_result_locl
     {
         this = default;
         sListData = new byte[4095];
+    }
+
+    public byte[] ToArray()
+    {
+        int size = 3 + wDataSize;
+        var buffer = new byte[size];
+        buffer[0] = byRetCode;
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(1, 2), wDataSize);
+        if (wDataSize > 0 && sListData != null)
+        {
+            Buffer.BlockCopy(sListData, 0, buffer, 3, Math.Min(wDataSize, sListData.Length));
+        }
+        return buffer;
     }
 }
 
@@ -269,6 +313,14 @@ public struct _crypty_key_inform_locl
 {
     public byte byPlus;
     public ushort wKey;
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[3];
+        buffer[0] = byPlus;
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(1, 2), wKey);
+        return buffer;
+    }
 }
 
 /// <summary>Client -> Login: manage account auth request.</summary>
@@ -340,6 +392,8 @@ public struct _notify_manage_account_auth_info_locl
 public struct _manage_client_force_exit_result_locl
 {
     public byte byRet;
+
+    public byte[] ToArray() => new[] { byRet };
 }
 
 /// <summary>Login -> Client: manage account auth result.</summary>
@@ -347,6 +401,8 @@ public struct _manage_client_force_exit_result_locl
 public struct _manage_account_auth_result_locl
 {
     public byte byRet;
+
+    public byte[] ToArray() => new[] { byRet };
 }
 
 /// <summary>Login -> Client: limit run account result.</summary>
@@ -354,4 +410,40 @@ public struct _manage_account_auth_result_locl
 public struct _manage_client_limit_run_account_result_locl
 {
     public byte byRet;
+
+    public byte[] ToArray() => new[] { byRet };
+}
+
+/// <summary>Login -> Client: manage client limit run world result.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct _manage_client_limit_run_world_result_locl
+{
+    public byte byRet;
+    public uint m_dwCode;
+
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+    public byte[] m_szName;
+
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+    public byte[] m_szDBName;
+
+    public byte m_byType;
+
+    public _manage_client_limit_run_world_result_locl()
+    {
+        this = default;
+        m_szName = new byte[32];
+        m_szDBName = new byte[32];
+    }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[1 + 4 + 32 + 32 + 1];
+        buffer[0] = byRet;
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(1, 4), m_dwCode);
+        Buffer.BlockCopy(m_szName, 0, buffer, 5, 32);
+        Buffer.BlockCopy(m_szDBName, 0, buffer, 37, 32);
+        buffer[69] = m_byType;
+        return buffer;
+    }
 }
