@@ -696,23 +696,39 @@ public sealed class ClientPacketRouter
                 }
                 else
                 {
-                    // Billing check for verified accounts
-                    int status = 0;
-                    await using (var billingConn = new SqlConnection(billingConnStr))
-                    {
-                        await billingConn.OpenAsync(cancellationToken).ConfigureAwait(false);
-                        using var cmd = billingConn.CreateCommand();
-                        cmd.CommandType = CommandType.StoredProcedure;
-                        cmd.CommandText = "RF_CheckAccountStatus";
-                        cmd.Parameters.AddWithValue("@id", session.AccountId);
-                        var statusParam = new SqlParameter("@Status", SqlDbType.Int)
-                        {
-                            Direction = ParameterDirection.Output
-                        };
-                        cmd.Parameters.Add(statusParam);
+                    // Billing check via EF (equivalent to RF_CheckAccountStatus proc)
+                    int status = 1;
+                    var options = new DbContextOptionsBuilder<BillingDbContext>()
+                        .UseSqlServer(billingConnStr)
+                        .Options;
 
-                        await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-                        status = statusParam.Value is int s ? s : 0;
+                    await using (var billingCtx = new BillingDbContext(options))
+                    {
+                        var entry = await billingCtx.UserStatuses
+                            .FirstOrDefaultAsync(u => u.Id == session.AccountId, cancellationToken)
+                            .ConfigureAwait(false);
+
+                        if (entry != null)
+                        {
+                            if (entry.DtEndPrem.HasValue && entry.DtEndPrem.Value > DateTime.Now)
+                            {
+                                status = entry.Status;
+                            }
+                            else
+                            {
+                                status = 1;
+                                if (entry.Status != status)
+                                {
+                                    entry.Status = status;
+                                    billingCtx.UserStatuses.Update(entry);
+                                    await billingCtx.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            status = 1;
+                        }
                     }
 
                     switch (status)
