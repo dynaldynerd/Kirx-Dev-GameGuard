@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\RFPackets\RFPackets.csproj" />
     <ProjectReference Include="..\RFNetworking\RFNetworking.csproj" />
     <ProjectReference Include="..\LoginServer.Data\LoginServer.Data.csproj" />
   </ItemGroup>

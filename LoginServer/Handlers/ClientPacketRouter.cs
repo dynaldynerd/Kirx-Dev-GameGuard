@@ -768,7 +768,7 @@ public sealed class ClientPacketRouter
             return;
         }
 
-        var req = _login_account_request_loac_blit.FromSession(session);
+        var req = BuildLoginAccountRequest(session);
         byte[] payload = req.ToArray();
         var env = new PacketEnvelope
         {
@@ -802,6 +802,48 @@ public sealed class ClientPacketRouter
         catch (Exception ex)
         {
             _log($"SendLoginResult failed: {ex.Message}");
+        }
+    }
+
+    private static unsafe _login_account_request_loac_blit BuildLoginAccountRequest(State.ClientSession session)
+    {
+        var req = new _login_account_request_loac_blit
+        {
+            idLocal = new _CLID { wIndex = session.Index, dwSerial = session.ClidSerial },
+            byUserCode = session.LoginCode,
+            dwClientIP = session.ClientIp,
+            bCheckDoubleIP = 1,
+            iType = (short)session.BillType,
+            lRemainTime = session.RemainTime,
+            wYear = 0,
+            wMonth = 0,
+            wDayOfWeek = 0,
+            wDay = 0,
+            wHour = 0,
+            wMinute = 0,
+            wSecond = 0,
+            wMilliseconds = 0,
+            authtype = 0,
+            nTrans = session.Trans,
+            bPrimium = (byte)(session.IsPremium ? 1 : 0),
+            bAgeLimit = session.AgeLimit ? (byte)1 : (byte)0,
+            bCancelWebUILockBlock = 0
+        };
+
+        FillFixed(req.szAccountID, 13, session.AccountId);
+        FillFixed(req.szPassword, 13, session.Password);
+        return req;
+    }
+
+    private static unsafe void FillFixed(byte* target, int length, string value)
+    {
+        for (int i = 0; i < length; i++) target[i] = 0;
+        if (string.IsNullOrEmpty(value)) return;
+        var bytes = System.Text.Encoding.ASCII.GetBytes(value);
+        int copy = Math.Min(bytes.Length, length);
+        for (int i = 0; i < copy; i++)
+        {
+            target[i] = bytes[i];
         }
     }
 
