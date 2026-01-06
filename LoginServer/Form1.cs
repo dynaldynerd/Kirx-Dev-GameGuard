@@ -344,7 +344,7 @@ public partial class MainWindow : Form
                 if (!handled)
                 {
                     _log($"{_role} invalid client packet 21/{packet.SubCode} len={packet.Payload.Length}");
-                    throw new InvalidOperationException($"Unhandled client packet 21/{packet.SubCode}");
+                    connection.Close();
                 }
                 return;
             }
@@ -355,13 +355,13 @@ public partial class MainWindow : Form
                 if (!handled)
                 {
                     _log($"{_role} invalid account packet 1/{packet.SubCode} len={packet.Payload.Length}");
-                    throw new InvalidOperationException($"Unhandled account packet 1/{packet.SubCode}");
+                    connection.Close();
                 }
                 return;
             }
 
             _log($"{_role} data op={packet.OpCode} sub={packet.SubCode} len={packet.Payload.Length}");
-            throw new InvalidOperationException($"Unhandled packet op={packet.OpCode} sub={packet.SubCode}");
+            connection.Close();
         }
 
         public override Task OnInternalPacketAsync(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)

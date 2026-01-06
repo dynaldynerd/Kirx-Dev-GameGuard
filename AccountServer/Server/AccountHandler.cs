@@ -33,20 +33,24 @@ public sealed class AccountHandler : NetworkHandlerBase
         return Task.CompletedTask;
     }
 
-    public override Task OnPacketAsync(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
+    public override async Task OnPacketAsync(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
     {
-        _log($"[{connection.ConnectionId}] packet op={packet.OpCode} sub={packet.SubCode} len={packet.Payload.Length} (no handler yet)");
-        return DispatchLoginLineAsync(connection, packet, cancellationToken);
+        bool ok = await DispatchLoginLineAsync(connection, packet, cancellationToken).ConfigureAwait(false);
+        if (!ok)
+        {
+            _log($"[{connection.ConnectionId}] handler returned false; disconnecting.");
+            connection.Close();
+        }
     }
 
-    private Task DispatchLoginLineAsync(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
+    private Task<bool> DispatchLoginLineAsync(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
     {
         if (packet.OpCode != 1)
         {
             // Accept internal ping 40/1
-            if (packet.OpCode == 40 && packet.SubCode == 1) return Task.CompletedTask;
+            if (packet.OpCode == 40 && packet.SubCode == 1) return Task.FromResult(true);
             _log($"[{connection.ConnectionId}] unknown op={packet.OpCode} sub={packet.SubCode}");
-            return Task.CompletedTask;
+            return Task.FromResult(false);
         }
 
         return packet.SubCode switch
@@ -64,85 +68,85 @@ public sealed class AccountHandler : NetworkHandlerBase
             20 => ManageAccountAuthRequest(connection, packet, token),
             22 => ManageClientLimitRunRequest(connection, packet, token),
             25 => ManageClientForceExitRequest(connection, packet, token),
-            _ => Task.CompletedTask
+            _ => Task.FromResult(false)
         };
     }
 
-    private Task JoinAccountRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
+    private Task<bool> JoinAccountRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
     {
         _log($"[{connection.ConnectionId}] JoinAccountRequest len={packet.Payload.Length}");
-        return Task.CompletedTask;
+        return Task.FromResult(true);
     }
 
-    private Task LoginAccountRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
+    private Task<bool> LoginAccountRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
     {
         _log($"[{connection.ConnectionId}] LoginAccountRequest len={packet.Payload.Length}");
-        return Task.CompletedTask;
+        return Task.FromResult(true);
     }
 
-    private Task SelectWorldRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
+    private Task<bool> SelectWorldRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
     {
         _log($"[{connection.ConnectionId}] SelectWorldRequest len={packet.Payload.Length}");
-        return Task.CompletedTask;
+        return Task.FromResult(true);
     }
 
-    private Task PushCloseRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
+    private Task<bool> PushCloseRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
     {
         _log($"[{connection.ConnectionId}] PushCloseRequest len={packet.Payload.Length}");
-        return Task.CompletedTask;
+        return Task.FromResult(true);
     }
 
-    private Task CloseAccountFromLoginRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
+    private Task<bool> CloseAccountFromLoginRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
     {
         _log($"[{connection.ConnectionId}] CloseAccountFromLoginRequest len={packet.Payload.Length}");
-        return Task.CompletedTask;
+        return Task.FromResult(true);
     }
 
-    private Task WorldListRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
+    private Task<bool> WorldListRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
     {
         _log($"[{connection.ConnectionId}] WorldListRequest len={packet.Payload.Length}");
-        return Task.CompletedTask;
+        return Task.FromResult(true);
     }
 
-    private Task LoginServerStatResult(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
+    private Task<bool> LoginServerStatResult(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
     {
         _log($"[{connection.ConnectionId}] LoginServerStatResult len={packet.Payload.Length}");
-        return Task.CompletedTask;
+        return Task.FromResult(true);
     }
 
-    private Task AccountDbInfoRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
+    private Task<bool> AccountDbInfoRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
     {
         _log($"[{connection.ConnectionId}] AccountDBInfoRequest len={packet.Payload.Length}");
-        return Task.CompletedTask;
+        return Task.FromResult(true);
     }
 
-    private Task UpdateUserLoginFailureCntRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
+    private Task<bool> UpdateUserLoginFailureCntRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
     {
         _log($"[{connection.ConnectionId}] UpdateUserLoginFailureCntRequest len={packet.Payload.Length}");
-        return Task.CompletedTask;
+        return Task.FromResult(true);
     }
 
-    private Task LogoutManageAccountRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
+    private Task<bool> LogoutManageAccountRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
     {
         _log($"[{connection.ConnectionId}] LogoutManageAccountRequest len={packet.Payload.Length}");
-        return Task.CompletedTask;
+        return Task.FromResult(true);
     }
 
-    private Task ManageAccountAuthRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
+    private Task<bool> ManageAccountAuthRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
     {
         _log($"[{connection.ConnectionId}] ManageAccountAuthRequest len={packet.Payload.Length}");
-        return Task.CompletedTask;
+        return Task.FromResult(true);
     }
 
-    private Task ManageClientLimitRunRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
+    private Task<bool> ManageClientLimitRunRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
     {
         _log($"[{connection.ConnectionId}] ManageClientLimitRunRequest len={packet.Payload.Length}");
-        return Task.CompletedTask;
+        return Task.FromResult(true);
     }
 
-    private Task ManageClientForceExitRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
+    private Task<bool> ManageClientForceExitRequest(PublicConnection connection, PacketEnvelope packet, CancellationToken token)
     {
         _log($"[{connection.ConnectionId}] ManageClientForceExitRequest len={packet.Payload.Length}");
-        return Task.CompletedTask;
+        return Task.FromResult(true);
     }
 }
