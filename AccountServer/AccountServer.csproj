@@ -12,6 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\RFPackets\RFPackets.csproj" />
     <ProjectReference Include="..\RFNetworking\RFNetworking.csproj" />
   </ItemGroup>
 
