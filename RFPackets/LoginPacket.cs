@@ -26,6 +26,32 @@ public struct _select_world_request_loac
         dwRequestMoveCharacterSerialList = new uint[3];
         dwRTournamentCharacterSerialList = new uint[3];
     }
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 38) return false;
+        gidGlobal = new _GLBID
+        {
+            dwIndex = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(0, 4)),
+            dwSerial = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(4, 4))
+        };
+        wWorldIndex = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(8, 2));
+        dwClientIP = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(10, 4));
+        dwRequestMoveCharacterSerialList = new uint[3];
+        dwRTournamentCharacterSerialList = new uint[3];
+        int offset = 14;
+        for (int i = 0; i < 3; i++)
+        {
+            dwRequestMoveCharacterSerialList[i] = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(offset, 4));
+            offset += 4;
+        }
+        for (int i = 0; i < 3; i++)
+        {
+            dwRTournamentCharacterSerialList[i] = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(offset, 4));
+            offset += 4;
+        }
+        return true;
+    }
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -141,6 +167,40 @@ public unsafe struct _login_account_request_loac_blit
     public byte bAgeLimit;
     public byte bCancelWebUILockBlock;
 
+    public bool Load(byte[] payload)
+    {
+        int size = Unsafe.SizeOf<_login_account_request_loac_blit>();
+        if (payload.Length < size) return false;
+        this = MemoryMarshal.Read<_login_account_request_loac_blit>(payload.AsSpan(0, size));
+        return true;
+    }
+
+    public byte[] GetAccountId()
+    {
+        var result = new byte[13];
+        unsafe
+        {
+            fixed (byte* p = szAccountID)
+            {
+                new ReadOnlySpan<byte>(p, 13).CopyTo(result);
+            }
+        }
+        return result;
+    }
+
+    public byte[] GetPassword()
+    {
+        var result = new byte[13];
+        unsafe
+        {
+            fixed (byte* p = szPassword)
+            {
+                new ReadOnlySpan<byte>(p, 13).CopyTo(result);
+            }
+        }
+        return result;
+    }
+
     public byte[] ToArray()
     {
         var size = Unsafe.SizeOf<_login_account_request_loac_blit>();
@@ -161,6 +221,17 @@ public struct _logout_account_request_loac
 {
     public _GLBID gidGlobal;
 
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 8) return false;
+        gidGlobal = new _GLBID
+        {
+            dwIndex = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(0, 4)),
+            dwSerial = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(4, 4))
+        };
+        return true;
+    }
+
     public byte[] ToArray()
     {
         var buffer = new byte[8];
@@ -173,6 +244,7 @@ public struct _logout_account_request_loac
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public struct _world_list_request_loac
 {
+    public bool Load(byte[] payload) => true; // no payload
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -194,6 +266,20 @@ public struct _join_account_request_loac
         szAccountID = new byte[13];
         szPassword = new byte[13];
     }
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 36) return false;
+        idLocal = new _CLID
+        {
+            wIndex = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(0, 2)),
+            dwSerial = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(2, 4))
+        };
+        Buffer.BlockCopy(payload, 6, szAccountID, 0, 13);
+        Buffer.BlockCopy(payload, 19, szPassword, 0, 13);
+        dwClientIP = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(32, 4));
+        return true;
+    }
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -203,6 +289,20 @@ public struct _push_close_request_loac
     public byte byUserCode;
     public uint dwAccountSerial;
     public uint dwClientIP;
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 15) return false;
+        idLocal = new _CLID
+        {
+            wIndex = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(0, 2)),
+            dwSerial = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(2, 4))
+        };
+        byUserCode = payload[6];
+        dwAccountSerial = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(7, 4));
+        dwClientIP = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(11, 4));
+        return true;
+    }
 
     public byte[] ToArray()
     {
@@ -221,6 +321,14 @@ public struct _login_server_stat_result_loac
 {
     public byte byRet;
     public ushort wClientIndex;
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 3) return false;
+        byRet = payload[0];
+        wClientIndex = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(1, 2));
+        return true;
+    }
 
     public byte[] ToArray()
     {
@@ -244,6 +352,14 @@ public struct _update_user_login_failure_cnt_loac
         this = default;
         szUserID = new byte[13];
     }
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 14) return false;
+        Buffer.BlockCopy(payload, 0, szUserID, 0, 13);
+        byType = payload[13];
+        return true;
+    }
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -259,18 +375,52 @@ public struct _manage_account_auth_request_loac
         this = default;
         byBin = new byte[32];
     }
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 38) return false;
+        idLocal = new _CLID
+        {
+            wIndex = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(0, 2)),
+            dwSerial = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(2, 4))
+        };
+        Buffer.BlockCopy(payload, 6, byBin, 0, 32);
+        return true;
+    }
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public struct _manage_client_force_exit_request_loac
 {
     public _CLID idLocal;
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 6) return false;
+        idLocal = new _CLID
+        {
+            wIndex = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(0, 2)),
+            dwSerial = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(2, 4))
+        };
+        return true;
+    }
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public struct _manage_client_limit_run_request_loac
 {
     public _CLID idLocal;
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 6) return false;
+        idLocal = new _CLID
+        {
+            wIndex = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(0, 2)),
+            dwSerial = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(2, 4))
+        };
+        return true;
+    }
 }
 
 // locl

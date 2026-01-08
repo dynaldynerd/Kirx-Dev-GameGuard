@@ -122,6 +122,15 @@ public struct _login_account_result_aclo
         uszBlockReason = new byte[32];
     }
 
+    public byte[] ToArray()
+    {
+        int size = Marshal.SizeOf<_login_account_result_aclo>();
+        var buffer = new byte[size];
+        var span = new Span<byte>(buffer);
+        MemoryMarshal.Write(span, in this);
+        return buffer;
+    }
+
     public bool Load(byte[] payload)
     {
         if (payload.Length < 59) return false;
