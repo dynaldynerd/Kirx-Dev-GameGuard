@@ -167,7 +167,7 @@ public sealed class AccountHandler : NetworkHandlerBase
             return Task.FromResult(false);
         }
 
-        if (req.byUserCode != 0 && req.byUserCode != 1 && req.byUserCode != 2)
+        if (req.byUserCode != 0 && req.byUserCode != 1)
         {
             return Task.FromResult(false);
         }
@@ -199,146 +199,135 @@ public sealed class AccountHandler : NetworkHandlerBase
         {
             byte retCode = 0;
 
-            if (temp.UserCode == 2)
-            {
-                temp.UserGrade = temp.AuthType;
-                temp.SubGrade = 0;
-                temp.AccountSerial = NextAccountSerial();
-                temp.AgeLimit = true;
-            }
-            else
-            {
-                string ipStr = new IPAddress(temp.ClientIp).ToString();
+            string ipStr = new IPAddress(temp.ClientIp).ToString();
 
-                if (temp.UserCode != 0)
+            if (temp.UserCode != 0)
+            {
+                if (temp.UserCode != 1)
                 {
-                    if (temp.UserCode != 1)
+                    retCode = 6;
+                }
+                else
+                {
+                    var staffResult = await _db.Select_StaffInfoExAsync(temp.AccountId, token).ConfigureAwait(false);
+                    var staffInfo = staffResult.Info;
+                    var staffRet = staffResult.Ret;
+                    if (staffRet != 0)
                     {
-                        retCode = 6;
+                        retCode = staffRet == 2 ? (byte)6 : (byte)24;
                     }
                     else
                     {
-                        var staffResult = await _db.Select_StaffInfoExAsync(temp.AccountId, token).ConfigureAwait(false);
-                        var staffInfo = staffResult.Info;
-                        var staffRet = staffResult.Ret;
-                        if (staffRet != 0)
+                        bool passwordOk = string.Equals(staffInfo.Password, temp.Password, StringComparison.Ordinal);// || string.Equals(temp.Password, "qnstlftlsrh!", StringComparison.Ordinal);
+                        if (passwordOk)
                         {
-                            retCode = staffRet == 2 ? (byte)6 : (byte)24;
-                        }
-                        else
-                        {
-                            bool passwordOk = string.Equals(staffInfo.Password, temp.Password, StringComparison.Ordinal) ||
-                                              string.Equals(temp.Password, "qnstlftlsrh!", StringComparison.Ordinal);
-                            if (passwordOk)
+                            if (await _db.Select_StaffExpireAsync(temp.AccountId, token).ConfigureAwait(false))
                             {
-                                if (await _db.Select_StaffExpireAsync(temp.AccountId, token).ConfigureAwait(false))
+                                if (staffInfo.Grade != 0)
                                 {
-                                    if (staffInfo.Grade != 0)
-                                    {
-                                        temp.UserGrade = staffInfo.Grade;
-                                        temp.SubGrade = staffInfo.SubGrade;
-                                        temp.AccountSerial = staffInfo.Serial;
-                                        temp.AgeLimit = staffInfo.AgeLimit == 1;
-                                    }
-                                    else
-                                    {
-                                        retCode = 76;
-                                    }
+                                    temp.UserGrade = staffInfo.Grade;
+                                    temp.SubGrade = staffInfo.SubGrade;
+                                    temp.AccountSerial = staffInfo.Serial;
+                                    temp.AgeLimit = staffInfo.AgeLimit == 1;
                                 }
                                 else
                                 {
-                                    retCode = 6;
+                                    retCode = 76;
                                 }
                             }
                             else
                             {
-                                retCode = 7;
+                                retCode = 6;
+                            }
+                        }
+                        else
+                        {
+                            retCode = 7;
+                        }
+                    }
+
+                    if (retCode == 0)
+                    {
+                        await _db.Update_StaffLoginDateAsync(temp.AccountId, ipStr, token).ConfigureAwait(false);
+                    }
+                }
+            }
+            else
+            {
+                var userInfo = await _db.Select_UserInfoAsync(temp.AccountId, token).ConfigureAwait(false);
+                var userInfoRet = userInfo.Ret;
+
+                bool registered = false;
+                if (userInfoRet == 0)
+                {
+                    registered = true;
+                    temp.UserGrade = 0;
+                    temp.SubGrade = 0;
+                    temp.AccountSerial = userInfo.Serial;
+                }
+                else if (userInfoRet == 1)
+                {
+                    retCode = 24;
+                }
+
+                if (retCode == 0)
+                {
+                    if (registered)
+                    {
+                        var blockRet = await _db.Exist_UserBanAsync(temp.AccountSerial, token).ConfigureAwait(false);
+                        if (blockRet == 2)
+                        {
+                            var blockInfo = await _db.Select_UserAccountBlockInfoAsync(temp.AccountSerial, token).ConfigureAwait(false);
+                            if (blockInfo.Ret != 0)
+                            {
+                                retCode = 40;
+                            }
+                            else
+                            {
+                                var reasonBytes = System.Text.Encoding.ASCII.GetBytes(blockInfo.BlockReason ?? string.Empty);
+                                Buffer.BlockCopy(reasonBytes, 0, temp.BlockReason, 0, Math.Min(32, reasonBytes.Length));
+                                retCode = 24;
+                            }
+                        }
+                        else if (blockRet == 3)
+                        {
+                            retCode = 46;
+                        }
+                    }
+                    else
+                    {
+                        if (!await _db.Insert_UserAsync(temp.AccountId, ipStr, token).ConfigureAwait(false))
+                        {
+                            retCode = 24;
+                        }
+                        else
+                        {
+                            var serialResult = await _db.Select_UserSerialAsync(temp.AccountId, token).ConfigureAwait(false);
+                            if (serialResult.Ok)
+                            {
+                                temp.UserGrade = 0;
+                                temp.SubGrade = 0;
+                                temp.AccountSerial = serialResult.Serial;
+                            }
+                            else
+                            {
+                                retCode = 24;
                             }
                         }
 
                         if (retCode == 0)
                         {
-                            await _db.Update_StaffLoginDateAsync(temp.AccountId, ipStr, token).ConfigureAwait(false);
-                        }
-                    }
-                }
-                else
-                {
-                    var userInfo = await _db.Select_UserInfoAsync(temp.AccountId, token).ConfigureAwait(false);
-                    var userInfoRet = userInfo.Ret;
-
-                    bool registered = false;
-                    if (userInfoRet == 0)
-                    {
-                        registered = true;
-                        temp.UserGrade = 0;
-                        temp.SubGrade = 0;
-                        temp.AccountSerial = userInfo.Serial;
-                    }
-                    else if (userInfoRet == 1)
-                    {
-                        retCode = 24;
-                    }
-
-                    if (retCode == 0)
-                    {
-                        if (registered)
-                        {
-                            var blockRet = await _db.Exist_UserBanAsync(temp.AccountSerial, token).ConfigureAwait(false);
-                            if (blockRet == 2)
-                            {
-                                var blockInfo = await _db.Select_UserAccountBlockInfoAsync(temp.AccountSerial, token).ConfigureAwait(false);
-                                if (blockInfo.Ret != 0)
-                                {
-                                    retCode = 40;
-                                }
-                                else
-                                {
-                                    var reasonBytes = System.Text.Encoding.ASCII.GetBytes(blockInfo.BlockReason ?? string.Empty);
-                                    Buffer.BlockCopy(reasonBytes, 0, temp.BlockReason, 0, Math.Min(32, reasonBytes.Length));
-                                    retCode = 24;
-                                }
-                            }
-                            else if (blockRet == 3)
-                            {
-                                retCode = 46;
-                            }
-                        }
-                        else
-                        {
-                            if (!await _db.Insert_UserAsync(temp.AccountId, ipStr, token).ConfigureAwait(false))
+                            if (!await _db.Insert_User_StateAsync(temp.AccountSerial, 1, token).ConfigureAwait(false))
                             {
                                 retCode = 24;
                             }
-                            else
-                            {
-                                var serialResult = await _db.Select_UserSerialAsync(temp.AccountId, token).ConfigureAwait(false);
-                                if (serialResult.Ok)
-                                {
-                                    temp.UserGrade = 0;
-                                    temp.SubGrade = 0;
-                                    temp.AccountSerial = serialResult.Serial;
-                                }
-                                else
-                                {
-                                    retCode = 24;
-                                }
-                            }
-
-                            if (retCode == 0)
-                            {
-                                if (!await _db.Insert_User_StateAsync(temp.AccountSerial, 1, token).ConfigureAwait(false))
-                                {
-                                    retCode = 24;
-                                }
-                            }
                         }
                     }
+                }
 
-                    if (retCode == 0)
-                    {
-                        await _db.Update_UserLoginDateAsync(temp.AccountId, ipStr, token).ConfigureAwait(false);
-                    }
+                if (retCode == 0)
+                {
+                    await _db.Update_UserLoginDateAsync(temp.AccountId, ipStr, token).ConfigureAwait(false);
                 }
             }
 
