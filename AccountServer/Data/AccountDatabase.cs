@@ -12,6 +12,8 @@ namespace AccountServer.Data;
 /// </summary>
 public sealed class AccountDatabase : IAccountDatabase
 {
+    private const string LimitRunParam1Hex =
+        "0xEFC6616D39F3CAB14D9D6264B2552A4A2D365809F15163DEC0A05B4A233CD4593F62B0F2FDDAEB0C45A55CB21662DD5326EE58D35AF3CAC85FCC128BD0CB96F6";
     private readonly string _connectionString;
     private readonly bool _saveDbLog;
 
@@ -225,6 +227,97 @@ public sealed class AccountDatabase : IAccountDatabase
     {
         const string proc = "pUpdate_UserLoginDate";
         return ExecNonQueryAsync(proc, token, ("@id", id), ("@ip", ip));
+    }
+
+    public async Task<bool> Update_Login_Failure_CountAsync(string id, byte byType, CancellationToken token)
+    {
+        string query;
+        if (byType == 0)
+        {
+            query = "Update tbl_useraccount set LoginFailureCnt = LoginFailureCnt+1 where id = convert(binary, @id)";
+        }
+        else if (byType == 1)
+        {
+            query = "Update tbl_useraccount set LoginFailureCnt = 0 where id = convert(binary, @id)";
+        }
+        else
+        {
+            return false;
+        }
+
+        try
+        {
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@id", id);
+            await conn.OpenAsync(token).ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync(token).ConfigureAwait(false);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task<(byte Ret, uint Serial)> Select_Limit_Run_Record_SerialAsync(CancellationToken token)
+    {
+        const string query = "select [ID] from [dbo].[tbl_GMActParam] where [Param1] = " + LimitRunParam1Hex;
+        try
+        {
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand(query, conn);
+            await conn.OpenAsync(token).ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync(token).ConfigureAwait(false);
+            if (!await reader.ReadAsync(token).ConfigureAwait(false))
+            {
+                return (2, 0);
+            }
+            uint serial = reader.GetFieldValue<uint>(0);
+            return (0, serial);
+        }
+        catch
+        {
+            return (1, 0);
+        }
+    }
+
+    public async Task<byte> Insert_Set_Limit_RunAsync(string param1Str, CancellationToken token)
+    {
+        string query =
+            "insert into [dbo].[tbl_GMActParam] ([Param1], [Param2]) values (" + LimitRunParam1Hex + ", @param2)";
+        try
+        {
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@param2", param1Str);
+            await conn.OpenAsync(token).ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync(token).ConfigureAwait(false);
+            return 0;
+        }
+        catch
+        {
+            return 1;
+        }
+    }
+
+    public async Task<byte> Update_Set_Limit_RunAsync(uint serial, string param1Str, CancellationToken token)
+    {
+        const string query = "update [dbo].[tbl_GMActParam] set [Param2] = @param2 where [ID] = @id";
+        try
+        {
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@param2", param1Str);
+            cmd.Parameters.AddWithValue("@id", serial);
+            await conn.OpenAsync(token).ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync(token).ConfigureAwait(false);
+            return 0;
+        }
+        catch
+        {
+            return 1;
+        }
     }
 
     private async Task<bool> ExecNonQueryAsync(string procName, CancellationToken token, params (string name, object value)[] parameters)

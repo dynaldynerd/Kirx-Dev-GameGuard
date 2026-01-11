@@ -135,6 +135,31 @@ public sealed class AccountMainContext
         UnregisterWorld(connection);
     }
 
+    public LoginServerSession[] GetLoginSessionsSnapshot()
+    {
+        return _loginServers.Values.ToArray();
+    }
+
+    public bool TryFindWorldByName(string name, out int index, out WorldEntry world)
+    {
+        lock (_worldLock)
+        {
+            for (int i = 0; i < _worldCount; i++)
+            {
+                if (string.Equals(_worlds[i].Name, name, StringComparison.Ordinal))
+                {
+                    index = i;
+                    world = _worlds[i];
+                    return true;
+                }
+            }
+        }
+
+        index = -1;
+        world = default;
+        return false;
+    }
+
     public LoginServerSession? GetSession(ulong connectionId)
     {
         _loginServers.TryGetValue(connectionId, out var session);
@@ -201,10 +226,54 @@ public sealed class AccountMainContext
 
     public WorldServerSession RegisterWorld(int worldCode, PublicConnection connection)
     {
+        if (_worldConnections.TryGetValue(connection.ConnectionId, out var existing))
+        {
+            existing.UpdateConnection(connection);
+            existing.UpdateWorldCode(worldCode);
+            _worldServers[worldCode] = existing;
+            return existing;
+        }
+
         var session = new WorldServerSession(connection.ConnectionId, worldCode, connection);
         _worldServers[worldCode] = session;
         _worldConnections[connection.ConnectionId] = session;
         return session;
+    }
+
+    public WorldServerSession RegisterWorldConnection(PublicConnection connection)
+    {
+        if (_worldConnections.TryGetValue(connection.ConnectionId, out var existing))
+        {
+            existing.UpdateConnection(connection);
+            return existing;
+        }
+
+        var session = new WorldServerSession(connection.ConnectionId, -1, connection);
+        _worldConnections[connection.ConnectionId] = session;
+        return session;
+    }
+
+    public bool AssignWorldCode(ulong connectionId, int worldCode)
+    {
+        if (!_worldConnections.TryGetValue(connectionId, out var session))
+        {
+            session = new WorldServerSession(connectionId, worldCode, null);
+            _worldConnections[connectionId] = session;
+        }
+
+        session.UpdateWorldCode(worldCode);
+        _worldServers[worldCode] = session;
+        return true;
+    }
+
+    public bool TryGetWorldSessionByConnection(ulong connectionId, out WorldServerSession session)
+    {
+        return _worldConnections.TryGetValue(connectionId, out session!);
+    }
+
+    public bool TryGetWorldSession(int worldCode, out WorldServerSession session)
+    {
+        return _worldServers.TryGetValue(worldCode, out session!);
     }
 
     public bool TryGetWorldConnection(int worldCode, out PublicConnection connection)
@@ -319,6 +388,10 @@ public sealed class ClientSession
     public _GLBID GlobalId { get; set; }
     public int WorldCode { get; set; } = -1;
     public uint[] MasterKey { get; } = new uint[4];
+    public byte[] AvatarName { get; } = new byte[17];
+    public uint AvatarSerial { get; set; } = uint.MaxValue;
+    public byte Level { get; set; }
+    public bool IsSelectChar { get; set; }
 
     public ClientSession(ulong loginConnId, _CLID clid)
     {
@@ -401,6 +474,7 @@ public sealed class WorldServerSession
     public ulong ConnectionId { get; }
     public int WorldCode { get; private set; }
     public PublicConnection? Connection { get; private set; }
+    public uint LastPingTime { get; private set; }
 
     public WorldServerSession(ulong connectionId, int worldCode, PublicConnection? connection)
     {
@@ -417,5 +491,10 @@ public sealed class WorldServerSession
     public void UpdateWorldCode(int worldCode)
     {
         WorldCode = worldCode;
+    }
+
+    public void UpdatePing(uint tick)
+    {
+        LastPingTime = tick;
     }
 }

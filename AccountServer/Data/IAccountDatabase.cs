@@ -24,4 +24,8 @@ public interface IAccountDatabase
     Task<(bool Ok, uint Serial, string Date)> Select_UserSerialAsync(string id, CancellationToken token);
     Task<bool> Update_StaffLoginDateAsync(string id, string ip, CancellationToken token);
     Task<bool> Update_UserLoginDateAsync(string id, string ip, CancellationToken token);
+    Task<bool> Update_Login_Failure_CountAsync(string id, byte byType, CancellationToken token);
+    Task<(byte Ret, uint Serial)> Select_Limit_Run_Record_SerialAsync(CancellationToken token);
+    Task<byte> Insert_Set_Limit_RunAsync(string param1Str, CancellationToken token);
+    Task<byte> Update_Set_Limit_RunAsync(uint serial, string param1Str, CancellationToken token);
 }

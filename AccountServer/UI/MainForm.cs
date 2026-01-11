@@ -7,7 +7,9 @@ namespace AccountServer.UI;
 public partial class MainForm : Form
 {
     private readonly AppSettings _settings;
-    private AccountHandler _handler;
+    private AccountHandler _loginHandler;
+    private AccountHandler _worldHandler;
+    private AccountHandler _controlHandler;
     private NetworkListener? _loginListener;
     private NetworkListener? _worldListener;
     private NetworkListener? _controlListener;
@@ -19,13 +21,15 @@ public partial class MainForm : Form
         InitializeComponent();
         _settings = AppSettings.Load();
         AccountMainContext.Instance.LoadWorldList(_settings.WorldList.Worlds);
-        _handler = CreateHandler();
+        _loginHandler = CreateHandler(AccountHandlerLine.Login);
+        _worldHandler = CreateHandler(AccountHandlerLine.World);
+        _controlHandler = CreateHandler(AccountHandlerLine.Control);
     }
 
-    private AccountHandler CreateHandler()
+    private AccountHandler CreateHandler(AccountHandlerLine lineType)
     {
         var connString = _settings.Database.BuildUserConnectionString();
-        return new AccountHandler(AppendLog, _settings, connString);
+        return new AccountHandler(AppendLog, _settings, connString, lineType: lineType);
     }
 
     private async void btnStart_Click(object sender, EventArgs e)
@@ -39,9 +43,9 @@ public partial class MainForm : Form
         _cts = new CancellationTokenSource();
         try
         {
-            _loginListener = new NetworkListener(_handler) { PingPacket = new PacketEnvelope { OpCode = 101, SubCode = 1, Payload = new byte[] { 0 } } };
-            _worldListener = new NetworkListener(_handler) { PingPacket = new PacketEnvelope { OpCode = 101, SubCode = 1, Payload = new byte[] { 0 } } };
-            _controlListener = new NetworkListener(_handler) { PingPacket = new PacketEnvelope { OpCode = 101, SubCode = 1, Payload = new byte[] { 0 } } };
+            _loginListener = new NetworkListener(_loginHandler) { PingPacket = new PacketEnvelope { OpCode = 101, SubCode = 1, Payload = new byte[] { 0 } } };
+            _worldListener = new NetworkListener(_worldHandler) { PingPacket = new PacketEnvelope { OpCode = 101, SubCode = 1, Payload = new byte[] { 0 } } };
+            _controlListener = new NetworkListener(_controlHandler) { PingPacket = new PacketEnvelope { OpCode = 101, SubCode = 1, Payload = new byte[] { 0 } } };
 
             await _loginListener.StartAsync(2700, _cts.Token);
             await _worldListener.StartAsync(29000, _cts.Token);
@@ -94,7 +98,9 @@ public partial class MainForm : Form
         }
 
         AccountMainContext.Instance.LoadWorldList(_settings.WorldList.Worlds);
-        _handler = CreateHandler();
+        _loginHandler = CreateHandler(AccountHandlerLine.Login);
+        _worldHandler = CreateHandler(AccountHandlerLine.World);
+        _controlHandler = CreateHandler(AccountHandlerLine.Control);
         AppendLog("Settings applied.");
     }
 
