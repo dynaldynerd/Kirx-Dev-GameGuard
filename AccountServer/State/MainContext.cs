@@ -61,7 +61,7 @@ public sealed class AccountMainContext
         {
             if (index < 0 || index >= _worldCount)
             {
-                world = default;
+                world = new WorldEntry();
                 return false;
             }
             world = _worlds[index];
@@ -156,7 +156,7 @@ public sealed class AccountMainContext
         }
 
         index = -1;
-        world = default;
+        world = new WorldEntry();
         return false;
     }
 

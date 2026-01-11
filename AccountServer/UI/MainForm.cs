@@ -1,5 +1,6 @@
 using AccountServer.Server;
 using AccountServer.Settings;
+using AccountServer.State;
 using RFNetworking;
 
 namespace AccountServer.UI;
@@ -7,9 +8,9 @@ namespace AccountServer.UI;
 public partial class MainForm : Form
 {
     private readonly AppSettings _settings;
-    private AccountHandler _loginHandler;
-    private AccountHandler _worldHandler;
-    private AccountHandler _controlHandler;
+    private LoginHandler _loginHandler;
+    private WorldHandler _worldHandler;
+    private ControlHandler _controlHandler;
     private NetworkListener? _loginListener;
     private NetworkListener? _worldListener;
     private NetworkListener? _controlListener;
@@ -21,15 +22,27 @@ public partial class MainForm : Form
         InitializeComponent();
         _settings = AppSettings.Load();
         AccountMainContext.Instance.LoadWorldList(_settings.WorldList.Worlds);
-        _loginHandler = CreateHandler(AccountHandlerLine.Login);
-        _worldHandler = CreateHandler(AccountHandlerLine.World);
-        _controlHandler = CreateHandler(AccountHandlerLine.Control);
+        _loginHandler = CreateLoginHandler();
+        _worldHandler = CreateWorldHandler();
+        _controlHandler = CreateControlHandler();
     }
 
-    private AccountHandler CreateHandler(AccountHandlerLine lineType)
+    private LoginHandler CreateLoginHandler()
     {
         var connString = _settings.Database.BuildUserConnectionString();
-        return new AccountHandler(AppendLog, _settings, connString, lineType: lineType);
+        return new LoginHandler(AppendLog, _settings, connString);
+    }
+
+    private WorldHandler CreateWorldHandler()
+    {
+        var connString = _settings.Database.BuildUserConnectionString();
+        return new WorldHandler(AppendLog, _settings, connString);
+    }
+
+    private ControlHandler CreateControlHandler()
+    {
+        var connString = _settings.Database.BuildUserConnectionString();
+        return new ControlHandler(AppendLog, _settings, connString);
     }
 
     private async void btnStart_Click(object sender, EventArgs e)
@@ -98,9 +111,9 @@ public partial class MainForm : Form
         }
 
         AccountMainContext.Instance.LoadWorldList(_settings.WorldList.Worlds);
-        _loginHandler = CreateHandler(AccountHandlerLine.Login);
-        _worldHandler = CreateHandler(AccountHandlerLine.World);
-        _controlHandler = CreateHandler(AccountHandlerLine.Control);
+        _loginHandler = CreateLoginHandler();
+        _worldHandler = CreateWorldHandler();
+        _controlHandler = CreateControlHandler();
         AppendLog("Settings applied.");
     }
 

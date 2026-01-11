@@ -12,9 +12,7 @@ public interface IAccountDatabase
 {
     Task<StaffInfoResult> Select_StaffInfoExAsync(string id, CancellationToken token);
     Task<bool> Select_StaffExpireAsync(string id, CancellationToken token);
-
     Task<UserInfoResult> Select_UserInfoAsync(string id, CancellationToken token);
-
     Task<byte> Exist_UserBanAsync(uint accountSerial, CancellationToken token);
     Task<(int Ret, string BlockReason)> Select_UserAccountBlockInfoAsync(uint accountSerial, CancellationToken token);
     Task<byte> Update_User_StateAsync(uint serial, byte state, CancellationToken token);
