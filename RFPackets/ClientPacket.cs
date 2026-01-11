@@ -5,7 +5,7 @@ namespace LoginServer.Packets;
 
 /// <summary>Client -> Login packets (_cllo).</summary>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _select_world_request_cllo
+public class _select_world_request_cllo
 {
     public ushort wWorldIndex;
 
@@ -15,10 +15,17 @@ public struct _select_world_request_cllo
         wWorldIndex = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(0, 2));
         return true;
     }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[2];
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(0, 2), wWorldIndex);
+        return buffer;
+    }
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _login_account_request_cllo
+public class _login_account_request_cllo
 {
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
     public byte[] szAccountID;
@@ -30,7 +37,6 @@ public struct _login_account_request_cllo
 
     public _login_account_request_cllo()
     {
-        this = default;
         szAccountID = new byte[13];
         szPassword = new byte[13];
     }
@@ -43,10 +49,25 @@ public struct _login_account_request_cllo
         byServerType = payload[26];
         return true;
     }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[27];
+        if (szAccountID != null)
+        {
+            Buffer.BlockCopy(szAccountID, 0, buffer, 0, Math.Min(13, szAccountID.Length));
+        }
+        if (szPassword != null)
+        {
+            Buffer.BlockCopy(szPassword, 0, buffer, 13, Math.Min(13, szPassword.Length));
+        }
+        buffer[26] = byServerType;
+        return buffer;
+    }
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _join_account_request_cllo
+public class _join_account_request_cllo
 {
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
     public byte[] szAccountID;
@@ -56,7 +77,6 @@ public struct _join_account_request_cllo
 
     public _join_account_request_cllo()
     {
-        this = default;
         szAccountID = new byte[13];
         szPassword = new byte[13];
     }
@@ -68,10 +88,24 @@ public struct _join_account_request_cllo
         Buffer.BlockCopy(payload, 13, szPassword, 0, 13);
         return true;
     }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[26];
+        if (szAccountID != null)
+        {
+            Buffer.BlockCopy(szAccountID, 0, buffer, 0, Math.Min(13, szAccountID.Length));
+        }
+        if (szPassword != null)
+        {
+            Buffer.BlockCopy(szPassword, 0, buffer, 13, Math.Min(13, szPassword.Length));
+        }
+        return buffer;
+    }
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _request_new_agree_cllo
+public class _request_new_agree_cllo
 {
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
     public byte[] szID;
@@ -81,14 +115,35 @@ public struct _request_new_agree_cllo
 
     public _request_new_agree_cllo()
     {
-        this = default;
         szID = new byte[13];
         nNewAgree = new byte[2];
+    }
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 15) return false;
+        Buffer.BlockCopy(payload, 0, szID, 0, 13);
+        Buffer.BlockCopy(payload, 13, nNewAgree, 0, 2);
+        return true;
+    }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[15];
+        if (szID != null)
+        {
+            Buffer.BlockCopy(szID, 0, buffer, 0, Math.Min(13, szID.Length));
+        }
+        if (nNewAgree != null)
+        {
+            Buffer.BlockCopy(nNewAgree, 0, buffer, 13, Math.Min(2, nNewAgree.Length));
+        }
+        return buffer;
     }
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _world_list_request_cllo
+public class _world_list_request_cllo
 {
     public uint dwClientVersion;
 
@@ -98,10 +153,17 @@ public struct _world_list_request_cllo
         dwClientVersion = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(0, 4));
         return true;
     }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[4];
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(0, 4), dwClientVersion);
+        return buffer;
+    }
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _motp_validation_request_cllo
+public class _motp_validation_request_cllo
 {
     public byte byType;
 
@@ -110,7 +172,6 @@ public struct _motp_validation_request_cllo
 
     public _motp_validation_request_cllo()
     {
-        this = default;
         szMOTP = new byte[13];
     }
 
@@ -121,17 +182,27 @@ public struct _motp_validation_request_cllo
         Buffer.BlockCopy(payload, 1, szMOTP, 0, 13);
         return true;
     }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[14];
+        buffer[0] = byType;
+        if (szMOTP != null)
+        {
+            Buffer.BlockCopy(szMOTP, 0, buffer, 1, Math.Min(13, szMOTP.Length));
+        }
+        return buffer;
+    }
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _manage_account_auth_request_cllo
+public class _manage_account_auth_request_cllo
 {
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
     public byte[] byBin;
 
     public _manage_account_auth_request_cllo()
     {
-        this = default;
         byBin = new byte[32];
     }
 
@@ -141,10 +212,20 @@ public struct _manage_account_auth_request_cllo
         Buffer.BlockCopy(payload, 0, byBin, 0, 32);
         return true;
     }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[32];
+        if (byBin != null)
+        {
+            Buffer.BlockCopy(byBin, 0, buffer, 0, Math.Min(32, byBin.Length));
+        }
+        return buffer;
+    }
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _push_close_request_cllo
+public class _push_close_request_cllo
 {
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
     public byte[] szAccountID;
@@ -154,7 +235,6 @@ public struct _push_close_request_cllo
 
     public _push_close_request_cllo()
     {
-        this = default;
         szAccountID = new byte[13];
         szPassword = new byte[13];
     }
@@ -166,22 +246,42 @@ public struct _push_close_request_cllo
         Buffer.BlockCopy(payload, 13, szPassword, 0, 13);
         return true;
     }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[26];
+        if (szAccountID != null)
+        {
+            Buffer.BlockCopy(szAccountID, 0, buffer, 0, Math.Min(13, szAccountID.Length));
+        }
+        if (szPassword != null)
+        {
+            Buffer.BlockCopy(szPassword, 0, buffer, 13, Math.Min(13, szPassword.Length));
+        }
+        return buffer;
+    }
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _crypty_key_request_cllo
+public class _crypty_key_request_cllo
 {
-    public bool Load(byte[] payload) => true;
+    public bool Load(byte[] payload) => payload.Length >= 1;
+
+    public byte[] ToArray() => new byte[1];
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _manage_client_limit_run_request_cllo
+public class _manage_client_limit_run_request_cllo
 {
-    public bool Load(byte[] payload) => true;
+    public bool Load(byte[] payload) => payload.Length >= 1;
+
+    public byte[] ToArray() => new byte[1];
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _manage_client_force_exit_request_cllo
+public class _manage_client_force_exit_request_cllo
 {
-    public bool Load(byte[] payload) => true;
+    public bool Load(byte[] payload) => payload.Length >= 1;
+
+    public byte[] ToArray() => new byte[1];
 }

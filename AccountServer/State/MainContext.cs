@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using RFNetworking;
@@ -98,9 +99,10 @@ public sealed class ClientSession
     {
         ConnectionId = loginConnId;
         Clid = clid;
+        GlobalId = new _GLBID { dwIndex = 0, dwSerial = uint.MaxValue };
     }
 
-    public unsafe void UpdateFromRequest(_login_account_request_loac_blit req)
+    public void UpdateFromRequest(_login_account_request_loac_blit req)
     {
         AccountId = PacketStringUtil.ToAsciiNullTerm(req.GetAccountId());
         Password = PacketStringUtil.ToAsciiNullTerm(req.GetPassword());
@@ -124,9 +126,9 @@ public sealed class ClientSession
         Trans = req.nTrans;
         AgeLimit = req.bAgeLimit != 0;
         AuthType = (byte)req.authtype;
-        for (int i = 0; i < Cms.Length; i++)
+        if (req.szCMS != null)
         {
-            Cms[i] = req.szCMS[i];
+            Buffer.BlockCopy(req.szCMS, 0, Cms, 0, Math.Min(Cms.Length, req.szCMS.Length));
         }
     }
 }

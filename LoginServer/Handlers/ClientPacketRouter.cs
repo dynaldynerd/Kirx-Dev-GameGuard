@@ -805,7 +805,7 @@ public sealed class ClientPacketRouter
         }
     }
 
-    private static unsafe _login_account_request_loac_blit BuildLoginAccountRequest(State.ClientSession session)
+    private static _login_account_request_loac_blit BuildLoginAccountRequest(State.ClientSession session)
     {
         var req = new _login_account_request_loac_blit
         {
@@ -830,21 +830,9 @@ public sealed class ClientPacketRouter
             bCancelWebUILockBlock = 0
         };
 
-        FillFixed(req.szAccountID, 13, session.AccountId);
-        FillFixed(req.szPassword, 13, session.Password);
+        PacketStringUtil.FillFixed(req.szAccountID, session.AccountId);
+        PacketStringUtil.FillFixed(req.szPassword, session.Password);
         return req;
-    }
-
-    private static unsafe void FillFixed(byte* target, int length, string value)
-    {
-        for (int i = 0; i < length; i++) target[i] = 0;
-        if (string.IsNullOrEmpty(value)) return;
-        var bytes = System.Text.Encoding.ASCII.GetBytes(value);
-        int copy = Math.Min(bytes.Length, length);
-        for (int i = 0; i < copy; i++)
-        {
-            target[i] = bytes[i];
-        }
     }
 
     private static bool IsDevUser(string accountId)

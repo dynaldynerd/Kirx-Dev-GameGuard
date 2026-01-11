@@ -29,21 +29,21 @@ public static class PacketStringUtil
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _GLBID
+public class _GLBID
 {
     public uint dwIndex;
     public uint dwSerial;
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct _CLID
+public class _CLID
 {
     public ushort wIndex;
     public uint dwSerial;
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 2)]
-public struct _SYSTEMTIME
+public class _SYSTEMTIME
 {
     public ushort wYear;
     public ushort wMonth;

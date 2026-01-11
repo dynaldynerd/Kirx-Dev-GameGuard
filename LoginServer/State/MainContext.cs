@@ -195,6 +195,7 @@ public sealed class ClientSession
     public ClientSession(ushort index)
     {
         Index = index;
+        GlobalId = new _GLBID { dwIndex = 0, dwSerial = uint.MaxValue };
     }
 
     public ushort Index { get; }
