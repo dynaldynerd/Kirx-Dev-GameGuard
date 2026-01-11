@@ -1,27 +1,26 @@
 using System;
 using System.Buffers.Binary;
-using System.Runtime.InteropServices;
 
 namespace LoginServer.Packets;
 
 #region Login -> Account (loac) and Login -> Client (locl)
 
 // loac
-[StructLayout(LayoutKind.Sequential, Pack = 2)]
-public class _select_world_request_loac
+public struct _select_world_request_loac
 {
     public _GLBID gidGlobal;
     public ushort wWorldIndex;
     public uint dwClientIP;
 
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
+    
     public uint[] dwRequestMoveCharacterSerialList;
 
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
+    
     public uint[] dwRTournamentCharacterSerialList;
 
     public _select_world_request_loac()
     {
+    this = default;
         gidGlobal = new _GLBID();
         dwRequestMoveCharacterSerialList = new uint[3];
         dwRTournamentCharacterSerialList = new uint[3];
@@ -56,8 +55,8 @@ public class _select_world_request_loac
     public byte[] ToArray()
     {
         var buffer = new byte[38];
-        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(0, 4), gidGlobal?.dwIndex ?? 0);
-        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(4, 4), gidGlobal?.dwSerial ?? 0);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(0, 4), gidGlobal.dwIndex);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(4, 4), gidGlobal.dwSerial);
         BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(8, 2), wWorldIndex);
         BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(10, 4), dwClientIP);
         int offset = 14;
@@ -79,19 +78,19 @@ public class _select_world_request_loac
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _select_world_request_loac_blit
+public struct _select_world_request_loac_blit
 {
     public _GLBID gidGlobal;
     public ushort wWorldIndex;
     public uint dwClientIP;
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
+    
     public uint[] dwRequestMoveCharacterSerialList;
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
+    
     public uint[] dwRTournamentCharacterSerialList;
 
     public _select_world_request_loac_blit()
     {
+    this = default;
         gidGlobal = new _GLBID();
         dwRequestMoveCharacterSerialList = new uint[3];
         dwRTournamentCharacterSerialList = new uint[3];
@@ -146,8 +145,8 @@ public class _select_world_request_loac_blit
     public byte[] ToArray()
     {
         var buffer = new byte[38];
-        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(0, 4), gidGlobal?.dwIndex ?? 0);
-        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(4, 4), gidGlobal?.dwSerial ?? 0);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(0, 4), gidGlobal.dwIndex);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(4, 4), gidGlobal.dwSerial);
         BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(8, 2), wWorldIndex);
         BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(10, 4), dwClientIP);
         int offset = 14;
@@ -169,26 +168,25 @@ public class _select_world_request_loac_blit
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _login_account_request_loac
+public struct _login_account_request_loac
 {
     public _CLID idLocal;
     public byte byUserCode;
 
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
+    
     public byte[] szAccountID;
 
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
+    
     public byte[] szPassword;
 
     public uint dwClientIP;
 
-    [MarshalAs(UnmanagedType.U1)]
+    
     public bool bCheckDoubleIP;
 
     public short iType;
 
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 7)]
+    
     public byte[] szCMS;
 
     public int lRemainTime;
@@ -196,17 +194,18 @@ public class _login_account_request_loac
     public int authtype;
     public int nTrans;
 
-    [MarshalAs(UnmanagedType.U1)]
+    
     public bool bPrimium;
 
-    [MarshalAs(UnmanagedType.U1)]
+    
     public bool bAgeLimit;
 
-    [MarshalAs(UnmanagedType.U1)]
+    
     public bool bCancelWebUILockBlock;
 
     public _login_account_request_loac()
     {
+    this = default;
         idLocal = new _CLID();
         szAccountID = new byte[13];
         szPassword = new byte[13];
@@ -233,7 +232,7 @@ public class _login_account_request_loac
         iType = BinaryPrimitives.ReadInt16LittleEndian(payload.AsSpan(38, 2));
         Buffer.BlockCopy(payload, 40, szCMS, 0, 7);
         lRemainTime = BinaryPrimitives.ReadInt32LittleEndian(payload.AsSpan(47, 4));
-        stEndDate ??= new _SYSTEMTIME();
+        stEndDate = new _SYSTEMTIME();
         stEndDate.wYear = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(51, 2));
         stEndDate.wMonth = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(53, 2));
         stEndDate.wDayOfWeek = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(55, 2));
@@ -253,8 +252,8 @@ public class _login_account_request_loac
     public byte[] ToArray()
     {
         var buffer = new byte[78];
-        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(0, 2), idLocal?.wIndex ?? 0);
-        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(2, 4), idLocal?.dwSerial ?? 0);
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(0, 2), idLocal.wIndex);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(2, 4), idLocal.dwSerial);
         buffer[6] = byUserCode;
         if (szAccountID != null)
         {
@@ -272,7 +271,7 @@ public class _login_account_request_loac
             Buffer.BlockCopy(szCMS, 0, buffer, 40, Math.Min(7, szCMS.Length));
         }
         BinaryPrimitives.WriteInt32LittleEndian(buffer.AsSpan(47, 4), lRemainTime);
-        var endDate = stEndDate ?? new _SYSTEMTIME();
+        var endDate = stEndDate;
         BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(51, 2), endDate.wYear);
         BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(53, 2), endDate.wMonth);
         BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(55, 2), endDate.wDayOfWeek);
@@ -290,19 +289,18 @@ public class _login_account_request_loac
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _login_account_request_loac_blit
+public struct _login_account_request_loac_blit
 {
     public _CLID idLocal;
     public byte byUserCode;
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
+    
     public byte[] szAccountID;
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
+    
     public byte[] szPassword;
     public uint dwClientIP;
     public byte bCheckDoubleIP;
     public short iType;
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 7)]
+    
     public byte[] szCMS;
     public int lRemainTime;
     public ushort wYear;
@@ -321,6 +319,7 @@ public class _login_account_request_loac_blit
 
     public _login_account_request_loac_blit()
     {
+    this = default;
         idLocal = new _CLID();
         szAccountID = new byte[13];
         szPassword = new byte[13];
@@ -385,8 +384,8 @@ public class _login_account_request_loac_blit
     public byte[] ToArray()
     {
         var buffer = new byte[78];
-        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(0, 2), idLocal?.wIndex ?? 0);
-        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(2, 4), idLocal?.dwSerial ?? 0);
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(0, 2), idLocal.wIndex);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(2, 4), idLocal.dwSerial);
         buffer[6] = byUserCode;
         if (szAccountID != null)
         {
@@ -421,10 +420,9 @@ public class _login_account_request_loac_blit
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _logout_account_request_loac
+public struct _logout_account_request_loac
 {
-    public _GLBID gidGlobal = new _GLBID();
+    public _GLBID gidGlobal;
 
     public bool Load(byte[] payload)
     {
@@ -440,35 +438,34 @@ public class _logout_account_request_loac
     public byte[] ToArray()
     {
         var buffer = new byte[8];
-        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(0, 4), gidGlobal?.dwIndex ?? 0);
-        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(4, 4), gidGlobal?.dwSerial ?? 0);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(0, 4), gidGlobal.dwIndex);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(4, 4), gidGlobal.dwSerial);
         return buffer;
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _world_list_request_loac
+public struct _world_list_request_loac
 {
     public bool Load(byte[] payload) => payload.Length >= 1;
 
     public byte[] ToArray() => new byte[1];
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _join_account_request_loac
+public struct _join_account_request_loac
 {
     public _CLID idLocal;
 
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
+    
     public byte[] szAccountID;
 
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
+    
     public byte[] szPassword;
 
     public uint dwClientIP;
 
     public _join_account_request_loac()
     {
+    this = default;
         idLocal = new _CLID();
         szAccountID = new byte[13];
         szPassword = new byte[13];
@@ -491,8 +488,8 @@ public class _join_account_request_loac
     public byte[] ToArray()
     {
         var buffer = new byte[36];
-        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(0, 2), idLocal?.wIndex ?? 0);
-        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(2, 4), idLocal?.dwSerial ?? 0);
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(0, 2), idLocal.wIndex);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(2, 4), idLocal.dwSerial);
         if (szAccountID != null)
         {
             Buffer.BlockCopy(szAccountID, 0, buffer, 6, Math.Min(13, szAccountID.Length));
@@ -506,10 +503,9 @@ public class _join_account_request_loac
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _push_close_request_loac
+public struct _push_close_request_loac
 {
-    public _CLID idLocal = new _CLID();
+    public _CLID idLocal;
     public byte byUserCode;
     public uint dwAccountSerial;
     public uint dwClientIP;
@@ -531,8 +527,8 @@ public class _push_close_request_loac
     public byte[] ToArray()
     {
         var buffer = new byte[15];
-        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(0, 2), idLocal?.wIndex ?? 0);
-        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(2, 4), idLocal?.dwSerial ?? 0);
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(0, 2), idLocal.wIndex);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(2, 4), idLocal.dwSerial);
         buffer[6] = byUserCode;
         BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(7, 4), dwAccountSerial);
         BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(11, 4), dwClientIP);
@@ -540,8 +536,7 @@ public class _push_close_request_loac
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _login_server_stat_result_loac
+public struct _login_server_stat_result_loac
 {
     public byte byRet;
     public ushort wClientIndex;
@@ -563,16 +558,16 @@ public class _login_server_stat_result_loac
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _update_user_login_failure_cnt_loac
+public struct _update_user_login_failure_cnt_loac
 {
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
+    
     public byte[] szUserID;
 
     public byte byType;
 
     public _update_user_login_failure_cnt_loac()
     {
+    this = default;
         szUserID = new byte[13];
     }
 
@@ -596,16 +591,16 @@ public class _update_user_login_failure_cnt_loac
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _manage_account_auth_request_loac
+public struct _manage_account_auth_request_loac
 {
     public _CLID idLocal;
 
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+    
     public byte[] byBin;
 
     public _manage_account_auth_request_loac()
     {
+    this = default;
         idLocal = new _CLID();
         byBin = new byte[32];
     }
@@ -625,8 +620,8 @@ public class _manage_account_auth_request_loac
     public byte[] ToArray()
     {
         var buffer = new byte[38];
-        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(0, 2), idLocal?.wIndex ?? 0);
-        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(2, 4), idLocal?.dwSerial ?? 0);
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(0, 2), idLocal.wIndex);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(2, 4), idLocal.dwSerial);
         if (byBin != null)
         {
             Buffer.BlockCopy(byBin, 0, buffer, 6, Math.Min(32, byBin.Length));
@@ -635,13 +630,13 @@ public class _manage_account_auth_request_loac
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _manage_client_force_exit_request_loac
+public struct _manage_client_force_exit_request_loac
 {
     public _CLID idLocal;
 
     public _manage_client_force_exit_request_loac()
     {
+    this = default;
         idLocal = new _CLID();
     }
 
@@ -659,19 +654,19 @@ public class _manage_client_force_exit_request_loac
     public byte[] ToArray()
     {
         var buffer = new byte[6];
-        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(0, 2), idLocal?.wIndex ?? 0);
-        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(2, 4), idLocal?.dwSerial ?? 0);
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(0, 2), idLocal.wIndex);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(2, 4), idLocal.dwSerial);
         return buffer;
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _manage_client_limit_run_request_loac
+public struct _manage_client_limit_run_request_loac
 {
     public _CLID idLocal;
 
     public _manage_client_limit_run_request_loac()
     {
+    this = default;
         idLocal = new _CLID();
     }
 
@@ -689,15 +684,14 @@ public class _manage_client_limit_run_request_loac
     public byte[] ToArray()
     {
         var buffer = new byte[6];
-        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(0, 2), idLocal?.wIndex ?? 0);
-        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(2, 4), idLocal?.dwSerial ?? 0);
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(0, 2), idLocal.wIndex);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(2, 4), idLocal.dwSerial);
         return buffer;
     }
 }
 
 // locl
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _push_close_result_locl
+public struct _push_close_result_locl
 {
     public byte byRetCode;
 
@@ -711,8 +705,7 @@ public class _push_close_result_locl
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _server_notify_inform_locl
+public struct _server_notify_inform_locl
 {
     public ushort wMsgCode;
 
@@ -731,8 +724,7 @@ public class _server_notify_inform_locl
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _result_new_agree_locl
+public struct _result_new_agree_locl
 {
     public sbyte nRet;
 
@@ -746,16 +738,16 @@ public class _result_new_agree_locl
     public byte[] ToArray() => new[] { unchecked((byte)nRet) };
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _free_server_inform_locl
+public struct _free_server_inform_locl
 {
     public byte byServiceWorldNum;
 
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 40)]
+    
     public byte[] bFree;
 
     public _free_server_inform_locl()
     {
+    this = default;
         bFree = new byte[40];
     }
 
@@ -780,16 +772,16 @@ public class _free_server_inform_locl
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _world_user_inform_locl
+public struct _world_user_inform_locl
 {
     public byte byServiceWorldNum;
 
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 40)]
+    
     public ushort[] wUserNum;
 
     public _world_user_inform_locl()
     {
+    this = default;
         wUserNum = new ushort[40];
     }
 
@@ -817,11 +809,10 @@ public class _world_user_inform_locl
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _motp_validation_reply_locl
+public struct _motp_validation_reply_locl
 {
     public byte byResult;
-    [MarshalAs(UnmanagedType.U1)] public bool bDuple;
+     public bool bDuple;
 
     public bool Load(byte[] payload)
     {
@@ -834,8 +825,7 @@ public class _motp_validation_reply_locl
     public byte[] ToArray() => new[] { byResult, bDuple ? (byte)1 : (byte)0 };
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _crypty_key_inform_locl
+public struct _crypty_key_inform_locl
 {
     public byte byPlus;
     public ushort wKey;
@@ -857,17 +847,17 @@ public class _crypty_key_inform_locl
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _world_list_result_locl
+public struct _world_list_result_locl
 {
     public byte byRetCode;
     public ushort wDataSize;
 
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4095)]
+    
     public byte[] sListData;
 
     public _world_list_result_locl()
     {
+    this = default;
         sListData = new byte[4095];
     }
 
@@ -901,21 +891,21 @@ public class _world_list_result_locl
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _select_world_result_locl
+public struct _select_world_result_locl
 {
     public byte byRetCode;
     public uint dwWorldGateIP;
     public ushort wWorldGatePort;
 
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+    
     public uint[] dwWorldMasterKey;
 
-    [MarshalAs(UnmanagedType.U1)]
+    
     public bool bAllowAltTab;
 
     public _select_world_result_locl()
     {
+    this = default;
         dwWorldMasterKey = new uint[4];
     }
 
@@ -950,23 +940,23 @@ public class _select_world_result_locl
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _login_account_result_locl
+public struct _login_account_result_locl
 {
     public byte byRetCode;
     public uint dwAccountSerial;
     public uint dwBillingType;
     public byte byBeChangedPass;
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
+    
     public byte[] nNewAgree;
-    [MarshalAs(UnmanagedType.U1)] public bool bAdult;
+     public bool bAdult;
     public uint dwTime;
-    [MarshalAs(UnmanagedType.U1)] public bool bMOTPEntry;
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+     public bool bMOTPEntry;
+    
     public byte[] uszBlockReason;
 
     public _login_account_result_locl()
     {
+    this = default;
         nNewAgree = new byte[2];
         uszBlockReason = new byte[32];
     }
@@ -1029,8 +1019,7 @@ public class _login_account_result_locl
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _join_account_result_locl
+public struct _join_account_result_locl
 {
     public byte byRetCode;
 
@@ -1044,14 +1033,14 @@ public class _join_account_result_locl
     public byte[] ToArray() => new[] { byRetCode };
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _notify_manage_account_auth_info_locl
+public struct _notify_manage_account_auth_info_locl
 {
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 149)]
+    
     public byte[] byKey;
 
     public _notify_manage_account_auth_info_locl()
     {
+    this = default;
         byKey = new byte[149];
     }
 
@@ -1073,8 +1062,7 @@ public class _notify_manage_account_auth_info_locl
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _manage_client_force_exit_result_locl
+public struct _manage_client_force_exit_result_locl
 {
     public byte byRet;
 
@@ -1088,8 +1076,7 @@ public class _manage_client_force_exit_result_locl
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _manage_account_auth_result_locl
+public struct _manage_account_auth_result_locl
 {
     public byte byRet;
 
@@ -1103,8 +1090,7 @@ public class _manage_account_auth_result_locl
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _manage_client_limit_run_account_result_locl
+public struct _manage_client_limit_run_account_result_locl
 {
     public byte byRet;
 
@@ -1118,22 +1104,22 @@ public class _manage_client_limit_run_account_result_locl
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _manage_client_limit_run_world_result_locl
+public struct _manage_client_limit_run_world_result_locl
 {
     public byte byRet;
     public uint m_dwCode;
 
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+    
     public byte[] m_szName;
 
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+    
     public byte[] m_szDBName;
 
     public byte m_byType;
 
     public _manage_client_limit_run_world_result_locl()
     {
+    this = default;
         m_szName = new byte[32];
         m_szDBName = new byte[32];
     }
@@ -1170,3 +1156,6 @@ public class _manage_client_limit_run_world_result_locl
 }
 
 #endregion
+
+
+

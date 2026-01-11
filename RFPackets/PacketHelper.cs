@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace LoginServer.Packets;
@@ -28,22 +27,19 @@ public static class PacketStringUtil
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _GLBID
+public struct _GLBID
 {
     public uint dwIndex;
     public uint dwSerial;
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _CLID
+public struct _CLID
 {
     public ushort wIndex;
     public uint dwSerial;
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 2)]
-public class _SYSTEMTIME
+public struct _SYSTEMTIME
 {
     public ushort wYear;
     public ushort wMonth;
@@ -54,3 +50,4 @@ public class _SYSTEMTIME
     public ushort wSecond;
     public ushort wMilliseconds;
 }
+

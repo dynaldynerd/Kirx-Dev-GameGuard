@@ -1,11 +1,9 @@
 using System.Buffers.Binary;
-using System.Runtime.InteropServices;
 
 namespace LoginServer.Packets;
 
 /// <summary>Client -> Login packets (_cllo).</summary>
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _select_world_request_cllo
+public struct _select_world_request_cllo
 {
     public ushort wWorldIndex;
 
@@ -24,19 +22,19 @@ public class _select_world_request_cllo
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _login_account_request_cllo
+public struct _login_account_request_cllo
 {
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
+    
     public byte[] szAccountID;
 
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
+    
     public byte[] szPassword;
 
     public byte byServerType;
 
     public _login_account_request_cllo()
     {
+    this = default;
         szAccountID = new byte[13];
         szPassword = new byte[13];
     }
@@ -66,17 +64,17 @@ public class _login_account_request_cllo
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _join_account_request_cllo
+public struct _join_account_request_cllo
 {
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
+    
     public byte[] szAccountID;
 
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
+    
     public byte[] szPassword;
 
     public _join_account_request_cllo()
     {
+    this = default;
         szAccountID = new byte[13];
         szPassword = new byte[13];
     }
@@ -104,17 +102,17 @@ public class _join_account_request_cllo
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _request_new_agree_cllo
+public struct _request_new_agree_cllo
 {
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
+    
     public byte[] szID;
 
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
+    
     public byte[] nNewAgree;
 
     public _request_new_agree_cllo()
     {
+    this = default;
         szID = new byte[13];
         nNewAgree = new byte[2];
     }
@@ -142,8 +140,7 @@ public class _request_new_agree_cllo
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _world_list_request_cllo
+public struct _world_list_request_cllo
 {
     public uint dwClientVersion;
 
@@ -162,16 +159,16 @@ public class _world_list_request_cllo
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _motp_validation_request_cllo
+public struct _motp_validation_request_cllo
 {
     public byte byType;
 
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
+    
     public byte[] szMOTP;
 
     public _motp_validation_request_cllo()
     {
+    this = default;
         szMOTP = new byte[13];
     }
 
@@ -195,14 +192,14 @@ public class _motp_validation_request_cllo
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _manage_account_auth_request_cllo
+public struct _manage_account_auth_request_cllo
 {
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+    
     public byte[] byBin;
 
     public _manage_account_auth_request_cllo()
     {
+    this = default;
         byBin = new byte[32];
     }
 
@@ -224,17 +221,17 @@ public class _manage_account_auth_request_cllo
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _push_close_request_cllo
+public struct _push_close_request_cllo
 {
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
+    
     public byte[] szAccountID;
 
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 13)]
+    
     public byte[] szPassword;
 
     public _push_close_request_cllo()
     {
+    this = default;
         szAccountID = new byte[13];
         szPassword = new byte[13];
     }
@@ -262,26 +259,25 @@ public class _push_close_request_cllo
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _crypty_key_request_cllo
+public struct _crypty_key_request_cllo
 {
     public bool Load(byte[] payload) => payload.Length >= 1;
 
     public byte[] ToArray() => new byte[1];
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _manage_client_limit_run_request_cllo
+public struct _manage_client_limit_run_request_cllo
 {
     public bool Load(byte[] payload) => payload.Length >= 1;
 
     public byte[] ToArray() => new byte[1];
 }
 
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class _manage_client_force_exit_request_cllo
+public struct _manage_client_force_exit_request_cllo
 {
     public bool Load(byte[] payload) => payload.Length >= 1;
 
     public byte[] ToArray() => new byte[1];
 }
+
+
