@@ -13,6 +13,7 @@ public sealed class AppSettings
     public GmFilterSettings GmFilter { get; set; } = new();
     public WorldListSettings WorldList { get; set; } = new();
     public SecuritySettings Security { get; set; } = new();
+    public ListenerSettings Listener { get; set; } = new();
     public int MaxActiveClients { get; set; } = -1;
 
     [JsonIgnore]
@@ -32,6 +33,7 @@ public sealed class AppSettings
         var json = File.ReadAllText(path);
         var settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions()) ?? new AppSettings();
         settings.Security ??= new SecuritySettings();
+        settings.Listener ??= new ListenerSettings();
         if (!IsValidBase64(settings.Security.Argon2SaltBase64))
         {
             settings.Security.Argon2SaltBase64 = GenerateSaltBase64();
@@ -95,6 +97,13 @@ public sealed class AppSettings
             Security = new SecuritySettings
             {
                 Argon2SaltBase64 = GenerateSaltBase64()
+            },
+            Listener = new ListenerSettings
+            {
+                Host = "0.0.0.0",
+                LoginPort = 27000,
+                WorldPort = 29000,
+                ControlPort = 28000
             }
         };
     }
@@ -184,4 +193,12 @@ public sealed class WorldEntry
 public sealed class SecuritySettings
 {
     public string Argon2SaltBase64 { get; set; } = "";
+}
+
+public sealed class ListenerSettings
+{
+    public string Host { get; set; } = "0.0.0.0";
+    public int LoginPort { get; set; } = 27000;
+    public int WorldPort { get; set; } = 29000;
+    public int ControlPort { get; set; } = 28000;
 }

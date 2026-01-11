@@ -60,11 +60,12 @@ public partial class MainForm : Form
             _worldListener = new NetworkListener(_worldHandler) { PingPacket = new PacketEnvelope { OpCode = 101, SubCode = 1, Payload = new byte[] { 0 } } };
             _controlListener = new NetworkListener(_controlHandler) { PingPacket = new PacketEnvelope { OpCode = 101, SubCode = 1, Payload = new byte[] { 0 } } };
 
-            await _loginListener.StartAsync(2700, _cts.Token);
-            await _worldListener.StartAsync(29000, _cts.Token);
-            await _controlListener.StartAsync(28000, _cts.Token);
+            var host = _settings.Listener.Host;
+            await _loginListener.StartAsync(host, _settings.Listener.LoginPort, _cts.Token);
+            await _worldListener.StartAsync(host, _settings.Listener.WorldPort, _cts.Token);
+            await _controlListener.StartAsync(host, _settings.Listener.ControlPort, _cts.Token);
 
-            AppendLog("Listening on ports: login 2700, world 29000, control 28000");
+            AppendLog($"Listening on {host}: login {_settings.Listener.LoginPort}, world {_settings.Listener.WorldPort}, control {_settings.Listener.ControlPort}");
         }
         catch (Exception ex)
         {

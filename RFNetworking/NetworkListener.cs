@@ -36,6 +36,17 @@ public sealed class NetworkListener : IAsyncDisposable
 
     public async Task StartAsync(int port, CancellationToken cancellationToken)
     {
+        await StartAsync(IPAddress.Any, port, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task StartAsync(string host, int port, CancellationToken cancellationToken)
+    {
+        var bindAddress = ResolveBindAddress(host);
+        await StartAsync(bindAddress, port, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task StartAsync(IPAddress bindAddress, int port, CancellationToken cancellationToken)
+    {
         if (_listenSocket != null)
         {
             throw new InvalidOperationException("Listener already running.");
@@ -43,12 +54,43 @@ public sealed class NetworkListener : IAsyncDisposable
 
         _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         _listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        _listenSocket.Bind(new IPEndPoint(IPAddress.Any, port));
+        _listenSocket.Bind(new IPEndPoint(bindAddress, port));
         _listenSocket.Listen(512);
-        Log?.Invoke($"Listening on port {port}");
+        Log?.Invoke($"Listening on {bindAddress}:{port}");
 
         _acceptLoop = Task.Run(() => AcceptLoopAsync(_cts.Token), CancellationToken.None);
         await Task.Yield();
+    }
+
+    private static IPAddress ResolveBindAddress(string host)
+    {
+        if (string.IsNullOrWhiteSpace(host) || host == "0.0.0.0" || host == "*" || host == "any")
+        {
+            return IPAddress.Any;
+        }
+
+        if (IPAddress.TryParse(host, out var ip))
+        {
+            return ip;
+        }
+
+        try
+        {
+            var addresses = Dns.GetHostAddresses(host);
+            foreach (var address in addresses)
+            {
+                if (address.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    return address;
+                }
+            }
+        }
+        catch
+        {
+            return IPAddress.Any;
+        }
+
+        return IPAddress.Any;
     }
 
     public async Task StopAsync()
