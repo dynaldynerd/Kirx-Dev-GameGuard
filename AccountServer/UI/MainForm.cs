@@ -18,13 +18,14 @@ public partial class MainForm : Form
     {
         InitializeComponent();
         _settings = AppSettings.Load();
+        AccountMainContext.Instance.LoadWorldList(_settings.WorldList.Worlds);
         _handler = CreateHandler();
     }
 
     private AccountHandler CreateHandler()
     {
         var connString = _settings.Database.BuildUserConnectionString();
-        return new AccountHandler(AppendLog, connString);
+        return new AccountHandler(AppendLog, _settings, connString);
     }
 
     private async void btnStart_Click(object sender, EventArgs e)
@@ -92,6 +93,7 @@ public partial class MainForm : Form
             return;
         }
 
+        AccountMainContext.Instance.LoadWorldList(_settings.WorldList.Worlds);
         _handler = CreateHandler();
         AppendLog("Settings applied.");
     }

@@ -3,6 +3,7 @@ using System;
 using System.Net;
 using AccountServer.State;
 using AccountServer.Data;
+using AccountServer.Settings;
 using LoginServer.Packets;
 
 namespace AccountServer.Server;
@@ -14,13 +15,15 @@ public sealed class AccountHandler : NetworkHandlerBase
 {
     private readonly Action<string> _log;
     private readonly AccountMainContext _context = AccountMainContext.Instance;
+    private readonly AppSettings _settings;
     private readonly IAccountDatabase _db;
     private uint _accountSerialSeed = 1;
     private uint _globalSerialSeed = 1;
 
-    public AccountHandler(Action<string> log, string? connectionString = null, IAccountDatabase? db = null)
+    public AccountHandler(Action<string> log, AppSettings settings, string? connectionString = null, IAccountDatabase? db = null)
     {
         _log = log;
+        _settings = settings;
         _db = db ?? CreateDefaultDb(connectionString);
     }
 
@@ -184,8 +187,166 @@ public sealed class AccountHandler : NetworkHandlerBase
 
     private Task<bool> SelectWorldRequest(PublicConnection connection, _select_world_request_loac request, CancellationToken token)
     {
-        _log($"[{connection.ConnectionId}] SelectWorldRequest world={request.wWorldIndex} gid=({request.gidGlobal.dwIndex},{request.gidGlobal.dwSerial}) ip={new IPAddress(request.dwClientIP)}");
+        if (request.wWorldIndex >= _context.WorldCount)
+        {
+            _log($"CNetworkEX::SelectWorldRequest() : Select WorldIndex Error[{request.wWorldIndex}]");
+            return Task.FromResult(false);
+        }
+
+        int maxActive = _settings.MaxActiveClients;
+        if (maxActive >= 0 && request.gidGlobal.dwIndex >= (uint)maxActive)
+        {
+            _log($"CNetworkEX::SelectWorldRequest() : G_id Error[{request.gidGlobal.dwIndex}]");
+            return Task.FromResult(false);
+        }
+
+        _ = PcSelectWorldAsync(connection, request, token);
         return Task.FromResult(true);
+    }
+
+    private async Task PcSelectWorldAsync(PublicConnection loginConnection, _select_world_request_loac request, CancellationToken token)
+    {
+        byte retCode = 0;
+        if (!_context.TryGetActiveGlobal(request.gidGlobal.dwIndex, out var user) || !user.IsLogin)
+        {
+            retCode = 17;
+        }
+        else if (user.GlobalId.dwSerial != request.gidGlobal.dwSerial)
+        {
+            _log("CMainThread::pc_SelectWorld() : G_id Different");
+            retCode = 4;
+        }
+
+        if (retCode == 0)
+        {
+            if (!_context.TryGetWorld(request.wWorldIndex, out var worldSet) || !worldSet.IsService)
+            {
+                _log($"CMainThread::pc_SelectWorld() : Not ServiceWorld[{request.wWorldIndex}]");
+                retCode = 29;
+            }
+            else
+            {
+                if (!_context.TryGetWorldConnection(request.wWorldIndex, out var worldConnection))
+                {
+                    _log($"CMainThread::pc_SelectWorld() : Not ServiceWorld[{request.wWorldIndex}]");
+                    retCode = 29;
+                }
+                else
+                {
+                GenerateMasterKey(user);
+                var inform = new _trans_account_inform_acwr();
+                inform.gidGlobal = user.GlobalId;
+                inform.dwAccountSerial = user.AccountSerial;
+                PacketStringUtil.FillFixed(inform.szAccountID, user.AccountId);
+
+                var codeKey = CalcCodeKey(user.MasterKey);
+                for (int i = 0; i < inform.dwKey.Length; i++)
+                {
+                    inform.dwKey[i] = codeKey[i];
+                }
+
+                inform.dwClientIP = request.dwClientIP;
+                inform.byUserDgr = user.UserGrade;
+                inform.bySubDgr = user.SubGrade;
+                inform.bChatLock = user.ChatLock;
+                inform.iType = user.Type;
+                inform.lRemainTime = user.RemainTime;
+                Buffer.BlockCopy(user.Cms, 0, inform.szCMS, 0, Math.Min(inform.szCMS.Length, user.Cms.Length));
+                inform.stEndDate = user.EndDate;
+                inform.bIsPcBang = user.IsPCBang;
+                inform.bAgeLimit = user.AgeLimit;
+                inform.nTrans = user.Trans;
+
+                if (user.UserCode == 0)
+                {
+                    inform.byUILock = user.UiLock;
+                    inform.byUILock_failcnt = user.UiLockFailCnt;
+                    inform.byUILock_HintIndex = user.UiLockHintIndex;
+                    inform.byUILockFindPassFailCount = user.UiLockFindPassFailCount;
+                    Buffer.BlockCopy(user.AccountPassword, 0, inform.szAccount_pw, 0, Math.Min(inform.szAccount_pw.Length, user.AccountPassword.Length));
+                    Buffer.BlockCopy(user.UiLockPw, 0, inform.szUILock_pw, 0, Math.Min(inform.szUILock_pw.Length, user.UiLockPw.Length));
+                    Buffer.BlockCopy(user.UiLockHintAnswer, 0, inform.uszUILock_HintAnswer, 0, Math.Min(inform.uszUILock_HintAnswer.Length, user.UiLockHintAnswer.Length));
+                }
+
+                for (int i = 0; i < 3; i++)
+                {
+                    inform.dwRequestMoveCharacterSerialList[i] = request.dwRequestMoveCharacterSerialList[i];
+                    inform.dwTournamentCharacterSerialList[i] = request.dwRTournamentCharacterSerialList[i];
+                }
+
+                var env = new PacketEnvelope
+                {
+                    OpCode = 1,
+                    SubCode = 8,
+                    Payload = inform.ToArray()
+                };
+
+                try
+                {
+                    await worldConnection.SendAsync(env, token).ConfigureAwait(false);
+                    _log($"{user.AccountId} Key: {user.MasterKey[0]}, {user.MasterKey[1]}, {user.MasterKey[2]}, {user.MasterKey[3]}");
+                }
+                catch (Exception ex)
+                {
+                    _log($"[{loginConnection.ConnectionId}] select world send failed: {ex.Message}");
+                    retCode = 29;
+                }
+                }
+            }
+        }
+
+        if (retCode != 0)
+        {
+            var send = new _select_world_result_aclo
+            {
+                idLocal = user?.Clid ?? default,
+                byRetCode = retCode
+            };
+            await SendSelectWorldResultAsync(loginConnection, send, token).ConfigureAwait(false);
+        }
+    }
+
+    private async Task SendSelectWorldResultAsync(PublicConnection connection, _select_world_result_aclo payload, CancellationToken token)
+    {
+        var env = new PacketEnvelope
+        {
+            OpCode = 1,
+            SubCode = 6,
+            Payload = payload.ToArray()
+        };
+
+        try
+        {
+            await connection.SendAsync(env, token).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _log($"[{connection.ConnectionId}] send select world result failed: {ex.Message}");
+        }
+    }
+
+    private static void GenerateMasterKey(ClientSession session)
+    {
+        for (int i = 0; i < session.MasterKey.Length; i++)
+        {
+            uint dwR = (uint)Random.Shared.Next(0, 0x8000);
+            uint dwRR = dwR | ((Random.Shared.Next() % 2 != 0) ? 0u : 0x8000u);
+            uint dwL = (uint)Random.Shared.Next(0, 0x8000);
+            session.MasterKey[i] = dwL | ((Random.Shared.Next() % 2 != 0) ? 0u : 0x8000u) | (dwRR << 16);
+        }
+    }
+
+    private static uint[] CalcCodeKey(uint[] masterKey)
+    {
+        const uint multiplier = 313210060;
+        uint v1 = (masterKey[0] + masterKey[2] - masterKey[1] - masterKey[3]) * multiplier;
+        return new[]
+        {
+            masterKey[0] ^ v1,
+            v1 ^ masterKey[1],
+            v1 ^ masterKey[2],
+            v1 ^ masterKey[3]
+        };
     }
 
     private async Task DoLoginAsync(PublicConnection connection, _login_account_request_loac_blit req, CancellationToken token)
@@ -268,6 +429,12 @@ public sealed class AccountHandler : NetworkHandlerBase
                     temp.UserGrade = 0;
                     temp.SubGrade = 0;
                     temp.AccountSerial = userInfo.Serial;
+                    temp.UiLock = userInfo.UiLock;
+                    temp.UiLockFailCnt = userInfo.UiLockFailCnt;
+                    temp.UiLockHintIndex = userInfo.HintIndex;
+                    temp.UiLockFindPassFailCount = userInfo.UiLockFindPassFailCount;
+                    PacketStringUtil.FillFixed(temp.UiLockPw, userInfo.UiLockPw);
+                    PacketStringUtil.FillFixed(temp.UiLockHintAnswer, userInfo.HintAnswer);
                 }
                 else if (userInfoRet == 1)
                 {
@@ -350,8 +517,7 @@ public sealed class AccountHandler : NetworkHandlerBase
                         else
                         {
                             await ForceCloseAccountAsync(existing, true, 5, 0, token).ConfigureAwait(false);
-                            _context.RemoveClient(existing.ConnectionId, existing.Clid);
-                            _context.RemoveActiveAccount(existing.AccountSerial);
+                            ReleaseAccount(existing, "pc_LoginAccount");
                         }
                     }
                 }
@@ -400,6 +566,13 @@ public sealed class AccountHandler : NetworkHandlerBase
             session.BlockReasonType = temp.BlockReasonType;
             session.CancelUiLockBlockRet = temp.CancelUiLockBlockRet;
             session.ChatLock = temp.ChatLock;
+            session.IsLogin = true;
+            session.UiLock = temp.UiLock;
+            session.UiLockFailCnt = temp.UiLockFailCnt;
+            session.UiLockHintIndex = temp.UiLockHintIndex;
+            session.UiLockFindPassFailCount = temp.UiLockFindPassFailCount;
+            Buffer.BlockCopy(temp.UiLockPw, 0, session.UiLockPw, 0, Math.Min(session.UiLockPw.Length, temp.UiLockPw.Length));
+            Buffer.BlockCopy(temp.UiLockHintAnswer, 0, session.UiLockHintAnswer, 0, Math.Min(session.UiLockHintAnswer.Length, temp.UiLockHintAnswer.Length));
             Buffer.BlockCopy(temp.BlockReason, 0, session.BlockReason, 0, Math.Min(session.BlockReason.Length, temp.BlockReason.Length));
 
             var gid = new _GLBID
@@ -519,19 +692,156 @@ public sealed class AccountHandler : NetworkHandlerBase
 
     private Task<bool> PushCloseRequest(PublicConnection connection, _push_close_request_loac request, CancellationToken token)
     {
-        _log($"[{connection.ConnectionId}] PushCloseRequest idx={request.idLocal.wIndex} serial={request.idLocal.dwSerial} userCode={request.byUserCode} acctSerial={request.dwAccountSerial} ip={new IPAddress(request.dwClientIP)}");
+        if (request.byUserCode != 0 && request.byUserCode != 1)
+        {
+            return Task.FromResult(false);
+        }
+
+        _ = PcPushCloseAsync(connection, request, token);
         return Task.FromResult(true);
+    }
+
+    private async Task PcPushCloseAsync(PublicConnection loginConnection, _push_close_request_loac request, CancellationToken token)
+    {
+        byte retCode = 0;
+        if (!TryGetLoginAccount(request.dwAccountSerial, request.byUserCode, out var target))
+        {
+            retCode = 27;
+        }
+        if (retCode != 0)
+        {
+            var send = new _push_close_result_aclo
+            {
+                idLocal = request.idLocal,
+                byRetCode = retCode
+            };
+
+            var env = new PacketEnvelope
+            {
+                OpCode = 1,
+                SubCode = 8,
+                Payload = send.ToArray()
+            };
+
+            try
+            {
+                await loginConnection.SendAsync(env, token).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _log($"[{loginConnection.ConnectionId}] push close result send failed: {ex.Message}");
+            }
+            return;
+        }
+
+        await ForceCloseAccountAsync(target, false, 1, request.dwClientIP, token).ConfigureAwait(false);
+    }
+
+    private bool TryGetLoginAccount(uint accountSerial, byte userCode, out ClientSession session)
+    {
+        if (_context.TryGetActiveAccount(accountSerial, out var found) && found.UserCode == userCode)
+        {
+            session = found;
+            return true;
+        }
+
+        session = null!;
+        return false;
     }
 
     private Task<bool> CloseAccountFromLoginRequest(PublicConnection connection, _logout_account_request_loac request, CancellationToken token)
     {
-        _log($"[{connection.ConnectionId}] CloseAccountFromLoginRequest gid=({request.gidGlobal.dwIndex},{request.gidGlobal.dwSerial})");
+        int maxActive = _settings.MaxActiveClients;
+        if (maxActive >= 0 && request.gidGlobal.dwIndex >= (uint)maxActive)
+        {
+            _log($"CNetworkEX::CloseAccountFromLoginRequest() : G_id Error[{request.gidGlobal.dwIndex}]");
+            return Task.FromResult(false);
+        }
+
+        PcCloseAccount(connection.ConnectionId, request.gidGlobal, 0);
         return Task.FromResult(true);
     }
 
-    private Task<bool> WorldListRequest(PublicConnection connection, CancellationToken token)
+    private void PcCloseAccount(ulong sourceConnectionId, _GLBID gidGlobal, byte posType)
     {
-        _log($"[{connection.ConnectionId}] WorldListRequest");
+        string position = posType == 1 ? "World" : "LogIn";
+
+        if (!_context.TryGetActiveGlobal(gidGlobal.dwIndex, out var account) || !account.IsLogin)
+        {
+            _log($"CMainThread::pc_CloseAccount() : Not Login ({position}) serial={account?.AccountSerial ?? 0} gidIndex={gidGlobal.dwIndex}");
+            return;
+        }
+        if (account.GlobalId.dwSerial != gidGlobal.dwSerial)
+        {
+            _log($"CMainThread::pc_CloseAccount() : G_id Different ({position}) serial={account.AccountSerial} cur={account.GlobalId.dwSerial} req={gidGlobal.dwSerial}");
+            return;
+        }
+
+        ReleaseAccount(account, "pc_CloseAccount");
+    }
+
+    private void ReleaseAccount(ClientSession account, string reason)
+    {
+        if (!account.IsLogin)
+        {
+            return;
+        }
+
+        if (account.UserCode == 0 && account.AccountSerial != 0)
+        {
+            string ip = new IPAddress(account.ClientIp).ToString();
+            _ = _db.Insert_UserPushLogAsync((int)account.AccountSerial, ip, ip, CancellationToken.None);
+        }
+
+        account.IsLogin = false;
+        account.WorldCode = -1;
+        account.GlobalId = default;
+
+        _context.RemoveClient(account.ConnectionId, account.Clid);
+        if (account.AccountSerial != 0)
+        {
+            _context.RemoveActiveAccount(account.AccountSerial);
+        }
+
+        _log($"ReleaseAccount: {reason} account={account.AccountId} serial={account.AccountSerial}");
+    }
+
+    private async Task<bool> WorldListRequest(PublicConnection connection, CancellationToken token)
+    {
+        var send = new _world_list_result_aclo();
+        var worldSnapshot = _context.GetWorldSnapshot();
+        int worldCount = Math.Min(_context.WorldCount, 40);
+        send.byServiceWorldNum = (byte)worldCount;
+        send.byWorldNum = (byte)worldCount;
+
+        for (int i = 0; i < worldCount; i++)
+        {
+            var entry = send.WorldList[i];
+            var world = worldSnapshot[i];
+            entry.bOpen = world.IsService;
+            PacketStringUtil.FillFixed(entry.szWorldName, world.Name);
+            entry.dwGateIP = world.GateIp;
+            entry.wGatePort = world.GatePort;
+            entry.byType = (byte)world.Type;
+            send.WorldList[i] = entry;
+        }
+
+        var env = new PacketEnvelope
+        {
+            OpCode = 1,
+            SubCode = 11,
+            Payload = send.ToArray()
+        };
+
+        try
+        {
+            await connection.SendAsync(env, token).ConfigureAwait(false);
+            _log($"{DateTime.Now:HH:mm:ss}/ Login Server Login");
+        }
+        catch (Exception ex)
+        {
+            _log($"[{connection.ConnectionId}] world list send failed: {ex.Message}");
+        }
         return Task.FromResult(true);
     }
 

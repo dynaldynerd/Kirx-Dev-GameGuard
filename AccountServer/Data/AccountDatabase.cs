@@ -186,6 +186,12 @@ public sealed class AccountDatabase : IAccountDatabase
         return ExecNonQueryAsync(proc, token, ("@id", id), ("@ip", ip));
     }
 
+    public Task<bool> Insert_UserPushLogAsync(int serial, string pushIP, string closeIP, CancellationToken token)
+    {
+        const string proc = "pInsert_UserPushLog";
+        return ExecNonQueryAsync(proc, token, ("@serial", serial), ("@pushIP", pushIP), ("@closeIP", closeIP));
+    }
+
     public async Task<(bool Ok, uint Serial, string Date)> Select_UserSerialAsync(string id, CancellationToken token)
     {
         uint serial = 0;

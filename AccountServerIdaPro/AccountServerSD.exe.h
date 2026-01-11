@@ -26139,3 +26139,6 @@ struct std::ostream::sentry;
 /* 2516 */
 struct std::ostream::_Sentry_base;
 
+/* 2517 */
+struct std::string;
+

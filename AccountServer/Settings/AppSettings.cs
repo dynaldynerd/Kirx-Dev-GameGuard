@@ -13,6 +13,7 @@ public sealed class AppSettings
     public GmFilterSettings GmFilter { get; set; } = new();
     public WorldListSettings WorldList { get; set; } = new();
     public SecuritySettings Security { get; set; } = new();
+    public int MaxActiveClients { get; set; } = -1;
 
     [JsonIgnore]
     public static string DefaultPath =>
@@ -90,6 +91,7 @@ public sealed class AppSettings
                     }
                 }
             },
+            MaxActiveClients = -1,
             Security = new SecuritySettings
             {
                 Argon2SaltBase64 = GenerateSaltBase64()
@@ -171,6 +173,12 @@ public sealed class WorldEntry
     public string Address { get; set; } = "";
     public string DbName { get; set; } = "";
     public int Type { get; set; }
+    [JsonIgnore]
+    public bool IsService { get; set; }
+    [JsonIgnore]
+    public uint GateIp { get; set; }
+    [JsonIgnore]
+    public ushort GatePort { get; set; }
 }
 
 public sealed class SecuritySettings

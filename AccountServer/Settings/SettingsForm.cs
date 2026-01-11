@@ -34,6 +34,7 @@ public sealed class SettingsForm : Form
     private Button btnGmRemove = null!;
     private DataGridView gridWorlds = null!;
     private Button btnWorldAdd = null!;
+    private NumericUpDown numMaxActive = null!;
     private Button btnSave = null!;
     private Button btnCancel = null!;
 
@@ -55,7 +56,10 @@ public sealed class SettingsForm : Form
             Name = entry.Name,
             Address = entry.Address,
             DbName = entry.DbName,
-            Type = entry.Type
+            Type = entry.Type,
+            IsService = entry.IsService,
+            GateIp = entry.GateIp,
+            GatePort = entry.GatePort
         };
     }
 
@@ -219,6 +223,23 @@ public sealed class SettingsForm : Form
 
     private Control BuildWorldTab()
     {
+        numMaxActive = new NumericUpDown
+        {
+            Minimum = -1,
+            Maximum = 1000000,
+            Width = 120
+        };
+
+        var maxPanel = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = true,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false
+        };
+        maxPanel.Controls.Add(new Label { Text = "Max Active Clients", AutoSize = true, TextAlign = ContentAlignment.MiddleLeft });
+        maxPanel.Controls.Add(numMaxActive);
+
         btnWorldAdd = new Button
         {
             Text = "Add",
@@ -227,14 +248,17 @@ public sealed class SettingsForm : Form
         };
         btnWorldAdd.Click += OnWorldAdd;
 
-        var header = new FlowLayoutPanel
+        var header = new TableLayoutPanel
         {
             Dock = DockStyle.Top,
             Height = 34,
-            FlowDirection = FlowDirection.RightToLeft,
+            ColumnCount = 2,
             Padding = new Padding(0, 5, 8, 5)
         };
-        header.Controls.Add(btnWorldAdd);
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        header.Controls.Add(maxPanel, 0, 0);
+        header.Controls.Add(btnWorldAdd, 1, 0);
 
         gridWorlds = new DataGridView
         {
@@ -311,6 +335,15 @@ public sealed class SettingsForm : Form
         cboDbProfile.Items.Clear();
         cboDbProfile.Items.AddRange(new object[] { "User DB", "Billing DB" });
         cboDbProfile.SelectedIndex = 0;
+        if (numMaxActive != null)
+        {
+            int maxActive = _settings.MaxActiveClients;
+            decimal min = numMaxActive.Minimum;
+            decimal max = numMaxActive.Maximum;
+            if (maxActive < min) numMaxActive.Value = min;
+            else if (maxActive > max) numMaxActive.Value = max;
+            else numMaxActive.Value = maxActive;
+        }
         _loading = false;
         LoadDbProfileToControls();
     }
@@ -365,6 +398,10 @@ public sealed class SettingsForm : Form
         _settings.Security.Argon2SaltBase64 = saltText;
         _settings.GmFilter.Prefixes = _gmPrefixes.Where(p => !string.IsNullOrWhiteSpace(p)).ToList();
         _settings.WorldList.Worlds = _worlds.Select(CloneWorldEntry).ToList();
+        if (numMaxActive != null)
+        {
+            _settings.MaxActiveClients = (int)numMaxActive.Value;
+        }
         return true;
     }
 

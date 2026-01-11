@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.Net;
+using AccountServer.Settings;
 using RFNetworking;
 using LoginServer.Packets;
 
@@ -10,12 +12,94 @@ public sealed class AccountMainContext
 {
     public static AccountMainContext Instance { get; } = new();
 
+    private readonly object _worldLock = new();
+    private readonly WorldEntry[] _worlds = new WorldEntry[40];
+    private int _worldCount;
     private readonly ConcurrentDictionary<ulong, LoginServerSession> _loginServers = new();
     private readonly ConcurrentDictionary<uint, ClientSession> _activeAccounts = new();
+    private readonly ConcurrentDictionary<uint, ClientSession> _activeGlobals = new();
     private readonly ConcurrentDictionary<int, WorldServerSession> _worldServers = new();
     private readonly ConcurrentDictionary<ulong, WorldServerSession> _worldConnections = new();
 
     private AccountMainContext() { }
+
+    public int WorldCount
+    {
+        get
+        {
+            lock (_worldLock)
+            {
+                return _worldCount;
+            }
+        }
+    }
+
+    public void LoadWorldList(IEnumerable<WorldEntry> worlds)
+    {
+        lock (_worldLock)
+        {
+            int i = 0;
+            foreach (var entry in worlds)
+            {
+                if (i >= _worlds.Length) break;
+                _worlds[i] = CloneWorldEntry(entry);
+                _worlds[i].IsService = false;
+                ParseGateAddress(ref _worlds[i]);
+                i++;
+            }
+            _worldCount = i;
+            for (; i < _worlds.Length; i++)
+            {
+                _worlds[i] = new WorldEntry();
+            }
+        }
+    }
+
+    public bool TryGetWorld(int index, out WorldEntry world)
+    {
+        lock (_worldLock)
+        {
+            if (index < 0 || index >= _worldCount)
+            {
+                world = default;
+                return false;
+            }
+            world = _worlds[index];
+            return true;
+        }
+    }
+
+    public WorldEntry[] GetWorldSnapshot()
+    {
+        lock (_worldLock)
+        {
+            var copy = new WorldEntry[_worlds.Length];
+            for (int i = 0; i < _worlds.Length; i++)
+            {
+                copy[i] = CloneWorldEntry(_worlds[i]);
+            }
+            return copy;
+        }
+    }
+
+    public void UpdateWorldService(int index, bool isService)
+    {
+        lock (_worldLock)
+        {
+            if (index < 0 || index >= _worldCount) return;
+            _worlds[index].IsService = isService;
+        }
+    }
+
+    public void UpdateWorldGate(int index, uint gateIp, ushort gatePort)
+    {
+        lock (_worldLock)
+        {
+            if (index < 0 || index >= _worldCount) return;
+            _worlds[index].GateIp = gateIp;
+            _worlds[index].GatePort = gatePort;
+        }
+    }
 
     public LoginServerSession Register(PublicConnection connection)
     {
@@ -39,6 +123,10 @@ public sealed class AccountMainContext
                 if (client.AccountSerial != 0)
                 {
                     _activeAccounts.TryRemove(client.AccountSerial, out _);
+                }
+                if (client.GlobalId.dwIndex != 0)
+                {
+                    _activeGlobals.TryRemove(client.GlobalId.dwIndex, out _);
                 }
             }
             loginSession.RemoveAllClients();
@@ -84,16 +172,31 @@ public sealed class AccountMainContext
         return _activeAccounts.TryGetValue(accountSerial, out session!);
     }
 
+    public bool TryGetActiveGlobal(uint globalIndex, out ClientSession session)
+    {
+        return _activeGlobals.TryGetValue(globalIndex, out session!);
+    }
+
     public void RegisterActiveAccount(ClientSession session)
     {
         if (session.AccountSerial == 0) return;
         _activeAccounts[session.AccountSerial] = session;
+        if (session.GlobalId.dwIndex != 0)
+        {
+            _activeGlobals[session.GlobalId.dwIndex] = session;
+        }
     }
 
     public void RemoveActiveAccount(uint accountSerial)
     {
         if (accountSerial == 0) return;
-        _activeAccounts.TryRemove(accountSerial, out _);
+        if (_activeAccounts.TryRemove(accountSerial, out var session))
+        {
+            if (session.GlobalId.dwIndex != 0)
+            {
+                _activeGlobals.TryRemove(session.GlobalId.dwIndex, out _);
+            }
+        }
     }
 
     public WorldServerSession RegisterWorld(int worldCode, PublicConnection connection)
@@ -123,6 +226,60 @@ public sealed class AccountMainContext
             _worldServers.TryRemove(session.WorldCode, out _);
         }
     }
+
+    private static WorldEntry CloneWorldEntry(WorldEntry entry)
+    {
+        return new WorldEntry
+        {
+            Name = entry.Name,
+            Address = entry.Address,
+            DbName = entry.DbName,
+            Type = entry.Type,
+            IsService = entry.IsService,
+            GateIp = entry.GateIp,
+            GatePort = entry.GatePort
+        };
+    }
+
+    private static void ParseGateAddress(ref WorldEntry entry)
+    {
+        if (string.IsNullOrWhiteSpace(entry.Address))
+        {
+            entry.GateIp = 0;
+            entry.GatePort = 0;
+            return;
+        }
+
+        string host = entry.Address.Trim();
+        ushort port = 0;
+        int colon = host.LastIndexOf(':');
+        if (colon > 0 && host.IndexOf(':') == colon)
+        {
+            if (ushort.TryParse(host.Substring(colon + 1), out var parsed))
+            {
+                port = parsed;
+                host = host.Substring(0, colon);
+            }
+        }
+
+        if (!IPAddress.TryParse(host, out var ip))
+        {
+            entry.GateIp = 0;
+            entry.GatePort = port;
+            return;
+        }
+
+        var bytes = ip.GetAddressBytes();
+        if (bytes.Length != 4)
+        {
+            entry.GateIp = 0;
+            entry.GatePort = port;
+            return;
+        }
+
+        entry.GateIp = (uint)(bytes[0] | (bytes[1] << 8) | (bytes[2] << 16) | (bytes[3] << 24));
+        entry.GatePort = port;
+    }
 }
 
 public sealed class ClientSession
@@ -151,8 +308,17 @@ public sealed class ClientSession
     public byte CancelUiLockBlockRet { get; set; }
     public byte[] BlockReason { get; } = new byte[32];
     public bool ChatLock { get; set; }
+    public bool IsLogin { get; set; }
+    public byte UiLock { get; set; }
+    public byte UiLockFailCnt { get; set; }
+    public byte UiLockHintIndex { get; set; }
+    public byte UiLockFindPassFailCount { get; set; }
+    public byte[] UiLockPw { get; } = new byte[13];
+    public byte[] UiLockHintAnswer { get; } = new byte[17];
+    public byte[] AccountPassword { get; } = new byte[13];
     public _GLBID GlobalId { get; set; }
     public int WorldCode { get; set; } = -1;
+    public uint[] MasterKey { get; } = new uint[4];
 
     public ClientSession(ulong loginConnId, _CLID clid)
     {
@@ -165,6 +331,7 @@ public sealed class ClientSession
     {
         AccountId = PacketStringUtil.ToAsciiNullTerm(req.GetAccountId());
         Password = PacketStringUtil.ToAsciiNullTerm(req.GetPassword());
+        PacketStringUtil.FillFixed(AccountPassword, Password);
         ClientIp = req.dwClientIP;
         UserCode = req.byUserCode;
         CheckDoubleIp = req.bCheckDoubleIP != 0;
