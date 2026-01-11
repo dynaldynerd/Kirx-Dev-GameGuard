@@ -650,3 +650,818 @@ public struct _manage_account_auth_result_aclo
 
 
 
+#region Account -> World (acwr)
+
+public struct _cashdb_setting_result_acwr
+{
+    public byte[] szIP;
+
+    public byte[] szDSN;
+
+    public byte[] szDBName;
+
+    public byte[] szAccount;
+
+    public byte[] szPassword;
+
+    public uint dwPort;
+
+    public _cashdb_setting_result_acwr()
+    {
+    this = default;
+        szIP = new byte[16];
+        szDSN = new byte[32];
+        szDBName = new byte[32];
+        szAccount = new byte[32];
+        szPassword = new byte[32];
+    }
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 148) return false;
+        szIP ??= new byte[16];
+        szDSN ??= new byte[32];
+        szDBName ??= new byte[32];
+        szAccount ??= new byte[32];
+        szPassword ??= new byte[32];
+        Buffer.BlockCopy(payload, 0, szIP, 0, 16);
+        Buffer.BlockCopy(payload, 16, szDSN, 0, 32);
+        Buffer.BlockCopy(payload, 48, szDBName, 0, 32);
+        Buffer.BlockCopy(payload, 80, szAccount, 0, 32);
+        Buffer.BlockCopy(payload, 112, szPassword, 0, 32);
+        dwPort = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(144, 4));
+        return true;
+    }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[148];
+        if (szIP != null)
+        {
+            Buffer.BlockCopy(szIP, 0, buffer, 0, Math.Min(16, szIP.Length));
+        }
+        if (szDSN != null)
+        {
+            Buffer.BlockCopy(szDSN, 0, buffer, 16, Math.Min(32, szDSN.Length));
+        }
+        if (szDBName != null)
+        {
+            Buffer.BlockCopy(szDBName, 0, buffer, 48, Math.Min(32, szDBName.Length));
+        }
+        if (szAccount != null)
+        {
+            Buffer.BlockCopy(szAccount, 0, buffer, 80, Math.Min(32, szAccount.Length));
+        }
+        if (szPassword != null)
+        {
+            Buffer.BlockCopy(szPassword, 0, buffer, 112, Math.Min(32, szPassword.Length));
+        }
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(144, 4), dwPort);
+        return buffer;
+    }
+}
+
+public struct _character_disconnect_request_acwr
+{
+    public ushort wClientIndex;
+
+    public byte[] szCharacterName;
+
+    public _character_disconnect_request_acwr()
+    {
+    this = default;
+        szCharacterName = new byte[17];
+    }
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 19) return false;
+        wClientIndex = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(0, 2));
+        szCharacterName ??= new byte[17];
+        Buffer.BlockCopy(payload, 2, szCharacterName, 0, 17);
+        return true;
+    }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[19];
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(0, 2), wClientIndex);
+        if (szCharacterName != null)
+        {
+            Buffer.BlockCopy(szCharacterName, 0, buffer, 2, Math.Min(17, szCharacterName.Length));
+        }
+        return buffer;
+    }
+}
+
+public struct _chat_lock_command_acwr
+{
+    public _CLID idLocal;
+    public ushort wBlockTimeH;
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 8) return false;
+        idLocal = new _CLID
+        {
+            wIndex = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(0, 2)),
+            dwSerial = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(2, 4))
+        };
+        wBlockTimeH = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(6, 2));
+        return true;
+    }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[8];
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(0, 2), idLocal.wIndex);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(2, 4), idLocal.dwSerial);
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(6, 2), wBlockTimeH);
+        return buffer;
+    }
+}
+
+public struct _check_is_block_ip_result_acwr
+{
+    public byte byRet;
+    public _CLID idLocal;
+    public uint ulIP;
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 11) return false;
+        byRet = payload[0];
+        idLocal = new _CLID
+        {
+            wIndex = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(1, 2)),
+            dwSerial = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(3, 4))
+        };
+        ulIP = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(7, 4));
+        return true;
+    }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[11];
+        buffer[0] = byRet;
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(1, 2), idLocal.wIndex);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(3, 4), idLocal.dwSerial);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(7, 4), ulIP);
+        return buffer;
+    }
+}
+
+public struct _enter_world_result_acwr
+{
+    public _CLID idLocal;
+    public byte byRetCode;
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 7) return false;
+        idLocal = new _CLID
+        {
+            wIndex = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(0, 2)),
+            dwSerial = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(2, 4))
+        };
+        byRetCode = payload[6];
+        return true;
+    }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[7];
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(0, 2), idLocal.wIndex);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(2, 4), idLocal.dwSerial);
+        buffer[6] = byRetCode;
+        return buffer;
+    }
+}
+
+public struct _force_close_command_acwr
+{
+    public _CLID idLocal;
+    public bool bDirectly;
+    public byte byKickType;
+    public uint dwPushIP;
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 12) return false;
+        idLocal = new _CLID
+        {
+            wIndex = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(0, 2)),
+            dwSerial = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(2, 4))
+        };
+        bDirectly = payload[6] != 0;
+        byKickType = payload[7];
+        dwPushIP = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(8, 4));
+        return true;
+    }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[12];
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(0, 2), idLocal.wIndex);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(2, 4), idLocal.dwSerial);
+        buffer[6] = bDirectly ? (byte)1 : (byte)0;
+        buffer[7] = byKickType;
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(8, 4), dwPushIP);
+        return buffer;
+    }
+}
+
+public struct _manage_client_limit_run_request_acwr
+{
+    public _CLID idLocal;
+    public byte byLoginServerIndex;
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 7) return false;
+        idLocal = new _CLID
+        {
+            wIndex = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(0, 2)),
+            dwSerial = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(2, 4))
+        };
+        byLoginServerIndex = payload[6];
+        return true;
+    }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[7];
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(0, 2), idLocal.wIndex);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(2, 4), idLocal.dwSerial);
+        buffer[6] = byLoginServerIndex;
+        return buffer;
+    }
+}
+
+public struct _open_control_inform_acwr
+{
+    public bool bControlOpen;
+    public uint dwControlIP;
+    public ushort wControlPort;
+
+    public uint[] dwMasterKey;
+
+    public _open_control_inform_acwr()
+    {
+    this = default;
+        dwMasterKey = new uint[4];
+    }
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 23) return false;
+        bControlOpen = payload[0] != 0;
+        dwControlIP = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(1, 4));
+        wControlPort = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(5, 2));
+        dwMasterKey ??= new uint[4];
+        for (int i = 0; i < 4; i++)
+        {
+            dwMasterKey[i] = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(7 + i * 4, 4));
+        }
+        return true;
+    }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[23];
+        buffer[0] = bControlOpen ? (byte)1 : (byte)0;
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(1, 4), dwControlIP);
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(5, 2), wControlPort);
+        for (int i = 0; i < 4; i++)
+        {
+            var value = dwMasterKey != null && i < dwMasterKey.Length ? dwMasterKey[i] : 0;
+            BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(7 + i * 4, 4), value);
+        }
+        return buffer;
+    }
+}
+
+public struct _open_world_failure_acwr
+{
+    public byte[] szErrCode;
+
+    public _open_world_failure_acwr()
+    {
+    this = default;
+        szErrCode = new byte[64];
+    }
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 64) return false;
+        szErrCode ??= new byte[64];
+        Buffer.BlockCopy(payload, 0, szErrCode, 0, 64);
+        return true;
+    }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[64];
+        if (szErrCode != null)
+        {
+            Buffer.BlockCopy(szErrCode, 0, buffer, 0, Math.Min(64, szErrCode.Length));
+        }
+        return buffer;
+    }
+}
+
+public struct _open_world_success_acwr
+{
+    public byte byWorldCode;
+
+    public byte[] szDBName;
+
+    public byte[] szDBIP;
+
+    public byte m_byWorldType;
+
+    public _open_world_success_acwr()
+    {
+    this = default;
+        szDBName = new byte[32];
+        szDBIP = new byte[17];
+    }
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 51) return false;
+        byWorldCode = payload[0];
+        szDBName ??= new byte[32];
+        szDBIP ??= new byte[17];
+        Buffer.BlockCopy(payload, 1, szDBName, 0, 32);
+        Buffer.BlockCopy(payload, 33, szDBIP, 0, 17);
+        m_byWorldType = payload[50];
+        return true;
+    }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[51];
+        buffer[0] = byWorldCode;
+        if (szDBName != null)
+        {
+            Buffer.BlockCopy(szDBName, 0, buffer, 1, Math.Min(32, szDBName.Length));
+        }
+        if (szDBIP != null)
+        {
+            Buffer.BlockCopy(szDBIP, 0, buffer, 33, Math.Min(17, szDBIP.Length));
+        }
+        buffer[50] = m_byWorldType;
+        return buffer;
+    }
+}
+
+public struct _trans_account_inform_acwr
+{
+    public _GLBID gidGlobal;
+
+    public uint[] dwKey;
+
+    public uint dwClientIP;
+    public uint dwAccountSerial;
+
+    public byte[] szAccountID;
+
+    public byte byUserDgr;
+    public byte bySubDgr;
+    public bool bChatLock;
+    public short iType;
+
+    public byte[] szCMS;
+
+    public int lRemainTime;
+    public _SYSTEMTIME stEndDate;
+    public byte byUILock;
+    public byte byUILock_failcnt;
+
+    public byte[] szUILock_pw;
+
+    public byte[] szAccount_pw;
+
+    public byte byUILock_HintIndex;
+
+    public byte[] uszUILock_HintAnswer;
+
+    public byte byUILockFindPassFailCount;
+
+    public uint[] dwRequestMoveCharacterSerialList;
+
+    public uint[] dwTournamentCharacterSerialList;
+
+    public bool bIsPcBang;
+    public int nTrans;
+    public bool bAgeLimit;
+
+    public _trans_account_inform_acwr()
+    {
+    this = default;
+        dwKey = new uint[4];
+        szAccountID = new byte[13];
+        szCMS = new byte[7];
+        stEndDate = new _SYSTEMTIME();
+        szUILock_pw = new byte[13];
+        szAccount_pw = new byte[13];
+        uszUILock_HintAnswer = new byte[17];
+        dwRequestMoveCharacterSerialList = new uint[3];
+        dwTournamentCharacterSerialList = new uint[3];
+    }
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 154) return false;
+        int offset = 0;
+        gidGlobal = new _GLBID
+        {
+            dwIndex = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(offset, 4)),
+            dwSerial = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(offset + 4, 4))
+        };
+        offset += 8;
+        dwKey ??= new uint[4];
+        for (int i = 0; i < 4; i++)
+        {
+            dwKey[i] = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(offset, 4));
+            offset += 4;
+        }
+        dwClientIP = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(offset, 4));
+        offset += 4;
+        dwAccountSerial = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(offset, 4));
+        offset += 4;
+        szAccountID ??= new byte[13];
+        Buffer.BlockCopy(payload, offset, szAccountID, 0, 13);
+        offset += 13;
+        byUserDgr = payload[offset++];
+        bySubDgr = payload[offset++];
+        bChatLock = payload[offset++] != 0;
+        iType = BinaryPrimitives.ReadInt16LittleEndian(payload.AsSpan(offset, 2));
+        offset += 2;
+        szCMS ??= new byte[7];
+        Buffer.BlockCopy(payload, offset, szCMS, 0, 7);
+        offset += 7;
+        lRemainTime = BinaryPrimitives.ReadInt32LittleEndian(payload.AsSpan(offset, 4));
+        offset += 4;
+        stEndDate = new _SYSTEMTIME
+        {
+            wYear = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(offset, 2)),
+            wMonth = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(offset + 2, 2)),
+            wDayOfWeek = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(offset + 4, 2)),
+            wDay = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(offset + 6, 2)),
+            wHour = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(offset + 8, 2)),
+            wMinute = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(offset + 10, 2)),
+            wSecond = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(offset + 12, 2)),
+            wMilliseconds = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(offset + 14, 2))
+        };
+        offset += 16;
+        byUILock = payload[offset++];
+        byUILock_failcnt = payload[offset++];
+        szUILock_pw ??= new byte[13];
+        Buffer.BlockCopy(payload, offset, szUILock_pw, 0, 13);
+        offset += 13;
+        szAccount_pw ??= new byte[13];
+        Buffer.BlockCopy(payload, offset, szAccount_pw, 0, 13);
+        offset += 13;
+        byUILock_HintIndex = payload[offset++];
+        uszUILock_HintAnswer ??= new byte[17];
+        Buffer.BlockCopy(payload, offset, uszUILock_HintAnswer, 0, 17);
+        offset += 17;
+        byUILockFindPassFailCount = payload[offset++];
+        dwRequestMoveCharacterSerialList ??= new uint[3];
+        for (int i = 0; i < 3; i++)
+        {
+            dwRequestMoveCharacterSerialList[i] = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(offset, 4));
+            offset += 4;
+        }
+        dwTournamentCharacterSerialList ??= new uint[3];
+        for (int i = 0; i < 3; i++)
+        {
+            dwTournamentCharacterSerialList[i] = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(offset, 4));
+            offset += 4;
+        }
+        bIsPcBang = payload[offset++] != 0;
+        nTrans = BinaryPrimitives.ReadInt32LittleEndian(payload.AsSpan(offset, 4));
+        offset += 4;
+        bAgeLimit = payload[offset] != 0;
+        return true;
+    }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[154];
+        int offset = 0;
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(offset, 4), gidGlobal.dwIndex);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(offset + 4, 4), gidGlobal.dwSerial);
+        offset += 8;
+        for (int i = 0; i < 4; i++)
+        {
+            var value = dwKey != null && i < dwKey.Length ? dwKey[i] : 0;
+            BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(offset, 4), value);
+            offset += 4;
+        }
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(offset, 4), dwClientIP);
+        offset += 4;
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(offset, 4), dwAccountSerial);
+        offset += 4;
+        if (szAccountID != null)
+        {
+            Buffer.BlockCopy(szAccountID, 0, buffer, offset, Math.Min(13, szAccountID.Length));
+        }
+        offset += 13;
+        buffer[offset++] = byUserDgr;
+        buffer[offset++] = bySubDgr;
+        buffer[offset++] = bChatLock ? (byte)1 : (byte)0;
+        BinaryPrimitives.WriteInt16LittleEndian(buffer.AsSpan(offset, 2), iType);
+        offset += 2;
+        if (szCMS != null)
+        {
+            Buffer.BlockCopy(szCMS, 0, buffer, offset, Math.Min(7, szCMS.Length));
+        }
+        offset += 7;
+        BinaryPrimitives.WriteInt32LittleEndian(buffer.AsSpan(offset, 4), lRemainTime);
+        offset += 4;
+        var endDate = stEndDate;
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset, 2), endDate.wYear);
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset + 2, 2), endDate.wMonth);
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset + 4, 2), endDate.wDayOfWeek);
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset + 6, 2), endDate.wDay);
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset + 8, 2), endDate.wHour);
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset + 10, 2), endDate.wMinute);
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset + 12, 2), endDate.wSecond);
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset + 14, 2), endDate.wMilliseconds);
+        offset += 16;
+        buffer[offset++] = byUILock;
+        buffer[offset++] = byUILock_failcnt;
+        if (szUILock_pw != null)
+        {
+            Buffer.BlockCopy(szUILock_pw, 0, buffer, offset, Math.Min(13, szUILock_pw.Length));
+        }
+        offset += 13;
+        if (szAccount_pw != null)
+        {
+            Buffer.BlockCopy(szAccount_pw, 0, buffer, offset, Math.Min(13, szAccount_pw.Length));
+        }
+        offset += 13;
+        buffer[offset++] = byUILock_HintIndex;
+        if (uszUILock_HintAnswer != null)
+        {
+            Buffer.BlockCopy(uszUILock_HintAnswer, 0, buffer, offset, Math.Min(17, uszUILock_HintAnswer.Length));
+        }
+        offset += 17;
+        buffer[offset++] = byUILockFindPassFailCount;
+        for (int i = 0; i < 3; i++)
+        {
+            var value = dwRequestMoveCharacterSerialList != null && i < dwRequestMoveCharacterSerialList.Length
+                ? dwRequestMoveCharacterSerialList[i] : 0;
+            BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(offset, 4), value);
+            offset += 4;
+        }
+        for (int i = 0; i < 3; i++)
+        {
+            var value = dwTournamentCharacterSerialList != null && i < dwTournamentCharacterSerialList.Length
+                ? dwTournamentCharacterSerialList[i] : 0;
+            BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(offset, 4), value);
+            offset += 4;
+        }
+        buffer[offset++] = bIsPcBang ? (byte)1 : (byte)0;
+        BinaryPrimitives.WriteInt32LittleEndian(buffer.AsSpan(offset, 4), nTrans);
+        offset += 4;
+        buffer[offset] = bAgeLimit ? (byte)1 : (byte)0;
+        return buffer;
+    }
+}
+
+public struct _uilock_user_refresh_info_result_acwr
+{
+    public uint dwAccountSerial;
+    public byte byResult;
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 5) return false;
+        dwAccountSerial = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(0, 4));
+        byResult = payload[4];
+        return true;
+    }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[5];
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(0, 4), dwAccountSerial);
+        buffer[4] = byResult;
+        return buffer;
+    }
+}
+
+public struct _uilock_update_result_acwr
+{
+    public byte byRet;
+    public ushort wUserIndex;
+
+    public byte[] uszUILockPW;
+
+    public byte byHintIndex;
+
+    public byte[] uszHintAnswer;
+
+    public _uilock_update_result_acwr()
+    {
+    this = default;
+        uszUILockPW = new byte[13];
+        uszHintAnswer = new byte[17];
+    }
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 34) return false;
+        byRet = payload[0];
+        wUserIndex = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(1, 2));
+        uszUILockPW ??= new byte[13];
+        uszHintAnswer ??= new byte[17];
+        Buffer.BlockCopy(payload, 3, uszUILockPW, 0, 13);
+        byHintIndex = payload[16];
+        Buffer.BlockCopy(payload, 17, uszHintAnswer, 0, 17);
+        return true;
+    }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[34];
+        buffer[0] = byRet;
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(1, 2), wUserIndex);
+        if (uszUILockPW != null)
+        {
+            Buffer.BlockCopy(uszUILockPW, 0, buffer, 3, Math.Min(13, uszUILockPW.Length));
+        }
+        buffer[16] = byHintIndex;
+        if (uszHintAnswer != null)
+        {
+            Buffer.BlockCopy(uszHintAnswer, 0, buffer, 17, Math.Min(17, uszHintAnswer.Length));
+        }
+        return buffer;
+    }
+}
+
+public struct _uilock_init_result_acwr
+{
+    public byte byRet;
+    public ushort wUserIndex;
+
+    public byte[] uszUILockPW;
+
+    public byte byHintIndex;
+
+    public byte[] uszHintAnswer;
+
+    public _uilock_init_result_acwr()
+    {
+    this = default;
+        uszUILockPW = new byte[13];
+        uszHintAnswer = new byte[17];
+    }
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 34) return false;
+        byRet = payload[0];
+        wUserIndex = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(1, 2));
+        uszUILockPW ??= new byte[13];
+        uszHintAnswer ??= new byte[17];
+        Buffer.BlockCopy(payload, 3, uszUILockPW, 0, 13);
+        byHintIndex = payload[16];
+        Buffer.BlockCopy(payload, 17, uszHintAnswer, 0, 17);
+        return true;
+    }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[34];
+        buffer[0] = byRet;
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(1, 2), wUserIndex);
+        if (uszUILockPW != null)
+        {
+            Buffer.BlockCopy(uszUILockPW, 0, buffer, 3, Math.Min(13, uszUILockPW.Length));
+        }
+        buffer[16] = byHintIndex;
+        if (uszHintAnswer != null)
+        {
+            Buffer.BlockCopy(uszHintAnswer, 0, buffer, 17, Math.Min(17, uszHintAnswer.Length));
+        }
+        return buffer;
+    }
+}
+
+public struct _user_block_result_acwr
+{
+    public byte byBlockResult;
+    public _CLID idLocalForTarget;
+    public _CLID idLocalForGM;
+    public uint dwAccountSerial;
+    public int bLogin;
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 21) return false;
+        byBlockResult = payload[0];
+        idLocalForTarget = new _CLID
+        {
+            wIndex = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(1, 2)),
+            dwSerial = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(3, 4))
+        };
+        idLocalForGM = new _CLID
+        {
+            wIndex = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(7, 2)),
+            dwSerial = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(9, 4))
+        };
+        dwAccountSerial = BinaryPrimitives.ReadUInt32LittleEndian(payload.AsSpan(13, 4));
+        bLogin = BinaryPrimitives.ReadInt32LittleEndian(payload.AsSpan(17, 4));
+        return true;
+    }
+
+    public byte[] ToArray()
+    {
+        var buffer = new byte[21];
+        buffer[0] = byBlockResult;
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(1, 2), idLocalForTarget.wIndex);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(3, 4), idLocalForTarget.dwSerial);
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(7, 2), idLocalForGM.wIndex);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(9, 4), idLocalForGM.dwSerial);
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(13, 4), dwAccountSerial);
+        BinaryPrimitives.WriteInt32LittleEndian(buffer.AsSpan(17, 4), bLogin);
+        return buffer;
+    }
+}
+
+public struct _world_exit_inform_acwr
+{
+    public bool Load(byte[] payload) => payload.Length >= 0;
+
+    public byte[] ToArray() => Array.Empty<byte>();
+}
+
+public struct _world_msg_inform_acwr
+{
+    public ushort wMsgSize;
+
+    public byte[] wszMsg;
+
+    public _world_msg_inform_acwr()
+    {
+    this = default;
+        wszMsg = new byte[1281];
+    }
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 2) return false;
+        wMsgSize = BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(0, 2));
+        if (wMsgSize > 1281) return false;
+        if (payload.Length < 2 + wMsgSize) return false;
+        wszMsg ??= new byte[1281];
+        Array.Clear(wszMsg, 0, wszMsg.Length);
+        if (wMsgSize > 0)
+        {
+            Buffer.BlockCopy(payload, 2, wszMsg, 0, wMsgSize);
+        }
+        return true;
+    }
+
+    public byte[] ToArray()
+    {
+        int msgSize = wMsgSize;
+        if (msgSize > 1281) msgSize = 1281;
+        var buffer = new byte[2 + msgSize];
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(0, 2), (ushort)msgSize);
+        if (msgSize > 0 && wszMsg != null)
+        {
+            Buffer.BlockCopy(wszMsg, 0, buffer, 2, Math.Min(msgSize, wszMsg.Length));
+        }
+        return buffer;
+    }
+}
+
+public struct _world_service_inform_acwr
+{
+    public bool bService;
+
+    public bool Load(byte[] payload)
+    {
+        if (payload.Length < 1) return false;
+        bService = payload[0] != 0;
+        return true;
+    }
+
+    public byte[] ToArray() => new[] { bService ? (byte)1 : (byte)0 };
+}
+
+public struct _world_total_sales_check_time_acwr
+{
+    public bool Load(byte[] payload) => payload.Length >= 0;
+
+    public byte[] ToArray() => Array.Empty<byte>();
+}
+
+#endregion
+

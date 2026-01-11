@@ -28,17 +28,44 @@ namespace AccountServer.UI
         /// </summary>
         private void InitializeComponent()
         {
+            menuStrip1 = new MenuStrip();
+            fileToolStripMenuItem = new ToolStripMenuItem();
+            settingsToolStripMenuItem = new ToolStripMenuItem();
             btnStart = new Button();
             btnStop = new Button();
             txtLog = new TextBox();
+            menuStrip1.SuspendLayout();
             SuspendLayout();
+            // 
+            // menuStrip1
+            // 
+            menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem });
+            menuStrip1.Location = new Point(0, 0);
+            menuStrip1.Name = "menuStrip1";
+            menuStrip1.Size = new Size(484, 24);
+            menuStrip1.TabIndex = 0;
+            menuStrip1.Text = "menuStrip1";
+            // 
+            // fileToolStripMenuItem
+            // 
+            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { settingsToolStripMenuItem });
+            fileToolStripMenuItem.Name = "fileToolStripMenuItem";
+            fileToolStripMenuItem.Size = new Size(37, 20);
+            fileToolStripMenuItem.Text = "File";
+            // 
+            // settingsToolStripMenuItem
+            // 
+            settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
+            settingsToolStripMenuItem.Size = new Size(116, 22);
+            settingsToolStripMenuItem.Text = "Settings";
+            settingsToolStripMenuItem.Click += OnOpenSettings;
             // 
             // btnStart
             // 
-            btnStart.Location = new Point(12, 12);
+            btnStart.Location = new Point(12, 36);
             btnStart.Name = "btnStart";
             btnStart.Size = new Size(75, 23);
-            btnStart.TabIndex = 0;
+            btnStart.TabIndex = 1;
             btnStart.Text = "Start";
             btnStart.UseVisualStyleBackColor = true;
             btnStart.Click += btnStart_Click;
@@ -46,10 +73,10 @@ namespace AccountServer.UI
             // btnStop
             // 
             btnStop.Enabled = false;
-            btnStop.Location = new Point(93, 12);
+            btnStop.Location = new Point(93, 36);
             btnStop.Name = "btnStop";
             btnStop.Size = new Size(75, 23);
-            btnStop.TabIndex = 1;
+            btnStop.TabIndex = 2;
             btnStop.Text = "Stop";
             btnStop.UseVisualStyleBackColor = true;
             btnStop.Click += btnStop_Click;
@@ -57,13 +84,13 @@ namespace AccountServer.UI
             // txtLog
             // 
             txtLog.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            txtLog.Location = new Point(12, 50);
+            txtLog.Location = new Point(12, 74);
             txtLog.Multiline = true;
             txtLog.Name = "txtLog";
             txtLog.ReadOnly = true;
             txtLog.ScrollBars = ScrollBars.Vertical;
-            txtLog.Size = new Size(460, 299);
-            txtLog.TabIndex = 2;
+            txtLog.Size = new Size(460, 275);
+            txtLog.TabIndex = 3;
             // 
             // MainForm
             // 
@@ -73,15 +100,22 @@ namespace AccountServer.UI
             Controls.Add(txtLog);
             Controls.Add(btnStop);
             Controls.Add(btnStart);
+            Controls.Add(menuStrip1);
+            MainMenuStrip = menuStrip1;
             MinimumSize = new Size(400, 300);
             Name = "MainForm";
             Text = "Account Server";
+            menuStrip1.ResumeLayout(false);
+            menuStrip1.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
 
         #endregion
 
+        private MenuStrip menuStrip1;
+        private ToolStripMenuItem fileToolStripMenuItem;
+        private ToolStripMenuItem settingsToolStripMenuItem;
         private Button btnStart;
         private Button btnStop;
         private TextBox txtLog;

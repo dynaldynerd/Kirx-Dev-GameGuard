@@ -18,16 +18,20 @@ public sealed class AccountHandler : NetworkHandlerBase
     private uint _accountSerialSeed = 1;
     private uint _globalSerialSeed = 1;
 
-    public AccountHandler(Action<string> log, IAccountDatabase? db = null)
+    public AccountHandler(Action<string> log, string? connectionString = null, IAccountDatabase? db = null)
     {
         _log = log;
-        _db = db ?? CreateDefaultDb();
+        _db = db ?? CreateDefaultDb(connectionString);
     }
 
-    private static IAccountDatabase CreateDefaultDb()
+    private static IAccountDatabase CreateDefaultDb(string? connectionString)
     {
-        var connString = Environment.GetEnvironmentVariable("ACCOUNT_DB_CONNECTION") ??
+        var connString = connectionString;
+        if (string.IsNullOrWhiteSpace(connString))
+        {
+            connString = Environment.GetEnvironmentVariable("ACCOUNT_DB_CONNECTION") ??
                          "Server=(local);Database=RF_User;Integrated Security=True;TrustServerCertificate=True";
+        }
         return new AccountDatabase(connString);
     }
 
@@ -345,6 +349,8 @@ public sealed class AccountHandler : NetworkHandlerBase
                         }
                         else
                         {
+                            await ForceCloseAccountAsync(existing, true, 5, 0, token).ConfigureAwait(false);
+                            _context.RemoveClient(existing.ConnectionId, existing.Clid);
                             _context.RemoveActiveAccount(existing.AccountSerial);
                         }
                     }
@@ -441,6 +447,73 @@ public sealed class AccountHandler : NetworkHandlerBase
         catch (Exception ex)
         {
             _log($"[{connection.ConnectionId}] send login result failed: {ex.Message}");
+        }
+    }
+
+    private async Task ForceCloseAccountAsync(ClientSession session, bool directly, byte kickType, uint pushIp, CancellationToken token)
+    {
+        if (session.WorldCode == -1)
+        {
+            if (!_context.TryGetLoginConnection(session.ConnectionId, out var connection))
+            {
+                _log($"[{session.ConnectionId}] ForceCloseAccount: login connection not found.");
+                return;
+            }
+
+            var send = new _force_close_command_aclo
+            {
+                idLocal = session.Clid
+            };
+
+            var env = new PacketEnvelope
+            {
+                OpCode = 1,
+                SubCode = 200,
+                Payload = send.ToArray()
+            };
+
+            try
+            {
+                await connection.SendAsync(env, token).ConfigureAwait(false);
+                _log($"[{session.ConnectionId}] ForceCloseAccount sent (kickType={kickType}, direct={directly}, pushIp={pushIp}).");
+            }
+            catch (Exception ex)
+            {
+                _log($"[{session.ConnectionId}] ForceCloseAccount send failed: {ex.Message}");
+            }
+        }
+        else
+        {
+            if (!_context.TryGetWorldConnection(session.WorldCode, out var worldConnection))
+            {
+                _log($"[{session.ConnectionId}] ForceCloseAccount: world connection not found for code {session.WorldCode}.");
+                return;
+            }
+
+            var send = new _force_close_command_acwr
+            {
+                idLocal = session.Clid,
+                bDirectly = directly,
+                byKickType = kickType,
+                dwPushIP = pushIp
+            };
+
+            var env = new PacketEnvelope
+            {
+                OpCode = 1,
+                SubCode = 7,
+                Payload = send.ToArray()
+            };
+
+            try
+            {
+                await worldConnection.SendAsync(env, token).ConfigureAwait(false);
+                _log($"[{session.ConnectionId}] ForceCloseAccount to world {session.WorldCode} sent (kickType={kickType}, direct={directly}, pushIp={pushIp}).");
+            }
+            catch (Exception ex)
+            {
+                _log($"[{session.ConnectionId}] ForceCloseAccount to world send failed: {ex.Message}");
+            }
         }
     }
 

@@ -1,11 +1,13 @@
 using AccountServer.Server;
+using AccountServer.Settings;
 using RFNetworking;
 
 namespace AccountServer.UI;
 
 public partial class MainForm : Form
 {
-    private readonly AccountHandler _handler;
+    private readonly AppSettings _settings;
+    private AccountHandler _handler;
     private NetworkListener? _loginListener;
     private NetworkListener? _worldListener;
     private NetworkListener? _controlListener;
@@ -15,7 +17,14 @@ public partial class MainForm : Form
     public MainForm()
     {
         InitializeComponent();
-        _handler = new AccountHandler(AppendLog);
+        _settings = AppSettings.Load();
+        _handler = CreateHandler();
+    }
+
+    private AccountHandler CreateHandler()
+    {
+        var connString = _settings.Database.BuildUserConnectionString();
+        return new AccountHandler(AppendLog, connString);
     }
 
     private async void btnStart_Click(object sender, EventArgs e)
@@ -67,6 +76,24 @@ public partial class MainForm : Form
         _cts?.Dispose();
         _cts = null;
         AppendLog("Stopped.");
+    }
+
+    private void OnOpenSettings(object sender, EventArgs e)
+    {
+        using var form = new SettingsForm(_settings);
+        if (form.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        if (_running)
+        {
+            AppendLog("Settings saved. Restart server to apply DB changes.");
+            return;
+        }
+
+        _handler = CreateHandler();
+        AppendLog("Settings applied.");
     }
 
     private void AppendLog(string message)

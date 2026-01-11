@@ -13,4 +13,10 @@ obj/
 Thumbs.db
 LoginServerIdaPro/
 appsettings.login.json
+appsettings.account.json
+Settings/appsettings.account.json
 558fba0/
+AccountServerIdaPro/
+LoginServerIdaPro/
+tools/
+WorldServerIdaPro/
