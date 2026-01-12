@@ -34,6 +34,11 @@ public sealed class AppSettings
         var settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions()) ?? new AppSettings();
         settings.Security ??= new SecuritySettings();
         settings.Listener ??= new ListenerSettings();
+        settings.Database ??= new DatabaseSettings();
+        if (!Enum.IsDefined(typeof(DatabaseProvider), settings.Database.Provider))
+        {
+            settings.Database.Provider = DatabaseProvider.SqlServer;
+        }
         if (!IsValidBase64(settings.Security.Argon2SaltBase64))
         {
             settings.Security.Argon2SaltBase64 = GenerateSaltBase64();
@@ -60,20 +65,12 @@ public sealed class AppSettings
         {
             Database = new DatabaseSettings
             {
+                Provider = DatabaseProvider.SqlServer,
                 User = new DbProfile
                 {
                     Host = "(local)",
                     Port = 1433,
                     Database = "RF_User",
-                    User = string.Empty,
-                    Password = string.Empty,
-                    TrustedConnection = true
-                },
-                Billing = new DbProfile
-                {
-                    Host = "(local)",
-                    Port = 1433,
-                    Database = "Billing",
                     User = string.Empty,
                     Password = string.Empty,
                     TrustedConnection = true
@@ -140,11 +137,10 @@ public sealed class AppSettings
 
 public sealed class DatabaseSettings
 {
+    public DatabaseProvider Provider { get; set; } = DatabaseProvider.SqlServer;
     public DbProfile User { get; set; } = new();
-    public DbProfile Billing { get; set; } = new();
 
     public string BuildUserConnectionString() => BuildConnectionString(User);
-    public string BuildBillingConnectionString() => BuildConnectionString(Billing);
 
     private static string BuildConnectionString(DbProfile profile)
     {
@@ -154,6 +150,34 @@ public sealed class DatabaseSettings
         }
         return $"Server={profile.Host},{profile.Port};Database={profile.Database};User ID={profile.User};Password={profile.Password};TrustServerCertificate=True;Encrypt=False;";
     }
+
+    public string BuildUserConnectionString(DatabaseProvider provider, string basePath) =>
+        BuildConnectionString(User, provider, basePath);
+
+    public static string GetSqlitePath(string basePath, string databaseName)
+    {
+        return Path.Combine(basePath, "Settings", "db", $"{databaseName}.db");
+    }
+
+    private static string BuildConnectionString(DbProfile profile, DatabaseProvider provider, string basePath)
+    {
+        switch (provider)
+        {
+            case DatabaseProvider.Sqlite:
+                return $"Data Source={GetSqlitePath(basePath, profile.Database)};";
+            case DatabaseProvider.MariaDb:
+                return $"Server={profile.Host};Port={profile.Port};Database={profile.Database};User ID={profile.User};Password={profile.Password};";
+            default:
+                return BuildConnectionString(profile);
+        }
+    }
+}
+
+public enum DatabaseProvider
+{
+    SqlServer = 0,
+    MariaDb = 1,
+    Sqlite = 2
 }
 
 public sealed class DbProfile

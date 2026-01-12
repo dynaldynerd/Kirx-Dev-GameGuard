@@ -11,11 +11,8 @@ public partial class SettingsForm : Form
 {
     private readonly AppSettings _settings;
     private readonly DatabaseSnapshot _userDb;
-    private readonly DatabaseSnapshot _billingDb;
     private readonly BindingList<WorldEntry> _worlds;
     private readonly BindingList<string> _gmPrefixes;
-    private bool _loading;
-    private int _currentDbProfileIndex;
 
     public SettingsForm()
         : this(new AppSettings(), true)
@@ -31,7 +28,6 @@ public partial class SettingsForm : Form
     {
         _settings = settings;
         _userDb = DatabaseSnapshot.From(settings.Database.User);
-        _billingDb = DatabaseSnapshot.From(settings.Database.Billing);
         _worlds = new BindingList<WorldEntry>(settings.WorldList.Worlds.Select(CloneWorldEntry).ToList());
         _gmPrefixes = new BindingList<string>(settings.GmFilter.Prefixes.ToList());
         InitializeComponent();
@@ -94,19 +90,13 @@ public partial class SettingsForm : Form
 
     private void LoadFromSettings()
     {
-        _loading = true;
-        cboDbProfile.Items.Clear();
-        cboDbProfile.Items.AddRange(new object[] { "User DB", "Billing DB" });
-        cboDbProfile.SelectedIndex = 0;
-        _currentDbProfileIndex = cboDbProfile.SelectedIndex;
-        _loading = false;
         LoadDbProfileToControls();
         LoadGeneralSettings();
     }
 
     private void LoadDbProfileToControls()
     {
-        var db = cboDbProfile.SelectedIndex == 1 ? _billingDb : _userDb;
+        var db = _userDb;
         txtDbHost.Text = db.Host;
         txtDbPort.Text = db.Port.ToString(CultureInfo.InvariantCulture);
         txtDbName.Text = db.Database;
@@ -145,13 +135,12 @@ public partial class SettingsForm : Form
             return false;
         }
 
-        var db = _currentDbProfileIndex == 1 ? _billingDb : _userDb;
-        db.Host = txtDbHost.Text.Trim();
-        db.Port = port;
-        db.Database = txtDbName.Text.Trim();
-        db.User = txtDbUser.Text.Trim();
-        db.Password = txtDbPass.Text;
-        db.Trusted = radAuthTrusted.Checked;
+        _userDb.Host = txtDbHost.Text.Trim();
+        _userDb.Port = port;
+        _userDb.Database = txtDbName.Text.Trim();
+        _userDb.User = txtDbUser.Text.Trim();
+        _userDb.Password = txtDbPass.Text;
+        _userDb.Trusted = radAuthTrusted.Checked;
         return true;
     }
 
@@ -163,7 +152,6 @@ public partial class SettingsForm : Form
         }
 
         _userDb.ApplyTo(_settings.Database.User);
-        _billingDb.ApplyTo(_settings.Database.Billing);
         var saltText = txtArgon2Salt.Text.Trim();
         if (!TryParseBase64(saltText, out var saltBytes) || saltBytes.Length < 16)
         {
@@ -181,21 +169,6 @@ public partial class SettingsForm : Form
         return true;
     }
 
-    private void OnDbProfileChanged(object? sender, EventArgs e)
-    {
-        if (_loading)
-        {
-            return;
-        }
-        int newIndex = cboDbProfile.SelectedIndex;
-        if (!SaveCurrentDbProfile())
-        {
-            cboDbProfile.SelectedIndex = _currentDbProfileIndex;
-            return;
-        }
-        _currentDbProfileIndex = newIndex;
-        LoadDbProfileToControls();
-    }
 
     private void OnAuthModeChanged(object? sender, EventArgs e)
     {

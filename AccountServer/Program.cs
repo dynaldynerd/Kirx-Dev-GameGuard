@@ -8,6 +8,14 @@ internal static class Program
     static void Main()
     {
         ApplicationConfiguration.Initialize();
+        if (!Properties.Settings.Default.IsSetup)
+        {
+            using var setup = new Setup();
+            if (setup.ShowDialog() != DialogResult.OK)
+            {
+                return;
+            }
+        }
         Application.Run(new MainForm());
     }
 }

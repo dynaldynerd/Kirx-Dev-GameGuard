@@ -1074,12 +1074,12 @@ public sealed class WorldHandler : AccountHandlerBase
     private async Task<bool> CashDbSettingRequest(PublicConnection connection, CancellationToken token)
     {
         var send = new _cashdb_setting_result_acwr();
-        PacketStringUtil.FillFixed(send.szIP, _settings.Database.Billing.Host);
-        PacketStringUtil.FillFixed(send.szDBName, _settings.Database.Billing.Database);
-        PacketStringUtil.FillFixed(send.szDSN, _settings.Database.Billing.Database);
-        PacketStringUtil.FillFixed(send.szAccount, _settings.Database.Billing.User);
-        PacketStringUtil.FillFixed(send.szPassword, _settings.Database.Billing.Password);
-        send.dwPort = (uint)_settings.Database.Billing.Port;
+        PacketStringUtil.FillFixed(send.szIP, _settings.Database.User.Host);
+        PacketStringUtil.FillFixed(send.szDBName, _settings.Database.User.Database);
+        PacketStringUtil.FillFixed(send.szDSN, _settings.Database.User.Database);
+        PacketStringUtil.FillFixed(send.szAccount, _settings.Database.User.User);
+        PacketStringUtil.FillFixed(send.szPassword, _settings.Database.User.Password);
+        send.dwPort = (uint)_settings.Database.User.Port;
 
         var env = new PacketEnvelope
         {

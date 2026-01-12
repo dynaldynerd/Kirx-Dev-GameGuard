@@ -31,14 +31,12 @@ public partial class SettingsForm
     private NumericUpDown numControlPort = null!;
     private Panel panelDb = null!;
     private TableLayoutPanel tblDatabase = null!;
-    private Label lblDbProfile = null!;
     private Label lblDbHost = null!;
     private Label lblDbPort = null!;
     private Label lblDbName = null!;
     private Label lblDbAuth = null!;
     private Label lblDbUser = null!;
     private Label lblDbPass = null!;
-    private ComboBox cboDbProfile = null!;
     private TextBox txtDbHost = null!;
     private TextBox txtDbPort = null!;
     private TextBox txtDbName = null!;
@@ -102,8 +100,6 @@ public partial class SettingsForm
         tabDatabase = new TabPage();
         panelDb = new Panel();
         tblDatabase = new TableLayoutPanel();
-        lblDbProfile = new Label();
-        cboDbProfile = new ComboBox();
         lblDbHost = new Label();
         txtDbHost = new TextBox();
         lblDbPort = new Label();
@@ -393,26 +389,23 @@ public partial class SettingsForm
         tblDatabase.ColumnCount = 2;
         tblDatabase.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140F));
         tblDatabase.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        tblDatabase.Controls.Add(lblDbProfile, 0, 0);
-        tblDatabase.Controls.Add(cboDbProfile, 1, 0);
-        tblDatabase.Controls.Add(lblDbHost, 0, 1);
-        tblDatabase.Controls.Add(txtDbHost, 1, 1);
-        tblDatabase.Controls.Add(lblDbPort, 0, 2);
-        tblDatabase.Controls.Add(txtDbPort, 1, 2);
-        tblDatabase.Controls.Add(lblDbName, 0, 3);
-        tblDatabase.Controls.Add(txtDbName, 1, 3);
-        tblDatabase.Controls.Add(lblDbAuth, 0, 4);
-        tblDatabase.Controls.Add(panelAuth, 1, 4);
-        tblDatabase.Controls.Add(lblDbUser, 0, 5);
-        tblDatabase.Controls.Add(txtDbUser, 1, 5);
-        tblDatabase.Controls.Add(lblDbPass, 0, 6);
-        tblDatabase.Controls.Add(txtDbPass, 1, 6);
+        tblDatabase.Controls.Add(lblDbHost, 0, 0);
+        tblDatabase.Controls.Add(txtDbHost, 1, 0);
+        tblDatabase.Controls.Add(lblDbPort, 0, 1);
+        tblDatabase.Controls.Add(txtDbPort, 1, 1);
+        tblDatabase.Controls.Add(lblDbName, 0, 2);
+        tblDatabase.Controls.Add(txtDbName, 1, 2);
+        tblDatabase.Controls.Add(lblDbAuth, 0, 3);
+        tblDatabase.Controls.Add(panelAuth, 1, 3);
+        tblDatabase.Controls.Add(lblDbUser, 0, 4);
+        tblDatabase.Controls.Add(txtDbUser, 1, 4);
+        tblDatabase.Controls.Add(lblDbPass, 0, 5);
+        tblDatabase.Controls.Add(txtDbPass, 1, 5);
         tblDatabase.Dock = DockStyle.Top;
         tblDatabase.Location = new Point(0, 0);
         tblDatabase.Name = "tblDatabase";
         tblDatabase.Padding = new Padding(8);
-        tblDatabase.RowCount = 7;
-        tblDatabase.RowStyles.Add(new RowStyle());
+        tblDatabase.RowCount = 6;
         tblDatabase.RowStyles.Add(new RowStyle());
         tblDatabase.RowStyles.Add(new RowStyle());
         tblDatabase.RowStyles.Add(new RowStyle());
@@ -422,25 +415,6 @@ public partial class SettingsForm
         tblDatabase.Size = new Size(712, 221);
         tblDatabase.TabIndex = 0;
         // 
-        // lblDbProfile
-        // 
-        lblDbProfile.AutoSize = true;
-        lblDbProfile.Location = new Point(11, 8);
-        lblDbProfile.Name = "lblDbProfile";
-        lblDbProfile.Size = new Size(41, 15);
-        lblDbProfile.TabIndex = 0;
-        lblDbProfile.Text = "Profile";
-        // 
-        // cboDbProfile
-        // 
-        cboDbProfile.Dock = DockStyle.Fill;
-        cboDbProfile.DropDownStyle = ComboBoxStyle.DropDownList;
-        cboDbProfile.Location = new Point(151, 11);
-        cboDbProfile.Name = "cboDbProfile";
-        cboDbProfile.Size = new Size(550, 23);
-        cboDbProfile.TabIndex = 1;
-        cboDbProfile.SelectedIndexChanged += OnDbProfileChanged;
-        cboDbProfile.SelectionChangeCommitted += OnDbProfileChanged;
         // 
         // lblDbHost
         // 
