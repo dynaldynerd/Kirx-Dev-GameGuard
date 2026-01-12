@@ -653,6 +653,13 @@ public sealed class ClientPacketRouter
                 session.LoginCode = 1; // GM code
                 session.AgeLimit = true;
             }
+            else if (!MainContext.Instance.ExternalOpen)
+            {
+                retCode = 48;
+                session.LoginCode = 0;
+                session.BillType = 100;
+                session.RemainTime = 0;
+            }
             else
             {
                 string? dbPassword = null;

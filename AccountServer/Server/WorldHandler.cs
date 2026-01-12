@@ -9,6 +9,11 @@ namespace AccountServer.Server;
 
 public sealed class WorldHandler : AccountHandlerBase
 {
+    private const string FireguardReason = "Fireguard Block";
+    private const string FireguardWriter = "Fireguard System";
+    private const string UiLockFindPassReason = "UILockFindPass";
+    private const string UiLockFailReason = "UILockFail";
+
     public WorldHandler(
         Action<string> log,
         AppSettings settings,
@@ -561,23 +566,46 @@ public sealed class WorldHandler : AccountHandlerBase
         return Task.FromResult(true);
     }
 
-    private Task<bool> FireguardBlockRequest(PublicConnection connection, _fireguard_block_request_wrac request, CancellationToken token)
+    private async Task<bool> FireguardBlockRequest(PublicConnection connection, _fireguard_block_request_wrac request, CancellationToken token)
     {
         string id = PacketStringUtil.ToAsciiNullTerm(request.szAccountID);
         _log($"FireguardBlockRequest id='{id}' serial={request.dwAccountSerial} ip={new IPAddress(request.dwIP)}");
-        return Task.FromResult(true);
+
+        var (ret, err, res) = await _db.Check_Fireguard_BlockAsync(id, token).ConfigureAwait(false);
+        if (ret != 0)
+        {
+            _log($"Check_Fireguard_Block failed id='{id}' ret={ret}");
+        }
+        else
+        {
+            _log($"Check_Fireguard_Block id='{id}' err={err} ret={res}");
+        }
+        return true;
     }
 
     private async Task<bool> UiLockInitRequest(PublicConnection connection, _uilock_init_request_wrac request, CancellationToken token)
     {
+        string pw = PacketStringUtil.ToAsciiNullTerm(request.uszUILockPW);
+        string answer = PacketStringUtil.ToAsciiNullTerm(request.uszHintAnswer);
+        var (dbRet, result) = await _db.UILock_InitAsync(
+            request.dwAccountSerial,
+            pw,
+            request.byHintIndex,
+            answer,
+            token).ConfigureAwait(false);
+
         var send = new _uilock_init_result_acwr
         {
-            byRet = 0,
-            wUserIndex = request.wUserIndex,
-            byHintIndex = request.byHintIndex
+            byRet = dbRet == 0 ? result : (byte)24
         };
-        Buffer.BlockCopy(request.uszUILockPW, 0, send.uszUILockPW, 0, Math.Min(send.uszUILockPW.Length, request.uszUILockPW.Length));
-        Buffer.BlockCopy(request.uszHintAnswer, 0, send.uszHintAnswer, 0, Math.Min(send.uszHintAnswer.Length, request.uszHintAnswer.Length));
+
+        if (send.byRet == 0)
+        {
+            send.wUserIndex = request.wUserIndex;
+            send.byHintIndex = request.byHintIndex;
+            Buffer.BlockCopy(request.uszUILockPW, 0, send.uszUILockPW, 0, Math.Min(send.uszUILockPW.Length, request.uszUILockPW.Length));
+            Buffer.BlockCopy(request.uszHintAnswer, 0, send.uszHintAnswer, 0, Math.Min(send.uszHintAnswer.Length, request.uszHintAnswer.Length));
+        }
 
         var env = new PacketEnvelope
         {
@@ -599,14 +627,27 @@ public sealed class WorldHandler : AccountHandlerBase
 
     private async Task<bool> UiLockUpdateRequest(PublicConnection connection, _uilock_update_request_wrac request, CancellationToken token)
     {
+        string pw = PacketStringUtil.ToAsciiNullTerm(request.uszUILockPW);
+        string answer = PacketStringUtil.ToAsciiNullTerm(request.uszHintAnswer);
+        var (dbRet, result) = await _db.UILock_UpdateAsync(
+            request.dwAccountSerial,
+            pw,
+            request.byHintIndex,
+            answer,
+            token).ConfigureAwait(false);
+
         var send = new _uilock_update_result_acwr
         {
-            byRet = 0,
-            wUserIndex = request.wUserIndex,
-            byHintIndex = request.byHintIndex
+            byRet = dbRet == 0 ? result : (byte)24
         };
-        Buffer.BlockCopy(request.uszUILockPW, 0, send.uszUILockPW, 0, Math.Min(send.uszUILockPW.Length, request.uszUILockPW.Length));
-        Buffer.BlockCopy(request.uszHintAnswer, 0, send.uszHintAnswer, 0, Math.Min(send.uszHintAnswer.Length, request.uszHintAnswer.Length));
+
+        if (send.byRet == 0)
+        {
+            send.wUserIndex = request.wUserIndex;
+            send.byHintIndex = request.byHintIndex;
+            Buffer.BlockCopy(request.uszUILockPW, 0, send.uszUILockPW, 0, Math.Min(send.uszUILockPW.Length, request.uszUILockPW.Length));
+            Buffer.BlockCopy(request.uszHintAnswer, 0, send.uszHintAnswer, 0, Math.Min(send.uszHintAnswer.Length, request.uszHintAnswer.Length));
+        }
 
         var env = new PacketEnvelope
         {
@@ -628,11 +669,77 @@ public sealed class WorldHandler : AccountHandlerBase
 
     private async Task<bool> UiLockRefreshRequest(PublicConnection connection, _uilock_user_refresh_info_request_wrac request, CancellationToken token)
     {
+        byte retCode = 0;
+        bool blocked = false;
+
+        byte failCount = request.byFailCnt;
+        byte findPassFailCount = request.byFindPassFailCount;
+
+        if (failCount < 5)
+        {
+            if (findPassFailCount >= 5)
+            {
+                findPassFailCount = 0;
+                string writer = $"WS{connection.ConnectionId}";
+                byte blockResult = await UpdateUserBanAsync(
+                    request.dwAccountSerial,
+                    0,
+                    0x18u,
+                    UiLockFindPassReason,
+                    writer,
+                    5,
+                    token).ConfigureAwait(false);
+                if (blockResult != 0)
+                {
+                    blocked = true;
+                }
+                else
+                {
+                    retCode = 5;
+                }
+            }
+        }
+        else
+        {
+            failCount = 0;
+            string writer = $"WS{connection.ConnectionId}";
+            byte blockResult = await UpdateUserBanAsync(
+                request.dwAccountSerial,
+                0,
+                0x18u,
+                UiLockFailReason,
+                writer,
+                4,
+                token).ConfigureAwait(false);
+            if (blockResult != 0)
+            {
+                blocked = true;
+            }
+            else
+            {
+                retCode = 4;
+            }
+        }
+
+        var (dbRet, result) = await _db.UILock_RefreshAsync(
+            request.dwAccountSerial,
+            failCount,
+            findPassFailCount,
+            token).ConfigureAwait(false);
+
         var send = new _uilock_user_refresh_info_result_acwr
         {
             dwAccountSerial = request.dwAccountSerial,
-            byResult = 0
+            byResult = dbRet == 0 ? (result != 0 ? result : retCode) : (byte)24
         };
+
+        if (blocked)
+        {
+            if (_context.TryGetActiveGlobal(request.gidGlobal.dwIndex, out var account) && account.IsLogin)
+            {
+                _log($"UILock refresh blocked account {account.AccountId}");
+            }
+        }
 
         var env = new PacketEnvelope
         {
@@ -652,11 +759,73 @@ public sealed class WorldHandler : AccountHandlerBase
         return true;
     }
 
-    private Task<bool> FireguardDivideBlockRequest(PublicConnection connection, _fireguard_divide_block_request_wrac request, CancellationToken token)
+    private async Task<bool> FireguardDivideBlockRequest(PublicConnection connection, _fireguard_divide_block_request_wrac request, CancellationToken token)
     {
         string id = PacketStringUtil.ToAsciiNullTerm(request.szAccountID);
         _log($"FireguardDivideBlockRequest id='{id}' serial={request.dwAccountSerial} ip={new IPAddress(request.dwIP)}");
-        return Task.FromResult(true);
+
+        var (ret, accountCount, ipCount) = await _db.Fireguard_Block_Type1Async(id, request.dwIP, token).ConfigureAwait(false);
+        if (ret != 0)
+        {
+            _log($"Fireguard_Block_Type1 failed id='{id}' ret={ret}");
+            return true;
+        }
+
+        if (accountCount >= 10)
+        {
+            var ban = await _db.Select_UserBanAsync(request.dwAccountSerial, token).ConfigureAwait(false);
+            if (ban.Ret != 0)
+            {
+                bool inserted = await _db.Insert_UserBanAsync(
+                    request.dwAccountSerial,
+                    0,
+                    0x3E7u,
+                    FireguardReason,
+                    FireguardWriter,
+                    3,
+                    token).ConfigureAwait(false);
+                if (inserted)
+                {
+                    _ = _db.Insert_UserBan_LogAsync(request.dwAccountSerial, 0, 0x3E7u, FireguardReason, token);
+                }
+                else
+                {
+                    _log($"Insert_UserBan failed for serial={request.dwAccountSerial}");
+                }
+            }
+            else
+            {
+                bool updated = await _db.Update_UserBanAsync(
+                    request.dwAccountSerial,
+                    0,
+                    0x3E7u,
+                    FireguardReason,
+                    token).ConfigureAwait(false);
+                if (!updated)
+                {
+                    _log($"Update_UserBan failed for serial={request.dwAccountSerial}");
+                }
+                else
+                {
+                    _ = _db.Insert_UserBan_LogAsync(request.dwAccountSerial, 0, 0x3E7u, FireguardReason, token);
+                }
+            }
+        }
+
+        if (ipCount >= 20)
+        {
+            byte ipRet = await _db.IsBlockIPAsync(request.dwIP, token).ConfigureAwait(false);
+            if (ipRet != 0)
+            {
+                bool inserted = await _db.Insert_BlockIPAsync(request.dwIP, token).ConfigureAwait(false);
+                if (!inserted)
+                {
+                    _log($"Insert_BlockIP failed ip={new IPAddress(request.dwIP)}");
+                }
+            }
+        }
+
+        return true;
     }
 
     private async Task<bool> ManageClientLimitRunResult(PublicConnection connection, _manage_client_limit_run_result_wrac request, CancellationToken token)
@@ -708,11 +877,17 @@ public sealed class WorldHandler : AccountHandlerBase
         return true;
     }
 
-    private Task<bool> ApexBlockRequest(PublicConnection connection, _apex_block_request_wrac request, CancellationToken token)
+    private async Task<bool> ApexBlockRequest(PublicConnection connection, _apex_block_request_wrac request, CancellationToken token)
     {
         string id = PacketStringUtil.ToAsciiNullTerm(request.szAccountID);
         _log($"ApexBlockRequest id='{id}' serial={request.dwAccountSerial} ip={new IPAddress(request.dwIP)}");
-        return Task.FromResult(true);
+
+        bool ok = await _db.Insert_UserBan_ApexAsync(request.dwAccountSerial, token).ConfigureAwait(false);
+        if (!ok)
+        {
+            _log($"Insert_UserBan_Apex failed serial={request.dwAccountSerial}");
+        }
+        return true;
     }
 
     private Task<bool> WorldServiceReport(PublicConnection connection, _world_service_report_wrac request, CancellationToken token)
@@ -729,15 +904,28 @@ public sealed class WorldHandler : AccountHandlerBase
         return Task.FromResult(true);
     }
 
-    private Task<bool> UserNumReport(PublicConnection connection, _user_num_report_wrac request, CancellationToken token)
+    private async Task<bool> UserNumReport(PublicConnection connection, _user_num_report_wrac request, CancellationToken token)
     {
         if (_context.TryGetWorldSessionByConnection(connection.ConnectionId, out var worldSession)
             && _context.TryGetWorld(worldSession.WorldCode, out var world))
         {
             string date = PacketStringUtil.ToAsciiNullTerm(request.szLogDate);
             _log($"UserNumReport {world.Name} avg={request.dwAveragePerHour} max={request.dwMaxPerHour} date={date}");
+
+            uint[] playerPerRace = request.dwPlayerPerRace ?? new uint[3];
+            bool ok = await _db.Insert_ServerUserLogAsync(
+                request.dwAveragePerHour,
+                request.dwMaxPerHour,
+                playerPerRace,
+                world.Name,
+                date,
+                token).ConfigureAwait(false);
+            if (!ok)
+            {
+                _log($"Insert_ServerUserLog failed for {world.Name} date={date}");
+            }
         }
-        return Task.FromResult(true);
+        return true;
     }
 
     private Task<bool> HolyQuestReport(PublicConnection connection, _holy_quest_report_wrac request, CancellationToken token)
@@ -783,9 +971,21 @@ public sealed class WorldHandler : AccountHandlerBase
 
     private async Task<bool> UserBlockRequest(PublicConnection connection, _user_block_request_wrac request, CancellationToken token)
     {
+        string reason = PacketStringUtil.ToAsciiNullTerm(request.uszReason);
+        string writer = PacketStringUtil.ToAsciiNullTerm(request.uszWriter);
+
+        byte blockResult = await UpdateUserBanAsync(
+            request.dwAccountSerial,
+            request.byBlockType,
+            unchecked((uint)request.iPeriod),
+            reason,
+            writer,
+            6,
+            token).ConfigureAwait(false);
+
         var send = new _user_block_result_acwr
         {
-            byBlockResult = 0,
+            byBlockResult = blockResult,
             idLocalForGM = request.idLocalForGM,
             dwAccountSerial = request.dwAccountSerial
         };
@@ -831,6 +1031,44 @@ public sealed class WorldHandler : AccountHandlerBase
             session.UpdatePing(unchecked((uint)Environment.TickCount));
         }
         return Task.FromResult(true);
+    }
+
+    private async Task<byte> UpdateUserBanAsync(
+        uint accountSerial,
+        byte blockType,
+        uint period,
+        string reason,
+        string writer,
+        byte reasonType,
+        CancellationToken token)
+    {
+        var ban = await _db.Select_UserBanAsync(accountSerial, token).ConfigureAwait(false);
+        if (ban.Ret != 0)
+        {
+            bool inserted = await _db.Insert_UserBanAsync(
+                accountSerial,
+                blockType,
+                period,
+                reason,
+                writer,
+                reasonType,
+                token).ConfigureAwait(false);
+            if (inserted)
+            {
+                _ = _db.Insert_UserBan_LogAsync(accountSerial, blockType, period, reason, token);
+                return 1;
+            }
+
+            _log($"Insert_UserBan failed serial={accountSerial}");
+            return 0;
+        }
+
+        if (ban.Kind == blockType)
+        {
+            return unchecked((byte)0xFF);
+        }
+
+        return unchecked((byte)0xFE);
     }
 
     private async Task<bool> CashDbSettingRequest(PublicConnection connection, CancellationToken token)

@@ -339,6 +339,358 @@ public sealed class AccountDatabase : IAccountDatabase
         }
     }
 
+    public Task<bool> Insert_UserCountLogAsync(uint averageUser, uint maxUser, CancellationToken token)
+    {
+        const string query = "exec pInsert_UserCountLog @avg, @max";
+        return ExecNonQueryTextAsync(query, token, ("@avg", averageUser), ("@max", maxUser));
+    }
+
+    public Task<bool> Insert_UserCountLogAsync(uint averageUser, uint maxUserRegular, uint maxUserTestServer, CancellationToken token)
+    {
+        const string query = "exec pInsert_UserCountLog20080218 @avg, @max, @maxTest";
+        return ExecNonQueryTextAsync(
+            query,
+            token,
+            ("@avg", averageUser),
+            ("@max", maxUserRegular),
+            ("@maxTest", maxUserTestServer));
+    }
+
+    public Task<bool> Insert_ServerUserLogAsync(
+        uint averageUser,
+        uint maxUser,
+        uint[] playerPerRace,
+        string serverName,
+        string logDate,
+        CancellationToken token)
+    {
+        uint race0 = playerPerRace != null && playerPerRace.Length > 0 ? playerPerRace[0] : 0;
+        uint race1 = playerPerRace != null && playerPerRace.Length > 1 ? playerPerRace[1] : 0;
+        uint race2 = playerPerRace != null && playerPerRace.Length > 2 ? playerPerRace[2] : 0;
+        const string query = "exec pInsert_ServerUserLog @avg, @max, @r0, @r1, @r2, @server, @date";
+        return ExecNonQueryTextAsync(
+            query,
+            token,
+            ("@avg", averageUser),
+            ("@max", maxUser),
+            ("@r0", race0),
+            ("@r1", race1),
+            ("@r2", race2),
+            ("@server", serverName),
+            ("@date", logDate));
+    }
+
+    public Task<bool> Update_WorldServerAsync(int serial, int state, CancellationToken token)
+    {
+        const string query = "exec pUpdate_WorldServer @serial, @state";
+        return ExecNonQueryTextAsync(query, token, ("@serial", serial), ("@state", state));
+    }
+
+    public async Task<(byte Ret, byte Kind, ushort Period, string StartDate)> Select_UserBanAsync(
+        uint accountSerial,
+        CancellationToken token)
+    {
+        byte kind = 0;
+        ushort period = 0;
+        string startDate = string.Empty;
+        const string query = "exec pSelect_UserBan @serial";
+        try
+        {
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@serial", accountSerial);
+            await conn.OpenAsync(token).ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync(token).ConfigureAwait(false);
+            if (!await reader.ReadAsync(token).ConfigureAwait(false))
+            {
+                return (2, kind, period, startDate);
+            }
+
+            startDate = ReadStringTrimmed(reader, 0);
+            period = ReadUInt16(reader, 1);
+            kind = reader.GetByte(2);
+            return (0, kind, period, startDate);
+        }
+        catch
+        {
+            return (1, kind, period, startDate);
+        }
+    }
+
+    public Task<bool> Insert_UserBanAsync(
+        uint accountSerial,
+        byte kind,
+        uint period,
+        string reason,
+        string writer,
+        byte reasonType,
+        CancellationToken token)
+    {
+        const string query =
+            "exec pInsert_UserBan_20071016 @serial, @period, @kind, @reason, @writer, @reasonType";
+        return ExecNonQueryTextAsync(
+            query,
+            token,
+            ("@serial", accountSerial),
+            ("@period", period),
+            ("@kind", kind),
+            ("@reason", reason),
+            ("@writer", writer),
+            ("@reasonType", reasonType));
+    }
+
+    public Task<bool> Update_UserBanAsync(uint accountSerial, byte kind, uint period, string reason, CancellationToken token)
+    {
+        const string query = "exec pUpdate_UserBan @serial, @period, @kind, @reason";
+        return ExecNonQueryTextAsync(
+            query,
+            token,
+            ("@serial", accountSerial),
+            ("@period", period),
+            ("@kind", kind),
+            ("@reason", reason));
+    }
+
+    public Task<bool> Insert_UserBan_LogAsync(uint accountSerial, byte kind, uint period, string reason, CancellationToken token)
+    {
+        const string query = "exec pInsert_UserBanLog @serial, @period, @kind, @reason";
+        return ExecNonQueryTextAsync(
+            query,
+            token,
+            ("@serial", accountSerial),
+            ("@period", period),
+            ("@kind", kind),
+            ("@reason", reason));
+    }
+
+    public Task<bool> Insert_UserBan_ApexAsync(uint accountSerial, CancellationToken token)
+    {
+        const string query = "exec pInsert_UserBan_Apex @serial";
+        return ExecNonQueryTextAsync(query, token, ("@serial", accountSerial));
+    }
+
+    public async Task<byte> IsBlockIPAsync(uint ip, CancellationToken token)
+    {
+        byte b0 = (byte)(ip & 0xFF);
+        byte b1 = (byte)((ip >> 8) & 0xFF);
+        byte b2 = (byte)((ip >> 16) & 0xFF);
+        byte b3 = (byte)((ip >> 24) & 0xFF);
+        const string query = "exec pSelect_BlockIP_20070122 @b0, @b1, @b2, @b3";
+        try
+        {
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@b0", b0);
+            cmd.Parameters.AddWithValue("@b1", b1);
+            cmd.Parameters.AddWithValue("@b2", b2);
+            cmd.Parameters.AddWithValue("@b3", b3);
+            await conn.OpenAsync(token).ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync(token).ConfigureAwait(false);
+            if (await reader.ReadAsync(token).ConfigureAwait(false))
+            {
+                return 0;
+            }
+            return 2;
+        }
+        catch
+        {
+            return 1;
+        }
+    }
+
+    public Task<bool> Insert_BlockIPAsync(uint ip, CancellationToken token)
+    {
+        byte b0 = (byte)(ip & 0xFF);
+        byte b1 = (byte)((ip >> 8) & 0xFF);
+        byte b2 = (byte)((ip >> 16) & 0xFF);
+        byte b3 = (byte)((ip >> 24) & 0xFF);
+        const string query = "exec pInsert_BlockIP @b0, @b1, @b2, @b3";
+        return ExecNonQueryTextAsync(
+            query,
+            token,
+            ("@b0", b0),
+            ("@b1", b1),
+            ("@b2", b2),
+            ("@b3", b3));
+    }
+
+    public async Task<(byte Ret, int AccountCount, int IpCount)> Fireguard_Block_Type1Async(
+        string accountId,
+        uint ip,
+        CancellationToken token)
+    {
+        const string query = "exec prc_process_fg_detection @id, @ip";
+        try
+        {
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@id", accountId);
+            cmd.Parameters.AddWithValue("@ip", ip);
+            await conn.OpenAsync(token).ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync(token).ConfigureAwait(false);
+            if (!await reader.ReadAsync(token).ConfigureAwait(false))
+            {
+                return (2, 0, 0);
+            }
+            int accountCount = ReadInt32(reader, 0);
+            int ipCount = ReadInt32(reader, 1);
+            return (0, accountCount, ipCount);
+        }
+        catch
+        {
+            return (1, 0, 0);
+        }
+    }
+
+    public async Task<(byte Ret, int ErrorCode, int ResultCode)> Check_Fireguard_BlockAsync(
+        string accountId,
+        CancellationToken token)
+    {
+        const string query = "exec pUpdate_FireguardBlock20071016 @id, 30, 3";
+        try
+        {
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@id", accountId);
+            await conn.OpenAsync(token).ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync(token).ConfigureAwait(false);
+            if (!await reader.ReadAsync(token).ConfigureAwait(false))
+            {
+                return (2, 0, 0);
+            }
+            int err = ReadInt32(reader, 0);
+            int ret = ReadInt32(reader, 1);
+            return (0, err, ret);
+        }
+        catch
+        {
+            return (1, 0, 0);
+        }
+    }
+
+    public async Task<(byte Ret, byte Result)> UILock_InitAsync(
+        uint accountSerial,
+        string uiLockPw,
+        byte hintIndex,
+        string hintAnswer,
+        CancellationToken token)
+    {
+        const string query =
+            "declare @result tinyint; exec pUpdate_UILock_Init @serial, @pw, @hint, @answer, @ret = @result output; select @result;";
+        return await ExecuteScalarByteAsync(
+            query,
+            token,
+            ("@serial", accountSerial),
+            ("@pw", uiLockPw),
+            ("@hint", hintIndex),
+            ("@answer", hintAnswer)).ConfigureAwait(false);
+    }
+
+    public async Task<(byte Ret, byte Result)> UILock_UpdateAsync(
+        uint accountSerial,
+        string uiLockPw,
+        byte hintIndex,
+        string hintAnswer,
+        CancellationToken token)
+    {
+        const string query =
+            "declare @result tinyint; exec pUpdate_UILock_Update @serial, @pw, @hint, @answer, @ret = @result output; select @result;";
+        return await ExecuteScalarByteAsync(
+            query,
+            token,
+            ("@serial", accountSerial),
+            ("@pw", uiLockPw),
+            ("@hint", hintIndex),
+            ("@answer", hintAnswer)).ConfigureAwait(false);
+    }
+
+    public async Task<(byte Ret, byte Result)> UILock_RefreshAsync(
+        uint accountSerial,
+        byte failCount,
+        byte findPassFailCount,
+        CancellationToken token)
+    {
+        const string query =
+            "declare @result tinyint; exec pUpdate_UILock_Refresh @serial, @failCnt, @findCnt, @ret = @result output; select @result;";
+        return await ExecuteScalarByteAsync(
+            query,
+            token,
+            ("@serial", accountSerial),
+            ("@failCnt", failCount),
+            ("@findCnt", findPassFailCount)).ConfigureAwait(false);
+    }
+
+    public Task<bool> Update_StaffLogoffDateAsync(uint accountSerial, CancellationToken token)
+    {
+        const string query = "exec pUpdate_StaffLogoffDate @serial";
+        return ExecNonQueryTextAsync(query, token, ("@serial", accountSerial));
+    }
+
+    public Task<bool> Update_UserLogoffDateAsync(uint accountSerial, CancellationToken token)
+    {
+        const string query = "exec pUpdate_UserLogoffDate @serial";
+        return ExecNonQueryTextAsync(query, token, ("@serial", accountSerial));
+    }
+
+    public async Task<bool> Create_LogOutTableAsync(string date, CancellationToken token)
+    {
+        string createTable = $"CREATE TABLE [dbo].[tbl_UserLogout_Log{date}] (" +
+                             " [idx] [int] IDENTITY (1, 1) NOT NULL, [nAccountSerial] [int] NOT NULL," +
+                             " [nWorldCode] [int] NOT NULL, [dtLoginDate] [datetime] NOT NULL, [dtLogoutDate] [datetime] NOT NULL," +
+                             " [nBillingType] [int] NOT NULL, [nLevel] [int] NULL," +
+                             " [nAvatorSerial] [int] NULL, [Account] [char] (17) NULL," +
+                             " [ip] [char] (16) NOT NULL ) ON [PRIMARY]";
+
+        string addPk = $"ALTER TABLE [dbo].[tbl_UserLogout_Log{date}] WITH NOCHECK ADD CONSTRAINT [PK_tbl_UserLogout_Log{date}]" +
+                       " PRIMARY KEY  NONCLUSTERED ( [idx] )  ON [PRIMARY]";
+
+        string idxLogout = $"CREATE  CLUSTERED  INDEX [IX_tbl_UserLogout_Log_Logout{date}] ON [dbo].[tbl_UserLogout_Log{date}]" +
+                           " ([dtLogoutDate]) ON [PRIMARY]";
+
+        string idxLogin = $"CREATE  INDEX [IX_tbl_UserLogout_Log{date}] ON [dbo].[tbl_UserLogout_Log{date}]" +
+                          " ([dtLoginDate]) ON [PRIMARY]";
+
+        if (!await ExecNonQueryTextAsync(createTable, token).ConfigureAwait(false))
+        {
+            return false;
+        }
+        if (!await ExecNonQueryTextAsync(addPk, token).ConfigureAwait(false))
+        {
+            return false;
+        }
+        if (!await ExecNonQueryTextAsync(idxLogout, token).ConfigureAwait(false))
+        {
+            return false;
+        }
+        return await ExecNonQueryTextAsync(idxLogin, token).ConfigureAwait(false);
+    }
+
+    public Task<bool> Insert_UserLogoutLogAsync(
+        uint accountSerial,
+        string loginDate,
+        string ip,
+        uint worldCode,
+        byte billingType,
+        byte level,
+        uint avatarSerial,
+        string account,
+        CancellationToken token)
+    {
+        const string query =
+            "exec pInsert_UserLogoutLog_Daily20070115 @serial, @loginDate, @ip, @world, @bill, @level, @avatar, @account";
+        return ExecNonQueryTextAsync(
+            query,
+            token,
+            ("@serial", accountSerial),
+            ("@loginDate", loginDate),
+            ("@ip", ip),
+            ("@world", worldCode),
+            ("@bill", billingType),
+            ("@level", level),
+            ("@avatar", avatarSerial),
+            ("@account", account));
+    }
+
     private async Task<bool> ExecNonQueryAsync(string procName, CancellationToken token, params (string name, object value)[] parameters)
     {
         try
@@ -362,10 +714,66 @@ public sealed class AccountDatabase : IAccountDatabase
         }
     }
 
+    private async Task<bool> ExecNonQueryTextAsync(string sql, CancellationToken token, params (string name, object value)[] parameters)
+    {
+        try
+        {
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand(sql, conn);
+            foreach (var (name, value) in parameters)
+            {
+                cmd.Parameters.AddWithValue(name, value ?? DBNull.Value);
+            }
+            await conn.OpenAsync(token).ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync(token).ConfigureAwait(false);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private async Task<(byte Ret, byte Result)> ExecuteScalarByteAsync(
+        string sql,
+        CancellationToken token,
+        params (string name, object value)[] parameters)
+    {
+        try
+        {
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand(sql, conn);
+            foreach (var (name, value) in parameters)
+            {
+                cmd.Parameters.AddWithValue(name, value ?? DBNull.Value);
+            }
+            await conn.OpenAsync(token).ConfigureAwait(false);
+            object? result = await cmd.ExecuteScalarAsync(token).ConfigureAwait(false);
+            byte resultValue = result == null || result is DBNull ? (byte)0 : Convert.ToByte(result);
+            return (0, resultValue);
+        }
+        catch
+        {
+            return (1, 0);
+        }
+    }
+
     private static uint ReadUInt32(SqlDataReader reader, int ordinal)
     {
         var value = reader.GetValue(ordinal);
         return value is uint u ? u : Convert.ToUInt32(value);
+    }
+
+    private static ushort ReadUInt16(SqlDataReader reader, int ordinal)
+    {
+        var value = reader.GetValue(ordinal);
+        return value is ushort u ? u : Convert.ToUInt16(value);
+    }
+
+    private static int ReadInt32(SqlDataReader reader, int ordinal)
+    {
+        var value = reader.GetValue(ordinal);
+        return value is int i ? i : Convert.ToInt32(value);
     }
 
     private static DateTime ReadDateTime(SqlDataReader reader, int ordinal)

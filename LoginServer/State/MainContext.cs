@@ -16,6 +16,7 @@ public sealed class MainContext
     private readonly object _lock = new();
     private readonly WorldData[] _worlds = new WorldData[40];
     private readonly ConcurrentDictionary<uint, ClientSession> _clients = new();
+    private int _externalOpen;
 
     private MainContext()
     {
@@ -25,7 +26,11 @@ public sealed class MainContext
 
     public int WorldCount { get; private set; }
     public int ServiceWorldNum { get; private set; }
-    public bool ExternalOpen { get; set; }
+    public bool ExternalOpen
+    {
+        get => Volatile.Read(ref _externalOpen) != 0;
+        set => Interlocked.Exchange(ref _externalOpen, value ? 1 : 0);
+    }
     public string? AccountDbName { get; set; }
     public string? AccountDbIp { get; set; }
     public int MaxConnections { get; set; }
@@ -34,6 +39,19 @@ public sealed class MainContext
     public PublicConnection? AccountConnection { get; private set; }
 
     public void IncrementUserCount() => Interlocked.Increment(ref _curUserCount);
+
+    public bool ToggleExternalOpen()
+    {
+        while (true)
+        {
+            int current = Volatile.Read(ref _externalOpen);
+            int next = current == 0 ? 1 : 0;
+            if (Interlocked.CompareExchange(ref _externalOpen, next, current) == current)
+            {
+                return next != 0;
+            }
+        }
+    }
 
     public IReadOnlyList<WorldData> Worlds
     {

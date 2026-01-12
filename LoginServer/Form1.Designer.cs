@@ -30,6 +30,7 @@ partial class MainWindow
     {
         startButton = new Button();
         stopButton = new Button();
+        externalOpenButton = new Button();
         statusLabel = new Label();
         logTextBox = new RichTextBox();
         menuStrip1 = new MenuStrip();
@@ -65,13 +66,24 @@ partial class MainWindow
         stopButton.UseVisualStyleBackColor = true;
         stopButton.Click += OnStopClicked;
         // 
+        // externalOpenButton
+        // 
+        externalOpenButton.Location = new Point(207, 31);
+        externalOpenButton.Margin = new Padding(2);
+        externalOpenButton.Name = "externalOpenButton";
+        externalOpenButton.Size = new Size(120, 35);
+        externalOpenButton.TabIndex = 2;
+        externalOpenButton.Text = "External: Closed";
+        externalOpenButton.UseVisualStyleBackColor = true;
+        externalOpenButton.Click += OnToggleExternalOpenClicked;
+        // 
         // statusLabel
         // 
         statusLabel.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-        statusLabel.Location = new Point(228, 31);
+        statusLabel.Location = new Point(337, 31);
         statusLabel.Margin = new Padding(2, 0, 2, 0);
         statusLabel.Name = "statusLabel";
-        statusLabel.Size = new Size(179, 35);
+        statusLabel.Size = new Size(301, 35);
         statusLabel.TabIndex = 4;
         statusLabel.Text = "Status: Stopped";
         statusLabel.TextAlign = ContentAlignment.MiddleLeft;
@@ -151,6 +163,7 @@ partial class MainWindow
         Controls.Add(logTextBox);
         Controls.Add(menuStrip1);
         Controls.Add(statusLabel);
+        Controls.Add(externalOpenButton);
         Controls.Add(stopButton);
         Controls.Add(startButton);
         MainMenuStrip = menuStrip1;
@@ -169,6 +182,7 @@ partial class MainWindow
 
     private System.Windows.Forms.Button startButton;
     private System.Windows.Forms.Button stopButton;
+    private System.Windows.Forms.Button externalOpenButton;
     private System.Windows.Forms.Label statusLabel;
     private System.Windows.Forms.RichTextBox logTextBox;
     private System.Windows.Forms.MenuStrip menuStrip1;

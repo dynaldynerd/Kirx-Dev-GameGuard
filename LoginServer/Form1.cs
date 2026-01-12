@@ -30,6 +30,7 @@ public partial class MainWindow : Form
     private void ApplySettingsToUi()
     {
         verboseLogToolStripMenuItem.Checked = _verboseLog;
+        UpdateExternalOpenButton(MainContext.Instance.ExternalOpen);
     }
 
     private void ReloadSettings()
@@ -170,6 +171,24 @@ public partial class MainWindow : Form
     private void OnToggleVerboseLog(object? sender, EventArgs e)
     {
         _verboseLog = verboseLogToolStripMenuItem.Checked;
+    }
+
+    private void OnToggleExternalOpenClicked(object? sender, EventArgs e)
+    {
+        bool isOpen = MainContext.Instance.ToggleExternalOpen();
+        UpdateExternalOpenButton(isOpen);
+        AppendLog($"External login {(isOpen ? "opened" : "closed")}.");
+    }
+
+    private void UpdateExternalOpenButton(bool isOpen)
+    {
+        if (InvokeRequired)
+        {
+            BeginInvoke(() => UpdateExternalOpenButton(isOpen));
+            return;
+        }
+
+        externalOpenButton.Text = isOpen ? "External: Open" : "External: Closed";
     }
 
     private async Task ConnectAccountAsync(CancellationToken token)
