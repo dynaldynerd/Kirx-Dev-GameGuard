@@ -581,19 +581,93 @@ public sealed class ClientPacketRouter
 
     private Task<bool> ManageAccountAuthRequest(PublicConnection connection, _manage_account_auth_request_cllo request, CancellationToken cancellationToken)
     {
-        _log($"ManageAccountAuthRequest from {connection.RemoteEndPoint} len={request.byBin.Length}");
+        uint idx = (uint)connection.ConnectionId;
+        var session = MainContext.Instance.GetClient(idx);
+        if (session == null || session.LoginCode != 2)
+        {
+            return Task.FromResult(false);
+        }
+
+        var accountConn = MainContext.Instance.AccountConnection;
+        if (accountConn == null)
+        {
+            return Task.FromResult(false);
+        }
+
+        var send = new _manage_account_auth_request_loac
+        {
+            idLocal = new _CLID { wIndex = session.Index, dwSerial = session.ClidSerial },
+            byBin = new byte[32]
+        };
+        Buffer.BlockCopy(request.byBin, 0, send.byBin, 0, Math.Min(send.byBin.Length, request.byBin.Length));
+
+        var env = new PacketEnvelope
+        {
+            OpCode = 1,
+            SubCode = 20,
+            Payload = send.ToArray()
+        };
+        _ = accountConn.SendAsync(env, cancellationToken);
         return Task.FromResult(true);
     }
 
     private Task<bool> ManageClientLimitRunRequest(PublicConnection connection, _manage_client_limit_run_request_cllo request, CancellationToken cancellationToken)
     {
-        _log($"ManageClientLimitRunRequest from {connection.RemoteEndPoint}");
+        uint idx = (uint)connection.ConnectionId;
+        var session = MainContext.Instance.GetClient(idx);
+        if (session == null || session.LoginCode != 2)
+        {
+            return Task.FromResult(false);
+        }
+
+        var accountConn = MainContext.Instance.AccountConnection;
+        if (accountConn == null)
+        {
+            return Task.FromResult(false);
+        }
+
+        var send = new _manage_client_limit_run_request_loac
+        {
+            idLocal = new _CLID { wIndex = session.Index, dwSerial = session.ClidSerial }
+        };
+
+        var env = new PacketEnvelope
+        {
+            OpCode = 1,
+            SubCode = 22,
+            Payload = send.ToArray()
+        };
+        _ = accountConn.SendAsync(env, cancellationToken);
         return Task.FromResult(true);
     }
 
     private Task<bool> ManageClientForceExitRequest(PublicConnection connection, _manage_client_force_exit_request_cllo request, CancellationToken cancellationToken)
     {
-        _log($"ManageClientForceExitRequest from {connection.RemoteEndPoint}");
+        uint idx = (uint)connection.ConnectionId;
+        var session = MainContext.Instance.GetClient(idx);
+        if (session == null || session.LoginCode != 2)
+        {
+            return Task.FromResult(false);
+        }
+
+        var accountConn = MainContext.Instance.AccountConnection;
+        if (accountConn == null)
+        {
+            return Task.FromResult(false);
+        }
+
+        var send = new _manage_client_force_exit_request_loac
+        {
+            idLocal = new _CLID { wIndex = session.Index, dwSerial = session.ClidSerial }
+        };
+
+        var env = new PacketEnvelope
+        {
+            OpCode = 1,
+            SubCode = 25,
+            Payload = send.ToArray()
+        };
+        _ = accountConn.SendAsync(env, cancellationToken);
         return Task.FromResult(true);
     }
 

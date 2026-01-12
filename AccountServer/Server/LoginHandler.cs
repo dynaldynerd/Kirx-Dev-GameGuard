@@ -855,32 +855,11 @@ public sealed class LoginHandler : AccountHandlerBase
         return true;
     }
 
-    private async Task<bool> LoginServerStatResult(PublicConnection connection, _login_server_stat_result_loac request, CancellationToken token)
+    private Task<bool> LoginServerStatResult(PublicConnection connection, _login_server_stat_result_loac request, CancellationToken token)
     {
         _externalLoginOpen = request.byRet == 1;
-
-        var send = new _login_server_stat_result_acco
-        {
-            byRet = request.byRet,
-            wClientIndex = request.wClientIndex
-        };
-
-        var env = new PacketEnvelope
-        {
-            OpCode = 50,
-            SubCode = 12,
-            Payload = send.ToArray()
-        };
-
-        try
-        {
-            await connection.SendAsync(env, token).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            _log($"[{connection.ConnectionId}] login server stat forward failed: {ex.Message}");
-        }
-        return true;
+        _log($"LoginServerStatResult: clientIndex={request.wClientIndex} externalOpen={_externalLoginOpen}");
+        return Task.FromResult(true);
     }
 
     private async Task<bool> AccountDbInfoRequest(PublicConnection connection, CancellationToken token)
