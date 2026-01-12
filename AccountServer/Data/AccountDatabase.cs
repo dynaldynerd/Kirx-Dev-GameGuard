@@ -3,6 +3,7 @@ using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using LoginServer.Packets;
 using Microsoft.Data.SqlClient;
 
 namespace AccountServer.Data;
@@ -25,12 +26,15 @@ public sealed class AccountDatabase : IAccountDatabase
 
     public async Task<StaffInfoResult> Select_StaffInfoExAsync(string id, CancellationToken token)
     {
-        var result = new StaffInfoResult { Ret = 1, Info = new StaffInfo(), LoginDate = string.Empty };
+        var result = new StaffInfoResult { Ret = 1, Info = new StaffInfo(), LoginDate = DateTime.MinValue };
         const string proc = "pSelect_StaffInfoEx";
         try
         {
             using var conn = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand($"{{ CALL {proc}(@id) }}", conn);
+            using var cmd = new SqlCommand(proc, conn)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
             cmd.Parameters.AddWithValue("@id", id);
             await conn.OpenAsync(token).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(token).ConfigureAwait(false);
@@ -40,12 +44,12 @@ public sealed class AccountDatabase : IAccountDatabase
                 return result;
             }
 
-            result.Info.Password = reader.GetString(0);
-            result.Info.Serial = reader.GetFieldValue<uint>(1);
-            result.Info.TotalLogMin = reader.GetFieldValue<uint>(2);
+            result.Info.Password = ReadStringTrimmed(reader, 0);
+            result.Info.Serial = ReadUInt32(reader, 1);
+            result.Info.TotalLogMin = ReadUInt32(reader, 2);
             result.Info.Grade = reader.GetByte(3);
             result.Info.SubGrade = reader.GetByte(4);
-            result.LoginDate = reader.GetString(5);
+            result.LoginDate = ReadDateTime(reader, 5);
             result.Ret = 0;
             return result;
         }
@@ -61,14 +65,17 @@ public sealed class AccountDatabase : IAccountDatabase
         try
         {
             using var conn = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand($"{{ CALL {proc}(@id) }}", conn);
+            using var cmd = new SqlCommand(proc, conn)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
             cmd.Parameters.AddWithValue("@id", id);
             await conn.OpenAsync(token).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(token).ConfigureAwait(false);
             if (!await reader.ReadAsync(token).ConfigureAwait(false)) return false;
-            var expire = reader.GetString(0);
-            var now = reader.GetString(1);
-            return string.Compare(expire, now, StringComparison.Ordinal) > 0;
+            var expire = ReadDateTime(reader, 0);
+            var now = ReadDateTime(reader, 1);
+            return expire > now;
         }
         catch
         {
@@ -83,7 +90,10 @@ public sealed class AccountDatabase : IAccountDatabase
         try
         {
             using var conn = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand($"{{ CALL {proc}(@id) }}", conn);
+            using var cmd = new SqlCommand(proc, conn)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
             cmd.Parameters.AddWithValue("@id", id);
             await conn.OpenAsync(token).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(token).ConfigureAwait(false);
@@ -93,14 +103,14 @@ public sealed class AccountDatabase : IAccountDatabase
                 return result;
             }
 
-            result.Serial = reader.GetFieldValue<uint>(0);
-            result.TotalLogMin = reader.GetFieldValue<uint>(1);
-            result.LoginDate = reader.GetString(2);
+            result.Serial = ReadUInt32(reader, 0);
+            result.TotalLogMin = ReadUInt32(reader, 1);
+            result.LoginDate = ReadDateTime(reader, 2);
             result.UiLock = reader.GetByte(3);
-            result.UiLockPw = reader.GetString(4);
+            result.UiLockPw = ReadStringTrimmed(reader, 4);
             result.UiLockFailCnt = reader.GetByte(5);
             result.HintIndex = reader.GetByte(6);
-            result.HintAnswer = reader.GetString(7);
+            result.HintAnswer = ReadStringTrimmed(reader, 7);
             result.UiLockFindPassFailCount = reader.GetByte(8);
             result.Ret = 0;
             return result;
@@ -117,7 +127,10 @@ public sealed class AccountDatabase : IAccountDatabase
         try
         {
             using var conn = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand($"{{ CALL {proc}(@serial) }}", conn);
+            using var cmd = new SqlCommand(proc, conn)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
             cmd.Parameters.AddWithValue("@serial", accountSerial);
             await conn.OpenAsync(token).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(token).ConfigureAwait(false);
@@ -148,7 +161,7 @@ public sealed class AccountDatabase : IAccountDatabase
             await conn.OpenAsync(token).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(token).ConfigureAwait(false);
             if (!await reader.ReadAsync(token).ConfigureAwait(false)) return (2, reason);
-            reason = reader.GetString(0);
+            reason = ReadStringTrimmed(reader, 0);
             return (0, reason);
         }
         catch
@@ -163,7 +176,10 @@ public sealed class AccountDatabase : IAccountDatabase
         try
         {
             using var conn = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand($"{{ CALL {proc}(@serial, @state) }}", conn);
+            using var cmd = new SqlCommand(proc, conn)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
             cmd.Parameters.AddWithValue("@serial", serial);
             cmd.Parameters.AddWithValue("@state", state);
             await conn.OpenAsync(token).ConfigureAwait(false);
@@ -194,21 +210,24 @@ public sealed class AccountDatabase : IAccountDatabase
         return ExecNonQueryAsync(proc, token, ("@serial", serial), ("@pushIP", pushIP), ("@closeIP", closeIP));
     }
 
-    public async Task<(bool Ok, uint Serial, string Date)> Select_UserSerialAsync(string id, CancellationToken token)
+    public async Task<(bool Ok, uint Serial, DateTime Date)> Select_UserSerialAsync(string id, CancellationToken token)
     {
         uint serial = 0;
-        string date = string.Empty;
+        DateTime date = DateTime.MinValue;
         const string proc = "pSelect_UserSerial";
         try
         {
             using var conn = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand($"{{ CALL {proc}(@id) }}", conn);
+            using var cmd = new SqlCommand(proc, conn)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
             cmd.Parameters.AddWithValue("@id", id);
             await conn.OpenAsync(token).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(token).ConfigureAwait(false);
             if (!await reader.ReadAsync(token).ConfigureAwait(false)) return (false, serial, date);
-            serial = reader.GetFieldValue<uint>(0);
-            date = reader.GetString(1);
+            serial = ReadUInt32(reader, 0);
+            date = ReadDateTime(reader, 1);
             return (true, serial, date);
         }
         catch
@@ -273,7 +292,7 @@ public sealed class AccountDatabase : IAccountDatabase
             {
                 return (2, 0);
             }
-            uint serial = reader.GetFieldValue<uint>(0);
+            uint serial = ReadUInt32(reader, 0);
             return (0, serial);
         }
         catch
@@ -325,7 +344,10 @@ public sealed class AccountDatabase : IAccountDatabase
         try
         {
             using var conn = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand($"{{ CALL {procName}({string.Join(",", parameters.Select(p => p.name))}) }}", conn);
+            using var cmd = new SqlCommand(procName, conn)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
             foreach (var (name, value) in parameters)
             {
                 cmd.Parameters.AddWithValue(name, value ?? DBNull.Value);
@@ -338,6 +360,33 @@ public sealed class AccountDatabase : IAccountDatabase
         {
             return false;
         }
+    }
+
+    private static uint ReadUInt32(SqlDataReader reader, int ordinal)
+    {
+        var value = reader.GetValue(ordinal);
+        return value is uint u ? u : Convert.ToUInt32(value);
+    }
+
+    private static DateTime ReadDateTime(SqlDataReader reader, int ordinal)
+    {
+        if (reader.IsDBNull(ordinal))
+        {
+            return DateTime.MinValue;
+        }
+        var value = reader.GetValue(ordinal);
+        return value is DateTime dt ? dt : Convert.ToDateTime(value);
+    }
+
+    private static string ReadStringTrimmed(SqlDataReader reader, int ordinal)
+    {
+        if (reader.IsDBNull(ordinal))
+        {
+            return string.Empty;
+        }
+        var value = reader.GetValue(ordinal);
+        var text = value as string ?? Convert.ToString(value) ?? string.Empty;
+        return text.TrimEnd('\0');
     }
 }
 
@@ -355,7 +404,7 @@ public sealed class StaffInfoResult
 {
     public byte Ret { get; set; }
     public StaffInfo Info { get; set; } = new();
-    public string LoginDate { get; set; } = string.Empty;
+    public DateTime LoginDate { get; set; } = DateTime.MinValue;
 }
 
 public sealed class UserInfoResult
@@ -363,7 +412,7 @@ public sealed class UserInfoResult
     public byte Ret { get; set; }
     public uint Serial { get; set; }
     public uint TotalLogMin { get; set; }
-    public string LoginDate { get; set; } = string.Empty;
+    public DateTime LoginDate { get; set; } = DateTime.MinValue;
     public byte UiLock { get; set; }
     public string UiLockPw { get; set; } = string.Empty;
     public byte UiLockFailCnt { get; set; }

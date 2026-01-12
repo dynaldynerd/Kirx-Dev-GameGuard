@@ -28,20 +28,57 @@ public sealed class WorldHandler : AccountHandlerBase
     public override Task OnDisconnectedAsync(PublicConnection connection, CancellationToken cancellationToken)
     {
         _log($"[{connection.ConnectionId}] disconnected (world)");
-        if (_context.TryGetWorldSessionByConnection(connection.ConnectionId, out var session))
-        {
-            if (session.WorldCode >= 0)
-            {
-                _context.UpdateWorldService(session.WorldCode, false);
-            }
-        }
-        _context.UnregisterWorld(connection);
-        return Task.CompletedTask;
+        return CloseWorldServerAsync(connection, cancellationToken);
     }
 
     public override Task OnInternalPacketAsync(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
     {
         return Task.CompletedTask;
+    }
+
+    private async Task CloseWorldServerAsync(PublicConnection connection, CancellationToken token)
+    {
+        if (!_context.TryGetWorldSessionByConnection(connection.ConnectionId, out var worldSession))
+        {
+            _log($"CMainThread::CloseWorldServer({connection.ConnectionId}).. GetWorldPtrFormSocketIndex({connection.ConnectionId}) == NULL");
+            _context.UnregisterWorld(connection);
+            return;
+        }
+
+        int worldCode = worldSession.WorldCode;
+        if (worldCode < 0 || !_context.TryGetWorld(worldCode, out var world))
+        {
+            _log($"CMainThread::CloseWorldServer({connection.ConnectionId}).. GetWorldPtrFormSocketIndex({connection.ConnectionId}) == NULL");
+            _context.UnregisterWorld(connection);
+            return;
+        }
+
+        var send = new _inform_close_world_aclo
+        {
+            dwWorldCode = (uint)worldCode
+        };
+
+        var env = new PacketEnvelope
+        {
+            OpCode = 1,
+            SubCode = 101,
+            Payload = send.ToArray()
+        };
+
+        await SendToLoginServersAsync(env, token).ConfigureAwait(false);
+
+        foreach (var account in _context.GetActiveAccountsSnapshot())
+        {
+            if (account.IsLogin && account.WorldCode == worldCode)
+            {
+                ReleaseAccount(account, "CloseWorldServer");
+            }
+        }
+
+        _context.UpdateWorldService(worldCode, false);
+        _context.UpdateWorldGate(worldCode, 0, 0);
+        _context.UnregisterWorld(connection);
+        _log($"{DateTime.Now:HH:mm:ss}/ Disconnect World Server : Code ({worldCode}), Name ({world.Name})");
     }
 
     public override async Task OnPacketAsync(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)

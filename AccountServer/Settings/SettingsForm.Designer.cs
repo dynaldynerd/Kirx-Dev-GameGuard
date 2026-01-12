@@ -1,4 +1,4 @@
-﻿#nullable disable
+#nullable enable
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
@@ -133,6 +133,10 @@ public partial class SettingsForm
         lblWorldList = new Label();
         btnWorldAdd = new Button();
         gridWorlds = new DataGridView();
+        colWorldName = new DataGridViewTextBoxColumn();
+        colWorldAddress = new DataGridViewTextBoxColumn();
+        colWorldDbName = new DataGridViewTextBoxColumn();
+        colWorldType = new DataGridViewTextBoxColumn();
         colWorldEdit = new DataGridViewButtonColumn();
         colWorldDelete = new DataGridViewButtonColumn();
         panelButtons = new FlowLayoutPanel();
@@ -724,7 +728,8 @@ public partial class SettingsForm
         // 
         gridWorlds.AllowUserToAddRows = false;
         gridWorlds.AllowUserToDeleteRows = false;
-        gridWorlds.Columns.AddRange(new DataGridViewColumn[] { colWorldEdit, colWorldDelete });
+        gridWorlds.AutoGenerateColumns = false;
+        gridWorlds.Columns.AddRange(new DataGridViewColumn[] { colWorldName, colWorldAddress, colWorldDbName, colWorldType, colWorldEdit, colWorldDelete });
         gridWorlds.Dock = DockStyle.Fill;
         gridWorlds.Location = new Point(3, 48);
         gridWorlds.MultiSelect = false;
@@ -736,25 +741,55 @@ public partial class SettingsForm
         gridWorlds.TabIndex = 1;
         gridWorlds.CellContentClick += OnWorldGridClick;
         // 
+        // colWorldName
+        // 
+        colWorldName.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        colWorldName.DataPropertyName = "Name";
+        colWorldName.HeaderText = "Name";
+        colWorldName.Name = "colWorldName";
+        colWorldName.ReadOnly = true;
+        // 
+        // colWorldAddress
+        // 
+        colWorldAddress.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        colWorldAddress.DataPropertyName = "Address";
+        colWorldAddress.HeaderText = "Address";
+        colWorldAddress.Name = "colWorldAddress";
+        colWorldAddress.ReadOnly = true;
+        // 
+        // colWorldDbName
+        // 
+        colWorldDbName.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        colWorldDbName.DataPropertyName = "DbName";
+        colWorldDbName.HeaderText = "DbName";
+        colWorldDbName.Name = "colWorldDbName";
+        colWorldDbName.ReadOnly = true;
+        // 
+        // colWorldType
+        // 
+        colWorldType.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+        colWorldType.DataPropertyName = "Type";
+        colWorldType.HeaderText = "Type";
+        colWorldType.Name = "colWorldType";
+        colWorldType.ReadOnly = true;
+        // 
         // colWorldEdit
         // 
         colWorldEdit.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
         colWorldEdit.HeaderText = "";
-        colWorldEdit.Name = "colWorldEdit";
+        colWorldEdit.Name = "colEdit";
         colWorldEdit.ReadOnly = true;
         colWorldEdit.Text = "Edit";
         colWorldEdit.UseColumnTextForButtonValue = true;
-        colWorldEdit.Width = 5;
         // 
         // colWorldDelete
         // 
         colWorldDelete.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
         colWorldDelete.HeaderText = "";
-        colWorldDelete.Name = "colWorldDelete";
+        colWorldDelete.Name = "colDelete";
         colWorldDelete.ReadOnly = true;
         colWorldDelete.Text = "Delete";
         colWorldDelete.UseColumnTextForButtonValue = true;
-        colWorldDelete.Width = 5;
         // 
         // panelButtons
         // 

@@ -133,7 +133,7 @@ public abstract class AccountHandlerBase : NetworkHandlerBase
         account.WorldCode = -1;
         account.GlobalId = default;
 
-        _context.RemoveClient(account.ConnectionId, account.Clid);
+        _context.RemoveClient(account.LoginServerIndex, account.Clid);
         if (account.AccountSerial != 0)
         {
             _context.RemoveActiveAccount(account.AccountSerial);

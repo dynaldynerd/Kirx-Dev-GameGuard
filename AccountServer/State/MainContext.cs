@@ -16,6 +16,7 @@ public sealed class AccountMainContext
     private readonly WorldEntry[] _worlds = new WorldEntry[40];
     private int _worldCount;
     private readonly ConcurrentDictionary<ulong, LoginServerSession> _loginServers = new();
+    private readonly ConcurrentDictionary<string, ClientSession> _clients = new();
     private readonly ConcurrentDictionary<uint, ClientSession> _activeAccounts = new();
     private readonly ConcurrentDictionary<uint, ClientSession> _activeGlobals = new();
     private readonly ConcurrentDictionary<int, WorldServerSession> _worldServers = new();
@@ -116,23 +117,7 @@ public sealed class AccountMainContext
 
     public void Unregister(PublicConnection connection)
     {
-        if (_loginServers.TryRemove(connection.ConnectionId, out var loginSession))
-        {
-            foreach (var client in loginSession.GetClientsSnapshot())
-            {
-                if (client.AccountSerial != 0)
-                {
-                    _activeAccounts.TryRemove(client.AccountSerial, out _);
-                }
-                if (client.GlobalId.dwIndex != 0)
-                {
-                    _activeGlobals.TryRemove(client.GlobalId.dwIndex, out _);
-                }
-            }
-            loginSession.RemoveAllClients();
-        }
-
-        UnregisterWorld(connection);
+        _loginServers.TryRemove(connection.ConnectionId, out _);
     }
 
     public LoginServerSession[] GetLoginSessionsSnapshot()
@@ -180,16 +165,15 @@ public sealed class AccountMainContext
 
     public ClientSession RegisterClient(ulong loginConnId, _CLID clid)
     {
-        var loginSession = _loginServers.GetOrAdd(loginConnId, id => new LoginServerSession(id, null));
-        return loginSession.RegisterClient(clid);
+        string key = ClientKey(loginConnId, clid);
+        var session = _clients.GetOrAdd(key, _ => new ClientSession(loginConnId, clid));
+        session.LoginServerIndex = loginConnId;
+        return session;
     }
 
     public void RemoveClient(ulong loginConnId, _CLID clid)
     {
-        if (_loginServers.TryGetValue(loginConnId, out var session))
-        {
-            session.RemoveClient(clid);
-        }
+        _clients.TryRemove(ClientKey(loginConnId, clid), out _);
     }
 
     public bool TryGetActiveAccount(uint accountSerial, out ClientSession session)
@@ -222,6 +206,11 @@ public sealed class AccountMainContext
                 _activeGlobals.TryRemove(session.GlobalId.dwIndex, out _);
             }
         }
+    }
+
+    public ClientSession[] GetActiveAccountsSnapshot()
+    {
+        return _activeAccounts.Values.ToArray();
     }
 
     public WorldServerSession RegisterWorld(int worldCode, PublicConnection connection)
@@ -349,11 +338,17 @@ public sealed class AccountMainContext
         entry.GateIp = (uint)(bytes[0] | (bytes[1] << 8) | (bytes[2] << 16) | (bytes[3] << 24));
         entry.GatePort = port;
     }
+
+    private static string ClientKey(ulong loginConnId, _CLID clid)
+    {
+        return $"{loginConnId}:{clid.wIndex}:{clid.dwSerial}";
+    }
 }
 
 public sealed class ClientSession
 {
     public ulong ConnectionId { get; }
+    public ulong LoginServerIndex { get; set; }
     public _CLID Clid { get; }
 
     public string AccountId { get; private set; } = string.Empty;
@@ -396,6 +391,7 @@ public sealed class ClientSession
     public ClientSession(ulong loginConnId, _CLID clid)
     {
         ConnectionId = loginConnId;
+        LoginServerIndex = loginConnId;
         Clid = clid;
         GlobalId = new _GLBID { dwIndex = 0, dwSerial = uint.MaxValue };
     }
@@ -436,7 +432,6 @@ public sealed class LoginServerSession
 {
     public ulong ConnectionId { get; }
     public PublicConnection? Connection { get; private set; }
-    private readonly ConcurrentDictionary<string, ClientSession> _clients = new();
 
     public LoginServerSession(ulong connectionId, PublicConnection? connection)
     {
@@ -444,29 +439,10 @@ public sealed class LoginServerSession
         Connection = connection;
     }
 
-    private static string KeyFor(_CLID clid) => $"{clid.wIndex}:{clid.dwSerial}";
-
-    public ClientSession RegisterClient(_CLID clid)
-    {
-        return _clients.GetOrAdd(KeyFor(clid), _ => new ClientSession(ConnectionId, clid));
-    }
-
     public void UpdateConnection(PublicConnection connection)
     {
         Connection = connection;
     }
-
-    public ClientSession[] GetClientsSnapshot()
-    {
-        return _clients.Values.ToArray();
-    }
-
-    public void RemoveClient(_CLID clid)
-    {
-        _clients.TryRemove(KeyFor(clid), out _);
-    }
-
-    public void RemoveAllClients() => _clients.Clear();
 }
 
 public sealed class WorldServerSession

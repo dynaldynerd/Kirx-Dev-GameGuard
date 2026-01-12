@@ -46,17 +46,34 @@ public partial class SettingsForm : Form
 
     private void HideExtraWorldColumns()
     {
-        if (gridWorlds.Columns.Contains("IsService"))
+        var columns = gridWorlds?.Columns;
+        if (columns == null)
         {
-            gridWorlds.Columns["IsService"].Visible = false;
+            return;
         }
-        if (gridWorlds.Columns.Contains("GateIp"))
+        if (columns.Contains("IsService"))
         {
-            gridWorlds.Columns["GateIp"].Visible = false;
+            var col = columns["IsService"];
+            if (col != null)
+            {
+                col.Visible = false;
+            }
         }
-        if (gridWorlds.Columns.Contains("GatePort"))
+        if (columns.Contains("GateIp"))
         {
-            gridWorlds.Columns["GatePort"].Visible = false;
+            var col = columns["GateIp"];
+            if (col != null)
+            {
+                col.Visible = false;
+            }
+        }
+        if (columns.Contains("GatePort"))
+        {
+            var col = columns["GatePort"];
+            if (col != null)
+            {
+                col.Visible = false;
+            }
         }
     }
 
@@ -194,7 +211,9 @@ public partial class SettingsForm : Form
 
     private void OnRegenerateSalt(object? sender, EventArgs e)
     {
-        txtArgon2Salt.Text = CryptoHelper.GenerateRandomBase64(16);
+        var r = MessageBox.Show("Change Salt?", "Are you sure you wanted to change salt? all user password will be gone and had to rehash if you replace this, make sure there's no user account before doing this", MessageBoxButtons.YesNo);
+        if(r == DialogResult.Yes)
+            txtArgon2Salt.Text = CryptoHelper.GenerateRandomBase64(16);
     }
 
     private static bool TryParseBase64(string value, out byte[] bytes)

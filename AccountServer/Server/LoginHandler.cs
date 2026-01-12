@@ -48,6 +48,7 @@ public sealed class LoginHandler : AccountHandlerBase
     public override Task OnDisconnectedAsync(PublicConnection connection, CancellationToken cancellationToken)
     {
         _log($"[{connection.ConnectionId}] disconnected (login)");
+        CloseLoginServer(connection);
         _context.Unregister(connection);
         return Task.CompletedTask;
     }
@@ -158,6 +159,29 @@ public sealed class LoginHandler : AccountHandlerBase
         return Task.FromResult(true);
     }
 
+    private void CloseLoginServer(PublicConnection connection)
+    {
+        foreach (var account in _context.GetActiveAccountsSnapshot())
+        {
+            if (!account.IsLogin)
+            {
+                continue;
+            }
+            if (account.WorldCode != -1)
+            {
+                continue;
+            }
+            if (account.LoginServerIndex != connection.ConnectionId)
+            {
+                continue;
+            }
+
+            ReleaseAccount(account, "CloseLoginServer");
+        }
+
+        _log($"{DateTime.Now:HH:mm:ss}/ Close Login Server");
+    }
+
     private Task<bool> LoginAccountRequest(PublicConnection connection, _login_account_request_loac_blit req, CancellationToken token)
     {
         var id = PacketStringUtil.ToAsciiNullTerm(req.GetAccountId());
@@ -174,13 +198,85 @@ public sealed class LoginHandler : AccountHandlerBase
             return Task.FromResult(false);
         }
 
-        if (req.byUserCode != 0 && req.byUserCode != 1)
+        if (req.byUserCode != 0 && req.byUserCode != 1 && req.byUserCode != 2)
         {
             return Task.FromResult(false);
         }
 
+        if (req.byUserCode == 2)
+        {
+            return LoginManageAccountRequest(connection, req, token);
+        }
+
         _ = DoLoginAsync(connection, req, token);
         return Task.FromResult(true);
+    }
+
+    private async Task<bool> LoginManageAccountRequest(PublicConnection connection, _login_account_request_loac_blit req, CancellationToken token)
+    {
+        if (_manageUserState == ManageUserState.None || _manageUserState == ManageUserState.Logout)
+        {
+            if (!TryGenerateManageAuthKey(out var keyBlob, out var hash))
+            {
+                var failure = new _login_account_result_aclo
+                {
+                    idLocal = req.idLocal,
+                    byRetCode = 24,
+                    byUserGrade = 5,
+                    byCancelUILockBlockRet = 0
+                };
+                await SendLoginResultAsync(connection, failure, token).ConfigureAwait(false);
+                return true;
+            }
+
+            _manageUserState = ManageUserState.GenKey;
+            Buffer.BlockCopy(hash, 0, _manageHash, 0, _manageHash.Length);
+
+            var send = new _notify_manage_account_auth_info_aclo
+            {
+                idLocal = req.idLocal,
+                byRetCode = 0
+            };
+            Buffer.BlockCopy(keyBlob, 0, send.byKey, 0, Math.Min(send.byKey.Length, keyBlob.Length));
+
+            var env = new PacketEnvelope
+            {
+                OpCode = 1,
+                SubCode = 19,
+                Payload = send.ToArray()
+            };
+
+            try
+            {
+                await connection.SendAsync(env, token).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _log($"[{connection.ConnectionId}] notify manage auth info send failed: {ex.Message}");
+            }
+            return true;
+        }
+
+        var reject = new _login_account_result_aclo
+        {
+            idLocal = req.idLocal,
+            byRetCode = 24,
+            byUserGrade = 5,
+            byCancelUILockBlockRet = 0
+        };
+        await SendLoginResultAsync(connection, reject, token).ConfigureAwait(false);
+        return true;
+    }
+
+    private static bool TryGenerateManageAuthKey(out byte[] keyBlob, out byte[] hash)
+    {
+        Span<byte> block = stackalloc byte[64];
+        RandomNumberGenerator.Fill(block);
+        hash = SHA256.HashData(block);
+        keyBlob = new byte[149];
+        int copy = Math.Min(block.Length, keyBlob.Length);
+        block.Slice(0, copy).CopyTo(keyBlob);
+        return true;
     }
 
     private uint NextAccountSerial() => unchecked(++_accountSerialSeed);
