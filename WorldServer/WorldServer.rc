@@ -1,5 +1,25 @@
 #include "resource.h"
 #include <windows.h>
+#ifndef FW_NORMAL
+#define FW_NORMAL 400
+#endif
+#ifndef FALSE
+#define FALSE 0
+#endif
+#ifndef VK_N
+#define VK_N 0x4E
+#define VK_O 0x4F
+#define VK_S 0x53
+#define VK_P 0x50
+#define VK_Z 0x5A
+#define VK_X 0x58
+#define VK_C 0x43
+#define VK_V 0x56
+#define VK_BACK 0x08
+#define VK_DELETE 0x2E
+#define VK_INSERT 0x2D
+#define VK_F6 0x75
+#endif
 
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
@@ -364,8 +384,6 @@ BLOCK "VarFileInfo"
 }
 }
 
-1 24 "MANIFEST1_1.txt"
+134 RCDATA "240134_1.bin"
 
-134 240 "240134_1.bin"
-
-128 241 "241128_1.bin"
+128 RCDATA "241128_1.bin"

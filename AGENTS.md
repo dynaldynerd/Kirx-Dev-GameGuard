@@ -48,3 +48,11 @@
 - Use IDA headers as the source of truth for packet layout and flow.
 - Keep ASCII in new files unless existing content requires otherwise.
 - Planned refactor: convert packet structs to classes, store strings as `string` (annotate original fixed sizes, e.g. `// byte[13]`), keep `Load()`/`ToArray()` on packet classes with manual parsing/serialization. DB methods should fill the session object directly and return only success/retcode.
+
+## WorldServer C++ Header Rules
+1. Structs/classes live in dedicated `.h` files, not inside `.cpp`.
+2. Function declarations go in `.h`; definitions go in `.cpp`.
+3. Do not model vtable pointers as fields; use virtual methods instead.
+4. WorldServer IDA structs are already split per file in `WorldServerIdaPro/structs`.
+5. WorldServer IDA functions live in `WorldServerIdaPro/functions` (e.g., `CPlayer__AddDalant`).
+6. WorldServer project targets x64 (Win64) architecture.

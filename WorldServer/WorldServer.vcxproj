@@ -152,6 +152,11 @@
     <ClInclude Include="Net\IocpListener.h" />
     <ClInclude Include="Net\PacketFramer.h" />
     <ClInclude Include="Net\InternalPacketProcessor.h" />
+    <ClInclude Include="Entities\CObjectList.h" />
+    <ClInclude Include="Entities\CGameObject.h" />
+    <ClInclude Include="Entities\CCharacter.h" />
+    <ClInclude Include="Entities\CPlayer.h" />
+    <ClInclude Include="Entities\CMainThread.h" />
   </ItemGroup>
 
   <ItemGroup>
@@ -164,6 +169,11 @@
     <ClCompile Include="Net\IocpListener.cpp" />
     <ClCompile Include="Net\PacketFramer.cpp" />
     <ClCompile Include="Net\InternalPacketProcessor.cpp" />
+    <ClCompile Include="Entities\CObjectList.cpp" />
+    <ClCompile Include="Entities\CGameObject.cpp" />
+    <ClCompile Include="Entities\CCharacter.cpp" />
+    <ClCompile Include="Entities\CPlayer.cpp" />
+    <ClCompile Include="Entities\CMainThread.cpp" />
   </ItemGroup>
 
   <ItemGroup>

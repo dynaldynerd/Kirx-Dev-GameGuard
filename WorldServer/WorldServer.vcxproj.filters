@@ -15,6 +15,12 @@
     <Filter Include="Source Files\Net">
       <UniqueIdentifier>{E1D7F6B6-5E36-4B9E-8D0E-7EF9D1AB6E86}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Entities">
+      <UniqueIdentifier>{9D80D67B-C46F-4BD3-9C20-1D6E2DD49A79}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Entities">
+      <UniqueIdentifier>{B4B2EE1B-0E5B-4E51-9E1F-43B37E27F60F}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{0A51C7F7-FAF1-4C7B-9E7C-2E44E8B5C3F1}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;bin;txt;manifest</Extensions>
@@ -48,6 +54,21 @@
     <ClInclude Include="Net\InternalPacketProcessor.h">
       <Filter>Header Files\Net</Filter>
     </ClInclude>
+    <ClInclude Include="Entities\CGameObject.h">
+      <Filter>Header Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\CObjectList.h">
+      <Filter>Header Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\CCharacter.h">
+      <Filter>Header Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\CPlayer.h">
+      <Filter>Header Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\CMainThread.h">
+      <Filter>Header Files\Entities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MainFrm.cpp">
@@ -70,6 +91,21 @@
     </ClCompile>
     <ClCompile Include="Net\InternalPacketProcessor.cpp">
       <Filter>Source Files\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\CGameObject.cpp">
+      <Filter>Source Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\CObjectList.cpp">
+      <Filter>Source Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\CCharacter.cpp">
+      <Filter>Source Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\CPlayer.cpp">
+      <Filter>Source Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\CMainThread.cpp">
+      <Filter>Source Files\Entities</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

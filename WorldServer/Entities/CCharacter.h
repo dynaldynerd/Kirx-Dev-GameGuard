@@ -1,0 +1,65 @@
+#pragma once
+
+#include "IdaCompat.h"
+
+#include "CGameObject.h"
+
+struct __declspec(align(4)) _sf_continous
+{
+  bool m_bExist;
+  unsigned __int8 m_byEffectCode;
+  unsigned __int16 m_wEffectIndex;
+  unsigned __int8 m_byLv;
+  unsigned int m_dwStartSec;
+  unsigned __int16 m_wDurSec;
+  unsigned int m_dwEffSerial;
+  int m_nCumulCounter;
+  unsigned int m_dwPlayerSerial;
+  char m_wszPlayerName[17];
+};
+
+struct __declspec(align(8)) _effect_parameter
+{
+  struct __param_data;
+
+  __param_data *m_pDataParam;
+  bool m_bLock;
+};
+
+struct _effect_parameter::__param_data
+{
+  float m_fEff_Rate[62];
+  float m_fEff_Plus[42];
+  char m_bEff_State[29];
+  float m_fEff_Have[83];
+};
+
+class __declspec(align(8)) CMyTimer
+{
+public:
+  virtual ~CMyTimer();
+
+  int m_nTickTerm;
+  unsigned int m_dwTickOld;
+  bool m_bOper;
+};
+
+class CCharacter : public CGameObject
+{
+public:
+  float m_fTarPos[3];
+  int m_AroundNum;
+  CCharacter *m_AroundSlot[5];
+  unsigned int m_dwNextGenAttackTime;
+  _sf_continous m_SFCont[2][8];
+  _sf_continous m_SFContAura[2][8];
+  unsigned int m_dwEffSerialCounter;
+  bool m_bLastContEffectUpdate;
+  unsigned __int16 m_wLastContEffect;
+  _effect_parameter m_EP;
+  unsigned __int16 m_wEffectTempValue;
+  unsigned int m_dwPlayerSerial;
+  char m_wszPlayerName[17];
+  int m_nContEffectSec;
+  CMyTimer m_tmrSFCont;
+};
