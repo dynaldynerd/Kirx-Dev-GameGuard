@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1132 */
-struct __cppobj __declspec(align(8)) CLogFile
+class __cppobj __declspec(align(8)) CLogFile
 {
   char m_szFileName[128];
   unsigned int m_dwLogCount;
@@ -14,3 +14,4 @@ struct __cppobj __declspec(align(8)) CLogFile
   bool m_bTrace;
   bool m_bInit;
 };
+

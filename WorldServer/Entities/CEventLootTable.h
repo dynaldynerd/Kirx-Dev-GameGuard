@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1286 */
-struct __cppobj CEventLootTable
+class __cppobj CEventLootTable
 {
   struct _event_drop
   {
@@ -18,3 +18,4 @@ struct __cppobj CEventLootTable
   _event_drop *m_pEventDropList;
   virtual ~CEventLootTable() = default;
 };
+

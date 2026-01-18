@@ -4,7 +4,7 @@
 #include "CMainThread.h"
 
 /* 1779 */
-struct __cppobj CAnimus : CCharacter
+class __cppobj CAnimus : CCharacter
 {
   unsigned __int8 m_byClassCode;
   int m_nHP;
@@ -35,3 +35,4 @@ struct __cppobj CAnimus : CCharacter
   CAITimer m_AITimer[3];
   SKILL m_Skill[2];
 };
+

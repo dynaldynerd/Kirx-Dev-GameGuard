@@ -4,8 +4,9 @@
 #include "CSyncCS.h"
 
 /* 1689 */
-struct __cppobj __declspec(align(8)) CIndexList
+class __cppobj __declspec(align(8)) CIndexList
 {
+public:
   struct _index_node
   {
     bool m_bLoad;
@@ -27,3 +28,4 @@ struct __cppobj __declspec(align(8)) CIndexList
   unsigned int m_dwMaxBufNum;
   virtual ~CIndexList() = default;
 };
+

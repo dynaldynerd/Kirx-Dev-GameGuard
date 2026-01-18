@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1730 */
-struct __cppobj CPlayerDB
+class __cppobj CPlayerDB
 {
   unsigned __int8 m_byPvPGrade;
   __unaligned __declspec(align(1)) _character_db_load m_dbChar;
@@ -51,3 +51,4 @@ struct __cppobj CPlayerDB
   CPlayer *m_pThis;
   char m_aszName[17];
 };
+

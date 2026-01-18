@@ -3,8 +3,9 @@
 #include "IdaCompat.h"
 
 /* 1735 */
-struct __cppobj __declspec(align(8)) CRealMoveRequestDelayChecker
+class __cppobj __declspec(align(8)) CRealMoveRequestDelayChecker
 {
+public:
   CIndexList m_kNodeInxOrderList;
   std::vector<unsigned long> m_vecDelayList;
   unsigned __int16 m_wTotalMissCount;
@@ -14,3 +15,4 @@ struct __cppobj __declspec(align(8)) CRealMoveRequestDelayChecker
   unsigned __int16 m_wContinueValiedCount;
   unsigned __int16 m_wTotalContinueValiedCount;
 };
+

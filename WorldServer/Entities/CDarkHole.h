@@ -3,10 +3,10 @@
 #include "IdaCompat.h"
 #include "CGameObject.h"
 
-struct CDarkHoleChannel;
+class CDarkHoleChannel;
 
 /* 1600 */
-struct __cppobj __declspec(align(4)) CDarkHole : CGameObject
+class __cppobj __declspec(align(4)) CDarkHole : CGameObject
 {
   CDarkHoleChannel *m_pChannel;
   unsigned int m_dwChannelSerial;
@@ -17,3 +17,4 @@ struct __cppobj __declspec(align(4)) CDarkHole : CGameObject
   unsigned int m_dwNextHurryTime;
   bool m_bHurry;
 };
+

@@ -5,7 +5,7 @@
 struct _base_fld;
 class CMapData;
 class CCharacter;
-struct CPlayer;
+class CPlayer;
 struct _object_create_setdata;
 class CRect;
 
@@ -183,3 +183,4 @@ public:
   bool m_bObserver;
   unsigned int m_dwCurSec;
 };
+

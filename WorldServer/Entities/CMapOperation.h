@@ -2,9 +2,19 @@
 
 #include "IdaCompat.h"
 
+#include <utility>
+#include <vector>
+
+#include "CCharacter.h"
+#include "CMapDataTable.h"
+#include "RegionData.h"
+
+class CMapData;
+
 /* 1462 */
-struct __cppobj CMapOperation
+class __cppobj CMapOperation
 {
+public:
   int m_nLoopStartPoint;
   unsigned int m_dwSpeedHackStdTime;
   CMapDataTable m_tblMapData;
@@ -22,3 +32,4 @@ struct __cppobj CMapOperation
   CMapData *m_SettlementMapData[3][2];
   virtual ~CMapOperation() = default;
 };
+

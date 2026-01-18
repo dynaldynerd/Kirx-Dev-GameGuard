@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1395 */
-struct __cppobj __unaligned __declspec(align(4)) CEntity
+class __cppobj __unaligned __declspec(align(4)) CEntity
 {
   int mIsUseMemory;
   int mIsEntityLoad;
@@ -32,3 +32,4 @@ struct __cppobj __unaligned __declspec(align(4)) CEntity
   float mAddFrame;
   float mFrame;
 };
+

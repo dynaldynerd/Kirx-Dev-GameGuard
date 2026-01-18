@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1421 */
-struct __cppobj CAlpha
+class __cppobj CAlpha
 {
   unsigned int mAlphaFaceCnt;
   unsigned int *mAlphaFace;
@@ -13,3 +13,4 @@ struct __cppobj CAlpha
   int mAlphaSize;
   void *mBsp;
 };
+

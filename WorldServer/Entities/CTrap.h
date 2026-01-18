@@ -4,7 +4,7 @@
 #include "CCharacter.h"
 
 /* 1746 */
-struct __cppobj CTrap : CCharacter
+class __cppobj CTrap : CCharacter
 {
   int m_nHP;
   CPlayer *m_pMaster;
@@ -19,3 +19,4 @@ struct __cppobj CTrap : CCharacter
   unsigned int m_dwLastDestroyTime;
   int m_nTrapMaxAttackPnt;
 };
+

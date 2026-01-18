@@ -2,10 +2,10 @@
 
 #include "IdaCompat.h"
 
-struct CLuaCommandEx;
+class CLuaCommandEx;
 
 /* 1680 */
-struct __cppobj CLuaSignalReActor
+class __cppobj CLuaSignalReActor
 {
   struct _Action
   {
@@ -15,3 +15,4 @@ struct __cppobj CLuaSignalReActor
 
   _Action m_ActionData[3];
 };
+

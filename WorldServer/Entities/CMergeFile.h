@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1401 */
-struct CMergeFile
+class CMergeFile
 {
   char mFileName[256];
   _MERGE_FILE *mMergeFNF;
@@ -12,3 +12,4 @@ struct CMergeFile
   unsigned int mCnt;
   unsigned int mHeaderSize;
 };
+

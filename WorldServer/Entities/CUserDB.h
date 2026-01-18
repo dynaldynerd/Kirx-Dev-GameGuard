@@ -4,7 +4,7 @@
 #include "CMainThread.h"
 
 /* 1536 */
-struct __cppobj __declspec(align(8)) CUserDB
+class __cppobj __declspec(align(8)) CUserDB
 {
   _GLBID m_gidGlobal;
   _CLID m_idWorld;
@@ -58,3 +58,4 @@ struct __cppobj __declspec(align(8)) CUserDB
   char m_szLobbyHistoryFileName[64];
   virtual ~CUserDB() = default;
 };
+

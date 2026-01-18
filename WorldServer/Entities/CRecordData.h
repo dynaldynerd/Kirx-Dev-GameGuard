@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1281 */
-struct __cppobj CRecordData
+class __cppobj CRecordData
 {
   bool m_bLoad;
   char m_szFileName[129];
@@ -14,3 +14,4 @@ struct __cppobj CRecordData
   unsigned int *m_pdwHashList;
   virtual ~CRecordData() = default;
 };
+

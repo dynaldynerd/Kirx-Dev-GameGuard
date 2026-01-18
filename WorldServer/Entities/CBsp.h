@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1423 */
-struct __cppobj CBsp
+class __cppobj CBsp
 {
   float (*mCVertex)[3];
   float (*mCNNormal)[3];
@@ -94,3 +94,4 @@ struct __cppobj CBsp
   _EXT_BSP_FILE_HEADER mExtBSPHeader;
   CAlpha mAlpha;
 };
+

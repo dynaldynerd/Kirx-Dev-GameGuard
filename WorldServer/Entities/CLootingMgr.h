@@ -2,10 +2,10 @@
 
 #include "IdaCompat.h"
 
-struct CPlayer;
+class CPlayer;
 
 /* 1637 */
-struct __cppobj CLootingMgr
+class __cppobj CLootingMgr
 {
   struct _list
   {
@@ -20,3 +20,4 @@ struct __cppobj CLootingMgr
   unsigned __int8 m_byUserNode;
   _list m_AtterList[64];
 };
+

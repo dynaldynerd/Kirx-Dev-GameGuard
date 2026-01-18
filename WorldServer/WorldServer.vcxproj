@@ -83,6 +83,7 @@
       <SDLCheck>true</SDLCheck>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
@@ -100,6 +101,7 @@
       <SDLCheck>true</SDLCheck>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
@@ -115,6 +117,7 @@
       <SDLCheck>true</SDLCheck>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
@@ -132,6 +135,7 @@
       <SDLCheck>true</SDLCheck>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
@@ -152,30 +156,8 @@
     <ClInclude Include="Net\IocpListener.h" />
     <ClInclude Include="Net\PacketFramer.h" />
     <ClInclude Include="Net\InternalPacketProcessor.h" />
-    <ClInclude Include="Entities\CObjectList.h" />
-    <ClInclude Include="Entities\CGameObject.h" />
-    <ClInclude Include="Entities\CCharacter.h" />
-    <ClInclude Include="Entities\CPlayer.h" />
-    <ClInclude Include="Entities\CMainThread.h" />
-    <ClInclude Include="Entities\CAggroNode.h" />
-    <ClInclude Include="Entities\CAnimus.h" />
-    <ClInclude Include="Entities\CDarkHole.h" />
-    <ClInclude Include="Entities\CDarkHoleChannel.h" />
-    <ClInclude Include="Entities\CGuardTower.h" />
-    <ClInclude Include="Entities\CIndexList.h" />
-    <ClInclude Include="Entities\CLootingMgr.h" />
-    <ClInclude Include="Entities\CLuaSignalReActor.h" />
-    <ClInclude Include="Entities\CMonster.h" />
-    <ClInclude Include="Entities\CMonsterAI.h" />
-    <ClInclude Include="Entities\CMonsterAggroMgr.h" />
-    <ClInclude Include="Entities\CMonsterHierarchy.h" />
-    <ClInclude Include="Entities\CMonsterSkill.h" />
-    <ClInclude Include="Entities\CMonsterSkillPool.h" />
-    <ClInclude Include="Entities\CParkingUnit.h" />
-    <ClInclude Include="Entities\CPartyPlayer.h" />
-    <ClInclude Include="Entities\CTrap.h" />
-    <ClInclude Include="Entities\CUserDB.h" />
-  </ItemGroup>
+    <ClInclude Include="Entities\*.h" Exclude="Entities\CABC75A24E330D1CBB803A094EF8.h" />
+</ItemGroup>
 
   <ItemGroup>
     <ClCompile Include="MainFrm.cpp" />
@@ -187,30 +169,8 @@
     <ClCompile Include="Net\IocpListener.cpp" />
     <ClCompile Include="Net\PacketFramer.cpp" />
     <ClCompile Include="Net\InternalPacketProcessor.cpp" />
-    <ClCompile Include="Entities\CObjectList.cpp" />
-    <ClCompile Include="Entities\CGameObject.cpp" />
-    <ClCompile Include="Entities\CCharacter.cpp" />
-    <ClCompile Include="Entities\CPlayer.cpp" />
-    <ClCompile Include="Entities\CMainThread.cpp" />
-    <ClCompile Include="Entities\CAggroNode.cpp" />
-    <ClCompile Include="Entities\CAnimus.cpp" />
-    <ClCompile Include="Entities\CDarkHole.cpp" />
-    <ClCompile Include="Entities\CDarkHoleChannel.cpp" />
-    <ClCompile Include="Entities\CGuardTower.cpp" />
-    <ClCompile Include="Entities\CIndexList.cpp" />
-    <ClCompile Include="Entities\CLootingMgr.cpp" />
-    <ClCompile Include="Entities\CLuaSignalReActor.cpp" />
-    <ClCompile Include="Entities\CMonster.cpp" />
-    <ClCompile Include="Entities\CMonsterAI.cpp" />
-    <ClCompile Include="Entities\CMonsterAggroMgr.cpp" />
-    <ClCompile Include="Entities\CMonsterHierarchy.cpp" />
-    <ClCompile Include="Entities\CMonsterSkill.cpp" />
-    <ClCompile Include="Entities\CMonsterSkillPool.cpp" />
-    <ClCompile Include="Entities\CParkingUnit.cpp" />
-    <ClCompile Include="Entities\CPartyPlayer.cpp" />
-    <ClCompile Include="Entities\CTrap.cpp" />
-    <ClCompile Include="Entities\CUserDB.cpp" />
-  </ItemGroup>
+    <ClCompile Include="Entities\*.cpp" />
+</ItemGroup>
 
   <ItemGroup>
     <ResourceCompile Include="WorldServer.rc" />
@@ -232,3 +192,4 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
 </Project>
+

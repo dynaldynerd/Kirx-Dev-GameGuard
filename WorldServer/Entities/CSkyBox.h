@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1424 */
-struct __cppobj CSkyBox
+class __cppobj CSkyBox
 {
   int mIsSkyLoad;
   CEntity mEntity;
@@ -12,3 +12,4 @@ struct __cppobj CSkyBox
   int mMatGroupNum;
   __int16 mMatGroupSort[512];
 };
+

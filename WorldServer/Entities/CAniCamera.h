@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1427 */
-struct __cppobj CAniCamera
+class __cppobj CAniCamera
 {
   _ANI_CAMERA *AniCamera;
   _ANI_OBJECT *mDummy;
@@ -20,3 +20,4 @@ struct __cppobj CAniCamera
   float mOldFrame;
   float mNowFrame;
 };
+

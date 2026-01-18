@@ -4,7 +4,7 @@
 #include "CPlayer.h"
 
 /* 1742 */
-struct __cppobj __declspec(align(8)) CGuardTower : CCharacter
+class __cppobj __declspec(align(8)) CGuardTower : CCharacter
 {
   int m_nHP;
   CPlayer *m_pMasterTwr;
@@ -21,3 +21,4 @@ struct __cppobj __declspec(align(8)) CGuardTower : CCharacter
   CCharacter *m_pMasterSetTarget;
   unsigned int m_dwLastDestroyTime;
 };
+

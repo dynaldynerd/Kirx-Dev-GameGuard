@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1428 */
-struct __cppobj CTimer
+class __cppobj CTimer
 {
   float mLoopTime;
   float mTime;
@@ -28,3 +28,4 @@ struct __cppobj CTimer
   unsigned __int64 m_qwTicksPerSec;
   unsigned __int64 m_qwTicksPerFrame;
 };
+

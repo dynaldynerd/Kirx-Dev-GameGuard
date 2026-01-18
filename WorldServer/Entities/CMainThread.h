@@ -10,18 +10,18 @@
 
 
 struct _RTL_CRITICAL_SECTION_DEBUG;
-struct CRFWorldDatabase;
+class CRFWorldDatabase;
 struct _PCBANG_PLAY_TIME;
-struct CEventLootTable;
-struct CItemLootTable;
-struct COreCuttingTable;
+class CEventLootTable;
+class CItemLootTable;
+class COreCuttingTable;
 struct _monster_sp_fld;
 struct _skill_fld;
 struct _force_fld;
 struct _monster_sp_group;
 struct RFEventBase;
 class CGameObject;
-struct CPlayer;
+class CPlayer;
 class CMapData;
 struct _BSP_C_FACE;
 struct _BSP_MAT_GROUP;
@@ -36,11 +36,11 @@ struct IDirect3DIndexBuffer8;
 struct _D3DR3VERTEX_TEX1;
 struct _D3DR3VERTEX_TEX2;
 struct _ENTITY_M_GROUP;
-struct CEntity;
+class CEntity;
 struct _PARTICLE_ELEMENT;
-struct CParticle;
+class CParticle;
 struct _MERGE_FILE;
-struct CMergeFile;
+class CMergeFile;
 struct _ENTITY_LIST;
 struct _LEAF_ENTITIES_LIST_INFO;
 struct _MAP_ENTITIES_LIST;
@@ -52,8 +52,8 @@ struct _BSP_LEAF;
 struct _TOOL_COL_LINE;
 struct _TOOL_COL_LEAF;
 struct _EXT_DUMMY;
-struct CBsp;
-struct CSkyBox;
+class CBsp;
+class CSkyBox;
 struct _ANI_CAMERA_EXT;
 struct _ANI_CAMERA;
 class CObjectList;
@@ -64,8 +64,8 @@ struct _mon_block;
 struct INI_Section;
 struct INI_Key;
 struct BossSchedule;
-struct CBossMonsterScheduleSystem;
-struct CMapOperation;
+class CBossMonsterScheduleSystem;
+class CMapOperation;
 struct _map_fld;
 struct BossSchedule_Map;
 struct BossSchedule_TBL;
@@ -80,12 +80,12 @@ struct _bind_dummy;
 struct _res_dummy;
 struct _quest_dummy;
 struct _safe_dummy;
-struct CUserDB;
+class CUserDB;
 struct _PVPPOINT_LIMIT_DB_BASE;
 struct _PVP_ORDER_VIEW_DB_BASE;
-struct CPartyPlayer;
-struct CDarkHoleChannel;
-struct CDarkHole;
+class CPartyPlayer;
+class CDarkHoleChannel;
+class CDarkHole;
 struct _dh_quest_setup;
 struct _dh_mission_setup;
 struct _monster_fld;
@@ -101,15 +101,15 @@ struct __add_time;
 struct _dh_job_setup;
 struct _react_sub_setup;
 struct __dp_mission_potal;
-struct CMonster;
+class CMonster;
 struct _event_respawn;
 struct _event_set;
 struct UsStateTBL;
-struct CLuaCommandEx;
+class CLuaCommandEx;
 struct AP_BatterySlot;
 struct AutominePersonal;
 struct _class_fld;
-struct CGuild;
+class CGuild;
 struct _guild_member_info;
 struct _guild_applier_info;
 struct _guild_member_download_zocl;
@@ -117,12 +117,12 @@ struct _guild_applier_download_zocl;
 struct _guild_query_info_result_zocl;
 struct _guild_money_io_download_zocl;
 struct _guild_member_buddy_download_zocl;
-struct CGuardTower;
-struct CTrap;
+class CGuardTower;
+class CTrap;
 struct _happen_event_node;
-struct CParkingUnit;
+class CParkingUnit;
 struct _animus_fld;
-struct CAnimus;
+class CAnimus;
 struct TimeLimitMgr;
 struct _mob_message;
 
@@ -331,7 +331,7 @@ struct __cppobj _server_rate_realtime_load
 };
 
 /* 1305 */
-struct __cppobj __declspec(align(8)) CMainThread
+class __cppobj __declspec(align(8)) CMainThread
 {
   _SRAND m_Rand;
   _WAIT_ENTER_ACCOUNT m_WaitEnterAccount[2532];
@@ -1321,7 +1321,7 @@ struct __cppobj _qry_case_update_mineore
 };
 
 /* 1710 */
-struct __cppobj AutominePersonal : CCharacter
+class __cppobj AutominePersonal : CCharacter
 {
   bool m_bDBLoad;
   bool m_bOpenUI_Inven;
@@ -2266,12 +2266,14 @@ struct UsPoint
 /* 1660 */
 struct __cppobj Us_HFSM
 {
+public:
   int m_bSet;
   void *m_pObject;
   unsigned int m_dwUsedCount;
   Us_FSM_Node m_ArNode[10];
   UsPoint<UsStateTBL> m_spShareStateTBLPtr;
-  virtual ~Us_HFSM() = default;
+  virtual void __vtable_anchor();
+  ~Us_HFSM();
 };
 
 /* 1670 */
@@ -3171,12 +3173,7 @@ struct __cppobj __declspec(align(8)) INI_Key
 #include "CMapDataTable.h"
 
 /* 1472 */
-struct __declspec(align(8)) _region_data
-{
-  char szRegionData[32];
-  CMapData *pMap;
-  unsigned __int16 wDummyLineIndex;
-};
+#include "RegionData.h"
 
 /* 1462 */
 #include "CMapOperation.h"
@@ -3200,4 +3197,5 @@ struct __cppobj ScheduleMSG
 };
 
 #pragma pack(pop)
+
 

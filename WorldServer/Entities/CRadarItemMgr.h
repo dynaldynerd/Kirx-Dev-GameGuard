@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1596 */
-struct __cppobj __declspec(align(8)) CRadarItemMgr
+class __cppobj __declspec(align(8)) CRadarItemMgr
 {
   bool m_bUse;
   bool m_bUpdate;
@@ -23,3 +23,4 @@ struct __cppobj __declspec(align(8)) CRadarItemMgr
   bool m_bEliteMonster;
   _detected_char_list m_RadarResult;
 };
+

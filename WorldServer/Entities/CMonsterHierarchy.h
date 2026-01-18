@@ -2,10 +2,10 @@
 
 #include "IdaCompat.h"
 
-struct CMonster;
+class CMonster;
 
 /* 1640 */
-struct __cppobj __declspec(align(8)) CMonsterHierarchy
+class __cppobj __declspec(align(8)) CMonsterHierarchy
 {
   unsigned int m_dwTotalCount;
   CMonster *m_pThisMon;
@@ -17,3 +17,4 @@ struct __cppobj __declspec(align(8)) CMonsterHierarchy
   unsigned int m_dwChildRecallTime;
   virtual ~CMonsterHierarchy() = default;
 };
+

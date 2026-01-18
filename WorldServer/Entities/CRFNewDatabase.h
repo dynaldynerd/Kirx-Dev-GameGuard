@@ -1,10 +1,12 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "CLogFile.h"
 
 /* 1126 */
-struct __cppobj __declspec(align(8)) CRFNewDatabase
+class __cppobj __declspec(align(8)) CRFNewDatabase
 {
+public:
   void *m_hEnv;
   void *m_hDbc;
   void *m_hStmtSelect;
@@ -23,3 +25,4 @@ struct __cppobj __declspec(align(8)) CRFNewDatabase
   char m_szLogUpperPath[128];
   virtual ~CRFNewDatabase() = default;
 };
+

@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1717 */
-struct __cppobj __declspec(align(8)) CGuild
+class __cppobj __declspec(align(8)) CGuild
 {
   int m_nIndex;
   unsigned int m_dwSerial;
@@ -47,3 +47,4 @@ struct __cppobj __declspec(align(8)) CGuild
   char m_szHistoryFileName[128];
   virtual ~CGuild() = default;
 };
+

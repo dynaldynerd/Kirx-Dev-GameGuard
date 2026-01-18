@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1273 */
-struct __cppobj CConnNumPHMgr
+class __cppobj CConnNumPHMgr
 {
   struct __cnt_per_h
   {
@@ -17,3 +17,4 @@ struct __cppobj CConnNumPHMgr
   int m_nLastHour;
   unsigned int m_dwCheckLastTime;
 };
+

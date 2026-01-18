@@ -3,12 +3,13 @@
 #include "IdaCompat.h"
 #include "CMonsterSkill.h"
 
-struct CMonster;
+class CMonster;
 
 /* 1648 */
-struct __cppobj CMonsterSkillPool
+class __cppobj CMonsterSkillPool
 {
   CMonster *m_pMyMon;
   int m_nSize;
   CMonsterSkill m_MonSkill[16];
 };
+

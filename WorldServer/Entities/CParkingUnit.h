@@ -3,10 +3,10 @@
 #include "IdaCompat.h"
 #include "CGameObject.h"
 
-struct CPlayer;
+class CPlayer;
 
 /* 1773 */
-struct __cppobj __declspec(align(8)) CParkingUnit : CGameObject
+class __cppobj __declspec(align(8)) CParkingUnit : CGameObject
 {
   CPlayer *m_pOwner;
   unsigned int m_dwOwnerSerial;
@@ -18,3 +18,4 @@ struct __cppobj __declspec(align(8)) CParkingUnit : CGameObject
   unsigned __int16 m_wHPRate;
   unsigned int m_dwLastDestroyTime;
 };
+

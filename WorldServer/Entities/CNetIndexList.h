@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1279 */
-struct __cppobj __declspec(align(8)) CNetIndexList
+class __cppobj __declspec(align(8)) CNetIndexList
 {
   struct _index_node
   {
@@ -22,3 +22,4 @@ struct __cppobj __declspec(align(8)) CNetIndexList
   unsigned int m_dwBufCount;
   unsigned int m_dwMaxBufNum;
 };
+

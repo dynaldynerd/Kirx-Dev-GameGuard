@@ -5,7 +5,7 @@
 #include "CIndexList.h"
 
 /* 1598 */
-struct __cppobj __declspec(align(8)) CDarkHoleChannel
+class __cppobj __declspec(align(8)) CDarkHoleChannel
 {
   unsigned __int16 m_wChannelIndex;
   unsigned int m_dwChannelSerial;
@@ -32,3 +32,4 @@ struct __cppobj __declspec(align(8)) CDarkHoleChannel
   bool m_bMoveNextMission;
   virtual ~CDarkHoleChannel() = default;
 };
+

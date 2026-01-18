@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1762 */
-struct __cppobj __declspec(align(4)) CSetItemEffect
+class __cppobj __declspec(align(4)) CSetItemEffect
 {
   struct __declspec(align(4)) set_effect_info
   {
@@ -17,3 +17,4 @@ struct __cppobj __declspec(align(4)) CSetItemEffect
   set_effect_info m_resetInfo;
   unsigned __int8 m_byTotalSetCount;
 };
+

@@ -4,10 +4,10 @@
 #include "CAggroNode.h"
 
 class CCharacter;
-struct CMonster;
+class CMonster;
 
 /* 1639 */
-struct __cppobj CMonsterAggroMgr
+class __cppobj CMonsterAggroMgr
 {
   CCharacter *m_pTopAggroCharacter;
   CCharacter *m_pTopDamageCharacter;
@@ -20,3 +20,4 @@ struct __cppobj CMonsterAggroMgr
   unsigned int m_dwShortRankTimer;
   CMonster *m_pMonster;
 };
+

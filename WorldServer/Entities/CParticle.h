@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1398 */
-struct __cppobj CParticle
+class __cppobj CParticle
 {
   char mEntityName[128];
   int mNum;
@@ -50,3 +50,4 @@ struct __cppobj CParticle
   float mParticleTimer;
   float mNextCreatorTime;
 };
+

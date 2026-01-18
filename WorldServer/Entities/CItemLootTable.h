@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1284 */
-struct __cppobj __declspec(align(8)) CItemLootTable
+class __cppobj __declspec(align(8)) CItemLootTable
 {
   struct _linker_code
   {
@@ -18,3 +18,4 @@ struct __cppobj __declspec(align(8)) CItemLootTable
   int m_nLootNum;
   virtual ~CItemLootTable() = default;
 };
+

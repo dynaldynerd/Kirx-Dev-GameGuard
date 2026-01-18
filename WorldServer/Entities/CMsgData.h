@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1264 */
-struct __cppobj CMsgData
+class __cppobj CMsgData
 {
   int m_nObjNum;
   int m_nMaxBufNum;
@@ -16,3 +16,4 @@ struct __cppobj CMsgData
   CMyCriticalSection m_csEmpty;
   virtual ~CMsgData() = default;
 };
+

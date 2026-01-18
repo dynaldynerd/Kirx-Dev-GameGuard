@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1794 */
-struct CPvpOrderView
+class CPvpOrderView
 {
   unsigned int m_dwLastAttackTime;
   unsigned int m_dwLastDamagedTime;
@@ -18,3 +18,4 @@ struct CPvpOrderView
   bool m_bDamaged;
   _PVP_ORDER_VIEW_DB_BASE *m_pkInfo;
 };
+

@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1290 */
-struct __cppobj COreCuttingTable
+class __cppobj COreCuttingTable
 {
   struct _ore_cut_list
   {
@@ -24,3 +24,4 @@ struct __cppobj COreCuttingTable
   _ore_cut_list *pOreList;
   virtual ~COreCuttingTable() = default;
 };
+

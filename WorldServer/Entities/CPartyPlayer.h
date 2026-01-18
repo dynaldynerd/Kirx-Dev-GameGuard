@@ -4,7 +4,7 @@
 #include "CPlayer.h"
 
 /* 1597 */
-struct __cppobj CPartyPlayer
+class __cppobj CPartyPlayer
 {
   bool m_bLogin;
   __unaligned __declspec(align(1)) _CLID m_id;
@@ -17,3 +17,4 @@ struct __cppobj CPartyPlayer
   CPartyPlayer *m_pLootAuthor;
   CDarkHole *m_pDarkHole;
 };
+

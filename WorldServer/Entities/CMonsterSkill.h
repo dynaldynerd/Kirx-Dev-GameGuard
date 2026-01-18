@@ -6,7 +6,7 @@ struct _base_fld;
 struct _monster_sp_fld;
 
 /* 1647 */
-struct __cppobj __declspec(align(8)) CMonsterSkill
+class __cppobj __declspec(align(8)) CMonsterSkill
 {
   bool m_bExit;
   int m_UseType;
@@ -30,3 +30,4 @@ struct __cppobj __declspec(align(8)) CMonsterSkill
   int m_MinProb;
   int m_MaxProb;
 };
+

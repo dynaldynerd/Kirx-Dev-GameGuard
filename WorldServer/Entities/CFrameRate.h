@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1262 */
-struct __cppobj __declspec(align(8)) CFrameRate
+class __cppobj __declspec(align(8)) CFrameRate
 {
   float m_fSpeedPerFrame;
   unsigned int m_dwFrames;
@@ -12,3 +12,4 @@ struct __cppobj __declspec(align(8)) CFrameRate
   unsigned int m_dwDisplayTick;
   virtual ~CFrameRate() = default;
 };
+

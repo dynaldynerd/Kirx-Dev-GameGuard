@@ -5,7 +5,7 @@
 class CCharacter;
 
 /* 1638 */
-struct __cppobj CAggroNode
+class __cppobj CAggroNode
 {
   CCharacter *m_pCharacter;
   unsigned int m_dwObjectSerial;
@@ -13,3 +13,4 @@ struct __cppobj CAggroNode
   int m_nDamageData;
   int m_nKingPowerDamage;
 };
+

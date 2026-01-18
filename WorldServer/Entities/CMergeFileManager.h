@@ -3,10 +3,11 @@
 #include "IdaCompat.h"
 
 /* 1402 */
-struct __cppobj CMergeFileManager
+class __cppobj CMergeFileManager
 {
   char mPath[256];
   unsigned int mPathNameLeng;
   unsigned int mMergeFileNum;
   CMergeFile *mMergeFile;
 };
+

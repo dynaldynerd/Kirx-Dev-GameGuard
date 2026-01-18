@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1215 */
-struct __cppobj __declspec(align(8)) CPostData
+class __cppobj __declspec(align(8)) CPostData
 {
   int m_nNumber;
   unsigned __int8 m_byState;
@@ -24,3 +24,4 @@ struct __cppobj __declspec(align(8)) CPostData
   bool m_bContentLoad;
   bool m_bUpdateIndex;
 };
+

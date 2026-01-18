@@ -15,7 +15,7 @@ struct _DB_QRY_SYN_DATA;
 struct _base_fld;
 struct _monster_sp_fld;
 class CGameObject;
-struct CPlayer;
+class CPlayer;
 class CMapData;
 struct _BSP_C_FACE;
 struct _BSP_MAT_GROUP;
@@ -30,11 +30,11 @@ struct IDirect3DIndexBuffer8;
 struct _D3DR3VERTEX_TEX1;
 struct _D3DR3VERTEX_TEX2;
 struct _ENTITY_M_GROUP;
-struct CEntity;
+class CEntity;
 struct _PARTICLE_ELEMENT;
-struct CParticle;
+class CParticle;
 struct _MERGE_FILE;
-struct CMergeFile;
+class CMergeFile;
 struct _ENTITY_LIST;
 struct _LEAF_ENTITIES_LIST_INFO;
 struct _MAP_ENTITIES_LIST;
@@ -46,8 +46,8 @@ struct _BSP_LEAF;
 struct _TOOL_COL_LINE;
 struct _TOOL_COL_LEAF;
 struct _EXT_DUMMY;
-struct CBsp;
-struct CSkyBox;
+class CBsp;
+class CSkyBox;
 struct _ANI_CAMERA_EXT;
 struct _ANI_CAMERA;
 class CObjectList;
@@ -58,8 +58,8 @@ struct _mon_block;
 struct INI_Section;
 struct INI_Key;
 struct BossSchedule;
-struct CBossMonsterScheduleSystem;
-struct CMapOperation;
+class CBossMonsterScheduleSystem;
+class CMapOperation;
 struct _map_fld;
 struct BossSchedule_Map;
 struct BossSchedule_TBL;
@@ -75,12 +75,12 @@ struct _res_dummy;
 struct _quest_dummy;
 struct _safe_dummy;
 struct _effect_parameter::__param_data;
-struct CUserDB;
+class CUserDB;
 struct _PVPPOINT_LIMIT_DB_BASE;
 struct _PVP_ORDER_VIEW_DB_BASE;
-struct CPartyPlayer;
-struct CDarkHoleChannel;
-struct CDarkHole;
+class CPartyPlayer;
+class CDarkHoleChannel;
+class CDarkHole;
 struct _dh_quest_setup;
 struct _dh_mission_setup;
 struct _monster_fld;
@@ -96,15 +96,15 @@ struct __add_time;
 struct _dh_job_setup;
 struct _react_sub_setup;
 struct __dp_mission_potal;
-struct CMonster;
+class CMonster;
 struct _event_respawn;
 struct _event_set;
 struct UsStateTBL;
-struct CLuaCommandEx;
+class CLuaCommandEx;
 struct AP_BatterySlot;
 struct AutominePersonal;
 struct _class_fld;
-struct CGuild;
+class CGuild;
 struct _guild_member_info;
 struct _guild_applier_info;
 struct _guild_member_download_zocl;
@@ -112,12 +112,12 @@ struct _guild_applier_download_zocl;
 struct _guild_query_info_result_zocl;
 struct _guild_money_io_download_zocl;
 struct _guild_member_buddy_download_zocl;
-struct CGuardTower;
-struct CTrap;
+class CGuardTower;
+class CTrap;
 struct _happen_event_node;
-struct CParkingUnit;
+class CParkingUnit;
 struct _animus_fld;
-struct CAnimus;
+class CAnimus;
 
 /* 1312 */
 
@@ -789,7 +789,7 @@ struct __cppobj __unaligned __declspec(align(2)) _other_shape_part_zocl
 };
 
 /* 1310 */
-struct __cppobj __declspec(align(8)) CPlayer : CCharacter
+class __cppobj __declspec(align(8)) CPlayer : CCharacter
 {
   union CashChangeStateFlag
   {
@@ -1007,3 +1007,4 @@ struct __cppobj __declspec(align(8)) CPlayer : CCharacter
 };
 
 #pragma pack(pop)
+

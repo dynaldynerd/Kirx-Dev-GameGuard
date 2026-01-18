@@ -1,8 +1,9 @@
 #pragma once
 
-#include "IdaCompat.h"
+#include "CRFNewDatabase.h"
 
 /* 1133 */
-struct __cppobj CRFWorldDatabase : CRFNewDatabase
+class __cppobj CRFWorldDatabase : CRFNewDatabase
 {
 };
+

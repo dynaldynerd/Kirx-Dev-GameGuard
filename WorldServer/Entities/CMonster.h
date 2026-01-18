@@ -10,7 +10,7 @@
 #include "CLuaSignalReActor.h"
 
 /* 1635 */
-struct __cppobj CMonster : CCharacter
+class __cppobj CMonster : CCharacter
 {
   bool m_bOper;
   bool m_bApparition;
@@ -51,3 +51,4 @@ struct __cppobj CMonster : CCharacter
   CMonsterAI m_AI;
   CLuaSignalReActor m_LuaSignalReActor;
 };
+

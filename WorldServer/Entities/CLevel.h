@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1315 */
-struct __cppobj __declspec(align(8)) CLevel
+class __cppobj __declspec(align(8)) CLevel
 {
   char mMapName[256];
   float mCamPos[3];
@@ -21,3 +21,4 @@ struct __cppobj __declspec(align(8)) CLevel
   unsigned int mEnvironment;
   virtual ~CLevel() = default;
 };
+

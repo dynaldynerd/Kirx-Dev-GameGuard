@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1417 */
-struct __cppobj CPathFinder
+class __cppobj CPathFinder
 {
   int mMaxDepth;
   _PATH_NODE mPathNode[12];
@@ -11,3 +11,4 @@ struct __cppobj CPathFinder
   _PATH_NODE mStackPathNode[20];
   int mStackPoint;
 };
+

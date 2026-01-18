@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1797 */
-struct __cppobj CCouponMgr
+class __cppobj CCouponMgr
 {
   CouponInfo m_Coupon[5];
   unsigned __int8 m_byRemainTime;
@@ -15,3 +15,4 @@ struct __cppobj CCouponMgr
   CMyTimer m_tmrCouponEnableTime;
   _PCBANG_PLAY_TIME *m_pkInfo;
 };
+
