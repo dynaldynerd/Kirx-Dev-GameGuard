@@ -27,3 +27,5 @@ description: Work on the RF Online server emulator in this repo, including packe
 ## Tooling
 - Shell: PowerShell 7 (use `&&` when chaining).
 - Build: `dotnet build RFOnlineLoginServer.sln`
+- MSBuild: `C:\Program Files\Microsoft Visual Studio\18\Enterprise\MSBuild\Current\Bin\MSBuild.exe`
+- Full build command: `& "C:\Program Files\Microsoft Visual Studio\18\Enterprise\MSBuild\Current\Bin\MSBuild.exe" .\RFOnlineLoginServer.sln /m /p:Configuration=Debug /p:Platform=x64`

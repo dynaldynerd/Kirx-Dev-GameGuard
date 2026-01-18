@@ -55,4 +55,5 @@
 3. Do not model vtable pointers as fields; use virtual methods instead.
 4. WorldServer IDA structs are already split per file in `WorldServerIdaPro/structs`.
 5. WorldServer IDA functions live in `WorldServerIdaPro/functions` (e.g., `CPlayer__AddDalant`).
+6. WorldServer builds target x64 only.
 6. WorldServer project targets x64 (Win64) architecture.

@@ -177,15 +177,7 @@ struct __cppobj _WAIT_ENTER_ACCOUNT
 };
 
 /* 1262 */
-struct __cppobj __declspec(align(8)) CFrameRate
-{
-  float m_fSpeedPerFrame;
-  unsigned int m_dwFrames;
-  unsigned int m_dwFrameTime;
-  unsigned int m_dwFrameCount;
-  unsigned int m_dwDisplayTick;
-  virtual ~CFrameRate() = default;
-};
+#include "CFrameRate.h"
 
 /* 1265 */
 struct __cppobj _message
@@ -199,31 +191,13 @@ struct __cppobj _message
 };
 
 /* 1267 */
-struct __cppobj CMyCriticalSection
-{
-  _RTL_CRITICAL_SECTION m_cs;
-  virtual ~CMyCriticalSection() = default;
-};
+#include "CMyCriticalSection.h"
 
 /* 1264 */
-struct __cppobj CMsgData
-{
-  int m_nObjNum;
-  int m_nMaxBufNum;
-  _message m_gmListHead;
-  _message m_gmListTail;
-  _message *m_gmBuf;
-  _message m_gmListEmptyHead;
-  _message m_gmListEmptyTail;
-  CMyCriticalSection m_csList;
-  CMyCriticalSection m_csEmpty;
-  virtual ~CMsgData() = default;
-};
+#include "CMsgData.h"
 
 /* 1269 */
-struct __cppobj CMsgProcess : CMsgData
-{
-};
+#include "CMsgProcess.h"
 
 /* 1272 */
 struct _USER_NUM_SHEET
@@ -234,20 +208,7 @@ struct _USER_NUM_SHEET
 };
 
 /* 1273 */
-struct __cppobj CConnNumPHMgr
-{
-  struct __cnt_per_h
-  {
-    int nUserCumPerMin;
-    unsigned int dwCounting;
-    int nMaxUserNum;
-  };
-
-  __cnt_per_h m_cph;
-  _USER_NUM_SHEET m_LastResult;
-  int m_nLastHour;
-  unsigned int m_dwCheckLastTime;
-};
+#include "CConnNumPHMgr.h"
 
 /* 1277 */
 struct __cppobj __declspec(align(4)) _DB_QRY_SYN_DATA
@@ -262,9 +223,7 @@ struct __cppobj __declspec(align(4)) _DB_QRY_SYN_DATA
 };
 
 /* 1280 */
-struct __cppobj CCheckSum
-{
-};
+#include "CCheckSum.h"
 
 /* 1283 */
 struct __cppobj _record_bin_header
@@ -275,86 +234,22 @@ struct __cppobj _record_bin_header
 };
 
 /* 1281 */
-struct __cppobj CRecordData
-{
-  bool m_bLoad;
-  char m_szFileName[129];
-  unsigned int m_dwTotalSize;
-  _record_bin_header m_Header;
-  int m_nLowNum;
-  char **m_ppsRecord;
-  unsigned int *m_pdwHashList;
-  virtual ~CRecordData() = default;
-};
+#include "CRecordData.h"
 
 /* 1284 */
-struct __cppobj __declspec(align(8)) CItemLootTable
-{
-  struct _linker_code
-  {
-    unsigned __int8 byTableCode;
-    unsigned __int16 wItemIndex;
-    int bExist;
-  };
-
-  CRecordData m_tblLoot;
-  CEventLootTable *m_pTblEvent;
-  _linker_code **m_ppLinkCode;
-  int m_nLootNum;
-  virtual ~CItemLootTable() = default;
-};
+#include "CItemLootTable.h"
 
 /* 1290 */
-struct __cppobj COreCuttingTable
-{
-  struct _ore_cut_list
-  {
-    struct _res_list
-    {
-      unsigned __int16 wResIndex;
-      unsigned int dwRate;
-      unsigned int dwCumRate;
-    };
-
-    int nResNum;
-    unsigned int dwTotalRate;
-    _res_list ResList[100];
-  };
-
-  CRecordData m_tblOreCutting;
-  int m_nOreNum;
-  _ore_cut_list *pOreList;
-  virtual ~COreCuttingTable() = default;
-};
+#include "COreCuttingTable.h"
 
 /* 1294 */
-struct __cppobj CItemUpgradeTable
-{
-  CRecordData m_tblItemUpgrade;
-  int m_nResNum;
-  unsigned __int16 *m_pwResIndex;
-  virtual ~CItemUpgradeTable() = default;
-};
+#include "CItemUpgradeTable.h"
 
 /* 1304 */
-struct __cppobj CMonsterSPGroupTable
-{
-  unsigned int m_dwRecordNum;
-  _monster_sp_group *m_pRecordData;
-};
+#include "CMonsterSPGroupTable.h"
 
 /* 1132 */
-struct __cppobj __declspec(align(8)) CLogFile
-{
-  char m_szFileName[128];
-  unsigned int m_dwLogCount;
-  int m_bWriteAble;
-  CNetCriticalSection m_cs;
-  bool m_bAddCount;
-  bool m_bDate;
-  bool m_bTrace;
-  bool m_bInit;
-};
+#include "CLogFile.h"
 
 /* 1806 */
 struct _notify_race_leader_s_owner_u_taxrate
@@ -368,10 +263,7 @@ struct _notify_race_leader_s_owner_u_taxrate
 };
 
 /* 1807 */
-struct __cppobj CNotifyNotifyRaceLeaderSownerUTaxrate
-{
-  _notify_race_leader_s_owner_u_taxrate m_Send[3];
-};
+#include "CNotifyNotifyRaceLeaderSownerUTaxrate.h"
 
 /* 1248 */
 struct __cppobj __declspec(align(4)) TournamentWinner
@@ -382,12 +274,7 @@ struct __cppobj __declspec(align(4)) TournamentWinner
 };
 
 /* 1808 */
-struct __cppobj CBattleTournamentInfo
-{
-  bool m_bLoad;
-  int m_nCurNum;
-  TournamentWinner m_WinnerInfo[48];
-};
+#include "CBattleTournamentInfo.h"
 
 /* 1809 */
 struct _event_info
@@ -570,31 +457,10 @@ struct __cppobj __declspec(align(8)) CMainThread
 /* 1306 */
 
 /* 1126 */
-struct __cppobj __declspec(align(8)) CRFNewDatabase
-{
-  void *m_hEnv;
-  void *m_hDbc;
-  void *m_hStmtSelect;
-  void *m_hStmtUpdate;
-  bool m_bConectionActive;
-  bool m_bSaveDBLog;
-  CLogFile m_ProcessLogW;
-  CLogFile m_ErrorLogW;
-  CLogFile m_ProcessLogA;
-  CLogFile m_ErrorLogA;
-  unsigned __int8 m_byLogFileHour;
-  char m_szOdbcName[32];
-  char m_szAccountName[32];
-  char m_szPassword[32];
-  bool m_bReconnectFailExit;
-  char m_szLogUpperPath[128];
-  virtual ~CRFNewDatabase() = default;
-};
+#include "CRFNewDatabase.h"
 
 /* 1133 */
-struct __cppobj CRFWorldDatabase : CRFNewDatabase
-{
-};
+#include "CRFWorldDatabase.h"
 
 /* 1263 */
 
@@ -609,21 +475,7 @@ struct __cppobj CRFWorldDatabase : CRFNewDatabase
 /* 1285 */
 
 /* 1286 */
-struct __cppobj CEventLootTable
-{
-  struct _event_drop
-  {
-    char strCode[64];
-    unsigned __int16 wMagnifications;
-    unsigned __int16 wRange;
-    unsigned __int16 wDropCntOnce;
-    unsigned __int16 wDropDelay;
-    _event_drop *pNext;
-  };
-
-  _event_drop *m_pEventDropList;
-  virtual ~CEventLootTable() = default;
-};
+#include "CEventLootTable.h"
 
 
 /* 1296 */
@@ -851,86 +703,19 @@ struct __cppobj D3DXMATRIX
 };
 
 /* 1427 */
-struct __cppobj CAniCamera
-{
-  _ANI_CAMERA *AniCamera;
-  _ANI_OBJECT *mDummy;
-  unsigned int mDummyNum;
-  unsigned int mAniCameraNum;
-  unsigned int mStartFrame;
-  unsigned int mEndFrame;
-  unsigned int mPlayStartFrame;
-  unsigned int mPlayEndFrame;
-  int mPlayIndex;
-  int mIsSetPerspect;
-  float mStartTick;
-  unsigned int mFlag;
-  float mOldFrame;
-  float mNowFrame;
-};
+#include "CAniCamera.h"
 
 /* 1428 */
-struct __cppobj CTimer
-{
-  float mLoopTime;
-  float mTime;
-  float mRealTime;
-  float mMinFPS;
-  float mfLoopHop;
-  unsigned int mOldTime;
-  unsigned int mLoopCnt;
-  unsigned int mLoopHop;
-  int m_bUsingQPF;
-  int m_bTimerInitialized;
-  float mFPS;
-  unsigned int mLoopFPSCnt;
-  float mFPSTime;
-  float m_fTicksPerSec;
-  float m_fFramesPerSec;
-  float m_fAverageFramesPerSec;
-  float m_fSecsPerFrame;
-  float m_fLamTime;
-  unsigned __int64 m_qwTicks;
-  unsigned __int64 m_qwStartTicks;
-  unsigned __int64 m_qwTicksPerSec;
-  unsigned __int64 m_qwTicksPerFrame;
-};
+#include "CTimer.h"
 
 /* 1415 */
-struct __cppobj CExtDummy
-{
-  unsigned int mMaxNum;
-  unsigned int mNum;
-  _EXT_DUMMY *mDummy;
-};
+#include "CExtDummy.h"
 
 /* 1315 */
-struct __cppobj __declspec(align(8)) CLevel
-{
-  char mMapName[256];
-  float mCamPos[3];
-  D3DXMATRIX mMatView;
-  int mIsLoadedBsp;
-  CBsp *mBsp;
-  CSkyBox *mSkyBox;
-  CAniCamera mAutoAniCam;
-  CTimer mTimer;
-  CExtDummy mDummy;
-  unsigned int mLightTexMemSize;
-  unsigned int mMapTexMemSize;
-  unsigned int mSkyTexMemSize;
-  unsigned int mEntityTexMemSize;
-  unsigned int mEnvironment;
-  virtual ~CLevel() = default;
-};
+#include "CLevel.h"
 
 /* 1524 */
-struct __cppobj __declspec(align(8)) CDummyPosTable
-{
-  _dummy_position *m_pDumPos;
-  int m_nDumPosDataNum;
-  virtual ~CDummyPosTable() = default;
-};
+#include "CDummyPosTable.h"
 
 /* 1526 */
 struct _bsp_info
@@ -951,55 +736,7 @@ struct _sec_info
 };
 
 /* 1313 */
-class __cppobj __declspec(align(8)) CMapData
-{
-  bool m_bUse;
-  bool m_bLoad;
-  int m_nMapIndex;
-  CLevel m_Level;
-  int m_nMapCode;
-  _LAYER_SET *m_ls;
-  _MULTI_BLOCK *m_mb;
-  CExtDummy m_Dummy;
-  int m_nMapInPlayerNum;
-  int m_nMapInMonsterNum;
-  int m_nMonBlockNum;
-  _mon_block *m_pMonBlock;
-  int m_nMonDumNum;
-  int m_nPortalNum;
-  _portal_dummy *m_pPortal;
-  int m_nItemStoreDumNum;
-  _store_dummy *m_pItemStoreDummy;
-  int m_nStartDumNum;
-  _start_dummy *m_pStartDummy;
-  int m_nBindDumNum;
-  _bind_dummy *m_pBindDummy;
-  int m_nResDumNum;
-  _res_dummy *m_pResDummy;
-  int m_nQuestDumNum;
-  _quest_dummy *m_pQuestDummy;
-  _map_fld *m_pMapSet;
-  CExtDummy *m_pExtDummy_Town;
-  int m_nSafeDumNum;
-  _safe_dummy *m_pSafeDummy;
-  CDummyPosTable m_tbSafeDumPos;
-  CRecordData m_tbMonBlk;
-  CRecordData m_tbPortal;
-  CDummyPosTable m_tbMonDumPos;
-  CDummyPosTable m_tbPortalDumPos;
-  CDummyPosTable m_tbStoreDumPos;
-  CDummyPosTable m_tbStartDumPos;
-  CDummyPosTable m_tbBindDumPos;
-  CDummyPosTable m_tbResDumPosHigh;
-  CDummyPosTable m_tbResDumPosMiddle;
-  CDummyPosTable m_tbResDumPosLow;
-  CDummyPosTable m_tbQuestDumPos;
-  _bsp_info m_BspInfo;
-  _sec_info m_SecInfo;
-  CMyTimer m_tmrMineGradeReSet;
-  int m_nMonTotalCount;
-  virtual ~CMapData() = default;
-};
+#include "CMapData.h"
 
 /* 1538 */
 struct _EQUIPKEY
@@ -1541,97 +1278,11 @@ struct __cppobj _detected_char_list
 };
 
 /* 1596 */
-struct __cppobj __declspec(align(8)) CRadarItemMgr
-{
-  bool m_bUse;
-  bool m_bUpdate;
-  unsigned int m_dwStartTime;
-  unsigned int m_dwDurTime;
-  unsigned int m_dwDelayTime;
-  CPlayer *m_pMaster;
-  char m_strRadarCode[64];
-  CMapData *m_pDestMap;
-  bool m_bPlayerEnd;
-  bool m_bMonEnd;
-  int m_nPlayerNum;
-  int m_nMonNum;
-  bool m_bSameRace;
-  bool m_bNorDiffRace;
-  bool m_bChiefDiffRace;
-  bool m_bEliteMonster;
-  _detected_char_list m_RadarResult;
-};
+#include "CRadarItemMgr.h"
 
 /* 1536 */
-struct __cppobj __declspec(align(8)) CUserDB
-{
-  _GLBID m_gidGlobal;
-  _CLID m_idWorld;
-  unsigned int m_dwIP;
-  unsigned int m_dwTotalPlayMin;
-  char m_szAccountID[13];
-  unsigned int m_dwAccountSerial;
-  unsigned int m_ipAddress;
-  unsigned __int8 m_byUserDgr;
-  unsigned __int8 m_bySubDgr;
-  char m_wszAvatorName[17];
-  char m_aszAvatorName[17];
-  unsigned int m_dwSerial;
-  unsigned __int8 m_byNameLen;
-  _REGED m_RegedList[3];
-  _AVATOR_DATA m_AvatorData;
-  _AVATOR_DATA m_AvatorData_bk;
-  _NOT_ARRANGED_AVATOR_DB m_NotArrangedChar[50];
-  unsigned int m_dwArrangePassCase0[50];
-  bool m_bActive;
-  bool m_bField;
-  bool m_bWndFullMode;
-  bool m_bDBWaitState;
-  _DB_QRY_SYN_DATA *m_pDBPushData;
-  bool m_bChatLock;
-  _SYNC_STATE m_ss;
-  unsigned int m_dwMessengerKey[4];
-  unsigned int m_dwOperLobbyTime;
-  bool m_bCreateTrunkFree;
-  CMyTimer m_tmrCheckPlayMin;
-  bool m_bDataUpdate;
-  unsigned int m_dwTermContSaveTime;
-  unsigned int m_dwLastContSaveTime;
-  bool m_bNoneUpdateData;
-  __declspec(align(4)) _BILLING_INFO m_BillingInfo;
-  bool m_bBillingNoLogout;
-  int m_nTrans;
-  CRadarItemMgr m_RadarItemMgr;
-  unsigned __int8 m_byUILock;
-  bool m_bUILock_Updated;
-  unsigned __int8 m_byUILock_InitFailCnt;
-  unsigned __int8 m_byUILock_FailCnt;
-  char m_szUILock_PW[13];
-  char m_szAccount_PW[13];
-  unsigned __int8 m_byUILock_HintIndex;
-  char m_uszUILock_HintAnswer[17];
-  unsigned __int8 m_byUILock_InitFindPassFailCount;
-  unsigned __int8 m_byUILockFindPassFailCount;
-  unsigned int m_dwRequestMoveCharacterSerialList[3];
-  unsigned int m_dwTournamentCharacterSerialList[3];
-  char m_szLobbyHistoryFileName[64];
-  virtual ~CUserDB() = default;
-};
 
 /* 1597 */
-struct __cppobj CPartyPlayer
-{
-  bool m_bLogin;
-  __unaligned __declspec(align(1)) _CLID m_id;
-  char m_wszName[17];
-  unsigned __int16 m_wZoneIndex;
-  CPartyPlayer *m_pPartyBoss;
-  CPartyPlayer *m_pPartyMember[8];
-  bool m_bLock;
-  unsigned __int8 m_byLootShareSystem;
-  CPartyPlayer *m_pLootAuthor;
-  CDarkHole *m_pDarkHole;
-};
 
 /* 1561 */
 
@@ -1807,50 +1458,7 @@ struct __declspec(align(8)) _io_money_data
 };
 
 /* 1717 */
-struct __cppobj __declspec(align(8)) CGuild
-{
-  int m_nIndex;
-  unsigned int m_dwSerial;
-  char m_wszName[17];
-  char m_aszName[17];
-  unsigned __int8 m_byGrade;
-  long double m_dTotalDalant;
-  long double m_dTotalGold;
-  unsigned int m_dwEmblemBack;
-  unsigned int m_dwEmblemMark;
-  unsigned __int8 m_byRace;
-  char m_wszGreetingMsg[256];
-  _guild_master_info m_MasterData;
-  int m_nMemberNum;
-  _guild_member_info *m_MemberData;
-  _guild_member_info *m_pGuildCommittee[3];
-  int m_nApplierNum;
-  _guild_applier_info *m_ApplierData;
-  bool m_bNowProcessSgtMter;
-  unsigned int m_dwSuggesterSerial;
-  _suggested_matter m_SuggestedMatter;
-  _guild_battle_suggest_matter m_GuildBattleSugestMatter;
-  bool m_bInGuildBattle;
-  bool m_bPossibleElectMaster;
-  unsigned int m_dwGuildBattleTotWin;
-  unsigned int m_dwGuildBattleTotDraw;
-  unsigned int m_dwGuildBattleTotLose;
-  _guild_member_download_zocl *m_DownPacket_Member;
-  _guild_applier_download_zocl *m_DownPacket_Applier;
-  _guild_query_info_result_zocl *m_QueryPacket_Info;
-  _guild_money_io_download_zocl *m_MoneyIO_List;
-  _guild_member_buddy_download_zocl *m_Buddy_List;
-  int m_nIOMoneyHistoryNum;
-  _io_money_data m_IOMoneyHistory[100];
-  bool m_bDBWait;
-  bool m_bIOWait;
-  bool m_bRankWait;
-  unsigned __int8 m_byMoneyOutputKind;
-  int m_nTempMemberNum;
-  unsigned int m_dwLastLoopTime;
-  char m_szHistoryFileName[128];
-  virtual ~CGuild() = default;
-};
+#include "CGuild.h"
 
 /* 1719 */
 struct __cppobj __declspec(align(8)) _guild_member_info
@@ -1871,40 +1479,10 @@ struct __cppobj __declspec(align(8)) _guild_member_info
 /* 1693 */
 
 /* 1742 */
-struct __cppobj __declspec(align(8)) CGuardTower : CCharacter
-{
-  int m_nHP;
-  CPlayer *m_pMasterTwr;
-  unsigned int m_dwMasterSerial;
-  unsigned __int8 m_byRaceCode;
-  _STORAGE_LIST::_db_con *m_pItem;
-  unsigned __int16 m_wItemSerial;
-  bool m_bSystemStruct;
-  int m_nIniIndex;
-  unsigned int m_dwStartMakeTime;
-  bool m_bComplete;
-  bool m_bQuick;
-  CCharacter *m_pTarget;
-  CCharacter *m_pMasterSetTarget;
-  unsigned int m_dwLastDestroyTime;
-};
+#include "CGuardTower.h"
 
 /* 1746 */
-struct __cppobj CTrap : CCharacter
-{
-  int m_nHP;
-  CPlayer *m_pMaster;
-  unsigned __int8 m_byRaceCode;
-  unsigned int m_dwMasterSerial;
-  char m_wszMasterName[17];
-  char m_aszMasterName[17];
-  long double m_dMasterPvPPoint;
-  unsigned int m_dwStartMakeTime;
-  bool m_bComplete;
-  bool m_bBreakTransparBuffer;
-  unsigned int m_dwLastDestroyTime;
-  int m_nTrapMaxAttackPnt;
-};
+#include "CTrap.h"
 
 /* 1752 */
 struct _happen_event_condition_node
@@ -1987,33 +1565,6 @@ struct __cppobj __declspec(align(8)) _dh_player_mgr
 };
 
 /* 1598 */
-struct __cppobj __declspec(align(8)) CDarkHoleChannel
-{
-  unsigned __int16 m_wChannelIndex;
-  unsigned int m_dwChannelSerial;
-  CDarkHole *m_pHoleObj;
-  unsigned int m_dwHoleSerial;
-  unsigned int m_dwQuestStartTime;
-  _dh_quest_setup *m_pQuestSetup;
-  unsigned __int16 m_wLayerIndex;
-  _LAYER_SET *m_pLayerSet;
-  _dh_mission_mgr m_MissionMgr;
-  char m_wszOpenerName[17];
-  char m_aszOpenerName[17];
-  unsigned int m_dwOpenerSerial;
-  int m_nOpenerDegree;
-  int m_nOpenerSubDegree;
-  bool m_bCheckMemberClose;
-  CPartyPlayer *m_pPartyMng;
-  _dh_player_mgr m_Quester[32];
-  _dh_player_mgr *m_pLeaderPtr;
-  unsigned int m_dwEnterOrderCounter;
-  unsigned int m_dwNextCloseTime;
-  unsigned int m_dwSendNewMissionMsgNextTime;
-  CIndexList m_listEnterMember;
-  bool m_bMoveNextMission;
-  virtual ~CDarkHoleChannel() = default;
-};
 
 /* 1435 */
 struct __cppobj __declspec(align(4)) _dummy_position
@@ -2033,26 +1584,10 @@ struct __cppobj __declspec(align(4)) _dummy_position
 };
 
 /* 1773 */
-struct __cppobj __declspec(align(8)) CParkingUnit : CGameObject
-{
-  CPlayer *m_pOwner;
-  unsigned int m_dwOwnerSerial;
-  unsigned __int8 m_byFrame;
-  unsigned __int8 m_byPartCode[6];
-  unsigned __int8 m_byCreateType;
-  unsigned __int8 m_byTransDistCode;
-  unsigned int m_dwParkingStartTime;
-  unsigned __int16 m_wHPRate;
-  unsigned int m_dwLastDestroyTime;
-};
+#include "CParkingUnit.h"
 
 /* 1776 */
-struct __cppobj CAITimer
-{
-  unsigned int m_BefTime;
-  unsigned int m_Delay;
-  unsigned int m_DDelay;
-};
+#include "CAITimer.h"
 
 /* 1777 */
 struct __cppobj __declspec(align(8)) _attack_param
@@ -2106,37 +1641,6 @@ struct __cppobj SKILL
 };
 
 /* 1779 */
-struct __cppobj CAnimus : CCharacter
-{
-  unsigned __int8 m_byClassCode;
-  int m_nHP;
-  int m_nFP;
-  unsigned __int64 m_dwExp;
-  CPlayer *m_pMaster;
-  unsigned int m_dwMasterSerial;
-  char m_wszMasterName[17];
-  char m_aszMasterName[17];
-  unsigned __int8 m_byRoleCode;
-  unsigned int m_dwLastDestroyTime;
-  float m_fMoveSpeed;
-  unsigned __int8 m_byPosRaceTown;
-  CMapData *m_pBeforeTownCheckMap;
-  float m_fBeforeTownCheckPos[2];
-  unsigned int m_dwStunTime;
-  unsigned int m_dwBeAttackedTargetTime;
-  CCharacter *m_pNextTarget;
-  int m_nMaxAttackPnt;
-  unsigned int m_tmNextEatMasterFP;
-  _animus_fld *m_pRecord;
-  int m_nMaxHP;
-  int m_nMaxFP;
-  float m_Mightiness;
-  int m_DefPart[5];
-  unsigned int m_dwAIMode;
-  CCharacter *m_pTarget;
-  CAITimer m_AITimer[3];
-  SKILL m_Skill[2];
-};
 
 /* 1314 */
 
@@ -2150,13 +1654,7 @@ union $1D4D54E2B5971D5BE0EAD557ED232A85
 };
 
 /* 1402 */
-struct __cppobj CMergeFileManager
-{
-  char mPath[256];
-  unsigned int mPathNameLeng;
-  unsigned int mMergeFileNum;
-  CMergeFile *mMergeFile;
-};
+#include "CMergeFileManager.h"
 
 /* 1416 */
 struct _PATH_NODE
@@ -2171,14 +1669,7 @@ struct _PATH_NODE
 };
 
 /* 1417 */
-struct __cppobj CPathFinder
-{
-  int mMaxDepth;
-  _PATH_NODE mPathNode[12];
-  float mStart[3];
-  _PATH_NODE mStackPathNode[20];
-  int mStackPoint;
-};
+#include "CPathFinder.h"
 
 /* 1390 */
 union $36F8BC5CB18F337A8B949972D0D6A08A
@@ -2189,12 +1680,7 @@ union $36F8BC5CB18F337A8B949972D0D6A08A
 };
 
 /* 1391 */
-struct __cppobj CVertexBuffer
-{
-  unsigned int m_Flag;
-  unsigned int m_Size;
-  $36F8BC5CB18F337A8B949972D0D6A08A ___u2;
-};
+#include "CVertexBuffer.h"
 
 /* 1392 */
 union $736DB51CE9487475C2E813E4336CA27C
@@ -2204,12 +1690,7 @@ union $736DB51CE9487475C2E813E4336CA27C
 };
 
 /* 1393 */
-struct __cppobj CIndexBuffer
-{
-  unsigned int m_Flag;
-  unsigned int m_Size;
-  $736DB51CE9487475C2E813E4336CA27C ___u2;
-};
+#include "CIndexBuffer.h"
 
 /* 1418 */
 struct _ENTRY
@@ -2265,109 +1746,10 @@ struct _EXT_BSP_FILE_HEADER
 };
 
 /* 1421 */
-struct __cppobj CAlpha
-{
-  unsigned int mAlphaFaceCnt;
-  unsigned int *mAlphaFace;
-  __int16 *mAlphaFaceZ;
-  unsigned int *mTempAlphaFace;
-  __int16 *mTempAlphaFaceZ;
-  int mAlphaSize;
-  void *mBsp;
-};
+#include "CAlpha.h"
 
 /* 1423 */
-struct __cppobj CBsp
-{
-  float (*mCVertex)[3];
-  float (*mCNNormal)[3];
-  unsigned int *mCVertexId;
-  _BSP_C_FACE *mCFace;
-  float (*mCNEdgeNormal)[4];
-  unsigned int *mCFaceId;
-  unsigned int *mVertexColor;
-  __int16 (*mLgtUV)[2];
-  int mNowCFaceId;
-  unsigned __int16 *MatListInLeafId;
-  unsigned int mMatGroupNum;
-  _BSP_MAT_GROUP *mMatGroup;
-  unsigned int mCVertexNum;
-  unsigned int mCFaceNum;
-  unsigned int mVertexNum;
-  unsigned int mFaceNum;
-  int mIsLoaded;
-  unsigned int mObjectNum;
-  _ANI_OBJECT *mObject;
-  unsigned __int16 *mEventObjectID;
-  unsigned int mEnvID[2];
-  $1D4D54E2B5971D5BE0EAD557ED232A85 ___u21;
-  CMergeFileManager mMapEntityMFM;
-  int mIsLoadEBP;
-  unsigned __int8 *mEntityCache;
-  unsigned int mEntityCacheSize;
-  unsigned int mNowRenderMatGroupNum;
-  unsigned int mNowShadowMatGroupNum;
-  CEntity *mEntity;
-  CParticle *mParticle;
-  _ENTITY_LIST *mEntityList;
-  unsigned __int16 *mEntityID;
-  _LEAF_ENTITIES_LIST_INFO *mLeafEntityList;
-  _MAP_ENTITIES_LIST *mMapEntitiesList;
-  unsigned int mEntityListNum;
-  unsigned int mLeafEntityListNum;
-  unsigned int mEntityIDNum;
-  unsigned int mMapEntitiesListNum;
-  unsigned __int8 *mSoundEntityCache;
-  unsigned int mSoundEntityCacheSize;
-  unsigned int mSoundEntityIDNum;
-  unsigned int mLeafSoundEntityListNum;
-  unsigned int mSoundEntityListNum;
-  unsigned int mSoundEntitiesListNum;
-  _SOUND_ENTITY_LIST *mSoundEntityList;
-  _SOUND_ENTITIES_LIST *mSoundEntitiesList;
-  unsigned __int16 *mSoundEntityID;
-  _LEAF_SOUND_ENTITIES_LIST_INFO *mLeafSoundEntityList;
-  unsigned int mTotalAllocSize;
-  unsigned int mTotalWaveSize;
-  unsigned int mVertexBufferSize;
-  _BSP_NODE *mNode;
-  _BSP_LEAF *mLeaf;
-  unsigned int mLeafNum;
-  unsigned int mNodeNum;
-  unsigned int mCFVertexNum;
-  unsigned int mCFLineNum;
-  unsigned int mCFLineIdNum;
-  float (*mCFVertex)[3];
-  _TOOL_COL_LINE *mCFLine;
-  unsigned __int16 *mCFLineId;
-  _TOOL_COL_LEAF *mCFLeaf;
-  float (*mCFVNormal)[3];
-  float (*mCFNormal)[4];
-  CExtDummy *mDummy;
-  CPathFinder mPathFinder;
-  int mColFaceId;
-  unsigned int mFindPathCnt;
-  __int16 mNowPlayerNum;
-  unsigned int mStaticVBCnt;
-  CVertexBuffer mStaticVertexBuffer[80];
-  unsigned int mVBVertexNum[80];
-  CIndexBuffer mStaticIndexedBuffer;
-  void *mMultiLayerUV;
-  void *mMultiLayerST;
-  unsigned __int8 *mStaticAlloc;
-  unsigned int mStaticAllocSize;
-  unsigned __int8 *mExtBspStaticAlloc;
-  unsigned int mExtBspStaticAllocSize;
-  int mPickPoly;
-  unsigned __int8 *mMatGroupCache;
-  int mMatGroupCacheSize;
-  float mTempCamera[3];
-  __int16 mTempSearchOk;
-  __int16 mNowLeafNum;
-  _BSP_FILE_HEADER mBSPHeader;
-  _EXT_BSP_FILE_HEADER mExtBSPHeader;
-  CAlpha mAlpha;
-};
+#include "CBsp.h"
 
 /* 1327 */
 struct _E_ENTRY
@@ -2392,46 +1774,10 @@ struct _ENTITY_FILE_HEADER
 };
 
 /* 1395 */
-struct __cppobj __unaligned __declspec(align(4)) CEntity
-{
-  int mIsUseMemory;
-  int mIsEntityLoad;
-  int mIsAlpha;
-  _ENTITY_FILE_HEADER mHeader;
-  unsigned int mVetexBufferSize;
-  float (*mOrgUV)[2];
-  unsigned int mMapColor;
-  unsigned int mFlag;
-  _R3MATERIAL *mMat;
-  CVertexBuffer mStaticVertexBuffer;
-  CIndexBuffer mStaticIndexedBuffer;
-  unsigned int mTextureSize;
-  int mMatGroupNum;
-  _ENTITY_M_GROUP *mMatGroup;
-  int mObjectNum;
-  _ANI_OBJECT *mObject;
-  unsigned __int8 *mTrack;
-  int mStartTexID;
-  int mTexNum;
-  unsigned int mVertexNum;
-  void *mIndependencyTex;
-  float mStartTime;
-  float mBBMin[3];
-  float mBBMax[3];
-  float mAddFrame;
-  float mFrame;
-};
+#include "CEntity.h"
 
 /* 1424 */
-struct __cppobj CSkyBox
-{
-  int mIsSkyLoad;
-  CEntity mEntity;
-  _ENTITY_M_GROUP *mMatGroup;
-  int mMatNum;
-  int mMatGroupNum;
-  __int16 mMatGroupSort[512];
-};
+#include "CSkyBox.h"
 
 /* 1426 */
 struct _ANI_CAMERA
@@ -2604,17 +1950,6 @@ struct __cppobj _safe_dummy
 /* 1537 */
 
 /* 1600 */
-struct __cppobj __declspec(align(4)) CDarkHole : CGameObject
-{
-  CDarkHoleChannel *m_pChannel;
-  unsigned int m_dwChannelSerial;
-  unsigned int m_dwOpenerSerial;
-  char m_wszOpenerName[17];
-  char m_aszOpenerName[17];
-  unsigned int m_dwNextCloseTime;
-  unsigned int m_dwNextHurryTime;
-  bool m_bHurry;
-};
 
 /* 1705 */
 struct __cppobj __unaligned __declspec(align(1)) AP_BatterySlot
@@ -2849,62 +2184,6 @@ struct __cppobj __respawn_monster
   char *pszDefineCode;
 };
 
-/* 1637 */
-struct __cppobj CLootingMgr
-{
-  struct _list
-  {
-    CPlayer *pAtter;
-    unsigned int dwAtterSerial;
-    unsigned int dwAttCount;
-    unsigned int dwDamage;
-    unsigned int dwLastAttTime;
-  };
-
-  bool m_bFirst;
-  unsigned __int8 m_byUserNode;
-  _list m_AtterList[64];
-};
-
-/* 1638 */
-struct __cppobj CAggroNode
-{
-  CCharacter *m_pCharacter;
-  unsigned int m_dwObjectSerial;
-  int m_nAggroData;
-  int m_nDamageData;
-  int m_nKingPowerDamage;
-};
-
-/* 1639 */
-struct __cppobj CMonsterAggroMgr
-{
-  CCharacter *m_pTopAggroCharacter;
-  CCharacter *m_pTopDamageCharacter;
-  CCharacter *m_pKingPowerDamageCharacter;
-  CAggroNode m_AggroPool[10];
-  unsigned int m_dwAggroCount;
-  unsigned int m_dwAllResetLastTime;
-  unsigned int m_dwShortRankLastTime;
-  unsigned int m_dwAllResetTimer;
-  unsigned int m_dwShortRankTimer;
-  CMonster *m_pMonster;
-};
-
-/* 1640 */
-struct __cppobj __declspec(align(8)) CMonsterHierarchy
-{
-  unsigned int m_dwTotalCount;
-  CMonster *m_pThisMon;
-  CMonster *m_pParentMon;
-  unsigned int m_dwParentSerial;
-  CMonster *m_pChildMon[3][10];
-  unsigned int m_dwMonCount[3];
-  unsigned __int8 m_byChildMonSetNum;
-  unsigned int m_dwChildRecallTime;
-  virtual ~CMonsterHierarchy() = default;
-};
-
 /* 1642 */
 struct __cppobj __declspec(align(8)) MonsterSFContDamageToleracne
 {
@@ -2915,12 +2194,7 @@ struct __cppobj __declspec(align(8)) MonsterSFContDamageToleracne
 };
 
 /* 1682 */
-struct $8861CABC75A24E330D1CBB803A094EF8
-{
-  unsigned __int32 m_nMove_State : 1;
-  unsigned __int32 m_nCombat_State : 1;
-  unsigned __int32 m_nEmotion_State : 3;
-};
+#include "CABC75A24E330D1CBB803A094EF8.h"
 
 /* 1683 */
 union $B1473DED9FF3433080ADDC1400B1BAA4
@@ -2962,38 +2236,8 @@ struct __cppobj MonsterStateData
 };
 
 /* 1647 */
-struct __cppobj __declspec(align(8)) CMonsterSkill
-{
-  bool m_bExit;
-  int m_UseType;
-  int m_nSFCode;
-  unsigned __int16 m_wSFIndex;
-  _base_fld *m_pSF_Fld;
-  _monster_sp_fld *m_pSPConst;
-  unsigned int m_BefTime;
-  unsigned int m_dwDelayTime;
-  unsigned int m_dwCastDelay;
-  float m_fAttackDist;
-  int m_nMotive;
-  int m_nMotivevalue;
-  int m_nCaseType;
-  int m_nAccumulationCount;
-  int m_nSFLv;
-  int m_Element;
-  int m_StdDmg;
-  int m_MinDmg;
-  int m_MaxDmg;
-  int m_MinProb;
-  int m_MaxProb;
-};
 
 /* 1648 */
-struct __cppobj CMonsterSkillPool
-{
-  CMonster *m_pMyMon;
-  int m_nSize;
-  CMonsterSkill m_MonSkill[16];
-};
 
 /* 1649 */
 struct _event_loot_item
@@ -3038,78 +2282,14 @@ struct __cppobj SF_Timer
 };
 
 /* 1671 */
-struct __cppobj __declspec(align(8)) CPathMgr
-{
-  float m_PosPool[16][3];
-  unsigned __int8 m_Size;
-  unsigned __int8 m_StartPos;
-  virtual ~CPathMgr() = default;
-};
+#include "CPathMgr.h"
 
 /* 1673 */
-struct __cppobj CMonsterAI : Us_HFSM
-{
-  SF_Timer m_SFCheckTime[4];
-  CMonster *m_pAsistMonster;
-  CPathMgr m_PathFinder;
-  unsigned int m_dwBattleModeTime;
-  int m_nCurPathFindFailCount;
-};
 
 /* 1680 */
-struct __cppobj CLuaSignalReActor
-{
-  struct _Action
-  {
-    unsigned __int8 m_bySignalCode;
-    CLuaCommandEx *m_pLuaCommandEx;
-  };
-
-  _Action m_ActionData[3];
-};
+#include "CLuaSignalReActor.h"
 
 /* 1635 */
-struct __cppobj CMonster : CCharacter
-{
-  bool m_bOper;
-  bool m_bApparition;
-  bool m_bDungeon;
-  unsigned int m_dwLastDestroyTime;
-  unsigned int m_dwDestroyNextTime;
-  unsigned int m_dwLastRecoverTime;
-  float m_fCreatePos[3];
-  float m_fLookAtPos[3];
-  bool m_bRobExp;
-  bool m_bRewardExp;
-  bool m_bStdItemLoot;
-  _mon_active *m_pActiveRec;
-  _monster_fld *m_pMonRec;
-  _dummy_position *m_pDumPosition;
-  int m_nHP;
-  CLootingMgr m_LootMgr;
-  CMonsterAggroMgr m_AggroMgr;
-  CMonsterHierarchy m_MonHierarcy;
-  MonsterSFContDamageToleracne m_SFContDamageTolerance;
-  unsigned __int8 m_byCreateDate[4];
-  unsigned int m_LifeMax;
-  unsigned int m_LifeCicle;
-  $B1473DED9FF3433080ADDC1400B1BAA4 ___u23;
-  EmotionPresentationChecker m_EmotionPresentationCheck;
-  float m_fYAngle;
-  float m_fStartLookAtPos[3];
-  bool m_bRotateMonster;
-  MonsterStateData m_MonsterStateData;
-  MonsterStateData m_BeforeMonsterStateData;
-  CCharacter *m_pTargetChar;
-  CMonsterSkillPool m_MonsterSkillPool;
-  int m_DefPart[5];
-  int m_nEventItemNum;
-  _event_loot_item m_eventItem[16];
-  _event_respawn *m_pEventRespawn;
-  _event_set *m_pEventSet;
-  CMonsterAI m_AI;
-  CLuaSignalReActor m_LuaSignalReActor;
-};
 
 /* 1775 */
 struct __cppobj _animus_fld : _base_fld
@@ -3202,64 +2382,10 @@ union $3E60C3DACEF2E33FF1D1871D4F2565FA
 };
 
 /* 1398 */
-struct __cppobj CParticle
-{
-  char mEntityName[128];
-  int mNum;
-  _PARTICLE_ELEMENT *mElement;
-  CEntity *mEntity;
-  float mTotalTime;
-  float mLiveTime;
-  float mStartTimeRange;
-  float mTimeSpeed;
-  float mGravity[3];
-  float mStartPower[2][3];
-  float mStartScale[2];
-  float mStartZRot[2];
-  float mStartYRot[2];
-  unsigned __int8 mFlickerAlpha;
-  float mFlickerTime;
-  float mStartARGB[4][2];
-  float mOnePerTimeEpsilon;
-  float mRotMat[4][4];
-  $3E60C3DACEF2E33FF1D1871D4F2565FA ___u18;
-  float mZFront;
-  float mEmitTime;
-  unsigned __int16 mSpecialID;
-  unsigned __int16 mTrackCnt;
-  float mTimeTrack[12];
-  unsigned __int8 mTrackFlag[12];
-  unsigned __int8 mATrack[12];
-  unsigned __int8 mRTrack[12][2];
-  unsigned __int8 mGTrack[12][2];
-  unsigned __int8 mBTrack[12][2];
-  float mScaleTrack[12][2];
-  float mZRotTrack[12][2];
-  float mYRotTrack[12][2];
-  float mPowerTrack[12][2][3];
-  float mSpecialARGV[2][3];
-  void *mBsp;
-  unsigned int mFlag;
-  unsigned int mAlphaType;
-  float mStartPos[2][3];
-  float mCreatePos[3];
-  int mState;
-  float mOnePerTime;
-  float mOnePerTimeEpsilonTemp;
-  float mParticleTimer;
-  float mNextCreatorTime;
-};
+#include "CParticle.h"
 
 /* 1401 */
-struct CMergeFile
-{
-  char mFileName[256];
-  _MERGE_FILE *mMergeFNF;
-  unsigned int *mOffset;
-  unsigned int *mIndex;
-  unsigned int mCnt;
-  unsigned int mHeaderSize;
-};
+#include "CMergeFile.h"
 
 /* 1403 */
 struct _ENTITY_LIST
@@ -3950,18 +3076,10 @@ struct __cppobj UsStateTBL : UsRefObject
 /* 1672 */
 
 /* 1675 */
-struct __cppobj __declspec(align(8)) CLuaCommand
-{
-  unsigned __int8 m_byCommand;
-  char m_strBuff[2048];
-  virtual ~CLuaCommand() = default;
-};
+#include "CLuaCommand.h"
 
 /* 1677 */
-struct __cppobj __declspec(align(8)) CLuaCommandEx : CLuaCommand
-{
-  char m_strScriptName[260];
-};
+#include "CLuaCommandEx.h"
 
 /* 1396 */
 struct _PARTICLE_ELEMENT
@@ -4006,12 +3124,7 @@ struct _MERGE_FILE
 /* 1430 */
 
 /* 1438 */
-struct __cppobj CIniFile
-{
-  char m_strPath[260];
-  std::vector<INI_Section *> m_SectionList;
-  virtual ~CIniFile() = default;
-};
+#include "CIniFile.h"
 
 /* 1473 */
 struct __cppobj BossSchedule_Map
@@ -4055,12 +3168,7 @@ struct __cppobj __declspec(align(8)) INI_Key
 };
 
 /* 1464 */
-struct __cppobj __declspec(align(8)) CMapDataTable
-{
-  _map_fld *m_pRecord;
-  unsigned int m_dwRecordNum;
-  virtual ~CMapDataTable() = default;
-};
+#include "CMapDataTable.h"
 
 /* 1472 */
 struct __declspec(align(8)) _region_data
@@ -4071,25 +3179,7 @@ struct __declspec(align(8)) _region_data
 };
 
 /* 1462 */
-struct __cppobj CMapOperation
-{
-  int m_nLoopStartPoint;
-  unsigned int m_dwSpeedHackStdTime;
-  CMapDataTable m_tblMapData;
-  int m_nMapNum;
-  int m_nStdMapNum;
-  std::vector<std::pair<int,int>> m_vecStandardMapCodeTable;
-  CMapData *m_Map;
-  int m_nRegionNum;
-  _region_data m_RegionData[100];
-  bool m_bReSpawnMonster;
-  CMyTimer m_tmrObjTerm;
-  CMyTimer m_tmrSystem;
-  CMyTimer m_tmrRecover;
-  unsigned int m_dwLastObjLoopTime;
-  CMapData *m_SettlementMapData[3][2];
-  virtual ~CMapOperation() = default;
-};
+#include "CMapOperation.h"
 
 /* 1474 */
 struct __cppobj BossSchedule_TBL

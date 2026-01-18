@@ -157,6 +157,24 @@
     <ClInclude Include="Entities\CCharacter.h" />
     <ClInclude Include="Entities\CPlayer.h" />
     <ClInclude Include="Entities\CMainThread.h" />
+    <ClInclude Include="Entities\CAggroNode.h" />
+    <ClInclude Include="Entities\CAnimus.h" />
+    <ClInclude Include="Entities\CDarkHole.h" />
+    <ClInclude Include="Entities\CDarkHoleChannel.h" />
+    <ClInclude Include="Entities\CGuardTower.h" />
+    <ClInclude Include="Entities\CIndexList.h" />
+    <ClInclude Include="Entities\CLootingMgr.h" />
+    <ClInclude Include="Entities\CLuaSignalReActor.h" />
+    <ClInclude Include="Entities\CMonster.h" />
+    <ClInclude Include="Entities\CMonsterAI.h" />
+    <ClInclude Include="Entities\CMonsterAggroMgr.h" />
+    <ClInclude Include="Entities\CMonsterHierarchy.h" />
+    <ClInclude Include="Entities\CMonsterSkill.h" />
+    <ClInclude Include="Entities\CMonsterSkillPool.h" />
+    <ClInclude Include="Entities\CParkingUnit.h" />
+    <ClInclude Include="Entities\CPartyPlayer.h" />
+    <ClInclude Include="Entities\CTrap.h" />
+    <ClInclude Include="Entities\CUserDB.h" />
   </ItemGroup>
 
   <ItemGroup>
@@ -174,6 +192,24 @@
     <ClCompile Include="Entities\CCharacter.cpp" />
     <ClCompile Include="Entities\CPlayer.cpp" />
     <ClCompile Include="Entities\CMainThread.cpp" />
+    <ClCompile Include="Entities\CAggroNode.cpp" />
+    <ClCompile Include="Entities\CAnimus.cpp" />
+    <ClCompile Include="Entities\CDarkHole.cpp" />
+    <ClCompile Include="Entities\CDarkHoleChannel.cpp" />
+    <ClCompile Include="Entities\CGuardTower.cpp" />
+    <ClCompile Include="Entities\CIndexList.cpp" />
+    <ClCompile Include="Entities\CLootingMgr.cpp" />
+    <ClCompile Include="Entities\CLuaSignalReActor.cpp" />
+    <ClCompile Include="Entities\CMonster.cpp" />
+    <ClCompile Include="Entities\CMonsterAI.cpp" />
+    <ClCompile Include="Entities\CMonsterAggroMgr.cpp" />
+    <ClCompile Include="Entities\CMonsterHierarchy.cpp" />
+    <ClCompile Include="Entities\CMonsterSkill.cpp" />
+    <ClCompile Include="Entities\CMonsterSkillPool.cpp" />
+    <ClCompile Include="Entities\CParkingUnit.cpp" />
+    <ClCompile Include="Entities\CPartyPlayer.cpp" />
+    <ClCompile Include="Entities\CTrap.cpp" />
+    <ClCompile Include="Entities\CUserDB.cpp" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,0 +1,12 @@
+#pragma once
+
+#include "IdaCompat.h"
+
+/* 1294 */
+struct __cppobj CItemUpgradeTable
+{
+  CRecordData m_tblItemUpgrade;
+  int m_nResNum;
+  unsigned __int16 *m_pwResIndex;
+  virtual ~CItemUpgradeTable() = default;
+};

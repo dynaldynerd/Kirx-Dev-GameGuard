@@ -325,42 +325,13 @@ struct __cppobj _INVENKEY
 };
 
 /* 1215 */
-struct __cppobj __declspec(align(8)) CPostData
-{
-  int m_nNumber;
-  unsigned __int8 m_byState;
-  unsigned __int8 m_byErrCode;
-  unsigned __int8 m_bySendRace;
-  unsigned __int8 m_bySenderDgr;
-  unsigned int m_dwSenderSerial;
-  char m_wszSendName[17];
-  char m_wszRecvName[17];
-  char m_wszTitle[21];
-  char m_wszContent[201];
-  _INVENKEY m_Key;
-  unsigned __int64 m_dwDur;
-  unsigned int m_dwUpt;
-  unsigned __int64 m_lnUID;
-  unsigned int m_dwGold;
-  unsigned int m_dwPSSerial;
-  bool m_bContentLoad;
-  bool m_bUpdateIndex;
-};
+#include "CPostData.h"
 
 /* 1703 */
-struct __cppobj __declspec(align(4)) CPostStorage
-{
-  CPostData m_PostData[50];
-  int m_nSize;
-  bool m_bUpdate;
-};
+#include "CPostStorage.h"
 
 /* 1704 */
-struct __cppobj __declspec(align(8)) CPostReturnStorage
-{
-  CPostData m_PostData[10];
-  int m_nSize;
-};
+#include "CPostReturnStorage.h"
 
 /* 1712 */
 struct __cppobj _personal_amine_inven_db_load : _STORAGE_LIST
@@ -376,54 +347,7 @@ struct __cppobj _quick_link
 };
 
 /* 1730 */
-struct __cppobj CPlayerDB
-{
-  unsigned __int8 m_byPvPGrade;
-  __unaligned __declspec(align(1)) _character_db_load m_dbChar;
-  __unaligned __declspec(align(1)) _bag_db_load m_dbInven;
-  __unaligned __declspec(align(1)) _equip_db_load m_dbEquip;
-  __unaligned __declspec(align(1)) _embellish_db_load m_dbEmbellish;
-  __unaligned __declspec(align(1)) _force_db_load m_dbForce;
-  __unaligned __declspec(align(1)) _animus_db_load m_dbAnimus;
-  __unaligned __declspec(align(1)) _trunk_db_load m_dbTrunk;
-  __unaligned __declspec(align(1)) _Exttrunk_db_load m_dbExtTrunk;
-  _STORAGE_LIST *m_pStoragePtr[8];
-  _UNIT_DB_BASE m_UnitDB;
-  _QUEST_DB_BASE m_QuestDB;
-  _SFCONT_DB_BASE m_SFContDB;
-  _ITEMCOMBINE_DB_BASE m_ItemCombineDB;
-  __declspec(align(8)) CPostStorage m_PostStorage;
-  CPostReturnStorage m_ReturnPostStorage;
-  bool m_bPersonalAmineInven;
-  AutominePersonal *m_pAPM;
-  _personal_amine_inven_db_load m_dbPersonalAmineInven;
-  unsigned __int16 *m_wCuttingResBuffer;
-  unsigned __int8 m_byNameLen;
-  unsigned int m_dwAlterMastery[80];
-  _class_fld *m_pClassData;
-  _class_fld *m_pClassHistory[3];
-  _class_fld **m_ppHistoryEffect[4];
-  _quick_link m_QLink[50];
-  CGuild *m_pGuild;
-  _guild_member_info *m_pGuildMemPtr;
-  unsigned __int8 m_byClassInGuild;
-  CGuild *m_pApplyGuild;
-  bool m_bGuildLock;
-  bool m_bTrunkOpen;
-  char m_wszTrunkPasswd[13];
-  long double m_dTrunkDalant;
-  long double m_dTrunkGold;
-  unsigned __int8 m_byTrunkSlotNum;
-  unsigned __int8 m_byTrunkHintIndex;
-  char m_wszTrunkHintAnswer[17];
-  unsigned __int8 m_byExtTrunkSlotNum;
-  int m_nMakeTrapMaxNum;
-  long double m_dPvpPointLeak;
-  bool m_bLastAttBuff;
-  unsigned __int16 m_wSerialCount;
-  CPlayer *m_pThis;
-  char m_aszName[17];
-};
+#include "CPlayerDB.h"
 
 /* 1276 */
 struct __unaligned __declspec(align(2)) _CLID
@@ -433,51 +357,14 @@ struct __unaligned __declspec(align(2)) _CLID
 };
 
 /* 1692 */
-struct __cppobj CSyncCS
-{
-  bool m_bUse;
-  _RTL_CRITICAL_SECTION m_cs;
-  virtual ~CSyncCS() = default;
-};
+#include "CSyncCS.h"
 
 /* 1689 */
-struct __cppobj __declspec(align(8)) CIndexList
-{
-  struct _index_node
-  {
-    bool m_bLoad;
-    unsigned int m_dwIndex;
-    unsigned int m_dwInfoDataSize;
-    char *m_pInfo;
-    _index_node *m_pPrev;
-    _index_node *m_pNext;
-  };
-
-  _index_node m_Head;
-  _index_node m_Tail;
-  _index_node m_BufHead;
-  _index_node m_BufTail;
-  _index_node *m_pBufNode;
-  CSyncCS m_csList;
-  unsigned int m_dwCount;
-  unsigned int m_dwBufCount;
-  unsigned int m_dwMaxBufNum;
-  virtual ~CIndexList() = default;
-};
+#include "CIndexList.h"
 
 
 /* 1735 */
-struct __cppobj __declspec(align(8)) CRealMoveRequestDelayChecker
-{
-  CIndexList m_kNodeInxOrderList;
-  std::vector<unsigned long> m_vecDelayList;
-  unsigned __int16 m_wTotalMissCount;
-  bool m_bPrevRet;
-  unsigned __int16 m_wContinueMissCount;
-  unsigned __int16 m_wSingleMissCount;
-  unsigned __int16 m_wContinueValiedCount;
-  unsigned __int16 m_wTotalContinueValiedCount;
-};
+#include "CRealMoveRequestDelayChecker.h"
 
 /* 1736 */
 struct __declspec(align(8)) _WEAPON_PARAM
@@ -610,31 +497,10 @@ struct __cppobj __declspec(align(8)) _TRAP_PARAM
 };
 
 /* 1131 */
-struct __cppobj CNetCriticalSection
-{
-  _RTL_CRITICAL_SECTION m_cs;
-};
+#include "CNetCriticalSection.h"
 
 /* 1279 */
-struct __cppobj __declspec(align(8)) CNetIndexList
-{
-  struct _index_node
-  {
-    unsigned int m_dwIndex;
-    _index_node *m_pPrev;
-    _index_node *m_pNext;
-  };
-
-  _index_node m_Head;
-  _index_node m_Tail;
-  _index_node m_BufHead;
-  _index_node m_BufTail;
-  _index_node *m_pBufNode;
-  CNetCriticalSection m_csList;
-  unsigned int m_dwCount;
-  unsigned int m_dwBufCount;
-  unsigned int m_dwMaxBufNum;
-};
+#include "CNetIndexList.h"
 
 /* 1751 */
 struct __cppobj _BUDDY_LIST
@@ -675,14 +541,7 @@ struct __cppobj __declspec(align(8)) _happen_event_cont
 };
 
 /* 1755 */
-struct __cppobj __declspec(align(8)) CQuestMgr
-{
-  CPlayer *m_pMaster;
-  _QUEST_DB_BASE *m_pQuestData;
-  _happen_event_cont m_LastHappenEvent;
-  _happen_event_cont *m_pTempHappenEvent;
-  unsigned int m_dwOldTimeoutChecktime;
-};
+#include "CQuestMgr.h"
 
 /* 1756 */
 struct __cppobj ItemCombineMgr
@@ -720,27 +579,10 @@ struct __cppobj MiningTicket
 };
 
 /* 1762 */
-struct __cppobj __declspec(align(4)) CSetItemEffect
-{
-  struct __declspec(align(4)) set_effect_info
-  {
-    bool m_bCheckSetEffect;
-    unsigned int m_dwSetItem;
-    unsigned __int8 m_bySetItemNum;
-    unsigned __int8 m_bySetEffectNum;
-  };
-
-  set_effect_info m_setCount[6];
-  set_effect_info m_resetInfo;
-  unsigned __int8 m_byTotalSetCount;
-};
+#include "CSetItemEffect.h"
 
 /* 1763 */
-struct __cppobj CEquipItemSFAgent
-{
-  CPlayer *m_pMaster;
-  _sf_continous *m_pContSF[8];
-};
+#include "CEquipItemSFAgent.h"
 
 /* 1765 */
 struct __cppobj _CRYMSG_LIST
@@ -814,21 +656,10 @@ struct __cppobj _ContPotionData
 };
 
 /* 1783 */
-struct __cppobj CPotionParam
-{
-  _ContPotionData m_ContCommonPotionData[2];
-  _ContPotionData m_StoneOfMovePotionData;
-  unsigned int m_dwNextUseTime[38];
-  CPlayer *m_pMaster;
-};
+#include "CPotionParam.h"
 
 /* 1784 */
-struct __cppobj CExtPotionBuf
-{
-  bool m_bExtPotionBufUse;
-  bool m_bDayChange;
-  unsigned int m_dwEndPotionTime;
-};
+#include "CExtPotionBuf.h"
 
 /* 1786 */
 struct __cppobj __unaligned __declspec(align(1)) _target_monster_contsf_allinform_zocl
@@ -889,57 +720,19 @@ struct __cppobj __declspec(align(4)) _ATTACK_DELAY_CHECKER
 };
 
 /* 1793 */
-struct __cppobj CPvpPointLimiter
-{
-  _PVPPOINT_LIMIT_DB_BASE *m_pkInfo;
-};
+#include "CPvpPointLimiter.h"
 
 /* 1794 */
-struct CPvpOrderView
-{
-  unsigned int m_dwLastAttackTime;
-  unsigned int m_dwLastDamagedTime;
-  int m_nKillCnt;
-  int m_nDeahtCnt;
-  long double m_dTodayPvpPoint;
-  long double m_dOriginalPvpPoint;
-  long double m_dPvpPoint;
-  long double m_dPvpTempCash;
-  long double m_dPvpCash;
-  bool m_bAttack;
-  bool m_bDamaged;
-  _PVP_ORDER_VIEW_DB_BASE *m_pkInfo;
-};
+#include "CPvpOrderView.h"
 
 /* 1795 */
-struct __cppobj __declspec(align(8)) CPvpCashPoint
-{
-  CIndexList m_KillerList;
-  unsigned __int8 m_byContPvpHave;
-  unsigned __int8 m_byContPvpLose;
-  bool m_bRaceWarRecvr;
-};
+#include "CPvpCashPoint.h"
 
 /* 1796 */
-struct CouponInfo
-{
-  unsigned __int8 byTableCode;
-  unsigned int dwIndex;
-};
+#include "CouponInfo.h"
 
 /* 1797 */
-struct __cppobj CCouponMgr
-{
-  CouponInfo m_Coupon[5];
-  unsigned __int8 m_byRemainTime;
-  unsigned __int8 m_byReceiveCoupon;
-  unsigned int m_dwContTime;
-  unsigned __int8 m_byInitTime;
-  bool m_bTimeReset;
-  CMyTimer m_tmrCheckConnMin;
-  CMyTimer m_tmrCouponEnableTime;
-  _PCBANG_PLAY_TIME *m_pkInfo;
-};
+#include "CCouponMgr.h"
 
 /* 1798 */
 struct __cppobj _NameChangeBuddyInfo
