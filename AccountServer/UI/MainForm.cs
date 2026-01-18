@@ -29,19 +29,19 @@ public partial class MainForm : Form
 
     private LoginHandler CreateLoginHandler()
     {
-        var connString = _settings.Database.BuildUserConnectionString();
+        var connString = _settings.Database.BuildUserConnectionString(_settings.Database.Provider, AppContext.BaseDirectory);
         return new LoginHandler(AppendLog, _settings, connString);
     }
 
     private WorldHandler CreateWorldHandler()
     {
-        var connString = _settings.Database.BuildUserConnectionString();
+        var connString = _settings.Database.BuildUserConnectionString(_settings.Database.Provider, AppContext.BaseDirectory);
         return new WorldHandler(AppendLog, _settings, connString);
     }
 
     private ControlHandler CreateControlHandler()
     {
-        var connString = _settings.Database.BuildUserConnectionString();
+        var connString = _settings.Database.BuildUserConnectionString(_settings.Database.Provider, AppContext.BaseDirectory);
         return new ControlHandler(AppendLog, _settings, connString);
     }
 

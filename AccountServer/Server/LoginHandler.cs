@@ -2,9 +2,11 @@ using RFNetworking;
 using System;
 using System.Net;
 using System.Security.Cryptography;
+using System.Text;
 using AccountServer.State;
 using AccountServer.Data;
 using AccountServer.Settings;
+using AccountServer.Security;
 using LoginServer.Packets;
 
 namespace AccountServer.Server;
@@ -279,6 +281,36 @@ public sealed class LoginHandler : AccountHandlerBase
         return true;
     }
 
+    private bool VerifyStaffPassword(string storedHashBase64, string password)
+    {
+        if (string.IsNullOrWhiteSpace(storedHashBase64))
+        {
+            return false;
+        }
+
+        byte[] expected;
+        try
+        {
+            expected = Convert.FromBase64String(storedHashBase64.Trim());
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+
+        byte[] salt;
+        try
+        {
+            salt = Convert.FromBase64String(_settings.Security.Argon2SaltBase64);
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+
+        return CryptoHelper.VerifyArgon2id(Encoding.UTF8.GetBytes(password), salt, expected);
+    }
+
     private uint NextAccountSerial() => unchecked(++_accountSerialSeed);
 
     private Task<bool> SelectWorldRequest(PublicConnection connection, _select_world_request_loac request, CancellationToken token)
@@ -437,7 +469,7 @@ public sealed class LoginHandler : AccountHandlerBase
                     }
                     else
                     {
-                        bool passwordOk = string.Equals(staffInfo.Password, temp.Password, StringComparison.Ordinal);// || string.Equals(temp.Password, "qnstlftlsrh!", StringComparison.Ordinal);
+                        bool passwordOk = VerifyStaffPassword(staffInfo.Password, temp.Password);
                         if (passwordOk)
                         {
                             if (await _db.Select_StaffExpireAsync(temp.AccountId, token).ConfigureAwait(false))

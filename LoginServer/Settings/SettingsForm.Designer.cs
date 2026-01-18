@@ -28,6 +28,8 @@ partial class SettingsForm
         txtDbUser = new System.Windows.Forms.TextBox();
         lblDbName = new System.Windows.Forms.Label();
         txtDbName = new System.Windows.Forms.TextBox();
+        lblArgon2Salt = new System.Windows.Forms.Label();
+        txtArgon2Salt = new System.Windows.Forms.TextBox();
         lblDbPort = new System.Windows.Forms.Label();
         txtDbPort = new System.Windows.Forms.TextBox();
         lblDbHost = new System.Windows.Forms.Label();
@@ -78,6 +80,8 @@ partial class SettingsForm
         tabDatabase.Controls.Add(txtDbUser);
         tabDatabase.Controls.Add(lblDbName);
         tabDatabase.Controls.Add(txtDbName);
+        tabDatabase.Controls.Add(lblArgon2Salt);
+        tabDatabase.Controls.Add(txtArgon2Salt);
         tabDatabase.Controls.Add(lblDbPort);
         tabDatabase.Controls.Add(txtDbPort);
         tabDatabase.Controls.Add(lblDbHost);
@@ -186,6 +190,24 @@ partial class SettingsForm
         txtDbName.Name = "txtDbName";
         txtDbName.Size = new System.Drawing.Size(110, 23);
         txtDbName.TabIndex = 6;
+        // 
+        // lblArgon2Salt
+        // 
+        lblArgon2Salt.AutoSize = true;
+        lblArgon2Salt.Location = new System.Drawing.Point(221, 142);
+        lblArgon2Salt.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+        lblArgon2Salt.Name = "lblArgon2Salt";
+        lblArgon2Salt.Size = new System.Drawing.Size(115, 15);
+        lblArgon2Salt.TabIndex = 14;
+        lblArgon2Salt.Text = "Argon2 Salt (Base64)";
+        // 
+        // txtArgon2Salt
+        // 
+        txtArgon2Salt.Location = new System.Drawing.Point(221, 160);
+        txtArgon2Salt.Margin = new System.Windows.Forms.Padding(2);
+        txtArgon2Salt.Name = "txtArgon2Salt";
+        txtArgon2Salt.Size = new System.Drawing.Size(268, 23);
+        txtArgon2Salt.TabIndex = 13;
         // 
         // lblDbPort
         // 
@@ -457,6 +479,8 @@ partial class SettingsForm
     private System.Windows.Forms.TextBox txtDbPort;
     private System.Windows.Forms.Label lblDbName;
     private System.Windows.Forms.TextBox txtDbName;
+    private System.Windows.Forms.Label lblArgon2Salt;
+    private System.Windows.Forms.TextBox txtArgon2Salt;
     private System.Windows.Forms.GroupBox grpAuth;
     private System.Windows.Forms.RadioButton radAuthTrusted;
     private System.Windows.Forms.RadioButton radAuthSql;

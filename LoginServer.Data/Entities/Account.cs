@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -7,11 +8,15 @@ namespace LoginServer.Data.Entities;
 public sealed class Account
 {
     [Key]
-    [Column("id")]
-    [MaxLength(13)]
-    public string Id { get; set; } = string.Empty;
+    [Column("id_hmac")]
+    public byte[] IdHmac { get; set; } = Array.Empty<byte>();
 
-    [Column("password")]
-    [MaxLength(32)]
-    public string Password { get; set; } = string.Empty;
+    [Column("id_enc")]
+    public byte[] IdEnc { get; set; } = Array.Empty<byte>();
+
+    [Column("password_hash")]
+    public string PasswordHash { get; set; } = string.Empty;
+
+    [Column("accounttype")]
+    public byte AccountType { get; set; }
 }

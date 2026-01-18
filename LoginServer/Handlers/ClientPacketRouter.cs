@@ -1,17 +1,16 @@
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
-using System.Data;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using LoginServer.Data.Contexts;
 using LoginServer.Packets;
+using LoginServer.Security;
 using LoginServer.Settings;
 using LoginServer.State;
 using RFNetworking;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace LoginServer.Handlers;
@@ -736,31 +735,67 @@ public sealed class ClientPacketRouter
             }
             else
             {
-                string? dbPassword = null;
-                await using (var userConn = new SqlConnection(userConnStr))
+                string? passwordHash = null;
+                byte[] salt;
+                try
                 {
-                    await userConn.OpenAsync(cancellationToken).ConfigureAwait(false);
-                    using var cmd = userConn.CreateCommand();
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.CommandText = "pSelect_AccountPass";
-                    cmd.Parameters.AddWithValue("@id", session.AccountId);
+                    salt = Convert.FromBase64String(settings.Security.Argon2SaltBase64);
+                }
+                catch (FormatException)
+                {
+                    retCode = 24;
+                    salt = Array.Empty<byte>();
+                }
 
-                    using var reader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                    if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                if (retCode != 0)
+                {
+                    await SendLoginResultAsync(connection, retCode, cancellationToken).ConfigureAwait(false);
+                    return;
+                }
+
+                var idHmac = CryptoHelper.ComputeHmacSha256(Encoding.UTF8.GetBytes(session.AccountId), salt);
+                var userDbOptions = new DbContextOptionsBuilder<LoginDbContext>()
+                    .UseSqlServer(userConnStr)
+                    .Options;
+                await using (var userCtx = new LoginDbContext(userDbOptions))
+                {
+                    var account = await userCtx.Accounts
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(a => a.IdHmac == idHmac, cancellationToken)
+                        .ConfigureAwait(false);
+
+                    if (account != null)
                     {
-                        dbPassword = reader.IsDBNull(0) ? null : reader.GetString(0);
+                        passwordHash = account.PasswordHash?.Trim();
                     }
                 }
 
-                if (dbPassword == null)
+                if (passwordHash == null)
                 {
                     retCode = 6;
                 }
-                else if (!string.Equals(dbPassword, session.Password, StringComparison.Ordinal))
-                {
-                    retCode = 7;
-                }
                 else
+                {
+                    byte[] expectedHash;
+                    try
+                    {
+                        expectedHash = Convert.FromBase64String(passwordHash);
+                    }
+                    catch (FormatException)
+                    {
+                        retCode = 24;
+                        expectedHash = Array.Empty<byte>();
+                    }
+
+                    if (retCode == 0)
+                    {
+                        if (!CryptoHelper.VerifyArgon2id(Encoding.UTF8.GetBytes(session.Password), salt, expectedHash))
+                        {
+                            retCode = 7;
+                        }
+                    }
+                }
+                if (retCode == 0)
                 {
                     // Billing check via EF (equivalent to RF_CheckAccountStatus proc)
                     int status = 1;

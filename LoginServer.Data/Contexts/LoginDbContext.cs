@@ -15,9 +15,11 @@ public sealed class LoginDbContext : DbContext
         modelBuilder.Entity<Account>(entity =>
         {
             entity.ToTable("tbl_rfaccount");
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Id).HasMaxLength(13);
-            entity.Property(e => e.Password).HasMaxLength(32);
+            entity.HasKey(e => e.IdHmac);
+            entity.Property(e => e.IdHmac).HasColumnName("id_hmac");
+            entity.Property(e => e.IdEnc).HasColumnName("id_enc");
+            entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
+            entity.Property(e => e.AccountType).HasColumnName("accounttype");
         });
     }
 

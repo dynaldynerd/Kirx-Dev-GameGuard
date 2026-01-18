@@ -46,6 +46,7 @@ public partial class SettingsForm : Form
         txtAccountHost.Text = _settings.Network.AccountHost;
         txtAccountPort.Text = _settings.Network.AccountPort.ToString(CultureInfo.InvariantCulture);
         txtMaxConn.Text = _settings.Network.MaxConnections.ToString(CultureInfo.InvariantCulture);
+        txtArgon2Salt.Text = _settings.Security.Argon2SaltBase64;
         var loads = _settings.Network.UserLoadThresholds ?? Array.Empty<int>();
         txtLoadLow.Text = (loads.Length > 0 ? loads[0] : 500).ToString(CultureInfo.InvariantCulture);
         txtLoadMid.Text = (loads.Length > 1 ? loads[1] : 1000).ToString(CultureInfo.InvariantCulture);
@@ -72,6 +73,23 @@ public partial class SettingsForm : Form
         _settings.Database.BillingUser = _billingDb.User;
         _settings.Database.BillingPassword = _billingDb.Password;
         _settings.Database.BillingTrustedConnection = _billingDb.Trusted;
+
+        var saltText = txtArgon2Salt.Text.Trim();
+        if (string.IsNullOrWhiteSpace(saltText))
+        {
+            MessageBox.Show(this, "Argon2 salt is required.", "Invalid Value", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return false;
+        }
+        try
+        {
+            _ = Convert.FromBase64String(saltText);
+        }
+        catch (FormatException)
+        {
+            MessageBox.Show(this, "Argon2 salt must be valid Base64.", "Invalid Value", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return false;
+        }
+        _settings.Security.Argon2SaltBase64 = saltText;
 
         if (!int.TryParse(txtClientPort.Text, out var cPort) || cPort < 1 || cPort > 65535)
         {

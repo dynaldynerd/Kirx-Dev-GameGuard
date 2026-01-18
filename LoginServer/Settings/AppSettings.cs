@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -9,6 +10,7 @@ public sealed class AppSettings
 {
     public DatabaseSettings Database { get; set; } = new();
     public NetworkSettings Network { get; set; } = new();
+    public SecuritySettings Security { get; set; } = new();
 
     [JsonIgnore]
     public static string DefaultPath => Path.Combine(AppContext.BaseDirectory, "appsettings.login.json");
@@ -25,6 +27,12 @@ public sealed class AppSettings
 
         var json = File.ReadAllText(path);
         var settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions()) ?? new AppSettings();
+        settings.Security ??= new SecuritySettings();
+        if (!IsValidBase64(settings.Security.Argon2SaltBase64))
+        {
+            settings.Security.Argon2SaltBase64 = GenerateSaltBase64();
+            settings.Save(path);
+        }
         return settings;
     }
 
@@ -66,6 +74,10 @@ public sealed class AppSettings
                 AccountPort = 27000,
                 MaxConnections = 5000,
                 UserLoadThresholds = new[] { 500, 1000, 1500 }
+            },
+            Security = new SecuritySettings
+            {
+                Argon2SaltBase64 = GenerateSaltBase64()
             }
         };
     }
@@ -75,6 +87,29 @@ public sealed class AppSettings
         WriteIndented = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
+
+    private static string GenerateSaltBase64()
+    {
+        var bytes = RandomNumberGenerator.GetBytes(16);
+        return Convert.ToBase64String(bytes);
+    }
+
+    private static bool IsValidBase64(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+        try
+        {
+            _ = Convert.FromBase64String(value);
+            return true;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
 }
 
 public sealed class DatabaseSettings
@@ -122,4 +157,9 @@ public sealed class NetworkSettings
     /// User-count thresholds for load indicators (low/med/high). Length must be 3, ascending.
     /// </summary>
     public int[] UserLoadThresholds { get; set; } = new[] { 500, 1000, 1500 };
+}
+
+public sealed class SecuritySettings
+{
+    public string Argon2SaltBase64 { get; set; } = "";
 }

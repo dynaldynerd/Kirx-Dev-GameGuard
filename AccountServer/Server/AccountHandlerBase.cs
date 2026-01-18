@@ -23,18 +23,18 @@ public abstract class AccountHandlerBase : NetworkHandlerBase
     {
         _log = log;
         _settings = settings;
-        _db = db ?? CreateDefaultDb(connectionString);
+        _db = db ?? CreateDefaultDb(settings, connectionString);
     }
 
-    protected static IAccountDatabase CreateDefaultDb(string? connectionString)
+    protected static IAccountDatabase CreateDefaultDb(AppSettings settings, string? connectionString)
     {
-        var connString = connectionString;
+        string connString = connectionString ?? string.Empty;
         if (string.IsNullOrWhiteSpace(connString))
         {
-            connString = Environment.GetEnvironmentVariable("ACCOUNT_DB_CONNECTION") ??
-                         "Server=(local);Database=RF_User;Integrated Security=True;TrustServerCertificate=True";
+            connString = settings.Database.BuildUserConnectionString(settings.Database.Provider, AppContext.BaseDirectory);
         }
-        return new AccountDatabase(connString);
+
+        return new AccountDatabaseEf(settings.Database.Provider, connString, settings.Security);
     }
 
     protected static void GenerateMasterKey(ClientSession session)

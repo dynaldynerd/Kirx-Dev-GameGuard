@@ -1,0 +1,19 @@
+#pragma once
+
+#define IDR_MAINFRAME 128
+#define IDD_ABOUTBOX 100
+#define IDD_MAIN_VIEW 101
+#define IDD_LOG_VIEW 130
+#define IDD_MAP_VIEW 132
+#define IDD_SERVER_VIEW 133
+#define IDD_OBJECT_SEARCH 134
+#define IDD_OBJECT_VIEW 136
+#define IDD_USER_VIEW 137
+#define IDD_MAIN_PANEL 138
+#define IDD_LOADING 140
+#define IDD_LICENSE 150
+
+#define ID_APP_ABOUT 57664
+#define ID_APP_EXIT 57665
+
+#define IDC_LOG_LIST 1
