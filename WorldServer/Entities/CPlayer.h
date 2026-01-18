@@ -2,6 +2,8 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
+
 #include "CCharacter.h"
 #include <vector>
 
@@ -1210,3 +1212,5 @@ struct __cppobj __declspec(align(8)) CPlayer : CCharacter
   _other_shape_all_zocl m_bufShapeAll;
   _other_shape_part_zocl m_bufSpapePart;
 };
+
+#pragma pack(pop)

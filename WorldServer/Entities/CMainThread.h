@@ -2,6 +2,8 @@
 
 #include "IdaCompat.h"
 #include "CPlayer.h"
+
+#pragma pack(push, 1)
 #include <utility>
 #include <vector>
 
@@ -622,6 +624,7 @@ struct __cppobj CEventLootTable
   _event_drop *m_pEventDropList;
   virtual ~CEventLootTable() = default;
 };
+
 
 /* 1296 */
 struct __cppobj _base_fld
@@ -4105,4 +4108,6 @@ struct __cppobj ScheduleMSG
   char m_strValue[64];
   unsigned __int16 m_wIniFileIndex;
 };
+
+#pragma pack(pop)
 

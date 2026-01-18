@@ -21,6 +21,4 @@
 #include <string>
 #include <vector>
 
-#pragma warning(disable:4359) // alignment specifier less than actual alignment
-
 #pragma comment(lib, "Ws2_32.lib")
