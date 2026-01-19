@@ -5,6 +5,7 @@
 /* 1286 */
 class __cppobj CEventLootTable
 {
+public:
   struct _event_drop
   {
     char strCode[64];
@@ -15,7 +16,9 @@ class __cppobj CEventLootTable
     _event_drop *pNext;
   };
 
-  _event_drop *m_pEventDropList;
   virtual ~CEventLootTable() = default;
+
+private:
+  _event_drop *m_pEventDropList;
 };
 

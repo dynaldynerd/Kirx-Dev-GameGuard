@@ -5,6 +5,25 @@
 /* 1717 */
 class __cppobj __declspec(align(8)) CGuild
 {
+public:
+  class MakeBuddyPacket
+  {
+  public:
+    class __l2
+    {
+    public:
+      struct __declspec(align(2)) __guild_buddy_list
+      {
+        unsigned int dwSerial;
+        unsigned __int16 wMapCode;
+        unsigned __int8 byRegionIndex;
+      };
+    };
+  };
+
+  virtual ~CGuild() = default;
+
+private:
   int m_nIndex;
   unsigned int m_dwSerial;
   char m_wszName[17];
@@ -45,6 +64,5 @@ class __cppobj __declspec(align(8)) CGuild
   int m_nTempMemberNum;
   unsigned int m_dwLastLoopTime;
   char m_szHistoryFileName[128];
-  virtual ~CGuild() = default;
 };
 
