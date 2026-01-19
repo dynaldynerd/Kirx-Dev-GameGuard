@@ -11,7 +11,6 @@ Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are avai
 
 
 ## Missing C* types
-- CEquipItemSFAgent::_requireSlot
 - CEventLootTable::_event_drop
 - CEventLootTable_vtbl
 - CGameObject_vtbl
