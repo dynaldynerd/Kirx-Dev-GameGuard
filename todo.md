@@ -2,7 +2,7 @@
 
 Total IDA C* types: 443
 Already in WorldServer/Entities: 283
-Missing (game-specific): 77
+Missing (game-specific): 71
 Deferred UI/App (not yet imported): 22
 Note: CryptoPP::* types are external Crypto++ library; add include/lib paths later.
 Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are available later if needed.
@@ -43,12 +43,6 @@ Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are avai
 - CRFMonsterAIMgr
 - CRaceBossMsgController
 - CRaceBossWinRate
-- CRaceBuffByHolyQuestProcedure
-- CRaceBuffHolyQuestResultInfo
-- CRaceBuffInfoByHolyQuest
-- CRaceBuffInfoByHolyQuestList
-- CRaceBuffInfoByHolyQuestfGroup
-- CRaceBuffManager
 - CRecallEffectController
 - CRecallRequest
 - CReturnGate
