@@ -2,13 +2,15 @@
 
 #include "IdaCompat.h"
 
-class __cppobj __declspec(align(8)) CHolyScheduleData
+class __cppobj CHolyScheduleData
 {
 public:
   struct __HolyScheduleNode
   {
     int m_nSceneTime[7];
   };
+
+  virtual ~CHolyScheduleData() = default;
 
   bool m_bSet;
   __HolyScheduleNode *m_pSchedule;

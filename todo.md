@@ -1,8 +1,8 @@
 # WorldServer IDA C* class tracker
 
-Total IDA C* types: 445
-Already in WorldServer/Entities: 253
-Missing (game-specific): 170
+Total IDA C* types: 443
+Already in WorldServer/Entities: 266
+Missing (game-specific): 155
 Deferred UI/App (not yet imported): 22
 Note: CryptoPP::* types are external Crypto++ library; add include/lib paths later.
 Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are available later if needed.
@@ -11,27 +11,13 @@ Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are avai
 
 
 ## Missing C* types
-- CDummyDraw_vtbl
-- CDummyPosTable_vtbl
-- CEngNetworkBillEX
-- CEnglandBillingMgr
 - CEquipItemSFAgent::_requireSlot
 - CEventLootTable::_event_drop
 - CEventLootTable_vtbl
 - CGameObject_vtbl
-- CGoldenBoxItemMgr
-- CGoldenBoxItemMgr::_BoxItemOpen_output
-- CGravityStone
-- CGravityStoneRegener
 - CGuild::MakeBuddyPacket::__l2::__guild_buddy_list
-- CGuildBattleController
 - CGuild_vtbl
-- CHEAT_COMMAND
-- CHackShieldExSystem
-- CHashMapPtrPool
-- CHolyScheduleData::__HolyScheduleNode
 - CHonorGuild_vtbl
-- CIP
 - CIndexList::_index_node
 - CIndexList_vtbl
 - CIniFile_vtbl
