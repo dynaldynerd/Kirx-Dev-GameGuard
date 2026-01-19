@@ -7,6 +7,7 @@ class CPlayer;
 /* 1637 */
 class __cppobj CLootingMgr
 {
+public:
   struct _list
   {
     CPlayer *pAtter;
