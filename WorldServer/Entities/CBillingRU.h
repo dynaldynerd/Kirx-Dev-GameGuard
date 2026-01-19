@@ -1,8 +1,8 @@
 #pragma once
 
-#include "IdaCompat.h"
+#include "CBillingID.h"
 
-class __cppobj CBillingRU
+class __cppobj CBillingRU : public CBillingID
 {
 };
 

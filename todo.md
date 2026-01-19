@@ -1,35 +1,16 @@
 # WorldServer IDA C* class tracker
 
-Total IDA C* types: 455
-Already in WorldServer/Entities: 235
-Missing (game-specific): 198
+Total IDA C* types: 445
+Already in WorldServer/Entities: 253
+Missing (game-specific): 170
 Deferred UI/App (not yet imported): 22
 Note: CryptoPP::* types are external Crypto++ library; add include/lib paths later.
 Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are available later if needed.
 
 
 
+
 ## Missing C* types
-- CChatStealSystem
-- CCheckSumBaseConverter
-- CCheckSumCharacAccountTrunkData
-- CCheckSumCharacTrunkConverter
-- CCheckSumGuildConverter
-- CCheckSumGuildData
-- CChiNetworkEX
-- CCircleZone
-- CCollLineDraw
-- CCollLineDraw_vtbl
-- CConnNumPHMgr::__cnt_per_h
-- CCryptParam
-- CCryptParamCrete
-- CCryptParam_vtbl
-- CDarkHoleChannel::__enter_member
-- CDarkHoleChannel_vtbl
-- CDarkHoleDungeonQuest
-- CDarkHoleDungeonQuestSetup
-- CDarkHoleDungeonQuestSetup_vtbl
-- CDummyDraw
 - CDummyDraw_vtbl
 - CDummyPosTable_vtbl
 - CEngNetworkBillEX
@@ -37,15 +18,7 @@ Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are avai
 - CEquipItemSFAgent::_requireSlot
 - CEventLootTable::_event_drop
 - CEventLootTable_vtbl
-- CExchangeEvent
-- CFPS
-- CFPS_vtbl
-- CFrameRate_vtbl
 - CGameObject_vtbl
-- CGameStatistics
-- CGameStatistics::_DAY
-- CGameStatistics::_map
-- CGameStatistics_vtbl
 - CGoldenBoxItemMgr
 - CGoldenBoxItemMgr::_BoxItemOpen_output
 - CGravityStone
@@ -208,6 +181,7 @@ Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are avai
 - ControllerTaxRate
 - ControllerTaxRate_vtbl
 - CookieDecision
+
 
 ## Deferred UI/App C* types
 - CAboutDlg
