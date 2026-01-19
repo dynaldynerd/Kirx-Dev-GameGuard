@@ -2,7 +2,7 @@
 
 Total IDA C* types: 443
 Already in WorldServer/Entities: 283
-Missing (game-specific): 138
+Missing (game-specific): 85
 Deferred UI/App (not yet imported): 22
 Note: CryptoPP::* types are external Crypto++ library; add include/lib paths later.
 Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are available later if needed.
@@ -11,16 +11,12 @@ Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are avai
 
 
 ## Missing C* types
-- CItemLootTable_vtbl
-- CItemUpgradeTable_vtbl
 - CLASS_REFINE_EVENT
-- CLevel_vtbl
 - CLogTypeDBTask
 - CLogTypeDBTaskManager
 - CLogTypeDBTaskPool
 - CLootingMgr::_list
 - CLuaCommandEx::_State
-- CLuaCommand_vtbl
 - CLuaEventMgr
 - CLuaEventNode
 - CLuaEventNode::_State
@@ -30,31 +26,15 @@ Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are avai
 - CLuaScript
 - CLuaScript::_State
 - CLuaScriptMgr
-- CLuaScript_vtbl
 - CLuaSignalReActor::RF_LUA_SIGNAL
 - CLuaSignalReActor::_Action
 - CM_Power_Data_s
-- CMainThread_vtbl
-- CMapDataTable_vtbl
-- CMapData_vtbl
-- CMapOperation_vtbl
-- CObjectList_vtbl
-- COreAmountMgr_vtbl
-- COreCuttingTable_vtbl
-- CPartyModeKillMonsterExpNotify
-- CPartyModeKillMonsterExpNotify::CExpInfo
-- CPathMgr_vtbl
-- CPcBangFavor
-- CPcBangFavor_vtbl
-- CPlayer::__target
-- CPlayerAttack
 - CPostSystemManager
 - CPotionMgr
 - CPotionMgr::_ParamData
 - CProcessLocal
 - CProcessLocalObject
 - CProcessThread
-- CProcessThread_vtbl
 - CPvpCashMng
 - CPvpUserAndGuildRankingSystem
 - CPvpUserRankingInfo
@@ -63,7 +43,6 @@ Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are avai
 - CRFCashItemDatabase
 - CRFDBItemLog
 - CRFMonsterAIMgr
-- CRFNewDatabase_vtbl
 - CRaceBossMsgController
 - CRaceBossWinRate
 - CRaceBuffByHolyQuestProcedure
@@ -74,7 +53,6 @@ Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are avai
 - CRaceBuffManager
 - CRecallEffectController
 - CRecallRequest
-- CRecordData_vtbl
 - CReturnGate
 - CReturnGateController
 - CReturnGateCreateParam
@@ -85,7 +63,6 @@ Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are avai
 - CSetItemType
 - CSlotData
 - CSurface
-- CSyncCS_vtbl
 - CTSingleton
 - CTakeOut
 - CTalkCrystalCombineManager
@@ -98,11 +75,9 @@ Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are avai
 - CTransportShip::__mgr_member
 - CTransportShip::__mgr_ticket
 - CUnDeadLock
-- CUserDB_vtbl
 - CUserRankingProcess
 - CVoteSystem
 - CWeaponBulletLinkTable
-- CWeaponBulletLinkTable_vtbl
 - CWeeklyGuildRankInfo
 - CWeeklyGuildRankManager
 - CWeeklyGuildRankOwnerInfo
@@ -115,7 +90,6 @@ Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are avai
 - CashItemRemoteStore::_remain_num_of_good
 - ClassOrderProcessor
 - ControllerTaxRate
-- ControllerTaxRate_vtbl
 - CookieDecision
 
 
@@ -123,7 +97,6 @@ Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are avai
 - CAboutDlg
 - CDisplay
 - CDisplayView
-- CDisplay_vtbl
 - CGameServerApp
 - CGameServerDoc
 - CGameServerView

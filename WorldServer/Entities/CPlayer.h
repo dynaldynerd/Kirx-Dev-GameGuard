@@ -689,6 +689,7 @@ struct __cppobj __unaligned __declspec(align(1)) _target_player_damage_contsf_al
 };
 
 
+
 /* 1792 */
 struct __cppobj __declspec(align(4)) _ATTACK_DELAY_CHECKER
 {
