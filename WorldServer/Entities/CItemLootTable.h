@@ -5,6 +5,7 @@
 /* 1284 */
 class __cppobj __declspec(align(8)) CItemLootTable
 {
+public:
   struct _linker_code
   {
     unsigned __int8 byTableCode;
@@ -12,10 +13,12 @@ class __cppobj __declspec(align(8)) CItemLootTable
     int bExist;
   };
 
+  virtual ~CItemLootTable() = default;
+
+private:
   CRecordData m_tblLoot;
   CEventLootTable *m_pTblEvent;
   _linker_code **m_ppLinkCode;
   int m_nLootNum;
-  virtual ~CItemLootTable() = default;
 };
 
