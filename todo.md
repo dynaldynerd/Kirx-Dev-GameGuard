@@ -1,8 +1,8 @@
 # WorldServer IDA C* class tracker
 
 Total IDA C* types: 443
-Already in WorldServer/Entities: 278
-Missing (game-specific): 143
+Already in WorldServer/Entities: 280
+Missing (game-specific): 141
 Deferred UI/App (not yet imported): 22
 Note: CryptoPP::* types are external Crypto++ library; add include/lib paths later.
 Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are available later if needed.
@@ -12,8 +12,6 @@ Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are avai
 
 ## Missing C* types
 - CItemLootTable_vtbl
-- CItemStore
-- CItemStoreManager
 - CItemUpgradeTable_vtbl
 - CLASS_REFINE_EVENT
 - CLevel_vtbl
