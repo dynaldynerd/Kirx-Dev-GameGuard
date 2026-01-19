@@ -1,8 +1,8 @@
 # WorldServer IDA C* class tracker
 
 Total IDA C* types: 443
-Already in WorldServer/Entities: 280
-Missing (game-specific): 141
+Already in WorldServer/Entities: 283
+Missing (game-specific): 138
 Deferred UI/App (not yet imported): 22
 Note: CryptoPP::* types are external Crypto++ library; add include/lib paths later.
 Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are available later if needed.
@@ -37,13 +37,9 @@ Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are avai
 - CMainThread_vtbl
 - CMapDataTable_vtbl
 - CMapData_vtbl
-- CMapExtend
 - CMapOperation_vtbl
 - CObjectList_vtbl
-- COreAmountMgr
 - COreAmountMgr_vtbl
-- COreCuttingTable::_ore_cut_list
-- COreCuttingTable::_ore_cut_list::_res_list
 - COreCuttingTable_vtbl
 - CPartyModeKillMonsterExpNotify
 - CPartyModeKillMonsterExpNotify::CExpInfo

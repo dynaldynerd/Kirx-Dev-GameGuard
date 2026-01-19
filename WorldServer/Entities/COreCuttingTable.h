@@ -5,6 +5,7 @@
 /* 1290 */
 class __cppobj COreCuttingTable
 {
+public:
   struct _ore_cut_list
   {
     struct _res_list
@@ -19,9 +20,11 @@ class __cppobj COreCuttingTable
     _res_list ResList[100];
   };
 
+  virtual ~COreCuttingTable() = default;
+
+private:
   CRecordData m_tblOreCutting;
   int m_nOreNum;
   _ore_cut_list *pOreList;
-  virtual ~COreCuttingTable() = default;
 };
 
