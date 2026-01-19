@@ -2,7 +2,7 @@
 
 Total IDA C* types: 443
 Already in WorldServer/Entities: 283
-Missing (game-specific): 85
+Missing (game-specific): 80
 Deferred UI/App (not yet imported): 22
 Note: CryptoPP::* types are external Crypto++ library; add include/lib paths later.
 Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are available later if needed.
@@ -30,8 +30,6 @@ Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are avai
 - CLuaSignalReActor::_Action
 - CM_Power_Data_s
 - CPostSystemManager
-- CPotionMgr
-- CPotionMgr::_ParamData
 - CProcessLocal
 - CProcessLocalObject
 - CProcessThread
@@ -71,9 +69,6 @@ Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are avai
 - CTotalGuildRankInfo
 - CTotalGuildRankManager
 - CTotalGuildRankRecord
-- CTransportShip
-- CTransportShip::__mgr_member
-- CTransportShip::__mgr_ticket
 - CUnDeadLock
 - CUserRankingProcess
 - CVoteSystem

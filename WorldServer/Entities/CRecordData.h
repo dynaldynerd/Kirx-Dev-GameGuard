@@ -12,6 +12,8 @@ class __cppobj CRecordData
   int m_nLowNum;
   char **m_ppsRecord;
   unsigned int *m_pdwHashList;
+
+public:
   virtual ~CRecordData() = default;
 };
 
