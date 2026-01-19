@@ -1,46 +1,15 @@
 # WorldServer IDA C* class tracker
 
-Total IDA C* types: 456
-Already in WorldServer/Entities: 204
-Missing (game-specific): 230
+Total IDA C* types: 455
+Already in WorldServer/Entities: 235
+Missing (game-specific): 198
 Deferred UI/App (not yet imported): 22
 Note: CryptoPP::* types are external Crypto++ library; add include/lib paths later.
 Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are available later if needed.
 
 
+
 ## Missing C* types
-- C24Timer
-- CActionPointSystemMgr
-- CAsyncLogBuffer
-- CAsyncLogBufferList
-- CAsyncLogInfo
-- CAsyncLogger
-- CBilling
-- CBillingBR
-- CBillingCN
-- CBillingID
-- CBillingJP
-- CBillingKR
-- CBillingManager
-- CBillingNULL
-- CBillingPH
-- CBillingRU
-- CBilling_vtbl
-- CBossMonsterScheduleSystem
-- CCashDBWorkManager
-- CCashDbWorkerBR
-- CCashDbWorkerCN
-- CCashDbWorkerES
-- CCashDbWorkerGB
-- CCashDbWorkerID
-- CCashDbWorkerJP
-- CCashDbWorkerKR
-- CCashDbWorkerNULL
-- CCashDbWorkerPH
-- CCashDbWorkerRU
-- CCashDbWorkerTH
-- CCashDbWorkerTW
-- CCashDbWorkerUS
 - CChatStealSystem
 - CCheckSumBaseConverter
 - CCheckSumCharacAccountTrunkData
