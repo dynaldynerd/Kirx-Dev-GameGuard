@@ -1,8 +1,8 @@
 # WorldServer IDA C* class tracker
 
 Total IDA C* types: 1290
-Already in WorldServer/Entities: 86
-Missing (not yet imported): 1205
+Already in WorldServer/Entities: 104
+Missing (not yet imported): 1187
 
 ## Missing C* types
 - C24Timer
@@ -28,7 +28,6 @@ Missing (not yet imported): 1205
 - CAtlTraceModuleInfo
 - CAtlTraceProcess
 - CAtlTraceSettings
-- CAttack
 - CBilling
 - CBillingBR
 - CBillingCN
@@ -176,8 +175,6 @@ Missing (not yet imported): 1205
 - CComCtlWrapper::Str_SetPtrW_Type
 - CComCtlWrapper::UninitializeFlatSB_Type
 - CComCtlWrapper::_TrackMouseEvent_Type
-- CComboBox
-- CComboBoxEx
 - CCommDlgWrapper
 - CCommDlgWrapper::ChooseColorA_Type
 - CCommDlgWrapper::ChooseColorW_Type
@@ -216,7 +213,6 @@ Missing (not yet imported): 1205
 - CCryptParam
 - CCryptParamCrete
 - CCryptParam_vtbl
-- CCryptor
 - CCtrlView
 - CDBException
 - CDBVariant
@@ -323,12 +319,6 @@ Missing (not yet imported): 1205
 - CGravityStoneRegener
 - CGuild::MakeBuddyPacket::__l2::__guild_buddy_list
 - CGuildBattleController
-- CGuildList
-- CGuildList_vtbl
-- CGuildMasterEffect
-- CGuildRanking
-- CGuildRoomInfo
-- CGuildRoomSystem
 - CGuild_vtbl
 - CHARFORMAT2A
 - CHARFORMAT2W
@@ -337,14 +327,7 @@ Missing (not yet imported): 1205
 - CHandleMap
 - CHashMapPtrPool
 - CHeaderCtrl
-- CHolyKeeper
-- CHolyScheduleData
 - CHolyScheduleData::__HolyScheduleNode
-- CHolyStone
-- CHolyStoneSaveData
-- CHolyStoneSystem
-- CHolyStoneSystemDataMgr
-- CHonorGuild
 - CHonorGuild_vtbl
 - CHotKeyCtrl
 - CHtmlEditCtrl
@@ -411,7 +394,6 @@ Missing (not yet imported): 1205
 - CMapData_vtbl
 - CMapDisplay
 - CMapExtend
-- CMapItemStoreList
 - CMapOperation_vtbl
 - CMapPtrToPtr
 - CMapPtrToPtr::CAssoc
@@ -433,7 +415,6 @@ Missing (not yet imported): 1205
 - CMemoryException
 - CMemoryState
 - CMenu
-- CMerchant
 - CMetaFileDC
 - CMgrAccountLobbyHistory
 - CMgrAccountLobbyHistory::__LOG_DATA
@@ -460,7 +441,6 @@ Missing (not yet imported): 1205
 - CMoneySupplyMgr
 - CMoneySupplyMgr_vtbl
 - CMonikerFile
-- CMonsterAttack
 - CMonsterEventRespawn
 - CMonsterEventRespawn_vtbl
 - CMonsterEventSet
