@@ -3,6 +3,7 @@
 #include "IdaCompat.h"
 
 #include "CGameObject.h"
+#include "CMyTimer.h"
 
 struct __declspec(align(4)) _sf_continous
 {
@@ -32,16 +33,6 @@ struct _effect_parameter::__param_data
   float m_fEff_Plus[42];
   char m_bEff_State[29];
   float m_fEff_Have[83];
-};
-
-class __declspec(align(8)) CMyTimer
-{
-public:
-  virtual ~CMyTimer();
-
-  int m_nTickTerm;
-  unsigned int m_dwTickOld;
-  bool m_bOper;
 };
 
 class CCharacter : public CGameObject

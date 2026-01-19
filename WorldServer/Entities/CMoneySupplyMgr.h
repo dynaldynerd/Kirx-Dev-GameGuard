@@ -1,0 +1,32 @@
+#pragma once
+
+#include "IdaCompat.h"
+
+struct __unaligned __declspec(align(4)) _MONEY_SUPPLY_DATA
+{
+  struct _money_supply
+  {
+    int nLv[4];
+    int nRace[3];
+    int nClass[60];
+  };
+
+  __int64 dwAmount[9];
+  _money_supply ms_data[4];
+  int nFeeLv[4];
+  int nFeeRace[3];
+  int nHonorGuildRace[2][3];
+  int nUnitRepairLv[4];
+  int nBuyUnitLv[4];
+};
+
+class __cppobj CMoneySupplyMgr
+{
+public:
+  virtual ~CMoneySupplyMgr() = default;
+
+  unsigned int m_dwLastSendTime;
+  unsigned int m_dwSystemOperStartTime;
+  _MONEY_SUPPLY_DATA m_MS_data;
+  _MONEY_SUPPLY_DATA m_MS_Senddata;
+};
