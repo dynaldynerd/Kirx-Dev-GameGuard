@@ -28,7 +28,6 @@ Note: Win32/COM SDK types are external; ensure Windows SDK headers/libs are avai
 - CLuaSignalReActor::RF_LUA_SIGNAL
 - CLuaSignalReActor::_Action
 - CM_Power_Data_s
-- CRtc
 - CRusiaBillingMgr
 - CSUItemSystem
 - CSetItemEffect::set_effect_info
