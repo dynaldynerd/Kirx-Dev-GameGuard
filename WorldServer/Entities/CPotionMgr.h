@@ -8,6 +8,8 @@ struct _PotionItem_fld;
 class __cppobj CPotionMgr
 {
 public:
+  bool DatafileInit();
+
   struct __cppobj PotionInnerData
   {
     bool m_bPotionDelayIndexList[38];
@@ -26,3 +28,5 @@ public:
   CRecordData m_tblPotionEffectData;
   CRecordData m_tblPotionCheckData;
 };
+
+extern CPotionMgr g_PotionMgr;

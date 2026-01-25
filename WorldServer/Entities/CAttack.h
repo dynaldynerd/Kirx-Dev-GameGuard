@@ -4,7 +4,10 @@
 
 class CCharacter;
 struct _attack_param;
+class CRecordData;
 
+#ifndef BE_DAMAGED_CHAR_DEFINED
+#define BE_DAMAGED_CHAR_DEFINED
 /* 2358 */
 struct __cppobj __declspec(align(8)) _be_damaged_char
 {
@@ -13,6 +16,7 @@ struct __cppobj __declspec(align(8)) _be_damaged_char
   bool m_bActiveSucc;
   int m_nActiveDamage;
 };
+#endif
 
 /* 2359 */
 class __cppobj __declspec(align(8)) CAttack
@@ -24,4 +28,7 @@ class __cppobj __declspec(align(8)) CAttack
   int m_nDamagedObjNum;
   _be_damaged_char m_DamList[30];
   bool m_bFailure;
+
+public:
+  static void SetStaticMember(CRecordData *effectTable);
 };

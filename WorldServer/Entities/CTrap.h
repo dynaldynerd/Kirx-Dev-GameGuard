@@ -6,6 +6,7 @@
 /* 1746 */
 class __cppobj CTrap : CCharacter
 {
+public:
   int m_nHP;
   CPlayer *m_pMaster;
   unsigned __int8 m_byRaceCode;
@@ -18,5 +19,7 @@ class __cppobj CTrap : CCharacter
   bool m_bBreakTransparBuffer;
   unsigned int m_dwLastDestroyTime;
   int m_nTrapMaxAttackPnt;
+
+  void Init(_object_id *pID);
 };
 

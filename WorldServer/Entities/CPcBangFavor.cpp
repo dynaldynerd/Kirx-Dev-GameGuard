@@ -12,3 +12,8 @@ bool CPcBangFavor::Initialzie()
 {
   return true;
 }
+
+bool CPcBangFavor::LoadPcBangData()
+{
+  return true;
+}

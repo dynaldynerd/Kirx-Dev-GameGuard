@@ -8,6 +8,7 @@ class CPlayer;
 /* 1773 */
 class __cppobj __declspec(align(8)) CParkingUnit : CGameObject
 {
+public:
   CPlayer *m_pOwner;
   unsigned int m_dwOwnerSerial;
   unsigned __int8 m_byFrame;
@@ -17,5 +18,7 @@ class __cppobj __declspec(align(8)) CParkingUnit : CGameObject
   unsigned int m_dwParkingStartTime;
   unsigned __int16 m_wHPRate;
   unsigned int m_dwLastDestroyTime;
+
+  void Init(_object_id *pID);
 };
 

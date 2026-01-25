@@ -22,6 +22,7 @@ public:
   };
 
   virtual ~CGuild() = default;
+  void Init(unsigned int index);
 
 private:
   int m_nIndex;

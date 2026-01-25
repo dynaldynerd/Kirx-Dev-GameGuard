@@ -12,6 +12,7 @@
 /* 1635 */
 class __cppobj CMonster : CCharacter
 {
+public:
   bool m_bOper;
   bool m_bApparition;
   bool m_bDungeon;
@@ -50,5 +51,7 @@ class __cppobj CMonster : CCharacter
   _event_set *m_pEventSet;
   CMonsterAI m_AI;
   CLuaSignalReActor m_LuaSignalReActor;
+
+  void Init(_object_id *pID);
 };
 

@@ -6,6 +6,7 @@
 /* 1597 */
 class __cppobj CPartyPlayer
 {
+public:
   bool m_bLogin;
   __unaligned __declspec(align(1)) _CLID m_id;
   char m_wszName[17];
@@ -16,5 +17,7 @@ class __cppobj CPartyPlayer
   unsigned __int8 m_byLootShareSystem;
   CPartyPlayer *m_pLootAuthor;
   CDarkHole *m_pDarkHole;
+
+  void Init(unsigned int index);
 };
 

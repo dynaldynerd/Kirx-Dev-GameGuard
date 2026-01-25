@@ -34,4 +34,6 @@ public:
   unsigned __int16 m_wRange;
   unsigned __int16 m_wDropCntOnce;
   CMyTimer m_tmrDropTime;
+
+  void Init(_object_id *pID);
 };

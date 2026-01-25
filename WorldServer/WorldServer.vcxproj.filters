@@ -57,6 +57,9 @@
     <ClInclude Include="Entities\*.h" Exclude="Entities\CABC75A24E330D1CBB803A094EF8.h">
       <Filter>Header Files\Entities</Filter>
     </ClInclude>
+    <ClInclude Include="Entities\ItemDataLoader.h">
+      <Filter>Header Files\Entities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MainFrm.cpp">
@@ -81,6 +84,9 @@
       <Filter>Source Files\Net</Filter>
     </ClCompile>
     <ClCompile Include="Entities\*.cpp">
+      <Filter>Source Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\ItemDataLoader.cpp">
       <Filter>Source Files\Entities</Filter>
     </ClCompile>
   </ItemGroup>

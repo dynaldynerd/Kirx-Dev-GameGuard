@@ -8,6 +8,7 @@ class CDarkHoleChannel;
 /* 1600 */
 class __cppobj __declspec(align(4)) CDarkHole : CGameObject
 {
+public:
   CDarkHoleChannel *m_pChannel;
   unsigned int m_dwChannelSerial;
   unsigned int m_dwOpenerSerial;
@@ -16,5 +17,7 @@ class __cppobj __declspec(align(4)) CDarkHole : CGameObject
   unsigned int m_dwNextCloseTime;
   unsigned int m_dwNextHurryTime;
   bool m_bHurry;
+
+  void Init(_object_id *pID);
 };
 

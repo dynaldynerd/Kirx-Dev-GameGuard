@@ -13,6 +13,8 @@ public:
     int bExist;
   };
 
+  bool ReadRecord(const char *fileName, CRecordData *itemTables, char *errCode);
+
   virtual ~CItemLootTable() = default;
 
 private:

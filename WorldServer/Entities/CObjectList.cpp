@@ -2,7 +2,7 @@
 #include "CObjectList.h"
 #include "CGameObject.h"
 
-/*
+
 _object_list_point::_object_list_point()
 {
   m_pItem = nullptr;
@@ -28,18 +28,18 @@ CObjectList::CObjectList()
   InitList();
 }
 
-CObjectList::~CObjectList()
-{
-}
+CObjectList::~CObjectList() = default;
 
 CGameObject *CObjectList::CopyItem(unsigned int dwIndex)
 {
   int index = 0;
   _object_list_point *node = m_Head.m_pNext;
-  while ( node != &m_Tail )
+  while (node != &m_Tail)
   {
-    if ( dwIndex == static_cast<unsigned int>(index) )
+    if (dwIndex == static_cast<unsigned int>(index))
+    {
       return node->m_pItem;
+    }
     ++index;
     node = node->m_pNext;
   }
@@ -48,9 +48,13 @@ CGameObject *CObjectList::CopyItem(unsigned int dwIndex)
 
 bool CObjectList::DeleteItem(_object_list_point *pItem)
 {
-  for ( _object_list_point *node = m_Head.m_pNext; node != &m_Tail; node = node->m_pNext )
+  if (pItem == nullptr)
   {
-    if ( node == pItem )
+    return false;
+  }
+  for (_object_list_point *node = m_Head.m_pNext; node != &m_Tail; node = node->m_pNext)
+  {
+    if (node == pItem)
     {
       node->m_pNext->m_pPrev = node->m_pPrev;
       node->m_pPrev->m_pNext = node->m_pNext;
@@ -61,7 +65,6 @@ bool CObjectList::DeleteItem(_object_list_point *pItem)
       return true;
     }
   }
-  MyMessageBox("CObjectList", "DeleteItem error");
   return false;
 }
 
@@ -81,9 +84,8 @@ void CObjectList::InitList()
 
 bool CObjectList::PushItem(_object_list_point *pItem)
 {
-  if ( pItem->m_pNext || pItem->m_pPrev )
+  if (pItem == nullptr || pItem->m_pNext || pItem->m_pPrev)
   {
-    MyMessageBox("CObjectList", "PushItem error");
     return false;
   }
 
@@ -94,4 +96,3 @@ bool CObjectList::PushItem(_object_list_point *pItem)
   ++m_nSize;
   return true;
 }
-*/

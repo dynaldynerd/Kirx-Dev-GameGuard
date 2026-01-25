@@ -3,6 +3,57 @@
 #include "CGameObject.h"
 #include <cstdlib>
 #include <ctime>
+
+bool _100_per_random_table::s_bRecordSet = false;
+unsigned __int16 _100_per_random_table::s_wRecord[10][100] = {};
+
+_object_id::_object_id()
+{
+  m_byKind = 0;
+  m_byID = 0;
+  m_wIndex = 0;
+}
+
+_object_id::_object_id(unsigned __int8 byKind, unsigned __int8 byID, unsigned __int16 wIndex)
+{
+  m_byKind = byKind;
+  m_byID = byID;
+  m_wIndex = wIndex;
+}
+
+_100_per_random_table::_100_per_random_table()
+{
+  if (!s_bRecordSet)
+  {
+    s_bRecordSet = true;
+    for (int j = 0; j < 10; ++j)
+    {
+      for (int k = 0; k < 100; ++k)
+      {
+        s_wRecord[j][k] = static_cast<unsigned __int16>(k);
+      }
+    }
+  }
+  m_wCurTable = 0;
+  m_wCurPoint = 0;
+}
+
+unsigned __int16 _100_per_random_table::GetRand()
+{
+  if (m_wCurPoint >= 100)
+  {
+    m_wCurPoint = 0;
+  }
+  unsigned __int16 value = s_wRecord[m_wCurTable][m_wCurPoint++];
+  return static_cast<unsigned __int16>(value % 100);
+}
+
+void _100_per_random_table::reset()
+{
+  m_wCurTable = 0;
+  m_wCurPoint = 0;
+}
+
 /*
 CGameObject *CGameObject::s_pSelectObject = nullptr;
 CGameObject *CGameObject::s_pTotalObject[42642] = {};

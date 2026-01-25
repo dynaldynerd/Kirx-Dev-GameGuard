@@ -7,6 +7,9 @@
 class __cppobj __declspec(align(8)) CNuclearBombMgr
 {
 public:
+  static CNuclearBombMgr *Instance();
+  bool MissileInit();
+
   virtual ~CNuclearBombMgr() = default;
 
   char m_szStickCode[64];

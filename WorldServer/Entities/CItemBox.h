@@ -7,6 +7,7 @@
 /* 3058 */
 class __cppobj __declspec(align(8)) CItemBox : public CGameObject
 {
+public:
   unsigned int m_dwOwnerSerial;
   unsigned __int16 m_wOwnerIndex;
   unsigned int m_dwThrowerSerial;
@@ -35,4 +36,6 @@ class __cppobj __declspec(align(8)) CItemBox : public CGameObject
   int m_bHolyScanner;
   _STORAGE_LIST::_db_con m_Item;
   bool m_bHide;
+
+  void Init(_object_id *pID);
 };

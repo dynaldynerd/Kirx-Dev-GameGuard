@@ -13,4 +13,6 @@ public:
   unsigned __int8 m_byRaceCode;
   unsigned int m_dwLastDestroyTime;
   int m_nLeftTicketNum[2];
+
+  void Init(_object_id *pID);
 };

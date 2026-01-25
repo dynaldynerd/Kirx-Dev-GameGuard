@@ -6,6 +6,13 @@
 class __cppobj CMonsterSPGroupTable
 {
 public:
+  bool Create(
+    CRecordData *monsterTable,
+    CRecordData *monsterBaseSP,
+    CRecordData *effectData0,
+    CRecordData *effectData1,
+    CRecordData *effectData2);
+
   unsigned int m_dwRecordNum;
   _monster_sp_group *m_pRecordData;
 };

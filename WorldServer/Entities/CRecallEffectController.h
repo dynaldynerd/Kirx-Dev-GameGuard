@@ -14,4 +14,7 @@ public:
   CMyTimer *m_pkTimer;
   CNetIndexList *m_pkEmptyInxList;
   CNetIndexList *m_pkUseInxList;
+
+  static CRecallEffectController *Instance();
+  bool Init(unsigned int infoCount);
 };

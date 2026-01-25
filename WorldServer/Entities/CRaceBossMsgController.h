@@ -43,4 +43,7 @@ public:
   int m_iOldDay;
   CMyTimer *m_pkTimer;
   RACE_BOSS_MSG::CMsgListManager m_kManager;
+
+  static CRaceBossMsgController *Instance();
+  void Init();
 };

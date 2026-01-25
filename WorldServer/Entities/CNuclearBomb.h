@@ -13,6 +13,8 @@ struct __cppobj _be_damaged_player
   int m_nDamage;
 };
 
+#ifndef BE_DAMAGED_CHAR_DEFINED
+#define BE_DAMAGED_CHAR_DEFINED
 struct __cppobj __declspec(align(8)) _be_damaged_char
 {
   CCharacter *m_pChar;
@@ -20,6 +22,7 @@ struct __cppobj __declspec(align(8)) _be_damaged_char
   bool m_bActiveSucc;
   int m_nActiveDamage;
 };
+#endif
 
 class __cppobj CNuclearBomb : public CCharacter
 {

@@ -6,6 +6,7 @@
 /* 1779 */
 class __cppobj CAnimus : CCharacter
 {
+public:
   unsigned __int8 m_byClassCode;
   int m_nHP;
   int m_nFP;
@@ -34,5 +35,8 @@ class __cppobj CAnimus : CCharacter
   CCharacter *m_pTarget;
   CAITimer m_AITimer[3];
   SKILL m_Skill[2];
+
+  static void SetStaticMember();
+  void Init(_object_id *pID);
 };
 

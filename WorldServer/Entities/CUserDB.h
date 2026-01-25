@@ -6,6 +6,7 @@
 /* 1536 */
 class __cppobj __declspec(align(8)) CUserDB
 {
+public:
   _GLBID m_gidGlobal;
   _CLID m_idWorld;
   unsigned int m_dwIP;
@@ -56,6 +57,7 @@ class __cppobj __declspec(align(8)) CUserDB
   unsigned int m_dwRequestMoveCharacterSerialList[3];
   unsigned int m_dwTournamentCharacterSerialList[3];
   char m_szLobbyHistoryFileName[64];
+  void Init(unsigned int index);
   virtual ~CUserDB() = default;
 };
 

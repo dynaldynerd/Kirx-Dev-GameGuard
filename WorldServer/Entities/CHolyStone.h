@@ -28,4 +28,6 @@ public:
   unsigned __int16 m_wDropCntOnce;
   unsigned __int16 m_wAddCountWithPlayer;
   CMyTimer m_tmrDropTime;
+
+  void Init(_object_id *pID);
 };

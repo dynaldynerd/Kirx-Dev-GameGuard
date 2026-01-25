@@ -2,6 +2,8 @@
 
 #include "IdaCompat.h"
 
+struct _base_fld;
+
 /* 1281 */
 class __cppobj CRecordData
 {
@@ -13,6 +15,13 @@ public:
   int m_nLowNum;
   char **m_ppsRecord;
   unsigned int *m_pdwHashList;
+
+  bool ReadRecord(const char *fileName, int structSize, char *errCode);
+  unsigned int GetRecordNum() const;
+  _base_fld *GetRecord(int index);
+  _base_fld *GetRecord(const char *code);
+  bool MakeHashTable(int keyIndex, int keyLength, char *errCode);
+  static unsigned int MakeHash(const char *p, int len);
 
   virtual ~CRecordData() = default;
 };

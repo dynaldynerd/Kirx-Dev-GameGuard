@@ -6,6 +6,7 @@
 /* 1742 */
 class __cppobj __declspec(align(8)) CGuardTower : CCharacter
 {
+public:
   int m_nHP;
   CPlayer *m_pMasterTwr;
   unsigned int m_dwMasterSerial;
@@ -20,5 +21,7 @@ class __cppobj __declspec(align(8)) CGuardTower : CCharacter
   CCharacter *m_pTarget;
   CCharacter *m_pMasterSetTarget;
   unsigned int m_dwLastDestroyTime;
+
+  void Init(_object_id *pID);
 };
 

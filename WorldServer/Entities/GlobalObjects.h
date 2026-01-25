@@ -1,0 +1,33 @@
+#pragma once
+
+#include "CMainThread.h"
+#include "CUserDB.h"
+#include "CPartyPlayer.h"
+#include "CPlayer.h"
+#include "CMonster.h"
+#include "CMerchant.h"
+#include "CAnimus.h"
+#include "CGuardTower.h"
+#include "CHolyStone.h"
+#include "CHolyKeeper.h"
+#include "CTrap.h"
+#include "CItemBox.h"
+#include "CParkingUnit.h"
+#include "CDarkHole.h"
+#include "CGuild.h"
+
+extern CUserDB g_UserDB[MAX_PLAYER];
+extern CPartyPlayer g_PartyPlayer[MAX_PLAYER];
+extern CPlayer g_Player[MAX_PLAYER];
+
+extern CMonster *g_Monster;
+extern CMerchant *g_NPC;
+extern CAnimus *g_Animus;
+extern CGuardTower *g_Tower;
+extern CHolyStone *g_Stone;
+extern CHolyKeeper *g_Keeper;
+extern CTrap *g_Trap;
+extern CItemBox *g_ItemBox;
+extern CParkingUnit *g_ParkingUnit;
+extern CDarkHole *g_DarkHole;
+extern CGuild *g_Guild;

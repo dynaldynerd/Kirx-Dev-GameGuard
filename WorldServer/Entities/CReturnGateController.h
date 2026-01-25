@@ -14,4 +14,7 @@ public:
   CNetIndexList *m_pkUseInxList;
   unsigned int m_uiGateTotCnt;
   CReturnGate **m_ppkGatePool;
+
+  static CReturnGateController *Instance();
+  bool Init(unsigned int gateCount);
 };

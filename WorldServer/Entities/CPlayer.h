@@ -14,6 +14,7 @@ struct _PCBANG_PLAY_TIME;
 struct _DB_QRY_SYN_DATA;
 struct _base_fld;
 struct _monster_sp_fld;
+struct _skill_fld;
 class CGameObject;
 class CPlayer;
 class CMapData;
@@ -76,6 +77,7 @@ struct _quest_dummy;
 struct _safe_dummy;
 struct _effect_parameter::__param_data;
 class CUserDB;
+class CRecordData;
 struct _PVPPOINT_LIMIT_DB_BASE;
 struct _PVP_ORDER_VIEW_DB_BASE;
 class CPartyPlayer;
@@ -389,6 +391,8 @@ struct __declspec(align(8)) _WEAPON_PARAM
   int nActiveEffLvl;
   int nActiveProb;
   char strEffBulletType[64];
+
+  static void SetStaticMember(CRecordData *itemTable);
 };
 
 /* 1737 */
@@ -467,6 +471,8 @@ struct __cppobj __declspec(align(8)) _MASTERY_PARAM
   _mastery_up_data m_MastUpData;
   _skill_lv_up_data m_SkillUpData;
   bool m_bUpdateEquipMast;
+
+  static void SetStaticMember(CRecordData *effectTable, CRecordData *forceTable);
 };
 
 /* 1745 */
@@ -546,6 +552,8 @@ struct __cppobj __declspec(align(8)) _happen_event_cont
 /* 1756 */
 struct __cppobj ItemCombineMgr
 {
+  static bool LoadData();
+
   CPlayer *m_pMaster;
 };
 
@@ -809,7 +817,14 @@ class __cppobj __declspec(align(8)) CPlayer : CCharacter
     _target_player_damage_contsf_allinform_zocl m_PrevTargetPlayerDamageContInfo;
   };
 
+public:
+  CPlayer();
   virtual ~CPlayer();
+
+  static _skill_fld *ms_pXmas_Snow_Effect;
+  static _skill_fld *ms_pXmas_Snow_Bullet_Effect;
+  static void SetStaticMember();
+  void Init(_object_id *pID);
 
   bool m_bLoad;
   bool m_bOper;

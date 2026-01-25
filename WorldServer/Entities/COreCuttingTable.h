@@ -20,6 +20,8 @@ public:
     _res_list ResList[100];
   };
 
+  bool ReadRecord(const char *fileName, CRecordData *oreTable, CRecordData *resTable, char *errCode);
+
   virtual ~COreCuttingTable() = default;
 
 private:

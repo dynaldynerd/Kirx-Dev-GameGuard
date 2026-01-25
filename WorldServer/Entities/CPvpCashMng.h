@@ -38,4 +38,7 @@ public:
   _talik_recvr_list m_TalikList;
   _class_value m_ClassValList[50];
   _max_point m_LimitPoint[30];
+
+  static CPvpCashMng *Instance();
+  bool LoadData();
 };
