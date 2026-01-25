@@ -26,6 +26,9 @@ namespace RACE_BOSS_MSG
     CNetIndexList m_kEmptyInxList;
     CNetIndexList m_kUseInxList;
     CNetIndexList m_kWaitInxList;
+
+    bool Load(unsigned int dwCurTime);
+    bool Save();
   };
 
   class CMsgListManager
@@ -33,6 +36,10 @@ namespace RACE_BOSS_MSG
   public:
     bool m_bEmpty;
     CMsgList *m_pkMsgList[3];
+
+    bool IsHaveBeenSave();
+    bool Load(unsigned int dwCurTime);
+    void Save();
   };
 }
 
@@ -45,5 +52,8 @@ public:
   RACE_BOSS_MSG::CMsgListManager m_kManager;
 
   static CRaceBossMsgController *Instance();
-  void Init();
+  bool Init();
+
+  int GetCurDay();
+  bool LoadCurTime(unsigned int *dwCurTime);
 };

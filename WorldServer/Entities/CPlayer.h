@@ -553,6 +553,7 @@ struct __cppobj __declspec(align(8)) _happen_event_cont
 struct __cppobj ItemCombineMgr
 {
   static bool LoadData();
+  static bool CheckLoadData();
 
   CPlayer *m_pMaster;
 };
@@ -580,10 +581,12 @@ struct __cppobj MiningTicket
   struct _AuthKeyTicket
   {
     $96C5C4A8485BFF889935F41DA1669980 ___u0;
+    void Init();
   };
 
   _AuthKeyTicket m_dwTakeLastMentalTicket;
   _AuthKeyTicket m_dwTakeLastCriTicket;
+  void Init();
 };
 
 /* 1762 */
@@ -726,6 +729,8 @@ struct __cppobj __declspec(align(4)) _ATTACK_DELAY_CHECKER
   unsigned __int8 byTemp_EffectCode;
   unsigned __int16 wTemp_EffectIndex;
   unsigned __int8 byTemp_EffectMastery;
+
+  static int s_nSpareTime;
 };
 
 /* 1793 */
@@ -748,6 +753,7 @@ struct __cppobj _NameChangeBuddyInfo
 {
   bool bNameChange;
   int nSendNum;
+  void Init();
 };
 
 /* 1800 */
@@ -825,6 +831,7 @@ public:
   static _skill_fld *ms_pXmas_Snow_Bullet_Effect;
   static void SetStaticMember();
   void Init(_object_id *pID);
+  void PastWhisperInit();
 
   bool m_bLoad;
   bool m_bOper;

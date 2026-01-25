@@ -2,6 +2,14 @@
 
 #include "IdaCompat.h"
 
+extern "C" {
+typedef int(__cdecl *RTC_error_fnW)(int, const wchar_t *, int, const wchar_t *, const wchar_t *, ...);
+RTC_error_fnW __cdecl RTC_SetErrorFuncW(RTC_error_fnW func);
+}
+
+extern LONG g_rtcRunning;
+extern RTC_error_fnW g_rtcErrorFunc;
+
 class __cppobj CRtc
 {
 public:

@@ -10,6 +10,7 @@ class __cppobj CPvpUserAndGuildRankingSystem
 public:
   static CPvpUserAndGuildRankingSystem *Instance();
   bool Init();
+  bool InitLogger();
 
   CLogFile *m_pkLogger;
   bool m_bInit;

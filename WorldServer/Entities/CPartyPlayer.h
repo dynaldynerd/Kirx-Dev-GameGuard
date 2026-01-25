@@ -19,5 +19,6 @@ public:
   CDarkHole *m_pDarkHole;
 
   void Init(unsigned int index);
+  void PartyListInit();
 };
 

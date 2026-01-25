@@ -12,3 +12,8 @@ bool CSUItemSystem::SUItemSystem_Init()
 {
   return true;
 }
+
+bool CSUItemSystem::SUItemSystem_CheckData()
+{
+  return true;
+}

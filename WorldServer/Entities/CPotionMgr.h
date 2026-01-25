@@ -9,6 +9,7 @@ class __cppobj CPotionMgr
 {
 public:
   bool DatafileInit();
+  bool SetPotionDataName();
 
   struct __cppobj PotionInnerData
   {

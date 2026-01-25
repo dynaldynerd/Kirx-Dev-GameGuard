@@ -14,5 +14,7 @@ public:
   unsigned __int16 m_wSingleMissCount;
   unsigned __int16 m_wContinueValiedCount;
   unsigned __int16 m_wTotalContinueValiedCount;
+
+  bool Init(unsigned int listCount);
 };
 

@@ -8,6 +8,8 @@ class __cppobj CWeeklyGuildRankManager
 public:
   static CWeeklyGuildRankManager *Instance();
   bool Init();
+  bool InitNextSetOwnerDate();
+  void SetNextRankDate();
 
   long long m_tNextUpdateTime;
   long long m_tNextSetOwnerTime;

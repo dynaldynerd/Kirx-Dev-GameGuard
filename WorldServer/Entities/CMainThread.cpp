@@ -41,6 +41,7 @@
 #include "CRtc.h"
 #include "CNationCodeStrTable.h"
 #include "CNationSettingManager.h"
+#include "NameTxt_fld.h"
 #include "CNuclearBombMgr.h"
 #include "CPvpCashMng.h"
 #include "CQuestMgr.h"
@@ -71,6 +72,16 @@ Us_HFSM::~Us_HFSM() = default;
 CMainThread g_Main;
 
 CMainThread::CMainThread() = default;
+
+bool CMainThread::IsTestServer() const
+{
+  return m_byWorldType == 1;
+}
+
+unsigned int CMainThread::GetMonsterRecordNum() const
+{
+  return m_tblMonster.GetRecordNum();
+}
 
 char CMainThread::ms_szClientVerCheck[33]{};
 
@@ -973,16 +984,893 @@ bool CMainThread::DataFileInit()
 
 bool CMainThread::SetGlobalDataName()
 {
+  char errMsg[160]{};
+
+  const char *itemNameFiles[37] =
+  {
+    ".\\script\\UpperItem_str.dat",
+    ".\\script\\LowerItem_str.dat",
+    ".\\script\\GauntletItem_str.dat",
+    ".\\script\\ShoeItem_str.dat",
+    ".\\script\\HelmetItem_str.dat",
+    ".\\script\\ShieldItem_str.dat",
+    ".\\script\\WeaponItem_str.dat",
+    ".\\script\\CloakItem_str.dat",
+    ".\\script\\RingItem_str.dat",
+    ".\\script\\AmuletItem_str.dat",
+    ".\\script\\BulletItem_str.dat",
+    ".\\script\\MaketoolItem_str.dat",
+    ".\\script\\BagItem_str.dat",
+    ".\\script\\PotionItem_str.dat",
+    ".\\script\\FaceItem_str.dat",
+    ".\\script\\ForceItem_str.dat",
+    ".\\script\\BatteryItem_str.dat",
+    ".\\script\\OreItem_str.dat",
+    ".\\script\\ResourceItem_str.dat",
+    ".\\script\\UnitKeyItem_str.dat",
+    ".\\script\\BootyItem_str.dat",
+    ".\\script\\MapItem_str.dat",
+    ".\\script\\TOWNItem_str.dat",
+    ".\\script\\BattleDungeonItem_str.dat",
+    ".\\script\\AnimusItem_str.dat",
+    ".\\script\\GuardTowerItem_str.dat",
+    ".\\script\\TrapItem_str.dat",
+    ".\\script\\SiegeKitItem_str.dat",
+    ".\\script\\TicketItem_str.dat",
+    ".\\script\\EventItem_str.dat",
+    ".\\script\\RecoveryItem_str.dat",
+    ".\\script\\BoxItem_str.dat",
+    ".\\script\\FIRECRACKER_str.dat",
+    ".\\script\\UNmannedminer_str.dat",
+    ".\\script\\RadarItem_str.dat",
+    ".\\script\\NPCLinkItem_str.dat",
+    ".\\script\\CouponItem_str.dat",
+  };
+
+  CRecordData itemNameTables[37];
+  for (int j = 0; j < 37; ++j)
+  {
+    if (!itemNameTables[j].ReadRecord(itemNameFiles[j], 0x304, errMsg))
+    {
+      MyMessageBox(
+        "SetGlobalDataName()",
+        "Item Name Data Load Error : ItemTableCode(%d), ErrorMsg(%s)",
+        j,
+        errMsg);
+      return false;
+    }
+
+    CRecordData *itemTable = &m_tblItemData[j];
+    if (!CRecordData::IsTableOpen(itemTable))
+    {
+      MyMessageBox("SetGlobalDataName()", "ItemData Not Loaded : ItemTableCode(%d)", j);
+      return false;
+    }
+
+    const int recordNum = static_cast<int>(itemTable->GetRecordNum());
+    for (int n = 0; n < recordNum; ++n)
+    {
+      _base_fld *record = itemTable->GetRecord(n);
+      if (!record)
+      {
+        MyMessageBox("SetGlobalDataName()", "Get Item Record Error : ItemTableCode(%d), ItemIndex(%d)", j, n);
+        return false;
+      }
+
+      char *destination = nullptr;
+      switch (j)
+      {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+        case 8:
+        case 9:
+        case 10:
+        case 11:
+        case 12:
+        case 13:
+        case 15:
+        case 16:
+        case 17:
+        case 18:
+        case 19:
+        case 20:
+        case 21:
+        case 22:
+        case 23:
+        case 27:
+        case 28:
+        case 30:
+        case 31:
+        case 32:
+        case 34:
+        case 35:
+        case 36:
+          destination = record[2].m_strCode;
+          break;
+        case 14:
+          destination = reinterpret_cast<char *>(&record[2]);
+          break;
+        case 24:
+          destination = &record[2].m_strCode[60];
+          break;
+        case 25:
+          destination = &record[2].m_strCode[56];
+          break;
+        case 26:
+          destination = reinterpret_cast<char *>(&record[3]);
+          break;
+        case 29:
+          destination = record[1].m_strCode;
+          break;
+        case 33:
+          destination = &record[2].m_strCode[60];
+          break;
+        default:
+          destination = nullptr;
+          break;
+      }
+
+      if (destination == nullptr)
+      {
+        MyMessageBox("SetGlobalDataName()", "Unknown Item Table Code : ItemTableCode(%d)", j);
+        return false;
+      }
+
+      _NameTxt_fld *nameRecord =
+        reinterpret_cast<_NameTxt_fld *>(itemNameTables[j].GetRecord(record->m_strCode));
+      if (!nameRecord)
+      {
+        MyMessageBox(
+          "SetGlobalDataName()",
+          "Get Item Name Error : Not Exist Item Name, ItemTableCode(%d), ItemCode(%s)",
+          j,
+          record->m_strCode);
+        return false;
+      }
+
+      const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
+      strcpy_s(destination, 0x40, name);
+    }
+  }
+
+  const char *effectNameFiles[4] =
+  {
+    ".\\script\\skill_str.dat",
+    ".\\script\\force_str.dat",
+    ".\\script\\ClassSkill_str.dat",
+    ".\\script\\BulletItemEffect_str.dat",
+  };
+
+  CRecordData effectNameTables[4];
+  for (int j = 0; j < 4; ++j)
+  {
+    if (!effectNameTables[j].ReadRecord(effectNameFiles[j], 0x304, errMsg))
+    {
+      MyMessageBox(
+        "SetGlobalDataName()",
+        "Effect Name Data Load Error : ItemTableCode(%d), ErrorMsg(%s)",
+        j,
+        errMsg);
+      return false;
+    }
+
+    CRecordData *effectTable = &m_tblEffectData[j];
+    if (!CRecordData::IsTableOpen(effectTable))
+    {
+      MyMessageBox("SetGlobalDataName()", "EffectData Not Loaded : EffectNum(%d)", j);
+      return false;
+    }
+
+    const int recordNum = static_cast<int>(effectTable->GetRecordNum());
+    for (int n = 0; n < recordNum; ++n)
+    {
+      _base_fld *record = effectTable->GetRecord(n);
+      if (!record)
+      {
+        MyMessageBox("SetGlobalDataName()", "Get Effect Record Error : EffectNum(%d), EffectIndex(%d)", j, n);
+        return false;
+      }
+
+      _NameTxt_fld *nameRecord =
+        reinterpret_cast<_NameTxt_fld *>(effectNameTables[j].GetRecord(record->m_strCode));
+      if (!nameRecord)
+      {
+        MyMessageBox(
+          "SetGlobalDataName()",
+          "Get Effect Name Error : Not Exist Effect Name, EffectNum(%d), EffectCode(%s)",
+          j,
+          record->m_strCode);
+        return false;
+      }
+
+      const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
+      strcpy_s(record[3].m_strCode, 0x40, name);
+    }
+  }
+
+  if (!g_PotionMgr.SetPotionDataName())
+  {
+    MyMessageBox("SetGlobalDataName()", "g_PotionMgr.SetPotionDataName() Error!");
+    return false;
+  }
+
+  if (!CRecordData::IsTableOpen(&m_tblClass))
+  {
+    MyMessageBox("SetGlobalDataName()", "Class Data Not Loaded");
+    return false;
+  }
+
+  CRecordData classNames;
+  if (!classNames.ReadRecord(".\\Script\\Class_str.dat", 0x304, errMsg))
+  {
+    MyMessageBox("SetGlobalDataName()", "Class Name Data Load Error");
+    return false;
+  }
+
+  int recordNum = static_cast<int>(m_tblClass.GetRecordNum());
+  for (int j = 0; j < recordNum; ++j)
+  {
+    _base_fld *record = m_tblClass.GetRecord(j);
+    if (!record)
+    {
+      MyMessageBox("SetGlobalDataName()", "Get Class Data Error, ClassIndex(%d)", j);
+      return false;
+    }
+    _NameTxt_fld *nameRecord = reinterpret_cast<_NameTxt_fld *>(classNames.GetRecord(record->m_strCode));
+    if (!nameRecord)
+    {
+      MyMessageBox(
+        "SetGlobalDataName()",
+        "Get Class Name Error : Not Exist Class Name, ClassCode(%s)",
+        record->m_strCode);
+      return false;
+    }
+    const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
+    strcpy_s(&record[9].m_strCode[48], 0x40, name);
+  }
+
+  if (!CRecordData::IsTableOpen(&m_tblPlayer))
+  {
+    MyMessageBox("SetGlobalDataName()", "Player Character Data Not Loaded");
+    return false;
+  }
+
+  CRecordData playerNames;
+  if (!playerNames.ReadRecord(".\\Script\\PlayerCharacter_str.dat", 0x304, errMsg))
+  {
+    MyMessageBox("SetGlobalDataName()", "Player Character Name Data Load Error");
+    return false;
+  }
+
+  recordNum = static_cast<int>(m_tblPlayer.GetRecordNum());
+  for (int j = 0; j < recordNum; ++j)
+  {
+    _base_fld *record = m_tblPlayer.GetRecord(j);
+    if (!record)
+    {
+      MyMessageBox("SetGlobalDataName()", "Get Player Character Data Error, PlayerCharacterIndex(%d)", j);
+      return false;
+    }
+    _NameTxt_fld *nameRecord = reinterpret_cast<_NameTxt_fld *>(playerNames.GetRecord(record->m_strCode));
+    if (!nameRecord)
+    {
+      MyMessageBox(
+        "SetGlobalDataName()",
+        "Get Player Character Name Error : Not Exist Player Character Name, PlayerCharacterCode(%s)",
+        record->m_strCode);
+      return false;
+    }
+    const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
+    strcpy_s(reinterpret_cast<char *>(&record[1]), 0x40, name);
+  }
+
+  if (!CRecordData::IsTableOpen(&m_tblMonster))
+  {
+    MyMessageBox("SetGlobalDataName()", "Monster Character Data Not Loaded");
+    return false;
+  }
+
+  CRecordData monsterNames;
+  if (!monsterNames.ReadRecord(".\\Script\\MonsterCharacter_str.dat", 0x304, errMsg))
+  {
+    MyMessageBox("SetGlobalDataName()", "Monster Character Name Data Load Error");
+    return false;
+  }
+
+  recordNum = static_cast<int>(m_tblMonster.GetRecordNum());
+  for (int j = 0; j < recordNum; ++j)
+  {
+    _base_fld *record = m_tblMonster.GetRecord(j);
+    if (!record)
+    {
+      MyMessageBox("SetGlobalDataName()", "Get Monster Character Data Error, MonsterCharacterIndex(%d)", j);
+      return false;
+    }
+    _NameTxt_fld *nameRecord = reinterpret_cast<_NameTxt_fld *>(monsterNames.GetRecord(record->m_strCode));
+    if (!nameRecord)
+    {
+      MyMessageBox(
+        "SetGlobalDataName()",
+        "Get Monster Character Name Error : Not Exist Monster Character Name, MonsterCharacterCode(%s)",
+        record->m_strCode);
+      return false;
+    }
+    const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
+    strcpy_s(reinterpret_cast<char *>(&record[1]), 0x40, name);
+  }
+
+  if (!CRecordData::IsTableOpen(&m_tblNPC))
+  {
+    MyMessageBox("SetGlobalDataName()", "NPC Data Not Loaded");
+    return false;
+  }
+
+  CRecordData npcNames;
+  if (!npcNames.ReadRecord(".\\Script\\NPCharacter_str.dat", 0x304, errMsg))
+  {
+    MyMessageBox("SetGlobalDataName()", "NPC Name Data Load Error");
+    return false;
+  }
+
+  recordNum = static_cast<int>(m_tblNPC.GetRecordNum());
+  for (int j = 0; j < recordNum; ++j)
+  {
+    _base_fld *record = m_tblNPC.GetRecord(j);
+    if (!record)
+    {
+      MyMessageBox("SetGlobalDataName()", "Get NPC Data Error, NPCIndex(%d)", j);
+      return false;
+    }
+    _NameTxt_fld *nameRecord = reinterpret_cast<_NameTxt_fld *>(npcNames.GetRecord(record->m_strCode));
+    if (!nameRecord)
+    {
+      MyMessageBox(
+        "SetGlobalDataName()",
+        "Get NPC Name Error : Not Exist NPC Name, NPCCode(%s)",
+        record->m_strCode);
+      return false;
+    }
+    const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
+    strcpy_s(reinterpret_cast<char *>(&record[1]), 0x40, name);
+  }
+
+  if (!CRecordData::IsTableOpen(&m_tblAnimus))
+  {
+    MyMessageBox("SetGlobalDataName()", "Animus Item Data Not Loaded");
+    return false;
+  }
+
+  CRecordData animusNames;
+  if (!animusNames.ReadRecord(".\\Script\\AnimusItem_str.dat", 0x304, errMsg))
+  {
+    MyMessageBox("SetGlobalDataName()", "Animus Item Name Data Load Error");
+    return false;
+  }
+
+  recordNum = static_cast<int>(m_tblAnimus.GetRecordNum());
+  for (int j = 0; j < recordNum; ++j)
+  {
+    _base_fld *record = m_tblAnimus.GetRecord(j);
+    if (!record)
+    {
+      MyMessageBox("SetGlobalDataName()", "Get Animus Item Data Error, AnimusItemIndex(%d)", j);
+      return false;
+    }
+    _NameTxt_fld *nameRecord = reinterpret_cast<_NameTxt_fld *>(animusNames.GetRecord(record->m_strCode));
+    if (!nameRecord)
+    {
+      MyMessageBox(
+        "SetGlobalDataName()",
+        "Get Animus Item Name Error : Not Exist Animus Item Name, AnimusItemCode(%s)",
+        record->m_strCode);
+      return false;
+    }
+    const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
+    strcpy_s(&record[2].m_strCode[60], 0x40, name);
+  }
+
+  const char *unitPartFiles[6] =
+  {
+    ".\\script\\UnitHead_str.dat",
+    ".\\script\\UnitUpper_str.dat",
+    ".\\script\\UnitLower_str.dat",
+    ".\\script\\UnitArms_str.dat",
+    ".\\script\\UnitShoulder_str.dat",
+    ".\\script\\UnitBack_str.dat",
+  };
+
+  CRecordData unitPartNames[6];
+  for (int j = 0; j < 6; ++j)
+  {
+    if (!unitPartNames[j].ReadRecord(unitPartFiles[j], 0x304, errMsg))
+    {
+      MyMessageBox(
+        "SetGlobalDataName()",
+        "Unit Part Name Data Load Error : UnitPartNum(%d), ErrorMsg(%s)",
+        j,
+        errMsg);
+      return false;
+    }
+
+    CRecordData *unitPartTable = &m_tblUnitPart[j];
+    if (!CRecordData::IsTableOpen(unitPartTable))
+    {
+      MyMessageBox("SetGlobalDataName()", "Unit Part Data Not Loaded : UnitPartNum(%d)", j);
+      return false;
+    }
+
+    const int unitRecordNum = static_cast<int>(unitPartTable->GetRecordNum());
+    for (int n = 0; n < unitRecordNum; ++n)
+    {
+      _base_fld *record = unitPartTable->GetRecord(n);
+      if (!record)
+      {
+        MyMessageBox(
+          "SetGlobalDataName()",
+          "Get Unit Part Data Error : UnitPartNum(%d), UnitPartIndex(%d)",
+          j,
+          n);
+        return false;
+      }
+
+      _NameTxt_fld *nameRecord =
+        reinterpret_cast<_NameTxt_fld *>(unitPartNames[j].GetRecord(record->m_strCode));
+      if (!nameRecord)
+      {
+        MyMessageBox(
+          "SetGlobalDataName()",
+          "Get Unit Part Name Error : Not Exist Unit Part Name, UnitPartCode(%s)",
+          record->m_strCode);
+        return false;
+      }
+
+      const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
+      strcpy_s(reinterpret_cast<char *>(&record[2]), 0x40, name);
+    }
+  }
+
+  if (!CRecordData::IsTableOpen(&m_tblUnitBullet))
+  {
+    MyMessageBox("SetGlobalDataName()", "Unit Bullet Data Not Loaded");
+    return false;
+  }
+
+  CRecordData unitBulletNames;
+  if (!unitBulletNames.ReadRecord(".\\Script\\UnitBullet_str.dat", 0x304, errMsg))
+  {
+    MyMessageBox("SetGlobalDataName()", "Unit Bullet Name Data Load Error");
+    return false;
+  }
+
+  recordNum = static_cast<int>(m_tblUnitBullet.GetRecordNum());
+  for (int j = 0; j < recordNum; ++j)
+  {
+    _base_fld *record = m_tblUnitBullet.GetRecord(j);
+    if (!record)
+    {
+      MyMessageBox("SetGlobalDataName()", "Get Unit Bullet Data Error, UnitBulletIndex(%d)", j);
+      return false;
+    }
+    _NameTxt_fld *nameRecord = reinterpret_cast<_NameTxt_fld *>(unitBulletNames.GetRecord(record->m_strCode));
+    if (!nameRecord)
+    {
+      MyMessageBox(
+        "SetGlobalDataName()",
+        "Get Unit Bullet Name Error : Not Exist Unit Bullet Name, UnitBulletCode(%s)",
+        record->m_strCode);
+      return false;
+    }
+    const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
+    strcpy_s(reinterpret_cast<char *>(&record[2]), 0x40, name);
+  }
+
   return true;
 }
 
 bool CMainThread::check_loaded_data()
 {
-  return true;
+  bool dataError = false;
+
+  int recordNum = static_cast<int>(m_tblItemData[18].GetRecordNum());
+  for (int n = 0; n < recordNum; ++n)
+  {
+    _base_fld *record = m_tblItemData[18].GetRecord(n);
+    if (!record)
+    {
+      continue;
+    }
+    if (*reinterpret_cast<unsigned int *>(&record[5].m_strCode[12])
+          != *reinterpret_cast<unsigned int *>(&record[5].m_strCode[16])
+        || *reinterpret_cast<unsigned int *>(&record[5].m_strCode[12])
+          != *reinterpret_cast<unsigned int *>(&record[5].m_strCode[20]))
+    {
+      MyMessageBox("date error", "m_tblEffectData[tbl_code_res].. price..");
+      return false;
+    }
+  }
+
+  if (m_tblEffectData[0].GetRecordNum() > 77)
+  {
+    MyMessageBox(
+      "date error",
+      "m_tblEffectData[effect_code_skill].ReadRecordNum() > max_skill_num + max_item_skill_num + "
+      "max_race_buff_skill_num + max_aura_skill_num + max_monster_skill_num");
+    return false;
+  }
+  if (m_tblEffectData[1].GetRecordNum() > 88)
+  {
+    MyMessageBox("date error", "m_tblEffectData[effect_code_force].ReadRecordNum() > force_storage_num");
+    return false;
+  }
+
+  recordNum = static_cast<int>(m_tblMonster.GetRecordNum());
+  for (int n = 0; n < recordNum; ++n)
+  {
+    _base_fld *record = m_tblMonster.GetRecord(n);
+    if (!record)
+    {
+      continue;
+    }
+    if (*reinterpret_cast<float *>(&record[3].m_strCode[60]) <= 0.0f)
+    {
+      MyMessageBox("date error", "m_tblMonster, %d Rec.. Level == %d", n, (int)*reinterpret_cast<float *>(&record[3].m_strCode[60]));
+      return false;
+    }
+  }
+
+  recordNum = static_cast<int>(m_tblEffectData[0].GetRecordNum());
+  for (int n = 0; n < recordNum; ++n)
+  {
+    _base_fld *record = m_tblEffectData[0].GetRecord(n);
+    if (!record)
+    {
+      continue;
+    }
+    if (*reinterpret_cast<unsigned int *>(&record[1].m_strCode[4]) >= 8u)
+    {
+      dataError = true;
+      MyMessageBox(
+        "date error",
+        "skill mastery error( %s : %d)",
+        record->m_strCode,
+        *reinterpret_cast<unsigned int *>(&record[1].m_strCode[4]));
+    }
+  }
+
+  recordNum = static_cast<int>(m_tblEffectData[1].GetRecordNum());
+  for (int n = 0; n < recordNum; ++n)
+  {
+    _base_fld *record = m_tblEffectData[1].GetRecord(n);
+    if (!record)
+    {
+      continue;
+    }
+    if (*reinterpret_cast<unsigned int *>(&record[1].m_strCode[4]) >= 0x18u)
+    {
+      dataError = true;
+      MyMessageBox(
+        "date error",
+        "force mastery error( %s : %d)",
+        record->m_strCode,
+        *reinterpret_cast<unsigned int *>(&record[1].m_strCode[4]));
+    }
+  }
+
+  recordNum = static_cast<int>(m_tblEffectData[2].GetRecordNum());
+  for (int n = 0; n < recordNum; ++n)
+  {
+    (void)m_tblEffectData[2].GetRecord(n);
+  }
+
+  recordNum = static_cast<int>(m_tblUnitFrame.GetRecordNum());
+  for (int n = 0; n < recordNum; ++n)
+  {
+    _base_fld *record = m_tblUnitFrame.GetRecord(n);
+    if (!record)
+    {
+      continue;
+    }
+    if (*reinterpret_cast<unsigned int *>(&record[1].m_strCode[24]) > 6u)
+    {
+      MyMessageBox("date error", "m_tblUnitFrame, %d Rec.. MoneyCode == %d", n, *reinterpret_cast<unsigned int *>(&record[1].m_strCode[24]));
+      return false;
+    }
+  }
+
+  for (int j = 0; j < 6; ++j)
+  {
+    recordNum = static_cast<int>(m_tblUnitPart[j].GetRecordNum());
+    for (int n = 0; n < recordNum; ++n)
+    {
+      _base_fld *record = m_tblUnitPart[j].GetRecord(n);
+      if (!record)
+      {
+        continue;
+      }
+      if (*reinterpret_cast<unsigned int *>(&record[5].m_strCode[36]) > 6u)
+      {
+        MyMessageBox(
+          "date error",
+          "m_tblUnitPart[%d], %d Rec.. MoneyCode == %d",
+          j,
+          n,
+          *reinterpret_cast<unsigned int *>(&record[5].m_strCode[36]));
+        return false;
+      }
+    }
+  }
+
+  recordNum = static_cast<int>(m_tblUnitBullet.GetRecordNum());
+  for (int n = 0; n < recordNum; ++n)
+  {
+    _base_fld *record = m_tblUnitBullet.GetRecord(n);
+    if (!record)
+    {
+      continue;
+    }
+    if (*reinterpret_cast<unsigned int *>(&record[3].m_strCode[4]) > 6u)
+    {
+      MyMessageBox(
+        "date error",
+        "m_tblUnitBullet[%d], %d Rec.. MoneyCode == %d",
+        0,
+        n,
+        *reinterpret_cast<unsigned int *>(&record[3].m_strCode[4]));
+      return false;
+    }
+  }
+
+  recordNum = static_cast<int>(m_tblItemData[24].GetRecordNum());
+  for (int n = 0; n < recordNum; ++n)
+  {
+    (void)m_tblItemData[24].GetRecord(n);
+  }
+
+  if (CQuestMgr::s_tblQuest != nullptr)
+  {
+    recordNum = static_cast<int>(CQuestMgr::s_tblQuest->GetRecordNum());
+    for (int n = 0; n < recordNum; ++n)
+    {
+      _base_fld *record = CQuestMgr::s_tblQuest->GetRecord(n);
+      if (!record)
+      {
+        continue;
+      }
+      const int len = static_cast<int>(std::strlen(record->m_strCode));
+      if (len > 7)
+      {
+        MyMessageBox(
+          "date error",
+          "CQuestMgr::s_tblQuest, %d Rec.. code: %s size(%d) is biger than quest_header_code_len(%d)",
+          n,
+          record->m_strCode,
+          len,
+          7);
+        return false;
+      }
+    }
+  }
+
+  recordNum = static_cast<int>(m_tblItemMakeData.GetRecordNum());
+  for (int n = 0; n < recordNum; ++n)
+  {
+    (void)m_tblItemMakeData.GetRecord(n);
+  }
+
+  recordNum = static_cast<int>(m_tblClass.GetRecordNum());
+  for (int n = 0; n < recordNum; ++n)
+  {
+    _base_fld *record = m_tblClass.GetRecord(n);
+    if (!record)
+    {
+      continue;
+    }
+    if (*reinterpret_cast<unsigned int *>(record[1].m_strCode) < 4u)
+    {
+      for (int k = 0; k < 9; ++k)
+      {
+        char *itemCode = &record[k + 24].m_strCode[8];
+        if (std::strncmp(itemCode, "-1", 2) != 0)
+        {
+          const int tableCode = GetItemTableCode(itemCode);
+          if (tableCode == -1)
+          {
+            MyMessageBox(
+              "data error",
+              "class-reward-item error .., class: %s, table code error %s",
+              record->m_strCode,
+              itemCode);
+            dataError = true;
+          }
+          else if (tableCode == 19)
+          {
+            MyMessageBox(
+              "data error",
+              "class-reward-item error.., class: %s, unit key %s",
+              record->m_strCode,
+              itemCode);
+            dataError = true;
+          }
+          else if (!m_tblItemData[tableCode].GetRecord(itemCode))
+          {
+            MyMessageBox(
+              "data error",
+              "class-reward-item error.., class: %s, unregistered item %s",
+              record->m_strCode,
+              itemCode);
+            dataError = true;
+          }
+        }
+      }
+    }
+    else
+    {
+      MyMessageBox(
+        "data error",
+        "classcode (%s : %d).., code error error",
+        record->m_strCode,
+        *reinterpret_cast<unsigned int *>(record[1].m_strCode));
+      dataError = true;
+    }
+  }
+
+  if (CQuestMgr::s_tblQuest != nullptr)
+  {
+    recordNum = static_cast<int>(CQuestMgr::s_tblQuest->GetRecordNum());
+    for (int n = 0; n < recordNum; ++n)
+    {
+      _base_fld *record = CQuestMgr::s_tblQuest->GetRecord(n);
+      if (!record)
+      {
+        continue;
+      }
+      for (int m = 0; m < 6; ++m)
+      {
+        char *itemCode = reinterpret_cast<char *>(&record[14]) + (72 * m);
+        if (std::strncmp(itemCode, "-1", 2) != 0)
+        {
+          const int tableCode = GetItemTableCode(itemCode);
+          if (tableCode == -1)
+          {
+            MyMessageBox(
+              "data error",
+              "quest-reward-item error.., quest: %s, table code error %s",
+              record->m_strCode,
+              itemCode);
+            dataError = true;
+          }
+          else if (!m_tblItemData[tableCode].GetRecord(itemCode))
+          {
+            MyMessageBox(
+              "data error",
+              "quest-reward-item.., quest: %s, unregistered item %s",
+              record->m_strCode,
+              itemCode);
+            dataError = true;
+          }
+        }
+      }
+    }
+  }
+
+  recordNum = static_cast<int>(m_tblEditData.GetRecordNum());
+  for (int n = 0; n < recordNum; ++n)
+  {
+    _base_fld *record = m_tblEditData.GetRecord(n);
+    if (!record)
+    {
+      continue;
+    }
+    for (int ii = 0; ii < 30; ++ii)
+    {
+      (void)ii;
+    }
+  }
+
+  recordNum = static_cast<int>(m_tblItemData[10].GetRecordNum());
+  for (int n = 0; n < recordNum; ++n)
+  {
+    _base_fld *record = m_tblItemData[10].GetRecord(n);
+    if (!record)
+    {
+      continue;
+    }
+    const int duration = *reinterpret_cast<int *>(&record[6].m_strCode[28]);
+    if (duration > 0xFFFF || duration < 1)
+    {
+      MyMessageBox(
+        "data error",
+        "bullet's duration error(1~65535).., %s : %d",
+        record->m_strCode,
+        duration);
+      dataError = true;
+    }
+  }
+
+  recordNum = static_cast<int>(m_tblMonster.GetRecordNum());
+  for (int n = 0; n < recordNum; ++n)
+  {
+    _base_fld *record = m_tblMonster.GetRecord(n);
+    if (!record)
+    {
+      continue;
+    }
+    const int len = static_cast<int>(std::strlen(record->m_strCode));
+    if (len > 5)
+    {
+      MyMessageBox(
+        "data error",
+        "monster code string size error(monster_code_len: %d != %d).., %s",
+        5,
+        len,
+        record->m_strCode);
+      dataError = true;
+    }
+  }
+
+  if (!ItemCombineMgr::CheckLoadData())
+  {
+    dataError = true;
+  }
+
+  if (!CSUItemSystem::Instance()->SUItemSystem_CheckData())
+  {
+    MyMessageBox("Data Check Error", "Set&Unique Item Data Check Error");
+    dataError = true;
+  }
+
+  return !dataError;
 }
 
 void CMainThread::gm_MainThreadControl()
 {
+  m_nSleepTerm = GetPrivateProfileIntA("MainThread", "SleepTerm", 2, ".\\Initialize\\WorldSystem.ini");
+  m_nSleepValue = GetPrivateProfileIntA("MainThread", "SleepValue", 1, ".\\Initialize\\WorldSystem.ini");
+  m_nSleepIgnore = GetPrivateProfileIntA("MainThread", "SleepIgnore", 0, ".\\Initialize\\WorldSystem.ini");
+
+  if (m_nSleepTerm < 0)
+  {
+    m_nSleepTerm = 0;
+  }
+  if (m_nSleepValue < 0)
+  {
+    m_nSleepValue = 0;
+  }
+  if (m_nSleepValue > 10)
+  {
+    m_nSleepValue = 10;
+  }
+  if (m_nSleepIgnore >= 2)
+  {
+    m_nSleepIgnore = 0;
+  }
+
+  _ATTACK_DELAY_CHECKER::s_nSpareTime = GetPrivateProfileIntA(
+    "Rule",
+    "AttackSpareDelay",
+    100,
+    ".\\Initialize\\WorldSystem.ini");
+
+  m_nLimUserNum = GetPrivateProfileIntA("System", "LimUserNum", MAX_PLAYER, ".\\Initialize\\WorldSystem.ini");
+  if (m_nLimUserNum > MAX_PLAYER)
+  {
+    m_nLimUserNum = MAX_PLAYER;
+  }
+
+  char returnedString[32]{};
+  GetPrivateProfileStringA("System", "CheckSum", "TRUE", returnedString, sizeof(returnedString), ".\\Initialize\\WorldSystem.ini");
+  m_bCheckSumActive = (strcmp(returnedString, "TRUE") == 0);
+
+  if (g_pFrame != nullptr)
+  {
+    g_pFrame->SendMessage(0x000C, 0, 0);
+  }
 }
 
 bool CMainThread::ObjectInit()

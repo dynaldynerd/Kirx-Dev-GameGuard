@@ -5,6 +5,7 @@
 /* 1313 */
 class __cppobj __declspec(align(8)) CMapData
 {
+public:
   bool m_bUse;
   bool m_bLoad;
   int m_nMapIndex;

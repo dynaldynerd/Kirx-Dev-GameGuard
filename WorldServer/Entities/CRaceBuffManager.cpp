@@ -10,5 +10,5 @@ CRaceBuffManager *CRaceBuffManager::Instance()
 
 bool CRaceBuffManager::Init()
 {
-  return true;
+  return m_kBuffByHolyQuest.Init();
 }

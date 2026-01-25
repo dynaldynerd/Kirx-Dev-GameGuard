@@ -8,6 +8,7 @@ struct _base_fld;
 class __cppobj CRecordData
 {
 public:
+  CRecordData();
   bool m_bLoad;
   char m_szFileName[129];
   unsigned int m_dwTotalSize;
@@ -22,6 +23,8 @@ public:
   _base_fld *GetRecord(const char *code);
   bool MakeHashTable(int keyIndex, int keyLength, char *errCode);
   static unsigned int MakeHash(const char *p, int len);
+  bool IsTableOpen() const;
+  static bool IsTableOpen(const CRecordData *table);
 
   virtual ~CRecordData() = default;
 };

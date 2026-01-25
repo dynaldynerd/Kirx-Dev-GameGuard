@@ -1,11 +1,19 @@
 #include "pch.h"
 
 #include "CGameObject.h"
+
+#include "CNetworkEX.h"
+#include "WorldServerUtil.h"
+
 #include <cstdlib>
 #include <ctime>
 
 bool _100_per_random_table::s_bRecordSet = false;
 unsigned __int16 _100_per_random_table::s_wRecord[10][100] = {};
+
+CGameObject *CGameObject::s_pSelectObject = nullptr;
+CGameObject *CGameObject::s_pTotalObject[42642] = {};
+int CGameObject::s_nTotalObjectNum = 0;
 
 _object_id::_object_id()
 {
@@ -52,6 +60,49 @@ void _100_per_random_table::reset()
 {
   m_wCurTable = 0;
   m_wCurPoint = 0;
+}
+
+void CGameObject::Init(_object_id *pID)
+{
+  m_ObjID = *pID;
+  m_SectorPoint.SetPoint(this);
+  m_SectorNetPoint.SetPoint(this);
+  m_bMapLoading = false;
+  m_bMaxVision = false;
+  m_nCirclePlayerNum = 0;
+  s_pTotalObject[s_nTotalObjectNum] = this;
+  m_nTotalObjIndex = s_nTotalObjectNum;
+  m_pRecordSet = nullptr;
+  m_dwObjSerial = 0;
+  m_bLive = false;
+  m_bCorpse = false;
+  m_bMove = false;
+  m_bStun = false;
+  m_dwLastSendTime = 0;
+  m_fCurPos[0] = 0.0f;
+  m_fCurPos[1] = 0.0f;
+  m_fCurPos[2] = 0.0f;
+  m_fAbsPos[0] = 0.0f;
+  m_fAbsPos[1] = 0.0f;
+  m_fAbsPos[2] = 0.0f;
+  m_nScreenPos[0] = 0;
+  m_nScreenPos[1] = 0;
+  m_fOldPos[0] = 0.0f;
+  m_fOldPos[1] = 0.0f;
+  m_fOldPos[2] = 0.0f;
+  m_pCurMap = nullptr;
+  m_wMapLayerIndex = 0;
+  m_dwNextFreeStunTime = static_cast<unsigned int>(-1);
+  m_dwOldTickBreakTranspar = static_cast<unsigned int>(-1);
+  m_bBreakTranspar = false;
+  m_bPlayerCircleList = nullptr;
+  m_bObserver = false;
+  m_dwCurSec = 0;
+  if (++s_nTotalObjectNum > 42642)
+  {
+    MyMessageBox("error", "CGameObject::Init : Lack Object Num");
+    ServerProgramExit("CGameObject::Init()", 0);
+  }
 }
 
 /*
@@ -345,8 +396,7 @@ __int64 CGameObject::CalcSecIndex()
   SecInfo = CMapData::GetSecInfo(this->m_pCurMap);
   if ( v5 < SecInfo->m_nSecNumW && v6 < SecInfo->m_nSecNumH )
     return SecInfo->m_nSecNumW * v6 + v5;
-  CLogFile::Write(
-    &g_Main.m_logSystemError,
+  g_Main.m_logSystemError.Write(
     "kind(%d), id(%d).. Out of Sector",
     this->m_ObjID.m_byKind,
     this->m_ObjID.m_byID);
@@ -527,8 +577,7 @@ char CGameObject::Create(_object_create_setdata *pData)
   else
   {
     this->m_pCurMap = 0LL;
-    CLogFile::Write(
-      &g_Main.m_logSystemError,
+    g_Main.m_logSystemError.Write(
       "CGameObject::Create() : dwSec >= MAX(this[%d-%d-%d])",
       this->m_ObjID.m_byKind,
       this->m_ObjID.m_byID,

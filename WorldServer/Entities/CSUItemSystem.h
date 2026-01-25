@@ -7,4 +7,5 @@ class __cppobj CSUItemSystem
 public:
   static CSUItemSystem *Instance();
   bool SUItemSystem_Init();
+  bool SUItemSystem_CheckData();
 };

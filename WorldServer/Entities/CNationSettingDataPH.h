@@ -6,4 +6,6 @@
 
 class __cppobj CNationSettingDataPH : public CNationSettingData
 {
+public:
+  CBilling *CreateBilling() override;
 };

@@ -11,6 +11,7 @@ class __cppobj CPostSystemManager
 public:
   static CPostSystemManager *Instace();
   bool Init();
+  bool InitLogger();
 
   unsigned __int8 m_byRegiNum;
   unsigned __int8 m_byProcNum;

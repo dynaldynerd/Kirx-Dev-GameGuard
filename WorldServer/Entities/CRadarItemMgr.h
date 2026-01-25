@@ -5,6 +5,7 @@
 /* 1596 */
 class __cppobj __declspec(align(8)) CRadarItemMgr
 {
+public:
   bool m_bUse;
   bool m_bUpdate;
   unsigned int m_dwStartTime;
@@ -22,5 +23,7 @@ class __cppobj __declspec(align(8)) CRadarItemMgr
   bool m_bChiefDiffRace;
   bool m_bEliteMonster;
   _detected_char_list m_RadarResult;
+
+  void Init();
 };
 

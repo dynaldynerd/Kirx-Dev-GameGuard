@@ -1,69 +1,12 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "GlobalObjectDefs.h"
 #include "CPlayer.h"
 
 #pragma pack(push, 1)
 #include <utility>
 #include <vector>
-
-#ifndef MAX_PLAYER
-#define MAX_PLAYER 2532
-#endif
-
-#ifndef MAX_MONSTER
-#define MAX_MONSTER 30000
-#endif
-
-#ifndef MAX_NPC
-#define MAX_NPC 500
-#endif
-
-#ifndef MAX_ANIMUS
-#define MAX_ANIMUS 500
-#endif
-
-#ifndef MAX_TOWER
-#define MAX_TOWER 500
-#endif
-
-#ifndef MAX_STONE
-#define MAX_STONE 3
-#endif
-
-#ifndef MAX_KEEPER
-#define MAX_KEEPER 1
-#endif
-
-#ifndef MAX_TRAP
-#define MAX_TRAP 507
-#endif
-
-#ifndef MAX_ITEMBOX
-#define MAX_ITEMBOX 5064
-#endif
-
-#ifndef MAX_PARKING_UNIT
-#define MAX_PARKING_UNIT 300
-#endif
-
-#ifndef MAX_DARKHOLE
-#define MAX_DARKHOLE 50
-#endif
-
-#ifndef MAX_GUILD
-#define MAX_GUILD 500
-#endif
-
-#ifndef MAX_DQS
-#define MAX_DQS 0x3174
-#endif
-
-#ifndef MAX_DB_QRY_SYN
-#define MAX_DB_QRY_SYN 12660
-#endif
-
-
 
 struct _RTL_CRITICAL_SECTION_DEBUG;
 class CRFWorldDatabase;
@@ -391,6 +334,7 @@ struct __cppobj _server_rate_realtime_load
 /* 1305 */
 class __cppobj __declspec(align(8)) CMainThread
 {
+public:
   _SRAND m_Rand;
   _WAIT_ENTER_ACCOUNT m_WaitEnterAccount[2532];
   CRFWorldDatabase *m_pWorldDB;
@@ -514,6 +458,8 @@ public:
 
   CMainThread();
   bool Init();
+  bool IsTestServer() const;
+  unsigned int GetMonsterRecordNum() const;
   virtual ~CMainThread() = default;
 
 private:
@@ -559,13 +505,8 @@ extern CMainThread g_Main;
 /* 1286 */
 #include "CEventLootTable.h"
 
-
 /* 1296 */
-struct __cppobj _base_fld
-{
-  unsigned int m_dwIndex;
-  char m_strCode[64];
-};
+#include "base_fld.h"
 
 /* 1303 */
 struct __cppobj __unaligned __declspec(align(2)) _monster_sp_group : _base_fld
@@ -828,6 +769,7 @@ struct _sec_info
 struct _EQUIPKEY
 {
   __int16 zItemIndex;
+  void SetRelease();
 };
 
 /* 1539 */
@@ -845,6 +787,7 @@ struct __cppobj __unaligned __declspec(align(1)) _REGED_AVATOR_DB
   _EQUIPKEY m_EquipKey[8];
   unsigned __int8 m_byEquipLv[8];
   unsigned int m_dwLastConnTime;
+  void Init();
 };
 
 /* 1540 */
@@ -856,6 +799,7 @@ struct __cppobj __unaligned __declspec(align(1)) _REGED : _REGED_AVATOR_DB
   unsigned __int8 m_byCsMethod[8];
   unsigned int m_dwET[8];
   unsigned int m_dwLendRegdTime[8];
+  void init();
 };
 
 /* 1541 */
@@ -1327,6 +1271,7 @@ struct __cppobj __unaligned __declspec(align(1)) _AVATOR_DATA
   _POTION_NEXT_USE_TIME_DB_BASE dbPotionNextUseTime;
   _PCBANG_FAVOR_ITEM_DB_BASE dbPcBangFavorItem;
   _TIMELIMITINFO_DB_BASE dbTimeLimitInfo;
+  void InitData();
 };
 
 /* 1174 */
@@ -1348,6 +1293,7 @@ struct __cppobj _SYNC_STATE
   bool bEnter;
   bool bReged;
   bool bSelect;
+  void Init();
 };
 
 /* 1595 */

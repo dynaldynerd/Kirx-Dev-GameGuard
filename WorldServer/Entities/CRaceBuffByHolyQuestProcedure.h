@@ -11,6 +11,8 @@ class __cppobj CRaceBuffByHolyQuestProcedure
 public:
   using REQUEST_TYPE = CUnmannedTraderRequestLimiter::REQUEST_TYPE;
 
+  bool Init();
+
   REQUEST_TYPE m_eState;
   unsigned int m_uiProccessIndex;
   CRaceBuffHolyQuestResultInfo m_kBuffHolyQestResultInfo;

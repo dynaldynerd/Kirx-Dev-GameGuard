@@ -53,5 +53,14 @@ public:
   CLuaSignalReActor m_LuaSignalReActor;
 
   void Init(_object_id *pID);
+
+  struct _monster_loot_index
+  {
+    int nStartRecIndex;
+    int nEndRecIndex;
+  };
+
+  static _monster_loot_index *s_idxMonsterLoot;
+  static void _InitSDM_LootTBL();
 };
 

@@ -57,7 +57,8 @@ public:
   unsigned int m_dwRequestMoveCharacterSerialList[3];
   unsigned int m_dwTournamentCharacterSerialList[3];
   char m_szLobbyHistoryFileName[64];
-  void Init(unsigned int index);
+  void Init(unsigned __int16 index);
+  void ParamInit();
   virtual ~CUserDB() = default;
 };
 

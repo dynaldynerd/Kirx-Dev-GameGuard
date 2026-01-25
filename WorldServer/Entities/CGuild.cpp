@@ -4,6 +4,6 @@
 
 void CGuild::Init(unsigned int index)
 {
-  (void)index;
+  m_nIndex = static_cast<int>(index);
 }
 

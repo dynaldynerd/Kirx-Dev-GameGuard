@@ -4,6 +4,17 @@
 
 #include <cstring>
 
+CRecordData::CRecordData()
+{
+  m_bLoad = false;
+  std::memset(m_szFileName, 0, sizeof(m_szFileName));
+  m_dwTotalSize = 0;
+  std::memset(&m_Header, 0, sizeof(m_Header));
+  m_nLowNum = 0;
+  m_ppsRecord = nullptr;
+  m_pdwHashList = nullptr;
+}
+
 bool CRecordData::ReadRecord(const char *fileName, int structSize, char *errCode)
 {
   (void)structSize;
@@ -20,6 +31,13 @@ bool CRecordData::ReadRecord(const char *fileName, int structSize, char *errCode
   {
     errCode[0] = '\0';
   }
+  m_dwTotalSize = 0;
+  m_Header.m_nRecordNum = 0;
+  m_Header.m_nFieldNum = 0;
+  m_Header.m_nRecordSize = structSize;
+  m_nLowNum = 0;
+  m_ppsRecord = nullptr;
+  m_pdwHashList = nullptr;
   m_bLoad = true;
   return true;
 }
@@ -106,4 +124,14 @@ unsigned int CRecordData::MakeHash(const char *p, int len)
     hash |= v << (6 * k);
   }
   return hash;
+}
+
+bool CRecordData::IsTableOpen() const
+{
+  return m_bLoad;
+}
+
+bool CRecordData::IsTableOpen(const CRecordData *table)
+{
+  return table != nullptr && table->m_bLoad;
 }

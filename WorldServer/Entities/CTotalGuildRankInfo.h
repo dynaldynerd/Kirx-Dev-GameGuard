@@ -7,6 +7,9 @@ struct _total_guild_rank_result_zocl;
 class __cppobj CTotalGuildRankRecord
 {
 public:
+  CTotalGuildRankRecord() = default;
+  void Clear();
+
   unsigned int m_dwInx;
   unsigned __int16 m_wRank;
   unsigned int m_dwSerial;
@@ -36,6 +39,9 @@ public:
 class __cppobj CTotalGuildRankInfo
 {
 public:
+  bool Init();
+  void Clear();
+
   bool m_bInit;
   bool m_bNoData;
   unsigned int m_dwRecordCnt[3];

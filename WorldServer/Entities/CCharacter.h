@@ -25,6 +25,9 @@ struct __declspec(align(8)) _effect_parameter
 
   __param_data *m_pDataParam;
   bool m_bLock;
+
+  void AllocEffParam();
+  void InitEffParam();
 };
 
 struct _effect_parameter::__param_data
@@ -53,4 +56,6 @@ public:
   char m_wszPlayerName[17];
   int m_nContEffectSec;
   CMyTimer m_tmrSFCont;
+
+  void Init(_object_id *pID);
 };

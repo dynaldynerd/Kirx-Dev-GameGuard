@@ -15,6 +15,8 @@ public:
     char *m_pInfo;
     _index_node *m_pPrev;
     _index_node *m_pNext;
+
+    bool AllocInfo(unsigned int infoSize);
   };
 
   _index_node m_Head;
@@ -26,6 +28,10 @@ public:
   unsigned int m_dwCount;
   unsigned int m_dwBufCount;
   unsigned int m_dwMaxBufNum;
+
+  static bool SetList(CIndexList *list, unsigned int maxBufNum, unsigned int infoSize, bool useMultiThread);
+  static bool PushNode_Back(CIndexList *list, unsigned int index, char *infoData);
+  static bool PushNode_Front(CIndexList *list, unsigned int index, char *infoData);
   virtual ~CIndexList() = default;
 };
 

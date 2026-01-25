@@ -29,5 +29,8 @@ class __cppobj __declspec(align(8)) CMonsterSkill
   int m_MaxDmg;
   int m_MinProb;
   int m_MaxProb;
+
+public:
+  void Init();
 };
 

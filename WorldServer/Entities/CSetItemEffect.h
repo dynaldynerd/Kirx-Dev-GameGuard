@@ -16,5 +16,9 @@ class __cppobj __declspec(align(4)) CSetItemEffect
   set_effect_info m_setCount[6];
   set_effect_info m_resetInfo;
   unsigned __int8 m_byTotalSetCount;
+
+public:
+  void Init_Info();
+  void Init_Data(unsigned __int8 byIdx);
 };
 

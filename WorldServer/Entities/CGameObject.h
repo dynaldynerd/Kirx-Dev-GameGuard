@@ -118,6 +118,7 @@ public:
   virtual bool SF_LateContHelpSkillRemove_Once(CCharacter *pDstObj);
   virtual bool SF_MakePortalReturnBindPositionPartyMember(CCharacter *pDstObj, float fEffectValue, unsigned __int8 *byRet);
   virtual bool SF_MakeZeroAnimusRecallTimeOnce(CCharacter *pDstObj, float fEffectValue);
+  void Init(_object_id *pID);
   virtual bool SF_OthersContHelpSFRemove_Once(float fEffectValue);
   virtual bool SF_OverHealing_Once(CCharacter *pDstObj, float fEffectValue);
   virtual bool SF_RecoverAllReturnStateAnimusHPFull(CCharacter *pDstObj, float fEffectValue);
@@ -151,6 +152,8 @@ public:
   char UpdateSecList();
   void _ResetCirclePlayer();
   */
+  void Init(_object_id *pID);
+
   static CGameObject *s_pSelectObject;
   static CGameObject *s_pTotalObject[42642];
   static int s_nTotalObjectNum;

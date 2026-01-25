@@ -6,6 +6,8 @@
 
 class CPlayer;
 class INationGameGuardSystem;
+class CBilling;
+struct _NameTxt_fld;
 
 struct CHEAT_COMMAND
 {
@@ -28,6 +30,8 @@ public:
   };
 
   virtual ~CNationSettingData() = default;
+  virtual CBilling *CreateBilling();
+  virtual const char *GetItemName(struct _NameTxt_fld *pFld);
 
   bool m_bServiceMode;
   int m_iNationCode;

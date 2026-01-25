@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CMainThread.h"
+#include "GlobalObjectDefs.h"
 #include "CUserDB.h"
 #include "CPartyPlayer.h"
 #include "CPlayer.h"

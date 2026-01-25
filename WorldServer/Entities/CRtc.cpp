@@ -9,18 +9,9 @@
 
 #include <atomic>
 
-extern "C" {
-typedef int(__cdecl *RTC_error_fnW)(int, const wchar_t *, int, const wchar_t *, const wchar_t *, ...);
-RTC_error_fnW __cdecl RTC_SetErrorFuncW(RTC_error_fnW);
-}
-
 CRtc *CRtc::ms_Instance = nullptr;
-
-namespace
-{
-    LONG g_rtcRunning = 0;
-    RTC_error_fnW g_rtcErrorFunc = nullptr;
-}
+LONG g_rtcRunning = 0;
+RTC_error_fnW g_rtcErrorFunc = nullptr;
 
 extern "C" RTC_error_fnW __cdecl RTC_SetErrorFuncW(RTC_error_fnW func)
 {

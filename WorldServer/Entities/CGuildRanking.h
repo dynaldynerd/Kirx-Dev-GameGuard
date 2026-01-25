@@ -4,12 +4,16 @@
 
 #include <vector>
 
+#include "guild_member_refresh_data.h"
+
 class CLogFile;
-struct _guild_member_refresh_data;
 
 class __cppobj __declspec(align(8)) CGuildRanking
 {
 public:
+  bool Init();
+  void SetLogger(CLogFile *pkLogger);
+
   CLogFile *m_pkLogger;
   unsigned int m_dwCurProcIndex;
   unsigned int m_dwNextProcIndex;

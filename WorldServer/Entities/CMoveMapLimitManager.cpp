@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "CMoveMapLimitManager.h"
+#include "CMoveMapLimitEnviromentValues.h"
 
 CMoveMapLimitManager *CMoveMapLimitManager::Instance()
 {
@@ -10,5 +11,19 @@ CMoveMapLimitManager *CMoveMapLimitManager::Instance()
 
 bool CMoveMapLimitManager::Init()
 {
+  if (!CMoveMapLimitEnviromentValues::Init())
+  {
+    return false;
+  }
+
+  std::vector<int> vecRightTypeList;
+  if (!m_kLimitInfo.Init(&vecRightTypeList))
+  {
+    return false;
+  }
+  if (!m_kRightInfo.Init(&vecRightTypeList))
+  {
+    return false;
+  }
   return true;
 }

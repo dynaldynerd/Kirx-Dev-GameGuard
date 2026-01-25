@@ -5,6 +5,9 @@
 class __cppobj __declspec(align(8)) CWeeklyGuildRankOwnerInfo
 {
 public:
+  CWeeklyGuildRankOwnerInfo();
+  void Clear();
+
   unsigned int m_dwSerial;
   char m_wszGuildName[17];
   unsigned __int8 m_byRace;
@@ -18,6 +21,9 @@ public:
 class __cppobj CWeeklyGuildRankRecord
 {
 public:
+  CWeeklyGuildRankRecord();
+  void Clear();
+
   unsigned int m_dwInx;
   unsigned __int16 m_wRank;
   unsigned int m_dwSerial;
@@ -30,6 +36,11 @@ public:
 class __cppobj CWeeklyGuildRankInfo
 {
 public:
+  bool Init();
+  void Clear();
+  void ClearRank();
+  void ClearOwner();
+
   bool m_bInit;
   bool m_NoDataPrev;
   bool m_bNoDataToday;
@@ -57,3 +68,5 @@ public:
 
   _weekly_guild_rank_result_zocl *m_pkSendList;
 };
+
+extern int SETTLEMENT_AREA_MANAGE_OWNER_LIMIT_GRADE;

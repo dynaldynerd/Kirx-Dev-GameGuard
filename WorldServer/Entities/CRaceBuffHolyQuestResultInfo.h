@@ -5,6 +5,11 @@
 class __cppobj CRaceBuffHolyQuestResultInfo
 {
 public:
+  bool Load();
+  bool LoadINI();
+  bool SaveINI();
+  bool SaveINISubProcSaveNum(const char *szItem, unsigned int value);
+
   bool m_bSetBuff;
   unsigned __int8 m_byCurWinRace;
   unsigned __int8 m_byCurFailRace;

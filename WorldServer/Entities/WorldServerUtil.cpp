@@ -4,12 +4,129 @@
 
 #include <cstdarg>
 #include <cstdio>
+#include <cstring>
+#include <ctime>
 
 CWnd *g_pFrame = nullptr;
 
 unsigned int GetLoopTime()
 {
   return GetTickCount();
+}
+
+int GetCurrentDay()
+{
+  std::time_t now = std::time(nullptr);
+  std::tm local{};
+  if (localtime_s(&local, &now) != 0)
+  {
+    return -1;
+  }
+  return local.tm_mday;
+}
+
+int GetCurDay()
+{
+  std::time_t now = std::time(nullptr);
+  std::tm local{};
+  if (localtime_s(&local, &now) != 0)
+  {
+    return -1;
+  }
+  return local.tm_mday;
+}
+
+int GetItemTableCode(const char *psItemCode)
+{
+  if (psItemCode == nullptr)
+  {
+    return -1;
+  }
+
+  char prefix[3] = {};
+  strncpy_s(prefix, sizeof(prefix), psItemCode, 2);
+
+  if (strcmp(prefix, "iu") == 0) return 0;
+  if (strcmp(prefix, "il") == 0) return 1;
+  if (strcmp(prefix, "ig") == 0) return 2;
+  if (strcmp(prefix, "is") == 0) return 3;
+  if (strcmp(prefix, "ih") == 0) return 4;
+  if (strcmp(prefix, "id") == 0) return 5;
+  if (strcmp(prefix, "iw") == 0) return 6;
+  if (strcmp(prefix, "im") == 0) return 11;
+  if (strcmp(prefix, "ie") == 0) return 12;
+  if (strcmp(prefix, "ip") == 0) return 13;
+  if (strcmp(prefix, "ib") == 0) return 10;
+  if (strcmp(prefix, "if") == 0) return 14;
+  if (strcmp(prefix, "ic") == 0) return 15;
+  if (strcmp(prefix, "it") == 0) return 16;
+  if (strcmp(prefix, "io") == 0) return 17;
+  if (strcmp(prefix, "ir") == 0) return 18;
+  if (strcmp(prefix, "in") == 0) return 19;
+  if (strcmp(prefix, "iy") == 0) return 20;
+  if (strcmp(prefix, "ik") == 0) return 7;
+  if (strcmp(prefix, "ii") == 0) return 8;
+  if (strcmp(prefix, "ia") == 0) return 9;
+  if (strcmp(prefix, "iz") == 0) return 21;
+  if (strcmp(prefix, "iq") == 0) return 22;
+  if (strcmp(prefix, "ix") == 0) return 23;
+  if (strcmp(prefix, "ij") == 0) return 24;
+  if (strcmp(prefix, "gt") == 0) return 25;
+  if (strcmp(prefix, "tr") == 0) return 26;
+  if (strcmp(prefix, "sk") == 0) return 27;
+  if (strcmp(prefix, "ti") == 0) return 28;
+  if (strcmp(prefix, "ev") == 0) return 29;
+  if (strcmp(prefix, "re") == 0) return 30;
+  if (strcmp(prefix, "bx") == 0) return 31;
+  if (strcmp(prefix, "fi") == 0) return 32;
+  if (strcmp(prefix, "un") == 0) return 33;
+  if (strcmp(prefix, "rd") == 0) return 34;
+  if (strcmp(prefix, "lk") == 0) return 35;
+  if (strcmp(prefix, "cu") == 0) return 36;
+
+  return -1;
+}
+
+int ParsingCommandA(char *pszSrc, int nMaxWordNum, char **ppszDst, int nMaxWordSize)
+{
+  char *src = pszSrc;
+  for (int j = 0; j < nMaxWordNum; ++j)
+  {
+    char *dst = ppszDst[j];
+    int len = 0;
+
+    while (*src == ' ' || *src == '\t')
+    {
+      ++src;
+    }
+
+    while (*src != '\0' && *src != ' ' && *src != '\t')
+    {
+      *dst++ = *src++;
+      if (len++ >= nMaxWordSize - 1)
+      {
+        return 0;
+      }
+    }
+    *dst = '\0';
+
+    if (*src == '\0')
+    {
+      if (std::strlen(ppszDst[j]) != 0)
+      {
+        return j + 1;
+      }
+      return j;
+    }
+
+    if (dst == ppszDst[j])
+    {
+      return j;
+    }
+    ++src;
+  }
+
+  return 0;
 }
 
 void WriteServerStartHistory(const char *format, ...)
@@ -51,4 +168,13 @@ int MyCrtDebugReportHook(int reportType, char *message, int *returnValue)
     *returnValue = 0;
   }
   return 0;
+}
+
+void ServerProgramExit(const char *source, int reason)
+{
+  char buffer[256]{};
+  _snprintf_s(buffer, sizeof(buffer), _TRUNCATE, "ServerProgramExit: %s (%d)", source, reason);
+  OutputDebugStringA(buffer);
+  OutputDebugStringA("\n");
+  ExitProcess(static_cast<unsigned int>(reason));
 }

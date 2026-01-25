@@ -60,7 +60,7 @@ char WriteTableData(int itemCount, CRecordData *itemTables, bool useHash, char *
     {
       strcpy_s(errCode, 256, "UI");
     }
-    return 0;
+    return false;
   }
 
   if (itemCount != 37)
@@ -69,21 +69,21 @@ char WriteTableData(int itemCount, CRecordData *itemTables, bool useHash, char *
     {
       sprintf_s(errCode, 256, "nItemMax<%d> != item_tbl_num<%d>", itemCount, 37);
     }
-    return 0;
+    return false;
   }
 
   for (int i = 0; i < 37; ++i)
   {
     if (!itemTables[i].ReadRecord(kItemDataFiles[i].pfilename, kItemDataFiles[i].nstructsize, errCode))
     {
-      return 0;
+      return false;
     }
     if (useHash && !itemTables[i].MakeHashTable(2, 5, errCode))
     {
-      return 0;
+      return false;
     }
   }
 
   s_ptblItemData = itemTables;
-  return 1;
+  return true;
 }

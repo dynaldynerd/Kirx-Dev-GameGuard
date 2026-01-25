@@ -11,5 +11,8 @@ class __cppobj CMonsterSkillPool
   CMonster *m_pMyMon;
   int m_nSize;
   CMonsterSkill m_MonSkill[16];
+
+public:
+  void Init();
 };
 

@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "CTotalGuildRankManager.h"
+#include "WorldServerUtil.h"
 
 CTotalGuildRankManager *CTotalGuildRankManager::Instance()
 {
@@ -10,5 +11,6 @@ CTotalGuildRankManager *CTotalGuildRankManager::Instance()
 
 bool CTotalGuildRankManager::Init()
 {
-  return true;
+  m_iOldDay = GetCurDay();
+  return m_iOldDay != -1 && m_kInfo.Init();
 }

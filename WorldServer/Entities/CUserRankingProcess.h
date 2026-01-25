@@ -3,17 +3,19 @@
 #include "IdaCompat.h"
 #include "CLogFile.h"
 #include "CGuildRanking.h"
+#include "guild_member_refresh_data.h"
 
 #include <vector>
 
 struct __unaligned _PVP_RANK_DATA;
 struct __declspec(align(2)) _PVP_RANK_PACKED_DATA;
 struct _PVP_RANK_REFRESH_USER;
-struct _guild_member_refresh_data;
 
 class __cppobj CPvpUserRankingInfo
 {
 public:
+  bool assign();
+
   std::vector<_PVP_RANK_DATA *> m_vecPvpRankDataCurrent;
   std::vector<_PVP_RANK_DATA *> m_vecPvpRankDataTomorrow;
   std::vector<_PVP_RANK_PACKED_DATA *> m_vecPackedRankData;
@@ -25,6 +27,8 @@ public:
 class __cppobj CPvpUserRankingTargetUserList
 {
 public:
+  bool assign();
+
   unsigned int m_uiAddTotalCnt;
   unsigned int m_uiRefreshCnt;
   std::vector<_PVP_RANK_REFRESH_USER *> m_PvpRankRefreshUser;
@@ -66,6 +70,24 @@ public:
   CPvpUserRankingInfo m_kPvpRankingInfo;
   CPvpUserRankingTargetUserList m_kTargetUserList;
   CGuildRanking m_kGuildRanking;
+
+  bool Init();
+  void SetLogger(CLogFile *pkLogger);
+  void LoadINI(unsigned int *piHour, unsigned int *piMin);
+  bool SetRankingStartTime(int iHour, int iMin);
+  bool AllocObject();
+  bool InitProcFunc();
+
+  void ProcWait();
+  void ProcSaveTargetList();
+  void ProcRankStart();
+  void ProcRankComplete();
+  void ProcWaitDayChanged();
+  void ProcNotifyVersionUp();
+  void ProcApplyGuildGrade();
+  void ProcApplyRankInGuild();
+  void ProcFailedWait();
+  void ProcRankSuccess();
 };
 
 struct __unaligned _PVP_RANK_DATA
@@ -94,20 +116,4 @@ struct _PVP_RANK_REFRESH_USER
   unsigned __int8 byRace;
   unsigned __int16 wPvpRate;
   unsigned int dwPvpRank;
-};
-
-struct _guild_member_refresh_data
-{
-  unsigned int dwGuildSerial;
-  unsigned __int16 wMemberCount;
-
-  struct __refresh_data
-  {
-    unsigned int dwSerial;
-    unsigned __int8 byGrade;
-    unsigned __int8 byLv;
-    unsigned int dwPvpPoint;
-  };
-
-  __refresh_data rMemberData[50];
 };

@@ -26,3 +26,5 @@ public:
   unsigned int dwPlayerPosMiss;
   unsigned __int8 m_byStatus[4];
 };
+
+extern CNetworkEX g_Network;
