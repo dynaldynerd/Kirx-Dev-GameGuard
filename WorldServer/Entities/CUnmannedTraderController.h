@@ -8,6 +8,9 @@
 class __cppobj CUnmannedTraderController
 {
 public:
+  static CUnmannedTraderController *Instance();
+  bool Init();
+
   CLogFile *m_pkLogger;
   CLogFile *m_pkServiceLogger;
   CUnmannedTraderTradeInfo m_kTradeInfo;

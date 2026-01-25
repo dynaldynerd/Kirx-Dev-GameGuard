@@ -5,6 +5,9 @@
 /* 1264 */
 class __cppobj CMsgData
 {
+public:
+  void Init(int maxBufNum);
+
   int m_nObjNum;
   int m_nMaxBufNum;
   _message m_gmListHead;

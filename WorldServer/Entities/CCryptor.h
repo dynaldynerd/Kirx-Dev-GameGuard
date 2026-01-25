@@ -15,6 +15,8 @@ namespace CryptoPP
 class __cppobj CCryptor : public CTSingleton<CCryptor>
 {
 public:
+  bool Init(const char *filePath, int reserved);
+
   CCryptParam *m_pkParam;
   CryptoPP::SHA256 *m_pHash;
   CryptoPP::AutoSeededRandomPool *m_prng;

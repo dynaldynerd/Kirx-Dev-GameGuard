@@ -74,6 +74,9 @@ struct __cppobj _event_set_looting
 class __cppobj __declspec(align(8)) CMonsterEventSet
 {
 public:
+  bool LoadEventSet(char *errBuffer);
+  bool LoadEventSetLooting();
+
   virtual ~CMonsterEventSet() = default;
 
   _event_set m_EventSet[10];
@@ -82,3 +85,5 @@ public:
   _FILETIME m_ftLootingWrite;
   bool m_bLoadEventLooting;
 };
+
+extern CMonsterEventSet g_MonsterEventSet;

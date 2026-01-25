@@ -5,5 +5,6 @@
 /* 1280 */
 class __cppobj CCheckSum
 {
+public:
 };
 

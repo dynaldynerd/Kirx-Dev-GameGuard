@@ -23,5 +23,6 @@
 
 #include "Entities/CABC75A24E330D1CBB803A094EF8.h"
 #include "Entities/CMainThread.h"
+#include "Entities/WorldServerUtil.h"
 
 #pragma comment(lib, "Ws2_32.lib")

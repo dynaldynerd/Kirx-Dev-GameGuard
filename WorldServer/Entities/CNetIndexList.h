@@ -1,10 +1,12 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "CNetCriticalSection.h"
 
 /* 1279 */
 class __cppobj __declspec(align(8)) CNetIndexList
 {
+public:
   struct _index_node
   {
     unsigned int m_dwIndex;

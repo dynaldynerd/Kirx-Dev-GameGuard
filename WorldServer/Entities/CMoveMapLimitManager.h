@@ -8,6 +8,9 @@
 class __cppobj CMoveMapLimitManager
 {
 public:
+  static CMoveMapLimitManager *Instance();
+  bool Init();
+
   CMoveMapLimitRightInfoList m_kRightInfo;
   CMoveMapLimitInfoList m_kLimitInfo;
 };

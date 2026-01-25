@@ -1,0 +1,45 @@
+License
+
+2.         Object of License
+
+2.2.1.  Exclusive Game Title License 
+
+CCR grants Innova Systems, GameOn Corp, Level Up! Interactive SA, Level Up! Inc, Lyto Datarind Fortuna, GDCN(Guangdong Data Communication Network), ASAO Entertainment Corporation, And Microwell and its affiliates and its and their respective sub-licensees the exclusive right to Commercially Exploit the Game Title, its packaging, its advertising and all marketing materials and/or other materials associated with the Game Title and to exclusively provide the Online Game Services in the Territory for the Term in accordance with this Agreement. Innova Systems, GameOn Corp, Level Up! Interactive SA, Level Up! Inc, Lyto Datarind Fortuna, GDCN(Guangdong Data Communication Network), ASAO Entertainment Corporation, And Microwell will be entitled to sub-contract the provision of the Game Service (or any part thereof) provided Innova Systems, GameOn Corp, Level Up! Interactive SA, Level Up! Inc, Lyto Datarind Fortuna, GDCN(Guangdong Data Communication Network), ASAO Entertainment Corporation, And Microwell ensures the observance by such sub-contracted parties of the obligations of this Agreement.
+
+2.1.2.  Licensed Materials for Use such as User¡¯s Manual 
+
+2.1.3. Innova Systems, GameOn Corp, Level Up! Interactive SA, Level Up! Inc, Lyto Datarind Fortuna, GDCN(Guangdong Data Communication Network), ASAO Entertainment Corporation, Microwell and its affiliates will be entitled to use the system operation manual, technical game operation manual, server operation manual and server layout provided by CCR separately from the Game Title. However, any intellectual property rights in the licensed materials provided by CCR  (such as user¡¯s manual) shall remain with CCR, and Innova Systems, GameOn Corp, Level Up! Interactive SA, Level Up! Inc, Lyto Datarind Fortuna, GDCN(Guangdong Data Communication Network), ASAO Entertainment Corporation, and Microwell shall protect these intellectual property rights in such manner as if it would protect its own rights. 
+
+2.1.4.  Rights to Source Code
+
+Source codes for the subject Game Title in this Agreement shall not be provided to Innova Systems, GameOn Corp, Level Up! Interactive SA, Level Up! Inc, Lyto Datarind Fortuna, GDCN(Guangdong Data Communication Network), ASAO Entertainment Corporation, and Microwell. 
+
+2.1.5.  Trademarks
+CCR has the rights and responsibilities to register trademarks in the Territory (at CCR¡¯s cost) for the service of the Game Title in the Territory under this Agreement. Innova Systems, GameOn Corp, Level Up! Interactive SA, Level Up! Inc, Lyto Datarind Fortuna, GDCN(Guangdong Data Communication Network), ASAO Entertainment Corporation, and Microwell shall (at CCR¡¯s cost) reasonably assist CCR in filing an application and registering the trademarks if so requested by CCR. Innova Systems, GameOn Corp, Level Up! Interactive SA, Level Up! Inc, Lyto Datarind Fortuna, GDCN(Guangdong Data Communication Network), ASAO Entertainment Corporation, and Microwell has the rights to use the trademarks described above for the term of this Agreement. Meanwhile, the type and scope of such trademarks will be separately determined.
+
+2.1.6.  Know-how in Game Operation 
+CCR shall provide Innova Systems, GameOn Corp, Level Up! Interactive SA, Level Up! Inc, Lyto Datarind Fortuna, GDCN(Guangdong Data Communication Network), ASAO Entertainment Corporation, and Microwell with all necessary assistance, training and know-how required in respect of the Game Title and its operation to the best of CCR¡¯s ability to ensure the effective operation of the Game Title and provision of Online Game Services by Innova Systems, GameOn Corp, Level Up! Interactive SA, Level Up! Inc, Lyto Datarind Fortuna, GDCN(Guangdong Data Communication Network), ASAO Entertainment Corporation, and Microwell in the Territory.
+
+2.1.7.  Merchandising 
+
+Subject to the terms of this clause 2.1.7 CCR grants Innova Systems, GameOn Corp, Level Up! Interactive SA, Level Up! Inc, Lyto Datarind Fortuna, GDCN(Guangdong Data Communication Network), ASAO Entertainment Corporation, and Microwell the right to Commercially Exploit Merchandise in the Territory during the term of this Agreement. Innova Systems, GameOn Corp, Level Up! Interactive SA, Level Up! Inc, Lyto Datarind Fortuna, GDCN(Guangdong Data Communication Network), ASAO Entertainment Corporation, and Microwell will be entitled to sub-contract any aspect of the Commercial Exploitation of the Merchandise but will not be entitled to sub-license its rights except for the purpose of distributing and manufacturing Merchandise. Prior to exercising its right to Merchandise Innova Systems, GameOn Corp, Level Up! Interactive SA, Level Up! Inc, Lyto Datarind Fortuna, GDCN(Guangdong Data Communication Network), ASAO Entertainment Corporation, and Microwell will notify CCR of its intention and the parties shall agree in good faith the terms of any such Merchandising.
+
+2.1.8  Exclusivity
+
+CCR acknowledges Innova Systems, GameOn Corp, Level Up! Interactive SA, Level Up! Inc, Lyto Datarind Fortuna, GDCN(Guangdong Data Communication Network), ASAO Entertainment Corporation, and Microwell has the exclusive right to Commercially Exploit the Game Title and provide the Online Game Services in the Territory during the Term. CCR will not be entitled to Commercially Exploit nor license any third party to Commercially Exploit the Game Title or provide the Online Game Services in the Territory during the Term. CCR will ensure that no person in the Territory is able to electronically access the Game Title outside the Territory and will take all necessary measures to ensure that the Game Title cannot be accessed by any person in the Territory from any online services operated and/or maintained by CCR and its licensees and its and their representatives. 
+
+ 
+
+2.2.      Exception to the License
+
+2.2.1.  Duplication Rights
+
+Innova Systems, GameOn Corp, Level Up! Interactive SA, Level Up! Inc, Lyto Datarind Fortuna, GDCN(Guangdong Data Communication Network), ASAO Entertainment Corporation, and Microwell will be entitled to supply the Game Title obtained from CCR to the General Users and Non-Paying Users of the internet based online service. All programs supplied by CCR to Innova Systems, GameOn Corp, Level Up! Interactive SA, Level Up! Inc, Lyto Datarind Fortuna, GDCN(Guangdong Data Communication Network), ASAO Entertainment Corporation, and Microwell (such as Server Software and Client Software to be installed in Game Title servers) shall be installed and operated only on the servers that are notified by Innova Systems, GameOn Corp, Level Up! Interactive SA, Level Up! Inc, Lyto Datarind Fortuna, GDCN(Guangdong Data Communication Network), ASAO Entertainment Corporation, and Microwell to CCR in advance.
+
+2.2.2.  Sublicensing 
+
+Innova Systems, GameOn Corp, Level Up! Interactive SA, Level Up! Inc, Lyto Datarind Fortuna, GDCN(Guangdong Data Communication Network), ASAO Entertainment Corporation, and Microwell shall be acknowledged as the exclusive licensee of the Game Title in the Territory under this Agreement. However, the license granted to Innova Systems, GameOn Corp, Level Up! Interactive SA, Level Up! Inc, Lyto Datarind Fortuna, GDCN(Guangdong Data Communication Network), ASAO Entertainment Corporation, and Microwell does not include the right to sublicense except as otherwise provided for in this Agreement. 
+
+2.2.3     Prohibition of Reverse Engineering
+
+Except as provided by applicable law, reverse engineering, re-mapping or editing of all programs and licensed materials provided by CCR shall be strictly prohibited. Any actions against this prohibition shall be considered in  breach of this Agreement

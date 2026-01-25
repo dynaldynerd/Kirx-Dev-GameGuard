@@ -5,6 +5,9 @@
 /* 1273 */
 class __cppobj CConnNumPHMgr
 {
+public:
+  void Init();
+
   struct __cnt_per_h
   {
     int nUserCumPerMin;

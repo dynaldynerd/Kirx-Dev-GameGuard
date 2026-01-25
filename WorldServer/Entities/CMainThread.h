@@ -287,6 +287,8 @@ struct _event_info
 /* 1811 */
 struct __cppobj GuildCreateEventInfo
 {
+  void Init();
+
   bool m_bStartedEvent;
   _event_info m_EventInfo;
   _event_info m_ModifyInfo;
@@ -451,8 +453,24 @@ class __cppobj __declspec(align(8)) CMainThread
   unsigned int m_dwCheatSetPlayTime;
   unsigned __int16 m_dwCheatSetScanerCnt;
   unsigned __int16 m_dwCheatSetLevel;
+public:
+  CMainThread();
+  bool Init();
   virtual ~CMainThread() = default;
+
+private:
+  bool LoadINI();
+  bool CheckDefine();
+  bool check_dbsyn_data_size();
+  bool DataFileInit();
+  bool ObjectInit();
+  bool NetworkInit();
+  void MakeSystemTower();
+  static void __cdecl RuleThread(void *param);
+  static void __cdecl DQSThread(void *param);
 };
+
+extern CMainThread g_Main;
 
 /* 1306 */
 
@@ -532,6 +550,10 @@ struct __declspec(align(8)) Player_TL_Status
 /* 1815 */
 struct __cppobj TimeLimitMgr
 {
+  static TimeLimitMgr *Instance();
+  void LoadTLINIFile();
+  void InitializeTLMgr();
+
   CMyTimer m_tmLoopTime;
   Player_TL_Status m_lstTLStaus[2532];
   unsigned __int16 m_wEnable;

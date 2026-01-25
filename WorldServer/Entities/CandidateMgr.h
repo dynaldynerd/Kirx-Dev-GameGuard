@@ -6,6 +6,9 @@
 class __cppobj CandidateMgr
 {
 public:
+  static CandidateMgr *Instance();
+  bool Initialize(int maxCount);
+
   struct __cppobj _candidate_info
   {
     enum Status : int

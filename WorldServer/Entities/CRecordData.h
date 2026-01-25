@@ -5,6 +5,7 @@
 /* 1281 */
 class __cppobj CRecordData
 {
+public:
   bool m_bLoad;
   char m_szFileName[129];
   unsigned int m_dwTotalSize;
@@ -13,7 +14,6 @@ class __cppobj CRecordData
   char **m_ppsRecord;
   unsigned int *m_pdwHashList;
 
-public:
   virtual ~CRecordData() = default;
 };
 

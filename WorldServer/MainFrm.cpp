@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "Entities/CMainThread.h"
 #include "MainFrm.h"
 
 #ifdef _DEBUG
@@ -37,6 +38,11 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
                       CRect(0, 0, 0, 0), this, 1))
     {
         return -1;
+    }
+
+    if (!g_Main.Init())
+    {
+        AfxMessageBox(L"CMainThread::Init() failed.");
     }
 
     m_log.AddString(L"World server initialized.");

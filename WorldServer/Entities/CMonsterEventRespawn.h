@@ -62,8 +62,12 @@ struct __cppobj _event_respawn
 class __cppobj CMonsterEventRespawn
 {
 public:
+  bool SetEventRespawn();
+
   virtual ~CMonsterEventRespawn() = default;
 
   int m_nLoadEventRespawn;
   _event_respawn m_EventRespawn[32];
 };
+
+extern CMonsterEventRespawn g_MonsterEventRespawn;

@@ -5,6 +5,9 @@
 class __cppobj CGoldenBoxItemMgr
 {
 public:
+  static CGoldenBoxItemMgr *Instance();
+  bool Initialize();
+
   struct _BoxItemOpen_output
   {
     unsigned int m_dwOutputIndex;

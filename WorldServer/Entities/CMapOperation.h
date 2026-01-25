@@ -15,6 +15,8 @@ class CMapData;
 class __cppobj CMapOperation
 {
 public:
+  bool Init();
+
   int m_nLoopStartPoint;
   unsigned int m_dwSpeedHackStdTime;
   CMapDataTable m_tblMapData;
@@ -32,4 +34,6 @@ public:
   CMapData *m_SettlementMapData[3][2];
   virtual ~CMapOperation() = default;
 };
+
+extern CMapOperation g_MapOper;
 

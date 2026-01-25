@@ -9,6 +9,9 @@
 class __cppobj CPostSystemManager
 {
 public:
+  static CPostSystemManager *Instace();
+  bool Init();
+
   unsigned __int8 m_byRegiNum;
   unsigned __int8 m_byProcNum;
   CMyTimer m_tmrRegiTime;
