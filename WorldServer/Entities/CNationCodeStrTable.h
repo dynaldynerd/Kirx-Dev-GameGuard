@@ -20,5 +20,12 @@ public:
 class __cppobj CNationCodeStrTable
 {
 public:
+  CNationCodeStrTable() = default;
+  ~CNationCodeStrTable() = default;
+
+  bool Init();
+  int GetCode(const char *code) const;
+  const char *GetStr(int code) const;
+
   CHashMapPtrPool<int, CNationCodeStr> m_kTable;
 };

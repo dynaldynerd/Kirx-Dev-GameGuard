@@ -36,6 +36,8 @@
 #include "CDarkHoleDungeonQuest.h"
 #include "CCryptor.h"
 #include "CRtc.h"
+#include "CNationCodeStrTable.h"
+#include "CNationSettingManager.h"
 #include "KorLocalTime.h"
 #include "PatriarchElectProcessor.h"
 #include "TimeItem.h"
@@ -50,6 +52,8 @@ Us_HFSM::~Us_HFSM() = default;
 CMainThread g_Main;
 
 CMainThread::CMainThread() = default;
+
+char CMainThread::ms_szClientVerCheck[33]{};
 
 void GuildCreateEventInfo::Init()
 {
@@ -487,7 +491,228 @@ bool CMainThread::Init()
 
 bool CMainThread::LoadINI()
 {
+  const int worldSystemRet = LoadWorldSystemINI();
+  if (worldSystemRet != 0)
+  {
+    MyMessageBox("CMainThread::LoadINI()", "LoadWorldSystemINI() iRet(%d) Fail!", worldSystemRet);
+    return false;
+  }
+
+  const int worldInfoRet = LoadWorldInfoINI();
+  if (worldInfoRet != 0)
+  {
+    MyMessageBox("CMainThread::LoadINI()", "LoadWorldInfoINI() iRet(%d) Fail!", worldInfoRet);
+    return false;
+  }
+
+  LoadItemConsumeINI();
   return true;
+}
+
+int CMainThread::LoadWorldSystemINI()
+{
+  char returnedString[128]{};
+  GetPrivateProfileStringA(
+    "System",
+    "AccountAddress",
+    "X",
+    returnedString,
+    static_cast<DWORD>(sizeof(returnedString)),
+    ".\\Initialize\\WorldSystem.ini");
+  if (strcmp(returnedString, "X") == 0)
+  {
+    return -1;
+  }
+  IN_ADDR addr{};
+  if (InetPtonA(AF_INET, returnedString, &addr) != 1)
+  {
+    return -1;
+  }
+  m_dwAccountIP = addr.s_addr;
+
+  GetPrivateProfileStringA(
+    "VersionCheck",
+    "Ver_CheckKey",
+    "X",
+    ms_szClientVerCheck,
+    static_cast<DWORD>(sizeof(ms_szClientVerCheck)),
+    ".\\Initialize\\WorldSystem.ini");
+  return 0;
+}
+
+int CMainThread::LoadWorldInfoINI()
+{
+  GetPrivateProfileStringA(
+    "System",
+    "WorldName",
+    "X",
+    m_szWorldName,
+    static_cast<DWORD>(sizeof(m_szWorldName)),
+    "..\\WorldInfo\\WorldInfo.ini");
+  if (strcmp(m_szWorldName, "X") == 0)
+  {
+    return -1;
+  }
+  strncpy_s(m_wszWorldName, sizeof(m_wszWorldName), m_szWorldName, _TRUNCATE);
+
+  m_bFreeServer = GetPrivateProfileIntA("System", "FreeServer", 0, "..\\WorldInfo\\WorldInfo.ini");
+  m_byWorldType = static_cast<unsigned __int8>(
+    GetPrivateProfileIntA("System", "ServerType", 2, "..\\WorldInfo\\WorldInfo.ini"));
+
+  char releaseType[9]{};
+  GetPrivateProfileStringA(
+    "ServerMode",
+    "ReleaseType",
+    "X",
+    releaseType,
+    static_cast<DWORD>(sizeof(releaseType)),
+    "..\\WorldInfo\\WorldInfo.ini");
+  if (_stricmp(releaseType, "Internal") == 0)
+  {
+    m_bReleaseServiceMode = false;
+  }
+  else if (_stricmp(releaseType, "Release") == 0)
+  {
+    m_bReleaseServiceMode = true;
+  }
+  else
+  {
+    MyMessageBox(
+      "CMainThread::LoadWorldSystemINI()",
+      "WorldInfo.ini\r\n[ServerMode]\r\nReleaseType = %s Invalid!!",
+      releaseType);
+    return -2;
+  }
+
+  char executeService[6]{};
+  GetPrivateProfileStringA(
+    "ServerMode",
+    "ExcuteService",
+    "X",
+    executeService,
+    static_cast<DWORD>(sizeof(executeService)),
+    "..\\WorldInfo\\WorldInfo.ini");
+  if (_stricmp(executeService, "true") == 0)
+  {
+    m_bExcuteService = true;
+  }
+  else if (_stricmp(executeService, "false") == 0)
+  {
+    m_bExcuteService = false;
+  }
+  else
+  {
+    MyMessageBox(
+      "CMainThread::LoadWorldSystemINI()",
+      "WorldInfo.ini\r\n[ServerMode]\r\nExcuteService = %s Invalid!!",
+      executeService);
+    return -3;
+  }
+
+  char nationCode[3]{};
+  GetPrivateProfileStringA(
+    "System",
+    "NationCode",
+    "X",
+    nationCode,
+    static_cast<DWORD>(sizeof(nationCode)),
+    "..\\WorldInfo\\WorldInfo.ini");
+
+  CNationCodeStrTable table;
+  if (!table.Init())
+  {
+    return -4;
+  }
+
+  const int type = table.GetCode(nationCode);
+  if (type == -1)
+  {
+    MyMessageBox(
+      "CMainThread::LoadWorldSystemINI()",
+      "WorldInfo.ini\r\n[System]\r\nNationCode = %s Invalid!!",
+      nationCode);
+    return -5;
+  }
+
+  const char *codeStr = table.GetStr(type);
+  strncpy_s(nationCode, sizeof(nationCode), codeStr, _TRUNCATE);
+  const int initRet = CNationSettingManager::Instance()->Init(type, nationCode, m_bReleaseServiceMode);
+  if (initRet != 0)
+  {
+    const char *serviceMode = m_bReleaseServiceMode ? "true" : "false";
+    MyMessageBox(
+      "CMainThread::LoadWorldSystemINI()",
+      "CNationSettingManager::Instance()->Init( iNationCode(%d), szNationCodeStr(%s), bServiceMode(%s) ) :  iRet(%d) Fail!",
+      type,
+      nationCode,
+      serviceMode,
+      initRet);
+    return -6;
+  }
+
+  return 0;
+}
+
+void CMainThread::LoadItemConsumeINI()
+{
+  char returnedString[10]{};
+  GetPrivateProfileStringA(
+    "AWAY_PARTY",
+    "ItemConsume",
+    "TRUE",
+    returnedString,
+    static_cast<DWORD>(sizeof(returnedString)),
+    ".\\Initialize\\ItemConsume.ini");
+  m_bAwayPartyConsumeItem = strcmp(returnedString, "TRUE") == 0;
+
+  GetPrivateProfileStringA(
+    "AWAY_PARTY",
+    "ItemCode",
+    "ircht01",
+    m_strAwayPartyItemCode,
+    static_cast<DWORD>(sizeof(m_strAwayPartyItemCode)),
+    ".\\Initialize\\ItemConsume.ini");
+
+  char moneyConsume[10]{};
+  GetPrivateProfileStringA(
+    "AWAY_PARTY",
+    "MoneyConsume",
+    "FALSE",
+    moneyConsume,
+    static_cast<DWORD>(sizeof(moneyConsume)),
+    ".\\Initialize\\ItemConsume.ini");
+  m_bAwayPartyConsumeMoney = strcmp(moneyConsume, "TRUE") == 0;
+  m_dwAwayPartyMoney = static_cast<unsigned int>(
+    GetPrivateProfileIntA("AWAY_PARTY", "Money", 0, ".\\Initialize\\ItemConsume.ini"));
+
+  GetPrivateProfileStringA(
+    "AllRaceChat",
+    "ItemCode",
+    "X",
+    m_strAllRaceChatItemCode,
+    static_cast<DWORD>(sizeof(m_strAllRaceChatItemCode)),
+    ".\\Initialize\\ItemConsume.ini");
+
+  char itemConsume[10]{};
+  GetPrivateProfileStringA(
+    "AllRaceChat",
+    "ItemConsume",
+    "TRUE",
+    itemConsume,
+    static_cast<DWORD>(sizeof(itemConsume)),
+    ".\\Initialize\\ItemConsume.ini");
+  m_bAllRaceChatItemConsume = strcmp(itemConsume, "TRUE") == 0;
+
+  GetPrivateProfileStringA(
+    "AllRaceChat",
+    "MoneyConsume",
+    "FALSE",
+    itemConsume,
+    static_cast<DWORD>(sizeof(itemConsume)),
+    ".\\Initialize\\ItemConsume.ini");
+  m_bAllRaceChatMoneyConsume = strcmp(itemConsume, "TRUE") == 0;
+  m_dwAllRaceChatMoney = static_cast<unsigned int>(
+    GetPrivateProfileIntA("AllRaceChat", "Money", 0, ".\\Initialize\\ItemConsume.ini"));
 }
 
 bool CMainThread::CheckDefine()

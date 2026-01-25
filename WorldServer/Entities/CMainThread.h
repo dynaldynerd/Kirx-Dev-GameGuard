@@ -454,12 +454,17 @@ class __cppobj __declspec(align(8)) CMainThread
   unsigned __int16 m_dwCheatSetScanerCnt;
   unsigned __int16 m_dwCheatSetLevel;
 public:
+  static char ms_szClientVerCheck[33];
+
   CMainThread();
   bool Init();
   virtual ~CMainThread() = default;
 
 private:
   bool LoadINI();
+  int LoadWorldSystemINI();
+  int LoadWorldInfoINI();
+  void LoadItemConsumeINI();
   bool CheckDefine();
   bool check_dbsyn_data_size();
   bool DataFileInit();
