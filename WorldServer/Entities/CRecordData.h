@@ -18,6 +18,7 @@ public:
   unsigned int *m_pdwHashList;
 
   bool ReadRecord(const char *fileName, int structSize, char *errCode);
+  bool ReadRecord_Ex(const char *fileName1, const char *fileName2, unsigned int structSize, char *errCode);
   unsigned int GetRecordNum() const;
   _base_fld *GetRecord(int index);
   _base_fld *GetRecord(const char *code);

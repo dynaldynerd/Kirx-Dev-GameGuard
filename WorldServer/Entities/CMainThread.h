@@ -507,6 +507,17 @@ extern CMainThread g_Main;
 
 /* 1296 */
 #include "base_fld.h"
+#include "SkillCommon.h"
+#include "monster_sp_fld.h"
+#include "skill_fld.h"
+#include "force_fld.h"
+#include "class_fld.h"
+#include "map_fld.h"
+#include "animus_fld.h"
+#include "mon_active_fld.h"
+#include "mon_block_fld.h"
+#include "portal_fld.h"
+#include "monster_fld.h"
 
 /* 1303 */
 struct __cppobj __unaligned __declspec(align(2)) _monster_sp_group : _base_fld
@@ -584,138 +595,6 @@ struct __declspec(align(2)) _mob_message
 /* 1287 */
 
 /* 1288 */
-
-/* 1297 */
-struct __cppobj _monster_sp_fld : _base_fld
-{
-  int m_nSpecialAttType;
-  char m_strSpecialAttCode[64];
-  int m_nAttLv;
-  float m_fSpecialRange;
-  int m_nMotiveCondition;
-  int m_nMotiveValue;
-  int m_nMotiveExceptionCondition;
-  int m_nMotiveExceptionValue;
-  int m_nMotiveTime;
-  int m_nDstType;
-  int m_nLimitCount;
-  int m_nProbability;
-};
-
-/* 1298 */
-struct _consume_item_list
-{
-  char m_itmNeedItemCode[8];
-  int m_nNeedItemCount;
-};
-
-/* 1299 */
-struct _cont_param_list
-{
-  int m_nContParamCode;
-  int m_nContParamIndex;
-  float m_fContValue[7];
-};
-
-/* 1300 */
-struct __cppobj _skill_fld : _base_fld
-{
-  int m_nClass;
-  int m_nIconIDX;
-  int m_nMastIndex;
-  char m_strMastKorName[64];
-  char m_strMastEngName[64];
-  char m_strKorName[64];
-  char m_strEngName[64];
-  int m_nLv;
-  int m_bActivate;
-  int m_bEnable;
-  char m_strUsableRace[64];
-  char m_strActableDst[64];
-  char m_strGradeLimit[64];
-  int m_nNeedMastIndex;
-  char m_strFixWeapon[64];
-  int m_bFixshield;
-  int m_nSpecialType;
-  int m_nNeedSpecialType;
-  int m_nNeedHP;
-  int m_nNeedFP;
-  int m_nNeedSP;
-  _consume_item_list m_ConsumeItemList[3];
-  float m_fActDelay;
-  int m_bCumulType;
-  int m_nCumulCounter;
-  int m_nNewEffCount;
-  char m_strEffectCode[64];
-  int m_nAttackable;
-  int m_nAttType[7];
-  int m_nAttConstant[7];
-  float m_fAttFormulaConstant;
-  int m_nAttNeedBt;
-  int m_nBonusDistance;
-  char m_strRangeEffCode[64];
-  int m_nTempEffectType;
-  int m_nTempParamCode;
-  float m_fTempValue[7];
-  int m_nContEffectType;
-  int m_nEffLimType;
-  int m_nEffLimType2;
-  int m_nContAreaType;
-  _cont_param_list m_ContParamList[5];
-  int m_nContEffectSec[7];
-  int m_nEtc;
-  float m_f1_2speed;
-  float m_f1_2distance;
-  float m_f2_3speed;
-  float m_f2_3distance;
-  int m_nEffectClass;
-};
-
-/* 1301 */
-struct __cppobj _force_fld : _base_fld
-{
-  int m_nClass;
-  int m_nIconIDX;
-  int m_nMastIndex;
-  char m_strMastKorName[64];
-  char m_strMastEngName[64];
-  char m_strKorName[64];
-  char m_strEngName[64];
-  int m_nLv;
-  int m_bActivate;
-  int m_bEnable;
-  char m_strUsableRace[64];
-  char m_strActableDst[64];
-  char m_strGradeLimit[64];
-  int m_nNeedMastIndex;
-  char m_strFixWeapon[64];
-  int m_bFixshield;
-  int m_nSpecialType;
-  int m_nNeedSpecialType;
-  int m_nNeedHP;
-  int m_nNeedFP;
-  int m_nNeedSP;
-  _consume_item_list m_ConsumeItemList[3];
-  float m_fActDelay;
-  int m_bCumulType;
-  int m_nCumulCounter;
-  int m_nNewEffCount;
-  char m_strEffectCode[64];
-  int m_bAttackable;
-  int m_nProperty;
-  int m_nEffectGroup;
-  float m_fAttFormulaConstant;
-  int m_nActDistance;
-  char m_strRangeEffCode[64];
-  int m_nTempEffectType;
-  int m_nTempParamCode;
-  float m_fTempValue[7];
-  int m_nContEffectType;
-  int m_nContAreaType;
-  _cont_param_list m_ContParamList[5];
-  int m_nContEffectSec[7];
-  int m_nEffectClass;
-};
 
 /* 1804 */
 
@@ -1383,54 +1262,6 @@ class __cppobj AutominePersonal : CCharacter
   CLogFile m_logSysErr;
 };
 
-/* 1713 */
-struct _mastery_lim_data
-{
-  int m_nBnsMMastery[2];
-  int m_nBnsSMastery;
-  int m_nBnsDefMastery;
-  int m_nBnsPryMastery;
-  int m_nBnsMakeMastery[3];
-  int m_nBnsSkillMastery[8];
-  int m_nBnsForceMastery[24];
-};
-
-/* 1715 */
-struct __cppobj _class_fld : _base_fld
-{
-  struct _bns_item
-  {
-    char strDefaultItem[64];
-    int nAmount;
-  };
-
-  int m_nRaceCode;
-  int m_nClass;
-  int m_nIconIDX;
-  int m_nGrade;
-  int m_nUpGradeLv;
-  char m_strCh_Class[8][64];
-  char m_strTemp[64];
-  char m_strKorName[64];
-  char m_strEngName[64];
-  int m_nConLim;
-  char m_strLinkClassSkill[10][64];
-  int m_bUnitUsable;
-  int m_bAnimusUsable;
-  int m_bLauncherUsable;
-  int m_bWMKToolUsable;
-  int m_bDMKToolUnitUsable;
-  int m_bBMKToolUnitUsable;
-  int m_nMakeTrapMaxNum;
-  int m_nBnsForHP;
-  int m_nBnsForFP;
-  int m_nBnsForSP;
-  int m_nUpValueDefMastery;
-  _mastery_lim_data m_MasteryLim;
-  int m_bSelectRewardItem;
-  _class_fld::_bns_item m_DefaultItem[9];
-};
-
 /* 1720 */
 struct __cppobj _guild_master_info
 {
@@ -1515,27 +1346,6 @@ struct __cppobj __declspec(align(8)) _guild_member_info
 
 /* 1746 */
 #include "CTrap.h"
-
-/* 1752 */
-struct _happen_event_condition_node
-{
-  int m_nCondType;
-  int m_nCondSubType;
-  char m_sCondVal[64];
-};
-
-/* 1753 */
-struct _happen_event_node
-{
-  int m_bUse;
-  int m_bQuestRepeat;
-  int m_nQuestType;
-  int m_bSelectQuestManual;
-  int m_nAcepProNum;
-  int m_nAcepProDen;
-  _happen_event_condition_node m_CondNode[5];
-  char m_strLinkQuest[5][64];
-};
 
 /* 1686 */
 struct __cppobj _dh_mission_mgr
@@ -1955,22 +1765,6 @@ struct __cppobj _quest_dummy
   _dummy_position *m_pDumPos;
 };
 
-/* 1466 */
-struct __cppobj _map_fld : _base_fld
-{
-  char m_strFileName[64];
-  int m_nMapType;
-  int m_nLayerNum;
-  int m_nRaceVillageCode;
-  int m_nMonsterSetFileNum;
-  int m_nMapClass;
-  int m_nRadius;
-  int m_nLevelLimit;
-  int m_nUpLevelLim;
-  int m_nPotionLim;
-  int m_nRacePvpUsable[3];
-};
-
 /* 1523 */
 struct __cppobj _safe_dummy
 {
@@ -2325,58 +2119,6 @@ struct __cppobj SF_Timer
 
 /* 1635 */
 
-/* 1775 */
-struct __cppobj _animus_fld : _base_fld
-{
-  int m_nLevel;
-  unsigned __int64 m_nForLvUpExp;
-  int m_nUseFP;
-  float m_fPenalty;
-  float m_fAttGap;
-  int m_nAttack_DP;
-  int m_nAttFcStd;
-  int m_nMinAFSelProb;
-  int m_nMaxAFSelProb;
-  int m_nAttSklUnit;
-  int m_nDefSklUnit;
-  float m_fWeakPart;
-  int m_nStdDefFc;
-  float m_fDefGap;
-  float m_fDefFacing;
-  int m_nFireTol;
-  int m_nWaterTol;
-  int m_nSoilTol;
-  int m_nWindTol;
-  int m_nForceLevel;
-  int m_nForceMastery;
-  int m_nForceAttStd;
-  char m_strAttTechID1[64];
-  int m_nAttTech1UseProb;
-  int m_nAttTechID1MotionTime;
-  char m_strPSecTechID[64];
-  int m_nPSecTechIDMotionTime;
-  char m_strMSecTechID[64];
-  int m_nMSecTechIDMotionTime;
-  int m_nMaxHP;
-  int m_nHPRecDelay;
-  int m_nHPRecUnit;
-  int m_nMaxFP;
-  int m_nFPRecDelay;
-  int m_nFPRecUnit;
-  int m_nAttSpd;
-  int m_nAttMoTime1;
-  int m_nAttMoTime2;
-  int m_nCrtMoTime;
-  int m_nViewExt;
-  int m_nRefExt;
-  int m_nAttExt;
-  int m_nMovSpd;
-  int m_nScaleRate;
-  int m_nWidth;
-  int m_nAttEffType;
-  int m_nDefEffType;
-};
-
 /* 1321 */
 struct _BSP_C_FACE
 {
@@ -2678,17 +2420,6 @@ struct _ROT_TRACK
   float quat[4];
 };
 
-/* 1432 */
-struct __cppobj _mon_active_fld : _base_fld
-{
-  unsigned int m_dwRegenTime;
-  unsigned int m_dwRegenLimNum;
-  unsigned int m_dwRegenProp;
-  unsigned int m_dwRegenMinNum;
-  unsigned int m_dwStdKill;
-  unsigned int m_dwRegenMaxNum;
-};
-
 /* 1452 */
 struct __cppobj BossSchedule
 {
@@ -2701,36 +2432,6 @@ struct __cppobj BossSchedule
   ATL::CTime m_LastRespawnSystemTime;
   unsigned __int16 m_LiveCount;
   BossSchedule_Map *m_pParent;
-};
-
-/* 1434 */
-struct __cppobj _mon_block_fld : _base_fld
-{
-  struct _dummy_info
-  {
-    char m_strDummyCode[64];
-    unsigned int m_dwSelectProp;
-  };
-
-  unsigned int m_dwDummyNum;
-  _dummy_info m_DummyInfo[20];
-  int m_nMin;
-  int m_nMob;
-  int m_nMax;
-};
-
-/* 1516 */
-struct __cppobj _portal_fld : _base_fld
-{
-  char m_strLinkMapCode[64];
-  char m_strLinkPortalCode[64];
-  char m_szMenu[64];
-  int m_bNeedConCheck;
-  int m_nNeedChrLevel;
-  int m_nUpLevelLim;
-  _consume_item_list m_ConsumeItemList[3];
-  int m_nKind;
-  char m_strUseRace[64];
 };
 
 /* 1602 */
@@ -2834,145 +2535,6 @@ struct __cppobj __declspec(align(8)) _dh_job_setup
   _react_sub_setup *ReactSetup[10];
   char szDescirptCode[17];
   virtual ~_dh_job_setup() = default;
-};
-
-/* 1608 */
-struct __cppobj _monster_fld : _base_fld
-{
-  struct __child_mon
-  {
-    char strChildMon[64];
-    int nChildMonNum;
-  };
-
-  struct _EmotionPresentation
-  {
-    int m_nEmotionCon;
-    int m_nEmotionClass;
-    char m_strEmotionCode[64];
-  };
-
-  char m_strName[64];
-  char m_strEffectCode[64];
-  int m_nMobGrade;
-  int m_nRaceCode;
-  int m_nMobRace;
-  int m_nKillPoint;
-  int m_nToCombatTime;
-  int m_nPincerCnt;
-  int m_nPreAttRange;
-  int m_nMinMoveDistance;
-  int m_nMaxMoveDistance;
-  int m_nMobAlienation;
-  int m_nMinMoveArea;
-  int m_nMaxMoveArea;
-  int m_nGuardRecallTimeMS;
-  int m_nGuardingArea;
-  float m_fTarDecType;
-  int m_nAPTime;
-  int m_nAPReset;
-  int m_nUglierType;
-  float m_fLevel;
-  int m_bMonsterCondition;
-  int m_nCriticalTol;
-  int m_bExpDown;
-  int m_nUpLooting;
-  int m_nDnLooting;
-  float m_fExt;
-  float m_fAttFcStd;
-  int m_nAttack_DP;
-  int m_nProperty;
-  float m_fAttGap;
-  int m_bAttRangeType;
-  int m_nAttType;
-  float m_fMinAFSelProb;
-  float m_fMaxAFSelProb;
-  float m_fAttSklUnit;
-  float m_fDefSklUnit;
-  float m_fWeakPart;
-  int m_bUseDefence;
-  float m_fStdDefFc;
-  float m_fDefGap;
-  float m_fDefFacing;
-  int m_nShieldBlock;
-  int m_nBlockPer;
-  float m_fFireTol;
-  float m_fWaterTol;
-  float m_fSoilTol;
-  float m_fWindTol;
-  char m_strSPCode[15][64];
-  float m_fForceLevel;
-  float m_fForceMastery;
-  float m_fForceAttStd;
-  char m_strAttTechID1[64];
-  float m_fAttTech1UseProb;
-  float m_fAttTechID1MotionTime;
-  char m_strAttTechID2[64];
-  float m_fAttTech2UseProb;
-  float m_fAttTechID2MotionTime;
-  char m_strAttTechID3[64];
-  float m_fAttTech3UseProb;
-  float m_fAttTechID3MotionTime;
-  char m_strPSecTechID[64];
-  float m_fPSecTechIDMotionTime;
-  char m_strMSecTechID[64];
-  float m_fMSecTechIDMotionTime;
-  int m_nInjuryLimit;
-  float m_fMaxHP;
-  float m_fHPRecDelay;
-  float m_fHPRecUnit;
-  float m_fAttSpd;
-  float m_fAttMoTime1;
-  float m_fAttMoTime2;
-  float m_fCrtMoTime;
-  int m_nViewAngle;
-  int m_nViewAngleCap;
-  int m_nCapacityValue;
-  float m_fViewExt;
-  float m_fAttExt;
-  float m_fMRefExt;
-  float m_fCopTime;
-  float m_fMovSpd;
-  float m_fWarMovSpd;
-  float m_fScaleRate;
-  int m_bScaleChange;
-  float m_fWidth;
-  float m_fWaitTime;
-  int m_nAsitReqRate;
-  int m_nAsitAptRate;
-  int m_nAsitType;
-  __child_mon m_Child[3];
-  float m_fEmoType;
-  float m_fOffensiveRate;
-  int m_nOffensiveType;
-  float m_fDamHPStd;
-  float m_fEmoImpStdTime;
-  float m_fGoodToOrdHPPer;
-  float m_fOrdToBadHPPer;
-  float m_fBadToWorseHPPer;
-  float m_fEspTFProb;
-  float m_fTypeCompTerms;
-  float m_fPSecTechChat;
-  float m_fPAttTechChat;
-  float m_fEmo0Chat;
-  float m_fEmo0ChatProb;
-  float m_fEmo1Chat;
-  float m_fEmo1ChatProb;
-  float m_fEmo2Chat;
-  float m_fEmo2ChatProb;
-  float m_fEmo3Chat;
-  float m_fEmo3ChatProb;
-  float m_fEmo4Chat;
-  float m_fEmo4ChatProb;
-  float m_fAsitReqSteEspChat;
-  float m_fAsitReqSteEspChatProb;
-  float m_fAsitReqSteHelpChat;
-  float m_fAsitReqSteHelpChatProb;
-  float m_fAsitReqSteCopChat;
-  float m_fAsitReqSteCopChatProb;
-  _EmotionPresentation m_EmotionChecker[5];
-  int m_nAttEffType;
-  int m_nDefEffType;
 };
 
 /* 1641 */

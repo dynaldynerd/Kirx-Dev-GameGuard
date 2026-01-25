@@ -15,5 +15,11 @@ bool CPcBangFavor::Initialzie()
 
 bool CPcBangFavor::LoadPcBangData()
 {
-  return true;
+  char pszErrMsg[144] = {};
+  if (m_tblPcRoomData.ReadRecord(".\\script\\PcRoom.dat", 0x2A4u, pszErrMsg))
+  {
+    return true;
+  }
+  MyMessageBox("DatafileInit", pszErrMsg);
+  return false;
 }

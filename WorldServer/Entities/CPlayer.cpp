@@ -1,19 +1,55 @@
 #include "pch.h"
 
 #include "CPlayer.h"
+#include "CRecordData.h"
 #include "GlobalObjects.h"
 
 _skill_fld *CPlayer::ms_pXmas_Snow_Effect = nullptr;
 _skill_fld *CPlayer::ms_pXmas_Snow_Bullet_Effect = nullptr;
 int _ATTACK_DELAY_CHECKER::s_nSpareTime = 0;
+CRecordData ItemCombineMgr::ms_tbl_ItemCombine;
+CRecordData ItemCombineMgr::ms_tbl_ItemCombine_Link_Stuff;
+CRecordData ItemCombineMgr::ms_tbl_ItemCombine_Link_Result;
 
 bool ItemCombineMgr::LoadData()
 {
-  return true;
+  char szMessage[144] = {};
+  if (ItemCombineMgr::ms_tbl_ItemCombine.ReadRecord_Ex(
+        ".\\script\\CombineTable.dat",
+        ".\\script\\CombineTable2.dat",
+        0x3C8u,
+        szMessage))
+  {
+    if (ItemCombineMgr::ms_tbl_ItemCombine_Link_Stuff.ReadRecord(
+          ".\\script\\LinkedStuff.dat",
+          0x1944u,
+          szMessage))
+    {
+      if (ItemCombineMgr::ms_tbl_ItemCombine_Link_Result.ReadRecord(
+            ".\\script\\LinkedResult.dat",
+            0x1944u,
+            szMessage))
+      {
+        return true;
+      }
+    }
+  }
+
+  MyMessageBox("DatafileInit", szMessage);
+  return false;
 }
 
 bool ItemCombineMgr::CheckLoadData()
 {
+  for (int n = 0; ; ++n)
+  {
+    const int recordNum = static_cast<int>(ItemCombineMgr::ms_tbl_ItemCombine.GetRecordNum());
+    if (n >= recordNum)
+    {
+      break;
+    }
+    (void)ItemCombineMgr::ms_tbl_ItemCombine.GetRecord(n);
+  }
   return true;
 }
 

@@ -4,10 +4,9 @@
 #include "CMapData.h"
 #include "CMyTimer.h"
 #include "CNetIndexList.h"
+#include "TicketItem_fld.h"
 
 class CPlayer;
-
-struct _TicketItem_fld;
 
 class __cppobj CTransportShip
 {

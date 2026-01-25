@@ -9,7 +9,7 @@
 #include <cstdio>
 #include <cstring>
 
-CRaceBuffInfoByHolyQuest::CRaceBuffInfoByHolyQuest(CRaceBuffInfoByHolyQuest::_skill_fld *data, unsigned __int8 lv)
+CRaceBuffInfoByHolyQuest::CRaceBuffInfoByHolyQuest(_skill_fld *data, unsigned __int8 lv)
   : m_pData(data),
     m_byLv(lv)
 {
@@ -17,7 +17,7 @@ CRaceBuffInfoByHolyQuest::CRaceBuffInfoByHolyQuest(CRaceBuffInfoByHolyQuest::_sk
 
 CRaceBuffInfoByHolyQuest *CRaceBuffInfoByHolyQuest::Create(unsigned int uiNTh, char *szItemName)
 {
-  CRaceBuffInfoByHolyQuest::_skill_fld *field = nullptr;
+  _skill_fld *field = nullptr;
   unsigned __int8 lv = 0;
   if (!LoadINISubProcLoadCode(uiNTh, szItemName, &field, &lv))
   {
@@ -30,7 +30,7 @@ CRaceBuffInfoByHolyQuest *CRaceBuffInfoByHolyQuest::Create(unsigned int uiNTh, c
 bool CRaceBuffInfoByHolyQuest::LoadINISubProcLoadCode(
   unsigned int uiTh,
   char *szItemName,
-  CRaceBuffInfoByHolyQuest::_skill_fld **ppFld,
+  _skill_fld **ppFld,
   unsigned __int8 *byLv)
 {
   char buffer[1024]{};

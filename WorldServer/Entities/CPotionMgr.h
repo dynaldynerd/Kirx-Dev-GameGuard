@@ -2,8 +2,7 @@
 
 #include "IdaCompat.h"
 #include "CRecordData.h"
-
-struct _PotionItem_fld;
+#include "PotionItem_fld.h"
 
 class __cppobj CPotionMgr
 {

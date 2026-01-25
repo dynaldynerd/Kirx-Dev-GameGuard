@@ -23,7 +23,7 @@ bool CMonsterSPGroupTable::Create(
         auto v15 = &this->m_pRecordData[n];
         _monster_fld*Record = (_monster_fld*)pMonsterRecordData->GetRecord(n);
         v15->m_dwIndex = n;
-        strcpy(v15->m_strCode, Record->m_strCode);
+        strcpy_s(v15->m_strCode, sizeof(v15->m_strCode), Record->m_strCode);
         v15->m_wCount = 0;
         for (int j = 0; j < 0xF; ++j)
         {

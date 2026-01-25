@@ -42,6 +42,25 @@ bool CRecordData::ReadRecord(const char *fileName, int structSize, char *errCode
   return true;
 }
 
+bool CRecordData::ReadRecord_Ex(const char *fileName1, const char *fileName2, unsigned int structSize, char *errCode)
+{
+  CRecordData src;
+  CRecordData extra;
+  if (!src.ReadRecord(fileName1, static_cast<int>(structSize), errCode))
+  {
+    return false;
+  }
+  if (!extra.ReadRecord(fileName2, static_cast<int>(structSize), errCode))
+  {
+    return false;
+  }
+
+  m_Header = src.m_Header;
+  m_Header.m_nRecordNum = static_cast<int>(src.GetRecordNum() + extra.GetRecordNum());
+  m_bLoad = true;
+  return true;
+}
+
 unsigned int CRecordData::GetRecordNum() const
 {
   return m_dwTotalSize;

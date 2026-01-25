@@ -554,6 +554,9 @@ struct __cppobj ItemCombineMgr
 {
   static bool LoadData();
   static bool CheckLoadData();
+  static CRecordData ms_tbl_ItemCombine;
+  static CRecordData ms_tbl_ItemCombine_Link_Stuff;
+  static CRecordData ms_tbl_ItemCombine_Link_Result;
 
   CPlayer *m_pMaster;
 };
