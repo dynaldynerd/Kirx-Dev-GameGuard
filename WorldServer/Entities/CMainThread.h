@@ -476,6 +476,7 @@ private:
   bool ObjectInit();
   bool NetworkInit();
   void MakeSystemTower();
+  void AddPassablePacket();
   static void __cdecl RuleThread(void *param);
   static void __cdecl DQSThread(void *param);
 };
@@ -569,6 +570,7 @@ struct __cppobj TimeLimitMgr
   static TimeLimitMgr *Instance();
   void LoadTLINIFile();
   void InitializeTLMgr();
+  void SetTLEnable(unsigned __int16 wState);
 
   CMyTimer m_tmLoopTime;
   Player_TL_Status m_lstTLStaus[2532];

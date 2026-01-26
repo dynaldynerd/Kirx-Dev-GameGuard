@@ -17,3 +17,5 @@ CItemBox *g_ItemBox = nullptr;
 CParkingUnit *g_ParkingUnit = nullptr;
 CDarkHole *g_DarkHole = nullptr;
 CGuild *g_Guild = nullptr;
+AggroCaculateData g_AggroCaculateData{};
+MonsterSetInfoData g_MonsterSetInfoData{};

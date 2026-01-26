@@ -16,6 +16,7 @@ class __cppobj CMapOperation
 {
 public:
   bool Init();
+  CMapData *GetMap(char *szMapCode);
 
   int m_nLoopStartPoint;
   unsigned int m_dwSpeedHackStdTime;

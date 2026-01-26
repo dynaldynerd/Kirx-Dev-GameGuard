@@ -33,6 +33,42 @@ bool CSUItemSystem::SUItemSystem_Init()
 
 bool CSUItemSystem::SUItemSystem_CheckData()
 {
+  if (m_SUOrigin[0].GetRecordNum() <= 0)
+  {
+    return false;
+  }
+
+  const int effectTypeCount = m_SetItemType.GetEffectTypeCount();
+  if (effectTypeCount <= 0)
+  {
+    return false;
+  }
+
+  for (int set_pos = 0; set_pos < effectTypeCount; ++set_pos)
+  {
+    si_interpret *interpret = m_SetItemType.Getsi_interpret(set_pos);
+    if (interpret == nullptr)
+    {
+      return false;
+    }
+    const unsigned __int8 count = interpret->GetEffectTypeCount();
+    if (count > 8u)
+    {
+      return false;
+    }
+    for (int idx = 0; idx < count; ++idx)
+    {
+      if (interpret->GetCountOfItem(static_cast<unsigned int>(idx)) > 0xCu)
+      {
+        return false;
+      }
+      if (interpret->GetCountOfEffect(static_cast<unsigned int>(idx)) > 8u)
+      {
+        return false;
+      }
+    }
+  }
+
   return true;
 }
 

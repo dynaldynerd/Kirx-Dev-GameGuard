@@ -15,6 +15,8 @@
 #include "CParkingUnit.h"
 #include "CDarkHole.h"
 #include "CGuild.h"
+#include "AggroCaculateData.h"
+#include "MonsterSetInfoData.h"
 
 extern CUserDB g_UserDB[MAX_PLAYER];
 extern CPartyPlayer g_PartyPlayer[MAX_PLAYER];
@@ -31,3 +33,5 @@ extern CItemBox *g_ItemBox;
 extern CParkingUnit *g_ParkingUnit;
 extern CDarkHole *g_DarkHole;
 extern CGuild *g_Guild;
+extern AggroCaculateData g_AggroCaculateData;
+extern MonsterSetInfoData g_MonsterSetInfoData;

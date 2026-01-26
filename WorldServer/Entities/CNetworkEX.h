@@ -25,6 +25,8 @@ public:
   unsigned int dwMonsterPosMiss;
   unsigned int dwPlayerPosMiss;
   unsigned __int8 m_byStatus[4];
+
+  void SetPassablePacket(unsigned int dwProID, unsigned __int8 byHeader1, unsigned __int8 byHeader2);
 };
 
 extern CNetworkEX g_Network;

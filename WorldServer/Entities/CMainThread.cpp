@@ -4,8 +4,10 @@
 
 #include <crtdbg.h>
 #include <process.h>
+#include <cstdlib>
 #include <cstdio>
 #include <cstring>
+#include <ctime>
 
 #include "AutominePersonalMgr.h"
 #include "CActionPointSystemMgr.h"
@@ -26,6 +28,7 @@
 #include "CMonsterEventRespawn.h"
 #include "CMonsterEventSet.h"
 #include "CMoveMapLimitManager.h"
+#include "CNetworkEX.h"
 #include "CPcBangFavor.h"
 #include "CPostSystemManager.h"
 #include "CPvpUserAndGuildRankingSystem.h"
@@ -112,10 +115,88 @@ TimeLimitMgr *TimeLimitMgr::Instance()
 
 void TimeLimitMgr::LoadTLINIFile()
 {
+  char returnedString[48]{};
+  char buffer[28]{};
+
+  GetPrivateProfileStringA("Time Limit", "Use", "FALSE", returnedString, sizeof(returnedString), ".\\Initialize\\WorldSystem.ini");
+  if (std::strcmp(returnedString, "FALSE") == 0)
+  {
+    SetTLEnable(0);
+  }
+  else
+  {
+    SetTLEnable(1);
+  }
+
+  m_wPeriodCnt = static_cast<unsigned __int16>(GetPrivateProfileIntA("Time Limit", "CNT", 2, ".\\Initialize\\WorldSystem.ini"));
+
+  const unsigned int periodCount = m_wPeriodCnt;
+  m_pwTime = new unsigned __int16[periodCount];
+  m_pdPercent = new long double[periodCount];
+  m_pwFatigue = new unsigned __int16[periodCount];
+
+  for (int j = 0; j < m_wPeriodCnt; ++j)
+  {
+    std::memset(buffer, 0, sizeof(buffer));
+    sprintf_s(buffer, sizeof(buffer), "Time_%d", j);
+    m_pwTime[j] = static_cast<unsigned __int16>(
+      GetPrivateProfileIntA("Time Limit", buffer, 60 * (j + 1), ".\\Initialize\\WorldSystem.ini"));
+
+    std::memset(returnedString, 0, sizeof(returnedString));
+    std::memset(buffer, 0, sizeof(buffer));
+    sprintf_s(buffer, sizeof(buffer), "Percent_%d", j);
+    GetPrivateProfileStringA("Time Limit", buffer, "1.0", returnedString, sizeof(returnedString), ".\\Initialize\\WorldSystem.ini");
+    m_pdPercent[j] = std::atof(returnedString);
+  }
+
+  for (int k = 0; k < m_wPeriodCnt; ++k)
+  {
+    m_pwFatigue[k] = static_cast<unsigned __int16>(100 * m_pwTime[k] / m_pwTime[m_wPeriodCnt - 1]);
+  }
+
+  m_dwLogoutTerm = GetPrivateProfileIntA("Time Limit", "LogoutTerm", 300, ".\\Initialize\\WorldSystem.ini");
+  m_dwNotifyTerm = GetPrivateProfileIntA("Time Limit", "NotifyTerm", 300, ".\\Initialize\\WorldSystem.ini");
+
+  char destination[1024]{};
+  char source[60]{};
+  strcpy_s(destination, sizeof(destination), "TimeLimitMgr::LoadTLINIFile()");
+  for (int m = 0; m < m_wPeriodCnt; ++m)
+  {
+    sprintf_s(
+      source,
+      sizeof(source),
+      ", Time_%d = %d, Percent_%d = %f",
+      m,
+      m_pwTime[m],
+      m,
+      static_cast<double>(m_pdPercent[m]));
+    strcat_s(destination, source);
+    std::memset(source, 0, sizeof(source));
+  }
+  g_Main.m_logLoadingError.Write(destination);
 }
 
 void TimeLimitMgr::InitializeTLMgr()
 {
+  int scratch[12]{};
+  std::memset(scratch, 0xCC, sizeof(scratch));
+
+  m_dwPlayFDegree = 60000 * m_pwTime[m_wPeriodCnt - 1] / 100;
+  m_dwLogoutFDegree = 60000 * m_dwLogoutTerm / 100;
+  m_tmLoopTime.BeginTimer(m_dwPlayFDegree);
+  for (unsigned int j = 0; j < MAX_PLAYER; ++j)
+  {
+    std::memset(&m_lstTLStaus[j], 0, sizeof(m_lstTLStaus[j]));
+  }
+  for (unsigned int k = 0; k < MAX_PLAYER; ++k)
+  {
+    m_lstTLStaus[k].m_bUpdateLogout = true;
+  }
+}
+
+void TimeLimitMgr::SetTLEnable(unsigned __int16 wState)
+{
+  m_wEnable = wState;
 }
 
 bool CMainThread::Init()
@@ -755,12 +836,12 @@ void CMainThread::LoadItemConsumeINI()
 
 bool CMainThread::CheckDefine()
 {
-  return true;
+  return true; //this is not stub, original code is already like this
 }
 
 bool CMainThread::check_dbsyn_data_size()
 {
-  return true;
+  return true; //this is not stub, original code is already like this
 }
 
 bool CMainThread::DataFileInit()
@@ -2049,19 +2130,276 @@ bool CMainThread::ObjectInit()
 
 bool CMainThread::NetworkInit()
 {
+  _NET_TYPE_PARAM params[4]{};
+
+  params[0].m_bServer = 1;
+  params[0].m_wSocketMaxNum = MAX_PLAYER;
+  params[0].m_bRealSockCheck = 1;
+  params[0].m_bSystemLogFile = 1;
+  if (m_bReleaseServiceMode)
+  {
+    params[0].m_byRecvThreadNum = 8;
+  }
+  params[0].m_byRecvSleepTime = 10;
+  params[0].m_bySendSleepTime = 2;
+  params[0].m_wPort = 27780;
+  params[0].m_bSpeedHackCheck = 1;
+  params[0].m_bOddMsgWriteLog = 1;
+  params[0].m_dwSocketRecycleTerm = 30000;
+  params[0].m_bOddMsgDisconnect = 1;
+  params[0].m_dwProcessMsgNumPerLoop = 20;
+  if (m_bReleaseServiceMode)
+  {
+    params[0].m_dwSendBufferSize = 40000;
+    params[0].m_dwSendSafeSize = 10000;
+  }
+  params[0].m_bSendSafe = true;
+  strcpy_s(params[0].m_szModuleName, "ClientLine");
+
+  params[1].m_bServer = 1;
+  params[1].m_wPort = 27555;
+  params[1].m_wSocketMaxNum = 2;
+  params[1].m_bRealSockCheck = 1;
+  params[1].m_bSystemLogFile = 1;
+  params[1].m_bRecvLogFile = 1;
+  params[1].m_bSendLogFile = 1;
+  params[1].m_bOddMsgWriteLog = 1;
+  params[1].m_bOddMsgDisconnect = 1;
+  params[1].m_bSendSafe = true;
+  params[1].m_byRecvSleepTime = 10;
+  params[1].m_bySendSleepTime = 2;
+  strcpy_s(params[1].m_szModuleName, "AccountLine");
+
+  params[2].m_bServer = 1;
+  params[2].m_wPort = 27556;
+  params[2].m_wSocketMaxNum = 1;
+  params[2].m_bRealSockCheck = 1;
+  params[2].m_bSystemLogFile = 1;
+  params[2].m_bRecvLogFile = 1;
+  params[2].m_bSendLogFile = 1;
+  params[2].m_bOddMsgWriteLog = 1;
+  params[2].m_bOddMsgDisconnect = 1;
+  params[2].m_dwSendBufferSize = 1000000;
+  params[2].m_dwRecvBufferSize = 1000000;
+  params[2].m_bSendSafe = true;
+  params[2].m_byRecvSleepTime = 10;
+  params[2].m_bySendSleepTime = 2;
+  strcpy_s(params[2].m_szModuleName, "WebLine");
+
+  params[3].m_bServer = 1;
+  params[3].m_wPort = 0;
+  params[3].m_wSocketMaxNum = 1;
+  params[3].m_bRealSockCheck = 1;
+  params[3].m_bSystemLogFile = 1;
+  params[3].m_bRecvLogFile = 1;
+  params[3].m_bSendLogFile = 1;
+  params[3].m_bOddMsgWriteLog = 1;
+  params[3].m_bOddMsgDisconnect = 1;
+  params[3].m_dwSendBufferSize = 1000000;
+  params[3].m_dwRecvBufferSize = 1000000;
+  params[3].m_bSendSafe = true;
+  params[3].m_byRecvSleepTime = 10;
+  params[3].m_bySendSleepTime = 2;
+  strcpy_s(params[3].m_szModuleName, "BillingLine");
+
+  g_Network.m_dwUseProcessNum = 4;
+  strcpy_s(g_Network.m_szSystemName, "GameServer");
+  strcpy_s(g_Network.m_szLogPath, "..\\ZoneServerLog\\NetLog");
+  for (unsigned int i = 0; i < 4; ++i)
+  {
+    g_Network.m_pProcess[i] = &g_Network.m_Process[i];
+    g_Network.m_Process[i].m_Type = params[i];
+  }
+  AddPassablePacket();
+
   return true;
 }
 
 void CMainThread::MakeSystemTower()
 {
+  const char *raceNames[3] = {"BELLATO", "CORA", "ACCRETIA"};
+  for (unsigned int race = 0; race < 3; ++race)
+  {
+    for (int nIniIndex = 0; nIniIndex < 50; ++nIniIndex)
+    {
+      char mapKey[160]{};
+      char mapCode[152]{};
+      sprintf_s(mapKey, sizeof(mapKey), "Map%d", nIniIndex);
+      GetPrivateProfileStringA(raceNames[race], mapKey, "NULL", mapCode, sizeof(mapCode), ".\\Script\\SystemGuardTower.ini");
+      if (std::strcmp(mapCode, "NULL") == 0)
+      {
+        continue;
+      }
+
+      CMapData *map = g_MapOper.GetMap(mapCode);
+      if (!map)
+      {
+        WritePrivateProfileStringA(raceNames[race], mapKey, "NULL", ".\\Script\\SystemGuardTower.ini");
+        m_logLoadingError.Write("SystemTower: invalid map (%s) for race %u idx %d", mapCode, race, nIniIndex);
+        continue;
+      }
+
+      char posKey[160]{};
+      char posValue[136]{};
+      float pos[3]{};
+      bool posValid = true;
+
+      sprintf_s(posKey, sizeof(posKey), "Pos%d_x", nIniIndex);
+      GetPrivateProfileStringA(raceNames[race], posKey, "NULL", posValue, sizeof(posValue), ".\\Script\\SystemGuardTower.ini");
+      if (std::strcmp(posValue, "NULL") == 0)
+      {
+        posValid = false;
+      }
+      else
+      {
+        pos[0] = static_cast<float>(std::atof(posValue));
+      }
+
+      sprintf_s(posKey, sizeof(posKey), "Pos%d_y", nIniIndex);
+      GetPrivateProfileStringA(raceNames[race], posKey, "NULL", posValue, sizeof(posValue), ".\\Script\\SystemGuardTower.ini");
+      if (std::strcmp(posValue, "NULL") == 0)
+      {
+        posValid = false;
+      }
+      else
+      {
+        pos[1] = static_cast<float>(std::atof(posValue));
+      }
+
+      sprintf_s(posKey, sizeof(posKey), "Pos%d_z", nIniIndex);
+      GetPrivateProfileStringA(raceNames[race], posKey, "NULL", posValue, sizeof(posValue), ".\\Script\\SystemGuardTower.ini");
+      if (std::strcmp(posValue, "NULL") == 0)
+      {
+        posValid = false;
+      }
+      else
+      {
+        pos[2] = static_cast<float>(std::atof(posValue));
+      }
+
+      if (!posValid || !map->IsMapIn(pos))
+      {
+        WritePrivateProfileStringA(raceNames[race], mapKey, "NULL", ".\\Script\\SystemGuardTower.ini");
+        m_logLoadingError.Write("SystemTower: invalid position for race %u idx %d", race, nIniIndex);
+        continue;
+      }
+
+      char codeKey[160]{};
+      char recordCode[152]{};
+      sprintf_s(codeKey, sizeof(codeKey), "Code%d", nIniIndex);
+      GetPrivateProfileStringA(raceNames[race], codeKey, "NULL", recordCode, sizeof(recordCode), ".\\Script\\SystemGuardTower.ini");
+      if (std::strcmp(recordCode, "NULL") == 0)
+      {
+        WritePrivateProfileStringA(raceNames[race], mapKey, "NULL", ".\\Script\\SystemGuardTower.ini");
+        m_logLoadingError.Write("SystemTower: missing record code for race %u idx %d", race, nIniIndex);
+        continue;
+      }
+
+      _base_fld *record = g_Main.m_tblItemData[25].GetRecord(recordCode);
+      if (!record)
+      {
+        WritePrivateProfileStringA(raceNames[race], mapKey, "NULL", ".\\Script\\SystemGuardTower.ini");
+        m_logLoadingError.Write("SystemTower: record not found (%s) race %u idx %d", recordCode, race, nIniIndex);
+        continue;
+      }
+    }
+  }
+}
+
+void CMainThread::AddPassablePacket()
+{
+  g_Network.SetPassablePacket(0, 4u, 3u);
+  g_Network.SetPassablePacket(0, 4u, 4u);
+  g_Network.SetPassablePacket(0, 4u, 5u);
+  g_Network.SetPassablePacket(0, 4u, 6u);
+  g_Network.SetPassablePacket(0, 4u, 7u);
+  g_Network.SetPassablePacket(0, 4u, 0xB1u);
+  g_Network.SetPassablePacket(0, 4u, 0x12u);
+  g_Network.SetPassablePacket(0, 4u, 0x14u);
+  g_Network.SetPassablePacket(0, 4u, 0x19u);
+  g_Network.SetPassablePacket(0, 4u, 0x1Eu);
+  g_Network.SetPassablePacket(0, 5u, 7u);
+  g_Network.SetPassablePacket(0, 5u, 8u);
+  g_Network.SetPassablePacket(0, 5u, 9u);
+  g_Network.SetPassablePacket(0, 5u, 0xAu);
+  g_Network.SetPassablePacket(0, 5u, 0xBu);
+  g_Network.SetPassablePacket(0, 5u, 0xCu);
+  g_Network.SetPassablePacket(0, 5u, 0xDu);
+  g_Network.SetPassablePacket(0, 5u, 0xEu);
+  g_Network.SetPassablePacket(0, 5u, 0xFu);
+  g_Network.SetPassablePacket(0, 5u, 0x97u);
+  g_Network.SetPassablePacket(0, 5u, 0x98u);
+  g_Network.SetPassablePacket(0, 2u, 0xAu);
+  g_Network.SetPassablePacket(0, 2u, 0xBu);
+  g_Network.SetPassablePacket(0, 2u, 0xBu);
+  g_Network.SetPassablePacket(0, 0xDu, 0x1Du);
+  g_Network.SetPassablePacket(0, 0xEu, 7u);
+  g_Network.SetPassablePacket(0, 0xEu, 8u);
+  g_Network.SetPassablePacket(0, 0xEu, 0x19u);
+  g_Network.SetPassablePacket(0, 0xEu, 0x3Cu);
+  g_Network.SetPassablePacket(0, 0xEu, 0x42u);
+  g_Network.SetPassablePacket(0, 0xEu, 0x37u);
+  g_Network.SetPassablePacket(0, 0xEu, 0x44u);
+  g_Network.SetPassablePacket(0, 0x38u, 6u);
+  g_Network.SetPassablePacket(0, 0x10u, 0x14u);
+  g_Network.SetPassablePacket(0, 0x10u, 0x15u);
+  g_Network.SetPassablePacket(0, 0x10u, 0x16u);
+  g_Network.SetPassablePacket(0, 0x10u, 0x18u);
+  g_Network.SetPassablePacket(0, 0x10u, 0x19u);
+  g_Network.SetPassablePacket(0, 0x10u, 0x19u);
+  g_Network.SetPassablePacket(0, 0x11u, 3u);
+  g_Network.SetPassablePacket(0, 0x11u, 6u);
+  g_Network.SetPassablePacket(0, 0x11u, 9u);
+  g_Network.SetPassablePacket(0, 0x11u, 9u);
+  g_Network.SetPassablePacket(0, 0x11u, 0x11u);
+  g_Network.SetPassablePacket(0, 0x11u, 0x1Au);
 }
 
 void __cdecl CMainThread::RuleThread(void *param)
 {
-  (void)param;
+  CMainThread *self = static_cast<CMainThread *>(param);
+  if (self == nullptr)
+  {
+    _endthreadex(0);
+    return;
+  }
+
+  srand(static_cast<unsigned int>(time(nullptr)));
+  int sleepCounter = 0;
+  while (self->m_bRuleThread)
+  {
+    (void)GetTickCount();
+    if (!self->m_nSleepIgnore && ++sleepCounter > self->m_nSleepTerm)
+    {
+      Sleep(self->m_nSleepValue);
+      sleepCounter = 0;
+    }
+  }
+  _endthreadex(0);
 }
 
 void __cdecl CMainThread::DQSThread(void *param)
 {
-  (void)param;
+  CMainThread *self = static_cast<CMainThread *>(param);
+  if (self == nullptr)
+  {
+    _endthreadex(0);
+    return;
+  }
+
+  char logPath[128]{};
+  const unsigned int now = GetKorLocalTime();
+  sprintf_s(logPath, "..\\ZoneServerLog\\Systemlog\\DQSError%d.log", now);
+  self->m_logDQS.SetWriteLogFile(logPath, 1, 0, 1, 1);
+
+  int throttle = 0;
+  while (self->m_bDQSThread)
+  {
+    if (throttle++ > 100)
+    {
+      Sleep(1);
+      throttle = 0;
+    }
+  }
+  _endthreadex(0);
 }

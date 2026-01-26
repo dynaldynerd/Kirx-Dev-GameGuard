@@ -6,6 +6,8 @@
 class __cppobj __declspec(align(8)) CMapData
 {
 public:
+  bool IsMapIn(float *fPos);
+
   bool m_bUse;
   bool m_bLoad;
   int m_nMapIndex;
