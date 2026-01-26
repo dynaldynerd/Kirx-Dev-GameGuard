@@ -42,6 +42,14 @@
 #include "CNationCodeStrTable.h"
 #include "CNationSettingManager.h"
 #include "NameTxt_fld.h"
+#include "ResourceItem_fld.h"
+#include "UnitFrame_fld.h"
+#include "UnitPart_fld.h"
+#include "UnitBullet_fld.h"
+#include "AnimusItem_fld.h"
+#include "ItemMakeData_fld.h"
+#include "EditData_fld.h"
+#include "BulletItem_fld.h"
 #include "CNuclearBombMgr.h"
 #include "CPvpCashMng.h"
 #include "CQuestMgr.h"
@@ -1477,18 +1485,15 @@ bool CMainThread::check_loaded_data()
 {
   bool dataError = false;
 
-  int recordNum = static_cast<int>(m_tblItemData[18].GetRecordNum());
-  for (int n = 0; n < recordNum; ++n)
+  for (int n = 0; ; ++n)
   {
-    _base_fld *record = m_tblItemData[18].GetRecord(n);
-    if (!record)
+    const int recordNum = static_cast<int>(m_tblItemData[18].GetRecordNum());
+    if (n >= recordNum)
     {
-      continue;
+      break;
     }
-    if (*reinterpret_cast<unsigned int *>(&record[5].m_strCode[12])
-          != *reinterpret_cast<unsigned int *>(&record[5].m_strCode[16])
-        || *reinterpret_cast<unsigned int *>(&record[5].m_strCode[12])
-          != *reinterpret_cast<unsigned int *>(&record[5].m_strCode[20]))
+    _ResourceItem_fld *record = reinterpret_cast<_ResourceItem_fld *>(m_tblItemData[18].GetRecord(n));
+    if (record->m_nAncStdPrice != record->m_nExStdPrice || record->m_nAncStdPrice != record->m_nMecaStdPrice)
     {
       MyMessageBox("date error", "m_tblEffectData[tbl_code_res].. price..");
       return false;
@@ -1499,8 +1504,8 @@ bool CMainThread::check_loaded_data()
   {
     MyMessageBox(
       "date error",
-      "m_tblEffectData[effect_code_skill].ReadRecordNum() > max_skill_num + max_item_skill_num + "
-      "max_race_buff_skill_num + max_aura_skill_num + max_monster_skill_num");
+      "m_tblEffectData[effect_code_skill].ReadRecordNum() > max_skill_num + max_item_skill_num + max_race_buff_skill_num "
+      "+ max_aura_skill_num + max_monster_skill_num");
     return false;
   }
   if (m_tblEffectData[1].GetRecordNum() > 88)
@@ -1509,173 +1514,165 @@ bool CMainThread::check_loaded_data()
     return false;
   }
 
-  recordNum = static_cast<int>(m_tblMonster.GetRecordNum());
-  for (int n = 0; n < recordNum; ++n)
+  for (int n = 0; ; ++n)
   {
-    _base_fld *record = m_tblMonster.GetRecord(n);
-    if (!record)
+    const int recordNum = static_cast<int>(m_tblMonster.GetRecordNum());
+    if (n >= recordNum)
     {
-      continue;
+      break;
     }
-    if (*reinterpret_cast<float *>(&record[3].m_strCode[60]) <= 0.0f)
+    _monster_fld *record = reinterpret_cast<_monster_fld *>(m_tblMonster.GetRecord(n));
+    if (record->m_fLevel <= 0.0f)
     {
-      MyMessageBox("date error", "m_tblMonster, %d Rec.. Level == %d", n, (int)*reinterpret_cast<float *>(&record[3].m_strCode[60]));
+      MyMessageBox("date error", "m_tblMonster, %d Rec.. Level == %d", n, (int)record->m_fLevel);
       return false;
     }
   }
 
-  recordNum = static_cast<int>(m_tblEffectData[0].GetRecordNum());
-  for (int n = 0; n < recordNum; ++n)
+  for (int n = 0; ; ++n)
   {
-    _base_fld *record = m_tblEffectData[0].GetRecord(n);
-    if (!record)
+    const int recordNum = static_cast<int>(m_tblEffectData[0].GetRecordNum());
+    if (n >= recordNum)
     {
-      continue;
+      break;
     }
-    if (*reinterpret_cast<unsigned int *>(&record[1].m_strCode[4]) >= 8u)
+    _skill_fld *record = reinterpret_cast<_skill_fld *>(m_tblEffectData[0].GetRecord(n));
+    if (record->m_nMastIndex >= 8u)
     {
       dataError = true;
-      MyMessageBox(
-        "date error",
-        "skill mastery error( %s : %d)",
-        record->m_strCode,
-        *reinterpret_cast<unsigned int *>(&record[1].m_strCode[4]));
+      MyMessageBox("date error", "skill mastery error( %s : %d)", record->m_strCode, record->m_nMastIndex);
     }
   }
 
-  recordNum = static_cast<int>(m_tblEffectData[1].GetRecordNum());
-  for (int n = 0; n < recordNum; ++n)
+  for (int n = 0; ; ++n)
   {
-    _base_fld *record = m_tblEffectData[1].GetRecord(n);
-    if (!record)
+    const int recordNum = static_cast<int>(m_tblEffectData[1].GetRecordNum());
+    if (n >= recordNum)
     {
-      continue;
+      break;
     }
-    if (*reinterpret_cast<unsigned int *>(&record[1].m_strCode[4]) >= 0x18u)
+    _force_fld *record = reinterpret_cast<_force_fld *>(m_tblEffectData[1].GetRecord(n));
+    if (record->m_nMastIndex >= 0x18u)
     {
       dataError = true;
-      MyMessageBox(
-        "date error",
-        "force mastery error( %s : %d)",
-        record->m_strCode,
-        *reinterpret_cast<unsigned int *>(&record[1].m_strCode[4]));
+      MyMessageBox("date error", "force mastery error( %s : %d)", record->m_strCode, record->m_nMastIndex);
     }
   }
 
-  recordNum = static_cast<int>(m_tblEffectData[2].GetRecordNum());
-  for (int n = 0; n < recordNum; ++n)
+  for (int n = 0; ; ++n)
   {
-    (void)m_tblEffectData[2].GetRecord(n);
+    const int recordNum = static_cast<int>(m_tblEffectData[2].GetRecordNum());
+    if (n >= recordNum)
+    {
+      break;
+    }
+    (void)reinterpret_cast<_skill_fld *>(m_tblEffectData[2].GetRecord(n));
   }
 
-  recordNum = static_cast<int>(m_tblUnitFrame.GetRecordNum());
-  for (int n = 0; n < recordNum; ++n)
+  for (int n = 0; ; ++n)
   {
-    _base_fld *record = m_tblUnitFrame.GetRecord(n);
-    if (!record)
+    const int recordNum = static_cast<int>(m_tblUnitFrame.GetRecordNum());
+    if (n >= recordNum)
     {
-      continue;
+      break;
     }
-    if (*reinterpret_cast<unsigned int *>(&record[1].m_strCode[24]) > 6u)
+    _UnitFrame_fld *record = reinterpret_cast<_UnitFrame_fld *>(m_tblUnitFrame.GetRecord(n));
+    if (record->m_nMoney > 6u)
     {
-      MyMessageBox("date error", "m_tblUnitFrame, %d Rec.. MoneyCode == %d", n, *reinterpret_cast<unsigned int *>(&record[1].m_strCode[24]));
+      MyMessageBox("date error", "m_tblUnitFrame, %d Rec.. MoneyCode == %d", n, record->m_nMoney);
       return false;
     }
   }
 
-  for (int j = 0; j < 6; ++j)
+  int j = 0;
+  for (j = 0; j < 6; ++j)
   {
-    recordNum = static_cast<int>(m_tblUnitPart[j].GetRecordNum());
-    for (int n = 0; n < recordNum; ++n)
+    for (int n = 0; ; ++n)
     {
-      _base_fld *record = m_tblUnitPart[j].GetRecord(n);
-      if (!record)
+      const int recordNum = static_cast<int>(m_tblUnitPart[j].GetRecordNum());
+      if (n >= recordNum)
       {
-        continue;
+        break;
       }
-      if (*reinterpret_cast<unsigned int *>(&record[5].m_strCode[36]) > 6u)
+      _UnitPart_fld *record = reinterpret_cast<_UnitPart_fld *>(m_tblUnitPart[j].GetRecord(n));
+      if (record->m_nMoney > 6u)
       {
-        MyMessageBox(
-          "date error",
-          "m_tblUnitPart[%d], %d Rec.. MoneyCode == %d",
-          j,
-          n,
-          *reinterpret_cast<unsigned int *>(&record[5].m_strCode[36]));
+        MyMessageBox("date error", "m_tblUnitPart[%d], %d Rec.. MoneyCode == %d", j, n, record->m_nMoney);
         return false;
       }
     }
   }
 
-  recordNum = static_cast<int>(m_tblUnitBullet.GetRecordNum());
-  for (int n = 0; n < recordNum; ++n)
+  for (int n = 0; ; ++n)
   {
-    _base_fld *record = m_tblUnitBullet.GetRecord(n);
-    if (!record)
+    const int recordNum = static_cast<int>(m_tblUnitBullet.GetRecordNum());
+    if (n >= recordNum)
     {
-      continue;
+      break;
     }
-    if (*reinterpret_cast<unsigned int *>(&record[3].m_strCode[4]) > 6u)
+    _UnitBullet_fld *record = reinterpret_cast<_UnitBullet_fld *>(m_tblUnitBullet.GetRecord(n));
+    if (record->m_nMoney > 6u)
+    {
+      MyMessageBox("date error", "m_tblUnitBullet[%d], %d Rec.. MoneyCode == %d", j, n, record->m_nMoney);
+      return false;
+    }
+  }
+
+  for (int n = 0; ; ++n)
+  {
+    const int recordNum = static_cast<int>(m_tblItemData[24].GetRecordNum());
+    if (n >= recordNum)
+    {
+      break;
+    }
+    (void)reinterpret_cast<_AnimusItem_fld *>(m_tblItemData[24].GetRecord(n));
+  }
+
+  for (int n = 0; ; ++n)
+  {
+    const int recordNum = static_cast<int>(CQuestMgr::s_tblQuest->GetRecordNum());
+    if (n >= recordNum)
+    {
+      break;
+    }
+    _Quest_fld *record = reinterpret_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(n));
+    const int len = static_cast<int>(std::strlen(record->m_strCode));
+    if (len > 7)
     {
       MyMessageBox(
         "date error",
-        "m_tblUnitBullet[%d], %d Rec.. MoneyCode == %d",
-        0,
+        "CQuestMgr::s_tblQuest, %d Rec.. code: %s size(%d) is biger than quest_header_code_len(%d)",
         n,
-        *reinterpret_cast<unsigned int *>(&record[3].m_strCode[4]));
+        record->m_strCode,
+        len,
+        7);
       return false;
     }
   }
 
-  recordNum = static_cast<int>(m_tblItemData[24].GetRecordNum());
-  for (int n = 0; n < recordNum; ++n)
+  for (int n = 0; ; ++n)
   {
-    (void)m_tblItemData[24].GetRecord(n);
-  }
-
-  if (CQuestMgr::s_tblQuest != nullptr)
-  {
-    recordNum = static_cast<int>(CQuestMgr::s_tblQuest->GetRecordNum());
-    for (int n = 0; n < recordNum; ++n)
+    const int recordNum = static_cast<int>(m_tblItemMakeData.GetRecordNum());
+    if (n >= recordNum)
     {
-      _base_fld *record = CQuestMgr::s_tblQuest->GetRecord(n);
-      if (!record)
-      {
-        continue;
-      }
-      const int len = static_cast<int>(std::strlen(record->m_strCode));
-      if (len > 7)
-      {
-        MyMessageBox(
-          "date error",
-          "CQuestMgr::s_tblQuest, %d Rec.. code: %s size(%d) is biger than quest_header_code_len(%d)",
-          n,
-          record->m_strCode,
-          len,
-          7);
-        return false;
-      }
+      break;
     }
+    (void)reinterpret_cast<_ItemMakeData_fld *>(m_tblItemMakeData.GetRecord(n));
   }
 
-  recordNum = static_cast<int>(m_tblItemMakeData.GetRecordNum());
-  for (int n = 0; n < recordNum; ++n)
+  for (int n = 0; ; ++n)
   {
-    (void)m_tblItemMakeData.GetRecord(n);
-  }
-
-  recordNum = static_cast<int>(m_tblClass.GetRecordNum());
-  for (int n = 0; n < recordNum; ++n)
-  {
-    _base_fld *record = m_tblClass.GetRecord(n);
-    if (!record)
+    const int recordNum = static_cast<int>(m_tblClass.GetRecordNum());
+    if (n >= recordNum)
     {
-      continue;
+      break;
     }
-    if (*reinterpret_cast<unsigned int *>(record[1].m_strCode) < 4u)
+    _class_fld *record = reinterpret_cast<_class_fld *>(m_tblClass.GetRecord(n));
+    if (record->m_nClass < 4u)
     {
       for (int k = 0; k < 9; ++k)
       {
-        char *itemCode = &record[k + 24].m_strCode[8];
+        char *itemCode = record->m_DefaultItem[k].strDefaultItem;
         if (std::strncmp(itemCode, "-1", 2) != 0)
         {
           const int tableCode = GetItemTableCode(itemCode);
@@ -1690,14 +1687,10 @@ bool CMainThread::check_loaded_data()
           }
           else if (tableCode == 19)
           {
-            MyMessageBox(
-              "data error",
-              "class-reward-item error.., class: %s, unit key %s",
-              record->m_strCode,
-              itemCode);
+            MyMessageBox("data error", "class-reward-item error.., class: %s, unit key %s", record->m_strCode, itemCode);
             dataError = true;
           }
-          else if (!m_tblItemData[tableCode].GetRecord(itemCode))
+          else if (!g_Main.m_tblItemData[tableCode].GetRecord(itemCode))
           {
             MyMessageBox(
               "data error",
@@ -1711,96 +1704,84 @@ bool CMainThread::check_loaded_data()
     }
     else
     {
-      MyMessageBox(
-        "data error",
-        "classcode (%s : %d).., code error error",
-        record->m_strCode,
-        *reinterpret_cast<unsigned int *>(record[1].m_strCode));
+      MyMessageBox("data error", "classcode (%s : %d).., code error error", record->m_strCode, record->m_nClass);
       dataError = true;
     }
   }
 
-  if (CQuestMgr::s_tblQuest != nullptr)
+  for (int n = 0; ; ++n)
   {
-    recordNum = static_cast<int>(CQuestMgr::s_tblQuest->GetRecordNum());
-    for (int n = 0; n < recordNum; ++n)
+    const int recordNum = static_cast<int>(CQuestMgr::s_tblQuest->GetRecordNum());
+    if (n >= recordNum)
     {
-      _base_fld *record = CQuestMgr::s_tblQuest->GetRecord(n);
-      if (!record)
+      break;
+    }
+    _Quest_fld *record = reinterpret_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(n));
+    for (int m = 0; m < 6; ++m)
+    {
+      char *itemCode = record->m_RewardItem[m].m_strConsITCode;
+      if (std::strncmp(itemCode, "-1", 2) != 0)
       {
-        continue;
-      }
-      for (int m = 0; m < 6; ++m)
-      {
-        char *itemCode = reinterpret_cast<char *>(&record[14]) + (72 * m);
-        if (std::strncmp(itemCode, "-1", 2) != 0)
+        const int tableCode = GetItemTableCode(itemCode);
+        if (tableCode == -1)
         {
-          const int tableCode = GetItemTableCode(itemCode);
-          if (tableCode == -1)
-          {
-            MyMessageBox(
-              "data error",
-              "quest-reward-item error.., quest: %s, table code error %s",
-              record->m_strCode,
-              itemCode);
-            dataError = true;
-          }
-          else if (!m_tblItemData[tableCode].GetRecord(itemCode))
-          {
-            MyMessageBox(
-              "data error",
-              "quest-reward-item.., quest: %s, unregistered item %s",
-              record->m_strCode,
-              itemCode);
-            dataError = true;
-          }
+          MyMessageBox(
+            "data error",
+            "quest-reward-item error.., quest: %s, table code error %s",
+            record->m_strCode,
+            itemCode);
+          dataError = true;
+        }
+        else if (!g_Main.m_tblItemData[tableCode].GetRecord(itemCode))
+        {
+          MyMessageBox(
+            "data error",
+            "quest-reward-item.., quest: %s, unregistered item %s",
+            record->m_strCode,
+            itemCode);
+          dataError = true;
         }
       }
     }
   }
 
-  recordNum = static_cast<int>(m_tblEditData.GetRecordNum());
-  for (int n = 0; n < recordNum; ++n)
+  for (int n = 0; ; ++n)
   {
-    _base_fld *record = m_tblEditData.GetRecord(n);
-    if (!record)
+    const int recordNum = static_cast<int>(m_tblEditData.GetRecordNum());
+    if (n >= recordNum)
     {
-      continue;
+      break;
     }
+    _EditData_fld *record = reinterpret_cast<_EditData_fld *>(m_tblEditData.GetRecord(n));
     for (int ii = 0; ii < 30; ++ii)
     {
-      (void)ii;
+      (void)record->m_Node[ii];
     }
   }
 
-  recordNum = static_cast<int>(m_tblItemData[10].GetRecordNum());
-  for (int n = 0; n < recordNum; ++n)
+  for (int n = 0; ; ++n)
   {
-    _base_fld *record = m_tblItemData[10].GetRecord(n);
-    if (!record)
+    const int recordNum = static_cast<int>(m_tblItemData[10].GetRecordNum());
+    if (n >= recordNum)
     {
-      continue;
+      break;
     }
-    const int duration = *reinterpret_cast<int *>(&record[6].m_strCode[28]);
-    if (duration > 0xFFFF || duration < 1)
+    _BulletItem_fld *record = reinterpret_cast<_BulletItem_fld *>(m_tblItemData[10].GetRecord(n));
+    if (record->m_nDurUnit > 0xFFFF || record->m_nDurUnit < 1)
     {
-      MyMessageBox(
-        "data error",
-        "bullet's duration error(1~65535).., %s : %d",
-        record->m_strCode,
-        duration);
+      MyMessageBox("data error", "bullet's duration error(1~65535).., %s : %d", record->m_strCode, record->m_nDurUnit);
       dataError = true;
     }
   }
 
-  recordNum = static_cast<int>(m_tblMonster.GetRecordNum());
-  for (int n = 0; n < recordNum; ++n)
+  for (int n = 0; ; ++n)
   {
-    _base_fld *record = m_tblMonster.GetRecord(n);
-    if (!record)
+    const int recordNum = static_cast<int>(m_tblMonster.GetRecordNum());
+    if (n >= recordNum)
     {
-      continue;
+      break;
     }
+    _monster_fld *record = reinterpret_cast<_monster_fld *>(m_tblMonster.GetRecord(n));
     const int len = static_cast<int>(std::strlen(record->m_strCode));
     if (len > 5)
     {

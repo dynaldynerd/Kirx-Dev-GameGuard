@@ -19,6 +19,9 @@ public:
 
   bool ReadRecord(const char *fileName, int structSize, char *errCode);
   bool ReadRecord_Ex(const char *fileName1, const char *fileName2, unsigned int structSize, char *errCode);
+  bool LoadRecordHeader(void *hFile, char *errCode);
+  bool LoadRecordData(void *hFile, char *errCode);
+  unsigned int FileSize(const char *fileName);
   unsigned int GetRecordNum() const;
   _base_fld *GetRecord(int index);
   _base_fld *GetRecord(const char *code);
@@ -27,6 +30,6 @@ public:
   bool IsTableOpen() const;
   static bool IsTableOpen(const CRecordData *table);
 
-  virtual ~CRecordData() = default;
+  virtual ~CRecordData();
 };
 
