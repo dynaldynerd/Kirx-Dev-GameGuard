@@ -1507,99 +1507,26 @@ union $1D4D54E2B5971D5BE0EAD557ED232A85
 #include "CMergeFileManager.h"
 
 /* 1416 */
-struct _PATH_NODE
-{
-  float TotalLeng;
-  float Path[17][3];
-  int WhatDirection;
-  unsigned __int16 FrontLinetId;
-  unsigned __int16 BackLineId;
-  int PathCnt;
-  int IsFind;
-};
+
 
 /* 1417 */
 #include "CPathFinder.h"
 
 /* 1390 */
-union $36F8BC5CB18F337A8B949972D0D6A08A
-{
-  IDirect3DVertexBuffer8 *m_lpVertexBuffer;
-  _D3DR3VERTEX_TEX1 *m_VertexBufferTex1;
-  _D3DR3VERTEX_TEX2 *m_VertexBufferTex2;
-};
+
 
 /* 1391 */
 #include "CVertexBuffer.h"
 
 /* 1392 */
-union $736DB51CE9487475C2E813E4336CA27C
-{
-  IDirect3DIndexBuffer8 *m_lpIndexBuffer;
-  unsigned __int16 *m_IndexBuffer;
-};
+
 
 /* 1393 */
 #include "CIndexBuffer.h"
 
 /* 1418 */
-struct _ENTRY
-{
-  unsigned int offset;
-  unsigned int size;
-};
-
-/* 1419 */
-struct _BSP_FILE_HEADER
-{
-  unsigned int version;
-  _ENTRY CPlanes;
-  _ENTRY CFaceId;
-  _ENTRY Node;
-  _ENTRY Leaf;
-  _ENTRY MatListInLeaf;
-  _ENTRY Object;
-  _ENTRY Track;
-  _ENTRY EventObjectID;
-  _ENTRY ReadSpare[35];
-  _ENTRY BVertex;
-  _ENTRY WVertex;
-  _ENTRY FVertex;
-  _ENTRY VertexColor;
-  _ENTRY UV;
-  _ENTRY LgtUV;
-  _ENTRY Face;
-  _ENTRY FaceId;
-  _ENTRY VertexId;
-  _ENTRY ReadMatGroup;
-  _ENTRY FreeSpare[32];
-};
-
-/* 1420 */
-struct _EXT_BSP_FILE_HEADER
-{
-  unsigned int version;
-  _ENTRY CFVertex;
-  _ENTRY CFLine;
-  _ENTRY CFLineId;
-  _ENTRY CFLeaf;
-  _ENTRY EntityList;
-  _ENTRY EntityID;
-  _ENTRY LeafEntityList;
-  _ENTRY SoundEntityID;
-  _ENTRY LeafSoundEntityList;
-  _ENTRY ReadSpare[18];
-  _ENTRY MapEntitiesList;
-  _ENTRY SoundEntityList;
-  _ENTRY SoundEntitiesList;
-  _ENTRY FreeSpare[18];
-};
-
-/* 1421 */
-#include "CAlpha.h"
-
-/* 1423 */
 #include "CBsp.h"
+#include "CAlpha.h"
 
 /* 1327 */
 struct _E_ENTRY
@@ -1776,6 +1703,10 @@ struct __cppobj __declspec(align(4)) _res_dummy
   unsigned __int8 m_byGrade[3];
   unsigned int m_dwDelay[3][2];
   unsigned __int8 m_byQualityGrade;
+
+  _res_dummy();
+  bool SetDummy(_dummy_position *pDumPos, unsigned char byQualityGrade);
+  void SetRangeGrade();
 };
 
 /* 1522 */
@@ -2142,35 +2073,7 @@ struct __cppobj SF_Timer
 /* 1635 */
 
 /* 1321 */
-struct _BSP_C_FACE
-{
-  unsigned __int8 Attr;
-  unsigned __int8 VNum;
-  __unaligned __declspec(align(1)) unsigned int VStartId;
-  unsigned __int16 MatGIndex;
-  float Normal[4];
-};
 
-/* 1322 */
-struct __unaligned __declspec(align(2)) _BSP_MAT_GROUP
-{
-  unsigned __int16 Type;
-  unsigned __int16 TriNum;
-  __int16 MtlId;
-  __int16 LgtId;
-  float BBMin[3];
-  float BBMax[3];
-  float Origin[3];
-  unsigned int VBMinIndex;
-  unsigned int IBMinIndex;
-  unsigned int VertexBufferId;
-  unsigned int VCnt;
-  unsigned int CFaceStartVId;
-  void *MultiSourceUV;
-  void *MultiSourceST;
-  unsigned __int16 ObjectId;
-  float CoronaAlpha;
-};
 
 /* 1397 */
 union $3E60C3DACEF2E33FF1D1871D4F2565FA
@@ -2255,109 +2158,11 @@ struct _LEAF_SOUND_ENTITIES_LIST_INFO
 };
 
 /* 1409 */
-struct _BSP_NODE
-{
-  unsigned int f_normal_id;
-  float d;
-  __int16 front;
-  __int16 back;
-  __int16 bb_min[3];
-  __int16 bb_max[3];
-};
 
-/* 1410 */
-struct __unaligned __declspec(align(1)) _BSP_LEAF
-{
-  unsigned __int8 type;
-  unsigned __int16 face_num;
-  unsigned int face_start_id;
-  unsigned __int16 m_group_num;
-  unsigned int m_group_start_id;
-  __int16 bb_min[3];
-  __int16 bb_max[3];
-};
-
-/* 1411 */
-struct _TOOL_COL_LINE
-{
-  unsigned int attr;
-  unsigned __int16 start_v;
-  unsigned __int16 end_v;
-  float height;
-  unsigned __int16 front;
-  unsigned __int16 back;
-};
-
-/* 1412 */
-struct __unaligned __declspec(align(2)) _TOOL_COL_LEAF
-{
-  unsigned int start_id;
-  unsigned __int16 line_num;
-};
 
 /* 1332 */
 /* 1357 */
-struct __cppobj IDirect3DResource8 : IUnknown
-{
-};
 
-/* 1367 */
-struct __cppobj IDirect3DVertexBuffer8 : IDirect3DResource8
-{
-};
-
-/* 1385 */
-union $B3185CC329BDC5A6DA4B2C96D7DC3DD4
-{
-  float x;
-  float pos[1];
-};
-
-/* 1386 */
-union $25C8602110B22A2EB54BB3EE6752756B
-{
-  float nx;
-  float normal[1];
-};
-
-/* 1387 */
-struct _D3DR3VERTEX_TEX1
-{
-  $B3185CC329BDC5A6DA4B2C96D7DC3DD4 ___u0;
-  float y;
-  float z;
-  $25C8602110B22A2EB54BB3EE6752756B ___u3;
-  float ny;
-  float nz;
-  unsigned int color;
-  float u;
-  float v;
-};
-
-/* 1388 */
-union $42A39AC029B3127F486DF502FF8A7E09
-{
-  float x;
-  float local[1];
-};
-
-/* 1389 */
-struct _D3DR3VERTEX_TEX2
-{
-  $42A39AC029B3127F486DF502FF8A7E09 ___u0;
-  float y;
-  float z;
-  $25C8602110B22A2EB54BB3EE6752756B ___u3;
-  float ny;
-  float nz;
-  unsigned int color;
-  float uv[2][2];
-};
-
-/* 1368 */
-struct __cppobj IDirect3DIndexBuffer8 : IDirect3DResource8
-{
-};
 
 /* 1329 */
 struct __unaligned __declspec(align(2)) _ONE_LAYER

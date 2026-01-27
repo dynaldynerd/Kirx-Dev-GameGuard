@@ -158,14 +158,55 @@ bool CMapData::CheckCenterPosDummy(_dummy_position *pPos)
     return false;
 }
 
-void CMapData::GetRandPosInDummy(_dummy_position *pDumPos, float *fOutPos, int nType)
+bool CMapData::GetRandPosInDummy(_dummy_position *pPos, float *pNewPos, bool bRePos)
 {
-    if (!pDumPos || !fOutPos) return;
-    
-    // Auth logic for randomized position inside dummy
-    fOutPos[0] = pDumPos->m_fCenterPos[0];
-    fOutPos[1] = pDumPos->m_fCenterPos[1];
-    fOutPos[2] = pDumPos->m_fCenterPos[2];
+    if (!pPos->m_bPosAble)
+        return false;
+
+    float v10[3];
+    for (int j = 0; j < 3; ++j)
+    {
+        float v8[3];
+        v8[0] = (float)(pPos->m_zLocalMin[0] + rand() % (pPos->m_zLocalMax[0] - pPos->m_zLocalMin[0]));
+        v8[2] = (float)(pPos->m_zLocalMin[2] + rand() % (pPos->m_zLocalMax[2] - pPos->m_zLocalMin[2]));
+        v8[1] = (float)((pPos->m_zLocalMin[1] + pPos->m_zLocalMax[1]) / 2);
+
+        if (!this->m_Dummy.GetWorldFromLocal(pNewPos, pPos->m_wLineIndex, v8))
+        {
+            MyMessageBox("CMapData Error", "GetRandPosInDummy map:%s, dummy:%s", this->m_pMapSet->m_strCode, pPos->m_szCode);
+            return false;
+        }
+
+        pNewPos[1] = this->m_Level.GetFirstYpos(pNewPos, pPos->m_fMin, pPos->m_fMax);
+        if (pNewPos[1] != -65535.0f)
+        {
+            float v11_y = pNewPos[1];
+        if (pNewPos[1] != -65535.0f)
+        {
+            float v11_y = pNewPos[1];
+            pNewPos[1] = pPos->m_fCenterPos[1];
+            
+            float v10_temp[3];
+            if (CBsp::CanYouGoThere(this->m_Level.mBsp, pPos->m_fCenterPos, pNewPos, (float(*)[3])v10_temp) || bRePos)
+            {
+                if (bRePos)
+                {
+                    pNewPos[0] = v10_temp[0];
+                    pNewPos[2] = v10_temp[2];
+                    pNewPos[1] = this->m_Level.GetFirstYpos(pNewPos, pPos->m_fMin, pPos->m_fMax);
+                    if (pNewPos[1] == -65535.0f) continue;
+                }
+                else
+                {
+                   pNewPos[1] = v11_y;
+                }
+                return true;
+            }
+        }
+        }
+    }
+    memcpy(pNewPos, pPos->m_fCenterPos, 12);
+    return true;
 }
 
 bool CMapData::IsMapIn(float *fPos)
@@ -415,4 +456,20 @@ bool CMapData::_LoadSafe(char *pszMapCode)
         this->m_pSafeDummy[i].m_pDumPos = (_dummy_position*)this->m_tbSafeDumPos.GetRecord(i);
     }
     return true;
+}
+
+_portal_dummy *CMapData::GetPortal(int nPortalIndex)
+{
+    if (nPortalIndex < 0 || nPortalIndex >= this->m_nPortalNum) return nullptr;
+    return &this->m_pPortal[nPortalIndex];
+}
+
+_portal_dummy *CMapData::GetPortal(char *pPortalCode)
+{
+    for (int j = 0; j < this->m_nPortalNum; ++j)
+    {
+        if (strcmp(pPortalCode, this->m_pPortal[j].m_pPortalRec->m_strCode) == 0)
+            return &this->m_pPortal[j];
+    }
+    return nullptr;
 }

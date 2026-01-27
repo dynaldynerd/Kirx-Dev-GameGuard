@@ -12,6 +12,9 @@ END_MESSAGE_MAP()
 
 CWorldServerApp theApp;
 
+const char* stState = ".";
+int dword_184A79820 = 0;
+
 CWorldServerApp::CWorldServerApp() noexcept
 {
 }

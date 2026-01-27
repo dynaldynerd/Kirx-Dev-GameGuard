@@ -12,6 +12,7 @@ CWnd *g_pFrame = nullptr;
 #include <windows.h>
 #include <mmsystem.h>
 #pragma comment(lib, "winmm.lib")
+
 #include "CMerchant.h"
 #include "GlobalObjectDefs.h"
 
@@ -241,3 +242,27 @@ void ServerProgramExit(const char *source, int reason)
   OutputDebugStringA("\n");
   ExitProcess(static_cast<unsigned int>(reason));
 }
+
+char* StripEXT(char* szPath)
+{
+    char* pDot = strrchr(szPath, '.');
+    if (pDot)
+        *pDot = '\0';
+    return szPath;
+}
+
+char* StripPath(char* szPath)
+{
+    char* pSlash = strrchr(szPath, '\\');
+    if (pSlash)
+        return pSlash + 1;
+    return szPath;
+}
+
+bool IsServerMode()
+{
+    return true;
+}
+
+bool IsInitR3Engine() { return true; }
+float R3GetTime() { return (float)GetTickCount() / 1000.0f; }

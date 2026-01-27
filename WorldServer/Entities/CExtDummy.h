@@ -12,6 +12,8 @@ public:
   unsigned int mNum;
   _EXT_DUMMY *mDummy;
 
+  CExtDummy();
+  ~CExtDummy();
   bool LoadExtDummy(const char *szFileName);
   bool GetWorldFromLocal(float *fOutPos, unsigned int nDummyIndex, float *v7);
 };

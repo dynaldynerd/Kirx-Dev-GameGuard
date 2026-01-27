@@ -9,9 +9,11 @@ class __cppobj __declspec(align(8)) CDummyPosTable
   int m_nDumPosDataNum;
 
 public:
+  CDummyPosTable();
   bool LoadDummyPosition(const char *szFileName, const char *szLabel);
+  static bool LoadDummyPosition(CDummyPosTable *pTable, const char *szFileName, const char *szLabel);
   int GetRecordNum();
   void *GetRecord(int index);
   void *GetRecord(const char *szLabel);
-  virtual ~CDummyPosTable() = default;
+  virtual ~CDummyPosTable();
 };

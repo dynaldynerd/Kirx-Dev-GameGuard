@@ -282,7 +282,45 @@ bool CMapOperation::LoadRegion()
 
 void CMapOperation::CheckMapPortalLink()
 {
-  // Logic to link portals between maps
+    for (int j = 0; j < this->m_nMapNum; ++j)
+    {
+        CMapData *v5 = &this->m_Map[j];
+        for (int nPortalIndex = 0; nPortalIndex < v5->m_nPortalNum; ++nPortalIndex)
+        {
+            _portal_dummy *Portal = &v5->m_pPortal[nPortalIndex];
+            if (Portal->m_pPortalRec && strcmp(Portal->m_pPortalRec->m_strLinkMapCode, "0") != 0)
+            {
+                CMapData *Map = this->GetMap(Portal->m_pPortalRec->m_strLinkMapCode);
+                if (Map)
+                {
+                    bool bFound = false;
+                    for (int k = 0; k < Map->m_nPortalNum; ++k)
+                    {
+                        if (strcmp(Map->m_pPortal[k].m_pPortalRec->m_strCode, Portal->m_pPortalRec->m_strLinkPortalCode) == 0)
+                        {
+                            bFound = true;
+                            break;
+                        }
+                    }
+                    if (!bFound)
+                    {
+                        NetTrace("Portal Link Check: %s.. %dth >> Map: %s, Portal: LinkPortalCode(%s)",
+                            v5->m_pMapSet->m_strCode,
+                            nPortalIndex,
+                            Portal->m_pPortalRec->m_strLinkMapCode,
+                            Portal->m_pPortalRec->m_strLinkPortalCode);
+                    }
+                }
+                else
+                {
+                    NetTrace("Portal Link Check: %s.. %dth >> Portal: LinkMapCode(%s)",
+                        v5->m_pMapSet->m_strCode,
+                        nPortalIndex,
+                        Portal->m_pPortalRec->m_strLinkMapCode);
+                }
+            }
+        }
+    }
 }
 
 CMapData *CMapOperation::GetMap(const char *szMapCode)

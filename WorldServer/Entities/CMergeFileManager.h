@@ -2,6 +2,8 @@
 
 #include "IdaCompat.h"
 
+struct CMergeFile;
+
 /* 1402 */
 class __cppobj CMergeFileManager
 {

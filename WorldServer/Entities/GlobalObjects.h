@@ -40,6 +40,9 @@ extern CGuild *g_Guild;
 extern AggroCaculateData g_AggroCaculateData;
 extern class MonsterSetInfoData g_MonsterSetInfoData;
 
+extern const char* stState;
+extern int dword_184A79820;
+
 extern CTransportShip g_TransportShip[3];
 extern CHolyStoneSystem g_HolySys;
 extern CWorldSchedule g_WorldSch;

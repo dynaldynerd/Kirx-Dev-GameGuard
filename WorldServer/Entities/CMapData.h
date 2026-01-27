@@ -16,7 +16,9 @@ public:
   void Init(_map_fld *pMapSet);
   bool OpenMap(char *szFileName, _map_fld *pMapSet, int nType);
   bool ConvertLocalToWorldDummy(CDummyPosTable *pTable, bool bCheckCenter);
-  void GetRandPosInDummy(_dummy_position *pDumPos, float *fOutPos, int nType);
+  bool GetRandPosInDummy(_dummy_position *pDumPos, float *fOutPos, bool bRePos);
+  _portal_dummy *GetPortal(int nPortalIndex);
+  _portal_dummy *GetPortal(char *pPortalCode);
 
   bool _LoadBspSec(char *pszMapCode);
   bool _LoadMonBlk(char *pszMapCode, _map_fld *pMapFld);

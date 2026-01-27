@@ -22,7 +22,7 @@ AccountServerIdaPro/
 LoginServerIdaPro/
 tools/
 WorldServerIdaPro/
-WorldServer/x64/
+WorldServer/x64/*
 WorldServer/WorldServer/
 worldserver/worldserver/*
 
