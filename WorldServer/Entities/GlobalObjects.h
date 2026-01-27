@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CMainThread.h"
 #include "GlobalObjectDefs.h"
 #include "CUserDB.h"
 #include "CPartyPlayer.h"
@@ -42,3 +43,4 @@ extern MonsterSetInfoData g_MonsterSetInfoData;
 extern CTransportShip g_TransportShip[3];
 extern CHolyStoneSystem g_HolySys;
 extern CWorldSchedule g_WorldSch;
+extern CMainThread g_Main;

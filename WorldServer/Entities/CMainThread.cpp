@@ -115,9 +115,8 @@
 
 void Us_HFSM::__vtable_anchor() {}
 
-Us_HFSM::~Us_HFSM() = default;
 
-CMainThread g_Main;
+Us_HFSM::~Us_HFSM() = default;
 
 CMainThread::CMainThread() = default;
 

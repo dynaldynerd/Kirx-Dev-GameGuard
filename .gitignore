@@ -24,3 +24,5 @@ tools/
 WorldServerIdaPro/
 WorldServer/x64/
 WorldServer/WorldServer/
+worldserver/worldserver/*
+
