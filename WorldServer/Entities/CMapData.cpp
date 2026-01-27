@@ -4,6 +4,20 @@
 
 #include <cstring>
 
+void CMapData::Init(_map_fld *pMapSet)
+{
+}
+
+bool CMapData::OpenMap(char *szFileName, _map_fld *pMapSet, int nType)
+{
+    return true;
+}
+
+bool CMapData::ConvertLocalToWorldDummy(CDummyPosTable *pTable, int nType)
+{
+    return true;
+}
+
 bool CMapData::IsMapIn(float *fPos)
 {
   int scratch[4]{};

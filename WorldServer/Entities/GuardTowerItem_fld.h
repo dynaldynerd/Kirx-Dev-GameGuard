@@ -5,14 +5,14 @@
 
 #pragma pack(push, 1)
 
-struct _GuardTowerItem_fld::__material
-{
-  char strMaterialCode[64];
-  int nMaterialNum;
-};
-
 struct __cppobj _GuardTowerItem_fld : _base_fld
 {
+  struct __material
+  {
+    char strMaterialCode[64];
+    int nMaterialNum;
+  };
+
   char m_strModle[64];
   char m_strCharMeshID[64];
   char m_strName[64];
@@ -57,7 +57,7 @@ struct __cppobj _GuardTowerItem_fld : _base_fld
   int m_nKillPoint;
   int m_nProcPoint;
   int m_nStoragePrice;
-  _GuardTowerItem_fld::__material m_Material[3];
+  __material m_Material[3];
   int m_bSell;
   int m_bExchange;
   int m_bGround;

@@ -7,6 +7,10 @@ class __cppobj __declspec(align(8)) CDummyPosTable
 {
   _dummy_position *m_pDumPos;
   int m_nDumPosDataNum;
+
+public:
+  bool LoadDummyPosition(const char *szFileName, const char *szLabel);
+  int GetRecordNum();
+  void *GetRecord(int index);
   virtual ~CDummyPosTable() = default;
 };
-

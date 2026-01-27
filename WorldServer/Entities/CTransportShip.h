@@ -11,6 +11,8 @@ class CPlayer;
 class __cppobj CTransportShip
 {
 public:
+  static bool InitShip(CTransportShip *pShip, CMapData *pLinkShipMap, CMapData *pLinkMainbaseMap, CMapData *pLinkPlatformMap, int nIndex);
+
   struct __cppobj __declspec(align(8)) __mgr_member
   {
     CPlayer *pPtr;

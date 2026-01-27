@@ -157,6 +157,21 @@ void WriteServerStartHistory(const char *format, ...)
   OutputDebugStringA("\n");
 }
 
+int GetCurrentHour()
+{
+    return CTime::GetCurrentTime().GetHour();
+}
+
+int GetCurrentMin()
+{
+    return CTime::GetCurrentTime().GetMinute();
+}
+
+int GetCurrentSec()
+{
+    return CTime::GetCurrentTime().GetSecond();
+}
+
 void clear_file(const char *directory, int keepCount)
 {
   (void)directory;

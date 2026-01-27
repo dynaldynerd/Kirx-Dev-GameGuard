@@ -7,6 +7,11 @@
 /* 5395 */
 class __cppobj COreAmountMgr
 {
+public:
+  static COreAmountMgr *Instance();
+  bool LoadINI();
+  void InitRemainOreAmount(unsigned int dwRemain, unsigned int dwInit);
+  void InitTransferOre(int nTransfer, int nInit);
   int m_bChangeRemainRate;
   unsigned int m_dwTotalOreSet;
   unsigned int m_dwMinOreSet;

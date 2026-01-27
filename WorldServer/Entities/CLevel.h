@@ -19,6 +19,7 @@ class __cppobj __declspec(align(8)) CLevel
   unsigned int mSkyTexMemSize;
   unsigned int mEntityTexMemSize;
   unsigned int mEnvironment;
+public:
   virtual ~CLevel() = default;
 };
 

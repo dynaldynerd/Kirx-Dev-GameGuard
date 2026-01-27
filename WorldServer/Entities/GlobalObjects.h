@@ -17,6 +17,9 @@
 #include "CGuild.h"
 #include "AggroCaculateData.h"
 #include "MonsterSetInfoData.h"
+#include "CTransportShip.h"
+#include "CHolyStoneSystem.h"
+#include "CWorldSchedule.h"
 
 extern CUserDB g_UserDB[MAX_PLAYER];
 extern CPartyPlayer g_PartyPlayer[MAX_PLAYER];
@@ -35,3 +38,7 @@ extern CDarkHole *g_DarkHole;
 extern CGuild *g_Guild;
 extern AggroCaculateData g_AggroCaculateData;
 extern MonsterSetInfoData g_MonsterSetInfoData;
+
+extern CTransportShip g_TransportShip[3];
+extern CHolyStoneSystem g_HolySys;
+extern CWorldSchedule g_WorldSch;

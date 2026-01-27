@@ -1,0 +1,745 @@
+MSBuild version 18.0.5+e22287bf1 for .NET Framework
+Build started 27/01/2026 19:27:02.
+
+     1>Project "D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj" on node 1 (default targets).
+     1>PrepareForBuild:
+         Structured output is enabled. The formatting of compiler diagnostics will reflect the error hierarchy. See https://aka.ms/cpp/structured-output for more details.
+       InitializeBuildStatus:
+         Creating "WorldServer\x64\Debug\WorldServer.tlog\unsuccessfulbuild" because "AlwaysCreate" was specified.
+         Touching "WorldServer\x64\Debug\WorldServer.tlog\unsuccessfulbuild".
+       ClCompile:
+         C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\bin\HostX86\x64\CL.exe /c /I"D:\Private Project\RF Online\WorldServer\\" /ZI /JMC /nologo /W3 /WX- /diagnostics:column /sdl /Od /D _DEBUG /D _WINDOWS /D _UNICODE /D UNICODE /D _AFXDLL /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /permissive- /Yc"pch.h" /Fp"WorldServer\x64\Debug\WorldServer.pch" /Fo"WorldServer\x64\Debug\\" /Fd"WorldServer\x64\Debug\vc143.pdb" /external:W3 /Gd /TP /FC /errorReport:queue pch.cpp
+         pch.cpp
+         _WIN32_WINNT not defined. Defaulting to _WIN32_WINNT_MAXVER (see WinSDKVer.h)
+     1>D:\Private Project\RF Online\WorldServer\Entities\CPlayer.h(198,50): warning C4359: '_embellish_db_load': Alignment specifier is less than actual alignment (4), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file 'pch.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CPostStorage.h(6,37): warning C4359: 'CPostStorage': Alignment specifier is less than actual alignment (8), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file 'pch.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMainThread.h(1119,50): warning C4359: '_AVATOR_DATA': Alignment specifier is less than actual alignment (2), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file 'pch.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMainThread.h(1788,50): warning C4359: 'AP_BatterySlot': Alignment specifier is less than actual alignment (2), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file 'pch.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMainThread.h(2644,17): warning C4624: 'BossSchedule_Map': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file 'pch.cpp')
+         
+         C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\bin\HostX86\x64\CL.exe /c /I"D:\Private Project\RF Online\WorldServer\\" /ZI /JMC /nologo /W3 /WX- /diagnostics:column /sdl /Od /D _DEBUG /D _WINDOWS /D _UNICODE /D UNICODE /D _AFXDLL /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /permissive- /Yu"pch.h" /Fp"WorldServer\x64\Debug\WorldServer.pch" /Fo"WorldServer\x64\Debug\\" /Fd"WorldServer\x64\Debug\vc143.pdb" /external:W3 /Gd /TP /FC /errorReport:queue Entities\AggroCaculateData.cpp Entities\AutominePersonal.cpp Entities\AutominePersonalMgr.cpp Entities\C24Timer.cpp Entities\CAITimer.cpp Entities\CActionPointSystemMgr.cpp Entities\CAggroNode.cpp Entities\CAlpha.cpp Entities\CAniCamera.cpp Entities\CAnimus.cpp Entities\CAsyncLogBuffer.cpp Entities\CAsyncLogBufferList.cpp Entities\CAsyncLogInfo.cpp Entities\CAsyncLogger.cpp Entities\CAttack.cpp Entities\CBattleTournamentInfo.cpp Entities\CBilling.cpp Entities\CBillingBR.cpp Entities\CBillingCN.cpp Entities\CBillingID.cpp Entities\CBillingJP.cpp Entities\CBillingKR.cpp Entities\CBillingManager.cpp Entities\CBillingNULL.cpp Entities\CBillingPH.cpp Entities\CBillingRU.cpp Entities\CBossMonsterScheduleSystem.cpp Entities\CBsp.cpp Entities\CCashDBWorkManager.cpp Entities\CCashDbWorkerBR.cpp Entities\CCashDbWorkerCN.cpp Entities\CCashDbWorkerES.cpp Entities\CCashDbWorkerGB.cpp Entities\CCashDbWorkerID.cpp Entities\CCashDbWorkerJP.cpp Entities\CCashDbWorkerKR.cpp Entities\CCashDbWorkerNULL.cpp Entities\CCashDbWorkerPH.cpp Entities\CCashDbWorkerRU.cpp Entities\CCashDbWorkerTH.cpp Entities\CCashDbWorkerTW.cpp Entities\CCashDbWorkerUS.cpp Entities\CCharacter.cpp Entities\CChatStealSystem.cpp Entities\CCheckSum.cpp Entities\CCheckSumBaseConverter.cpp Entities\CCheckSumCharacAccountTrunkData.cpp Entities\CCheckSumCharacTrunkConverter.cpp Entities\CCheckSumGuildConverter.cpp Entities\CCheckSumGuildData.cpp Entities\CChiNetworkEX.cpp Entities\CCircleZone.cpp Entities\CCollLineDraw.cpp Entities\CComboBox.cpp Entities\CComboBoxEx.cpp Entities\CConnNumPHMgr.cpp Entities\CCouponMgr.cpp Entities\CCryptParam.cpp Entities\CCryptParamCrete.cpp Entities\CCryptor.cpp Entities\CDarkHole.cpp Entities\CDarkHoleChannel.cpp Entities\CDarkHoleDungeonQuest.cpp Entities\CDarkHoleDungeonQuestSetup.cpp Entities\CDummyDraw.cpp Entities\CDummyPosTable.cpp Entities\CEngNetworkBillEX.cpp Entities\CEnglandBillingMgr.cpp Entities\CEntity.cpp Entities\CEquipItemSFAgent.cpp Entities\CEventLootTable.cpp Entities\CExchangeEvent.cpp Entities\CExtDummy.cpp Entities\CExtPotionBuf.cpp Entities\CFPS.cpp Entities\CFrameRate.cpp Entities\CGameObject.cpp Entities\CGameStatistics.cpp Entities\CGoldenBoxItemMgr.cpp Entities\CGravityStone.cpp Entities\CGravityStoneRegener.cpp Entities\CGuardTower.cpp Entities\CGuild.cpp Entities\CGuildBattleController.cpp Entities\CGuildList.cpp Entities\CGuildList_vtbl.cpp Entities\CGuildMasterEffect.cpp Entities\CGuildRanking.cpp Entities\CGuildRoomInfo.cpp Entities\CGuildRoomSystem.cpp Entities\CHEAT_COMMAND.cpp Entities\CHackShieldExSystem.cpp Entities\CHashMapPtrPool.cpp Entities\CHolyKeeper.cpp Entities\CHolyScheduleData.cpp Entities\CHolyStone.cpp Entities\CHolyStoneSaveData.cpp Entities\CHolyStoneSystem.cpp Entities\CHolyStoneSystemDataMgr.cpp Entities\CHonorGuild.cpp Entities\CIP.cpp Entities\CIndexBuffer.cpp Entities\CIndexList.cpp Entities\CIniFile.cpp Entities\CItemBox.cpp Entities\CItemDropMgr.cpp Entities\CItemLootTable.cpp Entities\CItemStore.cpp Entities\CItemStoreManager.cpp Entities\CItemUpgradeTable.cpp Entities\CLevel.cpp Entities\CLogFile.cpp Entities\CLogTypeDBTaskManager.cpp Entities\CLootingMgr.cpp Entities\CLuaCommand.cpp Entities\CLuaCommandEx.cpp Entities\CLuaScriptMgr.cpp Entities\CLuaSignalReActor.cpp Entities\CMainThread.cpp Entities\CMapData.cpp Entities\CMapDataTable.cpp Entities\CMapExtend.cpp Entities\CMapItemStoreList.cpp Entities\CMapOperation.cpp Entities\CMerchant.cpp Entities\CMergeFile.cpp Entities\CMergeFileManager.cpp Entities\CMgrAccountLobbyHistory.cpp Entities\CMgrAvatorItemHistory.cpp Entities\CMgrAvatorLvHistory.cpp Entities\CMgrAvatorQuestHistory.cpp Entities\CMgrGuildHistory.cpp Entities\CMiniDockFrameWnd.cpp Entities\CMiniFrameWnd.cpp Entities\CMirrorFile.cpp Entities\CMoneySupplyMgr.cpp Entities\CMonikerFile.cpp Entities\CMonster.cpp Entities\CMonsterAI.cpp Entities\CMonsterAggroMgr.cpp Entities\CMonsterAttack.cpp Entities\CMonsterEventRespawn.cpp Entities\CMonsterEventSet.cpp Entities\CMonsterHelper.cpp Entities\CMonsterHierarchy.cpp Entities\CMonsterSPGroupTable.cpp Entities\CMonsterSkill.cpp Entities\CMonsterSkillPool.cpp Entities\CMonthCalCtrl.cpp Entities\CMoveMapLimitEnviromentValues.cpp Entities\CMoveMapLimitInfo.cpp Entities\CMoveMapLimitInfoList.cpp Entities\CMoveMapLimitInfoPortal.cpp Entities\CMoveMapLimitManager.cpp Entities\CMoveMapLimitRight.cpp Entities\CMoveMapLimitRightInfo.cpp Entities\CMoveMapLimitRightInfoList.cpp Entities\CMoveMapLimitRightPortal.cpp Entities\CMsgData.cpp Entities\CMsgProcess.cpp Entities\CMultiDocTemplate.cpp Entities\CMultiLock.cpp Entities\CMultiPageDHtmlDialog.cpp Entities\CMutex.cpp Entities\CMyCriticalSection.cpp Entities\CMyTimer.cpp Entities\CNationCodeStr.cpp Entities\CNationCodeStrTable.cpp Entities\CNationSettingData.cpp Entities\CNationSettingDataBR.cpp Entities\CNationSettingDataCN.cpp Entities\CNationSettingDataES.cpp Entities\CNationSettingDataGB.cpp Entities\CNationSettingDataID.cpp Entities\CNationSettingDataJP.cpp Entities\CNationSettingDataKR.cpp Entities\CNationSettingDataNULL.cpp Entities\CNationSettingDataPH.cpp Entities\CNationSettingDataRU.cpp Entities\CNationSettingDataTH.cpp Entities\CNationSettingDataTW.cpp Entities\CNationSettingDataUS.cpp Entities\CNationSettingFactory.cpp Entities\CNationSettingFactoryBR.cpp Entities\CNationSettingFactoryCN.cpp Entities\CNationSettingFactoryES.cpp Entities\CNationSettingFactoryGB.cpp Entities\CNationSettingFactoryGroup.cpp Entities\CNationSettingFactoryID.cpp Entities\CNationSettingFactoryJP.cpp Entities\CNationSettingFactoryKR.cpp Entities\CNationSettingFactoryPH.cpp Entities\CNationSettingFactoryRU.cpp Entities\CNationSettingFactoryTH.cpp Entities\CNationSettingFactoryTW.cpp Entities\CNationSettingFactoryUS.cpp Entities\CNationSettingManager.cpp Entities\CNetCriticalSection.cpp Entities\CNetIndexList.cpp Entities\CNetProcess.cpp Entities\CNetwork.cpp Entities\CNetworkEX.cpp Entities\CNoTrackObject.cpp Entities\CNotSupportedException.cpp Entities\CNotifyNotifyRaceLeaderSownerUTaxrate.cpp Entities\CNuclearBomb.cpp Entities\CNuclearBombMgr.cpp Entities\CObjectList.cpp Entities\COreAmountMgr.cpp Entities\COreCuttingTable.cpp Entities\CParkingUnit.cpp Entities\CParticle.cpp Entities\CPartyModeKillMonsterExpNotify.cpp Entities\CPartyPlayer.cpp Entities\CPathFinder.cpp Entities\CPathMgr.cpp Entities\CPcBangFavor.cpp Entities\CPlayer.cpp Entities\CPlayerAttack.cpp Entities\CPlayerDB.cpp Entities\CPostData.cpp Entities\CPostReturnStorage.cpp Entities\CPostStorage.cpp Entities\CPostSystemManager.cpp Entities\CPotionMgr.cpp Entities\CPotionParam.cpp Entities\CProcessThread.cpp Entities\CPvpCashMng.cpp Entities\CPvpCashPoint.cpp Entities\CPvpOrderView.cpp Entities\CPvpPointLimiter.cpp Entities\CPvpUserAndGuildRankingSystem.cpp Entities\CQuestMgr.cpp Entities\CRFBillingdatabase.cpp Entities\CRFCashItemDatabase.cpp Entities\CRFDBItemLog.cpp Entities\CRFMonsterAIMgr.cpp Entities\CRFNewDatabase.cpp Entities\CRFWorldDatabase.cpp Entities\CRaceBossMsgController.cpp Entities\CRaceBossWinRate.cpp Entities\CRaceBuffByHolyQuestProcedure.cpp Entities\CRaceBuffHolyQuestResultInfo.cpp Entities\CRaceBuffInfoByHolyQuest.cpp Entities\CRaceBuffInfoByHolyQuestList.cpp Entities\CRaceBuffInfoByHolyQuestfGroup.cpp Entities\CRaceBuffManager.cpp Entities\CRadarItemMgr.cpp Entities\CRealMoveRequestDelayChecker.cpp Entities\CRecallEffectController.cpp Entities\CRecallRequest.cpp Entities\CRecordData.cpp Entities\CReturnGate.cpp Entities\CReturnGateController.cpp Entities\CReturnGateCreateParam.cpp Entities\CRtc.cpp Entities\CSUItemSystem.cpp Entities\CSetItemEffect.cpp Entities\CSetItemType.cpp Entities\CSkyBox.cpp Entities\CSyncCS.cpp Entities\CTSingleton.cpp Entities\CTimer.cpp Entities\CTotalGuildRankInfo.cpp Entities\CTotalGuildRankManager.cpp Entities\CTransportShip.cpp Entities\CTrap.cpp Entities\CUnmannedTraderClassInfo.cpp Entities\CUnmannedTraderClassInfoFactory.cpp Entities\CUnmannedTraderClassInfoTableCodeType.cpp Entities\CUnmannedTraderClassInfoTableType.cpp Entities\CUnmannedTraderController.cpp Entities\CUnmannedTraderDivisionInfo.cpp Entities\CUnmannedTraderEnvironmentValue.cpp Entities\CUnmannedTraderGroupDivisionVersionInfo.cpp Entities\CUnmannedTraderGroupIDInfo.cpp Entities\CUnmannedTraderGroupItemInfoTable.cpp Entities\CUnmannedTraderGroupVersionInfo.cpp Entities\CUnmannedTraderItemCodeInfo.cpp Entities\CUnmannedTraderItemState.cpp Entities\CUnmannedTraderLazyCleaner.cpp Entities\CUnmannedTraderRegistItemInfo.cpp Entities\CUnmannedTraderRequestLimiter.cpp Entities\CUnmannedTraderSchedule.cpp Entities\CUnmannedTraderScheduler.cpp Entities\CUnmannedTraderSortType.cpp Entities\CUnmannedTraderSubClassFactory.cpp Entities\CUnmannedTraderSubClassInfo.cpp Entities\CUnmannedTraderSubClassInfoCode.cpp Entities\CUnmannedTraderSubClassInfoDefault.cpp Entities\CUnmannedTraderSubClassInfoForceLiverGrade.cpp Entities\CUnmannedTraderSubClassInfoLevel.cpp Entities\CUnmannedTraderTaxRateManager.cpp Entities\CUnmannedTraderTradeInfo.cpp Entities\CUnmannedTraderUserInfo.cpp Entities\CUnmannedTraderUserInfoTable.cpp Entities\CUserDB.cpp Entities\CUserRankingProcess.cpp Entities\CVertexBuffer.cpp Entities\CVoteSystem.cpp Entities\CWeaponBulletLinkTable.cpp Entities\CWeeklyGuildRankInfo.cpp Entities\CWeeklyGuildRankManager.cpp Entities\CWorldSchedule.cpp Entities\CandidateMgr.cpp Entities\CandidateRegister.cpp Entities\CashItemRemoteStore.cpp Entities\ControllerTaxRate.cpp Entities\CouponInfo.cpp Entities\DfAIMgr.cpp Entities\ElectProcessor.cpp Entities\GlobalObjects.cpp Entities\ItemDataLoader.cpp Entities\KorLocalTime.cpp Entities\LendItemMng.cpp Entities\MonsterSetInfoData.cpp Entities\PatriarchElectProcessor.cpp Entities\RFEvent_ClassRefine.cpp Entities\TRC_AutoTrade.cpp Entities\TimeItem.cpp Entities\TimeLimitJadeMng.cpp Entities\WheatyExceptionReport.cpp Entities\WorldServerUtil.cpp Entities\cStaticMember_Player.cpp MainFrm.cpp Net\InternalPacketProcessor.cpp Net\IocpCore.cpp Net\IocpListener.cpp Net\PacketFramer.cpp WorldServer.cpp
+         AggroCaculateData.cpp
+         AutominePersonal.cpp
+         AutominePersonalMgr.cpp
+         C24Timer.cpp
+         CAITimer.cpp
+         CActionPointSystemMgr.cpp
+         CAggroNode.cpp
+         CAlpha.cpp
+         CAniCamera.cpp
+         CAnimus.cpp
+         CAsyncLogBuffer.cpp
+         CAsyncLogBufferList.cpp
+         CAsyncLogInfo.cpp
+         CAsyncLogger.cpp
+         CAttack.cpp
+         CBattleTournamentInfo.cpp
+         CBilling.cpp
+         CBillingBR.cpp
+         CBillingCN.cpp
+         CBillingID.cpp
+         Generating Code...
+         Compiling...
+         CBillingJP.cpp
+         CBillingKR.cpp
+         CBillingManager.cpp
+         CBillingNULL.cpp
+         CBillingPH.cpp
+         CBillingRU.cpp
+         CBossMonsterScheduleSystem.cpp
+         CBsp.cpp
+         CCashDBWorkManager.cpp
+         CCashDbWorkerBR.cpp
+         CCashDbWorkerCN.cpp
+         CCashDbWorkerES.cpp
+         CCashDbWorkerGB.cpp
+         CCashDbWorkerID.cpp
+         CCashDbWorkerJP.cpp
+         CCashDbWorkerKR.cpp
+         CCashDbWorkerNULL.cpp
+         CCashDbWorkerPH.cpp
+         CCashDbWorkerRU.cpp
+         CCashDbWorkerTH.cpp
+         Generating Code...
+         Compiling...
+         CCashDbWorkerTW.cpp
+         CCashDbWorkerUS.cpp
+         CCharacter.cpp
+         CChatStealSystem.cpp
+         CCheckSum.cpp
+         CCheckSumBaseConverter.cpp
+         CCheckSumCharacAccountTrunkData.cpp
+         CCheckSumCharacTrunkConverter.cpp
+         CCheckSumGuildConverter.cpp
+         CCheckSumGuildData.cpp
+         CChiNetworkEX.cpp
+         CCircleZone.cpp
+         CCollLineDraw.cpp
+         CComboBox.cpp
+         CComboBoxEx.cpp
+         CConnNumPHMgr.cpp
+         CCouponMgr.cpp
+         CCryptParam.cpp
+         CCryptParamCrete.cpp
+         CCryptor.cpp
+         Generating Code...
+         Compiling...
+         CDarkHole.cpp
+     1>D:\Private Project\RF Online\WorldServer\Entities\CDarkHole.h(9,37): warning C4359: 'CDarkHole': Alignment specifier is less than actual alignment (8), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CDarkHole.cpp')
+         
+         CDarkHoleChannel.cpp
+         CDarkHoleDungeonQuest.cpp
+         CDarkHoleDungeonQuestSetup.cpp
+         CDummyDraw.cpp
+         CDummyPosTable.cpp
+         CEngNetworkBillEX.cpp
+         CEnglandBillingMgr.cpp
+         CEntity.cpp
+         CEquipItemSFAgent.cpp
+         CEventLootTable.cpp
+         CExchangeEvent.cpp
+         CExtDummy.cpp
+         CExtPotionBuf.cpp
+         CFPS.cpp
+         CFrameRate.cpp
+         CGameObject.cpp
+         CGameStatistics.cpp
+         CGoldenBoxItemMgr.cpp
+         CGravityStone.cpp
+         Generating Code...
+         Compiling...
+         CGravityStoneRegener.cpp
+         CGuardTower.cpp
+         CGuild.cpp
+         CGuildBattleController.cpp
+         CGuildList.cpp
+         CGuildList_vtbl.cpp
+         CGuildMasterEffect.cpp
+         CGuildRanking.cpp
+         CGuildRoomInfo.cpp
+         CGuildRoomSystem.cpp
+         CHEAT_COMMAND.cpp
+         CHackShieldExSystem.cpp
+         CHashMapPtrPool.cpp
+         CHolyKeeper.cpp
+         CHolyScheduleData.cpp
+         CHolyStone.cpp
+     1>D:\Private Project\RF Online\WorldServer\Entities\CHolyStone.h(13,42): error C2061: syntax error: identifier '_stone_create_setdata' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CHolyStone.cpp')
+         
+         CHolyStoneSaveData.cpp
+         CHolyStoneSystem.cpp
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMonsterAI.h(7,16): warning C4624: 'CMonsterAI': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CHolyStoneSystem.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMonster.h(13,16): warning C4624: 'CMonster': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CHolyStoneSystem.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CHolyStone.h(13,42): error C2061: syntax error: identifier '_stone_create_setdata' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CHolyStoneSystem.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CDarkHole.h(9,37): warning C4359: 'CDarkHole': Alignment specifier is less than actual alignment (8), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CHolyStoneSystem.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(20,5): error C2065: '_stone_create_setdata': undeclared identifier [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CHolyStoneSystem.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(20,27): error C2146: syntax error: missing ';' before identifier 'pData' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CHolyStoneSystem.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(20,27): error C2065: 'pData': undeclared identifier [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CHolyStoneSystem.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(21,5): error C2065: 'pData': undeclared identifier [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CHolyStoneSystem.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(22,5): error C2065: 'pData': undeclared identifier [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CHolyStoneSystem.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(23,5): error C2065: 'pData': undeclared identifier [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CHolyStoneSystem.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(24,17): error C2065: 'pData': undeclared identifier [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CHolyStoneSystem.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(24,74): error C2065: 'pData': undeclared identifier [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CHolyStoneSystem.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(24,10): error C2660: 'memcpy': function does not take 2 arguments [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CHolyStoneSystem.cpp')
+             C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\vcruntime_string.h(43,15):
+             see declaration of 'memcpy'
+             D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(24,10):
+             while trying to match the argument list '()'
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(25,5): error C2065: 'pData': undeclared identifier [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CHolyStoneSystem.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(26,5): error C2065: 'pData': undeclared identifier [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CHolyStoneSystem.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(27,38): error C2065: 'pData': undeclared identifier [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CHolyStoneSystem.cpp')
+         
+         CHolyStoneSystemDataMgr.cpp
+         CHonorGuild.cpp
+         Generating Code...
+         Compiling...
+         CIP.cpp
+         CIndexBuffer.cpp
+         CIndexList.cpp
+         CIniFile.cpp
+         CItemBox.cpp
+         CItemDropMgr.cpp
+         CItemLootTable.cpp
+         CItemStore.cpp
+         CItemStoreManager.cpp
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMonsterAI.h(7,16): warning C4624: 'CMonsterAI': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CItemStoreManager.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMonster.h(13,16): warning C4624: 'CMonster': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CItemStoreManager.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CHolyStone.h(13,42): error C2061: syntax error: identifier '_stone_create_setdata' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CItemStoreManager.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CDarkHole.h(9,37): warning C4359: 'CDarkHole': Alignment specifier is less than actual alignment (8), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CItemStoreManager.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CItemStoreManager.cpp(32,20): error C2660: 'CRecordData::ReadRecord': function does not take 4 arguments [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CItemStoreManager.cpp')
+             D:\Private Project\RF Online\WorldServer\Entities\CRecordData.h(20,8):
+             see declaration of 'CRecordData::ReadRecord'
+             D:\Private Project\RF Online\WorldServer\Entities\CItemStoreManager.cpp(32,20):
+             while trying to match the argument list '(CRecordData *, const char [23], int, char [128])'
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CItemStoreManager.cpp(63,33): error C3861: 'GetKorLocalTime': identifier not found [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CItemStoreManager.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CItemStoreManager.cpp(65,15): error C2660: 'CLogFile::SetWriteLogFile': function does not take 6 arguments [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CItemStoreManager.cpp')
+             D:\Private Project\RF Online\WorldServer\Entities\CLogFile.h(10,8):
+             see declaration of 'CLogFile::SetWriteLogFile'
+             D:\Private Project\RF Online\WorldServer\Entities\CItemStoreManager.cpp(65,15):
+             while trying to match the argument list '(CLogFile *, char [144], int, int, int, int)'
+         
+         CItemUpgradeTable.cpp
+         CLevel.cpp
+         CLogFile.cpp
+         CLogTypeDBTaskManager.cpp
+         CLootingMgr.cpp
+         CLuaCommand.cpp
+         CLuaCommandEx.cpp
+         CLuaScriptMgr.cpp
+         CLuaSignalReActor.cpp
+         CMainThread.cpp
+     1>D:\Private Project\RF Online\WorldServer\Entities\CTotalGuildRankInfo.h(21,37): warning C4099: '_total_guild_rank_result_zocl': type name first seen using 'struct' now seen using 'class' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CMainThread.cpp')
+             D:\Private Project\RF Online\WorldServer\Entities\CTotalGuildRankInfo.h(21,37):
+             see declaration of '_total_guild_rank_result_zocl'
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CTotalGuildRankInfo.h(21,37): warning C4359: '_total_guild_rank_result_zocl': Alignment specifier is less than actual alignment (4), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CMainThread.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CWeeklyGuildRankInfo.h(52,43): warning C4359: 'CWeeklyGuildRankInfo::_weekly_guild_rank_result_zocl': Alignment specifier is less than actual alignment (4), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CMainThread.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CNationCodeStr.h(5,37): warning C4359: 'CNationCodeStr': Alignment specifier is less than actual alignment (4), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CMainThread.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMonsterAI.h(7,16): warning C4624: 'CMonsterAI': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CMainThread.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMonster.h(13,16): warning C4624: 'CMonster': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CMainThread.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CHolyStone.h(13,42): error C2061: syntax error: identifier '_stone_create_setdata' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CMainThread.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CDarkHole.h(9,37): warning C4359: 'CDarkHole': Alignment specifier is less than actual alignment (8), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CMainThread.cpp')
+         
+         CMapData.cpp
+         Generating Code...
+         Compiling...
+         CMapDataTable.cpp
+         CMapExtend.cpp
+         CMapItemStoreList.cpp
+         CMapOperation.cpp
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMonsterAI.h(7,16): warning C4624: 'CMonsterAI': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CMapOperation.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMonster.h(13,16): warning C4624: 'CMonster': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CMapOperation.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CHolyStone.h(13,42): error C2061: syntax error: identifier '_stone_create_setdata' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CMapOperation.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CDarkHole.h(9,37): warning C4359: 'CDarkHole': Alignment specifier is less than actual alignment (8), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CMapOperation.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMapOperation.cpp(129,20): error C2248: 'CDummyPosTable::LoadDummyPosition': cannot access private member declared in class 'CDummyPosTable' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CMapOperation.cpp')
+             D:\Private Project\RF Online\WorldServer\Entities\CDummyPosTable.h(10,8):
+             see declaration of 'CDummyPosTable::LoadDummyPosition'
+             D:\Private Project\RF Online\WorldServer\Entities\CDummyPosTable.h(6,37):
+             see declaration of 'CDummyPosTable'
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMapOperation.cpp(139,31): error C2248: 'CDummyPosTable::GetRecordNum': cannot access private member declared in class 'CDummyPosTable' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CMapOperation.cpp')
+             D:\Private Project\RF Online\WorldServer\Entities\CDummyPosTable.h(11,7):
+             see declaration of 'CDummyPosTable::GetRecordNum'
+             D:\Private Project\RF Online\WorldServer\Entities\CDummyPosTable.h(6,37):
+             see declaration of 'CDummyPosTable'
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMapOperation.cpp(142,40): error C2248: 'CDummyPosTable::GetRecord': cannot access private member declared in class 'CDummyPosTable' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CMapOperation.cpp')
+             D:\Private Project\RF Online\WorldServer\Entities\CDummyPosTable.h(12,9):
+             see declaration of 'CDummyPosTable::GetRecord'
+             D:\Private Project\RF Online\WorldServer\Entities\CDummyPosTable.h(6,37):
+             see declaration of 'CDummyPosTable'
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMapOperation.cpp(143,12): error C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CMapOperation.cpp')
+         
+         CMerchant.cpp
+         CMergeFile.cpp
+         CMergeFileManager.cpp
+         CMgrAccountLobbyHistory.cpp
+         CMgrAvatorItemHistory.cpp
+         CMgrAvatorLvHistory.cpp
+         CMgrAvatorQuestHistory.cpp
+         CMgrGuildHistory.cpp
+         CMiniDockFrameWnd.cpp
+         CMiniFrameWnd.cpp
+         CMirrorFile.cpp
+         CMoneySupplyMgr.cpp
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMoneySupplyMgr.h(5,41): warning C4359: '_MONEY_SUPPLY_DATA': Alignment specifier is less than actual alignment (8), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CMoneySupplyMgr.cpp')
+         
+         CMonikerFile.cpp
+         CMonster.cpp
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMonsterAI.h(7,16): warning C4624: 'CMonsterAI': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CMonster.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMonster.h(13,16): warning C4624: 'CMonster': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CMonster.cpp')
+         
+         CMonsterAI.cpp
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMonsterAI.h(7,16): warning C4624: 'CMonsterAI': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CMonsterAI.cpp')
+         
+         CMonsterAggroMgr.cpp
+         Generating Code...
+         Compiling...
+         CMonsterAttack.cpp
+         CMonsterEventRespawn.cpp
+         CMonsterEventSet.cpp
+         CMonsterHelper.cpp
+         CMonsterHierarchy.cpp
+         CMonsterSPGroupTable.cpp
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMonsterSPGroupTable.cpp(21,23): warning C4018: '<': signed/unsigned mismatch [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CMonsterSPGroupTable.cpp')
+         
+         CMonsterSkill.cpp
+         CMonsterSkillPool.cpp
+         CMonthCalCtrl.cpp
+         CMoveMapLimitEnviromentValues.cpp
+         CMoveMapLimitInfo.cpp
+         CMoveMapLimitInfoList.cpp
+         CMoveMapLimitInfoPortal.cpp
+         CMoveMapLimitManager.cpp
+         CMoveMapLimitRight.cpp
+         CMoveMapLimitRightInfo.cpp
+         CMoveMapLimitRightInfoList.cpp
+         CMoveMapLimitRightPortal.cpp
+         CMsgData.cpp
+         CMsgProcess.cpp
+         Generating Code...
+         Compiling...
+         CMultiDocTemplate.cpp
+         CMultiLock.cpp
+         CMultiPageDHtmlDialog.cpp
+         CMutex.cpp
+         CMyCriticalSection.cpp
+         CMyTimer.cpp
+         CNationCodeStr.cpp
+     1>D:\Private Project\RF Online\WorldServer\Entities\CNationCodeStr.h(5,37): warning C4359: 'CNationCodeStr': Alignment specifier is less than actual alignment (4), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CNationCodeStr.cpp')
+         
+         CNationCodeStrTable.cpp
+     1>D:\Private Project\RF Online\WorldServer\Entities\CNationCodeStr.h(5,37): warning C4359: 'CNationCodeStr': Alignment specifier is less than actual alignment (4), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CNationCodeStrTable.cpp')
+         
+         CNationSettingData.cpp
+         CNationSettingDataBR.cpp
+         CNationSettingDataCN.cpp
+         CNationSettingDataES.cpp
+         CNationSettingDataGB.cpp
+         CNationSettingDataID.cpp
+         CNationSettingDataJP.cpp
+         CNationSettingDataKR.cpp
+         CNationSettingDataNULL.cpp
+         CNationSettingDataPH.cpp
+         CNationSettingDataRU.cpp
+         CNationSettingDataTH.cpp
+         Generating Code...
+         Compiling...
+         CNationSettingDataTW.cpp
+         CNationSettingDataUS.cpp
+         CNationSettingFactory.cpp
+         CNationSettingFactoryBR.cpp
+         CNationSettingFactoryCN.cpp
+         CNationSettingFactoryES.cpp
+         CNationSettingFactoryGB.cpp
+         CNationSettingFactoryGroup.cpp
+         CNationSettingFactoryID.cpp
+         CNationSettingFactoryJP.cpp
+         CNationSettingFactoryKR.cpp
+         CNationSettingFactoryPH.cpp
+         CNationSettingFactoryRU.cpp
+         CNationSettingFactoryTH.cpp
+         CNationSettingFactoryTW.cpp
+         CNationSettingFactoryUS.cpp
+         CNationSettingManager.cpp
+         CNetCriticalSection.cpp
+         CNetIndexList.cpp
+         CNetProcess.cpp
+         Generating Code...
+         Compiling...
+         CNetwork.cpp
+         CNetworkEX.cpp
+         CNoTrackObject.cpp
+         CNotSupportedException.cpp
+         CNotifyNotifyRaceLeaderSownerUTaxrate.cpp
+         CNuclearBomb.cpp
+         CNuclearBombMgr.cpp
+         CObjectList.cpp
+         COreAmountMgr.cpp
+         COreCuttingTable.cpp
+         CParkingUnit.cpp
+         CParticle.cpp
+         CPartyModeKillMonsterExpNotify.cpp
+         CPartyPlayer.cpp
+         CPathFinder.cpp
+         CPathMgr.cpp
+         CPcBangFavor.cpp
+         CPlayer.cpp
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMonsterAI.h(7,16): warning C4624: 'CMonsterAI': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CPlayer.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMonster.h(13,16): warning C4624: 'CMonster': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CPlayer.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CHolyStone.h(13,42): error C2061: syntax error: identifier '_stone_create_setdata' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CPlayer.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CDarkHole.h(9,37): warning C4359: 'CDarkHole': Alignment specifier is less than actual alignment (8), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CPlayer.cpp')
+         
+         CPlayerAttack.cpp
+         CPlayerDB.cpp
+         Generating Code...
+         Compiling...
+         CPostData.cpp
+         CPostReturnStorage.cpp
+         CPostStorage.cpp
+         CPostSystemManager.cpp
+         CPotionMgr.cpp
+         CPotionParam.cpp
+         CProcessThread.cpp
+         CPvpCashMng.cpp
+         CPvpCashPoint.cpp
+         CPvpOrderView.cpp
+         CPvpPointLimiter.cpp
+         CPvpUserAndGuildRankingSystem.cpp
+         CQuestMgr.cpp
+         CRFBillingdatabase.cpp
+         CRFCashItemDatabase.cpp
+         CRFDBItemLog.cpp
+         CRFMonsterAIMgr.cpp
+         CRFNewDatabase.cpp
+         CRFWorldDatabase.cpp
+         CRaceBossMsgController.cpp
+         Generating Code...
+         Compiling...
+         CRaceBossWinRate.cpp
+         CRaceBuffByHolyQuestProcedure.cpp
+         CRaceBuffHolyQuestResultInfo.cpp
+         CRaceBuffInfoByHolyQuest.cpp
+         CRaceBuffInfoByHolyQuestList.cpp
+         CRaceBuffInfoByHolyQuestfGroup.cpp
+         CRaceBuffManager.cpp
+         CRadarItemMgr.cpp
+         CRealMoveRequestDelayChecker.cpp
+         CRecallEffectController.cpp
+         CRecallRequest.cpp
+         CRecordData.cpp
+         CReturnGate.cpp
+         CReturnGateController.cpp
+         CReturnGateCreateParam.cpp
+         CRtc.cpp
+         CSUItemSystem.cpp
+         CSetItemEffect.cpp
+         CSetItemType.cpp
+         CSkyBox.cpp
+         Generating Code...
+         Compiling...
+         CSyncCS.cpp
+         CTSingleton.cpp
+         CTimer.cpp
+         CTotalGuildRankInfo.cpp
+     1>D:\Private Project\RF Online\WorldServer\Entities\CTotalGuildRankInfo.h(21,37): warning C4099: '_total_guild_rank_result_zocl': type name first seen using 'struct' now seen using 'class' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CTotalGuildRankInfo.cpp')
+             D:\Private Project\RF Online\WorldServer\Entities\CTotalGuildRankInfo.h(21,37):
+             see declaration of '_total_guild_rank_result_zocl'
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CTotalGuildRankInfo.h(21,37): warning C4359: '_total_guild_rank_result_zocl': Alignment specifier is less than actual alignment (4), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CTotalGuildRankInfo.cpp')
+         
+         CTotalGuildRankManager.cpp
+     1>D:\Private Project\RF Online\WorldServer\Entities\CTotalGuildRankInfo.h(21,37): warning C4099: '_total_guild_rank_result_zocl': type name first seen using 'struct' now seen using 'class' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CTotalGuildRankManager.cpp')
+             D:\Private Project\RF Online\WorldServer\Entities\CTotalGuildRankInfo.h(21,37):
+             see declaration of '_total_guild_rank_result_zocl'
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CTotalGuildRankInfo.h(21,37): warning C4359: '_total_guild_rank_result_zocl': Alignment specifier is less than actual alignment (4), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CTotalGuildRankManager.cpp')
+         
+         CTransportShip.cpp
+         CTrap.cpp
+         CUnmannedTraderClassInfo.cpp
+         CUnmannedTraderClassInfoFactory.cpp
+         CUnmannedTraderClassInfoTableCodeType.cpp
+         CUnmannedTraderClassInfoTableType.cpp
+         CUnmannedTraderController.cpp
+         CUnmannedTraderDivisionInfo.cpp
+         CUnmannedTraderEnvironmentValue.cpp
+         CUnmannedTraderGroupDivisionVersionInfo.cpp
+         CUnmannedTraderGroupIDInfo.cpp
+         CUnmannedTraderGroupItemInfoTable.cpp
+         CUnmannedTraderGroupVersionInfo.cpp
+         CUnmannedTraderItemCodeInfo.cpp
+         CUnmannedTraderItemState.cpp
+         Generating Code...
+         Compiling...
+         CUnmannedTraderLazyCleaner.cpp
+         CUnmannedTraderRegistItemInfo.cpp
+         CUnmannedTraderRequestLimiter.cpp
+         CUnmannedTraderSchedule.cpp
+         CUnmannedTraderScheduler.cpp
+         CUnmannedTraderSortType.cpp
+         CUnmannedTraderSubClassFactory.cpp
+         CUnmannedTraderSubClassInfo.cpp
+         CUnmannedTraderSubClassInfoCode.cpp
+         CUnmannedTraderSubClassInfoDefault.cpp
+         CUnmannedTraderSubClassInfoForceLiverGrade.cpp
+         CUnmannedTraderSubClassInfoLevel.cpp
+         CUnmannedTraderTaxRateManager.cpp
+         CUnmannedTraderTradeInfo.cpp
+         CUnmannedTraderUserInfo.cpp
+         CUnmannedTraderUserInfoTable.cpp
+         CUserDB.cpp
+         CUserRankingProcess.cpp
+         CVertexBuffer.cpp
+         CVoteSystem.cpp
+     1>D:\Private Project\RF Online\WorldServer\Entities\CVoteSystem.h(9,43): warning C4359: 'CVoteSystem::_started_vote_inform_zocl': Alignment specifier is less than actual alignment (4), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CVoteSystem.cpp')
+         
+         Generating Code...
+         Compiling...
+         CWeaponBulletLinkTable.cpp
+         CWeeklyGuildRankInfo.cpp
+     1>D:\Private Project\RF Online\WorldServer\Entities\CWeeklyGuildRankInfo.h(52,43): warning C4359: 'CWeeklyGuildRankInfo::_weekly_guild_rank_result_zocl': Alignment specifier is less than actual alignment (4), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CWeeklyGuildRankInfo.cpp')
+         
+         CWeeklyGuildRankManager.cpp
+     1>D:\Private Project\RF Online\WorldServer\Entities\CWeeklyGuildRankInfo.h(52,43): warning C4359: 'CWeeklyGuildRankInfo::_weekly_guild_rank_result_zocl': Alignment specifier is less than actual alignment (4), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CWeeklyGuildRankManager.cpp')
+         
+         CWorldSchedule.cpp
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMonsterAI.h(7,16): warning C4624: 'CMonsterAI': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CWorldSchedule.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMonster.h(13,16): warning C4624: 'CMonster': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CWorldSchedule.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CHolyStone.h(13,42): error C2061: syntax error: identifier '_stone_create_setdata' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CWorldSchedule.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CDarkHole.h(9,37): warning C4359: 'CDarkHole': Alignment specifier is less than actual alignment (8), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CWorldSchedule.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CWorldSchedule.cpp(19,20): error C2660: 'CRecordData::ReadRecord': function does not take 4 arguments [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CWorldSchedule.cpp')
+             D:\Private Project\RF Online\WorldServer\Entities\CRecordData.h(20,8):
+             see declaration of 'CRecordData::ReadRecord'
+             D:\Private Project\RF Online\WorldServer\Entities\CWorldSchedule.cpp(19,20):
+             while trying to match the argument list '(CRecordData *, const char [22], int, char [132])'
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CWorldSchedule.cpp(24,29): error C3861: 'GetCurrentHour': identifier not found [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CWorldSchedule.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CWorldSchedule.cpp(25,28): error C3861: 'GetCurrentMin': identifier not found [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CWorldSchedule.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CWorldSchedule.cpp(26,38): error C3861: 'GetCurrentSec': identifier not found [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/CWorldSchedule.cpp')
+         
+         CandidateMgr.cpp
+         CandidateRegister.cpp
+         CashItemRemoteStore.cpp
+         ControllerTaxRate.cpp
+         CouponInfo.cpp
+         DfAIMgr.cpp
+         ElectProcessor.cpp
+         GlobalObjects.cpp
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMonsterAI.h(7,16): warning C4624: 'CMonsterAI': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/GlobalObjects.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CMonster.h(13,16): warning C4624: 'CMonster': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/GlobalObjects.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CHolyStone.h(13,42): error C2061: syntax error: identifier '_stone_create_setdata' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/GlobalObjects.cpp')
+         
+     1>D:\Private Project\RF Online\WorldServer\Entities\CDarkHole.h(9,37): warning C4359: 'CDarkHole': Alignment specifier is less than actual alignment (8), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/Entities/GlobalObjects.cpp')
+         
+         ItemDataLoader.cpp
+         KorLocalTime.cpp
+         LendItemMng.cpp
+         MonsterSetInfoData.cpp
+         PatriarchElectProcessor.cpp
+         RFEvent_ClassRefine.cpp
+         TRC_AutoTrade.cpp
+         TimeItem.cpp
+         Generating Code...
+         Compiling...
+         TimeLimitJadeMng.cpp
+         WheatyExceptionReport.cpp
+         WorldServerUtil.cpp
+         cStaticMember_Player.cpp
+         MainFrm.cpp
+         InternalPacketProcessor.cpp
+         IocpCore.cpp
+         IocpListener.cpp
+         PacketFramer.cpp
+         WorldServer.cpp
+     1>D:\Private Project\RF Online\WorldServer\resource.h(16,9): warning C4005: 'ID_APP_ABOUT': macro redefinition [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/WorldServer.cpp')
+             C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\atlmfc\include\afxres.h(280,9):
+             see previous definition of 'ID_APP_ABOUT'
+         
+     1>D:\Private Project\RF Online\WorldServer\resource.h(17,9): warning C4005: 'ID_APP_EXIT': macro redefinition [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         (compiling source file '/WorldServer.cpp')
+             C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\atlmfc\include\afxres.h(281,9):
+             see previous definition of 'ID_APP_EXIT'
+         
+         Generating Code...
+     1>Done Building Project "D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj" (default targets) -- FAILED.
+
+Build FAILED.
+
+       "D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj" (default target) (1) ->
+       (ClCompile target) -> 
+         D:\Private Project\RF Online\WorldServer\Entities\CPlayer.h(198,50): warning C4359: '_embellish_db_load': Alignment specifier is less than actual alignment (4), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CPostStorage.h(6,37): warning C4359: 'CPostStorage': Alignment specifier is less than actual alignment (8), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMainThread.h(1119,50): warning C4359: '_AVATOR_DATA': Alignment specifier is less than actual alignment (2), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMainThread.h(1788,50): warning C4359: 'AP_BatterySlot': Alignment specifier is less than actual alignment (2), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMainThread.h(2644,17): warning C4624: 'BossSchedule_Map': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+
+
+       "D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj" (default target) (1) ->
+         D:\Private Project\RF Online\WorldServer\Entities\CDarkHole.h(9,37): warning C4359: 'CDarkHole': Alignment specifier is less than actual alignment (8), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMonsterAI.h(7,16): warning C4624: 'CMonsterAI': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMonster.h(13,16): warning C4624: 'CMonster': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CDarkHole.h(9,37): warning C4359: 'CDarkHole': Alignment specifier is less than actual alignment (8), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMonsterAI.h(7,16): warning C4624: 'CMonsterAI': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMonster.h(13,16): warning C4624: 'CMonster': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CDarkHole.h(9,37): warning C4359: 'CDarkHole': Alignment specifier is less than actual alignment (8), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CTotalGuildRankInfo.h(21,37): warning C4099: '_total_guild_rank_result_zocl': type name first seen using 'struct' now seen using 'class' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CTotalGuildRankInfo.h(21,37): warning C4359: '_total_guild_rank_result_zocl': Alignment specifier is less than actual alignment (4), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CWeeklyGuildRankInfo.h(52,43): warning C4359: 'CWeeklyGuildRankInfo::_weekly_guild_rank_result_zocl': Alignment specifier is less than actual alignment (4), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CNationCodeStr.h(5,37): warning C4359: 'CNationCodeStr': Alignment specifier is less than actual alignment (4), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMonsterAI.h(7,16): warning C4624: 'CMonsterAI': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMonster.h(13,16): warning C4624: 'CMonster': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CDarkHole.h(9,37): warning C4359: 'CDarkHole': Alignment specifier is less than actual alignment (8), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMonsterAI.h(7,16): warning C4624: 'CMonsterAI': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMonster.h(13,16): warning C4624: 'CMonster': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CDarkHole.h(9,37): warning C4359: 'CDarkHole': Alignment specifier is less than actual alignment (8), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMoneySupplyMgr.h(5,41): warning C4359: '_MONEY_SUPPLY_DATA': Alignment specifier is less than actual alignment (8), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMonsterAI.h(7,16): warning C4624: 'CMonsterAI': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMonster.h(13,16): warning C4624: 'CMonster': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMonsterAI.h(7,16): warning C4624: 'CMonsterAI': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMonsterSPGroupTable.cpp(21,23): warning C4018: '<': signed/unsigned mismatch [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CNationCodeStr.h(5,37): warning C4359: 'CNationCodeStr': Alignment specifier is less than actual alignment (4), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CNationCodeStr.h(5,37): warning C4359: 'CNationCodeStr': Alignment specifier is less than actual alignment (4), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMonsterAI.h(7,16): warning C4624: 'CMonsterAI': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMonster.h(13,16): warning C4624: 'CMonster': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CDarkHole.h(9,37): warning C4359: 'CDarkHole': Alignment specifier is less than actual alignment (8), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CTotalGuildRankInfo.h(21,37): warning C4099: '_total_guild_rank_result_zocl': type name first seen using 'struct' now seen using 'class' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CTotalGuildRankInfo.h(21,37): warning C4359: '_total_guild_rank_result_zocl': Alignment specifier is less than actual alignment (4), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CTotalGuildRankInfo.h(21,37): warning C4099: '_total_guild_rank_result_zocl': type name first seen using 'struct' now seen using 'class' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CTotalGuildRankInfo.h(21,37): warning C4359: '_total_guild_rank_result_zocl': Alignment specifier is less than actual alignment (4), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CVoteSystem.h(9,43): warning C4359: 'CVoteSystem::_started_vote_inform_zocl': Alignment specifier is less than actual alignment (4), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CWeeklyGuildRankInfo.h(52,43): warning C4359: 'CWeeklyGuildRankInfo::_weekly_guild_rank_result_zocl': Alignment specifier is less than actual alignment (4), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CWeeklyGuildRankInfo.h(52,43): warning C4359: 'CWeeklyGuildRankInfo::_weekly_guild_rank_result_zocl': Alignment specifier is less than actual alignment (4), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMonsterAI.h(7,16): warning C4624: 'CMonsterAI': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMonster.h(13,16): warning C4624: 'CMonster': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CDarkHole.h(9,37): warning C4359: 'CDarkHole': Alignment specifier is less than actual alignment (8), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMonsterAI.h(7,16): warning C4624: 'CMonsterAI': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMonster.h(13,16): warning C4624: 'CMonster': destructor was implicitly defined as deleted [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CDarkHole.h(9,37): warning C4359: 'CDarkHole': Alignment specifier is less than actual alignment (8), and will be ignored. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\resource.h(16,9): warning C4005: 'ID_APP_ABOUT': macro redefinition [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\resource.h(17,9): warning C4005: 'ID_APP_EXIT': macro redefinition [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+
+
+       "D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj" (default target) (1) ->
+       (ClCompile target) -> 
+         D:\Private Project\RF Online\WorldServer\Entities\CHolyStone.h(13,42): error C2061: syntax error: identifier '_stone_create_setdata' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CHolyStone.h(13,42): error C2061: syntax error: identifier '_stone_create_setdata' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(20,5): error C2065: '_stone_create_setdata': undeclared identifier [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(20,27): error C2146: syntax error: missing ';' before identifier 'pData' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(20,27): error C2065: 'pData': undeclared identifier [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(21,5): error C2065: 'pData': undeclared identifier [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(22,5): error C2065: 'pData': undeclared identifier [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(23,5): error C2065: 'pData': undeclared identifier [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(24,17): error C2065: 'pData': undeclared identifier [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(24,74): error C2065: 'pData': undeclared identifier [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(24,10): error C2660: 'memcpy': function does not take 2 arguments [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(25,5): error C2065: 'pData': undeclared identifier [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(26,5): error C2065: 'pData': undeclared identifier [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CHolyStoneSystem.cpp(27,38): error C2065: 'pData': undeclared identifier [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CHolyStone.h(13,42): error C2061: syntax error: identifier '_stone_create_setdata' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CItemStoreManager.cpp(32,20): error C2660: 'CRecordData::ReadRecord': function does not take 4 arguments [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CItemStoreManager.cpp(63,33): error C3861: 'GetKorLocalTime': identifier not found [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CItemStoreManager.cpp(65,15): error C2660: 'CLogFile::SetWriteLogFile': function does not take 6 arguments [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CHolyStone.h(13,42): error C2061: syntax error: identifier '_stone_create_setdata' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CHolyStone.h(13,42): error C2061: syntax error: identifier '_stone_create_setdata' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMapOperation.cpp(129,20): error C2248: 'CDummyPosTable::LoadDummyPosition': cannot access private member declared in class 'CDummyPosTable' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMapOperation.cpp(139,31): error C2248: 'CDummyPosTable::GetRecordNum': cannot access private member declared in class 'CDummyPosTable' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMapOperation.cpp(142,40): error C2248: 'CDummyPosTable::GetRecord': cannot access private member declared in class 'CDummyPosTable' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CMapOperation.cpp(143,12): error C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CHolyStone.h(13,42): error C2061: syntax error: identifier '_stone_create_setdata' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CHolyStone.h(13,42): error C2061: syntax error: identifier '_stone_create_setdata' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CWorldSchedule.cpp(19,20): error C2660: 'CRecordData::ReadRecord': function does not take 4 arguments [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CWorldSchedule.cpp(24,29): error C3861: 'GetCurrentHour': identifier not found [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CWorldSchedule.cpp(25,28): error C3861: 'GetCurrentMin': identifier not found [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CWorldSchedule.cpp(26,38): error C3861: 'GetCurrentSec': identifier not found [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+         D:\Private Project\RF Online\WorldServer\Entities\CHolyStone.h(13,42): error C2061: syntax error: identifier '_stone_create_setdata' [D:\Private Project\RF Online\WorldServer\WorldServer.vcxproj]
+
+    47 Warning(s)
+    31 Error(s)
+
+Time Elapsed 00:00:07.95

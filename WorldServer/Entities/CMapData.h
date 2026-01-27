@@ -7,6 +7,9 @@ class __cppobj __declspec(align(8)) CMapData
 {
 public:
   bool IsMapIn(float *fPos);
+  void Init(_map_fld *pMapSet);
+  bool OpenMap(char *szFileName, _map_fld *pMapSet, int nType);
+  bool ConvertLocalToWorldDummy(CDummyPosTable *pTable, int nType);
 
   bool m_bUse;
   bool m_bLoad;

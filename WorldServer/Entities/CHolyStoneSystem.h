@@ -50,6 +50,10 @@ struct __cppobj __declspec(align(4)) _QUEST_CASH_OTHER
 class __cppobj __declspec(align(8)) CHolyStoneSystem
 {
 public:
+  static bool InitHolySystem(CHolyStoneSystem *pSystem);
+  bool ContinueStartSystem();
+  void InitQuestCash_Other();
+
   CRecordData m_tblQuest;
   CLogFile m_logQuest;
   CLogFile m_logQuestDestroy;

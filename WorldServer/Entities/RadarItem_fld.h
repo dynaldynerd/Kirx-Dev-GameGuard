@@ -5,11 +5,7 @@
 
 #pragma pack(push, 1)
 
-struct _consume_item_list
-{
-  char m_itmNeedItemCode[8];
-  int m_nNeedItemCount;
-};
+#include "SkillCommon.h"
 
 struct __cppobj _RadarItem_fld : _base_fld
 {

@@ -6,10 +6,22 @@
 
 struct _monster_fld;
 struct _dummy_position;
+class CMapData;
+
+struct _stone_create_setdata
+{
+  CMapData *m_pMap;
+  int m_nLayerIndex;
+  _monster_fld *m_pRecordSet;
+  float m_fStartPos[3];
+  _dummy_position *pDumPosition;
+  unsigned char byMasterRace;
+};
 
 class __cppobj CHolyStone : public CCharacter
 {
 public:
+  static bool Create(CHolyStone *pStone, _stone_create_setdata *pData);
   bool m_bOper;
   int m_nHP;
   int m_nMaxHP;

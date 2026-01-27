@@ -19,3 +19,7 @@ CDarkHole *g_DarkHole = nullptr;
 CGuild *g_Guild = nullptr;
 AggroCaculateData g_AggroCaculateData{};
 MonsterSetInfoData g_MonsterSetInfoData{};
+
+CTransportShip g_TransportShip[3]{};
+CHolyStoneSystem g_HolySys{};
+CWorldSchedule g_WorldSch{};

@@ -35,6 +35,12 @@ struct _qry_case_all_store_limit_item
 /* 5781 */
 class __cppobj CItemStoreManager
 {
+public:
+  static CItemStoreManager *Instance();
+  bool Init(int nMapNum, int nInstanceListNum);
+  bool InitLogger();
+  void SetNextEnforceInitTime();
+
   CLogFile *m_pkLogger;
   CMyTimer m_tmrCheckTime;
   CMyTimer m_tmrSaveTime;
