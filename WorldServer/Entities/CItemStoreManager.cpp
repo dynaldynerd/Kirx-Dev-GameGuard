@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "CItemStoreManager.h"
+#include "CItemStore.h"
 
 #include <cstdio>
 #include <cstring>
@@ -74,4 +75,19 @@ void CItemStoreManager::SetNextEnforceInitTime()
   CTime nextDay = current + CTimeSpan(1, 0, 0, 0);
   CTime nextMidnight(nextDay.GetYear(), nextDay.GetMonth(), nextDay.GetDay(), 0, 0, 0);
   this->m_tNextInitTime = nextMidnight.GetTime();
+}
+
+CMapItemStoreList *CItemStoreManager::GetMapItemStoreListByNum(int nMapNum)
+{
+  if (nMapNum < 0 || nMapNum >= m_nMapItemStoreListNum)
+    return nullptr;
+  return &m_MapItemStoreList[nMapNum];
+}
+
+CItemStore *CItemStoreManager::GetMapItemStoreFromList(int nMapNum, int nStoreNum)
+{
+  CMapItemStoreList *pList = GetMapItemStoreListByNum(nMapNum);
+  if (!pList || nStoreNum < 0 || nStoreNum >= pList->m_nItemStoreNum)
+    return nullptr;
+  return &pList->m_ItemStore[nStoreNum];
 }

@@ -12,4 +12,7 @@ public:
   int m_nSerial;
   int m_nItemStoreNum;
   CItemStore *m_ItemStore;
+
+  void SetTypeNSerial(unsigned __int8 byType, int nSerial);
+  bool CreateStores(CMapData *pMap);
 };

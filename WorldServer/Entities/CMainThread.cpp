@@ -2241,7 +2241,7 @@ bool CMainThread::NetworkInit()
     params[0].m_dwSendSafeSize = 10000;
   }
   params[0].m_bSendSafe = true;
-  strcpy_s(params[0].m_szModuleName, "ClientLine");
+  strcpy_s(params[0].m_szModuleName, sizeof(params[0].m_szModuleName), "ClientLine");
 
   params[1].m_bServer = 1;
   params[1].m_wPort = 27555;
@@ -2255,7 +2255,7 @@ bool CMainThread::NetworkInit()
   params[1].m_bSendSafe = true;
   params[1].m_byRecvSleepTime = 10;
   params[1].m_bySendSleepTime = 2;
-  strcpy_s(params[1].m_szModuleName, "AccountLine");
+  strcpy_s(params[1].m_szModuleName, sizeof(params[1].m_szModuleName), "AccountLine");
 
   params[2].m_bServer = 1;
   params[2].m_wPort = 27556;
@@ -2271,7 +2271,7 @@ bool CMainThread::NetworkInit()
   params[2].m_bSendSafe = true;
   params[2].m_byRecvSleepTime = 10;
   params[2].m_bySendSleepTime = 2;
-  strcpy_s(params[2].m_szModuleName, "WebLine");
+  strcpy_s(params[2].m_szModuleName, sizeof(params[2].m_szModuleName), "WebLine");
 
   params[3].m_bServer = 1;
   params[3].m_wPort = 0;
@@ -2287,11 +2287,11 @@ bool CMainThread::NetworkInit()
   params[3].m_bSendSafe = true;
   params[3].m_byRecvSleepTime = 10;
   params[3].m_bySendSleepTime = 2;
-  strcpy_s(params[3].m_szModuleName, "BillingLine");
+  strcpy_s(params[3].m_szModuleName, sizeof(params[3].m_szModuleName), "BillingLine");
 
   g_Network.m_dwUseProcessNum = 4;
-  strcpy_s(g_Network.m_szSystemName, "GameServer");
-  strcpy_s(g_Network.m_szLogPath, "..\\ZoneServerLog\\NetLog");
+  strcpy_s(g_Network.m_szSystemName, sizeof(g_Network.m_szSystemName), "GameServer");
+  strcpy_s(g_Network.m_szLogPath, sizeof(g_Network.m_szLogPath), "..\\ZoneServerLog\\NetLog");
   for (unsigned int i = 0; i < 4; ++i)
   {
     g_Network.m_pProcess[i] = &g_Network.m_Process[i];

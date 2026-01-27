@@ -5,6 +5,7 @@
 /* 1423 */
 class __cppobj CBsp
 {
+public:
   float (*mCVertex)[3];
   float (*mCNNormal)[3];
   unsigned int *mCVertexId;
@@ -93,5 +94,8 @@ class __cppobj CBsp
   _BSP_FILE_HEADER mBSPHeader;
   _EXT_BSP_FILE_HEADER mExtBSPHeader;
   CAlpha mAlpha;
+
+  float GetFirstYpos(float *const a2, float *const a3, float *const a4);
+  void GetLeafList(float *const a2, float *const a3, int *const a4, __int16 *a5, unsigned int a6);
 };
 

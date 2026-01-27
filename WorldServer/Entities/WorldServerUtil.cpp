@@ -9,9 +9,40 @@
 
 CWnd *g_pFrame = nullptr;
 
+#include <windows.h>
+#include <mmsystem.h>
+#pragma comment(lib, "winmm.lib")
+#include "CMerchant.h"
+#include "GlobalObjectDefs.h"
+
 unsigned int GetLoopTime()
 {
-  return GetTickCount();
+  return timeGetTime();
+}
+
+CMerchant *FindEmptyNPC(CMerchant *pNPC, int nMax)
+{
+    unsigned int dwTime = timeGetTime();
+    for (int i = 0; i < nMax; ++i)
+    {
+        if (!pNPC[i].m_bLive)
+        {
+            if (dwTime - pNPC[i].m_dwLastDestroyTime > 30000)
+                return &pNPC[i];
+        }
+    }
+    return nullptr;
+}
+
+void NetTrace(const char *fmt, ...)
+{
+    va_list va;
+    va_start(va, fmt);
+    char Buffer[272]{};
+    vsprintf_s(Buffer, sizeof(Buffer), fmt, va);
+    va_end(va);
+    strcat_s(Buffer, sizeof(Buffer), "\n");
+    OutputDebugStringA(Buffer);
 }
 
 int GetCurrentDay()

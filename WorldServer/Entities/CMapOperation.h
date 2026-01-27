@@ -20,6 +20,7 @@ public:
   CMapData *GetStartMap(unsigned __int8 byRaceCode);
   bool LoadMaps();
   bool LoadRegion();
+  bool LoadRegionData(int nMapNum, char **ppszMapNameList, char *pszErrMsg);
   void CheckMapPortalLink();
 
   static const char *ms_szSettlementMapName[3][2];
@@ -42,5 +43,10 @@ public:
   virtual ~CMapOperation() = default;
 };
 
+#include <map>
+#include "AreaList.h"
+
 extern CMapOperation g_MapOper;
+extern AreaList *g_AreaIndexTable[100];
+extern std::map<std::string, AreaList> g_strLMapMap;
 

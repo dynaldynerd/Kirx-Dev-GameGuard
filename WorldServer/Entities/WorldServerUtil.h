@@ -3,6 +3,7 @@
 #include "IdaCompat.h"
 
 class CWnd;
+class CMerchant;
 
 unsigned int GetLoopTime();
 int GetCurrentDay();
@@ -19,5 +20,7 @@ void clear_file(const char *directory, int keepCount);
 int MyMessageBox(const char *title, const char *format, ...);
 int MyCrtDebugReportHook(int reportType, char *message, int *returnValue);
 void ServerProgramExit(const char *source, int reason);
+CMerchant *FindEmptyNPC(CMerchant *pNPC, int nMax);
+void NetTrace(const char *fmt, ...);
 
 extern CWnd *g_pFrame;

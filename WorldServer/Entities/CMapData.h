@@ -2,6 +2,12 @@
 
 #include "IdaCompat.h"
 
+#include "DummyPosition.h"
+#include "CExtDummy.h"
+#include "CLevel.h"
+#include "mon_block_fld.h"
+#include "mon_active_fld.h"
+
 /* 1313 */
 class __cppobj __declspec(align(8)) CMapData
 {
@@ -9,7 +15,20 @@ public:
   bool IsMapIn(float *fPos);
   void Init(_map_fld *pMapSet);
   bool OpenMap(char *szFileName, _map_fld *pMapSet, int nType);
-  bool ConvertLocalToWorldDummy(CDummyPosTable *pTable, int nType);
+  bool ConvertLocalToWorldDummy(CDummyPosTable *pTable, bool bCheckCenter);
+  void GetRandPosInDummy(_dummy_position *pDumPos, float *fOutPos, int nType);
+
+  bool _LoadBspSec(char *pszMapCode);
+  bool _LoadMonBlk(char *pszMapCode, _map_fld *pMapFld);
+  bool _LoadPortal(char *pszMapCode);
+  bool _LoadStoreDummy(char *pszMapCode);
+  bool _LoadStart(char *pszMapCode);
+  bool _LoadResource(char *pszMapCode);
+  bool _LoadBind(char *pszMapCode);
+  bool _LoadQuest(char *pszMapCode);
+  bool _LoadSafe(char *pszMapCode);
+  bool ConvertLocal(_dummy_position *pPos);
+  bool CheckCenterPosDummy(_dummy_position *pPos);
 
   bool m_bUse;
   bool m_bLoad;
@@ -56,5 +75,6 @@ public:
   _sec_info m_SecInfo;
   CMyTimer m_tmrMineGradeReSet;
   int m_nMonTotalCount;
+public:
   virtual ~CMapData() = default;
 };

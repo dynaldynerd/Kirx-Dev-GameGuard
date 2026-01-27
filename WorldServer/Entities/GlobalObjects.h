@@ -38,7 +38,7 @@ extern CParkingUnit *g_ParkingUnit;
 extern CDarkHole *g_DarkHole;
 extern CGuild *g_Guild;
 extern AggroCaculateData g_AggroCaculateData;
-extern MonsterSetInfoData g_MonsterSetInfoData;
+extern class MonsterSetInfoData g_MonsterSetInfoData;
 
 extern CTransportShip g_TransportShip[3];
 extern CHolyStoneSystem g_HolySys;

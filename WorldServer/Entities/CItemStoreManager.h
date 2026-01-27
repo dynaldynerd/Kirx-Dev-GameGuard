@@ -41,6 +41,9 @@ public:
   bool InitLogger();
   void SetNextEnforceInitTime();
 
+  CMapItemStoreList *GetMapItemStoreListByNum(int nMapNum);
+  CItemStore *GetMapItemStoreFromList(int nMapNum, int nStoreNum);
+
   CLogFile *m_pkLogger;
   CMyTimer m_tmrCheckTime;
   CMyTimer m_tmrSaveTime;

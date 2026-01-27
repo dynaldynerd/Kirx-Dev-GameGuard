@@ -1415,14 +1415,14 @@ struct __cppobj __declspec(align(8)) _dh_player_mgr
 
 /* 1598 */
 
-/* 1435 */
+/* 1435
 struct __cppobj __declspec(align(4)) _dummy_position
 {
   char m_szCode[64];
   unsigned __int16 m_wLineIndex;
   bool m_bPosAble;
-  __int16 m_zLocalMin[3];
-  __int16 m_zLocalMax[3];
+  signed __int16 m_zLocalMin[3];
+  signed __int16 m_zLocalMax[3];
   float m_fMin[3];
   float m_fMax[3];
   float m_fRT[3];
@@ -1431,6 +1431,7 @@ struct __cppobj __declspec(align(4)) _dummy_position
   float m_fDirection[3];
   unsigned __int16 m_wActiveMon;
 };
+*/
 
 /* 1773 */
 #include "CParkingUnit.h"
@@ -1690,11 +1691,14 @@ struct __cppobj _mon_active
   _mon_active_fld *m_pActRec;
   _mon_block *m_pBlk;
   unsigned __int16 m_wMonRecIndex;
-  __int16 m_zCurMonNum;
+  signed __int16 m_zCurMonNum;
   unsigned int m_dwCumMonNum;
   unsigned int m_dwLastRespawnTime;
   int m_nLimRegenNum;
   BossSchedule *m_pBossSchedule;
+
+  bool SetActive(_mon_active_fld *pActRec, _mon_block *pBlk, int nMonRecIndex);
+  void SetZeroMonNum();
 };
 
 /* 1515 */
@@ -1708,6 +1712,9 @@ struct __cppobj _LAYER_SET
   _mon_active m_MonAct[200][300];
   unsigned int m_dwStartActiveTime;
   unsigned int m_dwLastInertTime;
+
+  void CreateLayer(int nSecNum);
+  void ActiveLayer(_MULTI_BLOCK *pMB);
 };
 
 /* 1514 */
@@ -1726,7 +1733,11 @@ struct _mon_block
   bool m_bBossBlock;
   bool m_bRotate;
   CMapData *m_pMap;
+
+  bool SetBlock(_mon_block_fld *pBlkRec, CMapData *pMap, _dummy_position **ppPos);
+  void SetRotateBlock(bool IsRotateBlock);
 };
+
 
 /* 1517 */
 struct __cppobj _portal_dummy
@@ -1735,13 +1746,14 @@ struct __cppobj _portal_dummy
   _dummy_position *m_pDumPos;
 };
 
-/* 1518 */
+/* 1518
 struct __cppobj _store_dummy
 {
   int m_nStoreType;
   _base_fld *m_pStoreRec;
   _dummy_position *m_pDumPos;
 };
+*/
 
 /* 1519 */
 struct __cppobj _start_dummy

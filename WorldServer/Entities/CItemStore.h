@@ -11,6 +11,7 @@ class CMapData;
 /* 3033 */
 class __cppobj __declspec(align(8)) CItemStore
 {
+public:
   bool m_bLive;
   int m_nIndex;
   unsigned int m_dwSecIndex;

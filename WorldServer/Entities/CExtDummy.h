@@ -2,6 +2,8 @@
 
 #include "IdaCompat.h"
 
+struct _EXT_DUMMY;
+
 /* 1415 */
 class __cppobj CExtDummy
 {
@@ -9,5 +11,8 @@ public:
   unsigned int mMaxNum;
   unsigned int mNum;
   _EXT_DUMMY *mDummy;
+
+  bool LoadExtDummy(const char *szFileName);
+  bool GetWorldFromLocal(float *fOutPos, unsigned int nDummyIndex, float *v7);
 };
 

@@ -12,5 +12,6 @@ public:
   bool LoadDummyPosition(const char *szFileName, const char *szLabel);
   int GetRecordNum();
   void *GetRecord(int index);
+  void *GetRecord(const char *szLabel);
   virtual ~CDummyPosTable() = default;
 };

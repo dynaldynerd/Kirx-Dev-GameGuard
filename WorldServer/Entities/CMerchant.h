@@ -4,9 +4,9 @@
 
 #include "CCharacter.h"
 
-class CItemStore;
+#include "ObjectCreateSetData.h"
 
-class __cppobj CMerchant : public CCharacter
+class CMerchant : public CCharacter
 {
 public:
   CItemStore *m_pItemStore;
@@ -14,5 +14,10 @@ public:
   unsigned int m_dwLastDestroyTime;
   int m_nLeftTicketNum[2];
 
+  static int s_nLiveNum;
+
   void Init(_object_id *pID);
+  bool Create(_npc_create_setdata *pData);
+  static unsigned int GetNewMonSerial();
+  static void SendMsg_Create(CMerchant *pMerchant);
 };
