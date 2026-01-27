@@ -36,7 +36,10 @@ public:
   CAITimer m_AITimer[3];
   SKILL m_Skill[2];
 
-  static void SetStaticMember();
+  static bool SetStaticMember();
   void Init(_object_id *pID);
+
+  static CRecordData s_tblParameter[8];
+  static unsigned int MAX_EXP[8];
 };
 

@@ -106,7 +106,7 @@ struct _event_set;
 struct UsStateTBL;
 class CLuaCommandEx;
 struct AP_BatterySlot;
-struct AutominePersonal;
+class AutominePersonal;
 struct _class_fld;
 class CGuild;
 struct _guild_member_info;
@@ -1236,6 +1236,11 @@ struct __cppobj _qry_case_update_mineore
 /* 1710 */
 class __cppobj AutominePersonal : CCharacter
 {
+public:
+  AutominePersonal();
+  ~AutominePersonal();
+  bool initialize(unsigned __int16 wIndex);
+
   bool m_bDBLoad;
   bool m_bOpenUI_Inven;
   bool m_bOpenUI_Battery;
@@ -1782,6 +1787,9 @@ struct __cppobj _safe_dummy
 /* 1705 */
 struct __cppobj __unaligned __declspec(align(1)) AP_BatterySlot
 {
+  AP_BatterySlot();
+  void clear();
+
   bool m_bFill;
   _STORAGE_LIST::_db_con battery_;
 };

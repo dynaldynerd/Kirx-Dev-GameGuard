@@ -36,6 +36,23 @@ int GetCurDay()
   return local.tm_mday;
 }
 
+bool GetDateTimeStr(char *szTime)
+{
+  if (szTime == nullptr)
+  {
+    return false;
+  }
+
+  std::time_t now = std::time(nullptr);
+  std::tm local{};
+  if (localtime_s(&local, &now) != 0)
+  {
+    return false;
+  }
+
+  return std::strftime(szTime, 0x80, "%y-%m-%d_%H-%M-%S", &local) != 0;
+}
+
 int GetItemTableCode(const char *psItemCode)
 {
   if (psItemCode == nullptr)

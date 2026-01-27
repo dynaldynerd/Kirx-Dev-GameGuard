@@ -1,21 +1,6 @@
 # Stub candidates (auto-scan)
 # NOTE: Heuristic list; please verify against IDA before implementation.
 
-## AutominePersonalMgr.cpp
-- AutominePersonalMgr::initialize :: return true;
-
-## CActionPointSystemMgr.cpp
-- CActionPointSystemMgr::Initialize :: return true;
-
-## CAnimus.cpp
-- CAnimus::SetStaticMember
-
-## CAsyncLogger.cpp
-- CAsyncLogger::Init :: return 0;
-
-## CAttack.cpp
-- CAttack::SetStaticMember :: (void)effectTable;
-
 ## CBillingManager.cpp
 - m_pBill
 
@@ -179,4 +164,4 @@
 ## cStaticMember_Player.cpp
 - cStaticMember_Player::Initialize :: return true;
 
-Total: 111
+Total: 106

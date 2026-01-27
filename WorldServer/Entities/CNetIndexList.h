@@ -17,6 +17,8 @@ public:
   static bool SetList(CNetIndexList *list, unsigned int maxBufNum);
   static bool PushNode_Back(CNetIndexList *list, unsigned int index);
   static bool PushNode_Front(CNetIndexList *list, unsigned int index);
+  static bool PopNode_Front(CNetIndexList *list, unsigned int *outIndex);
+  static unsigned int size(const CNetIndexList *list);
 
   _index_node m_Head;
   _index_node m_Tail;

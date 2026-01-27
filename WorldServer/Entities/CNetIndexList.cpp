@@ -106,3 +106,32 @@ bool CNetIndexList::PushNode_Front(CNetIndexList *list, unsigned int index)
   return true;
 }
 
+bool CNetIndexList::PopNode_Front(CNetIndexList *list, unsigned int *outIndex)
+{
+  if (list == nullptr || outIndex == nullptr)
+  {
+    return false;
+  }
+
+  _index_node *node = PopFront(list->m_Head, list->m_Tail);
+  if (node == nullptr)
+  {
+    return false;
+  }
+
+  *outIndex = node->m_dwIndex;
+  InsertBefore(&list->m_BufTail, node);
+  --list->m_dwCount;
+  ++list->m_dwBufCount;
+  return true;
+}
+
+unsigned int CNetIndexList::size(const CNetIndexList *list)
+{
+  if (list == nullptr)
+  {
+    return 0;
+  }
+  return list->m_dwCount;
+}
+

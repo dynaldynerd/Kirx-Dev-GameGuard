@@ -927,6 +927,7 @@ bool CMainThread::DataFileInit()
         MyMessageBox("DatafileInit", szErrCode);
         return false;
       }
+      // TODO(IDA): record[1].m_dwIndex is decompiler pointer math; map to the real MobMessage field.
       m_MobMessage[n].wIndex = static_cast<unsigned __int16>(atoi(record->m_strCode));
       m_MobMessage[n].byUsingNum = static_cast<unsigned __int8>(record[1].m_dwIndex);
     }
@@ -1077,43 +1078,43 @@ bool CMainThread::SetGlobalDataName()
 
   const char *itemNameFiles[37] =
   {
-    ".\\script\\UpperItem_str.dat",
-    ".\\script\\LowerItem_str.dat",
-    ".\\script\\GauntletItem_str.dat",
-    ".\\script\\ShoeItem_str.dat",
-    ".\\script\\HelmetItem_str.dat",
-    ".\\script\\ShieldItem_str.dat",
-    ".\\script\\WeaponItem_str.dat",
-    ".\\script\\CloakItem_str.dat",
-    ".\\script\\RingItem_str.dat",
-    ".\\script\\AmuletItem_str.dat",
-    ".\\script\\BulletItem_str.dat",
-    ".\\script\\MaketoolItem_str.dat",
-    ".\\script\\BagItem_str.dat",
-    ".\\script\\PotionItem_str.dat",
-    ".\\script\\FaceItem_str.dat",
-    ".\\script\\ForceItem_str.dat",
-    ".\\script\\BatteryItem_str.dat",
-    ".\\script\\OreItem_str.dat",
-    ".\\script\\ResourceItem_str.dat",
-    ".\\script\\UnitKeyItem_str.dat",
-    ".\\script\\BootyItem_str.dat",
-    ".\\script\\MapItem_str.dat",
-    ".\\script\\TOWNItem_str.dat",
-    ".\\script\\BattleDungeonItem_str.dat",
-    ".\\script\\AnimusItem_str.dat",
-    ".\\script\\GuardTowerItem_str.dat",
-    ".\\script\\TrapItem_str.dat",
-    ".\\script\\SiegeKitItem_str.dat",
-    ".\\script\\TicketItem_str.dat",
-    ".\\script\\EventItem_str.dat",
-    ".\\script\\RecoveryItem_str.dat",
-    ".\\script\\BoxItem_str.dat",
-    ".\\script\\FIRECRACKER_str.dat",
-    ".\\script\\UNmannedminer_str.dat",
-    ".\\script\\RadarItem_str.dat",
-    ".\\script\\NPCLinkItem_str.dat",
-    ".\\script\\CouponItem_str.dat",
+    ".\\script\\UpperItem_str.dat", //_DfnEquipItem_fld
+    ".\\script\\LowerItem_str.dat",//_DfnEquipItem_fld
+    ".\\script\\GauntletItem_str.dat",//_DfnEquipItem_fld
+    ".\\script\\ShoeItem_str.dat",//_DfnEquipItem_fld
+    ".\\script\\HelmetItem_str.dat",//_DfnEquipItem_fld
+    ".\\script\\ShieldItem_str.dat",//_DfnEquipItem_fld
+    ".\\script\\WeaponItem_str.dat",//_WeaponItem_fld
+    ".\\script\\CloakItem_str.dat",//_CloakItem_fld
+    ".\\script\\RingItem_str.dat",//_RingItem_fld
+    ".\\script\\AmuletItem_str.dat",//_AmuletItem_fld
+    ".\\script\\BulletItem_str.dat",//_BulletItem_fld
+    ".\\script\\MaketoolItem_str.dat",//_MakeToolItem_fld
+    ".\\script\\BagItem_str.dat",//_BagItem_fld
+    ".\\script\\PotionItem_str.dat",//_PotionItem_fld
+    ".\\script\\FaceItem_str.dat",//_FaceItem_fld
+    ".\\script\\ForceItem_str.dat",//_ForceItem_fld
+    ".\\script\\BatteryItem_str.dat",//_BatteryItem_fld
+    ".\\script\\OreItem_str.dat",//_OreItem_fld
+    ".\\script\\ResourceItem_str.dat",//_ResourceItem_fld
+    ".\\script\\UnitKeyItem_str.dat",//_ForceItem_fld
+    ".\\script\\BootyItem_str.dat",//_BootyItem_fld
+    ".\\script\\MapItem_str.dat",//_MapItem_fld
+    ".\\script\\TOWNItem_str.dat",//_TOWNItem_fld
+    ".\\script\\BattleDungeonItem_str.dat",//_BattleDungeonItem_fld
+    ".\\script\\AnimusItem_str.dat",//_AnimusItem_fld
+    ".\\script\\GuardTowerItem_str.dat",//_GuardTowerItem_fld
+    ".\\script\\TrapItem_str.dat",//_TrapItem_fld
+    ".\\script\\SiegeKitItem_str.dat",//_SiegeKitItem_fld
+    ".\\script\\TicketItem_str.dat",//_TicketItem_fld
+    ".\\script\\EventItem_str.dat",//_EventItem_fld
+    ".\\script\\RecoveryItem_str.dat",//_RecoveryItem_fld
+    ".\\script\\BoxItem_str.dat",//_BoxItem_fld
+    ".\\script\\FIRECRACKER_str.dat",//_FIRECRACKER_fld
+    ".\\script\\UNmannedminer_str.dat",//_UNmannedminer_fld
+    ".\\script\\RadarItem_str.dat",//_RadarItem_fld
+    ".\\script\\NPCLinkItem_str.dat",//_NPCLink_fld
+    ".\\script\\CouponItem_str.dat",//_CouponItem_fld
   };
 
   CRecordData itemNameTables[37];
@@ -1146,6 +1147,7 @@ bool CMainThread::SetGlobalDataName()
         return false;
       }
 
+      // TODO(IDA): item name destination offsets are decompiler artifacts; map to typed _Item*_fld name fields.
       char *destination = nullptr;
       switch (j)
       {
@@ -1279,6 +1281,7 @@ bool CMainThread::SetGlobalDataName()
       }
 
       const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
+      // TODO(IDA): record[3].m_strCode is decompiler pointer math; map to effect name field.
       strcpy_s(record[3].m_strCode, 0x40, name);
     }
   }
@@ -1321,6 +1324,7 @@ bool CMainThread::SetGlobalDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
+    // TODO(IDA): record[9].m_strCode[48] is decompiler pointer math; map to class name field.
     strcpy_s(&record[9].m_strCode[48], 0x40, name);
   }
 
@@ -1356,6 +1360,7 @@ bool CMainThread::SetGlobalDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
+    // TODO(IDA): record[1] offset is decompiler pointer math; map to player name field.
     strcpy_s(reinterpret_cast<char *>(&record[1]), 0x40, name);
   }
 
@@ -1391,6 +1396,7 @@ bool CMainThread::SetGlobalDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
+    // TODO(IDA): record[1] offset is decompiler pointer math; map to monster name field.
     strcpy_s(reinterpret_cast<char *>(&record[1]), 0x40, name);
   }
 
@@ -1426,6 +1432,7 @@ bool CMainThread::SetGlobalDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
+    // TODO(IDA): record[1] offset is decompiler pointer math; map to NPC name field.
     strcpy_s(reinterpret_cast<char *>(&record[1]), 0x40, name);
   }
 
@@ -1461,6 +1468,7 @@ bool CMainThread::SetGlobalDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
+    // TODO(IDA): record[2].m_strCode[60] is decompiler pointer math; map to animus name field.
     strcpy_s(&record[2].m_strCode[60], 0x40, name);
   }
 
@@ -1520,6 +1528,7 @@ bool CMainThread::SetGlobalDataName()
       }
 
       const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
+      // TODO(IDA): record[2] offset is decompiler pointer math; map to unit part name field.
       strcpy_s(reinterpret_cast<char *>(&record[2]), 0x40, name);
     }
   }
@@ -1556,6 +1565,7 @@ bool CMainThread::SetGlobalDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
+    // TODO(IDA): record[2] offset is decompiler pointer math; map to unit bullet name field.
     strcpy_s(reinterpret_cast<char *>(&record[2]), 0x40, name);
   }
 

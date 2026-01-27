@@ -65,6 +65,7 @@ bool CPotionMgr::SetPotionDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
+    // TODO(IDA): record[3].m_strCode is decompiler pointer math; map to potion effect name field.
     strcpy_s(record[3].m_strCode, 0x40, name);
   }
 
@@ -100,6 +101,7 @@ bool CPotionMgr::SetPotionDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
+    // TODO(IDA): record[1] offset is decompiler pointer math; map to potion check name field.
     strcpy_s(reinterpret_cast<char *>(&record[1]), 0x40, name);
   }
 

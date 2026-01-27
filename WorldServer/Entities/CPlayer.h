@@ -104,7 +104,7 @@ struct _event_set;
 struct UsStateTBL;
 class CLuaCommandEx;
 struct AP_BatterySlot;
-struct AutominePersonal;
+class AutominePersonal;
 struct _class_fld;
 class CGuild;
 struct _guild_member_info;

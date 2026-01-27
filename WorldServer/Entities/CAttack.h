@@ -30,5 +30,6 @@ class __cppobj __declspec(align(8)) CAttack
   bool m_bFailure;
 
 public:
+  static CRecordData *s_pSkillData;
   static void SetStaticMember(CRecordData *effectTable);
 };

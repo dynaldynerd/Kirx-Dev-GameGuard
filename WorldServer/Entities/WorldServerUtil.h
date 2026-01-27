@@ -7,6 +7,7 @@ class CWnd;
 unsigned int GetLoopTime();
 int GetCurrentDay();
 int GetCurDay();
+bool GetDateTimeStr(char *szTime);
 int GetItemTableCode(const char *psItemCode);
 int ParsingCommandA(char *pszSrc, int nMaxWordNum, char **ppszDst, int nMaxWordSize);
 void WriteServerStartHistory(const char *format, ...);

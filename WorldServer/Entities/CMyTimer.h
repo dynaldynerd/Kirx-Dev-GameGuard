@@ -5,7 +5,9 @@
 class __cppobj __declspec(align(8)) CMyTimer
 {
 public:
+  CMyTimer();
   void BeginTimer(unsigned int tickTerm);
+  bool CountingTimer();
   virtual ~CMyTimer();
 
   int m_nTickTerm;
