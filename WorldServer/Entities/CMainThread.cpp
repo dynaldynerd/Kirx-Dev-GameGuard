@@ -37,6 +37,43 @@
 #include "CUnmannedTraderController.h"
 #include "CWeeklyGuildRankManager.h"
 #include "CashItemRemoteStore.h"
+#include "AmuletItem_fld.h"
+#include "AnimusItem_fld.h"
+#include "BagItem_fld.h"
+#include "BattleDungeonItem_fld.h"
+#include "BatteryItem_fld.h"
+#include "BootyItem_fld.h"
+#include "BoxItem_fld.h"
+#include "BulletItem_fld.h"
+#include "CloakItem_fld.h"
+#include "CouponItem_fld.h"
+#include "DfnEquipItem_fld.h"
+#include "EventItem_fld.h"
+#include "FIRECRACKER_fld.h"
+#include "FaceItem_fld.h"
+#include "ForceItem_fld.h"
+#include "GuardTowerItem_fld.h"
+#include "MakeToolItem_fld.h"
+#include "MapItem_fld.h"
+#include "mobmsg_fld.h"
+#include "npc_fld.h"
+#include "NPCLink_fld.h"
+#include "OreItem_fld.h"
+#include "player_fld.h"
+#include "PotionItem_fld.h"
+#include "RadarItem_fld.h"
+#include "RecoveryItem_fld.h"
+#include "ResourceItem_fld.h"
+#include "RingItem_fld.h"
+#include "SiegeKitItem_fld.h"
+#include "TOWNItem_fld.h"
+#include "TicketItem_fld.h"
+#include "TrapItem_fld.h"
+#include "UnitBullet_fld.h"
+#include "UnitKeyItem_fld.h"
+#include "UnitPart_fld.h"
+#include "UNmannedminer_fld.h"
+#include "WeaponItem_fld.h"
 #include "CandidateMgr.h"
 #include "CSUItemSystem.h"
 #include "CDarkHoleDungeonQuest.h"
@@ -921,15 +958,14 @@ bool CMainThread::DataFileInit()
     m_MobMessage = new _mob_message[mobCount]{};
     for (unsigned int n = 0; n < mobCount; ++n)
     {
-      _base_fld *record = mobMessage.GetRecord(static_cast<int>(n));
+      _mobmsg_fld *record = reinterpret_cast<_mobmsg_fld *>(mobMessage.GetRecord(static_cast<int>(n)));
       if (record == nullptr)
       {
         MyMessageBox("DatafileInit", szErrCode);
         return false;
       }
-      // TODO(IDA): record[1].m_dwIndex is decompiler pointer math; map to the real MobMessage field.
       m_MobMessage[n].wIndex = static_cast<unsigned __int16>(atoi(record->m_strCode));
-      m_MobMessage[n].byUsingNum = static_cast<unsigned __int8>(record[1].m_dwIndex);
+      m_MobMessage[n].byUsingNum = static_cast<unsigned __int8>(record->m_nUsingNum);
     }
   }
 
@@ -1147,7 +1183,6 @@ bool CMainThread::SetGlobalDataName()
         return false;
       }
 
-      // TODO(IDA): item name destination offsets are decompiler artifacts; map to typed _Item*_fld name fields.
       char *destination = nullptr;
       switch (j)
       {
@@ -1157,50 +1192,100 @@ bool CMainThread::SetGlobalDataName()
         case 3:
         case 4:
         case 5:
+          destination = reinterpret_cast<_DfnEquipItem_fld *>(record)->m_strName;
+          break;
         case 6:
+          destination = reinterpret_cast<_WeaponItem_fld *>(record)->m_strName;
+          break;
         case 7:
+          destination = reinterpret_cast<_CloakItem_fld *>(record)->m_strName;
+          break;
         case 8:
+          destination = reinterpret_cast<_RingItem_fld *>(record)->m_strName;
+          break;
         case 9:
+          destination = reinterpret_cast<_AmuletItem_fld *>(record)->m_strName;
+          break;
         case 10:
+          destination = reinterpret_cast<_BulletItem_fld *>(record)->m_strName;
+          break;
         case 11:
+          destination = reinterpret_cast<_MakeToolItem_fld *>(record)->m_strName;
+          break;
         case 12:
+          destination = reinterpret_cast<_BagItem_fld *>(record)->m_strName;
+          break;
         case 13:
-        case 15:
-        case 16:
-        case 17:
-        case 18:
-        case 19:
-        case 20:
-        case 21:
-        case 22:
-        case 23:
-        case 27:
-        case 28:
-        case 30:
-        case 31:
-        case 32:
-        case 34:
-        case 35:
-        case 36:
-          destination = record[2].m_strCode;
+          destination = reinterpret_cast<_PotionItem_fld *>(record)->m_strName;
           break;
         case 14:
-          destination = reinterpret_cast<char *>(&record[2]);
+          destination = reinterpret_cast<_FaceItem_fld *>(record)->m_strName;
+          break;
+        case 15:
+          destination = reinterpret_cast<_ForceItem_fld *>(record)->m_strName;
+          break;
+        case 16:
+          destination = reinterpret_cast<_BatteryItem_fld *>(record)->m_strName;
+          break;
+        case 17:
+          destination = reinterpret_cast<_OreItem_fld *>(record)->m_strName;
+          break;
+        case 18:
+          destination = reinterpret_cast<_ResourceItem_fld *>(record)->m_strName;
+          break;
+        case 19:
+          destination = reinterpret_cast<_UnitKeyItem_fld *>(record)->m_strName;
+          break;
+        case 20:
+          destination = reinterpret_cast<_BootyItem_fld *>(record)->m_strName;
+          break;
+        case 21:
+          destination = reinterpret_cast<_MapItem_fld *>(record)->m_strName;
+          break;
+        case 22:
+          destination = reinterpret_cast<_TOWNItem_fld *>(record)->m_strName;
+          break;
+        case 23:
+          destination = reinterpret_cast<_BattleDungeonItem_fld *>(record)->m_strName;
           break;
         case 24:
-          destination = &record[2].m_strCode[60];
+          destination = reinterpret_cast<_AnimusItem_fld *>(record)->m_strName;
           break;
         case 25:
-          destination = &record[2].m_strCode[56];
+          destination = reinterpret_cast<_GuardTowerItem_fld *>(record)->m_strName;
           break;
         case 26:
-          destination = reinterpret_cast<char *>(&record[3]);
+          destination = reinterpret_cast<_TrapItem_fld *>(record)->m_strName;
+          break;
+        case 27:
+          destination = reinterpret_cast<_SiegeKitItem_fld *>(record)->m_strName;
+          break;
+        case 28:
+          destination = reinterpret_cast<_TicketItem_fld *>(record)->m_strName;
           break;
         case 29:
-          destination = record[1].m_strCode;
+          destination = reinterpret_cast<_EventItem_fld *>(record)->m_strName;
+          break;
+        case 30:
+          destination = reinterpret_cast<_RecoveryItem_fld *>(record)->m_strName;
+          break;
+        case 31:
+          destination = reinterpret_cast<_BoxItem_fld *>(record)->m_strName;
+          break;
+        case 32:
+          destination = reinterpret_cast<_FIRECRACKER_fld *>(record)->m_strName;
           break;
         case 33:
-          destination = &record[2].m_strCode[60];
+          destination = reinterpret_cast<_UNmannedminer_fld *>(record)->m_strName;
+          break;
+        case 34:
+          destination = reinterpret_cast<_RadarItem_fld *>(record)->m_strName;
+          break;
+        case 35:
+          destination = reinterpret_cast<_NPCLink_fld *>(record)->m_strName;
+          break;
+        case 36:
+          destination = reinterpret_cast<_CouponItem_fld *>(record)->m_strName;
           break;
         default:
           destination = nullptr;
@@ -1261,13 +1346,14 @@ bool CMainThread::SetGlobalDataName()
     const int recordNum = static_cast<int>(effectTable->GetRecordNum());
     for (int n = 0; n < recordNum; ++n)
     {
-      _base_fld *record = effectTable->GetRecord(n);
-      if (!record)
+      _base_fld *baseRecord = effectTable->GetRecord(n);
+      if (!baseRecord)
       {
         MyMessageBox("SetGlobalDataName()", "Get Effect Record Error : EffectNum(%d), EffectIndex(%d)", j, n);
         return false;
       }
 
+      _skill_fld *record = reinterpret_cast<_skill_fld *>(baseRecord);
       _NameTxt_fld *nameRecord =
         reinterpret_cast<_NameTxt_fld *>(effectNameTables[j].GetRecord(record->m_strCode));
       if (!nameRecord)
@@ -1281,8 +1367,7 @@ bool CMainThread::SetGlobalDataName()
       }
 
       const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
-      // TODO(IDA): record[3].m_strCode is decompiler pointer math; map to effect name field.
-      strcpy_s(record[3].m_strCode, 0x40, name);
+      strcpy_s(record->m_strKorName, 0x40, name);
     }
   }
 
@@ -1308,7 +1393,7 @@ bool CMainThread::SetGlobalDataName()
   int recordNum = static_cast<int>(m_tblClass.GetRecordNum());
   for (int j = 0; j < recordNum; ++j)
   {
-    _base_fld *record = m_tblClass.GetRecord(j);
+    _class_fld *record = reinterpret_cast<_class_fld *>(m_tblClass.GetRecord(j));
     if (!record)
     {
       MyMessageBox("SetGlobalDataName()", "Get Class Data Error, ClassIndex(%d)", j);
@@ -1324,8 +1409,7 @@ bool CMainThread::SetGlobalDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
-    // TODO(IDA): record[9].m_strCode[48] is decompiler pointer math; map to class name field.
-    strcpy_s(&record[9].m_strCode[48], 0x40, name);
+    strcpy_s(record->m_strKorName, 0x40, name);
   }
 
   if (!CRecordData::IsTableOpen(&m_tblPlayer))
@@ -1344,7 +1428,7 @@ bool CMainThread::SetGlobalDataName()
   recordNum = static_cast<int>(m_tblPlayer.GetRecordNum());
   for (int j = 0; j < recordNum; ++j)
   {
-    _base_fld *record = m_tblPlayer.GetRecord(j);
+    _player_fld *record = reinterpret_cast<_player_fld *>(m_tblPlayer.GetRecord(j));
     if (!record)
     {
       MyMessageBox("SetGlobalDataName()", "Get Player Character Data Error, PlayerCharacterIndex(%d)", j);
@@ -1360,8 +1444,7 @@ bool CMainThread::SetGlobalDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
-    // TODO(IDA): record[1] offset is decompiler pointer math; map to player name field.
-    strcpy_s(reinterpret_cast<char *>(&record[1]), 0x40, name);
+    strcpy_s(record->m_strName, 0x40, name);
   }
 
   if (!CRecordData::IsTableOpen(&m_tblMonster))
@@ -1380,7 +1463,7 @@ bool CMainThread::SetGlobalDataName()
   recordNum = static_cast<int>(m_tblMonster.GetRecordNum());
   for (int j = 0; j < recordNum; ++j)
   {
-    _base_fld *record = m_tblMonster.GetRecord(j);
+    _monster_fld *record = reinterpret_cast<_monster_fld *>(m_tblMonster.GetRecord(j));
     if (!record)
     {
       MyMessageBox("SetGlobalDataName()", "Get Monster Character Data Error, MonsterCharacterIndex(%d)", j);
@@ -1396,8 +1479,7 @@ bool CMainThread::SetGlobalDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
-    // TODO(IDA): record[1] offset is decompiler pointer math; map to monster name field.
-    strcpy_s(reinterpret_cast<char *>(&record[1]), 0x40, name);
+    strcpy_s(record->m_strName, 0x40, name);
   }
 
   if (!CRecordData::IsTableOpen(&m_tblNPC))
@@ -1416,7 +1498,7 @@ bool CMainThread::SetGlobalDataName()
   recordNum = static_cast<int>(m_tblNPC.GetRecordNum());
   for (int j = 0; j < recordNum; ++j)
   {
-    _base_fld *record = m_tblNPC.GetRecord(j);
+    _npc_fld *record = reinterpret_cast<_npc_fld *>(m_tblNPC.GetRecord(j));
     if (!record)
     {
       MyMessageBox("SetGlobalDataName()", "Get NPC Data Error, NPCIndex(%d)", j);
@@ -1432,8 +1514,7 @@ bool CMainThread::SetGlobalDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
-    // TODO(IDA): record[1] offset is decompiler pointer math; map to NPC name field.
-    strcpy_s(reinterpret_cast<char *>(&record[1]), 0x40, name);
+    strcpy_s(record->m_strName, 0x40, name);
   }
 
   if (!CRecordData::IsTableOpen(&m_tblAnimus))
@@ -1452,7 +1533,7 @@ bool CMainThread::SetGlobalDataName()
   recordNum = static_cast<int>(m_tblAnimus.GetRecordNum());
   for (int j = 0; j < recordNum; ++j)
   {
-    _base_fld *record = m_tblAnimus.GetRecord(j);
+    _AnimusItem_fld *record = reinterpret_cast<_AnimusItem_fld *>(m_tblAnimus.GetRecord(j));
     if (!record)
     {
       MyMessageBox("SetGlobalDataName()", "Get Animus Item Data Error, AnimusItemIndex(%d)", j);
@@ -1468,8 +1549,7 @@ bool CMainThread::SetGlobalDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
-    // TODO(IDA): record[2].m_strCode[60] is decompiler pointer math; map to animus name field.
-    strcpy_s(&record[2].m_strCode[60], 0x40, name);
+    strcpy_s(record->m_strName, 0x40, name);
   }
 
   const char *unitPartFiles[6] =
@@ -1505,7 +1585,7 @@ bool CMainThread::SetGlobalDataName()
     const int unitRecordNum = static_cast<int>(unitPartTable->GetRecordNum());
     for (int n = 0; n < unitRecordNum; ++n)
     {
-      _base_fld *record = unitPartTable->GetRecord(n);
+      _UnitPart_fld *record = reinterpret_cast<_UnitPart_fld *>(unitPartTable->GetRecord(n));
       if (!record)
       {
         MyMessageBox(
@@ -1528,8 +1608,7 @@ bool CMainThread::SetGlobalDataName()
       }
 
       const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
-      // TODO(IDA): record[2] offset is decompiler pointer math; map to unit part name field.
-      strcpy_s(reinterpret_cast<char *>(&record[2]), 0x40, name);
+      strcpy_s(record->m_strName, 0x40, name);
     }
   }
 
@@ -1549,7 +1628,7 @@ bool CMainThread::SetGlobalDataName()
   recordNum = static_cast<int>(m_tblUnitBullet.GetRecordNum());
   for (int j = 0; j < recordNum; ++j)
   {
-    _base_fld *record = m_tblUnitBullet.GetRecord(j);
+    _UnitBullet_fld *record = reinterpret_cast<_UnitBullet_fld *>(m_tblUnitBullet.GetRecord(j));
     if (!record)
     {
       MyMessageBox("SetGlobalDataName()", "Get Unit Bullet Data Error, UnitBulletIndex(%d)", j);
@@ -1565,8 +1644,7 @@ bool CMainThread::SetGlobalDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
-    // TODO(IDA): record[2] offset is decompiler pointer math; map to unit bullet name field.
-    strcpy_s(reinterpret_cast<char *>(&record[2]), 0x40, name);
+    strcpy_s(record->m_strName, 0x40, name);
   }
 
   return true;

@@ -1,0 +1,43 @@
+#pragma once
+
+#include "IdaCompat.h"
+#include "base_fld.h"
+
+#pragma pack(push, 1)
+
+struct __cppobj _NPCLink_fld : _base_fld
+{
+  int m_bExist;
+  char m_strModel[64];
+  int m_nIconIDX;
+  char m_strName[64];
+  int m_nKindClt;
+  int m_nFixPart;
+  char m_strCivil[64];
+  char m_strStore_NPCcode[64];
+  int m_nNpc_Class1;
+  int m_nNpc_Class2;
+  int m_nNpc_Class3;
+  int m_nNpc_Class4;
+  int m_nNpc_Class5;
+  int m_nNpc_Class6;
+  int m_nNpc_Class7;
+  int m_nNpc_Class8;
+  int m_nNpc_Class9;
+  int m_nNpc_Class10;
+  int m_nMoney;
+  int m_nStdPrice;
+  int m_nStoragePrice;
+  int m_nLV;
+  int m_nStdPoint;
+  int m_nStoragePart;
+  int m_bSell;
+  int m_bExchange;
+  int m_bGround;
+  int m_bStoragePossible;
+  int m_bUseableNormalAcc;
+  char m_strTooltipIndex[64];
+  int m_bIsCash;
+};
+
+#pragma pack(pop)

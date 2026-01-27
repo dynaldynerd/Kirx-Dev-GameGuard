@@ -1,0 +1,49 @@
+#pragma once
+
+#include "IdaCompat.h"
+#include "base_fld.h"
+
+#pragma pack(push, 1)
+
+struct _consume_item_list
+{
+  char m_itmNeedItemCode[8];
+  int m_nNeedItemCount;
+};
+
+struct __cppobj _RadarItem_fld : _base_fld
+{
+  int m_bExist;
+  char m_strModel[64];
+  int m_nIconIDX;
+  char m_strName[64];
+  int m_nKindClt;
+  int m_nFixPart;
+  char m_strCivil[64];
+  float m_fActDelay;
+  _consume_item_list m_ConsumeItemList[3];
+  int m_nLevelLim;
+  int m_nUpLevelLim;
+  int m_nMoney;
+  int m_nStdPrice;
+  int m_nStdPoint;
+  int m_nGoldPoint;
+  int m_nKillPoint;
+  int m_nProcPoint;
+  int m_nStoragePrice;
+  int m_bAbr;
+  float m_fEquipSpeed;
+  char m_strEffSort[64];
+  int m_nSucPro;
+  int m_nDuration;
+  int m_bSell;
+  int m_bExchange;
+  int m_bGround;
+  int m_bStoragePossible;
+  int m_bUseableNormalAcc;
+  int m_bUpgrade;
+  char m_strTooltipIndex[64];
+  int m_bIsTime;
+};
+
+#pragma pack(pop)

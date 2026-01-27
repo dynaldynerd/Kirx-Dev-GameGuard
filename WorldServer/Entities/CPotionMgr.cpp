@@ -3,7 +3,9 @@
 #include "CPotionMgr.h"
 
 #include "CNationSettingManager.h"
+#include "CheckPotion_fld.h"
 #include "NameTxt_fld.h"
+#include "skill_fld.h"
 
 CPotionMgr g_PotionMgr;
 
@@ -49,7 +51,7 @@ bool CPotionMgr::SetPotionDataName()
   int recordNum = static_cast<int>(m_tblPotionEffectData.GetRecordNum());
   for (int n = 0; n < recordNum; ++n)
   {
-    _base_fld *record = m_tblPotionEffectData.GetRecord(n);
+    _skill_fld *record = reinterpret_cast<_skill_fld *>(m_tblPotionEffectData.GetRecord(n));
     if (!record)
     {
       MyMessageBox("CPotionMgr::SetPotionDataName()", "Get Potion Effect Data Error, PotionEffectIndex(%d)", n);
@@ -65,8 +67,7 @@ bool CPotionMgr::SetPotionDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
-    // TODO(IDA): record[3].m_strCode is decompiler pointer math; map to potion effect name field.
-    strcpy_s(record[3].m_strCode, 0x40, name);
+    strcpy_s(record->m_strKorName, 0x40, name);
   }
 
   CRecordData checkEffectNames;
@@ -82,7 +83,7 @@ bool CPotionMgr::SetPotionDataName()
   recordNum = static_cast<int>(m_tblPotionCheckData.GetRecordNum());
   for (int n = 0; n < recordNum; ++n)
   {
-    _base_fld *record = m_tblPotionCheckData.GetRecord(n);
+    _CheckPotion_fld *record = reinterpret_cast<_CheckPotion_fld *>(m_tblPotionCheckData.GetRecord(n));
     if (!record)
     {
       MyMessageBox(
@@ -101,8 +102,7 @@ bool CPotionMgr::SetPotionDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
-    // TODO(IDA): record[1] offset is decompiler pointer math; map to potion check name field.
-    strcpy_s(reinterpret_cast<char *>(&record[1]), 0x40, name);
+    strcpy_s(record->m_strKOR_name, 0x40, name);
   }
 
   return true;
