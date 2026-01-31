@@ -42,6 +42,8 @@ extern class MonsterSetInfoData g_MonsterSetInfoData;
 
 extern const char* stState;
 extern int dword_184A79820;
+extern int dword_184A79824;
+extern int gAsci[256];
 
 extern CTransportShip g_TransportShip[3];
 extern CHolyStoneSystem g_HolySys;

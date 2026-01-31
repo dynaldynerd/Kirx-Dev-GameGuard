@@ -22,7 +22,7 @@ public:
   unsigned int mEnvironment;
 
   float GetFirstYpos(float *fCenterPos, float *fMin, float *fMax);
-  bool LoadLevel(const char *szFileName);
+  void LoadLevel(const char *szFileName);
 
   static void SetEnvironment(CLevel *pLevel, int nEnv);
 public:

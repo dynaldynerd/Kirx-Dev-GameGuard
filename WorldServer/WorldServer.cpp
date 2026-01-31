@@ -14,6 +14,7 @@ CWorldServerApp theApp;
 
 const char* stState = ".";
 int dword_184A79820 = 0;
+int dword_184A79824 = 0;
 
 CWorldServerApp::CWorldServerApp() noexcept
 {

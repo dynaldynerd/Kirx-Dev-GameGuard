@@ -187,4 +187,7 @@
 - CWorldSchedule::DataCheck :: return true;
 - CWorldSchedule::CalcScheduleCursor :: return 0;
 
-Total: 121
+## CSkyBox.cpp
+- CSkyBox::LoadSkyBox :: ;
+
+Total: 122

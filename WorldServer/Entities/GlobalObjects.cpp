@@ -24,3 +24,4 @@ CTransportShip g_TransportShip[3]{};
 CHolyStoneSystem g_HolySys{};
 CWorldSchedule g_WorldSch{};
 CMainThread g_Main{};
+int gAsci[256]{};

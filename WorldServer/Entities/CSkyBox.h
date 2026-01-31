@@ -11,5 +11,7 @@ class __cppobj CSkyBox
   int mMatNum;
   int mMatGroupNum;
   __int16 mMatGroupSort[512];
+public:
+  void LoadSkyBox(char *szFileName);
 };
 
