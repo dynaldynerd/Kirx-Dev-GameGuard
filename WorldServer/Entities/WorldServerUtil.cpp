@@ -266,3 +266,55 @@ bool IsServerMode()
 
 bool IsInitR3Engine() { return true; }
 float R3GetTime() { return (float)GetTickCount() / 1000.0f; }
+
+void ResetTexMemSize() {}
+bool IsExistFile(char *szFileName) { 
+    FILE* fp = nullptr; 
+    if (fopen_s(&fp, szFileName, "rb") == 0 && fp) { fclose(fp); return true; } 
+    return false;
+}
+void LoadMainR3M(char *szFileName) {}
+struct R3Texture *R3GetTexInfoR3T(char *szFileName, int a2) { return nullptr; }
+void SetNoLodTextere() {}
+void LoadR3T(struct R3Texture *pTex) {}
+unsigned int GetNowTexMemSize() { return 0; }
+void LoadMainMaterial(char *szFileName) {}
+void SetMergeFileManager(void *pMgr) {}
+void LoadLightMap(char *szFileName) {}
+void CN_SetEnableSky(int bEnable) {}
+void R3RestoreAllTextures() {}
+void RTMovieCreate(char *szFileName, void *pLevel) {}
+void RTMovieSetState(unsigned int nState) {}
+void R3EnvironmentShakeOff() {}
+void ClearDynamicLight() {}
+void Error(char *source, char *msg) { MyMessageBox(source, msg); }
+
+// Global helper stubs
+void GetVertexFromBVertex(float *const a1, char *a2, _BSP_READ_M_GROUP *a3)
+{
+    a1[0] = (float)a2[0] + a3->pos[0];
+    a1[1] = (float)a2[1] + a3->pos[1];
+    a1[2] = (float)a2[2] + a3->pos[2];
+}
+
+void GetVertexFromWVertex(float *const a1, short *a2, _BSP_READ_M_GROUP *a3)
+{
+    a1[0] = (float)a2[0] * a3->scale + a3->pos[0];
+    a1[1] = (float)a2[1] * a3->scale + a3->pos[1];
+    a1[2] = (float)a2[2] * a3->scale + a3->pos[2];
+}
+
+void GetVertexFromFVertex(float *const a1, float *a2, _BSP_READ_M_GROUP *a3)
+{
+    // float vertex is absolute usually? or relative?
+    // Decompiled code usually shows FVertex is relative too? Or absolute?
+    // Checking CLevel... wait, this is used in CBsp. 
+    // CBsp::OnlyStoreCollisionStructure uses it.
+    // Let's assume absolute or relative same as others. Usually FVertex is relative.
+    // Decompiled check: 
+    // v22 = (float *)((char *)v + 12 * v21);
+    // pos[0] = *v22 + mGroup.pos[0]; ...
+    a1[0] = a2[0] + a3->pos[0];
+    a1[1] = a2[1] + a3->pos[1];
+    a1[2] = a2[2] + a3->pos[2];
+}

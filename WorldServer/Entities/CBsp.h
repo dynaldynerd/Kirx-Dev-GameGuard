@@ -245,20 +245,20 @@ public:
   float GetFirstYpos(float *const a2, float *const a3, float *const a4);
   void GetLeafList(float *const a2, float *const a3, int *const a4, __int16 *a5, unsigned int a6);
 
-  static bool LoadBsp(CBsp *pBsp, char *szFileName);
-  static bool LoadExtBsp(CBsp *pBsp, char *szFileName);
-  static void CalcEntitiesMainColor(CBsp *pBsp);
+  bool LoadBsp(char *szFileName);
+  bool LoadExtBsp(char *szFileName);
+  void CalcEntitiesMainColor();
 
 private:
-  static void WalkNodeForLeafList(CBsp *pBsp, short nNodeId, float *const a3, float *const a4, short *a5, int *a6);
-  static void SubLeafList(CBsp *pBsp, float a2, _BSP_NODE *pNode, float *const a4, float *const a5, short *a6, int *a7);
-  static bool EdgeTest(CBsp *pBsp, float *pPos, unsigned int nNormalId);
-  static void SetCFNormal(CBsp *pBsp);
-  static void ReadDynamicDataFillVertexBuffer(CBsp *pBsp, FILE *Stream);
-  static void ReadDynamicDataExtBsp(CBsp *pBsp, FILE *Stream);
-  static void OnlyStoreCollisionStructure(CBsp *pBsp, _BSP_READ_M_GROUP *pRM, char (*pBV)[3], short (*pWV)[3], float (*pFV)[3], unsigned int *pVI, _BSP_READ_FACE *pRF, unsigned int *pFI);
+  void WalkNodeForLeafList(short nNodeId, float *const a3, float *const a4, short *a5, int *a6);
+  void SubLeafList(float a2, _BSP_NODE *pNode, float *const a4, float *const a5, short *a6, int *a7);
+  bool EdgeTest(float *pPos, unsigned int nNormalId);
+  void SetCFNormal();
+  void ReadDynamicDataFillVertexBuffer(FILE *Stream);
+  void ReadDynamicDataExtBsp(FILE *Stream);
+  void OnlyStoreCollisionStructure(_BSP_READ_M_GROUP *pRM, char (*pBV)[3], short (*pWV)[3], float (*pFV)[3], unsigned int *pVI, _BSP_READ_FACE *pRF, unsigned int *pFI);
 public:
-  static bool CanYouGoThere(CBsp *pBsp, float *const a2, float *const a3, float (*a4)[3]);
-  static int GetPathCrossPoint(CBsp *pBsp, float *const a2, float *const a3, float (*a4)[3], int a5, int a6);
+  bool CanYouGoThere(float *const a2, float *const a3, float (*a4)[3]);
+  int GetPathCrossPoint(float *const a2, float *const a3, float (*a4)[3], int a5, int a6);
 };
 

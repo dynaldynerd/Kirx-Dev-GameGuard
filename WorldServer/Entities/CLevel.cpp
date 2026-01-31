@@ -33,7 +33,7 @@ bool CLevel::LoadLevel(const char *szFileName)
         StripPath(szExtPath);
 
         this->SetEnvironment(this, dword_184A79820);
-        CBsp::LoadBsp(this->mBsp, (char*)szFileName);
+        this->mBsp->LoadBsp((char*)szFileName);
 
         sprintf_s(szRoot, "%sEXT.spt", szExtPath);
         this->mDummy.LoadExtDummy(szRoot);

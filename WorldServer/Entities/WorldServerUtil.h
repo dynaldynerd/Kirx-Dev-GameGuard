@@ -36,4 +36,22 @@ void GetVertexFromBVertex(float *const a1, char *a2, _BSP_READ_M_GROUP *a3);
 void GetVertexFromWVertex(float *const a1, short *a2, _BSP_READ_M_GROUP *a3);
 void GetVertexFromFVertex(float *const a1, float *a2, _BSP_READ_M_GROUP *a3);
 
+void ResetTexMemSize();
+bool IsExistFile(char *szFileName);
+void LoadMainR3M(char *szFileName);
+struct R3Texture *R3GetTexInfoR3T(char *szFileName, int a2);
+void SetNoLodTextere();
+void LoadR3T(struct R3Texture *pTex);
+unsigned int GetNowTexMemSize();
+void LoadMainMaterial(char *szFileName);
+void SetMergeFileManager(void *pMgr);
+void LoadLightMap(char *szFileName);
+void CN_SetEnableSky(int bEnable);
+void R3RestoreAllTextures();
+void RTMovieCreate(char *szFileName, void *pLevel);
+void RTMovieSetState(unsigned int nState);
+void R3EnvironmentShakeOff();
+void ClearDynamicLight();
+void Error(char *source, char *msg);
+
 extern CWnd *g_pFrame;

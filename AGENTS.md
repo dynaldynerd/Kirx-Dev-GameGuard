@@ -23,3 +23,6 @@
 8. all new stub function must be added to `todo.md`
 9. all `CRecordData::GetRecord` usually only return _base_fld hence the decompiled code might produce weird code such as Record[2].m_strCode[10], in that case you must write a note on `Record.md` so I could review and correct the implementation
 10. for any static string/array/data that appear in the decompiled code please write it in a log file before proceeding 
+11. any function that had "this" as first parameter mean it's a member function and shouldn't be made into a static function
+12. avoid shortened function implementation/half baked implementation as it would be dangerous when previewing the code where I thought everything is implemented turned out it was only half baked and wondered later what was wrong, the logic/implementation must exactly match the decompiled code without any shortened logic and must adhere to the all previous rules
+13. added `RF Online Old Sourcecode` an older (ten years or more older) version of the sourcecode, it might be useful for reference, but it's not the same as the decompiled code, so use it with caution and use it only when you're sure it's correct

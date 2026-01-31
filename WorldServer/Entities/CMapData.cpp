@@ -187,7 +187,7 @@ bool CMapData::GetRandPosInDummy(_dummy_position *pPos, float *pNewPos, bool bRe
             pNewPos[1] = pPos->m_fCenterPos[1];
             
             float v10_temp[3];
-            if (CBsp::CanYouGoThere(this->m_Level.mBsp, pPos->m_fCenterPos, pNewPos, (float(*)[3])v10_temp) || bRePos)
+            if (this->m_Level.mBsp->CanYouGoThere(pPos->m_fCenterPos, pNewPos, (float(*)[3])v10_temp) || bRePos)
             {
                 if (bRePos)
                 {

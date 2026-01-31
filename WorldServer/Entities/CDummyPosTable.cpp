@@ -18,11 +18,6 @@ CDummyPosTable::~CDummyPosTable()
 
 bool CDummyPosTable::LoadDummyPosition(const char *szFileName, const char *szLabel)
 {
-    return CDummyPosTable::LoadDummyPosition(this, szFileName, szLabel);
-}
-
-bool CDummyPosTable::LoadDummyPosition(CDummyPosTable *pTable, const char *szFileName, const char *szLabel)
-{
     FILE *Stream = nullptr;
     if (fopen_s(&Stream, szFileName, "rt") != 0 || !Stream)
         return false;
@@ -43,8 +38,8 @@ bool CDummyPosTable::LoadDummyPosition(CDummyPosTable *pTable, const char *szFil
         }
     }
 
-    pTable->m_nDumPosDataNum = count;
-    pTable->m_pDumPos = new _dummy_position[count];
+    this->m_nDumPosDataNum = count;
+    this->m_pDumPos = new _dummy_position[count];
 
     rewind(Stream);
     int idx = 0;
@@ -55,15 +50,15 @@ bool CDummyPosTable::LoadDummyPosition(CDummyPosTable *pTable, const char *szFil
         {
             if (strncmp(Str1, szLabel, prefixLen) == 0)
             {
-                pTable->m_pDumPos[idx].m_wLineIndex = (unsigned short)lineIdx;
+                this->m_pDumPos[idx].m_wLineIndex = (unsigned short)lineIdx;
                 char* pCode = Str1;
                 _strlwr_s(pCode, strlen(pCode) + 1);
-                strcpy_s(pTable->m_pDumPos[idx].m_szCode, pCode);
+                strcpy_s(this->m_pDumPos[idx].m_szCode, pCode);
 
                 for (int j = 0; j < 3; ++j)
-                    fscanf_s(Stream, "%d", &pTable->m_pDumPos[idx].m_zLocalMin[j]);
+                    fscanf_s(Stream, "%d", &this->m_pDumPos[idx].m_zLocalMin[j]);
                 for (int j = 0; j < 3; ++j)
-                    fscanf_s(Stream, "%d", &pTable->m_pDumPos[idx].m_zLocalMax[j]);
+                    fscanf_s(Stream, "%d", &this->m_pDumPos[idx].m_zLocalMax[j]);
                 idx++;
             }
             lineIdx++;

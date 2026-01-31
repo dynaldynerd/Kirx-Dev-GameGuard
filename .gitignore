@@ -13,6 +13,7 @@ obj/
 Thumbs.db
 Debug/
 x64/
+**/x64/
 LoginServerIdaPro/
 appsettings.login.json
 appsettings.account.json
@@ -22,7 +23,6 @@ AccountServerIdaPro/
 LoginServerIdaPro/
 tools/
 WorldServerIdaPro/
-WorldServer/x64/*
-WorldServer/WorldServer/
-worldserver/worldserver/*
-
+/WorldServer/x64/
+/WorldServer/WorldServer/
+RF Online Old Sourcecode/
