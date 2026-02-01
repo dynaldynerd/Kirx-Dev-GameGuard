@@ -2,6 +2,10 @@
 
 #include "IdaCompat.h"
 
+struct _R3MATERIAL;
+
+int GetMaterialNameNum(struct _R3MATERIAL *a1);
+
 /* 1424 */
 class __cppobj CSkyBox
 {

@@ -32,14 +32,57 @@ struct __cppobj IDirect3DResource8 : IDA_IUnknown
 {
 };
 
+struct IDirect3DDevice8;
+
 /* 1367 */
 struct __cppobj IDirect3DVertexBuffer8 : IDirect3DResource8
 {
+  HRESULT (__fastcall *Lock)(IDirect3DVertexBuffer8 *self, unsigned int offset, unsigned int size, unsigned char **data, unsigned int flags);
+  HRESULT (__fastcall *Unlock)(IDirect3DVertexBuffer8 *self);
+  unsigned int (__fastcall *Release)(IDirect3DVertexBuffer8 *self);
+  unsigned char *m_Data;
+  unsigned int m_Size;
 };
 
 /* 1368 */
 struct __cppobj IDirect3DIndexBuffer8 : IDirect3DResource8
 {
+  HRESULT (__fastcall *Lock)(IDirect3DIndexBuffer8 *self, unsigned int offset, unsigned int size, unsigned char **data, unsigned int flags);
+  HRESULT (__fastcall *Unlock)(IDirect3DIndexBuffer8 *self);
+  unsigned int (__fastcall *Release)(IDirect3DIndexBuffer8 *self);
+  unsigned char *m_Data;
+  unsigned int m_Size;
+};
+
+struct __cppobj IDirect3DTexture8 : IDirect3DResource8
+{
+  unsigned char *m_Data;
+  unsigned int m_Size;
+};
+
+/* Minimal device interface used by decompiled code */
+struct __cppobj IDirect3DDevice8
+{
+  HRESULT (__fastcall *CreateVertexBuffer)(
+    IDirect3DDevice8 *self,
+    unsigned int size,
+    unsigned int usage,
+    unsigned int fvf,
+    unsigned int pool,
+    IDirect3DVertexBuffer8 **out);
+  HRESULT (__fastcall *CreateIndexBuffer)(IDirect3DDevice8 *self, unsigned int size, unsigned int usage);
+};
+
+/* Minimal DDS header for mipmap calculations */
+struct _DDSURFACEDESC2
+{
+  unsigned int dwSize;
+  unsigned int dwFlags;
+  unsigned int dwHeight;
+  unsigned int dwWidth;
+  int lPitch;
+  unsigned int dwDepth;
+  unsigned int dwMipMapCount;
 };
 
 /* 1385 */

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "WorldServer.h"
 #include "MainFrm.h"
+#include "Entities/R3EngineState.h"
 #include "resource.h"
 
 #ifdef _DEBUG
@@ -12,7 +13,7 @@ END_MESSAGE_MAP()
 
 CWorldServerApp theApp;
 
-const char* stState = ".";
+_R3ENGINE_STATE stState{};
 int dword_184A79820 = 0;
 int dword_184A79824 = 0;
 
@@ -23,6 +24,8 @@ CWorldServerApp::CWorldServerApp() noexcept
 BOOL CWorldServerApp::InitInstance()
 {
     CWinApp::InitInstance();
+
+    strcpy_s(stState.MapPath, ".");
 
     WSADATA wsaData{};
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)

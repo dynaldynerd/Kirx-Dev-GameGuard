@@ -21,6 +21,7 @@
 #include "CTransportShip.h"
 #include "CHolyStoneSystem.h"
 #include "CWorldSchedule.h"
+#include "R3EngineState.h"
 
 extern CUserDB g_UserDB[MAX_PLAYER];
 extern CPartyPlayer g_PartyPlayer[MAX_PLAYER];
@@ -40,7 +41,7 @@ extern CGuild *g_Guild;
 extern AggroCaculateData g_AggroCaculateData;
 extern class MonsterSetInfoData g_MonsterSetInfoData;
 
-extern const char* stState;
+extern _R3ENGINE_STATE stState;
 extern int dword_184A79820;
 extern int dword_184A79824;
 extern int gAsci[256];
