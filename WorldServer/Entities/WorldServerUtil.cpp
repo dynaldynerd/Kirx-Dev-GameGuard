@@ -16,6 +16,7 @@ CWnd *g_pFrame = nullptr;
 #include "CMerchant.h"
 #include "GlobalObjectDefs.h"
 #include "R3EngineGlobals.h"
+#include "CMergeFileManager.h"
 
 unsigned int GetLoopTime()
 {
@@ -436,4 +437,146 @@ bool IsParticle(char *a1)
   _strlwr(a1);
   const size_t len = std::strlen(a1);
   return len >= 3 && *reinterpret_cast<unsigned short *>(&a1[len - 2]) == 29808 && a1[len - 3] == 's';
+}
+
+CMergeFileManager *GetMergeFileManager()
+{
+  return qword_184A7B208;
+}
+
+FILE *fopenMFM(char *a1, char *Mode)
+{
+  char *v2 = Mode;
+  char *v3 = a1;
+  if (qword_184A7B208)
+  {
+    CMergeFileManager *mgr = GetMergeFileManager();
+    FILE *result = mgr ? mgr->LoadFileOffset(v3, v2) : nullptr;
+    if (result)
+      return result;
+    Mode = v2;
+    a1 = v3;
+  }
+  return fopen(a1, Mode);
+}
+
+unsigned int GetFileSize(char *a1)
+{
+  FILE *v2 = fopen(a1, "rb");
+  if (v2)
+  {
+    long v3 = ftell(v2);
+    fseek(v2, 0, SEEK_END);
+    long v4 = ftell(v2);
+    fclose(v2);
+    return static_cast<unsigned int>(v4 - v3);
+  }
+  return 0;
+}
+
+__int64 GetTokenFloat(char *a1, float *a2)
+{
+  int v4 = 0;
+  int v5 = 0;
+  __int64 v6 = 0;
+  int v7 = static_cast<int>(std::strlen(a1));
+  __int64 v8 = 0;
+  char String[256]{};
+
+  if (v7 <= 0)
+  {
+    *a2 = 0.0f;
+    return static_cast<unsigned int>(v7);
+  }
+
+  while (true)
+  {
+    char v9 = a1[v6];
+    if (v9 != '(')
+      break;
+    v5 = 0;
+    v8 = 0;
+LABEL_7:
+    ++v6;
+    ++v4;
+    if (v6 >= v7)
+    {
+      *a2 = 0.0f;
+      return static_cast<unsigned int>(v7);
+    }
+  }
+  if (v9 != ',' && v9 != ')')
+  {
+    String[v8] = v9;
+    ++v5;
+    ++v8;
+    goto LABEL_7;
+  }
+  String[v5] = 0;
+  *a2 = static_cast<float>(std::atof(String));
+  return static_cast<unsigned int>(v4 + 1);
+}
+
+__int64 GetRandOrNum(FILE *Stream, float *a2, float *a3)
+{
+  char String[256]{};
+  char v17[256]{};
+
+  fscanf(Stream, "%s", String);
+  if (String[0] == 'r' && *reinterpret_cast<unsigned short *>(&String[1]) == 0x6E61 && String[3] == 'd')
+  {
+    int v6 = static_cast<int>(std::strlen(String));
+    int v7 = 0;
+    while (true)
+    {
+      if (v6 > 0)
+      {
+        for (__int64 v8 = 0; v8 < v6; ++v8)
+        {
+          if (String[v8] == ')')
+            v7 = 1;
+        }
+        if (v7)
+          break;
+      }
+      if (fscanf(Stream, "%s", v17) == -1 || !std::strcmp(String, "end"))
+        Error(byte_140884F48, asc_140884F60);
+      char *v9 = &String[std::strlen(String) + 1];
+      __int64 v10 = 0;
+      do
+      {
+        char v11 = v17[v10];
+        v9[v10++ - 1] = v11;
+      } while (v11);
+      v6 = static_cast<int>(std::strlen(String));
+    }
+    int TokenFloat = static_cast<int>(GetTokenFloat(String, a2));
+    GetTokenFloat(&String[TokenFloat], a3);
+    return 1;
+  }
+  float v15 = static_cast<float>(std::atof(String));
+  *a2 = v15;
+  *a3 = v15;
+  return 0;
+}
+
+__int64 IM_LoadWave(char *a1, unsigned int a2)
+{
+  (void)a1;
+  (void)a2;
+  return 1;
+}
+
+void IM_StopWave(unsigned int a1)
+{
+  (void)a1;
+}
+
+void IM_ReleaseWave(unsigned int a1)
+{
+  (void)a1;
+}
+
+void IM_ReleaseAllWaves()
+{
 }

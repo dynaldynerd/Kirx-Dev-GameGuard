@@ -77,6 +77,14 @@ struct __cppobj IDirect3DDevice8
 #define D3DPOOL_MANAGED 1
 #endif
 
+typedef unsigned int D3DFORMAT;
+#ifndef D3DFMT_R5G6B5
+#define D3DFMT_R5G6B5 23
+#endif
+#ifndef D3DFMT_A8R8G8B8
+#define D3DFMT_A8R8G8B8 21
+#endif
+
 /* Minimal DDS header for mipmap calculations */
 struct _DDSURFACEDESC2
 {

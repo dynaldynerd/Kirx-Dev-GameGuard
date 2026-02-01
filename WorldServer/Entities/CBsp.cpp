@@ -4,6 +4,7 @@
 #include "R3EngineGlobals.h"
 #include "CEntity.h"
 #include "CParticle.h"
+#include "BspReadEntities.h"
 #include <cmath>
 #include <cstdio>
 #include <cstring>

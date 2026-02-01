@@ -6,6 +6,7 @@
 
 #include <cmath>
 #include <xmmintrin.h>
+#include <intrin.h>
 
 float DotProduct(const float *a1, const float *a2)
 {
@@ -230,6 +231,180 @@ void MatrixFromQuaternion(float (*const a1)[4], float a2, float a3, float a4, fl
     (*a1)[5] = 1.0f - (((a4 * a4) + (a2 * a2)) * 2.0f);
     (*a1)[6] = ((a3 * a4) - (a2 * a5)) * 2.0f;
     (*a1)[10] = 1.0f - (((a3 * a3) + (a2 * a2)) * 2.0f);
+}
+
+void MatrixScale(float (*const a1)[4], float a2, float a3, float a4)
+{
+    (*a1)[0] = a2;
+    (*a1)[5] = a3;
+    (*a1)[15] = 1.0f;
+    (*a1)[1] = 0.0f;
+    (*a1)[2] = 0.0f;
+    (*a1)[10] = a4;
+    (*a1)[3] = 0.0f;
+    (*a1)[4] = 0.0f;
+    (*a1)[6] = 0.0f;
+    (*a1)[7] = 0.0f;
+    (*a1)[8] = 0.0f;
+    (*a1)[9] = 0.0f;
+    (*a1)[11] = 0.0f;
+    (*a1)[12] = 0.0f;
+    (*a1)[13] = 0.0f;
+    (*a1)[14] = 0.0f;
+}
+
+void MatrixRotate(float (*const a1)[4], float a2, float a3, float a4)
+{
+    const double v5 = a3 * 6.283184 / 360.0;
+    const double v6 = a2 * 6.283184 / 360.0;
+    const double v7 = a4 * 6.283184 / 360.0;
+
+    float v16[4]{};
+    int v17 = 0;
+    float v18 = FLOAT_1_0;
+    int v19 = 0;
+    int v20 = 0;
+    float v21 = 0.0f;
+    int v22 = 0;
+    float v23 = 0.0f;
+    int v24 = 0;
+    int v25 = 0;
+    int v26 = 0;
+    int v27 = 0;
+    float v28 = FLOAT_1_0;
+    float v29[16]{};
+    float v30[44]{};
+
+    float v8 = static_cast<float>(cos_0(v5));
+    v16[0] = v8;
+    v16[1] = 0.0f;
+    v16[2] = -static_cast<float>(sin_0(v5));
+    v16[3] = 0.0f;
+    v17 = 0;
+    v18 = FLOAT_1_0;
+    v19 = 0;
+    v20 = 0;
+    v21 = static_cast<float>(sin_0(v5));
+    v22 = 0;
+    v23 = v8;
+    v24 = 0;
+    v25 = 0;
+    v26 = 0;
+    v27 = 0;
+    v28 = FLOAT_1_0;
+
+    v29[0] = FLOAT_1_0;
+    v29[1] = 0.0f;
+    v29[2] = 0.0f;
+    v29[3] = 0.0f;
+    v29[4] = 0.0f;
+    const float cos_v6 = static_cast<float>(cos_0(v6));
+    v29[5] = cos_v6;
+    const float sin_v6 = static_cast<float>(sin_0(v6));
+    v29[7] = 0.0f;
+    v29[8] = 0.0f;
+    v29[10] = cos_v6;
+    v29[11] = 0.0f;
+    v29[12] = 0.0f;
+    v29[6] = sin_v6;
+    v29[13] = 0.0f;
+    v29[14] = 0.0f;
+    v29[15] = FLOAT_1_0;
+    v29[9] = -sin_v6;
+
+    MatrixMultiply(reinterpret_cast<float (*)[4]>(v30), reinterpret_cast<float (*)[4]>(v16), reinterpret_cast<float (*)[4]>(v29));
+
+    const float cos_v7 = static_cast<float>(cos_0(v7));
+    v16[0] = cos_v7;
+    v16[1] = static_cast<float>(sin_0(v7));
+    v16[2] = 0.0f;
+    v16[3] = 0.0f;
+    v17 = *reinterpret_cast<int *>(&(-static_cast<float>(sin_0(v7))));
+    v18 = cos_v7;
+    v19 = 0;
+    v20 = 0;
+    v21 = 0.0f;
+    v22 = 0;
+    v23 = FLOAT_1_0;
+    v24 = 0;
+    v25 = 0;
+    v26 = 0;
+    v27 = 0;
+    v28 = FLOAT_1_0;
+
+    MatrixMultiply(a1, reinterpret_cast<float (*)[4]>(v16), reinterpret_cast<float (*)[4]>(v30));
+}
+
+void MatrixRotateX(float (*const a1)[4], float a2)
+{
+    const double v3 = a2 * 6.283184 / 360.0;
+    const float v4 = static_cast<float>(cos_0(v3));
+    const float v6 = static_cast<float>(sin_0(v3));
+
+    (*a1)[0] = 1.0f;
+    (*a1)[1] = 0.0f;
+    (*a1)[2] = 0.0f;
+    (*a1)[3] = 0.0f;
+    (*a1)[4] = 0.0f;
+    (*a1)[5] = v4;
+    (*a1)[10] = v4;
+    (*a1)[7] = 0.0f;
+    (*a1)[8] = 0.0f;
+    (*a1)[11] = 0.0f;
+    (*a1)[12] = 0.0f;
+    (*a1)[13] = 0.0f;
+    (*a1)[6] = v6;
+    (*a1)[14] = 0.0f;
+    (*a1)[15] = 1.0f;
+    (*a1)[9] = -v6;
+}
+
+void MatrixRotateY(float (*const a1)[4], float a2)
+{
+    const double v3 = a2 * 6.283184 / 360.0;
+    const float v5 = static_cast<float>(cos_0(v3));
+    const float v6 = static_cast<float>(sin_0(v3));
+
+    (*a1)[1] = 0.0f;
+    (*a1)[0] = v5;
+    (*a1)[3] = 0.0f;
+    (*a1)[4] = 0.0f;
+    (*a1)[5] = 1.0f;
+    (*a1)[10] = v5;
+    (*a1)[6] = 0.0f;
+    (*a1)[7] = 0.0f;
+    (*a1)[9] = 0.0f;
+    (*a1)[11] = 0.0f;
+    (*a1)[12] = 0.0f;
+    (*a1)[13] = 0.0f;
+    (*a1)[8] = v6;
+    (*a1)[14] = 0.0f;
+    (*a1)[15] = 1.0f;
+    (*a1)[2] = -v6;
+}
+
+void MatrixRotateZ(float (*const a1)[4], float a2)
+{
+    const double v3 = a2 * 6.283184 / 360.0;
+    const float v4 = static_cast<float>(cos_0(v3));
+    const float v6 = static_cast<float>(sin_0(v3));
+
+    (*a1)[0] = v4;
+    (*a1)[5] = v4;
+    (*a1)[10] = 1.0f;
+    (*a1)[2] = 0.0f;
+    (*a1)[3] = 0.0f;
+    (*a1)[6] = 0.0f;
+    (*a1)[7] = 0.0f;
+    (*a1)[8] = 0.0f;
+    (*a1)[1] = v6;
+    (*a1)[9] = 0.0f;
+    (*a1)[11] = 0.0f;
+    (*a1)[12] = 0.0f;
+    (*a1)[13] = 0.0f;
+    (*a1)[14] = 0.0f;
+    (*a1)[4] = -v6;
+    (*a1)[15] = 1.0f;
 }
 
 void QuaternionSlerp(
@@ -505,4 +680,70 @@ void GetObjectMatrix(float (*const f_matrix)[4], unsigned short a2, _ANI_OBJECT 
     {
         MatrixIdentity(f_matrix);
     }
+}
+
+void ConvAniObject(int a1, unsigned __int8 *a2, _READ_ANI_OBJECT *a3, _ANI_OBJECT *a4)
+{
+    if (a1 <= 0)
+        return;
+
+    int *p_frames = &a4->frames;
+    char *v6 = reinterpret_cast<char *>(a3) + 4;
+    float *v7 = a4->s_matrix[0];
+    unsigned int v8 = static_cast<unsigned int>(a1);
+
+    do
+    {
+        *reinterpret_cast<unsigned short *>(p_frames - 2) = *reinterpret_cast<unsigned short *>(v6 - 2);
+        *p_frames = *reinterpret_cast<int *>(v6);
+        *reinterpret_cast<unsigned short *>(p_frames - 1) = *reinterpret_cast<unsigned short *>(v6 - 1);
+        p_frames[1] = *reinterpret_cast<int *>(v6 + 4);
+        p_frames[2] = *reinterpret_cast<int *>(v6 + 8);
+        int v9 = *reinterpret_cast<int *>(v6 + 12);
+        *reinterpret_cast<int *>(reinterpret_cast<char *>(p_frames) + 161) = 0;
+        p_frames[3] = v9;
+        _mm_prefetch(v6 + 556, 0);
+        p_frames[7] = *reinterpret_cast<int *>(v6 + 28);
+        p_frames[8] = *reinterpret_cast<int *>(v6 + 32);
+        p_frames[9] = *reinterpret_cast<int *>(v6 + 36);
+        p_frames[10] = *reinterpret_cast<int *>(v6 + 40);
+        p_frames[4] = *reinterpret_cast<int *>(v6 + 16);
+        p_frames[5] = *reinterpret_cast<int *>(v6 + 20);
+        p_frames[6] = *reinterpret_cast<int *>(v6 + 24);
+        p_frames[11] = *reinterpret_cast<int *>(v6 + 44);
+        p_frames[12] = *reinterpret_cast<int *>(v6 + 48);
+        p_frames[13] = *reinterpret_cast<int *>(v6 + 52);
+        p_frames[14] = *reinterpret_cast<int *>(v6 + 56);
+        p_frames[15] = *reinterpret_cast<int *>(v6 + 60);
+        p_frames[16] = *reinterpret_cast<int *>(v6 + 64);
+        p_frames[17] = *reinterpret_cast<int *>(v6 + 68);
+        *reinterpret_cast<unsigned long long *>(p_frames + 18) = reinterpret_cast<unsigned long long>(&a2[*reinterpret_cast<int *>(v6 + 80)]);
+        *reinterpret_cast<unsigned long long *>(p_frames + 20) = reinterpret_cast<unsigned long long>(&a2[*reinterpret_cast<int *>(v6 + 72)]);
+        *reinterpret_cast<unsigned long long *>(p_frames + 22) = reinterpret_cast<unsigned long long>(&a2[*reinterpret_cast<int *>(v6 + 76)]);
+
+        float v16[16]{};
+        float v17[16]{};
+        float v18[16]{};
+        float v19[16]{};
+
+        MatrixIdentity(reinterpret_cast<float (*)[4]>(v16));
+        float v10 = *reinterpret_cast<float *>(v6 + 24);
+        float v11 = *reinterpret_cast<float *>(v6 + 16);
+        float v12 = *reinterpret_cast<float *>(v6 + 36);
+        float v13 = *reinterpret_cast<float *>(v6 + 32);
+        v16[5] = *reinterpret_cast<float *>(v6 + 20);
+        float v14 = *reinterpret_cast<float *>(v6 + 40);
+        v16[10] = v10;
+        float v15 = *reinterpret_cast<float *>(v6 + 28);
+        v16[0] = v11;
+        MatrixFromQuaternion(reinterpret_cast<float (*)[4]>(v17), v15, v13, v12, v14);
+        MatrixInvert(reinterpret_cast<float (*)[4]>(v18), reinterpret_cast<float (*)[4]>(v17));
+        MatrixMultiply(reinterpret_cast<float (*)[4]>(v19), reinterpret_cast<float (*)[4]>(v16), reinterpret_cast<float (*)[4]>(v18));
+        MatrixMultiply(reinterpret_cast<float (*)[4]>(v7), reinterpret_cast<float (*)[4]>(v17), reinterpret_cast<float (*)[4]>(v19));
+
+        v7 = reinterpret_cast<float *>(reinterpret_cast<char *>(v7) + 361);
+        p_frames = reinterpret_cast<int *>(reinterpret_cast<char *>(p_frames) + 361);
+        v6 += 88;
+        --v8;
+    } while (v8);
 }

@@ -26,4 +26,6 @@ tools/
 WorldServerIdaPro/
 /WorldServer/x64/
 /WorldServer/WorldServer/
+WorldServer/WorldServer/**
+WorldServer/x64/**
 RF Online Old Sourcecode/

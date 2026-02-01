@@ -4,17 +4,10 @@
 #include "CSkyBox.h"
 #include "WorldServerUtil.h"
 #include "GlobalObjects.h"
+#include "R3EngineGlobals.h"
 
 #include <cstdio>
 #include <cstring>
-
-namespace
-{
-  const char kMissingMapMsg[] =
-    "\xC1\xB8\xC0\xE7\xC7\xCF\xC1\xF6\xBE\xCA\xC0\xBA \xB8\xCA\xC0\xBB \xB7\xCE\xB5\xF9\xC7\xCF\xB7\xC1 \xC7\xCF\xB0\xED\xC0\xD6\xBD\xC0\xB4\xCF\xB4\xD9.";
-  const char kMissingMapFileMsg[] = "<-\xC0\xCC \xB8\xCA\xC6\xC4\xC0\xCF\xC0\xCC \xBE\xF8\xBD\xC0\xB4\xCF\xB4\xD9.";
-  const char kEmptyMsg[] = "";
-}
 
 float CLevel::GetFirstYpos(float *fCenterPos, float *fMin, float *fMax)
 {
@@ -25,29 +18,29 @@ float CLevel::GetFirstYpos(float *fCenterPos, float *fMin, float *fMax)
 
 void CLevel::LoadLevel(const char *szFileName)
 {
-  char buffer[256]{};
   char v61[256]{};
   char v62[256]{};
   char v63[256]{};
   char v64[256]{};
+  char Buffer[256]{};
 
   SetMergeFileManager(nullptr);
   if (!szFileName)
   {
     if (!mMapName[0])
       return;
-    sprintf_s(buffer, sizeof(buffer), "%s\\%s\\%s.bsp", stState.MapPath, mMapName, mMapName);
-    szFileName = buffer;
+    sprintf_s(Buffer, sizeof(Buffer), "%s\\%s\\%s.bsp", stState.MapPath, mMapName, mMapName);
+    szFileName = Buffer;
   }
 
   FILE *fp = nullptr;
   if (fopen_s(&fp, szFileName, "rb") != 0 || !fp)
   {
     mBsp->mIsLoaded = 0;
-    if (szFileName && szFileName[0])
-      Error(const_cast<char *>(szFileName), const_cast<char *>(kMissingMapFileMsg));
+    if (szFileName && *szFileName)
+      Error(const_cast<char *>(szFileName), aAi_0);
     else
-      Error(const_cast<char *>(kMissingMapMsg), const_cast<char *>(kEmptyMsg));
+      Error(aA_1, byte_140883769);
     return;
   }
   fclose(fp);
@@ -156,9 +149,8 @@ void CLevel::LoadLevel(const char *szFileName)
 
     ResetTexMemSize();
     R3RestoreAllTextures();
-    const unsigned int now_tex_mem_size = GetNowTexMemSize();
     mIsLoadedBsp = 1;
-    mMapTexMemSize += now_tex_mem_size;
+    mMapTexMemSize += GetNowTexMemSize();
 
     strcpy_s(v61, sizeof(v61), v63);
     StripEXT(v61);

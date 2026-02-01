@@ -30,3 +30,10 @@ inline float acosf_0(float v) { return std::acosf(v); }
 inline float asinf_0(float v) { return std::asinf(v); }
 inline double sin_0(double v) { return std::sin(v); }
 inline double asin_0(double v) { return std::asin(v); }
+
+// Common float constants referenced by IDA output.
+inline constexpr float FLOAT_0_5 = 0.5f;
+inline constexpr float FLOAT_1_0 = 1.0f;
+inline constexpr float FLOAT_8_0 = 8.0f;
+inline constexpr float FLOAT_255_0 = 255.0f;
+inline constexpr float FLOAT_32767_0 = 32767.0f;

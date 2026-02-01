@@ -163,6 +163,9 @@ struct _BSP_MAT_GROUP
 
 struct _ANI_OBJECT;
 struct _MAP_ENTITIES_LIST;
+struct _READ_MAP_ENTITIES_LIST;
+struct _READ_SOUND_ENTITY_LIST;
+struct _READ_SOUND_ENTITIES_LIST;
 class CEntity;
 class CParticle;
 class CExtDummy;
@@ -276,6 +279,8 @@ private:
   void ReadDynamicDataExtBsp(FILE *Stream);
   void OnlyStoreCollisionStructure(_BSP_READ_M_GROUP *pRM, char (*pBV)[3], short (*pWV)[3], float (*pFV)[3], unsigned int *pVI, _BSP_READ_FACE *pRF, unsigned int *pFI);
   void MakeEdgeNormal();
+  void LoadEntities(_READ_MAP_ENTITIES_LIST *a2);
+  void LoadSoundEntities(_READ_SOUND_ENTITY_LIST *a2, _READ_SOUND_ENTITIES_LIST *a3);
 public:
   bool CanYouGoThere(float *const a2, float *const a3, float (*a4)[3]);
   int GetPathCrossPoint(float *const a2, float *const a3, float (*a4)[3], int a5, int a6);
