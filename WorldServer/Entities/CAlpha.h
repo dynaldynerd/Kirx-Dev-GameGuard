@@ -12,5 +12,9 @@ class __cppobj CAlpha
   __int16 *mTempAlphaFaceZ;
   int mAlphaSize;
   void *mBsp;
+
+public:
+  CAlpha();
+  void InitAlpha(void *a2);
 };
 

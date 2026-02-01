@@ -11,5 +11,13 @@ class __cppobj CMergeFileManager
   unsigned int mPathNameLeng;
   unsigned int mMergeFileNum;
   CMergeFile *mMergeFile;
+
+public:
+  CMergeFileManager();
+  void InitMergeFile(char *a2);
+  void ReleaseMergeFile();
+  unsigned int GetFileSize(char *a2);
+  __int64 IsExistFile(char *a2);
+  struct _iobuf *LoadFileOffset(char *a2, char *a3);
 };
 

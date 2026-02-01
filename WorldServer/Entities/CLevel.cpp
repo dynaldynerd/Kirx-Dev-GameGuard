@@ -36,12 +36,12 @@ void CLevel::LoadLevel(const char *szFileName)
   {
     if (!mMapName[0])
       return;
-    std::sprintf(buffer, "%s\\%s\\%s.bsp", stState.MapPath, mMapName, mMapName);
+    sprintf_s(buffer, sizeof(buffer), "%s\\%s\\%s.bsp", stState.MapPath, mMapName, mMapName);
     szFileName = buffer;
   }
 
-  FILE *fp = std::fopen(szFileName, "rb");
-  if (!fp)
+  FILE *fp = nullptr;
+  if (fopen_s(&fp, szFileName, "rb") != 0 || !fp)
   {
     mBsp->mIsLoaded = 0;
     if (szFileName && szFileName[0])
@@ -50,46 +50,46 @@ void CLevel::LoadLevel(const char *szFileName)
       Error(const_cast<char *>(kMissingMapMsg), const_cast<char *>(kEmptyMsg));
     return;
   }
-  std::fclose(fp);
+  fclose(fp);
 
-  std::strcpy(v64, szFileName);
+  strcpy_s(v64, sizeof(v64), szFileName);
   StripEXT(v64);
   StripPath(v64);
 
-  std::strcpy(v63, stState.MapPath);
-  std::strcat(v63, "\\");
-  std::strcat(v63, v64);
-  std::strcat(v63, "\\");
-  std::strcat(v63, v64);
-  std::strcat(v63, ".bsp");
+  strcpy_s(v63, sizeof(v63), stState.MapPath);
+  strcat_s(v63, sizeof(v63), "\\");
+  strcat_s(v63, sizeof(v63), v64);
+  strcat_s(v63, sizeof(v63), "\\");
+  strcat_s(v63, sizeof(v63), v64);
+  strcat_s(v63, sizeof(v63), ".bsp");
 
   ResetTexMemSize();
   dword_184A79824 = 0;
   if (IsServerMode())
   {
-    std::strcpy(v62, v63);
+    strcpy_s(v62, sizeof(v62), v63);
     StripEXT(v62);
-    std::strcat(v62, ".r3m");
+    strcat_s(v62, sizeof(v62), ".r3m");
     if (IsExistFile(v62))
       LoadMainR3M(v62);
   }
   else
   {
-    std::strcpy(v62, v63);
+    strcpy_s(v62, sizeof(v62), v63);
     StripEXT(v62);
-    std::strcat(v62, ".r3m");
+    strcat_s(v62, sizeof(v62), ".r3m");
 
-    std::strcpy(v64, szFileName);
+    strcpy_s(v64, sizeof(v64), szFileName);
     StripEXT(v64);
     StripPath(v64);
-    std::strcpy(mMapName, v64);
+    strcpy_s(mMapName, sizeof(mMapName), v64);
 
     if (IsExistFile(v62))
     {
       LoadMainR3M(v62);
-      std::strcpy(v62, v63);
+      strcpy_s(v62, sizeof(v62), v63);
       StripEXT(v62);
-      std::strcat(v62, ".r3t");
+      strcat_s(v62, sizeof(v62), ".r3t");
       R3Texture *tex = R3GetTexInfoR3T(v62, 0);
       SetNoLodTextere();
       LoadR3T(tex);
@@ -97,10 +97,10 @@ void CLevel::LoadLevel(const char *szFileName)
     }
     else
     {
-      std::strcpy(v62, stState.MapPath);
-      std::strcat(v62, "\\");
-      std::strcat(v62, v64);
-      std::strcat(v62, "\\Tex\\");
+      strcpy_s(v62, sizeof(v62), stState.MapPath);
+      strcat_s(v62, sizeof(v62), "\\");
+      strcat_s(v62, sizeof(v62), v64);
+      strcat_s(v62, sizeof(v62), "\\Tex\\");
       LoadMainMaterial(v62);
       SetNoLodTextere();
       mMapTexMemSize += GetNowTexMemSize();
@@ -111,30 +111,30 @@ void CLevel::LoadLevel(const char *szFileName)
   ResetTexMemSize();
   mBsp->LoadBsp(v63);
 
-  std::strcpy(v61, v63);
+  strcpy_s(v61, sizeof(v61), v63);
   StripEXT(v61);
-  std::strcat(v61, ".ebp");
+  strcat_s(v61, sizeof(v61), ".ebp");
   mBsp->LoadExtBsp(v61);
   mEntityTexMemSize += GetNowTexMemSize();
 
   if (!IsServerMode())
   {
     SetMergeFileManager(nullptr);
-    std::strcpy(v61, v63);
+    strcpy_s(v61, sizeof(v61), v63);
     StripEXT(v61);
-    std::strcat(v61, "Lgt.R3T");
+    strcat_s(v61, sizeof(v61), "Lgt.R3T");
     ResetTexMemSize();
     LoadLightMap(v61);
     mLightTexMemSize += GetNowTexMemSize();
     mBsp->CalcEntitiesMainColor();
 
     ResetTexMemSize();
-    std::strcpy(v61, stState.MapPath);
-    std::strcat(v61, "\\");
-    std::strcat(v61, v64);
-    std::strcat(v61, "\\sky2\\");
-    std::strcat(v61, mMapName);
-    std::strcat(v61, "sky2.r3e");
+    strcpy_s(v61, sizeof(v61), stState.MapPath);
+    strcat_s(v61, sizeof(v61), "\\");
+    strcat_s(v61, sizeof(v61), v64);
+    strcat_s(v61, sizeof(v61), "\\sky2\\");
+    strcat_s(v61, sizeof(v61), mMapName);
+    strcat_s(v61, sizeof(v61), "sky2.r3e");
     if (IsExistFile(v61))
     {
       CN_SetEnableSky(1);
@@ -143,12 +143,12 @@ void CLevel::LoadLevel(const char *szFileName)
     else
     {
       CN_SetEnableSky(0);
-      std::strcpy(v61, stState.MapPath);
-      std::strcat(v61, "\\");
-      std::strcat(v61, v64);
-      std::strcat(v61, "\\sky\\");
-      std::strcat(v61, mMapName);
-      std::strcat(v61, "sky.r3e");
+      strcpy_s(v61, sizeof(v61), stState.MapPath);
+      strcat_s(v61, sizeof(v61), "\\");
+      strcat_s(v61, sizeof(v61), v64);
+      strcat_s(v61, sizeof(v61), "\\sky\\");
+      strcat_s(v61, sizeof(v61), mMapName);
+      strcat_s(v61, sizeof(v61), "sky.r3e");
       if (IsExistFile(v61))
         mSkyBox->LoadSkyBox(v61);
     }
@@ -160,15 +160,15 @@ void CLevel::LoadLevel(const char *szFileName)
     mIsLoadedBsp = 1;
     mMapTexMemSize += now_tex_mem_size;
 
-    std::strcpy(v61, v63);
+    strcpy_s(v61, sizeof(v61), v63);
     StripEXT(v61);
-    std::strcat(v61, ".rvp");
+    strcat_s(v61, sizeof(v61), ".rvp");
     RTMovieCreate(v61, this);
     RTMovieSetState(4u);
 
-    std::strcpy(v61, v63);
+    strcpy_s(v61, sizeof(v61), v63);
     StripEXT(v61);
-    std::strcat(v61, "EXT.spt");
+    strcat_s(v61, sizeof(v61), "EXT.spt");
     SetMergeFileManager(nullptr);
     mDummy.LoadExtDummy(v61);
     mBsp->mDummy = &mDummy;

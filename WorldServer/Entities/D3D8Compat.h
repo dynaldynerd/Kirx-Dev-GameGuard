@@ -73,6 +73,10 @@ struct __cppobj IDirect3DDevice8
   HRESULT (__fastcall *CreateIndexBuffer)(IDirect3DDevice8 *self, unsigned int size, unsigned int usage);
 };
 
+#ifndef D3DPOOL_MANAGED
+#define D3DPOOL_MANAGED 1
+#endif
+
 /* Minimal DDS header for mipmap calculations */
 struct _DDSURFACEDESC2
 {

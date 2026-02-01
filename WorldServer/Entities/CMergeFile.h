@@ -11,5 +11,14 @@ class CMergeFile
   unsigned int *mIndex;
   unsigned int mCnt;
   unsigned int mHeaderSize;
+
+public:
+  CMergeFile();
+  __int64 LoadMergeFileHeader(char *a2);
+  void ReleaseMergeFileHeader();
+  struct _iobuf *LoadFileOffset(char *a2, char *a3);
+  unsigned int GetFileOffset(unsigned int a2, char *a3);
+  unsigned int GetFileSize(unsigned int a2, char *a3);
+  __int64 IsExistFile(char *a2);
 };
 

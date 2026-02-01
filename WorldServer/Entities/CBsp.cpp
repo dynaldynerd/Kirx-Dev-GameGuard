@@ -1,9 +1,41 @@
 #include "pch.h"
 #include "CBsp.h"
 #include "WorldServerUtil.h"
+#include "R3EngineGlobals.h"
+#include "CEntity.h"
+#include "CParticle.h"
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <intrin.h>
+
+namespace
+{
+    using GetVertexFromCompressFn = void (*)(float *, char *, _BSP_READ_M_GROUP *);
+
+    void GetVertexFromBVertexWrap(float *dst, char *src, _BSP_READ_M_GROUP *mg)
+    {
+        GetVertexFromBVertex(dst, src, mg);
+    }
+
+    void GetVertexFromWVertexWrap(float *dst, char *src, _BSP_READ_M_GROUP *mg)
+    {
+        GetVertexFromWVertex(dst, reinterpret_cast<short *>(src), mg);
+    }
+
+    void GetVertexFromFVertexWrap(float *dst, char *src, _BSP_READ_M_GROUP *mg)
+    {
+        GetVertexFromFVertex(dst, reinterpret_cast<float *>(src), mg);
+    }
+
+    GetVertexFromCompressFn GetVertexFromCompress[5] = {
+        nullptr,
+        GetVertexFromBVertexWrap, // 1
+        GetVertexFromWVertexWrap, // 2
+        nullptr,
+        GetVertexFromFVertexWrap  // 4
+    };
+}
 
 float CBsp::GetFirstYpos(float *const a2, float *const a3, float *const a4)
 {
@@ -92,47 +124,213 @@ void CBsp::SubLeafList(float dist, _BSP_NODE *pNode, float *const a4, float *con
     }
 }
 
-bool CBsp::LoadBsp(char *szFileName)
+void CBsp::LoadBsp(char *a2)
 {
-    FILE *Stream = nullptr;
-    if (fopen_s(&Stream, szFileName, "rb") != 0 || !Stream) return false;
+    if (!IsInitR3Engine())
+        Error(aR3engineAe, byte_140883769);
 
-    fread(&this->mBSPHeader, sizeof(_BSP_FILE_HEADER), 1, Stream);
-    if (this->mBSPHeader.version != 39) { fclose(Stream); return false; }
+    SetMergeFileManager(nullptr);
 
-    this->mLeafNum = this->mBSPHeader.Leaf.size / (this->mBSPHeader.version == 39 ? 0x10 : 1); // Mocking Leaf size if needed
-    // The sizes in header are in bytes. 
-    // From IDA: this->mLeafNum = (v6 + (((unsigned __int64)this->mBSPHeader.Leaf.size - v6) >> 1)) >> 4;
-    // Which is roughly size / 0x10.
-    this->mLeafNum = this->mBSPHeader.Leaf.size / 0x18; // Based on _BSP_LEAF size in IDA
-    this->mNodeNum = this->mBSPHeader.Node.size / 0x18; 
-    this->mCFaceNum = this->mBSPHeader.Face.size / 6;
+    FILE *v4 = fopen(a2, "rb");
+    if (!v4)
+        Error(a2, aAaiai_0);
 
-    this->mStaticAllocSize = this->mBSPHeader.CPlanes.size + this->mBSPHeader.CFaceId.size + this->mBSPHeader.Node.size + this->mBSPHeader.Leaf.size;
-    this->mStaticAlloc = new unsigned char[this->mStaticAllocSize];
-    
-    unsigned char* ptr = this->mStaticAlloc;
-    this->mCNNormal = (float (*)[3])ptr;
-    fread(ptr, this->mBSPHeader.CPlanes.size, 1, Stream);
-    ptr += this->mBSPHeader.CPlanes.size;
+    unsigned int v5 = 0;
+    mNowCFaceId = 0;
+    mTotalAllocSize = 0;
+    ResetTotalVertexBufferInfo();
 
-    this->mCFaceId = (unsigned int*)ptr;
-    fread(ptr, this->mBSPHeader.CFaceId.size, 1, Stream);
-    ptr += this->mBSPHeader.CFaceId.size;
+    fread(&mBSPHeader, 0x2ACu, 1, v4);
+    if (mBSPHeader.version != 39)
+        Error(aBspAai, aAa);
 
-    this->mNode = (_BSP_NODE*)ptr;
-    fread(ptr, this->mBSPHeader.Node.size, 1, Stream);
-    ptr += this->mBSPHeader.Node.size;
+    unsigned __int128 v6 = (unsigned __int128)mBSPHeader.Leaf.size * 0x47AE147AE147AE15ull;
+    mLeafNum = static_cast<unsigned int>(((static_cast<unsigned long long>(v6 >> 64) +
+                                           ((mBSPHeader.Leaf.size - static_cast<unsigned long long>(v6 >> 64)) >> 1)) >>
+                                          4));
+    mNodeNum = mBSPHeader.Node.size / 0x18;
+    mCVertexNum = mBSPHeader.BVertex.size / 3 + mBSPHeader.WVertex.size / 6 + mBSPHeader.FVertex.size / 0xC;
+    mCFaceNum = mBSPHeader.Face.size / 6;
+    mObjectNum = mBSPHeader.Object.size / 0x58;
 
-    this->mLeaf = (_BSP_LEAF*)ptr;
-    fread(ptr, this->mBSPHeader.Leaf.size, 1, Stream);
-    
-    // Faces usually loaded in ReadDynamicDataFillVertexBuffer which builds collision structure for server
-    this->ReadDynamicDataFillVertexBuffer(Stream);
-    
-    this->mIsLoaded = 1;
-    fclose(Stream);
-    return true;
+    unsigned __int128 v9 = (unsigned __int128)mBSPHeader.ReadMatGroup.size * 0x8618618618618619ull;
+    mMatGroupNum = static_cast<unsigned int>(((static_cast<unsigned long long>(v9 >> 64) +
+                                                ((mBSPHeader.ReadMatGroup.size - static_cast<unsigned long long>(v9 >> 64)) >> 1)) >>
+                                               5));
+
+    int v10 = 12 * mCVertexNum;
+    unsigned int size = mBSPHeader.VertexId.size;
+    int v12 = 24 * mCFaceNum;
+
+    if (IsServerMode())
+    {
+        mCNEdgeNormal = (float (*)[4])Dmalloc(mCFaceNum << 6);
+        mMapEntitiesListNum = 0;
+        mEntityIDNum = 0;
+        mEntityListNum = 0;
+        mLeafEntityListNum = 0;
+    }
+
+    unsigned int v13 = v10 + size;
+    unsigned __int128 v14 = (unsigned __int128)mBSPHeader.ReadMatGroup.size * 0x8618618618618619ull;
+    unsigned int matGroupNum =
+        static_cast<unsigned int>(((static_cast<unsigned long long>(v14 >> 64) +
+                                 ((mBSPHeader.ReadMatGroup.size - static_cast<unsigned long long>(v14 >> 64)) >> 1)) >>
+                                5));
+
+    unsigned int v15 =
+        v12 + v13 + mBSPHeader.CPlanes.size + mBSPHeader.CFaceId.size + mBSPHeader.Node.size + mBSPHeader.Track.size +
+        mBSPHeader.Leaf.size + mBSPHeader.LgtUV.size + mBSPHeader.MatListInLeaf.size + mBSPHeader.VertexColor.size +
+        361 * (mBSPHeader.Object.size / 0x58) +
+        2 * (mObjectNum + 29 * mMapEntitiesListNum + 43 * matGroupNum);
+
+    mStaticAllocSize = v15;
+    mTotalAllocSize += v15;
+    mStaticAlloc = static_cast<unsigned char *>(Dmalloc(v15));
+
+    mCVertex = reinterpret_cast<float (*)[3]>(mStaticAlloc);
+    mCVertexId = reinterpret_cast<unsigned int *>(&mStaticAlloc[v10]);
+    mCFace = reinterpret_cast<_BSP_C_FACE *>(&mStaticAlloc[v13]);
+
+    unsigned int v17 = v12 + v13;
+    mCNNormal = reinterpret_cast<float (*)[3]>(&mStaticAlloc[v17]);
+    fread(mCNNormal, mBSPHeader.CPlanes.size, 1, v4);
+
+    unsigned int v19 = mBSPHeader.CPlanes.size + v17;
+    mCFaceId = reinterpret_cast<unsigned int *>(&mStaticAlloc[v19]);
+    fread(mCFaceId, mBSPHeader.CFaceId.size, 1, v4);
+
+    unsigned int v21 = mBSPHeader.CFaceId.size + v19;
+    mNode = reinterpret_cast<_BSP_NODE *>(&mStaticAlloc[v21]);
+    fread(mNode, mBSPHeader.Node.size, 1, v4);
+
+    unsigned int v23 = mBSPHeader.Node.size + v21;
+    mLeaf = reinterpret_cast<_BSP_LEAF *>(&mStaticAlloc[v23]);
+    fread(mLeaf, mBSPHeader.Leaf.size, 1, v4);
+
+    unsigned int v25 = mBSPHeader.Leaf.size + v23;
+    MatListInLeafId = reinterpret_cast<unsigned short *>(&mStaticAlloc[v25]);
+    fread(MatListInLeafId, mBSPHeader.MatListInLeaf.size, 1, v4);
+
+    unsigned int v27 = mBSPHeader.MatListInLeaf.size + v25;
+    unsigned int *v28 = static_cast<unsigned int *>(Dmalloc(mBSPHeader.Object.size));
+    mObject = reinterpret_cast<_ANI_OBJECT *>(&mStaticAlloc[v27]);
+    fread(v28, mBSPHeader.Object.size, 1, v4);
+
+    unsigned int v29 = 361 * (mBSPHeader.Object.size / 0x58) + v27;
+    unsigned char *v30 = &mStaticAlloc[v29];
+    fread(v30, mBSPHeader.Track.size, 1, v4);
+
+    unsigned int v31 = mBSPHeader.Track.size + v29;
+    mEventObjectID = reinterpret_cast<unsigned short *>(&mStaticAlloc[v31]);
+    fread(mEventObjectID, mBSPHeader.EventObjectID.size, 1, v4);
+
+    unsigned int v33 = v31 + 2 * mObjectNum;
+    int v34 = 0;
+    unsigned int *p_size = &mBSPHeader.ReadSpare[0].size;
+    __int64 v36 = 35;
+    do
+    {
+        v34 += *p_size;
+        p_size += 2;
+        --v36;
+    } while (v36);
+    fseek(v4, v34, 1);
+
+    ConvAniObject(static_cast<int>(mBSPHeader.Object.size / 0x58), v30, reinterpret_cast<_READ_ANI_OBJECT *>(v28), mObject);
+    Dfree(v28);
+
+    mMatGroup = reinterpret_cast<_BSP_MAT_GROUP *>(&mStaticAlloc[v33]);
+    unsigned __int128 v38 = (unsigned __int128)mBSPHeader.ReadMatGroup.size * 0x8618618618618619ull;
+    unsigned int v39 =
+        86 * static_cast<unsigned int>(((static_cast<unsigned long long>(v38 >> 64) +
+                                         ((mBSPHeader.ReadMatGroup.size - static_cast<unsigned long long>(v38 >> 64)) >> 1)) >>
+                                        5)) +
+        v33;
+    mLgtUV = reinterpret_cast<__int16 (*)[2]>(&mStaticAlloc[v39]);
+    mVertexColor = reinterpret_cast<unsigned int *>(&mStaticAlloc[mBSPHeader.LgtUV.size + v39]);
+
+    ReadDynamicDataFillVertexBuffer(v4);
+    fclose(v4);
+
+    unsigned __int128 v40 = (unsigned __int128)mBSPHeader.ReadMatGroup.size * 0x8618618618618619ull;
+    mMatGroupCacheSize = static_cast<int>(((static_cast<unsigned long long>(v40 >> 64) +
+                                            ((mBSPHeader.ReadMatGroup.size - static_cast<unsigned long long>(v40 >> 64)) >>
+                                             1)) >>
+                                           8) +
+                                          1);
+    mMatGroupCache = static_cast<unsigned char *>(Dmalloc(mMatGroupCacheSize));
+    mTotalAllocSize += mMatGroupCacheSize;
+
+    mAlpha.InitAlpha(this);
+
+    mMapEntityMFM.InitMergeFile(byte_184A790F0);
+    SetMergeFileManager(&mMapEntityMFM);
+
+    unsigned int v42 = 0;
+    int *mEnvIDPtr = reinterpret_cast<int *>(mEnvID);
+    do
+    {
+        int v46 = unk_184A7999C[v42];
+        mEnvIDPtr[0] = v46;
+        if (v46)
+        {
+            char *v47 = &byte_184A79924[128 * v42];
+            if (IsParticle(v47))
+                mEnvIDPtr[0] |= 0x1000u;
+            if (_bittest(mEnvIDPtr, 0xCu))
+            {
+                CParticle *v48 = reinterpret_cast<CParticle *>(operator new(0x490ull));
+                CParticle *v49 = v48 ? new (v48) CParticle() : nullptr;
+                ___u21.mEnvEntity[v42] = reinterpret_cast<CEntity *>(v49);
+                if (v49 && CParticle::LoadParticleSPT(v49, v47, 0))
+                {
+                    CParticle::InitParticle(v49);
+                    CParticle::SetParticleState(v49, 1u);
+                }
+                else
+                {
+                    CParticle *v50 = reinterpret_cast<CParticle *>(___u21.mEnvEntity[v42]);
+                    if (___u21.mEnvEntity[v42])
+                    {
+                        v50->~CParticle();
+                        operator delete(v50);
+                    }
+                    mEnvIDPtr[0] = 0;
+                    unk_184A7999C[v42] = 0;
+                }
+            }
+            else
+            {
+                CEntity *v51 = reinterpret_cast<CEntity *>(operator new(0xF4ull));
+                CEntity *v52 = v51 ? new (v51) CEntity() : nullptr;
+                ___u21.mEnvEntity[v42] = v52;
+                if (v52 && !CEntity::LoadEntity(v52, v47, 0))
+                {
+                    CEntity *v53 = ___u21.mEnvEntity[v42];
+                    if (v53)
+                    {
+                        v53->~CEntity();
+                        operator delete(v53);
+                    }
+                }
+            }
+        }
+        ++v42;
+        ++mEnvIDPtr;
+    } while (v42 < 2);
+
+    if (mObjectNum)
+    {
+        unsigned int v54 = 0;
+        do
+        {
+            if (mObject[v54].parent >= mObjectNum)
+                mObject[v54].parent = 0;
+            ++v5;
+            ++v54;
+        } while (v5 < mObjectNum);
+    }
 }
 
 bool CBsp::LoadExtBsp(char *szFileName)

@@ -57,6 +57,8 @@ struct _EXT_BSP_FILE_HEADER
   _BSP_ENTRY FreeSpare[18];
 };
 
+// Read mat-group entries are packed to 2-byte alignment (size 0x2A).
+#pragma pack(push, 2)
 struct _BSP_READ_M_GROUP
 {
   unsigned short attr;
@@ -70,12 +72,16 @@ struct _BSP_READ_M_GROUP
   float scale;
   unsigned short object_id;
 };
+#pragma pack(pop)
 
+// Read face entries are packed to 2-byte alignment (size 0x06).
+#pragma pack(push, 2)
 struct _BSP_READ_FACE
 {
   unsigned short v_num;
   unsigned int v_start_id;
 };
+#pragma pack(pop)
 
 struct _BSP_NODE
 {
@@ -87,6 +93,8 @@ struct _BSP_NODE
   short bb_max[3];
 };
 
+// Leaf entries are packed to 1-byte alignment (size 0x19).
+#pragma pack(push, 1)
 struct _BSP_LEAF
 {
   unsigned char type;
@@ -97,7 +105,10 @@ struct _BSP_LEAF
   short bb_min[3];
   short bb_max[3];
 };
+#pragma pack(pop)
 
+// Collision face entries are packed to 1-byte alignment (size 0x18).
+#pragma pack(push, 1)
 struct _BSP_C_FACE
 {
   unsigned char Attr;
@@ -106,6 +117,7 @@ struct _BSP_C_FACE
   unsigned short MatGIndex;
   float Normal[4];
 };
+#pragma pack(pop)
 
 struct _TOOL_COL_LINE
 {
@@ -117,12 +129,17 @@ struct _TOOL_COL_LINE
   unsigned short back;
 };
 
+// Tool collision leaf entries are packed to 2-byte alignment (size 0x06).
+#pragma pack(push, 2)
 struct _TOOL_COL_LEAF
 {
   unsigned int start_id;
   unsigned short line_num;
 };
+#pragma pack(pop)
 
+// Mat-group entries are packed to 2-byte alignment (size 0x56).
+#pragma pack(push, 2)
 struct _BSP_MAT_GROUP
 {
   unsigned short Type;
@@ -142,6 +159,7 @@ struct _BSP_MAT_GROUP
   unsigned short ObjectId;
   float CoronaAlpha;
 };
+#pragma pack(pop)
 
 struct _ANI_OBJECT;
 struct _MAP_ENTITIES_LIST;
@@ -245,8 +263,8 @@ public:
   float GetFirstYpos(float *const a2, float *const a3, float *const a4);
   void GetLeafList(float *const a2, float *const a3, int *const a4, __int16 *a5, unsigned int a6);
 
-  bool LoadBsp(char *szFileName);
-  bool LoadExtBsp(char *szFileName);
+  void LoadBsp(char *szFileName);
+  void LoadExtBsp(char *szFileName);
   void CalcEntitiesMainColor();
 
 private:
@@ -257,6 +275,7 @@ private:
   void ReadDynamicDataFillVertexBuffer(FILE *Stream);
   void ReadDynamicDataExtBsp(FILE *Stream);
   void OnlyStoreCollisionStructure(_BSP_READ_M_GROUP *pRM, char (*pBV)[3], short (*pWV)[3], float (*pFV)[3], unsigned int *pVI, _BSP_READ_FACE *pRF, unsigned int *pFI);
+  void MakeEdgeNormal();
 public:
   bool CanYouGoThere(float *const a2, float *const a3, float (*a4)[3]);
   int GetPathCrossPoint(float *const a2, float *const a3, float (*a4)[3], int a5, int a6);

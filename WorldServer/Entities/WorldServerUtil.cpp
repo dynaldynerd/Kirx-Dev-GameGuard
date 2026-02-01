@@ -15,6 +15,7 @@ CWnd *g_pFrame = nullptr;
 
 #include "CMerchant.h"
 #include "GlobalObjectDefs.h"
+#include "R3EngineGlobals.h"
 
 unsigned int GetLoopTime()
 {
@@ -243,29 +244,52 @@ void ServerProgramExit(const char *source, int reason)
   ExitProcess(static_cast<unsigned int>(reason));
 }
 
-char* StripEXT(char* szPath)
+void StripEXT(char *szPath)
 {
-    char* pDot = strrchr(szPath, '.');
-    if (pDot)
-        *pDot = '\0';
-    return szPath;
+  int idx = static_cast<int>(std::strlen(szPath)) - 1;
+  for (int i = idx; i >= 0; --i)
+  {
+    if (szPath[i] == '.')
+    {
+      szPath[i] = '\0';
+      return;
+    }
+  }
 }
 
-char* StripPath(char* szPath)
+void StripPath(char *szPath)
 {
-    char* pSlash = strrchr(szPath, '\\');
-    if (pSlash)
-        return pSlash + 1;
-    return szPath;
+  const int len = static_cast<int>(std::strlen(szPath));
+  int slash = len - 2;
+  for (int i = len - 2; i >= 0; --i)
+  {
+    if (szPath[i] == '\\')
+      break;
+    --slash;
+  }
+  const int start = slash + 1;
+  if (start < len - 1)
+  {
+    const int count = len - 1 - start;
+    char temp[256]{};
+    memcpy_0(temp, &szPath[start], static_cast<unsigned int>(count));
+    temp[count] = '\0';
+    strcpy_s(szPath, 256, temp);
+  }
 }
 
 bool IsServerMode()
 {
-    return true;
+    return dword_184A77F38 != 0;
 }
 
-bool IsInitR3Engine() { return true; }
+bool IsInitR3Engine() { return dword_184A77F3C != 0; }
 float R3GetTime() { return (float)GetTickCount() / 1000.0f; }
+
+IDirect3DDevice8 *GetD3dDevice()
+{
+  return qword_184A7B2C8;
+}
 
 void ResetTexMemSize() {}
 bool IsExistFile(char *szFileName) { 
@@ -278,8 +302,13 @@ struct R3Texture *R3GetTexInfoR3T(char *szFileName, int a2) { return nullptr; }
 void SetNoLodTextere() {}
 void LoadR3T(struct R3Texture *pTex) {}
 unsigned int GetNowTexMemSize() { return 0; }
-void LoadMainMaterial(char *szFileName) {}
-void SetMergeFileManager(void *pMgr) {}
+_R3MATERIAL *LoadMainMaterial(char *szFileName) { 
+    (void)szFileName;
+    return qword_184A79DA8;
+}
+_R3MATERIAL *GetMainMaterial() { return qword_184A79DA8; }
+unsigned int GetMainMaterialNum() { return dword_184A79DB0; }
+void SetMergeFileManager(CMergeFileManager *pMgr) { qword_184A7B208 = pMgr; }
 void LoadLightMap(char *szFileName) {}
 void CN_SetEnableSky(int bEnable) {}
 void R3RestoreAllTextures() {}
@@ -287,34 +316,124 @@ void RTMovieCreate(char *szFileName, void *pLevel) {}
 void RTMovieSetState(unsigned int nState) {}
 void R3EnvironmentShakeOff() {}
 void ClearDynamicLight() {}
-void Error(char *source, char *msg) { MyMessageBox(source, msg); }
-
-// Global helper stubs
-void GetVertexFromBVertex(float *const a1, char *a2, _BSP_READ_M_GROUP *a3)
+void Error(char *source, char *msg)
 {
-    a1[0] = (float)a2[0] + a3->pos[0];
-    a1[1] = (float)a2[1] + a3->pos[1];
-    a1[2] = (float)a2[2] + a3->pos[2];
+  const char *v3 = source;
+  char Text[256]{};
+
+  char *dst = Text;
+  while ((*dst++ = *source++) != '\0')
+    ;
+
+  char *v6 = &Text[std::strlen(Text) + 1];
+  size_t idx = 0;
+  while ((v6[idx++] = msg[idx - 1]) != '\0')
+    ;
+
+  FILE *v9 = nullptr;
+  if (fopen_s(&v9, "error_message.txt", "wt") == 0 && v9)
+  {
+    fprintf(v9, "%s%s", v3, msg);
+    fclose(v9);
+  }
+
+  void (*v10)(char *) = ErrorMessageProc;
+  if (!v10)
+  {
+    MessageBoxA(nullptr, Text, "message", MB_ICONERROR);
+    exit(1);
+  }
+
+  static const unsigned char asc_140884708[4] = { 0x3C, 0x2D, 0xBF, 0xA1 }; // "<-에"
+  char *v11 = &Text[std::strlen(Text) + 1];
+  memcpy_0(v11 - 1, asc_140884708, sizeof(asc_140884708));
+  *reinterpret_cast<unsigned short *>(v11 + 3) = static_cast<unsigned short>(-20553);
+  v11[5] = 0;
+  v10(Text);
 }
 
-void GetVertexFromWVertex(float *const a1, short *a2, _BSP_READ_M_GROUP *a3)
+void Warning(char *source, char *msg)
 {
-    a1[0] = (float)a2[0] * a3->scale + a3->pos[0];
-    a1[1] = (float)a2[1] * a3->scale + a3->pos[1];
-    a1[2] = (float)a2[2] * a3->scale + a3->pos[2];
+  if (No_warning)
+    return;
+
+  char Text[256]{};
+  char *dst = Text;
+  while ((*dst++ = *source++) != '\0')
+    ;
+  char *v5 = &Text[std::strlen(Text) + 1];
+  size_t idx = 0;
+  while ((v5[idx++] = msg[idx - 1]) != '\0')
+    ;
+
+  void (*v8)(char *) = WarningMessageProc;
+  if (v8)
+  {
+    static const char kSuffix[] = "\x3C\x2D\xBF\xA1\xB7\xAF"; // "<-에러"
+    strcat_s(Text, kSuffix);
+    v8(Text);
+  }
+  else
+  {
+    MessageBoxA(nullptr, Text, "message", 0);
+  }
 }
 
-void GetVertexFromFVertex(float *const a1, float *a2, _BSP_READ_M_GROUP *a3)
+void ResetTotalVertexBufferInfo()
 {
-    // float vertex is absolute usually? or relative?
-    // Decompiled code usually shows FVertex is relative too? Or absolute?
-    // Checking CLevel... wait, this is used in CBsp. 
-    // CBsp::OnlyStoreCollisionStructure uses it.
-    // Let's assume absolute or relative same as others. Usually FVertex is relative.
-    // Decompiled check: 
-    // v22 = (float *)((char *)v + 12 * v21);
-    // pos[0] = *v22 + mGroup.pos[0]; ...
-    a1[0] = a2[0] + a3->pos[0];
-    a1[1] = a2[1] + a3->pos[1];
-    a1[2] = a2[2] + a3->pos[2];
+  dword_184A7B2D8 = 0;
+  dword_184A7B2DC = 0;
+}
+
+unsigned int GetTotalVertexBufferSize()
+{
+  return dword_184A7B2D8;
+}
+
+unsigned int GetTotalVertexBufferCnt()
+{
+  return dword_184A7B2DC;
+}
+
+void *Dmalloc(int size)
+{
+  if (!size)
+    return nullptr;
+
+  dword_184A78FD4 += static_cast<unsigned int>(size);
+  ++dword_184A78FD8;
+  auto *v3 = static_cast<unsigned int *>(malloc(static_cast<size_t>(size) + 4));
+  if (!v3)
+    return nullptr;
+  *v3 = static_cast<unsigned int>(size);
+  return v3 + 1;
+}
+
+void Dfree(void *ptr)
+{
+  if (!ptr)
+    return;
+
+  auto *base = static_cast<unsigned int *>(ptr) - 1;
+  unsigned int v1 = *base;
+  --dword_184A78FD8;
+  dword_184A78FD4 -= v1;
+  free(base);
+}
+
+unsigned int GetDmallocSize()
+{
+  return dword_184A78FD4;
+}
+
+unsigned int GetDmallocCnt()
+{
+  return dword_184A78FD8;
+}
+
+bool IsParticle(char *a1)
+{
+  _strlwr(a1);
+  const size_t len = std::strlen(a1);
+  return len >= 3 && *reinterpret_cast<unsigned short *>(&a1[len - 2]) == 29808 && a1[len - 3] == 's';
 }
