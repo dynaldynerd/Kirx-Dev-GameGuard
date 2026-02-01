@@ -69,6 +69,8 @@ extern unsigned int dword_184A79838;
 extern unsigned int dword_184A79914;
 extern unsigned int dword_184A79918;
 extern unsigned int dword_184A7991C;
+extern unsigned int dword_184A79C3C;
+extern int dword_184A7B2F0;
 extern char byte_184A79850[128];
 extern float unk_184A798D4[16];
 extern int stRealSky;

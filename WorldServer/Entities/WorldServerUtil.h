@@ -56,12 +56,14 @@ float DotProduct(const float *a1, const float *a2);
 void GetNormal(float *const a1, const float *const a2, const float *const a3, const float *const a4);
 int GetPlaneCrossPoint(const float *const a1, const float *const a2, float *const a3, const float *const a4, float a5);
 void CrossProduct(const float *a1, const float *a2, float *a3);
+void sub_1404E2FB0(float *a1, float *a2, float *a3);
 bool CheckEdgeEpsilon(const float *const a1, const float *const a2, const float *const a3, const float *const a4);
 
 void GetVertexFromBVertex(float *const a1, char *a2, _BSP_READ_M_GROUP *a3);
 void GetVertexFromWVertex(float *const a1, short *a2, _BSP_READ_M_GROUP *a3);
 void GetVertexFromFVertex(float *const a1, float *a2, _BSP_READ_M_GROUP *a3);
 bool IsParticle(char *a1);
+void sub_14050C650(float *a1, float *a2, float *a3);
 
 // Matrix/animation helpers (R3 engine).
 float GetFloatMod(float a1, float a2);
@@ -110,7 +112,7 @@ void ResetTexMemSize();
 bool IsExistFile(char *szFileName);
 unsigned int GetFileSizeAndMergeFile(char *szFileName);
 __int64 IsExistFileAndMergeFile(char *szFileName);
-void LoadMainR3M(char *szFileName);
+struct _R3MATERIAL *LoadMainR3M(char *szFileName);
 struct _R3MATERIAL *LoadSubR3M(char *szFileName);
 struct _R3MATERIAL *LoadIndependenceR3M(char *szFileName);
 struct _R3MATERIAL *LoadSubMaterial(char *szFileName);

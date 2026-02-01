@@ -23,6 +23,8 @@
 #include "CWorldSchedule.h"
 #include "R3EngineState.h"
 
+class CWnd;
+
 extern CUserDB g_UserDB[MAX_PLAYER];
 extern CPartyPlayer g_PartyPlayer[MAX_PLAYER];
 extern CPlayer g_Player[MAX_PLAYER];
@@ -50,3 +52,4 @@ extern CTransportShip g_TransportShip[3];
 extern CHolyStoneSystem g_HolySys;
 extern CWorldSchedule g_WorldSch;
 extern CMainThread g_Main;
+extern CWnd *g_pFrame;

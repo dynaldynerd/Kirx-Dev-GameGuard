@@ -66,6 +66,13 @@ void CrossProduct(const float *a1, const float *a2, float *a3)
     a3[2] = (*a1 * a2[1]) - (*a2 * a1[1]);
 }
 
+void sub_1404E2FB0(float *a1, float *a2, float *a3)
+{
+    a3[0] = (a2[2] * a1[1]) - (a2[1] * a1[2]);
+    a3[1] = (*a2 * a1[2]) - (*a1 * a2[2]);
+    a3[2] = (*a1 * a2[1]) - (*a2 * a1[1]);
+}
+
 bool CheckEdgeEpsilon(const float *const a1, const float *const a2, const float *const a3, const float *const a4)
 {
     float ux = a1[0] - a2[0], uy = a1[1] - a2[1], uz = a1[2] - a2[2];
@@ -81,6 +88,17 @@ bool CheckEdgeEpsilon(const float *const a1, const float *const a2, const float 
     // dot(a3 - a2, cross)
     float vx = a3[0] - a2[0], vy = a3[1] - a2[1], vz = a3[2] - a2[2];
     return (vx * cross[0] + vy * cross[1] + vz * cross[2]) <= 0.01f;
+}
+
+void sub_14050C650(float *a1, float *a2, float *a3)
+{
+    float v3 = *a2 - *a3;
+    float v5 = a2[1] - a3[1];
+    float v6 = a2[2] - a3[2];
+    float v7 = sqrtf_0((v5 * v5) + (v3 * v3) + (v6 * v6));
+    a1[0] = (v3 / v7) * 2.0f + a1[0];
+    a1[1] = (v5 / v7) * 2.0f + a1[1];
+    a1[2] = (v6 / v7) * 2.0f + a1[2];
 }
 
 void GetVertexFromBVertex(float *const a1, char *a2, _BSP_READ_M_GROUP *a3)

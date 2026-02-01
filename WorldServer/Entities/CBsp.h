@@ -264,6 +264,10 @@ public:
   CAlpha mAlpha;
 
   float GetFirstYpos(float *const a2, float *const a3, float *const a4);
+  float GetFirstYpos(float *const a2, int a3);
+  __int64 GetLightFromPoint(float *const a2, int a3);
+  __int64 GetColorFromPoint(int a2, float *const a3);
+  void GetLightMapUVFromPoint(float *const a2, int a3, float *const a4);
   void GetLeafList(float *const a2, float *const a3, int *const a4, __int16 *a5, unsigned int a6);
 
   void LoadBsp(char *szFileName);
@@ -271,6 +275,7 @@ public:
   void CalcEntitiesMainColor();
 
 private:
+  float GetFirstYpos(float *const a2, __int16 *const a3, __int16 *const a4);
   void WalkNodeForLeafList(short nNodeId, float *const a3, float *const a4, short *a5, int *a6);
   void SubLeafList(float a2, _BSP_NODE *pNode, float *const a4, float *const a5, short *a6, int *a7);
   bool EdgeTest(float *pPos, unsigned int nNormalId);

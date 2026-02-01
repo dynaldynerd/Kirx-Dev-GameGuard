@@ -22,6 +22,8 @@
 - R3 warnings/errors labels used: aR3tAaia_0, aR3tAaia, aAiAaiai_4, aA_3, aAiAaiaiAiau, aAiAaiai, aAiAaiai_5, aAiAaiai_2, aAiAaiai_3, aAo_2, aAlphaSortTrue
 - CVertexBuffer/CIndexBuffer error labels: byte_140884910, byte_140884930, aAiu, aAiao
 - Error/Warning suffix label: asc_140884708 (used to append suffix before callback)
+- System texture paths: ".\\system\\logo.dds", ".\\system\\dlight.dds"
+- Main material filename: "MainMaterial.mst"
 - pass_word[32] dwords (from old R3Engine r3d3dtex.cpp; used by sub_1404FFFB0 UnLockDDS):
   0x764D802E, 0xF0D1F82E, 0x81863FBD, 0x3F3F2C58, 0x6F672E2E, 0x783F403F, 0xC0F13F3C, 0x9F3BF6A5,
   0xD73F20C1, 0x85E9C1C8, 0x56EFBD86, 0x2EFBA13F, 0x4C618687, 0xB44E3B21, 0x97AE5778, 0x2E4A2E3F,
@@ -44,6 +46,8 @@
 - byte_184A79924: env entity name table [2][128] (IDA BSS, zero-initialized)
 - unk_184A7999C: env ID table [2] (IDA BSS, zero-initialized)
 - GetVertexFromCompress function pointer table: index 1=GetVertexFromBVertex, 2=GetVertexFromWVertex, 4=GetVertexFromFVertex
+- dword_184A79C3C: GetLeafList max leaf count limiter (IDA global, initialized to 0)
+- dword_184A7B2F0: CBsp::GetPathCrossPoint state flag (IDA global, initialized to 0)
 
 ## CBsp::LoadExtBsp / LoadEntities / Particle script static data (from IDA + old R3Engine reference)
 - EBP mismatch error (cp949 bytes): "\x3C\x2D\x65\x62\x70\xC6\xC4\xC0\xCF\xC0\xCC\x20\x42\x53\x50\xBF\xCD\x20\xB8\xC2\xC1\xF6\xBE\xCA\xBD\xBF\xB4\xD9\x2E\x20\x65\x62\x70\xB8\xA6\x20\xB4\xD9\xB8\xA5\xB9\xF6\xC0\xFC\xC0\xB8\xB7\xCE\x20\xC0\xDB\xBE\xF7\xC7\xD1\xB5\xED" ("<-ebp파일이 BSP와 맞지않슴다. ebp를 다른버전으로 작업한듯")

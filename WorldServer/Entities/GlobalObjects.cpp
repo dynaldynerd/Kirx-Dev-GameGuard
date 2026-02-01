@@ -25,3 +25,4 @@ CHolyStoneSystem g_HolySys{};
 CWorldSchedule g_WorldSch{};
 CMainThread g_Main{};
 int gAsci[256]{};
+CWnd *g_pFrame = nullptr;
