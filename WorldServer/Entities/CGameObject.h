@@ -152,7 +152,19 @@ public:
   char UpdateSecList();
   void _ResetCirclePlayer();
   */
+  void CalcAbsPos();
+  __int64 CalcSecIndex();
+  __int64 GetUseSectorRange();
+  char Create(_object_create_setdata *pData);
+  void CircleReport(unsigned __int8 *pbyType, char *szMsg, unsigned __int16 nMsgSize, bool bToOne);
+  void CircleReport(
+    unsigned __int8 *pbyType,
+    char *szMsg,
+    unsigned __int16 nMsgSize,
+    unsigned int dwPassObjSerial,
+    bool bToOne);
   void Init(_object_id *pID);
+  bool IsInTown();
 
   static CGameObject *s_pSelectObject;
   static CGameObject *s_pTotalObject[42642];

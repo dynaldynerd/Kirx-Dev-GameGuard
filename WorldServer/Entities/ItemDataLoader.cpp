@@ -9,7 +9,7 @@ struct ItemDataFileEntry
   int nstructsize;
 };
 
-static CRecordData *s_ptblItemData = nullptr;
+CRecordData *s_ptblItemData = nullptr;
 
 static const ItemDataFileEntry kItemDataFiles[] =
 {

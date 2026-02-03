@@ -18,6 +18,6 @@ public:
   void ReleaseMergeFile();
   unsigned int GetFileSize(char *a2);
   __int64 IsExistFile(char *a2);
-  struct _iobuf *LoadFileOffset(char *a2, char *a3);
+  struct _iobuf *LoadFileOffset(char *a2, const char *a3);
 };
 

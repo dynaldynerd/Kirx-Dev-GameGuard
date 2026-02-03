@@ -20,6 +20,9 @@ CGuild *g_Guild = nullptr;
 AggroCaculateData g_AggroCaculateData{};
 MonsterSetInfoData g_MonsterSetInfoData{};
 
+_R3ENGINE_STATE stState{};
+int dword_184A79820 = 0;
+
 CTransportShip g_TransportShip[3]{};
 CHolyStoneSystem g_HolySys{};
 CWorldSchedule g_WorldSch{};

@@ -126,6 +126,25 @@ bool CNetIndexList::PopNode_Front(CNetIndexList *list, unsigned int *outIndex)
   return true;
 }
 
+bool CNetIndexList::IsInList(CNetIndexList *list, unsigned int index)
+{
+  if (list == nullptr)
+  {
+    return false;
+  }
+
+  _index_node *node = list->m_Head.m_pNext;
+  while (node != &list->m_Tail)
+  {
+    if (node->m_dwIndex == index)
+    {
+      return true;
+    }
+    node = node->m_pNext;
+  }
+  return false;
+}
+
 unsigned int CNetIndexList::size(const CNetIndexList *list)
 {
   if (list == nullptr)

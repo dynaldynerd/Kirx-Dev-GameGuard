@@ -2,8 +2,11 @@
 
 #include "CGameObject.h"
 
+#include "CMapData.h"
 #include "CNetworkEX.h"
+#include "GlobalObjects.h"
 #include "WorldServerUtil.h"
+#include "pnt_rect.h"
 
 #include <cstdlib>
 #include <ctime>
@@ -431,13 +434,13 @@ void CGameObject::CircleReport(unsigned __int8 *pbyType, char *szMsg, unsigned _
     for ( dwClientIndex = 0; (int)dwClientIndex < 2532; ++dwClientIndex )
     {
       if ( this->m_bPlayerCircleList[dwClientIndex] )
-        CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], dwClientIndex, pbyType, szMsg, nMsgSize);
+        g_Network.m_pProcess[0]->LoadSendMsg(dwClientIndex, pbyType, szMsg, nMsgSize);
     }
   }
   else
   {
     if ( bToOne && !this->m_ObjID.m_byKind && !this->m_ObjID.m_byID )
-      CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], this->m_ObjID.m_wIndex, pbyType, szMsg, nMsgSize);
+      g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, szMsg, nMsgSize);
     if ( this->m_pCurMap && this->m_dwCurSec != -1 )
     {
       SecInfo = CMapData::GetSecInfo(this->m_pCurMap);
@@ -458,7 +461,7 @@ void CGameObject::CircleReport(unsigned __int8 *pbyType, char *szMsg, unsigned _
               m_pNext = m_pNext->m_pNext;
               p_m_ObjID = &m_pItem->m_ObjID;
               if ( m_pItem != this && (!this->m_bObserver || BYTE4(m_pItem[9].m_SectorNetPoint.m_pNext)) )
-                CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], p_m_ObjID->m_wIndex, pbyType, szMsg, nMsgSize);
+                g_Network.m_pProcess[0]->LoadSendMsg(p_m_ObjID->m_wIndex, pbyType, szMsg, nMsgSize);
             }
           }
         }
@@ -495,13 +498,13 @@ void CGameObject::CircleReport(unsigned __int8 *pbyType, char *szMsg, unsigned _
     for ( dwClientIndex = 0; (int)dwClientIndex < 2532; ++dwClientIndex )
     {
       if ( this->m_bPlayerCircleList[dwClientIndex] )
-        CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], dwClientIndex, pbyType, szMsg, nMsgSize);
+        g_Network.m_pProcess[0]->LoadSendMsg(dwClientIndex, pbyType, szMsg, nMsgSize);
     }
   }
   else
   {
     if ( bToOne && !this->m_ObjID.m_byKind && !this->m_ObjID.m_byID )
-      CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], this->m_ObjID.m_wIndex, pbyType, szMsg, nMsgSize);
+      g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, szMsg, nMsgSize);
     if ( this->m_pCurMap && this->m_dwCurSec != -1 )
     {
       SecInfo = CMapData::GetSecInfo(this->m_pCurMap);
@@ -525,7 +528,7 @@ void CGameObject::CircleReport(unsigned __int8 *pbyType, char *szMsg, unsigned _
                 && m_pItem->m_dwObjSerial != dwPassObjSerial
                 && (!this->m_bObserver || BYTE4(m_pItem[9].m_SectorNetPoint.m_pNext)) )
               {
-                CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], p_m_ObjID->m_wIndex, pbyType, szMsg, nMsgSize);
+                g_Network.m_pProcess[0]->LoadSendMsg(p_m_ObjID->m_wIndex, pbyType, szMsg, nMsgSize);
               }
             }
           }
@@ -1449,7 +1452,7 @@ void CGameObject::SendMsg_RealFixPosition(bool bCircle)
   if ( bCircle )
     CGameObject::CircleReport(pbyType, szMsg, 8, 0);
   else
-    CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], this->m_ObjID.m_wIndex, pbyType, szMsg, 8u);
+    g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, szMsg, 8u);
 }
 
 void CGameObject::SendMsg_RealMovePoint(int n)
@@ -1679,3 +1682,174 @@ void CGameObject::_ResetCirclePlayer()
   }
 }
 */
+
+void CGameObject::CalcAbsPos()
+{
+  _bsp_info *BspInfo = this->m_pCurMap->GetBspInfo();
+  this->m_fAbsPos[0] = static_cast<float>(-BspInfo->m_nMapMinSize[0]) + this->m_fCurPos[0];
+  this->m_fAbsPos[1] = static_cast<float>(BspInfo->m_nMapMaxSize[1]) - this->m_fCurPos[1];
+  this->m_fAbsPos[2] = static_cast<float>(BspInfo->m_nMapMaxSize[2]) - this->m_fCurPos[2];
+}
+
+__int64 CGameObject::CalcSecIndex()
+{
+  this->CalcAbsPos();
+  unsigned int secX = static_cast<unsigned int>(static_cast<int>(this->m_fAbsPos[0] / 100.0f));
+  unsigned int secZ = static_cast<unsigned int>(static_cast<int>(this->m_fAbsPos[2] / 100.0f));
+  _sec_info *SecInfo = this->m_pCurMap->GetSecInfo();
+  if (secX < SecInfo->m_nSecNumW && secZ < SecInfo->m_nSecNumH)
+    return SecInfo->m_nSecNumW * secZ + secX;
+  g_Main.m_logSystemError.Write(
+    "kind(%d), id(%d).. Out of Sector",
+    this->m_ObjID.m_byKind,
+    this->m_ObjID.m_byID);
+  return this->m_dwCurSec;
+}
+
+__int64 CGameObject::GetUseSectorRange()
+{
+  return static_cast<unsigned int>(this->m_pCurMap->m_pMapSet->m_nRadius);
+}
+
+bool CGameObject::IsInTown()
+{
+  return false;
+}
+
+void CGameObject::CircleReport(unsigned __int8 *pbyType, char *szMsg, unsigned __int16 nMsgSize, bool bToOne)
+{
+  if (this->m_bPlayerCircleList)
+  {
+    for (unsigned int dwClientIndex = 0; static_cast<int>(dwClientIndex) < 2532; ++dwClientIndex)
+    {
+      if (this->m_bPlayerCircleList[dwClientIndex])
+        g_Network.m_pProcess[0]->LoadSendMsg(dwClientIndex, pbyType, szMsg, nMsgSize);
+    }
+    return;
+  }
+
+  if (bToOne && !this->m_ObjID.m_byKind && !this->m_ObjID.m_byID)
+    g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, szMsg, nMsgSize);
+
+  if (this->m_pCurMap && this->m_dwCurSec != static_cast<unsigned int>(-1))
+  {
+    _sec_info *SecInfo = this->m_pCurMap->GetSecInfo();
+    int nRadius = static_cast<int>(this->GetUseSectorRange());
+    _pnt_rect pRect;
+    this->m_pCurMap->GetRectInRadius(&pRect, nRadius, this->m_dwCurSec);
+    for (int j = pRect.nStarty; j <= pRect.nEndy; ++j)
+    {
+      for (int k = pRect.nStartx; k <= pRect.nEndx; ++k)
+      {
+        unsigned int dwSecIndex = SecInfo->m_nSecNumW * j + k;
+        CObjectList *SectorListPlayer =
+          this->m_pCurMap->GetSectorListPlayer(this->m_wMapLayerIndex, dwSecIndex);
+        if (SectorListPlayer)
+        {
+          _object_list_point *m_pNext = SectorListPlayer->m_Head.m_pNext;
+          while (m_pNext != &SectorListPlayer->m_Tail)
+          {
+            CGameObject *m_pItem = m_pNext->m_pItem;
+            m_pNext = m_pNext->m_pNext;
+            _object_id *p_m_ObjID = &m_pItem->m_ObjID;
+            if (m_pItem != this && (!this->m_bObserver || BYTE4(m_pItem[9].m_SectorNetPoint.m_pNext)))
+              g_Network.m_pProcess[0]->LoadSendMsg(p_m_ObjID->m_wIndex, pbyType, szMsg, nMsgSize);
+          }
+        }
+      }
+    }
+  }
+}
+
+void CGameObject::CircleReport(
+  unsigned __int8 *pbyType,
+  char *szMsg,
+  unsigned __int16 nMsgSize,
+  unsigned int dwPassObjSerial,
+  bool bToOne)
+{
+  if (this->m_bPlayerCircleList)
+  {
+    for (unsigned int dwClientIndex = 0; static_cast<int>(dwClientIndex) < 2532; ++dwClientIndex)
+    {
+      if (this->m_bPlayerCircleList[dwClientIndex])
+        g_Network.m_pProcess[0]->LoadSendMsg(dwClientIndex, pbyType, szMsg, nMsgSize);
+    }
+    return;
+  }
+
+  if (bToOne && !this->m_ObjID.m_byKind && !this->m_ObjID.m_byID)
+    g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, szMsg, nMsgSize);
+
+  if (this->m_pCurMap && this->m_dwCurSec != static_cast<unsigned int>(-1))
+  {
+    _sec_info *SecInfo = this->m_pCurMap->GetSecInfo();
+    int nRadius = static_cast<int>(this->GetUseSectorRange());
+    _pnt_rect pRect;
+    this->m_pCurMap->GetRectInRadius(&pRect, nRadius, this->m_dwCurSec);
+    for (int j = pRect.nStarty; j <= pRect.nEndy; ++j)
+    {
+      for (int k = pRect.nStartx; k <= pRect.nEndx; ++k)
+      {
+        unsigned int dwSecIndex = SecInfo->m_nSecNumW * j + k;
+        CObjectList *SectorListPlayer =
+          this->m_pCurMap->GetSectorListPlayer(this->m_wMapLayerIndex, dwSecIndex);
+        if (SectorListPlayer)
+        {
+          _object_list_point *m_pNext = SectorListPlayer->m_Head.m_pNext;
+          while (m_pNext != &SectorListPlayer->m_Tail)
+          {
+            CGameObject *m_pItem = m_pNext->m_pItem;
+            m_pNext = m_pNext->m_pNext;
+            _object_id *p_m_ObjID = &m_pItem->m_ObjID;
+            if (m_pItem != this
+              && m_pItem->m_dwObjSerial != dwPassObjSerial
+              && (!this->m_bObserver || BYTE4(m_pItem[9].m_SectorNetPoint.m_pNext)))
+            {
+              g_Network.m_pProcess[0]->LoadSendMsg(p_m_ObjID->m_wIndex, pbyType, szMsg, nMsgSize);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+char CGameObject::Create(_object_create_setdata *pData)
+{
+  if (this->m_bLive)
+    return 0;
+
+  this->m_pCurMap = pData->m_pMap;
+  this->m_wMapLayerIndex = pData->m_nLayerIndex;
+  memcpy_0(this->m_fCurPos, pData->m_fStartPos, sizeof(this->m_fCurPos));
+  memcpy_0(this->m_fOldPos, pData->m_fStartPos, sizeof(this->m_fOldPos));
+  this->m_bMaxVision = 0;
+  this->m_bObserver = 0;
+  this->m_nCirclePlayerNum = 0;
+
+  unsigned int dwSecIndex = static_cast<unsigned int>(this->CalcSecIndex());
+  _sec_info *SecInfo = pData->m_pMap->GetSecInfo();
+  if (dwSecIndex < SecInfo->m_nSecNum)
+  {
+    pData->m_pMap->EnterMap(this, dwSecIndex);
+    this->m_bLive = 1;
+    this->m_pRecordSet = pData->m_pRecordSet;
+    this->m_dwCurSec = dwSecIndex;
+    this->m_bMove = 0;
+    this->m_bCorpse = 0;
+    this->m_bMapLoading = 0;
+    this->m_bBreakTranspar = 0;
+    this->m_dwLastSendTime = GetLoopTime();
+    this->m_dwOldTickBreakTranspar = GetLoopTime();
+    return 1;
+  }
+
+  this->m_pCurMap = nullptr;
+  g_Main.m_logSystemError.Write(
+    "CGameObject::Create() : dwSec >= MAX(this[%d-%d-%d])",
+    this->m_ObjID.m_byKind,
+    this->m_ObjID.m_byID,
+    this->m_ObjID.m_wIndex);
+  return 0;
+}

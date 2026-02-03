@@ -13,10 +13,6 @@ END_MESSAGE_MAP()
 
 CWorldServerApp theApp;
 
-_R3ENGINE_STATE stState{};
-int dword_184A79820 = 0;
-int dword_184A79824 = 0;
-
 CWorldServerApp::CWorldServerApp() noexcept
 {
 }

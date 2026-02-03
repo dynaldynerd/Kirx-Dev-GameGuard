@@ -25,6 +25,7 @@ struct _READ_ANI_OBJECT
 /* 1395 */
 class __cppobj __unaligned __declspec(align(4)) CEntity
 {
+public:
   int mIsUseMemory;
   int mIsEntityLoad;
   int mIsAlpha;
@@ -57,5 +58,6 @@ public:
   void ReleaseEntity();
   void ReleaseTexMem();
   void RestoreTexMem();
+  void PrepareAnimation();
 };
 

@@ -69,6 +69,8 @@ struct _FORCE_CLOSE
   CNetTimer m_tmFD;
   CNetIndexList m_listFD;
   CNetIndexList m_listFDEmpty;
+
+  bool PushNode(unsigned int dwIndex, unsigned int dwSerial);
 };
 
 struct _NET_TYPE_PARAM : _SOCK_TYPE_PARAM
@@ -113,6 +115,9 @@ public:
 
 struct _NET_BUFFER
 {
+  __int64 GetLeftLoadSize();
+  void AddPushPos(unsigned int dwAddSize);
+
   unsigned int m_nMaxSize;
   unsigned int m_nEtrSize;
   int m_dwPopRot;
@@ -177,6 +182,8 @@ class __cppobj __declspec(align(8)) CNetSocket
 public:
   virtual ~CNetSocket() = default;
 
+  _socket *GetSocket(unsigned int dwIndex);
+
   unsigned __int64 m_sAccept;
   void *m_AcceptEvent;
   _socket *m_Socket;
@@ -197,6 +204,9 @@ class __cppobj __declspec(align(8)) CNetProcess
 {
 public:
   virtual ~CNetProcess() = default;
+
+  int LoadSendMsg(unsigned int dwClientIndex, unsigned __int8 *pbyType, char *szMsg, unsigned __int16 nLen);
+  void PushCloseNode(unsigned int nIndex);
 
   CNetSocket m_NetSocket;
   _FORCE_CLOSE m_FC;

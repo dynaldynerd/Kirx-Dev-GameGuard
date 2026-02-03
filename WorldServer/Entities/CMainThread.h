@@ -2431,6 +2431,8 @@ struct _PARTICLE_ELEMENT
   unsigned __int8 mIsLive;
   unsigned __int16 mNowTrack;
   float mNowFrame;
+
+  void UpDate(float a2);
 };
 
 /* 1399 */

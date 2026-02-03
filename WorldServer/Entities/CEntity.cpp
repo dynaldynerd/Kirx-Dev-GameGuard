@@ -2,9 +2,11 @@
 
 #include "CEntity.h"
 
+#include <algorithm>
 #include <cstring>
 
 #include "WorldServerUtil.h"
+#include "R3EngineGlobals.h"
 
 #pragma pack(push, 1)
 struct _ENTITY_COMP_HEADER
@@ -400,12 +402,12 @@ __int64 CEntity::LoadEntity(char *a2, unsigned int a3)
     mMatGroup[i].MultiSourceUV = &mOrgUV[staticVertCnt];
     mMatGroup[i].ObjectId = readMatGroup[i].object_id;
 
-    mBBMin[0] = std::min(mBBMin[0], mMatGroup[i].BBMin[0]);
-    mBBMin[1] = std::min(mBBMin[1], mMatGroup[i].BBMin[1]);
-    mBBMin[2] = std::min(mBBMin[2], mMatGroup[i].BBMin[2]);
-    mBBMax[0] = std::max(mBBMax[0], mMatGroup[i].BBMax[0]);
-    mBBMax[1] = std::max(mBBMax[1], mMatGroup[i].BBMax[1]);
-    mBBMax[2] = std::max(mBBMax[2], mMatGroup[i].BBMax[2]);
+    mBBMin[0] = (std::min)(mBBMin[0], mMatGroup[i].BBMin[0]);
+    mBBMin[1] = (std::min)(mBBMin[1], mMatGroup[i].BBMin[1]);
+    mBBMin[2] = (std::min)(mBBMin[2], mMatGroup[i].BBMin[2]);
+    mBBMax[0] = (std::max)(mBBMax[0], mMatGroup[i].BBMax[0]);
+    mBBMax[1] = (std::max)(mBBMax[1], mMatGroup[i].BBMax[1]);
+    mBBMax[2] = (std::max)(mBBMax[2], mMatGroup[i].BBMax[2]);
 
     mMatGroup[i].Type = 1;
     unsigned int alpha = 0xFF000000;
@@ -522,7 +524,7 @@ void CEntity::ReleaseTexMem()
 {
   if (mFlag & 8)
   {
-    auto **texList = reinterpret_cast<unsigned long long *>(mIndependencyTex);
+    auto *texList = reinterpret_cast<unsigned long long *>(mIndependencyTex);
     for (int i = 0; i < mTexNum; ++i)
     {
       if (texList[i])
@@ -550,6 +552,23 @@ void CEntity::RestoreTexMem()
     for (int i = 0; i < mTexNum; ++i)
       R3LoadTextureMem(i + mStartTexID);
     mTextureSize += GetNowTexMemSize() - old;
+  }
+}
+
+void CEntity::PrepareAnimation()
+{
+  if (mObject)
+  {
+    int idx = 0;
+    if (mObjectNum > 0)
+    {
+      __int64 objIdx = 0;
+      do
+      {
+        ++idx;
+        mObject[objIdx++].AniFrameCache = 0;
+      } while (idx < mObjectNum);
+    }
   }
 }
 

@@ -125,6 +125,7 @@ bool CMapOperation::LoadMaps()
 
         if (!MapItemStoreListByNum->CreateStores(&this->m_Map[dwIndex]))
         {
+            MyMessageBox("ItemStore Load Error", "LoadMaps() : pMapItemStoreList->CreateStores(%s)", pMapSet->m_strFileName);
             return false;
         }
 
@@ -149,15 +150,13 @@ bool CMapOperation::LoadMaps()
                         pData.m_fStartPos,
                         1);
 
-                    CItemStore *MapItemStoreFromList = v4->GetMapItemStoreFromList(dwIndex, nStoreNum);
+                    CItemStoreManager *v5 = CItemStoreManager::Instance();
+                    CItemStore *MapItemStoreFromList = v5->GetMapItemStoreFromList(dwIndex, nStoreNum);
                     pData.m_pLinkItemStore = MapItemStoreFromList;
                     pData.m_pMap = &this->m_Map[dwIndex];
                     pData.m_nLayerIndex = 0;
-                    if (MapItemStoreFromList)
-                    {
-                        pData.m_pRecordSet = (_base_fld*)MapItemStoreFromList->m_pRec;
-                        pData.m_byRaceCode = MapItemStoreFromList->m_byNpcRaceCode;
-                    }
+                    pData.m_pRecordSet = MapItemStoreFromList->GetNpcRecord();
+                    pData.m_byRaceCode = MapItemStoreFromList->m_byNpcRaceCode;
 
                     EmptyNPC->Create(&pData);
                 }

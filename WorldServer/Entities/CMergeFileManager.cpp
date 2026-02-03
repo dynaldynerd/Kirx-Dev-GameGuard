@@ -36,7 +36,7 @@ void CMergeFileManager::InitMergeFile(char *a2)
     v9 = reinterpret_cast<unsigned long long *>(v21);
     do
     {
-      *v9++ = v7;
+      *v9++ = reinterpret_cast<unsigned long long>(v7);
       v7 += 64;
       --v8;
     } while (v8);
@@ -88,7 +88,7 @@ void CMergeFileManager::InitMergeFile(char *a2)
           {
             sprintf_s(String, "%s%s", v2, *v19);
             _strlwr(String);
-            CMergeFile::LoadMergeFileHeader(&mMergeFile[v10], String);
+            mMergeFile[v10].LoadMergeFileHeader(String);
             v10 = v10 + 1;
             ++v19;
           } while (v10 < mMergeFileNum);
@@ -149,7 +149,7 @@ __int64 CMergeFileManager::IsExistFile(char *a2)
   return 1;
 }
 
-struct _iobuf *CMergeFileManager::LoadFileOffset(char *a2, char *a3)
+struct _iobuf *CMergeFileManager::LoadFileOffset(char *a2, const char *a3)
 {
   _strlwr(a2);
   unsigned int v6 = 0;

@@ -7,6 +7,9 @@ class CItemStore;
 class __cppobj CMapItemStoreList
 {
 public:
+  CMapItemStoreList();
+  ~CMapItemStoreList();
+
   bool m_bUse;
   unsigned __int8 m_byType;
   int m_nSerial;
@@ -15,4 +18,5 @@ public:
 
   void SetTypeNSerial(unsigned __int8 byType, int nSerial);
   bool CreateStores(CMapData *pMap);
+  bool SetItemStores(CMapData *pMap);
 };

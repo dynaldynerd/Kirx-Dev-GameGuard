@@ -5,6 +5,8 @@
 #include "CGameObject.h"
 #include "CMyTimer.h"
 
+struct _character_create_setdata;
+
 struct __declspec(align(4)) _sf_continous
 {
   bool m_bExist;
@@ -57,5 +59,6 @@ public:
   int m_nContEffectSec;
   CMyTimer m_tmrSFCont;
 
+  bool Create(_character_create_setdata *pData);
   void Init(_object_id *pID);
 };

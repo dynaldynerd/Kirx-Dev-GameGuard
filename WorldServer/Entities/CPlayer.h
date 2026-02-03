@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "InvenKey.h"
 
 #pragma pack(push, 1)
 
@@ -316,14 +317,6 @@ struct __cppobj _ITEMCOMBINE_DB_BASE
   _LIST m_List[24];
   unsigned int m_dwResultEffectType;
   unsigned int m_dwResultEffectMsgCode;
-};
-
-/* 1197 */
-struct __cppobj _INVENKEY
-{
-  unsigned __int8 bySlotIndex;
-  unsigned __int8 byTableCode;
-  unsigned __int16 wItemIndex;
 };
 
 /* 1215 */

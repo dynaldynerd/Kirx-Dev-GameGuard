@@ -18,6 +18,7 @@ public:
   static bool PushNode_Back(CNetIndexList *list, unsigned int index);
   static bool PushNode_Front(CNetIndexList *list, unsigned int index);
   static bool PopNode_Front(CNetIndexList *list, unsigned int *outIndex);
+  static bool IsInList(CNetIndexList *list, unsigned int index);
   static unsigned int size(const CNetIndexList *list);
 
   _index_node m_Head;

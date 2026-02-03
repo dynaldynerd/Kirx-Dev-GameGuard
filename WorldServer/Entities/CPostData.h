@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "InvenKey.h"
 
 /* 1215 */
 class __cppobj __declspec(align(8)) CPostData

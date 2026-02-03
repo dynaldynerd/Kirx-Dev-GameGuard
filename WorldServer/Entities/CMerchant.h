@@ -15,9 +15,10 @@ public:
   int m_nLeftTicketNum[2];
 
   static int s_nLiveNum;
+  static unsigned int s_dwSerialCnt;
 
-  void Init(_object_id *pID);
+  bool Init(_object_id *pID);
   bool Create(_npc_create_setdata *pData);
   static unsigned int GetNewMonSerial();
-  static void SendMsg_Create(CMerchant *pMerchant);
+  void SendMsg_Create();
 };

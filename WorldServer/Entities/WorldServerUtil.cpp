@@ -14,10 +14,14 @@
 #pragma comment(lib, "winmm.lib")
 
 #include "CMerchant.h"
+#include "CRecordData.h"
 #include "GlobalObjectDefs.h"
+#include "GlobalObjects.h"
+#include "ItemDataLoader.h"
 #include "R3EngineState.h"
 #include "R3EngineGlobals.h"
 #include "CMergeFileManager.h"
+#include "base_fld.h"
 
 static __int64 D3DXCreateTextureFromFileInMemory_0(IDirect3DDevice8 *device, const void *data, unsigned int size, void *outTex);
 static __int64 D3DXCreateTextureFromFileExA_0(IDirect3DDevice8 *device, const char *path, __int64 flags);
@@ -105,6 +109,14 @@ bool GetDateTimeStr(char *szTime)
   return std::strftime(szTime, 0x80, "%y-%m-%d_%H-%M-%S", &local) != 0;
 }
 
+void FloatToShort(float *pFloat, short *pShort, int size)
+{
+  for (int j = 0; j < size; ++j)
+  {
+    pShort[j] = static_cast<short>(static_cast<int>(pFloat[j]));
+  }
+}
+
 int GetItemTableCode(const char *psItemCode)
 {
   if (psItemCode == nullptr)
@@ -154,6 +166,983 @@ int GetItemTableCode(const char *psItemCode)
   if (strcmp(prefix, "cu") == 0) return 36;
 
   return -1;
+}
+
+int GetItemStdPrice(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind)
+{
+  (void)nRace;
+  CRecordData *table = &s_ptblItemData[nTableCode];
+  _base_fld *Record = nullptr;
+
+  switch (nTableCode)
+  {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 7:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[36];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[40]);
+    case 6:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[8].m_strCode[36];
+      return *reinterpret_cast<unsigned int *>(&Record[8].m_strCode[40]);
+    case 8:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[16];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+    case 9:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[16];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+    case 10:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[6].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[4]);
+    case 11:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[8];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[12]);
+    case 12:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[4]);
+    case 13:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[6].m_strCode[44];
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[48]);
+    case 15:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[4]);
+    case 16:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[4]);
+    case 17:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[3].m_strCode[12];
+      return *reinterpret_cast<unsigned int *>(&Record[3].m_strCode[16]);
+    case 18:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[5].m_strCode[8];
+      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[12]);
+    case 19:
+      return 0;
+    case 20:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[4]);
+    case 21:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = static_cast<unsigned __int8>(Record[5].m_dwIndex);
+      return *reinterpret_cast<unsigned int *>(Record[5].m_strCode);
+    case 22:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[5].m_strCode[60];
+      return static_cast<unsigned int>(Record[6].m_dwIndex);
+    case 23:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = static_cast<unsigned __int8>(Record[6].m_dwIndex);
+      return *reinterpret_cast<unsigned int *>(Record[6].m_strCode);
+    case 24:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[4];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[8]);
+    case 25:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[6].m_strCode[44];
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[48]);
+    case 26:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[7].m_strCode[48];
+      return *reinterpret_cast<unsigned int *>(&Record[7].m_strCode[52]);
+    case 27:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[32];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[36]);
+    case 28:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[6].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[4]);
+    case 30:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[8];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[12]);
+    case 31:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[12];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[16]);
+    case 32:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[8];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[12]);
+    case 33:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[5].m_strCode[48];
+      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[52]);
+    case 34:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[48];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[52]);
+    case 35:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[5].m_strCode[36];
+      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[40]);
+    case 36:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[12];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+    default:
+      return 0;
+  }
+}
+
+int GetItemStdPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind)
+{
+  CRecordData *table = &s_ptblItemData[nTableCode];
+  _base_fld *Record = nullptr;
+
+  switch (nTableCode)
+  {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 7:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[36];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[44]);
+    case 6:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[8].m_strCode[36];
+      return *reinterpret_cast<unsigned int *>(&Record[8].m_strCode[44]);
+    case 8:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[16];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[24]);
+    case 9:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[16];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[24]);
+    case 10:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[6].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[8]);
+    case 11:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[8];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[16]);
+    case 12:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[8]);
+    case 13:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[6].m_strCode[44];
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[52]);
+    case 15:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[8]);
+    case 16:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[8]);
+    case 17:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[3].m_strCode[12];
+      return *reinterpret_cast<unsigned int *>(&Record[3].m_strCode[20]);
+    case 18:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[5].m_strCode[8];
+      switch (nRace)
+      {
+        case 0:
+          return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[12]);
+        case 1:
+          return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[16]);
+        case 2:
+          return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[20]);
+        default:
+          return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[24]);
+      }
+    case 19:
+      return 0;
+    case 20:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[8]);
+    case 21:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = static_cast<unsigned __int8>(Record[5].m_dwIndex);
+      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[4]);
+    case 22:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[5].m_strCode[60];
+      return *reinterpret_cast<unsigned int *>(Record[6].m_strCode);
+    case 23:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = static_cast<unsigned __int8>(Record[6].m_dwIndex);
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[4]);
+    case 24:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[4];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[12]);
+    case 25:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[6].m_strCode[44];
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[52]);
+    case 26:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[7].m_strCode[48];
+      return *reinterpret_cast<unsigned int *>(&Record[7].m_strCode[56]);
+    case 27:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[32];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[40]);
+    case 28:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[6].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[8]);
+    case 30:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[8];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[16]);
+    case 31:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[12];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+    case 32:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[8];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[16]);
+    case 33:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[5].m_strCode[48];
+      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[56]);
+    case 34:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[48];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[56]);
+    case 36:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[12];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+    default:
+      return 0;
+  }
+}
+
+int GetItemProcPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind)
+{
+  (void)nRace;
+  CRecordData *table = &s_ptblItemData[nTableCode];
+  _base_fld *Record = nullptr;
+
+  switch (nTableCode)
+  {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 7:
+      Record = table->GetRecord(nItemIndex);
+      if (Record)
+        *pbyMoneyKind = Record[4].m_strCode[36];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[56]);
+    case 6:
+      Record = table->GetRecord(nItemIndex);
+      if (Record)
+        *pbyMoneyKind = Record[8].m_strCode[36];
+      return *reinterpret_cast<unsigned int *>(&Record[8].m_strCode[56]);
+    case 8:
+      Record = table->GetRecord(nItemIndex);
+      if (Record)
+        *pbyMoneyKind = Record[4].m_strCode[16];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[36]);
+    case 9:
+      Record = table->GetRecord(nItemIndex);
+      if (Record)
+        *pbyMoneyKind = Record[4].m_strCode[16];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[36]);
+    case 10:
+      Record = table->GetRecord(nItemIndex);
+      if (Record)
+        *pbyMoneyKind = Record[6].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[20]);
+    case 11:
+      Record = table->GetRecord(nItemIndex);
+      if (Record)
+        *pbyMoneyKind = Record[4].m_strCode[8];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[28]);
+    case 12:
+      Record = table->GetRecord(nItemIndex);
+      if (Record)
+        *pbyMoneyKind = Record[4].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+    case 13:
+      Record = table->GetRecord(nItemIndex);
+      if (Record)
+        *pbyMoneyKind = Record[6].m_strCode[44];
+      return static_cast<unsigned int>(Record[7].m_dwIndex);
+    case 15:
+      Record = table->GetRecord(nItemIndex);
+      if (Record)
+        *pbyMoneyKind = Record[4].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+    case 16:
+      Record = table->GetRecord(nItemIndex);
+      if (Record)
+        *pbyMoneyKind = Record[4].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+    case 17:
+      Record = table->GetRecord(nItemIndex);
+      if (Record)
+        *pbyMoneyKind = Record[3].m_strCode[12];
+      return *reinterpret_cast<unsigned int *>(&Record[3].m_strCode[32]);
+    case 18:
+      Record = table->GetRecord(nItemIndex);
+      if (Record)
+        *pbyMoneyKind = Record[5].m_strCode[8];
+      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[36]);
+    case 19:
+      return 0;
+    case 20:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+    case 21:
+      Record = table->GetRecord(nItemIndex);
+      if (Record)
+        *pbyMoneyKind = static_cast<unsigned __int8>(Record[5].m_dwIndex);
+      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[16]);
+    case 22:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[5].m_strCode[60];
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[12]);
+    case 23:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = static_cast<unsigned __int8>(Record[6].m_dwIndex);
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[16]);
+    case 24:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[4];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[24]);
+    case 25:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[6].m_strCode[44];
+      return static_cast<unsigned int>(Record[7].m_dwIndex);
+    case 26:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[7].m_strCode[48];
+      return *reinterpret_cast<unsigned int *>(Record[8].m_strCode);
+    case 27:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[32];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[52]);
+    case 28:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[6].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[20]);
+    case 30:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[8];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[28]);
+    case 31:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[12];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[32]);
+    case 32:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[8];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[28]);
+    case 33:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[5].m_strCode[48];
+      return *reinterpret_cast<unsigned int *>(Record[6].m_strCode);
+    case 34:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[48];
+      return *reinterpret_cast<unsigned int *>(Record[5].m_strCode);
+    case 36:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[12];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[32]);
+    default:
+      return 0;
+  }
+}
+
+int GetItemKillPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind)
+{
+  (void)nRace;
+  CRecordData *table = &s_ptblItemData[nTableCode];
+  _base_fld *Record = nullptr;
+
+  switch (nTableCode)
+  {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 7:
+      Record = table->GetRecord(nItemIndex);
+      if (Record)
+        *pbyMoneyKind = Record[4].m_strCode[36];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[52]);
+    case 6:
+      Record = table->GetRecord(nItemIndex);
+      if (Record)
+        *pbyMoneyKind = Record[8].m_strCode[36];
+      return *reinterpret_cast<unsigned int *>(&Record[8].m_strCode[52]);
+    case 8:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[16];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[32]);
+    case 9:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[16];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[32]);
+    case 10:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[6].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[16]);
+    case 11:
+      Record = table->GetRecord(nItemIndex);
+      if (Record)
+        *pbyMoneyKind = Record[4].m_strCode[8];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[24]);
+    case 12:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[16]);
+    case 13:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[6].m_strCode[44];
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[60]);
+    case 15:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[16]);
+    case 16:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[16]);
+    case 17:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[3].m_strCode[12];
+      return *reinterpret_cast<unsigned int *>(&Record[3].m_strCode[28]);
+    case 18:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[5].m_strCode[8];
+      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[32]);
+    case 19:
+      return 0;
+    case 20:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[16]);
+    case 21:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = static_cast<unsigned __int8>(Record[5].m_dwIndex);
+      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[12]);
+    case 22:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[5].m_strCode[60];
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[8]);
+    case 23:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = static_cast<unsigned __int8>(Record[6].m_dwIndex);
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[12]);
+    case 24:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[4];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+    case 25:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[6].m_strCode[44];
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[60]);
+    case 26:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[7].m_strCode[48];
+      return static_cast<unsigned int>(Record[8].m_dwIndex);
+    case 27:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[32];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[48]);
+    case 28:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[6].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[16]);
+    case 30:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[8];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[24]);
+    case 31:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[12];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[28]);
+    case 32:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[8];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[24]);
+    case 33:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[5].m_strCode[48];
+      return static_cast<unsigned int>(Record[6].m_dwIndex);
+    case 34:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[48];
+      return static_cast<unsigned int>(Record[5].m_dwIndex);
+    case 36:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[12];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[28]);
+    default:
+      return 0;
+  }
+}
+
+int GetItemGoldPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind)
+{
+  (void)nRace;
+  CRecordData *table = &s_ptblItemData[nTableCode];
+  _base_fld *Record = nullptr;
+
+  switch (nTableCode)
+  {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 7:
+      Record = table->GetRecord(nItemIndex);
+      if (Record)
+        *pbyMoneyKind = Record[4].m_strCode[36];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[48]);
+    case 6:
+      Record = table->GetRecord(nItemIndex);
+      if (Record)
+        *pbyMoneyKind = Record[8].m_strCode[36];
+      return *reinterpret_cast<unsigned int *>(&Record[8].m_strCode[48]);
+    case 8:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[16];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[28]);
+    case 9:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[16];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[28]);
+    case 10:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[6].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[12]);
+    case 11:
+      Record = table->GetRecord(nItemIndex);
+      if (Record)
+        *pbyMoneyKind = Record[4].m_strCode[8];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+    case 12:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[12]);
+    case 13:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[6].m_strCode[44];
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[56]);
+    case 15:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[12]);
+    case 16:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[12]);
+    case 17:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[3].m_strCode[12];
+      return *reinterpret_cast<unsigned int *>(&Record[3].m_strCode[24]);
+    case 18:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[5].m_strCode[8];
+      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[28]);
+    case 19:
+      return 0;
+    case 20:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[12]);
+    case 21:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = static_cast<unsigned __int8>(Record[5].m_dwIndex);
+      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[8]);
+    case 22:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[5].m_strCode[60];
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[4]);
+    case 23:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = static_cast<unsigned __int8>(Record[6].m_dwIndex);
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[8]);
+    case 24:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[4];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[16]);
+    case 25:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[6].m_strCode[44];
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[56]);
+    case 26:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[7].m_strCode[48];
+      return *reinterpret_cast<unsigned int *>(&Record[7].m_strCode[60]);
+    case 27:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[32];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[44]);
+    case 28:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[6].m_strCode[0];
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[12]);
+    case 30:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[8];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+    case 31:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[12];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[24]);
+    case 32:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[8];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+    case 33:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[5].m_strCode[48];
+      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[60]);
+    case 34:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[48];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[60]);
+    case 36:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return 0;
+      *pbyMoneyKind = Record[4].m_strCode[12];
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[24]);
+    default:
+      return 0;
+  }
+}
+
+unsigned int GetItemDurPoint(int nTableCode, int nIndex)
+{
+  CRecordData *table = &s_ptblItemData[nTableCode];
+  _base_fld *Record = nullptr;
+
+  switch (nTableCode)
+  {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+      Record = table->GetRecord(nIndex);
+      if (!Record)
+        return 1;
+      return *reinterpret_cast<unsigned int *>(Record[5].m_strCode);
+    case 6:
+      Record = table->GetRecord(nIndex);
+      if (!Record)
+        return 1;
+      return *reinterpret_cast<unsigned int *>(Record[9].m_strCode);
+    case 10:
+      Record = table->GetRecord(nIndex);
+      if (!Record)
+        return 1;
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[28]);
+    case 11:
+      Record = table->GetRecord(nIndex);
+      if (!Record)
+        return 1;
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[40]);
+    case 15:
+      return 0;
+    case 16:
+      Record = table->GetRecord(nIndex);
+      if (!Record)
+        return 1;
+      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[28]);
+    case 24:
+      return 0;
+    case 25:
+      Record = table->GetRecord(nIndex);
+      if (!Record)
+        return 1;
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[40]);
+    case 26:
+      Record = table->GetRecord(nIndex);
+      if (!Record)
+        return 1;
+      return static_cast<unsigned int>(static_cast<int>(*reinterpret_cast<float *>(&Record[5].m_strCode[60])));
+    case 27:
+      Record = table->GetRecord(nIndex);
+      if (!Record)
+        return 1;
+      return static_cast<unsigned int>(Record[5].m_dwIndex);
+    case 33:
+      Record = table->GetRecord(nIndex);
+      if (!Record)
+        return 1;
+      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[44]);
+    default:
+      return 1;
+  }
 }
 
 int ParsingCommandA(char *pszSrc, int nMaxWordNum, char **ppszDst, int nMaxWordSize)
@@ -312,7 +1301,7 @@ bool IsServerMode()
 }
 
 bool IsInitR3Engine() { return dword_184A77F3C != 0; }
-float R3GetTime() { return (float)GetTickCount() / 1000.0f; }
+float R3GetTime() { return *reinterpret_cast<float *>(&dword_184A77EE8); }
 
 IDirect3DDevice8 *GetD3dDevice()
 {
@@ -359,6 +1348,18 @@ __int64 IsExistFileAndMergeFile(char *szFileName)
     }
   }
   return 0;
+}
+
+__int64 CalcFileSize(char *pszFileName)
+{
+  HANDLE hFile = CreateFileA(pszFileName, 0x80000000, 1u, nullptr, 3u, 0x80u, nullptr);
+  if (hFile == reinterpret_cast<HANDLE>(-1))
+    return 0;
+
+  DWORD v6 = SetFilePointer(hFile, 0, nullptr, 0);
+  DWORD v7 = SetFilePointer(hFile, 0, nullptr, 2u);
+  CloseHandle(hFile);
+  return static_cast<__int64>(v7 - v6);
 }
 _R3MATERIAL *LoadMainR3M(char *szFileName)
 {
@@ -1355,7 +2356,7 @@ void LoadLightMap(char *szFileName)
   while ((*dst++ = *szFileName++) != '\0')
     ;
   qword_184A79DA0 = reinterpret_cast<unsigned long long>(R3GetTexInfoR3T(v10, 0));
-  stLightmap = LoadR3TLightMap(reinterpret_cast<R3Texture *>(qword_184A79DA0), D3DFMT_R5G6B5);
+  stLightmap = LoadR3TLightMap(reinterpret_cast<R3Texture *>(qword_184A79DA0), static_cast<D3DFORMAT>(D3DFMT_R5G6B5));
   if (stLightmap)
   {
     dword_184A79D88 = *reinterpret_cast<unsigned int *>(qword_184A79DA0 + 132);
@@ -1628,9 +2629,9 @@ CMergeFileManager *GetMergeFileManager()
   return qword_184A7B208;
 }
 
-FILE *fopenMFM(char *a1, char *Mode)
+FILE *fopenMFM(char *a1, const char *Mode)
 {
-  char *v2 = Mode;
+  const char *v2 = Mode;
   char *v3 = a1;
   if (qword_184A7B208)
   {
@@ -1673,9 +2674,10 @@ __int64 GetTokenFloat(char *a1, float *a2)
     return static_cast<unsigned int>(v7);
   }
 
+  char v9 = 0;
   while (true)
   {
-    char v9 = a1[v6];
+    v9 = a1[v6];
     if (v9 != '(')
       break;
     v5 = 0;
@@ -1727,9 +2729,10 @@ __int64 GetRandOrNum(FILE *Stream, float *a2, float *a3)
         Error(byte_140884F48, asc_140884F60);
       char *v9 = &String[std::strlen(String) + 1];
       __int64 v10 = 0;
+      char v11 = 0;
       do
       {
-        char v11 = v17[v10];
+        v11 = v17[v10];
         v9[v10++ - 1] = v11;
       } while (v11);
       v6 = static_cast<int>(std::strlen(String));
@@ -2481,11 +3484,15 @@ static void RestoreSystemTexture()
   }
   if (qword_184A79C18)
   {
-    qword_184A79C18 = reinterpret_cast<unsigned long long>(R3LoadDDS(".\\system\\logo.dds", 2, 0x800, 0x800));
+    char logoPath[] = ".\\system\\logo.dds";
+    qword_184A79C18 = reinterpret_cast<unsigned long long>(R3LoadDDS(logoPath, 2, 0x800, 0x800));
     v0 = qword_184A79C20;
   }
   if (v0)
-    qword_184A79C20 = reinterpret_cast<unsigned long long>(R3LoadDDS(".\\system\\dlight.dds", 2, 0x800, 0x800));
+  {
+    char dlightPath[] = ".\\system\\dlight.dds";
+    qword_184A79C20 = reinterpret_cast<unsigned long long>(R3LoadDDS(dlightPath, 2, 0x800, 0x800));
+  }
 }
 
 static IDirect3DTexture8 *GetD3DTextureFromBuffer(unsigned __int8 *a1, unsigned int a2)

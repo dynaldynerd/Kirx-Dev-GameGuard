@@ -92,7 +92,7 @@ void CMergeFile::ReleaseMergeFileHeader()
   }
 }
 
-struct _iobuf *CMergeFile::LoadFileOffset(char *a2, char *Mode)
+struct _iobuf *CMergeFile::LoadFileOffset(char *a2, const char *Mode)
 {
   unsigned int FileOffset = GetFileOffset(0, a2);
   if (FileOffset == static_cast<unsigned int>(-1))

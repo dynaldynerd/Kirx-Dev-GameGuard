@@ -8,13 +8,25 @@
 #include "mon_block_fld.h"
 #include "mon_active_fld.h"
 
+class CObjectList;
+class CGameObject;
+struct _pnt_rect;
+
 /* 1313 */
 class __cppobj __declspec(align(8)) CMapData
 {
 public:
+  _bsp_info *GetBspInfo();
+  _sec_info *GetSecInfo();
+  CObjectList *GetSectorListObj(unsigned __int16 wLayerIndex, unsigned int dwSecIndex);
+  CObjectList *GetSectorListPlayer(unsigned __int16 wLayerIndex, unsigned int dwSecIndex);
+  CObjectList *GetSectorListTower(unsigned __int16 wLayerIndex, unsigned int dwSecIndex);
+  void GetRectInRadius(_pnt_rect *pRect, int nRadius, unsigned int nSecNum);
+  void EnterMap(CGameObject *pObj, unsigned int dwSecIndex);
+  void ExitMap(CGameObject *pObj, unsigned int dwSecIndex);
   bool IsMapIn(float *fPos);
   void Init(_map_fld *pMapSet);
-  bool OpenMap(char *szFileName, _map_fld *pMapSet, int nType);
+  bool OpenMap(char *szFileName, _map_fld *pMapSet, bool bUse);
   bool ConvertLocalToWorldDummy(CDummyPosTable *pTable, bool bCheckCenter);
   bool GetRandPosInDummy(_dummy_position *pDumPos, float *fOutPos, bool bRePos);
   _portal_dummy *GetPortal(int nPortalIndex);

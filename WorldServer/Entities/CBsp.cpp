@@ -607,6 +607,113 @@ void CBsp::SubLeafList(float dist, _BSP_NODE *pNode, float *const a4, float *con
     }
 }
 
+__int64 CBsp::IsCollisionFace(float *const a2, float *const a3, float (*a4)[3], float (*a5)[4])
+{
+    float *v5 = a3;
+    float *v6 = a2;
+    float *v61 = reinterpret_cast<float *>(a4);
+    float *v63 = reinterpret_cast<float *>(a5);
+    int v51 = 0;
+    __int16 v66[32000];
+
+    GetLeafList(a2, a3, &v51, v66, 0x7D00u);
+
+    float v8 = 1.0e8f;
+    int v50 = 0;
+    int v53 = 0;
+    if (v51 <= 0)
+        return 0LL;
+
+    __int16 *v10 = v66;
+    unsigned int v11 = static_cast<unsigned int>(v51);
+    do
+    {
+        _BSP_LEAF *mLeaf = this->mLeaf;
+        int v14 = *v10;
+        unsigned short face_num = mLeaf[v14].face_num;
+        int face_start_id = static_cast<int>(mLeaf[v14].face_start_id);
+        if (face_num)
+        {
+            int v13 = 0;
+            int v17 = face_start_id;
+            do
+            {
+                _BSP_C_FACE *mCFace = this->mCFace;
+                int v55 = this->mCFaceId[v17];
+                if ((mCFace[v55].Attr & 0x40) == 0)
+                {
+                    float v59[4];
+                    if ((unsigned int)GetPlaneCrossPoint(v6, v5, v59, mCFace[v55].Normal, mCFace[v55].Normal[3]))
+                    {
+                        int v22 = mCFace[v55].VNum;
+                        int v23 = static_cast<int>(mCFace[v55].VStartId);
+                        float v24 = v59[2];
+                        float v25 = v59[1];
+                        float v26 = v59[0];
+                        int v27 = 0;
+                        int v28 = 0;
+                        if (v22)
+                        {
+                            unsigned int *mCVertexId = this->mCVertexId;
+                            float *mCVertex = reinterpret_cast<float *>(this->mCVertex);
+                            float *v35 = mCFace[v55].Normal;
+                            do
+                            {
+                                ++v28;
+                                unsigned int v36 = mCVertexId[v23 + v28 - 1];
+                                unsigned int vNext = mCVertexId[v23 + v28 % v22];
+                                float v37 = mCVertex[3 * vNext];
+                                float v38 = mCVertex[3 * vNext + 1];
+                                float v39 = mCVertex[3 * vNext + 2];
+                                float v40 = mCVertex[3 * v36 + 1] - v38;
+                                float v60[3];
+                                v60[0] = mCVertex[3 * v36] - v37;
+                                float v41 = mCVertex[3 * v36 + 2];
+                                v60[1] = v40;
+                                v60[2] = v41 - v39;
+                                float v58[4];
+                                sub_1404E2FB0(v35, v60, v58);
+                                if ((float)((float)((float)(v25 - v38) * v58[1]) + (float)((float)(v26 - v37) * v58[0]))
+                                        + (float)((float)(v24 - v39) * v58[2])
+                                    <= 0.0f)
+                                    ++v27;
+                            } while (v28 < v22);
+                        }
+                        if (v27 == v22)
+                        {
+                            float dist = (float)((float)((float)(v25 - v6[1]) * (float)(v25 - v6[1]))
+                                                  + (float)((float)(v26 - *v6) * (float)(v26 - *v6)))
+                                        + (float)((float)(v24 - v6[2]) * (float)(v24 - v6[2]));
+                            if (v8 > dist)
+                            {
+                                v8 = dist;
+                                v50 = 1;
+                                v61[0] = v26;
+                                v61[1] = v25;
+                                v61[2] = v24;
+                                v53 = v55;
+                            }
+                        }
+                    }
+                }
+                ++v13;
+                ++v17;
+            } while (v13 < face_num);
+        }
+        ++v10;
+        --v11;
+    } while (v11);
+
+    if (!v50)
+        return 0LL;
+
+    v63[0] = this->mCFace[v53].Normal[0];
+    v63[1] = this->mCFace[v53].Normal[1];
+    v63[2] = this->mCFace[v53].Normal[2];
+    v63[3] = this->mCFace[v53].Normal[3];
+    return 1LL;
+}
+
 void CBsp::LoadBsp(char *a2)
 {
     if (!IsInitR3Engine())
@@ -627,19 +734,13 @@ void CBsp::LoadBsp(char *a2)
     if (mBSPHeader.version != 39)
         Error(aBspAai, aAa);
 
-    unsigned __int128 v6 = static_cast<unsigned __int128>(mBSPHeader.Leaf.size) * 0x47AE147AE147AE15ull;
-    mLeafNum = static_cast<unsigned int>(((static_cast<unsigned long long>(v6 >> 64) +
-                                           ((mBSPHeader.Leaf.size - static_cast<unsigned long long>(v6 >> 64)) >> 1)) >>
-                                          4));
+    mLeafNum = mBSPHeader.Leaf.size / 25;
     mNodeNum = mBSPHeader.Node.size / 0x18;
     mCVertexNum = mBSPHeader.BVertex.size / 3 + mBSPHeader.WVertex.size / 6 + mBSPHeader.FVertex.size / 0xC;
     mCFaceNum = mBSPHeader.Face.size / 6;
     mObjectNum = mBSPHeader.Object.size / 0x58;
 
-    unsigned __int128 v9 = static_cast<unsigned __int128>(mBSPHeader.ReadMatGroup.size) * 0x8618618618618619ull;
-    mMatGroupNum = static_cast<unsigned int>(((static_cast<unsigned long long>(v9 >> 64) +
-                                                ((mBSPHeader.ReadMatGroup.size - static_cast<unsigned long long>(v9 >> 64)) >> 1)) >>
-                                               5));
+    mMatGroupNum = mBSPHeader.ReadMatGroup.size / 42;
 
     int v10 = 12 * mCVertexNum;
     unsigned int size = mBSPHeader.VertexId.size;
@@ -655,15 +756,13 @@ void CBsp::LoadBsp(char *a2)
     }
 
     unsigned int v13 = v10 + size;
-    unsigned __int128 v14 = static_cast<unsigned __int128>(mBSPHeader.ReadMatGroup.size) * 0x8618618618618619ull;
+    unsigned int v14 = mBSPHeader.ReadMatGroup.size / 42;
     unsigned int v15 =
         v12 + v13 + mBSPHeader.CPlanes.size + mBSPHeader.CFaceId.size + mBSPHeader.Node.size + mBSPHeader.Track.size +
         mBSPHeader.Leaf.size + mBSPHeader.LgtUV.size + mBSPHeader.MatListInLeaf.size + mBSPHeader.VertexColor.size +
         361 * (mBSPHeader.Object.size / 0x58) +
         2 * (mObjectNum + 29 * mMapEntitiesListNum +
-             43 * static_cast<unsigned int>(((static_cast<unsigned long long>(v14 >> 64) +
-                                              ((mBSPHeader.ReadMatGroup.size - static_cast<unsigned long long>(v14 >> 64)) >> 1)) >>
-                                             5)));
+             43 * v14);
 
     mStaticAllocSize = v15;
     mTotalAllocSize += v15;
@@ -722,23 +821,15 @@ void CBsp::LoadBsp(char *a2)
     Dfree(v28);
 
     mMatGroup = reinterpret_cast<_BSP_MAT_GROUP *>(&mStaticAlloc[v33]);
-    unsigned __int128 v38 = static_cast<unsigned __int128>(mBSPHeader.ReadMatGroup.size) * 0x8618618618618619ull;
-    unsigned int v39 =
-        86 * static_cast<unsigned int>(((static_cast<unsigned long long>(v38 >> 64) +
-                                         ((mBSPHeader.ReadMatGroup.size - static_cast<unsigned long long>(v38 >> 64)) >> 1)) >>
-                                        5)) +
-        v33;
+    unsigned int v38 = mBSPHeader.ReadMatGroup.size / 42;
+    unsigned int v39 = 86 * v38 + v33;
     mLgtUV = reinterpret_cast<__int16 (*)[2]>(&mStaticAlloc[v39]);
     mVertexColor = reinterpret_cast<unsigned int *>(&mStaticAlloc[mBSPHeader.LgtUV.size + v39]);
 
     ReadDynamicDataFillVertexBuffer(fp);
     fclose(fp);
 
-    unsigned __int128 v40 = static_cast<unsigned __int128>(mBSPHeader.ReadMatGroup.size) * 0x8618618618618619ull;
-    mMatGroupCacheSize = static_cast<int>(((static_cast<unsigned long long>(v40 >> 64) +
-                                            ((mBSPHeader.ReadMatGroup.size - static_cast<unsigned long long>(v40 >> 64)) >> 1)) >>
-                                           8) +
-                                          1);
+    mMatGroupCacheSize = static_cast<int>((mBSPHeader.ReadMatGroup.size / 336) + 1);
     mMatGroupCache = static_cast<unsigned char *>(Dmalloc(mMatGroupCacheSize));
     mTotalAllocSize += mMatGroupCacheSize;
 
@@ -758,15 +849,15 @@ void CBsp::LoadBsp(char *a2)
             char *v47 = &byte_184A79924[128 * v42];
             if (IsParticle(v47))
                 mEnvIDPtr[0] |= 0x1000u;
-            if (_bittest(mEnvIDPtr, 0xCu))
+            if (_bittest(reinterpret_cast<const LONG *>(mEnvIDPtr), 0xCu))
             {
                 CParticle *v48 = reinterpret_cast<CParticle *>(operator new(0x490ull));
                 CParticle *v49 = v48 ? new (v48) CParticle() : nullptr;
                 ___u21.mEnvEntity[v42] = reinterpret_cast<CEntity *>(v49);
-                if (v49 && CParticle::LoadParticleSPT(v49, v47, 0))
+                if (v49 && v49->LoadParticleSPT(v47, 0))
                 {
-                    CParticle::InitParticle(v49);
-                    CParticle::SetParticleState(v49, 1u);
+                    v49->InitParticle();
+                    v49->SetParticleState(1u);
                 }
                 else
                 {
@@ -785,7 +876,7 @@ void CBsp::LoadBsp(char *a2)
                 CEntity *v51 = reinterpret_cast<CEntity *>(operator new(0xF4ull));
                 CEntity *v52 = v51 ? new (v51) CEntity() : nullptr;
                 ___u21.mEnvEntity[v42] = v52;
-                if (v52 && !CEntity::LoadEntity(v52, v47, 0))
+                if (v52 && !v52->LoadEntity(v47, 0))
                 {
                     CEntity *v53 = ___u21.mEnvEntity[v42];
                     if (v53)
@@ -999,9 +1090,30 @@ int CBsp::GetPathCrossPoint(float *const a2, float *const a3, float (*a4)[3], in
     int v18 = a6;
     int v19 = a5;
     int v20 = 0;
+    __int16 *v23 = v66;
+    float *mCFNormal = nullptr;
+    float v27 = 0.0f;
+    float v28 = 0.0f;
+    float v29 = 0.0f;
+    float v30 = 0.0f;
+    float v31 = 0.0f;
+    float v32 = 0.0f;
+    float v33 = 0.0f;
+    float v34 = 0.0f;
+    float v35 = 0.0f;
+    float v36 = 0.0f;
+    float v37 = 0.0f;
+    bool v38 = false;
+    float v39 = 0.0f;
+    float v41 = 0.0f;
+    float v42 = 0.0f;
+    float v43 = 0.0f;
+    float v44 = 0.0f;
+    float dx = 0.0f;
+    float dy = 0.0f;
+    float dz = 0.0f;
     if (v53 <= 0)
         goto LABEL_52;
-    __int16 *v23 = v66;
     do
     {
         int v24 = 0;
@@ -1020,18 +1132,18 @@ int CBsp::GetPathCrossPoint(float *const a2, float *const a3, float (*a4)[3], in
                 v9 = v52;
                 goto LABEL_48;
             }
-            float *mCFNormal = reinterpret_cast<float *>(this->mCFNormal);
-            float v27 = *v12;
-            float v28 = v12[1];
-            float v29 = v12[2];
-            float v30 = mCFNormal[4 * v25];
-            float v31 = mCFNormal[4 * v25 + 2];
-            float v32 = mCFNormal[4 * v25 + 3];
-            float v33 = *v63;
-            float v34 = v63[1];
-            float v35 = v63[2];
-            float v36 = (float)((float)((float)(v27 * v30) + (float)(mCFNormal[4 * v25 + 1] * v28)) + (float)(v29 * v31)) - v32;
-            float v37 = (float)((float)((float)(v33 * v30) + (float)(mCFNormal[4 * v25 + 1] * v34)) + (float)(v35 * v31)) - v32;
+            mCFNormal = reinterpret_cast<float *>(this->mCFNormal);
+            v27 = *v12;
+            v28 = v12[1];
+            v29 = v12[2];
+            v30 = mCFNormal[4 * v25];
+            v31 = mCFNormal[4 * v25 + 2];
+            v32 = mCFNormal[4 * v25 + 3];
+            v33 = *v63;
+            v34 = v63[1];
+            v35 = v63[2];
+            v36 = (float)((float)((float)(v27 * v30) + (float)(mCFNormal[4 * v25 + 1] * v28)) + (float)(v29 * v31)) - v32;
+            v37 = (float)((float)((float)(v33 * v30) + (float)(mCFNormal[4 * v25 + 1] * v34)) + (float)(v35 * v31)) - v32;
             if (v36 > -0.01f && v36 < 0.01f)
                 v55 = ++v21;
             if (v36 > 0.0f && v37 > 0.0f)
@@ -1044,7 +1156,6 @@ int CBsp::GetPathCrossPoint(float *const a2, float *const a3, float (*a4)[3], in
                 v9 = v52;
                 goto LABEL_48;
             }
-            bool v38;
             if (v36 <= -0.01f || v37 > 0.0f)
             {
                 if (v36 >= 0.0f || v37 <= 0.0f)
@@ -1065,7 +1176,7 @@ int CBsp::GetPathCrossPoint(float *const a2, float *const a3, float (*a4)[3], in
             {
                 v38 = false;
             }
-            float v39 = v36 / (float)(v36 - v37);
+            v39 = v36 / (float)(v36 - v37);
             v60 = (float)((float)(v33 - v27) * v39) + v27;
             v61 = (float)((float)(v34 - v28) * v39) + v28;
             v62 = (float)((float)(v35 - v29) * v39) + v29;
@@ -1082,16 +1193,16 @@ int CBsp::GetPathCrossPoint(float *const a2, float *const a3, float (*a4)[3], in
                 v9 = v52;
                 goto LABEL_AFTER_EDGE;
 LABEL_31:
-                float v41 = v60;
-                float v42 = v61;
-                float v43 = v62;
+                v41 = v60;
+                v42 = v61;
+                v43 = v62;
                 v65[v22++] = static_cast<int>(v25);
                 if (static_cast<int>(v25) >= 10000)
                     v22 = 9999;
-                float v44 = sqrtf_0(
-                    (float)((float)((float)(v42 - v56[1]) * (float)(v42 - v56[1]))
-                          + (float)((float)(v41 - v56[0]) * (float)(v41 - v56[0])))
-                          + (float)((float)(v43 - v56[2]) * (float)(v43 - v56[2]))));
+                dx = v42 - v56[1];
+                dy = v41 - v56[0];
+                dz = v43 - v56[2];
+                v44 = sqrtf_0((dx * dx) + (dy * dy) + (dz * dz));
                 if (v7 <= v44)
                 {
                     v9 = v52;
@@ -1178,15 +1289,14 @@ LABEL_52:
         }
 LABEL_63:
         float *v51 = reinterpret_cast<float *>(this->mCFNormal);
-        if ((float)((float)((float)(v48 * v51[4 * a5 + 1]) + (float)(v47 * v51[4 * a5]))
-                 + (float)(v49 * v51[4 * a5 + 2]))
-                - v51[4 * a5 + 3]) >= 0.0f
-         || (float)((float)((float)(v48 * v51[4 * v50 + 1]) + (float)(v47 * v51[4 * v50]))
-                 + (float)(v49 * v51[4 * v50 + 2]))
-                - v51[4 * v50 + 3]) >= 0.0f)
-        {
+        float vPlaneA = (float)((float)((float)(v48 * v51[4 * a5 + 1]) + (float)(v47 * v51[4 * a5]))
+                              + (float)(v49 * v51[4 * a5 + 2]))
+                       - v51[4 * a5 + 3];
+        float vPlaneB = (float)((float)((float)(v48 * v51[4 * v50 + 1]) + (float)(v47 * v51[4 * v50]))
+                              + (float)(v49 * v51[4 * v50 + 2]))
+                       - v51[4 * v50 + 3];
+        if (vPlaneA >= 0.0f || vPlaneB >= 0.0f)
             return 1;
-        }
         return 2;
     }
     else
@@ -1380,7 +1490,7 @@ void CBsp::OnlyStoreCollisionStructure(_BSP_READ_M_GROUP *pRM, char (*pBV)[3], s
 
             if (mGroup.mtl_id != -1 && mat)
             {
-                if (_bittest(reinterpret_cast<const signed __int32 *>(&mat[mGroup.mtl_id].m_Layer[0].m_dwFlag), 0x11u))
+                if (_bittest(reinterpret_cast<const LONG *>(&mat[mGroup.mtl_id].m_Layer[0].m_dwFlag), 0x11u))
                     mCFace[faceIdx].Attr |= 0x40u;
             }
         }
@@ -1690,9 +1800,9 @@ void CBsp::ReadDynamicDataFillVertexBuffer(FILE *Stream)
 
                     if (group.mtl_id != -1)
                     {
-                        if (_bittest(reinterpret_cast<const signed __int32 *>(&MainMaterial[group.mtl_id].m_Layer[0].m_dwFlag), 0x11u))
+                        if (_bittest(reinterpret_cast<const LONG *>(&MainMaterial[group.mtl_id].m_Layer[0].m_dwFlag), 0x11u))
                             mCFace[faceIdx].Attr |= 0x40u;
-                        if (_bittest(reinterpret_cast<const signed __int32 *>(&MainMaterial[group.mtl_id].m_Layer[0].m_dwFlag), 0x12u))
+                        if (_bittest(reinterpret_cast<const LONG *>(&MainMaterial[group.mtl_id].m_Layer[0].m_dwFlag), 0x12u))
                             mCFace[faceIdx].Attr |= 0x20u;
                         if (MainMaterial[group.mtl_id].m_Layer[1].m_dwFlag & 0x8000)
                             mCFace[faceIdx].Attr |= 0x20u;
@@ -2089,11 +2199,11 @@ void CBsp::LoadEntities(_READ_MAP_ENTITIES_LIST *a2)
 
             if (mEntityList[listIdx].IsParticle)
             {
-                if (CParticle::LoadParticleSPT(&mParticle[entIdx], filePath, 0))
+                if (mParticle[entIdx].LoadParticleSPT(filePath, 0))
                 {
                     mEntityList[listIdx].IsFileExist = 1;
-                    CParticle::InitParticle(&mParticle[entIdx]);
-                    CParticle::SetParticleState(&mParticle[entIdx], 1u);
+                    mParticle[entIdx].InitParticle();
+                    mParticle[entIdx].SetParticleState(1u);
                 }
                 else
                 {
@@ -2105,11 +2215,11 @@ void CBsp::LoadEntities(_READ_MAP_ENTITIES_LIST *a2)
                 unsigned int flags = 0;
                 if (mEntityList[listIdx].ShaderID)
                     flags = 2;
-                if (CEntity::LoadEntity(&mEntity[entIdx], filePath, flags | 0x20u))
+                if (mEntity[entIdx].LoadEntity(filePath, flags | 0x20u))
                 {
                     if (mEntityList[listIdx].Flag & 0x40)
                         mEntity[entIdx].mFlag |= 0x40u;
-                    CEntity::RestoreTexMem(&mEntity[entIdx]);
+                    mEntity[entIdx].RestoreTexMem();
                     mEntityList[listIdx].IsFileExist = 1;
                 }
             }
@@ -2150,7 +2260,7 @@ void CBsp::LoadEntities(_READ_MAP_ENTITIES_LIST *a2)
                     CParticle *inst = p ? new (p) CParticle() : nullptr;
                     mMapEntitiesList[listIdx].Particle = inst;
                     memcpy_0(inst, &mParticle[mMapEntitiesList[listIdx].ID], sizeof(CParticle));
-                    CParticle::InitParticle(inst);
+                    inst->InitParticle();
                 }
             }
             else
@@ -2163,7 +2273,7 @@ void CBsp::LoadEntities(_READ_MAP_ENTITIES_LIST *a2)
                 *reinterpret_cast<unsigned long long *>(dst->BBMax) = 0;
                 *reinterpret_cast<unsigned long long *>(reinterpret_cast<char *>(&dst->AddFrame) + 2) = 0;
                 *reinterpret_cast<CParticle **>(reinterpret_cast<char *>(&dst->Particle) + 6) = 0;
-                HIWORD(dst->mMapColor) = 0;
+                reinterpret_cast<unsigned short *>(&dst->mMapColor)[1] = 0;
             }
             ++i;
             posPtr = reinterpret_cast<float *>(reinterpret_cast<char *>(posPtr) + 38);
@@ -2217,24 +2327,24 @@ void CBsp::LoadSoundEntities(_READ_SOUND_ENTITY_LIST *a2, _READ_SOUND_ENTITIES_L
                 mSoundEntitiesList[si].ID = static_cast<unsigned short>(mSoundEntityListNum) - 1;
 
             mSoundEntitiesList[si].Flag = *p_flag;
-            LODWORD(mSoundEntitiesList[si].Scale) = p_flag[1];
-            LODWORD(mSoundEntitiesList[si].Attn) = p_flag[2];
-            LODWORD(mSoundEntitiesList[si].Pos[0]) = p_flag[3];
-            LODWORD(mSoundEntitiesList[si].Pos[1]) = p_flag[4];
-            LODWORD(mSoundEntitiesList[si].Pos[2]) = p_flag[5];
+            *reinterpret_cast<unsigned int *>(&mSoundEntitiesList[si].Scale) = p_flag[1];
+            *reinterpret_cast<unsigned int *>(&mSoundEntitiesList[si].Attn) = p_flag[2];
+            *reinterpret_cast<unsigned int *>(&mSoundEntitiesList[si].Pos[0]) = p_flag[3];
+            *reinterpret_cast<unsigned int *>(&mSoundEntitiesList[si].Pos[1]) = p_flag[4];
+            *reinterpret_cast<unsigned int *>(&mSoundEntitiesList[si].Pos[2]) = p_flag[5];
             mSoundEntitiesList[si].BBMin[0] = mSoundEntitiesList[si].Pos[0] - mSoundEntitiesList[si].Attn;
             mSoundEntitiesList[si].BBMin[1] = mSoundEntitiesList[si].Pos[1] - mSoundEntitiesList[si].Attn;
             mSoundEntitiesList[si].BBMin[2] = mSoundEntitiesList[si].Pos[2] - mSoundEntitiesList[si].Attn;
             mSoundEntitiesList[si].BBMax[0] = mSoundEntitiesList[si].Pos[0] + mSoundEntitiesList[si].Attn;
             mSoundEntitiesList[si].BBMax[1] = mSoundEntitiesList[si].Pos[1] + mSoundEntitiesList[si].Attn;
             mSoundEntitiesList[si].BBMax[2] = mSoundEntitiesList[si].Pos[2] + mSoundEntitiesList[si].Attn;
-            LODWORD(mSoundEntitiesList[si].BoxAttn) = p_flag[9];
-            LODWORD(mSoundEntitiesList[si].BoxRotX) = p_flag[10];
-            LODWORD(mSoundEntitiesList[si].BoxRotY) = p_flag[11];
+            *reinterpret_cast<unsigned int *>(&mSoundEntitiesList[si].BoxAttn) = p_flag[9];
+            *reinterpret_cast<unsigned int *>(&mSoundEntitiesList[si].BoxRotX) = p_flag[10];
+            *reinterpret_cast<unsigned int *>(&mSoundEntitiesList[si].BoxRotY) = p_flag[11];
             mSoundEntitiesList[si].EventTime = *(reinterpret_cast<unsigned short *>(p_flag) - 1);
-            LODWORD(mSoundEntitiesList[si].BoxScale[0]) = p_flag[6];
-            LODWORD(mSoundEntitiesList[si].BoxScale[1]) = p_flag[7];
-            LODWORD(mSoundEntitiesList[si].BoxScale[2]) = p_flag[8];
+            *reinterpret_cast<unsigned int *>(&mSoundEntitiesList[si].BoxScale[0]) = p_flag[6];
+            *reinterpret_cast<unsigned int *>(&mSoundEntitiesList[si].BoxScale[1]) = p_flag[7];
+            *reinterpret_cast<unsigned int *>(&mSoundEntitiesList[si].BoxScale[2]) = p_flag[8];
             mSoundEntitiesList[si].NextPlayTime = 0.0f;
 
             float matScale[16] = {};

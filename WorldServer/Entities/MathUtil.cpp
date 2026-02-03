@@ -13,6 +13,13 @@ float DotProduct(const float *a1, const float *a2)
     return (a1[1] * a2[1]) + (*a1 * *a2) + (a1[2] * a2[2]);
 }
 
+float GetSqrt(float *fPos, float *fTar)
+{
+    float dx = fTar[0] - fPos[0];
+    float dz = fTar[2] - fPos[2];
+    return std::sqrt((dx * dx) + (dz * dz));
+}
+
 void GetNormal(float *const a1, const float *const a2, const float *const a3, const float *const a4)
 {
     float v6 = a4[2] - a2[2];
@@ -148,7 +155,7 @@ void MatrixCopy(float (*const a1)[4], float (*const a2)[4])
     memcpy_0(a1, a2, 0x40u);
 }
 
-void MatrixMultiply(float (*const a1)[4], float (*const a2)[4], float (*const a3)[4])
+void MatrixMultiply(float (*a1)[4], float (*const a2)[4], float (*const a3)[4])
 {
     float *v3 = &(*a3)[8];
     float *v4 = &(*a2)[2];
@@ -337,7 +344,8 @@ void MatrixRotate(float (*const a1)[4], float a2, float a3, float a4)
     v16[1] = static_cast<float>(sin_0(v7));
     v16[2] = 0.0f;
     v16[3] = 0.0f;
-    v17 = *reinterpret_cast<int *>(&(-static_cast<float>(sin_0(v7))));
+    float neg_sin_v7 = -static_cast<float>(sin_0(v7));
+    v17 = *reinterpret_cast<int *>(&neg_sin_v7);
     v18 = cos_v7;
     v19 = 0;
     v20 = 0;
@@ -524,7 +532,6 @@ static __m128 sub_14051F9D0(int a1, float *a2, int a3, double a4)
         dword_184A89400 = v5 + 1;
         if (v5 == -1)
         {
-LABEL_6:
             dword_184A893FC = v4;
             dword_184A89400 = v4;
             return _mm_setzero_ps();
@@ -655,7 +662,7 @@ static void sub_14051FF20(float (*a1)[4], unsigned short a2, __int64 a3, double 
     }
 }
 
-void GetObjectMatrix(float (*const f_matrix)[4], unsigned short a2, _ANI_OBJECT *a3, double a4)
+void GetObjectMatrix(float (*f_matrix)[4], unsigned short a2, _ANI_OBJECT *a3, double a4)
 {
     double v4 = 0.0;
     double v5 = a4;

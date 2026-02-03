@@ -5,6 +5,7 @@
 /* 1398 */
 class __cppobj CParticle
 {
+public:
   char mEntityName[128];
   int mNum;
   _PARTICLE_ELEMENT *mElement;
@@ -23,7 +24,11 @@ class __cppobj CParticle
   float mStartARGB[4][2];
   float mOnePerTimeEpsilon;
   float mRotMat[4][4];
-  $3E60C3DACEF2E33FF1D1871D4F2565FA ___u18;
+  union
+  {
+    float mElasticity;
+    float mTexRepeat;
+  };
   float mZFront;
   float mEmitTime;
   unsigned __int16 mSpecialID;
@@ -49,5 +54,14 @@ class __cppobj CParticle
   float mOnePerTimeEpsilonTemp;
   float mParticleTimer;
   float mNextCreatorTime;
+
+  CParticle();
+  ~CParticle();
+  __int64 LoadParticleSPT(char *a2, int a3);
+  void InitParticle();
+  void SetParticleState(int a2);
+  void InitElement(int a2, float a3);
+  void GetPartcleStep(int a2, float a3);
+  void CheckCollision(int a2, float a3);
 };
 

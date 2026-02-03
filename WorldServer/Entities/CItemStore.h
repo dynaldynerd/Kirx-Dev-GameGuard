@@ -1,17 +1,26 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "ItemStoreTypes.h"
 
+struct _base_fld;
 struct _store_dummy;
 struct _StoreList_fld;
-struct _good_storage_info;
-struct _limit_item_info;
 class CMapData;
 
 /* 3033 */
 class __cppobj __declspec(align(8)) CItemStore
 {
 public:
+  CItemStore();
+  ~CItemStore();
+
+  bool Init(int nIndex, CMapData *pExistMap, _store_dummy *pDum, _StoreList_fld *pRec);
+  _base_fld *GetNpcRecord();
+  bool GetNpcRaceCode(unsigned __int8 *pbyRaceCode);
+  unsigned int CalcSecIndex(float x, float z);
+  void SetLimitItemInitTime();
+
   bool m_bLive;
   int m_nIndex;
   unsigned int m_dwSecIndex;

@@ -37,6 +37,12 @@ int GetCurrentHour();
 int GetCurrentMin();
 int GetCurrentSec();
 int GetItemTableCode(const char *psItemCode);
+int GetItemStdPrice(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind);
+int GetItemStdPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind);
+int GetItemProcPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind);
+int GetItemKillPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind);
+int GetItemGoldPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind);
+unsigned int GetItemDurPoint(int nTableCode, int nIndex);
 int ParsingCommandA(char *pszSrc, int nMaxWordNum, char **ppszDst, int nMaxWordSize);
 void WriteServerStartHistory(const char *format, ...);
 void clear_file(const char *directory, int keepCount);
@@ -50,9 +56,12 @@ void StripPath(char *szPath);
 void StripName(char *szPath);
 bool IsServerMode();
 bool IsInitR3Engine();
+float R3GetTime();
 struct IDirect3DDevice8 *GetD3dDevice();
 
 float DotProduct(const float *a1, const float *a2);
+float GetSqrt(float *fPos, float *fTar);
+void FloatToShort(float *pFloat, short *pShort, int size);
 void GetNormal(float *const a1, const float *const a2, const float *const a3, const float *const a4);
 int GetPlaneCrossPoint(const float *const a1, const float *const a2, float *const a3, const float *const a4, float a5);
 void CrossProduct(const float *a1, const float *a2, float *a3);
@@ -69,7 +78,7 @@ void sub_14050C650(float *a1, float *a2, float *a3);
 float GetFloatMod(float a1, float a2);
 void MatrixIdentity(float (*const a1)[4]);
 void MatrixCopy(float (*const a1)[4], float (*const a2)[4]);
-void MatrixMultiply(float (*const a1)[4], float (*const a2)[4], float (*const a3)[4]);
+void MatrixMultiply(float (*a1)[4], float (*const a2)[4], float (*const a3)[4]);
 int MatrixInvert(float (*const a1)[4], float (*const a2)[4]);
 void MatrixFromQuaternion(float (*const a1)[4], float a2, float a3, float a4, float a5);
 void MatrixScale(float (*const a1)[4], float a2, float a3, float a4);
@@ -93,7 +102,7 @@ void QuaternionSlerp(
   float a13);
 void GetMatrixFrom3DSMAXMatrix(float (*const a1)[4]);
 void GetAniMatrix(float (*const a1)[4], _ANI_OBJECT *a2, double a3);
-void GetObjectMatrix(float (*const a1)[4], unsigned short a2, _ANI_OBJECT *a3, double a4);
+void GetObjectMatrix(float (*a1)[4], unsigned short a2, _ANI_OBJECT *a3, double a4);
 void ConvAniObject(int a1, unsigned __int8 *a2, _READ_ANI_OBJECT *a3, _ANI_OBJECT *a4);
 
 // Vertex/Index buffer tracking.
@@ -112,6 +121,7 @@ void ResetTexMemSize();
 bool IsExistFile(char *szFileName);
 unsigned int GetFileSizeAndMergeFile(char *szFileName);
 __int64 IsExistFileAndMergeFile(char *szFileName);
+__int64 CalcFileSize(char *pszFileName);
 struct _R3MATERIAL *LoadMainR3M(char *szFileName);
 struct _R3MATERIAL *LoadSubR3M(char *szFileName);
 struct _R3MATERIAL *LoadIndependenceR3M(char *szFileName);
@@ -160,7 +170,7 @@ void Warning(char *source, char *msg);
 
 // Merge-file helpers.
 CMergeFileManager *GetMergeFileManager();
-FILE *fopenMFM(char *a1, char *Mode);
+FILE *fopenMFM(char *a1, const char *Mode);
 unsigned int GetFileSize(char *a1);
 
 // Particle/script helpers.

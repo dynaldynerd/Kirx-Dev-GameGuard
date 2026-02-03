@@ -4,6 +4,8 @@
 
 #include <cstring>
 
+#include "ObjectCreateSetData.h"
+
 CMyTimer::~CMyTimer() = default;
 
 void _effect_parameter::AllocEffParam()
@@ -63,4 +65,24 @@ void CCharacter::Init(_object_id *pID)
   std::memset(m_SFContAura, 0, sizeof(m_SFContAura));
   m_bLastContEffectUpdate = false;
   m_wLastContEffect = static_cast<unsigned __int16>(-1);
+}
+
+bool CCharacter::Create(_character_create_setdata *pData)
+{
+  if (!CGameObject::Create(pData))
+  {
+    return false;
+  }
+
+  memcpy_0(m_fTarPos, m_fCurPos, sizeof(m_fTarPos));
+  m_dwNextGenAttackTime = GetLoopTime();
+  m_nContEffectSec = -1;
+  m_tmrSFCont.BeginTimer(1000);
+  m_wEffectTempValue = 0;
+  m_dwEffSerialCounter = 1;
+  memset_0(m_SFCont, 0, sizeof(m_SFCont));
+  memset_0(m_SFContAura, 0, sizeof(m_SFContAura));
+  m_bLastContEffectUpdate = false;
+  m_wLastContEffect = static_cast<unsigned __int16>(-1);
+  return true;
 }

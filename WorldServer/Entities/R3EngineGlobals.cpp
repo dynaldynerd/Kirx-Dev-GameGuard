@@ -13,6 +13,7 @@ unsigned int dword_184A7B2DC = 0;
 // Engine/server mode flags.
 unsigned int dword_184A77F38 = 1; // server mode by default
 unsigned int dword_184A77F3C = 1; // R3 engine initialized by default
+int dword_184A77EE8 = 0;
 
 // D3D device + merge file manager pointers.
 IDirect3DDevice8 *qword_184A7B2C8 = nullptr;

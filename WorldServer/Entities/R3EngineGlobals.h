@@ -19,6 +19,7 @@ extern unsigned int dword_184A7B2DC;
 // Engine/server mode flags.
 extern unsigned int dword_184A77F38;
 extern unsigned int dword_184A77F3C;
+extern int dword_184A77EE8;
 
 // D3D device + merge file manager pointers.
 extern IDirect3DDevice8 *qword_184A7B2C8;

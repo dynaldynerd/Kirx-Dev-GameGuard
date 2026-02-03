@@ -269,6 +269,7 @@ public:
   __int64 GetColorFromPoint(int a2, float *const a3);
   void GetLightMapUVFromPoint(float *const a2, int a3, float *const a4);
   void GetLeafList(float *const a2, float *const a3, int *const a4, __int16 *a5, unsigned int a6);
+  __int64 IsCollisionFace(float *const a2, float *const a3, float (*a4)[3], float (*a5)[4]);
 
   void LoadBsp(char *szFileName);
   void LoadExtBsp(char *szFileName);

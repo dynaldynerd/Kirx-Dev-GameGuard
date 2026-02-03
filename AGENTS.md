@@ -27,3 +27,6 @@
 12. avoid shortened function implementation/half baked implementation as it would be dangerous when previewing the code where I thought everything is implemented turned out it was only half baked and wondered later what was wrong, the logic/implementation must exactly match the decompiled code without any shortened logic and must adhere to the all previous rules
 13. added `RF Online Old Sourcecode` an older (ten years or more older) version of the sourcecode, it might be useful for reference, but it's not the same as the decompiled code, so use it with caution and use it only when you're sure it's correct
 14. please don't create any stub function or shortened version of a function compared to decompiled source, let it be undeclared so we could know which function need implementation
+15. remove/don't implement any thunk function and directly implement only the real function
+16. for iterating global variable that the size is allocated using macro definition, use the macro for iteration instead of 500 for g_NPC, 2523 for g_Player, etc
+17. avoid ida pro variable such as a1, a2, v1, v2 as much as possible unless you don't have any idea what that variable is

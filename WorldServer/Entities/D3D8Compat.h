@@ -77,7 +77,9 @@ struct __cppobj IDirect3DDevice8
 #define D3DPOOL_MANAGED 1
 #endif
 
+#if !defined(_d3d9TYPES_H_) && !defined(_D3D9TYPES_H_) && !defined(_D3D9_H_) && !defined(_d3d8_h_) && !defined(_D3D8_H_) && !defined(_D3D8TYPES_H_)
 typedef unsigned int D3DFORMAT;
+#endif
 #ifndef D3DFMT_R5G6B5
 #define D3DFMT_R5G6B5 23
 #endif
@@ -114,10 +116,18 @@ union $25C8602110B22A2EB54BB3EE6752756B
 /* 1387 */
 struct _D3DR3VERTEX_TEX1
 {
-  $B3185CC329BDC5A6DA4B2C96D7DC3DD4 ___u0;
+  union
+  {
+    float x;
+    float pos[1];
+  };
   float y;
   float z;
-  $25C8602110B22A2EB54BB3EE6752756B ___u3;
+  union
+  {
+    float nx;
+    float normal[1];
+  };
   float ny;
   float nz;
   unsigned int color;

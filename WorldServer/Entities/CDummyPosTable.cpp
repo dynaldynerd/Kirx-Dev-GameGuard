@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "CDummyPosTable.h"
+#include "CGameObject.h"
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
@@ -9,6 +10,9 @@ CDummyPosTable::CDummyPosTable()
     this->m_pDumPos = nullptr;
     this->m_nDumPosDataNum = 0;
 }
+
+_dummy_position *CDummyPosTable::ms_pHeroes_Dummy[3] = {nullptr, nullptr, nullptr};
+const char *C_HEROES_DUMMY_NAME[3] = {"sd030f1", "sd040f1", "sd050f1"};
 
 CDummyPosTable::~CDummyPosTable()
 {
@@ -71,6 +75,81 @@ bool CDummyPosTable::LoadDummyPosition(const char *szFileName, const char *szLab
 
     fclose(Stream);
     return true;
+}
+
+bool CDummyPosTable::FindDummy(char *pszTextFileName, char *pszDummyCode, _dummy_position *pDummyPos)
+{
+    if (!pszTextFileName || !pszDummyCode || !pDummyPos)
+        return false;
+
+    FILE *Stream = nullptr;
+    if (fopen_s(&Stream, pszTextFileName, "rt") != 0 || !Stream)
+        return false;
+
+    char destination[128]{};
+    strcpy_s(destination, "*");
+    strcat_s(destination, pszDummyCode);
+
+    char token[256];
+    int foundCount = 0;
+    while (fscanf_s(Stream, "%s", token, (unsigned int)sizeof(token)) != -1)
+    {
+        if (strcmp(token, destination) == 0)
+        {
+            ++foundCount;
+        }
+        else if (strcmp(token, "[HelperObjectEnd]") == 0)
+        {
+            break;
+        }
+    }
+
+    if (foundCount != 1)
+    {
+        fclose(Stream);
+        return false;
+    }
+
+    rewind(Stream);
+    int lineIndex = 0;
+    while (fscanf_s(Stream, "%s", token, (unsigned int)sizeof(token)) != -1)
+    {
+        if (token[0] == '*')
+        {
+            if (strcmp(token, destination) == 0)
+            {
+                pDummyPos->m_wLineIndex = static_cast<unsigned short>(lineIndex);
+                _strlwr_s(token, sizeof(token));
+                strcpy_s(pDummyPos->m_szCode, token);
+                for (int j = 0; j < 3; ++j)
+                    fscanf_s(Stream, "%d", &pDummyPos->m_zLocalMin[j]);
+                for (int j = 0; j < 3; ++j)
+                    fscanf_s(Stream, "%d", &pDummyPos->m_zLocalMax[j]);
+                break;
+            }
+            ++lineIndex;
+        }
+        else if (strcmp(token, "[HelperObjectEnd]") == 0)
+        {
+            break;
+        }
+    }
+
+    fclose(Stream);
+    return true;
+}
+
+bool CDummyPosTable::CheckHeroesDummy(CGameObject *pObj, unsigned __int8 byRaceCode)
+{
+    if (!pObj)
+        return false;
+    if (byRaceCode >= 3)
+        return false;
+    if (!CDummyPosTable::ms_pHeroes_Dummy[byRaceCode])
+        return true;
+    if (pObj->IsInTown())
+        return GetSqrt(CDummyPosTable::ms_pHeroes_Dummy[byRaceCode]->m_fCenterPos, pObj->m_fCurPos) <= 100.0f;
+    return false;
 }
 
 int CDummyPosTable::GetRecordNum()
