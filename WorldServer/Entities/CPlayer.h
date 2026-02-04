@@ -6,6 +6,7 @@
 #pragma pack(push, 1)
 
 #include "CCharacter.h"
+#include "DELAY_PROCESS.h"
 #include "StorageList.h"
 #include "CMgrAvatorItemHistory.h"
 #include "CMgrAvatorLvHistory.h"
@@ -20,6 +21,7 @@ struct _base_fld;
 struct _monster_sp_fld;
 struct _skill_fld;
 struct _ResourceItem_fld;
+struct _ITEM_EFFECT;
 class CGameObject;
 class CPlayer;
 class CMapData;
@@ -376,7 +378,11 @@ struct __declspec(align(8)) _WEAPON_PARAM
   int nActiveProb;
   char strEffBulletType[64];
 
+  static CRecordData *s_pWeaponData;
   static void SetStaticMember(CRecordData *itemTable);
+  void Init();
+  void FixWeapon(_STORAGE_LIST::_db_con *pWeapon);
+  unsigned int GetWeaponTolType(_STORAGE_LIST::_db_con *pItem);
 };
 
 /* 1737 */
@@ -425,6 +431,9 @@ struct __cppobj _mastery_up_data
   unsigned __int8 byCode;
   unsigned __int8 byIndex;
   unsigned __int8 byMastery;
+
+  void init();
+  void set(unsigned __int8 code, unsigned __int8 index, unsigned __int8 mastery);
 };
 
 /* 1740 */
@@ -433,6 +442,9 @@ struct __declspec(align(2)) _skill_lv_up_data
   bool bUpdate;
   unsigned __int16 wIndex;
   unsigned __int8 byLv;
+
+  void init();
+  void set(unsigned __int16 index, unsigned __int8 lv);
 };
 
 /* 1741 */
@@ -458,7 +470,13 @@ struct __cppobj __declspec(align(8)) _MASTERY_PARAM
   _skill_lv_up_data m_SkillUpData;
   bool m_bUpdateEquipMast;
 
+  static CRecordData *s_pSkillData;
+  static CRecordData *s_pForceData;
   static void SetStaticMember(CRecordData *effectTable, CRecordData *forceTable);
+  unsigned __int8 GetMasteryPerMast(unsigned __int8 byCode, unsigned __int8 byMast);
+  void UpdateCumPerMast(unsigned __int8 byClass, unsigned __int8 byIndex, unsigned int dwNewCum);
+  float GetAveForceMasteryPerClass(unsigned __int8 byClass);
+  float GetAveSkillMasteryPerClass(unsigned __int8 byClass);
 };
 
 /* 1745 */
@@ -850,6 +868,8 @@ class __cppobj __declspec(align(8)) CPlayer : public CCharacter
   {
     $621D0DDFB6A4DE55506A65C7CCDC95CE __s0;
     unsigned __int8 m_byStateFlag;
+
+    CashChangeStateFlag(char cashrename = 0);
   };
 
   struct __declspec(align(8)) __target
@@ -872,9 +892,15 @@ public:
   static CMgrAvatorItemHistory s_MgrItemHistory;
   static CMgrAvatorLvHistory s_MgrLvHistory;
   static int s_nLiveNum;
+  static _DELAY_PROCESS s_AnimusReturnDelay;
   static void SetStaticMember();
   void Init(_object_id *pID);
   void PastWhisperInit();
+  _STORAGE_LIST::_db_con *Emb_AddStorage(
+    unsigned __int8 byStorageCode,
+    _STORAGE_LIST::_storage_con *pCon,
+    bool bMessage,
+    bool bLog);
   bool Emb_DelStorage(
     unsigned __int8 byStorageCode,
     unsigned __int8 byStorageIndex,
@@ -898,36 +924,63 @@ public:
   unsigned __int8 GetEffectEquipCode(unsigned __int8 byStorageCode, unsigned __int8 bySlotIndex);
   void SetEffectEquipCode(unsigned __int8 byStorageCode, unsigned __int8 bySlotIndex, unsigned __int8 byCode);
   void SetEquipEffect(_STORAGE_LIST::_db_con *pItem, bool bEquip);
+  void apply_normal_item_std_effect(int nEffCode, float fVal, bool bEquip);
   void apply_case_equip_std_effect(_STORAGE_LIST::_db_con *pItem, bool bEquip);
   void apply_case_equip_upgrade_effect(_STORAGE_LIST::_db_con *pItem, bool bEquip);
+  void apply_have_item_std_effect(int nEffCode, float fVal, bool bAdd, int nDiffCnt);
+  _ITEM_EFFECT *_GetItemEffect(_STORAGE_LIST::_db_con *pItem);
+  void SetEquipJadeEffect(int nParam, float fCurVal, bool bAdd);
+  bool DecHalfSFContDam(float fEffVal);
+  void HideNameEffect(bool bAdd);
+  void SetMstPt(int nMstCode, float fVal, bool bAdd, unsigned int nWpType);
   void CalcDefTol();
   bool IsRidingUnit();
   void CalcEquipSpeed();
+  void SendMsg_AlterEquipSPInform();
   void CalcEquipMaxDP(int bSendMsg);
   bool IsSiegeMode();
   void SetSiege(_STORAGE_LIST::_db_con *pItem);
   void SetHaveEffect(char bSet);
   void SetMstHaveEffect(_ResourceItem_fld *pFld, _STORAGE_LIST::_db_con *pItem, int a3, int a4);
+  void SetHaveEffectUseTime(_STORAGE_LIST::_db_con *pItem, bool bAdd);
+  bool IsUsableAccountType(int nCashType);
+  bool IsApplyPcbangPrimium();
+  void SendMsg_PremiumCashItemUse(unsigned __int16 wSerial);
   void DTradeInit();
   void SendMsg_DTradeCancleInform();
   void SendMsg_DTradeCloseInform(char byCloseCode);
   void _AnimusReturn(unsigned __int8 byReturnType);
+  void SendMsg_AnimusReturnResult(char byRetCode, unsigned __int16 wAnimusItemSerial, unsigned __int8 byReturnType);
   bool IsHaveMentalTicket();
   bool IsUseReleaseRaceBuffPotion();
   void SetUseReleaseRaceBuffPotion();
-  void mgr_tracing(int bOper);
+  char mgr_tracing(int bOper);
+  void SendMsg_Destroy();
+  void SendMsg_NewViewOther(unsigned __int8 byViewType);
   void SetLastAttBuff(bool bSet);
   void SetShapeAllBuffer();
-  int GetLevel();
-  int GetHP();
-  int GetMaxHP();
+  __int64 GetLevel();
+  __int64 GetHP();
+  __int64 GetMaxHP();
+  unsigned __int64 GetStateFlag();
   int GetFP();
   int GetSP();
   int GetMaxFP();
   int GetMaxSP();
+  int GetDP();
+  int GetMaxDP();
   bool SetFP(int nFP, bool bOver);
   bool SetSP(int nSP, bool bOver);
-  bool SetHP(int nHP, bool bOver);
+  char SetHP(int nHP, bool bOver);
+  char SetDP(int nDP, bool bOver);
+  void SendMsg_SetDPInform();
+  void SendMsg_AlterMaxDP();
+  void SendMsg_TransformSiegeModeResult(char byRetCode);
+  void SendMsg_ReleaseSiegeModeResult(char byRetCode);
+  void ReCalcMaxHFSP(bool bSend, bool bRatio);
+  int _CalcMaxHP();
+  int _CalcMaxFP();
+  int _CalcMaxSP();
   void RecvHSKQuest(
     unsigned __int8 byHSKQuestCode,
     unsigned __int8 byCristalBattleDBInfo,
@@ -956,6 +1009,7 @@ public:
   void SubDalant(unsigned int dwSub);
   void SendMsg_RemainOreRate();
   void SendMsg_OreTransferCount();
+  void SendMsg_LendItemTimeExpired(char byStorageCode, unsigned __int16 wSerial);
 
   bool m_bLoad;
   bool m_bOper;

@@ -2,11 +2,14 @@
 
 #include "IdaCompat.h"
 
+struct _ItemUpgrade_fld;
+
 /* 1294 */
 class __cppobj CItemUpgradeTable
 {
 public:
   bool ReadRecord(const char *fileName, CRecordData *resTable, char *errCode);
+  _ItemUpgrade_fld *GetRecord(unsigned int dwIndex);
 
   CRecordData m_tblItemUpgrade;
   int m_nResNum;

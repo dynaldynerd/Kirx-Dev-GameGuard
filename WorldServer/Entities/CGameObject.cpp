@@ -1683,6 +1683,21 @@ __int64 CGameObject::GetCurSecNum()
   return m_dwCurSec;
 }
 
+__int64 CGameObject::GetHP()
+{
+  return 1;
+}
+
+__int64 CGameObject::GetLevel()
+{
+  return 1;
+}
+
+__int64 CGameObject::GetMaxHP()
+{
+  return 1;
+}
+
 char CGameObject::SetCurPos(float *pPos)
 {
   if (!m_pCurMap->IsMapIn(pPos))
@@ -1694,6 +1709,126 @@ char CGameObject::SetCurPos(float *pPos)
 void CGameObject::SetCurSecNum(unsigned int dwNewSecNum)
 {
   m_dwCurSec = dwNewSecNum;
+}
+
+char CGameObject::Destroy()
+{
+  if (!m_bLive)
+  {
+    return 0;
+  }
+
+  if (m_pCurMap)
+  {
+    (void)m_pCurMap->GetSecInfo();
+    m_pCurMap->ExitMap(this, m_dwCurSec);
+  }
+
+  if (CGameObject::s_pSelectObject == this)
+  {
+    CGameObject::s_pSelectObject = nullptr;
+  }
+
+  m_bLive = false;
+  m_bCorpse = false;
+  m_bMove = false;
+  m_bStun = false;
+  m_bMapLoading = false;
+  m_SectorPoint.InitLink();
+  m_SectorNetPoint.InitLink();
+
+  if (m_bPlayerCircleList)
+  {
+    operator delete[](m_bPlayerCircleList);
+  }
+  m_bPlayerCircleList = nullptr;
+  m_bMaxVision = false;
+  return 1;
+}
+
+void CGameObject::SetMaxVersion()
+{
+  m_bMaxVision = true;
+  if (!m_bPlayerCircleList)
+  {
+    m_bPlayerCircleList = static_cast<bool *>(operator new[](0x9E4uLL));
+  }
+  _ResetCirclePlayer();
+}
+
+void CGameObject::_ResetCirclePlayer()
+{
+  if (!m_bPlayerCircleList)
+  {
+    return;
+  }
+
+  bool previousList[0x9E4]{};
+  memcpy_0(previousList, m_bPlayerCircleList, sizeof(previousList));
+  memset_0(m_bPlayerCircleList, 0, sizeof(previousList));
+
+  _pnt_rect rect{};
+  const unsigned int curSec = GetCurSecNum();
+  m_pCurMap->GetRectInRadius(&rect, 11, curSec);
+
+  for (int y = rect.nStarty; y <= rect.nEndy; ++y)
+  {
+    for (int x = rect.nStartx; x <= rect.nEndx; ++x)
+    {
+      _sec_info *secInfo = m_pCurMap->GetSecInfo();
+      const unsigned int secIndex = secInfo->m_nSecNumW * y + x;
+      CObjectList *sectorPlayers = m_pCurMap->GetSectorListPlayer(m_wMapLayerIndex, secIndex);
+      if (!sectorPlayers)
+      {
+        continue;
+      }
+
+      _object_list_point *node = sectorPlayers->m_Head.m_pNext;
+      while (node != &sectorPlayers->m_Tail)
+      {
+        CGameObject *obj = node->m_pItem;
+        node = node->m_pNext;
+        if (!previousList[obj->m_ObjID.m_wIndex])
+        {
+          const int targetIndex = obj->m_ObjID.m_wIndex;
+          if (m_bMove)
+          {
+            SendMsg_RealMovePoint(targetIndex);
+          }
+          else
+          {
+            SendMsg_FixPosition(targetIndex);
+          }
+        }
+        m_bPlayerCircleList[obj->m_ObjID.m_wIndex] = true;
+      }
+    }
+  }
+}
+
+void CGameObject::SendMsg_BreakStop()
+{
+#pragma pack(push, 1)
+  struct BreakStopMsg
+  {
+    unsigned __int8 byID;
+    unsigned int dwObjSerial;
+    __int16 pos[3];
+  };
+#pragma pack(pop)
+
+  BreakStopMsg msg{};
+  msg.byID = m_ObjID.m_byID;
+  msg.dwObjSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, msg.pos, 3);
+
+  unsigned __int8 type[2] = {4, 30};
+  CircleReport(type, reinterpret_cast<char *>(&msg), 11, false);
+}
+
+char CGameObject::SetHP(int /*nHP*/, bool /*bOver*/)
+{
+  return 1;
 }
 
 void CGameObject::CalcAbsPos()

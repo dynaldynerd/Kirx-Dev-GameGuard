@@ -11,6 +11,7 @@
 #include "CMoveMapLimitRightInfo.h"
 #include "CMerchant.h"
 #include "CItemStore.h"
+#include "StoreList_fld.h"
 #include "CMyTimer.h"
 #include "CNetworkEX.h"
 #include "GlobalObjects.h"

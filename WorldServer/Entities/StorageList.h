@@ -22,6 +22,7 @@ struct __cppobj __unaligned __declspec(align(4)) _STORAGE_LIST
     unsigned int m_dwLendRegdTime;
 
     void empty();
+    void lock(bool bLock);
 
     _storage_con()
     {
@@ -48,6 +49,8 @@ struct __cppobj __unaligned __declspec(align(4)) _STORAGE_LIST
   _db_con *m_pStorageList;
 
   bool EmptyCon(int n);
+  void SetLock(int n, bool bLock);
+  int TransInCon(_storage_con *pCon);
   int GetIndexEmptyCon();
   int GetNumEmptyCon();
 };

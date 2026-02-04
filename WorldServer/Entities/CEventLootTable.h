@@ -14,9 +14,15 @@ public:
     unsigned __int16 wDropCntOnce;
     unsigned __int16 wDropDelay;
     _event_drop *pNext;
+
+    _event_drop();
   };
 
-  virtual ~CEventLootTable() = default;
+  CEventLootTable();
+  bool ReadRecord();
+  void AddRecord(_event_drop *pEventDrop);
+  _event_drop *GetRecord(const char *szRecordCode);
+  virtual ~CEventLootTable();
 
 private:
   _event_drop *m_pEventDropList;

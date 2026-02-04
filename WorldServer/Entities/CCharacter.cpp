@@ -52,6 +52,19 @@ void _effect_parameter::InitEffParam()
   }
 }
 
+void _effect_parameter::InitEffHave()
+{
+  if (!m_pDataParam)
+  {
+    return;
+  }
+
+  for (int j = 0; j < 83; ++j)
+  {
+    m_pDataParam->m_fEff_Have[j] = 0.0f;
+  }
+}
+
 bool _effect_parameter::GetEff_State(unsigned int nParamIndex)
 {
   if (!m_pDataParam)
@@ -179,6 +192,15 @@ void CCharacter::Init(_object_id *pID)
   m_wLastContEffect = static_cast<unsigned __int16>(-1);
 }
 
+void CCharacter::Stop()
+{
+  memcpy_0(m_fTarPos, m_fCurPos, sizeof(m_fTarPos));
+  if (m_bMove)
+  {
+    m_bMove = false;
+  }
+}
+
 bool CCharacter::Create(_character_create_setdata *pData)
 {
   if (!CGameObject::Create(pData))
@@ -197,6 +219,56 @@ bool CCharacter::Create(_character_create_setdata *pData)
   m_bLastContEffectUpdate = false;
   m_wLastContEffect = static_cast<unsigned __int16>(-1);
   return true;
+}
+
+bool CCharacter::Destroy()
+{
+  m_EP.InitEffParam();
+  memset_0(m_SFCont, 0, sizeof(m_SFCont));
+  memset_0(m_SFContAura, 0, sizeof(m_SFContAura));
+  m_bLastContEffectUpdate = false;
+  m_wLastContEffect = static_cast<unsigned __int16>(-1);
+  return CGameObject::Destroy() != 0;
+}
+
+bool CCharacter::SetTarPos(float *fTarPos, bool bColl)
+{
+  if (!m_pCurMap->IsMapIn(fTarPos))
+  {
+    return false;
+  }
+
+  float crossPos[3]{};
+  if (!bColl || m_pCurMap->m_Level.mBsp->CanYouGoThere(m_fCurPos, fTarPos, reinterpret_cast<float(*)[3]>(crossPos)))
+  {
+    memcpy_0(m_fTarPos, fTarPos, sizeof(m_fTarPos));
+  }
+  else
+  {
+    crossPos[1] = m_fCurPos[1];
+    memcpy_0(m_fTarPos, crossPos, sizeof(m_fTarPos));
+  }
+
+  Go();
+  ResetSlot();
+  return true;
+}
+
+void CCharacter::Go()
+{
+  if (!m_bMove)
+  {
+    m_bMove = true;
+  }
+}
+
+void CCharacter::ResetSlot()
+{
+  if (m_AroundNum)
+  {
+    memset_0(m_AroundSlot, 0, sizeof(m_AroundSlot));
+    m_AroundNum = 0;
+  }
 }
 
 void CCharacter::RemoveSFContEffect(

@@ -30,7 +30,7 @@ public:
   void SetOper(bool bOper, float fHPRate);
   void SendMsg_StoneAlterOper();
   unsigned int CalcCurHPRate();
-  unsigned int GetHP();
+  __int64 GetHP();
   char SetHP(int nHP, bool bOver = false);
 
   static int s_nLiveNum;

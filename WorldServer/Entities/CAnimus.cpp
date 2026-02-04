@@ -2,11 +2,14 @@
 
 #include "CAnimus.h"
 #include "animus_fld.h"
+#include "CGameObject.h"
 
 #include <cstring>
+#include <mmsystem.h>
 
 CRecordData CAnimus::s_tblParameter[8];
 unsigned int CAnimus::MAX_EXP[8]{};
+int CAnimus::s_nLiveNum = 0;
 
 namespace
 {
@@ -98,3 +101,26 @@ void CAnimus::Init(_object_id *pID)
   m_pTarget = nullptr;
 }
 
+bool CAnimus::Destroy()
+{
+  m_dwLastDestroyTime = timeGetTime();
+  SendMsg_Destroy();
+  m_pMaster = nullptr;
+  m_dwObjSerial = static_cast<unsigned int>(-1);
+  m_tmNextEatMasterFP = static_cast<unsigned int>(-1);
+  --CAnimus::s_nLiveNum;
+  return CCharacter::Destroy();
+}
+
+void CAnimus::SendMsg_Destroy()
+{
+  char szMsg[7]{};
+  memcpy_0(szMsg, &m_ObjID.m_wIndex, sizeof(m_ObjID.m_wIndex));
+  memcpy_0(szMsg + 2, &m_dwObjSerial, sizeof(m_dwObjSerial));
+  szMsg[6] = (m_nHP <= 0);
+
+  unsigned __int8 pbyType[36]{};
+  pbyType[0] = 3;
+  pbyType[1] = 26;
+  CircleReport(pbyType, szMsg, 7, false);
+}

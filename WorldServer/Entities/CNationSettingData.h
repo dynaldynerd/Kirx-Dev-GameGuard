@@ -32,6 +32,8 @@ public:
   virtual ~CNationSettingData() = default;
   virtual CBilling *CreateBilling();
   virtual const char *GetItemName(struct _NameTxt_fld *pFld);
+  virtual bool IsApplyPcbangPrimium(const CPlayer *pUser);
+  const char *GetNoneString();
 
   bool m_bServiceMode;
   int m_iNationCode;

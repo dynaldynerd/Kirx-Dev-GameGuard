@@ -15,6 +15,7 @@
 
 #include "CMerchant.h"
 #include "CRecordData.h"
+#include "CashItemRemoteStore.h"
 #include "GlobalObjectDefs.h"
 #include "GlobalObjects.h"
 #include "ItemDataLoader.h"
@@ -24,6 +25,7 @@
 #include "base_fld.h"
 
 const char *dayofweek[7] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+static char szDefItemName[] = "UNKNOWN";
 
 static __int64 D3DXCreateTextureFromFileInMemory_0(IDirect3DDevice8 *device, const void *data, unsigned int size, void *outTex);
 static __int64 D3DXCreateTextureFromFileExA_0(IDirect3DDevice8 *device, const char *path, __int64 flags);
@@ -206,6 +208,23 @@ void IOFileWrite_0(char *pszFileName, unsigned int nLen, char *pszData)
   }
 }
 
+void IOFileWrite_1(char *pszFileName, unsigned int nLen, char *pszData)
+{
+  HANDLE hFile = CreateFileA(pszFileName, 0x40000000u, 1u, nullptr, 4u, 0x80u, nullptr);
+  if (hFile != INVALID_HANDLE_VALUE)
+  {
+    SetFilePointer(hFile, 0, nullptr, 2u);
+    DWORD written = 0;
+    WriteFile(hFile, pszData, nLen, &written, nullptr);
+    CloseHandle(hFile);
+  }
+}
+
+__time64_t time_20(__int64 *_Time)
+{
+  return _time64(_Time);
+}
+
 int GetCurDay()
 {
   std::time_t now = std::time(nullptr);
@@ -311,6 +330,169 @@ int GetItemTableCode(const char *psItemCode)
   if (strcmp(prefix, "cu") == 0) return 36;
 
   return -1;
+}
+
+int IsOverLapItem(int nTableCode)
+{
+  return nTableCode == 13
+      || nTableCode == 17
+      || nTableCode == 18
+      || nTableCode == 20
+      || nTableCode == 22
+      || nTableCode == 31
+      || nTableCode == 23
+      || nTableCode == 30
+      || nTableCode == 26
+      || nTableCode == 32
+      || nTableCode == 34
+      || nTableCode == 35;
+}
+
+int IsItemSerialNum(int nTableCode)
+{
+  switch (nTableCode)
+  {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 7:
+    case 6:
+    case 8:
+    case 9:
+    case 15:
+    case 24:
+    case 33:
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+int IsStorageRange(unsigned __int8 byStorageCode, unsigned __int8 byStorageIndex)
+{
+  switch (byStorageCode)
+  {
+    case 0u:
+      return byStorageIndex < 0x64u;
+    case 1u:
+      return byStorageIndex < 8u;
+    case 2u:
+      return byStorageIndex < 7u;
+    case 3u:
+      return byStorageIndex < 0x58u;
+    case 4u:
+      return byStorageIndex < 4u;
+    case 5u:
+      return byStorageIndex < 0x64u;
+    case 6u:
+      return byStorageIndex < 0x28u;
+    case 7u:
+      return byStorageIndex < 0x28u;
+    default:
+      return 0;
+  }
+}
+
+unsigned __int8 GetItemUpgedLv(unsigned int dwLvBit)
+{
+  if (!dwLvBit)
+  {
+    return 0;
+  }
+
+  unsigned __int8 level = 0;
+  for (int j = 0; j < 7; ++j)
+  {
+    const unsigned __int8 talik = static_cast<unsigned __int8>((dwLvBit >> (4 * j)) & 0xF);
+    if (talik == 0xF)
+    {
+      break;
+    }
+    ++level;
+  }
+  return level;
+}
+
+unsigned __int8 GetTalikFromSocket(unsigned int dwLvBit, unsigned __int8 bySocketIndex)
+{
+  if (dwLvBit)
+  {
+    return static_cast<unsigned __int8>((dwLvBit >> (4 * bySocketIndex)) & 0xF);
+  }
+  return 15;
+}
+
+unsigned __int8 GetDefItemUpgSocketNum(int nTableCode, int nItemIndex)
+{
+  if (nTableCode < 0)
+  {
+    return 0;
+  }
+
+  CRecordData *table = &s_ptblItemData[nTableCode];
+  unsigned __int8 socketNum = 0;
+  if (nTableCode <= 5 || nTableCode == 7)
+  {
+    _base_fld *record = table->GetRecord(nItemIndex);
+    if (record)
+    {
+      socketNum = record[6].m_strCode[52];
+    }
+  }
+  else if (nTableCode == 6)
+  {
+    _base_fld *record = table->GetRecord(nItemIndex);
+    if (record)
+    {
+      socketNum = record[11].m_strCode[16];
+    }
+  }
+
+  if (socketNum > 7)
+  {
+    char buffer[144]{};
+    sprintf_s(buffer, "tbl:%d, idx:%d => slot: %d\n", nTableCode, nItemIndex, socketNum);
+    OutputDebugStringA(buffer);
+    return 0;
+  }
+  return socketNum;
+}
+
+unsigned int GetBitAfterSetLimSocket(unsigned __int8 byLimSocketNum)
+{
+  return (static_cast<unsigned int>(byLimSocketNum) << 28) | 0x0FFFFFFF;
+}
+
+unsigned __int8 GetWeaponClass(int nItemIndex)
+{
+  _base_fld *record = s_ptblItemData[6].GetRecord(nItemIndex);
+  if (!record)
+  {
+    return 0;
+  }
+
+  const int weaponType = *reinterpret_cast<int *>(&record[6].m_strCode[8]);
+  switch (weaponType)
+  {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 9:
+      return 0;
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+    case 11:
+      return 1;
+    default:
+      return 0;
+  }
 }
 
 int GetItemStdPrice(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind)
@@ -1224,6 +1406,69 @@ int GetItemGoldPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 
   }
 }
 
+int GetUsePcCashType(unsigned __int8 byTblCode, int nIndex)
+{
+  CRecordData *table = &s_ptblItemData[byTblCode];
+  if (!CashItemRemoteStore::FindCashRec(byTblCode, nIndex))
+  {
+    return 0;
+  }
+
+  if (byTblCode == 10)
+  {
+    _base_fld *record = table->GetRecord(nIndex);
+    if (record)
+    {
+      return *reinterpret_cast<unsigned int *>(&record[9].m_strCode[16]);
+    }
+  }
+  else
+  {
+    switch (byTblCode)
+    {
+      case 13:
+      {
+        _base_fld *record = table->GetRecord(nIndex);
+        if (record)
+        {
+          return *reinterpret_cast<unsigned int *>(&record[9].m_strCode[40]);
+        }
+        break;
+      }
+      case 18:
+      {
+        _base_fld *record = table->GetRecord(nIndex);
+        if (record)
+        {
+          return *reinterpret_cast<unsigned int *>(&record[8].m_strCode[12]);
+        }
+        break;
+      }
+      case 22:
+      {
+        _base_fld *record = table->GetRecord(nIndex);
+        if (record)
+        {
+          return *reinterpret_cast<unsigned int *>(&record[7].m_strCode[48]);
+        }
+        break;
+      }
+      case 31:
+      {
+        _base_fld *record = table->GetRecord(nIndex);
+        if (record)
+        {
+          return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[60]);
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
+  return 0;
+}
+
 unsigned int GetItemDurPoint(int nTableCode, int nIndex)
 {
   CRecordData *table = &s_ptblItemData[nTableCode];
@@ -1287,6 +1532,316 @@ unsigned int GetItemDurPoint(int nTableCode, int nIndex)
       return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[44]);
     default:
       return 1;
+  }
+}
+
+char *GetItemKorName(int nTableCode, int nItemIndex)
+{
+  CRecordData *table = &s_ptblItemData[nTableCode];
+  _base_fld *Record = nullptr;
+
+  switch (nTableCode)
+  {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 7:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 6:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 8:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 9:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 10:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 11:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 12:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 13:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 14:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return reinterpret_cast<char *>(&Record[2]);
+    case 15:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 16:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 17:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 18:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 19:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 20:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 21:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 22:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 23:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 24:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return &Record[2].m_strCode[60];
+    case 25:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return &Record[2].m_strCode[56];
+    case 26:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return reinterpret_cast<char *>(&Record[3]);
+    case 27:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 28:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 29:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[1].m_strCode;
+    case 30:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 31:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 32:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 33:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return &Record[2].m_strCode[60];
+    case 34:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 35:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    case 36:
+      Record = table->GetRecord(nItemIndex);
+      if (!Record)
+        return szDefItemName;
+      return Record[2].m_strCode;
+    default:
+      return szDefItemName;
+  }
+}
+
+int IsTimeItem(unsigned __int8 byTblCode, int dwIndex)
+{
+  CRecordData *table = &s_ptblItemData[byTblCode];
+  _base_fld *Record = nullptr;
+
+  switch (byTblCode)
+  {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&Record[7].m_strCode[56]);
+    case 6:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&Record[12].m_strCode[20]);
+    case 7:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&Record[7].m_strCode[56]);
+    case 8:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[52]);
+    case 9:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[52]);
+    case 10:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&Record[9].m_strCode[20]);
+    case 11:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[8]);
+    case 12:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[44]);
+    case 13:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&Record[9].m_strCode[44]);
+    case 16:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[52]);
+    case 17:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[4]);
+    case 18:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&Record[8].m_strCode[16]);
+    case 20:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[48]);
+    case 21:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[40]);
+    case 22:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&Record[7].m_strCode[52]);
+    case 23:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(Record[10].m_strCode);
+    case 25:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&Record[11].m_strCode[32]);
+    case 26:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&Record[9].m_strCode[40]);
+    case 27:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&Record[7].m_strCode[20]);
+    case 28:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&Record[7].m_strCode[44]);
+    case 31:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return static_cast<int>(Record[6].m_dwIndex);
+    case 33:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&Record[7].m_strCode[36]);
+    case 34:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&Record[7].m_strCode[40]);
+    case 36:
+      Record = table->GetRecord(dwIndex);
+      if (!Record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[4]);
+    default:
+      return 0;
   }
 }
 
@@ -1438,6 +1993,22 @@ void StripName(char *szPath)
     --idx;
   if (idx)
     szPath[idx + 1] = '\0';
+}
+
+char W2M(char *lpwStr, char *szTran, unsigned int wTranBuffSize)
+{
+  if (!wTranBuffSize)
+  {
+    return 0;
+  }
+
+  if (strlen_0(lpwStr) + 1 > wTranBuffSize)
+  {
+    return 0;
+  }
+
+  strcpy_s(szTran, wTranBuffSize, lpwStr);
+  return 1;
 }
 
 bool IsServerMode()

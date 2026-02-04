@@ -3,6 +3,7 @@
 #include "IdaCompat.h"
 
 #include "CCharacter.h"
+#include "ObjectCreateSetData.h"
 
 class CAttack;
 class CPlayer;
@@ -12,6 +13,8 @@ struct _dummy_position;
 class __cppobj CHolyKeeper : public CCharacter
 {
 public:
+  CHolyKeeper();
+
   static int s_nLiveNum;
   static unsigned int s_dwSerialCnt;
 

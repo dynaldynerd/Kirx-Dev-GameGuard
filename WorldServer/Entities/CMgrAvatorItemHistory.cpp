@@ -3,11 +3,101 @@
 #include "CMgrAvatorItemHistory.h"
 
 #include <cstdio>
+#include <cstring>
+#include <ctime>
 #include <process.h>
 #include <windows.h>
 
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
+
+namespace
+{
+  char sData[20000]{};
+  char s_personal_amine_log[20000]{};
+  const char *kPersonalAmineUninstallDesc[] = {
+    "TYPE0",
+    "TYPE1",
+    "TYPE2",
+    "TYPE3"
+  };
+}
+
+void CMgrAvatorItemHistory::lenditem_del_from_inven(
+  unsigned __int8 byTblCode,
+  unsigned __int16 wItemIndex,
+  unsigned __int64 lnUID,
+  char *pFN)
+{
+  sData[0] = '\0';
+
+  _base_fld *record = g_Main.m_tblItemData[byTblCode].GetRecord(wItemIndex);
+  __time32_t timeValue[4]{};
+  _time32(timeValue);
+  tm *localTime = _localtime32(timeValue);
+
+  if (record)
+  {
+    const unsigned int korTime = GetKorLocalTime();
+    const char *itemKorName = GetItemKorName(byTblCode, wItemIndex);
+    sprintf(
+      sData,
+      "[DEL_LENDITEM] : %s(%s) [UID:%I64u][T:%u/%d]\r\n",
+      record->m_strCode,
+      itemKorName,
+      lnUID,
+      korTime,
+      localTime->tm_sec);
+  }
+  else
+  {
+    const unsigned int korTime = GetKorLocalTime();
+    sprintf(sData, "[DEL_LENDITEM] : Tbl:%d Idx:%d [UID:%I64u][%u]\r\n", byTblCode, wItemIndex, lnUID, korTime);
+  }
+
+  WriteFile(pFN, sData);
+}
+
+void CMgrAvatorItemHistory::time_jade_effect_log(
+  char *pszItemName,
+  _STORAGE_LIST::_db_con *pItem,
+  bool bAdd,
+  char *pszFileName)
+{
+  if (bAdd)
+  {
+    sprintf_s(
+      sData,
+      20000,
+      "Item Effect Add :%s_[%I64u] [Count :%d] [%s %s]\r\n",
+      pszItemName,
+      pItem->m_lnUID,
+      pItem->m_dwDur,
+      m_szCurDate,
+      m_szCurTime);
+  }
+  else
+  {
+    sprintf_s(
+      sData,
+      20000,
+      "Item Effect Del :%s_[%I64u] [Count :%d] [%s %s]\r\n",
+      pszItemName,
+      pItem->m_lnUID,
+      pItem->m_dwDur,
+      m_szCurDate,
+      m_szCurTime);
+  }
+
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::exp_prof_log(int count, char *szFile)
+{
+  memset_0(sData, 0, sizeof(sData));
+  sprintf_s(sData, sizeof(sData), "[Exp_Prof_Using] :  %d \r\n", count);
+  WriteFile(szFile, sData);
+}
 
 CMgrAvatorItemHistory::CMgrAvatorItemHistory()
 {
@@ -90,7 +180,7 @@ void CMgrAvatorItemHistory::IOThread(void *pv)
   _endthreadex(0);
 }
 
-void CMgrAvatorItemHistory::WriteFile(char *pszFileName, char *pszLog)
+void CMgrAvatorItemHistory::WriteFile(const char *pszFileName, const char *pszLog)
 {
   const int logLen = static_cast<int>(strlen_0(pszLog));
   unsigned int outIndex = 0;
@@ -132,10 +222,13 @@ void CMgrAvatorItemHistory::WriteFile(char *pszFileName, char *pszLog)
     return;
   }
 
-  IOFileWrite_0(pszFileName, logLen, pszLog);
+  IOFileWrite_0(
+    const_cast<char *>(pszFileName),
+    logLen,
+    const_cast<char *>(pszLog));
 }
 
-void CMgrAvatorItemHistory::consume_del_item(int n, _STORAGE_LIST::_db_con *pItem, char *pszFileName)
+void CMgrAvatorItemHistory::consume_del_item(int n, _STORAGE_LIST::_db_con *pItem, const char *pszFileName)
 {
   auto *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
   const char *upgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, pItem->m_dwLv);
@@ -152,4 +245,64 @@ void CMgrAvatorItemHistory::consume_del_item(int n, _STORAGE_LIST::_db_con *pIte
 
   (void)n;
   WriteFile(pszFileName, logBuffer);
+}
+
+void CMgrAvatorItemHistory::personal_amine_itemlog(
+  const char *szLogDesc,
+  unsigned __int8 byPos,
+  unsigned __int8 byTblCode,
+  unsigned __int16 wItemIndex,
+  unsigned int dwDur,
+  const char *szFileName)
+{
+  s_personal_amine_log[0] = '\0';
+  const char *itemName = GetItemKorName(byTblCode, wItemIndex);
+  sprintf_s(
+    s_personal_amine_log,
+    sizeof(s_personal_amine_log),
+    "[%s] %s(pos:%d code:%d idx:%d) dur(%d)\r\n",
+    szLogDesc,
+    itemName,
+    static_cast<int>(byPos),
+    static_cast<int>(byTblCode),
+    static_cast<int>(wItemIndex),
+    static_cast<int>(dwDur));
+  WriteFile(szFileName, s_personal_amine_log);
+}
+
+void CMgrAvatorItemHistory::personal_amine_uninstall(
+  unsigned __int8 byType,
+  const unsigned int *pdwMineCnt,
+  int nMaxOreNum,
+  _STORAGE_LIST::_db_con *pItem,
+  const char *szFileName)
+{
+  std::memset(s_personal_amine_log, 0, sizeof(s_personal_amine_log));
+  const char *itemName = GetItemKorName(pItem->m_byTableCode, pItem->m_wItemIndex);
+  sprintf_s(
+    s_personal_amine_log,
+    sizeof(s_personal_amine_log),
+    "[PERSONAL_AMINE_UNINSTALL][%s] - %s[%I64u]\r\n",
+    kPersonalAmineUninstallDesc[byType],
+    itemName,
+    pItem->m_lnUID);
+
+  char *buffer = &s_personal_amine_log[strlen_0(s_personal_amine_log)];
+  for (int nItemIndex = 0; nItemIndex < nMaxOreNum; ++nItemIndex)
+  {
+    if (pdwMineCnt[nItemIndex])
+    {
+      const char *oreName = GetItemKorName(17, nItemIndex);
+      const size_t remaining = sizeof(s_personal_amine_log) - static_cast<size_t>(buffer - s_personal_amine_log);
+      sprintf_s(
+        buffer,
+        remaining,
+        "%s >> num:%d\r\n",
+        oreName,
+        static_cast<int>(pdwMineCnt[nItemIndex]));
+      buffer += strlen_0(buffer);
+    }
+  }
+
+  WriteFile(szFileName, s_personal_amine_log);
 }

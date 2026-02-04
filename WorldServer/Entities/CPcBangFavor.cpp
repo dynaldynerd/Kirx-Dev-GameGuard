@@ -10,6 +10,16 @@ CPcBangFavor *CPcBangFavor::Instance()
 
 bool CPcBangFavor::Initialzie()
 {
+  char returnedString[40]{};
+  memset_0(returnedString, 0, 10);
+  GetPrivateProfileStringA(
+    "PcBang Favor",
+    "USE",
+    "FALSE",
+    returnedString,
+    0xAu,
+    ".\\Initialize\\WorldSystem.ini");
+  m_bEnable = strcmp_0(returnedString, "FALSE") != 0;
   return true;
 }
 

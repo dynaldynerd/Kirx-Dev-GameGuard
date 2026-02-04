@@ -24,7 +24,7 @@ public:
   virtual ~CGuild() = default;
   void Init(unsigned int index);
 
-private:
+public:
   int m_nIndex;
   unsigned int m_dwSerial;
   char m_wszName[17];

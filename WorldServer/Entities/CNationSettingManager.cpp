@@ -34,3 +34,21 @@ const char *CNationSettingManager::GetItemName(_NameTxt_fld *pFld)
   }
   return m_pData->GetItemName(pFld);
 }
+
+const char *CNationSettingManager::GetNoneString()
+{
+  if (m_pData == nullptr)
+  {
+    return "";
+  }
+  return m_pData->GetNoneString();
+}
+
+bool CNationSettingManager::IsApplyPcbangPrimium(const CPlayer *pUser)
+{
+  if (!m_pData)
+  {
+    return false;
+  }
+  return m_pData->IsApplyPcbangPrimium(pUser);
+}

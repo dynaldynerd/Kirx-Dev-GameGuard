@@ -87,24 +87,6 @@
 - CLuaScriptMgr::InitSDM :: return true;
 
 
-## CMapOperation.cpp
-- CMapOperation::Init :: return true;
-
-## CMonsterEventRespawn.cpp
-- CMonsterEventRespawn::SetEventRespawn :: return true;
-
-## CMonsterEventSet.cpp
-- CMonsterEventSet::LoadEventSetLooting :: return true;
-
-## CNotifyNotifyRaceLeaderSownerUTaxrate.cpp
-- CNotifyNotifyRaceLeaderSownerUTaxrate::Init
-
-## CNuclearBombMgr.cpp
-- CNuclearBombMgr::MissileInit :: return true;
-
-## CPcBangFavor.cpp
-- CPcBangFavor::Initialzie :: return true;
-
 ## CPlayer.cpp
 - CPlayer::SetStaticMember
 - _WEAPON_PARAM::SetStaticMember :: (void)itemTable;

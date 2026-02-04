@@ -76,6 +76,7 @@ class __cppobj __declspec(align(8)) CMonsterEventSet
 public:
   bool LoadEventSet(char *errBuffer);
   bool LoadEventSetLooting();
+  _event_set_looting *GetEvenSetLooting(const char *pszCode);
 
   virtual ~CMonsterEventSet() = default;
 

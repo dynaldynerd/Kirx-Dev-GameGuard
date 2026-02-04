@@ -266,6 +266,37 @@ _base_fld *CRecordData::GetRecord(const char *code)
   return nullptr;
 }
 
+_base_fld *CRecordData::GetRecord(const char *szRecordCode, int nCompareLen)
+{
+  for (int n = 0; n < m_Header.m_nRecordNum; ++n)
+  {
+    _base_fld *record = GetRecord(n);
+    if (record != nullptr && std::strncmp(record->m_strCode, szRecordCode, nCompareLen) == 0)
+    {
+      return record;
+    }
+  }
+  return nullptr;
+}
+
+_base_fld *CRecordData::GetRecordByHash(const char *szRecordCode, int offset, int len)
+{
+  if (!m_pdwHashList)
+  {
+    return GetRecord(szRecordCode, len + offset);
+  }
+
+  const unsigned int hash = MakeHash(&szRecordCode[offset], len);
+  for (int n = 0; n < m_Header.m_nRecordNum; ++n)
+  {
+    if (m_pdwHashList[n] == hash)
+    {
+      return GetRecord(n);
+    }
+  }
+  return nullptr;
+}
+
 bool CRecordData::MakeHashTable(int keyIndex, int keyLength, char *errCode)
 {
   if (!m_bLoad)

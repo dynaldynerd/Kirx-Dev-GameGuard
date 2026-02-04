@@ -41,3 +41,20 @@ bool CHonorGuild::Init()
   }
   return true;
 }
+
+unsigned __int8 CHonorGuild::FindHonorGuildRank(unsigned __int8 byRace, unsigned int dwGuildSerial)
+{
+  if (byRace >= 3u)
+  {
+    return static_cast<unsigned __int8>(-1);
+  }
+
+  for (int j = 0; j < m_pCurrHonorGuild[byRace]->byListNum; ++j)
+  {
+    if (m_pCurrHonorGuild[byRace]->GuildList[j].dwGuildSerial == dwGuildSerial)
+    {
+      return static_cast<unsigned __int8>(j);
+    }
+  }
+  return static_cast<unsigned __int8>(-1);
+}

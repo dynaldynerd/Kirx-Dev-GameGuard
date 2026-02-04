@@ -9,6 +9,8 @@ class CPlayer;
 class __cppobj __declspec(align(8)) CParkingUnit : CGameObject
 {
 public:
+  static int s_nLiveNum;
+
   CPlayer *m_pOwner;
   unsigned int m_dwOwnerSerial;
   unsigned __int8 m_byFrame;
@@ -20,5 +22,7 @@ public:
   unsigned int m_dwLastDestroyTime;
 
   void Init(_object_id *pID);
+  bool Destroy(unsigned __int8 byDestoryType);
+  void SendMsg_Destroy(unsigned __int8 byDestoryType);
 };
 

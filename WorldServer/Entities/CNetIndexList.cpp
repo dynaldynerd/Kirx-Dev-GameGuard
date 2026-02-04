@@ -35,6 +35,42 @@ namespace
   }
 }
 
+CNetIndexList::_index_node::_index_node()
+  : m_dwIndex(0),
+    m_pPrev(nullptr),
+    m_pNext(nullptr)
+{
+}
+
+CNetIndexList::CNetIndexList()
+  : m_Head(),
+    m_Tail(),
+    m_BufHead(),
+    m_BufTail(),
+    m_pBufNode(nullptr),
+    m_dwCount(0),
+    m_dwBufCount(0),
+    m_dwMaxBufNum(0)
+{
+  m_Head.m_pPrev = &m_Head;
+  m_Head.m_pNext = &m_Tail;
+  m_Tail.m_pPrev = &m_Head;
+  m_Tail.m_pNext = &m_Tail;
+  m_BufHead.m_pPrev = &m_BufHead;
+  m_BufHead.m_pNext = &m_BufTail;
+  m_BufTail.m_pPrev = &m_BufHead;
+  m_BufTail.m_pNext = &m_BufTail;
+}
+
+CNetIndexList::~CNetIndexList()
+{
+  if (m_pBufNode)
+  {
+    delete[] m_pBufNode;
+    m_pBufNode = nullptr;
+  }
+}
+
 bool CNetIndexList::SetList(CNetIndexList *list, unsigned int maxBufNum)
 {
   if (list == nullptr)
@@ -124,6 +160,52 @@ bool CNetIndexList::PopNode_Front(CNetIndexList *list, unsigned int *outIndex)
   --list->m_dwCount;
   ++list->m_dwBufCount;
   return true;
+}
+
+bool CNetIndexList::CopyFront(CNetIndexList *list, unsigned int *outIndex)
+{
+  if (list == nullptr || outIndex == nullptr)
+  {
+    return false;
+  }
+
+  list->m_csList.Lock();
+  if (list->m_Head.m_pNext == &list->m_Tail)
+  {
+    list->m_csList.Unlock();
+    return false;
+  }
+
+  *outIndex = list->m_Head.m_pNext->m_dwIndex;
+  list->m_csList.Unlock();
+  return true;
+}
+
+CNetIndexList::_index_node *CNetIndexList::FindNode(CNetIndexList *list, unsigned int index)
+{
+  if (list == nullptr)
+  {
+    return nullptr;
+  }
+
+  list->m_csList.Lock();
+  _index_node *node = list->m_Head.m_pNext;
+  while (node != &list->m_Tail)
+  {
+    if (node->m_dwIndex == index)
+    {
+      node->m_pPrev->m_pNext = node->m_pNext;
+      node->m_pNext->m_pPrev = node->m_pPrev;
+      --list->m_dwCount;
+      InsertBefore(&list->m_BufTail, node);
+      ++list->m_dwBufCount;
+      list->m_csList.Unlock();
+      return node;
+    }
+    node = node->m_pNext;
+  }
+  list->m_csList.Unlock();
+  return nullptr;
 }
 
 void CNetIndexList::ResetList(CNetIndexList *list)

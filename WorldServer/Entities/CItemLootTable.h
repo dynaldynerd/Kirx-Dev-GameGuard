@@ -18,6 +18,7 @@ public:
   virtual ~CItemLootTable() = default;
 
 private:
+public:
   CRecordData m_tblLoot;
   CEventLootTable *m_pTblEvent;
   _linker_code **m_ppLinkCode;

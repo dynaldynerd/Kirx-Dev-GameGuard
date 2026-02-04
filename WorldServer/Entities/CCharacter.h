@@ -32,6 +32,7 @@ struct __declspec(align(8)) _effect_parameter
 
   void AllocEffParam();
   void InitEffParam();
+  void InitEffHave();
   float GetEff_Rate(unsigned int nParamIndex);
   float GetEff_Plus(unsigned int nParamIndex);
   float GetEff_Have(unsigned int nParamIndex);
@@ -69,7 +70,12 @@ public:
   CMyTimer m_tmrSFCont;
 
   bool Create(_character_create_setdata *pData);
+  bool Destroy();
   void Init(_object_id *pID);
+  bool SetTarPos(float *fTarPos, bool bColl);
+  void Go();
+  void Stop();
+  void ResetSlot();
   void RemoveSFContEffect(unsigned __int8 byContCode, unsigned __int16 wListIndex, bool bInit, bool bAura);
   void RemoveSFContHelpByEffect(int nContParamCode, int nContParamIndex);
   unsigned int CalcEffectBit(unsigned __int16 wEffectCode, unsigned __int16 wEffectIndex);

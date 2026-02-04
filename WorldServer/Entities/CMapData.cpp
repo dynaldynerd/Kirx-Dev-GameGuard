@@ -241,6 +241,82 @@ bool CMapData::GetRandPosInDummy(_dummy_position *pPos, float *pNewPos, bool bRe
     return true;
 }
 
+bool CMapData::GetRandPosInRange(float *pStdPos, int nRange, float *pNewPos)
+{
+  float crossPoint[3];
+  for (int j = 0; j <= 50; ++j)
+  {
+    const float xMin = pStdPos[0] - static_cast<float>(nRange / 2);
+    pNewPos[0] = xMin + static_cast<float>(rand() % nRange);
+    const float zMin = pStdPos[2] - static_cast<float>(nRange / 2);
+    pNewPos[2] = zMin + static_cast<float>(rand() % nRange);
+    pNewPos[1] = pStdPos[1];
+    if (static_cast<unsigned int>(
+          this->m_Level.mBsp->CanYouGoThere(pStdPos, pNewPos, reinterpret_cast<float(*)[3]>(crossPoint))))
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool CMapData::GetRandPosVirtualDumExcludeStdRange(float *pStdPos, int nRange, int iExcludeRange, float *pNewPos)
+{
+  float minPos[3]{};
+  float maxPos[3]{};
+  minPos[0] = pStdPos[0] - static_cast<float>(nRange / 2);
+  minPos[1] = pStdPos[1] - 100.0f;
+  minPos[2] = pStdPos[2] - static_cast<float>(nRange / 2);
+  maxPos[0] = pStdPos[0] + static_cast<float>(nRange / 2);
+  maxPos[1] = pStdPos[1] + 100.0f;
+  maxPos[2] = pStdPos[2] + static_cast<float>(nRange / 2);
+
+  const float excludeMinX = pStdPos[0] - static_cast<float>(iExcludeRange / 2);
+  const float excludeMaxX = pStdPos[0] + static_cast<float>(iExcludeRange / 2);
+  const float excludeMinZ = pStdPos[2] - static_cast<float>(iExcludeRange / 2);
+  const float excludeMaxZ = pStdPos[2] + static_cast<float>(iExcludeRange / 2);
+
+  int failCount = 0;
+  while (true)
+  {
+    while (true)
+    {
+      do
+      {
+        const float xMin = pStdPos[0] - static_cast<float>(nRange / 2);
+        pNewPos[0] = xMin + static_cast<float>(rand() % nRange);
+        const float zMin = pStdPos[2] - static_cast<float>(nRange / 2);
+        pNewPos[2] = zMin + static_cast<float>(rand() % nRange);
+      } while (pNewPos[0] >= excludeMinX
+               && excludeMaxX >= pNewPos[0]
+               && pNewPos[2] >= excludeMinZ
+               && excludeMaxZ >= pNewPos[2]);
+
+      pNewPos[1] = this->m_Level.mBsp->GetFirstYpos(pNewPos, minPos, maxPos);
+      if (pNewPos[1] != -65535.0f)
+      {
+        break;
+      }
+      if (failCount++ > 50)
+      {
+        return false;
+      }
+    }
+
+    float crossPoint[3]{};
+    if (static_cast<unsigned int>(
+          this->m_Level.mBsp->CanYouGoThere(pStdPos, pNewPos, reinterpret_cast<float(*)[3]>(crossPoint))))
+    {
+      break;
+    }
+    if (failCount++ > 50)
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool CMapData::IsMapIn(float *fPos)
 {
   for (int j = 0; j < 3; ++j)

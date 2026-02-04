@@ -33,8 +33,32 @@ public:
 
   CMgrAvatorItemHistory();
   static void IOThread(void *pv);
-  void WriteFile(char *pszFileName, char *pszLog);
-  void consume_del_item(int n, _STORAGE_LIST::_db_con *pItem, char *pszFileName);
+  void WriteFile(const char *pszFileName, const char *pszLog);
+  void consume_del_item(int n, _STORAGE_LIST::_db_con *pItem, const char *pszFileName);
+  void personal_amine_itemlog(
+    const char *szLogDesc,
+    unsigned __int8 byPos,
+    unsigned __int8 byTblCode,
+    unsigned __int16 wItemIndex,
+    unsigned int dwDur,
+    const char *szFileName);
+  void personal_amine_uninstall(
+    unsigned __int8 byType,
+    const unsigned int *pdwMineCnt,
+    int nMaxOreNum,
+    _STORAGE_LIST::_db_con *pItem,
+    const char *szFileName);
+  void lenditem_del_from_inven(
+    unsigned __int8 byTblCode,
+    unsigned __int16 wItemIndex,
+    unsigned __int64 lnUID,
+    char *pFN);
+  void time_jade_effect_log(
+    char *pszItemName,
+    _STORAGE_LIST::_db_con *pItem,
+    bool bAdd,
+    char *pszFileName);
+  void exp_prof_log(int count, char *szFile);
 
   char m_szStdPath[128];
   unsigned int m_dwLastLocalDate;

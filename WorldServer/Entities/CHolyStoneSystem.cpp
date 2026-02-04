@@ -355,6 +355,11 @@ unsigned __int8 CHolyStoneSystem::GetNumOfTime()
   return m_SaveData.m_byNumOfTime;
 }
 
+int CHolyStoneSystem::GetDestroyerState()
+{
+  return static_cast<int>(m_SaveData.m_eDestroyerState);
+}
+
 int CHolyStoneSystem::GetHolyMasterRace()
 {
   return m_SaveData.m_nHolyMasterRace;
@@ -1065,7 +1070,7 @@ void CHolyStoneSystem::PeneltyFailRace(unsigned __int8 byFailRace)
 
 void CHolyStoneSystem::On_HS_SCENE_BATTLE_TIME()
 {
-  CHolyKeeper::Destroy(g_Keeper, 1u, nullptr);
+  g_Keeper->Destroy(1u, nullptr);
   m_dwNextStartTime = 0;
   m_pkDestroyer = nullptr;
   m_SaveData.m_nHolyMasterRace = -1;

@@ -25,6 +25,8 @@ public:
   unsigned int GetRecordNum() const;
   _base_fld *GetRecord(int index);
   _base_fld *GetRecord(const char *code);
+  _base_fld *GetRecord(const char *szRecordCode, int nCompareLen);
+  _base_fld *GetRecordByHash(const char *szRecordCode, int offset, int len);
   bool MakeHashTable(int keyIndex, int keyLength, char *errCode);
   static unsigned int MakeHash(const char *p, int len);
   bool IsTableOpen() const;

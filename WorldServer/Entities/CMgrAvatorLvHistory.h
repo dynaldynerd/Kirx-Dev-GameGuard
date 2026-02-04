@@ -6,6 +6,8 @@
 #include "CFrameRate.h"
 #include "CNetIndexList.h"
 
+class CPartyPlayer;
+
 class __cppobj CMgrAvatorLvHistory
 {
 public:
@@ -29,6 +31,9 @@ public:
   {
     char sData[200];
   };
+
+  void alter_pvp(int n, long double dPvpVariation, CPartyPlayer *pParty, char *pszFileName);
+  void WriteFile(char *pszFileName, char *pszLog);
 
   char m_szStdPath[128];
   unsigned int m_dwLastLocalDate;

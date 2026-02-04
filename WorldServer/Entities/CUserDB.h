@@ -61,7 +61,14 @@ public:
   void ParamInit();
   static bool Update_Map(CUserDB *self, unsigned __int8 map, float *pos);
   void Update_PvpPointLeak(long double dValue);
+  void Update_LastAttBuff(bool bSet);
   bool Update_AlterPvPPoint(long double dNewPoint);
+  bool Update_ItemAdd(
+    unsigned __int8 storage,
+    unsigned __int8 slot,
+    const _STORAGE_LIST::_db_con *pItem,
+    bool bUpdate);
+  bool Update_ItemDelete(unsigned __int8 storage, unsigned __int8 slot, bool bUpdate);
   bool Update_Money(unsigned int dalant, unsigned int gold);
   bool Update_SFContDelete(unsigned __int8 byContCode, unsigned __int8 bySlotIndex);
   bool Update_SFContInsert(

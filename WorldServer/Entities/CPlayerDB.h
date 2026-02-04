@@ -7,6 +7,7 @@ class __cppobj CPlayerDB
 {
 public:
   static int GetRaceCode(CPlayerDB *self);
+  static int GetRaceSexCode(CPlayerDB *self);
   static int GetMapCode(CPlayerDB *self);
   static void SetMapCode(CPlayerDB *self, unsigned __int8 byCode);
   static char *GetCharNameA(CPlayerDB *self);
@@ -22,10 +23,13 @@ public:
   static void SetFP(CPlayerDB *self, unsigned int dwFP);
   static unsigned int GetSP(CPlayerDB *self);
   static void SetSP(CPlayerDB *self, unsigned int dwSP);
+  static unsigned int GetDP(CPlayerDB *self);
+  static void SetDP(CPlayerDB *self, unsigned int dwDP);
   static unsigned int GetDalant(CPlayerDB *self);
   static void SetDalant(CPlayerDB *self, unsigned int dwDt);
   static unsigned int GetGold(CPlayerDB *self);
   static void SetCurPos(CPlayerDB *self, float *fPos);
+  static unsigned __int8 GetBagNum(CPlayerDB *self);
 
   unsigned __int8 m_byPvPGrade;
   __unaligned __declspec(align(1)) _character_db_load m_dbChar;

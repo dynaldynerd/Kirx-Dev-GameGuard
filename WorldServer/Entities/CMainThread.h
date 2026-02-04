@@ -147,6 +147,11 @@ struct __cppobj __declspec(align(2)) _BILLING_INFO
   bool bPCCheat;
   bool bIsPcBang;
   bool bAgeLimit;
+
+  bool IsPcBangType() const
+  {
+    return bIsPcBang;
+  }
 };
 
 /* 1261 */
@@ -659,6 +664,9 @@ struct _EQUIPKEY
 {
   __int16 zItemIndex;
   void SetRelease();
+  bool IsFilled();
+  void LoadDBKey(__int16 key);
+  __int16 CovDBKey();
 };
 
 /* 1539 */
@@ -689,6 +697,8 @@ struct __cppobj __unaligned __declspec(align(1)) _REGED : _REGED_AVATOR_DB
   unsigned int m_dwET[8];
   unsigned int m_dwLendRegdTime[8];
   void init();
+  bool Set(unsigned __int8 bySlot, const _STORAGE_LIST::_db_con *pItem);
+  bool Release(unsigned __int8 bySlot);
 };
 
 /* 1541 */
@@ -763,6 +773,11 @@ struct _EMBELLKEY
   unsigned __int8 bySlotIndex;
   unsigned __int8 byTableCode;
   unsigned __int16 wItemIndex;
+
+  bool IsFilled();
+  void SetRelease();
+  void LoadDBKey(_EMBELLKEY key);
+  __int64 CovDBKey();
 };
 
 /* 1547 */
@@ -777,6 +792,9 @@ struct __cppobj _EQUIP_DB_BASE
     unsigned __int8 byCsMethod;
     unsigned int dwT;
     unsigned int dwLendRegdTime;
+
+    bool Set(const _STORAGE_LIST::_db_con *pItem);
+    bool Release();
   };
 
   _EMBELLISH_LIST m_EmbellishList[7];
@@ -786,6 +804,11 @@ struct __cppobj _EQUIP_DB_BASE
 struct _FORCEKEY
 {
   unsigned int dwKey;
+
+  bool IsFilled();
+  void SetRelease();
+  void SetKey(unsigned __int8 byItemIndex, unsigned int dwStat);
+  unsigned __int8 GetIndex();
 };
 
 /* 1550 */
@@ -799,6 +822,9 @@ struct __cppobj _FORCE_DB_BASE
     unsigned __int8 byCsMethod;
     unsigned int dwT;
     unsigned int m_dwLendRegdTime;
+
+    bool Set(const _STORAGE_LIST::_db_con *pItem);
+    bool Release();
   };
 
   _LIST m_List[88];
@@ -808,6 +834,11 @@ struct __cppobj _FORCE_DB_BASE
 struct _ANIMUSKEY
 {
   unsigned __int8 byItemIndex;
+
+  bool IsFilled();
+  void SetRelease();
+  void LoadDBKey(unsigned __int8 key);
+  unsigned __int8 CovDBKey();
 };
 
 /* 1553 */
@@ -823,6 +854,9 @@ struct __cppobj _ANIMUS_DB_BASE
     unsigned __int8 byCsMethod;
     unsigned int dwT;
     unsigned int dwLendRegdTime;
+
+    bool Set(const _STORAGE_LIST::_db_con *pItem);
+    bool Release();
   };
 
   _LIST m_List[4];
@@ -841,6 +875,9 @@ struct __cppobj _INVEN_DB_BASE
     unsigned __int8 byCsMethod;
     unsigned int dwT;
     unsigned int dwLendRegdTime;
+
+    bool Set(const _STORAGE_LIST::_db_con *pItem);
+    bool Release();
   };
 
   _LIST m_List[100];
@@ -907,6 +944,9 @@ struct __cppobj __unaligned __declspec(align(1)) _TRUNK_DB_BASE
     unsigned __int8 byCsMethod;
     unsigned int dwT;
     unsigned int dwLendRegdTime;
+
+    bool Set(const _STORAGE_LIST::_db_con *pItem, unsigned __int8 byRaceCode);
+    bool Release();
   };
 
   char wszPasswd[13];
@@ -1022,6 +1062,9 @@ struct __cppobj __unaligned __declspec(align(1)) _PERSONALAMINE_INVEN_DB_BASE
   {
     _INVENKEY Key;
     unsigned int dwDur;
+
+    bool Set(const _STORAGE_LIST::_db_con *pItem);
+    bool Release();
   };
 
   _LIST m_List[40];
@@ -1224,6 +1267,47 @@ struct __cppobj __unaligned __declspec(align(2)) _personal_amine_mineore_zocl
   __changed change[40];
 
   void clear();
+};
+
+/* 5884 */
+struct __unaligned __declspec(align(2)) _personal_automine_uninstall_zocl
+{
+  struct __unaligned __declspec(align(2)) __battery
+  {
+    unsigned int dwDur;
+    unsigned __int16 wSerial;
+  };
+
+  unsigned int dwObjSerial;
+  unsigned __int8 byActType;
+  __unaligned __declspec(align(1)) unsigned int dwOwnerSerial;
+  __unaligned __declspec(align(1)) unsigned __int16 wItemSerial;
+  unsigned __int8 byCnt;
+  __battery battery[2];
+
+  _personal_automine_uninstall_zocl();
+  unsigned int size() const;
+};
+
+/* 5886 */
+struct __cppobj __unaligned __declspec(align(1)) _personal_automine_uninstall_circle_zocl
+{
+  unsigned int dwObjSerial;
+  unsigned __int8 byActType;
+
+  _personal_automine_uninstall_circle_zocl();
+  unsigned int size() const;
+};
+
+/* 5896 */
+struct __cppobj __unaligned __declspec(align(1)) _personal_automine_current_state_zocl
+{
+  unsigned __int16 wItemSerial;
+  unsigned __int8 byFilledSlotCnt;
+  unsigned int dwBatteryGage;
+
+  _personal_automine_current_state_zocl();
+  unsigned int size() const;
 };
 
 /* 1709 */

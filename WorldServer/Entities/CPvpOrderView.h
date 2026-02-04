@@ -2,9 +2,31 @@
 
 #include "IdaCompat.h"
 
+struct __cppobj _pvp_order_view_inform_zocl
+{
+  int nKillCnt;
+  int nDeahtCnt;
+  long double dTodayPvpPoint;
+  long double dOriginalPvpPoint;
+
+  _pvp_order_view_inform_zocl();
+  int size() const;
+};
+
 /* 1794 */
 class CPvpOrderView
 {
+public:
+  void UpdatePvPPoint(long double dUpPoint, long double dNewPoint);
+  void Notify_OrderView(unsigned __int16 wIndex);
+  void Update(
+    __int64 tUpdateDate,
+    int nDeath,
+    int nKill,
+    long double dTodayStacked,
+    long double dPvpPoint,
+    long double dPvpTempCash);
+
   unsigned int m_dwLastAttackTime;
   unsigned int m_dwLastDamagedTime;
   int m_nKillCnt;

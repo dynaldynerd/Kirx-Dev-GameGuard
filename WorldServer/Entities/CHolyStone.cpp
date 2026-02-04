@@ -95,7 +95,7 @@ unsigned int CHolyStone::CalcCurHPRate()
   return static_cast<unsigned int>(static_cast<int>((static_cast<float>(m_nHP) / static_cast<float>(m_nMaxHP)) * 10000.0f));
 }
 
-unsigned int CHolyStone::GetHP()
+__int64 CHolyStone::GetHP()
 {
   return static_cast<unsigned int>(m_nHP);
 }

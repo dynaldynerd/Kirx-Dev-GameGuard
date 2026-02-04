@@ -27,6 +27,11 @@ struct __cppobj __declspec(align(8)) _be_damaged_char
 class __cppobj CNuclearBomb : public CCharacter
 {
 public:
+  bool Init(_object_id *pID);
+  bool GetUse();
+  unsigned __int8 GetBombStatus();
+  float *GetMissilePos();
+
   unsigned __int16 m_wItemIndex;
   unsigned __int16 m_wControlSerial;
   bool m_bUse;

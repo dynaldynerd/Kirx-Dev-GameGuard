@@ -12,12 +12,19 @@ public:
     unsigned int m_dwIndex;
     _index_node *m_pPrev;
     _index_node *m_pNext;
+
+    _index_node();
   };
+
+  CNetIndexList();
+  ~CNetIndexList();
 
   static bool SetList(CNetIndexList *list, unsigned int maxBufNum);
   static bool PushNode_Back(CNetIndexList *list, unsigned int index);
   static bool PushNode_Front(CNetIndexList *list, unsigned int index);
   static bool PopNode_Front(CNetIndexList *list, unsigned int *outIndex);
+  static bool CopyFront(CNetIndexList *list, unsigned int *outIndex);
+  static _index_node *FindNode(CNetIndexList *list, unsigned int index);
   static void ResetList(CNetIndexList *list);
   static bool IsInList(CNetIndexList *list, unsigned int index);
   static unsigned int size(const CNetIndexList *list);

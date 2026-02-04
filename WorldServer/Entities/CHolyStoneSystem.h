@@ -69,6 +69,7 @@ public:
   void SetTermTimeDefault(unsigned __int8 byNumOfTime);
   void CheckKeeperPlusTime();
   unsigned __int8 GetNumOfTime();
+  int GetDestroyerState();
   int GetHolyMasterRace();
   int GetSceneCode();
   bool IsMinigeTicketCheck();

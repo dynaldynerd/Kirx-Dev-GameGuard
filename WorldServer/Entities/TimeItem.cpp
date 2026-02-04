@@ -3,15 +3,33 @@
 #include "TimeItem.h"
 
 #include "KorLocalTime.h"
+#include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
 #include <cstdio>
 #include <cstring>
 
+TimeItem::TimeItemMap *TimeItem::_phmapTbl = nullptr;
+
 TimeItem *TimeItem::Instance()
 {
   static TimeItem s_instance;
   return &s_instance;
+}
+
+const _TimeItem_fld *TimeItem::FindTimeRec(unsigned int nTbl, int nIdx)
+{
+  if (nTbl > 0x24)
+  {
+    return nullptr;
+  }
+  TimeItemMap &map = _phmapTbl[nTbl];
+  auto it = map.find(nIdx);
+  if (it == map.end())
+  {
+    return nullptr;
+  }
+  return it->second;
 }
 
 bool TimeItem::Init()
@@ -47,12 +65,73 @@ bool TimeItem::ReadGoods()
 
 bool TimeItem::MakeLinkTable(char *szMsg, int nSize)
 {
-  (void)szMsg;
-  (void)nSize;
+  _phmapTbl = new TimeItemMap[37];
+
+  for (int n = 0;; ++n)
+  {
+    const int recordNum = _kRecTimeItem.GetRecordNum();
+    if (n >= recordNum)
+    {
+      break;
+    }
+    auto *record = static_cast<_TimeItem_fld *>(_kRecTimeItem.GetRecord(n));
+    if (!record)
+    {
+      strcpy_s(szMsg, nSize, "Wrong index of time item\r\n");
+      return false;
+    }
+
+    const int itemTableCode = GetItemTableCode(record->m_strLendItemCode);
+    if (itemTableCode == -1)
+    {
+      strcpy_s(szMsg, nSize, "Wrong string code[_TimeItem_fld::m_strLendItemCode]\r\n");
+      return false;
+    }
+
+    _base_fld *itemRecord = g_Main.m_tblItemData[itemTableCode].GetRecord(record->m_strLendItemCode, 7);
+    if (!itemRecord)
+    {
+      strcpy_s(szMsg, nSize, "Wrong string code[_TimeItem_fld::m_strLendItemCode]-NonExist\r\n");
+      return false;
+    }
+
+    _phmapTbl[itemTableCode].insert(std::make_pair(static_cast<int>(itemRecord->m_dwIndex), record));
+  }
+
   return true;
 }
 
 bool TimeItem::CheckGoods()
 {
+  for (int n = 0;; ++n)
+  {
+    const int recordNum = _kRecTimeItem.GetRecordNum();
+    if (n >= recordNum)
+    {
+      break;
+    }
+
+    _base_fld *record = _kRecTimeItem.GetRecord(n);
+    unsigned __int8 itemTableCode = static_cast<unsigned __int8>(GetItemTableCode(reinterpret_cast<char *>(&record[1])));
+    _base_fld *itemRecord = g_Main.m_tblItemData[itemTableCode].GetRecord(reinterpret_cast<char *>(&record[1]), 7);
+    if (!itemRecord)
+    {
+      MyMessageBox("TimeItem", "Wrong Code : %s", reinterpret_cast<char *>(&record[1]));
+      return false;
+    }
+    if (!IsTimeItem(itemTableCode, static_cast<int>(itemRecord->m_dwIndex)))
+    {
+      MyMessageBox("TimeItem", "Is not Lend item : %s", reinterpret_cast<char *>(&record[1]));
+      return false;
+    }
+    const char *itemKorName = GetItemKorName(itemTableCode, static_cast<int>(itemRecord->m_dwIndex));
+    _kLogger.Write(
+      "[%s(%s)], method:%d, lentime:%d",
+      itemKorName,
+      itemRecord->m_strCode,
+      *reinterpret_cast<int *>(&record[1].m_strCode[60]),
+      record[2].m_dwIndex);
+  }
+
   return true;
 }

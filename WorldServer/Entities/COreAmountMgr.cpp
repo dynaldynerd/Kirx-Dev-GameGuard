@@ -148,7 +148,7 @@ void COreAmountMgr::InitRemainOreAmount(unsigned int dwRemain, unsigned int dwTo
     }
 
     const int dayIndex = GetCurwDay();
-    const int timeIndex = CHolyStoneSystem::GetNumOfTime(&g_HolySys) - 1;
+    const int timeIndex = g_HolySys.GetNumOfTime() - 1;
     if (m_fMultipleRate[dayIndex][timeIndex] != 1.0f)
     {
       m_logOreAmount.Write("Pre Apply Multiple Rate Ore Amount >> Total:%d", m_dwTotalOreAmount);
@@ -159,7 +159,7 @@ void COreAmountMgr::InitRemainOreAmount(unsigned int dwRemain, unsigned int dwTo
 
     m_dwRemainOreAmount = m_dwTotalOreAmount;
 
-    if (!CHolyStoneSystem::GetDestroyerState(&g_HolySys))
+    if (!g_HolySys.GetDestroyerState())
     {
       const unsigned int reduced = 70 * m_dwRemainOreAmount / 100;
       m_logOreAmount.Write(

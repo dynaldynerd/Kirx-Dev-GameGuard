@@ -7,6 +7,11 @@ int CPlayerDB::GetRaceCode(CPlayerDB *self)
   return static_cast<int>(self->m_dbChar.m_byRaceSexCode) >> 1;
 }
 
+int CPlayerDB::GetRaceSexCode(CPlayerDB *self)
+{
+  return self->m_dbChar.m_byRaceSexCode;
+}
+
 int CPlayerDB::GetMapCode(CPlayerDB *self)
 {
   return static_cast<unsigned int>(self->m_dbChar.m_sStartMapCode);
@@ -86,6 +91,16 @@ void CPlayerDB::SetSP(CPlayerDB *self, unsigned int dwSP)
   self->m_dbChar.m_dwSP = dwSP;
 }
 
+unsigned int CPlayerDB::GetDP(CPlayerDB *self)
+{
+  return self->m_dbChar.m_dwDP;
+}
+
+void CPlayerDB::SetDP(CPlayerDB *self, unsigned int dwDP)
+{
+  self->m_dbChar.m_dwDP = dwDP;
+}
+
 unsigned int CPlayerDB::GetDalant(CPlayerDB *self)
 {
   return self->m_dbChar.m_dwDalant;
@@ -104,6 +119,11 @@ unsigned int CPlayerDB::GetGold(CPlayerDB *self)
 void CPlayerDB::SetCurPos(CPlayerDB *self, float *fPos)
 {
   memcpy_0(self->m_dbChar.m_fStartPos, fPos, sizeof(self->m_dbChar.m_fStartPos));
+}
+
+unsigned __int8 CPlayerDB::GetBagNum(CPlayerDB *self)
+{
+  return self->m_dbChar.m_byUseBagNum;
 }
 
 _SFCONT_DB_BASE::_SFCONT_DB_BASE()

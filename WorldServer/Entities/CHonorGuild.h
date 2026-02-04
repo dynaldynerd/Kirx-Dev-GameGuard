@@ -27,6 +27,7 @@ class __cppobj CHonorGuild
 public:
   static CHonorGuild *Instance();
   bool Init();
+  unsigned __int8 FindHonorGuildRank(unsigned __int8 byRace, unsigned int dwGuildSerial);
 
   virtual ~CHonorGuild() = default;
 

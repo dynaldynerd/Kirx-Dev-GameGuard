@@ -156,6 +156,7 @@ public:
   __int64 CalcSecIndex();
   __int64 GetUseSectorRange();
   char Create(_object_create_setdata *pData);
+  char Destroy();
   void CircleReport(unsigned __int8 *pbyType, char *szMsg, unsigned __int16 nMsgSize, bool bToOne);
   void CircleReport(
     unsigned __int8 *pbyType,
@@ -169,12 +170,17 @@ public:
   virtual __int64 GetHP();
   virtual __int64 GetLevel();
   virtual __int64 GetMaxHP();
+  virtual void SendMsg_FixPosition(int n);
+  virtual void SendMsg_RealMovePoint(int n);
   char SetCurPos(float *pPos);
   void SetCurSecNum(unsigned int dwNewSecNum);
   void SFContDelMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, bool bSend, bool bAura = false);
   void SFContInsertMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, bool bAura);
   void SFContUpdateTimeMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, int nLeftTime);
   virtual char SetHP(int nHP, bool bOver);
+  void SetMaxVersion();
+  void _ResetCirclePlayer();
+  void SendMsg_BreakStop();
 
   static CGameObject *s_pSelectObject;
   static CGameObject *s_pTotalObject[42642];

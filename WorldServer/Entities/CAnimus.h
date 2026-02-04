@@ -38,8 +38,11 @@ public:
 
   static bool SetStaticMember();
   void Init(_object_id *pID);
+  bool Destroy();
+  void SendMsg_Destroy();
 
   static CRecordData s_tblParameter[8];
   static unsigned int MAX_EXP[8];
+  static int s_nLiveNum;
 };
 
