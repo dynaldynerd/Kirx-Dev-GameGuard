@@ -5,6 +5,7 @@
 #include "CCharacter.h"
 #include "CFrameRate.h"
 #include "CNetIndexList.h"
+#include "StorageList.h"
 
 class __cppobj CMgrAvatorItemHistory
 {
@@ -29,6 +30,11 @@ public:
   {
     char sData[200];
   };
+
+  CMgrAvatorItemHistory();
+  static void IOThread(void *pv);
+  void WriteFile(char *pszFileName, char *pszLog);
+  void consume_del_item(int n, _STORAGE_LIST::_db_con *pItem, char *pszFileName);
 
   char m_szStdPath[128];
   unsigned int m_dwLastLocalDate;

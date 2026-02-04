@@ -35,3 +35,18 @@ bool CPvpUserAndGuildRankingSystem::Init()
 {
   return InitLogger() && m_kUserRankingProcess.Init();
 }
+
+bool CPvpUserAndGuildRankingSystem::IsCurrentRaceBossGroup(unsigned __int8 byRace, unsigned int dwSerial)
+{
+  return m_kUserRankingProcess.IsCurrentRaceBossGroup(byRace, dwSerial);
+}
+
+unsigned int CPvpUserAndGuildRankingSystem::GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth)
+{
+  return m_kUserRankingProcess.GetCurrentRaceBossSerial(byRace, byNth);
+}
+
+unsigned __int8 CPvpUserAndGuildRankingSystem::GetBossType(unsigned __int8 byRace, unsigned int dwSerial)
+{
+  return m_kUserRankingProcess.GetBossType(byRace, dwSerial);
+}

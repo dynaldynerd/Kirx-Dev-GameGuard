@@ -6,6 +6,9 @@
 #pragma pack(push, 1)
 
 #include "CCharacter.h"
+#include "StorageList.h"
+#include "CMgrAvatorItemHistory.h"
+#include "CMgrAvatorLvHistory.h"
 #include <vector>
 
 
@@ -16,6 +19,7 @@ struct _DB_QRY_SYN_DATA;
 struct _base_fld;
 struct _monster_sp_fld;
 struct _skill_fld;
+struct _ResourceItem_fld;
 class CGameObject;
 class CPlayer;
 class CMapData;
@@ -151,38 +155,6 @@ struct __cppobj __unaligned __declspec(align(2)) _character_db_load
   unsigned __int8 m_byMaxLevel;
 };
 
-/* 1535 */
-struct __cppobj __unaligned __declspec(align(4)) _STORAGE_LIST
-{
-  struct __cppobj __unaligned __declspec(align(1)) _storage_con
-  {
-    unsigned __int8 m_bLoad;
-    unsigned __int8 m_byTableCode;
-    unsigned __int8 m_byClientIndex;
-    unsigned __int16 m_wItemIndex;
-    unsigned __int64 m_dwDur;
-    unsigned int m_dwLv;
-    unsigned __int16 m_wSerial;
-    bool m_bLock;
-    unsigned int m_dwETSerialNumber;
-    unsigned __int64 m_lnUID;
-    unsigned __int8 m_byCsMethod;
-    unsigned int m_dwT;
-    unsigned int m_dwLendRegdTime;
-  };
-
-  struct __cppobj __unaligned __declspec(align(2)) _db_con : _storage_con
-  {
-    _STORAGE_LIST *m_pInList;
-    unsigned __int8 m_byStorageIndex;
-  };
-
-  int m_nListNum;
-  int m_nUsedNum;
-  int m_nListCode;
-  _db_con *m_pStorageList;
-};
-
 /* 1696 */
 struct __cppobj _bag_db_load : _STORAGE_LIST
 {
@@ -285,9 +257,28 @@ struct __cppobj _SFCONT_DB_BASE
   struct _LIST
   {
     unsigned int dwKey;
+
+    void Init();
+    bool IsFilled() const;
+    unsigned int GetEffectCode() const;
+    unsigned int GetEffectIndex() const;
+    unsigned int GetLv() const;
+    unsigned int GetLeftTime() const;
+    unsigned int GetOrder() const;
+    void SetKey(
+      unsigned __int8 byOrder,
+      unsigned __int8 byEffectCode,
+      unsigned __int16 wEffectIndex,
+      unsigned __int8 byLv,
+      unsigned __int16 wLeftTime);
+    void SetLeftTime(unsigned __int16 wLeftTime);
+    void SetOrder(unsigned __int8 byOrder);
   };
 
   _LIST m_List[2][8];
+
+  _SFCONT_DB_BASE();
+  void Init();
 };
 
 /* 1573 */
@@ -411,6 +402,8 @@ struct __cppobj _DTRADE_PARAM
   unsigned __int8 byEmptyInvenNum;
   unsigned __int8 bySellItemNum;
   unsigned int dwKey[4];
+
+  void Init();
 };
 
 /* 1554 */
@@ -530,6 +523,20 @@ enum QUEST_HAPPEN : __int32
   QUEST_HAPPEN_TYPE_NUM = 0x9,
 };
 
+enum PVP_POINT_ALTER_TYPE : int
+{
+  kill_s_inc = 0,
+  kill_p_inc = 1,
+  die_dec = 2,
+  quest_inc = 3,
+  logoff_inc = 4,
+  logoff_dec = 5,
+  holy_award = 6,
+  holy_dec = 7,
+  cheat = 8,
+  guildbattle = 9,
+};
+
 /* 1754 */
 struct __cppobj __declspec(align(8)) _happen_event_cont
 {
@@ -578,11 +585,48 @@ struct __cppobj MiningTicket
   {
     $96C5C4A8485BFF889935F41DA1669980 ___u0;
     void Init();
+    void Set(unsigned int uiSrc);
+    void Set(
+      unsigned __int16 byYear,
+      unsigned __int8 byMonth,
+      unsigned __int8 byDay,
+      unsigned __int8 byHour,
+      unsigned __int8 byNumofTime);
+    bool operator==(const _AuthKeyTicket &src) const;
+    bool operator!=(const _AuthKeyTicket &src) const;
   };
 
   _AuthKeyTicket m_dwTakeLastMentalTicket;
   _AuthKeyTicket m_dwTakeLastCriTicket;
   void Init();
+  bool AuthLastMentalTicket(
+    unsigned __int16 byCurrentYear,
+    unsigned __int8 byCurrentMonth,
+    unsigned __int8 byCurrentDay,
+    unsigned __int8 byCurrentHour,
+    unsigned __int8 byNumOfTime);
+  bool AuthLastCriTicket(
+    unsigned __int16 byCurrentYear,
+    unsigned __int8 byCurrentMonth,
+    unsigned __int8 byCurrentDay,
+    unsigned __int8 byCurrentHour,
+    unsigned __int8 byNumOfTime);
+  unsigned int GetLastMentalTicket();
+  unsigned int GetLastCriTicket();
+  void SetLastMentalTicket(unsigned int uiMentalTicket);
+  void SetLastMentalTicket(
+    unsigned __int16 byCurrentYear,
+    unsigned __int8 byCurrentMonth,
+    unsigned __int8 byCurrentDay,
+    unsigned __int8 byCurrentHour,
+    unsigned __int8 byNumOfTime);
+  void SetLastCriTicket(unsigned int uiCriTicket);
+  void SetLastCriTicket(
+    unsigned __int16 byCurrentYear,
+    unsigned __int8 byCurrentMonth,
+    unsigned __int8 byCurrentDay,
+    unsigned __int8 byCurrentHour,
+    unsigned __int8 byNumOfTime);
 };
 
 /* 1762 */
@@ -800,7 +844,7 @@ struct __cppobj __unaligned __declspec(align(2)) _other_shape_part_zocl
 };
 
 /* 1310 */
-class __cppobj __declspec(align(8)) CPlayer : CCharacter
+class __cppobj __declspec(align(8)) CPlayer : public CCharacter
 {
   union CashChangeStateFlag
   {
@@ -825,9 +869,93 @@ public:
 
   static _skill_fld *ms_pXmas_Snow_Effect;
   static _skill_fld *ms_pXmas_Snow_Bullet_Effect;
+  static CMgrAvatorItemHistory s_MgrItemHistory;
+  static CMgrAvatorLvHistory s_MgrLvHistory;
+  static int s_nLiveNum;
   static void SetStaticMember();
   void Init(_object_id *pID);
   void PastWhisperInit();
+  bool Emb_DelStorage(
+    unsigned __int8 byStorageCode,
+    unsigned __int8 byStorageIndex,
+    bool bEquipChange,
+    bool bDelete,
+    const char *strErrorCodePos);
+  bool OutOfMap(CMapData *pIntoMap, unsigned __int16 wLayerIndex, unsigned __int8 byMapOutType, float *pfStartPos);
+  void SendMsg_GotoRecallResult(
+    char byErrCode,
+    char byMapCode,
+    float *pfStartPos,
+    unsigned __int8 byMapInType);
+  void SendMsg_GotoBasePortalResult(char byErrCode);
+  void SendMsg_MapEnvInform(char byMapCode, unsigned int dwMapEnvCode);
+  void SendMsg_MapOut(unsigned __int8 byMapOutCode, unsigned __int8 byNextMapCode);
+  void SendMsg_MineCancle();
+  void SendMsg_DeleteStorageInform(char byStorageCode, unsigned __int16 wSerial);
+  void SendMsg_EquipPartChange(unsigned __int8 byPart);
+  unsigned __int16 GetVisualVer();
+  void UpdateVisualVer(CashChangeStateFlag byChangeFlagMask);
+  unsigned __int8 GetEffectEquipCode(unsigned __int8 byStorageCode, unsigned __int8 bySlotIndex);
+  void SetEffectEquipCode(unsigned __int8 byStorageCode, unsigned __int8 bySlotIndex, unsigned __int8 byCode);
+  void SetEquipEffect(_STORAGE_LIST::_db_con *pItem, bool bEquip);
+  void apply_case_equip_std_effect(_STORAGE_LIST::_db_con *pItem, bool bEquip);
+  void apply_case_equip_upgrade_effect(_STORAGE_LIST::_db_con *pItem, bool bEquip);
+  void CalcDefTol();
+  bool IsRidingUnit();
+  void CalcEquipSpeed();
+  void CalcEquipMaxDP(int bSendMsg);
+  bool IsSiegeMode();
+  void SetSiege(_STORAGE_LIST::_db_con *pItem);
+  void SetHaveEffect(char bSet);
+  void SetMstHaveEffect(_ResourceItem_fld *pFld, _STORAGE_LIST::_db_con *pItem, int a3, int a4);
+  void DTradeInit();
+  void SendMsg_DTradeCancleInform();
+  void SendMsg_DTradeCloseInform(char byCloseCode);
+  void _AnimusReturn(unsigned __int8 byReturnType);
+  bool IsHaveMentalTicket();
+  bool IsUseReleaseRaceBuffPotion();
+  void SetUseReleaseRaceBuffPotion();
+  void mgr_tracing(int bOper);
+  void SetLastAttBuff(bool bSet);
+  void SetShapeAllBuffer();
+  int GetLevel();
+  int GetHP();
+  int GetMaxHP();
+  int GetFP();
+  int GetSP();
+  int GetMaxFP();
+  int GetMaxSP();
+  bool SetFP(int nFP, bool bOver);
+  bool SetSP(int nSP, bool bOver);
+  bool SetHP(int nHP, bool bOver);
+  void RecvHSKQuest(
+    unsigned __int8 byHSKQuestCode,
+    unsigned __int8 byCristalBattleDBInfo,
+    int nPvpPoint,
+    unsigned __int16 wKillPoint,
+    unsigned __int16 wDieCount,
+    unsigned __int8 byHSKTime);
+  void SendMsg_RecvHSKQuest();
+  void AlterPvPPoint(double dAlter, int AlterType, unsigned int dwDstSerial);
+  void SendMsg_AlterPvPPoint();
+  void SendMsg_RaceBattlePenelty(int nAlterPoint, char byAlterType);
+  void SetCntEnable(bool bSet);
+  void ExtractStringToTime(unsigned int dwTemp, _SYSTEMTIME *tm);
+  void AlterPvpPointLeak(long double dAlter);
+  void SetPvpPointLeak(long double dValue);
+  bool pc_Resurrect(bool bQuickPotion);
+  void SendMsg_ResurrectInform();
+  void SendMsg_Resurrect(char byRet, bool bQuickPotion);
+  void pc_NuclearAfterEffect();
+  void SendMsg_StartContSF(_sf_continous *pCont);
+  void ForcePullUnit(bool bLogout);
+  void _UpdateUnitDebt(unsigned __int8 bySlotIndex, unsigned int dwPull);
+  bool _LockUnitKey(unsigned __int8 bySlotIndex, bool bLock);
+  void SendMsg_UnitForceReturnInform(char bySlotIndex, unsigned int dwDebt);
+  void SendMsg_UnitAlterFeeInform(char bySlotIndex, unsigned int dwPullingFee);
+  void SubDalant(unsigned int dwSub);
+  void SendMsg_RemainOreRate();
+  void SendMsg_OreTransferCount();
 
   bool m_bLoad;
   bool m_bOper;
@@ -1024,6 +1152,8 @@ public:
   _other_shape_all_zocl m_bufShapeAll;
   _other_shape_part_zocl m_bufSpapePart;
 };
+
+bool DTradeEqualPerson(CPlayer *lp_pOne, CPlayer **lpp_pDst);
 
 #pragma pack(pop)
 

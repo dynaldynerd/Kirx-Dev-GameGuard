@@ -1,0 +1,427 @@
+Microsoft (R) COFF/PE Dumper Version 14.44.35207.1
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+
+Dump of file .\WorldServer\WorldServer\x64\Debug\CGameObject.obj
+
+File Type: COFF OBJECT
+
+COFF SYMBOL TABLE
+000 01058987 ABS    notype       Static       | @comp.id
+001 80010390 ABS    notype       Static       | @feat.00
+002 00000003 ABS    notype       Static       | @vol.md
+003 00000000 SECT1  notype       Static       | .drectve
+    Section length  5AF, #relocs    0, #linenums    0, checksum        0
+    Relocation CRC 00000000
+006 00000000 SECT2  notype       Static       | .debug$S
+    Section length 185C, #relocs   58, #linenums    0, checksum        0
+    Relocation CRC 009F5F3B
+009 00000000 SECT3  notype       Static       | .bss
+    Section length 53C84, #relocs    0, #linenums    0, checksum        0
+    Relocation CRC 00000000
+00C 00000000 SECT3  notype       External     | ?s_bRecordSet@_100_per_random_table@@2_NA (public: static bool _100_per_random_table::s_bRecordSet)
+00D 00000010 SECT3  notype       External     | ?s_wRecord@_100_per_random_table@@2PAY0GE@GA (public: static unsigned short (* _100_per_random_table::s_wRecord)[100])
+00E 000007E0 SECT3  notype       External     | ?s_pSelectObject@CGameObject@@2PEAV1@EA (public: static class CGameObject * CGameObject::s_pSelectObject)
+00F 000007F0 SECT3  notype       External     | ?s_pTotalObject@CGameObject@@2PAPEAV1@A (public: static class CGameObject * * CGameObject::s_pTotalObject)
+010 00053C80 SECT3  notype       External     | ?s_nTotalObjectNum@CGameObject@@2HA (public: static int CGameObject::s_nTotalObjectNum)
+011 00000000 SECT4  notype       Static       | .msvcjmc
+    Section length   25, #relocs    0, #linenums    0, checksum B355DFE6
+    Relocation CRC 00000000
+014 00000000 SECT4  notype       Static       | __9F6F0870_WorldServer@pch
+015 00000001 SECT4  notype       Static       | __6E38DAFD_IdaCompat@h
+016 00000002 SECT4  notype       Static       | __1E27805E_CGameObject@h
+017 00000003 SECT4  notype       Static       | __CEA36273_pnt_rect@h
+018 00000004 SECT4  notype       Static       | __7FDE6B33_R3EngineState@h
+019 00000005 SECT4  notype       Static       | __157FA1E2_CGameStatistics@h
+01A 00000006 SECT4  notype       Static       | __CA73588B_CWorldSchedule@h
+01B 00000007 SECT4  notype       Static       | __E02B9FCE_CHolyStoneSaveData@h
+01C 00000008 SECT4  notype       Static       | __E3041A00_CHolyScheduleData@h
+01D 00000009 SECT4  notype       Static       | __D3ABD5DB_CHolyStoneSystem@h
+01E 0000000A SECT4  notype       Static       | __C2B9F1A5_TicketItem_fld@h
+01F 0000000B SECT4  notype       Static       | __AACDFFD7_CTransportShip@h
+020 0000000C SECT4  notype       Static       | __00EA1237_MonsterSetInfoData@h
+021 0000000D SECT4  notype       Static       | __EE8B5C4A_AggroCaculateData@h
+022 0000000E SECT4  notype       Static       | __24BD7315_CDarkHole@h
+023 0000000F SECT4  notype       Static       | __65494BB8_CItemBox@h
+024 00000010 SECT4  notype       Static       | __A2AE574F_CHolyKeeper@h
+025 00000011 SECT4  notype       Static       | __265AF02C_CHolyStone@h
+026 00000012 SECT4  notype       Static       | __9585E205_CAnimus@h
+027 00000013 SECT4  notype       Static       | __ADAEB7D5_ObjectCreateSetData@h
+028 00000014 SECT4  notype       Static       | __B9DAFD2F_CMerchant@h
+029 00000015 SECT4  notype       Static       | __7BDDEDD3_CMonsterAI@h
+02A 00000016 SECT4  notype       Static       | __4A4A400C_CMonsterSkill@h
+02B 00000017 SECT4  notype       Static       | __4F3DB88F_CMonsterSkillPool@h
+02C 00000018 SECT4  notype       Static       | __20638AEE_CMonsterHierarchy@h
+02D 00000019 SECT4  notype       Static       | __3460075F_CAggroNode@h
+02E 0000001A SECT4  notype       Static       | __97107AD8_CMonsterAggroMgr@h
+02F 0000001B SECT4  notype       Static       | __BCF41402_CLootingMgr@h
+030 0000001C SECT4  notype       Static       | __6EE4284C_CMonster@h
+031 0000001D SECT4  notype       Static       | __9040D2BA_CPartyPlayer@h
+032 0000001E SECT4  notype       Static       | __9331F091_CUserDB@h
+033 0000001F SECT4  notype       Static       | __F346762D_GlobalObjects@h
+034 00000020 SECT4  notype       Static       | __BAEF0AF6_CGameObject@cpp
+035 00000021 SECT4  notype       Static       | __810CD14C_CNetProcess@h
+036 00000022 SECT4  notype       Static       | __CCC58CFA_CNetworkEX@h
+037 00000023 SECT4  notype       Static       | __BBE4E464_pch@h
+038 00000024 SECT4  notype       Static       | __D599D40D_pch@cpp
+039 00000000 SECT5  notype       Static       | .text$mn
+    Section length   B2, #relocs    5, #linenums    0, checksum BE1EBF07, selection    1 (pick no duplicates)
+    Relocation CRC 399D572C
+03C 00000000 SECT6  notype       Static       | .debug$S
+    Section length  16C, #relocs    8, #linenums    0, checksum        0, selection    5 (pick associative Section 0x5)
+    Relocation CRC 097B4695
+03F 00000000 SECT7  notype       Static       | .text$mn
+    Section length   73, #relocs    2, #linenums    0, checksum AE0A4B31, selection    1 (pick no duplicates)
+    Relocation CRC C2899CD3
+042 00000000 SECT8  notype       Static       | .debug$S
+    Section length  10C, #relocs    4, #linenums    0, checksum        0, selection    5 (pick associative Section 0x7)
+    Relocation CRC 2A04401B
+045 00000000 SECT9  notype       Static       | .text$mn
+    Section length   53, #relocs    2, #linenums    0, checksum 1FC60738, selection    1 (pick no duplicates)
+    Relocation CRC 1AF8A2A7
+048 00000000 SECTA  notype       Static       | .debug$S
+    Section length   D0, #relocs    4, #linenums    0, checksum        0, selection    5 (pick associative Section 0x9)
+    Relocation CRC 6E319DAF
+04B 00000000 SECTB  notype       Static       | .text$mn
+    Section length   FF, #relocs    3, #linenums    0, checksum 7967D0CB, selection    1 (pick no duplicates)
+    Relocation CRC 7BED6A6F
+04E 00000000 SECTC  notype       Static       | .debug$S
+    Section length   F0, #relocs    4, #linenums    0, checksum        0, selection    5 (pick associative Section 0xB)
+    Relocation CRC BA1DAB32
+051 00000000 SECTD  notype       Static       | .text$mn
+    Section length   FA, #relocs    9, #linenums    0, checksum D153C5D1, selection    1 (pick no duplicates)
+    Relocation CRC 88787CF9
+054 00000000 SECTE  notype       Static       | .debug$S
+    Section length  138, #relocs    4, #linenums    0, checksum        0, selection    5 (pick associative Section 0xD)
+    Relocation CRC BC818407
+057 00000000 SECTF  notype       Static       | .text$mn
+    Section length  3AF, #relocs   10, #linenums    0, checksum FCFE5B6C, selection    1 (pick no duplicates)
+    Relocation CRC 9F21761B
+05A 00000000 SECT10 notype       Static       | .debug$S
+    Section length  408, #relocs   16, #linenums    0, checksum        0, selection    5 (pick associative Section 0xF)
+    Relocation CRC F06CB080
+05D 00000000 SECT11 notype       Static       | .text$mn
+    Section length  399, #relocs   10, #linenums    0, checksum 5FCD35EA, selection    1 (pick no duplicates)
+    Relocation CRC FC9F7C9F
+060 00000000 SECT12 notype       Static       | .debug$S
+    Section length  3E8, #relocs   16, #linenums    0, checksum        0, selection    5 (pick associative Section 0x11)
+    Relocation CRC 86016168
+063 00000000 SECT13 notype       Static       | .text$mn
+    Section length  207, #relocs    C, #linenums    0, checksum 788C1F32, selection    1 (pick no duplicates)
+    Relocation CRC A0A96F95
+066 00000000 SECT14 notype       Static       | .debug$S
+    Section length  1C8, #relocs    4, #linenums    0, checksum        0, selection    5 (pick associative Section 0x13)
+    Relocation CRC C2FE88C0
+069 00000000 SECT15 notype       Static       | .text$mn
+    Section length   9F, #relocs    3, #linenums    0, checksum DD3876C6, selection    1 (pick no duplicates)
+    Relocation CRC 611CF940
+06C 00000000 SECT16 notype       Static       | .debug$S
+    Section length   F4, #relocs    4, #linenums    0, checksum        0, selection    5 (pick associative Section 0x15)
+    Relocation CRC 8BFF7DB3
+06F 00000000 SECT17 notype       Static       | .text$mn
+    Section length   42, #relocs    2, #linenums    0, checksum 3E5DC12A, selection    1 (pick no duplicates)
+    Relocation CRC CFFEA43D
+072 00000000 SECT18 notype       Static       | .debug$S
+    Section length   C8, #relocs    4, #linenums    0, checksum        0, selection    5 (pick associative Section 0x17)
+    Relocation CRC 1BF210B4
+075 00000000 SECT19 notype       Static       | .text$mn
+    Section length  2E9, #relocs    F, #linenums    0, checksum DC346180, selection    1 (pick no duplicates)
+    Relocation CRC 741176A4
+078 00000000 SECT1A notype       Static       | .debug$S
+    Section length  1EC, #relocs    4, #linenums    0, checksum        0, selection    5 (pick associative Section 0x19)
+    Relocation CRC 9B429174
+07B 00000000 SECT1B notype       Static       | .text$mn
+    Section length   2C, #relocs    2, #linenums    0, checksum AF638563, selection    1 (pick no duplicates)
+    Relocation CRC 99DCFC13
+07E 00000000 SECT1C notype       Static       | .debug$S
+    Section length   C0, #relocs    4, #linenums    0, checksum        0, selection    5 (pick associative Section 0x1B)
+    Relocation CRC BE07C7AB
+081 00000000 SECT1D notype       Static       | .text$mn
+    Section length   2A, #relocs    2, #linenums    0, checksum 5945B91D, selection    2 (pick any)
+    Relocation CRC B3EF532F
+084 00000000 SECT1E notype       Static       | .debug$S
+    Section length   BC, #relocs    4, #linenums    0, checksum        0, selection    5 (pick associative Section 0x1D)
+    Relocation CRC FFDDB778
+087 00000000 SECT1F notype       Static       | .text$mn
+    Section length   2F, #relocs    2, #linenums    0, checksum 3C8914F0, selection    2 (pick any)
+    Relocation CRC AB65AEE1
+08A 00000000 SECT20 notype       Static       | .debug$S
+    Section length   D4, #relocs    4, #linenums    0, checksum        0, selection    5 (pick associative Section 0x1F)
+    Relocation CRC A75ABB06
+08D 00000000 SECT21 notype       Static       | .text$mn
+    Section length   4E, #relocs    3, #linenums    0, checksum F290603A, selection    2 (pick any)
+    Relocation CRC 8B5F9F01
+090 00000000 SECT22 notype       Static       | .debug$S
+    Section length   D0, #relocs    4, #linenums    0, checksum        0, selection    5 (pick associative Section 0x21)
+    Relocation CRC 0AB09CAE
+093 00000000 SECT23 notype       Static       | .text$mn
+    Section length   43, #relocs    2, #linenums    0, checksum 8EA688C4, selection    1 (pick no duplicates)
+    Relocation CRC 9A8CA38C
+096 00000000 SECT24 notype       Static       | .debug$S
+    Section length   D0, #relocs    4, #linenums    0, checksum        0, selection    5 (pick associative Section 0x23)
+    Relocation CRC B43A320D
+099 00000000 SECT25 notype       Static       | .text$mn
+    Section length    3, #relocs    0, #linenums    0, checksum 922B422E, selection    2 (pick any)
+    Relocation CRC 4A6A8444
+09C 00000000 SECT26 notype       Static       | .debug$S
+    Section length   6C, #relocs    2, #linenums    0, checksum        0, selection    5 (pick associative Section 0x25)
+    Relocation CRC C5009019
+09F 00000000 SECT1D notype ()    External     | ?__empty_global_delete@@YAXPEAX@Z (void __cdecl __empty_global_delete(void *))
+0A0 00000000 SECT1F notype ()    External     | ?__empty_global_delete@@YAXPEAX_K@Z (void __cdecl __empty_global_delete(void *,unsigned __int64))
+0A1 00000000 UNDEF  notype ()    External     | memcpy
+0A2 00000000 SECT21 notype ()    External     | ?memcpy_0@@YAPEAXPEAXPEBX_K@Z (void * __cdecl memcpy_0(void *,void const *,unsigned __int64))
+0A3 00000000 UNDEF  notype ()    External     | ?SetPoint@_object_list_point@@QEAAXPEAVCGameObject@@@Z (public: void __cdecl _object_list_point::SetPoint(class CGameObject *))
+0A4 00000000 SECT9  notype ()    External     | ??0_object_id@@QEAA@XZ (public: __cdecl _object_id::_object_id(void))
+0A5 00000000 SECT7  notype ()    External     | ??0_object_id@@QEAA@EEG@Z (public: __cdecl _object_id::_object_id(unsigned char,unsigned char,unsigned short))
+0A6 00000000 SECT5  notype ()    External     | ??0_100_per_random_table@@QEAA@XZ (public: __cdecl _100_per_random_table::_100_per_random_table(void))
+0A7 00000000 SECT15 notype ()    External     | ?GetRand@_100_per_random_table@@QEAAGXZ (public: unsigned short __cdecl _100_per_random_table::GetRand(void))
+0A8 00000000 SECT23 notype ()    External     | ?reset@_100_per_random_table@@QEAAXXZ (public: void __cdecl _100_per_random_table::reset(void))
+0A9 00000000 SECTB  notype ()    External     | ?CalcAbsPos@CGameObject@@QEAAXXZ (public: void __cdecl CGameObject::CalcAbsPos(void))
+0AA 00000000 SECTD  notype ()    External     | ?CalcSecIndex@CGameObject@@QEAA_JXZ (public: __int64 __cdecl CGameObject::CalcSecIndex(void))
+0AB 00000000 SECT17 notype ()    External     | ?GetUseSectorRange@CGameObject@@QEAA_JXZ (public: __int64 __cdecl CGameObject::GetUseSectorRange(void))
+0AC 00000000 SECT13 notype ()    External     | ?Create@CGameObject@@QEAADPEAU_object_create_setdata@@@Z (public: char __cdecl CGameObject::Create(struct _object_create_setdata *))
+0AD 00000000 SECT11 notype ()    External     | ?CircleReport@CGameObject@@QEAAXPEAEPEADG_N@Z (public: void __cdecl CGameObject::CircleReport(unsigned char *,char *,unsigned short,bool))
+0AE 00000000 SECTF  notype ()    External     | ?CircleReport@CGameObject@@QEAAXPEAEPEADGI_N@Z (public: void __cdecl CGameObject::CircleReport(unsigned char *,char *,unsigned short,unsigned int,bool))
+0AF 00000000 SECT19 notype ()    External     | ?Init@CGameObject@@QEAAXPEAU_object_id@@@Z (public: void __cdecl CGameObject::Init(struct _object_id *))
+0B0 00000000 SECT1B notype ()    External     | ?IsInTown@CGameObject@@QEAA_NXZ (public: bool __cdecl CGameObject::IsInTown(void))
+0B1 00000000 UNDEF  notype ()    External     | ?Write@CLogFile@@QEAAXPEBDZZ (public: void __cdecl CLogFile::Write(char const *,...))
+0B2 00000000 UNDEF  notype ()    External     | ?GetBspInfo@CMapData@@QEAAPEAU_bsp_info@@XZ (public: struct _bsp_info * __cdecl CMapData::GetBspInfo(void))
+0B3 00000000 UNDEF  notype ()    External     | ?GetSecInfo@CMapData@@QEAAPEAU_sec_info@@XZ (public: struct _sec_info * __cdecl CMapData::GetSecInfo(void))
+0B4 00000000 UNDEF  notype ()    External     | ?GetSectorListPlayer@CMapData@@QEAAPEAVCObjectList@@GI@Z (public: class CObjectList * __cdecl CMapData::GetSectorListPlayer(unsigned short,unsigned int))
+0B5 00000000 UNDEF  notype ()    External     | ?GetRectInRadius@CMapData@@QEAAXPEAU_pnt_rect@@HI@Z (public: void __cdecl CMapData::GetRectInRadius(struct _pnt_rect *,int,unsigned int))
+0B6 00000000 UNDEF  notype ()    External     | ?EnterMap@CMapData@@QEAAXPEAVCGameObject@@I@Z (public: void __cdecl CMapData::EnterMap(class CGameObject *,unsigned int))
+0B7 00000000 UNDEF  notype ()    External     | ?GetLoopTime@@YAIXZ (unsigned int __cdecl GetLoopTime(void))
+0B8 00000000 UNDEF  notype ()    External     | ?MyMessageBox@@YAHPEBD0ZZ (int __cdecl MyMessageBox(char const *,char const *,...))
+0B9 00000000 UNDEF  notype ()    External     | ?ServerProgramExit@@YAXPEBDH@Z (void __cdecl ServerProgramExit(char const *,int))
+0BA 00000000 UNDEF  notype ()    External     | ?LoadSendMsg@CNetProcess@@QEAAHIPEAEPEADG@Z (public: int __cdecl CNetProcess::LoadSendMsg(unsigned int,unsigned char *,char *,unsigned short))
+0BB 00000000 UNDEF  notype ()    External     | _RTC_CheckStackVars
+0BC 00000000 UNDEF  notype ()    External     | _RTC_InitBase
+0BD 00000000 UNDEF  notype ()    External     | _RTC_Shutdown
+0BE 00000000 UNDEF  notype ()    External     | __CheckForDebuggerJustMyCode
+0BF 00000000 UNDEF  notype ()    External     | __GSHandlerCheck
+0C0 00000000 SECT25 notype ()    External     | __JustMyCode_Default
+0C1 00000000 UNDEF  notype ()    External     | __security_check_cookie
+0C2 00000000 SECT1D notype       Label        | $LN3
+0C3 00000000 SECT1F notype       Label        | $LN3
+0C4 00000000 SECT21 notype       Label        | $LN3
+0C5 00000000 SECT9  notype       Label        | $LN3
+0C6 00000000 SECT7  notype       Label        | $LN3
+0C7 00000000 SECT5  notype       Label        | $LN10
+0C8 00000000 SECT15 notype       Label        | $LN4
+0C9 00000000 SECT23 notype       Label        | $LN3
+0CA 00000000 SECTB  notype       Label        | $LN3
+0CB 00000000 SECTD  notype       Label        | $LN4
+0CC 00000000 SECT17 notype       Label        | $LN3
+0CD 00000000 SECT13 notype       Label        | $LN5
+0CE 00000000 SECT11 notype       Label        | $LN21
+0CF 00000000 SECTF  notype       Label        | $LN21
+0D0 00000000 SECT19 notype       Label        | $LN4
+0D1 00000000 SECT1B notype       Label        | $LN3
+0D2 00000000 SECT27 notype       Static       | .xdata
+    Section length   10, #relocs    0, #linenums    0, checksum F67185E7, selection    5 (pick associative Section 0x1D)
+    Relocation CRC 00000000
+0D5 00000000 SECT27 notype       Static       | $unwind$?__empty_global_delete@@YAXPEAX@Z
+0D6 00000000 SECT28 notype       Static       | .pdata
+    Section length    C, #relocs    3, #linenums    0, checksum 68B67E9E, selection    5 (pick associative Section 0x1D)
+    Relocation CRC 13FAA51A
+0D9 00000000 SECT28 notype       Static       | $pdata$?__empty_global_delete@@YAXPEAX@Z
+0DA 00000000 SECT29 notype       Static       | .xdata
+    Section length   10, #relocs    0, #linenums    0, checksum 13EAA551, selection    5 (pick associative Section 0x1F)
+    Relocation CRC 00000000
+0DD 00000000 SECT29 notype       Static       | $unwind$?__empty_global_delete@@YAXPEAX_K@Z
+0DE 00000000 SECT2A notype       Static       | .pdata
+    Section length    C, #relocs    3, #linenums    0, checksum 205670FA, selection    5 (pick associative Section 0x1F)
+    Relocation CRC 12C4E4A7
+0E1 00000000 SECT2A notype       Static       | $pdata$?__empty_global_delete@@YAXPEAX_K@Z
+0E2 00000000 SECT2B notype       Static       | .xdata
+    Section length   10, #relocs    0, #linenums    0, checksum 787E56E6, selection    5 (pick associative Section 0x21)
+    Relocation CRC 00000000
+0E5 00000000 SECT2B notype       Static       | $unwind$?memcpy_0@@YAPEAXPEAXPEBX_K@Z
+0E6 00000000 SECT2C notype       Static       | .pdata
+    Section length    C, #relocs    3, #linenums    0, checksum 3C17D0DF, selection    5 (pick associative Section 0x21)
+    Relocation CRC C77CEAD7
+0E9 00000000 SECT2C notype       Static       | $pdata$?memcpy_0@@YAPEAXPEAXPEBX_K@Z
+0EA 00000000 SECT2D notype       Static       | .xdata
+    Section length   10, #relocs    0, #linenums    0, checksum F67185E7, selection    5 (pick associative Section 0x9)
+    Relocation CRC 00000000
+0ED 00000000 SECT2D notype       Static       | $unwind$??0_object_id@@QEAA@XZ
+0EE 00000000 SECT2E notype       Static       | .pdata
+    Section length    C, #relocs    3, #linenums    0, checksum DBA9F425, selection    5 (pick associative Section 0x9)
+    Relocation CRC 2A525FDD
+0F1 00000000 SECT2E notype       Static       | $pdata$??0_object_id@@QEAA@XZ
+0F2 00000000 SECT2F notype       Static       | .xdata
+    Section length   10, #relocs    0, #linenums    0, checksum 4A1E9611, selection    5 (pick associative Section 0x7)
+    Relocation CRC 00000000
+0F5 00000000 SECT2F notype       Static       | $unwind$??0_object_id@@QEAA@EEG@Z
+0F6 00000000 SECT30 notype       Static       | .pdata
+    Section length    C, #relocs    3, #linenums    0, checksum 22DF9673, selection    5 (pick associative Section 0x7)
+    Relocation CRC 3FCA7451
+0F9 00000000 SECT30 notype       Static       | $pdata$??0_object_id@@QEAA@EEG@Z
+0FA 00000000 SECT31 notype       Static       | .xdata
+    Section length   10, #relocs    0, #linenums    0, checksum A059CD2F, selection    5 (pick associative Section 0x5)
+    Relocation CRC 00000000
+0FD 00000000 SECT31 notype       Static       | $unwind$??0_100_per_random_table@@QEAA@XZ
+0FE 00000000 SECT32 notype       Static       | .pdata
+    Section length    C, #relocs    3, #linenums    0, checksum 94D3D1DA, selection    5 (pick associative Section 0x5)
+    Relocation CRC B6B35864
+101 00000000 SECT32 notype       Static       | $pdata$??0_100_per_random_table@@QEAA@XZ
+102 00000000 SECT33 notype       Static       | .xdata
+    Section length   10, #relocs    0, #linenums    0, checksum 2413C3D5, selection    5 (pick associative Section 0x15)
+    Relocation CRC 00000000
+105 00000000 SECT33 notype       Static       | $unwind$?GetRand@_100_per_random_table@@QEAAGXZ
+106 00000000 SECT34 notype       Static       | .pdata
+    Section length    C, #relocs    3, #linenums    0, checksum F6A0A65D, selection    5 (pick associative Section 0x15)
+    Relocation CRC C66CADB3
+109 00000000 SECT34 notype       Static       | $pdata$?GetRand@_100_per_random_table@@QEAAGXZ
+10A 00000000 SECT35 notype       Static       | .xdata
+    Section length   10, #relocs    0, #linenums    0, checksum F67185E7, selection    5 (pick associative Section 0x23)
+    Relocation CRC 00000000
+10D 00000000 SECT35 notype       Static       | $unwind$?reset@_100_per_random_table@@QEAAXXZ
+10E 00000000 SECT36 notype       Static       | .pdata
+    Section length    C, #relocs    3, #linenums    0, checksum A712C50E, selection    5 (pick associative Section 0x23)
+    Relocation CRC 4F43F0EE
+111 00000000 SECT36 notype       Static       | $pdata$?reset@_100_per_random_table@@QEAAXXZ
+112 00000000 SECT37 notype       Static       | .xdata
+    Section length   10, #relocs    0, #linenums    0, checksum 2413C3D5, selection    5 (pick associative Section 0xB)
+    Relocation CRC 00000000
+115 00000000 SECT37 notype       Static       | $unwind$?CalcAbsPos@CGameObject@@QEAAXXZ
+116 00000000 SECT38 notype       Static       | .pdata
+    Section length    C, #relocs    3, #linenums    0, checksum 264B06E6, selection    5 (pick associative Section 0xB)
+    Relocation CRC 9DE1005B
+119 00000000 SECT38 notype       Static       | $pdata$?CalcAbsPos@CGameObject@@QEAAXXZ
+11A 00000000 SECT39 notype       Static       | .xdata
+    Section length   10, #relocs    0, #linenums    0, checksum F7F6D860, selection    5 (pick associative Section 0xD)
+    Relocation CRC 00000000
+11D 00000000 SECT39 notype       Static       | $unwind$?CalcSecIndex@CGameObject@@QEAA_JXZ
+11E 00000000 SECT3A notype       Static       | .pdata
+    Section length    C, #relocs    3, #linenums    0, checksum 6EAB0882, selection    5 (pick associative Section 0xD)
+    Relocation CRC CCBC9E27
+121 00000000 SECT3A notype       Static       | $pdata$?CalcSecIndex@CGameObject@@QEAA_JXZ
+122 00000000 SECT3B notype       Static       | .xdata
+    Section length   10, #relocs    0, #linenums    0, checksum F67185E7, selection    5 (pick associative Section 0x17)
+    Relocation CRC 00000000
+125 00000000 SECT3B notype       Static       | $unwind$?GetUseSectorRange@CGameObject@@QEAA_JXZ
+126 00000000 SECT3C notype       Static       | .pdata
+    Section length    C, #relocs    3, #linenums    0, checksum 6BB8C590, selection    5 (pick associative Section 0x17)
+    Relocation CRC DB1FA8C5
+129 00000000 SECT3C notype       Static       | $pdata$?GetUseSectorRange@CGameObject@@QEAA_JXZ
+12A 00000000 SECT3D notype       Static       | .xdata
+    Section length   10, #relocs    0, #linenums    0, checksum 1D1688F5, selection    5 (pick associative Section 0x13)
+    Relocation CRC 00000000
+12D 00000000 SECT3D notype       Static       | $unwind$?Create@CGameObject@@QEAADPEAU_object_create_setdata@@@Z
+12E 00000000 SECT3E notype       Static       | .pdata
+    Section length    C, #relocs    3, #linenums    0, checksum 9D5A1830, selection    5 (pick associative Section 0x13)
+    Relocation CRC 0FC2D7F1
+131 00000000 SECT3E notype       Static       | $pdata$?Create@CGameObject@@QEAADPEAU_object_create_setdata@@@Z
+132 00000000 SECT3F notype       Static       | .rdata
+    Section length   60, #relocs    2, #linenums    0, checksum 767A3D95, selection    5 (pick associative Section 0x11)
+    Relocation CRC E581E752
+135 00000000 SECT3F notype       Static       | ?CircleReport@CGameObject@@QEAAXPEAEPEADG_N@Z$rtcName$0 (?CircleReport@CGameObject@@QEAAXPEAEPEADG_N@Z$rtcName$0)
+136 00000010 SECT3F notype       Static       | ?CircleReport@CGameObject@@QEAAXPEAEPEADG_N@Z$rtcVarDesc (?CircleReport@CGameObject@@QEAAXPEAEPEADG_N@Z$rtcVarDesc)
+137 00000050 SECT3F notype       Static       | ?CircleReport@CGameObject@@QEAAXPEAEPEADG_N@Z$rtcFrameData (?CircleReport@CGameObject@@QEAAXPEAEPEADG_N@Z$rtcFrameData)
+138 00000000 SECT40 notype       Static       | .xdata
+    Section length   18, #relocs    1, #linenums    0, checksum 8152EE3D, selection    5 (pick associative Section 0x11)
+    Relocation CRC F44896CA
+13B 00000000 SECT40 notype       Static       | $unwind$?CircleReport@CGameObject@@QEAAXPEAEPEADG_N@Z
+13C 00000000 SECT41 notype       Static       | .pdata
+    Section length    C, #relocs    3, #linenums    0, checksum  127B547, selection    5 (pick associative Section 0x11)
+    Relocation CRC 01C85B4B
+13F 00000000 SECT41 notype       Static       | $pdata$?CircleReport@CGameObject@@QEAAXPEAEPEADG_N@Z
+140 00000000 SECT42 notype       Static       | .voltbl
+    Section length    4, #relocs    0, #linenums    0, checksum 1CF5CE10, selection    5 (pick associative Section 0x11)
+    Relocation CRC 00000000
+143 00000000 SECT42 notype       Static       | _volmd
+144 00000000 SECT43 notype       Static       | .rdata
+    Section length   60, #relocs    2, #linenums    0, checksum 767A3D95, selection    5 (pick associative Section 0xF)
+    Relocation CRC 97E596F7
+147 00000000 SECT43 notype       Static       | ?CircleReport@CGameObject@@QEAAXPEAEPEADGI_N@Z$rtcName$0 (?CircleReport@CGameObject@@QEAAXPEAEPEADGI_N@Z$rtcName$0)
+148 00000010 SECT43 notype       Static       | ?CircleReport@CGameObject@@QEAAXPEAEPEADGI_N@Z$rtcVarDesc (?CircleReport@CGameObject@@QEAAXPEAEPEADGI_N@Z$rtcVarDesc)
+149 00000050 SECT43 notype       Static       | ?CircleReport@CGameObject@@QEAAXPEAEPEADGI_N@Z$rtcFrameData (?CircleReport@CGameObject@@QEAAXPEAEPEADGI_N@Z$rtcFrameData)
+14A 00000000 SECT44 notype       Static       | .xdata
+    Section length   18, #relocs    1, #linenums    0, checksum 8152EE3D, selection    5 (pick associative Section 0xF)
+    Relocation CRC F44896CA
+14D 00000000 SECT44 notype       Static       | $unwind$?CircleReport@CGameObject@@QEAAXPEAEPEADGI_N@Z
+14E 00000000 SECT45 notype       Static       | .pdata
+    Section length    C, #relocs    3, #linenums    0, checksum 4285EFBD, selection    5 (pick associative Section 0xF)
+    Relocation CRC 95A778D9
+151 00000000 SECT45 notype       Static       | $pdata$?CircleReport@CGameObject@@QEAAXPEAEPEADGI_N@Z
+152 00000000 SECT46 notype       Static       | .voltbl
+    Section length    4, #relocs    0, #linenums    0, checksum   6D7BC7, selection    5 (pick associative Section 0xF)
+    Relocation CRC 00000000
+155 00000000 SECT46 notype       Static       | _volmd
+156 00000000 SECT47 notype       Static       | .xdata
+    Section length   10, #relocs    0, #linenums    0, checksum 13EAA551, selection    5 (pick associative Section 0x19)
+    Relocation CRC 00000000
+159 00000000 SECT47 notype       Static       | $unwind$?Init@CGameObject@@QEAAXPEAU_object_id@@@Z
+15A 00000000 SECT48 notype       Static       | .pdata
+    Section length    C, #relocs    3, #linenums    0, checksum  B002F63, selection    5 (pick associative Section 0x19)
+    Relocation CRC E24E51D4
+15D 00000000 SECT48 notype       Static       | $pdata$?Init@CGameObject@@QEAAXPEAU_object_id@@@Z
+15E 00000000 SECT49 notype       Static       | .xdata
+    Section length   10, #relocs    0, #linenums    0, checksum F67185E7, selection    5 (pick associative Section 0x1B)
+    Relocation CRC 00000000
+161 00000000 SECT49 notype       Static       | $unwind$?IsInTown@CGameObject@@QEAA_NXZ
+162 00000000 SECT4A notype       Static       | .pdata
+    Section length    C, #relocs    3, #linenums    0, checksum AED97719, selection    5 (pick associative Section 0x1B)
+    Relocation CRC 1CC1C154
+165 00000000 SECT4A notype       Static       | $pdata$?IsInTown@CGameObject@@QEAA_NXZ
+166 00000000 UNDEF  notype       External     | ?g_Main@@3VCMainThread@@A (class CMainThread g_Main)
+167 00000000 UNDEF  notype       External     | ?g_Network@@3VCNetworkEX@@A (class CNetworkEX g_Network)
+168 00000000 SECT4B notype       Static       | .rdata
+    Section length   24, #relocs    0, #linenums    0, checksum C57D0474, selection    2 (pick any)
+    Relocation CRC 00000000
+16B 00000000 SECT4B notype       External     | ??_C@_0CE@FADEEJFO@CGameObject?3?3Init?5?3?5Lack?5Object@ (`string')
+16C 00000000 SECT4C notype       Static       | .rdata
+    Section length    6, #relocs    0, #linenums    0, checksum 449FD238, selection    2 (pick any)
+    Relocation CRC 00000000
+16F 00000000 SECT4C notype       External     | ??_C@_05KKCIMGE@error@ (`string')
+170 00000000 SECT4D notype       Static       | .rdata
+    Section length   14, #relocs    0, #linenums    0, checksum B8AC2061, selection    2 (pick any)
+    Relocation CRC 00000000
+173 00000000 SECT4D notype       External     | ??_C@_0BE@EIIGEEBD@CGameObject?3?3Init?$CI?$CJ@ (`string')
+174 00000000 SECT4E notype       Static       | .rdata
+    Section length   21, #relocs    0, #linenums    0, checksum 2FED0157, selection    2 (pick any)
+    Relocation CRC 00000000
+177 00000000 SECT4E notype       External     | ??_C@_0CB@KKGOMECF@kind?$CI?$CFd?$CJ?0?5id?$CI?$CFd?$CJ?4?4?5Out?5of?5Secto@ (`string')
+178 00000000 SECT4F notype       Static       | .rdata
+    Section length   35, #relocs    0, #linenums    0, checksum D6457495, selection    2 (pick any)
+    Relocation CRC 00000000
+17B 00000000 SECT4F notype       External     | ??_C@_0DF@DABFPMGE@CGameObject?3?3Create?$CI?$CJ?5?3?5dwSec?5?$DO@ (`string')
+17C 00000000 SECT50 notype       Static       | .rtc$IMZ
+    Section length    8, #relocs    1, #linenums    0, checksum        0, selection    2 (pick any)
+    Relocation CRC BB70974B
+17F 00000000 SECT50 notype       Static       | _RTC_InitBase.rtc$IMZ
+180 00000000 SECT51 notype       Static       | .rtc$TMZ
+    Section length    8, #relocs    1, #linenums    0, checksum        0, selection    2 (pick any)
+    Relocation CRC AACEFC19
+183 00000000 SECT51 notype       Static       | _RTC_Shutdown.rtc$TMZ
+184 00000000 SECT52 notype       Static       | .rdata
+    Section length    4, #relocs    0, #linenums    0, checksum 9BF17DFA, selection    2 (pick any)
+    Relocation CRC 00000000
+187 00000000 SECT52 notype       External     | __real@42c80000
+188 00000000 UNDEF  notype       External     | __security_cookie
+189 00000000 UNDEF  notype       External     | _fltused
+18A 00000000 SECT53 notype       Static       | .debug$T
+    Section length   68, #relocs    0, #linenums    0, checksum        0
+    Relocation CRC 00000000
+18D 00000000 SECT54 notype       Static       | .chks64
+    Section length  2A0, #relocs    0, #linenums    0, checksum        0
+    Relocation CRC 00000000
+
+String Table Size = 0x11BA bytes
+
+  Summary
+
+       53C84 .bss
+         2A0 .chks64
+        2F88 .debug$S
+          68 .debug$T
+         5AF .drectve
+          25 .msvcjmc
+          C0 .pdata
+         158 .rdata
+           8 .rtc$IMZ
+           8 .rtc$TMZ
+        11A3 .text$mn
+           8 .voltbl
+         110 .xdata

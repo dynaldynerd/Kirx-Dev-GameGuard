@@ -5,6 +5,28 @@
 /* 1730 */
 class __cppobj CPlayerDB
 {
+public:
+  static int GetRaceCode(CPlayerDB *self);
+  static int GetMapCode(CPlayerDB *self);
+  static void SetMapCode(CPlayerDB *self, unsigned __int8 byCode);
+  static char *GetCharNameA(CPlayerDB *self);
+  static const char *GetCharNameW(CPlayerDB *self);
+  static unsigned int GetCharSerial(CPlayerDB *self);
+  static long double GetPvPPoint(CPlayerDB *self);
+  static void SetPvPPoint(CPlayerDB *self, long double dPoint);
+  static unsigned int GetGuildSerial(CPlayerDB *self);
+  static unsigned int GetLevel(CPlayerDB *self);
+  static unsigned int GetHP(CPlayerDB *self);
+  static void SetHP(CPlayerDB *self, unsigned int dwHP);
+  static unsigned int GetFP(CPlayerDB *self);
+  static void SetFP(CPlayerDB *self, unsigned int dwFP);
+  static unsigned int GetSP(CPlayerDB *self);
+  static void SetSP(CPlayerDB *self, unsigned int dwSP);
+  static unsigned int GetDalant(CPlayerDB *self);
+  static void SetDalant(CPlayerDB *self, unsigned int dwDt);
+  static unsigned int GetGold(CPlayerDB *self);
+  static void SetCurPos(CPlayerDB *self, float *fPos);
+
   unsigned __int8 m_byPvPGrade;
   __unaligned __declspec(align(1)) _character_db_load m_dbChar;
   __unaligned __declspec(align(1)) _bag_db_load m_dbInven;

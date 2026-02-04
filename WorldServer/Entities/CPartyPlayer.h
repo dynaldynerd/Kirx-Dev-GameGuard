@@ -20,5 +20,7 @@ public:
 
   void Init(unsigned int index);
   void PartyListInit();
+  bool IsPartyMode();
+  CPartyPlayer **GetPtrPartyMember();
 };
 

@@ -3,25 +3,39 @@
 #include "IdaCompat.h"
 
 #include "CCharacter.h"
+#include "ObjectCreateSetData.h"
 
 struct _monster_fld;
 struct _dummy_position;
 class CMapData;
 
-struct _stone_create_setdata
+struct __cppobj __declspec(align(8)) _stone_create_setdata : _character_create_setdata
 {
-  CMapData *m_pMap;
-  int m_nLayerIndex;
-  _monster_fld *m_pRecordSet;
-  float m_fStartPos[3];
   _dummy_position *pDumPosition;
   unsigned char byMasterRace;
+
+  _stone_create_setdata()
+  {
+    pDumPosition = nullptr;
+    byMasterRace = 0;
+  }
 };
 
 class __cppobj CHolyStone : public CCharacter
 {
 public:
-  static bool Create(CHolyStone *pStone, _stone_create_setdata *pData);
+  bool Create(_stone_create_setdata *pData);
+  static unsigned int GetNewStoneSerial();
+  void SendMsg_Create();
+  void SetOper(bool bOper, float fHPRate);
+  void SendMsg_StoneAlterOper();
+  unsigned int CalcCurHPRate();
+  unsigned int GetHP();
+  char SetHP(int nHP, bool bOver = false);
+
+  static int s_nLiveNum;
+  static unsigned int s_dwSerialCnt;
+
   bool m_bOper;
   int m_nHP;
   int m_nMaxHP;
@@ -41,5 +55,5 @@ public:
   unsigned __int16 m_wAddCountWithPlayer;
   CMyTimer m_tmrDropTime;
 
-  void Init(_object_id *pID);
+  bool Init(_object_id *pID);
 };

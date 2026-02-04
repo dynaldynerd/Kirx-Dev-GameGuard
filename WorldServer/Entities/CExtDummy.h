@@ -16,5 +16,6 @@ public:
   ~CExtDummy();
   bool LoadExtDummy(const char *szFileName);
   bool GetWorldFromLocal(float *fOutPos, unsigned int nDummyIndex, float *v7);
+  bool IsInBBox(unsigned int nDummyIndex, float *const pos);
 };
 

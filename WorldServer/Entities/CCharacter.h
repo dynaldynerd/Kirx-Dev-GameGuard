@@ -19,6 +19,8 @@ struct __declspec(align(4)) _sf_continous
   int m_nCumulCounter;
   unsigned int m_dwPlayerSerial;
   char m_wszPlayerName[17];
+
+  static unsigned int GetSFContCurTime();
 };
 
 struct __declspec(align(8)) _effect_parameter
@@ -30,6 +32,13 @@ struct __declspec(align(8)) _effect_parameter
 
   void AllocEffParam();
   void InitEffParam();
+  float GetEff_Rate(unsigned int nParamIndex);
+  float GetEff_Plus(unsigned int nParamIndex);
+  float GetEff_Have(unsigned int nParamIndex);
+  bool GetEff_State(unsigned int nParamIndex);
+  bool SetEff_Rate(unsigned int nParamIndex, float fVar, bool bAdd);
+  bool SetEff_Plus(unsigned int nParamIndex, float fVar, bool bAdd);
+  bool SetEff_State(unsigned int nParamIndex, bool bVar);
 };
 
 struct _effect_parameter::__param_data
@@ -61,4 +70,7 @@ public:
 
   bool Create(_character_create_setdata *pData);
   void Init(_object_id *pID);
+  void RemoveSFContEffect(unsigned __int8 byContCode, unsigned __int16 wListIndex, bool bInit, bool bAura);
+  void RemoveSFContHelpByEffect(int nContParamCode, int nContParamIndex);
+  unsigned int CalcEffectBit(unsigned __int16 wEffectCode, unsigned __int16 wEffectIndex);
 };

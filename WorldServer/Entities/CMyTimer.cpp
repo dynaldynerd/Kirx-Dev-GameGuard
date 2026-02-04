@@ -39,3 +39,8 @@ bool CMyTimer::CountingTimer()
   m_dwTickOld = now;
   return true;
 }
+
+void CMyTimer::StopTimer()
+{
+  m_bOper = false;
+}

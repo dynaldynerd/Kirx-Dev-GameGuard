@@ -9,6 +9,7 @@ class __cppobj CRaceBuffManager
 public:
   static CRaceBuffManager *Instance();
   bool Init();
+  bool RequestHolyQuestRaceBuff(int iType);
 
   CRaceBuffByHolyQuestProcedure m_kBuffByHolyQuest;
 };

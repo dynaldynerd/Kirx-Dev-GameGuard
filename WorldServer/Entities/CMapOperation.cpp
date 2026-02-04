@@ -2,6 +2,7 @@
 
 #include "CMapOperation.h"
 
+#include <new>
 #include <cstdio>
 #include <cstring>
 
@@ -25,15 +26,18 @@ CMapOperation g_MapOper;
 AreaList *g_AreaIndexTable[100];
 std::map<std::string, AreaList> g_strLMapMap;
 
+bool LoadRegionData(int nMapNum, char **ppszMapNameList, char *pszErrMsg);
+
 bool CMapOperation::Init()
 {
   if (!m_tblMapData.ReadScript(".\\Map\\Map_Data.spt"))
   {
+    MyMessageBox("DatafileInit", "MapSptfile Load Error");
     return false;
   }
 
   m_nMapNum = m_tblMapData.GetRecordNum();
-  m_Map = new CMapData[m_nMapNum];
+  m_Map = new (std::nothrow) CMapData[m_nMapNum];
 
   if (!CItemStoreManager::Instance()->Init(m_nMapNum, 90))
   {
@@ -60,6 +64,7 @@ bool CMapOperation::Init()
       CMapData *pLinkMainbaseMap = GetStartMap(j);
       if (!pLinkMainbaseMap)
       {
+        MyMessageBox("CMapOperation::Init() Error", "if(!pMainBaseMap)");
         return false;
       }
       if (!CTransportShip::InitShip(&g_TransportShip[j], pLinkShipMap, pLinkMainbaseMap, pLinkPlatformMap, j))
@@ -75,6 +80,14 @@ bool CMapOperation::Init()
         m_SettlementMapData[k][m] = GetMap(ms_szSettlementMapName[k][m]);
         if (!m_SettlementMapData[k][m])
         {
+          MyMessageBox(
+            "Error",
+            "CMapOperation::Init() : m_SettlementMapData[%d][%d] = GetMap( ms_szSettlementMapName[%d][%d](%s) ) Fail!",
+            k,
+            m,
+            k,
+            m,
+            ms_szSettlementMapName[k][m]);
           return false;
         }
       }
@@ -83,6 +96,7 @@ bool CMapOperation::Init()
     return CHolyStoneSystem::InitHolySystem(&g_HolySys) && CWorldSchedule::Init(&g_WorldSch);
   }
 
+  MyMessageBox("CMapOperation::Init() Error", "if(!pShipMap || !pPlatformMap)");
   return false;
 }
 
@@ -100,82 +114,105 @@ CMapData *CMapOperation::GetStartMap(unsigned __int8 byRaceCode)
   return nullptr;
 }
 
-bool CMapOperation::LoadMaps()
+CMapData *CMapOperation::GetPosStartMap(unsigned __int8 byRaceCode, bool bRand, float *pfoutPos)
 {
-    char *ppszMapNameList[100];
-    char pszErrMsg[144];
+  CMapData *startMap = GetStartMap(byRaceCode);
+  if (!startMap)
+  {
+    return nullptr;
+  }
 
-    for (int dwIndex = 0; dwIndex < this->m_nMapNum; ++dwIndex)
-    {
-        _map_fld *pMapSet = this->m_tblMapData.GetRecord(dwIndex);
-        this->m_Map[dwIndex].Init(pMapSet);
-        ppszMapNameList[dwIndex] = pMapSet->m_strCode;
+  int startIndex = 0;
+  if (bRand)
+  {
+    startIndex = rand() % startMap->m_nStartDumNum;
+  }
 
-        NetTrace("Map Loading : %s", pMapSet->m_strCode);
+  if (startMap->GetRandPosInDummy(startMap->m_pStartDummy[startIndex].m_pDumPos, pfoutPos, true))
+  {
+    return startMap;
+  }
 
-        if (!this->m_Map[dwIndex].OpenMap(pMapSet->m_strFileName, pMapSet, 1))
-        {
-            MyMessageBox("Map Load Error", "%s - Read Error", pMapSet->m_strFileName);
-            return false;
-        }
-
-        CItemStoreManager *v4 = CItemStoreManager::Instance();
-        CMapItemStoreList *MapItemStoreListByNum = v4->GetMapItemStoreListByNum(dwIndex);
-        MapItemStoreListByNum->SetTypeNSerial(0, this->m_Map[dwIndex].m_nMapIndex);
-
-        if (!MapItemStoreListByNum->CreateStores(&this->m_Map[dwIndex]))
-        {
-            MyMessageBox("ItemStore Load Error", "LoadMaps() : pMapItemStoreList->CreateStores(%s)", pMapSet->m_strFileName);
-            return false;
-        }
-
-        NetTrace("ItemStore Loaded : %s", pMapSet->m_strCode);
-
-        if (!pMapSet->m_nMapType)
-        {
-            if (this->m_Map[dwIndex].m_pItemStoreDummy)
-            {
-                for (int nStoreNum = 0; nStoreNum < this->m_Map[dwIndex].m_nItemStoreDumNum; ++nStoreNum)
-                {
-                    CMerchant *EmptyNPC = FindEmptyNPC(g_NPC, MAX_NPC);
-                    if (!EmptyNPC)
-                    {
-                         MyMessageBox("error", "CMerchant find error");
-                         break;
-                    }
-
-                    _npc_create_setdata pData;
-                    this->m_Map[dwIndex].GetRandPosInDummy(
-                        this->m_Map[dwIndex].m_pItemStoreDummy[nStoreNum].m_pDumPos,
-                        pData.m_fStartPos,
-                        1);
-
-                    CItemStoreManager *v5 = CItemStoreManager::Instance();
-                    CItemStore *MapItemStoreFromList = v5->GetMapItemStoreFromList(dwIndex, nStoreNum);
-                    pData.m_pLinkItemStore = MapItemStoreFromList;
-                    pData.m_pMap = &this->m_Map[dwIndex];
-                    pData.m_nLayerIndex = 0;
-                    pData.m_pRecordSet = MapItemStoreFromList->GetNpcRecord();
-                    pData.m_byRaceCode = MapItemStoreFromList->m_byNpcRaceCode;
-
-                    EmptyNPC->Create(&pData);
-                }
-            }
-            this->m_vecStandardMapCodeTable.push_back(std::make_pair(this->m_Map[dwIndex].m_nMapCode, this->m_nStdMapNum));
-            ++this->m_nStdMapNum;
-        }
-    }
-
-    this->CheckMapPortalLink();
-
-    if (LoadRegionData(this->m_nMapNum, ppszMapNameList, pszErrMsg))
-        return true;
-
-    MyMessageBox("LoadMaps", "%s", pszErrMsg);
-    return false;
+  return nullptr;
 }
 
-bool CMapOperation::LoadRegionData(int nMapNum, char **ppszMapNameList, char *pszErrMsg)
+bool CMapOperation::LoadMaps()
+{
+  char *ppszMapNameList[100];
+  char pszErrMsg[144];
+
+  for (int mapIndex = 0; mapIndex < this->m_nMapNum; ++mapIndex)
+  {
+    _map_fld *pMapSet = this->m_tblMapData.GetRecord(mapIndex);
+    this->m_Map[mapIndex].Init(pMapSet);
+    ppszMapNameList[mapIndex] = pMapSet->m_strCode;
+
+    NetTrace("Map Loading : %s", pMapSet->m_strCode);
+
+    if (!this->m_Map[mapIndex].OpenMap(pMapSet->m_strFileName, pMapSet, 1))
+    {
+      MyMessageBox("Map Load Error", "%s - Read Error", pMapSet->m_strFileName);
+      return false;
+    }
+
+    CItemStoreManager *itemStoreManager = CItemStoreManager::Instance();
+    CMapItemStoreList *mapItemStoreList = itemStoreManager->GetMapItemStoreListByNum(mapIndex);
+    mapItemStoreList->SetTypeNSerial(0, this->m_Map[mapIndex].m_nMapIndex);
+
+    if (!mapItemStoreList->CreateStores(&this->m_Map[mapIndex]))
+    {
+      MyMessageBox("ItemStore Load Error", "LoadMaps() : pMapItemStoreList->CreateStores(%s)", pMapSet->m_strFileName);
+      return false;
+    }
+
+    NetTrace("ItemStore Loaded : %s", pMapSet->m_strCode);
+
+    if (!pMapSet->m_nMapType)
+    {
+      if (this->m_Map[mapIndex].m_pItemStoreDummy)
+      {
+        for (int nStoreNum = 0; nStoreNum < this->m_Map[mapIndex].m_nItemStoreDumNum; ++nStoreNum)
+        {
+          CMerchant *emptyNpc = FindEmptyNPC(g_NPC, MAX_NPC);
+          if (!emptyNpc)
+          {
+            MyMessageBox("error", "CMerchant find error");
+            break;
+          }
+
+          _npc_create_setdata pData;
+          this->m_Map[mapIndex].GetRandPosInDummy(
+              this->m_Map[mapIndex].m_pItemStoreDummy[nStoreNum].m_pDumPos,
+              pData.m_fStartPos,
+              1);
+
+          itemStoreManager = CItemStoreManager::Instance();
+          CItemStore *mapItemStore = itemStoreManager->GetMapItemStoreFromList(mapIndex, nStoreNum);
+          pData.m_pLinkItemStore = mapItemStore;
+          pData.m_pMap = &this->m_Map[mapIndex];
+          pData.m_nLayerIndex = 0;
+          pData.m_pRecordSet = mapItemStore->GetNpcRecord();
+          pData.m_byRaceCode = mapItemStore->m_byNpcRaceCode;
+
+          emptyNpc->Create(&pData);
+        }
+      }
+      this->m_vecStandardMapCodeTable.push_back(
+          std::make_pair(this->m_Map[mapIndex].m_nMapCode, this->m_nStdMapNum));
+      ++this->m_nStdMapNum;
+    }
+  }
+
+  this->CheckMapPortalLink();
+
+  if (LoadRegionData(this->m_nMapNum, ppszMapNameList, pszErrMsg))
+    return true;
+
+  MyMessageBox("LoadMaps", "%s", pszErrMsg);
+  return false;
+}
+
+bool LoadRegionData(int nMapNum, char **ppszMapNameList, char *pszErrMsg)
 {
     for (int j = 0; j < 100; ++j) g_AreaIndexTable[j] = nullptr;
 
@@ -191,9 +228,9 @@ bool CMapOperation::LoadRegionData(int nMapNum, char **ppszMapNameList, char *ps
 
     for (unsigned int k = 0; k < dwMapNumInFile; ++k)
     {
-        AreaList v17;
-        fread(&v17.Height, 4, 1, Stream);
-        fread(&v17.Width, 4, 1, Stream);
+        AreaList areaList;
+        fread(&areaList.Height, 4, 1, Stream);
+        fread(&areaList.Width, 4, 1, Stream);
 
         unsigned int dwStrLen = 0;
         fread(&dwStrLen, 4, 1, Stream);
@@ -212,18 +249,18 @@ bool CMapOperation::LoadRegionData(int nMapNum, char **ppszMapNameList, char *ps
             fread(&adata.dwX, 4, 1, Stream);
             fread(&adata.dwY, 4, 1, Stream);
             fread(&adata.dwSound, 4, 1, Stream);
-            v17.Push(&adata);
+            areaList.Push(&adata);
         }
 
-        fread(&v17.DataEnd, 4, 1, Stream);
+        fread(&areaList.DataEnd, 4, 1, Stream);
         
-        g_strLMapMap[szMapCode] = v17;
+        g_strLMapMap[szMapCode] = areaList;
         AreaList *pListInMap = &g_strLMapMap[szMapCode];
 
-        if (v17.DataEnd > 0)
+        if (areaList.DataEnd > 0)
         {
-            pListInMap->m_Data.resize(v17.DataEnd);
-            fread(pListInMap->m_Data.data(), v17.DataEnd, 1, Stream);
+            pListInMap->m_Data.resize(areaList.DataEnd);
+            fread(pListInMap->m_Data.data(), areaList.DataEnd, 1, Stream);
         }
         
         pListInMap->ExtractData();
@@ -251,17 +288,19 @@ bool CMapOperation::LoadRegion()
   this->m_nRegionNum = 0;
   for (int k = 0; k < this->m_nStdMapNum; ++k)
   {
-    CMapData *v7 = &this->m_Map[k];
+    CMapData *mapData = &this->m_Map[k];
     char Buffer[152];
-    sprintf_s(Buffer, ".\\map\\%s\\%s.spt", v7->m_pMapSet->m_strCode, v7->m_pMapSet->m_strCode);
-    
+    sprintf_s(Buffer, ".\\map\\%s\\%s.spt", mapData->m_pMapSet->m_strCode, mapData->m_pMapSet->m_strCode);
+
     CDummyPosTable pPosTable;
     if (!pPosTable.LoadDummyPosition(Buffer, "*rg_"))
     {
+      MyMessageBox(
+          "CMapOperation Error", "CMapOperation::LoadRegion(%s) == false", mapData->m_pMapSet->m_strCode);
       return false;
     }
-    
-    if (!v7->ConvertLocalToWorldDummy(&pPosTable, 0))
+
+    if (!mapData->ConvertLocalToWorldDummy(&pPosTable, 0))
     {
       return false;
     }
@@ -270,8 +309,11 @@ bool CMapOperation::LoadRegion()
     for (int i = 0; i < RecordNum; ++i)
     {
       char *Source = (char *)pPosTable.GetRecord(i);
-      strcpy_s(this->m_RegionData[this->m_nRegionNum].szRegionData, sizeof(this->m_RegionData[this->m_nRegionNum].szRegionData), Source);
-      this->m_RegionData[this->m_nRegionNum].pMap = v7;
+      strcpy_s(
+          this->m_RegionData[this->m_nRegionNum].szRegionData,
+          sizeof(this->m_RegionData[this->m_nRegionNum].szRegionData),
+          Source);
+      this->m_RegionData[this->m_nRegionNum].pMap = mapData;
       this->m_RegionData[this->m_nRegionNum].wDummyLineIndex = *((unsigned short *)Source + 32);
       this->m_nRegionNum++;
     }
@@ -281,45 +323,50 @@ bool CMapOperation::LoadRegion()
 
 void CMapOperation::CheckMapPortalLink()
 {
-    for (int j = 0; j < this->m_nMapNum; ++j)
+  for (int j = 0; j < this->m_nMapNum; ++j)
+  {
+    CMapData *mapData = &this->m_Map[j];
+    for (int nPortalIndex = 0; nPortalIndex < mapData->m_nPortalNum; ++nPortalIndex)
     {
-        CMapData *v5 = &this->m_Map[j];
-        for (int nPortalIndex = 0; nPortalIndex < v5->m_nPortalNum; ++nPortalIndex)
+      _portal_dummy *Portal = mapData->GetPortal(nPortalIndex);
+      if (Portal->m_pPortalRec && std::strcmp(Portal->m_pPortalRec->m_strLinkMapCode, "0") != 0)
+      {
+        CMapData *linkedMap = this->GetMap(Portal->m_pPortalRec->m_strLinkMapCode);
+        if (linkedMap)
         {
-            _portal_dummy *Portal = &v5->m_pPortal[nPortalIndex];
-            if (Portal->m_pPortalRec && strcmp(Portal->m_pPortalRec->m_strLinkMapCode, "0") != 0)
-            {
-                CMapData *Map = this->GetMap(Portal->m_pPortalRec->m_strLinkMapCode);
-                if (Map)
-                {
-                    bool bFound = false;
-                    for (int k = 0; k < Map->m_nPortalNum; ++k)
-                    {
-                        if (strcmp(Map->m_pPortal[k].m_pPortalRec->m_strCode, Portal->m_pPortalRec->m_strLinkPortalCode) == 0)
-                        {
-                            bFound = true;
-                            break;
-                        }
-                    }
-                    if (!bFound)
-                    {
-                        NetTrace("Portal Link Check: %s.. %dth >> Map: %s, Portal: LinkPortalCode(%s)",
-                            v5->m_pMapSet->m_strCode,
-                            nPortalIndex,
-                            Portal->m_pPortalRec->m_strLinkMapCode,
-                            Portal->m_pPortalRec->m_strLinkPortalCode);
-                    }
-                }
-                else
-                {
-                    NetTrace("Portal Link Check: %s.. %dth >> Portal: LinkMapCode(%s)",
-                        v5->m_pMapSet->m_strCode,
-                        nPortalIndex,
-                        Portal->m_pPortalRec->m_strLinkMapCode);
-                }
-            }
+          if (!linkedMap->GetPortal(Portal->m_pPortalRec->m_strLinkPortalCode))
+          {
+            g_Main.m_logLoadingError.Write(
+                "Portal Link Check: %s.. %dth >> Map: %s, Portal: LinkPortalCode(%s)",
+                mapData->m_pMapSet->m_strCode,
+                nPortalIndex,
+                Portal->m_pPortalRec->m_strLinkMapCode,
+                Portal->m_pPortalRec->m_strLinkPortalCode);
+          }
         }
+        else
+        {
+          g_Main.m_logLoadingError.Write(
+              "Portal Link Check: %s.. %dth >> Portal: LinkMapCode(%s)",
+              mapData->m_pMapSet->m_strCode,
+              nPortalIndex,
+              Portal->m_pPortalRec->m_strLinkMapCode);
+        }
+      }
     }
+  }
+}
+
+bool CMapOperation::IsExistStdMapID(int iMapID)
+{
+  for (size_t j = 0; j < m_vecStandardMapCodeTable.size(); ++j)
+  {
+    if (iMapID == m_vecStandardMapCodeTable[j].first)
+    {
+      return true;
+    }
+  }
+  return false;
 }
 
 CMapData *CMapOperation::GetMap(const char *szMapCode)
@@ -332,4 +379,25 @@ CMapData *CMapOperation::GetMap(const char *szMapCode)
     }
   }
   return nullptr;
+}
+
+CMapData *CMapOperation::GetMap(int nIndex)
+{
+  if (nIndex < m_nMapNum && nIndex >= 0)
+  {
+    return &m_Map[nIndex];
+  }
+  return nullptr;
+}
+
+int CMapOperation::GetMap(CMapData *pMap)
+{
+  for (int j = 0; j < m_nMapNum; ++j)
+  {
+    if (&m_Map[j] == pMap)
+    {
+      return j;
+    }
+  }
+  return -1;
 }

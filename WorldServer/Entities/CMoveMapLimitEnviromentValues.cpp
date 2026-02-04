@@ -7,6 +7,7 @@
 #include <cstring>
 
 int CMoveMapLimitEnviromentValues::ELAN_MAP_CODE = -1;
+int CMoveMapLimitEnviromentValues::ELAN_1TH_LIMIT_NPC_RECORD_INDEX = -1;
 
 bool CMoveMapLimitEnviromentValues::Init()
 {

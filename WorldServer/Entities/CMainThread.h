@@ -459,7 +459,14 @@ public:
   CMainThread();
   bool Init();
   bool IsTestServer() const;
+  bool IsReleaseServiceMode() const;
   unsigned int GetMonsterRecordNum() const;
+  _DB_QRY_SYN_DATA *PushDQSData(
+    unsigned int dwAccountSerial,
+    _CLID *pidWorld,
+    unsigned __int8 byQryCase,
+    char *pQryData,
+    int nSize);
   virtual ~CMainThread() = default;
 
 private:
@@ -571,6 +578,7 @@ struct __cppobj TimeLimitMgr
   void LoadTLINIFile();
   void InitializeTLMgr();
   void SetTLEnable(unsigned __int16 wState);
+  long double GetPlayerPenalty(unsigned __int16 wIndex);
 
   CMyTimer m_tmLoopTime;
   Player_TL_Status m_lstTLStaus[2532];
@@ -1214,6 +1222,8 @@ struct __cppobj __unaligned __declspec(align(2)) _personal_amine_mineore_zocl
   unsigned int dwBattery;
   unsigned __int8 byChangedNum;
   __changed change[40];
+
+  void clear();
 };
 
 /* 1709 */
@@ -1234,12 +1244,19 @@ struct __cppobj _qry_case_update_mineore
 };
 
 /* 1710 */
-class __cppobj AutominePersonal : CCharacter
+class __cppobj AutominePersonal : public CCharacter
 {
 public:
   AutominePersonal();
   ~AutominePersonal();
   bool initialize(unsigned __int16 wIndex);
+  bool is_installed();
+  unsigned int get_ownerserial();
+  bool unregist_from_map(unsigned __int8 byDestroyType);
+  bool extract_battery(unsigned __int8 bySlotIdx, _STORAGE_LIST::_db_con *pBattery);
+  void send_current_state();
+  unsigned int get_battery();
+  unsigned int get_battery(int n);
 
   bool m_bDBLoad;
   bool m_bOpenUI_Inven;
@@ -1732,6 +1749,8 @@ struct __cppobj __unaligned __declspec(align(1)) AP_BatterySlot
 {
   AP_BatterySlot();
   void clear();
+  bool extract(_STORAGE_LIST::_db_con *pout_item);
+  unsigned int get_dur();
 
   bool m_bFill;
   _STORAGE_LIST::_db_con battery_;

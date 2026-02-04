@@ -125,9 +125,50 @@ bool CMainThread::IsTestServer() const
   return m_byWorldType == 1;
 }
 
+bool CMainThread::IsReleaseServiceMode() const
+{
+  return m_bReleaseServiceMode;
+}
+
 unsigned int CMainThread::GetMonsterRecordNum() const
 {
   return m_tblMonster.GetRecordNum();
+}
+
+_DB_QRY_SYN_DATA *CMainThread::PushDQSData(
+  unsigned int dwAccountSerial,
+  _CLID *pidWorld,
+  unsigned __int8 byQryCase,
+  char *pQryData,
+  int nSize)
+{
+  unsigned int outIndex[5]{};
+  if (!CNetIndexList::PopNode_Front(&m_listDQSDataEmpty, outIndex))
+  {
+    ServerProgramExit("m_listDQSDataEmpty.PopNode_Front() => failed", 1);
+  }
+
+  _DB_QRY_SYN_DATA *data = &m_DBQrySynData[outIndex[0]];
+  data->m_dwAccountSerial = dwAccountSerial;
+  if (pidWorld)
+  {
+    memcpy_0(&data->m_idWorld, pidWorld, sizeof(data->m_idWorld));
+  }
+  data->m_byQryCase = byQryCase;
+  if (pQryData)
+  {
+    memcpy_0(data->m_sData, pQryData, nSize);
+  }
+
+  if (CNetIndexList::PushNode_Back(&m_listDQSData, outIndex[0]))
+  {
+    data->m_bUse = true;
+    data->m_bLoad = false;
+    return data;
+  }
+
+  m_logSystemError.Write("%d : m_listDQSData.PushNode_Back() => failed ", byQryCase);
+  return nullptr;
 }
 
 char CMainThread::ms_szClientVerCheck[33]{};
@@ -233,6 +274,26 @@ void TimeLimitMgr::InitializeTLMgr()
 void TimeLimitMgr::SetTLEnable(unsigned __int16 wState)
 {
   m_wEnable = wState;
+}
+
+long double TimeLimitMgr::GetPlayerPenalty(unsigned __int16 wIndex)
+{
+  if (!m_wEnable)
+  {
+    return 1.0L;
+  }
+
+  if (!m_lstTLStaus[wIndex].m_bUse)
+  {
+    return 0.0L;
+  }
+
+  if (m_lstTLStaus[wIndex].m_bAgeLimit)
+  {
+    return m_lstTLStaus[wIndex].m_dPercent;
+  }
+
+  return 1.0L;
 }
 
 bool CMainThread::Init()

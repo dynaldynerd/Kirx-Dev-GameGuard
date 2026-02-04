@@ -27,3 +27,26 @@ bool CMoveMapLimitManager::Init()
   }
   return true;
 }
+
+bool CMoveMapLimitManager::Request(
+  int iLimitType,
+  int iRequetType,
+  int iMapInx,
+  unsigned int dwStoreRecordIndex,
+  int iUserInx,
+  char *pRequest)
+{
+  CMoveMapLimitRightInfo *rightInfo = m_kRightInfo.Get(iUserInx);
+  return m_kLimitInfo.Request(iLimitType, iRequetType, iMapInx, dwStoreRecordIndex, iUserInx, pRequest, rightInfo);
+}
+
+bool CMoveMapLimitManager::RequestElanMapUserForceMoveHQ()
+{
+  return Request(
+    0,
+    0,
+    CMoveMapLimitEnviromentValues::ELAN_MAP_CODE,
+    CMoveMapLimitEnviromentValues::ELAN_1TH_LIMIT_NPC_RECORD_INDEX,
+    -1,
+    nullptr);
+}

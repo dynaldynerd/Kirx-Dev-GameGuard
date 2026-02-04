@@ -3,6 +3,7 @@
 #include "IdaCompat.h"
 
 struct _base_fld;
+struct _dummy_position;
 class CMapData;
 class CItemStore;
 
@@ -35,5 +36,21 @@ struct __cppobj __declspec(align(8)) _npc_create_setdata : _character_create_set
   {
     m_pLinkItemStore = nullptr;
     m_byRaceCode = 0;
+  }
+};
+
+struct __cppobj _keeper_create_setdata : _character_create_setdata
+{
+  int nMasterRace;
+  _dummy_position *pPosCreate;
+  _dummy_position *pPosActive;
+  _dummy_position *pPosCenter;
+
+  _keeper_create_setdata()
+  {
+    nMasterRace = -1;
+    pPosCreate = nullptr;
+    pPosActive = nullptr;
+    pPosCenter = nullptr;
   }
 };

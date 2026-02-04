@@ -12,3 +12,8 @@ bool CRaceBuffManager::Init()
 {
   return m_kBuffByHolyQuest.Init();
 }
+
+bool CRaceBuffManager::RequestHolyQuestRaceBuff(int iType)
+{
+  return m_kBuffByHolyQuest.Request(iType);
+}

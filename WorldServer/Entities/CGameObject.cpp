@@ -1218,11 +1218,6 @@ bool CGameObject::RobbedHP(CCharacter *pDst, int nDecHP)
   return 0;
 }
 
-void CGameObject::SFContDelMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, bool bSend)
-{
-  ;
-}
-
 void CGameObject::SFContInsertMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, bool bAura)
 {
   ;
@@ -1682,6 +1677,24 @@ void CGameObject::_ResetCirclePlayer()
   }
 }
 */
+
+__int64 CGameObject::GetCurSecNum()
+{
+  return m_dwCurSec;
+}
+
+char CGameObject::SetCurPos(float *pPos)
+{
+  if (!m_pCurMap->IsMapIn(pPos))
+    return 0;
+  memcpy_0(m_fCurPos, pPos, sizeof(m_fCurPos));
+  return 1;
+}
+
+void CGameObject::SetCurSecNum(unsigned int dwNewSecNum)
+{
+  m_dwCurSec = dwNewSecNum;
+}
 
 void CGameObject::CalcAbsPos()
 {

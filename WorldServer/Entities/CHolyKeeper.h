@@ -12,6 +12,9 @@ struct _dummy_position;
 class __cppobj CHolyKeeper : public CCharacter
 {
 public:
+  static int s_nLiveNum;
+  static unsigned int s_dwSerialCnt;
+
   int m_nHP;
   unsigned int m_dwLastDestroyTime;
   _monster_fld *m_pRec;
@@ -36,4 +39,16 @@ public:
   CMyTimer m_tmrDropTime;
 
   void Init(_object_id *pID);
+  bool Create(_keeper_create_setdata *pData, int nCreateType);
+  bool Destroy(unsigned __int8 byDestroyCode, CCharacter *pAtter);
+  bool Exit();
+  void SetMaxHP(int nMaxHP);
+  void SetHP(int nHP);
+  void SetDamageAbleState(bool bDamageAbState);
+  void SetStateChaos();
+  void SendMsg_Create();
+  void SendMsg_Destroy(unsigned __int8 byDesType);
+  void SendMsg_Move();
+  void SetDropItem();
+  void DropItem();
 };

@@ -15,6 +15,9 @@ class __cppobj CPvpUserRankingInfo
 {
 public:
   bool assign();
+  bool IsCurrentRaceBossGroup(unsigned __int8 byRace, unsigned int dwSerial);
+  unsigned int GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth);
+  unsigned __int8 GetBossType(unsigned __int8 byRaceCode, unsigned int dwSerial);
 
   std::vector<_PVP_RANK_DATA *> m_vecPvpRankDataCurrent;
   std::vector<_PVP_RANK_DATA *> m_vecPvpRankDataTomorrow;
@@ -77,6 +80,10 @@ public:
   bool SetRankingStartTime(int iHour, int iMin);
   bool AllocObject();
   bool InitProcFunc();
+
+  bool IsCurrentRaceBossGroup(unsigned __int8 byRace, unsigned int dwSerial);
+  unsigned int GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth);
+  unsigned __int8 GetBossType(unsigned __int8 byRace, unsigned int dwSerial);
 
   void ProcWait();
   void ProcSaveTargetList();

@@ -9,9 +9,33 @@ class __cppobj COreAmountMgr
 {
 public:
   static COreAmountMgr *Instance();
+  COreAmountMgr();
+  void Release();
   bool LoadINI();
+  bool IsINIFileChanged();
+  bool ReLoad();
   void InitRemainOreAmount(unsigned int dwRemain, unsigned int dwInit);
   void InitTransferOre(int nTransfer, int nInit);
+  unsigned int GetRemainOre();
+  unsigned int GetTotalOre();
+  unsigned int GetOreTransferAmount();
+  unsigned __int8 GetOreTransferCount();
+  unsigned __int8 GetDepositRate();
+  float *GetMultipleRate();
+  void UpdateDepositeRate();
+  void UpdateForce();
+  void IncreaseOreAmount();
+  void IncreaseOreCount();
+  void DecreaseOre(unsigned int dwAlt);
+  void SetOreTransferAmount();
+  void InsertOreLog(unsigned __int8 byType);
+  void Loop();
+  void LoopSubProcSendInform();
+  bool CheatOreAmount(unsigned int dwTot, unsigned int dwRemain);
+  bool IsOreRemain();
+
+  static COreAmountMgr *m_pInstance;
+
   int m_bChangeRemainRate;
   unsigned int m_dwTotalOreSet;
   unsigned int m_dwMinOreSet;

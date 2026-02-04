@@ -23,7 +23,12 @@ struct __unaligned __declspec(align(4)) _MONEY_SUPPLY_DATA
 class __cppobj CMoneySupplyMgr
 {
 public:
+  static CMoneySupplyMgr *Instance();
+  void UpdateBuyUnitData(int nLv, unsigned int nAmount);
+  CMoneySupplyMgr();
   virtual ~CMoneySupplyMgr() = default;
+
+  static CMoneySupplyMgr *pInstance;
 
   unsigned int m_dwLastSendTime;
   unsigned int m_dwSystemOperStartTime;

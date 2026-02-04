@@ -45,3 +45,39 @@ bool CRaceBuffInfoByHolyQuestList::Init()
 
   return true;
 }
+
+unsigned int CRaceBuffInfoByHolyQuestList::GetMaxThCnt()
+{
+  if (m_vecInfo.empty())
+  {
+    return 0;
+  }
+  return static_cast<unsigned int>(m_vecInfo.size() - 1);
+}
+
+bool CRaceBuffInfoByHolyQuestList::Apply(unsigned int uiContinueCnt, int iResultType, CPlayer *pkDest)
+{
+  if (uiContinueCnt >= m_vecInfo.size())
+  {
+    return false;
+  }
+  return m_vecInfo[uiContinueCnt]->Apply(static_cast<unsigned int>(iResultType), pkDest);
+}
+
+bool CRaceBuffInfoByHolyQuestList::Release(unsigned int uiContinueCnt, int iResultType, CPlayer *pkDest)
+{
+  if (uiContinueCnt >= m_vecInfo.size())
+  {
+    return false;
+  }
+  return m_vecInfo[uiContinueCnt]->Release(static_cast<unsigned int>(iResultType), pkDest);
+}
+
+bool CRaceBuffInfoByHolyQuestList::CreateComplete(unsigned int uiContinueCnt, int iResultType, CPlayer *pkDest)
+{
+  if (uiContinueCnt >= m_vecInfo.size())
+  {
+    return false;
+  }
+  return m_vecInfo[uiContinueCnt]->CreateComplete(static_cast<unsigned int>(iResultType), pkDest);
+}

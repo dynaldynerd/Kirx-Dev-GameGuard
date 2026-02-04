@@ -21,6 +21,7 @@
 #include "CTransportShip.h"
 #include "CHolyStoneSystem.h"
 #include "CWorldSchedule.h"
+#include "CGameStatistics.h"
 #include "R3EngineState.h"
 
 class CWnd;
@@ -49,7 +50,9 @@ extern int dword_184A79824;
 extern int gAsci[256];
 
 extern CTransportShip g_TransportShip[3];
+extern CLogFile g_logSchedule;
 extern CHolyStoneSystem g_HolySys;
 extern CWorldSchedule g_WorldSch;
+extern CGameStatistics g_GameStatistics;
 extern CMainThread g_Main;
 extern CWnd *g_pFrame;

@@ -1,10 +1,13 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "CHolyScheduleData.h"
 
 class CHolyStoneSaveData
 {
 public:
+  void DefaultInit(CHolyScheduleData::__HolyScheduleNode *ScheduleNode);
+
   int m_nSceneCode;
   unsigned int m_dwPassTimeInScene;
   int m_nStartStoneHP;

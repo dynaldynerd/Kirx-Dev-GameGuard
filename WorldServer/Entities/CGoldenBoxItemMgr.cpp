@@ -12,3 +12,8 @@ bool CGoldenBoxItemMgr::Initialize()
 {
   return true;
 }
+
+unsigned __int8 CGoldenBoxItemMgr::Get_Event_Status()
+{
+  return m_golden_box_event.m_event_status;
+}

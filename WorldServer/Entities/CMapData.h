@@ -29,6 +29,7 @@ public:
   bool OpenMap(char *szFileName, _map_fld *pMapSet, bool bUse);
   bool ConvertLocalToWorldDummy(CDummyPosTable *pTable, bool bCheckCenter);
   bool GetRandPosInDummy(_dummy_position *pDumPos, float *fOutPos, bool bRePos);
+  bool LoadHolySystemDummy(char *pszDummyCode, _dummy_position *pPos);
   _portal_dummy *GetPortal(int nPortalIndex);
   _portal_dummy *GetPortal(char *pPortalCode);
 

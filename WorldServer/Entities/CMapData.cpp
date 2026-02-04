@@ -174,20 +174,37 @@ bool CMapData::CheckCenterPosDummy(_dummy_position *pPos)
     return false;
 }
 
+bool CMapData::LoadHolySystemDummy(char *pszDummyCode, _dummy_position *pPos)
+{
+  char buffer[144]{};
+  sprintf_s(buffer, ".\\map\\%s\\%s.spt", m_pMapSet->m_strCode, m_pMapSet->m_strCode);
+
+  if (CDummyPosTable::FindDummy(buffer, pszDummyCode, pPos))
+  {
+    return ConvertLocal(pPos) && CheckCenterPosDummy(pPos);
+  }
+
+  MyMessageBox(
+    "CMapData Error",
+    "CDummyPosTable::FindDummy(%s, %s) == false",
+    m_pMapSet->m_strCode,
+    pszDummyCode);
+  return false;
+}
+
 bool CMapData::GetRandPosInDummy(_dummy_position *pPos, float *pNewPos, bool bRePos)
 {
     if (!pPos->m_bPosAble)
         return false;
 
-    float v10[3];
     for (int j = 0; j < 3; ++j)
     {
-        float v8[3];
-        v8[0] = (float)(pPos->m_zLocalMin[0] + rand() % (pPos->m_zLocalMax[0] - pPos->m_zLocalMin[0]));
-        v8[2] = (float)(pPos->m_zLocalMin[2] + rand() % (pPos->m_zLocalMax[2] - pPos->m_zLocalMin[2]));
-        v8[1] = (float)((pPos->m_zLocalMin[1] + pPos->m_zLocalMax[1]) / 2);
+        float localPos[3];
+        localPos[0] = (float)(pPos->m_zLocalMin[0] + rand() % (pPos->m_zLocalMax[0] - pPos->m_zLocalMin[0]));
+        localPos[2] = (float)(pPos->m_zLocalMin[2] + rand() % (pPos->m_zLocalMax[2] - pPos->m_zLocalMin[2]));
+        localPos[1] = (float)((pPos->m_zLocalMin[1] + pPos->m_zLocalMax[1]) / 2);
 
-        if (!this->m_Dummy.GetWorldFromLocal(pNewPos, pPos->m_wLineIndex, v8))
+        if (!this->m_Dummy.GetWorldFromLocal(pNewPos, pPos->m_wLineIndex, localPos))
         {
             MyMessageBox("CMapData Error", "GetRandPosInDummy map:%s, dummy:%s", this->m_pMapSet->m_strCode, pPos->m_szCode);
             return false;
@@ -196,29 +213,28 @@ bool CMapData::GetRandPosInDummy(_dummy_position *pPos, float *pNewPos, bool bRe
         pNewPos[1] = this->m_Level.GetFirstYpos(pNewPos, pPos->m_fMin, pPos->m_fMax);
         if (pNewPos[1] != -65535.0f)
         {
-            float v11_y = pNewPos[1];
-        if (pNewPos[1] != -65535.0f)
-        {
-            float v11_y = pNewPos[1];
+            float originalY = pNewPos[1];
             pNewPos[1] = pPos->m_fCenterPos[1];
-            
-            float v10_temp[3];
-            if (this->m_Level.mBsp->CanYouGoThere(pPos->m_fCenterPos, pNewPos, (float(*)[3])v10_temp) || bRePos)
+
+            float crossPoint[3];
+            bool canUse = this->m_Level.mBsp->CanYouGoThere(
+                pPos->m_fCenterPos,
+                pNewPos,
+                (float(*)[3])crossPoint);
+
+            if (!canUse && bRePos)
             {
-                if (bRePos)
-                {
-                    pNewPos[0] = v10_temp[0];
-                    pNewPos[2] = v10_temp[2];
-                    pNewPos[1] = this->m_Level.GetFirstYpos(pNewPos, pPos->m_fMin, pPos->m_fMax);
-                    if (pNewPos[1] == -65535.0f) continue;
-                }
-                else
-                {
-                   pNewPos[1] = v11_y;
-                }
+                pNewPos[0] = crossPoint[0];
+                pNewPos[2] = crossPoint[2];
+                pNewPos[1] = this->m_Level.GetFirstYpos(pNewPos, pPos->m_fMin, pPos->m_fMax);
+                canUse = (pNewPos[1] != -65535.0f);
+            }
+
+            if (canUse)
+            {
+                pNewPos[1] = originalY;
                 return true;
             }
-        }
         }
     }
     memcpy(pNewPos, pPos->m_fCenterPos, 12);

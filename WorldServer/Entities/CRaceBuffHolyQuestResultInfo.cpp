@@ -121,3 +121,182 @@ bool CRaceBuffHolyQuestResultInfo::SaveINISubProcSaveNum(const char *szItem, uns
   }
   return true;
 }
+
+void CRaceBuffHolyQuestResultInfo::ClearResult()
+{
+  m_bSetBuff = false;
+  m_byOldWinRace = m_byCurWinRace;
+  m_byOldFailRace = m_byCurFailRace;
+  m_byOldLoseRace = m_byCurLoseRace;
+  m_byCurWinRace = static_cast<unsigned __int8>(-1);
+  m_byCurFailRace = static_cast<unsigned __int8>(-1);
+  m_byCurLoseRace = static_cast<unsigned __int8>(-1);
+  SaveINI();
+}
+
+void CRaceBuffHolyQuestResultInfo::SetBuffFlag()
+{
+  m_bSetBuff = true;
+  const char *flag = m_bSetBuff ? "true" : "false";
+  if (!WritePrivateProfileStringA("OldHolyQuestResult", "beSetBuff", flag, "..\\SystemSave\\ServerState.ini"))
+  {
+    g_Main.m_logSystemError.Write(
+      "CRaceBuffOldHistoryInfo::SaveINI() : WritePrivateProfileString( %s, beSetBuff, %s, %s )",
+      "OldHolyQuestResult",
+      flag,
+      "..\\SystemSave\\ServerState.ini");
+  }
+}
+
+void CRaceBuffHolyQuestResultInfo::SetResult(
+  unsigned __int8 byWinRace,
+  unsigned __int8 byLoseRace,
+  unsigned int uiThMax)
+{
+  if (!SetResultSubProcSetRace(byWinRace, byLoseRace, uiThMax))
+  {
+    m_byCurWinRace = static_cast<unsigned __int8>(-1);
+    m_byCurFailRace = static_cast<unsigned __int8>(-1);
+    m_byCurLoseRace = static_cast<unsigned __int8>(-1);
+  }
+  SaveINI();
+}
+
+bool CRaceBuffHolyQuestResultInfo::SetResultSubProcSetRace(
+  unsigned __int8 byWinRace,
+  unsigned __int8 byLoseRace,
+  unsigned int uiThMax)
+{
+  unsigned __int8 failRace = static_cast<unsigned __int8>(-1);
+  if (!FindFailRace(byWinRace, byLoseRace, &failRace))
+  {
+    return false;
+  }
+
+  if (byWinRace == m_byOldWinRace)
+  {
+    if (uiThMax <= ++m_uiContinueWinCnt)
+    {
+      m_uiContinueWinCnt = uiThMax;
+    }
+  }
+  else
+  {
+    m_uiContinueWinCnt = 0;
+  }
+
+  if (failRace == m_byOldFailRace)
+  {
+    if (uiThMax <= ++m_uiContinueFailCnt)
+    {
+      m_uiContinueFailCnt = uiThMax;
+    }
+  }
+  else
+  {
+    m_uiContinueFailCnt = 0;
+  }
+
+  if (byLoseRace == m_byOldLoseRace)
+  {
+    if (uiThMax <= ++m_uiContinueLoseCnt)
+    {
+      m_uiContinueLoseCnt = uiThMax;
+    }
+  }
+  else
+  {
+    m_uiContinueLoseCnt = 0;
+  }
+
+  m_byCurWinRace = byWinRace;
+  m_byCurFailRace = failRace;
+  m_byCurLoseRace = byLoseRace;
+  return IsValidResult();
+}
+
+bool CRaceBuffHolyQuestResultInfo::FindFailRace(
+  unsigned __int8 byWinRace,
+  unsigned __int8 byLoseRace,
+  unsigned __int8 *pbyFailRace)
+{
+  if (byWinRace >= 3u || byLoseRace >= 3u || byWinRace == byLoseRace)
+  {
+    return false;
+  }
+
+  unsigned __int8 used[3]{};
+  used[byWinRace] = 1;
+  used[byLoseRace] = 1;
+  *pbyFailRace = static_cast<unsigned __int8>(-1);
+
+  for (unsigned __int8 j = 0; j < 3u; ++j)
+  {
+    if (!used[j])
+    {
+      *pbyFailRace = j;
+      return *pbyFailRace != static_cast<unsigned __int8>(-1);
+    }
+  }
+
+  return *pbyFailRace != static_cast<unsigned __int8>(-1);
+}
+
+bool CRaceBuffHolyQuestResultInfo::IsValidResult()
+{
+  return m_byCurWinRace != static_cast<unsigned __int8>(-1)
+      && m_byCurFailRace != static_cast<unsigned __int8>(-1)
+      && m_byCurLoseRace != static_cast<unsigned __int8>(-1)
+      && m_byCurWinRace != m_byCurFailRace
+      && m_byCurFailRace != m_byCurLoseRace
+      && m_byCurWinRace != m_byCurLoseRace;
+}
+
+bool CRaceBuffHolyQuestResultInfo::IsChaos()
+{
+  return m_byCurWinRace == static_cast<unsigned __int8>(-1)
+      || m_byCurFailRace == static_cast<unsigned __int8>(-1)
+      || m_byCurLoseRace == static_cast<unsigned __int8>(-1);
+}
+
+int CRaceBuffHolyQuestResultInfo::GetResultType(unsigned __int8 byRace, bool bGetScanner)
+{
+  if (!m_bSetBuff)
+  {
+    return -1;
+  }
+  if (m_byCurWinRace == byRace && bGetScanner)
+  {
+    return 0;
+  }
+  if (m_byCurWinRace == byRace && !bGetScanner)
+  {
+    return 1;
+  }
+  if (m_byCurFailRace == byRace)
+  {
+    return 2;
+  }
+  if (m_byCurLoseRace == byRace)
+  {
+    return 3;
+  }
+  return -2;
+}
+
+unsigned int CRaceBuffHolyQuestResultInfo::GetContinueCnt(unsigned int iType)
+{
+  if (iType <= 1)
+  {
+    return m_uiContinueWinCnt;
+  }
+  if (iType == 2)
+  {
+    return m_uiContinueFailCnt;
+  }
+  if (iType == 3)
+  {
+    return m_uiContinueLoseCnt;
+  }
+  return 0;
+}

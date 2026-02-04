@@ -6,6 +6,7 @@
 
 class CWnd;
 class CMerchant;
+struct _FILETIME;
 struct CMergeFileManager;
 struct _R3MATERIAL;
 struct _ANI_OBJECT;
@@ -30,12 +31,19 @@ struct _LIGHTMAP
 
 unsigned int GetLoopTime();
 int GetCurrentDay();
+int GetCurrentYear();
+int GetCurrentMonth();
 int GetCurDay();
 bool GetDateTimeStr(char *szTime);
 unsigned int GetKorLocalTime();
 int GetCurrentHour();
 int GetCurrentMin();
 int GetCurrentSec();
+int GetCurwDay();
+void GetNowDateTime(char *szDateTime);
+bool GetLastWriteFileTime(const char *szFileName, _FILETIME *ftWrite);
+unsigned __int8 GetItemKindCode(int nTableCode);
+char *DisplayItemUpgInfo(int nTableCode, int dwLvBit);
 int GetItemTableCode(const char *psItemCode);
 int GetItemStdPrice(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind);
 int GetItemStdPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind);
@@ -49,6 +57,7 @@ void clear_file(const char *directory, int keepCount);
 int MyMessageBox(const char *title, const char *format, ...);
 int MyCrtDebugReportHook(int reportType, char *message, int *returnValue);
 void ServerProgramExit(const char *source, int reason);
+void IOFileWrite_0(char *pszFileName, unsigned int nLen, char *pszData);
 CMerchant *FindEmptyNPC(CMerchant *pNPC, int nMax);
 void NetTrace(const char *fmt, ...);
 void StripEXT(char *szPath);
@@ -67,6 +76,8 @@ int GetPlaneCrossPoint(const float *const a1, const float *const a2, float *cons
 void CrossProduct(const float *a1, const float *a2, float *a3);
 void sub_1404E2FB0(float *a1, float *a2, float *a3);
 bool CheckEdgeEpsilon(const float *const a1, const float *const a2, const float *const a3, const float *const a4);
+bool IsCollisionBBoxPoint(float *const a1, float *const a2, float *const a3);
+bool IsCollisionBBoxPoint(short *const a1, short *const a2, float *const a3);
 
 void GetVertexFromBVertex(float *const a1, char *a2, _BSP_READ_M_GROUP *a3);
 void GetVertexFromWVertex(float *const a1, short *a2, _BSP_READ_M_GROUP *a3);
@@ -184,3 +195,4 @@ void IM_ReleaseWave(unsigned int a1);
 void IM_ReleaseAllWaves();
 
 extern CWnd *g_pFrame;
+extern const char *dayofweek[7];

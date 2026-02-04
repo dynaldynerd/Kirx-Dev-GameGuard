@@ -23,7 +23,7 @@ public:
 
   float GetFirstYpos(float *fCenterPos, float *fMin, float *fMax);
   void LoadLevel(const char *szFileName);
-
+  static unsigned int GetEnvironment(CLevel *pLevel);
   static void SetEnvironment(CLevel *pLevel, int nEnv);
 public:
   virtual ~CLevel() = default;

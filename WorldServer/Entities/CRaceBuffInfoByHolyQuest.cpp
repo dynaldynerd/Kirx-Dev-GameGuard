@@ -5,6 +5,7 @@
 #include "CMainThread.h"
 #include "CLogFile.h"
 #include "WorldServerUtil.h"
+#include "CNetworkEX.h"
 
 #include <cstdio>
 #include <cstring>
@@ -92,4 +93,124 @@ bool CRaceBuffInfoByHolyQuest::LoadINISubProcLoadCode(
   }
 
   return true;
+}
+
+bool CRaceBuffInfoByHolyQuest::Apply(CPlayer *pkDest)
+{
+  if (!ApplyEffect(pkDest, true))
+  {
+    return false;
+  }
+  NotifySetBuff(pkDest);
+  return true;
+}
+
+bool CRaceBuffInfoByHolyQuest::Release(CPlayer *pkDest)
+{
+  if (!ApplyEffect(pkDest, false))
+  {
+    return false;
+  }
+  NotifyReleaseBuff(pkDest->m_ObjID.m_wIndex);
+  return true;
+}
+
+bool CRaceBuffInfoByHolyQuest::CreateComplete(CPlayer *pkDest)
+{
+  if (!ApplyEffect(pkDest, true))
+  {
+    return false;
+  }
+  NotifyLogInSetBuff(pkDest->m_ObjID.m_wIndex);
+  return true;
+}
+
+bool CRaceBuffInfoByHolyQuest::ApplyEffect(CPlayer *pkDest, bool bAdd)
+{
+  if (!m_pData || m_byLv >= 7u || !pkDest)
+  {
+    return false;
+  }
+
+  for (int j = 0; j < 5; ++j)
+  {
+    _cont_param_list *param = &m_pData->m_ContParamList[j];
+    if (param->m_nContParamCode == -1)
+    {
+      break;
+    }
+
+    switch (param->m_nContParamCode)
+    {
+      case 0:
+        pkDest->m_EP.SetEff_Rate(
+          static_cast<unsigned int>(param->m_nContParamIndex),
+          param->m_fContValue[m_byLv - 1],
+          bAdd);
+        break;
+      case 1:
+        pkDest->m_EP.SetEff_Plus(
+          static_cast<unsigned int>(param->m_nContParamIndex),
+          param->m_fContValue[m_byLv - 1],
+          bAdd);
+        break;
+      case 2:
+        pkDest->m_EP.SetEff_State(static_cast<unsigned int>(param->m_nContParamIndex), bAdd);
+        break;
+      default:
+        break;
+    }
+  }
+
+  return true;
+}
+
+void CRaceBuffInfoByHolyQuest::NotifySetBuff(CPlayer *pkDest)
+{
+#pragma pack(push, 1)
+  struct
+  {
+    unsigned __int8 byLv;
+    unsigned __int16 wIndex;
+    unsigned int dwObjSerial;
+  } msg{};
+#pragma pack(pop)
+
+  msg.byLv = m_byLv;
+  msg.wIndex = static_cast<unsigned __int16>(m_pData->m_dwIndex);
+  msg.dwObjSerial = pkDest->m_dwObjSerial;
+
+  unsigned __int8 type[2]{};
+  type[0] = 17;
+  type[1] = 36;
+  pkDest->CircleReport(type, reinterpret_cast<char *>(&msg), 7, true);
+}
+
+void CRaceBuffInfoByHolyQuest::NotifyReleaseBuff(unsigned __int16 wUserInx)
+{
+  unsigned int msg = 0;
+  unsigned __int8 type[2]{};
+  type[0] = 17;
+  type[1] = 37;
+  g_Network.m_pProcess[0]->LoadSendMsg(wUserInx, type, reinterpret_cast<char *>(&msg), 4u);
+}
+
+void CRaceBuffInfoByHolyQuest::NotifyLogInSetBuff(unsigned __int16 wUserInx)
+{
+#pragma pack(push, 1)
+  struct
+  {
+    unsigned __int8 byLv;
+    unsigned __int16 wIndex;
+    unsigned __int16 wZero;
+  } msg{};
+#pragma pack(pop)
+
+  msg.byLv = m_byLv;
+  msg.wIndex = static_cast<unsigned __int16>(m_pData->m_dwIndex);
+
+  unsigned __int8 type[2]{};
+  type[0] = 17;
+  type[1] = 25;
+  g_Network.m_pProcess[0]->LoadSendMsg(wUserInx, type, reinterpret_cast<char *>(&msg), 5u);
 }

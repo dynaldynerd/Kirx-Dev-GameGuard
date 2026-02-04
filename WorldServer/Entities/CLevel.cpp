@@ -177,3 +177,8 @@ void CLevel::SetEnvironment(CLevel *pLevel, int nEnv)
 {
     pLevel->mEnvironment = nEnv;
 }
+
+unsigned int CLevel::GetEnvironment(CLevel *pLevel)
+{
+  return pLevel->mEnvironment;
+}

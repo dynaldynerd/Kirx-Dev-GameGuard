@@ -126,6 +126,19 @@ bool CNetIndexList::PopNode_Front(CNetIndexList *list, unsigned int *outIndex)
   return true;
 }
 
+void CNetIndexList::ResetList(CNetIndexList *list)
+{
+  if (list == nullptr)
+  {
+    return;
+  }
+
+  unsigned int outIndex = 0;
+  while (CNetIndexList::PopNode_Front(list, &outIndex))
+  {
+  }
+}
+
 bool CNetIndexList::IsInList(CNetIndexList *list, unsigned int index)
 {
   if (list == nullptr)

@@ -97,6 +97,40 @@ bool CheckEdgeEpsilon(const float *const a1, const float *const a2, const float 
     return (vx * cross[0] + vy * cross[1] + vz * cross[2]) <= 0.01f;
 }
 
+bool IsCollisionBBoxPoint(float *const a1, float *const a2, float *const a3)
+{
+    if (*a3 >= *a1 && *a2 >= *a3)
+    {
+        float y = a3[1];
+        if (y >= a1[1] && a2[1] >= y)
+        {
+            float z = a3[2];
+            if (z >= a1[2] && a2[2] >= z)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool IsCollisionBBoxPoint(short *const a1, short *const a2, float *const a3)
+{
+    if (*a3 >= static_cast<float>(a1[0]) && static_cast<float>(a2[0]) >= *a3)
+    {
+        float y = a3[1];
+        if (y >= static_cast<float>(a1[1]) && static_cast<float>(a2[1]) >= y)
+        {
+            float z = a3[2];
+            if (z >= static_cast<float>(a1[2]) && static_cast<float>(a2[2]) >= z)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void sub_14050C650(float *a1, float *a2, float *a3)
 {
     float v3 = *a2 - *a3;

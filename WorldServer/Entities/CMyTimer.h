@@ -8,6 +8,7 @@ public:
   CMyTimer();
   void BeginTimer(unsigned int tickTerm);
   bool CountingTimer();
+  void StopTimer();
   virtual ~CMyTimer();
 
   int m_nTickTerm;

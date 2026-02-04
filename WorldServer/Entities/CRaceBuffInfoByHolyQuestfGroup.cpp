@@ -40,3 +40,42 @@ bool CRaceBuffInfoByHolyQuestfGroup::Init()
 
   return true;
 }
+
+bool CRaceBuffInfoByHolyQuestfGroup::Apply(unsigned int iResultType, CPlayer *pkDest)
+{
+  if (iResultType >= 4 || !pkDest)
+  {
+    return false;
+  }
+  if (iResultType >= m_vecInfo.size())
+  {
+    return false;
+  }
+  return m_vecInfo[iResultType]->Apply(pkDest);
+}
+
+bool CRaceBuffInfoByHolyQuestfGroup::Release(unsigned int iResultType, CPlayer *pkDest)
+{
+  if (iResultType >= 4 || !pkDest)
+  {
+    return false;
+  }
+  if (iResultType >= m_vecInfo.size())
+  {
+    return false;
+  }
+  return m_vecInfo[iResultType]->Release(pkDest);
+}
+
+bool CRaceBuffInfoByHolyQuestfGroup::CreateComplete(unsigned int iResultType, CPlayer *pkDest)
+{
+  if (iResultType >= 4 || !pkDest)
+  {
+    return false;
+  }
+  if (iResultType >= m_vecInfo.size())
+  {
+    return false;
+  }
+  return m_vecInfo[iResultType]->CreateComplete(pkDest);
+}

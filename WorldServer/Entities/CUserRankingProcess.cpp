@@ -61,6 +61,47 @@ bool CPvpUserRankingInfo::assign()
   return true;
 }
 
+bool CPvpUserRankingInfo::IsCurrentRaceBossGroup(unsigned __int8 byRace, unsigned int dwSerial)
+{
+  if (byRace >= m_dwCurrentRaceBossSerial.size())
+  {
+    return false;
+  }
+
+  for (int j = 0; j < 9; ++j)
+  {
+    unsigned long *serials = m_dwCurrentRaceBossSerial[byRace];
+    if (serials && serials[j] == dwSerial)
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
+unsigned int CPvpUserRankingInfo::GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth)
+{
+  return m_dwCurrentRaceBossSerial[byRace][byNth];
+}
+
+unsigned __int8 CPvpUserRankingInfo::GetBossType(unsigned __int8 byRaceCode, unsigned int dwSerial)
+{
+  if (byRaceCode >= 3)
+  {
+    return static_cast<unsigned __int8>(-1);
+  }
+
+  for (int j = 0; j < 9; ++j)
+  {
+    unsigned long *serials = m_dwCurrentRaceBossSerial[byRaceCode];
+    if (serials && serials[j] == dwSerial)
+    {
+      return static_cast<unsigned __int8>(j);
+    }
+  }
+  return static_cast<unsigned __int8>(-1);
+}
+
 bool CPvpUserRankingTargetUserList::assign()
 {
   m_PvpRankRefreshUser.assign(2532, nullptr);
@@ -137,6 +178,21 @@ bool CUserRankingProcess::InitProcFunc()
   m_vecProc[8] = &CUserRankingProcess::ProcFailedWait;
   m_vecProc[9] = &CUserRankingProcess::ProcRankSuccess;
   return true;
+}
+
+bool CUserRankingProcess::IsCurrentRaceBossGroup(unsigned __int8 byRace, unsigned int dwSerial)
+{
+  return m_kPvpRankingInfo.IsCurrentRaceBossGroup(byRace, dwSerial);
+}
+
+unsigned int CUserRankingProcess::GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth)
+{
+  return m_kPvpRankingInfo.GetCurrentRaceBossSerial(byRace, byNth);
+}
+
+unsigned __int8 CUserRankingProcess::GetBossType(unsigned __int8 byRace, unsigned int dwSerial)
+{
+  return m_kPvpRankingInfo.GetBossType(byRace, dwSerial);
 }
 
 bool CUserRankingProcess::Init()

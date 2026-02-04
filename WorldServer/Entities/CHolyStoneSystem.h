@@ -39,20 +39,75 @@ struct __cppobj __declspec(align(4)) _QUEST_CASH
   unsigned __int16 wDiePoint;
   unsigned __int8 byCristalBattleDBInfo;
   unsigned __int8 byHSKTime;
+
+  void init()
+  {
+    dwAvatorSerial = static_cast<unsigned int>(-1);
+  }
 };
 
 struct __cppobj __declspec(align(4)) _QUEST_CASH_OTHER
 {
   unsigned int dwAvatorSerial;
   unsigned __int8 byStoneMapMoveInfo;
+
+  void init()
+  {
+    dwAvatorSerial = 0;
+  }
 };
 
 class __cppobj __declspec(align(8)) CHolyStoneSystem
 {
 public:
   static bool InitHolySystem(CHolyStoneSystem *pSystem);
+  void AlterSchedule(unsigned __int8 byScheduleCode, unsigned __int8 byNumOfTime);
   bool ContinueStartSystem();
   void InitQuestCash_Other();
+  void InitQuestCash();
+  bool SetScene(unsigned __int8 byNumOfTime, int nSceneCode, unsigned int nPassTime, int nChangeReason);
+  void SetTermTimeDefault(unsigned __int8 byNumOfTime);
+  void CheckKeeperPlusTime();
+  unsigned __int8 GetNumOfTime();
+  int GetHolyMasterRace();
+  int GetSceneCode();
+  bool IsMinigeTicketCheck();
+  int GetDestroyStoneRace();
+  unsigned int GetStartBattleTickTime();
+  unsigned __int16 GetStartYear();
+  unsigned __int8 GetStartMonth();
+  unsigned __int8 GetStartDay();
+  unsigned __int8 GetStartHour();
+  unsigned __int8 GetStartMin();
+  unsigned int GetDestroyerGuildSerial();
+  void ReleaseLastAttBuff();
+  void CreateHolyStone();
+  void DestroyHolyStone();
+  void CreateHolyKeeper(int nCreateType);
+  void DestroyHolyKeeper();
+  void SetGoldBoxConsumable(bool bFlag);
+  void SetKeeperDestroyRace(unsigned __int8 byRace);
+  void UnAllRegisterPerAutoMine();
+  void SendIsArriveDestroyer(char byArrive);
+  void SendMsg_NoticeNextQuest(unsigned int n, unsigned __int8 byStoneMapMoveInfo);
+  void SendMsg_NotifyHolyKeeperAttackTimeBeKeepKeeper(char bKeepKeeper);
+  void SendMsg_EnterStone(unsigned int n);
+  void SendMsg_ExitStone();
+  void SendMsg_StartBattle();
+  void SendMsg_EndBattle(char byLoseRace);
+  void SendMsg_EnterKeeper(unsigned int n);
+  void SendMsg_WaitKeeper(unsigned int n, char byWaitType);
+  void SendMsg_HolyKeeperStateChaos();
+  void GiveHSKQuest();
+  void SendHolyStoneHPToRaceBoss();
+  void SendNotifyHolyStoneDestroyedToRaceBoss();
+  void PeneltyFailRace(unsigned __int8 byFailRace);
+  void On_HS_SCENE_BATTLE_TIME();
+  void On_HS_SCENE_BATTLE_END_WAIT_TIME();
+  void On_HS_SCENE_KEEPER_ATTACKABLE_TIME();
+  void On_HS_SCENE_KEEPER_DEATTACKABLE_TIME();
+  void On_HS_SCENE_KEEPER_DIE_TIME();
+  void On_HS_SCENE_KEEPER_CHAOS_TIME();
 
   CRecordData m_tblQuest;
   CLogFile m_logQuest;

@@ -97,7 +97,7 @@ public:
   __int64 RerangeSecIndex(unsigned int dwOld, unsigned int dwNew);
   void ResetSector(unsigned int dwOldSec, unsigned int dwNewSec);
   virtual bool RobbedHP(CCharacter *pDst, int nDecHP);
-  virtual void SFContDelMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, bool bSend);
+  virtual void SFContDelMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, bool bSend, bool bAura = false);
   virtual void SFContInsertMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, bool bAura);
   virtual void SFContUpdateTimeMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, int nLeftTime);
   virtual bool SF_AllContDamageForceRemove_Once(CCharacter *pDstObj);
@@ -165,6 +165,16 @@ public:
     bool bToOne);
   void Init(_object_id *pID);
   bool IsInTown();
+  __int64 GetCurSecNum();
+  virtual __int64 GetHP();
+  virtual __int64 GetLevel();
+  virtual __int64 GetMaxHP();
+  char SetCurPos(float *pPos);
+  void SetCurSecNum(unsigned int dwNewSecNum);
+  void SFContDelMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, bool bSend, bool bAura = false);
+  void SFContInsertMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, bool bAura);
+  void SFContUpdateTimeMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, int nLeftTime);
+  virtual char SetHP(int nHP, bool bOver);
 
   static CGameObject *s_pSelectObject;
   static CGameObject *s_pTotalObject[42642];
@@ -198,4 +208,12 @@ public:
   bool m_bObserver;
   unsigned int m_dwCurSec;
 };
+
+inline void CGameObject::SFContDelMessage(
+  unsigned __int8 /*byContCode*/,
+  unsigned __int8 /*byListIndex*/,
+  bool /*bSend*/,
+  bool /*bAura*/)
+{
+}
 

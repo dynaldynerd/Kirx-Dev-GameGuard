@@ -23,6 +23,8 @@
 #include "CMergeFileManager.h"
 #include "base_fld.h"
 
+const char *dayofweek[7] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+
 static __int64 D3DXCreateTextureFromFileInMemory_0(IDirect3DDevice8 *device, const void *data, unsigned int size, void *outTex);
 static __int64 D3DXCreateTextureFromFileExA_0(IDirect3DDevice8 *device, const char *path, __int64 flags);
 static __int64 sub_1404FFFB0(__int64 a1);
@@ -81,6 +83,129 @@ int GetCurrentDay()
   return local.tm_mday;
 }
 
+int GetCurrentYear()
+{
+  std::time_t now = std::time(nullptr);
+  std::tm local{};
+  if (localtime_s(&local, &now) != 0)
+  {
+    return -1;
+  }
+  return local.tm_year + 1900;
+}
+
+int GetCurrentMonth()
+{
+  std::time_t now = std::time(nullptr);
+  std::tm local{};
+  if (localtime_s(&local, &now) != 0)
+  {
+    return -1;
+  }
+  return local.tm_mon + 1;
+}
+
+int GetCurwDay()
+{
+  std::time_t now = std::time(nullptr);
+  std::tm local{};
+  if (localtime_s(&local, &now) != 0)
+  {
+    return -1;
+  }
+  return local.tm_wday;
+}
+
+void GetNowDateTime(char *szDateTime)
+{
+  if (!szDateTime)
+  {
+    return;
+  }
+
+  char month[32]{};
+  char day[32]{};
+  char hour[32]{};
+  char minute[16]{};
+
+  const unsigned __int16 year = static_cast<unsigned __int16>(GetCurrentYear());
+  const unsigned __int16 curMonth = static_cast<unsigned __int16>(GetCurrentMonth());
+  const unsigned __int16 curDay = static_cast<unsigned __int16>(GetCurrentDay());
+  const unsigned __int16 curHour = static_cast<unsigned __int16>(GetCurrentHour());
+  const unsigned __int16 curMin = static_cast<unsigned __int16>(GetCurrentMin());
+
+  if (curMonth > 9)
+    sprintf_s(month, "%d", curMonth);
+  else
+    sprintf_s(month, "0%d", curMonth);
+
+  if (curDay > 9)
+    sprintf_s(day, "%d", curDay);
+  else
+    sprintf_s(day, "0%d", curDay);
+
+  if (curHour > 9)
+    sprintf_s(hour, "%d", curHour);
+  else
+    sprintf_s(hour, "0%d", curHour);
+
+  if (curMin > 9)
+    sprintf_s(minute, "%d", curMin);
+  else
+    sprintf_s(minute, "0%d", curMin);
+
+  sprintf_s(szDateTime, 128, "%d-%s-%s %s:%s", year, month, day, hour, minute);
+}
+
+unsigned __int8 GetItemKindCode(int nTableCode)
+{
+  if (nTableCode == 19)
+  {
+    return 2;
+  }
+  return nTableCode == 24;
+}
+
+char *DisplayItemUpgInfo(int nTableCode, int dwLvBit)
+{
+  static char g_szLv[32] = "00000000";
+  static char g_szUPT[32] = "f";
+  static char szBufUpt[32]{};
+
+  if (!dwLvBit)
+  {
+    return g_szUPT;
+  }
+
+  if (GetItemKindCode(nTableCode) || dwLvBit == 0x0FFFFFFF)
+  {
+    return g_szUPT;
+  }
+
+  strcpy_s(g_szLv, "00000000");
+  _itoa_s(dwLvBit, szBufUpt, 16);
+  const size_t len = strlen_0(szBufUpt);
+  memcpy_0(&g_szLv[8 - len], szBufUpt, len);
+  g_szLv[8] = '\0';
+  if (!strcmp_0(&g_szLv[1], "fffffff"))
+  {
+    g_szLv[2] = '\0';
+  }
+  return g_szLv;
+}
+
+void IOFileWrite_0(char *pszFileName, unsigned int nLen, char *pszData)
+{
+  HANDLE hFile = CreateFileA(pszFileName, 0x40000000u, 1u, nullptr, 4u, 0x80u, nullptr);
+  if (hFile != INVALID_HANDLE_VALUE)
+  {
+    SetFilePointer(hFile, 0, nullptr, 2u);
+    DWORD written = 0;
+    WriteFile(hFile, pszData, nLen, &written, nullptr);
+    CloseHandle(hFile);
+  }
+}
+
 int GetCurDay()
 {
   std::time_t now = std::time(nullptr);
@@ -107,6 +232,26 @@ bool GetDateTimeStr(char *szTime)
   }
 
   return std::strftime(szTime, 0x80, "%y-%m-%d_%H-%M-%S", &local) != 0;
+}
+
+bool GetLastWriteFileTime(const char *szFileName, _FILETIME *ftWrite)
+{
+  if (!szFileName || !ftWrite)
+  {
+    return false;
+  }
+
+  HANDLE hFile = CreateFileA(szFileName, 0x80000000, 1u, nullptr, 3u, 0x80u, nullptr);
+  if (hFile == INVALID_HANDLE_VALUE)
+  {
+    return false;
+  }
+
+  _FILETIME creationTime{};
+  _FILETIME lastAccessTime{};
+  const BOOL ok = GetFileTime(hFile, &creationTime, &lastAccessTime, ftWrite);
+  CloseHandle(hFile);
+  return ok != FALSE;
 }
 
 void FloatToShort(float *pFloat, short *pShort, int size)

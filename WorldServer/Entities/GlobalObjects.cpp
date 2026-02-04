@@ -24,8 +24,10 @@ _R3ENGINE_STATE stState{};
 int dword_184A79820 = 0;
 
 CTransportShip g_TransportShip[3]{};
+CLogFile g_logSchedule{};
 CHolyStoneSystem g_HolySys{};
 CWorldSchedule g_WorldSch{};
+CGameStatistics g_GameStatistics{};
 CMainThread g_Main{};
 int gAsci[256]{};
 CWnd *g_pFrame = nullptr;

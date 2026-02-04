@@ -17,10 +17,13 @@ class __cppobj CMapOperation
 public:
   bool Init();
   CMapData *GetMap(const char *szMapCode);
+  CMapData *GetMap(int nIndex);
+  int GetMap(CMapData *pMap);
   CMapData *GetStartMap(unsigned __int8 byRaceCode);
+  CMapData *GetPosStartMap(unsigned __int8 byRaceCode, bool bRand, float *pfoutPos);
   bool LoadMaps();
   bool LoadRegion();
-  bool LoadRegionData(int nMapNum, char **ppszMapNameList, char *pszErrMsg);
+  bool IsExistStdMapID(int iMapID);
   void CheckMapPortalLink();
 
   static const char *ms_szSettlementMapName[3][2];
@@ -49,4 +52,3 @@ public:
 extern CMapOperation g_MapOper;
 extern AreaList *g_AreaIndexTable[100];
 extern std::map<std::string, AreaList> g_strLMapMap;
-

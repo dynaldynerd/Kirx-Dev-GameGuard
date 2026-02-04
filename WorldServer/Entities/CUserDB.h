@@ -59,6 +59,20 @@ public:
   char m_szLobbyHistoryFileName[64];
   void Init(unsigned __int16 index);
   void ParamInit();
+  static bool Update_Map(CUserDB *self, unsigned __int8 map, float *pos);
+  void Update_PvpPointLeak(long double dValue);
+  bool Update_AlterPvPPoint(long double dNewPoint);
+  bool Update_Money(unsigned int dalant, unsigned int gold);
+  bool Update_SFContDelete(unsigned __int8 byContCode, unsigned __int8 bySlotIndex);
+  bool Update_SFContInsert(
+    unsigned __int8 byContCode,
+    unsigned __int8 bySlotIndex,
+    unsigned __int8 byEffectCode,
+    unsigned __int16 wEffectIndex,
+    unsigned __int8 byLv,
+    unsigned __int16 wDurSec);
+  bool Update_SFContUpdate(unsigned __int8 byContCode, unsigned __int8 bySlotIndex, unsigned __int16 wTime);
+  bool Update_UnitData(unsigned __int8 bySlotIndex, _UNIT_DB_BASE::_LIST *pData);
   virtual ~CUserDB() = default;
 };
 

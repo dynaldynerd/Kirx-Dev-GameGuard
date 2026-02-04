@@ -21,6 +21,39 @@ public:
     FMHS_FORCE_MOVE = 4,
   };
 
+  CMoveMapLimitInfoPortal(unsigned int uiInx, int iType);
+  ~CMoveMapLimitInfoPortal() override;
+
+  unsigned __int8 Request(
+    int iUserInx,
+    int iRequetType,
+    char *pRequest,
+    CMoveMapLimitRightInfo *pkRight) override;
+  void Load(CPlayer *pkPlayer, CMoveMapLimitRightInfo *pkRight) override;
+  bool Init() override;
+  void Loop() override;
+
+  bool LoadINI();
+  void SubProcNotifyForceMoveHQ();
+  void SubProcForceMoveHQ();
+
+  unsigned __int8 ProcUseMoveScroll(
+    int iUserInx,
+    char *pRequest,
+    CMoveMapLimitRightInfo *pkRight);
+  unsigned __int8 ProcGotoLimitZone(
+    unsigned int iUserInx,
+    char *pRequest,
+    CMoveMapLimitRightInfo *pkRight);
+  unsigned __int8 SubProcGotoLimitZone(
+    unsigned int iUserInx,
+    char *pRequest,
+    CMoveMapLimitRightInfo *pkRight);
+  unsigned __int8 ProcForceMoveHQ(
+    int iUserInx,
+    char *pRequest,
+    CMoveMapLimitRightInfo *pkRight);
+
   _dummy_position *m_pkSrcDummy;
   _dummy_position *m_pkDestDummy;
   _dummy_position *m_pkRegenDummy;

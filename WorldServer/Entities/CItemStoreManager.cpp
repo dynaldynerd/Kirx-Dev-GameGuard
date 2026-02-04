@@ -5,6 +5,7 @@
 
 #include <cstdio>
 #include <cstring>
+#include <new>
 #include <atltime.h>
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
@@ -27,9 +28,9 @@ bool CItemStoreManager::Init(int nNormalListNum, int nInstanceListNum)
   }
 
   this->m_nMapItemStoreListNum = nNormalListNum;
-  this->m_MapItemStoreList = new CMapItemStoreList[nNormalListNum];
+  this->m_MapItemStoreList = new (std::nothrow) CMapItemStoreList[nNormalListNum];
 
-  char pszErrMsg[128]{};
+  char pszErrMsg[144]{};
   if (this->m_tblItemStore.ReadRecord(".\\Script\\StoreList.dat", 0x37CC, pszErrMsg))
   {
     if (nInstanceListNum > 0)
@@ -40,7 +41,7 @@ bool CItemStoreManager::Init(int nNormalListNum, int nInstanceListNum)
         this->m_InstanceItemStoreList = nullptr;
       }
       this->m_nInstanceItemStoreListNum = nInstanceListNum;
-      this->m_InstanceItemStoreList = new CMapItemStoreList[nInstanceListNum];
+      this->m_InstanceItemStoreList = new (std::nothrow) CMapItemStoreList[nInstanceListNum];
     }
 
     if (InitLogger())
@@ -51,13 +52,17 @@ bool CItemStoreManager::Init(int nNormalListNum, int nInstanceListNum)
       return true;
     }
   }
+  else
+  {
+    MyMessageBox("CItemStoreManager::Init() : StorList.dat Read Fail!", pszErrMsg);
+  }
   return false;
 }
 
 bool CItemStoreManager::InitLogger()
 {
   CreateDirectoryA("..\\ZoneServerLog\\Systemlog\\ItemStoreSystem", nullptr);
-  this->m_pkLogger = new CLogFile();
+  this->m_pkLogger = new (std::nothrow) CLogFile();
   if (this->m_pkLogger)
   {
     char Buffer[144];
@@ -66,6 +71,7 @@ bool CItemStoreManager::InitLogger()
     this->m_pkLogger->SetWriteLogFile(Buffer, 1, 0, 1, 1);
     return true;
   }
+  g_Main.m_logLoadingError.Write("CItemStoreManager::InitLogger() NULL == new CLogFile!\r\n");
   return false;
 }
 
