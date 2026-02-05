@@ -520,10 +520,29 @@ struct __cppobj _BUDDY_LIST
     unsigned int dwSerial;
     char wszName[17];
     CPlayer *pPtr;
+
+    __list();
+    void init();
+    bool fill();
+    void ON(char *pwszName, CPlayer *ptr);
   };
 
   __list m_List[50];
   CNetIndexList m_LastApply;
+
+  _BUDDY_LIST();
+  ~_BUDDY_LIST();
+  void Init();
+  int GetBuddyNum();
+  __list *GetEmptyData();
+  int PushBuddy(unsigned int dwSerial, char *pwszName, CPlayer *pPtr);
+  int PopBuddy(unsigned int dwSerial, CPlayer **ppPoper);
+  bool IsBuddy(unsigned int dwSerial);
+  bool SearchBuddyLogoff(unsigned int dwSerial);
+  bool SearchBuddyLogin(CPlayer *pLoger, unsigned int dwSerial, char *pwszName);
+  void PushLastApplyTemp(unsigned int dwDstSerial);
+  void PopLastApplyTemp(unsigned int dwDstSerial);
+  bool IsPushLastApply(unsigned int dwDstSerial);
 };
 
 /* 67 */
@@ -1001,6 +1020,9 @@ public:
   void SendMsg_Resurrect(char byRet, bool bQuickPotion);
   void pc_NuclearAfterEffect();
   void SendMsg_StartContSF(_sf_continous *pCont);
+  void SendMsg_AlterContEffectTime(unsigned __int8 byContType);
+  void pc_PartyLeaveSelfReqeuest();
+  void SendMsg_PartyLeaveSelfResult(CPartyPlayer *pLeaver, bool bWorldExit);
   void ForcePullUnit(bool bLogout);
   void _UpdateUnitDebt(unsigned __int8 bySlotIndex, unsigned int dwPull);
   bool _LockUnitKey(unsigned __int8 bySlotIndex, bool bLock);
@@ -1208,6 +1230,7 @@ public:
 };
 
 bool DTradeEqualPerson(CPlayer *lp_pOne, CPlayer **lpp_pDst);
+void wa_PartySelfLeave(_CLID *pidLeaver);
 
 #pragma pack(pop)
 

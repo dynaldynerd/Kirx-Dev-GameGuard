@@ -99,6 +99,59 @@ void CMgrAvatorItemHistory::exp_prof_log(int count, char *szFile)
   WriteFile(szFile, sData);
 }
 
+void CMgrAvatorItemHistory::mastery_change_jade(
+  int nMstCode,
+  unsigned int dwOldCum,
+  unsigned int dwNewCum,
+  int nLv,
+  float fVal,
+  char *szFileName,
+  int nWpType)
+{
+  char category[56]{};
+  switch (nMstCode)
+  {
+    case 0:
+      if (nWpType)
+      {
+        strcpy_0(category, "mastery_weapon_long");
+      }
+      else
+      {
+        strcpy_0(category, "mastery_weapon_close");
+      }
+      break;
+    case 1:
+      strcpy_0(category, "mastery_code_defence");
+      break;
+    case 2:
+      strcpy_0(category, "mastery_code_shield");
+      break;
+    case 3:
+      strcpy_0(category, "mastery_code_shield");
+      break;
+    case 4:
+      strcpy_0(category, "mastery_code_force");
+      break;
+    case 6:
+      strcpy_0(category, "mastery_code_special");
+      break;
+    default:
+      break;
+  }
+
+  sprintf_s(
+    sData,
+    sizeof(sData),
+    "MasteryChange(%s) : %d Lv[%d] => %d Lv[%d] \r\n",
+    category,
+    nLv,
+    dwOldCum,
+    static_cast<unsigned int>(static_cast<float>(nLv) + fVal),
+    dwNewCum);
+  WriteFile(szFileName, sData);
+}
+
 CMgrAvatorItemHistory::CMgrAvatorItemHistory()
 {
   m_dwLastLocalDate = 0;

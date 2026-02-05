@@ -1419,7 +1419,7 @@ void CGameObject::SendMsg_BreakStop()
 
 void CGameObject::SendMsg_FixPosition(int n)
 {
-  ;
+  (void)n;
 }
 
 void CGameObject::SendMsg_RealFixPosition(bool bCircle)
@@ -1452,7 +1452,7 @@ void CGameObject::SendMsg_RealFixPosition(bool bCircle)
 
 void CGameObject::SendMsg_RealMovePoint(int n)
 {
-  ;
+  (void)n;
 }
 
 void CGameObject::SendMsg_SetHPInform()
@@ -1467,7 +1467,7 @@ void CGameObject::SendMsg_StunInform()
 
 void CGameObject::SetAttackPart(int nAttactPart)
 {
-  ;
+  (void)nAttactPart;
 }
 
 void CGameObject::SetBreakTranspar(bool bBreak)

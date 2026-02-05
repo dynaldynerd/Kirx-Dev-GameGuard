@@ -59,6 +59,14 @@ public:
     bool bAdd,
     char *pszFileName);
   void exp_prof_log(int count, char *szFile);
+  void mastery_change_jade(
+    int nMstCode,
+    unsigned int dwOldCum,
+    unsigned int dwNewCum,
+    int nLv,
+    float fVal,
+    char *szFileName,
+    int nWpType);
 
   char m_szStdPath[128];
   unsigned int m_dwLastLocalDate;

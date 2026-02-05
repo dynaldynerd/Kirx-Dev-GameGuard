@@ -26,6 +26,7 @@
 
 const char *dayofweek[7] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 static char szDefItemName[] = "UNKNOWN";
+static float sR[4] = {200.0f, 200.0f, 200.0f, 200.0f};
 
 static __int64 D3DXCreateTextureFromFileInMemory_0(IDirect3DDevice8 *device, const void *data, unsigned int size, void *outTex);
 static __int64 D3DXCreateTextureFromFileExA_0(IDirect3DDevice8 *device, const char *path, __int64 flags);
@@ -466,6 +467,31 @@ unsigned int GetBitAfterSetLimSocket(unsigned __int8 byLimSocketNum)
   return (static_cast<unsigned int>(byLimSocketNum) << 28) | 0x0FFFFFFF;
 }
 
+unsigned __int8 GetItemGrade(int nTableCode, int nItemIndex)
+{
+  CRecordData *table = &s_ptblItemData[nTableCode];
+  if (nTableCode >= 0)
+  {
+    if (nTableCode <= 5 || nTableCode == 7)
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      if (record)
+      {
+        return record[3].m_strCode[0];
+      }
+    }
+    else if (nTableCode == 6)
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      if (record)
+      {
+        return record[3].m_strCode[0];
+      }
+    }
+  }
+  return 0;
+}
+
 unsigned __int8 GetWeaponClass(int nItemIndex)
 {
   _base_fld *record = s_ptblItemData[6].GetRecord(nItemIndex);
@@ -493,6 +519,141 @@ unsigned __int8 GetWeaponClass(int nItemIndex)
     default:
       return 0;
   }
+}
+
+int CalcRoundUp(float fVal)
+{
+  int rounded = static_cast<int>(fVal);
+  const float remainder = fVal - static_cast<float>(rounded);
+  if (remainder > 0.0f)
+  {
+    ++rounded;
+  }
+  return rounded;
+}
+
+int CalcMastery(int nMasteryCode, int nMasteryIndex, int dwMasteryCum, unsigned int nRaceCode)
+{
+  float mastery = 0.0f;
+  switch (nMasteryCode)
+  {
+    case 0:
+    {
+      const float v16 = (static_cast<float>(dwMasteryCum) + 1.0f) / 1000.0f;
+      const float v6 = std::sqrt(static_cast<float>(dwMasteryCum) + 1.0f);
+      mastery = std::sqrt(v16 + v6);
+      break;
+    }
+    case 1:
+    {
+      const float v17 = (static_cast<float>(dwMasteryCum) + 1.0f) / 1000.0f;
+      const float v7 = std::sqrt(static_cast<float>(dwMasteryCum) + 1.0f);
+      mastery = std::sqrt(v17 + v7);
+      break;
+    }
+    case 2:
+    {
+      const float v18 = (static_cast<float>(dwMasteryCum) + 1.0f) / 100.0f;
+      const float v8 = std::sqrt(static_cast<float>(dwMasteryCum) + 1.0f);
+      mastery = std::sqrt(v18 + v8);
+      break;
+    }
+    case 3:
+    {
+      const float v9 = std::sqrt((static_cast<float>(dwMasteryCum) + 1.0f) * 10.0f);
+      mastery = std::sqrt(v9);
+      break;
+    }
+    case 4:
+    {
+      const float v10 = std::sqrt((static_cast<float>(dwMasteryCum) + 1.0f) * 14.0f);
+      mastery = std::sqrt(v10);
+      break;
+    }
+    case 5:
+    {
+      if (nMasteryIndex == 0 || nMasteryIndex == 1)
+      {
+        mastery = std::sqrt(((static_cast<float>(dwMasteryCum) / 1.1f) * 3.0f) + 1.0f);
+      }
+      else if (nMasteryIndex == 2)
+      {
+        mastery = std::sqrt(((static_cast<float>(dwMasteryCum) / 10.0f) * 3.0f) + 1.0f);
+      }
+      break;
+    }
+    case 6:
+    {
+      if (nRaceCode > 1)
+      {
+        const float v20 = (static_cast<float>(dwMasteryCum) + 1.0f) / 1000.0f;
+        const float v11 = std::sqrt(static_cast<float>(dwMasteryCum) + 1.0f);
+        mastery = std::sqrt(v20 + v11);
+      }
+      else
+      {
+        mastery = std::sqrt(static_cast<float>(dwMasteryCum) / 15000.0f) + 1.0f;
+      }
+      break;
+    }
+    default:
+      break;
+  }
+
+  if (mastery <= 99.0f)
+  {
+    if (mastery < 1.0f)
+    {
+      mastery = FLOAT_1_0;
+    }
+  }
+  else
+  {
+    mastery = 99.0f;
+  }
+  return static_cast<int>(mastery);
+}
+
+int GetSFLevel(int nLv, unsigned int dwHitCount)
+{
+  const float ratio =
+    std::sqrt(static_cast<float>(static_cast<int>(dwHitCount + 1)) / sR[nLv]);
+  const int level = static_cast<int>(std::sqrt(ratio) + 0.9999f);
+  if (level <= 7)
+  {
+    if (level < 1)
+    {
+      return 1;
+    }
+  }
+  else
+  {
+    return 7;
+  }
+  return level;
+}
+
+int GetStaffMastery(unsigned int *pdwForceLvCum)
+{
+  const float weightedSum = (static_cast<float>(static_cast<int>(pdwForceLvCum[0])) * 1.125f)
+                            + (static_cast<float>(static_cast<int>(pdwForceLvCum[1])) * 2.25f)
+                            + (static_cast<float>(static_cast<int>(pdwForceLvCum[2])) * 3.375f)
+                            + (static_cast<float>(static_cast<int>(pdwForceLvCum[3])) * 4.5f);
+  const float v7 = (weightedSum + 1.0f) / 1000.0f;
+  const float v3 = std::sqrt(weightedSum + 1.0f);
+  const int mastery = static_cast<int>(std::sqrt(v7 + v3));
+  if (mastery <= 99)
+  {
+    if (mastery < 1)
+    {
+      return 1;
+    }
+  }
+  else
+  {
+    return 99;
+  }
+  return mastery;
 }
 
 int GetItemStdPrice(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind)

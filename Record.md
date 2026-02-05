@@ -13,6 +13,7 @@ During the implementation of `CMapOperation::Init` and its sub-flows, the follow
 | `CMapData.cpp` | `_LoadStoreDummy` | `CItemStoreManager::m_tblItemStore` | `_StoreList_fld *` | IDA compares `&Record[3].m_strCode[52]` with map code; interpreted as `_StoreList_fld::m_strStore_MAPcode`. |
 | `WorldServerUtil.cpp` | `GetDefItemUpgSocketNum` | `g_Main.m_tblItemData[nTableCode]` | `_base_fld *` | Uses `Record[6].m_strCode[52]` and `Record[11].m_strCode[16]`. |
 | `WorldServerUtil.cpp` | `GetWeaponClass` | `s_ptblItemData[6]` | `_base_fld *` | Uses `Record[6].m_strCode[8]`. |
+| `WorldServerUtil.cpp` | `GetItemGrade` | `s_ptblItemData[nTableCode]` | `_base_fld *` | Uses `Record[3].m_strCode[0]`. |
 | `CPlayer.cpp` | `_WEAPON_PARAM::FixWeapon` | `g_Main.m_tblItemData[6]` | `_base_fld *` | Uses `Record[6].m_strCode[8]`, `Record[9].m_strCode[60/56/48/20]`, `Record[10].m_strCode[...]`, `Record[3].m_strCode[4/8]`, `Record[4].m_strCode[4/8]`, `Record[5].m_strCode[12]`. |
 | `TimeLimitJade.cpp` | `InsertWaitList` | `g_Main.m_tblItemData[pkItem->m_byTableCode]` | `_base_fld *` | Uses `Record[5].m_strCode[44]` (start hour) and `Record[5].m_strCode[48]` (use time). |
 | `CPlayer.cpp` | `SetHaveEffectUseTime` | `g_Main.m_tblItemData[pItem->m_byTableCode]` | `_base_fld *` | Uses `Record[6].m_dwIndex` and `Record[6].m_strCode[12*i + {0,4,8}]` for effect data. |
@@ -20,6 +21,8 @@ During the implementation of `CMapOperation::Init` and its sub-flows, the follow
 | `CPlayer.cpp` | `CalcEquipSpeed` | `g_Main.m_tblItemData[...]` | `_base_fld *` | Uses `Record[5].m_strCode[4]` and `Record[9].m_strCode[4]` for equip speed. |
 | `CPlayer.cpp` | `CalcEquipMaxDP` | `g_Main.m_tblItemData[...]` | `_base_fld *` | Uses `Record[5].m_strCode[52]` for max DP. |
 | `CPlayer.cpp` | `SetHaveEffect` | `g_Main.m_tblItemData[...]` | `_base_fld *` | Uses `Record[5].m_strCode[44]`, `Record[5].m_strCode[52]`, `Record[6].m_dwIndex`, `Record[6].m_strCode[12*i + {0,4,8}]`. |
+| `CPlayer.cpp` | `_GetItemEffect` | `g_Main.m_tblItemData[pItem->m_byTableCode]` | `_base_fld *` | Returns `_ITEM_EFFECT *` via `Record + 51`, `Record + 89`, `Record + 43`, `&Record[5].m_strCode[28]`, or `&Record[6]` depending on table code. |
+| `CPlayer.cpp` | `_MASTERY_PARAM::UpdateCumPerMast` | `_MASTERY_PARAM::s_pSkillData` | `_base_fld *` | Uses `Record[4].m_strCode[60]` (skill lv), `Record[1].m_strCode[4]` (skill class). |
 | `WorldServerUtil.cpp` | `GetUsePcCashType` | `s_ptblItemData[byTblCode]` | `_base_fld *` | Uses `Record[9].m_strCode[16/40]`, `Record[8].m_strCode[12]`, `Record[7].m_strCode[48]`, `Record[5].m_strCode[60]`. |
 
 > [!NOTE]

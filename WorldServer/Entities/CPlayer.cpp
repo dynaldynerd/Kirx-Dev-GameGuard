@@ -13,6 +13,9 @@
 #include "CParkingUnit.h"
 #include "CHolyStoneSystem.h"
 #include "CHolyStone.h"
+#include "CPvpUserAndGuildRankingSystem.h"
+#include "CGuildBattleController.h"
+#include "CGuildMasterEffect.h"
 #include "CHonorGuild.h"
 #include "CLogFile.h"
 #include "CTSingleton.h"
@@ -23,6 +26,7 @@
 #include "ResourceItem_fld.h"
 #include "UIDGenerator.h"
 #include "WorldServerUtil.h"
+#include "alter_cont_effect_time_zocl.h"
 #include "notify_not_use_premium_cashitem_zocl.h"
 #include "CNetworkEX.h"
 #include "GlobalObjects.h"
@@ -31,6 +35,7 @@
 #include <cstring>
 #include <ctime>
 #include <cstdlib>
+#include <cmath>
 
 _skill_fld *CPlayer::ms_pXmas_Snow_Effect = nullptr;
 _skill_fld *CPlayer::ms_pXmas_Snow_Bullet_Effect = nullptr;
@@ -39,6 +44,8 @@ CMgrAvatorLvHistory CPlayer::s_MgrLvHistory{};
 int CPlayer::s_nLiveNum = 0;
 _DELAY_PROCESS CPlayer::s_AnimusReturnDelay{};
 CRecordData *_WEAPON_PARAM::s_pWeaponData = nullptr;
+CRecordData *_MASTERY_PARAM::s_pSkillData = nullptr;
+CRecordData *_MASTERY_PARAM::s_pForceData = nullptr;
 int _ATTACK_DELAY_CHECKER::s_nSpareTime = 0;
 CRecordData ItemCombineMgr::ms_tbl_ItemCombine;
 CRecordData ItemCombineMgr::ms_tbl_ItemCombine_Link_Stuff;
@@ -293,6 +300,195 @@ void _MASTERY_PARAM::SetStaticMember(CRecordData *effectTable, CRecordData *forc
   (void)forceTable;
 }
 
+void _mastery_up_data::init()
+{
+  bUpdate = false;
+}
+
+void _mastery_up_data::set(unsigned __int8 code, unsigned __int8 index, unsigned __int8 mastery)
+{
+  bUpdate = true;
+  byCode = code;
+  byIndex = index;
+  byMastery = mastery;
+}
+
+void _skill_lv_up_data::init()
+{
+  bUpdate = false;
+}
+
+void _skill_lv_up_data::set(unsigned __int16 index, unsigned __int8 lv)
+{
+  bUpdate = true;
+  wIndex = index;
+  byLv = lv;
+}
+
+unsigned __int8 _MASTERY_PARAM::GetMasteryPerMast(unsigned __int8 byCode, unsigned __int8 byMast)
+{
+  return m_ppbyMasteryPtr[byCode][byMast];
+}
+
+void _MASTERY_PARAM::UpdateCumPerMast(unsigned __int8 byClass, unsigned __int8 byIndex, unsigned int dwNewCum)
+{
+  m_MastUpData.init();
+  m_SkillUpData.init();
+
+  switch (byClass)
+  {
+    case 0:
+    {
+      m_BaseCum.m_dwDamWpCnt[byIndex] = dwNewCum;
+      if (m_mtyWp[byIndex] <= 0x63u)
+      {
+        const unsigned __int8 mastery =
+          static_cast<unsigned __int8>(CalcMastery(0, byIndex, m_BaseCum.m_dwDamWpCnt[byIndex], m_byRaceCode));
+        m_mtyWp[byIndex] = mastery;
+        m_MastUpData.set(0, byIndex, mastery);
+      }
+      break;
+    }
+    case 1:
+    {
+      m_BaseCum.m_dwDefenceCnt = dwNewCum;
+      if (m_mtySuffer <= 0x63u)
+      {
+        const unsigned __int8 mastery =
+          static_cast<unsigned __int8>(CalcMastery(1, 0, m_BaseCum.m_dwDefenceCnt, m_byRaceCode));
+        m_mtySuffer = mastery;
+        m_MastUpData.set(1u, 0, mastery);
+      }
+      break;
+    }
+    case 2:
+    {
+      m_BaseCum.m_dwShieldCnt = dwNewCum;
+      if (m_mtyShield <= 0x63u)
+      {
+        const unsigned __int8 mastery =
+          static_cast<unsigned __int8>(CalcMastery(2, 0, m_BaseCum.m_dwShieldCnt, m_byRaceCode));
+        m_mtyShield = mastery;
+        m_MastUpData.set(2u, 0, mastery);
+      }
+      break;
+    }
+    case 3:
+    {
+      m_BaseCum.m_dwSkillCum[byIndex] = dwNewCum;
+      _base_fld *record = s_pSkillData->GetRecord(byIndex);
+      const unsigned __int8 skillLevel =
+        static_cast<unsigned __int8>(GetSFLevel(*reinterpret_cast<int *>(&record[4].m_strCode[60]),
+                                                m_BaseCum.m_dwSkillCum[byIndex]));
+      m_lvSkill[byIndex] = skillLevel;
+      m_SkillUpData.set(byIndex, skillLevel);
+
+      const int skillClass = *reinterpret_cast<int *>(&record[1].m_strCode[4]);
+      if (m_mtySkill[skillClass] <= 0x63u)
+      {
+        m_dwSkillMasteryCum[skillClass] += dwNewCum;
+        const unsigned __int8 mastery =
+          static_cast<unsigned __int8>(CalcMastery(3, skillClass, m_dwSkillMasteryCum[skillClass], m_byRaceCode));
+        m_mtySkill[skillClass] = mastery;
+        m_MastUpData.set(3u, static_cast<unsigned __int8>(record[1].m_strCode[4]), mastery);
+      }
+      break;
+    }
+    case 4:
+    {
+      m_BaseCum.m_dwForceCum[byIndex] = dwNewCum;
+      m_dwForceLvCum[byIndex & 3] = dwNewCum;
+      if (m_mtyForce[byIndex] <= 0x63u)
+      {
+        const unsigned __int8 mastery =
+          static_cast<unsigned __int8>(CalcMastery(4, byIndex, m_BaseCum.m_dwForceCum[byIndex], m_byRaceCode));
+        m_mtyForce[byIndex] = mastery;
+        m_MastUpData.set(4u, byIndex, mastery);
+      }
+      if (m_mtyForce[byIndex] <= 0x63u)
+      {
+        m_mtyStaff = static_cast<unsigned __int8>(GetStaffMastery(m_dwForceLvCum));
+      }
+      break;
+    }
+    case 5:
+    {
+      m_BaseCum.m_dwMakeCum[byIndex] = dwNewCum;
+      if (m_mtyMakeItem[byIndex] <= 0x63u)
+      {
+        unsigned __int8 mastery = 0;
+        if (byIndex)
+        {
+          if (byIndex == 1)
+          {
+            mastery =
+              static_cast<unsigned __int8>(CalcMastery(5, 1, m_BaseCum.m_dwMakeCum[byIndex], m_byRaceCode));
+          }
+          else if (byIndex == 2)
+          {
+            mastery =
+              static_cast<unsigned __int8>(CalcMastery(5, 2, m_BaseCum.m_dwMakeCum[byIndex], m_byRaceCode));
+          }
+        }
+        else
+        {
+          mastery = static_cast<unsigned __int8>(CalcMastery(5, 0, m_BaseCum.m_dwMakeCum[0], m_byRaceCode));
+        }
+        m_mtyMakeItem[byIndex] = mastery;
+        m_MastUpData.set(5u, byIndex, mastery);
+      }
+      break;
+    }
+    case 6:
+    {
+      m_BaseCum.m_dwSpecialCum = dwNewCum;
+      if (m_mtySpecial <= 0x63u)
+      {
+        const unsigned __int8 mastery =
+          static_cast<unsigned __int8>(CalcMastery(6, 0, m_BaseCum.m_dwSpecialCum, m_byRaceCode));
+        m_mtySpecial = mastery;
+        m_MastUpData.set(6u, 0, mastery);
+      }
+      break;
+    }
+    default:
+      return;
+  }
+}
+
+float _MASTERY_PARAM::GetAveForceMasteryPerClass(unsigned __int8 byClass)
+{
+  int total = 0;
+  for (int index = 0; index < 4; ++index)
+  {
+    total += m_ppbyMasteryPtr[4][4 * byClass + index];
+  }
+  return static_cast<float>(total) / 4.0f;
+}
+
+float _MASTERY_PARAM::GetAveSkillMasteryPerClass(unsigned __int8 byClass)
+{
+  int total = 0;
+  int count = 1;
+  if (byClass)
+  {
+    for (int index = 4; index <= 6; ++index)
+    {
+      total += m_ppbyMasteryPtr[3][index];
+    }
+    count = 3;
+  }
+  else
+  {
+    for (int index = 0; index <= 3; ++index)
+    {
+      total += m_ppbyMasteryPtr[3][index];
+    }
+    count = 4;
+  }
+  return static_cast<float>(total) / static_cast<float>(count);
+}
+
 void MiningTicket::_AuthKeyTicket::Init()
 {
   ___u0.uiData = 0;
@@ -423,6 +619,185 @@ void MiningTicket::SetLastCriTicket(
     ((byCurrentHour & 0x1Fu) << 4) | (m_dwTakeLastCriTicket.___u0.uiData & 0xFFFFFE0Fu);
   m_dwTakeLastCriTicket.___u0.uiData =
     (byNumOfTime & 0xFu) | (m_dwTakeLastCriTicket.___u0.uiData & 0xFFFFFFF0u);
+}
+
+_BUDDY_LIST::__list::__list()
+{
+  init();
+}
+
+void _BUDDY_LIST::__list::init()
+{
+  dwSerial = static_cast<unsigned int>(-1);
+  pPtr = nullptr;
+}
+
+bool _BUDDY_LIST::__list::fill()
+{
+  return dwSerial != static_cast<unsigned int>(-1);
+}
+
+void _BUDDY_LIST::__list::ON(char *pwszName, CPlayer *ptr)
+{
+  strcpy_0(wszName, pwszName);
+  pPtr = ptr;
+}
+
+_BUDDY_LIST::_BUDDY_LIST()
+{
+  CNetIndexList::SetList(&m_LastApply, 8u);
+  Init();
+}
+
+_BUDDY_LIST::~_BUDDY_LIST() = default;
+
+void _BUDDY_LIST::Init()
+{
+  for (int index = 0; index < 50; ++index)
+  {
+    m_List[index].init();
+  }
+  CNetIndexList::ResetList(&m_LastApply);
+}
+
+int _BUDDY_LIST::GetBuddyNum()
+{
+  unsigned int count = 0;
+  for (int index = 0; index < 50; ++index)
+  {
+    if (m_List[index].fill())
+    {
+      ++count;
+    }
+  }
+  return static_cast<int>(count);
+}
+
+_BUDDY_LIST::__list *_BUDDY_LIST::GetEmptyData()
+{
+  for (int index = 0; index < 50; ++index)
+  {
+    if (!m_List[index].fill())
+    {
+      return &m_List[index];
+    }
+  }
+  return nullptr;
+}
+
+int _BUDDY_LIST::PushBuddy(unsigned int dwSerial, char *pwszName, CPlayer *pPtr)
+{
+  int buddyIndex = -1;
+  for (int index = 0; index < 50; ++index)
+  {
+    if (m_List[index].fill() && m_List[index].dwSerial == dwSerial)
+    {
+      buddyIndex = index;
+      break;
+    }
+  }
+
+  if (buddyIndex == -1)
+  {
+    for (int index = 0; index < 50; ++index)
+    {
+      if (!m_List[index].fill())
+      {
+        buddyIndex = index;
+        break;
+      }
+    }
+  }
+
+  if (buddyIndex == -1)
+  {
+    return -1;
+  }
+
+  _BUDDY_LIST::__list *entry = &m_List[buddyIndex];
+  entry->dwSerial = dwSerial;
+  strcpy_0(entry->wszName, pwszName);
+  entry->pPtr = pPtr;
+  return buddyIndex;
+}
+
+int _BUDDY_LIST::PopBuddy(unsigned int dwSerial, CPlayer **ppPoper)
+{
+  for (int index = 0; index < 50; ++index)
+  {
+    if (m_List[index].fill() && m_List[index].dwSerial == dwSerial)
+    {
+      if (ppPoper)
+      {
+        *ppPoper = m_List[index].pPtr;
+      }
+      m_List[index].dwSerial = static_cast<unsigned int>(-1);
+      return index;
+    }
+  }
+  return -1;
+}
+
+bool _BUDDY_LIST::IsBuddy(unsigned int dwSerial)
+{
+  for (int index = 0; index < 50; ++index)
+  {
+    if (m_List[index].fill() && m_List[index].dwSerial == dwSerial)
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool _BUDDY_LIST::SearchBuddyLogoff(unsigned int dwSerial)
+{
+  for (int index = 0; index < 50; ++index)
+  {
+    if (m_List[index].fill() && m_List[index].dwSerial == dwSerial)
+    {
+      m_List[index].pPtr = nullptr;
+      return true;
+    }
+  }
+  return false;
+}
+
+bool _BUDDY_LIST::SearchBuddyLogin(CPlayer *pLoger, unsigned int dwSerial, char *pwszName)
+{
+  for (int index = 0; index < 50; ++index)
+  {
+    if (m_List[index].fill() && m_List[index].dwSerial == dwSerial)
+    {
+      m_List[index].pPtr = pLoger;
+      strcpy_0(m_List[index].wszName, pwszName);
+      return true;
+    }
+  }
+  return false;
+}
+
+void _BUDDY_LIST::PushLastApplyTemp(unsigned int dwDstSerial)
+{
+  unsigned int outIndex[9]{};
+  if (!CNetIndexList::IsInList(&m_LastApply, dwDstSerial))
+  {
+    if (CNetIndexList::size(&m_LastApply) >= 8)
+    {
+      CNetIndexList::PopNode_Front(&m_LastApply, outIndex);
+    }
+    CNetIndexList::PushNode_Back(&m_LastApply, dwDstSerial);
+  }
+}
+
+void _BUDDY_LIST::PopLastApplyTemp(unsigned int dwDstSerial)
+{
+  CNetIndexList::FindNode(&m_LastApply, dwDstSerial);
+}
+
+bool _BUDDY_LIST::IsPushLastApply(unsigned int dwDstSerial)
+{
+  return CNetIndexList::IsInList(&m_LastApply, dwDstSerial);
 }
 
 void _NameChangeBuddyInfo::Init()
@@ -1298,6 +1673,15 @@ void CPlayer::SendMsg_DTradeCancleInform()
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, &msg, 1u);
 }
 
+void CPlayer::SendMsg_DTradeCloseInform(char byCloseCode)
+{
+  char msg[1]{};
+  msg[0] = byCloseCode;
+
+  unsigned __int8 type[2] = {18, 26};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, 1u);
+}
+
 void CPlayer::_AnimusReturn(unsigned __int8 byReturnType)
 {
   if (!m_pRecalledAnimusChar)
@@ -1965,6 +2349,408 @@ void CPlayer::SetEquipEffect(_STORAGE_LIST::_db_con *pItem, bool bEquip)
   apply_case_equip_upgrade_effect(pItem, bEquip);
 }
 
+void CPlayer::apply_case_equip_std_effect(_STORAGE_LIST::_db_con *pItem, bool bEquip)
+{
+  _ITEM_EFFECT *itemEffect = _GetItemEffect(pItem);
+  if (!itemEffect)
+  {
+    return;
+  }
+
+  for (int index = 0; index < 4; ++index)
+  {
+    apply_normal_item_std_effect(itemEffect[index].nEffectCode, itemEffect[index].fEffectValue, bEquip);
+  }
+}
+
+_ITEM_EFFECT *CPlayer::_GetItemEffect(_STORAGE_LIST::_db_con *pItem)
+{
+  if (pItem->m_byTableCode >= 5u)
+  {
+    const int tableOffset = static_cast<int>(pItem->m_byTableCode) - 5;
+    switch (tableOffset)
+    {
+      case 0:
+      {
+        auto *record = reinterpret_cast<_ITEM_EFFECT *>(
+          g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex));
+        return record ? record + 51 : nullptr;
+      }
+      case 1:
+      {
+        auto *record = reinterpret_cast<_ITEM_EFFECT *>(
+          g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex));
+        return record ? record + 89 : nullptr;
+      }
+      case 2:
+      {
+        auto *record = reinterpret_cast<_ITEM_EFFECT *>(
+          g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex));
+        return record ? record + 51 : nullptr;
+      }
+      case 3:
+      {
+        auto *record = reinterpret_cast<_ITEM_EFFECT *>(
+          g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex));
+        return record ? record + 43 : nullptr;
+      }
+      case 4:
+      {
+        auto *record = reinterpret_cast<_ITEM_EFFECT *>(
+          g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex));
+        return record ? record + 43 : nullptr;
+      }
+      case 22:
+      {
+        _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
+        return record ? reinterpret_cast<_ITEM_EFFECT *>(&record[5].m_strCode[28]) : nullptr;
+      }
+      default:
+        return nullptr;
+    }
+  }
+
+  _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
+  if (record)
+  {
+    return reinterpret_cast<_ITEM_EFFECT *>(&record[6]);
+  }
+  return nullptr;
+}
+
+void CPlayer::apply_normal_item_std_effect(int nEffCode, float fVal, bool bEquip)
+{
+  switch (nEffCode)
+  {
+    case 1:
+      m_EP.SetEff_Rate(11, fVal, bEquip);
+      break;
+    case 2:
+      m_EP.SetEff_Rate(7, fVal, bEquip);
+      break;
+    case 3:
+      for (int paramIndex = 0; paramIndex < 2; ++paramIndex)
+      {
+        m_EP.SetEff_Plus(paramIndex, fVal, bEquip);
+      }
+      m_EP.SetEff_Plus(2, fVal, bEquip);
+      break;
+    case 4:
+    case 24:
+      m_EP.SetEff_Plus(3, fVal, bEquip);
+      break;
+    case 5:
+      m_EP.SetEff_Rate(9, fVal, bEquip);
+      m_EP.SetEff_Rate(10, fVal, bEquip);
+      break;
+    case 6:
+      for (int paramIndex = 0; paramIndex < 2; ++paramIndex)
+      {
+        m_EP.SetEff_Rate(paramIndex, fVal, bEquip);
+        m_EP.SetEff_Rate(paramIndex + 2, fVal, bEquip);
+      }
+      m_EP.SetEff_Rate(4, fVal, bEquip);
+      m_EP.SetEff_Rate(29, fVal, bEquip);
+      break;
+    case 7:
+    case 21:
+      m_EP.SetEff_Rate(6, fVal, bEquip);
+      break;
+    case 8:
+      m_EP.SetEff_Plus(19, fVal, bEquip);
+      break;
+    case 9:
+      m_EP.SetEff_Plus(21, 1.0f, bEquip);
+      break;
+    case 10:
+      m_EP.SetEff_Plus(22, 1.0f, bEquip);
+      break;
+    case 11:
+      m_EP.SetEff_Plus(23, 1.0f, bEquip);
+      break;
+    case 12:
+      if (!m_bInGuildBattle || !m_bTakeGravityStone)
+      {
+        m_EP.SetEff_Plus(20, fVal, bEquip);
+      }
+      break;
+    case 13:
+      m_EP.SetEff_Plus(24, 1.0f, bEquip);
+      break;
+    case 14:
+      m_EP.SetEff_Plus(25, fVal, bEquip);
+      break;
+    case 15:
+      m_EP.SetEff_Rate(4, fVal, bEquip);
+      break;
+    case 16:
+      m_EP.SetEff_Rate(10, fVal, bEquip);
+      break;
+    case 17:
+      m_EP.SetEff_Rate(12, fVal, bEquip);
+      break;
+    case 18:
+      m_EP.SetEff_Rate(13, fVal, bEquip);
+      break;
+    case 19:
+      m_EP.SetEff_Plus(14, fVal, bEquip);
+      break;
+    case 20:
+      for (int paramIndex = 0; paramIndex < 2; ++paramIndex)
+      {
+        m_EP.SetEff_Plus(paramIndex + 4, fVal, bEquip);
+        m_EP.SetEff_Plus(paramIndex + 6, fVal, bEquip);
+      }
+      m_EP.SetEff_Plus(36, fVal, bEquip);
+      break;
+    case 22:
+    case 31:
+      m_EP.SetEff_Rate(8, fVal, bEquip);
+      break;
+    case 23:
+      m_EP.SetEff_Rate(14, fVal, bEquip);
+      break;
+    case 25:
+      m_EP.SetEff_Plus(11, fVal, bEquip);
+      break;
+    case 26:
+      m_EP.SetEff_Plus(8, fVal, bEquip);
+      break;
+    case 27:
+      m_EP.SetEff_Plus(37, fVal, bEquip);
+      break;
+    case 28:
+      m_EP.SetEff_Plus(29, fVal, bEquip);
+      break;
+    case 29:
+      m_EP.SetEff_Plus(15, fVal, bEquip);
+      m_EP.SetEff_Plus(16, fVal, bEquip);
+      m_EP.SetEff_Plus(17, fVal, bEquip);
+      m_EP.SetEff_Plus(18, fVal, bEquip);
+      break;
+    case 30:
+      m_EP.SetEff_Rate(9, fVal, bEquip);
+      break;
+    case 32:
+      m_EP.SetEff_Plus(28, fVal, bEquip);
+      break;
+    case 33:
+      m_EP.SetEff_Plus(10, fVal, bEquip);
+      break;
+    case 34:
+      m_EP.SetEff_Plus(12, fVal, bEquip);
+      break;
+    case 35:
+      m_EP.SetEff_Plus(13, fVal, bEquip);
+      break;
+    case 36:
+      m_EP.SetEff_Plus(38, fVal, bEquip);
+      break;
+    default:
+      return;
+  }
+}
+
+void CPlayer::apply_case_equip_upgrade_effect(_STORAGE_LIST::_db_con *pItem, bool bEquip)
+{
+  unsigned int dwLvBit[4]{};
+  memcpy_0(dwLvBit, &pItem->m_dwLv, sizeof(dwLvBit[0]));
+
+  const unsigned __int8 itemUpgedLv = GetItemUpgedLv(dwLvBit[0]);
+  if (!itemUpgedLv || !GetDefItemUpgSocketNum(pItem->m_byTableCode, pItem->m_wItemIndex))
+  {
+    float effectValue = 0.0f;
+    const float have79 = m_EP.GetEff_Have(79);
+    if (have79 > 0.0f
+        && have79 < 6.0f
+        && pItem->m_byTableCode == 6
+        && GetItemGrade(pItem->m_byTableCode, pItem->m_wItemIndex) < 3u)
+    {
+      _ItemUpgrade_fld *record = g_Main.m_tblItemUpgrade.GetRecord(0);
+      const int effIndex = static_cast<int>(have79) - 1;
+      effectValue = (&record->m_fUp1)[effIndex];
+
+      for (int paramIndex = 0; paramIndex < 2; ++paramIndex)
+      {
+        m_EP.SetEff_Rate(paramIndex, effectValue, bEquip);
+        m_EP.SetEff_Rate(paramIndex + 2, effectValue, bEquip);
+      }
+      m_EP.SetEff_Rate(4, effectValue, bEquip);
+      m_EP.SetEff_Rate(29, effectValue, bEquip);
+    }
+    else
+    {
+      const float have80 = m_EP.GetEff_Have(80);
+      if (have80 > 0.0f && have80 < 5.0f && pItem->m_byTableCode <= 5u)
+      {
+        _ItemUpgrade_fld *record = g_Main.m_tblItemUpgrade.GetRecord(5u);
+        effectValue = reinterpret_cast<float *>(&record->m_nEffectUnit)[static_cast<int>(have80)];
+        m_EP.SetEff_Rate(6, effectValue, bEquip);
+        if (bEquip)
+        {
+          m_fTalik_DefencePoint += effectValue;
+        }
+        else
+        {
+          m_fTalik_DefencePoint -= effectValue;
+        }
+      }
+    }
+  }
+
+  if (!GetDefItemUpgSocketNum(pItem->m_byTableCode, pItem->m_wItemIndex))
+  {
+    return;
+  }
+
+  for (int socketIndex = 0; socketIndex < itemUpgedLv; ++socketIndex)
+  {
+    const unsigned __int8 talik = GetTalikFromSocket(dwLvBit[0], static_cast<unsigned __int8>(socketIndex));
+    if (talik == 15)
+    {
+      continue;
+    }
+
+    int talikCount = 1;
+    for (int nextIndex = socketIndex + 1; nextIndex < itemUpgedLv; ++nextIndex)
+    {
+      const unsigned __int8 nextTalik = GetTalikFromSocket(dwLvBit[0], static_cast<unsigned __int8>(nextIndex));
+      if (talik == nextTalik)
+      {
+        ++talikCount;
+        dwLvBit[0] |= 15u << (4 * nextIndex);
+      }
+    }
+
+    _ItemUpgrade_fld *record = g_Main.m_tblItemUpgrade.GetRecord(talik);
+    if (!record || talikCount < 1 || talikCount > 7)
+    {
+      continue;
+    }
+
+    float talikValue = reinterpret_cast<float *>(&record->m_nEffectUnit)[talikCount];
+    switch (talik)
+    {
+      case 0:
+      {
+        int effHave79 = static_cast<int>(m_EP.GetEff_Have(79));
+        if (effHave79 > 5)
+        {
+          effHave79 = 5;
+        }
+        if (effHave79 > talikCount
+            && GetItemGrade(pItem->m_byTableCode, pItem->m_wItemIndex) < 3u
+            && pItem->m_byTableCode == 6)
+        {
+          talikValue = reinterpret_cast<float *>(&record->m_nEffectUnit)[effHave79];
+        }
+
+        for (int paramIndex = 0; paramIndex < 2; ++paramIndex)
+        {
+          m_EP.SetEff_Rate(paramIndex, talikValue, bEquip);
+          m_EP.SetEff_Rate(paramIndex + 2, talikValue, bEquip);
+        }
+        m_EP.SetEff_Rate(4, talikValue, bEquip);
+        m_EP.SetEff_Rate(29, talikValue, bEquip);
+        break;
+      }
+      case 1:
+        m_EP.SetEff_Rate(12, talikValue, bEquip);
+        break;
+      case 2:
+        m_EP.SetEff_Plus(28, talikValue, bEquip);
+        break;
+      case 3:
+        if (pItem->m_byTableCode == 7)
+        {
+          m_EP.SetEff_Plus(37, talikValue, bEquip);
+        }
+        else
+        {
+          m_EP.SetEff_Plus(14, talikValue, bEquip);
+        }
+        break;
+      case 4:
+        m_EP.SetEff_Plus(5, talikValue, bEquip);
+        break;
+      case 5:
+      {
+        int effHave80 = static_cast<int>(m_EP.GetEff_Have(80));
+        if (effHave80 > 4)
+        {
+          effHave80 = 4;
+        }
+        if (talikCount < effHave80 && pItem->m_byTableCode <= 5u)
+        {
+          talikValue = reinterpret_cast<float *>(&record->m_nEffectUnit)[effHave80];
+        }
+        m_EP.SetEff_Rate(6, talikValue, bEquip);
+        if (bEquip)
+        {
+          m_fTalik_DefencePoint += talikValue;
+        }
+        else
+        {
+          m_fTalik_DefencePoint -= talikValue;
+        }
+        break;
+      }
+      case 6:
+        m_EP.SetEff_Plus(38, talikValue, bEquip);
+        break;
+      case 7:
+        if (pItem->m_byTableCode != 6)
+        {
+          m_EP.SetEff_Plus(15, talikValue, bEquip);
+        }
+        break;
+      case 8:
+        if (pItem->m_byTableCode != 6)
+        {
+          m_EP.SetEff_Plus(16, talikValue, bEquip);
+        }
+        break;
+      case 9:
+        if (pItem->m_byTableCode != 6)
+        {
+          m_EP.SetEff_Plus(17, talikValue, bEquip);
+        }
+        break;
+      case 10:
+        if (pItem->m_byTableCode != 6)
+        {
+          m_EP.SetEff_Plus(18, talikValue, bEquip);
+        }
+        break;
+      case 11:
+        for (int paramIndex = 0; paramIndex < 2; ++paramIndex)
+        {
+          m_EP.SetEff_Plus(paramIndex, talikValue, bEquip);
+        }
+        m_EP.SetEff_Plus(2, talikValue, bEquip);
+        m_EP.SetEff_Plus(31, talikValue, bEquip);
+        m_EP.SetEff_Plus(30, talikValue, bEquip);
+        break;
+      case 12:
+      {
+        const float halfValue = talikValue / 2.0f;
+        m_EP.SetEff_Plus(3, halfValue, bEquip);
+        if (bEquip)
+        {
+          m_fTalik_AvoidPoint += halfValue;
+        }
+        else
+        {
+          m_fTalik_AvoidPoint -= halfValue;
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
+}
+
 void CPlayer::CalcDefTol()
 {
   memset_0(m_nTolValue, 0, sizeof(m_nTolValue));
@@ -2122,6 +2908,19 @@ void CPlayer::CalcEquipSpeed()
   }
 }
 
+void CPlayer::SendMsg_AlterEquipSPInform()
+{
+  struct
+  {
+    float equipSpeed;
+  } msg{};
+
+  msg.equipSpeed = m_fEquipSpeed;
+
+  unsigned __int8 type[2] = {11, 13};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 4u);
+}
+
 void CPlayer::CalcEquipMaxDP(int bSendMsg)
 {
   int maxDp = 1;
@@ -2158,6 +2957,77 @@ void CPlayer::CalcEquipMaxDP(int bSendMsg)
   }
 }
 
+int CPlayer::GetMaxDP()
+{
+  const float baseMax = static_cast<float>(m_nMaxDP);
+  const float bonus = m_EP.GetEff_Plus(35);
+  return static_cast<int>(baseMax + bonus);
+}
+
+int CPlayer::GetDP()
+{
+  return CPlayerDB::GetDP(&m_Param);
+}
+
+char CPlayer::SetDP(int nDP, bool bOver)
+{
+  const int currentDp = CPlayerDB::GetDP(&m_Param);
+  if (!bOver && nDP > currentDp)
+  {
+    const int maxDp = GetMaxDP();
+    if (currentDp >= maxDp || nDP <= GetMaxDP())
+    {
+      const int currentMax = GetMaxDP();
+      if (currentDp >= currentMax && nDP >= currentDp)
+      {
+        return 0;
+      }
+    }
+    else
+    {
+      nDP = GetMaxDP();
+    }
+  }
+
+  if (nDP < 0)
+  {
+    nDP = 0;
+  }
+  if (currentDp == nDP)
+  {
+    return 0;
+  }
+
+  CPlayerDB::SetDP(&m_Param, nDP);
+  return 1;
+}
+
+void CPlayer::SendMsg_SetDPInform()
+{
+  struct
+  {
+    unsigned __int16 dp;
+  } msg{};
+
+  msg.dp = static_cast<unsigned __int16>(CPlayerDB::GetDP(&m_Param));
+
+  unsigned __int8 type[2] = {17, 114};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 2u);
+}
+
+void CPlayer::SendMsg_AlterMaxDP()
+{
+  struct
+  {
+    unsigned __int16 maxDp;
+  } msg{};
+
+  msg.maxDp = static_cast<unsigned __int16>(GetMaxDP());
+
+  unsigned __int8 type[2] = {11, static_cast<unsigned __int8>(-123)};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 2u);
+}
+
 void CPlayer::SetSiege(_STORAGE_LIST::_db_con *pItem)
 {
   if (pItem)
@@ -2192,6 +3062,68 @@ void CPlayer::SetSiege(_STORAGE_LIST::_db_con *pItem)
     CCharacter::Stop();
     CGameObject::SendMsg_BreakStop();
   }
+}
+
+void CPlayer::SendMsg_TransformSiegeModeResult(char byRetCode)
+{
+  char msg[1]{};
+  msg[0] = byRetCode;
+
+  unsigned __int8 type[2] = {28, 2};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, 1u);
+
+  if (byRetCode)
+  {
+    return;
+  }
+
+#pragma pack(push, 1)
+  struct SiegeTransformMsg
+  {
+    unsigned int objSerial;
+    unsigned __int16 equipItemIndex;
+    unsigned __int8 siegeItemIndex;
+    unsigned __int16 visualVer;
+  };
+#pragma pack(pop)
+
+  SiegeTransformMsg circleMsg{};
+  circleMsg.objSerial = m_dwObjSerial;
+  circleMsg.equipItemIndex = m_Param.m_dbEquip.m_pStorageList[6].m_wItemIndex;
+  circleMsg.siegeItemIndex = static_cast<unsigned __int8>(m_pSiegeItem->m_wItemIndex);
+  circleMsg.visualVer = GetVisualVer();
+
+  unsigned __int8 circleType[2] = {28, 3};
+  CGameObject::CircleReport(circleType, reinterpret_cast<char *>(&circleMsg), sizeof(circleMsg), 0);
+}
+
+void CPlayer::SendMsg_ReleaseSiegeModeResult(char byRetCode)
+{
+  char msg[1]{};
+  msg[0] = byRetCode;
+
+  unsigned __int8 type[2] = {28, 5};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, 1u);
+
+  if (byRetCode)
+  {
+    return;
+  }
+
+#pragma pack(push, 1)
+  struct SiegeReleaseMsg
+  {
+    unsigned int objSerial;
+    unsigned __int16 visualVer;
+  };
+#pragma pack(pop)
+
+  SiegeReleaseMsg circleMsg{};
+  circleMsg.objSerial = m_dwObjSerial;
+  circleMsg.visualVer = GetVisualVer();
+
+  unsigned __int8 circleType[2] = {28, 6};
+  CGameObject::CircleReport(circleType, reinterpret_cast<char *>(&circleMsg), sizeof(circleMsg), 0);
 }
 
 void CPlayer::SetHaveEffect(char bLogin)
@@ -2360,6 +3292,434 @@ void CPlayer::SetHaveEffect(char bLogin)
     const int count = static_cast<int>(diff) % 10;
     s_MgrItemHistory.exp_prof_log(count, m_szItemHistoryFileName);
   }
+}
+
+void CPlayer::apply_have_item_std_effect(int nEffCode, float fVal, bool bAdd, int nDiffCnt)
+{
+  switch (nEffCode)
+  {
+    case 15:
+      m_EP.SetEff_Rate(9, fVal, bAdd);
+      break;
+    case 16:
+      m_EP.SetEff_Rate(10, fVal, bAdd);
+      break;
+    case 17:
+      m_EP.SetEff_Rate(11, fVal, bAdd);
+      break;
+    case 18:
+      m_EP.SetEff_Rate(0, fVal, bAdd);
+      m_EP.SetEff_Rate(1, fVal, bAdd);
+      m_EP.SetEff_Rate(2, fVal, bAdd);
+      m_EP.SetEff_Rate(3, fVal, bAdd);
+      m_EP.SetEff_Rate(4, fVal, bAdd);
+      m_EP.SetEff_Rate(29, fVal, bAdd);
+      break;
+    case 19:
+      m_EP.SetEff_Rate(0, fVal, bAdd);
+      break;
+    case 20:
+      m_EP.SetEff_Rate(2, fVal, bAdd);
+      break;
+    case 21:
+      m_EP.SetEff_Rate(1, fVal, bAdd);
+      break;
+    case 22:
+      m_EP.SetEff_Rate(3, fVal, bAdd);
+      break;
+    case 23:
+      m_EP.SetEff_Rate(4, fVal, bAdd);
+      break;
+    case 24:
+      m_EP.SetEff_Rate(6, fVal, bAdd);
+      break;
+    case 25:
+      m_EP.SetEff_Rate(12, fVal, bAdd);
+      break;
+    case 26:
+      m_EP.SetEff_Rate(13, fVal, bAdd);
+      break;
+    case 27:
+      m_EP.SetEff_Rate(40, fVal, bAdd);
+      break;
+    case 29:
+      m_EP.SetEff_Rate(41, fVal, bAdd);
+      break;
+    case 30:
+      m_EP.SetEff_Rate(42, fVal, bAdd);
+      break;
+    case 31:
+      m_EP.SetEff_Rate(43, fVal, bAdd);
+      break;
+    case 32:
+      m_EP.SetEff_Rate(44, fVal, bAdd);
+      break;
+    case 33:
+      m_EP.SetEff_Rate(57, fVal, bAdd);
+      break;
+    case 34:
+      m_EP.SetEff_Rate(58, fVal, bAdd);
+      break;
+    case 35:
+      m_EP.SetEff_Rate(59, fVal, bAdd);
+      break;
+    case 36:
+      m_EP.SetEff_Rate(60, fVal, bAdd);
+      break;
+    case 37:
+      m_EP.SetEff_Rate(61, fVal, bAdd);
+      break;
+    case 38:
+      m_EP.SetEff_Rate(0, fVal, bAdd);
+      m_EP.SetEff_Rate(1, fVal, bAdd);
+      break;
+    case 39:
+      m_EP.SetEff_Plus(6, fVal, bAdd);
+      m_EP.SetEff_Plus(7, fVal, bAdd);
+      break;
+    case 40:
+      m_EP.SetEff_Plus(23, 1.0f, bAdd);
+      break;
+    case 41:
+      m_EP.SetEff_Plus(20, fVal, bAdd);
+      break;
+    case 43:
+      m_EP.SetEff_Plus(0, fVal, bAdd);
+      break;
+    case 44:
+      m_EP.SetEff_Plus(1, fVal, bAdd);
+      break;
+    case 45:
+      m_EP.SetEff_Plus(31, fVal, bAdd);
+      break;
+    case 46:
+      m_EP.SetEff_Plus(30, fVal, bAdd);
+      break;
+    case 47:
+      m_EP.SetEff_Plus(14, fVal, bAdd);
+      break;
+    case 48:
+      m_EP.SetEff_Plus(40, fVal, bAdd);
+      break;
+    case 49:
+      m_EP.SetEff_Plus(3, fVal, bAdd);
+      break;
+    case 50:
+      HideNameEffect(bAdd);
+      break;
+    case 56:
+      m_EP.SetEff_State(8, bAdd);
+      break;
+    case 57:
+      m_EP.SetEff_Plus(29, fVal, bAdd);
+      break;
+    case 59:
+      SetMstPt(0, fVal, bAdd, 0);
+      break;
+    case 60:
+      SetMstPt(0, fVal, bAdd, 1);
+      break;
+    case 61:
+      SetMstPt(4, fVal, bAdd, 0);
+      break;
+    case 62:
+      SetMstPt(1, fVal, bAdd, 0);
+      break;
+    case 63:
+      SetMstPt(2, fVal, bAdd, 0);
+      break;
+    case 64:
+    case 65:
+      SetMstPt(6, fVal, bAdd, 0);
+      break;
+    case 76:
+      m_EP.SetEff_Plus(22, fVal, bAdd);
+      break;
+    case 77:
+      if (nDiffCnt > 0 && bAdd)
+      {
+        const float reduceValue = static_cast<float>(nDiffCnt) * 0.01f;
+        DecHalfSFContDam(reduceValue);
+      }
+      break;
+    case 78:
+      m_EP.SetEff_Plus(28, fVal, bAdd);
+      break;
+    case 79:
+      if (nDiffCnt != 1 && fVal >= 1.0f)
+      {
+        SetEquipJadeEffect(79, fVal, bAdd);
+      }
+      break;
+    case 80:
+      if (nDiffCnt != 1 && fVal >= 1.0f)
+      {
+        SetEquipJadeEffect(80, fVal, bAdd);
+      }
+      break;
+    default:
+      return;
+  }
+}
+
+void CPlayer::SetEquipJadeEffect(int nParam, float fCurVal, bool bAdd)
+{
+  (void)nParam;
+
+  for (int slotIndex = 0; slotIndex < 7; ++slotIndex)
+  {
+    _STORAGE_LIST::_db_con *item = &m_Param.m_pStoragePtr[1]->m_pStorageList[slotIndex];
+    if (item && item->m_bLoad)
+    {
+      unsigned int lvBits = item->m_dwLv;
+      const unsigned __int8 upgradeLevel = GetItemUpgedLv(lvBits);
+      if (upgradeLevel && GetDefItemUpgSocketNum(item->m_byTableCode, item->m_wItemIndex))
+      {
+        for (int socketIndex = 0; socketIndex < upgradeLevel; ++socketIndex)
+        {
+          const unsigned __int8 talikType = GetTalikFromSocket(lvBits, static_cast<unsigned __int8>(socketIndex));
+          if (talikType != 15)
+          {
+            int sameCount = 1;
+            for (int nextIndex = socketIndex + 1; nextIndex < upgradeLevel; ++nextIndex)
+            {
+              const unsigned __int8 nextTalik = GetTalikFromSocket(lvBits, static_cast<unsigned __int8>(nextIndex));
+              if (talikType == nextTalik)
+              {
+                ++sameCount;
+                lvBits |= 15u << (4 * nextIndex);
+              }
+            }
+
+            _ItemUpgrade_fld *record = g_Main.m_tblItemUpgrade.GetRecord(talikType);
+            if (record && sameCount >= 1 && sameCount <= 7)
+            {
+              const float baseValue = reinterpret_cast<float *>(&record->m_nEffectUnit)[sameCount];
+              float deltaValue = 0.0f;
+              if (talikType)
+              {
+                if (talikType == 5 && item->m_byTableCode != 6)
+                {
+                  if (fCurVal > 0.0f && sameCount < static_cast<int>(fCurVal))
+                  {
+                    deltaValue =
+                      reinterpret_cast<float *>(&record->m_nEffectUnit)[static_cast<int>(fCurVal)] - baseValue;
+                  }
+                  m_EP.SetEff_Rate(6, deltaValue, bAdd);
+                  m_fTalik_DefencePoint = m_fTalik_DefencePoint + deltaValue;
+                }
+              }
+              else if (item->m_byTableCode == 6)
+              {
+                if (fCurVal > 0.0f && sameCount < static_cast<int>(fCurVal))
+                {
+                  deltaValue =
+                    reinterpret_cast<float *>(&record->m_nEffectUnit)[static_cast<int>(fCurVal)] - baseValue;
+                }
+                for (int paramIndex = 0; paramIndex < 2; ++paramIndex)
+                {
+                  m_EP.SetEff_Rate(paramIndex, deltaValue, bAdd);
+                  m_EP.SetEff_Rate(paramIndex + 2, deltaValue, bAdd);
+                }
+                m_EP.SetEff_Rate(4, deltaValue, bAdd);
+                m_EP.SetEff_Rate(29, deltaValue, bAdd);
+              }
+            }
+          }
+        }
+      }
+      else
+      {
+        float effectValue = 0.0f;
+        if (fCurVal > 0.0f
+            && fCurVal < 6.0f
+            && item->m_byTableCode == 6
+            && GetItemGrade(item->m_byTableCode, item->m_wItemIndex) < 3u)
+        {
+          _ItemUpgrade_fld *record = g_Main.m_tblItemUpgrade.GetRecord(0);
+          effectValue = reinterpret_cast<float *>(&record->m_nEffectUnit)[static_cast<int>(fCurVal)];
+          for (int paramIndex = 0; paramIndex < 2; ++paramIndex)
+          {
+            m_EP.SetEff_Rate(paramIndex, effectValue, bAdd);
+            m_EP.SetEff_Rate(paramIndex + 2, effectValue, bAdd);
+          }
+          m_EP.SetEff_Rate(4, effectValue, bAdd);
+          m_EP.SetEff_Rate(29, effectValue, bAdd);
+        }
+        else if (fCurVal > 0.0f && fCurVal < 5.0f && item->m_byTableCode <= 5u)
+        {
+          _ItemUpgrade_fld *record = g_Main.m_tblItemUpgrade.GetRecord(5u);
+          effectValue = reinterpret_cast<float *>(&record->m_nEffectUnit)[static_cast<int>(fCurVal)];
+          m_EP.SetEff_Rate(6, effectValue, bAdd);
+          m_fTalik_DefencePoint = bAdd ? (m_fTalik_DefencePoint + effectValue)
+                                       : (m_fTalik_DefencePoint - effectValue);
+        }
+      }
+    }
+  }
+}
+
+bool CPlayer::DecHalfSFContDam(float fEffVal)
+{
+  const unsigned int curTime = _sf_continous::GetSFContCurTime();
+  int hitCount = 0;
+  int updatedCount = 0;
+
+  for (int index = 0; index < 8; ++index)
+  {
+    _sf_continous *cont = &m_SFCont[0][index];
+    if (cont->m_bExist)
+    {
+      _base_fld *record = g_Main.m_tblEffectData[3].GetRecord("17");
+      if (!record
+          || !m_bAfterEffect
+          || cont->m_byEffectCode != 3
+          || cont->m_wEffectIndex != record->m_dwIndex)
+      {
+        const unsigned int elapsed = curTime - cont->m_dwStartSec;
+        int leftSec = 0;
+        if (fEffVal <= 0.0f)
+        {
+          leftSec = (static_cast<int>(cont->m_wDurSec) >> 1) - static_cast<int>(elapsed);
+        }
+        else
+        {
+          leftSec =
+            static_cast<int>(static_cast<float>(cont->m_wDurSec) * (1.0f - fEffVal)) - static_cast<int>(elapsed);
+        }
+
+        if (leftSec <= 0)
+        {
+          RemoveSFContEffect(0, static_cast<unsigned __int16>(index), false, false);
+        }
+        else
+        {
+          AlterContDurSec(0, static_cast<unsigned __int16>(index), cont->m_dwStartSec, cont->m_wDurSec / 2);
+          ++updatedCount;
+        }
+        ++hitCount;
+      }
+    }
+  }
+
+  if (updatedCount > 0)
+  {
+    SendMsg_AlterContEffectTime(0);
+  }
+  return hitCount > 0;
+}
+
+void CPlayer::SetMstPt(int nMstCode, float fVal, bool bAdd, unsigned int nWpType)
+{
+  float deltaValue = bAdd ? fVal : (fVal * -1.0f);
+  int curMastery = m_pmMst.GetMasteryPerMast(static_cast<unsigned __int8>(nMstCode), static_cast<unsigned __int8>(nWpType));
+  if (static_cast<float>(curMastery) + deltaValue > 99.0f)
+  {
+    deltaValue = static_cast<float>(99 - curMastery);
+  }
+
+  const float base1000 = std::pow(1000.0f, 2.0f);
+  const float curPow = std::pow(static_cast<float>(curMastery), 2.0f);
+  const float curRoot = std::sqrt(base1000 + (4.0f * curPow) * 1000.0f);
+  unsigned int oldCum = static_cast<unsigned int>(std::pow((curRoot - 1000.0f) / 2.0f, 2.0f));
+
+  const float newPow = std::pow(static_cast<float>(curMastery) + deltaValue, 2.0f);
+  const float newRoot = std::sqrt(base1000 + (4.0f * newPow) * 1000.0f) - 1000.0f;
+  unsigned int newCum = static_cast<unsigned int>(std::pow(newRoot / 2.0f, 2.0f));
+
+  int updated = 0;
+  if (nMstCode == 0)
+  {
+    updated = Emb_UpdateStat(nWpType, newCum, oldCum);
+    m_pmMst.UpdateCumPerMast(0, static_cast<unsigned __int8>(nWpType), updated + newCum);
+    SendMsg_StatInform(nWpType, updated + newCum, 0);
+    s_MgrItemHistory.mastery_change_jade(
+      0,
+      oldCum,
+      newCum,
+      curMastery,
+      deltaValue,
+      m_szItemHistoryFileName,
+      nWpType);
+  }
+  if (nMstCode == 1)
+  {
+    updated = Emb_UpdateStat(2u, newCum, oldCum);
+    m_pmMst.UpdateCumPerMast(1u, 0, newCum);
+    SendMsg_StatInform(2u, updated + newCum, 0);
+  }
+  if (nMstCode == 2)
+  {
+    const float base100 = std::pow(100.0f, 2.0f);
+    const float oldPow = std::pow(static_cast<float>(curMastery), 2.0f);
+    const float oldRoot = std::sqrt(base100 + (4.0f * oldPow) * 100.0f);
+    oldCum = static_cast<unsigned int>(std::pow((oldRoot - 100.0f) / 2.0f, 2.0f));
+
+    const float newPow2 = std::pow(static_cast<float>(curMastery) + deltaValue, 2.0f);
+    const float newRoot2 = std::sqrt(base100 + (4.0f * newPow2) * 100.0f) - 100.0f;
+    newCum = static_cast<unsigned int>(std::pow(newRoot2 / 2.0f, 2.0f));
+
+    updated = Emb_UpdateStat(3u, newCum, oldCum);
+    m_pmMst.UpdateCumPerMast(2u, 0, newCum);
+    SendMsg_StatInform(3u, updated + newCum, 0);
+  }
+  if (nMstCode == 4)
+  {
+    for (int index = 0; index < 24; ++index)
+    {
+      curMastery = m_pmMst.GetMasteryPerMast(4u, static_cast<unsigned __int8>(index));
+      const float oldPow = std::pow(static_cast<float>(curMastery), 2.0f);
+      const float oldPow2 = std::pow(oldPow, 2.0f);
+      oldCum = static_cast<unsigned int>((CalcRoundUp(oldPow2 / 14.0f) - 1) + 0.0099999998f);
+
+      const float newPow3 = std::pow(static_cast<float>(curMastery) + deltaValue, 2.0f);
+      const float newPow4 = std::pow(newPow3, 2.0f);
+      newCum = static_cast<unsigned int>((CalcRoundUp(newPow4 / 14.0f) - 1) + 0.0099999998f);
+
+      updated = Emb_UpdateStat(index + 52, newCum, oldCum);
+      m_pmMst.UpdateCumPerMast(4u, static_cast<unsigned __int8>(index), newCum);
+      SendMsg_StatInform(index + 52, updated + newCum, 0);
+    }
+  }
+  if (nMstCode == 6 && static_cast<unsigned int>(CPlayerDB::GetRaceCode(&m_Param)) != 2)
+  {
+    newCum = static_cast<unsigned int>(std::pow(static_cast<float>((curMastery - 1) + deltaValue), 2.0f) * 15000.0f);
+    oldCum = static_cast<unsigned int>(std::pow(static_cast<float>(curMastery - 1), 2.0f) * 15000.0f);
+    updated = Emb_UpdateStat(0x4Fu, newCum, oldCum);
+    m_pmMst.UpdateCumPerMast(6u, 0, newCum);
+    SendMsg_StatInform(0x4Fu, updated + newCum, 0);
+  }
+  ReCalcMaxHFSP(true, false);
+}
+
+void CPlayer::SendMsg_AlterContEffectTime(unsigned __int8 byContType)
+{
+  _alter_cont_effect_time_zocl msg;
+  const unsigned int curTime = _sf_continous::GetSFContCurTime();
+  int effectCount = 0;
+
+  for (int index = 0; index < 8; ++index)
+  {
+    _sf_continous *cont = &m_SFCont[byContType][index];
+    if (cont->m_bExist)
+    {
+      _base_fld *record = g_Main.m_tblEffectData[cont->m_byEffectCode].GetRecord(cont->m_wEffectIndex);
+      (void)record;
+      const unsigned __int16 effectCode = CalcEffectBit(cont->m_byEffectCode, cont->m_wEffectIndex);
+      msg.List[effectCount].wEffectCode = effectCode;
+      const unsigned int elapsed = curTime - cont->m_dwStartSec;
+      msg.List[effectCount].zLeftSec = static_cast<__int16>(cont->m_wDurSec - elapsed);
+      ++effectCount;
+    }
+  }
+
+  msg.byEffectNum = static_cast<unsigned __int8>(effectCount);
+
+  unsigned __int8 type[2]{};
+  type[0] = 17;
+  type[1] = 24;
+  const unsigned __int16 len = static_cast<unsigned __int16>(msg.size());
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
 }
 
 void CPlayer::SetMstHaveEffect(_ResourceItem_fld *pFld, _STORAGE_LIST::_db_con *pItem, int bAdd, int nAlter)
@@ -2661,6 +4021,44 @@ void CPlayer::pc_NuclearAfterEffect()
       }
     }
   }
+}
+
+void CPlayer::SendMsg_StartContSF(_sf_continous *pCont)
+{
+#pragma pack(push, 1)
+  struct StartContMsg
+  {
+    unsigned __int8 lv;
+    unsigned __int16 effectBit;
+    unsigned __int16 durSec;
+  };
+#pragma pack(pop)
+
+  StartContMsg msg{};
+  msg.lv = pCont->m_byLv;
+  msg.effectBit = CalcEffectBit(pCont->m_byEffectCode, pCont->m_wEffectIndex);
+  msg.durSec = pCont->m_wDurSec;
+
+  unsigned __int8 type[2] = {17, 25};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+}
+
+void CPlayer::SendMsg_UnitAlterFeeInform(char bySlotIndex, unsigned int dwPullingFee)
+{
+#pragma pack(push, 1)
+  struct UnitAlterFeeMsg
+  {
+    char bySlotIndex;
+    unsigned int dwPullingFee;
+  };
+#pragma pack(pop)
+
+  UnitAlterFeeMsg msg{};
+  msg.bySlotIndex = bySlotIndex;
+  msg.dwPullingFee = dwPullingFee;
+
+  unsigned __int8 type[2] = {23, 21};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
 void CPlayer::_UpdateUnitDebt(unsigned __int8 bySlotIndex, unsigned int dwPull)

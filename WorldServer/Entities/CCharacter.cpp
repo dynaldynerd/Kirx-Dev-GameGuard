@@ -322,6 +322,20 @@ void CCharacter::RemoveSFContEffect(
   m_bLastContEffectUpdate = true;
 }
 
+void CCharacter::AlterContDurSec(
+  unsigned __int8 byContCode,
+  unsigned __int16 wListIndex,
+  unsigned int dwStartSec,
+  unsigned __int16 wNewDur)
+{
+  _sf_continous *cont = &m_SFCont[byContCode][wListIndex];
+  if (cont->m_bExist)
+  {
+    cont->m_dwStartSec = dwStartSec;
+    cont->m_wDurSec = wNewDur;
+  }
+}
+
 void CCharacter::RemoveSFContHelpByEffect(int nContParamCode, int nContParamIndex)
 {
   for (int j = 0; j < 8; ++j)
