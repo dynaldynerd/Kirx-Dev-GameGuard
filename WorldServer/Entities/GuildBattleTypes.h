@@ -71,3 +71,71 @@ struct _possible_battle_guild_list_result_zocl
   __int64 size();
 };
 #pragma pack(pop)
+
+#pragma pack(push, 2)
+struct _guild_battle_rank_list_result_zocl_list
+{
+  int nRank;
+  unsigned __int8 byGrade;
+  char wszName[17];
+  unsigned int dwWin;
+  unsigned int dwLose;
+  unsigned int dwDraw;
+  unsigned int dwScore;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _guild_battle_rank_list_result_zocl
+{
+  unsigned int dwCurVer;
+  unsigned __int8 byRace;
+  unsigned __int8 byCurPage;
+  unsigned __int8 byMaxPage;
+  unsigned __int8 byExistSelfGuildInfo;
+  unsigned __int8 byCnt;
+  _guild_battle_rank_list_result_zocl_list list[11];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _guild_battle_reserved_schedule_result_zocl
+{
+  struct __list
+  {
+    char wsz1PName[17];
+    unsigned __int8 by1PRace;
+    char wsz2PName[17];
+    unsigned __int8 by2PRace;
+    unsigned __int8 byStartHour;
+    unsigned __int8 byStartMin;
+    unsigned __int8 byEndHour;
+    unsigned __int8 byEndMin;
+  };
+
+  unsigned int dwVer;
+  unsigned __int8 byToDay;
+  unsigned __int8 byTomorrow;
+  unsigned __int8 byDate;
+  unsigned __int8 byPage;
+  unsigned __int8 byMaxPage;
+  unsigned __int8 bySelfScheduleInx;
+  unsigned __int8 byCnt;
+  __list List[5];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _guild_battle_current_battle_info_result_zocl
+{
+  char wszLeftRedName[17];
+  char wszRightBlueName[17];
+  unsigned int dwLeftRedScore;
+  unsigned int dwRighBluetScore;
+  unsigned int dwLeftRedGoalCnt;
+  unsigned int dwRighBluetGoalCnt;
+  unsigned __int8 byLeftHour;
+  unsigned __int8 byLeftMin;
+  unsigned __int8 byLeftSec;
+};
+#pragma pack(pop)
