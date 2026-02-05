@@ -360,6 +360,11 @@ int CHolyStoneSystem::GetDestroyerState()
   return static_cast<int>(m_SaveData.m_eDestroyerState);
 }
 
+unsigned int CHolyStoneSystem::GetDestroyerSerial()
+{
+  return m_SaveData.m_dwDestroyerSerial;
+}
+
 int CHolyStoneSystem::GetHolyMasterRace()
 {
   return m_SaveData.m_nHolyMasterRace;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "RecordDataTypes.h"
 
 struct _base_fld;
 

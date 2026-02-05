@@ -230,12 +230,7 @@ struct __cppobj __declspec(align(4)) _DB_QRY_SYN_DATA
 #include "CCheckSum.h"
 
 /* 1283 */
-struct __cppobj _record_bin_header
-{
-  int m_nRecordNum;
-  int m_nFieldNum;
-  int m_nRecordSize;
-};
+#include "RecordDataTypes.h"
 
 /* 1281 */
 #include "CRecordData.h"
@@ -584,6 +579,7 @@ struct __cppobj TimeLimitMgr
   void InitializeTLMgr();
   void SetTLEnable(unsigned __int16 wState);
   long double GetPlayerPenalty(unsigned __int16 wIndex);
+  unsigned __int8 GetPlayerStatus(unsigned __int16 wIndex);
 
   CMyTimer m_tmLoopTime;
   Player_TL_Status m_lstTLStaus[2532];
@@ -1414,6 +1410,9 @@ struct __cppobj __declspec(align(8)) _guild_battle_suggest_matter
   unsigned int dwStartTime;
   unsigned int dwNumber;
   unsigned int dwMapIdx;
+
+  _guild_battle_suggest_matter();
+  void Clear();
 };
 
 /* 1729 */
@@ -1443,6 +1442,10 @@ struct __cppobj __declspec(align(8)) _guild_member_info
   unsigned __int8 byGrade;
   CPlayer *pPlayer;
   bool bVote;
+
+  _guild_member_info();
+  void init();
+  bool IsFill();
 };
 
 /* 1690 */
@@ -1847,6 +1850,10 @@ struct __cppobj __declspec(align(8)) _guild_applier_info
 {
   CPlayer *pPlayer;
   unsigned int dwApplyTime;
+
+  _guild_applier_info();
+  void init();
+  bool IsFill();
 };
 
 /* 1724 */

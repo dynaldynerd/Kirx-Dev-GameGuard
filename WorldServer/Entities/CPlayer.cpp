@@ -15,7 +15,10 @@
 #include "CHolyStone.h"
 #include "CPvpUserAndGuildRankingSystem.h"
 #include "CGuildBattleController.h"
+#include "CGuild.h"
 #include "CGuildMasterEffect.h"
+#include "CPartyPlayer.h"
+#include "PatriarchElectProcessor.h"
 #include "CHonorGuild.h"
 #include "CLogFile.h"
 #include "CTSingleton.h"
@@ -28,6 +31,7 @@
 #include "WorldServerUtil.h"
 #include "alter_cont_effect_time_zocl.h"
 #include "notify_not_use_premium_cashitem_zocl.h"
+#include "pt_inform_punishment_zocl.h"
 #include "CNetworkEX.h"
 #include "GlobalObjects.h"
 
@@ -1805,6 +1809,11 @@ void CPlayer::SetLastAttBuff(bool bSet)
   }
 }
 
+bool CPlayer::IsLastAttBuff()
+{
+  return m_Param.m_bLastAttBuff;
+}
+
 __int64 CPlayer::GetLevel()
 {
   return CPlayerDB::GetLevel(&m_Param);
@@ -1830,6 +1839,355 @@ __int64 CPlayer::GetMaxHP()
 unsigned __int64 CPlayer::GetStateFlag()
 {
   return m_dwLastState;
+}
+
+void CPlayer::SetStateFlag()
+{
+  if (!m_pPartyMgr)
+  {
+    return;
+  }
+
+  unsigned __int64 state = 0;
+  const unsigned __int64 bit = 1;
+
+  if (m_byMoveType == 1)
+  {
+    state |= bit;
+  }
+  if (m_byModeType == 1)
+  {
+    state |= bit << 1;
+  }
+  if (GetStealth(false))
+  {
+    state |= bit << 2;
+  }
+  if (m_bStun)
+  {
+    state |= bit << 3;
+  }
+  if (m_pPartyMgr->IsPartyMode())
+  {
+    state |= bit << 4;
+  }
+  if (m_bCorpse || !CPlayerDB::GetHP(&m_Param))
+  {
+    state |= bit << 5;
+  }
+  if (m_pPartyMgr->IsPartyBoss())
+  {
+    state |= bit << 6;
+  }
+  if (m_pmTrd.bDTradeMode)
+  {
+    state |= bit << 7;
+  }
+  if (m_EP.GetEff_Plus(22) > 0.0)
+  {
+    state |= bit << 8;
+  }
+  if (m_bObserver)
+  {
+    state |= bit << 9;
+  }
+  if (m_pPartyMgr->IsPartyLock())
+  {
+    state |= bit << 10;
+  }
+  if (m_bMineMode)
+  {
+    state |= bit << 11;
+  }
+  if (m_byStandType)
+  {
+    state |= bit << 13;
+  }
+  if (m_bBlockParty)
+  {
+    state |= bit << 14;
+  }
+  if (m_bBlockTrade)
+  {
+    state |= bit << 15;
+  }
+
+  const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+  CPvpUserAndGuildRankingSystem *rankingSystem = CPvpUserAndGuildRankingSystem::Instance();
+  if (m_dwObjSerial == rankingSystem->GetCurrentRaceBossSerial(static_cast<unsigned __int8>(raceCode), 0))
+  {
+    state |= bit << 16;
+  }
+  const int viceRaceCode = CPlayerDB::GetRaceCode(&m_Param);
+  if (rankingSystem->IsRaceViceBoss(static_cast<unsigned __int8>(viceRaceCode), m_dwObjSerial))
+  {
+    state |= bit << 17;
+  }
+  if (m_EP.GetEff_State(20))
+  {
+    state |= bit << 18;
+  }
+  if (m_EP.GetEff_State(21))
+  {
+    state |= bit << 19;
+  }
+  if (m_EP.GetEff_State(22))
+  {
+    state |= bit << 20;
+  }
+  if (m_dwSelfDestructionTime)
+  {
+    state |= bit << 21;
+  }
+  if (g_HolySys.GetDestroyerSerial() == m_dwObjSerial)
+  {
+    state |= bit << 22;
+  }
+  if (m_bTakeGravityStone)
+  {
+    state |= bit << 23;
+  }
+  if (m_bInGuildBattle)
+  {
+    state |= bit << 24;
+  }
+  if (m_bTakeSoccerBall)
+  {
+    state |= bit << 25;
+  }
+  if (m_byMoveType == 2)
+  {
+    state |= bit << 26;
+  }
+  if (m_nChaosMode == 1)
+  {
+    state |= bit << 27;
+  }
+  if (m_nChaosMode == 2)
+  {
+    state |= bit << 28;
+  }
+  if (m_bSnowMan)
+  {
+    state |= bit << 30;
+  }
+  for (int j = 0; j < 2; ++j)
+  {
+    if (m_PotionParam.m_ContCommonPotionData[j].m_dwPotionEffectIndex == 237)
+    {
+      state |= bit << 29;
+    }
+    if (m_PotionParam.m_ContCommonPotionData[j].m_dwPotionEffectIndex == 238)
+    {
+      state |= bit << 31;
+    }
+  }
+  if (IsPunished(1u, false))
+  {
+    state |= bit << 32;
+  }
+
+  const unsigned int charSerial = CPlayerDB::GetCharSerial(&m_Param);
+  const int bossRaceCode = CPlayerDB::GetRaceCode(&m_Param);
+  const unsigned __int8 bossType =
+    rankingSystem->GetBossType(static_cast<unsigned __int8>(bossRaceCode), charSerial);
+  switch (bossType)
+  {
+    case 1:
+      state |= bit << 33;
+      break;
+    case 2:
+      state |= bit << 34;
+      break;
+    case 3:
+      state |= bit << 35;
+      break;
+    case 4:
+      state |= bit << 36;
+      break;
+    case 5:
+      state |= bit << 37;
+      break;
+    case 6:
+      state |= bit << 38;
+      break;
+    case 7:
+      state |= bit << 39;
+      break;
+    case 8:
+      state |= bit << 40;
+      break;
+    default:
+      break;
+  }
+
+  if (m_bAfterEffect)
+  {
+    state |= bit << 41;
+  }
+  if (m_Param.m_pGuild && m_Param.m_byClassInGuild == 2)
+  {
+    state |= bit << 42;
+  }
+  if (m_tmrAuraSkill.m_bOper)
+  {
+    state |= bit << 43;
+  }
+  if (m_EP.GetEff_Have(50) > 0.0)
+  {
+    state |= bit << 44;
+  }
+  if (m_EP.GetEff_Have(58) > 0.0)
+  {
+    state |= bit << 45;
+  }
+  if (IsLastAttBuff())
+  {
+    state |= bit << 46;
+  }
+  if (m_byBattleTournamentGrade != 255)
+  {
+    if (m_byBattleTournamentGrade)
+    {
+      if (m_byBattleTournamentGrade == 1)
+      {
+        state |= bit << 48;
+      }
+      else if (m_byBattleTournamentGrade == 2)
+      {
+        state |= bit << 49;
+      }
+    }
+    else
+    {
+      state |= bit << 47;
+    }
+  }
+  if (GetInvisible())
+  {
+    state |= bit << 51;
+  }
+  if (m_EP.GetEff_State(28))
+  {
+    state |= bit << 52;
+  }
+
+  m_dwLastState = state;
+}
+
+void CPlayer::SenseState()
+{
+  const unsigned __int64 oldState = GetStateFlag();
+  SetStateFlag();
+  if (oldState != m_dwLastState)
+  {
+    SendMsg_StateInform(m_dwLastState);
+  }
+}
+
+void CPlayer::SendMsg_StateInform(unsigned __int64 dwStateFlag)
+{
+  struct
+  {
+    unsigned int dwObjSerial;
+    unsigned __int64 dwState;
+  } msg{};
+
+  msg.dwObjSerial = m_dwObjSerial;
+  msg.dwState = dwStateFlag;
+
+  unsigned __int8 type[2] = {4, 25};
+  CircleReport(type, reinterpret_cast<char *>(&msg), 12, true);
+}
+
+char CPlayer::IsPunished(unsigned __int8 byType, bool bSend)
+{
+  if (byType >= 3u)
+  {
+    return 0;
+  }
+  if (g_Main.IsReleaseServiceMode() && m_byUserDgr == 2)
+  {
+    return 0;
+  }
+  if (!m_pUserDB)
+  {
+    return 0;
+  }
+  if (m_pUserDB->m_AvatorData.dbAvator.m_dwPunishment[byType] == static_cast<unsigned int>(-1))
+  {
+    return 0;
+  }
+
+  PatriarchElectProcessor *processor = PatriarchElectProcessor::Instance();
+  const unsigned int currentElectSerial = processor->GetCurrPatriarchElectSerial();
+  if (m_pUserDB->m_AvatorData.dbAvator.m_dwElectSerial[byType] != currentElectSerial)
+  {
+    return 0;
+  }
+
+  __int64 nowTime = 0;
+  time(&nowTime);
+  const int nowMin = static_cast<int>(nowTime / 60);
+  if (nowMin - static_cast<int>(m_pUserDB->m_AvatorData.dbAvator.m_dwPunishment[byType]) >= 0x10E0)
+  {
+    m_pUserDB->m_AvatorData.dbAvator.m_dwPunishment[byType] = static_cast<unsigned int>(-1);
+    return 0;
+  }
+
+  if (bSend)
+  {
+    _pt_inform_punishment_zocl msg{};
+    msg.byType = byType;
+    msg.nRemainMin = 4320 - (nowMin - static_cast<int>(m_pUserDB->m_AvatorData.dbAvator.m_dwPunishment[byType]));
+
+    unsigned __int8 type[2] = {13, 117};
+    const unsigned __int16 len = static_cast<unsigned __int16>(msg.size());
+    g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
+  }
+  return 1;
+}
+
+bool CPlayer::IsMapLoading()
+{
+  return GetCurSecNum() == static_cast<unsigned int>(-1) || m_bMapLoading;
+}
+
+bool CPlayer::IsRidingShip()
+{
+  return m_pCurMap == g_TransportShip[CPlayerDB::GetRaceCode(&m_Param)].m_pLinkShipMap;
+}
+
+CMapData *CPlayer::GetBindMapData()
+{
+  return m_pBindMapData;
+}
+
+_dummy_position *CPlayer::GetBindDummy()
+{
+  return m_pBindDummyData;
+}
+
+bool CPlayer::SetBindPosition(CMapData *pMap, _dummy_position *pDummy)
+{
+  if (!m_bOper || !pMap || !pDummy || !m_pUserDB)
+  {
+    return false;
+  }
+  m_pBindMapData = pMap;
+  m_pBindDummyData = pDummy;
+  return m_pUserDB->Update_Bind(pMap->m_pMapSet->m_strCode, pDummy->m_szCode, true);
+}
+
+void CPlayer::pc_SetInGuildBattle(bool bInGuildBattle, unsigned __int8 byColorInx)
+{
+  m_bInGuildBattle = bInGuildBattle;
+  m_byGuildBattleColorInx = byColorInx;
+  m_bufShapeAll.byColor = m_byGuildBattleColorInx;
+  if (!m_bInGuildBattle)
+  {
+    m_bTakeGravityStone = false;
+  }
 }
 
 char CPlayer::SetHP(int nHP, bool bOver)
@@ -3462,6 +3820,99 @@ void CPlayer::apply_have_item_std_effect(int nEffCode, float fVal, bool bAdd, in
   }
 }
 
+void CPlayer::HideNameEffect(bool bAdd)
+{
+  const unsigned int dwSerial = CPlayerDB::GetCharSerial(&m_Param);
+  const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+  CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
+  const unsigned __int8 bossType = ranking->GetBossType(static_cast<unsigned __int8>(raceCode), dwSerial);
+
+  if (!bossType || bossType == 1 || bossType == 5)
+  {
+    m_EP.m_pDataParam->m_fEff_Have[50] = 0.0f;
+  }
+  else if (bAdd)
+  {
+    if (m_pPartyMgr->IsPartyMode())
+    {
+      pc_PartyLeaveSelfReqeuest();
+    }
+    for (int j = 0; j < 50; ++j)
+    {
+      _BUDDY_LIST::__list *buddy = &m_pmBuddy.m_List[j];
+      if (buddy->fill() && buddy->pPtr && buddy->pPtr->m_pmBuddy.SearchBuddyLogoff(m_dwObjSerial))
+      {
+        buddy->pPtr->SendMsg_BuddyLogoffInform(m_dwObjSerial);
+      }
+    }
+    if (m_Param.m_pGuild)
+    {
+      m_Param.m_pGuild->LogoffMember(m_dwObjSerial);
+      m_Param.m_pGuild->SendMsg_GuildMemberLogoff(m_dwObjSerial);
+    }
+    if (m_Param.m_pApplyGuild)
+    {
+      m_Param.m_pApplyGuild->PopApplier(m_dwObjSerial, 2u);
+    }
+  }
+  else
+  {
+    for (int k = 0; k < 50; ++k)
+    {
+      _BUDDY_LIST::__list *buddy = &m_pmBuddy.m_List[k];
+      if (buddy->fill())
+      {
+        for (int m = 0; m < MAX_PLAYER; ++m)
+        {
+          CPlayer *ptr = &g_Player[m];
+          if (ptr->m_bLive && ptr != this && ptr->m_dwObjSerial == buddy->dwSerial)
+          {
+            if (ptr->m_pmBuddy.IsBuddy(m_dwObjSerial))
+            {
+              const char *name = CPlayerDB::GetCharNameW(&ptr->m_Param);
+              buddy->ON(const_cast<char *>(name), ptr);
+              const char *selfName = CPlayerDB::GetCharNameW(&m_Param);
+              ptr->m_pmBuddy.SearchBuddyLogin(this, m_dwObjSerial, const_cast<char *>(selfName));
+              ptr->SendMsg_BuddyLoginInform(m_dwObjSerial, m_wRegionMapIndex, m_wRegionIndex);
+            }
+            break;
+          }
+        }
+      }
+    }
+    if (m_Param.m_pGuild)
+    {
+      _guild_member_info *member = m_Param.m_pGuild->LoginMember(m_dwObjSerial, this);
+      if (member)
+      {
+        m_Param.m_pGuildMemPtr = member;
+        m_Param.m_pGuild->SendMsg_GuildMemberLogin(m_dwObjSerial, m_wRegionMapIndex, m_wRegionIndex);
+        CPlayer *pkPlayer = &g_Player[m_ObjID.m_wIndex];
+        CGuildBattleController::Instance()->LogIn(pkPlayer);
+        if (member->byClassInGuild == 2)
+        {
+          CGuildBattleController::Instance()->SendPossibleBattleGuildListFirst(
+            m_ObjID.m_wIndex,
+            static_cast<unsigned __int8>(CPlayerDB::GetRaceCode(&m_Param)));
+        }
+        if (member->byClassInGuild == 2)
+        {
+          const unsigned __int8 grade = m_Param.m_pGuild->GetGrade();
+          CGuildMasterEffect::GetInstance()->in_player(this, grade);
+        }
+      }
+      else
+      {
+        m_Param.m_pGuild = nullptr;
+      }
+    }
+    if (m_Param.m_pApplyGuild)
+    {
+      m_Param.m_pApplyGuild->PushApplier(this);
+    }
+  }
+}
+
 void CPlayer::SetEquipJadeEffect(int nParam, float fCurVal, bool bAdd)
 {
   (void)nParam;
@@ -3720,6 +4171,53 @@ void CPlayer::SendMsg_AlterContEffectTime(unsigned __int8 byContType)
   type[1] = 24;
   const unsigned __int16 len = static_cast<unsigned __int16>(msg.size());
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
+}
+
+int CPlayer::Emb_UpdateStat(unsigned int dwStatIndex, unsigned int dwNewData, unsigned int dwOldData)
+{
+  const int diff = static_cast<int>(dwNewData - m_pmMst.m_BaseCum.m_dwDamWpCnt[dwStatIndex]);
+  const unsigned int prevDelta = m_pmMst.m_BaseCum.m_dwDamWpCnt[dwStatIndex] - dwOldData;
+  const unsigned int newCum = prevDelta + dwNewData;
+
+  m_pmMst.m_BaseCum.m_dwDamWpCnt[dwStatIndex] = newCum;
+  if (m_pUserDB)
+  {
+    m_pUserDB->Update_Stat(dwStatIndex, newCum, 0);
+  }
+  m_Param.m_dwAlterMastery[dwStatIndex] += diff;
+  return static_cast<int>(prevDelta);
+}
+
+void CPlayer::SendMsg_StatInform(unsigned __int8 byStatIndex, unsigned int dwNewStat, unsigned __int8 byReason)
+{
+#pragma pack(push, 1)
+  struct StatMsg
+  {
+    unsigned __int8 byIndex;
+    unsigned int dwValue;
+    unsigned __int8 byReason;
+  };
+#pragma pack(pop)
+
+  StatMsg msg{};
+  msg.byIndex = byStatIndex;
+  msg.dwValue = dwNewStat;
+  msg.byReason = byReason;
+
+  unsigned __int8 type[2] = {3, 43};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+}
+
+CPlayer::__target *CPlayer::GetGroupTarget(unsigned __int8 byGroupType)
+{
+  return &m_GroupTargetObject[byGroupType];
+}
+
+void CPlayer::SendMsg_ReleaseGroupTargetObjectResult(unsigned __int8 byGroupType)
+{
+  unsigned __int8 type[2] = {13, 109};
+  unsigned __int8 msg = byGroupType;
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
 void CPlayer::SetMstHaveEffect(_ResourceItem_fld *pFld, _STORAGE_LIST::_db_con *pItem, int bAdd, int nAlter)
@@ -4149,6 +4647,204 @@ void CPlayer::SendMsg_PremiumCashItemUse(unsigned __int16 wSerial)
   unsigned __int8 type[2] = {59, 16};
   const unsigned __int16 len = msg.size();
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
+}
+
+int CPlayer::_CalcMaxHP()
+{
+  float masteryPerMast = static_cast<float>(m_pmMst.GetMasteryPerMast(1u, 0));
+  masteryPerMast += static_cast<float>(m_nAddPointByClass[0]);
+
+  const int level = CPlayerDB::GetLevel(&m_Param);
+  const float levelPow = std::pow(static_cast<float>(level), 2.0f);
+  const float value = std::sqrt(levelPow * masteryPerMast) * 20.0f + 80.0f;
+  return static_cast<int>(value);
+}
+
+int CPlayer::_CalcMaxFP()
+{
+  float value = 0.0f;
+  const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+
+  if (raceCode == 0)
+  {
+    float sum = m_pmMst.GetAveForceMasteryPerClass(1u) * 0.40000001f;
+    sum += m_pmMst.GetAveForceMasteryPerClass(2u) * 0.075000003f;
+    sum += m_pmMst.GetAveForceMasteryPerClass(3u) * 0.1125f;
+    sum += m_pmMst.GetAveForceMasteryPerClass(4u) * 0.1125f;
+    sum += m_pmMst.GetAveForceMasteryPerClass(5u) * 0.075000003f;
+    sum += m_pmMst.GetAveSkillMasteryPerClass(0) * 0.1125f;
+    sum += m_pmMst.GetAveSkillMasteryPerClass(1u) * 0.1125f;
+    value = sum;
+  }
+  else if (raceCode == 1)
+  {
+    float sum = m_pmMst.GetAveForceMasteryPerClass(0) * 0.40000001f;
+    sum += m_pmMst.GetAveForceMasteryPerClass(2u) * 0.075000003f;
+    sum += m_pmMst.GetAveForceMasteryPerClass(3u) * 0.1125f;
+    sum += m_pmMst.GetAveForceMasteryPerClass(4u) * 0.1125f;
+    sum += m_pmMst.GetAveForceMasteryPerClass(5u) * 0.075000003f;
+    sum += m_pmMst.GetAveSkillMasteryPerClass(0) * 0.1125f;
+    sum += m_pmMst.GetAveSkillMasteryPerClass(1u) * 0.1125f;
+    value = sum;
+  }
+  else if (raceCode == 2)
+  {
+    float sum = m_pmMst.GetAveSkillMasteryPerClass(0) * 0.5f;
+    sum += m_pmMst.GetAveSkillMasteryPerClass(1u) * 0.5f;
+    value = sum;
+  }
+
+  value += static_cast<float>(m_nAddPointByClass[1]);
+  const float level = static_cast<float>(CPlayerDB::GetLevel(&m_Param));
+  const float powValue = std::pow(value, 2.0f);
+  const float result = std::sqrt(level * powValue) * 5.0f + 40.0f;
+  return static_cast<int>(result);
+}
+
+int CPlayer::_CalcMaxSP()
+{
+  float value = static_cast<float>(m_pmMst.GetMasteryPerMast(0, 0)) * 0.2f;
+  value += static_cast<float>(m_pmMst.GetMasteryPerMast(0, 1u)) * 0.80000001f;
+  value += static_cast<float>(m_nAddPointByClass[2]);
+
+  const float level = static_cast<float>(CPlayerDB::GetLevel(&m_Param));
+  const float powValue = std::pow(value, 2.0f);
+  const float result = std::sqrt(level * powValue) * 2.5f + 160.0f;
+  return static_cast<int>(result);
+}
+
+void CPlayer::ReCalcMaxHFSP(bool bSend, bool bRatio)
+{
+  (void)bSend;
+  (void)bRatio;
+
+  m_nMaxPoint[0] = _CalcMaxHP();
+  m_nMaxPoint[1] = _CalcMaxFP();
+  m_nMaxPoint[2] = _CalcMaxSP();
+}
+
+void CPlayer::SendMsg_BuddyLogoffInform(unsigned int dwObjSerial)
+{
+#pragma pack(push, 1)
+  struct BuddyLogoffInformMsg
+  {
+    unsigned int dwSerial;
+  };
+#pragma pack(pop)
+
+  BuddyLogoffInformMsg msg{};
+  msg.dwSerial = dwObjSerial;
+
+  unsigned __int8 type[2] = {31, 2};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 4u);
+}
+
+void CPlayer::SendMsg_BuddyLoginInform(unsigned int dwObjSerial, unsigned __int8 byMapIndex, unsigned __int8 byPosCode)
+{
+#pragma pack(push, 1)
+  struct BuddyLoginInformMsg
+  {
+    unsigned int dwSerial;
+    unsigned __int8 byMapIndex;
+    unsigned __int8 byPosCode;
+  };
+#pragma pack(pop)
+
+  BuddyLoginInformMsg msg{};
+  msg.dwSerial = dwObjSerial;
+  msg.byMapIndex = byMapIndex;
+  msg.byPosCode = byPosCode;
+
+  unsigned __int8 type[2] = {31, 1};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 6u);
+}
+
+void CPlayer::SendMsg_PartyLeaveSelfResult(CPartyPlayer *pLeaver, bool bWorldExit)
+{
+#pragma pack(push, 1)
+  struct PartyLeaveSelfResultMsg
+  {
+    unsigned int dwSerial;
+    bool bWorldExit;
+  };
+#pragma pack(pop)
+
+  PartyLeaveSelfResultMsg msg{};
+  msg.bWorldExit = bWorldExit;
+  msg.dwSerial = pLeaver ? pLeaver->m_id.dwSerial : static_cast<unsigned int>(-1);
+
+  unsigned __int8 type[2] = {16, 10};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 5u);
+}
+
+void CPlayer::SendMsg_GuildMasterEffect(
+  char byState,
+  char byGrade,
+  char byEffSubAttack,
+  unsigned __int8 byEffSubDefence,
+  unsigned __int8 byEffAddAttack,
+  unsigned __int8 byEffAddDefence)
+{
+#pragma pack(push, 1)
+  struct GuildMasterEffectMsg
+  {
+    char byState;
+    char byGrade;
+    char byEffSubAttack;
+    unsigned __int8 byEffSubDefence;
+    unsigned __int8 byEffAddAttack;
+    unsigned __int8 byEffAddDefence;
+  };
+#pragma pack(pop)
+
+  GuildMasterEffectMsg msg{};
+  msg.byState = byState;
+  msg.byGrade = byGrade;
+  msg.byEffSubAttack = byEffSubAttack;
+  msg.byEffSubDefence = byEffSubDefence;
+  msg.byEffAddAttack = byEffAddAttack;
+  msg.byEffAddDefence = byEffAddDefence;
+
+  unsigned __int8 type[2] = {27, 120};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 6u);
+}
+
+void CPlayer::pc_PartyLeaveSelfReqeuest()
+{
+  if (m_pPartyMgr->IsPartyMode())
+  {
+    wa_PartySelfLeave(&m_id);
+  }
+  else
+  {
+    SendMsg_PartyLeaveSelfResult(nullptr, false);
+  }
+}
+
+void wa_PartySelfLeave(_CLID *pidLeaver)
+{
+  CPartyPlayer *exiter = &g_PartyPlayer[pidLeaver->wIndex];
+  CPartyPlayer *partyBoss = exiter->m_pPartyBoss;
+
+  if (exiter->m_id.dwSerial == pidLeaver->dwSerial && exiter->m_bLogin && exiter->IsPartyMode()
+      && partyBoss->IsPartyBoss())
+  {
+    CPartyPlayer *prevMembers[8]{};
+    for (int j = 0; j < 8; ++j)
+    {
+      prevMembers[j] = partyBoss->m_pPartyMember[j];
+    }
+
+    CPartyPlayer *newBoss = nullptr;
+    if (partyBoss->RemovePartyMember(exiter, &newBoss))
+    {
+      for (int j = 0; j < 8 && prevMembers[j]; ++j)
+      {
+        CPlayer *notifyPlayer = &g_Player[prevMembers[j]->m_id.wIndex];
+        notifyPlayer->SendMsg_PartyLeaveSelfResult(exiter, false);
+      }
+    }
+  }
 }
 
 

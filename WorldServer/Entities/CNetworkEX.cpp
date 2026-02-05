@@ -44,3 +44,12 @@ void CNetworkEX::SetPassablePacket(unsigned int dwProID, unsigned __int8 byHeade
   }
   m_pProcess[dwProID]->m_bPassablePacket[byHeader1][byHeader2] = true;
 }
+
+void CNetworkEX::Close(unsigned int dwProID, unsigned int dwSocketIndex, bool bSlowClose, const char *pszLog)
+{
+  if (pszLog)
+  {
+    m_LogFile.Write(pszLog);
+  }
+  CloseSocket(dwProID, dwSocketIndex, bSlowClose);
+}

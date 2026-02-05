@@ -60,6 +60,7 @@ public:
   void Init(unsigned __int16 index);
   void ParamInit();
   static bool Update_Map(CUserDB *self, unsigned __int8 map, float *pos);
+  char Update_Bind(char *pszMapCode, char *pDummyCode, bool bUpdate);
   void Update_PvpPointLeak(long double dValue);
   void Update_LastAttBuff(bool bSet);
   bool Update_AlterPvPPoint(long double dNewPoint);
@@ -79,7 +80,9 @@ public:
     unsigned __int8 byLv,
     unsigned __int16 wDurSec);
   bool Update_SFContUpdate(unsigned __int8 byContCode, unsigned __int8 bySlotIndex, unsigned __int16 wTime);
+  bool Update_Stat(unsigned __int8 byStatIndex, unsigned int dwNewCum, bool bUpdate);
   bool Update_UnitData(unsigned __int8 bySlotIndex, _UNIT_DB_BASE::_LIST *pData);
+  void ForceCloseCommand(unsigned __int8 byKickType, unsigned int dwPushIP, bool bSlow, const char *pszCause);
   virtual ~CUserDB() = default;
 };
 

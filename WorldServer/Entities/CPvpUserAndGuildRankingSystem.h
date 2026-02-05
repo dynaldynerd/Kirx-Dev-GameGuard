@@ -13,6 +13,7 @@ public:
   bool InitLogger();
   bool IsCurrentRaceBossGroup(unsigned __int8 byRace, unsigned int dwSerial);
   unsigned int GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth);
+  bool IsRaceViceBoss(unsigned __int8 byRace, unsigned int dwSerial);
   unsigned __int8 GetBossType(unsigned __int8 byRace, unsigned int dwSerial);
 
   CLogFile *m_pkLogger;

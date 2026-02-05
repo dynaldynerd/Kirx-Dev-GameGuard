@@ -20,7 +20,7 @@
 5. Headers with only `struct` do not need a `.cpp`.
 6. Any type name starting with `C` should be declared as a `class`, not `struct`.
 7. all g_* variable are meant to be a global variable and must be put on `GlobalObjects.h` and `GlobalObjects.cpp`
-8. all new stub function must be added to `todo.md`
+8. all new stub function must be added to `todo.md`. (this rule now obsolet, please follow rule #14)
 9. all `CRecordData::GetRecord` usually only return _base_fld hence the decompiled code might produce weird code such as Record[2].m_strCode[10], in that case you must write a note on `Record.md` so I could review and correct the implementation
 10. for any static string/array/data that appear in the decompiled code please write it in a log file before proceeding 
 11. any function that had "this" as first parameter mean it's a member function and shouldn't be made into a static function

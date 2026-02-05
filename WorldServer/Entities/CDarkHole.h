@@ -6,7 +6,7 @@
 class CDarkHoleChannel;
 
 /* 1600 */
-class __cppobj __declspec(align(4)) CDarkHole : CGameObject
+class __cppobj __declspec(align(4)) CDarkHole : public CGameObject
 {
 public:
   CDarkHoleChannel *m_pChannel;

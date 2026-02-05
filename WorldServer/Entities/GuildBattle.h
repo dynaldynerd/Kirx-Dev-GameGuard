@@ -1,0 +1,505 @@
+#pragma once
+
+#include "IdaCompat.h"
+
+#include <atltime.h>
+
+class CPlayer;
+class CGuild;
+class CMapData;
+class CLogFile;
+class CMyTimer;
+class CCircleZone;
+class CGravityStoneRegener;
+class CGravityStone;
+struct _dummy_position;
+struct _guild_member_info;
+struct _possible_battle_guild_list_result_zocl;
+
+namespace GUILD_BATTLE
+{
+  class CGuildBattle;
+  class CGuildBattleState;
+  class CGuildBattleStateList;
+  class CGuildBattleSchedule;
+  class CGuildBattleSchedulePool;
+  class CGuildBattleReservedSchedule;
+  class CGuildBattleReservedScheduleMapGroup;
+  class CGuildBattleScheduleManager;
+  class CGuildBattleLogger;
+  class CNormalGuildBattle;
+  class CNormalGuildBattleLogger;
+  class CNormalGuildBattleStateList;
+  class CNormalGuildBattleStateListPool;
+  class CNormalGuildBattleField;
+  class CNormalGuildBattleFieldList;
+  class CNormalGuildBattleGuild;
+  class CNormalGuildBattleGuildMember;
+  class CNormalGuildBattleManager;
+  class CPossibleBattleGuildListManager;
+
+  class CGuildBattle
+  {
+  public:
+    virtual ~CGuildBattle() = default;
+    virtual int GetObjType();
+  };
+
+  class CGuildBattleState
+  {
+  public:
+    virtual ~CGuildBattleState() = default;
+    virtual int Enter(CGuildBattle *pkBattle);
+    virtual int Loop(CGuildBattle *pkBattle);
+    virtual int Fin(CGuildBattle *pkBattle);
+    virtual ATL::CTimeSpan *GetTerm(ATL::CTimeSpan *result);
+  };
+
+  class CGuildBattleStateList
+  {
+  public:
+    enum GBS_LOOP_TYPE : __int32
+    {
+      GBS_ONCE = 0,
+      GBS_LOOP = 1,
+      GBS_COUNT = 2,
+      GBS_MAX = 3,
+    };
+
+    CGuildBattleStateList(int iStateMax, GBS_LOOP_TYPE iLoopType, unsigned int uiLoopCnt);
+    virtual ~CGuildBattleStateList() = default;
+    virtual void SetNextState();
+    void Clear();
+
+    int m_iForceAdvance;
+    int m_iState;
+    CGuildBattleState *m_pkNextState;
+    CGuildBattleState *m_pkCurState;
+    const int STATE_MAX;
+    unsigned int m_uiLoopCnt;
+    unsigned int m_uiCurLoopCnt;
+    GBS_LOOP_TYPE m_eLoopType;
+    bool m_bEnter;
+  };
+
+  class CNormalGuildBattleState : public CGuildBattleState
+  {
+  public:
+    CNormalGuildBattleState();
+  };
+
+  class CNormalGuildBattleStateNotify : public CNormalGuildBattleState
+  {
+  public:
+    CNormalGuildBattleStateNotify();
+  };
+
+  class CNormalGuildBattleStateReady : public CNormalGuildBattleState
+  {
+  public:
+    CNormalGuildBattleStateReady();
+  };
+
+  class CNormalGuildBattleStateCountDown : public CNormalGuildBattleState
+  {
+  public:
+    CNormalGuildBattleStateCountDown();
+  };
+
+  class CNormalGuildBattleStateRound : public CGuildBattleState
+  {
+  public:
+    CNormalGuildBattleStateRound();
+  };
+
+  class CNormalGuildBattleStateRoundStart : public CNormalGuildBattleStateRound
+  {
+  public:
+    CNormalGuildBattleStateRoundStart();
+
+    CMyTimer *m_pkTimer;
+  };
+
+  class CNormalGuildBattleStateRoundProcess : public CNormalGuildBattleStateRound
+  {
+  public:
+    CNormalGuildBattleStateRoundProcess();
+
+    CMyTimer *m_pkTimer;
+  };
+
+  class CNormalGuildBattleStateRoundReturnStartPos : public CNormalGuildBattleStateRound
+  {
+  public:
+    CNormalGuildBattleStateRoundReturnStartPos();
+
+    CMyTimer *m_pkTimer;
+  };
+
+  class CNormalGuildBattleStateRoundList : public CGuildBattleStateList
+  {
+  public:
+    CNormalGuildBattleStateRoundList();
+
+    CNormalGuildBattleStateRoundStart START;
+    CNormalGuildBattleStateRoundProcess PROCESS;
+    CNormalGuildBattleStateRoundReturnStartPos ROUND_END;
+    CNormalGuildBattleStateRound *m_pStateList[3];
+  };
+
+  class CNormalGuildBattleStateInBattle : public CNormalGuildBattleState
+  {
+  public:
+    CNormalGuildBattleStateInBattle();
+    void SetBattleTime(ATL::CTimeSpan kTime);
+
+    ATL::CTimeSpan m_kInBattleTime;
+    CNormalGuildBattleStateRoundList m_kRountStateList;
+  };
+
+  class CNormalGuildBattleStateDivide : public CNormalGuildBattleState
+  {
+  public:
+    CNormalGuildBattleStateDivide();
+  };
+
+  class CNormalGuildBattleStateReturn : public CNormalGuildBattleState
+  {
+  public:
+    CNormalGuildBattleStateReturn();
+  };
+
+  class CNormalGuildBattleStateFin : public CNormalGuildBattleState
+  {
+  public:
+    CNormalGuildBattleStateFin();
+  };
+
+  class CNormalGuildBattleStateList : public CGuildBattleStateList
+  {
+  public:
+    CNormalGuildBattleStateList();
+    bool IsReadyOrCountState();
+    bool IsInBattle();
+    void SetBattleTime(ATL::CTimeSpan kTime);
+
+    CNormalGuildBattleStateNotify NOTIFY;
+    CNormalGuildBattleStateReady READY;
+    CNormalGuildBattleStateCountDown COUNT;
+    CNormalGuildBattleStateInBattle INBATTLE;
+    CNormalGuildBattleStateDivide DIVIDE;
+    CNormalGuildBattleStateReturn RETURN;
+    CNormalGuildBattleStateFin FIN;
+    CNormalGuildBattleState *m_pStateList[7];
+  };
+
+  class CNormalGuildBattleStateListPool
+  {
+  public:
+    static CNormalGuildBattleStateListPool *Instance();
+    CNormalGuildBattleStateListPool();
+    CNormalGuildBattleStateList *Get(unsigned int dwID);
+
+    static CNormalGuildBattleStateListPool *ms_Instance;
+    unsigned int m_dwMaxCount;
+    CNormalGuildBattleStateList *m_pkStateList;
+  };
+
+  class CNormalGuildBattleField
+  {
+  public:
+    bool Start(unsigned __int8 byStartPos, CPlayer *pkPlayer);
+    char MoveStartPos(unsigned __int8 byStartPos, unsigned __int8 byMapOutType, CPlayer *pkPlayer);
+    unsigned int GetMapCode();
+    unsigned int GetMapID();
+
+    bool m_bInit;
+    unsigned int m_uiMapInx;
+    CMapData *m_pkMap;
+    _dummy_position *m_pkStartPos[2];
+    unsigned int m_ui1PGoalPosCnt;
+    CCircleZone *m_pk1PGoalZone;
+    unsigned int m_ui2PGoalPosCnt;
+    CCircleZone *m_pk2PGoalZone;
+    unsigned int m_uiRegenPosCnt;
+    CGravityStoneRegener *m_pkRegenPos;
+    CGravityStone *m_pkBall;
+  };
+
+  class CNormalGuildBattleFieldList
+  {
+  public:
+    static CNormalGuildBattleFieldList *Instance();
+    CNormalGuildBattleFieldList();
+    char GetMapInx(unsigned __int8 byRace, unsigned int dwMapCode, unsigned int *dwMapInx);
+    CNormalGuildBattleField *GetField(unsigned int dwMapID);
+    CNormalGuildBattleField *GetField(unsigned __int8 byRace, unsigned int dwMapCode);
+
+    static CNormalGuildBattleFieldList *ms_Instance;
+    unsigned int m_dwCnt;
+    CNormalGuildBattleField *m_pkField;
+    unsigned __int8 m_byUseFieldCnt[3];
+    CNormalGuildBattleField **m_ppkUseFieldByRace[3];
+  };
+
+  class CNormalGuildBattleLogger
+  {
+  public:
+    CNormalGuildBattleLogger();
+
+    CLogFile *m_pkLogger;
+  };
+
+  class CNormalGuildBattleGuildMember
+  {
+  public:
+    CNormalGuildBattleGuildMember();
+    void Clear();
+    bool IsEmpty();
+    bool IsExist();
+    bool IsEnableStart();
+    unsigned int GetSerial();
+    unsigned __int16 GetIndex();
+    CPlayer *GetPlayer();
+    void StockOldInfo();
+    void SetBattleState(bool bFlag, unsigned __int8 byColorInx);
+
+    unsigned int m_dwSerial;
+    bool m_bRestart;
+    CMapData *m_pOldBindMapData;
+    _dummy_position *m_pOldBindDummyData;
+    char m_szOldBindMapCode[12];
+    char m_szOldBindDummy[12];
+    unsigned __int16 m_usGoalCnt;
+    unsigned __int16 m_usKillCnt;
+    long double m_dPvpPoint;
+    _guild_member_info *m_pkMember;
+  };
+
+  class CNormalGuildBattleGuild
+  {
+  public:
+    explicit CNormalGuildBattleGuild(unsigned __int8 byID);
+    void Clear();
+    void SetGuild(CGuild *pkGuild);
+    unsigned int GetGuildSerial();
+    char *GetGuildName();
+    char IsJoinMember(unsigned int dwSerial);
+    __int64 GetMember(unsigned int dwSerial);
+    void AskJoin(int n, unsigned int dwSerial, unsigned __int8 GuildBattleNumber, char *wszDestGuild, CNormalGuildBattleLogger *kLogger);
+    void AskJoin(unsigned int n, char *wszDestGuildName, CNormalGuildBattleLogger *kLogger);
+    void LogIn(
+      int n,
+      unsigned int dwSerial,
+      unsigned __int8 GuildBattleNumber,
+      char *wszDestGuild,
+      unsigned int uiID,
+      CNormalGuildBattleField *pkField,
+      CNormalGuildBattleLogger *kLogger);
+    void SendMsg(unsigned __int8 *byType, char *pMsg, unsigned __int16 uiSize);
+    void SendMsg(unsigned __int8 *byType, char *pMsg, unsigned __int16 uiSize, int iExeceptMemberInx);
+    void SendMsg(unsigned __int8 *byType, char *pMsg, unsigned __int16 uiSize, unsigned int dwSerial);
+    void SendOhterNotifyCommitteeMemberPosition(CPlayer *pkPlayer);
+    void SendSelfNotifyCommitteeMemberPositionList(CPlayer *pkPlayer);
+    char MoveMember(int iMember, unsigned int uiID, CNormalGuildBattleField *pkField, CNormalGuildBattleLogger *kLogger);
+
+    const unsigned __int8 m_byID;
+    unsigned __int8 m_byColorInx;
+    unsigned int m_dwGoalCnt;
+    unsigned int m_dwScore;
+    unsigned int m_dwKillPoint;
+    CGuild *m_pkGuild;
+    unsigned __int8 m_byNotifyPositionMemberCnt;
+    CNormalGuildBattleGuildMember *m_pkNotifyPositionMember[10];
+    unsigned int m_dwKillCountSum;
+    unsigned int m_dwMaxJoinMemberCnt;
+    unsigned int m_dwCurJoinMember;
+    CNormalGuildBattleGuildMember m_kMember[150];
+  };
+
+  class CNormalGuildBattle : public CGuildBattle
+  {
+  public:
+    CNormalGuildBattle(unsigned int dwID);
+    void Clear();
+    void Init(CGuild *pk1P, CGuild *pk2P, CNormalGuildBattleField *pkField, unsigned __int8 byNumber, CNormalGuildBattleStateList *pkStateList);
+    bool IsEmpty();
+    bool IsMemberGuild(unsigned int dwGuildSerial);
+    bool IsReadyOrCountState();
+    bool IsInBattle();
+    void AskJoin(int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial);
+    void LogIn(int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial);
+    unsigned int GetID();
+    CNormalGuildBattleGuild *Get1P();
+    CNormalGuildBattleGuild *Get2P();
+    unsigned __int8 GetGuildBattleNumber();
+
+    const unsigned int m_dwID;
+    bool m_bInit;
+    CNormalGuildBattleLogger m_kLogger;
+    unsigned __int8 m_byGuildBattleNumber;
+    CNormalGuildBattleGuild m_k1P;
+    CNormalGuildBattleGuild m_k2P;
+    CNormalGuildBattleField *m_pkField;
+    unsigned __int8 m_byWinResult;
+    CNormalGuildBattleGuild *m_pkWin;
+    CNormalGuildBattleGuild *m_pkLose;
+    CNormalGuildBattleGuild *m_pkRed;
+    CNormalGuildBattleGuild *m_pkBlue;
+    CNormalGuildBattleStateList *m_pkStateList;
+  };
+
+  class CNormalGuildBattleManager
+  {
+  public:
+    static CNormalGuildBattleManager *Instance();
+    CNormalGuildBattleManager();
+    unsigned __int8 Add(
+      CGuild *pSrcGuild,
+      CGuild *pDestGuild,
+      unsigned int dwStartTime,
+      unsigned int dwElapseTimeCnt,
+      unsigned __int8 byNumber,
+      unsigned int dwMapCode);
+    void LogIn(int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial);
+    CNormalGuildBattle *GetBattleByGuildSerial(unsigned int dwGuildSerial);
+    CNormalGuildBattle *GetBattle(unsigned int dwID);
+    bool PushDQSData(
+      unsigned int uiFieldInx,
+      unsigned int uiSLID,
+      CNormalGuildBattle *pkBattle,
+      CGuildBattleSchedule *pkSchedule);
+
+    static CNormalGuildBattleManager *ms_Instance;
+    bool m_bLoad;
+    bool m_bDone;
+    unsigned int m_uiMapCnt;
+    unsigned int m_uiMaxBattleCnt;
+    CNormalGuildBattle **m_ppkNormalBattle;
+    CNormalGuildBattle **m_ppkTodayBattle;
+    CNormalGuildBattle **m_ppkTomorrowBattle;
+  };
+
+  class CGuildBattleSchedule
+  {
+  public:
+    enum GS_STATE : __int32
+    {
+      GS_NONE = 0,
+      GS_WAIT = 1,
+      GS_PROC = 2,
+      GS_DONE = 3,
+      GS_MAX = 4,
+    };
+
+    unsigned int GetSID();
+    ATL::CTimeSpan *GetBattleTime(ATL::CTimeSpan *result);
+    void SetStateList(CGuildBattleStateList *pkStateList);
+    unsigned int GetState();
+    __int64 GetRealStartTime();
+    __int64 GetBattleTurm();
+    unsigned __int8 Set(unsigned int dwStartTimeInx, unsigned int dwElapseTimeCnt);
+    bool IsEmpty();
+    bool IsDone();
+    void Clear();
+
+    unsigned int m_dwScheduleID;
+    GS_STATE m_eState;
+    ATL::CTime m_kNextStartTime;
+    ATL::CTime m_kBattleStartTime;
+    ATL::CTimeSpan m_kBattleTime;
+    CGuildBattleStateList *m_pkStateList;
+  };
+
+  class CGuildBattleSchedulePool
+  {
+  public:
+    static CGuildBattleSchedulePool *Instance();
+    CGuildBattleSchedulePool();
+    CGuildBattleSchedule *Get(unsigned int dwSID);
+    CGuildBattleSchedule *Get(unsigned int uiSLID, unsigned int dwStartInx);
+
+    static CGuildBattleSchedulePool *ms_Instance;
+    unsigned int m_uiMapCnt;
+    unsigned int m_dwMaxScheduleCnt;
+    CGuildBattleSchedule **m_ppkSchedule;
+  };
+
+  class CGuildBattleReservedSchedule
+  {
+  public:
+    unsigned int GetID();
+    unsigned __int8 Add(unsigned int dwStartTimeInx, unsigned int dwElapseTimeCnt, CGuildBattleSchedule **ppkSchedule);
+    unsigned __int8 IsEmptyTime(unsigned int dwStartTimeInx, unsigned int dwElapseTimeCnt);
+    void UpdateUseField(unsigned int dwStartTimeInx, unsigned int dwElapseTimeCnt);
+
+    unsigned int m_uiScheduleListID;
+    bool m_bDone;
+    unsigned int m_uiCurScheduleInx;
+    bool m_bUseField[23];
+    CGuildBattleSchedule *m_pkSchedule[23];
+  };
+
+  class CGuildBattleReservedScheduleMapGroup
+  {
+  public:
+    unsigned __int8 Add(
+      unsigned int uiFieldInx,
+      unsigned int dwStartTimeInx,
+      unsigned int dwElapseTimeCnt,
+      CGuildBattleSchedule **ppkSchedule,
+      unsigned int *uiSLID);
+    unsigned __int8 IsEmptyTime(unsigned int uiFieldInx, unsigned int dwStartTimeInx, unsigned int dwElapseTimeCnt);
+
+    bool m_bDone;
+    unsigned int m_uiDayInx;
+    unsigned int m_uiMapCnt;
+    CGuildBattleReservedSchedule **m_ppkReservedSchedule;
+  };
+
+  class CGuildBattleScheduleManager
+  {
+  public:
+    static CGuildBattleScheduleManager *Instance();
+    unsigned __int8 Add(
+      unsigned int uiFieldInx,
+      unsigned int dwStartTimeInx,
+      unsigned int dwElapseTimeCnt,
+      CGuildBattleSchedule **ppkSchedule,
+      unsigned int *uiSLID);
+
+    bool m_bLoad;
+    ATL::CTime *m_pkOldDayTime;
+    CMyTimer *m_pkTimer;
+    unsigned int m_uiMapCnt;
+    CGuildBattleReservedScheduleMapGroup m_kSchdule[2];
+    CGuildBattleReservedScheduleMapGroup *m_pkTodaySchedule;
+    CGuildBattleReservedScheduleMapGroup *m_pkTomorrowSchedule;
+  };
+
+  class CGuildBattleLogger
+  {
+  public:
+    static CGuildBattleLogger *Instance();
+    CGuildBattleLogger();
+    void Log(const char *fmt, ...);
+
+    static CGuildBattleLogger *ms_Instance;
+    CLogFile *m_pkLogger;
+  };
+
+  class CPossibleBattleGuildListManager
+  {
+  public:
+    static CPossibleBattleGuildListManager *Instance();
+    CPossibleBattleGuildListManager();
+    void SendFirst(int n, unsigned __int8 byRace);
+    unsigned __int8 SendInfo(unsigned int n, unsigned __int8 byRace, unsigned __int8 byPage, unsigned int dwVer);
+
+    static CPossibleBattleGuildListManager *ms_Instance;
+    bool m_bInit;
+    unsigned int *m_pdwVer;
+    unsigned int *m_pMaxPage;
+    _possible_battle_guild_list_result_zocl **m_ppkList;
+  };
+} // namespace GUILD_BATTLE

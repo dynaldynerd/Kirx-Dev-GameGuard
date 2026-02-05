@@ -102,6 +102,19 @@ unsigned __int8 CPvpUserRankingInfo::GetBossType(unsigned __int8 byRaceCode, uns
   return static_cast<unsigned __int8>(-1);
 }
 
+char CPvpUserRankingInfo::IsRaceViceBoss(unsigned __int8 byRace, unsigned int dwSerial)
+{
+  for (int j = 1; j < 9; ++j)
+  {
+    unsigned long *serials = m_dwCurrentRaceBossSerial[byRace];
+    if (serials && serials[j] == dwSerial)
+    {
+      return 1;
+    }
+  }
+  return 0;
+}
+
 bool CPvpUserRankingTargetUserList::assign()
 {
   m_PvpRankRefreshUser.assign(2532, nullptr);
@@ -193,6 +206,11 @@ unsigned int CUserRankingProcess::GetCurrentRaceBossSerial(unsigned __int8 byRac
 unsigned __int8 CUserRankingProcess::GetBossType(unsigned __int8 byRace, unsigned int dwSerial)
 {
   return m_kPvpRankingInfo.GetBossType(byRace, dwSerial);
+}
+
+bool CUserRankingProcess::IsRaceViceBoss(unsigned __int8 byRace, unsigned int dwSerial)
+{
+  return m_kPvpRankingInfo.IsRaceViceBoss(byRace, dwSerial) != 0;
 }
 
 bool CUserRankingProcess::Init()

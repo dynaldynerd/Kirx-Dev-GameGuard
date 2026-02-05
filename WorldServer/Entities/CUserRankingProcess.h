@@ -18,6 +18,7 @@ public:
   bool IsCurrentRaceBossGroup(unsigned __int8 byRace, unsigned int dwSerial);
   unsigned int GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth);
   unsigned __int8 GetBossType(unsigned __int8 byRaceCode, unsigned int dwSerial);
+  char IsRaceViceBoss(unsigned __int8 byRace, unsigned int dwSerial);
 
   std::vector<_PVP_RANK_DATA *> m_vecPvpRankDataCurrent;
   std::vector<_PVP_RANK_DATA *> m_vecPvpRankDataTomorrow;
@@ -84,6 +85,7 @@ public:
   bool IsCurrentRaceBossGroup(unsigned __int8 byRace, unsigned int dwSerial);
   unsigned int GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth);
   unsigned __int8 GetBossType(unsigned __int8 byRace, unsigned int dwSerial);
+  bool IsRaceViceBoss(unsigned __int8 byRace, unsigned int dwSerial);
 
   void ProcWait();
   void ProcSaveTargetList();

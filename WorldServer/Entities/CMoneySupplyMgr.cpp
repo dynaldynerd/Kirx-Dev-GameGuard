@@ -39,3 +39,45 @@ void CMoneySupplyMgr::UpdateBuyUnitData(int nLv, unsigned int nAmount)
   }
 }
 
+void CMoneySupplyMgr::UpdateHonorGuildMoneyData(
+  unsigned __int8 byTradeType,
+  unsigned __int8 byRace,
+  unsigned int nAmount)
+{
+  if (byTradeType)
+  {
+    if (byTradeType == 1)
+    {
+      m_MS_data.dwAmount[6] += nAmount;
+      if (!byRace)
+      {
+        ++m_MS_data.nHonorGuildRace[byTradeType][0];
+      }
+      if (byRace == 1)
+      {
+        ++m_MS_data.nHonorGuildRace[byTradeType][1];
+      }
+      else
+      {
+        ++m_MS_data.nHonorGuildRace[byTradeType][2];
+      }
+    }
+  }
+  else
+  {
+    m_MS_data.dwAmount[3] += nAmount;
+    if (!byRace)
+    {
+      ++m_MS_data.nHonorGuildRace[0][0];
+    }
+    if (byRace == 1)
+    {
+      ++m_MS_data.nHonorGuildRace[0][1];
+    }
+    else
+    {
+      ++m_MS_data.nHonorGuildRace[0][2];
+    }
+  }
+}
+

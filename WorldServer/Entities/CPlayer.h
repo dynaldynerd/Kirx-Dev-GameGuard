@@ -10,6 +10,9 @@
 #include "StorageList.h"
 #include "CMgrAvatorItemHistory.h"
 #include "CMgrAvatorLvHistory.h"
+#include "CRecordData.h"
+#include "SKILL_IDX_PER_MASTERY.h"
+#include "BILLING_FORCE_CLOSE_DELAY.h"
 #include <vector>
 
 
@@ -912,6 +915,14 @@ public:
   static CMgrAvatorLvHistory s_MgrLvHistory;
   static int s_nLiveNum;
   static _DELAY_PROCESS s_AnimusReturnDelay;
+  static int *s_pnLinkForceItemToEffect;
+  static _SKILL_IDX_PER_MASTERY s_SkillIndexPerMastery[8];
+  static int s_nAddMstFc[100];
+  static CRecordData s_tblLimMastery[3][4];
+  static CRecordData s_tblLimMasteryContinue[3][4];
+  static CRecordData s_tblLimMasteryCum[3][4];
+  static CRecordData s_tblLimMasteryCumContinue[3][4];
+  static _BILLING_FORCE_CLOSE_DELAY s_BillingForceCloseDelay;
   static void SetStaticMember();
   void Init(_object_id *pID);
   void PastWhisperInit();
@@ -977,11 +988,22 @@ public:
   void SendMsg_Destroy();
   void SendMsg_NewViewOther(unsigned __int8 byViewType);
   void SetLastAttBuff(bool bSet);
+  bool IsLastAttBuff();
   void SetShapeAllBuffer();
   __int64 GetLevel();
   __int64 GetHP();
   __int64 GetMaxHP();
   unsigned __int64 GetStateFlag();
+  void SetStateFlag();
+  void SenseState();
+  void SendMsg_StateInform(unsigned __int64 dwStateFlag);
+  char IsPunished(unsigned __int8 byType, bool bSend);
+  bool IsMapLoading();
+  bool IsRidingShip();
+  CMapData *GetBindMapData();
+  _dummy_position *GetBindDummy();
+  bool SetBindPosition(CMapData *pMap, _dummy_position *pDummy);
+  void pc_SetInGuildBattle(bool bInGuildBattle, unsigned __int8 byColorInx);
   int GetFP();
   int GetSP();
   int GetMaxFP();
@@ -1021,6 +1043,19 @@ public:
   void pc_NuclearAfterEffect();
   void SendMsg_StartContSF(_sf_continous *pCont);
   void SendMsg_AlterContEffectTime(unsigned __int8 byContType);
+  int Emb_UpdateStat(unsigned int dwStatIndex, unsigned int dwNewData, unsigned int dwOldData);
+  void SendMsg_StatInform(unsigned __int8 byStatIndex, unsigned int dwNewStat, unsigned __int8 byReason);
+  __target *GetGroupTarget(unsigned __int8 byGroupType);
+  void SendMsg_ReleaseGroupTargetObjectResult(unsigned __int8 byGroupType);
+  void SendMsg_BuddyLogoffInform(unsigned int dwObjSerial);
+  void SendMsg_BuddyLoginInform(unsigned int dwObjSerial, unsigned __int8 byMapIndex, unsigned __int8 byPosCode);
+  void SendMsg_GuildMasterEffect(
+    char byState,
+    char byGrade,
+    char byEffSubAttack,
+    unsigned __int8 byEffSubDefence,
+    unsigned __int8 byEffAddAttack,
+    unsigned __int8 byEffAddDefence);
   void pc_PartyLeaveSelfReqeuest();
   void SendMsg_PartyLeaveSelfResult(CPartyPlayer *pLeaver, bool bWorldExit);
   void ForcePullUnit(bool bLogout);

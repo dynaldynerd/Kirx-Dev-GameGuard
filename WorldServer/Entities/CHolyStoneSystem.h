@@ -70,6 +70,7 @@ public:
   void CheckKeeperPlusTime();
   unsigned __int8 GetNumOfTime();
   int GetDestroyerState();
+  unsigned int GetDestroyerSerial();
   int GetHolyMasterRace();
   int GetSceneCode();
   bool IsMinigeTicketCheck();

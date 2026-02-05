@@ -28,6 +28,7 @@ inline size_t strlen_0(const char *str) { return std::strlen(str); }
 inline int strcmp_0(const char *a, const char *b) { return std::strcmp(a, b); }
 inline int strncmp_0(const char *a, const char *b, size_t count) { return std::strncmp(a, b, count); }
 inline char *strcpy_0(char *dest, const char *src) { return std::strcpy(dest, src); }
+inline char *strcat_0(char *dest, const char *src) { return std::strcat(dest, src); }
 inline float sqrtf_0(float v) { return std::sqrt(v); }
 inline float sinf_0(float v) { return std::sinf(v); }
 inline float cosf_0(float v) { return std::cosf(v); }

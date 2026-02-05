@@ -25,6 +25,7 @@ class __cppobj CMoneySupplyMgr
 public:
   static CMoneySupplyMgr *Instance();
   void UpdateBuyUnitData(int nLv, unsigned int nAmount);
+  void UpdateHonorGuildMoneyData(unsigned __int8 byTradeType, unsigned __int8 byRace, unsigned int nAmount);
   CMoneySupplyMgr();
   virtual ~CMoneySupplyMgr() = default;
 

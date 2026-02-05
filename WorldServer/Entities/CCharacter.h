@@ -76,6 +76,8 @@ public:
   void Go();
   void Stop();
   void ResetSlot();
+  bool GetStealth(bool bInvisible);
+  bool GetInvisible();
   void RemoveSFContEffect(unsigned __int8 byContCode, unsigned __int16 wListIndex, bool bInit, bool bAura);
   void AlterContDurSec(unsigned __int8 byContCode, unsigned __int16 wListIndex, unsigned int dwStartSec, unsigned __int16 wNewDur);
   void RemoveSFContHelpByEffect(int nContParamCode, int nContParamIndex);

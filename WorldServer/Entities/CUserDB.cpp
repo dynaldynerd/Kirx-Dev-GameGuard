@@ -7,6 +7,9 @@
 #include "CMapOperation.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
+#include "CLogFile.h"
+#include "CNetworkEX.h"
+#include "server_notify_inform_zone.h"
 
 void CUserDB::Init(unsigned __int16 index)
 {
@@ -65,6 +68,22 @@ bool CUserDB::Update_Map(CUserDB *self, unsigned __int8 map, float *pos)
   return true;
 }
 
+char CUserDB::Update_Bind(char *pszMapCode, char *pDummyCode, bool bUpdate)
+{
+  if (strlen_0(pszMapCode) > 0xBu)
+  {
+    return 0;
+  }
+  if (strlen_0(pDummyCode) > 0xBu)
+  {
+    return 0;
+  }
+  strcpy_0(m_AvatorData.dbAvator.m_szBindMapCode, pszMapCode);
+  strcpy_0(m_AvatorData.dbAvator.m_szBindDummy, pDummyCode);
+  (void)bUpdate;
+  return 1;
+}
+
 void CUserDB::Update_PvpPointLeak(long double dValue)
 {
   m_AvatorData.dbSupplement.dPvpPointLeak = dValue;
@@ -73,6 +92,50 @@ void CUserDB::Update_PvpPointLeak(long double dValue)
 void CUserDB::Update_LastAttBuff(bool bSet)
 {
   m_AvatorData.dbSupplement.bLastAttBuff = bSet;
+}
+
+bool CUserDB::Update_Stat(unsigned __int8 byStatIndex, unsigned int dwNewCum, bool bUpdate)
+{
+  (void)bUpdate;
+  if (byStatIndex < 0x50u)
+  {
+    if (m_AvatorData.dbStat.m_dwDamWpCnt[byStatIndex] <= dwNewCum || m_byUserDgr)
+    {
+      m_AvatorData.dbStat.m_dwDamWpCnt[byStatIndex] = dwNewCum;
+      m_bDataUpdate = true;
+      return true;
+    }
+
+    g_Main.m_logSystemError.Write(
+      "%s:Update_Stat(Idx:%d)..%d >= %d",
+      m_aszAvatorName,
+      byStatIndex,
+      m_AvatorData.dbStat.m_dwDamWpCnt[byStatIndex],
+      dwNewCum);
+    return false;
+  }
+
+  g_Main.m_logSystemError.Write("%s:Update_Stat(Idx:%d)", m_aszAvatorName, byStatIndex);
+  return false;
+}
+
+void CUserDB::ForceCloseCommand(unsigned __int8 byKickType, unsigned int dwPushIP, bool bSlow, const char *pszCause)
+{
+  _server_notify_inform_zone msg{};
+  msg.wMsgCode = byKickType;
+  msg.dwPushIP = dwPushIP;
+
+  unsigned __int8 type[2] = {1, 16};
+  const unsigned __int16 len = msg.size();
+  g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, type, reinterpret_cast<char *>(&msg), len);
+
+  char buffer[144] = {};
+  sprintf(buffer, "CLOSE>> ForceCloseCommand Type: %d, ID: %s Reason : ", byKickType, m_szAccountID);
+  if (pszCause)
+  {
+    strcat_0(buffer, pszCause);
+  }
+  g_Network.Close(0, m_idWorld.wIndex, bSlow, buffer);
 }
 
 bool CUserDB::Update_AlterPvPPoint(long double dNewPoint)

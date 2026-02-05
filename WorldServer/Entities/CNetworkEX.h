@@ -31,6 +31,7 @@ public:
   unsigned __int8 m_byStatus[4];
 
   void SetPassablePacket(unsigned int dwProID, unsigned __int8 byHeader1, unsigned __int8 byHeader2);
+  void Close(unsigned int dwProID, unsigned int dwSocketIndex, bool bSlowClose, const char *pszLog);
 };
 
 extern CNetworkEX g_Network;

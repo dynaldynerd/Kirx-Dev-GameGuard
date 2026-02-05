@@ -23,6 +23,21 @@ public:
 
   virtual ~CGuild() = default;
   void Init(unsigned int index);
+  char LogoffMember(unsigned int dwMemberSerial);
+  _guild_member_info *LoginMember(unsigned int dwMemberSerial, CPlayer *pPtr);
+  void SendMsg_GuildMemberLogoff(unsigned int dwSerial);
+  void SendMsg_GuildMemberLogin(unsigned int dwSerial, unsigned __int16 wMapCode, unsigned __int16 wRegionIndex);
+  char PopApplier(unsigned int dwApplierSerial, unsigned __int8 byDelCode);
+  char PushApplier(CPlayer *pApplier);
+  unsigned __int8 GetGrade();
+  void SendMsg_AddJoinApplier(_guild_applier_info *p);
+  void SendMsg_DelJoinApplier(_guild_applier_info *p, unsigned __int8 byDelCode);
+  void MakeDownApplierPacket();
+  unsigned __int8 ManageAcceptORRefuseGuildBattle(bool bAccept);
+  void SendMsg_ApplyGuildBattleResultInform(char byRet, char *wszDestGuildName);
+  void SendMsg_GuildBattleRefused(char *pwszName);
+  void PushDQSInGuildBattleCost();
+  void PushDQSDestGuildOutputGuildBattleCost();
 
 public:
   int m_nIndex;

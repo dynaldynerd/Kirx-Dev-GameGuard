@@ -21,6 +21,11 @@ public:
   void Init(unsigned int index);
   void PartyListInit();
   bool IsPartyMode();
+  bool IsPartyBoss();
+  bool IsPartyLock();
   CPartyPlayer **GetPtrPartyMember();
+  unsigned int GetPopPartyMember();
+  bool DisjointParty();
+  bool RemovePartyMember(CPartyPlayer *pExiter, CPartyPlayer **ppoutNewBoss);
 };
 

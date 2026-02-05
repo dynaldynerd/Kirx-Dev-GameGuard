@@ -271,6 +271,36 @@ void CCharacter::ResetSlot()
   }
 }
 
+bool CCharacter::GetStealth(bool bInvisible)
+{
+  if (m_bCorpse)
+  {
+    return false;
+  }
+  if (m_bBreakTranspar)
+  {
+    return false;
+  }
+  if (m_EP.GetEff_Plus(21) > 0.0f || m_EP.GetEff_State(5))
+  {
+    return true;
+  }
+  return bInvisible && m_EP.GetEff_State(26);
+}
+
+bool CCharacter::GetInvisible()
+{
+  if (m_bCorpse)
+  {
+    return false;
+  }
+  if (m_bBreakTranspar)
+  {
+    return false;
+  }
+  return m_EP.GetEff_State(26);
+}
+
 void CCharacter::RemoveSFContEffect(
   unsigned __int8 byContCode,
   unsigned __int16 wListIndex,

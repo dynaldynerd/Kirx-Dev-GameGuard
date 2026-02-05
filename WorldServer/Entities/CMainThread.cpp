@@ -296,6 +296,23 @@ long double TimeLimitMgr::GetPlayerPenalty(unsigned __int16 wIndex)
   return 1.0L;
 }
 
+unsigned __int8 TimeLimitMgr::GetPlayerStatus(unsigned __int16 wIndex)
+{
+  if (!m_wEnable)
+  {
+    return 0;
+  }
+  if (!m_lstTLStaus[wIndex].m_bUse)
+  {
+    return 99;
+  }
+  if (m_lstTLStaus[wIndex].m_bAgeLimit)
+  {
+    return m_lstTLStaus[wIndex].m_byTL_Status;
+  }
+  return 0;
+}
+
 bool CMainThread::Init()
 {
   CRtc::GetIntance()->Reg_Fn();

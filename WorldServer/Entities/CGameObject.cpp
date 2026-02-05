@@ -1826,6 +1826,16 @@ void CGameObject::SendMsg_BreakStop()
   CircleReport(type, reinterpret_cast<char *>(&msg), 11, false);
 }
 
+void CGameObject::SendMsg_FixPosition(int n)
+{
+  (void)n;
+}
+
+void CGameObject::SendMsg_RealMovePoint(int n)
+{
+  (void)n;
+}
+
 char CGameObject::SetHP(int /*nHP*/, bool /*bOver*/)
 {
   return 1;

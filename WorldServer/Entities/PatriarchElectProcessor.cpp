@@ -12,3 +12,8 @@ bool PatriarchElectProcessor::Initialize()
 {
   return true;
 }
+
+unsigned int PatriarchElectProcessor::GetCurrPatriarchElectSerial()
+{
+  return _dwCurrPatriarchElectSerial;
+}

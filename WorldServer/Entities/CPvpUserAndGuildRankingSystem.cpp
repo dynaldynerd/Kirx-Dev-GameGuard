@@ -46,6 +46,11 @@ unsigned int CPvpUserAndGuildRankingSystem::GetCurrentRaceBossSerial(unsigned __
   return m_kUserRankingProcess.GetCurrentRaceBossSerial(byRace, byNth);
 }
 
+bool CPvpUserAndGuildRankingSystem::IsRaceViceBoss(unsigned __int8 byRace, unsigned int dwSerial)
+{
+  return m_kUserRankingProcess.IsRaceViceBoss(byRace, dwSerial);
+}
+
 unsigned __int8 CPvpUserAndGuildRankingSystem::GetBossType(unsigned __int8 byRace, unsigned int dwSerial)
 {
   return m_kUserRankingProcess.GetBossType(byRace, dwSerial);
