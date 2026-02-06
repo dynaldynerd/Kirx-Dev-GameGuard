@@ -300,6 +300,41 @@ void CMgrAvatorItemHistory::consume_del_item(int n, _STORAGE_LIST::_db_con *pIte
   WriteFile(pszFileName, logBuffer);
 }
 
+void CMgrAvatorItemHistory::reward_add_item(
+  int n,
+  char *pszClause,
+  _STORAGE_LIST::_db_con *pItem,
+  char *pszFileName)
+{
+  __int64 stackFill = 0;
+  auto *fillPtr = &stackFill;
+  for (int fillCount = 28; fillCount; --fillCount)
+  {
+    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
+    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
+  }
+
+  _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
+  char *curTime = m_szCurTime;
+  char *curDate = m_szCurDate;
+  const int tableCode = pItem->m_byTableCode;
+  const char *upgradeInfo = DisplayItemUpgInfo(tableCode, pItem->m_dwLv);
+
+  sprintf(
+    sData,
+    "REWARD: %s /ITEM %s_%u_@%s[%I64u] [%s %s]\r\n",
+    pszClause,
+    record->m_strCode,
+    pItem->m_dwDur,
+    upgradeInfo,
+    pItem->m_lnUID,
+    curDate,
+    curTime);
+
+  (void)n;
+  WriteFile(pszFileName, sData);
+}
+
 void CMgrAvatorItemHistory::personal_amine_itemlog(
   const char *szLogDesc,
   unsigned __int8 byPos,

@@ -15,6 +15,15 @@ public:
     UTUI_NONE = -1,
   };
 
+  CUnmannedTraderUserInfo();
+
+  bool Init(unsigned short wInx);
+  void Clear();
+  void ClearLoadItemInfo();
+  bool IsNull();
+
+  static CUnmannedTraderUserInfo ms_kNull;
+
   LOG_IN_STATE m_eState;
   unsigned short m_wInx;
   unsigned int m_dwUserSerial;

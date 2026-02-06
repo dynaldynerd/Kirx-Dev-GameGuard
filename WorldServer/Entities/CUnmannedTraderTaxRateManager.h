@@ -8,6 +8,13 @@
 class __cppobj CUnmannedTraderTaxRateManager
 {
 public:
+  static CUnmannedTraderTaxRateManager *Instance();
+
+  CUnmannedTraderTaxRateManager();
+  bool Init(CLogFile *pkLogger);
+
+  static CUnmannedTraderTaxRateManager *ms_Instance;
+
   CMyTimer *m_pkTimer;
   std::vector<TRC_AutoTrade *> m_vecTRC;
 };

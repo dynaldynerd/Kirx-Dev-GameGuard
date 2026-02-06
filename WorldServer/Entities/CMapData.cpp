@@ -174,6 +174,18 @@ bool CMapData::CheckCenterPosDummy(_dummy_position *pPos)
     return false;
 }
 
+bool CMapData::LoadDummy(char *pszDummyCode, _dummy_position *pPos)
+{
+  char buffer[144]{};
+  sprintf(buffer, ".\\map\\%s\\%s.spt", m_pMapSet->m_strCode, m_pMapSet->m_strCode);
+  if (CDummyPosTable::FindDummy(buffer, pszDummyCode, pPos))
+  {
+    return ConvertLocal(pPos) && CheckCenterPosDummy(pPos);
+  }
+  MyMessageBox("CMapData Error", "CDummyPosTable::FindDummy(%s, %s) == false", m_pMapSet->m_strCode, pszDummyCode);
+  return false;
+}
+
 bool CMapData::LoadHolySystemDummy(char *pszDummyCode, _dummy_position *pPos)
 {
   char buffer[144]{};
@@ -190,6 +202,37 @@ bool CMapData::LoadHolySystemDummy(char *pszDummyCode, _dummy_position *pPos)
     m_pMapSet->m_strCode,
     pszDummyCode);
   return false;
+}
+
+_dummy_position *CMapData::GetDummyPostion(char *pszDummyCode)
+{
+  __int64 stackFill = 0;
+  auto *fillPtr = &stackFill;
+  for (int fillCount = 8; fillCount; --fillCount)
+  {
+    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
+    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
+  }
+
+  if (!strncmp(pszDummyCode, "dm", 2u))
+    return static_cast<_dummy_position *>(m_tbMonDumPos.GetRecord(pszDummyCode));
+  if (!strncmp(pszDummyCode, "dp", 2u))
+    return static_cast<_dummy_position *>(m_tbPortalDumPos.GetRecord(pszDummyCode));
+  if (!strncmp(pszDummyCode, "sd", 2u))
+    return static_cast<_dummy_position *>(m_tbStoreDumPos.GetRecord(pszDummyCode));
+  if (!strncmp(pszDummyCode, "ds", 2u))
+    return static_cast<_dummy_position *>(m_tbStartDumPos.GetRecord(pszDummyCode));
+  if (!strncmp(pszDummyCode, "bd", 2u))
+    return static_cast<_dummy_position *>(m_tbBindDumPos.GetRecord(pszDummyCode));
+  if (!strncmp(pszDummyCode, "0dr", 3u))
+    return static_cast<_dummy_position *>(m_tbResDumPosHigh.GetRecord(pszDummyCode));
+  if (!strncmp(pszDummyCode, "1dr", 3u))
+    return static_cast<_dummy_position *>(m_tbResDumPosMiddle.GetRecord(pszDummyCode));
+  if (!strncmp(pszDummyCode, "2dr", 3u))
+    return static_cast<_dummy_position *>(m_tbResDumPosLow.GetRecord(pszDummyCode));
+  if (!strncmp(pszDummyCode, "dq", 2u))
+    return static_cast<_dummy_position *>(m_tbQuestDumPos.GetRecord(pszDummyCode));
+  return nullptr;
 }
 
 bool CMapData::GetRandPosInDummy(_dummy_position *pPos, float *pNewPos, bool bRePos)
@@ -822,6 +865,18 @@ bool CMapData::_LoadSafe(char *pszMapCode)
         }
     }
     return true;
+}
+
+int CMapData::GetPortalInx(char *pPortalCode)
+{
+  for (int j = 0; j < m_nPortalNum; ++j)
+  {
+    if (!strcmp_0(pPortalCode, m_pPortal[j].m_pPortalRec->m_strCode))
+    {
+      return j;
+    }
+  }
+  return -1;
 }
 
 _portal_dummy *CMapData::GetPortal(int nPortalIndex)

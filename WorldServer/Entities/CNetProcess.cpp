@@ -28,6 +28,37 @@ _socket *CNetSocket::GetSocket(unsigned int dwIndex)
   return &this->m_Socket[dwIndex];
 }
 
+CNetTimer::CNetTimer()
+{
+  m_bOper = false;
+  m_dwTickOld = 0;
+}
+
+void CNetTimer::BeginTimer(int dwTerm)
+{
+  m_bOper = true;
+  m_nTickTerm = dwTerm;
+  m_dwTickOld = timeGetTime();
+}
+
+bool CNetTimer::CountingTimer()
+{
+  if (!m_bOper)
+    return false;
+
+  const DWORD now = timeGetTime();
+  const int elapsed = static_cast<int>(now - m_dwTickOld);
+  if (elapsed <= m_nTickTerm)
+  {
+    if (elapsed < 0)
+      m_dwTickOld = 0;
+    return false;
+  }
+
+  m_dwTickOld = now;
+  return true;
+}
+
 __int64 _NET_BUFFER::GetLeftLoadSize()
 {
   this->m_csPop.Lock();

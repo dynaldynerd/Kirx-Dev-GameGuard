@@ -56,3 +56,5 @@ extern CWorldSchedule g_WorldSch;
 extern CGameStatistics g_GameStatistics;
 extern CMainThread g_Main;
 extern CWnd *g_pFrame;
+
+extern float TSVR_ADD_DARKHOLE_REWARD_RATE;

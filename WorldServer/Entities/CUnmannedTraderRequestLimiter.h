@@ -14,5 +14,8 @@ public:
     RT_TYPE_MAX = 4,
   };
 
+  CUnmannedTraderRequestLimiter();
+  void ClearRequset();
+
   REQUEST_TYPE m_eState;
 };

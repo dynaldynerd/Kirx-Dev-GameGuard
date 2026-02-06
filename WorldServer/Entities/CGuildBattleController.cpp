@@ -13,7 +13,44 @@ CGuildBattleController *CGuildBattleController::Instance()
 
 bool CGuildBattleController::Init()
 {
-  return true;
+  auto *logger = GUILD_BATTLE::CGuildBattleLogger::Instance();
+  if (!logger->Init())
+    return false;
+
+  auto *rewardManager = GUILD_BATTLE::CGuildBattleRewardItemManager::Instance();
+  if (!rewardManager->Init())
+    return false;
+
+  auto *rankManager = GUILD_BATTLE::CGuildBattleRankManager::Instance();
+  if (!rankManager->Init())
+    return false;
+
+  auto *fieldList = GUILD_BATTLE::CNormalGuildBattleFieldList::Instance();
+  if (!fieldList->Init())
+    return false;
+
+  auto *scheduler = GUILD_BATTLE::CGuildBattleScheduler::Instance();
+  if (!scheduler->Init())
+    return false;
+
+  auto *possibleList = GUILD_BATTLE::CPossibleBattleGuildListManager::Instance();
+  if (!possibleList->Init())
+    return false;
+
+  auto *battleManager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
+  if (!battleManager->Init())
+    return false;
+
+  auto *reservedSchedule = GUILD_BATTLE::CGuildBattleReservedScheduleListManager::Instance();
+  if (!reservedSchedule->Init())
+    return false;
+
+  auto *currentInfo = GUILD_BATTLE::CCurrentGuildBattleInfoManager::Instance();
+  if (!currentInfo->Init())
+    return false;
+
+  auto *stateListPool = GUILD_BATTLE::CNormalGuildBattleStateListPool::Instance();
+  return stateListPool->Init();
 }
 
 unsigned __int8 CGuildBattleController::Add(

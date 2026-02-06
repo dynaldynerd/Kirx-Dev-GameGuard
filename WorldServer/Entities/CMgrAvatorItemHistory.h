@@ -35,6 +35,7 @@ public:
   static void IOThread(void *pv);
   void WriteFile(const char *pszFileName, const char *pszLog);
   void consume_del_item(int n, _STORAGE_LIST::_db_con *pItem, const char *pszFileName);
+  void reward_add_item(int n, char *pszClause, _STORAGE_LIST::_db_con *pItem, char *pszFileName);
   void personal_amine_itemlog(
     const char *szLogDesc,
     unsigned __int8 byPos,

@@ -7,6 +7,7 @@
 /* 1598 */
 class __cppobj __declspec(align(8)) CDarkHoleChannel
 {
+public:
   unsigned __int16 m_wChannelIndex;
   unsigned int m_dwChannelSerial;
   CDarkHole *m_pHoleObj;

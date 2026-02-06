@@ -126,6 +126,18 @@ unsigned __int8 CPlayerDB::GetBagNum(CPlayerDB *self)
   return self->m_dbChar.m_byUseBagNum;
 }
 
+unsigned __int16 CPlayerDB::GetNewItemSerial(CPlayerDB *self)
+{
+  __int16 stackFill = 0;
+  auto *fillPtr = &stackFill;
+  for (int fillCount = 4; fillCount; --fillCount)
+  {
+    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
+    fillPtr += 2;
+  }
+  return self->m_wSerialCount++;
+}
+
 _SFCONT_DB_BASE::_SFCONT_DB_BASE()
 {
   Init();

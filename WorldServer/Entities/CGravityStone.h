@@ -2,9 +2,16 @@
 
 #include "IdaCompat.h"
 
-class __cppobj CGravityStone
+#include "CGameObject.h"
+
+class CPlayer;
+
+class CGravityStone : public CGameObject
 {
 public:
-  virtual ~CGravityStone() = default;
+  explicit CGravityStone(unsigned __int16 wInx);
+
+  unsigned int m_dwTakeLimitTime;
+  CPlayer *m_pkOwner;
 };
 

@@ -12,6 +12,7 @@ struct _R3MATERIAL;
 struct _ANI_OBJECT;
 struct _READ_ANI_OBJECT;
 struct _LIGHTMAP;
+struct _animus_fld;
 
 struct R3Texture
 {
@@ -34,6 +35,7 @@ int GetCurrentDay();
 int GetCurrentYear();
 int GetCurrentMonth();
 int GetCurDay();
+int GetNextDay();
 bool GetDateTimeStr(char *szTime);
 unsigned int GetKorLocalTime();
 int GetCurrentHour();
@@ -58,10 +60,13 @@ int IsOverLapItem(int nTableCode);
 int IsItemSerialNum(int nTableCode);
 int IsStorageRange(unsigned __int8 byStorageCode, unsigned __int8 byStorageIndex);
 unsigned __int8 GetItemGrade(int nTableCode, int nItemIndex);
+int GetItemEquipLevel(int nTableCode, int nItemIndex);
 unsigned __int8 GetItemUpgedLv(unsigned int dwLvBit);
 unsigned __int8 GetDefItemUpgSocketNum(int nTableCode, int nItemIndex);
 unsigned __int8 GetTalikFromSocket(unsigned int dwLvBit, unsigned __int8 bySocketIndex);
 unsigned int GetBitAfterSetLimSocket(unsigned __int8 byLimSocketNum);
+_animus_fld *GetAnimusFldFromExp(int nAnimusClass, unsigned __int64 dwExp);
+unsigned int GetMaxParamFromExp(int nAnimusClass, unsigned __int64 dwExp);
 unsigned __int8 GetWeaponClass(int nItemIndex);
 int CalcRoundUp(float fVal);
 int CalcMastery(int nMasteryCode, int nMasteryIndex, int dwMasteryCum, unsigned int nRaceCode);

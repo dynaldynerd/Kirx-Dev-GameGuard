@@ -8,13 +8,25 @@ struct TiXmlElement;
 class __cppobj CUnmannedTraderClassInfo
 {
 public:
-  virtual ~CUnmannedTraderClassInfo() = default;
+  virtual ~CUnmannedTraderClassInfo();
 
-  virtual bool LoadXML(TiXmlElement *pElement, CLogFile *pLogger, unsigned int dwVersion);
-  virtual bool GetGroupID(unsigned char byDivision, unsigned short wGroup, unsigned char *pOutMajor, unsigned char *pOutMinor);
-  virtual bool GetGroupID(unsigned char byDivision, unsigned short wGroup, unsigned char *pOutMajor);
-  virtual bool IsExistGroupID(unsigned char byDivision, unsigned char byGroup);
-  virtual CUnmannedTraderClassInfo *Create(unsigned int dwID);
+  virtual bool LoadXML(TiXmlElement *pElement, CLogFile *pLogger, unsigned int dwVersion) = 0;
+  virtual bool GetGroupID(
+    unsigned char byDivision,
+    unsigned short wGroup,
+    unsigned char *pOutMajor,
+    unsigned char *pOutMinor) = 0;
+  virtual bool GetGroupID(
+    unsigned char byDivision,
+    unsigned short wGroup,
+    unsigned char *pOutMajor) = 0;
+  virtual bool IsExistGroupID(unsigned char byClass, unsigned char bySubClass) = 0;
+  virtual CUnmannedTraderClassInfo *Create(unsigned int dwID) = 0;
+
+  CUnmannedTraderClassInfo(unsigned int dwID);
+  const CUnmannedTraderClassInfo *Copy(const CUnmannedTraderClassInfo *lhs);
+  unsigned int GetID();
+  char *GetTypeName();
 
 public:
   unsigned int m_dwID;

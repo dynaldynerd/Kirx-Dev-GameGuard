@@ -9,6 +9,12 @@
 
 struct __cppobj __declspec(align(4)) _dummy_position
 {
+  _dummy_position()
+  {
+    m_bPosAble = true;
+    m_wActiveMon = 0;
+  }
+
   char m_szCode[64];
   unsigned __int16 m_wLineIndex;
   bool m_bPosAble;

@@ -32,8 +32,11 @@ public:
   bool GetRandPosInRange(float *pStdPos, int nRange, float *pNewPos);
   bool GetRandPosVirtualDumExcludeStdRange(float *pStdPos, int nRange, int iExcludeRange, float *pNewPos);
   bool LoadHolySystemDummy(char *pszDummyCode, _dummy_position *pPos);
+  bool LoadDummy(char *pszDummyCode, _dummy_position *pPos);
+  _dummy_position *GetDummyPostion(char *pszDummyCode);
   _portal_dummy *GetPortal(int nPortalIndex);
   _portal_dummy *GetPortal(char *pPortalCode);
+  int GetPortalInx(char *pPortalCode);
 
   bool _LoadBspSec(char *pszMapCode);
   bool _LoadMonBlk(char *pszMapCode, _map_fld *pMapFld);

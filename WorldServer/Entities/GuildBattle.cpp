@@ -5,16 +5,29 @@
 #include "GuildBattleTypes.h"
 
 #include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <new>
 
 #include "CLogFile.h"
 #include "CMainThread.h"
+#include "CMapOperation.h"
 #include "CMapData.h"
+#include "CCircleZone.h"
+#include "CGravityStoneRegener.h"
+#include "CGravityStone.h"
+#include "CMyTimer.h"
 #include "CNetworkEX.h"
 #include "CPlayer.h"
 #include "CPlayerDB.h"
+#include "CRecordData.h"
 #include "CGuild.h"
 #include "GlobalObjects.h"
+#include "CUnmannedTraderEnvironmentValue.h"
+#include "StorageList.h"
+#include "WorldServerUtil.h"
+#include "base_fld.h"
 
 __int64 _qry_case_in_guildbattlecost::size()
 {
@@ -45,6 +58,14 @@ namespace GUILD_BATTLE
   static CGuildBattleState GUILD_BATTLE_STATE_NULL_11{};
   static CGuildBattleStateList STATE_LIST_NULL_10(2147483646, CGuildBattleStateList::GBS_ONCE, 1u);
   static CNormalGuildBattleStateList NORMAL_GUILD_BATTLE_STATE_NULL_11;
+  unsigned __int8 LIMIT_SRC_GRADE = 0;
+  unsigned __int8 LIMIT_DEST_GRADE = 0;
+  CGuildBattleRewardItem CGuildBattleRewardItem::ms_kNullObj{};
+  CGuildBattleRewardItemManager *CGuildBattleRewardItemManager::ms_Instance = nullptr;
+  CGuildBattleRankManager *CGuildBattleRankManager::ms_Instance = nullptr;
+  CGuildBattleScheduler *CGuildBattleScheduler::ms_Instance = nullptr;
+  CGuildBattleReservedScheduleListManager *CGuildBattleReservedScheduleListManager::ms_Instance = nullptr;
+  CCurrentGuildBattleInfoManager *CCurrentGuildBattleInfoManager::ms_Instance = nullptr;
 
   int CGuildBattle::GetObjType()
   {
@@ -213,6 +234,28 @@ namespace GUILD_BATTLE
   {
   }
 
+  bool CNormalGuildBattleStateListPool::Init()
+  {
+    CNormalGuildBattleFieldList *fieldList = CNormalGuildBattleFieldList::Instance();
+    const unsigned int mapCount = fieldList->GetMapCnt();
+    if (!mapCount)
+    {
+      return false;
+    }
+
+    m_dwMaxCount = 46 * mapCount;
+    m_pkStateList = new (std::nothrow) CNormalGuildBattleStateList[m_dwMaxCount];
+    if (m_pkStateList)
+    {
+      return true;
+    }
+
+    CGuildBattleLogger::Instance()->Log(
+      "CNormalGuildBattleStateListPool::Init()NULL == new CNormalGuildBattleStateList[%u]",
+      m_dwMaxCount);
+    return false;
+  }
+
   CNormalGuildBattleStateList *CNormalGuildBattleStateListPool::Get(unsigned int dwID)
   {
     if (m_pkStateList && m_dwMaxCount > dwID)
@@ -257,6 +300,125 @@ namespace GUILD_BATTLE
     m_ppkUseFieldByRace[0] = nullptr;
     m_ppkUseFieldByRace[1] = nullptr;
     m_ppkUseFieldByRace[2] = nullptr;
+  }
+
+  bool CNormalGuildBattleFieldList::Init()
+  {
+    char szStrBuff[1024]{};
+    unsigned int mapCount = GetPrivateProfileIntA("Field", "mapcnt", 100, "./Initialize/NormalGuildBattle.ini");
+    if (!mapCount)
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CNormalGuildBattleFieldList::Init() GetPrivateProfileInt( Field, mapcnt, 0, %s ) = 0",
+        "./Initialize/NormalGuildBattle.ini");
+      return false;
+    }
+
+    m_dwCnt = mapCount;
+    m_pkField = new (std::nothrow) CNormalGuildBattleField[m_dwCnt];
+    if (!m_pkField)
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CNormalGuildBattleFieldList::Init() NULL == new CNormalGuildBattleField[%u]",
+        m_dwCnt);
+      return false;
+    }
+
+    for (unsigned int uiMapInx = 0; uiMapInx < m_dwCnt; ++uiMapInx)
+    {
+      if (!m_pkField[uiMapInx].Init(uiMapInx))
+      {
+        CGuildBattleLogger::Instance()->Log(
+          "CNormalGuildBattleFieldList::Init() m_pkField[%u].Init(%u) = false",
+          uiMapInx,
+          uiMapInx);
+        return false;
+      }
+    }
+
+    char parseStorage[25600]{};
+    char *szParseBuff[100]{};
+    for (int j = 0; j < 100; ++j)
+    {
+      szParseBuff[j] = &parseStorage[256 * j];
+    }
+    memset_0(parseStorage, 0, sizeof(parseStorage));
+
+    const char *szKeyName[3] = {"Bellato", "Cora", "Accratia"};
+    for (int k = 0; k < 3; ++k)
+    {
+      if (!InitUseField(static_cast<unsigned __int8>(k), const_cast<char *>(szKeyName[k]), szStrBuff, szParseBuff))
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool CNormalGuildBattleFieldList::InitUseField(
+    unsigned __int8 byRace,
+    char *szKeyName,
+    char *szStrBuff,
+    char **szParseBuff)
+  {
+    if (byRace >= 3u)
+    {
+      return false;
+    }
+    *szStrBuff = 0;
+    GetPrivateProfileStringA(
+      "UseMap",
+      szKeyName,
+      "X",
+      szStrBuff,
+      0x7FFu,
+      "./Initialize/NormalGuildBattle.ini");
+    if (!strcmp_0("X", szStrBuff))
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CNormalGuildBattleFieldList::InitUseField( %u, %s, szUseMapInxStr, szBuff ) : GetPrivateProfileInt( UseMap, %s, X, szStr, 2047, %s ) = X",
+        byRace,
+        szKeyName,
+        szKeyName,
+        "./Initialize/NormalGuildBattle.ini");
+      return false;
+    }
+
+    const int count = ParsingCommandA(szStrBuff, 100, szParseBuff, 255);
+    if (count && count <= 100)
+    {
+      m_ppkUseFieldByRace[byRace] = new CNormalGuildBattleField *[count];
+      if (m_pkField)
+      {
+        m_byUseFieldCnt[byRace] = static_cast<unsigned __int8>(count);
+        for (int j = 0; j < count; ++j)
+        {
+          const int mapIndex = atoi(szParseBuff[j]);
+          m_ppkUseFieldByRace[byRace][j] = &m_pkField[mapIndex];
+        }
+        return true;
+      }
+
+      CGuildBattleLogger::Instance()->Log(
+        "CNormalGuildBattleFieldList::InitUseField( %u, %s, szUseMapInxStr, szBuff ) : m_ppkUseFieldByRace[%u] == new CNormalGuildBattleField * [%u]",
+        byRace,
+        szKeyName,
+        byRace,
+        m_dwCnt);
+      return false;
+    }
+
+    CGuildBattleLogger::Instance()->Log(
+      "CNormalGuildBattleFieldList::InitUseField( %u, %s, szUseMapInxStr, szBuff ) : ::ParsingCommandA( szStrBuff, 100, szParseBuff, 255 ) == %u Invalid!",
+      byRace,
+      szKeyName,
+      count);
+    return false;
+  }
+
+  unsigned int CNormalGuildBattleFieldList::GetMapCnt()
+  {
+    return m_dwCnt;
   }
 
   char CNormalGuildBattleFieldList::GetMapInx(unsigned __int8 byRace, unsigned int dwMapCode, unsigned int *dwMapInx)
@@ -307,6 +469,231 @@ namespace GUILD_BATTLE
       }
     }
     return nullptr;
+  }
+
+  bool CNormalGuildBattleField::Init(unsigned int uiMapInx)
+  {
+    char returned[256]{};
+    char buffer[256]{};
+    char tmp[256]{};
+    (void)tmp;
+
+    sprintf(buffer, "Map%d", uiMapInx);
+    returned[0] = 0;
+    GetPrivateProfileStringA(buffer, "Name", "X", returned, 0xFFu, "./Initialize/NormalGuildBattle.ini");
+    if (returned[0] == 'X')
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CNormalGuildBattleField::Init( %u )GetPrivateProfileString( %s, Name, X, %s, 255, %s ) Fail",
+        uiMapInx,
+        buffer,
+        returned,
+        "./Initialize/NormalGuildBattle.ini");
+      return false;
+    }
+
+    m_pkMap = g_MapOper.GetMap(returned);
+    if (!m_pkMap)
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CNormalGuildBattleField::Init( %u )NULL == g_MapOper.GetMap( %s )",
+        uiMapInx,
+        returned);
+      return false;
+    }
+
+    returned[0] = 0;
+    GetPrivateProfileStringA(
+      buffer,
+      "1PStartPosDummyName",
+      "X",
+      returned,
+      0xFFu,
+      "./Initialize/NormalGuildBattle.ini");
+    if (returned[0] == 'X')
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CNormalGuildBattleField::Init( %u )GetPrivateProfileString( %s, 1PStartPosDummyName, X, %s, 255, %s ) Fail!",
+        uiMapInx,
+        buffer,
+        returned,
+        "./Initialize/NormalGuildBattle.ini");
+      return false;
+    }
+
+    m_pkStartPos[0] = new (std::nothrow) _dummy_position();
+    if (!m_pkStartPos[0])
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CNormalGuildBattleField::Init( %u )new _dummy_position",
+        uiMapInx);
+      return false;
+    }
+    if (!m_pkMap->LoadDummy(returned, m_pkStartPos[0]))
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CNormalGuildBattleField::Init( %u )m_pkMap->LoadDummy( %s, ... )",
+        uiMapInx,
+        returned);
+      return false;
+    }
+
+    returned[0] = 0;
+    GetPrivateProfileStringA(
+      buffer,
+      "2PStartPosDummyName",
+      "X",
+      returned,
+      0xFFu,
+      "./Initialize/NormalGuildBattle.ini");
+    if (returned[0] == 'X')
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CNormalGuildBattleField::Init( %u )GetPrivateProfileString( %s, 2PStartPosDummyName, X, %s, 255, %s ) Fail!",
+        uiMapInx,
+        buffer,
+        returned,
+        "./Initialize/NormalGuildBattle.ini");
+      return false;
+    }
+
+    m_pkStartPos[1] = new (std::nothrow) _dummy_position();
+    if (!m_pkStartPos[1])
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CNormalGuildBattleField::Init( %u )new _dummy_position",
+        uiMapInx);
+      return false;
+    }
+    if (!m_pkMap->LoadDummy(returned, m_pkStartPos[1]))
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CNormalGuildBattleField::Init( %u )m_pkMap->LoadDummy()",
+        uiMapInx);
+      return false;
+    }
+
+    m_ui1PGoalPosCnt =
+      GetPrivateProfileIntA(buffer, "1PGoalPosCnt", 0, "./Initialize/NormalGuildBattle.ini");
+    if (!m_ui1PGoalPosCnt)
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CNormalGuildBattleField::Init( %u ) : GetPrivateProfileInt( %s, 1PGoalPosCnt, 0, %s ) is 0 !",
+        uiMapInx,
+        buffer,
+        "./Initialize/NormalGuildBattle.ini");
+      return false;
+    }
+
+    m_pk1PGoalZone = new (std::nothrow) CCircleZone[m_ui1PGoalPosCnt];
+    if (!m_pk1PGoalZone)
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CNormalGuildBattleField::Init( %u )new CCircleZone[%u]",
+        uiMapInx,
+        m_ui1PGoalPosCnt);
+    }
+    for (int iNth = 0; iNth < static_cast<int>(m_ui1PGoalPosCnt); ++iNth)
+    {
+      if (!m_pk1PGoalZone[iNth].Init(uiMapInx, 1, iNth, static_cast<unsigned __int16>(iNth), m_pkMap))
+      {
+        const int mapCode = static_cast<int>(GetMapCode());
+        CGuildBattleLogger::Instance()->Log(
+          "CNormalGuildBattleField::Init( %u )m_pk1PGoalZone[%d].Init( %u, %u, %d )",
+          uiMapInx,
+          iNth,
+          uiMapInx,
+          iNth,
+          mapCode);
+      }
+    }
+
+    m_ui2PGoalPosCnt =
+      GetPrivateProfileIntA(buffer, "2PGoalPosCnt", 0, "./Initialize/NormalGuildBattle.ini");
+    if (!m_ui2PGoalPosCnt)
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CNormalGuildBattleField::Init( %u ) : GetPrivateProfileInt( %s, 2PGoalPosCnt, 0, %s ) is 0 !",
+        uiMapInx,
+        buffer,
+        "./Initialize/NormalGuildBattle.ini");
+      return false;
+    }
+
+    m_pk2PGoalZone = new (std::nothrow) CCircleZone[m_ui2PGoalPosCnt];
+    if (!m_pk2PGoalZone)
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CNormalGuildBattleField::Init( %u )new CCircleZone[%u]",
+        uiMapInx,
+        m_ui2PGoalPosCnt);
+    }
+    for (int iNth = 0; iNth < static_cast<int>(m_ui2PGoalPosCnt); ++iNth)
+    {
+      if (!m_pk2PGoalZone[iNth].Init(
+            uiMapInx,
+            2,
+            iNth,
+            static_cast<unsigned __int16>(m_ui1PGoalPosCnt + iNth),
+            m_pkMap))
+      {
+        const int mapCode = static_cast<int>(GetMapCode());
+        CGuildBattleLogger::Instance()->Log(
+          "CNormalGuildBattleField::Init( %u )m_pk2PGoalZone[%d].Init( %u, %u, %d )",
+          uiMapInx,
+          iNth,
+          uiMapInx,
+          iNth,
+          mapCode);
+      }
+    }
+
+    m_uiRegenPosCnt =
+      GetPrivateProfileIntA(buffer, "BallRegenPosCnt", 0, "./Initialize/NormalGuildBattle.ini");
+    if (!m_uiRegenPosCnt)
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CNormalGuildBattleField::Init( %u ) : GetPrivateProfileInt( %s, BallRegenPosCnt, 0, %s ) is 0 !",
+        uiMapInx,
+        buffer,
+        "./Initialize/NormalGuildBattle.ini");
+      return false;
+    }
+
+    m_pkRegenPos = new (std::nothrow) CGravityStoneRegener[m_uiRegenPosCnt];
+    if (!m_pkRegenPos)
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CNormalGuildBattleField::Init( %u )new GravityStoneRegener[%u]",
+        uiMapInx,
+        m_uiRegenPosCnt);
+    }
+    for (int iNth = 0; iNth < static_cast<int>(m_uiRegenPosCnt); ++iNth)
+    {
+      if (!m_pkRegenPos[iNth].Init(uiMapInx, static_cast<unsigned __int16>(iNth), m_pkMap))
+      {
+        const int mapCode = static_cast<int>(GetMapCode());
+        CGuildBattleLogger::Instance()->Log(
+          "CNormalGuildBattleField::Init( %u )m_pkRegenPos[%d].Init( %u, %d )",
+          uiMapInx,
+          iNth,
+          iNth,
+          mapCode);
+      }
+    }
+
+    m_pkBall = new (std::nothrow) CGravityStone(static_cast<unsigned __int16>(uiMapInx));
+    if (!m_pkBall)
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CNormalGuildBattleField::Init( %u )NULL == new CGravityStone",
+        uiMapInx);
+      return false;
+    }
+
+    m_uiMapInx = uiMapInx;
+    m_bInit = true;
+    return true;
   }
 
   bool CNormalGuildBattleField::Start(unsigned __int8 byStartPos, CPlayer *pkPlayer)
@@ -361,6 +748,48 @@ namespace GUILD_BATTLE
 
   CNormalGuildBattleLogger::CNormalGuildBattleLogger() : m_pkLogger(nullptr)
   {
+  }
+
+  bool CNormalGuildBattleLogger::Init()
+  {
+    if (m_pkLogger)
+    {
+      return true;
+    }
+    m_pkLogger = new (std::nothrow) CLogFile();
+    if (m_pkLogger)
+    {
+      return true;
+    }
+    g_Main.m_logLoadingError.Write("CGuildBattleLogger::Init() new CLogFile Fail!");
+    return false;
+  }
+
+  void CNormalGuildBattleLogger::CreateLogFile(char *szLogName)
+  {
+    const unsigned int korLocalTime = GetKorLocalTime();
+    char buffer[144]{};
+    if (szLogName)
+    {
+      sprintf(buffer, "..\\ZoneServerLog\\Systemlog\\GuildBattle\\GuildBattle%s%d.log", szLogName, korLocalTime);
+    }
+    else
+    {
+      sprintf(buffer, "..\\ZoneServerLog\\Systemlog\\GuildBattle\\GuildBattle%d.log", korLocalTime);
+    }
+    m_pkLogger->SetWriteLogFile(buffer, 1, 0, 1, 1);
+  }
+
+  void CNormalGuildBattleLogger::Log(char *fmt, ...)
+  {
+    if (!m_pkLogger)
+    {
+      return;
+    }
+    va_list va;
+    va_start(va, fmt);
+    m_pkLogger->WriteFromArg(fmt, va);
+    va_end(va);
   }
 
   CNormalGuildBattleGuildMember::CNormalGuildBattleGuildMember()
@@ -488,6 +917,15 @@ namespace GUILD_BATTLE
     if (m_pkGuild)
     {
       return m_pkGuild->m_wszName;
+    }
+    return nullptr;
+  }
+
+  char *CNormalGuildBattleGuild::GetANSIGuildName()
+  {
+    if (m_pkGuild)
+    {
+      return m_pkGuild->m_aszName;
     }
     return nullptr;
   }
@@ -737,6 +1175,37 @@ namespace GUILD_BATTLE
   {
   }
 
+  bool CNormalGuildBattle::CreateLogger()
+  {
+    return m_kLogger.Init();
+  }
+
+  void CNormalGuildBattle::CreateLogFile()
+  {
+    bool bSuccess = true;
+    const char *fallback = "NONE";
+    char *leftName = m_k1P.GetANSIGuildName();
+    char *rightName = m_k2P.GetANSIGuildName();
+    if (!leftName)
+    {
+      leftName = const_cast<char *>(fallback);
+      bSuccess = false;
+    }
+    if (!rightName)
+    {
+      rightName = const_cast<char *>(fallback);
+      bSuccess = false;
+    }
+
+    char buffer[1032]{};
+    sprintf(buffer, "[%u]_(%02d:00)_[%s]:[%s]_", m_dwID, m_dwID % 0x17u, leftName, rightName);
+    m_kLogger.CreateLogFile(buffer);
+    if (!bSuccess)
+    {
+      CGuildBattleLogger::Instance()->Log("CNormalGuildBattle::CreateLogFile() Fail!");
+    }
+  }
+
   void CNormalGuildBattle::Clear()
   {
     m_bInit = false;
@@ -855,6 +1324,56 @@ namespace GUILD_BATTLE
       m_ppkTodayBattle(nullptr),
       m_ppkTomorrowBattle(nullptr)
   {
+  }
+
+  bool CNormalGuildBattleManager::Init()
+  {
+    if (g_Main.IsReleaseServiceMode())
+    {
+      LIMIT_SRC_GRADE = 2;
+      LIMIT_DEST_GRADE = 2;
+      CUnmannedTraderEnvironmentValue::Unmanned_Trader_Check_Schedule_Delay = 300000;
+    }
+
+    CNormalGuildBattleFieldList *fieldList = CNormalGuildBattleFieldList::Instance();
+    m_uiMapCnt = fieldList->GetMapCnt();
+    if (!m_uiMapCnt)
+    {
+      return false;
+    }
+
+    m_uiMaxBattleCnt = 46 * m_uiMapCnt;
+    CGuildBattleLogger *logger = CGuildBattleLogger::Instance();
+    m_ppkNormalBattle = new (std::nothrow) CNormalGuildBattle *[m_uiMaxBattleCnt];
+    if (!m_ppkNormalBattle)
+    {
+      logger->Log(
+        "CNormalGuildBattleManager::Init() : new CNormalGuildBattle * [%u] Fail!",
+        m_uiMaxBattleCnt);
+      return false;
+    }
+
+    memset_0(m_ppkNormalBattle, 0, sizeof(CNormalGuildBattle *) * m_uiMaxBattleCnt);
+    for (unsigned int dwID = 0; dwID < m_uiMaxBattleCnt; ++dwID)
+    {
+      m_ppkNormalBattle[dwID] = new (std::nothrow) CNormalGuildBattle(dwID);
+      if (!m_ppkNormalBattle[dwID])
+      {
+        logger->Log("GuildBattleManager::Init() : new CNormalGuildBattle( %u ) Fail!", dwID);
+        return false;
+      }
+      if (!m_ppkNormalBattle[dwID]->CreateLogger())
+      {
+        logger->Log(
+          "CNormalGuildBattleManager::Init() : m_ppkNormalBattle[i]->CreateLogger() Fail!",
+          dwID);
+        return false;
+      }
+    }
+
+    m_ppkTodayBattle = m_ppkNormalBattle;
+    m_ppkTomorrowBattle = &m_ppkNormalBattle[23 * m_uiMapCnt];
+    return true;
   }
 
   unsigned __int8 CNormalGuildBattleManager::Add(
@@ -993,6 +1512,14 @@ namespace GUILD_BATTLE
     return g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x1Eu, reinterpret_cast<char *>(&qry), nSize) != nullptr;
   }
 
+  CGuildBattleSchedule::CGuildBattleSchedule(unsigned int dwScheduleID) : m_dwScheduleID(dwScheduleID)
+  {
+    m_kNextStartTime = ATL::CTime();
+    m_kBattleStartTime = ATL::CTime();
+    m_kBattleTime = ATL::CTimeSpan();
+    Clear();
+  }
+
   unsigned int CGuildBattleSchedule::GetSID()
   {
     return m_dwScheduleID;
@@ -1086,6 +1613,40 @@ namespace GUILD_BATTLE
   {
   }
 
+  bool CGuildBattleSchedulePool::Init(unsigned int uiMapCnt)
+  {
+    if (!uiMapCnt)
+    {
+      return false;
+    }
+
+    m_dwMaxScheduleCnt = 46 * uiMapCnt;
+    m_ppkSchedule = new (std::nothrow) CGuildBattleSchedule *[m_dwMaxScheduleCnt];
+    if (!m_ppkSchedule)
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CGuildBattleSchedulePool() : new CGuildBattleSchedule * [%u] Fail!",
+        23);
+      return false;
+    }
+
+    memset_0(m_ppkSchedule, 0, sizeof(CGuildBattleSchedule *) * m_dwMaxScheduleCnt);
+    for (unsigned int dwScheduleID = 0; dwScheduleID < m_dwMaxScheduleCnt; ++dwScheduleID)
+    {
+      m_ppkSchedule[dwScheduleID] = new (std::nothrow) CGuildBattleSchedule(dwScheduleID);
+      if (!m_ppkSchedule[dwScheduleID])
+      {
+        CGuildBattleLogger::Instance()->Log(
+          "CGuildBattleSchedulePool() : new CGuildBattleSchedule( %u ) Fail!",
+          dwScheduleID);
+        return false;
+      }
+    }
+
+    m_uiMapCnt = uiMapCnt;
+    return true;
+  }
+
   CGuildBattleSchedule *CGuildBattleSchedulePool::Get(unsigned int dwSID)
   {
     if (!m_ppkSchedule || m_dwMaxScheduleCnt <= dwSID)
@@ -1108,6 +1669,20 @@ namespace GUILD_BATTLE
   {
     const unsigned int dwSID = dwStartInx + 23 * uiSLID;
     return Get(dwSID);
+  }
+
+  CGuildBattleReservedSchedule::CGuildBattleReservedSchedule(unsigned int uiScheduleListID)
+    : m_uiScheduleListID(uiScheduleListID)
+  {
+    Clear();
+  }
+
+  void CGuildBattleReservedSchedule::Clear()
+  {
+    m_bDone = false;
+    m_uiCurScheduleInx = 0;
+    memset_0(m_bUseField, 0, sizeof(m_bUseField));
+    memset_0(m_pkSchedule, 0, sizeof(m_pkSchedule));
   }
 
   unsigned int CGuildBattleReservedSchedule::GetID()
@@ -1165,6 +1740,50 @@ namespace GUILD_BATTLE
     }
   }
 
+  CGuildBattleReservedScheduleMapGroup::CGuildBattleReservedScheduleMapGroup()
+    : m_bDone(false), m_uiDayInx(0), m_uiMapCnt(0), m_ppkReservedSchedule(nullptr)
+  {
+  }
+
+  bool CGuildBattleReservedScheduleMapGroup::Init(unsigned int uiDayInx, unsigned int uiMapCnt)
+  {
+    if (!uiMapCnt)
+    {
+      return false;
+    }
+
+    m_ppkReservedSchedule = new (std::nothrow) CGuildBattleReservedSchedule *[uiMapCnt];
+    if (!m_ppkReservedSchedule)
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CGuildBattleReservedScheduleMapGroup::Init( %u, %u ) : new CGuildBattleReservedSchedule * [%u] Fail!",
+        uiDayInx,
+        uiMapCnt,
+        uiMapCnt);
+      return false;
+    }
+
+    const unsigned int baseID = uiMapCnt * uiDayInx;
+    for (unsigned int j = 0; j < uiMapCnt; ++j)
+    {
+      const unsigned int scheduleID = j + baseID;
+      m_ppkReservedSchedule[j] = new (std::nothrow) CGuildBattleReservedSchedule(scheduleID);
+      if (!m_ppkReservedSchedule[j])
+      {
+        CGuildBattleLogger::Instance()->Log(
+          "CGuildBattleReservedScheduleMapGroup::Init( %u, %u ) : new CGuildBattleReservedSchedule(%u) Fail!",
+          uiDayInx,
+          uiMapCnt,
+          scheduleID);
+        return false;
+      }
+    }
+
+    m_uiDayInx = uiDayInx;
+    m_uiMapCnt = uiMapCnt;
+    return true;
+  }
+
   unsigned __int8 CGuildBattleReservedScheduleMapGroup::Add(
     unsigned int uiFieldInx,
     unsigned int dwStartTimeInx,
@@ -1195,6 +1814,44 @@ namespace GUILD_BATTLE
       return m_ppkReservedSchedule[uiFieldInx]->IsEmptyTime(dwStartTimeInx, dwElapseTimeCnt);
     }
     return 110;
+  }
+
+  CGuildBattleScheduleManager::CGuildBattleScheduleManager()
+    : m_bLoad(false),
+      m_pkOldDayTime(nullptr),
+      m_pkTimer(nullptr),
+      m_uiMapCnt(0),
+      m_pkTodaySchedule(m_kSchdule),
+      m_pkTomorrowSchedule(&m_kSchdule[1])
+  {
+  }
+
+  bool CGuildBattleScheduleManager::Init(unsigned int uiMapCnt)
+  {
+    m_pkOldDayTime = new (std::nothrow) ATL::CTime();
+    if (!m_pkOldDayTime)
+    {
+      CGuildBattleLogger::Instance()->Log("CGuildBattleScheduler::Init(%u) m_pkOldDayTime NULL!", uiMapCnt);
+      return false;
+    }
+    *m_pkOldDayTime = ATL::CTime::GetCurrentTime();
+
+    m_pkTimer = new (std::nothrow) CMyTimer();
+    if (!m_pkTimer)
+    {
+      CGuildBattleLogger::Instance()->Log("CGuildBattleScheduler::Init(%u) new CMyTimer Fail!", uiMapCnt);
+      return false;
+    }
+
+    if (!m_kSchdule[0].Init(0, uiMapCnt) || !m_kSchdule[1].Init(1u, uiMapCnt))
+    {
+      CGuildBattleLogger::Instance()->Log("CGuildBattleScheduler::Init(%u) m_kSchdule[].Init Fail!", uiMapCnt);
+      return false;
+    }
+
+    m_pkTimer->BeginTimer(1000u);
+    m_uiMapCnt = uiMapCnt;
+    return true;
   }
 
   CGuildBattleScheduleManager *CGuildBattleScheduleManager::Instance()
@@ -1228,6 +1885,44 @@ namespace GUILD_BATTLE
   {
   }
 
+  bool CGuildBattleLogger::Init()
+  {
+    CreateDirectoryA("..\\ZoneServerLog\\Systemlog\\GuildBattle", nullptr);
+    clear_file("..\\ZoneServerLog\\Systemlog\\GuildBattle", 0xFu);
+
+    if (!m_pkLogger)
+    {
+      m_pkLogger = new (std::nothrow) CLogFile();
+    }
+    if (m_pkLogger)
+    {
+      CreateLogFile(const_cast<char *>("System"));
+      return true;
+    }
+
+    g_Main.m_logLoadingError.Write("CGuildBattleLogger::Init() new CLogFile Fail!");
+    return false;
+  }
+
+  void CGuildBattleLogger::CreateLogFile(char *szLogName)
+  {
+    const unsigned int korLocalTime = GetKorLocalTime();
+    char buffer[128]{};
+    if (szLogName)
+    {
+      sprintf_s(
+        buffer,
+        "..\\ZoneServerLog\\Systemlog\\GuildBattle\\GuildBattle%s%d.log",
+        szLogName,
+        korLocalTime);
+    }
+    else
+    {
+      sprintf_s(buffer, "..\\ZoneServerLog\\Systemlog\\GuildBattle\\GuildBattle%d.log", korLocalTime);
+    }
+    m_pkLogger->SetWriteLogFile(buffer, 1, 0, 1, 1);
+  }
+
   void CGuildBattleLogger::Log(const char *fmt, ...)
   {
     if (!m_pkLogger)
@@ -1238,6 +1933,402 @@ namespace GUILD_BATTLE
     va_start(va, fmt);
     m_pkLogger->WriteFromArg(fmt, va);
     va_end(va);
+  }
+
+  CGuildBattleRewardItem::CGuildBattleRewardItem() : m_ucD(0), m_ucTableCode(0xFFu), m_pFld(nullptr)
+  {
+  }
+
+  bool CGuildBattleRewardItem::Init(unsigned __int16 usInx)
+  {
+    char buffer[1024]{};
+    char returned[2048]{};
+    sprintf(buffer, "item%d", usInx);
+    GetPrivateProfileStringA("RewardItem", buffer, "X", returned, 0x800u, "./Initialize/NormalGuildBattle.ini");
+    if (!strcmp_0(returned, "X"))
+    {
+      return false;
+    }
+
+    char itemCode[64]{};
+    char amount[64]{};
+    char *tokens[2] = {itemCode, amount};
+    if (!ParsingCommandA(returned, 2, tokens, 64))
+    {
+      return false;
+    }
+    if (!SetItem(tokens[0]))
+    {
+      return false;
+    }
+    m_ucD = static_cast<unsigned __int8>(atoi(tokens[1]));
+    return true;
+  }
+
+  bool CGuildBattleRewardItem::SetItem(char *szItemCode)
+  {
+    _base_fld *record = nullptr;
+    unsigned __int8 tableCode = 0;
+    for (; tableCode < 0x25u; ++tableCode)
+    {
+      record = g_Main.m_tblItemData[tableCode].GetRecord(szItemCode);
+      if (record)
+      {
+        break;
+      }
+    }
+    if (tableCode >= 0x25u)
+    {
+      return false;
+    }
+    if (GetItemKindCode(tableCode))
+    {
+      return false;
+    }
+    m_ucTableCode = tableCode;
+    m_pFld = record;
+    return true;
+  }
+
+  const CGuildBattleRewardItem *CGuildBattleRewardItem::Give(CPlayer *pkPlayer)
+  {
+    unsigned int durability = 0;
+    if (IsOverLapItem(m_ucTableCode))
+    {
+      durability = m_ucD;
+    }
+    else
+    {
+      durability = GetItemDurPoint(m_ucTableCode, m_pFld->m_dwIndex);
+    }
+
+    unsigned __int8 sockets = 0;
+    const unsigned __int8 defSockets = GetDefItemUpgSocketNum(m_ucTableCode, m_pFld->m_dwIndex);
+    if (defSockets)
+    {
+      sockets = static_cast<unsigned __int8>(rand() % defSockets + 1);
+    }
+    const unsigned int dwLv = GetBitAfterSetLimSocket(sockets);
+
+    _STORAGE_LIST::_db_con item{};
+    item.m_byTableCode = m_ucTableCode;
+    item.m_wItemIndex = m_pFld->m_dwIndex;
+    item.m_dwDur = durability;
+    item.m_dwLv = dwLv;
+    if (pkPlayer->pc_GiveItem(&item, const_cast<char *>("GuildBattle Reward"), true))
+    {
+      return this;
+    }
+    return &ms_kNullObj;
+  }
+
+  char *CGuildBattleRewardItem::GetItemCode()
+  {
+    if (m_pFld)
+    {
+      return m_pFld->m_strCode;
+    }
+    return const_cast<char *>("None");
+  }
+
+  unsigned __int8 CGuildBattleRewardItem::GetAmount()
+  {
+    return m_ucD;
+  }
+
+  bool CGuildBattleRewardItem::IsNull()
+  {
+    return this == &ms_kNullObj;
+  }
+
+  CGuildBattleRewardItemManager *CGuildBattleRewardItemManager::Instance()
+  {
+    if (!ms_Instance)
+    {
+      ms_Instance = new (std::nothrow) CGuildBattleRewardItemManager();
+    }
+    return ms_Instance;
+  }
+
+  CGuildBattleRewardItemManager::CGuildBattleRewardItemManager() = default;
+
+  bool CGuildBattleRewardItemManager::Init()
+  {
+    const unsigned int count =
+      GetPrivateProfileIntA("RewardItem", "ItemCnt", 0, "./Initialize/NormalGuildBattle.ini");
+    if (!count || count > 10)
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CGuildBattleRewardItemManager::Init() : ItemCnt = %u MAX_CNT(%u)!",
+        count,
+        10);
+      return false;
+    }
+
+    CGuildBattleRewardItem item;
+    m_kItem.assign(count, item);
+    for (unsigned int j = 0; j < count; ++j)
+    {
+      if (!m_kItem[j].Init(static_cast<unsigned __int16>(j)))
+      {
+        CGuildBattleLogger::Instance()->Log("CGuildBattleRewardItemManager::Init() : m_kItem[%d].Init()", j);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  const CGuildBattleRewardItem *CGuildBattleRewardItemManager::Give(CPlayer *pkPlayer)
+  {
+    const size_t count = m_kItem.size();
+    CGuildBattleRewardItem *item = &m_kItem[rand() % count];
+    return item->Give(pkPlayer);
+  }
+
+  CGuildBattleRankManager *CGuildBattleRankManager::Instance()
+  {
+    if (!ms_Instance)
+    {
+      ms_Instance = new (std::nothrow) CGuildBattleRankManager();
+    }
+    return ms_Instance;
+  }
+
+  CGuildBattleRankManager::CGuildBattleRankManager()
+  {
+    m_dwVer[0] = 0;
+    m_dwVer[1] = 0;
+    m_dwVer[2] = 0;
+  }
+
+  bool CGuildBattleRankManager::Init()
+  {
+    m_ppkList = new (std::nothrow) _guild_battle_rank_list_result_zocl *[3];
+    if (!m_ppkList)
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CGuildBattleRankManager::Init() : NULL == new _guild_battle_rank_list_result_zocl * [%u]",
+        3);
+      return false;
+    }
+
+    memset_0(m_ppkList, 0, sizeof(_guild_battle_rank_list_result_zocl *) * 3);
+    for (int j = 0; j < 3; ++j)
+    {
+      m_ppkList[j] = new (std::nothrow) _guild_battle_rank_list_result_zocl[30];
+      if (!m_ppkList[j])
+      {
+        CGuildBattleLogger::Instance()->Log(
+          "CGuildBattleRankManager::Init() : NULL == new _guild_battle_rank_list_result_zocl[%u]",
+          30);
+        return false;
+      }
+      memset_0(m_ppkList[j], 0, sizeof(_guild_battle_rank_list_result_zocl) * 30);
+    }
+
+    memset_0(m_dwGuildSerial, 0, sizeof(m_dwGuildSerial));
+    return true;
+  }
+
+  CReservedGuildSchedulePage::CReservedGuildSchedulePage()
+    : m_pkList(nullptr), m_ucPageInx(static_cast<unsigned __int8>(-1)), m_dwVer(static_cast<unsigned int>(-1))
+  {
+    memset_0(m_dw1PGuildSerial, 0, sizeof(m_dw1PGuildSerial));
+    memset_0(m_dw2PGuildSerial, 0, sizeof(m_dw2PGuildSerial));
+  }
+
+  bool CReservedGuildSchedulePage::Init(unsigned __int8 ucPageInx)
+  {
+    m_pkList = new (std::nothrow) _guild_battle_reserved_schedule_result_zocl();
+    if (!m_pkList)
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CReservedGuildSchedulePage::Init(%u) : m_pkList = new _guild_battle_reserved_schedule_result_zocl NULL!",
+        ucPageInx);
+      return false;
+    }
+
+    m_ucPageInx = ucPageInx;
+    return Clear();
+  }
+
+  bool CReservedGuildSchedulePage::Clear()
+  {
+    const int today = GetCurDay();
+    const int tomorrow = GetNextDay();
+    if (today == -1 || tomorrow == -1)
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CReservedGuildSchedulePage::InitClear(%u) : -1 == iToDay || -1 == iTomorrow Fail!",
+        m_ucPageInx);
+      return false;
+    }
+
+    m_dwVer = 0;
+    memset_0(m_dw1PGuildSerial, 0, sizeof(m_dw1PGuildSerial));
+    memset_0(m_dw2PGuildSerial, 0, sizeof(m_dw2PGuildSerial));
+    memset_0(m_pkList, 0, sizeof(_guild_battle_reserved_schedule_result_zocl));
+    m_pkList->byToDay = static_cast<unsigned __int8>(today);
+    m_pkList->byTomorrow = static_cast<unsigned __int8>(tomorrow);
+    m_pkList->byPage = m_ucPageInx;
+    m_pkList->bySelfScheduleInx = static_cast<unsigned __int8>(-1);
+    return true;
+  }
+
+  CReservedGuildScheduleMapGroup::CReservedGuildScheduleMapGroup()
+    : m_uiMapInx(static_cast<unsigned int>(-1)),
+      m_byMaxPage(static_cast<unsigned __int8>(-1))
+  {
+  }
+
+  bool CReservedGuildScheduleMapGroup::Init(unsigned int uiMapInx)
+  {
+    for (unsigned int j = 0; j < 6; ++j)
+    {
+      if (!m_kList[j].Init(static_cast<unsigned __int8>(j)))
+      {
+        return false;
+      }
+    }
+    m_uiMapInx = uiMapInx;
+    m_byMaxPage = 0;
+    return true;
+  }
+
+  CReservedGuildScheduleDayGroup::CReservedGuildScheduleDayGroup() : m_uiMapCnt(0), m_pkList(nullptr)
+  {
+  }
+
+  bool CReservedGuildScheduleDayGroup::Init(unsigned int uiMapCnt)
+  {
+    m_uiMapCnt = uiMapCnt;
+    if (!m_uiMapCnt)
+    {
+      return false;
+    }
+
+    m_pkList = new (std::nothrow) CReservedGuildScheduleMapGroup[m_uiMapCnt];
+    if (!m_pkList)
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CReservedGuildScheduleDayGroup::Init(%u) m_pkList = new CReservedGuildScheduleDayGroup[%u] NULL!",
+        uiMapCnt,
+        uiMapCnt);
+      return false;
+    }
+
+    for (unsigned int uiMapInx = 0; uiMapInx < m_uiMapCnt; ++uiMapInx)
+    {
+      if (!m_pkList[uiMapInx].Init(uiMapInx))
+      {
+        CGuildBattleLogger::Instance()->Log(
+          "CReservedGuildScheduleDayGroup::Init(%u) m_pkList[i].Init( i ) Fail",
+          m_uiMapCnt);
+        return false;
+      }
+    }
+
+    m_byToday = static_cast<unsigned __int8>(GetCurDay());
+    m_byTommorow = static_cast<unsigned __int8>(GetNextDay());
+    return true;
+  }
+
+  CGuildBattleReservedScheduleListManager *CGuildBattleReservedScheduleListManager::Instance()
+  {
+    if (!ms_Instance)
+    {
+      ms_Instance = new (std::nothrow) CGuildBattleReservedScheduleListManager();
+    }
+    return ms_Instance;
+  }
+
+  CGuildBattleReservedScheduleListManager::CGuildBattleReservedScheduleListManager()
+    : m_uiMapCnt(0), m_pkToday(m_kList), m_pkTomorrow(&m_kList[1])
+  {
+  }
+
+  bool CGuildBattleReservedScheduleListManager::Init()
+  {
+    CNormalGuildBattleFieldList *fieldList = CNormalGuildBattleFieldList::Instance();
+    m_uiMapCnt = fieldList->GetMapCnt();
+    if (!m_uiMapCnt)
+    {
+      return false;
+    }
+    return m_kList[0].Init(m_uiMapCnt) && m_kList[1].Init(m_uiMapCnt);
+  }
+
+  CGuildBattleScheduler *CGuildBattleScheduler::Instance()
+  {
+    if (!ms_Instance)
+    {
+      ms_Instance = new (std::nothrow) CGuildBattleScheduler();
+    }
+    return ms_Instance;
+  }
+
+  bool CGuildBattleScheduler::Init()
+  {
+    CNormalGuildBattleFieldList *fieldList = CNormalGuildBattleFieldList::Instance();
+    const unsigned int uiMapCnt = fieldList->GetMapCnt();
+    if (!CGuildBattleSchedulePool::Instance()->Init(uiMapCnt))
+    {
+      return false;
+    }
+    return CGuildBattleScheduleManager::Instance()->Init(uiMapCnt);
+  }
+
+  void CGuildBattleScheduler::Destroy()
+  {
+    if (ms_Instance)
+    {
+      delete ms_Instance;
+      ms_Instance = nullptr;
+    }
+  }
+
+  CCurrentGuildBattleInfoManager *CCurrentGuildBattleInfoManager::Instance()
+  {
+    if (!ms_Instance)
+    {
+      ms_Instance = new (std::nothrow) CCurrentGuildBattleInfoManager();
+    }
+    return ms_Instance;
+  }
+
+  CCurrentGuildBattleInfoManager::CCurrentGuildBattleInfoManager() : m_bInit(false), m_uiMapCnt(0), m_pbUpdate(nullptr)
+  {
+  }
+
+  bool CCurrentGuildBattleInfoManager::Init()
+  {
+    CNormalGuildBattleFieldList *fieldList = CNormalGuildBattleFieldList::Instance();
+    m_uiMapCnt = fieldList->GetMapCnt();
+    if (!m_uiMapCnt)
+    {
+      return false;
+    }
+
+    m_pkInfo = new (std::nothrow) _guild_battle_current_battle_info_result_zocl[m_uiMapCnt];
+    if (!m_pkInfo)
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CCurrentGuildBattleInfoManager::Init()new _guild_battle_current_battle_info_result_zocl[%u] NULL!",
+        m_uiMapCnt);
+      return false;
+    }
+    memset_0(m_pkInfo, 0, sizeof(_guild_battle_current_battle_info_result_zocl) * m_uiMapCnt);
+
+    m_pbUpdate = new (std::nothrow) bool[m_uiMapCnt];
+    if (!m_pbUpdate)
+    {
+      CGuildBattleLogger::Instance()->Log("CCurrentGuildBattleInfoManager::Init()new bool[%u] NULL!", m_uiMapCnt);
+      return false;
+    }
+    memset_0(m_pbUpdate, 0, sizeof(bool) * m_uiMapCnt);
+
+    m_bInit = true;
+    return true;
   }
 
   CPossibleBattleGuildListManager *CPossibleBattleGuildListManager::ms_Instance = nullptr;
@@ -1254,6 +2345,55 @@ namespace GUILD_BATTLE
   CPossibleBattleGuildListManager::CPossibleBattleGuildListManager()
     : m_bInit(false), m_pdwVer(nullptr), m_pMaxPage(nullptr), m_ppkList(nullptr)
   {
+  }
+
+  bool CPossibleBattleGuildListManager::Init()
+  {
+    m_pdwVer = new (std::nothrow) unsigned int[3];
+    if (!m_pdwVer)
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CPossibleBattleGuildListManager::Init()m_pdwVer == new DWORD[%u] NULL!",
+        3);
+      return false;
+    }
+    memset_0(m_pdwVer, 0, sizeof(unsigned int) * 3);
+
+    m_pMaxPage = new (std::nothrow) unsigned __int8[3];
+    if (!m_pMaxPage)
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CPossibleBattleGuildListManager::Init()m_pMaxPage == new BYTE[%u] NULL!",
+        3);
+      return false;
+    }
+    memset_0(m_pMaxPage, 0, sizeof(unsigned __int8) * 3);
+
+    m_ppkList = new (std::nothrow) _possible_battle_guild_list_result_zocl *[3];
+    if (!m_ppkList)
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CPossibleBattleGuildListManager::Init()m_ppkList = new _possible_battle_guild_list_result_zocl * [%u] Fail",
+        3);
+      return false;
+    }
+
+    for (int j = 0; j < 3; ++j)
+    {
+      m_ppkList[j] = new (std::nothrow) _possible_battle_guild_list_result_zocl[75];
+      if (!m_ppkList[j])
+      {
+        CGuildBattleLogger::Instance()->Log(
+          "CPossibleBattleGuildListManager::Init()m_ppkList[%d] = new _possible_battle_guild_list_result_zocl[%u] Fail",
+          j,
+          75);
+        return false;
+      }
+      memset_0(m_ppkList[j], 0, sizeof(_possible_battle_guild_list_result_zocl) * 75);
+    }
+
+    m_bInit = true;
+    return true;
   }
 
   void CPossibleBattleGuildListManager::SendFirst(int n, unsigned __int8 byRace)

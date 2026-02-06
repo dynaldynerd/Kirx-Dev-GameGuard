@@ -490,6 +490,20 @@ __int16 _EQUIPKEY::CovDBKey()
   return zItemIndex;
 }
 
+_INVENKEY::_INVENKEY() = default;
+
+_INVENKEY::_INVENKEY(unsigned __int8 byInSlotIndex, unsigned __int8 byInTableCode, unsigned __int16 wInItemIndex)
+{
+  bySlotIndex = byInSlotIndex;
+  byTableCode = byInTableCode;
+  wItemIndex = wInItemIndex;
+}
+
+int _INVENKEY::CovDBKey()
+{
+  return *reinterpret_cast<int *>(this);
+}
+
 bool _INVENKEY::IsFilled()
 {
   return bySlotIndex != 0xFF || byTableCode != 0xFF || wItemIndex != 0xFFFF;

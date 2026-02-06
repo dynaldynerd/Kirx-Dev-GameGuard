@@ -1004,6 +1004,7 @@ public:
   _dummy_position *GetBindDummy();
   bool SetBindPosition(CMapData *pMap, _dummy_position *pDummy);
   void pc_SetInGuildBattle(bool bInGuildBattle, unsigned __int8 byColorInx);
+  char pc_GiveItem(_STORAGE_LIST::_db_con *kItem, char *szReason, bool bDrop);
   int GetFP();
   int GetSP();
   int GetMaxFP();
@@ -1041,6 +1042,7 @@ public:
   void SendMsg_ResurrectInform();
   void SendMsg_Resurrect(char byRet, bool bQuickPotion);
   void pc_NuclearAfterEffect();
+  void SendMsg_RewardAddItem(_STORAGE_LIST::_db_con *pItem, unsigned __int8 byReason);
   void SendMsg_StartContSF(_sf_continous *pCont);
   void SendMsg_AlterContEffectTime(unsigned __int8 byContType);
   int Emb_UpdateStat(unsigned int dwStatIndex, unsigned int dwNewData, unsigned int dwOldData);

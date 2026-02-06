@@ -9,6 +9,14 @@
 class __cppobj CUnmannedTraderScheduler
 {
 public:
+  static CUnmannedTraderScheduler *Instance();
+
+  CUnmannedTraderScheduler();
+  bool Init();
+  void SetLogger(CLogFile *pkLogger);
+
+  static CUnmannedTraderScheduler *ms_Instance;
+
   int m_iOldDay;
   bool m_bLoad;
   CMyTimer *m_pkTimer;

@@ -30,6 +30,7 @@ public:
   static unsigned int GetGold(CPlayerDB *self);
   static void SetCurPos(CPlayerDB *self, float *fPos);
   static unsigned __int8 GetBagNum(CPlayerDB *self);
+  static unsigned __int16 GetNewItemSerial(CPlayerDB *self);
 
   unsigned __int8 m_byPvPGrade;
   __unaligned __declspec(align(1)) _character_db_load m_dbChar;

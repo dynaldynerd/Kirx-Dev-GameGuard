@@ -6,6 +6,7 @@
 #include "CLevel.h"
 #include "CTransportShip.h"
 #include "CUserDB.h"
+#include "CItemBox.h"
 #include "CMoneySupplyMgr.h"
 #include "COreAmountMgr.h"
 #include "CNuclearBombMgr.h"
@@ -2188,6 +2189,88 @@ void CPlayer::pc_SetInGuildBattle(bool bInGuildBattle, unsigned __int8 byColorIn
   {
     m_bTakeGravityStone = false;
   }
+}
+
+char CPlayer::pc_GiveItem(_STORAGE_LIST::_db_con *kItem, char *szReason, bool bDrop)
+{
+  const char *fallback = "NONE";
+  char *reason = szReason;
+  if (!reason)
+  {
+    reason = const_cast<char *>(fallback);
+  }
+
+  bool success = true;
+  if (m_Param.m_dbInven.GetIndexEmptyCon() == 255)
+  {
+    if (bDrop)
+    {
+      if (!CreateItemBox(
+            kItem,
+            this,
+            0xFFFFFFFF,
+            false,
+            nullptr,
+            3u,
+            m_pCurMap,
+            m_wMapLayerIndex,
+            m_fCurPos,
+            false))
+      {
+        success = false;
+      }
+      CPlayer::s_MgrItemHistory.reward_add_item(
+        m_ObjID.m_wIndex,
+        reason,
+        kItem,
+        m_szItemHistoryFileName);
+    }
+  }
+  else
+  {
+    kItem->m_wSerial = CPlayerDB::GetNewItemSerial(&m_Param);
+    if (!Emb_AddStorage(0, kItem, false, true))
+    {
+      success = false;
+    }
+    SendMsg_RewardAddItem(kItem, 4u);
+    CPlayer::s_MgrItemHistory.reward_add_item(
+      m_ObjID.m_wIndex,
+      reason,
+      kItem,
+      m_szItemHistoryFileName);
+  }
+  return success ? 1 : 0;
+}
+
+void CPlayer::SendMsg_RewardAddItem(_STORAGE_LIST::_db_con *pItem, unsigned __int8 byReason)
+{
+#pragma pack(push, 1)
+  struct RewardAddItemMsg
+  {
+    unsigned __int8 byTableCode;
+    unsigned __int16 wItemIndex;
+    unsigned __int64 dwDur;
+    unsigned int dwLv;
+    unsigned __int16 wSerial;
+    unsigned __int8 byReason;
+    unsigned __int8 byCsMethod;
+    unsigned int dwT;
+  };
+#pragma pack(pop)
+
+  RewardAddItemMsg msg{};
+  msg.byTableCode = pItem->m_byTableCode;
+  msg.wItemIndex = pItem->m_wItemIndex;
+  msg.dwDur = pItem->m_dwDur;
+  msg.dwLv = pItem->m_dwLv;
+  msg.wSerial = pItem->m_wSerial;
+  msg.byReason = byReason;
+  msg.byCsMethod = pItem->m_byCsMethod;
+  msg.dwT = pItem->m_dwT;
+
+  unsigned __int8 byType[2] = {11, 9};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, byType, reinterpret_cast<char *>(&msg), 0x17u);
 }
 
 char CPlayer::SetHP(int nHP, bool bOver)

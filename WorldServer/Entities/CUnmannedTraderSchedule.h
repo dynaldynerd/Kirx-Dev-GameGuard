@@ -14,6 +14,9 @@ public:
     CANCEL_FAIL_COMPLETE = 4,
   };
 
+  CUnmannedTraderSchedule();
+  void Clear();
+
   STATE m_eState;
   unsigned char m_byType;
   unsigned int m_dwRegistSerial;

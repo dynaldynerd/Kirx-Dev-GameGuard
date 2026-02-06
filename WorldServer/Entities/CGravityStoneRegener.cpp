@@ -1,3 +1,85 @@
 #include "pch.h"
 
 #include "CGravityStoneRegener.h"
+
+#include <new>
+
+#include "CGameObject.h"
+#include "CMapData.h"
+#include "DummyPosition.h"
+#include "GuildBattle.h"
+
+CGravityStoneRegener::CGravityStoneRegener() : m_eState(GSR_NONE), m_iPortalInx(-1), m_pkRegenPos(nullptr)
+{
+}
+
+bool CGravityStoneRegener::Init(unsigned int uiMapInx, unsigned __int16 wInx, CMapData *pkMap)
+{
+  _object_id id(0, 8u, wInx);
+  CGameObject::Init(&id);
+
+  char returned[288]{};
+  char keyName[288]{};
+  char buffer[272]{};
+  sprintf(buffer, "Map%u", uiMapInx);
+
+  m_pkRegenPos = new (std::nothrow) _dummy_position();
+  if (!m_pkRegenPos)
+  {
+    GUILD_BATTLE::CGuildBattleLogger::Instance()->Log(
+      "CGravityStoneRegener::Init( %u, %d, pkMap ) : new _dummy_position NULL!",
+      uiMapInx,
+      wInx);
+    return false;
+  }
+
+  sprintf(keyName, "BallRegenDummyName%d", m_ObjID.m_wIndex);
+  GetPrivateProfileStringA(
+    buffer,
+    keyName,
+    "X",
+    returned,
+    0xFFu,
+    "./Initialize/NormalGuildBattle.ini");
+  if (returned[0] == 'X')
+  {
+    GUILD_BATTLE::CGuildBattleLogger::Instance()->Log(
+      "CGravityStoneRegener::Init( %u, %d, pkMap ) : GetPrivateProfileString( %s, %s, X, %s, 255, %s ) == 'X'!",
+      uiMapInx,
+      wInx,
+      buffer,
+      keyName,
+      returned,
+      "./Initialize/NormalGuildBattle.ini");
+    return false;
+  }
+
+  if (!pkMap->LoadDummy(returned, m_pkRegenPos))
+  {
+    GUILD_BATTLE::CGuildBattleLogger::Instance()->Log(
+      "CGravityStoneRegener::Init( %u, %d, pkMap ) : pkMap->LoadDummy( %s, m_pkRegenPos ) Fail!",
+      uiMapInx,
+      wInx,
+      returned);
+    return false;
+  }
+
+  m_iPortalInx = pkMap->GetPortalInx(m_pkRegenPos->m_szCode);
+  if (m_iPortalInx < 0)
+  {
+    GUILD_BATTLE::CGuildBattleLogger::Instance()->Log(
+      "CGravityStoneRegener::Init( %u, %d, pkMap )pkMap->GetPortalInx( %s ) Fail!",
+      uiMapInx,
+      wInx,
+      m_pkRegenPos->m_szCode);
+    return false;
+  }
+
+  m_eState = GSR_INIT;
+  return true;
+}
+
+int CGravityStoneRegener::GetPortalInx() const
+{
+  return m_iPortalInx;
+}

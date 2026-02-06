@@ -23,6 +23,8 @@
 #include "R3EngineGlobals.h"
 #include "CMergeFileManager.h"
 #include "base_fld.h"
+#include "CAnimus.h"
+#include "animus_fld.h"
 
 const char *dayofweek[7] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 static char szDefItemName[] = "UNKNOWN";
@@ -229,6 +231,18 @@ __time64_t time_20(__int64 *_Time)
 int GetCurDay()
 {
   std::time_t now = std::time(nullptr);
+  std::tm local{};
+  if (localtime_s(&local, &now) != 0)
+  {
+    return -1;
+  }
+  return local.tm_mday;
+}
+
+int GetNextDay()
+{
+  std::time_t now = std::time(nullptr);
+  now += 86400;
   std::tm local{};
   if (localtime_s(&local, &now) != 0)
   {
@@ -467,6 +481,47 @@ unsigned int GetBitAfterSetLimSocket(unsigned __int8 byLimSocketNum)
   return (static_cast<unsigned int>(byLimSocketNum) << 28) | 0x0FFFFFFF;
 }
 
+_animus_fld *GetAnimusFldFromExp(int nAnimusClass, unsigned __int64 dwExp)
+{
+  __int64 stackFill = 0;
+  auto *fillPtr = &stackFill;
+  for (int fillCount = 16; fillCount; --fillCount)
+  {
+    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
+    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
+  }
+
+  CRecordData *table = &CAnimus::s_tblParameter[nAnimusClass];
+  for (int n = 0; n < 65; ++n)
+  {
+    _base_fld *record = table->GetRecord(n);
+    if (!record)
+      return nullptr;
+    if (*reinterpret_cast<unsigned __int64 *>(record[1].m_strCode) > dwExp)
+      return reinterpret_cast<_animus_fld *>(record);
+  }
+  const int recordNum = static_cast<int>(table->GetRecordNum());
+  return reinterpret_cast<_animus_fld *>(table->GetRecord(recordNum - 1));
+}
+
+unsigned int GetMaxParamFromExp(int nAnimusClass, unsigned __int64 dwExp)
+{
+  __int64 stackFill = 0;
+  auto *fillPtr = &stackFill;
+  for (int fillCount = 20; fillCount; --fillCount)
+  {
+    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
+    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
+  }
+
+  _animus_fld *record = GetAnimusFldFromExp(nAnimusClass, dwExp);
+  if (!record)
+    return 0;
+  const unsigned int maxHP = static_cast<unsigned int>(record->m_nMaxHP) & 0xFFFFu;
+  const unsigned int maxFP = static_cast<unsigned int>(record->m_nMaxFP) & 0xFFFFu;
+  return (maxFP << 16) | maxHP;
+}
+
 unsigned __int8 GetItemGrade(int nTableCode, int nItemIndex)
 {
   CRecordData *table = &s_ptblItemData[nTableCode];
@@ -490,6 +545,78 @@ unsigned __int8 GetItemGrade(int nTableCode, int nItemIndex)
     }
   }
   return 0;
+}
+
+int GetItemEquipLevel(int nTableCode, int nItemIndex)
+{
+  CRecordData *table = &s_ptblItemData[nTableCode];
+  switch (nTableCode)
+  {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 7:
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      if (!record)
+        return 1;
+      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[8]);
+    }
+    case 6:
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      if (!record)
+        return 1;
+      return *reinterpret_cast<unsigned int *>(&record[8].m_strCode[8]);
+    }
+    case 8:
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      if (!record)
+        return 1;
+      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[4]);
+    }
+    case 9:
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      if (!record)
+        return 1;
+      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[4]);
+    }
+    case 25:
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      if (!record)
+        return 1;
+      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[48]);
+    }
+    case 26:
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      if (!record)
+        return 1;
+      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[60]);
+    }
+    case 27:
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      if (!record)
+        return 1;
+      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[8]);
+    }
+    case 33:
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      if (!record)
+        return 1;
+      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[52]);
+    }
+    default:
+      return 1;
+  }
 }
 
 unsigned __int8 GetWeaponClass(int nItemIndex)
@@ -4532,3 +4659,4 @@ static void MakeMipMap(unsigned short a1, unsigned short a2, unsigned short *a3,
     } while (v12);
   }
 }
+

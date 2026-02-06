@@ -15,9 +15,25 @@ struct RoomCharInfo
   unsigned int dwCharSerial;
 };
 
+struct __declspec(align(4)) RoomInfo
+{
+  unsigned int dwCost;
+  unsigned int dwTime;
+  unsigned __int8 byRestrict;
+  unsigned __int8 byMaxRoomCount;
+};
+
 class __cppobj CGuildRoomInfo
 {
 public:
+  CGuildRoomInfo();
+  CGuildRoomInfo(const CGuildRoomInfo &other);
+  CGuildRoomInfo &operator=(const CGuildRoomInfo &other);
+  ~CGuildRoomInfo();
+
+  void Room_Initialize();
+  void SetRoomMapInfo(CMapData *pMap, unsigned __int16 wMapLayer, unsigned __int8 byRoomType, unsigned __int8 byRace);
+
   bool m_bRent;
   unsigned __int8 m_byRoomType;
   unsigned __int8 m_byRace;
@@ -30,4 +46,8 @@ public:
   unsigned __int16 m_wRoomMapLayer;
   _LAYER_SET *m_pLayerSet;
   _dummy_position *m_pRoomStartDummy;
+
+  static CMapData *sm_neutal_map[3];
+  static _dummy_position *sm_neutral_hq_dummy[3];
+  static RoomInfo sm_RoomInfo[2];
 };

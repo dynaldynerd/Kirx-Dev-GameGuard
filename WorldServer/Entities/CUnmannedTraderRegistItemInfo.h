@@ -6,6 +6,9 @@
 class __cppobj CUnmannedTraderRegistItemInfo
 {
 public:
+  CUnmannedTraderRegistItemInfo();
+  void Clear();
+
   unsigned int m_dwRegistSerial;
   unsigned short m_wItemSerial;
   unsigned int m_dwETSerialNumber;

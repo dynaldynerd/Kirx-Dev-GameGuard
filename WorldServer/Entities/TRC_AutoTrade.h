@@ -9,6 +9,9 @@
 class __cppobj _suggested_matter_change_taxrate
 {
 public:
+  _suggested_matter_change_taxrate();
+  void init();
+
   unsigned char byMatterType;
   unsigned int dwMatterDst;
   char wszMatterDst[64];
@@ -19,6 +22,11 @@ public:
 class __cppobj TRC_AutoTrade
 {
 public:
+  TRC_AutoTrade();
+  TRC_AutoTrade(unsigned char byRace);
+
+  bool Initialzie();
+
   bool m_bInit;
   unsigned char m_byCurDay;
   unsigned short m_wCurMonth;

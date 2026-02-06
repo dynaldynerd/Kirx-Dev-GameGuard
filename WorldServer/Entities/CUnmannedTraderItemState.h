@@ -14,5 +14,8 @@ public:
     NONE = -1,
   };
 
+  CUnmannedTraderItemState();
+  void Clear();
+
   STATE m_eState;
 };

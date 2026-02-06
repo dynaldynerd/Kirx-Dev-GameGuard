@@ -31,3 +31,5 @@ CGameStatistics g_GameStatistics{};
 CMainThread g_Main{};
 int gAsci[256]{};
 CWnd *g_pFrame = nullptr;
+
+float TSVR_ADD_DARKHOLE_REWARD_RATE = 0.0f;

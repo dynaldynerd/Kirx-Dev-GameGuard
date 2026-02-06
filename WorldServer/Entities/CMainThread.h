@@ -1917,18 +1917,25 @@ struct __cppobj _guild_member_buddy_download_zocl
 /* 1631 */
 struct __cppobj _dh_reward_sub_setup
 {
+  _dh_reward_sub_setup();
+  virtual ~_dh_reward_sub_setup();
+
   int nItemNum;
   _STORAGE_LIST::_db_con *Item[128];
   unsigned int m_dwGivePercent[128];
   long double dExp;
   unsigned int dwPvp;
   unsigned int dwDalant;
-  virtual ~_dh_reward_sub_setup() = default;
 };
 
 /* 1630 */
 struct __cppobj __dp_mission_potal
 {
+  __dp_mission_potal();
+  ~__dp_mission_potal();
+  void set(char *szCode);
+  bool find(char *pcode);
+
   int m_nNums;
   int m_nCodeLen[32];
   char m_strCodes[32][64];
@@ -1937,6 +1944,11 @@ struct __cppobj __dp_mission_potal
 /* 1601 */
 struct __cppobj _dh_quest_setup
 {
+  _dh_quest_setup();
+  virtual ~_dh_quest_setup();
+  void SetRealBoss(bool isReal);
+  _dh_mission_setup *SearchMissionFromTitle(char *pszMissionTitle);
+
   int bRealBoss;
   char szQuestTitle[33];
   int bPartyOnly;
@@ -1956,12 +1968,14 @@ struct __cppobj _dh_quest_setup
   __monster_group *pMonsterGroup[32];
   int nLimitLvMin;
   int nLimitLvMax;
-  virtual ~_dh_quest_setup() = default;
 };
 
 /* 1603 */
 struct __cppobj __declspec(align(8)) _dh_mission_setup
 {
+  _dh_mission_setup();
+  virtual ~_dh_mission_setup();
+
   char szMissionTitle[33];
   _dummy_position *pAreaDummy;
   _dummy_position *pStartDummy;
@@ -1989,7 +2003,6 @@ struct __cppobj __declspec(align(8)) _dh_mission_setup
   _dh_job_setup *EmbJobSetup[8];
   _dh_mission_setup *pNextMission;
   __dp_mission_potal facMissionPotal;
-  virtual ~_dh_mission_setup() = default;
 };
 
 /* 407 */
@@ -2003,6 +2016,9 @@ enum __bitmask OBJ_DEF_TYPE : __int32
 /* 1613 */
 struct __cppobj __declspec(align(8)) _react_obj
 {
+  _react_obj();
+  void copy(_react_obj *pObj);
+
   struct ITEM
   {
     unsigned __int8 byItemTableCode;
@@ -2042,6 +2058,9 @@ enum __bitmask AREA_DEF_TYPE : __int32
 /* 1618 */
 struct __cppobj _react_area
 {
+  _react_area();
+  void copy(_react_area *pObj);
+
   struct DUMMY
   {
     _dummy_position *pPos;
@@ -2065,6 +2084,8 @@ struct __cppobj _react_area
 /* 1624 */
 struct __cppobj __respawn_monster
 {
+  __respawn_monster();
+
   _react_obj ReactObj;
   _react_area ReactArea;
   unsigned int dwTermMSec;
@@ -2378,6 +2399,8 @@ struct __cppobj BossSchedule
 /* 1615 */
 struct __cppobj __dummy_block
 {
+  __dummy_block();
+
   char *pszBlockName;
   int nSubDummyNum;
   _dummy_position *pSubDummy[32];
@@ -2386,6 +2409,8 @@ struct __cppobj __dummy_block
 /* 1610 */
 struct __cppobj __monster_group
 {
+  __monster_group();
+
   char *pszGroupName;
   int nSubMonsterNum;
   _monster_fld *pSubMonster[32];
@@ -2396,6 +2421,8 @@ struct __cppobj __monster_group
 /* 1619 */
 struct __cppobj __add_monster
 {
+  __add_monster();
+
   _react_obj ReactObj;
   _react_area ReactArea;
 };
@@ -2403,6 +2430,8 @@ struct __cppobj __add_monster
 /* 1620 */
 struct __cppobj __add_loot_item
 {
+  __add_loot_item();
+
   unsigned __int8 byItemTableCode;
   _base_fld *pItemFld;
   unsigned int dwDur;
@@ -2412,6 +2441,9 @@ struct __cppobj __add_loot_item
 /* 1621 */
 struct __cppobj __change_monster
 {
+  __change_monster();
+  ~__change_monster();
+
   _monster_fld *pMonsterFldA;
   _monster_fld *pMonsterFldB;
   int nProb;
@@ -2422,6 +2454,9 @@ struct __cppobj __change_monster
 /* 1622 */
 struct __cppobj __inner_check
 {
+  __inner_check();
+  ~__inner_check();
+
   _react_area ReactArea_Evt;
   _react_area ReactArea_Aft;
   _react_obj ReactObj;
@@ -2432,6 +2467,9 @@ struct __cppobj __inner_check
 /* 1623 */
 struct __cppobj __respond_check
 {
+  __respond_check();
+  ~__respond_check();
+
   unsigned __int8 byActTableCode;
   _base_fld *pActObjFld;
   _react_obj ReactObj;
@@ -2442,6 +2480,8 @@ struct __cppobj __respond_check
 /* 1625 */
 struct __cppobj __add_time
 {
+  __add_time();
+
   _react_obj EventObj;
   unsigned int dwAddSec;
   char *pszMsg;
@@ -2457,6 +2497,8 @@ enum EM_DH_EVENT : __int32
 /* 1628 */
 struct __cppobj _job_sub_setup
 {
+  _job_sub_setup();
+
   _base_fld *pEventFld;
   unsigned __int8 byTable;
   int nEventCount;
@@ -2465,13 +2507,15 @@ struct __cppobj _job_sub_setup
 /* 1626 */
 struct __cppobj __declspec(align(8)) _dh_job_setup
 {
+  _dh_job_setup();
+  virtual ~_dh_job_setup();
+
   char szJobTitle[33];
   EM_DH_EVENT eventType;
   _job_sub_setup JobSetup;
   int nReactNum;
   _react_sub_setup *ReactSetup[10];
   char szDescirptCode[17];
-  virtual ~_dh_job_setup() = default;
 };
 
 /* 1641 */
@@ -2585,6 +2629,8 @@ struct __cppobj BossSchedule_Map
 /* 1629 */
 struct __cppobj _react_sub_setup
 {
+  _react_sub_setup();
+
   unsigned __int8 byReactType;
   _dummy_position *pPortalDummy;
 };

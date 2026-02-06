@@ -11,6 +11,10 @@ public:
   static CUnmannedTraderController *Instance();
   bool Init();
 
+private:
+  bool InitLogger();
+
+public:
   CLogFile *m_pkLogger;
   CLogFile *m_pkServiceLogger;
   CUnmannedTraderTradeInfo m_kTradeInfo;

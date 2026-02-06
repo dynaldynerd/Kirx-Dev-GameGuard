@@ -44,6 +44,10 @@ struct _total_count
 class __cppobj __declspec(align(4)) CNetTimer
 {
 public:
+  CNetTimer();
+  void BeginTimer(int dwTerm);
+  bool CountingTimer();
+
   int m_nTickTerm;
   unsigned int m_dwTickOld;
   bool m_bOper;

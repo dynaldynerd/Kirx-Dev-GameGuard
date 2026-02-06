@@ -7,9 +7,6 @@
 ## CCashDBWorkManager.cpp
 - CCashDBWorkManager::Initialize :: return true;
 
-## CDarkHoleDungeonQuest.cpp
-- CDarkHoleDungeonQuest::LoadDarkHoleQuest :: return true;
-
 ## CExchangeEvent.cpp
 - CExchangeEvent::Initialzie :: return true;
 
@@ -71,15 +68,6 @@
 - CGameObject::SetAttackPart :: ;
 - CGameObject::SetHP :: return 1;
 
-## CGoldenBoxItemMgr.cpp
-- CGoldenBoxItemMgr::Initialize :: return true;
-
-## CGuildBattleController.cpp
-- CGuildBattleController::Init :: return true;
-
-## CGuildRoomSystem.cpp
-- CGuildRoomSystem::Init :: return true;
-
 ## CLogTypeDBTaskManager.cpp
 - CLogTypeDBTaskManager::Init :: return true;
 
@@ -103,8 +91,6 @@
 ## CRaceBuffInfoByHolyQuestfGroup.cpp
 - m_uiNTh
 
-## CUnmannedTraderController.cpp
-- CUnmannedTraderController::Init :: return true;
 
 ## CUserRankingProcess.cpp
 - CUserRankingProcess::ProcWait
@@ -124,20 +110,11 @@
 ## DfAIMgr.cpp
 - DfAIMgr::OnUsStateTBLInit :: return true;
 
-## LendItemMng.cpp
-- LendItemMng::Initialize :: return true;
-
 ## PatriarchElectProcessor.cpp
 - PatriarchElectProcessor::Initialize :: return true;
 
 ## RFEvent_ClassRefine.cpp
 - RFEvent_ClassRefine::Initialzie :: return true;
-
-## TimeItem.cpp
-- TimeItem::CheckGoods :: return true;
-
-## TimeLimitJadeMng.cpp
-- TimeLimitJadeMng::Init :: return true;
 
 ## WheatyExceptionReport.cpp
 - WheatyExceptionReport::SetLogName :: (void)logName;
@@ -146,30 +123,7 @@
 ## cStaticMember_Player.cpp
 - cStaticMember_Player::Initialize :: return true;
 
-## CMapData.cpp
-- CMapData::Init :: return ;
-- CMapData::OpenMap :: return true;
-- CMapData::ConvertLocalToWorldDummy :: return true;
-
-## CDummyPosTable.cpp
-- CDummyPosTable::LoadDummyPosition :: return true;
-- CDummyPosTable::GetRecordNum :: return 0;
-- CDummyPosTable::GetRecord :: return nullptr;
-
-## CHolyStone.cpp
-- CHolyStone::Create :: return true;
-- CHolyStone::Init :: return ;
-
-## COreAmountMgr.cpp
-- COreAmountMgr::LoadINI :: return true;
-- COreAmountMgr::InitRemainOreAmount :: return ;
-- COreAmountMgr::InitTransferOre :: return ;
-
-## CWorldSchedule.cpp
-- CWorldSchedule::DataCheck :: return true;
-- CWorldSchedule::CalcScheduleCursor :: return 0;
-
 ## CSkyBox.cpp
 - CSkyBox::LoadSkyBox :: ;
 
-Total: 122
+Total: 86
