@@ -1332,6 +1332,7 @@ public:
   bool initialize(unsigned __int16 wIndex);
   bool is_installed();
   unsigned int get_ownerserial();
+  CPlayer *GetOwner();
   bool unregist_from_map(unsigned __int8 byDestroyType);
   bool extract_battery(unsigned __int8 bySlotIdx, _STORAGE_LIST::_db_con *pBattery);
   void send_current_state();
@@ -1571,6 +1572,8 @@ struct __cppobj __declspec(align(8)) _attack_param
   int nMinAFPlus;
   int nMaxAFPlus;
   int nEffShotNum;
+
+  _attack_param();
 };
 
 /* 1778 */
@@ -1730,6 +1733,10 @@ struct __cppobj _mon_active
 
   bool SetActive(_mon_active_fld *pActRec, _mon_block *pBlk, int nMonRecIndex);
   void SetZeroMonNum();
+  char SetCurMonNum(int nAlter);
+  void SetBossSchedule(BossSchedule *pBossSchedule);
+  BossSchedule *GetBossSchedule();
+  void BossScheduleSave();
 };
 
 /* 1515 */
@@ -2101,6 +2108,14 @@ struct __cppobj __declspec(align(8)) MonsterSFContDamageToleracne
   float m_fToleranceProb;
   float m_fToleranceProbMax;
   unsigned int m_dwLastUpdateTime;
+
+  MonsterSFContDamageToleracne();
+  void Init(float fMaxTolValue);
+  void OnlyOnceInit(CMonster *pMonster);
+  bool IsSFContDamage();
+  float GetToleranceProb();
+  void SetSFDamageToleracne_Variation(float fAddValue);
+  void Update();
 };
 
 /* 1682 */
@@ -2121,6 +2136,10 @@ struct __cppobj EmotionPresentationChecker
   unsigned __int16 m_wIndex;
   unsigned __int16 m_wRandIndex;
   CCharacter *m_pTarget;
+
+  EmotionPresentationChecker();
+  void ReSet();
+  bool CheckEmotionState(CMonster *pThis, unsigned __int8 byCheckType, CCharacter *pTarget);
 };
 
 /* 1644 */
@@ -2143,6 +2162,10 @@ union $61453E1D3C89B67BD8C0921FE198A987
 struct __cppobj MonsterStateData
 {
   $61453E1D3C89B67BD8C0921FE198A987 ___u0;
+
+  MonsterStateData();
+  unsigned __int16 GetStateChunk();
+  bool operator!=(const MonsterStateData *rhs);
 };
 
 /* 1647 */
@@ -2429,6 +2452,9 @@ struct __cppobj BossSchedule
   ATL::CTime m_LastRespawnSystemTime;
   unsigned __int16 m_LiveCount;
   BossSchedule_Map *m_pParent;
+
+  void Save_LiveCount(unsigned __int16 wCount);
+  bool Make_LiveCountString(char *strBuff, int nBuffSize);
 };
 
 /* 1602 */
@@ -2756,6 +2782,9 @@ struct __cppobj ScheduleMSG
   unsigned __int8 m_byKey;
   char m_strValue[64];
   unsigned __int16 m_wIniFileIndex;
+
+  ScheduleMSG();
+  void Init();
 };
 
 #pragma pack(pop)

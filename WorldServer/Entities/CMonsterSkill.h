@@ -11,6 +11,7 @@ struct _force_fld;
 /* 1647 */
 class __cppobj __declspec(align(8)) CMonsterSkill
 {
+public:
   bool m_bExit;
   int m_UseType;
   int m_nSFCode;
@@ -32,8 +33,6 @@ class __cppobj __declspec(align(8)) CMonsterSkill
   int m_MaxDmg;
   int m_MinProb;
   int m_MaxProb;
-
-public:
   CMonsterSkill();
   ~CMonsterSkill();
   void Init();

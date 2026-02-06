@@ -27,6 +27,8 @@ struct __cppobj __declspec(align(4)) _dummy_position
   float m_fCenterPos[3];
   float m_fDirection[3];
   unsigned __int16 m_wActiveMon;
+
+  void SetActiveMonNum(__int16 nAlter);
 };
 
 struct _base_fld;

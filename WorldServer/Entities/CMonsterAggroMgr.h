@@ -9,6 +9,7 @@ class CMonster;
 /* 1639 */
 class __cppobj CMonsterAggroMgr
 {
+  friend class CPlayer;
   CCharacter *m_pTopAggroCharacter;
   CCharacter *m_pTopDamageCharacter;
   CCharacter *m_pKingPowerDamageCharacter;
@@ -24,5 +25,19 @@ public:
   void Init();
   void ResetAggro();
   CCharacter *GetTopAggroCharacter();
+  void OnlyOnceInit(CMonster *pMonster);
+  void SetAggro(
+    CCharacter *pCharacter,
+    int nDam,
+    int nAttackType,
+    unsigned int dwAttackSerial,
+    int bOtherPlayerSupport,
+    int bTempSkill);
+  CAggroNode *SearchAggroNode(CCharacter *pCharacter);
+  void SendChangeAggroData();
+
+private:
+  CAggroNode *_SearchAggroNode(CCharacter *pCharacter);
+  CAggroNode *_GetBlinkNode();
 };
 

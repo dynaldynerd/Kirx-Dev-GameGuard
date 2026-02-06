@@ -20,6 +20,7 @@ extern unsigned int dword_184A7B2DC;
 extern unsigned int dword_184A77F38;
 extern unsigned int dword_184A77F3C;
 extern int dword_184A77EE8;
+extern unsigned int dword_184A77EF0;
 
 // D3D device + merge file manager pointers.
 extern IDirect3DDevice8 *qword_184A7B2C8;
@@ -90,6 +91,8 @@ extern char aAiu[];
 extern char aAiao[];
 extern char aMaxVbCnt[];
 extern char aMakeedgenormal[];
+extern char aGetyposinleafu[];
+extern char aPathfinderStac[];
 extern char aR3engineAe[];
 extern char aAaiai_0[];
 extern char aBspAai[];

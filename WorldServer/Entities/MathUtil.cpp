@@ -20,6 +20,72 @@ float GetSqrt(float *fPos, float *fTar)
     return std::sqrt((dx * dx) + (dz * dz));
 }
 
+float GetDist(float *const a1, float *const a2)
+{
+    const float dx = *a2 - *a1;
+    const float dz = a2[2] - a1[2];
+    return sqrtf_0((dx * dx) + (dz * dz));
+}
+
+float Get3DSqrt(float *Pos, float *Tar)
+{
+    __int64 stackFill = 0;
+    auto *fillPtr = &stackFill;
+    for (int fillCount = 24; fillCount; --fillCount)
+    {
+        *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
+        fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
+    }
+
+    const float dx = *Pos - *Tar;
+    const float dy = Pos[1] - Tar[1];
+    const float dz = Pos[2] - Tar[2];
+    return sqrtf_0((dx * dx) + (dy * dy) + (dz * dz));
+}
+
+float GetYAngle(float *Pos, float *Tar)
+{
+    __int64 stackFill = 0;
+    auto *fillPtr = &stackFill;
+    for (int fillCount = 20; fillCount; --fillCount)
+    {
+        *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
+        fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
+    }
+
+    const float dx = *Tar - *Pos;
+    const float dz = Tar[2] - Pos[2];
+    const float dist = sqrtf_0((dx * dx) + (dz * dz));
+    if (dist == 0.0f)
+    {
+        return 0.0f;
+    }
+
+    const double angle = acos_0(dz / dist);
+    if (dx <= 0.0f)
+    {
+        return static_cast<float>((-angle) * 65535.0 / 6.283185307 + 32768.0);
+    }
+    return static_cast<float>(angle * 65535.0 / 6.283185307 + 32768.0);
+}
+
+void Normalize(float *v)
+{
+    __int64 stackFill = 0;
+    auto *fillPtr = &stackFill;
+    for (int fillCount = 12; fillCount; --fillCount)
+    {
+        *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
+        fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
+    }
+
+    const float length = sqrtf_0((v[0] * v[0]) + (v[1] * v[1]) + (v[2] * v[2]));
+    const double len = length;
+    v[0] = v[0] / static_cast<float>(len);
+    v[1] = v[1] / static_cast<float>(len);
+    v[2] = v[2] / static_cast<float>(len);
+}
+
 void GetNormal(float *const a1, const float *const a2, const float *const a3, const float *const a4)
 {
     float v6 = a4[2] - a2[2];
@@ -140,6 +206,26 @@ void sub_14050C650(float *a1, float *a2, float *a3)
     a1[0] = (v3 / v7) * 2.0f + a1[0];
     a1[1] = (v5 / v7) * 2.0f + a1[1];
     a1[2] = (v6 / v7) * 2.0f + a1[2];
+}
+
+unsigned int sub_1404E1570(float a1, float a2, float a3)
+{
+    const float bestHeight = a1 + a2;
+    if (a3 < a1)
+    {
+        return static_cast<unsigned int>(2 * static_cast<int>((a1 - a3) / (bestHeight - a1)) + 1);
+    }
+    return static_cast<unsigned int>(2 * static_cast<int>((a3 - a1) / (bestHeight - a1)));
+}
+
+unsigned int sub_1404E46E0(float a1, float a2, float a3)
+{
+    const float bestHeight = a1 + a2;
+    if (a3 < a1)
+    {
+        return static_cast<unsigned int>(2 * static_cast<int>((a1 - a3) / (bestHeight - a1)) + 1);
+    }
+    return static_cast<unsigned int>(2 * static_cast<int>((a3 - a1) / (bestHeight - a1)));
 }
 
 void GetVertexFromBVertex(float *const a1, char *a2, _BSP_READ_M_GROUP *a3)

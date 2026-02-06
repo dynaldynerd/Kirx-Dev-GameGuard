@@ -221,3 +221,57 @@ bool CPartyPlayer::RemovePartyMember(CPartyPlayer *pExiter, CPartyPlayer **ppout
   return true;
 }
 
+
+CPlayer *CPartyPlayer::GetLootAuthor()
+{
+  if (!IsPartyMode())
+  {
+    return nullptr;
+  }
+
+  CPlayer *lootAuthor = nullptr;
+  const unsigned __int8 lootShareSystem = m_pPartyBoss->m_byLootShareSystem;
+  switch (lootShareSystem)
+  {
+    case 0:
+      return nullptr;
+    case 1:
+      return &g_Player[m_pPartyBoss->m_wZoneIndex];
+    case 2:
+      if (m_pPartyBoss->m_pLootAuthor)
+      {
+        return &g_Player[m_pPartyBoss->m_pLootAuthor->m_wZoneIndex];
+      }
+      lootAuthor = &g_Player[m_pPartyBoss->m_wZoneIndex];
+      m_pPartyBoss->m_pLootAuthor = m_pPartyBoss;
+      break;
+  }
+  return lootAuthor;
+}
+
+void CPartyPlayer::SetNextLootAuthor()
+{
+  if (IsPartyMode() && m_pPartyBoss->m_byLootShareSystem == 2)
+  {
+    CPartyPlayer **members = GetPtrPartyMember();
+    for (int j = 0; j < 8; ++j)
+    {
+      if (members[j] == m_pPartyBoss->m_pLootAuthor)
+      {
+        if (j == 7)
+        {
+          m_pPartyBoss->m_pLootAuthor = *members;
+        }
+        else if (members[j + 1])
+        {
+          m_pPartyBoss->m_pLootAuthor = members[j + 1];
+        }
+        else
+        {
+          m_pPartyBoss->m_pLootAuthor = *members;
+        }
+        return;
+      }
+    }
+  }
+}

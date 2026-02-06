@@ -2322,6 +2322,7 @@ bool IsServerMode()
 
 bool IsInitR3Engine() { return dword_184A77F3C != 0; }
 float R3GetTime() { return *reinterpret_cast<float *>(&dword_184A77EE8); }
+float R3GetLoopTime() { return *reinterpret_cast<float *>(&dword_184A77EF0); }
 
 IDirect3DDevice8 *GetD3dDevice()
 {

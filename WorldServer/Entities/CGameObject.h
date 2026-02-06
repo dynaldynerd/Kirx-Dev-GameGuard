@@ -165,13 +165,44 @@ public:
     unsigned int dwPassObjSerial,
     bool bToOne);
   void Init(_object_id *pID);
+  virtual bool IsAttackableInTown();
   bool IsInTown();
   __int64 GetCurSecNum();
+  virtual __int64 GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart);
+  virtual float GetDefFacing(int nPart);
+  virtual float GetDefGap(int nPart);
+  virtual __int64 GetDefSkill(bool bBackAttackDamage);
+  virtual __int64 GetFireTol();
+  virtual __int64 GetSoilTol();
+  virtual __int64 GetWaterTol();
+  virtual __int64 GetWindTol();
+  virtual float GetWeaponAdjust();
+  virtual char *GetObjName();
+  virtual __int64 GetObjRace();
+  virtual bool IsBeAttackedAble(bool bFirst);
+  virtual char IsBeDamagedAble(CCharacter *pAtter);
+  virtual __int64 GetAttackDP();
+  virtual __int64 GetAttackLevel();
+  virtual float GetAttackRange();
+  virtual __int64 GetAvoidRate();
+  virtual __int64 GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack);
+  virtual __int64 GetWeaponClass();
+  virtual float GetWidth();
   virtual __int64 GetHP();
   virtual __int64 GetLevel();
   virtual __int64 GetMaxHP();
   virtual void SendMsg_FixPosition(int n);
   virtual void SendMsg_RealMovePoint(int n);
+  virtual void SetAttackPart(int nAttactPart);
+  virtual __int64 SetDamage(
+    int nDam,
+    CCharacter *pDst,
+    int nDstLv,
+    bool bCrt,
+    int nAttackType,
+    unsigned int dwAttackSerial,
+    bool bJadeReturn);
+  void SetBreakTranspar(bool bBreak);
   char SetCurPos(float *pPos);
   void SetCurSecNum(unsigned int dwNewSecNum);
   void SFContDelMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, bool bSend, bool bAura = false);
@@ -221,5 +252,19 @@ inline void CGameObject::SFContDelMessage(
   bool /*bSend*/,
   bool /*bAura*/)
 {
+}
+
+inline void CGameObject::SFContInsertMessage(unsigned __int8 /*byContCode*/, unsigned __int8 /*byListIndex*/, bool /*bAura*/)
+{
+}
+
+inline bool CGameObject::IsAttackableInTown()
+{
+  return false;
+}
+
+inline char *CGameObject::GetObjName()
+{
+  return nullptr;
 }
 

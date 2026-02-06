@@ -29,7 +29,7 @@ void CMonsterSkillPool::Init()
 
 __int64 CMonsterSkillPool::Set(CMonster *pMyMonster)
 {
-  CMonsterSkillPool::Init();
+  Init();
   if (!pMyMonster)
   {
     return 0;
@@ -43,7 +43,7 @@ __int64 CMonsterSkillPool::Set(CMonster *pMyMonster)
     return 0;
   }
 
-  _monster_sp_group *spGroup = CMonsterSPGroupTable::GetRecord(&g_Main.m_MonsterSPGroupTable, monsterFld->m_dwIndex);
+  _monster_sp_group *spGroup = g_Main.m_MonsterSPGroupTable.GetRecord(monsterFld->m_dwIndex);
   if (!spGroup)
   {
     return 0;
@@ -85,8 +85,7 @@ __int64 CMonsterSkillPool::Set(CMonster *pMyMonster)
         const int motiveValue = spCont->m_nDstType;
         const int motive = spCont->m_nMotiveValue;
         const int motiveCondition = spCont->m_nMotiveCondition;
-        CMonsterSkill::SetForce(
-          &skill,
+        skill.SetForce(
           monsterFld,
           spCont,
           spCont->m_nAttLv,
@@ -97,7 +96,7 @@ __int64 CMonsterSkillPool::Set(CMonster *pMyMonster)
           motiveCondition,
           motive,
           motiveValue);
-        CMonsterSkillPool::InsertSkill(this, &skill);
+        InsertSkill(&skill);
       }
       else if (spCont->m_nSpecialAttType == 2)
       {
@@ -109,8 +108,7 @@ __int64 CMonsterSkillPool::Set(CMonster *pMyMonster)
         const int skillDestType = spCont->m_nDstType;
         const int motiveValue = spCont->m_nMotiveValue;
         const int motive = spCont->m_nMotiveCondition;
-        CMonsterSkill::SetSkill(
-          &skill,
+        skill.SetSkill(
           monsterFld,
           spCont,
           spCont->m_nAttLv,
@@ -122,7 +120,7 @@ __int64 CMonsterSkillPool::Set(CMonster *pMyMonster)
           motive,
           motiveValue,
           skillDestType);
-        CMonsterSkillPool::InsertSkill(this, &skill);
+        InsertSkill(&skill);
       }
     }
     else
@@ -135,8 +133,7 @@ __int64 CMonsterSkillPool::Set(CMonster *pMyMonster)
       const int skillDestType = spCont->m_nDstType;
       const int motiveValue = spCont->m_nMotiveValue;
       const int motive = spCont->m_nMotiveCondition;
-      CMonsterSkill::SetSkill(
-        &skill,
+      skill.SetSkill(
         monsterFld,
         spCont,
         spCont->m_nAttLv,
@@ -148,19 +145,18 @@ __int64 CMonsterSkillPool::Set(CMonster *pMyMonster)
         motive,
         motiveValue,
         skillDestType);
-      CMonsterSkillPool::InsertSkill(this, &skill);
+      InsertSkill(&skill);
     }
   }
 
   skill.Init();
-  CMonsterSkill::SetGen(
-    &skill,
+  skill.SetGen(
     monsterFld,
     1,
     static_cast<unsigned int>(monsterFld->m_fAttSpd),
     monsterFld->m_fAttExt,
     static_cast<unsigned int>(monsterFld->m_fAttMoTime1));
-  CMonsterSkillPool::InsertSkill(this, &skill);
+  InsertSkill(&skill);
   return 1;
 }
 

@@ -89,6 +89,371 @@ namespace
     }
 }
 
+void CBsp::GetFaceFrontPoint(float (*a2)[3], int a3)
+{
+  const int idx = 3 * a3;
+  float *normal = reinterpret_cast<float *>(mCFVNormal);
+  float *vertex = reinterpret_cast<float *>(mCFVertex);
+  (*a2)[0] = (normal[idx] * 2.0f) + vertex[idx];
+  (*a2)[1] = (normal[idx + 1] * 2.0f) + vertex[idx + 1];
+  (*a2)[2] = (normal[idx + 2] * 2.0f) + vertex[idx + 2];
+}
+
+int CBsp::IsExistSelfPoint(int a2, int a3)
+{
+  int index = 0;
+  _PATH_NODE &node = mPathFinder.mPathNode[a2];
+  if (node.WhatDirection == -1)
+  {
+    const int startVertex = mCFLine[a3].start_v;
+    const int pathCount = node.PathCnt;
+    if (pathCount > 0)
+    {
+      for (int i = 0; i < pathCount; ++i)
+      {
+        const float *point = node.Path[i];
+        if ((mCFVertex[startVertex][0] + 2.0f) > point[0] && point[0] > (mCFVertex[startVertex][0] - 2.0f)
+          && (mCFVertex[startVertex][1] + 2.0f) > point[1] && point[1] > (mCFVertex[startVertex][1] - 2.0f)
+          && (mCFVertex[startVertex][2] + 2.0f) > point[2] && point[2] > (mCFVertex[startVertex][2] - 2.0f))
+        {
+          return 1;
+        }
+        ++index;
+      }
+      return 0;
+    }
+  }
+  else
+  {
+    const int endVertex = mCFLine[a3].end_v;
+    const int pathCount = node.PathCnt;
+    if (pathCount > 0)
+    {
+      for (int i = 0; i < pathCount; ++i)
+      {
+        const float *point = node.Path[i];
+        if ((mCFVertex[endVertex][0] + 2.0f) > point[0] && point[0] > (mCFVertex[endVertex][0] - 2.0f)
+          && (mCFVertex[endVertex][1] + 2.0f) > point[1] && point[1] > (mCFVertex[endVertex][1] - 2.0f)
+          && (mCFVertex[endVertex][2] + 2.0f) > point[2] && point[2] > (mCFVertex[endVertex][2] - 2.0f))
+        {
+          return 1;
+        }
+        ++index;
+      }
+      return 0;
+    }
+  }
+  return 0;
+}
+
+int CBsp::GetPath(float *const a2, float *const a3)
+{
+  if (mFindPathCnt >= 10)
+  {
+    return 0;
+  }
+  if (mPathFinder.GetPathCnt(mFindPathCnt) + 1 >= mPathFinder.mMaxDepth)
+  {
+    return 0;
+  }
+
+  float get[3]{};
+  float getTemp[3]{};
+  float get2[3]{};
+
+  int type = GetPathCrossPoint(
+    a2,
+    a3,
+    &get,
+    mPathFinder.GetFrontLineId(mFindPathCnt),
+    mPathFinder.GetBackLineId(mFindPathCnt));
+  const int backupFace = mColFaceId;
+
+  if (type == 1)
+  {
+    if (IsExistSelfPoint(mFindPathCnt, backupFace))
+    {
+      type = 2;
+    }
+  }
+
+  switch (type)
+  {
+  case 1:
+    mPathFinder.AddPath(get, mFindPathCnt);
+    mPathFinder.PushPathStack(mFindPathCnt);
+    mPathFinder.SetFrontLineId(mFindPathCnt, backupFace);
+    mPathFinder.SetBackLineId(mFindPathCnt, mCFLine[backupFace].back);
+    mPathFinder.SetPathDirection(mFindPathCnt, -1);
+    GetFaceFrontPoint(&getTemp, mCFLine[backupFace].start_v);
+    getTemp[1] = a2[1];
+
+    type = GetPathCrossPoint(
+      get,
+      getTemp,
+      &get2,
+      mPathFinder.GetFrontLineId(mFindPathCnt),
+      mPathFinder.GetBackLineId(mFindPathCnt));
+    if (type && mColFaceId != -1)
+    {
+      mPathFinder.AddPath(get2, mFindPathCnt);
+      mPathFinder.SetFrontLineId(mFindPathCnt, mColFaceId);
+      mPathFinder.SetBackLineId(mFindPathCnt, mCFLine[mColFaceId].back);
+      GetFaceFrontPoint(&getTemp, mCFLine[mColFaceId].start_v);
+      getTemp[1] = a2[1];
+    }
+    mPathFinder.AddPath(getTemp, mFindPathCnt);
+    GetPath(getTemp, a3);
+
+    ++mFindPathCnt;
+    mPathFinder.PopPathStack(mFindPathCnt);
+    if (mFindPathCnt >= 10)
+    {
+      --mFindPathCnt;
+      return 0;
+    }
+
+    mPathFinder.SetFrontLineId(mFindPathCnt, mCFLine[backupFace].front);
+    mPathFinder.SetBackLineId(mFindPathCnt, backupFace);
+    mPathFinder.SetPathDirection(mFindPathCnt, 1);
+    GetFaceFrontPoint(&getTemp, mCFLine[backupFace].end_v);
+    getTemp[1] = a2[1];
+
+    type = GetPathCrossPoint(
+      get,
+      getTemp,
+      &get2,
+      mPathFinder.GetFrontLineId(mFindPathCnt),
+      mPathFinder.GetBackLineId(mFindPathCnt));
+    if (type && mColFaceId != -1)
+    {
+      mPathFinder.AddPath(get2, mFindPathCnt);
+      mPathFinder.SetBackLineId(mFindPathCnt, mColFaceId);
+      mPathFinder.SetFrontLineId(mFindPathCnt, mCFLine[mColFaceId].front);
+      GetFaceFrontPoint(&getTemp, mCFLine[mColFaceId].end_v);
+      getTemp[1] = a2[1];
+    }
+    mPathFinder.AddPath(getTemp, mFindPathCnt);
+    GetPath(getTemp, a3);
+    break;
+  case 2:
+    if (mPathFinder.GetPathDirection(mFindPathCnt) == -1)
+    {
+      const int backLine = mPathFinder.GetBackLineId(mFindPathCnt);
+      mPathFinder.SetFrontLineId(mFindPathCnt, backLine);
+      mPathFinder.SetBackLineId(mFindPathCnt, mCFLine[backLine].back);
+      GetFaceFrontPoint(&getTemp, mCFLine[backLine].start_v);
+      getTemp[1] = a2[1];
+
+      type = GetPathCrossPoint(
+        a2,
+        getTemp,
+        &get,
+        mPathFinder.GetFrontLineId(mFindPathCnt),
+        mPathFinder.GetBackLineId(mFindPathCnt));
+      if (type && mColFaceId != -1)
+      {
+        mPathFinder.AddPath(get, mFindPathCnt);
+        mPathFinder.SetFrontLineId(mFindPathCnt, mColFaceId);
+        mPathFinder.SetBackLineId(mFindPathCnt, mCFLine[mColFaceId].back);
+        GetFaceFrontPoint(&getTemp, mCFLine[mColFaceId].start_v);
+        getTemp[1] = a2[1];
+      }
+      mPathFinder.AddPath(getTemp, mFindPathCnt);
+      GetPath(getTemp, a3);
+    }
+    else
+    {
+      const int backLine = mPathFinder.GetFrontLineId(mFindPathCnt);
+      mPathFinder.SetBackLineId(mFindPathCnt, backLine);
+      mPathFinder.SetFrontLineId(mFindPathCnt, mCFLine[backLine].front);
+      GetFaceFrontPoint(&getTemp, mCFLine[backLine].end_v);
+      getTemp[1] = a2[1];
+
+      type = GetPathCrossPoint(
+        a2,
+        getTemp,
+        &get,
+        mPathFinder.GetFrontLineId(mFindPathCnt),
+        mPathFinder.GetBackLineId(mFindPathCnt));
+      if (type && mColFaceId != -1)
+      {
+        mPathFinder.AddPath(get, mFindPathCnt);
+        mPathFinder.SetBackLineId(mFindPathCnt, mColFaceId);
+        mPathFinder.SetFrontLineId(mFindPathCnt, mCFLine[mColFaceId].front);
+        GetFaceFrontPoint(&getTemp, mCFLine[mColFaceId].end_v);
+        getTemp[1] = a2[1];
+      }
+      mPathFinder.AddPath(getTemp, mFindPathCnt);
+      GetPath(getTemp, a3);
+    }
+    break;
+  case 0:
+    if (mPathFinder.AddPath(a3, mFindPathCnt))
+    {
+      mPathFinder.CompletePath(mFindPathCnt);
+    }
+    break;
+  case 3:
+    if (mPathFinder.AddPath(get, mFindPathCnt))
+    {
+      mPathFinder.CompletePath(mFindPathCnt);
+    }
+    break;
+  default:
+    break;
+  }
+
+  return 0;
+}
+
+int CBsp::GetFinalPath(float *a2, float *const a3, float (*const a4)[3])
+{
+  _PATH_NODE *node = reinterpret_cast<_PATH_NODE *>(a2);
+  float temp[3]{};
+  if (node->PathCnt == 1)
+  {
+    (*a4)[0] = node->Path[0][0];
+    (*a4)[1] = node->Path[0][1];
+    (*a4)[2] = node->Path[0][2];
+    return 1;
+  }
+
+  int index[16]{};
+  int indexCount = 0;
+  int id = -1;
+
+  index[indexCount++] = node->PathCnt - 1;
+  for (int i = node->PathCnt - 2; i > 0; --i)
+  {
+    id = -2;
+    if (!GetPathCrossPoint(a3, node->Path[i], &temp, 0, 0))
+    {
+      id = -1;
+      index[indexCount++] = i;
+      break;
+    }
+    for (int j = i - 2; j > 0; --j)
+    {
+      if (!GetPathCrossPoint(node->Path[j], node->Path[i], &temp, 0, 0))
+      {
+        id = j;
+      }
+    }
+    if (id == -2)
+    {
+      index[indexCount++] = i;
+      continue;
+    }
+
+    index[indexCount++] = i;
+    index[indexCount++] = id;
+    i = id + 1;
+  }
+  if (id != -1)
+  {
+    index[indexCount++] = 0;
+  }
+
+  for (int i = 0; i < indexCount; ++i)
+  {
+    const int pointIndex = index[indexCount - i - 1];
+    a4[i][0] = node->Path[pointIndex][0];
+    a4[i][1] = node->Path[pointIndex][1];
+    a4[i][2] = node->Path[pointIndex][2];
+  }
+  return indexCount;
+}
+
+int CBsp::GetPathFind(float *const a2, float *const a3, float (*const a4)[3], unsigned int *a5, int a6)
+{
+  float minDist = FLOAT_1000000_0;
+  int minIndex = -1;
+  bool tooLong = false;
+
+  float target[3] = {a3[0], a2[1], a3[2]};
+  float tempAt[3] = {0.0f, 0.0f, 0.0f};
+  float tempVec[3] = {target[0] - a2[0], target[1] - a2[1], target[2] - a2[2]};
+
+  const float dist = sqrtf_0((tempVec[0] * tempVec[0]) + (tempVec[1] * tempVec[1]) + (tempVec[2] * tempVec[2]));
+  if (dist > 200.0f)
+  {
+    tooLong = true;
+    tempAt[0] = target[0];
+    tempAt[1] = target[1];
+    tempAt[2] = target[2];
+    Normalize(tempVec);
+    tempVec[0] *= 200.0f;
+    tempVec[1] *= 200.0f;
+    tempVec[2] *= 200.0f;
+    target[0] = a2[0] + tempVec[0];
+    target[1] = a2[1] + tempVec[1];
+    target[2] = a2[2] + tempVec[2];
+    Normalize(tempVec);
+    tempVec[0] *= 210.0f;
+    tempVec[1] *= 210.0f;
+    tempVec[2] *= 210.0f;
+    tempAt[0] = a2[0] + tempVec[0];
+    tempAt[1] = a2[1];
+    tempAt[2] = a2[2] + tempVec[2];
+  }
+
+  memset_0(mPathFinder.mPathNode, 0, sizeof(_PATH_NODE) * 10);
+  mFindPathCnt = 0;
+  mPathFinder.mStackPoint = 0;
+  mPathFinder.mStart[0] = a2[0];
+  mPathFinder.mStart[1] = a2[1];
+  mPathFinder.mStart[2] = a2[2];
+  mPathFinder.mMaxDepth = a6;
+  GetPath(a2, target);
+  ++mFindPathCnt;
+
+  for (unsigned int i = 0; i < mFindPathCnt; ++i)
+  {
+    if (!mPathFinder.mPathNode[i].IsFind)
+    {
+      continue;
+    }
+    if (minDist > mPathFinder.mPathNode[i].TotalLeng)
+    {
+      minDist = mPathFinder.mPathNode[i].TotalLeng;
+      minIndex = static_cast<int>(i);
+    }
+  }
+
+  if (minIndex == -1)
+  {
+    float canGo[3]{};
+    if (GetPathCrossPoint(a2, target, &canGo, 0, 0))
+    {
+      (*a4)[0] = canGo[0];
+      (*a4)[1] = canGo[1];
+      (*a4)[2] = canGo[2];
+    }
+    else
+    {
+      (*a4)[0] = target[0];
+      (*a4)[1] = target[1];
+      (*a4)[2] = target[2];
+    }
+    *a5 = 1;
+    return 0;
+  }
+
+  const unsigned int finalPath = static_cast<unsigned int>(
+    GetFinalPath(reinterpret_cast<float *>(&mPathFinder.mPathNode[minIndex].TotalLeng), a2, a4));
+  *a5 = finalPath;
+  if (tooLong && finalPath == 1 && target[0] == (*a4)[0] && target[1] == (*a4)[1] && target[2] == (*a4)[2])
+  {
+    *a5 = 2;
+    (*a4)[3] = tempAt[0];
+    (*a4)[4] = tempAt[1];
+    (*a4)[5] = tempAt[2];
+    return 2;
+  }
+  return 1;
+}
+
 float CBsp::GetFirstYpos(float *const a2, float *const a3, float *const a4)
 {
     __int16 v5[4] = {};
@@ -235,6 +600,274 @@ float CBsp::GetFirstYpos(float *const a2, __int16 *const a3, __int16 *const a4)
         }
     }
     return best;
+}
+
+__int16 CBsp::GetLeafNum(float *const a2)
+{
+    mTempCamera[0] = a2[0];
+    mTempCamera[1] = a2[1];
+    mTempCamera[2] = a2[2];
+    mTempSearchOk = -1;
+    SearchNode(1);
+    return mTempSearchOk;
+}
+
+void CBsp::SearchNode(__int16 a2)
+{
+    if (!a2)
+    {
+        return;
+    }
+
+    _BSP_NODE *nodes = mNode;
+    const float side = DotProduct(mCNNormal[nodes[a2].f_normal_id], mTempCamera) - nodes[a2].d;
+    if (side < 0.0f)
+    {
+        const __int16 back = nodes[a2].back;
+        if (back >= 0)
+        {
+            SearchNode(back);
+        }
+        else
+        {
+            mTempSearchOk = static_cast<__int16>(-1 - back);
+        }
+
+        if (mTempSearchOk <= 0)
+        {
+            const __int16 front = nodes[a2].front;
+            if (front >= 0)
+            {
+                SearchNode(front);
+            }
+            else
+            {
+                mTempSearchOk = static_cast<__int16>(-1 - front);
+            }
+        }
+    }
+    else
+    {
+        const __int16 front = nodes[a2].front;
+        if (front >= 0)
+        {
+            SearchNode(front);
+        }
+        else
+        {
+            mTempSearchOk = static_cast<__int16>(-1 - front);
+        }
+
+        if (mTempSearchOk <= 0)
+        {
+            const __int16 back = nodes[a2].back;
+            if (back >= 0)
+            {
+                SearchNode(back);
+            }
+            else
+            {
+                mTempSearchOk = static_cast<__int16>(-1 - back);
+            }
+        }
+    }
+}
+
+float CBsp::GetYposInLeaf(float *const a2, float *const a3, float a4, float a5, int a6)
+{
+    const _BSP_LEAF &leaf = mLeaf[a6];
+    float bestY = FLOAT_N32000_0;
+    if (!leaf.face_num)
+    {
+        return bestY;
+    }
+
+    unsigned int *faceIds = &mCFaceId[leaf.face_start_id];
+    for (unsigned int i = 0; i < leaf.face_num; ++i)
+    {
+        const unsigned int faceIndex = faceIds[i];
+        _BSP_C_FACE &face = mCFace[faceIndex];
+        if (face.Attr & 0x40)
+        {
+            continue;
+        }
+
+        float cross[4];
+        if (!GetPlaneCrossPoint(a2, a3, cross, face.Normal, face.Normal[3]))
+        {
+            continue;
+        }
+
+        int insideCount = 0;
+        const int vNum = face.VNum;
+        const unsigned int vStart = face.VStartId;
+        if (vNum > 0)
+        {
+            for (int j = 0; j < vNum; ++j)
+            {
+                const unsigned int v0 = mCVertexId[vStart + j];
+                const unsigned int v1 = mCVertexId[vStart + (j + 1) % vNum];
+                const float *vertex0 = mCVertex[v0];
+                const float *vertex1 = mCVertex[v1];
+                float edge[3] = {vertex0[0] - vertex1[0], vertex0[1] - vertex1[1], vertex0[2] - vertex1[2]};
+                float edgeNormal[4];
+                sub_1404E2FB0(face.Normal, edge, edgeNormal);
+                const float dx = cross[0] - vertex1[0];
+                const float dy = cross[1] - vertex1[1];
+                const float dz = cross[2] - vertex1[2];
+                if ((dx * edgeNormal[0] + dy * edgeNormal[1] + dz * edgeNormal[2]) <= 0.0f)
+                {
+                    ++insideCount;
+                }
+            }
+        }
+
+        if (insideCount == vNum)
+        {
+            const float y = cross[1];
+            if (y > bestY && y < (a4 + a5) && y > (a5 - a4))
+            {
+                bestY = y;
+                mNowCFaceId = static_cast<int>(faceIndex);
+            }
+        }
+    }
+
+    return bestY;
+}
+
+float CBsp::GetBestYposInLeaf(float *const a2, float *const a3, float a4, float a5, int a6)
+{
+    const _BSP_LEAF &leaf = mLeaf[a6];
+    float bestY = FLOAT_N32000_0;
+    unsigned int bestLevel = 10000;
+    if (!leaf.face_num)
+    {
+        return bestY;
+    }
+
+    unsigned int *faceIds = &mCFaceId[leaf.face_start_id];
+    for (unsigned int i = 0; i < leaf.face_num; ++i)
+    {
+        const unsigned int faceIndex = faceIds[i];
+        _BSP_C_FACE &face = mCFace[faceIndex];
+        if (face.Attr & 0x40)
+        {
+            continue;
+        }
+
+        float cross[4];
+        if (!GetPlaneCrossPoint(a2, a3, cross, face.Normal, face.Normal[3]))
+        {
+            continue;
+        }
+
+        int insideCount = 0;
+        const int vNum = face.VNum;
+        const unsigned int vStart = face.VStartId;
+        if (vNum > 0)
+        {
+            for (int j = 0; j < vNum; ++j)
+            {
+                const unsigned int v0 = mCVertexId[vStart + j];
+                const unsigned int v1 = mCVertexId[vStart + (j + 1) % vNum];
+                const float *vertex0 = mCVertex[v0];
+                const float *vertex1 = mCVertex[v1];
+                float edge[3] = {vertex0[0] - vertex1[0], vertex0[1] - vertex1[1], vertex0[2] - vertex1[2]};
+                float edgeNormal[4];
+                sub_1404E2FB0(face.Normal, edge, edgeNormal);
+                const float dx = cross[0] - vertex1[0];
+                const float dy = cross[1] - vertex1[1];
+                const float dz = cross[2] - vertex1[2];
+                if ((dx * edgeNormal[0] + dy * edgeNormal[1] + dz * edgeNormal[2]) <= 0.0f)
+                {
+                    ++insideCount;
+                }
+            }
+        }
+
+        if (insideCount == vNum)
+        {
+            const float y = cross[1];
+            const unsigned int level = sub_1404E46E0(a5, a4, y);
+            if (bestLevel == level)
+            {
+                if (y > bestY)
+                {
+                    bestLevel = level;
+                    bestY = y;
+                    mNowCFaceId = static_cast<int>(faceIndex);
+                }
+            }
+            else if (bestLevel > level)
+            {
+                bestLevel = level;
+                bestY = y;
+                mNowCFaceId = static_cast<int>(faceIndex);
+            }
+        }
+    }
+
+    return bestY;
+}
+
+float CBsp::GetYposInLeafUseEdgeNormal(float *const a2, float *const a3, float a4, float a5, int a6)
+{
+    if (!mCNEdgeNormal)
+    {
+        Warning(aGetyposinleafu, byte_140883769);
+        return 0.0f;
+    }
+
+    const _BSP_LEAF &leaf = mLeaf[a6];
+    float bestY = FLOAT_N32000_0;
+    if (!leaf.face_num)
+    {
+        return bestY;
+    }
+
+    unsigned int *faceIds = &mCFaceId[leaf.face_start_id];
+    for (unsigned int i = 0; i < leaf.face_num; ++i)
+    {
+        const unsigned int faceIndex = faceIds[i];
+        _BSP_C_FACE &face = mCFace[faceIndex];
+        if (face.Attr & 0x40)
+        {
+            continue;
+        }
+
+        float cross[3];
+        if (!GetPlaneCrossPoint(a2, a3, cross, face.Normal, face.Normal[3]))
+        {
+            continue;
+        }
+
+        const int vNum = face.VNum;
+        int insideCount = 0;
+        if (vNum > 0)
+        {
+            float *edgeNormals = reinterpret_cast<float *>(mCNEdgeNormal) + (faceIndex * 16);
+            for (int j = 0; j < vNum; ++j)
+            {
+                if ((cross[0] * edgeNormals[0] + cross[1] * edgeNormals[1] + cross[2] * edgeNormals[2]
+                     - edgeNormals[3])
+                    <= -0.01f)
+                {
+                    break;
+                }
+                ++insideCount;
+                edgeNormals += 4;
+            }
+        }
+
+        if (insideCount == vNum && cross[1] > bestY && (a4 + a5) > cross[1] && cross[1] > (a5 - a4))
+        {
+            bestY = cross[1];
+            mNowCFaceId = static_cast<int>(faceIndex);
+        }
+    }
+
+    return bestY;
 }
 
 __int64 CBsp::GetLightFromPoint(float *const a2, int a3)

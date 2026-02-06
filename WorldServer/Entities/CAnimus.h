@@ -4,7 +4,7 @@
 #include "CMainThread.h"
 
 /* 1779 */
-class __cppobj CAnimus : CCharacter
+class __cppobj CAnimus : public CCharacter
 {
 public:
   unsigned __int8 m_byClassCode;

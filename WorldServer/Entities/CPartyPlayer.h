@@ -24,6 +24,8 @@ public:
   bool IsPartyBoss();
   bool IsPartyLock();
   CPartyPlayer **GetPtrPartyMember();
+  CPlayer *GetLootAuthor();
+  void SetNextLootAuthor();
   unsigned int GetPopPartyMember();
   bool DisjointParty();
   bool RemovePartyMember(CPartyPlayer *pExiter, CPartyPlayer **ppoutNewBoss);

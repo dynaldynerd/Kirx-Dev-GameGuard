@@ -29,6 +29,7 @@ class CWnd;
 extern CUserDB g_UserDB[MAX_PLAYER];
 extern CPartyPlayer g_PartyPlayer[MAX_PLAYER];
 extern CPlayer g_Player[MAX_PLAYER];
+extern CPlayer sPlayerDum;
 
 extern CMonster *g_Monster;
 extern CMerchant *g_NPC;
@@ -57,4 +58,15 @@ extern CGameStatistics g_GameStatistics;
 extern CMainThread g_Main;
 extern CWnd *g_pFrame;
 
+extern int g_tmpEffectedNum;
+extern _tmp_effected_list g_tmpEffectedList[30];
+extern bool (__fastcall *g_TempEffectFunc[150])(CCharacter *pActChar, CCharacter *pTargetChar, float fEffectValue, unsigned __int8 *byRet);
+
+extern float ITEM_ROOT_RATE;
+extern float MINE_SPEED_RATE;
+extern float FORCE_LIVER_ACCUM_RATE;
+extern float MASTERY_GET_RATE;
+extern float ANIMUS_EXP_RATE;
+extern float PLAYER_EXP_RATE;
+extern float PLAYER_LOST_EXP;
 extern float TSVR_ADD_DARKHOLE_REWARD_RATE;

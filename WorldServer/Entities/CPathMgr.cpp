@@ -62,7 +62,7 @@ int CPathMgr::SearchPathA(CMonster *pMon, float *vTarPos, int bBackupRestore)
   }
 
   Init();
-  if (CBsp::CanYouGoThere(pMon->m_pCurMap->m_Level.mBsp, pMon->m_fCurPos, vTarPos, (float (*)[3])tempPos))
+  if (pMon->m_pCurMap->m_Level.mBsp->CanYouGoThere(pMon->m_fCurPos, vTarPos, (float (*)[3])tempPos))
   {
     m_Size = 1;
     m_StartPos = 0;

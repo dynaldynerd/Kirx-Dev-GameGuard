@@ -265,6 +265,10 @@ public:
 
   float GetFirstYpos(float *const a2, float *const a3, float *const a4);
   float GetFirstYpos(float *const a2, int a3);
+  __int16 GetLeafNum(float *const a2);
+  float GetYposInLeaf(float *const a2, float *const a3, float a4, float a5, int a6);
+  float GetYposInLeafUseEdgeNormal(float *const a2, float *const a3, float a4, float a5, int a6);
+  float GetBestYposInLeaf(float *const a2, float *const a3, float a4, float a5, int a6);
   __int64 GetLightFromPoint(float *const a2, int a3);
   __int64 GetColorFromPoint(int a2, float *const a3);
   void GetLightMapUVFromPoint(float *const a2, int a3, float *const a4);
@@ -277,6 +281,9 @@ public:
 
 private:
   float GetFirstYpos(float *const a2, __int16 *const a3, __int16 *const a4);
+  void GetFaceFrontPoint(float (*a2)[3], int a3);
+  int IsExistSelfPoint(int a2, int a3);
+  void SearchNode(__int16 a2);
   void WalkNodeForLeafList(short nNodeId, float *const a3, float *const a4, short *a5, int *a6);
   void SubLeafList(float a2, _BSP_NODE *pNode, float *const a4, float *const a5, short *a6, int *a7);
   bool EdgeTest(float *pPos, unsigned int nNormalId);

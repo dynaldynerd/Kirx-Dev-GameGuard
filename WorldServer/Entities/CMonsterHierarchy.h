@@ -3,6 +3,7 @@
 #include "IdaCompat.h"
 
 class CMonster;
+struct _monster_create_setdata;
 
 /* 1640 */
 class __cppobj __declspec(align(8)) CMonsterHierarchy
@@ -18,11 +19,14 @@ class __cppobj __declspec(align(8)) CMonsterHierarchy
 
 public:
   virtual ~CMonsterHierarchy() = default;
+  void Init();
   CMonster *GetParent();
   unsigned __int8 ChildKindCount();
   __int64 GetChildCount(unsigned int nKindIndex);
   CMonster *GetChild(int nKind, unsigned int nIndex);
   __int64 PopChildMon(CMonster *pMon);
   __int64 SetParent(CMonster *pMon);
+  void OnChildMonsterCreate(_monster_create_setdata *pData);
+  void OnChildMonsterDestroy();
 };
 

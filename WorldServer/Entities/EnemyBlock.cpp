@@ -47,6 +47,36 @@ void _mon_active::SetZeroMonNum()
     this->m_dwCumMonNum = 0;
 }
 
+char _mon_active::SetCurMonNum(int nAlter)
+{
+    this->m_zCurMonNum = static_cast<signed __int16>(this->m_zCurMonNum + nAlter);
+    if (nAlter > 0)
+    {
+        this->m_dwCumMonNum += static_cast<unsigned int>(nAlter);
+    }
+    BossScheduleSave();
+    return 1;
+}
+
+void _mon_active::SetBossSchedule(BossSchedule *pBossSchedule)
+{
+    this->m_pBossSchedule = pBossSchedule;
+}
+
+BossSchedule *_mon_active::GetBossSchedule()
+{
+    return this->m_pBossSchedule;
+}
+
+void _mon_active::BossScheduleSave()
+{
+    BossSchedule *bossSchedule = GetBossSchedule();
+    if (bossSchedule)
+    {
+        bossSchedule->Save_LiveCount(static_cast<unsigned __int16>(this->m_zCurMonNum));
+    }
+}
+
 void _LAYER_SET::CreateLayer(int nSecNum)
 {
     this->m_pMB = nullptr;

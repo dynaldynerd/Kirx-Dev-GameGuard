@@ -193,12 +193,12 @@ unsigned int CLevel::GetPath(
   const float dx = *a2 - *a3;
   if (fabsf(dx) >= 0.1f)
   {
-    return CBsp::GetPathFind(mBsp, a2, a3, a4, a5, a6);
+    return mBsp->GetPathFind(a2, a3, a4, a5, a6);
   }
   const float dz = a2[2] - a3[2];
   if (fabsf(dz) >= 0.1f)
   {
-    return CBsp::GetPathFind(mBsp, a2, a3, a4, a5, a6);
+    return mBsp->GetPathFind(a2, a3, a4, a5, a6);
   }
   (*a4)[0] = *a2;
   (*a4)[1] = a2[1];
@@ -217,16 +217,240 @@ unsigned int CLevel::GetPathFromDepth(
   const float dx = *a2 - *a3;
   if (fabsf(dx) >= 0.1f)
   {
-    return CBsp::GetPathFind(mBsp, a2, a3, a5, a6, a4);
+    return mBsp->GetPathFind(a2, a3, a5, a6, a4);
   }
   const float dz = a2[2] - a3[2];
   if (fabsf(dz) >= 0.1f)
   {
-    return CBsp::GetPathFind(mBsp, a2, a3, a5, a6, a4);
+    return mBsp->GetPathFind(a2, a3, a5, a6, a4);
   }
   (*a5)[0] = *a2;
   (*a5)[1] = a2[1];
   (*a5)[2] = a2[2];
   *a6 = 0;
   return 0;
+}
+
+__int64 CLevel::GetNextYposForServer(float *const a2, float *a3)
+{
+  CBsp *bsp = mBsp;
+  a2[1] = a2[1] - FLOAT_23_0;
+  const __int16 leaf0 = bsp->GetLeafNum(a2);
+  const float baseY = a2[1];
+  a2[1] = baseY + (FLOAT_23_0 * 2.0f);
+  const __int16 leaf1 = bsp->GetLeafNum(a2);
+
+  const float startX = *a2;
+  const float startZ = a2[2];
+  const int leafDiff = leaf0 != leaf1;
+  const int leafCount = leafDiff + 1;
+  float bestY = FLOAT_N100000_0;
+  unsigned int found = 0;
+
+  float start[3]{};
+  float end[3]{};
+  start[0] = startX;
+  start[2] = startZ;
+  end[0] = startX;
+  end[2] = startZ;
+
+  a2[1] = baseY;
+  start[1] = baseY + FLOAT_9999_0;
+  end[1] = baseY - FLOAT_9999_0;
+
+  __int16 leafIds[2]{leaf0, leaf1};
+  for (int index = 0; index < leafCount; ++index)
+  {
+    const float ypos = bsp->GetYposInLeafUseEdgeNormal(start, end, FLOAT_23_0, a2[1], leafIds[index]);
+    if (ypos != FLOAT_N32000_0 && ypos > bestY)
+    {
+      found = 1;
+      bestY = ypos;
+    }
+  }
+
+  if (found)
+  {
+    *a3 = bestY;
+  }
+  return found;
+}
+
+__int64 CLevel::GetNextYposForServerFar(float *const a2, float *const a3, float *a4)
+{
+  if (*a2 == *a3 && a2[1] == a3[1] && a2[2] == a3[2])
+  {
+    *a4 = a2[1];
+    return 1;
+  }
+
+  float src[3]{a2[0], a2[1], a2[2]};
+  float dst[3]{a3[0], a3[1], a3[2]};
+
+  __int16 leafIds[32000]{};
+  while (true)
+  {
+    float bestY = FLOAT_N100000_0;
+    float dist = GetDist(src, dst);
+
+    if (dist > FLOAT_30_0)
+    {
+      const float dx = dst[0] - src[0];
+      const float dy = dst[1] - src[1];
+      const float dz = dst[2] - src[2];
+      const float len = sqrtf_0((dx * dx) + (dy * dy) + (dz * dz));
+      const float scale = FLOAT_25_0 / len;
+      dst[0] = src[0] + (dx * scale);
+      dst[1] = src[1] + (dy * scale);
+      dst[2] = src[2] + (dz * scale);
+      dist = FLOAT_30_0;
+    }
+
+    float ableHeight = dist * 1.73f;
+    if (ableHeight < FLOAT_23_0)
+    {
+      ableHeight = FLOAT_23_0;
+    }
+
+    float start[3]{dst[0], dst[1] + ableHeight, dst[2]};
+    float end[3]{dst[0], dst[1] - ableHeight, dst[2]};
+    int leafCount = 0;
+    mBsp->GetLeafList(start, end, &leafCount, leafIds, 0x7D00u);
+
+    float bCamera[3]{dst[0], dst[1] + FLOAT_9999_0, dst[2]};
+    float nCamera[3]{dst[0], dst[1] - FLOAT_9999_0, dst[2]};
+
+    bool found = false;
+    for (int i = 0; i < leafCount; ++i)
+    {
+      const float yHeight = mBsp->GetYposInLeaf(bCamera, nCamera, ableHeight, dst[1], leafIds[i]);
+      if (yHeight != FLOAT_N32000_0 && yHeight > bestY)
+      {
+        found = true;
+        bestY = yHeight;
+      }
+    }
+
+    if (!found)
+    {
+      return 0;
+    }
+
+    if (dst[0] == a3[0] && dst[2] == a3[2])
+    {
+      *a4 = bestY;
+      return 1;
+    }
+
+    src[0] = dst[0];
+    src[1] = bestY;
+    src[2] = dst[2];
+
+    dst[0] = a3[0];
+    dst[1] = bestY;
+    dst[2] = a3[2];
+  }
+}
+
+__int64 CLevel::GetNextYposFarProgress(float *const a2, float *const a3, float *a4)
+{
+  if (!mIsLoadedBsp)
+  {
+    return 0;
+  }
+  if (*a2 == *a3 && a2[1] == a3[1] && a2[2] == a3[2])
+  {
+    *a4 = a2[1];
+    return 1;
+  }
+
+  a3[1] = a2[1];
+  float src[3]{a2[0], a2[1], a2[2]};
+  float dst[3]{a3[0], a3[1], a3[2]};
+  float finalPos[3]{a3[0], a3[1], a3[2]};
+
+  __int16 leafIds[10512]{};
+  while (true)
+  {
+    float bestY = FLOAT_N100000_0;
+    float dist = GetDist(src, dst);
+
+    if (dist > FLOAT_25_0)
+    {
+      const float dx = dst[0] - src[0];
+      const float dy = dst[1] - src[1];
+      const float dz = dst[2] - src[2];
+      const float len = sqrtf_0((dx * dx) + (dy * dy) + (dz * dz));
+      const float scale = FLOAT_25_0 / len;
+      dst[0] = src[0] + (dx * scale);
+      dst[1] = src[1] + (dy * scale);
+      dst[2] = src[2] + (dz * scale);
+      dist = FLOAT_25_0;
+    }
+
+    float ableHeight = dist * 1.73f;
+    if (ableHeight < FLOAT_23_0)
+    {
+      ableHeight = FLOAT_23_0;
+    }
+
+    float start[3]{dst[0], dst[1] + 30000.0f, dst[2]};
+    float end[3]{dst[0], dst[1] - 30000.0f, dst[2]};
+    int leafCount = 0;
+    mBsp->GetLeafList(start, end, &leafCount, leafIds, 0x2710u);
+
+    float bCamera[3]{dst[0], dst[1] + 30000.0f, dst[2]};
+    float nCamera[3]{dst[0], dst[1] - 30000.0f, dst[2]};
+
+    bool found = false;
+    unsigned int bestLevel = 10000;
+    for (int i = 0; i < leafCount; ++i)
+    {
+      for (int j = 0; j < 2; ++j)
+      {
+        const float yHeight = mBsp->GetBestYposInLeaf(bCamera, nCamera, ableHeight, dst[1], leafIds[i]);
+        if (yHeight != FLOAT_N32000_0)
+        {
+          const unsigned int level = sub_1404E1570(dst[1], ableHeight, yHeight);
+          if (bestLevel == level)
+          {
+            if (bestY < yHeight)
+            {
+              found = true;
+              bestY = yHeight;
+            }
+          }
+          else if (bestLevel > level)
+          {
+            bestLevel = level;
+            found = true;
+            bestY = yHeight;
+          }
+        }
+        bCamera[0] += 0.5f;
+        nCamera[0] += 0.5f;
+      }
+      bCamera[0] -= 1.0f;
+      nCamera[0] -= 1.0f;
+    }
+
+    if (!found)
+    {
+      return 0;
+    }
+
+    if (dst[0] == finalPos[0] && dst[2] == finalPos[2])
+    {
+      *a4 = bestY;
+      return 1;
+    }
+
+    src[0] = dst[0];
+    src[1] = bestY;
+    src[2] = dst[2];
+
+    dst[0] = finalPos[0];
+    dst[1] = bestY;
+    dst[2] = finalPos[2];
+  }
 }

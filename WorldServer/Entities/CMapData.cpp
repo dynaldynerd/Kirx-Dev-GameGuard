@@ -905,6 +905,22 @@ _sec_info *CMapData::GetSecInfo()
   return &this->m_SecInfo;
 }
 
+int CMapData::GetSectorIndex(float *pPos)
+{
+  const float localX = static_cast<float>(-this->m_BspInfo.m_nMapMinSize[0]) + pPos[0];
+  const float localZ = static_cast<float>(this->m_BspInfo.m_nMapMaxSize[2]) - pPos[2];
+  const unsigned int secX = static_cast<unsigned int>(static_cast<int>(localX / 100.0f));
+  const unsigned int secY = static_cast<unsigned int>(static_cast<int>(localZ / 100.0f));
+
+  if (secX < static_cast<unsigned int>(this->m_SecInfo.m_nSecNumW)
+      && secY < static_cast<unsigned int>(this->m_SecInfo.m_nSecNumH))
+  {
+    return static_cast<int>(static_cast<unsigned int>(this->m_SecInfo.m_nSecNumW) * secY + secX);
+  }
+
+  return -1;
+}
+
 CObjectList *CMapData::GetSectorListObj(unsigned __int16 wLayerIndex, unsigned int dwSecIndex)
 {
   return &this->m_ls[wLayerIndex].m_pListSectorObj[static_cast<unsigned __int64>(dwSecIndex)];

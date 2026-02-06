@@ -25,6 +25,9 @@ public:
   void LoadLevel(const char *szFileName);
   static unsigned int GetEnvironment(CLevel *pLevel);
   static void SetEnvironment(CLevel *pLevel, int nEnv);
+  __int64 GetNextYposForServer(float *const a2, float *a3);
+  __int64 GetNextYposForServerFar(float *const a2, float *const a3, float *a4);
+  __int64 GetNextYposFarProgress(float *const a2, float *const a3, float *a4);
   unsigned int GetPath(float *const a2, float *const a3, float (*const a4)[3], unsigned int *a5, int a6);
   unsigned int GetPathFromDepth(float *const a2, float *const a3, int a4, float (*const a5)[3], unsigned int *a6);
 public:

@@ -763,6 +763,9 @@ struct __cppobj __unaligned __declspec(align(1)) _target_monster_contsf_allinfor
   unsigned int dwSerial;
   unsigned __int8 byContCount;
   _moncontsf m_MonContSf[8];
+
+  _target_monster_contsf_allinform_zocl();
+  void Init();
 };
 
 /* 1788 */
@@ -777,6 +780,9 @@ struct __cppobj __unaligned __declspec(align(1)) _target_player_damage_contsf_al
   unsigned int dwSerial;
   unsigned __int8 byContCount;
   _playercontsf m_PlayerContSf[8];
+
+  _target_player_damage_contsf_allinform_zocl();
+  void Init();
 };
 
 
@@ -903,6 +909,9 @@ class __cppobj __declspec(align(8)) CPlayer : public CCharacter
     unsigned __int16 wHPRate;
     _target_monster_contsf_allinform_zocl m_PrevTargetMonsterContInfo;
     _target_player_damage_contsf_allinform_zocl m_PrevTargetPlayerDamageContInfo;
+
+    __target();
+    void init();
   };
 
 public:
@@ -966,10 +975,11 @@ public:
   void CalcDefTol();
   bool IsRidingUnit();
   void CalcEquipSpeed();
-  void SendMsg_AlterEquipSPInform();
-  void CalcEquipMaxDP(int bSendMsg);
-  bool IsSiegeMode();
-  void SetSiege(_STORAGE_LIST::_db_con *pItem);
+    void SendMsg_AlterEquipSPInform();
+    void CalcEquipMaxDP(int bSendMsg);
+    bool IsSiegeMode();
+    bool IsChaosMode();
+    void SetSiege(_STORAGE_LIST::_db_con *pItem);
   void SetHaveEffect(char bSet);
   void SetMstHaveEffect(_ResourceItem_fld *pFld, _STORAGE_LIST::_db_con *pItem, int a3, int a4);
   void SetHaveEffectUseTime(_STORAGE_LIST::_db_con *pItem, bool bAdd);
@@ -981,6 +991,7 @@ public:
   void SendMsg_DTradeCloseInform(char byCloseCode);
   void _AnimusReturn(unsigned __int8 byReturnType);
   void SendMsg_AnimusReturnResult(char byRetCode, unsigned __int16 wAnimusItemSerial, unsigned __int8 byReturnType);
+  CAnimus *GetRecallAnimus();
   bool IsHaveMentalTicket();
   bool IsUseReleaseRaceBuffPotion();
   void SetUseReleaseRaceBuffPotion();
@@ -1042,12 +1053,15 @@ public:
   void SendMsg_ResurrectInform();
   void SendMsg_Resurrect(char byRet, bool bQuickPotion);
   void pc_NuclearAfterEffect();
-  void SendMsg_RewardAddItem(_STORAGE_LIST::_db_con *pItem, unsigned __int8 byReason);
-  void SendMsg_StartContSF(_sf_continous *pCont);
-  void SendMsg_AlterContEffectTime(unsigned __int8 byContType);
-  int Emb_UpdateStat(unsigned int dwStatIndex, unsigned int dwNewData, unsigned int dwOldData);
-  void SendMsg_StatInform(unsigned __int8 byStatIndex, unsigned int dwNewStat, unsigned __int8 byReason);
-  __target *GetGroupTarget(unsigned __int8 byGroupType);
+    void SendMsg_RewardAddItem(_STORAGE_LIST::_db_con *pItem, unsigned __int8 byReason);
+    void SendMsg_StartContSF(_sf_continous *pCont);
+    void SendMsg_AlterContEffectTime(unsigned __int8 byContType);
+    void SendMsg_TLStatusPenalty(char byErrCode);
+    void SendMsg_MonsterAggroData(CCharacter *pCharacter);
+    int Emb_UpdateStat(unsigned int dwStatIndex, unsigned int dwNewData, unsigned int dwOldData);
+    void SendMsg_StatInform(unsigned __int8 byStatIndex, unsigned int dwNewStat, unsigned __int8 byReason);
+    CGameObject *GetTargetObj();
+    __target *GetGroupTarget(unsigned __int8 byGroupType);
   void SendMsg_ReleaseGroupTargetObjectResult(unsigned __int8 byGroupType);
   void SendMsg_BuddyLogoffInform(unsigned int dwObjSerial);
   void SendMsg_BuddyLoginInform(unsigned int dwObjSerial, unsigned __int8 byMapIndex, unsigned __int8 byPosCode);

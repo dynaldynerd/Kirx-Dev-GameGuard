@@ -108,7 +108,6 @@
 - CashItemRemoteStore::Initialize :: return true;
 
 ## DfAIMgr.cpp
-- DfAIMgr::OnUsStateTBLInit :: return true;
 
 ## PatriarchElectProcessor.cpp
 

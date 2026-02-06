@@ -18,6 +18,7 @@ class __cppobj __declspec(align(8)) CMapData
 public:
   _bsp_info *GetBspInfo();
   _sec_info *GetSecInfo();
+  int GetSectorIndex(float *pPos);
   CObjectList *GetSectorListObj(unsigned __int16 wLayerIndex, unsigned int dwSecIndex);
   CObjectList *GetSectorListPlayer(unsigned __int16 wLayerIndex, unsigned int dwSecIndex);
   CObjectList *GetSectorListTower(unsigned __int16 wLayerIndex, unsigned int dwSecIndex);

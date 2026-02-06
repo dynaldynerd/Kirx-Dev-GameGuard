@@ -92,10 +92,15 @@ char W2M(char *lpwStr, char *szTran, unsigned int wTranBuffSize);
 bool IsServerMode();
 bool IsInitR3Engine();
 float R3GetTime();
+float R3GetLoopTime();
 struct IDirect3DDevice8 *GetD3dDevice();
 
 float DotProduct(const float *a1, const float *a2);
 float GetSqrt(float *fPos, float *fTar);
+float GetDist(float *const a1, float *const a2);
+float Get3DSqrt(float *Pos, float *Tar);
+float GetYAngle(float *Pos, float *Tar);
+void Normalize(float *v);
 void FloatToShort(float *pFloat, short *pShort, int size);
 void GetNormal(float *const a1, const float *const a2, const float *const a3, const float *const a4);
 int GetPlaneCrossPoint(const float *const a1, const float *const a2, float *const a3, const float *const a4, float a5);
@@ -111,6 +116,9 @@ void GetVertexFromFVertex(float *const a1, float *a2, _BSP_READ_M_GROUP *a3);
 bool IsParticle(char *a1);
 void sub_14050C650(float *a1, float *a2, float *a3);
 void Vector3fTransform(float *const a1, float *const a2, float (*const a3)[4]);
+
+unsigned int sub_1404E1570(float a1, float a2, float a3);
+unsigned int sub_1404E46E0(float a1, float a2, float a3);
 
 // Matrix/animation helpers (R3 engine).
 float GetFloatMod(float a1, float a2);

@@ -7,12 +7,12 @@ class CMonster;
 /* 1671 */
 class __cppobj __declspec(align(8)) CPathMgr
 {
+public:
   float m_PosPool[16][3];
   unsigned __int8 m_Size;
   unsigned __int8 m_StartPos;
   virtual ~CPathMgr();
 
-public:
   CPathMgr();
   void Init();
   unsigned __int8 GetPathSize();

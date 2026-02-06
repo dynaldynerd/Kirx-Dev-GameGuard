@@ -21,6 +21,7 @@ struct __cppobj __unaligned __declspec(align(4)) _STORAGE_LIST
     unsigned int m_dwT;
     unsigned int m_dwLendRegdTime;
 
+    void Init();
     void empty();
     void lock(bool bLock);
 
@@ -36,6 +37,7 @@ struct __cppobj __unaligned __declspec(align(4)) _STORAGE_LIST
     _STORAGE_LIST *m_pInList;
     unsigned __int8 m_byStorageIndex;
 
+    void Init();
     _db_con()
     {
       m_pInList = nullptr;
@@ -54,3 +56,5 @@ struct __cppobj __unaligned __declspec(align(4)) _STORAGE_LIST
   int GetIndexEmptyCon();
   int GetNumEmptyCon();
 };
+
+_STORAGE_LIST::_db_con *MakeLoot(unsigned __int8 byTableCode, unsigned __int16 wItemIndex);

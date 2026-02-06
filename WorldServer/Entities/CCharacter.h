@@ -6,6 +6,11 @@
 #include "CMyTimer.h"
 
 struct _character_create_setdata;
+struct _skill_fld;
+struct _force_fld;
+
+class CCharacter;
+class CPlayer;
 
 struct __declspec(align(4)) _sf_continous
 {
@@ -40,6 +45,7 @@ struct __declspec(align(8)) _effect_parameter
   bool SetEff_Rate(unsigned int nParamIndex, float fVar, bool bAdd);
   bool SetEff_Plus(unsigned int nParamIndex, float fVar, bool bAdd);
   bool SetEff_State(unsigned int nParamIndex, bool bVar);
+  void SetLock(bool bLock);
 };
 
 struct _effect_parameter::__param_data
@@ -48,6 +54,13 @@ struct _effect_parameter::__param_data
   float m_fEff_Plus[42];
   char m_bEff_State[29];
   float m_fEff_Have[83];
+};
+
+struct _tmp_effected_list
+{
+  CCharacter *pMem;
+  unsigned __int8 byRetCode;
+  unsigned __int16 wEffectValue;
 };
 
 class CCharacter : public CGameObject
@@ -84,6 +97,7 @@ public:
   void BreakStealth();
   __int64 GetTotalTol(unsigned __int8 byAttTolType, int nDamPoint);
   __int64 GetAttackDamPoint(int nAttPnt, int nAttPart, int nTolType, CCharacter *pDst, bool bBackAttack);
+  __int64 GetAttackRandomPart();
   void SendMsg_AttackActEffect(unsigned __int8 byActEffect, CCharacter *pDamer);
   bool GetStealth(bool bInvisible);
   bool GetInvisible();
@@ -91,4 +105,75 @@ public:
   void AlterContDurSec(unsigned __int8 byContCode, unsigned __int16 wListIndex, unsigned int dwStartSec, unsigned __int16 wNewDur);
   void RemoveSFContHelpByEffect(int nContParamCode, int nContParamIndex);
   unsigned int CalcEffectBit(unsigned __int16 wEffectCode, unsigned __int16 wEffectIndex);
+  __int64 FindEffectDst(
+    int nEffectCode,
+    int nAreaType,
+    int nLv,
+    bool bBenefit,
+    CCharacter *pOriDst,
+    char *psActableDst,
+    CCharacter **ppDsts);
+  __int64 FindPotionEffectDst(
+    int nAreaType,
+    int nEffectAreaVal,
+    bool bBenefit,
+    CCharacter *pOriDst,
+    char *psActableDst,
+    CCharacter **ppDsts,
+    bool *pbPath);
+  __int64 _GetAreaEffectMember(
+    CCharacter *pOriDst,
+    bool bBenefit,
+    int nLimitRadius,
+    float *pTar,
+    char *psActableDst,
+    CCharacter **ppDsts);
+  __int64 _GetPartyEffectMember(CCharacter *pOriDst, bool bCircle, CCharacter **ppDsts);
+  __int64 _GetFlashEffectMember(
+    CCharacter *pOriDst,
+    bool bBenefit,
+    int nLimitRadius,
+    int nLimitAngle,
+    CCharacter *pOriTar,
+    char *psActableDst,
+    CCharacter **ppDsts);
+  char IsEffectableDst(char *psActableDst, CCharacter *pDst);
+  char AssistSkill(
+    CCharacter *pDstChar,
+    int nEffectCode,
+    _skill_fld *pSkillFld,
+    int nSkillLv,
+    unsigned __int8 *pbyErrorCode,
+    bool *pbUpMty);
+  char AssistForce(
+    CCharacter *pDstChar,
+    _force_fld *pForceFld,
+    int nForceLv,
+    unsigned __int8 *pbyErrorCode,
+    bool *pbUpMty);
+  bool AssistSkillToOne(CCharacter *pDst, int nEffectCode, _skill_fld *pSkillFld, int nSkillLv);
+  bool AssistForceToOne(CCharacter *pDst, _force_fld *pForceFld, int nForceLv);
+  virtual unsigned __int8 InsertSFContEffect(
+    unsigned __int8 byContCode,
+    unsigned __int8 byEffectCode,
+    unsigned int dwEffectIndex,
+    unsigned __int16 wDurSec,
+    unsigned __int8 byLv,
+    bool *pbUpMty,
+    CPlayer *pActChar);
+  void _set_sf_cont(
+    _sf_continous *pCont,
+    unsigned __int8 byEffectCode,
+    unsigned __int16 wEffectIndex,
+    unsigned __int8 byLv,
+    unsigned int dwStartSec,
+    unsigned __int16 wDurSec,
+    int nCumulCount);
 };
+
+int _CheckCumulativeSF(
+  unsigned __int8 byEffectCode,
+  int dwEffectIndex,
+  int *nCumulMax,
+  unsigned int *nEffectCount,
+  char **pstrLinkCode);

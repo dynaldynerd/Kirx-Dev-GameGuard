@@ -740,11 +740,6 @@ __int64 CGameObject::GetMaxHP()
   return 1LL;
 }
 
-char * CGameObject::GetObjName()
-{
-  return 0LL;
-}
-
 __int64 CGameObject::GetObjRace()
 {
   return 0xFFFFFFFFLL;
@@ -861,11 +856,6 @@ void CGameObject::Init(_object_id *pID)
     MyMessageBox("error", "CGameObject::Init : Lack Object Num");
     ServerProgramExit("CGameObject::Init()", 0);
   }
-}
-
-bool CGameObject::IsAttackableInTown()
-{
-  return 0;
 }
 
 bool CGameObject::IsBeAttackedAble(bool bFirst)
@@ -1216,11 +1206,6 @@ void CGameObject::ResetSector(unsigned int dwOldSec, unsigned int dwNewSec)
 bool CGameObject::RobbedHP(CCharacter *pDst, int nDecHP)
 {
   return 0;
-}
-
-void CGameObject::SFContInsertMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, bool bAura)
-{
-  ;
 }
 
 void CGameObject::SFContUpdateTimeMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, int nLeftTime)
@@ -1683,6 +1668,65 @@ __int64 CGameObject::GetCurSecNum()
   return m_dwCurSec;
 }
 
+bool CGameObject::IsBeAttackedAble(bool bFirst)
+{
+  (void)bFirst;
+  return 0;
+}
+
+char CGameObject::IsBeDamagedAble(CCharacter *pAtter)
+{
+  (void)pAtter;
+  return 1;
+}
+
+__int64 CGameObject::GetAttackDP()
+{
+  return 0LL;
+}
+
+__int64 CGameObject::GetAttackLevel()
+{
+  __int64 *stackPtr = nullptr;
+  __int64 i = 0;
+  __int64 stackFill = 0;
+
+  stackPtr = &stackFill;
+  for (i = 8LL; i; --i)
+  {
+    *reinterpret_cast<unsigned int *>(stackPtr) = 0xCCCCCCCC;
+    stackPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(stackPtr) + 4);
+  }
+  return GetLevel();
+}
+
+float CGameObject::GetAttackRange()
+{
+  __int64 *stackPtr = nullptr;
+  __int64 i = 0;
+  __int64 stackFill = 0;
+
+  stackPtr = &stackFill;
+  for (i = 4LL; i; --i)
+  {
+    *reinterpret_cast<unsigned int *>(stackPtr) = 0xCCCCCCCC;
+    stackPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(stackPtr) + 4);
+  }
+  return 0.0f;
+}
+
+__int64 CGameObject::SetDamage(
+  int /*nDam*/,
+  CCharacter * /*pDst*/,
+  int /*nDstLv*/,
+  bool /*bCrt*/,
+  int /*nAttackType*/,
+  unsigned int /*dwAttackSerial*/,
+  bool /*bJadeReturn*/)
+{
+  return 0LL;
+}
+
 __int64 CGameObject::GetHP()
 {
   return 1;
@@ -2010,4 +2054,132 @@ char CGameObject::Create(_object_create_setdata *pData)
     this->m_ObjID.m_byID,
     this->m_ObjID.m_wIndex);
   return 0;
+}
+
+__int64 CGameObject::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
+{
+  (void)nAttactPart;
+  (void)pAttChar;
+  (void)pnConvertPart;
+  return 1LL;
+}
+
+float CGameObject::GetDefFacing(int nPart)
+{
+  (void)nPart;
+  __int64 stackFill = 0;
+  auto *fillPtr = &stackFill;
+  for (int fillCount = 4; fillCount; --fillCount)
+  {
+    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
+    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
+  }
+  return FLOAT_0_5;
+}
+
+float CGameObject::GetDefGap(int nPart)
+{
+  (void)nPart;
+  __int64 stackFill = 0;
+  auto *fillPtr = &stackFill;
+  for (int fillCount = 4; fillCount; --fillCount)
+  {
+    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
+    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
+  }
+  return FLOAT_0_5;
+}
+
+__int64 CGameObject::GetDefSkill(bool bBackAttackDamage)
+{
+  (void)bBackAttackDamage;
+  return 1LL;
+}
+
+__int64 CGameObject::GetFireTol()
+{
+  return 0LL;
+}
+
+__int64 CGameObject::GetSoilTol()
+{
+  return 0LL;
+}
+
+__int64 CGameObject::GetWaterTol()
+{
+  return 0LL;
+}
+
+__int64 CGameObject::GetWindTol()
+{
+  return 0LL;
+}
+
+float CGameObject::GetWeaponAdjust()
+{
+  __int64 stackFill = 0;
+  auto *fillPtr = &stackFill;
+  for (int fillCount = 4; fillCount; --fillCount)
+  {
+    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
+    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
+  }
+  return FLOAT_0_5;
+}
+
+__int64 CGameObject::GetObjRace()
+{
+  return 0xFFFFFFFFLL;
+}
+
+__int64 CGameObject::GetAvoidRate()
+{
+  return 0LL;
+}
+
+__int64 CGameObject::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
+{
+  (void)pDst;
+  (void)nPart;
+  (void)bBackAttack;
+  return 0LL;
+}
+
+__int64 CGameObject::GetWeaponClass()
+{
+  return 0LL;
+}
+
+float CGameObject::GetWidth()
+{
+  __int64 stackFill = 0;
+  auto *fillPtr = &stackFill;
+  for (int fillCount = 4; fillCount; --fillCount)
+  {
+    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
+    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
+  }
+  return 0.0f;
+}
+
+void CGameObject::SetAttackPart(int nAttactPart)
+{
+  (void)nAttactPart;
+}
+
+void CGameObject::SetBreakTranspar(bool bBreak)
+{
+  __int64 stackFill = 0;
+  auto *fillPtr = &stackFill;
+  for (int fillCount = 8; fillCount; --fillCount)
+  {
+    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
+    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
+  }
+  m_bBreakTranspar = bBreak;
+  if (m_bBreakTranspar)
+  {
+    m_dwOldTickBreakTranspar = GetLoopTime();
+  }
 }

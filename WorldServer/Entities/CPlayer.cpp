@@ -2,6 +2,8 @@
 
 #include "CPlayer.h"
 #include "CRecordData.h"
+#include "CAnimus.h"
+#include "CMonster.h"
 #include "CMapData.h"
 #include "CLevel.h"
 #include "CTransportShip.h"
@@ -33,6 +35,7 @@
 #include "alter_cont_effect_time_zocl.h"
 #include "notify_not_use_premium_cashitem_zocl.h"
 #include "pt_inform_punishment_zocl.h"
+#include "target_monster_aggro_inform_zocl.h"
 #include "CNetworkEX.h"
 #include "GlobalObjects.h"
 
@@ -4934,3 +4937,137 @@ void wa_PartySelfLeave(_CLID *pidLeaver)
 
 
 
+
+_target_monster_contsf_allinform_zocl::_target_monster_contsf_allinform_zocl()
+{
+  Init();
+}
+
+void _target_monster_contsf_allinform_zocl::Init()
+{
+  dwSerial = static_cast<unsigned int>(-1);
+  byContCount = 0;
+  for (int j = 0; j < 8; ++j)
+  {
+    m_MonContSf[j].wSfcode = static_cast<unsigned __int16>(-1);
+  }
+}
+
+_target_player_damage_contsf_allinform_zocl::_target_player_damage_contsf_allinform_zocl()
+{
+  Init();
+}
+
+void _target_player_damage_contsf_allinform_zocl::Init()
+{
+  dwSerial = static_cast<unsigned int>(-1);
+  byContCount = 0;
+  for (int j = 0; j < 8; ++j)
+  {
+    m_PlayerContSf[j].wSfcode = static_cast<unsigned __int16>(-1);
+    m_PlayerContSf[j].byContCount = 0;
+  }
+}
+
+CPlayer::__target::__target()
+{
+  init();
+}
+
+void CPlayer::__target::init()
+{
+  pObject = nullptr;
+  m_PrevTargetMonsterContInfo.Init();
+  m_PrevTargetPlayerDamageContInfo.Init();
+}
+
+void CPlayer::SendMsg_TLStatusPenalty(char byErrCode)
+{
+  char szMsg[32];
+  unsigned __int8 pbyType[36];
+
+  szMsg[0] = byErrCode;
+  pbyType[0] = 13;
+  pbyType[1] = static_cast<unsigned __int8>(-109);
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, szMsg, 1u);
+}
+
+CGameObject *CPlayer::GetTargetObj()
+{
+  if (!m_TargetObject.pObject)
+  {
+    return nullptr;
+  }
+
+  CGameObject *object = m_TargetObject.pObject;
+  if (object->m_bLive && m_TargetObject.byKind == object->m_ObjID.m_byKind
+      && m_TargetObject.byID == object->m_ObjID.m_byID && m_TargetObject.dwSerial == object->m_dwObjSerial
+      && m_TargetObject.pObject->m_pCurMap == m_pCurMap)
+  {
+    return m_TargetObject.pObject;
+  }
+
+  m_TargetObject.init();
+  return nullptr;
+}
+
+bool CPlayer::IsChaosMode()
+{
+  return m_nChaosMode != 0;
+}
+
+CAnimus *CPlayer::GetRecallAnimus()
+{
+  return m_pRecalledAnimusChar;
+}
+
+void CPlayer::SendMsg_MonsterAggroData(CCharacter *pCharacter)
+{
+  if (!pCharacter)
+  {
+    return;
+  }
+
+  CMonster *monster = static_cast<CMonster *>(pCharacter);
+  _target_monster_aggro_inform_zocl info;
+
+  info.dwSerial = monster->m_dwObjSerial;
+  info.fTimer = static_cast<float>(static_cast<int>(GetLoopTime()))
+                - static_cast<float>(static_cast<int>(monster->m_AggroMgr.m_dwShortRankLastTime));
+
+  for (int j = 0; j < 10; ++j)
+  {
+    _target_monster_aggro_inform_zocl::_aggro_node *nodeInfo = &info.m_AggroNode[j];
+    CAggroNode *aggroNode = &monster->m_AggroMgr.m_AggroPool[j];
+    if (aggroNode->IsLive())
+    {
+      CCharacter *aggroCharacter = aggroNode->m_pCharacter;
+      if (aggroCharacter && !aggroCharacter->m_ObjID.m_byKind)
+      {
+        if (aggroCharacter->m_ObjID.m_byID)
+        {
+          if (aggroCharacter->m_ObjID.m_byID == 3)
+          {
+            CAnimus *animus = static_cast<CAnimus *>(aggroCharacter);
+            sprintf(nodeInfo->m_Name, "[AniMaster:%s]", animus->m_aszMasterName);
+          }
+        }
+        else
+        {
+          CPlayer *player = static_cast<CPlayer *>(aggroCharacter);
+          const char *name = CPlayerDB::GetCharNameA(&player->m_Param);
+          sprintf(nodeInfo->m_Name, "%s", name);
+        }
+      }
+      nodeInfo->m_IsData = 1;
+      nodeInfo->m_nAggroData = aggroNode->m_nAggroData;
+      nodeInfo->m_nDamageData = aggroNode->m_nDamageData;
+      nodeInfo->m_nKingPowerDamage = aggroNode->m_nKingPowerDamage;
+    }
+  }
+
+  unsigned __int8 pbyType[28];
+  pbyType[0] = 13;
+  pbyType[1] = 99;
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, (char *)&info, 0x1CAu);
+}

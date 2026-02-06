@@ -108,6 +108,11 @@ unsigned int AutominePersonal::get_ownerserial()
   return static_cast<unsigned int>(-1);
 }
 
+CPlayer *AutominePersonal::GetOwner()
+{
+  return m_pOwner;
+}
+
 AutominePersonal::AutominePersonal()
   : m_bDBLoad(false),
     m_bOpenUI_Inven(false),

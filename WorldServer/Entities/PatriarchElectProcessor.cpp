@@ -22,10 +22,10 @@ PatriarchElectProcessor *PatriarchElectProcessor::Instance()
 
 bool PatriarchElectProcessor::Initialize()
 {
-  char buffer[260]{};
+  char buffer[260];
 
   CreateDirectoryA("..\\ZoneServerLog\\Systemlog\\Patriarch", nullptr);
-  clear_file("..\\ZoneServerLog\\Systemlog\\Patriarch", 30);
+  clear_file("..\\ZoneServerLog\\Systemlog\\Patriarch", 0x1E);
 
   memset(buffer, 0, 256);
   const unsigned int now = GetKorLocalTime();
@@ -33,9 +33,9 @@ bool PatriarchElectProcessor::Initialize()
   _kSysLog.SetWriteLogFile(buffer, 1, 0, 1, 1);
 
   CreateDirectoryA("..\\ZoneServerLog\\ServiceLog\\Patriarch", nullptr);
-  clear_file("..\\ZoneServerLog\\ServiceLog\\Patriarch", 30);
+  clear_file("..\\ZoneServerLog\\ServiceLog\\Patriarch", 0x1E);
 
-  CandidateRegister *candidate = reinterpret_cast<CandidateRegister *>(operator new(sizeof(CandidateRegister)));
+  CandidateRegister *candidate = static_cast<CandidateRegister *>(operator new(0x11438uLL));
   if (candidate)
   {
     new (candidate) CandidateRegister();
@@ -47,7 +47,7 @@ bool PatriarchElectProcessor::Initialize()
   _kProcessor[0] = candidate;
 
   SecondCandidateCrystallizer *secondCandidate =
-    reinterpret_cast<SecondCandidateCrystallizer *>(operator new(sizeof(SecondCandidateCrystallizer)));
+    static_cast<SecondCandidateCrystallizer *>(operator new(0xC8uLL));
   if (secondCandidate)
   {
     new (secondCandidate) SecondCandidateCrystallizer();
@@ -58,7 +58,7 @@ bool PatriarchElectProcessor::Initialize()
   }
   _kProcessor[1] = secondCandidate;
 
-  Voter *voter = reinterpret_cast<Voter *>(operator new(sizeof(Voter)));
+  Voter *voter = static_cast<Voter *>(operator new(0x648uLL));
   if (voter)
   {
     new (voter) Voter();
@@ -69,8 +69,7 @@ bool PatriarchElectProcessor::Initialize()
   }
   _kProcessor[2] = voter;
 
-  FinalDecisionProcessor *finalDecision =
-    reinterpret_cast<FinalDecisionProcessor *>(operator new(sizeof(FinalDecisionProcessor)));
+  FinalDecisionProcessor *finalDecision = static_cast<FinalDecisionProcessor *>(operator new(0x1C8uLL));
   if (finalDecision)
   {
     new (finalDecision) FinalDecisionProcessor();
@@ -81,8 +80,7 @@ bool PatriarchElectProcessor::Initialize()
   }
   _kProcessor[3] = finalDecision;
 
-  FinalDecisionApplyer *finalApplyer =
-    reinterpret_cast<FinalDecisionApplyer *>(operator new(sizeof(FinalDecisionApplyer)));
+  FinalDecisionApplyer *finalApplyer = static_cast<FinalDecisionApplyer *>(operator new(0xC8uLL));
   if (finalApplyer)
   {
     new (finalApplyer) FinalDecisionApplyer();
@@ -93,7 +91,7 @@ bool PatriarchElectProcessor::Initialize()
   }
   _kProcessor[4] = finalApplyer;
 
-  ClassOrderProcessor *classOrder = reinterpret_cast<ClassOrderProcessor *>(operator new(sizeof(ClassOrderProcessor)));
+  ClassOrderProcessor *classOrder = static_cast<ClassOrderProcessor *>(operator new(0x210uLL));
   if (classOrder)
   {
     new (classOrder) ClassOrderProcessor();

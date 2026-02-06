@@ -8,6 +8,7 @@
 #include "CObjectList.h"
 #include "CBsp.h"
 #include "ObjectCreateSetData.h"
+#include "pnt_rect.h"
 #include "WorldServerUtil.h"
 
 #include <cmath>
@@ -82,21 +83,21 @@ void CMonsterHelper::GetDirection(float (*cur)[3], float (*tar)[3], float (*out)
 
 void CMonsterHelper::HierarcyHelpCast(CMonster *pMon)
 {
-  CMonster *parent = CMonsterHierarchy::GetParent(&pMon->m_MonHierarcy);
-  const unsigned __int8 childKindCount = CMonsterHierarchy::ChildKindCount(&pMon->m_MonHierarcy);
+  CMonster *parent = pMon->m_MonHierarcy.GetParent();
+  const unsigned __int8 childKindCount = pMon->m_MonHierarcy.ChildKindCount();
   if (parent)
   {
-    const int parentKindCount = CMonsterHierarchy::ChildKindCount(&parent->m_MonHierarcy);
+    const int parentKindCount = parent->m_MonHierarcy.ChildKindCount();
     for (int kindIndex = 0; kindIndex < parentKindCount; ++kindIndex)
     {
       for (int index = 0;; ++index)
       {
-        const unsigned int childCount = CMonsterHierarchy::GetChildCount(&parent->m_MonHierarcy, kindIndex);
+        const unsigned int childCount = parent->m_MonHierarcy.GetChildCount(kindIndex);
         if (static_cast<unsigned int>(index) >= childCount)
         {
           break;
         }
-        CMonster *child = CMonsterHierarchy::GetChild(&parent->m_MonHierarcy, kindIndex, index);
+        CMonster *child = parent->m_MonHierarcy.GetChild(kindIndex, index);
         if (child && child != pMon)
         {
           Us_HFSM::SendExternMsg(&child->m_AI, 1u, pMon, 0);
@@ -111,12 +112,12 @@ void CMonsterHelper::HierarcyHelpCast(CMonster *pMon)
     {
       for (int index = 0;; ++index)
       {
-        const unsigned int childCount = CMonsterHierarchy::GetChildCount(&pMon->m_MonHierarcy, kindIndex);
+        const unsigned int childCount = pMon->m_MonHierarcy.GetChildCount(kindIndex);
         if (static_cast<unsigned int>(index) >= childCount)
         {
           break;
         }
-        CMonster *child = CMonsterHierarchy::GetChild(&pMon->m_MonHierarcy, kindIndex, index);
+        CMonster *child = pMon->m_MonHierarcy.GetChild(kindIndex, index);
         if (child && child != pMon)
         {
           Us_HFSM::SendExternMsg(&child->m_AI, 1u, pMon, 0);
@@ -172,16 +173,16 @@ CMonster *CMonsterHelper::SearchNearMonsterByDistance(CMonster *pMon, int dwDist
     return nullptr;
   }
 
-  const int curSecNum = CGameObject::GetCurSecNum(pMon);
+  const int curSecNum = static_cast<int>(pMon->GetCurSecNum());
   _pnt_rect rect{};
-  CMapData::GetRectInRadius(pMon->m_pCurMap, &rect, 1, curSecNum);
+  pMon->m_pCurMap->GetRectInRadius(&rect, 1, curSecNum);
   for (int y = rect.nStarty; y <= rect.nEndy; ++y)
   {
     for (int x = rect.nStartx; x <= rect.nEndx; ++x)
     {
-      _sec_info *secInfo = CMapData::GetSecInfo(pMon->m_pCurMap);
+      _sec_info *secInfo = pMon->m_pCurMap->GetSecInfo();
       const unsigned int secIndex = secInfo->m_nSecNumW * y + x;
-      CObjectList *sectorList = CMapData::GetSectorListObj(pMon->m_pCurMap, pMon->m_wMapLayerIndex, secIndex);
+      CObjectList *sectorList = pMon->m_pCurMap->GetSectorListObj(pMon->m_wMapLayerIndex, secIndex);
       if (!sectorList)
       {
         continue;
@@ -229,17 +230,17 @@ unsigned int CMonsterHelper::SearchNearMonster(
 
   CCharacter *targetChar = pMon->m_pTargetChar;
   const float limitLen = *reinterpret_cast<float *>(&pMon->m_pRecordSet[25].m_strCode[52]);
-  const int curSecNum = CGameObject::GetCurSecNum(pMon);
+  const int curSecNum = static_cast<int>(pMon->GetCurSecNum());
   _pnt_rect rect{};
-  CMapData::GetRectInRadius(pMon->m_pCurMap, &rect, 4, curSecNum);
+  pMon->m_pCurMap->GetRectInRadius(&rect, 4, curSecNum);
 
   for (int y = rect.nStarty; y <= rect.nEndy; ++y)
   {
     for (int x = rect.nStartx; x <= rect.nEndx; ++x)
     {
-      _sec_info *secInfo = CMapData::GetSecInfo(pMon->m_pCurMap);
+      _sec_info *secInfo = pMon->m_pCurMap->GetSecInfo();
       const unsigned int secIndex = secInfo->m_nSecNumW * y + x;
-      CObjectList *sectorList = CMapData::GetSectorListObj(pMon->m_pCurMap, pMon->m_wMapLayerIndex, secIndex);
+      CObjectList *sectorList = pMon->m_pCurMap->GetSectorListObj(pMon->m_wMapLayerIndex, secIndex);
       if (!sectorList)
       {
         continue;
@@ -256,11 +257,10 @@ unsigned int CMonsterHelper::SearchNearMonster(
             && (bTargetIgnore || !mon->m_pTargetChar)
             && std::abs(mon->m_fCurPos[1] - pMon->m_fCurPos[1]) <= 50.0f)
         {
-          if (!targetChar || mon->m_pMonRec->m_nRaceCode != targetChar->GetObjRace(targetChar))
+          if (!targetChar || mon->m_pMonRec->m_nRaceCode != targetChar->GetObjRace())
           {
-            if (CMonster::GetMob_AsistType(pMon)
-                || CMonster::GetMob_SubRace(pMon) == CMonster::GetMob_SubRace(mon)
-                || CMonster::GetMob_AsistType(mon))
+            if (pMon->GetMob_AsistType() || pMon->GetMob_SubRace() == mon->GetMob_SubRace()
+                || mon->GetMob_AsistType())
             {
               const float dx = std::abs(mon->m_fCurPos[0] - pMon->m_fCurPos[0]);
               const float dz = std::abs(mon->m_fCurPos[2] - pMon->m_fCurPos[2]);
@@ -306,7 +306,7 @@ unsigned int CMonsterHelper::SearchNearMonster(
   {
     float scratch[3]{};
     const int canGo =
-      CBsp::CanYouGoThere(pMon->m_pCurMap->m_Level.mBsp, pMon->m_fCurPos, NearChar[i].pChar->m_fCurPos, &scratch);
+      pMon->m_pCurMap->m_Level.mBsp->CanYouGoThere(pMon->m_fCurPos, NearChar[i].pChar->m_fCurPos, &scratch);
     NearChar[i].bCanYouGoThere = canGo;
     if (NearChar[i].bCanYouGoThere && !firstReachable)
     {
@@ -335,23 +335,23 @@ CPlayer *CMonsterHelper::SearchNearPlayer(CMonster *pMon, int nType)
   }
 
   CMapData *map = pMon->m_pCurMap;
-  const float visualField = (CMonster::GetVisualField(pMon) >= 300.0f) ? 300.0f : CMonster::GetVisualField(pMon);
+  const float visualField = (pMon->GetVisualField() >= 300.0f) ? 300.0f : pMon->GetVisualField();
   const float radius = visualField;
   const int radiusCount = static_cast<int>((visualField / 100.0f) + 0.5f);
-  const float angle = CMonster::GetVisualAngle(pMon);
+  const float angle = pMon->GetVisualAngle();
 
   _NEAR_DATA nearData[5]{};
-  const int curSecNum = CGameObject::GetCurSecNum(pMon);
+  const int curSecNum = static_cast<int>(pMon->GetCurSecNum());
   _pnt_rect rect{};
-  CMapData::GetRectInRadius(map, &rect, radiusCount, curSecNum);
+  map->GetRectInRadius(&rect, radiusCount, curSecNum);
 
   for (int y = rect.nStarty; y <= rect.nEndy; ++y)
   {
     for (int x = rect.nStartx; x <= rect.nEndx; ++x)
     {
-      _sec_info *secInfo = CMapData::GetSecInfo(map);
+      _sec_info *secInfo = map->GetSecInfo();
       const unsigned int secIndex = secInfo->m_nSecNumW * y + x;
-      CObjectList *sectorList = CMapData::GetSectorListPlayer(map, pMon->m_wMapLayerIndex, secIndex);
+      CObjectList *sectorList = map->GetSectorListPlayer(pMon->m_wMapLayerIndex, secIndex);
       if (!sectorList)
       {
         continue;
@@ -364,13 +364,13 @@ CPlayer *CMonsterHelper::SearchNearPlayer(CMonster *pMon, int nType)
         node = node->m_pNext;
         _object_id *objId = &candidate->m_ObjID;
 
-        if (!candidate->m_bCorpse && !CCharacter::GetStealth(candidate, 1) && !candidate->m_ObjID.m_byID
+        if (!candidate->m_bCorpse && !candidate->GetStealth(true) && !candidate->m_ObjID.m_byID
             && !candidate->m_ObjID.m_byKind
             && reinterpret_cast<unsigned char *>(&candidate[1].m_fCurPos[2])[2] == 0)
         {
-          if (candidate->IsBeAttackedAble(candidate, true))
+          if (candidate->IsBeAttackedAble(true))
           {
-            if (pMon->m_pMonRec->m_nRaceCode != candidate->GetObjRace(candidate))
+            if (pMon->m_pMonRec->m_nRaceCode != candidate->GetObjRace())
             {
               float distanceValue = 0.0f;
               if (CMonsterHelper::CheckPreAttackRangeTargetAbleCharacter(pMon, candidate)
@@ -406,10 +406,10 @@ CPlayer *CMonsterHelper::SearchNearPlayer(CMonster *pMon, int nType)
                     }
                     break;
                   case 3:
-                    distanceValue = static_cast<float>(candidate->GetHP(candidate));
+                    distanceValue = static_cast<float>(candidate->GetHP());
                     break;
                   case 4:
-                    distanceValue = -static_cast<float>(candidate->GetHP(candidate));
+                    distanceValue = -static_cast<float>(candidate->GetHP());
                     break;
                   case 5:
                     distanceValue = -0.0f
@@ -418,25 +418,25 @@ CPlayer *CMonsterHelper::SearchNearPlayer(CMonster *pMon, int nType)
                                                            &candidate[23].m_SFCont[1][2].m_wszPlayerName[8]));
                     break;
                   case 6:
-                    distanceValue = -static_cast<float>(candidate->GetLevel(candidate));
+                    distanceValue = -static_cast<float>(candidate->GetLevel());
                     break;
                   case 7:
-                    distanceValue = static_cast<float>(candidate->GetLevel(candidate));
+                    distanceValue = static_cast<float>(candidate->GetLevel());
                     break;
                   case 8:
-                    if (candidate->GetObjRace(candidate))
+                    if (candidate->GetObjRace())
                     {
                       selected = nullptr;
                     }
                     break;
                   case 9:
-                    if (candidate->GetObjRace(candidate) != 1)
+                    if (candidate->GetObjRace() != 1)
                     {
                       selected = nullptr;
                     }
                     break;
                   case 10:
-                    if (candidate->GetObjRace(candidate) != 2)
+                    if (candidate->GetObjRace() != 2)
                     {
                       selected = nullptr;
                     }
@@ -484,7 +484,7 @@ CPlayer *CMonsterHelper::SearchNearPlayer(CMonster *pMon, int nType)
   for (int n = 0; n < 5 && nearData[n].pChar; ++n)
   {
     float scratch[3]{};
-    if (CBsp::CanYouGoThere(map->m_Level.mBsp, pMon->m_fCurPos, nearData[n].pChar->m_fCurPos, &scratch))
+    if (map->m_Level.mBsp->CanYouGoThere(pMon->m_fCurPos, nearData[n].pChar->m_fCurPos, &scratch))
     {
       selected = nearData[n].pChar;
       break;
@@ -500,13 +500,13 @@ CPlayer *CMonsterHelper::SearchNearPlayer(CMonster *pMon, int nType)
 
 bool CMonsterHelper::SearchPatrolMovePos(CMonster *mon, float (*NewTar)[3])
 {
-  if (CMonster::IsRoateMonster(mon))
+  if (mon->IsRoateMonster())
   {
     return false;
   }
   if (!mon->m_bMove)
   {
-    CMonster *parent = CMonsterHierarchy::GetParent(&mon->m_MonHierarcy);
+    CMonster *parent = mon->m_MonHierarcy.GetParent();
     for (int attempt = 0;; ++attempt)
     {
       if (attempt >= 5)
@@ -516,7 +516,7 @@ bool CMonsterHelper::SearchPatrolMovePos(CMonster *mon, float (*NewTar)[3])
 
       if (!parent && mon->m_pDumPosition)
       {
-        if (!CMapData::GetRandPosInDummy(mon->m_pCurMap, mon->m_pDumPosition, reinterpret_cast<float *>(NewTar), 1))
+        if (!mon->m_pCurMap->GetRandPosInDummy(mon->m_pDumPosition, reinterpret_cast<float *>(NewTar), true))
         {
           continue;
         }
@@ -545,7 +545,7 @@ bool CMonsterHelper::SearchPatrolMovePos(CMonster *mon, float (*NewTar)[3])
         {
           const int targetDist = static_cast<int>(Get3DSqrt(reinterpret_cast<float *>(NewTar), parent->m_fCurPos));
           const float parentLimit =
-            static_cast<float>(mon->GetWidth(mon) / 2.0) + 100.0f + static_cast<float>(parent->GetWidth(parent) / 2.0);
+            static_cast<float>(mon->GetWidth() / 2.0) + 100.0f + static_cast<float>(parent->GetWidth() / 2.0);
           if (static_cast<float>(targetDist) > parentLimit)
           {
             const int curDist = static_cast<int>(Get3DSqrt(mon->m_fCurPos, parent->m_fCurPos));
@@ -558,8 +558,7 @@ bool CMonsterHelper::SearchPatrolMovePos(CMonster *mon, float (*NewTar)[3])
       }
 
       float scratch[3]{};
-      if (CBsp::CanYouGoThere(
-            mon->m_pCurMap->m_Level.mBsp,
+      if (mon->m_pCurMap->m_Level.mBsp->CanYouGoThere(
             mon->m_fCurPos,
             reinterpret_cast<float *const>(NewTar),
             &scratch))
@@ -583,7 +582,7 @@ bool CMonsterHelper::SearchTargetMovePos_MovingTarget(
   CCharacter *pTargetCharacter,
   float (*tarPos)[3])
 {
-  const float range = pMon->GetAttackRange(pMon) * 0.69999999f;
+  const float range = pMon->GetAttackRange() * 0.69999999f;
   const double dist = GetSqrt(pTargetCharacter->m_fCurPos, pMon->m_fCurPos);
   if (range >= dist && range >= 1.0f)
   {
@@ -608,7 +607,7 @@ bool CMonsterHelper::SearchTargetMovePos_StopTarget(
     return false;
   }
 
-  float dist = pMon->GetAttackRange(pMon);
+  float dist = pMon->GetAttackRange();
   dist = dist - (dist * 0.2f);
   const double space = Get3DSqrt(pTargetCharacter->m_fCurPos, pMon->m_fCurPos);
   if (dist >= space && dist >= 1.0f)
@@ -624,8 +623,9 @@ bool CMonsterHelper::SearchTargetMovePos_StopTarget(
     pos = 4;
   }
 
-  CCharacter::RemoveSlot(pTargetCharacter, pMon);
-  const int nearSlot = CCharacter::GetNearEmptySlot(pTargetCharacter, pos, dist, pMon->m_fCurPos, reinterpret_cast<float *>(tarPos));
+  pTargetCharacter->RemoveSlot(pMon);
+  const int nearSlot = static_cast<int>(
+    pTargetCharacter->GetNearEmptySlot(pos, dist, pMon->m_fCurPos, reinterpret_cast<float *>(tarPos)));
   if (nearSlot < 0)
   {
     std::memcpy(tarPos, pTargetCharacter->m_fCurPos, sizeof(float[3]));
@@ -636,7 +636,7 @@ bool CMonsterHelper::SearchTargetMovePos_StopTarget(
   }
   else
   {
-    if (!CCharacter::InsertSlot(pTargetCharacter, pMon, nearSlot))
+    if (!pTargetCharacter->InsertSlot(pMon, nearSlot))
     {
       return false;
     }
@@ -648,8 +648,7 @@ bool CMonsterHelper::SearchTargetMovePos_StopTarget(
     (*tarPos)[2] = (*tarPos)[2] + static_cast<float>(dz);
 
     float scratch[3]{};
-    if (!CBsp::CanYouGoThere(
-          pMon->m_pCurMap->m_Level.mBsp,
+    if (!pMon->m_pCurMap->m_Level.mBsp->CanYouGoThere(
           pMon->m_fCurPos,
           reinterpret_cast<float *const>(tarPos),
           &scratch))
@@ -674,10 +673,10 @@ void CMonsterHelper::TransPort(CMonster *mon, float *tarPos)
   data.pActiveRec = mon->m_pActiveRec;
   data.bDungeon = mon->m_bDungeon;
   data.pDumPosition = mon->m_pDumPosition;
-  data.pParent = CMonsterHierarchy::GetParent(&mon->m_MonHierarcy);
-  const int hp = mon->GetHP(mon);
+  data.pParent = mon->m_MonHierarcy.GetParent();
+  const int hp = static_cast<int>(mon->GetHP());
   data.bRobExp = mon->m_bRobExp;
-  CMonster::Destroy(mon, 1u, nullptr);
-  CMonster::Create(mon, &data);
-  mon->SetHP(mon, hp, true);
+  mon->Destroy(1u, nullptr);
+  mon->Create(&data);
+  mon->SetHP(hp, true);
 }
