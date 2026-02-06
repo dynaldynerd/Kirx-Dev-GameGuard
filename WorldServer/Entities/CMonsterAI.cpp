@@ -2,3 +2,56 @@
 
 #include "CMonsterAI.h"
 
+#include "CPathMgr.h"
+
+CMonsterAI::CMonsterAI()
+  : Us_HFSM()
+{
+  for (int i = 0; i < 4; ++i)
+  {
+    m_SFCheckTime[i].m_dwLastCheckTime = 0;
+    m_SFCheckTime[i].m_dwGapCheckTime = 0;
+  }
+  m_pAsistMonster = nullptr;
+  m_nCurPathFindFailCount = 0;
+}
+
+CMonsterAI::~CMonsterAI() = default;
+
+void CMonsterAI::Init()
+{
+  Us_HFSM::Init();
+  m_PathFinder.Init();
+  m_pAsistMonster = nullptr;
+  m_nCurPathFindFailCount = 0;
+}
+
+bool CMonsterAI::SetMyData(UsStateTBL *pStateTBL, void *pObject)
+{
+  return Us_HFSM::SetMyData(pStateTBL, pObject) != 0;
+}
+
+SF_Timer *CMonsterAI::GetTimer(unsigned int nIndex)
+{
+  if (nIndex >= 4)
+  {
+    return nullptr;
+  }
+  return &m_SFCheckTime[nIndex];
+}
+
+CPathMgr *CMonsterAI::GetPathFinder()
+{
+  return &m_PathFinder;
+}
+
+unsigned int CMonsterAI::GetBattleModeTime()
+{
+  return m_dwBattleModeTime;
+}
+
+void CMonsterAI::SetBattleModeTime(unsigned int dwTempBattleModeTime)
+{
+  m_dwBattleModeTime = dwTempBattleModeTime;
+}
+

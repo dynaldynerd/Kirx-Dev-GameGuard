@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 class CLogFile;
-struct TiXmlElement;
+class TiXmlElement;
 
 class __cppobj CUnmannedTraderClassInfo
 {

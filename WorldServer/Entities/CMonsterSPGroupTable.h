@@ -12,6 +12,8 @@ public:
     CRecordData *effectData0,
     CRecordData *effectData1,
     CRecordData *effectData2);
+  _monster_sp_group *GetRecord(unsigned int dwIndex);
+  _monster_sp_group *GetRecord(char *szCode);
 
   unsigned int m_dwRecordNum;
   _monster_sp_group *m_pRecordData;

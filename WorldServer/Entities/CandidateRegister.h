@@ -6,6 +6,7 @@
 class __cppobj CandidateRegister : public ElectProcessor
 {
 public:
+  CandidateRegister();
   struct __cppobj _pt_result_fcandidacy_list_zocl
   {
     struct __candi_info

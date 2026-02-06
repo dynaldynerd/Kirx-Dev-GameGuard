@@ -110,6 +110,22 @@ int GetCurrentMonth()
   return local.tm_mon + 1;
 }
 
+unsigned int GetLocalDate()
+{
+  const int year = GetCurrentYear();
+  const int month = GetCurrentMonth();
+  const int day = GetCurrentDay();
+  return static_cast<unsigned int>(10000 * year + 100 * month + day);
+}
+
+unsigned int eGetLocalDate()
+{
+  const int year = GetCurrentYear();
+  const int month = GetCurrentMonth();
+  const int day = GetCurrentDay();
+  return static_cast<unsigned int>(10000 * year + 100 * month + day);
+}
+
 int GetCurwDay()
 {
   std::time_t now = std::time(nullptr);

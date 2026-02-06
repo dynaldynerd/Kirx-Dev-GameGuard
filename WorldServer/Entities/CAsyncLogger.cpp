@@ -181,3 +181,175 @@ void CAsyncLogger::ProcWrite()
     CNetIndexList::PushNode_Back(&m_klistEmpty, outIndex);
   }
 }
+
+void CAsyncLogger::Log(const char *szFileName, const char *szLog, int iLenStr)
+{
+  if (m_kBufferList == nullptr || szFileName == nullptr || szLog == nullptr || iLenStr <= 0)
+  {
+    return;
+  }
+
+  int bufferIndex = -1;
+  for (int index = 0; index < 3; ++index)
+  {
+    if (m_kBufferList[index].GetBufferSize() >= iLenStr && m_kBufferList[index].GetEmptySize())
+    {
+      bufferIndex = index;
+      break;
+    }
+  }
+
+  if (bufferIndex < 0)
+  {
+    SystemLog("FileName(%s) iLenStr(%d) Log(%s) Exceed BuffSize!", szFileName, iLenStr, szLog);
+    return;
+  }
+
+  unsigned int outIndex = 0;
+  if (CNetIndexList::PopNode_Front(&m_klistEmpty, &outIndex))
+  {
+    m_kBufferList[bufferIndex].Log(szFileName, szLog, iLenStr);
+    m_vecPushList[outIndex] = static_cast<unsigned long>(bufferIndex);
+    CNetIndexList::PushNode_Back(&m_klistProc, outIndex);
+  }
+  else
+  {
+    SystemLog("FileName(%s) iLenStr(%d) Log(%s) Exceed BuffSize!", szFileName, iLenStr, szLog);
+  }
+}
+
+bool CAsyncLogger::Log(int iType, const char *szLog)
+{
+  auto it = m_mapLogInfo.find(iType);
+  if (it == m_mapLogInfo.end())
+  {
+    return false;
+  }
+
+  char buffer[11288]{};
+  _SYSTEMTIME systemTime{};
+  GetLocalTime(&systemTime);
+
+  const unsigned int count = it->second->GetCount();
+  const int headerLen = sprintf_s(
+    buffer,
+    0x2C00u,
+    "%u\t%04d-%02d-%02d %02d:%02d:%02d.%03d : %s",
+    count,
+    systemTime.wYear,
+    systemTime.wMonth,
+    systemTime.wDay,
+    systemTime.wHour,
+    systemTime.wMinute,
+    systemTime.wSecond,
+    systemTime.wMilliseconds,
+    szLog);
+
+  if (headerLen <= 0 || headerLen >= 11264)
+  {
+    return false;
+  }
+
+  const char *fileName = it->second->GetFileName();
+  Log(fileName, buffer, headerLen);
+  it->second->IncreaseCount();
+  return true;
+}
+
+bool CAsyncLogger::LogFromArg(int iType, char *fmt, va_list arg_ptr)
+{
+  auto it = m_mapLogInfo.find(iType);
+  if (it == m_mapLogInfo.end())
+  {
+    return false;
+  }
+
+  char buffer[11288]{};
+  _SYSTEMTIME systemTime{};
+  GetLocalTime(&systemTime);
+
+  const unsigned int count = it->second->GetCount();
+  const int headerLen = sprintf_s(
+    buffer,
+    0x2C00u,
+    "%u\t%04d-%02d-%02d %02d:%02d:%02d.%03d : ",
+    count,
+    systemTime.wYear,
+    systemTime.wMonth,
+    systemTime.wDay,
+    systemTime.wHour,
+    systemTime.wMinute,
+    systemTime.wSecond,
+    systemTime.wMilliseconds);
+
+  if (headerLen <= 0 || headerLen >= 11264)
+  {
+    return false;
+  }
+
+  const int msgLen = vsprintf_s(&buffer[headerLen], 11264LL - headerLen, fmt, arg_ptr);
+  if (msgLen <= 0)
+  {
+    return false;
+  }
+
+  const int totalLen = headerLen + msgLen;
+  const char *fileName = it->second->GetFileName();
+  Log(fileName, buffer, totalLen);
+  it->second->IncreaseCount();
+  return true;
+}
+
+bool CAsyncLogger::FormatLog(int iType, const char *fmt, ...)
+{
+  va_list args;
+  va_start(args, fmt);
+  bool result = LogFromArg(iType, const_cast<char *>(fmt), args);
+  va_end(args);
+  return result;
+}
+
+void CAsyncLogger::SystemLog(const char *fmt, ...)
+{
+  if (m_pSystemLogInfo == nullptr)
+  {
+    return;
+  }
+
+  char buffer[11288]{};
+  _SYSTEMTIME systemTime{};
+  GetLocalTime(&systemTime);
+
+  const unsigned int count = m_pSystemLogInfo->GetCount();
+  const int headerLen = sprintf_s(
+    buffer,
+    0x2C00u,
+    "%u\t%04d-%02d-%02d %02d:%02d:%02d.%03d : ",
+    count,
+    systemTime.wYear,
+    systemTime.wMonth,
+    systemTime.wDay,
+    systemTime.wHour,
+    systemTime.wMinute,
+    systemTime.wSecond,
+    systemTime.wMilliseconds);
+
+  if (headerLen <= 0 || headerLen >= 11264)
+  {
+    return;
+  }
+
+  va_list args;
+  va_start(args, fmt);
+  const int msgLen = vsprintf_s(&buffer[headerLen], 11264LL - headerLen, fmt, args);
+  va_end(args);
+
+  if (msgLen <= 0)
+  {
+    return;
+  }
+
+  const int totalLen = headerLen + msgLen;
+  const char *fileName = m_pSystemLogInfo->GetFileName();
+  CAsyncLogBufferList::WriteFile(fileName, static_cast<unsigned long>(totalLen), buffer);
+}

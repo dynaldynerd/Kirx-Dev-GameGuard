@@ -290,5 +290,8 @@ private:
 public:
   bool CanYouGoThere(float *const a2, float *const a3, float (*a4)[3]);
   int GetPathCrossPoint(float *const a2, float *const a3, float (*a4)[3], int a5, int a6);
+  int GetPathFind(float *const a2, float *const a3, float (*const a4)[3], unsigned int *a5, int a6);
+  int GetPath(float *const a2, float *const a3);
+  int GetFinalPath(float *a2, float *const a3, float (*const a4)[3]);
 };
 

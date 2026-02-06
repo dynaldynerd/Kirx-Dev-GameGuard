@@ -12,5 +12,14 @@ public:
   CPathMgr m_PathFinder;
   unsigned int m_dwBattleModeTime;
   int m_nCurPathFindFailCount;
+
+  CMonsterAI();
+  virtual ~CMonsterAI();
+  void Init();
+  bool SetMyData(UsStateTBL *pStateTBL, void *pObject);
+  SF_Timer *GetTimer(unsigned int nIndex);
+  CPathMgr *GetPathFinder();
+  unsigned int GetBattleModeTime();
+  void SetBattleModeTime(unsigned int dwTempBattleModeTime);
 };
 

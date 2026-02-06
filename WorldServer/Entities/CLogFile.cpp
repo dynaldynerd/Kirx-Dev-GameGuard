@@ -6,6 +6,17 @@
 #include <cstdio>
 #include <cstring>
 
+CLogFile::CLogFile()
+  : m_dwLogCount(0),
+    m_bWriteAble(0),
+    m_bAddCount(true),
+    m_bDate(false),
+    m_bTrace(false),
+    m_bInit(false)
+{
+  m_szFileName[0] = 0;
+}
+
 void CLogFile::SetWriteLogFile(const char *fileName, int addCount, int date, int trace, int init)
 {
   if (fileName != nullptr)

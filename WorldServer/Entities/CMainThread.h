@@ -2159,6 +2159,14 @@ struct _event_loot_item
 /* 1668 */
 struct __cppobj Us_FSM_Node
 {
+  Us_FSM_Node();
+  ~Us_FSM_Node();
+  void Init();
+  void SetState(unsigned int dwState);
+  unsigned int GetState();
+  void SetParent(Us_FSM_Node *pParent);
+  void SetLoopTime(unsigned int dwLoopTime);
+
   Us_FSM_Node *m_pParent;
   unsigned int m_dwState;
   int m_bLive;
@@ -2173,6 +2181,20 @@ struct UsPoint
   T *m_pObject;
 };
 
+template <>
+struct UsPoint<UsStateTBL>
+{
+  UsPoint();
+  UsPoint(UsStateTBL *pObject);
+  UsPoint(const UsPoint<UsStateTBL> &other);
+  ~UsPoint();
+  UsPoint<UsStateTBL> &operator=(UsStateTBL *pObject);
+  UsStateTBL *operator->();
+  operator UsStateTBL *();
+
+  UsStateTBL *m_pObject;
+};
+
 /* 1660 */
 struct __cppobj Us_HFSM
 {
@@ -2182,8 +2204,22 @@ public:
   unsigned int m_dwUsedCount;
   Us_FSM_Node m_ArNode[10];
   UsPoint<UsStateTBL> m_spShareStateTBLPtr;
+  Us_HFSM();
   virtual void __vtable_anchor();
-  ~Us_HFSM();
+  virtual ~Us_HFSM();
+  void Init();
+  void CleanUp();
+  int SetMyData(UsStateTBL *pStateTBL, void *pObject);
+  Us_FSM_Node *GetNode(unsigned int dwIndex);
+  void *GetObjectA();
+  unsigned int GetState(unsigned int dwIndex);
+  unsigned int GetIndex(Us_FSM_Node *pNode);
+  int Link(Us_FSM_Node *pParent, Us_FSM_Node *pChild);
+  static void SendMsg(Us_HFSM *pHFS, unsigned int dwFSMIndex, unsigned int dwMSG, void *lpParam);
+  static void SendExternMsg(Us_HFSM *pHFS, unsigned int dwMSG, void *lpParam, unsigned int nParam);
+  void SetLoopTime(unsigned int nIndex, unsigned int dwLoopTime);
+  void AddLoopDelayTime(unsigned int nIndex, unsigned int dwAddDelay);
+  virtual void OnProcess(unsigned int dwLastTime);
 };
 
 /* 1670 */
@@ -2191,6 +2227,9 @@ struct __cppobj SF_Timer
 {
   unsigned int m_dwLastCheckTime;
   unsigned int m_dwGapCheckTime;
+
+  void Set(unsigned int dwTimeDelay);
+  bool CheckTime(unsigned int dwLoopTime);
 };
 
 /* 1671 */
@@ -2525,8 +2564,14 @@ struct __cppobj __declspec(align(8)) _dh_job_setup
 /* 1661 */
 struct __cppobj __declspec(align(8)) UsRefObject
 {
+  UsRefObject();
+  virtual ~UsRefObject();
+  void IncRefCount();
+  void DecRefCount();
+
+  static unsigned int ms_uiObjects;
+
   unsigned int m_uiRefCount;
-  virtual ~UsRefObject() = default;
 };
 
 /* 1665 */
@@ -2536,6 +2581,9 @@ struct __cppobj UsStateTBL : UsRefObject
   {
     unsigned __int8 byKey;
     void (__fastcall *pEvnetFun)(Us_HFSM *, unsigned int, void *);
+
+    _TBLData();
+    void Init();
   };
 
   struct _HFSM_Node_Info
@@ -2544,6 +2592,9 @@ struct __cppobj UsStateTBL : UsRefObject
     unsigned int m_dwStartState;
     int m_bUsed;
     unsigned int m_dwLoopTime;
+
+    _HFSM_Node_Info();
+    void Init();
   };
 
   unsigned int m_IdentityKey;
@@ -2556,6 +2607,30 @@ struct __cppobj UsStateTBL : UsRefObject
   void (__fastcall *m_pFun)(Us_HFSM *, unsigned int, unsigned int, void *);
   int (__fastcall *m_pInitFun)(UsStateTBL *, Us_HFSM *);
   void (__fastcall *m_pExternFun)(Us_HFSM *, unsigned int, void *, int);
+
+  UsStateTBL();
+  virtual ~UsStateTBL();
+  void CleanUp();
+  void Alloc(unsigned __int8 byHFSMSize, unsigned __int8 byStateSize, unsigned __int8 byMessageSize);
+  int Add(
+    unsigned __int8 byHFSMIndex,
+    unsigned __int8 byCurrState,
+    unsigned __int8 byEvent_IN,
+    unsigned __int8 byNextState_OUT,
+    void (__fastcall *pEvnetFun)(Us_HFSM *, unsigned int, void *));
+  void SetHFSMNode(
+    int nNodeIndex,
+    unsigned int dwStartState,
+    unsigned int dwLoopTime,
+    int ParentData,
+    int bUsed);
+  void SetInitFunction(int (__fastcall *pInitFun)(UsStateTBL *, Us_HFSM *));
+  void SetExternCallFunction(void (__fastcall *pExternFun)(Us_HFSM *, unsigned int, void *, int));
+  void SetCallFunction(void (__fastcall *pFun)(Us_HFSM *, unsigned int, unsigned int, void *));
+  unsigned __int8 GetHSFMSize();
+  _TBLData *GetTransState(unsigned __int8 byState, unsigned __int8 byMessage);
+  int SetHFSM(Us_HFSM *pHFSM, void *pObject);
+  static void OnMsgProc(Us_HFSM *pHFS, unsigned int dwFSMIndex, unsigned int dwMSG, void *lpParam);
 };
 
 /* 1672 */

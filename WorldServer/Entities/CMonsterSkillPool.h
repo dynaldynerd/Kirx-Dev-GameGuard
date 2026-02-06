@@ -13,6 +13,12 @@ class __cppobj CMonsterSkillPool
   CMonsterSkill m_MonSkill[16];
 
 public:
+  CMonsterSkillPool();
+  ~CMonsterSkillPool();
   void Init();
+  __int64 Set(CMonster *pMyMonster);
+  __int64 InsertSkill(CMonsterSkill *skill);
+  CMonsterSkill *GetMonSkill(unsigned int nIndex);
+  CMonsterSkill *GetMonSkillKind(unsigned int nKind);
 };
 

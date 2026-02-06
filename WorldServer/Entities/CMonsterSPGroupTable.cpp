@@ -64,3 +64,20 @@ bool CMonsterSPGroupTable::Create(
     }
     return true;
 }
+
+_monster_sp_group *CMonsterSPGroupTable::GetRecord(unsigned int dwIndex)
+{
+    if (dwIndex >= m_dwRecordNum)
+        return nullptr;
+    return &m_pRecordData[dwIndex];
+}
+
+_monster_sp_group *CMonsterSPGroupTable::GetRecord(char *szCode)
+{
+    for (unsigned int j = 0; j < m_dwRecordNum; ++j)
+    {
+        if (!strcmp_0(m_pRecordData[j].m_strCode, szCode))
+            return &m_pRecordData[j];
+    }
+    return nullptr;
+}

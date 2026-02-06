@@ -182,3 +182,51 @@ unsigned int CLevel::GetEnvironment(CLevel *pLevel)
 {
   return pLevel->mEnvironment;
 }
+
+unsigned int CLevel::GetPath(
+  float *const a2,
+  float *const a3,
+  float (*const a4)[3],
+  unsigned int *a5,
+  int a6)
+{
+  const float dx = *a2 - *a3;
+  if (fabsf(dx) >= 0.1f)
+  {
+    return CBsp::GetPathFind(mBsp, a2, a3, a4, a5, a6);
+  }
+  const float dz = a2[2] - a3[2];
+  if (fabsf(dz) >= 0.1f)
+  {
+    return CBsp::GetPathFind(mBsp, a2, a3, a4, a5, a6);
+  }
+  (*a4)[0] = *a2;
+  (*a4)[1] = a2[1];
+  (*a4)[2] = a2[2];
+  *a5 = 0;
+  return 0;
+}
+
+unsigned int CLevel::GetPathFromDepth(
+  float *const a2,
+  float *const a3,
+  int a4,
+  float (*const a5)[3],
+  unsigned int *a6)
+{
+  const float dx = *a2 - *a3;
+  if (fabsf(dx) >= 0.1f)
+  {
+    return CBsp::GetPathFind(mBsp, a2, a3, a5, a6, a4);
+  }
+  const float dz = a2[2] - a3[2];
+  if (fabsf(dz) >= 0.1f)
+  {
+    return CBsp::GetPathFind(mBsp, a2, a3, a5, a6, a4);
+  }
+  (*a5)[0] = *a2;
+  (*a5)[1] = a2[1];
+  (*a5)[2] = a2[2];
+  *a6 = 0;
+  return 0;
+}

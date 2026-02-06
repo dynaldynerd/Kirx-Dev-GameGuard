@@ -1,0 +1,51 @@
+#pragma once
+
+#include "IdaCompat.h"
+
+struct __unaligned __declspec(align(1)) _pt_trans_votepaper_zocl
+{
+  struct __body
+  {
+    unsigned __int8 byRank;
+    char wszAvatorName[17];
+    char wszGuildName[17];
+    unsigned int dwWinCnt;
+  };
+
+  unsigned __int8 byCnt;
+  __body body[8];
+};
+
+struct _pt_notify_vote_score_zocl
+{
+  struct __body
+  {
+    unsigned __int8 byRank;
+    char wszAvatorName[17];
+    unsigned __int8 byScoreRate;
+  };
+
+  unsigned __int8 byRace;
+  unsigned __int8 byVoteRate;
+  unsigned __int8 byNonvoteRate;
+  unsigned __int8 byCnt;
+  __body body[8];
+};
+
+struct _pt_notify_final_decision
+{
+  char wszAvatorName[5][17];
+};
+
+struct __unaligned __declspec(align(1)) _pt_appoint_inform_request_zocl
+{
+  struct __body
+  {
+    unsigned __int8 byLevel;
+    unsigned __int8 byClassType;
+    long double dPvpPoint;
+    char wszAvatorName[17];
+  };
+
+  __body body[4];
+};

@@ -7,6 +7,7 @@
 #include "CMyTimer.h"
 #include "CNetIndexList.h"
 
+#include <cstdarg>
 #include <functional>
 #ifndef _SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS
 #define _SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS
@@ -45,6 +46,11 @@ public:
     const char *filePrefix,
     bool isDaily,
     unsigned int dwUpdateFileNameDelay);
+  bool Log(int iType, const char *szLog);
+  bool LogFromArg(int iType, char *fmt, va_list arg_ptr);
+  bool FormatLog(int iType, const char *fmt, ...);
+  void Log(const char *szFileName, const char *szLog, int iLenStr);
+  void SystemLog(const char *fmt, ...);
   int Init();
   void ProcWrite();
   static void __cdecl ProcThread(void *param);

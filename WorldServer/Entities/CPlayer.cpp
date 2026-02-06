@@ -48,6 +48,7 @@ CMgrAvatorItemHistory CPlayer::s_MgrItemHistory{};
 CMgrAvatorLvHistory CPlayer::s_MgrLvHistory{};
 int CPlayer::s_nLiveNum = 0;
 _DELAY_PROCESS CPlayer::s_AnimusReturnDelay{};
+int *CPlayer::s_pnLinkForceItemToEffect = nullptr;
 CRecordData *_WEAPON_PARAM::s_pWeaponData = nullptr;
 CRecordData *_MASTERY_PARAM::s_pSkillData = nullptr;
 CRecordData *_MASTERY_PARAM::s_pForceData = nullptr;

@@ -19,5 +19,10 @@ class __cppobj CMonsterAggroMgr
   unsigned int m_dwAllResetTimer;
   unsigned int m_dwShortRankTimer;
   CMonster *m_pMonster;
+
+public:
+  void Init();
+  void ResetAggro();
+  CCharacter *GetTopAggroCharacter();
 };
 

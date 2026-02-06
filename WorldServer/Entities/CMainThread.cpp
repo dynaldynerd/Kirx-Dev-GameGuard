@@ -113,11 +113,6 @@
 #include "DfAIMgr.h"
 #include "RFEvent_ClassRefine.h"
 
-void Us_HFSM::__vtable_anchor() {}
-
-
-Us_HFSM::~Us_HFSM() = default;
-
 CMainThread::CMainThread() = default;
 
 bool CMainThread::IsTestServer() const

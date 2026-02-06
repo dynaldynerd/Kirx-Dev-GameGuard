@@ -34,6 +34,8 @@ unsigned int GetLoopTime();
 int GetCurrentDay();
 int GetCurrentYear();
 int GetCurrentMonth();
+unsigned int GetLocalDate();
+unsigned int eGetLocalDate();
 int GetCurDay();
 int GetNextDay();
 bool GetDateTimeStr(char *szTime);

@@ -28,6 +28,15 @@ During the implementation of `CMapOperation::Init` and its sub-flows, the follow
 | `CGoldenBoxItemMgr.cpp` | `CGoldenBoxItemMgr::SetGoldBoxItemIndex` | `g_Main.m_tblItemData[17]` | `_base_fld *` | IDA uses `*(_DWORD *)&Record[3].m_strCode[4]` to filter records; needs review for correct field mapping. |
 | `WorldServerUtil.cpp` | `GetAnimusFldFromExp` | `CAnimus::s_tblParameter[nAnimusClass]` | `_base_fld *` | IDA compares `*(_QWORD *)Record[1].m_strCode` to exp; indicates non-base layout usage. |
 | `CUnmannedTraderSubClassInfoForceLiverGrade.cpp` | `CUnmannedTraderSubClassInfoForceLiverGrade::GetGroupID` | `g_Main.m_tblEffectData` | `_base_fld *` | Uses `Record[4].m_strCode[60]` for effect data; verify correct field mapping. |
+| `DfAIMgr.cpp` | `Action_Attack_OnLoop` | `CMonster::m_pRecordSet` | `_base_fld *` | Uses `Record[25].m_strCode[20]` as loop time basis for attack behavior. |
+| `DfAIMgr.cpp` | `Action_Change_Handler` | `CMonster::m_pRecordSet` | `_base_fld *` | Uses `Record[26].m_strCode[12]` (base), random add; sets loop time. |
+| `DfAIMgr.cpp` | `OnDfExternCallFun` | `CMonster::m_pRecordSet` | `_base_fld *` | Uses `Record[26].m_strCode[20]` as probability threshold. |
+| `DfAIMgr.cpp` | `Mon_SearchStart_OnLoop` | `CMonster::m_pRecordSet` | `_base_fld *` | Uses `Record[26].m_strCode[16]` and `Record[3].m_strCode[8]` in search logic. |
+| `DfAIMgr.cpp` | `CheckEmotionBad` | `CMonster::m_pRecordSet` | `_monster_fld *` | Casts to `_monster_fld` to use `m_fEmoType` (decompiled shows `Record[29].m_strCode[28]`). |
+| `CMonster.cpp` | `GetOffensiveType` | `CMonster::m_pRecordSet` | `_base_fld *` | Uses `Record[29].m_strCode[36]` for offensive type. |
+| `CMonster.cpp` | `IsPreAttackAbleMon` | `CMonster::m_pRecordSet` | `_base_fld *` | Uses `Record[29].m_strCode[28]` compared to `5.0f`. |
+| `CMonster.cpp` | `GeEmotionImpStdTime` | `CMonster::m_pRecordSet` | `_base_fld *` | Uses `Record[29].m_strCode[44]` for emotion impulse timing. |
+| `CMonster.cpp` | `GetAggroShortTime / GetAggroResetTime` | `CMonster::m_pRecordSet` | `_base_fld *` | Uses `Record[3].m_strCode[48]` and `Record[3].m_strCode[52]` (scaled by 1000). |
 
 > [!NOTE]
 > Rule 9: `CRecordData::GetRecord` usually returns `_base_fld`. Re-casters should be careful with structure packing and offsets.

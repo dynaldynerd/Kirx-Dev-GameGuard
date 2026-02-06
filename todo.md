@@ -111,10 +111,8 @@
 - DfAIMgr::OnUsStateTBLInit :: return true;
 
 ## PatriarchElectProcessor.cpp
-- PatriarchElectProcessor::Initialize :: return true;
 
 ## RFEvent_ClassRefine.cpp
-- RFEvent_ClassRefine::Initialzie :: return true;
 
 ## WheatyExceptionReport.cpp
 - WheatyExceptionReport::SetLogName :: (void)logName;
@@ -126,4 +124,4 @@
 ## CSkyBox.cpp
 - CSkyBox::LoadSkyBox :: ;
 
-Total: 86
+Total: 83

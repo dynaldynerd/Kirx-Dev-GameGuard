@@ -44,9 +44,11 @@ public:
     _eNonProcessor = 0xFF,
   };
 
+  ElectProcessor(ProcessorType nProcessorType);
   virtual ~ElectProcessor() = default;
   virtual bool Initialize();
   virtual int Doit(Cmd cmd, CPlayer *pkPlayer, char *pszData);
+  ProcessorType GetProcessorType();
 
   bool _bEnable;
   ProcessorType _nProcesor;

@@ -73,9 +73,18 @@ public:
   bool Destroy();
   void Init(_object_id *pID);
   bool SetTarPos(float *fTarPos, bool bColl);
+  void Move(float fSpeed);
+  void MoveBreak(float fSpeed);
   void Go();
   void Stop();
   void ResetSlot();
+  __int64 RemoveSlot(CCharacter *p);
+  __int64 GetNearEmptySlot(unsigned int pos, float dist, float *cur, float *target);
+  __int64 InsertSlot(CCharacter *p, int pos);
+  void BreakStealth();
+  __int64 GetTotalTol(unsigned __int8 byAttTolType, int nDamPoint);
+  __int64 GetAttackDamPoint(int nAttPnt, int nAttPart, int nTolType, CCharacter *pDst, bool bBackAttack);
+  void SendMsg_AttackActEffect(unsigned __int8 byActEffect, CCharacter *pDamer);
   bool GetStealth(bool bInvisible);
   bool GetInvisible();
   void RemoveSFContEffect(unsigned __int8 byContCode, unsigned __int16 wListIndex, bool bInit, bool bAura);
