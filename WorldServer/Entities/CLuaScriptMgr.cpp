@@ -130,7 +130,7 @@ bool CLuaScriptMgr::InitSDM()
   luaopen_math(m_MasterState);
   lua_settop(m_MasterState, 0);
   lua_pushcclosure(m_MasterState, LuaScripAlert, 0);
-  lua_setfield(m_MasterState, 4294957294LL, "_ALERT");
+  lua_setfield(m_MasterState, LUA_GLOBALSINDEX, "_ALERT");
 
   if (!_Regist_Novus())
   {
@@ -343,7 +343,7 @@ bool CLuaScriptMgr::AttachLuaScript(CLuaScript *pScript, CLuaCommand *pAttachCom
 
   lua_pushstring(m_MasterState, pScript->m_strName);
   pScript->m_MyState = lua_newthread(m_MasterState);
-  lua_settable(m_MasterState, 4294957296LL);
+  lua_settable(m_MasterState, LUA_REGISTRYINDEX);
 
   CLuaScript::_State *state = m_ChildScriptArEx.GetStateAtPtr(index);
   if (state)
@@ -385,7 +385,7 @@ bool CLuaScriptMgr::DetackLuaScript(CLuaScript *pScript)
   lua_settop(pScript->m_MyState, 0);
   lua_pushstring(m_MasterState, pScript->GetName());
   lua_pushnil(m_MasterState);
-  lua_settable(m_MasterState, 4294957296LL);
+  lua_settable(m_MasterState, LUA_REGISTRYINDEX);
 
   m_LogScriptState.Write("Dettach ( %s )", pScript->GetName());
   RemoveScript(pScript);
