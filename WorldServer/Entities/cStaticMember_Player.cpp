@@ -3,20 +3,63 @@
 #include "cStaticMember_Player.h"
 
 #include <cstdlib>
+#include <new>
 
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 #include "base_fld.h"
 
+cStaticMember_Player *cStaticMember_Player::_pInstance = nullptr;
+
+cStaticMember_Player::cStaticMember_Player()
+{
+  // this is not a stub
+}
+
+cStaticMember_Player::~cStaticMember_Player()
+{
+  if (this->_pLimExp)
+  {
+    operator delete[](this->_pLimExp);
+    this->_pLimExp = nullptr;
+  }
+}
+
 cStaticMember_Player *cStaticMember_Player::Instance()
 {
-  static cStaticMember_Player s_instance;
-  return &s_instance;
+  if (!_pInstance)
+  {
+    _pInstance = new (std::nothrow) cStaticMember_Player();
+  }
+  return _pInstance;
+}
+
+void cStaticMember_Player::Release()
+{
+  if (_pInstance)
+  {
+    delete _pInstance;
+    _pInstance = nullptr;
+  }
 }
 
 bool cStaticMember_Player::Initialize()
 {
   return this->loadLimitExpData();
+}
+
+int cStaticMember_Player::GetMaxLv()
+{
+  return this->_nMaxLv;
+}
+
+long double cStaticMember_Player::GetLimitExp(int lv)
+{
+  if (lv < this->_nMaxLv)
+  {
+    return this->_pLimExp[lv];
+  }
+  return 0.0;
 }
 
 bool cStaticMember_Player::loadLimitExpData()
