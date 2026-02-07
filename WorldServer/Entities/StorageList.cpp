@@ -23,6 +23,138 @@ void _STORAGE_LIST::_db_con::Init()
   _STORAGE_LIST::_storage_con::Init();
 }
 
+void _STORAGE_LIST::_storage_con::empty()
+{
+  m_bLoad = 0;
+  m_bLock = 0;
+  m_dwETSerialNumber = 0;
+  m_byCsMethod = 0;
+}
+
+void _STORAGE_LIST::_storage_con::lock(bool bLock)
+{
+  m_bLock = bLock;
+}
+
+char _STORAGE_LIST::EmptyCon(int n)
+{
+  if (m_nListCode == 1 && n >= 8)
+  {
+    return 0;
+  }
+  if (!m_pStorageList[n].m_bLoad)
+  {
+    return 0;
+  }
+  _STORAGE_LIST::_storage_con::empty(&m_pStorageList[n]);
+  return 1;
+}
+
+void _STORAGE_LIST::SetLock(int n, bool bLock)
+{
+  _STORAGE_LIST::_storage_con::lock(&m_pStorageList[n], bLock);
+}
+
+int _STORAGE_LIST::TransInCon(_storage_con *pCon)
+{
+  int slotIndex = 0;
+  if (m_nListCode == 1)
+  {
+    slotIndex = pCon->m_byTableCode;
+    if (slotIndex >= 8)
+    {
+      return 255;
+    }
+    if (m_pStorageList[slotIndex].m_bLoad)
+    {
+      return 255;
+    }
+  }
+  else
+  {
+    slotIndex = GetIndexEmptyCon();
+    if (slotIndex == 255)
+    {
+      return 255;
+    }
+  }
+
+  memcpy_0(&m_pStorageList[slotIndex], pCon, 0x29u);
+  m_pStorageList[slotIndex].m_pInList = this;
+  m_pStorageList[slotIndex].m_byStorageIndex = static_cast<unsigned __int8>(slotIndex);
+  m_pStorageList[slotIndex].m_bLoad = 1;
+  m_pStorageList[slotIndex].m_byClientIndex = 0;
+  m_pStorageList[slotIndex].m_bLock = 0;
+  return slotIndex;
+}
+
+int _STORAGE_LIST::GetIndexEmptyCon()
+{
+  for (int index = 0; index < m_nUsedNum; ++index)
+  {
+    if (!m_pStorageList[index].m_bLoad)
+    {
+      return index;
+    }
+  }
+  return 255;
+}
+
+int _STORAGE_LIST::GetNumEmptyCon()
+{
+  unsigned int count = 0;
+  for (int index = 0; index < m_nUsedNum; ++index)
+  {
+    if (!m_pStorageList[index].m_bLoad)
+    {
+      ++count;
+    }
+  }
+  return static_cast<int>(count);
+}
+
+char _STORAGE_LIST::AlterCurDur(int n, int nAlter, unsigned __int64 *pdwLeftDur)
+{
+  if (m_nListCode == 1 && n >= 8)
+  {
+    return 0;
+  }
+  if (!m_pStorageList[n].m_bLoad)
+  {
+    return 0;
+  }
+
+  if (nAlter <= 0)
+  {
+    if (nAlter < 0)
+    {
+      if (m_pStorageList[n].m_dwDur >= m_pStorageList[n].m_dwDur + nAlter)
+      {
+        m_pStorageList[n].m_dwDur += nAlter;
+      }
+      else
+      {
+        m_pStorageList[n].m_dwDur = 0;
+      }
+    }
+  }
+  else if (m_pStorageList[n].m_dwDur <= m_pStorageList[n].m_dwDur + nAlter)
+  {
+    m_pStorageList[n].m_dwDur += nAlter;
+  }
+  else
+  {
+    m_pStorageList[n].m_dwDur = static_cast<unsigned __int64>(-1);
+  }
+
+  if (!m_pStorageList[n].m_dwDur)
+  {
+    _STORAGE_LIST::EmptyCon(this, n);
+  }
+  *pdwLeftDur = m_pStorageList[n].m_dwDur;
+  return 1;
+}
+
 _STORAGE_LIST::_db_con *MakeLoot(unsigned __int8 byTableCode, unsigned __int16 wItemIndex)
 {
   unsigned int dwExp = GetItemDurPoint(byTableCode, wItemIndex);

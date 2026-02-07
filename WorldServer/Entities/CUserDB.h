@@ -3,10 +3,14 @@
 #include "IdaCompat.h"
 #include "CMainThread.h"
 
+struct _EXIT_ALTER_PARAM;
+
 /* 1536 */
 class __cppobj __declspec(align(8)) CUserDB
 {
 public:
+  static int s_nLoginNum;
+
   _GLBID m_gidGlobal;
   _CLID m_idWorld;
   unsigned int m_dwIP;
@@ -70,6 +74,7 @@ public:
     const _STORAGE_LIST::_db_con *pItem,
     bool bUpdate);
   bool Update_ItemDelete(unsigned __int8 storage, unsigned __int8 slot, bool bUpdate);
+  char Update_ItemDur(unsigned __int8 storage, unsigned __int8 slot, unsigned __int64 amount, bool bUpdate);
   bool Update_Money(unsigned int dalant, unsigned int gold);
   bool Update_SFContDelete(unsigned __int8 byContCode, unsigned __int8 bySlotIndex);
   bool Update_SFContInsert(
@@ -82,7 +87,13 @@ public:
   bool Update_SFContUpdate(unsigned __int8 byContCode, unsigned __int8 bySlotIndex, unsigned __int16 wTime);
   bool Update_Stat(unsigned __int8 byStatIndex, unsigned int dwNewCum, bool bUpdate);
   bool Update_UnitData(unsigned __int8 bySlotIndex, _UNIT_DB_BASE::_LIST *pData);
+  char Update_Param(_EXIT_ALTER_PARAM *pCon);
   void ForceCloseCommand(unsigned __int8 byKickType, unsigned int dwPushIP, bool bSlow, const char *pszCause);
+  void SetWorldCLID(unsigned int dwSerial, unsigned int *pipAddr);
+  void SendMsgAccount_UILockRefresh_Update();
+  _AVATOR_DATA *IsContPushBefore();
+  void Exit_Account_Request();
+  void Exit_Account_Complete(unsigned __int8 byRetCode);
   virtual ~CUserDB() = default;
 };
 

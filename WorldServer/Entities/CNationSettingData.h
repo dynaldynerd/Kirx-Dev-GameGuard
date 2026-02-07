@@ -37,10 +37,13 @@ public:
   virtual const char *GetItemName(struct _NameTxt_fld *pFld);
   virtual bool IsApplyPcbangPrimium(const CPlayer *pUser);
   virtual int GetCashItemPrice(_CashShop_str_fld *pFld);
+  virtual void SendCashDBDSNRequest();
+  virtual void NetClose(CPlayer *pOne);
   const char *GetNoneString();
   bool IsCashDBUseExtRef();
   bool IsCashDBInit();
   bool IsCashDBDSNSetted();
+  INationGameGuardSystem *GetGameGuardSystem();
   void SetCashDBInitFlag();
 
   bool m_bServiceMode;

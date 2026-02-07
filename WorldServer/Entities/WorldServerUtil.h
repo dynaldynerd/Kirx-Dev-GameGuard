@@ -86,6 +86,7 @@ int MyCrtDebugReportHook(int reportType, char *message, int *returnValue);
 void ServerProgramExit(const char *source, int reason);
 void IOFileWrite_0(char *pszFileName, unsigned int nLen, char *pszData);
 void IOFileWrite_1(char *pszFileName, unsigned int nLen, char *pszData);
+void __trace(const char *fmt, ...);
 __time64_t time_20(__int64 *_Time);
 __time64_t time_18(__int64 *_Time);
 __time64_t mktime_3(tm *_Tm);

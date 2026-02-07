@@ -7,6 +7,11 @@
 
 #include <cstring>
 
+bool _event_participant_classrefine::IsChanged()
+{
+  return bChange;
+}
+
 bool RFEvent_ClassRefine::Initialzie()
 {
   if (!GetLastWriteFileTime(".\\Initialize\\WorldSystem.ini", &m_ftWrite))
@@ -44,6 +49,24 @@ bool RFEvent_ClassRefine::Initialzie()
     _kEvent.nEndDate);
 
   return true;
+}
+
+bool RFEvent_ClassRefine::IsDbUpdate(unsigned int nIdx)
+{
+  return nIdx < 0x9E4 && _pkParticipant[nIdx].IsChanged();
+}
+
+_event_participant_classrefine *RFEvent_ClassRefine::GetPlayerState(unsigned int nIdx, unsigned int nAvator)
+{
+  if (nIdx >= 0x9E4)
+  {
+    return nullptr;
+  }
+  if (_pkParticipant[nIdx].nAvatorSerial == nAvator)
+  {
+    return &_pkParticipant[nIdx];
+  }
+  return nullptr;
 }
 
 void RFEvent_ClassRefine::ReadClassRefineEventInfo()

@@ -21,5 +21,6 @@ public:
   int m_nTrapMaxAttackPnt;
 
   void Init(_object_id *pID);
+  void MasterNetClose(long double dPvPPoint);
 };
 

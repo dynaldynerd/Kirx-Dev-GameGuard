@@ -35,6 +35,10 @@ public:
   char *GetWorldDBPW();
   char *GetNationCodeStr();
   void SetCashDBInitState();
+  void OnConnectSession(unsigned int n);
+  void OnDisConnectSession(unsigned int n);
+  void SendCashDBDSNRequest();
+  void NetClose(CPlayer *pOne);
 
   CNationSettingData *m_pData;
 };

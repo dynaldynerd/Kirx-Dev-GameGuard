@@ -31,6 +31,11 @@ void CLogFile::SetWriteLogFile(const char *fileName, int addCount, int date, int
   m_bWriteAble = 1;
 }
 
+void CLogFile::SetWriteAble(bool bAble)
+{
+  m_bWriteAble = bAble ? 1 : 0;
+}
+
 void CLogFile::Write(const char *format, ...)
 {
   va_list args;

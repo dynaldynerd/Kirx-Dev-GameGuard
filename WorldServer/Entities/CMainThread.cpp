@@ -81,6 +81,7 @@
 #include "CRtc.h"
 #include "CNationCodeStrTable.h"
 #include "CNationSettingManager.h"
+#include "wrac_packets.h"
 #include "NameTxt_fld.h"
 #include "ResourceItem_fld.h"
 #include "UnitFrame_fld.h"
@@ -103,6 +104,7 @@
 #include "AggroCaculateData.h"
 #include "PatriarchElectProcessor.h"
 #include "TimeItem.h"
+#include "NetUtil.h"
 #include "WheatyExceptionReport.h"
 #include "WorldServerUtil.h"
 #include "cStaticMember_Player.h"
@@ -133,6 +135,42 @@ bool CMainThread::IsExcuteService() const
 unsigned int CMainThread::GetMonsterRecordNum() const
 {
   return m_tblMonster.GetRecordNum();
+}
+
+void CMainThread::AccountServerLogin()
+{
+  _open_world_request_wrac request;
+
+  strcpy_0(request.szWorldName, m_szWorldName);
+
+  char returnedString[128]{};
+  GetPrivateProfileStringA("System", "GateIP", "X", returnedString, sizeof(returnedString), "..\\WorldInfo\\WorldInfo.ini");
+  if (!strcmp_0(returnedString, "X"))
+  {
+    request.dwWorldServerIP = GetIPAddress();
+  }
+  else
+  {
+    request.dwWorldServerIP = inet_addr(returnedString);
+  }
+
+  memcpy_s(request.byHash, sizeof(request.byHash), g_cbHashVerify, sizeof(g_cbHashVerify));
+
+  unsigned __int8 type[2] = {1, 1};
+  const unsigned __int16 len = request.size();
+  g_Network.m_pProcess[1]->LoadSendMsg(0, type, request.szWorldName, len);
+
+  CNationSettingManager::Instance()->SendCashDBDSNRequest();
+}
+
+void CMainThread::gm_ServerClose()
+{
+  if (!m_bServerClosing)
+  {
+    m_bServerClosing = true;
+    m_tmForceUserExit.BeginTimer(0x32u);
+    m_nForceExitSocketIndexOffset = 0;
+  }
 }
 
 _DB_QRY_SYN_DATA *CMainThread::PushDQSData(
@@ -2367,13 +2405,11 @@ bool CMainThread::NetworkInit()
   params[3].m_bySendSleepTime = 2;
   strcpy_s(params[3].m_szModuleName, sizeof(params[3].m_szModuleName), "BillingLine");
 
-  g_Network.m_dwUseProcessNum = 4;
-  strcpy_s(g_Network.m_szSystemName, sizeof(g_Network.m_szSystemName), "GameServer");
-  strcpy_s(g_Network.m_szLogPath, sizeof(g_Network.m_szLogPath), "..\\ZoneServerLog\\NetLog");
-  for (unsigned int i = 0; i < 4; ++i)
+  char systemName[] = "GameServer";
+  char logPath[] = "..\\ZoneServerLog\\NetLog";
+  if (!g_Network.SetNetSystem(4, params, systemName, logPath))
   {
-    g_Network.m_pProcess[i] = &g_Network.m_Process[i];
-    g_Network.m_Process[i].m_Type = params[i];
+    return false;
   }
   AddPassablePacket();
 

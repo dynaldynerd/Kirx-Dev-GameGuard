@@ -21,3 +21,9 @@ void CTrap::Init(_object_id *pID)
   m_nTrapMaxAttackPnt = 0;
 }
 
+void CTrap::MasterNetClose(long double dPvPPoint)
+{
+  m_pMaster = nullptr;
+  m_dMasterPvPPoint = dPvPPoint;
+}
+

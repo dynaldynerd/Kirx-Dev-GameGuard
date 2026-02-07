@@ -19,6 +19,7 @@ struct _skill_fld;
 struct _force_fld;
 struct _monster_sp_group;
 struct RFEventBase;
+struct _event_participant_classrefine;
 class CGameObject;
 class CPlayer;
 class CMapData;
@@ -458,6 +459,8 @@ public:
 
   CMainThread();
   bool Init();
+  void AccountServerLogin();
+  void gm_ServerClose();
   bool IsTestServer() const;
   bool IsReleaseServiceMode() const;
   bool IsExcuteService() const;
@@ -556,6 +559,8 @@ struct __cppobj __declspec(align(4)) RFEventBase
   unsigned int _nOldLoopTime;
   event_date_range _kDateRange;
   virtual ~RFEventBase() = default;
+  virtual bool IsDbUpdate(unsigned int nIdx);
+  virtual _event_participant_classrefine *GetPlayerState(unsigned int nIdx, unsigned int nAvator);
 };
 
 /* 1814 */
@@ -805,6 +810,7 @@ struct _FORCEKEY
   bool IsFilled();
   void SetRelease();
   void SetKey(unsigned __int8 byItemIndex, unsigned int dwStat);
+  void SetStat(unsigned int pl_dwStat);
   unsigned __int8 GetIndex();
 };
 

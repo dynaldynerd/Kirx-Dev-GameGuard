@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "GlobalObjectDefs.h"
 
 struct _base_fld;
 class CMapData;
@@ -214,7 +215,7 @@ public:
   void SendMsg_BreakStop();
 
   static CGameObject *s_pSelectObject;
-  static CGameObject *s_pTotalObject[42642];
+  static CGameObject *s_pTotalObject[MAX_TOTAL_CGAMEOBJECT];
   static int s_nTotalObjectNum;
 
   _base_fld *m_pRecordSet;

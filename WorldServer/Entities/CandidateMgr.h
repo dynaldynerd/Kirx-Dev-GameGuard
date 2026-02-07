@@ -52,6 +52,9 @@ public:
     unsigned int dwScore;
     bool bValidChar;
     unsigned __int8 byGrade;
+
+    _candidate_info();
+    void _Init();
   };
 
   int m_nMaxNum;

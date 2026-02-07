@@ -3,6 +3,7 @@
 #include "CNationSettingManager.h"
 
 #include "CNationSettingData.h"
+#include "INationGameGuardSystem.h"
 #include "NameTxt_fld.h"
 
 int CNationSettingManager::Init(int nationCode, const char *nationCodeStr, bool serviceMode)
@@ -126,4 +127,32 @@ char *CNationSettingManager::GetNationCodeStr()
 void CNationSettingManager::SetCashDBInitState()
 {
   m_pData->SetCashDBInitFlag();
+}
+
+void CNationSettingManager::OnConnectSession(unsigned int n)
+{
+  INationGameGuardSystem *gameGuard = m_pData->GetGameGuardSystem();
+  if (gameGuard)
+  {
+    gameGuard->OnConnectSession(static_cast<int>(n));
+  }
+}
+
+void CNationSettingManager::OnDisConnectSession(unsigned int n)
+{
+  INationGameGuardSystem *gameGuard = m_pData->GetGameGuardSystem();
+  if (gameGuard)
+  {
+    gameGuard->OnDisConnectSession(static_cast<int>(n));
+  }
+}
+
+void CNationSettingManager::SendCashDBDSNRequest()
+{
+  m_pData->SendCashDBDSNRequest();
+}
+
+void CNationSettingManager::NetClose(CPlayer *pOne)
+{
+  m_pData->NetClose(pOne);
 }

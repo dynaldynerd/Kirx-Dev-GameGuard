@@ -15,7 +15,7 @@ bool _100_per_random_table::s_bRecordSet = false;
 unsigned __int16 _100_per_random_table::s_wRecord[10][100] = {};
 
 CGameObject *CGameObject::s_pSelectObject = nullptr;
-CGameObject *CGameObject::s_pTotalObject[42642] = {};
+CGameObject *CGameObject::s_pTotalObject[MAX_TOTAL_CGAMEOBJECT] = {};
 int CGameObject::s_nTotalObjectNum = 0;
 
 _object_id::_object_id()
@@ -101,7 +101,7 @@ void CGameObject::Init(_object_id *pID)
   m_bPlayerCircleList = nullptr;
   m_bObserver = false;
   m_dwCurSec = 0;
-  if (++s_nTotalObjectNum > 42642)
+  if (++s_nTotalObjectNum > MAX_TOTAL_CGAMEOBJECT)
   {
     MyMessageBox("error", "CGameObject::Init : Lack Object Num");
     ServerProgramExit("CGameObject::Init()", 0);

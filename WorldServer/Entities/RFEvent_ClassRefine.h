@@ -17,6 +17,8 @@ struct __declspec(align(4)) _event_participant_classrefine
   bool bChange;
   unsigned int dwRefineDate;
   unsigned __int8 nCurRefineCnt;
+
+  bool IsChanged();
 };
 
 #ifndef _FILETIME_
@@ -32,6 +34,8 @@ class __cppobj RFEvent_ClassRefine : public RFEventBase
 {
 public:
   bool Initialzie();
+  bool IsDbUpdate(unsigned int nIdx) override;
+  _event_participant_classrefine *GetPlayerState(unsigned int nIdx, unsigned int nAvator) override;
 
   void ReadClassRefineEventInfo();
 

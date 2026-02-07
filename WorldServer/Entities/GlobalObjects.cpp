@@ -2,6 +2,8 @@
 
 #include "GlobalObjects.h"
 
+#include "CCRFG_SEND_BUFFER.h"
+
 CUserDB g_UserDB[MAX_PLAYER]{};
 CPartyPlayer g_PartyPlayer[MAX_PLAYER]{};
 CPlayer g_Player[MAX_PLAYER]{};
@@ -32,6 +34,11 @@ CGameStatistics g_GameStatistics{};
 CMainThread g_Main{};
 int gAsci[256]{};
 CWnd *g_pFrame = nullptr;
+CLogFile g_FgLogFile{};
+_CCRFG_SEND_BUFFER g_FGSendData{};
+_CCRFG_RECV_BUFFER g_FGRecvData{};
+_CCRFG_CALLBACK g_pfnCallBack{};
+unsigned __int8 g_cbHashVerify[32]{};
 
 int g_tmpEffectedNum = 0;
 _tmp_effected_list g_tmpEffectedList[30]{};
@@ -45,3 +52,4 @@ float ANIMUS_EXP_RATE = 0.0f;
 float PLAYER_EXP_RATE = 0.0f;
 float PLAYER_LOST_EXP = 0.0f;
 float TSVR_ADD_DARKHOLE_REWARD_RATE = 0.0f;
+unsigned __int8 Major_Bind_HQ = 0;

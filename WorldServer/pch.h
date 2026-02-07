@@ -4,6 +4,10 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
+#ifndef _WINSOCK_DEPRECATED_NO_WARNINGS
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#endif
+
 #include "framework.h"
 
 #ifndef __cppobj

@@ -3,6 +3,7 @@
 #include "CBillingManager.h"
 
 #include "CBillingNULL.h"
+#include "CUserDB.h"
 #include "CNationSettingManager.h"
 
 CBillingManager::CBillingManager()
@@ -48,4 +49,14 @@ bool CBillingManager::Init()
     m_pBill = billing;
   }
   return true;
+}
+
+void CBillingManager::Start()
+{
+  m_pBill->Start();
+}
+
+void CBillingManager::Logout(CUserDB *pUserDB)
+{
+  m_pBill->Logout(pUserDB);
 }

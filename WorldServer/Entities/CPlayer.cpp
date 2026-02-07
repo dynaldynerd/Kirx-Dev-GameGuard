@@ -32,6 +32,17 @@
 #include "ResourceItem_fld.h"
 #include "UIDGenerator.h"
 #include "WorldServerUtil.h"
+#include "CExchangeEvent.h"
+#include "CPcBangFavor.h"
+#include "CUnmannedTraderController.h"
+#include "CUnmannedTraderRegistItemInfo.h"
+#include "CMoveMapLimitManager.h"
+#include "CCouponMgr.h"
+#include "CDarkHoleChannel.h"
+#include "CGuardTower.h"
+#include "CTrap.h"
+#include "CSetItemEffect.h"
+#include "exit_alter_param.h"
 #include "alter_cont_effect_time_zocl.h"
 #include "notify_not_use_premium_cashitem_zocl.h"
 #include "pt_inform_punishment_zocl.h"
@@ -61,6 +72,9 @@ CRecordData CPlayer::s_tblLimMasteryContinue[3][4];
 CRecordData CPlayer::s_tblLimMasteryCum[3][4];
 CRecordData CPlayer::s_tblLimMasteryCumContinue[3][4];
 _BILLING_FORCE_CLOSE_DELAY CPlayer::s_BillingForceCloseDelay{};
+int CPlayer::s_nRaceNum[3] = {};
+unsigned int CPlayer::s_dwTotalCloseCount = 0;
+unsigned int CPlayer::s_dwAbnormalCloseCount = 0;
 CRecordData *_WEAPON_PARAM::s_pWeaponData = nullptr;
 CRecordData *_MASTERY_PARAM::s_pSkillData = nullptr;
 CRecordData *_MASTERY_PARAM::s_pForceData = nullptr;
@@ -128,6 +142,26 @@ bool ItemCombineMgr::CheckLoadData()
 }
 
 CPlayer::CPlayer() = default;
+
+void _TOWER_PARAM::_list::init()
+{
+  m_pTowerItem = nullptr;
+  m_pTowerObj = nullptr;
+}
+
+void _TOWER_PARAM::Init()
+{
+  for (int j = 0; j < 6; ++j)
+  {
+    m_List[j].init();
+  }
+  m_nCount = 0;
+}
+
+bool _TRAP_PARAM::_param::isLoad()
+{
+  return pItem != nullptr;
+}
 
 bool LoadMasteryLimFile(char *pszErrMsg)
 {
@@ -1809,6 +1843,140 @@ bool CPlayer::Emb_DelStorage(
   return true;
 }
 
+unsigned __int64 CPlayer::Emb_AlterDurPoint(
+  unsigned __int8 byStorageCode,
+  unsigned __int8 byStorageIndex,
+  int nAlter,
+  bool bUpdate,
+  bool bSend)
+{
+  int alter = nAlter;
+  _STORAGE_LIST::_db_con *pkItem = &m_Param.m_pStoragePtr[byStorageCode]->m_pStorageList[byStorageIndex];
+  if (!pkItem->m_bLoad)
+  {
+    return 0;
+  }
+
+  if (pkItem->m_byTableCode == 15 && nAlter > 0 && pkItem->m_dwDur + nAlter > 0xFFFFFFu)
+  {
+    alter = static_cast<int>(0xFFFFFFu - pkItem->m_dwDur);
+    if (alter <= 0)
+    {
+      return static_cast<unsigned int>(pkItem->m_dwDur);
+    }
+  }
+
+  const unsigned __int64 oldDur = pkItem->m_dwDur;
+  unsigned __int64 leftDur = 0;
+  const unsigned __int16 itemSerial = pkItem->m_wSerial;
+
+  if (alter < 0 && !(pkItem->m_dwDur + alter) && pkItem->m_byCsMethod)
+  {
+    LendItemMng::Instance()->DeleteLink(m_ObjID.m_wIndex, byStorageCode, pkItem);
+  }
+
+  if (m_Param.m_pStoragePtr[byStorageCode]->AlterCurDur(byStorageIndex, alter, &leftDur))
+  {
+    if (!byStorageCode && pkItem->m_byTableCode == 18)
+    {
+      auto *fld = reinterpret_cast<_ResourceItem_fld *>(
+        g_Main.m_tblItemData[pkItem->m_byTableCode].GetRecord(pkItem->m_wItemIndex));
+      if (fld->m_nEffectDataNum > 0)
+      {
+        SetHaveEffect(0);
+        if (!fld->m_nEffType1)
+        {
+          if (oldDur <= leftDur)
+          {
+            SetMstHaveEffect(fld, pkItem, 1, alter);
+          }
+          else
+          {
+            SetMstHaveEffect(fld, pkItem, 0, alter);
+          }
+        }
+        if (fld->m_nStartTime != -1)
+        {
+          if (!TimeLimitJadeMng::Instance()->DeleteList(m_ObjID.m_wIndex, pkItem))
+          {
+            const char *charName = CPlayerDB::GetCharNameA(&m_Param);
+            g_Main.m_logSystemError.Write(
+              "%s: Emb_AlterDurPoint.. TimeLimitJadeMng::DeleteList() error storage: %d, item[%s]: %d-%d: ",
+              charName,
+              byStorageCode,
+              fld->m_strCode,
+              pkItem->m_byTableCode,
+              pkItem->m_wItemIndex);
+            return static_cast<unsigned int>(pkItem->m_dwDur);
+          }
+        }
+      }
+    }
+
+    if (leftDur)
+    {
+      if (oldDur != leftDur)
+      {
+        if (bSend)
+        {
+          SendMsg_AlterItemDurInform(byStorageCode, itemSerial, leftDur);
+        }
+        if (m_pUserDB)
+        {
+          m_pUserDB->Update_ItemDur(byStorageCode, byStorageIndex, leftDur, bUpdate);
+        }
+      }
+    }
+    else
+    {
+      if (m_pUserDB)
+      {
+        m_pUserDB->Update_ItemDelete(byStorageCode, byStorageIndex, bUpdate);
+      }
+      if (byStorageCode == 1)
+      {
+        if (GetEffectEquipCode(byStorageCode, byStorageIndex) == 1)
+        {
+          SetEquipEffect(pkItem, false);
+        }
+        SetEffectEquipCode(byStorageCode, byStorageIndex, 0);
+      }
+      if ((byStorageCode == 1 || byStorageCode == 2)
+          && (pkItem->m_byTableCode < 6 || pkItem->m_byTableCode == 8 || pkItem->m_byTableCode == 9))
+      {
+        CalcDefTol();
+      }
+      if (byStorageCode == 1)
+      {
+        CashChangeStateFlag changeFlag(0);
+        UpdateVisualVer(changeFlag);
+        SendMsg_EquipPartChange(pkItem->m_byTableCode);
+        if (IsSiegeMode())
+        {
+          SetSiege(nullptr);
+        }
+        CalcEquipSpeed();
+        CalcEquipMaxDP(0);
+      }
+      else if (!byStorageCode && IsSiegeMode() && pkItem == m_pSiegeItem)
+      {
+        SetSiege(nullptr);
+      }
+      SendMsg_DeleteStorageInform(byStorageCode, itemSerial);
+    }
+
+    return static_cast<unsigned int>(leftDur);
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&m_Param);
+  g_Main.m_logSystemError.Write(
+    "%s: Emb_AlterDurPoint.. AlterCurDur() error storage: %d, slot: %d: ",
+    charName,
+    byStorageCode,
+    byStorageIndex);
+  return static_cast<unsigned int>(pkItem->m_dwDur);
+}
+
 unsigned __int16 CPlayer::GetVisualVer()
 {
   return m_wVisualVer;
@@ -2120,6 +2288,44 @@ char CPlayer::mgr_tracing(int bOper)
   m_bObserver = bOn;
   SendMsg_NewViewOther(0);
   return 1;
+}
+
+void CPlayer::SendMsg_AlterItemDurInform(char byStorageCode, unsigned __int16 wItemSerial, unsigned __int64 dwDur)
+{
+#pragma pack(push, 1)
+  struct AlterItemDurMsg
+  {
+    char byStorageCode;
+    unsigned __int16 wItemSerial;
+    unsigned __int64 dwDur;
+  };
+#pragma pack(pop)
+
+  AlterItemDurMsg msg{};
+  msg.byStorageCode = byStorageCode;
+  msg.wItemSerial = wItemSerial;
+  msg.dwDur = dwDur;
+
+  unsigned __int8 type[2] = {7, 25};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0xBu);
+}
+
+void CPlayer::SendMsg_AlterTowerHP(unsigned __int16 wItemSerial, unsigned __int16 wLeftHP)
+{
+#pragma pack(push, 1)
+  struct AlterTowerHpMsg
+  {
+    unsigned __int16 wItemSerial;
+    unsigned __int16 wLeftHP;
+  };
+#pragma pack(pop)
+
+  AlterTowerHpMsg msg{};
+  msg.wItemSerial = wItemSerial;
+  msg.wLeftHP = wLeftHP;
+
+  unsigned __int8 type[2] = {17, 22};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 4u);
 }
 
 void CPlayer::SendMsg_Destroy()

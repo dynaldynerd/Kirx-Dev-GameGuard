@@ -77,6 +77,17 @@ void NetTrace(const char *fmt, ...)
     OutputDebugStringA(Buffer);
 }
 
+void __trace(const char *fmt, ...)
+{
+  va_list va;
+  va_start(va, fmt);
+  char buffer[272]{};
+  vsprintf_s(buffer, sizeof(buffer), fmt, va);
+  va_end(va);
+  strcat_s(buffer, sizeof(buffer), "\n");
+  OutputDebugStringA(buffer);
+}
+
 int GetCurrentDay()
 {
   std::time_t now = std::time(nullptr);

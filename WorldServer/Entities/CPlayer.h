@@ -490,10 +490,14 @@ struct _TOWER_PARAM
     _STORAGE_LIST::_db_con *m_pTowerItem;
     unsigned __int16 m_wItemSerial;
     CGuardTower *m_pTowerObj;
+
+    void init();
   };
 
   int m_nCount;
   _list m_List[6];
+
+  void Init();
 };
 
 /* 1749 */
@@ -503,6 +507,8 @@ struct __cppobj __declspec(align(8)) _TRAP_PARAM
   {
     CTrap *pItem;
     unsigned int dwSerial;
+
+    bool isLoad();
   };
 
   _param m_Item[20];
@@ -934,6 +940,9 @@ public:
   static CRecordData s_tblLimMasteryCum[3][4];
   static CRecordData s_tblLimMasteryCumContinue[3][4];
   static _BILLING_FORCE_CLOSE_DELAY s_BillingForceCloseDelay;
+  static int s_nRaceNum[3];
+  static unsigned int s_dwTotalCloseCount;
+  static unsigned int s_dwAbnormalCloseCount;
   static void SetStaticMember();
   void Init(_object_id *pID);
   void PastWhisperInit();
@@ -948,6 +957,12 @@ public:
     bool bEquipChange,
     bool bDelete,
     const char *strErrorCodePos);
+  unsigned __int64 Emb_AlterDurPoint(
+    unsigned __int8 byStorageCode,
+    unsigned __int8 byStorageIndex,
+    int nAlter,
+    bool bUpdate,
+    bool bSend);
   bool OutOfMap(CMapData *pIntoMap, unsigned __int16 wLayerIndex, unsigned __int8 byMapOutType, float *pfStartPos);
   void SendMsg_GotoRecallResult(
     char byErrCode,
@@ -959,6 +974,7 @@ public:
   void SendMsg_MapOut(unsigned __int8 byMapOutCode, unsigned __int8 byNextMapCode);
   void SendMsg_MineCancle();
   void SendMsg_DeleteStorageInform(char byStorageCode, unsigned __int16 wSerial);
+  void SendMsg_AlterItemDurInform(char byStorageCode, unsigned __int16 wItemSerial, unsigned __int64 dwDur);
   void SendMsg_EquipPartChange(unsigned __int8 byPart);
   unsigned __int16 GetVisualVer();
   void UpdateVisualVer(CashChangeStateFlag byChangeFlagMask);
@@ -991,6 +1007,10 @@ public:
   void DTradeInit();
   void SendMsg_DTradeCancleInform();
   void SendMsg_DTradeCloseInform(char byCloseCode);
+  void NetClose(bool bMoveOutLobby);
+  void _TowerAllReturn(unsigned __int8 byDestroyType, bool bForceReturn);
+  void _TowerDestroy(CGuardTower *pTowerObj);
+  void ExitUpdateDataToWorld();
   void _AnimusReturn(unsigned __int8 byReturnType);
   void SendMsg_AnimusReturnResult(char byRetCode, unsigned __int16 wAnimusItemSerial, unsigned __int8 byReturnType);
   CAnimus *GetRecallAnimus();
@@ -998,6 +1018,7 @@ public:
   bool IsUseReleaseRaceBuffPotion();
   void SetUseReleaseRaceBuffPotion();
   char mgr_tracing(int bOper);
+  void SendMsg_AlterTowerHP(unsigned __int16 wItemSerial, unsigned __int16 wLeftHP);
   void SendMsg_Destroy();
   void SendMsg_NewViewOther(unsigned __int8 byViewType);
   void SetLastAttBuff(bool bSet);
@@ -1013,6 +1034,7 @@ public:
   char IsPunished(unsigned __int8 byType, bool bSend);
   bool IsMapLoading();
   bool IsRidingShip();
+  CMapData *GetBindMap(float *pfPos, bool bIgnoreMapClass);
   CMapData *GetBindMapData();
   _dummy_position *GetBindDummy();
   bool SetBindPosition(CMapData *pMap, _dummy_position *pDummy);

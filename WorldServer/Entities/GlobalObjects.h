@@ -25,6 +25,9 @@
 #include "R3EngineState.h"
 
 class CWnd;
+struct _CCRFG_SEND_BUFFER;
+struct _CCRFG_RECV_BUFFER;
+struct _CCRFG_CALLBACK;
 
 extern CUserDB g_UserDB[MAX_PLAYER];
 extern CPartyPlayer g_PartyPlayer[MAX_PLAYER];
@@ -57,6 +60,11 @@ extern CWorldSchedule g_WorldSch;
 extern CGameStatistics g_GameStatistics;
 extern CMainThread g_Main;
 extern CWnd *g_pFrame;
+extern CLogFile g_FgLogFile;
+extern _CCRFG_SEND_BUFFER g_FGSendData;
+extern _CCRFG_RECV_BUFFER g_FGRecvData;
+extern _CCRFG_CALLBACK g_pfnCallBack;
+extern unsigned __int8 g_cbHashVerify[32];
 
 extern int g_tmpEffectedNum;
 extern _tmp_effected_list g_tmpEffectedList[30];
@@ -70,3 +78,4 @@ extern float ANIMUS_EXP_RATE;
 extern float PLAYER_EXP_RATE;
 extern float PLAYER_LOST_EXP;
 extern float TSVR_ADD_DARKHOLE_REWARD_RATE;
+extern unsigned __int8 Major_Bind_HQ;

@@ -11,6 +11,7 @@ class __cppobj __declspec(align(8)) CLogFile
 public:
   CLogFile();
   void SetWriteLogFile(const char *fileName, int addCount, int date, int trace, int init);
+  void SetWriteAble(bool bAble);
   void Write(const char *format, ...);
   void WriteFromArg(const char *format, va_list arg);
   void WriteFromArg(const wchar_t *format, va_list arg);

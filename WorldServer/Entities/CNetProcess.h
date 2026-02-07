@@ -23,6 +23,8 @@ struct _SOCK_TYPE_PARAM
   int m_bAcceptIPCheck;
   unsigned int m_dwIPCheckTerm;
   unsigned int m_dwSocketRecycleTerm;
+
+  _SOCK_TYPE_PARAM();
 };
 
 struct _total_count
@@ -39,6 +41,8 @@ struct _total_count
   unsigned int m_dwFdWriteCnt;
   unsigned int m_dwNoFindEmptySocket;
   unsigned int m_dwNoEventSelect;
+
+  _total_count();
 };
 
 class __cppobj __declspec(align(4)) CNetTimer
@@ -74,6 +78,9 @@ struct _FORCE_CLOSE
   CNetIndexList m_listFD;
   CNetIndexList m_listFDEmpty;
 
+  _FORCE_CLOSE();
+  ~_FORCE_CLOSE();
+  bool Init(unsigned int dwNodeNum);
   bool PushNode(unsigned int dwIndex, unsigned int dwSerial);
 };
 
@@ -100,6 +107,8 @@ struct _NET_TYPE_PARAM : _SOCK_TYPE_PARAM
   unsigned int m_dwKeyCheckTerm;
   unsigned int m_dwProcessMsgNumPerLoop;
   char m_szModuleName[128];
+
+  _NET_TYPE_PARAM();
 };
 
 struct _thread_parameter
@@ -107,6 +116,10 @@ struct _thread_parameter
   int m_bStart;
   void *m_pParam;
   int m_nIndex;
+
+  _thread_parameter();
+  void SetParameter(int bStart, void *pParam, int nIndex);
+  void EndThread();
 };
 
 class __cppobj CNetFrameRate
@@ -115,12 +128,23 @@ public:
   unsigned int m_dwFrames;
   unsigned int m_dwFrameTime;
   unsigned int m_dwFrameCount;
+
+  CNetFrameRate();
+  void CalcFrameRate();
 };
 
 struct _NET_BUFFER
 {
   __int64 GetLeftLoadSize();
   void AddPushPos(unsigned int dwAddSize);
+  _NET_BUFFER();
+  ~_NET_BUFFER();
+  bool AllocBuffer(unsigned int nMaxSize, unsigned int nEtrSize, char *pTemp);
+  char *GetPushPos();
+  char *GetPopPoint(bool *pbMiss);
+  char *GetSendPoint(int *pnSendSize, bool *pMiss);
+  void AddPopPos(unsigned int dwAddSize);
+  void Init();
 
   unsigned int m_nMaxSize;
   unsigned int m_nEtrSize;
@@ -177,6 +201,10 @@ struct __cppobj _socket
   unsigned int m_dwLastRecvTime;
   unsigned int m_dwLastSendTime;
   void *m_hFGContext;
+
+  _socket();
+  ~_socket();
+  void InitParam();
 };
 
 class CNetWorking;
@@ -184,9 +212,27 @@ class CNetWorking;
 class __cppobj __declspec(align(8)) CNetSocket
 {
 public:
-  virtual ~CNetSocket() = default;
+  CNetSocket();
+  virtual ~CNetSocket();
 
   _socket *GetSocket(unsigned int dwIndex);
+  bool SetSocket(_SOCK_TYPE_PARAM *pType, char *pszErrMsg);
+  bool InitAcceptSocket(char *pszErrMsg);
+  unsigned int Accept_Server();
+  bool Accept_Client(unsigned int dwSocketIndex);
+  int Connect(unsigned int n, sockaddr_in *pAddr);
+  bool Send(unsigned int n, char *pBuf, int nSize, int *pnRet);
+  bool Recv(unsigned int n, char *pBuf, int nBufMaxSize, int *pnRet);
+  bool CloseSocket(unsigned int n);
+  void CloseAll();
+  void Release();
+  unsigned int FindEmptySocket();
+  void EmptySocketBuffer(unsigned int n);
+  unsigned int GetSocketIPAddress(unsigned int dwIndex);
+  _SOCK_TYPE_PARAM *GetSocketType();
+  _total_count *GetTotalCount();
+  void OnLoop();
+  bool PushIPCheckList(unsigned int dwIP);
 
   unsigned __int64 m_sAccept;
   void *m_AcceptEvent;
@@ -207,9 +253,46 @@ public:
 class __cppobj __declspec(align(8)) CNetProcess
 {
 public:
-  virtual ~CNetProcess() = default;
+  CNetProcess();
+  virtual ~CNetProcess();
 
   int LoadSendMsg(unsigned int dwClientIndex, unsigned __int8 *pbyType, char *szMsg, unsigned __int16 nLen);
+  int LoadSendMsg(unsigned int dwClientIndex, unsigned __int16 wType, char *szMsg, unsigned __int16 nLen);
+  bool SetProcess(int nIndex, _NET_TYPE_PARAM *pType, CNetWorking *pNetwork, bool bUseFG);
+  void Release();
+  void CloseAll();
+  void CloseSocket(unsigned int dwSocketIndex, bool bSlowClose);
+  void OnLoop();
+  void OnLoop_Receipt();
+  void LogFileOperSetting(bool bRecv, bool bSend, bool bSystem);
+  void IOLogFileOperSetting(bool bOper);
+  void *GetContextHandle(unsigned __int16 wIndex);
+  void SetContextHandle(void *hContextHandle, unsigned __int16 wIndex);
+  unsigned int GetSendThreadFrame();
+  bool StartSpeedHackCheck(unsigned int dwClientIndex, char *pszID);
+  bool PushAnsyncConnect(unsigned int dwSocketIndex, sockaddr_in *pAddr);
+  void CompleteAnsyncConnect();
+  bool PushKeyCheckList(unsigned int dwSerial, unsigned int dwIP, unsigned int *pdwKey, int nUseKeyNum);
+  bool FindKeyFromWaitList(unsigned int dwSocketIndex, unsigned int dwSerial, unsigned int *pdwKey, int nUseKeyNum);
+  bool wt_AcceptClient(unsigned int *pdwClientIndex);
+  bool wt_CloseClient(unsigned int dwClientIndex);
+  void _Receipt();
+  void _PopRecvMsg(unsigned __int16 wSocketIndex);
+  bool _InternalPacketProcess(unsigned int dwSocketIndex, _MSG_HEADER *pMsgHeader, char *pMsg);
+  void _SendLoop(unsigned int n);
+  void _ForceCloseLoop();
+  void _CheckSend(unsigned __int16 wSocketIndex);
+  void _CheckWaitKey();
+  void _CkeckKeyCertifyDeley();
+  void _CkeckRecvBreak();
+  void _CkeckSpeedHackDeley();
+  void _ResponSpeedHack();
+  void _SendSpeedHackCheckMsg(unsigned int n);
+  static void AcceptThread(void *pv);
+  static void NetEventThread(void *pv);
+  static void RecvThread(void *pv);
+  static void SendThread(void *pv);
+  static void ConnectThread(void *pv);
   void PushCloseNode(unsigned int nIndex);
 
   CNetSocket m_NetSocket;

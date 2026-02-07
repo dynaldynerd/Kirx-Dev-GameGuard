@@ -181,6 +181,29 @@ bool CNetIndexList::CopyFront(unsigned int *outIndex)
   return true;
 }
 
+int CNetIndexList::CopyIndexList(unsigned int *pdwList, int nMax)
+{
+  if (this == nullptr || pdwList == nullptr || nMax <= 0)
+  {
+    return 0;
+  }
+
+  this->m_csList.Lock();
+  _index_node *node = this->m_Head.m_pNext;
+  int count = 0;
+  while (node != &this->m_Tail)
+  {
+    pdwList[count++] = node->m_dwIndex;
+    if (count >= nMax)
+    {
+      break;
+    }
+    node = node->m_pNext;
+  }
+  this->m_csList.Unlock();
+  return count;
+}
+
 CNetIndexList::_index_node *CNetIndexList::FindNode(unsigned int index)
 {
   if (this == nullptr)

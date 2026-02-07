@@ -2,9 +2,11 @@
 
 #include "CNationSettingData.h"
 
+#include "CNetworkEX.h"
 #include "CPlayer.h"
 #include "CUserDB.h"
 #include "NameTxt_fld.h"
+#include "wrac_packets.h"
 
 CBilling *CNationSettingData::CreateBilling()
 {
@@ -22,6 +24,20 @@ int CNationSettingData::GetCashItemPrice(_CashShop_str_fld *pFld)
   (void)pFld;
   // this is not a stub
   return 0;
+}
+
+void CNationSettingData::SendCashDBDSNRequest()
+{
+  _cashdb_setting_request_wrac msg{};
+  unsigned __int8 type[2] = {1, 31};
+  const unsigned __int16 len = msg.size();
+  g_Network.m_pProcess[1]->LoadSendMsg(0, type, reinterpret_cast<char *>(&msg), len);
+}
+
+void CNationSettingData::NetClose(CPlayer *pOne)
+{
+  (void)pOne;
+  // this is not a stub
 }
 
 const char *CNationSettingData::GetItemName(_NameTxt_fld *pFld)
@@ -60,6 +76,11 @@ bool CNationSettingData::IsCashDBInit()
 bool CNationSettingData::IsCashDBDSNSetted()
 {
   return m_eCashDBFlag == CDPS_SET;
+}
+
+INationGameGuardSystem *CNationSettingData::GetGameGuardSystem()
+{
+  return m_pGameGuardSystem;
 }
 
 void CNationSettingData::SetCashDBInitFlag()

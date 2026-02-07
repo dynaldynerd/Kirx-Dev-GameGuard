@@ -5,11 +5,18 @@
 #include <cstring>
 
 #include "CMapOperation.h"
+#include "CNationSettingManager.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 #include "CLogFile.h"
 #include "CNetworkEX.h"
 #include "server_notify_inform_zone.h"
+#include "wrac_packets.h"
+#include "qry_logout.h"
+#include "exit_alter_param.h"
+#include "RFEvent_ClassRefine.h"
+
+int CUserDB::s_nLoginNum = 0;
 
 void CUserDB::Init(unsigned __int16 index)
 {
@@ -329,6 +336,107 @@ bool CUserDB::Update_ItemDelete(unsigned __int8 storage, unsigned __int8 slot, b
   return false;
 }
 
+char CUserDB::Update_ItemDur(unsigned __int8 storage, unsigned __int8 slot, unsigned __int64 amount, bool /*bUpdate*/)
+{
+  if (!IsStorageRange(storage, slot))
+  {
+    g_Main.m_logSystemError.Write(
+      "%s : Update_ItemDur(CODE) : scode : %d, icode : %d  ",
+      m_aszAvatorName,
+      storage,
+      slot);
+    return 0;
+  }
+
+  if (storage)
+  {
+    switch (storage)
+    {
+      case 2u:
+      {
+        _EMBELLKEY *key = &m_AvatorData.dbEquip.m_EmbellishList[slot].Key;
+        if (!key->IsFilled())
+        {
+          g_Main.m_logSystemError.Write("%s:Update_ItemDur(EMBELL, Idx:%d)", m_aszAvatorName, slot);
+          return 0;
+        }
+        m_AvatorData.dbEquip.m_EmbellishList[slot].wAmount = static_cast<unsigned __int16>(amount);
+        break;
+      }
+      case 3u:
+      {
+        _FORCEKEY *key = &m_AvatorData.dbForce.m_List[slot].Key;
+        if (!key->IsFilled())
+        {
+          g_Main.m_logSystemError.Write("%s:Update_ItemDur(FORCE, Idx:%d)", m_aszAvatorName, slot);
+          return 0;
+        }
+        key->SetStat(static_cast<unsigned int>(amount));
+        break;
+      }
+      case 4u:
+      {
+        _ANIMUSKEY *key = &m_AvatorData.dbAnimus.m_List[slot].Key;
+        if (!key->IsFilled())
+        {
+          g_Main.m_logSystemError.Write("%s:Update_ItemDur(ANIMUS, Idx:%d)", m_aszAvatorName, slot);
+          return 0;
+        }
+        m_AvatorData.dbAnimus.m_List[slot].dwExp = amount;
+        break;
+      }
+      case 5u:
+      {
+        _INVENKEY *key = &m_AvatorData.dbTrunk.m_List[slot].Key;
+        if (!key->IsFilled())
+        {
+          g_Main.m_logSystemError.Write("%s:Update_ItemDur(TRUNK, Idx:%d)", m_aszAvatorName, slot);
+          return 0;
+        }
+        m_AvatorData.dbTrunk.m_List[slot].dwDur = amount;
+        break;
+      }
+      case 6u:
+      {
+        _INVENKEY *key = &m_AvatorData.dbPersonalAmineInven.m_List[slot].Key;
+        if (!key->IsFilled())
+        {
+          g_Main.m_logSystemError.Write("%s:Update_ItemDur(TRUNK, Idx:%d)", m_aszAvatorName, slot);
+          return 0;
+        }
+        m_AvatorData.dbPersonalAmineInven.m_List[slot].dwDur = static_cast<unsigned int>(amount);
+        break;
+      }
+      case 7u:
+      {
+        _INVENKEY *key = &m_AvatorData.dbTrunk.m_ExtList[slot].Key;
+        if (!key->IsFilled())
+        {
+          g_Main.m_logSystemError.Write("%s:Update_ItemDur(EXT_TRUNK, Idx:%d)", m_aszAvatorName, slot);
+          return 0;
+        }
+        m_AvatorData.dbTrunk.m_ExtList[slot].dwDur = amount;
+        break;
+      }
+      default:
+        break;
+    }
+  }
+  else
+  {
+    _INVENKEY *key = &m_AvatorData.dbInven.m_List[slot].Key;
+    if (!key->IsFilled())
+    {
+      g_Main.m_logSystemError.Write("%s:Update_ItemDur(INVEN, Idx:%d)", m_aszAvatorName, slot);
+      return 0;
+    }
+    m_AvatorData.dbInven.m_List[slot].dwDur = amount;
+  }
+
+  m_bDataUpdate = true;
+  return 1;
+}
+
 bool CUserDB::Update_Money(unsigned int dalant, unsigned int gold)
 {
   m_AvatorData.dbAvator.m_dwDalant = dalant;
@@ -560,6 +668,12 @@ void _FORCEKEY::SetRelease()
 void _FORCEKEY::SetKey(unsigned __int8 byItemIndex, unsigned int dwStat)
 {
   dwKey = (dwStat & 0xFFFFFFu) | (static_cast<unsigned int>(byItemIndex) << 24);
+}
+
+void _FORCEKEY::SetStat(unsigned int pl_dwStat)
+{
+  dwKey &= 0xFF000000u;
+  dwKey |= pl_dwStat & 0xFFFFFFu;
 }
 
 unsigned __int8 _FORCEKEY::GetIndex()
@@ -822,5 +936,173 @@ void _AVATOR_DATA::InitData()
 {
   std::memset(this, 0, sizeof(_AVATOR_DATA));
   m_bCristalBattleDateUpdate = 1;
+}
+
+void CUserDB::SetWorldCLID(unsigned int dwSerial, unsigned int *pipAddr)
+{
+  m_idWorld.dwSerial = dwSerial;
+  m_ipAddress = *pipAddr;
+  m_ss.Init();
+  const int index = m_idWorld.wIndex;
+  CNationSettingManager::Instance()->OnConnectSession(index);
+}
+
+void CUserDB::SendMsgAccount_UILockRefresh_Update()
+{
+  if (m_byUILock != 0xFF
+      && !m_byUserDgr
+      && (m_byUILock_InitFailCnt != m_byUILock_FailCnt
+          || m_byUILock_InitFindPassFailCount != m_byUILockFindPassFailCount))
+  {
+    _uilock_user_refresh_info_request_wrac msg{};
+    msg.dwAccountSerial = m_dwAccountSerial;
+    msg.byFailCnt = m_byUILock_FailCnt;
+    msg.byFindPassFailCount = m_byUILockFindPassFailCount;
+    msg.gidGlobal = m_gidGlobal;
+
+    unsigned __int8 type[2] = {1, 19};
+    const unsigned __int16 len = msg.size();
+    g_Network.m_pProcess[1]->LoadSendMsg(0, type, reinterpret_cast<char *>(&msg), len);
+  }
+}
+
+_AVATOR_DATA *CUserDB::IsContPushBefore()
+{
+  if (!m_bDBWaitState)
+  {
+    return nullptr;
+  }
+  if (!m_pDBPushData)
+  {
+    return nullptr;
+  }
+  if (!m_pDBPushData->m_bUse)
+  {
+    return nullptr;
+  }
+  if (m_pDBPushData->m_byQryCase != 12)
+  {
+    return nullptr;
+  }
+
+  if (!memcmp_0(&m_idWorld, &m_pDBPushData->m_idWorld, sizeof(_CLID)))
+  {
+    char *data = m_pDBPushData->m_sData;
+    if (*reinterpret_cast<unsigned int *>(data) == m_dwSerial)
+    {
+      return reinterpret_cast<_AVATOR_DATA *>(data + 4);
+    }
+
+    g_Main.m_logSave.Write(
+      "Before Push Cont Save FAIL >> id: %s, name: %s (%d) : LoadSheet->dwAvatorSerial != m_dwSerial",
+      m_szAccountID,
+      m_aszAvatorName,
+      m_dwSerial);
+    return nullptr;
+  }
+
+  g_Main.m_logSave.Write(
+    "Before Push Cont Save FAIL >> id: %s, name: %s (%d) : if(memcmp(&m_idWorld, &pLoadSheet->m_idWorld, sizeof(_CLID)))",
+    m_szAccountID,
+    m_aszAvatorName,
+    m_dwSerial);
+  return nullptr;
+}
+
+void CUserDB::Exit_Account_Request()
+{
+  CNationSettingManager::Instance()->OnDisConnectSession(m_idWorld.wIndex);
+
+  if (m_bActive)
+  {
+    if (m_dwSerial == static_cast<unsigned int>(-1))
+    {
+      _qry_case_lobby_logout qry{};
+      qry.dwAccountSerial = m_dwAccountSerial;
+      strcpy_s(qry.szLobbyHistoryFileName, sizeof(qry.szLobbyHistoryFileName), m_szLobbyHistoryFileName);
+      const int size = static_cast<int>(qry.size());
+      g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0xABu, reinterpret_cast<char *>(&qry), size);
+      Exit_Account_Complete(0);
+    }
+    else
+    {
+      _qry_sheet_logout qry{};
+      qry.dwAvatorSerial = m_dwSerial;
+      memcpy_0(&qry.NewData, &m_AvatorData, sizeof(qry.NewData));
+
+      _AVATOR_DATA *contData = IsContPushBefore();
+      if (contData)
+      {
+        memcpy_0(&qry.OldData, contData, sizeof(qry.OldData));
+      }
+      else
+      {
+        memcpy_0(&qry.OldData, &m_AvatorData_bk, sizeof(qry.OldData));
+      }
+
+      qry.bCheckLowHigh = !m_bNoneUpdateData;
+      qry.bUpdateRefineCnt = false;
+
+      if (g_Main.m_pRFEvent_ClassRefine->IsDbUpdate(m_idWorld.wIndex))
+      {
+        _event_participant_classrefine *state =
+          g_Main.m_pRFEvent_ClassRefine->GetPlayerState(m_idWorld.wIndex, m_idWorld.dwSerial);
+        if (state)
+        {
+          qry.bUpdateRefineCnt = true;
+          qry.byRefinedCnt = state->nCurRefineCnt;
+          qry.dwRefineDate = state->dwRefineDate;
+        }
+      }
+
+      const int size = static_cast<int>(qry.size());
+      if (g_Main.PushDQSData(m_dwAccountSerial, &m_idWorld, 5u, reinterpret_cast<char *>(&qry), size))
+      {
+        m_bDBWaitState = true;
+      }
+      else
+      {
+        Exit_Account_Complete(0x64u);
+      }
+    }
+  }
+  else
+  {
+    ParamInit();
+  }
+}
+
+void CUserDB::Exit_Account_Complete(unsigned __int8 byRetCode)
+{
+  m_bDBWaitState = false;
+
+  _logout_account_request_wrac msg{};
+  memcpy_0(&msg, &m_gidGlobal, sizeof(msg));
+  unsigned __int8 type[2] = {1, 5};
+  const unsigned __int16 len = msg.size();
+  g_Network.m_pProcess[1]->LoadSendMsg(0, type, reinterpret_cast<char *>(&msg), len);
+
+  ParamInit();
+}
+
+char CUserDB::Update_Param(_EXIT_ALTER_PARAM *pCon)
+{
+  m_AvatorData.dbAvator.m_dwHP = pCon->dwHP;
+  m_AvatorData.dbAvator.m_dwFP = pCon->dwFP;
+  m_AvatorData.dbAvator.m_dwSP = pCon->dwSP;
+  m_AvatorData.dbAvator.m_dwDP = pCon->dwDP;
+  m_AvatorData.dbAvator.m_dExp = pCon->dExp;
+  m_AvatorData.dbAvator.m_dwDalant = pCon->dwDalant;
+  m_AvatorData.dbAvator.m_dwGold = pCon->dwGold;
+
+  if (g_MapOper.IsExistStdMapID(pCon->byMapCode))
+  {
+    m_AvatorData.dbAvator.m_byMapCode = pCon->byMapCode;
+    m_AvatorData.dbAvator.m_fStartPos[0] = pCon->fStartPos[0];
+    m_AvatorData.dbAvator.m_fStartPos[1] = pCon->fStartPos[1];
+    m_AvatorData.dbAvator.m_fStartPos[2] = pCon->fStartPos[2];
+  }
+
+  return 1;
 }
 
