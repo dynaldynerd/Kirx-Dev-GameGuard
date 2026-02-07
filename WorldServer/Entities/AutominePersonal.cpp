@@ -103,7 +103,7 @@ unsigned int AutominePersonal::get_ownerserial()
 {
   if (m_pOwner != nullptr)
   {
-    return CPlayerDB::GetCharSerial(&m_pOwner->m_Param);
+    return m_pOwner->m_Param.GetCharSerial();
   }
   return static_cast<unsigned int>(-1);
 }
@@ -248,7 +248,7 @@ bool AutominePersonal::unregist_from_map(unsigned __int8 byDestroyType)
 
   if (byDestroyType && byDestroyType != 2)
   {
-    const char *charName = CPlayerDB::GetCharNameA(&m_pOwner->m_Param);
+    const char *charName = m_pOwner->m_Param.GetCharNameA();
     m_logProcess.Write("AutominePersonal::unregist_from_map(destroy) >> Name:%s", charName);
   }
   else
@@ -296,7 +296,7 @@ bool AutominePersonal::unregist_from_map(unsigned __int8 byDestroyType)
           }
           else
           {
-            const char *charName = CPlayerDB::GetCharNameA(&m_pOwner->m_Param);
+            const char *charName = m_pOwner->m_Param.GetCharNameA();
             m_logSysErr.Write(
               "AutominePersonal::unregist_from_map(recovery) >> Failed CPlayer::EmbAddStorage() >> Name:%s",
               charName);

@@ -108,6 +108,32 @@ void CGameObject::Init(_object_id *pID)
   }
 }
 
+void CGameObject::SFContDelMessage(
+  unsigned __int8 /*byContCode*/,
+  unsigned __int8 /*byListIndex*/,
+  bool /*bSend*/,
+  bool /*bAura*/)
+{
+  // this is not a stub
+}
+
+void CGameObject::SFContInsertMessage(unsigned __int8 /*byContCode*/, unsigned __int8 /*byListIndex*/, bool /*bAura*/)
+{
+  // this is not a stub
+}
+
+bool CGameObject::IsAttackableInTown()
+{
+  // this is not a stub
+  return false;
+}
+
+char *CGameObject::GetObjName()
+{
+  // this is not a stub
+  return nullptr;
+}
+
 /*
 CGameObject *CGameObject::s_pSelectObject = nullptr;
 CGameObject *CGameObject::s_pTotalObject[42642] = {};
@@ -195,7 +221,6 @@ CGameObject::CGameObject()
   v1 = &v3;
   for ( i = 8LL; i; --i )
   {
-    *(_DWORD *)v1 = -858993460;
     v1 = (__int64 *)((char *)v1 + 4);
   }
   this->m_ObjID = _object_id();
@@ -223,7 +248,6 @@ void CGameObject::CalcAbsPos()
   v1 = &v3;
   for ( i = 12LL; i; --i )
   {
-    *(_DWORD *)v1 = -858993460;
     v1 = (__int64 *)((char *)v1 + 4);
   }
   BspInfo = CMapData::GetBspInfo(this->m_pCurMap);
@@ -248,7 +272,6 @@ __int64 CGameObject::CalcCirclePlayerNum(int nRange)
   v2 = &v5;
   for ( i = 28LL; i; --i )
   {
-    *(_DWORD *)v2 = -858993460;
     v2 = (__int64 *)((char *)v2 + 4);
   }
   if ( this->m_bPlayerCircleList )
@@ -287,7 +310,6 @@ __int64 CGameObject::CalcCirclePlayerNum(int nRange, bool (__fastcall *fnComp)(C
   v3 = &v6;
   for ( i = 32LL; i; --i )
   {
-    *(_DWORD *)v3 = -858993460;
     v3 = (__int64 *)((char *)v3 + 4);
   }
   if ( this->m_bPlayerCircleList )
@@ -328,7 +350,6 @@ __int64 CGameObject::CalcCurHPRate()
   v1 = &v5;
   for ( i = 12LL; i; --i )
   {
-    *(_DWORD *)v1 = -858993460;
     v1 = (__int64 *)((char *)v1 + 4);
   }
   v6 = (float)this->GetHP();
@@ -347,7 +368,6 @@ void CGameObject::CalcScrExtendPoint(CRect *prcWnd, CRect *prcExtend)
   v3 = &v5;
   for ( i = 16LL; i; --i )
   {
-    *(_DWORD *)v3 = -858993460;
     v3 = (__int64 *)((char *)v3 + 4);
   }
   v6 = this->m_fAbsPos[0] - (float)prcExtend->left;
@@ -368,7 +388,6 @@ void CGameObject::CalcScrNormalPoint(CRect *prcWnd)
   v2 = &v4;
   for ( i = 12LL; i; --i )
   {
-    *(_DWORD *)v2 = -858993460;
     v2 = (__int64 *)((char *)v2 + 4);
   }
   right = prcWnd->right;
@@ -390,7 +409,6 @@ __int64 CGameObject::CalcSecIndex()
   v1 = &v4;
   for ( i = 12LL; i; --i )
   {
-    *(_DWORD *)v1 = -858993460;
     v1 = (__int64 *)((char *)v1 + 4);
   }
   CGameObject::CalcAbsPos();
@@ -426,7 +444,6 @@ void CGameObject::CircleReport(unsigned __int8 *pbyType, char *szMsg, unsigned _
   v5 = &v7;
   for ( i = 40LL; i; --i )
   {
-    *(_DWORD *)v5 = -858993460;
     v5 = (__int64 *)((char *)v5 + 4);
   }
   if ( this->m_bPlayerCircleList )
@@ -490,7 +507,6 @@ void CGameObject::CircleReport(unsigned __int8 *pbyType, char *szMsg, unsigned _
   v6 = &v8;
   for ( i = 40LL; i; --i )
   {
-    *(_DWORD *)v6 = -858993460;
     v6 = (__int64 *)((char *)v6 + 4);
   }
   if ( this->m_bPlayerCircleList )
@@ -549,7 +565,6 @@ char CGameObject::Create(_object_create_setdata *pData)
   v2 = &v6;
   for ( i = 16LL; i; --i )
   {
-    *(_DWORD *)v2 = -858993460;
     v2 = (__int64 *)((char *)v2 + 4);
   }
   if ( this->m_bLive )
@@ -598,7 +613,6 @@ char CGameObject::Destroy()
 
   v1 = v4;
   for ( i = 12LL; i; --i )
-    *v1++ = -858993460;
   if ( !this->m_bLive )
     return 0;
   if ( this->m_pCurMap )
@@ -644,7 +658,6 @@ __int64 CGameObject::GetAttackLevel()
   v1 = &v4;
   for ( i = 8LL; i; --i )
   {
-    *(_DWORD *)v1 = -858993460;
     v1 = (__int64 *)((char *)v1 + 4);
   }
   return this->GetLevel();
@@ -659,7 +672,6 @@ float CGameObject::GetAttackRange()
   v1 = &v4;
   for ( i = 4LL; i; --i )
   {
-    *(_DWORD *)v1 = -858993460;
     v1 = (__int64 *)((char *)v1 + 4);
   }
   return 0.0;
@@ -689,7 +701,6 @@ float CGameObject::GetDefFacing(int nPart)
   v2 = &v5;
   for ( i = 4LL; i; --i )
   {
-    *(_DWORD *)v2 = -858993460;
     v2 = (__int64 *)((char *)v2 + 4);
   }
   return FLOAT_0_5;
@@ -704,7 +715,6 @@ float CGameObject::GetDefGap(int nPart)
   v2 = &v5;
   for ( i = 4LL; i; --i )
   {
-    *(_DWORD *)v2 = -858993460;
     v2 = (__int64 *)((char *)v2 + 4);
   }
   return FLOAT_0_5;
@@ -774,7 +784,6 @@ float CGameObject::GetWeaponAdjust()
   v1 = &v4;
   for ( i = 4LL; i; --i )
   {
-    *(_DWORD *)v1 = -858993460;
     v1 = (__int64 *)((char *)v1 + 4);
   }
   return FLOAT_0_5;
@@ -794,7 +803,6 @@ float CGameObject::GetWidth()
   v1 = &v4;
   for ( i = 4LL; i; --i )
   {
-    *(_DWORD *)v1 = -858993460;
     v1 = (__int64 *)((char *)v1 + 4);
   }
   return 0.0;
@@ -814,7 +822,6 @@ void CGameObject::Init(_object_id *pID)
   v2 = &v4;
   for ( i = 8LL; i; --i )
   {
-    *(_DWORD *)v2 = -858993460;
     v2 = (__int64 *)((char *)v2 + 4);
   }
   this->m_ObjID = *pID;
@@ -879,7 +886,6 @@ char CGameObject::IsBeCirclePlayer(int nRange)
   v2 = &v5;
   for ( i = 28LL; i; --i )
   {
-    *(_DWORD *)v2 = -858993460;
     v2 = (__int64 *)((char *)v2 + 4);
   }
   if ( this->m_bPlayerCircleList )
@@ -921,7 +927,6 @@ char CGameObject::IsCircleObject(int nRange, CGameObject *pObject)
   v3 = &v6;
   for ( i = 28LL; i; --i )
   {
-    *(_DWORD *)v3 = -858993460;
     v3 = (__int64 *)((char *)v3 + 4);
   }
   SecInfo = CMapData::GetSecInfo(this->m_pCurMap);
@@ -982,7 +987,6 @@ void CGameObject::OnLoop()
   v1 = &v5;
   for ( i = 12LL; i; --i )
   {
-    *(_DWORD *)v1 = -858993460;
     v1 = (__int64 *)((char *)v1 + 4);
   }
   LoopTime = GetLoopTime();
@@ -1045,7 +1049,6 @@ __int64 CGameObject::RerangeSecIndex(unsigned int dwOld, unsigned int dwNew)
   v3 = &v7;
   for ( i = 24LL; i; --i )
   {
-    *(_DWORD *)v3 = -858993460;
     v3 = (__int64 *)((char *)v3 + 4);
   }
   if ( dwOld == -1 )
@@ -1117,7 +1120,6 @@ void CGameObject::ResetSector(unsigned int dwOldSec, unsigned int dwNewSec)
   v3 = &v11;
   for ( i = 48LL; i; --i )
   {
-    *(_DWORD *)v3 = -858993460;
     v3 = (__int64 *)((char *)v3 + 4);
   }
   if ( !this->m_bMaxVision )
@@ -1391,7 +1393,6 @@ void CGameObject::SendMsg_BreakStop()
   v1 = &v3;
   for ( i = 36LL; i; --i )
   {
-    *(_DWORD *)v1 = -858993460;
     v1 = (__int64 *)((char *)v1 + 4);
   }
   szMsg = this->m_ObjID.m_byID;
@@ -1420,7 +1421,6 @@ void CGameObject::SendMsg_RealFixPosition(bool bCircle)
   v2 = &v4;
   for ( i = 28LL; i; --i )
   {
-    *(_DWORD *)v2 = -858993460;
     v2 = (__int64 *)((char *)v2 + 4);
   }
   szMsg[0] = this->m_ObjID.m_byKind;
@@ -1464,7 +1464,6 @@ void CGameObject::SetBreakTranspar(bool bBreak)
   v2 = &v4;
   for ( i = 8LL; i; --i )
   {
-    *(_DWORD *)v2 = -858993460;
     v2 = (__int64 *)((char *)v2 + 4);
   }
   this->m_bBreakTranspar = bBreak;
@@ -1489,7 +1488,6 @@ char CGameObject::SetCurPos(float *pPos)
   v2 = &v5;
   for ( i = 8LL; i; --i )
   {
-    *(_DWORD *)v2 = -858993460;
     v2 = (__int64 *)((char *)v2 + 4);
   }
   if ( !CMapData::IsMapIn(this->m_pCurMap, pPos) )
@@ -1523,7 +1521,6 @@ void CGameObject::SetMaxVersion()
   v1 = &v3;
   for ( i = 12LL; i; --i )
   {
-    *(_DWORD *)v1 = -858993460;
     v1 = (__int64 *)((char *)v1 + 4);
   }
   this->m_bMaxVision = 1;
@@ -1544,7 +1541,6 @@ void CGameObject::SetStun(bool bStun)
   v2 = &v4;
   for ( i = 8LL; i; --i )
   {
-    *(_DWORD *)v2 = -858993460;
     v2 = (__int64 *)((char *)v2 + 4);
   }
   this->m_bStun = bStun;
@@ -1563,7 +1559,6 @@ char CGameObject::UpdateSecList()
   v1 = &v4;
   for ( i = 12LL; i; --i )
   {
-    *(_DWORD *)v1 = -858993460;
     v1 = (__int64 *)((char *)v1 + 4);
   }
   dwNew = CGameObject::CalcSecIndex();
@@ -1590,7 +1585,6 @@ CGameObject::~CGameObject()
   v1 = &v3;
   for ( i = 12LL; i; --i )
   {
-    *(_DWORD *)v1 = -858993460;
     v1 = (__int64 *)((char *)v1 + 4);
   }
   if ( this->m_bPlayerCircleList )
@@ -1623,7 +1617,6 @@ void CGameObject::_ResetCirclePlayer()
   v1 = &v6;
   for ( i = 680LL; i; --i )
   {
-    *(_DWORD *)v1 = -858993460;
     v1 = (__int64 *)((char *)v1 + 4);
   }
   if ( this->m_bPlayerCircleList )
@@ -1689,12 +1682,8 @@ __int64 CGameObject::GetAttackLevel()
 {
   __int64 *stackPtr = nullptr;
   __int64 i = 0;
-  __int64 stackFill = 0;
-
-  stackPtr = &stackFill;
   for (i = 8LL; i; --i)
   {
-    *reinterpret_cast<unsigned int *>(stackPtr) = 0xCCCCCCCC;
     stackPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(stackPtr) + 4);
   }
   return GetLevel();
@@ -1704,12 +1693,8 @@ float CGameObject::GetAttackRange()
 {
   __int64 *stackPtr = nullptr;
   __int64 i = 0;
-  __int64 stackFill = 0;
-
-  stackPtr = &stackFill;
   for (i = 4LL; i; --i)
   {
-    *reinterpret_cast<unsigned int *>(stackPtr) = 0xCCCCCCCC;
     stackPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(stackPtr) + 4);
   }
   return 0.0f;
@@ -2067,26 +2052,12 @@ __int64 CGameObject::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConv
 float CGameObject::GetDefFacing(int nPart)
 {
   (void)nPart;
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 4; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
   return FLOAT_0_5;
 }
 
 float CGameObject::GetDefGap(int nPart)
 {
   (void)nPart;
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 4; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
   return FLOAT_0_5;
 }
 
@@ -2118,13 +2089,6 @@ __int64 CGameObject::GetWindTol()
 
 float CGameObject::GetWeaponAdjust()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 4; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
   return FLOAT_0_5;
 }
 
@@ -2153,13 +2117,6 @@ __int64 CGameObject::GetWeaponClass()
 
 float CGameObject::GetWidth()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 4; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
   return 0.0f;
 }
 
@@ -2170,13 +2127,6 @@ void CGameObject::SetAttackPart(int nAttactPart)
 
 void CGameObject::SetBreakTranspar(bool bBreak)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
   m_bBreakTranspar = bBreak;
   if (m_bBreakTranspar)
   {

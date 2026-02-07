@@ -2238,8 +2238,8 @@ public:
   unsigned int GetState(unsigned int dwIndex);
   unsigned int GetIndex(Us_FSM_Node *pNode);
   int Link(Us_FSM_Node *pParent, Us_FSM_Node *pChild);
-  static void SendMsg(Us_HFSM *pHFS, unsigned int dwFSMIndex, unsigned int dwMSG, void *lpParam);
-  static void SendExternMsg(Us_HFSM *pHFS, unsigned int dwMSG, void *lpParam, unsigned int nParam);
+  void SendMsg(unsigned int dwFSMIndex, unsigned int dwMSG, void *lpParam);
+  void SendExternMsg(unsigned int dwMSG, void *lpParam, unsigned int nParam);
   void SetLoopTime(unsigned int nIndex, unsigned int dwLoopTime);
   void AddLoopDelayTime(unsigned int nIndex, unsigned int dwAddDelay);
   virtual void OnProcess(unsigned int dwLastTime);

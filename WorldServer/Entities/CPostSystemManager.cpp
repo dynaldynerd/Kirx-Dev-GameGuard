@@ -48,13 +48,13 @@ bool CPostSystemManager::Init()
   m_tmrRegiTime.BeginTimer(1000);
   m_tmrProcTime.BeginTimer(30000);
 
-  CNetIndexList::SetList(&m_listEmpty, 500);
-  CNetIndexList::SetList(&m_listRegist, 500);
-  CNetIndexList::SetList(&m_listProc, 500);
+  m_listEmpty.SetList(500);
+  m_listRegist.SetList(500);
+  m_listProc.SetList(500);
 
   for (unsigned int i = 0; i < 500; ++i)
   {
-    CNetIndexList::PushNode_Back(&m_listEmpty, i);
+    m_listEmpty.PushNode_Back(i);
   }
 
   return true;

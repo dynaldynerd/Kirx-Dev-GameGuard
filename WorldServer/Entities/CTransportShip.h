@@ -12,7 +12,7 @@ class CPlayer;
 class __cppobj CTransportShip
 {
 public:
-  static bool InitShip(CTransportShip *pShip, CMapData *pLinkShipMap, CMapData *pLinkMainbaseMap, CMapData *pLinkPlatformMap, int nIndex);
+  bool InitShip(CMapData *pLinkShipMap, CMapData *pLinkMainbaseMap, CMapData *pLinkPlatformMap, int nIndex);
   void AlterState(bool bAnchor, unsigned __int8 byDirect, int nPassMin, int nNextSubEventTerm);
   void KickFreeMember();
   void KickOldMember(unsigned __int8 byKickDirectCode);

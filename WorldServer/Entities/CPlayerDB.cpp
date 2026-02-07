@@ -2,140 +2,133 @@
 
 #include "CPlayerDB.h"
 
-int CPlayerDB::GetRaceCode(CPlayerDB *self)
+int CPlayerDB::GetRaceCode()
 {
-  return static_cast<int>(self->m_dbChar.m_byRaceSexCode) >> 1;
+  return static_cast<int>(this->m_dbChar.m_byRaceSexCode) >> 1;
 }
 
-int CPlayerDB::GetRaceSexCode(CPlayerDB *self)
+int CPlayerDB::GetRaceSexCode()
 {
-  return self->m_dbChar.m_byRaceSexCode;
+  return this->m_dbChar.m_byRaceSexCode;
 }
 
-int CPlayerDB::GetMapCode(CPlayerDB *self)
+int CPlayerDB::GetMapCode()
 {
-  return static_cast<unsigned int>(self->m_dbChar.m_sStartMapCode);
+  return static_cast<unsigned int>(this->m_dbChar.m_sStartMapCode);
 }
 
-void CPlayerDB::SetMapCode(CPlayerDB *self, unsigned __int8 byCode)
+void CPlayerDB::SetMapCode(unsigned __int8 byCode)
 {
-  self->m_dbChar.m_sStartMapCode = byCode;
+  this->m_dbChar.m_sStartMapCode = byCode;
 }
 
-char *CPlayerDB::GetCharNameA(CPlayerDB *self)
+char *CPlayerDB::GetCharNameA()
 {
-  return self->m_aszName;
+  return this->m_aszName;
 }
 
-const char *CPlayerDB::GetCharNameW(CPlayerDB *self)
+const char *CPlayerDB::GetCharNameW()
 {
-  return self->m_dbChar.m_wszCharID;
+  return this->m_dbChar.m_wszCharID;
 }
 
-unsigned int CPlayerDB::GetCharSerial(CPlayerDB *self)
+unsigned int CPlayerDB::GetCharSerial()
 {
-  return self->m_dbChar.m_dwSerial;
+  return this->m_dbChar.m_dwSerial;
 }
 
-long double CPlayerDB::GetPvPPoint(CPlayerDB *self)
+long double CPlayerDB::GetPvPPoint()
 {
-  return self->m_dbChar.m_dPvPPoint;
+  return this->m_dbChar.m_dPvPPoint;
 }
 
-void CPlayerDB::SetPvPPoint(CPlayerDB *self, long double dPoint)
+void CPlayerDB::SetPvPPoint(long double dPoint)
 {
-  self->m_dbChar.m_dPvPPoint = dPoint;
+  this->m_dbChar.m_dPvPPoint = dPoint;
 }
 
-unsigned int CPlayerDB::GetGuildSerial(CPlayerDB *self)
+unsigned int CPlayerDB::GetGuildSerial()
 {
-  if (self->m_pGuild)
+  if (this->m_pGuild)
   {
-    return self->m_pGuild->m_dwSerial;
+    return this->m_pGuild->m_dwSerial;
   }
   return static_cast<unsigned int>(-1);
 }
 
-unsigned int CPlayerDB::GetLevel(CPlayerDB *self)
+unsigned int CPlayerDB::GetLevel()
 {
-  return self->m_dbChar.m_byLevel;
+  return this->m_dbChar.m_byLevel;
 }
 
-unsigned int CPlayerDB::GetHP(CPlayerDB *self)
+unsigned int CPlayerDB::GetHP()
 {
-  return self->m_dbChar.m_dwHP;
+  return this->m_dbChar.m_dwHP;
 }
 
-void CPlayerDB::SetHP(CPlayerDB *self, unsigned int dwHP)
+void CPlayerDB::SetHP(unsigned int dwHP)
 {
-  self->m_dbChar.m_dwHP = dwHP;
+  this->m_dbChar.m_dwHP = dwHP;
 }
 
-unsigned int CPlayerDB::GetFP(CPlayerDB *self)
+unsigned int CPlayerDB::GetFP()
 {
-  return self->m_dbChar.m_dwFP;
+  return this->m_dbChar.m_dwFP;
 }
 
-void CPlayerDB::SetFP(CPlayerDB *self, unsigned int dwFP)
+void CPlayerDB::SetFP(unsigned int dwFP)
 {
-  self->m_dbChar.m_dwFP = dwFP;
+  this->m_dbChar.m_dwFP = dwFP;
 }
 
-unsigned int CPlayerDB::GetSP(CPlayerDB *self)
+unsigned int CPlayerDB::GetSP()
 {
-  return self->m_dbChar.m_dwSP;
+  return this->m_dbChar.m_dwSP;
 }
 
-void CPlayerDB::SetSP(CPlayerDB *self, unsigned int dwSP)
+void CPlayerDB::SetSP(unsigned int dwSP)
 {
-  self->m_dbChar.m_dwSP = dwSP;
+  this->m_dbChar.m_dwSP = dwSP;
 }
 
-unsigned int CPlayerDB::GetDP(CPlayerDB *self)
+unsigned int CPlayerDB::GetDP()
 {
-  return self->m_dbChar.m_dwDP;
+  return this->m_dbChar.m_dwDP;
 }
 
-void CPlayerDB::SetDP(CPlayerDB *self, unsigned int dwDP)
+void CPlayerDB::SetDP(unsigned int dwDP)
 {
-  self->m_dbChar.m_dwDP = dwDP;
+  this->m_dbChar.m_dwDP = dwDP;
 }
 
-unsigned int CPlayerDB::GetDalant(CPlayerDB *self)
+unsigned int CPlayerDB::GetDalant()
 {
-  return self->m_dbChar.m_dwDalant;
+  return this->m_dbChar.m_dwDalant;
 }
 
-void CPlayerDB::SetDalant(CPlayerDB *self, unsigned int dwDt)
+void CPlayerDB::SetDalant(unsigned int dwDt)
 {
-  self->m_dbChar.m_dwDalant = dwDt;
+  this->m_dbChar.m_dwDalant = dwDt;
 }
 
-unsigned int CPlayerDB::GetGold(CPlayerDB *self)
+unsigned int CPlayerDB::GetGold()
 {
-  return self->m_dbChar.m_dwGold;
+  return this->m_dbChar.m_dwGold;
 }
 
-void CPlayerDB::SetCurPos(CPlayerDB *self, float *fPos)
+void CPlayerDB::SetCurPos(float *fPos)
 {
-  memcpy_0(self->m_dbChar.m_fStartPos, fPos, sizeof(self->m_dbChar.m_fStartPos));
+  memcpy_0(this->m_dbChar.m_fStartPos, fPos, sizeof(this->m_dbChar.m_fStartPos));
 }
 
-unsigned __int8 CPlayerDB::GetBagNum(CPlayerDB *self)
+unsigned __int8 CPlayerDB::GetBagNum()
 {
-  return self->m_dbChar.m_byUseBagNum;
+  return this->m_dbChar.m_byUseBagNum;
 }
 
-unsigned __int16 CPlayerDB::GetNewItemSerial(CPlayerDB *self)
+unsigned __int16 CPlayerDB::GetNewItemSerial()
 {
-  __int16 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 4; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr += 2;
-  }
-  return self->m_wSerialCount++;
+  return this->m_wSerialCount++;
 }
 
 _SFCONT_DB_BASE::_SFCONT_DB_BASE()
@@ -214,4 +207,3 @@ void _SFCONT_DB_BASE::_LIST::SetOrder(unsigned __int8 byOrder)
 {
   dwKey = (dwKey & 0x0FFFFFFF) | (static_cast<unsigned int>(byOrder) << 28);
 }
-

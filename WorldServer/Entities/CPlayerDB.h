@@ -6,31 +6,31 @@
 class __cppobj CPlayerDB
 {
 public:
-  static int GetRaceCode(CPlayerDB *self);
-  static int GetRaceSexCode(CPlayerDB *self);
-  static int GetMapCode(CPlayerDB *self);
-  static void SetMapCode(CPlayerDB *self, unsigned __int8 byCode);
-  static char *GetCharNameA(CPlayerDB *self);
-  static const char *GetCharNameW(CPlayerDB *self);
-  static unsigned int GetCharSerial(CPlayerDB *self);
-  static long double GetPvPPoint(CPlayerDB *self);
-  static void SetPvPPoint(CPlayerDB *self, long double dPoint);
-  static unsigned int GetGuildSerial(CPlayerDB *self);
-  static unsigned int GetLevel(CPlayerDB *self);
-  static unsigned int GetHP(CPlayerDB *self);
-  static void SetHP(CPlayerDB *self, unsigned int dwHP);
-  static unsigned int GetFP(CPlayerDB *self);
-  static void SetFP(CPlayerDB *self, unsigned int dwFP);
-  static unsigned int GetSP(CPlayerDB *self);
-  static void SetSP(CPlayerDB *self, unsigned int dwSP);
-  static unsigned int GetDP(CPlayerDB *self);
-  static void SetDP(CPlayerDB *self, unsigned int dwDP);
-  static unsigned int GetDalant(CPlayerDB *self);
-  static void SetDalant(CPlayerDB *self, unsigned int dwDt);
-  static unsigned int GetGold(CPlayerDB *self);
-  static void SetCurPos(CPlayerDB *self, float *fPos);
-  static unsigned __int8 GetBagNum(CPlayerDB *self);
-  static unsigned __int16 GetNewItemSerial(CPlayerDB *self);
+  int GetRaceCode();
+  int GetRaceSexCode();
+  int GetMapCode();
+  void SetMapCode(unsigned __int8 byCode);
+  char *GetCharNameA();
+  const char *GetCharNameW();
+  unsigned int GetCharSerial();
+  long double GetPvPPoint();
+  void SetPvPPoint(long double dPoint);
+  unsigned int GetGuildSerial();
+  unsigned int GetLevel();
+  unsigned int GetHP();
+  void SetHP(unsigned int dwHP);
+  unsigned int GetFP();
+  void SetFP(unsigned int dwFP);
+  unsigned int GetSP();
+  void SetSP(unsigned int dwSP);
+  unsigned int GetDP();
+  void SetDP(unsigned int dwDP);
+  unsigned int GetDalant();
+  void SetDalant(unsigned int dwDt);
+  unsigned int GetGold();
+  void SetCurPos(float *fPos);
+  unsigned __int8 GetBagNum();
+  unsigned __int16 GetNewItemSerial();
 
   unsigned __int8 m_byPvPGrade;
   __unaligned __declspec(align(1)) _character_db_load m_dbChar;

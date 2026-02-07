@@ -45,7 +45,7 @@ void CRaceBossWinRate::Notify()
     CPlayer *player = &g_Player[index];
     if (player->m_bOper && player->m_bLive)
     {
-      const unsigned __int8 race = static_cast<unsigned __int8>(CPlayerDB::GetRaceCode(&player->m_Param));
+      const unsigned __int8 race = static_cast<unsigned __int8>(player->m_Param.GetRaceCode());
       unsigned __int8 type[2]{};
       type[0] = 13;
       type[1] = 123;

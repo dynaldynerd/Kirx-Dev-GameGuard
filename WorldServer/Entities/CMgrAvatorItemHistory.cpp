@@ -176,20 +176,20 @@ CMgrAvatorItemHistory::CMgrAvatorItemHistory()
 
   m_tmrUpdateTime.BeginTimer(0xEA60);
 
-  CNetIndexList::SetList(&m_listLogData_10K, 0xFE);
-  CNetIndexList::SetList(&m_listLogDataEmpty_10K, 0xFE);
+  m_listLogData_10K.SetList(0xFE);
+  m_listLogDataEmpty_10K.SetList(0xFE);
   for (unsigned int index = 0; index < 254; ++index)
-    CNetIndexList::PushNode_Back(&m_listLogDataEmpty_10K, index);
+    m_listLogDataEmpty_10K.PushNode_Back(index);
 
-  CNetIndexList::SetList(&m_listLogData_1K, 0xFE);
-  CNetIndexList::SetList(&m_listLogDataEmpty_1K, 0xFE);
+  m_listLogData_1K.SetList(0xFE);
+  m_listLogDataEmpty_1K.SetList(0xFE);
   for (unsigned int index = 0; index < 254; ++index)
-    CNetIndexList::PushNode_Back(&m_listLogDataEmpty_1K, index);
+    m_listLogDataEmpty_1K.PushNode_Back(index);
 
-  CNetIndexList::SetList(&m_listLogData_200, 0x9E4);
-  CNetIndexList::SetList(&m_listLogDataEmpty_200, 0x9E4);
+  m_listLogData_200.SetList(0x9E4);
+  m_listLogDataEmpty_200.SetList(0x9E4);
   for (unsigned int index = 0; index < 2532; ++index)
-    CNetIndexList::PushNode_Back(&m_listLogDataEmpty_200, index);
+    m_listLogDataEmpty_200.PushNode_Back(index);
 
   m_bIOThread = true;
   _beginthread(&CMgrAvatorItemHistory::IOThread, 0, this);
@@ -203,27 +203,27 @@ void CMgrAvatorItemHistory::IOThread(void *pv)
     self->m_FrameRate.CalcSpeedPerFrame();
 
     unsigned int outIndex = 0;
-    while (CNetIndexList::PopNode_Front(&self->m_listLogData_10K, &outIndex))
+    while (self->m_listLogData_10K.PopNode_Front(&outIndex))
     {
       __LOG_DATA_10K &entry = self->m_LogData_10K[outIndex];
       IOFileWrite_0(entry.szFileName, entry.nLen, entry.sData);
-      CNetIndexList::PushNode_Back(&self->m_listLogDataEmpty_10K, outIndex);
+      self->m_listLogDataEmpty_10K.PushNode_Back(outIndex);
       Sleep(0);
     }
 
-    while (CNetIndexList::PopNode_Front(&self->m_listLogData_1K, &outIndex))
+    while (self->m_listLogData_1K.PopNode_Front(&outIndex))
     {
       __LOG_DATA_1K &entry = self->m_LogData_1K[outIndex];
       IOFileWrite_0(entry.szFileName, entry.nLen, entry.sData);
-      CNetIndexList::PushNode_Back(&self->m_listLogDataEmpty_1K, outIndex);
+      self->m_listLogDataEmpty_1K.PushNode_Back(outIndex);
       Sleep(0);
     }
 
-    while (CNetIndexList::PopNode_Front(&self->m_listLogData_200, &outIndex))
+    while (self->m_listLogData_200.PopNode_Front(&outIndex))
     {
       __LOG_DATA_200 &entry = self->m_LogData_200[outIndex];
       IOFileWrite_0(entry.szFileName, entry.nLen, entry.sData);
-      CNetIndexList::PushNode_Back(&self->m_listLogDataEmpty_200, outIndex);
+      self->m_listLogDataEmpty_200.PushNode_Back(outIndex);
       Sleep(0);
     }
 
@@ -242,36 +242,36 @@ void CMgrAvatorItemHistory::WriteFile(const char *pszFileName, const char *pszLo
   {
     if (logLen >= 0x3E8)
     {
-      if (logLen < 0x2710 && CNetIndexList::PopNode_Front(&m_listLogDataEmpty_10K, &outIndex))
+      if (logLen < 0x2710 && m_listLogDataEmpty_10K.PopNode_Front(&outIndex))
       {
         __LOG_DATA_10K &entry = m_LogData_10K[outIndex];
         strcpy_0(entry.szFileName, pszFileName);
         entry.nLen = logLen;
         memcpy_0(entry.sData, pszLog, static_cast<unsigned int>(logLen));
         entry.sData[logLen] = '\0';
-        CNetIndexList::PushNode_Back(&m_listLogData_10K, outIndex);
+        m_listLogData_10K.PushNode_Back(outIndex);
         return;
       }
     }
-    else if (CNetIndexList::PopNode_Front(&m_listLogDataEmpty_1K, &outIndex))
+    else if (m_listLogDataEmpty_1K.PopNode_Front(&outIndex))
     {
       __LOG_DATA_1K &entry = m_LogData_1K[outIndex];
       strcpy_0(entry.szFileName, pszFileName);
       entry.nLen = logLen;
       memcpy_0(entry.sData, pszLog, static_cast<unsigned int>(logLen));
       entry.sData[logLen] = '\0';
-      CNetIndexList::PushNode_Back(&m_listLogData_1K, outIndex);
+      m_listLogData_1K.PushNode_Back(outIndex);
       return;
     }
   }
-  else if (CNetIndexList::PopNode_Front(&m_listLogDataEmpty_200, &outIndex))
+  else if (m_listLogDataEmpty_200.PopNode_Front(&outIndex))
   {
     __LOG_DATA_200 &entry = m_LogData_200[outIndex];
     strcpy_0(entry.szFileName, pszFileName);
     entry.nLen = logLen;
     memcpy_0(entry.sData, pszLog, static_cast<unsigned int>(logLen));
     entry.sData[logLen] = '\0';
-    CNetIndexList::PushNode_Back(&m_listLogData_200, outIndex);
+    m_listLogData_200.PushNode_Back(outIndex);
     return;
   }
 
@@ -306,13 +306,6 @@ void CMgrAvatorItemHistory::reward_add_item(
   _STORAGE_LIST::_db_con *pItem,
   char *pszFileName)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 28; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
   char *curTime = m_szCurTime;

@@ -71,165 +71,165 @@ CNetIndexList::~CNetIndexList()
   }
 }
 
-bool CNetIndexList::SetList(CNetIndexList *list, unsigned int maxBufNum)
+bool CNetIndexList::SetList(unsigned int maxBufNum)
 {
-  if (list == nullptr)
+  if (this == nullptr)
   {
     return false;
   }
-  if (list->m_pBufNode != nullptr || list->m_dwMaxBufNum != 0)
+  if (this->m_pBufNode != nullptr || this->m_dwMaxBufNum != 0)
   {
     return false;
   }
 
-  list->m_dwMaxBufNum = maxBufNum;
-  list->m_pBufNode = new _index_node[maxBufNum];
-  list->m_dwBufCount = 0;
-  list->m_dwCount = 0;
+  this->m_dwMaxBufNum = maxBufNum;
+  this->m_pBufNode = new _index_node[maxBufNum];
+  this->m_dwBufCount = 0;
+  this->m_dwCount = 0;
 
-  InitList(list->m_Head, list->m_Tail);
-  InitList(list->m_BufHead, list->m_BufTail);
+  InitList(this->m_Head, this->m_Tail);
+  InitList(this->m_BufHead, this->m_BufTail);
 
-  for (unsigned int j = 0; j < list->m_dwMaxBufNum; ++j)
+  for (unsigned int j = 0; j < this->m_dwMaxBufNum; ++j)
   {
-    InsertBefore(&list->m_BufTail, &list->m_pBufNode[j]);
-    ++list->m_dwBufCount;
+    InsertBefore(&this->m_BufTail, &this->m_pBufNode[j]);
+    ++this->m_dwBufCount;
   }
 
   return true;
 }
 
-bool CNetIndexList::PushNode_Back(CNetIndexList *list, unsigned int index)
+bool CNetIndexList::PushNode_Back(unsigned int index)
 {
-  if (list == nullptr)
+  if (this == nullptr)
   {
     return false;
   }
 
-  _index_node *node = PopFront(list->m_BufHead, list->m_BufTail);
+  _index_node *node = PopFront(this->m_BufHead, this->m_BufTail);
   if (node == nullptr)
   {
     return false;
   }
 
   node->m_dwIndex = index;
-  InsertBefore(&list->m_Tail, node);
-  --list->m_dwBufCount;
-  ++list->m_dwCount;
+  InsertBefore(&this->m_Tail, node);
+  --this->m_dwBufCount;
+  ++this->m_dwCount;
   return true;
 }
 
-bool CNetIndexList::PushNode_Front(CNetIndexList *list, unsigned int index)
+bool CNetIndexList::PushNode_Front(unsigned int index)
 {
-  if (list == nullptr)
+  if (this == nullptr)
   {
     return false;
   }
 
-  _index_node *node = PopFront(list->m_BufHead, list->m_BufTail);
+  _index_node *node = PopFront(this->m_BufHead, this->m_BufTail);
   if (node == nullptr)
   {
     return false;
   }
 
   node->m_dwIndex = index;
-  node->m_pNext = list->m_Head.m_pNext;
-  node->m_pPrev = &list->m_Head;
-  list->m_Head.m_pNext->m_pPrev = node;
-  list->m_Head.m_pNext = node;
-  --list->m_dwBufCount;
-  ++list->m_dwCount;
+  node->m_pNext = this->m_Head.m_pNext;
+  node->m_pPrev = &this->m_Head;
+  this->m_Head.m_pNext->m_pPrev = node;
+  this->m_Head.m_pNext = node;
+  --this->m_dwBufCount;
+  ++this->m_dwCount;
   return true;
 }
 
-bool CNetIndexList::PopNode_Front(CNetIndexList *list, unsigned int *outIndex)
+bool CNetIndexList::PopNode_Front(unsigned int *outIndex)
 {
-  if (list == nullptr || outIndex == nullptr)
+  if (this == nullptr || outIndex == nullptr)
   {
     return false;
   }
 
-  _index_node *node = PopFront(list->m_Head, list->m_Tail);
+  _index_node *node = PopFront(this->m_Head, this->m_Tail);
   if (node == nullptr)
   {
     return false;
   }
 
   *outIndex = node->m_dwIndex;
-  InsertBefore(&list->m_BufTail, node);
-  --list->m_dwCount;
-  ++list->m_dwBufCount;
+  InsertBefore(&this->m_BufTail, node);
+  --this->m_dwCount;
+  ++this->m_dwBufCount;
   return true;
 }
 
-bool CNetIndexList::CopyFront(CNetIndexList *list, unsigned int *outIndex)
+bool CNetIndexList::CopyFront(unsigned int *outIndex)
 {
-  if (list == nullptr || outIndex == nullptr)
+  if (this == nullptr || outIndex == nullptr)
   {
     return false;
   }
 
-  list->m_csList.Lock();
-  if (list->m_Head.m_pNext == &list->m_Tail)
+  this->m_csList.Lock();
+  if (this->m_Head.m_pNext == &this->m_Tail)
   {
-    list->m_csList.Unlock();
+    this->m_csList.Unlock();
     return false;
   }
 
-  *outIndex = list->m_Head.m_pNext->m_dwIndex;
-  list->m_csList.Unlock();
+  *outIndex = this->m_Head.m_pNext->m_dwIndex;
+  this->m_csList.Unlock();
   return true;
 }
 
-CNetIndexList::_index_node *CNetIndexList::FindNode(CNetIndexList *list, unsigned int index)
+CNetIndexList::_index_node *CNetIndexList::FindNode(unsigned int index)
 {
-  if (list == nullptr)
+  if (this == nullptr)
   {
     return nullptr;
   }
 
-  list->m_csList.Lock();
-  _index_node *node = list->m_Head.m_pNext;
-  while (node != &list->m_Tail)
+  this->m_csList.Lock();
+  _index_node *node = this->m_Head.m_pNext;
+  while (node != &this->m_Tail)
   {
     if (node->m_dwIndex == index)
     {
       node->m_pPrev->m_pNext = node->m_pNext;
       node->m_pNext->m_pPrev = node->m_pPrev;
-      --list->m_dwCount;
-      InsertBefore(&list->m_BufTail, node);
-      ++list->m_dwBufCount;
-      list->m_csList.Unlock();
+      --this->m_dwCount;
+      InsertBefore(&this->m_BufTail, node);
+      ++this->m_dwBufCount;
+      this->m_csList.Unlock();
       return node;
     }
     node = node->m_pNext;
   }
-  list->m_csList.Unlock();
+  this->m_csList.Unlock();
   return nullptr;
 }
 
-void CNetIndexList::ResetList(CNetIndexList *list)
+void CNetIndexList::ResetList()
 {
-  if (list == nullptr)
+  if (this == nullptr)
   {
     return;
   }
 
   unsigned int outIndex = 0;
-  while (CNetIndexList::PopNode_Front(list, &outIndex))
+  while (PopNode_Front(&outIndex))
   {
   }
 }
 
-bool CNetIndexList::IsInList(CNetIndexList *list, unsigned int index)
+bool CNetIndexList::IsInList(unsigned int index)
 {
-  if (list == nullptr)
+  if (this == nullptr)
   {
     return false;
   }
 
-  _index_node *node = list->m_Head.m_pNext;
-  while (node != &list->m_Tail)
+  _index_node *node = this->m_Head.m_pNext;
+  while (node != &this->m_Tail)
   {
     if (node->m_dwIndex == index)
     {
@@ -240,12 +240,12 @@ bool CNetIndexList::IsInList(CNetIndexList *list, unsigned int index)
   return false;
 }
 
-unsigned int CNetIndexList::size(const CNetIndexList *list)
+unsigned int CNetIndexList::size()
 {
-  if (list == nullptr)
+  if (this == nullptr)
   {
     return 0;
   }
-  return list->m_dwCount;
+  return this->m_dwCount;
 }
 

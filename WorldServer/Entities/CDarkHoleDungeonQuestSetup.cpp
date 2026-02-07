@@ -40,52 +40,24 @@ namespace
 
 __error_info::__error_info()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   init();
 }
 
 void __error_info::init()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   memset_0(this, 0, sizeof(__error_info));
 }
 
 void __error_info::SetFileName(const char *pszFileName)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   strcpy_0(szFileName, pszFileName);
 }
 
 void __error_info::SetQuestTitle(const char *pszTitle)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   strcpy_0(szQuestTitle, pszTitle);
 }
@@ -93,13 +65,6 @@ void __error_info::SetQuestTitle(const char *pszTitle)
 CDarkHoleDungeonQuestSetup::CDarkHoleDungeonQuestSetup()
   : m_ErrorInfo()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   m_nLoadQuest = 0;
   m_nCurCondiKind = -1;
@@ -113,13 +78,6 @@ CDarkHoleDungeonQuestSetup::~CDarkHoleDungeonQuestSetup() = default;
 
 char *CDarkHoleDungeonQuestSetup::GetErrorMsg()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 12; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   sprintf(
     szMsg,
@@ -132,13 +90,6 @@ char *CDarkHoleDungeonQuestSetup::GetErrorMsg()
 
 bool CDarkHoleDungeonQuestSetup::SetupQuest(char *pszQuestFileName)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 364; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   if ((_S1_1 & 1) == 0)
   {
@@ -225,13 +176,6 @@ _dh_quest_setup *CDarkHoleDungeonQuestSetup::GetQuestSetupPtr(unsigned int dwQue
 
 bool CDarkHoleDungeonQuestSetup::_Analysis_Quest_Setting(strFILE *fstr)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 60; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   _dh_quest_setup *quest = (_dh_quest_setup *)operator new(0x1200uLL);
   if (quest)
@@ -262,13 +206,6 @@ bool CDarkHoleDungeonQuestSetup::_Analysis_Quest_Setting(strFILE *fstr)
 
 bool CDarkHoleDungeonQuestSetup::_Analysis_Quest_Condition(strFILE *fstr)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 92; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[136]{};
   if (!fstr->word(poutszWord))
@@ -288,13 +225,6 @@ bool CDarkHoleDungeonQuestSetup::_Analysis_Quest_Condition(strFILE *fstr)
 
 bool CDarkHoleDungeonQuestSetup::_Analysis_Mission_Setting(strFILE *fstr)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 60; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   if (!m_pCurLoadQuest)
     return _false(fstr, this);
@@ -326,13 +256,6 @@ bool CDarkHoleDungeonQuestSetup::_Analysis_Mission_Setting(strFILE *fstr)
 
 bool CDarkHoleDungeonQuestSetup::_Analysis_Mission_Condition(strFILE *fstr)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 92; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[132]{};
   if (!fstr->word(poutszWord))
@@ -352,13 +275,6 @@ bool CDarkHoleDungeonQuestSetup::_Analysis_Mission_Condition(strFILE *fstr)
 
 bool CDarkHoleDungeonQuestSetup::_Analysis_Job_Setting(strFILE *fstr)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 60; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   if (!m_pCurLoadQuest || !m_pCurLoadMission)
     return _false(fstr, this);
@@ -390,13 +306,6 @@ bool CDarkHoleDungeonQuestSetup::_Analysis_Job_Setting(strFILE *fstr)
 
 bool CDarkHoleDungeonQuestSetup::_Analysis_Job_Condition(strFILE *fstr)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 92; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[136]{};
   if (!fstr->word(poutszWord))
@@ -416,13 +325,6 @@ bool CDarkHoleDungeonQuestSetup::_Analysis_Job_Condition(strFILE *fstr)
 
 bool CDarkHoleDungeonQuestSetup::_LastCheckScipt(char *pszQuestFileName)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 24; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   _dh_quest_setup *quest = m_QuestSetup[m_nLoadQuest];
   for (int j = 0; j < quest->nEmbMissionSetupNum; ++j)
@@ -496,6 +398,3 @@ bool CDarkHoleDungeonQuestSetup::_LastCheckScipt(char *pszQuestFileName)
   }
   return true;
 }
-
-
-

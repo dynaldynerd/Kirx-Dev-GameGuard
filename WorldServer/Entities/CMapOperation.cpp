@@ -67,7 +67,7 @@ bool CMapOperation::Init()
         MyMessageBox("CMapOperation::Init() Error", "if(!pMainBaseMap)");
         return false;
       }
-      if (!CTransportShip::InitShip(&g_TransportShip[j], pLinkShipMap, pLinkMainbaseMap, pLinkPlatformMap, j))
+      if (!g_TransportShip[j].InitShip(pLinkShipMap, pLinkMainbaseMap, pLinkPlatformMap, j))
       {
         return false;
       }
@@ -93,7 +93,7 @@ bool CMapOperation::Init()
       }
     }
 
-    return CHolyStoneSystem::InitHolySystem(&g_HolySys) && CWorldSchedule::Init(&g_WorldSch);
+    return g_HolySys.InitHolySystem() && g_WorldSch.Init();
   }
 
   MyMessageBox("CMapOperation::Init() Error", "if(!pShipMap || !pPlatformMap)");

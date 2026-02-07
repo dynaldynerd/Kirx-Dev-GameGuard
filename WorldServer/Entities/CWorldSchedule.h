@@ -9,7 +9,7 @@ struct _WorldSchedule_fld;
 class __cppobj CWorldSchedule
 {
 public:
-  static bool Init(CWorldSchedule *pSch);
+  bool Init();
   bool DataCheck();
   int CalcScheduleCursor(int nHour, int nMin);
   void ChangeSchCursor(_WorldSchedule_fld *pFld, int nPassMin);

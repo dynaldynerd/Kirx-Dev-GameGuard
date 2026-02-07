@@ -369,11 +369,6 @@ bool CRecordData::IsTableOpen() const
   return m_bLoad;
 }
 
-bool CRecordData::IsTableOpen(const CRecordData *table)
-{
-  return table != nullptr && table->m_bLoad;
-}
-
 CRecordData::~CRecordData()
 {
   if (m_ppsRecord != nullptr)

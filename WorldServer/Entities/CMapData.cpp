@@ -206,13 +206,6 @@ bool CMapData::LoadHolySystemDummy(char *pszDummyCode, _dummy_position *pPos)
 
 _dummy_position *CMapData::GetDummyPostion(char *pszDummyCode)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   if (!strncmp(pszDummyCode, "dm", 2u))
     return static_cast<_dummy_position *>(m_tbMonDumPos.GetRecord(pszDummyCode));

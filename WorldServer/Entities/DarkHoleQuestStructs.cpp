@@ -4,9 +4,7 @@
 
 _dh_reward_sub_setup::_dh_reward_sub_setup()
 {
-  int stackFill[4];
   for (int i = 0; i < 4; ++i)
-    stackFill[i] = 0xCCCCCCCC;
 
   nItemNum = 0;
   for (int j = 0; j < 128; ++j)
@@ -21,13 +19,6 @@ _dh_reward_sub_setup::_dh_reward_sub_setup()
 
 _dh_reward_sub_setup::~_dh_reward_sub_setup()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 12; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   for (int j = 0; j < 128; ++j)
   {
@@ -41,13 +32,6 @@ _dh_reward_sub_setup::~_dh_reward_sub_setup()
 
 __dp_mission_potal::__dp_mission_potal()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   memset_0(this, 0, sizeof(*this));
 }
@@ -56,13 +40,6 @@ __dp_mission_potal::~__dp_mission_potal() = default;
 
 void __dp_mission_potal::set(char *szCode)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   m_nCodeLen[m_nNums] = static_cast<int>(strlen_0(szCode));
   strcpy_0(m_strCodes[static_cast<__int64>(m_nNums)], szCode);
@@ -71,13 +48,6 @@ void __dp_mission_potal::set(char *szCode)
 
 bool __dp_mission_potal::find(char *pcode)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 12; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   for (int j = 0; j < m_nNums; ++j)
   {
@@ -89,13 +59,6 @@ bool __dp_mission_potal::find(char *pcode)
 
 _dh_quest_setup::_dh_quest_setup()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 12; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   nEmbMissionSetupNum = 0;
   for (int j = 0; j < 100; ++j)
@@ -114,13 +77,6 @@ _dh_quest_setup::_dh_quest_setup()
 
 _dh_quest_setup::~_dh_quest_setup()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 20; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   for (int j = 0; j < 100; ++j)
   {
@@ -139,13 +95,6 @@ void _dh_quest_setup::SetRealBoss(bool isReal)
 
 _dh_mission_setup *_dh_quest_setup::SearchMissionFromTitle(char *pszMissionTitle)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 12; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   for (int j = 0; j < nEmbMissionSetupNum; ++j)
   {
@@ -157,13 +106,6 @@ _dh_mission_setup *_dh_quest_setup::SearchMissionFromTitle(char *pszMissionTitle
 
 _dh_mission_setup::_dh_mission_setup()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 12; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   nEmbJobSetupNum = 0;
   for (int j = 0; j < 8; ++j)
@@ -203,13 +145,6 @@ _dh_mission_setup::_dh_mission_setup()
 
 _dh_mission_setup::~_dh_mission_setup()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 44; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   for (int j = 0; j < 8; ++j)
   {
@@ -256,65 +191,30 @@ _dh_mission_setup::~_dh_mission_setup()
 
 _react_obj::_react_obj()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   memset_0(this, 0, sizeof(*this));
 }
 
 void _react_obj::copy(_react_obj *pObj)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   memcpy_0(this, pObj, sizeof(*this));
 }
 
 _react_area::_react_area()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   memset_0(this, 0, sizeof(*this));
 }
 
 void _react_area::copy(_react_area *pObj)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   memcpy_0(this, pObj, sizeof(*this));
 }
 
 __respawn_monster::__respawn_monster()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   bCallEvent = false;
   pszDefineCode = nullptr;
@@ -334,25 +234,10 @@ __monster_group::__monster_group()
 
 __add_monster::__add_monster()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
-
 }
 
 __add_loot_item::__add_loot_item()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   byItemTableCode = static_cast<unsigned __int8>(-1);
 }
@@ -365,13 +250,6 @@ __change_monster::__change_monster()
 
 __change_monster::~__change_monster()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 12; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   if (pszIfMissionDescirptCode)
     operator delete[](pszIfMissionDescirptCode);
@@ -381,13 +259,6 @@ __change_monster::~__change_monster()
 
 __inner_check::__inner_check()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   pszMsg = nullptr;
   pszRespawnCode = nullptr;
@@ -395,13 +266,6 @@ __inner_check::__inner_check()
 
 __inner_check::~__inner_check()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 12; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   if (pszMsg)
     operator delete[](pszMsg);
@@ -411,26 +275,12 @@ __inner_check::~__inner_check()
 
 __respond_check::__respond_check()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   pszMsg = nullptr;
 }
 
 __respond_check::~__respond_check()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 12; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   if (pszMsg)
     operator delete[](pszMsg);
@@ -438,13 +288,6 @@ __respond_check::~__respond_check()
 
 __add_time::__add_time()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   pszMsg = nullptr;
 }
@@ -458,13 +301,6 @@ _job_sub_setup::_job_sub_setup()
 
 _dh_job_setup::_dh_job_setup()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 12; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   nReactNum = 0;
   for (int j = 0; j < 10; ++j)
@@ -476,13 +312,6 @@ _dh_job_setup::_dh_job_setup()
 
 _dh_job_setup::~_dh_job_setup()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 12; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   for (int j = 0; j < 10; ++j)
   {

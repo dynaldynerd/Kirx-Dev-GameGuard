@@ -100,7 +100,7 @@ void CLevel::LoadLevel(const char *szFileName)
     }
   }
 
-  SetEnvironment(this, dword_184A79820);
+  SetEnvironment(dword_184A79820);
   ResetTexMemSize();
   mBsp->LoadBsp(v63);
 
@@ -173,14 +173,14 @@ void CLevel::LoadLevel(const char *szFileName)
   mBsp->mIsLoaded = 1;
 }
 
-void CLevel::SetEnvironment(CLevel *pLevel, int nEnv)
+void CLevel::SetEnvironment(int nEnv)
 {
-    pLevel->mEnvironment = nEnv;
+    this->mEnvironment = nEnv;
 }
 
-unsigned int CLevel::GetEnvironment(CLevel *pLevel)
+unsigned int CLevel::GetEnvironment()
 {
-  return pLevel->mEnvironment;
+  return this->mEnvironment;
 }
 
 unsigned int CLevel::GetPath(

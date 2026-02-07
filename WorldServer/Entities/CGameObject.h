@@ -246,25 +246,4 @@ public:
   unsigned int m_dwCurSec;
 };
 
-inline void CGameObject::SFContDelMessage(
-  unsigned __int8 /*byContCode*/,
-  unsigned __int8 /*byListIndex*/,
-  bool /*bSend*/,
-  bool /*bAura*/)
-{
-}
-
-inline void CGameObject::SFContInsertMessage(unsigned __int8 /*byContCode*/, unsigned __int8 /*byListIndex*/, bool /*bAura*/)
-{
-}
-
-inline bool CGameObject::IsAttackableInTown()
-{
-  return false;
-}
-
-inline char *CGameObject::GetObjName()
-{
-  return nullptr;
-}
 

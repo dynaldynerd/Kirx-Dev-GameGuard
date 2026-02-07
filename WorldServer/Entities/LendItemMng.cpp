@@ -134,4 +134,3 @@ void LendItemMng::ReleaseAll()
     _pkInstance = nullptr;
   }
 }
-

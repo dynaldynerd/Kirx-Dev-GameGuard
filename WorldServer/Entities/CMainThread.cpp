@@ -138,7 +138,7 @@ _DB_QRY_SYN_DATA *CMainThread::PushDQSData(
   int nSize)
 {
   unsigned int outIndex[5]{};
-  if (!CNetIndexList::PopNode_Front(&m_listDQSDataEmpty, outIndex))
+  if (!m_listDQSDataEmpty.PopNode_Front(outIndex))
   {
     ServerProgramExit("m_listDQSDataEmpty.PopNode_Front() => failed", 1);
   }
@@ -155,7 +155,7 @@ _DB_QRY_SYN_DATA *CMainThread::PushDQSData(
     memcpy_0(data->m_sData, pQryData, nSize);
   }
 
-  if (CNetIndexList::PushNode_Back(&m_listDQSData, outIndex[0]))
+  if (m_listDQSData.PushNode_Back(outIndex[0]))
   {
     data->m_bUse = true;
     data->m_bLoad = false;
@@ -1239,7 +1239,7 @@ bool CMainThread::SetGlobalDataName()
     }
 
     CRecordData *itemTable = &m_tblItemData[j];
-    if (!CRecordData::IsTableOpen(itemTable))
+    if (!itemTable || !itemTable->IsTableOpen())
     {
       MyMessageBox("SetGlobalDataName()", "ItemData Not Loaded : ItemTableCode(%d)", j);
       return false;
@@ -1409,7 +1409,7 @@ bool CMainThread::SetGlobalDataName()
     }
 
     CRecordData *effectTable = &m_tblEffectData[j];
-    if (!CRecordData::IsTableOpen(effectTable))
+    if (!effectTable || !effectTable->IsTableOpen())
     {
       MyMessageBox("SetGlobalDataName()", "EffectData Not Loaded : EffectNum(%d)", j);
       return false;
@@ -1449,7 +1449,7 @@ bool CMainThread::SetGlobalDataName()
     return false;
   }
 
-  if (!CRecordData::IsTableOpen(&m_tblClass))
+  if (!m_tblClass.IsTableOpen())
   {
     MyMessageBox("SetGlobalDataName()", "Class Data Not Loaded");
     return false;
@@ -1484,7 +1484,7 @@ bool CMainThread::SetGlobalDataName()
     strcpy_s(record->m_strKorName, 0x40, name);
   }
 
-  if (!CRecordData::IsTableOpen(&m_tblPlayer))
+  if (!m_tblPlayer.IsTableOpen())
   {
     MyMessageBox("SetGlobalDataName()", "Player Character Data Not Loaded");
     return false;
@@ -1519,7 +1519,7 @@ bool CMainThread::SetGlobalDataName()
     strcpy_s(record->m_strName, 0x40, name);
   }
 
-  if (!CRecordData::IsTableOpen(&m_tblMonster))
+  if (!m_tblMonster.IsTableOpen())
   {
     MyMessageBox("SetGlobalDataName()", "Monster Character Data Not Loaded");
     return false;
@@ -1554,7 +1554,7 @@ bool CMainThread::SetGlobalDataName()
     strcpy_s(record->m_strName, 0x40, name);
   }
 
-  if (!CRecordData::IsTableOpen(&m_tblNPC))
+  if (!m_tblNPC.IsTableOpen())
   {
     MyMessageBox("SetGlobalDataName()", "NPC Data Not Loaded");
     return false;
@@ -1589,7 +1589,7 @@ bool CMainThread::SetGlobalDataName()
     strcpy_s(record->m_strName, 0x40, name);
   }
 
-  if (!CRecordData::IsTableOpen(&m_tblAnimus))
+  if (!m_tblAnimus.IsTableOpen())
   {
     MyMessageBox("SetGlobalDataName()", "Animus Item Data Not Loaded");
     return false;
@@ -1648,7 +1648,7 @@ bool CMainThread::SetGlobalDataName()
     }
 
     CRecordData *unitPartTable = &m_tblUnitPart[j];
-    if (!CRecordData::IsTableOpen(unitPartTable))
+    if (!unitPartTable || !unitPartTable->IsTableOpen())
     {
       MyMessageBox("SetGlobalDataName()", "Unit Part Data Not Loaded : UnitPartNum(%d)", j);
       return false;
@@ -1684,7 +1684,7 @@ bool CMainThread::SetGlobalDataName()
     }
   }
 
-  if (!CRecordData::IsTableOpen(&m_tblUnitBullet))
+  if (!m_tblUnitBullet.IsTableOpen())
   {
     MyMessageBox("SetGlobalDataName()", "Unit Bullet Data Not Loaded");
     return false;
@@ -2240,12 +2240,12 @@ bool CMainThread::ObjectInit()
   _WEAPON_PARAM::SetStaticMember(&m_tblItemData[6]);
   _MASTERY_PARAM::SetStaticMember(m_tblEffectData, &m_tblEffectData[1]);
 
-  CNetIndexList::SetList(&m_listDQSData, MAX_DQS);
-  CNetIndexList::SetList(&m_listDQSDataComplete, MAX_DQS);
-  CNetIndexList::SetList(&m_listDQSDataEmpty, MAX_DQS);
+  m_listDQSData.SetList(MAX_DQS);
+  m_listDQSDataComplete.SetList(MAX_DQS);
+  m_listDQSDataEmpty.SetList(MAX_DQS);
   for (unsigned int index = 0; index < MAX_DB_QRY_SYN; ++index)
   {
-    CNetIndexList::PushNode_Back(&m_listDQSDataEmpty, index);
+    m_listDQSDataEmpty.PushNode_Back(index);
   }
 
   m_pRFEvent_ClassRefine = new RFEvent_ClassRefine();

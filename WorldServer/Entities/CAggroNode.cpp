@@ -7,13 +7,6 @@
 
 CAggroNode::CAggroNode()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
   Init();
 }
 
@@ -28,13 +21,6 @@ void CAggroNode::Init()
 
 void CAggroNode::Set(CCharacter *pCharacter)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   Init();
   if (pCharacter)
@@ -53,13 +39,6 @@ void CAggroNode::SetAggro(
   int bFirstAttack,
   int bTempSkill)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 28; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   int defaultValue = 0;
 
@@ -246,12 +225,6 @@ APPLY_AGGRO:
 
 bool CAggroNode::IsLive()
 {
-  int stackFill = 0;
-  int *fillPtr = &stackFill;
-  for (int fillCount = 4; fillCount; --fillCount)
-  {
-    *fillPtr++ = -858993460;
-  }
 
   return m_dwObjectSerial != static_cast<unsigned int>(-1) && m_pCharacter && m_pCharacter->m_bLive
          && !m_pCharacter->m_bCorpse;

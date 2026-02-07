@@ -20,13 +20,6 @@ CDarkHoleDungeonQuest g_DarkHoleQuest;
 
 bool CDarkHoleDungeonQuest::LoadDarkHoleQuest()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 100; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   for (int n = 0;; ++n)
   {
@@ -57,4 +50,3 @@ bool CDarkHoleDungeonQuest::LoadDarkHoleQuest()
   m_dwCheckLastTime = timeGetTime();
   return true;
 }
-

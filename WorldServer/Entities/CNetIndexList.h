@@ -19,15 +19,15 @@ public:
   CNetIndexList();
   ~CNetIndexList();
 
-  static bool SetList(CNetIndexList *list, unsigned int maxBufNum);
-  static bool PushNode_Back(CNetIndexList *list, unsigned int index);
-  static bool PushNode_Front(CNetIndexList *list, unsigned int index);
-  static bool PopNode_Front(CNetIndexList *list, unsigned int *outIndex);
-  static bool CopyFront(CNetIndexList *list, unsigned int *outIndex);
-  static _index_node *FindNode(CNetIndexList *list, unsigned int index);
-  static void ResetList(CNetIndexList *list);
-  static bool IsInList(CNetIndexList *list, unsigned int index);
-  static unsigned int size(const CNetIndexList *list);
+  bool SetList(unsigned int maxBufNum);
+  bool PushNode_Back(unsigned int index);
+  bool PushNode_Front(unsigned int index);
+  bool PopNode_Front(unsigned int *outIndex);
+  bool CopyFront(unsigned int *outIndex);
+  _index_node *FindNode(unsigned int index);
+  void ResetList();
+  bool IsInList(unsigned int index);
+  unsigned int size();
 
   _index_node m_Head;
   _index_node m_Tail;

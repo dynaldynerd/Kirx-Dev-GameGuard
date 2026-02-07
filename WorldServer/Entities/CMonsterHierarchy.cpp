@@ -8,12 +8,6 @@
 
 void CMonsterHierarchy::Init()
 {
-  unsigned int stackFill = 0;
-  unsigned int *fillPtr = &stackFill;
-  for (int fillCount = 4; fillCount; --fillCount)
-  {
-    *fillPtr++ = 0xCCCCCCCC;
-  }
 
   m_dwTotalCount = 0;
   m_pParentMon = nullptr;
@@ -103,13 +97,6 @@ __int64 CMonsterHierarchy::SetParent(CMonster *pMon)
 
 void CMonsterHierarchy::OnChildMonsterCreate(_monster_create_setdata *pData)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 16; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   Init();
   _base_fld *recordSet = pData->m_pRecordSet;
@@ -136,13 +123,6 @@ void CMonsterHierarchy::OnChildMonsterCreate(_monster_create_setdata *pData)
 
 void CMonsterHierarchy::OnChildMonsterDestroy()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 12; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   if (m_pParentMon)
   {

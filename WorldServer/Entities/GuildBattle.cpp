@@ -857,7 +857,7 @@ namespace GUILD_BATTLE
   {
     if (m_pkMember && m_pkMember->pPlayer)
     {
-      m_dPvpPoint = CPlayerDB::GetPvPPoint(&m_pkMember->pPlayer->m_Param);
+      m_dPvpPoint = m_pkMember->pPlayer->m_Param.GetPvPPoint();
       m_pOldBindMapData = m_pkMember->pPlayer->GetBindMapData();
       m_pOldBindDummyData = m_pkMember->pPlayer->GetBindDummy();
       const char *bindMapCode = m_pkMember->pPlayer->m_pUserDB->m_AvatorData.dbAvator.m_szBindMapCode;
@@ -1139,7 +1139,7 @@ namespace GUILD_BATTLE
       if (pkField->Start(m_byColorInx, player))
       {
         unsigned int objSerial = player ? player->m_dwObjSerial : 0;
-        const char *charName = player ? CPlayerDB::GetCharNameW(&player->m_Param) : "NULL";
+        const char *charName = player ? player->m_Param.GetCharNameW() : "NULL";
         CGuildBattleLogger::Instance()->Log(
           "CNormalGuildBattleGuild::MoveMember( iMember(%d), uiID(%u), pkField ) : %s(%u) Move Start Position!",
           iMember,

@@ -22,15 +22,15 @@
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
-bool CHolyStoneSystem::InitHolySystem(CHolyStoneSystem *pSystem)
+bool CHolyStoneSystem::InitHolySystem()
 {
-  if (!CHolyStoneSystemDataMgr::LoadIni(pSystem))
+  if (!CHolyStoneSystemDataMgr::LoadIni(this))
   {
     MyMessageBox("Error", "CHolyStoneSystem::InitHolySystem() : CHolyStoneSystemDataMgr::LoadIni(*this) Fail!");
     return false;
   }
 
-  if (!CHolyStoneSystemDataMgr::LoadSceduleData(&pSystem->m_ScheculeData))
+  if (!CHolyStoneSystemDataMgr::LoadSceduleData(&this->m_ScheculeData))
   {
     MyMessageBox(
       "Error",
@@ -38,16 +38,16 @@ bool CHolyStoneSystem::InitHolySystem(CHolyStoneSystem *pSystem)
     return false;
   }
 
-  CHolyScheduleData::__HolyScheduleNode *firstSchedule = pSystem->m_ScheculeData.GetIndex(1);
+  CHolyScheduleData::__HolyScheduleNode *firstSchedule = this->m_ScheculeData.GetIndex(1);
   if (!firstSchedule)
   {
     MyMessageBox("Error", "CHolyStoneSystem::InitHolySystem() : pFirstSchedule = m_ScheculeData.GetIndex(1) NULL!");
     return false;
   }
 
-  for (int j = 0; j < pSystem->m_nHolyStoneNum; ++j)
+  for (int j = 0; j < this->m_nHolyStoneNum; ++j)
   {
-    __holy_stone_data *stoneData = &pSystem->m_HolyStoneData[j];
+    __holy_stone_data *stoneData = &this->m_HolyStoneData[j];
     _stone_create_setdata data;
     data.m_pMap = stoneData->pCreateMap;
     data.m_nLayerIndex = 0;
@@ -70,16 +70,16 @@ bool CHolyStoneSystem::InitHolySystem(CHolyStoneSystem *pSystem)
   if (scheduleInit)
   {
     WritePrivateProfileStringA("Schedule", "ScheduleInit", "0", ".\\Initialize\\WorldSystem.ini");
-    pSystem->m_SaveData.DefaultInit(firstSchedule);
+    this->m_SaveData.DefaultInit(firstSchedule);
     oreMgr = COreAmountMgr::Instance();
     oreMgr->InitRemainOreAmount(0xFFFFFFFF, 0xFFFFFFFF);
     oreMgr->InitTransferOre(0, 0);
   }
 
   if (!scheduleInit
-      && (!CHolyStoneSystemDataMgr::LoadStateData(&pSystem->m_SaveData) || !pSystem->ContinueStartSystem()))
+      && (!CHolyStoneSystemDataMgr::LoadStateData(&this->m_SaveData) || !this->ContinueStartSystem()))
   {
-    pSystem->m_SaveData.DefaultInit(firstSchedule);
+    this->m_SaveData.DefaultInit(firstSchedule);
     oreMgr = COreAmountMgr::Instance();
     oreMgr->InitRemainOreAmount(0xFFFFFFFF, 0xFFFFFFFF);
     oreMgr->InitTransferOre(0, 0);
@@ -88,11 +88,11 @@ bool CHolyStoneSystem::InitHolySystem(CHolyStoneSystem *pSystem)
 
   if (scheduleInit)
   {
-    CHolyStoneSystemDataMgr::SaveStateData(&pSystem->m_SaveData);
+    CHolyStoneSystemDataMgr::SaveStateData(&this->m_SaveData);
   }
 
-  pSystem->m_bScheduleCodePre = 0;
-  pSystem->InitQuestCash_Other();
+  this->m_bScheduleCodePre = 0;
+  this->InitQuestCash_Other();
   return true;
 }
 
@@ -442,7 +442,7 @@ void CHolyStoneSystem::ReleaseLastAttBuff()
     {
       if (g_Player[j].m_bLive && g_Player[j].m_Param.m_pGuild)
       {
-        const unsigned int guildSerial = CPlayerDB::GetGuildSerial(&g_Player[j].m_Param);
+        const unsigned int guildSerial = g_Player[j].m_Param.GetGuildSerial();
         if (guildSerial == destroyerGuildSerial)
         {
           g_Player[j].SetLastAttBuff(false);
@@ -621,8 +621,8 @@ void CHolyStoneSystem::SendIsArriveDestroyer(char byArrive)
 #pragma pack(pop)
 
   msg.arrive = byArrive;
-  msg.race = static_cast<char>(CPlayerDB::GetRaceCode(&m_pkDestroyer->m_Param));
-  const char *charName = CPlayerDB::GetCharNameW(&m_pkDestroyer->m_Param);
+  msg.race = static_cast<char>(m_pkDestroyer->m_Param.GetRaceCode());
+  const char *charName = m_pkDestroyer->m_Param.GetCharNameW();
   memcpy_0(msg.name, charName, 0x10u);
   msg.name[16] = 0;
   msg.destroyerSerial = m_SaveData.m_dwDestroyerSerial;
@@ -949,8 +949,8 @@ void CHolyStoneSystem::GiveHSKQuest()
           for (int k = 0; k < 8 && partyMembers[k]; ++k)
           {
             CPlayer *member = &g_Player[partyMembers[k]->m_wZoneIndex];
-            const int memberRace = CPlayerDB::GetRaceCode(&member->m_Param);
-            const int playerRace = CPlayerDB::GetRaceCode(&player->m_Param);
+            const int memberRace = member->m_Param.GetRaceCode();
+            const int playerRace = player->m_Param.GetRaceCode();
             if (memberRace == playerRace && member->m_byHSKQuestCode == 100)
             {
               const unsigned __int8 byNumOfTime = GetNumOfTime();
@@ -992,8 +992,8 @@ void CHolyStoneSystem::SendHolyStoneHPToRaceBoss()
     CPlayer *player = &g_Player[k];
     if (player->m_bLive)
     {
-      const unsigned int serial = CPlayerDB::GetCharSerial(&player->m_Param);
-      const int race = CPlayerDB::GetRaceCode(&player->m_Param);
+      const unsigned int serial = player->m_Param.GetCharSerial();
+      const int race = player->m_Param.GetRaceCode();
       if (CPvpUserAndGuildRankingSystem::Instance()->IsCurrentRaceBossGroup(race, serial))
       {
         g_Network.m_pProcess[0]->LoadSendMsg( player->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 6u);
@@ -1015,8 +1015,8 @@ void CHolyStoneSystem::SendNotifyHolyStoneDestroyedToRaceBoss()
     CPlayer *player = &g_Player[j];
     if (player->m_bLive && player->m_bOper)
     {
-      const unsigned int serial = CPlayerDB::GetCharSerial(&player->m_Param);
-      const int race = CPlayerDB::GetRaceCode(&player->m_Param);
+      const unsigned int serial = player->m_Param.GetCharSerial();
+      const int race = player->m_Param.GetRaceCode();
       if (CPvpUserAndGuildRankingSystem::Instance()->IsCurrentRaceBossGroup(race, serial))
       {
         g_Network.m_pProcess[0]->LoadSendMsg( player->m_ObjID.m_wIndex, type, msg, 1u);
@@ -1032,7 +1032,7 @@ void CHolyStoneSystem::PeneltyFailRace(unsigned __int8 byFailRace)
     CPlayer *player = &g_Player[j];
     if (player->m_bLive && player->m_bOper && player->m_byHSKQuestCode != 100)
     {
-      const int race = CPlayerDB::GetRaceCode(&player->m_Param);
+      const int race = player->m_Param.GetRaceCode();
       if (race == byFailRace)
       {
         const unsigned __int8 byNumOfTime = g_HolySys.GetNumOfTime();
@@ -1049,10 +1049,10 @@ void CHolyStoneSystem::PeneltyFailRace(unsigned __int8 byFailRace)
               byNumOfTime))
         {
           int alterPoint = m_nRaceBattlePoint[1][0];
-          const double curPoint = CPlayerDB::GetPvPPoint(&player->m_Param);
+          const double curPoint = player->m_Param.GetPvPPoint();
           if (static_cast<double>(std::abs(alterPoint)) > curPoint)
           {
-            alterPoint = static_cast<int>(-0.0 - CPlayerDB::GetPvPPoint(&player->m_Param));
+            alterPoint = static_cast<int>(-0.0 - player->m_Param.GetPvPPoint());
           }
           player->AlterPvPPoint(static_cast<double>(alterPoint), holy_dec, 0xFFFFFFFF);
           player->SendMsg_RaceBattlePenelty(alterPoint, 0);
@@ -1060,10 +1060,10 @@ void CHolyStoneSystem::PeneltyFailRace(unsigned __int8 byFailRace)
         else
         {
           int alterPoint = m_nRaceBattlePoint[1][1];
-          const double curPoint = CPlayerDB::GetPvPPoint(&player->m_Param);
+          const double curPoint = player->m_Param.GetPvPPoint();
           if (static_cast<double>(std::abs(alterPoint)) > curPoint)
           {
-            alterPoint = static_cast<int>(-0.0 - CPlayerDB::GetPvPPoint(&player->m_Param));
+            alterPoint = static_cast<int>(-0.0 - player->m_Param.GetPvPPoint());
           }
           player->AlterPvPPoint(static_cast<double>(alterPoint), holy_dec, 0xFFFFFFFF);
           player->SendMsg_RaceBattlePenelty(alterPoint, 0);

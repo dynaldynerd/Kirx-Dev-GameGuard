@@ -45,9 +45,9 @@ void CGameStatistics::ConvertDay(char *pszWorldName)
   m_day.init();
 }
 
-CGameStatistics::_DAY *CGameStatistics::CurWriteData(CGameStatistics *thisPtr)
+CGameStatistics::_DAY *CGameStatistics::CurWriteData()
 {
-  return &thisPtr->m_day;
+  return &this->m_day;
 }
 
 void CGameStatistics::WriteDayData(char *pszWorldName)

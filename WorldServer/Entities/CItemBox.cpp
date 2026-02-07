@@ -88,14 +88,14 @@ bool CItemBox::Create(_itembox_create_setdata *pParam, bool bHide)
 
   if (pParam->pAttacker)
   {
-    m_byEventRaceCode = CPlayerDB::GetRaceCode(&pParam->pAttacker->m_Param);
+    m_byEventRaceCode = pParam->pAttacker->m_Param.GetRaceCode();
     if (pParam->pAttacker->m_pPartyMgr && pParam->pAttacker->m_pPartyMgr->IsPartyMode())
     {
       m_dwEventPartyBoss = pParam->pAttacker->m_pPartyMgr->m_pPartyBoss->m_id.dwSerial;
     }
     else
     {
-      m_dwEventPartyBoss = CPlayerDB::GetCharSerial(&pParam->pAttacker->m_Param);
+      m_dwEventPartyBoss = pParam->pAttacker->m_Param.GetCharSerial();
     }
     if (pParam->pAttacker->m_Param.m_pGuild)
     {
@@ -121,15 +121,15 @@ bool CItemBox::Create(_itembox_create_setdata *pParam, bool bHide)
     if (pParam->pThrower->m_ObjID.m_byID == 0)
     {
       CPlayer *throwerPlayer = static_cast<CPlayer *>(pParam->pThrower);
-      const char *charNameW = CPlayerDB::GetCharNameW(&throwerPlayer->m_Param);
+      const char *charNameW = throwerPlayer->m_Param.GetCharNameW();
       strcpy_0(m_wszThrowerName, charNameW);
       W2M(m_wszThrowerName, m_aszThrowerName, 0x11u);
-      m_dwThrowerCharSerial = CPlayerDB::GetCharSerial(&throwerPlayer->m_Param);
+      m_dwThrowerCharSerial = throwerPlayer->m_Param.GetCharSerial();
       if (throwerPlayer->m_pUserDB)
       {
         strcpy_0(m_szThrowerID, throwerPlayer->m_pUserDB->m_szAccountID);
       }
-      m_byThrowerRaceCode = CPlayerDB::GetRaceCode(&throwerPlayer->m_Param);
+      m_byThrowerRaceCode = throwerPlayer->m_Param.GetRaceCode();
       m_byThrowerDegree = throwerPlayer->m_byUserDgr;
       if (m_szThrowerItemHistoryFileName)
       {

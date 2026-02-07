@@ -100,11 +100,11 @@ void CMonsterHelper::HierarcyHelpCast(CMonster *pMon)
         CMonster *child = parent->m_MonHierarcy.GetChild(kindIndex, index);
         if (child && child != pMon)
         {
-          Us_HFSM::SendExternMsg(&child->m_AI, 1u, pMon, 0);
+          child->m_AI.SendExternMsg(1u, pMon, 0);
         }
       }
     }
-    Us_HFSM::SendExternMsg(&parent->m_AI, 1u, pMon, 0);
+    parent->m_AI.SendExternMsg(1u, pMon, 0);
   }
   else if (childKindCount)
   {
@@ -120,7 +120,7 @@ void CMonsterHelper::HierarcyHelpCast(CMonster *pMon)
         CMonster *child = pMon->m_MonHierarcy.GetChild(kindIndex, index);
         if (child && child != pMon)
         {
-          Us_HFSM::SendExternMsg(&child->m_AI, 1u, pMon, 0);
+          child->m_AI.SendExternMsg(1u, pMon, 0);
         }
       }
     }

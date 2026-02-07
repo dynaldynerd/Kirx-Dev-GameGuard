@@ -89,22 +89,22 @@ void _NET_BUFFER::AddPushPos(unsigned int dwAddSize)
 bool _FORCE_CLOSE::PushNode(unsigned int dwIndex, unsigned int dwSerial)
 {
   unsigned int outIndex = 0;
-  if (!CNetIndexList::PopNode_Front(&this->m_listFDEmpty, &outIndex))
+  if (!this->m_listFDEmpty.PopNode_Front(&outIndex))
     return false;
 
   _FORCE_CLOSE::__FD_NODE *node = &this->m_pFDData[outIndex];
   node->dwEventCreateTime = timeGetTime();
   node->dwObjIndex = dwIndex;
   node->dwObjSerial = dwSerial;
-  CNetIndexList::PushNode_Back(&this->m_listFD, outIndex);
+  this->m_listFD.PushNode_Back(outIndex);
   return true;
 }
 
 void CNetProcess::PushCloseNode(unsigned int nIndex)
 {
   _socket *Socket = this->m_NetSocket.GetSocket(nIndex);
-  if (Socket->m_bAccept && !CNetIndexList::IsInList(&this->m_listCloseEvent, nIndex))
-    CNetIndexList::PushNode_Back(&this->m_listCloseEvent, nIndex);
+  if (Socket->m_bAccept && !this->m_listCloseEvent.IsInList(nIndex))
+    this->m_listCloseEvent.PushNode_Back(nIndex);
 }
 
 int CNetProcess::LoadSendMsg(

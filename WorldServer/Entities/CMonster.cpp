@@ -1934,7 +1934,7 @@ char CMonster::_LootItem_Std(CPlayer *pOwner)
                 }
                 if (statOK && link->byTableCode < 8u)
                 {
-                  CGameStatistics::_DAY *day = CGameStatistics::CurWriteData(&g_GameStatistics);
+                  CGameStatistics::_DAY *day = g_GameStatistics.CurWriteData();
                   if (GetItemGrade(link->byTableCode, link->wItemIndex))
                   {
                     ++day->dwDropRareItem_Evt;
@@ -2028,7 +2028,7 @@ void CMonster::_BossDieWriteLog_Start(unsigned __int8 byDestroyCode, CPlayer *pA
         }
         else if (entry->pAtter->m_bLive && entry->pAtter->m_dwObjSerial == entry->dwAtterSerial)
         {
-          const char *name = CPlayerDB::GetCharNameA(&entry->pAtter->m_Param);
+          const char *name = entry->pAtter->m_Param.GetCharNameA();
           CMonster::s_logTrace_Boss_Looting.Write( "\t %s (%d) : %s", name, entry->dwAtterSerial, buffer);
         }
         else
@@ -2043,7 +2043,7 @@ void CMonster::_BossDieWriteLog_Start(unsigned __int8 byDestroyCode, CPlayer *pA
     if (pAttObj != &sPlayerDum)
     {
       const DWORD sec = timeGetTime() / 1000;
-      const char *name = CPlayerDB::GetCharNameA(&pAttObj->m_Param);
+      const char *name = pAttObj->m_Param.GetCharNameA();
         CMonster::s_logTrace_Boss_Looting.Write(
           "\t <<TAKER>> %s (%d) Sec: %d",
           name,

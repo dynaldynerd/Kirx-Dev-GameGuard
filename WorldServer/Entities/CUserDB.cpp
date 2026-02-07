@@ -54,17 +54,17 @@ void CUserDB::ParamInit()
   std::memset(m_dwTournamentCharacterSerialList, 0, sizeof(m_dwTournamentCharacterSerialList));
 }
 
-bool CUserDB::Update_Map(CUserDB *self, unsigned __int8 map, float *pos)
+bool CUserDB::Update_Map(unsigned __int8 map, float *pos)
 {
   if (!g_MapOper.IsExistStdMapID(map))
   {
     return false;
   }
 
-  self->m_AvatorData.dbAvator.m_byMapCode = map;
-  self->m_AvatorData.dbAvator.m_fStartPos[0] = pos[0];
-  self->m_AvatorData.dbAvator.m_fStartPos[1] = pos[1];
-  self->m_AvatorData.dbAvator.m_fStartPos[2] = pos[2];
+  this->m_AvatorData.dbAvator.m_byMapCode = map;
+  this->m_AvatorData.dbAvator.m_fStartPos[0] = pos[0];
+  this->m_AvatorData.dbAvator.m_fStartPos[1] = pos[1];
+  this->m_AvatorData.dbAvator.m_fStartPos[2] = pos[2];
   return true;
 }
 

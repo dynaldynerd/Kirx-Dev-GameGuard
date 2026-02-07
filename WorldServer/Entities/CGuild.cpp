@@ -148,10 +148,10 @@ void CGuild::SendMsg_AddJoinApplier(_guild_applier_info *p)
 
   AddJoinApplierMsg msg{};
   msg.dwSerial = p->pPlayer->m_dwObjSerial;
-  const char *charName = CPlayerDB::GetCharNameW(&p->pPlayer->m_Param);
+  const char *charName = p->pPlayer->m_Param.GetCharNameW();
   strcpy_0(msg.wszName, charName);
   msg.wszName[17] = static_cast<char>(p->pPlayer->GetLevel());
-  msg.nPvpPoint = static_cast<int>(CPlayerDB::GetPvPPoint(&p->pPlayer->m_Param));
+  msg.nPvpPoint = static_cast<int>(p->pPlayer->m_Param.GetPvPPoint());
   msg.dwApplyTime = p->dwApplyTime;
 
   unsigned __int8 pbyType[2] = {27, 8};
@@ -216,7 +216,7 @@ void CGuild::MakeDownApplierPacket()
     if (info->IsFill())
     {
       CPlayer *player = info->pPlayer;
-      const char *charName = CPlayerDB::GetCharNameW(&player->m_Param);
+      const char *charName = player->m_Param.GetCharNameW();
 
       char nameLen = static_cast<char>(strlen_0(charName));
       memcpy_0(sData, &nameLen, 1u);
@@ -236,7 +236,7 @@ void CGuild::MakeDownApplierPacket()
       sData = static_cast<char *>(sData) + 1;
       ++dataSize;
 
-      int pvpPoint = static_cast<int>(CPlayerDB::GetPvPPoint(&player->m_Param));
+      int pvpPoint = static_cast<int>(player->m_Param.GetPvPPoint());
       memcpy_0(sData, &pvpPoint, 4u);
       sData = static_cast<char *>(sData) + 4;
       dataSize += 4;

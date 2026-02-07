@@ -57,7 +57,7 @@ bool CRaceBuffByHolyQuestProcedure::CreateComplete(CPlayer *pkPlayer)
   }
 
   const bool haveMentalTicket = pkPlayer->IsHaveMentalTicket();
-  const unsigned __int8 race = static_cast<unsigned __int8>(CPlayerDB::GetRaceCode(&pkPlayer->m_Param));
+  const unsigned __int8 race = static_cast<unsigned __int8>(pkPlayer->m_Param.GetRaceCode());
   const int resultType = m_kBuffHolyQestResultInfo.GetResultType(race, haveMentalTicket);
   if (resultType < 0)
   {
@@ -83,7 +83,7 @@ int CRaceBuffByHolyQuestProcedure::CancelPlayerRaceBuff(
   }
 
   const bool haveMentalTicket = pkPlayer->IsHaveMentalTicket();
-  const unsigned __int8 race = static_cast<unsigned __int8>(CPlayerDB::GetRaceCode(&pkPlayer->m_Param));
+  const unsigned __int8 race = static_cast<unsigned __int8>(pkPlayer->m_Param.GetRaceCode());
   const int resultType = m_kBuffHolyQestResultInfo.GetResultType(race, haveMentalTicket);
   if (resultType < 0)
   {
@@ -110,7 +110,7 @@ int CRaceBuffByHolyQuestProcedure::CancelPlayerRaceBuff(
 int CRaceBuffByHolyQuestProcedure::GetRaceBuffLevel(CPlayer *pOne)
 {
   const bool haveMentalTicket = pOne->IsHaveMentalTicket();
-  const unsigned __int8 race = static_cast<unsigned __int8>(CPlayerDB::GetRaceCode(&pOne->m_Param));
+  const unsigned __int8 race = static_cast<unsigned __int8>(pOne->m_Param.GetRaceCode());
   const int resultType = m_kBuffHolyQestResultInfo.GetResultType(race, haveMentalTicket);
   if (resultType >= 0)
   {
@@ -126,7 +126,7 @@ bool CRaceBuffByHolyQuestProcedure::RequestSubProcCancelRaceBuff()
     if (g_Player[j].m_bOper)
     {
       const bool haveMentalTicket = g_Player[j].IsHaveMentalTicket();
-      const unsigned __int8 race = static_cast<unsigned __int8>(CPlayerDB::GetRaceCode(&g_Player[j].m_Param));
+      const unsigned __int8 race = static_cast<unsigned __int8>(g_Player[j].m_Param.GetRaceCode());
       const int resultType = m_kBuffHolyQestResultInfo.GetResultType(race, haveMentalTicket);
       if (resultType >= 0)
       {
@@ -175,7 +175,7 @@ void CRaceBuffByHolyQuestProcedure::LoopSubProcSetRaceBuff()
     if (g_Player[j].m_bOper)
     {
       const bool haveMentalTicket = g_Player[j].IsHaveMentalTicket();
-      const unsigned __int8 race = static_cast<unsigned __int8>(CPlayerDB::GetRaceCode(&g_Player[j].m_Param));
+      const unsigned __int8 race = static_cast<unsigned __int8>(g_Player[j].m_Param.GetRaceCode());
       const int resultType = m_kBuffHolyQestResultInfo.GetResultType(race, haveMentalTicket);
       if (resultType >= 0)
       {

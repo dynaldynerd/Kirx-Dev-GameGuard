@@ -9,9 +9,9 @@ public:
   bool m_bUse;
   _RTL_CRITICAL_SECTION m_cs;
 
-  static void SetUse(CSyncCS *cs, bool use);
-  static void Lock(CSyncCS *cs);
-  static void Unlock(CSyncCS *cs);
+  void SetUse(bool use);
+  void Lock();
+  void Unlock();
   virtual ~CSyncCS();
 };
 

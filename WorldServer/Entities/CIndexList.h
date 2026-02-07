@@ -29,9 +29,9 @@ public:
   unsigned int m_dwBufCount;
   unsigned int m_dwMaxBufNum;
 
-  static bool SetList(CIndexList *list, unsigned int maxBufNum, unsigned int infoSize, bool useMultiThread);
-  static bool PushNode_Back(CIndexList *list, unsigned int index, char *infoData);
-  static bool PushNode_Front(CIndexList *list, unsigned int index, char *infoData);
+  bool SetList(unsigned int maxBufNum, unsigned int infoSize, bool useMultiThread);
+  bool PushNode_Back(unsigned int index, char *infoData);
+  bool PushNode_Front(unsigned int index, char *infoData);
   virtual ~CIndexList() = default;
 };
 

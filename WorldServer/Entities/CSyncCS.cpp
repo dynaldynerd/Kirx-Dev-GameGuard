@@ -4,35 +4,35 @@
 
 #include <Windows.h>
 
-void CSyncCS::SetUse(CSyncCS *cs, bool use)
+void CSyncCS::SetUse(bool use)
 {
-  if (cs == nullptr)
+  if (this == nullptr)
   {
     return;
   }
-  cs->m_bUse = use;
+  this->m_bUse = use;
   if (use)
   {
-    InitializeCriticalSection(&cs->m_cs);
+    InitializeCriticalSection(&this->m_cs);
   }
 }
 
-void CSyncCS::Lock(CSyncCS *cs)
+void CSyncCS::Lock()
 {
-  if (cs == nullptr || !cs->m_bUse)
+  if (this == nullptr || !this->m_bUse)
   {
     return;
   }
-  EnterCriticalSection(&cs->m_cs);
+  EnterCriticalSection(&this->m_cs);
 }
 
-void CSyncCS::Unlock(CSyncCS *cs)
+void CSyncCS::Unlock()
 {
-  if (cs == nullptr || !cs->m_bUse)
+  if (this == nullptr || !this->m_bUse)
   {
     return;
   }
-  LeaveCriticalSection(&cs->m_cs);
+  LeaveCriticalSection(&this->m_cs);
 }
 
 CSyncCS::~CSyncCS() = default;

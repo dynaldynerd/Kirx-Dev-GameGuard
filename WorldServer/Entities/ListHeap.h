@@ -65,11 +65,11 @@ public:
 
     _pBuf = buffer;
     memset_0(_pBuf, 0, allocSize);
-    CNetIndexList::SetList(&_listData, static_cast<unsigned int>(nMaxBuf));
-    CNetIndexList::SetList(&_listEmpty, static_cast<unsigned int>(nMaxBuf));
+    _listData.SetList(static_cast<unsigned int>(nMaxBuf));
+    _listEmpty.SetList(static_cast<unsigned int>(nMaxBuf));
     for (unsigned int j = 0; j < nMaxBuf; ++j)
     {
-      CNetIndexList::PushNode_Back(&_listEmpty, j);
+      _listEmpty.PushNode_Back(j);
     }
     _nMaxSize = nMaxBuf;
     return true;
@@ -78,16 +78,16 @@ public:
   void Release()
   {
     unsigned int outIndex = 0;
-    for (unsigned __int64 j = 0; j < _nMaxSize && CNetIndexList::PopNode_Front(&_listData, &outIndex); ++j)
+    for (unsigned __int64 j = 0; j < _nMaxSize && _listData.PopNode_Front(&outIndex); ++j)
     {
-      CNetIndexList::PushNode_Back(&_listEmpty, outIndex);
+      _listEmpty.PushNode_Back(outIndex);
     }
   }
 
   bool push(const T &data)
   {
     unsigned int outIndex = 0;
-    if (!CNetIndexList::PopNode_Front(&_listEmpty, &outIndex))
+    if (!_listEmpty.PopNode_Front(&outIndex))
     {
       return false;
     }
@@ -96,9 +96,9 @@ public:
 
     CNetIndexList::_index_node *pos = _listData.m_Head.m_pNext;
     T *first = &_pBuf[pos->m_dwIndex];
-    if (CNetIndexList::size(&_listData))
+    if (_listData.size())
     {
-      if (!CNetIndexList::size(&_listData) || !first->operator>(&data))
+      if (!_listData.size() || !first->operator>(&data))
       {
         while (pos != &_listData.m_Tail)
         {
@@ -112,30 +112,30 @@ public:
           {
             if (!_listData.Push(pos, outIndex))
             {
-              CNetIndexList::PushNode_Back(&_listEmpty, outIndex);
+              _listEmpty.PushNode_Back(outIndex);
               return false;
             }
             return true;
           }
         }
-        if (CNetIndexList::PushNode_Back(&_listData, outIndex))
+        if (_listData.PushNode_Back(outIndex))
         {
           return true;
         }
-        CNetIndexList::PushNode_Back(&_listEmpty, outIndex);
+        _listEmpty.PushNode_Back(outIndex);
         return false;
       }
-      if (!CNetIndexList::PushNode_Front(&_listData, outIndex))
+      if (!_listData.PushNode_Front(outIndex))
       {
-        CNetIndexList::PushNode_Back(&_listEmpty, outIndex);
+        _listEmpty.PushNode_Back(outIndex);
         return false;
       }
     }
     else
     {
-      if (!CNetIndexList::PushNode_Front(&_listData, outIndex))
+      if (!_listData.PushNode_Front(outIndex))
       {
-        CNetIndexList::PushNode_Back(&_listEmpty, outIndex);
+        _listEmpty.PushNode_Back(outIndex);
         return false;
       }
     }
@@ -145,8 +145,8 @@ public:
   bool pop()
   {
     unsigned int outIndex = static_cast<unsigned int>(-1);
-    return CNetIndexList::PopNode_Front(&_listData, &outIndex)
-        && CNetIndexList::PushNode_Back(&_listEmpty, outIndex);
+    return _listData.PopNode_Front(&outIndex)
+        && _listEmpty.PushNode_Back(outIndex);
   }
 
   bool pop(const T &data)
@@ -168,7 +168,7 @@ public:
         bufTail->m_pPrev = node;
         ++_listData.m_dwBufCount;
 
-        CNetIndexList::PushNode_Back(&_listEmpty, node->m_dwIndex);
+        _listEmpty.PushNode_Back(node->m_dwIndex);
         return true;
       }
       node = node->m_pNext;

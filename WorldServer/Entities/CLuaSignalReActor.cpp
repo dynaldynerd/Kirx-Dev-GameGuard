@@ -6,13 +6,6 @@
 
 CLuaSignalReActor::_Action::_Action()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
   Init();
 }
 
@@ -24,13 +17,6 @@ void CLuaSignalReActor::_Action::Init()
 
 CLuaSignalReActor::CLuaSignalReActor()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
   for (int j = 0; j < 3; ++j)
   {
     m_ActionData[j].Init();
@@ -39,25 +25,11 @@ CLuaSignalReActor::CLuaSignalReActor()
 
 void CLuaSignalReActor::Init()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
   Free();
 }
 
 void CLuaSignalReActor::Free()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 12; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
   for (int j = 0; j < 3; ++j)
   {
     _Free(&m_ActionData[j]);
@@ -66,12 +38,6 @@ void CLuaSignalReActor::Free()
 
 CLuaSignalReActor::_Action *CLuaSignalReActor::_SearchAction(unsigned __int8 bySignalCode)
 {
-  int stackFill = 0;
-  int *fillPtr = &stackFill;
-  for (int fillCount = 4; fillCount; --fillCount)
-  {
-    *fillPtr++ = -858993460;
-  }
   for (int j = 0; j < 3; ++j)
   {
     if (m_ActionData[j].m_bySignalCode == bySignalCode && m_ActionData[j].m_pLuaCommandEx)
@@ -84,12 +50,6 @@ CLuaSignalReActor::_Action *CLuaSignalReActor::_SearchAction(unsigned __int8 byS
 
 CLuaSignalReActor::_Action *CLuaSignalReActor::_SearchEmptyAction()
 {
-  int stackFill = 0;
-  int *fillPtr = &stackFill;
-  for (int fillCount = 4; fillCount; --fillCount)
-  {
-    *fillPtr++ = -858993460;
-  }
   for (int j = 0; j < 3; ++j)
   {
     if (m_ActionData[j].m_bySignalCode == 0xFF && !m_ActionData[j].m_pLuaCommandEx)
@@ -102,13 +62,6 @@ CLuaSignalReActor::_Action *CLuaSignalReActor::_SearchEmptyAction()
 
 void CLuaSignalReActor::_Free(_Action *pAction)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
   if (pAction)
   {
     if (pAction->m_pLuaCommandEx)
@@ -121,13 +74,6 @@ void CLuaSignalReActor::_Free(_Action *pAction)
 
 bool CLuaSignalReActor::SetSignalAndAction(unsigned __int8 bySignalCode)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 16; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   bool result = false;
   _Action *action = _SearchAction(bySignalCode);
@@ -152,13 +98,6 @@ bool CLuaSignalReActor::AddAction(
   const char *strScriptName,
   const char *strName)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 12; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   if (bySignalCode == 0xFF)
   {
@@ -182,4 +121,3 @@ bool CLuaSignalReActor::AddAction(
   action->m_bySignalCode = bySignalCode;
   return true;
 }
-

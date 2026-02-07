@@ -31,13 +31,6 @@ lua_State *CLuaScript::GetLuaState()
 
 bool CLuaScript::RunCommand(CLuaCommand *pCommand)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 100; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   if (!pCommand)
   {

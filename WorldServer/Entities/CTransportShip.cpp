@@ -31,49 +31,47 @@ void CTransportShip::__mgr_ticket::init()
   dwNextUpdateTime = static_cast<unsigned int>(-1);
 }
 
-bool CTransportShip::InitShip(
-  CTransportShip *pShip,
-  CMapData *pLinkShipMap,
+bool CTransportShip::InitShip(CMapData *pLinkShipMap,
   CMapData *pLinkMainbaseMap,
   CMapData *pLinkPlatformMap,
   int nIndex)
 {
-  pShip->m_bAnchor = true;
-  pShip->m_byDirect = 0;
-  pShip->m_bHurry = false;
-  pShip->m_dwNextHurryTime = static_cast<unsigned int>(-1);
-  pShip->m_dwEventCreateTime = timeGetTime();
-  pShip->m_pLinkShipMap = pLinkShipMap;
-  pShip->m_pLinkPortMap[0] = pLinkMainbaseMap;
-  pShip->m_pLinkPortMap[1] = pLinkPlatformMap;
-  pShip->m_byRaceCode_Layer = static_cast<unsigned __int8>(nIndex);
+  this->m_bAnchor = true;
+  this->m_byDirect = 0;
+  this->m_bHurry = false;
+  this->m_dwNextHurryTime = static_cast<unsigned int>(-1);
+  this->m_dwEventCreateTime = timeGetTime();
+  this->m_pLinkShipMap = pLinkShipMap;
+  this->m_pLinkPortMap[0] = pLinkMainbaseMap;
+  this->m_pLinkPortMap[1] = pLinkPlatformMap;
+  this->m_byRaceCode_Layer = static_cast<unsigned __int8>(nIndex);
 
   for (int j = 0; j < 2; ++j)
   {
-    pShip->m_MgrTicket[j].init();
-    pShip->m_MgrTicket[j].pLinkTicketItem = nullptr;
+    this->m_MgrTicket[j].init();
+    this->m_MgrTicket[j].pLinkTicketItem = nullptr;
 
     const int recordNum = g_Main.m_tblItemData[28].GetRecordNum();
     for (int n = 0; n < recordNum; ++n)
     {
       auto *record = reinterpret_cast<_TicketItem_fld *>(g_Main.m_tblItemData[28].GetRecord(n));
-      if (record->m_strCivil[2 * pShip->m_byRaceCode_Layer] != '0'
-          && std::strcmp(record->m_strMapCode, pShip->m_pLinkPortMap[j]->m_pMapSet->m_strCode) == 0)
+      if (record->m_strCivil[2 * this->m_byRaceCode_Layer] != '0'
+          && std::strcmp(record->m_strMapCode, this->m_pLinkPortMap[j]->m_pMapSet->m_strCode) == 0)
       {
-        pShip->m_MgrTicket[j].pLinkTicketItem = record;
+        this->m_MgrTicket[j].pLinkTicketItem = record;
         break;
       }
     }
 
-    if (!pShip->m_MgrTicket[j].pLinkTicketItem)
+    if (!this->m_MgrTicket[j].pLinkTicketItem)
     {
       MyMessageBox("CTransportShip::InitShip", "Ticket Link Error");
       return false;
     }
   }
 
-  memset_0(pShip->m_NewMember, 0, sizeof(pShip->m_NewMember));
-  memset_0(pShip->m_OldMember, 0, sizeof(pShip->m_OldMember));
+  memset_0(this->m_NewMember, 0, sizeof(this->m_NewMember));
+  memset_0(this->m_OldMember, 0, sizeof(this->m_OldMember));
   return true;
 }
 
@@ -89,7 +87,7 @@ void CTransportShip::AlterState(bool bAnchor, unsigned __int8 byDirect, int nPas
   {
     memcpy_0(m_OldMember, m_NewMember, sizeof(m_OldMember));
     memset_0(m_NewMember, 0, sizeof(m_NewMember));
-    CNetIndexList::ResetList(&m_listLogoffMember);
+    m_listLogoffMember.ResetList();
     if (nNextSubEventTerm <= nPassMin)
     {
       m_bHurry = true;
@@ -144,7 +142,7 @@ void CTransportShip::KickOldMember(unsigned __int8 byKickDirectCode)
           && member->pPtr->m_pCurMap == m_pLinkShipMap)
       {
         SendMsg_KickForSail(member->pPtr->m_ObjID.m_wIndex);
-        const int raceCode = CPlayerDB::GetRaceCode(&member->pPtr->m_Param);
+        const int raceCode = member->pPtr->m_Param.GetRaceCode();
         const int portalIndex = GetOutPortalIndex(raceCode, byKickDirectCode);
         CheckTicket_Kick(member->pPtr, portalIndex);
       }
@@ -165,7 +163,7 @@ void CTransportShip::ExitMember(CPlayer *pExiter, bool bLogoff)
     {
       if (bLogoff && !m_bAnchor)
       {
-        CNetIndexList::PushNode_Back(&m_listLogoffMember, pExiter->m_dwObjSerial);
+        m_listLogoffMember.PushNode_Back(pExiter->m_dwObjSerial);
       }
       member->init();
     }
@@ -215,7 +213,7 @@ bool CTransportShip::Ticketting(CPlayer *pExiter)
         pExiter->m_szItemHistoryFileName);
       SendMsg_TicketCheck(pExiter->m_ObjID.m_wIndex, 1, itemCopy.m_wSerial);
 
-      const int raceCode = CPlayerDB::GetRaceCode(&pExiter->m_Param);
+      const int raceCode = pExiter->m_Param.GetRaceCode();
       const int outPortalIndex = GetOutPortalIndex(raceCode, m_byDirect);
       CheckTicket_Pass(pExiter, outPortalIndex);
 
@@ -226,7 +224,7 @@ bool CTransportShip::Ticketting(CPlayer *pExiter)
       }
       if (countStat)
       {
-        CGameStatistics::_DAY *day = CGameStatistics::CurWriteData(&g_GameStatistics);
+        CGameStatistics::_DAY *day = g_GameStatistics.CurWriteData();
         ++day->dwEderEnter_Evt;
       }
       return true;
@@ -234,7 +232,7 @@ bool CTransportShip::Ticketting(CPlayer *pExiter)
 
     SendMsg_TicketCheck(pExiter->m_ObjID.m_wIndex, 0, 0xFFFF);
     const unsigned __int8 kickDirect = (m_byDirect == 0);
-    const int raceCode = CPlayerDB::GetRaceCode(&pExiter->m_Param);
+    const int raceCode = pExiter->m_Param.GetRaceCode();
     const int portalIndex = GetOutPortalIndex(raceCode, kickDirect);
     CheckTicket_Kick(pExiter, portalIndex);
     return true;
@@ -242,7 +240,7 @@ bool CTransportShip::Ticketting(CPlayer *pExiter)
 
   SendMsg_TicketCheck(pExiter->m_ObjID.m_wIndex, 0, 0xFFFF);
   const unsigned __int8 kickDirect = (m_byDirect == 0);
-  const int raceCode = CPlayerDB::GetRaceCode(&pExiter->m_Param);
+  const int raceCode = pExiter->m_Param.GetRaceCode();
   const int portalIndex = GetOutPortalIndex(raceCode, kickDirect);
   CheckTicket_Kick(pExiter, portalIndex);
   return true;
@@ -288,7 +286,7 @@ void CTransportShip::SendMsg_TransportShipState(int n)
     for (unsigned int index = 0; index < MAX_PLAYER; ++index)
     {
       CPlayer *player = &g_Player[index];
-      if (player->m_bLive && static_cast<unsigned int>(CPlayerDB::GetRaceCode(&player->m_Param)) == m_byRaceCode_Layer)
+      if (player->m_bLive && static_cast<unsigned int>(player->m_Param.GetRaceCode()) == m_byRaceCode_Layer)
       {
         g_Network.m_pProcess[0]->LoadSendMsg(index, type, reinterpret_cast<char *>(message), 7);
       }
@@ -330,7 +328,7 @@ void CTransportShip::CheckTicket_Pass(CPlayer *pPtr, int nPortalIndex)
 
   if (pPtr->m_pUserDB)
   {
-    CUserDB::Update_Map(pPtr->m_pUserDB, targetMap->m_pMapSet->m_dwIndex, newPos);
+    pPtr->m_pUserDB->Update_Map(targetMap->m_pMapSet->m_dwIndex, newPos);
   }
 }
 
@@ -361,7 +359,7 @@ void CTransportShip::CheckTicket_Kick(CPlayer *pPtr, int nPortalIndex)
   }
 
   pPtr->OutOfMap(targetMap, 0, 1, newPos);
-  const unsigned __int8 mapCode = static_cast<unsigned __int8>(CPlayerDB::GetMapCode(&pPtr->m_Param));
+  const unsigned __int8 mapCode = static_cast<unsigned __int8>(pPtr->m_Param.GetMapCode());
   pPtr->SendMsg_GotoRecallResult(0, mapCode, newPos, 4);
 }
 

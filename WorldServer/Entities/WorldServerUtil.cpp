@@ -499,13 +499,6 @@ unsigned int GetBitAfterSetLimSocket(unsigned __int8 byLimSocketNum)
 
 _animus_fld *GetAnimusFldFromExp(int nAnimusClass, unsigned __int64 dwExp)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 16; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   CRecordData *table = &CAnimus::s_tblParameter[nAnimusClass];
   for (int n = 0; n < 65; ++n)
@@ -522,13 +515,6 @@ _animus_fld *GetAnimusFldFromExp(int nAnimusClass, unsigned __int64 dwExp)
 
 unsigned int GetMaxParamFromExp(int nAnimusClass, unsigned __int64 dwExp)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 20; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   _animus_fld *record = GetAnimusFldFromExp(nAnimusClass, dwExp);
   if (!record)
@@ -4676,4 +4662,3 @@ static void MakeMipMap(unsigned short a1, unsigned short a2, unsigned short *a3,
     } while (v12);
   }
 }
-

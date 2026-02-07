@@ -270,4 +270,3 @@ __int64 TimeLimitJade::CheckEndTime()
 
   return 0;
 }
-

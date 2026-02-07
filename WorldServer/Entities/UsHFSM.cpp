@@ -475,13 +475,13 @@ int Us_HFSM::Link(Us_FSM_Node *pParent, Us_FSM_Node *pChild)
   return 1;
 }
 
-void Us_HFSM::SendMsg(Us_HFSM *pHFS, unsigned int dwFSMIndex, unsigned int dwMSG, void *lpParam)
+void Us_HFSM::SendMsg(unsigned int dwFSMIndex, unsigned int dwMSG, void *lpParam)
 {
-  if (!pHFS)
+  if (this == nullptr)
   {
     return;
   }
-  if (!pHFS->m_bSet)
+  if (!this->m_bSet)
   {
     return;
   }
@@ -489,40 +489,40 @@ void Us_HFSM::SendMsg(Us_HFSM *pHFS, unsigned int dwFSMIndex, unsigned int dwMSG
   {
     return;
   }
-  if (!static_cast<UsStateTBL *>(pHFS->m_spShareStateTBLPtr))
+  if (!static_cast<UsStateTBL *>(this->m_spShareStateTBLPtr))
   {
     return;
   }
-  if (!pHFS->m_spShareStateTBLPtr->m_pFun)
+  if (!this->m_spShareStateTBLPtr->m_pFun)
   {
     return;
   }
 
-  Us_FSM_Node *node = pHFS->GetNode(dwFSMIndex);
+  Us_FSM_Node *node = this->GetNode(dwFSMIndex);
   if (node)
   {
     if (node->m_bLive)
     {
-      pHFS->m_spShareStateTBLPtr->m_pFun(pHFS, dwFSMIndex, dwMSG, lpParam);
+      this->m_spShareStateTBLPtr->m_pFun(this, dwFSMIndex, dwMSG, lpParam);
     }
     if (node->m_pParent)
     {
-      unsigned int parentIndex = pHFS->GetIndex(node->m_pParent);
+      unsigned int parentIndex = this->GetIndex(node->m_pParent);
       if (parentIndex != static_cast<unsigned int>(-1))
       {
-        Us_HFSM::SendMsg(pHFS, parentIndex, dwMSG, lpParam);
+        this->SendMsg(parentIndex, dwMSG, lpParam);
       }
     }
   }
 }
 
-void Us_HFSM::SendExternMsg(Us_HFSM *pHFS, unsigned int dwMSG, void *lpParam, unsigned int nParam)
+void Us_HFSM::SendExternMsg(unsigned int dwMSG, void *lpParam, unsigned int nParam)
 {
-  if (pHFS && pHFS->m_bSet && static_cast<UsStateTBL *>(pHFS->m_spShareStateTBLPtr))
+  if (this && this->m_bSet && static_cast<UsStateTBL *>(this->m_spShareStateTBLPtr))
   {
-    if (pHFS->m_spShareStateTBLPtr->m_pExternFun)
+    if (this->m_spShareStateTBLPtr->m_pExternFun)
     {
-      pHFS->m_spShareStateTBLPtr->m_pExternFun(pHFS, dwMSG, lpParam, nParam);
+      this->m_spShareStateTBLPtr->m_pExternFun(this, dwMSG, lpParam, nParam);
     }
   }
 }

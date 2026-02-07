@@ -29,13 +29,6 @@ float GetDist(float *const a1, float *const a2)
 
 float Get3DSqrt(float *Pos, float *Tar)
 {
-    __int64 stackFill = 0;
-    auto *fillPtr = &stackFill;
-    for (int fillCount = 24; fillCount; --fillCount)
-    {
-        *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-        fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-    }
 
     const float dx = *Pos - *Tar;
     const float dy = Pos[1] - Tar[1];
@@ -45,13 +38,6 @@ float Get3DSqrt(float *Pos, float *Tar)
 
 float GetYAngle(float *Pos, float *Tar)
 {
-    __int64 stackFill = 0;
-    auto *fillPtr = &stackFill;
-    for (int fillCount = 20; fillCount; --fillCount)
-    {
-        *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-        fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-    }
 
     const float dx = *Tar - *Pos;
     const float dz = Tar[2] - Pos[2];
@@ -71,13 +57,6 @@ float GetYAngle(float *Pos, float *Tar)
 
 void Normalize(float *v)
 {
-    __int64 stackFill = 0;
-    auto *fillPtr = &stackFill;
-    for (int fillCount = 12; fillCount; --fillCount)
-    {
-        *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-        fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-    }
 
     const float length = sqrtf_0((v[0] * v[0]) + (v[1] * v[1]) + (v[2] * v[2]));
     const double len = length;

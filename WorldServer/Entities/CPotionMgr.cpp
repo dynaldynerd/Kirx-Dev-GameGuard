@@ -34,7 +34,7 @@ bool CPotionMgr::DatafileInit()
 
 bool CPotionMgr::SetPotionDataName()
 {
-  if (!CRecordData::IsTableOpen(&m_tblPotionEffectData) || !CRecordData::IsTableOpen(&m_tblPotionCheckData))
+  if (!m_tblPotionEffectData.IsTableOpen() || !m_tblPotionCheckData.IsTableOpen())
   {
     MyMessageBox("CPotionMgr::SetPotionDataName()", "PotionItemEffectData Or CheckPotionEffectData Not Load!");
     return false;

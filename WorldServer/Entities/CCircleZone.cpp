@@ -83,4 +83,3 @@ int CCircleZone::GetPortalInx() const
 {
   return m_iPortalInx;
 }
-

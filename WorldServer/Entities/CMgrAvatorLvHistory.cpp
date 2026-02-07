@@ -22,36 +22,36 @@ void CMgrAvatorLvHistory::WriteFile(char *pszFileName, char *pszLog)
   {
     if (logLen >= 0x3E8)
     {
-      if (logLen < 0x7D0 && CNetIndexList::PopNode_Front(&m_listLogDataEmpty_2K, &outIndex))
+      if (logLen < 0x7D0 && m_listLogDataEmpty_2K.PopNode_Front(&outIndex))
       {
         __LOG_DATA_2K &entry = m_LogData_2K[outIndex];
         strcpy_0(entry.szFileName, pszFileName);
         entry.nLen = logLen;
         memcpy_0(entry.sData, pszLog, static_cast<unsigned int>(logLen));
         entry.sData[logLen] = '\0';
-        CNetIndexList::PushNode_Back(&m_listLogData_2K, outIndex);
+        m_listLogData_2K.PushNode_Back(outIndex);
         return;
       }
     }
-    else if (CNetIndexList::PopNode_Front(&m_listLogDataEmpty_1K, &outIndex))
+    else if (m_listLogDataEmpty_1K.PopNode_Front(&outIndex))
     {
       __LOG_DATA_1K &entry = m_LogData_1K[outIndex];
       strcpy_0(entry.szFileName, pszFileName);
       entry.nLen = logLen;
       memcpy_0(entry.sData, pszLog, static_cast<unsigned int>(logLen));
       entry.sData[logLen] = '\0';
-      CNetIndexList::PushNode_Back(&m_listLogData_1K, outIndex);
+      m_listLogData_1K.PushNode_Back(outIndex);
       return;
     }
   }
-  else if (CNetIndexList::PopNode_Front(&m_listLogDataEmpty_200, &outIndex))
+  else if (m_listLogDataEmpty_200.PopNode_Front(&outIndex))
   {
     __LOG_DATA_200 &entry = m_LogData_200[outIndex];
     strcpy_0(entry.szFileName, pszFileName);
     entry.nLen = logLen;
     memcpy_0(entry.sData, pszLog, static_cast<unsigned int>(logLen));
     entry.sData[logLen] = '\0';
-    CNetIndexList::PushNode_Back(&m_listLogData_200, outIndex);
+    m_listLogData_200.PushNode_Back(outIndex);
     return;
   }
 

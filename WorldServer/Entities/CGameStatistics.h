@@ -37,7 +37,7 @@ public:
   void Init();
   void ConvertDay(char *pszWorldName);
   void WriteDayData(char *pszWorldName);
-  static _DAY *CurWriteData(CGameStatistics *thisPtr);
+  _DAY *CurWriteData();
 
   _DAY m_day;
 };

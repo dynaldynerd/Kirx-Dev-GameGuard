@@ -31,7 +31,6 @@ public:
   bool MakeHashTable(int keyIndex, int keyLength, char *errCode);
   static unsigned int MakeHash(const char *p, int len);
   bool IsTableOpen() const;
-  static bool IsTableOpen(const CRecordData *table);
 
   virtual ~CRecordData();
 };

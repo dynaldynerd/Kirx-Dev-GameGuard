@@ -214,7 +214,7 @@ void DfAIMgr::OnDfExternCallFun(Us_HFSM *pHFS, unsigned int dwEvent, void *lpPar
             const int roll = rand() % 100;
             if (prob > roll)
             {
-              Us_HFSM::SendMsg(pHFS, 5u, 0x2Du, lpParam);
+              pHFS->SendMsg(5u, 0x2Du, lpParam);
             }
           }
         }
@@ -230,7 +230,7 @@ void DfAIMgr::OnDfExternCallFun(Us_HFSM *pHFS, unsigned int dwEvent, void *lpPar
 
   if (mon->IsBeDamagedAble(static_cast<CCharacter *>(lpParam)))
   {
-    Us_HFSM::SendMsg(pHFS, 5u, 0x2Eu, nullptr);
+    pHFS->SendMsg(5u, 0x2Eu, nullptr);
     if (mon->GetAttackTarget())
     {
       CCharacter *topAggro = mon->m_AggroMgr.GetTopAggroCharacter();
@@ -238,21 +238,21 @@ void DfAIMgr::OnDfExternCallFun(Us_HFSM *pHFS, unsigned int dwEvent, void *lpPar
       {
         if (DfAIMgr::CheckEmotionBad(mon, static_cast<CMonsterAI *>(hfs), nParam))
         {
-          Us_HFSM::SendMsg(hfs, 3u, 0x23u, nullptr);
+          hfs->SendMsg(3u, 0x23u, nullptr);
         }
       }
       else
       {
-        Us_HFSM::SendMsg(pHFS, 1u, 0x1Cu, topAggro);
+        pHFS->SendMsg(1u, 0x1Cu, topAggro);
       }
     }
     else
     {
-      Us_HFSM::SendMsg(pHFS, 1u, 0x1Cu, lpParam);
+      pHFS->SendMsg(1u, 0x1Cu, lpParam);
       mon->CheckEventEmotionPresentation( 9u, nullptr);
     }
     CMonsterHelper::HierarcyHelpCast(mon);
-    Us_HFSM::SendMsg(hfs, 2u, 0x1Eu, nullptr);
+    hfs->SendMsg(2u, 0x1Eu, nullptr);
   }
 }
 
@@ -288,10 +288,10 @@ void DfAIMgr::Atp_SearchStart_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *
   if (target)
   {
     mon->CheckEventEmotionPresentation( 1u, nullptr);
-    Us_HFSM::SendMsg(pHFS, 1u, 0x1Cu, target);
+    pHFS->SendMsg(1u, 0x1Cu, target);
     if (mon->GetHelpMeCase())
     {
-      Us_HFSM::SendMsg(hfs, 2u, 0x1Eu, nullptr);
+      hfs->SendMsg(2u, 0x1Eu, nullptr);
     }
   }
 }
@@ -316,8 +316,8 @@ void DfAIMgr::Atp_Lost_Handler(Us_HFSM *pHFS, unsigned int dwEvent, void *lpPara
 
   mon->SetAttackTarget(nullptr);
   mon->m_AggroMgr.ResetAggro();
-  Us_HFSM::SendMsg(pHFS, 7u, 0x21u, nullptr);
-  Us_HFSM::SendMsg(pHFS, 6u, 0x1Du, nullptr);
+  pHFS->SendMsg(7u, 0x21u, nullptr);
+  pHFS->SendMsg(6u, 0x1Du, nullptr);
 
   Us_FSM_Node *parentNode = hfs[1].m_ArNode[0].m_pParent;
   if (parentNode)
@@ -329,12 +329,12 @@ void DfAIMgr::Atp_Lost_Handler(Us_HFSM *pHFS, unsigned int dwEvent, void *lpPara
       CCharacter *target = parentMon->GetAttackTarget();
       if (target)
       {
-        Us_HFSM::SendMsg(hfs, 1u, 0x1Cu, target);
+        hfs->SendMsg(1u, 0x1Cu, target);
       }
     }
   }
 
-  Us_HFSM::SendMsg(hfs, 2u, 0x1Fu, nullptr);
+  hfs->SendMsg(2u, 0x1Fu, nullptr);
 }
 
 void DfAIMgr::Atp_Searched_Handler(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
@@ -353,17 +353,17 @@ void DfAIMgr::Atp_Searched_Handler(Us_HFSM *pHFS, unsigned int dwEvent, void *lp
     return;
   }
 
-  Us_HFSM::SendMsg(pHFS, 1u, 0x1Bu, nullptr);
+  pHFS->SendMsg(1u, 0x1Bu, nullptr);
   CCharacter *target = static_cast<CCharacter *>(lpParam);
   CCharacter *attackTarget = mon->GetAttackTarget();
   if (target && attackTarget != target)
   {
     mon->SetAttackTarget( target);
-    Us_HFSM::SendMsg(pHFS, 6u, 0x1Cu, nullptr);
+    pHFS->SendMsg(6u, 0x1Cu, nullptr);
     Us_FSM_Node *node = pHFS->GetNode( 3u);
     if (node->GetState() == 11)
     {
-      Us_HFSM::SendMsg(pHFS, 3u, 0x23u, nullptr);
+      pHFS->SendMsg(3u, 0x23u, nullptr);
     }
   }
 }
@@ -408,12 +408,12 @@ void DfAIMgr::Mon_SearchStart_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *
           }
           if (nearMon[j].pChar && nearMon[j].pChar != mon)
           {
-            Us_HFSM::SendMsg(pHFS, 2u, 0x20u, nearMon[j].pChar);
+            pHFS->SendMsg(2u, 0x20u, nearMon[j].pChar);
             _object_id *objId = &nearMon[j].pChar->m_ObjID;
             if (!objId->m_byKind && objId->m_byID == 1)
             {
               CCharacter *nearChar = nearMon[j].pChar;
-              Us_HFSM::SendExternMsg(reinterpret_cast<Us_HFSM *>(&nearChar[3].m_AroundSlot[2]), 1u, mon, 0);
+              reinterpret_cast<Us_HFSM *>(&nearChar[3].m_AroundSlot[2])->SendExternMsg(1u, mon, 0);
               mon->CheckEventEmotionPresentation( 2u, nullptr);
             }
           }
@@ -421,7 +421,7 @@ void DfAIMgr::Mon_SearchStart_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *
         const unsigned int count = found >= maxCount ? maxCount : found;
         if (count)
         {
-          Us_HFSM::SendMsg(hfs, 2u, 0x1Fu, nullptr);
+          hfs->SendMsg(2u, 0x1Fu, nullptr);
         }
       }
     }
@@ -562,7 +562,7 @@ void DfAIMgr::Action_Wait_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lpPa
   unsigned char *objBytes = static_cast<unsigned char *>(pHFS->GetObjectA());
   if (objBytes && objBytes[24])
   {
-    Us_HFSM::SendMsg(pHFS, 6u, 0x26u, nullptr);
+    pHFS->SendMsg(6u, 0x26u, nullptr);
   }
 }
 
@@ -587,7 +587,7 @@ void DfAIMgr::Action_Patrol_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lp
   Us_FSM_Node *node = pHFS->GetNode( 1u);
   if (node->GetState() == 2)
   {
-    Us_HFSM::SendMsg(pHFS, 1u, 0x1Au, nullptr);
+    pHFS->SendMsg(1u, 0x1Au, nullptr);
   }
 
   if (!mon->m_bMove && !DfAIMgr::CheckMonArea_N_ChangeState(static_cast<CMonsterAI *>(hfs), mon, 0))
@@ -596,7 +596,7 @@ void DfAIMgr::Action_Patrol_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lp
     {
       DfAIMgr::SearchPatrollPath(static_cast<CMonsterAI *>(hfs), mon);
     }
-    Us_HFSM::SendMsg(hfs, 3u, 0x24u, nullptr);
+    hfs->SendMsg(3u, 0x24u, nullptr);
   }
 }
 
@@ -621,7 +621,7 @@ void DfAIMgr::Action_Attack_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lp
   CCharacter *target = mon->GetAttackTarget();
   if (!target || !target->m_bLive || target->GetStealth(true) || target->m_bCorpse || mon->m_pCurMap != target->m_pCurMap)
   {
-    Us_HFSM::SendMsg(hfs, 1u, 0x1Du, nullptr);
+    hfs->SendMsg(1u, 0x1Du, nullptr);
     hfs->SetLoopTime( 6, 0x1F4u);
     return;
   }
@@ -640,7 +640,7 @@ void DfAIMgr::Action_Attack_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lp
       Us_FSM_Node *node = pHFS->GetNode( 5u);
       if (node->GetState() == 23)
       {
-        Us_HFSM::SendMsg(hfs, 2u, 0x1Eu, nullptr);
+        hfs->SendMsg(2u, 0x1Eu, nullptr);
       }
     }
 
@@ -650,7 +650,7 @@ void DfAIMgr::Action_Attack_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lp
         || (DfAIMgr::CheckSPFDelayTime(static_cast<CMonsterAI *>(hfs), 0, now)
             && DfAIMgr::CheckGen(static_cast<CMonsterAI *>(hfs), mon)))
     {
-      Us_HFSM::SendMsg(pHFS, 7u, 0x21u, nullptr);
+      pHFS->SendMsg(7u, 0x21u, nullptr);
       const float loopTime = *reinterpret_cast<float *>(&mon->m_pRecordSet[25].m_strCode[20]) + 500.0f;
       hfs->SetLoopTime( 6, static_cast<int>(loopTime));
     }
@@ -671,7 +671,7 @@ void DfAIMgr::Action_Attack_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lp
   }
   else
   {
-    Us_HFSM::SendMsg(hfs, 1u, 0x1Du, nullptr);
+    hfs->SendMsg(1u, 0x1Du, nullptr);
     hfs->SetLoopTime( 6, 0x1F4u);
   }
 }
@@ -704,7 +704,7 @@ void DfAIMgr::Emotion_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
   Us_FSM_Node *node = pHFS->GetNode( 3u);
   if (node->GetState() != 12)
   {
-    Us_HFSM::SendMsg(pHFS, 3u, 0x24u, nullptr);
+    pHFS->SendMsg(3u, 0x24u, nullptr);
     return;
   }
 
@@ -718,7 +718,7 @@ void DfAIMgr::Emotion_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
   const int lostDist = g_MonsterSetInfoData.GetLostMonsterTargetDistance();
   if (dist >= static_cast<float>(lostDist))
   {
-    Us_HFSM::SendMsg(pHFS, 3u, 0x24u, nullptr);
+    pHFS->SendMsg(3u, 0x24u, nullptr);
     return;
   }
 
@@ -756,7 +756,7 @@ void DfAIMgr::Emotion_OnChange(Us_HFSM *pHFS, unsigned int dwEvent, void *lpPara
     case 0xBu:
       mon->SetMoveType( 0);
       mon->SetEmotionState( 0);
-      Us_HFSM::SendMsg(hfs, 1u, 0x1Du, nullptr);
+      hfs->SendMsg(1u, 0x1Du, nullptr);
       break;
     case 0xCu:
       mon->SetMoveType( 1u);
@@ -818,7 +818,7 @@ void DfAIMgr::Condition_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lpPara
   const float hpPercent = (hp / maxHp) * 100.0f;
   if (hp == maxHp)
   {
-    Us_HFSM::SendMsg(pHFS, 4u, 0x27u, nullptr);
+    pHFS->SendMsg(4u, 0x27u, nullptr);
     pHFS->SetLoopTime( 4, 0x2710u);
   }
   else if (hpPercent <= *reinterpret_cast<float *>(recordPtr + 2024))
@@ -827,24 +827,24 @@ void DfAIMgr::Condition_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lpPara
     {
       if (hpPercent <= *reinterpret_cast<float *>(recordPtr + 2032))
       {
-        Us_HFSM::SendMsg(pHFS, 4u, 0x2Bu, nullptr);
+        pHFS->SendMsg(4u, 0x2Bu, nullptr);
         pHFS->SetLoopTime( 4, 0x7D0u);
       }
       else
       {
-        Us_HFSM::SendMsg(pHFS, 4u, 0x2Au, nullptr);
+        pHFS->SendMsg(4u, 0x2Au, nullptr);
         pHFS->SetLoopTime( 4, 0x2710u);
       }
     }
     else
     {
-      Us_HFSM::SendMsg(pHFS, 4u, 0x29u, nullptr);
+      pHFS->SendMsg(4u, 0x29u, nullptr);
       pHFS->SetLoopTime( 4, 0x2710u);
     }
   }
   else
   {
-    Us_HFSM::SendMsg(pHFS, 4u, 0x28u, nullptr);
+    pHFS->SendMsg(4u, 0x28u, nullptr);
     pHFS->SetLoopTime( 4, 0x2710u);
   }
 }
@@ -910,7 +910,7 @@ void DfAIMgr::Assist_OnChange(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam
       CCharacter *target = parentMon->GetAttackTarget();
       if (target)
       {
-        Us_HFSM::SendMsg(pHFS, 1u, 0x1Cu, target);
+        pHFS->SendMsg(1u, 0x1Cu, target);
       }
       pHFS->SetLoopTime( 5, 0x7530u);
       mon->CheckEventEmotionPresentation(3u, nullptr);
@@ -941,7 +941,7 @@ void DfAIMgr::Assist_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
   unsigned char *objBytes = static_cast<unsigned char *>(pHFS->GetObjectA());
   if (objBytes && objBytes[24])
   {
-    Us_HFSM::SendMsg(pHFS, 5u, 0x2Eu, nullptr);
+    pHFS->SendMsg(5u, 0x2Eu, nullptr);
   }
 }
 
@@ -1190,7 +1190,7 @@ __int64 DfAIMgr::CheckMonArea_N_ChangeState(CMonsterAI *pAI, CMonster *pMon, int
             pMon->m_fCreatePos,
             &midPos))
       {
-        Us_HFSM::SendMsg(pAI, 3u, 0x24u, nullptr);
+        pAI->SendMsg(3u, 0x24u, nullptr);
         DfAIMgr::ChangeTargetPos(pMon, pMon->m_fCreatePos);
       }
       else
@@ -1224,7 +1224,7 @@ __int64 DfAIMgr::CheckMonArea_N_ChangeState(CMonsterAI *pAI, CMonster *pMon, int
 
         if (pMon->m_pCurMap->m_Level.mBsp->CanYouGoThere(pMon->m_fCurPos, tarPos, &midPos))
         {
-          Us_HFSM::SendMsg(pAI, 3u, 0x23u, nullptr);
+          pAI->SendMsg(3u, 0x23u, nullptr);
           const float loopTime = pMon->GeEmotionImpStdTime();
           pAI->SetLoopTime( 3, static_cast<int>(loopTime));
           DfAIMgr::ChangeTargetPos(pMon, pMon->m_MonHierarcy.GetParent()->m_fCurPos);
@@ -1251,7 +1251,7 @@ __int64 DfAIMgr::CheckMonArea_N_ChangeState(CMonsterAI *pAI, CMonster *pMon, int
                 pMon->m_fCreatePos,
                 &midPos))
           {
-            Us_HFSM::SendMsg(pAI, 3u, 0x24u, nullptr);
+            pAI->SendMsg(3u, 0x24u, nullptr);
             DfAIMgr::ChangeTargetPos(pMon, pMon->m_fCreatePos);
             return 1LL;
           }
@@ -1265,7 +1265,7 @@ __int64 DfAIMgr::CheckMonArea_N_ChangeState(CMonsterAI *pAI, CMonster *pMon, int
               pMon->m_fCreatePos,
               &midPos))
         {
-          Us_HFSM::SendMsg(pAI, 3u, 0x23u, nullptr);
+          pAI->SendMsg(3u, 0x23u, nullptr);
           const float loopTime = pMon->GeEmotionImpStdTime();
           pAI->SetLoopTime( 3, static_cast<int>(loopTime));
           DfAIMgr::ChangeTargetPos(pMon, pMon->m_fCreatePos);
@@ -1295,14 +1295,14 @@ __int64 DfAIMgr::CheckMonArea_N_ChangeState(CMonsterAI *pAI, CMonster *pMon, int
 
   if (bAttackState)
   {
-    Us_HFSM::SendMsg(pAI, 5u, 0x2Fu, nullptr);
+    pAI->SendMsg(5u, 0x2Fu, nullptr);
     CMonsterHelper::TransPort(pMon, pMon->m_fCreatePos);
     pMon->SetAttackTarget( nullptr);
-    Us_HFSM::SendMsg(pAI, 6u, 0x26u, nullptr);
+    pAI->SendMsg(6u, 0x26u, nullptr);
   }
   else
   {
-    Us_HFSM::SendMsg(pAI, 3u, 0x23u, nullptr);
+    pAI->SendMsg(3u, 0x23u, nullptr);
     const float loopTime = pMon->GeEmotionImpStdTime();
     pAI->SetLoopTime( 3, static_cast<int>(loopTime));
     DfAIMgr::ChangeTargetPos(pMon, pMon->m_fCreatePos);
@@ -1324,12 +1324,6 @@ void DfAIMgr::SearchPatrollPath(CMonsterAI *pAI, CMonster *pMon)
 char DfAIMgr::SearchCharacterPath(CMonsterAI *pAI, CMonster *pMon, CCharacter *pTarget)
 {
   float v14[21];
-  float *fillPtr = v14;
-  for (int fillCount = 48; fillCount; --fillCount)
-  {
-    *fillPtr++ = -107374180.0f;
-  }
-
   CPathMgr *pathFinder = pAI->GetPathFinder();
   if (pathFinder->GetPathSize())
   {
@@ -1420,7 +1414,7 @@ void DfAIMgr::ChangeTargetPos(CMonster *pMon, float *pTarPos)
     {
       pMon->SendMsg_Move();
     }
-    Us_HFSM::SendMsg(&pMon->m_AI, 7u, 0x22u, nullptr);
+    pMon->m_AI.SendMsg(7u, 0x22u, nullptr);
   }
 }
 

@@ -654,7 +654,7 @@ void _BUDDY_LIST::__list::ON(char *pwszName, CPlayer *ptr)
 
 _BUDDY_LIST::_BUDDY_LIST()
 {
-  CNetIndexList::SetList(&m_LastApply, 8u);
+  m_LastApply.SetList(8u);
   Init();
 }
 
@@ -666,7 +666,7 @@ void _BUDDY_LIST::Init()
   {
     m_List[index].init();
   }
-  CNetIndexList::ResetList(&m_LastApply);
+  m_LastApply.ResetList();
 }
 
 int _BUDDY_LIST::GetBuddyNum()
@@ -789,24 +789,24 @@ bool _BUDDY_LIST::SearchBuddyLogin(CPlayer *pLoger, unsigned int dwSerial, char 
 void _BUDDY_LIST::PushLastApplyTemp(unsigned int dwDstSerial)
 {
   unsigned int outIndex[9]{};
-  if (!CNetIndexList::IsInList(&m_LastApply, dwDstSerial))
+  if (!m_LastApply.IsInList(dwDstSerial))
   {
-    if (CNetIndexList::size(&m_LastApply) >= 8)
+    if (m_LastApply.size() >= 8)
     {
-      CNetIndexList::PopNode_Front(&m_LastApply, outIndex);
+      m_LastApply.PopNode_Front(outIndex);
     }
-    CNetIndexList::PushNode_Back(&m_LastApply, dwDstSerial);
+    m_LastApply.PushNode_Back(dwDstSerial);
   }
 }
 
 void _BUDDY_LIST::PopLastApplyTemp(unsigned int dwDstSerial)
 {
-  CNetIndexList::FindNode(&m_LastApply, dwDstSerial);
+  m_LastApply.FindNode(dwDstSerial);
 }
 
 bool _BUDDY_LIST::IsPushLastApply(unsigned int dwDstSerial)
 {
-  return CNetIndexList::IsInList(&m_LastApply, dwDstSerial);
+  return m_LastApply.IsInList(dwDstSerial);
 }
 
 void _NameChangeBuddyInfo::Init()
@@ -1070,14 +1070,14 @@ bool CPlayer::OutOfMap(CMapData *pIntoMap, unsigned __int16 wLayerIndex, unsigne
       && !m_bObserver
       && pIntoMap != m_pCurMap
       && pIntoMap->m_pMapSet->m_nRaceVillageCode < 3
-      && static_cast<unsigned int>(CPlayerDB::GetRaceCode(&m_Param)) != static_cast<unsigned int>(pIntoMap->m_pMapSet->m_nRaceVillageCode))
+      && static_cast<unsigned int>(m_Param.GetRaceCode()) != static_cast<unsigned int>(pIntoMap->m_pMapSet->m_nRaceVillageCode))
   {
     mgr_tracing(1);
   }
 
-  if (m_pCurMap == g_TransportShip[CPlayerDB::GetRaceCode(&m_Param)].m_pLinkShipMap)
+  if (m_pCurMap == g_TransportShip[m_Param.GetRaceCode()].m_pLinkShipMap)
   {
-    const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+    const int raceCode = m_Param.GetRaceCode();
     g_TransportShip[raceCode].ExitMember(this, false);
   }
 
@@ -1086,7 +1086,7 @@ bool CPlayer::OutOfMap(CMapData *pIntoMap, unsigned __int16 wLayerIndex, unsigne
   DTradeInit();
   m_byMapInModeBuffer = byMapOutType;
 
-  const unsigned int dwMapEnvCode = CLevel::GetEnvironment(&pIntoMap->m_Level);
+  const unsigned int dwMapEnvCode = pIntoMap->m_Level.GetEnvironment();
   SendMsg_MapEnvInform(static_cast<char>(pIntoMap->m_pMapSet->m_dwIndex), dwMapEnvCode);
   SendMsg_MapOut(byMapOutType, static_cast<unsigned __int8>(pIntoMap->m_pMapSet->m_dwIndex));
 
@@ -1098,14 +1098,14 @@ bool CPlayer::OutOfMap(CMapData *pIntoMap, unsigned __int16 wLayerIndex, unsigne
   {
     if (m_pUserDB)
     {
-      CUserDB::Update_Map(m_pUserDB, m_pCurMap->m_pMapSet->m_dwIndex, m_fCurPos);
+      m_pUserDB->Update_Map(m_pCurMap->m_pMapSet->m_dwIndex, m_fCurPos);
     }
   }
   else
   {
     if (m_pUserDB)
     {
-      CUserDB::Update_Map(m_pUserDB, pIntoMap->m_pMapSet->m_dwIndex, pfStartPos);
+      m_pUserDB->Update_Map(pIntoMap->m_pMapSet->m_dwIndex, pfStartPos);
     }
     memcpy_0(m_fCurPos, pfStartPos, sizeof(m_fCurPos));
   }
@@ -1129,7 +1129,7 @@ bool CPlayer::OutOfMap(CMapData *pIntoMap, unsigned __int16 wLayerIndex, unsigne
 
   m_pCurMap = pIntoMap;
   m_wMapLayerIndex = wLayerIndex;
-  CPlayerDB::SetMapCode(&m_Param, pIntoMap->m_pMapSet->m_dwIndex);
+  m_Param.SetMapCode(pIntoMap->m_pMapSet->m_dwIndex);
   SetCurPos(pfStartPos);
   memcpy_0(m_fTarPos, m_fCurPos, sizeof(m_fTarPos));
   m_bMove = false;
@@ -1146,7 +1146,7 @@ _STORAGE_LIST::_db_con *CPlayer::Emb_AddStorage(
 {
   if (byStorageCode >= 8)
   {
-    const char *charName = CPlayerDB::GetCharNameA(&m_Param);
+    const char *charName = m_Param.GetCharNameA();
     g_Main.m_logSystemError.Write(
       "%s: Emb_AddStorage.. total_storage_num is over. storage: %d, item: %d-%d: ",
       charName,
@@ -1159,7 +1159,7 @@ _STORAGE_LIST::_db_con *CPlayer::Emb_AddStorage(
   unsigned int storageIndex = m_Param.m_pStoragePtr[byStorageCode]->TransInCon(pCon);
   if (storageIndex == 255)
   {
-    const char *charName = CPlayerDB::GetCharNameA(&m_Param);
+    const char *charName = m_Param.GetCharNameA();
     g_Main.m_logSystemError.Write(
       "%s: Emb_AddStorage.. TransInCon()error storage: %d, item: %d-%d: ",
       charName,
@@ -1172,7 +1172,7 @@ _STORAGE_LIST::_db_con *CPlayer::Emb_AddStorage(
   _STORAGE_LIST::_db_con *pkItem = &m_Param.m_pStoragePtr[byStorageCode]->m_pStorageList[storageIndex];
   if (!pkItem)
   {
-    const char *charName = CPlayerDB::GetCharNameA(&m_Param);
+    const char *charName = m_Param.GetCharNameA();
     g_Main.m_logSystemError.Write(
       "%s: Emb_AddStorage.. Item is not exist. storage: %d, item: %d-%d: ",
       charName,
@@ -1191,7 +1191,7 @@ _STORAGE_LIST::_db_con *CPlayer::Emb_AddStorage(
   {
     if (!LendItemMng::Instance()->InsertLink(m_ObjID.m_wIndex, byStorageCode, pkItem))
     {
-      const char *charName = CPlayerDB::GetCharNameA(&m_Param);
+      const char *charName = m_Param.GetCharNameA();
       g_Main.m_logSystemError.Write(
         "%s: Emb_AddStorage.. InsertLink ()error storage: %d, item: %d-%d: ",
         charName,
@@ -1267,12 +1267,12 @@ _STORAGE_LIST::_db_con *CPlayer::Emb_AddStorage(
 
   if (byStorageCode == 5)
   {
-    const unsigned __int8 raceCode = CPlayerDB::GetRaceCode(&m_Param);
+    const unsigned __int8 raceCode = m_Param.GetRaceCode();
     m_Param.m_dbTrunk.m_byItemSlotRace[storageIndex] = raceCode;
   }
   if (byStorageCode == 7)
   {
-    const unsigned __int8 raceCode = CPlayerDB::GetRaceCode(&m_Param);
+    const unsigned __int8 raceCode = m_Param.GetRaceCode();
     m_Param.m_dbExtTrunk.m_byItemSlotRace[storageIndex] = raceCode;
   }
 
@@ -1288,7 +1288,7 @@ bool CPlayer::Emb_DelStorage(
 {
   if (byStorageCode >= 8)
   {
-    const char *charName = CPlayerDB::GetCharNameA(&m_Param);
+    const char *charName = m_Param.GetCharNameA();
     if (strErrorCodePos)
     {
       g_Main.m_logSystemError.Write(
@@ -1320,7 +1320,7 @@ bool CPlayer::Emb_DelStorage(
 
   if (!m_Param.m_pStoragePtr[byStorageCode]->EmptyCon(byStorageIndex))
   {
-    const char *charName = CPlayerDB::GetCharNameA(&m_Param);
+    const char *charName = m_Param.GetCharNameA();
     if (strErrorCodePos)
     {
       g_Main.m_logSystemError.Write(
@@ -1416,7 +1416,7 @@ bool CPlayer::Emb_DelStorage(
         {
           if (!TimeLimitJadeMng::Instance()->DeleteList(m_ObjID.m_wIndex, pkItem))
           {
-            const char *charName = CPlayerDB::GetCharNameA(&m_Param);
+            const char *charName = m_Param.GetCharNameA();
             g_Main.m_logSystemError.Write(
               "%s: Emb_DelStorage.. TimeLimitJadeMng::DeleteList() error storage: %d, item: %d-%d: ",
               charName,
@@ -1463,7 +1463,7 @@ void CPlayer::SetShapeAllBuffer()
   m_bufShapeAll.wIndex = m_ObjID.m_wIndex;
   m_bufShapeAll.dwSerial = m_dwObjSerial;
   m_bufShapeAll.wEquipVer = GetVisualVer();
-  m_bufShapeAll.byRecIndex = CPlayerDB::GetRaceSexCode(&m_Param);
+  m_bufShapeAll.byRecIndex = m_Param.GetRaceSexCode();
   m_bufShapeAll.byFaceIndex = m_Param.m_dbChar.m_byDftPart_Face;
   m_bufShapeAll.byHairIndex = m_Param.m_dbChar.m_byDftPart[4];
   m_bufShapeAll.byCashChangeStateFlag = m_CashChangeStateFlag.m_byStateFlag;
@@ -1490,7 +1490,7 @@ void CPlayer::SetShapeAllBuffer()
   if (m_Param.m_pGuild)
   {
     m_bufShapeAll.dwGuildSerial = m_Param.m_pGuild->m_dwSerial;
-    const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+    const int raceCode = m_Param.GetRaceCode();
     CHonorGuild *honorGuild = CHonorGuild::Instance();
     m_bufShapeAll.byHonorGuildRank = honorGuild->FindHonorGuildRank(raceCode, m_Param.m_pGuild->m_dwSerial);
   }
@@ -1500,7 +1500,7 @@ void CPlayer::SetShapeAllBuffer()
     m_bufShapeAll.byHonorGuildRank = static_cast<unsigned __int8>(-1);
   }
 
-  const char *charName = CPlayerDB::GetCharNameW(&m_Param);
+  const char *charName = m_Param.GetCharNameW();
   strcpy_0(m_bufShapeAll.wszName, charName);
   m_bufShapeAll.bySpecialPart = static_cast<unsigned __int8>(-1);
 
@@ -1600,7 +1600,7 @@ void CPlayer::SetShapeAllBuffer()
 
   if (m_Param.m_pGuild)
   {
-    const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+    const int raceCode = m_Param.GetRaceCode();
     CHonorGuild *honorGuild = CHonorGuild::Instance();
     m_bufSpapePart.byHonorGuildRank =
       honorGuild->FindHonorGuildRank(raceCode, m_Param.m_pGuild->m_dwSerial);
@@ -1795,7 +1795,7 @@ void CPlayer::SendMsg_NewViewOther(unsigned __int8 byViewType)
   msg.dwSerial = m_dwObjSerial;
   msg.wVisualVer = GetVisualVer();
   FloatToShort(m_fCurPos, msg.pos, 3);
-  msg.byRaceSexCode = static_cast<unsigned __int8>(CPlayerDB::GetRaceSexCode(&m_Param));
+  msg.byRaceSexCode = static_cast<unsigned __int8>(m_Param.GetRaceSexCode());
   msg.byViewType = byViewType;
   msg.dwStateFlag = GetStateFlag();
   msg.wLastContEffect = m_wLastContEffect;
@@ -1821,12 +1821,12 @@ bool CPlayer::IsLastAttBuff()
 
 __int64 CPlayer::GetLevel()
 {
-  return CPlayerDB::GetLevel(&m_Param);
+  return m_Param.GetLevel();
 }
 
 __int64 CPlayer::GetHP()
 {
-  return CPlayerDB::GetHP(&m_Param);
+  return m_Param.GetHP();
 }
 
 __int64 CPlayer::GetMaxHP()
@@ -1876,7 +1876,7 @@ void CPlayer::SetStateFlag()
   {
     state |= bit << 4;
   }
-  if (m_bCorpse || !CPlayerDB::GetHP(&m_Param))
+  if (m_bCorpse || !m_Param.GetHP())
   {
     state |= bit << 5;
   }
@@ -1917,13 +1917,13 @@ void CPlayer::SetStateFlag()
     state |= bit << 15;
   }
 
-  const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+  const int raceCode = m_Param.GetRaceCode();
   CPvpUserAndGuildRankingSystem *rankingSystem = CPvpUserAndGuildRankingSystem::Instance();
   if (m_dwObjSerial == rankingSystem->GetCurrentRaceBossSerial(static_cast<unsigned __int8>(raceCode), 0))
   {
     state |= bit << 16;
   }
-  const int viceRaceCode = CPlayerDB::GetRaceCode(&m_Param);
+  const int viceRaceCode = m_Param.GetRaceCode();
   if (rankingSystem->IsRaceViceBoss(static_cast<unsigned __int8>(viceRaceCode), m_dwObjSerial))
   {
     state |= bit << 17;
@@ -1992,8 +1992,8 @@ void CPlayer::SetStateFlag()
     state |= bit << 32;
   }
 
-  const unsigned int charSerial = CPlayerDB::GetCharSerial(&m_Param);
-  const int bossRaceCode = CPlayerDB::GetRaceCode(&m_Param);
+  const unsigned int charSerial = m_Param.GetCharSerial();
+  const int bossRaceCode = m_Param.GetRaceCode();
   const unsigned __int8 bossType =
     rankingSystem->GetBossType(static_cast<unsigned __int8>(bossRaceCode), charSerial);
   switch (bossType)
@@ -2160,7 +2160,7 @@ bool CPlayer::IsMapLoading()
 
 bool CPlayer::IsRidingShip()
 {
-  return m_pCurMap == g_TransportShip[CPlayerDB::GetRaceCode(&m_Param)].m_pLinkShipMap;
+  return m_pCurMap == g_TransportShip[m_Param.GetRaceCode()].m_pLinkShipMap;
 }
 
 CMapData *CPlayer::GetBindMapData()
@@ -2232,7 +2232,7 @@ char CPlayer::pc_GiveItem(_STORAGE_LIST::_db_con *kItem, char *szReason, bool bD
   }
   else
   {
-    kItem->m_wSerial = CPlayerDB::GetNewItemSerial(&m_Param);
+    kItem->m_wSerial = m_Param.GetNewItemSerial();
     if (!Emb_AddStorage(0, kItem, false, true))
     {
       success = false;
@@ -2307,7 +2307,7 @@ char CPlayer::SetHP(int nHP, bool bOver)
   {
     return 0;
   }
-  CPlayerDB::SetHP(&m_Param, nHP);
+  m_Param.SetHP(nHP);
   return 1;
 }
 
@@ -2422,7 +2422,7 @@ void CPlayer::AlterPvPPoint(double dAlter, int AlterType, unsigned int dwDstSeri
     alterValue = dAlter * penalty;
   }
 
-  const double curPoint = CPlayerDB::GetPvPPoint(&m_Param);
+  const double curPoint = m_Param.GetPvPPoint();
   double nextPoint = curPoint + alterValue;
   if (nextPoint < 0.0)
   {
@@ -2434,13 +2434,13 @@ void CPlayer::AlterPvPPoint(double dAlter, int AlterType, unsigned int dwDstSeri
     return;
   }
 
-  CHolyStone *holyStone = &g_Stone[static_cast<int>(CPlayerDB::GetRaceCode(&m_Param))];
+  CHolyStone *holyStone = &g_Stone[static_cast<int>(m_Param.GetRaceCode())];
   if (holyStone->m_pCurMap == m_pCurMap && g_HolySys.GetSceneCode() == 1)
   {
     AlterPvpPointLeak(alterValue);
   }
 
-  CPlayerDB::SetPvPPoint(&m_Param, nextPoint);
+  m_Param.SetPvPPoint(nextPoint);
   m_kPvpOrderView.UpdatePvPPoint(alterValue, nextPoint);
   m_kPvpOrderView.Notify_OrderView(m_ObjID.m_wIndex);
   s_MgrLvHistory.alter_pvp(
@@ -2449,18 +2449,18 @@ void CPlayer::AlterPvPPoint(double dAlter, int AlterType, unsigned int dwDstSeri
     m_pPartyMgr,
     m_szLvHistoryFileName);
 
-  if (curPoint != CPlayerDB::GetPvPPoint(&m_Param))
+  if (curPoint != m_Param.GetPvPPoint())
   {
     if (m_pUserDB)
     {
-      m_pUserDB->Update_AlterPvPPoint(CPlayerDB::GetPvPPoint(&m_Param));
+      m_pUserDB->Update_AlterPvPPoint(m_Param.GetPvPPoint());
     }
     SendMsg_AlterPvPPoint();
   }
 
   if (AlterType < 10)
   {
-    const char *charName = CPlayerDB::GetCharNameA(&m_Param);
+    const char *charName = m_Param.GetCharNameA();
     g_Main.m_logPvP.Write(
       "%s [ %d ] DST: [ %d ] type: %s  >> pvp : %.0f  last: %.0f",
       charName,
@@ -2468,13 +2468,13 @@ void CPlayer::AlterPvPPoint(double dAlter, int AlterType, unsigned int dwDstSeri
       dwDstSerial,
       sType[AlterType],
       alterValue,
-      CPlayerDB::GetPvPPoint(&m_Param));
+      m_Param.GetPvPPoint());
   }
 }
 
 void CPlayer::SendMsg_AlterPvPPoint()
 {
-  double msgPoint = CPlayerDB::GetPvPPoint(&m_Param);
+  double msgPoint = m_Param.GetPvPPoint();
   unsigned __int8 type[2] = {11, 10};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msgPoint), 8);
 }
@@ -2550,14 +2550,14 @@ void CPlayer::ForcePullUnit(bool bLogout)
     m_pParkingUnit->Destroy(0);
   }
 
-  if (bLogout || CPlayerDB::GetDalant(&m_Param) < 1000)
+  if (bLogout || m_Param.GetDalant() < 1000)
   {
     _UpdateUnitDebt(m_pUsingUnit->bySlotIndex, 1000);
   }
   else
   {
     SubDalant(1000);
-    const int level = CPlayerDB::GetLevel(&m_Param);
+    const int level = m_Param.GetLevel();
     if (level == 30 || level == 40 || level == 50 || level == 60)
     {
       CMoneySupplyMgr::Instance()->UpdateBuyUnitData(level, 1000);
@@ -2746,7 +2746,7 @@ bool DTradeEqualPerson(CPlayer *lp_pOne, CPlayer **lpp_pDst)
       && dst->m_pUserDB
       && dst->m_pmTrd.wDTradeDstIndex == lp_pOne->m_ObjID.m_wIndex
       && dst->m_pmTrd.dwDTradeDstSerial == lp_pOne->m_dwObjSerial
-      && CPlayerDB::GetRaceCode(&dst->m_Param) == CPlayerDB::GetRaceCode(&lp_pOne->m_Param))
+      && dst->m_Param.GetRaceCode() == lp_pOne->m_Param.GetRaceCode())
   {
     if (lpp_pDst)
     {
@@ -3411,12 +3411,12 @@ int CPlayer::GetMaxDP()
 
 int CPlayer::GetDP()
 {
-  return CPlayerDB::GetDP(&m_Param);
+  return m_Param.GetDP();
 }
 
 char CPlayer::SetDP(int nDP, bool bOver)
 {
-  const int currentDp = CPlayerDB::GetDP(&m_Param);
+  const int currentDp = m_Param.GetDP();
   if (!bOver && nDP > currentDp)
   {
     const int maxDp = GetMaxDP();
@@ -3443,7 +3443,7 @@ char CPlayer::SetDP(int nDP, bool bOver)
     return 0;
   }
 
-  CPlayerDB::SetDP(&m_Param, nDP);
+  m_Param.SetDP(nDP);
   return 1;
 }
 
@@ -3454,7 +3454,7 @@ void CPlayer::SendMsg_SetDPInform()
     unsigned __int16 dp;
   } msg{};
 
-  msg.dp = static_cast<unsigned __int16>(CPlayerDB::GetDP(&m_Param));
+  msg.dp = static_cast<unsigned __int16>(m_Param.GetDP());
 
   unsigned __int8 type[2] = {17, 114};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 2u);
@@ -3598,7 +3598,7 @@ void CPlayer::SetHaveEffect(char bLogin)
 
   for (int slotIndex = 0; ; ++slotIndex)
   {
-    const unsigned __int8 bagNum = CPlayerDB::GetBagNum(&m_Param);
+    const unsigned __int8 bagNum = m_Param.GetBagNum();
     if (slotIndex >= 20 * bagNum)
     {
       break;
@@ -3619,7 +3619,7 @@ void CPlayer::SetHaveEffect(char bLogin)
 
   for (int slotIndex = 0; ; ++slotIndex)
   {
-    const unsigned __int8 bagNum = CPlayerDB::GetBagNum(&m_Param);
+    const unsigned __int8 bagNum = m_Param.GetBagNum();
     if (slotIndex >= 20 * bagNum)
     {
       break;
@@ -3909,8 +3909,8 @@ void CPlayer::apply_have_item_std_effect(int nEffCode, float fVal, bool bAdd, in
 
 void CPlayer::HideNameEffect(bool bAdd)
 {
-  const unsigned int dwSerial = CPlayerDB::GetCharSerial(&m_Param);
-  const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+  const unsigned int dwSerial = m_Param.GetCharSerial();
+  const int raceCode = m_Param.GetRaceCode();
   CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
   const unsigned __int8 bossType = ranking->GetBossType(static_cast<unsigned __int8>(raceCode), dwSerial);
 
@@ -3956,9 +3956,9 @@ void CPlayer::HideNameEffect(bool bAdd)
           {
             if (ptr->m_pmBuddy.IsBuddy(m_dwObjSerial))
             {
-              const char *name = CPlayerDB::GetCharNameW(&ptr->m_Param);
+              const char *name = ptr->m_Param.GetCharNameW();
               buddy->ON(const_cast<char *>(name), ptr);
-              const char *selfName = CPlayerDB::GetCharNameW(&m_Param);
+              const char *selfName = m_Param.GetCharNameW();
               ptr->m_pmBuddy.SearchBuddyLogin(this, m_dwObjSerial, const_cast<char *>(selfName));
               ptr->SendMsg_BuddyLoginInform(m_dwObjSerial, m_wRegionMapIndex, m_wRegionIndex);
             }
@@ -3980,7 +3980,7 @@ void CPlayer::HideNameEffect(bool bAdd)
         {
           CGuildBattleController::Instance()->SendPossibleBattleGuildListFirst(
             m_ObjID.m_wIndex,
-            static_cast<unsigned __int8>(CPlayerDB::GetRaceCode(&m_Param)));
+            static_cast<unsigned __int8>(m_Param.GetRaceCode()));
         }
         if (member->byClassInGuild == 2)
         {
@@ -4219,7 +4219,7 @@ void CPlayer::SetMstPt(int nMstCode, float fVal, bool bAdd, unsigned int nWpType
       SendMsg_StatInform(index + 52, updated + newCum, 0);
     }
   }
-  if (nMstCode == 6 && static_cast<unsigned int>(CPlayerDB::GetRaceCode(&m_Param)) != 2)
+  if (nMstCode == 6 && static_cast<unsigned int>(m_Param.GetRaceCode()) != 2)
   {
     newCum = static_cast<unsigned int>(std::pow(static_cast<float>((curMastery - 1) + deltaValue), 2.0f) * 15000.0f);
     oldCum = static_cast<unsigned int>(std::pow(static_cast<float>(curMastery - 1), 2.0f) * 15000.0f);
@@ -4346,12 +4346,12 @@ void CPlayer::SetMstHaveEffect(_ResourceItem_fld *pFld, _STORAGE_LIST::_db_con *
 
 int CPlayer::GetFP()
 {
-  return CPlayerDB::GetFP(&m_Param);
+  return m_Param.GetFP();
 }
 
 int CPlayer::GetSP()
 {
-  return CPlayerDB::GetSP(&m_Param);
+  return m_Param.GetSP();
 }
 
 int CPlayer::GetMaxFP()
@@ -4412,7 +4412,7 @@ bool CPlayer::SetFP(int nFP, bool bOver)
     return false;
   }
 
-  CPlayerDB::SetFP(&m_Param, nFP);
+  m_Param.SetFP(nFP);
   return true;
 }
 
@@ -4423,7 +4423,7 @@ bool CPlayer::SetSP(int nSP, bool bOver)
     return true;
   }
 
-  const int curSp = CPlayerDB::GetSP(&m_Param);
+  const int curSp = m_Param.GetSP();
   if (!bOver && nSP > curSp)
   {
     const int maxSp = GetMaxSP();
@@ -4450,7 +4450,7 @@ bool CPlayer::SetSP(int nSP, bool bOver)
     return false;
   }
 
-  CPlayerDB::SetSP(&m_Param, nSP);
+  m_Param.SetSP(nSP);
   return true;
 }
 
@@ -4512,10 +4512,10 @@ void CPlayer::SendMsg_Resurrect(char byRet, bool bQuickPotion)
 
   ResurrectMsg msg{};
   msg.byRet = byRet;
-  msg.byLevel = static_cast<char>(CPlayerDB::GetLevel(&m_Param));
-  msg.wFP = static_cast<unsigned __int16>(CPlayerDB::GetFP(&m_Param));
-  msg.wHP = static_cast<unsigned __int16>(CPlayerDB::GetHP(&m_Param));
-  msg.wSP = static_cast<unsigned __int16>(CPlayerDB::GetSP(&m_Param));
+  msg.byLevel = static_cast<char>(m_Param.GetLevel());
+  msg.wFP = static_cast<unsigned __int16>(m_Param.GetFP());
+  msg.wHP = static_cast<unsigned __int16>(m_Param.GetHP());
+  msg.wSP = static_cast<unsigned __int16>(m_Param.GetSP());
   msg.bQuickPotion = bQuickPotion;
 
   unsigned __int8 type[2] = {3, 40};
@@ -4591,7 +4591,7 @@ void CPlayer::pc_NuclearAfterEffect()
       if (invalid)
       {
         m_pUserDB->Update_SFContDelete(static_cast<unsigned __int8>(row), static_cast<unsigned __int8>(col));
-        const char *charName = CPlayerDB::GetCharNameW(&m_Param);
+        const char *charName = m_Param.GetCharNameW();
         g_Main.m_logSystemError.Write(
           "%s: error stored effect, code: %d, idx: %d: lv: %d",
           charName,
@@ -4693,17 +4693,17 @@ void CPlayer::SendMsg_UnitForceReturnInform(char bySlotIndex, unsigned int dwDeb
 
 void CPlayer::SubDalant(unsigned int dwSub)
 {
-  unsigned int nextDalant = CPlayerDB::GetDalant(&m_Param) - dwSub;
-  if (dwSub > CPlayerDB::GetDalant(&m_Param))
+  unsigned int nextDalant = m_Param.GetDalant() - dwSub;
+  if (dwSub > m_Param.GetDalant())
   {
     nextDalant = 0;
   }
 
-  if (nextDalant != CPlayerDB::GetDalant(&m_Param))
+  if (nextDalant != m_Param.GetDalant())
   {
-    CPlayerDB::SetDalant(&m_Param, nextDalant);
-    const unsigned int gold = CPlayerDB::GetGold(&m_Param);
-    m_pUserDB->Update_Money(CPlayerDB::GetDalant(&m_Param), gold);
+    m_Param.SetDalant(nextDalant);
+    const unsigned int gold = m_Param.GetGold();
+    m_pUserDB->Update_Money(m_Param.GetDalant(), gold);
   }
 }
 
@@ -4741,7 +4741,7 @@ int CPlayer::_CalcMaxHP()
   float masteryPerMast = static_cast<float>(m_pmMst.GetMasteryPerMast(1u, 0));
   masteryPerMast += static_cast<float>(m_nAddPointByClass[0]);
 
-  const int level = CPlayerDB::GetLevel(&m_Param);
+  const int level = m_Param.GetLevel();
   const float levelPow = std::pow(static_cast<float>(level), 2.0f);
   const float value = std::sqrt(levelPow * masteryPerMast) * 20.0f + 80.0f;
   return static_cast<int>(value);
@@ -4750,7 +4750,7 @@ int CPlayer::_CalcMaxHP()
 int CPlayer::_CalcMaxFP()
 {
   float value = 0.0f;
-  const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+  const int raceCode = m_Param.GetRaceCode();
 
   if (raceCode == 0)
   {
@@ -4782,7 +4782,7 @@ int CPlayer::_CalcMaxFP()
   }
 
   value += static_cast<float>(m_nAddPointByClass[1]);
-  const float level = static_cast<float>(CPlayerDB::GetLevel(&m_Param));
+  const float level = static_cast<float>(m_Param.GetLevel());
   const float powValue = std::pow(value, 2.0f);
   const float result = std::sqrt(level * powValue) * 5.0f + 40.0f;
   return static_cast<int>(result);
@@ -4794,7 +4794,7 @@ int CPlayer::_CalcMaxSP()
   value += static_cast<float>(m_pmMst.GetMasteryPerMast(0, 1u)) * 0.80000001f;
   value += static_cast<float>(m_nAddPointByClass[2]);
 
-  const float level = static_cast<float>(CPlayerDB::GetLevel(&m_Param));
+  const float level = static_cast<float>(m_Param.GetLevel());
   const float powValue = std::pow(value, 2.0f);
   const float result = std::sqrt(level * powValue) * 2.5f + 160.0f;
   return static_cast<int>(result);
@@ -5055,7 +5055,7 @@ void CPlayer::SendMsg_MonsterAggroData(CCharacter *pCharacter)
         else
         {
           CPlayer *player = static_cast<CPlayer *>(aggroCharacter);
-          const char *name = CPlayerDB::GetCharNameA(&player->m_Param);
+          const char *name = player->m_Param.GetCharNameA();
           sprintf(nodeInfo->m_Name, "%s", name);
         }
       }

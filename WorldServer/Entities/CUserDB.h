@@ -59,7 +59,7 @@ public:
   char m_szLobbyHistoryFileName[64];
   void Init(unsigned __int16 index);
   void ParamInit();
-  static bool Update_Map(CUserDB *self, unsigned __int8 map, float *pos);
+  bool Update_Map(unsigned __int8 map, float *pos);
   char Update_Bind(char *pszMapCode, char *pDummyCode, bool bUpdate);
   void Update_PvpPointLeak(long double dValue);
   void Update_LastAttBuff(bool bSet);

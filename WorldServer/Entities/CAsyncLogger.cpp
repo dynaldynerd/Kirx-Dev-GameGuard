@@ -134,12 +134,12 @@ int CAsyncLogger::Init()
   }
 
   const unsigned int dwMaxBufNum = 3040;
-  CNetIndexList::SetList(&m_klistEmpty, 0xBE0u);
+  m_klistEmpty.SetList(0xBE0u);
   for (unsigned int index = 0; index < dwMaxBufNum; ++index)
   {
-    CNetIndexList::PushNode_Back(&m_klistEmpty, index);
+    m_klistEmpty.PushNode_Back(index);
   }
-  CNetIndexList::SetList(&m_klistProc, dwMaxBufNum);
+  m_klistProc.SetList(dwMaxBufNum);
   m_vecPushList.assign(dwMaxBufNum, static_cast<unsigned long>(-1));
 
   m_kCheckUpdateLogFileNameDelay.BeginTimer(0x2710u);
@@ -173,12 +173,12 @@ void CAsyncLogger::ProcWrite()
   }
 
   unsigned int outIndex = 0;
-  while (CNetIndexList::PopNode_Front(&m_klistProc, &outIndex))
+  while (m_klistProc.PopNode_Front(&outIndex))
   {
     unsigned long &listIndex = m_vecPushList[outIndex];
     m_kBufferList[listIndex].ProcWrite();
     listIndex = static_cast<unsigned long>(-1);
-    CNetIndexList::PushNode_Back(&m_klistEmpty, outIndex);
+    m_klistEmpty.PushNode_Back(outIndex);
   }
 }
 
@@ -206,11 +206,11 @@ void CAsyncLogger::Log(const char *szFileName, const char *szLog, int iLenStr)
   }
 
   unsigned int outIndex = 0;
-  if (CNetIndexList::PopNode_Front(&m_klistEmpty, &outIndex))
+  if (m_klistEmpty.PopNode_Front(&outIndex))
   {
     m_kBufferList[bufferIndex].Log(szFileName, szLog, iLenStr);
     m_vecPushList[outIndex] = static_cast<unsigned long>(bufferIndex);
-    CNetIndexList::PushNode_Back(&m_klistProc, outIndex);
+    m_klistProc.PushNode_Back(outIndex);
   }
   else
   {

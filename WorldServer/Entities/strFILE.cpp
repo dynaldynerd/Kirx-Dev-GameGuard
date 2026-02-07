@@ -14,13 +14,6 @@ strFILE::strFILE()
 
 strFILE::~strFILE()
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 12; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   if (m_pLoadStr)
     operator delete[](m_pLoadStr);
@@ -28,13 +21,6 @@ strFILE::~strFILE()
 
 bool strFILE::load(const char *pszFileName)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 28; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   if (!pszFileName)
     return false;
@@ -69,13 +55,6 @@ bool strFILE::load(const char *pszFileName)
 
 bool strFILE::word(char *poutszWord)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 12; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   if (!m_pReadStr)
     return false;
@@ -113,13 +92,6 @@ bool strFILE::word(char *poutszWord)
 
 bool strFILE::word(int *pnoutVal)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 52; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char buffer[144]{};
   if (!word(buffer))
@@ -130,13 +102,6 @@ bool strFILE::word(int *pnoutVal)
 
 bool strFILE::word(float *pfoutVal)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 52; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char buffer[144]{};
   if (!word(buffer))
@@ -147,13 +112,6 @@ bool strFILE::word(float *pfoutVal)
 
 bool strFILE::word(long double *pdoutVal)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 52; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char buffer[144]{};
   if (!word(buffer))
@@ -164,10 +122,6 @@ bool strFILE::word(long double *pdoutVal)
 
 unsigned int strFILE::read_line_count()
 {
-  int stackFill[8];
-  for (int i = 0; i < 8; ++i)
-    stackFill[i] = 0xCCCCCCCC;
-
   int lineCount = 0;
   char *readCursor = m_pLoadStr;
   for (unsigned int index = 0; index < m_dwLoadSize && readCursor != m_pReadStr; ++index)

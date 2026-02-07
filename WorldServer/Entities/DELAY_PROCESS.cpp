@@ -45,7 +45,7 @@ bool _DELAY_PROCESS::Init(unsigned int dwObjectNum, unsigned int dwTerm)
   m_dwTerm = static_cast<int>(dwTerm);
   m_pdwPushTime = new unsigned int[dwObjectNum];
   m_pdwPushSerial = new unsigned int[dwObjectNum];
-  CNetIndexList::SetList(&m_list, dwObjectNum);
+  m_list.SetList(dwObjectNum);
   std::memset(m_pdwPushSerial, 0xFF, sizeof(unsigned int) * dwObjectNum);
   return true;
 }
@@ -64,14 +64,14 @@ bool _DELAY_PROCESS::Push(unsigned int dwIndex, unsigned int dwSerial)
 
   m_pdwPushTime[dwIndex] = timeGetTime();
   m_pdwPushSerial[dwIndex] = dwSerial;
-  return CNetIndexList::PushNode_Back(&m_list, dwIndex);
+  return m_list.PushNode_Back(dwIndex);
 }
 
 void _DELAY_PROCESS::Delete(unsigned int dwIndex, unsigned int dwSerial)
 {
   if (m_pdwPushSerial[dwIndex] == dwSerial && m_pdwPushSerial[dwIndex] != static_cast<unsigned int>(-1))
   {
-    if (CNetIndexList::FindNode(&m_list, dwIndex))
+    if (m_list.FindNode(dwIndex))
     {
       m_pdwPushSerial[dwIndex] = static_cast<unsigned int>(-1);
     }
@@ -87,7 +87,7 @@ void _DELAY_PROCESS::CheckOnLoop()
 
   const unsigned int now = timeGetTime();
   unsigned int outIndex[4] = {};
-  while (CNetIndexList::CopyFront(&m_list, outIndex))
+  while (m_list.CopyFront(outIndex))
   {
     const unsigned int index = outIndex[0];
     const int elapsed = static_cast<int>(now - m_pdwPushTime[index]);
@@ -102,7 +102,7 @@ void _DELAY_PROCESS::CheckOnLoop()
 
     Process(index, m_pdwPushSerial[index]);
     m_pdwPushSerial[index] = static_cast<unsigned int>(-1);
-    CNetIndexList::PopNode_Front(&m_list, outIndex);
+    m_list.PopNode_Front(outIndex);
   }
 }
 

@@ -169,7 +169,7 @@ void CMoveMapLimitInfoPortal::SubProcForceMoveHQ()
   {
     if (g_Player[index].m_bLive && m_iMapInx == g_Player[index].m_pCurMap->m_nMapCode)
     {
-      const unsigned __int8 race = static_cast<unsigned __int8>(CPlayerDB::GetRaceCode(&g_Player[index].m_Param));
+      const unsigned __int8 race = static_cast<unsigned __int8>(g_Player[index].m_Param.GetRaceCode());
       intoMap = g_MapOper.GetPosStartMap(race, false, outPos);
       if (intoMap)
       {
@@ -238,7 +238,7 @@ void CMoveMapLimitInfoPortal::Load(CPlayer *pkPlayer, CMoveMapLimitRightInfo *pk
     float newPos[3]{};
     if (map->GetRandPosInDummy(m_pkRegenDummy, newPos, true))
     {
-      CPlayerDB::SetCurPos(&pkPlayer->m_Param, newPos);
+      pkPlayer->m_Param.SetCurPos(newPos);
       pkRight->SetFlag(type, 0, true);
     }
   }

@@ -131,13 +131,6 @@ JOB_COMMAND job_command[] = {
 
 bool (__fastcall *SearchQuestCommandFn(char *pszCommand))(strFILE *, CDarkHoleDungeonQuestSetup *, char *)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 12; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   int index = 0;
   while (true)
@@ -153,13 +146,6 @@ bool (__fastcall *SearchQuestCommandFn(char *pszCommand))(strFILE *, CDarkHoleDu
 
 bool (__fastcall *SearchMissionCommandFn(char *pszCommand))(strFILE *, CDarkHoleDungeonQuestSetup *, char *)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 12; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   int index = 0;
   while (true)
@@ -175,13 +161,6 @@ bool (__fastcall *SearchMissionCommandFn(char *pszCommand))(strFILE *, CDarkHole
 
 bool (__fastcall *SearchJobCommandFn(char *pszCommand))(strFILE *, CDarkHoleDungeonQuestSetup *, char *)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 12; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   int index = 0;
   while (true)
@@ -197,13 +176,6 @@ bool (__fastcall *SearchJobCommandFn(char *pszCommand))(strFILE *, CDarkHoleDung
 
 bool __fastcall _false(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 8; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   if (fstr)
     pSetup->m_ErrorInfo.nLine = fstr->read_line_count();
@@ -219,13 +191,6 @@ bool __fastcall GetReactObject(
   char *pszoutErrMsg,
   char *pszoutEventCode)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 184; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[160]{};
   char szRecordCode[136]{};
@@ -314,13 +279,6 @@ bool __fastcall GetReactArea(
   char *pszoutErrMsg,
   char *pszoutEventCode)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 100; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   (void)pszoutErrMsg;
   (void)pszoutEventCode;
@@ -380,13 +338,6 @@ bool __fastcall GetReactArea(
 
 bool __fastcall qc_MembershipParty(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 16; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   int pnoutVal[9]{};
   if (!fstr->word(pnoutVal))
@@ -397,13 +348,6 @@ bool __fastcall qc_MembershipParty(strFILE *fstr, CDarkHoleDungeonQuestSetup *pS
 
 bool __fastcall qc_MemberNum(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 16; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   int pnoutVal[9]{};
   if (!fstr->word(pnoutVal))
@@ -414,13 +358,6 @@ bool __fastcall qc_MemberNum(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, 
 
 bool __fastcall qc_UseMap(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 52; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[136]{};
   if (!fstr->word(poutszWord))
@@ -434,13 +371,6 @@ bool __fastcall qc_UseMap(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, cha
 
 bool __fastcall qc_StartMission(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 52; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[144]{};
   if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 0x20)
@@ -451,13 +381,6 @@ bool __fastcall qc_StartMission(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetu
 
 bool __fastcall qc_LimitLvMin(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 52; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[144]{};
   if (!fstr->word(poutszWord))
@@ -468,13 +391,6 @@ bool __fastcall qc_LimitLvMin(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup,
 
 bool __fastcall qc_LimitLvMax(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 52; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[144]{};
   if (!fstr->word(poutszWord))
@@ -485,13 +401,6 @@ bool __fastcall qc_LimitLvMax(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup,
 
 bool __fastcall qc_DummyBlock(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 108; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[160]{};
   char pszDummyCode[136]{};
@@ -531,13 +440,6 @@ bool __fastcall qc_DummyBlock(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup,
 
 bool __fastcall qc_monsterGroup(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 108; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[160]{};
   char szRecordCode[136]{};
@@ -577,13 +479,6 @@ bool __fastcall qc_monsterGroup(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetu
 
 bool __fastcall qc_RewardItem(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 128; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[132]{};
   if (!fstr->word(poutszWord))
@@ -652,13 +547,6 @@ bool __fastcall qc_RewardItem(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup,
 
 bool __fastcall qc_RewardExp(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 64; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[132]{};
   if (!fstr->word(poutszWord))
@@ -676,13 +564,6 @@ bool __fastcall qc_RewardExp(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, 
 
 bool __fastcall qc_RewardPvp(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 64; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[132]{};
   if (!fstr->word(poutszWord))
@@ -700,13 +581,6 @@ bool __fastcall qc_RewardPvp(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, 
 
 bool __fastcall qc_Dalant(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 64; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[132]{};
   if (!fstr->word(poutszWord))
@@ -724,13 +598,6 @@ bool __fastcall qc_Dalant(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, cha
 
 bool __fastcall qc_Description(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 52; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[144]{};
   if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 0x10)
@@ -741,13 +608,6 @@ bool __fastcall qc_Description(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup
 
 bool __fastcall mc_Area(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 52; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[136]{};
   if (!fstr->word(poutszWord))
@@ -762,13 +622,6 @@ bool __fastcall mc_Area(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char 
 
 bool __fastcall mc_StartPos(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 52; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[136]{};
   if (!fstr->word(poutszWord))
@@ -783,13 +636,6 @@ bool __fastcall mc_StartPos(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, c
 
 bool __fastcall mc_GatePos(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 52; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[136]{};
   if (!fstr->word(poutszWord))
@@ -802,13 +648,6 @@ bool __fastcall mc_GatePos(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, ch
 
 bool __fastcall mc_JobOrder(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 52; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[144]{};
   if (!fstr->word(poutszWord))
@@ -828,13 +667,6 @@ bool __fastcall mc_JobOrder(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, c
 
 bool __fastcall mc_LimTimeSec(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 16; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   int pnoutVal[9]{};
   if (!fstr->word(pnoutVal) || pnoutVal[0] < 0)
@@ -845,13 +677,6 @@ bool __fastcall mc_LimTimeSec(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup,
 
 bool __fastcall mc_ResultType(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 52; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[144]{};
   if (!fstr->word(poutszWord))
@@ -875,13 +700,6 @@ bool __fastcall mc_ResultType(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup,
 
 bool __fastcall mc_ResultContents(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 52; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[144]{};
   if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 0x20)
@@ -893,13 +711,6 @@ bool __fastcall mc_ResultContents(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSe
 
 bool __fastcall mc_Description(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 52; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[144]{};
   if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 0x10)
@@ -910,13 +721,6 @@ bool __fastcall mc_Description(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup
 
 bool __fastcall mc_CompleteMsg(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 52; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[144]{};
   if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 0x10)
@@ -927,13 +731,6 @@ bool __fastcall mc_CompleteMsg(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup
 
 bool __fastcall mc_LootItem(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 92; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[132]{};
   if (!fstr->word(poutszWord))
@@ -969,13 +766,6 @@ bool __fastcall mc_LootItem(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, c
 
 bool __fastcall mc_AddMonster(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 52; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   _react_obj poutReactObject;
     if (!GetReactObject(fstr, pSetup, &poutReactObject, 1, 6u, pszoutErrMsg, nullptr))
@@ -1000,13 +790,6 @@ bool __fastcall mc_AddMonster(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup,
 
 bool __fastcall mc_RespawnMonster(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 152; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   _react_obj poutReactObject;
     if (!GetReactObject(fstr, pSetup, &poutReactObject, 1, 6u, pszoutErrMsg, nullptr))
@@ -1053,13 +836,6 @@ bool __fastcall mc_RespawnMonster(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSe
 
 bool __fastcall mc_RespawnMonsterOption(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 136; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[160]{};
   char nextWord[160]{};
@@ -1084,13 +860,6 @@ bool __fastcall mc_RespawnMonsterOption(strFILE *fstr, CDarkHoleDungeonQuestSetu
 
 bool __fastcall mc_ChangeMonster(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 148; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[160]{};
   if (!fstr->word(poutszWord))
@@ -1127,13 +896,6 @@ bool __fastcall mc_ChangeMonster(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSet
 
 bool __fastcall mc_If(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 176; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[160]{};
   if (!fstr->word(poutszWord))
@@ -1171,13 +933,6 @@ bool __fastcall mc_If(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *p
 
 bool __fastcall mc_Inner(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 220; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   _react_area poutReactArea;
     if (!GetReactArea(fstr, pSetup, &poutReactArea, 3u, pszoutErrMsg, nullptr))
@@ -1248,13 +1003,6 @@ bool __fastcall mc_Inner(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char
 
 bool __fastcall mc_respond(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 228; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[160]{};
   if (!fstr->word(poutszWord))
@@ -1323,13 +1071,6 @@ bool __fastcall mc_respond(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, ch
 
 bool __fastcall mc_AddTime(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 132; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   _react_obj poutReactObject;
     if (!GetReactObject(fstr, pSetup, &poutReactObject, 0, 7u, pszoutErrMsg, nullptr))
@@ -1363,13 +1104,6 @@ bool __fastcall mc_AddTime(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, ch
 
 bool __fastcall jc_Type(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 52; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[144]{};
   if (!fstr->word(poutszWord))
@@ -1389,13 +1123,6 @@ bool __fastcall jc_Type(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char 
 
 bool __fastcall jc_Contents(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 56; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[132]{};
   if (!fstr->word(poutszWord))
@@ -1439,13 +1166,6 @@ bool __fastcall jc_Contents(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, c
 
 bool __fastcall jc_Count(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 16; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   int pnoutVal[4]{};
   if (!fstr->word(pnoutVal))
@@ -1464,13 +1184,6 @@ bool __fastcall jc_Count(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char
 
 bool __fastcall jc_ReactType(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 60; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[132]{};
   if (!fstr->word(poutszWord) || strcmp_0(poutszWord, kDHJobReactPortal))
@@ -1489,13 +1202,6 @@ bool __fastcall jc_ReactType(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, 
 
 bool __fastcall jc_ReactContents(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 56; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[132]{};
   if (!fstr->word(poutszWord) || pSetup->m_pCurLoadJob->nReactNum <= 0)
@@ -1527,13 +1233,6 @@ bool __fastcall jc_ReactContents(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSet
 
 bool __fastcall jc_Description(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *pszoutErrMsg)
 {
-  __int64 stackFill = 0;
-  auto *fillPtr = &stackFill;
-  for (int fillCount = 52; fillCount; --fillCount)
-  {
-    *reinterpret_cast<unsigned int *>(fillPtr) = 0xCCCCCCCC;
-    fillPtr = reinterpret_cast<__int64 *>(reinterpret_cast<char *>(fillPtr) + 4);
-  }
 
   char poutszWord[144]{};
   if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 0x10)
@@ -1541,9 +1240,6 @@ bool __fastcall jc_Description(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup
   strcpy_0(pSetup->m_pCurLoadJob->szDescirptCode, poutszWord);
   return true;
 }
-
-
-
 
 
 

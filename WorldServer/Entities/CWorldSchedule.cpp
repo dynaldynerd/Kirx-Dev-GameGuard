@@ -21,9 +21,9 @@ namespace
   const char *kScheduleEventFmt = "code:%s event:%u info1:%u info2:%u";
 }
 
-bool CWorldSchedule::Init(CWorldSchedule *thisPtr)
+bool CWorldSchedule::Init()
 {
-  if (thisPtr->m_bOper)
+  if (this->m_bOper)
     return false;
 
   if (!g_logSchedule.m_bInit)
@@ -34,37 +34,37 @@ bool CWorldSchedule::Init(CWorldSchedule *thisPtr)
     g_logSchedule.SetWriteLogFile(logPath, 1, 0, 1, 1);
   }
 
-  thisPtr->m_dwLastCheckTime = timeGetTime();
+  this->m_dwLastCheckTime = timeGetTime();
 
   char pszErrMsg[132]{};
-  if (thisPtr->m_tblSch.ReadRecord(".\\script\\Schedule.dat", 0x5C, pszErrMsg))
+  if (this->m_tblSch.ReadRecord(".\\script\\Schedule.dat", 0x5C, pszErrMsg))
   {
-    thisPtr->m_nMaxSchNum = thisPtr->m_tblSch.GetRecordNum();
-    if (thisPtr->DataCheck())
+    this->m_nMaxSchNum = this->m_tblSch.GetRecordNum();
+    if (this->DataCheck())
     {
-      thisPtr->m_nCurHour = GetCurrentHour();
-      thisPtr->m_nCurMin = GetCurrentMin();
-      thisPtr->m_nCurMilSec = 1000 * GetCurrentSec();
-      thisPtr->m_nSchCursor = thisPtr->CalcScheduleCursor(thisPtr->m_nCurHour, thisPtr->m_nCurMin);
+      this->m_nCurHour = GetCurrentHour();
+      this->m_nCurMin = GetCurrentMin();
+      this->m_nCurMilSec = 1000 * GetCurrentSec();
+      this->m_nSchCursor = this->CalcScheduleCursor(this->m_nCurHour, this->m_nCurMin);
 
-      int nextCursor = thisPtr->m_nSchCursor + 1;
-      if (nextCursor >= thisPtr->m_nMaxSchNum)
+      int nextCursor = this->m_nSchCursor + 1;
+      if (nextCursor >= this->m_nMaxSchNum)
         nextCursor = 0;
 
-      auto *current = reinterpret_cast<_WorldSchedule_fld *>(thisPtr->m_tblSch.GetRecord(thisPtr->m_nSchCursor));
-      auto *next = reinterpret_cast<_WorldSchedule_fld *>(thisPtr->m_tblSch.GetRecord(nextCursor));
+      auto *current = reinterpret_cast<_WorldSchedule_fld *>(this->m_tblSch.GetRecord(this->m_nSchCursor));
+      auto *next = reinterpret_cast<_WorldSchedule_fld *>(this->m_tblSch.GetRecord(nextCursor));
 
       int nPassMin = 0;
       if (next->m_nHour < current->m_nHour)
       {
-        const int hourGap = (thisPtr->m_nCurHour < current->m_nHour)
-          ? (thisPtr->m_nCurHour + 24 - current->m_nHour)
-          : (thisPtr->m_nCurHour - current->m_nHour);
-        nPassMin = thisPtr->m_nCurMin - current->m_nMin + 60 * hourGap;
+        const int hourGap = (this->m_nCurHour < current->m_nHour)
+          ? (this->m_nCurHour + 24 - current->m_nHour)
+          : (this->m_nCurHour - current->m_nHour);
+        nPassMin = this->m_nCurMin - current->m_nMin + 60 * hourGap;
       }
       else
       {
-        nPassMin = thisPtr->m_nCurMin - current->m_nMin + 60 * (thisPtr->m_nCurHour - current->m_nHour);
+        nPassMin = this->m_nCurMin - current->m_nMin + 60 * (this->m_nCurHour - current->m_nHour);
       }
 
       g_logSchedule.Write(kSchedulePassMinFmt, static_cast<unsigned int>(nPassMin));
@@ -72,14 +72,14 @@ bool CWorldSchedule::Init(CWorldSchedule *thisPtr)
       _strtime(timeBuffer);
       g_logSchedule.Write(
         kScheduleCursorFmt,
-        static_cast<unsigned int>(thisPtr->m_nSchCursor),
-        static_cast<unsigned int>(thisPtr->m_nCurHour),
-        static_cast<unsigned int>(thisPtr->m_nCurMin),
-        static_cast<unsigned int>(thisPtr->m_nCurMilSec),
+        static_cast<unsigned int>(this->m_nSchCursor),
+        static_cast<unsigned int>(this->m_nCurHour),
+        static_cast<unsigned int>(this->m_nCurMin),
+        static_cast<unsigned int>(this->m_nCurMilSec),
         timeBuffer);
 
       if (!current->m_nEventCode)
-        thisPtr->ChangeSchCursor(current, nPassMin);
+        this->ChangeSchCursor(current, nPassMin);
 
       g_logSchedule.Write(
         kScheduleEventFmt,
@@ -88,8 +88,8 @@ bool CWorldSchedule::Init(CWorldSchedule *thisPtr)
         static_cast<unsigned int>(current->m_nEventInfo1),
         static_cast<unsigned int>(current->m_nEventInfo2));
 
-      thisPtr->m_tmrCheck.BeginTimer(1000);
-      thisPtr->m_bOper = true;
+      this->m_tmrCheck.BeginTimer(1000);
+      this->m_bOper = true;
       return true;
     }
   }

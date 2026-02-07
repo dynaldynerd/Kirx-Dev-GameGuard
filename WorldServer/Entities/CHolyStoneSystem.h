@@ -60,7 +60,7 @@ struct __cppobj __declspec(align(4)) _QUEST_CASH_OTHER
 class __cppobj __declspec(align(8)) CHolyStoneSystem
 {
 public:
-  static bool InitHolySystem(CHolyStoneSystem *pSystem);
+  bool InitHolySystem();
   void AlterSchedule(unsigned __int8 byScheduleCode, unsigned __int8 byNumOfTime);
   bool ContinueStartSystem();
   void InitQuestCash_Other();
