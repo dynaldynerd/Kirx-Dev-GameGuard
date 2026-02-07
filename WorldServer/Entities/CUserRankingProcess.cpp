@@ -2,6 +2,8 @@
 
 #include "CUserRankingProcess.h"
 
+#include "GlobalObjects.h"
+#include "qry_case_rank_racerank_guildrank.h"
 #include "WorldServerUtil.h"
 
 #include <ctime>
@@ -115,14 +117,120 @@ char CPvpUserRankingInfo::IsRaceViceBoss(unsigned __int8 byRace, unsigned int dw
   return 0;
 }
 
+void CPvpUserRankingInfo::ClearTomorrowPvpRankData()
+{
+  if (m_vecPvpRankDataTomorrow.empty())
+  {
+    return;
+  }
+
+  for (int j = 0; j < 3; ++j)
+  {
+    _PVP_RANK_DATA *tomorrow = m_vecPvpRankDataTomorrow[j];
+    if (tomorrow)
+    {
+      memset_0(tomorrow, 0, 0x157CuLL);
+    }
+  }
+}
+
+void CPvpUserRankingInfo::DoDayChangedWork(CLogFile *pkLogger)
+{
+  if (pkLogger)
+  {
+    pkLogger->Write("CPvpUserRankingInfo::DoDayChangedWork() Start");
+  }
+
+  if (m_vecPvpRankDataCurrent.empty() || m_vecPvpRankDataTomorrow.empty())
+  {
+    return;
+  }
+
+  for (int j = 0; j < 3; ++j)
+  {
+    if (!m_vecPvpRankDataCurrent[j] || !m_vecPvpRankDataTomorrow[j])
+    {
+      return;
+    }
+
+    memcpy_0(m_vecPvpRankDataCurrent[j], m_vecPvpRankDataTomorrow[j], 0x157CuLL);
+  }
+
+  PvpRankDataPacking(pkLogger);
+  ++m_byPvpRankDataVersion;
+
+  if (pkLogger)
+  {
+    pkLogger->Write("CPvpUserRankingInfo::DoDayChangedWork() End");
+  }
+}
+
+unsigned __int8 CPvpUserRankingInfo::GetPvpRankDataVersion()
+{
+  return m_byPvpRankDataVersion;
+}
+
+void CPvpUserRankingInfo::PvpRankDataPacking(CLogFile *pkLogger)
+{
+  if (pkLogger)
+  {
+    pkLogger->Write("CPvpUserRankingInfo::PvpRankDataPacking() Start");
+  }
+
+  for (int race = 0; race < 3; ++race)
+  {
+    unsigned int baseIndex = 0;
+    for (int groupIndex = 0; groupIndex < 10; ++groupIndex)
+    {
+      _PVP_RANK_PACKED_DATA *packedData = m_vecPackedRankData[race];
+      char *packedBuffer = packedData[groupIndex].szPackedData;
+      unsigned __int16 dataLen = 0;
+
+      for (unsigned int rankIndex = baseIndex; rankIndex < baseIndex + 10; ++rankIndex)
+      {
+        _PVP_RANK_DATA *rankData = m_vecPvpRankDataCurrent[race];
+        unsigned __int8 nameLen = static_cast<unsigned __int8>(strlen_0(rankData[rankIndex].wszName) + 1);
+        if (nameLen <= 1)
+        {
+          break;
+        }
+
+        packedBuffer[dataLen++] = static_cast<char>(nameLen);
+        memcpy_0(packedBuffer + dataLen, rankData[rankIndex].wszName, nameLen);
+        dataLen += nameLen;
+
+        packedBuffer[dataLen++] = static_cast<char>(rankData[rankIndex].byRank);
+        packedBuffer[dataLen++] = static_cast<char>(rankData[rankIndex].byGrade);
+
+        unsigned __int8 guildNameLen =
+          static_cast<unsigned __int8>(strlen_0(rankData[rankIndex].wszGuildName) + 1);
+        packedBuffer[dataLen++] = static_cast<char>(guildNameLen);
+        memcpy_0(packedBuffer + dataLen, rankData[rankIndex].wszGuildName, guildNameLen);
+        dataLen += guildNameLen;
+
+        packedBuffer[dataLen++] = static_cast<char>(
+          GetBossType(static_cast<unsigned __int8>(race), rankData[rankIndex].dwAvatorSerial));
+      }
+
+      packedData[groupIndex].wDataLen = dataLen;
+      baseIndex += 10;
+    }
+  }
+
+  if (pkLogger)
+  {
+    pkLogger->Write("CPvpUserRankingInfo::PvpRankDataPacking() End");
+  }
+}
+
 bool CPvpUserRankingTargetUserList::assign()
 {
-  m_PvpRankRefreshUser.assign(2532, nullptr);
-  if (m_PvpRankRefreshUser.size() != 2532)
+  m_PvpRankRefreshUser.assign(MAX_PLAYER, nullptr);
+  if (m_PvpRankRefreshUser.size() != MAX_PLAYER)
   {
     return false;
   }
-  for (int j = 0; j < 2532; ++j)
+  for (int j = 0; j < MAX_PLAYER; ++j)
   {
     _PVP_RANK_REFRESH_USER *entry = reinterpret_cast<_PVP_RANK_REFRESH_USER *>(operator new(0xC));
     m_PvpRankRefreshUser[j] = entry;
@@ -132,6 +240,88 @@ bool CPvpUserRankingTargetUserList::assign()
     }
   }
   return true;
+}
+
+void CPvpUserRankingTargetUserList::ClearRankingStart()
+{
+  m_uiAddTotalCnt = 0;
+  m_uiRefreshCnt = 0;
+
+  for (_PVP_RANK_REFRESH_USER *entry : m_PvpRankRefreshUser)
+  {
+    entry->Init();
+  }
+}
+
+void CPvpUserRankingTargetUserList::Add(unsigned int dwSerial, unsigned __int8 byLv, unsigned __int8 byRace)
+{
+  for (int j = 0; j < MAX_PLAYER; ++j)
+  {
+    _PVP_RANK_REFRESH_USER *entry = m_PvpRankRefreshUser[j];
+    if (!entry->IsFilled())
+    {
+      for (int k = 0; k < j; ++k)
+      {
+        if (dwSerial == m_PvpRankRefreshUser[k]->dwSerial)
+        {
+          return;
+        }
+      }
+
+      entry->SetData(dwSerial, byLv, byRace);
+      break;
+    }
+  }
+
+  ++m_uiAddTotalCnt;
+}
+
+unsigned int CPvpUserRankingTargetUserList::GetAddedTotalCnt()
+{
+  return m_uiAddTotalCnt;
+}
+
+void CPvpUserRankingTargetUserList::UpdateCharGrade()
+{
+  for (int j = 0; j < MAX_PLAYER; ++j)
+  {
+    CPlayer *player = &g_Player[j];
+    if (player->m_bOper)
+    {
+      for (int k = 0; k < MAX_PLAYER; ++k)
+      {
+        _PVP_RANK_REFRESH_USER *entry = m_PvpRankRefreshUser[k];
+        if (entry->IsFilled() && entry->wPvpRate != 0xFFFF)
+        {
+          const unsigned int charSerial = player->m_Param.GetCharSerial();
+          if (entry->dwSerial == charSerial)
+          {
+            unsigned __int8 grade = CPlayerDB::CalcCharGrade(entry->byLv, entry->wPvpRate);
+            player->SetGrade(grade);
+            player->SetRankRate(entry->wPvpRate, entry->dwPvpRank);
+            break;
+          }
+        }
+      }
+    }
+  }
+}
+
+void _PVP_RANK_REFRESH_USER::Init()
+{
+  dwSerial = static_cast<unsigned int>(-1);
+}
+
+bool _PVP_RANK_REFRESH_USER::IsFilled()
+{
+  return dwSerial != static_cast<unsigned int>(-1);
+}
+
+void _PVP_RANK_REFRESH_USER::SetData(unsigned int dwSerialP, unsigned __int8 byLvP, unsigned __int8 byRaceP)
+{
+  dwSerial = dwSerialP;
+  byLv = byLvP;
+  byRace = byRaceP;
 }
 
 void CUserRankingProcess::SetLogger(CLogFile *pkLogger)
@@ -191,6 +381,11 @@ bool CUserRankingProcess::InitProcFunc()
   m_vecProc[8] = &CUserRankingProcess::ProcFailedWait;
   m_vecProc[9] = &CUserRankingProcess::ProcRankSuccess;
   return true;
+}
+
+void CUserRankingProcess::UpdateNextRankingStartTime()
+{
+  m_tStartTime += 86400LL;
 }
 
 bool CUserRankingProcess::IsCurrentRaceBossGroup(unsigned __int8 byRace, unsigned int dwSerial)
@@ -263,40 +458,177 @@ bool CUserRankingProcess::Init()
 
 void CUserRankingProcess::ProcWait()
 {
+  std::time_t now = std::time(nullptr);
+  if (static_cast<long long>(now) >= m_tStartTime)
+  {
+    m_iPvpSaveJobIndexOffset = 0;
+    m_iPvpRankDataVersionUpSendOffset = 0;
+    m_kTargetUserList.ClearRankingStart();
+    m_kPvpRankingInfo.ClearTomorrowPvpRankData();
+    m_pkLogger->WriteString("CUserRankingProcess::ProcWait() End");
+    m_eState = PS_SAVE_TARGET_LIST;
+  }
 }
 
 void CUserRankingProcess::ProcSaveTargetList()
 {
+  m_pkLogger->Write("CUserRankingProcess::ProcSaveTargetList() Start");
+  int index = m_iPvpSaveJobIndexOffset;
+  for (; index < MAX_PLAYER; ++index)
+  {
+    CUserDB *user = &g_UserDB[index];
+    if (user->m_dwSerial != static_cast<unsigned int>(-1)
+        && user->m_AvatorData.dbAvator.m_zClassHistory[0] != -1
+        && !user->m_byUserDgr)
+    {
+      m_kTargetUserList.Add(
+        user->m_dwSerial,
+        user->m_AvatorData.dbAvator.m_byLevel,
+        user->m_AvatorData.dbAvator.m_byRaceSexCode);
+      m_iPvpSaveJobIndexOffset = index + 1;
+      break;
+    }
+  }
+
+  if (index >= MAX_PLAYER)
+  {
+    unsigned int total = m_kTargetUserList.GetAddedTotalCnt();
+    m_pkLogger->Write("CUserRankingProcess::ProcSaveTargetList() End : %d", total);
+    m_eState = PS_RANK_START;
+  }
 }
 
 void CUserRankingProcess::ProcRankStart()
 {
+  m_pkLogger->Write("CUserRankingProcess::ProcRankStart() Start");
+  for (int j = 0; j < MAX_GUILD; ++j)
+  {
+    CGuild *guild = &g_Guild[j];
+    if (guild->IsFill())
+    {
+      guild->ClearVote();
+      guild->StartRankJob();
+    }
+  }
+
+  char szDate[48];
+  memset_0(szDate, 0, 9u);
+  GetDateStrAfterDay(szDate, 9, 1u);
+
+  _qry_case_rank_racerank_guildrank qry;
+  strcpy_s(qry.szDate, 9uLL, szDate);
+  g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x55u, qry.szDate, 20);
+  m_eState = PS_USER_RANK_PROCESS;
+  m_pkLogger->WriteString("CUserRankingProcess::ProcRankStart() End\r\n");
 }
 
 void CUserRankingProcess::ProcRankComplete()
 {
+  m_eState = PS_WAIT_DAY_CHANGED;
+  m_pkLogger->WriteString("CUserRankingProcess::ProcRankComplete() Start, End");
 }
 
 void CUserRankingProcess::ProcWaitDayChanged()
 {
+  if (IsDayChanged(&m_iOldDay))
+  {
+    m_pkLogger->WriteString("CUserRankingProcess::ProcRankStart() Start");
+    m_kPvpRankingInfo.DoDayChangedWork(m_pkLogger);
+    m_kTargetUserList.UpdateCharGrade();
+    m_iPvpRankDataVersionUpSendOffset = 0;
+    m_eState = PS_NOTIFY_VERSIONUP;
+    m_pkLogger->WriteString("CUserRankingProcess::ProcRankStart() End");
+  }
 }
 
 void CUserRankingProcess::ProcNotifyVersionUp()
 {
+  m_pkLogger->WriteString("CUserRankingProcess::ProcNotifyVersionUp() Start");
+  int sentCount = 0;
+  unsigned __int8 version = m_kPvpRankingInfo.GetPvpRankDataVersion();
+
+  int index = m_iPvpRankDataVersionUpSendOffset;
+  for (; index < MAX_PLAYER; ++index)
+  {
+    CPlayer *player = &g_Player[index];
+    if (player->m_bLive)
+    {
+      player->SendMsg_PvpRankListVersionUp(static_cast<char>(version));
+      if (++sentCount >= 10)
+      {
+        m_iPvpRankDataVersionUpSendOffset = index + 1;
+        break;
+      }
+    }
+  }
+
+  if (index >= MAX_PLAYER)
+  {
+    _qry_case_rank_racerank_guildrank qry;
+    GetDateStrAfterDay(qry.szDate, 9, 1u);
+    m_kGuildRanking.ClearGuildSerial();
+    m_kGuildRanking.ClearGuildGrade();
+    g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x6Bu, qry.szDate, 20);
+    m_eState = PS_UPDATE_AND_LOAD_GRADE;
+    m_iPvpRankDataVersionUpSendOffset = 0;
+    m_pkLogger->WriteString("CUserRankingProcess::ProcNotifyVersionUp() End");
+  }
 }
 
 void CUserRankingProcess::ProcApplyGuildGrade()
 {
+  m_pkLogger->WriteString("CUserRankingProcess::ProcNotifyVersionUp() Start");
+  m_kGuildRanking.ApplyGuildGrade();
+  m_kGuildRanking.ClearApplyRankInGuildJobOffset();
+  m_eState = PS_APPLY_RANK_IN_GUILD;
+  m_pkLogger->WriteString("CUserRankingProcess::ProcNotifyVersionUp() End");
 }
 
 void CUserRankingProcess::ProcApplyRankInGuild()
 {
+  static unsigned int s_rankInGuildTh = 0;
+  const unsigned int rankInGuildOffset = m_kGuildRanking.GetRankInGuildJobOffset();
+  m_pkLogger->Write(
+    "CUserRankingProcess::ProcApplyRankInGuild() %uTh, Offset(%d)",
+    s_rankInGuildTh,
+    rankInGuildOffset);
+  ++s_rankInGuildTh;
+
+  if (m_kGuildRanking.ApplyRankInGuild())
+  {
+    m_eState = PS_RANK_SUCCESS;
+    m_pkLogger->WriteString("CUserRankingProcess::ProcApplyRankInGuild() End");
+  }
 }
 
 void CUserRankingProcess::ProcFailedWait()
 {
+  m_pkLogger->WriteString("CUserRankingProcess::ProcFailedWait() Start");
+  for (int j = 0; j < MAX_GUILD; ++j)
+  {
+    CGuild *guild = &g_Guild[j];
+    if (guild->IsFill())
+    {
+      guild->EndRankJob();
+    }
+  }
+  UpdateNextRankingStartTime();
+  m_eState = PS_WAIT;
+  m_pkLogger->WriteString("CUserRankingProcess::ProcFailedWait() End");
 }
 
 void CUserRankingProcess::ProcRankSuccess()
 {
+  m_pkLogger->WriteString("CUserRankingProcess::ProcRankSuccess() Start");
+  for (int j = 0; j < MAX_GUILD; ++j)
+  {
+    CGuild *guild = &g_Guild[j];
+    if (guild->IsFill())
+    {
+      guild->EndRankJob();
+    }
+  }
+  UpdateNextRankingStartTime();
+  m_eState = PS_WAIT;
+  m_pkLogger->WriteString("CUserRankingProcess::ProcRankSuccess() End");
 }

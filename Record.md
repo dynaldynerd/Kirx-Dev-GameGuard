@@ -43,5 +43,11 @@ During the implementation of `CMapOperation::Init` and its sub-flows, the follow
 | `CMonster.cpp` | `GetMaxDMGSFContCount` | `CMonster::m_pRecordSet` | `_base_fld *` | Uses `Record[25].m_strCode` as max count. |
 | `CMonster.cpp` | `_LootItem_Std` | `g_Main.m_tblItemLoot.m_tblLoot` | `_base_fld *` | Uses `Record[1].m_strCode[4/8]`, `Record[1].m_dwIndex` for loot weights/counts. |
 | `CMonster.cpp` | `_LootItem_Std` | `CMonster::m_pRecordSet` | `_base_fld *` | Uses `Record[4].m_strCode[8]` as level diff adjust. |
+| `cStaticMember_Player.cpp` | `cStaticMember_Player::loadLimitExpData` | `g_Main.m_tblExp` | `_base_fld *` | Uses `&Record[1]` as string input to `atof`, implying non-base layout usage. |
+| `CPlayerDB.cpp` | `CPlayerDB::CalcCharGrade` | `g_Main.m_tblGrade` | `_base_fld *` | Uses `Record[1].m_dwIndex` as float and `Record[1].m_strCode[0]`; verify field offsets. |
+| `CPlayer.cpp` | `CPlayer::SetStaticMember` | `g_Main.m_tblItemData[15]` | `_base_fld *` | Uses `&Record[4].m_strCode[28]` as key into `m_tblEffectData[1]`; likely non-base layout. |
+| `CPlayer.cpp` | `CPlayer::SetStaticMember` | `g_Main.m_tblEffectData` | `_base_fld *` | Reads `*reinterpret_cast<unsigned int *>(&Record[1].m_strCode[4])` as mastery index; verify field mapping. |
+| `CashItemRemoteStore.cpp` | `CashItemRemoteStore::__CheckGoods` | `CashItemRemoteStore::_kRecGoods` | `_base_fld *` | Uses `reinterpret_cast<char *>(&Record[1])` as item code; writes price to `Record[1].m_strCode[60]`; logs `Record[3].m_dwIndex` and `Record[3].m_strCode[0/4]`. |
+| `WorldServerUtil.cpp` | `IsCashItem` | `s_ptblItemData[byTblCode]` | `_base_fld *` | Uses `Record[6].m_strCode[48]`, `Record[9].m_strCode[12/36]`, `Record[5].m_strCode[48/44/60/56]`, `Record[8].m_strCode[8]`, `Record[7].m_strCode[44/32/8]`, `Record[6].m_strCode[0]`. |
 > [!NOTE]
 > Rule 9: `CRecordData::GetRecord` usually returns `_base_fld`. Re-casters should be careful with structure packing and offsets.

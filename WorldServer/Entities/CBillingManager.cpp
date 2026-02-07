@@ -5,10 +5,8 @@
 #include "CBillingNULL.h"
 #include "CNationSettingManager.h"
 
-static CBillingNULL s_nullBilling;
-
 CBillingManager::CBillingManager()
-  : m_pBill(&s_nullBilling)
+  : m_pBill(&CBillingNULL::ms_NULL)
 {
 }
 
@@ -36,10 +34,6 @@ bool CBillingManager::LoadINI()
 
 bool CBillingManager::Init()
 {
-  if (m_pBill == nullptr)
-  {
-    m_pBill = &s_nullBilling;
-  }
   if (!LoadINI())
   {
     return false;

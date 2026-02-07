@@ -460,6 +460,7 @@ public:
   bool Init();
   bool IsTestServer() const;
   bool IsReleaseServiceMode() const;
+  bool IsExcuteService() const;
   unsigned int GetMonsterRecordNum() const;
   _DB_QRY_SYN_DATA *PushDQSData(
     unsigned int dwAccountSerial,

@@ -4,12 +4,15 @@
 
 WheatyExceptionReport g_WheatyExceptionReport;
 
+char WheatyExceptionReport::m_szLogName[256]{};
+char WheatyExceptionReport::m_szDescription[256]{};
+
 void WheatyExceptionReport::SetLogName(const char *logName)
 {
-  (void)logName;
+  strcpy_0(WheatyExceptionReport::m_szLogName, logName);
 }
 
 void WheatyExceptionReport::SetDescription(const char *description)
 {
-  (void)description;
+  strcpy_0(WheatyExceptionReport::m_szDescription, description);
 }

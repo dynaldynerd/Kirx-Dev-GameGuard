@@ -13,6 +13,12 @@ class __cppobj __declspec(align(8)) CGuildRanking
 public:
   bool Init();
   void SetLogger(CLogFile *pkLogger);
+  void ApplyGuildGrade();
+  bool ApplyRankInGuild();
+  void ClearApplyRankInGuildJobOffset();
+  void ClearGuildSerial();
+  void ClearGuildGrade();
+  unsigned int GetRankInGuildJobOffset();
 
   CLogFile *m_pkLogger;
   unsigned int m_dwCurProcIndex;

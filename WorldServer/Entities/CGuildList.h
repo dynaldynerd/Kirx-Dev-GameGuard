@@ -15,12 +15,17 @@ struct __cppobj __guild_list_page
 
   unsigned __int8 byListCnt;
   __list GuildList[4];
+
+  __guild_list_page();
 };
 
 class __cppobj CGuildList
 {
 public:
-  virtual ~CGuildList() = default;
+  CGuildList();
+  virtual ~CGuildList();
+  char Init();
+  void SetGrade(unsigned __int8 byRace, char *pwszGuildName, unsigned __int8 byGrade);
 
   bool m_bInit;
   unsigned __int8 m_byMaxPage[3];

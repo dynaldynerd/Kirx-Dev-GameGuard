@@ -52,6 +52,15 @@ CMgrAvatorLvHistory CPlayer::s_MgrLvHistory{};
 int CPlayer::s_nLiveNum = 0;
 _DELAY_PROCESS CPlayer::s_AnimusReturnDelay{};
 int *CPlayer::s_pnLinkForceItemToEffect = nullptr;
+_SKILL_IDX_PER_MASTERY CPlayer::s_SkillIndexPerMastery[8]{};
+int CPlayer::s_nAddMstFc[100]{};
+int CPlayer::s_nStdDefPoint = 0;
+int CPlayer::s_nRevDefPoint = 0;
+CRecordData CPlayer::s_tblLimMastery[3][4];
+CRecordData CPlayer::s_tblLimMasteryContinue[3][4];
+CRecordData CPlayer::s_tblLimMasteryCum[3][4];
+CRecordData CPlayer::s_tblLimMasteryCumContinue[3][4];
+_BILLING_FORCE_CLOSE_DELAY CPlayer::s_BillingForceCloseDelay{};
 CRecordData *_WEAPON_PARAM::s_pWeaponData = nullptr;
 CRecordData *_MASTERY_PARAM::s_pSkillData = nullptr;
 CRecordData *_MASTERY_PARAM::s_pForceData = nullptr;
@@ -120,8 +129,368 @@ bool ItemCombineMgr::CheckLoadData()
 
 CPlayer::CPlayer() = default;
 
+bool LoadMasteryLimFile(char *pszErrMsg)
+{
+  const char *files[4] = {
+    ".\\script\\WarriorMasteryLimit.dat",
+    ".\\script\\RangerMasteryLimit.dat",
+    ".\\script\\SpiritualistMasteryLimit.dat",
+    ".\\script\\SpecialistMasteryLimit.dat",
+  };
+
+  for (int classIndex = 0; classIndex < 4; ++classIndex)
+  {
+    for (int masteryIndex = 0; masteryIndex < 3; ++masteryIndex)
+    {
+      if (!CPlayer::s_tblLimMastery[masteryIndex][classIndex].ReadRecord(
+            files[classIndex], 0xE8u, pszErrMsg))
+      {
+        return false;
+      }
+      if (!CPlayer::s_tblLimMasteryContinue[masteryIndex][classIndex].ReadRecord(
+            files[classIndex], 0xE8u, pszErrMsg))
+      {
+        return false;
+      }
+      if (!CPlayer::s_tblLimMasteryCum[masteryIndex][classIndex].ReadRecord(
+            files[classIndex], 0xE8u, pszErrMsg))
+      {
+        return false;
+      }
+      if (!CPlayer::s_tblLimMasteryCumContinue[masteryIndex][classIndex].ReadRecord(
+            files[classIndex], 0xE8u, pszErrMsg))
+      {
+        return false;
+      }
+
+      const float scale = 1.1f;
+      for (int recordIndex = 0; ; ++recordIndex)
+      {
+        const int recordCount =
+          CPlayer::s_tblLimMasteryContinue[masteryIndex][classIndex].GetRecordNum();
+        if (recordIndex >= recordCount)
+        {
+          break;
+        }
+        int *record = reinterpret_cast<int *>(
+          CPlayer::s_tblLimMasteryContinue[masteryIndex][classIndex].GetRecord(recordIndex));
+        for (int j = 0; j < 2; ++j)
+        {
+          const float scaled = static_cast<float>(record[j + 18]) * scale;
+          record[j + 18] = static_cast<int>(scaled >= 99.0f ? 99.0f : scaled);
+        }
+        {
+          const float scaled = static_cast<float>(record[21]) * scale;
+          record[21] = static_cast<int>(scaled >= 99.0f ? 99.0f : scaled);
+        }
+        {
+          const float scaled = static_cast<float>(record[22]) * scale;
+          record[22] = static_cast<int>(scaled >= 99.0f ? 99.0f : scaled);
+        }
+        for (int j = 0; j < 24; ++j)
+        {
+          const float scaled = static_cast<float>(record[j + 34]) * scale;
+          record[j + 34] = static_cast<int>(scaled >= 99.0f ? 99.0f : scaled);
+        }
+        for (int j = 0; j < 8; ++j)
+        {
+          const float scaled = static_cast<float>(record[j + 26]) * scale;
+          record[j + 26] = static_cast<int>(scaled >= 99.0f ? 99.0f : scaled);
+        }
+        for (int j = 0; j < 3; ++j)
+        {
+          const float scaled = static_cast<float>(record[j + 23]) * scale;
+          record[j + 23] = static_cast<int>(scaled >= 99.0f ? 99.0f : scaled);
+        }
+        {
+          const float scaled = static_cast<float>(record[20]) * scale;
+          record[20] = static_cast<int>(scaled >= 99.0f ? 99.0f : scaled);
+        }
+
+        int *cumRecord = reinterpret_cast<int *>(
+          CPlayer::s_tblLimMasteryCumContinue[masteryIndex][classIndex].GetRecord(recordIndex));
+        for (int j = 0; j < 2; ++j)
+        {
+          const float scaled = static_cast<float>(cumRecord[j + 18]) * scale;
+          cumRecord[j + 18] = static_cast<int>(scaled >= 99.0f ? 99.0f : scaled);
+        }
+        {
+          const float scaled = static_cast<float>(cumRecord[21]) * scale;
+          cumRecord[21] = static_cast<int>(scaled >= 99.0f ? 99.0f : scaled);
+        }
+        {
+          const float scaled = static_cast<float>(cumRecord[22]) * scale;
+          cumRecord[22] = static_cast<int>(scaled >= 99.0f ? 99.0f : scaled);
+        }
+        for (int j = 0; j < 24; ++j)
+        {
+          const float scaled = static_cast<float>(cumRecord[j + 34]) * scale;
+          cumRecord[j + 34] = static_cast<int>(scaled >= 99.0f ? 99.0f : scaled);
+        }
+        for (int j = 0; j < 8; ++j)
+        {
+          const float scaled = static_cast<float>(cumRecord[j + 26]) * scale;
+          cumRecord[j + 26] = static_cast<int>(scaled >= 99.0f ? 99.0f : scaled);
+        }
+        for (int j = 0; j < 3; ++j)
+        {
+          const float scaled = static_cast<float>(cumRecord[j + 23]) * scale;
+          cumRecord[j + 23] = static_cast<int>(scaled >= 99.0f ? 99.0f : scaled);
+        }
+        {
+          const float scaled = static_cast<float>(cumRecord[20]) * scale;
+          cumRecord[20] = static_cast<int>(scaled >= 99.0f ? 99.0f : scaled);
+        }
+      }
+
+      for (int recordIndex = 0; ; ++recordIndex)
+      {
+        const int recordCount =
+          CPlayer::s_tblLimMasteryCum[masteryIndex][classIndex].GetRecordNum();
+        if (recordIndex >= recordCount)
+        {
+          break;
+        }
+        int *record = reinterpret_cast<int *>(
+          CPlayer::s_tblLimMasteryCum[masteryIndex][classIndex].GetRecord(recordIndex));
+        for (int j = 0; j < 2; ++j)
+        {
+          const float pow2 = std::pow(static_cast<float>(record[j + 18]), 2.0f);
+          const float sqrtVal = std::sqrt((1000.0f * 1000.0f) + (4.0f * pow2 * 1000.0f));
+          const float calc = std::pow((sqrtVal + -1000.0f) / 2.0f, 2.0f);
+          record[j + 18] = static_cast<int>(calc);
+        }
+
+        {
+          const float pow2 = std::pow(static_cast<float>(record[21]), 2.0f);
+          const float sqrtVal = std::sqrt((1000.0f * 1000.0f) + (4.0f * pow2 * 1000.0f));
+          const float calc = std::pow((sqrtVal + -1000.0f) / 2.0f, 2.0f);
+          record[21] = static_cast<int>(calc);
+        }
+        {
+          const float pow2 = std::pow(static_cast<float>(record[22]), 2.0f);
+          const float sqrtVal = std::sqrt((100.0f * 100.0f) + (4.0f * pow2 * 100.0f));
+          const float calc = std::pow((sqrtVal + -100.0f) / 2.0f, 2.0f);
+          record[22] = static_cast<int>(calc);
+        }
+
+        for (int j = 0; j < 24; ++j)
+        {
+          const float pow2 = std::pow(static_cast<float>(record[j + 34]), 2.0f);
+          const float pow4 = std::pow(pow2, 2.0f);
+          const int rounded = CalcRoundUp(pow4 / 14.0f);
+          record[j + 34] = static_cast<int>((static_cast<float>(rounded - 1) + 0.0099999998f));
+        }
+        for (int j = 0; j < 8; ++j)
+        {
+          const float pow2 = std::pow(static_cast<float>(record[j + 26]), 2.0f);
+          const float pow4 = std::pow(pow2, 2.0f);
+          const int rounded = CalcRoundUp(pow4 / 10.0f);
+          record[j + 26] = static_cast<int>((static_cast<float>(rounded - 1) + 0.0099999998f));
+        }
+        {
+          const float pow2 = std::pow(static_cast<float>(record[23]), 2.0f);
+          record[23] = static_cast<int>(((pow2 - 1.0f) / 3.0f) * 1.1f + 0.89999998f);
+        }
+        {
+          const float pow2 = std::pow(static_cast<float>(record[24]), 2.0f);
+          record[24] = static_cast<int>(((pow2 - 1.0f) / 3.0f) * 1.1f + 0.89999998f);
+        }
+        {
+          const float pow2 = std::pow(static_cast<float>(record[25]), 2.0f);
+          record[25] = static_cast<int>(((pow2 - 1.0f) / 3.0f) * 10.0f + 0.89999998f);
+        }
+
+        if (masteryIndex)
+        {
+          if (masteryIndex == 1)
+          {
+            const float pow2 = std::pow(static_cast<float>(record[20] - 1), 2.0f);
+            record[20] = static_cast<int>(pow2 * 15000.0f);
+          }
+          else if (masteryIndex == 2)
+          {
+            const float pow2 = std::pow(static_cast<float>(record[20]), 2.0f);
+            const float sqrtVal = std::sqrt((1000.0f * 1000.0f) + (4.0f * pow2 * 1000.0f));
+            const float calc = std::pow((sqrtVal + -1000.0f) / 2.0f, 2.0f);
+            record[20] = static_cast<int>(calc);
+          }
+        }
+        else
+        {
+          const float pow2 = std::pow(static_cast<float>(record[20] - 1), 2.0f);
+          record[20] = static_cast<int>(pow2 * 15000.0f);
+        }
+
+        int *cumRecord = reinterpret_cast<int *>(
+          CPlayer::s_tblLimMasteryCumContinue[masteryIndex][classIndex].GetRecord(recordIndex));
+        for (int j = 0; j < 2; ++j)
+        {
+          const float pow2 = std::pow(static_cast<float>(cumRecord[j + 18]), 2.0f);
+          const float sqrtVal = std::sqrt((1000.0f * 1000.0f) + (4.0f * pow2 * 1000.0f));
+          const float calc = std::pow((sqrtVal + -1000.0f) / 2.0f, 2.0f);
+          cumRecord[j + 18] = static_cast<int>(calc);
+        }
+        {
+          const float pow2 = std::pow(static_cast<float>(cumRecord[21]), 2.0f);
+          const float sqrtVal = std::sqrt((1000.0f * 1000.0f) + (4.0f * pow2 * 1000.0f));
+          const float calc = std::pow((sqrtVal + -1000.0f) / 2.0f, 2.0f);
+          cumRecord[21] = static_cast<int>(calc);
+        }
+        {
+          const float pow2 = std::pow(static_cast<float>(cumRecord[22]), 2.0f);
+          const float sqrtVal =
+            std::sqrt((100.0f * 100.0f) + (4.0f * pow2 * 100.0f)) + -100.0f;
+          const float calc = std::pow(sqrtVal / 2.0f, 2.0f);
+          cumRecord[22] = static_cast<int>(calc);
+        }
+        for (int j = 0; j < 24; ++j)
+        {
+          const float pow2 = std::pow(static_cast<float>(cumRecord[j + 34]), 2.0f);
+          const float pow4 = std::pow(pow2, 2.0f);
+          const int rounded = CalcRoundUp(pow4 / 14.0f);
+          cumRecord[j + 34] = static_cast<int>((static_cast<float>(rounded - 1) + 0.0099999998f));
+        }
+        for (int j = 0; j < 8; ++j)
+        {
+          const float pow2 = std::pow(static_cast<float>(cumRecord[j + 26]), 2.0f);
+          const float pow4 = std::pow(pow2, 2.0f);
+          const int rounded = CalcRoundUp(pow4 / 10.0f);
+          cumRecord[j + 26] = static_cast<int>((static_cast<float>(rounded - 1) + 0.0099999998f));
+        }
+        {
+          const float pow2 = std::pow(static_cast<float>(cumRecord[23]), 2.0f);
+          cumRecord[23] = static_cast<int>(((pow2 - 1.0f) / 3.0f) * 1.1f + 0.89999998f);
+        }
+        {
+          const float pow2 = std::pow(static_cast<float>(cumRecord[24]), 2.0f);
+          cumRecord[24] = static_cast<int>(((pow2 - 1.0f) / 3.0f) * 1.1f + 0.89999998f);
+        }
+        {
+          const float pow2 = std::pow(static_cast<float>(cumRecord[25]), 2.0f);
+          cumRecord[25] = static_cast<int>(((pow2 - 1.0f) / 3.0f) * 10.0f + 0.89999998f);
+        }
+
+        if (static_cast<unsigned int>(masteryIndex) > 1)
+        {
+          if (masteryIndex == 2)
+          {
+            const float pow2 = std::pow(static_cast<float>(cumRecord[20]), 2.0f);
+            const float sqrtVal =
+              std::sqrt((1000.0f * 1000.0f) + (4.0f * pow2 * 1000.0f)) + -1000.0f;
+            const float calc = std::pow(sqrtVal / 2.0f, 2.0f);
+            cumRecord[20] = static_cast<int>(calc);
+          }
+        }
+        else
+        {
+          const float pow2 = std::pow(static_cast<float>(cumRecord[20] - 1), 2.0f);
+          cumRecord[20] = static_cast<int>(pow2 * 15000.0f);
+        }
+      }
+    }
+  }
+
+  return true;
+}
+
 void CPlayer::SetStaticMember()
 {
+  unsigned __int64 recordNum = g_Main.m_tblItemData[15].GetRecordNum();
+  s_pnLinkForceItemToEffect = static_cast<int *>(operator new[](saturated_mul(recordNum, 4uLL)));
+  memset_0(s_pnLinkForceItemToEffect, -1, 8uLL);
+
+  for (int n = 0; ; ++n)
+  {
+    const int recordCount = g_Main.m_tblItemData[15].GetRecordNum();
+    if (n >= recordCount)
+    {
+      break;
+    }
+    _base_fld *record = g_Main.m_tblItemData[15].GetRecord(n);
+    if (!record)
+    {
+      g_Main.m_logSystemError.Write("CPlayer::SetStaticMember() : %d force..NULL", n);
+      break;
+    }
+    _base_fld *effectRecord = g_Main.m_tblEffectData[1].GetRecord(&record[4].m_strCode[28]);
+    if (!effectRecord)
+    {
+      g_Main.m_logSystemError.Write("CPlayer::SetStaticMember() : %s force..NULL", &record[4].m_strCode[28]);
+      break;
+    }
+    s_pnLinkForceItemToEffect[n] = effectRecord->m_dwIndex;
+  }
+
+  for (int n = 0; ; ++n)
+  {
+    const int recordCount = g_Main.m_tblEffectData[0].GetRecordNum();
+    if (n >= recordCount)
+    {
+      break;
+    }
+    _base_fld *record = g_Main.m_tblEffectData[0].GetRecord(n);
+    const unsigned int masteryIndex = *reinterpret_cast<unsigned int *>(&record[1].m_strCode[4]);
+    if (record[1].m_dwIndex <= 1 && masteryIndex < 8u && record[1].m_dwIndex != 2)
+    {
+      _SKILL_IDX_PER_MASTERY *skillInfo = &CPlayer::s_SkillIndexPerMastery[masteryIndex];
+      skillInfo->m_nSkillIndex[skillInfo->m_nSkillIndexNum++] = n;
+    }
+  }
+
+  memset_0(CPlayer::s_nAddMstFc, 1, sizeof(CPlayer::s_nAddMstFc));
+  for (int n = 0; n < 100; ++n)
+  {
+    const float powVal = std::pow(static_cast<float>(n), 3.0f);
+    const float sqrtVal = std::sqrt(powVal * 2.0f);
+    CPlayer::s_nAddMstFc[n] = static_cast<int>(sqrtVal);
+  }
+
+  char errorMessage[132]{};
+  if (!LoadMasteryLimFile(errorMessage))
+  {
+    MyMessageBox("CPlayer::SetStaticMember()", errorMessage);
+    ServerProgramExit("MasteryLimData Load Error", 0);
+  }
+
+  if (!g_Main.IsReleaseServiceMode())
+  {
+    const UINT stdDefPoint = GetPrivateProfileIntA(
+      "Formula",
+      "StdDefPoint",
+      0x7FFFFFFF,
+      ".\\Initialize\\WorldSystem.ini");
+    if (stdDefPoint == 0x7FFFFFFF)
+    {
+      char buffer[132]{};
+      _itoa(s_nStdDefPoint, buffer, 10);
+      WritePrivateProfileStringA("Formula", "StdDefPoint", buffer, ".\\Initialize\\WorldSystem.ini");
+    }
+    else
+    {
+      s_nStdDefPoint = stdDefPoint;
+    }
+
+    const UINT revDefPoint = GetPrivateProfileIntA(
+      "Formula",
+      "RcvDefPoint",
+      0x7FFFFFFF,
+      ".\\Initialize\\WorldSystem.ini");
+    if (revDefPoint == 0x7FFFFFFF)
+    {
+      char buffer[144]{};
+      _itoa(s_nRevDefPoint, buffer, 10);
+      WritePrivateProfileStringA("Formula", "RcvDefPoint", buffer, ".\\Initialize\\WorldSystem.ini");
+    }
+    else
+    {
+      s_nRevDefPoint = revDefPoint;
+    }
+  }
+
+  CNationSettingManager *nationSetting = CTSingleton<CNationSettingManager>::Instance();
+  const unsigned __int16 delay = nationSetting->GetBillingForceCloseDelay();
+  CPlayer::s_BillingForceCloseDelay.Init(0x9E4u, 1000 * delay);
 }
 
 void CPlayer::Init(_object_id *pID)
@@ -5070,4 +5439,59 @@ void CPlayer::SendMsg_MonsterAggroData(CCharacter *pCharacter)
   pbyType[0] = 13;
   pbyType[1] = 99;
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, (char *)&info, 0x1CAu);
+}
+
+void CPlayer::SetGrade(unsigned __int8 byGrade)
+{
+  if (byGrade != m_Param.m_byPvPGrade)
+  {
+    m_Param.m_byPvPGrade = byGrade;
+    m_pUserDB->m_AvatorData.m_byPvpGrade = byGrade;
+    SendMsg_AlterGradeInform();
+  }
+}
+
+void CPlayer::SetRankRate(unsigned __int16 wRankRate, unsigned int dwRank)
+{
+  if (m_Param.m_dbChar.m_wRankRate != wRankRate || m_Param.m_dbChar.m_dwRank != dwRank)
+  {
+    m_Param.m_dbChar.m_wRankRate = wRankRate;
+    m_Param.m_dbChar.m_dwRank = dwRank;
+    SendMsg_AlterPvPRank(wRankRate, dwRank);
+  }
+}
+
+void CPlayer::SendMsg_AlterGradeInform()
+{
+  char msg[1]{};
+  msg[0] = static_cast<char>(m_Param.m_byPvPGrade);
+
+  unsigned __int8 pbyType[2] = {17, 17};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, msg, 1u);
+}
+
+void CPlayer::SendMsg_AlterPvPRank(unsigned __int16 wPvpRate, unsigned int dwPvpRank)
+{
+  #pragma pack(push, 1)
+  struct
+  {
+    unsigned __int16 wPvpRate;
+    unsigned int dwPvpRank;
+  } msg{};
+  #pragma pack(pop)
+
+  msg.wPvpRate = wPvpRate;
+  msg.dwPvpRank = dwPvpRank;
+
+  unsigned __int8 pbyType[2] = {17, 18};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), 6u);
+}
+
+void CPlayer::SendMsg_PvpRankListVersionUp(char byVersion)
+{
+  char msg[1]{};
+  msg[0] = byVersion;
+
+  unsigned __int8 pbyType[2] = {13, 24};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, msg, 1u);
 }

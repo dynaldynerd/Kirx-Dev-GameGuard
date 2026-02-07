@@ -125,6 +125,11 @@ bool CMainThread::IsReleaseServiceMode() const
   return m_bReleaseServiceMode;
 }
 
+bool CMainThread::IsExcuteService() const
+{
+  return m_bExcuteService;
+}
+
 unsigned int CMainThread::GetMonsterRecordNum() const
 {
   return m_tblMonster.GetRecordNum();

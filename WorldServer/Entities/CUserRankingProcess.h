@@ -15,10 +15,14 @@ class __cppobj CPvpUserRankingInfo
 {
 public:
   bool assign();
+  void ClearTomorrowPvpRankData();
+  void DoDayChangedWork(CLogFile *pkLogger);
+  unsigned __int8 GetPvpRankDataVersion();
   bool IsCurrentRaceBossGroup(unsigned __int8 byRace, unsigned int dwSerial);
   unsigned int GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth);
   unsigned __int8 GetBossType(unsigned __int8 byRaceCode, unsigned int dwSerial);
   char IsRaceViceBoss(unsigned __int8 byRace, unsigned int dwSerial);
+  void PvpRankDataPacking(CLogFile *pkLogger);
 
   std::vector<_PVP_RANK_DATA *> m_vecPvpRankDataCurrent;
   std::vector<_PVP_RANK_DATA *> m_vecPvpRankDataTomorrow;
@@ -32,6 +36,10 @@ class __cppobj CPvpUserRankingTargetUserList
 {
 public:
   bool assign();
+  void ClearRankingStart();
+  void Add(unsigned int dwSerial, unsigned __int8 byLv, unsigned __int8 byRace);
+  unsigned int GetAddedTotalCnt();
+  void UpdateCharGrade();
 
   unsigned int m_uiAddTotalCnt;
   unsigned int m_uiRefreshCnt;
@@ -81,6 +89,7 @@ public:
   bool SetRankingStartTime(int iHour, int iMin);
   bool AllocObject();
   bool InitProcFunc();
+  void UpdateNextRankingStartTime();
 
   bool IsCurrentRaceBossGroup(unsigned __int8 byRace, unsigned int dwSerial);
   unsigned int GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth);
@@ -125,4 +134,8 @@ struct _PVP_RANK_REFRESH_USER
   unsigned __int8 byRace;
   unsigned __int16 wPvpRate;
   unsigned int dwPvpRank;
+
+  void Init();
+  bool IsFilled();
+  void SetData(unsigned int dwSerialP, unsigned __int8 byLvP, unsigned __int8 byRaceP);
 };

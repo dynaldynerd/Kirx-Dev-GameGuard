@@ -26,6 +26,8 @@ public:
   TRC_AutoTrade(unsigned char byRace);
 
   bool Initialzie();
+  bool IsOwnerGuild(unsigned int nGuildSerial);
+  float get_taxrate();
 
   bool m_bInit;
   unsigned char m_byCurDay;

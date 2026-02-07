@@ -38,6 +38,8 @@ unsigned int GetLocalDate();
 unsigned int eGetLocalDate();
 int GetCurDay();
 int GetNextDay();
+bool GetDateStrAfterDay(char *szDate, int iBuffSize, unsigned __int16 wDayAfter);
+bool IsDayChanged(int *iOldDay);
 bool GetDateTimeStr(char *szTime);
 unsigned int GetKorLocalTime();
 int GetCurrentHour();
@@ -55,6 +57,7 @@ int GetItemProcPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 
 int GetItemKillPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind);
 int GetItemGoldPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind);
 int GetUsePcCashType(unsigned __int8 byTblCode, int nIndex);
+int IsCashItem(unsigned __int8 byTblCode, int dwIndex);
 unsigned int GetItemDurPoint(int nTableCode, int nIndex);
 char *GetItemKorName(int nTableCode, int nItemIndex);
 int IsTimeItem(unsigned __int8 byTblCode, int dwIndex);

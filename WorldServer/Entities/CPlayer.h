@@ -927,6 +927,8 @@ public:
   static int *s_pnLinkForceItemToEffect;
   static _SKILL_IDX_PER_MASTERY s_SkillIndexPerMastery[8];
   static int s_nAddMstFc[100];
+  static int s_nStdDefPoint;
+  static int s_nRevDefPoint;
   static CRecordData s_tblLimMastery[3][4];
   static CRecordData s_tblLimMasteryContinue[3][4];
   static CRecordData s_tblLimMasteryCum[3][4];
@@ -1043,6 +1045,11 @@ public:
     unsigned __int8 byHSKTime);
   void SendMsg_RecvHSKQuest();
   void AlterPvPPoint(double dAlter, int AlterType, unsigned int dwDstSerial);
+  void SetGrade(unsigned __int8 byGrade);
+  void SetRankRate(unsigned __int16 wRankRate, unsigned int dwRank);
+  void SendMsg_AlterGradeInform();
+  void SendMsg_AlterPvPRank(unsigned __int16 wPvpRate, unsigned int dwPvpRank);
+  void SendMsg_PvpRankListVersionUp(char byVersion);
   void SendMsg_AlterPvPPoint();
   void SendMsg_RaceBattlePenelty(int nAlterPoint, char byAlterType);
   void SetCntEnable(bool bSet);
@@ -1280,6 +1287,7 @@ public:
   _other_shape_part_zocl m_bufSpapePart;
 };
 
+bool LoadMasteryLimFile(char *pszErrMsg);
 bool DTradeEqualPerson(CPlayer *lp_pOne, CPlayer **lpp_pDst);
 void wa_PartySelfLeave(_CLID *pidLeaver);
 

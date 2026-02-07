@@ -77,3 +77,13 @@ bool TRC_AutoTrade::Initialzie()
   this->m_Controller.setLimitTaxRate(0.050000001f, 0.2f);
   return true;
 }
+
+bool TRC_AutoTrade::IsOwnerGuild(unsigned int nGuildSerial)
+{
+  return m_pOwnerGuild && nGuildSerial == m_pOwnerGuild->m_dwSerial;
+}
+
+float TRC_AutoTrade::get_taxrate()
+{
+  return m_Controller.getCurTaxRate();
+}

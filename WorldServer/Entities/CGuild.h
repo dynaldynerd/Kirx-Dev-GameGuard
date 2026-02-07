@@ -1,11 +1,16 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "CGuildList.h"
+
+struct _guild_member_refresh_data;
 
 /* 1717 */
 class __cppobj __declspec(align(8)) CGuild
 {
 public:
+  static CGuildList s_GuildList;
+
   class MakeBuddyPacket
   {
   public:
@@ -23,6 +28,10 @@ public:
 
   virtual ~CGuild() = default;
   void Init(unsigned int index);
+  bool IsFill();
+  void ClearVote();
+  void StartRankJob();
+  void EndRankJob();
   char LogoffMember(unsigned int dwMemberSerial);
   _guild_member_info *LoginMember(unsigned int dwMemberSerial, CPlayer *pPtr);
   void SendMsg_GuildMemberLogoff(unsigned int dwSerial);
@@ -30,6 +39,13 @@ public:
   char PopApplier(unsigned int dwApplierSerial, unsigned __int8 byDelCode);
   char PushApplier(CPlayer *pApplier);
   unsigned __int8 GetGrade();
+  void UpdateGrade(unsigned __int8 byGrade);
+  void RefreshGuildMemberData(_guild_member_refresh_data *pRefreshMember);
+  void SendMsg_AlterMemberState();
+  void SendMsg_AlterMemberGrade();
+  void SendMsg_VoteComplete(bool bPass);
+  void InitVote();
+  void MakeDownMemberPacket();
   void SendMsg_AddJoinApplier(_guild_applier_info *p);
   void SendMsg_DelJoinApplier(_guild_applier_info *p, unsigned __int8 byDelCode);
   void MakeDownApplierPacket();
@@ -81,4 +97,6 @@ public:
   unsigned int m_dwLastLoopTime;
   char m_szHistoryFileName[128];
 };
+
+CGuild *GetGuildDataFromSerial(CGuild *pData, int nNum, unsigned int dwSerial);
 

@@ -15,6 +15,8 @@ namespace RACE_BOSS_MSG
     char m_wszMsg[49];
     unsigned int m_dwSendTime;
     unsigned int m_dwWebSendDBID;
+
+    bool Save(unsigned __int8 ucRace);
   };
 
   class CMsgList
@@ -29,6 +31,8 @@ namespace RACE_BOSS_MSG
 
     bool Load(unsigned int dwCurTime);
     bool Save();
+    bool SaveIndexList(unsigned int iType, CNetIndexList *kInxList);
+    bool SaveMsgList(CNetIndexList *kInxList);
   };
 
   class CMsgListManager

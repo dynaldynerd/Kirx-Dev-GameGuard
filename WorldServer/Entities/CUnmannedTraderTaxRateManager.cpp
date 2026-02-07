@@ -49,3 +49,23 @@ bool CUnmannedTraderTaxRateManager::Init(CLogFile *pkLogger)
   this->m_pkTimer->BeginTimer(CUnmannedTraderEnvironmentValue::Unmanned_Trader_Change_Taxrate_Check_Changed_Day_Delay);
   return true;
 }
+
+bool CUnmannedTraderTaxRateManager::IsOwnerGuild(unsigned __int8 byRace, unsigned int dwGuildSerial)
+{
+  if (m_vecTRC.empty() || m_vecTRC.size() <= byRace)
+  {
+    return false;
+  }
+
+  return m_vecTRC[byRace]->IsOwnerGuild(dwGuildSerial);
+}
+
+float CUnmannedTraderTaxRateManager::GetTaxRate(unsigned __int8 byRace)
+{
+  if (m_vecTRC.empty() || m_vecTRC.size() <= byRace)
+  {
+    return FLOAT_255_0;
+  }
+
+  return m_vecTRC[byRace]->get_taxrate();
+}

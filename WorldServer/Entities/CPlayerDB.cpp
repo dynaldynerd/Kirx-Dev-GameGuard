@@ -2,6 +2,8 @@
 
 #include "CPlayerDB.h"
 
+#include <cstdlib>
+
 int CPlayerDB::GetRaceCode()
 {
   return static_cast<int>(this->m_dbChar.m_byRaceSexCode) >> 1;
@@ -129,6 +131,41 @@ unsigned __int8 CPlayerDB::GetBagNum()
 unsigned __int16 CPlayerDB::GetNewItemSerial()
 {
   return this->m_wSerialCount++;
+}
+
+char CPlayerDB::CalcCharGrade(unsigned __int8 byLv, unsigned __int16 wRankRate)
+{
+  unsigned __int16 rankRate = wRankRate;
+  if (wRankRate >= 0x2710u)
+  {
+    rankRate = 0;
+  }
+
+  const float rate = static_cast<float>(static_cast<float>(rankRate) / 100.0f) / 100.0f;
+
+  char buffer[48]{};
+  _itoa(byLv, buffer, 10);
+
+  _base_fld *record = g_Main.m_tblGrade.GetRecord(buffer);
+  while (record)
+  {
+    if (*reinterpret_cast<float *>(&record[1].m_dwIndex) >= rate)
+    {
+      return record[1].m_strCode[0];
+    }
+
+    record = g_Main.m_tblGrade.GetRecord(record->m_dwIndex + 1);
+    if (!record)
+    {
+      return 0;
+    }
+    if (strcmp_0(record->m_strCode, buffer))
+    {
+      return 0;
+    }
+  }
+
+  return 0;
 }
 
 _SFCONT_DB_BASE::_SFCONT_DB_BASE()

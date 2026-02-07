@@ -7,7 +7,9 @@
 class CPlayer;
 class INationGameGuardSystem;
 class CBilling;
+class CashDbWorker;
 struct _NameTxt_fld;
+struct _CashShop_str_fld;
 
 struct CHEAT_COMMAND
 {
@@ -30,10 +32,16 @@ public:
   };
 
   virtual ~CNationSettingData() = default;
+  virtual CashDbWorker *CreateWorker();
   virtual CBilling *CreateBilling();
   virtual const char *GetItemName(struct _NameTxt_fld *pFld);
   virtual bool IsApplyPcbangPrimium(const CPlayer *pUser);
+  virtual int GetCashItemPrice(_CashShop_str_fld *pFld);
   const char *GetNoneString();
+  bool IsCashDBUseExtRef();
+  bool IsCashDBInit();
+  bool IsCashDBDSNSetted();
+  void SetCashDBInitFlag();
 
   bool m_bServiceMode;
   int m_iNationCode;

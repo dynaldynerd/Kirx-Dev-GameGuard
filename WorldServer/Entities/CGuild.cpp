@@ -2,15 +2,91 @@
 
 #include "CGuild.h"
 
+#include "CGuildMasterEffect.h"
 #include "CNetworkEX.h"
+#include "CUnmannedTraderTaxRateManager.h"
 #include "CGuildBattleController.h"
 #include "CHonorGuild.h"
 #include "CMoneySupplyMgr.h"
 #include "GuildBattleTypes.h"
+#include "guild_member_refresh_data.h"
+#include "guild_alter_member_grade_inform_zocl.h"
+#include "guild_alter_member_state_inform_zocl.h"
+
+CGuildList CGuild::s_GuildList;
 
 void CGuild::Init(unsigned int index)
 {
   m_nIndex = static_cast<int>(index);
+}
+
+bool CGuild::IsFill()
+{
+  return m_dwSerial != static_cast<unsigned int>(-1);
+}
+
+void CGuild::ClearVote()
+{
+  if (m_bNowProcessSgtMter)
+  {
+    if (m_SuggestedMatter.byMatterType == 4)
+    {
+      m_GuildBattleSugestMatter.Clear();
+    }
+    else if (m_SuggestedMatter.byMatterType == 5)
+    {
+      m_GuildBattleSugestMatter.pkSrc->m_GuildBattleSugestMatter.Clear();
+      m_GuildBattleSugestMatter.pkSrc->PushDQSInGuildBattleCost();
+      m_GuildBattleSugestMatter.pkSrc->SendMsg_ApplyGuildBattleResultInform(0xACu, m_wszName);
+      m_GuildBattleSugestMatter.Clear();
+    }
+
+    SendMsg_VoteComplete(false);
+    InitVote();
+  }
+}
+
+void CGuild::StartRankJob()
+{
+  m_bRankWait = true;
+}
+
+void CGuild::EndRankJob()
+{
+  m_bRankWait = false;
+}
+
+void CGuild::SendMsg_VoteComplete(bool bPass)
+{
+  #pragma pack(push, 1)
+  struct
+  {
+    unsigned int dwVoteKey;
+    unsigned __int8 byVoteState0;
+    unsigned __int8 byVoteState1;
+    bool bPass;
+  } msg{};
+  #pragma pack(pop)
+
+  msg.dwVoteKey = m_SuggestedMatter.dwMatterVoteSynKey;
+  msg.byVoteState0 = m_SuggestedMatter.byVoteState[0];
+  msg.byVoteState1 = m_SuggestedMatter.byVoteState[1];
+  msg.bPass = bPass;
+
+  unsigned __int8 pbyType[2] = {27, 29};
+  for (int j = 0; j < 50; ++j)
+  {
+    _guild_member_info *member = &m_MemberData[j];
+    if (member->IsFill() && member->pPlayer)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(member->pPlayer->m_ObjID.m_wIndex, pbyType, (char *)&msg, 7u);
+    }
+  }
+}
+
+void CGuild::InitVote()
+{
+  m_bNowProcessSgtMter = false;
 }
 
 char CGuild::LogoffMember(unsigned int dwMemberSerial)
@@ -134,6 +210,38 @@ unsigned __int8 CGuild::GetGrade()
   return m_byGrade;
 }
 
+void CGuild::UpdateGrade(unsigned __int8 byGrade)
+{
+  if (m_MasterData.pMember && m_MasterData.pMember->pPlayer)
+  {
+    _guild_member_info *master = m_MasterData.pMember;
+    CGuildMasterEffect::GetInstance()->change_player(master->pPlayer, m_byGrade, byGrade);
+  }
+
+  m_byGrade = byGrade;
+
+  char msg[0x19];
+  *reinterpret_cast<unsigned int *>(msg) = m_dwSerial;
+  msg[4] = static_cast<char>(m_byGrade);
+  *reinterpret_cast<unsigned int *>(msg + 5) = m_dwEmblemBack;
+  *reinterpret_cast<unsigned int *>(msg + 9) = m_dwEmblemMark;
+
+  unsigned __int8 pbyType[2] = {27, 40};
+  for (int j = 0; j < 50; ++j)
+  {
+    if (m_MemberData[j].IsFill() && m_MemberData[j].pPlayer)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        m_MemberData[j].pPlayer->m_ObjID.m_wIndex,
+        pbyType,
+        msg,
+        0x19u);
+    }
+  }
+
+  CGuild::s_GuildList.SetGrade(m_byRace, m_wszName, m_byGrade);
+}
+
 void CGuild::SendMsg_AddJoinApplier(_guild_applier_info *p)
 {
   #pragma pack(push, 1)
@@ -248,6 +356,162 @@ void CGuild::MakeDownApplierPacket()
   }
 
   m_DownPacket_Applier->wDataSize = dataSize;
+}
+
+void CGuild::MakeDownMemberPacket()
+{
+  m_DownPacket_Member->dwGuildSerial = m_dwSerial;
+  m_DownPacket_Member->byGuildGrade = m_byGrade;
+  m_DownPacket_Member->dwEmblemBack = m_dwEmblemBack;
+  m_DownPacket_Member->dwEmblemMark = m_dwEmblemMark;
+  m_DownPacket_Member->dDalant = m_dTotalDalant;
+  m_DownPacket_Member->dGold = m_dTotalGold;
+  m_DownPacket_Member->byCurTax = static_cast<unsigned __int8>(-1);
+
+  CUnmannedTraderTaxRateManager *taxMgr = CUnmannedTraderTaxRateManager::Instance();
+  if (taxMgr->IsOwnerGuild(m_byRace, m_dwSerial))
+  {
+    float taxRate = taxMgr->GetTaxRate(m_byRace);
+    m_DownPacket_Member->byCurTax = static_cast<unsigned __int8>(taxRate * 100.0f);
+  }
+
+  m_DownPacket_Member->dwTotWin = m_dwGuildBattleTotWin;
+  m_DownPacket_Member->dwTotDraw = m_dwGuildBattleTotDraw;
+  m_DownPacket_Member->dwTotLose = m_dwGuildBattleTotLose;
+  m_DownPacket_Member->bPossibleElectMaster = m_bPossibleElectMaster;
+  m_DownPacket_Member->wDataSize = 0;
+
+  int dataSize = 0;
+  void *sData = m_DownPacket_Member->sData;
+
+  unsigned __int8 nameLen = static_cast<unsigned __int8>(strlen_0(m_wszName));
+  memcpy_0(sData, &nameLen, 1u);
+  sData = static_cast<char *>(sData) + 1;
+  ++dataSize;
+
+  memcpy_0(sData, m_wszName, nameLen);
+  sData = static_cast<char *>(sData) + nameLen;
+  dataSize += nameLen;
+
+  memcpy_0(sData, &m_nMemberNum, 1u);
+  sData = static_cast<char *>(sData) + 1;
+  ++dataSize;
+
+  for (int j = 0; j < 50; ++j)
+  {
+    _guild_member_info *member = &m_MemberData[j];
+    if (member->IsFill())
+    {
+      nameLen = static_cast<unsigned __int8>(strlen_0(member->wszName));
+      memcpy_0(sData, &nameLen, 1u);
+      sData = static_cast<char *>(sData) + 1;
+      ++dataSize;
+
+      memcpy_0(sData, member->wszName, nameLen);
+      sData = static_cast<char *>(sData) + nameLen;
+      dataSize += nameLen;
+
+      memcpy_0(sData, member, 4u);
+      sData = static_cast<char *>(sData) + 4;
+      dataSize += 4;
+
+      memcpy_0(sData, &member->byLv, 1u);
+      sData = static_cast<char *>(sData) + 1;
+      ++dataSize;
+
+      memcpy_0(sData, &member->dwPvpPoint, 4u);
+      sData = static_cast<char *>(sData) + 4;
+      dataSize += 4;
+
+      memcpy_0(sData, &member->byClassInGuild, 1u);
+      sData = static_cast<char *>(sData) + 1;
+      ++dataSize;
+
+      memcpy_0(sData, &member->byRank, 1u);
+      sData = static_cast<char *>(sData) + 1;
+      ++dataSize;
+    }
+  }
+
+  m_DownPacket_Member->wDataSize = dataSize;
+}
+
+void CGuild::RefreshGuildMemberData(_guild_member_refresh_data *pRefreshMember)
+{
+  for (int j = 0; j < m_nMemberNum; ++j)
+  {
+    for (int k = 0; k < pRefreshMember->wMemberCount; ++k)
+    {
+      if (m_MemberData[j].dwSerial == pRefreshMember->rMemberData[k].dwSerial)
+      {
+        m_MemberData[j].byRank = static_cast<unsigned __int8>(k);
+        m_MemberData[j].byLv = pRefreshMember->rMemberData[k].byLv;
+        m_MemberData[j].dwPvpPoint = pRefreshMember->rMemberData[k].dwPvpPoint;
+      }
+    }
+  }
+
+  MakeDownMemberPacket();
+}
+
+void CGuild::SendMsg_AlterMemberState()
+{
+  _guild_alter_member_state_inform_zocl msg{};
+  int count = 0;
+
+  for (int j = 0; j < 50; ++j)
+  {
+    _guild_member_info *member = &m_MemberData[j];
+    if (member->IsFill())
+    {
+      msg.MemberList[count].dwMemberSerial = member->dwSerial;
+      msg.MemberList[count].byLv = member->byLv;
+      msg.MemberList[count].dwPvpPoint = member->dwPvpPoint;
+      ++count;
+    }
+  }
+
+  msg.byAlterMemberNum = static_cast<unsigned __int8>(count);
+  unsigned __int8 pbyType[2] = {27, 31};
+
+  for (int j = 0; j < 50; ++j)
+  {
+    if (m_MemberData[j].IsFill() && m_MemberData[j].pPlayer)
+    {
+      const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
+      g_Network.m_pProcess[0]->LoadSendMsg(m_MemberData[j].pPlayer->m_ObjID.m_wIndex, pbyType, (char *)&msg, nLen);
+    }
+  }
+}
+
+void CGuild::SendMsg_AlterMemberGrade()
+{
+  _guild_alter_member_grade_inform_zocl msg{};
+  int count = 0;
+
+  for (int j = 0; j < 50; ++j)
+  {
+    _guild_member_info *member = &m_MemberData[j];
+    if (member->IsFill())
+    {
+      msg.MemberList[count].dwMemberSerial = member->dwSerial;
+      msg.MemberList[count].byRank = member->byRank;
+      msg.MemberList[count].byGrade = member->byClassInGuild;
+      ++count;
+    }
+  }
+
+  msg.byAlterMemberNum = static_cast<unsigned __int8>(count);
+  unsigned __int8 pbyType[2] = {27, 32};
+
+  for (int j = 0; j < 50; ++j)
+  {
+    if (m_MemberData[j].IsFill() && m_MemberData[j].pPlayer)
+    {
+      const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
+      g_Network.m_pProcess[0]->LoadSendMsg(m_MemberData[j].pPlayer->m_ObjID.m_wIndex, pbyType, (char *)&msg, nLen);
+    }
+  }
 }
 
 unsigned __int8 CGuild::ManageAcceptORRefuseGuildBattle(bool bAccept)
@@ -392,5 +656,17 @@ void CGuild::PushDQSDestGuildOutputGuildBattleCost()
   const int nSize = qry.size();
   g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x76u, reinterpret_cast<char *>(&qry), nSize);
   m_bIOWait = true;
+}
+
+CGuild *GetGuildDataFromSerial(CGuild *pData, int nNum, unsigned int dwSerial)
+{
+  for (int j = 0; j < nNum; ++j)
+  {
+    if (pData[j].IsFill() && pData[j].m_dwSerial == dwSerial)
+    {
+      return &pData[j];
+    }
+  }
+  return nullptr;
 }
 

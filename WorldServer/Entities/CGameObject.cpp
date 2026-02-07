@@ -1663,12 +1663,14 @@ __int64 CGameObject::GetCurSecNum()
 
 bool CGameObject::IsBeAttackedAble(bool bFirst)
 {
+  // this is not a stub
   (void)bFirst;
   return 0;
 }
 
 char CGameObject::IsBeDamagedAble(CCharacter *pAtter)
 {
+  // this is not a stub
   (void)pAtter;
   return 1;
 }
@@ -1857,16 +1859,19 @@ void CGameObject::SendMsg_BreakStop()
 
 void CGameObject::SendMsg_FixPosition(int n)
 {
+  // this is not a stub
   (void)n;
 }
 
 void CGameObject::SendMsg_RealMovePoint(int n)
 {
+  // this is not a stub
   (void)n;
 }
 
 char CGameObject::SetHP(int /*nHP*/, bool /*bOver*/)
 {
+  // this is not a stub
   return 1;
 }
 
@@ -1900,6 +1905,7 @@ __int64 CGameObject::GetUseSectorRange()
 
 bool CGameObject::IsInTown()
 {
+  // this is not a stub
   return false;
 }
 
@@ -2122,6 +2128,7 @@ float CGameObject::GetWidth()
 
 void CGameObject::SetAttackPart(int nAttactPart)
 {
+  // this is not a stub
   (void)nAttactPart;
 }
 

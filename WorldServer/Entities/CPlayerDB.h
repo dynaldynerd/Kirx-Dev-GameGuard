@@ -31,6 +31,7 @@ public:
   void SetCurPos(float *fPos);
   unsigned __int8 GetBagNum();
   unsigned __int16 GetNewItemSerial();
+  static char CalcCharGrade(unsigned __int8 byLv, unsigned __int16 wRankRate);
 
   unsigned __int8 m_byPvPGrade;
   __unaligned __declspec(align(1)) _character_db_load m_dbChar;

@@ -22,6 +22,16 @@ CBilling *CNationSettingManager::CreateBilling()
   return m_pData->CreateBilling();
 }
 
+CashDbWorker *CNationSettingManager::CreateWorker()
+{
+  return m_pData->CreateWorker();
+}
+
+int CNationSettingManager::GetCashItemPrice(_CashShop_str_fld *pFld)
+{
+  return m_pData->GetCashItemPrice(pFld);
+}
+
 const char *CNationSettingManager::GetItemName(_NameTxt_fld *pFld)
 {
   if (pFld == nullptr)
@@ -51,4 +61,59 @@ bool CNationSettingManager::IsApplyPcbangPrimium(const CPlayer *pUser)
     return false;
   }
   return m_pData->IsApplyPcbangPrimium(pUser);
+}
+
+bool CNationSettingManager::IsCashDBUseExtRef()
+{
+  return m_pData->IsCashDBUseExtRef();
+}
+
+bool CNationSettingManager::IsCashDBInit()
+{
+  return m_pData->IsCashDBInit();
+}
+
+bool CNationSettingManager::IsCashDBDSNSetted()
+{
+  return m_pData->IsCashDBDSNSetted();
+}
+
+unsigned __int16 CNationSettingManager::GetBillingForceCloseDelay()
+{
+  return m_pData->m_wBillingForceCloseDelay;
+}
+
+char *CNationSettingManager::GetCashDBName()
+{
+  return m_pData->m_szCashDBName;
+}
+
+char *CNationSettingManager::GetCashDBDBIP()
+{
+  return m_pData->m_szCashDBIP;
+}
+
+char *CNationSettingManager::GetCashDBID()
+{
+  return m_pData->m_szCashDBID;
+}
+
+char *CNationSettingManager::GetCashDBPW()
+{
+  return m_pData->m_szCashDBPW;
+}
+
+unsigned __int16 CNationSettingManager::GetCashDBPort()
+{
+  return m_pData->m_wCashDBPort;
+}
+
+char *CNationSettingManager::GetNationCodeStr()
+{
+  return m_pData->m_szNationCodeStr;
+}
+
+void CNationSettingManager::SetCashDBInitState()
+{
+  m_pData->SetCashDBInitFlag();
 }

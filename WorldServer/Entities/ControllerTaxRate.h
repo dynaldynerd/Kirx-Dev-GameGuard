@@ -7,6 +7,9 @@ class __cppobj ControllerTaxRate
 public:
   void setLimitTaxRate(float fMin, float fMax);
   bool checkLimitTaxRate(float fTaxRate);
+  float getCurTaxRate();
+  void setCurTaxRate(float fTaxRate);
+  unsigned int calcTaxRate(unsigned int dalant);
 
   bool m_bInit;
   float m_fMinTaxRate;

@@ -6,4 +6,6 @@
 
 class __cppobj CNationSettingDataES : public CNationSettingData
 {
+public:
+  int GetCashItemPrice(_CashShop_str_fld *pFld) override;
 };

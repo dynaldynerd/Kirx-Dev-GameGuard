@@ -267,6 +267,41 @@ int GetNextDay()
   return local.tm_mday;
 }
 
+bool GetDateStrAfterDay(char *szDate, int iBuffSize, unsigned __int16 wDayAfter)
+{
+  if (!szDate)
+  {
+    return false;
+  }
+
+  std::time_t now = std::time(nullptr);
+  now += static_cast<std::time_t>(86400) * static_cast<std::time_t>(wDayAfter);
+
+  std::tm local{};
+  if (localtime_s(&local, &now) != 0)
+  {
+    return false;
+  }
+
+  sprintf_s(szDate, iBuffSize, "%04d%02d%02d", local.tm_year + 1900, local.tm_mon + 1, local.tm_mday);
+  return true;
+}
+
+bool IsDayChanged(int *iOldDay)
+{
+  const int curDay = GetCurDay();
+  if (curDay < 0)
+  {
+    return false;
+  }
+  if (curDay == *iOldDay)
+  {
+    return false;
+  }
+  *iOldDay = curDay;
+  return true;
+}
+
 bool GetDateTimeStr(char *szTime)
 {
   if (szTime == nullptr)
@@ -1757,6 +1792,116 @@ int GetUsePcCashType(unsigned __int8 byTblCode, int nIndex)
     }
   }
   return 0;
+}
+
+int IsCashItem(unsigned __int8 byTblCode, int dwIndex)
+{
+  CRecordData *table = &s_ptblItemData[byTblCode];
+  switch (byTblCode)
+  {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+      return 0;
+    case 8:
+    {
+      _base_fld *record = table->GetRecord(dwIndex);
+      if (!record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&record[6].m_strCode[48]);
+    }
+    case 9:
+    {
+      _base_fld *record = table->GetRecord(dwIndex);
+      if (!record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&record[6].m_strCode[48]);
+    }
+    case 10:
+    {
+      _base_fld *record = table->GetRecord(dwIndex);
+      if (!record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&record[9].m_strCode[12]);
+    }
+    case 13:
+    {
+      _base_fld *record = table->GetRecord(dwIndex);
+      if (!record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&record[9].m_strCode[36]);
+    }
+    case 16:
+    {
+      _base_fld *record = table->GetRecord(dwIndex);
+      if (!record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[48]);
+    }
+    case 18:
+    {
+      _base_fld *record = table->GetRecord(dwIndex);
+      if (!record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&record[8].m_strCode[8]);
+    }
+    case 20:
+    {
+      _base_fld *record = table->GetRecord(dwIndex);
+      if (!record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[44]);
+    }
+    case 22:
+    {
+      _base_fld *record = table->GetRecord(dwIndex);
+      if (!record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&record[7].m_strCode[44]);
+    }
+    case 30:
+    {
+      _base_fld *record = table->GetRecord(dwIndex);
+      if (!record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[60]);
+    }
+    case 31:
+    {
+      _base_fld *record = table->GetRecord(dwIndex);
+      if (!record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[56]);
+    }
+    case 33:
+    {
+      _base_fld *record = table->GetRecord(dwIndex);
+      if (!record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&record[7].m_strCode[32]);
+    }
+    case 35:
+    {
+      _base_fld *record = table->GetRecord(dwIndex);
+      if (!record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(&record[7].m_strCode[8]);
+    }
+    case 36:
+    {
+      _base_fld *record = table->GetRecord(dwIndex);
+      if (!record)
+        return 0;
+      return *reinterpret_cast<unsigned int *>(record[6].m_strCode);
+    }
+    default:
+      return 0;
+  }
 }
 
 unsigned int GetItemDurPoint(int nTableCode, int nIndex)

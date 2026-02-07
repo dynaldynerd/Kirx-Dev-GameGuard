@@ -41,4 +41,8 @@ public:
 
   static CPvpCashMng *Instance();
   bool LoadData();
+
+private:
+  bool Parsing(const char *szTitle, const char *szItem, char **szBuff, int nInx, unsigned __int8 byParseType);
+  bool SetItem(char *szItemCode, int nInx);
 };

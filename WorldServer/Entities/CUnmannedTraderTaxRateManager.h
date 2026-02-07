@@ -12,6 +12,8 @@ public:
 
   CUnmannedTraderTaxRateManager();
   bool Init(CLogFile *pkLogger);
+  bool IsOwnerGuild(unsigned __int8 byRace, unsigned int dwGuildSerial);
+  float GetTaxRate(unsigned __int8 byRace);
 
   static CUnmannedTraderTaxRateManager *ms_Instance;
 

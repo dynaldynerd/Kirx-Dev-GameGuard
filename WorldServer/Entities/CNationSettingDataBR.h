@@ -8,4 +8,5 @@ class __cppobj CNationSettingDataBR : public CNationSettingData
 {
 public:
   CBilling *CreateBilling() override;
+  int GetCashItemPrice(_CashShop_str_fld *pFld) override;
 };
