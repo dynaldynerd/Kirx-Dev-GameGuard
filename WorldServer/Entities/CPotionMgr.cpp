@@ -3,6 +3,7 @@
 #include "CPotionMgr.h"
 
 #include "CNationSettingManager.h"
+#include "CRFWorldDatabase.h"
 #include "CheckPotion_fld.h"
 #include "NameTxt_fld.h"
 #include "skill_fld.h"
@@ -106,4 +107,12 @@ bool CPotionMgr::SetPotionDataName()
   }
 
   return true;
+}
+
+bool CPotionMgr::InsertRenamePotion(CRFWorldDatabase *pkWorldDB, char *pData)
+{
+  return pkWorldDB->Insert_RenamePotionLog(
+    *reinterpret_cast<unsigned int *>(pData),
+    pData + 4,
+    pData + 21);
 }

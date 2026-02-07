@@ -153,6 +153,7 @@ public:
   void SetDefPart(_monster_fld *pMonRec);
   __int64 CreateAI(int nType);
   void Command_ChildMonDestroy(unsigned int dwTime);
+  CLuaSignalReActor *GetSignalReActor();
 
   struct _monster_loot_index
   {
@@ -169,4 +170,17 @@ public:
 };
 
 unsigned __int16 _GetMonsterContTime(unsigned __int8 byEffectCode, unsigned __int8 byLv);
+
+CMonster *SearchEmptyMonster(bool bWithoutFail);
+CMonster *CreateRepMonster(
+  CMapData *pMap,
+  unsigned __int16 wLayer,
+  float *fPos,
+  char *pszMonsterCode,
+  CMonster *pParent,
+  bool bRobExp,
+  bool bRewardExp,
+  bool bDungeon,
+  bool bWithoutFail,
+  bool bApplyRopExpField);
 

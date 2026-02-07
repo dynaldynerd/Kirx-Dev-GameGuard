@@ -4,13 +4,17 @@
 #include "CLuaCommand.h"
 #include "CLuaScriptMgr.h"
 #include "CLogFile.h"
+#include "LuaTinker.h"
 
 #include <cstdio>
 
-namespace lua_tinker
+CLuaScript::_State CLuaScript::_State::ms_cEmpty{};
+
+CLuaScript::_State::_State() : m_bExist(false), m_bAttached(false) {}
+
+bool CLuaScript::_State::operator==(const _State &rhs) const
 {
-  void dofile(lua_State *, const char *) {}
-  void dostring(lua_State *, const char *) {}
+  return m_bExist == rhs.m_bExist && m_bAttached == rhs.m_bAttached;
 }
 
 CLuaScript::CLuaScript()

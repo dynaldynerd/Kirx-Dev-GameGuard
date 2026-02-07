@@ -244,6 +244,16 @@ __time64_t time_20(__int64 *_Time)
   return _time64(_Time);
 }
 
+__time64_t time_18(__int64 *_Time)
+{
+  return _time64(_Time);
+}
+
+__time64_t mktime_3(tm *_Tm)
+{
+  return _mktime64(_Tm);
+}
+
 int GetCurDay()
 {
   std::time_t now = std::time(nullptr);

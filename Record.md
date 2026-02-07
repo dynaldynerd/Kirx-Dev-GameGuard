@@ -43,6 +43,7 @@ During the implementation of `CMapOperation::Init` and its sub-flows, the follow
 | `CMonster.cpp` | `GetMaxDMGSFContCount` | `CMonster::m_pRecordSet` | `_base_fld *` | Uses `Record[25].m_strCode` as max count. |
 | `CMonster.cpp` | `_LootItem_Std` | `g_Main.m_tblItemLoot.m_tblLoot` | `_base_fld *` | Uses `Record[1].m_strCode[4/8]`, `Record[1].m_dwIndex` for loot weights/counts. |
 | `CMonster.cpp` | `_LootItem_Std` | `CMonster::m_pRecordSet` | `_base_fld *` | Uses `Record[4].m_strCode[8]` as level diff adjust. |
+| `CMonster.cpp` | `CreateRepMonster` | `g_Main.m_tblMonster` | `_monster_fld *` | IDA uses `Record[4].m_strCode[4]`; interpreted as `_monster_fld::m_bExpDown` when applying rob-exp field. |
 | `cStaticMember_Player.cpp` | `cStaticMember_Player::loadLimitExpData` | `g_Main.m_tblExp` | `_base_fld *` | Uses `&Record[1]` as string input to `atof`, implying non-base layout usage. |
 | `CPlayerDB.cpp` | `CPlayerDB::CalcCharGrade` | `g_Main.m_tblGrade` | `_base_fld *` | Uses `Record[1].m_dwIndex` as float and `Record[1].m_strCode[0]`; verify field offsets. |
 | `CPlayer.cpp` | `CPlayer::SetStaticMember` | `g_Main.m_tblItemData[15]` | `_base_fld *` | Uses `&Record[4].m_strCode[28]` as key into `m_tblEffectData[1]`; likely non-base layout. |

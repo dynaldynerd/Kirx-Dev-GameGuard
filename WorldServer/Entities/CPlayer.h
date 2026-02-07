@@ -1290,6 +1290,7 @@ public:
 bool LoadMasteryLimFile(char *pszErrMsg);
 bool DTradeEqualPerson(CPlayer *lp_pOne, CPlayer **lpp_pDst);
 void wa_PartySelfLeave(_CLID *pidLeaver);
+CPlayer *GetPtrPlayerFromSerial(CPlayer *pData, int nNum, unsigned int dwSerial);
 
 #pragma pack(pop)
 

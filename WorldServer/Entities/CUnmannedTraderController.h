@@ -5,11 +5,15 @@
 #include "CUnmannedTraderLazyCleaner.h"
 #include "CUnmannedTraderTradeInfo.h"
 
+class CRFWorldDatabase;
+
 class __cppobj CUnmannedTraderController
 {
 public:
   static CUnmannedTraderController *Instance();
   bool Init();
+  unsigned __int8 SelectSearchList(char *pData, CRFWorldDatabase *pkWorldDB, unsigned __int8 *byProcRet);
+  void CompleteSelectSearchList(unsigned __int8 byDBRet, unsigned __int8 byProcRet, char *pLoadData);
 
 private:
   bool InitLogger();

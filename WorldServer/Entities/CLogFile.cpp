@@ -5,6 +5,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
+#include <cwchar>
 
 CLogFile::CLogFile()
   : m_dwLogCount(0),
@@ -93,6 +94,69 @@ void CLogFile::WriteFromArg(const char *format, va_list arg)
     const DWORD len = strlen_0(line);
     WriteFile(hFile, line, len, &written, nullptr);
     CloseHandle(hFile);
+  }
+}
+
+void CLogFile::WriteFromArg(const wchar_t *format, va_list arg)
+{
+  if (!m_bInit || !m_bWriteAble)
+  {
+    return;
+  }
+
+  wchar_t buffer[10256]{};
+  wchar_t line[11280]{};
+  wchar_t date[144]{};
+  wchar_t time[140]{};
+
+  vswprintf_s(buffer, 0x2800u, format, arg);
+
+  if (m_bDate)
+  {
+    _wstrdate_s(date, 0x80u);
+    _wstrtime_s(time, 0x80u);
+  }
+  else
+  {
+    date[0] = 0;
+    time[0] = 0;
+  }
+
+  if (m_bAddCount)
+  {
+    if (m_bDate)
+    {
+      const unsigned int count = m_dwLogCount++;
+      swprintf_s(line, 0x2C00u, L"%d %s %s : %s\r\n", count, date, time, buffer);
+    }
+    else
+    {
+      const unsigned int count = m_dwLogCount++;
+      swprintf_s(line, 0x2C00u, L"%d : %s\r\n", count, buffer);
+    }
+  }
+  else if (m_bDate)
+  {
+    swprintf_s(line, 0x2C00u, L"%s %s %s\r\n", date, time, buffer);
+  }
+  else
+  {
+    swprintf_s(line, 0x2C00u, L"%s\r\n", buffer);
+  }
+
+  FILE *stream = nullptr;
+  fopen_s(&stream, m_szFileName, "ab");
+  if (stream)
+  {
+    if (m_dwLogCount == 1)
+    {
+      unsigned __int16 bom = static_cast<unsigned __int16>(-257);
+      fwrite(&bom, sizeof(bom), 1, stream);
+    }
+
+    const size_t len = wcslen(line);
+    fwrite(line, 2 * len, 1, stream);
+    fclose(stream);
   }
 }
 

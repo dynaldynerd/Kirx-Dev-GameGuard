@@ -2199,4 +2199,112 @@ unsigned __int8 CMonster::InsertSFContEffect(
   return 29;
 }
 
+CLuaSignalReActor *CMonster::GetSignalReActor()
+{
+  return &m_LuaSignalReActor;
+}
+
+CMonster *SearchEmptyMonster(bool bWithoutFail)
+{
+  for (unsigned int index = 0; index < MAX_MONSTER; ++index)
+  {
+    if (!g_Monster[index].m_bLive)
+    {
+      return &g_Monster[index];
+    }
+  }
+
+  if (!bWithoutFail)
+  {
+    return nullptr;
+  }
+
+  for (unsigned int index = 0; index < MAX_MONSTER; ++index)
+  {
+    CMonster *mon = &g_Monster[index];
+    if (!mon->m_bLive)
+    {
+      return mon;
+    }
+
+    if (!mon->m_pCurMap->m_pMapSet->m_nMapType
+        && !mon->m_MonHierarcy.ChildKindCount()
+        && !mon->m_MonHierarcy.GetParent()
+        && mon->m_pMonRec->m_bMonsterCondition != 1
+        && !mon->GetEmotionState())
+    {
+      mon->Destroy(1u, nullptr);
+      return mon;
+    }
+  }
+
+  for (unsigned int index = 0; index < MAX_MONSTER; ++index)
+  {
+    CMonster *mon = &g_Monster[index];
+    if (!mon->m_bLive)
+    {
+      return mon;
+    }
+
+    if (!mon->m_pCurMap->m_pMapSet->m_nMapType
+        && !mon->m_MonHierarcy.ChildKindCount()
+        && !mon->m_MonHierarcy.GetParent()
+        && mon->m_pMonRec->m_bMonsterCondition != 1
+        && !mon->m_pTargetChar)
+    {
+      mon->Destroy(1u, nullptr);
+      return mon;
+    }
+  }
+
+  return nullptr;
+}
+
+CMonster *CreateRepMonster(
+  CMapData *pMap,
+  unsigned __int16 wLayer,
+  float *fPos,
+  char *pszMonsterCode,
+  CMonster *pParent,
+  bool bRobExp,
+  bool bRewardExp,
+  bool bDungeon,
+  bool bWithoutFail,
+  bool bApplyRopExpField)
+{
+  CMonster *mon = SearchEmptyMonster(bWithoutFail);
+  if (!mon)
+  {
+    return nullptr;
+  }
+
+  _monster_create_setdata data;
+  data.m_pMap = pMap;
+  data.m_nLayerIndex = wLayer;
+  data.m_pRecordSet = g_Main.m_tblMonster.GetRecord(pszMonsterCode);
+  if (!data.m_pRecordSet)
+  {
+    return nullptr;
+  }
+
+  memcpy_0(data.m_fStartPos, fPos, sizeof(data.m_fStartPos));
+  data.pActiveRec = nullptr;
+  data.pDumPosition = nullptr;
+  data.pParent = pParent;
+  data.bDungeon = bDungeon;
+  if (bApplyRopExpField)
+  {
+    const _monster_fld *monRec = static_cast<const _monster_fld *>(data.m_pRecordSet);
+    data.bRobExp = monRec->m_bExpDown != 0;
+  }
+  else
+  {
+    data.bRobExp = bRobExp;
+  }
+  data.bRewardExp = bRewardExp;
+
+  mon->Create(&data);
+  return mon;
+}
+
 

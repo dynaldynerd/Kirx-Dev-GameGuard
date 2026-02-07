@@ -13,6 +13,7 @@ public:
   void SetWriteLogFile(const char *fileName, int addCount, int date, int trace, int init);
   void Write(const char *format, ...);
   void WriteFromArg(const char *format, va_list arg);
+  void WriteFromArg(const wchar_t *format, va_list arg);
   void WriteString(const char *fmt);
 
   char m_szFileName[128];

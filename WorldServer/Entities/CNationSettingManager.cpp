@@ -108,6 +108,16 @@ unsigned __int16 CNationSettingManager::GetCashDBPort()
   return m_pData->m_wCashDBPort;
 }
 
+char *CNationSettingManager::GetWorldDBID()
+{
+  return m_pData->m_szWorldDBID;
+}
+
+char *CNationSettingManager::GetWorldDBPW()
+{
+  return m_pData->m_szWorldDBPW;
+}
+
 char *CNationSettingManager::GetNationCodeStr()
 {
   return m_pData->m_szNationCodeStr;

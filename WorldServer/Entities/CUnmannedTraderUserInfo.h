@@ -5,6 +5,8 @@
 #include "CUnmannedTraderRequestLimiter.h"
 #include <vector>
 
+class CPlayer;
+
 class __cppobj CUnmannedTraderUserInfo
 {
 public:
@@ -20,7 +22,15 @@ public:
   bool Init(unsigned short wInx);
   void Clear();
   void ClearLoadItemInfo();
+  void ClearRequest();
+  CPlayer *FindOwner();
+  unsigned __int16 GetIndex();
   bool IsNull();
+  void SendSearchErrorResult(unsigned __int16 wInx, char byRet);
+  void SendSearchResult(unsigned __int16 wInx, char *pLoadData);
+
+  bool operator==(unsigned int dwSerial);
+  CUnmannedTraderUserInfo &operator=(const CUnmannedTraderUserInfo &rhs);
 
   static CUnmannedTraderUserInfo ms_kNull;
 

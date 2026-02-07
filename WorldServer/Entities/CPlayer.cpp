@@ -5495,3 +5495,15 @@ void CPlayer::SendMsg_PvpRankListVersionUp(char byVersion)
   unsigned __int8 pbyType[2] = {13, 24};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, msg, 1u);
 }
+
+CPlayer *GetPtrPlayerFromSerial(CPlayer *pData, int nNum, unsigned int dwSerial)
+{
+  for (int index = 0; index < nNum; ++index)
+  {
+    if (pData[index].m_bLive && pData[index].m_dwObjSerial == dwSerial)
+    {
+      return &pData[index];
+    }
+  }
+  return nullptr;
+}

@@ -4,11 +4,14 @@
 #include "CRecordData.h"
 #include "PotionItem_fld.h"
 
+class CRFWorldDatabase;
+
 class __cppobj CPotionMgr
 {
 public:
   bool DatafileInit();
   bool SetPotionDataName();
+  bool InsertRenamePotion(CRFWorldDatabase *pkWorldDB, char *pData);
 
   struct __cppobj PotionInnerData
   {

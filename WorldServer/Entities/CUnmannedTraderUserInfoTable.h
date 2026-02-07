@@ -13,6 +13,10 @@ public:
   CUnmannedTraderUserInfoTable();
   bool Init();
   void SetLogger(CLogFile *pkLogger, CLogFile *pkServiceLogger);
+  CUnmannedTraderUserInfo *Find(unsigned int dwSerial);
+  CUnmannedTraderUserInfo *FindByIndex(unsigned __int16 wInx);
+  CUnmannedTraderUserInfo *FindUser(unsigned __int16 wInx, unsigned int dwSerial);
+  void CompleteSearch(unsigned __int8 byDBRet, unsigned __int8 byProcRet, char *pLoadData);
 
   static CUnmannedTraderUserInfoTable *ms_Instance;
 

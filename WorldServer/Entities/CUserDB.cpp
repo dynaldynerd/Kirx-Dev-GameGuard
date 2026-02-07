@@ -499,6 +499,11 @@ _INVENKEY::_INVENKEY(unsigned __int8 byInSlotIndex, unsigned __int8 byInTableCod
   wItemIndex = wInItemIndex;
 }
 
+void _INVENKEY::LoadDBKey(_INVENKEY pl_nKey)
+{
+  *this = pl_nKey;
+}
+
 int _INVENKEY::CovDBKey()
 {
   return *reinterpret_cast<int *>(this);

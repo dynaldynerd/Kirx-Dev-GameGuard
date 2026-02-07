@@ -2,6 +2,8 @@
 
 #include "CWeeklyGuildRankManager.h"
 
+#include "CRFWorldDatabase.h"
+
 #include <ctime>
 
 CWeeklyGuildRankManager *CWeeklyGuildRankManager::Instance()
@@ -84,4 +86,33 @@ void CWeeklyGuildRankManager::SetNextRankDate()
     return;
   }
   m_tNextUpdateTime = static_cast<long long>(next);
+}
+
+bool CWeeklyGuildRankManager::InsertSettlementOwner(CRFWorldDatabase *pkWorldDB, char *pData)
+{
+  bool success = true;
+  for (int j = 0; j < 3; ++j)
+  {
+    for (int k = 0; k < 2; ++k)
+    {
+      const int index = k + 2 * j;
+      if (*reinterpret_cast<unsigned int *>(&pData[56 * index]))
+      {
+        if (!pkWorldDB->Insert_SettlementOwnerLog(
+              static_cast<unsigned __int8>(k),
+              static_cast<unsigned __int8>(pData[56 * index + 21]),
+              *reinterpret_cast<unsigned int *>(&pData[56 * index]),
+              &pData[56 * index + 4],
+              *reinterpret_cast<unsigned short *>(&pData[56 * index + 22]),
+              static_cast<unsigned __int8>(pData[56 * index + 24]),
+              *reinterpret_cast<long double *>(&pData[56 * index + 32]),
+              *reinterpret_cast<long double *>(&pData[56 * index + 40]),
+              *reinterpret_cast<unsigned int *>(&pData[56 * index + 48])))
+        {
+          success = false;
+        }
+      }
+    }
+  }
+  return success;
 }

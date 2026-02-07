@@ -13,6 +13,7 @@ struct _ANI_OBJECT;
 struct _READ_ANI_OBJECT;
 struct _LIGHTMAP;
 struct _animus_fld;
+struct tm;
 
 struct R3Texture
 {
@@ -86,6 +87,8 @@ void ServerProgramExit(const char *source, int reason);
 void IOFileWrite_0(char *pszFileName, unsigned int nLen, char *pszData);
 void IOFileWrite_1(char *pszFileName, unsigned int nLen, char *pszData);
 __time64_t time_20(__int64 *_Time);
+__time64_t time_18(__int64 *_Time);
+__time64_t mktime_3(tm *_Tm);
 CMerchant *FindEmptyNPC(CMerchant *pNPC, int nMax);
 void NetTrace(const char *fmt, ...);
 void StripEXT(char *szPath);

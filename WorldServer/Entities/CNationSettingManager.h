@@ -31,6 +31,8 @@ public:
   char *GetCashDBID();
   char *GetCashDBPW();
   unsigned __int16 GetCashDBPort();
+  char *GetWorldDBID();
+  char *GetWorldDBPW();
   char *GetNationCodeStr();
   void SetCashDBInitState();
 

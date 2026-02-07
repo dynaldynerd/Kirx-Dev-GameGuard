@@ -9,14 +9,25 @@ class __cppobj __declspec(align(8)) CLuaScript
 {
 public:
   CLuaScript();
-  ~CLuaScript() = default;
+  virtual ~CLuaScript() = default;
 
-  const char *GetName();
-  lua_State *GetLuaState();
-  bool RunCommand(CLuaCommand *pCommand);
-  void SetName(const char *name);
+  virtual const char *GetName();
+  virtual lua_State *GetLuaState();
+  virtual bool RunCommand(CLuaCommand *pCommand);
+  virtual void SetName(const char *name);
 
-private:
+  class _State
+  {
+  public:
+    bool m_bExist;
+    bool m_bAttached;
+
+    _State();
+    bool operator==(const _State &rhs) const;
+
+    static _State ms_cEmpty;
+  };
+
   lua_State *m_MyState;
   char m_strName[260];
 };
