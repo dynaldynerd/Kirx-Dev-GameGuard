@@ -6,4 +6,7 @@
 
 class __cppobj CNationSettingFactoryID : public CNationSettingFactory
 {
+public:
+  CNationSettingFactoryID();
+  CNationSettingData *Create(int iNationCode, const char *szNationCodeStr, bool bServiceMode) override;
 };

@@ -2307,4 +2307,60 @@ CMonster *CreateRepMonster(
   return mon;
 }
 
+CMonster *CreateRespawnMonster(
+  CMapData *pMap,
+  unsigned __int16 wLayer,
+  int nMonsterIndex,
+  _mon_active *pActiveRec,
+  _dummy_position *pDumPosition,
+  bool bRobExp,
+  bool bRewardExp,
+  bool bDungeon,
+  bool bWithoutFail,
+  bool bApplyRopExpField)
+{
+  CMonster *mon = SearchEmptyMonster(bWithoutFail);
+  if (!mon)
+  {
+    return nullptr;
+  }
+
+  _monster_create_setdata data;
+  data.m_pMap = pMap;
+  data.m_nLayerIndex = wLayer;
+  data.m_pRecordSet = g_Main.m_tblMonster.GetRecord(nMonsterIndex);
+  if (!data.m_pRecordSet)
+  {
+    return nullptr;
+  }
+
+  if (pActiveRec && pActiveRec->m_pBlk && pActiveRec->m_pBlk->m_bRotate && pDumPosition)
+  {
+    memcpy_0(data.m_fStartPos, pDumPosition->m_fCenterPos, sizeof(data.m_fStartPos));
+  }
+  else if (!pMap->GetRandPosInDummy(pDumPosition, data.m_fStartPos, false))
+  {
+    return nullptr;
+  }
+
+  data.pActiveRec = pActiveRec;
+  data.pDumPosition = pDumPosition;
+  data.bDungeon = bDungeon;
+  if (bApplyRopExpField)
+  {
+    data.bRobExp = *reinterpret_cast<unsigned int *>(&data.m_pRecordSet[4].m_strCode[4]) != 0;
+  }
+  else
+  {
+    data.bRobExp = bRobExp;
+  }
+  data.bRewardExp = bRewardExp;
+
+  if (mon->Create(&data))
+  {
+    return mon;
+  }
+  return nullptr;
+}
+
 

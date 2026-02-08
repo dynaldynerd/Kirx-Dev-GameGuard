@@ -3,14 +3,30 @@
 #include "CNationSettingManager.h"
 
 #include "CNationSettingData.h"
+#include "CNationSettingFactoryGroup.h"
 #include "INationGameGuardSystem.h"
 #include "NameTxt_fld.h"
 
 int CNationSettingManager::Init(int nationCode, const char *nationCodeStr, bool serviceMode)
 {
-  (void)nationCode;
-  (void)nationCodeStr;
-  (void)serviceMode;
+  CNationSettingFactoryGroup factoryGroup;
+  const int initResult = factoryGroup.Init();
+  if (initResult)
+  {
+    return -1;
+  }
+
+  m_pData = factoryGroup.Create(nationCode, nationCodeStr, serviceMode);
+  if (!m_pData)
+  {
+    return -2;
+  }
+
+  if (m_pData->Init())
+  {
+    return -3;
+  }
+
   return 0;
 }
 
@@ -46,12 +62,8 @@ const char *CNationSettingManager::GetItemName(_NameTxt_fld *pFld)
   return m_pData->GetItemName(pFld);
 }
 
-const char *CNationSettingManager::GetNoneString()
+char *CNationSettingManager::GetNoneString()
 {
-  if (m_pData == nullptr)
-  {
-    return "";
-  }
   return m_pData->GetNoneString();
 }
 

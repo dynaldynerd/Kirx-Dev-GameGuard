@@ -121,6 +121,30 @@ int _STORAGE_LIST::GetNumEmptyCon()
   return static_cast<int>(count);
 }
 
+int _STORAGE_LIST::GetIndexFromSerial(unsigned __int16 wSerial)
+{
+  for (int j = 0; j < m_nUsedNum; ++j)
+  {
+    if (m_pStorageList[j].m_bLoad && m_pStorageList[j].m_wSerial == wSerial)
+    {
+      m_pStorageList[j].m_pInList = this;
+      m_pStorageList[j].m_byStorageIndex = static_cast<unsigned __int8>(j);
+      return j;
+    }
+  }
+  return 255;
+}
+
+_STORAGE_LIST::_db_con *_STORAGE_LIST::GetPtrFromSerial(unsigned __int16 wSerial)
+{
+  const int index = GetIndexFromSerial(wSerial);
+  if (index == 255)
+  {
+    return nullptr;
+  }
+  return &m_pStorageList[index];
+}
+
 char _STORAGE_LIST::AlterCurDur(int n, int nAlter, unsigned __int64 *pdwLeftDur)
 {
   if (m_nListCode == 1 && n >= 8)

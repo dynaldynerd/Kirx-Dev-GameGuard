@@ -1773,6 +1773,7 @@ struct __cppobj _LAYER_SET
 
   void CreateLayer(int nSecNum);
   void ActiveLayer(_MULTI_BLOCK *pMB);
+  bool IsActiveLayer();
 };
 
 /* 1514 */
@@ -1794,6 +1795,7 @@ struct _mon_block
 
   bool SetBlock(_mon_block_fld *pBlkRec, CMapData *pMap, _dummy_position **ppPos);
   void SetRotateBlock(bool IsRotateBlock);
+  int SelectDummyIndex();
 };
 
 
@@ -2473,8 +2475,16 @@ struct __cppobj BossSchedule
   unsigned __int16 m_LiveCount;
   BossSchedule_Map *m_pParent;
 
+  BossSchedule();
+  ~BossSchedule();
+  static unsigned __int16 Make_LiveCount(char *strTimeValue);
+  static ATL::CTime *Make_LastTimeRespawnSystemTime(ATL::CTime *result, char *strTimeValue);
   void Save_LiveCount(unsigned __int16 wCount);
+  void Save_LastRespawnSystemTime(ATL::CTime *systime);
   bool Make_LiveCountString(char *strBuff, int nBuffSize);
+  bool Make_LastTimeRespawnSystemTimeString(char *strBuff, int nBuffSize);
+
+  static const char *ms_KeyPair[3];
 };
 
 /* 1602 */
@@ -2743,6 +2753,12 @@ struct __cppobj BossSchedule_Map
   int m_nCount;
   BossSchedule **m_ScheduleList;
   CBossMonsterScheduleSystem *m_pSystem;
+
+  BossSchedule_Map();
+  ~BossSchedule_Map();
+  void Clear();
+  bool SaveAll();
+  bool LoadAll();
 };
 
 /* 1627 */
@@ -2767,6 +2783,10 @@ struct __cppobj INI_Section
 {
   char m_strSection[64];
   std::vector<INI_Key *> m_KeyList;
+
+  INI_Section();
+  ~INI_Section();
+  INI_Key *GetKey(const char *strKey);
 };
 
 /* 1449 */
@@ -2775,6 +2795,8 @@ struct __cppobj __declspec(align(8)) INI_Key
   INI_Section *m_pParentSection;
   char m_strKey[65];
   char m_strValue[65];
+
+  INI_Key();
 };
 
 /* 1464 */
@@ -2791,6 +2813,9 @@ struct __cppobj BossSchedule_TBL
 {
   int m_nCount;
   BossSchedule_Map **m_MapScheduleList;
+
+  BossSchedule_TBL();
+  ~BossSchedule_TBL();
 };
 
 /* 1477 */

@@ -47,6 +47,7 @@ During the implementation of `CMapOperation::Init` and its sub-flows, the follow
 | `CMonster.cpp` | `_LootItem_Std` | `g_Main.m_tblItemLoot.m_tblLoot` | `_base_fld *` | Uses `Record[1].m_strCode[4/8]`, `Record[1].m_dwIndex` for loot weights/counts. |
 | `CMonster.cpp` | `_LootItem_Std` | `CMonster::m_pRecordSet` | `_base_fld *` | Uses `Record[4].m_strCode[8]` as level diff adjust. |
 | `CMonster.cpp` | `CreateRepMonster` | `g_Main.m_tblMonster` | `_monster_fld *` | IDA uses `Record[4].m_strCode[4]`; interpreted as `_monster_fld::m_bExpDown` when applying rob-exp field. |
+| `CMonster.cpp` | `CreateRespawnMonster` | `g_Main.m_tblMonster` | `_base_fld *` | Uses `Record[4].m_strCode[4]` to set `bRobExp` when applying rob-exp field; verify field mapping. |
 | `cStaticMember_Player.cpp` | `cStaticMember_Player::loadLimitExpData` | `g_Main.m_tblExp` | `_base_fld *` | Uses `&Record[1]` as string input to `atof`, implying non-base layout usage. |
 | `CPlayerDB.cpp` | `CPlayerDB::CalcCharGrade` | `g_Main.m_tblGrade` | `_base_fld *` | Uses `Record[1].m_dwIndex` as float and `Record[1].m_strCode[0]`; verify field offsets. |
 | `CPlayer.cpp` | `CPlayer::SetStaticMember` | `g_Main.m_tblItemData[15]` | `_base_fld *` | Uses `&Record[4].m_strCode[28]` as key into `m_tblEffectData[1]`; likely non-base layout. |
@@ -56,3 +57,5 @@ During the implementation of `CMapOperation::Init` and its sub-flows, the follow
 > [!NOTE]
 > Rule 9: `CRecordData::GetRecord` usually returns `_base_fld`. Re-casters should be careful with structure packing and offsets.
 | `WorldServerUtil.cpp` | `InitMasteryFormula` | `pSkillData` / `pForceData` | `_base_fld *` | Uses `Record[1].m_strCode[4]` and `Record[4].m_strCode[60]` to fill mastery-level tables; verify offsets. |
+| `CPlayer.cpp` | `CPlayer::DeleteCouponItem` | `g_Main.m_tblItemData[pItem->m_byTableCode]` | `_base_fld *` | Uses `Record[4].m_strCode[48]` to check coupon deletion; verify field mapping. |
+| `CBossMonsterScheduleSystem.cpp` | `CBossMonsterScheduleSystem::MakeMap` | `g_Main.m_tblMonster` | `_base_fld *` | Uses `Record[4].m_dwIndex` to filter boss schedules; verify field mapping. |

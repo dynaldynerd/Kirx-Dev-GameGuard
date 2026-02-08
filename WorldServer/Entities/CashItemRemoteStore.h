@@ -137,6 +137,11 @@ public:
   static CashItemRemoteStore *Instance();
   bool Initialize();
   static const _CashShop_fld *FindCashRec(unsigned int nTbl, int nIdx);
+  void Check_Grosssales(unsigned int dwTotalSellCash);
+  void Set_LimitedSale_count(unsigned __int8 byTableCode, unsigned int dwIndex);
+  void Set_DB_LimitedSale_Event();
+  char LimitedSale_check_count(unsigned __int8 byTableCode, unsigned int dwIndex);
+  unsigned __int16 BuyLimSale(unsigned __int8 byTableCode, unsigned int dwIndex);
 
   CLogFile _kLoggers[2];
   CRecordData _kRecGoods;

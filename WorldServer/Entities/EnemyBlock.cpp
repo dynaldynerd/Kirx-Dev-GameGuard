@@ -3,6 +3,7 @@
 #include "CMapData.h"
 #include "CObjectList.h"
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <mmsystem.h>
 
@@ -26,6 +27,11 @@ bool _mon_block::SetBlock(_mon_block_fld *pBlkRec, CMapData *pMap, _dummy_positi
 void _mon_block::SetRotateBlock(bool IsRotateBlock)
 {
     this->m_bRotate = IsRotateBlock;
+}
+
+int _mon_block::SelectDummyIndex()
+{
+    return rand() % this->m_pBlkRec->m_dwDummyNum;
 }
 
 bool _mon_active::SetActive(_mon_active_fld *pRec, _mon_block *pBlk, int nMonRecIndex)
@@ -99,4 +105,9 @@ void _LAYER_SET::ActiveLayer(_MULTI_BLOCK *pMB)
         }
     }
     this->m_dwStartActiveTime = timeGetTime();
+}
+
+bool _LAYER_SET::IsActiveLayer()
+{
+    return this->m_pMB != nullptr;
 }

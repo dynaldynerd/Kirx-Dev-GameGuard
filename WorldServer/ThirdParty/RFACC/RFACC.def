@@ -1,0 +1,9 @@
+LIBRARY RFACC
+EXPORTS
+RFACC_Cancel
+RFACC_ChargeBalance
+RFACC_CheckAccountStatus
+RFACC_CheckBalance
+RFACC_CheckItemPrice
+RFACC_Free
+RFACC_Init

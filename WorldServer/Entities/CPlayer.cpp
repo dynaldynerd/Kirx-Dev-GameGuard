@@ -6163,6 +6163,40 @@ void CPlayer::SendMsg_PremiumCashItemUse(unsigned __int16 wSerial)
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
 }
 
+int CPlayer::GetCashAmount()
+{
+  return m_nCashAmount;
+}
+
+void CPlayer::SetCashAmount(int nAmount)
+{
+  m_nCashAmount = nAmount;
+}
+
+void CPlayer::DeleteCouponItem(_STORAGE_POS_INDIV *CouponItem, int n)
+{
+  for (int j = 0; j < n; ++j)
+  {
+    _STORAGE_LIST *storage = m_Param.m_pStoragePtr[CouponItem[j].byStorageCode];
+    _STORAGE_LIST::_db_con *pItem = storage->GetPtrFromSerial(CouponItem[j].wItemSerial);
+    if (pItem)
+    {
+      _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
+      if (record)
+      {
+        if (!*reinterpret_cast<unsigned int *>(&record[4].m_strCode[48]))
+        {
+          Emb_DelStorage(0, pItem->m_byStorageIndex, 0, 1, "CPlayer::DeleteCouponItem");
+          s_MgrItemHistory.consume_del_item(
+            m_ObjID.m_wIndex,
+            pItem,
+            m_szItemHistoryFileName);
+        }
+      }
+    }
+  }
+}
+
 int CPlayer::_CalcMaxHP()
 {
   float masteryPerMast = static_cast<float>(m_pmMst.GetMasteryPerMast(1u, 0));

@@ -3,6 +3,8 @@
 #include "IdaCompat.h"
 #include "D3D8Compat.h"
 #include <cstdio>
+#include <string>
+#include <vector>
 
 class CWnd;
 class CMerchant;
@@ -108,6 +110,7 @@ bool IsInitR3Engine();
 float R3GetTime();
 float R3GetLoopTime();
 struct IDirect3DDevice8 *GetD3dDevice();
+unsigned __int64 SplitString(char *strSrc, const char *_Delim, std::vector<std::string> *stringlist);
 
 float DotProduct(const float *a1, const float *a2);
 float GetSqrt(float *fPos, float *fTar);

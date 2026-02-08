@@ -730,17 +730,7 @@ struct __cppobj _CRYMSG_LIST
 };
 
 /* 1766 */
-struct _STORAGE_POS
-{
-  unsigned __int8 byStorageCode;
-};
-
-/* 1767 */
-struct __cppobj _STORAGE_POS_INDIV : _STORAGE_POS
-{
-  __unaligned __declspec(align(1)) unsigned __int16 wItemSerial;
-  unsigned __int8 byNum;
-};
+#include "StoragePos.h"
 
 /* 1768 */
 struct __cppobj _RENAME_POTION_USE_INFO
@@ -1046,6 +1036,9 @@ public:
   bool IsUsableAccountType(int nCashType);
   bool IsApplyPcbangPrimium();
   void SendMsg_PremiumCashItemUse(unsigned __int16 wSerial);
+  int GetCashAmount();
+  void SetCashAmount(int nAmount);
+  void DeleteCouponItem(_STORAGE_POS_INDIV *CouponItem, int n);
   void DTradeInit();
   void SendMsg_DTradeCancleInform();
   void SendMsg_DTradeCloseInform(char byCloseCode);

@@ -7,7 +7,7 @@ class CPlayer;
 class __cppobj CHEAT_COMMAND
 {
 public:
-  virtual ~CHEAT_COMMAND() = default;
+  bool operator()(const CHEAT_COMMAND *lhs, const CHEAT_COMMAND *rhs);
 
   const char *pwszCommand;
   unsigned int uiCmdLen;

@@ -134,7 +134,6 @@ bool CRFNewDatabase::ConfigUserODBC(
   offset = static_cast<unsigned __int16>(offset + sprintf(&buffer[offset], "SERVER=%s,%u%c", szServer, wPort, 0));
   offset = static_cast<unsigned __int16>(offset + sprintf(&buffer[offset], "DATABASE=%s%c", szDatabase, 0));
 
-#if defined(UNICODE) || defined(_UNICODE)
   wchar_t bufferW[272]{};
   const int attributesLen = static_cast<int>(offset) + 2;
   const int wideLen = MultiByteToWideChar(
@@ -149,9 +148,6 @@ bool CRFNewDatabase::ConfigUserODBC(
     return false;
   }
   return SQLConfigDataSourceW(nullptr, ODBC_ADD_SYS_DSN, L"SQL Server", bufferW) != 0;
-#else
-  return SQLConfigDataSource(nullptr, ODBC_ADD_SYS_DSN, "SQL Server", buffer) != 0;
-#endif
 }
 
 void CRFNewDatabase::DiagRecALog(__int16 sqlRet, SQLSMALLINT HandleType, void *Handle)

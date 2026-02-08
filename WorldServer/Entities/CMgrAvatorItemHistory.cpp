@@ -619,6 +619,134 @@ void CMgrAvatorItemHistory::close(int n, char *pCloseCode, char *pszFileName)
   WriteFile(pszFileName, sData);
 }
 
+void CMgrAvatorItemHistory::read_cashamount(
+  unsigned int dwAC,
+  unsigned int dwAV,
+  int nCash,
+  char *pFileName)
+{
+  sData[0] = 0;
+  sprintf(sData, "[READ_CASH] : AC:%u AV:%u Cash:%u\r\n", dwAC, dwAV, nCash);
+  WriteFile(pFileName, sData);
+}
+
+void CMgrAvatorItemHistory::buy_to_inven_cashitem(
+  unsigned __int8 byTbl,
+  unsigned __int16 wIndex,
+  int nPrice,
+  int nDis,
+  int nNum,
+  int nBuyPrice,
+  int nAmount,
+  char *pFileName,
+  unsigned __int64 lnUID,
+  unsigned __int8 byEventType)
+{
+  (void)nBuyPrice;
+  sData[0] = 0;
+  _base_fld *record = g_Main.m_tblItemData[byTbl].GetRecord(wIndex);
+  __time32_t now[5];
+  _time32(now);
+  struct tm *timeInfo = _localtime32(now);
+  if (record)
+  {
+    (void)GetItemTableCode(record->m_strCode);
+    const unsigned int korTime = GetKorLocalTime();
+    const char *itemKorName = GetItemKorName(byTbl, wIndex);
+    sprintf(
+      sData,
+      "[BUY_CASHITEM] : %s(%s) [UID: %I64u] [Price:%d Discount:%d Num:%d Event: %d] [Remain:%d][T:%u/%d]\r\n",
+      record->m_strCode,
+      itemKorName,
+      lnUID,
+      nPrice,
+      nDis,
+      nNum,
+      byEventType,
+      nAmount,
+      korTime,
+      timeInfo->tm_sec);
+  }
+  else
+  {
+    const unsigned int korTime = GetKorLocalTime();
+    sprintf(sData, "[BUY_CASHITEM] - [Report Server Developer][T:%u]\r\n", korTime);
+  }
+  WriteFile(pFileName, sData);
+}
+
+void CMgrAvatorItemHistory::cash_item_use(int n, _STORAGE_LIST::_db_con *pUseItem, char *pszFileName)
+{
+  (void)n;
+  sData[0] = 0;
+  _base_fld *record = g_Main.m_tblItemData[pUseItem->m_byTableCode].GetRecord(pUseItem->m_wItemIndex);
+  const char *upgInfo = DisplayItemUpgInfo(pUseItem->m_byTableCode, pUseItem->m_dwLv);
+  sprintf(
+    sBuf,
+    "USE CASH ITEM: %s_%u_@%s[%I64u]  [%s %s]\r\n",
+    record->m_strCode,
+    pUseItem->m_dwDur,
+    upgInfo,
+    pUseItem->m_lnUID,
+    m_szCurDate,
+    m_szCurTime);
+  strcat_0(sData, sBuf);
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::cashitem_del_from_inven(
+  unsigned __int8 byTblCode,
+  unsigned __int16 wItemIndex,
+  unsigned __int64 lnUID,
+  char *pFN)
+{
+  sData[0] = 0;
+  _base_fld *record = g_Main.m_tblItemData[byTblCode].GetRecord(wItemIndex);
+  __time32_t now[5];
+  _time32(now);
+  struct tm *timeInfo = _localtime32(now);
+  if (record)
+  {
+    (void)GetItemTableCode(record->m_strCode);
+    const unsigned int korTime = GetKorLocalTime();
+    const char *itemKorName = GetItemKorName(byTblCode, wItemIndex);
+    sprintf(
+      sData,
+      "[DEL_CASHITEM] : %s(%s) [UID:%I64u][T:%u/%d]\r\n",
+      record->m_strCode,
+      itemKorName,
+      lnUID,
+      korTime,
+      timeInfo->tm_sec);
+  }
+  else
+  {
+    const unsigned int korTime = GetKorLocalTime();
+    sprintf(sData, "[DEL_CASHITEM] : Tbl:%d Idx:%d [UID:%I64u][%u]\r\n", byTblCode, wItemIndex, lnUID, korTime);
+  }
+  WriteFile(pFN, sData);
+}
+
+void CMgrAvatorItemHistory::rollback_cashitem(
+  char *szRet,
+  unsigned __int64 lnUID,
+  char *strItemCode,
+  int nCash,
+  char *pFileName)
+{
+  sData[0] = 0;
+  const unsigned int korTime = GetKorLocalTime();
+  sprintf(sData, "[CS_ROLLBACK_%s] UID:%I64u ICODE:%s Cash:%d[T:%u]\r\n", szRet, lnUID, strItemCode, nCash, korTime);
+  WriteFile(pFileName, sData);
+}
+
+void CMgrAvatorItemHistory::used_cash(int nCurCash, int nUseCash, char *pFileName)
+{
+  sData[0] = 0;
+  sprintf(sData, "[CASH_AMOUNT] : [cash:%d] - [used:%d] = [remain:%d]\r\n", nCurCash, nUseCash, nCurCash - nUseCash);
+  WriteFile(pFileName, sData);
+}
+
 CMgrAvatorItemHistory::CMgrAvatorItemHistory()
 {
   m_dwLastLocalDate = 0;

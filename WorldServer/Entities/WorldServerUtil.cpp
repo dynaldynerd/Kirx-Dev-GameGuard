@@ -55,6 +55,15 @@ unsigned int GetLoopTime()
   return timeGetTime();
 }
 
+unsigned __int64 SplitString(char *strSrc, const char *_Delim, std::vector<std::string> *stringlist)
+{
+  for (char *token = strtok(strSrc, _Delim); token; token = strtok(nullptr, _Delim))
+  {
+    stringlist->push_back(std::string(token));
+  }
+  return stringlist->size();
+}
+
 CMerchant *FindEmptyNPC(CMerchant *pNPC, int nMax)
 {
     unsigned int dwTime = timeGetTime();

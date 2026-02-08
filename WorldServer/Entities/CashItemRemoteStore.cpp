@@ -9,8 +9,10 @@
 #include "CNationSettingManager.h"
 #include "CTSingleton.h"
 #include "GlobalObjects.h"
+#include "ICsSendInterface.h"
 #include "TimeItem.h"
 #include "WorldServerUtil.h"
+#include "qry_case_cash_limsale.h"
 
 #include <cstdio>
 #include <cstring>
@@ -83,6 +85,61 @@ const _CashShop_fld *CashItemRemoteStore::FindCashRec(unsigned int nTbl, int nId
     return nullptr;
   }
   return it->second;
+}
+
+void CashItemRemoteStore::Check_Grosssales(unsigned int dwTotalSellCash)
+{
+  __time32_t timeValue[4]{};
+  _time32(timeValue);
+
+  if (m_cde.m_ini.m_cdeTime[0] > timeValue[0] || m_cde.m_ini.m_cdeTime[1] < timeValue[0])
+  {
+    for (int j = 0; j < 3; ++j)
+    {
+      if (m_cash_event[j].m_ini.m_EventTime[0] <= timeValue[0] && m_cash_event[j].m_ini.m_EventTime[1] >= timeValue[0])
+      {
+        return;
+      }
+    }
+
+    if ((m_con_event.m_eventtime.m_EventTime[0] < timeValue[0] || m_con_event.m_eventtime.m_EventTime[1] < timeValue[0])
+        && !m_con_event.m_bConEvent
+        && (timeValue[0] <= m_cde.m_ini.m_cdeTime[1]
+            || static_cast<unsigned int>(timeValue[0] - m_cde.m_ini.m_cdeTime[1]) > 0x1C20))
+    {
+      for (int j = 0; j < 3; ++j)
+      {
+        if (timeValue[0] > m_cash_event[j].m_ini.m_EventTime[1]
+            && static_cast<unsigned int>(timeValue[0] - m_cash_event[j].m_ini.m_EventTime[1]) <= 0x1C20)
+        {
+          return;
+        }
+      }
+
+      if ((timeValue[0] <= m_con_event.m_eventtime.m_EventTime[1]
+           || static_cast<unsigned int>(timeValue[0] - m_con_event.m_eventtime.m_EventTime[1]) > 0x1C20)
+          && dwTotalSellCash < m_con_event.m_ini.m_dwCashMin)
+      {
+        tm *timeInfo = _localtime32(timeValue);
+        ++timeInfo->tm_min;
+        m_con_event.m_eventtime.m_EventTime[0] = _mktime32(timeInfo);
+        m_con_event.m_eventtime.m_nYear[0] = timeInfo->tm_year;
+        m_con_event.m_eventtime.m_nMonth[0] = timeInfo->tm_mon;
+        m_con_event.m_eventtime.m_nDay[0] = timeInfo->tm_mday;
+        m_con_event.m_eventtime.m_nHour[0] = timeInfo->tm_hour;
+        m_con_event.m_eventtime.m_nMinute[0] = timeInfo->tm_min;
+        timeInfo->tm_min += m_con_event.m_ini.m_iEventTime;
+        m_con_event.m_eventtime.m_EventTime[1] = _mktime32(timeInfo);
+        m_con_event.m_eventtime.m_nYear[1] = timeInfo->tm_year;
+        m_con_event.m_eventtime.m_nMonth[1] = timeInfo->tm_mon;
+        m_con_event.m_eventtime.m_nDay[1] = timeInfo->tm_mday;
+        m_con_event.m_eventtime.m_nHour[1] = timeInfo->tm_hour;
+        m_con_event.m_eventtime.m_nMinute[1] = timeInfo->tm_min;
+        m_con_event.m_bConEvent = 1;
+        Set_Conditional_Evnet_Status(1u);
+      }
+    }
+  }
 }
 
 bool CashItemRemoteStore::_InitLoggers()
@@ -1514,6 +1571,74 @@ void CashItemRemoteStore::Set_LimitedSale_Event_Ini(_cash_event_ini *pIni)
       }
     }
   }
+}
+
+void CashItemRemoteStore::Set_LimitedSale_count(unsigned __int8 byTableCode, unsigned int dwIndex)
+{
+  for (int j = 0; j < m_lim_event.m_byEventNum; ++j)
+  {
+    if (m_lim_event.m_EventItemInfo[j].byTableCode == byTableCode
+        && m_lim_event.m_EventItemInfo[j].dwIndex == dwIndex)
+    {
+      --m_lim_event.m_EventItemInfo[j].wCount;
+      return;
+    }
+  }
+}
+
+void CashItemRemoteStore::Set_DB_LimitedSale_Event()
+{
+  memcpy_0(&m_lim_event_New, &m_lim_event, sizeof(m_lim_event_New));
+
+  qry_case_cash_limsale pQryData;
+  pQryData.NewSale.byDck = m_lim_event_New.DCK;
+  pQryData.OldSale.byDck = m_lim_event_Old.DCK;
+  pQryData.NewSale.byLimited_sale_num = m_lim_event_New.m_byEventNum;
+  pQryData.OldSale.byLimited_sale_num = m_lim_event_Old.m_byEventNum;
+
+  for (int j = 0; j < m_lim_event_New.m_byEventNum; ++j)
+  {
+    _INVENKEY newKey(0, m_lim_event_New.m_EventItemInfo[j].byTableCode, m_lim_event_New.m_EventItemInfo[j].dwIndex);
+    pQryData.NewSale.List[j].nLimcode = newKey.CovDBKey();
+    pQryData.NewSale.List[j].nLimcount = m_lim_event_New.m_EventItemInfo[j].wCount;
+
+    _INVENKEY oldKey(0, m_lim_event_Old.m_EventItemInfo[j].byTableCode, m_lim_event_Old.m_EventItemInfo[j].dwIndex);
+    pQryData.OldSale.List[j].nLimcode = oldKey.CovDBKey();
+    pQryData.OldSale.List[j].nLimcount = m_lim_event_Old.m_EventItemInfo[j].wCount;
+  }
+
+  const int nSize = static_cast<int>(pQryData.size());
+  if (g_Main.PushDQSData(0xFFFFFFFFu, nullptr, 0x9Eu, reinterpret_cast<char *>(&pQryData), nSize))
+  {
+    memcpy_0(&m_lim_event_Old, &m_lim_event_New, sizeof(m_lim_event_Old));
+  }
+}
+
+unsigned __int16 CashItemRemoteStore::BuyLimSale(unsigned __int8 byTableCode, unsigned int dwIndex)
+{
+  for (int j = 0; j < m_lim_event.m_byEventNum; ++j)
+  {
+    if (m_lim_event.m_EventItemInfo[j].byTableCode == byTableCode
+        && m_lim_event.m_EventItemInfo[j].dwIndex == dwIndex)
+    {
+      return m_lim_event.m_EventItemInfo[j].wCount;
+    }
+  }
+  return 0;
+}
+
+char CashItemRemoteStore::LimitedSale_check_count(unsigned __int8 byTableCode, unsigned int dwIndex)
+{
+  const unsigned __int16 remainCount = BuyLimSale(byTableCode, dwIndex);
+  for (unsigned int j = 0; j < MAX_PLAYER; ++j)
+  {
+    CPlayer *player = &g_Player[j];
+    if (player->m_bOper && player->m_bLive)
+    {
+      ICsSendInterface::SendMsg_LimitedsaleEventInform(player->m_ObjID.m_wIndex, byTableCode, dwIndex, remainCount);
+    }
+  }
+  return 1;
 }
 
 void CashItemRemoteStore::Check_Loaded_Event_Status(unsigned __int8 byEventType)

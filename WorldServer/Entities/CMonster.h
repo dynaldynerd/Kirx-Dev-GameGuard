@@ -172,6 +172,17 @@ public:
 unsigned __int16 _GetMonsterContTime(unsigned __int8 byEffectCode, unsigned __int8 byLv);
 
 CMonster *SearchEmptyMonster(bool bWithoutFail);
+CMonster *CreateRespawnMonster(
+  CMapData *pMap,
+  unsigned __int16 wLayer,
+  int nMonsterIndex,
+  _mon_active *pActiveRec,
+  _dummy_position *pDumPosition,
+  bool bRobExp,
+  bool bRewardExp,
+  bool bDungeon,
+  bool bWithoutFail,
+  bool bApplyRopExpField);
 CMonster *CreateRepMonster(
   CMapData *pMap,
   unsigned __int16 wLayer,

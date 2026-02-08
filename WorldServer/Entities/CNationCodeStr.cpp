@@ -2,6 +2,8 @@
 
 #include "CNationCodeStr.h"
 
+#include <cstring>
+
 CNationCodeStr::CNationCodeStr(int code, const char *codeStr)
 {
   m_iCode = code;
@@ -22,4 +24,20 @@ CNationCodeStr::CNationCodeStr(int code, const char *codeStr)
 char *CNationCodeStr::GetStr()
 {
   return m_szStr;
+}
+
+bool CNationCodeStr::IsNULL()
+{
+  // this is not a stub
+  return false;
+}
+
+int CNationCodeStr::GetKey()
+{
+  return m_iCode;
+}
+
+bool operator==(const CNationCodeStr &lhs, const CNationCodeStr &rhs)
+{
+  return _stricmp(lhs.m_szStr, rhs.m_szStr) == 0;
 }

@@ -90,6 +90,22 @@ public:
   void post_storage(CPostStorage *pStorage, char *pFileName);
   void return_post_storage(CPostReturnStorage *pReturn, char *pFileName);
   void close(int n, char *pCloseCode, char *pszFileName);
+  void read_cashamount(unsigned int dwAC, unsigned int dwAV, int nCash, char *pFileName);
+  void buy_to_inven_cashitem(
+    unsigned __int8 byTbl,
+    unsigned __int16 wIndex,
+    int nPrice,
+    int nDis,
+    int nNum,
+    int nBuyPrice,
+    int nAmount,
+    char *pFileName,
+    unsigned __int64 lnUID,
+    unsigned __int8 byEventType);
+  void cash_item_use(int n, _STORAGE_LIST::_db_con *pUseItem, char *pszFileName);
+  void cashitem_del_from_inven(unsigned __int8 byTblCode, unsigned __int16 wItemIndex, unsigned __int64 lnUID, char *pFN);
+  void rollback_cashitem(char *szRet, unsigned __int64 lnUID, char *strItemCode, int nCash, char *pFileName);
+  void used_cash(int nCurCash, int nUseCash, char *pFileName);
 
   char m_szStdPath[128];
   unsigned int m_dwLastLocalDate;

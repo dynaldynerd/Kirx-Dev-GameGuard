@@ -20,7 +20,7 @@ public:
   CashDbWorker *CreateWorker();
   int GetCashItemPrice(_CashShop_str_fld *pFld);
   const char *GetItemName(_NameTxt_fld *pFld);
-  const char *GetNoneString();
+  char *GetNoneString();
   int GetNationCode();
   bool IsApplyPcbangPrimium(const CPlayer *pUser);
   bool IsCashDBUseExtRef();

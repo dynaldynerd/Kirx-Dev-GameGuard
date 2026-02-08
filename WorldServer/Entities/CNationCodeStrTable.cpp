@@ -93,7 +93,7 @@ int CNationCodeStrTable::RegistCode()
   return 0;
 }
 
-int CNationCodeStrTable::GetCode(const char *code) const
+int CNationCodeStrTable::GetCode(const char *code)
 {
   int outCode = -1;
   CNationCodeStr lookup(-1, code);
@@ -104,7 +104,7 @@ int CNationCodeStrTable::GetCode(const char *code) const
   return -1;
 }
 
-const char *CNationCodeStrTable::GetStr(int code) const
+const char *CNationCodeStrTable::GetStr(int code)
 {
   CNationCodeStr *entry = nullptr;
   if (m_kTable.get(code, &entry))

@@ -57,6 +57,8 @@ struct __cppobj __unaligned __declspec(align(4)) _STORAGE_LIST
   int GetIndexEmptyCon();
   int GetNumEmptyCon();
   char AlterCurDur(int n, int nAlter, unsigned __int64 *pdwLeftDur);
+  int GetIndexFromSerial(unsigned __int16 wSerial);
+  _db_con *GetPtrFromSerial(unsigned __int16 wSerial);
 };
 
 _STORAGE_LIST::_db_con *MakeLoot(unsigned __int8 byTableCode, unsigned __int16 wItemIndex);
