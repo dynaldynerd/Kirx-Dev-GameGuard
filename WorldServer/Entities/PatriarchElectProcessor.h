@@ -10,6 +10,8 @@ public:
   static PatriarchElectProcessor *Instance();
   bool Initialize();
   unsigned int GetCurrPatriarchElectSerial();
+  char Doit(Cmd eCmd, CPlayer *pOne, char *pdata);
+  void SendMsg_ResultCode(unsigned int n, unsigned __int8 byCode);
 
   unsigned int m_dwNonvoteCnt[3];
   unsigned int m_dwTotalVoteCnt[3];

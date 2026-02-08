@@ -5,7 +5,7 @@
 #include "TEMP_WAIT_TOWER.h"
 
 /* 1742 */
-class __cppobj __declspec(align(8)) CGuardTower : CCharacter
+class __cppobj __declspec(align(8)) CGuardTower : public CCharacter
 {
 public:
   static int s_nLiveNum;

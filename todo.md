@@ -1,8 +1,5 @@
 # Init gaps from CMainThread::Init audit
 
-## CCryptor.cpp
-- CCryptor::Init (stub: ignores key path / useCreate, returns true)
-
 ## CBossMonsterScheduleSystem.cpp
 - CBossMonsterScheduleSystem::Init (stub: ignores mapOper, returns true)
 

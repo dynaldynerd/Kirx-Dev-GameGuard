@@ -23,12 +23,15 @@
 #include "R3EngineGlobals.h"
 #include "CMergeFileManager.h"
 #include "base_fld.h"
+#include "EQUIP_MASTERY_LIM.h"
 #include "CAnimus.h"
 #include "animus_fld.h"
 
 const char *dayofweek[7] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 static char szDefItemName[] = "UNKNOWN";
 static float sR[4] = {200.0f, 200.0f, 200.0f, 200.0f};
+static int s_nSkillLvPerMastery[8] = {};
+static int s_nForceLvPerMastery[24] = {};
 
 static __int64 D3DXCreateTextureFromFileInMemory_0(IDirect3DDevice8 *device, const void *data, unsigned int size, void *outTex);
 static __int64 D3DXCreateTextureFromFileExA_0(IDirect3DDevice8 *device, const char *path, __int64 flags);
@@ -263,6 +266,11 @@ __time64_t time_18(__int64 *_Time)
 __time64_t mktime_3(tm *_Tm)
 {
   return _mktime64(_Tm);
+}
+
+tm *localtime_5(const __int64 *_Time)
+{
+  return _localtime64(_Time);
 }
 
 int GetCurDay()
@@ -580,6 +588,11 @@ unsigned int GetMaxParamFromExp(int nAnimusClass, unsigned __int64 dwExp)
   return (maxFP << 16) | maxHP;
 }
 
+int GetMaxResKind()
+{
+  return static_cast<int>(g_Main.m_tblItemData[18].GetRecordNum());
+}
+
 unsigned __int8 GetItemGrade(int nTableCode, int nItemIndex)
 {
   CRecordData *table = &s_ptblItemData[nTableCode];
@@ -675,6 +688,105 @@ int GetItemEquipLevel(int nTableCode, int nItemIndex)
     default:
       return 1;
   }
+}
+
+int GetItemEquipUpLevel(int nTableCode, int nItemIndex)
+{
+  CRecordData *table = &s_ptblItemData[nTableCode];
+  switch (nTableCode)
+  {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 7:
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      if (!record)
+        return 1;
+      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[12]);
+    }
+    case 6:
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      if (!record)
+        return 1;
+      return *reinterpret_cast<unsigned int *>(&record[8].m_strCode[12]);
+    }
+    case 8:
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      if (!record)
+        return 1;
+      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[8]);
+    }
+    case 9:
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      if (!record)
+        return 1;
+      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[8]);
+    }
+    case 25:
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      if (!record)
+        return 1;
+      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[52]);
+    }
+    case 26:
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      if (!record)
+        return 1;
+      return static_cast<int>(record[5].m_dwIndex);
+    }
+    case 27:
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      if (!record)
+        return 1;
+      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[12]);
+    }
+    case 33:
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      if (!record)
+        return 1;
+      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[56]);
+    }
+    default:
+      return 1;
+  }
+}
+
+_EQUIP_MASTERY_LIM *GetItemEquipMastery(int nTableCode, int nItemIndex, int *pnLimNum)
+{
+  CRecordData *table = &s_ptblItemData[nTableCode];
+  if (nTableCode >= 0)
+  {
+    if (nTableCode <= 5 || nTableCode == 7)
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      if (record)
+      {
+        *pnLimNum = 2;
+        return reinterpret_cast<_EQUIP_MASTERY_LIM *>(&record[4].m_strCode[20]);
+      }
+    }
+    else if (nTableCode == 6)
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      if (record)
+      {
+        *pnLimNum = 2;
+        return reinterpret_cast<_EQUIP_MASTERY_LIM *>(&record[8].m_strCode[20]);
+      }
+    }
+  }
+  return nullptr;
 }
 
 unsigned __int8 GetWeaponClass(int nItemIndex)
@@ -839,6 +951,40 @@ int GetStaffMastery(unsigned int *pdwForceLvCum)
     return 99;
   }
   return mastery;
+}
+
+void InitMasteryFormula(CRecordData *pSkillData, CRecordData *pForceData)
+{
+  memset_0(s_nSkillLvPerMastery, -1, sizeof(s_nSkillLvPerMastery));
+  memset_0(s_nForceLvPerMastery, -1, sizeof(s_nForceLvPerMastery));
+  for (int n = 0; ; ++n)
+  {
+    const int recordNum = pSkillData->GetRecordNum();
+    if (n >= recordNum)
+    {
+      break;
+    }
+    _base_fld *record = pSkillData->GetRecord(n);
+    if (*reinterpret_cast<unsigned int *>(&record[1].m_strCode[4]) < 8u)
+    {
+      s_nSkillLvPerMastery[*reinterpret_cast<int *>(&record[1].m_strCode[4])] =
+        *reinterpret_cast<int *>(&record[4].m_strCode[60]);
+    }
+  }
+  for (int n = 0; ; ++n)
+  {
+    const int recordNum = pForceData->GetRecordNum();
+    if (n >= recordNum)
+    {
+      break;
+    }
+    _base_fld *record = pForceData->GetRecord(n);
+    if (*reinterpret_cast<unsigned int *>(&record[1].m_strCode[4]) < 0x18u)
+    {
+      s_nForceLvPerMastery[*reinterpret_cast<int *>(&record[1].m_strCode[4])] =
+        *reinterpret_cast<int *>(&record[4].m_strCode[60]);
+    }
+  }
 }
 
 int GetItemStdPrice(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind)

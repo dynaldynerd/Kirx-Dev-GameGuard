@@ -32,6 +32,7 @@ public:
   bool SetList(unsigned int maxBufNum, unsigned int infoSize, bool useMultiThread);
   bool PushNode_Back(unsigned int index, char *infoData);
   bool PushNode_Front(unsigned int index, char *infoData);
+  bool FindNode(unsigned int dwIndex, char *pInfoData);
   virtual ~CIndexList() = default;
 };
 

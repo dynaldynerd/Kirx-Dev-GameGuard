@@ -55,6 +55,11 @@ const char *CNationSettingManager::GetNoneString()
   return m_pData->GetNoneString();
 }
 
+int CNationSettingManager::GetNationCode()
+{
+  return m_pData->m_iNationCode;
+}
+
 bool CNationSettingManager::IsApplyPcbangPrimium(const CPlayer *pUser)
 {
   if (!m_pData)

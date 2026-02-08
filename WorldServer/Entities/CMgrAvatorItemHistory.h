@@ -7,6 +7,11 @@
 #include "CNetIndexList.h"
 #include "StorageList.h"
 
+class CPostStorage;
+class CPostReturnStorage;
+class CUnmannedTraderRegistItemInfo;
+struct _AVATOR_DATA;
+
 class __cppobj CMgrAvatorItemHistory
 {
 public:
@@ -68,6 +73,23 @@ public:
     float fVal,
     char *szFileName,
     int nWpType);
+  void have_auto_item(int n, const CUnmannedTraderRegistItemInfo *pkInfo, unsigned __int8 byMaxCnt);
+  void have_item_close(
+    int n,
+    char *pszName,
+    _AVATOR_DATA *pLoadData,
+    _AVATOR_DATA *pBackupData,
+    char *pszID,
+    unsigned int dwIDSerial,
+    unsigned __int8 byDgr,
+    unsigned int dwIP,
+    unsigned int dwExpRate,
+    const CUnmannedTraderRegistItemInfo *pkInfo,
+    unsigned __int8 byMaxCnt,
+    char *pszFileName);
+  void post_storage(CPostStorage *pStorage, char *pFileName);
+  void return_post_storage(CPostReturnStorage *pReturn, char *pFileName);
+  void close(int n, char *pCloseCode, char *pszFileName);
 
   char m_szStdPath[128];
   unsigned int m_dwLastLocalDate;

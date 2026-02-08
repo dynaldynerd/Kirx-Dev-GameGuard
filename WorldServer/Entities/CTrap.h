@@ -4,7 +4,7 @@
 #include "CCharacter.h"
 
 /* 1746 */
-class __cppobj CTrap : CCharacter
+class __cppobj CTrap : public CCharacter
 {
 public:
   int m_nHP;

@@ -10,12 +10,17 @@ struct EventItemInfo
   unsigned int dwIndex;
 };
 
+class CPlayer;
+
 class __cppobj CExchangeEvent : public RFEventBase
 {
 public:
   CExchangeEvent();
   static CExchangeEvent *Instance();
   bool Initialzie();
+  bool IsEnable();
+  bool IsDelete();
+  void DeleteExchangeEventItem(CPlayer *pOne);
 
 private:
   void ReadBuddhaEventInfo();

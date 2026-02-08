@@ -5,6 +5,8 @@
 #include "CMoveMapLimitInfoList.h"
 #include "CMoveMapLimitRightInfoList.h"
 
+class CPlayer;
+
 class __cppobj CMoveMapLimitManager
 {
 public:
@@ -18,6 +20,7 @@ public:
     int iUserInx,
     char *pRequest);
   bool RequestElanMapUserForceMoveHQ();
+  void LogOut(CPlayer *pkPlayer);
 
   CMoveMapLimitRightInfoList m_kRightInfo;
   CMoveMapLimitInfoList m_kLimitInfo;

@@ -6,6 +6,7 @@
 #include <vector>
 
 class CPlayer;
+class CLogFile;
 
 class __cppobj CUnmannedTraderUserInfo
 {
@@ -25,9 +26,14 @@ public:
   void ClearRequest();
   CPlayer *FindOwner();
   unsigned __int16 GetIndex();
+  bool IsLogInState();
+  unsigned int GetSerial();
+  unsigned __int8 GetMaxRegistCnt();
+  const CUnmannedTraderRegistItemInfo *GetRegItemInfo();
   bool IsNull();
   void SendSearchErrorResult(unsigned __int16 wInx, char byRet);
   void SendSearchResult(unsigned __int16 wInx, char *pLoadData);
+  void LogOut(unsigned int dwSerial, CLogFile *pkLogger);
 
   bool operator==(unsigned int dwSerial);
   CUnmannedTraderUserInfo &operator=(const CUnmannedTraderUserInfo &rhs);

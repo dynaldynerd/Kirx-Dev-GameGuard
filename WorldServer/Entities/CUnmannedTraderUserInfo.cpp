@@ -3,6 +3,7 @@
 #include "CUnmannedTraderUserInfo.h"
 #include "CNetworkEX.h"
 #include "CPlayer.h"
+#include "CLogFile.h"
 #include "GlobalObjects.h"
 #include "InvenKey.h"
 #include "WorldServerUtil.h"
@@ -106,6 +107,31 @@ unsigned __int16 CUnmannedTraderUserInfo::GetIndex()
   return this->m_wInx;
 }
 
+bool CUnmannedTraderUserInfo::IsLogInState()
+{
+  return this->m_eState == LOG_IN_STATE::UTUI_LOGIN;
+}
+
+unsigned int CUnmannedTraderUserInfo::GetSerial()
+{
+  return this->m_dwUserSerial;
+}
+
+unsigned __int8 CUnmannedTraderUserInfo::GetMaxRegistCnt()
+{
+  return this->m_byMaxRegistCnt;
+}
+
+const CUnmannedTraderRegistItemInfo *CUnmannedTraderUserInfo::GetRegItemInfo()
+{
+  if (IsNull() || this->m_vecRegistItemInfo.empty())
+  {
+    return nullptr;
+  }
+
+  return &this->m_vecRegistItemInfo[0];
+}
+
 void CUnmannedTraderUserInfo::SendSearchErrorResult(unsigned __int16 wInx, char byRet)
 {
   char msg[532];
@@ -115,6 +141,20 @@ void CUnmannedTraderUserInfo::SendSearchErrorResult(unsigned __int16 wInx, char 
   pbyType[0] = 30;
   pbyType[1] = 33;
   g_Network.m_pProcess[0]->LoadSendMsg(wInx, pbyType, msg, 0x1F3u);
+}
+
+void CUnmannedTraderUserInfo::LogOut(unsigned int dwSerial, CLogFile *pkLogger)
+{
+  if (this->m_dwUserSerial != dwSerial && pkLogger)
+  {
+    pkLogger->Write(
+      "CUnmannedTraderUserInfo::LogOut( DWORD dwSerial )\r\n\t\tm_wInx(%u) m_dwSerial(%u) != dwSerial(%u)\r\n",
+      this->m_wInx,
+      this->m_dwUserSerial,
+      dwSerial);
+  }
+  Clear();
+  this->m_eState = LOG_IN_STATE::UTUI_EMPTY;
 }
 
 void CUnmannedTraderUserInfo::SendSearchResult(unsigned __int16 wInx, char *pLoadData)

@@ -40,6 +40,7 @@ struct __cppobj __declspec(align(4)) _QUEST_CASH
   unsigned __int8 byCristalBattleDBInfo;
   unsigned __int8 byHSKTime;
 
+  bool isload();
   void init()
   {
     dwAvatorSerial = static_cast<unsigned int>(-1);
@@ -51,6 +52,7 @@ struct __cppobj __declspec(align(4)) _QUEST_CASH_OTHER
   unsigned int dwAvatorSerial;
   unsigned __int8 byStoneMapMoveInfo;
 
+  bool isLoaded();
   void init()
   {
     dwAvatorSerial = 0;
@@ -73,6 +75,7 @@ public:
   unsigned int GetDestroyerSerial();
   int GetHolyMasterRace();
   int GetSceneCode();
+  bool IsControlScene();
   bool IsMinigeTicketCheck();
   int GetDestroyStoneRace();
   unsigned int GetStartBattleTickTime();
@@ -103,6 +106,15 @@ public:
   void GiveHSKQuest();
   void SendHolyStoneHPToRaceBoss();
   void SendNotifyHolyStoneDestroyedToRaceBoss();
+  void PushStoreQuestCash(
+    unsigned int dwAvatorSerial,
+    unsigned __int8 byQuestType,
+    int nPvpPoint,
+    unsigned __int16 wKillPoint,
+    unsigned __int16 wDiePoint,
+    unsigned __int8 byCristalBattleDBInfo,
+    unsigned __int8 byHSKTime);
+  void PushQuestCash_Other(unsigned int dwAvatorSerial, unsigned __int8 byStoneMapMoveInfo);
   void PeneltyFailRace(unsigned __int8 byFailRace);
   void On_HS_SCENE_BATTLE_TIME();
   void On_HS_SCENE_BATTLE_END_WAIT_TIME();

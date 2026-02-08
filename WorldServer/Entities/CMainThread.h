@@ -586,7 +586,9 @@ struct __cppobj TimeLimitMgr
   void SetTLEnable(unsigned __int16 wState);
   long double GetPlayerPenalty(unsigned __int16 wIndex);
   unsigned __int8 GetPlayerStatus(unsigned __int16 wIndex);
+  void Pop_Data(unsigned int dwAccountSerial, unsigned __int16 wIndex);
 
+  static unsigned int m_dwCnt;
   CMyTimer m_tmLoopTime;
   Player_TL_Status m_lstTLStaus[2532];
   unsigned __int16 m_wEnable;
@@ -812,6 +814,7 @@ struct _FORCEKEY
   void SetKey(unsigned __int8 byItemIndex, unsigned int dwStat);
   void SetStat(unsigned int pl_dwStat);
   unsigned __int8 GetIndex();
+  unsigned int GetStat();
 };
 
 /* 1550 */
@@ -1158,6 +1161,10 @@ struct __cppobj _POTION_NEXT_USE_TIME_DB_BASE
 struct _PCBANG_FAVOR_ITEM_DB_BASE
 {
   unsigned __int64 lnUID[50];
+
+  void Init();
+  char InsertItem(_STORAGE_LIST::_db_con *Item);
+  char IsDeleteItem(_STORAGE_LIST::_db_con *Item);
 };
 
 /* 1591 */
@@ -1517,12 +1524,18 @@ struct __cppobj __declspec(align(8)) _dh_player_mgr
     CMapData *pMap;
     unsigned __int16 wLayer;
     float fPos[3];
+
+    void init();
   };
 
   CPlayer *pOne;
   unsigned int dwSerial;
   _pos LastPos;
   int nEnterOrder;
+
+  _dh_player_mgr();
+  void Init();
+  bool IsFill();
 };
 
 /* 1598 */

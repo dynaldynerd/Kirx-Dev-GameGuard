@@ -3,6 +3,7 @@
 #include "CExchangeEvent.h"
 
 #include "CRecordData.h"
+#include "CPlayer.h"
 #include "WorldServerUtil.h"
 #include "base_fld.h"
 
@@ -64,6 +65,51 @@ bool CExchangeEvent::Initialzie()
 
   m_tmDataFileCheckTime.BeginTimer(0x2710u);
   return true;
+}
+
+bool CExchangeEvent::IsEnable()
+{
+  return m_bEnable;
+}
+
+bool CExchangeEvent::IsDelete()
+{
+  return m_bDelete;
+}
+
+void CExchangeEvent::DeleteExchangeEventItem(CPlayer *pOne)
+{
+  if (pOne && pOne->m_bLive)
+  {
+    for (int index = 0; ; ++index)
+    {
+      const unsigned __int8 bagNum = pOne->m_Param.GetBagNum();
+      if (index >= 20 * bagNum)
+      {
+        break;
+      }
+
+      _STORAGE_LIST::_db_con *item = &pOne->m_Param.m_dbInven.m_pStorageList[index];
+      if (item
+          && item->m_bLoad
+          && ((item->m_byTableCode == m_EventItemInfo[0].byTableCode
+               && item->m_wItemIndex == m_EventItemInfo[0].dwIndex)
+              || (item->m_byTableCode == m_EventItemInfo[1].byTableCode
+                  && item->m_wItemIndex == m_EventItemInfo[1].dwIndex)
+              || (item->m_byTableCode == m_EventItemInfo[2].byTableCode
+                  && item->m_wItemIndex == m_EventItemInfo[2].dwIndex)
+              || (item->m_byTableCode == m_EventItemInfo[3].byTableCode
+                  && item->m_wItemIndex == m_EventItemInfo[3].dwIndex)))
+      {
+        if (!pOne->Emb_DelStorage(0, item->m_byStorageIndex, false, true, nullptr))
+        {
+          return;
+        }
+        pOne->SendMsg_DeleteStorageInform(0, item->m_wSerial);
+        pOne->SendMsg_BuddhaEventMsg(2);
+      }
+    }
+  }
 }
 
 void CExchangeEvent::ReadBuddhaEventInfo()

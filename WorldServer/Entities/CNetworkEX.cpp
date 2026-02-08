@@ -13,8 +13,6 @@
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
-CNetworkEX g_Network{};
-
 CNetWorking::CNetWorking()
 {
   WSAData wsaData{};
@@ -336,7 +334,7 @@ void CNetworkEX::AcceptClientCheck(unsigned int dwProID, unsigned int dwIndex, u
       else
       {
         _socket *socket = GetSocket(0, dwIndex);
-        user->SetWorldCLID(dwSerial, &socket->m_Addr.sin_addr.S_un.S_addr);
+        user->SetWorldCLID(dwSerial, reinterpret_cast<unsigned int *>(&socket->m_Addr.sin_addr.S_un.S_addr));
       }
     }
     ++CUserDB::s_nLoginNum;

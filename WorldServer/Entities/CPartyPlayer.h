@@ -29,5 +29,6 @@ public:
   unsigned int GetPopPartyMember();
   bool DisjointParty();
   bool RemovePartyMember(CPartyPlayer *pExiter, CPartyPlayer **ppoutNewBoss);
+  void ExitWorld(CPartyPlayer **ppoutNewBoss);
 };
 

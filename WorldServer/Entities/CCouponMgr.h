@@ -5,6 +5,10 @@
 /* 1797 */
 class __cppobj CCouponMgr
 {
+public:
+  void LogOut(bool bForceClose);
+
+private:
   CouponInfo m_Coupon[5];
   unsigned __int8 m_byRemainTime;
   unsigned __int8 m_byReceiveCoupon;

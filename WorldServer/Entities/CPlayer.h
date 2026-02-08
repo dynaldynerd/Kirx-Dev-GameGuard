@@ -218,9 +218,16 @@ struct __cppobj _UNIT_DB_BASE
     int nPullingFee;
     unsigned int dwCutTime;
     unsigned __int16 wBooster;
+
+    _LIST();
+    void Init(unsigned __int8 byIndex);
+    void DelUnit();
   };
 
   _LIST m_List[4];
+
+  _UNIT_DB_BASE();
+  void Init();
 };
 
 /* 1562 */
@@ -232,6 +239,9 @@ struct __cppobj _QUEST_DB_BASE
     unsigned __int16 wIndex;
     unsigned __int16 wNum[3];
     unsigned int dwPassSec;
+
+    _LIST();
+    void Init();
   };
 
   struct __cppobj __unaligned __declspec(align(1)) _NPC_QUEST_HISTORY
@@ -240,6 +250,9 @@ struct __cppobj _QUEST_DB_BASE
     int nEventNo;
     unsigned __int8 byLevel;
     unsigned int dwEventEndTime;
+
+    _NPC_QUEST_HISTORY();
+    void Init();
   };
 
   struct __cppobj __unaligned __declspec(align(1)) _START_NPC_QUEST_HISTORY
@@ -248,12 +261,18 @@ struct __cppobj _QUEST_DB_BASE
     unsigned __int8 byLevel;
     _SYSTEMTIME tmStartTime;
     __int64 nEndTime;
+
+    _START_NPC_QUEST_HISTORY();
+    void Init();
   };
 
   _LIST m_List[30];
   _NPC_QUEST_HISTORY m_History[70];
   unsigned int dwListCnt;
   _START_NPC_QUEST_HISTORY *m_StartHistory;
+
+  _QUEST_DB_BASE();
+  void Init();
 };
 
 /* 1566 */
@@ -292,6 +311,11 @@ struct _COMBINEKEY
   unsigned __int8 byRewardIndex;
   unsigned __int8 byTableCode;
   unsigned __int16 wItemIndex;
+
+  void SetRelease();
+  bool IsFilled();
+  void LoadDBKey(_COMBINEKEY pl_nKey);
+  __int64 CovDBKey();
 };
 
 /* 1575 */
@@ -302,6 +326,9 @@ struct __cppobj _ITEMCOMBINE_DB_BASE
     _COMBINEKEY Key;
     unsigned int dwDur;
     unsigned int dwUpt;
+
+    _LIST();
+    void Init();
   };
 
   bool m_bIsResult;
@@ -313,6 +340,10 @@ struct __cppobj _ITEMCOMBINE_DB_BASE
   _LIST m_List[24];
   unsigned int m_dwResultEffectType;
   unsigned int m_dwResultEffectMsgCode;
+
+  _ITEMCOMBINE_DB_BASE();
+  void Init();
+  bool IsCombineData();
 };
 
 /* 1215 */
@@ -335,6 +366,9 @@ struct __cppobj _quick_link
 {
   unsigned __int8 byLinkIndex;
   unsigned __int16 wSerial;
+
+  _quick_link();
+  void init();
 };
 
 /* 1730 */
@@ -477,6 +511,9 @@ struct __cppobj __declspec(align(8)) _MASTERY_PARAM
   static CRecordData *s_pForceData;
   static void SetStaticMember(CRecordData *effectTable, CRecordData *forceTable);
   unsigned __int8 GetMasteryPerMast(unsigned __int8 byCode, unsigned __int8 byMast);
+  unsigned int GetCumPerMast(unsigned __int8 byCode, unsigned __int8 byMast);
+  unsigned __int8 GetSkillLv(unsigned __int8 bySkillIndex);
+  unsigned __int8 GetEquipMastery(int nEquipMasteryCode);
   void UpdateCumPerMast(unsigned __int8 byClass, unsigned __int8 byIndex, unsigned int dwNewCum);
   float GetAveForceMasteryPerClass(unsigned __int8 byClass);
   float GetAveSkillMasteryPerClass(unsigned __int8 byClass);
@@ -974,6 +1011,7 @@ public:
   void SendMsg_MapOut(unsigned __int8 byMapOutCode, unsigned __int8 byNextMapCode);
   void SendMsg_MineCancle();
   void SendMsg_DeleteStorageInform(char byStorageCode, unsigned __int16 wSerial);
+  void SendMsg_BuddhaEventMsg(char byErrorCode);
   void SendMsg_AlterItemDurInform(char byStorageCode, unsigned __int16 wItemSerial, unsigned __int64 dwDur);
   void SendMsg_EquipPartChange(unsigned __int8 byPart);
   unsigned __int16 GetVisualVer();
@@ -981,6 +1019,10 @@ public:
   unsigned __int8 GetEffectEquipCode(unsigned __int8 byStorageCode, unsigned __int8 bySlotIndex);
   void SetEffectEquipCode(unsigned __int8 byStorageCode, unsigned __int8 bySlotIndex, unsigned __int8 byCode);
   void SetEquipEffect(_STORAGE_LIST::_db_con *pItem, bool bEquip);
+  char ApplyEquipItemEffect(int iItemEffectCode, bool bEquip);
+  char IsEffectableEquip(_STORAGE_LIST::_storage_con *pCon);
+  unsigned int _check_equipmastery_lim(int EquipMasteryCode);
+  __int64 _check_mastery_lim(unsigned __int8 byMasteryClass, unsigned __int8 byIndex);
   void apply_normal_item_std_effect(int nEffCode, float fVal, bool bEquip);
   void apply_case_equip_std_effect(_STORAGE_LIST::_db_con *pItem, bool bEquip);
   void apply_case_equip_upgrade_effect(_STORAGE_LIST::_db_con *pItem, bool bEquip);
@@ -1037,7 +1079,10 @@ public:
   CMapData *GetBindMap(float *pfPos, bool bIgnoreMapClass);
   CMapData *GetBindMapData();
   _dummy_position *GetBindDummy();
+  void SetBindMapData(CMapData *pMapData);
+  void SetBindDummy(_dummy_position *pDummy);
   bool SetBindPosition(CMapData *pMap, _dummy_position *pDummy);
+  void ClearGravityStone();
   void pc_SetInGuildBattle(bool bInGuildBattle, unsigned __int8 byColorInx);
   char pc_GiveItem(_STORAGE_LIST::_db_con *kItem, char *szReason, bool bDrop);
   int GetFP();
@@ -1103,6 +1148,7 @@ public:
     unsigned __int8 byEffAddDefence);
   void pc_PartyLeaveSelfReqeuest();
   void SendMsg_PartyLeaveSelfResult(CPartyPlayer *pLeaver, bool bWorldExit);
+  void SendMsg_PartySuccessResult(CPartyPlayer *pSuccessor);
   void ForcePullUnit(bool bLogout);
   void _UpdateUnitDebt(unsigned __int8 bySlotIndex, unsigned int dwPull);
   bool _LockUnitKey(unsigned __int8 bySlotIndex, bool bLock);
@@ -1312,6 +1358,7 @@ public:
 bool LoadMasteryLimFile(char *pszErrMsg);
 bool DTradeEqualPerson(CPlayer *lp_pOne, CPlayer **lpp_pDst);
 void wa_PartySelfLeave(_CLID *pidLeaver);
+void wa_ExitWorld(_CLID *pidWorld);
 CPlayer *GetPtrPlayerFromSerial(CPlayer *pData, int nNum, unsigned int dwSerial);
 
 #pragma pack(pop)

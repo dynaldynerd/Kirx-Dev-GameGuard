@@ -47,6 +47,26 @@ bool CUnmannedTraderController::Init()
   return taxRateManager->Init(this->m_pkLogger) && this->m_kLazyCleaner.Init();
 }
 
+unsigned __int8 CUnmannedTraderController::GetMaxRegistCnt(unsigned __int16 wInx, unsigned int dwSerial)
+{
+  CUnmannedTraderUserInfoTable *userInfoTable = CUnmannedTraderUserInfoTable::Instance();
+  return userInfoTable->GetMaxRegistCnt(wInx, dwSerial);
+}
+
+const CUnmannedTraderRegistItemInfo *CUnmannedTraderController::GetRegItemInfo(
+  unsigned __int16 wInx,
+  unsigned int dwSerial)
+{
+  CUnmannedTraderUserInfoTable *userInfoTable = CUnmannedTraderUserInfoTable::Instance();
+  return userInfoTable->GetRegItemInfo(wInx, dwSerial);
+}
+
+void CUnmannedTraderController::LogOut(unsigned __int16 wInx, unsigned int dwSerial)
+{
+  CUnmannedTraderUserInfoTable *userInfoTable = CUnmannedTraderUserInfoTable::Instance();
+  userInfoTable->LogOut(wInx, dwSerial);
+}
+
 bool CUnmannedTraderController::InitLogger()
 {
   CreateDirectoryA("..\\ZoneServerLog\\Systemlog\\UnmannedTrader", nullptr);

@@ -75,3 +75,27 @@ void CGuildRoomInfo::SetRoomMapInfo(
   m_pRoomStartDummy = pMap->m_pPortal->m_pDumPos;
   m_pLayerSet = &pMap->m_ls[m_wRoomMapLayer];
 }
+
+bool CGuildRoomInfo::IsRent()
+{
+  return m_bRent;
+}
+
+unsigned int CGuildRoomInfo::GetGuildSerial()
+{
+  return m_dwGuildSerial;
+}
+
+int CGuildRoomInfo::RoomOut(int n, unsigned int dwCharSerial)
+{
+  for (size_t index = 0; index < m_vecRoomMember.size(); ++index)
+  {
+    RoomCharInfo &member = m_vecRoomMember[index];
+    if (member.bIn && member.iCharIdx == n && member.dwCharSerial == dwCharSerial)
+    {
+      member.bIn = false;
+      return 0;
+    }
+  }
+  return 1;
+}

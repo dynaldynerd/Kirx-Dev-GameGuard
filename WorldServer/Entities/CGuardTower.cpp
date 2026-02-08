@@ -4,6 +4,8 @@
 
 #include "WorldServerUtil.h"
 
+#include <mmsystem.h>
+
 int CGuardTower::s_nLiveNum = 0;
 unsigned int CGuardTower::s_dwSerialCnt = 0;
 __TEMP_WAIT_TOWER CGuardTower::s_Temp[MAX_PLAYER]{};
@@ -42,7 +44,7 @@ bool CGuardTower::Destroy(unsigned __int8 byDesType, bool bSystemBack)
     m_pMasterTwr = nullptr;
     m_dwObjSerial = static_cast<unsigned int>(-1);
     --CGuardTower::s_nLiveNum;
-    return CCharacter::Destroy(this);
+    return CCharacter::Destroy();
   }
 
   m_nHP = *reinterpret_cast<int *>(&m_pRecordSet[6].m_strCode[40]);

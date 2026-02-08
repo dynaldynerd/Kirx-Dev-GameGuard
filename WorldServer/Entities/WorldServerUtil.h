@@ -6,6 +6,7 @@
 
 class CWnd;
 class CMerchant;
+class CRecordData;
 struct _FILETIME;
 struct CMergeFileManager;
 struct _R3MATERIAL;
@@ -13,6 +14,7 @@ struct _ANI_OBJECT;
 struct _READ_ANI_OBJECT;
 struct _LIGHTMAP;
 struct _animus_fld;
+struct _EQUIP_MASTERY_LIM;
 struct tm;
 
 struct R3Texture
@@ -67,17 +69,21 @@ int IsItemSerialNum(int nTableCode);
 int IsStorageRange(unsigned __int8 byStorageCode, unsigned __int8 byStorageIndex);
 unsigned __int8 GetItemGrade(int nTableCode, int nItemIndex);
 int GetItemEquipLevel(int nTableCode, int nItemIndex);
+int GetItemEquipUpLevel(int nTableCode, int nItemIndex);
+_EQUIP_MASTERY_LIM *GetItemEquipMastery(int nTableCode, int nItemIndex, int *pnLimNum);
 unsigned __int8 GetItemUpgedLv(unsigned int dwLvBit);
 unsigned __int8 GetDefItemUpgSocketNum(int nTableCode, int nItemIndex);
 unsigned __int8 GetTalikFromSocket(unsigned int dwLvBit, unsigned __int8 bySocketIndex);
 unsigned int GetBitAfterSetLimSocket(unsigned __int8 byLimSocketNum);
 _animus_fld *GetAnimusFldFromExp(int nAnimusClass, unsigned __int64 dwExp);
 unsigned int GetMaxParamFromExp(int nAnimusClass, unsigned __int64 dwExp);
+int GetMaxResKind();
 unsigned __int8 GetWeaponClass(int nItemIndex);
 int CalcRoundUp(float fVal);
 int CalcMastery(int nMasteryCode, int nMasteryIndex, int dwMasteryCum, unsigned int nRaceCode);
 int GetSFLevel(int nLv, unsigned int dwHitCount);
 int GetStaffMastery(unsigned int *pdwForceLvCum);
+void InitMasteryFormula(CRecordData *pSkillData, CRecordData *pForceData);
 int ParsingCommandA(char *pszSrc, int nMaxWordNum, char **ppszDst, int nMaxWordSize);
 void WriteServerStartHistory(const char *format, ...);
 void clear_file(const char *directory, int keepCount);
@@ -90,6 +96,7 @@ void __trace(const char *fmt, ...);
 __time64_t time_20(__int64 *_Time);
 __time64_t time_18(__int64 *_Time);
 __time64_t mktime_3(tm *_Tm);
+tm *localtime_5(const __int64 *_Time);
 CMerchant *FindEmptyNPC(CMerchant *pNPC, int nMax);
 void NetTrace(const char *fmt, ...);
 void StripEXT(char *szPath);

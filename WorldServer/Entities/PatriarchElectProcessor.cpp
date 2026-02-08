@@ -9,6 +9,8 @@
 #include "FinalDecisionApplyer.h"
 #include "ClassOrderProcessor.h"
 #include "WorldServerUtil.h"
+#include "GlobalObjects.h"
+#include "pt_result_code_zocl.h"
 
 #include <cstdio>
 #include <cstring>
@@ -118,4 +120,76 @@ bool PatriarchElectProcessor::Initialize()
 unsigned int PatriarchElectProcessor::GetCurrPatriarchElectSerial()
 {
   return _dwCurrPatriarchElectSerial;
+}
+
+char PatriarchElectProcessor::Doit(Cmd eCmd, CPlayer *pOne, char *pdata)
+{
+  if (eCmd == _eReqDischarge || eCmd == _eReqPatriarchInform)
+  {
+    ClassOrderProcessor *orderProcessor = ClassOrderProcessor::Instance();
+    const int result = static_cast<int>(orderProcessor->Doit(eCmd, pOne, pdata));
+    if (!result)
+    {
+      return 1;
+    }
+    if (pOne)
+    {
+      SendMsg_ResultCode(pOne->m_id.wIndex, static_cast<unsigned __int8>(result));
+    }
+    return 1;
+  }
+
+  int result = 0;
+  if (!this->_kRunningProcessor
+      || (result = static_cast<int>(this->_kRunningProcessor->Doit(eCmd, pOne, pdata)), result == 255))
+  {
+    if (!pOne || !pOne->m_bOper)
+    {
+      return 1;
+    }
+
+    if (eCmd < _eRequestCandidateList)
+    {
+      result = 2;
+    }
+    else if (eCmd <= _eRegCandidate)
+    {
+      result = 2;
+    }
+    else if (eCmd == _eVote)
+    {
+      result = 9;
+    }
+    else if (eCmd <= _eReqNetFinalDecision || eCmd > _eReqPatriarchInform)
+    {
+      result = 2;
+    }
+    else
+    {
+      result = 21;
+    }
+
+    SendMsg_ResultCode(pOne->m_id.wIndex, static_cast<unsigned __int8>(result));
+    return 1;
+  }
+
+  if (!result)
+  {
+    return 1;
+  }
+  if (pOne)
+  {
+    SendMsg_ResultCode(pOne->m_id.wIndex, static_cast<unsigned __int8>(result));
+  }
+  return 1;
+}
+
+void PatriarchElectProcessor::SendMsg_ResultCode(unsigned int n, unsigned __int8 byCode)
+{
+  _pt_result_code_zocl msg{};
+  msg.byRetCode = byCode;
+
+  unsigned __int8 type[2]{56, static_cast<unsigned __int8>(-1)};
+  const unsigned __int16 len = static_cast<unsigned __int16>(msg.size());
+  g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), len);
 }

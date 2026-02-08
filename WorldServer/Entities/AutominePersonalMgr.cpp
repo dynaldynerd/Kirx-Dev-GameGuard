@@ -82,3 +82,12 @@ bool AutominePersonalMgr::init_objects()
 
   return true;
 }
+
+AutominePersonal *AutominePersonalMgr::get_machine(unsigned int nIdx)
+{
+  if (nIdx >= MAX_PLAYER)
+  {
+    return nullptr;
+  }
+  return &m_pMachine[nIdx];
+}

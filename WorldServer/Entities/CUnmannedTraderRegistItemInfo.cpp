@@ -44,3 +44,65 @@ void CUnmannedTraderRegistItemInfo::Clear()
   this->m_dwD = static_cast<unsigned long long>(-1);
   this->m_dwU = 0x7FFFFFF;
 }
+
+bool CUnmannedTraderRegistItemInfo::IsRegist()
+{
+  const unsigned int state = m_kState.GetState();
+  return state == static_cast<unsigned int>(CUnmannedTraderItemState::STATE::WATEREL)
+      || state == static_cast<unsigned int>(CUnmannedTraderItemState::STATE::SOILEL);
+}
+
+unsigned __int16 CUnmannedTraderRegistItemInfo::GetItemIndex()
+{
+  return m_wItemIndex;
+}
+
+unsigned __int8 CUnmannedTraderRegistItemInfo::GetTableCode()
+{
+  return m_byTableCode;
+}
+
+__int64 *CUnmannedTraderRegistItemInfo::GetStartTimePtr()
+{
+  return &m_tStartTime;
+}
+
+__int64 CUnmannedTraderRegistItemInfo::GetStartTime()
+{
+  return m_tStartTime;
+}
+
+unsigned __int8 CUnmannedTraderRegistItemInfo::GetSellTurm()
+{
+  return m_bySellTurm;
+}
+
+unsigned int CUnmannedTraderRegistItemInfo::GetPrice()
+{
+  return m_dwPrice;
+}
+
+unsigned int CUnmannedTraderRegistItemInfo::GetETSerial()
+{
+  return m_dwETSerialNumber;
+}
+
+unsigned int CUnmannedTraderRegistItemInfo::GetU()
+{
+  return m_dwU;
+}
+
+unsigned __int64 CUnmannedTraderRegistItemInfo::GetD()
+{
+  return m_dwD;
+}
+
+unsigned __int8 CUnmannedTraderRegistItemInfo::GetStorageIndex()
+{
+  return m_byStorageIndex;
+}
+
+unsigned int CUnmannedTraderRegistItemInfo::GetRegistSerial()
+{
+  return m_dwRegistSerial;
+}

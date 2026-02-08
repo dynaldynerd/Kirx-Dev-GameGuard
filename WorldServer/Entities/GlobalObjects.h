@@ -23,6 +23,7 @@
 #include "CWorldSchedule.h"
 #include "CGameStatistics.h"
 #include "R3EngineState.h"
+#include "CNetworkEX.h"
 
 class CWnd;
 struct _CCRFG_SEND_BUFFER;
@@ -59,12 +60,15 @@ extern CHolyStoneSystem g_HolySys;
 extern CWorldSchedule g_WorldSch;
 extern CGameStatistics g_GameStatistics;
 extern CMainThread g_Main;
+extern CNetworkEX g_Network;
 extern CWnd *g_pFrame;
 extern CLogFile g_FgLogFile;
 extern _CCRFG_SEND_BUFFER g_FGSendData;
 extern _CCRFG_RECV_BUFFER g_FGRecvData;
 extern _CCRFG_CALLBACK g_pfnCallBack;
 extern unsigned __int8 g_cbHashVerify[32];
+extern unsigned __int8 g_key[16];
+extern unsigned __int8 g_iv[16];
 
 extern int g_tmpEffectedNum;
 extern _tmp_effected_list g_tmpEffectedList[30];

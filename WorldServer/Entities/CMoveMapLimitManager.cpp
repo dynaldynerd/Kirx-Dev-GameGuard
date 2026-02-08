@@ -2,6 +2,7 @@
 
 #include "CMoveMapLimitManager.h"
 #include "CMoveMapLimitEnviromentValues.h"
+#include "CPlayer.h"
 
 CMoveMapLimitManager *CMoveMapLimitManager::Instance()
 {
@@ -49,4 +50,11 @@ bool CMoveMapLimitManager::RequestElanMapUserForceMoveHQ()
     CMoveMapLimitEnviromentValues::ELAN_1TH_LIMIT_NPC_RECORD_INDEX,
     -1,
     nullptr);
+}
+
+void CMoveMapLimitManager::LogOut(CPlayer *pkPlayer)
+{
+  m_kRightInfo.LogOut(pkPlayer);
+  CMoveMapLimitRightInfo *rightInfo = m_kRightInfo.Get(pkPlayer->m_ObjID.m_wIndex);
+  m_kLimitInfo.LogOut(pkPlayer, rightInfo);
 }

@@ -46,13 +46,21 @@ char _STORAGE_LIST::EmptyCon(int n)
   {
     return 0;
   }
-  _STORAGE_LIST::_storage_con::empty(&m_pStorageList[n]);
+  m_pStorageList[n].empty();
   return 1;
+}
+
+void _STORAGE_LIST::SetAllEmpty()
+{
+  for (int index = 0; index < m_nListNum; ++index)
+  {
+    m_pStorageList[index].empty();
+  }
 }
 
 void _STORAGE_LIST::SetLock(int n, bool bLock)
 {
-  _STORAGE_LIST::_storage_con::lock(&m_pStorageList[n], bLock);
+  m_pStorageList[n].lock(bLock);
 }
 
 int _STORAGE_LIST::TransInCon(_storage_con *pCon)
@@ -149,7 +157,7 @@ char _STORAGE_LIST::AlterCurDur(int n, int nAlter, unsigned __int64 *pdwLeftDur)
 
   if (!m_pStorageList[n].m_dwDur)
   {
-    _STORAGE_LIST::EmptyCon(this, n);
+    EmptyCon(n);
   }
   *pdwLeftDur = m_pStorageList[n].m_dwDur;
   return 1;

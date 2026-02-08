@@ -8,6 +8,16 @@
 class __cppobj __declspec(align(8)) CDarkHoleChannel
 {
 public:
+  struct __cppobj __enter_member
+  {
+    bool bActive;
+    bool bDisnormalClose;
+    unsigned int dwDisconnectTime;
+
+    __enter_member();
+    __enter_member(bool active, bool disnormal, unsigned int time);
+  };
+
   unsigned __int16 m_wChannelIndex;
   unsigned int m_dwChannelSerial;
   CDarkHole *m_pHoleObj;
@@ -31,6 +41,11 @@ public:
   unsigned int m_dwSendNewMissionMsgNextTime;
   CIndexList m_listEnterMember;
   bool m_bMoveNextMission;
+
+  char ClearMember(CPlayer *pMember, bool bDisconnect, _dh_player_mgr::_pos *poutPlayerPos);
+  void SendMsg_PopMember(CPlayer *pPopMember, bool bDisconnect);
+  void SendMsg_LeaderChange(CPlayer *pNewLeader);
+
   virtual ~CDarkHoleChannel() = default;
 };
 

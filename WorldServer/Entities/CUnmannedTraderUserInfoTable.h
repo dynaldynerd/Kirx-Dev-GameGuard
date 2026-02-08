@@ -16,7 +16,10 @@ public:
   CUnmannedTraderUserInfo *Find(unsigned int dwSerial);
   CUnmannedTraderUserInfo *FindByIndex(unsigned __int16 wInx);
   CUnmannedTraderUserInfo *FindUser(unsigned __int16 wInx, unsigned int dwSerial);
+  unsigned __int8 GetMaxRegistCnt(unsigned __int16 wInx, unsigned int dwSerial);
+  const CUnmannedTraderRegistItemInfo *GetRegItemInfo(unsigned __int16 wInx, unsigned int dwSerial);
   void CompleteSearch(unsigned __int8 byDBRet, unsigned __int8 byProcRet, char *pLoadData);
+  void LogOut(unsigned __int16 wInx, unsigned int dwSerial);
 
   static CUnmannedTraderUserInfoTable *ms_Instance;
 

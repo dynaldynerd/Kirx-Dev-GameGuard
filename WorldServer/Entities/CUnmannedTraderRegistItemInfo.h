@@ -8,6 +8,18 @@ class __cppobj CUnmannedTraderRegistItemInfo
 public:
   CUnmannedTraderRegistItemInfo();
   void Clear();
+  bool IsRegist();
+  unsigned __int16 GetItemIndex();
+  unsigned __int8 GetTableCode();
+  __int64 *GetStartTimePtr();
+  __int64 GetStartTime();
+  unsigned __int8 GetSellTurm();
+  unsigned int GetPrice();
+  unsigned int GetETSerial();
+  unsigned int GetU();
+  unsigned __int64 GetD();
+  unsigned __int8 GetStorageIndex();
+  unsigned int GetRegistSerial();
 
   unsigned int m_dwRegistSerial;
   unsigned short m_wItemSerial;

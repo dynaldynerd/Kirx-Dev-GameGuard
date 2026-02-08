@@ -229,6 +229,7 @@ namespace GUILD_BATTLE
     bool Init(unsigned int uiMapInx);
     bool Start(unsigned __int8 byStartPos, CPlayer *pkPlayer);
     char MoveStartPos(unsigned __int8 byStartPos, unsigned __int8 byMapOutType, CPlayer *pkPlayer);
+    unsigned __int8 DropBall(CPlayer *pkPlayer);
     unsigned int GetMapCode();
     unsigned int GetMapID();
 
@@ -288,6 +289,8 @@ namespace GUILD_BATTLE
     CPlayer *GetPlayer();
     void StockOldInfo();
     void SetBattleState(bool bFlag, unsigned __int8 byColorInx);
+    void NetClose();
+    void ReturnBindPos();
 
     unsigned int m_dwSerial;
     bool m_bRestart;
@@ -309,6 +312,7 @@ namespace GUILD_BATTLE
     void SetGuild(CGuild *pkGuild);
     unsigned int GetGuildSerial();
     char *GetGuildName();
+    unsigned __int8 GetColorInx();
     char IsJoinMember(unsigned int dwSerial);
     __int64 GetMember(unsigned int dwSerial);
     void AskJoin(int n, unsigned int dwSerial, unsigned __int8 GuildBattleNumber, char *wszDestGuild, CNormalGuildBattleLogger *kLogger);
@@ -326,7 +330,10 @@ namespace GUILD_BATTLE
     void SendMsg(unsigned __int8 *byType, char *pMsg, unsigned __int16 uiSize, unsigned int dwSerial);
     void SendOhterNotifyCommitteeMemberPosition(CPlayer *pkPlayer);
     void SendSelfNotifyCommitteeMemberPositionList(CPlayer *pkPlayer);
+    void SendDeleteNotifyPositionMember(int iMemberInx);
     char MoveMember(int iMember, unsigned int uiID, CNormalGuildBattleField *pkField, CNormalGuildBattleLogger *kLogger);
+    char NetClose(bool bInGuildBattle, unsigned int dwSerial, CNormalGuildBattleLogger *kLogger);
+    void ReturnBindPosAll();
     char *GetANSIGuildName();
 
     const unsigned __int8 m_byID;
@@ -357,6 +364,8 @@ namespace GUILD_BATTLE
     bool IsInBattle();
     void AskJoin(int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial);
     void LogIn(int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial);
+    unsigned __int8 NetClose(unsigned int dwCharacSerial, CPlayer *pkPlayer);
+    void NotifyDestoryBall(unsigned int dwOwnerSerial);
     unsigned int GetID();
     CNormalGuildBattleGuild *Get1P();
     CNormalGuildBattleGuild *Get2P();
@@ -391,6 +400,7 @@ namespace GUILD_BATTLE
       unsigned __int8 byNumber,
       unsigned int dwMapCode);
     void LogIn(int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial);
+    unsigned __int8 NetClose(unsigned int dwGuildSerial, unsigned int dwCharacSerial, CPlayer *pkPlayer);
     CNormalGuildBattle *GetBattleByGuildSerial(unsigned int dwGuildSerial);
     CNormalGuildBattle *GetBattle(unsigned int dwID);
     bool PushDQSData(

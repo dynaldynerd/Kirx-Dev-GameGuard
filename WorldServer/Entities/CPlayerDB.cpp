@@ -1,6 +1,8 @@
 #include "pch.h"
 
 #include "CPlayerDB.h"
+#include "AutominePersonalMgr.h"
+#include "CPlayer.h"
 
 #include <cstdlib>
 
@@ -39,6 +41,16 @@ unsigned int CPlayerDB::GetCharSerial()
   return this->m_dbChar.m_dwSerial;
 }
 
+long double CPlayerDB::GetExp()
+{
+  return this->m_dbChar.m_dExp;
+}
+
+float *CPlayerDB::GetCurPos()
+{
+  return this->m_dbChar.m_fStartPos;
+}
+
 long double CPlayerDB::GetPvPPoint()
 {
   return this->m_dbChar.m_dPvPPoint;
@@ -61,6 +73,25 @@ unsigned int CPlayerDB::GetGuildSerial()
 unsigned int CPlayerDB::GetLevel()
 {
   return this->m_dbChar.m_byLevel;
+}
+
+unsigned int CPlayerDB::GetMaxLevel()
+{
+  return this->m_dbChar.m_byMaxLevel;
+}
+
+_class_fld *CPlayerDB::GetPtrCurClass()
+{
+  return this->m_pClassData;
+}
+
+_class_fld *CPlayerDB::GetPtrBaseClass()
+{
+  if (this->m_pClassHistory[0])
+  {
+    return this->m_pClassHistory[0];
+  }
+  return this->m_pClassData;
 }
 
 unsigned int CPlayerDB::GetHP()
@@ -166,6 +197,75 @@ char CPlayerDB::CalcCharGrade(unsigned __int8 byLv, unsigned __int16 wRankRate)
   }
 
   return 0;
+}
+
+void CPlayerDB::InitResBuffer()
+{
+  if (m_wCuttingResBuffer)
+  {
+    for (int j = 0; j < GetMaxResKind(); ++j)
+    {
+      m_wCuttingResBuffer[j] = 0;
+    }
+  }
+}
+
+void CPlayerDB::InitAlterMastery()
+{
+  memset_0(m_dwAlterMastery, 0, sizeof(m_dwAlterMastery));
+}
+
+void CPlayerDB::InitPlayerDB(CPlayer *pThis)
+{
+  if (!m_wCuttingResBuffer)
+  {
+    const unsigned __int64 maxResKind = static_cast<unsigned __int64>(GetMaxResKind());
+    m_wCuttingResBuffer = static_cast<unsigned __int16 *>(operator new[](saturated_mul(maxResKind, 2uLL)));
+  }
+
+  const int maxResKind = GetMaxResKind();
+  memset_0(m_wCuttingResBuffer, 0, 2LL * maxResKind);
+  m_pThis = pThis;
+  m_wSerialCount = 0;
+  InitResBuffer();
+  for (int j = 0; j < 8; ++j)
+  {
+    m_pStoragePtr[j]->SetAllEmpty();
+  }
+  m_QuestDB.Init();
+  m_UnitDB.Init();
+  m_ItemCombineDB.Init();
+  InitAlterMastery();
+  m_byPvPGrade = 0;
+  m_pClassData = nullptr;
+  for (int j = 0; j < 3; ++j)
+  {
+    m_pClassHistory[j] = nullptr;
+  }
+  for (int j = 0; j < 50; ++j)
+  {
+    m_QLink[j].init();
+  }
+  m_ppHistoryEffect[0] = &m_pClassData;
+  m_ppHistoryEffect[1] = m_pClassHistory;
+  m_ppHistoryEffect[2] = &m_pClassHistory[1];
+  m_ppHistoryEffect[3] = &m_pClassHistory[2];
+  m_pGuild = nullptr;
+  m_pGuildMemPtr = nullptr;
+  m_pApplyGuild = nullptr;
+  m_byClassInGuild = static_cast<unsigned __int8>(-1);
+  m_bGuildLock = false;
+  m_nMakeTrapMaxNum = 0;
+  const int nIdx = pThis->m_id.wIndex;
+  AutominePersonalMgr *mgr = AutominePersonalMgr::instance();
+  m_pAPM = mgr->get_machine(nIdx);
+  if (!m_pAPM)
+  {
+    m_bPersonalAmineInven = false;
+  }
+  m_PostStorage.Init();
+  m_ReturnPostStorage.Init();
+  m_dPvpPointLeak = 0.0;
 }
 
 _SFCONT_DB_BASE::_SFCONT_DB_BASE()

@@ -50,7 +50,8 @@ struct __cppobj __unaligned __declspec(align(4)) _STORAGE_LIST
   int m_nListCode;
   _db_con *m_pStorageList;
 
-  bool EmptyCon(int n);
+  char EmptyCon(int n);
+  void SetAllEmpty();
   void SetLock(int n, bool bLock);
   int TransInCon(_storage_con *pCon);
   int GetIndexEmptyCon();

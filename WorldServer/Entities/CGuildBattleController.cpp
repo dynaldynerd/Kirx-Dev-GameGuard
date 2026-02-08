@@ -90,6 +90,37 @@ void CGuildBattleController::LogIn(CPlayer *pkPlayer)
   manager->LogIn(n, dwGuildSerial, dwCharacSerial);
 }
 
+void CGuildBattleController::NetClose(CPlayer *pkPlayer)
+{
+  if (!pkPlayer)
+  {
+    return;
+  }
+
+  (void)pkPlayer->m_Param.GetRaceCode();
+  unsigned int guildSerial = static_cast<unsigned int>(-1);
+  if (pkPlayer->m_Param.m_pGuild)
+  {
+    guildSerial = pkPlayer->m_Param.m_pGuild->m_dwSerial;
+  }
+
+  const unsigned int charSerial = pkPlayer->m_pUserDB->m_dwSerial;
+  GUILD_BATTLE::CNormalGuildBattleManager *manager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
+  const unsigned __int8 result = manager->NetClose(guildSerial, charSerial, pkPlayer);
+
+  if (pkPlayer->m_bInGuildBattle && result)
+  {
+    const char *charName = pkPlayer->m_Param.GetCharNameW();
+    GUILD_BATTLE::CGuildBattleLogger *logger = GUILD_BATTLE::CGuildBattleLogger::Instance();
+    logger->Log(
+      "CGuildBattleController::NetClose( %s ) : CNormalGuildBattleManager::Instance()->NetClose( %u, %u ) Return(%u) Fail!",
+      charName,
+      guildSerial,
+      charSerial,
+      result);
+  }
+}
+
 void CGuildBattleController::SendPossibleBattleGuildListFirst(int n, unsigned __int8 byRace)
 {
   GUILD_BATTLE::CPossibleBattleGuildListManager *manager = GUILD_BATTLE::CPossibleBattleGuildListManager::Instance();

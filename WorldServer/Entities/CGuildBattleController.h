@@ -24,6 +24,7 @@ public:
     unsigned __int8 byNumber,
     unsigned int dwMapInx);
   void LogIn(CPlayer *pkPlayer);
+  void NetClose(CPlayer *pkPlayer);
   void SendPossibleBattleGuildListFirst(int n, unsigned __int8 byRace);
 
   virtual ~CGuildBattleController() = default;

@@ -37,7 +37,10 @@
 #include "CUnmannedTraderController.h"
 #include "CUnmannedTraderRegistItemInfo.h"
 #include "CMoveMapLimitManager.h"
+#include "CBillingManager.h"
+#include "CGuildRoomSystem.h"
 #include "CCouponMgr.h"
+#include "EQUIP_MASTERY_LIM.h"
 #include "CDarkHoleChannel.h"
 #include "CGuardTower.h"
 #include "CTrap.h"
@@ -55,6 +58,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <cmath>
+#include <mmsystem.h>
 
 _skill_fld *CPlayer::ms_pXmas_Snow_Effect = nullptr;
 _skill_fld *CPlayer::ms_pXmas_Snow_Bullet_Effect = nullptr;
@@ -161,6 +165,174 @@ void _TOWER_PARAM::Init()
 bool _TRAP_PARAM::_param::isLoad()
 {
   return pItem != nullptr;
+}
+
+_UNIT_DB_BASE::_LIST::_LIST()
+{
+  Init(0xFFu);
+}
+
+void _UNIT_DB_BASE::_LIST::Init(unsigned __int8 byIndex)
+{
+  if (byIndex != 0xFFu)
+  {
+    bySlotIndex = byIndex;
+  }
+  byFrame = static_cast<unsigned __int8>(-1);
+  memset_0(byPart, 0xFF, sizeof(byPart));
+  memset_0(dwBullet, -1, sizeof(dwBullet));
+  memset_0(dwSpare, -1, sizeof(dwSpare));
+  dwGauge = 0;
+  nPullingFee = 0;
+  dwCutTime = 0;
+  wBooster = 0;
+}
+
+void _UNIT_DB_BASE::_LIST::DelUnit()
+{
+  byFrame = static_cast<unsigned __int8>(-1);
+  memset_0(byPart, 0xFF, sizeof(byPart));
+  memset_0(dwBullet, -1, sizeof(dwBullet));
+  memset_0(dwSpare, -1, sizeof(dwSpare));
+  dwGauge = 0;
+  nPullingFee = 0;
+  dwCutTime = 0;
+  wBooster = 0;
+}
+
+_UNIT_DB_BASE::_UNIT_DB_BASE()
+{
+  Init();
+}
+
+void _UNIT_DB_BASE::Init()
+{
+  for (int j = 0; j < 4; ++j)
+  {
+    m_List[j].Init(static_cast<unsigned __int8>(j));
+  }
+}
+
+_QUEST_DB_BASE::_LIST::_LIST()
+{
+  Init();
+}
+
+void _QUEST_DB_BASE::_LIST::Init()
+{
+  byQuestType = static_cast<unsigned __int8>(-1);
+  wIndex = static_cast<unsigned __int16>(-1);
+  for (int j = 0; j < 3; ++j)
+  {
+    wNum[j] = static_cast<unsigned __int16>(-1);
+  }
+  dwPassSec = 0;
+}
+
+_QUEST_DB_BASE::_NPC_QUEST_HISTORY::_NPC_QUEST_HISTORY()
+{
+  Init();
+}
+
+void _QUEST_DB_BASE::_NPC_QUEST_HISTORY::Init()
+{
+  memset_0(this, 0, 8u);
+  byLevel = static_cast<unsigned __int8>(-1);
+}
+
+_QUEST_DB_BASE::_START_NPC_QUEST_HISTORY::_START_NPC_QUEST_HISTORY()
+{
+  Init();
+}
+
+void _QUEST_DB_BASE::_START_NPC_QUEST_HISTORY::Init()
+{
+  strcpy_0(szQuestCode, "*");
+  byLevel = static_cast<unsigned __int8>(-1);
+  nEndTime = 0;
+  memset_0(&tmStartTime, 0, sizeof(tmStartTime));
+}
+
+_QUEST_DB_BASE::_QUEST_DB_BASE()
+{
+  Init();
+}
+
+void _QUEST_DB_BASE::Init()
+{
+  for (int j = 0; j < 30; ++j)
+  {
+    m_List[j].Init();
+  }
+}
+
+void _COMBINEKEY::SetRelease()
+{
+  byRewardIndex = static_cast<unsigned __int8>(-1);
+  byTableCode = static_cast<unsigned __int8>(-1);
+  wItemIndex = static_cast<unsigned __int16>(-1);
+}
+
+bool _COMBINEKEY::IsFilled()
+{
+  return byRewardIndex != 0xFFu || byTableCode != 0xFFu || wItemIndex != 0xFFFFu;
+}
+
+void _COMBINEKEY::LoadDBKey(_COMBINEKEY pl_nKey)
+{
+  *this = pl_nKey;
+}
+
+__int64 _COMBINEKEY::CovDBKey()
+{
+  int key = 0;
+  memcpy_0(&key, this, sizeof(key));
+  return static_cast<__int64>(key);
+}
+
+_ITEMCOMBINE_DB_BASE::_LIST::_LIST()
+{
+  Init();
+}
+
+void _ITEMCOMBINE_DB_BASE::_LIST::Init()
+{
+  Key.SetRelease();
+  dwDur = 0;
+  dwUpt = 0xFFFFFFF;
+}
+
+_ITEMCOMBINE_DB_BASE::_ITEMCOMBINE_DB_BASE()
+{
+  Init();
+}
+
+void _ITEMCOMBINE_DB_BASE::Init()
+{
+  m_bIsResult = false;
+  m_byItemListNum = 0;
+  m_dwDalant = 0;
+  m_dwCheckKey = static_cast<unsigned int>(-1);
+  m_bySelectItemCount = 0;
+  for (int j = 0; j < 24; ++j)
+  {
+    m_List[j].Init();
+  }
+}
+
+bool _ITEMCOMBINE_DB_BASE::IsCombineData()
+{
+  return m_bIsResult && m_dwCheckKey != static_cast<unsigned int>(-1);
+}
+
+_quick_link::_quick_link()
+{
+  init();
+}
+
+void _quick_link::init()
+{
+  byLinkIndex = static_cast<unsigned __int8>(-1);
 }
 
 bool LoadMasteryLimFile(char *pszErrMsg)
@@ -706,10 +878,11 @@ CPlayer::CashChangeStateFlag::CashChangeStateFlag(char cashrename)
   m_byStateFlag = static_cast<unsigned __int8>((cashrename & 7) | (current & 0xF8));
 }
 
-void _MASTERY_PARAM::SetStaticMember(CRecordData *effectTable, CRecordData *forceTable)
+void _MASTERY_PARAM::SetStaticMember(CRecordData *pSkillData, CRecordData *pForceData)
 {
-  (void)effectTable;
-  (void)forceTable;
+  s_pSkillData = pSkillData;
+  s_pForceData = pForceData;
+  InitMasteryFormula(pSkillData, pForceData);
 }
 
 void _mastery_up_data::init()
@@ -740,6 +913,21 @@ void _skill_lv_up_data::set(unsigned __int16 index, unsigned __int8 lv)
 unsigned __int8 _MASTERY_PARAM::GetMasteryPerMast(unsigned __int8 byCode, unsigned __int8 byMast)
 {
   return m_ppbyMasteryPtr[byCode][byMast];
+}
+
+unsigned int _MASTERY_PARAM::GetCumPerMast(unsigned __int8 byCode, unsigned __int8 byMast)
+{
+  return m_ppdwMasteryCumPtr[byCode][byMast];
+}
+
+unsigned __int8 _MASTERY_PARAM::GetSkillLv(unsigned __int8 bySkillIndex)
+{
+  return m_lvSkill[bySkillIndex];
+}
+
+unsigned __int8 _MASTERY_PARAM::GetEquipMastery(int nEquipMasteryCode)
+{
+  return *m_ppbyEquipMasteryPrt[nEquipMasteryCode];
 }
 
 void _MASTERY_PARAM::UpdateCumPerMast(unsigned __int8 byClass, unsigned __int8 byIndex, unsigned int dwNewCum)
@@ -1371,99 +1559,13 @@ void CPlayer::SendMsg_DeleteStorageInform(char byStorageCode, unsigned __int16 w
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 3);
 }
 
-void _STORAGE_LIST::_storage_con::empty()
+void CPlayer::SendMsg_BuddhaEventMsg(char byErrorCode)
 {
-  m_bLoad = 0;
-  m_bLock = 0;
-  m_dwETSerialNumber = 0;
-  m_byCsMethod = 0;
-}
+  char msg[1]{};
+  msg[0] = byErrorCode;
 
-void _STORAGE_LIST::_storage_con::lock(bool bLock)
-{
-  m_bLock = bLock;
-}
-
-void _STORAGE_LIST::SetLock(int n, bool bLock)
-{
-  m_pStorageList[n].lock(bLock);
-}
-
-bool _STORAGE_LIST::EmptyCon(int n)
-{
-  if (m_nListCode == 1 && n >= 8)
-  {
-    return false;
-  }
-  if (!m_pStorageList[n].m_bLoad)
-  {
-    return false;
-  }
-  m_pStorageList[n].empty();
-  return true;
-}
-
-int _STORAGE_LIST::GetIndexEmptyCon()
-{
-  for (int j = 0; j < m_nUsedNum; ++j)
-  {
-    if (!m_pStorageList[j].m_bLoad)
-    {
-      return j;
-    }
-  }
-  return 255;
-}
-
-int _STORAGE_LIST::GetNumEmptyCon()
-{
-  int count = 0;
-  for (int j = 0; j < m_nUsedNum; ++j)
-  {
-    if (!m_pStorageList[j].m_bLoad)
-    {
-      ++count;
-    }
-  }
-  return count;
-}
-
-int _STORAGE_LIST::TransInCon(_storage_con *pCon)
-{
-  if (!pCon)
-  {
-    return 255;
-  }
-
-  int storageIndex = 0;
-  if (m_nListCode == 1)
-  {
-    storageIndex = pCon->m_byTableCode;
-    if (storageIndex >= 8)
-    {
-      return 255;
-    }
-    if (m_pStorageList[storageIndex].m_bLoad)
-    {
-      return 255;
-    }
-  }
-  else
-  {
-    storageIndex = GetIndexEmptyCon();
-    if (storageIndex == 255)
-    {
-      return 255;
-    }
-  }
-
-  memcpy_0(&m_pStorageList[storageIndex], pCon, 0x29u);
-  m_pStorageList[storageIndex].m_pInList = this;
-  m_pStorageList[storageIndex].m_byStorageIndex = static_cast<unsigned __int8>(storageIndex);
-  m_pStorageList[storageIndex].m_bLoad = 1;
-  m_pStorageList[storageIndex].m_byClientIndex = 0;
-  m_pStorageList[storageIndex].m_bLock = 0;
-  return storageIndex;
+  unsigned __int8 type[2]{59, 2};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, 1u);
 }
 
 bool CPlayer::OutOfMap(CMapData *pIntoMap, unsigned __int16 wLayerIndex, unsigned __int8 byMapOutType, float *pfStartPos)
@@ -1899,7 +2001,7 @@ unsigned __int64 CPlayer::Emb_AlterDurPoint(
         {
           if (!TimeLimitJadeMng::Instance()->DeleteList(m_ObjID.m_wIndex, pkItem))
           {
-            const char *charName = CPlayerDB::GetCharNameA(&m_Param);
+            const char *charName = m_Param.GetCharNameA();
             g_Main.m_logSystemError.Write(
               "%s: Emb_AlterDurPoint.. TimeLimitJadeMng::DeleteList() error storage: %d, item[%s]: %d-%d: ",
               charName,
@@ -1968,7 +2070,7 @@ unsigned __int64 CPlayer::Emb_AlterDurPoint(
     return static_cast<unsigned int>(leftDur);
   }
 
-  const char *charName = CPlayerDB::GetCharNameA(&m_Param);
+  const char *charName = m_Param.GetCharNameA();
   g_Main.m_logSystemError.Write(
     "%s: Emb_AlterDurPoint.. AlterCurDur() error storage: %d, slot: %d: ",
     charName,
@@ -2228,6 +2330,319 @@ void CPlayer::SendMsg_DTradeCloseInform(char byCloseCode)
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, 1u);
 }
 
+void CPlayer::NetClose(bool bMoveOutLobby)
+{
+  if (m_byPatriarchAppointPropose != 255)
+  {
+    char pdata[16];
+    pdata[0] = 1;
+    PatriarchElectProcessor *processor = PatriarchElectProcessor::Instance();
+    processor->Doit(_eRespAppoint, this, pdata);
+  }
+
+  if (m_Param.m_pAPM)
+  {
+    m_Param.m_pAPM->unregist_from_map(2u);
+  }
+  m_Param.m_bPersonalAmineInven = 0;
+
+  LendItemMng::Instance()->Release(m_ObjID.m_wIndex);
+
+  if (m_bLoad && m_bOper)
+  {
+    g_Main.m_pTimeLimitMgr->Pop_Data(m_pUserDB->m_dwAccountSerial, m_id.wIndex);
+    g_Main.m_logSystemError.Write(
+      "CPlayer::NetClose() : Time Limit System Stop!! : ID = %s",
+      m_pUserDB->m_szAccountID);
+  }
+
+  TimeLimitJadeMng::Instance()->Release(m_ObjID.m_wIndex);
+
+  if (m_bLive)
+  {
+    DTradeInit();
+    _TowerAllReturn(2u, false);
+    _AnimusReturn(2u);
+    ForcePullUnit(true);
+
+    for (int trapIndex = 0; trapIndex < 20; ++trapIndex)
+    {
+      _TRAP_PARAM::_param *trapParam = &m_pmTrp.m_Item[trapIndex];
+      if (trapParam->isLoad() && trapParam->pItem->m_dwObjSerial == trapParam->dwSerial)
+      {
+        const long double pvpPoint = m_Param.GetPvPPoint();
+        trapParam->pItem->MasterNetClose(pvpPoint);
+      }
+    }
+
+    CExchangeEvent *exchangeEvent = CExchangeEvent::Instance();
+    if (exchangeEvent->IsDelete() || CExchangeEvent::Instance()->IsEnable())
+    {
+      CExchangeEvent::Instance()->DeleteExchangeEventItem(this);
+    }
+
+    CPcBangFavor::Instance()->PcBangDeleteItem(this);
+
+    if (m_pCurMap == g_TransportShip[m_Param.GetRaceCode()].m_pLinkShipMap)
+    {
+      const int raceCode = m_Param.GetRaceCode();
+      g_TransportShip[raceCode].ExitMember(this, true);
+    }
+
+    if (g_HolySys.GetSceneCode() == 1 && m_byHSKQuestCode != 100)
+    {
+      g_HolySys.PushStoreQuestCash(
+        m_dwObjSerial,
+        m_byHSKQuestCode,
+        m_nHSKPvpPoint,
+        m_wKillPoint,
+        m_wDiePoint,
+        m_byCristalBattleDBInfo,
+        m_byHSKTime);
+    }
+
+    if (GetLevel() >= 25 && (g_HolySys.m_bScheduleCodePre == 1 || g_HolySys.GetSceneCode() == 1))
+    {
+      g_HolySys.PushQuestCash_Other(m_dwObjSerial, m_byStoneMapMoveInfo);
+    }
+
+    CGuildBattleController::Instance()->NetClose(this);
+
+    if (m_Param.m_pGuild && m_EP.GetEff_Have(50) <= 0.0)
+    {
+      m_Param.m_pGuild->LogoffMember(m_dwObjSerial);
+      m_Param.m_pGuild->SendMsg_GuildMemberLogoff(m_dwObjSerial);
+    }
+    if (m_Param.m_pApplyGuild && m_EP.GetEff_Have(50) <= 0.0)
+    {
+      m_Param.m_pApplyGuild->PopApplier(m_dwObjSerial, 2u);
+    }
+
+    SendMsg_Destroy();
+    CCharacter::Destroy();
+
+    bool needMove = false;
+    if (m_bOutOfMap || m_bCheckMovePacket)
+    {
+      needMove = true;
+    }
+    else if (g_Main.m_bServerClosing)
+    {
+      needMove = false;
+    }
+    else if (m_bOper)
+    {
+      needMove = false;
+    }
+    else if (m_Param.GetLevel() <= 7 && GetHP() > 0)
+    {
+      needMove = true;
+    }
+
+    if (g_HolySys.IsControlScene() && !strncmp(m_pCurMap->m_pMapSet->m_strCode, "resources", 9u))
+    {
+      needMove = true;
+    }
+
+    float bindPos[8];
+    if (!m_pDHChannel)
+    {
+      if (needMove)
+      {
+        CMapData *bindMap = GetBindMap(bindPos, false);
+        if (bindMap)
+        {
+          m_pCurMap = bindMap;
+          memcpy_0(m_fCurPos, bindPos, sizeof(m_fCurPos));
+        }
+      }
+    }
+    if (m_pDHChannel)
+    {
+      _dh_player_mgr::_pos outPos;
+      m_pDHChannel->ClearMember(this, m_bOper, &outPos);
+      m_pCurMap = outPos.pMap;
+      memcpy_0(m_fCurPos, outPos.fPos, sizeof(m_fCurPos));
+    }
+
+    m_Param.SetMapCode(m_pCurMap->m_pMapSet->m_dwIndex);
+    m_Param.SetCurPos(m_fCurPos);
+    ExitUpdateDataToWorld();
+
+    --s_nLiveNum;
+    --s_nRaceNum[m_Param.GetRaceCode()];
+
+    CUnmannedTraderController *traderController = CUnmannedTraderController::Instance();
+    const unsigned __int8 maxRegistCnt =
+      traderController->GetMaxRegistCnt(m_ObjID.m_wIndex, m_dwObjSerial);
+    const CUnmannedTraderRegistItemInfo *regItemInfo =
+      traderController->GetRegItemInfo(m_ObjID.m_wIndex, m_dwObjSerial);
+
+    s_MgrItemHistory.have_item_close(
+      m_ObjID.m_wIndex,
+      m_Param.GetCharNameA(),
+      &m_pUserDB->m_AvatorData,
+      &m_pUserDB->m_AvatorData_bk,
+      m_pUserDB->m_szAccountID,
+      m_pUserDB->m_dwAccountSerial,
+      m_byUserDgr,
+      m_pUserDB->m_ipAddress,
+      m_dwExpRate,
+      regItemInfo,
+      maxRegistCnt,
+      m_szItemHistoryFileName);
+
+    traderController->LogOut(m_ObjID.m_wIndex, m_dwObjSerial);
+
+    s_MgrItemHistory.post_storage(&m_Param.m_PostStorage, m_szItemHistoryFileName);
+    s_MgrItemHistory.return_post_storage(&m_Param.m_ReturnPostStorage, m_szItemHistoryFileName);
+
+    CMoveMapLimitManager::Instance()->LogOut(this);
+    wa_ExitWorld(&m_id);
+
+    s_MgrLvHistory.update_mastery(
+      m_ObjID.m_wIndex,
+      m_byUserDgr,
+      m_Param.GetLevel(),
+      m_Param.GetExp(),
+      m_dwExpRate,
+      m_Param.m_byPvPGrade,
+      m_nMaxPoint,
+      &m_pmMst,
+      m_Param.m_dwAlterMastery,
+      m_szLvHistoryFileName,
+      1u,
+      nullptr);
+
+    ++s_dwTotalCloseCount;
+    if (m_pUserDB)
+    {
+      if (m_bOper)
+      {
+        s_MgrItemHistory.close(m_ObjID.m_wIndex, const_cast<char *>("Abnormal"), m_szItemHistoryFileName);
+        ++s_dwAbnormalCloseCount;
+      }
+      else
+      {
+        s_MgrItemHistory.close(m_ObjID.m_wIndex, const_cast<char *>("Normal"), m_szItemHistoryFileName);
+      }
+    }
+
+    if (!m_pUserDB->m_byUserDgr && !m_pUserDB->m_bBillingNoLogout)
+    {
+      CTSingleton<CBillingManager>::Instance()->Logout(m_pUserDB);
+    }
+
+    if (m_EP.GetEff_Have(50) <= 0.0)
+    {
+      for (int buddyIndex = 0; buddyIndex < 50; ++buddyIndex)
+      {
+        _BUDDY_LIST::__list *buddyList = &m_pmBuddy.m_List[buddyIndex];
+        if (buddyList->fill()
+            && buddyList->pPtr
+            && buddyList->pPtr->m_pmBuddy.SearchBuddyLogoff(m_dwObjSerial))
+        {
+          buddyList->pPtr->SendMsg_BuddyLogoffInform(m_dwObjSerial);
+        }
+      }
+    }
+  }
+
+  if (m_Param.m_pGuild)
+  {
+    CGuildRoomSystem *roomSystem = CGuildRoomSystem::GetInstance();
+    roomSystem->RoomOut(m_Param.m_pGuild->m_dwSerial, m_ObjID.m_wIndex, m_pUserDB->m_dwSerial);
+  }
+
+  const DWORD limitTime = m_AttDelayChker.m_nNextAddTime + timeGetTime();
+  if (m_pUserDB)
+  {
+    for (int index = 0; index < 10; ++index)
+    {
+      _ATTACK_DELAY_CHECKER::_eff_list *eff = &m_AttDelayChker.EFF[index];
+      if (eff->byEffectCode == 255 || eff->dwNextTime <= limitTime)
+      {
+        m_pUserDB->m_AvatorData.dbSFDelay.EFF[index].byEffectCode = static_cast<unsigned __int8>(-1);
+        m_pUserDB->m_AvatorData.dbSFDelay.EFF[index].wEffectIndex = 0;
+        m_pUserDB->m_AvatorData.dbSFDelay.EFF[index].dwNextTime = 0;
+      }
+      else
+      {
+        m_pUserDB->m_AvatorData.dbSFDelay.EFF[index].byEffectCode = eff->byEffectCode;
+        m_pUserDB->m_AvatorData.dbSFDelay.EFF[index].wEffectIndex = eff->wEffectIndex;
+        m_pUserDB->m_AvatorData.dbSFDelay.EFF[index].dwNextTime = eff->dwNextTime - limitTime;
+      }
+
+      _ATTACK_DELAY_CHECKER::_mas_list *mas = &m_AttDelayChker.MAS[index];
+      if (mas->byEffectCode == 255 || mas->dwNextTime <= limitTime)
+      {
+        m_pUserDB->m_AvatorData.dbSFDelay.MAS[index].byEffectCode = static_cast<unsigned __int8>(-1);
+        m_pUserDB->m_AvatorData.dbSFDelay.MAS[index].byMastery = 0;
+        m_pUserDB->m_AvatorData.dbSFDelay.MAS[index].dwNextTime = 0;
+      }
+      else
+      {
+        m_pUserDB->m_AvatorData.dbSFDelay.MAS[index].byEffectCode = mas->byEffectCode;
+        m_pUserDB->m_AvatorData.dbSFDelay.MAS[index].byMastery = mas->byMastery;
+        m_pUserDB->m_AvatorData.dbSFDelay.MAS[index].dwNextTime = mas->dwNextTime - limitTime;
+      }
+    }
+  }
+
+  if (IsApplyPcbangPrimium())
+  {
+    if (bMoveOutLobby || m_bOper)
+    {
+      m_kPcBangCoupon.LogOut(true);
+    }
+    else
+    {
+      m_kPcBangCoupon.LogOut(false);
+    }
+  }
+
+  CTSingleton<CNationSettingManager>::Instance()->NetClose(this);
+  m_Param.InitPlayerDB(this);
+
+  m_byUserDgr = 0;
+  m_bCorpse = false;
+  m_bLoad = false;
+  m_bOper = false;
+  m_bMapLoading = false;
+  m_bFullMode = false;
+  m_pUserDB = nullptr;
+  m_pUsingUnit = nullptr;
+  m_pParkingUnit = nullptr;
+  m_pRecalledAnimusItem = nullptr;
+  m_pRecalledAnimusChar = nullptr;
+  m_dwLastRecallTime = 0;
+  m_byNextRecallReturn = static_cast<unsigned __int8>(-1);
+  m_bBaseDownload = true;
+  m_bInvenDownload = true;
+  m_bForceDownload = true;
+  m_bCumDownload = true;
+  m_bSpecialDownload = true;
+  m_bQuestDownload = true;
+  m_bLinkBoardDownload = true;
+  m_bRecvMapChat = false;
+  m_bSpyGM = false;
+  m_clsSetItem.Init_Info();
+  m_id.dwSerial = static_cast<unsigned int>(-1);
+  m_dwObjSerial = static_cast<unsigned int>(-1);
+  m_bTakeGravityStone = false;
+  m_bBlockGuildBattleMsg = false;
+  m_bInGuildBattle = false;
+  m_bNotifyPosition = false;
+  m_byGuildBattleColorInx = static_cast<unsigned __int8>(-1);
+  m_bTakeSoccerBall = false;
+  m_pSoccerItem = nullptr;
+  m_nChaosMode = 0;
+  m_dwChaosModeTime10Per = 0;
+  m_dwChaosModeEndTime = 0;
+  m_bSnowMan = false;
+  m_bAfterEffect = false;
+}
+
 void CPlayer::_AnimusReturn(unsigned __int8 byReturnType)
 {
   if (!m_pRecalledAnimusChar)
@@ -2326,6 +2741,66 @@ void CPlayer::SendMsg_AlterTowerHP(unsigned __int16 wItemSerial, unsigned __int1
 
   unsigned __int8 type[2] = {17, 22};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 4u);
+}
+
+void CPlayer::_TowerDestroy(CGuardTower *pTowerObj)
+{
+  _STORAGE_LIST::_db_con *pItem = nullptr;
+  for (int j = 0; j < 6; ++j)
+  {
+    if (m_pmTwr.m_List[j].m_pTowerObj == pTowerObj)
+    {
+      pItem = m_pmTwr.m_List[j].m_pTowerItem;
+      m_pmTwr.m_List[j].init();
+      --m_pmTwr.m_nCount;
+      break;
+    }
+  }
+
+  if (pItem)
+  {
+    pItem->m_bLock = false;
+    SendMsg_AlterTowerHP(pItem->m_wSerial, 0);
+    Emb_DelStorage(0, pItem->m_byStorageIndex, false, true, "CPlayer::_TowerDestroy()");
+    s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex, pItem, m_szItemHistoryFileName);
+  }
+}
+
+void CPlayer::_TowerAllReturn(unsigned __int8 byDestroyType, bool bForceReturn)
+{
+  for (int j = 0; j < 6; ++j)
+  {
+    if (m_pmTwr.m_List[j].m_pTowerItem)
+    {
+      m_pmTwr.m_List[j].m_pTowerItem->lock(false);
+      CGuardTower *tower = m_pmTwr.m_List[j].m_pTowerObj;
+      if (tower->m_bLive)
+      {
+        const int nAlter = tower->m_nHP - static_cast<int>(m_pmTwr.m_List[j].m_pTowerItem->m_dwDur);
+        Emb_AlterDurPoint(0, m_pmTwr.m_List[j].m_pTowerItem->m_byStorageIndex, nAlter, false, false);
+        if (!bForceReturn && m_bOper)
+        {
+          for (int k = 0; k < MAX_PLAYER; ++k)
+          {
+            __TEMP_WAIT_TOWER *waitNode = &CGuardTower::s_Temp[k];
+            if (waitNode->dwMasterSerial == static_cast<unsigned int>(-1))
+            {
+              waitNode->dwMasterSerial = tower->m_pMasterTwr->m_dwObjSerial;
+              waitNode->byItemIndex = tower->m_pItem->m_byStorageIndex;
+              waitNode->pMap = tower->m_pCurMap;
+              memcpy_0(waitNode->fPos, tower->m_fCurPos, sizeof(waitNode->fPos));
+              waitNode->bComplete = tower->m_bComplete;
+              waitNode->dwPushTime = GetLoopTime();
+              break;
+            }
+          }
+        }
+        tower->Destroy(byDestroyType, false);
+      }
+      m_pmTwr.m_List[j].init();
+      --m_pmTwr.m_nCount;
+    }
+  }
 }
 
 void CPlayer::SendMsg_Destroy()
@@ -2738,6 +3213,68 @@ bool CPlayer::IsRidingShip()
   return m_pCurMap == g_TransportShip[m_Param.GetRaceCode()].m_pLinkShipMap;
 }
 
+CMapData *CPlayer::GetBindMap(float *pfPos, bool bIgnoreMapClass)
+{
+  if (m_ObjID.m_byKind)
+  {
+    return nullptr;
+  }
+
+  CMapData *bindMap = nullptr;
+  CMapData *curMap = m_pCurMap;
+  if (GetCurSecNum() == static_cast<unsigned int>(-1) || m_bMapLoading)
+  {
+    return nullptr;
+  }
+
+  if (!bIgnoreMapClass && curMap->m_pMapSet->m_nMapClass)
+  {
+    const int raceCode = m_Param.GetRaceCode();
+    if (curMap->m_nStartDumNum <= raceCode)
+    {
+      return nullptr;
+    }
+    if (!curMap->GetRandPosInDummy(curMap->m_pStartDummy[raceCode].m_pDumPos, pfPos, true))
+    {
+      return nullptr;
+    }
+    bindMap = curMap;
+  }
+  else if (m_pBindMapData)
+  {
+    bindMap = m_pBindMapData;
+    if (!m_pBindDummyData)
+    {
+      m_pUserDB->Update_Bind(const_cast<char *>("0"), const_cast<char *>("0"), false);
+      return nullptr;
+    }
+    if (!m_pBindMapData->GetRandPosInDummy(m_pBindDummyData, pfPos, true))
+    {
+      m_pUserDB->Update_Bind(const_cast<char *>("0"), const_cast<char *>("0"), false);
+      return nullptr;
+    }
+  }
+  else
+  {
+    const unsigned __int8 raceCode = static_cast<unsigned __int8>(m_Param.GetRaceCode());
+    bindMap = g_MapOper.GetPosStartMap(raceCode, false, pfPos);
+    if (!bindMap)
+    {
+      return nullptr;
+    }
+  }
+
+  if (!Major_Bind_HQ)
+  {
+    return bindMap;
+  }
+
+  const unsigned __int8 raceCode = static_cast<unsigned __int8>(m_Param.GetRaceCode());
+  CMapData *result = g_MapOper.GetPosStartMap(raceCode, false, pfPos);
+  bindMap = result;
+  return result;
+}
+
 CMapData *CPlayer::GetBindMapData()
 {
   return m_pBindMapData;
@@ -2746,6 +3283,16 @@ CMapData *CPlayer::GetBindMapData()
 _dummy_position *CPlayer::GetBindDummy()
 {
   return m_pBindDummyData;
+}
+
+void CPlayer::SetBindMapData(CMapData *pMapData)
+{
+  m_pBindMapData = pMapData;
+}
+
+void CPlayer::SetBindDummy(_dummy_position *pDummy)
+{
+  m_pBindDummyData = pDummy;
 }
 
 bool CPlayer::SetBindPosition(CMapData *pMap, _dummy_position *pDummy)
@@ -2757,6 +3304,63 @@ bool CPlayer::SetBindPosition(CMapData *pMap, _dummy_position *pDummy)
   m_pBindMapData = pMap;
   m_pBindDummyData = pDummy;
   return m_pUserDB->Update_Bind(pMap->m_pMapSet->m_strCode, pDummy->m_szCode, true);
+}
+
+void CPlayer::ClearGravityStone()
+{
+  m_bTakeGravityStone = false;
+  m_EP.SetEff_Plus(3, -30.0, 0);
+  ApplyEquipItemEffect(12, true);
+}
+
+void CPlayer::ExitUpdateDataToWorld()
+{
+  if (m_pUserDB && !m_pUserDB->m_bNoneUpdateData)
+  {
+    _EXIT_ALTER_PARAM param{};
+    param.dwHP = m_Param.GetHP();
+    param.dwFP = m_Param.GetFP();
+    param.dwSP = m_Param.GetSP();
+    param.dwDP = m_Param.GetDP();
+    param.dExp = m_Param.GetExp();
+    param.byMapCode = static_cast<unsigned __int8>(m_Param.GetMapCode());
+    float *curPos = m_Param.GetCurPos();
+    memcpy_0(param.fStartPos, curPos, sizeof(param.fStartPos));
+    param.dwDalant = m_Param.GetDalant();
+    param.dwGold = m_Param.GetGold();
+    m_pUserDB->Update_Param(&param);
+
+    if (m_Param.GetRaceCode() == 0)
+    {
+      for (int j = 0; j < 4; ++j)
+      {
+        _UNIT_DB_BASE::_LIST *pData = &m_Param.m_UnitDB.m_List[j];
+        if (m_Param.m_UnitDB.m_List[j].byFrame != 255)
+        {
+          m_pUserDB->Update_UnitData(j, pData);
+        }
+      }
+    }
+
+    for (int k = 0; k < 2; ++k)
+    {
+      for (int m = 0; m < 8; ++m)
+      {
+        if (m_SFCont[k][m].m_bExist)
+        {
+          unsigned __int8 order = 0;
+          for (int j = 0; j < 8; ++j)
+          {
+            if (m_SFCont[k][j].m_bExist && m != j && m_SFCont[k][m].m_dwStartSec < m_SFCont[k][j].m_dwStartSec)
+            {
+              ++order;
+            }
+          }
+          m_pUserDB->m_AvatorData.dbSfcont.m_List[k][m].SetOrder(order);
+        }
+      }
+    }
+  }
 }
 
 void CPlayer::pc_SetInGuildBattle(bool bInGuildBattle, unsigned __int8 byColorInx)
@@ -3367,6 +3971,254 @@ void CPlayer::SetEquipEffect(_STORAGE_LIST::_db_con *pItem, bool bEquip)
 {
   apply_case_equip_std_effect(pItem, bEquip);
   apply_case_equip_upgrade_effect(pItem, bEquip);
+}
+
+char CPlayer::ApplyEquipItemEffect(int iItemEffectCode, bool bEquip)
+{
+  for (int index = 0; index < 15; ++index)
+  {
+    if (m_byEffectEquipCode[index] != 1)
+    {
+      continue;
+    }
+
+    _STORAGE_LIST::_db_con *pCon = nullptr;
+    if (index >= 8)
+    {
+      pCon = &m_Param.m_dbEmbellish.m_pStorageList[index - 8];
+    }
+    else
+    {
+      pCon = &m_Param.m_dbEquip.m_pStorageList[index];
+    }
+
+    if (pCon->m_bLoad)
+    {
+      if (IsEffectableEquip(pCon))
+      {
+        _ITEM_EFFECT *itemEffect = _GetItemEffect(pCon);
+        if (itemEffect)
+        {
+          for (int effectIndex = 0; effectIndex < 4; ++effectIndex)
+          {
+            if (iItemEffectCode == itemEffect[effectIndex].nEffectCode)
+            {
+              apply_normal_item_std_effect(
+                itemEffect[effectIndex].nEffectCode,
+                itemEffect[effectIndex].fEffectValue,
+                bEquip);
+            }
+          }
+        }
+      }
+    }
+  }
+  return 0;
+}
+
+char CPlayer::IsEffectableEquip(_STORAGE_LIST::_storage_con *pCon)
+{
+  const unsigned __int8 itemEquipLevel =
+    static_cast<unsigned __int8>(GetItemEquipLevel(pCon->m_byTableCode, pCon->m_wItemIndex));
+  const unsigned __int8 itemEquipUpLevel =
+    static_cast<unsigned __int8>(GetItemEquipUpLevel(pCon->m_byTableCode, pCon->m_wItemIndex));
+  const float level = static_cast<float>(m_Param.GetLevel());
+  const float effHave = m_EP.GetEff_Have(4);
+  if (static_cast<float>(itemEquipLevel) > (level + effHave))
+  {
+    return 0;
+  }
+
+  if (itemEquipUpLevel != static_cast<unsigned __int8>(-1))
+  {
+    const float limitLevel = static_cast<float>(itemEquipUpLevel);
+    const float curLevel = static_cast<float>(m_Param.GetLevel());
+    const float curEffHave = m_EP.GetEff_Have(4);
+    if ((curLevel - curEffHave) > limitLevel)
+    {
+      return 0;
+    }
+  }
+
+  int limNum = 0;
+  _EQUIP_MASTERY_LIM *equipMastery =
+    GetItemEquipMastery(pCon->m_byTableCode, pCon->m_wItemIndex, &limNum);
+  if (!equipMastery)
+  {
+    return 1;
+  }
+
+  for (int index = 0; index < limNum; ++index)
+  {
+    const int equipMasteryCode = equipMastery[index].nMasteryCode;
+    if (equipMasteryCode != -1)
+    {
+      const int mastery = m_pmMst.GetEquipMastery(equipMasteryCode);
+      const unsigned int masteryLimit = _check_equipmastery_lim(equipMasteryCode);
+      const int cappedMastery =
+        mastery >= static_cast<int>(masteryLimit)
+          ? static_cast<int>(_check_equipmastery_lim(equipMasteryCode))
+          : static_cast<int>(m_pmMst.GetEquipMastery(equipMasteryCode));
+      if (cappedMastery < equipMastery[index].nLimMastery)
+      {
+        return 0;
+      }
+    }
+  }
+
+  return 1;
+}
+
+unsigned int CPlayer::_check_equipmastery_lim(int EquipMasteryCode)
+{
+  switch (EquipMasteryCode)
+  {
+    case 0:
+      return static_cast<unsigned int>(_check_mastery_lim(0, 0));
+    case 1:
+      return static_cast<unsigned int>(_check_mastery_lim(0, 1u));
+    case 2:
+      return static_cast<unsigned int>(_check_mastery_lim(6u, 0));
+    case 3:
+      return 99;
+    case 4:
+      return static_cast<unsigned int>(_check_mastery_lim(2u, 0));
+    case 5:
+      return static_cast<unsigned int>(_check_mastery_lim(1u, 0));
+    default:
+      return 99;
+  }
+}
+
+__int64 CPlayer::_check_mastery_lim(unsigned __int8 byMasteryClass, unsigned __int8 byIndex)
+{
+  _base_fld *curRecord = nullptr;
+  _base_fld *baseRecord = nullptr;
+
+  if (m_Param.GetPtrCurClass()->m_nClass < 4 && m_Param.GetPtrBaseClass()->m_nClass < 4)
+  {
+    if (m_Param.GetRaceCode() < 3)
+    {
+      const int maxLevel = static_cast<int>(m_Param.GetMaxLevel());
+      const int curLevel = static_cast<int>(GetLevel());
+      if (curLevel <= maxLevel && GetLevel() > 0)
+      {
+        if (m_Param.m_pClassHistory[0])
+        {
+          _class_fld *curClass = m_Param.GetPtrCurClass();
+          _class_fld *baseClass = m_Param.GetPtrBaseClass();
+          if (curClass->m_nClass == baseClass->m_nClass)
+          {
+            const int recordIndex = static_cast<int>(GetLevel()) - 1;
+            CRecordData *table = s_tblLimMasteryContinue[m_Param.GetRaceCode()];
+            curRecord = table[curClass->m_nClass].GetRecord(recordIndex);
+          }
+          else
+          {
+            const int recordIndex = static_cast<int>(GetLevel()) - 1;
+            CRecordData *table = s_tblLimMastery[m_Param.GetRaceCode()];
+            curRecord = table[curClass->m_nClass].GetRecord(recordIndex);
+            baseRecord = table[baseClass->m_nClass].GetRecord(recordIndex);
+          }
+        }
+        else
+        {
+          const int recordIndex = static_cast<int>(GetLevel()) - 1;
+          CRecordData *table = s_tblLimMastery[m_Param.GetRaceCode()];
+          _class_fld *curClass = m_Param.GetPtrCurClass();
+          curRecord = table[curClass->m_nClass].GetRecord(recordIndex);
+        }
+
+        if (curRecord)
+        {
+          unsigned int curLim = 0;
+          unsigned int baseLim = 0;
+          switch (byMasteryClass)
+          {
+            case 0:
+              curLim = *reinterpret_cast<unsigned int *>(&curRecord[1].m_strCode[4 * byIndex]);
+              if (baseRecord)
+              {
+                baseLim = *reinterpret_cast<unsigned int *>(&baseRecord[1].m_strCode[4 * byIndex]);
+              }
+              break;
+            case 1:
+              curLim = *reinterpret_cast<unsigned int *>(&curRecord[1].m_strCode[12]);
+              if (baseRecord)
+              {
+                baseLim = *reinterpret_cast<unsigned int *>(&baseRecord[1].m_strCode[12]);
+              }
+              break;
+            case 2:
+              curLim = *reinterpret_cast<unsigned int *>(&curRecord[1].m_strCode[16]);
+              if (baseRecord)
+              {
+                baseLim = *reinterpret_cast<unsigned int *>(&baseRecord[1].m_strCode[16]);
+              }
+              break;
+            case 3:
+              curLim = *reinterpret_cast<unsigned int *>(&curRecord[1].m_strCode[4 * byIndex + 32]);
+              if (baseRecord)
+              {
+                baseLim = *reinterpret_cast<unsigned int *>(&baseRecord[1].m_strCode[4 * byIndex + 32]);
+              }
+              break;
+            case 4:
+              curLim = reinterpret_cast<unsigned int *>(&curRecord[2].m_dwIndex)[byIndex];
+              if (baseRecord)
+              {
+                baseLim = reinterpret_cast<unsigned int *>(&baseRecord[2].m_dwIndex)[byIndex];
+              }
+              break;
+            case 5:
+              curLim = *reinterpret_cast<unsigned int *>(&curRecord[1].m_strCode[4 * byIndex + 20]);
+              if (baseRecord)
+              {
+                baseLim = *reinterpret_cast<unsigned int *>(&baseRecord[1].m_strCode[4 * byIndex + 20]);
+              }
+              break;
+            case 6:
+              curLim = *reinterpret_cast<unsigned int *>(&curRecord[1].m_strCode[8]);
+              if (baseRecord)
+              {
+                baseLim = *reinterpret_cast<unsigned int *>(&baseRecord[1].m_strCode[8]);
+              }
+              break;
+            default:
+              break;
+          }
+
+          if (static_cast<int>(curLim) <= static_cast<int>(baseLim))
+          {
+            return baseLim;
+          }
+          return curLim;
+        }
+
+        g_Main.m_logSystemError.Write("_check_mastery_lim.. pCurFld : NULL");
+        return 0;
+      }
+
+      const int level = static_cast<int>(GetLevel());
+      g_Main.m_logSystemError.Write(
+        "_check_mastery_lim.. level : %d, max level : %d",
+        level,
+        maxLevel);
+      return 0;
+    }
+
+    const int raceCode = m_Param.GetRaceCode();
+    g_Main.m_logSystemError.Write("_check_mastery_lim.. racecode : %d", raceCode);
+    return 0;
+  }
+
+  _class_fld *baseClass = m_Param.GetPtrBaseClass();
+  _class_fld *curClass = m_Param.GetPtrCurClass();
+  g_Main.m_logSystemError.Write(
+    "_check_mastery_lim.. cur_class : %d, base_class : %d",
+    curClass->m_nClass,
+    baseClass->m_nClass);
+  return 0;
 }
 
 void CPlayer::apply_case_equip_std_effect(_STORAGE_LIST::_db_con *pItem, bool bEquip)
@@ -5439,6 +6291,22 @@ void CPlayer::SendMsg_PartyLeaveSelfResult(CPartyPlayer *pLeaver, bool bWorldExi
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 5u);
 }
 
+void CPlayer::SendMsg_PartySuccessResult(CPartyPlayer *pSuccessor)
+{
+  char msg[4]{};
+  if (pSuccessor)
+  {
+    *reinterpret_cast<unsigned int *>(msg) = pSuccessor->m_id.dwSerial;
+  }
+  else
+  {
+    *reinterpret_cast<unsigned int *>(msg) = static_cast<unsigned int>(-1);
+  }
+
+  unsigned __int8 type[2] = {16, 16};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, 4u);
+}
+
 void CPlayer::SendMsg_GuildMasterEffect(
   char byState,
   char byGrade,
@@ -5509,7 +6377,37 @@ void wa_PartySelfLeave(_CLID *pidLeaver)
   }
 }
 
-
+void wa_ExitWorld(_CLID *pidWorld)
+{
+  CPartyPlayer *leaver = &g_PartyPlayer[pidWorld->wIndex];
+  if (leaver->m_id.dwSerial == pidWorld->dwSerial && leaver->m_bLogin)
+  {
+    CPartyPlayer *oldBoss = leaver->m_pPartyBoss;
+    CPartyPlayer *newBoss = leaver->m_pPartyBoss;
+    if (leaver->IsPartyMode())
+    {
+      CPartyPlayer **members = leaver->GetPtrPartyMember();
+      for (int j = 0; j < 8 && members[j]; ++j)
+      {
+        if (members[j] != leaver)
+        {
+          CPlayer *notifyPlayer = &g_Player[members[j]->m_wZoneIndex];
+          notifyPlayer->SendMsg_PartyLeaveSelfResult(leaver, true);
+        }
+      }
+    }
+    leaver->ExitWorld(&newBoss);
+    if (newBoss && newBoss != oldBoss)
+    {
+      CPartyPlayer **members = newBoss->GetPtrPartyMember();
+      for (int k = 0; k < 8 && members[k]; ++k)
+      {
+        CPlayer *notifyPlayer = &g_Player[members[k]->m_wZoneIndex];
+        notifyPlayer->SendMsg_PartySuccessResult(newBoss);
+      }
+    }
+  }
+}
 
 
 

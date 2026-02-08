@@ -115,6 +115,8 @@
 #include "DfAIMgr.h"
 #include "RFEvent_ClassRefine.h"
 
+unsigned int TimeLimitMgr::m_dwCnt = 0;
+
 CMainThread::CMainThread() = default;
 
 bool CMainThread::IsTestServer() const
@@ -349,6 +351,18 @@ unsigned __int8 TimeLimitMgr::GetPlayerStatus(unsigned __int16 wIndex)
     return m_lstTLStaus[wIndex].m_byTL_Status;
   }
   return 0;
+}
+
+void TimeLimitMgr::Pop_Data(unsigned int dwAccountSerial, unsigned __int16 wIndex)
+{
+  if (m_dwCnt)
+  {
+    if (dwAccountSerial == m_lstTLStaus[wIndex].m_dwAccountSerial)
+    {
+      memset_0(&m_lstTLStaus[wIndex], 0, sizeof(m_lstTLStaus[wIndex]));
+      --m_dwCnt;
+    }
+  }
 }
 
 bool CMainThread::Init()
@@ -686,7 +700,7 @@ bool CMainThread::Init()
     return false;
   }
 
-  if (!CTSingleton<CCryptor>::Instance()->Init(".\\Initialize\\WorldSystem.bin", 0))
+  if (!CTSingleton<CCryptor>::Instance()->Init(".\\Initialize\\WorldSystem.bin", false))
   {
     MyMessageBox("CMainThread::Init() : ", "CCryptor::Instance()->Init() Fail");
     m_logLoadingError.Write("CCryptor::Instance()->Init()");

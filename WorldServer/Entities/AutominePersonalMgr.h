@@ -10,6 +10,7 @@ class __cppobj AutominePersonalMgr
 public:
   static AutominePersonalMgr *instance();
   bool initialize();
+  AutominePersonal *get_machine(unsigned int nIdx);
 
 private:
   bool init_objects();

@@ -8,13 +8,24 @@
 #include <process.h>
 #include <windows.h>
 
+#include "CPostData.h"
+#include "CPostReturnStorage.h"
+#include "CPostStorage.h"
+#include "CRecordData.h"
+#include "CUnmannedTraderRegistItemInfo.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
 namespace
 {
   char sData[20000]{};
+  char sBuf[0x2800]{};
   char s_personal_amine_log[20000]{};
+  const char *pRace_0[3] = {
+    "Bellato",
+    "Cora",
+    "Accratia"
+  };
   const char *kPersonalAmineUninstallDesc[] = {
     "TYPE0",
     "TYPE1",
@@ -150,6 +161,462 @@ void CMgrAvatorItemHistory::mastery_change_jade(
     static_cast<unsigned int>(static_cast<float>(nLv) + fVal),
     dwNewCum);
   WriteFile(szFileName, sData);
+}
+
+void CMgrAvatorItemHistory::have_auto_item(
+  int n,
+  const CUnmannedTraderRegistItemInfo *pkInfo,
+  unsigned __int8 byMaxCnt)
+{
+  (void)n;
+
+  if (pkInfo && byMaxCnt)
+  {
+    tm *localTime = nullptr;
+    char buffer[260]{};
+    std::memset(buffer, 0, 256);
+    char hasData = 0;
+
+    for (unsigned __int8 index = 0; index < byMaxCnt; ++index)
+    {
+      auto *info = const_cast<CUnmannedTraderRegistItemInfo *>(&pkInfo[index]);
+      if (info->IsRegist())
+      {
+        if (!hasData)
+        {
+          strcat_0(sData, "\r\n== UnmannedTrader Regist Info ==\r\n");
+        }
+        ++hasData;
+
+        const int itemIndex = info->GetItemIndex();
+        const unsigned __int8 tableCode = info->GetTableCode();
+        _base_fld *record = g_Main.m_tblItemData[tableCode].GetRecord(itemIndex);
+        const __int64 *startTimePtr = info->GetStartTimePtr();
+        localTime = localtime_5(startTimePtr);
+        if (localTime)
+        {
+          std::sprintf(
+            buffer,
+            "%04d-%02d-%02d %02d:%02d:%02d",
+            localTime->tm_year + 1900,
+            localTime->tm_mon + 1,
+            localTime->tm_mday,
+            localTime->tm_hour,
+            localTime->tm_min,
+            localTime->tm_sec);
+        }
+        else
+        {
+          const int startTime = info->GetStartTime();
+          std::sprintf(buffer, "invalid(%u)", startTime);
+        }
+
+        const int sellTurn = info->GetSellTurm();
+        const unsigned int price = info->GetPrice();
+        const unsigned int etSerial = info->GetETSerial();
+        const unsigned int dwLvBit = info->GetU();
+        const unsigned __int8 upgTableCode = info->GetTableCode();
+        char *upgInfo = DisplayItemUpgInfo(upgTableCode, dwLvBit);
+        const unsigned __int64 dValue = info->GetD();
+        char *code = record->m_strCode;
+        const int storageIndex = info->GetStorageIndex();
+        const unsigned int registSerial = info->GetRegistSerial();
+
+        std::sprintf(
+          sBuf,
+          "%u : reg(%u) storageinx(%u) %s_%u_@%s[%u] price(%u) regtime(%s) sellturm(%u) \r\n",
+          index,
+          registSerial,
+          storageIndex,
+          code,
+          dValue,
+          upgInfo,
+          etSerial,
+          price,
+          buffer,
+          sellTurn);
+        strcat_0(sData, sBuf);
+      }
+    }
+
+    if (hasData)
+    {
+      strcat_0(sData, "================================\r\n\r\n");
+    }
+  }
+  else
+  {
+    sprintf_s(
+      sBuf,
+      0x2800uLL,
+      "\r\n== UnmannedTrader Regist Info pkInfo(%p) byMacCnt(%u) ==\r\n",
+      pkInfo,
+      byMaxCnt);
+    strcat_s(sData, 0x4E20uLL, sBuf);
+  }
+}
+
+void CMgrAvatorItemHistory::have_item_close(
+  int n,
+  char *pszName,
+  _AVATOR_DATA *pLoadData,
+  _AVATOR_DATA *pBackupData,
+  char *pszID,
+  unsigned int dwIDSerial,
+  unsigned __int8 byDgr,
+  unsigned int dwIP,
+  unsigned int dwExpRate,
+  const CUnmannedTraderRegistItemInfo *pkInfo,
+  unsigned __int8 byMaxCnt,
+  char *pszFileName)
+{
+  (void)n;
+  (void)pszName;
+  (void)pBackupData;
+  (void)pszID;
+  (void)byDgr;
+  (void)dwIP;
+
+  sData[0] = 0;
+  g_Main.m_tblClass.GetRecord(pLoadData->dbAvator.m_zClassHistory[0]);
+  g_Main.m_tblClass.GetRecord(pLoadData->dbAvator.m_zClassHistory[1]);
+  g_Main.m_tblClass.GetRecord(pLoadData->dbAvator.m_zClassHistory[2]);
+  strcat_0(sData, "\r\n\t============\r\n\r\n");
+  have_auto_item(n, pkInfo, byMaxCnt);
+
+  std::sprintf(
+    sBuf,
+    "LV: %d\r\nXP: %.0f (%d)\r\n$D: %u\r\n$G: %u\r\nPvP: %.0f\r\nCB: %.0f\r\nTIME: %d\r\n\r\n",
+    pLoadData->dbAvator.m_byLevel,
+    static_cast<double>(pLoadData->dbAvator.m_dExp),
+    dwExpRate,
+    pLoadData->dbAvator.m_dwDalant,
+    pLoadData->dbAvator.m_dwGold,
+    static_cast<double>(pLoadData->dbAvator.m_dPvPPoint),
+    static_cast<double>(pLoadData->dbAvator.m_dPvPCashBag),
+    pLoadData->dbAvator.m_dwTotalPlayMin);
+  strcat_0(sData, sBuf);
+
+  std::sprintf(sBuf, "EQUIP\r\n");
+  strcat_0(sData, sBuf);
+  for (int tableCode = 0; tableCode < 8; ++tableCode)
+  {
+    _EQUIPKEY *equipKey = &pLoadData->dbAvator.m_EquipKey[tableCode];
+    if (equipKey->IsFilled())
+    {
+      _base_fld *record = g_Main.m_tblItemData[tableCode].GetRecord(equipKey->zItemIndex);
+      const char *upgInfo = DisplayItemUpgInfo(tableCode, pLoadData->dbAvator.m_dwFixEquipLv[tableCode]);
+      std::sprintf(
+        sBuf,
+        "\t%s_@%s[%I64u]\r\n",
+        record->m_strCode,
+        upgInfo,
+        pLoadData->dbAvator.m_lnUID[tableCode]);
+      strcat_0(sData, sBuf);
+    }
+  }
+
+  std::sprintf(sBuf, "EMBELL\r\n");
+  strcat_0(sData, sBuf);
+  for (int tableCode = 0; tableCode < 7; ++tableCode)
+  {
+    _EQUIP_DB_BASE::_EMBELLISH_LIST *embellish = &pLoadData->dbEquip.m_EmbellishList[tableCode];
+    if (embellish->Key.IsFilled())
+    {
+      _base_fld *record =
+        g_Main.m_tblItemData[embellish->Key.byTableCode].GetRecord(embellish->Key.wItemIndex);
+      std::sprintf(sBuf, "\t%s[%I64u]\r\n", record->m_strCode, embellish->lnUID);
+      strcat_0(sData, sBuf);
+    }
+  }
+
+  std::sprintf(sBuf, "INVEN\r\n");
+  strcat_0(sData, sBuf);
+  for (int slot = 0; slot < 20 * pLoadData->dbAvator.m_byBagNum; ++slot)
+  {
+    _INVEN_DB_BASE::_LIST *listEntry = &pLoadData->dbInven.m_List[slot];
+    if (listEntry->Key.IsFilled())
+    {
+      _base_fld *record =
+        g_Main.m_tblItemData[listEntry->Key.byTableCode].GetRecord(listEntry->Key.wItemIndex);
+      if (record)
+      {
+        const char *upgInfo = DisplayItemUpgInfo(listEntry->Key.byTableCode, listEntry->dwUpt);
+        std::sprintf(
+          sBuf,
+          "\t%s_%u_@%s[%I64u]\r\n",
+          record->m_strCode,
+          listEntry->dwDur,
+          upgInfo,
+          listEntry->lnUID);
+        strcat_0(sData, sBuf);
+      }
+    }
+  }
+
+  std::sprintf(sBuf, "FORCE\r\n");
+  strcat_0(sData, sBuf);
+  for (int index = 0; index < 88; ++index)
+  {
+    _FORCE_DB_BASE::_LIST *forceEntry = &pLoadData->dbForce.m_List[index];
+    if (forceEntry->Key.IsFilled())
+    {
+      const unsigned __int8 forceIndex = forceEntry->Key.GetIndex();
+      _base_fld *record = g_Main.m_tblItemData[15].GetRecord(forceIndex);
+      const unsigned int stat = forceEntry->Key.GetStat();
+      std::sprintf(sBuf, "\t%s_%u[%I64u]\r\n", record->m_strCode, stat, forceEntry->lnUID);
+      strcat_0(sData, sBuf);
+    }
+  }
+
+  std::sprintf(sBuf, "RES\r\n");
+  strcat_0(sData, sBuf);
+  for (int index = 0; index < 20; ++index)
+  {
+    _CUTTING_DB_BASE::_LIST *listEntry = &pLoadData->dbCutting.m_List[index];
+    if (listEntry->Key.IsFilled())
+    {
+      _base_fld *record = g_Main.m_tblItemData[18].GetRecord(listEntry->Key.wItemIndex);
+      if (record)
+      {
+        std::sprintf(sBuf, "\t%s_%u\r\n", record->m_strCode, listEntry->dwDur);
+        strcat_0(sData, sBuf);
+      }
+      else
+      {
+        g_Main.m_logSystemError.Write(
+          "CMgrAvatorItemHistory::have_item_close() : _CUTTING_DB_BASE::_LIST* pList->Key.wItemIndex(%u) i(%d) Serial(%u)",
+          listEntry->Key.wItemIndex,
+          index,
+          dwIDSerial);
+      }
+    }
+  }
+
+  const unsigned __int8 raceCode = static_cast<unsigned __int8>(pLoadData->dbAvator.m_byRaceSexCode >> 1);
+  if (raceCode)
+  {
+    if (raceCode == 1)
+    {
+      std::sprintf(sBuf, "ANIMUS\r\n");
+      strcat_0(sData, sBuf);
+      for (int index = 0; index < 4; ++index)
+      {
+        _ANIMUS_DB_BASE::_LIST *listEntry = &pLoadData->dbAnimus.m_List[index];
+        if (listEntry->Key.IsFilled())
+        {
+          _base_fld *record = g_Main.m_tblItemData[24].GetRecord(listEntry->Key.byItemIndex);
+          std::sprintf(
+            sBuf,
+            "\t%s_%u[%I64u]\r\n",
+            record->m_strCode,
+            listEntry->dwExp,
+            listEntry->lnUID);
+          strcat_0(sData, sBuf);
+        }
+      }
+    }
+  }
+  else
+  {
+    std::sprintf(sBuf, "UNIT\r\n");
+    strcat_0(sData, sBuf);
+    for (int index = 0; index < 4; ++index)
+    {
+      unsigned __int8 *unitData = &pLoadData->dbUnit.m_List[index].bySlotIndex;
+      if (pLoadData->dbUnit.m_List[index].byFrame != 255)
+      {
+        std::sprintf(
+          sBuf,
+          "\t%d>fr:%d %d/%d/%d/%d/%d/%d\r\n",
+          index,
+          unitData[1],
+          unitData[6],
+          unitData[7],
+          unitData[8],
+          unitData[9],
+          unitData[10],
+          unitData[11]);
+        strcat_0(sData, sBuf);
+      }
+    }
+  }
+
+  std::sprintf(
+    sBuf,
+    "TRUNK (slot:%d, ^D:%.0f, ^G:%.0f)\r\n",
+    pLoadData->dbTrunk.bySlotNum,
+    static_cast<double>(pLoadData->dbTrunk.dDalant),
+    static_cast<double>(pLoadData->dbTrunk.dGold));
+  strcat_0(sData, sBuf);
+  for (int index = 0; index < pLoadData->dbTrunk.bySlotNum; ++index)
+  {
+    _TRUNK_DB_BASE::_LIST *listEntry = &pLoadData->dbTrunk.m_List[index];
+    if (listEntry->Key.IsFilled())
+    {
+      _base_fld *record =
+        g_Main.m_tblItemData[listEntry->Key.byTableCode].GetRecord(listEntry->Key.wItemIndex);
+      const unsigned __int8 raceIndex = listEntry->byRace;
+      const char *upgInfo = DisplayItemUpgInfo(listEntry->Key.byTableCode, listEntry->dwUpt);
+      std::sprintf(
+        sBuf,
+        "\t%s_%u_@%s[%I64u] %s\r\n",
+        record->m_strCode,
+        listEntry->dwDur,
+        upgInfo,
+        listEntry->lnUID,
+        pRace_0[raceIndex]);
+      strcat_0(sData, sBuf);
+    }
+  }
+
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::post_storage(CPostStorage *pStorage, char *pFileName)
+{
+  char szTran[21]{};
+  char sender[17]{};
+  char buffer[64]{};
+
+  sData[0] = 0;
+  strcat_s(sData, 0x4E20uLL, "\r\n\t============\r\n\r\n");
+  const int size = pStorage->GetSize();
+  sprintf_s(
+    sBuf,
+    0x2800uLL,
+    "POST STORAGE >> POST NUM = %d\r\n\r\n\t%s%14s%11s%18s%17s%37s%15s\r\n",
+    size,
+    "[No]",
+    "[PostSerial]",
+    "[State]",
+    "[Sender]",
+    "[Title]",
+    "[Item]",
+    "[Gold]");
+  strcat_s(sData, 0x4E20uLL, sBuf);
+  if (size > 0)
+  {
+    for (int index = 0; index < 50; ++index)
+    {
+      CPostData *postData = pStorage->GetPostDataFromInx(index);
+      if (postData && postData->GetState() != 255)
+      {
+        if (postData->m_Key.IsFilled())
+        {
+          _base_fld *record =
+            g_Main.m_tblItemData[postData->m_Key.byTableCode].GetRecord(postData->m_Key.wItemIndex);
+          const char *upgInfo = DisplayItemUpgInfo(postData->m_Key.byTableCode, postData->m_dwUpt);
+          sprintf_s(
+            buffer,
+            0x40uLL,
+            "%s_%I64u_@%s[%I64u]",
+            record->m_strCode,
+            postData->m_dwDur,
+            upgInfo,
+            postData->m_lnUID);
+        }
+        else
+        {
+          sprintf_s(buffer, 0x40uLL, "NoItem");
+        }
+        W2M(postData->m_wszTitle, szTran, 0x15u);
+        W2M(postData->m_wszSendName, sender, 0x11u);
+        const char *state = postData->m_byState == 1 ? "Read" : "NotRead";
+        sprintf_s(
+          sBuf,
+          0x2800uLL,
+          "\t%3d %13u %10s %17s %22s %34s %10u\r\n",
+          postData->m_nNumber,
+          postData->m_dwPSSerial,
+          state,
+          sender,
+          szTran,
+          buffer,
+          postData->m_dwGold);
+        strcat_s(sData, 0x4E20uLL, sBuf);
+      }
+    }
+  }
+  strcat_s(sData, 0x4E20uLL, "\r\n\t============\r\n\r\n");
+  WriteFile(pFileName, sData);
+}
+
+void CMgrAvatorItemHistory::return_post_storage(CPostReturnStorage *pReturn, char *pFileName)
+{
+  char szTran[21]{};
+  char receiver[17]{};
+  char buffer[64]{};
+
+  sData[0] = 0;
+  strcat_s(sData, 0x4E20uLL, "\r\n\t============\r\n\r\n");
+  const int size = pReturn->GetSize();
+  sprintf_s(
+    sBuf,
+    0x2800uLL,
+    "RETURN POST STORAGE >> RETURN POST NUM = %d\r\n\r\n\t%s%14s%11s%18s%17s%37s%15s\r\n",
+    size,
+    "[No]",
+    "[PostSerial]",
+    "[Receiver]",
+    "[State]",
+    "[Title]",
+    "[Item]",
+    "[Gold]");
+  strcat_s(sData, 0x4E20uLL, sBuf);
+  if (size > 0)
+  {
+    for (int index = 0; index < 10; ++index)
+    {
+      CPostData *postData = pReturn->GetPostDataFromInx(index);
+      if (postData && postData->GetState() != 255)
+      {
+        if (postData->m_Key.IsFilled())
+        {
+          _base_fld *record =
+            g_Main.m_tblItemData[postData->m_Key.byTableCode].GetRecord(postData->m_Key.wItemIndex);
+          const char *upgInfo = DisplayItemUpgInfo(postData->m_Key.byTableCode, postData->m_dwUpt);
+          sprintf_s(
+            buffer,
+            0x40uLL,
+            "%s_%I64u_@%s[%I64u]",
+            record->m_strCode,
+            postData->m_dwDur,
+            upgInfo,
+            postData->m_lnUID);
+        }
+        else
+        {
+          sprintf_s(buffer, 0x40uLL, "NoItem");
+        }
+        W2M(postData->m_wszTitle, szTran, 0x15u);
+        W2M(postData->m_wszRecvName, receiver, 0x11u);
+        const char *state = postData->m_byState == 1 ? "Read" : "NotRead";
+        sprintf_s(
+          sBuf,
+          0x2800uLL,
+          "\t%3d %13u %10s %17s %22s %34s %10u\r\n",
+          postData->m_nNumber,
+          postData->m_dwPSSerial,
+          state,
+          receiver,
+          szTran,
+          buffer,
+          postData->m_dwGold);
+        strcat_s(sData, 0x4E20uLL, sBuf);
+      }
+    }
+  }
+  strcat_s(sData, 0x4E20uLL, "\r\n\t============\r\n\r\n");
+  WriteFile(pFileName, sData);
+}
+
+void CMgrAvatorItemHistory::close(int n, char *pCloseCode, char *pszFileName)
+{
+  (void)n;
+
+  std::sprintf(sData, "\r\nCLOSE %s [%s %s]\r\n\r\n", pCloseCode, this->m_szCurDate, this->m_szCurTime);
+  WriteFile(pszFileName, sData);
 }
 
 CMgrAvatorItemHistory::CMgrAvatorItemHistory()

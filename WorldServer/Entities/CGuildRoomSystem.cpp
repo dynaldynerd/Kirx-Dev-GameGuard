@@ -216,3 +216,16 @@ bool CGuildRoomSystem::Init()
 
   return true;
 }
+
+int CGuildRoomSystem::RoomOut(unsigned int dwGuildSerial, int n, unsigned int dwCharSerial)
+{
+  for (int index = 0; index < 90; ++index)
+  {
+    CGuildRoomInfo &room = m_vecGuildRoom[index];
+    if (room.IsRent() && room.GetGuildSerial() == dwGuildSerial)
+    {
+      return room.RoomOut(n, dwCharSerial);
+    }
+  }
+  return 3;
+}

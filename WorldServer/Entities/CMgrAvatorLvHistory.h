@@ -7,6 +7,7 @@
 #include "CNetIndexList.h"
 
 class CPartyPlayer;
+struct _MASTERY_PARAM;
 
 class __cppobj CMgrAvatorLvHistory
 {
@@ -33,6 +34,19 @@ public:
   };
 
   void alter_pvp(int n, long double dPvpVariation, CPartyPlayer *pParty, char *pszFileName);
+  void update_mastery(
+    int n,
+    unsigned __int8 byUserDgr,
+    unsigned int dwLv,
+    long double dExp,
+    unsigned int dwExpRate,
+    int nGrade,
+    int *pnMaxPoint,
+    _MASTERY_PARAM *pData,
+    unsigned int *pdwAlter,
+    char *pszFileName,
+    unsigned __int8 byLogType,
+    char *pszTitle);
   void WriteFile(char *pszFileName, char *pszLog);
 
   char m_szStdPath[128];

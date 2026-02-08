@@ -15,6 +15,8 @@ During the implementation of `CMapOperation::Init` and its sub-flows, the follow
 | `WorldServerUtil.cpp` | `GetWeaponClass` | `s_ptblItemData[6]` | `_base_fld *` | Uses `Record[6].m_strCode[8]`. |
 | `WorldServerUtil.cpp` | `GetItemGrade` | `s_ptblItemData[nTableCode]` | `_base_fld *` | Uses `Record[3].m_strCode[0]`. |
 | `WorldServerUtil.cpp` | `GetItemEquipLevel` | `s_ptblItemData[nTableCode]` | `_base_fld *` | Uses `Record[4].m_strCode[8]`, `Record[8].m_strCode[8]`, `Record[4].m_strCode[4]`, `Record[4].m_strCode[48]`, `Record[4].m_strCode[60]`, `Record[4].m_strCode[52]` depending on table code. |
+| `WorldServerUtil.cpp` | `GetItemEquipUpLevel` | `s_ptblItemData[nTableCode]` | `_base_fld *` | Uses `Record[4].m_strCode[12]`, `Record[8].m_strCode[12]`, `Record[4].m_strCode[8]`, `Record[4].m_strCode[52]`, `Record[5].m_dwIndex`, `Record[4].m_strCode[56]` depending on table code. |
+| `WorldServerUtil.cpp` | `GetItemEquipMastery` | `s_ptblItemData[nTableCode]` | `_base_fld *` | Returns `_EQUIP_MASTERY_LIM *` via `&Record[4].m_strCode[20]` or `&Record[8].m_strCode[20]` depending on table code. |
 | `CPlayer.cpp` | `_WEAPON_PARAM::FixWeapon` | `g_Main.m_tblItemData[6]` | `_base_fld *` | Uses `Record[6].m_strCode[8]`, `Record[9].m_strCode[60/56/48/20]`, `Record[10].m_strCode[...]`, `Record[3].m_strCode[4/8]`, `Record[4].m_strCode[4/8]`, `Record[5].m_strCode[12]`. |
 | `TimeLimitJade.cpp` | `InsertWaitList` | `g_Main.m_tblItemData[pkItem->m_byTableCode]` | `_base_fld *` | Uses `Record[5].m_strCode[44]` (start hour) and `Record[5].m_strCode[48]` (use time). |
 | `CPlayer.cpp` | `SetHaveEffectUseTime` | `g_Main.m_tblItemData[pItem->m_byTableCode]` | `_base_fld *` | Uses `Record[6].m_dwIndex` and `Record[6].m_strCode[12*i + {0,4,8}]` for effect data. |
@@ -24,6 +26,7 @@ During the implementation of `CMapOperation::Init` and its sub-flows, the follow
 | `CPlayer.cpp` | `SetHaveEffect` | `g_Main.m_tblItemData[...]` | `_base_fld *` | Uses `Record[5].m_strCode[44]`, `Record[5].m_strCode[52]`, `Record[6].m_dwIndex`, `Record[6].m_strCode[12*i + {0,4,8}]`. |
 | `CPlayer.cpp` | `_GetItemEffect` | `g_Main.m_tblItemData[pItem->m_byTableCode]` | `_base_fld *` | Returns `_ITEM_EFFECT *` via `Record + 51`, `Record + 89`, `Record + 43`, `&Record[5].m_strCode[28]`, or `&Record[6]` depending on table code. |
 | `CPlayer.cpp` | `_MASTERY_PARAM::UpdateCumPerMast` | `_MASTERY_PARAM::s_pSkillData` | `_base_fld *` | Uses `Record[4].m_strCode[60]` (skill lv), `Record[1].m_strCode[4]` (skill class). |
+| `CPlayer.cpp` | `CPlayer::_check_mastery_lim` | `CPlayer::s_tblLimMastery*` | `_base_fld *` | Uses `Record[1].m_strCode[4*byIndex]`, `Record[1].m_strCode[12/16/20/8]`, `Record[1].m_strCode[4*byIndex+32]`, and `Record[2].m_dwIndex` as mastery limits. |
 | `WorldServerUtil.cpp` | `GetUsePcCashType` | `s_ptblItemData[byTblCode]` | `_base_fld *` | Uses `Record[9].m_strCode[16/40]`, `Record[8].m_strCode[12]`, `Record[7].m_strCode[48]`, `Record[5].m_strCode[60]`. |
 | `CGoldenBoxItemMgr.cpp` | `CGoldenBoxItemMgr::SetGoldBoxItemIndex` | `g_Main.m_tblItemData[17]` | `_base_fld *` | IDA uses `*(_DWORD *)&Record[3].m_strCode[4]` to filter records; needs review for correct field mapping. |
 | `WorldServerUtil.cpp` | `GetAnimusFldFromExp` | `CAnimus::s_tblParameter[nAnimusClass]` | `_base_fld *` | IDA compares `*(_QWORD *)Record[1].m_strCode` to exp; indicates non-base layout usage. |
@@ -52,3 +55,4 @@ During the implementation of `CMapOperation::Init` and its sub-flows, the follow
 | `WorldServerUtil.cpp` | `IsCashItem` | `s_ptblItemData[byTblCode]` | `_base_fld *` | Uses `Record[6].m_strCode[48]`, `Record[9].m_strCode[12/36]`, `Record[5].m_strCode[48/44/60/56]`, `Record[8].m_strCode[8]`, `Record[7].m_strCode[44/32/8]`, `Record[6].m_strCode[0]`. |
 > [!NOTE]
 > Rule 9: `CRecordData::GetRecord` usually returns `_base_fld`. Re-casters should be careful with structure packing and offsets.
+| `WorldServerUtil.cpp` | `InitMasteryFormula` | `pSkillData` / `pForceData` | `_base_fld *` | Uses `Record[1].m_strCode[4]` and `Record[4].m_strCode[60]` to fill mastery-level tables; verify offsets. |

@@ -681,6 +681,11 @@ unsigned __int8 _FORCEKEY::GetIndex()
   return static_cast<unsigned __int8>(dwKey >> 24);
 }
 
+unsigned int _FORCEKEY::GetStat()
+{
+  return dwKey & 0xFFFFFFu;
+}
+
 bool _ANIMUSKEY::IsFilled()
 {
   return byItemIndex != 0xFF;
@@ -699,6 +704,39 @@ void _ANIMUSKEY::LoadDBKey(unsigned __int8 key)
 unsigned __int8 _ANIMUSKEY::CovDBKey()
 {
   return byItemIndex;
+}
+
+void _PCBANG_FAVOR_ITEM_DB_BASE::Init()
+{
+  for (int index = 0; index < 50; ++index)
+  {
+    lnUID[index] = static_cast<unsigned __int64>(-1);
+  }
+}
+
+char _PCBANG_FAVOR_ITEM_DB_BASE::InsertItem(_STORAGE_LIST::_db_con *Item)
+{
+  for (int index = 0; index < 50; ++index)
+  {
+    if (lnUID[index] == static_cast<unsigned __int64>(-1))
+    {
+      lnUID[index] = Item->m_lnUID;
+      return 1;
+    }
+  }
+  return 0;
+}
+
+char _PCBANG_FAVOR_ITEM_DB_BASE::IsDeleteItem(_STORAGE_LIST::_db_con *Item)
+{
+  for (int index = 0; index < 50; ++index)
+  {
+    if (lnUID[index] != static_cast<unsigned __int64>(-1) && lnUID[index] == Item->m_lnUID)
+    {
+      return 1;
+    }
+  }
+  return 0;
 }
 
 bool _INVEN_DB_BASE::_LIST::Set(const _STORAGE_LIST::_db_con *pItem)

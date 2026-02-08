@@ -3,6 +3,9 @@
 #include "IdaCompat.h"
 
 /* 1730 */
+class CPlayer;
+struct _class_fld;
+
 class __cppobj CPlayerDB
 {
 public:
@@ -13,10 +16,15 @@ public:
   char *GetCharNameA();
   const char *GetCharNameW();
   unsigned int GetCharSerial();
+  long double GetExp();
+  float *GetCurPos();
   long double GetPvPPoint();
   void SetPvPPoint(long double dPoint);
   unsigned int GetGuildSerial();
   unsigned int GetLevel();
+  unsigned int GetMaxLevel();
+  _class_fld *GetPtrCurClass();
+  _class_fld *GetPtrBaseClass();
   unsigned int GetHP();
   void SetHP(unsigned int dwHP);
   unsigned int GetFP();
@@ -32,6 +40,9 @@ public:
   unsigned __int8 GetBagNum();
   unsigned __int16 GetNewItemSerial();
   static char CalcCharGrade(unsigned __int8 byLv, unsigned __int16 wRankRate);
+  void InitPlayerDB(CPlayer *pThis);
+  void InitResBuffer();
+  void InitAlterMastery();
 
   unsigned __int8 m_byPvPGrade;
   __unaligned __declspec(align(1)) _character_db_load m_dbChar;

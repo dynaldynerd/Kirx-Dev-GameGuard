@@ -16,6 +16,7 @@ public:
 
   CUnmannedTraderItemState();
   void Clear();
+  unsigned int GetState() const;
 
   STATE m_eState;
 };

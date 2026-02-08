@@ -6,6 +6,11 @@
 /* 1215 */
 class __cppobj __declspec(align(8)) CPostData
 {
+public:
+  CPostData();
+  void Init();
+  unsigned __int8 GetState();
+
   int m_nNumber;
   unsigned __int8 m_byState;
   unsigned __int8 m_byErrCode;

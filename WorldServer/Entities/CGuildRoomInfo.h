@@ -33,6 +33,9 @@ public:
 
   void Room_Initialize();
   void SetRoomMapInfo(CMapData *pMap, unsigned __int16 wMapLayer, unsigned __int8 byRoomType, unsigned __int8 byRace);
+  bool IsRent();
+  unsigned int GetGuildSerial();
+  int RoomOut(int n, unsigned int dwCharSerial);
 
   bool m_bRent;
   unsigned __int8 m_byRoomType;

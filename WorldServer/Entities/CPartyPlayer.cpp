@@ -221,6 +221,15 @@ bool CPartyPlayer::RemovePartyMember(CPartyPlayer *pExiter, CPartyPlayer **ppout
   return true;
 }
 
+void CPartyPlayer::ExitWorld(CPartyPlayer **ppoutNewBoss)
+{
+  m_bLogin = false;
+  m_id.dwSerial = static_cast<unsigned int>(-1);
+  if (IsPartyMode())
+  {
+    m_pPartyBoss->RemovePartyMember(this, ppoutNewBoss);
+  }
+}
 
 CPlayer *CPartyPlayer::GetLootAuthor()
 {

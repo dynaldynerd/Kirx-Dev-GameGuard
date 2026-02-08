@@ -1219,3 +1219,84 @@ void CHolyStoneSystem::On_HS_SCENE_KEEPER_CHAOS_TIME()
   g_Keeper->SetDamageAbleState(0);
   SendMsg_HolyKeeperStateChaos();
 }
+
+bool _QUEST_CASH::isload()
+{
+  return dwAvatorSerial != static_cast<unsigned int>(-1);
+}
+
+bool _QUEST_CASH_OTHER::isLoaded()
+{
+  return dwAvatorSerial != 0;
+}
+
+bool CHolyStoneSystem::IsControlScene()
+{
+  return GetSceneCode() == 3 || GetSceneCode() == 4;
+}
+
+void CHolyStoneSystem::PushStoreQuestCash(
+  unsigned int dwAvatorSerial,
+  unsigned __int8 byQuestType,
+  int nPvpPoint,
+  unsigned __int16 wKillPoint,
+  unsigned __int16 wDiePoint,
+  unsigned __int8 byCristalBattleDBInfo,
+  unsigned __int8 byHSKTime)
+{
+  if (m_SaveData.m_nSceneCode == 1)
+  {
+    for (int j = 0; j < 5064; ++j)
+    {
+      _QUEST_CASH *entry = &m_cashQuest[j];
+      if (entry->isload() && entry->dwAvatorSerial == dwAvatorSerial)
+      {
+        entry->byQuestType = byQuestType;
+        entry->nPvpPoint = nPvpPoint;
+        entry->wKillPoint = wKillPoint;
+        entry->wDiePoint = wDiePoint;
+        entry->byCristalBattleDBInfo = byCristalBattleDBInfo;
+        entry->byHSKTime = byHSKTime;
+        return;
+      }
+    }
+    for (int j = 0; j < 5064; ++j)
+    {
+      _QUEST_CASH *entry = &m_cashQuest[j];
+      if (!entry->isload())
+      {
+        entry->dwAvatorSerial = dwAvatorSerial;
+        entry->byQuestType = byQuestType;
+        entry->nPvpPoint = nPvpPoint;
+        entry->wKillPoint = wKillPoint;
+        entry->wDiePoint = wDiePoint;
+        entry->byCristalBattleDBInfo = byCristalBattleDBInfo;
+        entry->byHSKTime = byHSKTime;
+        return;
+      }
+    }
+  }
+}
+
+void CHolyStoneSystem::PushQuestCash_Other(unsigned int dwAvatorSerial, unsigned __int8 byStoneMapMoveInfo)
+{
+  for (int j = 0; j < 5064; ++j)
+  {
+    _QUEST_CASH_OTHER *entry = &m_cashQuestOther[j];
+    if (entry->isLoaded() && entry->dwAvatorSerial == dwAvatorSerial)
+    {
+      entry->byStoneMapMoveInfo = byStoneMapMoveInfo;
+      return;
+    }
+  }
+  for (int j = 0; j < 5064; ++j)
+  {
+    _QUEST_CASH_OTHER *entry = &m_cashQuestOther[j];
+    if (!entry->isLoaded())
+    {
+      entry->dwAvatorSerial = dwAvatorSerial;
+      entry->byStoneMapMoveInfo = byStoneMapMoveInfo;
+      return;
+    }
+  }
+}

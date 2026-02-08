@@ -21,6 +21,7 @@ public:
   int GetCashItemPrice(_CashShop_str_fld *pFld);
   const char *GetItemName(_NameTxt_fld *pFld);
   const char *GetNoneString();
+  int GetNationCode();
   bool IsApplyPcbangPrimium(const CPlayer *pUser);
   bool IsCashDBUseExtRef();
   bool IsCashDBInit();

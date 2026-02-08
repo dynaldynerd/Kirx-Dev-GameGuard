@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "ClassOrderProcessor.h"
+#include "PatriarchElectProcessor.h"
 
 #include <cstring>
 
@@ -18,4 +19,10 @@ ClassOrderProcessor::ClassOrderProcessor()
       _kSend[raceIndex].body[classType].byClassType = static_cast<unsigned __int8>(classType);
     }
   }
+}
+
+ClassOrderProcessor *ClassOrderProcessor::Instance()
+{
+  PatriarchElectProcessor *processor = PatriarchElectProcessor::Instance();
+  return static_cast<ClassOrderProcessor *>(processor->_kProcessor[ElectProcessor::_eClassOrderProcessor]);
 }

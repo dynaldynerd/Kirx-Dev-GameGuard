@@ -77,6 +77,48 @@ CUnmannedTraderUserInfo *CUnmannedTraderUserInfoTable::FindUser(unsigned __int16
   return Find(dwSerial);
 }
 
+unsigned __int8 CUnmannedTraderUserInfoTable::GetMaxRegistCnt(unsigned __int16 wInx, unsigned int dwSerial)
+{
+  if (this->m_veckInfo.empty() || this->m_veckInfo.size() <= wInx)
+  {
+    return 0;
+  }
+
+  CUnmannedTraderUserInfo &info = this->m_veckInfo[wInx];
+  if (!info.IsLogInState())
+  {
+    return 0;
+  }
+  if (info.GetSerial() != dwSerial)
+  {
+    return 0;
+  }
+
+  return info.GetMaxRegistCnt();
+}
+
+const CUnmannedTraderRegistItemInfo *CUnmannedTraderUserInfoTable::GetRegItemInfo(
+  unsigned __int16 wInx,
+  unsigned int dwSerial)
+{
+  if (this->m_veckInfo.empty() || this->m_veckInfo.size() <= wInx)
+  {
+    return nullptr;
+  }
+
+  CUnmannedTraderUserInfo &info = this->m_veckInfo[wInx];
+  if (!info.IsLogInState())
+  {
+    return nullptr;
+  }
+  if (info.GetSerial() != dwSerial)
+  {
+    return nullptr;
+  }
+
+  return info.GetRegItemInfo();
+}
+
 void CUnmannedTraderUserInfoTable::CompleteSearch(
   unsigned __int8 byDBRet,
   unsigned __int8 byProcRet,
@@ -99,5 +141,13 @@ void CUnmannedTraderUserInfoTable::CompleteSearch(
         user->SendSearchResult(owner->m_ObjID.m_wIndex, pLoadData);
       }
     }
+  }
+}
+
+void CUnmannedTraderUserInfoTable::LogOut(unsigned __int16 wInx, unsigned int dwSerial)
+{
+  if (!this->m_veckInfo.empty() && this->m_veckInfo.size() > wInx)
+  {
+    this->m_veckInfo[wInx].LogOut(dwSerial, this->m_pkLogger);
   }
 }

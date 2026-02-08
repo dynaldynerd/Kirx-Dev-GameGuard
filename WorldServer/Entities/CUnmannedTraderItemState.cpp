@@ -12,3 +12,8 @@ void CUnmannedTraderItemState::Clear()
 {
   this->m_eState = STATE::NONE;
 }
+
+unsigned int CUnmannedTraderItemState::GetState() const
+{
+  return static_cast<unsigned int>(m_eState);
+}
