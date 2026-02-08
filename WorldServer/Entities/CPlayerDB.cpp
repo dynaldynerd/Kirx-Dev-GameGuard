@@ -70,6 +70,16 @@ unsigned int CPlayerDB::GetGuildSerial()
   return static_cast<unsigned int>(-1);
 }
 
+unsigned __int8 CPlayerDB::GetClassInGuild()
+{
+  return m_byClassInGuild;
+}
+
+void CPlayerDB::SetClassInGuild(unsigned __int8 byClassInGuild)
+{
+  m_byClassInGuild = byClassInGuild;
+}
+
 unsigned int CPlayerDB::GetLevel()
 {
   return this->m_dbChar.m_byLevel;

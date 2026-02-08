@@ -39,6 +39,7 @@ unsigned int GetLoopTime();
 int GetCurrentDay();
 int GetCurrentYear();
 int GetCurrentMonth();
+void GetTodayStr(char *szToday);
 unsigned int GetLocalDate();
 unsigned int eGetLocalDate();
 int GetCurDay();
@@ -94,11 +95,14 @@ int MyCrtDebugReportHook(int reportType, char *message, int *returnValue);
 void ServerProgramExit(const char *source, int reason);
 void IOFileWrite_0(char *pszFileName, unsigned int nLen, char *pszData);
 void IOFileWrite_1(char *pszFileName, unsigned int nLen, char *pszData);
+void IOFileWrite(char *pszFileName, unsigned int nLen, char *pszData);
 void __trace(const char *fmt, ...);
 __time64_t time_20(__int64 *_Time);
 __time64_t time_18(__int64 *_Time);
+__time64_t time_17(__int64 *_Time);
 __time64_t mktime_3(tm *_Tm);
 tm *localtime_5(const __int64 *_Time);
+tm *localtime_2(const __int64 *_Time);
 CMerchant *FindEmptyNPC(CMerchant *pNPC, int nMax);
 void NetTrace(const char *fmt, ...);
 void StripEXT(char *szPath);
@@ -230,6 +234,9 @@ void R3EnvironmentShakeOff();
 void ClearDynamicLight();
 void Error(char *source, char *msg);
 void Warning(char *source, char *msg);
+
+bool CanAddMoneyForMaxLimMoney(unsigned __int64 ui64AddMoney, unsigned __int64 ui64HasMoney);
+void MakeBinaryStr(const unsigned __int8 *pBuff, unsigned __int64 tBufSize, char *pOut, rsize_t tOutSize);
 
 // Merge-file helpers.
 CMergeFileManager *GetMergeFileManager();

@@ -6,6 +6,9 @@
 #include "CFrameRate.h"
 #include "CNetIndexList.h"
 
+struct _qry_case_lobby_logout;
+struct _REGED;
+
 class __cppobj CMgrAccountLobbyHistory
 {
 public:
@@ -47,4 +50,19 @@ public:
   CNetIndexList m_listLogDataEmpty_200;
   bool m_bIOThread;
   CFrameRate m_FrameRate;
+
+  CMgrAccountLobbyHistory();
+  ~CMgrAccountLobbyHistory();
+  void enter_lobby(
+    unsigned int dwAccountSerial,
+    char *pAccountID,
+    unsigned __int8 byUserDgr,
+    unsigned int dwIpAddress,
+    bool bFirst,
+    char *pszFileName);
+  void lobby_disconnect(_qry_case_lobby_logout *pRegeData, char *pszFileName);
+  void recovery_char_complete(unsigned __int8 byRetCode, _REGED *pAvator, char *pszFileName);
+  void WriteFile(char *pszFileName, char *pszLog);
+  void OnLoop();
+  static void IOThread(char *pv);
 };

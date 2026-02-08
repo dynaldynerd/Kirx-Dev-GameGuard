@@ -12,6 +12,14 @@ public:
   static CPostSystemManager *Instace();
   bool Init();
   bool InitLogger();
+  unsigned __int8 UpdateRegist(char *pData);
+  unsigned __int8 PostSend(char *pData);
+  unsigned __int8 PostReceiverCheck(char *pData);
+  void CompleteRegist(char *pData);
+  void CompleteSend(char *pData);
+  void CompletePostReceiverCheck(char *pData);
+  void Log(const char *fmt, ...);
+  void Log(const wchar_t *fmt, ...);
 
   unsigned __int8 m_byRegiNum;
   unsigned __int8 m_byProcNum;

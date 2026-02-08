@@ -162,6 +162,31 @@ bool CNetIndexList::PopNode_Front(unsigned int *outIndex)
   return true;
 }
 
+bool CNetIndexList::PopNode_Back(unsigned int *outIndex)
+{
+  if (this == nullptr || outIndex == nullptr)
+  {
+    return false;
+  }
+
+  this->m_csList.Lock();
+  if (this->m_Tail.m_pPrev == &this->m_Head)
+  {
+    this->m_csList.Unlock();
+    return false;
+  }
+
+  _index_node *node = this->m_Tail.m_pPrev;
+  *outIndex = node->m_dwIndex;
+  this->m_Tail.m_pPrev = node->m_pPrev;
+  node->m_pPrev->m_pNext = &this->m_Tail;
+  --this->m_dwCount;
+  InsertBefore(&this->m_BufTail, node);
+  ++this->m_dwBufCount;
+  this->m_csList.Unlock();
+  return true;
+}
+
 bool CNetIndexList::CopyFront(unsigned int *outIndex)
 {
   if (this == nullptr || outIndex == nullptr)

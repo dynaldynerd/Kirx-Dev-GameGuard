@@ -52,8 +52,54 @@ public:
   unsigned __int8 ManageAcceptORRefuseGuildBattle(bool bAccept);
   void SendMsg_ApplyGuildBattleResultInform(char byRet, char *wszDestGuildName);
   void SendMsg_GuildBattleRefused(char *pwszName);
+  void SendMsg_GuildBattleSuggestResult(unsigned __int8 byRet, char *wszDestGuildName);
+  char SendMsg_GuildBattleProposed(char *pwszName);
   void PushDQSInGuildBattleCost();
   void PushDQSDestGuildOutputGuildBattleCost();
+  void CompleteOutGuildbattleCost(
+    unsigned int dwSrcGuildSerial,
+    unsigned int dwStartTimeInx,
+    unsigned int dwMemberCntInx,
+    unsigned int dwMapInx);
+  void UpdateGuildBattleWinCnt(unsigned int dwTotWin, unsigned int dwTotDraw, unsigned int dwTotLose);
+  unsigned __int8 CheckGuildBattleSuggestRequestToDestGuild(
+    unsigned int dwSrcGuildSerial,
+    unsigned int dwStartTimeInx,
+    unsigned int dwMemberCntInx,
+    unsigned int dwMapInx);
+  unsigned __int8 DestGuildIsAvailableBattleRequestState();
+  void SetGuildBattleMatter(
+    unsigned int dwSrcGuildSerial,
+    unsigned int dwStartTime,
+    unsigned int dwNumber,
+    unsigned int dwMapIdx);
+  void IOMoney(
+    const char *pwszIOerName,
+    unsigned int dwIOerSerial,
+    long double dIODalant,
+    long double dIOGold,
+    long double dTotalDalant,
+    long double dTotalGold,
+    unsigned __int8 *pbyDate,
+    bool bInPut);
+  void PushHistory_IOMoney(
+    bool bInput,
+    const char *pwszIOerName,
+    unsigned int dwIOerSerial,
+    long double dIODalant,
+    long double dIOGold,
+    long double dLeftDalant,
+    long double dLeftGold,
+    unsigned __int8 *pbyDate);
+  void MakeMoneyIOPacket();
+  void SendMsg_IOMoney(
+    unsigned int dwIOerSerial,
+    long double dIODalant,
+    long double dIOGold,
+    bool bInPut,
+    unsigned __int8 *pbyDate);
+  long double GetTotalDalant();
+  long double GetTotalGold();
 
 public:
   int m_nIndex;

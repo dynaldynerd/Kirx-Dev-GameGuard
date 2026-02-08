@@ -24,6 +24,7 @@
 #include "CGameStatistics.h"
 #include "R3EngineState.h"
 #include "CNetworkEX.h"
+#include "CVoteSystem.h"
 
 class CWnd;
 struct _CCRFG_SEND_BUFFER;
@@ -59,6 +60,7 @@ extern CLogFile g_logSchedule;
 extern CHolyStoneSystem g_HolySys;
 extern CWorldSchedule g_WorldSch;
 extern CGameStatistics g_GameStatistics;
+extern CVoteSystem g_VoteSys[3];
 extern CMainThread g_Main;
 extern CNetworkEX g_Network;
 extern CWnd *g_pFrame;

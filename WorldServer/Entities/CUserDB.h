@@ -1,7 +1,10 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "CLogFile.h"
 #include "CMainThread.h"
+#include "CMgrAccountLobbyHistory.h"
+#include "MOVE_LOBBY_DELAY.h"
 
 struct _EXIT_ALTER_PARAM;
 
@@ -10,6 +13,9 @@ class __cppobj __declspec(align(8)) CUserDB
 {
 public:
   static int s_nLoginNum;
+  static CLogFile s_logAvatorDB;
+  static CMgrAccountLobbyHistory s_MgrLobbyHistory;
+  static _MOVE_LOBBY_DELAY s_MoveLobbyDelay;
 
   _GLBID m_gidGlobal;
   _CLID m_idWorld;
@@ -87,13 +93,48 @@ public:
   bool Update_SFContUpdate(unsigned __int8 byContCode, unsigned __int8 bySlotIndex, unsigned __int16 wTime);
   bool Update_Stat(unsigned __int8 byStatIndex, unsigned int dwNewCum, bool bUpdate);
   bool Update_UnitData(unsigned __int8 bySlotIndex, _UNIT_DB_BASE::_LIST *pData);
+  void SetDBPostData(
+    unsigned int n,
+    unsigned int dwSerial,
+    int nNumber,
+    unsigned __int8 byState,
+    int nKey,
+    unsigned __int64 dwDur,
+    unsigned int dwUpt,
+    unsigned int dwGold,
+    bool bUpdateIndex,
+    unsigned __int64 lnUID);
+  void SetNewDBPostData(
+    unsigned int n,
+    unsigned int dwSerial,
+    int nNumber,
+    unsigned __int8 byState,
+    char *wszSendName,
+    char *wszRecvName,
+    char *wszTitle,
+    char *wszContent,
+    int nKey,
+    unsigned __int64 dwDur,
+    unsigned int dwUpt,
+    unsigned int dwGold,
+    unsigned __int64 lnUID);
+  void DelPostData(unsigned int dwIndex);
   char Update_Param(_EXIT_ALTER_PARAM *pCon);
   void ForceCloseCommand(unsigned __int8 byKickType, unsigned int dwPushIP, bool bSlow, const char *pszCause);
   void SetWorldCLID(unsigned int dwSerial, unsigned int *pipAddr);
   void SendMsgAccount_UILockRefresh_Update();
+  void Lobby_Char_Complete(unsigned __int8 byRetCode);
+  void Cont_UserSave_Complete(unsigned __int8 byResult, _AVATOR_DATA *pAvatorData);
+  void Alive_Char_Complete(
+    unsigned __int8 byRetCode,
+    unsigned __int8 byCase,
+    unsigned int dwSerial,
+    _REGED *pAliveAvator);
   _AVATOR_DATA *IsContPushBefore();
   void Exit_Account_Request();
   void Exit_Account_Complete(unsigned __int8 byRetCode);
+  static void ReRangeClientIndex(_AVATOR_DATA *pData);
+  static char CheckDQSLoadCharacterData(_AVATOR_DATA *pData);
   virtual ~CUserDB() = default;
 };
 

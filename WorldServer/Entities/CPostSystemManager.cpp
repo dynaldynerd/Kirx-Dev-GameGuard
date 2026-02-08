@@ -2,8 +2,19 @@
 
 #include "CPostSystemManager.h"
 
+#include <cstdarg>
+
+#include "CMgrAvatorItemHistory.h"
+#include "CMainThread.h"
+#include "CPlayer.h"
+#include "CPostReturnStorage.h"
+#include "CPostStorage.h"
+#include "CRFWorldDatabase.h"
+#include "CUserDB.h"
+#include "GlobalObjects.h"
 #include "KorLocalTime.h"
 #include "WorldServerUtil.h"
+#include "qry_case_post_send.h"
 
 #include <cstdio>
 
@@ -58,4 +69,374 @@ bool CPostSystemManager::Init()
   }
 
   return true;
+}
+
+
+void CPostSystemManager::Log(const char *fmt, ...)
+{
+  if (!m_pkLogger)
+  {
+    return;
+  }
+
+  va_list va;
+  va_start(va, fmt);
+  m_pkLogger->WriteFromArg(fmt, va);
+  va_end(va);
+}
+
+void CPostSystemManager::Log(const wchar_t *fmt, ...)
+{
+  if (!m_pkLogger)
+  {
+    return;
+  }
+
+  va_list va;
+  va_start(va, fmt);
+  m_pkLogger->WriteFromArg(fmt, va);
+  va_end(va);
+}
+
+
+unsigned __int8 CPostSystemManager::UpdateRegist(char *pData)
+{
+  for (unsigned int j = 0; j < *reinterpret_cast<unsigned int *>(pData); ++j)
+  {
+    char *entry = &pData[304 * j + 8];
+    int nK = static_cast<int>(reinterpret_cast<_INVENKEY *>(pData + 304 * j + 276)->CovDBKey());
+    bool updated = g_Main.m_pWorldDB->Update_PostRegistry(
+      *reinterpret_cast<unsigned int *>(entry),
+      *reinterpret_cast<unsigned int *>(entry + 8),
+      entry + 12,
+      entry + 29,
+      entry + 46,
+      entry + 67,
+      nK,
+      *reinterpret_cast<unsigned long long *>(entry + 272),
+      *reinterpret_cast<unsigned int *>(entry + 280),
+      *reinterpret_cast<unsigned int *>(entry + 296),
+      static_cast<unsigned __int8>(entry[5]),
+      static_cast<unsigned __int8>(entry[6]),
+      *reinterpret_cast<unsigned long long *>(entry + 288));
+    entry[4] = updated ? 1 : 0;
+  }
+  return 0;
+}
+
+unsigned __int8 CPostSystemManager::PostSend(char *pData)
+{
+  for (unsigned int j = 0; j < *reinterpret_cast<unsigned int *>(pData); ++j)
+  {
+    char *entry = &pData[312 * j + 8];
+    if (!entry[0])
+    {
+      int recvCount = g_Main.m_pWorldDB->Select_PostRecvStorageCheck(*reinterpret_cast<unsigned int *>(entry + 12));
+      if (recvCount >= 50)
+      {
+        entry[0] = 10;
+      }
+    }
+
+    unsigned __int8 errCode = 0;
+    unsigned int ownerSerial = 0;
+    if (entry[0])
+    {
+      errCode = 100;
+      ownerSerial = *reinterpret_cast<unsigned int *>(entry + 16);
+    }
+    else
+    {
+      errCode = 0;
+      ownerSerial = *reinterpret_cast<unsigned int *>(entry + 12);
+    }
+
+    if (!g_Main.m_pWorldDB->Select_PostStorageRecordCheck())
+    {
+      g_Main.m_pWorldDB->Insert_PostStorageRecord();
+    }
+
+    unsigned __int8 number[36]{};
+    if (g_Main.m_pWorldDB->Select_PostStorageEmptyRecordSerial(reinterpret_cast<unsigned int *>(entry + 8)))
+    {
+      int nK = static_cast<int>(reinterpret_cast<_INVENKEY *>(entry + 276)->CovDBKey());
+      g_Main.m_pWorldDB->Update_PostStorageSendToRecver(
+        ownerSerial,
+        *reinterpret_cast<unsigned int *>(entry + 8),
+        errCode,
+        entry + 20,
+        entry + 37,
+        entry + 54,
+        entry + 75,
+        nK,
+        *reinterpret_cast<unsigned long long *>(entry + 280),
+        *reinterpret_cast<unsigned int *>(entry + 288),
+        *reinterpret_cast<unsigned int *>(entry + 304),
+        static_cast<unsigned __int8>(entry[0]),
+        0xFFu,
+        number,
+        true,
+        *reinterpret_cast<unsigned long long *>(entry + 296));
+    }
+  }
+
+  return 0;
+}
+
+unsigned __int8 CPostSystemManager::PostReceiverCheck(char *pData)
+{
+  unsigned int outSerial[8]{};
+  unsigned int accSerial[8]{};
+  unsigned int fatigue[8]{};
+  unsigned __int8 status[16]{};
+
+  for (unsigned int j = 0; j < *reinterpret_cast<unsigned int *>(pData); ++j)
+  {
+    unsigned int race[5]{};
+    char *entry = &pData[32 * j + 4];
+    g_Main.m_pWorldDB->Update_PostRegistryDisable(*reinterpret_cast<unsigned int *>(entry));
+    unsigned __int8 dbRet = g_Main.m_pWorldDB->Select_PostRecvSerialFromName(
+      entry + 7,
+      outSerial,
+      accSerial,
+      race);
+    if (dbRet)
+    {
+      entry[28] = (dbRet == 2) ? 9 : 8;
+    }
+    else
+    {
+      dbRet = g_Main.m_pWorldDB->Select_PlayerTimeLimitInfo(accSerial[0], fatigue, status);
+      if (!dbRet || dbRet == 2)
+      {
+        bool invalid = false;
+        if (entry[6])
+        {
+          if (static_cast<unsigned __int8>(entry[4]) >= 2u)
+          {
+            invalid = accSerial[0] < 0x77359400;
+          }
+          else
+          {
+            invalid = accSerial[0] >= 0x77359400;
+          }
+        }
+        if (invalid)
+        {
+          entry[28] = 8;
+        }
+        else if (status[0] == 99)
+        {
+          entry[28] = 18;
+        }
+        else
+        {
+          if (static_cast<unsigned __int8>(entry[5]) == race[0] / 2)
+          {
+            *reinterpret_cast<unsigned int *>(entry + 24) = outSerial[0];
+          }
+          else
+          {
+            entry[28] = 13;
+          }
+        }
+      }
+      else
+      {
+        entry[28] = 8;
+      }
+    }
+  }
+
+  return 0;
+}
+
+
+void CPostSystemManager::CompleteRegist(char *pData)
+{
+  for (unsigned int j = 0; j < *reinterpret_cast<unsigned int *>(pData); ++j)
+  {
+    char *entry = &pData[304 * j + 8];
+    if (pData[304 * j + 12])
+    {
+      m_listProc.PushNode_Back(*reinterpret_cast<unsigned int *>(entry));
+    }
+    else
+    {
+      int nK = static_cast<int>(reinterpret_cast<_INVENKEY *>(entry + 268)->CovDBKey());
+      Log(
+        "CPostSystemManager::CompleteRegist() Serial(%d),PostInx(%d),K(%d),D(%d),U(%d),Gold(%d)",
+        *reinterpret_cast<unsigned int *>(entry + 8),
+        *reinterpret_cast<unsigned int *>(entry),
+        nK,
+        *reinterpret_cast<unsigned long long *>(entry + 272),
+        *reinterpret_cast<unsigned int *>(entry + 280),
+        *reinterpret_cast<unsigned int *>(entry + 296));
+      m_listEmpty.PushNode_Back(*reinterpret_cast<unsigned int *>(entry));
+    }
+  }
+}
+
+void CPostSystemManager::CompleteSend(char *pData)
+{
+  for (unsigned int j = 0; j < *reinterpret_cast<unsigned int *>(pData); ++j)
+  {
+    char *entry = &pData[312 * j + 8];
+    if (entry[0])
+    {
+      ++m_nPostReturnCountPerDay;
+      CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, *reinterpret_cast<unsigned int *>(entry + 16));
+      if (player && player->m_bOper && player->m_bPostLoad)
+      {
+        CPostData *postData = &m_PostData[*reinterpret_cast<unsigned int *>(entry + 4)];
+        CPostData *post = player->m_Param.m_ReturnPostStorage.AddReturnPost(
+          static_cast<unsigned __int8>(entry[0]),
+          *reinterpret_cast<unsigned int *>(entry + 8),
+          0x64u,
+          postData->m_wszRecvName,
+          postData->m_wszTitle,
+          postData->m_wszContent,
+          postData->m_Key,
+          postData->m_dwDur,
+          postData->m_dwUpt,
+          postData->m_dwGold,
+          postData->m_lnUID);
+        if (post)
+        {
+          if (post->m_Key.IsFilled() || post->m_dwGold)
+          {
+            CPlayer::s_MgrItemHistory.post_returnreceive(post, player->m_szItemHistoryFileName);
+          }
+          player->SendMsg_PostReturn(
+            post->m_byErrCode,
+            post->m_dwPSSerial,
+            post->m_wszRecvName,
+            post->m_wszTitle,
+            post->m_wszContent,
+            post->m_Key.byTableCode,
+            post->m_Key.wItemIndex,
+            post->m_dwDur,
+            post->m_dwUpt,
+            post->m_dwGold);
+        }
+        else
+        {
+          int size = player->m_Param.m_ReturnPostStorage.GetSize();
+          Log(
+            "CPostSystemManager::CompletePostReturn() :AddReturnPost: SenderSerial(%d),PSSize(%d)",
+            *reinterpret_cast<unsigned int *>(entry + 16),
+            size);
+        }
+      }
+    }
+    m_listEmpty.PushNode_Back(*reinterpret_cast<unsigned int *>(entry + 4));
+  }
+}
+
+void CPostSystemManager::CompletePostReceiverCheck(char *pData)
+{
+  _qry_case_post_send qry;
+  int nNumber[5]{};
+
+  for (unsigned int j = 0; j < *reinterpret_cast<unsigned int *>(pData); ++j)
+  {
+    char *entry = &pData[32 * j + 4];
+    CPostData *postData = &m_PostData[*reinterpret_cast<unsigned int *>(entry)];
+    bool handled = false;
+
+    if (!pData[32 * j + 32])
+    {
+      CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, *reinterpret_cast<unsigned int *>(entry + 24));
+      if (player)
+      {
+        if (player->m_bPostLoad && player->m_bOper)
+        {
+          if (player->m_Param.m_PostStorage.GetSize() < 50)
+          {
+            int index = -1;
+            nNumber[0] = static_cast<unsigned int>(-1);
+            postData->SetState(2u);
+            index = player->m_Param.m_PostStorage.AddNewPost(
+              postData->m_dwSenderSerial,
+              postData->m_wszSendName,
+              postData->m_wszRecvName,
+              postData->m_wszTitle,
+              postData->m_wszContent,
+              postData->m_Key,
+              postData->m_dwDur,
+              postData->m_dwUpt,
+              postData->m_dwGold,
+              0,
+              postData->m_byState,
+              nNumber,
+              postData->m_lnUID);
+            CPostData *post = player->m_Param.m_PostStorage.GetPostDataFromInx(index);
+            int nK = static_cast<int>(post->m_Key.CovDBKey());
+            player->m_pUserDB->SetNewDBPostData(
+              index,
+              0,
+              post->m_nNumber,
+              post->m_byState,
+              post->m_wszSendName,
+              post->m_wszRecvName,
+              post->m_wszTitle,
+              post->m_wszContent,
+              nK,
+              post->m_dwDur,
+              post->m_dwUpt,
+              post->m_dwGold,
+              post->m_lnUID);
+            if (post->m_Key.IsFilled() || post->m_dwGold)
+            {
+              CPlayer::s_MgrItemHistory.post_receive(post, player->m_szItemHistoryFileName);
+            }
+            bool hasGold = post->m_dwGold != 0;
+            bool hasItem = post->m_Key.IsFilled();
+            player->SendMsg_PostDelivery(
+              nNumber[0],
+              index,
+              post->m_wszSendName,
+              post->m_wszTitle,
+              hasItem,
+              hasGold,
+              0);
+            m_listEmpty.PushNode_Back(*reinterpret_cast<unsigned int *>(entry));
+            handled = true;
+          }
+          else
+          {
+            entry[28] = 10;
+          }
+        }
+        else
+        {
+          entry[28] = 8;
+        }
+      }
+    }
+
+    if (!handled)
+    {
+      qry.pushdata(
+        *reinterpret_cast<unsigned int *>(entry),
+        static_cast<unsigned __int8>(entry[28]),
+        *reinterpret_cast<unsigned int *>(entry + 24),
+        postData->m_dwSenderSerial,
+        postData->m_wszSendName,
+        postData->m_wszRecvName,
+        postData->m_wszTitle,
+        postData->m_wszContent,
+        postData->m_Key,
+        postData->m_dwDur,
+        postData->m_dwUpt,
+        postData->m_dwGold,
+        postData->m_lnUID);
+    }
+  }
+
+  if (qry.dwCount)
+  {
+    int size = static_cast<int>(qry.size());
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x4Eu, reinterpret_cast<char *>(&qry), size);
+  }
 }

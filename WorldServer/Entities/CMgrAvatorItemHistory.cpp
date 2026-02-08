@@ -473,6 +473,36 @@ void CMgrAvatorItemHistory::have_item_close(
   WriteFile(pszFileName, sData);
 }
 
+void CMgrAvatorItemHistory::post_receive(CPostData *pPost, char *pFileName)
+{
+  char sender[17]{};
+  sData[0] = 0;
+
+  W2M(pPost->m_wszSendName, sender, 0x11u);
+  if (pPost->m_Key.IsFilled())
+  {
+    _base_fld *record = g_Main.m_tblItemData[pPost->m_Key.byTableCode].GetRecord(pPost->m_Key.wItemIndex);
+    const char *upgInfo = DisplayItemUpgInfo(pPost->m_Key.byTableCode, pPost->m_dwUpt);
+    sprintf_s(sBuf, 0x2800uLL, "%s_%I64u_@%s[%I64u]", record->m_strCode, pPost->m_dwDur, upgInfo, pPost->m_lnUID);
+  }
+  else
+  {
+    sprintf_s(sBuf, 0x2800uLL, "NoItem");
+  }
+
+  sprintf_s(
+    sData,
+    0x4E20uLL,
+    "[PostSystem : Post Receive] - PostSerial[%u] - Item[%s] - Gold[%u] - Sender[%s] - [%s %s]\r\n",
+    pPost->m_dwPSSerial,
+    sBuf,
+    pPost->m_dwGold,
+    sender,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pFileName, sData);
+}
+
 void CMgrAvatorItemHistory::post_storage(CPostStorage *pStorage, char *pFileName)
 {
   char szTran[21]{};
@@ -539,6 +569,36 @@ void CMgrAvatorItemHistory::post_storage(CPostStorage *pStorage, char *pFileName
     }
   }
   strcat_s(sData, 0x4E20uLL, "\r\n\t============\r\n\r\n");
+  WriteFile(pFileName, sData);
+}
+
+void CMgrAvatorItemHistory::post_returnreceive(CPostData *pPost, char *pFileName)
+{
+  char receiver[17]{};
+  sData[0] = 0;
+
+  W2M(pPost->m_wszRecvName, receiver, 0x11u);
+  if (pPost->m_Key.IsFilled())
+  {
+    _base_fld *record = g_Main.m_tblItemData[pPost->m_Key.byTableCode].GetRecord(pPost->m_Key.wItemIndex);
+    const char *upgInfo = DisplayItemUpgInfo(pPost->m_Key.byTableCode, pPost->m_dwUpt);
+    sprintf_s(sBuf, 0x2800uLL, "%s_%I64u_@%s[%I64u]", record->m_strCode, pPost->m_dwDur, upgInfo, pPost->m_lnUID);
+  }
+  else
+  {
+    sprintf_s(sBuf, 0x2800uLL, "NoItem");
+  }
+
+  sprintf_s(
+    sData,
+    0x4E20uLL,
+    "[PostSystem : Return Post Receive] - PostSerial[%u] - Item[%s] - Gold[%u] - Receiver[%s] - [%s %s]\r\n",
+    pPost->m_dwPSSerial,
+    sBuf,
+    pPost->m_dwGold,
+    receiver,
+    m_szCurDate,
+    m_szCurTime);
   WriteFile(pFileName, sData);
 }
 
@@ -609,6 +669,43 @@ void CMgrAvatorItemHistory::return_post_storage(CPostReturnStorage *pReturn, cha
   }
   strcat_s(sData, 0x4E20uLL, "\r\n\t============\r\n\r\n");
   WriteFile(pFileName, sData);
+}
+
+void CMgrAvatorItemHistory::patriarch_push_money(
+  char *pwszPatriarchName,
+  unsigned int dwPushDalant,
+  unsigned int dwLeftDalant,
+  char *pszFileName)
+{
+  memset_0(sData, 0, sizeof(sData));
+  sprintf(
+    sData,
+    "[PATRIARCH PUSH TAX MONEY]: PATRIARCH(%s) pay(D:%u) $D:%u [%s %s]\r\n",
+    pwszPatriarchName,
+    dwPushDalant,
+    dwLeftDalant,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::guild_est_money_rollback(
+  int n,
+  char *pszGuildName,
+  unsigned int dwEstDalant,
+  unsigned int dwLeftDalant,
+  char *pszFileName)
+{
+  sprintf(
+    sData,
+    "GUILD EST PAY ROLLBACK: guild(%s) pay(D:%u) $D:%u [%s %s]\r\n",
+    pszGuildName,
+    dwEstDalant,
+    dwLeftDalant,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pszFileName, sData);
+  (void)n;
 }
 
 void CMgrAvatorItemHistory::close(int n, char *pCloseCode, char *pszFileName)

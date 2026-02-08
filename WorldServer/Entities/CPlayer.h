@@ -18,6 +18,7 @@
 
 
 struct _RTL_CRITICAL_SECTION_DEBUG;
+struct _DB_QRY_SYN_DATA;
 struct _PCBANG_PLAY_TIME;
 struct _DB_QRY_SYN_DATA;
 struct _base_fld;
@@ -971,6 +972,15 @@ public:
   static unsigned int s_dwTotalCloseCount;
   static unsigned int s_dwAbnormalCloseCount;
   static void SetStaticMember();
+  static void Guild_Insert_Complete(_DB_QRY_SYN_DATA *pData);
+  static void Guild_Join_Accept_Complete(_DB_QRY_SYN_DATA *pData);
+  static void Guild_Self_Leave_Complete(_DB_QRY_SYN_DATA *pData);
+  static void Guild_Force_Leave_Complete(_DB_QRY_SYN_DATA *pData);
+  static void Guild_Push_Money_Complete(_DB_QRY_SYN_DATA *pData);
+  static void Guild_Pop_Money_Complete(_DB_QRY_SYN_DATA *pData);
+  static void Guild_Buy_Emblem_Complete(_DB_QRY_SYN_DATA *pData);
+  static void Guild_Disjoint_Complete(_DB_QRY_SYN_DATA *pData);
+  static void Guild_Update_GuildMater_Complete(_DB_QRY_SYN_DATA *pData);
   void Init(_object_id *pID);
   void PastWhisperInit();
   _STORAGE_LIST::_db_con *Emb_AddStorage(
@@ -1004,6 +1014,45 @@ public:
   void SendMsg_BuddhaEventMsg(char byErrorCode);
   void SendMsg_AlterItemDurInform(char byStorageCode, unsigned __int16 wItemSerial, unsigned __int64 dwDur);
   void SendMsg_EquipPartChange(unsigned __int8 byPart);
+  void SendMsg_PostDelivery(
+    char byIndex,
+    unsigned int dwPostSerial,
+    char *wszSendName,
+    char *wszTitle,
+    bool bItem,
+    bool bGold,
+    unsigned __int8 byState);
+  void SendMsg_PostReturn(
+    char byErrCode,
+    unsigned int dwPostSerial,
+    char *wszRecvName,
+    char *wszTitle,
+    char *wszContent,
+    unsigned __int8 byTableCode,
+    unsigned __int16 wItemIndex,
+    unsigned __int64 dwDur,
+    unsigned int dwLv,
+    unsigned int dwGold);
+  void SendMsg_PostContent(
+    unsigned __int8 byErrCode,
+    unsigned int dwPostSerial,
+    char *wszContent,
+    unsigned __int8 byTableCode,
+    unsigned __int16 wItemIndex,
+    unsigned __int64 dwDur,
+    unsigned int dwLv,
+    unsigned int dwGold);
+  void SendData_ChatTrans(
+    unsigned __int8 byChatType,
+    unsigned int dwSenderSerial,
+    unsigned __int8 byRaceCode,
+    bool bFilter,
+    char *pwszMessage,
+    unsigned __int8 byPvpGrade,
+    char *pwszSender);
+  void AlterDalant(double dDalant);
+  void SendMsg_ExchangeMoneyResult(char byErrCode);
+  void SendMsg_InformTaxIncome(unsigned __int8 byRet, unsigned int dwComm, char *pwszDate);
   unsigned __int16 GetVisualVer();
   void UpdateVisualVer(CashChangeStateFlag byChangeFlagMask);
   unsigned __int8 GetEffectEquipCode(unsigned __int8 byStorageCode, unsigned __int8 bySlotIndex);
@@ -1147,6 +1196,7 @@ public:
   bool _LockUnitKey(unsigned __int8 bySlotIndex, bool bLock);
   void SendMsg_UnitForceReturnInform(char bySlotIndex, unsigned int dwDebt);
   void SendMsg_UnitAlterFeeInform(char bySlotIndex, unsigned int dwPullingFee);
+  void AddDalant(int dwPush, bool bApply);
   void SubDalant(unsigned int dwSub);
   void SendMsg_RemainOreRate();
   void SendMsg_OreTransferCount();

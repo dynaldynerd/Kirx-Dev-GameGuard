@@ -10,6 +10,43 @@ public:
   CPostData();
   void Init();
   unsigned __int8 GetState();
+  void SetState(unsigned __int8 byState);
+  void SetPostContent(char *wszContent);
+  void SetPostItemSerial(unsigned __int64 lnUID);
+  void SetPostData(
+    int nNumber,
+    unsigned int dwSenderSerial,
+    char *wszSendName,
+    char *wszRecvName,
+    char *wszTitle,
+    _INVENKEY Key,
+    unsigned __int64 dwDur,
+    unsigned int dwUpt,
+    unsigned int dwGold,
+    unsigned int dwPSSerial,
+    unsigned __int8 bySendRace,
+    unsigned __int8 bySenderDgr);
+  void SetPostTitleData(
+    int nNumber,
+    unsigned int dwPSSerial,
+    unsigned __int8 byState,
+    char *wszSendName,
+    char *wszTitle,
+    _INVENKEY Key,
+    unsigned __int64 dwDur,
+    unsigned int dwUpt,
+    unsigned int dwGold,
+    bool bUpdateIndex);
+  void SetReturnPostData(
+    unsigned __int8 byErrCode,
+    unsigned int dwPostSerial,
+    char *wszRecvName,
+    char *wszTitle,
+    char *wszContent,
+    _INVENKEY Key,
+    unsigned __int64 dwDur,
+    unsigned int dwUpt,
+    unsigned int dwGold);
 
   int m_nNumber;
   unsigned __int8 m_byState;

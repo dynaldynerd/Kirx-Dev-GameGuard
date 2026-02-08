@@ -187,7 +187,7 @@ void CUnmannedTraderUserInfo::SendSearchResult(unsigned __int16 wInx, char *pLoa
     char *item = msg + 19 + 48 * index;
 
     *reinterpret_cast<unsigned int *>(item) = *reinterpret_cast<unsigned int *>(reqData + dataOffset + 168);
-    key.LoadDBKey(*reinterpret_cast<_INVENKEY *>(reqData + dataOffset + 172));
+    key.LoadDBKey(*reinterpret_cast<int *>(reqData + dataOffset + 172));
     item[4] = static_cast<char>(key.byTableCode);
     *reinterpret_cast<unsigned __int16 *>(item + 5) = key.wItemIndex;
     *reinterpret_cast<unsigned __int64 *>(item + 7) =

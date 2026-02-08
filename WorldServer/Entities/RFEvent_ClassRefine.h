@@ -19,6 +19,7 @@ struct __declspec(align(4)) _event_participant_classrefine
   unsigned __int8 nCurRefineCnt;
 
   bool IsChanged();
+  __int64 size();
 };
 
 #ifndef _FILETIME_

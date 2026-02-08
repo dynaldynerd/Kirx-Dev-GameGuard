@@ -1,3 +1,274 @@
 #include "pch.h"
 
 #include "CMgrAccountLobbyHistory.h"
+
+#include <cstdio>
+#include <process.h>
+#include <winsock2.h>
+
+#include "CMainThread.h"
+#include "GlobalObjects.h"
+#include "WorldServerUtil.h"
+#include "qry_logout.h"
+
+namespace
+{
+  char sLData[20000];
+  char sLBuf[10240];
+}
+
+CMgrAccountLobbyHistory::CMgrAccountLobbyHistory()
+  : m_dwLastLocalDate(0),
+    m_dwLastLocalHour(0),
+    m_bIOThread(true)
+{
+  char returnedString[128]{};
+  GetPrivateProfileStringA(
+    "System",
+    "HistoryPath",
+    "C:\\History",
+    returnedString,
+    0x80u,
+    "..\\WorldInfo\\WorldInfo.ini");
+  CreateDirectoryA(returnedString, nullptr);
+  sprintf_s(m_szStdPath, "%s\\Lobby", returnedString);
+  CreateDirectoryA(m_szStdPath, nullptr);
+
+  _strdate(m_szCurDate);
+  m_szCurDate[5] = 0;
+  _strtime(m_szCurTime);
+  m_szCurTime[5] = 0;
+
+  m_tmrUpdateTime.BeginTimer(0xEA60u);
+
+  m_listLogData_10K.SetList(0xFEu);
+  m_listLogDataEmpty_10K.SetList(0xFEu);
+  for (unsigned int index = 0; index < 254; ++index)
+  {
+    m_listLogDataEmpty_10K.PushNode_Back(index);
+  }
+
+  m_listLogData_1K.SetList(0xFEu);
+  m_listLogDataEmpty_1K.SetList(0xFEu);
+  for (unsigned int index = 0; index < 254; ++index)
+  {
+    m_listLogDataEmpty_1K.PushNode_Back(index);
+  }
+
+  m_listLogData_200.SetList(0x9E4u);
+  m_listLogDataEmpty_200.SetList(0x9E4u);
+  for (unsigned int index = 0; index < 2532; ++index)
+  {
+    m_listLogDataEmpty_200.PushNode_Back(index);
+  }
+
+  _beginthread(reinterpret_cast<_beginthread_proc_type>(&CMgrAccountLobbyHistory::IOThread), 0, this);
+}
+
+CMgrAccountLobbyHistory::~CMgrAccountLobbyHistory()
+{
+  m_bIOThread = false;
+}
+
+void CMgrAccountLobbyHistory::enter_lobby(
+  unsigned int dwAccountSerial,
+  char *pAccountID,
+  unsigned __int8 byUserDgr,
+  unsigned int dwIpAddress,
+  bool bFirst,
+  char *pszFileName)
+{
+  sLData[0] = 0;
+  if (bFirst)
+  {
+    strcat_s(sLData, "[First Enter Lobby]\r\n");
+  }
+  else
+  {
+    strcat_s(sLData, "[ReEnter Lobby]\r\n");
+  }
+
+  in_addr addr{};
+  addr.S_un.S_addr = dwIpAddress;
+  const char *ipText = inet_ntoa(addr);
+  sprintf_s(
+    sLBuf,
+    "ID: %s [%s %s]\r\nWORLD: %s\r\nSR: %d\r\nDGR: %d\r\nIP: %s\r\n\r\n",
+    pAccountID,
+    m_szCurDate,
+    m_szCurTime,
+    g_Main.m_szWorldName,
+    dwAccountSerial,
+    byUserDgr,
+    ipText);
+  strcat_s(sLData, sLBuf);
+  strcat_s(sLData, "\r\n\t============\r\n\r\n");
+  WriteFile(pszFileName, sLData);
+}
+
+void CMgrAccountLobbyHistory::lobby_disconnect(_qry_case_lobby_logout *pRegeData, char *pszFileName)
+{
+  sLData[0] = 0;
+  const bool ok = pRegeData->byDBRet == 0;
+  const char *result = ok ? "SUCCESS" : "ERROR";
+  sprintf_s(
+    sLBuf,
+    "Lobby Logout RegedDB Result: %d (%s)\r\n",
+    pRegeData->byDBRet,
+    result);
+  strcat_s(sLData, sLBuf);
+  sprintf_s(sLBuf, "AccountSerial: %d\r\n", pRegeData->dwAccountSerial);
+  strcat_s(sLData, sLBuf);
+  if (ok)
+  {
+    sprintf_s(sLBuf, "CharNum: %d\r\n", pRegeData->nRegeNum);
+    strcat_s(sLData, sLBuf);
+    for (int j = 0; j < 3; ++j)
+    {
+      if (pRegeData->RegeList[j].bySlotIndex != 0xFF)
+      {
+        sprintf_s(
+          sLBuf,
+          "[Slot%d]\r\nNAME: %s\r\nCharSR: %d\r\nLV: %d\r\n$D: %d\r\n$G: %d\r\n\r\n",
+          j,
+          pRegeData->RegeList[j].szCharName,
+          pRegeData->RegeList[j].dwCharSerial,
+          pRegeData->RegeList[j].nLevel,
+          pRegeData->RegeList[j].dwDalant,
+          pRegeData->RegeList[j].dwGold);
+        strcat_s(sLData, sLBuf);
+      }
+    }
+  }
+
+  sprintf_s(
+    sLBuf,
+    "Lobby Logout RegedDB Complete [%s %s]\r\n",
+    m_szCurDate,
+    m_szCurTime);
+  strcat_s(sLData, sLBuf);
+  strcat_s(sLData, "\r\n\t============\r\n\r\n");
+  WriteFile(pszFileName, sLData);
+}
+
+void CMgrAccountLobbyHistory::recovery_char_complete(
+  unsigned __int8 byRetCode,
+  _REGED *pAvator,
+  char *pszFileName)
+{
+  sLData[0] = 0;
+  const bool ok = byRetCode == 0;
+  const char *result = ok ? "SUCCESS" : "ERROR";
+  sprintf_s(
+    sLBuf,
+    "Recovery Character Result: %d (%s) [%s %s]\r\n",
+    byRetCode,
+    result,
+    m_szCurDate,
+    m_szCurTime);
+  strcat_s(sLData, sLBuf);
+  if (ok)
+  {
+    sprintf_s(
+      sLBuf,
+      "[Slot%d]\r\nNAME: %s\r\nCharSR: %d\r\nLV: %d\r\n$D: %d\r\n$G: %d\r\n\r\n",
+      pAvator->m_bySlotIndex,
+      pAvator->m_wszAvatorName,
+      pAvator->m_dwRecordNum,
+      pAvator->m_byLevel,
+      pAvator->m_dwDalant,
+      pAvator->m_dwGold);
+    strcat_s(sLData, sLBuf);
+  }
+  strcat_s(sLData, "\r\n\t============\r\n\r\n");
+  WriteFile(pszFileName, sLData);
+}
+
+void CMgrAccountLobbyHistory::WriteFile(char *pszFileName, char *pszLog)
+{
+  unsigned int outIndex[4]{};
+  const int size = static_cast<int>(strlen_0(pszLog));
+  if (size >= 0xC8)
+  {
+    if (size >= 0x3E8)
+    {
+      if (size < 0x2710 && m_listLogDataEmpty_10K.PopNode_Front(outIndex))
+      {
+        __LOG_DATA_10K &entry = m_LogData_10K[outIndex[0]];
+        strcpy_0(entry.szFileName, pszFileName);
+        entry.nLen = size;
+        memcpy_0(entry.sData, pszLog, static_cast<unsigned int>(size));
+        entry.sData[size] = 0;
+        m_listLogData_10K.PushNode_Back(outIndex[0]);
+        return;
+      }
+    }
+    else if (m_listLogDataEmpty_1K.PopNode_Front(outIndex))
+    {
+      __LOG_DATA_1K &entry = m_LogData_1K[outIndex[0]];
+      strcpy_0(entry.szFileName, pszFileName);
+      entry.nLen = size;
+      memcpy_0(entry.sData, pszLog, static_cast<unsigned int>(size));
+      entry.sData[size] = 0;
+      m_listLogData_1K.PushNode_Back(outIndex[0]);
+      return;
+    }
+  }
+  else if (m_listLogDataEmpty_200.PopNode_Front(outIndex))
+  {
+    __LOG_DATA_200 &entry = m_LogData_200[outIndex[0]];
+    strcpy_0(entry.szFileName, pszFileName);
+    entry.nLen = size;
+    memcpy_0(entry.sData, pszLog, static_cast<unsigned int>(size));
+    entry.sData[size] = 0;
+    m_listLogData_200.PushNode_Back(outIndex[0]);
+    return;
+  }
+
+  IOFileWrite(pszFileName, size, pszLog);
+}
+
+void CMgrAccountLobbyHistory::OnLoop()
+{
+  if (m_tmrUpdateTime.CountingTimer())
+  {
+    _strdate(m_szCurDate);
+    m_szCurDate[5] = 0;
+    _strtime(m_szCurTime);
+    m_szCurTime[5] = 0;
+  }
+}
+
+void CMgrAccountLobbyHistory::IOThread(char *pv)
+{
+  auto *self = reinterpret_cast<CMgrAccountLobbyHistory *>(pv);
+  unsigned int outIndex[5]{};
+
+  while (self->m_bIOThread)
+  {
+    self->m_FrameRate.CalcSpeedPerFrame();
+    while (self->m_listLogData_10K.PopNode_Front(outIndex))
+    {
+      __LOG_DATA_10K &entry = self->m_LogData_10K[outIndex[0]];
+      IOFileWrite(entry.szFileName, entry.nLen, entry.sData);
+      self->m_listLogDataEmpty_10K.PushNode_Back(outIndex[0]);
+      Sleep(0);
+    }
+    while (self->m_listLogData_1K.PopNode_Front(outIndex))
+    {
+      __LOG_DATA_1K &entry = self->m_LogData_1K[outIndex[0]];
+      IOFileWrite(entry.szFileName, entry.nLen, entry.sData);
+      self->m_listLogDataEmpty_1K.PushNode_Back(outIndex[0]);
+      Sleep(0);
+    }
+    while (self->m_listLogData_200.PopNode_Front(outIndex))
+    {
+      __LOG_DATA_200 &entry = self->m_LogData_200[outIndex[0]];
+      IOFileWrite(entry.szFileName, entry.nLen, entry.sData);
+      self->m_listLogDataEmpty_200.PushNode_Back(outIndex[0]);
+      Sleep(0);
+    }
+    Sleep(1);
+  }
+  _endthreadex(0);
+}

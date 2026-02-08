@@ -23,6 +23,7 @@ public:
   bool PushNode_Back(unsigned int index);
   bool PushNode_Front(unsigned int index);
   bool PopNode_Front(unsigned int *outIndex);
+  bool PopNode_Back(unsigned int *outIndex);
   bool CopyFront(unsigned int *outIndex);
   int CopyIndexList(unsigned int *pdwList, int nMax);
   _index_node *FindNode(unsigned int index);

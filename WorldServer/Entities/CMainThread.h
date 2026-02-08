@@ -11,6 +11,24 @@
 struct _RTL_CRITICAL_SECTION_DEBUG;
 class CRFWorldDatabase;
 struct _PCBANG_PLAY_TIME;
+struct _REGED;
+struct _REGED_AVATOR_DB;
+struct _NOT_ARRANGED_AVATOR_DB;
+struct qry_case_cash_limsale;
+struct _db_cash_limited_sale;
+struct _SUPPLEMENT_DB_BASE;
+struct _TIMELIMITINFO_DB_BASE;
+struct _INVEN_DB_BASE;
+struct _LINK_DB_BASE;
+struct _BUDDY_DB_BASE;
+struct _TRUNK_DB_BASE;
+struct _TRADE_DB_BASE;
+struct _AIOC_A_MACRODATA;
+struct _CRYMSG_DB_BASE;
+struct _worlddb_sf_delay_info;
+struct _POTION_NEXT_USE_TIME_DB_BASE;
+struct _CUTTING_DB_BASE;
+struct _PCBANG_FAVOR_ITEM_DB_BASE;
 class CEventLootTable;
 class CItemLootTable;
 class COreCuttingTable;
@@ -121,6 +139,16 @@ class CGuardTower;
 class CTrap;
 struct _happen_event_node;
 class CParkingUnit;
+struct _qry_case_sendwebracebosssms;
+struct _qry_case_gm_greetingmsg;
+struct _qry_case_race_greetingmsg;
+struct _qry_case_guild_greetingmsg;
+struct _qry_case_guildroom_insert;
+struct _qry_case_guildroom_update;
+struct _qry_case_update_guildmaster;
+struct _qry_case_lobby_logout;
+struct _db_golden_box_item;
+struct _worlddb_economy_history_info;
 struct _animus_fld;
 class CAnimus;
 struct TimeLimitMgr;
@@ -220,6 +248,7 @@ struct __cppobj __declspec(align(4)) _DB_QRY_SYN_DATA
 {
   bool m_bUse;
   bool m_bLoad;
+  unsigned __int16 m_wAlignPad;
   unsigned int m_dwAccountSerial;
   _CLID m_idWorld;
   unsigned __int8 m_byQryCase;
@@ -471,6 +500,365 @@ public:
     unsigned __int8 byQryCase,
     char *pQryData,
     int nSize);
+  void OnDQSRun();
+  void DQSCompleteProcess();
+  unsigned __int8 db_Reged_Avator(
+    unsigned int dwAccountSerial,
+    _REGED *pRegedList,
+    _NOT_ARRANGED_AVATOR_DB *pArrangedList,
+    const char *pszIP);
+  unsigned __int8 db_Insert_Avator(
+    unsigned int dwAccountSerial,
+    char *pszAccount,
+    _REGED_AVATOR_DB *pCharDB,
+    unsigned int *pdwAvatorSerial);
+  unsigned __int8 db_Delete_Avator(unsigned int dwSerial, unsigned __int8 byRaceCode);
+  unsigned __int8 db_Load_Avator(
+    unsigned int dwSerial,
+    unsigned int dwAccountSerial,
+    _AVATOR_DATA *pData,
+    bool *pbAddItem,
+    unsigned int *pdwAddDalant,
+    unsigned int *pdwAddGold,
+    bool *pbTrunkAddItem,
+    unsigned __int8 *pbyTrunkOldSlot,
+    long double *pdTrunkOldDalant,
+    long double *pdTrunkOldGold,
+    bool *pbCreateTrunkFree,
+    bool *pbExtTrunkAddItem,
+    unsigned __int8 *pbyExtTrunkOldSlot,
+    bool bAll,
+    unsigned int *pdwCheckSum);
+  char db_Update_Avator(
+    unsigned int dwSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData,
+    bool bCheckLowHigh);
+  unsigned __int8 db_Update_PostStorage(
+    unsigned int dwAvatorSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData);
+  unsigned __int8 db_Log_AvatorLevel(unsigned int dwSerial, unsigned int dwAccountSerial, unsigned __int8 byLevel);
+  unsigned __int8 db_Log_UserNum(unsigned int dwRace, unsigned int dwUserNum);
+  bool db_Insert_Economy_History(unsigned int dwDate, _worlddb_economy_history_info *pEconomyData);
+  unsigned __int8 db_Insert_CharacSelect_Log(
+    unsigned int dwAccountSerial,
+    char *szAccount,
+    unsigned int dwCharacSerial,
+    char *pwszCharacName,
+    unsigned __int16 dwYear,
+    unsigned __int8 byMonth,
+    unsigned __int8 byDay,
+    unsigned __int8 byHour,
+    unsigned __int8 byMin,
+    unsigned __int8 bySec);
+  unsigned __int8 db_Update_PvpInfo(
+    unsigned int dwSerial,
+    unsigned __int8 byGrade,
+    __int16 *pwKillPoint,
+    long double dPvPPoint);
+  unsigned __int8 db_Add_PvpPoint(
+    unsigned int dwSerial,
+    unsigned int dwAddPoint,
+    unsigned int dwAddCashBag);
+  unsigned __int8 db_Insert_Item(
+    unsigned int dwSerial,
+    unsigned int dwItemCodeK,
+    unsigned int dwItemCodeD,
+    unsigned int dwItemCodeU,
+    unsigned __int8 byType);
+  char db_Insert_guild(
+    unsigned int *dwSerial,
+    char *pwszGuildName,
+    unsigned __int8 byRace,
+    unsigned int *dwGuildSerial);
+  unsigned __int8 db_update_guildmember_add(
+    unsigned int dwGuildSerial,
+    unsigned int dwCharSerial,
+    unsigned __int8 byClass,
+    unsigned int dwLevel);
+  unsigned __int8 db_update_guildmember_del(
+    unsigned int dwGuildSerial,
+    unsigned int dwCharSerial,
+    unsigned int dwGuildIndex);
+  unsigned __int8 db_input_guild_money(
+    unsigned int dwGuildSerial,
+    unsigned int dwCharSerial,
+    unsigned int dwAccountSerial,
+    unsigned int dwParam,
+    long double *dCurTotalDalant,
+    long double *dCurTotalGold,
+    unsigned __int8 *pbyDate,
+    const char *pszPurpose);
+  unsigned __int8 db_output_guild_money(
+    unsigned int dwGuildSerial,
+    unsigned int dwCharSerial,
+    unsigned int dwAccountSerial,
+    unsigned int dwParam,
+    long double *dCurTotalDalant,
+    long double *dCurTotalGold,
+    unsigned __int8 *pbyDate,
+    const char *pszPurpose,
+    unsigned __int8 *pbyRetCode);
+  unsigned __int8 db_buy_emblem(
+    unsigned int dwGuildSerial,
+    unsigned int dwCharSerial,
+    unsigned int dwGuildIndex,
+    unsigned int dwEmblemBack,
+    unsigned int dwEmblemMark,
+    long double *dCurTotalDalant,
+    long double *dCurTotalGold,
+    unsigned __int8 *pbyDate,
+    char *pwszGuildName,
+    unsigned __int8 *pbyRetCode);
+  unsigned __int8 db_disjoint_guild(unsigned int dwGuildSerial);
+  unsigned __int8 db_char_set_alive(
+    unsigned int dwSerial,
+    unsigned __int8 byRaceCode,
+    unsigned int dwDalant,
+    char *szReviveMapCode,
+    unsigned __int8 byReviveStat,
+    _REGED *pReged);
+  unsigned __int8 db_Insert_ChangeClass_AfterInitClass(
+    unsigned int dwCharacSerial,
+    unsigned __int8 byType,
+    char *szPrevClassCode,
+    char *szNextClassCode,
+    int nClassInitCnt,
+    unsigned __int8 byLastClassGrade,
+    unsigned __int16 dwYear,
+    unsigned __int8 byMonth,
+    unsigned __int8 byDay,
+    unsigned __int8 byHour,
+    unsigned __int8 byMin,
+    unsigned __int8 bySec);
+  unsigned __int8 db_sendwebracebosssms(_qry_case_sendwebracebosssms *pSheet);
+  unsigned __int8 db_GM_GreetingMsg(_qry_case_gm_greetingmsg *pSheet);
+  unsigned __int8 db_RACE_GreetingMsg(_qry_case_race_greetingmsg *pSheet);
+  unsigned __int8 db_GUILD_GreetingMsg(_qry_case_guild_greetingmsg *pSheet);
+  unsigned __int8 db_Load_PostStorage(char *pData);
+  unsigned __int8 db_Load_ReturnPost(char *pData);
+  unsigned __int8 db_Load_Content(char *pData);
+  unsigned __int8 db_update_guildmaster(_qry_case_update_guildmaster *pSheet);
+  unsigned __int8 db_input_guild_money_atradetax(
+    unsigned int dwGuildSerial,
+    unsigned int dwCharSerial,
+    unsigned int dwAccountSerial,
+    long double *dCurTotalDalant,
+    long double *dCurTotalGold,
+    unsigned __int8 *pbyDate);
+  unsigned __int8 check_min_max_guild_money(unsigned int dwGuildSerial, long double *pdDalant, long double *pdGold);
+  unsigned __int8 _db_load_event_classrefine(
+    unsigned int dwAvatorSerial,
+    unsigned __int8 *byRefinedCnt,
+    unsigned int *dwRefineDate);
+  unsigned __int8 _db_update_event_classrefine(
+    unsigned __int16 wIndex,
+    unsigned int dwSerial,
+    unsigned __int8 byRefinedCnt,
+    unsigned int dwRefineDate);
+  unsigned __int8 _db_Update_SFDelayData(unsigned int dwSerial, _AVATOR_DATA *pData);
+  unsigned __int8 _db_init_classrefine_count();
+  unsigned __int8 _db_GuildRoom_Insert(_qry_case_guildroom_insert *pSheet);
+  bool _db_GuildRoom_Update(_qry_case_guildroom_update *pSheet);
+  unsigned __int8 _db_Load_PatriarchComm(char *pData);
+  unsigned __int8 _db_Load_Cash_LimSale(qry_case_cash_limsale *pSheet);
+  unsigned __int8 _db_Update_Cash_LimSale(_db_cash_limited_sale *pNewData, _db_cash_limited_sale *pOldData);
+  unsigned __int8 _db_Update_Set_Limit_Run();
+  unsigned __int8 _db_Update_GoldBoxItem(int nDBSerial, _db_golden_box_item *pNewData, _db_golden_box_item *pOldData);
+  unsigned __int8 _db_Select_RegeAvator_For_Lobby_Logout(char *pData);
+  unsigned __int8 _db_Update_Data_For_Post_Send(char *pSheet);
+  unsigned __int8 _db_Update_Data_For_Trade(char *pSheet);
+  unsigned __int8 _db_Load_Base(unsigned int dwSerial, _AVATOR_DATA *pData);
+  unsigned __int8 _db_Load_General(unsigned int dwSerial, unsigned __int8 byRace, _AVATOR_DATA *pData);
+  unsigned __int8 _db_Load_Supplement(unsigned int dwSerial, _SUPPLEMENT_DB_BASE *pSupplement);
+  unsigned __int8 _db_Load_TimeLimitInfo(unsigned int dwAccSerial, _TIMELIMITINFO_DB_BASE *pTimeLimit);
+  unsigned __int8 _db_Load_Inven(unsigned int dwSerial, unsigned __int8 byBagNum, _INVEN_DB_BASE *pInven);
+  unsigned __int8 _db_Load_Unit(unsigned int dwSerial, _UNIT_DB_BASE *pUnit);
+  unsigned __int8 _db_Load_UI(unsigned int dwSerial, _LINK_DB_BASE *pLink, _SFCONT_DB_BASE *pSfcont);
+  unsigned __int8 _db_Load_Quest(unsigned int dwSerial, _QUEST_DB_BASE *pQuest);
+  unsigned __int8 _db_Load_NpcQuest_History(unsigned int dwSerial, _QUEST_DB_BASE *pQuest);
+  unsigned __int8 _db_Load_Start_NpcQuest_History(unsigned int dwSerial, unsigned __int8 byRace, _QUEST_DB_BASE *pQuest);
+  unsigned __int8 _db_Load_Buddy(unsigned int dwSerial, _BUDDY_DB_BASE *pBuddy);
+  unsigned __int8 _db_Load_Trunk(
+    unsigned int dwSerial,
+    unsigned int dwAccountSerial,
+    unsigned __int8 byRace,
+    _TRUNK_DB_BASE *pTrunk);
+  unsigned __int8 _db_Load_Trade(unsigned __int8 byRace, unsigned int dwSerial, _TRADE_DB_BASE *pTrade);
+  unsigned __int8 _db_Load_ItemCombineEx(unsigned int dwSerial, _ITEMCOMBINE_DB_BASE *pItemCombineEx);
+  unsigned __int8 _db_Load_MacroData(unsigned int dwSerial, _AIOC_A_MACRODATA *pMacro);
+  unsigned __int8 _db_Load_PvpPointLimitData(unsigned int dwSerial, _PVPPOINT_LIMIT_DB_BASE *pLimit);
+  unsigned __int8 _db_Load_CryMsg(unsigned int dwSerial, _CRYMSG_DB_BASE *pCryMsg);
+  unsigned __int8 _db_Load_PvpOrderView(unsigned int dwSerial, _PVP_ORDER_VIEW_DB_BASE *pOrderView);
+  unsigned __int8 _db_Load_SFDelayData(unsigned int dwSerial, _worlddb_sf_delay_info *pSFDelay);
+  unsigned __int8 _db_Load_PrimiumPlayTime(unsigned int dwAccSerial, _PCBANG_PLAY_TIME *pPlayTime);
+  unsigned __int8 _db_Load_PotionDelay(unsigned int dwSerial, _POTION_NEXT_USE_TIME_DB_BASE *pPotionDelay);
+  unsigned __int8 _db_Load_OreCutting(unsigned int dwSerial, _CUTTING_DB_BASE *pCutting);
+  unsigned __int8 _db_Load_PcBangFavor(unsigned int dwSerial, _PCBANG_FAVOR_ITEM_DB_BASE *pFavorItem);
+  unsigned __int8 _db_Check_NpcData(unsigned int dwSerial, _AVATOR_DATA *pData);
+  unsigned __int8 _db_load_raceboss(unsigned int dwSerial, _AVATOR_DATA *pData);
+  unsigned __int8 _db_load_punishment(unsigned int dwSerial, _AVATOR_DATA *pData);
+  unsigned __int8 _db_load_losebattlecount(unsigned int dwSerial, _AVATOR_DATA *pData);
+  char _db_Update_Base(
+    unsigned int dwSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData,
+    char *pSzQuery,
+    bool bCheckLowHigh);
+  char _db_Update_General(
+    unsigned int dwSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData,
+    char *pSzQuery,
+    bool bCheckLowHigh);
+  char _db_Update_Supplement(
+    unsigned int dwSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData,
+    char *pSzQuery,
+    int nBufferSize);
+  char _db_Update_Inven(
+    unsigned int dwSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData,
+    char *pSzQuery);
+  char _db_Update_Unit(
+    unsigned int dwSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData,
+    char *pSzQuery);
+  char _db_Update_UI(
+    unsigned int dwSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData,
+    char *pSzQuery);
+  char _db_Update_Quest(
+    unsigned int dwSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData,
+    char *pSzQuery);
+  char _db_Update_NpcQuest_History(
+    unsigned int dwSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData,
+    char *pSzQuery);
+  char _db_Update_Start_NpcQuest_History(
+    unsigned int dwSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData);
+  char _db_Update_Buddy(
+    unsigned int dwSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData,
+    char *pSzQuery);
+  char _db_Update_ItemCombineEx(
+    unsigned int dwSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData,
+    char *pSzQuery);
+  char _db_Update_MacroData(
+    unsigned int dwSerial,
+    _AIOC_A_MACRODATA *pNewData,
+    _AIOC_A_MACRODATA *pOldData);
+  char _db_Update_Trunk(
+    unsigned int dwAccountSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData,
+    char *pSzQuery);
+  char _db_Update_Trunk_Extend(
+    unsigned int dwAccountSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData,
+    char *pSzQuery);
+  char _db_Update_TimeLimitInfo(
+    unsigned int dwAccountSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData,
+    char *pSzQuery,
+    int nBufferSize);
+  char _db_update_inven_AMP(
+    unsigned int dwSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData,
+    char *pSzQuery);
+  char _db_Update_PvpPointLimit(
+    unsigned int dwSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData,
+    char *pSzQuery,
+    char *pErrMsg);
+  char _db_Update_CryMsg(
+    unsigned int dwSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData,
+    char *pSzQuery);
+  char _db_Update_PvpOrderView(
+    unsigned int dwSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData,
+    char *pSzQuery,
+    char *pErrMsg);
+  char _db_Update_PrimiumPlayTime(
+    unsigned int dwAccSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData,
+    char *pSzQuery,
+    char *pErrMsg);
+  char _db_Update_PotionDelay(
+    unsigned int dwSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData,
+    char *pSzQuery,
+    int nBufferSize);
+  char _db_Update_OreCutting(
+    unsigned int dwSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData,
+    char *pSzQuery,
+    int nBufferSize);
+  char _db_Update_PcBangFavor(
+    unsigned int dwSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData,
+    char *pSzQuery,
+    int nBufferSize);
+  void Reged_Avator_Complete(_DB_QRY_SYN_DATA *pData);
+  void Insert_Avator_Complete(_DB_QRY_SYN_DATA *pData);
+  void Delete_Avator_Complete(_DB_QRY_SYN_DATA *pData);
+  void Select_Avator_Complete(_DB_QRY_SYN_DATA *pData);
+  void Logout_Account_Complete(_DB_QRY_SYN_DATA *pData);
+  void Lobby_Account_Complete(_DB_QRY_SYN_DATA *pData);
+  void Cont_UserSave_Complete(_DB_QRY_SYN_DATA *pData);
+  void Alive_Char_Complete(_DB_QRY_SYN_DATA *pData);
+  void SendWebRaceBossSMS(_DB_QRY_SYN_DATA *pData);
+  void AddGuildBattleSchdule(_DB_QRY_SYN_DATA *pData);
+  void UpdateGuildBattleWinLoseRankInfo(_DB_QRY_SYN_DATA *pData);
+  void UpdateGuildBattleDrawRankInfo(_DB_QRY_SYN_DATA *pData);
+  void UpdateLoadGuildBattleRank(_DB_QRY_SYN_DATA *pData);
+  void InGuildbattleCost(_DB_QRY_SYN_DATA *pData);
+  void OutSrcGuildbattleCost(_DB_QRY_SYN_DATA *pData);
+  void OutDestGuildbattleCost(_DB_QRY_SYN_DATA *pData);
+  void InGuildbattleRewardMoney(_DB_QRY_SYN_DATA *pData);
+  void UpdateReservedGuildBattleSchedule(_DB_QRY_SYN_DATA *pData);
+  void CompleteLoadGuildBattleTotalRecord(unsigned __int8 byRet, char *pLoadData);
+  void InAtradTaxMoney(_DB_QRY_SYN_DATA *pData);
+  void Load_PostStorage_Complete(char *pData);
+  void Load_ReturnPost_Complete(char *pData);
+  void Load_Content_Complete(char *pData);
+  void CompleteUpdateVoteAvailable(char *pData);
+  void CompleteUpdatePlayerVoteInfo(char *pData);
+  void CompleteUpdateServerToken(char *pData);
+  void CompleteUpdateSetLimitRun(char byRet, char *pData);
+  void Complete_Select_RegeAvator_For_Lobby_Logout(_qry_case_lobby_logout *pSheet);
+  void Complete_db_Update_Data_For_Post_Send(char *pSheet);
+  void Complete_db_Update_Data_For_Trade(char *pSheet);
+  void _db_complete_event_classrefine(
+    unsigned __int16 wSock,
+    unsigned int dwAvatorSerial,
+    unsigned __int8 byRefinedCnt,
+    unsigned int dwRefineDate);
+  void _db_complete_update_event_classrefine(unsigned __int16 wSock, unsigned int dwAvatorSerial);
   virtual ~CMainThread() = default;
 
 private:
@@ -688,6 +1076,7 @@ struct __cppobj __unaligned __declspec(align(1)) _REGED_AVATOR_DB
   _EQUIPKEY m_EquipKey[8];
   unsigned __int8 m_byEquipLv[8];
   unsigned int m_dwLastConnTime;
+  _REGED_AVATOR_DB();
   void Init();
 };
 
@@ -701,6 +1090,7 @@ struct __cppobj __unaligned __declspec(align(1)) _REGED : _REGED_AVATOR_DB
   unsigned int m_dwET[8];
   unsigned int m_dwLendRegdTime[8];
   void init();
+  void UpdateEquipLv();
   bool Set(unsigned __int8 bySlot, const _STORAGE_LIST::_db_con *pItem);
   bool Release(unsigned __int8 bySlot);
 };
@@ -751,6 +1141,8 @@ struct __cppobj __unaligned __declspec(align(1)) _AVATOR_DB_BASE : _REGED
 struct _LINKKEY
 {
   unsigned __int16 wEffectCode;
+
+  unsigned __int16 CovDBKey();
 };
 
 /* 1544 */
@@ -815,6 +1207,7 @@ struct _FORCEKEY
   void SetStat(unsigned int pl_dwStat);
   unsigned __int8 GetIndex();
   unsigned int GetStat();
+  __int64 CovDBKey();
 };
 
 /* 1550 */
@@ -1216,19 +1609,6 @@ struct __cppobj __unaligned __declspec(align(1)) _AVATOR_DATA
   void InitData();
 };
 
-/* 1174 */
-struct __cppobj __unaligned __declspec(align(1)) _NOT_ARRANGED_AVATOR_DB
-{
-  unsigned int dwSerial;
-  unsigned __int8 byLv;
-  unsigned __int8 byRaceSexCode;
-  unsigned int dwDalant;
-  unsigned int dwGold;
-  char wszName[17];
-  char szServer[33];
-  char szClassCode[5];
-};
-
 /* 1593 */
 struct __cppobj _SYNC_STATE
 {
@@ -1236,6 +1616,7 @@ struct __cppobj _SYNC_STATE
   bool bReged;
   bool bSelect;
   void Init();
+  void re_lobby();
 };
 
 /* 1595 */

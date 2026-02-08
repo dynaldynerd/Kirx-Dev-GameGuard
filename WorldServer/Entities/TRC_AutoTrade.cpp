@@ -2,6 +2,7 @@
 
 #include "TRC_AutoTrade.h"
 #include "KorLocalTime.h"
+#include "GlobalObjects.h"
 
 _suggested_matter_change_taxrate::_suggested_matter_change_taxrate()
 {
@@ -86,4 +87,21 @@ bool TRC_AutoTrade::IsOwnerGuild(unsigned int nGuildSerial)
 float TRC_AutoTrade::get_taxrate()
 {
   return m_Controller.getCurTaxRate();
+}
+
+unsigned __int8 TRC_AutoTrade::_insert_info(char *pdata)
+{
+  if (CRFWorldDatabase::insert_atrade_taxrate(
+        g_Main.m_pWorldDB,
+        *pdata,
+        *reinterpret_cast<unsigned int *>(pdata + 1),
+        pdata + 5,
+        *reinterpret_cast<unsigned int *>(pdata + 23),
+        pdata + 27,
+        pdata[95],
+        *reinterpret_cast<unsigned int *>(pdata + 91)))
+  {
+    return 0;
+  }
+  return 24;
 }

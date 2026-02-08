@@ -9,6 +9,7 @@
 
 class CPostStorage;
 class CPostReturnStorage;
+class CPostData;
 class CUnmannedTraderRegistItemInfo;
 struct _AVATOR_DATA;
 
@@ -87,8 +88,21 @@ public:
     const CUnmannedTraderRegistItemInfo *pkInfo,
     unsigned __int8 byMaxCnt,
     char *pszFileName);
+  void post_receive(CPostData *pPost, char *pFileName);
   void post_storage(CPostStorage *pStorage, char *pFileName);
+  void post_returnreceive(CPostData *pPost, char *pFileName);
   void return_post_storage(CPostReturnStorage *pReturn, char *pFileName);
+  void patriarch_push_money(
+    char *pwszPatriarchName,
+    unsigned int dwPushDalant,
+    unsigned int dwLeftDalant,
+    char *pszFileName);
+  void guild_est_money_rollback(
+    int n,
+    char *pszGuildName,
+    unsigned int dwEstDalant,
+    unsigned int dwLeftDalant,
+    char *pszFileName);
   void close(int n, char *pCloseCode, char *pszFileName);
   void read_cashamount(unsigned int dwAC, unsigned int dwAV, int nCash, char *pFileName);
   void buy_to_inven_cashitem(

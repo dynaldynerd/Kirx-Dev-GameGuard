@@ -2610,11 +2610,9 @@ void __cdecl CMainThread::DQSThread(void *param)
   int throttle = 0;
   while (self->m_bDQSThread)
   {
+    self->OnDQSRun();
     if (throttle++ > 100)
-    {
       Sleep(1);
-      throttle = 0;
-    }
   }
   _endthreadex(0);
 }

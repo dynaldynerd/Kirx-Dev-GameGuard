@@ -2,16 +2,271 @@
 
 #include "CRaceBossMsgController.h"
 
-#include "WorldServerUtil.h"
-
+#include <cstdio>
 #include <ctime>
 #include <cstring>
-#include <cstdio>
+#include <new>
+
+#include <mmsystem.h>
+
+#include "CNetworkEX.h"
+#include "CPvpUserAndGuildRankingSystem.h"
+#include "GlobalObjects.h"
+#include "WorldServerUtil.h"
+#include "raceboss_msg_confirm_zowb.h"
+#include "racebosssms_fromweb_send_error_result_zowb.h"
 
 CRaceBossMsgController *CRaceBossMsgController::Instance()
 {
   static CRaceBossMsgController s_instance;
   return &s_instance;
+}
+
+RACE_BOSS_MSG::CMsg::CMsg(unsigned __int8 /*ucRace*/, unsigned int dwID)
+{
+  Clear();
+  m_dwID = dwID;
+  m_dwWebSendDBID = 0;
+}
+
+void RACE_BOSS_MSG::CMsg::Clear()
+{
+  m_uiState = 0;
+  m_dwSerial = static_cast<unsigned int>(-1);
+  memset_0(m_wszName, 0, sizeof(m_wszName));
+  memset_0(m_wszMsg, 0, sizeof(m_wszMsg));
+  m_dwSendTime = 0;
+  m_dwWebSendDBID = 0;
+}
+
+char RACE_BOSS_MSG::CMsg::Set(
+  unsigned int dwSerial,
+  const char *pwszName,
+  const char *pwszMsg,
+  unsigned int dbWebSendDBID)
+{
+  if (m_uiState == 3)
+  {
+    return 0;
+  }
+  m_dwSerial = dwSerial;
+  strncpy(m_wszName, pwszName, 0x10u);
+  m_wszName[16] = 0;
+  strncpy(m_wszMsg, pwszMsg, 0x30u);
+  m_wszMsg[48] = 0;
+  for (int j = 0; j <= 48; ++j)
+  {
+    if (m_wszMsg[j] == 39)
+    {
+      m_wszMsg[j] = 32;
+    }
+  }
+  m_dwSendTime = timeGetTime();
+  m_dwWebSendDBID = dbWebSendDBID;
+  m_uiState = 1;
+  return 1;
+}
+
+unsigned int RACE_BOSS_MSG::CMsg::GetID()
+{
+  return m_dwID;
+}
+
+unsigned int RACE_BOSS_MSG::CMsg::GetSerial()
+{
+  return m_dwSerial;
+}
+
+char *RACE_BOSS_MSG::CMsg::GetBossName()
+{
+  return m_wszName;
+}
+
+char *RACE_BOSS_MSG::CMsg::GetMsg()
+{
+  return m_wszMsg;
+}
+
+unsigned int RACE_BOSS_MSG::CMsg::GetWebDBID()
+{
+  return m_dwWebSendDBID;
+}
+
+void RACE_BOSS_MSG::CMsg::SetDayChanged()
+{
+  m_uiState = 2;
+}
+
+void RACE_BOSS_MSG::CMsg::SetDone()
+{
+  m_uiState = 3;
+}
+
+RACE_BOSS_MSG::CMsgList::CMsgList(unsigned __int8 ucRace, unsigned int uiSize)
+  : m_ucRace(ucRace),
+    m_ppMsg(nullptr),
+    m_uiSize(uiSize)
+{
+  Init();
+}
+
+RACE_BOSS_MSG::CMsgList::~CMsgList()
+{
+  CleanUp();
+}
+
+char RACE_BOSS_MSG::CMsgList::Init()
+{
+  if (!m_uiSize)
+  {
+    return 0;
+  }
+
+  m_kEmptyInxList.SetList(m_uiSize);
+  m_kUseInxList.SetList(m_uiSize);
+  m_kWaitInxList.SetList(m_uiSize);
+
+  m_ppMsg = new (std::nothrow) CMsg *[m_uiSize];
+  for (unsigned int id = 0; id < m_uiSize; ++id)
+  {
+    CMsg *msg = new (std::nothrow) CMsg(m_ucRace, id);
+    m_ppMsg[id] = msg;
+  }
+
+  for (unsigned int index = 0; index < 2; ++index)
+  {
+    m_kEmptyInxList.PushNode_Back(index);
+  }
+  for (unsigned int index = 2; index < 4; ++index)
+  {
+    m_kWaitInxList.PushNode_Back(index);
+  }
+  return 1;
+}
+
+void RACE_BOSS_MSG::CMsgList::CleanUp()
+{
+  if (!m_uiSize)
+  {
+    return;
+  }
+  for (unsigned int j = 0; j < m_uiSize; ++j)
+  {
+    delete m_ppMsg[j];
+  }
+  delete[] m_ppMsg;
+}
+
+RACE_BOSS_MSG::CMsg *RACE_BOSS_MSG::CMsgList::GetEmpty()
+{
+  unsigned int outIndex = 0;
+  if (!m_kEmptyInxList.PopNode_Front(&outIndex))
+  {
+    return nullptr;
+  }
+  m_ppMsg[outIndex]->Clear();
+  return m_ppMsg[outIndex];
+}
+
+void RACE_BOSS_MSG::CMsgList::AddUse(CMsg *pkMsg)
+{
+  if (!pkMsg)
+  {
+    return;
+  }
+  const unsigned int id = pkMsg->GetID();
+  if (!m_kUseInxList.IsInList(id))
+  {
+    m_kUseInxList.PushNode_Back(id);
+  }
+}
+
+void RACE_BOSS_MSG::CMsgList::RollBack()
+{
+  if (m_uiSize && m_kWaitInxList.size())
+  {
+    unsigned int outIndex = static_cast<unsigned int>(-1);
+    m_kUseInxList.PopNode_Back(&outIndex);
+    if (!m_kEmptyInxList.IsInList(outIndex))
+    {
+      m_kEmptyInxList.PushNode_Front(outIndex);
+    }
+  }
+}
+
+RACE_BOSS_MSG::CMsgListManager::CMsgListManager()
+  : m_bEmpty(true)
+{
+  memset_0(m_pkMsgList, 0, sizeof(m_pkMsgList));
+  if (Init())
+  {
+    m_bEmpty = false;
+  }
+}
+
+RACE_BOSS_MSG::CMsgListManager::~CMsgListManager()
+{
+  CleanUp();
+}
+
+char RACE_BOSS_MSG::CMsgListManager::Init()
+{
+  char ok = 1;
+  for (int j = 0; j < 3; ++j)
+  {
+    CMsgList *list = new (std::nothrow) CMsgList(static_cast<unsigned __int8>(j), 4u);
+    m_pkMsgList[j] = list;
+    if (!m_pkMsgList[j])
+    {
+      ok = 0;
+    }
+  }
+  return ok;
+}
+
+void RACE_BOSS_MSG::CMsgListManager::CleanUp()
+{
+  for (int j = 0; j < 3; ++j)
+  {
+    delete m_pkMsgList[j];
+    m_pkMsgList[j] = nullptr;
+  }
+}
+
+int RACE_BOSS_MSG::CMsgListManager::Send(
+  unsigned __int8 ucRace,
+  unsigned int dwSerial,
+  const char *pwszName,
+  const char *pwszMsg,
+  CMsg **pkSend,
+  unsigned int dbWebSendDBID)
+{
+  if (m_bEmpty)
+  {
+    return 1;
+  }
+  if (ucRace >= 3u || pwszName == nullptr || pwszMsg == nullptr || !strlen_0(pwszMsg))
+  {
+    return 1;
+  }
+
+  CMsg *msg = m_pkMsgList[ucRace]->GetEmpty();
+  if (!msg)
+  {
+    return 4;
+  }
+
+  msg->Set(dwSerial, pwszName, pwszMsg, dbWebSendDBID);
+  m_pkMsgList[ucRace]->AddUse(msg);
+  if (m_pkMsgList[ucRace]->Save()
+      && WritePrivateProfileStringA("RaceBossSMSSave", "Flag", "TRUE", "..\\SystemSave\\ServerState.ini"))
+  {
+    *pkSend = msg;
+    return 0;
+  }
+
+  m_pkMsgList[ucRace]->RollBack();
+  return 1;
 }
 
 bool RACE_BOSS_MSG::CMsgListManager::IsHaveBeenSave()
@@ -192,6 +447,114 @@ bool RACE_BOSS_MSG::CMsgList::SaveMsgList(CNetIndexList *kInxList)
   }
   kInxList->m_csList.Unlock();
   return true;
+}
+
+char CRaceBossMsgController::Send(
+  unsigned __int8 ucRace,
+  unsigned int dwSerial,
+  const char *wszName,
+  const char *pwszMsg,
+  unsigned int dwWebSendDBID)
+{
+  if (!g_Main.m_bConnectedWebAgentServer)
+  {
+    return 0;
+  }
+  if (!dwSerial)
+  {
+    SendWebRaceBossSMSErrorResult(2, dwWebSendDBID);
+    return 0;
+  }
+
+  CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
+  if (ranking->GetCurrentRaceBossSerial(ucRace, 0) == dwSerial)
+  {
+    RACE_BOSS_MSG::CMsg *msg = nullptr;
+    const int ret = m_kManager.Send(ucRace, dwSerial, wszName, pwszMsg, &msg, dwWebSendDBID);
+    if (ret)
+    {
+      SendWebRaceBossSMSErrorResult(static_cast<char>(ret), dwWebSendDBID);
+      return 0;
+    }
+
+    SendComfirmWeb(ucRace, msg);
+    SendConfirmCtrl(ucRace, msg);
+    return 1;
+  }
+
+  SendWebRaceBossSMSErrorResult(3, dwWebSendDBID);
+  return 0;
+}
+
+void CRaceBossMsgController::SendWebRaceBossSMSErrorResult(char iRet, unsigned int dwWebDBID)
+{
+  _racebosssms_fromweb_send_error_result_zowb msg{};
+  msg.byErrCode = static_cast<unsigned __int8>(iRet + 10);
+  msg.dwWebSendDBID = dwWebDBID;
+
+  unsigned __int8 type[2] = {51, 13};
+  if (g_Main.m_bConnectedWebAgentServer)
+  {
+    g_Network.m_pProcess[2]->LoadSendMsg(
+      g_Main.m_byWebAgentServerNetInx,
+      type,
+      reinterpret_cast<char *>(&msg),
+      msg.size());
+  }
+}
+
+void CRaceBossMsgController::SendComfirmWeb(unsigned __int8 ucRace, RACE_BOSS_MSG::CMsg *pkMsg)
+{
+  if (!g_Main.m_bWorldOpen || !g_Main.m_bWorldService)
+  {
+    return;
+  }
+
+  _raceboss_msg_confirm_zowb msg{};
+  msg.nCountIndex = static_cast<int>(pkMsg->GetID());
+  msg.nWorldCode = static_cast<int>(g_Main.m_byWorldCode);
+  msg.byRaceCode = ucRace;
+  strncpy(msg.wszMasterName, pkMsg->GetBossName(), 0x10u);
+  msg.wszMasterName[16] = 0;
+  strncpy(msg.wszMsg, pkMsg->GetMsg(), 0x30u);
+  msg.wszMsg[48] = 0;
+
+  unsigned __int8 type[2] = {51, 9};
+  if (g_Main.m_bConnectedWebAgentServer)
+  {
+    g_Network.m_pProcess[2]->LoadSendMsg(
+      g_Main.m_byWebAgentServerNetInx,
+      type,
+      reinterpret_cast<char *>(&msg),
+      msg.size());
+  }
+}
+
+void CRaceBossMsgController::SendConfirmCtrl(unsigned __int8 ucRace, RACE_BOSS_MSG::CMsg *pkMsg)
+{
+  if (!g_Main.m_bWorldOpen || !g_Main.m_bWorldService)
+  {
+    return;
+  }
+
+  _raceboss_msg_confirm_zowb msg{};
+  msg.nCountIndex = static_cast<int>(pkMsg->GetID());
+  msg.nWorldCode = static_cast<int>(g_Main.m_byWorldCode);
+  msg.byRaceCode = ucRace;
+  strncpy(msg.wszMasterName, pkMsg->GetBossName(), 0x10u);
+  msg.wszMasterName[16] = 0;
+  strncpy(msg.wszMsg, pkMsg->GetMsg(), 0x30u);
+  msg.wszMsg[48] = 0;
+
+  unsigned __int8 type[2] = {54, 2};
+  if (g_Main.m_bConnectedControllServer)
+  {
+    g_Network.m_pProcess[2]->LoadSendMsg(
+      g_Main.m_byControllServerNetInx,
+      type,
+      reinterpret_cast<char *>(&msg),
+      msg.size());
+  }
 }
 
 int CRaceBossMsgController::GetCurDay()

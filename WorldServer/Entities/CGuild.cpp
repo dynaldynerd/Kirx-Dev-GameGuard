@@ -9,6 +9,7 @@
 #include "CHonorGuild.h"
 #include "CMoneySupplyMgr.h"
 #include "GuildBattleTypes.h"
+#include "guild_battle_suggest_request_result_zocl.h"
 #include "guild_member_refresh_data.h"
 #include "guild_alter_member_grade_inform_zocl.h"
 #include "guild_alter_member_state_inform_zocl.h"
@@ -615,6 +616,167 @@ void CGuild::SendMsg_GuildBattleRefused(char *pwszName)
   }
 }
 
+void CGuild::SendMsg_GuildBattleSuggestResult(unsigned __int8 byRet, char *wszDestGuildName)
+{
+  _guild_battle_suggest_request_result_zocl msg{};
+  msg.byRet = byRet;
+  if (!byRet && wszDestGuildName)
+  {
+    strcpy_0(msg.wszDestGuildName, wszDestGuildName);
+  }
+
+  unsigned __int8 type[2] = {27, 53};
+  for (int j = 0; j < 50; ++j)
+  {
+    _guild_member_info *member = &m_MemberData[j];
+    if (member->IsFill() && member->pPlayer && member->byClassInGuild == 2)
+    {
+      const unsigned __int16 len = msg.size();
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        member->pPlayer->m_ObjID.m_wIndex,
+        type,
+        reinterpret_cast<char *>(&msg),
+        len);
+    }
+  }
+}
+
+char CGuild::SendMsg_GuildBattleProposed(char *pwszName)
+{
+  char destination[44]{};
+  unsigned __int8 type[2] = {27, 92};
+
+  strcpy_0(destination, pwszName);
+  if (!m_MasterData.pMember)
+  {
+    return 0;
+  }
+
+  CPlayer *player = m_MasterData.pMember->pPlayer;
+  if (!player)
+  {
+    return 0;
+  }
+
+  g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, type, destination, 0x11u);
+  return 1;
+}
+
+unsigned __int8 CGuild::CheckGuildBattleSuggestRequestToDestGuild(
+  unsigned int dwSrcGuildSerial,
+  unsigned int dwStartTimeInx,
+  unsigned int dwMemberCntInx,
+  unsigned int dwMapInx)
+{
+  (void)dwStartTimeInx;
+  (void)dwMemberCntInx;
+  (void)dwMapInx;
+
+  if (m_bRankWait)
+  {
+    return static_cast<unsigned __int8>(-92);
+  }
+  if (!_guild_master_info::IsFill(&m_MasterData))
+  {
+    return static_cast<unsigned __int8>(-83);
+  }
+  if (!m_MasterData.pMember || !m_MasterData.pMember->pPlayer)
+  {
+    return static_cast<unsigned __int8>(-77);
+  }
+  if (m_dTotalGold < 5000.0)
+  {
+    return static_cast<unsigned __int8>(-90);
+  }
+  if (!GetGuildDataFromSerial(g_Guild, 500, dwSrcGuildSerial))
+  {
+    return 111;
+  }
+  if (GetGuildDataFromSerial(g_Guild, 500, m_dwSerial))
+  {
+    return DestGuildIsAvailableBattleRequestState();
+  }
+  return 111;
+}
+
+unsigned __int8 CGuild::DestGuildIsAvailableBattleRequestState()
+{
+  switch (m_GuildBattleSugestMatter.eState)
+  {
+    case _guild_battle_suggest_matter::WAIT_BATTLE_REQUEST:
+      return 0;
+    case _guild_battle_suggest_matter::BATTLE_REQUEST_SUGGEST:
+      return static_cast<unsigned __int8>(-91);
+    case _guild_battle_suggest_matter::COMPLETE_REQUEST:
+      return static_cast<unsigned __int8>(-95);
+    case _guild_battle_suggest_matter::APPLY_BATTLE_REQUEST_SUGGEST:
+      return static_cast<unsigned __int8>(-94);
+    case _guild_battle_suggest_matter::COMPLETE_BATTLE_REQUEST:
+      return static_cast<unsigned __int8>(-93);
+    default:
+      return 110;
+  }
+}
+
+void CGuild::SetGuildBattleMatter(
+  unsigned int dwSrcGuildSerial,
+  unsigned int dwStartTime,
+  unsigned int dwNumber,
+  unsigned int dwMapIdx)
+{
+  m_GuildBattleSugestMatter.pkSrc = GetGuildDataFromSerial(g_Guild, 500, dwSrcGuildSerial);
+  m_GuildBattleSugestMatter.pkDest = this;
+  m_GuildBattleSugestMatter.eState = _guild_battle_suggest_matter::APPLY_BATTLE_REQUEST_SUGGEST;
+  m_GuildBattleSugestMatter.dwStartTime = dwStartTime;
+  m_GuildBattleSugestMatter.dwNumber = dwNumber;
+  m_GuildBattleSugestMatter.dwMapIdx = dwMapIdx;
+}
+
+void CGuild::CompleteOutGuildbattleCost(
+  unsigned int dwSrcGuildSerial,
+  unsigned int dwStartTimeInx,
+  unsigned int dwMemberCntInx,
+  unsigned int dwMapInx)
+{
+  unsigned __int8 ret = m_GuildBattleSugestMatter.pkDest->CheckGuildBattleSuggestRequestToDestGuild(
+    m_dwSerial,
+    dwStartTimeInx,
+    dwMemberCntInx,
+    dwMapInx);
+  if (ret)
+  {
+    m_GuildBattleSugestMatter.pkSrc->PushDQSInGuildBattleCost();
+  }
+  else if (m_GuildBattleSugestMatter.pkDest->SendMsg_GuildBattleProposed(m_wszName))
+  {
+    m_GuildBattleSugestMatter.pkDest->SetGuildBattleMatter(
+      dwSrcGuildSerial,
+      dwStartTimeInx,
+      dwMemberCntInx,
+      dwMapInx);
+    m_GuildBattleSugestMatter.eState = _guild_battle_suggest_matter::COMPLETE_REQUEST;
+  }
+  else
+  {
+    ret = static_cast<unsigned __int8>(-77);
+    m_GuildBattleSugestMatter.pkSrc->PushDQSInGuildBattleCost();
+  }
+
+  SendMsg_GuildBattleSuggestResult(ret, m_GuildBattleSugestMatter.pkDest->m_wszName);
+  m_GuildBattleSugestMatter.Clear();
+}
+
+void CGuild::UpdateGuildBattleWinCnt(unsigned int dwTotWin, unsigned int dwTotDraw, unsigned int dwTotLose)
+{
+  m_dwGuildBattleTotWin = dwTotWin;
+  m_dwGuildBattleTotDraw = dwTotDraw;
+  m_dwGuildBattleTotLose = dwTotLose;
+  MakeQueryInfoPacket();
+  MakeDownMemberPacket();
+  m_byMoneyOutputKind = 0;
+  SendMsg_GuildInfoUpdateInform();
+}
+
 void CGuild::PushDQSInGuildBattleCost()
 {
   _qry_case_in_guildbattlecost qry{};
@@ -656,6 +818,171 @@ void CGuild::PushDQSDestGuildOutputGuildBattleCost()
   const int nSize = qry.size();
   g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x76u, reinterpret_cast<char *>(&qry), nSize);
   m_bIOWait = true;
+}
+
+void CGuild::IOMoney(
+  const char *pwszIOerName,
+  unsigned int dwIOerSerial,
+  long double dIODalant,
+  long double dIOGold,
+  long double dTotalDalant,
+  long double dTotalGold,
+  unsigned __int8 *pbyDate,
+  bool bInPut)
+{
+  m_dTotalDalant = dTotalDalant;
+  m_dTotalGold = dTotalGold;
+  MakeDownMemberPacket();
+  PushHistory_IOMoney(
+    bInPut,
+    pwszIOerName,
+    dwIOerSerial,
+    dIODalant,
+    dIOGold,
+    dTotalDalant,
+    dTotalGold,
+    pbyDate);
+  MakeMoneyIOPacket();
+}
+
+void CGuild::PushHistory_IOMoney(
+  bool bInput,
+  const char *pwszIOerName,
+  unsigned int dwIOerSerial,
+  long double dIODalant,
+  long double dIOGold,
+  long double dLeftDalant,
+  long double dLeftGold,
+  unsigned __int8 *pbyDate)
+{
+  _io_money_data *entry = nullptr;
+  if (m_nIOMoneyHistoryNum >= 100)
+  {
+    memcpy_0(m_IOMoneyHistory, &m_IOMoneyHistory[1], sizeof(_io_money_data) * 99);
+    entry = &m_IOMoneyHistory[99];
+  }
+  else
+  {
+    entry = &m_IOMoneyHistory[m_nIOMoneyHistoryNum++];
+  }
+
+  strcpy_0(entry->wszIOerName, pwszIOerName);
+  entry->dwIOerSerial = dwIOerSerial;
+  entry->dIODalant = dIODalant;
+  entry->dIOGold = dIOGold;
+  entry->dLeftDalant = dLeftDalant;
+  entry->dLeftGold = dLeftGold;
+  memcpy_0(entry->byDate, pbyDate, sizeof(entry->byDate));
+
+  SendMsg_IOMoney(dwIOerSerial, dIODalant, dIOGold, bInput, pbyDate);
+}
+
+void CGuild::MakeMoneyIOPacket()
+{
+  m_MoneyIO_List->wDataSize = 0;
+
+  int dataSize = 0;
+  void *sData = m_MoneyIO_List->sData;
+  memcpy_0(sData, &m_nIOMoneyHistoryNum, 1uLL);
+  sData = static_cast<char *>(sData) + 1;
+  ++dataSize;
+
+  int historyCount = m_nIOMoneyHistoryNum;
+  for (int j = 0; j < m_nIOMoneyHistoryNum; ++j)
+  {
+    _io_money_data *entry = &m_IOMoneyHistory[--historyCount];
+    unsigned __int8 nameLen = static_cast<unsigned __int8>(strlen_0(entry->wszIOerName));
+    memcpy_0(sData, &nameLen, 1uLL);
+    sData = static_cast<char *>(sData) + 1;
+    ++dataSize;
+
+    memcpy_0(sData, entry->wszIOerName, nameLen);
+    sData = static_cast<char *>(sData) + nameLen;
+    dataSize += nameLen;
+
+    memcpy_0(sData, &entry->dIODalant, 8uLL);
+    sData = static_cast<char *>(sData) + 8;
+    dataSize += 8;
+
+    memcpy_0(sData, &entry->dIOGold, 8uLL);
+    sData = static_cast<char *>(sData) + 8;
+    dataSize += 8;
+
+    memcpy_0(sData, &entry->dLeftDalant, 8uLL);
+    sData = static_cast<char *>(sData) + 8;
+    dataSize += 8;
+
+    memcpy_0(sData, &entry->dLeftGold, 8uLL);
+    sData = static_cast<char *>(sData) + 8;
+    dataSize += 8;
+
+    memcpy_0(sData, entry->byDate, 4uLL);
+    sData = static_cast<char *>(sData) + 4;
+    dataSize += 4;
+  }
+
+  m_MoneyIO_List->wDataSize = dataSize;
+}
+
+void CGuild::SendMsg_IOMoney(
+  unsigned int dwIOerSerial,
+  long double dIODalant,
+  long double dIOGold,
+  bool bInPut,
+  unsigned __int8 *pbyDate)
+{
+  #pragma pack(push, 1)
+  struct GuildIOMoneyMsg
+  {
+    unsigned int dwIOerSerial;
+    unsigned __int8 byMoneyOutputKind;
+    bool bInPut;
+    long double dIODalant;
+    long double dIOGold;
+    long double dTotalDalant;
+    long double dTotalGold;
+    unsigned __int8 byDate[4];
+  };
+  #pragma pack(pop)
+
+  GuildIOMoneyMsg msg{};
+  msg.dwIOerSerial = dwIOerSerial;
+  msg.byMoneyOutputKind = m_byMoneyOutputKind;
+  msg.bInPut = bInPut;
+  msg.dIODalant = dIODalant;
+  msg.dIOGold = dIOGold;
+  msg.dTotalDalant = GetTotalDalant();
+  msg.dTotalGold = GetTotalGold();
+  memcpy_0(msg.byDate, pbyDate, sizeof(msg.byDate));
+
+  unsigned __int8 pbyType[16]{};
+  pbyType[0] = 27;
+  pbyType[1] = 37;
+
+  for (int j = 0; j < 50; ++j)
+  {
+    if (m_MemberData[j].IsFill())
+    {
+      if (m_MemberData[j].pPlayer)
+      {
+        g_Network.m_pProcess[0]->LoadSendMsg(
+          m_MemberData[j].pPlayer->m_ObjID.m_wIndex,
+          pbyType,
+          reinterpret_cast<char *>(&msg),
+          0x2Au);
+      }
+    }
+  }
+}
+
+long double CGuild::GetTotalDalant()
+{
+  return m_dTotalDalant;
+}
+
+long double CGuild::GetTotalGold()
+{
+  return m_dTotalGold;
 }
 
 CGuild *GetGuildDataFromSerial(CGuild *pData, int nNum, unsigned int dwSerial)

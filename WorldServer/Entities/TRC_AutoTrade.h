@@ -28,6 +28,7 @@ public:
   bool Initialzie();
   bool IsOwnerGuild(unsigned int nGuildSerial);
   float get_taxrate();
+  static unsigned __int8 _insert_info(char *pdata);
 
   bool m_bInit;
   unsigned char m_byCurDay;

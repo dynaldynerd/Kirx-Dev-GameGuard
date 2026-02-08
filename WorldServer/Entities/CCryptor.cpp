@@ -40,3 +40,19 @@ bool CCryptor::Init(const char *szKeyPath, bool bUseCreate)
 
   return m_pkParam->Load(szKeyPath);
 }
+
+bool CCryptor::MakeHash(
+  const unsigned __int8 *pBuff,
+  unsigned __int64 tBufSize,
+  unsigned __int8 *pHash,
+  unsigned __int64 tHashSize)
+{
+  if (tHashSize != 32)
+  {
+    return false;
+  }
+
+  m_pHash->Update(pBuff, tBufSize);
+  m_pHash->Final(pHash);
+  return true;
+}

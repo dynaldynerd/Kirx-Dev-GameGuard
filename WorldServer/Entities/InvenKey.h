@@ -11,8 +11,8 @@ struct __cppobj _INVENKEY
   _INVENKEY();
   _INVENKEY(unsigned __int8 byInSlotIndex, unsigned __int8 byInTableCode, unsigned __int16 wInItemIndex);
 
-  void LoadDBKey(_INVENKEY pl_nKey);
+  void LoadDBKey(int pl_nKey);
   bool IsFilled();
   void SetRelease();
-  int CovDBKey();
+  __int64 CovDBKey();
 };

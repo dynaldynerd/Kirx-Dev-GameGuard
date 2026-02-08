@@ -9,14 +9,22 @@
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 #include "CLogFile.h"
+#include "CNetProcess.h"
 #include "CNetworkEX.h"
+#include "alive_char_result_zocl.h"
+#include "enter_lobby_report_wrac.h"
+#include "moveout_user_result_zone.h"
 #include "server_notify_inform_zone.h"
 #include "wrac_packets.h"
 #include "qry_logout.h"
 #include "exit_alter_param.h"
 #include "RFEvent_ClassRefine.h"
+#include "CNetIndexList.h"
 
 int CUserDB::s_nLoginNum = 0;
+CLogFile CUserDB::s_logAvatorDB;
+CMgrAccountLobbyHistory CUserDB::s_MgrLobbyHistory{};
+_MOVE_LOBBY_DELAY CUserDB::s_MoveLobbyDelay{};
 
 void CUserDB::Init(unsigned __int16 index)
 {
@@ -607,14 +615,14 @@ _INVENKEY::_INVENKEY(unsigned __int8 byInSlotIndex, unsigned __int8 byInTableCod
   wItemIndex = wInItemIndex;
 }
 
-void _INVENKEY::LoadDBKey(_INVENKEY pl_nKey)
+void _INVENKEY::LoadDBKey(int pl_nKey)
 {
-  *this = pl_nKey;
+  *reinterpret_cast<int *>(this) = pl_nKey;
 }
 
-int _INVENKEY::CovDBKey()
+__int64 _INVENKEY::CovDBKey()
 {
-  return *reinterpret_cast<int *>(this);
+  return static_cast<__int64>(*reinterpret_cast<unsigned int *>(this));
 }
 
 bool _INVENKEY::IsFilled()
@@ -686,6 +694,16 @@ unsigned int _FORCEKEY::GetStat()
   return dwKey & 0xFFFFFFu;
 }
 
+__int64 _FORCEKEY::CovDBKey()
+{
+  return static_cast<__int64>(dwKey);
+}
+
+unsigned __int16 _LINKKEY::CovDBKey()
+{
+  return wEffectCode;
+}
+
 bool _ANIMUSKEY::IsFilled()
 {
   return byItemIndex != 0xFF;
@@ -704,6 +722,113 @@ void _ANIMUSKEY::LoadDBKey(unsigned __int8 key)
 unsigned __int8 _ANIMUSKEY::CovDBKey()
 {
   return byItemIndex;
+}
+
+void CUserDB::SetDBPostData(
+  unsigned int n,
+  unsigned int dwSerial,
+  int nNumber,
+  unsigned __int8 byState,
+  int nKey,
+  unsigned __int64 dwDur,
+  unsigned int dwUpt,
+  unsigned int dwGold,
+  bool bUpdateIndex,
+  unsigned __int64 lnUID)
+{
+  if (n < 50)
+  {
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].dwPSSerial = dwSerial;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].nNumber = nNumber;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].byState = byState;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].nKey = nKey;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].dwDur = dwDur;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].dwUpt = dwUpt;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].dwGold = dwGold;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].bNew = 0;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].lnUID = lnUID;
+    if (bUpdateIndex)
+    {
+      m_AvatorData.dbPostData.dbPost.m_PostList[n].bUpdate = 1;
+      m_AvatorData.dbPostData.dbPost.m_PostList[n].bUpdateIndex = 1;
+      m_AvatorData.dbPostData.dbPost.m_bUpdate = 1;
+      m_bDataUpdate = 1;
+    }
+    memcpy_s(
+      &m_AvatorData_bk.dbPostData.dbPost.m_PostList[n],
+      0x129u,
+      &m_AvatorData.dbPostData.dbPost.m_PostList[n],
+      0x129u);
+  }
+}
+
+void CUserDB::SetNewDBPostData(
+  unsigned int n,
+  unsigned int dwSerial,
+  int nNumber,
+  unsigned __int8 byState,
+  char *wszSendName,
+  char *wszRecvName,
+  char *wszTitle,
+  char *wszContent,
+  int nKey,
+  unsigned __int64 dwDur,
+  unsigned int dwUpt,
+  unsigned int dwGold,
+  unsigned __int64 lnUID)
+{
+  if (n < 50)
+  {
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].dwPSSerial = dwSerial;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].nNumber = nNumber;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].byState = byState;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].nKey = nKey;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].dwDur = dwDur;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].dwUpt = dwUpt;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].dwGold = dwGold;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].lnUID = lnUID;
+    strcpy_s(m_AvatorData.dbPostData.dbPost.m_PostList[n].wszSendName, 0x11u, wszSendName);
+    strcpy_s(m_AvatorData.dbPostData.dbPost.m_PostList[n].wszRecvName, 0x11u, wszRecvName);
+    strcpy_s(m_AvatorData.dbPostData.dbPost.m_PostList[n].wszTitle, 0x15u, wszTitle);
+    strcpy_s(m_AvatorData.dbPostData.dbPost.m_PostList[n].wszContent, 0xC9u, wszContent);
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].bNew = 1;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].bUpdate = 1;
+    m_AvatorData.dbPostData.dbPost.m_bUpdate = 1;
+    m_bDataUpdate = 1;
+  }
+}
+
+void CUserDB::DelPostData(unsigned int dwIndex)
+{
+  if (dwIndex < 50)
+  {
+    m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].dwPSSerial = 0;
+    m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].nNumber = 0;
+    m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].byState = static_cast<unsigned __int8>(-1);
+    m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].nKey = -1;
+    m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].dwDur = 0;
+    m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].dwUpt = 0;
+    m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].dwGold = 0;
+    m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].lnUID = 0;
+    memset_0(
+      m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].wszSendName,
+      0,
+      sizeof(m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].wszSendName));
+    memset_0(
+      m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].wszRecvName,
+      0,
+      sizeof(m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].wszRecvName));
+    memset_0(
+      m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].wszTitle,
+      0,
+      sizeof(m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].wszTitle));
+    memset_0(
+      m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].wszContent,
+      0,
+      sizeof(m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].wszContent));
+    m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].bNew = 0;
+    m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].bUpdate = 0;
+  }
 }
 
 void _PCBANG_FAVOR_ITEM_DB_BASE::Init()
@@ -940,6 +1065,11 @@ bool _REGED::Release(unsigned __int8 bySlot)
   return true;
 }
 
+_REGED_AVATOR_DB::_REGED_AVATOR_DB()
+{
+  Init();
+}
+
 void _REGED_AVATOR_DB::Init()
 {
   std::memset(this, 0, sizeof(_REGED_AVATOR_DB));
@@ -965,9 +1095,23 @@ void _REGED::init()
   }
 }
 
+void _REGED::UpdateEquipLv()
+{
+  for (int j = 0; j < 8; ++j)
+  {
+    m_byEquipLv[j] = GetItemUpgedLv(m_dwFixEquipLv[j]);
+  }
+}
+
 void _SYNC_STATE::Init()
 {
   std::memset(this, 0, sizeof(_SYNC_STATE));
+}
+
+void _SYNC_STATE::re_lobby()
+{
+  bSelect = false;
+  bReged = false;
 }
 
 void _AVATOR_DATA::InitData()
@@ -1123,6 +1267,143 @@ void CUserDB::Exit_Account_Complete(unsigned __int8 byRetCode)
   ParamInit();
 }
 
+void CUserDB::Lobby_Char_Complete(unsigned __int8 byRetCode)
+{
+  m_bDBWaitState = false;
+  m_bField = false;
+  m_dwSerial = static_cast<unsigned int>(-1);
+  m_ss.re_lobby();
+  m_bDataUpdate = false;
+  m_AvatorData.InitData();
+  m_AvatorData_bk.InitData();
+  for (int j = 0; j < 3; ++j)
+  {
+    m_RegedList[j].init();
+  }
+
+  if (m_byUserDgr)
+  {
+    m_byUILock = 2;
+    _moveout_user_result_zone msg{};
+    msg.byRetCode = byRetCode;
+    unsigned __int8 type[2] = {1, 7};
+    const unsigned __int16 len = msg.size();
+    g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, type, reinterpret_cast<char *>(&msg), len);
+  }
+  else
+  {
+    s_MoveLobbyDelay.Push(m_idWorld.wIndex, m_idWorld.dwSerial);
+    m_byUILock = 1;
+  }
+
+  s_MgrLobbyHistory.enter_lobby(
+    m_dwAccountSerial,
+    m_szAccountID,
+    m_byUserDgr,
+    m_dwIP,
+    0,
+    m_szLobbyHistoryFileName);
+
+  _enter_lobby_report_wrac report{};
+  memcpy_0(&report, &m_gidGlobal, sizeof(report));
+  unsigned __int8 type[2] = {1, 13};
+  const unsigned __int16 len = report.size();
+  g_Network.m_pProcess[1]->LoadSendMsg(0, type, reinterpret_cast<char *>(&report), len);
+}
+
+void CUserDB::Cont_UserSave_Complete(unsigned __int8 byResult, _AVATOR_DATA *pAvatorData)
+{
+  if (byResult)
+  {
+    g_Network.Close(0, m_idWorld.wIndex, true, "Cont Save Error");
+    return;
+  }
+
+  _QUEST_DB_BASE::_START_NPC_QUEST_HISTORY *startHistory = m_AvatorData_bk.dbQuest.m_StartHistory;
+  unsigned int listCount = m_AvatorData_bk.dbQuest.dwListCnt;
+  memcpy_0(&m_AvatorData_bk, pAvatorData, sizeof(m_AvatorData_bk));
+  m_AvatorData_bk.dbQuest.m_StartHistory = startHistory;
+  m_AvatorData_bk.dbQuest.dwListCnt = listCount;
+
+  const unsigned int addCount = m_AvatorData.dbQuest.dwListCnt - m_AvatorData_bk.dbQuest.dwListCnt;
+  for (unsigned int j = 0; j < addCount; ++j)
+  {
+    memcpy_0(
+      &m_AvatorData_bk.dbQuest.m_StartHistory[m_AvatorData_bk.dbQuest.dwListCnt],
+      &m_AvatorData.dbQuest.m_StartHistory[m_AvatorData_bk.dbQuest.dwListCnt],
+      sizeof(m_AvatorData_bk.dbQuest.m_StartHistory[m_AvatorData_bk.dbQuest.dwListCnt]));
+    ++m_AvatorData_bk.dbQuest.dwListCnt;
+  }
+
+  m_bDBWaitState = false;
+  m_pDBPushData = nullptr;
+}
+
+void CUserDB::Alive_Char_Complete(
+  unsigned __int8 byRetCode,
+  unsigned __int8 byCase,
+  unsigned int dwSerial,
+  _REGED *pAliveAvator)
+{
+  m_bDBWaitState = false;
+
+  unsigned __int8 resultCode = byRetCode;
+  unsigned __int8 slotIndex = 0xFF;
+  if (!byRetCode)
+  {
+    slotIndex = pAliveAvator->m_bySlotIndex;
+    if (slotIndex < 3u)
+    {
+      if (m_RegedList[slotIndex].m_bySlotIndex == 0xFF)
+      {
+        memcpy_0(&m_RegedList[slotIndex], pAliveAvator, sizeof(m_RegedList[slotIndex]));
+        m_RegedList[slotIndex].UpdateEquipLv();
+        for (int j = 0; j < 50; ++j)
+        {
+          if (m_NotArrangedChar[j].dwSerial == dwSerial)
+          {
+            m_NotArrangedChar[j].dwSerial = static_cast<unsigned int>(-1);
+            break;
+          }
+        }
+      }
+      else
+      {
+        resultCode = 50;
+      }
+    }
+    else
+    {
+      resultCode = 50;
+    }
+  }
+
+  if (!byCase)
+  {
+    for (int k = 0; k < 50; ++k)
+    {
+      if (m_dwArrangePassCase0[k] == static_cast<unsigned int>(-1))
+      {
+        m_dwArrangePassCase0[k] = dwSerial;
+        break;
+      }
+    }
+  }
+
+  s_MgrLobbyHistory.recovery_char_complete(resultCode, pAliveAvator, m_szLobbyHistoryFileName);
+
+  _alive_char_result_zocl msg{};
+  msg.byRetCode = resultCode;
+  if (!resultCode)
+  {
+    msg.dwSerial = dwSerial;
+    memcpy_0(&msg.AliveChar, &m_RegedList[slotIndex], sizeof(msg.AliveChar));
+  }
+
+  unsigned __int8 type[2] = {1, 23};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, type, reinterpret_cast<char *>(&msg), 0x4Au);
+}
+
 char CUserDB::Update_Param(_EXIT_ALTER_PARAM *pCon)
 {
   m_AvatorData.dbAvator.m_dwHP = pCon->dwHP;
@@ -1142,5 +1423,149 @@ char CUserDB::Update_Param(_EXIT_ALTER_PARAM *pCon)
   }
 
   return 1;
+}
+
+char CUserDB::CheckDQSLoadCharacterData(_AVATOR_DATA *pData)
+{
+  int maxLevel = pData->dbAvator.m_byMaxLevel ? pData->dbAvator.m_byMaxLevel : 50;
+  if (pData->dbAvator.m_byLevel <= maxLevel)
+  {
+    if (pData->dbAvator.m_byRaceSexCode < 5u)
+    {
+      return 1;
+    }
+
+    static const char kDataValidCheckRace[] = "D_DataValidCheck (Serial:%d) Race:%d";
+    CUserDB::s_logAvatorDB.Write(
+      kDataValidCheckRace,
+      pData->dbAvator.m_dwRecordNum,
+      pData->dbAvator.m_byRaceSexCode);
+    return 0;
+  }
+
+  static const char kDataValidCheckLevel[] = "D_DataValidCheck (Serial:%d) Level:%d Max:%d";
+  CUserDB::s_logAvatorDB.Write(
+    kDataValidCheckLevel,
+    pData->dbAvator.m_dwRecordNum,
+    pData->dbAvator.m_byLevel,
+    maxLevel);
+  return 0;
+}
+
+void CUserDB::ReRangeClientIndex(_AVATOR_DATA *pData)
+{
+  CNetIndexList list;
+  list.SetList(0x64u);
+
+  unsigned char slotUsed[100]{};
+  unsigned int indexList[101]{};
+
+  int maxSlots = 20 * pData->dbAvator.m_byBagNum;
+  list.ResetList();
+  std::memset(slotUsed, 0, sizeof(slotUsed));
+
+  for (unsigned int i = 0; static_cast<int>(i) < maxSlots; ++i)
+  {
+    if (pData->dbInven.m_List[i].Key.IsFilled())
+    {
+      unsigned __int8 slotIndex = pData->dbInven.m_List[i].Key.bySlotIndex;
+      if (slotIndex >= maxSlots || slotUsed[slotIndex])
+      {
+        list.PushNode_Back(i);
+      }
+      else
+      {
+        slotUsed[slotIndex] = 1;
+      }
+    }
+  }
+
+  int startIndex = 0;
+  int listCount = list.CopyIndexList(indexList, maxSlots);
+  for (int j = 0; j < listCount; ++j)
+  {
+    for (int k = startIndex; k < maxSlots; ++k)
+    {
+      if (!slotUsed[k])
+      {
+        pData->dbInven.m_List[indexList[j]].Key.bySlotIndex = static_cast<unsigned __int8>(k);
+        slotUsed[k] = 1;
+        startIndex = k;
+        break;
+      }
+    }
+  }
+
+  maxSlots = 7;
+  list.ResetList();
+  std::memset(slotUsed, 0, sizeof(slotUsed));
+  startIndex = 0;
+
+  for (unsigned int i = 0; static_cast<int>(i) < maxSlots; ++i)
+  {
+    if (pData->dbEquip.m_EmbellishList[i].Key.IsFilled())
+    {
+      unsigned __int8 slotIndex = pData->dbEquip.m_EmbellishList[i].Key.bySlotIndex;
+      if (slotIndex >= maxSlots || slotUsed[slotIndex])
+      {
+        list.PushNode_Back(i);
+      }
+      else
+      {
+        slotUsed[slotIndex] = 1;
+      }
+    }
+  }
+
+  listCount = list.CopyIndexList(indexList, maxSlots);
+  for (int j = 0; j < listCount; ++j)
+  {
+    for (int k = startIndex; k < maxSlots; ++k)
+    {
+      if (!slotUsed[k])
+      {
+        pData->dbEquip.m_EmbellishList[indexList[j]].Key.bySlotIndex = static_cast<unsigned __int8>(k);
+        slotUsed[k] = 1;
+        startIndex = k;
+        break;
+      }
+    }
+  }
+
+  maxSlots = pData->dbTrunk.bySlotNum;
+  list.ResetList();
+  std::memset(slotUsed, 0, sizeof(slotUsed));
+  startIndex = 0;
+
+  for (unsigned int i = 0; static_cast<int>(i) < maxSlots; ++i)
+  {
+    if (pData->dbTrunk.m_List[i].Key.IsFilled())
+    {
+      unsigned __int8 slotIndex = pData->dbTrunk.m_List[i].Key.bySlotIndex;
+      if (slotIndex >= maxSlots || slotUsed[slotIndex])
+      {
+        list.PushNode_Back(i);
+      }
+      else
+      {
+        slotUsed[slotIndex] = 1;
+      }
+    }
+  }
+
+  listCount = list.CopyIndexList(indexList, maxSlots);
+  for (int j = 0; j < listCount; ++j)
+  {
+    for (int k = startIndex; k < maxSlots; ++k)
+    {
+      if (!slotUsed[k])
+      {
+        pData->dbTrunk.m_List[indexList[j]].Key.bySlotIndex = static_cast<unsigned __int8>(k);
+        slotUsed[k] = 1;
+        startIndex = k;
+        break;
+      }
+    }
+  }
 }
 

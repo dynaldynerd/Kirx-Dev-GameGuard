@@ -3,10 +3,12 @@
 #include "CItemStoreManager.h"
 #include "CItemStore.h"
 
+#include <cstdarg>
 #include <cstdio>
 #include <cstring>
 #include <new>
 #include <atltime.h>
+#include "CRFWorldDatabase.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
@@ -96,4 +98,202 @@ CItemStore *CItemStoreManager::GetMapItemStoreFromList(int nMapNum, int nStoreNu
   if (!pList || nStoreNum < 0 || nStoreNum >= pList->m_nItemStoreNum)
     return nullptr;
   return &pList->m_ItemStore[nStoreNum];
+}
+
+
+void _qry_case_all_store_limit_item::__list::init()
+{
+  std::memset(this, 0, sizeof(*this));
+  for (int j = 0; j < 16; ++j)
+  {
+    ItemData[j].Key.SetRelease();
+  }
+}
+
+void _qry_case_all_store_limit_item::DataInit()
+{
+  dwCount = 0;
+  for (unsigned int j = 0; j < dwMax; ++j)
+  {
+    pStoreList[j].init();
+  }
+}
+
+void CItemStoreManager::Log(char *fmt, ...)
+{
+  if (!m_pkLogger)
+  {
+    return;
+  }
+
+  va_list va;
+  va_start(va, fmt);
+  m_pkLogger->WriteFromArg(fmt, va);
+  va_end(va);
+}
+
+unsigned __int8 CItemStoreManager::UpdateStoreLimitItem()
+{
+  char query[2052]{};
+  std::memset(query, 0, 2048);
+
+  for (unsigned int j = 0; j < m_Sheet.dwCount; ++j)
+  {
+    _qry_case_all_store_limit_item::__list *entry = &m_Sheet.pStoreList[j];
+    if (entry->dwDBSerial)
+    {
+      MakeLimitItemUpdateQuery(
+        entry->dwDBSerial,
+        entry->byType,
+        entry->nTypeSerial,
+        entry->dwStoreIndex,
+        entry->ItemData,
+        entry->dwLimitInitTime,
+        query,
+        2048);
+      if (!g_Main.m_pWorldDB->Update_LimitItemNum(query))
+      {
+        entry->byRet = 3;
+      }
+    }
+    else
+    {
+      unsigned int dbSerial[7]{};
+      unsigned __int8 dbRet = g_Main.m_pWorldDB->Select_LimitItemUsedRecord(
+        entry->byType,
+        entry->nTypeSerial,
+        entry->dwStoreIndex,
+        dbSerial);
+      if (dbRet == 1)
+      {
+        entry->byRet = 4;
+        continue;
+      }
+      if (!dbSerial[0])
+      {
+        dbRet = g_Main.m_pWorldDB->Select_LimitItemEmptyRecord(dbSerial);
+        if (dbRet == 1)
+        {
+          entry->byRet = 1;
+          continue;
+        }
+        if (!dbSerial[0] && !g_Main.m_pWorldDB->Insert_LimitItemRecord(dbSerial))
+        {
+          entry->byRet = 2;
+          continue;
+        }
+      }
+
+      MakeLimitItemUpdateQuery(
+        dbSerial[0],
+        entry->byType,
+        entry->nTypeSerial,
+        entry->dwStoreIndex,
+        entry->ItemData,
+        entry->dwLimitInitTime,
+        query,
+        2048);
+      if (g_Main.m_pWorldDB->Update_LimitItemNum(query))
+      {
+        m_Sheet.pStoreList[j].bNewSerial = true;
+        m_Sheet.pStoreList[j].dwDBSerial = dbSerial[0];
+      }
+      else
+      {
+        entry->byRet = 3;
+      }
+    }
+  }
+
+  return 0;
+}
+
+unsigned __int8 CItemStoreManager::UpdateDisableInstanceStore(char *pData)
+{
+  for (int j = 0; j < *reinterpret_cast<unsigned int *>(pData); ++j)
+  {
+    char *entry = reinterpret_cast<char *>(*reinterpret_cast<unsigned long long *>(pData + 8) + 8LL * j);
+    if (*reinterpret_cast<unsigned int *>(entry + 4))
+    {
+      bool updated = g_Main.m_pWorldDB->Update_DisableInstanceStore(*reinterpret_cast<unsigned int *>(entry + 4));
+      entry[0] = updated ? 1 : 0;
+    }
+  }
+
+  return 0;
+}
+
+void CItemStoreManager::CompleteStoreLimitItem()
+{
+  for (unsigned int j = 0; j < m_Sheet.dwCount; ++j)
+  {
+    _qry_case_all_store_limit_item::__list *entry = &m_Sheet.pStoreList[j];
+    if (entry->byRet)
+    {
+      Log(
+        "CItemStoreManager::CompleteStoreLimitItem\r\n\t\tStore Limit Item DBUpdate Proc(ErrorCode:%d) Fail!\r\n",
+        entry->byRet);
+    }
+    else if (entry->bNewSerial)
+    {
+      CItemStore *store = nullptr;
+      CMapItemStoreList *storeList = nullptr;
+      if (entry->byType)
+      {
+        if (entry->byType == 1)
+        {
+          storeList = GetInstanceStoreListBySerial(entry->nTypeSerial);
+        }
+      }
+      else
+      {
+        storeList = GetMapItemStoreListBySerial(entry->nTypeSerial);
+      }
+      if (storeList)
+      {
+        store = storeList->GetItemStoreFromRecIndex(entry->dwStoreIndex);
+        if (store)
+        {
+          store->m_dwDBSerial = entry->dwDBSerial;
+        }
+        else
+        {
+          Log(
+            "CItemStoreManager::CompleteStoreLimitItem\r\n"
+            "\t\t Store Limit Item NewSerial Set Fail! (StoreType:%d)(Serial:%d)\r\n",
+            entry->byType,
+            entry->nTypeSerial);
+        }
+      }
+      else
+      {
+        Log(
+          "CItemStoreManager::CompleteStoreLimitItem\r\n"
+          "\t\t Store Limit Item NewSerial Set Fail! (StoreType:%d)(Serial:%d)\r\n",
+          entry->byType,
+          entry->nTypeSerial);
+      }
+    }
+  }
+
+  m_Sheet.DataInit();
+}
+
+void CItemStoreManager::CompleteDisableInstanceStore(char *pData)
+{
+  for (int j = 0; j < *reinterpret_cast<unsigned int *>(pData); ++j)
+  {
+    char *entry = reinterpret_cast<char *>(*reinterpret_cast<unsigned long long *>(pData + 8) + 8LL * j);
+    if (!entry[0])
+    {
+      Log(
+        "CItemStoreManager::CompleteDisableInstanceStore\r\n\t\tInstanceStore Disable Fail! (DBSerial:%d)\r\n",
+        *reinterpret_cast<unsigned int *>(entry + 4));
+    }
+  }
+
+  if (*reinterpret_cast<int *>(pData) > 0)
+  {
+    operator delete[](*reinterpret_cast<void **>(pData + 8));
+  }
 }

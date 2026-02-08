@@ -48,7 +48,12 @@
 #include "exit_alter_param.h"
 #include "alter_cont_effect_time_zocl.h"
 #include "notify_not_use_premium_cashitem_zocl.h"
+#include "post_content_result_zocl.h"
+#include "post_recv_delivery_zocl.h"
+#include "post_return_zocl.h"
+#include "pt_inform_commission_income_zocl.h"
 #include "pt_inform_punishment_zocl.h"
+#include "chat_message_receipt_udp.h"
 #include "target_monster_aggro_inform_zocl.h"
 #include "CNetworkEX.h"
 #include "GlobalObjects.h"
@@ -6118,6 +6123,44 @@ void CPlayer::SendMsg_UnitForceReturnInform(char bySlotIndex, unsigned int dwDeb
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
+void CPlayer::AddDalant(int dwPush, bool bApply)
+{
+  if (bApply)
+  {
+    const double penalty = g_Main.m_pTimeLimitMgr->GetPlayerPenalty(m_id.wIndex);
+    dwPush = static_cast<int>(static_cast<double>(dwPush) * penalty);
+  }
+
+  unsigned int newDalant = static_cast<unsigned int>(dwPush) + m_Param.GetDalant();
+  const unsigned int currentDalant = m_Param.GetDalant();
+  if (!CanAddMoneyForMaxLimMoney(static_cast<unsigned int>(dwPush), currentDalant))
+  {
+    newDalant = 2000000000;
+  }
+
+  if (newDalant != m_Param.GetDalant())
+  {
+    m_Param.SetDalant(newDalant);
+    const unsigned int gold = m_Param.GetGold();
+    m_pUserDB->Update_Money(m_Param.GetDalant(), gold);
+  }
+}
+
+void CPlayer::AlterDalant(double dDalant)
+{
+  if (dDalant <= 0.0)
+  {
+    if (dDalant < 0.0)
+    {
+      SubDalant(static_cast<int>(-dDalant));
+    }
+  }
+  else
+  {
+    AddDalant(static_cast<int>(dDalant), true);
+  }
+}
+
 void CPlayer::SubDalant(unsigned int dwSub)
 {
   unsigned int nextDalant = m_Param.GetDalant() - dwSub;
@@ -6632,6 +6675,163 @@ void CPlayer::SendMsg_PvpRankListVersionUp(char byVersion)
 
   unsigned __int8 pbyType[2] = {13, 24};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, msg, 1u);
+}
+
+void CPlayer::SendData_ChatTrans(
+  unsigned __int8 byChatType,
+  unsigned int dwSenderSerial,
+  unsigned __int8 byRaceCode,
+  bool bFilter,
+  char *pwszMessage,
+  unsigned __int8 byPvpGrade,
+  char *pwszSender)
+{
+  _chat_message_receipt_udp msg{};
+  msg.byMessageType = byChatType;
+  msg.dwSenderSerial = dwSenderSerial;
+  if (pwszSender)
+  {
+    strcpy_s(msg.wszSenderName, 0x11u, pwszSender);
+  }
+  msg.byPvpGrade = byPvpGrade;
+  msg.byRaceCode = byRaceCode;
+  msg.bFiltering = bFilter;
+  if (bFilter)
+  {
+    msg.wszChatData[0] = 0;
+    msg.bySize = 0;
+  }
+  else
+  {
+    msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszMessage));
+    memcpy_0(msg.wszChatData, pwszMessage, msg.bySize);
+    msg.wszChatData[msg.bySize] = 0;
+  }
+
+  unsigned __int8 pbyType[2] = {2, 10};
+  const unsigned __int16 nLen = msg.size();
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), nLen);
+}
+
+void CPlayer::SendMsg_ExchangeMoneyResult(char byErrCode)
+{
+  #pragma pack(push, 1)
+  struct ExchangeMoneyResultMsg
+  {
+    char byErrCode;
+    unsigned int dwGold;
+    unsigned int dwDalant;
+  };
+  #pragma pack(pop)
+
+  ExchangeMoneyResultMsg msg{};
+  msg.byErrCode = byErrCode;
+  msg.dwDalant = m_Param.GetDalant();
+  msg.dwGold = m_Param.GetGold();
+
+  unsigned __int8 pbyType[2] = {12, 13};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), 9u);
+}
+
+void CPlayer::SendMsg_InformTaxIncome(unsigned __int8 byRet, unsigned int dwComm, char *pwszDate)
+{
+  char monthBuffer[32]{};
+  char dayBuffer[32]{};
+
+  strncpy(monthBuffer, pwszDate + 4, 2u);
+  monthBuffer[2] = 0;
+  strncpy(dayBuffer, pwszDate + 6, 2u);
+  dayBuffer[2] = 0;
+
+  _pt_inform_commission_income_zocl msg{};
+  msg.byRet = byRet;
+  msg.byMonth = static_cast<unsigned __int8>(atoi(monthBuffer));
+  msg.byDay = static_cast<unsigned __int8>(atoi(dayBuffer));
+  msg.dwCommission = dwComm;
+
+  unsigned __int8 pbyType[2] = {13, 122};
+  const unsigned __int16 nLen = msg.size();
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), nLen);
+}
+
+void CPlayer::SendMsg_PostDelivery(
+  char byIndex,
+  unsigned int dwPostSerial,
+  char *wszSendName,
+  char *wszTitle,
+  bool bItem,
+  bool bGold,
+  unsigned __int8 byState)
+{
+  _post_recv_delivery_zocl msg{};
+  msg.byIndex = byIndex;
+  msg.dwPostSerial = dwPostSerial;
+  strcpy_s(msg.wszSendName, 0x11u, wszSendName);
+  strcpy_s(msg.wszTitle, 0x15u, wszTitle);
+  msg.bItem = bItem;
+  msg.bGold = bGold;
+  msg.byState = byState;
+
+  unsigned __int8 pbyType[2] = {58, 4};
+  const unsigned __int16 nLen = msg.size();
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), nLen);
+}
+
+void CPlayer::SendMsg_PostReturn(
+  char byErrCode,
+  unsigned int dwPostSerial,
+  char *wszRecvName,
+  char *wszTitle,
+  char *wszContent,
+  unsigned __int8 byTableCode,
+  unsigned __int16 wItemIndex,
+  unsigned __int64 dwDur,
+  unsigned int dwLv,
+  unsigned int dwGold)
+{
+  _post_return_zocl msg{};
+  msg.byErrCode = byErrCode;
+  msg.dwPostSerial = dwPostSerial;
+  strcpy_s(msg.wszRecvName, 0x11u, wszRecvName);
+  strcpy_s(msg.wszTitle, 0x15u, wszTitle);
+  strcpy_s(msg.wszContent, 0xC9u, wszContent);
+  msg.Item.byTableCode = byTableCode;
+  msg.Item.wItemIndex = wItemIndex;
+  msg.Item.dwDur = dwDur;
+  msg.Item.dwLv = dwLv;
+  msg.dwGold = dwGold;
+
+  unsigned __int8 pbyType[2] = {58, 13};
+  const unsigned __int16 nLen = msg.size();
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), nLen);
+}
+
+void CPlayer::SendMsg_PostContent(
+  unsigned __int8 byErrCode,
+  unsigned int dwPostSerial,
+  char *wszContent,
+  unsigned __int8 byTableCode,
+  unsigned __int16 wItemIndex,
+  unsigned __int64 dwDur,
+  unsigned int dwLv,
+  unsigned int dwGold)
+{
+  _post_content_result_zocl msg{};
+  msg.byErrCode = byErrCode;
+  msg.dwPostSerial = dwPostSerial;
+  if (!byErrCode)
+  {
+    strcpy_s(msg.wszContent, 0xC9u, wszContent);
+    msg.Item.byTableCode = byTableCode;
+    msg.Item.wItemIndex = wItemIndex;
+    msg.Item.dwDur = dwDur;
+    msg.Item.dwLv = dwLv;
+    msg.dwGold = dwGold;
+  }
+
+  unsigned __int8 pbyType[2] = {58, 6};
+  const unsigned __int16 nLen = msg.size();
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), nLen);
 }
 
 CPlayer *GetPtrPlayerFromSerial(CPlayer *pData, int nNum, unsigned int dwSerial)

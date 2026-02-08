@@ -55,6 +55,32 @@ unsigned int GetLoopTime()
   return timeGetTime();
 }
 
+bool CanAddMoneyForMaxLimMoney(unsigned __int64 ui64AddMoney, unsigned __int64 ui64HasMoney)
+{
+  if (ui64AddMoney > 0x77359400ULL)
+  {
+    return false;
+  }
+  if (ui64HasMoney <= 0x77359400ULL)
+  {
+    return ui64AddMoney <= 2000000000ULL - ui64HasMoney;
+  }
+  return false;
+}
+
+void MakeBinaryStr(const unsigned __int8 *pBuff, unsigned __int64 tBufSize, char *pOut, rsize_t tOutSize)
+{
+  char temp[32]{};
+
+  sprintf_s(temp, "0x%0.2X", pBuff[0]);
+  strcat_s(pOut, tOutSize, temp);
+  for (unsigned __int64 i = 1; i < tBufSize; ++i)
+  {
+    sprintf_s(temp, "%0.2X", pBuff[i]);
+    strcat_s(pOut, tOutSize, temp);
+  }
+}
+
 unsigned __int64 SplitString(char *strSrc, const char *_Delim, std::vector<std::string> *stringlist)
 {
   for (char *token = strtok(strSrc, _Delim); token; token = strtok(nullptr, _Delim))
@@ -131,6 +157,40 @@ int GetCurrentMonth()
     return -1;
   }
   return local.tm_mon + 1;
+}
+
+void GetTodayStr(char *szToday)
+{
+  if (!szToday)
+  {
+    return;
+  }
+
+  char month[32]{};
+  char day[16]{};
+  const unsigned __int16 year = static_cast<unsigned __int16>(GetCurrentYear());
+  const unsigned __int16 curMonth = static_cast<unsigned __int16>(GetCurrentMonth());
+  const unsigned __int16 curDay = static_cast<unsigned __int16>(GetCurrentDay());
+
+  if (curMonth > 9)
+  {
+    sprintf(month, "%d", curMonth);
+  }
+  else
+  {
+    sprintf(month, "0%d", curMonth);
+  }
+
+  if (curDay > 9)
+  {
+    sprintf(day, "%d", curDay);
+  }
+  else
+  {
+    sprintf(day, "0%d", curDay);
+  }
+
+  sprintf(szToday, "%d%s%s", year, month, day);
 }
 
 unsigned int GetLocalDate()
@@ -262,6 +322,18 @@ void IOFileWrite_1(char *pszFileName, unsigned int nLen, char *pszData)
   }
 }
 
+void IOFileWrite(char *pszFileName, unsigned int nLen, char *pszData)
+{
+  HANDLE hFile = CreateFileA(pszFileName, 0x40000000u, 1u, nullptr, 4u, 0x80u, nullptr);
+  if (hFile != INVALID_HANDLE_VALUE)
+  {
+    SetFilePointer(hFile, 0, nullptr, 2u);
+    DWORD written = 0;
+    WriteFile(hFile, pszData, nLen, &written, nullptr);
+    CloseHandle(hFile);
+  }
+}
+
 __time64_t time_20(__int64 *_Time)
 {
   return _time64(_Time);
@@ -272,12 +344,22 @@ __time64_t time_18(__int64 *_Time)
   return _time64(_Time);
 }
 
+__time64_t time_17(__int64 *_Time)
+{
+  return _time64(_Time);
+}
+
 __time64_t mktime_3(tm *_Tm)
 {
   return _mktime64(_Tm);
 }
 
 tm *localtime_5(const __int64 *_Time)
+{
+  return _localtime64(_Time);
+}
+
+tm *localtime_2(const __int64 *_Time)
 {
   return _localtime64(_Time);
 }

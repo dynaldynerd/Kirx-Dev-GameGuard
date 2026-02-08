@@ -21,6 +21,8 @@ public:
   long double GetPvPPoint();
   void SetPvPPoint(long double dPoint);
   unsigned int GetGuildSerial();
+  unsigned __int8 GetClassInGuild();
+  void SetClassInGuild(unsigned __int8 byClassInGuild);
   unsigned int GetLevel();
   unsigned int GetMaxLevel();
   _class_fld *GetPtrCurClass();

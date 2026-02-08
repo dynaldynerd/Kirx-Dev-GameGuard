@@ -25,11 +25,15 @@ struct _qry_case_all_store_limit_item
     unsigned __int64 dwLimitInitTime;
     _limit_item_db_data ItemData[16];
     unsigned __int8 byRet;
+
+    void init();
   };
 
   unsigned int dwMax;
   unsigned int dwCount;
   __list *pStoreList;
+
+  void DataInit();
 };
 
 /* 5781 */
@@ -40,6 +44,11 @@ public:
   bool Init(int nMapNum, int nInstanceListNum);
   bool InitLogger();
   void SetNextEnforceInitTime();
+  unsigned __int8 UpdateStoreLimitItem();
+  unsigned __int8 UpdateDisableInstanceStore(char *pData);
+  void CompleteStoreLimitItem();
+  void CompleteDisableInstanceStore(char *pData);
+  void Log(char *fmt, ...);
 
   CMapItemStoreList *GetMapItemStoreListByNum(int nMapNum);
   CItemStore *GetMapItemStoreFromList(int nMapNum, int nStoreNum);

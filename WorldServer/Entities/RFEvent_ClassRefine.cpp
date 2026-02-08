@@ -12,6 +12,11 @@ bool _event_participant_classrefine::IsChanged()
   return bChange;
 }
 
+__int64 _event_participant_classrefine::size()
+{
+  return 20;
+}
+
 bool RFEvent_ClassRefine::Initialzie()
 {
   if (!GetLastWriteFileTime(".\\Initialize\\WorldSystem.ini", &m_ftWrite))

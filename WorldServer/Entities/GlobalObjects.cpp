@@ -31,6 +31,7 @@ CLogFile g_logSchedule{};
 CHolyStoneSystem g_HolySys{};
 CWorldSchedule g_WorldSch{};
 CGameStatistics g_GameStatistics{};
+CVoteSystem g_VoteSys[3]{};
 CMainThread g_Main{};
 CNetworkEX g_Network{};
 int gAsci[256]{};
