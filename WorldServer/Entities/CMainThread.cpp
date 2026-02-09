@@ -29,6 +29,7 @@
 #include "CMonsterEventSet.h"
 #include "CMoveMapLimitManager.h"
 #include "CNetworkEX.h"
+#include "CNetSocket.h"
 #include "CPcBangFavor.h"
 #include "CPostSystemManager.h"
 #include "CPvpUserAndGuildRankingSystem.h"
@@ -82,6 +83,7 @@
 #include "CNationCodeStrTable.h"
 #include "CNationSettingManager.h"
 #include "wrac_packets.h"
+#include "CheatCommands.h"
 #include "NameTxt_fld.h"
 #include "ResourceItem_fld.h"
 #include "UnitFrame_fld.h"
@@ -114,8 +116,116 @@
 #include "TimeLimitJadeMng.h"
 #include "DfAIMgr.h"
 #include "RFEvent_ClassRefine.h"
+#include "start_world_request_wrac.h"
+#include "trans_account_report_wrac.h"
+#include "trans_gm_msg_inform_zocl.h"
 
 unsigned int TimeLimitMgr::m_dwCnt = 0;
+
+_BILLING_INFO::_BILLING_INFO()
+{
+  bPCCheat = 0;
+}
+
+_WAIT_ENTER_ACCOUNT::_WAIT_ENTER_ACCOUNT()
+{
+  _BILLING_INFO::_BILLING_INFO(&m_BillingInfo);
+  m_bLoad = false;
+  m_byUserDgr = 0;
+}
+
+void _WAIT_ENTER_ACCOUNT::Release()
+{
+  m_bLoad = false;
+}
+
+void _WAIT_ENTER_ACCOUNT::SetData(
+  unsigned int dwAccountSerial,
+  char *pszAccountID,
+  unsigned __int8 byUserDgr,
+  unsigned __int8 bySubDgr,
+  _GLBID *pgidGlobal,
+  unsigned int *pdwKey,
+  bool bChatLock)
+{
+  m_bLoad = true;
+  m_dwAccountSerial = dwAccountSerial;
+  strcpy_0(m_szAccountID, pszAccountID);
+  m_byUserDgr = byUserDgr;
+  m_bySubDgr = bySubDgr;
+  memcpy_0(&m_gidGlobal, pgidGlobal, sizeof(m_gidGlobal));
+  memcpy_0(m_dwKey, pdwKey, sizeof(m_dwKey));
+  m_dwLoadTime = timeGetTime();
+  m_bChatLock = bChatLock;
+}
+
+void _WAIT_ENTER_ACCOUNT::SetBillingInfo(__int16 iType, char *szCMS, int lRemainTime, _SYSTEMTIME *pstEndDate)
+{
+  m_BillingInfo.iType = iType;
+  m_BillingInfo.lRemainTime = lRemainTime;
+  memcpy_0(m_BillingInfo.szCMS, szCMS, sizeof(m_BillingInfo.szCMS));
+  memcpy_0(&m_BillingInfo.stEndDate, pstEndDate, sizeof(m_BillingInfo.stEndDate));
+}
+
+void _WAIT_ENTER_ACCOUNT::SetPcBangFlag(bool bIsPcBang)
+{
+  m_BillingInfo.bIsPcBang = bIsPcBang;
+}
+
+void _WAIT_ENTER_ACCOUNT::SetTransFlag(int nTrans)
+{
+  m_nTrans = nTrans;
+}
+
+void _WAIT_ENTER_ACCOUNT::SetAgeLimitFlag(bool bAgeLimit)
+{
+  m_BillingInfo.bAgeLimit = bAgeLimit;
+}
+
+void _WAIT_ENTER_ACCOUNT::SetUILock(
+  unsigned __int8 byUILock,
+  char *szUILockPW,
+  unsigned __int8 byUILockFailCnt,
+  char *szAccountPW,
+  unsigned __int8 byHintIndex,
+  char *uszHintAnswer,
+  unsigned __int8 byUILockFindPassFailCount)
+{
+  char wszTran[40]{};
+
+  m_byUILock = byUILock;
+  m_byUILock_FailCnt = byUILockFailCnt;
+  m_byUILock_HintIndex = byHintIndex;
+  if (szUILockPW)
+  {
+    strcpy_s(m_szUILock_PW, sizeof(m_szUILock_PW), szUILockPW);
+  }
+  else
+  {
+    strcpy_s(m_szUILock_PW, sizeof(m_szUILock_PW), "________PW__");
+  }
+
+  if (szAccountPW)
+  {
+    M2W(szAccountPW, wszTran, 0xDu);
+    strcpy_s(m_szAccount_PW, sizeof(m_szAccount_PW), wszTran);
+  }
+  else
+  {
+    strcpy_s(m_szAccount_PW, sizeof(m_szAccount_PW), "________PW__");
+  }
+
+  if (uszHintAnswer)
+  {
+    strcpy_s(m_uszUILock_HintAnswer, sizeof(m_uszUILock_HintAnswer), uszHintAnswer);
+  }
+  else
+  {
+    strcpy_s(m_uszUILock_HintAnswer, sizeof(m_uszUILock_HintAnswer), "________PW__");
+  }
+
+  m_byUILockFindPassFailCount = byUILockFindPassFailCount;
+}
 
 CMainThread::CMainThread() = default;
 
@@ -2615,4 +2725,469 @@ void __cdecl CMainThread::DQSThread(void *param)
       Sleep(1);
   }
   _endthreadex(0);
+}
+
+void CMainThread::pc_OpenWorldSuccessResult(unsigned __int8 byWorldCode, char *pszDBName, char *pszDBIP)
+{
+  char dateBuf[160]{};
+  char timeBuf[144]{};
+
+  _strdate(dateBuf);
+  _strtime(timeBuf);
+  __trace("%s-%s: Open World", dateBuf, timeBuf);
+  m_byWorldCode = byWorldCode;
+
+  WriteServerStartHistory("DBInit Begin >> name: %s, ip: %s", pszDBName, pszDBIP);
+  if (DatabaseInit(pszDBName, pszDBIP))
+  {
+    m_bWorldOpen = true;
+    SerivceSelfStart();
+    WriteServerStartHistory("DBInit Complete >>");
+  }
+  else
+  {
+    WriteServerStartHistory("DBInit Fail >>");
+    CLogFile::WriteString(&m_logSystemError, "init DB fail");
+    g_pFrame->SendMessage(0x10u, 0, 0);
+  }
+}
+
+void CMainThread::pc_OpenWorldFailureResult(char *szMsg)
+{
+  (void)szMsg;
+  MyMessageBox("pc_OpenWorldFailureResult", "request world-open fail");
+  g_pFrame->SendMessage(0x10u, 0, 0);
+}
+
+void CMainThread::pc_ForceCloseCommand(
+  _CLID *pidWorld,
+  bool bDirectly,
+  unsigned __int8 byKickType,
+  unsigned int dwPushIP)
+{
+  (void)bDirectly;
+  CUserDB *user = &g_UserDB[pidWorld->wIndex];
+  if (user->m_bActive && user->m_idWorld.dwSerial == pidWorld->dwSerial)
+  {
+    user->ForceCloseCommand(byKickType, dwPushIP, false, "Account Server Command");
+  }
+}
+
+void CMainThread::pc_TransIPKeyInform(
+  unsigned int dwAccountSerial,
+  char *pszAccountID,
+  unsigned __int8 byUserDgr,
+  unsigned __int8 bySubDgr,
+  unsigned int *pdwKey,
+  _GLBID *pgidGlobal,
+  unsigned int dwClientIP,
+  bool bChatLock,
+  __int16 iType,
+  char *szCMS,
+  _SYSTEMTIME *pstEndDate,
+  int lRemainTime,
+  unsigned __int8 byUILock,
+  char *szUILockPW,
+  unsigned __int8 byUILockFailCnt,
+  char *szAccountPW,
+  unsigned __int8 byUILock_HintIndex,
+  char *uszUILock_HintAnswer,
+  unsigned __int8 byUILockFindPassFailCount,
+  bool bIsPcBang,
+  int nTrans,
+  bool bAgeLimit,
+  unsigned int *pdwRequestMoveCharacterSerialList,
+  unsigned int *pdwTournamentCharacterSerialList)
+{
+  unsigned __int8 retCode = 0;
+  bool slotFound = false;
+  if (CUserDB::s_nLoginNum < m_nLimUserNum || byUserDgr)
+  {
+    for (int index = 0; index < MAX_PLAYER; ++index)
+    {
+      CUserDB *user = &g_UserDB[index];
+      if (user->m_bActive && user->m_dwAccountSerial == dwAccountSerial)
+      {
+        user->ForceCloseCommand(1u, dwClientIP, false, "Duplicate Account Login");
+        retCode = 2;
+        goto RESULT_125;
+      }
+    }
+
+    for (int index = 0; index < MAX_PLAYER; ++index)
+    {
+      _WAIT_ENTER_ACCOUNT *entry = &m_WaitEnterAccount[index];
+      if (!entry->m_bLoad)
+      {
+        entry->SetData(dwAccountSerial, pszAccountID, byUserDgr, bySubDgr, pgidGlobal, pdwKey, bChatLock);
+        entry->SetBillingInfo(iType, szCMS, lRemainTime, pstEndDate);
+        entry->SetPcBangFlag(bIsPcBang);
+        entry->SetTransFlag(nTrans);
+        entry->SetAgeLimitFlag(bAgeLimit);
+        if (!byUserDgr)
+        {
+          entry->SetUILock(
+            byUILock,
+            szUILockPW,
+            byUILockFailCnt,
+            szAccountPW,
+            byUILock_HintIndex,
+            uszUILock_HintAnswer,
+            byUILockFindPassFailCount);
+        }
+        for (int j = 0; j < 3; ++j)
+        {
+          entry->m_dwRequestMoveCharacterSerialList[j] = pdwRequestMoveCharacterSerialList[j];
+          entry->m_dwTournamentCharacterSerialList[j] = pdwTournamentCharacterSerialList[j];
+        }
+        CLogFile::Write(&m_logBillCheck, "id:%s Bill:%d bAgeLimit:%d", pszAccountID, iType, bAgeLimit);
+        if (g_Network.m_Process[0].m_Type.m_bAcceptIPCheck
+            && !CNetSocket::PushIPCheckList(&g_Network.m_Process[0].m_NetSocket, dwClientIP))
+        {
+          retCode = 8;
+          goto RESULT_125;
+        }
+        slotFound = true;
+        break;
+      }
+    }
+    if (!slotFound)
+    {
+      retCode = 8;
+    }
+  }
+  else
+  {
+    retCode = 8;
+  }
+
+RESULT_125:
+  _trans_account_report_wrac report{};
+  report.byRetCode = retCode;
+  memcpy_0(&report, pgidGlobal, 8uLL);
+  unsigned __int8 pbyType[2]{1, 9};
+  const unsigned __int16 len = report.size();
+  g_Network.m_pProcess[1]->LoadSendMsg(0, pbyType, reinterpret_cast<char *>(&report), len);
+}
+
+void CMainThread::pc_EnterWorldResult(unsigned __int8 byRetCode, _CLID *pidWorld)
+{
+  if (byRetCode)
+  {
+    CUserDB *user = &g_UserDB[pidWorld->wIndex];
+    if (user->m_bActive && user->m_idWorld.dwSerial == pidWorld->dwSerial)
+    {
+      user->ForceCloseCommand(1u, 0xFFFFFFFFu, false, "Enter world False");
+    }
+  }
+}
+
+void CMainThread::pc_UILockInitResult(char *pMsg)
+{
+  CUserDB *user = &g_UserDB[*reinterpret_cast<unsigned __int16 *>(pMsg + 1)];
+  if (user->m_bActive)
+  {
+    user->UILockInfo_Init(pMsg);
+  }
+}
+
+void CMainThread::pc_UILockUpdateResult(char *pMsg)
+{
+  CUserDB *user = &g_UserDB[*reinterpret_cast<unsigned __int16 *>(pMsg + 1)];
+  if (user->m_bActive)
+  {
+    user->UILockInfo_Update(pMsg);
+  }
+}
+
+void CMainThread::pc_AllUserMsgInform(char *pwszMsg)
+{
+  char destination[288]{};
+  strcpy_0(destination, "$????");
+  if (*pwszMsg == '%')
+  {
+    ProcessCheatCommand(nullptr, pwszMsg + 1);
+    return;
+  }
+
+  const size_t prefixLen = strlen_0(destination);
+  if (!strncmp(destination, pwszMsg, prefixLen))
+  {
+    char gmMsg[1328]{};
+    strcpy_0(gmMsg, &pwszMsg[prefixLen]);
+    pc_AllUserGMNoticeInform(gmMsg);
+    return;
+  }
+
+  _trans_gm_msg_inform_zocl msg{};
+  msg.wMsgSize = strlen_0(pwszMsg);
+  memcpy_0(msg.wszChatData, pwszMsg, msg.wMsgSize);
+  msg.wszChatData[msg.wMsgSize] = 0;
+
+  unsigned __int8 pbyType[2]{2, 13};
+  const int nLen = msg.size();
+  for (unsigned int index = 0; index < MAX_PLAYER; ++index)
+  {
+    if (g_Player[index].m_bLive)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(index, pbyType, reinterpret_cast<char *>(&msg), nLen);
+    }
+  }
+}
+
+void CMainThread::pc_AllUserGMNoticeInform(char *pwszMsg)
+{
+  _trans_gm_msg_inform_zocl msg{};
+  msg.wMsgSize = strlen_0(pwszMsg);
+  memcpy_0(msg.wszChatData, pwszMsg, msg.wMsgSize);
+  msg.wszChatData[msg.wMsgSize] = 0;
+
+  unsigned __int8 pbyType[2]{2, 14};
+  const int nLen = msg.size();
+  for (unsigned int index = 0; index < MAX_PLAYER; ++index)
+  {
+    if (g_Player[index].m_bLive && g_Player[index].m_bOper)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(index, pbyType, reinterpret_cast<char *>(&msg), nLen);
+    }
+  }
+}
+
+void CMainThread::pc_AllUserKickInform()
+{
+  if (!m_bServerClosing)
+  {
+    m_bServerClosing = true;
+    m_tmForceUserExit.BeginTimer(0x32u);
+    m_nForceExitSocketIndexOffset = 0;
+  }
+}
+
+void CMainThread::pc_ChatLockCommand(_CLID *pidLocal, unsigned __int16 wBlockTimeH)
+{
+  (void)wBlockTimeH;
+  CUserDB *user = &g_UserDB[pidLocal->wIndex];
+  if (user->m_bActive && user->m_idWorld.dwSerial == pidLocal->dwSerial)
+  {
+    user->SetChatLock(true);
+  }
+}
+
+void CMainThread::pc_AlterWorldService(bool bService)
+{
+  SerivceForceSet(bService);
+}
+
+void CMainThread::pc_CashDBInfoRecvResult(
+  char *szIP,
+  char *szDBName,
+  char *szAccount,
+  char *szPassword,
+  unsigned int dwPort)
+{
+  char dateBuf[160]{};
+  char timeBuf[144]{};
+
+  _strdate(dateBuf);
+  _strtime(timeBuf);
+  WriteServerStartHistory("Cash DB Init Begin >> name: %s, ip: %s", szDBName, szIP);
+  if (!strcmp_0(szIP, "None") || !strcmp_0(szDBName, "None"))
+  {
+    MyMessageBox(
+      "CMainThread::pc_CashDBInfoRecvResult",
+      "DSN : szIP(%s), szDBName(%s), szAccount(%s), szPassword(%s) dwPort(%d) Invalid",
+      szIP,
+      szDBName,
+      szAccount,
+      szPassword,
+      dwPort);
+    CLogFile::Write(
+      &m_logLoadingError,
+      "CMainThread::pc_CashDBInfoRecvResult : DSN : szIP(%s), szDBName(%s), szAccount(%s), szPassword(%s) dwPort(%d) Invalid",
+      szIP,
+      szDBName,
+      szAccount,
+      szPassword,
+      dwPort);
+    CLogFile::Write(
+      &m_logSystemError,
+      "CMainThread::pc_CashDBInfoRecvResult : DSN : szIP(%s), szDBName(%s), szAccount(%s), szPassword(%s) dwPort(%d) Invalid",
+      szIP,
+      szDBName,
+      szAccount,
+      szPassword,
+      dwPort);
+    ServerProgramExit("CMainThread::pc_CashDBInfoRecvResult Invalid DSN!", 1);
+  }
+  if (!CashDBInit(szIP, szDBName, szAccount, szPassword, dwPort))
+  {
+    MyMessageBox(
+      "CMainThread::pc_CashDBInfoRecvResult",
+      "CashDBInit( szIP(%s), szDBName(%s), szAccount(%s), szPassword(%s) dwPort(%d) ) Fail!",
+      szIP,
+      szDBName,
+      szAccount,
+      szPassword,
+      dwPort);
+    CLogFile::Write(
+      &m_logLoadingError,
+      "CMainThread::pc_CashDBInfoRecvResult : CashDBInit( szIP(%s), szDBName(%s), szAccount(%s), szPassword(%s) dwPort(%d) ) Fail!",
+      szIP,
+      szDBName,
+      szAccount,
+      szPassword,
+      dwPort);
+    CLogFile::Write(
+      &m_logSystemError,
+      "CMainThread::pc_CashDBInfoRecvResult : CashDBInit( szIP(%s), szDBName(%s), szAccount(%s), szPassword(%s) dwPort(%d) ) Fail!",
+      szIP,
+      szDBName,
+      szAccount,
+      szPassword,
+      dwPort);
+    ServerProgramExit("CMainThread::pc_CashDBInfoRecvResult CashDBInit Fail!", 1);
+  }
+  WriteServerStartHistory("Cash DB Init Complete >>");
+  CLogFile::WriteString(&m_logLoadingError, "Cash DB Init Complete >>");
+  CCashDBWorkManager::Instance()->Start();
+  __trace("%s-%s: Open Cash DB", dateBuf, timeBuf);
+}
+
+void CMainThread::pc_TaiwanBillingUserCertify(char *szAccount, unsigned __int8 byCertify)
+{
+  (void)szAccount;
+  (void)byCertify;
+  // this is not a stub (intentionally unimplemented for non-RU per rule #19)
+}
+
+void CMainThread::ManageClientLimitRunRequest(char *pBuf)
+{
+  OutputDebugLog("ManageClientLimitRunRequest Start");
+
+  char pQryData[36]{};
+  memset_0(&pQryData[2], 0, 5uLL);
+  memcpy_0(pQryData, pBuf, 6uLL);
+  pQryData[6] = pBuf[6];
+  if (!PushDQSData(0xFFFFFFFF, nullptr, 0xA1u, pQryData, 7))
+  {
+    struct _limit_run_result
+    {
+      char byRet;
+      unsigned __int8 data[7];
+    };
+
+    _limit_run_result result{};
+    result.byRet = 24;
+    memcpy_0(result.data, pBuf, 6uLL);
+    result.data[6] = static_cast<unsigned __int8>(pBuf[6]);
+    unsigned __int8 pbyType[2]{1, 26};
+    g_Network.m_pProcess[1]->LoadSendMsg(0, pbyType, reinterpret_cast<char *>(&result), 8u);
+  }
+
+  OutputDebugLog("ManageClientLimitRunRequest End");
+}
+
+void CMainThread::EndServer()
+{
+  // this is not a stub
+}
+
+char CMainThread::_CheckTotalSales()
+{
+  CashItemRemoteStore::Instance()->Check_Total_Selling();
+  return 1;
+}
+
+bool CMainThread::DatabaseInit(char *pszDBName, char *pszDBIP)
+{
+  CLogFile::Write(&m_logLoadingError, "DataBase Setting Start!! (%s : %s)", pszDBIP, pszDBName);
+  strcpy_0(m_szWorldDBName, pszDBName);
+  g_pFrame->SendMessage(0xCu, 0, 0);
+
+  if (!m_pWorldDB)
+  {
+    CRFWorldDatabase *worldDb = new CRFWorldDatabase();
+    m_pWorldDB = worldDb;
+    CRFNewDatabase::SetLogFile(m_pWorldDB, "..\\ZoneServerLog\\", m_szWorldDBName);
+    if (!CRFNewDatabase::ConfigUserODBC(m_pWorldDB, pszDBName, pszDBIP, pszDBName, 0xEFF9u))
+    {
+      MyMessageBox("DatabaseInit", "World DB ODBC Setting Faild!");
+      return false;
+    }
+    CLogFile::Write(&m_logLoadingError, "World DB ODBC Config Complete!!");
+    char *passWord = CNationSettingManager::Instance()->GetWorldDBPW();
+    const char *worldDbId = CNationSettingManager::Instance()->GetWorldDBID();
+    if (!CRFNewDatabase::StartDataBase(m_pWorldDB, m_szWorldDBName, worldDbId, passWord))
+    {
+      MyMessageBox("DatabaseInit", "Connect World DB Failed!");
+      return false;
+    }
+    CLogFile::Write(&m_logLoadingError, "Start World DataBase Complete!!");
+    if (!_GameDataBaseInit())
+    {
+      return false;
+    }
+  }
+
+  if (!CLogTypeDBTaskManager::Instance()->IsInitialized())
+  {
+    if (!CLogTypeDBTaskManager::Instance()->InitDB(pszDBName, pszDBIP))
+    {
+      return false;
+    }
+  }
+
+  CLogFile::Write(&m_logLoadingError, "DataBase Setting Complete!! (%s : %s)", pszDBIP, pszDBName);
+  return true;
+}
+
+bool CMainThread::CashDBInit(
+  char *szIP,
+  char *szDBName,
+  char *szAccount,
+  char *szPassword,
+  unsigned int dwPort)
+{
+  CNationSettingManager::Instance()->SetCashDBDSN(szIP, szDBName, szAccount, szPassword, dwPort);
+  if (CCashDBWorkManager::Instance()->InitializeWorker())
+  {
+    CLogFile::Write(
+      &m_logLoadingError,
+      "CMainThread::CashDBInit() : Cash Item DataBase Setting Complete!! (%s : %s)",
+      szIP,
+      szDBName);
+    return true;
+  }
+
+  MyMessageBox("CMainThread::Init() : ", "CCashDBWorkManager::Instance()->Initialize() Fail!");
+  CLogFile::Write(&m_logLoadingError, "CashDbWorker::Instance()->Initialize() Fail!");
+  return false;
+}
+
+void CMainThread::SerivceSelfStart()
+{
+  if (!m_bCheckOverTickCount && g_Main.m_bWorldOpen && !g_Main.m_bWorldService)
+  {
+    m_bWorldService = true;
+    char returnedString[148]{};
+    GetPrivateProfileStringA("System", "GateIP", "X", returnedString, 0x80u, "..\\WorldInfo\\WorldInfo.ini");
+    _start_world_request_wrac request{};
+    if (!strcmp_0(returnedString, "X"))
+    {
+      request.dwGateIP = GetIPAddress();
+    }
+    else
+    {
+      request.dwGateIP = inet_addr(returnedString);
+    }
+    request.wGatePort = 27780;
+    unsigned __int8 pbyType[2]{1, 3};
+    const unsigned __int16 len = request.size();
+    g_Network.m_pProcess[1]->LoadSendMsg(0, pbyType, reinterpret_cast<char *>(&request), len);
+  }
+}
+
+void CMainThread::SerivceForceSet(bool bService)
+{
+  m_bWorldService = bService;
 }

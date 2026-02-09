@@ -169,6 +169,8 @@ struct _GLBID
 /* 1260 */
 struct __cppobj __declspec(align(2)) _BILLING_INFO
 {
+  _BILLING_INFO();
+
   __int16 iType;
   char szCMS[7];
   int lRemainTime;
@@ -186,6 +188,29 @@ struct __cppobj __declspec(align(2)) _BILLING_INFO
 /* 1261 */
 struct __cppobj _WAIT_ENTER_ACCOUNT
 {
+  _WAIT_ENTER_ACCOUNT();
+  void Release();
+  void SetData(
+    unsigned int dwAccountSerial,
+    char *pszAccountID,
+    unsigned __int8 byUserDgr,
+    unsigned __int8 bySubDgr,
+    _GLBID *pgidGlobal,
+    unsigned int *pdwKey,
+    bool bChatLock);
+  void SetBillingInfo(__int16 iType, char *szCMS, int lRemainTime, _SYSTEMTIME *pstEndDate);
+  void SetPcBangFlag(bool bIsPcBang);
+  void SetTransFlag(int nTrans);
+  void SetAgeLimitFlag(bool bAgeLimit);
+  void SetUILock(
+    unsigned __int8 byUILock,
+    char *szUILockPW,
+    unsigned __int8 byUILockFailCnt,
+    char *szAccountPW,
+    unsigned __int8 byHintIndex,
+    char *uszHintAnswer,
+    unsigned __int8 byUILockFindPassFailCount);
+
   bool m_bLoad;
   unsigned int m_dwAccountSerial;
   char m_szAccountID[13];
@@ -859,6 +884,56 @@ public:
     unsigned __int8 byRefinedCnt,
     unsigned int dwRefineDate);
   void _db_complete_update_event_classrefine(unsigned __int16 wSock, unsigned int dwAvatorSerial);
+  void pc_OpenWorldSuccessResult(unsigned __int8 byWorldCode, char *pszDBName, char *pszDBIP);
+  void pc_OpenWorldFailureResult(char *szMsg);
+  void pc_ForceCloseCommand(_CLID *pidWorld, bool bDirectly, unsigned __int8 byKickType, unsigned int dwPushIP);
+  void pc_TransIPKeyInform(
+    unsigned int dwAccountSerial,
+    char *pszAccountID,
+    unsigned __int8 byUserDgr,
+    unsigned __int8 bySubDgr,
+    unsigned int *pdwKey,
+    _GLBID *pgidGlobal,
+    unsigned int dwClientIP,
+    bool bChatLock,
+    __int16 iType,
+    char *szCMS,
+    _SYSTEMTIME *pstEndDate,
+    int lRemainTime,
+    unsigned __int8 byUILock,
+    char *szUILockPW,
+    unsigned __int8 byUILockFailCnt,
+    char *szAccountPW,
+    unsigned __int8 byUILock_HintIndex,
+    char *uszUILock_HintAnswer,
+    unsigned __int8 byUILockFindPassFailCount,
+    bool bIsPcBang,
+    int nTrans,
+    bool bAgeLimit,
+    unsigned int *pdwRequestMoveCharacterSerialList,
+    unsigned int *pdwTournamentCharacterSerialList);
+  void pc_EnterWorldResult(unsigned __int8 byRetCode, _CLID *pidWorld);
+  void pc_UILockInitResult(char *pMsg);
+  void pc_UILockUpdateResult(char *pMsg);
+  void pc_AllUserMsgInform(char *pwszMsg);
+  void pc_AllUserGMNoticeInform(char *pwszMsg);
+  void pc_AllUserKickInform();
+  void pc_ChatLockCommand(_CLID *pidLocal, unsigned __int16 wBlockTimeH);
+  void pc_AlterWorldService(bool bService);
+  void pc_CashDBInfoRecvResult(
+    char *szIP,
+    char *szDBName,
+    char *szAccount,
+    char *szPassword,
+    unsigned int dwPort);
+  void pc_TaiwanBillingUserCertify(char *szAccount, unsigned __int8 byCertify);
+  void ManageClientLimitRunRequest(char *pBuf);
+  void EndServer();
+  char _CheckTotalSales();
+  bool DatabaseInit(char *pszDBName, char *pszDBIP);
+  bool CashDBInit(char *szIP, char *szDBName, char *szAccount, char *szPassword, unsigned int dwPort);
+  void SerivceSelfStart();
+  void SerivceForceSet(bool bService);
   virtual ~CMainThread() = default;
 
 private:

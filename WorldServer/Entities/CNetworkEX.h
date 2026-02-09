@@ -4,6 +4,8 @@
 
 #include "CNetProcess.h"
 
+struct _CLID;
+
 class __cppobj __declspec(align(8)) CNetWorking
 {
 public:
@@ -49,12 +51,59 @@ public:
   unsigned __int8 m_byStatus[4];
 
   void UserLoop() override;
+  bool DataAnalysis(
+    unsigned int dwProID,
+    unsigned int dwClientIndex,
+    _MSG_HEADER *pMsgHeader,
+    char *pMsg) override;
   void AcceptClientCheck(unsigned int dwProID, unsigned int dwIndex, unsigned int dwSerial) override;
   void CloseClientCheck(unsigned int dwProID, unsigned int dwIndex, unsigned int dwSerial) override;
   void AnsyncConnectComplete(unsigned int dwProID, unsigned int dwIndex, int nResult) override;
 
   void SetPassablePacket(unsigned int dwProID, unsigned __int8 byHeader1, unsigned __int8 byHeader2);
   void Close(unsigned int dwProID, unsigned int dwSocketIndex, bool bSlowClose, const char *pszLog);
+
+  bool ClientLineAnalysis(unsigned int n, _MSG_HEADER *pMsgHeader, char *pMsg);
+  bool AccountLineAnalysis(unsigned int n, _MSG_HEADER *pMsgHeader, char *pMsg);
+  bool BillingLineAnalysis(int n, _MSG_HEADER *pMsgHeader, char *pMsg);
+  bool WebAgentLineAnalysis(int n, _MSG_HEADER *pMsgHeader, char *pMsg);
+
+  bool OpenWorldSuccessResult(unsigned int n, char *pMsg);
+  bool OpenWorldFailureResult(unsigned int n, char *pMsg);
+  bool ForceCloseCommand(unsigned int n, _CLID *pMsg);
+  bool TransAccountInform(unsigned int n, char *pMsg);
+  bool EnterWorldResult(unsigned int n, _CLID *pMsg);
+  bool UILockInitResult(unsigned int n, char *pMsg);
+  bool UILockUpdateResult(unsigned int n, char *pMsg);
+  bool UILockRefreshResult(unsigned int n, char *pMsg);
+  bool CheckIsBlockIPResult(unsigned int n, char *pMsg);
+  bool ConEventTotalSalesCheck(int n, char *pBuf);
+  bool DisconnectGuildWarCharacterRequest(int n, char *pBuf);
+  bool ManageClientLimitRunRequest(char *pBuf);
+  bool ManageClientForceExitRequest();
+  bool CashDBInfoRecvResult(int n, char *pBuf);
+  bool WorldServiceInform(unsigned int n, bool *pMsg);
+  bool WorldExitInform(unsigned int n, char *pMsg);
+  bool WorldMsgInform(unsigned int n, char *pMsg);
+  bool ChatLockCommand(unsigned int n, _CLID *pMsg);
+
+  bool BillingCloseRequest(int n, char *pBuf);
+  bool BillingRemaintimePersonal(int n, char *pBuf);
+  bool BillingRemaintimePCBang(int n, char *pBuf);
+  bool BillingChangeType(int n, char *pBuf);
+  bool BillingExpirePersonal(int n, char *pBuf);
+  bool BillingExpirePCBang(int n, char *pBuf);
+  bool BillingExpireIPOverflow(int n, char *pBuf);
+  bool BillingDestroyModule(int n, char *pBuf);
+  bool TaiwanBillingUserCertify(int n, char *pBuf);
+  bool ChinaBillingChangePrimium(int n, char *pBuf);
+  bool ZoneAliveCheckRequest(int n, char *pBuf);
+
+  bool LogInWebAgentServer(unsigned int n, char *pBuf);
+  bool SendRaceBossMsgFromWebRequest(int n, char *pBuf);
+  bool LogInControllServer(unsigned int n, char *pBuf);
+  bool CancelRaceBossSMSMsg(int n, char *pBuf);
+  bool ConnectionStatusRequest(int n);
 };
 
 extern CNetworkEX g_Network;

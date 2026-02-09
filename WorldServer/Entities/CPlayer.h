@@ -1403,6 +1403,8 @@ bool DTradeEqualPerson(CPlayer *lp_pOne, CPlayer **lpp_pDst);
 void wa_PartySelfLeave(_CLID *pidLeaver);
 void wa_ExitWorld(_CLID *pidWorld);
 CPlayer *GetPtrPlayerFromSerial(CPlayer *pData, int nNum, unsigned int dwSerial);
+CPlayer *GetPtrPlayerFromAccount(CPlayer *pData, int nNum, char *szAccount);
+CPlayer *GetPtrPlayerFromAccountSerial(CPlayer *pData, int nNum, unsigned int dwSerial);
 
 #pragma pack(pop)
 

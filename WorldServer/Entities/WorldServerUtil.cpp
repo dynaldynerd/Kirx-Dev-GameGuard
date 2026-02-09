@@ -8,6 +8,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <intrin.h>
+#include <atlstr.h>
 
 #include <windows.h>
 #include <mmsystem.h>
@@ -126,6 +127,40 @@ void __trace(const char *fmt, ...)
   OutputDebugStringA(buffer);
 }
 
+static unsigned __int64 dw64Cnt = 0;
+
+void OutputDebugLog(const char *szFormat, ...)
+{
+  if (CMainThread::IsReleaseServiceMode(&g_Main))
+  {
+    return;
+  }
+
+  va_list args;
+  va_start(args, szFormat);
+  CStringA message;
+  message.FormatV(szFormat, args);
+  va_end(args);
+  message += "\r\n";
+
+  SYSTEMTIME systemTime{};
+  GetLocalTime(&systemTime);
+
+  const unsigned __int64 logIndex = dw64Cnt++;
+  CStringA line;
+  line.Format(
+    "%u\t%04d-%02d-%02d %02d:%02d:%02d.%03d : %s",
+    static_cast<unsigned int>(logIndex),
+    systemTime.wYear,
+    systemTime.wMonth,
+    systemTime.wDay,
+    systemTime.wHour,
+    systemTime.wMinute,
+    systemTime.wSecond,
+    systemTime.wMilliseconds,
+    static_cast<const char *>(message));
+  OutputDebugStringA(line);
+}
 int GetCurrentDay()
 {
   std::time_t now = std::time(nullptr);
@@ -2580,6 +2615,48 @@ int ParsingCommandA(char *pszSrc, int nMaxWordNum, char **ppszDst, int nMaxWordS
   return 0;
 }
 
+int ParsingCommandW(char *pwszSrc, int nMaxWordNum, char **ppwszDst, int nMaxWordSize)
+{
+  char *src = pwszSrc;
+  for (int j = 0; ; ++j)
+  {
+    if (j >= nMaxWordNum)
+    {
+      return 0;
+    }
+
+    char *dst = ppszDst[j];
+    int len = 0;
+
+    while (*src == ' ' || *src == '\t')
+    {
+      ++src;
+    }
+
+    while (*src != '\0' && *src != ' ' && *src != '\t')
+    {
+      *dst++ = *src++;
+      if (len++ >= nMaxWordSize - 1)
+      {
+        return 0;
+      }
+    }
+    *dst = '\0';
+
+    if (*src == '\0')
+    {
+      return strlen_0(ppszDst[j]) ? (j + 1) : j;
+    }
+
+    if (dst == ppszDst[j])
+    {
+      return j;
+    }
+
+    ++src;
+  }
+}
+
 void WriteServerStartHistory(const char *format, ...)
 {
   char buffer[512]{};
@@ -2701,6 +2778,22 @@ char W2M(char *lpwStr, char *szTran, unsigned int wTranBuffSize)
   }
 
   strcpy_s(szTran, wTranBuffSize, lpwStr);
+  return 1;
+}
+
+char M2W(char *lpStr, char *wszTran, unsigned int wTranBuffSize)
+{
+  if (!wTranBuffSize)
+  {
+    return 0;
+  }
+
+  if (strlen_0(lpStr) + 1 > wTranBuffSize)
+  {
+    return 0;
+  }
+
+  strcpy_0(wszTran, lpStr);
   return 1;
 }
 

@@ -56,7 +56,81 @@ void CBillingManager::Start()
   m_pBill->Start();
 }
 
+void CBillingManager::Login(CUserDB *pUserDB)
+{
+  m_pBill->Login(pUserDB);
+}
+
+void CBillingManager::Alive(CUserDB *pUserDB)
+{
+  m_pBill->Alive(pUserDB);
+}
+
 void CBillingManager::Logout(CUserDB *pUserDB)
 {
   m_pBill->Logout(pUserDB);
+}
+
+bool CBillingManager::IsOperate()
+{
+  return m_pBill->m_bOper;
+}
+
+void CBillingManager::BillingClose(char *szID)
+{
+  m_pBill->BillingClose(szID);
+}
+
+void CBillingManager::Remaintime_Personal(
+  char *szID,
+  __int16 iType,
+  int lRemaintime,
+  _SYSTEMTIME *pstEndDate)
+{
+  m_pBill->Remaintime_Personal(szID, iType, lRemaintime, pstEndDate);
+}
+
+void CBillingManager::Remaintime_PCBang(
+  char *szCMSCode,
+  __int16 iType,
+  int lRemaintime,
+  _SYSTEMTIME *pstEndDate)
+{
+  m_pBill->Remaintime_PCBang(szCMSCode, iType, lRemaintime, pstEndDate);
+}
+
+void CBillingManager::Change_BillingType(
+  char *szID,
+  char *szCMSCode,
+  __int16 iType,
+  int lRemainTime,
+  _SYSTEMTIME *pstEndDate,
+  unsigned __int8 byReason)
+{
+  m_pBill->Change_BillingType(szID, szCMSCode, iType, lRemainTime, pstEndDate, byReason);
+}
+
+void CBillingManager::Expire_Personal(char *szID)
+{
+  m_pBill->Expire_Personal(szID);
+}
+
+void CBillingManager::Expire_PCBang(char *szCMS)
+{
+  m_pBill->Expire_PCBang(szCMS);
+}
+
+void CBillingManager::Expire_IPOverflow(char *szID)
+{
+  m_pBill->Expire_IPOverflow(szID);
+}
+
+void CBillingManager::Change_Primium(char *szID, bool bResult)
+{
+  m_pBill->Change_Primium(szID, bResult);
+}
+
+void CBillingManager::SendMsg_ZoneAliveCheck(unsigned int dwData)
+{
+  m_pBill->SendMsg_ZoneAliveCheck(dwData);
 }

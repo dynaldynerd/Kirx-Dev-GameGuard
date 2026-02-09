@@ -6845,3 +6845,27 @@ CPlayer *GetPtrPlayerFromSerial(CPlayer *pData, int nNum, unsigned int dwSerial)
   }
   return nullptr;
 }
+
+CPlayer *GetPtrPlayerFromAccount(CPlayer *pData, int nNum, char *szAccount)
+{
+  for (int index = 0; index < nNum; ++index)
+  {
+    if (pData[index].m_bLive && !strcmp_0(pData[index].m_pUserDB->m_szAccountID, szAccount))
+    {
+      return &pData[index];
+    }
+  }
+  return nullptr;
+}
+
+CPlayer *GetPtrPlayerFromAccountSerial(CPlayer *pData, int nNum, unsigned int dwSerial)
+{
+  for (int index = 0; index < nNum; ++index)
+  {
+    if (pData[index].m_bLive && pData[index].m_pUserDB->m_dwAccountSerial == dwSerial)
+    {
+      return &pData[index];
+    }
+  }
+  return nullptr;
+}

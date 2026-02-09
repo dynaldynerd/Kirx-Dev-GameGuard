@@ -13,6 +13,7 @@
 #include "CNetworkEX.h"
 #include "alive_char_result_zocl.h"
 #include "enter_lobby_report_wrac.h"
+#include "chat_lock_inform_zocl.h"
 #include "moveout_user_result_zone.h"
 #include "server_notify_inform_zone.h"
 #include "wrac_packets.h"
@@ -25,6 +26,23 @@ int CUserDB::s_nLoginNum = 0;
 CLogFile CUserDB::s_logAvatorDB;
 CMgrAccountLobbyHistory CUserDB::s_MgrLobbyHistory{};
 _MOVE_LOBBY_DELAY CUserDB::s_MoveLobbyDelay{};
+
+CUserDB *SearchAvatorWithName(CUserDB *pList, int nMax, char *pwszName)
+{
+  const unsigned __int8 nameLen = static_cast<unsigned __int8>(strlen_0(pwszName));
+  for (int index = 0; index < nMax; ++index)
+  {
+    CUserDB &entry = pList[index];
+    if (entry.m_bActive
+        && entry.m_bField
+        && entry.m_byNameLen == nameLen
+        && !strncmp_0(entry.m_wszAvatorName, pwszName, nameLen))
+    {
+      return &entry;
+    }
+  }
+  return nullptr;
+}
 
 void CUserDB::Init(unsigned __int16 index)
 {
@@ -151,6 +169,183 @@ void CUserDB::ForceCloseCommand(unsigned __int8 byKickType, unsigned int dwPushI
     strcat_0(buffer, pszCause);
   }
   g_Network.Close(0, m_idWorld.wIndex, bSlow, buffer);
+}
+
+void CUserDB::ClearBillingData()
+{
+  memset_0(&m_BillingInfo, 0, sizeof(m_BillingInfo));
+}
+
+void CUserDB::SetBillingData(_BILLING_INFO *pBillingInfo)
+{
+  if (pBillingInfo)
+  {
+    memcpy_0(&m_BillingInfo, pBillingInfo, sizeof(m_BillingInfo));
+  }
+  m_BillingInfo.bPCCheat = 0;
+}
+
+void CUserDB::SetBillingData(char *szCMSCode, __int16 iType, int lRemainTime, _SYSTEMTIME *pstEndDate)
+{
+  m_BillingInfo.iType = iType;
+  m_BillingInfo.lRemainTime = lRemainTime;
+  if (iType == 6 || iType == 7)
+  {
+    memcpy_0(m_BillingInfo.szCMS, szCMSCode, sizeof(m_BillingInfo.szCMS));
+  }
+  else
+  {
+    memset_0(m_BillingInfo.szCMS, 0, sizeof(m_BillingInfo.szCMS));
+  }
+  if (pstEndDate)
+  {
+    memcpy_0(&m_BillingInfo.stEndDate, pstEndDate, sizeof(m_BillingInfo.stEndDate));
+  }
+  if (!CMainThread::IsReleaseServiceMode(&g_Main) && m_BillingInfo.bPCCheat)
+  {
+    m_BillingInfo.bIsPcBang = 1;
+    m_BillingInfo.iType = 7;
+  }
+}
+
+int CUserDB::GetBillingType()
+{
+  return m_BillingInfo.iType;
+}
+
+void CUserDB::SetBillingNoLogout(bool bNoLogout)
+{
+  m_bBillingNoLogout = bNoLogout;
+}
+
+void CUserDB::SendMsg_BillingInfo()
+{
+  struct _billing_msg
+  {
+    __int16 iType;
+    int lRemainTime;
+    _SYSTEMTIME stEndDate;
+  };
+
+  _billing_msg msg{};
+  msg.iType = m_BillingInfo.iType;
+  msg.lRemainTime = m_BillingInfo.lRemainTime;
+  memcpy_0(&msg.stEndDate, &m_BillingInfo.stEndDate, sizeof(msg.stEndDate));
+
+  unsigned __int8 pbyType[2]{29, 2};
+  CNetProcess::LoadSendMsg(
+    g_Network.m_pProcess[0],
+    m_idWorld.wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    0x16u);
+}
+
+void CUserDB::SetRemainTime(int lRemainTime)
+{
+  m_BillingInfo.lRemainTime = lRemainTime;
+}
+
+void CUserDB::UILockInfo_Init(char *pMsg)
+{
+  if (!pMsg)
+  {
+    return;
+  }
+
+  char msg[2]{};
+  if (m_byUILock)
+  {
+    msg[0] = 11;
+  }
+  else if (*pMsg)
+  {
+    if (*pMsg == 1)
+    {
+      msg[0] = 11;
+    }
+    else if (*pMsg == 2)
+    {
+      msg[0] = 12;
+    }
+    else
+    {
+      msg[0] = 15;
+    }
+  }
+  else
+  {
+    msg[0] = 0;
+    msg[1] = pMsg[16];
+    m_byUILock = 1;
+    strcpy_0(m_szUILock_PW, pMsg + 3);
+    m_byUILock_HintIndex = pMsg[16];
+    strcpy_0(m_uszUILock_HintAnswer, pMsg + 17);
+  }
+
+  unsigned __int8 pbyType[2]{13, 0x80};
+  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_idWorld.wIndex, pbyType, msg, 2u);
+}
+
+void CUserDB::UILockInfo_Update(char *pMsg)
+{
+  if (!pMsg)
+  {
+    return;
+  }
+
+  char msg[1]{};
+  if (m_byUILock >= 2u)
+  {
+    if (*pMsg)
+    {
+      if (*pMsg == 1)
+      {
+        msg[0] = 10;
+      }
+      else if (*pMsg == 2)
+      {
+        msg[0] = 12;
+      }
+      else
+      {
+        msg[0] = 8;
+      }
+    }
+    else
+    {
+      msg[0] = 0;
+      m_byUILock = 2;
+      strcpy_0(m_szUILock_PW, pMsg + 3);
+      m_byUILock_HintIndex = pMsg[16];
+      strcpy_0(m_uszUILock_HintAnswer, pMsg + 17);
+    }
+  }
+  else
+  {
+    msg[0] = 7;
+  }
+
+  unsigned __int8 pbyType[2]{13, static_cast<unsigned __int8>(-124)};
+  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_idWorld.wIndex, pbyType, msg, 1u);
+}
+
+void CUserDB::SetChatLock(bool bLock)
+{
+  m_bChatLock = bLock;
+  if (bLock)
+  {
+    _chat_lock_inform_zocl msg{};
+    msg.bLock = 1;
+    unsigned __int8 pbyType[2]{2, 12};
+    const unsigned __int16 len = msg.size();
+    CNetProcess::LoadSendMsg(
+      g_Network.m_pProcess[0],
+      m_idWorld.wIndex,
+      pbyType,
+      reinterpret_cast<char *>(&msg.bLock),
+      len);
+  }
 }
 
 bool CUserDB::Update_AlterPvPPoint(long double dNewPoint)

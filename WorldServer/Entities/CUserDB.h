@@ -121,6 +121,16 @@ public:
   void DelPostData(unsigned int dwIndex);
   char Update_Param(_EXIT_ALTER_PARAM *pCon);
   void ForceCloseCommand(unsigned __int8 byKickType, unsigned int dwPushIP, bool bSlow, const char *pszCause);
+  void ClearBillingData();
+  void SetBillingData(_BILLING_INFO *pBillingInfo);
+  void SetBillingData(char *szCMSCode, __int16 iType, int lRemainTime, _SYSTEMTIME *pstEndDate);
+  int GetBillingType();
+  void SetBillingNoLogout(bool bNoLogout);
+  void SendMsg_BillingInfo();
+  void SetRemainTime(int lRemainTime);
+  void UILockInfo_Init(char *pMsg);
+  void UILockInfo_Update(char *pMsg);
+  void SetChatLock(bool bLock);
   void SetWorldCLID(unsigned int dwSerial, unsigned int *pipAddr);
   void SendMsgAccount_UILockRefresh_Update();
   void Lobby_Char_Complete(unsigned __int8 byRetCode);
@@ -137,4 +147,6 @@ public:
   static char CheckDQSLoadCharacterData(_AVATOR_DATA *pData);
   virtual ~CUserDB() = default;
 };
+
+CUserDB *SearchAvatorWithName(CUserDB *pList, int nMax, char *pwszName);
 

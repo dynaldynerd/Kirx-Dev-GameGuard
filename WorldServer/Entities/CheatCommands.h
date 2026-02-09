@@ -1,6 +1,20 @@
 #pragma once
 
+#include "IdaCompat.h"
+
+class CLogFile;
 class CPlayer;
+class CHEAT_COMMAND;
+
+extern int s_nWordCount;
+extern char *s_pwszDstCheat[6];
+extern char wszRespon[256];
+extern CLogFile s_logCheat;
+
+bool ProcessCheatCommand(CPlayer *pOne, char *pwszCommand);
+bool AuthorityFilter(CHEAT_COMMAND *pCmd, CPlayer *pOne);
+void WriteCheatLog(char *pwszCommand, CPlayer *pOne);
+void InitCheatCommand(CHEAT_COMMAND *pCmdList, unsigned __int8 *byCommandSizeList);
 
 extern bool __fastcall ct_change_degree(CPlayer *pOne);
 extern bool __fastcall ct_respawn_start(CPlayer *pOne);

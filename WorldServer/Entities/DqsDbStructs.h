@@ -497,7 +497,14 @@ struct __declspec(align(4)) _qry_case_sendwebracebosssms
   char szCharacterName[17];
   unsigned int dwCharactSerial;
   unsigned __int8 byRace;
+
+  unsigned __int16 size() const;
 };
+
+inline unsigned __int16 _qry_case_sendwebracebosssms::size() const
+{
+  return 284;
+}
 
 struct _qry_case_gm_greetingmsg
 {

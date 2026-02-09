@@ -11,6 +11,7 @@
 
 #include "CNetworkEX.h"
 #include "CPvpUserAndGuildRankingSystem.h"
+#include "CPlayer.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 #include "raceboss_msg_confirm_zowb.h"
@@ -100,6 +101,16 @@ void RACE_BOSS_MSG::CMsg::SetDayChanged()
 void RACE_BOSS_MSG::CMsg::SetDone()
 {
   m_uiState = 3;
+}
+
+bool RACE_BOSS_MSG::CMsg::IsWait()
+{
+  return m_uiState == 1;
+}
+
+bool RACE_BOSS_MSG::CMsg::IsDayChanged()
+{
+  return m_uiState == 2;
 }
 
 RACE_BOSS_MSG::CMsgList::CMsgList(unsigned __int8 ucRace, unsigned int uiSize)
@@ -194,6 +205,53 @@ void RACE_BOSS_MSG::CMsgList::RollBack()
   }
 }
 
+int RACE_BOSS_MSG::CMsgList::Cancel(unsigned int dwMsgID, CMsg **pkMsg)
+{
+  if (!m_uiSize)
+  {
+    return 1;
+  }
+  if (!m_kUseInxList.size())
+  {
+    return 2;
+  }
+  if (!m_kUseInxList.FindNode(dwMsgID))
+  {
+    return 2;
+  }
+  *pkMsg = m_ppMsg[dwMsgID];
+  return 0;
+}
+
+void RACE_BOSS_MSG::CMsgList::AddEmpty(CMsg *pkMsg)
+{
+  if (!pkMsg)
+  {
+    return;
+  }
+  const unsigned int id = pkMsg->GetID();
+  if (!m_kEmptyInxList.IsInList(id))
+  {
+    m_kEmptyInxList.PushNode_Front(id);
+  }
+}
+
+void RACE_BOSS_MSG::CMsgList::Release(CMsg *pkMsg)
+{
+  if (!pkMsg)
+  {
+    return;
+  }
+  const unsigned int dwIndex = pkMsg->GetID();
+  if (!m_kWaitInxList.IsInList(dwIndex))
+  {
+    m_kUseInxList.FindNode(dwIndex);
+    m_kWaitInxList.PushNode_Back(dwIndex);
+    pkMsg->Clear();
+    pkMsg->SetDone();
+  }
+}
+
 RACE_BOSS_MSG::CMsgListManager::CMsgListManager()
   : m_bEmpty(true)
 {
@@ -267,6 +325,42 @@ int RACE_BOSS_MSG::CMsgListManager::Send(
 
   m_pkMsgList[ucRace]->RollBack();
   return 1;
+}
+
+int RACE_BOSS_MSG::CMsgListManager::Cancel(
+  unsigned __int8 ucRace,
+  unsigned int dwMsgID,
+  CMsg **pkMsg)
+{
+  if (m_bEmpty)
+  {
+    return 1;
+  }
+  if (ucRace < 3u)
+  {
+    return m_pkMsgList[ucRace]->Cancel(dwMsgID, pkMsg);
+  }
+  return 2;
+}
+
+void RACE_BOSS_MSG::CMsgListManager::CleanUpCancel(unsigned __int8 ucRace, CMsg *pkMsg)
+{
+  if (!m_bEmpty && ucRace < 3u)
+  {
+    if (pkMsg->IsWait())
+    {
+      m_pkMsgList[ucRace]->AddEmpty(pkMsg);
+    }
+    else
+    {
+      if (!pkMsg->IsDayChanged())
+      {
+        return;
+      }
+      m_pkMsgList[ucRace]->Release(pkMsg);
+    }
+    m_pkMsgList[ucRace]->Save();
+  }
 }
 
 bool RACE_BOSS_MSG::CMsgListManager::IsHaveBeenSave()
@@ -601,4 +695,43 @@ bool CRaceBossMsgController::Init()
 
   m_kManager.Save();
   return true;
+}
+
+char CRaceBossMsgController::Cancel(unsigned __int8 ucRace, unsigned int dwMsgID)
+{
+  RACE_BOSS_MSG::CMsg *pkMsg = nullptr;
+  if (m_kManager.Cancel(ucRace, dwMsgID, &pkMsg))
+  {
+    return 0;
+  }
+
+  const unsigned int serial = pkMsg->GetSerial();
+  SendCancleInfomSender(serial);
+  SendCancelWeb(ucRace, pkMsg);
+  m_kManager.CleanUpCancel(ucRace, pkMsg);
+  return 1;
+}
+
+char CRaceBossMsgController::Cancel(unsigned __int8 ucRace, unsigned int dwMsgID, CPlayer *pkManager)
+{
+  if (pkManager->m_byUserDgr != 2 || pkManager->m_bySubDgr == 3)
+  {
+    return 0;
+  }
+
+  RACE_BOSS_MSG::CMsg *pkMsg = nullptr;
+  const int result = m_kManager.Cancel(ucRace, dwMsgID, &pkMsg);
+  if (result)
+  {
+    SendCancleInfomManager(pkManager->m_ObjID.m_wIndex, result, 0xFFFFFFFFu, nullptr);
+    return 0;
+  }
+
+  const unsigned int serial = pkMsg->GetSerial();
+  SendCancleInfomSender(serial);
+  const char *bossName = pkMsg->GetBossName();
+  SendCancleInfomManager(pkManager->m_ObjID.m_wIndex, 0, dwMsgID, bossName);
+  SendCancelWeb(ucRace, pkMsg);
+  m_kManager.CleanUpCancel(ucRace, pkMsg);
+  return 1;
 }

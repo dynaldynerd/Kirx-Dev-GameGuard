@@ -6,8 +6,9 @@
 
 namespace RACE_BOSS_MSG
 {
-  struct CMsg
+  class CMsg
   {
+  public:
     unsigned int m_uiState;
     unsigned int m_dwID;
     unsigned int m_dwSerial;
@@ -26,6 +27,8 @@ namespace RACE_BOSS_MSG
     unsigned int GetWebDBID();
     void SetDayChanged();
     void SetDone();
+    bool IsWait();
+    bool IsDayChanged();
     bool Save(unsigned __int8 ucRace);
   };
 
@@ -46,6 +49,9 @@ namespace RACE_BOSS_MSG
     CMsg *GetEmpty();
     void AddUse(CMsg *pkMsg);
     void RollBack();
+    int Cancel(unsigned int dwMsgID, CMsg **pkMsg);
+    void AddEmpty(CMsg *pkMsg);
+    void Release(CMsg *pkMsg);
     bool Load(unsigned int dwCurTime);
     bool Save();
     bool SaveIndexList(unsigned int iType, CNetIndexList *kInxList);
@@ -69,11 +75,15 @@ namespace RACE_BOSS_MSG
       const char *pwszMsg,
       CMsg **pkSend,
       unsigned int dbWebSendDBID);
+    int Cancel(unsigned __int8 ucRace, unsigned int dwMsgID, CMsg **pkMsg);
+    void CleanUpCancel(unsigned __int8 ucRace, CMsg *pkMsg);
     bool IsHaveBeenSave();
     bool Load(unsigned int dwCurTime);
     void Save();
   };
 }
+
+class CPlayer;
 
 class __cppobj CRaceBossMsgController
 {
@@ -95,6 +105,8 @@ public:
   void SendWebRaceBossSMSErrorResult(char iRet, unsigned int dwWebDBID);
   void SendComfirmWeb(unsigned __int8 ucRace, RACE_BOSS_MSG::CMsg *pkMsg);
   void SendConfirmCtrl(unsigned __int8 ucRace, RACE_BOSS_MSG::CMsg *pkMsg);
+  char Cancel(unsigned __int8 ucRace, unsigned int dwMsgID);
+  char Cancel(unsigned __int8 ucRace, unsigned int dwMsgID, CPlayer *pkManager);
 
   int GetCurDay();
   bool LoadCurTime(unsigned int *dwCurTime);

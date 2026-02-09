@@ -141,6 +141,21 @@ char *CNationSettingManager::GetNationCodeStr()
   return m_pData->m_szNationCodeStr;
 }
 
+CHEAT_COMMAND *CNationSettingManager::GetCheatTable()
+{
+  return &m_pData->m_vecCheatData[0];
+}
+
+void CNationSettingManager::SetCashDBDSN(
+  char *szIP,
+  char *szDBName,
+  char *szAccount,
+  char *szPassword,
+  unsigned __int16 dwPort)
+{
+  m_pData->SetCashDBDSN(szIP, szDBName, szAccount, szPassword, dwPort);
+}
+
 void CNationSettingManager::SetCashDBInitState()
 {
   m_pData->SetCashDBInitFlag();

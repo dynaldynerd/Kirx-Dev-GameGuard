@@ -7,6 +7,7 @@
 class CBilling;
 class CPlayer;
 class CashDbWorker;
+class CHEAT_COMMAND;
 
 class CNationSettingData;
 struct _NameTxt_fld;
@@ -35,6 +36,8 @@ public:
   char *GetWorldDBID();
   char *GetWorldDBPW();
   char *GetNationCodeStr();
+  CHEAT_COMMAND *GetCheatTable();
+  void SetCashDBDSN(char *szIP, char *szDBName, char *szAccount, char *szPassword, unsigned __int16 dwPort);
   void SetCashDBInitState();
   void OnConnectSession(unsigned int n);
   void OnDisConnectSession(unsigned int n);
