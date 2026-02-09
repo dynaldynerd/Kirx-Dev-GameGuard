@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __unaligned __declspec(align(2)) _chat_message_receipt_udp
+struct __unaligned __declspec(align(2)) _chat_steal_message_gm_zocl
 {
   unsigned __int8 byMessageType;
   unsigned int dwSenderSerial;
@@ -13,16 +13,16 @@ struct __unaligned __declspec(align(2)) _chat_message_receipt_udp
   unsigned __int8 bySize;
   char wszChatData[256];
 
-  _chat_message_receipt_udp();
+  _chat_steal_message_gm_zocl();
   unsigned __int16 size() const;
 };
 
-inline _chat_message_receipt_udp::_chat_message_receipt_udp()
+inline _chat_steal_message_gm_zocl::_chat_steal_message_gm_zocl()
 {
   bySize = 0;
 }
 
-inline unsigned __int16 _chat_message_receipt_udp::size() const
+inline unsigned __int16 _chat_steal_message_gm_zocl::size() const
 {
   return static_cast<unsigned __int16>(282 - (255 - bySize));
 }

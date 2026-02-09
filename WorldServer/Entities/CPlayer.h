@@ -91,6 +91,7 @@ class CUserDB;
 class CRecordData;
 struct _PVPPOINT_LIMIT_DB_BASE;
 struct _PVP_ORDER_VIEW_DB_BASE;
+struct _w_name;
 class CPartyPlayer;
 class CDarkHoleChannel;
 class CDarkHole;
@@ -1010,6 +1011,7 @@ public:
   void SendMsg_MapEnvInform(char byMapCode, unsigned int dwMapEnvCode);
   void SendMsg_MapOut(unsigned __int8 byMapOutCode, unsigned __int8 byNextMapCode);
   void SendMsg_MineCancle();
+  void SendMsg_AdjustAmountInform(char byStorageCode, unsigned __int16 wSerial, unsigned int dwDur);
   void SendMsg_DeleteStorageInform(char byStorageCode, unsigned __int16 wSerial);
   void SendMsg_BuddhaEventMsg(char byErrorCode);
   void SendMsg_AlterItemDurInform(char byStorageCode, unsigned __int16 wItemSerial, unsigned __int64 dwDur);
@@ -1050,6 +1052,25 @@ public:
     char *pwszMessage,
     unsigned __int8 byPvpGrade,
     char *pwszSender);
+  unsigned int GetMoney(unsigned __int8 byMoneyCode);
+  void SendMsg_ChatFarFailure(char bBlock);
+  CPlayer *FindFarChatPlayerWithTemp(char *pwszName);
+  void pc_ChatOperatorRequest(unsigned __int8 byRaceCode, char *pwszChatData);
+  void pc_ChatCircleRequest(char *pwszChatData);
+  void pc_ChatFarRequest(char *pwszName, char *pwszChatData);
+  void pc_ChatPartyRequest(char *pwszChatData);
+  void pc_ChatRaceRequest(char *pwszChatData);
+  void pc_ChatMgrWhisperRequest(char *pwszChatData);
+  void pc_ChatMapRequest(char *pwszChatData);
+  void pc_ChatRaceBossRequest(char *pwszChatData);
+  void pc_ChatGuildEstSenRequest(char *pwszChatData);
+  void pc_ChatRePresentationRequest(char *pwszChatData);
+  void pc_ChatAllRequest(char *pwszChatData);
+  void pc_ChatGmNoticeRequest(char *pwszChatData);
+  void pc_ChatTradeRequestMsg(unsigned __int8 bySubType, char *pwszTradeMsg);
+  void pc_ChatGuildRequest(unsigned int dwDstSerial, char *pwszChatData);
+  void pc_ChatMultiFarRequest(unsigned __int8 byDstNum, _w_name *pDstName, char *pwszMsg);
+  void pc_ChatRaceBossCryRequest(char *pwszChatData);
   void AlterDalant(double dDalant);
   void SendMsg_ExchangeMoneyResult(char byErrCode);
   void SendMsg_InformTaxIncome(unsigned __int8 byRet, unsigned int dwComm, char *pwszDate);

@@ -38,6 +38,7 @@
 #include "CUnmannedTraderController.h"
 #include "CWeeklyGuildRankManager.h"
 #include "CashItemRemoteStore.h"
+#include "DqsDbStructs.h"
 #include "AmuletItem_fld.h"
 #include "AnimusItem_fld.h"
 #include "BagItem_fld.h"
@@ -2949,6 +2950,43 @@ void CMainThread::pc_AllUserGMNoticeInform(char *pwszMsg)
     if (g_Player[index].m_bLive && g_Player[index].m_bOper)
     {
       g_Network.m_pProcess[0]->LoadSendMsg(index, pbyType, reinterpret_cast<char *>(&msg), nLen);
+    }
+  }
+}
+
+void CMainThread::pc_SetMainGreetingMsg(char *pwszGMName, char *pwszMsg)
+{
+  if (*pwszMsg)
+  {
+    if (strlen_0(pwszMsg) <= 0xFF)
+    {
+      strcpy_s(m_wszGMName, 0x11u, pwszGMName);
+      strcpy_s(m_wszMainGreetingMsg, 0x100u, pwszMsg);
+
+      _qry_case_gm_greetingmsg qry{};
+      strcpy_s(qry.in_gmgreetingmsg, 0x100u, m_wszMainGreetingMsg);
+      strcpy_s(qry.in_gmname, 0x11u, m_wszGMName);
+      const int size = qry.size();
+      g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x4Au, reinterpret_cast<char *>(&qry), size);
+    }
+  }
+}
+
+void CMainThread::pc_SetRaceGreetingMsg(int racenum, char *pwszBossName, char *pwszMsg)
+{
+  if (*pwszMsg)
+  {
+    if (strlen_0(pwszMsg) <= 0xFF)
+    {
+      strcpy_s(m_wszBossName[racenum], 0x11u, pwszBossName);
+      strcpy_s(m_wszRaceGreetingMsg[racenum], 0x100u, pwszMsg);
+
+      _qry_case_race_greetingmsg qry{};
+      strcpy_s(qry.in_racegreetingmsg, 0x100u, pwszMsg);
+      strcpy_s(qry.in_bossname, 0x11u, pwszBossName);
+      qry.type = racenum;
+      const int size = qry.size();
+      g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x4Bu, reinterpret_cast<char *>(&qry), size);
     }
   }
 }

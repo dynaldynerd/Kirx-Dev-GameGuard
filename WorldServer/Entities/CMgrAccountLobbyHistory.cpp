@@ -70,6 +70,64 @@ CMgrAccountLobbyHistory::~CMgrAccountLobbyHistory()
   m_bIOThread = false;
 }
 
+void CMgrAccountLobbyHistory::GetNewFileName(unsigned int dwAccountSerial, char *pszFileName)
+{
+  const unsigned int localDate = GetLocalDate();
+  char buffer[132]{};
+  sprintf(buffer, "%s\\%d", m_szStdPath, localDate);
+  CreateDirectoryA(buffer, nullptr);
+  m_dwLastLocalDate = localDate;
+
+  const unsigned int hour = GetCurrentHour();
+  char pathName[148]{};
+  sprintf(pathName, "%s\\%d\\%d", m_szStdPath, m_dwLastLocalDate, hour);
+  CreateDirectoryA(pathName, nullptr);
+  m_dwLastLocalHour = hour;
+
+  char hourText[32]{};
+  char minText[32]{};
+  char secText[16]{};
+  if (hour <= 9)
+  {
+    sprintf(hourText, "0%d", hour);
+  }
+  else
+  {
+    sprintf(hourText, "%d", hour);
+  }
+
+  const unsigned int minute = GetCurrentMin();
+  if (minute <= 9)
+  {
+    sprintf(minText, "0%d", minute);
+  }
+  else
+  {
+    sprintf(minText, "%d", minute);
+  }
+
+  const unsigned int second = GetCurrentSec();
+  if (second <= 9)
+  {
+    sprintf(secText, "0%d", second);
+  }
+  else
+  {
+    sprintf(secText, "%d", second);
+  }
+
+  char timeText[32]{};
+  sprintf(timeText, "%s%s%s", hourText, minText, secText);
+  sprintf(
+    pszFileName,
+    "%s\\%d\\%d\\%d_%s.his",
+    m_szStdPath,
+    m_dwLastLocalDate,
+    m_dwLastLocalHour,
+    dwAccountSerial,
+    timeText);
+}
+
 void CMgrAccountLobbyHistory::enter_lobby(
   unsigned int dwAccountSerial,
   char *pAccountID,
@@ -146,6 +204,94 @@ void CMgrAccountLobbyHistory::lobby_disconnect(_qry_case_lobby_logout *pRegeData
     "Lobby Logout RegedDB Complete [%s %s]\r\n",
     m_szCurDate,
     m_szCurTime);
+  strcat_s(sLData, sLBuf);
+  strcat_s(sLData, "\r\n\t============\r\n\r\n");
+  WriteFile(pszFileName, sLData);
+}
+
+void CMgrAccountLobbyHistory::reged_char_request(char *pszFileName)
+{
+  sLData[0] = '\0';
+  sprintf_s(sLBuf, "Regist Character Request [%s %s]\r\n", m_szCurDate, m_szCurTime);
+  strcat_s(sLData, sLBuf);
+  WriteFile(pszFileName, sLData);
+}
+
+void CMgrAccountLobbyHistory::add_char_request(char *pszFileName)
+{
+  sLData[0] = '\0';
+  sprintf_s(sLBuf, "Add Character Request [%s %s]\r\n", m_szCurDate, m_szCurTime);
+  strcat_s(sLData, sLBuf);
+  WriteFile(pszFileName, sLData);
+}
+
+void CMgrAccountLobbyHistory::del_char_request(
+  unsigned __int8 bySlotIndex,
+  unsigned int dwAvatorSerial,
+  char *pszFileName)
+{
+  sLData[0] = '\0';
+  sprintf_s(
+    sLBuf,
+    "Del Character Request [%s %s]\r\nSlot: %d\r\nCharSR: %d\r\n",
+    m_szCurDate,
+    m_szCurTime,
+    bySlotIndex,
+    dwAvatorSerial);
+  strcat_s(sLData, sLBuf);
+  WriteFile(pszFileName, sLData);
+}
+
+void CMgrAccountLobbyHistory::sel_char_request(
+  unsigned __int8 bySlotIndex,
+  unsigned int dwAvatorSerial,
+  char *pszFileName)
+{
+  sLData[0] = '\0';
+  sprintf_s(
+    sLBuf,
+    "Select Character Request [%s %s]\r\nSlot: %d\r\nCharSR: %d\r\n",
+    m_szCurDate,
+    m_szCurTime,
+    bySlotIndex,
+    dwAvatorSerial);
+  strcat_s(sLData, sLBuf);
+  WriteFile(pszFileName, sLData);
+}
+
+void CMgrAccountLobbyHistory::add_char_complete(
+  unsigned __int8 byRetCode,
+  _REGED_AVATOR_DB *pInsertData,
+  char *pszFileName)
+{
+  sLData[0] = '\0';
+  const bool ok = byRetCode == 0;
+  const char *result = ok ? "SUCCESS" : "ERROR";
+  sprintf_s(sLBuf, "Add Result: %d (%s)\r\n", byRetCode, result);
+  strcat_s(sLData, sLBuf);
+  if (ok && pInsertData)
+  {
+    sprintf_s(
+      sLBuf,
+      "[Slot%d]\r\nNAME: %s\r\nCharSR: %d\r\nLV: %d\r\n$D: %d\r\n$G: %d\r\n\r\n",
+      pInsertData->m_bySlotIndex,
+      pInsertData->m_wszAvatorName,
+      pInsertData->m_dwRecordNum,
+      pInsertData->m_byLevel,
+      pInsertData->m_dwDalant,
+      pInsertData->m_dwGold);
+    strcat_s(sLData, sLBuf);
+  }
+  sprintf_s(sLBuf, "Add Character Complete [%s %s]\r\n", m_szCurDate, m_szCurTime);
+  strcat_s(sLData, sLBuf);
+  strcat_s(sLData, "\r\n\t============\r\n\r\n");
+  WriteFile(pszFileName, sLData);
+}
+
+void CMgrAccountLobbyHistory::tutorial_process_report_recv(char *pszFileName)
+{
+  sLData[0] = '\0';
+  sprintf_s(sLBuf, "Tutorial Process Report Received [%s %s]\r\n", m_szCurDate, m_szCurTime);
   strcat_s(sLData, sLBuf);
   strcat_s(sLData, "\r\n\t============\r\n\r\n");
   WriteFile(pszFileName, sLData);

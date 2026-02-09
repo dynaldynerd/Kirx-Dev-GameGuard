@@ -8,6 +8,7 @@
 #include "CGuildBattleController.h"
 #include "CHonorGuild.h"
 #include "CMoneySupplyMgr.h"
+#include "DqsDbStructs.h"
 #include "GuildBattleTypes.h"
 #include "guild_battle_suggest_request_result_zocl.h"
 #include "guild_member_refresh_data.h"
@@ -973,6 +974,38 @@ void CGuild::SendMsg_IOMoney(
       }
     }
   }
+}
+
+unsigned int CGuild::GetGuildMasterSerial()
+{
+  return m_MasterData.dwSerial;
+}
+
+_guild_member_info *CGuild::GetMemberFromSerial(unsigned int dwMemberSerial)
+{
+  for (int j = 0; j < 50; ++j)
+  {
+    if (_guild_member_info::IsFill(&m_MemberData[j]) && m_MemberData[j].dwSerial == dwMemberSerial)
+    {
+      return &m_MemberData[j];
+    }
+  }
+  return nullptr;
+}
+
+void CGuild::SetGreetingmsg_GUILD(char *wszgreetmsg)
+{
+  _qry_case_guild_greetingmsg qry{};
+  if (strlen_0(wszgreetmsg) <= 0xFF)
+  {
+    strcpy_s(m_wszGreetingMsg, 0x100u, wszgreetmsg);
+    m_wszGreetingMsg[255] = 0;
+  }
+
+  strcpy_s(qry.in_guildgreetingmsg, 0x100u, m_wszGreetingMsg);
+  qry.in_guildserial = m_dwSerial;
+  const int size = qry.size();
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x4Cu, reinterpret_cast<char *>(&qry), size);
 }
 
 long double CGuild::GetTotalDalant()

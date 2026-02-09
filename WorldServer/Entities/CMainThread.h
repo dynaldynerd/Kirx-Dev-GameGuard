@@ -917,6 +917,8 @@ public:
   void pc_UILockUpdateResult(char *pMsg);
   void pc_AllUserMsgInform(char *pwszMsg);
   void pc_AllUserGMNoticeInform(char *pwszMsg);
+  void pc_SetMainGreetingMsg(char *pwszGMName, char *pwszMsg);
+  void pc_SetRaceGreetingMsg(int racenum, char *pwszBossName, char *pwszMsg);
   void pc_AllUserKickInform();
   void pc_ChatLockCommand(_CLID *pidLocal, unsigned __int16 wBlockTimeH);
   void pc_AlterWorldService(bool bService);
@@ -1692,6 +1694,9 @@ struct __cppobj _SYNC_STATE
   bool bSelect;
   void Init();
   void re_lobby();
+  char chk_enter();
+  char chk_reged();
+  char chk_select();
 };
 
 /* 1595 */

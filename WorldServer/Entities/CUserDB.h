@@ -6,6 +6,8 @@
 #include "CMgrAccountLobbyHistory.h"
 #include "MOVE_LOBBY_DELAY.h"
 
+#include <cstddef>
+
 struct _EXIT_ALTER_PARAM;
 
 /* 1536 */
@@ -133,6 +135,24 @@ public:
   void SetChatLock(bool bLock);
   void SetWorldCLID(unsigned int dwSerial, unsigned int *pipAddr);
   void SendMsgAccount_UILockRefresh_Update();
+  bool Enter_Account(unsigned int dwAccountSerial, unsigned int dwIP, unsigned int dwProtocolVer, unsigned int *pdwMasterKey);
+  bool Lobby_Char_Request();
+  bool Reged_Char_Request();
+  bool Insert_Char_Request(
+    char *pwszCharName,
+    unsigned __int8 bySlotIndex,
+    unsigned __int8 byRaceSexCode,
+    char *pszClassCode,
+    unsigned int dwBaseShape);
+  bool Delete_Char_Request(unsigned __int8 bySlotIndex);
+  bool Select_Char_Request(unsigned __int8 bySlotIndex);
+  bool Alive_Char_Request(
+    unsigned __int8 byCase,
+    unsigned int dwSerial,
+    char *pwszName,
+    unsigned __int8 bySlotIndex);
+  unsigned __int8 IsExistRequestMoveCharacterList(unsigned int dwCharSerial);
+  void Insert_Char_Complete(unsigned __int8 byRetCode, _REGED_AVATOR_DB *pInsertData);
   void Lobby_Char_Complete(unsigned __int8 byRetCode);
   void Cont_UserSave_Complete(unsigned __int8 byResult, _AVATOR_DATA *pAvatorData);
   void Alive_Char_Complete(
@@ -149,4 +169,10 @@ public:
 };
 
 CUserDB *SearchAvatorWithName(CUserDB *pList, int nMax, char *pwszName);
+
+extern const char wszNonMakeName_0[3][17];
+extern const char wszNonMakeName_1[3][17];
+extern const char wszNonMakeName[3][17];
+extern const char wszGMCmp[];
+extern size_t nGMCmpLen;
 

@@ -49,6 +49,9 @@ public:
   void SendMsg_AddJoinApplier(_guild_applier_info *p);
   void SendMsg_DelJoinApplier(_guild_applier_info *p, unsigned __int8 byDelCode);
   void MakeDownApplierPacket();
+  unsigned int GetGuildMasterSerial();
+  _guild_member_info *GetMemberFromSerial(unsigned int dwMemberSerial);
+  void SetGreetingmsg_GUILD(char *wszgreetmsg);
   unsigned __int8 ManageAcceptORRefuseGuildBattle(bool bAccept);
   void SendMsg_ApplyGuildBattleResultInform(char byRet, char *wszDestGuildName);
   void SendMsg_GuildBattleRefused(char *pwszName);

@@ -54,6 +54,15 @@
 #include "pt_inform_commission_income_zocl.h"
 #include "pt_inform_punishment_zocl.h"
 #include "chat_message_receipt_udp.h"
+#include "announ_message_receipt_udp.h"
+#include "chat_far_failure_zocl.h"
+#include "chat_guild_failure_zocl.h"
+#include "chat_multi_far_failure_zocl.h"
+#include "chat_multi_far_trans_zocl.h"
+#include "w_name.h"
+#include "CChatStealSystem.h"
+#include "CObjectList.h"
+#include "pnt_rect.h"
 #include "target_monster_aggro_inform_zocl.h"
 #include "CNetworkEX.h"
 #include "GlobalObjects.h"
@@ -6711,6 +6720,1018 @@ void CPlayer::SendData_ChatTrans(
   unsigned __int8 pbyType[2] = {2, 10};
   const unsigned __int16 nLen = msg.size();
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), nLen);
+}
+
+void CPlayer::SendMsg_ChatFarFailure(char bBlock)
+{
+  _chat_far_failure_zocl msg{};
+  msg.bBlock = bBlock != 0;
+
+  unsigned __int8 pbyType[2] = {2, 4};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), msg.size());
+}
+
+void CPlayer::SendMsg_AdjustAmountInform(char byStorageCode, unsigned __int16 wSerial, unsigned int dwDur)
+{
+  #pragma pack(push, 1)
+  struct AdjustAmountInformMsg
+  {
+    char byStorageCode;
+    unsigned __int16 wSerial;
+    unsigned int dwDur;
+  };
+  #pragma pack(pop)
+
+  AdjustAmountInformMsg msg{};
+  msg.byStorageCode = byStorageCode;
+  msg.wSerial = wSerial;
+  msg.dwDur = dwDur;
+
+  unsigned __int8 pbyType[2] = {20, 3};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), 7u);
+}
+
+unsigned int CPlayer::GetMoney(unsigned __int8 byMoneyCode)
+{
+  if (byMoneyCode)
+  {
+    return CPlayerDB::GetGold(&m_Param);
+  }
+  return CPlayerDB::GetDalant(&m_Param);
+}
+
+CPlayer *CPlayer::FindFarChatPlayerWithTemp(char *pwszName)
+{
+  const unsigned __int8 nameLen = static_cast<unsigned __int8>(strlen_0(pwszName));
+  CPlayer *dst = nullptr;
+
+  for (int j = 0; j < 10; ++j)
+  {
+    _MEM_PAST_WHISPER *entry = &m_PastWhiper[j];
+    if (entry->bMemory && entry->byNameLen == nameLen && !strncmp(entry->wszName, pwszName, nameLen))
+    {
+      if (entry->pDst
+          && entry->pDst->m_bLive
+          && entry->pDst->m_Param.m_byNameLen == nameLen
+          && !strncmp(CPlayerDB::GetCharNameW(&entry->pDst->m_Param), entry->wszName, nameLen))
+      {
+        dst = entry->pDst;
+      }
+      else
+      {
+        entry->bMemory = false;
+      }
+      break;
+    }
+  }
+
+  if (!dst)
+  {
+    for (int k = 0; k < MAX_PLAYER; ++k)
+    {
+      CPlayer *candidate = &g_Player[k];
+      if (candidate->m_bLive && candidate->m_Param.m_byNameLen == nameLen)
+      {
+        if (!strncmp(CPlayerDB::GetCharNameW(&candidate->m_Param), pwszName, nameLen))
+        {
+          dst = candidate;
+          break;
+        }
+      }
+    }
+
+    if (dst)
+    {
+      _MEM_PAST_WHISPER *slot = nullptr;
+      for (int m = 0; m < 10; ++m)
+      {
+        if (!m_PastWhiper[m].bMemory)
+        {
+          slot = &m_PastWhiper[m];
+          break;
+        }
+      }
+
+      if (!slot)
+      {
+        unsigned int oldest = static_cast<unsigned int>(-1);
+        for (int n = 0; n < 10; ++n)
+        {
+          if (m_PastWhiper[n].dwMemoryTime < oldest)
+          {
+            oldest = m_PastWhiper[n].dwMemoryTime;
+            slot = &m_PastWhiper[n];
+          }
+        }
+      }
+
+      slot->bMemory = true;
+      slot->dwMemoryTime = timeGetTime();
+      slot->pDst = dst;
+      strcpy_0(slot->wszName, CPlayerDB::GetCharNameW(&dst->m_Param));
+      slot->byNameLen = static_cast<unsigned __int8>(strlen_0(slot->wszName));
+    }
+  }
+
+  return dst;
+}
+
+void CPlayer::pc_ChatOperatorRequest(unsigned __int8 byRaceCode, char *pwszChatData)
+{
+  if (m_byUserDgr == 2)
+  {
+    for (int j = 0; j < MAX_PLAYER; ++j)
+    {
+      CPlayer *target = &g_Player[j];
+      if (target->m_bLive
+          && (byRaceCode == 0xFF || target->m_byUserDgr || CPlayerDB::GetRaceCode(&target->m_Param) == byRaceCode))
+      {
+        target->SendData_ChatTrans(0, 0xFFFFFFFF, byRaceCode, false, pwszChatData, 0xFFu, nullptr);
+      }
+    }
+  }
+}
+
+void CPlayer::pc_ChatCircleRequest(char *pwszChatData)
+{
+  if ((!m_pUserDB || !m_pUserDB->m_bChatLock)
+      && m_pCurMap
+      && CGameObject::GetCurSecNum(this) != -1
+      && !m_bMapLoading)
+  {
+    _chat_message_receipt_udp msg{};
+    msg.byMessageType = 1;
+    msg.dwSenderSerial = m_dwObjSerial;
+    msg.byRaceCode = CPlayerDB::GetRaceCode(&m_Param);
+    msg.bFiltering = false;
+    msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszChatData));
+    memcpy_0(msg.wszChatData, pwszChatData, msg.bySize);
+    msg.wszChatData[msg.bySize] = 0;
+    strcpy_0(msg.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+    msg.byPvpGrade = m_Param.m_byPvPGrade;
+
+    _chat_message_receipt_udp filtered{};
+    filtered.byMessageType = 1;
+    filtered.dwSenderSerial = m_dwObjSerial;
+    filtered.byRaceCode = CPlayerDB::GetRaceCode(&m_Param);
+    filtered.bFiltering = true;
+    filtered.wszChatData[0] = 0;
+    filtered.bySize = 0;
+    strcpy_0(filtered.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+    filtered.byPvpGrade = m_Param.m_byPvPGrade;
+
+    unsigned __int8 type[2] = {2, 10};
+    _sec_info *secInfo = CMapData::GetSecInfo(m_pCurMap);
+    const int curSec = CGameObject::GetCurSecNum(this);
+    _pnt_rect rect{};
+    CMapData::GetRectInRadius(m_pCurMap, &rect, 3, curSec);
+
+    CChatStealSystem *stealSystem = CChatStealSystem::Instance();
+    stealSystem->StealChatMsg(this, 1u, pwszChatData);
+
+    for (int y = rect.nStarty; y <= rect.nEndy; ++y)
+    {
+      for (int x = rect.nStartx; x <= rect.nEndx; ++x)
+      {
+        const unsigned int secIndex = secInfo->m_nSecNumW * y + x;
+        CObjectList *list = CMapData::GetSectorListPlayer(m_pCurMap, m_wMapLayerIndex, secIndex);
+        if (!list)
+        {
+          continue;
+        }
+
+        _object_list_point *node = list->m_Head.m_pNext;
+        while (node != &list->m_Tail)
+        {
+          CGameObject *obj = node->m_pItem;
+          node = node->m_pNext;
+
+          CPlayer *target = static_cast<CPlayer *>(obj);
+          bool sendFull = false;
+          if (m_byUserDgr == 2)
+          {
+            sendFull = true;
+          }
+          else if (CPlayerDB::GetRaceCode(&target->m_Param) == CPlayerDB::GetRaceCode(&m_Param))
+          {
+            sendFull = true;
+          }
+          else if (target->m_byUserDgr >= 2u)
+          {
+            sendFull = true;
+          }
+          else if (_effect_parameter::GetEff_Have(&target->m_EP, 3) != 0.0)
+          {
+            sendFull = true;
+          }
+          else
+          {
+            const int raceCode = CPlayerDB::GetRaceCode(&target->m_Param);
+            CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
+            const unsigned int bossSerial = CPvpUserAndGuildRankingSystem::GetCurrentRaceBossSerial(rank, raceCode, 0);
+            if (bossSerial == target->m_dwObjSerial)
+            {
+              sendFull = true;
+            }
+          }
+
+          if (sendFull)
+          {
+            const unsigned __int16 len = msg.size();
+            CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], target->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
+          }
+          else
+          {
+            const unsigned __int16 len = filtered.size();
+            CNetProcess::LoadSendMsg(
+              g_Network.m_pProcess[0],
+              target->m_ObjID.m_wIndex,
+              type,
+              reinterpret_cast<char *>(&filtered),
+              len);
+          }
+        }
+      }
+    }
+  }
+}
+
+void CPlayer::pc_ChatFarRequest(char *pwszName, char *pwszChatData)
+{
+  if (!m_pUserDB || (!m_pUserDB->m_bChatLock && !IsPunished(0, true)))
+  {
+    CPlayer *dst = FindFarChatPlayerWithTemp(pwszName);
+    if (dst)
+    {
+      if (m_byUserDgr == 2 || !dst->m_bBlockWhisper)
+      {
+        bool filter = false;
+        unsigned __int8 chatType = 2;
+        if (m_byUserDgr == 2)
+        {
+          chatType = 12;
+        }
+        else
+        {
+          const int dstRace = CPlayerDB::GetRaceCode(&dst->m_Param);
+          const int myRace = CPlayerDB::GetRaceCode(&m_Param);
+          if (dstRace != myRace && dst->m_byUserDgr < 2u && _effect_parameter::GetEff_Have(&dst->m_EP, 3) == 0.0)
+          {
+            const int raceCode = CPlayerDB::GetRaceCode(&dst->m_Param);
+            CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
+            const unsigned int bossSerial = CPvpUserAndGuildRankingSystem::GetCurrentRaceBossSerial(rank, raceCode, 0);
+            if (bossSerial != dst->m_dwObjSerial)
+            {
+              filter = true;
+            }
+          }
+        }
+
+        char *senderName = CPlayerDB::GetCharNameW(&m_Param);
+        const unsigned __int8 senderRace = CPlayerDB::GetRaceCode(&m_Param);
+        dst->SendData_ChatTrans(
+          chatType,
+          m_dwObjSerial,
+          senderRace,
+          filter,
+          pwszChatData,
+          m_Param.m_byPvPGrade,
+          senderName);
+
+        char *dstName = CPlayerDB::GetCharNameW(&dst->m_Param);
+        const unsigned __int8 selfRace = CPlayerDB::GetRaceCode(&m_Param);
+        SendData_ChatTrans(chatType, m_dwObjSerial, selfRace, false, pwszChatData, m_Param.m_byPvPGrade, dstName);
+
+        char buffer[288]{};
+        sprintf_s(buffer, 0x110u, dstName);
+
+        CChatStealSystem *stealSystem = CChatStealSystem::Instance();
+        stealSystem->StealChatMsg(this, chatType, pwszChatData);
+      }
+      else
+      {
+        SendMsg_ChatFarFailure(1);
+      }
+    }
+    else
+    {
+      SendMsg_ChatFarFailure(0);
+    }
+  }
+}
+
+void CPlayer::pc_ChatPartyRequest(char *pwszChatData)
+{
+  if ((!m_pUserDB || (!m_pUserDB->m_bChatLock && !IsPunished(0, true))) && CPartyPlayer::IsPartyMode(m_pPartyMgr))
+  {
+    _chat_message_receipt_udp msg{};
+    msg.byMessageType = 3;
+    msg.dwSenderSerial = m_dwObjSerial;
+    msg.byRaceCode = CPlayerDB::GetRaceCode(&m_Param);
+    msg.bFiltering = false;
+    msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszChatData));
+    memcpy_0(msg.wszChatData, pwszChatData, msg.bySize);
+    msg.wszChatData[msg.bySize] = 0;
+    strcpy_0(msg.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+    msg.byPvpGrade = static_cast<unsigned __int8>(-1);
+
+    unsigned __int8 type[2] = {2, 10};
+    CPartyPlayer **members = CPartyPlayer::GetPtrPartyMember(m_pPartyMgr);
+
+    CChatStealSystem *stealSystem = CChatStealSystem::Instance();
+    stealSystem->StealChatMsg(this, msg.byMessageType, pwszChatData);
+
+    for (int j = 0; j < 8; ++j)
+    {
+      if (members[j])
+      {
+        const unsigned __int16 len = msg.size();
+        CNetProcess::LoadSendMsg(
+          g_Network.m_pProcess[0],
+          members[j]->m_wZoneIndex,
+          type,
+          reinterpret_cast<char *>(&msg),
+          len);
+      }
+    }
+  }
+}
+
+void CPlayer::pc_ChatRaceRequest(char *pwszChatData)
+{
+  if (m_pUserDB && !m_pUserDB->m_bChatLock && !IsPunished(0, true))
+  {
+    const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+    CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
+    if (CPvpUserAndGuildRankingSystem::IsCurrentRaceBossGroup(rank, raceCode, m_dwObjSerial))
+    {
+      _announ_message_receipt_udp msg{};
+      msg.byMessageType = 4;
+      msg.bySenderRace = CPlayerDB::GetRaceCode(&m_Param);
+      msg.dwSenderSerial = m_dwObjSerial;
+      strcpy_0(msg.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+      msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszChatData));
+      memcpy_0(msg.wszChatData, pwszChatData, msg.bySize);
+      msg.wszChatData[msg.bySize] = 0;
+      msg.byPvpGrade = static_cast<unsigned __int8>(-1);
+
+      unsigned __int8 type[2] = {2, 11};
+      const int len = msg.size();
+
+      CChatStealSystem *stealSystem = CChatStealSystem::Instance();
+      stealSystem->StealChatMsg(this, msg.byMessageType, pwszChatData);
+
+      for (int j = 0; j < MAX_PLAYER; ++j)
+      {
+        CPlayer *target = &g_Player[j];
+        if (target->m_bLive)
+        {
+          if (target->m_byUserDgr >= 2u
+              || CPlayerDB::GetRaceCode(&target->m_Param) == CPlayerDB::GetRaceCode(&m_Param))
+          {
+            CNetProcess::LoadSendMsg(
+              g_Network.m_pProcess[0],
+              target->m_ObjID.m_wIndex,
+              type,
+              reinterpret_cast<char *>(&msg),
+              len);
+          }
+        }
+      }
+    }
+  }
+}
+
+void CPlayer::pc_ChatMgrWhisperRequest(char *pwszChatData)
+{
+  if (m_byUserDgr >= 2u)
+  {
+    mgr_whisper(pwszChatData);
+  }
+}
+
+void CPlayer::pc_ChatMapRequest(char *pwszChatData)
+{
+  if (m_pUserDB
+      && !m_pUserDB->m_bChatLock
+      && !IsPunished(0, true)
+      && CGameObject::GetCurSecNum(this) != -1
+      && !m_bMapLoading)
+  {
+    _chat_message_receipt_udp msg{};
+    msg.byMessageType = 9;
+    msg.dwSenderSerial = m_dwObjSerial;
+    msg.byRaceCode = CPlayerDB::GetRaceCode(&m_Param);
+    msg.bFiltering = false;
+    msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszChatData));
+    memcpy_0(msg.wszChatData, pwszChatData, msg.bySize);
+    msg.wszChatData[msg.bySize] = 0;
+    strcpy_0(msg.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+    msg.byPvpGrade = m_Param.m_byPvPGrade;
+
+    unsigned __int8 type[2] = {2, 10};
+    CChatStealSystem *stealSystem = CChatStealSystem::Instance();
+    stealSystem->StealChatMsg(this, msg.byMessageType, pwszChatData);
+
+    const int len = msg.size();
+    _sec_info *secInfo = CMapData::GetSecInfo(m_pCurMap);
+    for (int j = 0; j < secInfo->m_nSecNumH; ++j)
+    {
+      for (int k = 0; k < secInfo->m_nSecNumW; ++k)
+      {
+        const unsigned int secIndex = k + secInfo->m_nSecNumW * j;
+        CObjectList *list = CMapData::GetSectorListPlayer(m_pCurMap, m_wMapLayerIndex, secIndex);
+        if (!list)
+        {
+          continue;
+        }
+
+        _object_list_point *node = list->m_Head.m_pNext;
+        while (node != &list->m_Tail)
+        {
+          CGameObject *obj = node->m_pItem;
+          node = node->m_pNext;
+
+          CPlayer *target = static_cast<CPlayer *>(obj);
+          if (CPlayerDB::GetRaceCode(&target->m_Param) == CPlayerDB::GetRaceCode(&m_Param))
+          {
+            if (target->m_bRecvMapChat)
+            {
+              CNetProcess::LoadSendMsg(
+                g_Network.m_pProcess[0],
+                target->m_ObjID.m_wIndex,
+                type,
+                reinterpret_cast<char *>(&msg),
+                len);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+void CPlayer::pc_ChatRaceBossRequest(char *pwszChatData)
+{
+  if (m_pUserDB && !m_pUserDB->m_bChatLock && !IsPunished(0, true))
+  {
+    const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+    CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
+    if (CPvpUserAndGuildRankingSystem::IsCurrentRaceBossGroup(rank, raceCode, m_dwObjSerial))
+    {
+      _announ_message_receipt_udp msg{};
+      msg.byMessageType = 10;
+      msg.bySenderRace = CPlayerDB::GetRaceCode(&m_Param);
+      msg.dwSenderSerial = m_dwObjSerial;
+      strcpy_0(msg.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+      msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszChatData));
+      memcpy_0(msg.wszChatData, pwszChatData, msg.bySize);
+      msg.wszChatData[msg.bySize] = 0;
+      msg.byPvpGrade = static_cast<unsigned __int8>(-1);
+
+      unsigned __int8 type[2] = {2, 11};
+      CChatStealSystem *stealSystem = CChatStealSystem::Instance();
+      stealSystem->StealChatMsg(this, msg.byMessageType, pwszChatData);
+
+      const int len = msg.size();
+      for (int j = 0; j < MAX_PLAYER; ++j)
+      {
+        CPlayer *target = &g_Player[j];
+        if (target->m_bLive)
+        {
+          if (CPlayerDB::GetRaceCode(&target->m_Param) == CPlayerDB::GetRaceCode(&m_Param))
+          {
+            const unsigned int serial = CPlayerDB::GetCharSerial(&target->m_Param);
+            const int myRace = CPlayerDB::GetRaceCode(&m_Param);
+            CPvpUserAndGuildRankingSystem *rankSys = CPvpUserAndGuildRankingSystem::Instance();
+            if (CPvpUserAndGuildRankingSystem::IsCurrentRaceBossGroup(rankSys, myRace, serial))
+            {
+              CNetProcess::LoadSendMsg(
+                g_Network.m_pProcess[0],
+                target->m_ObjID.m_wIndex,
+                type,
+                reinterpret_cast<char *>(&msg),
+                len);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+void CPlayer::pc_ChatGuildEstSenRequest(char *pwszChatData)
+{
+  if (m_pUserDB
+      && !m_pUserDB->m_bChatLock
+      && m_Param.m_pGuild
+      && m_Param.m_pGuildMemPtr
+      && (m_Param.m_byClassInGuild == 1 || m_Param.m_byClassInGuild == 2))
+  {
+    _announ_message_receipt_udp msg{};
+    msg.byMessageType = 11;
+    msg.bySenderRace = CPlayerDB::GetRaceCode(&m_Param);
+    msg.dwSenderSerial = m_dwObjSerial;
+    strcpy_0(msg.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+    msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszChatData));
+    memcpy_0(msg.wszChatData, pwszChatData, msg.bySize);
+    msg.wszChatData[msg.bySize] = 0;
+    msg.byPvpGrade = static_cast<unsigned __int8>(-1);
+
+    unsigned __int8 type[2] = {2, 11};
+    CGuild *guild = m_Param.m_pGuild;
+    _guild_member_info *members = guild->m_MemberData;
+
+    CChatStealSystem *stealSystem = CChatStealSystem::Instance();
+    stealSystem->StealChatMsg(this, msg.byMessageType, pwszChatData);
+
+    const int len = msg.size();
+    for (int j = 0; j < guild->m_nMemberNum; ++j)
+    {
+      if (_guild_member_info::IsFill(&members[j])
+          && members[j].pPlayer
+          && (members[j].byClassInGuild == 1 || members[j].byClassInGuild == 2))
+      {
+        CPlayer *target = members[j].pPlayer;
+        CNetProcess::LoadSendMsg(
+          g_Network.m_pProcess[0],
+          target->m_ObjID.m_wIndex,
+          type,
+          reinterpret_cast<char *>(&msg),
+          len);
+      }
+    }
+  }
+}
+
+void CPlayer::pc_ChatRePresentationRequest(char *pwszChatData)
+{
+  if (m_pUserDB)
+  {
+    if (!m_pUserDB->m_bChatLock)
+    {
+      const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+      CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
+      if (CPvpUserAndGuildRankingSystem::IsCurrentRaceBossGroup(rank, raceCode, m_dwObjSerial)
+          || (m_Param.m_byClassInGuild == 2 && m_Param.m_pGuild))
+      {
+        _announ_message_receipt_udp msg{};
+        msg.byMessageType = 13;
+        msg.bySenderRace = CPlayerDB::GetRaceCode(&m_Param);
+        msg.dwSenderSerial = m_dwObjSerial;
+        strcpy_0(msg.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+        msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszChatData));
+        memcpy_0(msg.wszChatData, pwszChatData, msg.bySize);
+        msg.wszChatData[msg.bySize] = 0;
+        msg.byPvpGrade = static_cast<unsigned __int8>(-1);
+
+        unsigned __int8 type[2] = {2, 11};
+        CChatStealSystem *stealSystem = CChatStealSystem::Instance();
+        stealSystem->StealChatMsg(this, msg.byMessageType, pwszChatData);
+
+        const int len = msg.size();
+        for (int j = 0; j < MAX_PLAYER; ++j)
+        {
+          CPlayer *target = &g_Player[j];
+          if (target->m_bLive)
+          {
+            if (CPlayerDB::GetRaceCode(&target->m_Param) == CPlayerDB::GetRaceCode(&m_Param))
+            {
+              const int myRace = CPlayerDB::GetRaceCode(&m_Param);
+              CPvpUserAndGuildRankingSystem *rankSys = CPvpUserAndGuildRankingSystem::Instance();
+              if (CPvpUserAndGuildRankingSystem::IsCurrentRaceBossGroup(rankSys, myRace, target->m_dwObjSerial)
+                  || (target->m_Param.m_byClassInGuild == 2 && target->m_Param.m_pGuild))
+              {
+                CNetProcess::LoadSendMsg(
+                  g_Network.m_pProcess[0],
+                  target->m_ObjID.m_wIndex,
+                  type,
+                  reinterpret_cast<char *>(&msg),
+                  len);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+void CPlayer::pc_ChatAllRequest(char *pwszChatData)
+{
+  if (!m_pUserDB)
+  {
+    return;
+  }
+  if (m_pUserDB->m_bChatLock)
+  {
+    return;
+  }
+  if (IsPunished(0, true))
+  {
+    return;
+  }
+  if (CGameObject::GetCurSecNum(this) == -1)
+  {
+    return;
+  }
+  if (m_bMapLoading)
+  {
+    return;
+  }
+
+  _STORAGE_LIST::_db_con *item = nullptr;
+  if (g_Main.m_bAllRaceChatItemConsume)
+  {
+    item = _STORAGE_LIST::GetPtrFromItemCode(&m_Param.m_dbInven, g_Main.m_strAllRaceChatItemCode);
+    if (!item)
+    {
+      return;
+    }
+  }
+
+  if (g_Main.m_bAllRaceChatMoneyConsume && g_Main.m_dwAllRaceChatMoney > GetMoney(0))
+  {
+    return;
+  }
+
+  if (g_Main.m_bAllRaceChatItemConsume && item)
+  {
+    if (IsOverLapItem(item->m_byTableCode))
+    {
+      const unsigned int dur = Emb_AlterDurPoint(0, item->m_byStorageIndex, -1, 0, 0);
+      if (dur)
+      {
+        SendMsg_AdjustAmountInform(0, item->m_wSerial, dur);
+        goto LABEL_AFTER_ITEM;
+      }
+    }
+    else if (!Emb_DelStorage(0, item->m_byStorageIndex, 0, 1, "CPlayer::pcChatAllRequest()"))
+    {
+      return;
+    }
+
+    CMgrAvatorItemHistory::consume_del_item(&CPlayer::s_MgrItemHistory, m_ObjID.m_wIndex, item, m_szItemHistoryFileName);
+  }
+
+LABEL_AFTER_ITEM:
+  if (g_Main.m_bAllRaceChatMoneyConsume)
+  {
+    SubDalant(g_Main.m_dwAllRaceChatMoney);
+    SendMsg_AlterMoneyInform(0);
+  }
+
+  _announ_message_receipt_udp msg{};
+  msg.byMessageType = 14;
+  msg.dwSenderSerial = m_dwObjSerial;
+  msg.bySenderRace = CPlayerDB::GetRaceCode(&m_Param);
+  strcpy_0(msg.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+  msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszChatData));
+  memcpy_0(msg.wszChatData, pwszChatData, msg.bySize);
+  msg.wszChatData[msg.bySize] = 0;
+  msg.byPvpGrade = m_Param.m_byPvPGrade;
+
+  unsigned __int8 type[2] = {2, 11};
+  CChatStealSystem *stealSystem = CChatStealSystem::Instance();
+  stealSystem->StealChatMsg(this, msg.byMessageType, pwszChatData);
+
+  const int len = msg.size();
+  for (int j = 0; j < MAX_PLAYER; ++j)
+  {
+    CPlayer *target = &g_Player[j];
+    if (target->m_bLive)
+    {
+      if (CPlayerDB::GetRaceCode(&target->m_Param) == CPlayerDB::GetRaceCode(&m_Param))
+      {
+        CNetProcess::LoadSendMsg(
+          g_Network.m_pProcess[0],
+          target->m_ObjID.m_wIndex,
+          type,
+          reinterpret_cast<char *>(&msg),
+          len);
+      }
+    }
+  }
+}
+
+void CPlayer::pc_ChatGmNoticeRequest(char *pwszChatData)
+{
+  if (m_pUserDB && m_byUserDgr == 2)
+  {
+    CMainThread::pc_AllUserGMNoticeInform(&g_Main, pwszChatData);
+  }
+}
+
+void CPlayer::pc_ChatTradeRequestMsg(unsigned __int8 bySubType, char *pwszTradeMsg)
+{
+  if (m_pUserDB
+      && !m_pUserDB->m_bChatLock
+      && !IsPunished(0, true)
+      && CPlayerDB::GetDalant(&m_Param) >= 0x3E8)
+  {
+    SubDalant(0x3E8u);
+    SendMsg_AlterMoneyInform(0);
+
+    const int level = CPlayerDB::GetLevel(&m_Param);
+    if (level == 30 || level == 40 || level == 50 || level == 60)
+    {
+      const int lv = CPlayerDB::GetLevel(&m_Param);
+      const int race = CPlayerDB::GetRaceCode(&m_Param);
+      CMoneySupplyMgr *mgr = CMoneySupplyMgr::Instance();
+      CMoneySupplyMgr::UpdateFeeMoneyData(mgr, race, lv, 0x3E8u);
+    }
+
+    _announ_message_receipt_udp msg{};
+    msg.byMessageType = 19;
+    msg.dwSenderSerial = m_dwObjSerial;
+    msg.bySenderRace = CPlayerDB::GetRaceCode(&m_Param);
+    strcpy_0(msg.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+    msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszTradeMsg));
+    memcpy_0(msg.wszChatData, pwszTradeMsg, msg.bySize);
+    msg.wszChatData[msg.bySize] = 0;
+    msg.byPvpGrade = m_Param.m_byPvPGrade;
+    msg.bySubType = bySubType;
+
+    unsigned __int8 type[2] = {2, 11};
+    CChatStealSystem *stealSystem = CChatStealSystem::Instance();
+    stealSystem->StealChatMsg(this, msg.byMessageType, pwszTradeMsg);
+
+    const int len = msg.size();
+    for (int j = 0; j < MAX_PLAYER; ++j)
+    {
+      CPlayer *target = &g_Player[j];
+      if (target->m_bLive)
+      {
+        if (CPlayerDB::GetRaceCode(&target->m_Param) == CPlayerDB::GetRaceCode(&m_Param))
+        {
+          CNetProcess::LoadSendMsg(
+            g_Network.m_pProcess[0],
+            target->m_ObjID.m_wIndex,
+            type,
+            reinterpret_cast<char *>(&msg),
+            len);
+        }
+      }
+    }
+  }
+}
+
+void CPlayer::pc_ChatGuildRequest(unsigned int dwDstSerial, char *pwszChatData)
+{
+  char errCode = 0;
+  CPlayer *dstPlayer = nullptr;
+
+  if (m_Param.m_pGuild)
+  {
+    if (dwDstSerial != static_cast<unsigned int>(-1))
+    {
+      _guild_member_info *member = CGuild::GetMemberFromSerial(m_Param.m_pGuild, dwDstSerial);
+      if (member)
+      {
+        if (member->pPlayer)
+        {
+          dstPlayer = member->pPlayer;
+        }
+        else
+        {
+          errCode = static_cast<char>(-49);
+        }
+      }
+      else
+      {
+        errCode = static_cast<char>(-54);
+      }
+    }
+  }
+  else
+  {
+    errCode = static_cast<char>(-54);
+  }
+
+  if (errCode)
+  {
+    _chat_guild_failure_zocl msg{};
+    msg.byErrCode = static_cast<unsigned __int8>(errCode);
+    unsigned __int8 type[2] = {2, 100};
+    CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), msg.size());
+  }
+  else
+  {
+    _announ_message_receipt_udp msg{};
+    msg.bySenderRace = CPlayerDB::GetRaceCode(&m_Param);
+    msg.dwSenderSerial = m_dwObjSerial;
+    strcpy_0(msg.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+    msg.byPvpGrade = m_Param.m_byPvPGrade;
+    msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszChatData));
+    memcpy_0(msg.wszChatData, pwszChatData, msg.bySize);
+    msg.wszChatData[msg.bySize] = 0;
+
+    unsigned __int8 type[2] = {2, 11};
+    const int baseLen = msg.size();
+
+    if (dstPlayer)
+    {
+      msg.byMessageType = 8;
+      const unsigned __int16 len = msg.size();
+      CNetProcess::LoadSendMsg(
+        g_Network.m_pProcess[0],
+        dstPlayer->m_ObjID.m_wIndex,
+        type,
+        reinterpret_cast<char *>(&msg),
+        len);
+    }
+    else
+    {
+      msg.byMessageType = 7;
+      for (int j = 0; j < 50; ++j)
+      {
+        _guild_member_info *member = &m_Param.m_pGuild->m_MemberData[j];
+        if (_guild_member_info::IsFill(member))
+        {
+          if (member->pPlayer)
+          {
+            CNetProcess::LoadSendMsg(
+              g_Network.m_pProcess[0],
+              member->pPlayer->m_ObjID.m_wIndex,
+              type,
+              reinterpret_cast<char *>(&msg),
+              baseLen);
+          }
+        }
+      }
+    }
+
+    CChatStealSystem *stealSystem = CChatStealSystem::Instance();
+    stealSystem->StealChatMsg(this, msg.byMessageType, pwszChatData);
+  }
+}
+
+void CPlayer::pc_ChatMultiFarRequest(unsigned __int8 byDstNum, _w_name *pDstName, char *pwszMsg)
+{
+  unsigned __int8 dstCount = 0;
+  CPlayer *targets[4]{};
+
+  for (int j = 0; j < byDstNum; ++j)
+  {
+    CPlayer *dst = FindFarChatPlayerWithTemp(pDstName[j].name);
+    char failCode = 0;
+    if (dst)
+    {
+      if (dst->m_bBlockWhisper)
+      {
+        failCode = 2;
+      }
+      else if (dst == this)
+      {
+        failCode = 4;
+      }
+      else
+      {
+        for (int k = 0; k < dstCount; ++k)
+        {
+          if (targets[k] == dst)
+          {
+            failCode = 5;
+            break;
+          }
+        }
+        if (!failCode)
+        {
+          if (m_byUserDgr != 2 && dst->m_byUserDgr != 2
+              && _effect_parameter::GetEff_Have(&dst->m_EP, 3) <= 0.0)
+          {
+            const int raceCode = CPlayerDB::GetRaceCode(&dst->m_Param);
+            CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
+            const unsigned int bossSerial = CPvpUserAndGuildRankingSystem::GetCurrentRaceBossSerial(rank, raceCode, 0);
+            if (bossSerial != dst->m_dwObjSerial)
+            {
+              const int dstRace = CPlayerDB::GetRaceCode(&dst->m_Param);
+              const int myRace = CPlayerDB::GetRaceCode(&m_Param);
+              if (dstRace != myRace)
+              {
+                failCode = 3;
+              }
+            }
+          }
+        }
+      }
+    }
+    else
+    {
+      failCode = 1;
+    }
+
+    if (failCode)
+    {
+      _chat_multi_far_failure_zocl fail{};
+      strcpy_0(fail.wszDstName, pDstName[j].name);
+      fail.byFailCode = static_cast<unsigned __int8>(failCode);
+      unsigned __int8 type[2] = {2, 103};
+      CNetProcess::LoadSendMsg(
+        g_Network.m_pProcess[0],
+        m_ObjID.m_wIndex,
+        type,
+        reinterpret_cast<char *>(&fail),
+        fail.size());
+    }
+    else
+    {
+      if (dstCount < 4)
+      {
+        targets[dstCount++] = dst;
+      }
+    }
+  }
+
+  if (dstCount)
+  {
+    _chat_multi_far_trans_zocl msg{};
+    int writePos = 0;
+    char *sData = msg.sData;
+
+    char *senderName = CPlayerDB::GetCharNameW(&m_Param);
+    unsigned __int8 senderLen = static_cast<unsigned __int8>(strlen_0(senderName));
+    memcpy_0(&sData[writePos++], &senderLen, sizeof(senderLen));
+    memcpy_0(&sData[writePos], senderName, senderLen);
+    writePos += senderLen;
+
+    memcpy_0(&sData[writePos++], &dstCount, sizeof(dstCount));
+    for (int m = 0; m < dstCount; ++m)
+    {
+      char *dstName = CPlayerDB::GetCharNameW(&targets[m]->m_Param);
+      unsigned __int8 dstLen = static_cast<unsigned __int8>(strlen_0(dstName));
+      memcpy_0(&sData[writePos++], &dstLen, sizeof(dstLen));
+      memcpy_0(&sData[writePos], dstName, dstLen);
+      writePos += dstLen;
+    }
+
+    unsigned __int8 msgLen = static_cast<unsigned __int8>(strlen_0(pwszMsg) + 1);
+    memcpy_0(&sData[writePos++], &msgLen, sizeof(msgLen));
+    memcpy_0(&sData[writePos], pwszMsg, msgLen);
+    writePos += msgLen;
+
+    msg.wSize = static_cast<unsigned __int16>(writePos);
+
+    unsigned __int8 type[2] = {2, 102};
+    CChatStealSystem *stealSystem = CChatStealSystem::Instance();
+    stealSystem->StealChatMsg(this, 9u, pwszMsg);
+
+    const unsigned __int16 len = msg.size();
+    for (int m = 0; m < dstCount; ++m)
+    {
+      CNetProcess::LoadSendMsg(
+        g_Network.m_pProcess[0],
+        targets[m]->m_ObjID.m_wIndex,
+        type,
+        reinterpret_cast<char *>(&msg),
+        len);
+    }
+    CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
+  }
+}
+
+void CPlayer::pc_ChatRaceBossCryRequest(char *pwszChatData)
+{
+  if (m_pUserDB)
+  {
+    const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+    CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
+    const unsigned int bossSerial = CPvpUserAndGuildRankingSystem::GetCurrentRaceBossSerial(rank, raceCode, 0);
+    const unsigned int charSerial = CPlayerDB::GetCharSerial(&m_Param);
+    if (bossSerial == charSerial)
+    {
+      _announ_message_receipt_udp msg{};
+      msg.byMessageType = 18;
+      msg.bySenderRace = CPlayerDB::GetRaceCode(&m_Param);
+      strcpy_0(msg.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+      msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszChatData));
+      memcpy_0(msg.wszChatData, pwszChatData, msg.bySize);
+      msg.wszChatData[msg.bySize] = 0;
+      msg.dwSenderSerial = m_dwObjSerial;
+      msg.byPvpGrade = static_cast<unsigned __int8>(-1);
+
+      unsigned __int8 type[2] = {2, 11};
+      const int len = msg.size();
+      for (int j = 0; j < MAX_PLAYER; ++j)
+      {
+        CPlayer *target = &g_Player[j];
+        if (target->m_bOper)
+        {
+          if (CPlayerDB::GetRaceCode(&target->m_Param) == CPlayerDB::GetRaceCode(&m_Param)
+              && target->m_pCurMap == m_pCurMap
+              && target->m_wMapLayerIndex == m_wMapLayerIndex)
+          {
+            CNetProcess::LoadSendMsg(
+              g_Network.m_pProcess[0],
+              target->m_ObjID.m_wIndex,
+              type,
+              reinterpret_cast<char *>(&msg),
+              len);
+          }
+        }
+      }
+    }
+  }
 }
 
 void CPlayer::SendMsg_ExchangeMoneyResult(char byErrCode)

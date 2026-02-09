@@ -384,6 +384,11 @@ __time64_t time_17(__int64 *_Time)
   return _time64(_Time);
 }
 
+__time64_t time_5(__int64 *_Time)
+{
+  return _time64(_Time);
+}
+
 __time64_t mktime_3(tm *_Tm)
 {
   return _mktime64(_Tm);
@@ -395,6 +400,11 @@ tm *localtime_5(const __int64 *_Time)
 }
 
 tm *localtime_2(const __int64 *_Time)
+{
+  return _localtime64(_Time);
+}
+
+tm *localtime_3(const __int64 *_Time)
 {
   return _localtime64(_Time);
 }
@@ -2655,6 +2665,36 @@ int ParsingCommandW(char *pwszSrc, int nMaxWordNum, char **ppwszDst, int nMaxWor
 
     ++src;
   }
+}
+
+bool IsSQLValidString(const char *wszStr)
+{
+  if (!wszStr)
+  {
+    return true;
+  }
+
+  if (strchr(wszStr, ';'))
+  {
+    return false;
+  }
+  if (strchr(wszStr, '\''))
+  {
+    return false;
+  }
+  if (strstr(wszStr, "--"))
+  {
+    return false;
+  }
+  if (strstr(wszStr, "/*"))
+  {
+    return false;
+  }
+  if (strstr(wszStr, "*/"))
+  {
+    return false;
+  }
+  return strstr(wszStr, "xp_") == nullptr;
 }
 
 void WriteServerStartHistory(const char *format, ...)

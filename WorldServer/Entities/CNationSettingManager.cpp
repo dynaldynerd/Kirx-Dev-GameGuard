@@ -179,6 +179,31 @@ void CNationSettingManager::OnDisConnectSession(unsigned int n)
   }
 }
 
+bool CNationSettingManager::CheckEnterWorldRequest(unsigned int n, char *pBuf)
+{
+  INationGameGuardSystem *gameGuard = m_pData->GetGameGuardSystem();
+  if (gameGuard && !gameGuard->OnCheckSession_FirstVerify(static_cast<int>(n)))
+  {
+    return false;
+  }
+  return m_pData->CheckEnterWorldRequest(static_cast<int>(n), pBuf);
+}
+
+bool CNationSettingManager::IsNormalString(const char *szString)
+{
+  return m_pData->IsNormalString(szString);
+}
+
+bool CNationSettingManager::RecvGameGuardData(unsigned int n, _MSG_HEADER *pHeader, char *pBuff)
+{
+  if (!m_pData->GetGameGuardSystem())
+  {
+    return false;
+  }
+  INationGameGuardSystem *gameGuard = m_pData->GetGameGuardSystem();
+  return gameGuard->RecvClientLine(static_cast<int>(n), pHeader, pBuff);
+}
+
 void CNationSettingManager::SendCashDBDSNRequest()
 {
   m_pData->SendCashDBDSNRequest();

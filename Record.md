@@ -28,6 +28,7 @@ During the implementation of `CMapOperation::Init` and its sub-flows, the follow
 | `CPlayer.cpp` | `_MASTERY_PARAM::UpdateCumPerMast` | `_MASTERY_PARAM::s_pSkillData` | `_base_fld *` | Uses `Record[4].m_strCode[60]` (skill lv), `Record[1].m_strCode[4]` (skill class). |
 | `CPlayer.cpp` | `CPlayer::_check_mastery_lim` | `CPlayer::s_tblLimMastery*` | `_base_fld *` | Uses `Record[1].m_strCode[4*byIndex]`, `Record[1].m_strCode[12/16/20/8]`, `Record[1].m_strCode[4*byIndex+32]`, and `Record[2].m_dwIndex` as mastery limits. |
 | `WorldServerUtil.cpp` | `GetUsePcCashType` | `s_ptblItemData[byTblCode]` | `_base_fld *` | Uses `Record[9].m_strCode[16/40]`, `Record[8].m_strCode[12]`, `Record[7].m_strCode[48]`, `Record[5].m_strCode[60]`. |
+| `CUserDB.cpp` | `Insert_Char_Request` | `g_Main.m_tblClass` | `_base_fld *` | IDA accesses `Record[1].m_strCode[8]` (as dword) and `Record[1].m_dwIndex` to validate class/race. |
 | `CGoldenBoxItemMgr.cpp` | `CGoldenBoxItemMgr::SetGoldBoxItemIndex` | `g_Main.m_tblItemData[17]` | `_base_fld *` | IDA uses `*(_DWORD *)&Record[3].m_strCode[4]` to filter records; needs review for correct field mapping. |
 | `WorldServerUtil.cpp` | `GetAnimusFldFromExp` | `CAnimus::s_tblParameter[nAnimusClass]` | `_base_fld *` | IDA compares `*(_QWORD *)Record[1].m_strCode` to exp; indicates non-base layout usage. |
 | `CUnmannedTraderSubClassInfoForceLiverGrade.cpp` | `CUnmannedTraderSubClassInfoForceLiverGrade::GetGroupID` | `g_Main.m_tblEffectData` | `_base_fld *` | Uses `Record[4].m_strCode[60]` for effect data; verify correct field mapping. |

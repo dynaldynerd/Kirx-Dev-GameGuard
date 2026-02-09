@@ -68,6 +68,40 @@ public:
   bool BillingLineAnalysis(int n, _MSG_HEADER *pMsgHeader, char *pMsg);
   bool WebAgentLineAnalysis(int n, _MSG_HEADER *pMsgHeader, char *pMsg);
 
+  bool EnterWorldRequest(unsigned int n, _MSG_HEADER *pMsgHeader, char *pBuf);
+  bool MoveLobbyRequest(unsigned int n, char *pBuf);
+  bool RegedCharRequest(unsigned int n, char *pBuf);
+  bool AddCharRequest(unsigned int n, char *pBuf);
+  bool DelCharRequest(unsigned int n, char *pBuf);
+  bool SelCharRequest(unsigned int n, char *pBuf);
+  bool TutorialProcessReport(int n, char *pBuf);
+  bool AliveCharRequest(int n, char *pBuf);
+  bool NotifyLocalTimeRequest(int n, char *pBuf);
+
+  bool ChatOperatorRequest(unsigned int n, char *pBuf);
+  bool ChatCircleRequest(unsigned int n, char *pBuf);
+  bool ChatFarRequest(unsigned int n, char *pBuf);
+  bool ChatPartyRequest(unsigned int n, char *pBuf);
+  bool ChatRaceRequest(unsigned int n, char *pBuf);
+  bool ChatCheatRequest(unsigned int n, char *pBuf);
+  bool ChatManageRequest(unsigned int n, char *pBuf);
+  bool ChatMgrWhisperRequest(unsigned int n, char *pBuf);
+  bool ChatMapRecvYesOrNo(unsigned int n, char *pBuf);
+  bool ChatMapRequest(unsigned int n, char *pBuf);
+  bool ChatRaceBossRequest(unsigned int n, char *pBuf);
+  bool ChatGuildEstSenRequest(unsigned int n, char *pBuf);
+  bool ChatRePresentationRequest(unsigned int n, char *pBuf);
+  bool ChatAllRecvYesOrNo(unsigned int n, char *pBuf);
+  bool ChatAllRequest(unsigned int n, char *pBuf);
+  bool ChatGreetingMsg_GM(unsigned int n, char *pBuf);
+  bool ChatGreetingMsg_RACE(unsigned int n, char *pBuf);
+  bool ChatGreetingMsg_GUILD(unsigned int n, char *pBuf);
+  bool ChatTradeRequestMsg(unsigned int n, char *pBuf);
+  bool ChatGuildRequest(unsigned int n, char *pBuf);
+  bool ChatMultiFarRequest(unsigned int n, char *pBuf);
+  bool ChatRaceBossCryRequest(unsigned int n, char *pBuf);
+  bool ChatGmNoticeRequest(unsigned int n, char *pBuf);
+
   bool OpenWorldSuccessResult(unsigned int n, char *pMsg);
   bool OpenWorldFailureResult(unsigned int n, char *pMsg);
   bool ForceCloseCommand(unsigned int n, _CLID *pMsg);

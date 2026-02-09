@@ -8,6 +8,7 @@
 
 struct _qry_case_lobby_logout;
 struct _REGED;
+struct _REGED_AVATOR_DB;
 
 class __cppobj CMgrAccountLobbyHistory
 {
@@ -53,6 +54,7 @@ public:
 
   CMgrAccountLobbyHistory();
   ~CMgrAccountLobbyHistory();
+  void GetNewFileName(unsigned int dwAccountSerial, char *pszFileName);
   void enter_lobby(
     unsigned int dwAccountSerial,
     char *pAccountID,
@@ -61,6 +63,12 @@ public:
     bool bFirst,
     char *pszFileName);
   void lobby_disconnect(_qry_case_lobby_logout *pRegeData, char *pszFileName);
+  void reged_char_request(char *pszFileName);
+  void add_char_request(char *pszFileName);
+  void del_char_request(unsigned __int8 bySlotIndex, unsigned int dwAvatorSerial, char *pszFileName);
+  void sel_char_request(unsigned __int8 bySlotIndex, unsigned int dwAvatorSerial, char *pszFileName);
+  void add_char_complete(unsigned __int8 byRetCode, _REGED_AVATOR_DB *pInsertData, char *pszFileName);
+  void tutorial_process_report_recv(char *pszFileName);
   void recovery_char_complete(unsigned __int8 byRetCode, _REGED *pAvator, char *pszFileName);
   void WriteFile(char *pszFileName, char *pszLog);
   void OnLoop();

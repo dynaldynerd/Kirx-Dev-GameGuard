@@ -12,6 +12,7 @@ class CHEAT_COMMAND;
 class CNationSettingData;
 struct _NameTxt_fld;
 struct _CashShop_str_fld;
+struct _MSG_HEADER;
 
 class __cppobj CNationSettingManager : public CTSingleton<CNationSettingManager>
 {
@@ -41,6 +42,9 @@ public:
   void SetCashDBInitState();
   void OnConnectSession(unsigned int n);
   void OnDisConnectSession(unsigned int n);
+  bool CheckEnterWorldRequest(unsigned int n, char *pBuf);
+  bool IsNormalString(const char *szString);
+  bool RecvGameGuardData(unsigned int n, _MSG_HEADER *pHeader, char *pBuff);
   void SendCashDBDSNRequest();
   void NetClose(CPlayer *pOne);
 
