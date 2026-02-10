@@ -1,5 +1,6 @@
 # ClientLineAnalysis type0-1 switch tracking
 
+
 | Case (type0-1) | Type0 | Handlers / Notes | Status |
 |---|---|---|---|
 | 12 | 13 | ForceInvenChangeRequest, AnimusInvenChangeRequest, ResSeparationRequest, ResDivisionRequest, PotionSocketSeparationRequest, PotionSocketDivisionRequest, AlterItemSlotRequest, AlterLinkBoardSlotRequest, PvpRankListRequest, ModeChangeRequest, GustureRequest, AlterWindowInfoRequest, SetTargetObjectRequest, ReleaseTargetObjectRequest, PartyReqBlockReport, WhisperBlockReport, TradeBlockReport, GuildBattleBlockReport, PlayerMacroUpdate, TotalGuildRankRequest, WeeklyGuildRankRequest, SetRaceBossCryMsgRequest, NotifyRaceBossCryMsg, SetGroupTargetObjectRequest, ReleaseGroupTargetObjectRequest, SetGroupMapPointRequest, RequestPatriarchPunishment, RequestTaxRate, RequestChangeTaxRate, RequestUILockInit, RequestUILockUserCertify, RequestUILockUpdateInfo, RequestUILockFindPW, RequestTLLogoutTime | todo |
