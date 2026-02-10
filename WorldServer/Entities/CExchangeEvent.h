@@ -20,7 +20,10 @@ public:
   bool Initialzie();
   bool IsEnable();
   bool IsDelete();
+  bool IsWait();
+  EventItemInfo *GetEventItemInfo(unsigned int nInfoType);
   void DeleteExchangeEventItem(CPlayer *pOne);
+  void GiveEventItem(CPlayer *pOne);
 
 private:
   void ReadBuddhaEventInfo();

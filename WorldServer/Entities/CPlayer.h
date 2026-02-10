@@ -461,6 +461,11 @@ struct __cppobj _STAT_DB_BASE
   unsigned int m_dwForceCum[24];
   unsigned int m_dwMakeCum[3];
   unsigned int m_dwSpecialCum;
+
+  _STAT_DB_BASE();
+  void Init();
+  static int GetStatIndex(unsigned __int8 byMasteryClass, unsigned __int8 byIndex);
+  static bool IsRangePerMastery(unsigned __int8 byMasteryClass, unsigned __int8 byIndex);
 };
 
 /* 1739 */
@@ -902,6 +907,9 @@ struct __cppobj _other_shape_all_zocl
   unsigned __int8 bySpecialPart;
   unsigned __int8 byFrameIndex;
   unsigned __int8 byUnitPartIndex[6];
+
+  _other_shape_all_zocl();
+  unsigned __int64 size();
 };
 
 /* 1802 */
@@ -922,6 +930,9 @@ struct __cppobj __unaligned __declspec(align(2)) _other_shape_part_zocl
   unsigned __int8 bySpecialPart;
   unsigned __int8 byFrameIndex;
   unsigned __int8 byUnitPartIndex[6];
+
+  _other_shape_part_zocl();
+  unsigned __int64 size();
 };
 
 /* 1310 */
@@ -1001,6 +1012,8 @@ public:
     int nAlter,
     bool bUpdate,
     bool bSend);
+  char Create();
+  char IntoMap(unsigned __int8 byMapInMode);
   bool OutOfMap(CMapData *pIntoMap, unsigned __int16 wLayerIndex, unsigned __int8 byMapOutType, float *pfStartPos);
   void SendMsg_GotoRecallResult(
     char byErrCode,
@@ -1194,11 +1207,14 @@ public:
     void SendMsg_StartContSF(_sf_continous *pCont);
     void SendMsg_AlterContEffectTime(unsigned __int8 byContType);
     void SendMsg_TLStatusPenalty(char byErrCode);
+    void SendMsg_TLStatusInfo(unsigned int dwFatigue, unsigned __int8 wStatus);
     void SendMsg_MonsterAggroData(CCharacter *pCharacter);
     int Emb_UpdateStat(unsigned int dwStatIndex, unsigned int dwNewData, unsigned int dwOldData);
     void SendMsg_StatInform(unsigned __int8 byStatIndex, unsigned int dwNewStat, unsigned __int8 byReason);
     CGameObject *GetTargetObj();
     __target *GetGroupTarget(unsigned __int8 byGroupType);
+  void SendMsg_SetGroupTargetObjectResult(char byRetCode, char byGroupType);
+  void SendMsg_SetGroupMapPoint(char byRetCode, char byGroupType, char byMapCode, float *pzTar, unsigned __int8 byRemain);
   void SendMsg_ReleaseGroupTargetObjectResult(unsigned __int8 byGroupType);
   void SendMsg_BuddyLogoffInform(unsigned int dwObjSerial);
   void SendMsg_BuddyLoginInform(unsigned int dwObjSerial, unsigned __int8 byMapIndex, unsigned __int8 byPosCode);
@@ -1222,6 +1238,38 @@ public:
   void SendMsg_RemainOreRate();
   void SendMsg_OreTransferCount();
   void SendMsg_LendItemTimeExpired(char byStorageCode, unsigned __int16 wSerial);
+  void pc_NewPosStart();
+  void pc_Revival(bool bUseableJade);
+  void pc_ExitWorldRequest();
+  void pc_LinkBoardRequest();
+  void NewViewCircleObject();
+  void CreateComplete();
+  void CheckGroupTargeting();
+  void CheckGroupMapPoint();
+  void SendMsg_StartNewPos(char byMapInMode);
+  void SendMsg_BaseDownloadResult();
+  void SendMsg_InvenDownloadResult();
+  void SendMsg_CumDownloadResult();
+  void SendMsg_ForceDownloadResult();
+  void SendMsg_QuestDownloadResult();
+  void SendMsg_QuestHistoryDownloadResult();
+  void SendMsg_SpecialDownloadResult();
+  void SendMsg_LinkBoardDownloadResult();
+  void SendMsg_MacroRequest();
+  void SendMsg_AMPInvenDownloadResult();
+  void SendMsg_ChangeClassCommand();
+  void SendMsg_RadarDelayTime(unsigned int dwDelay);
+  void SendMsg_Init_Action_Point();
+  void SendMsg_BuyCashItemMode();
+  void SendMsg_ExitWorldResult(unsigned __int8 byRetCode);
+  void SendMsg_Revival(char byRet, bool bEquialZone);
+  void SendMsg_OtherShapeAll(CPlayer *pDst);
+  void SendMsg_OtherShapePart(CPlayer *pDst);
+  void SendMsg_OtherShapePartEx_CashChange(
+    CPlayer *pDst,
+    CashChangeStateFlag ServerData,
+    CashChangeStateFlag ClinetData);
+  void SendMsg_OtherShapeError(CPlayer *pDst, unsigned __int8 byErrCode);
 
   bool m_bLoad;
   bool m_bOper;

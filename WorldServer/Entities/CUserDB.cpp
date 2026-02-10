@@ -912,9 +912,62 @@ __int64 _FORCEKEY::CovDBKey()
   return static_cast<__int64>(dwKey);
 }
 
+bool _LINKKEY::IsFilled()
+{
+  return wEffectCode != 0xFFFF;
+}
+
+void _LINKKEY::SetRelease()
+{
+  wEffectCode = 0xFFFF;
+}
+
+void _LINKKEY::LoadDBKey(unsigned __int16 pl_zKey)
+{
+  wEffectCode = pl_zKey;
+}
+
+unsigned __int16 _LINKKEY::GetCode()
+{
+  return static_cast<unsigned __int16>(wEffectCode >> 12);
+}
+
+unsigned __int16 _LINKKEY::GetIndex()
+{
+  return static_cast<unsigned __int16>(wEffectCode & 0x0FFF);
+}
+
+void _LINKKEY::SetData(unsigned __int16 wCode, unsigned __int16 wIndex)
+{
+  wEffectCode = static_cast<unsigned __int16>(wIndex | (wCode << 12));
+}
+
 unsigned __int16 _LINKKEY::CovDBKey()
 {
   return wEffectCode;
+}
+
+_LINK_DB_BASE::_LIST::_LIST()
+{
+  Init();
+}
+
+void _LINK_DB_BASE::_LIST::Init()
+{
+  Key.SetRelease();
+}
+
+_LINK_DB_BASE::_LINK_DB_BASE()
+{
+  Init();
+}
+
+void _LINK_DB_BASE::Init()
+{
+  for (int j = 0; j < 50; ++j)
+  {
+    m_LinkList[j].Init();
+  }
 }
 
 bool _ANIMUSKEY::IsFilled()

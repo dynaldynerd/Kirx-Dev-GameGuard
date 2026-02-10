@@ -77,6 +77,19 @@ public:
   bool TutorialProcessReport(int n, char *pBuf);
   bool AliveCharRequest(int n, char *pBuf);
   bool NotifyLocalTimeRequest(int n, char *pBuf);
+  bool NewPosStartRequest(unsigned int n, char *pBuf);
+  bool BaseDownloadRequest(unsigned int n, char *pBuf);
+  bool InvenDownloadRequest(unsigned int n, char *pBuf);
+  bool CumDownloadRequest(unsigned int n, char *pBuf);
+  bool ForceDownloadRequest(unsigned int n, char *pBuf);
+  bool QuestDownloadRequest(unsigned int n, char *pBuf);
+  bool SpecialDownloadRequest(unsigned int n, char *pBuf);
+  bool OtherShapeRequest(unsigned int n, char *pBuf);
+  bool Revival(unsigned int n, char *pBuf);
+  bool ExitWorldRequest(unsigned int n, char *pBuf);
+  bool LinkBoardDownloadRequest(unsigned int n, char *pBuf);
+  bool MacroDownLoadRequest(unsigned int n, char *pBuf);
+  bool AMP_DownloadRequest(unsigned int n, char *pBuf);
 
   bool ChatOperatorRequest(unsigned int n, char *pBuf);
   bool ChatCircleRequest(unsigned int n, char *pBuf);

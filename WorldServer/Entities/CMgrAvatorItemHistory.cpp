@@ -256,6 +256,425 @@ void CMgrAvatorItemHistory::have_auto_item(
   }
 }
 
+void CMgrAvatorItemHistory::GetNewFileName(unsigned int dwAvatorSerial, char *pszFileName)
+{
+  const unsigned int localDate = GetLocalDate();
+  char buffer[132]{};
+  sprintf(buffer, "%s\\%d", this->m_szStdPath, localDate);
+  CreateDirectoryA(buffer, nullptr);
+  this->m_dwLastLocalDate = localDate;
+
+  const unsigned int currentHour = GetCurrentHour();
+  char pathName[148]{};
+  sprintf(pathName, "%s\\%d\\%d", this->m_szStdPath, this->m_dwLastLocalDate, currentHour);
+  CreateDirectoryA(pathName, nullptr);
+  this->m_dwLastLocalHour = currentHour;
+
+  char hourStr[32]{};
+  if (currentHour <= 9)
+  {
+    sprintf(hourStr, "0%d", currentHour);
+  }
+  else
+  {
+    sprintf(hourStr, "%d", currentHour);
+  }
+
+  const unsigned int currentMin = GetCurrentMin();
+  char minStr[32]{};
+  if (currentMin <= 9)
+  {
+    sprintf(minStr, "0%d", currentMin);
+  }
+  else
+  {
+    sprintf(minStr, "%d", currentMin);
+  }
+
+  const unsigned int currentSec = GetCurrentSec();
+  char secStr[16]{};
+  if (currentSec <= 9)
+  {
+    sprintf(secStr, "0%d", currentSec);
+  }
+  else
+  {
+    sprintf(secStr, "%d", currentSec);
+  }
+
+  char timeStr[32]{};
+  sprintf(timeStr, "%s%s%s", hourStr, minStr, secStr);
+  sprintf(
+    pszFileName,
+    "%s\\%d\\%d\\%d_%s.his",
+    this->m_szStdPath,
+    this->m_dwLastLocalDate,
+    this->m_dwLastLocalHour,
+    dwAvatorSerial,
+    timeStr);
+}
+
+void CMgrAvatorItemHistory::have_item(
+  int n,
+  char *pszName,
+  _AVATOR_DATA *pLoadData,
+  _AVATOR_DATA *pBackupData,
+  char *pszID,
+  unsigned int dwIDSerial,
+  unsigned __int8 byDgr,
+  unsigned int dwIP,
+  unsigned int dwExpRate,
+  bool bStart,
+  char *pszFileName)
+{
+  sData[0] = 0;
+
+  _base_fld *class0 = CRecordData::GetRecord(&g_Main.m_tblClass, pLoadData->dbAvator.m_zClassHistory[0]);
+  _base_fld *class1 = CRecordData::GetRecord(&g_Main.m_tblClass, pLoadData->dbAvator.m_zClassHistory[1]);
+  _base_fld *class2 = CRecordData::GetRecord(&g_Main.m_tblClass, pLoadData->dbAvator.m_zClassHistory[2]);
+
+  if (bStart)
+  {
+    const char *classCode2 = class2 ? class2->m_strCode : "-1";
+    const char *classCode1 = class1 ? class1->m_strCode : "-1";
+    const char *classCode0 = class0 ? class0->m_strCode : "-1";
+
+    in_addr ipAddr{};
+    ipAddr.S_un.S_addr = dwIP;
+    const char *ipStr = inet_ntoa(ipAddr);
+
+    const unsigned __int8 bagNum = pLoadData->dbAvator.m_byBagNum;
+    const unsigned int dalantDiff = pLoadData->dbAvator.m_dwDalant - pBackupData->dbAvator.m_dwDalant;
+    const unsigned __int8 lastClassGrade = pLoadData->dbAvator.m_byLastClassGrade;
+    const unsigned __int8 sexCode = pLoadData->dbAvator.m_byRaceSexCode & 1;
+    const unsigned __int8 raceSexCode = pLoadData->dbAvator.m_byRaceSexCode;
+
+    sprintf(
+      sBuf,
+      "NAME: %s [%s %s]\r\n"
+      "WORLD: %s\r\n"
+      "SR: %d\r\n"
+      "ID: %s (%d)\r\n"
+      "DGR: %d\r\n"
+      "LV: %d\r\n"
+      "XP: %.0f (%d)\r\n"
+      "RACE: %d\r\n"
+      "SEX: %d\r\n"
+      "CurClass:%s\r\n"
+      "OldClass 0:%s, 1:%s, 2:%s\r\n"
+      "LastClassGrade: %d\r\n"
+      "InitClassCnt: %d\r\n"
+      "$D: %u  ( %u push )\r\n"
+      "$G: %u\r\n"
+      "PvP: %.0f\r\n"
+      "CB: %.0f\r\n"
+      "BAG: %d\r\n"
+      "IP: %s\r\n"
+      "TIME: %d\r\n"
+      "\r\n",
+      pszName,
+      this->m_szCurDate,
+      this->m_szCurTime,
+      g_Main.m_szWorldName,
+      pLoadData->dbAvator.m_dwRecordNum,
+      pszID,
+      dwIDSerial,
+      byDgr,
+      pLoadData->dbAvator.m_byLevel,
+      static_cast<double>(pLoadData->dbAvator.m_dExp),
+      dwExpRate,
+      raceSexCode / 2,
+      sexCode,
+      pLoadData->dbAvator.m_szClassCode,
+      classCode0,
+      classCode1,
+      classCode2,
+      lastClassGrade,
+      pLoadData->dbAvator.m_dwClassInitCnt,
+      pLoadData->dbAvator.m_dwDalant,
+      dalantDiff,
+      pLoadData->dbAvator.m_dwGold,
+      static_cast<double>(pLoadData->dbAvator.m_dPvPPoint),
+      static_cast<double>(pLoadData->dbAvator.m_dPvPCashBag),
+      bagNum,
+      ipStr,
+      pLoadData->dbAvator.m_dwTotalPlayMin);
+    strcat_0(sData, sBuf);
+  }
+  else
+  {
+    strcat_0(sData, "\r\n\t============\r\n\r\n");
+    sprintf(
+      sBuf,
+      "LV: %d\r\n"
+      "XP: %.0f (%d)\r\n"
+      "$D: %u\r\n"
+      "$G: %u\r\n"
+      "PvP: %.0f\r\n"
+      "CB: %.0f\r\n"
+      "TIME: %d\r\n"
+      "\r\n",
+      pLoadData->dbAvator.m_byLevel,
+      static_cast<double>(pLoadData->dbAvator.m_dExp),
+      dwExpRate,
+      pLoadData->dbAvator.m_dwDalant,
+      pLoadData->dbAvator.m_dwGold,
+      static_cast<double>(pLoadData->dbAvator.m_dPvPPoint),
+      static_cast<double>(pLoadData->dbAvator.m_dPvPCashBag),
+      pLoadData->dbAvator.m_dwTotalPlayMin);
+    strcat_0(sData, sBuf);
+  }
+
+  sprintf(sBuf, "EQUIP\r\n");
+  strcat_0(sData, sBuf);
+  for (int tableCode = 0; tableCode < 8; ++tableCode)
+  {
+    _EQUIPKEY *equipKey = &pLoadData->dbAvator.m_EquipKey[tableCode];
+    if (equipKey->IsFilled())
+    {
+      _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[tableCode], equipKey->zItemIndex);
+      const char *upgInfo = DisplayItemUpgInfo(tableCode, pLoadData->dbAvator.m_dwFixEquipLv[tableCode]);
+      sprintf(
+        sBuf,
+        "\t%s_@%s[%I64u]\r\n",
+        record->m_strCode,
+        upgInfo,
+        pLoadData->dbAvator.m_lnUID[tableCode]);
+      strcat_0(sData, sBuf);
+    }
+  }
+
+  sprintf(sBuf, "EMBELL\r\n");
+  strcat_0(sData, sBuf);
+  for (int tableCode = 0; tableCode < 7; ++tableCode)
+  {
+    _EQUIP_DB_BASE::_EMBELLISH_LIST *embellish = &pLoadData->dbEquip.m_EmbellishList[tableCode];
+    if (embellish->Key.IsFilled())
+    {
+      _base_fld *record =
+        CRecordData::GetRecord(&g_Main.m_tblItemData[embellish->Key.byTableCode], embellish->Key.wItemIndex);
+      sprintf(sBuf, "\t%s[%I64u]\r\n", record->m_strCode, embellish->lnUID);
+      strcat_0(sData, sBuf);
+    }
+  }
+
+  sprintf(sBuf, "INVEN\r\n");
+  strcat_0(sData, sBuf);
+  for (int slot = 0; slot < 20 * pLoadData->dbAvator.m_byBagNum; ++slot)
+  {
+    _INVEN_DB_BASE::_LIST *listEntry = &pLoadData->dbInven.m_List[slot];
+    if (listEntry->Key.IsFilled())
+    {
+      _base_fld *record =
+        CRecordData::GetRecord(&g_Main.m_tblItemData[listEntry->Key.byTableCode], listEntry->Key.wItemIndex);
+      const char *upgInfo = DisplayItemUpgInfo(listEntry->Key.byTableCode, listEntry->dwUpt);
+      if (bStart)
+      {
+        if (pBackupData->dbInven.m_List[slot].Key.IsFilled())
+        {
+          sprintf(
+            sBuf,
+            "\t%s_%u_@%s[%I64u]\r\n",
+            record->m_strCode,
+            static_cast<unsigned int>(listEntry->dwDur),
+            upgInfo,
+            listEntry->lnUID);
+        }
+        else
+        {
+          sprintf(
+            sBuf,
+            "\t%s_%u_@%s[%I64u] \t#push\r\n",
+            record->m_strCode,
+            static_cast<unsigned int>(listEntry->dwDur),
+            upgInfo,
+            listEntry->lnUID);
+        }
+      }
+      else
+      {
+        sprintf(
+          sBuf,
+          "\t%s_%u_@%s[%I64u]\r\n",
+          record->m_strCode,
+          static_cast<unsigned int>(listEntry->dwDur),
+          upgInfo,
+          listEntry->lnUID);
+      }
+      strcat_0(sData, sBuf);
+    }
+  }
+
+  sprintf(sBuf, "FORCE\r\n");
+  strcat_0(sData, sBuf);
+  for (int slot = 0; slot < 88; ++slot)
+  {
+    _FORCE_DB_BASE::_LIST *forceEntry = &pLoadData->dbForce.m_List[slot];
+    if (forceEntry->Key.IsFilled())
+    {
+      const unsigned __int8 index = forceEntry->Key.GetIndex();
+      _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[15], index);
+      const unsigned int stat = forceEntry->Key.GetStat();
+      sprintf(sBuf, "\t%s_%u[%I64u]\r\n", record->m_strCode, stat, forceEntry->lnUID);
+      strcat_0(sData, sBuf);
+    }
+  }
+
+  sprintf(sBuf, "RES\r\n");
+  strcat_0(sData, sBuf);
+  for (int slot = 0; slot < 20; ++slot)
+  {
+    _CUTTING_DB_BASE::_LIST *listEntry = &pLoadData->dbCutting.m_List[slot];
+    if (listEntry->Key.IsFilled())
+    {
+      _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[18], listEntry->Key.wItemIndex);
+      if (record)
+      {
+        sprintf(sBuf, "\t%s_%u\r\n", record->m_strCode, listEntry->dwDur);
+        strcat_0(sData, sBuf);
+      }
+      else
+      {
+        CLogFile::Write(
+          &g_Main.m_logSystemError,
+          "CMgrAvatorItemHistory::have_item() : _CUTTING_DB_BASE::_LIST* pList->Key.wItemIndex(%u) i(%d) Serial(%u)",
+          listEntry->Key.wItemIndex,
+          slot,
+          dwIDSerial);
+      }
+    }
+  }
+
+  const unsigned __int8 raceCode = static_cast<unsigned __int8>(pLoadData->dbAvator.m_byRaceSexCode >> 1);
+  if (raceCode)
+  {
+    if (raceCode == 1)
+    {
+      sprintf(sBuf, "ANIMUS\r\n");
+      strcat_0(sData, sBuf);
+      for (int slot = 0; slot < 4; ++slot)
+      {
+        _ANIMUS_DB_BASE::_LIST *listEntry = &pLoadData->dbAnimus.m_List[slot];
+        if (listEntry->Key.IsFilled())
+        {
+          _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[24], listEntry->Key.byItemIndex);
+          sprintf(
+            sBuf,
+            "\t%s_%I64u[%I64u]\r\n",
+            record->m_strCode,
+            listEntry->dwExp,
+            listEntry->lnUID);
+          strcat_0(sData, sBuf);
+        }
+      }
+    }
+  }
+  else
+  {
+    sprintf(sBuf, "UNIT\r\n");
+    strcat_0(sData, sBuf);
+    for (int slot = 0; slot < 4; ++slot)
+    {
+      _UNIT_DB_BASE::_LIST *unit = &pLoadData->dbUnit.m_List[slot];
+      if (unit->byFrame != 0xFF)
+      {
+        sprintf(
+          sBuf,
+          "\t%d>fr:%d %d/%d/%d/%d/%d/%d\r\n",
+          slot,
+          unit->byFrame,
+          unit->byPart[0],
+          unit->byPart[1],
+          unit->byPart[2],
+          unit->byPart[3],
+          unit->byPart[4],
+          unit->byPart[5]);
+        strcat_0(sData, sBuf);
+      }
+    }
+  }
+
+  if (bStart)
+  {
+    const long double dalantDiff = pLoadData->dbTrunk.dDalant - pBackupData->dbTrunk.dDalant;
+    const long double goldDiff = pLoadData->dbTrunk.dGold - pBackupData->dbTrunk.dGold;
+    sprintf(
+      sBuf,
+      "TRUNK (slot:%d, ^D:%.0f, ^G:%.0f) ( ^D:%.0f, ^G:%.0f push )\r\n",
+      pLoadData->dbTrunk.bySlotNum,
+      static_cast<double>(pLoadData->dbTrunk.dDalant),
+      static_cast<double>(pLoadData->dbTrunk.dGold),
+      static_cast<double>(dalantDiff),
+      static_cast<double>(goldDiff));
+  }
+  else
+  {
+    sprintf(
+      sBuf,
+      "TRUNK (slot:%d, ^D:%.0f, ^G:%.0f)\r\n",
+      pLoadData->dbTrunk.bySlotNum,
+      static_cast<double>(pLoadData->dbTrunk.dDalant),
+      static_cast<double>(pLoadData->dbTrunk.dGold));
+  }
+  strcat_0(sData, sBuf);
+
+  for (int slot = 0; slot < pLoadData->dbTrunk.bySlotNum; ++slot)
+  {
+    _TRUNK_DB_BASE::_LIST *listEntry = &pLoadData->dbTrunk.m_List[slot];
+    if (listEntry->Key.IsFilled())
+    {
+      _base_fld *record =
+        CRecordData::GetRecord(&g_Main.m_tblItemData[listEntry->Key.byTableCode], listEntry->Key.wItemIndex);
+      const char *upgInfo = DisplayItemUpgInfo(listEntry->Key.byTableCode, listEntry->dwUpt);
+      const unsigned __int8 raceIndex = listEntry->byRace;
+      if (bStart)
+      {
+        if (pBackupData->dbTrunk.m_List[slot].Key.IsFilled())
+        {
+          sprintf(
+            sBuf,
+            "\t%s_%u_@%s[%I64u] %s\r\n",
+            record->m_strCode,
+            static_cast<unsigned int>(listEntry->dwDur),
+            upgInfo,
+            listEntry->lnUID,
+            pRace_0[raceIndex]);
+        }
+        else
+        {
+          sprintf(
+            sBuf,
+            "\t%s_%u_@%s[%I64u] %s\t#push\r\n",
+            record->m_strCode,
+            static_cast<unsigned int>(listEntry->dwDur),
+            upgInfo,
+            listEntry->lnUID,
+            pRace_0[raceIndex]);
+        }
+      }
+      else
+      {
+        sprintf(
+          sBuf,
+          "\t%s_%u_@%s[%I64u] %s\r\n",
+          record->m_strCode,
+          static_cast<unsigned int>(listEntry->dwDur),
+          upgInfo,
+          listEntry->lnUID,
+          pRace_0[raceIndex]);
+      }
+      strcat_0(sData, sBuf);
+    }
+  }
+
+  if (bStart)
+  {
+    strcat_0(sData, "\r\n\t============\r\n\r\n");
+  }
+
+  WriteFile(pszFileName, sData);
+}
+
 void CMgrAvatorItemHistory::have_item_close(
   int n,
   char *pszName,

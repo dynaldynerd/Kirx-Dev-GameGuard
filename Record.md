@@ -55,6 +55,8 @@ During the implementation of `CMapOperation::Init` and its sub-flows, the follow
 | `CPlayer.cpp` | `CPlayer::SetStaticMember` | `g_Main.m_tblEffectData` | `_base_fld *` | Reads `*reinterpret_cast<unsigned int *>(&Record[1].m_strCode[4])` as mastery index; verify field mapping. |
 | `CashItemRemoteStore.cpp` | `CashItemRemoteStore::__CheckGoods` | `CashItemRemoteStore::_kRecGoods` | `_base_fld *` | Uses `reinterpret_cast<char *>(&Record[1])` as item code; writes price to `Record[1].m_strCode[60]`; logs `Record[3].m_dwIndex` and `Record[3].m_strCode[0/4]`. |
 | `WorldServerUtil.cpp` | `IsCashItem` | `s_ptblItemData[byTblCode]` | `_base_fld *` | Uses `Record[6].m_strCode[48]`, `Record[9].m_strCode[12/36]`, `Record[5].m_strCode[48/44/60/56]`, `Record[8].m_strCode[8]`, `Record[7].m_strCode[44/32/8]`, `Record[6].m_strCode[0]`. |
+| `CPlayer.cpp` | `CPlayer::CreateComplete` | `CQuestMgr::s_tblQuest` | `_base_fld *` | Uses `Record[13].m_strCode[60]` and `Record[1].m_strCode[24]` when deciding reward handling after quest completion. |
+| `CPlayer.cpp` | `CPlayer::CreateComplete` | `g_Main.m_tblItemData[25]` | `_base_fld *` | Uses `Record[3].m_strCode[raceSexCode + 52]` to validate guard tower item availability. |
 > [!NOTE]
 > Rule 9: `CRecordData::GetRecord` usually returns `_base_fld`. Re-casters should be careful with structure packing and offsets.
 | `WorldServerUtil.cpp` | `InitMasteryFormula` | `pSkillData` / `pForceData` | `_base_fld *` | Uses `Record[1].m_strCode[4]` and `Record[4].m_strCode[60]` to fill mastery-level tables; verify offsets. |

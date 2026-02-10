@@ -1219,6 +1219,12 @@ struct _LINKKEY
 {
   unsigned __int16 wEffectCode;
 
+  bool IsFilled();
+  void SetRelease();
+  void LoadDBKey(unsigned __int16 pl_zKey);
+  unsigned __int16 GetCode();
+  unsigned __int16 GetIndex();
+  void SetData(unsigned __int16 wCode, unsigned __int16 wIndex);
   unsigned __int16 CovDBKey();
 };
 
@@ -1228,6 +1234,9 @@ struct __cppobj __unaligned __declspec(align(1)) _LINK_DB_BASE
   struct _LIST
   {
     _LINKKEY Key;
+
+    _LIST();
+    void Init();
   };
 
   _LIST m_LinkList[50];
@@ -1238,6 +1247,9 @@ struct __cppobj __unaligned __declspec(align(1)) _LINK_DB_BASE
   unsigned int m_dwAnimus[2];
   unsigned int m_dwInven;
   unsigned int m_dwInvenBag[5];
+
+  _LINK_DB_BASE();
+  void Init();
 };
 
 /* 1545 */

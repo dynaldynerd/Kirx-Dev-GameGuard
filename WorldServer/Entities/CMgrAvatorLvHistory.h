@@ -34,6 +34,17 @@ public:
   };
 
   void alter_pvp(int n, long double dPvpVariation, CPartyPlayer *pParty, char *pszFileName);
+  void GetNewFileName(unsigned int dwAvatorSerial, char *pszFileName);
+  void start_mastery(
+    int n,
+    char *pszAvatorName,
+    unsigned int dwLv,
+    long double dExp,
+    unsigned int dwExpRate,
+    int nGrade,
+    int *pnMaxPoint,
+    _MASTERY_PARAM *pData,
+    char *pszFileName);
   void update_mastery(
     int n,
     unsigned __int8 byUserDgr,

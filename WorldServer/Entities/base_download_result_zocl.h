@@ -1,0 +1,59 @@
+#pragma once
+
+#include "IdaCompat.h"
+
+#pragma pack(push, 1)
+struct __unaligned __declspec(align(2)) _base_download_result_zocl
+{
+  struct _list_equip
+  {
+    char sTableCode;
+    __unaligned __declspec(align(1)) unsigned __int16 wItemIndex;
+    __unaligned __declspec(align(1)) unsigned int dwUptInfo;
+    unsigned __int8 byCsMethod;
+    unsigned int dwT;
+  };
+
+  struct __unaligned __declspec(align(1)) _list_embellish
+  {
+    char sTableCode;
+    unsigned __int16 wItemIndex;
+    unsigned __int16 wNum;
+    char sClientIndex;
+    unsigned __int8 byCsMethod;
+    unsigned int dwT;
+  };
+
+  unsigned __int8 byRetCode;
+  unsigned __int16 wZoneIndex;
+  unsigned int dwExpRate;
+  unsigned __int16 wClassHistory[3];
+  unsigned __int16 wHP;
+  unsigned __int16 wSP;
+  unsigned __int16 wFP;
+  long double dPvpPoint;
+  long double dPvpCashBag;
+  long double dPvpTempCash;
+  unsigned int dwPvpRank;
+  unsigned __int8 byPvpClass;
+  unsigned __int8 byPlusKey;
+  unsigned __int16 wXorKey;
+  unsigned __int16 wMaxHP;
+  unsigned __int16 wMaxSP;
+  unsigned __int16 wMaxFP;
+  unsigned __int16 wMapIndex;
+  float fPos[3];
+  _list_equip EquipList[8];
+  _list_embellish EmbellishList[7];
+  unsigned __int8 byHolyMasterState;
+  unsigned int dwGuildSerial;
+  unsigned __int8 byGuildGrade;
+  unsigned __int8 byEffectValue[2];
+  unsigned __int8 byUseTrunkSlotNum;
+  unsigned __int16 wMaxDP;
+  unsigned __int16 wDP;
+  unsigned __int8 byHonorGuildRank;
+
+  unsigned __int64 size();
+};
+#pragma pack(pop)

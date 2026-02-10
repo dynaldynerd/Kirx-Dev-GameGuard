@@ -42,6 +42,19 @@ public:
   void WriteFile(const char *pszFileName, const char *pszLog);
   void consume_del_item(int n, _STORAGE_LIST::_db_con *pItem, const char *pszFileName);
   void reward_add_item(int n, char *pszClause, _STORAGE_LIST::_db_con *pItem, char *pszFileName);
+  void GetNewFileName(unsigned int dwAvatorSerial, char *pszFileName);
+  void have_item(
+    int n,
+    char *pszName,
+    _AVATOR_DATA *pLoadData,
+    _AVATOR_DATA *pBackupData,
+    char *pszID,
+    unsigned int dwIDSerial,
+    unsigned __int8 byDgr,
+    unsigned int dwIP,
+    unsigned int dwExpRate,
+    bool bStart,
+    char *pszFileName);
   void personal_amine_itemlog(
     const char *szLogDesc,
     unsigned __int8 byPos,

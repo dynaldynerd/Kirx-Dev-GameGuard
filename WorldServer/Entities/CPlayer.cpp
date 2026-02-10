@@ -5,6 +5,8 @@
 #include "CAnimus.h"
 #include "CMonster.h"
 #include "CMapData.h"
+#include "CObjectList.h"
+#include "pnt_rect.h"
 #include "CLevel.h"
 #include "CTransportShip.h"
 #include "CUserDB.h"
@@ -23,6 +25,10 @@
 #include "CPartyPlayer.h"
 #include "PatriarchElectProcessor.h"
 #include "CHonorGuild.h"
+#include "CGoldenBoxItemMgr.h"
+#include "CRaceBuffManager.h"
+#include "CRaceBossWinRate.h"
+#include "CashItemRemoteStore.h"
 #include "CLogFile.h"
 #include "CTSingleton.h"
 #include "LendItemMng.h"
@@ -42,9 +48,11 @@
 #include "CCouponMgr.h"
 #include "EQUIP_MASTERY_LIM.h"
 #include "CDarkHoleChannel.h"
+#include "CDarkHoleDungeonQuest.h"
 #include "CGuardTower.h"
 #include "CTrap.h"
 #include "CSetItemEffect.h"
+#include "DqsDbStructs.h"
 #include "exit_alter_param.h"
 #include "alter_cont_effect_time_zocl.h"
 #include "notify_not_use_premium_cashitem_zocl.h"
@@ -59,6 +67,17 @@
 #include "chat_guild_failure_zocl.h"
 #include "chat_multi_far_failure_zocl.h"
 #include "chat_multi_far_trans_zocl.h"
+#include "base_download_result_zocl.h"
+#include "inven_download_result_zocl.h"
+#include "cum_download_result_zocl.h"
+#include "force_download_result_zocl.h"
+#include "quest_download_result_zocl.h"
+#include "quest_history_download_result_zocl.h"
+#include "unit_download_result_zocl.h"
+#include "animus_download_result_zocl.h"
+#include "personal_automine_download_zocl.h"
+#include "player_macro_result_zocl.h"
+#include "Init_action_point_zocl.h"
 #include "w_name.h"
 #include "CChatStealSystem.h"
 #include "CObjectList.h"
@@ -6551,6 +6570,44 @@ void CPlayer::SendMsg_TLStatusPenalty(char byErrCode)
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, szMsg, 1u);
 }
 
+void CPlayer::SendMsg_TLStatusInfo(unsigned int /*dwFatigue*/, unsigned __int8 /*wStatus*/)
+{
+  #pragma pack(push, 1)
+  struct TLStatusInfoMsg
+  {
+    unsigned int dwFatigue;
+    unsigned __int16 byTLStatus;
+    unsigned int dwRemainTime;
+    unsigned int dwPlayValue;
+  };
+  #pragma pack(pop)
+
+  TLStatusInfoMsg msg{};
+  msg.dwFatigue = this->m_pUserDB->m_AvatorData.dbTimeLimitInfo.dwFatigue;
+  msg.byTLStatus = this->m_pUserDB->m_AvatorData.dbTimeLimitInfo.byTLStatus;
+
+  const unsigned int playDegree = TimeLimitMgr::GetPlayFDegree(g_Main.m_pTimeLimitMgr);
+  msg.dwPlayValue = (playDegree / 1000) * msg.dwFatigue;
+
+  const unsigned __int16 endPlayTime = TimeLimitMgr::GetEndPlayTime(g_Main.m_pTimeLimitMgr);
+  if (msg.dwPlayValue < 60u * endPlayTime)
+  {
+    msg.dwRemainTime = 60u * endPlayTime - msg.dwPlayValue;
+  }
+  else
+  {
+    msg.dwRemainTime = 0;
+  }
+
+  unsigned __int8 pbyType[2] = {13, static_cast<unsigned __int8>(-113)};
+  CNetProcess::LoadSendMsg(
+    g_Network.m_pProcess[0],
+    this->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    0xEu);
+}
+
 CGameObject *CPlayer::GetTargetObj()
 {
   if (!m_TargetObject.pObject)
@@ -6720,6 +6777,2245 @@ void CPlayer::SendData_ChatTrans(
   unsigned __int8 pbyType[2] = {2, 10};
   const unsigned __int16 nLen = msg.size();
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), nLen);
+}
+
+_STAT_DB_BASE::_STAT_DB_BASE()
+{
+  Init();
+}
+
+void _STAT_DB_BASE::Init()
+{
+  memset_0(this, 0, sizeof(_STAT_DB_BASE));
+}
+
+int _STAT_DB_BASE::GetStatIndex(unsigned __int8 byMasteryClass, unsigned __int8 byIndex)
+{
+  int statIndex = -1;
+  switch (byMasteryClass)
+  {
+    case 0u:
+      statIndex = static_cast<int>(byIndex);
+      break;
+    case 1u:
+      statIndex = 2;
+      break;
+    case 2u:
+      statIndex = 3;
+      break;
+    case 3u:
+      statIndex = static_cast<int>(byIndex) + 4;
+      break;
+    case 4u:
+      statIndex = static_cast<int>(byIndex) + 52;
+      break;
+    case 5u:
+      statIndex = static_cast<int>(byIndex) + 76;
+      break;
+    case 6u:
+      statIndex = 79;
+      break;
+    default:
+      break;
+  }
+  return statIndex;
+}
+
+bool _STAT_DB_BASE::IsRangePerMastery(unsigned __int8 byMasteryClass, unsigned __int8 byIndex)
+{
+  switch (byMasteryClass)
+  {
+    case 0u:
+      return byIndex < 2u;
+    case 1u:
+      return byIndex == 0;
+    case 2u:
+      return byIndex == 0;
+    case 3u:
+      return byIndex < 0x30u;
+    case 4u:
+      return byIndex < 0x18u;
+    case 5u:
+      return byIndex < 3u;
+    case 6u:
+      return byIndex == 0;
+    default:
+      break;
+  }
+  return false;
+}
+
+_other_shape_all_zocl::_other_shape_all_zocl()
+{
+  bySpecialPart = static_cast<unsigned __int8>(-1);
+}
+
+unsigned __int64 _other_shape_all_zocl::size()
+{
+  return bySpecialPart == 0xFFu ? 62u : 68u;
+}
+
+_other_shape_part_zocl::_other_shape_part_zocl()
+{
+  bySpecialPart = static_cast<unsigned __int8>(-1);
+}
+
+unsigned __int64 _other_shape_part_zocl::size()
+{
+  return bySpecialPart == 0xFFu ? 36u : 42u;
+}
+
+unsigned __int64 _base_download_result_zocl::size()
+{
+  return byRetCode ? 1u : 258u;
+}
+
+_inven_download_result_zocl::_inven_download_result_zocl()
+{
+  bySlotNum = 0;
+}
+
+unsigned __int64 _inven_download_result_zocl::size()
+{
+  if (byRetCode)
+  {
+    return 1u;
+  }
+  if (bySlotNum > 0x64u)
+  {
+    bySlotNum = 0;
+  }
+  return static_cast<unsigned __int64>(2103 - 21LL * (100 - bySlotNum));
+}
+
+_force_download_result_zocl::_force_download_result_zocl()
+{
+  bySlotNum = 0;
+}
+
+unsigned __int64 _force_download_result_zocl::size()
+{
+  if (byRetCode)
+  {
+    return 1u;
+  }
+  if (bySlotNum > 0x58u)
+  {
+    bySlotNum = 0;
+  }
+  return static_cast<unsigned __int64>(970 - 11LL * (88 - bySlotNum));
+}
+
+_cum_download_result_zocl::_cum_download_result_zocl()
+{
+  Stat.Init();
+  byLeftCuttingResNum = 0;
+}
+
+unsigned __int64 _cum_download_result_zocl::size()
+{
+  if (byRetCode)
+  {
+    return 1u;
+  }
+  if (byLeftCuttingResNum > 0x14u)
+  {
+    byLeftCuttingResNum = 0;
+  }
+  return static_cast<unsigned __int64>(362 - 2LL * (20 - byLeftCuttingResNum));
+}
+
+_quest_download_result_zocl::__list::__list()
+{
+  cont.Init();
+}
+
+_quest_download_result_zocl::_quest_download_result_zocl()
+{
+  bySlotNum = 0;
+}
+
+unsigned __int64 _quest_download_result_zocl::size()
+{
+  if (byRetCode)
+  {
+    return 1u;
+  }
+  if (bySlotNum > 0x1Eu)
+  {
+    bySlotNum = 0;
+  }
+  return static_cast<unsigned __int64>(422 - 14LL * (30 - bySlotNum));
+}
+
+_quest_history_download_result_zocl::_quest_history_download_result_zocl()
+{
+  bySlotNum = 0;
+}
+
+unsigned __int64 _quest_history_download_result_zocl::size()
+{
+  if (bySlotNum > 0x46u)
+  {
+    bySlotNum = 0;
+  }
+  return static_cast<unsigned __int64>(631 - 9LL * (70 - bySlotNum));
+}
+
+_unit_download_result_zocl::_list::_list()
+{
+  UnitData.Init(0xFFu);
+}
+
+_unit_download_result_zocl::_unit_download_result_zocl()
+{
+  byUnitNum = 0;
+}
+
+unsigned __int64 _unit_download_result_zocl::size()
+{
+  if (byUnitNum > 4u)
+  {
+    byUnitNum = 0;
+  }
+  return static_cast<unsigned __int64>(253 - 63LL * (4 - byUnitNum));
+}
+
+_animus_download_result_zocl::_animus_download_result_zocl()
+{
+  byAnimusNum = 0;
+}
+
+unsigned __int64 _animus_download_result_zocl::size()
+{
+  if (byAnimusNum > 4u)
+  {
+    byAnimusNum = 0;
+  }
+  return static_cast<unsigned __int64>(73 - 18LL * (4 - byAnimusNum));
+}
+
+unsigned __int64 _personal_automine_download_zocl::size()
+{
+  return static_cast<unsigned __int64>(202 - 5LL * (40 - byCnt));
+}
+
+_Init_action_point_zocl::_Init_action_point_zocl()
+{
+  memset_0(this, 0, sizeof(_Init_action_point_zocl));
+}
+
+void CPlayer::SendMsg_ChangeClassCommand()
+{
+  char szMsg[32];
+  *reinterpret_cast<unsigned __int16 *>(szMsg) = this->m_Param.m_pClassData->m_dwIndex;
+
+  unsigned __int8 pbyType[2] = {11, 5};
+  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], this->m_ObjID.m_wIndex, pbyType, szMsg, 2u);
+}
+
+void CPlayer::SendMsg_RadarDelayTime(unsigned int dwDelay)
+{
+  char szMsg[32];
+  *reinterpret_cast<unsigned int *>(szMsg) = dwDelay;
+
+  unsigned __int8 pbyType[2] = {7, 53};
+  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], this->m_ObjID.m_wIndex, pbyType, szMsg, 4u);
+}
+
+void CPlayer::SendMsg_StartNewPos(char byMapInMode)
+{
+  char szMsg[32];
+  szMsg[0] = byMapInMode;
+
+  unsigned __int8 pbyType[2] = {3, 2};
+  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], this->m_ObjID.m_wIndex, pbyType, szMsg, 1u);
+}
+
+void CPlayer::SendMsg_ExitWorldResult(unsigned __int8 byRetCode)
+{
+  (void)byRetCode;
+  char szMsg[32];
+
+  unsigned __int8 pbyType[2] = {3, 42};
+  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], this->m_ObjID.m_wIndex, pbyType, szMsg, 1u);
+}
+
+void CPlayer::SendMsg_Revival(char byRet, bool bEquialZone)
+{
+  #pragma pack(push, 1)
+  struct RevivalMsg
+  {
+    char byRet;
+    __int16 wMap;
+    __int16 wPos[3];
+    char byLevel;
+    __int16 wHP;
+    __int16 wFP;
+    __int16 wSP;
+    bool bNotEqualZone;
+  };
+  #pragma pack(pop)
+
+  RevivalMsg msg{};
+  msg.byRet = byRet;
+  msg.byLevel = CPlayerDB::GetLevel(&this->m_Param);
+  msg.wFP = CPlayerDB::GetFP(&this->m_Param);
+  msg.wHP = CPlayerDB::GetHP(&this->m_Param);
+  msg.wSP = CPlayerDB::GetSP(&this->m_Param);
+  msg.wMap = CMapOperation::GetMap(&g_MapOper, this->m_pCurMap);
+  FloatToShort(this->m_fCurPos, msg.wPos, 3);
+  msg.bNotEqualZone = !bEquialZone;
+
+  unsigned __int8 pbyType[2] = {3, 38};
+  CNetProcess::LoadSendMsg(
+    g_Network.m_pProcess[0],
+    this->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    0x11u);
+}
+
+void CPlayer::SendMsg_OtherShapeError(CPlayer *pDst, unsigned __int8 byErrCode)
+{
+  #pragma pack(push, 1)
+  struct OtherShapeErrorMsg
+  {
+    unsigned __int16 wIndex;
+    unsigned __int8 byErrCode;
+  };
+  #pragma pack(pop)
+
+  OtherShapeErrorMsg msg{};
+  msg.wIndex = this->m_ObjID.m_wIndex;
+  msg.byErrCode = byErrCode;
+
+  unsigned __int8 pbyType[2] = {3, 33};
+  CNetProcess::LoadSendMsg(
+    g_Network.m_pProcess[0],
+    pDst->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    3u);
+}
+
+void CPlayer::SendMsg_OtherShapeAll(CPlayer *pDst)
+{
+  if (!this->m_bObserver || pDst->m_byUserDgr)
+  {
+    if (this->m_bLive)
+    {
+      unsigned __int8 pbyType[2] = {3, 31};
+      const unsigned __int16 nLen = static_cast<unsigned __int16>(this->m_bufShapeAll.size());
+      CNetProcess::LoadSendMsg(
+        g_Network.m_pProcess[0],
+        pDst->m_ObjID.m_wIndex,
+        pbyType,
+        reinterpret_cast<char *>(&this->m_bufShapeAll),
+        nLen);
+    }
+    else
+    {
+      SendMsg_OtherShapeError(pDst, 0);
+    }
+  }
+}
+
+void CPlayer::SendMsg_OtherShapePart(CPlayer *pDst)
+{
+  if (!this->m_bObserver || pDst->m_byUserDgr)
+  {
+    if (this->m_bLive)
+    {
+      unsigned __int8 pbyType[2] = {3, 32};
+      const unsigned __int16 nLen = static_cast<unsigned __int16>(this->m_bufSpapePart.size());
+      CNetProcess::LoadSendMsg(
+        g_Network.m_pProcess[0],
+        pDst->m_ObjID.m_wIndex,
+        pbyType,
+        reinterpret_cast<char *>(&this->m_bufSpapePart),
+        nLen);
+    }
+    else
+    {
+      SendMsg_OtherShapeError(pDst, 0);
+    }
+  }
+}
+
+void CPlayer::SendMsg_OtherShapePartEx_CashChange(
+  CPlayer *pDst,
+  CashChangeStateFlag ServerData,
+  CashChangeStateFlag ClinetData)
+{
+  if ((!this->m_bObserver || pDst->m_byUserDgr)
+      && (ServerData.m_byStateFlag & 7) != (ClinetData.m_byStateFlag & 7))
+  {
+    #pragma pack(push, 1)
+    struct OtherShapeCashChangeMsg
+    {
+      unsigned __int16 wIndex;
+      unsigned int dwSerial;
+      char wszName[17];
+    };
+    #pragma pack(pop)
+
+    OtherShapeCashChangeMsg msg{};
+    msg.wIndex = this->m_ObjID.m_wIndex;
+    msg.dwSerial = this->m_dwObjSerial;
+    const char *charName = CPlayerDB::GetCharNameW(&this->m_Param);
+    strcpy_0(msg.wszName, charName);
+
+    unsigned __int8 pbyType[2] = {3, 61};
+    CNetProcess::LoadSendMsg(
+      g_Network.m_pProcess[0],
+      pDst->m_ObjID.m_wIndex,
+      pbyType,
+      reinterpret_cast<char *>(&msg),
+      0x17u);
+  }
+}
+
+void CPlayer::SendMsg_Init_Action_Point()
+{
+  _Init_action_point_zocl msg{};
+  for (int j = 0; j < 3; ++j)
+  {
+    msg.dwActionPoint[j] = this->m_pUserDB->m_AvatorData.dbSupplement.dwActionPoint[j];
+  }
+
+  unsigned __int8 pbyType[2] = {11, 37};
+  CNetProcess::LoadSendMsg(
+    g_Network.m_pProcess[0],
+    this->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    0xCu);
+}
+
+void CPlayer::SendMsg_BuyCashItemMode()
+{
+  char szMsg[32];
+  CashItemRemoteStore *store = CashItemRemoteStore::Instance();
+  szMsg[0] = !CashItemRemoteStore::IsBuyCashItemByGold(store);
+
+  unsigned __int8 pbyType[2] = {59, 17};
+  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], this->m_ObjID.m_wIndex, pbyType, szMsg, 1u);
+}
+
+void CPlayer::SendMsg_BaseDownloadResult()
+{
+  _base_download_result_zocl msg{};
+
+  this->m_bBaseDownload = 1;
+  msg.byRetCode = 0;
+  msg.wZoneIndex = this->m_ObjID.m_wIndex;
+  msg.dwExpRate = this->m_dwExpRate;
+  for (int j = 0; j < 3; ++j)
+  {
+    if (this->m_Param.m_pClassHistory[j])
+    {
+      msg.wClassHistory[j] = this->m_Param.m_pClassHistory[j]->m_dwIndex;
+    }
+    else
+    {
+      msg.wClassHistory[j] = static_cast<unsigned __int16>(-1);
+    }
+  }
+  msg.wHP = CPlayerDB::GetHP(&this->m_Param);
+  msg.wSP = CPlayerDB::GetSP(&this->m_Param);
+  msg.wFP = CPlayerDB::GetFP(&this->m_Param);
+  msg.wDP = CPlayerDB::GetDP(&this->m_Param);
+  msg.dPvpPoint = CPlayerDB::GetPvPPoint(&this->m_Param);
+  msg.dPvpCashBag = CPvpOrderView::GetPvpCash(&this->m_kPvpOrderView);
+  msg.dPvpTempCash = CPvpOrderView::GetPvpTempCash(&this->m_kPvpOrderView);
+  msg.dwPvpRank = this->m_Param.m_dbChar.m_dwRank;
+  msg.byPvpClass = this->m_Param.m_byPvPGrade;
+  msg.wMaxHP = this->m_nMaxPoint[0];
+  msg.wMaxSP = this->m_nMaxPoint[2];
+  msg.wMaxFP = this->m_nMaxPoint[1];
+  msg.wMaxDP = static_cast<unsigned __int16>(CPlayer::GetMaxDP(this));
+
+  const int mapCode = CPlayerDB::GetMapCode(&this->m_Param);
+  unsigned __int16 *record =
+    reinterpret_cast<unsigned __int16 *>(g_MapOper.m_tblMapData.GetRecord(mapCode));
+  msg.wMapIndex = *record;
+  float *curPos = CPlayerDB::GetCurPos(&this->m_Param);
+  memcpy_0(msg.fPos, curPos, sizeof(msg.fPos));
+  msg.byUseTrunkSlotNum = this->m_Param.m_dbTrunk.m_nUsedNum;
+
+  for (int j = 0; j < 8; ++j)
+  {
+    _STORAGE_LIST::_db_con *equipItem = &this->m_Param.m_dbEquip.m_pStorageList[j];
+    if (equipItem->m_bLoad)
+    {
+      msg.EquipList[j].sTableCode = equipItem->m_byTableCode;
+      msg.EquipList[j].wItemIndex = equipItem->m_wItemIndex;
+      msg.EquipList[j].dwUptInfo = equipItem->m_dwLv;
+      msg.EquipList[j].byCsMethod = equipItem->m_byCsMethod;
+      msg.EquipList[j].dwT = equipItem->m_dwT;
+    }
+    else
+    {
+      msg.EquipList[j].sTableCode = -1;
+    }
+  }
+
+  for (int j = 0; j < 7; ++j)
+  {
+    _STORAGE_LIST::_db_con *embellishItem = &this->m_Param.m_dbEmbellish.m_pStorageList[j];
+    if (embellishItem->m_bLoad)
+    {
+      msg.EmbellishList[j].sTableCode = embellishItem->m_byTableCode;
+      msg.EmbellishList[j].wItemIndex = embellishItem->m_wItemIndex;
+      msg.EmbellishList[j].wNum = embellishItem->m_dwDur;
+      msg.EmbellishList[j].sClientIndex = embellishItem->m_byClientIndex;
+      msg.EmbellishList[j].byCsMethod = embellishItem->m_byCsMethod;
+      msg.EmbellishList[j].dwT = embellishItem->m_dwT;
+    }
+    else
+    {
+      msg.EmbellishList[j].sTableCode = -1;
+    }
+  }
+
+  if (CHolyStoneSystem::GetHolyMasterRace(&g_HolySys) == -1)
+  {
+    if (CHolyStoneSystem::GetSceneCode(&g_HolySys) == 1)
+    {
+      msg.byHolyMasterState = static_cast<unsigned __int8>(-1);
+    }
+    else
+    {
+      msg.byHolyMasterState = 100;
+    }
+  }
+  else
+  {
+    msg.byHolyMasterState = CHolyStoneSystem::GetHolyMasterRace(&g_HolySys);
+  }
+
+  msg.byPlusKey = this->m_byPlusKey;
+  msg.wXorKey = this->m_wXorKey;
+
+  if (this->m_Param.m_pGuild)
+  {
+    msg.dwGuildSerial = this->m_Param.m_pGuild->m_dwSerial;
+    const int raceCode = CPlayerDB::GetRaceCode(&this->m_Param);
+    CHonorGuild *honorGuild = CHonorGuild::Instance();
+    msg.byHonorGuildRank = CHonorGuild::FindHonorGuildRank(honorGuild, raceCode, msg.dwGuildSerial);
+  }
+  else
+  {
+    msg.dwGuildSerial = static_cast<unsigned int>(-1);
+    msg.byHonorGuildRank = static_cast<unsigned __int8>(-1);
+  }
+
+  msg.byGuildGrade = 0;
+  msg.byEffectValue[0] = 0;
+  msg.byEffectValue[1] = 0;
+  if (this->m_Param.m_pGuild)
+  {
+    CGuildMasterEffect *effect = CGuildMasterEffect::GetInstance();
+    const int adjustableGrade = CGuildMasterEffect::get_AdjustableGrade(effect);
+    const unsigned __int8 grade = CGuild::GetGrade(this->m_Param.m_pGuild);
+    if (adjustableGrade <= grade && this->m_Param.m_byClassInGuild == 2)
+    {
+      msg.byGuildGrade = CGuild::GetGrade(this->m_Param.m_pGuild);
+      effect = CGuildMasterEffect::GetInstance();
+      msg.byEffectValue[0] = CGuildMasterEffect::get_AttactValueByGrade(effect, msg.byGuildGrade);
+      effect = CGuildMasterEffect::GetInstance();
+      msg.byEffectValue[1] = CGuildMasterEffect::get_DefenceValueByGrade(effect, msg.byGuildGrade);
+    }
+  }
+
+  unsigned __int8 pbyType[2] = {3, 4};
+  const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
+  CNetProcess::LoadSendMsg(
+    g_Network.m_pProcess[0],
+    this->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    nLen);
+}
+
+void CPlayer::SendMsg_InvenDownloadResult()
+{
+  _inven_download_result_zocl msg;
+
+  this->m_bInvenDownload = 1;
+  msg.byRetCode = 0;
+  msg.byBagNum = this->m_Param.m_dbChar.m_byUseBagNum;
+  int count = 0;
+  const int useSlot = CPlayerDB::GetUseSlot(&this->m_Param);
+  for (int j = 0; j < useSlot; ++j)
+  {
+    _STORAGE_LIST::_db_con *item = &this->m_Param.m_dbInven.m_pStorageList[j];
+    if (item->m_bLoad)
+    {
+      msg.ItemSlotInfo[count].byTableCode = item->m_byTableCode;
+      msg.ItemSlotInfo[count].sClientIndex = item->m_byClientIndex;
+      msg.ItemSlotInfo[count].wItemIndex = item->m_wItemIndex;
+      msg.ItemSlotInfo[count].dwUptInfo = item->m_dwLv;
+      msg.ItemSlotInfo[count].dwDurPoint = item->m_dwDur;
+      msg.ItemSlotInfo[count].byCsMethod = item->m_byCsMethod;
+      msg.ItemSlotInfo[count++].dwT = item->m_dwT;
+    }
+  }
+  msg.bySlotNum = static_cast<unsigned __int8>(count);
+
+  unsigned __int8 pbyType[2] = {3, 6};
+  const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
+  CNetProcess::LoadSendMsg(
+    g_Network.m_pProcess[0],
+    this->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    nLen);
+}
+
+void CPlayer::SendMsg_CumDownloadResult()
+{
+  _cum_download_result_zocl msg;
+
+  this->m_bCumDownload = 1;
+  msg.byRetCode = 0;
+  memcpy_0(&msg.Stat, &this->m_pmMst.m_BaseCum, sizeof(msg.Stat));
+
+  unsigned __int8 count = 0;
+  for (int j = 0; j < GetMaxResKind(); ++j)
+  {
+    if (this->m_Param.m_wCuttingResBuffer[j])
+    {
+      const unsigned __int16 packed =
+        static_cast<unsigned __int16>((this->m_Param.m_wCuttingResBuffer[j] << 8) | (j & 0xFF));
+      msg.wleftResList[count++] = packed;
+    }
+  }
+  msg.byLeftCuttingResNum = count;
+
+  unsigned __int8 pbyType[2] = {3, 8};
+  const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
+  CNetProcess::LoadSendMsg(
+    g_Network.m_pProcess[0],
+    this->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    nLen);
+}
+
+void CPlayer::SendMsg_ForceDownloadResult()
+{
+  _force_download_result_zocl msg;
+
+  this->m_bForceDownload = 1;
+  msg.byRetCode = 0;
+  int count = 0;
+  for (int j = 0; j < 88; ++j)
+  {
+    _STORAGE_LIST::_db_con *item = &this->m_Param.m_dbForce.m_pStorageList[j];
+    if (item->m_bLoad)
+    {
+      msg.ItemSlotInfo[count].dwCum = item->m_dwDur;
+      msg.ItemSlotInfo[count].wItemIndex = item->m_wItemIndex;
+      msg.ItemSlotInfo[count].byCsMethod = item->m_byCsMethod;
+      msg.ItemSlotInfo[count++].dwT = item->m_dwT;
+    }
+  }
+  msg.bySlotNum = static_cast<unsigned __int8>(count);
+
+  unsigned __int8 pbyType[2] = {3, 10};
+  const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
+  CNetProcess::LoadSendMsg(
+    g_Network.m_pProcess[0],
+    this->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    nLen);
+}
+
+void CPlayer::SendMsg_QuestDownloadResult()
+{
+  _quest_download_result_zocl msg;
+
+  this->m_bQuestDownload = 1;
+  msg.byRetCode = 0;
+  int count = 0;
+  for (int j = 0; j < 30; ++j)
+  {
+    _QUEST_DB_BASE::_LIST *quest = &this->m_Param.m_QuestDB.m_List[j];
+    if (quest->byQuestType != 0xFF)
+    {
+      msg.SlotInfo[count].byDBSlotIndex = static_cast<unsigned __int8>(j);
+      memcpy_0(&msg.SlotInfo[count].cont, quest, sizeof(msg.SlotInfo[count].cont));
+      ++count;
+    }
+  }
+  msg.bySlotNum = static_cast<unsigned __int8>(count);
+
+  unsigned __int8 pbyType[2] = {3, 12};
+  const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
+  CNetProcess::LoadSendMsg(
+    g_Network.m_pProcess[0],
+    this->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    nLen);
+}
+
+void CPlayer::SendMsg_QuestHistoryDownloadResult()
+{
+  _quest_history_download_result_zocl msg;
+
+  int count = 0;
+  for (int j = 0; j < 70; ++j)
+  {
+    if (this->m_Param.m_QuestDB.m_History[j].byLevel != 0xFF)
+    {
+      msg.SlotInfo[count].byIndex = static_cast<unsigned __int8>(j);
+      strcpy_0(msg.SlotInfo[count++].szQuestCode, this->m_Param.m_QuestDB.m_History[j].szQuestCode);
+    }
+  }
+  msg.bySlotNum = static_cast<unsigned __int8>(count);
+
+  unsigned __int8 pbyType[2] = {3, 57};
+  const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
+  CNetProcess::LoadSendMsg(
+    g_Network.m_pProcess[0],
+    this->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    nLen);
+}
+
+void CPlayer::SendMsg_SpecialDownloadResult()
+{
+  this->m_bSpecialDownload = 1;
+  const unsigned int raceCode = static_cast<unsigned int>(CPlayerDB::GetRaceCode(&this->m_Param));
+
+  if (raceCode)
+  {
+    if (raceCode == 1)
+    {
+      _animus_download_result_zocl msg;
+      int count = 0;
+      for (int j = 0; j < 4; ++j)
+      {
+        _STORAGE_LIST::_db_con *item = &this->m_Param.m_dbAnimus.m_pStorageList[j];
+        if (item->m_bLoad)
+        {
+          msg.AnimusList[count].sItemIndex = item->m_wItemIndex;
+          msg.AnimusList[count].dwExp = item->m_dwDur;
+          msg.AnimusList[count].dwParam = item->m_dwLv;
+          msg.AnimusList[count].byCsMethod = item->m_byCsMethod;
+          msg.AnimusList[count++].dwT = item->m_dwT;
+        }
+      }
+      msg.byAnimusNum = static_cast<unsigned __int8>(count);
+
+      unsigned __int8 pbyType[2] = {3, 15};
+      const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
+      CNetProcess::LoadSendMsg(
+        g_Network.m_pProcess[0],
+        this->m_ObjID.m_wIndex,
+        pbyType,
+        reinterpret_cast<char *>(&msg),
+        nLen);
+    }
+    else
+    {
+      _animus_download_result_zocl msg;
+      unsigned __int8 pbyType[2] = {3, 15};
+      const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
+      CNetProcess::LoadSendMsg(
+        g_Network.m_pProcess[0],
+        this->m_ObjID.m_wIndex,
+        pbyType,
+        reinterpret_cast<char *>(&msg),
+        nLen);
+    }
+  }
+  else
+  {
+    _unit_download_result_zocl msg;
+    int count = 0;
+    for (int j = 0; j < 4; ++j)
+    {
+      if (this->m_Param.m_UnitDB.m_List[j].byFrame != 0xFF)
+      {
+        msg.UnitList[count].bySlotIndex = static_cast<unsigned __int8>(j);
+        memcpy_0(
+          &msg.UnitList[count].UnitData,
+          &this->m_Param.m_UnitDB.m_List[j],
+          sizeof(msg.UnitList[count].UnitData));
+        ++count;
+      }
+    }
+    msg.byUnitNum = static_cast<unsigned __int8>(count);
+
+    unsigned __int8 pbyType[2] = {3, 14};
+    const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
+    CNetProcess::LoadSendMsg(
+      g_Network.m_pProcess[0],
+      this->m_ObjID.m_wIndex,
+      pbyType,
+      reinterpret_cast<char *>(&msg),
+      nLen);
+  }
+}
+
+void CPlayer::SendMsg_LinkBoardDownloadResult()
+{
+  if (!this->m_pUserDB)
+  {
+    return;
+  }
+
+  _LINK_DB_BASE msg;
+  for (int j = 0; j < 50; ++j)
+  {
+    _LINKKEY *key = &this->m_pUserDB->m_AvatorData.dbLink.m_LinkList[j].Key;
+    msg.m_LinkList[j].Key = *key;
+    if (_LINKKEY::IsFilled(key))
+    {
+      const unsigned __int16 code = _LINKKEY::GetCode(key);
+      if (code == 4)
+      {
+        const unsigned __int16 index = _LINKKEY::GetIndex(key);
+        const int storageIndex = static_cast<int>(index) >> 8;
+        const unsigned __int8 slotIndex = static_cast<unsigned __int8>(index);
+        if (IsStorageRange(static_cast<unsigned __int8>(index >> 8), slotIndex))
+        {
+          _STORAGE_LIST::_db_con *item =
+            &this->m_Param.m_pStoragePtr[storageIndex]->m_pStorageList[slotIndex];
+          if (item)
+          {
+            _LINK_DB_BASE::_LIST list;
+            list.Key.SetData(code, item->m_wSerial);
+            msg.m_LinkList[j] = list;
+          }
+        }
+      }
+    }
+  }
+
+  msg.m_byLinkBoardLock = this->m_pUserDB->m_AvatorData.dbLink.m_byLinkBoardLock;
+  memcpy_0(msg.m_dwSkill, this->m_pUserDB->m_AvatorData.dbLink.m_dwSkill, sizeof(msg.m_dwSkill));
+  memcpy_0(msg.m_dwForce, this->m_pUserDB->m_AvatorData.dbLink.m_dwForce, sizeof(msg.m_dwForce));
+  memcpy_0(msg.m_dwCharacter, this->m_pUserDB->m_AvatorData.dbLink.m_dwCharacter, sizeof(msg.m_dwCharacter));
+  memcpy_0(msg.m_dwAnimus, this->m_pUserDB->m_AvatorData.dbLink.m_dwAnimus, sizeof(msg.m_dwAnimus));
+  memcpy_0(msg.m_dwInvenBag, this->m_pUserDB->m_AvatorData.dbLink.m_dwInvenBag, 0x14u);
+  msg.m_dwInven = this->m_pUserDB->m_AvatorData.dbLink.m_dwInven;
+
+  unsigned __int8 pbyType[2] = {3, 45};
+  CNetProcess::LoadSendMsg(
+    g_Network.m_pProcess[0],
+    this->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    0x9Du);
+}
+
+void CPlayer::SendMsg_MacroRequest()
+{
+  _player_macro_result_zocl msg;
+  _AIOC_A_MACRODATA *macro = &this->m_pUserDB->m_AvatorData.dbMacro;
+
+  memset_0(&msg, 0, sizeof(msg));
+  for (int k = 0; k < 3; ++k)
+  {
+    msg.potion[k] = macro->mcr_Potion[0].Potion[k];
+    msg.potionvalue[k] = macro->mcr_Potion[0].PotionValue[k];
+  }
+  for (int j = 0; j < 3; ++j)
+  {
+    for (int k = 0; k < 10; ++k)
+    {
+      msg.behavior[10 * j + k] = macro->mcr_Action[j].Action[k];
+    }
+  }
+  for (int j = 0; j < 2; ++j)
+  {
+    for (int k = 0; k < 5; ++k)
+    {
+      strncpy(msg.chatting[5 * j + k], macro->mcr_Chat[j].Chat[k], 0x51u);
+    }
+  }
+
+  unsigned __int8 pbyType[2] = {3, 50};
+  CNetProcess::LoadSendMsg(
+    g_Network.m_pProcess[0],
+    this->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    0x3BAu);
+}
+
+void CPlayer::SendMsg_AMPInvenDownloadResult()
+{
+  _personal_automine_download_zocl msg{};
+
+  this->m_bAMPInvenDownload = 1;
+  msg.byHaveBag = CPlayerDB::BeHaveBoxOfAMP(&this->m_Param);
+
+  int count = 0;
+  for (int j = 0; j < 40; ++j)
+  {
+    _STORAGE_LIST::_db_con *item = &this->m_Param.m_dbPersonalAmineInven.m_pStorageList[j];
+    if (item->m_bLoad)
+    {
+      msg.list[count].byClientSlotIndex = item->m_byClientIndex;
+      msg.list[count].byTblCode = item->m_byTableCode;
+      msg.list[count].wItemTblIndex = item->m_wItemIndex;
+      msg.list[count++].byDur = static_cast<unsigned __int8>(item->m_dwDur);
+    }
+  }
+  msg.byCnt = static_cast<unsigned __int8>(count);
+
+  unsigned __int8 pbyType[2] = {3, 55};
+  const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
+  CNetProcess::LoadSendMsg(
+    g_Network.m_pProcess[0],
+    this->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    nLen);
+}
+
+void CPlayer::SendMsg_SetGroupTargetObjectResult(char byRetCode, char byGroupType)
+{
+  #pragma pack(push, 1)
+  struct SetGroupTargetObjectResultMsg
+  {
+    char byRetCode;
+    char byGroupType;
+    char byMapCode;
+    char byID;
+    unsigned int dwSerial;
+    float fPos[3];
+  };
+  #pragma pack(pop)
+
+  SetGroupTargetObjectResultMsg msg{};
+  msg.byRetCode = byRetCode;
+
+  const unsigned __int8 groupType = static_cast<unsigned __int8>(byGroupType);
+  if (!byRetCode && this->m_GroupTargetObject[groupType].pObject)
+  {
+    msg.byGroupType = byGroupType;
+    msg.byMapCode = static_cast<unsigned __int8>(this->m_GroupTargetObject[groupType].pObject->m_pCurMap->m_nMapCode);
+    msg.byID = this->m_GroupTargetObject[groupType].byID;
+    msg.dwSerial = this->m_GroupTargetObject[groupType].dwSerial;
+    memcpy_0(msg.fPos, this->m_GroupTargetObject[groupType].pObject->m_fCurPos, sizeof(msg.fPos));
+  }
+
+  unsigned __int8 pbyType[2] = {13, 107};
+  CNetProcess::LoadSendMsg(
+    g_Network.m_pProcess[0],
+    this->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    0x14u);
+}
+
+void CPlayer::SendMsg_SetGroupMapPoint(
+  char byRetCode,
+  char byGroupType,
+  char byMapCode,
+  float *pzTar,
+  unsigned __int8 byRemain)
+{
+  #pragma pack(push, 1)
+  struct SetGroupMapPointMsg
+  {
+    char byRetCode;
+    char byGroupType;
+    char byMapCode;
+    char byRemain;
+    float fPos[2];
+  };
+  #pragma pack(pop)
+
+  SetGroupMapPointMsg msg{};
+  msg.byRetCode = byRetCode;
+  msg.byGroupType = byGroupType;
+  msg.byMapCode = byMapCode;
+  msg.byRemain = static_cast<char>(byRemain);
+  memcpy_0(msg.fPos, pzTar, sizeof(msg.fPos));
+
+  unsigned __int8 pbyType[2] = {13, 114};
+  CNetProcess::LoadSendMsg(
+    g_Network.m_pProcess[0],
+    this->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    0xCu);
+}
+
+void CPlayer::pc_NewPosStart()
+{
+  unsigned __int8 resultCode = 0;
+  if (this->m_bMapLoading)
+  {
+    if (this->m_byMapInModeBuffer == 0xFF)
+    {
+      resultCode = 2;
+    }
+  }
+  else
+  {
+    resultCode = 1;
+  }
+
+  if (!resultCode)
+  {
+    const unsigned __int8 mapInMode = this->m_byMapInModeBuffer;
+    if (mapInMode)
+    {
+      if (mapInMode <= 6u || mapInMode == 8)
+      {
+        if (!IntoMap(mapInMode))
+        {
+          resultCode = 3;
+        }
+      }
+      else
+      {
+        resultCode = 5;
+      }
+    }
+    else if (!Create())
+    {
+      resultCode = 3;
+    }
+  }
+
+  if (resultCode)
+  {
+    const char *charName = CPlayerDB::GetCharNameA(&this->m_Param);
+    char buffer[144]{};
+    sprintf(buffer, "Close.. %s: MapInMode(%u) Reason(%d)", charName, this->m_byMapInModeBuffer, resultCode);
+    CNetworkEX::Close(&g_Network, 0, this->m_ObjID.m_wIndex, false, buffer);
+  }
+  else
+  {
+    SendMsg_StartNewPos(this->m_byMapInModeBuffer);
+    SendMsg_NewViewOther(this->m_byMapInModeBuffer);
+    NewViewCircleObject();
+    if (this->m_byMapInModeBuffer && this->m_byMapInModeBuffer != 6)
+    {
+      if (this->m_byMapInModeBuffer == 2)
+      {
+        pc_NuclearAfterEffect();
+      }
+    }
+    else
+    {
+      CreateComplete();
+    }
+
+    if (GetCurSecNum() != static_cast<unsigned int>(-1))
+    {
+      this->m_bMapLoading = 0;
+      this->m_byMapInModeBuffer = 0xFF;
+    }
+
+    CheckGroupTargeting();
+    CheckGroupMapPoint();
+    CNuclearBombMgr *manager = CNuclearBombMgr::Instance();
+    CNuclearBombMgr::CheckNuclearState(manager, this);
+  }
+}
+
+void CPlayer::NewViewCircleObject()
+{
+  _sec_info *secInfo = this->m_pCurMap->GetSecInfo();
+  const unsigned int secNum = GetCurSecNum();
+  const int useSectorRange = GetUseSectorRange();
+
+  _pnt_rect rect{};
+  this->m_pCurMap->GetRectInRadius(&rect, useSectorRange, secNum);
+
+  for (int y = rect.nStarty; y <= rect.nEndy; ++y)
+  {
+    for (int x = rect.nStartx; x <= rect.nEndx; ++x)
+    {
+      const unsigned int secIndex = secInfo->m_nSecNumW * y + x;
+      CObjectList *list = this->m_pCurMap->GetSectorListObj(this->m_wMapLayerIndex, secIndex);
+      if (!list)
+      {
+        continue;
+      }
+
+      for (_object_list_point *node = list->m_Head.m_pNext; node != &list->m_Tail; node = node->m_pNext)
+      {
+        CGameObject *obj = node->m_pItem;
+        if (obj == this)
+        {
+          continue;
+        }
+
+        if (obj->m_bMove)
+        {
+          obj->SendMsg_RealMovePoint(this->m_ObjID.m_wIndex);
+        }
+        else
+        {
+          obj->SendMsg_FixPosition(this->m_ObjID.m_wIndex);
+        }
+      }
+    }
+  }
+}
+
+void CPlayer::CheckGroupTargeting()
+{
+  CPlayer *groupPlayer = nullptr;
+
+  for (int groupType = 0; groupType < 3; ++groupType)
+  {
+    if (groupType)
+    {
+      if (groupType == 1)
+      {
+        if (!this->m_Param.m_pGuild)
+        {
+          continue;
+        }
+
+        const unsigned int guildMasterSerial = CGuild::GetGuildMasterSerial(this->m_Param.m_pGuild);
+        _guild_member_info *member =
+          CGuild::GetMemberFromSerial(this->m_Param.m_pGuild, guildMasterSerial);
+        if (!member || !member->pPlayer)
+        {
+          continue;
+        }
+        groupPlayer = member->pPlayer;
+      }
+      else if (groupType == 2)
+      {
+        const int raceCode = CPlayerDB::GetRaceCode(&this->m_Param);
+        CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
+        const unsigned int bossSerial = CPvpUserAndGuildRankingSystem::GetCurrentRaceBossSerial(ranking, raceCode, 0);
+        groupPlayer = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, bossSerial);
+      }
+    }
+    else
+    {
+      if (!this->m_pPartyMgr->IsPartyMode())
+      {
+        continue;
+      }
+      groupPlayer = &g_Player[this->m_pPartyMgr->m_pPartyBoss->m_id.wIndex];
+    }
+
+    if (groupPlayer)
+    {
+      if (groupPlayer->m_GroupTargetObject[groupType].pObject)
+      {
+        if (groupPlayer->m_GroupTargetObject[groupType].pObject->m_pCurMap == this->m_pCurMap
+            && groupPlayer->m_GroupTargetObject[groupType].pObject->m_wMapLayerIndex == this->m_wMapLayerIndex)
+        {
+          this->m_GroupTargetObject[groupType].pObject = groupPlayer->m_GroupTargetObject[groupType].pObject;
+          this->m_GroupTargetObject[groupType].byKind = groupPlayer->m_GroupTargetObject[groupType].byKind;
+          this->m_GroupTargetObject[groupType].byID = groupPlayer->m_GroupTargetObject[groupType].byID;
+          this->m_GroupTargetObject[groupType].dwSerial = groupPlayer->m_GroupTargetObject[groupType].dwSerial;
+          SendMsg_SetGroupTargetObjectResult(0, static_cast<char>(groupType));
+        }
+        groupPlayer = nullptr;
+      }
+      else if (this->m_GroupTargetObject[groupType].pObject)
+      {
+        CPlayer::__target::init(&this->m_GroupTargetObject[groupType]);
+        SendMsg_ReleaseGroupTargetObjectResult(static_cast<unsigned __int8>(groupType));
+      }
+    }
+  }
+}
+
+void CPlayer::CheckGroupMapPoint()
+{
+  CPlayer *groupPlayer = nullptr;
+  const unsigned int loopTime = GetLoopTime();
+
+  for (int groupType = 0; groupType < 3; ++groupType)
+  {
+    if (groupType)
+    {
+      if (groupType == 1)
+      {
+        if (!this->m_Param.m_pGuild)
+        {
+          continue;
+        }
+
+        const unsigned int guildMasterSerial = CGuild::GetGuildMasterSerial(this->m_Param.m_pGuild);
+        _guild_member_info *member =
+          CGuild::GetMemberFromSerial(this->m_Param.m_pGuild, guildMasterSerial);
+        if (!member || !member->pPlayer)
+        {
+          continue;
+        }
+        groupPlayer = member->pPlayer;
+      }
+      else if (groupType == 2)
+      {
+        const int raceCode = CPlayerDB::GetRaceCode(&this->m_Param);
+        CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
+        const unsigned int bossSerial = CPvpUserAndGuildRankingSystem::GetCurrentRaceBossSerial(ranking, raceCode, 0);
+        groupPlayer = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, bossSerial);
+      }
+    }
+    else
+    {
+      if (!this->m_pPartyMgr->IsPartyMode())
+      {
+        continue;
+      }
+      groupPlayer = &g_Player[this->m_pPartyMgr->m_pPartyBoss->m_id.wIndex];
+    }
+
+    if (groupPlayer)
+    {
+      const unsigned __int8 mapCode = static_cast<unsigned __int8>(this->m_pCurMap->m_nMapCode);
+      if (mapCode == groupPlayer->m_byGroupMapPointMapCode[groupType]
+          && this->m_wMapLayerIndex == groupPlayer->m_wGroupMapPointLayerIndex[groupType])
+      {
+        const unsigned int elapsed = loopTime - groupPlayer->m_dwLastGroupMapPointTime[groupType];
+        if (elapsed < 0xEA60)
+        {
+          const unsigned __int8 remain = static_cast<unsigned __int8>((60000 - elapsed) / 1000);
+          if (remain)
+          {
+            SendMsg_SetGroupMapPoint(
+              0,
+              static_cast<char>(groupType),
+              static_cast<char>(groupPlayer->m_byGroupMapPointMapCode[groupType]),
+              groupPlayer->m_fGroupMapPoint[groupType],
+              remain);
+          }
+        }
+      }
+      groupPlayer = nullptr;
+    }
+  }
+}
+
+void CPlayer::pc_Revival(bool bUseableJade)
+{
+  (void)bUseableJade;
+
+  if (!this->m_pUserDB)
+  {
+    return;
+  }
+
+  unsigned __int8 resultCode = 0;
+  CMapData *intoMap = nullptr;
+  float revivePos[3]{};
+
+  if (GetCurSecNum() == static_cast<unsigned int>(-1) || this->m_bMapLoading)
+  {
+    resultCode = 5;
+  }
+  else if (this->m_bCorpse)
+  {
+    if (this->m_pCurMap->m_pMapSet->m_nMapType == 1)
+    {
+      if (this->m_pDHChannel)
+      {
+        _dh_player_mgr *playerInfo = CDarkHoleChannel::GetPlayerInfo(this->m_pDHChannel, this->m_dwObjSerial);
+        if (playerInfo)
+        {
+          intoMap = playerInfo->LastPos.pMap;
+          memcpy_0(revivePos, playerInfo->LastPos.fPos, sizeof(revivePos));
+          CDarkHoleChannel::ClearMember(this->m_pDHChannel, this, 0, nullptr);
+        }
+      }
+    }
+
+    if (!intoMap)
+    {
+      intoMap = GetBindMap(revivePos, 0);
+    }
+    if (!intoMap)
+    {
+      resultCode = 2;
+    }
+  }
+  else
+  {
+    resultCode = 1;
+  }
+
+  if (!resultCode)
+  {
+    if (intoMap)
+    {
+      this->m_bCorpse = 0;
+      this->m_byModeType = 0;
+      this->m_byMoveType = 1;
+      const unsigned int maxHP = GetMaxHP();
+      SetHP(maxHP, true);
+      const int maxFP = GetMaxFP();
+      SetFP(maxFP, true);
+      const int maxSP = GetMaxSP();
+      SetSP(maxSP, true);
+      OutOfMap(intoMap, 0, 2u, revivePos);
+    }
+    else
+    {
+      pc_NuclearAfterEffect();
+      CNuclearBombMgr *manager = CNuclearBombMgr::Instance();
+      CNuclearBombMgr::CheckNuclearState(manager, this);
+    }
+  }
+
+  SendMsg_Revival(resultCode, true);
+}
+
+void CPlayer::pc_ExitWorldRequest()
+{
+  if (!this->m_bOper)
+  {
+    return;
+  }
+
+  if (this->m_bLoad && this->m_bOper)
+  {
+    TimeLimitMgr::Pop_Data(
+      g_Main.m_pTimeLimitMgr,
+      this->m_pUserDB->m_dwAccountSerial,
+      this->m_id.wIndex);
+  }
+
+  this->m_bOper = 0;
+  if (this->m_pmTrd.bDTradeMode)
+  {
+    CPlayer *dst = nullptr;
+    if (DTradeEqualPerson(this, &dst))
+    {
+      dst->m_pmTrd.Init();
+      SendMsg_DTradeCloseInform(dst, 0);
+    }
+    this->m_pmTrd.Init();
+  }
+
+  SendMsg_ExitWorldResult(0);
+}
+
+void CPlayer::pc_LinkBoardRequest()
+{
+  if (!this->m_bLinkBoardDownload)
+  {
+    SendMsg_LinkBoardDownloadResult();
+    this->m_bLinkBoardDownload = 1;
+  }
+}
+
+char CPlayer::IntoMap(unsigned __int8 byMapInMode)
+{
+  if (this->m_pCurMap->m_pMapSet->m_nMapType == 1
+      && !this->m_pCurMap->m_ls[this->m_wMapLayerIndex].IsActiveLayer())
+  {
+    return 0;
+  }
+
+  if (byMapInMode == 6)
+  {
+    CGuildBattleController *controller = CGuildBattleController::Instance();
+    (void)CGuildBattleController::Start(controller, this);
+  }
+
+  const unsigned int secIndex = static_cast<unsigned int>(CalcSecIndex());
+  _sec_info *secInfo = this->m_pCurMap->GetSecInfo();
+  if (secIndex >= static_cast<unsigned int>(secInfo->m_nSecNum))
+  {
+    return 0;
+  }
+
+  this->m_pCurMap->EnterMap(this, secIndex);
+  SetCurSecNum(secIndex);
+  SendData_PartyMemberPos();
+
+  if (this->m_pCurMap == g_TransportShip[static_cast<int>(CPlayerDB::GetRaceCode(&this->m_Param))].m_pLinkShipMap)
+  {
+    const int raceCode = CPlayerDB::GetRaceCode(&this->m_Param);
+    CTransportShip::EnterMember(&g_TransportShip[raceCode], this);
+  }
+
+  SetStateFlag();
+  CheckPos_Region();
+  return 1;
+}
+
+char CPlayer::Create()
+{
+  if (!this->m_bLoad || this->m_bLive || !this->m_pUserDB)
+  {
+    return 0;
+  }
+
+  const DWORD nowTime = timeGetTime();
+  this->m_dwObjSerial = this->m_id.dwSerial;
+
+  _character_create_setdata createData;
+  createData.m_pMap = CMapOperation::GetMap(&g_MapOper, this->m_Param.m_dbChar.m_sStartMapCode);
+  if (createData.m_pMap->m_pMapSet->m_nMapType == 2)
+  {
+    createData.m_nLayerIndex = static_cast<int>(this->m_Param.m_dbChar.m_byRaceSexCode) >> 1;
+  }
+  else
+  {
+    createData.m_nLayerIndex = 0;
+  }
+  createData.m_fStartPos[0] = this->m_Param.m_dbChar.m_fStartPos[0];
+  createData.m_fStartPos[1] = this->m_Param.m_dbChar.m_fStartPos[1];
+  createData.m_fStartPos[2] = this->m_Param.m_dbChar.m_fStartPos[2];
+  createData.m_pRecordSet =
+    CRecordData::GetRecord(&g_Main.m_tblPlayer, this->m_Param.m_dbChar.m_byRaceSexCode);
+
+  if (!CCharacter::Create(&createData))
+  {
+    const int posX = static_cast<int>(this->m_fCurPos[0]);
+    const int posY = static_cast<int>(this->m_fCurPos[1]);
+    const int posZ = static_cast<int>(this->m_fCurPos[2]);
+    const char *mapCode = this->m_pCurMap->m_pMapSet->m_strCode;
+    const char *charName = CPlayerDB::GetCharNameA(&this->m_Param);
+    char buffer[132]{};
+    sprintf(buffer, "Close.. %s: Create() Map(%s) Pos(%d, %d, %d)", charName, mapCode, posX, posY, posZ);
+    CNetworkEX::Close(&g_Network, 0, this->m_ObjID.m_wIndex, false, buffer);
+    return 0;
+  }
+
+  if (this->m_pUserDB->m_byUILock == 2)
+  {
+    this->m_bOper = 1;
+  }
+
+  this->m_byModeType = 0;
+  this->m_byMoveType = 1;
+  this->m_byStandType = 0;
+  this->m_byHSKQuestCode = 100;
+  this->m_nHSKPvpPoint = 0;
+  this->m_wKillPoint = 0;
+  this->m_wDiePoint = 0;
+  this->m_byCristalBattleDBInfo = 3;
+  memcpy_0(this->m_fLastRecvPos, this->m_fCurPos, sizeof(this->m_fLastRecvPos));
+  this->m_byLastRecvMapIndex = static_cast<unsigned __int8>(this->m_pCurMap->m_pMapSet->m_dwIndex);
+  CheckPos_Region();
+  this->m_wVisualVer = 1;
+  this->m_dwLastState = 0;
+  this->m_pBeforeDungeonMap = nullptr;
+  this->m_nLastBeatenPart = 0;
+  this->m_pUsingUnit = nullptr;
+  this->m_pParkingUnit = nullptr;
+  this->m_dwUnitViewOverTime = static_cast<unsigned int>(-1);
+  this->m_byUsingWeaponPart = 0;
+  this->m_pRecalledAnimusItem = nullptr;
+  this->m_pRecalledAnimusChar = nullptr;
+  this->m_dwLastRecallTime = 0;
+  this->m_byNextRecallReturn = 0xFF;
+  this->m_wTimeFreeRecallSerial = 0xFFFF;
+  this->m_pSiegeItem = nullptr;
+  this->m_dwLastTakeItemTime = 0;
+
+  CMyTimer::TermTimeRun(&this->m_tmrIntervalSec);
+  CMyTimer::TermTimeRun(&this->m_tmrBilling);
+  CMyTimer::TermTimeRun(&this->m_tmrGroupTargeting);
+  if (IsApplyPcbangPrimium())
+  {
+    CMyTimer::TermTimeRun(&this->m_tmrPremiumPVPInform);
+  }
+
+  _RENAME_POTION_USE_INFO::Init(&this->m_ReNamePotionUseInfo);
+  GetLocalTime(&this->m_tmLoginTime);
+  GetLocalTime(&this->m_tmCalcTime);
+  this->m_dwUMWHLastTime = GetLoopTime();
+
+  const int currentMinuteSeconds = 60 * GetCurrentMin();
+  const int currentSec = GetCurrentSec();
+  CMyTimer::BeginTimerAddLapse(&this->m_tmrEffectStartTime, 0x36EE80u, 1000 * (currentSec + currentMinuteSeconds));
+
+  CPotionParam::Init(&this->m_PotionParam, this);
+  if (CPlayerDB::GetHP(&this->m_Param))
+  {
+    this->m_bCorpse = 0;
+  }
+  else
+  {
+    this->m_bCorpse = 1;
+  }
+
+  CalcDefTol();
+  PastWhisperInit();
+  SetHaveEffect(1);
+  CQuestMgr::InitMgr(&this->m_QuestMgr, this, &this->m_Param.m_QuestDB);
+  ItemCombineMgr::InitMgr(&this->m_ItemCombineMgr, this);
+
+  CPlayer::__target::init(&this->m_TargetObject);
+  for (int j = 0; j < 3; ++j)
+  {
+    CPlayer::__target::init(&this->m_GroupTargetObject[j]);
+  }
+
+  this->m_wPointRate_PartySend[0] = 10000;
+  this->m_wPointRate_PartySend[1] = 10000;
+  this->m_wPointRate_PartySend[2] = 10000;
+  this->m_bMineMode = 0;
+  this->m_dwMineNextTime = static_cast<unsigned int>(-1);
+
+  _ATTACK_DELAY_CHECKER::Init(&this->m_AttDelayChker);
+  for (int k = 0; k < 10; ++k)
+  {
+    if (this->m_pUserDB->m_AvatorData.dbSFDelay.EFF[k].byEffectCode != 0xFF)
+    {
+      this->m_AttDelayChker.EFF[k].byEffectCode = this->m_pUserDB->m_AvatorData.dbSFDelay.EFF[k].byEffectCode;
+      this->m_AttDelayChker.EFF[k].wEffectIndex = this->m_pUserDB->m_AvatorData.dbSFDelay.EFF[k].wEffectIndex;
+      this->m_AttDelayChker.EFF[k].dwNextTime = nowTime + this->m_pUserDB->m_AvatorData.dbSFDelay.EFF[k].dwNextTime;
+    }
+    if (this->m_pUserDB->m_AvatorData.dbSFDelay.MAS[k].byEffectCode != 0xFF)
+    {
+      this->m_AttDelayChker.MAS[k].byEffectCode = this->m_pUserDB->m_AvatorData.dbSFDelay.MAS[k].byEffectCode;
+      this->m_AttDelayChker.MAS[k].byMastery = this->m_pUserDB->m_AvatorData.dbSFDelay.MAS[k].byMastery;
+      this->m_AttDelayChker.MAS[k].dwNextTime = nowTime + this->m_pUserDB->m_AvatorData.dbSFDelay.MAS[k].dwNextTime;
+    }
+  }
+
+  SendMsg_SFDelayRequest();
+  const DWORD potionTime = timeGetTime();
+  SendMsg_PotionDelayTime(this->m_pUserDB->m_AvatorData.dbPotionNextUseTime.dwPotionNextUseTime, potionTime);
+
+  this->m_nChaosMode = 0;
+  this->m_dwChaosModeTime10Per = 0;
+  this->m_dwChaosModeEndTime = 0;
+  CEquipItemSFAgent::Init(&this->EquipItemSFAgent, this);
+  this->m_bSnowMan = 0;
+
+  char *charNameW = CPlayerDB::GetCharNameW(&this->m_Param);
+  const unsigned int charSerial = CPlayerDB::GetCharSerial(&this->m_Param);
+  this->m_byBattleTournamentGrade =
+    CBattleTournamentInfo::GetWinnerGrade(&g_Main.m_BattleTournamentInfo, charSerial, charNameW);
+
+  this->m_fUnitPv_AttFc = FLOAT_1_0;
+  this->m_fUnitPv_DefFc = FLOAT_1_0;
+  this->m_fUnitPv_RepPr = FLOAT_1_0;
+  if (this->m_Param.m_pClassData->m_dwIndex == 49
+      && this->m_Param.m_pClassHistory[0]
+      && this->m_Param.m_pClassHistory[0]->m_dwIndex == 45)
+  {
+    this->m_fUnitPv_AttFc = FLOAT_1_1;
+    CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
+    CNationSettingManager::SetUnitPassiveValue(manager, &this->m_fUnitPv_DefFc);
+    this->m_fUnitPv_RepPr = FLOAT_0_60000002;
+  }
+
+  memcpy_0(this->m_fBeforeDungeonPos, this->m_fCurPos, sizeof(this->m_fBeforeDungeonPos));
+  this->m_pBeforeDungeonMap = this->m_pCurMap;
+
+  if (this->m_pUserDB)
+  {
+    CUserDB::StartFieldMode(this->m_pUserDB);
+    const unsigned int radarDelay = 1000 * this->m_pUserDB->m_AvatorData.dbAvator.m_dwRadarDelayTime;
+    CRadarItemMgr::Init(&this->m_pUserDB->m_RadarItemMgr, radarDelay);
+    MiningTicket::SetLastMentalTicket(
+      &this->m_MinigTicket,
+      this->m_pUserDB->m_AvatorData.dbAvator.m_dwTakeLastMentalTicket);
+    MiningTicket::SetLastCriTicket(
+      &this->m_MinigTicket,
+      this->m_pUserDB->m_AvatorData.dbAvator.m_dwTakeLastCriTicket);
+    MiningTicket::_AuthKeyTicket::Set(
+      &this->m_dwRaceBuffClearKey,
+      this->m_pUserDB->m_AvatorData.dbSupplement.dwRaceBuffClear);
+
+    CMgrAvatorItemHistory::GetNewFileName(
+      &CPlayer::s_MgrItemHistory,
+      this->m_pUserDB->m_dwSerial,
+      this->m_szItemHistoryFileName);
+    CMgrAvatorLvHistory::GetNewFileName(
+      &CPlayer::s_MgrLvHistory,
+      this->m_pUserDB->m_dwSerial,
+      this->m_szLvHistoryFileName);
+
+    CMgrAvatorItemHistory::have_item(
+      &CPlayer::s_MgrItemHistory,
+      this->m_ObjID.m_wIndex,
+      CPlayerDB::GetCharNameA(&this->m_Param),
+      &this->m_pUserDB->m_AvatorData,
+      &this->m_pUserDB->m_AvatorData_bk,
+      this->m_pUserDB->m_szAccountID,
+      this->m_pUserDB->m_dwAccountSerial,
+      this->m_byUserDgr,
+      this->m_pUserDB->m_ipAddress,
+      this->m_dwExpRate,
+      true,
+      this->m_szItemHistoryFileName);
+
+    CMgrAvatorLvHistory::start_mastery(
+      &CPlayer::s_MgrLvHistory,
+      this->m_ObjID.m_wIndex,
+      CPlayerDB::GetCharNameA(&this->m_Param),
+      CPlayerDB::GetLevel(&this->m_Param),
+      CPlayerDB::GetExp(&this->m_Param),
+      this->m_dwExpRate,
+      this->m_Param.m_byPvPGrade,
+      this->m_nMaxPoint,
+      &this->m_pmMst,
+      this->m_szLvHistoryFileName);
+
+    CUserDB::WriteLog_CharSelect(this->m_pUserDB);
+  }
+
+  if (this->m_pUserDB->m_AvatorData.dbAvator.m_dwDalant
+      != this->m_pUserDB->m_AvatorData_bk.dbAvator.m_dwDalant)
+  {
+    SendMsg_ExchangeMoneyResult(0);
+  }
+
+  CMoveMapLimitManager *moveMapLimit = CMoveMapLimitManager::Instance();
+  CMoveMapLimitManager::LogIn(moveMapLimit, this);
+
+  this->m_pBindMapData =
+    CMapOperation::GetMap(&g_MapOper, this->m_pUserDB->m_AvatorData.dbAvator.m_szBindMapCode);
+  if (this->m_pBindMapData)
+  {
+    this->m_pBindDummyData =
+      CDummyPosTable::GetRecord(
+        &this->m_pBindMapData->m_tbBindDumPos,
+        this->m_pUserDB->m_AvatorData.dbAvator.m_szBindDummy);
+    if (!this->m_pBindDummyData)
+    {
+      this->m_pBindMapData = nullptr;
+    }
+  }
+
+  if (this->m_pUserDB && !this->m_pBindMapData)
+  {
+    CUserDB::Update_Bind(this->m_pUserDB, "0", "0", 0);
+  }
+
+  SendMsg_EconomyHistoryInform();
+  SendMsg_EconomyRateInform(1);
+
+  ++CPlayer::s_nLiveNum;
+  ++CPlayer::s_nRaceNum[static_cast<int>(CPlayerDB::GetRaceCode(&this->m_Param))];
+
+  _WA_AVATOR_CODE waCode{};
+  memcpy_0(&waCode, &this->m_id, 6u);
+  char *playerNameW = CPlayerDB::GetCharNameW(&this->m_Param);
+  strcpy_0(waCode.m_wszName, playerNameW);
+  wa_EnterWorld(&waCode, this->m_ObjID.m_wIndex);
+
+  _set_db_sf_effect(&this->m_pUserDB->m_AvatorData.dbSfcont);
+  CHolyStoneSystem::SendMsg_HolyStoneSystemState(&g_HolySys, this->m_ObjID.m_wIndex);
+
+  this->m_nAddDfnMstByClass = 0;
+  for (int i = 0; i < 4; ++i)
+  {
+    _class_fld *effectRecord = *this->m_Param.m_ppHistoryEffect[i];
+    if (!effectRecord)
+    {
+      break;
+    }
+    this->m_nAddDfnMstByClass += *reinterpret_cast<int *>(reinterpret_cast<char *>(effectRecord) + 1476);
+  }
+
+  if (this->m_Param.m_pGuild && _effect_parameter::GetEff_Have(&this->m_EP, 50) <= 0.0)
+  {
+    _guild_member_info *member = CGuild::LoginMember(this->m_Param.m_pGuild, this->m_dwObjSerial, this);
+    if (member)
+    {
+      this->m_Param.m_pGuildMemPtr = member;
+      CGuild::SendMsg_GuildMemberLogin(
+        this->m_Param.m_pGuild,
+        this->m_dwObjSerial,
+        this->m_wRegionMapIndex,
+        this->m_wRegionIndex);
+
+      CGuildBattleController *controller = CGuildBattleController::Instance();
+      CGuildBattleController::LogIn(controller, this);
+
+      if (member->byClassInGuild == 2)
+      {
+        const unsigned __int8 raceCode = CPlayerDB::GetRaceCode(&this->m_Param);
+        CGuildBattleController::SendPossibleBattleGuildListFirst(
+          controller,
+          this->m_ObjID.m_wIndex,
+          raceCode);
+      }
+
+      if (member->byClassInGuild == 2)
+      {
+        const unsigned __int8 grade = CGuild::GetGrade(this->m_Param.m_pGuild);
+        CGuildMasterEffect *effect = CGuildMasterEffect::GetInstance();
+        CGuildMasterEffect::in_player(effect, this, grade);
+      }
+    }
+    else
+    {
+      this->m_Param.m_pGuild = nullptr;
+    }
+  }
+
+  if (!this->m_bInGuildBattle
+      && this->m_pCurMap->m_pMapSet->m_nRaceVillageCode < 3
+      && static_cast<unsigned int>(CPlayerDB::GetRaceCode(&this->m_Param))
+        != this->m_pCurMap->m_pMapSet->m_nRaceVillageCode
+      && this->m_byUserDgr >= 2u)
+  {
+    this->m_bObserver = 1;
+  }
+
+  SetShapeAllBuffer();
+  this->m_byDefMatCount = 0;
+  this->m_dwLastSetPointTime = GetLoopTime();
+
+  const int raceCode = CPlayerDB::GetRaceCode(&this->m_Param);
+  CTransportShip::SendMsg_TransportShipState(&g_TransportShip[raceCode], this->m_ObjID.m_wIndex);
+  if (this->m_pCurMap == g_TransportShip[raceCode].m_pLinkShipMap)
+  {
+    CTransportShip::ReEnterMember(&g_TransportShip[raceCode], this);
+  }
+
+  if (!this->m_pUserDB->m_byUserDgr)
+  {
+    CBillingManager *billing = CTSingleton<CBillingManager>::Instance();
+    CBillingManager::Login(billing, this->m_pUserDB);
+  }
+
+  SenseState();
+  this->m_nCheckMovePacket = 0;
+  this->m_bCheckMovePacket = 0;
+  CHolyStoneSystem::SendHolyStoneHP(&g_HolySys, this);
+  this->m_byStoneMapMoveInfo = 0;
+  this->m_dwPatriarchAppointTime = static_cast<unsigned int>(-1);
+  this->m_byPatriarchAppointPropose = static_cast<unsigned __int8>(-1);
+  this->m_byBattleMode = 0;
+  this->m_dwBattleTime = 0;
+
+  if (this->m_pUserDB)
+  {
+    CMgrAccountLobbyHistory::player_create(
+      &CUserDB::s_MgrLobbyHistory,
+      this->m_bFirstStart,
+      &this->m_pUserDB->m_AvatorData,
+      this->m_pUserDB->m_szLobbyHistoryFileName);
+  }
+
+  return 1;
+}
+
+void CPlayer::CreateComplete()
+{
+  if (!this->m_bLive || this->m_bCreateComplete)
+  {
+    return;
+  }
+
+  this->m_bCreateComplete = 1;
+  CheckUnitCutTime();
+  if (CPlayerDB::IsClassChangeableLv(&this->m_Param))
+  {
+    SendMsg_ChangeClassCommand();
+  }
+  CalcEquipSpeed();
+  CPvpOrderView::Notify_OrderView(&this->m_kPvpOrderView, this->m_ObjID.m_wIndex);
+
+  for (int j = 0; j < 30; ++j)
+  {
+    _QUEST_DB_BASE::_LIST *quest = &this->m_Param.m_QuestDB.m_List[j];
+    if (quest->byQuestType != 0xFF)
+    {
+      bool isAllEmpty = true;
+      for (int k = 0; k < 3; ++k)
+      {
+        if (quest->wNum[k] != 0xFFFF)
+        {
+          isAllEmpty = false;
+          break;
+        }
+      }
+
+      if (isAllEmpty)
+      {
+        _base_fld *record = CRecordData::GetRecord(CQuestMgr::s_tblQuest, quest->wIndex);
+        if (*reinterpret_cast<unsigned int *>(&record[13].m_strCode[60])
+            || *reinterpret_cast<unsigned int *>(&record[1].m_strCode[24]))
+        {
+          SendMsg_SelectQuestReward(j);
+        }
+        else
+        {
+          Emb_CompleteQuest(j, 0xFFu, 0xFFu);
+        }
+      }
+    }
+  }
+
+  ItemCombineMgr::OnPlayerCreateCompleteProc(&this->m_ItemCombineMgr);
+
+  if (CRadarItemMgr::GetDelayTime(&this->m_pUserDB->m_RadarItemMgr))
+  {
+    const unsigned int delay = CRadarItemMgr::GetDelayTime(&this->m_pUserDB->m_RadarItemMgr);
+    SendMsg_RadarDelayTime(delay);
+  }
+
+  this->m_zLastTol[0] = GetFireTol();
+  this->m_zLastTol[1] = GetWaterTol();
+  this->m_zLastTol[2] = GetSoilTol();
+  this->m_zLastTol[3] = GetWindTol();
+  SendMsg_AlterTol();
+  CheckPosInTown();
+
+  for (int j = 0; j < MAX_TRAP; ++j)
+  {
+    CTrap *trap = &g_Trap[j];
+    if (trap->m_bLive && !trap->m_pMaster && trap->m_dwMasterSerial == this->m_dwObjSerial)
+    {
+      if (!_TRAP_PARAM::PushItem(&this->m_pmTrp, trap, trap->m_dwObjSerial))
+      {
+        break;
+      }
+      CTrap::MasterReStart(trap, this);
+    }
+  }
+  if (this->m_pmTrp.m_nCount > 0)
+  {
+    SendMsg_MadeTrapNumInform(this->m_pmTrp.m_nCount);
+  }
+
+  for (int j = 0; j < MAX_PLAYER; ++j)
+  {
+    __TEMP_WAIT_TOWER *entry = &CGuardTower::s_Temp[j];
+    if (entry->dwMasterSerial == this->m_dwObjSerial)
+    {
+      entry->dwMasterSerial = static_cast<unsigned int>(-1);
+      const int itemIndex = entry->byItemIndex;
+      const unsigned __int8 bagNum = CPlayerDB::GetBagNum(&this->m_Param);
+      if (itemIndex < 20 * bagNum)
+      {
+        _STORAGE_LIST::_db_con *item = &this->m_Param.m_dbInven.m_pStorageList[itemIndex];
+        if (item->m_bLoad && item->m_byTableCode == 25 && !item->m_bLock)
+        {
+          _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[25], item->m_wItemIndex);
+          if (record)
+          {
+            const int raceSexCode = CPlayerDB::GetRaceSexCode(&this->m_Param);
+            if (record[3].m_strCode[raceSexCode + 52] == 49)
+            {
+              const bool quick = entry->bComplete;
+              const unsigned __int8 raceCode = CPlayerDB::GetRaceCode(&this->m_Param);
+              CGuardTower *tower =
+                CreateGuardTower(entry->pMap, 0, entry->fPos, item, this, raceCode, quick);
+              if (tower)
+              {
+                if (IsOtherTowerNear(this, entry->fPos, tower))
+                {
+                  CGuardTower::Destroy(tower, 0, 0);
+                }
+                else
+                {
+                  _STORAGE_LIST::_storage_con::lock(item, 1);
+                  _TOWER_PARAM::PushList(&this->m_pmTwr, item, tower);
+                  ++this->m_pmTwr.m_nCount;
+                  SendMsg_TowerContinue(item->m_wSerial, tower);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  const int raceCode = CPlayerDB::GetRaceCode(&this->m_Param);
+  CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
+  if (CPvpUserAndGuildRankingSystem::IsCurrentRaceBossGroup(ranking, raceCode, this->m_dwObjSerial))
+  {
+    SendMsg_RaceTopInform(1);
+  }
+
+  if (this->m_bFirstStart)
+  {
+    const int level = GetLevel();
+    char *levelStr = cvt_string(level);
+    Emb_CreateQuestEvent(quest_happen_type_lv, levelStr);
+    CGoldenBoxItemMgr *golden = CGoldenBoxItemMgr::Instance();
+    if (CGoldenBoxItemMgr::Get_Event_Status(golden) == 2)
+    {
+      CGoldenBoxItemMgr *countMgr = CGoldenBoxItemMgr::Instance();
+      if (CGoldenBoxItemMgr::Get_StarterBox_Count(countMgr))
+      {
+        bool inserted = false;
+        for (int m = 0; m < 2; ++m)
+        {
+          CGoldenBoxItemMgr *boxMgr = CGoldenBoxItemMgr::Instance();
+          char *itemCode = CGoldenBoxItemMgr::GetStarterBoxCode(boxMgr, m);
+          CGoldenBoxItemMgr *insertMgr = CGoldenBoxItemMgr::Instance();
+          if (CGoldenBoxItemMgr::StarterBox_InsertToInven(insertMgr, this, itemCode))
+          {
+            inserted = true;
+          }
+        }
+        if (inserted)
+        {
+          CGoldenBoxItemMgr *setMgr = CGoldenBoxItemMgr::Instance();
+          CGoldenBoxItemMgr::Set_StarterBox_Count(setMgr, 1u, 0);
+        }
+      }
+    }
+  }
+
+  CVoteSystem *voteSystem = &g_VoteSys[static_cast<int>(CPlayerDB::GetRaceCode(&this->m_Param))];
+  if (voteSystem->m_bActive)
+  {
+    if (voteSystem->m_bPunishment)
+    {
+      const unsigned int serial = CPlayerDB::GetCharSerial(&this->m_Param);
+      const int voteRace = CPlayerDB::GetRaceCode(&this->m_Param);
+      CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
+      if (CPvpUserAndGuildRankingSystem::GetBossType(rank, voteRace, serial) == 0xFF)
+      {
+        CVoteSystem::SendMsg_StartedVoteInform(voteSystem, this->m_ObjID.m_wIndex, this->m_dwObjSerial, 1);
+      }
+      else
+      {
+        CVoteSystem::SendMsg_StartedVoteInform(voteSystem, this->m_ObjID.m_wIndex, this->m_dwObjSerial, 0);
+      }
+    }
+    else
+    {
+      CVoteSystem::SendMsg_StartedVoteInform(voteSystem, this->m_ObjID.m_wIndex, this->m_dwObjSerial, 0);
+    }
+  }
+
+  if (CHolyStoneSystem::GetSceneCode(&g_HolySys) == 1)
+  {
+    _QUEST_CASH *questCash = CHolyStoneSystem::FindStoragedQuestCash(&g_HolySys, this->m_dwObjSerial);
+    if (questCash)
+    {
+      RecvHSKQuest(
+        questCash->byQuestType,
+        questCash->byCristalBattleDBInfo,
+        questCash->nPvpPoint,
+        questCash->wKillPoint,
+        questCash->wDiePoint,
+        questCash->byHSKTime + 1);
+    }
+    else if (GetLevel() >= 25)
+    {
+      const unsigned __int8 numOfTime = CHolyStoneSystem::GetNumOfTime(&g_HolySys);
+      const int randVal = rand();
+      RecvHSKQuest(randVal % 2, 0, 0, 0, 0, numOfTime);
+    }
+  }
+
+  for (int j = 0; j < 50; ++j)
+  {
+    _BUDDY_LIST::__list *buddy = &this->m_pmBuddy.m_List[j];
+    if (_BUDDY_LIST::__list::fill(buddy))
+    {
+      for (int n = 0; n < MAX_PLAYER; ++n)
+      {
+        CPlayer *ptr = &g_Player[n];
+        if (ptr->m_bLive
+            && ptr != this
+            && _effect_parameter::GetEff_Have(&ptr->m_EP, 50) <= 0.0
+            && ptr->m_dwObjSerial == buddy->dwSerial)
+        {
+          if (_BUDDY_LIST::IsBuddy(&ptr->m_pmBuddy, this->m_dwObjSerial))
+          {
+            char *nameW = CPlayerDB::GetCharNameW(&ptr->m_Param);
+            _BUDDY_LIST::__list::ON(buddy, nameW, ptr);
+            char *selfNameW = CPlayerDB::GetCharNameW(&this->m_Param);
+            _BUDDY_LIST::SearchBuddyLogin(&ptr->m_pmBuddy, this, this->m_dwObjSerial, selfNameW);
+            SendMsg_BuddyLoginInform(ptr, this->m_dwObjSerial, this->m_wRegionMapIndex, this->m_wRegionIndex);
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  CUserDB *userDb = this->m_pUserDB;
+  TimeLimitMgr::InsertPlayerStatus(
+    g_Main.m_pTimeLimitMgr,
+    this->m_id.wIndex,
+    userDb->m_dwAccountSerial,
+    userDb->m_AvatorData.dbTimeLimitInfo.byTLStatus,
+    userDb->m_AvatorData.dbTimeLimitInfo.dwFatigue,
+    userDb->m_AvatorData.dbTimeLimitInfo.dwLastLogoutTime,
+    userDb->m_BillingInfo.bAgeLimit);
+  TimeLimitMgr::CheckPlayerStatus(
+    g_Main.m_pTimeLimitMgr,
+    this->m_id.wIndex,
+    this->m_pUserDB->m_AvatorData.dbTimeLimitInfo.dwLastLogoutTime,
+    &this->m_pUserDB->m_AvatorData.dbTimeLimitInfo.byTLStatus,
+    &this->m_pUserDB->m_AvatorData.dbTimeLimitInfo.dwFatigue);
+  this->m_pUserDB->m_bDataUpdate = 1;
+  SendMsg_TLStatusInfo(
+    this->m_pUserDB->m_AvatorData.dbTimeLimitInfo.dwFatigue,
+    this->m_pUserDB->m_AvatorData.dbTimeLimitInfo.byTLStatus);
+  SendMsg_Init_Action_Point();
+
+  CUnmannedTraderController *trader = CUnmannedTraderController::Instance();
+  CUnmannedTraderController::CompleteCreate(trader, this->m_ObjID.m_wIndex);
+
+  CDarkHoleChannel *channel =
+    CDarkHoleDungeonQuest::SearchOncePlayedChannel(&g_DarkHoleQuest, this->m_dwObjSerial);
+  if (channel)
+  {
+    SendMsg_ReEnterAsk(channel->m_wChannelIndex, channel->m_dwChannelSerial);
+  }
+
+  if (GetLevel() >= 25)
+  {
+    _QUEST_CASH_OTHER *questCashOther = nullptr;
+    unsigned __int8 stoneMapMoveInfo = 0;
+    this->m_byStoneMapMoveInfo = 0;
+
+    if (g_HolySys.m_bScheduleCodePre == 1)
+    {
+      questCashOther = CHolyStoneSystem::PopStoredQuestCash_Other(&g_HolySys, this->m_dwObjSerial);
+      if (questCashOther)
+      {
+        stoneMapMoveInfo = questCashOther->byStoneMapMoveInfo;
+      }
+      else
+      {
+        stoneMapMoveInfo = 1;
+      }
+      CHolyStoneSystem::SendMsg_NoticeNextQuest(&g_HolySys, this->m_ObjID.m_wIndex, stoneMapMoveInfo);
+    }
+    else if (CHolyStoneSystem::GetSceneCode(&g_HolySys) == 1)
+    {
+      questCashOther = CHolyStoneSystem::PopStoredQuestCash_Other(&g_HolySys, this->m_dwObjSerial);
+      if (questCashOther)
+      {
+        stoneMapMoveInfo = questCashOther->byStoneMapMoveInfo;
+      }
+      else
+      {
+        stoneMapMoveInfo = 1;
+      }
+      SendMsg_MoveToOwnStoneMapInform(stoneMapMoveInfo);
+    }
+
+    this->m_byStoneMapMoveInfo = stoneMapMoveInfo;
+    if (g_HolySys.bFreeMining && CHolyStoneSystem::IsMentalPass(&g_HolySys))
+    {
+      const unsigned __int8 numOfTime = CHolyStoneSystem::GetNumOfTime(&g_HolySys);
+      const unsigned __int8 startHour = CHolyStoneSystem::GetStartHour(&g_HolySys);
+      const unsigned __int8 startDay = CHolyStoneSystem::GetStartDay(&g_HolySys);
+      const unsigned __int8 startMonth = CHolyStoneSystem::GetStartMonth(&g_HolySys);
+      const unsigned __int16 startYear = CHolyStoneSystem::GetStartYear(&g_HolySys);
+      UpdateLastCriTicket(startYear, startMonth, startDay, startHour, numOfTime);
+    }
+  }
+
+  if (this->m_pUserDB->m_byUserDgr == 2 && this->m_bSpyGM)
+  {
+    char buffer[136]{};
+    sprintf(buffer, "SPY GM !!");
+    SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, buffer, 0xFFu, nullptr);
+  }
+
+  PatriarchElectProcessor *patriarch = PatriarchElectProcessor::Instance();
+  PatriarchElectProcessor::SendMsg_ConnectNewUser(patriarch, this);
+  SendMsg_GM_Greeting(g_Main.m_wszGMName, g_Main.m_wszMainGreetingMsg);
+
+  char *raceGreeting = g_Main.m_wszRaceGreetingMsg[static_cast<int>(CPlayerDB::GetRaceCode(&this->m_Param))];
+  const int raceGreetingIndex = CPlayerDB::GetRaceCode(&this->m_Param);
+  SendMsg_RACE_Greeting(g_Main.m_wszBossName[raceGreetingIndex], raceGreeting);
+
+  if (this->m_Param.m_pGuild && this->m_Param.m_pGuild->m_wszGreetingMsg[0])
+  {
+    char *guildMasterName = CGuild::GetGuildMasterName(this->m_Param.m_pGuild);
+    if (!guildMasterName)
+    {
+      guildMasterName = this->m_Param.m_pGuild->m_wszName;
+    }
+    SendMsg_GUILD_Greeting(guildMasterName, this->m_Param.m_pGuild->m_wszGreetingMsg);
+  }
+
+  const unsigned __int8 notifyRace = CPlayerDB::GetRaceCode(&this->m_Param);
+  CNotifyNotifyRaceLeaderSownerUTaxrate::Notify(&g_Main.m_kEtcNotifyInfo, notifyRace, this->m_ObjID.m_wIndex);
+
+  const int notifyTradeRace = CPlayerDB::GetRaceCode(&this->m_Param);
+  CUnmannedTraderController *tradeInfo = CUnmannedTraderController::Instance();
+  CUnmannedTraderController::CompleteCreateNotifyTradeInfo(tradeInfo, notifyTradeRace, this->m_ObjID.m_wIndex);
+
+  CMoveMapLimitManager *moveMapLimit = CMoveMapLimitManager::Instance();
+  CMoveMapLimitManager::CreateComplete(moveMapLimit, this);
+
+  if (!IsUseReleaseRaceBuffPotion())
+  {
+    CRaceBuffManager *raceBuff = CRaceBuffManager::Instance();
+    CRaceBuffManager::CreateComplete(raceBuff, this);
+  }
+
+  _qry_case_select_patriarch_comm query{};
+  query.dwSerial = CPlayerDB::GetCharSerial(&this->m_Param);
+  const int querySize = _qry_case_select_patriarch_comm::size(&query);
+  CMainThread::PushDQSData(&g_Main, 0xFFFFFFFF, nullptr, 0x82u, reinterpret_cast<char *>(&query), querySize);
+
+  const int bossRace = CPlayerDB::GetRaceCode(&this->m_Param);
+  CPvpUserAndGuildRankingSystem *bossRank = CPvpUserAndGuildRankingSystem::Instance();
+  if (CPvpUserAndGuildRankingSystem::GetCurrentRaceBossSerial(bossRank, bossRace, 0) == this->m_dwObjSerial)
+  {
+    const int honorRace = CPlayerDB::GetRaceCode(&this->m_Param);
+    CHonorGuild *honor = CHonorGuild::Instance();
+    CHonorGuild::SendInformChange(honor, honorRace, this->m_ObjID.m_wIndex);
+  }
+
+  const int winRateRace = CPlayerDB::GetRaceCode(&this->m_Param);
+  CRaceBossWinRate *winRate = CRaceBossWinRate::Instance();
+  CRaceBossWinRate::Notify(winRate, winRateRace, this->m_ObjID.m_wIndex);
+
+  int number = 0;
+  for (int ii = 0; ii < 3; ++ii)
+  {
+    number += this->m_pUserDB->m_AvatorData.dbAvator.m_dwRaceBattleRecord[ii]
+      * g_HolySys.m_nRaceBattlePoint[ii][1];
+  }
+
+  if (number)
+  {
+    if (number < 0)
+    {
+      const double pvpPoint = CPlayerDB::GetPvPPoint(&this->m_Param);
+      if (std::fabs(static_cast<double>(number)) > pvpPoint)
+      {
+        number = static_cast<int>(-pvpPoint);
+      }
+    }
+    AlterPvPPoint(static_cast<double>(number), holy_dec, 0xFFFFFFFF);
+    SendMsg_RaceBattlePenelty(number, 0);
+  }
+
+  CashItemRemoteStore *cashStore = CashItemRemoteStore::Instance();
+  CashItemRemoteStore::inform_cashdiscount_event(cashStore, this->m_ObjID.m_wIndex);
+  CashItemRemoteStore *cashEvent = CashItemRemoteStore::Instance();
+  CashItemRemoteStore::Inform_CashEvent(cashEvent, this->m_ObjID.m_wIndex);
+  CashItemRemoteStore *conditionalEvent = CashItemRemoteStore::Instance();
+  CashItemRemoteStore::Inform_ConditionalEvent(conditionalEvent, this->m_ObjID.m_wIndex);
+
+  if (IsOverOneDay() && !this->m_bFirstStart)
+  {
+    double pvpPoint = CPlayerDB::GetPvPPoint(&this->m_Param);
+    double alter = pvpPoint * 0.2000000029802322;
+    if (pvpPoint < 0.0)
+    {
+      pvpPoint = 0.0;
+    }
+    AlterPvPPoint(-alter, logoff_dec, 0xFFFFFFFF);
+    SendMsg_RaceBattlePenelty(static_cast<int>(alter), 1u);
+  }
+
+  const bool isPremium = IsApplyPcbangPrimium();
+  CExchangeEvent *exchange = CExchangeEvent::Instance();
+  if (exchange->IsDelete() || CExchangeEvent::Instance()->IsEnable())
+  {
+    CExchangeEvent::Instance()->DeleteExchangeEventItem(this);
+  }
+
+  CExchangeEvent *enableMgr = CExchangeEvent::Instance();
+  if (enableMgr->IsEnable())
+  {
+    if (!enableMgr->IsWait() && isPremium)
+    {
+      enableMgr->GiveEventItem(this);
+    }
+  }
+
+  if (this->m_pUserDB && !this->m_bFirstStart)
+  {
+    const unsigned int limitTime = GetConnectTime_AddBySec(-2592000);
+    if (this->m_pUserDB->m_AvatorData_bk.dbAvator.m_dwLastConnTime < limitTime)
+    {
+      SendMsg_Notify_ExceptFromRaceRanking(1);
+    }
+  }
+
+  CQuestMgr::CheckFailLoop(&this->m_QuestMgr, 2, nullptr);
+  SendMsg_RemainOreRate();
+  SendMsg_OreTransferCount();
+
+  if (IsApplyPcbangPrimium())
+  {
+    CCouponMgr::Init(&this->m_kPcBangCoupon, this->m_ObjID.m_wIndex);
+  }
+
+  if (this->m_Param.m_pGuild)
+  {
+    const unsigned int destroyerSerial = CHolyStoneSystem::GetDestroyerGuildSerial(&g_HolySys);
+    if (destroyerSerial == static_cast<unsigned int>(-1))
+    {
+      SetLastAttBuff(0);
+    }
+    else
+    {
+      const unsigned int guildSerial = CPlayerDB::GetGuildSerial(&this->m_Param);
+      if (destroyerSerial != guildSerial)
+      {
+        SetLastAttBuff(0);
+      }
+    }
+  }
+
+  const unsigned int endTime = this->m_pUserDB->m_AvatorData.dbSupplement.dwBufPotionEndTime;
+  if (endTime <= GetKorLocalTime())
+  {
+    CExtPotionBuf::SetExtPotionBufUse(&this->m_PotionBufUse, 0);
+  }
+  else
+  {
+    CExtPotionBuf::SetExtPotionBufUse(&this->m_PotionBufUse, 1);
+    CExtPotionBuf::SetExtPotionEndTime(&this->m_PotionBufUse, endTime);
+    CExtPotionBuf::CalcRemainTime(&this->m_PotionBufUse, this->m_ObjID.m_wIndex, 1);
+  }
+
+  CPcBangFavor *pcBang = CPcBangFavor::Instance();
+  CPcBangFavor::PcBangDeleteItem(pcBang, this);
+
+  CPcBangFavor *pcBangEnable = CPcBangFavor::Instance();
+  if (CPcBangFavor::IsEnable(pcBangEnable))
+  {
+    if (IsApplyPcbangPrimium())
+    {
+      _AVATOR_DATA *data = &this->m_pUserDB->m_AvatorData;
+      CPcBangFavor *parser = CPcBangFavor::Instance();
+      CPcBangFavor::ClassCodePasing(parser, data, this);
+    }
+  }
+
+  if (this->m_pUserDB)
+  {
+    CMgrAccountLobbyHistory::player_create_complete_money(
+      &CUserDB::s_MgrLobbyHistory,
+      &this->m_pUserDB->m_AvatorData,
+      this->m_pUserDB->m_szLobbyHistoryFileName);
+    if (this->m_bFirstStart
+        && (this->m_pUserDB->m_AvatorData.dbAvator.m_dwDalant
+            || this->m_pUserDB->m_AvatorData.dbAvator.m_dwGold))
+    {
+      const unsigned int oldDalant = this->m_pUserDB->m_AvatorData.dbAvator.m_dwDalant;
+      const unsigned int oldGold = this->m_pUserDB->m_AvatorData.dbAvator.m_dwGold;
+      this->m_pUserDB->m_AvatorData.dbAvator.m_dwDalant = 0;
+      this->m_pUserDB->m_AvatorData.dbAvator.m_dwGold = 0;
+      CMgrAccountLobbyHistory::player_money_fix(
+        &CUserDB::s_MgrLobbyHistory,
+        oldDalant,
+        oldGold,
+        &this->m_pUserDB->m_AvatorData,
+        this->m_pUserDB->m_szLobbyHistoryFileName);
+      SendMsg_ExchangeMoneyResult(0);
+    }
+  }
+
+  CNationSettingManager *nation = CTSingleton<CNationSettingManager>::Instance();
+  CNationSettingManager::CreateComplete(nation, this);
+  SendMsg_BuyCashItemMode();
 }
 
 void CPlayer::SendMsg_ChatFarFailure(char bBlock)

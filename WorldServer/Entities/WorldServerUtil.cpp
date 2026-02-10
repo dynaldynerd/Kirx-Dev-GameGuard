@@ -33,6 +33,7 @@ static char szDefItemName[] = "UNKNOWN";
 static float sR[4] = {200.0f, 200.0f, 200.0f, 200.0f};
 static int s_nSkillLvPerMastery[8] = {};
 static int s_nForceLvPerMastery[24] = {};
+static char sBuffer[32] = {};
 
 static __int64 D3DXCreateTextureFromFileInMemory_0(IDirect3DDevice8 *device, const void *data, unsigned int size, void *outTex);
 static __int64 D3DXCreateTextureFromFileExA_0(IDirect3DDevice8 *device, const char *path, __int64 flags);
@@ -54,6 +55,26 @@ static void MakeMipMap(unsigned short a1, unsigned short a2, unsigned short *a3,
 unsigned int GetLoopTime()
 {
   return timeGetTime();
+}
+
+unsigned int GetConnectTime_AddBySec(int iSec)
+{
+  __time32_t timeValue{};
+  _time32(&timeValue);
+  timeValue += iSec;
+
+  tm local{};
+  _localtime32_s(&local, &timeValue);
+
+  char buffer[44]{};
+  sprintf(buffer, "%01d%02d%02d%02d%02d", local.tm_year - 100, local.tm_mon + 1, local.tm_mday, local.tm_hour, local.tm_min);
+  return static_cast<unsigned int>(atol(buffer));
+}
+
+char *cvt_string(int nVal)
+{
+  _itoa(nVal, sBuffer, 10);
+  return sBuffer;
 }
 
 bool CanAddMoneyForMaxLimMoney(unsigned __int64 ui64AddMoney, unsigned __int64 ui64HasMoney)

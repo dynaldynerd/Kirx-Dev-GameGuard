@@ -32,6 +32,7 @@
 #include "enter_world_request_zone.h"
 #include "enter_world_result_zone.h"
 #include "notify_local_time_result_zocl.h"
+#include "other_shape_request_clzo.h"
 #include "server_notify_inform_zone.h"
 #include "w_name.h"
 
@@ -1771,6 +1772,286 @@ bool CNetworkEX::ClientLineAnalysis(unsigned int n, _MSG_HEADER *pMsgHeader, cha
       break;
   }
   return result;
+}
+
+bool CNetworkEX::NewPosStartRequest(unsigned int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bLoad)
+  {
+    return true;
+  }
+
+  const unsigned __int8 mapInMode = static_cast<unsigned __int8>(*pBuf);
+  if (mapInMode < 9u)
+  {
+    player->pc_NewPosStart();
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: NewPosStartRequest()..  if(pRecv->byMapInMode >= mapin_type_num)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::BaseDownloadRequest(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bLoad)
+  {
+    return true;
+  }
+  if (player->m_bBaseDownload)
+  {
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: BaseDownloadRequest()..  if(pOne->m_bBaseDownload)",
+      charName);
+    return false;
+  }
+
+  player->SendMsg_BaseDownloadResult();
+  return true;
+}
+
+bool CNetworkEX::InvenDownloadRequest(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bLoad)
+  {
+    return true;
+  }
+  if (player->m_bInvenDownload)
+  {
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: InvenDownloadRequest()..  if(pOne->m_bInvenDownload)",
+      charName);
+    return false;
+  }
+
+  player->SendMsg_InvenDownloadResult();
+  return true;
+}
+
+bool CNetworkEX::CumDownloadRequest(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bLoad)
+  {
+    return true;
+  }
+  if (player->m_bCumDownload)
+  {
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: CumDownloadRequest()..  if(pOne->m_bCumDownload)",
+      charName);
+    return false;
+  }
+
+  player->SendMsg_CumDownloadResult();
+  return true;
+}
+
+bool CNetworkEX::ForceDownloadRequest(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bLoad)
+  {
+    return true;
+  }
+  if (player->m_bForceDownload)
+  {
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: ForceDownloadRequest()..  if(pOne->m_bForceDownload)",
+      charName);
+    return false;
+  }
+
+  player->SendMsg_ForceDownloadResult();
+  return true;
+}
+
+bool CNetworkEX::QuestDownloadRequest(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bLoad)
+  {
+    return true;
+  }
+  if (player->m_bQuestDownload)
+  {
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: QuestDownloadRequest()..  if(pOne->m_bQuestDownload)",
+      charName);
+    return false;
+  }
+
+  player->SendMsg_QuestDownloadResult();
+  player->SendMsg_QuestHistoryDownloadResult();
+  return true;
+}
+
+bool CNetworkEX::SpecialDownloadRequest(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bLoad)
+  {
+    return true;
+  }
+  if (player->m_bSpecialDownload)
+  {
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: SpecialDownloadRequest()..  if(pOne->m_bSpecialDownload)",
+      charName);
+    return false;
+  }
+
+  player->SendMsg_SpecialDownloadResult();
+  return true;
+}
+
+bool CNetworkEX::OtherShapeRequest(unsigned int n, char *pBuf)
+{
+  CPlayer *dst = &g_Player[n];
+  if (!dst->m_bOper)
+  {
+    return true;
+  }
+
+  const _other_shape_request_clzo *request =
+    reinterpret_cast<const _other_shape_request_clzo *>(pBuf);
+  if (request->byReqType == _other_shape_request_clzo::SHAPE_ALL
+      || request->byReqType == _other_shape_request_clzo::SHAPE_PART)
+  {
+    if (request->wIndex < MAX_PLAYER)
+    {
+      CPlayer *src = &g_Player[request->wIndex];
+      if (request->byReqType == _other_shape_request_clzo::SHAPE_PART)
+      {
+        src->SendMsg_OtherShapePart(dst);
+        CPlayer::CashChangeStateFlag clientData(0);
+        clientData.m_byStateFlag = request->byStateFlag;
+        src->SendMsg_OtherShapePartEx_CashChange(dst, src->m_CashChangeStateFlag, clientData);
+      }
+      else
+      {
+        src->SendMsg_OtherShapeAll(dst);
+      }
+      return true;
+    }
+
+    const char *charName = CPlayerDB::GetCharNameA(&dst->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: OtherShapeRequest()..  if(pRecv->wIndex >= MAX_PLAYER)",
+      charName);
+    return false;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&dst->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: OtherShapeRequest()..  if(pRecv->byReqType != _other_shape_request_clzo::SHAPE_ALL && pRecv->byReqType !"
+    "= _other_shape_request_clzo::SHAPE_PART)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::Revival(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  if (player->m_bOper)
+  {
+    player->pc_Revival(true);
+  }
+  return true;
+}
+
+bool CNetworkEX::ExitWorldRequest(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper)
+  {
+    return true;
+  }
+
+  if (m_bUseFG)
+  {
+    _socket *socket = GetSocket(0, n);
+    if (socket)
+    {
+      _CcrFG_rs_CloseUserContext(&socket->m_hFGContext);
+    }
+  }
+
+  player->pc_ExitWorldRequest();
+  return true;
+}
+
+bool CNetworkEX::LinkBoardDownloadRequest(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  if (player->m_bLoad)
+  {
+    player->pc_LinkBoardRequest();
+  }
+  return true;
+}
+
+bool CNetworkEX::MacroDownLoadRequest(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  if (player->m_bLoad)
+  {
+    player->SendMsg_MacroRequest();
+  }
+  return true;
+}
+
+bool CNetworkEX::AMP_DownloadRequest(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bLoad)
+  {
+    return true;
+  }
+  if (player->m_bAMPInvenDownload)
+  {
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: AMP_InvenDownloadRequest()..  if(pOne->m_bAMPInvenDownload)",
+      charName);
+    return false;
+  }
+
+  player->SendMsg_AMPInvenDownloadResult();
+  return true;
 }
 
 bool CNetworkEX::EnterWorldRequest(unsigned int n, _MSG_HEADER *pMsgHeader, char *pBuf)
