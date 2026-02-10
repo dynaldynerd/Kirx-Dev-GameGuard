@@ -51,6 +51,7 @@ public:
   void Log(char *fmt, ...);
 
   CMapItemStoreList *GetMapItemStoreListByNum(int nMapNum);
+  CMapItemStoreList *GetMapItemStoreListBySerial(int nSerial);
   CItemStore *GetMapItemStoreFromList(int nMapNum, int nStoreNum);
 
   CLogFile *m_pkLogger;

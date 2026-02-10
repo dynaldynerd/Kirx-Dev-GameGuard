@@ -19,4 +19,5 @@ public:
   void SetTypeNSerial(unsigned __int8 byType, int nSerial);
   bool CreateStores(CMapData *pMap);
   bool SetItemStores(CMapData *pMap);
+  CItemStore *GetItemStoreFromRecIndex(unsigned int dwRecIndex);
 };

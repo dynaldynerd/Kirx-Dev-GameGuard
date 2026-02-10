@@ -66,3 +66,9 @@ During the implementation of `CMapOperation::Init` and its sub-flows, the follow
 | `WorldServerUtil.cpp` | `InitMasteryFormula` | `pSkillData` / `pForceData` | `_base_fld *` | Uses `Record[1].m_strCode[4]` and `Record[4].m_strCode[60]` to fill mastery-level tables; verify offsets. |
 | `CPlayer.cpp` | `CPlayer::DeleteCouponItem` | `g_Main.m_tblItemData[pItem->m_byTableCode]` | `_base_fld *` | Uses `Record[4].m_strCode[48]` to check coupon deletion; verify field mapping. |
 | `CBossMonsterScheduleSystem.cpp` | `CBossMonsterScheduleSystem::MakeMap` | `g_Main.m_tblMonster` | `_base_fld *` | Uses `Record[4].m_dwIndex` to filter boss schedules; verify field mapping. |
+| `CPlayer.cpp` | `CPlayer::CalcEquipAttackDelay` | `g_Main.m_tblItemData[...]` | `_base_fld *` | Uses `Record[5].m_strCode[20]` (equip slots 0-4, 5, 27) and `Record[9].m_strCode[52]` (slot 6) for attack delay add. |
+| `CPlayer.cpp` | `CPlayer::GetAttackDP` | `g_Main.m_tblUnitPart[3]`, `g_Main.m_tblItemData[6]` | `_base_fld *` | Uses `Record[4].m_strCode[40]` (unit part) and `Record[9].m_strCode[44]` (weapon) for attack DP. |
+| `CPlayer.cpp` | `CPlayer::GetAttackLevel` | `g_Main.m_tblUnitPart[3]`, `g_Main.m_tblItemData[6]` | `_base_fld *` | Uses `Record[4].m_strCode[12]` (unit part) and `Record[8].m_strCode[8]` (weapon) for attack level. |
+| `CPlayer.cpp` | `CPlayer::GetGenAttackProb` | `g_Main.m.tblUnitPart[...]` | `_base_fld *` | Uses `Record[5].m_dwIndex` from unit parts (weapon part and base part 0) when riding a unit. |
+| `CPlayer.cpp` | `CPlayer::pc_PlayAttack_Test` | `g_Main.m_tblEffectData[1]`, `g_Main.m_tblUnitPart[3/4]` | `_base_fld *` | Uses `Record[4].m_strCode[60]` for SF level and `Record[4].m_strCode` (word/dword) for unit bullet consumption. |
+| `CPlayer.cpp` | `CPlayer::CalcExp` | `CMonster::m_pRecordSet` | `_base_fld *` | Uses `Record[4].m_strCode[16]` (exp base) and `Record[25].m_strCode[4]` (HP max?) for exp calculations. |

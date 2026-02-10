@@ -668,6 +668,15 @@ unsigned __int8 GetItemUpgedLv(unsigned int dwLvBit)
   return level;
 }
 
+unsigned __int8 GetItemUpgLimSocket(unsigned int dwLvBit)
+{
+  if (dwLvBit)
+  {
+    return static_cast<unsigned __int8>(dwLvBit >> 28);
+  }
+  return 0;
+}
+
 unsigned __int8 GetTalikFromSocket(unsigned int dwLvBit, unsigned __int8 bySocketIndex)
 {
   if (dwLvBit)
@@ -716,6 +725,20 @@ unsigned __int8 GetDefItemUpgSocketNum(int nTableCode, int nItemIndex)
 unsigned int GetBitAfterSetLimSocket(unsigned __int8 byLimSocketNum)
 {
   return (static_cast<unsigned int>(byLimSocketNum) << 28) | 0x0FFFFFFF;
+}
+
+unsigned int GetBitAfterUpgrade(unsigned int dwCurBit, char dwTalikCode, unsigned __int8 byCurLv)
+{
+  const unsigned int talikBits = static_cast<unsigned int>(dwTalikCode & 0xF);
+  const unsigned int shift = 4u * byCurLv;
+  const unsigned int leftMask = ~(-1 << shift);
+  const unsigned int upperBits = (dwCurBit >> (shift + 4)) << (shift + 4);
+  return (talikBits << shift) | (dwCurBit & leftMask) | upperBits;
+}
+
+unsigned int GetBitAfterDowngrade(unsigned int dwCurBit, unsigned __int8 byCurLv)
+{
+  return (15u << (4u * (byCurLv - 1))) | dwCurBit;
 }
 
 _animus_fld *GetAnimusFldFromExp(int nAnimusClass, unsigned __int64 dwExp)

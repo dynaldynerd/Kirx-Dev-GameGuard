@@ -1454,6 +1454,309 @@ void CMgrAvatorItemHistory::reward_add_item(
   WriteFile(pszFileName, sData);
 }
 
+void CMgrAvatorItemHistory::add_storage_fail(
+  int n,
+  _STORAGE_LIST::_db_con *pItem,
+  const char *strErrorCodePos,
+  char *pszFileName)
+{
+  sprintf_s(
+    sData,
+    sizeof(sData),
+    "Amb_AddStorage ERR - item:[%d-%d], CodePos:(%s) \r\n",
+    pItem->m_byTableCode,
+    pItem->m_wItemIndex,
+    strErrorCodePos);
+  (void)n;
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::make_item(
+  int n,
+  _STORAGE_LIST::_db_con *pMaterial,
+  unsigned __int8 *pbyMtrNum,
+  unsigned __int8 byMaterialNum,
+  unsigned __int8 byRetCode,
+  bool bInsert,
+  _STORAGE_LIST::_db_con *pMakeItem,
+  char *pszFileName)
+{
+  sData[0] = 0;
+  if (byRetCode)
+  {
+    std::sprintf(sBuf, "MAKE(FAIL): [%s %s]\r\n", m_szCurDate, m_szCurTime);
+    strcat_0(sData, sBuf);
+  }
+  else
+  {
+    _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[pMakeItem->m_byTableCode], pMakeItem->m_wItemIndex);
+    if (bInsert)
+    {
+      const char *upgradeInfo = DisplayItemUpgInfo(pMakeItem->m_byTableCode, pMakeItem->m_dwLv);
+      std::sprintf(
+        sBuf,
+        "MAKE(SUCC): %s_%u_@%s[%I64u] [%s %s]\r\n",
+        record->m_strCode,
+        pMakeItem->m_dwDur,
+        upgradeInfo,
+        pMakeItem->m_lnUID,
+        m_szCurDate,
+        m_szCurTime);
+    }
+    else
+    {
+      const char *upgradeInfo = DisplayItemUpgInfo(pMakeItem->m_byTableCode, pMakeItem->m_dwLv);
+      std::sprintf(
+        sBuf,
+        "MAKE(QUEST): %s_%u_@%s[%I64u] [%s %s]\r\n",
+        record->m_strCode,
+        pMakeItem->m_dwDur,
+        upgradeInfo,
+        pMakeItem->m_lnUID,
+        m_szCurDate,
+        m_szCurTime);
+    }
+    strcat_0(sData, sBuf);
+  }
+
+  for (int j = 0; j < byMaterialNum; ++j)
+  {
+    _base_fld *record =
+      CRecordData::GetRecord(&g_Main.m_tblItemData[pMaterial[j].m_byTableCode], pMaterial[j].m_wItemIndex);
+    std::sprintf(sBuf, "\t- %s_%d[%I64]\r\n", record->m_strCode, pbyMtrNum[j], pMaterial[j].m_lnUID);
+    strcat_0(sData, sBuf);
+  }
+
+  (void)n;
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::cheat_make_item_no_material(
+  int n,
+  unsigned __int8 byRetCode,
+  _STORAGE_LIST::_db_con *pMakeItem,
+  char *pszFileName)
+{
+  sData[0] = 0;
+  if (byRetCode)
+  {
+    std::sprintf(sBuf, "MAKE(FAIL): [%s %s] ( CHEAT_MATERIAL ) \r\n", m_szCurDate, m_szCurTime);
+  }
+  else
+  {
+    _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[pMakeItem->m_byTableCode], pMakeItem->m_wItemIndex);
+    const char *upgradeInfo = DisplayItemUpgInfo(pMakeItem->m_byTableCode, pMakeItem->m_dwLv);
+    std::sprintf(
+      sBuf,
+      "MAKE(SUCC): %s_%u_@%s[%I64u] [%s %s] ( CHEAT_MATERIAL ) \r\n",
+      record->m_strCode,
+      pMakeItem->m_dwDur,
+      upgradeInfo,
+      pMakeItem->m_lnUID,
+      m_szCurDate,
+      m_szCurTime);
+  }
+  strcat_0(sData, sBuf);
+  (void)n;
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::grade_up_item(
+  int n,
+  _STORAGE_LIST::_db_con *pItem,
+  _STORAGE_LIST::_db_con *pTalik,
+  _STORAGE_LIST::_db_con *pJewel,
+  unsigned __int8 byJewelNum,
+  unsigned __int8 byErrCode,
+  unsigned int dwAfterLv,
+  char *pszFileName)
+{
+  sData[0] = 0;
+  const char *beforeUpgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, pItem->m_dwLv);
+  char beforeUpgrade[48]{};
+  strcpy_0(beforeUpgrade, beforeUpgradeInfo);
+
+  _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[pItem->m_byTableCode], pItem->m_wItemIndex);
+  if (byErrCode)
+  {
+    switch (byErrCode)
+    {
+      case 100:
+        std::sprintf(
+          sBuf,
+          "UPGRADE(FAIL): %s_%u_@%s[%I64u] [%s %s]\r\n",
+          record->m_strCode,
+          pItem->m_dwDur,
+          beforeUpgrade,
+          pItem->m_lnUID,
+          m_szCurDate,
+          m_szCurTime);
+        strcat_0(sData, sBuf);
+        break;
+      case 101:
+      {
+        const char *afterUpgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, dwAfterLv);
+        std::sprintf(
+          sBuf,
+          "UPGRADE(ZERO): %s_%u_@%s[%I64u]->%s [%s %s]\r\n",
+          record->m_strCode,
+          pItem->m_dwDur,
+          beforeUpgrade,
+          pItem->m_lnUID,
+          afterUpgradeInfo,
+          m_szCurDate,
+          m_szCurTime);
+        strcat_0(sData, sBuf);
+        break;
+      }
+      case 102:
+        std::sprintf(
+          sBuf,
+          "UPGRADE(LOST): %s_%u_@%s[%I64u] [%s %s]\r\n",
+          record->m_strCode,
+          pItem->m_dwDur,
+          beforeUpgrade,
+          pItem->m_lnUID,
+          m_szCurDate,
+          m_szCurTime);
+        strcat_0(sData, sBuf);
+        break;
+      default:
+        break;
+    }
+  }
+  else
+  {
+    const char *afterUpgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, dwAfterLv);
+    std::sprintf(
+      sBuf,
+      "UPGRADE(SUCC): %s_%u_@%s[%I64u]->%s [%s %s]\r\n",
+      record->m_strCode,
+      pItem->m_dwDur,
+      beforeUpgrade,
+      pItem->m_lnUID,
+      afterUpgradeInfo,
+      m_szCurDate,
+      m_szCurTime);
+    strcat_0(sData, sBuf);
+  }
+
+  _base_fld *talikRecord =
+    CRecordData::GetRecord(&g_Main.m_tblItemData[pTalik->m_byTableCode], pTalik->m_wItemIndex);
+  std::sprintf(sBuf, "\t- T %s \r\n", talikRecord->m_strCode);
+  strcat_0(sData, sBuf);
+  for (int j = 0; j < byJewelNum; ++j)
+  {
+    _base_fld *jewelRecord =
+      CRecordData::GetRecord(&g_Main.m_tblItemData[pJewel[j].m_byTableCode], pJewel[j].m_wItemIndex);
+    std::sprintf(sBuf, "\t- R %s\r\n", jewelRecord->m_strCode);
+    strcat_0(sData, sBuf);
+  }
+
+  (void)n;
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::grade_down_item(
+  int n,
+  _STORAGE_LIST::_db_con *pItem,
+  _STORAGE_LIST::_db_con *pTalik,
+  unsigned int dwAfterLv,
+  char *pszFileName)
+{
+  sData[0] = 0;
+  const char *beforeUpgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, pItem->m_dwLv);
+  char beforeUpgrade[48]{};
+  strcpy_0(beforeUpgrade, beforeUpgradeInfo);
+
+  _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[pItem->m_byTableCode], pItem->m_wItemIndex);
+  const char *afterUpgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, dwAfterLv);
+  std::sprintf(
+    sBuf,
+    "DOWNGRADE: %s_%u_@%s[%I64u] -> %s [%s %s]\r\n",
+    record->m_strCode,
+    pItem->m_dwDur,
+    beforeUpgrade,
+    pItem->m_lnUID,
+    afterUpgradeInfo,
+    m_szCurDate,
+    m_szCurTime);
+  strcat_0(sData, sBuf);
+
+  _base_fld *talikRecord =
+    CRecordData::GetRecord(&g_Main.m_tblItemData[pTalik->m_byTableCode], pTalik->m_wItemIndex);
+  std::sprintf(sBuf, "\t- T %s\r\n", talikRecord->m_strCode);
+  strcat_0(sData, sBuf);
+
+  (void)n;
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::combine_item(
+  int n,
+  _STORAGE_LIST::_db_con *pMaterial,
+  unsigned __int8 *pbyMtrNum,
+  unsigned __int8 byMaterialNum,
+  _STORAGE_LIST::_db_con *pMakeItem,
+  unsigned int dwFee,
+  unsigned int dwLeftDalant,
+  char *pszFileName)
+{
+  sData[0] = 0;
+  _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[pMakeItem->m_byTableCode], pMakeItem->m_wItemIndex);
+  const char *upgradeInfo = DisplayItemUpgInfo(pMakeItem->m_byTableCode, pMakeItem->m_dwLv);
+  std::sprintf(
+    sBuf,
+    "COMBINE: %s_%u_@%s[%I64u] pay(D:%u) $D:%u [%s %s]\r\n",
+    record->m_strCode,
+    pMakeItem->m_dwDur,
+    upgradeInfo,
+    pMakeItem->m_lnUID,
+    dwFee,
+    dwLeftDalant,
+    m_szCurDate,
+    m_szCurTime);
+  strcat_0(sData, sBuf);
+  for (int j = 0; j < byMaterialNum; ++j)
+  {
+    _base_fld *materialRecord =
+      CRecordData::GetRecord(&g_Main.m_tblItemData[pMaterial[j].m_byTableCode], pMaterial[j].m_wItemIndex);
+    std::sprintf(sBuf, "\t- %s_%d\r\n", materialRecord->m_strCode, pbyMtrNum[j]);
+    strcat_0(sData, sBuf);
+  }
+
+  (void)n;
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::exchange_item(
+  int n,
+  _STORAGE_LIST::_db_con *pUseItem,
+  _STORAGE_LIST::_db_con *pOutItem,
+  char *pszFileName)
+{
+  sData[0] = 0;
+  _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[pOutItem->m_byTableCode], pOutItem->m_wItemIndex);
+  const char *upgradeInfo = DisplayItemUpgInfo(pOutItem->m_byTableCode, pOutItem->m_dwLv);
+  std::sprintf(
+    sBuf,
+    "EXCHANGE: %s_%u_@%s[%I64u] [%s %s]\r\n",
+    record->m_strCode,
+    pOutItem->m_dwDur,
+    upgradeInfo,
+    pOutItem->m_lnUID,
+    m_szCurDate,
+    m_szCurTime);
+  strcat_0(sData, sBuf);
+  _base_fld *useRecord = CRecordData::GetRecord(&g_Main.m_tblItemData[pUseItem->m_byTableCode], pUseItem->m_wItemIndex);
+  const char *useUpgradeInfo = DisplayItemUpgInfo(pUseItem->m_byTableCode, pUseItem->m_dwLv);
+  std::sprintf(sBuf, "\t- %s_%u_%s\r\n", useRecord->m_strCode, pUseItem->m_dwDur, useUpgradeInfo);
+  strcat_0(sData, sBuf);
+
+  (void)n;
+  WriteFile(pszFileName, sData);
+}
+
 void CMgrAvatorItemHistory::personal_amine_itemlog(
   const char *szLogDesc,
   unsigned __int8 byPos,

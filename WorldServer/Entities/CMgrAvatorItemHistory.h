@@ -40,7 +40,47 @@ public:
   CMgrAvatorItemHistory();
   static void IOThread(void *pv);
   void WriteFile(const char *pszFileName, const char *pszLog);
+  void add_storage_fail(int n, _STORAGE_LIST::_db_con *pItem, const char *strErrorCodePos, char *pszFileName);
   void consume_del_item(int n, _STORAGE_LIST::_db_con *pItem, const char *pszFileName);
+  void make_item(
+    int n,
+    _STORAGE_LIST::_db_con *pMaterial,
+    unsigned __int8 *pbyMtrNum,
+    unsigned __int8 byMaterialNum,
+    unsigned __int8 byRetCode,
+    bool bInsert,
+    _STORAGE_LIST::_db_con *pMakeItem,
+    char *pszFileName);
+  void cheat_make_item_no_material(
+    int n,
+    unsigned __int8 byRetCode,
+    _STORAGE_LIST::_db_con *pMakeItem,
+    char *pszFileName);
+  void grade_up_item(
+    int n,
+    _STORAGE_LIST::_db_con *pItem,
+    _STORAGE_LIST::_db_con *pTalik,
+    _STORAGE_LIST::_db_con *pJewel,
+    unsigned __int8 byJewelNum,
+    unsigned __int8 byErrCode,
+    unsigned int dwAfterLv,
+    char *pszFileName);
+  void grade_down_item(
+    int n,
+    _STORAGE_LIST::_db_con *pItem,
+    _STORAGE_LIST::_db_con *pTalik,
+    unsigned int dwAfterLv,
+    char *pszFileName);
+  void combine_item(
+    int n,
+    _STORAGE_LIST::_db_con *pMaterial,
+    unsigned __int8 *pbyMtrNum,
+    unsigned __int8 byMaterialNum,
+    _STORAGE_LIST::_db_con *pMakeItem,
+    unsigned int dwFee,
+    unsigned int dwLeftDalant,
+    char *pszFileName);
+  void exchange_item(int n, _STORAGE_LIST::_db_con *pUseItem, _STORAGE_LIST::_db_con *pOutItem, char *pszFileName);
   void reward_add_item(int n, char *pszClause, _STORAGE_LIST::_db_con *pItem, char *pszFileName);
   void GetNewFileName(unsigned int dwAvatorSerial, char *pszFileName);
   void have_item(

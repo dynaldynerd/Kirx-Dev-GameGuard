@@ -59,3 +59,14 @@ bool CMapItemStoreList::SetItemStores(CMapData *pMap)
     }
     return true;
 }
+
+CItemStore *CMapItemStoreList::GetItemStoreFromRecIndex(unsigned int dwRecIndex)
+{
+    for (int index = 0; index < m_nItemStoreNum; ++index)
+    {
+        CItemStore *store = &m_ItemStore[index];
+        if (store->m_pRec->m_dwIndex == dwRecIndex)
+            return store;
+    }
+    return nullptr;
+}

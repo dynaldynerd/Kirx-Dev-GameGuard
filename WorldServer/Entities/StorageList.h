@@ -56,9 +56,13 @@ struct __cppobj __unaligned __declspec(align(4)) _STORAGE_LIST
   int TransInCon(_storage_con *pCon);
   int GetIndexEmptyCon();
   int GetNumEmptyCon();
+  void SetUseListNum(int n);
   char AlterCurDur(int n, int nAlter, unsigned __int64 *pdwLeftDur);
   int GetIndexFromSerial(unsigned __int16 wSerial);
   _db_con *GetPtrFromSerial(unsigned __int16 wSerial);
+  char GradeUp(int n, unsigned int dwUptInfo);
+  char GradeDown(int n, unsigned int dwUptInfo);
+  char SetGrade(int n, unsigned __int8 byLv, unsigned int dwUptInfo);
 };
 
 _STORAGE_LIST::_db_con *MakeLoot(unsigned __int8 byTableCode, unsigned __int16 wItemIndex);

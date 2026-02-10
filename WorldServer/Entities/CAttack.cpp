@@ -6,11 +6,14 @@
 #include "CAnimus.h"
 #include "CCharacter.h"
 #include "CGameObject.h"
+#include "CGuardTower.h"
+#include "CHolyStoneSystem.h"
 #include "CLogFile.h"
 #include "CMapData.h"
 #include "CMonster.h"
 #include "CObjectList.h"
 #include "CPlayer.h"
+#include "CPvpUserAndGuildRankingSystem.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 #include "pnt_rect.h"
@@ -61,6 +64,467 @@ CAttack::CAttack(CCharacter *pThis)
 void CAttack::SetStaticMember(CRecordData *effectTable)
 {
   s_pSkillData = effectTable;
+}
+
+void CAttack::SetActiveSucc(bool bSucc)
+{
+  m_bActiveSucc = bSucc;
+}
+
+void CAttack::AttackGen(_attack_param *pParam, bool bMustMiss, bool bUseEffBullet)
+{
+  m_nDamagedObjNum = 0;
+  m_bIsCrtAtt = false;
+  m_pp = pParam;
+  bool canHit = true;
+  m_nDamagedObjNum = 0;
+  CCharacter::BreakStealth(m_pAttChar);
+
+  if (m_pp->pDst)
+  {
+    bool isAvoided = false;
+    if (_effect_parameter::GetEff_State(&m_pp->pDst->m_EP, 14))
+    {
+      isAvoided = true;
+    }
+    else if (_effect_parameter::GetEff_Plus(&m_pp->pDst->m_EP, 27) > 0.0f)
+    {
+      const float roll = static_cast<float>(rand() % 100);
+      if (_effect_parameter::GetEff_Plus(&m_pp->pDst->m_EP, 27) > roll)
+      {
+        isAvoided = true;
+      }
+    }
+
+    if (isAvoided)
+    {
+      if (!m_pp->bPassCount && !m_pp->nClass && !m_pp->pDst->GetWeaponClass(m_pp->pDst))
+      {
+        const float targetRange = m_pp->pDst->GetAttackRange(m_pp->pDst);
+        const float attackerWidth = m_pAttChar->GetWidth(m_pAttChar);
+        const float rangeLimit =
+          targetRange + (attackerWidth / 2.0f) + _effect_parameter::GetEff_Plus(&m_pp->pDst->m_EP, 4);
+        const float dist = GetSqrt(m_pp->pDst->m_fCurPos, m_pAttChar->m_fCurPos);
+        if (rangeLimit >= dist)
+        {
+          m_DamList[0].m_pChar = m_pp->pDst;
+          m_DamList[0].m_nDamage = -1;
+          m_nDamagedObjNum = 1;
+          CCharacter::SendMsg_AttackActEffect(m_pAttChar, 0, m_pp->pDst);
+          return;
+        }
+      }
+
+      if (_effect_parameter::GetEff_Plus(&m_pp->pDst->m_EP, 27) > 0.0f)
+      {
+        m_DamList[0].m_pChar = m_pp->pDst;
+        m_DamList[0].m_nDamage = 0;
+        m_nDamagedObjNum = 1;
+        return;
+      }
+    }
+
+    if (m_pp->bMatchless)
+    {
+      m_DamList[0].m_pChar = m_pp->pDst;
+      m_DamList[0].m_nDamage = m_pp->pDst->GetHP(m_pp->pDst);
+      m_nDamagedObjNum = 1;
+      return;
+    }
+
+    if (_effect_parameter::GetEff_State(&m_pp->pDst->m_EP, 8))
+    {
+      canHit = false;
+    }
+    else
+    {
+      const int roll = rand() % 100;
+      const int attackProb = m_pAttChar->GetGenAttackProb(m_pp->pDst, m_pp->nPart, m_pp->bBackAttack);
+      if (roll >= attackProb)
+      {
+        canHit = false;
+      }
+    }
+
+    if (canHit && bMustMiss)
+    {
+      canHit = false;
+    }
+
+    if (!canHit)
+    {
+      m_DamList[0].m_pChar = m_pp->pDst;
+      m_DamList[0].m_nDamage = 0;
+      m_nDamagedObjNum = 1;
+      return;
+    }
+  }
+
+  float normalAttack = static_cast<float>(m_pp->nAddAttPnt + _CalcGenAttPnt(false));
+  float effAttack = static_cast<float>(m_pp->nAddAttPnt + _CalcGenAttPnt(bUseEffBullet));
+
+  if (!m_pAttChar->m_ObjID.m_byID
+    && (CHolyStoneSystem::GetDestroyerSerial(&g_HolySys) == m_pAttChar->m_dwObjSerial
+      || CPlayer::IsLastAttBuff(reinterpret_cast<CPlayer *>(m_pAttChar))))
+  {
+    normalAttack *= 1.3f;
+    effAttack *= 1.3f;
+  }
+
+  if (!m_pAttChar->m_ObjID.m_byID)
+  {
+    auto *attacker = reinterpret_cast<CPlayer *>(m_pAttChar);
+    if (!attacker->m_bInGuildBattle)
+    {
+      const unsigned int dwSerial = CPlayerDB::GetCharSerial(&attacker->m_Param);
+      const int raceCode = CPlayerDB::GetRaceCode(&attacker->m_Param);
+      CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
+      const unsigned __int8 bossType = CPvpUserAndGuildRankingSystem::GetBossType(ranking, raceCode, dwSerial);
+      if (bossType)
+      {
+        if (bossType == 2 || bossType == 6)
+        {
+          normalAttack *= 1.2f;
+          effAttack *= 1.2f;
+        }
+      }
+      else
+      {
+        normalAttack *= 1.3f;
+        effAttack *= 1.3f;
+      }
+    }
+  }
+
+  if (m_pAttChar->m_ObjID.m_byID == 3)
+  {
+    auto *tower = reinterpret_cast<CGuardTower *>(m_pAttChar);
+    if (tower && tower->m_pMasterTwr)
+    {
+      const float attackFc0 = GetAttackFC(tower->m_pMasterTwr, 2u, true, false);
+      const float effRate0 = _effect_parameter::GetEff_Rate(&tower->m_pMasterTwr->m_EP, 57);
+      const float add0 = attackFc0 * (effRate0 - 1.0f);
+
+      const float attackFc1 = GetAttackFC(tower->m_pMasterTwr, 0, true, false);
+      const float effRate1 = _effect_parameter::GetEff_Rate(&tower->m_pMasterTwr->m_EP, 58);
+      const float add1 = attackFc1 * (effRate1 - 1.0f);
+
+      const float attackFc2 = GetAttackFC(tower->m_pMasterTwr, 0, false, false);
+      const float effRate2 = _effect_parameter::GetEff_Rate(&tower->m_pMasterTwr->m_EP, 59);
+      const float add2 = attackFc2 * (effRate2 - 1.0f);
+
+      const float attackFc3 = GetAttackFC(tower->m_pMasterTwr, 1u, true, false);
+      const float effRate3 = _effect_parameter::GetEff_Rate(&tower->m_pMasterTwr->m_EP, 60);
+      const float add3 = attackFc3 * (effRate3 - 1.0f);
+
+      const float attackFc4 = GetAttackFC(tower->m_pMasterTwr, 1u, false, false);
+      const float effRate4 = _effect_parameter::GetEff_Rate(&tower->m_pMasterTwr->m_EP, 61);
+      const float add4 = attackFc4 * (effRate4 - 1.0f);
+
+      normalAttack = (((normalAttack + add0) + add1) + add2) + add3 + add4;
+      effAttack = (((effAttack + add0) + add1) + add2) + add3 + add4;
+    }
+  }
+
+  if (m_pp->nWpType == 7)
+  {
+    const float rate = _effect_parameter::GetEff_Rate(&m_pAttChar->m_EP, 29);
+    normalAttack *= rate;
+    effAttack *= rate;
+  }
+  else
+  {
+    const float rate = _effect_parameter::GetEff_Rate(&m_pAttChar->m_EP, m_pp->nClass);
+    normalAttack *= rate;
+    effAttack *= rate;
+  }
+
+  const int attackType = pParam->nAttactType;
+  if (attackType >= 0 && attackType <= 2)
+  {
+    m_DamList[0].m_pChar = m_pp->pDst;
+    if (bUseEffBullet)
+    {
+      m_DamList[0].m_nDamage = CCharacter::GetAttackDamPoint(
+        m_pAttChar,
+        static_cast<int>(effAttack),
+        m_pp->nPart,
+        m_pp->nTol,
+        m_pp->pDst,
+        m_pp->bBackAttack);
+    }
+    else
+    {
+      m_DamList[0].m_nDamage = CCharacter::GetAttackDamPoint(
+        m_pAttChar,
+        static_cast<int>(normalAttack),
+        m_pp->nPart,
+        m_pp->nTol,
+        m_pp->pDst,
+        m_pp->bBackAttack);
+    }
+    m_nDamagedObjNum = 1;
+  }
+  else if (attackType == 5)
+  {
+    if (m_pp->nExtentRange > 0)
+    {
+      FlashDamageProc(m_pp->nExtentRange, static_cast<int>(normalAttack), 90, static_cast<int>(effAttack), bUseEffBullet);
+    }
+  }
+  else if (attackType == 6)
+  {
+    if (m_pp->nExtentRange > 0)
+    {
+      AreaDamageProc(
+        m_pp->nExtentRange,
+        static_cast<int>(normalAttack),
+        m_pp->fArea,
+        static_cast<int>(effAttack),
+        bUseEffBullet);
+    }
+  }
+  else
+  {
+    m_DamList[0].m_pChar = m_pp->pDst;
+    m_DamList[0].m_nDamage = 0;
+    m_nDamagedObjNum = 1;
+  }
+
+  CalcAvgDamage();
+}
+
+void CAttack::AttackForce(_attack_param *pParam, bool bUseEffBullet)
+{
+  m_nDamagedObjNum = 0;
+  m_bIsCrtAtt = false;
+  m_pp = pParam;
+  _base_fld *forceField = m_pp->pFld;
+  bool canHit = true;
+  CCharacter::BreakStealth(m_pAttChar);
+
+  if (m_pp->pDst)
+  {
+    if (_effect_parameter::GetEff_State(&m_pp->pDst->m_EP, 8))
+    {
+      canHit = false;
+    }
+    else
+    {
+      const float baseChance = _effect_parameter::GetEff_Plus(&m_pAttChar->m_EP, 31) + 100.0f;
+      const int avoid = m_pp->pDst->GetAvoidRate(m_pp->pDst);
+      int chance = static_cast<int>(baseChance - static_cast<float>(avoid));
+      if (!m_pAttChar->m_ObjID.m_byID)
+      {
+        const float add = _effect_parameter::GetEff_Plus(&m_pAttChar->m_EP, 40);
+        chance = static_cast<int>(static_cast<float>(chance) + add);
+      }
+      if (chance < 0)
+      {
+        chance = 0;
+      }
+      if (chance > 100)
+      {
+        chance = 100;
+      }
+      if (rand() % 100 >= chance)
+      {
+        canHit = false;
+      }
+    }
+  }
+
+  if (!canHit)
+  {
+    if (m_pp->pDst)
+    {
+      m_DamList[0].m_pChar = m_pp->pDst;
+      m_DamList[0].m_nDamage = 0;
+      m_nDamagedObjNum = 1;
+    }
+    return;
+  }
+
+  float normalAttack = static_cast<float>(m_pp->nAddAttPnt + _CalcForceAttPnt(false));
+  normalAttack *= _effect_parameter::GetEff_Rate(&m_pAttChar->m_EP, 4);
+  float effAttack = static_cast<float>(m_pp->nAddAttPnt + _CalcForceAttPnt(bUseEffBullet));
+  effAttack *= _effect_parameter::GetEff_Rate(&m_pAttChar->m_EP, 4);
+
+  if (!m_pAttChar->m_ObjID.m_byID
+    && (CHolyStoneSystem::GetDestroyerSerial(&g_HolySys) == m_pAttChar->m_dwObjSerial
+      || CPlayer::IsLastAttBuff(reinterpret_cast<CPlayer *>(m_pAttChar))))
+  {
+    normalAttack *= 1.3f;
+    effAttack *= 1.3f;
+  }
+
+  if (!m_pAttChar->m_ObjID.m_byID)
+  {
+    auto *attacker = reinterpret_cast<CPlayer *>(m_pAttChar);
+    if (!attacker->m_bInGuildBattle)
+    {
+      const unsigned int dwSerial = CPlayerDB::GetCharSerial(&attacker->m_Param);
+      const int raceCode = CPlayerDB::GetRaceCode(&attacker->m_Param);
+      CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
+      const unsigned __int8 bossType = CPvpUserAndGuildRankingSystem::GetBossType(ranking, raceCode, dwSerial);
+      if (bossType)
+      {
+        if (bossType == 2 || bossType == 6)
+        {
+          normalAttack *= 1.2f;
+          effAttack *= 1.2f;
+        }
+      }
+      else
+      {
+        normalAttack *= 1.3f;
+        effAttack *= 1.3f;
+      }
+    }
+  }
+
+  const int attackType = *reinterpret_cast<int *>(&forceField[11].m_strCode[4]);
+  if (attackType >= 0 && attackType <= 2)
+  {
+    if (m_pp->pDst)
+    {
+      m_DamList[0].m_pChar = m_pp->pDst;
+      if (bUseEffBullet)
+      {
+        m_DamList[0].m_nDamage = CCharacter::GetAttackDamPoint(
+          m_pAttChar,
+          static_cast<int>(effAttack),
+          m_pp->nPart,
+          m_pp->nTol,
+          m_pp->pDst,
+          m_pp->bBackAttack);
+      }
+      else
+      {
+        m_DamList[0].m_nDamage = CCharacter::GetAttackDamPoint(
+          m_pAttChar,
+          static_cast<int>(normalAttack),
+          m_pp->nPart,
+          m_pp->nTol,
+          m_pp->pDst,
+          m_pp->bBackAttack);
+      }
+      m_nDamagedObjNum = 1;
+    }
+  }
+  else if (attackType == 5)
+  {
+    const int index = *reinterpret_cast<int *>(&forceField[4].m_strCode[60]);
+    FlashDamageProc(
+      s_nLimitDist[index],
+      static_cast<int>(normalAttack),
+      s_nLimitAngle[1][index],
+      static_cast<int>(effAttack),
+      bUseEffBullet);
+  }
+  else if (attackType == 4 || attackType == 6)
+  {
+    const int index = *reinterpret_cast<int *>(&forceField[4].m_strCode[60]);
+    AreaDamageProc(
+      s_nLimitRadius[index],
+      static_cast<int>(normalAttack),
+      m_pp->fArea,
+      static_cast<int>(effAttack),
+      bUseEffBullet);
+  }
+  else
+  {
+    return;
+  }
+
+  CalcAvgDamage();
+}
+
+float CAttack::GetAttackFC(CPlayer *pPlayer, unsigned __int8 bySkill, bool bNear, bool bUnit)
+{
+  _STORAGE_LIST::_db_con *weaponItem = pPlayer->m_Param.m_dbEquip.m_pStorageList + 6;
+  if (!weaponItem->m_bLoad)
+  {
+    return 0.0f;
+  }
+
+  _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[6], weaponItem->m_wItemIndex);
+  if (!record)
+  {
+    return 0.0f;
+  }
+
+  const int mastery = _MASTERY_PARAM::GetMasteryPerMast(&pPlayer->m_pmMst, 0, pPlayer->m_pmWpn.byWpClass);
+  float value = 0.0f;
+
+  if (bySkill)
+  {
+    if (bySkill == 1)
+    {
+      if (bUnit)
+      {
+        value = (*reinterpret_cast<float *>(record[10].m_strCode) * _effect_parameter::GetEff_Rate(&pPlayer->m_EP, 32))
+          + static_cast<float>(mastery);
+      }
+      else
+      {
+        value = (static_cast<float>(pPlayer->m_pmWpn.nGaMaxAF) * _effect_parameter::GetEff_Rate(&pPlayer->m_EP, 32))
+          + static_cast<float>(mastery);
+      }
+      if (!bNear || GetWeaponClass(weaponItem->m_wItemIndex))
+      {
+        if (bNear || GetWeaponClass(weaponItem->m_wItemIndex) != 1)
+        {
+          return 0.0f;
+        }
+        return value * _effect_parameter::GetEff_Rate(&pPlayer->m_EP, 3);
+      }
+      return value * _effect_parameter::GetEff_Rate(&pPlayer->m_EP, 2);
+    }
+    if (bUnit)
+    {
+      return (*reinterpret_cast<float *>(&record[10].m_strCode[24]) * _effect_parameter::GetEff_Rate(&pPlayer->m_EP, 32))
+        + static_cast<float>(pPlayer->m_pmMst.m_mtyStaff);
+    }
+    return (static_cast<float>(pPlayer->m_pmWpn.nMaMaxAF) * _effect_parameter::GetEff_Rate(&pPlayer->m_EP, 32))
+      + static_cast<float>(pPlayer->m_pmMst.m_mtyStaff);
+  }
+
+  if (bUnit)
+  {
+    value = (*reinterpret_cast<float *>(record[10].m_strCode) * _effect_parameter::GetEff_Rate(&pPlayer->m_EP, 32))
+      + static_cast<float>(CPlayer::s_nAddMstFc[mastery]);
+  }
+  else
+  {
+    value = (static_cast<float>(pPlayer->m_pmWpn.nGaMaxAF) * _effect_parameter::GetEff_Rate(&pPlayer->m_EP, 32))
+      + static_cast<float>(CPlayer::s_nAddMstFc[mastery]);
+  }
+
+  if (!bNear || GetWeaponClass(weaponItem->m_wItemIndex))
+  {
+    if (bNear || GetWeaponClass(weaponItem->m_wItemIndex) != 1)
+    {
+      return 0.0f;
+    }
+    return value * _effect_parameter::GetEff_Rate(&pPlayer->m_EP, 1);
+  }
+
+  return value * _effect_parameter::GetEff_Rate(&pPlayer->m_EP, 0);
+}
+
+__int64 CAttack::GetMeleeSkillIndex(int nMeleeTechCode)
+{
+  const int recordCount = CRecordData::GetRecordNum(s_pSkillData);
+  for (int index = 0; index < recordCount; ++index)
+  {
+    _base_fld *record = CRecordData::GetRecord(s_pSkillData, index);
+    if (!record[1].m_dwIndex && *reinterpret_cast<int *>(&record[16].m_strCode[52]) == nMeleeTechCode)
+    {
+      return index;
+    }
+  }
+  return 0xFFFFFFFFLL;
 }
 
 __int64 CAttack::_CalcGenAttPnt(bool bUseEffBullet)

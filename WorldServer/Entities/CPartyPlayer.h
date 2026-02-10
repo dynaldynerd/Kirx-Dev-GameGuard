@@ -23,6 +23,7 @@ public:
   bool IsPartyMode();
   bool IsPartyBoss();
   bool IsPartyLock();
+  bool IsPartyMember(CPlayer *pkObj);
   CPartyPlayer **GetPtrPartyMember();
   CPlayer *GetLootAuthor();
   void SetNextLootAuthor();

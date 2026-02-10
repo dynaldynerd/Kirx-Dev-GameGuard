@@ -37,6 +37,25 @@ bool CPartyPlayer::IsPartyLock()
   return m_pPartyBoss && m_pPartyBoss->m_bLock;
 }
 
+bool CPartyPlayer::IsPartyMember(CPlayer *pkObj)
+{
+  CPartyPlayer **members = GetPtrPartyMember();
+  if (!members)
+  {
+    return false;
+  }
+
+  for (int index = 0; index < 8 && members[index]; ++index)
+  {
+    if (members[index]->m_id.dwSerial == pkObj->m_dwObjSerial)
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 CPartyPlayer **CPartyPlayer::GetPtrPartyMember()
 {
   if (m_pPartyBoss)

@@ -92,6 +92,17 @@ CMapItemStoreList *CItemStoreManager::GetMapItemStoreListByNum(int nMapNum)
   return &m_MapItemStoreList[nMapNum];
 }
 
+CMapItemStoreList *CItemStoreManager::GetMapItemStoreListBySerial(int nSerial)
+{
+  for (int index = 0; index < m_nMapItemStoreListNum; ++index)
+  {
+    CMapItemStoreList *storeList = &m_MapItemStoreList[index];
+    if (storeList->m_nSerial == nSerial)
+      return storeList;
+  }
+  return nullptr;
+}
+
 CItemStore *CItemStoreManager::GetMapItemStoreFromList(int nMapNum, int nStoreNum)
 {
   CMapItemStoreList *pList = GetMapItemStoreListByNum(nMapNum);

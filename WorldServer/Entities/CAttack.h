@@ -5,6 +5,7 @@
 class CCharacter;
 class CGameObject;
 class CMonster;
+class CPlayer;
 struct _attack_param;
 class CRecordData;
 
@@ -38,6 +39,12 @@ public:
   static CRecordData *s_pSkillData;
   static _attack_param s_DefParam;
   static void SetStaticMember(CRecordData *effectTable);
+
+  void SetActiveSucc(bool bSucc);
+  void AttackGen(_attack_param *pParam, bool bMustMiss, bool bUseEffBullet);
+  void AttackForce(_attack_param *pParam, bool bUseEffBullet);
+  float GetAttackFC(CPlayer *pPlayer, unsigned __int8 bySkill, bool bNear, bool bUnit);
+  static __int64 GetMeleeSkillIndex(int nMeleeTechCode);
 
   __int64 _CalcGenAttPnt(bool bUseEffBullet);
   __int64 _CalcForceAttPnt(bool bUseEffBullet);

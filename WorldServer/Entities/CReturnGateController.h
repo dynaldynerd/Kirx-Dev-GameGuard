@@ -5,6 +5,7 @@
 #include "CNetIndexList.h"
 
 class CReturnGate;
+class CPlayer;
 
 class __cppobj CReturnGateController
 {
@@ -17,4 +18,9 @@ public:
 
   static CReturnGateController *Instance();
   bool Init(unsigned int gateCount);
+  CReturnGate *GetGate(unsigned int uiInx);
+  void Close(CReturnGate *pkGate);
+  int ProcessEnter(unsigned int uiGateInx, CPlayer *pkObj);
+  void SendEnterResult(char iResult, CPlayer *pkObj);
+  char Enter(unsigned int uiGateInx, CPlayer *pkObj);
 };

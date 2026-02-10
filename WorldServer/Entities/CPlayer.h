@@ -13,6 +13,7 @@
 #include "CRecordData.h"
 #include "SKILL_IDX_PER_MASTERY.h"
 #include "BILLING_FORCE_CLOSE_DELAY.h"
+#include "talik_crystal_exchange_clzo.h"
 #include <vector>
 
 
@@ -24,10 +25,26 @@ struct _DB_QRY_SYN_DATA;
 struct _base_fld;
 struct _monster_sp_fld;
 struct _skill_fld;
+struct _force_fld;
 struct _ResourceItem_fld;
 struct _ITEM_EFFECT;
+struct _consume_item_list;
+struct _BulletItem_fld;
+struct _UnitBullet_fld;
+struct _UnitPart_fld;
+struct _unit_bullet_param;
+struct _combine_ex_item_request_clzo;
+struct _combine_ex_item_accept_request_clzo;
+struct _combine_ex_item_result_zocl;
+struct _combine_ex_item_accept_result_zocl;
+struct _attack_param;
+struct _be_damaged_char;
+class CAttack;
 class CGameObject;
+class CItemBox;
+class CItemStore;
 class CPlayer;
+class CPlayerAttack;
 class CMapData;
 struct _BSP_C_FACE;
 struct _BSP_MAT_GROUP;
@@ -93,6 +110,7 @@ struct _PVPPOINT_LIMIT_DB_BASE;
 struct _PVP_ORDER_VIEW_DB_BASE;
 struct _w_name;
 class CPartyPlayer;
+class CPartyModeKillMonsterExpNotify;
 class CDarkHoleChannel;
 class CDarkHole;
 struct _dh_quest_setup;
@@ -422,6 +440,8 @@ struct __declspec(align(8)) _WEAPON_PARAM
   void Init();
   void FixWeapon(_STORAGE_LIST::_db_con *pWeapon);
   unsigned int GetWeaponTolType(_STORAGE_LIST::_db_con *pItem);
+  unsigned int GetAttackDelay(int nLv, int nAddDelay);
+  unsigned int GetAttackToolType();
 };
 
 /* 1737 */
@@ -838,6 +858,10 @@ struct __cppobj __declspec(align(4)) _ATTACK_DELAY_CHECKER
     unsigned __int8 byEffectCode;
     unsigned __int16 wEffectIndex;
     unsigned int dwNextTime;
+
+    _eff_list();
+    static void init(_eff_list *self);
+    static bool fill(_eff_list *self);
   };
 
   struct _mas_list
@@ -845,6 +869,10 @@ struct __cppobj __declspec(align(4)) _ATTACK_DELAY_CHECKER
     unsigned __int8 byEffectCode;
     unsigned __int8 byMastery;
     unsigned int dwNextTime;
+
+    _mas_list();
+    static void init(_mas_list *self);
+    static bool fill(_mas_list *self);
   };
 
   _eff_list EFF[10];
@@ -860,6 +888,12 @@ struct __cppobj __declspec(align(4)) _ATTACK_DELAY_CHECKER
   unsigned __int8 byTemp_EffectMastery;
 
   static int s_nSpareTime;
+
+  _ATTACK_DELAY_CHECKER();
+  static void Init(_ATTACK_DELAY_CHECKER *self);
+  static char IsDelay(_ATTACK_DELAY_CHECKER *self, unsigned __int8 code, unsigned __int16 index, unsigned __int8 mastery);
+  static void SetDelay(_ATTACK_DELAY_CHECKER *self, unsigned int delay);
+  static char _delay_check(_ATTACK_DELAY_CHECKER *self, unsigned __int8 code, unsigned __int16 index, unsigned __int8 mastery);
 };
 
 /* 1793 */
@@ -1015,6 +1049,11 @@ public:
     int nAlter,
     bool bUpdate,
     bool bSend);
+  void Emb_ItemUpgrade(
+    unsigned __int8 byUpgradeType,
+    unsigned __int8 byStorageCode,
+    unsigned __int8 byStorageIndex,
+    unsigned int dwGradeInfo);
   char Create();
   char IntoMap(unsigned __int8 byMapInMode);
   bool OutOfMap(CMapData *pIntoMap, unsigned __int16 wLayerIndex, unsigned __int8 byMapOutType, float *pfStartPos);
@@ -1024,6 +1063,14 @@ public:
     float *pfStartPos,
     unsigned __int8 byMapInType);
   void SendMsg_GotoBasePortalResult(char byErrCode);
+  void SendMsg_MovePortal(
+    char byRet,
+    char byMapIndex,
+    unsigned __int8 byPotalIndex,
+    float *pfStartPos,
+    bool bEqualZone);
+  void SendMsg_MovePortal(char byMapIndex, float *pfStartPos, unsigned __int8 byZoneCode);
+  void SendMsg_RegistBindResult(char byRetCode);
   void SendMsg_MoveError(char byRetCode);
   void SendMsg_Stop(bool bAll);
   void SendMsg_MoveNext(bool bOtherSend);
@@ -1035,6 +1082,45 @@ public:
   void SendMsg_BuddhaEventMsg(char byErrorCode);
   void SendMsg_AlterItemDurInform(char byStorageCode, unsigned __int16 wItemSerial, unsigned __int64 dwDur);
   void SendMsg_EquipPartChange(unsigned __int8 byPart);
+  void SendMsg_TakeNewResult(char byErrCode, _STORAGE_LIST::_db_con *pItem);
+  void SendMsg_TakeAddResult(char byErrCode, _STORAGE_LIST::_db_con *pItem);
+  void SendMsg_ThrowStorageResult(char byErrCode);
+  void SendMsg_AddBagResult(char byErrCode);
+  void SendMsg_EquipPartResult(char byErrCode);
+  void SendMsg_EmbellishResult(char byErrCode);
+  void SendMsg_OffPartResult(char byErrCode);
+  void SendMsg_MakeItemResult(char byErrCode);
+  void SendMsg_ItemUpgrade(char byErrCode);
+  void SendMsg_ItemDowngrade(char byErrCode);
+  void SendMsg_CombineItemResult(char byErrCode, unsigned int dwFee, _STORAGE_LIST::_db_con *pNewItem);
+  void SendMsg_CombineLendItemResult(unsigned __int8 byErrCode, unsigned int dwFee, _STORAGE_LIST::_db_con *pNewItem);
+  void SendMsg_ExchangeItemResult(char byErrCode, _STORAGE_LIST::_db_con *pNewItem);
+  void SendMsg_CombineItemExResult(_combine_ex_item_result_zocl *pSend);
+  void SendMsg_CombineItemExAcceptResult(_combine_ex_item_accept_result_zocl *pSend);
+  void SendMsg_UsePotionResult(char byErrCode, unsigned __int16 wSerial, unsigned __int8 byLeftNum);
+  void SendMsg_UseRadarResult(char byErrCode, unsigned __int16 wSerial, unsigned int dwDelay);
+  void SendMsg_RadarCharSearchResult();
+  void SendMsg_FanfareItem(unsigned __int8 byGetType, _STORAGE_LIST::_db_con *pItem, CItemBox *pItemBox);
+  void SendMsg_PartyLootItemInform(
+    unsigned int dwTakerSerial,
+    unsigned __int8 byTableCode,
+    unsigned __int16 wItemIndex,
+    unsigned __int8 byNum);
+  void SendMsg_Notify_Get_Golden_Box(
+    char byBoxType,
+    unsigned int dwCharSerial,
+    char *szCharName,
+    _STORAGE_LIST::_db_con *pItem,
+    bool bCircle);
+  void SendMsg_Notify_Me_Get_Golden_Box(char byBoxType, _STORAGE_LIST::_db_con *pItem);
+  void SendMsg_ExchangeLendItemResult(unsigned __int8 byErrCode, _STORAGE_LIST::_db_con *pNewItem);
+  void SendMsg_TalikCrystalExchangeResult(
+    unsigned __int8 byRet,
+    unsigned __int8 byExchangeNum,
+    _STORAGE_LIST::_db_con *pNewItem);
+  void SendMsg_CharacterRenameCashResult(char bChange, char byErrCode);
+  void SendMsg_SetItemCheckResult(char byResult, unsigned int dwSetItem, unsigned __int8 bySetEffectNum);
+  void SendMsg_NPCLinkItemCheckResult(unsigned __int8 byResCode, _STORAGE_POS_INDIV *pStorage);
   void SendMsg_PostDelivery(
     char byIndex,
     unsigned int dwPostSerial,
@@ -1096,6 +1182,8 @@ public:
   void pc_MoveModeChangeRequest(unsigned __int8 byMoveType);
   void pc_GotoBasePortalRequest(unsigned __int16 wItemSerial);
   void pc_GotoAvatorRequest(char *pwszAvatorName);
+  void pc_MovePortal(int nPortalIndex, unsigned __int16 *pConsumeSerial);
+  void pc_RegistBind(CItemStore *pStore);
   bool IsOutExtraStopPos(float *pfStopPos);
   char Emb_CheckActForQuest(int nActCode, char *pszReqCode, unsigned __int16 wAddCount, bool bParty);
   char Emb_StartQuest(unsigned __int8 bySelectQuest, _happen_event_cont *pHappenEvent);
@@ -1266,6 +1354,50 @@ public:
   void SendMsg_RemainOreRate();
   void SendMsg_OreTransferCount();
   void SendMsg_LendItemTimeExpired(char byStorageCode, unsigned __int16 wSerial);
+  void pc_TakeGroundingItem(CItemBox *pBox, unsigned __int16 wAddSerial);
+  void pc_ThrowStorageItem(_STORAGE_POS_INDIV *pItem);
+  void pc_UsePotionItem(CPlayer *pTargetPlayer, _STORAGE_POS_INDIV *pItem);
+  void pc_EquipPart(_STORAGE_POS_INDIV *pItem);
+  void pc_EmbellishPart(_STORAGE_POS_INDIV *pItem, unsigned __int16 wChangeSerial);
+  void pc_OffPart(_STORAGE_POS_INDIV *pItem);
+  void pc_MakeItem(
+    _STORAGE_POS_INDIV *pipMakeTool,
+    unsigned __int16 wManualIndex,
+    unsigned __int8 byMaterialNum,
+    _STORAGE_POS_INDIV *pipMaterials);
+  void pc_UpgradeItem(
+    _STORAGE_POS_INDIV *pposTalik,
+    _STORAGE_POS_INDIV *pposToolItem,
+    _STORAGE_POS_INDIV *pposUpgItem,
+    unsigned __int8 byJewelNum,
+    _STORAGE_POS_INDIV *pposUpgJewel);
+  void pc_DowngradeItem(_STORAGE_POS_INDIV *pposTalik, _STORAGE_POS_INDIV *pposToolItem, _STORAGE_POS_INDIV *pposUpgItem);
+  void pc_AddBag(unsigned __int16 wBagItemSerial);
+  char pc_UseRecoverLossExpItem(unsigned __int16 wItemSerial);
+  void pc_CombineItem(
+    unsigned __int16 wManualIndex,
+    unsigned __int8 byMaterialNum,
+    _STORAGE_POS_INDIV *pipMaterials,
+    unsigned __int16 wOverlapItemSerial);
+  void pc_ExchangeItem(unsigned __int16 wManualIndex, unsigned __int16 wItemSerial);
+  void pc_CombineItemEx(_combine_ex_item_request_clzo *pRecv);
+  void pc_CombineItemExAccept(_combine_ex_item_accept_request_clzo *pRecv);
+  __int64 pc_UseFireCracker(unsigned __int16 wItemSerial);
+  unsigned __int8 pc_UserSoccerBall(unsigned __int16 wItemSerial, unsigned __int16 *wItemIndex);
+  char pc_UseRadarItem(_STORAGE_POS_INDIV *pItem, unsigned __int16 *pConsumeSerial);
+  char pc_RadarCharInfo();
+  char pc_NPCLinkCheckItemRequest(_STORAGE_POS_INDIV *pStorage);
+  unsigned __int8 pc_NPCLinkCheckItemRequest_Check(_STORAGE_POS_INDIV *pStorage);
+  unsigned __int8 pc_NPCLinkCheckItemRequest_Use(_STORAGE_POS_INDIV *pStorage);
+  void pc_TalikCrystalExchange(unsigned __int8 byExchangeNum, _talik_crystal_exchange_clzo::_list *pList);
+  unsigned __int8 pc_RenameItemNConditionCheck(_STORAGE_POS_INDIV *pItemInfo, _STORAGE_LIST::_db_con **ppItem);
+  char pc_CharacterRenameCash(bool bChange, _STORAGE_POS_INDIV *pItem, const char *strCharacterName);
+  char pc_CharacterRenameCheck(const char *strCharacterName);
+  char pc_SetItemCheckRequest(
+    unsigned int dwSetItem,
+    unsigned __int8 bySetItemNum,
+    unsigned __int8 bySetEffectNum,
+    bool bSet);
   void pc_NewPosStart();
   void pc_Revival(bool bUseableJade);
   void pc_ExitWorldRequest();
@@ -1298,6 +1430,210 @@ public:
     CashChangeStateFlag ServerData,
     CashChangeStateFlag ClinetData);
   void SendMsg_OtherShapeError(CPlayer *pDst, unsigned __int8 byErrCode);
+  char _pre_check_normal_attack(
+    CCharacter *pDst,
+    unsigned __int16 wBulletSerial,
+    bool bCount,
+    _STORAGE_LIST::_db_con **ppBulletProp,
+    _BulletItem_fld **ppfldBullet,
+    unsigned __int16 wEffBtSerial,
+    _STORAGE_LIST::_db_con **ppEffBtProp,
+    _BulletItem_fld **ppfldEffBt);
+  char _pre_check_skill_attack(
+    CCharacter *pDst,
+    float *pfAttackPos,
+    unsigned __int8 byEffectCode,
+    _skill_fld *pSkillFld,
+    unsigned __int16 wBulletSerial,
+    _STORAGE_LIST::_db_con **ppBulletProp,
+    _BulletItem_fld **ppfldBullet,
+    int nEffectGroup,
+    unsigned __int16 *pdwDecPoint,
+    unsigned __int16 wEffBtSerial,
+    _STORAGE_LIST::_db_con **ppEffBtProp,
+    _BulletItem_fld **ppfldEffBt);
+  char _pre_check_force_attack(
+    CCharacter *pDst,
+    float *pfTarPos,
+    unsigned __int16 wForceItemSerial,
+    _force_fld **ppForceFld,
+    _STORAGE_LIST::_db_con **ppForceItem,
+    unsigned __int16 *pdwDecPoint,
+    unsigned __int16 wEffBtSerial,
+    _STORAGE_LIST::_db_con **ppEffBtProp,
+    _BulletItem_fld **ppfldEffBt);
+  char _pre_check_unit_attack(
+    CCharacter *pDst,
+    unsigned __int8 byWeaponPart,
+    _UnitPart_fld **ppWeaponFld,
+    _UnitBullet_fld **ppBulletFld,
+    _unit_bullet_param **ppBulletParam);
+  char _pre_check_siege_attack(
+    CCharacter *pDst,
+    float *pfAttackPos,
+    unsigned __int16 wBulletSerial,
+    _STORAGE_LIST::_db_con **ppBulletProp,
+    _BulletItem_fld **ppfldBullet,
+    unsigned __int16 wEffBtSerial,
+    _STORAGE_LIST::_db_con **ppEffBulletProp,
+    _BulletItem_fld **ppfldEffBullet);
+  char _pre_check_wpactive_skill_attack(
+    unsigned __int8 byEffectCode,
+    _skill_fld *pSkillFld,
+    unsigned __int16 wBulletSerial,
+    _STORAGE_LIST::_db_con **ppBulletProp,
+    _BulletItem_fld **ppfldBullet);
+  bool _pre_check_wpactive_force_attack();
+  int _pre_check_in_guild_battle(CPlayer *pDst);
+  bool _pre_check_in_guild_battle_race(CPlayer *pDst, bool bEqueal);
+  bool _pre_check_skill_enable(_skill_fld *pSkillFld);
+  char _pre_check_skill_gradelimit(_skill_fld *pSkillFld);
+  void make_gen_attack_param(
+    CCharacter *pDst,
+    unsigned __int8 byPart,
+    _BulletItem_fld *pBulletFld,
+    float fAddBulletFc,
+    _attack_param *pAP,
+    _BulletItem_fld *pEffBtFld,
+    float fAddEffBtFc);
+  void make_skill_attack_param(
+    CCharacter *pDst,
+    float *pfAttackPos,
+    unsigned __int8 byEffectCode,
+    _skill_fld *pSkillFld,
+    int nAttType,
+    _STORAGE_LIST::_db_con *pBulletItem,
+    float fAddBulletFc,
+    _attack_param *pAP,
+    _STORAGE_LIST::_db_con *pEffBulletItem,
+    float fAddEffBulletFc);
+  void make_force_attack_param(
+    CCharacter *pDst,
+    _force_fld *pForceFld,
+    _STORAGE_LIST::_db_con *pForceItem,
+    float *pTar,
+    _attack_param *pAP,
+    _STORAGE_LIST::_db_con *pEffBulletItem,
+    float fAddEffBtFc);
+  void make_unit_attack_param(CCharacter *pDst, _UnitPart_fld *pWeaponFld, float fAddBulletFc, _attack_param *pAP);
+  void make_siege_attack_param(
+    CCharacter *pDst,
+    float *pfAttackPos,
+    unsigned __int8 byPart,
+    _BulletItem_fld *pBulletFld,
+    float fAddBulletFc,
+    _attack_param *pAP,
+    _BulletItem_fld *pEffBulletFld,
+    float fAddEffBtFc);
+  void make_wpactive_skill_attack_param(
+    CCharacter *pDst,
+    _skill_fld *pSkillFld,
+    float *pfAttackPos,
+    unsigned __int8 byEffectCode,
+    int nAttType,
+    _STORAGE_LIST::_db_con *pBulletItem,
+    float fAddBulletFc,
+    _attack_param *pAP,
+    int *nShotNum);
+  void make_wpactive_force_attack_param(CCharacter *pDst, _force_fld *pForceFld, float *pfAttackPos, _attack_param *pAP);
+  char WeaponSFActive(
+    _be_damaged_char *pDamList,
+    int *nDamagedObjNum,
+    int *nShotNum,
+    unsigned __int16 wBulletSerial);
+  char pc_WPActiveAttack_Skill(
+    _be_damaged_char *pDamList,
+    int *nDamagedObjNum,
+    int *nShotNum,
+    _skill_fld *pSkillFld,
+    unsigned __int8 byEffectCode,
+    unsigned __int16 wBulletSerial);
+  char pc_WPActiveAttack_Force(_be_damaged_char *pDamList, int *nDamagedObjNum, _force_fld *pForceFld);
+  bool WPActiveSkill(_be_damaged_char *pDamList, int nDamagedObjNum, _skill_fld *pSkillFld, int nEffectCode);
+  bool WPActiveForce(_be_damaged_char *pDamList, int nDamagedObjNum, _force_fld *pForceFld);
+  void pc_PlayAttack_Gen(
+    CCharacter *pDst,
+    unsigned __int8 byAttPart,
+    unsigned __int16 wBulletSerial,
+    unsigned __int16 wEffBtSerial,
+    bool bCount);
+  void pc_PlayAttack_Skill(
+    CCharacter *pDst,
+    float *pfAttackPos,
+    unsigned __int8 byEffectCode,
+    unsigned __int16 wSkillIndex,
+    unsigned __int16 wBulletSerial,
+    unsigned __int16 *pConsumeSerial,
+    unsigned __int16 wEffBtSerial);
+  void pc_PlayAttack_Force(
+    CCharacter *pDst,
+    float *pfAreaPos,
+    unsigned __int16 wForceSerial,
+    unsigned __int16 *pConsumeSerial,
+    unsigned __int16 wEffBtSerial);
+  void pc_PlayAttack_Unit(CCharacter *pDst, unsigned __int8 byWeaponPart);
+  void pc_PlayAttack_Siege(
+    CCharacter *pDst,
+    float *pfAttackPos,
+    unsigned __int8 byAttPart,
+    unsigned __int16 wBulletSerial,
+    unsigned __int16 wEffBtSerial);
+  void pc_PlayAttack_Test(
+    unsigned __int8 byEffectCode,
+    unsigned __int8 byEffectIndex,
+    unsigned __int16 wBulletItemSerial,
+    unsigned __int8 byWeaponPart,
+    __int16 *pzTar);
+  void pc_PlayAttack_SelfDestruction();
+  unsigned int _check_exp_after_attack(
+    int nDamagedObjNum,
+    _be_damaged_char *pList,
+    CPartyModeKillMonsterExpNotify *kPartyExpNotify);
+  void _check_dst_param_after_attack(int nTotalDam, CCharacter *pTarget);
+  bool IsPassExpLimitLvDiff(int iDstLevel, bool *bGetAttackExp);
+  float GetPartyExpDistributionRate(int iPartyMemberLevel, int iMaxLevel, int i2ndLevel);
+  void CalcExp(CCharacter *pDst, int nDam, CPartyModeKillMonsterExpNotify *kPartyExpNotify);
+  void SendMsg_AttackResult_Gen(CAttack *pAt, unsigned __int16 wBulletIndex);
+  void SendMsg_AttackResult_Skill(unsigned __int8 byEffectCode, CPlayerAttack *pAt, unsigned __int16 wBulletIndex);
+  void SendMsg_AttackResult_Force(CAttack *pAt);
+  void SendMsg_AttackResult_Unit(CAttack *pAt, unsigned __int8 byWeaponPart, unsigned __int16 wBulletIndex);
+  void SendMsg_AttackResult_Siege(CAttack *pAt, unsigned __int16 wBulletIndex);
+  void SendMsg_AttackResult_Count(CAttack *pAt);
+  void SendMsg_AttackResult_SelfDestruction(CAttack *pAt);
+  void SendMsg_AttackResult_Error(char nErrCode);
+  void SendMsg_TestAttackResult(
+    unsigned __int8 byEffectCode,
+    unsigned __int8 byEffectIndex,
+    unsigned __int16 wBulletItemIndex,
+    unsigned __int8 byEffectLv,
+    unsigned __int8 byWeaponPart,
+    __int16 *pzTar);
+  void SendMsg_AlterWeaponBulletInform(unsigned __int16 wItemSerial, unsigned __int16 wLeftNum);
+  void SendMsg_AlterUnitBulletInform(char byPart, unsigned __int16 wLeftNum);
+  void SendMsg_Recover();
+  char GetUseConsumeItem(
+    _consume_item_list *pConsumeList,
+    unsigned __int16 *pItemSerials,
+    _STORAGE_LIST::_db_con **ppConsumeItems,
+    int *pnConsume,
+    bool *pbOverLap);
+  char DeleteUseConsumeItem(_STORAGE_LIST::_db_con **ppConsumeItems, int *pnConsume, bool *pbOverLap);
+  int GetGauge(int nParamCode);
+  void SetGauge(int nParamCode, int nValue, bool bOver);
+  __int64 CalcEquipAttackDelay();
+  __int64 GetMasteryCumAfterAttack(int nDstLv);
+  bool IsPassMasteryLimitLvDiff(int iDstLevel);
+  void SetBattleMode(bool bAttack);
+  __int64 AttackableHeight();
+  __int64 GetAttackDP();
+  __int64 GetAttackLevel();
+  float GetAttackRange();
+  __int64 GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack);
+  bool IsBeAttackedAble(bool bFirst);
+  void SetAttackPart(int nAttactPart);
+  char dev_trap_attack_grade(int nPoint);
+  char mgr_MaxAttackPoint(int nMax);
+  char mgr_set_animus_attack_point(int nPoint);
 
   bool m_bLoad;
   bool m_bOper;

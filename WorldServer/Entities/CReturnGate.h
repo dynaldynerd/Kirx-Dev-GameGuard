@@ -16,4 +16,14 @@ public:
   CMapData *m_pDestMap;
   float m_fBindPos[3];
   unsigned int m_dwCloseTime;
+
+  void Clear();
+  unsigned __int16 GetIndex();
+  bool IsOpen();
+  bool IsValidOwner();
+  bool IsValidPosition(float *pfCurPos);
+  int Enter(CPlayer *pkObj);
+  void Close();
+  void SendMsg_Destroy();
+  void SendMsg_MovePortal(CPlayer *pkObj);
 };
