@@ -90,6 +90,14 @@ public:
   bool LinkBoardDownloadRequest(unsigned int n, char *pBuf);
   bool MacroDownLoadRequest(unsigned int n, char *pBuf);
   bool AMP_DownloadRequest(unsigned int n, char *pBuf);
+  bool NextPoint(unsigned int n, char *pBuf);
+  bool RealMovPosRequest(unsigned int n, char *pBuf);
+  bool Stop(unsigned int n, char *pBuf);
+  bool GotoBasePortalRequest(unsigned int n, char *pBuf);
+  bool GotoAvatorRequest(unsigned int n, char *pBuf);
+  bool MoveTypeChangeRequeset(unsigned int n, char *pBuf);
+  bool MoveInfoRequeset(unsigned int n, char *pBuf);
+  bool PlayerInfoResult(unsigned int n, char *pBuf);
 
   bool ChatOperatorRequest(unsigned int n, char *pBuf);
   bool ChatCircleRequest(unsigned int n, char *pBuf);
@@ -154,3 +162,5 @@ public:
 };
 
 extern CNetworkEX g_Network;
+
+void DeCrypt_Move(char *pStr, int nSize, unsigned __int8 byPlus, unsigned __int16 wCryptKey);

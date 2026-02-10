@@ -85,4 +85,7 @@ extern float PLAYER_EXP_RATE;
 extern float PLAYER_LOST_EXP;
 extern float TSVR_ADD_DARKHOLE_REWARD_RATE;
 extern unsigned __int8 Major_Bind_HQ;
+extern unsigned __int8 Major_Sette_Mine_Elan_Map;
+extern unsigned __int8 Major_Scroll_Item;
+extern unsigned __int8 Major_Cash_Item;
 extern unsigned __int8 Major_Add_Character;

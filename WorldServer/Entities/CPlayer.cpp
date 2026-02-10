@@ -1,6 +1,9 @@
 #include "pch.h"
 
 #include "CPlayer.h"
+#include "quest_check_result.h"
+#include "insert_new_quest_inform_zocl.h"
+#include "insert_next_quest_inform_zocl.h"
 #include "CRecordData.h"
 #include "CAnimus.h"
 #include "CMonster.h"
@@ -35,6 +38,7 @@
 #include "ITEM_EFFECT.h"
 #include "ItemUpgrade_fld.h"
 #include "TimeLimitJadeMng.h"
+#include "TimeItem.h"
 #include "ResourceItem_fld.h"
 #include "UIDGenerator.h"
 #include "WorldServerUtil.h"
@@ -297,6 +301,16 @@ void _QUEST_DB_BASE::Init()
   {
     m_List[j].Init();
   }
+}
+
+void _happen_event_cont::init()
+{
+  memset_0(this, 0, sizeof(_happen_event_cont));
+}
+
+bool _happen_event_cont::isset() const
+{
+  return m_pEvent != nullptr;
 }
 
 void _COMBINEKEY::SetRelease()
@@ -1479,6 +1493,652 @@ void CPlayer::SendMsg_GotoBasePortalResult(char byErrCode)
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, 8u);
 }
 
+void CPlayer::SendMsg_MoveError(char byRetCode)
+{
+  char msg[13]{};
+  msg[0] = byRetCode;
+  memcpy_0(msg + 1, m_fCurPos, 12);
+
+  unsigned __int8 type[2]{4, 3};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, 0xDu);
+}
+
+void CPlayer::SendMsg_Stop(bool bAll)
+{
+  char msg[10]{};
+  *reinterpret_cast<unsigned int *>(msg) = m_dwObjSerial;
+  FloatToShort(m_fCurPos, reinterpret_cast<short *>(msg + 4), 3);
+
+  unsigned __int8 type[2]{4, 20};
+  if (bAll)
+  {
+    CircleReport(type, msg, 10, true);
+  }
+  else
+  {
+    g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, 0xAu);
+  }
+}
+
+void CPlayer::SendMsg_MoveNext(bool bOtherSend)
+{
+  char msg[17]{};
+  *reinterpret_cast<unsigned int *>(msg) = m_dwObjSerial;
+  FloatToShort(m_fCurPos, reinterpret_cast<short *>(msg + 4), 3);
+  auto *shorts = reinterpret_cast<short *>(msg + 4);
+  shorts[3] = static_cast<short>(m_fTarPos[0]);
+  shorts[4] = static_cast<short>(m_fTarPos[2]);
+  shorts[5] = static_cast<short>(GetAddSpeed());
+  msg[16] = static_cast<char>(m_byMoveDirect);
+
+  unsigned __int8 type[2]{4, 4};
+  if (bOtherSend)
+  {
+    CircleReport(type, msg, 17, true);
+  }
+  else
+  {
+    g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, 0x11u);
+  }
+}
+
+void CPlayer::SendMsg_QuestProcess(char byQuestDBSlot, char byActIndex, unsigned __int16 wCount)
+{
+  char msg[4]{};
+  msg[0] = byQuestDBSlot;
+  msg[1] = byActIndex;
+  *reinterpret_cast<unsigned __int16 *>(msg + 2) = wCount;
+
+  unsigned __int8 type[2]{24, 6};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, 4u);
+}
+
+void CPlayer::SendMsg_SelectQuestReward(char byQuestDBSlot)
+{
+  char msg[1]{};
+  msg[0] = byQuestDBSlot;
+
+  unsigned __int8 type[2]{24, 8};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, 1u);
+}
+
+void CPlayer::SendMsg_QuestFailure(char byFailCode, char byQuestDBSlot)
+{
+  char msg[2]{};
+  msg[0] = byFailCode;
+  msg[1] = byQuestDBSlot;
+
+  unsigned __int8 type[2]{24, 7};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, 2u);
+}
+
+void CPlayer::SendMsg_InsertNextQuest(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pQuestDB)
+{
+  _insert_next_quest_inform_zocl msg{};
+  msg.byQuestDBSlot = bySlotIndex;
+  memcpy_0(&msg.NewQuestData, pQuestDB, sizeof(msg.NewQuestData));
+
+  unsigned __int8 type[2]{24, 111};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0xEu);
+}
+
+void CPlayer::SendMsg_InsertNewQuest(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pQuestDB)
+{
+  _insert_new_quest_inform_zocl msg{};
+  msg.byQuestDBSlot = bySlotIndex;
+  memcpy_0(&msg.NewQuestData, pQuestDB, sizeof(msg.NewQuestData));
+
+  unsigned __int8 type[2]{24, 1};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0xEu);
+}
+
+void CPlayer::SendMsg_QuestComplete(char byQuestDBSlot)
+{
+  char msg[1]{};
+  msg[0] = byQuestDBSlot;
+
+  unsigned __int8 type[2]{24, 5};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, 1u);
+}
+
+void CPlayer::SendMsg_NpcQuestHistoryInform(char bySlotIndex)
+{
+  char msg[9]{};
+  msg[0] = bySlotIndex;
+  strcpy_0(msg + 1, m_QuestMgr.m_pQuestData->m_History[static_cast<unsigned __int8>(bySlotIndex)].szQuestCode);
+
+  unsigned __int8 type[2]{24, 19};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, 9u);
+}
+
+bool CPlayer::IsOutExtraStopPos(float *pfStopPos)
+{
+  return GetSqrt(m_fTarPos, pfStopPos) > 20.0f;
+}
+
+void CPlayer::pc_MoveModeChangeRequest(unsigned __int8 byMoveType)
+{
+  if (byMoveType != 2)
+  {
+    BreakCloakBooster();
+  }
+  m_byMoveType = byMoveType;
+  SenseState();
+}
+
+void CPlayer::pc_MoveNext(unsigned __int8 byMoveType, float *pfCur, float *pfTar, unsigned __int8 byDirect)
+{
+  unsigned __int8 errorCode = 0;
+  if (m_pmTrd.bDTradeMode)
+  {
+    errorCode = 7;
+  }
+  else if (m_bCorpse)
+  {
+    errorCode = 8;
+  }
+  else if (IsSiegeMode() || IsActingSiegeMode())
+  {
+    errorCode = 12;
+  }
+  else if (m_byStandType == 1)
+  {
+    errorCode = 10;
+  }
+  else if (m_bMapLoading)
+  {
+    errorCode = 1;
+  }
+  else if (_effect_parameter::GetEff_State(&m_EP, 6))
+  {
+    errorCode = 2;
+  }
+  else if (_effect_parameter::GetEff_State(&m_EP, 7) && byMoveType == 1)
+  {
+    errorCode = 3;
+  }
+  else if (_effect_parameter::GetEff_State(&m_EP, 20))
+  {
+    errorCode = 13;
+  }
+  else if (CMapData::IsMapIn(m_pCurMap, pfCur))
+  {
+    if (m_byUserDgr || (std::fabs(m_fCurPos[0] - pfCur[0]) <= 100.0f && std::fabs(m_fCurPos[2] - pfCur[2]) <= 100.0f))
+    {
+      const int raceTown = m_byPosRaceTown;
+      const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+      if (raceTown != raceCode && (byMoveType == 1 || byMoveType == 2))
+      {
+        if (IsRidingUnit())
+        {
+          if (!m_pUsingUnit->wBooster)
+          {
+            errorCode = 5;
+          }
+        }
+        else if (m_bMove)
+        {
+          if (!GetSP())
+          {
+            errorCode = 5;
+          }
+        }
+        else if (m_fEquipSpeed >= static_cast<float>(GetSP()))
+        {
+          errorCode = 5;
+        }
+      }
+    }
+    else
+    {
+      errorCode = 11;
+    }
+  }
+  else
+  {
+    errorCode = 4;
+  }
+
+  if (errorCode)
+  {
+    SendMsg_MoveError(static_cast<char>(errorCode));
+    if (m_bMove)
+    {
+      const bool outExtra = IsOutExtraStopPos(m_fCurPos);
+      SendMsg_Stop(outExtra);
+      CCharacter::Stop(this);
+    }
+    return;
+  }
+
+  const int raceTown = m_byPosRaceTown;
+  const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+  if (raceTown != raceCode && !IsRidingUnit() && !m_bMove && byMoveType == 1)
+  {
+    int sp = GetSP();
+    sp = static_cast<int>(static_cast<float>(sp) - m_fEquipSpeed);
+    if (sp < 0)
+    {
+      sp = 0;
+    }
+    SetSP(sp, false);
+    SendMsg_AlterSPInform();
+  }
+
+  m_byMoveType = byMoveType;
+  m_byMoveDirect = byDirect;
+  memcpy_0(m_fOldPos, m_fCurPos, sizeof(m_fOldPos));
+  memcpy_0(m_fCurPos, pfCur, sizeof(m_fCurPos));
+
+  bool otherSend = true;
+  if (m_bMove && m_byLastDirect == byDirect)
+  {
+    const float diffX = std::fabs(m_fSendTarPos[0] - pfTar[0]);
+    const float diffZ = std::fabs(m_fSendTarPos[1] - pfTar[2]);
+    const float diff = diffX <= diffZ ? diffZ : diffX;
+    if (diff < 10.0f)
+    {
+      otherSend = false;
+    }
+  }
+
+  if (otherSend)
+  {
+    m_fSendTarPos[0] = pfTar[0];
+    m_fSendTarPos[1] = pfTar[2];
+    m_byLastDirect = byDirect;
+  }
+
+  memcpy_0(m_fTarPos, pfTar, sizeof(m_fTarPos));
+  CCharacter::ResetSlot(this);
+  CCharacter::Go(this);
+  SendMsg_MoveNext(otherSend);
+  if (_effect_parameter::GetEff_State(&m_EP, 14))
+  {
+    CCharacter::RemoveSFContHelpByEffect(this, 2, 14);
+  }
+  m_dwLastSetPointTime = GetLoopTime();
+  if (m_bMineMode)
+  {
+    m_bMineMode = false;
+    m_dwMineNextTime = static_cast<unsigned int>(-1);
+    SendMsg_MineCancle();
+  }
+}
+
+void CPlayer::pc_RealMovPos(float *pfCur)
+{
+  unsigned __int8 errorCode = 0;
+  if (m_bMove)
+  {
+    if (CRealMoveRequestDelayChecker::Check(&m_kMoveDelayChecker, this))
+    {
+      if (m_pmTrd.bDTradeMode)
+      {
+        errorCode = 7;
+      }
+      else if (m_bCorpse)
+      {
+        errorCode = 8;
+      }
+      else if (IsSiegeMode())
+      {
+        errorCode = 12;
+      }
+      else if (!memcmp_0(pfCur, m_fCurPos, 12))
+      {
+        errorCode = 6;
+      }
+      else if (m_byStandType == 1)
+      {
+        errorCode = 10;
+      }
+      else if (_effect_parameter::GetEff_State(&m_EP, 20))
+      {
+        errorCode = 13;
+      }
+      else if (m_byUserDgr
+               || (std::fabs(m_fCurPos[0] - pfCur[0]) <= 200.0f
+                   && std::fabs(m_fCurPos[2] - pfCur[2]) <= 200.0f))
+      {
+        if (!CMapData::IsMapIn(m_pCurMap, pfCur))
+        {
+          errorCode = 4;
+        }
+      }
+      else
+      {
+        errorCode = 11;
+      }
+    }
+    else
+    {
+      errorCode = 6;
+    }
+  }
+  else
+  {
+    errorCode = 6;
+  }
+
+  if (errorCode)
+  {
+    SendMsg_MoveError(static_cast<char>(errorCode));
+    if (m_bMove)
+    {
+      const bool outExtra = IsOutExtraStopPos(m_fCurPos);
+      SendMsg_Stop(outExtra);
+      CCharacter::Stop(this);
+    }
+  }
+  else
+  {
+    memcpy_0(m_fOldPos, m_fCurPos, sizeof(m_fOldPos));
+    memcpy_0(m_fCurPos, pfCur, sizeof(m_fCurPos));
+    ++m_nCheckMovePacket;
+    m_dwLastSetPointTime = GetLoopTime();
+  }
+}
+
+void CPlayer::pc_MoveStop(float *pfCur)
+{
+  unsigned __int8 errorCode = 0;
+  if (m_bMove)
+  {
+    if (m_pmTrd.bDTradeMode)
+    {
+      errorCode = 7;
+    }
+    else if (m_bCorpse)
+    {
+      errorCode = 8;
+    }
+    else if (IsSiegeMode())
+    {
+      errorCode = 12;
+    }
+    else if (m_byStandType == 1)
+    {
+      errorCode = 10;
+    }
+    else if (m_byUserDgr
+             || (std::fabs(m_fCurPos[0] - pfCur[0]) <= 200.0f
+                 && std::fabs(m_fCurPos[2] - pfCur[2]) <= 200.0f))
+    {
+      if (!CMapData::IsMapIn(m_pCurMap, pfCur))
+      {
+        errorCode = 4;
+      }
+    }
+    else
+    {
+      errorCode = 11;
+    }
+  }
+  else
+  {
+    errorCode = 6;
+  }
+
+  CRealMoveRequestDelayChecker::Reset(&m_kMoveDelayChecker);
+  if (errorCode)
+  {
+    SendMsg_MoveError(static_cast<char>(errorCode));
+    if (m_bMove)
+    {
+      const bool outExtra = IsOutExtraStopPos(m_fCurPos);
+      SendMsg_Stop(outExtra);
+      CCharacter::Stop(this);
+    }
+  }
+  else
+  {
+    memcpy_0(m_fOldPos, m_fCurPos, sizeof(m_fOldPos));
+    memcpy_0(m_fCurPos, pfCur, sizeof(m_fCurPos));
+    ++m_nCheckMovePacket;
+    const bool outExtra = IsOutExtraStopPos(m_fCurPos);
+    SendMsg_Stop(outExtra);
+    CCharacter::Stop(this);
+  }
+}
+
+void CPlayer::pc_GotoBasePortalRequest(unsigned __int16 wItemSerial)
+{
+  unsigned __int8 resultCode = 0;
+  CMapData *intoMap = nullptr;
+  _STORAGE_LIST::_db_con *item = nullptr;
+  _base_fld *record = nullptr;
+  float newPos[3]{};
+
+  if (m_bInGuildBattle)
+  {
+    resultCode = 12;
+  }
+  else if (CGameObject::GetCurSecNum(this) == -1 || m_bMapLoading)
+  {
+    resultCode = 5;
+  }
+  else if (m_bCorpse)
+  {
+    resultCode = 1;
+  }
+  else if (m_pCurMap->m_pMapSet->m_nMapType)
+  {
+    resultCode = 8;
+  }
+  else if (m_byStandType == 1)
+  {
+    resultCode = 8;
+  }
+  else if (IsSiegeMode())
+  {
+    resultCode = 8;
+  }
+  else if (IsRidingUnit())
+  {
+    resultCode = 8;
+  }
+  else if (_effect_parameter::GetEff_State(&m_EP, 20))
+  {
+    resultCode = 9;
+  }
+  else if (_effect_parameter::GetEff_State(&m_EP, 28))
+  {
+    resultCode = 9;
+  }
+  else if (wItemSerial == 0xFFFF)
+  {
+    const unsigned __int8 raceCode = CPlayerDB::GetRaceCode(&m_Param);
+    intoMap = CMapOperation::GetPosStartMap(&g_MapOper, raceCode, 0, newPos);
+    if (!intoMap)
+    {
+      resultCode = 11;
+    }
+  }
+  else
+  {
+    item = _STORAGE_LIST::GetPtrFromSerial(&m_Param.m_dbInven, wItemSerial);
+    if (item)
+    {
+      if (item->m_byTableCode == 22)
+      {
+        if (CHolyStoneSystem::IsUseReturnItem(&g_HolySys, m_dwObjSerial))
+        {
+          if (item->m_bLock)
+          {
+            resultCode = 22;
+          }
+          else
+          {
+            record = CRecordData::GetRecord(&g_Main.m_tblItemData[22], item->m_wItemIndex);
+            if (record)
+            {
+              if (m_pCurMap->m_pMapSet->m_nMapType == 2)
+              {
+                resultCode = 11;
+              }
+              else if (m_pCurMap->m_pMapSet->m_nMapClass
+                       && !*reinterpret_cast<int *>(&record[7].m_strCode[44])
+                       && (strcmp_0(m_pCurMap->m_pMapSet->m_strCode, "Elan")
+                           || (!strcmp_0(m_pCurMap->m_pMapSet->m_strCode, "Platform01")
+                               || !strcmp_0(m_pCurMap->m_pMapSet->m_strCode, "Medicallab"))
+                             && _effect_parameter::GetEff_Have(&m_EP, 55) == 0.0)
+                       && strcmp_0(record[4].m_strCode, m_pCurMap->m_pMapSet->m_strCode))
+              {
+                resultCode = 11;
+              }
+              else
+              {
+                const int level = static_cast<int>(GetLevel());
+                if (level >= *reinterpret_cast<int *>(&record[6].m_strCode[20]))
+                {
+                  if (*reinterpret_cast<int *>(&record[6].m_strCode[24]) == -1
+                    || static_cast<int>(GetLevel()) <= *reinterpret_cast<int *>(&record[6].m_strCode[24]))
+                  {
+                    intoMap = CMapOperation::GetMap(&g_MapOper, record[4].m_strCode);
+                    if (intoMap)
+                    {
+                      _dummy_position *pos = CMapData::GetDummyPostion(intoMap, reinterpret_cast<char *>(&record[5]));
+                      if (pos)
+                      {
+                        if (CMapData::GetRandPosInDummy(intoMap, pos, newPos, 1))
+                        {
+                          if (Major_Scroll_Item && record)
+                          {
+                            if (!strcmp_0(record[4].m_strCode, "Elan")
+                              || !strcmp_0(record[4].m_strCode, "NeutralA")
+                              || !strcmp_0(record[4].m_strCode, "NeutralB")
+                              || !strcmp_0(record[4].m_strCode, "NeutralC"))
+                            {
+                              resultCode = 0;
+                            }
+                            else
+                            {
+                              resultCode = 22;
+                            }
+                          }
+                          else
+                          {
+                            const int cashType = GetUsePcCashType(item->m_byTableCode, item->m_wItemIndex);
+                            if (!IsUsableAccountType(cashType))
+                            {
+                              SendMsg_PremiumCashItemUse(0xFFFF);
+                              resultCode = 22;
+                            }
+                          }
+                        }
+                        else
+                        {
+                          resultCode = 7;
+                        }
+                      }
+                      else
+                      {
+                        resultCode = 2;
+                      }
+                    }
+                    else
+                    {
+                      resultCode = 11;
+                    }
+                  }
+                  else
+                  {
+                    resultCode = 15;
+                  }
+                }
+                else
+                {
+                  resultCode = 15;
+                }
+              }
+            }
+            else
+            {
+              resultCode = 10;
+            }
+          }
+        }
+        else
+        {
+          resultCode = 13;
+        }
+      }
+      else
+      {
+        resultCode = 10;
+      }
+    }
+    else
+    {
+      SendMsg_AdjustAmountInform(0, wItemSerial, 0);
+      resultCode = 10;
+    }
+  }
+
+  if (!resultCode)
+  {
+    OutOfMap(intoMap, 0, 3, newPos);
+    if (wItemSerial != 0xFFFF)
+    {
+      Emb_AlterDurPoint(0, item->m_byStorageIndex, -1, false, false);
+    }
+    Emb_CheckActForQuest(16, record->m_strCode, 1, false);
+  }
+  SendMsg_GotoBasePortalResult(static_cast<char>(resultCode));
+}
+
+void CPlayer::pc_GotoAvatorRequest(char *pwszAvatorName)
+{
+  unsigned __int8 resultCode = 0;
+  CPlayer *target = nullptr;
+
+  if (m_pmTrd.bDTradeMode)
+  {
+    resultCode = 6;
+  }
+  else if (CGameObject::GetCurSecNum(this) == -1 || m_bMapLoading)
+  {
+    resultCode = 5;
+  }
+  else if (m_byStandType == 1)
+  {
+    resultCode = 8;
+  }
+  else
+  {
+    for (int j = 0; j < MAX_PLAYER; ++j)
+    {
+      CPlayer *player = &g_Player[j];
+      if (player->m_bLive)
+      {
+        const char *name = CPlayerDB::GetCharNameW(&player->m_Param);
+        if (!strcmp_0(name, pwszAvatorName))
+        {
+          target = player;
+          break;
+        }
+      }
+    }
+    if (!target)
+    {
+      resultCode = 2;
+    }
+  }
+
+  float startPos[3];
+  if (!resultCode)
+  {
+    startPos[0] = target->m_fCurPos[0];
+    startPos[2] = target->m_fCurPos[2];
+    startPos[1] = target->m_fCurPos[1];
+    OutOfMap(target->m_pCurMap, target->m_wMapLayerIndex, 4, startPos);
+  }
+
+  const unsigned __int8 mapCode = CPlayerDB::GetMapCode(&m_Param);
+  SendMsg_GotoRecallResult(static_cast<char>(resultCode), mapCode, startPos, 4);
+}
+
 void CPlayer::SendMsg_MapOut(unsigned __int8 byMapOutCode, unsigned __int8 byNextMapCode)
 {
   struct
@@ -2330,6 +2990,11 @@ bool CPlayer::IsRidingUnit()
 bool CPlayer::IsSiegeMode()
 {
   return m_pSiegeItem != nullptr;
+}
+
+bool CPlayer::IsActingSiegeMode()
+{
+  return m_bIsSiegeActing;
 }
 
 void CPlayer::DTradeInit()
@@ -9016,6 +9681,590 @@ void CPlayer::CreateComplete()
   CNationSettingManager *nation = CTSingleton<CNationSettingManager>::Instance();
   CNationSettingManager::CreateComplete(nation, this);
   SendMsg_BuyCashItemMode();
+}
+
+char CPlayer::Emb_CheckActForQuest(int nActCode, char *pszReqCode, unsigned __int16 wAddCount, bool bParty)
+{
+  _quest_check_result *checkResult = m_QuestMgr.CheckReqAct(nActCode, pszReqCode, wAddCount, bParty);
+  if (!checkResult)
+  {
+    return 0;
+  }
+
+  for (int j = 0; j < checkResult->m_byCheckNum; ++j)
+  {
+    _quest_check_result::_node *node = &checkResult->m_List[j];
+    _QUEST_DB_BASE::_LIST *slot = &m_Param.m_QuestDB.m_List[node->byQuestDBSlot];
+    slot->wNum[node->byActIndex] = node->wCount;
+
+    if (!m_QuestMgr.CheckFailCondition(node->byQuestDBSlot, 1, nullptr))
+    {
+      bool isAllComplete = true;
+      if (node->bORComplete)
+      {
+        for (int k = 0; k < 3; ++k)
+        {
+          slot->wNum[k] = 0xFFFF;
+        }
+      }
+      else
+      {
+        for (int k = 0; k < 3; ++k)
+        {
+          if (slot->wNum[k] != 0xFFFF)
+          {
+            isAllComplete = false;
+            break;
+          }
+        }
+      }
+
+      if (isAllComplete)
+      {
+        slot->dwPassSec = static_cast<unsigned int>(-1);
+      }
+
+      SendMsg_QuestProcess(static_cast<char>(node->byQuestDBSlot), static_cast<char>(node->byActIndex), node->wCount);
+
+      bool update = false;
+      if (node->wCount == 0xFFFF || isAllComplete)
+      {
+        update = true;
+      }
+      if (m_pUserDB)
+      {
+        CUserDB::Update_QuestUpdate(m_pUserDB, node->byQuestDBSlot, slot, update);
+      }
+
+      if (isAllComplete)
+      {
+        _base_fld *record = CRecordData::GetRecord(CQuestMgr::s_tblQuest, slot->wIndex);
+        if (*reinterpret_cast<unsigned int *>(&record[13].m_strCode[60])
+            || *reinterpret_cast<unsigned int *>(&record[1].m_strCode[24]))
+        {
+          SendMsg_SelectQuestReward(static_cast<char>(node->byQuestDBSlot));
+        }
+        else
+        {
+          Emb_CompleteQuest(node->byQuestDBSlot, 0xFFu, 0xFFu);
+        }
+      }
+    }
+  }
+
+  return 1;
+}
+
+char CPlayer::Emb_StartQuest(unsigned __int8 bySelectQuest, _happen_event_cont *pHappenEvent)
+{
+  if (!m_pUserDB)
+  {
+    return 0;
+  }
+
+  _Quest_fld *quest = m_QuestMgr.GetQuestFromEvent(bySelectQuest);
+  if (!quest)
+  {
+    return 0;
+  }
+
+  int slotIndex = -1;
+  for (int j = 0; j < 30; ++j)
+  {
+    if (m_Param.m_QuestDB.m_List[j].byQuestType == 0xFF)
+    {
+      slotIndex = j;
+      break;
+    }
+  }
+
+  if (pHappenEvent->m_pEvent->m_nQuestType)
+  {
+    if (m_QuestMgr.GetCountQuestType(pHappenEvent->m_pEvent->m_nQuestType) >= 5)
+    {
+      return 0;
+    }
+  }
+  else if (m_QuestMgr.GetCountQuestType(pHappenEvent->m_pEvent->m_nQuestType) >= 20)
+  {
+    slotIndex = -1;
+    unsigned int maxPassSec = 0;
+    for (int j = 0; j < 30; ++j)
+    {
+      _QUEST_DB_BASE::_LIST *slot = &m_Param.m_QuestDB.m_List[j];
+      if (slot->byQuestType == pHappenEvent->m_pEvent->m_nQuestType)
+      {
+        if (slot->dwPassSec == static_cast<unsigned int>(-1))
+        {
+          return 0;
+        }
+        if (slot->dwPassSec >= maxPassSec)
+        {
+          maxPassSec = slot->dwPassSec;
+          slotIndex = j;
+        }
+      }
+    }
+    if (slotIndex != -1)
+    {
+      SendMsg_QuestFailure(5, static_cast<char>(slotIndex));
+      m_QuestMgr.DeleteQuestData(static_cast<unsigned __int8>(slotIndex));
+      CUserDB::Update_QuestDelete(m_pUserDB, static_cast<unsigned __int8>(slotIndex));
+    }
+  }
+
+  if (slotIndex == -1)
+  {
+    return 0;
+  }
+
+  _QUEST_DB_BASE::_LIST *slot = &m_Param.m_QuestDB.m_List[slotIndex];
+  slot->byQuestType = static_cast<unsigned __int8>(pHappenEvent->m_pEvent->m_nQuestType);
+  slot->wIndex = static_cast<unsigned __int16>(quest->m_dwIndex);
+  slot->dwPassSec = 0;
+  for (int k = 0; k < 3; ++k)
+  {
+    slot->wNum[k] = 0xFFFF;
+    if (quest->m_ActionNode[k].m_nActType != -1)
+    {
+      slot->wNum[k] = 0;
+    }
+    if (quest->m_ActionNode[k].m_nReqAct == -1)
+    {
+      slot->wNum[k] = 0xFFFF;
+    }
+  }
+  CUserDB::Update_QuestInsert(m_pUserDB, static_cast<unsigned __int8>(slotIndex), slot);
+  SendMsg_InsertNewQuest(static_cast<unsigned __int8>(slotIndex), slot);
+
+  if (pHappenEvent->m_pEvent->m_nQuestType == 1)
+  {
+    for (int m = 0; m < 5; ++m)
+    {
+      if (pHappenEvent->m_pEvent->m_CondNode[m].m_nCondType == 8)
+      {
+        _STORAGE_LIST::_db_con *item =
+          _STORAGE_LIST::GetPtrFromItemCode(&m_Param.m_dbInven, pHappenEvent->m_pEvent->m_CondNode[m].m_sCondVal);
+        if (item)
+        {
+          if (IsOverLapItem(item->m_byTableCode))
+          {
+            unsigned int dwDur = Emb_AlterDurPoint(0, item->m_byStorageIndex, -1, false, false);
+            if (dwDur)
+            {
+              SendMsg_AdjustAmountInform(0, item->m_wSerial, dwDur);
+            }
+            else
+            {
+              CMgrAvatorItemHistory::delete_npc_quest_item(
+                &CPlayer::s_MgrItemHistory,
+                m_ObjID.m_wIndex,
+                item,
+                m_szItemHistoryFileName);
+            }
+          }
+          else
+          {
+            if (!Emb_DelStorage(this, 0, item->m_byStorageIndex, false, true, "CPlayer::pcChatAllRequest()"))
+            {
+              return 0;
+            }
+            CMgrAvatorItemHistory::delete_npc_quest_item(
+              &CPlayer::s_MgrItemHistory,
+              m_ObjID.m_wIndex,
+              item,
+              m_szItemHistoryFileName);
+          }
+        }
+      }
+    }
+  }
+
+  return 1;
+}
+
+_Quest_fld *CPlayer::_Reward_Quest(_Quest_fld *pQuestFld, unsigned __int8 byRewardItemIndex)
+{
+  _Quest_fld *linkedQuest = nullptr;
+  const long double penalty = TimeLimitMgr::GetPlayerPenalty(g_Main.m_pTimeLimitMgr, m_id.wIndex);
+
+  if (pQuestFld->m_nMaxLevel != -1)
+  {
+    AlterMaxLevel(pQuestFld->m_nMaxLevel);
+  }
+  if (pQuestFld->m_dConsExp > 0.0)
+  {
+    AlterExp(pQuestFld->m_dConsExp, true, false, true);
+  }
+  if (pQuestFld->m_nConsContribution > 0)
+  {
+    AlterPvPPoint(static_cast<double>(pQuestFld->m_nConsContribution), quest_inc, static_cast<unsigned int>(-1));
+  }
+  if (pQuestFld->m_nConspvppoint > 0)
+  {
+    pQuestFld->m_nConspvppoint = static_cast<int>(static_cast<double>(pQuestFld->m_nConspvppoint) * penalty);
+    AlterPvPCashBag(static_cast<double>(pQuestFld->m_nConspvppoint), pm_quest);
+  }
+
+  if (pQuestFld->m_nConsDalant > 0 || pQuestFld->m_nConsGold > 0)
+  {
+    AddDalant(pQuestFld->m_nConsDalant, true);
+    AddGold(pQuestFld->m_nConsGold, true);
+    SendMsg_ExchangeMoneyResult(0);
+
+    const unsigned int addDalant = static_cast<unsigned int>(
+      static_cast<double>(pQuestFld->m_nConsDalant) * penalty);
+    const unsigned int addGold = static_cast<unsigned int>(
+      static_cast<double>(pQuestFld->m_nConsGold) * penalty);
+    const unsigned int sumGold = CPlayerDB::GetGold(&m_Param);
+    const unsigned int sumDalant = CPlayerDB::GetDalant(&m_Param);
+    CMgrAvatorItemHistory::reward_add_money(
+      &CPlayer::s_MgrItemHistory,
+      m_ObjID.m_wIndex,
+      "Quest",
+      addDalant,
+      addGold,
+      sumDalant,
+      sumGold,
+      m_szItemHistoryFileName);
+
+    const int level = CPlayerDB::GetLevel(&m_Param);
+    if (level == 30 || level == 40 || level == 50 || level == 60)
+    {
+      if (pQuestFld->m_nConsDalant > 0)
+      {
+        const char *classCode = CPlayerDB::GetPtrCurClass(&m_Param)->m_strCode;
+        const int curLevel = CPlayerDB::GetLevel(&m_Param);
+        const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+        CMoneySupplyMgr *money = CMoneySupplyMgr::Instance();
+        CMoneySupplyMgr::UpdateQuestRewardMoneyData(money, raceCode, curLevel, classCode, pQuestFld->m_nConsDalant);
+      }
+      if (pQuestFld->m_nConsGold > 0)
+      {
+        const unsigned int amount = 2000 * pQuestFld->m_nConsGold;
+        const char *classCode = CPlayerDB::GetPtrCurClass(&m_Param)->m_strCode;
+        const int curLevel = CPlayerDB::GetLevel(&m_Param);
+        const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+        CMoneySupplyMgr *money = CMoneySupplyMgr::Instance();
+        CMoneySupplyMgr::UpdateQuestRewardMoneyData(money, raceCode, curLevel, classCode, amount);
+      }
+    }
+  }
+
+  for (int j = 0; j < 6; ++j)
+  {
+    const char *itemCode = pQuestFld->m_RewardItem[j].m_strConsITCode;
+    if (TimeLimitMgr::GetPlayerStatus(g_Main.m_pTimeLimitMgr, m_id.wIndex) == 99)
+    {
+      break;
+    }
+
+    if (byRewardItemIndex != 0xFF)
+    {
+      if (j != byRewardItemIndex)
+      {
+        continue;
+      }
+      if (pQuestFld->m_RewardItem[j].m_nLinkQuestIdx != -1)
+      {
+        linkedQuest = reinterpret_cast<_Quest_fld *>(CRecordData::GetRecord(
+          CQuestMgr::s_tblQuest,
+          pQuestFld->m_strLinkQuest[pQuestFld->m_RewardItem[j].m_nLinkQuestIdx]));
+      }
+    }
+
+    if (std::strncmp(itemCode, "-1", 2) == 0)
+    {
+      break;
+    }
+
+    const int tableCode = GetItemTableCode(itemCode);
+    if (tableCode == -1)
+    {
+      continue;
+    }
+
+    auto *record = reinterpret_cast<unsigned __int16 *>(
+      CRecordData::GetRecord(&g_Main.m_tblItemData[tableCode], itemCode));
+    if (!record)
+    {
+      continue;
+    }
+
+    _STORAGE_LIST::_db_con item{};
+    item.m_byTableCode = static_cast<unsigned __int8>(tableCode);
+    item.m_wItemIndex = *record;
+    if (IsOverLapItem(tableCode))
+    {
+      item.m_dwDur = pQuestFld->m_RewardItem[j].m_nConsITCnt;
+    }
+    else
+    {
+      item.m_dwDur = GetItemDurPoint(tableCode, *reinterpret_cast<unsigned int *>(record));
+    }
+    const unsigned __int8 socketNum = GetDefItemUpgSocketNum(tableCode, *reinterpret_cast<unsigned int *>(record));
+    item.m_dwLv = GetBitAfterSetLimSocket(socketNum);
+
+    if (_STORAGE_LIST::GetIndexEmptyCon(&m_Param.m_dbInven) == 0xFF)
+    {
+      if (TimeLimitMgr::GetPlayerStatus(g_Main.m_pTimeLimitMgr, m_id.wIndex) == 99)
+      {
+        break;
+      }
+
+      CreateItemBox(
+        &item,
+        this,
+        static_cast<unsigned int>(-1),
+        0,
+        nullptr,
+        3,
+        m_pCurMap,
+        m_wMapLayerIndex,
+        m_fCurPos,
+        0);
+
+      char clause[136]{};
+      sprintf(clause, "Quest G (%s)", pQuestFld->m_strCode);
+      CMgrAvatorItemHistory::reward_add_item(
+        &CPlayer::s_MgrItemHistory,
+        m_ObjID.m_wIndex,
+        clause,
+        &item,
+        m_szItemHistoryFileName);
+    }
+    else
+    {
+      item.m_wSerial = CPlayerDB::GetNewItemSerial(&m_Param);
+      const _TimeItem_fld *timeRec = TimeItem::FindTimeRec(tableCode, *reinterpret_cast<unsigned int *>(record));
+      if (timeRec && timeRec->m_nCheckType)
+      {
+        item.m_byCsMethod = static_cast<unsigned __int8>(timeRec->m_nCheckType);
+        __time32_t now[11]{};
+        _time32(now);
+        item.m_dwT = timeRec->m_nUseTime + now[0];
+        item.m_dwLendRegdTime = now[0];
+      }
+      if (!Emb_AddStorage(0, &item, false, true))
+      {
+        CMgrAvatorItemHistory::add_storage_fail(
+          &CPlayer::s_MgrItemHistory,
+          m_ObjID.m_wIndex,
+          &item,
+          "CPlayer::_Reward_Quest() - Emb_AddStorage() Fail",
+          m_szItemHistoryFileName);
+        continue;
+      }
+
+      SendMsg_RewardAddItem(&item, 2);
+
+      char clause[160]{};
+      sprintf(clause, "Quest (%s)", pQuestFld->m_strCode);
+      CMgrAvatorItemHistory::reward_add_item(
+        &CPlayer::s_MgrItemHistory,
+        m_ObjID.m_wIndex,
+        clause,
+        &item,
+        m_szItemHistoryFileName);
+    }
+
+    SendMsg_FanfareItem(5, &item, nullptr);
+  }
+
+  for (int j = 0; j < 2; ++j)
+  {
+    _quest_reward_mastery *reward = &pQuestFld->m_RewardMastery[j];
+    if (reward->m_nConsMasteryID == -1)
+    {
+      break;
+    }
+    Emb_AlterStat(
+      reward->m_nConsMasteryID,
+      reward->m_nConsMasterySubID,
+      reward->m_nConsMasteryCnt,
+      2,
+      "CPlayer::_Reward_Quest()---0",
+      true);
+  }
+
+  if (std::strncmp(pQuestFld->m_strConsSkillCode, "-1", 2) != 0)
+  {
+    auto *record = reinterpret_cast<unsigned __int8 *>(
+      CRecordData::GetRecord(g_Main.m_tblEffectData, pQuestFld->m_strConsSkillCode));
+    if (record)
+    {
+      Emb_AlterStat(3, *record, pQuestFld->m_nConsSkillCnt, 2, "CPlayer::_Reward_Quest()---1", true);
+    }
+  }
+
+  if (std::strncmp(pQuestFld->m_strConsForceCode, "-1", 2) != 0)
+  {
+    _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblEffectData[1], pQuestFld->m_strConsSkillCode);
+    if (record)
+    {
+      for (int k = 0; k < 88; ++k)
+      {
+        _STORAGE_LIST::_db_con *forceItem = &m_Param.m_dbForce.m_pStorageList[k];
+        if (forceItem->m_bLoad
+          && static_cast<unsigned int>(CPlayer::s_pnLinkForceItemToEffect[forceItem->m_wItemIndex]) == record->m_dwIndex)
+        {
+          unsigned int newStat = Emb_AlterDurPoint(3, forceItem->m_byStorageIndex, pQuestFld->m_nConsForceCnt, false, false);
+          SendMsg_FcitemInform(forceItem->m_wSerial, newStat);
+          return linkedQuest;
+        }
+      }
+    }
+  }
+
+  return linkedQuest;
+}
+
+void CPlayer::Emb_CompleteQuest(
+  unsigned __int8 byQuestDBSlot,
+  unsigned __int8 byRewardItemIndex,
+  unsigned __int8 byLinkQuestIndex)
+{
+  if (!m_pUserDB)
+  {
+    return;
+  }
+
+  _QUEST_DB_BASE::_LIST *slot = &m_Param.m_QuestDB.m_List[byQuestDBSlot];
+  if (slot->byQuestType == 0xFF)
+  {
+    return;
+  }
+
+  for (int j = 0; j < 3; ++j)
+  {
+    if (slot->wNum[j] != 0xFFFF)
+    {
+      return;
+    }
+  }
+
+  CMgrAvatorLvHistory::update_mastery(
+    m_ObjID.m_wIndex,
+    m_byUserDgr,
+    CPlayerDB::GetLevel(&m_Param),
+    CPlayerDB::GetExp(&m_Param),
+    m_dwExpRate,
+    m_Param.m_byPvPGrade,
+    m_nMaxPoint,
+    &m_pmMst,
+    m_Param.m_dwAlterMastery,
+    m_szLvHistoryFileName,
+    0,
+    nullptr);
+  CPlayerDB::InitAlterMastery(&m_Param);
+
+  auto *quest = reinterpret_cast<_Quest_fld *>(CRecordData::GetRecord(CQuestMgr::s_tblQuest, slot->wIndex));
+  _Quest_fld *linkedQuest = _Reward_Quest(quest, byRewardItemIndex);
+  SendMsg_QuestComplete(static_cast<char>(byQuestDBSlot));
+
+  if (slot->byQuestType == 1)
+  {
+    const unsigned __int8 inserted = m_QuestMgr.InsertNpcQuestHistory(
+      quest->m_strCode,
+      static_cast<char>(quest->m_nDifficultyLevel),
+      quest->m_dRepeatTime);
+    _QUEST_DB_BASE::_NPC_QUEST_HISTORY *history = &m_Param.m_QuestDB.m_History[inserted];
+    CUserDB::Update_NPCQuestHistory(m_pUserDB, inserted, history);
+    SendMsg_NpcQuestHistoryInform(static_cast<char>(inserted));
+  }
+
+  m_QuestMgr.DeleteQuestData(byQuestDBSlot);
+  CUserDB::Update_QuestDelete(m_pUserDB, byQuestDBSlot);
+
+  CMgrAvatorLvHistory::update_mastery(
+    m_ObjID.m_wIndex,
+    m_byUserDgr,
+    CPlayerDB::GetLevel(&m_Param),
+    CPlayerDB::GetExp(&m_Param),
+    m_dwExpRate,
+    m_Param.m_byPvPGrade,
+    m_nMaxPoint,
+    &m_pmMst,
+    m_Param.m_dwAlterMastery,
+    m_szLvHistoryFileName,
+    2,
+    quest->m_strCode);
+  CPlayerDB::InitAlterMastery(&m_Param);
+
+  m_dwUMWHLastTime = GetLoopTime();
+  if (quest->m_nLinkDummyCond == 1)
+  {
+    if (strcmp_0(quest->m_strLinkDummyCode, "-1") != 0)
+    {
+      _dummy_position *pos = CMapData::GetDummyPostion(m_pCurMap, quest->m_strLinkDummyCode);
+      if (pos)
+      {
+        float newPos[3]{};
+        if (CMapData::GetRandPosInDummy(m_pCurMap, pos, newPos, 1))
+        {
+          OutOfMap(m_pCurMap, m_wMapLayerIndex, 3, newPos);
+          const unsigned __int8 mapCode = CPlayerDB::GetMapCode(&m_Param);
+          SendMsg_GotoRecallResult(0, mapCode, newPos, 4);
+        }
+      }
+    }
+  }
+
+  if (!linkedQuest)
+  {
+    int linkCount = 0;
+    for (int j = 0; j < 5; ++j)
+    {
+      if (std::strncmp(quest->m_strLinkQuest[j], "-1", 2) != 0)
+      {
+        ++linkCount;
+      }
+    }
+    if (linkCount > 0)
+    {
+      unsigned __int8 linkIndex = byLinkQuestIndex;
+      if (byLinkQuestIndex == 0xFF)
+      {
+        linkIndex = static_cast<unsigned __int8>(rand() % linkCount);
+      }
+      linkedQuest = reinterpret_cast<_Quest_fld *>(CRecordData::GetRecord(CQuestMgr::s_tblQuest, quest->m_strLinkQuest[linkIndex]));
+    }
+  }
+
+  if (linkedQuest)
+  {
+    _QUEST_DB_BASE::_LIST *nextSlot = &m_Param.m_QuestDB.m_List[byQuestDBSlot];
+    nextSlot->byQuestType = slot->byQuestType;
+    nextSlot->wIndex = static_cast<unsigned __int16>(linkedQuest->m_dwIndex);
+    nextSlot->dwPassSec = 0;
+    for (int k = 0; k < 3; ++k)
+    {
+      if (linkedQuest->m_ActionNode[k].m_nActType != -1)
+      {
+        nextSlot->wNum[k] = 0;
+      }
+    }
+    CUserDB::Update_QuestInsert(m_pUserDB, byQuestDBSlot, nextSlot);
+    SendMsg_InsertNextQuest(byQuestDBSlot, nextSlot);
+  }
+
+  for (int m = 0; m < 3; ++m)
+  {
+    if (m_QuestMgr.m_pTempHappenEvent[m].isset())
+    {
+      memcpy_0(&m_QuestMgr.m_LastHappenEvent, &m_QuestMgr.m_pTempHappenEvent[m], sizeof(m_QuestMgr.m_LastHappenEvent));
+      Emb_StartQuest(0xFFu, &m_QuestMgr.m_pTempHappenEvent[m]);
+      if (m_QuestMgr.m_pTempHappenEvent[m].m_QtHpType == quest_happen_type_maxlevel)
+      {
+        CPlayerDB::SetMaxLevel(&m_Param, 50);
+        if (m_pUserDB)
+        {
+          CUserDB::Update_MaxLevel(m_pUserDB, 0x32u);
+        }
+      }
+      m_QuestMgr.m_pTempHappenEvent[m].init();
+    }
+  }
 }
 
 void CPlayer::SendMsg_ChatFarFailure(char bBlock)

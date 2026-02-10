@@ -634,6 +634,9 @@ struct __cppobj __declspec(align(8)) _happen_event_cont
   QUEST_HAPPEN m_QtHpType;
   int m_nIndexInType;
   int m_nRaceCode;
+
+  void init();
+  bool isset() const;
 };
 
 /* 1755 */
@@ -1021,6 +1024,9 @@ public:
     float *pfStartPos,
     unsigned __int8 byMapInType);
   void SendMsg_GotoBasePortalResult(char byErrCode);
+  void SendMsg_MoveError(char byRetCode);
+  void SendMsg_Stop(bool bAll);
+  void SendMsg_MoveNext(bool bOtherSend);
   void SendMsg_MapEnvInform(char byMapCode, unsigned int dwMapEnvCode);
   void SendMsg_MapOut(unsigned __int8 byMapOutCode, unsigned __int8 byNextMapCode);
   void SendMsg_MineCancle();
@@ -1084,6 +1090,27 @@ public:
   void pc_ChatGuildRequest(unsigned int dwDstSerial, char *pwszChatData);
   void pc_ChatMultiFarRequest(unsigned __int8 byDstNum, _w_name *pDstName, char *pwszMsg);
   void pc_ChatRaceBossCryRequest(char *pwszChatData);
+  void pc_MoveNext(unsigned __int8 byMoveType, float *pfCur, float *pfTar, unsigned __int8 byDirect);
+  void pc_RealMovPos(float *pfCur);
+  void pc_MoveStop(float *pfCur);
+  void pc_MoveModeChangeRequest(unsigned __int8 byMoveType);
+  void pc_GotoBasePortalRequest(unsigned __int16 wItemSerial);
+  void pc_GotoAvatorRequest(char *pwszAvatorName);
+  bool IsOutExtraStopPos(float *pfStopPos);
+  char Emb_CheckActForQuest(int nActCode, char *pszReqCode, unsigned __int16 wAddCount, bool bParty);
+  char Emb_StartQuest(unsigned __int8 bySelectQuest, _happen_event_cont *pHappenEvent);
+  void Emb_CompleteQuest(
+    unsigned __int8 byQuestDBSlot,
+    unsigned __int8 byRewardItemIndex,
+    unsigned __int8 byLinkQuestIndex);
+  _Quest_fld *_Reward_Quest(_Quest_fld *pQuestFld, unsigned __int8 byRewardItemIndex);
+  void SendMsg_QuestProcess(char byQuestDBSlot, char byActIndex, unsigned __int16 wCount);
+  void SendMsg_SelectQuestReward(char byQuestDBSlot);
+  void SendMsg_QuestFailure(char byFailCode, char byQuestDBSlot);
+  void SendMsg_InsertNextQuest(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pQuestDB);
+  void SendMsg_InsertNewQuest(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pQuestDB);
+  void SendMsg_QuestComplete(char byQuestDBSlot);
+  void SendMsg_NpcQuestHistoryInform(char bySlotIndex);
   void AlterDalant(double dDalant);
   void SendMsg_ExchangeMoneyResult(char byErrCode);
   void SendMsg_InformTaxIncome(unsigned __int8 byRet, unsigned int dwComm, char *pwszDate);
@@ -1111,6 +1138,7 @@ public:
     void SendMsg_AlterEquipSPInform();
     void CalcEquipMaxDP(int bSendMsg);
     bool IsSiegeMode();
+    bool IsActingSiegeMode();
     bool IsChaosMode();
     void SetSiege(_STORAGE_LIST::_db_con *pItem);
   void SetHaveEffect(char bSet);

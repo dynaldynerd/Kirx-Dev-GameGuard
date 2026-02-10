@@ -36,6 +36,18 @@
 #include "server_notify_inform_zone.h"
 #include "w_name.h"
 
+void DeCrypt_Move(char *pStr, int nSize, unsigned __int8 byPlus, unsigned __int16 wCryptKey)
+{
+  for (int index = 0; index < nSize; ++index)
+  {
+    unsigned char value = static_cast<unsigned char>(*pStr);
+    value ^= static_cast<unsigned char>(wCryptKey + 32);
+    value = static_cast<unsigned char>(value - static_cast<unsigned char>(byPlus + 23));
+    *pStr = static_cast<char>(value);
+    ++pStr;
+  }
+}
+
 CNetWorking::CNetWorking()
 {
   WSAData wsaData{};
@@ -2051,6 +2063,223 @@ bool CNetworkEX::AMP_DownloadRequest(unsigned int n, char *pBuf)
   }
 
   player->SendMsg_AMPInvenDownloadResult();
+  return true;
+}
+
+bool CNetworkEX::NextPoint(unsigned int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  char *packet = pBuf;
+  if (!player->m_bOper)
+  {
+    return true;
+  }
+
+  DeCrypt_Move(packet, 22, static_cast<unsigned __int8>(player->m_byPlusKey + 1), player->m_wXorKey + 1);
+  const unsigned int recvMoveCount = *reinterpret_cast<unsigned int *>(packet + 13);
+  if (player->m_dwMoveCount < recvMoveCount)
+  {
+    if (recvMoveCount - player->m_dwMoveCount > 100u)
+    {
+      const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+      CLogFile::Write(
+        &g_Main.m_logMove,
+        "move count hack(start) warning! >> %s (one: %d, recv: %d)",
+        charName,
+        player->m_dwMoveCount,
+        recvMoveCount);
+    }
+    player->m_dwMoveCount = recvMoveCount;
+
+    const unsigned __int8 moveType = static_cast<unsigned __int8>(*packet);
+    if (moveType == 0 || moveType == 1 || moveType == 2)
+    {
+      float targetPos[3]{};
+      targetPos[0] = static_cast<float>(*reinterpret_cast<short *>(packet + 17));
+      targetPos[1] = *reinterpret_cast<float *>(packet + 5);
+      targetPos[2] = static_cast<float>(*reinterpret_cast<short *>(packet + 19));
+      player->pc_MoveNext(moveType, reinterpret_cast<float *>(packet + 1), targetPos, packet[21]);
+      return true;
+    }
+
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: NextPoint()..  if(pRecv->byMoveType != move_type_walk && pRecv->byMoveType != move_type_run && pRecv->byMoveType != move_type_fly)",
+      charName);
+    return false;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &g_Main.m_logMove,
+    "move count hack(start) >> %s (one: %d, recv: %d)",
+    charName,
+    player->m_dwMoveCount,
+    recvMoveCount);
+  return false;
+}
+
+bool CNetworkEX::RealMovPosRequest(unsigned int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  char *packet = pBuf;
+  if (!player->m_bOper)
+  {
+    return true;
+  }
+
+  DeCrypt_Move(packet, 16, static_cast<unsigned __int8>(player->m_byPlusKey + 1), player->m_wXorKey + 2);
+  const unsigned int recvMoveCount = *reinterpret_cast<unsigned int *>(packet);
+  if (player->m_dwMoveCount < recvMoveCount)
+  {
+    if (recvMoveCount - player->m_dwMoveCount > 100u)
+    {
+      const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+      CLogFile::Write(
+        &g_Main.m_logMove,
+        "move count hack(real) warning! >> %s (one: %d, recv: %d)",
+        charName,
+        player->m_dwMoveCount,
+        recvMoveCount);
+    }
+    player->m_dwMoveCount = recvMoveCount;
+    player->pc_RealMovPos(reinterpret_cast<float *>(packet + 4));
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &g_Main.m_logMove,
+    "move count hack(real) >> %s (one: %d, recv: %d)",
+    charName,
+    player->m_dwMoveCount,
+    recvMoveCount);
+  return false;
+}
+
+bool CNetworkEX::Stop(unsigned int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  char *packet = pBuf;
+  if (!player->m_bOper)
+  {
+    return true;
+  }
+
+  DeCrypt_Move(packet, 16, static_cast<unsigned __int8>(player->m_byPlusKey + 1), player->m_wXorKey + 19);
+  const unsigned int recvMoveCount = *reinterpret_cast<unsigned int *>(packet);
+  if (player->m_dwMoveCount < recvMoveCount)
+  {
+    if (recvMoveCount - player->m_dwMoveCount > 100u)
+    {
+      const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+      CLogFile::Write(
+        &g_Main.m_logMove,
+        "move count hack(stop) warning! >> %s (one: %d, recv: %d)",
+        charName,
+        player->m_dwMoveCount,
+        recvMoveCount);
+    }
+    player->m_dwMoveCount = recvMoveCount;
+    player->pc_MoveStop(reinterpret_cast<float *>(packet + 4));
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &g_Main.m_logMove,
+    "move count hack(stop) >> %s (one: %d, recv: %d)",
+    charName,
+    player->m_dwMoveCount,
+    recvMoveCount);
+  return false;
+}
+
+bool CNetworkEX::GotoBasePortalRequest(unsigned int n, char *pBuf)
+{
+  auto *packet = reinterpret_cast<unsigned __int16 *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  player->pc_GotoBasePortalRequest(*packet);
+  return true;
+}
+
+bool CNetworkEX::GotoAvatorRequest(unsigned int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  char nameBuffer[17]{};
+  memcpy_0(nameBuffer, pBuf, 16);
+  nameBuffer[16] = '\0';
+  if (strlen_0(nameBuffer) <= 16)
+  {
+    if (player->m_byUserDgr)
+    {
+      player->pc_GotoAvatorRequest(nameBuffer);
+      return true;
+    }
+
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: GotoAvatorRequest()..  if(pOne->m_byUserDgr == USER_DEGREE_STD)",
+      charName);
+    return false;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: GotoAvatorRequest()..  if(strlen(pRecv->szAvatorName) > max_name_len)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::MoveTypeChangeRequeset(unsigned int n, char *pBuf)
+{
+  auto *packet = reinterpret_cast<unsigned __int8 *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (*packet == 0 || *packet == 1 || *packet == 2)
+  {
+    player->pc_MoveModeChangeRequest(*packet);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: MoveTypeChangeRequeset()..  if(pRecv->byMoveType != move_type_walk && pRecv->byMoveType != move_type_run)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::MoveInfoRequeset(unsigned int n, char *pBuf)
+{
+  (void)n;
+  (void)pBuf;
+  // this is not a stub
+  return true;
+}
+
+bool CNetworkEX::PlayerInfoResult(unsigned int n, char *pBuf)
+{
+  (void)n;
+  (void)pBuf;
+  // this is not a stub
   return true;
 }
 

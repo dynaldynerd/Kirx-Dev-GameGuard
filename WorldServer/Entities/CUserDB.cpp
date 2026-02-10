@@ -170,6 +170,120 @@ bool CUserDB::Update_Stat(unsigned __int8 byStatIndex, unsigned int dwNewCum, bo
   return false;
 }
 
+char CUserDB::Update_QuestInsert(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pSlotData)
+{
+  if (bySlotIndex < 0x1Eu)
+  {
+    if (m_AvatorData.dbQuest.m_List[bySlotIndex].byQuestType == 0xFF)
+    {
+      memcpy_0(
+        &m_AvatorData.dbQuest.m_List[bySlotIndex],
+        pSlotData,
+        sizeof(m_AvatorData.dbQuest.m_List[bySlotIndex]));
+      m_bDataUpdate = true;
+      return 1;
+    }
+
+    CLogFile::Write(
+      &g_Main.m_logSystemError,
+      "%s : Update_QuestInsert(EXIST) : slot : %d",
+      m_aszAvatorName,
+      bySlotIndex);
+    return 0;
+  }
+
+  CLogFile::Write(
+    &g_Main.m_logSystemError,
+    "%s : Update_QuestInsert(SlotIndex OVER) : slot : %d",
+    m_aszAvatorName,
+    bySlotIndex);
+  return 0;
+}
+
+char CUserDB::Update_QuestDelete(unsigned __int8 bySlotIndex)
+{
+  if (bySlotIndex < 0x1Eu)
+  {
+    if (m_AvatorData.dbQuest.m_List[bySlotIndex].byQuestType == 0xFF)
+    {
+      CLogFile::Write(
+        &g_Main.m_logSystemError,
+        "%s : Update_QuestDelete(EXIST) : slot : %d",
+        m_aszAvatorName,
+        bySlotIndex);
+      return 0;
+    }
+
+    m_AvatorData.dbQuest.m_List[bySlotIndex].Init();
+    m_bDataUpdate = true;
+    return 1;
+  }
+
+  CLogFile::Write(
+    &g_Main.m_logSystemError,
+    "%s : Update_QuestDelete(SlotIndex OVER) : slot : %d",
+    m_aszAvatorName,
+    bySlotIndex);
+  return 0;
+}
+
+char CUserDB::Update_QuestUpdate(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pSlotData, bool bUpdate)
+{
+  if (bySlotIndex < 0x1Eu)
+  {
+    if (m_AvatorData.dbQuest.m_List[bySlotIndex].byQuestType == 0xFF)
+    {
+      CLogFile::Write(
+        &g_Main.m_logSystemError,
+        "%s : Update_QuestUpdate(NOTHING) : slot : %d",
+        m_aszAvatorName,
+        bySlotIndex);
+      return 0;
+    }
+
+    memcpy_0(
+      &m_AvatorData.dbQuest.m_List[bySlotIndex],
+      pSlotData,
+      sizeof(m_AvatorData.dbQuest.m_List[bySlotIndex]));
+    if (bUpdate)
+    {
+      m_bDataUpdate = true;
+    }
+    return 1;
+  }
+
+  CLogFile::Write(
+    &g_Main.m_logSystemError,
+    "%s : Update_QuestUpdate(SlotIndex OVER) : slot : %d",
+    m_aszAvatorName,
+    bySlotIndex);
+  return 0;
+}
+
+char CUserDB::Update_NPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BASE::_NPC_QUEST_HISTORY *pHisData)
+{
+  if (byIndex < 0x46u)
+  {
+    memcpy_0(
+      &m_AvatorData.dbQuest.m_History[byIndex],
+      pHisData,
+      sizeof(m_AvatorData.dbQuest.m_History[byIndex]));
+    return 1;
+  }
+
+  CLogFile::Write(
+    &g_Main.m_logSystemError,
+    "%s : Update_NPCQuestHistory(Index OVER) : %d",
+    m_aszAvatorName,
+    byIndex);
+  return 0;
+}
+
+void CUserDB::Update_MaxLevel(unsigned __int8 byMaxLevel)
+{
+  m_AvatorData.dbAvator.m_byMaxLevel = byMaxLevel;
+}
+
 void CUserDB::ForceCloseCommand(unsigned __int8 byKickType, unsigned int dwPushIP, bool bSlow, const char *pszCause)
 {
   _server_notify_inform_zone msg{};

@@ -73,6 +73,7 @@ public:
     unsigned __int16 wItemIndex,
     unsigned __int64 lnUID,
     char *pFN);
+  void delete_npc_quest_item(int n, _STORAGE_LIST::_db_con *pItem, char *pszFileName);
   void time_jade_effect_log(
     char *pszItemName,
     _STORAGE_LIST::_db_con *pItem,

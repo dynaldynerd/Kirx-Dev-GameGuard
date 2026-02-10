@@ -57,6 +57,10 @@ During the implementation of `CMapOperation::Init` and its sub-flows, the follow
 | `WorldServerUtil.cpp` | `IsCashItem` | `s_ptblItemData[byTblCode]` | `_base_fld *` | Uses `Record[6].m_strCode[48]`, `Record[9].m_strCode[12/36]`, `Record[5].m_strCode[48/44/60/56]`, `Record[8].m_strCode[8]`, `Record[7].m_strCode[44/32/8]`, `Record[6].m_strCode[0]`. |
 | `CPlayer.cpp` | `CPlayer::CreateComplete` | `CQuestMgr::s_tblQuest` | `_base_fld *` | Uses `Record[13].m_strCode[60]` and `Record[1].m_strCode[24]` when deciding reward handling after quest completion. |
 | `CPlayer.cpp` | `CPlayer::CreateComplete` | `g_Main.m_tblItemData[25]` | `_base_fld *` | Uses `Record[3].m_strCode[raceSexCode + 52]` to validate guard tower item availability. |
+| `CPlayer.cpp` | `CPlayer::pc_GotoBasePortalRequest` | `g_Main.m_tblItemData[22]` | `_base_fld *` | Uses `Record[7].m_strCode[44]`, `Record[6].m_strCode[20/24]`, `Record[4].m_strCode` (map code), `Record[5]` (dummy position), and `Record[4].m_strCode[...]` for map class checks. |
+| `CPlayer.cpp` | `CPlayer::Emb_CheckActForQuest` | `CQuestMgr::s_tblQuest` | `_base_fld *` | Uses `Record[13].m_strCode[60]` and `Record[1].m_strCode[24]` for reward selection checks. |
+| `CQuestMgr.cpp` | `CQuestMgr::CheckReqAct` | `CQuestMgr::s_tblQuest` | `_base_fld *` | Uses `Record[1].m_strCode` and offsets via `Record[4*k+1].m_strCode[32/68/132/196/200/268]`, plus `Record[4*m+5].m_strCode[28]` and `Record[1].m_strCode[28]` for quest action checks. |
+| `CQuestMgr.cpp` | `CQuestMgr::CheckFailCondition` | `CQuestMgr::s_tblQuest` | `_base_fld *` | Uses `Record[27..29].m_strCode[28/32/36]`, `Record[31].m_strCode[28/32]`, and `Record[32].m_strCode[28]` for fail conditions and follow-up quest logic. |
 > [!NOTE]
 > Rule 9: `CRecordData::GetRecord` usually returns `_base_fld`. Re-casters should be careful with structure packing and offsets.
 | `WorldServerUtil.cpp` | `InitMasteryFormula` | `pSkillData` / `pForceData` | `_base_fld *` | Uses `Record[1].m_strCode[4]` and `Record[4].m_strCode[60]` to fill mastery-level tables; verify offsets. |

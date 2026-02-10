@@ -69,6 +69,21 @@ void CMgrAvatorItemHistory::lenditem_del_from_inven(
   WriteFile(pFN, sData);
 }
 
+void CMgrAvatorItemHistory::delete_npc_quest_item(int n, _STORAGE_LIST::_db_con *pItem, char *pszFileName)
+{
+  (void)n;
+  _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[pItem->m_byTableCode], pItem->m_wItemIndex);
+  sprintf(
+    sData,
+    "DELETE NPC QUEST ITEM : %s_%u_[%I64u] [%s %s]\r\n",
+    record->m_strCode,
+    pItem->m_dwDur,
+    pItem->m_lnUID,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pszFileName, sData);
+}
+
 void CMgrAvatorItemHistory::time_jade_effect_log(
   char *pszItemName,
   _STORAGE_LIST::_db_con *pItem,
