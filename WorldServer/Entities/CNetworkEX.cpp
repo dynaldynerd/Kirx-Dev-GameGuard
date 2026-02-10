@@ -494,31 +494,31 @@ bool CNetworkEX::ClientLineAnalysis(unsigned int n, _MSG_HEADER *pMsgHeader, cha
       switch (subType - 1)
       {
         case 0:
-          result = EnterWorldRequest(n, pMsgHeader, pMsg);
+          result = this->EnterWorldRequest(n, pMsgHeader, pMsg);
           break;
         case 5:
-          result = MoveLobbyRequest(n, pMsg);
+          result = this->MoveLobbyRequest(n, pMsg);
           break;
         case 7:
-          result = RegedCharRequest(n, pMsg);
+          result = this->RegedCharRequest(n, pMsg);
           break;
         case 9:
-          result = AddCharRequest(n, pMsg);
+          result = this->AddCharRequest(n, pMsg);
           break;
         case 11:
-          result = DelCharRequest(n, pMsg);
+          result = this->DelCharRequest(n, pMsg);
           break;
         case 13:
-          result = SelCharRequest(n, pMsg);
+          result = this->SelCharRequest(n, pMsg);
           break;
         case 16:
-          result = TutorialProcessReport(n, pMsg);
+          result = this->TutorialProcessReport(n, pMsg);
           break;
         case 21:
-          result = AliveCharRequest(n, pMsg);
+          result = this->AliveCharRequest(n, pMsg);
           break;
         case 25:
-          result = NotifyLocalTimeRequest(n, pMsg);
+          result = this->NotifyLocalTimeRequest(n, pMsg);
           break;
         default:
           result = false;
@@ -532,73 +532,73 @@ bool CNetworkEX::ClientLineAnalysis(unsigned int n, _MSG_HEADER *pMsgHeader, cha
       switch (subType - 1)
       {
         case 0:
-          result = ChatOperatorRequest(n, pMsg);
+          result = this->ChatOperatorRequest(n, pMsg);
           break;
         case 1:
-          result = ChatCircleRequest(n, pMsg);
+          result = this->ChatCircleRequest(n, pMsg);
           break;
         case 2:
-          result = ChatFarRequest(n, pMsg);
+          result = this->ChatFarRequest(n, pMsg);
           break;
         case 4:
-          result = ChatPartyRequest(n, pMsg);
+          result = this->ChatPartyRequest(n, pMsg);
           break;
         case 5:
-          result = ChatRaceRequest(n, pMsg);
+          result = this->ChatRaceRequest(n, pMsg);
           break;
         case 6:
-          result = ChatCheatRequest(n, pMsg);
+          result = this->ChatCheatRequest(n, pMsg);
           break;
         case 7:
-          result = ChatManageRequest(n, pMsg);
+          result = this->ChatManageRequest(n, pMsg);
           break;
         case 8:
-          result = ChatMgrWhisperRequest(n, pMsg);
+          result = this->ChatMgrWhisperRequest(n, pMsg);
           break;
         case 9:
-          result = ChatMapRecvYesOrNo(n, pMsg);
+          result = this->ChatMapRecvYesOrNo(n, pMsg);
           break;
         case 10:
-          result = ChatMapRequest(n, pMsg);
+          result = this->ChatMapRequest(n, pMsg);
           break;
         case 11:
-          result = ChatRaceBossRequest(n, pMsg);
+          result = this->ChatRaceBossRequest(n, pMsg);
           break;
         case 12:
-          result = ChatGuildEstSenRequest(n, pMsg);
+          result = this->ChatGuildEstSenRequest(n, pMsg);
           break;
         case 13:
-          result = ChatRePresentationRequest(n, pMsg);
+          result = this->ChatRePresentationRequest(n, pMsg);
           break;
         case 14:
-          result = ChatAllRecvYesOrNo(n, pMsg);
+          result = this->ChatAllRecvYesOrNo(n, pMsg);
           break;
         case 15:
-          result = ChatAllRequest(n, pMsg);
+          result = this->ChatAllRequest(n, pMsg);
           break;
         case 16:
-          result = ChatGreetingMsg_GM(n, pMsg);
+          result = this->ChatGreetingMsg_GM(n, pMsg);
           break;
         case 17:
-          result = ChatGreetingMsg_RACE(n, pMsg);
+          result = this->ChatGreetingMsg_RACE(n, pMsg);
           break;
         case 18:
-          result = ChatGreetingMsg_GUILD(n, pMsg);
+          result = this->ChatGreetingMsg_GUILD(n, pMsg);
           break;
         case 19:
-          result = ChatTradeRequestMsg(n, pMsg);
+          result = this->ChatTradeRequestMsg(n, pMsg);
           break;
         case 98:
-          result = ChatGuildRequest(n, pMsg);
+          result = this->ChatGuildRequest(n, pMsg);
           break;
         case 100:
-          result = ChatMultiFarRequest(n, pMsg);
+          result = this->ChatMultiFarRequest(n, pMsg);
           break;
         case 103:
-          result = ChatRaceBossCryRequest(n, pMsg);
+          result = this->ChatRaceBossCryRequest(n, pMsg);
           break;
         case 104:
-          result = ChatGmNoticeRequest(n, pMsg);
+          result = this->ChatGmNoticeRequest(n, pMsg);
           break;
         default:
           result = false;
@@ -612,43 +612,43 @@ bool CNetworkEX::ClientLineAnalysis(unsigned int n, _MSG_HEADER *pMsgHeader, cha
       switch (subType - 1)
       {
         case 0:
-          result = NewPosStartRequest(n, pMsg);
+          result = this->NewPosStartRequest(n, pMsg);
           break;
         case 2:
-          result = BaseDownloadRequest(n, pMsg);
+          result = this->BaseDownloadRequest(n, pMsg);
           break;
         case 4:
-          result = InvenDownloadRequest(n, pMsg);
+          result = this->InvenDownloadRequest(n, pMsg);
           break;
         case 6:
-          result = CumDownloadRequest(n, pMsg);
+          result = this->CumDownloadRequest(n, pMsg);
           break;
         case 8:
-          result = ForceDownloadRequest(n, pMsg);
+          result = this->ForceDownloadRequest(n, pMsg);
           break;
         case 10:
-          result = QuestDownloadRequest(n, pMsg);
+          result = this->QuestDownloadRequest(n, pMsg);
           break;
         case 12:
-          result = SpecialDownloadRequest(n, pMsg);
+          result = this->SpecialDownloadRequest(n, pMsg);
           break;
         case 29:
-          result = OtherShapeRequest(n, pMsg);
+          result = this->OtherShapeRequest(n, pMsg);
           break;
         case 36:
-          result = Revival(n, pMsg);
+          result = this->Revival(n, pMsg);
           break;
         case 40:
-          result = ExitWorldRequest(n, pMsg);
+          result = this->ExitWorldRequest(n, pMsg);
           break;
         case 45:
-          result = LinkBoardDownloadRequest(n, pMsg);
+          result = this->LinkBoardDownloadRequest(n, pMsg);
           break;
         case 48:
-          result = MacroDownLoadRequest(n, pMsg);
+          result = this->MacroDownLoadRequest(n, pMsg);
           break;
         case 53:
-          result = AMP_DownloadRequest(n, pMsg);
+          result = this->AMP_DownloadRequest(n, pMsg);
           break;
         default:
           result = false;
@@ -662,28 +662,28 @@ bool CNetworkEX::ClientLineAnalysis(unsigned int n, _MSG_HEADER *pMsgHeader, cha
       switch (subType - 1)
       {
         case 0:
-          result = NextPoint(n, pMsg);
+          result = this->NextPoint(n, pMsg);
           break;
         case 1:
-          result = RealMovPosRequest(n, pMsg);
+          result = this->RealMovPosRequest(n, pMsg);
           break;
         case 18:
-          result = Stop(n, pMsg);
+          result = this->Stop(n, pMsg);
           break;
         case 25:
-          result = GotoBasePortalRequest(n, pMsg);
+          result = this->GotoBasePortalRequest(n, pMsg);
           break;
         case 27:
-          result = GotoAvatorRequest(n, pMsg);
+          result = this->GotoAvatorRequest(n, pMsg);
           break;
         case 30:
-          result = MoveTypeChangeRequeset(n, pMsg);
+          result = this->MoveTypeChangeRequeset(n, pMsg);
           break;
         case 31:
-          result = MoveInfoRequeset(n, pMsg);
+          result = this->MoveInfoRequeset(n, pMsg);
           break;
         case 32:
-          result = PlayerInfoResult(n, pMsg);
+          result = this->PlayerInfoResult(n, pMsg);
           break;
         default:
           result = false;
@@ -697,22 +697,22 @@ bool CNetworkEX::ClientLineAnalysis(unsigned int n, _MSG_HEADER *pMsgHeader, cha
       switch (subType - 1)
       {
         case 0:
-          result = AttackPersonalRequest(n, pMsg);
+          result = this->AttackPersonalRequest(n, pMsg);
           break;
         case 1:
-          result = AttackSkillRequest(n, pMsg);
+          result = this->AttackSkillRequest(n, pMsg);
           break;
         case 2:
-          result = AttackForceRequest(n, pMsg);
+          result = this->AttackForceRequest(n, pMsg);
           break;
         case 3:
-          result = AttackUnitRequest(n, pMsg);
+          result = this->AttackUnitRequest(n, pMsg);
           break;
         case 4:
-          result = AttackTestRequest(n, pMsg);
+          result = this->AttackTestRequest(n, pMsg);
           break;
         case 54:
-          result = AttackSiegeRequest(n, pMsg);
+          result = this->AttackSiegeRequest(n, pMsg);
           break;
         default:
           result = false;
@@ -726,76 +726,76 @@ bool CNetworkEX::ClientLineAnalysis(unsigned int n, _MSG_HEADER *pMsgHeader, cha
       switch (subType)
       {
         case 0:
-          result = ItemboxTakeRequest(n, pMsg);
+          result = this->ItemboxTakeRequest(n, pMsg);
           break;
         case 3:
-          result = ThrowStorageRequest(n, pMsg);
+          result = this->ThrowStorageRequest(n, pMsg);
           break;
         case 5:
-          result = UsePotionRequest(n, pMsg);
+          result = this->UsePotionRequest(n, pMsg);
           break;
         case 7:
-          result = EquipPartRequest(n, pMsg);
+          result = this->EquipPartRequest(n, pMsg);
           break;
         case 9:
-          result = EmbellishRequest(n, pMsg);
+          result = this->EmbellishRequest(n, pMsg);
           break;
         case 11:
-          result = OffPartRequest(n, pMsg);
+          result = this->OffPartRequest(n, pMsg);
           break;
         case 13:
-          result = MakeItemRequest(n, pMsg);
+          result = this->MakeItemRequest(n, pMsg);
           break;
         case 15:
-          result = UpgradeItemRequest(n, pMsg);
+          result = this->UpgradeItemRequest(n, pMsg);
           break;
         case 17:
-          result = DownGradeItemRequest(n, pMsg);
+          result = this->DownGradeItemRequest(n, pMsg);
           break;
         case 19:
-          result = AddBagRequest(n, pMsg);
+          result = this->AddBagRequest(n, pMsg);
           break;
         case 24:
-          result = UseRecoverLossExpItemRequest(n, pMsg);
+          result = this->UseRecoverLossExpItemRequest(n, pMsg);
           break;
         case 26:
-          result = CombineItemRequest(n, pMsg);
+          result = this->CombineItemRequest(n, pMsg);
           break;
         case 28:
-          result = ExchangeItemRequest(n, pMsg);
+          result = this->ExchangeItemRequest(n, pMsg);
           break;
         case 30:
-          result = CombineExItemRequest(n, pMsg);
+          result = this->CombineExItemRequest(n, pMsg);
           break;
         case 33:
-          result = CombineExItemAcceptRequest(n, pMsg);
+          result = this->CombineExItemAcceptRequest(n, pMsg);
           break;
         case 35:
-          result = UseFireCrackerItemRequest(n, pMsg);
+          result = this->UseFireCrackerItemRequest(n, pMsg);
           break;
         case 43:
-          result = SetItemCheckRequest(n, pMsg);
+          result = this->SetItemCheckRequest(n, pMsg);
           break;
         case 44:
-          result = UseSoccerBallItemRequest(n, pMsg);
+          result = this->UseSoccerBallItemRequest(n, pMsg);
           break;
         case 47:
-          result = UseRadarItemRequest(n, pMsg);
+          result = this->UseRadarItemRequest(n, pMsg);
           break;
         case 49:
-          result = RadarCharListRequest(n, pMsg);
+          result = this->RadarCharListRequest(n, pMsg);
           break;
         case 57:
-          result = NPCLinkCheckItemRequest(n, pMsg);
+          result = this->NPCLinkCheckItemRequest(n, pMsg);
           break;
         case 61:
-          result = UseRecallTeleportItemRequest(n, pMsg);
+          result = this->UseRecallTeleportItemRequest(n, pMsg);
           break;
         case 64:
-          result = CharacterRenameCash(n, pMsg);
+          result = this->CharacterRenameCash(n, pMsg);
           break;
         case 73:
-          result = TalikCrystalExchangeRequest(n, pMsgHeader, pMsg);
+          result = this->TalikCrystalExchangeRequest(n, pMsgHeader, pMsg);
           break;
         default:
           result = false;
@@ -808,15 +808,15 @@ bool CNetworkEX::ClientLineAnalysis(unsigned int n, _MSG_HEADER *pMsgHeader, cha
       const unsigned __int8 subType = pMsgHeader->m_byType[1];
       if (subType == 1)
       {
-        result = MovePortalRequest(n, pMsg);
+        result = this->MovePortalRequest(n, pMsg);
       }
       else if (subType == 3)
       {
-        result = RegistBindRequest(n, pMsg);
+        result = this->RegistBindRequest(n, pMsg);
       }
       else
       {
-        result = subType == 9 && EnterReturnGateRequest(n, pMsg);
+        result = subType == 9 && this->EnterReturnGateRequest(n, pMsg);
       }
       break;
     }
@@ -826,19 +826,19 @@ bool CNetworkEX::ClientLineAnalysis(unsigned int n, _MSG_HEADER *pMsgHeader, cha
       switch (subType)
       {
         case 6u:
-          result = SelectClassRequest(n, pMsg);
+          result = this->SelectClassRequest(n, pMsg);
           break;
         case 0x18u:
-          result = InitClassRequest(n, pMsg);
+          result = this->InitClassRequest(n, pMsg);
           break;
         case 0x1Au:
-          result = InitClassCostRequest(n, pMsg);
+          result = this->InitClassCostRequest(n, pMsg);
           break;
         case 0x1Cu:
-          result = CanSelectClassRequest(n, pMsg);
+          result = this->CanSelectClassRequest(n, pMsg);
           break;
         default:
-          result = subType == 33 && SelectPcBangRewardRequest(n, pMsg);
+          result = subType == 33 && this->SelectPcBangRewardRequest(n, pMsg);
           break;
       }
       break;
@@ -849,31 +849,31 @@ bool CNetworkEX::ClientLineAnalysis(unsigned int n, _MSG_HEADER *pMsgHeader, cha
       switch (subType - 1)
       {
         case 0:
-          result = BuyStoreRequest(n, pMsg);
+          result = this->BuyStoreRequest(n, pMsg);
           break;
         case 3:
-          result = SellStoreRequest(n, pMsg);
+          result = this->SellStoreRequest(n, pMsg);
           break;
         case 7:
-          result = StoreListRequest(n, pMsg);
+          result = this->StoreListRequest(n, pMsg);
           break;
         case 9:
-          result = ExchangeDalantForGoldRequest(n, pMsg);
+          result = this->ExchangeDalantForGoldRequest(n, pMsg);
           break;
         case 10:
-          result = ExchangeGoldForDalantRequest(n, pMsg);
+          result = this->ExchangeGoldForDalantRequest(n, pMsg);
           break;
         case 16:
-          result = LimitItemNumRequest(n, pMsg);
+          result = this->LimitItemNumRequest(n, pMsg);
           break;
         case 18:
-          result = TalikRecorverList(n, pMsg);
+          result = this->TalikRecorverList(n, pMsg);
           break;
         case 20:
-          result = PvpCashRecorverWithTalik(n, pMsg);
+          result = this->PvpCashRecorverWithTalik(n, pMsg);
           break;
         case 22:
-          result = PcBangPrimiumCouponRequest(n, pMsg);
+          result = this->PcBangPrimiumCouponRequest(n, pMsg);
           break;
         default:
           result = false;
