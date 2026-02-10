@@ -32,3 +32,6 @@
 17. avoid ida pro variable such as a1, a2, v1, v2 as much as possible unless you don't have any idea what that variable is
 18. please skip implementing stackFill or debug stack-fill junk (0xCCCCCCCC) at the start of a function, it just MSVC Debug being MSVC and we should get rid of it from our program as it was automatically generated to a debug MSVC program 
 19. for any nation-related implementation, only implement RU; other nation variants should be left unimplemented unless explicitly requested
+20. before rebasing, always create a backup branch first (and push it to remote before continuing).
+21. when fixing merge conflicts, do the simplest merge: list all conflicted functions/headers and only add missing function/struct/class/global variable/static variable from both sides. Example: if one side has A, B, E and the other has B, C, D then merge into A, B, C, D, E with no duplicate B.
+22. for `Record.md` conflicts, combine both sides and then remove duplicate entries.

@@ -3,24 +3,31 @@
 #include "CUserDB.h"
 
 #include <cstring>
-#include <new>
-#include <mmsystem.h>
 
 #include "CMapOperation.h"
 #include "CNationSettingManager.h"
+#include "CRecordData.h"
 #include "FireGuard.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 #include "CLogFile.h"
 #include "CNetProcess.h"
 #include "CNetworkEX.h"
-#include "alive_char_result_zocl.h"
 #include "add_char_result_zone.h"
+#include "alive_char_result_zocl.h"
+#include "enter_lobby_report_wrac.h"
+#include "enter_world_request_wrac.h"
+#include "enter_world_result_zone.h"
 #include "chat_lock_inform_zocl.h"
 #include "del_char_result_zone.h"
-#include "enter_lobby_report_wrac.h"
 #include "moveout_user_result_zone.h"
 #include "not_arranged_char_inform_zocl.h"
+#include "qry_case_alive_char.h"
+#include "qry_sheet_delete.h"
+#include "qry_sheet_insert.h"
+#include "qry_sheet_load.h"
+#include "qry_sheet_lobby.h"
+#include "qry_sheet_reged.h"
 #include "reged_char_result_zone.h"
 #include "sel_char_result_zone.h"
 #include "select_avator_report_wrac.h"
@@ -36,33 +43,27 @@ CLogFile CUserDB::s_logAvatorDB;
 CMgrAccountLobbyHistory CUserDB::s_MgrLobbyHistory{};
 _MOVE_LOBBY_DELAY CUserDB::s_MoveLobbyDelay{};
 
-_BUDDY_DB_BASE::_LIST::_LIST()
-{
-  Init();
-}
+const char wszNonMakeName_0[3][17] = {"GM", "ADMIN", "OPERATOR"};
+const char wszNonMakeName_1[3][17] = {"GM", "ADMIN", "OPERATOR"};
+const char wszNonMakeName[3][17] = {"GM", "ADMIN", "OPERATOR"};
+const char wszGMCmp[] = "GM";
+size_t nGMCmpLen = strlen_0(wszGMCmp);
 
-void _BUDDY_DB_BASE::_LIST::Init()
+CUserDB *SearchAvatorWithName(CUserDB *pList, int nMax, char *pwszName)
 {
-  dwSerial = static_cast<unsigned int>(-1);
-  wszName[0] = '\0';
-}
-
-bool _BUDDY_DB_BASE::_LIST::IsFilled()
-{
-  return dwSerial != static_cast<unsigned int>(-1);
-}
-
-_BUDDY_DB_BASE::_BUDDY_DB_BASE()
-{
-  Init();
-}
-
-void _BUDDY_DB_BASE::Init()
-{
-  for (int j = 0; j < 50; ++j)
+  const unsigned __int8 nameLen = static_cast<unsigned __int8>(strlen_0(pwszName));
+  for (int index = 0; index < nMax; ++index)
   {
-    m_List[j].Init();
+    CUserDB &entry = pList[index];
+    if (entry.m_bActive
+        && entry.m_bField
+        && entry.m_byNameLen == nameLen
+        && !strncmp_0(entry.m_wszAvatorName, pwszName, nameLen))
+    {
+      return &entry;
+    }
   }
+  return nullptr;
 }
 
 void CUserDB::Init(unsigned __int16 index)
@@ -138,13 +139,6 @@ char CUserDB::Update_Bind(char *pszMapCode, char *pDummyCode, bool bUpdate)
   return 1;
 }
 
-char CUserDB::Update_DelBuddy(unsigned __int8 bySlotIndex)
-{
-  m_AvatorData.dbBuddy.m_List[bySlotIndex].Init();
-  m_bDataUpdate = true;
-  return 1;
-}
-
 void CUserDB::Update_PvpPointLeak(long double dValue)
 {
   m_AvatorData.dbSupplement.dPvpPointLeak = dValue;
@@ -153,42 +147,6 @@ void CUserDB::Update_PvpPointLeak(long double dValue)
 void CUserDB::Update_LastAttBuff(bool bSet)
 {
   m_AvatorData.dbSupplement.bLastAttBuff = bSet;
-}
-
-char CUserDB::Update_LossExp(long double dLossExp)
-{
-  m_AvatorData.dbAvator.m_dLossExp = dLossExp;
-  m_bDataUpdate = true;
-  return 1;
-}
-
-char CUserDB::Update_Exp(long double exp)
-{
-  m_AvatorData.dbAvator.m_dExp = exp;
-  m_bDataUpdate = true;
-  return 1;
-}
-
-char CUserDB::Update_UserFatigue(unsigned int dwFatigue)
-{
-  m_AvatorData.dbTimeLimitInfo.dwFatigue = dwFatigue;
-  m_bDataUpdate = true;
-  return 1;
-}
-
-char CUserDB::Update_UserTLStatus(unsigned __int8 byStatus)
-{
-  m_AvatorData.dbTimeLimitInfo.byTLStatus = byStatus;
-  m_bDataUpdate = true;
-  return 1;
-}
-
-void CUserDB::Update_PotionNextUseTime(unsigned __int8 byPotionClass, unsigned int dwNextUseTime)
-{
-  if (byPotionClass < 0x26u && dwNextUseTime != static_cast<unsigned int>(-1))
-  {
-    m_AvatorData.dbPotionNextUseTime.dwPotionNextUseTime[byPotionClass] = dwNextUseTime;
-  }
 }
 
 bool CUserDB::Update_Stat(unsigned __int8 byStatIndex, unsigned int dwNewCum, bool bUpdate)
@@ -216,6 +174,120 @@ bool CUserDB::Update_Stat(unsigned __int8 byStatIndex, unsigned int dwNewCum, bo
   return false;
 }
 
+char CUserDB::Update_QuestInsert(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pSlotData)
+{
+  if (bySlotIndex < 0x1Eu)
+  {
+    if (m_AvatorData.dbQuest.m_List[bySlotIndex].byQuestType == 0xFF)
+    {
+      memcpy_0(
+        &m_AvatorData.dbQuest.m_List[bySlotIndex],
+        pSlotData,
+        sizeof(m_AvatorData.dbQuest.m_List[bySlotIndex]));
+      m_bDataUpdate = true;
+      return 1;
+    }
+
+    CLogFile::Write(
+      &g_Main.m_logSystemError,
+      "%s : Update_QuestInsert(EXIST) : slot : %d",
+      m_aszAvatorName,
+      bySlotIndex);
+    return 0;
+  }
+
+  CLogFile::Write(
+    &g_Main.m_logSystemError,
+    "%s : Update_QuestInsert(SlotIndex OVER) : slot : %d",
+    m_aszAvatorName,
+    bySlotIndex);
+  return 0;
+}
+
+char CUserDB::Update_QuestDelete(unsigned __int8 bySlotIndex)
+{
+  if (bySlotIndex < 0x1Eu)
+  {
+    if (m_AvatorData.dbQuest.m_List[bySlotIndex].byQuestType == 0xFF)
+    {
+      CLogFile::Write(
+        &g_Main.m_logSystemError,
+        "%s : Update_QuestDelete(EXIST) : slot : %d",
+        m_aszAvatorName,
+        bySlotIndex);
+      return 0;
+    }
+
+    m_AvatorData.dbQuest.m_List[bySlotIndex].Init();
+    m_bDataUpdate = true;
+    return 1;
+  }
+
+  CLogFile::Write(
+    &g_Main.m_logSystemError,
+    "%s : Update_QuestDelete(SlotIndex OVER) : slot : %d",
+    m_aszAvatorName,
+    bySlotIndex);
+  return 0;
+}
+
+char CUserDB::Update_QuestUpdate(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pSlotData, bool bUpdate)
+{
+  if (bySlotIndex < 0x1Eu)
+  {
+    if (m_AvatorData.dbQuest.m_List[bySlotIndex].byQuestType == 0xFF)
+    {
+      CLogFile::Write(
+        &g_Main.m_logSystemError,
+        "%s : Update_QuestUpdate(NOTHING) : slot : %d",
+        m_aszAvatorName,
+        bySlotIndex);
+      return 0;
+    }
+
+    memcpy_0(
+      &m_AvatorData.dbQuest.m_List[bySlotIndex],
+      pSlotData,
+      sizeof(m_AvatorData.dbQuest.m_List[bySlotIndex]));
+    if (bUpdate)
+    {
+      m_bDataUpdate = true;
+    }
+    return 1;
+  }
+
+  CLogFile::Write(
+    &g_Main.m_logSystemError,
+    "%s : Update_QuestUpdate(SlotIndex OVER) : slot : %d",
+    m_aszAvatorName,
+    bySlotIndex);
+  return 0;
+}
+
+char CUserDB::Update_NPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BASE::_NPC_QUEST_HISTORY *pHisData)
+{
+  if (byIndex < 0x46u)
+  {
+    memcpy_0(
+      &m_AvatorData.dbQuest.m_History[byIndex],
+      pHisData,
+      sizeof(m_AvatorData.dbQuest.m_History[byIndex]));
+    return 1;
+  }
+
+  CLogFile::Write(
+    &g_Main.m_logSystemError,
+    "%s : Update_NPCQuestHistory(Index OVER) : %d",
+    m_aszAvatorName,
+    byIndex);
+  return 0;
+}
+
+void CUserDB::Update_MaxLevel(unsigned __int8 byMaxLevel)
+{
+  m_AvatorData.dbAvator.m_byMaxLevel = byMaxLevel;
+}
+
 void CUserDB::ForceCloseCommand(unsigned __int8 byKickType, unsigned int dwPushIP, bool bSlow, const char *pszCause)
 {
   _server_notify_inform_zone msg{};
@@ -233,6 +305,183 @@ void CUserDB::ForceCloseCommand(unsigned __int8 byKickType, unsigned int dwPushI
     strcat_0(buffer, pszCause);
   }
   g_Network.Close(0, m_idWorld.wIndex, bSlow, buffer);
+}
+
+void CUserDB::ClearBillingData()
+{
+  memset_0(&m_BillingInfo, 0, sizeof(m_BillingInfo));
+}
+
+void CUserDB::SetBillingData(_BILLING_INFO *pBillingInfo)
+{
+  if (pBillingInfo)
+  {
+    memcpy_0(&m_BillingInfo, pBillingInfo, sizeof(m_BillingInfo));
+  }
+  m_BillingInfo.bPCCheat = 0;
+}
+
+void CUserDB::SetBillingData(char *szCMSCode, __int16 iType, int lRemainTime, _SYSTEMTIME *pstEndDate)
+{
+  m_BillingInfo.iType = iType;
+  m_BillingInfo.lRemainTime = lRemainTime;
+  if (iType == 6 || iType == 7)
+  {
+    memcpy_0(m_BillingInfo.szCMS, szCMSCode, sizeof(m_BillingInfo.szCMS));
+  }
+  else
+  {
+    memset_0(m_BillingInfo.szCMS, 0, sizeof(m_BillingInfo.szCMS));
+  }
+  if (pstEndDate)
+  {
+    memcpy_0(&m_BillingInfo.stEndDate, pstEndDate, sizeof(m_BillingInfo.stEndDate));
+  }
+  if (!CMainThread::IsReleaseServiceMode(&g_Main) && m_BillingInfo.bPCCheat)
+  {
+    m_BillingInfo.bIsPcBang = 1;
+    m_BillingInfo.iType = 7;
+  }
+}
+
+int CUserDB::GetBillingType()
+{
+  return m_BillingInfo.iType;
+}
+
+void CUserDB::SetBillingNoLogout(bool bNoLogout)
+{
+  m_bBillingNoLogout = bNoLogout;
+}
+
+void CUserDB::SendMsg_BillingInfo()
+{
+  struct _billing_msg
+  {
+    __int16 iType;
+    int lRemainTime;
+    _SYSTEMTIME stEndDate;
+  };
+
+  _billing_msg msg{};
+  msg.iType = m_BillingInfo.iType;
+  msg.lRemainTime = m_BillingInfo.lRemainTime;
+  memcpy_0(&msg.stEndDate, &m_BillingInfo.stEndDate, sizeof(msg.stEndDate));
+
+  unsigned __int8 pbyType[2]{29, 2};
+  CNetProcess::LoadSendMsg(
+    g_Network.m_pProcess[0],
+    m_idWorld.wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    0x16u);
+}
+
+void CUserDB::SetRemainTime(int lRemainTime)
+{
+  m_BillingInfo.lRemainTime = lRemainTime;
+}
+
+void CUserDB::UILockInfo_Init(char *pMsg)
+{
+  if (!pMsg)
+  {
+    return;
+  }
+
+  char msg[2]{};
+  if (m_byUILock)
+  {
+    msg[0] = 11;
+  }
+  else if (*pMsg)
+  {
+    if (*pMsg == 1)
+    {
+      msg[0] = 11;
+    }
+    else if (*pMsg == 2)
+    {
+      msg[0] = 12;
+    }
+    else
+    {
+      msg[0] = 15;
+    }
+  }
+  else
+  {
+    msg[0] = 0;
+    msg[1] = pMsg[16];
+    m_byUILock = 1;
+    strcpy_0(m_szUILock_PW, pMsg + 3);
+    m_byUILock_HintIndex = pMsg[16];
+    strcpy_0(m_uszUILock_HintAnswer, pMsg + 17);
+  }
+
+  unsigned __int8 pbyType[2]{13, 0x80};
+  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_idWorld.wIndex, pbyType, msg, 2u);
+}
+
+void CUserDB::UILockInfo_Update(char *pMsg)
+{
+  if (!pMsg)
+  {
+    return;
+  }
+
+  char msg[1]{};
+  if (m_byUILock >= 2u)
+  {
+    if (*pMsg)
+    {
+      if (*pMsg == 1)
+      {
+        msg[0] = 10;
+      }
+      else if (*pMsg == 2)
+      {
+        msg[0] = 12;
+      }
+      else
+      {
+        msg[0] = 8;
+      }
+    }
+    else
+    {
+      msg[0] = 0;
+      m_byUILock = 2;
+      strcpy_0(m_szUILock_PW, pMsg + 3);
+      m_byUILock_HintIndex = pMsg[16];
+      strcpy_0(m_uszUILock_HintAnswer, pMsg + 17);
+    }
+  }
+  else
+  {
+    msg[0] = 7;
+  }
+
+  unsigned __int8 pbyType[2]{13, static_cast<unsigned __int8>(-124)};
+  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_idWorld.wIndex, pbyType, msg, 1u);
+}
+
+void CUserDB::SetChatLock(bool bLock)
+{
+  m_bChatLock = bLock;
+  if (bLock)
+  {
+    _chat_lock_inform_zocl msg{};
+    msg.bLock = 1;
+    unsigned __int8 pbyType[2]{2, 12};
+    const unsigned __int16 len = msg.size();
+    CNetProcess::LoadSendMsg(
+      g_Network.m_pProcess[0],
+      m_idWorld.wIndex,
+      pbyType,
+      reinterpret_cast<char *>(&msg.bLock),
+      len);
+  }
 }
 
 bool CUserDB::Update_AlterPvPPoint(long double dNewPoint)
@@ -719,17 +968,6 @@ void _INVENKEY::SetRelease()
   wItemIndex = 0xFFFF;
 }
 
-_INVENKEY &_INVENKEY::operator=(const _INVENKEY &rhs)
-{
-  memcpy_0(this, &rhs, sizeof(_INVENKEY));
-  return *this;
-}
-
-bool _INVENKEY::operator==(const _INVENKEY &rhs) const
-{
-  return byTableCode == rhs.byTableCode && wItemIndex == rhs.wItemIndex;
-}
-
 bool _EMBELLKEY::IsFilled()
 {
   return bySlotIndex != 0xFF || byTableCode != 0xFF || wItemIndex != 0xFFFF;
@@ -792,9 +1030,62 @@ __int64 _FORCEKEY::CovDBKey()
   return static_cast<__int64>(dwKey);
 }
 
+bool _LINKKEY::IsFilled()
+{
+  return wEffectCode != 0xFFFF;
+}
+
+void _LINKKEY::SetRelease()
+{
+  wEffectCode = 0xFFFF;
+}
+
+void _LINKKEY::LoadDBKey(unsigned __int16 pl_zKey)
+{
+  wEffectCode = pl_zKey;
+}
+
+unsigned __int16 _LINKKEY::GetCode()
+{
+  return static_cast<unsigned __int16>(wEffectCode >> 12);
+}
+
+unsigned __int16 _LINKKEY::GetIndex()
+{
+  return static_cast<unsigned __int16>(wEffectCode & 0x0FFF);
+}
+
+void _LINKKEY::SetData(unsigned __int16 wCode, unsigned __int16 wIndex)
+{
+  wEffectCode = static_cast<unsigned __int16>(wIndex | (wCode << 12));
+}
+
 unsigned __int16 _LINKKEY::CovDBKey()
 {
   return wEffectCode;
+}
+
+_LINK_DB_BASE::_LIST::_LIST()
+{
+  Init();
+}
+
+void _LINK_DB_BASE::_LIST::Init()
+{
+  Key.SetRelease();
+}
+
+_LINK_DB_BASE::_LINK_DB_BASE()
+{
+  Init();
+}
+
+void _LINK_DB_BASE::Init()
+{
+  for (int j = 0; j < 50; ++j)
+  {
+    m_LinkList[j].Init();
+  }
 }
 
 bool _ANIMUSKEY::IsFilled()
@@ -852,33 +1143,6 @@ void CUserDB::SetDBPostData(
       0x129u,
       &m_AvatorData.dbPostData.dbPost.m_PostList[n],
       0x129u);
-  }
-}
-
-void CUserDB::Update_Post(
-  unsigned int n,
-  unsigned int dwSerial,
-  int nNumber,
-  unsigned __int8 byState,
-  int nKey,
-  unsigned __int64 dwDur,
-  unsigned int dwUpt,
-  unsigned int dwGold,
-  unsigned __int64 lnUID)
-{
-  if (n < 50)
-  {
-    m_AvatorData.dbPostData.dbPost.m_PostList[n].dwPSSerial = dwSerial;
-    m_AvatorData.dbPostData.dbPost.m_PostList[n].nNumber = nNumber;
-    m_AvatorData.dbPostData.dbPost.m_PostList[n].byState = byState;
-    m_AvatorData.dbPostData.dbPost.m_PostList[n].nKey = nKey;
-    m_AvatorData.dbPostData.dbPost.m_PostList[n].dwDur = dwDur;
-    m_AvatorData.dbPostData.dbPost.m_PostList[n].dwUpt = dwUpt;
-    m_AvatorData.dbPostData.dbPost.m_PostList[n].dwGold = dwGold;
-    m_AvatorData.dbPostData.dbPost.m_PostList[n].lnUID = lnUID;
-    m_AvatorData.dbPostData.dbPost.m_PostList[n].bUpdate = 1;
-    m_AvatorData.dbPostData.dbPost.m_bUpdate = 1;
-    m_bDataUpdate = 1;
   }
 }
 
@@ -1001,19 +1265,6 @@ bool _INVEN_DB_BASE::_LIST::Set(const _STORAGE_LIST::_db_con *pItem)
   return true;
 }
 
-_INVEN_DB_BASE::_LIST &_INVEN_DB_BASE::_LIST::operator=(const _LIST &rhs)
-{
-  Key = rhs.Key;
-  dwDur = rhs.dwDur;
-  dwUpt = rhs.dwUpt;
-  dwItemETSerial = rhs.dwItemETSerial;
-  lnUID = rhs.lnUID;
-  byCsMethod = rhs.byCsMethod;
-  dwT = rhs.dwT;
-  dwLendRegdTime = rhs.dwLendRegdTime;
-  return *this;
-}
-
 bool _INVEN_DB_BASE::_LIST::Release()
 {
   if (!Key.IsFilled())
@@ -1025,35 +1276,6 @@ bool _INVEN_DB_BASE::_LIST::Release()
   dwT = static_cast<unsigned int>(-1);
   byCsMethod = 0;
   return true;
-}
-
-_INVEN_DB_BASE & _INVEN_DB_BASE::operator=(const _INVEN_DB_BASE &rhs)
-{
-  for (unsigned int j = 0; j < 0x64; ++j)
-  {
-    m_List[j] = rhs.m_List[j];
-  }
-  return *this;
-}
-
-void _CUTTING_DB_BASE::_LIST::Init()
-{
-  Key.SetRelease();
-  dwDur = 0;
-}
-
-void _CUTTING_DB_BASE::Init()
-{
-  m_byLeftNum = 0;
-  for (int j = 0; j < 20; ++j)
-  {
-    m_List[j].Init();
-  }
-}
-
-void _CUTTING_DB_BASE::ReSetOldDataLoad()
-{
-  m_bOldDataLoad = false;
 }
 
 bool _EQUIP_DB_BASE::_EMBELLISH_LIST::Set(const _STORAGE_LIST::_db_con *pItem)
@@ -1265,17 +1487,6 @@ void _REGED::UpdateEquipLv()
   }
 }
 
-_NOT_ARRANGED_AVATOR_DB::_NOT_ARRANGED_AVATOR_DB()
-{
-  Init();
-}
-
-void _NOT_ARRANGED_AVATOR_DB::Init()
-{
-  memset_0(this, 0, sizeof(_NOT_ARRANGED_AVATOR_DB));
-  dwSerial = static_cast<unsigned int>(-1);
-}
-
 void _SYNC_STATE::Init()
 {
   std::memset(this, 0, sizeof(_SYNC_STATE));
@@ -1285,6 +1496,36 @@ void _SYNC_STATE::re_lobby()
 {
   bSelect = false;
   bReged = false;
+}
+
+char _SYNC_STATE::chk_enter()
+{
+  if (bEnter)
+  {
+    return 0;
+  }
+  bEnter = true;
+  return 1;
+}
+
+char _SYNC_STATE::chk_reged()
+{
+  if (bReged)
+  {
+    return 0;
+  }
+  bReged = true;
+  return 1;
+}
+
+char _SYNC_STATE::chk_select()
+{
+  if (bSelect)
+  {
+    return 0;
+  }
+  bSelect = true;
+  return 1;
 }
 
 void _AVATOR_DATA::InitData()
@@ -1321,29 +1562,640 @@ void CUserDB::SendMsgAccount_UILockRefresh_Update()
   }
 }
 
-void CUserDB::SendMsg_Inform_UILock()
+bool CUserDB::Enter_Account(
+  unsigned int dwAccountSerial,
+  unsigned int dwIP,
+  unsigned int dwProtocolVer,
+  unsigned int *pdwMasterKey)
 {
-  char payload[32]{};
-  payload[0] = static_cast<char>(m_byUILock);
-  payload[1] = static_cast<char>(m_byUILock_FailCnt);
-  payload[2] = static_cast<char>(m_byUILock_HintIndex);
-  payload[3] = static_cast<char>(m_byUILockFindPassFailCount);
+  if (m_bActive)
+  {
+    CLogFile::Write(&g_Main.m_logSystemError, "%d.. Enter_Account : m_bActive == true", dwAccountSerial);
+    return false;
+  }
+  if (!m_ss.chk_enter())
+  {
+    CLogFile::Write(&g_Main.m_logSystemError, "%d.. Enter_Account : if(!m_ss.chk_enter())", dwAccountSerial);
+    return false;
+  }
 
-  unsigned __int8 type[2] = {13, static_cast<unsigned __int8>(-123)};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, type, payload, 4u);
+  _WAIT_ENTER_ACCOUNT *waitData = nullptr;
+  for (int j = 0; j < MAX_PLAYER; ++j)
+  {
+    _WAIT_ENTER_ACCOUNT *entry = &g_Main.m_WaitEnterAccount[j];
+    if (entry->m_bLoad && entry->m_dwAccountSerial == dwAccountSerial)
+    {
+      bool keyMatch = true;
+      for (int k = 0; k < 4; ++k)
+      {
+        if (entry->m_dwKey[k] != pdwMasterKey[k])
+        {
+          keyMatch = false;
+          break;
+        }
+      }
+      if (keyMatch)
+      {
+        entry->Release();
+        waitData = entry;
+        break;
+      }
+    }
+  }
+
+  if (!waitData)
+  {
+    CLogFile::Write(&g_Main.m_logSystemError, "%d.. Enter_Account : pWaitData == NULL", dwAccountSerial);
+    return false;
+  }
+
+  bool valid = true;
+  if (!waitData->m_byUserDgr && dwProtocolVer != 126455)
+  {
+    CLogFile::Write(
+      &g_Main.m_logSystemError,
+      "%s.. Enter_Account : if(dwProtocolVer != __PROTOCOL_VER)",
+      waitData->m_szAccountID);
+    valid = false;
+  }
+  if (g_Player[m_idWorld.wIndex].m_bLoad)
+  {
+    CLogFile::Write(
+      &g_Main.m_logSystemError,
+      "%s.. Enter_Account : if(g_Player[m_idWorld.wIndex].m_bLoad)",
+      waitData->m_szAccountID);
+    valid = false;
+  }
+  for (int j = 0; j < MAX_PLAYER; ++j)
+  {
+    CUserDB *user = &g_UserDB[j];
+    if (user->m_bActive && dwAccountSerial == user->m_dwAccountSerial)
+    {
+      CLogFile::Write(
+        &g_Main.m_logSystemError,
+        "%s.. Enter_Account : if(dwAccountSerial == p->m_dwAccountSerial)",
+        waitData->m_szAccountID);
+      valid = false;
+    }
+  }
+
+  if (!valid)
+  {
+    _logout_account_request_wrac msg{};
+    memcpy_0(&msg, &m_gidGlobal, sizeof(msg));
+    unsigned __int8 type[2]{1, 5};
+    const unsigned __int16 len = msg.size();
+    g_Network.m_pProcess[1]->LoadSendMsg(0, type, reinterpret_cast<char *>(&msg), len);
+    return false;
+  }
+
+  m_bActive = true;
+  m_dwOperLobbyTime = timeGetTime();
+  m_dwAccountSerial = dwAccountSerial;
+  strcpy_0(m_szAccountID, waitData->m_szAccountID);
+  m_byUserDgr = waitData->m_byUserDgr;
+  m_bySubDgr = waitData->m_bySubDgr;
+  m_dwIP = dwIP;
+  memcpy_0(&m_gidGlobal, &waitData->m_gidGlobal, sizeof(m_gidGlobal));
+  m_dwTotalPlayMin = 0;
+  m_dwSerial = static_cast<unsigned int>(-1);
+  m_bDBWaitState = false;
+  m_pDBPushData = nullptr;
+  m_bChatLock = waitData->m_bChatLock;
+  m_bWndFullMode = false;
+  m_bDataUpdate = false;
+  m_nTrans = waitData->m_nTrans;
+  for (int j = 0; j < 50; ++j)
+  {
+    m_NotArrangedChar[j].dwSerial = static_cast<unsigned int>(-1);
+    m_dwArrangePassCase0[j] = static_cast<unsigned int>(-1);
+  }
+
+  unsigned __int8 retCode = 0;
+  ClearBillingData();
+  SetBillingData(&waitData->m_BillingInfo);
+  if (m_byUserDgr)
+  {
+    m_byUILock = 2;
+  }
+  else
+  {
+    if (!m_BillingInfo.iType)
+    {
+      CLogFile::Write(&g_Main.m_logSystemError, "%s.. Enter_Account Billing Type = 0", waitData->m_szAccountID);
+      return false;
+    }
+    if (!m_BillingInfo.lRemainTime && (m_BillingInfo.iType == 5 || m_BillingInfo.iType == 2))
+    {
+      CLogFile::Write(
+        &g_Main.m_logSystemError,
+        "%s.. Enter_Account Billing lRemainTime = 0",
+        waitData->m_szAccountID);
+      return false;
+    }
+
+    m_byUILock = waitData->m_byUILock;
+    m_byUILock_InitFailCnt = waitData->m_byUILock_FailCnt;
+    m_byUILock_FailCnt = m_byUILock_InitFailCnt;
+    m_byUILock_HintIndex = waitData->m_byUILock_HintIndex;
+    strcpy_s(m_szUILock_PW, 0xDuLL, waitData->m_szUILock_PW);
+    strcpy_s(m_szAccount_PW, 0xDuLL, waitData->m_szAccount_PW);
+    strcpy_s(m_uszUILock_HintAnswer, 0x11uLL, waitData->m_uszUILock_HintAnswer);
+    m_byUILock_InitFindPassFailCount = waitData->m_byUILockFindPassFailCount;
+    m_byUILockFindPassFailCount = m_byUILock_InitFindPassFailCount;
+    for (int m = 0; m < 3; ++m)
+    {
+      m_dwRequestMoveCharacterSerialList[m] = waitData->m_dwRequestMoveCharacterSerialList[m];
+      m_dwTournamentCharacterSerialList[m] = waitData->m_dwTournamentCharacterSerialList[m];
+    }
+  }
+
+  if (!retCode)
+  {
+    _enter_world_request_wrac request{};
+    memcpy_0(&request, &m_gidGlobal, 8u);
+    memcpy_0(&request.idLocal, &m_idWorld, sizeof(request.idLocal));
+    request.ulConnectIP = m_ipAddress;
+    unsigned __int8 type[2]{1, 10};
+    const unsigned __int16 len = static_cast<unsigned __int16>(request.size());
+    g_Network.m_pProcess[1]->LoadSendMsg(0, type, reinterpret_cast<char *>(&request), len);
+  }
+
+  s_MgrLobbyHistory.GetNewFileName(m_dwAccountSerial, m_szLobbyHistoryFileName);
+  s_MgrLobbyHistory.enter_lobby(
+    m_dwAccountSerial,
+    m_szAccountID,
+    m_byUserDgr,
+    m_dwIP,
+    true,
+    m_szLobbyHistoryFileName);
+
+  _enter_world_result_zone result{};
+  result.byResult = retCode;
+  result.byUserGrade = m_byUserDgr;
+  result.bySvrType = g_Main.m_byWorldType;
+  unsigned __int8 type[2]{1, 2};
+  const unsigned __int16 len = static_cast<unsigned __int16>(result.size());
+  g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, type, reinterpret_cast<char *>(&result), len);
+  return true;
 }
 
-void CUserDB::SetChatLock(bool bLock)
+bool CUserDB::Lobby_Char_Request()
 {
-  m_bChatLock = bLock;
-  if (bLock)
+  if (!m_bActive)
   {
-    _chat_lock_inform_zocl msg{};
-    msg.bLock = true;
-    unsigned __int8 type[2] = {2, 12};
-    const unsigned __int16 len = msg.size();
-    g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, type, reinterpret_cast<char *>(&msg.bLock), len);
+    return false;
   }
+  if (!m_bField || m_dwSerial == static_cast<unsigned int>(-1))
+  {
+    return false;
+  }
+
+  g_Player[m_idWorld.wIndex].NetClose(true);
+  _qry_sheet_lobby qry;
+  qry.dwAvatorSerial = m_dwSerial;
+  memcpy_0(&qry.NewData, &m_AvatorData, sizeof(qry.NewData));
+
+  _AVATOR_DATA *contData = IsContPushBefore();
+  if (contData)
+  {
+    memcpy_0(&qry.OldData, contData, sizeof(qry.OldData));
+  }
+  else
+  {
+    memcpy_0(&qry.OldData, &m_AvatorData_bk, sizeof(qry.OldData));
+  }
+
+  qry.bUpdateRefineCnt = false;
+  if (g_Main.m_pRFEvent_ClassRefine->IsDbUpdate(m_idWorld.wIndex))
+  {
+    _event_participant_classrefine *state =
+      g_Main.m_pRFEvent_ClassRefine->GetPlayerState(m_idWorld.wIndex, m_idWorld.dwSerial);
+    if (state)
+    {
+      qry.bUpdateRefineCnt = true;
+      qry.byRefinedCnt = state->nCurRefineCnt;
+      qry.dwRefineDate = state->dwRefineDate;
+    }
+  }
+
+  const int size = static_cast<int>(qry.size());
+  if (g_Main.PushDQSData(m_dwAccountSerial, &m_idWorld, 6u, reinterpret_cast<char *>(&qry), size))
+  {
+    m_dwOperLobbyTime = timeGetTime();
+    m_bDBWaitState = true;
+    return true;
+  }
+
+  Exit_Account_Complete(0x64u);
+  return false;
+}
+
+bool CUserDB::Reged_Char_Request()
+{
+  if (!m_bActive)
+  {
+    return false;
+  }
+  if (!m_ss.chk_reged())
+  {
+    return false;
+  }
+  if (m_bDBWaitState)
+  {
+    return false;
+  }
+
+  for (int j = 0; j < 50; ++j)
+  {
+    m_NotArrangedChar[j].dwSerial = static_cast<unsigned int>(-1);
+    m_dwArrangePassCase0[j] = static_cast<unsigned int>(-1);
+  }
+
+  s_MgrLobbyHistory.reged_char_request(m_szLobbyHistoryFileName);
+
+  _qry_sheet_reged qry;
+  qry.dwAccountSerial = m_dwAccountSerial;
+  in_addr addr{};
+  addr.S_un.S_addr = m_ipAddress;
+  char *ipText = inet_ntoa(addr);
+  strcpy_0(qry.in_szIP, ipText);
+
+  const int size = static_cast<int>(qry.size());
+  if (!g_Main.PushDQSData(m_dwAccountSerial, &m_idWorld, 0u, reinterpret_cast<char *>(&qry), size))
+  {
+    return false;
+  }
+  m_bDBWaitState = true;
+  return true;
+}
+
+bool CUserDB::Insert_Char_Request(
+  char *pwszCharName,
+  unsigned __int8 bySlotIndex,
+  unsigned __int8 byRaceSexCode,
+  char *pszClassCode,
+  unsigned int dwBaseShape)
+{
+  if (!m_bActive)
+  {
+    return false;
+  }
+  if (!m_ss.bReged || m_ss.bSelect)
+  {
+    return false;
+  }
+  if (m_bDBWaitState)
+  {
+    return false;
+  }
+  if (m_RegedList[bySlotIndex].m_bySlotIndex != 0xFF)
+  {
+    return false;
+  }
+
+  for (char *cursor = pwszCharName; ; ++cursor)
+  {
+    if (*cursor == 32 || *cursor == 39)
+    {
+      goto invalid_name;
+    }
+    if (!*cursor)
+    {
+      break;
+    }
+  }
+  if (*pwszCharName == 42)
+  {
+    goto invalid_name;
+  }
+  for (int k = 0; k < 3; ++k)
+  {
+    if (!strcmp_0(pwszCharName, wszNonMakeName_0[k]))
+    {
+      goto invalid_name;
+    }
+  }
+
+  {
+    CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
+    if ((m_byUserDgr != 2 && strlen_0(pwszCharName) >= nGMCmpLen
+         && !strncmp(pwszCharName, wszGMCmp, nGMCmpLen))
+        || !manager->IsNormalString(pwszCharName))
+    {
+      goto invalid_name;
+    }
+  }
+
+  if (IsSQLValidString(pwszCharName))
+  {
+    _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblClass, pszClassCode);
+    if (!record)
+    {
+      return false;
+    }
+    if (*reinterpret_cast<unsigned int *>(&record[1].m_strCode[8]))
+    {
+      return false;
+    }
+    if (record[1].m_dwIndex == static_cast<int>(byRaceSexCode) >> 1)
+    {
+      s_MgrLobbyHistory.add_char_request(m_szLobbyHistoryFileName);
+      _qry_sheet_insert qry;
+      qry.dwAccountSerial = m_dwAccountSerial;
+      strcpy_0(qry.szAccountID, m_szAccountID);
+      strcpy_0(qry.InsertData.m_wszAvatorName, pwszCharName);
+      qry.InsertData.m_byRaceSexCode = byRaceSexCode;
+      qry.InsertData.m_bySlotIndex = bySlotIndex;
+      qry.InsertData.m_dwBaseShape = dwBaseShape;
+      strcpy_0(qry.InsertData.m_szClassCode, record->m_strCode);
+      const int size = static_cast<int>(qry.size());
+      if (g_Main.PushDQSData(m_dwAccountSerial, &m_idWorld, 1u, reinterpret_cast<char *>(&qry), size))
+      {
+        m_bDBWaitState = true;
+        return true;
+      }
+      return false;
+    }
+    return false;
+  }
+
+  CLogFile::Write(
+    &g_Main.m_logSystemError,
+    "CUserDB::Insert_Char_Request() : Account : %s(%u) ::IsSQLValidString(pwszCharName(%s)) Invalid!",
+    m_szAccountID,
+    m_dwAccountSerial,
+    pwszCharName);
+  Insert_Char_Complete(0x2Fu, nullptr);
+  return true;
+
+invalid_name:
+  Insert_Char_Complete(0x2Fu, nullptr);
+  return true;
+}
+
+bool CUserDB::Delete_Char_Request(unsigned __int8 bySlotIndex)
+{
+  if (!m_bActive)
+  {
+    return false;
+  }
+  if (!m_ss.bReged || m_ss.bSelect)
+  {
+    return false;
+  }
+  if (m_bDBWaitState)
+  {
+    return false;
+  }
+  if (m_RegedList[bySlotIndex].m_bySlotIndex == 0xFF)
+  {
+    return false;
+  }
+
+  unsigned __int8 exist = IsExistRequestMoveCharacterList(m_RegedList[bySlotIndex].m_dwRecordNum);
+  if (exist)
+  {
+    _del_char_result_zone result{};
+    memset_0(&result, 0, sizeof(result));
+    if (exist == 1)
+    {
+      result.byRetCode = 74;
+    }
+    else
+    {
+      result.byRetCode = 76;
+    }
+    result.bySlotIndex = bySlotIndex;
+    unsigned __int8 type[2]{1, 13};
+    const unsigned __int16 len = static_cast<unsigned __int16>(result.size());
+    g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, type, reinterpret_cast<char *>(&result), len);
+    return true;
+  }
+
+  s_MgrLobbyHistory.del_char_request(
+    bySlotIndex,
+    m_RegedList[bySlotIndex].m_dwRecordNum,
+    m_szLobbyHistoryFileName);
+  _qry_sheet_delete qry;
+  qry.bySlotIndex = bySlotIndex;
+  qry.byRaceCode = static_cast<unsigned __int8>(m_RegedList[bySlotIndex].m_byRaceSexCode >> 1);
+  qry.dwAvatorSerial = m_RegedList[bySlotIndex].m_dwRecordNum;
+  const int size = static_cast<int>(qry.size());
+  if (g_Main.PushDQSData(m_dwAccountSerial, &m_idWorld, 2u, reinterpret_cast<char *>(&qry), size))
+  {
+    m_bDBWaitState = true;
+    return true;
+  }
+  return false;
+}
+
+bool CUserDB::Select_Char_Request(unsigned __int8 bySlotIndex)
+{
+  if (!m_bActive)
+  {
+    return false;
+  }
+  if (!m_ss.bReged)
+  {
+    return false;
+  }
+  if (!m_ss.chk_select())
+  {
+    return false;
+  }
+  if (m_bDBWaitState)
+  {
+    return false;
+  }
+  if (m_RegedList[bySlotIndex].m_bySlotIndex == 0xFF)
+  {
+    return false;
+  }
+
+  for (int j = 0; j < MAX_PLAYER; ++j)
+  {
+    CUserDB *user = &g_UserDB[j];
+    if (user->m_bActive && m_RegedList[bySlotIndex].m_dwRecordNum == user->m_dwSerial)
+    {
+      return false;
+    }
+  }
+
+  unsigned __int8 exist = IsExistRequestMoveCharacterList(m_RegedList[bySlotIndex].m_dwRecordNum);
+  if (exist)
+  {
+    m_ss.bSelect = false;
+    _sel_char_result_zone result{};
+    memset_0(&result, 0, sizeof(result));
+    if (exist == 1)
+    {
+      result.byRetCode = 74;
+    }
+    else
+    {
+      result.byRetCode = 76;
+    }
+    unsigned __int8 type[2]{1, 15};
+    const unsigned __int16 len = static_cast<unsigned __int16>(result.size());
+    g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, type, reinterpret_cast<char *>(&result), len);
+    return true;
+  }
+
+  s_MgrLobbyHistory.sel_char_request(
+    bySlotIndex,
+    m_RegedList[bySlotIndex].m_dwRecordNum,
+    m_szLobbyHistoryFileName);
+  _qry_sheet_load qry;
+  qry.dwAvatorSerial = m_RegedList[bySlotIndex].m_dwRecordNum;
+  qry.dwCheckSum = 0;
+  memcpy_0(&qry.LoadData, &m_RegedList[bySlotIndex], 0x10DuLL);
+  const int size = static_cast<int>(qry.size());
+  if (g_Main.PushDQSData(m_dwAccountSerial, &m_idWorld, 3u, reinterpret_cast<char *>(&qry), size))
+  {
+    m_bDBWaitState = true;
+    return true;
+  }
+  return false;
+}
+
+unsigned __int8 CUserDB::IsExistRequestMoveCharacterList(unsigned int dwCharSerial)
+{
+  for (int j = 0; j < 3; ++j)
+  {
+    if (m_dwRequestMoveCharacterSerialList[j] || m_dwTournamentCharacterSerialList[j])
+    {
+      if (m_dwRequestMoveCharacterSerialList[j] == dwCharSerial)
+      {
+        return 1;
+      }
+      if (m_dwTournamentCharacterSerialList[j] == dwCharSerial)
+      {
+        return 2;
+      }
+    }
+  }
+  return 0;
+}
+
+bool CUserDB::Alive_Char_Request(
+  unsigned __int8 byCase,
+  unsigned int dwSerial,
+  char *pwszName,
+  unsigned __int8 bySlotIndex)
+{
+  if (m_RegedList[bySlotIndex].m_bySlotIndex != 0xFF)
+  {
+    Alive_Char_Complete(0x32u, byCase, dwSerial, nullptr);
+    return false;
+  }
+
+  if (!byCase)
+  {
+    goto check_not_arranged;
+  }
+
+  bool hasArranged = false;
+  for (int j = 0; j < 50; ++j)
+  {
+    if (m_dwArrangePassCase0[j] == dwSerial)
+    {
+      hasArranged = true;
+      break;
+    }
+  }
+  if (hasArranged)
+  {
+    goto check_not_arranged;
+  }
+
+  Alive_Char_Complete(0x32u, byCase, dwSerial, nullptr);
+  return false;
+
+check_not_arranged:
+  {
+    bool found = false;
+    for (int k = 0; k < 50; ++k)
+    {
+      if (m_NotArrangedChar[k].dwSerial != static_cast<unsigned int>(-1)
+          && m_NotArrangedChar[k].dwSerial == dwSerial)
+      {
+        if (byCase)
+        {
+          if (!strcmp_0(m_NotArrangedChar[k].wszName, pwszName))
+          {
+            break;
+          }
+        }
+        else if (strcmp_0(m_NotArrangedChar[k].wszName, pwszName))
+        {
+          break;
+        }
+        found = true;
+        break;
+      }
+    }
+    if (!found)
+    {
+      Alive_Char_Complete(0x39u, byCase, dwSerial, nullptr);
+      return false;
+    }
+  }
+
+  for (char *cursor = pwszName; ; ++cursor)
+  {
+    if (*cursor == 32 || *cursor == 39)
+    {
+      Alive_Char_Complete(0x2Fu, byCase, dwSerial, nullptr);
+      return true;
+    }
+    if (!*cursor)
+    {
+      break;
+    }
+  }
+
+  CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
+  if (manager->IsNormalString(pwszName))
+  {
+    _qry_case_alive_char qry;
+    qry.in_byCase = byCase;
+    qry.in_dwSerial = dwSerial;
+    strcpy_0(qry.in_w_szName, pwszName);
+    qry.in_bySlot = bySlotIndex;
+    const int size = static_cast<int>(qry.size());
+    if (g_Main.PushDQSData(m_dwAccountSerial, &m_idWorld, 0x17u, reinterpret_cast<char *>(&qry), size))
+    {
+      m_bDBWaitState = true;
+      return true;
+    }
+    return false;
+  }
+
+  Insert_Char_Complete(0x2Fu, nullptr);
+  return true;
+}
+
+void CUserDB::Insert_Char_Complete(unsigned __int8 byRetCode, _REGED_AVATOR_DB *pInsertData)
+{
+  m_bDBWaitState = false;
+  m_dwOperLobbyTime = timeGetTime();
+
+  unsigned __int8 slotIndex = static_cast<unsigned __int8>(-1);
+  if (!byRetCode && pInsertData)
+  {
+    slotIndex = pInsertData->m_bySlotIndex;
+    memcpy_0(&m_RegedList[slotIndex], pInsertData, 0x45u);
+  }
+
+  s_MgrLobbyHistory.add_char_complete(byRetCode, pInsertData, m_szLobbyHistoryFileName);
+
+  _add_char_result_zone result{};
+  result.byRetCode = byRetCode;
+  result.byAddSlotIndex = slotIndex;
+  unsigned __int8 type[2]{1, 11};
+  const unsigned __int16 len = static_cast<unsigned __int16>(result.size());
+  g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, type, reinterpret_cast<char *>(&result), len);
 }
 
 _AVATOR_DATA *CUserDB::IsContPushBefore()
@@ -1509,24 +2361,485 @@ void CUserDB::Lobby_Char_Complete(unsigned __int8 byRetCode)
   g_Network.m_pProcess[1]->LoadSendMsg(0, type, reinterpret_cast<char *>(&report), len);
 }
 
-unsigned __int8 CUserDB::IsExistRequestMoveCharacterList(unsigned int dwCharSerial)
+void CUserDB::Cont_UserSave_Complete(unsigned __int8 byResult, _AVATOR_DATA *pAvatorData)
 {
-  for (int j = 0; j < 3; ++j)
+  if (byResult)
   {
-    if (m_dwRequestMoveCharacterSerialList[j] || m_dwTournamentCharacterSerialList[j])
+    g_Network.Close(0, m_idWorld.wIndex, true, "Cont Save Error");
+    return;
+  }
+
+  _QUEST_DB_BASE::_START_NPC_QUEST_HISTORY *startHistory = m_AvatorData_bk.dbQuest.m_StartHistory;
+  unsigned int listCount = m_AvatorData_bk.dbQuest.dwListCnt;
+  memcpy_0(&m_AvatorData_bk, pAvatorData, sizeof(m_AvatorData_bk));
+  m_AvatorData_bk.dbQuest.m_StartHistory = startHistory;
+  m_AvatorData_bk.dbQuest.dwListCnt = listCount;
+
+  const unsigned int addCount = m_AvatorData.dbQuest.dwListCnt - m_AvatorData_bk.dbQuest.dwListCnt;
+  for (unsigned int j = 0; j < addCount; ++j)
+  {
+    memcpy_0(
+      &m_AvatorData_bk.dbQuest.m_StartHistory[m_AvatorData_bk.dbQuest.dwListCnt],
+      &m_AvatorData.dbQuest.m_StartHistory[m_AvatorData_bk.dbQuest.dwListCnt],
+      sizeof(m_AvatorData_bk.dbQuest.m_StartHistory[m_AvatorData_bk.dbQuest.dwListCnt]));
+    ++m_AvatorData_bk.dbQuest.dwListCnt;
+  }
+
+  m_bDBWaitState = false;
+  m_pDBPushData = nullptr;
+}
+
+void CUserDB::Alive_Char_Complete(
+  unsigned __int8 byRetCode,
+  unsigned __int8 byCase,
+  unsigned int dwSerial,
+  _REGED *pAliveAvator)
+{
+  m_bDBWaitState = false;
+
+  unsigned __int8 resultCode = byRetCode;
+  unsigned __int8 slotIndex = 0xFF;
+  if (!byRetCode)
+  {
+    slotIndex = pAliveAvator->m_bySlotIndex;
+    if (slotIndex < 3u)
     {
-      if (m_dwRequestMoveCharacterSerialList[j] == dwCharSerial)
+      if (m_RegedList[slotIndex].m_bySlotIndex == 0xFF)
       {
-        return 1;
+        memcpy_0(&m_RegedList[slotIndex], pAliveAvator, sizeof(m_RegedList[slotIndex]));
+        m_RegedList[slotIndex].UpdateEquipLv();
+        for (int j = 0; j < 50; ++j)
+        {
+          if (m_NotArrangedChar[j].dwSerial == dwSerial)
+          {
+            m_NotArrangedChar[j].dwSerial = static_cast<unsigned int>(-1);
+            break;
+          }
+        }
       }
-      if (m_dwTournamentCharacterSerialList[j] == dwCharSerial)
+      else
       {
-        return 2;
+        resultCode = 50;
+      }
+    }
+    else
+    {
+      resultCode = 50;
+    }
+  }
+
+  if (!byCase)
+  {
+    for (int k = 0; k < 50; ++k)
+    {
+      if (m_dwArrangePassCase0[k] == static_cast<unsigned int>(-1))
+      {
+        m_dwArrangePassCase0[k] = dwSerial;
+        break;
       }
     }
   }
+
+  s_MgrLobbyHistory.recovery_char_complete(resultCode, pAliveAvator, m_szLobbyHistoryFileName);
+
+  _alive_char_result_zocl msg{};
+  msg.byRetCode = resultCode;
+  if (!resultCode)
+  {
+    msg.dwSerial = dwSerial;
+    memcpy_0(&msg.AliveChar, &m_RegedList[slotIndex], sizeof(msg.AliveChar));
+  }
+
+  unsigned __int8 type[2] = {1, 23};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, type, reinterpret_cast<char *>(&msg), 0x4Au);
+}
+
+char CUserDB::Update_Param(_EXIT_ALTER_PARAM *pCon)
+{
+  m_AvatorData.dbAvator.m_dwHP = pCon->dwHP;
+  m_AvatorData.dbAvator.m_dwFP = pCon->dwFP;
+  m_AvatorData.dbAvator.m_dwSP = pCon->dwSP;
+  m_AvatorData.dbAvator.m_dwDP = pCon->dwDP;
+  m_AvatorData.dbAvator.m_dExp = pCon->dExp;
+  m_AvatorData.dbAvator.m_dwDalant = pCon->dwDalant;
+  m_AvatorData.dbAvator.m_dwGold = pCon->dwGold;
+
+  if (g_MapOper.IsExistStdMapID(pCon->byMapCode))
+  {
+    m_AvatorData.dbAvator.m_byMapCode = pCon->byMapCode;
+    m_AvatorData.dbAvator.m_fStartPos[0] = pCon->fStartPos[0];
+    m_AvatorData.dbAvator.m_fStartPos[1] = pCon->fStartPos[1];
+    m_AvatorData.dbAvator.m_fStartPos[2] = pCon->fStartPos[2];
+  }
+
+  return 1;
+}
+
+char CUserDB::CheckDQSLoadCharacterData(_AVATOR_DATA *pData)
+{
+  int maxLevel = pData->dbAvator.m_byMaxLevel ? pData->dbAvator.m_byMaxLevel : 50;
+  if (pData->dbAvator.m_byLevel <= maxLevel)
+  {
+    if (pData->dbAvator.m_byRaceSexCode < 5u)
+    {
+      return 1;
+    }
+
+    static const char kDataValidCheckRace[] = "D_DataValidCheck (Serial:%d) Race:%d";
+    CUserDB::s_logAvatorDB.Write(
+      kDataValidCheckRace,
+      pData->dbAvator.m_dwRecordNum,
+      pData->dbAvator.m_byRaceSexCode);
+    return 0;
+  }
+
+  static const char kDataValidCheckLevel[] = "D_DataValidCheck (Serial:%d) Level:%d Max:%d";
+  CUserDB::s_logAvatorDB.Write(
+    kDataValidCheckLevel,
+    pData->dbAvator.m_dwRecordNum,
+    pData->dbAvator.m_byLevel,
+    maxLevel);
   return 0;
 }
+
+void CUserDB::ReRangeClientIndex(_AVATOR_DATA *pData)
+{
+  CNetIndexList list;
+  list.SetList(0x64u);
+
+  unsigned char slotUsed[100]{};
+  unsigned int indexList[101]{};
+
+  int maxSlots = 20 * pData->dbAvator.m_byBagNum;
+  list.ResetList();
+  std::memset(slotUsed, 0, sizeof(slotUsed));
+
+  for (unsigned int i = 0; static_cast<int>(i) < maxSlots; ++i)
+  {
+    if (pData->dbInven.m_List[i].Key.IsFilled())
+    {
+      unsigned __int8 slotIndex = pData->dbInven.m_List[i].Key.bySlotIndex;
+      if (slotIndex >= maxSlots || slotUsed[slotIndex])
+      {
+        list.PushNode_Back(i);
+      }
+      else
+      {
+        slotUsed[slotIndex] = 1;
+      }
+    }
+  }
+
+  int startIndex = 0;
+  int listCount = list.CopyIndexList(indexList, maxSlots);
+  for (int j = 0; j < listCount; ++j)
+  {
+    for (int k = startIndex; k < maxSlots; ++k)
+    {
+      if (!slotUsed[k])
+      {
+        pData->dbInven.m_List[indexList[j]].Key.bySlotIndex = static_cast<unsigned __int8>(k);
+        slotUsed[k] = 1;
+        startIndex = k;
+        break;
+      }
+    }
+  }
+
+  maxSlots = 7;
+  list.ResetList();
+  std::memset(slotUsed, 0, sizeof(slotUsed));
+  startIndex = 0;
+
+  for (unsigned int i = 0; static_cast<int>(i) < maxSlots; ++i)
+  {
+    if (pData->dbEquip.m_EmbellishList[i].Key.IsFilled())
+    {
+      unsigned __int8 slotIndex = pData->dbEquip.m_EmbellishList[i].Key.bySlotIndex;
+      if (slotIndex >= maxSlots || slotUsed[slotIndex])
+      {
+        list.PushNode_Back(i);
+      }
+      else
+      {
+        slotUsed[slotIndex] = 1;
+      }
+    }
+  }
+
+  listCount = list.CopyIndexList(indexList, maxSlots);
+  for (int j = 0; j < listCount; ++j)
+  {
+    for (int k = startIndex; k < maxSlots; ++k)
+    {
+      if (!slotUsed[k])
+      {
+        pData->dbEquip.m_EmbellishList[indexList[j]].Key.bySlotIndex = static_cast<unsigned __int8>(k);
+        slotUsed[k] = 1;
+        startIndex = k;
+        break;
+      }
+    }
+  }
+
+  maxSlots = pData->dbTrunk.bySlotNum;
+  list.ResetList();
+  std::memset(slotUsed, 0, sizeof(slotUsed));
+  startIndex = 0;
+
+  for (unsigned int i = 0; static_cast<int>(i) < maxSlots; ++i)
+  {
+    if (pData->dbTrunk.m_List[i].Key.IsFilled())
+    {
+      unsigned __int8 slotIndex = pData->dbTrunk.m_List[i].Key.bySlotIndex;
+      if (slotIndex >= maxSlots || slotUsed[slotIndex])
+      {
+        list.PushNode_Back(i);
+      }
+      else
+      {
+        slotUsed[slotIndex] = 1;
+      }
+    }
+  }
+
+  listCount = list.CopyIndexList(indexList, maxSlots);
+  for (int j = 0; j < listCount; ++j)
+  {
+    for (int k = startIndex; k < maxSlots; ++k)
+    {
+      if (!slotUsed[k])
+      {
+        pData->dbTrunk.m_List[indexList[j]].Key.bySlotIndex = static_cast<unsigned __int8>(k);
+        slotUsed[k] = 1;
+        startIndex = k;
+        break;
+      }
+    }
+  }
+}
+
+_BUDDY_DB_BASE::_LIST::_LIST()
+{
+  Init();
+}
+
+
+void _BUDDY_DB_BASE::_LIST::Init()
+{
+  dwSerial = static_cast<unsigned int>(-1);
+  wszName[0] = '\0';
+}
+
+
+bool _BUDDY_DB_BASE::_LIST::IsFilled()
+{
+  return dwSerial != static_cast<unsigned int>(-1);
+}
+
+
+_BUDDY_DB_BASE::_BUDDY_DB_BASE()
+{
+  Init();
+}
+
+
+void _BUDDY_DB_BASE::Init()
+{
+  for (int j = 0; j < 50; ++j)
+  {
+    m_List[j].Init();
+  }
+}
+
+
+_INVENKEY &_INVENKEY::operator=(const _INVENKEY &rhs)
+{
+  memcpy_0(this, &rhs, sizeof(_INVENKEY));
+  return *this;
+}
+
+
+bool _INVENKEY::operator==(const _INVENKEY &rhs) const
+{
+  return byTableCode == rhs.byTableCode && wItemIndex == rhs.wItemIndex;
+}
+
+
+_INVEN_DB_BASE::_LIST &_INVEN_DB_BASE::_LIST::operator=(const _LIST &rhs)
+{
+  Key = rhs.Key;
+  dwDur = rhs.dwDur;
+  dwUpt = rhs.dwUpt;
+  dwItemETSerial = rhs.dwItemETSerial;
+  lnUID = rhs.lnUID;
+  byCsMethod = rhs.byCsMethod;
+  dwT = rhs.dwT;
+  dwLendRegdTime = rhs.dwLendRegdTime;
+  return *this;
+}
+
+
+_INVEN_DB_BASE & _INVEN_DB_BASE::operator=(const _INVEN_DB_BASE &rhs)
+{
+  for (unsigned int j = 0; j < 0x64; ++j)
+  {
+    m_List[j] = rhs.m_List[j];
+  }
+  return *this;
+}
+
+
+void _CUTTING_DB_BASE::_LIST::Init()
+{
+  Key.SetRelease();
+  dwDur = 0;
+}
+
+
+void _CUTTING_DB_BASE::Init()
+{
+  m_byLeftNum = 0;
+  for (int j = 0; j < 20; ++j)
+  {
+    m_List[j].Init();
+  }
+}
+
+
+void _CUTTING_DB_BASE::ReSetOldDataLoad()
+{
+  m_bOldDataLoad = false;
+}
+
+
+_NOT_ARRANGED_AVATOR_DB::_NOT_ARRANGED_AVATOR_DB()
+{
+  Init();
+}
+
+
+void _NOT_ARRANGED_AVATOR_DB::Init()
+{
+  memset_0(this, 0, sizeof(_NOT_ARRANGED_AVATOR_DB));
+  dwSerial = static_cast<unsigned int>(-1);
+}
+
+
+char CUserDB::Update_DelBuddy(unsigned __int8 bySlotIndex)
+{
+  m_AvatorData.dbBuddy.m_List[bySlotIndex].Init();
+  m_bDataUpdate = true;
+  return 1;
+}
+
+
+char CUserDB::Update_LossExp(long double dLossExp)
+{
+  m_AvatorData.dbAvator.m_dLossExp = dLossExp;
+  m_bDataUpdate = true;
+  return 1;
+}
+
+
+char CUserDB::Update_Exp(long double exp)
+{
+  m_AvatorData.dbAvator.m_dExp = exp;
+  m_bDataUpdate = true;
+  return 1;
+}
+
+
+char CUserDB::Update_UserFatigue(unsigned int dwFatigue)
+{
+  m_AvatorData.dbTimeLimitInfo.dwFatigue = dwFatigue;
+  m_bDataUpdate = true;
+  return 1;
+}
+
+
+char CUserDB::Update_UserTLStatus(unsigned __int8 byStatus)
+{
+  m_AvatorData.dbTimeLimitInfo.byTLStatus = byStatus;
+  m_bDataUpdate = true;
+  return 1;
+}
+
+
+void CUserDB::Update_PotionNextUseTime(unsigned __int8 byPotionClass, unsigned int dwNextUseTime)
+{
+  if (byPotionClass < 0x26u && dwNextUseTime != static_cast<unsigned int>(-1))
+  {
+    m_AvatorData.dbPotionNextUseTime.dwPotionNextUseTime[byPotionClass] = dwNextUseTime;
+  }
+}
+
+
+void CUserDB::Update_Post(
+  unsigned int n,
+  unsigned int dwSerial,
+  int nNumber,
+  unsigned __int8 byState,
+  int nKey,
+  unsigned __int64 dwDur,
+  unsigned int dwUpt,
+  unsigned int dwGold,
+  unsigned __int64 lnUID)
+{
+  if (n < 50)
+  {
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].dwPSSerial = dwSerial;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].nNumber = nNumber;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].byState = byState;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].nKey = nKey;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].dwDur = dwDur;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].dwUpt = dwUpt;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].dwGold = dwGold;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].lnUID = lnUID;
+    m_AvatorData.dbPostData.dbPost.m_PostList[n].bUpdate = 1;
+    m_AvatorData.dbPostData.dbPost.m_bUpdate = 1;
+    m_bDataUpdate = 1;
+  }
+}
+
+
+void CUserDB::SendMsg_Inform_UILock()
+{
+  char payload[32]{};
+  payload[0] = static_cast<char>(m_byUILock);
+  payload[1] = static_cast<char>(m_byUILock_FailCnt);
+  payload[2] = static_cast<char>(m_byUILock_HintIndex);
+  payload[3] = static_cast<char>(m_byUILockFindPassFailCount);
+
+  unsigned __int8 type[2] = {13, static_cast<unsigned __int8>(-123)};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, type, payload, 4u);
+}
+
+
+char CUserDB::Update_CopyAll(_AVATOR_DATA *pSrc)
+{
+  _AVATOR_DATA snapshot{};
+  snapshot = _AVATOR_DATA();
+  memcpy_0(&snapshot, &this->m_AvatorData, sizeof(snapshot));
+  memcpy_0(&this->m_AvatorData, pSrc, sizeof(this->m_AvatorData));
+  strcpy_0(this->m_AvatorData.dbAvator.m_wszAvatorName, snapshot.dbAvator.m_wszAvatorName);
+  this->m_AvatorData.dbAvator.m_dwRecordNum = snapshot.dbAvator.m_dwRecordNum;
+  this->m_AvatorData.dbAvator.m_byRaceSexCode = snapshot.dbAvator.m_byRaceSexCode;
+  this->m_AvatorData.dbAvator.m_bySlotIndex = snapshot.dbAvator.m_bySlotIndex;
+  this->m_AvatorData.dbAvator.m_dwBaseShape = snapshot.dbAvator.m_dwBaseShape;
+  this->m_AvatorData.dbAvator.m_dwLastConnTime = snapshot.dbAvator.m_dwLastConnTime;
+  this->m_AvatorData.dbAvator.m_byMapCode = snapshot.dbAvator.m_byMapCode;
+  memcpy_0(
+    this->m_AvatorData.dbAvator.m_fStartPos,
+    snapshot.dbAvator.m_fStartPos,
+    sizeof(this->m_AvatorData.dbAvator.m_fStartPos));
+  this->m_AvatorData.dbAvator.m_dwTotalPlayMin = snapshot.dbAvator.m_dwTotalPlayMin;
+  this->m_AvatorData.dbAvator.m_dwStartPlayTime = snapshot.dbAvator.m_dwStartPlayTime;
+  this->m_bNoneUpdateData = true;
+  this->m_bDataUpdate = true;
+  return 1;
+}
+
 
 void CUserDB::Reged_Char_Complete(
   unsigned __int8 byRetCode,
@@ -1620,27 +2933,6 @@ void CUserDB::Reged_Char_Complete(
   }
 }
 
-void CUserDB::Insert_Char_Complete(unsigned __int8 byRetCode, _REGED_AVATOR_DB *pInsertData)
-{
-  m_bDBWaitState = false;
-  m_dwOperLobbyTime = timeGetTime();
-
-  unsigned __int8 slotIndex = 0xFF;
-  if (!byRetCode)
-  {
-    slotIndex = pInsertData->m_bySlotIndex;
-    memcpy_0(&m_RegedList[slotIndex], pInsertData, sizeof(_REGED_AVATOR_DB));
-  }
-
-  s_MgrLobbyHistory.add_char_complete(byRetCode, pInsertData, m_szLobbyHistoryFileName);
-
-  _add_char_result_zone result{};
-  result.byRetCode = byRetCode;
-  result.byAddSlotIndex = slotIndex;
-  unsigned __int8 type[2] = {1, 11};
-  const unsigned __int16 len = result.size();
-  g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, type, reinterpret_cast<char *>(&result), len);
-}
 
 void CUserDB::Delete_Char_Complete(unsigned __int8 byRetCode, unsigned __int8 bySlotIndex)
 {
@@ -1661,6 +2953,7 @@ void CUserDB::Delete_Char_Complete(unsigned __int8 byRetCode, unsigned __int8 by
   const unsigned __int16 len = result.size();
   g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, type, reinterpret_cast<char *>(&result), len);
 }
+
 
 void CUserDB::Select_Char_Complete(
   unsigned __int8 byRetCode,
@@ -1884,286 +3177,3 @@ void CUserDB::Select_Char_Complete(
   const unsigned __int16 outLen = result.size();
   g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, outType, reinterpret_cast<char *>(&result), outLen);
 }
-
-void CUserDB::Cont_UserSave_Complete(unsigned __int8 byResult, _AVATOR_DATA *pAvatorData)
-{
-  if (byResult)
-  {
-    g_Network.Close(0, m_idWorld.wIndex, true, "Cont Save Error");
-    return;
-  }
-
-  _QUEST_DB_BASE::_START_NPC_QUEST_HISTORY *startHistory = m_AvatorData_bk.dbQuest.m_StartHistory;
-  unsigned int listCount = m_AvatorData_bk.dbQuest.dwListCnt;
-  memcpy_0(&m_AvatorData_bk, pAvatorData, sizeof(m_AvatorData_bk));
-  m_AvatorData_bk.dbQuest.m_StartHistory = startHistory;
-  m_AvatorData_bk.dbQuest.dwListCnt = listCount;
-
-  const unsigned int addCount = m_AvatorData.dbQuest.dwListCnt - m_AvatorData_bk.dbQuest.dwListCnt;
-  for (unsigned int j = 0; j < addCount; ++j)
-  {
-    memcpy_0(
-      &m_AvatorData_bk.dbQuest.m_StartHistory[m_AvatorData_bk.dbQuest.dwListCnt],
-      &m_AvatorData.dbQuest.m_StartHistory[m_AvatorData_bk.dbQuest.dwListCnt],
-      sizeof(m_AvatorData_bk.dbQuest.m_StartHistory[m_AvatorData_bk.dbQuest.dwListCnt]));
-    ++m_AvatorData_bk.dbQuest.dwListCnt;
-  }
-
-  m_bDBWaitState = false;
-  m_pDBPushData = nullptr;
-}
-
-void CUserDB::Alive_Char_Complete(
-  unsigned __int8 byRetCode,
-  unsigned __int8 byCase,
-  unsigned int dwSerial,
-  _REGED *pAliveAvator)
-{
-  m_bDBWaitState = false;
-
-  unsigned __int8 resultCode = byRetCode;
-  unsigned __int8 slotIndex = 0xFF;
-  if (!byRetCode)
-  {
-    slotIndex = pAliveAvator->m_bySlotIndex;
-    if (slotIndex < 3u)
-    {
-      if (m_RegedList[slotIndex].m_bySlotIndex == 0xFF)
-      {
-        memcpy_0(&m_RegedList[slotIndex], pAliveAvator, sizeof(m_RegedList[slotIndex]));
-        m_RegedList[slotIndex].UpdateEquipLv();
-        for (int j = 0; j < 50; ++j)
-        {
-          if (m_NotArrangedChar[j].dwSerial == dwSerial)
-          {
-            m_NotArrangedChar[j].dwSerial = static_cast<unsigned int>(-1);
-            break;
-          }
-        }
-      }
-      else
-      {
-        resultCode = 50;
-      }
-    }
-    else
-    {
-      resultCode = 50;
-    }
-  }
-
-  if (!byCase)
-  {
-    for (int k = 0; k < 50; ++k)
-    {
-      if (m_dwArrangePassCase0[k] == static_cast<unsigned int>(-1))
-      {
-        m_dwArrangePassCase0[k] = dwSerial;
-        break;
-      }
-    }
-  }
-
-  s_MgrLobbyHistory.recovery_char_complete(resultCode, pAliveAvator, m_szLobbyHistoryFileName);
-
-  _alive_char_result_zocl msg{};
-  msg.byRetCode = resultCode;
-  if (!resultCode)
-  {
-    msg.dwSerial = dwSerial;
-    memcpy_0(&msg.AliveChar, &m_RegedList[slotIndex], sizeof(msg.AliveChar));
-  }
-
-  unsigned __int8 type[2] = {1, 23};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, type, reinterpret_cast<char *>(&msg), 0x4Au);
-}
-
-char CUserDB::Update_Param(_EXIT_ALTER_PARAM *pCon)
-{
-  m_AvatorData.dbAvator.m_dwHP = pCon->dwHP;
-  m_AvatorData.dbAvator.m_dwFP = pCon->dwFP;
-  m_AvatorData.dbAvator.m_dwSP = pCon->dwSP;
-  m_AvatorData.dbAvator.m_dwDP = pCon->dwDP;
-  m_AvatorData.dbAvator.m_dExp = pCon->dExp;
-  m_AvatorData.dbAvator.m_dwDalant = pCon->dwDalant;
-  m_AvatorData.dbAvator.m_dwGold = pCon->dwGold;
-
-  if (g_MapOper.IsExistStdMapID(pCon->byMapCode))
-  {
-    m_AvatorData.dbAvator.m_byMapCode = pCon->byMapCode;
-    m_AvatorData.dbAvator.m_fStartPos[0] = pCon->fStartPos[0];
-    m_AvatorData.dbAvator.m_fStartPos[1] = pCon->fStartPos[1];
-    m_AvatorData.dbAvator.m_fStartPos[2] = pCon->fStartPos[2];
-  }
-
-  return 1;
-}
-
-char CUserDB::Update_CopyAll(_AVATOR_DATA *pSrc)
-{
-  _AVATOR_DATA snapshot{};
-  snapshot = _AVATOR_DATA();
-  memcpy_0(&snapshot, &this->m_AvatorData, sizeof(snapshot));
-  memcpy_0(&this->m_AvatorData, pSrc, sizeof(this->m_AvatorData));
-  strcpy_0(this->m_AvatorData.dbAvator.m_wszAvatorName, snapshot.dbAvator.m_wszAvatorName);
-  this->m_AvatorData.dbAvator.m_dwRecordNum = snapshot.dbAvator.m_dwRecordNum;
-  this->m_AvatorData.dbAvator.m_byRaceSexCode = snapshot.dbAvator.m_byRaceSexCode;
-  this->m_AvatorData.dbAvator.m_bySlotIndex = snapshot.dbAvator.m_bySlotIndex;
-  this->m_AvatorData.dbAvator.m_dwBaseShape = snapshot.dbAvator.m_dwBaseShape;
-  this->m_AvatorData.dbAvator.m_dwLastConnTime = snapshot.dbAvator.m_dwLastConnTime;
-  this->m_AvatorData.dbAvator.m_byMapCode = snapshot.dbAvator.m_byMapCode;
-  memcpy_0(
-    this->m_AvatorData.dbAvator.m_fStartPos,
-    snapshot.dbAvator.m_fStartPos,
-    sizeof(this->m_AvatorData.dbAvator.m_fStartPos));
-  this->m_AvatorData.dbAvator.m_dwTotalPlayMin = snapshot.dbAvator.m_dwTotalPlayMin;
-  this->m_AvatorData.dbAvator.m_dwStartPlayTime = snapshot.dbAvator.m_dwStartPlayTime;
-  this->m_bNoneUpdateData = true;
-  this->m_bDataUpdate = true;
-  return 1;
-}
-
-char CUserDB::CheckDQSLoadCharacterData(_AVATOR_DATA *pData)
-{
-  int maxLevel = pData->dbAvator.m_byMaxLevel ? pData->dbAvator.m_byMaxLevel : 50;
-  if (pData->dbAvator.m_byLevel <= maxLevel)
-  {
-    if (pData->dbAvator.m_byRaceSexCode < 5u)
-    {
-      return 1;
-    }
-
-    static const char kDataValidCheckRace[] = "D_DataValidCheck (Serial:%d) Race:%d";
-    CUserDB::s_logAvatorDB.Write(
-      kDataValidCheckRace,
-      pData->dbAvator.m_dwRecordNum,
-      pData->dbAvator.m_byRaceSexCode);
-    return 0;
-  }
-
-  static const char kDataValidCheckLevel[] = "D_DataValidCheck (Serial:%d) Level:%d Max:%d";
-  CUserDB::s_logAvatorDB.Write(
-    kDataValidCheckLevel,
-    pData->dbAvator.m_dwRecordNum,
-    pData->dbAvator.m_byLevel,
-    maxLevel);
-  return 0;
-}
-
-void CUserDB::ReRangeClientIndex(_AVATOR_DATA *pData)
-{
-  CNetIndexList list;
-  list.SetList(0x64u);
-
-  unsigned char slotUsed[100]{};
-  unsigned int indexList[101]{};
-
-  int maxSlots = 20 * pData->dbAvator.m_byBagNum;
-  list.ResetList();
-  std::memset(slotUsed, 0, sizeof(slotUsed));
-
-  for (unsigned int i = 0; static_cast<int>(i) < maxSlots; ++i)
-  {
-    if (pData->dbInven.m_List[i].Key.IsFilled())
-    {
-      unsigned __int8 slotIndex = pData->dbInven.m_List[i].Key.bySlotIndex;
-      if (slotIndex >= maxSlots || slotUsed[slotIndex])
-      {
-        list.PushNode_Back(i);
-      }
-      else
-      {
-        slotUsed[slotIndex] = 1;
-      }
-    }
-  }
-
-  int startIndex = 0;
-  int listCount = list.CopyIndexList(indexList, maxSlots);
-  for (int j = 0; j < listCount; ++j)
-  {
-    for (int k = startIndex; k < maxSlots; ++k)
-    {
-      if (!slotUsed[k])
-      {
-        pData->dbInven.m_List[indexList[j]].Key.bySlotIndex = static_cast<unsigned __int8>(k);
-        slotUsed[k] = 1;
-        startIndex = k;
-        break;
-      }
-    }
-  }
-
-  maxSlots = 7;
-  list.ResetList();
-  std::memset(slotUsed, 0, sizeof(slotUsed));
-  startIndex = 0;
-
-  for (unsigned int i = 0; static_cast<int>(i) < maxSlots; ++i)
-  {
-    if (pData->dbEquip.m_EmbellishList[i].Key.IsFilled())
-    {
-      unsigned __int8 slotIndex = pData->dbEquip.m_EmbellishList[i].Key.bySlotIndex;
-      if (slotIndex >= maxSlots || slotUsed[slotIndex])
-      {
-        list.PushNode_Back(i);
-      }
-      else
-      {
-        slotUsed[slotIndex] = 1;
-      }
-    }
-  }
-
-  listCount = list.CopyIndexList(indexList, maxSlots);
-  for (int j = 0; j < listCount; ++j)
-  {
-    for (int k = startIndex; k < maxSlots; ++k)
-    {
-      if (!slotUsed[k])
-      {
-        pData->dbEquip.m_EmbellishList[indexList[j]].Key.bySlotIndex = static_cast<unsigned __int8>(k);
-        slotUsed[k] = 1;
-        startIndex = k;
-        break;
-      }
-    }
-  }
-
-  maxSlots = pData->dbTrunk.bySlotNum;
-  list.ResetList();
-  std::memset(slotUsed, 0, sizeof(slotUsed));
-  startIndex = 0;
-
-  for (unsigned int i = 0; static_cast<int>(i) < maxSlots; ++i)
-  {
-    if (pData->dbTrunk.m_List[i].Key.IsFilled())
-    {
-      unsigned __int8 slotIndex = pData->dbTrunk.m_List[i].Key.bySlotIndex;
-      if (slotIndex >= maxSlots || slotUsed[slotIndex])
-      {
-        list.PushNode_Back(i);
-      }
-      else
-      {
-        slotUsed[slotIndex] = 1;
-      }
-    }
-  }
-
-  listCount = list.CopyIndexList(indexList, maxSlots);
-  for (int j = 0; j < listCount; ++j)
-  {
-    for (int k = startIndex; k < maxSlots; ++k)
-    {
-      if (!slotUsed[k])
-      {
-        pData->dbTrunk.m_List[indexList[j]].Key.bySlotIndex = static_cast<unsigned __int8>(k);
-        slotUsed[k] = 1;
-        startIndex = k;
-        break;
-      }
-    }
-  }
-}
-
