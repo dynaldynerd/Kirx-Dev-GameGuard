@@ -24,3 +24,15 @@ _ItemUpgrade_fld *CItemUpgradeTable::GetRecord(unsigned int dwIndex)
   }
   return nullptr;
 }
+
+_ItemUpgrade_fld *CItemUpgradeTable::GetRecordFromRes(unsigned int dwResIndex)
+{
+  for (int n = 0; n < m_nResNum; ++n)
+  {
+    if (m_pwResIndex[n] == dwResIndex)
+    {
+      return reinterpret_cast<_ItemUpgrade_fld *>(m_tblItemUpgrade.GetRecord(n));
+    }
+  }
+  return nullptr;
+}

@@ -1614,6 +1614,24 @@ void CashItemRemoteStore::Set_DB_LimitedSale_Event()
   }
 }
 
+void CashItemRemoteStore::Set_FROMDB_LimitedSale_Event(_db_cash_limited_sale *Sheet)
+{
+  m_lim_event_New.DCK = Sheet->byDck;
+  m_lim_event_New.m_byEventNum = Sheet->byLimited_sale_num;
+
+  for (int i = 0; i < m_lim_event_New.m_byEventNum; ++i)
+  {
+    const _db_cash_limited_sale::_db_cash_limited_info *info = &Sheet->List[i];
+    m_lim_event_New.m_EventItemInfo[i].byTableCode = static_cast<unsigned __int8>(info->nLimcode >> 8);
+    m_lim_event_New.m_EventItemInfo[i].dwIndex = static_cast<unsigned int>(info->nLimcode >> 16);
+    m_lim_event_New.m_EventItemInfo[i].wCount = static_cast<unsigned __int16>(info->nLimcount);
+  }
+
+  _cash_lim_sale tmp{};
+  memcpy_0(&tmp, &m_lim_event_New, sizeof(tmp));
+  memcpy_0(&m_lim_event_Old, &tmp, sizeof(m_lim_event_Old));
+}
+
 unsigned __int16 CashItemRemoteStore::BuyLimSale(unsigned __int8 byTableCode, unsigned int dwIndex)
 {
   for (int j = 0; j < m_lim_event.m_byEventNum; ++j)

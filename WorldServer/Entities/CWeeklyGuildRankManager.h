@@ -2,6 +2,8 @@
 
 #include "IdaCompat.h"
 #include "CWeeklyGuildRankInfo.h"
+#include "pvppoint_guild_rank_info.h"
+#include "weeklyguildrank_owner_info.h"
 
 class CRFWorldDatabase;
 
@@ -13,6 +15,22 @@ public:
   bool InitNextSetOwnerDate();
   void SetNextRankDate();
   bool InsertSettlementOwner(CRFWorldDatabase *pkWorldDB, char *pData);
+  void Loop();
+  void GetTodayRankDate(char *szDate, int iBuffSize);
+  __int64 UpdateTodayTable(char *szDate, _pvppoint_guild_rank_info *pkInfo);
+  void OrderRank(_pvppoint_guild_rank_info *pkInfo);
+  char UpdateRankDBRecord(char *szDate, _pvppoint_guild_rank_info *pkInfo);
+  char UpdateOwnerGuild(char *szDate);
+  char SelectOwnerGuild(char *szDate, _weeklyguildrank_owner_info *pkInfo);
+  void SetSettlementAreaManageOwnerGuild();
+  bool SaveINI();
+  void PushSettlementOwnerDBLog(char *pInfo);
+  char UpdateTodayRank(_pvppoint_guild_rank_info *pLoadData);
+  bool UpdateWeeklyOwner(_weeklyguildrank_owner_info *pLoadData);
+  void CompleteLoadeTodayRank(unsigned __int8 byRet, _pvppoint_guild_rank_info *pLoadData);
+  void CompleteUpdateWeeklyOwner(unsigned __int8 byRet, _weeklyguildrank_owner_info *pLoadData);
+  void CompleteUpdateClear(unsigned __int8 byRet);
+  bool CreatePvpPointGuildRank(char *szDate);
 
   long long m_tNextUpdateTime;
   long long m_tNextSetOwnerTime;

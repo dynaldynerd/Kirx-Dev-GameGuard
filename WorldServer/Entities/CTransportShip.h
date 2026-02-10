@@ -25,6 +25,8 @@ public:
   void CheckTicket_Kick(CPlayer *pPtr, int nPortalIndex);
   int GetOutPortalIndex(int nRaceCode, unsigned __int8 byExitDirect);
   bool GetCurRideShipThisTicket(_TicketItem_fld *pTicketFld);
+  bool IsMemberBeforeLogoff(unsigned int dwPlayerSerial);
+  void GetStartPosInShip(float *pfPos);
 
   struct __cppobj __declspec(align(8)) __mgr_member
   {

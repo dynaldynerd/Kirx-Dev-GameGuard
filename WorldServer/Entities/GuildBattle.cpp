@@ -9,9 +9,11 @@
 #include <cstdlib>
 #include <cstring>
 #include <new>
+#include <atlcomtime.h>
 
 #include "CLogFile.h"
 #include "CMainThread.h"
+#include "CPvpUserAndGuildRankingSystem.h"
 #include "CMapOperation.h"
 #include "CMapData.h"
 #include "CCircleZone.h"
@@ -28,6 +30,9 @@
 #include "StorageList.h"
 #include "WorldServerUtil.h"
 #include "base_fld.h"
+#include "qry_case_updatereservedschedule.h"
+#include "worlddb_guild_battle_rank_list.h"
+#include "worlddb_guild_battle_reserved_schedule_info.h"
 
 __int64 _qry_case_in_guildbattlecost::size()
 {
@@ -1574,6 +1579,34 @@ namespace GUILD_BATTLE
     return PushDQSData(dwMapInx, uiSLID, pkBattle, pkSchedule) ? 0 : 110;
   }
 
+  void CNormalGuildBattleManager::AddComplete(unsigned __int8 byRet, unsigned int dwBattleID)
+  {
+    if (!m_ppkNormalBattle || m_uiMaxBattleCnt <= dwBattleID || !m_ppkNormalBattle[dwBattleID])
+    {
+      return;
+    }
+
+    if (byRet)
+    {
+      m_ppkNormalBattle[dwBattleID]->Clear();
+    }
+    m_ppkNormalBattle[dwBattleID]->AddComplete(byRet);
+  }
+
+  char CNormalGuildBattleManager::UpdateClearGuildBattleDayInfo(unsigned int dwStartSID, unsigned int dwEndSID)
+  {
+    if (g_Main.m_pWorldDB->UpdateClearGuildBattleInfo(dwStartSID, dwEndSID))
+    {
+      return 1;
+    }
+
+    g_Main.m_logDQS.Write(
+      "CGuildBattleReservedScheduleMapGroup::UpdateClearGuildBattleDayInfo() : g_Main.m_pWorldDB->UpdateClearGuildBattleInfo( %u, %u ) Fail!",
+      dwStartSID,
+      dwEndSID);
+    return 0;
+  }
+
   void CNormalGuildBattleManager::LogIn(int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial)
   {
     if (dwGuildSerial != static_cast<unsigned int>(-1))
@@ -2022,6 +2055,11 @@ namespace GUILD_BATTLE
     return m_pkTomorrowSchedule->Add(uiFieldInx, dwStartTimeInx, dwElapseTimeCnt, ppkSchedule, uiSLID);
   }
 
+  bool CGuildBattleScheduleManager::ClearTommorowScheduleByID(unsigned int uiMapID, unsigned int dwID)
+  {
+    return m_pkTomorrowSchedule->Clear(uiMapID, dwID) != 0;
+  }
+
   CGuildBattleLogger *CGuildBattleLogger::ms_Instance = nullptr;
 
   CGuildBattleLogger *CGuildBattleLogger::Instance()
@@ -2282,6 +2320,175 @@ namespace GUILD_BATTLE
     return true;
   }
 
+  void CGuildBattleRankManager::PushCreateGuildBattleRankTable()
+  {
+    char buffer[48]{};
+    memset(buffer, 0, 10);
+
+    ATL::CTime now = ATL::CTime::GetCurrentTime();
+    const int day = now.GetDay();
+    const int month = now.GetMonth();
+    const int year = now.GetYear();
+    sprintf_s(buffer, 0xAu, "%04d%02d%02d", year, month, day);
+
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x22u, buffer, 10);
+    CPvpUserAndGuildRankingSystem::Instance()->Log("CGuildBattleRankManager::PushCreateGuildBattleRankTable()");
+  }
+
+  void CGuildBattleRankManager::PushClearGuildBattleRank()
+  {
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x23u, nullptr, 0);
+    CPvpUserAndGuildRankingSystem::Instance()->Log("CGuildBattleRankManager::PushClearGuildBattleRank()");
+  }
+
+  char CGuildBattleRankManager::UpdateWinLose(
+    unsigned __int8 byWinRace,
+    unsigned int dwWinGuildSerial,
+    unsigned __int8 byLoseRace,
+    unsigned int dwLoseGuildSerial)
+  {
+    if (byWinRace >= 3u || byLoseRace >= 3u)
+    {
+      return 0;
+    }
+    if (!CheckRecord(dwWinGuildSerial) || !CheckRecord(dwLoseGuildSerial))
+    {
+      return 0;
+    }
+
+    g_Main.m_pWorldDB->SetAutoCommitMode(false);
+    if (g_Main.m_pWorldDB->UpdateWinGuildBattleResult(dwWinGuildSerial, 3u)
+        && g_Main.m_pWorldDB->UpdateLoseGuildBattleResult(dwLoseGuildSerial, 0))
+    {
+      g_Main.m_pWorldDB->CommitTransaction();
+      g_Main.m_pWorldDB->SetAutoCommitMode(true);
+      return 1;
+    }
+
+    g_Main.m_pWorldDB->RollbackTransaction();
+    g_Main.m_pWorldDB->SetAutoCommitMode(true);
+    return 0;
+  }
+
+  char CGuildBattleRankManager::UpdateDraw(
+    unsigned __int8 by1PRace,
+    unsigned int dw1PGuildSerial,
+    unsigned __int8 by2PRace,
+    unsigned int dw2PGuildSerial)
+  {
+    if (by1PRace >= 3u || by2PRace >= 3u)
+    {
+      return 0;
+    }
+    if (!CheckRecord(dw1PGuildSerial) || !CheckRecord(dw2PGuildSerial))
+    {
+      return 0;
+    }
+
+    g_Main.m_pWorldDB->SetAutoCommitMode(false);
+    if (g_Main.m_pWorldDB->UpdateDrawGuildBattleResult(dw1PGuildSerial, 1u)
+        && g_Main.m_pWorldDB->UpdateDrawGuildBattleResult(dw2PGuildSerial, 1u))
+    {
+      g_Main.m_pWorldDB->CommitTransaction();
+      g_Main.m_pWorldDB->SetAutoCommitMode(true);
+      return 1;
+    }
+
+    g_Main.m_pWorldDB->RollbackTransaction();
+    g_Main.m_pWorldDB->SetAutoCommitMode(true);
+    return 0;
+  }
+
+  bool CGuildBattleRankManager::SelectGuildBattleRankList(
+    unsigned __int8 byRace,
+    _worlddb_guild_battle_rank_list *pOutData)
+  {
+    if (!pOutData)
+    {
+      return false;
+    }
+
+    memset_0(pOutData, 0, sizeof(_worlddb_guild_battle_rank_list));
+    return g_Main.m_pWorldDB->SelectGuildBattleRankList(byRace, pOutData);
+  }
+
+  char CGuildBattleRankManager::Update(unsigned __int8 byRace, unsigned __int8 *pLoadData)
+  {
+    if (byRace >= 3u)
+    {
+      return 0;
+    }
+
+    unsigned __int16 pageInx = 0;
+    unsigned __int16 listInx = 0;
+    auto *loadData = pLoadData;
+
+    Clear(byRace);
+    ++m_dwVer[byRace];
+
+    for (unsigned __int16 j = 0; j < *reinterpret_cast<unsigned __int16 *>(loadData); ++j)
+    {
+      if (pageInx >= 0xAu)
+      {
+        m_ppkList[byRace][listInx].dwCurVer = m_dwVer[byRace];
+        m_ppkList[byRace][listInx].byCnt = 10;
+        pageInx = 0;
+        ++listInx;
+      }
+
+      auto *entry = &m_ppkList[byRace][listInx].list[pageInx];
+      entry->nRank = *reinterpret_cast<unsigned int *>(&loadData[44 * j + 4]);
+      entry->byGrade = loadData[44 * j + 8];
+      strcpy_0(entry->wszName, reinterpret_cast<const char *>(&loadData[44 * j + 9]));
+      entry->dwWin = *reinterpret_cast<unsigned int *>(&loadData[44 * j + 28]);
+      entry->dwLose = *reinterpret_cast<unsigned int *>(&loadData[44 * j + 32]);
+      entry->dwDraw = *reinterpret_cast<unsigned int *>(&loadData[44 * j + 36]);
+      entry->dwScore = *reinterpret_cast<unsigned int *>(&loadData[44 * j + 40]);
+      m_dwGuildSerial[byRace][listInx][pageInx++] = *reinterpret_cast<unsigned int *>(&loadData[44 * j + 44]);
+    }
+
+    m_ppkList[byRace][listInx].byCnt = static_cast<unsigned __int8>(pageInx);
+    for (unsigned __int16 k = 0; k <= listInx; ++k)
+    {
+      m_ppkList[byRace][k].dwCurVer = m_dwVer[byRace];
+      m_ppkList[byRace][k].byMaxPage = static_cast<unsigned __int8>(listInx + 1);
+    }
+    return 1;
+  }
+
+  void CGuildBattleRankManager::Clear()
+  {
+    for (int j = 0; j < 3; ++j)
+    {
+      ++m_dwVer[j];
+      Clear(static_cast<unsigned __int8>(j));
+    }
+  }
+
+  void CGuildBattleRankManager::Clear(unsigned __int8 byRace)
+  {
+    if (byRace >= 3u)
+    {
+      return;
+    }
+
+    memset_0(m_dwGuildSerial[byRace], 0, sizeof(m_dwGuildSerial[byRace]));
+    if (!m_ppkList || !m_ppkList[byRace])
+    {
+      return;
+    }
+
+    for (int j = 0; j < 10; ++j)
+    {
+      m_ppkList[byRace][j].dwCurVer = m_dwVer[byRace];
+      m_ppkList[byRace][j].byRace = byRace;
+      m_ppkList[byRace][j].byCurPage = static_cast<unsigned __int8>(j);
+      m_ppkList[byRace][j].byMaxPage = 0;
+      m_ppkList[byRace][j].byExistSelfGuildInfo = static_cast<unsigned __int8>(-1);
+      m_ppkList[byRace][j].byCnt = 0;
+    }
+  }
+
   CReservedGuildSchedulePage::CReservedGuildSchedulePage()
     : m_pkList(nullptr), m_ucPageInx(static_cast<unsigned __int8>(-1)), m_dwVer(static_cast<unsigned int>(-1))
   {
@@ -2327,6 +2534,15 @@ namespace GUILD_BATTLE
     return true;
   }
 
+  void CReservedGuildSchedulePage::IncVer()
+  {
+    ++m_dwVer;
+    if (m_pkList)
+    {
+      m_pkList->dwVer = m_dwVer;
+    }
+  }
+
   CReservedGuildScheduleMapGroup::CReservedGuildScheduleMapGroup()
     : m_uiMapInx(static_cast<unsigned int>(-1)),
       m_byMaxPage(static_cast<unsigned __int8>(-1))
@@ -2345,6 +2561,102 @@ namespace GUILD_BATTLE
     m_uiMapInx = uiMapInx;
     m_byMaxPage = 0;
     return true;
+  }
+
+  char CReservedGuildScheduleMapGroup::Load(
+    unsigned __int8 byDayID,
+    _worlddb_guild_battle_reserved_schedule_info *kInfo)
+  {
+    m_byMaxPage = static_cast<unsigned __int8>(kInfo->wCount / 4);
+    unsigned __int8 remain = static_cast<unsigned __int8>(kInfo->wCount & 3);
+    if (!m_byMaxPage && !remain)
+    {
+      return 1;
+    }
+
+    if (m_byMaxPage >= 6u)
+    {
+      m_byMaxPage = 5;
+      remain = 0;
+    }
+
+    unsigned __int16 listIndex = 0;
+    char *dest = nullptr;
+    _worlddb_guild_battle_reserved_schedule_info::__list *src = nullptr;
+    unsigned __int8 page = 0;
+
+    for (page = 0; page < m_byMaxPage; ++page)
+    {
+      unsigned __int8 slot = 0;
+      while (slot < 4u)
+      {
+        dest = m_kList[page].m_pkList->List[slot].wsz1PName;
+        src = &kInfo->list[listIndex];
+        m_kList[page].m_dw1PGuildSerial[slot] = src->dw1PGuildSerial;
+        strcpy_0(dest, src->wsz1PName);
+        dest[17] = src->by1PRace;
+        m_kList[page].m_dw2PGuildSerial[slot] = kInfo->list[listIndex].dw2PGuildSerial;
+        strcpy_0(dest + 18, src->wsz2PName);
+        dest[35] = src->by2PRace;
+        dest[36] = src->byStartHour;
+        dest[37] = src->byStartMin;
+        dest[38] = src->byEndHour;
+        dest[39] = src->byEndMin;
+        if (kInfo->wCount <= listIndex)
+        {
+          break;
+        }
+        ++slot;
+        ++listIndex;
+      }
+
+      m_kList[page].m_pkList->byDate = byDayID;
+      m_kList[page].m_pkList->byCnt = 4;
+    }
+
+    if (remain)
+    {
+      if (++m_byMaxPage > 6u)
+      {
+        m_byMaxPage = 6;
+      }
+    }
+
+    unsigned __int8 tailSlot = 0;
+    while (tailSlot < remain)
+    {
+      dest = m_kList[page].m_pkList->List[tailSlot].wsz1PName;
+      src = &kInfo->list[listIndex];
+      m_kList[page].m_dw1PGuildSerial[tailSlot] = src->dw1PGuildSerial;
+      strcpy_0(dest, src->wsz1PName);
+      dest[17] = src->by1PRace;
+      m_kList[page].m_dw2PGuildSerial[tailSlot] = kInfo->list[listIndex].dw2PGuildSerial;
+      strcpy_0(dest + 18, src->wsz2PName);
+      dest[35] = src->by2PRace;
+      dest[36] = src->byStartHour;
+      dest[37] = src->byStartMin;
+      dest[38] = src->byEndHour;
+      dest[39] = src->byEndMin;
+      if (kInfo->wCount <= listIndex)
+      {
+        break;
+      }
+      ++tailSlot;
+      ++listIndex;
+    }
+
+    if (remain)
+    {
+      m_kList[page].m_pkList->byDate = byDayID;
+      m_kList[page].m_pkList->byCnt = static_cast<unsigned __int8>(listIndex & 3);
+    }
+
+    for (page = 0; page < m_byMaxPage; ++page)
+    {
+      m_kList[page].m_pkList->byMaxPage = m_byMaxPage;
+      m_kList[page].IncVer();
+    }
+    return 1;
   }
 
   CReservedGuildScheduleDayGroup::CReservedGuildScheduleDayGroup() : m_uiMapCnt(0), m_pkList(nullptr)
@@ -2385,6 +2697,15 @@ namespace GUILD_BATTLE
     return true;
   }
 
+  bool CReservedGuildScheduleDayGroup::Load(
+    unsigned __int8 byDayID,
+    unsigned int uiMapInx,
+    _worlddb_guild_battle_reserved_schedule_info *kInfo)
+  {
+    return m_uiMapCnt > uiMapInx && m_pkList
+           && m_pkList[uiMapInx].Load(byDayID, kInfo);
+  }
+
   CGuildBattleReservedScheduleListManager *CGuildBattleReservedScheduleListManager::Instance()
   {
     if (!ms_Instance)
@@ -2410,6 +2731,43 @@ namespace GUILD_BATTLE
     return m_kList[0].Init(m_uiMapCnt) && m_kList[1].Init(m_uiMapCnt);
   }
 
+  void CGuildBattleReservedScheduleListManager::PushDQS(unsigned int dwMapID, unsigned int dwSLID)
+  {
+    _qry_case_updatereservedschedule qry{};
+    qry.dwMapID = dwMapID;
+    qry.dwSLID = dwSLID;
+    qry.byLoadDataStartPosition = 0;
+
+    const int size = static_cast<int>(qry.size());
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x29u, reinterpret_cast<char *>(&qry), size);
+  }
+
+  bool CGuildBattleReservedScheduleListManager::UpdateReservedShedule(
+    unsigned int dwSLID,
+    _worlddb_guild_battle_reserved_schedule_info *byOutData)
+  {
+    if (!byOutData)
+    {
+      return false;
+    }
+
+    memset_0(byOutData, 0, sizeof(_worlddb_guild_battle_reserved_schedule_info));
+    return g_Main.m_pWorldDB->SelectGuildBattleRerservedList(dwSLID, dwSLID, byOutData);
+  }
+
+  void CGuildBattleReservedScheduleListManager::UpdateTomorrowComplete(
+    unsigned int dwMapID,
+    _worlddb_guild_battle_reserved_schedule_info *pLoadData)
+  {
+    if (!m_pkTomorrow->Load(1u, dwMapID, pLoadData))
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CGuildBattleReservedScheduleListManager::UpdateTomorrowComplete(%u) : m_pkToday->Load( %u ) Fail!",
+        dwMapID,
+        dwMapID);
+    }
+  }
+
   CGuildBattleScheduler *CGuildBattleScheduler::Instance()
   {
     if (!ms_Instance)
@@ -2428,6 +2786,20 @@ namespace GUILD_BATTLE
       return false;
     }
     return CGuildBattleScheduleManager::Instance()->Init(uiMapCnt);
+  }
+
+  char CGuildBattleScheduler::UpdateClearGuildBattleScheduleDayInfo(unsigned int dwStartSLID, unsigned int dwEndSLID)
+  {
+    if (g_Main.m_pWorldDB->UpdateClearGuildBattleScheduleInfo(dwStartSLID, dwEndSLID))
+    {
+      return 1;
+    }
+
+    g_Main.m_logDQS.Write(
+      "CGuildBattleReservedScheduleMapGroup::UpdateClearGuildBattleScheduleDayInfo() : g_Main.m_pWorldDB->UpdateClearGuildBattleScheduleInfo( %u, %u ) Fail!",
+      dwStartSLID,
+      dwEndSLID);
+    return 0;
   }
 
   void CGuildBattleScheduler::Destroy()
@@ -2546,6 +2918,35 @@ namespace GUILD_BATTLE
 
     m_bInit = true;
     return true;
+  }
+
+  void CPossibleBattleGuildListManager::UpdateGuildList()
+  {
+    if (!m_bInit)
+    {
+      return;
+    }
+
+    unsigned __int16 lastGuildInx[8]{};
+    for (unsigned int race = 0; race < 3; ++race)
+    {
+      m_pMaxPage[race] = 0;
+      for (int page = 0; page < 75 && MakePage(static_cast<unsigned __int8>(race), page, lastGuildInx); ++page)
+      {
+        ++m_pMaxPage[race];
+      }
+      ++m_pdwVer[race];
+      lastGuildInx[0] = 0;
+    }
+
+    for (unsigned int race = 0; race < 3; ++race)
+    {
+      for (unsigned __int8 page = 0; page < m_pMaxPage[race]; ++page)
+      {
+        m_ppkList[race][page].byMaxPage = m_pMaxPage[race];
+        m_ppkList[race][page].dwCurVer = m_pdwVer[race];
+      }
+    }
   }
 
   void CPossibleBattleGuildListManager::SendFirst(int n, unsigned __int8 byRace)

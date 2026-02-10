@@ -328,3 +328,28 @@ _react_sub_setup::_react_sub_setup()
   byReactType = 0;
   pPortalDummy = nullptr;
 }
+
+void _dh_mission_mgr::OpenPortal(int nIndex)
+{
+  if (nIndex == -1)
+  {
+    memset_0(this->bOpenPortal, 1, sizeof(this->bOpenPortal));
+  }
+  else
+  {
+    this->bOpenPortal[nIndex] = 1;
+  }
+}
+
+__int64 _dh_mission_mgr::GetLimMSecTime()
+{
+  if (!pCurMssionPtr)
+  {
+    return 0;
+  }
+  if (pCurMssionPtr->dwLimTimeMSec == static_cast<unsigned int>(-1))
+  {
+    return static_cast<__int64>(-1);
+  }
+  return static_cast<__int64>(nAddLimMSecTime) + pCurMssionPtr->dwLimTimeMSec;
+}

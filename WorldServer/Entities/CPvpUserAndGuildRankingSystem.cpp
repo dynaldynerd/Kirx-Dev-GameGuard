@@ -5,6 +5,7 @@
 #include "KorLocalTime.h"
 #include "WorldServerUtil.h"
 
+#include <cstdarg>
 #include <cstdio>
 
 CPvpUserAndGuildRankingSystem *CPvpUserAndGuildRankingSystem::Instance()
@@ -54,6 +55,34 @@ bool CPvpUserAndGuildRankingSystem::IsRaceViceBoss(unsigned __int8 byRace, unsig
 unsigned __int8 CPvpUserAndGuildRankingSystem::GetBossType(unsigned __int8 byRace, unsigned int dwSerial)
 {
   return m_kUserRankingProcess.GetBossType(byRace, dwSerial);
+}
+
+void CPvpUserAndGuildRankingSystem::Log(const char *fmt, ...)
+{
+  if (!m_pkLogger)
+  {
+    return;
+  }
+
+  va_list va;
+  va_start(va, fmt);
+  m_pkLogger->WriteFromArg(fmt, va);
+  va_end(va);
+}
+
+void CPvpUserAndGuildRankingSystem::SetUpdateRaceBossSerial(
+  unsigned __int8 byRace,
+  unsigned __int8 byNth,
+  unsigned int dwSerial)
+{
+  m_kUserRankingProcess.SetUpdateRaceBossSerial(byRace, byNth, dwSerial);
+}
+
+void CPvpUserAndGuildRankingSystem::ApplyUpdatedBossInfo()
+{
+  m_kUserRankingProcess.FlipPvPRankTop();
+  m_kUserRankingProcess.PvpRankDataPacking();
+  m_kUserRankingProcess.IncreaseVesion();
 }
 
 unsigned __int8 CPvpUserAndGuildRankingSystem::UpdateRaceRankStep1(char *szData)

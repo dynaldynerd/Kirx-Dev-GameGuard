@@ -3,8 +3,12 @@
 #include "CRaceBossWinRate.h"
 
 #include "CNetworkEX.h"
+#include "CPvpUserAndGuildRankingSystem.h"
+#include "CRFWorldDatabase.h"
 #include "notify_race_boss_winrate_zocl.h"
+#include "raceboss_acc_winrate.h"
 #include "GlobalObjects.h"
+#include "DqsDbStructs.h"
 
 CRaceBossWinRate *CRaceBossWinRate::m_Inst = nullptr;
 
@@ -36,6 +40,84 @@ void CRaceBossWinRate::UpdateWinCnt(unsigned __int8 byRace)
   ++m_byWinCnt[byRace];
   ++m_byTotalBattleCnt;
   Notify();
+}
+
+void CRaceBossWinRate::UpdateRaceBossWinRate(unsigned __int8 byRace)
+{
+  m_byWinCnt[byRace] = 0;
+}
+
+void CRaceBossWinRate::UpdateRaceBossWinRate()
+{
+  for (int j = 0; j < 3; ++j)
+  {
+    m_byWinCnt[j] = 0;
+  }
+  m_byTotalBattleCnt = 0;
+  Notify();
+}
+
+unsigned __int8 CRaceBossWinRate::LoadBossAccmulationWinRate(_qry_case_raceboss_accumulation_winrate *pData)
+{
+  const bool noData = pData == nullptr;
+  unsigned int bossSerial = static_cast<unsigned int>(-1);
+
+  for (int race = 0; race < 3; ++race)
+  {
+    CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
+    bossSerial = ranking->GetCurrentRaceBossSerial(static_cast<unsigned __int8>(race), 0);
+    if (bossSerial != static_cast<unsigned int>(-1))
+    {
+      if (noData)
+      {
+        m_dwAccBattleCnt[race] = 0;
+        m_dwAccWinCnt[race] = 0;
+      }
+      else
+      {
+        pData->dwTotalCnt[race] = 0;
+        pData->dwWinCnt[race] = 0;
+      }
+
+      _raceboss_acc_winrate winData{};
+      const unsigned __int8 result =
+        g_Main.m_pWorldDB->Select_RaceBossAccumulationWinRate(race, bossSerial, &winData);
+      if (result == 1)
+      {
+        g_Main.m_logSystemError.Write(
+          "CRaceBossWinRate::LoadBossAccmulationWinRate() : Select_RaceBossAccumulationWinRate( %d, %d ) Boss Accumulation Win Rate Load Error",
+          race,
+          bossSerial);
+      }
+      else if (noData)
+      {
+        m_dwAccBattleCnt[race] = winData.dwTotalCnt;
+        m_dwAccWinCnt[race] = winData.dwWinCnt;
+      }
+      else
+      {
+        pData->dwTotalCnt[race] = winData.dwTotalCnt;
+        pData->dwWinCnt[race] = winData.dwWinCnt;
+      }
+    }
+  }
+
+  return 0;
+}
+
+void CRaceBossWinRate::CompleteBossAccmulationWinRate(_qry_case_raceboss_accumulation_winrate *pData)
+{
+  if (!pData)
+  {
+    return;
+  }
+
+  for (int race = 0; race < 3; ++race)
+  {
+    m_dwAccBattleCnt[race] = pData->dwTotalCnt[race];
+    m_dwAccWinCnt[race] = pData->dwWinCnt[race];
+  }
+  UpdateRaceBossWinRate();
 }
 
 void CRaceBossWinRate::Notify()

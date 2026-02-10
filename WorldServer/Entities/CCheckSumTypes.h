@@ -1,0 +1,17 @@
+#pragma once
+
+enum CHECKSUM_CHARAC_DATA_TYPE : unsigned int
+{
+  CDWT_DALANT = 0,
+  CDWT_GOLD = 1,
+  CDWT_LV = 2,
+  CDWT_NEAR_MASTERY = 3,
+  CDWT_DIS_MASTERY = 4,
+  CDWT_DEF_MASTERY = 5,
+};
+
+enum CHECKSUM_TRUNK_DATA_TYPE : unsigned int
+{
+  CDT_TRUNK_DALANT = 0,
+  CDT_TRUNK_GOLD = 1,
+};

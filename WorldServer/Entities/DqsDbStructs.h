@@ -341,6 +341,9 @@ struct __cppobj __unaligned __declspec(align(1)) _NOT_ARRANGED_AVATOR_DB
   char wszName[17];
   char szServer[33];
   char szClassCode[5];
+
+  _NOT_ARRANGED_AVATOR_DB();
+  void Init();
 };
 
 struct __cppobj _worlddb_arrange_char_info
@@ -516,14 +519,13 @@ struct _qry_case_gm_greetingmsg
 struct _qry_case_race_greetingmsg
 {
   unsigned __int8 type;
-  char in_race;
+  char in_bossname[17];
   char in_racegreetingmsg[256];
 };
 
 struct _qry_case_guild_greetingmsg
 {
-  unsigned __int8 type;
-  char in_guildname[17];
+  unsigned int in_guildserial;
   char in_guildgreetingmsg[256];
 };
 
@@ -643,6 +645,9 @@ struct __cppobj __declspec(align(4)) _qry_case_insert_patriarch_comm
   unsigned int dwSerial;
   unsigned int dwDalant;
   char szDepDate[9];
+
+  _qry_case_insert_patriarch_comm();
+  __int64 size();
 };
 
 struct __cppobj __declspec(align(4)) _qry_case_select_patriarch_comm
@@ -650,6 +655,16 @@ struct __cppobj __declspec(align(4)) _qry_case_select_patriarch_comm
   unsigned int dwSerial;
   unsigned __int8 byDBRet;
 };
+
+inline _qry_case_insert_patriarch_comm::_qry_case_insert_patriarch_comm()
+{
+  memset_0(this, 0, sizeof(*this));
+}
+
+inline __int64 _qry_case_insert_patriarch_comm::size()
+{
+  return 20;
+}
 
 struct __declspec(align(4)) _qry_case_insert_timelimit_info
 {
@@ -662,11 +677,19 @@ struct __declspec(align(4)) _qry_case_insert_timelimit_info
 
 struct __declspec(align(4)) _qry_case_update_punishment
 {
-  unsigned int dwCharSerial;
   unsigned __int8 byType;
-  unsigned int dwStartDate;
-  unsigned int dwEndDate;
+  unsigned int dwValue;
+  char wszCharName[17];
+  unsigned int dwAvatorSerial;
+  unsigned int dwElectSerial;
+
+  __int64 size();
 };
+
+inline __int64 _qry_case_update_punishment::size()
+{
+  return 36;
+}
 
 struct __declspec(align(4)) _post_storage_list
 {

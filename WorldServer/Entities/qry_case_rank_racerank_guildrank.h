@@ -10,4 +10,5 @@ struct __cppobj _qry_case_rank_racerank_guildrank
   unsigned int dwParam2;
 
   _qry_case_rank_racerank_guildrank();
+  void ClearRetParam();
 };

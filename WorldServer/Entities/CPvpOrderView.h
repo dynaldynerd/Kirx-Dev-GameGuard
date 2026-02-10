@@ -2,6 +2,9 @@
 
 #include "IdaCompat.h"
 
+struct _PVP_ORDER_VIEW_DB_BASE;
+class CPlayer;
+
 struct __cppobj _pvp_order_view_inform_zocl
 {
   int nKillCnt;
@@ -17,8 +20,17 @@ struct __cppobj _pvp_order_view_inform_zocl
 class CPvpOrderView
 {
 public:
+  long double GetPvpCash();
+  long double GetPvpTempCash();
+  void SetPvpCash(long double dAlter);
+  char SetPvpOrderView(long double dPvpPoint, _PVP_ORDER_VIEW_DB_BASE *pkInfo, CPlayer *pOne);
+  void UpdatePvpCash(double dPvpCash);
+  void Update_PvpTempCash(unsigned __int16 wIndex, double dTempPvpCash);
   void UpdatePvPPoint(long double dUpPoint, long double dNewPoint);
   void Notify_OrderView(unsigned __int16 wIndex);
+  void Notify_PvpTempCash(unsigned __int16 wIndex);
+  void Update_RaceWarRecvr(bool bUse);
+  void ResetPvPOrderView();
   void Update(
     __int64 tUpdateDate,
     int nDeath,

@@ -39,6 +39,41 @@ void CMoneySupplyMgr::UpdateBuyUnitData(int nLv, unsigned int nAmount)
   }
 }
 
+void CMoneySupplyMgr::UpdateFeeMoneyData(unsigned __int8 byRace, int nLv, unsigned int nAmount)
+{
+  m_MS_data.dwAmount[5] += nAmount;
+  switch (nLv)
+  {
+    case 30:
+      ++m_MS_data.nFeeLv[0];
+      break;
+    case 40:
+      ++m_MS_data.nFeeLv[1];
+      break;
+    case 50:
+      ++m_MS_data.nFeeLv[2];
+      break;
+    case 60:
+      ++m_MS_data.nFeeLv[3];
+      break;
+    default:
+      break;
+  }
+
+  if (!byRace)
+  {
+    ++m_MS_data.nFeeRace[0];
+  }
+  if (byRace == 1)
+  {
+    ++m_MS_data.nFeeRace[1];
+  }
+  else
+  {
+    ++m_MS_data.nFeeRace[2];
+  }
+}
+
 void CMoneySupplyMgr::UpdateHonorGuildMoneyData(
   unsigned __int8 byTradeType,
   unsigned __int8 byRace,

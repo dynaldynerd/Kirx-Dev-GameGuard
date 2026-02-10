@@ -1,3 +1,366 @@
 #include "pch.h"
 
 #include "CVoteSystem.h"
+
+#include "CMainThread.h"
+#include "CNetProcess.h"
+#include "CPlayer.h"
+#include "CPlayerDB.h"
+#include "CPvpUserAndGuildRankingSystem.h"
+#include "GlobalObjects.h"
+#include "PatriarchElectProcessor.h"
+#include "pt_result_punishment_zocl.h"
+
+#include <ctime>
+#include <cstring>
+
+_starting_vote_inform_zocl::_starting_vote_inform_zocl()
+{
+  wContentSize = 0;
+}
+
+__int64 _starting_vote_inform_zocl::size()
+{
+  if (wContentSize > 0x500u)
+  {
+    wContentSize = 0;
+  }
+  return 1289LL - (1280 - wContentSize);
+}
+
+CVoteSystem::_started_vote_inform_zocl::_started_vote_inform_zocl()
+{
+  wContentSize = 0;
+}
+
+__int64 CVoteSystem::_started_vote_inform_zocl::size()
+{
+  if (wContentSize > 0x500u)
+  {
+    wContentSize = 0;
+  }
+  return 1297LL - (1280 - wContentSize);
+}
+
+CVoteSystem::CVoteSystem() : m_bActive(false), m_byRaceCode(static_cast<unsigned __int8>(-1)), m_nSerial(0)
+{
+  m_SendStarted = _started_vote_inform_zocl();
+  m_listVote.SetList(0x13C8u);
+}
+
+CVoteSystem::~CVoteSystem() = default;
+
+char CVoteSystem::StartVote(char *pwszContent, unsigned __int8 byLimGrade, unsigned __int8 byRaceCode)
+{
+  if (m_bActive)
+  {
+    return 0;
+  }
+
+  ++m_nSerial;
+  m_byRaceCode = byRaceCode;
+  memset_0(m_dwPoint, 0, sizeof(m_dwPoint));
+  m_listVote.ResetList();
+  m_byLimGrade = byLimGrade;
+  m_dwLastBroadcastTime = GetLoopTime();
+  m_dwStartVoteTime = GetLoopTime();
+  m_bActive = true;
+  m_bHurry = false;
+  m_bPunishment = false;
+
+  _starting_vote_inform_zocl started{};
+  started.nVoteSerial = m_nSerial;
+  started.byLimGrade = m_byLimGrade;
+  started.wLeftSec = 300;
+  strcpy_0(started.wszContent, pwszContent);
+  started.wContentSize = strlen_0(pwszContent) + 1;
+
+  unsigned __int8 type[16]{};
+  type[0] = 26;
+  type[1] = 3;
+  for (unsigned int clientIndex = 0; clientIndex < MAX_PLAYER; ++clientIndex)
+  {
+    CPlayer *player = &g_Player[clientIndex];
+    if (player->m_bLive && static_cast<unsigned int>(player->m_Param.GetRaceCode()) == m_byRaceCode)
+    {
+      const unsigned __int16 len = static_cast<unsigned __int16>(started.size());
+      g_Network.m_pProcess[0]->LoadSendMsg(clientIndex, type, reinterpret_cast<char *>(&started), len);
+    }
+  }
+
+  m_SendStarted.nVoteSerial = m_nSerial;
+  m_SendStarted.byLimGrade = m_byLimGrade;
+  strcpy_0(m_SendStarted.wszContent, pwszContent);
+  m_SendStarted.wContentSize = strlen_0(pwszContent) + 1;
+  m_SendStarted.wLeftSec = 300;
+  return 1;
+}
+
+char CVoteSystem::StartVote(
+  unsigned __int8 byRaceCode,
+  unsigned __int8 byPunishType,
+  char *pwszContent,
+  char *pwszName,
+  unsigned int dwSerial)
+{
+  if (m_bActive)
+  {
+    return 0;
+  }
+
+  ++m_nSerial;
+  m_byRaceCode = byRaceCode;
+  memset_0(m_dwPoint, 0, sizeof(m_dwPoint));
+  m_listVote.ResetList();
+  m_byLimGrade = 0;
+  m_dwLastBroadcastTime = GetLoopTime();
+  m_dwStartVoteTime = GetLoopTime();
+  m_bActive = true;
+  m_bHurry = false;
+  m_bPunishment = true;
+  m_byPunishType = byPunishType;
+  m_dwAvatorSerial = dwSerial;
+  strcpy_0(m_wszCharName, pwszName);
+
+  _starting_vote_inform_zocl started{};
+  started.nVoteSerial = m_nSerial;
+  started.byLimGrade = m_byLimGrade;
+  started.wLeftSec = 300;
+  strcpy_0(started.wszContent, pwszContent);
+  started.wContentSize = strlen_0(pwszContent) + 1;
+
+  unsigned __int8 type[16]{};
+  type[0] = 26;
+  type[1] = 3;
+
+  m_SendStarted.nVoteSerial = m_nSerial;
+  m_SendStarted.byLimGrade = m_byLimGrade;
+  strcpy_0(m_SendStarted.wszContent, pwszContent);
+  m_SendStarted.wContentSize = strlen_0(pwszContent) + 1;
+  m_SendStarted.wLeftSec = 300;
+
+  for (int index = 0; index < MAX_PLAYER; ++index)
+  {
+    CPlayer *player = &g_Player[index];
+    if (player->m_bLive && player->m_bOper &&
+        static_cast<unsigned int>(player->m_Param.GetRaceCode()) == m_byRaceCode)
+    {
+      const unsigned int charSerial = player->m_Param.GetCharSerial();
+      const int raceCode = player->m_Param.GetRaceCode();
+      CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
+      if (ranking->GetBossType(raceCode, charSerial) == 255)
+      {
+        const unsigned int serial = player->m_Param.GetCharSerial();
+        SendMsg_StartedVoteInform(player->m_ObjID.m_wIndex, serial, true);
+      }
+      else
+      {
+        const unsigned __int16 len = static_cast<unsigned __int16>(started.size());
+        g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&started), len);
+      }
+    }
+  }
+
+  return 1;
+}
+
+void CVoteSystem::CompleteSelectCharSerial(char *pData)
+{
+  CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
+  const unsigned int bossSerial = ranking->GetCurrentRaceBossSerial(static_cast<unsigned __int8>(pData[0]), 0);
+  CPlayer *boss = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, bossSerial);
+
+  if (*reinterpret_cast<unsigned int *>(pData + 4) == static_cast<unsigned int>(-1))
+  {
+    if (boss)
+    {
+      boss->SendMsg_ProposeVoteResult(8);
+    }
+  }
+  else if (!StartVote(
+             static_cast<unsigned __int8>(pData[0]),
+             static_cast<unsigned __int8>(pData[1]),
+             pData + 25,
+             pData + 8,
+             *reinterpret_cast<unsigned int *>(pData + 4)))
+  {
+    if (boss)
+    {
+      boss->SendMsg_ProposeVoteResult(7);
+    }
+  }
+}
+
+char CVoteSystem::ActVote(unsigned int dwAvatorSerial, unsigned __int8 byPoint)
+{
+  if (!m_bActive)
+  {
+    return 0;
+  }
+  if (m_listVote.IsInList(dwAvatorSerial))
+  {
+    return 0;
+  }
+
+  m_listVote.PushNode_Back(dwAvatorSerial);
+  ++m_dwPoint[byPoint];
+  return 1;
+}
+
+void CVoteSystem::Loop()
+{
+  if (!m_bActive)
+  {
+    return;
+  }
+
+  const unsigned int loopTime = GetLoopTime();
+  if (m_bHurry)
+  {
+    if (loopTime - m_dwStartVoteTime > 0x493E0)
+    {
+      StopVote();
+      return;
+    }
+  }
+  else if (loopTime - m_dwStartVoteTime > 0x3A980)
+  {
+    m_bHurry = true;
+  }
+
+  m_SendStarted.wLeftSec = (300000 - (loopTime - m_dwStartVoteTime)) / 1000;
+  if (loopTime - m_dwLastBroadcastTime <= 0x2710)
+  {
+    return;
+  }
+
+  m_dwLastBroadcastTime = loopTime;
+
+  char msg[11]{};
+  *reinterpret_cast<int *>(msg) = m_nSerial;
+  unsigned __int16 point[3]{};
+  for (int index = 0; index < 3; ++index)
+  {
+    point[index] = static_cast<unsigned __int16>(m_dwPoint[index]);
+  }
+  const bool hurry = m_bHurry;
+  memcpy_0(msg + 4, point, sizeof(point));
+  msg[10] = static_cast<char>(hurry);
+
+  unsigned __int8 type[20]{};
+  type[0] = 26;
+  type[1] = 4;
+
+  for (unsigned int clientIndex = 0; clientIndex < MAX_PLAYER; ++clientIndex)
+  {
+    CPlayer *player = &g_Player[clientIndex];
+    if (player->m_bLive && static_cast<unsigned int>(player->m_Param.GetRaceCode()) == m_byRaceCode)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(clientIndex, type, msg, 11);
+    }
+  }
+}
+
+char CVoteSystem::StopVote()
+{
+  if (!m_bActive)
+  {
+    return 0;
+  }
+
+  m_bActive = false;
+  m_listVote.ResetList();
+
+  char msg[10]{};
+  *reinterpret_cast<int *>(msg) = m_nSerial;
+  unsigned __int16 point[3]{};
+  for (int index = 0; index < 3; ++index)
+  {
+    point[index] = static_cast<unsigned __int16>(m_dwPoint[index]);
+  }
+  memcpy_0(msg + 4, point, sizeof(point));
+
+  unsigned __int8 type[20]{};
+  type[0] = 26;
+  type[1] = 7;
+
+  for (unsigned int clientIndex = 0; clientIndex < MAX_PLAYER; ++clientIndex)
+  {
+    CPlayer *player = &g_Player[clientIndex];
+    if (player->m_bLive && static_cast<unsigned int>(player->m_Param.GetRaceCode()) == m_byRaceCode)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(clientIndex, type, msg, 10);
+    }
+  }
+
+  if (m_bPunishment && m_dwPoint[0] > m_dwPoint[1])
+  {
+    ProcessPunishment();
+  }
+
+  return 1;
+}
+
+void CVoteSystem::SendMsg_StartedVoteInform(unsigned int n, unsigned int dwAvatorSerial, bool bPunish)
+{
+  m_SendStarted.bActed = m_listVote.IsInList(dwAvatorSerial) || bPunish;
+  for (int index = 0; index < 3; ++index)
+  {
+    m_SendStarted.wPoint[index] = static_cast<unsigned __int16>(m_dwPoint[index]);
+  }
+  m_SendStarted.bHurry = m_bHurry;
+
+  unsigned __int8 type[36]{};
+  type[0] = 26;
+  type[1] = 33;
+  const unsigned __int16 len = static_cast<unsigned __int16>(m_SendStarted.size());
+  g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&m_SendStarted), len);
+}
+
+void CVoteSystem::ProcessPunishment()
+{
+  const std::time_t now = std::time(nullptr);
+  const unsigned int value = static_cast<unsigned int>(now / 60);
+
+  CGameObject *charObject = g_Main.GetCharW(m_wszCharName);
+  if (charObject)
+  {
+    const unsigned __int64 playerData =
+      *reinterpret_cast<unsigned __int64 *>(&charObject[10].m_ObjID.m_byKind);
+    if (playerData)
+    {
+      *reinterpret_cast<unsigned int *>(playerData + 4LL * m_byPunishType + 1321) = value;
+      PatriarchElectProcessor *processor = PatriarchElectProcessor::Instance();
+      const unsigned int electSerial = processor->GetCurrPatriarchElectSerial();
+      *reinterpret_cast<unsigned int *>(playerData + 4LL * m_byPunishType + 1333) = electSerial;
+    }
+  }
+
+  unsigned __int8 type[36]{};
+  type[0] = 13;
+  type[1] = 116;
+
+  _pt_result_punishment_zocl result{};
+  result.byType = m_byPunishType;
+  strcpy_0(result.wszCharName, m_wszCharName);
+  for (unsigned int clientIndex = 0; clientIndex < MAX_PLAYER; ++clientIndex)
+  {
+    CPlayer *player = &g_Player[clientIndex];
+    if (player->m_bLive && static_cast<unsigned int>(player->m_Param.GetRaceCode()) == m_byRaceCode)
+    {
+      const unsigned __int16 len = static_cast<unsigned __int16>(result.size());
+      g_Network.m_pProcess[0]->LoadSendMsg(clientIndex, type, reinterpret_cast<char *>(&result), len);
+    }
+  }
+
+  _qry_case_update_punishment update{};
+  update.byType = m_byPunishType;
+  update.dwValue = value;
+  update.dwAvatorSerial = m_dwAvatorSerial;
+  PatriarchElectProcessor *processor = PatriarchElectProcessor::Instance();
+  update.dwElectSerial = processor->GetCurrPatriarchElectSerial();
+  strcpy_0(update.wszCharName, m_wszCharName);
+
+  const int size = update.size();
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x7Fu, reinterpret_cast<char *>(&update), size);
+}

@@ -19,6 +19,20 @@ public:
   void ClearGuildSerial();
   void ClearGuildGrade();
   unsigned int GetRankInGuildJobOffset();
+  void ClearRefreshData();
+  unsigned int GetNextGuildSerial();
+
+  unsigned __int8 UpdateGuildRankStep1(char *szData);
+  unsigned __int8 UpdateGuildRankStep2(char *szData);
+  unsigned __int8 UpdateGuildRankStep3(char *szData);
+  unsigned __int8 UpdateGuildRankStep4(char *szData);
+  unsigned __int8 UpdateRankinGuildStep1(char *szData);
+  unsigned __int8 UpdateRankinGuildStep2(char *szData);
+  unsigned __int8 UpdateRankinGuildStep3(char *szData);
+  unsigned __int8 UpdateRankinGuildStep4(char *szData);
+  unsigned __int8 UpdateRankinGuildStep5(char *szData);
+  unsigned __int8 UpdateRankinGuildStep6(char *szData);
+  unsigned __int8 UpdateAndSelectGuildGrade(char *szData);
 
   CLogFile *m_pkLogger;
   unsigned int m_dwCurProcIndex;

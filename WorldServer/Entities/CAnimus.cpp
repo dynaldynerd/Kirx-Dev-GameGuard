@@ -11,26 +11,23 @@ CRecordData CAnimus::s_tblParameter[8];
 unsigned int CAnimus::MAX_EXP[8]{};
 int CAnimus::s_nLiveNum = 0;
 
-namespace
+_animus_fld *GetAnimusFldFromLv(int nAnimusClass, unsigned int dwLv)
 {
-  _animus_fld *GetAnimusFldFromLv(int nAnimusClass, unsigned int dwLv)
+  CRecordData *table = &CAnimus::s_tblParameter[nAnimusClass];
+  for (int n = 0; n < 65; ++n)
   {
-    CRecordData *table = &CAnimus::s_tblParameter[nAnimusClass];
-    for (int n = 0; n < 65; ++n)
+    _animus_fld *record = reinterpret_cast<_animus_fld *>(table->GetRecord(n));
+    if (record == nullptr)
     {
-      _animus_fld *record = (_animus_fld*)table->GetRecord(n);
-      if (record == nullptr)
-      {
-        return nullptr;
-      }
-      if (record->m_nLevel == dwLv)
-      {
-        return reinterpret_cast<_animus_fld *>(record);
-      }
+      return nullptr;
     }
-    const int recordNum = static_cast<int>(table->GetRecordNum());
-    return reinterpret_cast<_animus_fld *>(table->GetRecord(recordNum - 1));
+    if (record->m_nLevel == dwLv)
+    {
+      return record;
+    }
   }
+  const int recordNum = static_cast<int>(table->GetRecordNum());
+  return reinterpret_cast<_animus_fld *>(table->GetRecord(recordNum - 1));
 }
 
 bool CAnimus::SetStaticMember()

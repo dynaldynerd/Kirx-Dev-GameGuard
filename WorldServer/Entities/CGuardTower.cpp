@@ -3,6 +3,7 @@
 #include "CGuardTower.h"
 
 #include "WorldServerUtil.h"
+#include "GlobalObjects.h"
 
 #include <mmsystem.h>
 
@@ -106,5 +107,49 @@ void CGuardTower::SendMsg_Create()
 __int64 CGuardTower::GetNewSerial()
 {
   return s_dwSerialCnt++;
+}
+
+CGuardTower *CreateSystemTower(
+  CMapData *pMap,
+  unsigned __int16 wLayer,
+  float *fPos,
+  int nTowerIndex,
+  unsigned __int8 byRaceCode,
+  int nIniIndex)
+{
+  CGuardTower *tower = nullptr;
+  for (int j = 0; j < MAX_TOWER; ++j)
+  {
+    if (!g_Tower[j].m_bLive)
+    {
+      tower = &g_Tower[j];
+      break;
+    }
+  }
+
+  if (!tower)
+  {
+    return nullptr;
+  }
+
+  _tower_create_setdata data;
+  data.m_pMap = pMap;
+  data.m_nLayerIndex = wLayer;
+  data.m_pRecordSet = g_Main.m_tblItemData[25].GetRecord(nTowerIndex);
+  if (!data.m_pRecordSet)
+  {
+    return nullptr;
+  }
+  memcpy_0(data.m_fStartPos, fPos, sizeof(data.m_fStartPos));
+  data.pMaster = nullptr;
+  data.byRaceCode = byRaceCode;
+  data.pItem = nullptr;
+  data.nIniIndex = nIniIndex;
+
+  if (tower->Create(&data))
+  {
+    return tower;
+  }
+  return nullptr;
 }
 

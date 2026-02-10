@@ -43,6 +43,8 @@ struct __cppobj _event_respawn
     unsigned int dwLastUpdateTime;
     int nRespawnNum;
     _mon MonInfo[640];
+
+    void init();
   };
 
   bool bLoad;
@@ -63,6 +65,8 @@ class __cppobj CMonsterEventRespawn
 {
 public:
   bool SetEventRespawn();
+  bool StartRespawnEvent(char *pszEventCode, char *pwszErrCode);
+  bool StopRespawnEvent(char *pszEventCode, char *pwszErrCode);
 
   virtual ~CMonsterEventRespawn() = default;
 

@@ -15,6 +15,9 @@ public:
   unsigned int GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth);
   bool IsRaceViceBoss(unsigned __int8 byRace, unsigned int dwSerial);
   unsigned __int8 GetBossType(unsigned __int8 byRace, unsigned int dwSerial);
+  void Log(const char *fmt, ...);
+  void SetUpdateRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth, unsigned int dwSerial);
+  void ApplyUpdatedBossInfo();
 
   unsigned __int8 UpdateRaceRankStep1(char *szData);
   unsigned __int8 UpdateRaceRankStep2(char *szData);

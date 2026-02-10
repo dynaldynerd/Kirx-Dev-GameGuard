@@ -8,12 +8,14 @@
 class CRFWorldDatabase;
 class CUnmannedTraderRegistItemInfo;
 struct _unmannedtrader_reserved_schedule_info;
+struct _TRADE_DB_BASE;
 
 class __cppobj CUnmannedTraderController
 {
 public:
   static CUnmannedTraderController *Instance();
   bool Init();
+  bool Load(unsigned __int16 wInx, unsigned int dwSerial, _TRADE_DB_BASE *kInfo);
   unsigned __int8 GetMaxRegistCnt(unsigned __int16 wInx, unsigned int dwSerial);
   const CUnmannedTraderRegistItemInfo *GetRegItemInfo(unsigned __int16 wInx, unsigned int dwSerial);
   void LogOut(unsigned __int16 wInx, unsigned int dwSerial);
@@ -58,7 +60,7 @@ private:
     unsigned int dwRegistSerial,
     unsigned __int8 *byState,
     unsigned __int8 *byProcRet);
-  void Log(char *fmt, ...);
+  void Log(const char *fmt, ...);
 
 public:
   CLogFile *m_pkLogger;

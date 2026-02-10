@@ -40,6 +40,11 @@ bool CMyTimer::CountingTimer()
   return true;
 }
 
+void CMyTimer::TermTimeRun()
+{
+  m_dwTickOld = timeGetTime();
+}
+
 void CMyTimer::StopTimer()
 {
   m_bOper = false;

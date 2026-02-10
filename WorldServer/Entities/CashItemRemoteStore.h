@@ -14,6 +14,7 @@
 #include <hash_map>
 
 struct _CashShop_fld;
+struct _db_cash_limited_sale;
 
 struct _cash_discount_ini_
 {
@@ -140,6 +141,7 @@ public:
   void Check_Grosssales(unsigned int dwTotalSellCash);
   void Set_LimitedSale_count(unsigned __int8 byTableCode, unsigned int dwIndex);
   void Set_DB_LimitedSale_Event();
+  void Set_FROMDB_LimitedSale_Event(_db_cash_limited_sale *Sheet);
   char LimitedSale_check_count(unsigned __int8 byTableCode, unsigned int dwIndex);
   unsigned __int16 BuyLimSale(unsigned __int8 byTableCode, unsigned int dwIndex);
 

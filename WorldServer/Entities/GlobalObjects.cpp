@@ -3,6 +3,7 @@
 #include "GlobalObjects.h"
 
 #include "CCRFG_SEND_BUFFER.h"
+#include "CGameServerDoc.h"
 
 CUserDB g_UserDB[MAX_PLAYER]{};
 CPartyPlayer g_PartyPlayer[MAX_PLAYER]{};
@@ -37,6 +38,8 @@ CMainThread g_Main{};
 CNetworkEX g_Network{};
 int gAsci[256]{};
 CWnd *g_pFrame = nullptr;
+CGameServerDoc g_GameServerDoc{};
+CGameServerDoc *g_pDoc = &g_GameServerDoc;
 CLogFile g_FgLogFile{};
 _CCRFG_SEND_BUFFER g_FGSendData{};
 _CCRFG_RECV_BUFFER g_FGRecvData{};

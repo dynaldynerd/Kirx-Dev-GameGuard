@@ -898,6 +898,11 @@ _sec_info *CMapData::GetSecInfo()
   return &this->m_SecInfo;
 }
 
+unsigned __int8 CMapData::GetMapCode()
+{
+  return static_cast<unsigned __int8>(this->m_pMapSet->m_dwIndex);
+}
+
 int CMapData::GetSectorIndex(float *pPos)
 {
   const float localX = static_cast<float>(-this->m_BspInfo.m_nMapMinSize[0]) + pPos[0];

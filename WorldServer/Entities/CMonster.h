@@ -124,6 +124,8 @@ public:
   void SendMsg_Move();
   void SendMsg_Create();
   void SendMsg_Destroy(unsigned __int8 byDestroyCode);
+  void DisableStdItemLoot();
+  void LinkEventRespawn(_event_respawn *pEventRespawn);
   void SendMsg_Assist_Skill(
     char byErrCode,
     int nEffectCode,

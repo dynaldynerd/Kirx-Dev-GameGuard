@@ -6,8 +6,6 @@
 #include "CMgrAccountLobbyHistory.h"
 #include "MOVE_LOBBY_DELAY.h"
 
-#include <cstddef>
-
 struct _EXIT_ALTER_PARAM;
 
 /* 1536 */
@@ -73,8 +71,12 @@ public:
   void ParamInit();
   bool Update_Map(unsigned __int8 map, float *pos);
   char Update_Bind(char *pszMapCode, char *pDummyCode, bool bUpdate);
+  char Update_DelBuddy(unsigned __int8 bySlotIndex);
   void Update_PvpPointLeak(long double dValue);
   void Update_LastAttBuff(bool bSet);
+  char Update_UserFatigue(unsigned int dwFatigue);
+  char Update_UserTLStatus(unsigned __int8 byStatus);
+  void Update_PotionNextUseTime(unsigned __int8 byPotionClass, unsigned int dwNextUseTime);
   bool Update_AlterPvPPoint(long double dNewPoint);
   bool Update_ItemAdd(
     unsigned __int8 storage,
@@ -83,7 +85,16 @@ public:
     bool bUpdate);
   bool Update_ItemDelete(unsigned __int8 storage, unsigned __int8 slot, bool bUpdate);
   char Update_ItemDur(unsigned __int8 storage, unsigned __int8 slot, unsigned __int64 amount, bool bUpdate);
+  char Update_ItemUpgrade(unsigned __int8 storage, unsigned __int8 slot, unsigned int upg, bool bUpdate);
   bool Update_Money(unsigned int dalant, unsigned int gold);
+  void Update_MaxLevel(unsigned __int8 byMaxLevel);
+  char Update_QuestUpdate(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pSlotData, bool bUpdate);
+  char Update_QuestDelete(unsigned __int8 bySlotIndex);
+  char Update_QuestInsert(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pSlotData);
+  char Update_NPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BASE::_NPC_QUEST_HISTORY *pHisData);
+  char Update_TakeLastMentalTicket(unsigned int dwMentalTicket);
+  char Update_TrunkSlotNum(unsigned __int8 bySlotNum);
+  char Update_ExtTrunkSlotNum(unsigned __int8 byExtSlotNum);
   bool Update_SFContDelete(unsigned __int8 byContCode, unsigned __int8 bySlotIndex);
   bool Update_SFContInsert(
     unsigned __int8 byContCode,
@@ -94,12 +105,12 @@ public:
     unsigned __int16 wDurSec);
   bool Update_SFContUpdate(unsigned __int8 byContCode, unsigned __int8 bySlotIndex, unsigned __int16 wTime);
   bool Update_Stat(unsigned __int8 byStatIndex, unsigned int dwNewCum, bool bUpdate);
+  char Update_Level(unsigned __int8 lv, long double exp);
+  char Update_LossExp(long double dLossExp);
+  char Update_Exp(long double exp);
+  char Setting_Class(char *pszClassCode);
+  void WriteLog_Level(unsigned __int8 byLv);
   bool Update_UnitData(unsigned __int8 bySlotIndex, _UNIT_DB_BASE::_LIST *pData);
-  char Update_QuestInsert(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pSlotData);
-  char Update_QuestDelete(unsigned __int8 bySlotIndex);
-  char Update_QuestUpdate(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pSlotData, bool bUpdate);
-  char Update_NPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BASE::_NPC_QUEST_HISTORY *pHisData);
-  void Update_MaxLevel(unsigned __int8 byMaxLevel);
   void SetDBPostData(
     unsigned int n,
     unsigned int dwSerial,
@@ -110,6 +121,16 @@ public:
     unsigned int dwUpt,
     unsigned int dwGold,
     bool bUpdateIndex,
+    unsigned __int64 lnUID);
+  void Update_Post(
+    unsigned int n,
+    unsigned int dwSerial,
+    int nNumber,
+    unsigned __int8 byState,
+    int nKey,
+    unsigned __int64 dwDur,
+    unsigned int dwUpt,
+    unsigned int dwGold,
     unsigned __int64 lnUID);
   void SetNewDBPostData(
     unsigned int n,
@@ -127,44 +148,40 @@ public:
     unsigned __int64 lnUID);
   void DelPostData(unsigned int dwIndex);
   char Update_Param(_EXIT_ALTER_PARAM *pCon);
+  char Update_CopyAll(_AVATOR_DATA *pSrc);
   void ForceCloseCommand(unsigned __int8 byKickType, unsigned int dwPushIP, bool bSlow, const char *pszCause);
-  void ClearBillingData();
-  void SetBillingData(_BILLING_INFO *pBillingInfo);
-  void SetBillingData(char *szCMSCode, __int16 iType, int lRemainTime, _SYSTEMTIME *pstEndDate);
-  int GetBillingType();
-  void SetBillingNoLogout(bool bNoLogout);
-  void SendMsg_BillingInfo();
-  void SetRemainTime(int lRemainTime);
-  void UILockInfo_Init(char *pMsg);
-  void UILockInfo_Update(char *pMsg);
-  void SetChatLock(bool bLock);
   void SetWorldCLID(unsigned int dwSerial, unsigned int *pipAddr);
   void SendMsgAccount_UILockRefresh_Update();
-  bool Enter_Account(unsigned int dwAccountSerial, unsigned int dwIP, unsigned int dwProtocolVer, unsigned int *pdwMasterKey);
-  bool Lobby_Char_Request();
-  bool Reged_Char_Request();
-  bool Insert_Char_Request(
-    char *pwszCharName,
-    unsigned __int8 bySlotIndex,
-    unsigned __int8 byRaceSexCode,
-    char *pszClassCode,
-    unsigned int dwBaseShape);
-  bool Delete_Char_Request(unsigned __int8 bySlotIndex);
-  bool Select_Char_Request(unsigned __int8 bySlotIndex);
-  bool Alive_Char_Request(
-    unsigned __int8 byCase,
-    unsigned int dwSerial,
-    char *pwszName,
-    unsigned __int8 bySlotIndex);
-  unsigned __int8 IsExistRequestMoveCharacterList(unsigned int dwCharSerial);
-  void Insert_Char_Complete(unsigned __int8 byRetCode, _REGED_AVATOR_DB *pInsertData);
+  void SendMsg_Inform_UILock();
+  void SetChatLock(bool bLock);
   void Lobby_Char_Complete(unsigned __int8 byRetCode);
+  void Reged_Char_Complete(unsigned __int8 byRetCode, _REGED *pRegedList, _NOT_ARRANGED_AVATOR_DB *pArrangedList);
+  void Insert_Char_Complete(unsigned __int8 byRetCode, _REGED_AVATOR_DB *pInsertData);
+  void Delete_Char_Complete(unsigned __int8 byRetCode, unsigned __int8 bySlotIndex);
+  void Select_Char_Complete(
+    unsigned __int8 byRetCode,
+    _AVATOR_DATA *pLoadData,
+    bool *pbAddItem,
+    unsigned int dwAddDalant,
+    unsigned int dwAddGold,
+    unsigned int dwCheckSum,
+    bool *pbTrunkAddItem,
+    unsigned __int8 byTrunkOldSlot,
+    long double dTrunkOldDalant,
+    long double dTrunkOldGold,
+    bool bCreateTrunkFree,
+    bool *pbExtTrunkAddItem,
+    unsigned __int8 byExtTrunkOldSlot);
   void Cont_UserSave_Complete(unsigned __int8 byResult, _AVATOR_DATA *pAvatorData);
   void Alive_Char_Complete(
     unsigned __int8 byRetCode,
     unsigned __int8 byCase,
     unsigned int dwSerial,
     _REGED *pAliveAvator);
+  char DataValidCheckRevise(_AVATOR_DATA *pData, bool *pDataUpdated);
+  bool FirstSettingData();
+  unsigned __int8 IsExistRequestMoveCharacterList(unsigned int dwRecordNum);
+  char UpdateContUserSave(bool bDirect);
   _AVATOR_DATA *IsContPushBefore();
   void Exit_Account_Request();
   void Exit_Account_Complete(unsigned __int8 byRetCode);
@@ -174,10 +191,4 @@ public:
 };
 
 CUserDB *SearchAvatorWithName(CUserDB *pList, int nMax, char *pwszName);
-
-extern const char wszNonMakeName_0[3][17];
-extern const char wszNonMakeName_1[3][17];
-extern const char wszNonMakeName[3][17];
-extern const char wszGMCmp[];
-extern size_t nGMCmpLen;
 

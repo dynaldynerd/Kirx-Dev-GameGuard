@@ -49,3 +49,23 @@ struct __unaligned __declspec(align(1)) _pt_appoint_inform_request_zocl
 
   __body body[4];
 };
+
+struct __cppobj _pt_query_appoint_zocl
+{
+  unsigned __int8 byClassType;
+  unsigned __int8 byRet;
+  char wszAvatorName[17];
+
+  _pt_query_appoint_zocl();
+  __int64 size();
+};
+
+inline _pt_query_appoint_zocl::_pt_query_appoint_zocl()
+{
+  memset_0(this, 0, sizeof(*this));
+}
+
+inline __int64 _pt_query_appoint_zocl::size()
+{
+  return 19;
+}

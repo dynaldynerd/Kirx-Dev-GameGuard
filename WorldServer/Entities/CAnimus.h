@@ -46,3 +46,5 @@ public:
   static int s_nLiveNum;
 };
 
+_animus_fld *GetAnimusFldFromLv(int nAnimusClass, unsigned int dwLv);
+

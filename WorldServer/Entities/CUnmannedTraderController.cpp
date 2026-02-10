@@ -58,6 +58,12 @@ bool CUnmannedTraderController::Init()
   return taxRateManager->Init(this->m_pkLogger) && this->m_kLazyCleaner.Init();
 }
 
+bool CUnmannedTraderController::Load(unsigned __int16 wInx, unsigned int dwSerial, _TRADE_DB_BASE *kInfo)
+{
+  CUnmannedTraderUserInfoTable *userInfoTable = CUnmannedTraderUserInfoTable::Instance();
+  return userInfoTable->Load(0, wInx, dwSerial, kInfo);
+}
+
 unsigned __int8 CUnmannedTraderController::GetMaxRegistCnt(unsigned __int16 wInx, unsigned int dwSerial)
 {
   CUnmannedTraderUserInfoTable *userInfoTable = CUnmannedTraderUserInfoTable::Instance();
@@ -275,7 +281,7 @@ unsigned __int8 CUnmannedTraderController::CheckDBItemState(
   return 0;
 }
 
-void CUnmannedTraderController::Log(char *fmt, ...)
+void CUnmannedTraderController::Log(const char *fmt, ...)
 {
   if (!m_pkLogger)
   {
@@ -671,7 +677,7 @@ unsigned __int8 CUnmannedTraderController::UpdateBuyRollBack(char *pData)
 
 unsigned __int8 CUnmannedTraderController::UpdateLazyClean(char *pData)
 {
-  return m_kLazyCleaner.UpdateClear(pData);
+  return m_kLazyCleaner.UpdateClear(reinterpret_cast<bool *>(pData));
 }
 
 
@@ -1064,9 +1070,9 @@ void CUnmannedTraderController::CompleteSelectBuyInfo(unsigned __int8 byRet, cha
       CPlayer *seller = GetPtrPlayerFromSerial(g_Player, 2532, *reinterpret_cast<unsigned int *>(&pLoadData[72 * j + 24]));
       if (seller && !seller->m_bLive)
       {
-        pLoadData[72 * j + 28] = CPlayerDB::GetRaceSexCode(&seller->m_Param);
-        *reinterpret_cast<unsigned int *>(&pLoadData[72 * j + 32]) = CPlayerDB::GetDalant(&seller->m_Param);
-        *reinterpret_cast<unsigned int *>(&pLoadData[72 * j + 36]) = CPlayerDB::GetGuildSerial(&seller->m_Param);
+        pLoadData[72 * j + 28] = static_cast<unsigned __int8>(seller->m_Param.GetRaceSexCode());
+        *reinterpret_cast<unsigned int *>(&pLoadData[72 * j + 32]) = seller->m_Param.GetDalant();
+        *reinterpret_cast<unsigned int *>(&pLoadData[72 * j + 36]) = seller->m_Param.GetGuildSerial();
         pLoadData[72 * j + 40] = seller->m_byUserDgr;
       }
 
@@ -1133,7 +1139,7 @@ void CUnmannedTraderController::CompleteSelectBuyInfo(unsigned __int8 byRet, cha
         result.List[k].byRet = destination[96 * k + 37];
         result.List[k].dwPrice = *reinterpret_cast<unsigned int *>(&destination[96 * k + 68]);
       }
-      result.dwLeftDalant = CPlayerDB::GetDalant(&buyer->m_Param);
+      result.dwLeftDalant = buyer->m_Param.GetDalant();
 
       unsigned __int8 type[28]{};
       type[0] = 30;
@@ -1150,7 +1156,10 @@ void CUnmannedTraderController::CompleteSelectBuyInfo(unsigned __int8 byRet, cha
 void CUnmannedTraderController::CompleteBuy(unsigned __int8 byRet, char *pLoadData)
 {
   CUnmannedTraderUserInfoTable *table = CUnmannedTraderUserInfoTable::Instance();
-  table->CompleteBuy(byRet, pLoadData, &m_kTradeInfo);
+  table->CompleteBuy(
+    byRet,
+    reinterpret_cast<_qry_case_unmandtrader_buy_update_wait *>(pLoadData),
+    &m_kTradeInfo);
 }
 
 void CUnmannedTraderController::CompleteBuyRollBack(unsigned __int8 byRet, char *pLoadData)
@@ -1250,9 +1259,9 @@ void CUnmannedTraderController::CompleteUpdateCheatRegistTime(char *pLoadData)
     {
       char buffer[260]{};
       sprintf(buffer, "Cnt : %u", data[1]);
-      CPlayer::SendData_ChatTrans(player, 0, 0xFFFFFFFF, 0xFFu, 0, buffer, 0xFFu, 0);
+      player->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, buffer, 0xFFu, nullptr);
       sprintf(buffer, "th  serial  state  ret");
-      CPlayer::SendData_ChatTrans(player, 0, 0xFFFFFFFF, 0xFFu, 0, buffer, 0xFFu, 0);
+      player->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, buffer, 0xFFu, nullptr);
       for (unsigned __int8 j = 0; j < data[1]; ++j)
       {
         sprintf(
@@ -1262,7 +1271,7 @@ void CUnmannedTraderController::CompleteUpdateCheatRegistTime(char *pLoadData)
           *reinterpret_cast<unsigned int *>(&data[8 * j + 12]),
           static_cast<unsigned __int8>(data[8 * j + 9]),
           static_cast<unsigned __int8>(data[8 * j + 8]));
-        CPlayer::SendData_ChatTrans(player, 0, 0xFFFFFFFF, 0xFFu, 0, buffer, 0xFFu, 0);
+        player->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, buffer, 0xFFu, nullptr);
       }
     }
   }

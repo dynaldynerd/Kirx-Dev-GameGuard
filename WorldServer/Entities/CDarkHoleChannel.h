@@ -4,6 +4,8 @@
 #include "CMainThread.h"
 #include "CIndexList.h"
 
+class CGameObject;
+
 /* 1598 */
 class __cppobj __declspec(align(8)) CDarkHoleChannel
 {
@@ -43,6 +45,10 @@ public:
   bool m_bMoveNextMission;
 
   char ClearMember(CPlayer *pMember, bool bDisconnect, _dh_player_mgr::_pos *poutPlayerPos);
+  char CheckEvent(EM_DH_EVENT eventType, int nContentTable, int nContentIndex, int nCount, CGameObject *pObj);
+  void SendMsg_JobCount(unsigned __int8 nJobIndex, unsigned __int16 nCount);
+  void SendMsg_RealMsgInform(char *pMsg);
+  void SendMsg_RealAddLimTime(int nAddSec, char *pMsg);
   void SendMsg_PopMember(CPlayer *pPopMember, bool bDisconnect);
   void SendMsg_LeaderChange(CPlayer *pNewLeader);
 

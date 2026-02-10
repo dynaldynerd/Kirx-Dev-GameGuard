@@ -2,6 +2,7 @@
 #include "CMapItemStoreList.h"
 #include "CItemStore.h"
 #include "CMapData.h"
+#include "StoreList_fld.h"
 
 CMapItemStoreList::CMapItemStoreList()
 {
@@ -62,11 +63,13 @@ bool CMapItemStoreList::SetItemStores(CMapData *pMap)
 
 CItemStore *CMapItemStoreList::GetItemStoreFromRecIndex(unsigned int dwRecIndex)
 {
-    for (int index = 0; index < m_nItemStoreNum; ++index)
+    for (int j = 0; j < m_nItemStoreNum; ++j)
     {
-        CItemStore *store = &m_ItemStore[index];
+        CItemStore *store = &m_ItemStore[j];
         if (store->m_pRec->m_dwIndex == dwRecIndex)
+        {
             return store;
+        }
     }
     return nullptr;
 }

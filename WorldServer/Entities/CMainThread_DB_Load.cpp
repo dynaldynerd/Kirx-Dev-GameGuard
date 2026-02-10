@@ -55,7 +55,7 @@ unsigned __int8 CMainThread::db_Load_Avator(
   }
   else
   {
-    CRFWorldDatabase::Select_CheckSumValue(m_pWorldDB, dwSerial, pdwCheckSum);
+    m_pWorldDB->Select_CheckSumValue(dwSerial, pdwCheckSum);
   }
 
   pData->dbAvator.m_dwAccountSerial = dwAccountSerial;
@@ -237,7 +237,7 @@ unsigned __int8 CMainThread::db_Load_Avator(
   unsigned __int16 pwRankRate[8]{};
   pwRankRate[0] = static_cast<unsigned __int16>(-1);
 
-  unsigned __int8 pvpRate = CRFWorldDatabase::Select_PvpRate(m_pWorldDB, dwSerial, szToday, pdwRank, pwRankRate);
+  unsigned __int8 pvpRate = m_pWorldDB->Select_PvpRate(dwSerial, szToday, pdwRank, pwRankRate);
   if (pvpRate)
   {
     if (pvpRate == 2)
@@ -269,7 +269,7 @@ unsigned __int8 CMainThread::db_Load_Avator(
   }
 
   AutominePersonalMgr *autoMineMgr = AutominePersonalMgr::instance();
-  pData->dbPersonalAmineInven.bUsable = AutominePersonalMgr::db_load_inven(autoMineMgr, dwSerial, &pData->dbPersonalAmineInven);
+  pData->dbPersonalAmineInven.bUsable = autoMineMgr->db_load_inven(dwSerial, &pData->dbPersonalAmineInven);
 
   result = _db_load_punishment(dwSerial, pData);
   if (result)
@@ -311,9 +311,7 @@ unsigned __int8 CMainThread::db_Load_Avator(
   unsigned __int64 pDwItemCode_D[3]{};
 
   bool itemAdded = false;
-  while (CRFWorldDatabase::Select_ItemCharge(
-           m_pWorldDB,
-           dwSerial,
+  while (m_pWorldDB->Select_ItemCharge(dwSerial,
            pbyType,
            pDwItemCode_K,
            pDwItemCode_D,
@@ -326,7 +324,7 @@ unsigned __int8 CMainThread::db_Load_Avator(
       if (pbyType[0] == 1)
       {
         *pdwAddDalant += static_cast<unsigned int>(pDwItemCode_D[0]);
-        CRFWorldDatabase::Delete_ItemCharge(m_pWorldDB, dwItemChargeIndex[0]);
+        m_pWorldDB->Delete_ItemCharge(dwItemChargeIndex[0]);
       }
       else
       {
@@ -334,7 +332,7 @@ unsigned __int8 CMainThread::db_Load_Avator(
         {
           *pdwAddGold += static_cast<unsigned int>(pDwItemCode_D[0]);
         }
-        CRFWorldDatabase::Delete_ItemCharge(m_pWorldDB, dwItemChargeIndex[0]);
+        m_pWorldDB->Delete_ItemCharge(dwItemChargeIndex[0]);
       }
     }
     else
@@ -369,7 +367,7 @@ unsigned __int8 CMainThread::db_Load_Avator(
             }
             pData->dbInven.m_List[j].dwLendRegdTime = timeNow[0];
           }
-          CRFWorldDatabase::Delete_ItemCharge(m_pWorldDB, dwItemChargeIndex[0]);
+          m_pWorldDB->Delete_ItemCharge(dwItemChargeIndex[0]);
           pbAddItem[j] = true;
           itemAdded = true;
           break;
@@ -413,9 +411,7 @@ unsigned __int8 CMainThread::db_Load_Avator(
   if (!pData->dbTrunk.bySlotNum)
   {
     if (pbCreateTrunkFree
-        && CRFWorldDatabase::Select_AccountItemCharge(
-          m_pWorldDB,
-          dwAccountSerial,
+        && m_pWorldDB->Select_AccountItemCharge(dwAccountSerial,
           pbyType,
           pdMoney,
           pDwItemCode_K,
@@ -432,9 +428,7 @@ unsigned __int8 CMainThread::db_Load_Avator(
 
   for (unsigned int j = 0;
        j < 10000
-       && CRFWorldDatabase::Select_AccountItemCharge(
-         m_pWorldDB,
-         dwAccountSerial,
+       && m_pWorldDB->Select_AccountItemCharge(dwAccountSerial,
          pbyType,
          pdMoney,
          pDwItemCode_K,
@@ -449,7 +443,7 @@ unsigned __int8 CMainThread::db_Load_Avator(
          && pDwItemCode_D[0] != 100)
         || pDwItemCode_D[0] == 20)
     {
-      CRFWorldDatabase::Delete_TrunkItemCharge(m_pWorldDB, dwItemChargeIndex[0]);
+      m_pWorldDB->Delete_TrunkItemCharge(dwItemChargeIndex[0]);
       continue;
     }
 
@@ -464,7 +458,7 @@ unsigned __int8 CMainThread::db_Load_Avator(
         pData->dbTrunk.dDalant = pData->dbTrunk.dDalant + addDalant;
         pData->dbTrunk.bySlotNum = 100;
       }
-      CRFWorldDatabase::Delete_TrunkItemCharge(m_pWorldDB, dwItemChargeIndex[0]);
+      m_pWorldDB->Delete_TrunkItemCharge(dwItemChargeIndex[0]);
       continue;
     }
 
@@ -475,16 +469,14 @@ unsigned __int8 CMainThread::db_Load_Avator(
       add = add + 1.844674407370955e19;
     }
     pData->dbTrunk.dDalant = pData->dbTrunk.dDalant + add;
-    CRFWorldDatabase::Delete_TrunkItemCharge(m_pWorldDB, dwItemChargeIndex[0]);
+    m_pWorldDB->Delete_TrunkItemCharge(dwItemChargeIndex[0]);
   }
 
   pbyType[0] = 2;
   pbyRace[0] = static_cast<unsigned __int8>(pData->dbAvator.m_byRaceSexCode >> 1);
   for (unsigned int j = 0;
        j < 10000
-       && CRFWorldDatabase::Select_AccountItemCharge(
-         m_pWorldDB,
-         dwAccountSerial,
+       && m_pWorldDB->Select_AccountItemCharge(dwAccountSerial,
          pbyType,
          pdMoney,
          pDwItemCode_K,
@@ -496,16 +488,14 @@ unsigned __int8 CMainThread::db_Load_Avator(
        ++j)
   {
     pData->dbTrunk.dDalant = pData->dbTrunk.dDalant + pdMoney[0];
-    CRFWorldDatabase::Delete_TrunkItemCharge(m_pWorldDB, dwItemChargeIndex[0]);
+    m_pWorldDB->Delete_TrunkItemCharge(dwItemChargeIndex[0]);
   }
 
   pbyType[0] = 3;
   pbyRace[0] = static_cast<unsigned __int8>(pData->dbAvator.m_byRaceSexCode >> 1);
   for (unsigned int j = 0;
        j < 10000
-       && CRFWorldDatabase::Select_AccountItemCharge(
-         m_pWorldDB,
-         dwAccountSerial,
+       && m_pWorldDB->Select_AccountItemCharge(dwAccountSerial,
          pbyType,
          pdMoney,
          pDwItemCode_K,
@@ -517,7 +507,7 @@ unsigned __int8 CMainThread::db_Load_Avator(
        ++j)
   {
     pData->dbTrunk.dGold = pData->dbTrunk.dGold + pdMoney[0];
-    CRFWorldDatabase::Delete_TrunkItemCharge(m_pWorldDB, dwItemChargeIndex[0]);
+    m_pWorldDB->Delete_TrunkItemCharge(dwItemChargeIndex[0]);
   }
 
   pbyType[0] = 4;
@@ -525,9 +515,7 @@ unsigned __int8 CMainThread::db_Load_Avator(
   bool hasExtendCharge = false;
   if (!pData->dbTrunk.byExtSlotNum && pData->dbTrunk.bySlotNum)
   {
-    hasExtendCharge = CRFWorldDatabase::Select_AccountItemCharge(
-      m_pWorldDB,
-      dwAccountSerial,
+    hasExtendCharge = m_pWorldDB->Select_AccountItemCharge(dwAccountSerial,
       pbyType,
       pdMoney,
       pDwItemCode_K,
@@ -541,9 +529,7 @@ unsigned __int8 CMainThread::db_Load_Avator(
   {
     for (unsigned int j = 0;
          j < 10000
-         && CRFWorldDatabase::Select_AccountItemCharge(
-           m_pWorldDB,
-           dwAccountSerial,
+         && m_pWorldDB->Select_AccountItemCharge(dwAccountSerial,
            pbyType,
            pdMoney,
            pDwItemCode_K,
@@ -563,7 +549,7 @@ unsigned __int8 CMainThread::db_Load_Avator(
           pData->dbTrunk.byExtSlotNum = 40;
         }
       }
-      CRFWorldDatabase::Delete_TrunkItemCharge(m_pWorldDB, dwItemChargeIndex[0]);
+      m_pWorldDB->Delete_TrunkItemCharge(dwItemChargeIndex[0]);
     }
   }
 
@@ -573,9 +559,7 @@ unsigned __int8 CMainThread::db_Load_Avator(
   {
     if (!pData->dbTrunk.m_List[k].Key.IsFilled())
     {
-      if (!CRFWorldDatabase::Select_AccountItemCharge(
-            m_pWorldDB,
-            dwAccountSerial,
+      if (!m_pWorldDB->Select_AccountItemCharge(dwAccountSerial,
             pbyType,
             pdMoney,
             pDwItemCode_K,
@@ -614,7 +598,7 @@ unsigned __int8 CMainThread::db_Load_Avator(
         pData->dbTrunk.m_List[k].dwLendRegdTime = timeNow[0];
       }
       pbTrunkAddItem[k] = true;
-      CRFWorldDatabase::Delete_TrunkItemCharge(m_pWorldDB, dwItemChargeIndex[0]);
+      m_pWorldDB->Delete_TrunkItemCharge(dwItemChargeIndex[0]);
     }
   }
 

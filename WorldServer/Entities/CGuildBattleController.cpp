@@ -108,7 +108,7 @@ void CGuildBattleController::AddComplete(
 
 unsigned __int8 CGuildBattleController::AddSchedule(char *szData)
 {
-  CRFNewDatabase::SetAutoCommitMode(g_Main.m_pWorldDB, 0);
+  g_Main.m_pWorldDB->SetAutoCommitMode(0);
   if (g_Main.m_pWorldDB->UpdateGuildBattleInfo(
         *reinterpret_cast<unsigned int *>(szData),
         *reinterpret_cast<unsigned int *>(szData + 4),
@@ -155,7 +155,9 @@ bool CGuildBattleController::UpdateDraw(
 bool CGuildBattleController::UpdateRank(unsigned __int8 byRace, unsigned __int8 *byOutData)
 {
   GUILD_BATTLE::CGuildBattleRankManager *rankManager = GUILD_BATTLE::CGuildBattleRankManager::Instance();
-  return rankManager->SelectGuildBattleRankList(byRace, byOutData);
+  return rankManager->SelectGuildBattleRankList(
+    byRace,
+    reinterpret_cast<_worlddb_guild_battle_rank_list *>(byOutData));
 }
 
 void CGuildBattleController::CompleteUpdateRank(unsigned __int8 byResult, unsigned __int8 byRace, unsigned __int8 *pLoadData)
@@ -193,14 +195,18 @@ bool CGuildBattleController::UpdateReservedGuildBattleSchedule(unsigned int dwSL
 {
   GUILD_BATTLE::CGuildBattleReservedScheduleListManager *reserved =
     GUILD_BATTLE::CGuildBattleReservedScheduleListManager::Instance();
-  return reserved->UpdateReservedShedule(dwSLID, byOutData);
+  return reserved->UpdateReservedShedule(
+    dwSLID,
+    reinterpret_cast<_worlddb_guild_battle_reserved_schedule_info *>(byOutData));
 }
 
 void CGuildBattleController::CompleteUpdateReservedSchedule(unsigned int dwMapID, unsigned __int8 *pLoadData)
 {
   GUILD_BATTLE::CGuildBattleReservedScheduleListManager *reserved =
     GUILD_BATTLE::CGuildBattleReservedScheduleListManager::Instance();
-  reserved->UpdateTomorrowComplete(dwMapID, pLoadData);
+  reserved->UpdateTomorrowComplete(
+    dwMapID,
+    reinterpret_cast<_worlddb_guild_battle_reserved_schedule_info *>(pLoadData));
 }
 
 void CGuildBattleController::CompleteCreateGuildBattleRankTable(unsigned __int8 byResult)
@@ -223,6 +229,18 @@ void CGuildBattleController::CompleteClearGuildBattleRank(unsigned __int8 byResu
     "CGuildBattleController::ClearGuildBattleRankComplete( BYTE byResult(%u) ) : Clear %s!",
     byResult,
     result);
+}
+
+void CGuildBattleController::PushCreateGuildBattleRankTable()
+{
+  GUILD_BATTLE::CGuildBattleRankManager *manager = GUILD_BATTLE::CGuildBattleRankManager::Instance();
+  manager->PushCreateGuildBattleRankTable();
+}
+
+void CGuildBattleController::PushClearGuildBattleRank()
+{
+  GUILD_BATTLE::CGuildBattleRankManager *manager = GUILD_BATTLE::CGuildBattleRankManager::Instance();
+  manager->PushClearGuildBattleRank();
 }
 
 void CGuildBattleController::LogIn(CPlayer *pkPlayer)

@@ -9,6 +9,7 @@
 #include "CNetworkEX.h"
 #include "CPartyPlayer.h"
 #include "CMonster.h"
+#include "CPvpUserAndGuildRankingSystem.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
@@ -70,6 +71,102 @@ void CItemBox::Init(_object_id *pID)
   m_byCreateCode = static_cast<unsigned __int8>(-1);
   m_bCompDgr = false;
   m_bHide = false;
+}
+
+bool CItemBox::IsTakeRight(CPlayer *pOne)
+{
+  if (m_byCreateCode == 7)
+  {
+    if (!m_bHolyScanner
+        || pOne->m_MinigTicket.AuthLastMentalTicket(
+             g_HolySys.GetStartYear(),
+             g_HolySys.GetStartMonth(),
+             g_HolySys.GetStartDay(),
+             g_HolySys.GetStartHour(),
+             g_HolySys.GetNumOfTime()))
+    {
+      switch (m_byEventLootAuth)
+      {
+        case 0:
+          return m_dwEventPartyBoss == pOne->m_Param.GetCharSerial()
+                 || (pOne->m_pPartyMgr && pOne->m_pPartyMgr->IsPartyMode()
+                     && m_dwEventPartyBoss == pOne->m_pPartyMgr->m_pPartyBoss->m_id.dwSerial);
+        case 1:
+          return m_byEventRaceCode == pOne->m_Param.GetRaceCode();
+        case 2:
+          return pOne->m_Param.m_pGuild && m_dwEventGuildSerial == pOne->m_Param.m_pGuild->m_dwSerial;
+        case 3:
+          return true;
+        case 4:
+        {
+          auto *system = CPvpUserAndGuildRankingSystem::Instance();
+          const unsigned int bossSerial = system->GetCurrentRaceBossSerial(m_byEventRaceCode, 0);
+          return bossSerial == pOne->m_Param.GetCharSerial();
+        }
+        case 5:
+          if (m_byEventRaceCode == pOne->m_Param.GetRaceCode() && pOne->m_Param.m_pGuild)
+          {
+            const unsigned int guildMasterSerial = pOne->m_Param.m_pGuild->GetGuildMasterSerial();
+            return guildMasterSerial == pOne->m_Param.GetCharSerial();
+          }
+          return false;
+        default:
+          return false;
+      }
+    }
+    return false;
+  }
+  if (m_byCreateCode == 4 || m_byCreateCode == 6)
+  {
+    return g_HolySys.IsItemLootAuthority(pOne, m_byCreateCode) != 0;
+  }
+  if (m_dwOwnerSerial == pOne->m_dwObjSerial)
+  {
+    return true;
+  }
+  if (m_dwThrowerCharSerial == pOne->m_dwObjSerial)
+  {
+    return true;
+  }
+  if (m_byCreateCode == 3)
+  {
+    return false;
+  }
+  if (m_bCompDgr && !pOne->m_byUserDgr)
+  {
+    return false;
+  }
+  if (m_byThrowerDegree != 255 && m_byThrowerDegree != pOne->m_byUserDgr)
+  {
+    return false;
+  }
+  if (m_byThrowerRaceCode != 255 && pOne->m_Param.GetRaceCode() != m_byThrowerRaceCode)
+  {
+    return false;
+  }
+  if (m_dwOwnerSerial == static_cast<unsigned int>(-1))
+  {
+    return true;
+  }
+  if (m_nStateCode <= 0)
+  {
+    if (m_bPartyShare && pOne->m_pPartyMgr)
+    {
+      CPartyPlayer **partyMembers = pOne->m_pPartyMgr->GetPtrPartyMember();
+      if (partyMembers)
+      {
+        for (int j = 0; j < 8 && partyMembers[j]; ++j)
+        {
+          if (partyMembers[j]->m_id.dwSerial == m_dwOwnerSerial)
+          {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+  return true;
 }
 
 bool CItemBox::Create(_itembox_create_setdata *pParam, bool bHide)

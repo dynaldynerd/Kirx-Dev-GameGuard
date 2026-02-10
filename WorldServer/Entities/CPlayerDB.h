@@ -5,6 +5,7 @@
 /* 1730 */
 class CPlayer;
 struct _class_fld;
+struct _AVATOR_DATA;
 
 class __cppobj CPlayerDB
 {
@@ -14,9 +15,12 @@ public:
   int GetMapCode();
   void SetMapCode(unsigned __int8 byCode);
   char *GetCharNameA();
-  const char *GetCharNameW();
+  char *GetCharNameW();
   unsigned int GetCharSerial();
   long double GetExp();
+  long double GetLossExp();
+  void SetExp(long double dExp);
+  void SetLossExp(long double dLossExp);
   float *GetCurPos();
   long double GetPvPPoint();
   void SetPvPPoint(long double dPoint);
@@ -24,7 +28,11 @@ public:
   unsigned __int8 GetClassInGuild();
   void SetClassInGuild(unsigned __int8 byClassInGuild);
   unsigned int GetLevel();
+  void SetLevel(unsigned __int8 nLv);
   unsigned int GetMaxLevel();
+  bool IsClassChangeableLv();
+  unsigned __int8 GetTrunkSlotNum();
+  unsigned __int8 GetExtTrunkSlotNum();
   _class_fld *GetPtrCurClass();
   _class_fld *GetPtrBaseClass();
   unsigned int GetHP();
@@ -38,13 +46,21 @@ public:
   unsigned int GetDalant();
   void SetDalant(unsigned int dwDt);
   unsigned int GetGold();
+  void SetGold(unsigned int dwGold);
   void SetCurPos(float *fPos);
   unsigned __int8 GetBagNum();
   unsigned __int16 GetNewItemSerial();
   static char CalcCharGrade(unsigned __int8 byLv, unsigned __int16 wRankRate);
+  bool BeHaveBoxOfAMP();
+  void SetHaveBoxOfAMP(bool bFlag);
   void InitPlayerDB(CPlayer *pThis);
   void InitResBuffer();
   void InitAlterMastery();
+  void SetMaxLevel(unsigned __int8 nLv);
+  char ConvertAvatorDB(_AVATOR_DATA *pData);
+  char ConvertGeneralDB(_AVATOR_DATA *pData, _AVATOR_DATA *pOutData);
+  void AppointSerialStorageItem();
+  char PushLink(int nLinkIndex, unsigned __int16 wSerial, bool bInit);
 
   unsigned __int8 m_byPvPGrade;
   __unaligned __declspec(align(1)) _character_db_load m_dbChar;

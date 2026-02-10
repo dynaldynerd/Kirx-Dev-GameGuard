@@ -143,12 +143,10 @@ char CMainThread::db_Update_Avator(
     return 24;
   }
 
-  CCheckSumCharacAccountTrunkData checkSum{};
-  checkSum.m_dwSerial = dwSerial;
-  checkSum.m_dwAccountSerial = pNewData->dbAvator.m_dwAccountSerial;
-  checkSum.m_byRace = static_cast<unsigned __int8>(pNewData->dbAvator.m_byRaceSexCode / 2);
-  memset_0(checkSum.m_dwValues, 0, sizeof(checkSum.m_dwValues));
-  memset_0(checkSum.m_dValues, 0, sizeof(checkSum.m_dValues));
+  CCheckSumCharacAccountTrunkData checkSum(
+    dwSerial,
+    pNewData->dbAvator.m_dwAccountSerial,
+    static_cast<unsigned __int8>(pNewData->dbAvator.m_byRaceSexCode / 2));
   checkSum.Encode(pNewData);
   if (!checkSum.Update(m_pWorldDB))
   {
@@ -161,9 +159,7 @@ char CMainThread::db_Update_Avator(
       && pOldData->dbAvator.m_dPvPPoint != pNewData->dbAvator.m_dPvPPoint)
   {
     long double dPvpPoint = pNewData->dbAvator.m_dPvPPoint - pOldData->dbAvator.m_dPvPPoint;
-    if (!CRFWorldDatabase::Update_IncreaseWeeklyGuildKillPvpPointSum(
-          m_pWorldDB,
-          pOldData->dbAvator.m_dwGuildSerial,
+    if (!m_pWorldDB->Update_IncreaseWeeklyGuildKillPvpPointSum(pOldData->dbAvator.m_dwGuildSerial,
           dPvpPoint))
     {
       m_logSystemError.Write(
@@ -175,9 +171,7 @@ char CMainThread::db_Update_Avator(
 
   if (pNewData->m_byHSKTime <= 2u && pNewData->m_byCristalBattleDBInfo != 3)
   {
-    if (!CRFWorldDatabase::Update_CristalBattleCharInfo(
-          m_pWorldDB,
-          dwSerial,
+    if (!m_pWorldDB->Update_CristalBattleCharInfo(dwSerial,
           pNewData->m_byHSKTime,
           pNewData->m_byPvpGrade,
           pNewData->m_iPvpPoint,
@@ -195,11 +189,11 @@ char CMainThread::db_Update_Avator(
     }
 
     if (!pNewData->m_bCristalBattleDateUpdate
-        && !CRFWorldDatabase::update_cristalbattle_date(m_pWorldDB, dwSerial, pNewData->m_byHSKTime))
+        && !m_pWorldDB->update_cristalbattle_date(dwSerial, pNewData->m_byHSKTime))
     {
-      if (CRFWorldDatabase::Insert_Supplement(m_pWorldDB, dwSerial))
+      if (m_pWorldDB->Insert_Supplement(dwSerial))
       {
-        if (!CRFWorldDatabase::update_cristalbattle_date(m_pWorldDB, dwSerial, pNewData->m_byHSKTime))
+        if (!m_pWorldDB->update_cristalbattle_date(dwSerial, pNewData->m_byHSKTime))
         {
           m_logSystemError.Write(
             "Web[CristalBattle] Date 'Update&Insert&Update' Fail :: CharSerial[%d]",
@@ -216,8 +210,8 @@ char CMainThread::db_Update_Avator(
   }
 
   if (pNewData->dbPersonalAmineInven.bUsable
-      && CRFWorldDatabase::select_amine_personal(m_pWorldDB, dwSerial) == 2
-      && !CRFWorldDatabase::insert_amine_personal(m_pWorldDB, dwSerial))
+      && m_pWorldDB->select_amine_personal(dwSerial) == 2
+      && !m_pWorldDB->insert_amine_personal(dwSerial))
   {
     m_logSystemError.Write(
       "db_Update_Avator() : insert_amine_personal(sr:%d) failed call",
@@ -314,7 +308,7 @@ char CMainThread::db_Update_Avator(
   updateQuery.wszExtTrunkQuery = wszExtTrunkQuery;
   updateQuery.szTimeLimitInfoQuery = pszTimeLimitInfoQuery;
 
-  if (CRFWorldDatabase::Update_CharacterData(m_pWorldDB, dwSerial, &updateQuery))
+  if (m_pWorldDB->Update_CharacterData(dwSerial, &updateQuery))
   {
     return 0;
   }
@@ -353,7 +347,7 @@ unsigned __int8 CMainThread::db_Update_PostStorage(
           dwAvatorSerial);
       }
       strcat_s(buffer, 0x800u, source);
-      CRFWorldDatabase::Update_Post(m_pWorldDB, buffer);
+      m_pWorldDB->Update_Post(buffer);
     }
   }
 
@@ -369,17 +363,15 @@ unsigned __int8 CMainThread::db_Update_PostStorage(
         {
           if (postEntry->bNew)
           {
-            if (!CRFWorldDatabase::Select_PostStorageRecordCheck(m_pWorldDB))
+            if (!m_pWorldDB->Select_PostStorageRecordCheck())
             {
-              CRFWorldDatabase::Insert_PostStorageRecord(m_pWorldDB);
+              m_pWorldDB->Insert_PostStorageRecord();
             }
-            if (CRFWorldDatabase::Select_PostStorageEmptyRecordSerial(m_pWorldDB, &postEntry->dwPSSerial))
+            if (m_pWorldDB->Select_PostStorageEmptyRecordSerial(&postEntry->dwPSSerial))
             {
               unsigned __int8 numberList[28]{};
               numberList[0] = static_cast<unsigned __int8>(postEntry->nNumber);
-              bool updated = CRFWorldDatabase::Update_PostStorageSendToRecver(
-                g_Main.m_pWorldDB,
-                dwAvatorSerial,
+              bool updated = g_Main.m_pWorldDB->Update_PostStorageSendToRecver(dwAvatorSerial,
                 postEntry->dwPSSerial,
                 postEntry->byState,
                 postEntry->wszSendName,
@@ -481,7 +473,7 @@ unsigned __int8 CMainThread::db_Update_PostStorage(
             }
             if (changed)
             {
-              bool updated = CRFWorldDatabase::Update_Post(m_pWorldDB, buffer);
+              bool updated = m_pWorldDB->Update_Post(buffer);
               postEntry->bRetProc = updated;
             }
           }
@@ -499,7 +491,7 @@ unsigned __int8 CMainThread::db_Update_PostStorage(
         0x800u,
         "update tbl_PostStorage set dck=1 where serial=%d",
         newReturnPost->m_RetSerials[storageIndex]);
-      CRFWorldDatabase::Update_Post(m_pWorldDB, buffer);
+      m_pWorldDB->Update_Post(buffer);
     }
   }
 
@@ -1597,9 +1589,7 @@ char CMainThread::_db_Update_Start_NpcQuest_History(
         timeParts[5],
         timeParts[6],
         timeParts[7]);
-      if (!CRFWorldDatabase::Insert_Start_NpcQuest_History(
-            m_pWorldDB,
-            dwSerial,
+      if (!m_pWorldDB->Insert_Start_NpcQuest_History(dwSerial,
             pNewData->dbQuest.m_StartHistory[listIndex].szQuestCode,
             pNewData->dbQuest.m_StartHistory[listIndex].byLevel,
             timeBuffer,
@@ -2378,7 +2368,7 @@ char CMainThread::_db_Update_PotionDelay(
 
   for (int index = 0; index < 38; ++index)
   {
-    if (CPotionMgr::IsPotionDelayUseIndex(&g_PotionMgr, index)
+    if (g_PotionMgr.IsPotionDelayUseIndex(index)
         && pNewData->dbPotionNextUseTime.dwPotionNextUseTime[index])
     {
       unsigned int delay = 0;

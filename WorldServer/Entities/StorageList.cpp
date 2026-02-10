@@ -6,6 +6,7 @@
 #include "WorldServerUtil.h"
 
 #include <ctime>
+#include <cstdlib>
 
 static unsigned int s_makeLootInitFlag = 0;
 static _STORAGE_LIST::_db_con s_makeLootItem{};
@@ -21,6 +22,35 @@ void _STORAGE_LIST::_db_con::Init()
   m_pInList = nullptr;
   m_byStorageIndex = static_cast<unsigned __int8>(-1);
   _STORAGE_LIST::_storage_con::Init();
+}
+
+void _STORAGE_LIST::_db_con::SetSerialNumber(unsigned int dwSN)
+{
+  if (dwSN)
+  {
+    m_dwETSerialNumber = dwSN;
+  }
+  else
+  {
+    m_dwETSerialNumber = CalcNewSerialNumber();
+  }
+}
+
+unsigned int _STORAGE_LIST::_db_con::GetSerialNumber() const
+{
+  return m_dwETSerialNumber;
+}
+
+unsigned int _STORAGE_LIST::_db_con::CalcNewSerialNumber()
+{
+  const int firstRand = rand();
+  const int firstHighBit = (rand() % 2) ? 0 : 0x8000;
+  const int first = firstHighBit | firstRand;
+  const int firstShift = first << 16;
+  const int secondRand = rand();
+  const int secondHighBit = (rand() % 2) ? 0 : 0x8000;
+  const unsigned int serial = static_cast<unsigned int>(secondHighBit | secondRand | firstShift);
+  return (serial == 1u) ? 0u : serial;
 }
 
 void _STORAGE_LIST::_storage_con::empty()
@@ -216,6 +246,49 @@ char _STORAGE_LIST::AlterCurDur(int n, int nAlter, unsigned __int64 *pdwLeftDur)
     EmptyCon(n);
   }
   *pdwLeftDur = m_pStorageList[n].m_dwDur;
+  return 1;
+}
+
+char _STORAGE_LIST::UpdateCurDur(int n, int nUpdate)
+{
+  if (m_nListCode != 3)
+  {
+    return 0;
+  }
+  if (!m_pStorageList[n].m_bLoad)
+  {
+    return 0;
+  }
+  m_pStorageList[n].m_dwDur = nUpdate;
+  return 1;
+}
+
+char _STORAGE_LIST::SetUseListNum(int nUsedNum)
+{
+  if (m_nUsedNum > m_nListNum)
+  {
+    return 0;
+  }
+  m_nUsedNum = nUsedNum;
+  return 1;
+}
+
+char _STORAGE_LIST::GradeUp(int n, unsigned int dwUptInfo)
+{
+  m_pStorageList[n].m_dwLv = dwUptInfo;
+  return 1;
+}
+
+char _STORAGE_LIST::GradeDown(int n, unsigned int dwUptInfo)
+{
+  m_pStorageList[n].m_dwLv = dwUptInfo;
+  return 1;
+}
+
+char _STORAGE_LIST::SetGrade(int n, unsigned __int8 byLv, unsigned int dwUptInfo)
+{
+  (void)byLv;
+  m_pStorageList[n].m_dwLv = dwUptInfo;
   return 1;
 }
 

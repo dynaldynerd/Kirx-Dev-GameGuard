@@ -330,6 +330,121 @@ void CMgrAccountLobbyHistory::recovery_char_complete(
   WriteFile(pszFileName, sLData);
 }
 
+void CMgrAccountLobbyHistory::reged_char_complete(
+  unsigned __int8 byRetCode,
+  int nCharNum,
+  _REGED *pRegedList,
+  char *pszFileName)
+{
+  sLData[0] = 0;
+  const bool ok = byRetCode == 0;
+  const char *result = ok ? "SUCCESS" : "ERROR";
+  sprintf_s(sLBuf, "Reged Result: %d (%s)\r\n", byRetCode, result);
+  strcat_s(sLData, sLBuf);
+  if (ok)
+  {
+    sprintf_s(sLBuf, "CharNum: %d\r\n", nCharNum);
+    strcat_s(sLData, sLBuf);
+    for (int j = 0; j < 3; ++j)
+    {
+      if (pRegedList[j].m_bySlotIndex != 0xFF)
+      {
+        sprintf_s(
+          sLBuf,
+          "[Slot%d]\r\nNAME: %s\r\nCharSR: %d\r\nLV: %d\r\n$D: %d\r\n$G: %d\r\n\r\n",
+          j,
+          pRegedList[j].m_wszAvatorName,
+          pRegedList[j].m_dwRecordNum,
+          pRegedList[j].m_byLevel,
+          pRegedList[j].m_dwDalant,
+          pRegedList[j].m_dwGold);
+        strcat_s(sLData, sLBuf);
+      }
+    }
+  }
+  sprintf_s(
+    sLBuf,
+    "Regist Character Complete [%s %s]\r\n",
+    m_szCurDate,
+    m_szCurTime);
+  strcat_s(sLData, sLBuf);
+  strcat_s(sLData, "\r\n\t============\r\n\r\n");
+  WriteFile(pszFileName, sLData);
+}
+
+void CMgrAccountLobbyHistory::add_char_complete(
+  unsigned __int8 byRetCode,
+  _REGED_AVATOR_DB *pInsertData,
+  char *pszFileName)
+{
+  sLData[0] = 0;
+  const bool ok = byRetCode == 0;
+  const char *result = ok ? "SUCCESS" : "ERROR";
+  sprintf_s(sLBuf, "Add Result: %d (%s)\r\n", byRetCode, result);
+  strcat_s(sLData, sLBuf);
+  if (ok)
+  {
+    sprintf_s(
+      sLBuf,
+      "[Slot%d]\r\nNAME: %s\r\nCharSR: %d\r\nLV: %d\r\n$D: %d\r\n$G: %d\r\n\r\n",
+      pInsertData->m_bySlotIndex,
+      pInsertData->m_wszAvatorName,
+      pInsertData->m_dwRecordNum,
+      pInsertData->m_byLevel,
+      pInsertData->m_dwDalant,
+      pInsertData->m_dwGold);
+    strcat_s(sLData, sLBuf);
+  }
+  sprintf_s(sLBuf, "Add Character Complete [%s %s]\r\n", m_szCurDate, m_szCurTime);
+  strcat_s(sLData, sLBuf);
+  strcat_s(sLData, "\r\n\t============\r\n\r\n");
+  WriteFile(pszFileName, sLData);
+}
+
+void CMgrAccountLobbyHistory::del_char_complete(unsigned __int8 byRetCode, char *pszFileName)
+{
+  sLData[0] = 0;
+  const bool ok = byRetCode == 0;
+  const char *result = ok ? "SUCCESS" : "ERROR";
+  sprintf_s(sLBuf, "Del Result: %d (%s)\r\n", byRetCode, result);
+  strcat_s(sLData, sLBuf);
+  sprintf_s(sLBuf, "Del Character Complete [%s %s]\r\n", m_szCurDate, m_szCurTime);
+  strcat_s(sLData, sLBuf);
+  strcat_s(sLData, "\r\n\t============\r\n\r\n");
+  WriteFile(pszFileName, sLData);
+}
+
+void CMgrAccountLobbyHistory::sel_char_complete(
+  unsigned __int8 byRetCode,
+  _AVATOR_DATA *pAvator,
+  unsigned int dwAddDalant,
+  unsigned int dwAddGold,
+  char *pszFileName)
+{
+  sLData[0] = 0;
+  const bool ok = byRetCode == 0;
+  const char *result = ok ? "SUCCESS" : "ERROR";
+  sprintf_s(sLBuf, "Select Result: %d (%s)\r\n", byRetCode, result);
+  strcat_s(sLData, sLBuf);
+  if (ok)
+  {
+    sprintf_s(
+      sLBuf,
+      "[Slot%d]\r\nNAME: %s\r\nCharSR: %d\r\nLV: %d\r\n$D: %d Charge(%d)\r\n$G: %d Charge(%d)\r\n\r\n",
+      pAvator->dbAvator.m_bySlotIndex,
+      pAvator->dbAvator.m_wszAvatorName,
+      pAvator->dbAvator.m_dwRecordNum,
+      pAvator->dbAvator.m_byLevel,
+      pAvator->dbAvator.m_dwDalant - dwAddDalant,
+      dwAddDalant,
+      pAvator->dbAvator.m_dwGold - dwAddGold,
+      dwAddGold);
+    strcat_s(sLData, sLBuf);
+  }
+  strcat_s(sLData, "\r\n\t============\r\n\r\n");
+  WriteFile(pszFileName, sLData);
+}
+
 void CMgrAccountLobbyHistory::WriteFile(char *pszFileName, char *pszLog)
 {
   unsigned int outIndex[4]{};

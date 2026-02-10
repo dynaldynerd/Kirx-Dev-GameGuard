@@ -122,6 +122,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ThirdParty\\tinyxml;$(ProjectDir)ThirdParty\\lua-5.1.5\\src;$(ProjectDir)ThirdParty\\cryptopp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

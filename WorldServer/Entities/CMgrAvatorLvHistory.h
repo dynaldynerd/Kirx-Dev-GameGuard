@@ -33,6 +33,7 @@ public:
     char sData[200];
   };
 
+  void char_copy(int n, char *pszDstName, unsigned int dwDstSerial, char *pszFileName);
   void alter_pvp(int n, long double dPvpVariation, CPartyPlayer *pParty, char *pszFileName);
   void GetNewFileName(unsigned int dwAvatorSerial, char *pszFileName);
   void start_mastery(
@@ -58,6 +59,8 @@ public:
     char *pszFileName,
     unsigned __int8 byLogType,
     char *pszTitle);
+  void upgrade_lv(int n, unsigned int dwLv, int nGrade, int *pnMaxPoint, char *pszFileName);
+  void downgrade_lv(int n, unsigned int dwLv, int nGrade, int *pnMaxPoint, char *pszFileName);
   void WriteFile(char *pszFileName, char *pszLog);
 
   char m_szStdPath[128];

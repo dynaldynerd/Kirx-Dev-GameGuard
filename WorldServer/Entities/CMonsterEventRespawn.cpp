@@ -5,10 +5,12 @@
 #include <cstdio>
 #include <cstring>
 #include <windows.h>
+#include <mmsystem.h>
 
 #include "CMapOperation.h"
 #include "CMapData.h"
 #include "CLogFile.h"
+#include "CMonster.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
@@ -19,6 +21,121 @@ namespace
   static bool s_iniExtLenInit = false;
   static size_t s_iniExtLen = 0;
   const char *pos_key[3] = {"x", "y", "z"};
+}
+
+void _event_respawn::_state::init()
+{
+  memset_0(this, 0, sizeof(*this));
+}
+
+bool CMonsterEventRespawn::StartRespawnEvent(char *pszEventCode, char *pwszErrCode)
+{
+  _event_respawn *eventRespawn = nullptr;
+  for (int j = 0; j < m_nLoadEventRespawn; ++j)
+  {
+    _event_respawn *candidate = &m_EventRespawn[j];
+    if (candidate->bLoad && !strcmp_0(candidate->szScriptName, pszEventCode))
+    {
+      eventRespawn = candidate;
+      break;
+    }
+  }
+
+  if (!eventRespawn)
+  {
+    return false;
+  }
+
+  if (eventRespawn->bActive)
+  {
+    if (pwszErrCode)
+    {
+      sprintf(pwszErrCode, "now actived");
+    }
+    return false;
+  }
+
+  eventRespawn->State.init();
+  int respawnCount = 0;
+  for (int k = 0; k < eventRespawn->wMonSetNum; ++k)
+  {
+    _event_respawn::_mon *monSet = &eventRespawn->MonSet[k];
+    for (int m = 0; m < monSet->wNum; ++m)
+    {
+      CMonster *monster = CreateRepMonster(
+        eventRespawn->pMap,
+        0,
+        eventRespawn->fPos,
+        monSet->pMonsterFld->m_strCode,
+        nullptr,
+        eventRespawn->Option.bExpPenalty,
+        eventRespawn->Option.bExpReward,
+        0,
+        0,
+        0);
+      if (monster)
+      {
+        eventRespawn->State.MonInfo[respawnCount].pMon = monster;
+        eventRespawn->State.MonInfo[respawnCount].dwSerial = monster->m_dwObjSerial;
+        eventRespawn->State.MonInfo[respawnCount].pMonFld = monSet->pMonsterFld;
+        ++respawnCount;
+
+        if (!eventRespawn->Option.bItemLoot)
+        {
+          monster->DisableStdItemLoot();
+        }
+        monster->LinkEventRespawn(eventRespawn);
+      }
+    }
+  }
+
+  eventRespawn->State.nRespawnNum = respawnCount;
+  eventRespawn->State.dwLastUpdateTime = timeGetTime();
+  eventRespawn->bActive = true;
+  return true;
+}
+
+bool CMonsterEventRespawn::StopRespawnEvent(char *pszEventCode, char *pwszErrCode)
+{
+  _event_respawn *eventRespawn = nullptr;
+  for (int j = 0; j < m_nLoadEventRespawn; ++j)
+  {
+    _event_respawn *candidate = &m_EventRespawn[j];
+    if (candidate->bLoad && !strcmp_0(candidate->szScriptName, pszEventCode))
+    {
+      eventRespawn = candidate;
+      break;
+    }
+  }
+
+  if (!eventRespawn)
+  {
+    return false;
+  }
+
+  if (!eventRespawn->bActive)
+  {
+    if (pwszErrCode)
+    {
+      sprintf(pwszErrCode, "now stoped");
+    }
+    return false;
+  }
+
+  if (eventRespawn->Option.bKillAfterStop)
+  {
+    for (int k = 0; k < eventRespawn->State.nRespawnNum; ++k)
+    {
+      _event_respawn::_state::_mon *info = &eventRespawn->State.MonInfo[k];
+      if (info->pMon && info->pMon->m_bLive && info->pMon->m_dwObjSerial == info->dwSerial)
+      {
+        info->pMon->Destroy(1u, nullptr);
+      }
+    }
+  }
+
+  eventRespawn->bActive = false;
+  return true;
 }
 
 bool CMonsterEventRespawn::SetEventRespawn()

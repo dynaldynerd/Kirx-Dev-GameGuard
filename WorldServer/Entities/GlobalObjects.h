@@ -28,6 +28,7 @@
 #include "CVoteSystem.h"
 
 class CWnd;
+class CGameServerDoc;
 struct _CCRFG_SEND_BUFFER;
 struct _CCRFG_RECV_BUFFER;
 struct _CCRFG_CALLBACK;
@@ -66,6 +67,7 @@ extern CVoteSystem g_VoteSys[3];
 extern CMainThread g_Main;
 extern CNetworkEX g_Network;
 extern CWnd *g_pFrame;
+extern CGameServerDoc *g_pDoc;
 extern CLogFile g_FgLogFile;
 extern _CCRFG_SEND_BUFFER g_FGSendData;
 extern _CCRFG_RECV_BUFFER g_FGRecvData;

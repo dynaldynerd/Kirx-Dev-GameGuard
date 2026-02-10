@@ -3,8 +3,18 @@
 #include "CPlayerDB.h"
 #include "AutominePersonalMgr.h"
 #include "CPlayer.h"
+#include "CRecordData.h"
+#include "CGuild.h"
+#include "CLogFile.h"
+#include "DqsDbStructs.h"
+#include "GlobalObjects.h"
+#include "LendItemMng.h"
+#include "TimeItem.h"
+#include "UIDGenerator.h"
+#include "WorldServerUtil.h"
 
 #include <cstdlib>
+#include <ctime>
 
 int CPlayerDB::GetRaceCode()
 {
@@ -31,7 +41,7 @@ char *CPlayerDB::GetCharNameA()
   return this->m_aszName;
 }
 
-const char *CPlayerDB::GetCharNameW()
+char *CPlayerDB::GetCharNameW()
 {
   return this->m_dbChar.m_wszCharID;
 }
@@ -44,6 +54,21 @@ unsigned int CPlayerDB::GetCharSerial()
 long double CPlayerDB::GetExp()
 {
   return this->m_dbChar.m_dExp;
+}
+
+long double CPlayerDB::GetLossExp()
+{
+  return this->m_dbChar.m_dLossExp;
+}
+
+void CPlayerDB::SetExp(long double dExp)
+{
+  this->m_dbChar.m_dExp = dExp;
+}
+
+void CPlayerDB::SetLossExp(long double dLossExp)
+{
+  this->m_dbChar.m_dLossExp = dLossExp;
 }
 
 float *CPlayerDB::GetCurPos()
@@ -85,9 +110,39 @@ unsigned int CPlayerDB::GetLevel()
   return this->m_dbChar.m_byLevel;
 }
 
+void CPlayerDB::SetLevel(unsigned __int8 nLv)
+{
+  this->m_dbChar.m_byLevel = nLv;
+}
+
 unsigned int CPlayerDB::GetMaxLevel()
 {
   return this->m_dbChar.m_byMaxLevel;
+}
+
+bool CPlayerDB::IsClassChangeableLv()
+{
+  if (!this->m_pClassData)
+  {
+    return false;
+  }
+  const int level = static_cast<int>(this->GetLevel());
+  return this->m_pClassData->m_nUpGradeLv <= level;
+}
+
+unsigned __int8 CPlayerDB::GetTrunkSlotNum()
+{
+  return this->m_byTrunkSlotNum;
+}
+
+unsigned __int8 CPlayerDB::GetExtTrunkSlotNum()
+{
+  return this->m_byExtTrunkSlotNum;
+}
+
+void CPlayerDB::SetMaxLevel(unsigned __int8 nLv)
+{
+  this->m_dbChar.m_byMaxLevel = nLv;
 }
 
 _class_fld *CPlayerDB::GetPtrCurClass()
@@ -159,6 +214,11 @@ unsigned int CPlayerDB::GetGold()
   return this->m_dbChar.m_dwGold;
 }
 
+void CPlayerDB::SetGold(unsigned int dwGold)
+{
+  this->m_dbChar.m_dwGold = dwGold;
+}
+
 void CPlayerDB::SetCurPos(float *fPos)
 {
   memcpy_0(this->m_dbChar.m_fStartPos, fPos, sizeof(this->m_dbChar.m_fStartPos));
@@ -172,6 +232,19 @@ unsigned __int8 CPlayerDB::GetBagNum()
 unsigned __int16 CPlayerDB::GetNewItemSerial()
 {
   return this->m_wSerialCount++;
+}
+
+bool CPlayerDB::BeHaveBoxOfAMP()
+{
+  return m_bPersonalAmineInven;
+}
+
+void CPlayerDB::SetHaveBoxOfAMP(bool bFlag)
+{
+  if (!m_bPersonalAmineInven)
+  {
+    m_bPersonalAmineInven = bFlag;
+  }
 }
 
 char CPlayerDB::CalcCharGrade(unsigned __int8 byLv, unsigned __int16 wRankRate)

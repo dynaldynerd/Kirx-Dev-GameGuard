@@ -69,3 +69,46 @@ float CUnmannedTraderTaxRateManager::GetTaxRate(unsigned __int8 byRace)
 
   return m_vecTRC[byRace]->get_taxrate();
 }
+
+void CUnmannedTraderTaxRateManager::DQSCompleteInAtradTaxMoney(unsigned __int8 byRace, char *pdata)
+{
+  if (!m_vecTRC.empty() && m_vecTRC.size() > byRace)
+  {
+    TRC_AutoTrade *autoTrade = m_vecTRC[byRace];
+    autoTrade->AddGDalant(pdata);
+  }
+}
+
+unsigned int CUnmannedTraderTaxRateManager::GetTax(
+  unsigned __int8 byRace,
+  unsigned int dwGuildSerial,
+  unsigned int dwPrice)
+{
+  if (m_vecTRC.empty() || m_vecTRC.size() <= byRace)
+  {
+    return dwPrice;
+  }
+
+  TRC_AutoTrade *autoTrade = m_vecTRC[byRace];
+  return autoTrade->CalcPrice(dwGuildSerial, dwPrice);
+}
+
+int CUnmannedTraderTaxRateManager::ChangeOwner(unsigned __int8 byRace, CGuild *pGuild)
+{
+  if (m_vecTRC.empty() || m_vecTRC.size() <= byRace)
+  {
+    return -1;
+  }
+
+  TRC_AutoTrade *autoTrade = m_vecTRC[byRace];
+  return autoTrade->ChangeOwner(pGuild);
+}
+
+void CUnmannedTraderTaxRateManager::SetPatriarchTaxMoney(unsigned __int8 byRace, unsigned int dwTax)
+{
+  if (!m_vecTRC.empty() && m_vecTRC.size() > byRace)
+  {
+    TRC_AutoTrade *autoTrade = m_vecTRC[byRace];
+    autoTrade->SetPatriarchTaxMoney(static_cast<int>(dwTax));
+  }
+}

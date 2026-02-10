@@ -190,3 +190,16 @@ void CWorldSchedule::ChangeSchCursor(_WorldSchedule_fld *pFld, int nPassMin)
       g_TransportShip[j].AlterState(anchor, static_cast<unsigned __int8>(pFld->m_nEventInfo1), nPassMin, pFld->m_nEventInfo3);
   }
 }
+
+void CWorldSchedule::PassOneStep()
+{
+  int next = this->m_nSchCursor + 1;
+  if (next >= this->m_nMaxSchNum)
+  {
+    next = 0;
+  }
+  _base_fld *record = this->m_tblSch.GetRecord(next);
+  this->m_nCurHour = record[1].m_dwIndex;
+  this->m_nCurMin = *reinterpret_cast<int *>(record[1].m_strCode);
+  this->m_nCurMilSec = 0;
+}

@@ -38,6 +38,9 @@ struct __cppobj __unaligned __declspec(align(4)) _STORAGE_LIST
     unsigned __int8 m_byStorageIndex;
 
     void Init();
+    void SetSerialNumber(unsigned int dwSN);
+    unsigned int GetSerialNumber() const;
+    static unsigned int CalcNewSerialNumber();
     _db_con()
     {
       m_pInList = nullptr;
@@ -56,10 +59,12 @@ struct __cppobj __unaligned __declspec(align(4)) _STORAGE_LIST
   int TransInCon(_storage_con *pCon);
   int GetIndexEmptyCon();
   int GetNumEmptyCon();
-  void SetUseListNum(int n);
   char AlterCurDur(int n, int nAlter, unsigned __int64 *pdwLeftDur);
+  char UpdateCurDur(int n, int nUpdate);
+  char SetUseListNum(int nUsedNum);
   int GetIndexFromSerial(unsigned __int16 wSerial);
   _db_con *GetPtrFromSerial(unsigned __int16 wSerial);
+  _db_con *GetPtrFromItemCode(char *pwszItemCode);
   char GradeUp(int n, unsigned int dwUptInfo);
   char GradeDown(int n, unsigned int dwUptInfo);
   char SetGrade(int n, unsigned __int8 byLv, unsigned int dwUptInfo);

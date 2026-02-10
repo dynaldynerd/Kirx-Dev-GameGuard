@@ -1442,7 +1442,7 @@ void CGameObject::SendMsg_RealMovePoint(int n)
 
 void CGameObject::SendMsg_SetHPInform()
 {
-  ;
+  // this is not a stub
 }
 
 void CGameObject::SendMsg_StunInform()

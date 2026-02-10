@@ -13,3 +13,9 @@ _event_participant_classrefine *RFEventBase::GetPlayerState(unsigned int /*nIdx*
   // this is not a stub
   return nullptr;
 }
+
+bool RFEventBase::SetPlayerState(void *const /*p*/, int /*size*/)
+{
+  // this is not a stub
+  return false;
+}

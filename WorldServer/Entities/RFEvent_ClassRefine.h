@@ -37,6 +37,7 @@ public:
   bool Initialzie();
   bool IsDbUpdate(unsigned int nIdx) override;
   _event_participant_classrefine *GetPlayerState(unsigned int nIdx, unsigned int nAvator) override;
+  bool SetPlayerState(void *const p, int size) override;
 
   void ReadClassRefineEventInfo();
 

@@ -1,8 +1,29 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "ObjectCreateSetData.h"
 #include "CPlayer.h"
 #include "TEMP_WAIT_TOWER.h"
+
+struct __cppobj __declspec(align(4)) _tower_create_setdata : _character_create_setdata
+{
+  int nHP;
+  CPlayer *pMaster;
+  unsigned __int8 byRaceCode;
+  _STORAGE_LIST::_db_con *pItem;
+  int nIniIndex;
+  bool bQuick;
+
+  _tower_create_setdata()
+  {
+    nHP = 0;
+    pMaster = nullptr;
+    byRaceCode = 0;
+    pItem = nullptr;
+    nIniIndex = 0;
+    bQuick = false;
+  }
+};
 
 /* 1742 */
 class __cppobj __declspec(align(8)) CGuardTower : public CCharacter
@@ -33,4 +54,12 @@ public:
   void SendMsg_Create();
   static __int64 GetNewSerial();
 };
+
+CGuardTower *CreateSystemTower(
+  CMapData *pMap,
+  unsigned __int16 wLayer,
+  float *fPos,
+  int nTowerIndex,
+  unsigned __int8 byRaceCode,
+  int nIniIndex);
 

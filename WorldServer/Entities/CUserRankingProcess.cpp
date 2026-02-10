@@ -117,6 +117,70 @@ char CPvpUserRankingInfo::IsRaceViceBoss(unsigned __int8 byRace, unsigned int dw
   return 0;
 }
 
+void CPvpUserRankingInfo::SetUpdateRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth, unsigned int dwSerial)
+{
+  if (byNth < 9)
+  {
+    m_dwUpdateRaceBossSerial[byRace][byNth] = dwSerial;
+  }
+}
+
+void CPvpUserRankingInfo::FlipPvPRankTop()
+{
+  for (int race = 0; race < 3; ++race)
+  {
+    for (int nth = 0; nth < 9; ++nth)
+    {
+      unsigned long *updateSerials = m_dwUpdateRaceBossSerial[race];
+      if (updateSerials && updateSerials[nth] != static_cast<unsigned int>(-1))
+      {
+        if (!IsCurrentRaceBossGroup(static_cast<unsigned __int8>(race), updateSerials[nth]))
+        {
+          CPlayer *player = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, updateSerials[nth]);
+          if (player)
+          {
+            player->SendMsg_RaceTopInform(1);
+          }
+        }
+      }
+    }
+  }
+
+  for (int race = 0; race < 3; ++race)
+  {
+    for (int nth = 0; nth < 9; ++nth)
+    {
+      unsigned long *currentSerials = m_dwCurrentRaceBossSerial[race];
+      if (currentSerials && currentSerials[nth] != static_cast<unsigned int>(-1))
+      {
+        if (!IsCurrentRaceBossGroup(static_cast<unsigned __int8>(race), currentSerials[nth]))
+        {
+          CPlayer *player = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, currentSerials[nth]);
+          if (player)
+          {
+            player->SendMsg_RaceTopInform(0);
+          }
+        }
+      }
+    }
+  }
+
+  for (size_t race = 0; race < m_dwUpdateRaceBossSerial.size(); ++race)
+  {
+    for (int nth = 0; nth < 9; ++nth)
+    {
+      unsigned long *updateSerials = m_dwUpdateRaceBossSerial[race];
+      unsigned long *currentSerials = m_dwCurrentRaceBossSerial[race];
+      currentSerials[nth] = updateSerials[nth];
+    }
+  }
+}
+
+void CPvpUserRankingInfo::IncreaseVesion()
+{
+  ++m_byPvpRankDataVersion;
+}
+
 void CPvpUserRankingInfo::ClearTomorrowPvpRankData()
 {
   if (m_vecPvpRankDataTomorrow.empty())
@@ -221,6 +285,26 @@ void CPvpUserRankingInfo::PvpRankDataPacking(CLogFile *pkLogger)
   {
     pkLogger->Write("CPvpUserRankingInfo::PvpRankDataPacking() End");
   }
+}
+
+void CUserRankingProcess::SetUpdateRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth, unsigned int dwSerial)
+{
+  m_kPvpRankingInfo.SetUpdateRaceBossSerial(byRace, byNth, dwSerial);
+}
+
+void CUserRankingProcess::FlipPvPRankTop()
+{
+  m_kPvpRankingInfo.FlipPvPRankTop();
+}
+
+void CUserRankingProcess::PvpRankDataPacking()
+{
+  m_kPvpRankingInfo.PvpRankDataPacking(m_pkLogger);
+}
+
+void CUserRankingProcess::IncreaseVesion()
+{
+  m_kPvpRankingInfo.IncreaseVesion();
 }
 
 bool CPvpUserRankingTargetUserList::assign()
@@ -631,4 +715,876 @@ void CUserRankingProcess::ProcRankSuccess()
   UpdateNextRankingStartTime();
   m_eState = PS_WAIT;
   m_pkLogger->WriteString("CUserRankingProcess::ProcRankSuccess() End");
+}
+
+_PVP_RANK_DATA *CPvpUserRankingInfo::GetTomorrowPvpRankData(unsigned __int8 byRace, unsigned __int8 byNth)
+{
+  if (m_vecPvpRankDataTomorrow.size() > byRace && byNth < 0x64u)
+  {
+    return &m_vecPvpRankDataTomorrow[byRace][byNth];
+  }
+
+  return nullptr;
+}
+
+unsigned __int8 CPvpUserRankingInfo::UpdateRaceRankStep1(char *szData)
+{
+  if (g_Main.m_pWorldDB->Update_RaceRank_Step1(szData))
+  {
+    return 0;
+  }
+
+  return 24;
+}
+
+unsigned __int8 CPvpUserRankingInfo::UpdateRaceRankStep2(char *szData)
+{
+  if (g_Main.m_pWorldDB->Update_RaceRank_Step2(szData))
+  {
+    return 0;
+  }
+
+  return 24;
+}
+
+unsigned __int8 CPvpUserRankingInfo::UpdateRaceRankStep3(char *szData)
+{
+  if (g_Main.m_pWorldDB->Update_RaceRank_Step3(szData))
+  {
+    return 0;
+  }
+
+  return 24;
+}
+
+unsigned __int8 CPvpUserRankingInfo::UpdateRaceRankStep4(char *szData)
+{
+  if (g_Main.m_pWorldDB->Update_RaceRank_Step4(szData))
+  {
+    return 0;
+  }
+
+  return 24;
+}
+
+unsigned __int8 CPvpUserRankingInfo::UpdateRaceRankStep5(char *szData)
+{
+  if (g_Main.m_pWorldDB->Update_RaceRank_Step5(szData))
+  {
+    return 0;
+  }
+
+  return 24;
+}
+
+unsigned __int8 CPvpUserRankingInfo::UpdateRaceRankStep6(char *szData)
+{
+  if (g_Main.m_pWorldDB->Update_RaceRank_Step6(szData))
+  {
+    return 0;
+  }
+
+  return 24;
+}
+
+unsigned __int8 CPvpUserRankingInfo::UpdateRaceRankStep7(char *szData)
+{
+  if (g_Main.m_pWorldDB->Update_RaceRank_Step7(szData))
+  {
+    return 0;
+  }
+
+  return 24;
+}
+
+unsigned __int8 CPvpUserRankingInfo::UpdateRaceRankStep8(char *szData)
+{
+  if (g_Main.m_pWorldDB->Update_RaceRank_Step8(szData))
+  {
+    return 0;
+  }
+
+  return 24;
+}
+
+unsigned __int8 CPvpUserRankingInfo::UpdateRaceRankStep9(char *szData)
+{
+  if (g_Main.m_pWorldDB->Update_RaceRank_Step9(szData))
+  {
+    return 0;
+  }
+
+  return 24;
+}
+
+unsigned __int8 CPvpUserRankingInfo::UpdateRaceRankStep10(char *szData)
+{
+  for (int j = 0; j < 3; ++j)
+  {
+    _PVP_RANK_DATA *rankData = GetTomorrowPvpRankData(static_cast<unsigned __int8>(j), 0);
+    if (!rankData || g_Main.m_pWorldDB->Select_PvpRankInfo(j, szData, rankData))
+    {
+      szData[9] = 1;
+      *reinterpret_cast<unsigned int *>(szData + 12) = static_cast<unsigned int>(j);
+      return 0;
+    }
+  }
+
+  return 0;
+}
+
+unsigned __int8 CPvpUserRankingTargetUserList::UpdateRaceRankStep11(char *szData)
+{
+  unsigned __int8 result = 0;
+
+  for (int j = 0; j < MAX_PLAYER; ++j)
+  {
+    _PVP_RANK_REFRESH_USER *entry = m_PvpRankRefreshUser[j];
+    if (entry->IsFilled())
+    {
+      unsigned __int16 *rankRate = &entry->wPvpRate;
+      unsigned int *rank = &entry->dwPvpRank;
+      result = g_Main.m_pWorldDB->Select_PvpRate(entry->dwSerial, szData, rank, rankRate);
+      if (result == 2)
+      {
+        entry->wPvpRate = static_cast<unsigned __int16>(-1);
+      }
+      else if (result == 1)
+      {
+        *reinterpret_cast<unsigned int *>(szData + 12) = static_cast<unsigned int>(j);
+        *reinterpret_cast<unsigned int *>(szData + 16) = entry->dwSerial;
+        return 0;
+      }
+
+      ++m_uiRefreshCnt;
+    }
+  }
+
+  return 0;
+}
+
+unsigned __int8 CUserRankingProcess::UpdateRaceRankStep1(char *szData)
+{
+  return m_kPvpRankingInfo.UpdateRaceRankStep1(szData);
+}
+
+unsigned __int8 CUserRankingProcess::UpdateRaceRankStep2(char *szData)
+{
+  return m_kPvpRankingInfo.UpdateRaceRankStep2(szData);
+}
+
+unsigned __int8 CUserRankingProcess::UpdateRaceRankStep3(char *szData)
+{
+  return m_kPvpRankingInfo.UpdateRaceRankStep3(szData);
+}
+
+unsigned __int8 CUserRankingProcess::UpdateRaceRankStep4(char *szData)
+{
+  return m_kPvpRankingInfo.UpdateRaceRankStep4(szData);
+}
+
+unsigned __int8 CUserRankingProcess::UpdateRaceRankStep5(char *szData)
+{
+  return m_kPvpRankingInfo.UpdateRaceRankStep5(szData);
+}
+
+unsigned __int8 CUserRankingProcess::UpdateRaceRankStep6(char *szData)
+{
+  return m_kPvpRankingInfo.UpdateRaceRankStep6(szData);
+}
+
+unsigned __int8 CUserRankingProcess::UpdateRaceRankStep7(char *szData)
+{
+  return m_kPvpRankingInfo.UpdateRaceRankStep7(szData);
+}
+
+unsigned __int8 CUserRankingProcess::UpdateRaceRankStep8(char *szData)
+{
+  return m_kPvpRankingInfo.UpdateRaceRankStep8(szData);
+}
+
+unsigned __int8 CUserRankingProcess::UpdateRaceRankStep9(char *szData)
+{
+  return m_kPvpRankingInfo.UpdateRaceRankStep9(szData);
+}
+
+unsigned __int8 CUserRankingProcess::UpdateRaceRankStep10(char *szData)
+{
+  return m_kPvpRankingInfo.UpdateRaceRankStep10(szData);
+}
+
+unsigned __int8 CUserRankingProcess::UpdateRaceRankStep11(char *szData)
+{
+  return m_kTargetUserList.UpdateRaceRankStep11(szData);
+}
+
+unsigned __int8 CUserRankingProcess::UpdateGuildRankStep1(char *szData)
+{
+  return m_kGuildRanking.UpdateGuildRankStep1(szData);
+}
+
+unsigned __int8 CUserRankingProcess::UpdateGuildRankStep2(char *szData)
+{
+  return m_kGuildRanking.UpdateGuildRankStep2(szData);
+}
+
+unsigned __int8 CUserRankingProcess::UpdateGuildRankStep3(char *szData)
+{
+  return m_kGuildRanking.UpdateGuildRankStep3(szData);
+}
+
+unsigned __int8 CUserRankingProcess::UpdateGuildRankStep4(char *szData)
+{
+  return m_kGuildRanking.UpdateGuildRankStep4(szData);
+}
+
+unsigned __int8 CUserRankingProcess::UpdateRankinGuildStep1(char *szData)
+{
+  return m_kGuildRanking.UpdateRankinGuildStep1(szData);
+}
+
+unsigned __int8 CUserRankingProcess::UpdateRankinGuildStep2(char *szData)
+{
+  return m_kGuildRanking.UpdateRankinGuildStep2(szData);
+}
+
+unsigned __int8 CUserRankingProcess::UpdateRankinGuildStep3(char *szData)
+{
+  return m_kGuildRanking.UpdateRankinGuildStep3(szData);
+}
+
+unsigned __int8 CUserRankingProcess::UpdateRankinGuildStep4(char *szData)
+{
+  return m_kGuildRanking.UpdateRankinGuildStep4(szData);
+}
+
+unsigned __int8 CUserRankingProcess::UpdateRankinGuildStep5(char *szData)
+{
+  return m_kGuildRanking.UpdateRankinGuildStep5(szData);
+}
+
+unsigned __int8 CUserRankingProcess::UpdateRankinGuildStep6(char *szData)
+{
+  return m_kGuildRanking.UpdateRankinGuildStep6(szData);
+}
+
+unsigned __int8 CUserRankingProcess::UpdateAndSelectGuildGrade(char *szData)
+{
+  return m_kGuildRanking.UpdateAndSelectGuildGrade(szData);
+}
+
+void CUserRankingProcess::CompleteRaceRankStep1(unsigned __int8 byRet, char *szData)
+{
+  auto *qryData = reinterpret_cast<_qry_case_rank_racerank_guildrank *>(szData);
+  if (byRet || qryData->scProcRet)
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRaceRankStep1(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step1 Fail!",
+      qryData->szDate,
+      byRet,
+      qryData->scProcRet);
+    m_eState = PS_FAILED_WAIT;
+  }
+  else
+  {
+    qryData->ClearRetParam();
+    g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x56u, qryData->szDate, 20);
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRaceRankStep1(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step1 Success!",
+      qryData->szDate,
+      0,
+      qryData->scProcRet);
+  }
+}
+
+void CUserRankingProcess::CompleteRaceRankStep2(unsigned __int8 byRet, char *szData)
+{
+  auto *qryData = reinterpret_cast<_qry_case_rank_racerank_guildrank *>(szData);
+  if (byRet || qryData->scProcRet)
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRaceRankStep1(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step2 Fail!",
+      qryData->szDate,
+      byRet,
+      qryData->scProcRet);
+    m_eState = PS_FAILED_WAIT;
+  }
+  else
+  {
+    qryData->ClearRetParam();
+    g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x57u, qryData->szDate, 20);
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRaceRankStep2(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step2 Success!",
+      qryData->szDate,
+      0,
+      qryData->scProcRet);
+  }
+}
+
+void CUserRankingProcess::CompleteRaceRankStep3(unsigned __int8 byRet, char *szData)
+{
+  auto *qryData = reinterpret_cast<_qry_case_rank_racerank_guildrank *>(szData);
+  if (byRet || qryData->scProcRet)
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRaceRankStep3(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step3 Fail!",
+      qryData->szDate,
+      byRet,
+      qryData->scProcRet);
+    m_eState = PS_FAILED_WAIT;
+  }
+  else
+  {
+    qryData->ClearRetParam();
+    g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x58u, qryData->szDate, 20);
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRaceRankStep3(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step3 Success!",
+      qryData->szDate,
+      0,
+      qryData->scProcRet);
+  }
+}
+
+void CUserRankingProcess::CompleteRaceRankStep4(unsigned __int8 byRet, char *szData)
+{
+  auto *qryData = reinterpret_cast<_qry_case_rank_racerank_guildrank *>(szData);
+  if (byRet || qryData->scProcRet)
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRaceRankStep4(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step4 Fail!",
+      qryData->szDate,
+      byRet,
+      qryData->scProcRet);
+    m_eState = PS_FAILED_WAIT;
+  }
+  else
+  {
+    qryData->ClearRetParam();
+    g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x59u, qryData->szDate, 20);
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRaceRankStep4(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step4 Success!",
+      qryData->szDate,
+      0,
+      qryData->scProcRet);
+  }
+}
+
+void CUserRankingProcess::CompleteRaceRankStep5(unsigned __int8 byRet, char *szData)
+{
+  auto *qryData = reinterpret_cast<_qry_case_rank_racerank_guildrank *>(szData);
+  if (byRet || qryData->scProcRet)
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRaceRankStep5(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step5 Fail!",
+      qryData->szDate,
+      byRet,
+      qryData->scProcRet);
+    m_eState = PS_FAILED_WAIT;
+  }
+  else
+  {
+    qryData->ClearRetParam();
+    g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x5Au, qryData->szDate, 20);
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRaceRankStep5(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step5 Success!",
+      qryData->szDate,
+      0,
+      qryData->scProcRet);
+  }
+}
+
+void CUserRankingProcess::CompleteRaceRankStep6(unsigned __int8 byRet, char *szData)
+{
+  auto *qryData = reinterpret_cast<_qry_case_rank_racerank_guildrank *>(szData);
+  if (byRet || qryData->scProcRet)
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRaceRankStep6(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step6 Fail!",
+      qryData->szDate,
+      byRet,
+      qryData->scProcRet);
+    m_eState = PS_FAILED_WAIT;
+  }
+  else
+  {
+    qryData->ClearRetParam();
+    g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x5Bu, qryData->szDate, 20);
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRaceRankStep6(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step6 Success!",
+      qryData->szDate,
+      0,
+      qryData->scProcRet);
+  }
+}
+
+void CUserRankingProcess::CompleteRaceRankStep7(unsigned __int8 byRet, char *szData)
+{
+  auto *qryData = reinterpret_cast<_qry_case_rank_racerank_guildrank *>(szData);
+  if (byRet || qryData->scProcRet)
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRaceRankStep7(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step7 Fail!",
+      qryData->szDate,
+      byRet,
+      qryData->scProcRet);
+    m_eState = PS_FAILED_WAIT;
+  }
+  else
+  {
+    qryData->ClearRetParam();
+    g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x5Cu, qryData->szDate, 20);
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRaceRankStep7(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step7 Success!",
+      qryData->szDate,
+      0,
+      qryData->scProcRet);
+  }
+}
+
+void CUserRankingProcess::CompleteRaceRankStep8(unsigned __int8 byRet, char *szData)
+{
+  auto *qryData = reinterpret_cast<_qry_case_rank_racerank_guildrank *>(szData);
+  if (byRet || qryData->scProcRet)
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRaceRankStep8(...) : %s Date qry_case_rank_racerank_step8 Fail!",
+      qryData->szDate);
+    m_eState = PS_FAILED_WAIT;
+  }
+  else
+  {
+    qryData->ClearRetParam();
+    g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x5Du, qryData->szDate, 20);
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRaceRankStep8(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step8 Success!",
+      qryData->szDate,
+      0,
+      qryData->scProcRet);
+  }
+}
+
+void CUserRankingProcess::CompleteRaceRankStep9(unsigned __int8 byRet, char *szData)
+{
+  auto *qryData = reinterpret_cast<_qry_case_rank_racerank_guildrank *>(szData);
+  if (byRet || qryData->scProcRet)
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRaceRankStep9(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step9 Fail!\r\n",
+      qryData->szDate,
+      byRet,
+      qryData->scProcRet);
+    m_eState = PS_FAILED_WAIT;
+  }
+  else
+  {
+    qryData->ClearRetParam();
+    g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x5Eu, qryData->szDate, 20);
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRaceRankStep9(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step9 Success!",
+      qryData->szDate,
+      0,
+      qryData->scProcRet);
+  }
+}
+
+void CUserRankingProcess::CompleteRaceRankStep10(unsigned __int8 byRet, char *szData)
+{
+  auto *qryData = reinterpret_cast<_qry_case_rank_racerank_guildrank *>(szData);
+  if (byRet || qryData->scProcRet)
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRaceRankStep10(...) : %s Date byRet(%u) byProcRet(%u)  qry_case_rank_racerank_step10 Fail!\r\n"
+      "\t\tLoad Race Top100 Rank : %d Fail!",
+      qryData->szDate,
+      byRet,
+      qryData->scProcRet,
+      qryData->dwParam1);
+  }
+
+  qryData->ClearRetParam();
+  g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x5Fu, qryData->szDate, 20);
+  m_pkLogger->Write(
+    "CUserRankingProcess::CompleteRaceRankStep10(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step10 Success!",
+    qryData->szDate,
+    byRet,
+    qryData->scProcRet);
+}
+
+void CUserRankingProcess::CompleteRaceRankStep11(unsigned __int8 byRet, char *szData)
+{
+  auto *qryData = reinterpret_cast<_qry_case_rank_racerank_guildrank *>(szData);
+  if (byRet || qryData->scProcRet)
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRaceRankStep11(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step11 Fail!\r\n"
+      "\t\t(%u)th %u Select_PvpRate Fail!",
+      qryData->szDate,
+      byRet,
+      qryData->scProcRet,
+      qryData->dwParam1,
+      qryData->dwParam2);
+  }
+
+  qryData->ClearRetParam();
+  g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x61u, qryData->szDate, 20);
+  m_eState = PS_GUILD_RANK_PROCESS;
+  m_pkLogger->Write(
+    "CUserRankingProcess::CompleteRaceRankStep11(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step11 Success!\r\n",
+    qryData->szDate,
+    byRet,
+    qryData->scProcRet);
+}
+
+void CUserRankingProcess::CompleteGuildRankStep1(unsigned __int8 byRet, char *szData)
+{
+  auto *qryData = reinterpret_cast<_qry_case_rank_racerank_guildrank *>(szData);
+  if (byRet || qryData->scProcRet)
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteGuildRankStep1(...) : \r\n%s Date byRet(%u) byProcRet(%u) qry_case_rank_guildrank_step1 Fail!",
+      qryData->szDate,
+      byRet,
+      qryData->scProcRet);
+    m_eState = PS_FAILED_WAIT;
+  }
+  else
+  {
+    qryData->ClearRetParam();
+    g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x62u, qryData->szDate, 20);
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteGuildRankStep1(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step1 Success!",
+      qryData->szDate,
+      0,
+      qryData->scProcRet);
+  }
+}
+
+void CUserRankingProcess::CompleteGuildRankStep2(unsigned __int8 byRet, char *szData)
+{
+  auto *qryData = reinterpret_cast<_qry_case_rank_racerank_guildrank *>(szData);
+  if (byRet || qryData->scProcRet)
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteGuildRankStep2(...) : \r\n%s Date byRet(%u) byProcRet(%u) qry_case_rank_guildrank_step2 Fail!",
+      qryData->szDate,
+      byRet,
+      qryData->scProcRet);
+    m_eState = PS_FAILED_WAIT;
+  }
+  else
+  {
+    qryData->ClearRetParam();
+    g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x63u, qryData->szDate, 20);
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteGuildRankStep2(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step2 Success!",
+      qryData->szDate,
+      0,
+      qryData->scProcRet);
+  }
+}
+
+void CUserRankingProcess::CompleteGuildRankStep3(unsigned __int8 byRet, char *szData)
+{
+  auto *qryData = reinterpret_cast<_qry_case_rank_racerank_guildrank *>(szData);
+  if (byRet || qryData->scProcRet)
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteGuildRankStep3(...) : \r\n%s Date byRet(%u) byProcRet(%u) qry_case_rank_guildrank_step3 Fail!",
+      qryData->szDate,
+      byRet,
+      qryData->scProcRet);
+    m_eState = PS_FAILED_WAIT;
+  }
+  else
+  {
+    qryData->ClearRetParam();
+    m_kGuildRanking.ClearGuildSerial();
+    g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x64u, qryData->szDate, 20);
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteGuildRankStep3(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step3 Success!",
+      qryData->szDate,
+      0,
+      qryData->scProcRet);
+  }
+}
+
+void CUserRankingProcess::CompleteGuildRankStep4(unsigned __int8 byRet, char *szData)
+{
+  auto *qryData = reinterpret_cast<_qry_case_rank_racerank_guildrank *>(szData);
+  if (byRet || qryData->scProcRet)
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteGuildRankStep4(...) : \r\n"
+      "\t\t%s Date byRet(%u) byProcRet(%u) qry_case_rank_guildrank_step4 Fail!\r\n"
+      "\t\tSelectAllGuildSerial Fail",
+      qryData->szDate,
+      byRet,
+      qryData->scProcRet);
+    m_eState = PS_FAILED_WAIT;
+  }
+  else
+  {
+    qryData->ClearRetParam();
+    qryData->dwParam1 = m_kGuildRanking.GetNextGuildSerial();
+    if (qryData->dwParam1 == static_cast<unsigned int>(-1))
+    {
+      m_eState = PS_RANK_COMPLETE;
+      m_pkLogger->Write(
+        "CUserRankingProcess::CompleteGuildRankStep4(...) : m_eState = PS_RANK_COMPLETE");
+    }
+    else
+    {
+      m_kGuildRanking.ClearRefreshData();
+      g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x65u, qryData->szDate, 20);
+      m_eState = PS_RANK_IN_GUILD_PROCESS;
+      m_pkLogger->Write(
+        "CUserRankingProcess::CompleteGuildRankStep4(...) : %s Date byRet(%u) byProcRet(%u) qry_case_rank_racerank_step4 Success!\r\n",
+        qryData->szDate,
+        0,
+        qryData->scProcRet);
+    }
+  }
+}
+
+void CUserRankingProcess::CompleteRankInGuildStep1(unsigned __int8 byRet, char *szData)
+{
+  char *pQryData = szData;
+  if (byRet || pQryData[9])
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRankInGuildStep1(...) : %s Date byRet(%u) byProcRet(%u) Guild(%u) qry_case_rank_rankinguild_step1 Fail!",
+      pQryData,
+      byRet,
+      pQryData[9],
+      *reinterpret_cast<unsigned int *>(pQryData + 12));
+
+    unsigned int nextSerial = m_kGuildRanking.GetNextGuildSerial();
+    *reinterpret_cast<unsigned int *>(pQryData + 12) = nextSerial;
+    if (*reinterpret_cast<unsigned int *>(pQryData + 12) == static_cast<unsigned int>(-1))
+    {
+      m_eState = PS_RANK_COMPLETE;
+      m_pkLogger->WriteString(
+        "CUserRankingProcess::CompleteRankInGuildStep1(...) : m_eState = PS_RANK_COMPLETE\r\n");
+    }
+    else
+    {
+      pQryData[9] = 0;
+      g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x65u, pQryData, 20);
+      m_pkLogger->WriteString(
+        "CUserRankingProcess::CompleteRankInGuildStep1(...) : Push qry_case_rank_rankinguild_step1\r\n");
+    }
+  }
+  else
+  {
+    pQryData[9] = 0;
+    g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x66u, pQryData, 20);
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRankInGuildStep1(...) : Push qry_case_rank_rankinguild_step2");
+  }
+}
+
+void CUserRankingProcess::CompleteRankInGuildStep2(unsigned __int8 byRet, char *szData)
+{
+  char *pQryData = szData;
+  if (byRet || pQryData[9])
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRankInGuildStep2(...) : %s Date byRet(%u) byProcRet(%u) Guild(%u) qry_case_rank_rankinguild_step2 Fail!",
+      pQryData,
+      byRet,
+      pQryData[9],
+      *reinterpret_cast<unsigned int *>(pQryData + 12));
+
+    unsigned int nextSerial = m_kGuildRanking.GetNextGuildSerial();
+    *reinterpret_cast<unsigned int *>(pQryData + 12) = nextSerial;
+    if (*reinterpret_cast<unsigned int *>(pQryData + 12) == static_cast<unsigned int>(-1))
+    {
+      m_eState = PS_RANK_COMPLETE;
+      m_pkLogger->WriteString(
+        "CUserRankingProcess::CompleteRankInGuildStep2(...) : m_eState = PS_RANK_COMPLETE\r\n");
+    }
+    else
+    {
+      pQryData[9] = 0;
+      g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x65u, pQryData, 20);
+      m_pkLogger->WriteString(
+        "CUserRankingProcess::CompleteRankInGuildStep2(...) : Push qry_case_rank_rankinguild_step1\r\n");
+    }
+  }
+  else
+  {
+    pQryData[9] = 0;
+    g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x67u, pQryData, 20);
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRankInGuildStep2(...) : Push qry_case_rank_rankinguild_step3");
+  }
+}
+
+void CUserRankingProcess::CompleteRankInGuildStep3(unsigned __int8 byRet, char *szData)
+{
+  char *pQryData = szData;
+  if (byRet || pQryData[9])
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRankInGuildStep3(...) : %s Date byRet(%u) byProcRet(%u) Guild(%u) qry_case_rank_rankinguild_step3 Fail!",
+      pQryData,
+      byRet,
+      pQryData[9],
+      *reinterpret_cast<unsigned int *>(pQryData + 12));
+
+    unsigned int nextSerial = m_kGuildRanking.GetNextGuildSerial();
+    *reinterpret_cast<unsigned int *>(pQryData + 12) = nextSerial;
+    if (*reinterpret_cast<unsigned int *>(pQryData + 12) == static_cast<unsigned int>(-1))
+    {
+      m_eState = PS_RANK_COMPLETE;
+      m_pkLogger->WriteString(
+        "CUserRankingProcess::CompleteRankInGuildStep3(...) : m_eState = PS_RANK_COMPLETE\r\n");
+    }
+    else
+    {
+      pQryData[9] = 0;
+      g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x65u, pQryData, 20);
+      m_pkLogger->WriteString(
+        "CUserRankingProcess::CompleteRankInGuildStep3(...) : Push qry_case_rank_rankinguild_step1\r\n");
+    }
+  }
+  else
+  {
+    pQryData[9] = 0;
+    g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x68u, pQryData, 20);
+    m_pkLogger->WriteString(
+      "CUserRankingProcess::CompleteRankInGuildStep3(...) : Push qry_case_rank_rankinguild_step4");
+  }
+}
+
+void CUserRankingProcess::CompleteRankInGuildStep4(unsigned __int8 byRet, char *szData)
+{
+  char *pQryData = szData;
+  if (byRet || pQryData[9])
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRankInGuildStep4(...) : %s Date byRet(%u) byProcRet(%u) Guild(%u) qry_case_rank_rankinguild_step4 Fail!",
+      pQryData,
+      byRet,
+      pQryData[9],
+      *reinterpret_cast<unsigned int *>(pQryData + 12));
+
+    unsigned int nextSerial = m_kGuildRanking.GetNextGuildSerial();
+    *reinterpret_cast<unsigned int *>(pQryData + 12) = nextSerial;
+    if (*reinterpret_cast<unsigned int *>(pQryData + 12) == static_cast<unsigned int>(-1))
+    {
+      m_eState = PS_RANK_COMPLETE;
+      m_pkLogger->WriteString(
+        "CUserRankingProcess::CompleteRankInGuildStep4(...) : m_eState = PS_RANK_COMPLETE\r\n");
+    }
+    else
+    {
+      pQryData[9] = 0;
+      g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x65u, pQryData, 20);
+      m_pkLogger->WriteString(
+        "CUserRankingProcess::CompleteRankInGuildStep4(...) : Push qry_case_rank_rankinguild_step1\r\n");
+    }
+  }
+  else
+  {
+    pQryData[9] = 0;
+    g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x69u, pQryData, 20);
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRankInGuildStep4(...) : Push qry_case_rank_rankinguild_step5");
+  }
+}
+
+void CUserRankingProcess::CompleteRankInGuildStep5(unsigned __int8 byRet, char *szData)
+{
+  char *pQryData = szData;
+  if (byRet || pQryData[9])
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRankInGuildStep5(...) : %s Date byRet(%u) byProcRet(%u) Guild(%u) qry_case_rank_rankinguild_step5 Fail!",
+      pQryData,
+      byRet,
+      pQryData[9],
+      *reinterpret_cast<unsigned int *>(pQryData + 12));
+
+    unsigned int nextSerial = m_kGuildRanking.GetNextGuildSerial();
+    *reinterpret_cast<unsigned int *>(pQryData + 12) = nextSerial;
+    if (*reinterpret_cast<unsigned int *>(pQryData + 12) == static_cast<unsigned int>(-1))
+    {
+      m_eState = PS_RANK_COMPLETE;
+      m_pkLogger->WriteString(
+        "CUserRankingProcess::CompleteRankInGuildStep5(...) : m_eState = PS_RANK_COMPLETE\r\n");
+    }
+    else
+    {
+      pQryData[9] = 0;
+      g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x65u, pQryData, 20);
+      m_pkLogger->WriteString(
+        "CUserRankingProcess::CompleteRankInGuildStep5(...) : Push qry_case_rank_rankinguild_step1\r\n");
+    }
+  }
+  else
+  {
+    pQryData[9] = 0;
+    g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x6Au, pQryData, 20);
+    m_pkLogger->WriteString(
+      "CUserRankingProcess::CompleteRankInGuildStep5(...) : Push qry_case_rank_rankinguild_step6");
+  }
+}
+
+void CUserRankingProcess::CompleteRankInGuildStep6(unsigned __int8 byRet, char *szData)
+{
+  char *pQryData = szData;
+  if (byRet || pQryData[9])
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRankInGuildStep6(...) : %s Date byRet(%u) byProcRet(%u) Guild(%u) qry_case_rank_rankinguild_step6 Fail!",
+      pQryData,
+      byRet,
+      pQryData[9],
+      *reinterpret_cast<unsigned int *>(pQryData + 12));
+  }
+  else
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRankInGuildStep6(...) : SUCCESS : Update_RankInGuild Serial(%u)",
+      *reinterpret_cast<unsigned int *>(pQryData + 12));
+  }
+
+  unsigned int nextSerial = m_kGuildRanking.GetNextGuildSerial();
+  *reinterpret_cast<unsigned int *>(pQryData + 12) = nextSerial;
+  if (*reinterpret_cast<unsigned int *>(pQryData + 12) == static_cast<unsigned int>(-1))
+  {
+    m_eState = PS_RANK_COMPLETE;
+    m_pkLogger->WriteString(
+      "CUserRankingProcess::CompleteRankInGuildStep6(...) : m_eState = PS_RANK_COMPLETE\r\n");
+  }
+  else
+  {
+    pQryData[9] = 0;
+    g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x65u, pQryData, 20);
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRankInGuildStep6(...) : Push qry_case_rank_guildrank_step1 Serial(%u)\r\n",
+      *reinterpret_cast<unsigned int *>(pQryData + 12));
+  }
+}
+
+void CUserRankingProcess::CompleteRankUpdateAndSelectGarde(unsigned __int8 byRet, char *szData)
+{
+  char *pQryData = szData;
+  if (byRet || pQryData[9])
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRankUpdateAndSelectGarde(...) : %s Date byRet(%u) byProcRet(%u) Guild(%u) qry_case_rank_update_and_select_garde Fail!",
+      pQryData,
+      byRet,
+      pQryData[9],
+      *reinterpret_cast<unsigned int *>(pQryData + 12));
+    m_eState = PS_FAILED_WAIT;
+  }
+  else
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::CompleteRankUpdateAndSelectGarde(...) : SUCCESS : Update_GuildGrade");
+    m_eState = PS_APPLY_GUILD_GRADE;
+  }
 }

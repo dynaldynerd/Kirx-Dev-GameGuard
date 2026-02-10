@@ -12,6 +12,10 @@ public:
   bool DatafileInit();
   bool SetPotionDataName();
   bool InsertRenamePotion(CRFWorldDatabase *pkWorldDB, char *pData);
+  bool IsPotionDelayUseIndex(unsigned int nIndex);
+  void Complete_RenameChar_DB_Select(unsigned __int8 byRet, char *p);
+  void Complete_RenameChar_DB_Update(unsigned __int8 byRet, char *p);
+  void PushRenamePotionDBLog(char *pInfo);
 
   struct __cppobj PotionInnerData
   {

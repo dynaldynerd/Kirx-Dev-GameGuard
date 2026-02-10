@@ -17,7 +17,20 @@ public:
   void CleanUp();
   bool LoadXML(TiXmlElement *pkElement, CLogFile *kLogger);
   unsigned int GetID();
+  unsigned __int64 GetMaxClassCnt();
   unsigned long long GetSize();
+  bool GetGroupID(
+    unsigned __int8 byTableCode,
+    unsigned __int16 wItemTableIndex,
+    unsigned __int8 *byDivision,
+    unsigned __int8 *byClass);
+  bool GetGroupID(
+    unsigned __int8 byTableCode,
+    unsigned __int16 wItemTableIndex,
+    unsigned __int8 *byDivision,
+    unsigned __int8 *byClass,
+    unsigned __int8 *bySubClass,
+    unsigned int *dwListIndex);
   bool IsExistSortTypeID(unsigned int dwID);
   bool IsValidID(unsigned int dwID);
 

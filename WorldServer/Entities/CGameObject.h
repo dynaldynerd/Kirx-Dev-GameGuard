@@ -194,6 +194,7 @@ public:
   virtual __int64 GetMaxHP();
   virtual void SendMsg_FixPosition(int n);
   virtual void SendMsg_RealMovePoint(int n);
+  virtual void SendMsg_SetHPInform();
   virtual void SetAttackPart(int nAttactPart);
   virtual __int64 SetDamage(
     int nDam,

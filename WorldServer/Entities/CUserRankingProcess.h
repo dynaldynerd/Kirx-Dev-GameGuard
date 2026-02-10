@@ -22,6 +22,9 @@ public:
   unsigned int GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth);
   unsigned __int8 GetBossType(unsigned __int8 byRaceCode, unsigned int dwSerial);
   char IsRaceViceBoss(unsigned __int8 byRace, unsigned int dwSerial);
+  void SetUpdateRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth, unsigned int dwSerial);
+  void FlipPvPRankTop();
+  void IncreaseVesion();
   void PvpRankDataPacking(CLogFile *pkLogger);
   _PVP_RANK_DATA *GetTomorrowPvpRankData(unsigned __int8 byRace, unsigned __int8 byNth);
   unsigned __int8 UpdateRaceRankStep1(char *szData);
@@ -107,6 +110,10 @@ public:
   unsigned int GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth);
   unsigned __int8 GetBossType(unsigned __int8 byRace, unsigned int dwSerial);
   bool IsRaceViceBoss(unsigned __int8 byRace, unsigned int dwSerial);
+  void SetUpdateRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth, unsigned int dwSerial);
+  void FlipPvPRankTop();
+  void PvpRankDataPacking();
+  void IncreaseVesion();
 
   void ProcWait();
   void ProcSaveTargetList();

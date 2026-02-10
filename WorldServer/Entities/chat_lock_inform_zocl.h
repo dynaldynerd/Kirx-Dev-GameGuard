@@ -4,12 +4,12 @@
 
 struct _chat_lock_inform_zocl
 {
-  unsigned __int8 bLock;
+  bool bLock;
 
-  unsigned __int16 size() const;
+  __int64 size() const;
 };
 
-inline unsigned __int16 _chat_lock_inform_zocl::size() const
+inline __int64 _chat_lock_inform_zocl::size() const
 {
   return 1;
 }

@@ -4,12 +4,14 @@
 #include "CGuildList.h"
 
 struct _guild_member_refresh_data;
+class CMgrGuildHistory;
 
 /* 1717 */
 class __cppobj __declspec(align(8)) CGuild
 {
 public:
   static CGuildList s_GuildList;
+  static CMgrGuildHistory s_MgrHistory;
 
   class MakeBuddyPacket
   {
@@ -46,6 +48,8 @@ public:
   void SendMsg_VoteComplete(bool bPass);
   void InitVote();
   void MakeDownMemberPacket();
+  void MakeQueryInfoPacket();
+  void SendMsg_GuildInfoUpdateInform();
   void SendMsg_AddJoinApplier(_guild_applier_info *p);
   void SendMsg_DelJoinApplier(_guild_applier_info *p, unsigned __int8 byDelCode);
   void MakeDownApplierPacket();
@@ -103,6 +107,13 @@ public:
     unsigned __int8 *pbyDate);
   long double GetTotalDalant();
   long double GetTotalGold();
+  _guild_member_info *GetMemberFromSerial(unsigned int dwMemberSerial);
+  unsigned int GetGuildMasterSerial();
+  void SendMsg_ManageGuildCommitteeResult(char bAppoint, char *pwszCommitteeName);
+  void SendMsg_MasterElectPossible(char bPossible);
+  void Complete_DB_Update_Committee(char *pData);
+  void CompleteSelectMasterLastConn(unsigned int dwLastConnTime);
+  unsigned int GetMemberNum();
 
 public:
   int m_nIndex;
@@ -148,4 +159,5 @@ public:
 };
 
 CGuild *GetGuildDataFromSerial(CGuild *pData, int nNum, unsigned int dwSerial);
+CGuild *GetGuildPtrFromName(CGuild *pData, int nNum, char *pwszGuildName);
 

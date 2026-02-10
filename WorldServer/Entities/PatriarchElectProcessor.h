@@ -4,14 +4,29 @@
 #include "CLogFile.h"
 #include "ElectProcessor.h"
 
+struct _DB_QRY_SYN_DATA;
+
 class __cppobj PatriarchElectProcessor
 {
 public:
   static PatriarchElectProcessor *Instance();
   bool Initialize();
+  unsigned int GetElectSerial();
+  ElectProcessor::ProcessorType GetProcessorType();
   unsigned int GetCurrPatriarchElectSerial();
   char Doit(Cmd eCmd, CPlayer *pOne, char *pdata);
   void SendMsg_ResultCode(unsigned int n, unsigned __int8 byCode);
+  __int64 Insert_Elect();
+  __int64 Update_Elect();
+  char LoadElectState();
+  __int64 Request_Refund(char *pData);
+  __int64 Insert_PatrirchItemChargeRefund(char *pData);
+  void CompleteInsertElect();
+  void CompleteSelectElect();
+  void CompleteRequestRefund(_DB_QRY_SYN_DATA *pData);
+  void CompleteItemChargeRefund(_DB_QRY_SYN_DATA *pData);
+  void CompleteInsertPatriarch(_DB_QRY_SYN_DATA *pData);
+  void CompleteCheckInvalidChar(unsigned __int8 byProc);
 
   unsigned int m_dwNonvoteCnt[3];
   unsigned int m_dwTotalVoteCnt[3];

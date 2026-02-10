@@ -104,6 +104,7 @@ public:
   unsigned __int8 GetLoopCount();
   void Set_FromINIToStruct(_golden_box_item_ini *pIni);
   void Set_ToStruct();
+  void BoxItemDataCopy();
 
   unsigned __int8 Get_Event_Status();
 

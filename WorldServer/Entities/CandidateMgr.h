@@ -6,9 +6,6 @@
 class __cppobj CandidateMgr
 {
 public:
-  static CandidateMgr *Instance();
-  bool Initialize(int maxCount);
-
   struct __cppobj _candidate_info
   {
     enum Status : int
@@ -56,6 +53,24 @@ public:
     _candidate_info();
     void _Init();
   };
+
+  static CandidateMgr *Instance();
+  bool Initialize(int maxCount);
+  _candidate_info *GetCandidateBySerial(unsigned __int8 byRace, unsigned int dwASerial);
+  _candidate_info *GetPatriarchGroup(unsigned __int8 byRace, _candidate_info::ClassType eType);
+  _candidate_info *GetPatriarchGroupBySerial(unsigned __int8 byRace, unsigned int dwASerial);
+  const _candidate_info *GetCandidate_2st(unsigned __int8 byRace, unsigned int nIdx);
+  void ChangeState_1to2();
+  __int64 Update_RegistCandidate_2st();
+  __int64 Update_Score();
+  __int64 Update_ClassType();
+  __int64 Insert_Candidate(char *p);
+  __int64 Update_Refund();
+  __int64 Update_DischargePatriarch(char *p);
+  __int64 CheckDBValidCharacter(unsigned __int8 byProc);
+  __int64 Update_VoteTime(unsigned int dwSerial);
+  void CompleteInsertCandidate(unsigned __int8 byRet, char *p);
+  __int64 __SortByPvpPoint();
 
   int m_nMaxNum;
   _candidate_info *m_kCandidate[3];

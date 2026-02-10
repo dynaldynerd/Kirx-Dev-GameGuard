@@ -216,3 +216,60 @@ bool CUnmannedTraderDivisionInfo::IsValidID(unsigned int dwID)
   }
   return true;
 }
+
+unsigned __int64 CUnmannedTraderDivisionInfo::GetMaxClassCnt()
+{
+  return this->m_vecClass.size();
+}
+
+bool CUnmannedTraderDivisionInfo::GetGroupID(
+  unsigned __int8 byTableCode,
+  unsigned __int16 wItemTableIndex,
+  unsigned __int8 *byDivision,
+  unsigned __int8 *byClass)
+{
+  if (this->m_vecClass.empty())
+  {
+    return false;
+  }
+
+  for (CUnmannedTraderClassInfo *info : this->m_vecClass)
+  {
+    if (info && info->GetGroupID(byTableCode, wItemTableIndex, byClass))
+    {
+      *byDivision = static_cast<unsigned __int8>(this->m_dwID);
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool CUnmannedTraderDivisionInfo::GetGroupID(
+  unsigned __int8 byTableCode,
+  unsigned __int16 wItemTableIndex,
+  unsigned __int8 *byDivision,
+  unsigned __int8 *byClass,
+  unsigned __int8 *bySubClass,
+  unsigned int *dwListIndex)
+{
+  if (this->m_vecClass.empty())
+  {
+    *dwListIndex = 0;
+    return false;
+  }
+
+  unsigned int classIndex = 0;
+  for (CUnmannedTraderClassInfo *info : this->m_vecClass)
+  {
+    if (info && info->GetGroupID(byTableCode, wItemTableIndex, byClass, bySubClass))
+    {
+      *byDivision = static_cast<unsigned __int8>(this->m_dwID);
+      *dwListIndex = classIndex;
+      return true;
+    }
+    ++classIndex;
+  }
+
+  return false;
+}

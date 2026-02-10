@@ -12,6 +12,7 @@
 #include "CRFWorldDatabase.h"
 #include "DqsDbStructs.h"
 #include "GlobalObjects.h"
+#include "qry_case_cash_limsale.h"
 #include "WorldServerUtil.h"
 
 namespace
@@ -269,8 +270,8 @@ char CMainThread::db_Insert_guild(
   }
 
   CCheckSumGuildData checksum(*dwGuildSerial);
-  CCheckSumGuildData::Encode(&checksum, 0.0, 0.0);
-  if (!CCheckSumGuildData::Insert(&checksum, m_pWorldDB))
+  checksum.Encode(0.0, 0.0);
+  if (!checksum.Insert(m_pWorldDB))
   {
     return 24;
   }
@@ -358,8 +359,8 @@ unsigned __int8 CMainThread::db_input_guild_money(
   *dCurTotalGold = guildData.dGold;
 
   CCheckSumGuildData checksum(dwCharSerial);
-  CCheckSumGuildData::Encode(&checksum, guildData.dDalant, guildData.dGold);
-  if (!CCheckSumGuildData::Update(&checksum, m_pWorldDB))
+  checksum.Encode(guildData.dDalant, guildData.dGold);
+  if (!checksum.Update(m_pWorldDB))
   {
     return 24;
   }
@@ -428,8 +429,8 @@ unsigned __int8 CMainThread::db_output_guild_money(
   }
 
   CCheckSumGuildData checksum(dwCharSerial);
-  CCheckSumGuildData::Encode(&checksum, *dCurTotalDalant, *dCurTotalGold);
-  if (!CCheckSumGuildData::Update(&checksum, m_pWorldDB))
+  checksum.Encode(*dCurTotalDalant, *dCurTotalGold);
+  if (!checksum.Update(m_pWorldDB))
   {
     m_pWorldDB->RollbackTransaction();
     m_pWorldDB->SetAutoCommitMode(true);
@@ -503,8 +504,8 @@ unsigned __int8 CMainThread::db_buy_emblem(
   }
 
   CCheckSumGuildData checksum(dwGuildSerial);
-  CCheckSumGuildData::Encode(&checksum, *dCurTotalDalant, *dCurTotalGold);
-  if (!CCheckSumGuildData::Update(&checksum, m_pWorldDB))
+  checksum.Encode(*dCurTotalDalant, *dCurTotalGold);
+  if (!checksum.Update(m_pWorldDB))
   {
     m_pWorldDB->RollbackTransaction();
     m_pWorldDB->SetAutoCommitMode(true);
@@ -814,8 +815,8 @@ unsigned __int8 CMainThread::db_input_guild_money_atradetax(
   *dCurTotalGold = guildData.dGold;
 
   CCheckSumGuildData checksum(dwCharSerial);
-  CCheckSumGuildData::Encode(&checksum, guildData.dDalant, guildData.dGold);
-  if (!CCheckSumGuildData::Update(&checksum, m_pWorldDB))
+  checksum.Encode(guildData.dDalant, guildData.dGold);
+  if (!checksum.Update(m_pWorldDB))
   {
     return 24;
   }
@@ -906,8 +907,8 @@ unsigned __int8 CMainThread::check_min_max_guild_money(
     }
 
     CCheckSumGuildData checksum(dwGuildSerial);
-    CCheckSumGuildData::Encode(&checksum, guildData.dDalant, 0.0);
-    if (!CCheckSumGuildData::Update(&checksum, m_pWorldDB))
+    checksum.Encode(guildData.dDalant, 0.0);
+    if (!checksum.Update(m_pWorldDB))
     {
       m_pWorldDB->RollbackTransaction();
       m_pWorldDB->SetAutoCommitMode(true);
@@ -1021,25 +1022,24 @@ unsigned __int8 CMainThread::_db_Load_PatriarchComm(char *pData)
     }
     for (unsigned int j = 0; j < outList.dwCount; ++j)
     {
-      unsigned int currentDalant = CPlayerDB::GetDalant(&player->m_Param);
+      unsigned int currentDalant = player->m_Param.GetDalant();
       if (!CanAddMoneyForMaxLimMoney(outList.List[j].dwDalant, currentDalant))
       {
-        CPlayer::SendMsg_InformTaxIncome(player, 1u, outList.List[j].dwDalant, outList.List[j].pszDepDate);
+        player->SendMsg_InformTaxIncome(1u, outList.List[j].dwDalant, outList.List[j].pszDepDate);
         return 0;
       }
-      CPlayer::AlterDalant(player, static_cast<double>(static_cast<int>(outList.List[j].dwDalant)));
+      player->AlterDalant(static_cast<double>(static_cast<int>(outList.List[j].dwDalant)));
       if (!m_pWorldDB->Delete_PatriarchComm(*reinterpret_cast<unsigned int *>(pData), outList.List[j].pszDepDate))
       {
-        CPlayer::AlterDalant(player, -static_cast<double>(outList.List[j].dwDalant));
+        player->AlterDalant(-static_cast<double>(outList.List[j].dwDalant));
         return 0;
       }
-      CPlayer::SendMsg_ExchangeMoneyResult(player, 0);
-      CPlayer::SendMsg_InformTaxIncome(player, 0, outList.List[j].dwDalant, outList.List[j].pszDepDate);
-      unsigned int leftDalant = CPlayerDB::GetDalant(&player->m_Param);
-      char *charName = CPlayerDB::GetCharNameW(&player->m_Param);
-      CMgrAvatorItemHistory::patriarch_push_money(
-        &CPlayer::s_MgrItemHistory,
-        charName,
+      player->SendMsg_ExchangeMoneyResult(0);
+      player->SendMsg_InformTaxIncome(0, outList.List[j].dwDalant, outList.List[j].pszDepDate);
+      unsigned int leftDalant = player->m_Param.GetDalant();
+      const char *charName = player->m_Param.GetCharNameW();
+      CPlayer::s_MgrItemHistory.patriarch_push_money(
+        const_cast<char *>(charName),
         outList.List[j].dwDalant,
         leftDalant,
         player->m_szItemHistoryFileName);
@@ -1132,7 +1132,7 @@ unsigned __int8 CMainThread::_db_Update_Set_Limit_Run()
   char out[84]{};
 
   CCryptor *cryptor = CTSingleton<CCryptor>::Instance();
-  if (!CCryptor::MakeHash(cryptor, g_cbHashVerify, 0x20uLL, hash, 0x20uLL))
+  if (!cryptor->MakeHash(g_cbHashVerify, 0x20uLL, hash, 0x20uLL))
   {
     return 82;
   }
@@ -1184,7 +1184,7 @@ unsigned __int8 CMainThread::_db_Update_GoldBoxItem(
   for (int j = 0;; ++j)
   {
     CGoldenBoxItemMgr *mgr = CGoldenBoxItemMgr::Instance();
-    unsigned __int8 loopCount = CGoldenBoxItemMgr::GetLoopCount(mgr);
+    unsigned __int8 loopCount = mgr->GetLoopCount();
     if (j >= loopCount)
     {
       break;
@@ -1376,7 +1376,11 @@ unsigned __int8 CMainThread::_db_Update_Data_For_Post_Send(char *pSheet)
   if (m_pWorldDB->Update_Gold(serial[0], serial[1]))
   {
     char query[2048]{};
-    if (CMainThread::_db_Update_Inven(this, serial[0], reinterpret_cast<_AVATOR_DATA *>(serial[2]), reinterpret_cast<_AVATOR_DATA *>(serial[3]), query))
+    if (_db_Update_Inven(
+          serial[0],
+          reinterpret_cast<_AVATOR_DATA *>(serial[2]),
+          reinterpret_cast<_AVATOR_DATA *>(serial[3]),
+          query))
     {
       if (m_pWorldDB->ExecUpdateQuery(query, true))
       {
@@ -1414,7 +1418,7 @@ unsigned __int8 CMainThread::_db_Update_Data_For_Trade(char *pSheet)
     }
 
     char query[2048]{};
-    if (!CMainThread::_db_Update_Inven(this, serial, newData, oldData, query))
+    if (!_db_Update_Inven(serial, newData, oldData, query))
     {
       m_logSystemError.Write( "_db_Update_Inven..failed ..", serial);
       return 24;

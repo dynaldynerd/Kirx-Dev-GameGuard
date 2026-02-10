@@ -13,6 +13,7 @@ public:
   bool DataCheck();
   int CalcScheduleCursor(int nHour, int nMin);
   void ChangeSchCursor(_WorldSchedule_fld *pFld, int nPassMin);
+  void PassOneStep();
 
   bool m_bOper;
   CRecordData m_tblSch;

@@ -17,6 +17,18 @@ public:
   void Log(const char *fmt, ...);
   bool IsExistID(unsigned int dwID);
   bool GetIDInfo(std::vector<std::pair<unsigned long, unsigned long>> *vecInfo);
+  bool GetGroupID(
+    unsigned __int8 byTableCode,
+    unsigned __int16 wItemTableIndex,
+    unsigned __int8 *byDivision,
+    unsigned __int8 *byClass);
+  bool GetGroupID(
+    unsigned __int8 byTableCode,
+    unsigned __int16 wItemTableIndex,
+    unsigned __int8 *byDivision,
+    unsigned __int8 *byClass,
+    unsigned __int8 *bySubClass,
+    unsigned int *dwListIndex);
   bool LoadXML(const char *szFileName);
 
   CLogFile *m_pkLogger;

@@ -8,6 +8,20 @@
 class __cppobj __declspec(align(8)) CMgrGuildHistory
 {
 public:
+  CMgrGuildHistory();
+  ~CMgrGuildHistory();
+
+  static void IOThread(void *pv);
+  void WriteFile(const char *pszFileName, const char *pszLog);
+  void push_money(
+    const char *pszIOerName,
+    unsigned int dwIOerSerial,
+    int nPushDalant,
+    int nPushGold,
+    long double dTotalDalant,
+    long double dTotalGold,
+    const char *pszFileName);
+
   struct __LOG_DATA
   {
     char szFileName[128];

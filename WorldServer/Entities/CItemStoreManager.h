@@ -48,7 +48,19 @@ public:
   unsigned __int8 UpdateDisableInstanceStore(char *pData);
   void CompleteStoreLimitItem();
   void CompleteDisableInstanceStore(char *pData);
-  void Log(char *fmt, ...);
+  void Log(const char *fmt, ...);
+
+  void MakeLimitItemUpdateQuery(
+    unsigned int dwSerial,
+    unsigned __int8 byStoreType,
+    int nTypeSerial,
+    unsigned int dwStoreIndex,
+    _limit_item_db_data *pItemData,
+    unsigned __int64 dwLimitInitTime,
+    char *pszQuery,
+    int nBufSize);
+  CMapItemStoreList *GetMapItemStoreListBySerial(int nSerial);
+  CMapItemStoreList *GetInstanceStoreListBySerial(int nSerial);
 
   CMapItemStoreList *GetMapItemStoreListByNum(int nMapNum);
   CMapItemStoreList *GetMapItemStoreListBySerial(int nSerial);

@@ -961,6 +961,124 @@ void CMgrAvatorItemHistory::have_item_close(
   WriteFile(pszFileName, sData);
 }
 
+void CMgrAvatorItemHistory::take_ground_item(
+  int /*n*/,
+  unsigned __int8 byItemBoxCode,
+  _STORAGE_LIST::_db_con *pItem,
+  const char *pszThrowerName,
+  unsigned int dwThrowerSerial,
+  const char *pszThrowerID,
+  unsigned __int16 wMonRecIndex,
+  const char *pMapCode,
+  float *pfPos,
+  const char *pszFileName)
+{
+  _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
+
+  if (dwThrowerSerial == static_cast<unsigned int>(-1))
+  {
+    char destination[48]{};
+    if (byItemBoxCode || wMonRecIndex == 0xFFFF)
+    {
+      switch (byItemBoxCode)
+      {
+        case 2:
+          sprintf(destination, "cheat");
+          break;
+        case 3:
+          sprintf(destination, "reward");
+          break;
+        case 4:
+          sprintf(destination, "crystal");
+          break;
+        case 6:
+          sprintf(destination, "holykeeper");
+          break;
+        default:
+          sprintf(destination, "loot");
+          break;
+      }
+    }
+    else
+    {
+      _base_fld *monRecord = g_Main.m_tblMonster.GetRecord(wMonRecIndex);
+      strcpy_0(destination, monRecord->m_strCode);
+    }
+
+    const int posX = static_cast<int>(pfPos[0]);
+    const int posY = static_cast<int>(pfPos[1]);
+    const int posZ = static_cast<int>(pfPos[2]);
+    const char *upgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, pItem->m_dwLv);
+
+    sprintf(
+      sData,
+      "PICK UP: %s_%u_@%s[%I64u] mob(%s) \t{POS:%s (%d, %d, %d)} [%s %s]\r\n",
+      record->m_strCode,
+      pItem->m_dwDur,
+      upgradeInfo,
+      pItem->m_lnUID,
+      destination,
+      pMapCode,
+      posX,
+      posY,
+      posZ,
+      m_szCurDate,
+      m_szCurTime);
+  }
+  else
+  {
+    const int posX = static_cast<int>(pfPos[0]);
+    const int posY = static_cast<int>(pfPos[1]);
+    const int posZ = static_cast<int>(pfPos[2]);
+    const char *upgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, pItem->m_dwLv);
+
+    sprintf(
+      sData,
+      "PICK UP: %s_%u_@%s[%I64u] twr(%s:%d id:%s) \t{POS:%s (%d, %d, %d)} [%s %s]\r\n",
+      record->m_strCode,
+      pItem->m_dwDur,
+      upgradeInfo,
+      pItem->m_lnUID,
+      pszThrowerName,
+      dwThrowerSerial,
+      pszThrowerID,
+      pMapCode,
+      posX,
+      posY,
+      posZ,
+      m_szCurDate,
+      m_szCurTime);
+  }
+
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::trans_ground_item(
+  _STORAGE_LIST::_db_con *pItem,
+  const char *pszTakerName,
+  unsigned int dwTakerSerial,
+  const char *pszTakerID,
+  const char *pszFileName)
+{
+  _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
+  const char *upgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, pItem->m_dwLv);
+
+  sprintf(
+    sData,
+    "TRANS: %s_%u_@%s[%I64u] taker(%s:%d id:%s) [%s %s]\r\n",
+    record->m_strCode,
+    pItem->m_dwDur,
+    upgradeInfo,
+    pItem->m_lnUID,
+    pszTakerName,
+    dwTakerSerial,
+    pszTakerID,
+    m_szCurDate,
+    m_szCurTime);
+
+  WriteFile(pszFileName, sData);
+}
+
 void CMgrAvatorItemHistory::post_receive(CPostData *pPost, char *pFileName)
 {
   char sender[17]{};
@@ -1174,6 +1292,13 @@ void CMgrAvatorItemHistory::patriarch_push_money(
     dwLeftDalant,
     m_szCurDate,
     m_szCurTime);
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::raceboss_giveback(unsigned int dwSerial, unsigned int dwDalant, char *pszFileName)
+{
+  const unsigned int korTime = GetKorLocalTime();
+  sprintf(sData, "[RACE BOSS]giveback: Avator Serial:%d\t$D:%u\tTime:%d\n", dwSerial, dwDalant, korTime);
   WriteFile(pszFileName, sData);
 }
 
@@ -1459,6 +1584,106 @@ void CMgrAvatorItemHistory::WriteFile(const char *pszFileName, const char *pszLo
     const_cast<char *>(pszFileName),
     logLen,
     const_cast<char *>(pszLog));
+}
+
+void CMgrAvatorItemHistory::char_copy(int n, char *pszDstName, unsigned int dwDstSerial, char *pszFileName)
+{
+  (void)n;
+  sprintf(sData, "CHAR COPY: dst(%s:%d) [%s %s]\r\n", pszDstName, dwDstSerial, m_szCurDate, m_szCurTime);
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::cheat_alter_money(
+  int n,
+  unsigned int dwNewDalant,
+  unsigned int dwNewGold,
+  char *pszFileName)
+{
+  (void)n;
+  sprintf(
+    sData,
+    "CHEAT(MONEY): $D:%u $G:%u [%s %s]\r\n",
+    dwNewDalant,
+    dwNewGold,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::cheat_add_item(
+  int n,
+  _STORAGE_LIST::_db_con *pItem,
+  unsigned __int8 byAddNum,
+  char *pszFileName)
+{
+  (void)n;
+
+  sData[0] = 0;
+  sprintf(sBuf, "CHEAT(ITEM+): num:%d [%s %s]\r\n", byAddNum, m_szCurDate, m_szCurTime);
+  strcat_0(sData, sBuf);
+  for (int index = 0; index < byAddNum; ++index)
+  {
+    if (IsProtectItem(pItem[index].m_byTableCode))
+    {
+      _base_fld *record = g_Main.m_tblItemData[pItem[index].m_byTableCode].GetRecord(pItem[index].m_wItemIndex);
+      const char *upgInfo = DisplayItemUpgInfo(pItem[index].m_byTableCode, pItem[index].m_dwLv);
+      sprintf(
+        sBuf,
+        "\t+ %s_%u_@%s[%I64u]\r\n",
+        record->m_strCode,
+        pItem[index].m_dwDur,
+        upgInfo,
+        pItem[index].m_lnUID);
+      strcat_0(sData, sBuf);
+    }
+  }
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::cheat_del_item(
+  int n,
+  _STORAGE_LIST::_db_con *pItem,
+  unsigned __int8 byDelNum,
+  char *pszFileName)
+{
+  (void)n;
+
+  sData[0] = 0;
+  sprintf(sBuf, "CHEAT(ITEM-): num:%d [%s %s]\r\n", byDelNum, m_szCurDate, m_szCurTime);
+  strcat_0(sData, sBuf);
+  for (int index = 0; index < byDelNum; ++index)
+  {
+    if (IsProtectItem(pItem[index].m_byTableCode))
+    {
+      _base_fld *record = g_Main.m_tblItemData[pItem[index].m_byTableCode].GetRecord(pItem[index].m_wItemIndex);
+      const char *upgInfo = DisplayItemUpgInfo(pItem[index].m_byTableCode, pItem[index].m_dwLv);
+      sprintf(
+        sBuf,
+        "\t- %s_%u_@%s[%I64u]\r\n",
+        record->m_strCode,
+        pItem[index].m_dwDur,
+        upgInfo,
+        pItem[index].m_lnUID);
+      strcat_0(sData, sBuf);
+    }
+  }
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::delete_npc_quest_item(int n, _STORAGE_LIST::_db_con *pItem, char *pszFileName)
+{
+  (void)n;
+
+  _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
+  sprintf(
+    sData,
+    "DELETE NPC QUEST ITEM : %s_%u_[%I64u] [%s %s]\r\n",
+    record->m_strCode,
+    pItem->m_dwDur,
+    pItem->m_lnUID,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pszFileName, sData);
 }
 
 void CMgrAvatorItemHistory::consume_del_item(int n, _STORAGE_LIST::_db_con *pItem, const char *pszFileName)
@@ -1971,4 +2196,214 @@ void CMgrAvatorItemHistory::personal_amine_uninstall(
   }
 
   WriteFile(szFileName, s_personal_amine_log);
+}
+
+void CMgrAvatorItemHistory::reg_auto_trade(
+  int n,
+  unsigned int dwRegistSerial,
+  _STORAGE_LIST::_db_con *pRegItem,
+  unsigned int dwPrice,
+  unsigned int dwfee,
+  unsigned int dwLeftDalant,
+  char *pszFileName)
+{
+  _base_fld *record = g_Main.m_tblItemData[pRegItem->m_byTableCode].GetRecord(pRegItem->m_wItemIndex);
+  const char *upgradeInfo = DisplayItemUpgInfo(pRegItem->m_byTableCode, pRegItem->m_dwLv);
+
+  sprintf(
+    sData,
+    "REG_AUTO_TRADE: reg(%u) %s_%u_@%s[%I64u] pr(D:%u), tax(D:%u) $D:%u [%s %s]\r\n",
+    dwRegistSerial,
+    record->m_strCode,
+    pRegItem->m_dwDur,
+    upgradeInfo,
+    pRegItem->m_lnUID,
+    dwPrice,
+    dwfee,
+    dwLeftDalant,
+    m_szCurDate,
+    m_szCurTime);
+
+  WriteFile(pszFileName, sData);
+  (void)n;
+}
+
+void CMgrAvatorItemHistory::self_cancel_auto_trade(
+  int n,
+  unsigned int dwRegistSerial,
+  _STORAGE_LIST::_db_con *pRegItem,
+  char *pszFileName)
+{
+  _base_fld *record = g_Main.m_tblItemData[pRegItem->m_byTableCode].GetRecord(pRegItem->m_wItemIndex);
+  const char *upgradeInfo = DisplayItemUpgInfo(pRegItem->m_byTableCode, pRegItem->m_dwLv);
+
+  sprintf(
+    sData,
+    "CANCEL_AUTO_TRADE: reg(%u) %s_%u_@%s[%I64u] [%s %s]\r\n",
+    dwRegistSerial,
+    record->m_strCode,
+    pRegItem->m_dwDur,
+    upgradeInfo,
+    pRegItem->m_lnUID,
+    m_szCurDate,
+    m_szCurTime);
+
+  WriteFile(pszFileName, sData);
+  (void)n;
+}
+
+void CMgrAvatorItemHistory::time_out_cancel_auto_trade(
+  int n,
+  unsigned int dwRegistSerial,
+  _STORAGE_LIST::_db_con *pRegItem,
+  char *pszFileName)
+{
+  _base_fld *record = g_Main.m_tblItemData[pRegItem->m_byTableCode].GetRecord(pRegItem->m_wItemIndex);
+  const char *upgradeInfo = DisplayItemUpgInfo(pRegItem->m_byTableCode, pRegItem->m_dwLv);
+
+  sprintf(
+    sData,
+    "TIMEOUT_AUTO_TRADE: reg(%u) %s_%u_@%s[%I64u] [%s %s]\r\n",
+    dwRegistSerial,
+    record->m_strCode,
+    pRegItem->m_dwDur,
+    upgradeInfo,
+    pRegItem->m_lnUID,
+    m_szCurDate,
+    m_szCurTime);
+
+  WriteFile(pszFileName, sData);
+  (void)n;
+}
+
+void CMgrAvatorItemHistory::price_auto_trade(
+  int n,
+  unsigned int dwRegistSerial,
+  _STORAGE_LIST::_db_con *pRegItem,
+  unsigned int dwTax,
+  unsigned int dwOldPrice,
+  unsigned int dwNewPrice,
+  char *pszFileName)
+{
+  _base_fld *record = g_Main.m_tblItemData[pRegItem->m_byTableCode].GetRecord(pRegItem->m_wItemIndex);
+  const char *upgradeInfo = DisplayItemUpgInfo(pRegItem->m_byTableCode, pRegItem->m_dwLv);
+
+  sprintf(
+    sData,
+    "REPRICE_AUTO_TRADE: reg(%u) %s_%u_@%s[%I64u] tax(%u) pr(D:%u -> %u) [%s %s]\r\n",
+    dwRegistSerial,
+    record->m_strCode,
+    pRegItem->m_dwDur,
+    upgradeInfo,
+    pRegItem->m_lnUID,
+    dwTax,
+    dwOldPrice,
+    dwNewPrice,
+    m_szCurDate,
+    m_szCurTime);
+
+  WriteFile(pszFileName, sData);
+  (void)n;
+}
+
+void CMgrAvatorItemHistory::re_reg_auto_trade(
+  int n,
+  unsigned int dwRegistSerial,
+  _STORAGE_LIST::_db_con *pRegItem,
+  unsigned int dwPrice,
+  unsigned int dwfee,
+  unsigned int dwLeftDalant,
+  char *pszFileName)
+{
+  _base_fld *record = g_Main.m_tblItemData[pRegItem->m_byTableCode].GetRecord(pRegItem->m_wItemIndex);
+  const char *upgradeInfo = DisplayItemUpgInfo(pRegItem->m_byTableCode, pRegItem->m_dwLv);
+
+  sprintf(
+    sData,
+    "RE_REG_AUTO_TRADE: re_reg(%u) %s_%u_@%s[%I64u] pr(D:%u), tax(D:%u) $D:%u [%s %s]\r\n",
+    dwRegistSerial,
+    record->m_strCode,
+    pRegItem->m_dwDur,
+    upgradeInfo,
+    pRegItem->m_lnUID,
+    dwPrice,
+    dwfee,
+    dwLeftDalant,
+    m_szCurDate,
+    m_szCurTime);
+
+  WriteFile(pszFileName, sData);
+  (void)n;
+}
+
+void CMgrAvatorItemHistory::auto_trade_sell(
+  const char *szBuyerName,
+  unsigned int dwBuyerSerial,
+  const char *szBuyerID,
+  unsigned int dwRegistSerial,
+  _STORAGE_LIST::_db_con *pItem,
+  unsigned int dwPrice,
+  unsigned int dwTax,
+  unsigned int dwLeftDalant,
+  unsigned int dwLeftGold,
+  char *pszFileName)
+{
+  sData[0] = 0;
+  sprintf_s(
+    sBuf,
+    sizeof(sBuf),
+    "AUTO TRADE(SELL): reg(%u) buyer(%s:%d id:%s) recv(D:%u) tax(%u) $D:%u $G:%u [%s %s]\r\n",
+    dwRegistSerial,
+    szBuyerName,
+    dwBuyerSerial,
+    szBuyerID,
+    dwPrice,
+    dwTax,
+    dwLeftDalant,
+    dwLeftGold,
+    m_szCurDate,
+    m_szCurTime);
+  strcat_s(sData, sizeof(sData), sBuf);
+
+  _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
+  const char *upgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, pItem->m_dwLv);
+  sprintf_s(sBuf, sizeof(sBuf), "\t- %s_%u_@%s[%I64u]\r\n", record->m_strCode, pItem->m_dwDur, upgradeInfo, pItem->m_lnUID);
+  strcat_s(sData, sizeof(sData), sBuf);
+
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::auto_trade_buy(
+  const char *szSellerName,
+  unsigned int dwSellerSerial,
+  const char *szSellerID,
+  unsigned int dwRegistSerial,
+  _STORAGE_LIST::_db_con *pItem,
+  unsigned int dwPrice,
+  unsigned int dwLeftDalant,
+  unsigned int dwLeftGold,
+  char *pszFileName)
+{
+  sData[0] = 0;
+  sprintf_s(
+    sBuf,
+    sizeof(sBuf),
+    "AUTO TRADE(BUY): reg(%u) seller(%s:%d id:%s) pay(D:%u) tax(none) $D:%u $G:%u [%s %s]\r\n",
+    dwRegistSerial,
+    szSellerName,
+    dwSellerSerial,
+    szSellerID,
+    dwPrice,
+    dwLeftDalant,
+    dwLeftGold,
+    m_szCurDate,
+    m_szCurTime);
+  strcat_0(sData, sBuf);
+
+  _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
+  const char *upgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, pItem->m_dwLv);
+  sprintf_s(sBuf, sizeof(sBuf), "\t+ %s_%u_@%s[%I64u]\r\n", record->m_strCode, pItem->m_dwDur, upgradeInfo, pItem->m_lnUID);
+  strcat_s(sData, sizeof(sData), sBuf);
+
+  WriteFile(pszFileName, sData);
 }

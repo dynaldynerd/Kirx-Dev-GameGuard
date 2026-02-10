@@ -7,6 +7,8 @@ class CMyTimer;
 class __cppobj CUnmannedTraderTradeInfo
 {
 public:
+  void AddIncome(unsigned int dwOriPrice);
+
   CMyTimer *m_pkTimer;
   int m_iOldDay;
   bool m_bNeedUpdateSave;

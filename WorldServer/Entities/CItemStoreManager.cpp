@@ -111,6 +111,66 @@ CItemStore *CItemStoreManager::GetMapItemStoreFromList(int nMapNum, int nStoreNu
   return &pList->m_ItemStore[nStoreNum];
 }
 
+void CItemStoreManager::MakeLimitItemUpdateQuery(
+  unsigned int dwSerial,
+  unsigned __int8 byStoreType,
+  int nTypeSerial,
+  unsigned int dwStoreIndex,
+  _limit_item_db_data *pItemData,
+  unsigned __int64 dwLimitInitTime,
+  char *pszQuery,
+  int nBufSize)
+{
+  char buffer[132]{};
+
+  std::memset(buffer, 0, sizeof(buffer));
+  sprintf_s(
+    pszQuery,
+    nBufSize,
+    "Update tbl_StoreLimitItem_061212 set dck=0,type=%d,typeserial=%d,storeinx=%d,resettime=%I64d,",
+    byStoreType,
+    nTypeSerial,
+    dwStoreIndex,
+    dwLimitInitTime);
+
+  for (int j = 0; j < 16; ++j)
+  {
+    int key = static_cast<int>(pItemData[j].Key.CovDBKey());
+    sprintf_s(buffer, 0x80u, "k%d=%d,num%d=%d,", j, key, j, pItemData[j].nLimitNum);
+    strcat_s(pszQuery, nBufSize, buffer);
+  }
+
+  pszQuery[strlen_0(pszQuery) - 1] = 32;
+  sprintf_s(buffer, 0x80u, "where serial=%d", dwSerial);
+  strcat_s(pszQuery, nBufSize, buffer);
+  strlen_0(pszQuery);
+}
+
+CMapItemStoreList *CItemStoreManager::GetMapItemStoreListBySerial(int nSerial)
+{
+  for (int j = 0; j < m_nMapItemStoreListNum; ++j)
+  {
+    CMapItemStoreList *list = &m_MapItemStoreList[j];
+    if (list->m_nSerial == nSerial)
+    {
+      return list;
+    }
+  }
+  return nullptr;
+}
+
+CMapItemStoreList *CItemStoreManager::GetInstanceStoreListBySerial(int nSerial)
+{
+  for (int j = 0; j < m_nInstanceItemStoreListNum; ++j)
+  {
+    if (m_InstanceItemStoreList[j].m_bUse && m_InstanceItemStoreList[j].m_nSerial == nSerial)
+    {
+      return &m_InstanceItemStoreList[j];
+    }
+  }
+  return nullptr;
+}
+
 
 void _qry_case_all_store_limit_item::__list::init()
 {
@@ -130,7 +190,7 @@ void _qry_case_all_store_limit_item::DataInit()
   }
 }
 
-void CItemStoreManager::Log(char *fmt, ...)
+void CItemStoreManager::Log(const char *fmt, ...)
 {
   if (!m_pkLogger)
   {

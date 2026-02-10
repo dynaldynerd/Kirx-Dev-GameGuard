@@ -46,6 +46,8 @@ public:
   void CompleteUpdateReservedSchedule(unsigned int dwMapID, unsigned __int8 *pLoadData);
   void CompleteCreateGuildBattleRankTable(unsigned __int8 byResult);
   void CompleteClearGuildBattleRank(unsigned __int8 byResult);
+  void PushCreateGuildBattleRankTable();
+  void PushClearGuildBattleRank();
   void LogIn(CPlayer *pkPlayer);
   void NetClose(CPlayer *pkPlayer);
   void SendPossibleBattleGuildListFirst(int n, unsigned __int8 byRace);

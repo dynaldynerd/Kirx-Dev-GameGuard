@@ -383,3 +383,16 @@ bool CTransportShip::GetCurRideShipThisTicket(_TicketItem_fld *pTicketFld)
 
   return std::strcmp(m_pLinkPortMap[direct]->m_pMapSet->m_strCode, pTicketFld->m_strMapCode) == 0;
 }
+
+bool CTransportShip::IsMemberBeforeLogoff(unsigned int dwPlayerSerial)
+{
+  return this->m_listLogoffMember.IsInList(dwPlayerSerial);
+}
+
+void CTransportShip::GetStartPosInShip(float *pfPos)
+{
+  if (this->m_pLinkShipMap)
+  {
+    this->m_pLinkShipMap->GetRandPosInDummy(this->m_pLinkShipMap->m_pStartDummy->m_pDumPos, pfPos, true);
+  }
+}

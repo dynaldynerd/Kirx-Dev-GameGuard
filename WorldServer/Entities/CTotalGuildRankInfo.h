@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "total_guild_rank_info.h"
 
 struct _total_guild_rank_result_zocl;
 
@@ -34,13 +35,27 @@ public:
   unsigned __int8 byExistSelfRankInfo;
   unsigned __int8 byCnt;
   _list list[11];
+
+  __int64 size();
 };
 
 class __cppobj CTotalGuildRankInfo
 {
 public:
+  CTotalGuildRankInfo();
+  ~CTotalGuildRankInfo();
   bool Init();
   void Clear();
+  __int64 Find(unsigned __int8 byRace, unsigned int dwGuildSerial);
+  char Load(_total_guild_rank_info *pkInfo);
+  void SetNoDataFlag();
+  void Send(
+    unsigned int dwVer,
+    unsigned int n,
+    unsigned __int8 byTabRace,
+    unsigned __int8 bySelfRace,
+    unsigned int dwGuildSerial);
+  bool Update(_total_guild_rank_info *pkInfo);
 
   bool m_bInit;
   bool m_bNoData;

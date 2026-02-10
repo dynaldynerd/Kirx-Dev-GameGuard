@@ -74,6 +74,34 @@ _event_participant_classrefine *RFEvent_ClassRefine::GetPlayerState(unsigned int
   return nullptr;
 }
 
+bool RFEvent_ClassRefine::SetPlayerState(void *const p, int size)
+{
+  if (size != 20)
+  {
+    return false;
+  }
+
+  auto *state = reinterpret_cast<_event_participant_classrefine *>(p);
+  const unsigned __int16 index = state->nSock;
+
+  _pkParticipant[index].nAvatorSerial = state->nAvatorSerial;
+  if (state->dwRefineDate >= _kEvent.nStartDate)
+  {
+    _pkParticipant[index].dwRefineDate = state->dwRefineDate;
+    _pkParticipant[index].nCurRefineCnt = state->nCurRefineCnt;
+    _pkParticipant[index].bChange = false;
+  }
+  else
+  {
+    _pkParticipant[index].dwRefineDate = _kEvent.nStartDate;
+    _pkParticipant[index].nCurRefineCnt = 0;
+    _pkParticipant[index].bChange = true;
+  }
+  _pkParticipant[index].nSock = index;
+
+  return true;
+}
+
 void RFEvent_ClassRefine::ReadClassRefineEventInfo()
 {
   char returnedString[24]{};

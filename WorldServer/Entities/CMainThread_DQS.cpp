@@ -37,6 +37,7 @@
 #include "RFEvent_ClassRefine.h"
 #include "TRC_AutoTrade.h"
 #include "qry_case_cash_limsale.h"
+#include "qry_logout.h"
 
 void CMainThread::OnDQSRun()
 {
@@ -501,7 +502,7 @@ void CMainThread::OnDQSRun()
       {
         entry->m_byResult = 0;
         CTotalGuildRankManager *manager = CTotalGuildRankManager::Instance();
-        if (!manager->Update( base + 16))
+        if (!manager->Update(reinterpret_cast<_total_guild_rank_info *>(base + 16)))
         {
           entry->m_byResult = 24;
         }
@@ -511,7 +512,7 @@ void CMainThread::OnDQSRun()
       {
         entry->m_byResult = 0;
         CWeeklyGuildRankManager *manager = CWeeklyGuildRankManager::Instance();
-        if (!manager->UpdateTodayRank( base + 16))
+        if (!manager->UpdateTodayRank(reinterpret_cast<_pvppoint_guild_rank_info *>(base + 16)))
         {
           entry->m_byResult = 24;
         }
@@ -521,7 +522,7 @@ void CMainThread::OnDQSRun()
       {
         entry->m_byResult = 0;
         CWeeklyGuildRankManager *manager = CWeeklyGuildRankManager::Instance();
-        if (!manager->UpdateWeeklyOwner( base + 16))
+        if (!manager->UpdateWeeklyOwner(reinterpret_cast<_weeklyguildrank_owner_info *>(base + 16)))
         {
           entry->m_byResult = 24;
         }
@@ -1396,19 +1397,23 @@ void CMainThread::DQSCompleteProcess()
       case 43:
       {
         CTotalGuildRankManager *manager = CTotalGuildRankManager::Instance();
-        manager->UpdateComlete( pData->m_byResult, pData->m_sData);
+        manager->UpdateComlete(pData->m_byResult, reinterpret_cast<_total_guild_rank_info *>(pData->m_sData));
         break;
       }
       case 44:
       {
         CWeeklyGuildRankManager *manager = CWeeklyGuildRankManager::Instance();
-        manager->CompleteLoadeTodayRank( pData->m_byResult, pData->m_sData);
+        manager->CompleteLoadeTodayRank(
+          pData->m_byResult,
+          reinterpret_cast<_pvppoint_guild_rank_info *>(pData->m_sData));
         break;
       }
       case 45:
       {
         CWeeklyGuildRankManager *manager = CWeeklyGuildRankManager::Instance();
-        manager->CompleteUpdateWeeklyOwner( pData->m_byResult, pData->m_sData);
+        manager->CompleteUpdateWeeklyOwner(
+          pData->m_byResult,
+          reinterpret_cast<_weeklyguildrank_owner_info *>(pData->m_sData));
         break;
       }
       case 46:
@@ -1777,10 +1782,10 @@ void CMainThread::DQSCompleteProcess()
         break;
       }
       case 145:
-        CPotionMgr::Complete_RenameChar_DB_Select(&g_PotionMgr, pData->m_byResult, pData->m_sData);
+        g_PotionMgr.Complete_RenameChar_DB_Select(pData->m_byResult, pData->m_sData);
         break;
       case 146:
-        CPotionMgr::Complete_RenameChar_DB_Update(&g_PotionMgr, pData->m_byResult, pData->m_sData);
+        g_PotionMgr.Complete_RenameChar_DB_Update(pData->m_byResult, pData->m_sData);
         break;
       case 147:
       {
@@ -1867,8 +1872,7 @@ void CMainThread::Reged_Avator_Complete(_DB_QRY_SYN_DATA *pData)
   CUserDB *user = &g_UserDB[pData->m_idWorld.wIndex];
   if (user->m_bActive && user->m_idWorld.dwSerial == pData->m_idWorld.dwSerial)
   {
-    CUserDB::Reged_Char_Complete(
-      user,
+    user->Reged_Char_Complete(
       pData->m_byResult,
       reinterpret_cast<_REGED *>(&pData->m_sData[4]),
       reinterpret_cast<_NOT_ARRANGED_AVATOR_DB *>(&pData->m_sData[811]));
@@ -1880,7 +1884,7 @@ void CMainThread::Insert_Avator_Complete(_DB_QRY_SYN_DATA *pData)
   CUserDB *user = &g_UserDB[pData->m_idWorld.wIndex];
   if (user->m_bActive && user->m_idWorld.dwSerial == pData->m_idWorld.dwSerial)
   {
-    CUserDB::Insert_Char_Complete(user, pData->m_byResult, reinterpret_cast<_REGED_AVATOR_DB *>(&pData->m_sData[17]));
+    user->Insert_Char_Complete(pData->m_byResult, reinterpret_cast<_REGED_AVATOR_DB *>(&pData->m_sData[17]));
   }
 }
 
@@ -1889,7 +1893,7 @@ void CMainThread::Delete_Avator_Complete(_DB_QRY_SYN_DATA *pData)
   CUserDB *user = &g_UserDB[pData->m_idWorld.wIndex];
   if (user->m_bActive && user->m_idWorld.dwSerial == pData->m_idWorld.dwSerial)
   {
-    CUserDB::Delete_Char_Complete(user, pData->m_byResult, pData->m_sData[0]);
+    user->Delete_Char_Complete(pData->m_byResult, pData->m_sData[0]);
   }
 }
 
@@ -1900,8 +1904,7 @@ void CMainThread::Select_Avator_Complete(_DB_QRY_SYN_DATA *pData)
   {
     char *data = pData->m_sData;
     unsigned __int8 extTrunkOldSlot = static_cast<unsigned __int8>(data[37505]);
-    CUserDB::Select_Char_Complete(
-      user,
+    user->Select_Char_Complete(
       pData->m_byResult,
       reinterpret_cast<_AVATOR_DATA *>(data + 4),
       reinterpret_cast<bool *>(data + 37219),
@@ -1927,7 +1930,7 @@ void CMainThread::Logout_Account_Complete(_DB_QRY_SYN_DATA *pData)
   CUserDB *user = &g_UserDB[pData->m_idWorld.wIndex];
   if (user->m_bActive && user->m_idWorld.dwSerial == pData->m_idWorld.dwSerial)
   {
-    CUserDB::Exit_Account_Complete(user, pData->m_byResult);
+    user->Exit_Account_Complete(pData->m_byResult);
   }
 }
 
@@ -1947,7 +1950,7 @@ void CMainThread::Lobby_Account_Complete(_DB_QRY_SYN_DATA *pData)
         user->m_dwAccountSerial,
         user->m_aszAvatorName,
         user->m_dwSerial);
-      CNetworkEX::Close(&g_Network, 0, pData->m_idWorld.wIndex, 0, buffer);
+      g_Network.Close(0, pData->m_idWorld.wIndex, false, buffer);
     }
     else
     {
@@ -1972,7 +1975,7 @@ void CMainThread::Cont_UserSave_Complete(_DB_QRY_SYN_DATA *pData)
           char *postEntry = data + (297 * nIndex) + 19964;
           if (data[297 * nIndex + 19993] && postEntry[31] && postEntry[30])
           {
-            CPostData *postData = CPostStorage::GetPostDataFromInx(&player->m_Param.m_PostStorage, nIndex);
+            CPostData *postData = player->m_Param.m_PostStorage.GetPostDataFromInx(nIndex);
             if (postData && !user->m_AvatorData.dbPostData.dbPost.m_PostList[nIndex].bNew)
             {
               postData->m_dwPSSerial = *reinterpret_cast<unsigned int *>(postEntry);
@@ -1989,7 +1992,7 @@ void CMainThread::Cont_UserSave_Complete(_DB_QRY_SYN_DATA *pData)
       user->m_AvatorData_bk.m_bCristalBattleDateUpdate = 1;
     }
 
-    _CUTTING_DB_BASE::ReSetOldDataLoad(&user->m_AvatorData.dbCutting);
+    user->m_AvatorData.dbCutting.ReSetOldDataLoad();
 
     if (pData->m_byResult)
     {
@@ -2002,7 +2005,7 @@ void CMainThread::Cont_UserSave_Complete(_DB_QRY_SYN_DATA *pData)
         user->m_dwAccountSerial,
         user->m_aszAvatorName,
         user->m_dwSerial);
-      CNetworkEX::Close(&g_Network, 0, pData->m_idWorld.wIndex, 0, buffer);
+      g_Network.Close(0, pData->m_idWorld.wIndex, 0, buffer);
     }
     else
     {
@@ -2286,7 +2289,7 @@ void CMainThread::InAtradTaxMoney(_DB_QRY_SYN_DATA *pData)
 {
   unsigned __int8 *data = reinterpret_cast<unsigned __int8 *>(pData->m_sData);
   CUnmannedTraderTaxRateManager *manager = CUnmannedTraderTaxRateManager::Instance();
-  CUnmannedTraderTaxRateManager::DQSCompleteInAtradTaxMoney(manager, *data, pData->m_sData);
+  manager->DQSCompleteInAtradTaxMoney(*data, pData->m_sData);
 }
 void CMainThread::Load_PostStorage_Complete(char *pData)
 {
@@ -2368,7 +2371,7 @@ void CMainThread::Load_PostStorage_Complete(char *pData)
     {
       bool hasItem = false;
       bool hasGold = false;
-      int size = CPostStorage::GetSize(postStorage);
+      int size = postStorage->GetSize();
       for (int n = 0; n < 50; ++n)
       {
         if (postStorage->m_PostData[n].GetState() != 255)
@@ -2455,7 +2458,7 @@ void CMainThread::Load_ReturnPost_Complete(char *pData)
 
     if (count)
     {
-      int size = CPostReturnStorage::GetSize(returnStorage);
+      int size = returnStorage->GetSize();
       for (int j = 0; j < 10; ++j)
       {
         if (returnStorage->m_PostData[j].GetState() != 255)
@@ -2562,8 +2565,8 @@ void CMainThread::Complete_db_Update_Data_For_Post_Send(char *pSheet)
   if (player && player->m_bOper)
   {
     player->m_pUserDB->m_AvatorData_bk.dbAvator.m_dwGold = player->m_pUserDB->m_AvatorData.dbAvator.m_dwGold;
-    _INVEN_DB_BASE::operator=(&player->m_pUserDB->m_AvatorData_bk.dbInven, &player->m_pUserDB->m_AvatorData.dbInven);
-    CPlayer::SendMsg_PostSendReply(player, 0);
+    player->m_pUserDB->m_AvatorData_bk.dbInven = player->m_pUserDB->m_AvatorData.dbInven;
+    player->SendMsg_PostSendReply(0);
   }
 }
 
@@ -2576,7 +2579,7 @@ void CMainThread::Complete_db_Update_Data_For_Trade(char *pSheet)
     {
       player->m_pUserDB->m_AvatorData_bk.dbAvator.m_dwDalant = player->m_pUserDB->m_AvatorData.dbAvator.m_dwDalant;
       player->m_pUserDB->m_AvatorData_bk.dbAvator.m_dwGold = player->m_pUserDB->m_AvatorData.dbAvator.m_dwGold;
-      _INVEN_DB_BASE::operator=(&player->m_pUserDB->m_AvatorData_bk.dbInven, &player->m_pUserDB->m_AvatorData.dbInven);
+      player->m_pUserDB->m_AvatorData_bk.dbInven = player->m_pUserDB->m_AvatorData.dbInven;
     }
   }
 }
@@ -2593,7 +2596,7 @@ void CMainThread::_db_complete_event_classrefine(
   state.nCurRefineCnt = byRefinedCnt;
   state.dwRefineDate = dwRefineDate;
   int size = state.size();
-  g_Main.m_pRFEvent_ClassRefine->SetPlayerState(g_Main.m_pRFEvent_ClassRefine, &state, size);
+  g_Main.m_pRFEvent_ClassRefine->SetPlayerState(&state, size);
 }
 
 void CMainThread::_db_complete_update_event_classrefine(unsigned __int16 wSock, unsigned int dwAvatorSerial)

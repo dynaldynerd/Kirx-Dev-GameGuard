@@ -1273,6 +1273,16 @@ void CMonster::SendMsg_Destroy(unsigned __int8 byDestroyCode)
   CircleReport(type, reinterpret_cast<char *>(msg), 7, 0);
 }
 
+void CMonster::DisableStdItemLoot()
+{
+  m_bStdItemLoot = false;
+}
+
+void CMonster::LinkEventRespawn(_event_respawn *pEventRespawn)
+{
+  m_pEventRespawn = pEventRespawn;
+}
+
 void CMonster::SendMsg_Assist_Skill(
   char byErrCode,
   int nEffectCode,

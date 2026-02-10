@@ -6,6 +6,7 @@
 class __cppobj CCouponMgr
 {
 public:
+  void LoadData(unsigned int dwAccSerial, _PCBANG_PLAY_TIME *pkInfo);
   void LogOut(bool bForceClose);
 
 private:

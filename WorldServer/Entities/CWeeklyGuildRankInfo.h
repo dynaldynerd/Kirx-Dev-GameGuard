@@ -2,11 +2,16 @@
 
 #include "IdaCompat.h"
 
+struct _pvppoint_guild_rank_info;
+struct _weeklyguildrank_owner_info;
+class CGuild;
+
 class __cppobj __declspec(align(8)) CWeeklyGuildRankOwnerInfo
 {
 public:
   CWeeklyGuildRankOwnerInfo();
   void Clear();
+  bool IsEmpty();
 
   unsigned int m_dwSerial;
   char m_wszGuildName[17];
@@ -36,10 +41,32 @@ public:
 class __cppobj CWeeklyGuildRankInfo
 {
 public:
+  CWeeklyGuildRankInfo();
+  ~CWeeklyGuildRankInfo();
   bool Init();
   void Clear();
   void ClearRank();
   void ClearOwner();
+  __int64 Find(unsigned __int8 byRace, unsigned int dwGuildSerial);
+  char CheckEmpty(_pvppoint_guild_rank_info *pkInfo);
+  char Load(_pvppoint_guild_rank_info *pkInfo, bool *bNoData);
+  bool LoadToday(_pvppoint_guild_rank_info *pkInfo);
+  bool LoadPrev(_pvppoint_guild_rank_info *pkInfo);
+  char LoadOwner(_weeklyguildrank_owner_info *pkInfo);
+  bool Update(_pvppoint_guild_rank_info *pkInfo);
+  bool UpdateOwner(_weeklyguildrank_owner_info *pkInfo);
+  CGuild *GetOwnerGuild(unsigned __int8 byRace, unsigned __int8 byNth);
+  CGuild *GetPrevOwnerGuild(unsigned __int8 byRace, unsigned __int8 byNth);
+  CGuild *GetCurOwnerGuild(unsigned __int8 byRace, unsigned __int8 byNth);
+  bool IsNoDataPrev();
+  bool IsNoDataToday();
+  void SetNoDataFlagToday();
+  void Send(
+    unsigned int dwVer,
+    unsigned int n,
+    unsigned __int8 byTabRace,
+    unsigned __int8 bySelfRace,
+    unsigned int dwGuildSerial);
 
   bool m_bInit;
   bool m_NoDataPrev;
@@ -64,6 +91,8 @@ public:
     unsigned __int8 byExistSelfRankInfo;
     unsigned __int8 byCnt;
     _list list[11];
+
+    __int64 size();
   };
 
   _weekly_guild_rank_result_zocl *m_pkSendList;

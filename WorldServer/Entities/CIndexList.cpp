@@ -159,6 +159,50 @@ bool CIndexList::PushNode_Front(unsigned int index, char *infoData)
   return true;
 }
 
+bool CIndexList::PopNode_Front(unsigned int *pdwOutIndex, char *pInfoData)
+{
+  if (this == nullptr)
+  {
+    return false;
+  }
+
+  m_csList.Lock();
+  if (m_Head.m_pNext == &m_Tail)
+  {
+    m_csList.Unlock();
+    return false;
+  }
+
+  _index_node *node = m_Head.m_pNext;
+  if (pdwOutIndex)
+  {
+    *pdwOutIndex = node->m_dwIndex;
+  }
+  if (pInfoData && node->m_dwInfoDataSize)
+  {
+    memcpy_0(pInfoData, node->m_pInfo, node->m_dwInfoDataSize);
+  }
+
+  m_Head.m_pNext = node->m_pNext;
+  node->m_pNext->m_pPrev = &m_Head;
+  --m_dwCount;
+  node->m_bLoad = false;
+  node->m_pNext = &m_BufTail;
+  node->m_pPrev = m_BufTail.m_pPrev;
+  m_BufTail.m_pPrev->m_pNext = node;
+  m_BufTail.m_pPrev = node;
+  ++m_dwBufCount;
+  m_csList.Unlock();
+  return true;
+}
+
+void CIndexList::ResetList()
+{
+  while (PopNode_Front(nullptr, nullptr))
+  {
+  }
+}
+
 bool CIndexList::FindNode(unsigned int dwIndex, char *pInfoData)
 {
   if (this == nullptr)

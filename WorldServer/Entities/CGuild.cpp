@@ -3,8 +3,10 @@
 #include "CGuild.h"
 
 #include "CGuildMasterEffect.h"
+#include "CMgrGuildHistory.h"
 #include "CNetworkEX.h"
 #include "CUnmannedTraderTaxRateManager.h"
+#include "GlobalObjects.h"
 #include "CGuildBattleController.h"
 #include "CHonorGuild.h"
 #include "CMoneySupplyMgr.h"
@@ -16,6 +18,24 @@
 #include "guild_alter_member_state_inform_zocl.h"
 
 CGuildList CGuild::s_GuildList;
+CMgrGuildHistory CGuild::s_MgrHistory;
+
+_guild_master_info::_guild_master_info()
+{
+  init();
+}
+
+void _guild_master_info::init()
+{
+  dwSerial = static_cast<unsigned int>(-1);
+  byPrevGrade = 0;
+  pMember = nullptr;
+}
+
+bool _guild_master_info::IsFill()
+{
+  return dwSerial != static_cast<unsigned int>(-1);
+}
 
 void CGuild::Init(unsigned int index)
 {
@@ -438,6 +458,60 @@ void CGuild::MakeDownMemberPacket()
   m_DownPacket_Member->wDataSize = dataSize;
 }
 
+void CGuild::MakeQueryInfoPacket()
+{
+  m_QueryPacket_Info->dwGuildSerial = m_dwSerial;
+  m_QueryPacket_Info->byGrade = m_byGrade;
+  m_QueryPacket_Info->dwEmblemBack = m_dwEmblemBack;
+  m_QueryPacket_Info->dwEmblemMark = m_dwEmblemMark;
+  strcpy_0(m_QueryPacket_Info->wszGuildName, m_wszName);
+  m_QueryPacket_Info->dwTotWin = m_dwGuildBattleTotWin;
+  m_QueryPacket_Info->dwTotDraw = m_dwGuildBattleTotDraw;
+  m_QueryPacket_Info->dwTotLose = m_dwGuildBattleTotLose;
+  m_QueryPacket_Info->byCurTax = static_cast<unsigned __int8>(-1);
+
+  CUnmannedTraderTaxRateManager *taxMgr = CUnmannedTraderTaxRateManager::Instance();
+  if (taxMgr->IsOwnerGuild(m_byRace, m_dwSerial))
+  {
+    m_QueryPacket_Info->byCurTax = static_cast<unsigned __int8>(taxMgr->GetTaxRate(m_byRace) * 100.0f);
+  }
+}
+
+void CGuild::SendMsg_GuildInfoUpdateInform()
+{
+  #pragma pack(push, 1)
+  struct GuildInfoUpdateMsg
+  {
+    unsigned int dwSerial;
+    unsigned __int8 byGrade;
+    unsigned int dwEmblemBack;
+    unsigned int dwEmblemMark;
+    unsigned int dwTotWin;
+    unsigned int dwTotDraw;
+    unsigned int dwTotLose;
+  };
+  #pragma pack(pop)
+
+  GuildInfoUpdateMsg msg{};
+  msg.dwSerial = m_dwSerial;
+  msg.byGrade = m_byGrade;
+  msg.dwEmblemBack = m_dwEmblemBack;
+  msg.dwEmblemMark = m_dwEmblemMark;
+  msg.dwTotWin = m_dwGuildBattleTotWin;
+  msg.dwTotDraw = m_dwGuildBattleTotDraw;
+  msg.dwTotLose = m_dwGuildBattleTotLose;
+
+  unsigned __int8 pbyType[2] = {27, 40};
+  for (int j = 0; j < MAX_PLAYER; ++j)
+  {
+    CPlayer *player = &g_Player[j];
+    if (player->m_bLive)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), 0x19u);
+    }
+  }
+}
+
 void CGuild::RefreshGuildMemberData(_guild_member_refresh_data *pRefreshMember)
 {
   for (int j = 0; j < m_nMemberNum; ++j)
@@ -677,7 +751,7 @@ unsigned __int8 CGuild::CheckGuildBattleSuggestRequestToDestGuild(
   {
     return static_cast<unsigned __int8>(-92);
   }
-  if (!_guild_master_info::IsFill(&m_MasterData))
+  if (!m_MasterData.IsFill())
   {
     return static_cast<unsigned __int8>(-83);
   }
@@ -1018,11 +1092,179 @@ long double CGuild::GetTotalGold()
   return m_dTotalGold;
 }
 
+void CGuild::Complete_DB_Update_Committee(char *pData)
+{
+  char *payload = pData;
+  _guild_member_info *member = GetMemberFromSerial(*reinterpret_cast<unsigned int *>(payload));
+  if (!member)
+  {
+    return;
+  }
+
+  member->byClassInGuild = static_cast<unsigned __int8>(payload[12]);
+  if (member->pPlayer)
+  {
+    member->pPlayer->m_Param.m_byClassInGuild = static_cast<unsigned __int8>(payload[12]);
+    member->pPlayer->m_Param.m_bGuildLock = false;
+  }
+
+  if (payload[12] == 1)
+  {
+    int emptyIndex = -1;
+    for (int j = 0; j < 3; ++j)
+    {
+      if (!m_pGuildCommittee[j])
+      {
+        emptyIndex = j;
+        break;
+      }
+    }
+    if (emptyIndex != -1)
+    {
+      m_pGuildCommittee[emptyIndex] = member;
+    }
+  }
+  else if (payload[12] == 0)
+  {
+    for (int j = 0; j < 3; ++j)
+    {
+      if (m_pGuildCommittee[j] && m_pGuildCommittee[j]->dwSerial == *reinterpret_cast<unsigned int *>(payload))
+      {
+        m_pGuildCommittee[j] = nullptr;
+        break;
+      }
+    }
+  }
+
+  MakeDownMemberPacket();
+
+  _guild_alter_member_grade_inform_zocl msg{};
+  msg.MemberList[0].dwMemberSerial = member->dwSerial;
+  msg.MemberList[0].byRank = member->byRank;
+  msg.MemberList[0].byGrade = member->byClassInGuild;
+  msg.byAlterMemberNum = 1;
+
+  unsigned __int8 pbyType[2]{};
+  pbyType[0] = 27;
+  pbyType[1] = 32;
+  for (int j = 0; j < 50; ++j)
+  {
+    if (m_MemberData[j].IsFill() && m_MemberData[j].pPlayer)
+    {
+      const unsigned __int16 len = static_cast<unsigned __int16>(msg.size());
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        m_MemberData[j].pPlayer->m_ObjID.m_wIndex,
+        pbyType,
+        reinterpret_cast<char *>(&msg),
+        len);
+    }
+  }
+
+  SendMsg_ManageGuildCommitteeResult(payload[12] != 0, member->wszName);
+}
+
+_guild_member_info *CGuild::GetMemberFromSerial(unsigned int dwMemberSerial)
+{
+  for (int j = 0; j < 50; ++j)
+  {
+    if (m_MemberData[j].IsFill() && m_MemberData[j].dwSerial == dwMemberSerial)
+    {
+      return &m_MemberData[j];
+    }
+  }
+  return nullptr;
+}
+
+unsigned int CGuild::GetGuildMasterSerial()
+{
+  return m_MasterData.dwSerial;
+}
+
+void CGuild::SendMsg_ManageGuildCommitteeResult(char bAppoint, char *pwszCommitteeName)
+{
+  struct CommitteeResultMsg
+  {
+    char byAppoint;
+    char wszCommitteeName[17];
+  };
+
+  CommitteeResultMsg msg{};
+  msg.byAppoint = bAppoint;
+  strcpy_0(msg.wszCommitteeName, pwszCommitteeName);
+
+  unsigned __int8 pbyType[16]{};
+  pbyType[0] = 27;
+  pbyType[1] = 125;
+
+  for (int j = 0; j < 50; ++j)
+  {
+    _guild_member_info *member = &m_MemberData[j];
+    if (member->IsFill() && member->pPlayer)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        member->pPlayer->m_ObjID.m_wIndex,
+        pbyType,
+        reinterpret_cast<char *>(&msg),
+        0x12u);
+    }
+  }
+}
+
+void CGuild::SendMsg_MasterElectPossible(char bPossible)
+{
+  char szMsg[32]{};
+  szMsg[0] = bPossible;
+
+  unsigned __int8 pbyType[16]{};
+  pbyType[0] = 27;
+  pbyType[1] = 126;
+
+  for (int j = 0; j < 50; ++j)
+  {
+    _guild_member_info *member = &m_MemberData[j];
+    if (member->IsFill() && member->pPlayer)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        member->pPlayer->m_ObjID.m_wIndex,
+        pbyType,
+        szMsg,
+        1u);
+    }
+  }
+}
+
+void CGuild::CompleteSelectMasterLastConn(unsigned int dwLastConnTime)
+{
+  if (dwLastConnTime != static_cast<unsigned int>(-1))
+  {
+    m_bPossibleElectMaster = true;
+    MakeDownMemberPacket();
+    SendMsg_MasterElectPossible(m_bPossibleElectMaster);
+  }
+}
+
+unsigned int CGuild::GetMemberNum()
+{
+  return static_cast<unsigned int>(m_nMemberNum);
+}
+
 CGuild *GetGuildDataFromSerial(CGuild *pData, int nNum, unsigned int dwSerial)
 {
   for (int j = 0; j < nNum; ++j)
   {
     if (pData[j].IsFill() && pData[j].m_dwSerial == dwSerial)
+    {
+      return &pData[j];
+    }
+  }
+  return nullptr;
+}
+
+CGuild *GetGuildPtrFromName(CGuild *pData, int nNum, char *pwszGuildName)
+{
+  for (int j = 0; j < nNum; ++j)
+  {
+    if (pData[j].IsFill() && !strcmp_0(pData[j].m_wszName, pwszGuildName))
     {
       return &pData[j];
     }

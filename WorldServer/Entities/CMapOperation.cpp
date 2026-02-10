@@ -369,6 +369,24 @@ bool CMapOperation::IsExistStdMapID(int iMapID)
   return false;
 }
 
+char CMapOperation::IsInRegion(char *pszRegionCode, CGameObject *pObj)
+{
+  for (int j = 0; j < m_nRegionNum; ++j)
+  {
+    _region_data *region = &m_RegionData[j];
+    if (!strcmp_0(region->szRegionData, pszRegionCode) && region->pMap == pObj->m_pCurMap)
+    {
+      CExtDummy *dummy = &region->pMap->m_Dummy;
+      if (dummy->IsInBBox(region->wDummyLineIndex, pObj->m_fCurPos))
+      {
+        return 1;
+      }
+    }
+  }
+
+  return 0;
+}
+
 CMapData *CMapOperation::GetMap(const char *szMapCode)
 {
   for (int j = 0; j < m_nMapNum; ++j)

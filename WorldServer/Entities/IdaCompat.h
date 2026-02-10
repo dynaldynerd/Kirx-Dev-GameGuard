@@ -18,12 +18,22 @@
 #include <cmath>
 #include <limits>
 
+// Common IDA scalar aliases.
+using _BYTE = unsigned __int8;
+using _WORD = unsigned __int16;
+using _DWORD = unsigned __int32;
+using _QWORD = unsigned __int64;
+
 #ifndef BYTE4
 #define BYTE4(x) (*((unsigned char *)&(x) + 4))
 #endif
 
 #ifndef BYTE2
 #define BYTE2(x) (*((unsigned char *)&(x) + 2))
+#endif
+
+#ifndef LODWORD
+#define LODWORD(x) (*((unsigned int *)&(x)))
 #endif
 
 // IDA decompiler helpers (map to standard C/C++ runtime).

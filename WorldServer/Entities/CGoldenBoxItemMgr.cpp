@@ -63,6 +63,13 @@ bool CGoldenBoxItemMgr::_init_loggers()
   return true;
 }
 
+void CGoldenBoxItemMgr::BoxItemDataCopy()
+{
+  _db_golden_box_item temp{};
+  memcpy_0(&temp, &m_golden_box_item_New, sizeof(m_golden_box_item_New));
+  memcpy_0(&m_golden_box_item_Old, &temp, sizeof(m_golden_box_item_Old));
+}
+
 bool CGoldenBoxItemMgr::Load_Golden_Box_Item_Event()
 {
   m_golden_box_event.m_event_timer.BeginTimer(0x1D4C0u);

@@ -40,6 +40,9 @@
 #include "CashItemRemoteStore.h"
 #include "DqsDbStructs.h"
 #include "AmuletItem_fld.h"
+#include "TimeItem.h"
+#include "UIDGenerator.h"
+#include "qry_case_insertitem.h"
 #include "AnimusItem_fld.h"
 #include "BagItem_fld.h"
 #include "BattleDungeonItem_fld.h"
@@ -112,6 +115,7 @@
 #include "WorldServerUtil.h"
 #include "cStaticMember_Player.h"
 #include "GlobalObjects.h"
+#include "CGameServerDoc.h"
 
 #include "LendItemMng.h"
 #include "TimeLimitJadeMng.h"
@@ -286,6 +290,44 @@ void CMainThread::gm_ServerClose()
   }
 }
 
+bool CMainThread::gm_MonsterInit(CMonster *pExt)
+{
+  g_MapOper.m_bReSpawnMonster = !g_MapOper.m_bReSpawnMonster;
+  if (!g_MapOper.m_bReSpawnMonster)
+  {
+    for (int j = 0; j < MAX_MONSTER; ++j)
+    {
+      if (g_Monster[j].m_bLive && pExt != &g_Monster[j])
+      {
+        g_Monster[j].Destroy(1u, nullptr);
+      }
+    }
+  }
+
+  if (g_pDoc->m_InfoSheet.GetActiveIndex() == 3)
+  {
+    g_Main.m_GameMsg.PackingMsg(0x3EEu, 0, 0, 0);
+  }
+
+  return g_MapOper.m_bReSpawnMonster;
+}
+
+CPlayer *CMainThread::GetCharW(char *wpszCharName)
+{
+  for (int index = 0; index < MAX_PLAYER; ++index)
+  {
+    if (g_Player[index].m_bLive)
+    {
+      const char *charName = g_Player[index].m_Param.GetCharNameW();
+      if (!strcmp_0(charName, wpszCharName))
+      {
+        return &g_Player[index];
+      }
+    }
+  }
+  return nullptr;
+}
+
 _DB_QRY_SYN_DATA *CMainThread::PushDQSData(
   unsigned int dwAccountSerial,
   _CLID *pidWorld,
@@ -320,6 +362,36 @@ _DB_QRY_SYN_DATA *CMainThread::PushDQSData(
 
   m_logSystemError.Write("%d : m_listDQSData.PushNode_Back() => failed ", byQryCase);
   return nullptr;
+}
+
+bool CMainThread::Push_ChargeItem(
+  unsigned int dwSerial,
+  unsigned int dwK,
+  unsigned int dwD,
+  unsigned int dwU,
+  unsigned __int8 byType)
+{
+  _qry_case_insertitem qry{};
+  qry.byType = byType;
+  qry.dwItemCodeK = dwK;
+  qry.dwItemCodeD = dwD;
+  qry.dwItemCodeU = dwU;
+  qry.dwSerial = dwSerial;
+
+  if (!byType)
+  {
+    const unsigned int tableCode = (dwK >> 8) & 0xFFu;
+    const unsigned __int16 itemIndex = static_cast<unsigned __int16>((dwK >> 16) & 0xFFFFu);
+    const _TimeItem_fld *timeRec = TimeItem::FindTimeRec(tableCode, itemIndex);
+    if (timeRec)
+    {
+      qry.dwRemainTime = timeRec->m_nUseTime;
+    }
+    qry.lnUID = UIDGenerator::getuid(g_Main.m_byWorldCode);
+  }
+
+  const int size = static_cast<int>(qry.size());
+  return PushDQSData(0xFFFFFFFF, nullptr, 0xEu, reinterpret_cast<char *>(&qry), size) != nullptr;
 }
 
 char CMainThread::ms_szClientVerCheck[33]{};
@@ -474,6 +546,153 @@ void TimeLimitMgr::Pop_Data(unsigned int dwAccountSerial, unsigned __int16 wInde
       --m_dwCnt;
     }
   }
+}
+
+__int64 TimeLimitMgr::ClacLastLogoutTimeSec(unsigned int dwLastConnTime)
+{
+  char buffer[28]{};
+  sprintf_s(buffer, 0xFu, "%d", dwLastConnTime);
+  const int len = static_cast<int>(strlen_0(buffer));
+
+  tm tmLast{};
+  tmLast.tm_isdst = -1;
+
+  char temp[32]{};
+  char yearString[16]{};
+
+  memcpy_0(temp, buffer, static_cast<size_t>(len - 8));
+  if (len == 9)
+  {
+    sprintf(yearString, "200%s", temp);
+  }
+  else if (len == 10)
+  {
+    sprintf(yearString, "20%s", temp);
+  }
+  yearString[4] = 0;
+  tmLast.tm_year = atoi(yearString) - 1900;
+
+  memset_0(temp, 0, 3u);
+  memcpy_0(temp, &buffer[len - 8], 2u);
+  tmLast.tm_mon = atoi(temp) - 1;
+
+  memset_0(temp, 0, 3u);
+  memcpy_0(temp, &buffer[len - 6], 2u);
+  tmLast.tm_mday = atoi(temp);
+
+  memset_0(temp, 0, 3u);
+  memcpy_0(temp, &buffer[len - 4], 2u);
+  tmLast.tm_hour = atoi(temp);
+
+  memset_0(temp, 0, 3u);
+  memcpy_0(temp, &buffer[len - 2], 2u);
+  tmLast.tm_min = atoi(temp);
+
+  memset_0(temp, 0, 3u);
+  return SumMinuteBetweenSec(&tmLast);
+}
+
+unsigned __int16 TimeLimitMgr::GetEndPlayTime()
+{
+  return m_pwTime[m_wPeriodCnt - 1];
+}
+
+char TimeLimitMgr::UpdatePlayerStatus(unsigned __int16 wIndex, unsigned int dwFatigue, unsigned __int8 wStatus)
+{
+  Player_TL_Status *data = Find_Data(wIndex);
+  if (!data)
+  {
+    return 0;
+  }
+
+  data->m_dwFatigue = dwFatigue;
+  g_Player[wIndex].m_pUserDB->Update_UserFatigue(dwFatigue);
+  data->m_byTL_Status = wStatus;
+  g_Player[wIndex].m_pUserDB->Update_UserTLStatus(wStatus);
+  return 1;
+}
+
+void TimeLimitMgr::ReSetPercent(unsigned __int16 wIndex)
+{
+  CPlayer *player = &g_Player[wIndex];
+  if (player && player->m_bOper && m_lstTLStaus[wIndex].m_bUse && m_lstTLStaus[wIndex].m_bAgeLimit)
+  {
+    if (m_lstTLStaus[wIndex].m_dwFatigue > 0x63)
+    {
+      if (m_lstTLStaus[wIndex].m_dwFatigue > 0x64)
+      {
+        m_lstTLStaus[wIndex].m_dwFatigue = 100;
+      }
+      m_lstTLStaus[wIndex].m_byTL_Status = 99;
+      m_lstTLStaus[wIndex].m_dPercent = 0.0;
+    }
+    else
+    {
+      for (int j = 0; j < m_wPeriodCnt; ++j)
+      {
+        if (m_lstTLStaus[wIndex].m_dwFatigue >= m_pwFatigue[j] &&
+            m_lstTLStaus[wIndex].m_dwFatigue < m_pwFatigue[j + 1])
+        {
+          m_lstTLStaus[wIndex].m_dPercent = m_pdPercent[j];
+          m_lstTLStaus[wIndex].m_byTL_Status = static_cast<unsigned __int8>(j);
+          break;
+        }
+      }
+    }
+    player->SendMsg_UpdateTLStatusInfo(
+      m_lstTLStaus[wIndex].m_dwFatigue,
+      m_lstTLStaus[wIndex].m_byTL_Status);
+  }
+}
+
+__int64 TimeLimitMgr::SumMinuteBetweenSec(tm *tmLast)
+{
+  const __int64 lastTime = mktime_3(tmLast);
+  if (lastTime == -1)
+  {
+    return 0;
+  }
+
+  __int64 now = 0;
+  time_20(&now);
+  if (now >= lastTime)
+  {
+    return now - lastTime;
+  }
+
+  return 0;
+}
+
+Player_TL_Status *TimeLimitMgr::Find_Data(unsigned __int16 wIndex)
+{
+  if (m_lstTLStaus[wIndex].m_bUse)
+  {
+    return &m_lstTLStaus[wIndex];
+  }
+  return nullptr;
+}
+
+Player_TL_Status *TimeLimitMgr::Find_Data(unsigned int dwSerial)
+{
+  for (int j = 0; j < MAX_PLAYER; ++j)
+  {
+    CPlayer *player = &g_Player[j];
+    if (player->m_bLive && player->m_Param.GetCharSerial() == dwSerial && m_lstTLStaus[j].m_bUse)
+    {
+      return &m_lstTLStaus[j];
+    }
+  }
+  return nullptr;
+}
+
+unsigned __int8 Player_TL_Status::GetTLStatus()
+{
+  return m_byTL_Status;
+}
+
+__int64 TimeLimitMgr::GetPlayFDegree()
+{
+  return m_dwPlayFDegree;
 }
 
 bool CMainThread::Init()

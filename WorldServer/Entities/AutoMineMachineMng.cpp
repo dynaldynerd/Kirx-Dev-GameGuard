@@ -7,6 +7,7 @@
 #include "CPlayer.h"
 #include "CGuild.h"
 #include "GlobalObjects.h"
+#include "qry_case_amine_newowner.h"
 
 static SYSTEMTIME s_tmLocal{};
 
@@ -89,6 +90,55 @@ void AutoMineMachine::SubChargeCost(unsigned __int8 byRet, char *pdata)
     *reinterpret_cast<double *>(pdata + 33));
 }
 
+void AutoMineMachine::ChangeOwner(CGuild *pOwnerGuild)
+{
+  if (!pOwnerGuild || !m_pOwnerGuild || m_pOwnerGuild->m_dwSerial != pOwnerGuild->m_dwSerial)
+  {
+    if (m_pOwnerGuild)
+    {
+      m_Log.Write("Prev Owner:%d", m_pOwnerGuild->m_dwSerial);
+    }
+    else
+    {
+      m_Log.Write("Prev Owner:NULL");
+    }
+
+    m_bOpenUI = false;
+    m_bRunning = false;
+    m_bySelectedOre = 0;
+    m_pOwnerGuild = pOwnerGuild;
+    m_Battery.m_nCurGage = 0;
+    m_Inven.clear();
+    m_bInit = true;
+    push_dqs_newowner();
+
+    if (m_pOwnerGuild)
+    {
+      m_Log.Write("Changed Owner:%d", m_pOwnerGuild->m_dwSerial);
+    }
+    else
+    {
+      m_Log.Write("Changed Owner:NULL");
+    }
+  }
+}
+
+void AutoMineMachine::push_dqs_newowner()
+{
+  if (!m_pOwnerGuild)
+  {
+    return;
+  }
+
+  _qry_case_amine_newowner query{};
+  query.byCollisionType = m_byCollisionType;
+  query.byRace = m_byRace;
+  query.dwGuildSerial = m_pOwnerGuild->m_dwSerial;
+
+  const int size = static_cast<int>(query.size());
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x35u, reinterpret_cast<char *>(&query), size);
+}
+
 AutoMineMachineMng::AutoMineMachineMng() = default;
 
 AutoMineMachineMng *AutoMineMachineMng::Instance()
@@ -145,6 +195,11 @@ void AutoMineMachineMng::result_db_query(unsigned __int8 byRet, char *pdata)
 AutoMineMachine *AutoMineMachineMng::GetMachine(unsigned __int8 byRace, unsigned __int8 byCollisionType)
 {
   return &m_Machine[byRace][byCollisionType];
+}
+
+void AutoMineMachineMng::ChangeOwner(int nRaceCode, CGuild *pGuild, unsigned __int8 byCollisionType)
+{
+  m_Machine[nRaceCode][byCollisionType].ChangeOwner(pGuild);
 }
 
 unsigned __int8 AutoMineMachineMng::_db_qry_insert_newowner(char *pdata)

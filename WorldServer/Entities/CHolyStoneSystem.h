@@ -84,7 +84,9 @@ public:
   unsigned __int8 GetStartDay();
   unsigned __int8 GetStartHour();
   unsigned __int8 GetStartMin();
+  unsigned __int8 GetKeeperDestroyRace();
   unsigned int GetDestroyerGuildSerial();
+  char IsItemLootAuthority(CPlayer *pOne, unsigned __int8 byCreateCode);
   void ReleaseLastAttBuff();
   void CreateHolyStone();
   void DestroyHolyStone();

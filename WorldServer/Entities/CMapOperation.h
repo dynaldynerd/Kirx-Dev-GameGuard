@@ -10,6 +10,7 @@
 #include "RegionData.h"
 
 class CMapData;
+class CGameObject;
 
 /* 1462 */
 class __cppobj CMapOperation
@@ -24,6 +25,7 @@ public:
   bool LoadMaps();
   bool LoadRegion();
   bool IsExistStdMapID(int iMapID);
+  char IsInRegion(char *pszRegionCode, CGameObject *pObj);
   void CheckMapPortalLink();
 
   static const char *ms_szSettlementMapName[3][2];

@@ -18,6 +18,8 @@ struct TInvenSlot
   T m_Item;
   int m_nOverlapNum;
   int m_nMaxOverlapNum;
+
+  void clear();
 };
 
 template <typename T>
@@ -26,6 +28,8 @@ struct TInvenPage
   int m_nMaxSlotNum;
   int m_nMaxOverlapNum;
   TInvenSlot<T> *m_pSlot;
+
+  void clear();
 };
 
 template <typename T>
@@ -39,6 +43,8 @@ struct TInventory
 
   TInventory();
   ~TInventory() = default;
+
+  void clear();
 };
 
 template <typename T>
@@ -49,6 +55,31 @@ TInventory<T>::TInventory()
     m_nMaxOverlapNum(0),
     m_pPage(nullptr)
 {
+}
+
+template <typename T>
+void TInvenSlot<T>::clear()
+{
+  memset_0(&m_Item, 0, sizeof(m_Item));
+  m_nOverlapNum = 0;
+}
+
+template <typename T>
+void TInvenPage<T>::clear()
+{
+  for (int j = 0; j < m_nMaxSlotNum; ++j)
+  {
+    m_pSlot[j].clear();
+  }
+}
+
+template <typename T>
+void TInventory<T>::clear()
+{
+  for (int j = 0; j < m_nMaxPageNum; ++j)
+  {
+    m_pPage[j].clear();
+  }
 }
 
 struct _pt_automine_charge_money_db_update_fail_zocl
@@ -65,6 +96,8 @@ public:
   ~AutoMineMachine();
 
   void SubChargeCost(unsigned __int8 byRet, char *pdata);
+  void ChangeOwner(CGuild *pOwnerGuild);
+  void push_dqs_newowner();
 
   bool m_bInit;
   bool m_bOpenUI;
@@ -94,6 +127,7 @@ public:
   unsigned __int8 request_db_query(char *pdata);
   void result_db_query(unsigned __int8 byRet, char *pdata);
   AutoMineMachine *GetMachine(unsigned __int8 byRace, unsigned __int8 byCollisionType);
+  void ChangeOwner(int nRaceCode, CGuild *pGuild, unsigned __int8 byCollisionType);
 
 private:
   unsigned __int8 _db_qry_insert_newowner(char *pdata);

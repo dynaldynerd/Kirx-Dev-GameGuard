@@ -29,6 +29,10 @@ public:
   bool Init();
   unsigned __int8 FindHonorGuildRank(unsigned __int8 byRace, unsigned int dwGuildSerial);
   char CheckHonorGuild(unsigned __int8 byRace, unsigned int dwSerial);
+  unsigned __int8 UpdateNextHonorGuild(unsigned __int8 byRace);
+  unsigned __int8 UpdateChangeHonorGuild(unsigned __int8 byRace);
+  void SetGuildMaintainMoney(unsigned __int8 byRace, unsigned int dwTax, unsigned int dwSeller);
+  void DQSCompleteInAtradTaxMoney(char *pdata);
 
   virtual ~CHonorGuild() = default;
 

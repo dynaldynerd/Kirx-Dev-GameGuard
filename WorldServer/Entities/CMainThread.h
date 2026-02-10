@@ -240,6 +240,12 @@ struct __cppobj _WAIT_ENTER_ACCOUNT
 /* 1265 */
 struct __cppobj _message
 {
+  _message();
+  ~_message();
+  void SetMsg(unsigned int message, unsigned int key1, unsigned int key2, unsigned int key3);
+  unsigned int GetMessageA() const;
+  unsigned int GetKey1() const;
+
   unsigned int dwMessage;
   unsigned int dwKey1;
   unsigned int dwKey2;
@@ -515,6 +521,7 @@ public:
   bool Init();
   void AccountServerLogin();
   void gm_ServerClose();
+  bool gm_MonsterInit(CMonster *pExt);
   bool IsTestServer() const;
   bool IsReleaseServiceMode() const;
   bool IsExcuteService() const;
@@ -525,8 +532,15 @@ public:
     unsigned __int8 byQryCase,
     char *pQryData,
     int nSize);
+  bool Push_ChargeItem(
+    unsigned int dwSerial,
+    unsigned int dwK,
+    unsigned int dwD,
+    unsigned int dwU,
+    unsigned __int8 byType);
   void OnDQSRun();
   void DQSCompleteProcess();
+  CPlayer *GetCharW(char *wpszCharName);
   unsigned __int8 db_Reged_Avator(
     unsigned int dwAccountSerial,
     _REGED *pRegedList,
@@ -782,7 +796,7 @@ public:
     _AVATOR_DATA *pNewData,
     _AVATOR_DATA *pOldData,
     char *pSzQuery);
-  char _db_Update_MacroData(
+  bool _db_Update_MacroData(
     unsigned int dwSerial,
     _AIOC_A_MACRODATA *pNewData,
     _AIOC_A_MACRODATA *pOldData);
@@ -796,7 +810,7 @@ public:
     _AVATOR_DATA *pNewData,
     _AVATOR_DATA *pOldData,
     char *pSzQuery);
-  char _db_Update_TimeLimitInfo(
+  unsigned __int8 _db_Update_TimeLimitInfo(
     unsigned int dwAccountSerial,
     _AVATOR_DATA *pNewData,
     _AVATOR_DATA *pOldData,
@@ -1026,6 +1040,7 @@ struct __cppobj __declspec(align(4)) RFEventBase
   virtual ~RFEventBase() = default;
   virtual bool IsDbUpdate(unsigned int nIdx);
   virtual _event_participant_classrefine *GetPlayerState(unsigned int nIdx, unsigned int nAvator);
+  virtual bool SetPlayerState(void *const p, int size);
 };
 
 /* 1814 */
@@ -1040,6 +1055,8 @@ struct __declspec(align(8)) Player_TL_Status
   unsigned int m_dwAccountSerial;
   unsigned int m_dwLastLogoutTime;
   bool m_bUpdateLogout;
+
+  unsigned __int8 GetTLStatus();
 };
 
 /* 1815 */
@@ -1052,6 +1069,14 @@ struct __cppobj TimeLimitMgr
   long double GetPlayerPenalty(unsigned __int16 wIndex);
   unsigned __int8 GetPlayerStatus(unsigned __int16 wIndex);
   void Pop_Data(unsigned int dwAccountSerial, unsigned __int16 wIndex);
+  __int64 ClacLastLogoutTimeSec(unsigned int dwLastConnTime);
+  unsigned __int16 GetEndPlayTime();
+  char UpdatePlayerStatus(unsigned __int16 wIndex, unsigned int dwFatigue, unsigned __int8 wStatus);
+  void ReSetPercent(unsigned __int16 wIndex);
+  __int64 SumMinuteBetweenSec(tm *tmLast);
+  Player_TL_Status *Find_Data(unsigned __int16 wIndex);
+  Player_TL_Status *Find_Data(unsigned int dwSerial);
+  __int64 GetPlayFDegree();
 
   static unsigned int m_dwCnt;
   CMyTimer m_tmLoopTime;
@@ -1364,11 +1389,15 @@ struct __cppobj _INVEN_DB_BASE
     unsigned int dwT;
     unsigned int dwLendRegdTime;
 
+    _LIST &operator=(const _LIST &rhs);
+
     bool Set(const _STORAGE_LIST::_db_con *pItem);
     bool Release();
   };
 
   _LIST m_List[100];
+
+  _INVEN_DB_BASE &operator=(const _INVEN_DB_BASE &rhs);
 };
 
 /* 1558 */
@@ -1380,9 +1409,14 @@ struct __cppobj __unaligned __declspec(align(2)) _CUTTING_DB_BASE
   {
     _INVENKEY Key;
     unsigned int dwDur;
+
+    void Init();
   };
 
   _LIST m_List[20];
+
+  void Init();
+  void ReSetOldDataLoad();
 };
 
 /* 1568 */
@@ -1413,9 +1447,16 @@ struct __cppobj _BUDDY_DB_BASE
   {
     unsigned int dwSerial;
     char wszName[17];
+
+    _LIST();
+    void Init();
+    bool IsFilled();
   };
 
   _LIST m_List[50];
+
+  _BUDDY_DB_BASE();
+  void Init();
 };
 
 /* 1572 */
@@ -1497,6 +1538,9 @@ struct __cppobj _POSTSTORAGE_DB_BASE
 
   __list m_PostList[50];
   bool m_bUpdate;
+
+  void Init();
+  void UpdateInit();
 };
 
 /* 1578 */
@@ -1506,6 +1550,8 @@ struct __cppobj __unaligned __declspec(align(1)) _RETURNPOST_DB_BASE
   int m_nMax;
   int m_nCum;
   unsigned int m_RetSerials[30];
+
+  void Init();
 };
 
 /* 1580 */
@@ -1521,6 +1567,8 @@ struct __cppobj __unaligned __declspec(align(1)) _DELPOST_DB_BASE
   int m_nMax;
   int m_nCum;
   __list m_List[50];
+
+  void Init();
 };
 
 /* 1581 */
@@ -1529,6 +1577,9 @@ struct __cppobj _POSTDATA_DB_BASE
   _POSTSTORAGE_DB_BASE dbPost;
   _RETURNPOST_DB_BASE dbRetPost;
   _DELPOST_DB_BASE dbDelPost;
+
+  void Init();
+  void UpdateInit();
 };
 
 /* 1583 */
@@ -1696,6 +1747,7 @@ struct __cppobj __unaligned __declspec(align(1)) _AVATOR_DATA
   _PCBANG_FAVOR_ITEM_DB_BASE dbPcBangFavorItem;
   _TIMELIMITINFO_DB_BASE dbTimeLimitInfo;
   void InitData();
+  void PostUpdateInit();
 };
 
 /* 1593 */
@@ -1857,6 +1909,10 @@ public:
 /* 1720 */
 struct __cppobj _guild_master_info
 {
+  _guild_master_info();
+  void init();
+  bool IsFill();
+
   unsigned int dwSerial;
   unsigned __int8 byPrevGrade;
   _guild_member_info *pMember;
@@ -1987,6 +2043,9 @@ struct __cppobj _dh_mission_mgr
   _if_change IfCont[100];
   int nRespawnActNum;
   _respawn_monster_act RespawnMonsterAct[32];
+
+  void OpenPortal(int nIndex);
+  __int64 GetLimMSecTime();
 };
 
 /* 1688 */

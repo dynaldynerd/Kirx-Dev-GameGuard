@@ -95,6 +95,56 @@ bool CUnmannedTraderGroupIDInfo::GetIDInfo(std::vector<std::pair<unsigned long, 
   return this->m_vecDivisionInfo.size() == vecInfo->size();
 }
 
+bool CUnmannedTraderGroupIDInfo::GetGroupID(
+  unsigned __int8 byTableCode,
+  unsigned __int16 wItemTableIndex,
+  unsigned __int8 *byDivision,
+  unsigned __int8 *byClass)
+{
+  if (this->m_vecDivisionInfo.empty())
+  {
+    return false;
+  }
+
+  for (CUnmannedTraderDivisionInfo *division : this->m_vecDivisionInfo)
+  {
+    if (division->GetGroupID(byTableCode, wItemTableIndex, byDivision, byClass))
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool CUnmannedTraderGroupIDInfo::GetGroupID(
+  unsigned __int8 byTableCode,
+  unsigned __int16 wItemTableIndex,
+  unsigned __int8 *byDivision,
+  unsigned __int8 *byClass,
+  unsigned __int8 *bySubClass,
+  unsigned int *dwListIndex)
+{
+  if (this->m_vecDivisionInfo.empty())
+  {
+    return false;
+  }
+
+  unsigned int accIndex = 0;
+  for (CUnmannedTraderDivisionInfo *division : this->m_vecDivisionInfo)
+  {
+    unsigned int localIndex = 0;
+    if (division->GetGroupID(byTableCode, wItemTableIndex, byDivision, byClass, bySubClass, &localIndex))
+    {
+      *dwListIndex = localIndex + accIndex;
+      return true;
+    }
+    accIndex += static_cast<unsigned int>(division->GetMaxClassCnt());
+  }
+
+  return false;
+}
+
 bool CUnmannedTraderGroupIDInfo::LoadXML(const char *szFileName)
 {
   if (!szFileName)
