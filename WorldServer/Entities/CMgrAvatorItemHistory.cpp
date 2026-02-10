@@ -13,6 +13,8 @@
 #include "CPostStorage.h"
 #include "CRecordData.h"
 #include "CUnmannedTraderRegistItemInfo.h"
+#include "buy_offer.h"
+#include "sell_offer.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
@@ -123,6 +125,58 @@ void CMgrAvatorItemHistory::exp_prof_log(int count, char *szFile)
   memset_0(sData, 0, sizeof(sData));
   sprintf_s(sData, sizeof(sData), "[Exp_Prof_Using] :  %d \r\n", count);
   WriteFile(szFile, sData);
+}
+
+void CMgrAvatorItemHistory::InitClass(
+  int iCostGold,
+  unsigned int dwInitClassCnt,
+  unsigned __int8 byLastClassGrade,
+  char *szOldClass,
+  char *szCurClass,
+  int *piOldMaxPoint,
+  int *piAlterMaxPoint,
+  char *pszFileName)
+{
+  sprintf(
+    sData,
+    "INIT CLASS: G:%d Cnt:%d Gd:%d %s -> %s H:%d F:%d S:%d -> H:%d F:%d S:%d\r\n",
+    iCostGold,
+    dwInitClassCnt,
+    byLastClassGrade,
+    szOldClass,
+    szCurClass,
+    *piOldMaxPoint,
+    piOldMaxPoint[1],
+    piOldMaxPoint[2],
+    *piAlterMaxPoint,
+    piAlterMaxPoint[1],
+    piAlterMaxPoint[2]);
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::ClassUP(
+  unsigned __int8 byCurClassGrade,
+  unsigned __int8 byLastClassGrade,
+  char *szOldClass,
+  char *szCurClass,
+  int *piOldMaxPoint,
+  int *piAlterMaxPoint,
+  char *pszFileName)
+{
+  sprintf(
+    sData,
+    "CLASS UP: CGd:%d LGd:%d %s -> %s H:%d F:%d S:%d -> H:%d F:%d S:%d\r\n",
+    byCurClassGrade,
+    byLastClassGrade,
+    szOldClass,
+    szCurClass,
+    *piOldMaxPoint,
+    piOldMaxPoint[1],
+    piOldMaxPoint[2],
+    *piAlterMaxPoint,
+    piAlterMaxPoint[1],
+    piAlterMaxPoint[2]);
+  WriteFile(pszFileName, sData);
 }
 
 void CMgrAvatorItemHistory::mastery_change_jade(
@@ -1449,6 +1503,108 @@ void CMgrAvatorItemHistory::reward_add_item(
     pItem->m_lnUID,
     curDate,
     curTime);
+
+  (void)n;
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::exchange_money(
+  int n,
+  unsigned int dwCurDalant,
+  unsigned int dwCurGold,
+  unsigned int dwNewDalant,
+  unsigned int dwNewGold,
+  char *pszFileName)
+{
+  sprintf(
+    sData,
+    "EXCHANGE: D:%u->$D:%u / G:%u->$G:%u [%s %s]\r\n",
+    dwCurDalant,
+    dwNewDalant,
+    dwCurGold,
+    dwNewGold,
+    m_szCurDate,
+    m_szCurTime);
+
+  (void)n;
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::buy_item(
+  int n,
+  _buy_offer *pOffer,
+  unsigned __int8 byOfferNum,
+  unsigned int dwCostDalant,
+  unsigned int dwCostGold,
+  unsigned int dwNewDalant,
+  unsigned int dwNewGold,
+  char *pszFileName)
+{
+  sData[0] = '\0';
+  sprintf(
+    sBuf,
+    "BUY: num:%d pay(D:%u G:%u) $D:%u $G:%u [%s %s]\r\n",
+    byOfferNum,
+    dwCostDalant,
+    dwCostGold,
+    dwNewDalant,
+    dwNewGold,
+    m_szCurDate,
+    m_szCurTime);
+  strcat_0(sData, sBuf);
+
+  for (int j = 0; j < byOfferNum; ++j)
+  {
+    _STORAGE_LIST::_db_con *pItem = &pOffer[j].Item;
+    _base_fld *record =
+      CRecordData::GetRecord(&g_Main.m_tblItemData[pOffer[j].Item.m_byTableCode], pOffer[j].Item.m_wItemIndex);
+    const char *upgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, pItem->m_dwLv);
+    sprintf(sBuf, "\t+ %s_%u_@%s[%I64u]\r\n", record->m_strCode, pItem->m_dwDur, upgradeInfo, pItem->m_lnUID);
+    strcat_0(sData, sBuf);
+  }
+
+  (void)n;
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::sell_item(
+  int n,
+  _sell_offer *pOffer,
+  unsigned __int8 byOfferNum,
+  unsigned int dwIncomeDalant,
+  unsigned int dwIncomeGold,
+  unsigned int dwNewDalant,
+  unsigned int dwNewGold,
+  char *pszFileName)
+{
+  sData[0] = '\0';
+  sprintf(
+    sBuf,
+    "SELL: num:%u rev(D:%u G:%u) $D:%u $G:%u [%s %s]\r\n",
+    byOfferNum,
+    dwIncomeDalant,
+    dwIncomeGold,
+    dwNewDalant,
+    dwNewGold,
+    m_szCurDate,
+    m_szCurTime);
+  strcat_0(sData, sBuf);
+
+  for (int j = 0; j < byOfferNum; ++j)
+  {
+    _STORAGE_LIST::_db_con *pItem = pOffer[j].pItem;
+    _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[pItem->m_byTableCode], pItem->m_wItemIndex);
+    if (IsOverLapItem(pItem->m_byTableCode))
+    {
+      sprintf(sBuf, "\t- %s_%u[%I64u]\r\n", record->m_strCode, pOffer[j].byAmount, pItem->m_lnUID);
+    }
+    else
+    {
+      const char *upgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, pItem->m_dwLv);
+      sprintf(sBuf, "\t- %s_%u_@%s[%I64u]\r\n", record->m_strCode, pItem->m_dwDur, upgradeInfo, pItem->m_lnUID);
+    }
+    strcat_0(sData, sBuf);
+  }
 
   (void)n;
   WriteFile(pszFileName, sData);

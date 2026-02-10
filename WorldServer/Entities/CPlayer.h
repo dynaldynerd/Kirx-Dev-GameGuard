@@ -14,6 +14,8 @@
 #include "SKILL_IDX_PER_MASTERY.h"
 #include "BILLING_FORCE_CLOSE_DELAY.h"
 #include "talik_crystal_exchange_clzo.h"
+#include "buy_store_request_clzo.h"
+#include "sell_store_request_clzo.h"
 #include <vector>
 
 
@@ -43,6 +45,9 @@ class CAttack;
 class CGameObject;
 class CItemBox;
 class CItemStore;
+struct _buy_offer;
+struct _sell_offer;
+struct _limit_amount_info;
 class CPlayer;
 class CPlayerAttack;
 class CMapData;
@@ -1418,6 +1423,39 @@ public:
   void SendMsg_MacroRequest();
   void SendMsg_AMPInvenDownloadResult();
   void SendMsg_ChangeClassCommand();
+  void SendMsg_SelectClassResult(char byErrCode, unsigned __int16 wSelClassIndex);
+  void SendMsg_PcRoomCharClass(unsigned int dwPcRoomClassIndex);
+  unsigned int GetInitClassCost();
+  unsigned __int8 pc_InitClassRequest();
+  unsigned __int8 pc_InitClass();
+  void CalcAddPointByClass();
+  void RewardChangeClassMastery(_class_fld *pClassFld);
+  void RewardChangeClassRewardItem(_class_fld *pClassFld, unsigned __int8 bySelectRewardItem);
+  void RewardChangeClass(_class_fld *pClassFld, unsigned __int8 bySelectRewardItem);
+  void pc_SelectClassRequest(unsigned __int16 wSelClassIndex, unsigned __int8 bySelectRewardItem);
+  unsigned __int8 pc_CanSelectClassRequest(bool *pIsRealClassUp);
+  void SendMsg_StoreListResult();
+  void SendMsg_BuyItemStoreResult(
+    CItemStore *pStore,
+    int nOfferNum,
+    _buy_offer *pCard,
+    unsigned __int8 byErrCode);
+  void SendMsg_SellItemStoreResult(CItemStore *pStore, unsigned __int8 byErrCode);
+  void SendMsg_StoreLimitItemAmountInfo(unsigned int dwStoreIndex, _limit_amount_info *pAmountInfo);
+  void pc_BuyItemStore(
+    CItemStore *pStore,
+    unsigned __int8 byOfferNum,
+    _buy_store_request_clzo::_list *pList,
+    int bUseNPCLinkIntem);
+  void pc_SellItemStore(
+    CItemStore *pStore,
+    unsigned __int8 byOfferNum,
+    _sell_store_request_clzo::_list *pList,
+    int bUseNPCLinkIntem);
+  void pc_ExchangeDalantForGold(unsigned int dwDalant);
+  void pc_ExchangeGoldForDalant(unsigned int dwGold);
+  void pc_LimitItemNumRequest(unsigned int dwStoreIndex);
+  void pc_PvpCashRecorver(unsigned __int16 dwItemSerial, unsigned __int8 byItemCnt);
   void SendMsg_RadarDelayTime(unsigned int dwDelay);
   void SendMsg_Init_Action_Point();
   void SendMsg_BuyCashItemMode();

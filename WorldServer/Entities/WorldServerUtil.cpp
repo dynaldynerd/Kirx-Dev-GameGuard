@@ -17,6 +17,8 @@
 #include "CMerchant.h"
 #include "CRecordData.h"
 #include "CashItemRemoteStore.h"
+#include "CItemStoreManager.h"
+#include "CMapData.h"
 #include "GlobalObjectDefs.h"
 #include "GlobalObjects.h"
 #include "ItemDataLoader.h"
@@ -27,6 +29,11 @@
 #include "EQUIP_MASTERY_LIM.h"
 #include "CAnimus.h"
 #include "animus_fld.h"
+
+namespace
+{
+  char szDefCivilCode[] = "111111";
+}
 
 const char *dayofweek[7] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 static char szDefItemName[] = "UNKNOWN";
@@ -88,6 +95,705 @@ bool CanAddMoneyForMaxLimMoney(unsigned __int64 ui64AddMoney, unsigned __int64 u
     return ui64AddMoney <= 2000000000ULL - ui64HasMoney;
   }
   return false;
+}
+
+bool CanAddMoneyForMaxLimGold(unsigned __int64 ui64AddGold, unsigned __int64 ui64HasGold)
+{
+  if (ui64AddGold > 0x7A120ULL)
+  {
+    return false;
+  }
+  if (ui64HasGold <= 0x7A120ULL)
+  {
+    return ui64AddGold <= 500000ULL - ui64HasGold;
+  }
+  return false;
+}
+
+int eGetRate(int nRaceCode)
+{
+  if (e_EconomySystem.m_CurRate[nRaceCode].fPayExgRate < 1000.0f)
+  {
+    e_EconomySystem.m_CurRate[nRaceCode].fPayExgRate = 1000.0f;
+  }
+  if (e_EconomySystem.m_CurRate[nRaceCode].fPayExgRate > 3000.0f)
+  {
+    e_EconomySystem.m_CurRate[nRaceCode].fPayExgRate = 3000.0f;
+  }
+  return static_cast<int>(e_EconomySystem.m_CurRate[nRaceCode].fPayExgRate);
+}
+
+float eGetTex(int nRaceCode)
+{
+  if (e_EconomySystem.m_CurRate[nRaceCode].fTexRate < 0.0099999998f)
+  {
+    e_EconomySystem.m_CurRate[nRaceCode].fTexRate = 0.0099999998f;
+  }
+  if (e_EconomySystem.m_CurRate[nRaceCode].fTexRate > 0.30000001f)
+  {
+    e_EconomySystem.m_CurRate[nRaceCode].fTexRate = 0.30000001f;
+  }
+  return e_EconomySystem.m_CurRate[nRaceCode].fTexRate;
+}
+
+unsigned int eGetTexRate(int nRaceCode)
+{
+  if (e_EconomySystem.m_CurRate[nRaceCode].dwTexRate < 100u)
+  {
+    e_EconomySystem.m_CurRate[nRaceCode].dwTexRate = 100u;
+  }
+  if (e_EconomySystem.m_CurRate[nRaceCode].dwTexRate > 3000u)
+  {
+    e_EconomySystem.m_CurRate[nRaceCode].dwTexRate = 3000u;
+  }
+  return e_EconomySystem.m_CurRate[nRaceCode].dwTexRate;
+}
+
+float eGetOreRate(int nRaceCode)
+{
+  return e_EconomySystem.m_CurRate[nRaceCode].fOreRate;
+}
+
+void eAddDalant(int nRaceCode, int nAdd)
+{
+  e_EconomySystem.m_dBufTradeDalant[nRaceCode] += static_cast<double>(nAdd);
+  if (e_EconomySystem.m_dBufTradeDalant[nRaceCode] < 0.0)
+  {
+    e_EconomySystem.m_dBufTradeDalant[nRaceCode] = 0.0;
+  }
+}
+
+void eAddGold(int nRaceCode, int nAdd)
+{
+  e_EconomySystem.m_dBufTradeGold[nRaceCode] += static_cast<double>(nAdd);
+}
+
+CItemStore *IsBeNearStore(CPlayer *p, int nStoreCode)
+{
+  CMapItemStoreList *storeList = nullptr;
+  const int mapCode = CMapData::GetMapCode(p->m_pCurMap);
+  CItemStoreManager *manager = CItemStoreManager::Instance();
+  storeList = CItemStoreManager::GetMapItemStoreListBySerial(manager, mapCode);
+  if (!storeList)
+  {
+    return nullptr;
+  }
+
+  for (int j = 0; j < storeList->m_nItemStoreNum; ++j)
+  {
+    CItemStore *store = &storeList->m_ItemStore[j];
+    if ((nStoreCode == -1
+        || (store->m_pRec && store->m_pRec->m_nStore_trade == nStoreCode))
+      && GetSqrt(store->m_pDum->m_pDumPos->m_fCenterPos, p->m_fCurPos) < 100.0)
+    {
+      return store;
+    }
+  }
+  return nullptr;
+}
+
+int IsStorageCodeWithItemKind(int nTableCode, int nStorageCode)
+{
+  if (nStorageCode == 1)
+  {
+    if (nTableCode >= 8)
+    {
+      return 0;
+    }
+  }
+  else if (nStorageCode == 2)
+  {
+    if (nTableCode != 8 && nTableCode != 9 && nTableCode != 10)
+    {
+      return 0;
+    }
+  }
+  else if (nStorageCode == 3)
+  {
+    if (nTableCode != 15)
+    {
+      return 0;
+    }
+  }
+  else if (nStorageCode == 4 && nTableCode != 24)
+  {
+    return 0;
+  }
+  return 1;
+}
+
+char *GetItemEquipCivil(int nTableCode, int nItemIndex)
+{
+  CRecordData *table = &s_ptblItemData[nTableCode];
+  switch (nTableCode)
+  {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 7:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[12];
+    }
+    case 6:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[6].m_strCode[16];
+    }
+    case 8:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[8];
+    }
+    case 9:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[8];
+    }
+    case 10:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[4];
+    }
+    case 11:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[4];
+    }
+    case 12:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[4];
+    }
+    case 13:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[4];
+    }
+    case 14:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return record[3].m_strCode;
+    }
+    case 15:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[4];
+    }
+    case 16:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[4];
+    }
+    case 18:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[8];
+    }
+    case 19:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return reinterpret_cast<char *>(&record[3]);
+    }
+    case 20:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[4];
+    }
+    case 21:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[4];
+    }
+    case 22:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[4];
+    }
+    case 23:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[4];
+    }
+    case 24:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return reinterpret_cast<char *>(&record[2]);
+    }
+    case 25:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[52];
+    }
+    case 26:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[60];
+    }
+    case 27:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[12];
+    }
+    case 28:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[4];
+    }
+    case 30:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[4];
+    }
+    case 31:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[4];
+    }
+    case 32:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[4];
+    }
+    case 33:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[56];
+    }
+    case 35:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[4];
+    }
+    case 36:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return szDefCivilCode;
+      }
+      return &record[3].m_strCode[4];
+    }
+    default:
+      return szDefCivilCode;
+  }
+}
+
+bool IsItemEquipCivil(int nTableCode, int nItemIndex, unsigned __int8 byRaceSex)
+{
+  if (byRaceSex > 5u)
+  {
+    return false;
+  }
+  char *civil = GetItemEquipCivil(nTableCode, nItemIndex);
+  return !civil || civil[byRaceSex] == '1';
+}
+
+int IsAbrItem(int nTableCode, int nItemIndex)
+{
+  (void)nItemIndex;
+  switch (nTableCode)
+  {
+    case 6:
+      return 0;
+    case 10:
+    case 11:
+    case 16:
+    case 19:
+    case 25:
+    case 27:
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+int IsSellItem(int nTableCode, int nItemIndex)
+{
+  CRecordData *table = &s_ptblItemData[nTableCode];
+  switch (nTableCode)
+  {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 7:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[6].m_strCode[32]);
+    }
+    case 6:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return record[11].m_dwIndex;
+    }
+    case 8:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[32]);
+    }
+    case 9:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[32]);
+    }
+    case 10:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[7].m_strCode[60]);
+    }
+    case 11:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[56]);
+    }
+    case 12:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[28]);
+    }
+    case 13:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[8].m_strCode[16]);
+    }
+    case 15:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[24]);
+    }
+    case 16:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[32]);
+    }
+    case 17:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[3].m_strCode[44]);
+    }
+    case 18:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[6].m_strCode[60]);
+    }
+    case 19:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return record[4].m_dwIndex;
+    }
+    case 20:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[28]);
+    }
+    case 21:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[24]);
+    }
+    case 22:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[6].m_strCode[28]);
+    }
+    case 23:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[7].m_strCode[56]);
+    }
+    case 24:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[32]);
+    }
+    case 25:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[10].m_strCode[4]);
+    }
+    case 26:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[8].m_strCode[12]);
+    }
+    case 27:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return record[6].m_dwIndex;
+    }
+    case 28:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[6].m_strCode[28]);
+    }
+    case 30:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[44]);
+    }
+    case 31:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[40]);
+    }
+    case 32:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[48]);
+    }
+    case 33:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[6].m_strCode[8]);
+    }
+    case 34:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[6].m_strCode[20]);
+    }
+    case 35:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[60]);
+    }
+    case 36:
+    {
+      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      if (!record)
+      {
+        return 0;
+      }
+      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[52]);
+    }
+    default:
+      return 0;
+  }
 }
 
 void MakeBinaryStr(const unsigned __int8 *pBuff, unsigned __int64 tBufSize, char *pOut, rsize_t tOutSize)

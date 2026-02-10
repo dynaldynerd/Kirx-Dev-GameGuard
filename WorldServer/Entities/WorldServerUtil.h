@@ -8,6 +8,8 @@
 
 class CWnd;
 class CMerchant;
+class CItemStore;
+class CPlayer;
 class CRecordData;
 struct _FILETIME;
 struct CMergeFileManager;
@@ -67,8 +69,12 @@ int GetUsePcCashType(unsigned __int8 byTblCode, int nIndex);
 int IsCashItem(unsigned __int8 byTblCode, int dwIndex);
 unsigned int GetItemDurPoint(int nTableCode, int nIndex);
 char *GetItemKorName(int nTableCode, int nItemIndex);
+char *GetItemEquipCivil(int nTableCode, int nItemIndex);
+bool IsItemEquipCivil(int nTableCode, int nItemIndex, unsigned __int8 byRaceSex);
 int IsTimeItem(unsigned __int8 byTblCode, int dwIndex);
 int IsOverLapItem(int nTableCode);
+int IsSellItem(int nTableCode, int nItemIndex);
+int IsAbrItem(int nTableCode, int nItemIndex);
 int IsItemSerialNum(int nTableCode);
 int IsStorageRange(unsigned __int8 byStorageCode, unsigned __int8 byStorageIndex);
 unsigned __int8 GetItemGrade(int nTableCode, int nItemIndex);
@@ -126,6 +132,15 @@ float R3GetTime();
 float R3GetLoopTime();
 struct IDirect3DDevice8 *GetD3dDevice();
 unsigned __int64 SplitString(char *strSrc, const char *_Delim, std::vector<std::string> *stringlist);
+
+int eGetRate(int nRaceCode);
+float eGetTex(int nRaceCode);
+unsigned int eGetTexRate(int nRaceCode);
+float eGetOreRate(int nRaceCode);
+CItemStore *IsBeNearStore(CPlayer *p, int nStoreCode);
+void eAddDalant(int nRaceCode, int nAdd);
+void eAddGold(int nRaceCode, int nAdd);
+int IsStorageCodeWithItemKind(int nTableCode, int nStorageCode);
 
 float DotProduct(const float *a1, const float *a2);
 float GetSqrt(float *fPos, float *fTar);
@@ -247,6 +262,7 @@ void Error(char *source, char *msg);
 void Warning(char *source, char *msg);
 
 bool CanAddMoneyForMaxLimMoney(unsigned __int64 ui64AddMoney, unsigned __int64 ui64HasMoney);
+bool CanAddMoneyForMaxLimGold(unsigned __int64 ui64AddGold, unsigned __int64 ui64HasGold);
 void MakeBinaryStr(const unsigned __int8 *pBuff, unsigned __int64 tBufSize, char *pOut, rsize_t tOutSize);
 
 // Merge-file helpers.

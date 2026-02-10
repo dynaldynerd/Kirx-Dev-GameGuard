@@ -10,6 +10,7 @@
 #include "DummyPosition.h"
 #include "GlobalObjects.h"
 #include "StoreList_fld.h"
+#include "TimeItem.h"
 #include "WorldServerUtil.h"
 
 _good_storage_info::_good_storage_info()
@@ -276,4 +277,391 @@ void CItemStore::SetLimitItemInitTime()
   {
     m_dwLimitInitTime = v9 + nowSec;
   }
+}
+
+char *CItemStore::GetNpcCode()
+{
+  if (m_pRec)
+  {
+    return m_pRec->m_strStore_NPCcode;
+  }
+  return nullptr;
+}
+
+float *CItemStore::GetStorePos()
+{
+  return m_pDum->m_pDumPos->m_fCenterPos;
+}
+
+_limit_item_info *CItemStore::GetLimitItem(int nIndex)
+{
+  if (nIndex >= 0 && nIndex < m_nLimitStorageItemNum)
+  {
+    return &m_pLimitStorageItem[nIndex];
+  }
+  return nullptr;
+}
+
+void CItemStore::InitLimitItemInfo()
+{
+  int tableCode = -1;
+  for (int j = 0; j < 16; ++j)
+  {
+    tableCode = GetItemTableCode(m_pRec->m_sellLimitList[j].m_strItemCode);
+    if (tableCode == -1)
+    {
+      m_pLimitStorageItem[j].init();
+      continue;
+    }
+
+    auto *record = reinterpret_cast<unsigned __int16 *>(
+      CRecordData::GetRecord(&g_Main.m_tblItemData[tableCode], m_pRec->m_sellLimitList[j].m_strItemCode));
+    if (!record)
+    {
+      m_pLimitStorageItem[j].init();
+      continue;
+    }
+
+    m_pLimitStorageItem[j].bLoad = true;
+    m_pLimitStorageItem[j].dwStorageIndex = j;
+    m_pLimitStorageItem[j].Key.byTableCode = static_cast<unsigned __int8>(tableCode);
+    m_pLimitStorageItem[j].Key.wItemIndex = *record;
+    m_pLimitStorageItem[j].nLimitNum = m_pRec->m_sellLimitList[j].m_nMaxCount;
+  }
+}
+
+void CItemStore::GetLimitItemAmount(_limit_amount_info *pAmountInfo)
+{
+  if (m_nLimitStorageItemNum > 0)
+  {
+    for (int j = 0; j < m_nLimitStorageItemNum; ++j)
+    {
+      if (m_pLimitStorageItem[j].bLoad)
+      {
+        const unsigned __int8 index = pAmountInfo->byItemNum;
+        pAmountInfo->ItemInfo[index].dwLimitItemIndex = m_pLimitStorageItem[j].dwStorageIndex;
+        pAmountInfo->ItemInfo[pAmountInfo->byItemNum++].wLimitNum = m_pLimitStorageItem[j].nLimitNum;
+      }
+    }
+  }
+}
+
+unsigned __int8 CItemStore::IsSell(
+  unsigned __int8 byOfferNum,
+  _buy_offer *pOffer,
+  unsigned int dwHasDalant,
+  unsigned int dwHasGold,
+  double dHasPoint,
+  unsigned int *dwHasActPoint,
+  unsigned __int8 *pbyActCode,
+  float fDiscountRate,
+  unsigned __int8 byRace,
+  unsigned __int8 byPvpGrade)
+{
+  (void)byPvpGrade;
+  if (!m_pStorageItem || !m_pLimitStorageItem)
+  {
+    return 100;
+  }
+
+  SetZeroTradeMoney();
+  const unsigned int texRate = eGetTexRate(byRace) + 10000;
+  (void)eGetTex(byRace);
+
+  int limitCounts[16]{};
+  for (int j = 0; j < byOfferNum; ++j)
+  {
+    if (pOffer[j].byGoodIndex >= m_nStorageItemNum)
+    {
+      return 17;
+    }
+
+    _good_storage_info *good = &m_pStorageItem[pOffer[j].byGoodIndex];
+    if (good->byType == 1)
+    {
+      limitCounts[good->dwLimitIndex] += pOffer[j].byGoodAmount;
+      if (limitCounts[good->dwLimitIndex] > m_pLimitStorageItem[good->dwLimitIndex].nLimitNum)
+      {
+        return 19;
+      }
+    }
+
+    unsigned __int8 moneyUnit[20]{};
+    unsigned int price = CalcSellPrice(pOffer[j].byGoodIndex, moneyUnit);
+    unsigned __int64 totalCost = static_cast<unsigned __int64>(pOffer[j].byGoodAmount) * price;
+    const unsigned __int8 unit = moneyUnit[0];
+    if (unit == 4)
+    {
+      *pbyActCode = 0;
+    }
+    else if (unit == 5)
+    {
+      *pbyActCode = 1;
+    }
+    else if (unit == 6)
+    {
+      *pbyActCode = 2;
+    }
+
+    if (fDiscountRate > 0.0f)
+    {
+      if (fDiscountRate > 1.0f)
+      {
+        fDiscountRate = FLOAT_1_0;
+      }
+      const unsigned __int64 discountRate = static_cast<unsigned int>(fDiscountRate * 10000.0f);
+      totalCost -= (discountRate * totalCost) / 0x2710;
+      if (!totalCost)
+      {
+        totalCost = 1;
+      }
+    }
+
+    totalCost = static_cast<unsigned __int64>(texRate) * totalCost / 0x2710;
+    if (unit)
+    {
+      switch (unit)
+      {
+        case 1:
+          m_dwLastTradeGold += static_cast<unsigned int>(totalCost);
+          if (dwHasGold < m_dwLastTradeGold)
+          {
+            return 14;
+          }
+          break;
+        case 2:
+        case 3:
+          m_dwLastTradePoint += static_cast<unsigned int>(totalCost);
+          if (static_cast<double>(static_cast<int>(m_dwLastTradePoint)) > dHasPoint || dHasPoint < 0.0)
+          {
+            return 21;
+          }
+          break;
+        case 4:
+        case 5:
+        case 6:
+          m_dwLastTradeActPoint[*pbyActCode] += static_cast<unsigned int>(totalCost);
+          if (dwHasActPoint[*pbyActCode] < m_dwLastTradeActPoint[*pbyActCode])
+          {
+            switch (unit)
+            {
+              case 4:
+                return 25;
+              case 5:
+                return 26;
+              case 6:
+                return 27;
+            }
+          }
+          break;
+        default:
+          break;
+      }
+    }
+    else
+    {
+      m_dwLastTradeDalant += static_cast<unsigned int>(totalCost);
+      if (dwHasDalant < m_dwLastTradeDalant)
+      {
+        return 13;
+      }
+    }
+  }
+
+  for (int j = 0; j < byOfferNum; ++j)
+  {
+    _good_storage_info *good = &m_pStorageItem[pOffer[j].byGoodIndex];
+    pOffer[j].Item.m_byTableCode = good->byItemTableCode;
+    pOffer[j].Item.m_wItemIndex = good->wItemIndex;
+    pOffer[j].Item.m_dwDur = IsOverLapItem(good->byItemTableCode) ? pOffer[j].byGoodAmount : good->dwDurPoint;
+    const unsigned __int8 itemKind = GetItemKindCode(good->byItemTableCode);
+    if (itemKind)
+    {
+      if (itemKind != 1)
+      {
+        return 100;
+      }
+      pOffer[j].Item.m_dwLv = GetMaxParamFromExp(good->wItemIndex, pOffer[j].Item.m_dwDur);
+    }
+    else
+    {
+      pOffer[j].Item.m_dwLv = good->dwUpCode;
+    }
+
+    const _TimeItem_fld *timeRec = TimeItem::FindTimeRec(good->byItemTableCode, good->wItemIndex);
+    if (timeRec)
+    {
+      __time32_t now{};
+      _time32(&now);
+      pOffer[j].Item.m_byCsMethod = timeRec->m_nCheckType;
+      pOffer[j].Item.m_dwT = timeRec->m_nUseTime + now;
+      pOffer[j].Item.m_dwLendRegdTime = now;
+    }
+  }
+  return 0;
+}
+
+unsigned __int8 CItemStore::IsBuy(
+  unsigned __int8 byOfferNum,
+  _sell_offer *pOffer,
+  float fDiscountRate,
+  unsigned __int8 byRace)
+{
+  if (!m_pStorageItem)
+  {
+    return 100;
+  }
+
+  SetZeroTradeMoney();
+  const float texAdjust = FLOAT_1_0 - eGetTex(byRace);
+  const float oreRate = eGetOreRate(byRace);
+  const int oreRateScaled = static_cast<int>(oreRate * 10000.0f);
+  const unsigned int texRate = 10000 - eGetTexRate(byRace);
+
+  for (int j = 0; j < byOfferNum; ++j)
+  {
+    if (pOffer[j].pItem->m_byTableCode == 19)
+    {
+      return 15;
+    }
+  }
+
+  for (int j = 0; j < byOfferNum; ++j)
+  {
+    const int itemIndex = pOffer[j].pItem->m_wItemIndex;
+    const int tableCode = pOffer[j].pItem->m_byTableCode;
+    unsigned __int8 moneyKind[16]{};
+    int basePrice = GetItemStdPrice(tableCode, itemIndex, byRace, moneyKind);
+    unsigned int value = static_cast<unsigned int>(pOffer[j].byAmount) * basePrice / 2;
+    if (IsAbrItem(pOffer[j].pItem->m_byTableCode, pOffer[j].pItem->m_wItemIndex))
+    {
+      const int itemDurPoint = GetItemDurPoint(pOffer[j].pItem->m_byTableCode, pOffer[j].pItem->m_wItemIndex);
+      const unsigned __int64 dur = pOffer[j].pItem->m_dwDur;
+      float durRatio = static_cast<float>(static_cast<int>(dur)) / static_cast<float>(itemDurPoint);
+      if (durRatio > FLOAT_1_0)
+      {
+        durRatio = FLOAT_1_0;
+      }
+      const unsigned int durScaled = static_cast<unsigned int>(durRatio * 10000.0f);
+      value = static_cast<unsigned int>(static_cast<unsigned __int64>(durScaled) * value / 0x2710);
+    }
+
+    if (IsItemEquipCivil(tableCode, itemIndex, 2 * byRace))
+    {
+      value = static_cast<unsigned int>(static_cast<unsigned __int64>(texRate) * value / 0x2710);
+    }
+
+    if (pOffer[j].pItem->m_byTableCode == 17)
+    {
+      value = static_cast<unsigned int>(static_cast<unsigned __int64>(oreRateScaled) * value / 0x2710);
+    }
+
+    if (!moneyKind[0]
+      || moneyKind[0] == 2
+      || moneyKind[0] == 4
+      || moneyKind[0] == 5
+      || moneyKind[0] == 6)
+    {
+      m_dwLastTradeDalant += value;
+    }
+    else if (moneyKind[0] == 1 || moneyKind[0] == 3)
+    {
+      m_dwLastTradeGold += value;
+    }
+  }
+
+  if (fDiscountRate > 0.0f && m_dwLastTradeDalant > 1)
+  {
+    if (fDiscountRate > 1.0f)
+    {
+      fDiscountRate = FLOAT_1_0;
+    }
+    const int rateScaled = static_cast<int>(fDiscountRate * 10000.0f);
+    const unsigned __int64 addValue = static_cast<unsigned __int64>(rateScaled) * m_dwLastTradeDalant;
+    const unsigned int current = m_dwLastTradeDalant;
+    m_dwLastTradeDalant = static_cast<unsigned int>(addValue / 0x2710 + current);
+  }
+
+  (void)texAdjust;
+  return 0;
+}
+
+float CItemStore::CalcBuyPrice(unsigned __int8 byTableCode, unsigned __int16 wItemIndex, unsigned __int8 *pbyMoneyUnit)
+{
+  int multi = 2;
+  if (m_byNpcRaceCode != 255)
+  {
+    const unsigned __int8 raceSex = static_cast<unsigned __int8>(2 * m_byNpcRaceCode);
+    if (!IsItemEquipCivil(byTableCode, wItemIndex, raceSex))
+    {
+      multi = 2;
+    }
+  }
+  const int npcRace = m_byNpcRaceCode;
+  const float price = static_cast<float>(GetItemStdPrice(byTableCode, wItemIndex, npcRace, pbyMoneyUnit));
+  return price / static_cast<float>(multi);
+}
+
+unsigned int CItemStore::CalcSellPrice(int nGoodIndex, unsigned __int8 *pbyMoneyUnit)
+{
+  *pbyMoneyUnit = m_pStorageItem[nGoodIndex].byMoneyUnit;
+  switch (m_pStorageItem[nGoodIndex].byMoneyUnit)
+  {
+    case 2:
+    case 3:
+      return static_cast<unsigned int>(m_pStorageItem[nGoodIndex].nStdPoint);
+    case 4:
+      return static_cast<unsigned int>(m_pStorageItem[nGoodIndex].nResPoint);
+    case 5:
+      return static_cast<unsigned int>(m_pStorageItem[nGoodIndex].nKillPoint);
+    case 6:
+      return static_cast<unsigned int>(m_pStorageItem[nGoodIndex].nGoldPoint);
+    default:
+      return static_cast<unsigned int>(m_pStorageItem[nGoodIndex].nStdPrice);
+  }
+}
+
+void CItemStore::SetZeroTradeMoney()
+{
+  m_dwLastTradePoint = 0;
+  memset_0(m_dwLastTradeActPoint, 0, sizeof(m_dwLastTradeActPoint));
+  m_dwLastTradeDalant = 0;
+  m_dwLastTradeGold = 0;
+}
+
+unsigned int CItemStore::GetLastTradeDalant()
+{
+  return m_dwLastTradeDalant;
+}
+
+unsigned int CItemStore::GetLastTradeGold()
+{
+  return m_dwLastTradeGold;
+}
+
+unsigned int CItemStore::GetLastTradePoint()
+{
+  return m_dwLastTradePoint;
+}
+
+unsigned int CItemStore::GetLastTradeActPoint(int nActPoint)
+{
+  return m_dwLastTradeActPoint[nActPoint];
+}
+
+void CItemStore::SubLimitItemNum(int nLimitItemIndex, int nSubNum)
+{
+  if (nLimitItemIndex < m_nLimitStorageItemNum)
+  {
+    m_pLimitStorageItem[nLimitItemIndex].nLimitNum -= nSubNum;
+    if (m_pLimitStorageItem[nLimitItemIndex].nLimitNum < 0)
+    {
+      m_pLimitStorageItem[nLimitItemIndex].nLimitNum = 0;
+    }
+  }
+}
+
+void CItemStore::UpdateLimitItemNum(bool bUpdate)
+{
+  m_bUpdate = bUpdate;
 }

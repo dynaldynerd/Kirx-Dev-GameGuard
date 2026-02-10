@@ -12,6 +12,8 @@ class CPostReturnStorage;
 class CPostData;
 class CUnmannedTraderRegistItemInfo;
 struct _AVATOR_DATA;
+struct _buy_offer;
+struct _sell_offer;
 
 class __cppobj CMgrAvatorItemHistory
 {
@@ -82,6 +84,48 @@ public:
     char *pszFileName);
   void exchange_item(int n, _STORAGE_LIST::_db_con *pUseItem, _STORAGE_LIST::_db_con *pOutItem, char *pszFileName);
   void reward_add_item(int n, char *pszClause, _STORAGE_LIST::_db_con *pItem, char *pszFileName);
+  void exchange_money(
+    int n,
+    unsigned int dwCurDalant,
+    unsigned int dwCurGold,
+    unsigned int dwNewDalant,
+    unsigned int dwNewGold,
+    char *pszFileName);
+  void buy_item(
+    int n,
+    _buy_offer *pOffer,
+    unsigned __int8 byOfferNum,
+    unsigned int dwCostDalant,
+    unsigned int dwCostGold,
+    unsigned int dwNewDalant,
+    unsigned int dwNewGold,
+    char *pszFileName);
+  void sell_item(
+    int n,
+    _sell_offer *pOffer,
+    unsigned __int8 byOfferNum,
+    unsigned int dwIncomeDalant,
+    unsigned int dwIncomeGold,
+    unsigned int dwNewDalant,
+    unsigned int dwNewGold,
+    char *pszFileName);
+  void InitClass(
+    int iCostGold,
+    unsigned int dwInitClassCnt,
+    unsigned __int8 byLastClassGrade,
+    char *szOldClass,
+    char *szCurClass,
+    int *piOldMaxPoint,
+    int *piAlterMaxPoint,
+    char *pszFileName);
+  void ClassUP(
+    unsigned __int8 byCurClassGrade,
+    unsigned __int8 byLastClassGrade,
+    char *szOldClass,
+    char *szCurClass,
+    int *piOldMaxPoint,
+    int *piAlterMaxPoint,
+    char *pszFileName);
   void GetNewFileName(unsigned int dwAvatorSerial, char *pszFileName);
   void have_item(
     int n,

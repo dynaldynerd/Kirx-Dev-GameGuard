@@ -2,6 +2,9 @@
 
 #include "IdaCompat.h"
 #include "ItemStoreTypes.h"
+#include "buy_offer.h"
+#include "limit_amount_info.h"
+#include "sell_offer.h"
 
 struct _base_fld;
 struct _store_dummy;
@@ -17,8 +20,38 @@ public:
 
   bool Init(int nIndex, CMapData *pExistMap, _store_dummy *pDum, _StoreList_fld *pRec);
   _base_fld *GetNpcRecord();
+  char *GetNpcCode();
   bool GetNpcRaceCode(unsigned __int8 *pbyRaceCode);
+  float *GetStorePos();
+  _limit_item_info *GetLimitItem(int nIndex);
+  void InitLimitItemInfo();
+  void GetLimitItemAmount(_limit_amount_info *pAmountInfo);
+  unsigned __int8 IsSell(
+    unsigned __int8 byOfferNum,
+    _buy_offer *pOffer,
+    unsigned int dwHasDalant,
+    unsigned int dwHasGold,
+    double dHasPoint,
+    unsigned int *dwHasActPoint,
+    unsigned __int8 *pbyActCode,
+    float fDiscountRate,
+    unsigned __int8 byRace,
+    unsigned __int8 byPvpGrade);
+  unsigned __int8 IsBuy(
+    unsigned __int8 byOfferNum,
+    _sell_offer *pOffer,
+    float fDiscountRate,
+    unsigned __int8 byRace);
+  float CalcBuyPrice(unsigned __int8 byTableCode, unsigned __int16 wItemIndex, unsigned __int8 *pbyMoneyUnit);
+  unsigned int CalcSellPrice(int nGoodIndex, unsigned __int8 *pbyMoneyUnit);
+  void SetZeroTradeMoney();
+  unsigned int GetLastTradeDalant();
+  unsigned int GetLastTradeGold();
+  unsigned int GetLastTradePoint();
+  unsigned int GetLastTradeActPoint(int nActPoint);
   unsigned int CalcSecIndex(float x, float z);
+  void SubLimitItemNum(int nLimitItemIndex, int nSubNum);
+  void UpdateLimitItemNum(bool bUpdate);
   void SetLimitItemInitTime();
 
   bool m_bLive;

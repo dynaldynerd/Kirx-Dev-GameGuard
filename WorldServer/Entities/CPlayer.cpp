@@ -16,9 +16,17 @@
 #include "combine_ex_item_request_clzo.h"
 #include "combine_ex_item_result_zocl.h"
 #include "exchange_lend_item_result_zocl.h"
+#include "buy_offer.h"
+#include "sell_offer.h"
+#include "buy_store_failure_zocl.h"
+#include "buy_store_success_zocl.h"
 #include "item_fanfare_zocl.h"
 #include "itembox_take_add_result_zocl.h"
 #include "itembox_take_new_result_zocl.h"
+#include "limit_amount_info.h"
+#include "limit_item_num_info_zocl.h"
+#include "sell_store_result_zocl.h"
+#include "store_list_result_zocl.h"
 #include "unit_bullet_param.h"
 #include "quest_check_result.h"
 #include "insert_new_quest_inform_zocl.h"
@@ -8413,6 +8421,1758 @@ void CPlayer::SendMsg_ChangeClassCommand()
 
   unsigned __int8 pbyType[2] = {11, 5};
   CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], this->m_ObjID.m_wIndex, pbyType, szMsg, 2u);
+}
+
+void CPlayer::SendMsg_SelectClassResult(char byErrCode, unsigned __int16 wSelClassIndex)
+{
+  char szMsg[32]{};
+  szMsg[0] = byErrCode;
+
+  unsigned __int8 type[2]{11, 7};
+  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_ObjID.m_wIndex, type, szMsg, 1u);
+
+  if (!byErrCode)
+  {
+    char circleMsg[6]{};
+    *reinterpret_cast<unsigned int *>(circleMsg) = m_dwObjSerial;
+    *reinterpret_cast<unsigned __int16 *>(circleMsg + 4) = wSelClassIndex;
+    unsigned __int8 circleType[2]{17, 8};
+    CGameObject::CircleReport(this, circleType, circleMsg, 6, 0);
+  }
+}
+
+void CPlayer::SendMsg_PcRoomCharClass(unsigned int dwPcRoomClassIndex)
+{
+  char szMsg[32]{};
+  *reinterpret_cast<unsigned int *>(szMsg) = dwPcRoomClassIndex;
+
+  unsigned __int8 type[2]{11, 32};
+  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_ObjID.m_wIndex, type, szMsg, 4u);
+}
+
+unsigned int CPlayer::GetInitClassCost()
+{
+  const unsigned int classInitCount = m_pUserDB->m_AvatorData.dbAvator.m_dwClassInitCnt;
+  const unsigned int costs[5] = {1000, 10000, 100000, 1000000, 1000000};
+  if (classInitCount > 4)
+  {
+    return 1000000;
+  }
+  return costs[classInitCount];
+}
+
+unsigned __int8 CPlayer::pc_InitClassRequest()
+{
+  const unsigned int cost = GetInitClassCost();
+  if (cost > CPlayerDB::GetGold(&m_Param))
+  {
+    return 3;
+  }
+
+  const unsigned __int8 result = pc_InitClass();
+  if (!result)
+  {
+    SubGold(cost);
+  }
+  ++m_pUserDB->m_AvatorData.dbAvator.m_dwClassInitCnt;
+  return result;
+}
+
+unsigned __int8 CPlayer::pc_InitClass()
+{
+  if (!m_pUserDB)
+  {
+    return 1;
+  }
+  if (!m_Param.m_pClassHistory[0])
+  {
+    return 2;
+  }
+  if (m_pUsingUnit || m_pParkingUnit)
+  {
+    return 4;
+  }
+  if (_STORAGE_LIST::GetNumUseCon(&m_Param.m_dbAnimus) > 0)
+  {
+    return 5;
+  }
+  if (m_bAfterEffect)
+  {
+    return 11;
+  }
+
+  char prevClass[36]{};
+  memcpy_0(prevClass, m_pUserDB->m_AvatorData.dbAvator.m_szClassCode, 5u);
+  int oldMaxPoint[8]{};
+  oldMaxPoint[0] = m_nMaxPoint[0];
+  oldMaxPoint[1] = m_nMaxPoint[1];
+  oldMaxPoint[2] = m_nMaxPoint[2];
+  memset(&oldMaxPoint[3], 0, sizeof(int));
+
+  CPlayerDB::InitClass(&m_Param);
+  CalcAddPointByClass();
+  m_nAddDfnMstByClass = 0;
+  RewardChangeClassMastery(m_Param.m_pClassData);
+  CUserDB::InitClass(m_pUserDB, m_Param.m_pClassData->m_strCode);
+  ReCalcMaxHFSP(false, false);
+  _TowerAllReturn(3u, true);
+
+  for (int j = 0; j < 20; ++j)
+  {
+    _TRAP_PARAM::_param *trap = &m_pmTrp.m_Item[j];
+    if (_TRAP_PARAM::_param::isLoad(trap) && trap->pItem->m_dwObjSerial == trap->dwSerial)
+    {
+      CTrap::Destroy(trap->pItem, 4u);
+    }
+  }
+
+  m_fUnitPv_AttFc = FLOAT_1_0;
+  m_fUnitPv_DefFc = FLOAT_1_0;
+  m_fUnitPv_RepPr = FLOAT_1_0;
+  CCharacter::RemoveAllContinousEffect(this);
+  SendMsg_AlterMoneyInform(0);
+
+  CMgrAvatorItemHistory::InitClass(
+    &CPlayer::s_MgrItemHistory,
+    0,
+    m_pUserDB->m_AvatorData.dbAvator.m_dwClassInitCnt,
+    m_pUserDB->m_AvatorData.dbAvator.m_byLastClassGrade,
+    prevClass,
+    m_pUserDB->m_AvatorData.dbAvator.m_szClassCode,
+    oldMaxPoint,
+    m_nMaxPoint,
+    m_szItemHistoryFileName);
+  CUserDB::WriteLog_ChangeClassAfterInitClass(m_pUserDB, 0, prevClass);
+  m_bDownCheckEquipEffect = 1;
+  return 0;
+}
+
+void CPlayer::CalcAddPointByClass()
+{
+  memset_0(m_nAddPointByClass, 0, sizeof(m_nAddPointByClass));
+  m_nAddPointByClass[0] += m_Param.m_pClassData->m_nBnsForHP;
+  m_nAddPointByClass[1] += m_Param.m_pClassData->m_nBnsForFP;
+  m_nAddPointByClass[2] += m_Param.m_pClassData->m_nBnsForSP;
+  for (int j = 0; j < 3 && m_Param.m_pClassHistory[j]; ++j)
+  {
+    m_nAddPointByClass[0] += m_Param.m_pClassHistory[j]->m_nBnsForHP;
+    m_nAddPointByClass[1] += m_Param.m_pClassHistory[j]->m_nBnsForFP;
+    m_nAddPointByClass[2] += m_Param.m_pClassHistory[j]->m_nBnsForSP;
+  }
+}
+
+void CPlayer::RewardChangeClassMastery(_class_fld *pClassFld)
+{
+  CPlayer::s_MgrLvHistory.update_mastery(
+    m_ObjID.m_wIndex,
+    m_byUserDgr,
+    CPlayerDB::GetLevel(&m_Param),
+    CPlayerDB::GetExp(&m_Param),
+    m_dwExpRate,
+    m_Param.m_byPvPGrade,
+    m_nMaxPoint,
+    &m_pmMst,
+    m_Param.m_dwAlterMastery,
+    m_szLvHistoryFileName,
+    0,
+    nullptr);
+  CPlayerDB::InitAlterMastery(&m_Param);
+
+  for (int j = 0; j < 2; ++j)
+  {
+    if (pClassFld->m_MasteryLim.m_nBnsMMastery[j])
+    {
+      Emb_AlterStat(
+        0,
+        j,
+        pClassFld->m_MasteryLim.m_nBnsMMastery[j],
+        1u,
+        "Player::RewardChangeClassMastery()---0",
+        false);
+    }
+  }
+  if (pClassFld->m_MasteryLim.m_nBnsSMastery)
+  {
+    Emb_AlterStat(
+      6u,
+      0,
+      pClassFld->m_MasteryLim.m_nBnsSMastery,
+      1u,
+      "Player::RewardChangeClassMastery()---1",
+      false);
+  }
+  if (pClassFld->m_MasteryLim.m_nBnsDefMastery)
+  {
+    Emb_AlterStat(
+      1u,
+      0,
+      pClassFld->m_MasteryLim.m_nBnsDefMastery,
+      1u,
+      "Player::RewardChangeClassMastery()---2",
+      false);
+  }
+  if (pClassFld->m_MasteryLim.m_nBnsPryMastery)
+  {
+    Emb_AlterStat(
+      2u,
+      0,
+      pClassFld->m_MasteryLim.m_nBnsPryMastery,
+      1u,
+      "Player::RewardChangeClassMastery()---3",
+      false);
+  }
+  for (int j = 0; j < 3; ++j)
+  {
+    if (pClassFld->m_MasteryLim.m_nBnsMakeMastery[j])
+    {
+      Emb_AlterStat(
+        5u,
+        j,
+        pClassFld->m_MasteryLim.m_nBnsMakeMastery[j],
+        1u,
+        "Player::RewardChangeClassMastery()---4",
+        false);
+    }
+  }
+  for (int j = 0; j < 24; ++j)
+  {
+    if (pClassFld->m_MasteryLim.m_nBnsForceMastery[j])
+    {
+      Emb_AlterStat(
+        4u,
+        j,
+        pClassFld->m_MasteryLim.m_nBnsForceMastery[j],
+        1u,
+        "Player::RewardChangeClassMastery()---5",
+        false);
+    }
+  }
+  for (int j = 0; j < 8; ++j)
+  {
+    if (pClassFld->m_MasteryLim.m_nBnsSkillMastery[j])
+    {
+      int totalSkill = 0;
+      for (int k = 0; k < CPlayer::s_SkillIndexPerMastery[j].m_nSkillIndexNum; ++k)
+      {
+        const int skillIndex = CPlayer::s_SkillIndexPerMastery[j].m_nSkillIndex[k];
+        totalSkill += m_pmMst.m_BaseCum.m_dwSkillCum[skillIndex];
+      }
+      if (totalSkill)
+      {
+        for (int k = 0; k < CPlayer::s_SkillIndexPerMastery[j].m_nSkillIndexNum; ++k)
+        {
+          const int skillIndex = CPlayer::s_SkillIndexPerMastery[j].m_nSkillIndex[k];
+          if (m_pmMst.m_BaseCum.m_dwSkillCum[skillIndex])
+          {
+            const unsigned int alterValue = static_cast<unsigned int>(
+              static_cast<int>(
+                static_cast<float>(m_pmMst.m_BaseCum.m_dwSkillCum[skillIndex]) / static_cast<float>(totalSkill)
+                * static_cast<float>(pClassFld->m_MasteryLim.m_nBnsSkillMastery[j])
+                + 1.0f));
+            if (static_cast<int>(alterValue) > 0)
+            {
+              Emb_AlterStat(3u, skillIndex, alterValue, 1u, "Player::RewardChangeClassMastery()---7", false);
+            }
+          }
+        }
+      }
+      else
+      {
+        unsigned int alterValue =
+          pClassFld->m_MasteryLim.m_nBnsSkillMastery[j] / CPlayer::s_SkillIndexPerMastery[j].m_nSkillIndexNum;
+        if (pClassFld->m_MasteryLim.m_nBnsSkillMastery[j]
+            % CPlayer::s_SkillIndexPerMastery[j].m_nSkillIndexNum)
+        {
+          ++alterValue;
+        }
+        for (int k = 0; k < CPlayer::s_SkillIndexPerMastery[j].m_nSkillIndexNum; ++k)
+        {
+          const int skillIndex = CPlayer::s_SkillIndexPerMastery[j].m_nSkillIndex[k];
+          if (static_cast<int>(alterValue) > 0)
+          {
+            Emb_AlterStat(3u, skillIndex, alterValue, 1u, "Player::RewardChangeClassMastery()---6", false);
+          }
+        }
+      }
+    }
+  }
+
+  CPlayer::s_MgrLvHistory.update_mastery(
+    m_ObjID.m_wIndex,
+    m_byUserDgr,
+    CPlayerDB::GetLevel(&m_Param),
+    CPlayerDB::GetExp(&m_Param),
+    m_dwExpRate,
+    m_Param.m_byPvPGrade,
+    m_nMaxPoint,
+    &m_pmMst,
+    m_Param.m_dwAlterMastery,
+    m_szLvHistoryFileName,
+    3u,
+    pClassFld->m_strCode);
+  CPlayerDB::InitAlterMastery(&m_Param);
+  m_dwUMWHLastTime = GetLoopTime();
+}
+
+void CPlayer::RewardChangeClassRewardItem(_class_fld *pClassFld, unsigned __int8 bySelectRewardItem)
+{
+  for (int j = 0; j < 9; ++j)
+  {
+    if (bySelectRewardItem == 0xFF || bySelectRewardItem == j)
+    {
+      char *entry = pClassFld->m_DefaultItem[j].strDefaultItem;
+      if (std::strncmp(entry, "-1", 2) != 0)
+      {
+        _STORAGE_LIST::_db_con rewardItem{};
+        const int tableCode = GetItemTableCode(entry);
+        if (tableCode == -1)
+        {
+          CLogFile::Write(
+            &g_Main.m_logSystemError,
+            "error bonus item of class change .., class: %s, error table code",
+            pClassFld->m_strCode);
+          continue;
+        }
+        if (tableCode == 19)
+        {
+          CLogFile::Write(
+            &g_Main.m_logSystemError,
+            "error bonus item of class change .., class: %s, unit key",
+            pClassFld->m_strCode);
+          continue;
+        }
+        _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[tableCode], entry);
+        if (!record)
+        {
+          CLogFile::Write(
+            &g_Main.m_logSystemError,
+            "error bonus item of class change .., class: %s, nothing in table",
+            pClassFld->m_strCode);
+          continue;
+        }
+
+        unsigned __int64 itemExp = *reinterpret_cast<unsigned int *>(entry + 64);
+        const unsigned __int8 itemKind = GetItemKindCode(tableCode);
+        if (itemKind)
+        {
+          if (itemKind != 1)
+          {
+            continue;
+          }
+          itemExp = (itemExp & 0xFFFFFFFFu)
+            | (static_cast<unsigned __int64>(GetMaxParamFromExp(record->m_dwIndex, static_cast<unsigned int>(itemExp))) << 32);
+        }
+        else
+        {
+          const unsigned __int8 defSocketNum = GetDefItemUpgSocketNum(tableCode, record->m_dwIndex);
+          itemExp = (itemExp & 0xFFFFFFFFu)
+            | (static_cast<unsigned __int64>(GetBitAfterSetLimSocket(defSocketNum)) << 32);
+        }
+
+        rewardItem.m_byTableCode = static_cast<unsigned __int8>(tableCode);
+        rewardItem.m_wItemIndex = record->m_dwIndex;
+        rewardItem.m_dwDur = static_cast<unsigned int>(itemExp);
+        rewardItem.m_dwLv = static_cast<unsigned int>(itemExp >> 32);
+
+        if (_STORAGE_LIST::GetIndexEmptyCon(&m_Param.m_dbInven) == 0xFF)
+        {
+          CreateItemBox(
+            &rewardItem,
+            this,
+            0xFFFFFFFF,
+            0,
+            nullptr,
+            3u,
+            m_pCurMap,
+            m_wMapLayerIndex,
+            m_fCurPos,
+            0);
+          char clause[144]{};
+          sprintf(clause, "Class G (%s)", pClassFld->m_strCode);
+          CMgrAvatorItemHistory::reward_add_item(
+            &CPlayer::s_MgrItemHistory,
+            m_ObjID.m_wIndex,
+            clause,
+            &rewardItem,
+            m_szItemHistoryFileName);
+        }
+        else
+        {
+          rewardItem.m_wSerial = CPlayerDB::GetNewItemSerial(&m_Param);
+          if (Emb_AddStorage(0, &rewardItem, false, true))
+          {
+            SendMsg_RewardAddItem(&rewardItem, 1u);
+            char clause[160]{};
+            sprintf(clause, "Class (%s)", pClassFld->m_strCode);
+            CMgrAvatorItemHistory::reward_add_item(
+              &CPlayer::s_MgrItemHistory,
+              m_ObjID.m_wIndex,
+              clause,
+              &rewardItem,
+              m_szItemHistoryFileName);
+          }
+        }
+      }
+    }
+  }
+}
+
+void CPlayer::RewardChangeClass(_class_fld *pClassFld, unsigned __int8 bySelectRewardItem)
+{
+  CPlayer::s_MgrLvHistory.update_mastery(
+    m_ObjID.m_wIndex,
+    m_byUserDgr,
+    CPlayerDB::GetLevel(&m_Param),
+    CPlayerDB::GetExp(&m_Param),
+    m_dwExpRate,
+    m_Param.m_byPvPGrade,
+    m_nMaxPoint,
+    &m_pmMst,
+    m_Param.m_dwAlterMastery,
+    m_szLvHistoryFileName,
+    0,
+    nullptr);
+  CPlayerDB::InitAlterMastery(&m_Param);
+
+  for (int j = 0; j < 2; ++j)
+  {
+    if (pClassFld->m_MasteryLim.m_nBnsMMastery[j])
+    {
+      Emb_AlterStat(
+        0,
+        j,
+        pClassFld->m_MasteryLim.m_nBnsMMastery[j],
+        1u,
+        "CPlayer::RewardChangeClass()---0",
+        true);
+    }
+  }
+  if (pClassFld->m_MasteryLim.m_nBnsSMastery)
+  {
+    Emb_AlterStat(
+      6u,
+      0,
+      pClassFld->m_MasteryLim.m_nBnsSMastery,
+      1u,
+      "CPlayer::RewardChangeClass()---1",
+      true);
+  }
+  if (pClassFld->m_MasteryLim.m_nBnsDefMastery)
+  {
+    Emb_AlterStat(
+      1u,
+      0,
+      pClassFld->m_MasteryLim.m_nBnsDefMastery,
+      1u,
+      "CPlayer::RewardChangeClass()---2",
+      true);
+  }
+  if (pClassFld->m_MasteryLim.m_nBnsPryMastery)
+  {
+    Emb_AlterStat(
+      2u,
+      0,
+      pClassFld->m_MasteryLim.m_nBnsPryMastery,
+      1u,
+      "CPlayer::RewardChangeClass()---3",
+      true);
+  }
+  for (int j = 0; j < 3; ++j)
+  {
+    if (pClassFld->m_MasteryLim.m_nBnsMakeMastery[j])
+    {
+      Emb_AlterStat(
+        5u,
+        j,
+        pClassFld->m_MasteryLim.m_nBnsMakeMastery[j],
+        1u,
+        "CPlayer::RewardChangeClass()---4",
+        true);
+    }
+  }
+  for (int j = 0; j < 24; ++j)
+  {
+    if (pClassFld->m_MasteryLim.m_nBnsForceMastery[j])
+    {
+      Emb_AlterStat(
+        4u,
+        j,
+        pClassFld->m_MasteryLim.m_nBnsForceMastery[j],
+        1u,
+        "CPlayer::RewardChangeClass()---5",
+        true);
+    }
+  }
+  for (int j = 0; j < 8; ++j)
+  {
+    if (pClassFld->m_MasteryLim.m_nBnsSkillMastery[j])
+    {
+      int totalSkill = 0;
+      for (int k = 0; k < CPlayer::s_SkillIndexPerMastery[j].m_nSkillIndexNum; ++k)
+      {
+        const int skillIndex = CPlayer::s_SkillIndexPerMastery[j].m_nSkillIndex[k];
+        totalSkill += m_pmMst.m_BaseCum.m_dwSkillCum[skillIndex];
+      }
+      if (totalSkill)
+      {
+        for (int k = 0; k < CPlayer::s_SkillIndexPerMastery[j].m_nSkillIndexNum; ++k)
+        {
+          const int skillIndex = CPlayer::s_SkillIndexPerMastery[j].m_nSkillIndex[k];
+          if (m_pmMst.m_BaseCum.m_dwSkillCum[skillIndex])
+          {
+            const unsigned int alterValue = static_cast<unsigned int>(
+              static_cast<int>(
+                static_cast<float>(m_pmMst.m_BaseCum.m_dwSkillCum[skillIndex]) / static_cast<float>(totalSkill)
+                * static_cast<float>(pClassFld->m_MasteryLim.m_nBnsSkillMastery[j])
+                + 1.0f));
+            if (static_cast<int>(alterValue) > 0)
+            {
+              Emb_AlterStat(3u, skillIndex, alterValue, 1u, "CPlayer::RewardChangeClass()---7", true);
+            }
+          }
+        }
+      }
+      else
+      {
+        unsigned int alterValue =
+          pClassFld->m_MasteryLim.m_nBnsSkillMastery[j] / CPlayer::s_SkillIndexPerMastery[j].m_nSkillIndexNum;
+        if (pClassFld->m_MasteryLim.m_nBnsSkillMastery[j]
+            % CPlayer::s_SkillIndexPerMastery[j].m_nSkillIndexNum)
+        {
+          ++alterValue;
+        }
+        for (int k = 0; k < CPlayer::s_SkillIndexPerMastery[j].m_nSkillIndexNum; ++k)
+        {
+          const int skillIndex = CPlayer::s_SkillIndexPerMastery[j].m_nSkillIndex[k];
+          if (static_cast<int>(alterValue) > 0)
+          {
+            Emb_AlterStat(3u, skillIndex, alterValue, 1u, "CPlayer::RewardChangeClass()---6", true);
+          }
+        }
+      }
+    }
+  }
+
+  for (int j = 0; j < 9; ++j)
+  {
+    if (bySelectRewardItem == 0xFF || bySelectRewardItem == j)
+    {
+      char *entry = pClassFld->m_DefaultItem[j].strDefaultItem;
+      if (std::strncmp(entry, "-1", 2) != 0)
+      {
+        _STORAGE_LIST::_db_con rewardItem{};
+        const int tableCode = GetItemTableCode(entry);
+        if (tableCode == -1)
+        {
+          CLogFile::Write(
+            &g_Main.m_logSystemError,
+            "error bonus item of class change .., class: %s, error table code",
+            pClassFld->m_strCode);
+          continue;
+        }
+        if (tableCode == 19)
+        {
+          CLogFile::Write(
+            &g_Main.m_logSystemError,
+            "error bonus item of class change .., class: %s, unit key",
+            pClassFld->m_strCode);
+          continue;
+        }
+        _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[tableCode], entry);
+        if (!record)
+        {
+          CLogFile::Write(
+            &g_Main.m_logSystemError,
+            "error bonus item of class change .., class: %s, nothing in table",
+            pClassFld->m_strCode);
+          continue;
+        }
+
+        unsigned __int64 itemExp = *reinterpret_cast<unsigned int *>(entry + 64);
+        const unsigned __int8 itemKind = GetItemKindCode(tableCode);
+        if (itemKind)
+        {
+          if (itemKind != 1)
+          {
+            continue;
+          }
+          itemExp = (itemExp & 0xFFFFFFFFu)
+            | (static_cast<unsigned __int64>(GetMaxParamFromExp(record->m_dwIndex, static_cast<unsigned int>(itemExp))) << 32);
+        }
+        else
+        {
+          const unsigned __int8 defSocketNum = GetDefItemUpgSocketNum(tableCode, record->m_dwIndex);
+          itemExp = (itemExp & 0xFFFFFFFFu)
+            | (static_cast<unsigned __int64>(GetBitAfterSetLimSocket(defSocketNum)) << 32);
+        }
+
+        rewardItem.m_byTableCode = static_cast<unsigned __int8>(tableCode);
+        rewardItem.m_wItemIndex = record->m_dwIndex;
+        rewardItem.m_dwDur = static_cast<unsigned int>(itemExp);
+        rewardItem.m_dwLv = static_cast<unsigned int>(itemExp >> 32);
+
+        if (_STORAGE_LIST::GetIndexEmptyCon(&m_Param.m_dbInven) == 0xFF)
+        {
+          CreateItemBox(
+            &rewardItem,
+            this,
+            0xFFFFFFFF,
+            0,
+            nullptr,
+            3u,
+            m_pCurMap,
+            m_wMapLayerIndex,
+            m_fCurPos,
+            0);
+          char clause[144]{};
+          sprintf(clause, "Class G (%s)", pClassFld->m_strCode);
+          CMgrAvatorItemHistory::reward_add_item(
+            &CPlayer::s_MgrItemHistory,
+            m_ObjID.m_wIndex,
+            clause,
+            &rewardItem,
+            m_szItemHistoryFileName);
+        }
+        else
+        {
+          rewardItem.m_wSerial = CPlayerDB::GetNewItemSerial(&m_Param);
+          if (Emb_AddStorage(0, &rewardItem, false, true))
+          {
+            SendMsg_RewardAddItem(&rewardItem, 1u);
+            char clause[160]{};
+            sprintf(clause, "Class (%s)", pClassFld->m_strCode);
+            CMgrAvatorItemHistory::reward_add_item(
+              &CPlayer::s_MgrItemHistory,
+              m_ObjID.m_wIndex,
+              clause,
+              &rewardItem,
+              m_szItemHistoryFileName);
+          }
+          else
+          {
+            CMgrAvatorItemHistory::add_storage_fail(
+              &CPlayer::s_MgrItemHistory,
+              m_ObjID.m_wIndex,
+              &rewardItem,
+              "RewardChangeClass - Emb_AddStorage() Fail",
+              m_szItemHistoryFileName);
+          }
+        }
+      }
+    }
+  }
+
+  CPlayer::s_MgrLvHistory.update_mastery(
+    m_ObjID.m_wIndex,
+    m_byUserDgr,
+    CPlayerDB::GetLevel(&m_Param),
+    CPlayerDB::GetExp(&m_Param),
+    m_dwExpRate,
+    m_Param.m_byPvPGrade,
+    m_nMaxPoint,
+    &m_pmMst,
+    m_Param.m_dwAlterMastery,
+    m_szLvHistoryFileName,
+    3u,
+    pClassFld->m_strCode);
+  CPlayerDB::InitAlterMastery(&m_Param);
+  m_dwUMWHLastTime = GetLoopTime();
+}
+
+int GetRewardItemNumChangeClass(_class_fld *pClassFld)
+{
+  unsigned int count = 0;
+  for (int j = 0; j < 9; ++j)
+  {
+    char *entry = pClassFld->m_DefaultItem[j].strDefaultItem;
+    if (std::strncmp(entry, "-1", 2) != 0)
+    {
+      ++count;
+    }
+  }
+  return static_cast<int>(count);
+}
+
+void CPlayer::pc_SelectClassRequest(unsigned __int16 wSelClassIndex, unsigned __int8 bySelectRewardItem)
+{
+  unsigned __int8 errCode = 0;
+  _class_fld *currentClass = m_Param.m_pClassData;
+  _class_fld *classRecord = (_class_fld *)CRecordData::GetRecord(&g_Main.m_tblClass, wSelClassIndex);
+  unsigned __int8 classSlot = 0xFF;
+  unsigned __int8 changeSlot = 0xFF;
+  bool rewardClassUp = false;
+
+  if (m_pUserDB)
+  {
+    if (CPlayerDB::IsClassChangeableLv(&m_Param))
+    {
+      if (classRecord)
+      {
+        for (int j = 0; j < 8 && std::strncmp(currentClass->m_strCh_Class[j], "-1", 2) != 0; ++j)
+        {
+          if (!strcmp_0(currentClass->m_strCh_Class[j], classRecord->m_strCode))
+          {
+            changeSlot = static_cast<unsigned __int8>(j);
+            break;
+          }
+        }
+        if (changeSlot == 0xFF)
+        {
+          errCode = 2;
+        }
+        else
+        {
+          for (int j = 0; j < 3; ++j)
+          {
+            if (!m_Param.m_pClassHistory[j])
+            {
+              classSlot = static_cast<unsigned __int8>(j);
+              break;
+            }
+          }
+          if (classSlot == 0xFF)
+          {
+            errCode = 3;
+          }
+          else
+          {
+            rewardClassUp = classSlot + 1 > m_pUserDB->m_AvatorData.dbAvator.m_byLastClassGrade;
+            if (rewardClassUp)
+            {
+              if (bySelectRewardItem == 0xFF)
+              {
+                if (classRecord->m_bSelectRewardItem)
+                {
+                  errCode = 4;
+                }
+                else
+                {
+                  const int rewardCount = GetRewardItemNumChangeClass(classRecord);
+                  const int emptyCount = _STORAGE_LIST::GetNumEmptyCon(&m_Param.m_dbInven);
+                  if (emptyCount < rewardCount)
+                  {
+                    errCode = 5;
+                  }
+                }
+              }
+              else if (classRecord->m_bSelectRewardItem)
+              {
+                char *entry = classRecord->m_DefaultItem[bySelectRewardItem].strDefaultItem;
+                if (std::strncmp(entry, "0", 1) == 0)
+                {
+                  errCode = 4;
+                }
+                else if (_STORAGE_LIST::GetNumEmptyCon(&m_Param.m_dbInven) < 1)
+                {
+                  errCode = 5;
+                }
+              }
+              else
+              {
+                errCode = 4;
+              }
+            }
+          }
+        }
+      }
+      else
+      {
+        errCode = 2;
+      }
+    }
+    else
+    {
+      errCode = 1;
+    }
+
+    if (!errCode)
+    {
+      char oldClass[36]{};
+      memcpy_0(oldClass, m_pUserDB->m_AvatorData.dbAvator.m_szClassCode, 5u);
+      int oldMaxPoint[8]{};
+      oldMaxPoint[0] = m_nMaxPoint[0];
+      oldMaxPoint[1] = m_nMaxPoint[1];
+      oldMaxPoint[2] = m_nMaxPoint[2];
+      memset(&oldMaxPoint[3], 0, sizeof(int));
+
+      CPlayerDB::SelectClass(&m_Param, classSlot, classRecord);
+      if (m_Param.m_pClassData->m_dwIndex == 49
+          && m_Param.m_pClassHistory[0]
+          && m_Param.m_pClassHistory[0]->m_dwIndex == 45)
+      {
+        m_fUnitPv_AttFc = FLOAT_1_1;
+        CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
+        CNationSettingManager::SetUnitPassiveValue(manager, &m_fUnitPv_DefFc);
+        m_fUnitPv_RepPr = FLOAT_0_60000002;
+      }
+      CalcAddPointByClass();
+      m_nAddDfnMstByClass = 0;
+      for (int j = 0; j < 4; ++j)
+      {
+        _DWORD *historyEffect = *m_Param.m_ppHistoryEffect[j];
+        if (!historyEffect)
+        {
+          break;
+        }
+        m_nAddDfnMstByClass += *reinterpret_cast<int *>(reinterpret_cast<char *>(historyEffect) + 1476);
+      }
+      if (rewardClassUp && TimeLimitMgr::GetPlayerStatus(g_Main.m_pTimeLimitMgr, m_id.wIndex) != 99)
+      {
+        RewardChangeClassMastery(classRecord);
+        RewardChangeClassRewardItem(classRecord, bySelectRewardItem);
+      }
+      ReCalcMaxHFSP(false, false);
+      CUserDB::Update_Class(m_pUserDB, classRecord->m_strCode, classSlot, m_Param.m_pClassHistory[classSlot]->m_dwIndex);
+      if (rewardClassUp)
+      {
+        Emb_CreateQuestEvent(quest_happen_type_class, classRecord->m_strCode);
+      }
+      CMgrAvatorItemHistory::ClassUP(
+        &CPlayer::s_MgrItemHistory,
+        classSlot + 1,
+        m_pUserDB->m_AvatorData.dbAvator.m_byLastClassGrade,
+        oldClass,
+        m_pUserDB->m_AvatorData.dbAvator.m_szClassCode,
+        oldMaxPoint,
+        m_nMaxPoint,
+        m_szItemHistoryFileName);
+      CUserDB::WriteLog_ChangeClassAfterInitClass(m_pUserDB, 1u, oldClass);
+      m_bUpCheckEquipEffect = 1;
+    }
+    SendMsg_SelectClassResult(errCode, wSelClassIndex);
+  }
+}
+
+unsigned __int8 CPlayer::pc_CanSelectClassRequest(bool *pIsRealClassUp)
+{
+  if (!CPlayerDB::IsClassChangeableLv(&m_Param))
+  {
+    return 1;
+  }
+
+  unsigned __int8 nextSlot = 0xFF;
+  for (int j = 0; j < 3; ++j)
+  {
+    if (!m_Param.m_pClassHistory[j])
+    {
+      nextSlot = static_cast<unsigned __int8>(j);
+      break;
+    }
+  }
+  if (nextSlot > 1u)
+  {
+    return 3;
+  }
+
+  if (pIsRealClassUp)
+  {
+    *pIsRealClassUp = nextSlot + 1 <= m_pUserDB->m_AvatorData.dbAvator.m_byLastClassGrade;
+  }
+  return 0;
+}
+
+void CPlayer::SendMsg_StoreListResult()
+{
+  _store_list_result_zocl msg{};
+  const int mapIndex = CPlayerDB::GetMapCode(&m_Param);
+  CMapData *map = g_MapOper.GetMap(mapIndex);
+  if (!map)
+  {
+    return;
+  }
+
+  const int serial = CMapData::GetMapCode(map);
+  CItemStoreManager *manager = CItemStoreManager::Instance();
+  CMapItemStoreList *storeList = CItemStoreManager::GetMapItemStoreListBySerial(manager, serial);
+  if (!storeList)
+  {
+    return;
+  }
+
+  for (int j = 0; j < storeList->m_nItemStoreNum; ++j)
+  {
+    CItemStore *store = &storeList->m_ItemStore[j];
+    msg.StorePos[j].dwStoreIndex = store->m_pRec->m_dwIndex;
+    memcpy_0(msg.StorePos[j].fPos, store->m_pDum->m_pDumPos->m_fCenterPos, sizeof(msg.StorePos[j].fPos));
+  }
+  msg.byStoreNum = static_cast<unsigned __int8>(map->m_nItemStoreDumNum);
+
+  unsigned __int8 type[2]{12, 9};
+  const unsigned __int16 len = msg.size();
+  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
+}
+
+void CPlayer::SendMsg_BuyItemStoreResult(
+  CItemStore *pStore,
+  int nOfferNum,
+  _buy_offer *pCard,
+  unsigned __int8 byErrCode)
+{
+  if (byErrCode)
+  {
+    _buy_store_failure_zocl msg{};
+    msg.dwDalant = CPlayerDB::GetDalant(&m_Param);
+    msg.dwGold = CPlayerDB::GetGold(&m_Param);
+    msg.dPoint = CPvpOrderView::GetPvpCash(&m_kPvpOrderView);
+    for (int j = 0; j < 3; ++j)
+    {
+      msg.dwActPoint[j] = CUserDB::GetActPoint(m_pUserDB, j);
+    }
+    msg.byRetCode = byErrCode;
+
+    unsigned __int8 type[2]{12, 3};
+    CNetProcess::LoadSendMsg(
+      g_Network.m_pProcess[0],
+      m_ObjID.m_wIndex,
+      type,
+      reinterpret_cast<char *>(&msg),
+      0x1Du);
+    return;
+  }
+
+  _buy_store_success_zocl msg{};
+  msg.dwLeftDalant = CPlayerDB::GetDalant(&m_Param);
+  msg.dwLeftGold = CPlayerDB::GetGold(&m_Param);
+  msg.dwConsumDanlant = CItemStore::GetLastTradeDalant(pStore);
+  msg.dwConsumGold = CItemStore::GetLastTradeGold(pStore);
+  msg.dwLeftPoint = static_cast<unsigned int>(CPvpOrderView::GetPvpCash(&m_kPvpOrderView));
+  msg.dwConsumPoint = CItemStore::GetLastTradePoint(pStore);
+  for (int j = 0; j < 3; ++j)
+  {
+    msg.dwConsumActPoint[j] = CItemStore::GetLastTradeActPoint(pStore, j);
+  }
+  for (int j = 0; j < 3; ++j)
+  {
+    msg.dwLeftActPoint[j] = CUserDB::GetActPoint(m_pUserDB, j);
+  }
+  msg.byDiscountRate = 100 * static_cast<unsigned __int8>(_effect_parameter::GetEff_Have(&m_EP, 1));
+  msg.byBuyNum = static_cast<unsigned __int8>(nOfferNum);
+  for (int j = 0; j < nOfferNum; ++j)
+  {
+    msg.OfferList[j].wSerial = pCard[j].wSerial;
+    msg.OfferList[j].byCsMethod = pCard[j].Item.m_byCsMethod;
+    msg.OfferList[j].dwT = pCard[j].Item.m_dwT;
+  }
+
+  unsigned __int8 type[2]{12, 2};
+  const unsigned __int16 len = msg.size();
+  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
+}
+
+void CPlayer::SendMsg_SellItemStoreResult(CItemStore *pStore, unsigned __int8 byErrCode)
+{
+  _sell_store_result_zocl msg{};
+  msg.bSucc = byErrCode == 0;
+  msg.dwLeftDalant = CPlayerDB::GetDalant(&m_Param);
+  msg.dwLeftGold = CPlayerDB::GetGold(&m_Param);
+  msg.dwProfitDanlant = CItemStore::GetLastTradeDalant(pStore);
+  msg.dwProfitGold = CItemStore::GetLastTradeGold(pStore);
+  msg.byDiscountRate = 100 * static_cast<unsigned __int8>(_effect_parameter::GetEff_Have(&m_EP, 1));
+  msg.byRetCode = byErrCode;
+
+  unsigned __int8 type[2]{12, 5};
+  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0x13u);
+}
+
+void CPlayer::SendMsg_StoreLimitItemAmountInfo(unsigned int dwStoreIndex, _limit_amount_info *pAmountInfo)
+{
+  _limit_item_num_info_zocl msg{};
+  msg.dwStoreIndex = dwStoreIndex;
+  for (int j = 0; j < pAmountInfo->byItemNum; ++j)
+  {
+    msg.LimitItemInfo[j].dwLimitItemIndex = pAmountInfo->ItemInfo[j].dwLimitItemIndex;
+    msg.LimitItemInfo[j].wLimitNum = pAmountInfo->ItemInfo[j].wLimitNum;
+  }
+  msg.byLimitItemNum = pAmountInfo->byItemNum;
+
+  unsigned __int8 type[2]{12, 18};
+  const unsigned __int16 len = msg.size();
+  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
+}
+
+void CPlayer::pc_BuyItemStore(
+  CItemStore *pStore,
+  unsigned __int8 byOfferNum,
+  _buy_store_request_clzo::_list *pList,
+  int bUseNPCLinkIntem)
+{
+  _buy_offer offers[100]{};
+  unsigned __int8 storageCounts[16]{};
+  memset(storageCounts, 0, 8);
+
+  CTransportShip *ship = &g_TransportShip[CPlayerDB::GetRaceCode(&m_Param)];
+  unsigned __int8 resultCode = 0;
+  if (TimeLimitMgr::GetPlayerStatus(g_Main.m_pTimeLimitMgr, m_id.wIndex) == 99)
+  {
+    resultCode = 23;
+  }
+  else if (bUseNPCLinkIntem || pStore->m_pExistMap == m_pCurMap)
+  {
+    const int npcRace = pStore->m_byNpcRaceCode;
+    const int playerRace = CPlayerDB::GetRaceCode(&m_Param);
+    if (npcRace == playerRace || pStore->m_byNpcRaceCode == 255)
+    {
+      if (bUseNPCLinkIntem || GetSqrt(pStore->m_pDum->m_pDumPos->m_fCenterPos, m_fCurPos) <= 100.0)
+      {
+        for (int j = 0; j < byOfferNum; ++j)
+        {
+          ++storageCounts[pList[j].byStorageCode];
+        }
+        for (int j = 0; j < 8; ++j)
+        {
+          const int emptyCount = _STORAGE_LIST::GetNumEmptyCon(m_Param.m_pStoragePtr[j]);
+          if (emptyCount < storageCounts[j])
+          {
+            resultCode = 4;
+            goto Result;
+          }
+        }
+
+        for (int j = 0; j < byOfferNum; ++j)
+        {
+          offers[j].byGoodIndex = pList[j].dwGoodSerial;
+          offers[j].byGoodAmount = pList[j].byAmount;
+          offers[j].byStorageCode = pList[j].byStorageCode;
+        }
+
+        const float discount = _effect_parameter::GetEff_Have(&m_EP, 1) + _effect_parameter::GetEff_Have(&m_EP, 11);
+        unsigned __int8 actCode[16]{};
+        const int race = CPlayerDB::GetRaceCode(&m_Param);
+        unsigned int *actPoints = CUserDB::GetPtrActPoint(m_pUserDB);
+        const double pvpCash = CPvpOrderView::GetPvpCash(&m_kPvpOrderView);
+        const unsigned int hasGold = CPlayerDB::GetGold(&m_Param);
+        const unsigned int hasDalant = CPlayerDB::GetDalant(&m_Param);
+        resultCode = CItemStore::IsSell(
+          pStore,
+          byOfferNum,
+          offers,
+          hasDalant,
+          hasGold,
+          pvpCash,
+          actPoints,
+          actCode,
+          discount,
+          race,
+          m_Param.m_byPvPGrade);
+
+        unsigned __int8 buyRaceBossGoldBox = static_cast<unsigned __int8>(-1);
+        if (!resultCode)
+        {
+          CTransportShip::InitTicketReserver(ship);
+          for (int j = 0; j < byOfferNum; ++j)
+          {
+            if (offers[j].Item.m_byTableCode == 26)
+            {
+              _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[26], offers[j].Item.m_wItemIndex);
+              if (record && *reinterpret_cast<unsigned int *>(record[1].m_strCode) == 1)
+              {
+                const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+                CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
+                const unsigned int bossSerial =
+                  CPvpUserAndGuildRankingSystem::GetCurrentRaceBossSerial(rank, raceCode, 0);
+                const unsigned int charSerial = CPlayerDB::GetCharSerial(&m_Param);
+                if (bossSerial != charSerial)
+                {
+                  resultCode = 6;
+                  break;
+                }
+              }
+            }
+
+            if (pStore->m_pRec->m_nStore_trade == 18 && offers[j].Item.m_byTableCode == 28)
+            {
+              char *civil = GetItemEquipCivil(28, offers[j].Item.m_wItemIndex);
+              const int raceSexCode = CPlayerDB::GetRaceSexCode(&m_Param);
+              if (civil[raceSexCode] != '1')
+              {
+                resultCode = 16;
+                break;
+              }
+              _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[28], offers[j].Item.m_wItemIndex);
+              if (CTransportShip::GetLeftTicketIncludeReserNum(ship, &record[4].m_strCode[8], 1) <= 0)
+              {
+                resultCode = 16;
+                break;
+              }
+            }
+
+            if (offers[j].Item.m_byTableCode == 31)
+            {
+              _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[31], offers[j].Item.m_wItemIndex);
+              if (*reinterpret_cast<unsigned int *>(&record[4].m_strCode[4]) == 11
+                  && !strcmp_0(record->m_strCode, "bxgol01"))
+              {
+                if (offers[j].byGoodAmount > 1u)
+                {
+                  offers[j].byGoodAmount = 1;
+                }
+                CGoldenBoxItemMgr *goldMgr = CGoldenBoxItemMgr::Instance();
+                buyRaceBossGoldBox = CGoldenBoxItemMgr::IsBuyRaceBossGoldBox(goldMgr, this);
+                if (buyRaceBossGoldBox)
+                {
+                  resultCode = buyRaceBossGoldBox;
+                  break;
+                }
+              }
+            }
+
+            if (!IsStorageCodeWithItemKind(offers[j].Item.m_byTableCode, pList[j].byStorageCode))
+            {
+              resultCode = 5;
+              break;
+            }
+
+            if (pList[j].byStorageCode == 1)
+            {
+              _STORAGE_LIST::_db_con *equip =
+                &m_Param.m_dbEquip.m_pStorageList[offers[j].Item.m_byTableCode];
+              if (equip->m_bLoad)
+              {
+                resultCode = 5;
+                break;
+              }
+              if (!_check_equip_part(&offers[j].Item))
+              {
+                resultCode = 7;
+                break;
+              }
+            }
+
+            if (pList[j].byStorageCode == 2)
+            {
+              if (offers[j].Item.m_byTableCode != 8
+                && offers[j].Item.m_byTableCode != 9
+                && offers[j].Item.m_byTableCode != 10)
+              {
+                resultCode = 5;
+                break;
+              }
+              int sameTypeCount = 0;
+              for (int k = 0; k < 7; ++k)
+              {
+                if (m_Param.m_dbEmbellish.m_pStorageList[k].m_bLoad
+                    && m_Param.m_dbEmbellish.m_pStorageList[k].m_byTableCode == offers[j].Item.m_byTableCode)
+                {
+                  ++sameTypeCount;
+                }
+              }
+              if (sameTypeCount > 1)
+              {
+                resultCode = 5;
+                break;
+              }
+              if (!_check_embel_part(&offers[j].Item))
+              {
+                resultCode = 7;
+                break;
+              }
+            }
+
+            if (pList[j].byStorageCode == 3)
+            {
+              for (int m = 0; m < 88; ++m)
+              {
+                _STORAGE_LIST::_db_con *forceItem = &m_Param.m_dbForce.m_pStorageList[m];
+                if (forceItem->m_bLoad
+                    && CPlayer::s_pnLinkForceItemToEffect[forceItem->m_wItemIndex]
+                      == CPlayer::s_pnLinkForceItemToEffect[offers[j].Item.m_wItemIndex])
+                {
+                  resultCode = 7;
+                  goto Result;
+                }
+              }
+            }
+
+            if (pList[j].byStorageCode == 4)
+            {
+              for (int m = 0; m < 4; ++m)
+              {
+                _STORAGE_LIST::_db_con *animus = &m_Param.m_dbAnimus.m_pStorageList[m];
+                if (animus->m_bLoad && animus->m_wItemIndex == offers[j].Item.m_wItemIndex)
+                {
+                  resultCode = 7;
+                  goto Result;
+                }
+              }
+            }
+          }
+        }
+      }
+      else
+      {
+        resultCode = 3;
+      }
+    }
+    else
+    {
+      resultCode = 2;
+    }
+  }
+  else
+  {
+    resultCode = 1;
+  }
+
+Result:
+  if (!resultCode)
+  {
+    CTransportShip::ApplyTicketReserver(ship);
+
+    bool limitUpdated = false;
+    for (int j = 0; j < byOfferNum; ++j)
+    {
+      _good_storage_info *good = &pStore->m_pStorageItem[offers[j].byGoodIndex];
+      if (good->byType == 1)
+      {
+        CItemStore::SubLimitItemNum(pStore, good->dwLimitIndex, offers[j].byGoodAmount);
+        limitUpdated = true;
+      }
+    }
+    if (limitUpdated)
+    {
+      CItemStore::UpdateLimitItemNum(pStore, true);
+    }
+
+    SubDalant(CItemStore::GetLastTradeDalant(pStore));
+    SubGold(CItemStore::GetLastTradeGold(pStore));
+    SubPoint(CItemStore::GetLastTradePoint(pStore));
+    for (int j = 0; j < 3; ++j)
+    {
+      SubActPoint(j, CItemStore::GetLastTradeActPoint(pStore, j));
+    }
+
+    for (int j = 0; j < byOfferNum; ++j)
+    {
+      offers[j].wSerial = CPlayerDB::GetNewItemSerial(&m_Param);
+      offers[j].Item.m_wSerial = offers[j].wSerial;
+      if (!Emb_AddStorage(pList[j].byStorageCode, &offers[j].Item, false, true))
+      {
+        SubDalant(-static_cast<int>(CItemStore::GetLastTradeDalant(pStore)));
+        SubGold(-static_cast<int>(CItemStore::GetLastTradeGold(pStore)));
+        SubPoint(-static_cast<int>(CItemStore::GetLastTradePoint(pStore)));
+        int actPointIndex = 0;
+        for (; actPointIndex < 3; ++actPointIndex)
+        {
+          SubActPoint(
+            actPointIndex,
+            -static_cast<int>(CItemStore::GetLastTradeActPoint(pStore, actPointIndex)));
+        }
+        SendMsg_BuyItemStoreResult(pStore, byOfferNum, offers, 0x11u);
+        // IDA uses the act-point loop index after completion; keep exact behavior.
+        CMgrAvatorItemHistory::add_storage_fail(
+          &CPlayer::s_MgrItemHistory,
+          m_ObjID.m_wIndex,
+          &offers[actPointIndex].Item,
+          " CPlayer::pc_BuyItemStore - Emb_AddStorage() Fail",
+          m_szItemHistoryFileName);
+        return;
+      }
+
+      if (!buyRaceBossGoldBox && offers[j].Item.m_byTableCode == 31)
+      {
+        _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[31], offers[j].Item.m_wItemIndex);
+        if (!strcmp_0(record->m_strCode, "bxgol01"))
+        {
+          CHolyStoneSystem::SetGoldBoxConsumable(&g_HolySys, 0);
+          _STORAGE_LIST::_db_con *item = &offers[j].Item;
+          char *charName = CPlayerDB::GetCharNameA(&m_Param);
+          const unsigned int charSerial = CPlayerDB::GetCharSerial(&m_Param);
+          SendMsg_Notify_Get_Golden_Box(1u, charSerial, charName, item, 0);
+        }
+      }
+    }
+
+    if (!m_byUserDgr)
+    {
+      if (CItemStore::GetLastTradeDalant(pStore) > 0)
+      {
+        const int addDalant = CItemStore::GetLastTradeDalant(pStore);
+        const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+        eAddDalant(raceCode, addDalant);
+      }
+      if (CItemStore::GetLastTradeGold(pStore) > 0)
+      {
+        const int addGold = CItemStore::GetLastTradeGold(pStore);
+        const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+        eAddGold(raceCode, addGold);
+      }
+    }
+
+    const int level = CPlayerDB::GetLevel(&m_Param);
+    if (level == 30 || level == 40 || level == 50 || level == 60)
+    {
+      if (CItemStore::GetLastTradeDalant(pStore) > 0)
+      {
+        const unsigned int amount = CItemStore::GetLastTradeDalant(pStore);
+        char *classCode = CPlayerDB::GetPtrCurClass(&m_Param)->m_strCode;
+        const int curLevel = CPlayerDB::GetLevel(&m_Param);
+        const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+        CMoneySupplyMgr *moneyMgr = CMoneySupplyMgr::Instance();
+        CMoneySupplyMgr::UpdateBuyData(moneyMgr, raceCode, curLevel, classCode, amount);
+      }
+      if (CItemStore::GetLastTradeGold(pStore) > 0)
+      {
+        const unsigned int amount = 2000 * CItemStore::GetLastTradeGold(pStore);
+        char *classCode = CPlayerDB::GetPtrCurClass(&m_Param)->m_strCode;
+        const int curLevel = CPlayerDB::GetLevel(&m_Param);
+        const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+        CMoneySupplyMgr *moneyMgr = CMoneySupplyMgr::Instance();
+        CMoneySupplyMgr::UpdateBuyData(moneyMgr, raceCode, curLevel, classCode, amount);
+      }
+    }
+
+    const unsigned int newGold = CPlayerDB::GetGold(&m_Param);
+    const unsigned int newDalant = CPlayerDB::GetDalant(&m_Param);
+    const unsigned int costGold = CItemStore::GetLastTradeGold(pStore);
+    const unsigned int costDalant = CItemStore::GetLastTradeDalant(pStore);
+    CMgrAvatorItemHistory::buy_item(
+      &CPlayer::s_MgrItemHistory,
+      m_ObjID.m_wIndex,
+      offers,
+      byOfferNum,
+      costDalant,
+      costGold,
+      newDalant,
+      newGold,
+      m_szItemHistoryFileName);
+  }
+
+  if (!resultCode || resultCode == 19)
+  {
+    _limit_amount_info amountInfo{};
+    CItemStore::GetLimitItemAmount(pStore, &amountInfo);
+    SendMsg_StoreLimitItemAmountInfo(pStore->m_pRec->m_dwIndex, &amountInfo);
+  }
+
+  SendMsg_BuyItemStoreResult(pStore, byOfferNum, offers, resultCode);
+}
+
+void CPlayer::pc_SellItemStore(
+  CItemStore *pStore,
+  unsigned __int8 byOfferNum,
+  _sell_store_request_clzo::_list *pList,
+  int bUseNPCLinkIntem)
+{
+  _sell_offer offers[100]{};
+  unsigned __int8 resultCode = 0;
+  if (TimeLimitMgr::GetPlayerStatus(g_Main.m_pTimeLimitMgr, m_id.wIndex) == 99)
+  {
+    resultCode = 23;
+    goto Result;
+  }
+  if (!bUseNPCLinkIntem && pStore->m_pExistMap != m_pCurMap)
+  {
+    resultCode = 1;
+    goto Result;
+  }
+  const int npcRace = pStore->m_byNpcRaceCode;
+  const int playerRace = CPlayerDB::GetRaceCode(&m_Param);
+  if (npcRace != playerRace && pStore->m_byNpcRaceCode != 255)
+  {
+    resultCode = 2;
+    goto Result;
+  }
+  if (!bUseNPCLinkIntem && GetSqrt(pStore->m_pDum->m_pDumPos->m_fCenterPos, m_fCurPos) > 100.0)
+  {
+    resultCode = 3;
+    goto Result;
+  }
+
+  int offerIndex = 0;
+  while (true)
+  {
+    if (offerIndex >= byOfferNum)
+    {
+      break;
+    }
+
+    _STORAGE_LIST::_db_con *item = _STORAGE_LIST::GetPtrFromSerial(
+      m_Param.m_pStoragePtr[pList[offerIndex].byStorageCode],
+      pList[offerIndex].wSerial);
+    offers[offerIndex].pItem = item;
+    if (!offers[offerIndex].pItem)
+    {
+      resultCode = 8;
+      goto Result;
+    }
+    if (offers[offerIndex].pItem->m_byTableCode == 19)
+    {
+      resultCode = 9;
+      goto Result;
+    }
+    if (offers[offerIndex].pItem->m_bLock)
+    {
+      resultCode = 10;
+      goto Result;
+    }
+    for (int j = 0; j < offerIndex; ++j)
+    {
+      if (offers[j].pItem == offers[offerIndex].pItem)
+      {
+        resultCode = 11;
+        goto Result;
+      }
+    }
+    if (!IsSellItem(offers[offerIndex].pItem->m_byTableCode, offers[offerIndex].pItem->m_wItemIndex))
+    {
+      resultCode = 15;
+      goto Result;
+    }
+    offers[offerIndex].bySlotIndex = offers[offerIndex].pItem->m_byStorageIndex;
+    offers[offerIndex].byStorageCode = pList[offerIndex].byStorageCode;
+    if (IsOverLapItem(offers[offerIndex].pItem->m_byTableCode))
+    {
+      if (pList[offerIndex].byAmount > offers[offerIndex].pItem->m_dwDur)
+      {
+        resultCode = 12;
+        goto Result;
+      }
+      offers[offerIndex].byAmount = pList[offerIndex].byAmount;
+    }
+    else
+    {
+      offers[offerIndex].byAmount = 1;
+    }
+    ++offerIndex;
+  }
+
+  const float discount = _effect_parameter::GetEff_Have(&m_EP, 1) + _effect_parameter::GetEff_Have(&m_EP, 10);
+  const unsigned __int8 race = static_cast<unsigned __int8>(CPlayerDB::GetRaceCode(&m_Param));
+  resultCode = CItemStore::IsBuy(pStore, byOfferNum, offers, discount, race);
+  if (!resultCode)
+  {
+    if (CItemStore::GetLastTradeDalant(pStore) <= 0
+        || CanAddMoneyForMaxLimMoney(CItemStore::GetLastTradeDalant(pStore), CPlayerDB::GetDalant(&m_Param)))
+    {
+      if (CItemStore::GetLastTradeGold(pStore) > 0)
+      {
+        if (!CanAddMoneyForMaxLimGold(CItemStore::GetLastTradeGold(pStore), CPlayerDB::GetGold(&m_Param)))
+        {
+          resultCode = 18;
+        }
+      }
+    }
+    else
+    {
+      resultCode = 18;
+    }
+  }
+
+Result:
+  if (!resultCode)
+  {
+    AddDalant(CItemStore::GetLastTradeDalant(pStore), true);
+    AddGold(CItemStore::GetLastTradeGold(pStore), true);
+
+    const unsigned int newGold = CPlayerDB::GetGold(&m_Param);
+    const unsigned int newDalant = CPlayerDB::GetDalant(&m_Param);
+    const unsigned int incomeGold = CItemStore::GetLastTradeGold(pStore);
+    const unsigned int incomeDalant = CItemStore::GetLastTradeDalant(pStore);
+    CMgrAvatorItemHistory::sell_item(
+      &CPlayer::s_MgrItemHistory,
+      m_ObjID.m_wIndex,
+      offers,
+      byOfferNum,
+      incomeDalant,
+      incomeGold,
+      newDalant,
+      newGold,
+      m_szItemHistoryFileName);
+
+    for (int k = 0; k < byOfferNum; ++k)
+    {
+      _STORAGE_LIST::_db_con *storageItem =
+        &m_Param.m_pStoragePtr[offers[k].byStorageCode]->m_pStorageList[offers[k].bySlotIndex];
+      if (IsOverLapItem(offers[k].pItem->m_byTableCode))
+      {
+        Emb_AlterDurPoint(offers[k].byStorageCode, offers[k].bySlotIndex, -offers[k].byAmount, true, false);
+      }
+      else if (!Emb_DelStorage(
+                 offers[k].byStorageCode,
+                 offers[k].bySlotIndex,
+                 false,
+                 true,
+                 "CPlayer::pc_SellItemStore()"))
+      {
+        AddGold(-static_cast<int>(CItemStore::GetLastTradeDalant(pStore)), true);
+        AddGold(-static_cast<int>(CItemStore::GetLastTradeGold(pStore)), true);
+        SendMsg_SellItemStoreResult(pStore, 0xFFu);
+        return;
+      }
+      (void)storageItem;
+    }
+
+    if (!m_byUserDgr)
+    {
+      if (CItemStore::GetLastTradeDalant(pStore) > 0)
+      {
+        const int addDalant = CItemStore::GetLastTradeDalant(pStore);
+        const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+        eAddDalant(raceCode, addDalant);
+      }
+      if (CItemStore::GetLastTradeGold(pStore) > 0)
+      {
+        const int addGold = CItemStore::GetLastTradeGold(pStore);
+        const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+        eAddGold(raceCode, addGold);
+      }
+    }
+
+    const int level = CPlayerDB::GetLevel(&m_Param);
+    if (level == 30 || level == 40 || level == 50 || level == 60)
+    {
+      const unsigned int amount = CItemStore::GetLastTradeDalant(pStore);
+      char *classCode = CPlayerDB::GetPtrCurClass(&m_Param)->m_strCode;
+      const int curLevel = CPlayerDB::GetLevel(&m_Param);
+      const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+      CMoneySupplyMgr *moneyMgr = CMoneySupplyMgr::Instance();
+      CMoneySupplyMgr::UpdateSellData(moneyMgr, raceCode, curLevel, classCode, amount);
+    }
+  }
+  SendMsg_SellItemStoreResult(pStore, resultCode);
+}
+
+void CPlayer::pc_ExchangeDalantForGold(unsigned int dwDalant)
+{
+  unsigned __int8 resultCode = 0;
+  const unsigned int curDalant = CPlayerDB::GetDalant(&m_Param);
+  const unsigned int curGold = CPlayerDB::GetGold(&m_Param);
+  const int rate = eGetRate(CPlayerDB::GetRaceCode(&m_Param));
+  const int exchangeDalant = static_cast<int>(dwDalant - dwDalant % rate);
+  const unsigned int feeDalant = static_cast<unsigned int>(static_cast<float>(exchangeDalant) * 0.1f);
+  const int addGold = exchangeDalant / rate;
+
+  if (IsBeNearStore(this, 10))
+  {
+    const unsigned int totalDalant = feeDalant + exchangeDalant;
+    if (totalDalant <= CPlayerDB::GetDalant(&m_Param))
+    {
+      if (addGold)
+      {
+        const unsigned int gold = CPlayerDB::GetGold(&m_Param);
+        if (!CanAddMoneyForMaxLimGold(addGold, gold))
+        {
+          resultCode = 2;
+        }
+      }
+    }
+    else
+    {
+      resultCode = 1;
+    }
+  }
+  else
+  {
+    resultCode = 13;
+  }
+
+  if (!resultCode)
+  {
+    SubDalant(feeDalant + exchangeDalant);
+    AddGold(addGold, false);
+
+    CMgrAvatorItemHistory::exchange_money(
+      &CPlayer::s_MgrItemHistory,
+      m_ObjID.m_wIndex,
+      curDalant,
+      curGold,
+      CPlayerDB::GetDalant(&m_Param),
+      CPlayerDB::GetGold(&m_Param),
+      m_szItemHistoryFileName);
+
+    const unsigned int level = CPlayerDB::GetLevel(&m_Param);
+    if (level == 30 || level == 40 || level == 50 || level == 60)
+    {
+      const int lv = CPlayerDB::GetLevel(&m_Param);
+      const int race = CPlayerDB::GetRaceCode(&m_Param);
+      CMoneySupplyMgr *moneyMgr = CMoneySupplyMgr::Instance();
+      CMoneySupplyMgr::UpdateFeeMoneyData(moneyMgr, race, lv, feeDalant);
+    }
+  }
+  SendMsg_ExchangeMoneyResult(resultCode);
+}
+
+void CPlayer::pc_ExchangeGoldForDalant(unsigned int dwGold)
+{
+  unsigned __int8 resultCode = 0;
+  const unsigned int curGold = CPlayerDB::GetGold(&m_Param);
+  const unsigned int curDalant = CPlayerDB::GetDalant(&m_Param);
+  const int rate = eGetRate(CPlayerDB::GetRaceCode(&m_Param));
+  const unsigned int dalantTotal = rate * dwGold;
+  const unsigned int feeDalant = static_cast<unsigned int>(static_cast<float>(dalantTotal) * 0.1f);
+  const unsigned int addDalant = dalantTotal - feeDalant;
+
+  if (IsBeNearStore(this, 10))
+  {
+    if (dwGold <= curGold)
+    {
+      if (addDalant)
+      {
+        const unsigned int dalant = CPlayerDB::GetDalant(&m_Param);
+        if (!CanAddMoneyForMaxLimMoney(addDalant, dalant))
+        {
+          resultCode = 2;
+        }
+      }
+    }
+    else
+    {
+      resultCode = 1;
+    }
+  }
+  else
+  {
+    resultCode = 13;
+  }
+
+  if (!resultCode)
+  {
+    SubGold(dwGold);
+    AddDalant(addDalant, false);
+
+    CMgrAvatorItemHistory::exchange_money(
+      &CPlayer::s_MgrItemHistory,
+      m_ObjID.m_wIndex,
+      curDalant,
+      curGold,
+      CPlayerDB::GetDalant(&m_Param),
+      CPlayerDB::GetGold(&m_Param),
+      m_szItemHistoryFileName);
+
+    const unsigned int level = CPlayerDB::GetLevel(&m_Param);
+    if (level == 30 || level == 40 || level == 50 || level == 60)
+    {
+      const int lv = CPlayerDB::GetLevel(&m_Param);
+      const int race = CPlayerDB::GetRaceCode(&m_Param);
+      CMoneySupplyMgr *moneyMgr = CMoneySupplyMgr::Instance();
+      CMoneySupplyMgr::UpdateFeeMoneyData(moneyMgr, race, lv, feeDalant);
+    }
+  }
+  SendMsg_ExchangeMoneyResult(resultCode);
+}
+
+void CPlayer::pc_LimitItemNumRequest(unsigned int dwStoreIndex)
+{
+  if (!m_pCurMap)
+  {
+    return;
+  }
+
+  CItemStoreManager *storeMgr = CItemStoreManager::Instance();
+  if (dwStoreIndex >= CRecordData::GetRecordNum(&storeMgr->m_tblItemStore))
+  {
+    return;
+  }
+
+  CMapItemStoreList *storeList = nullptr;
+  if (m_pCurMap->m_pMapSet->m_nMapType == 1)
+  {
+    if (m_Param.m_pGuild)
+    {
+      CGuildRoomSystem *room = CGuildRoomSystem::GetInstance();
+      if (CGuildRoomSystem::IsGuildRoomMemberIn(
+            room,
+            m_Param.m_pGuild->m_dwSerial,
+            m_ObjID.m_wIndex,
+            m_pUserDB->m_dwSerial))
+      {
+        CItemStoreManager *manager = CItemStoreManager::Instance();
+        storeList = CItemStoreManager::GetInstanceStoreListBySerial(manager, m_Param.m_pGuild->m_dwSerial);
+      }
+    }
+  }
+  else
+  {
+    const int serial = CMapData::GetMapCode(m_pCurMap);
+    CItemStoreManager *manager = CItemStoreManager::Instance();
+    storeList = CItemStoreManager::GetMapItemStoreListBySerial(manager, serial);
+  }
+
+  if (!storeList)
+  {
+    return;
+  }
+
+  CItemStore *store = CMapItemStoreList::GetItemStoreFromRecIndex(storeList, dwStoreIndex);
+  if (!store)
+  {
+    return;
+  }
+
+  _limit_amount_info amountInfo{};
+  CItemStore::GetLimitItemAmount(store, &amountInfo);
+  SendMsg_StoreLimitItemAmountInfo(store->m_pRec->m_dwIndex, &amountInfo);
+}
+
+void CPlayer::pc_PvpCashRecorver(unsigned __int16 dwItemSerial, unsigned __int8 byItemCnt)
+{
+  unsigned __int8 resultCode = 0;
+  _STORAGE_LIST::_db_con *item = _STORAGE_LIST::GetPtrFromSerial(&m_Param.m_dbInven, dwItemSerial);
+  _base_fld *record = nullptr;
+  if (item && item->m_dwDur >= byItemCnt)
+  {
+    record = CRecordData::GetRecord(&g_Main.m_tblItemData[18], item->m_wItemIndex);
+    if (record)
+    {
+      CPvpCashMng *cashMng = CPvpCashMng::Instance();
+      if (!CPvpCashMng::IsTalikItem(cashMng, record->m_strCode))
+      {
+        resultCode = 1;
+      }
+    }
+    else
+    {
+      resultCode = 1;
+    }
+  }
+  else
+  {
+    resultCode = 1;
+  }
+
+  if (resultCode)
+  {
+    CPvpCashPoint::SendMsg_RecoverResult(&m_kPvpCashPoint, m_ObjID.m_wIndex, resultCode, 0);
+    return;
+  }
+
+  const int recoverPoint = CPvpCashPoint::GetTalikRecvrPoint(&m_kPvpCashPoint, item->m_byTableCode, record->m_dwIndex);
+  int addedPoint = 0;
+  int appliedCount = 0;
+  const double pvpCash = CPvpOrderView::GetPvpCash(&m_kPvpOrderView);
+  if (pvpCash >= 0.0)
+  {
+    resultCode = 2;
+  }
+  CPvpCashPoint::SendMsg_RecoverResult(&m_kPvpCashPoint, m_ObjID.m_wIndex, resultCode, recoverPoint);
+  if (!resultCode)
+  {
+    long double alter = 0.0;
+    for (int j = 1; j <= byItemCnt; ++j)
+    {
+      addedPoint += recoverPoint;
+      appliedCount = j;
+      if (pvpCash + static_cast<double>(addedPoint) >= 0.0)
+      {
+        alter = -0.0 - pvpCash;
+        break;
+      }
+      alter = static_cast<double>(addedPoint);
+    }
+    AlterPvPCashBag(alter, pm_reward);
+    if (IsOverLapItem(item->m_byTableCode))
+    {
+      Emb_AlterDurPoint(0, item->m_byStorageIndex, -appliedCount, 1, 1);
+    }
+    else if (Emb_DelStorage(0, item->m_byStorageIndex, 0, 1, "CPlayer::pc_PvpCashRecorver"))
+    {
+      CMgrAvatorItemHistory::consume_del_item(&CPlayer::s_MgrItemHistory, m_ObjID.m_wIndex, item, m_szItemHistoryFileName);
+    }
+    else
+    {
+      AlterPvPCashBag(-0.0 - alter, pm_reward);
+    }
+  }
 }
 
 void CPlayer::SendMsg_RadarDelayTime(unsigned int dwDelay)

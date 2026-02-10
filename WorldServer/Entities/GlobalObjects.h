@@ -22,6 +22,7 @@
 #include "CHolyStoneSystem.h"
 #include "CWorldSchedule.h"
 #include "CGameStatistics.h"
+#include "ECONOMY_SYSTEM.h"
 #include "R3EngineState.h"
 #include "CNetworkEX.h"
 #include "CVoteSystem.h"
@@ -60,6 +61,7 @@ extern CLogFile g_logSchedule;
 extern CHolyStoneSystem g_HolySys;
 extern CWorldSchedule g_WorldSch;
 extern CGameStatistics g_GameStatistics;
+extern _ECONOMY_SYSTEM e_EconomySystem;
 extern CVoteSystem g_VoteSys[3];
 extern CMainThread g_Main;
 extern CNetworkEX g_Network;

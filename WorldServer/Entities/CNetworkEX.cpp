@@ -16,6 +16,7 @@
 #include "CMainThread.h"
 #include "CNationSettingManager.h"
 #include "CNuclearBombMgr.h"
+#include "CPcBangFavor.h"
 #include "CPvpUserAndGuildRankingSystem.h"
 #include "CGuild.h"
 #include "CheatCommands.h"
@@ -23,6 +24,7 @@
 #include "CPlayer.h"
 #include "CItemStoreManager.h"
 #include "CMapData.h"
+#include "CGuildRoomSystem.h"
 #include "CReturnGateController.h"
 #include "CUserDB.h"
 #include "CRaceBossMsgController.h"
@@ -35,6 +37,8 @@
 #include "combine_ex_item_accept_request_clzo.h"
 #include "combine_ex_item_request_clzo.h"
 #include "combine_item_request_clzo.h"
+#include "buy_store_request_clzo.h"
+#include "sell_store_request_clzo.h"
 #include "enter_world_request_zone.h"
 #include "enter_world_result_zone.h"
 #include "make_item_request_clzo.h"
@@ -2350,6 +2354,422 @@ bool CNetworkEX::PlayerInfoResult(unsigned int n, char *pBuf)
   (void)n;
   (void)pBuf;
   // this is not a stub
+  return true;
+}
+
+bool CNetworkEX::SelectClassRequest(unsigned int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper)
+  {
+    return true;
+  }
+
+  const unsigned __int16 selClassIndex = *reinterpret_cast<unsigned __int16 *>(pBuf);
+  const int recordNum = CRecordData::GetRecordNum(&g_Main.m_tblClass);
+  if (selClassIndex < recordNum)
+  {
+    const unsigned __int8 selectRewardItem = static_cast<unsigned __int8>(pBuf[2]);
+    if (selectRewardItem == 0xFF || selectRewardItem < 9u)
+    {
+      player->pc_SelectClassRequest(selClassIndex, selectRewardItem);
+      return true;
+    }
+
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: SelectClassRequest()..  if(pRecv->bySelectRewardItem >= max_class_bns_item)",
+      charName);
+    return false;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: SelectClassRequest()..  if(pRecv->wSelClassIndex >= g_Main.m_tblClass.GetRecordNum())",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::InitClassRequest(unsigned int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper)
+  {
+    return true;
+  }
+
+  unsigned __int8 resultCode = 0;
+  if (*pBuf)
+  {
+    if (static_cast<unsigned __int8>(*pBuf) == 2)
+    {
+      resultCode = g_Main.m_pRFEvent_ClassRefine->DoEvent(g_Main.m_pRFEvent_ClassRefine, player);
+    }
+  }
+  else
+  {
+    resultCode = player->pc_InitClassRequest();
+  }
+
+  unsigned __int8 type[2]{11, 25};
+  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], player->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&resultCode), 1u);
+  return true;
+}
+
+bool CNetworkEX::InitClassCostRequest(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  if (player->m_bOper)
+  {
+    unsigned int cost = player->GetInitClassCost();
+    unsigned __int8 type[2]{11, 27};
+    CNetProcess::LoadSendMsg(
+      g_Network.m_pProcess[0],
+      player->m_ObjID.m_wIndex,
+      type,
+      reinterpret_cast<char *>(&cost),
+      4u);
+  }
+  return true;
+}
+
+bool CNetworkEX::CanSelectClassRequest(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  if (player->m_bOper)
+  {
+    unsigned __int8 isRealClassUp = 0;
+    const unsigned __int8 resultCode = player->pc_CanSelectClassRequest(reinterpret_cast<bool *>(&isRealClassUp));
+    unsigned __int8 msg[2]{resultCode, isRealClassUp};
+    unsigned __int8 type[2]{11, 29};
+    CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], player->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(msg), 2u);
+  }
+  return true;
+}
+
+bool CNetworkEX::SelectPcBangRewardRequest(unsigned int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (player->m_bOper)
+  {
+    const unsigned int rewardIndex = *reinterpret_cast<unsigned int *>(pBuf);
+    unsigned __int8 *selectItemIndex = reinterpret_cast<unsigned __int8 *>(pBuf + 4);
+    CPcBangFavor *pcBang = CPcBangFavor::Instance();
+    CPcBangFavor::PcBangGiveItem(pcBang, player, rewardIndex, selectItemIndex, 5);
+  }
+  return true;
+}
+
+bool CNetworkEX::BuyStoreRequest(unsigned int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  CItemStoreManager *storeManager = CItemStoreManager::Instance();
+  const unsigned int recordNum = CRecordData::GetRecordNum(&storeManager->m_tblItemStore);
+  const unsigned int storeIndex = *reinterpret_cast<unsigned int *>(pBuf);
+  if (storeIndex >= recordNum)
+  {
+    return true;
+  }
+
+  const unsigned __int8 buyNum = static_cast<unsigned __int8>(pBuf[4]);
+  if (buyNum > 0x64u)
+  {
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: BuyStoreRequest().. if(pRecv->byBuyNum > trade_item_max_num)",
+      charName);
+    return false;
+  }
+  if (!buyNum)
+  {
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(&m_LogFile, "odd.. %s: BuyStoreRequest().. if(pRecv->byBuyNum == 0)", charName);
+    return false;
+  }
+
+  CMapItemStoreList *storeList = nullptr;
+  if (player->m_pCurMap->m_pMapSet->m_nMapType == 1)
+  {
+    if (player->m_Param.m_pGuild)
+    {
+      CGuildRoomSystem *guildRoom = CGuildRoomSystem::GetInstance();
+      if (CGuildRoomSystem::IsGuildRoomMemberIn(
+            guildRoom,
+            player->m_Param.m_pGuild->m_dwSerial,
+            player->m_ObjID.m_wIndex,
+            player->m_pUserDB->m_dwSerial))
+      {
+        CItemStoreManager *manager = CItemStoreManager::Instance();
+        storeList = CItemStoreManager::GetInstanceStoreListBySerial(manager, player->m_Param.m_pGuild->m_dwSerial);
+      }
+    }
+  }
+  else
+  {
+    unsigned __int8 mapCode = static_cast<unsigned __int8>(-1);
+    if (*reinterpret_cast<unsigned int *>(pBuf + 5))
+    {
+      const int raceCode = CPlayerDB::GetRaceCode(&player->m_Param);
+      if (raceCode == 1)
+      {
+        mapCode = 1;
+      }
+      else if (raceCode == 2)
+      {
+        mapCode = 3;
+      }
+      else
+      {
+        mapCode = 0;
+      }
+    }
+    else
+    {
+      mapCode = static_cast<unsigned __int8>(CMapData::GetMapCode(player->m_pCurMap));
+    }
+
+    CItemStoreManager *manager = CItemStoreManager::Instance();
+    storeList = CItemStoreManager::GetMapItemStoreListBySerial(manager, mapCode);
+  }
+
+  if (!storeList)
+  {
+    return true;
+  }
+
+  CItemStore *store = CMapItemStoreList::GetItemStoreFromRecIndex(storeList, storeIndex);
+  if (!store)
+  {
+    return true;
+  }
+
+  for (int j = 0; j < buyNum; ++j)
+  {
+    const unsigned int goodSerial = *reinterpret_cast<unsigned int *>(&pBuf[6 * j + 10]);
+    if (goodSerial >= static_cast<unsigned int>(store->m_nStorageItemNum))
+    {
+      const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+      CLogFile::Write(
+        &m_LogFile,
+        "odd.. %s: BuyStoreRequest().. if(pRecv->OfferList[i].dwGoodSerial >= pStore->m_nStorageItemNum)",
+        charName);
+      return false;
+    }
+    const unsigned __int8 amount = static_cast<unsigned __int8>(pBuf[6 * j + 14]);
+    if (!amount || amount > 0x63u)
+    {
+      const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+      CLogFile::Write(
+        &m_LogFile,
+        "odd.. %s: BuyStoreRequest().. if(pRecv->OfferList[i].byAmount < 1 || pRecv->OfferList[i].byAmount > 99)",
+        charName);
+      return false;
+    }
+    const unsigned __int8 storageCode = static_cast<unsigned __int8>(pBuf[6 * j + 9]);
+    if (storageCode >= 8u)
+    {
+      const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+      CLogFile::Write(
+        &m_LogFile,
+        "odd.. %s: BuyStoreRequest().. if(pRecv->OfferList[i].byStorageCode >= _STORAGE_POS::STORAGE_NUM)",
+        charName);
+      return false;
+    }
+  }
+
+  player->pc_BuyItemStore(
+    store,
+    buyNum,
+    reinterpret_cast<_buy_store_request_clzo::_list *>(pBuf + 9),
+    *reinterpret_cast<unsigned int *>(pBuf + 5));
+  return true;
+}
+
+bool CNetworkEX::SellStoreRequest(unsigned int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  CItemStoreManager *storeManager = CItemStoreManager::Instance();
+  const unsigned int recordNum = CRecordData::GetRecordNum(&storeManager->m_tblItemStore);
+  const unsigned int storeIndex = *reinterpret_cast<unsigned int *>(pBuf);
+  if (storeIndex >= recordNum)
+  {
+    return true;
+  }
+
+  const unsigned __int8 sellNum = static_cast<unsigned __int8>(pBuf[4]);
+  if (sellNum > 0x64u)
+  {
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: SellStoreRequest() : pRecv->bySellNum(%d) >= trade_item_max_num(%d)",
+      charName,
+      sellNum,
+      100);
+    return false;
+  }
+  if (!sellNum)
+  {
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(&m_LogFile, "odd.. %s: SellStoreRequest() : if(pRecv->bySellNum == 0)", charName);
+    return false;
+  }
+
+  for (int j = 0; j < sellNum; ++j)
+  {
+    const unsigned __int8 amount = static_cast<unsigned __int8>(pBuf[4 * j + 12]);
+    if (!amount || amount > 0x63u)
+    {
+      const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+      CLogFile::Write(
+        &m_LogFile,
+        "odd.. %s: SellStoreRequest() : pRecv->Item[i].byAmount (%d)",
+        charName,
+        amount);
+      return false;
+    }
+    const unsigned __int8 storageCode = static_cast<unsigned __int8>(pBuf[4 * j + 9]);
+    if (storageCode >= 8u)
+    {
+      const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+      CLogFile::Write(
+        &m_LogFile,
+        "odd.. %s: SellStoreRequest() : pRecv->Item[i].byStorageCode (%d)",
+        charName,
+        storageCode);
+      return false;
+    }
+  }
+
+  unsigned __int8 mapCode = static_cast<unsigned __int8>(-1);
+  if (*reinterpret_cast<unsigned int *>(pBuf + 5))
+  {
+    const int raceCode = CPlayerDB::GetRaceCode(&player->m_Param);
+    if (raceCode == 1)
+    {
+      mapCode = 1;
+    }
+    else if (raceCode == 2)
+    {
+      mapCode = 3;
+    }
+    else
+    {
+      mapCode = 0;
+    }
+  }
+  else
+  {
+    mapCode = static_cast<unsigned __int8>(CMapData::GetMapCode(player->m_pCurMap));
+  }
+
+  CItemStoreManager *manager = CItemStoreManager::Instance();
+  CMapItemStoreList *storeList = CItemStoreManager::GetMapItemStoreListBySerial(manager, mapCode);
+  if (!storeList)
+  {
+    return true;
+  }
+
+  CItemStore *store = CMapItemStoreList::GetItemStoreFromRecIndex(storeList, storeIndex);
+  if (store)
+  {
+    player->pc_SellItemStore(
+      store,
+      sellNum,
+      reinterpret_cast<_sell_store_request_clzo::_list *>(pBuf + 9),
+      *reinterpret_cast<unsigned int *>(pBuf + 5));
+  }
+  return true;
+}
+
+bool CNetworkEX::StoreListRequest(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  player->SendMsg_StoreListResult();
+  return true;
+}
+
+bool CNetworkEX::ExchangeDalantForGoldRequest(unsigned int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+  player->pc_ExchangeDalantForGold(*reinterpret_cast<unsigned int *>(pBuf));
+  return true;
+}
+
+bool CNetworkEX::ExchangeGoldForDalantRequest(unsigned int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+  player->pc_ExchangeGoldForDalant(*reinterpret_cast<unsigned int *>(pBuf));
+  return true;
+}
+
+bool CNetworkEX::LimitItemNumRequest(unsigned int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_bCorpse)
+  {
+    return true;
+  }
+  player->pc_LimitItemNumRequest(*reinterpret_cast<unsigned int *>(pBuf));
+  return true;
+}
+
+bool CNetworkEX::TalikRecorverList(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_bCorpse)
+  {
+    return true;
+  }
+  CPvpCashPoint::SendMsg_TalikList(&player->m_kPvpCashPoint, n);
+  return true;
+}
+
+bool CNetworkEX::PvpCashRecorverWithTalik(unsigned int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_bCorpse)
+  {
+    return true;
+  }
+  player->pc_PvpCashRecorver(*reinterpret_cast<unsigned int *>(pBuf), static_cast<unsigned __int8>(pBuf[4]));
+  return true;
+}
+
+bool CNetworkEX::PcBangPrimiumCouponRequest(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_bCorpse)
+  {
+    return true;
+  }
+  CCouponMgr::ReceivePrimiumCoupon(&player->m_kPcBangCoupon, n);
   return true;
 }
 
