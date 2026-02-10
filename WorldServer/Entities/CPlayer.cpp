@@ -9865,7 +9865,7 @@ char CPlayer::Emb_StartQuest(unsigned __int8 bySelectQuest, _happen_event_cont *
           }
           else
           {
-            if (!Emb_DelStorage(this, 0, item->m_byStorageIndex, false, true, "CPlayer::pcChatAllRequest()"))
+            if (!Emb_DelStorage(0, item->m_byStorageIndex, false, true, "CPlayer::pcChatAllRequest()"))
             {
               return 0;
             }
