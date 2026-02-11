@@ -25,6 +25,13 @@ struct __cppobj __unaligned __declspec(align(4)) _STORAGE_LIST
     void empty();
     void lock(bool bLock);
 
+    _storage_con(
+      unsigned __int8 byTableCode,
+      unsigned __int16 wItemIndex,
+      unsigned int dwDur,
+      unsigned int dwLv,
+      unsigned __int16 wSerial);
+
     _storage_con()
     {
       memset_0(this, 0, sizeof(_storage_con));

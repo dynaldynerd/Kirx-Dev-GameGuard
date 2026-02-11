@@ -56,6 +56,8 @@ extern _R3ENGINE_STATE stState;
 extern int dword_184A79820;
 extern int dword_184A79824;
 extern int gAsci[256];
+extern unsigned __int8 gbyWeaponPerBullet[2];
+extern int gnBulletPerPart[6];
 
 extern CTransportShip g_TransportShip[3];
 extern CLogFile g_logSchedule;
@@ -63,6 +65,7 @@ extern CHolyStoneSystem g_HolySys;
 extern CWorldSchedule g_WorldSch;
 extern CGameStatistics g_GameStatistics;
 extern _ECONOMY_SYSTEM e_EconomySystem;
+extern int e_nMgrDft;
 extern CVoteSystem g_VoteSys[3];
 extern CMainThread g_Main;
 extern CNetworkEX g_Network;

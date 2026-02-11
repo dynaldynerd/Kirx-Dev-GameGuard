@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "CMainThread.h"
+#include "GlobalObjects.h"
+#include "PCBANG_PRIMIUM_FAVOR.h"
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -73,4 +75,38 @@ void _res_dummy::SetRangeGrade()
         this->m_byGrade[v5++ % 3] = v6;
         this->m_byGrade[v5 % 3] = (v6 == 1) ? 2 : 1;
     }
+}
+
+unsigned __int8 _res_dummy::GetQualityGrade()
+{
+    return this->m_byQualityGrade;
+}
+
+unsigned int _res_dummy::GetDelay(unsigned __int8 bySector, bool bIsPcbang)
+{
+    int delay = 300000;
+    const unsigned __int8 qualityGrade = this->m_byQualityGrade;
+    if (qualityGrade)
+    {
+        if (qualityGrade == 1)
+        {
+            delay = 30000;
+        }
+        else if (qualityGrade == 2)
+        {
+            delay = 300000;
+        }
+    }
+    else
+    {
+        const unsigned __int8 grade = this->m_byGrade[bySector];
+        delay =
+            this->m_dwDelay[grade][0]
+            + rand() % (this->m_dwDelay[grade][1] - this->m_dwDelay[grade][0]);
+    }
+
+    const float adjusted =
+        bIsPcbang ? static_cast<float>(delay) / PCBANG_PRIMIUM_FAVOR::MINING_SPEED
+                  : static_cast<float>(delay) / MINE_SPEED_RATE;
+    return static_cast<unsigned int>(static_cast<int>(adjusted));
 }

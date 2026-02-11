@@ -175,6 +175,40 @@ bool CExtDummy::LoadExtDummy(const char *szFileName)
   return true;
 }
 
+_EXT_DUMMY *CExtDummy::GetDummy(unsigned int nDummyIndex)
+{
+  if (!mDummy)
+  {
+    return nullptr;
+  }
+  if (!mNum)
+  {
+    return nullptr;
+  }
+
+  unsigned int maxIndex = mNum - 1;
+  if (nDummyIndex >= maxIndex)
+  {
+    nDummyIndex = maxIndex;
+  }
+  return &mDummy[nDummyIndex];
+}
+
+void CExtDummy::GetDummyList(int nFlag, unsigned int *pnNum, unsigned int *pList)
+{
+  *pnNum = 0;
+  if (mDummy && mNum)
+  {
+    for (unsigned int index = 0; index < mNum; ++index)
+    {
+      if ((nFlag & mDummy[index].mFlag) != 0)
+      {
+        pList[(*pnNum)++] = index;
+      }
+    }
+  }
+}
+
 bool CExtDummy::GetWorldFromLocal(float *fOutPos, unsigned int nDummyIndex, float *v7)
 {
   if (!mDummy)

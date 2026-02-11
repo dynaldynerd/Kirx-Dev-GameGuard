@@ -3,6 +3,7 @@
 #include "CWeeklyGuildRankManager.h"
 
 #include "CRFWorldDatabase.h"
+#include "CPlayer.h"
 #include "CPvpUserAndGuildRankingSystem.h"
 #include "CGuildBattleController.h"
 #include "CLogTypeDBTaskManager.h"
@@ -421,6 +422,19 @@ void CWeeklyGuildRankManager::CompleteUpdateClear(unsigned __int8 byRet)
   CPvpUserAndGuildRankingSystem::Instance()->Log(
     "CWeeklyGuildRankManager::CompleteUpdateClear() : Clear Weekly Guild PVPPoint Sum %s!",
     result);
+}
+
+void CWeeklyGuildRankManager::Send(unsigned int dwVer, unsigned __int8 byTabRace, CPlayer *pkPlayer)
+{
+  unsigned int guildSerial = static_cast<unsigned int>(-1);
+  if (pkPlayer->m_Param.m_pGuild)
+  {
+    guildSerial = pkPlayer->m_Param.m_pGuild->m_dwSerial;
+  }
+
+  const unsigned __int8 bySelfRace = CPlayerDB::GetRaceCode(&pkPlayer->m_Param);
+  const unsigned __int16 wIndex = pkPlayer->m_ObjID.m_wIndex;
+  m_kInfo.Send(dwVer, wIndex, byTabRace, bySelfRace, guildSerial);
 }
 
 bool CWeeklyGuildRankManager::CreatePvpPointGuildRank(char *szDate)

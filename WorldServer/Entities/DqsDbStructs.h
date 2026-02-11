@@ -612,7 +612,33 @@ struct __declspec(align(4)) _qry_case_select_charserial
   unsigned int dwAvatorSerial;
   char wszCharName[17];
   char wszContent[1280];
+
+  __int64 size();
 };
+
+inline __int64 _qry_case_select_charserial::size()
+{
+  return 1308;
+}
+
+struct __cppobj __declspec(align(1)) _insert_trc_info
+{
+  unsigned __int8 byRace;
+  __unaligned __declspec(align(1)) unsigned int dwGSerial;
+  char szGuildName[17];
+  unsigned __int8 byMatterType;
+  __unaligned __declspec(align(1)) unsigned int dwMatterDst;
+  char wszMatterDst[64];
+  __unaligned __declspec(align(1)) unsigned int dwNext;
+  unsigned __int8 byCurrTax;
+
+  __int64 size();
+};
+
+inline __int64 _insert_trc_info::size()
+{
+  return 96;
+}
 
 struct __declspec(align(4)) _qry_case_update_user_guild_data
 {

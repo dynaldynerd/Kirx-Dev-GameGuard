@@ -1802,6 +1802,7 @@ struct __cppobj __unaligned __declspec(align(2)) _personal_amine_mineore_zocl
   __changed change[40];
 
   void clear();
+  unsigned int size() const;
 };
 
 /* 5884 */
@@ -1845,6 +1846,86 @@ struct __cppobj __unaligned __declspec(align(1)) _personal_automine_current_stat
   unsigned int size() const;
 };
 
+/* 5894 */
+struct __cppobj __unaligned __declspec(align(1)) _personal_automine_install_zocl
+{
+  unsigned int dwObjSerial;
+  unsigned __int16 wObjIndex;
+  unsigned int dwOwnerSerial;
+  unsigned __int16 wItemTblIndex;
+  unsigned __int16 wItemSerial;
+  float fPos[3];
+  unsigned __int8 byFilledSlotCnt;
+
+  _personal_automine_install_zocl();
+  unsigned int size() const;
+};
+
+/* 5869 */
+struct __cppobj __unaligned __declspec(align(2)) _personal_automine_battery_insert_zocl
+{
+  unsigned int dwObjSerial;
+  unsigned int dwOwnerSerial;
+  unsigned __int16 wItemSerial;
+
+  _personal_automine_battery_insert_zocl();
+  unsigned int size() const;
+};
+
+/* 5871 */
+struct __cppobj __unaligned __declspec(align(1)) _personal_automine_battery_extract_zocl
+{
+  unsigned int dwObjSerial;
+  unsigned __int16 wSerial;
+  unsigned int dwDur;
+  unsigned __int8 byRetCode;
+
+  _personal_automine_battery_extract_zocl();
+  unsigned int size() const;
+};
+
+/* 5867 */
+struct __cppobj __unaligned __declspec(align(1)) _personal_automine_selore_zocl
+{
+  unsigned int dwObjSerial;
+  unsigned __int8 bySelectOre;
+
+  _personal_automine_selore_zocl();
+  unsigned int size() const;
+};
+
+/* 5877 */
+struct __cppobj __unaligned __declspec(align(1)) _personal_automine_popore_zocl
+{
+  unsigned __int16 wItemSerial;
+  unsigned __int8 byNum;
+
+  _personal_automine_popore_zocl();
+  unsigned int size() const;
+};
+
+/* 5872 */
+struct __cppobj __unaligned __declspec(align(1)) _personal_automine_stop_zocl
+{
+  unsigned int dwObjSerial;
+  unsigned int dwOwnerSerial;
+  unsigned __int8 byStopType;
+  unsigned __int16 wItemSerial;
+
+  _personal_automine_stop_zocl();
+  unsigned int size() const;
+};
+
+/* 5875 */
+struct __cppobj _personal_amine_infoui_open_zocl
+{
+  unsigned int dwObjSerial;
+  unsigned int dwBattery[2];
+
+  _personal_amine_infoui_open_zocl();
+  unsigned int size() const;
+};
+
 /* 1709 */
 struct __cppobj _qry_case_update_mineore
 {
@@ -1870,8 +1951,29 @@ public:
   ~AutominePersonal();
   bool initialize(unsigned __int16 wIndex);
   bool is_installed();
+  unsigned int get_objserial();
   unsigned int get_ownerserial();
+  unsigned __int16 get_itemserial();
+  _STORAGE_LIST::_db_con *get_item();
+  CPlayer *get_owner();
   CPlayer *GetOwner();
+  bool is_run();
+  void set_selore(unsigned __int8 bySelOre);
+  void set_openUI_Inven(bool bFlag);
+  void set_openUI_battery(bool bFlag);
+  void send_changed_packet(unsigned int n);
+  void set_work(bool bWork);
+  void sub_filledslot();
+  bool insert_battery(unsigned __int8 bySlotIdx, unsigned __int16 wItemSerial);
+  bool regist_to_map(
+    CPlayer *pOne,
+    _STORAGE_LIST::_db_con *pDstItem,
+    unsigned __int8 byDummyIndex,
+    unsigned int dwObjSerial,
+    float fDelayProf);
+  void send_installed();
+  void set_delay(unsigned int dwDelay);
+  void set_delaysec(unsigned __int8 dwDS);
   bool unregist_from_map(unsigned __int8 byDestroyType);
   bool extract_battery(unsigned __int8 bySlotIdx, _STORAGE_LIST::_db_con *pBattery);
   void send_current_state();
@@ -2372,6 +2474,8 @@ struct __cppobj __declspec(align(4)) _res_dummy
   _res_dummy();
   bool SetDummy(_dummy_position *pDumPos, unsigned char byQualityGrade);
   void SetRangeGrade();
+  unsigned __int8 GetQualityGrade();
+  unsigned int GetDelay(unsigned __int8 bySector, bool bIsPcbang);
 };
 
 /* 1522 */
@@ -2398,6 +2502,8 @@ struct __cppobj __unaligned __declspec(align(1)) AP_BatterySlot
   AP_BatterySlot();
   void clear();
   bool extract(_STORAGE_LIST::_db_con *pout_item);
+  __int64 insert(_STORAGE_LIST::_db_con *pItem);
+  bool is_private_item(_STORAGE_LIST::_db_con *pItem);
   unsigned int get_dur();
 
   bool m_bFill;

@@ -40,6 +40,10 @@ public:
   void Init(_object_id *pID);
   bool Destroy();
   void SendMsg_Destroy();
+  void ChangeMode(unsigned int mode);
+  void ChangeMode_MasterCommand(unsigned int nMode);
+  bool ChangeTarget_MasterCommand(CPlayer *pTarget);
+  void AlterMode_MasterReport(unsigned __int8 byMode);
 
   static CRecordData s_tblParameter[8];
   static unsigned int MAX_EXP[8];
@@ -47,4 +51,5 @@ public:
 };
 
 _animus_fld *GetAnimusFldFromLv(int nAnimusClass, unsigned int dwLv);
+CAnimus *FindEmptyAnimus(CAnimus *pObjArray, int nMax);
 

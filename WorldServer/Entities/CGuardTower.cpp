@@ -2,10 +2,14 @@
 
 #include "CGuardTower.h"
 
+#include "CMapData.h"
+#include "CObjectList.h"
+#include "pnt_rect.h"
 #include "WorldServerUtil.h"
 #include "GlobalObjects.h"
 
 #include <mmsystem.h>
+#include <cmath>
 
 int CGuardTower::s_nLiveNum = 0;
 unsigned int CGuardTower::s_dwSerialCnt = 0;
@@ -151,5 +155,93 @@ CGuardTower *CreateSystemTower(
     return tower;
   }
   return nullptr;
+}
+
+CGuardTower *CreateGuardTower(
+  CMapData *pMap,
+  unsigned __int16 wLayer,
+  float *fPos,
+  _STORAGE_LIST::_db_con *pItem,
+  CPlayer *pMaster,
+  unsigned __int8 byRaceCode,
+  bool bQuick)
+{
+  CGuardTower *tower = nullptr;
+  for (int j = 0; j < MAX_TOWER; ++j)
+  {
+    if (!g_Tower[j].m_bLive)
+    {
+      tower = &g_Tower[j];
+      break;
+    }
+  }
+
+  if (!tower)
+  {
+    return nullptr;
+  }
+
+  _tower_create_setdata data;
+  data.m_pMap = pMap;
+  data.m_nLayerIndex = wLayer;
+  data.m_pRecordSet = CRecordData::GetRecord(&g_Main.m_tblItemData[25], pItem->m_wItemIndex);
+  if (!data.m_pRecordSet)
+  {
+    return nullptr;
+  }
+  memcpy_0(data.m_fStartPos, fPos, sizeof(data.m_fStartPos));
+  data.pMaster = pMaster;
+  data.byRaceCode = byRaceCode;
+  data.pItem = pItem;
+  data.bQuick = bQuick;
+
+  if (tower->Create(&data))
+  {
+    return tower;
+  }
+  return nullptr;
+}
+
+bool IsOtherTowerNear(CGameObject *pEster, float *pfEstPos, CGuardTower *pEstObj)
+{
+  const int curSector = CGameObject::GetCurSecNum(pEster);
+  _pnt_rect rect{};
+  CMapData::GetRectInRadius(pEster->m_pCurMap, &rect, 3, curSector);
+
+  for (int y = rect.nStarty; y <= rect.nEndy; ++y)
+  {
+    for (int x = rect.nStartx; x <= rect.nEndx; ++x)
+    {
+      _sec_info *secInfo = CMapData::GetSecInfo(pEster->m_pCurMap);
+      const unsigned int secIndex = secInfo->m_nSecNumW * y + x;
+      CObjectList *sectorList = CMapData::GetSectorListObj(pEster->m_pCurMap, pEster->m_wMapLayerIndex, secIndex);
+      if (!sectorList)
+      {
+        continue;
+      }
+
+      _object_list_point *node = sectorList->m_Head.m_pNext;
+      while (node != &sectorList->m_Tail)
+      {
+        auto *tower = static_cast<CGuardTower *>(node->m_pItem);
+        node = node->m_pNext;
+        _object_id *objId = &tower->m_ObjID;
+        if (!tower->m_ObjID.m_byKind
+          && objId->m_byID == 4
+          && pEstObj != tower
+          && std::fabs(tower->m_fCurPos[1] - pfEstPos[1]) <= 100.0f)
+        {
+          const int checkRange = *reinterpret_cast<int *>(&tower->m_pRecordSet[5].m_strCode[24]);
+          const double dist = GetSqrt(tower->m_fCurPos, pfEstPos);
+          if (static_cast<double>(checkRange) > dist)
+          {
+            return true;
+          }
+        }
+      }
+    }
+  }
+
+  return false;
 }
 

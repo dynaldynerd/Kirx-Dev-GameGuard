@@ -8,6 +8,7 @@ struct _mon_active;
 class CMapData;
 class CItemStore;
 class CMonster;
+class CPlayer;
 
 struct __cppobj _object_create_setdata
 {
@@ -27,6 +28,41 @@ struct __cppobj _object_create_setdata
 
 struct __cppobj _character_create_setdata : _object_create_setdata
 {
+};
+
+struct __cppobj __declspec(align(8)) _parkingunit_create_setdata : _object_create_setdata
+{
+  CPlayer *pOwner;
+  unsigned __int8 byCreateType;
+  unsigned __int8 byFrame;
+  unsigned __int8 byPartCode[6];
+  unsigned __int8 byTransDistCode;
+  unsigned __int16 wHPRate;
+
+  _parkingunit_create_setdata()
+  {
+    pOwner = nullptr;
+    byCreateType = 0;
+    byTransDistCode = 0;
+  }
+};
+
+struct __cppobj __declspec(align(8)) _animus_create_setdata : _character_create_setdata
+{
+  int nHP;
+  int nFP;
+  unsigned __int64 dwExp;
+  CPlayer *pMaster;
+  int nMaxAttackPnt;
+
+  _animus_create_setdata()
+  {
+    nHP = 0;
+    nFP = 0;
+    dwExp = 0;
+    pMaster = nullptr;
+    nMaxAttackPnt = 0;
+  }
 };
 
 struct __cppobj _monster_create_setdata : _character_create_setdata

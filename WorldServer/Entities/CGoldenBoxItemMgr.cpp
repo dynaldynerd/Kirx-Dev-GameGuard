@@ -529,3 +529,22 @@ unsigned __int8 CGoldenBoxItemMgr::Get_Event_Status()
 {
   return m_golden_box_event.m_event_status;
 }
+
+unsigned __int16 CGoldenBoxItemMgr::GetGoldBoxItemIndex(unsigned __int16 wIndex)
+{
+  return m_pItemIndex[wIndex].wItemIndex;
+}
+
+unsigned __int16 CGoldenBoxItemMgr::Get_Box_Count(unsigned __int8 byIndex)
+{
+  return m_golden_box_item.m_wBoxMax[byIndex];
+}
+
+void CGoldenBoxItemMgr::Set_Box_Count(unsigned __int8 byIndex)
+{
+  if (m_golden_box_item.m_wBoxMax[byIndex])
+  {
+    --m_golden_box_item.m_wBoxMax[byIndex];
+    Set_ToStruct();
+  }
+}

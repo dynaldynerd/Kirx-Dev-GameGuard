@@ -18,10 +18,13 @@
 #include "CNuclearBombMgr.h"
 #include "CPcBangFavor.h"
 #include "CPvpUserAndGuildRankingSystem.h"
+#include "CTotalGuildRankManager.h"
+#include "CWeeklyGuildRankManager.h"
 #include "CGuild.h"
 #include "CheatCommands.h"
 #include "PatriarchElectProcessor.h"
 #include "CPlayer.h"
+#include "CRecallEffectController.h"
 #include "CItemStoreManager.h"
 #include "CMapData.h"
 #include "CGuildRoomSystem.h"
@@ -31,14 +34,89 @@
 #include "DqsDbStructs.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
+#include "CHRID.h"
 #include "cancel_raceboss_msg_result_zoct.h"
 #include "character_disconnect_result_wrac.h"
 #include "connection_status_result_zoct.h"
 #include "combine_ex_item_accept_request_clzo.h"
 #include "combine_ex_item_request_clzo.h"
 #include "combine_item_request_clzo.h"
+#include "force_inven_change_request_clzo.h"
+#include "animus_inven_change_request_clzo.h"
+#include "animus_recall_request_clzo.h"
+#include "animus_command_request_clzo.h"
+#include "animus_target_request_clzo.h"
+#include "res_separation_request_clzo.h"
+#include "res_division_request_clzo.h"
+#include "potionsocket_separation_request_clzo.h"
+#include "potionsocket_division_request_clzo.h"
+#include "alter_item_slot_request_clzo.h"
+#include "alter_link_slot_request_clzo.h"
+#include "pvp_rank_list_request_clzo.h"
+#include "mode_change_request_clzo.h"
+#include "gesture_request_clzo.h"
+#include "alter_window_info_request_clzo.h"
+#include "unit_frame_buy_request_clzo.h"
+#include "unit_sell_request_clzo.h"
+#include "unit_part_tuning_request_clzo.h"
+#include "unit_frame_repair_request_clzo.h"
+#include "unit_bullet_fill_request_clzo.h"
+#include "unit_pack_fill_request_clzo.h"
+#include "unit_delivery_request_clzo.h"
+#include "unit_return_request_clzo.h"
+#include "unit_take_request_clzo.h"
+#include "unit_leave_request_clzo.h"
+#include "unit_bullet_replace_request_clzo.h"
+#include "set_target_object_request_clzo.h"
+#include "object_server_pos_request_clzo.h"
+#include "release_target_object_request_clzo.h"
+#include "player_macro_update_request_clzo.h"
+#include "total_guild_rank_request_clzo.h"
+#include "weekly_guild_rank_request_clzo.h"
+#include "set_raceboss_cry_msg_request_clzo.h"
+#include "notify_raceboss_cry_msg_request_zocl.h"
+#include "set_group_target_object_request_clzo.h"
+#include "release_group_target_object_request_clzo.h"
+#include "set_group_map_point_request_clzo.h"
+#include "select_waited_quest_report_clzo.h"
+#include "quest_select_reward_repart_clzo.h"
+#include "brief_pass_report_clzo.h"
+#include "npc_quest_request_clzo.h"
+#include "npc_quest_list_request_clzo.h"
+#include "quest_give_up_request_clzo.h"
+#include "pt_request_punishment_clzo.h"
+#include "uilock_init_request_clzo.h"
+#include "uilock_user_certify_request_clzo.h"
+#include "uilock_update_info_request_clzo.h"
+#include "uilock_find_pw_request_clzo.h"
+#include "mine_start_request_clzo.h"
+#include "mine_cancle_request_clzo.h"
+#include "ore_cutting_request_clzo.h"
+#include "ore_into_bag_request_clzo.h"
+#include "cutting_complete_request_clzo.h"
+#include "qry_case_select_timelimit_info.h"
 #include "buy_store_request_clzo.h"
 #include "sell_store_request_clzo.h"
+#include "force_request_clzo.h"
+#include "skill_request_clzo.h"
+#include "class_skill_request_clzo.h"
+#include "make_tower_request_clzo.h"
+#include "back_tower_request_clzo.h"
+#include "make_trap_request_clzo.h"
+#include "decide_recall_request_clzo.h"
+#include "back_trap_request_clzo.h"
+#include "force_recall_teleport_request_clzo.h"
+#include "skill_recall_teleport_request_clzo.h"
+#include "class_skill_recall_teleport_request_clzo.h"
+#include "thorw_skill_request_clzo.h"
+#include "d_trade_add_request_clzo.h"
+#include "d_trade_answer_request_clzo.h"
+#include "d_trade_ask_request_clzo.h"
+#include "d_trade_bet_request_clzo.h"
+#include "d_trade_cancle_request_clzo.h"
+#include "d_trade_del_request_clzo.h"
+#include "d_trade_lock_request_clzo.h"
+#include "d_trade_ok_request_clzo.h"
 #include "enter_world_request_zone.h"
 #include "enter_world_result_zone.h"
 #include "make_item_request_clzo.h"
@@ -3701,6 +3779,753 @@ bool CNetworkEX::TalikCrystalExchangeRequest(unsigned int n, _MSG_HEADER *pHeade
   return false;
 }
 
+bool CNetworkEX::ForceInvenChangeRequest(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<_force_inven_change_request_clzo *>(pBuf);
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode)
+  {
+    return true;
+  }
+
+  if (!request->Item.byStorageCode || request->Item.byStorageCode == 3)
+  {
+    player->pc_ForceInvenChange(&request->Item, request->wReplaceSerial);
+    return true;
+  }
+
+  const int storageCode = request->Item.byStorageCode;
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: ForceInvenChangeRequest() : pRecv->Item.byStorageCode(%d)",
+    charName,
+    storageCode);
+  return false;
+}
+
+bool CNetworkEX::AnimusInvenChangeRequest(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<_animus_inven_change_request_clzo *>(pBuf);
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode)
+  {
+    return true;
+  }
+
+  if (!request->Item.byStorageCode || request->Item.byStorageCode == 4)
+  {
+    player->pc_AnimusInvenChange(&request->Item, request->wReplaceSerial);
+    return true;
+  }
+
+  const int storageCode = request->Item.byStorageCode;
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: AnimusInvenChangeRequest() : pRecv->Item.byStorageCode(%d)",
+    charName,
+    storageCode);
+  return false;
+}
+
+bool CNetworkEX::ResSeparationRequest(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<_res_separation_request_clzo *>(pBuf);
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode)
+  {
+    return true;
+  }
+
+  if (request->byMoveAmount < 0x63u)
+  {
+    player->pc_ResSeparation(request->wStartSerial, request->byMoveAmount);
+    return true;
+  }
+
+  const int amount = request->byMoveAmount;
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: ResSeparationRequest() : pRecv->byMoveAmount(%d)",
+    charName,
+    amount);
+  return false;
+}
+
+bool CNetworkEX::ResDivisionRequest(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<_res_division_request_clzo *>(pBuf);
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode)
+  {
+    return true;
+  }
+
+  if (request->byMoveAmount < 0x63u)
+  {
+    player->pc_ResDivision(request->wStartSerial, request->wTarSerial, request->byMoveAmount);
+    return true;
+  }
+
+  const int amount = request->byMoveAmount;
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: ResDivisionRequest() : pRecv->byMoveAmount(%d)",
+    charName,
+    amount);
+  return false;
+}
+
+bool CNetworkEX::PotionSocketSeparationRequest(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<_potionsocket_separation_request_clzo *>(pBuf);
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode)
+  {
+    return true;
+  }
+
+  if (request->byMoveAmount <= 0x63u)
+  {
+    player->pc_PotionSeparation(request->wStartSerial, request->byMoveAmount);
+    return true;
+  }
+
+  const int amount = request->byMoveAmount;
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: PotionSocketSeparationRequest() : pRecv->byMoveAmount(%d)",
+    charName,
+    amount);
+  return false;
+}
+
+bool CNetworkEX::PotionSocketDivisionRequest(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<_potionsocket_division_request_clzo *>(pBuf);
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode)
+  {
+    return true;
+  }
+
+  if (request->byMoveAmount <= 0x63u)
+  {
+    player->pc_PotionDivision(request->wStartSerial, request->wTarSerial, request->byMoveAmount);
+    return true;
+  }
+
+  const int amount = request->byMoveAmount;
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: PotionSocketDivisionRequest() : pRecv->byMoveAmount(%d)",
+    charName,
+    amount);
+  return false;
+}
+
+bool CNetworkEX::AlterItemSlotRequest(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<_alter_item_slot_request_clzo *>(pBuf);
+  if (!player->m_bOper)
+  {
+    return true;
+  }
+
+  if (request->byNum && request->byNum <= 0x64u)
+  {
+    for (int j = 0; j < request->byNum; ++j)
+    {
+      const auto &entry = request->list[j];
+      if (entry.byStorageIndex)
+      {
+        if (entry.byStorageIndex != 2)
+        {
+          const int storageIndex = entry.byStorageIndex;
+          const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+          CLogFile::Write(
+            &m_LogFile,
+            "odd.. %s: AlterItemSlotRequest() : pRecv->list[%d].byStorageIndex(%d)",
+            charName,
+            j,
+            storageIndex);
+          return false;
+        }
+        if (entry.byClientSlotIndex >= 7u)
+        {
+          const int clientIndex = entry.byClientSlotIndex;
+          const int storageIndex = entry.byStorageIndex;
+          const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+          CLogFile::Write(
+            &m_LogFile,
+            "odd.. %s: AlterItemSlotRequest() : pRecv->list[%d].byStorageIndex(%d), pRecv->list[%d].byClientSlotIndex(%d)",
+            charName,
+            j,
+            storageIndex,
+            j,
+            clientIndex);
+          return false;
+        }
+      }
+      else if (entry.byClientSlotIndex >= 0x64u)
+      {
+        const int clientIndex = entry.byClientSlotIndex;
+        const int storageIndex = entry.byStorageIndex;
+        const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+        CLogFile::Write(
+          &m_LogFile,
+          "odd.. %s: AlterItemSlotRequest() : pRecv->list[%d].byStorageIndex(%d), pRecv->list[%d].byClientSlotIndex(%d)",
+          charName,
+          j,
+          storageIndex,
+          j,
+          clientIndex);
+        return false;
+      }
+    }
+    player->pc_AlterItemSlotRequest(request->byNum, request->list);
+    return true;
+  }
+
+  const int num = request->byNum;
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: AlterItemSlotRequest() : pRecv->byNum(%d)",
+    charName,
+    num);
+  return false;
+}
+
+bool CNetworkEX::AlterLinkBoardSlotRequest(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<_alter_link_slot_request_clzo *>(pBuf);
+  if (!player->m_bOper)
+  {
+    return true;
+  }
+
+  if (request->byNum < 0x32u)
+  {
+    for (int j = 0; j < request->byNum; ++j)
+    {
+      const auto &entry = request->list[j];
+      if (entry.bySlotIndex >= 0x32u)
+      {
+        const int slotIndex = entry.bySlotIndex;
+        const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+        CLogFile::Write(
+          &m_LogFile,
+          "odd.. %s: AlterLinkBoardSlotRequest() : pRecv->list[%d].bySlotIndex(%d)",
+          charName,
+          j,
+          slotIndex);
+        return false;
+      }
+      if (entry.byLinkCode != 0xFFu && entry.byLinkCode >= 7u)
+      {
+        const int linkCode = entry.byLinkCode;
+        const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+        CLogFile::Write(
+          &m_LogFile,
+          "odd.. %s: AlterLinkBoardSlotRequest() : pRecv->list[%d].byLinkCode(%d)",
+          charName,
+          j,
+          linkCode);
+        return false;
+      }
+    }
+    player->pc_AlterLinkBoardSlotRequest(request->byNum, request->list, request->byLinkLock);
+    return true;
+  }
+
+  const int num = request->byNum;
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: AlterLinkBoardSlotRequest() : pRecv->byNum(%d)",
+    charName,
+    num);
+  return false;
+}
+
+bool CNetworkEX::PvpRankListRequest(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<_pvp_rank_list_request_clzo *>(pBuf);
+  if (!player->m_bOper)
+  {
+    return true;
+  }
+
+  if (request->byRace < 3u)
+  {
+    if (request->byPage < 0xAu)
+    {
+      CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
+      ranking->PvpRankListRequest(
+        player->m_ObjID.m_wIndex,
+        request->byRace,
+        request->byVersion,
+        request->byPage);
+      return true;
+    }
+
+    const int page = request->byPage;
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: PvpRankListRequest() : pRecv->byPage(%d)",
+      charName,
+      page);
+    return false;
+  }
+
+  const int race = request->byRace;
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: PvpRankListRequest() : pRecv->byRace(%d)",
+    charName,
+    race);
+  return false;
+}
+
+bool CNetworkEX::ModeChangeRequest(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<_mode_change_request_clzo *>(pBuf);
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (!request->byModeCode || request->byModeCode == 1)
+  {
+    if (!request->byStandCode || request->byStandCode == 1)
+    {
+      player->pc_ChangeModeType(request->byModeCode, request->byStandCode);
+      return true;
+    }
+
+    const int standCode = request->byStandCode;
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: ModeChangeRequest() : pRecv->byStandCode(%d)",
+      charName,
+      standCode);
+    return false;
+  }
+
+  const int modeCode = request->byModeCode;
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: ModeChangeRequest() : pRecv->byModeCode(%d)",
+    charName,
+    modeCode);
+  return false;
+}
+
+bool CNetworkEX::GustureRequest(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<_gesture_request_clzo *>(pBuf);
+  if (!player->m_bOper || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (request->byGestureType < 0x64u)
+  {
+    player->pc_GestureRequest(request->byGestureType);
+    return true;
+  }
+
+  const int gestureType = request->byGestureType;
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: GustureRequest() : pRecv->byGestureType(%d)",
+    charName,
+    gestureType);
+  return false;
+}
+
+bool CNetworkEX::AlterWindowInfoRequest(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<_alter_window_info_request_clzo *>(pBuf);
+  if (player->m_bOper)
+  {
+    player->pc_AlterWindowInfoRequest(
+      request->dwSkill,
+      request->dwForce,
+      request->dwCharacter,
+      request->dwAnimus,
+      request->dwInven,
+      request->dwInvenBag);
+  }
+  return true;
+}
+
+bool CNetworkEX::SetTargetObjectRequest(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<_set_target_object_request_clzo *>(pBuf);
+  if (player->m_bOper)
+  {
+    CGameObject *target = CMainThread::GetObjectA(
+      &g_Main,
+      request->byKind,
+      request->byID,
+      request->wIndex);
+    player->pc_SetTargetObjectRequest(target, request->dwSerial, false);
+  }
+  return true;
+}
+
+bool CNetworkEX::ReleaseTargetObjectRequest(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  auto *player = &g_Player[n];
+  if (player->m_bOper)
+  {
+    player->pc_ReleaseTargetObjectRequest();
+  }
+  return true;
+}
+
+bool CNetworkEX::PartyReqBlockReport(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<bool *>(pBuf);
+  if (player->m_bOper)
+  {
+    player->pc_PartyReqBlock(*request);
+  }
+  return true;
+}
+
+bool CNetworkEX::WhisperBlockReport(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<bool *>(pBuf);
+  if (player->m_bOper)
+  {
+    player->pc_WhisperBlock(*request);
+  }
+  return true;
+}
+
+bool CNetworkEX::TradeBlockReport(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<bool *>(pBuf);
+  if (player->m_bOper)
+  {
+    player->pc_TradeBlock(*request);
+  }
+  return true;
+}
+
+bool CNetworkEX::GuildBattleBlockReport(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<bool *>(pBuf);
+  if (player->m_bOper)
+  {
+    player->pc_GuildBattleBlock(*request);
+  }
+  return true;
+}
+
+bool CNetworkEX::PlayerMacroUpdate(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  if (player->m_bOper)
+  {
+    player->pc_MacroUpdate(pBuf);
+  }
+  return true;
+}
+
+bool CNetworkEX::TotalGuildRankRequest(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<_total_guild_rank_request_clzo *>(pBuf);
+  if (player->m_bOper)
+  {
+    CTotalGuildRankManager *manager = CTotalGuildRankManager::Instance();
+    manager->Send(request->dwVer, request->byRace, player);
+  }
+  return true;
+}
+
+bool CNetworkEX::WeeklyGuildRankRequest(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<_weekly_guild_rank_request_clzo *>(pBuf);
+  if (player->m_bOper)
+  {
+    CWeeklyGuildRankManager *manager = CWeeklyGuildRankManager::Instance();
+    manager->Send(request->dwVer, request->byRace, player);
+  }
+  return true;
+}
+
+bool CNetworkEX::SetRaceBossCryMsgRequest(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<_set_raceboss_cry_msg_request_clzo *>(pBuf);
+  if (!player->m_bOper)
+  {
+    return true;
+  }
+
+  if (request->bySlot >= 0xAu)
+  {
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: SetRaceBossCryMsgRequest()..  if( pRecv->bySlot >= max_cry_msg || pRecv->bySlot < 0)",
+      charName);
+    return false;
+  }
+
+  char cryMsg[65]{};
+  strncpy_s(cryMsg, request->wszCryMsg, 0x40u);
+  player->pc_SetRaceBossCryMsg(request->bySlot, cryMsg);
+  return true;
+}
+
+bool CNetworkEX::NotifyRaceBossCryMsg(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  auto *player = &g_Player[n];
+  player->pc_NotifyRaceBossCryMsg();
+  return true;
+}
+
+bool CNetworkEX::SetGroupTargetObjectRequest(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<_set_group_target_object_request_clzo *>(pBuf);
+  if (!player->m_bOper)
+  {
+    return true;
+  }
+
+  if (request->byGroupType < 3u)
+  {
+    CGameObject *target = CMainThread::GetObjectA(&g_Main, 0, request->byID, request->wIndex);
+    player->pc_SetGroupTargetObjectRequest(target, request->dwSerial, request->byGroupType);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: SetGroupTargetObjectRequest()..  if(pRecv->byGroupType < 0 || pRecv->byGroupType >= GROUP_TYPE_NUM)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::ReleaseGroupTargetObjectRequest(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<_release_group_target_object_request_clzo *>(pBuf);
+  if (!player->m_bOper)
+  {
+    return true;
+  }
+
+  if (request->byGroupType < 3u)
+  {
+    player->pc_ReleaseGroupTargetObjectRequest(request->byGroupType);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: ReleaseGroupTargetObjectRequest()..  if(pRecv->byGroupType < 0 || pRecv->byGroupType >= GROUP_TYPE_NUM)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::SetGroupMapPointRequest(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<_set_group_map_point_request_clzo *>(pBuf);
+  if (!player->m_bOper)
+  {
+    return true;
+  }
+
+  if (request->byGroupType < 3u)
+  {
+    player->pc_SetGroupMapPointRequest(request->byGroupType, request->zPos);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: SetGroupMapPointRequest()..  if(pRecv->byGroupType < 0 || pRecv->byGroupType >= GROUP_TYPE_NUM)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::RequestPatriarchPunishment(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<_pt_request_punishment_clzo *>(pBuf);
+  if (!player->m_bOper)
+  {
+    return true;
+  }
+
+  if (request->byType < 3u)
+  {
+    if (request->wContentSize <= 0x4FFu)
+    {
+      if (request->wContentSize)
+      {
+        char content[1296]{};
+        memcpy_0(content, request->wszContent, request->wContentSize);
+        content[request->wContentSize] = 0;
+        player->pc_RequestPatriarchPunishment(request->byType, request->wszCharName, content);
+        return true;
+      }
+
+      const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+      CLogFile::Write(
+        &m_LogFile,
+        "odd.. %s: RequestPatriarchPunishment()..  if (pRecv->wContentSize == 0)",
+        charName);
+      return false;
+    }
+
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: RequestPatriarchPunishment()..  if (pRecv->wContentSize > _pt_request_punishment_clzo::content_size-1)",
+      charName);
+    return false;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: RequestPatriarchPunishment()..  if (pRecv->byType < 0 || pRecv->byType >= PUNISHMENT_TYPE_NUM)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::RequestTaxRate(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  auto *player = &g_Player[n];
+  if (player->m_bOper)
+  {
+    player->pc_RequestTaxRate();
+  }
+  return true;
+}
+
+bool CNetworkEX::RequestChangeTaxRate(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<unsigned __int8 *>(pBuf);
+  if (player->m_bOper)
+  {
+    player->pc_RequestChangeTaxRate(*request);
+  }
+  return true;
+}
+
+bool CNetworkEX::RequestUILockInit(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *user = &g_UserDB[n];
+  auto *request = reinterpret_cast<_uilock_init_request_clzo *>(pBuf);
+
+  char uilockPw[13]{};
+  char uilockPwConfirm[13]{};
+  char hintAnswer[17]{};
+  memcpy_0(uilockPw, request->uszUILockPW, 12);
+  memcpy_0(uilockPwConfirm, request->uszUILockPW_Confirm, 12);
+  memcpy_0(hintAnswer, request->uszUILock_HintAnswer, 16);
+
+  player->pc_RequestUILockInit(
+    user,
+    uilockPw,
+    uilockPwConfirm,
+    request->byUILock_HintIndex,
+    hintAnswer);
+  return true;
+}
+
+bool CNetworkEX::RequestUILockUserCertify(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *user = &g_UserDB[n];
+  auto *request = reinterpret_cast<_uilock_user_certify_request_clzo *>(pBuf);
+  player->pc_RequestUILockCertify(user, request->szUILockPW);
+  return true;
+}
+
+bool CNetworkEX::RequestUILockUpdateInfo(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *request = reinterpret_cast<_uilock_update_info_request_clzo *>(pBuf);
+  if (player->m_bOper)
+  {
+    player->pc_RequestUILockUpdate(
+      request->uszUILockPW_Old,
+      request->uszUILockPW,
+      request->uszUILockPW_Confirm,
+      request->byHintIndex,
+      request->uszHintAnswer);
+  }
+  return true;
+}
+
+bool CNetworkEX::RequestUILockFindPW(unsigned int n, char *pBuf)
+{
+  auto *player = &g_Player[n];
+  auto *user = &g_UserDB[n];
+  auto *request = reinterpret_cast<_uilock_find_pw_request_clzo *>(pBuf);
+  player->pc_RequestUILockFindPW(user, request->uszHintAnswer);
+  return true;
+}
+
+bool CNetworkEX::RequestTLLogoutTime(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  auto *user = &g_UserDB[n];
+  if (!user)
+  {
+    return false;
+  }
+
+  _qry_case_select_timelimit_info query;
+  query.dwAccountSerial = user->m_dwAccountSerial;
+  query.wIndex = static_cast<unsigned __int16>(n);
+  const int size = query.size();
+  CMainThread::PushDQSData(&g_Main, 0xFFFFFFFF, nullptr, 0x99u, reinterpret_cast<char *>(&query), size);
+  return true;
+}
+
 bool CNetworkEX::EnterWorldRequest(unsigned int n, _MSG_HEADER *pMsgHeader, char *pBuf)
 {
   CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
@@ -5418,4 +6243,1695 @@ bool CNetworkEX::ConnectionStatusRequest(int n)
       len);
   }
   return true;
+}
+
+bool CNetworkEX::MineStartRequest(unsigned int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  auto *recv = reinterpret_cast<_mine_start_request_clzo *>(pBuf);
+  if (recv->byMineIndex < player->m_pCurMap->m_nResDumNum)
+  {
+    const int oreIndex = recv->byOreIndex;
+    const int recordNum = CRecordData::GetRecordNum(&g_Main.m_tblItemData[17]);
+    if (oreIndex < recordNum)
+    {
+      if (player->m_pCurMap)
+      {
+        player->pc_MineStart(recv->byMineIndex, recv->byOreIndex, recv->wBatterySerial);
+        return true;
+      }
+
+      const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+      m_LogFile.Write("odd.. %s: MineStartRequest() .. if(!pOne->m_pCurMap)", charName);
+      return false;
+    }
+
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    m_LogFile.Write(
+      "odd.. %s: if(pRecv->byOreIndex >= g_Main.m_tblItemData[tbl_code_ore].GetRecordNum())",
+      charName);
+    return false;
+  }
+
+  if (player->m_pCurMap->m_nResDumNum > 0)
+  {
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    m_LogFile.Write(
+      "odd.. %s: MineStartRequest() : pRecv->byMineIndex(%d) >= pOne->m_pCurMap->m_nResDumNum(%d)",
+      charName,
+      static_cast<int>(recv->byMineIndex),
+      player->m_pCurMap->m_nResDumNum);
+  }
+
+  return true;
+}
+
+bool CNetworkEX::MineCancleRequest(unsigned int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  static_cast<void>(pBuf);
+  player->pc_MineCancle();
+  return true;
+}
+
+bool CNetworkEX::ResCuttingRequest(unsigned int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  auto *recv = reinterpret_cast<_ore_cutting_request_clzo *>(pBuf);
+  if (recv->byProcessNum <= 0x63u)
+  {
+    player->pc_OreCutting(recv->wOreSerial, recv->byProcessNum);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  m_LogFile.Write(
+    "odd.. %s: ResCuttingRequest()..  if(pRecv->byProcessNum > max_overlap_num)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::OreIntoBagRequest(unsigned int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  auto *recv = reinterpret_cast<_ore_into_bag_request_clzo *>(pBuf);
+  if (recv->byAddAmount <= 0x63u)
+  {
+    const int recordNum = CRecordData::GetRecordNum(&g_Main.m_tblItemData[18]);
+    if (recv->wResIndex < recordNum)
+    {
+      player->pc_OreIntoBag(recv->wResIndex, recv->wSerial, recv->byAddAmount);
+      return true;
+    }
+
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    m_LogFile.Write(
+      "odd.. %s: OreIntoBagRequest()..  if(pRecv->wResIndex >= g_Main.m_tblItemData[tbl_code_res].GetRecordNum())",
+      charName);
+    return false;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  m_LogFile.Write(
+    "odd.. %s: OreIntoBagRequest()..  if(pRecv->byAddAmount > max_overlap_num)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::CuttingCompleteRequest(unsigned int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  static_cast<void>(pBuf);
+  player->pc_CuttingComplete(0);
+  return true;
+}
+
+bool CNetworkEX::PartyJoinInvitation(int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (player->m_EP.GetEff_Have(50) <= 0.0f)
+  {
+    const unsigned __int16 dstIndex = *reinterpret_cast<unsigned __int16 *>(pBuf);
+    if (dstIndex < MAX_PLAYER)
+    {
+      player->pc_PartyJoinInvitation(dstIndex);
+      return true;
+    }
+
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: PartyJoinInvitation()..  if(pRecv->wDstIndex >= MAX_PLAYER)",
+      charName);
+    return false;
+  }
+
+  player->SendMsg_JadeEffectErr(1u);
+  return true;
+}
+
+bool CNetworkEX::PartyJoinInvitationAnswer(int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  auto *bossId = reinterpret_cast<_CLID *>(pBuf);
+  if (bossId->wIndex < MAX_PLAYER)
+  {
+    player->pc_PartyJoinInvitationAnswer(bossId);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: PartyJoinInvitationAnswer()..  if(pRecv->idBoss.wIndex >= MAX_PLAYER)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::PartyJoinApplication(int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  const unsigned __int16 bossIndex = *reinterpret_cast<unsigned __int16 *>(pBuf);
+  if (bossIndex < MAX_PLAYER)
+  {
+    player->pc_PartyJoinApplication(bossIndex);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: PartyJoinApplication()..  if(pRecv->wBossIndex >= MAX_PLAYER)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::PartyJoinApplicatiohAnswer(int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  auto *applicantId = reinterpret_cast<_CLID *>(pBuf);
+  if (applicantId->wIndex < MAX_PLAYER)
+  {
+    player->pc_PartyJoinApplicationAnswer(applicantId);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: PartyJoinApplication()..  if(pRecv->idApplicant.wIndex >= MAX_PLAYER)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::PartyLeaveSelfRequest(int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  player->pc_PartyLeaveSelfReqeuest();
+  return true;
+}
+
+bool CNetworkEX::PartyLeaveCompulsionRequest(int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  const unsigned int exiterSerial = *reinterpret_cast<unsigned int *>(pBuf);
+  player->pc_PartyLeaveCompulsionReqeuest(exiterSerial);
+  return true;
+}
+
+bool CNetworkEX::PartyDisjointRequest(int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  player->pc_PartyDisJointReqeuest();
+  return true;
+}
+
+bool CNetworkEX::PartySuccessionRequest(int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  const unsigned int successorSerial = *reinterpret_cast<unsigned int *>(pBuf);
+  player->pc_PartySuccessionReqeuest(successorSerial);
+  return true;
+}
+
+bool CNetworkEX::PartyLockRequest(int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  const bool lockMode = *reinterpret_cast<bool *>(pBuf);
+  player->pc_PartyLockReqeuest(lockMode);
+  return true;
+}
+
+bool CNetworkEX::AlterPartyLootShareRequest(int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  const unsigned __int8 lootShareMode = *reinterpret_cast<unsigned __int8 *>(pBuf);
+  if (lootShareMode < 3u)
+  {
+    player->pc_PartyAlterLootShareReqeuest(lootShareMode);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: PartyJoinApplication()..  if(pRecv->byLootShareMode >= PARTY_ITEM_AUTHOR_TYPE_NUM)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::AwayPartyInvitation(int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (strlen_0(pBuf))
+  {
+    if (strlen_0(pBuf) <= 0x10)
+    {
+      player->pc_AwaypartyInvitationRequest(pBuf);
+      return true;
+    }
+
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: AwayPartyInvitation()..  if (__strlen(wszCharName) > max_name_len)",
+      charName);
+    return false;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: AwayPartyInvitation()..  if (__strlen(pRecv->wszCharName) == 0)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::AwayPartyInvitationAnswer(int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  const unsigned __int8 retCode = *reinterpret_cast<unsigned __int8 *>(pBuf);
+  auto *bossId = reinterpret_cast<_CLID *>(pBuf + 1);
+  if (bossId->wIndex < MAX_PLAYER)
+  {
+    player->pc_AwayPartyJoinInvitationAnswer(bossId, retCode);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: AwayPartyInvitationAnswer()..  if(pRecv->idBoss.wIndex >= MAX_PLAYER)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::ForceRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_force_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (CMainThread::GetObjectA(&g_Main, 0, request->idDst.byID, request->idDst.wIndex))
+  {
+    player->pc_ForceRequest(request->wForceSerial, &request->idDst, request->wConsumeItemSerial);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: ForceRequest()..  if(!g_Main.GetObject(obj_kind_char, pRecv->idDst.byID, pRecv->idDst.wIndex))",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::SkillRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_skill_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (CMainThread::GetObjectA(&g_Main, 0, request->idDst.byID, request->idDst.wIndex))
+  {
+    const int skillIndex = request->bySkillIndex;
+    const int recordNum = CRecordData::GetRecordNum(g_Main.m_tblEffectData);
+    if (skillIndex < recordNum)
+    {
+      player->pc_SkillRequest(request->bySkillIndex, &request->idDst, request->wConsumeItemSerial);
+      return true;
+    }
+
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: ForceRequest()..  if(pRecv->bySkillIndex >= g_Main.m_tblEffectData[effect_code_skill].GetRecordNum())",
+      charName);
+    return false;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: ForceRequest()..  if(!g_Main.GetObject(obj_kind_char, pRecv->idDst.byID, pRecv->idDst.wIndex))",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::ClassSkillRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_class_skill_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (CMainThread::GetObjectA(&g_Main, 0, request->idDst.byID, request->idDst.wIndex))
+  {
+    const int skillIndex = request->wSkillIndex;
+    const int recordNum = CRecordData::GetRecordNum(&g_Main.m_tblEffectData[2]);
+    if (skillIndex < recordNum)
+    {
+      player->pc_ClassSkillRequest(request->wSkillIndex, &request->idDst, request->wConsumeItemSerial);
+      return true;
+    }
+
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: ClassSkillRequest()..  if(pRecv->wSkillIndex >= g_Main.m_tblEffectData[effect_code_class].GetRecordNum())",
+      charName);
+    return false;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: ClassSkillRequest()..  if(!g_Main.GetObject(obj_kind_char, pRecv->idDst.byID, pRecv->idDst.wIndex))",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::MakeTowerRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_make_tower_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  const int recordNum = CRecordData::GetRecordNum(&g_Main.m_tblEffectData[2]);
+  if (request->wSkillIndex >= recordNum)
+  {
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: MakeTowerRequest()..  if(pRecv->wSkillIndex >= g_Main.m_tblEffectData[effect_code_class].GetRecordNum())",
+      charName);
+    return false;
+  }
+
+  if (request->byMaterialNum > _make_tower_request_clzo::max_material)
+  {
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: MakeTowerRequest()..  if(pRecv->byMaterialNum > _make_tower_request_clzo::max_material)",
+      charName);
+    return false;
+  }
+
+  for (int j = 0; j < request->byMaterialNum; ++j)
+  {
+    if (request->Material[j].byMaterSlotIndex >= 3u)
+    {
+      const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+      CLogFile::Write(
+        &m_LogFile,
+        "odd.. %s: MakeTowerRequest()..  if(pRecv->Material[i].byMaterSlotIndex >= max_tower_material)",
+        charName);
+      return false;
+    }
+
+    if (request->Material[j].byAmount > 0x63u)
+    {
+      const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+      CLogFile::Write(
+        &m_LogFile,
+        "odd.. %s: MakeTowerRequest()..  if(pRecv->Material[i].byAmount > max_overlap_num)",
+        charName);
+      return false;
+    }
+  }
+
+  float makePos[3]{};
+  ShortToFloat(request->zPos, makePos, 3);
+  player->pc_MakeTowerRequest(
+    request->wSkillIndex,
+    request->wTowerItemSerial,
+    request->byMaterialNum,
+    request->Material,
+    makePos,
+    request->wConsumeItemSerial);
+  return true;
+}
+
+bool CNetworkEX::BackTowerRequest(unsigned int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  const unsigned int towerObjSerial = *reinterpret_cast<unsigned int *>(pBuf);
+  player->pc_BackTowerRequest(towerObjSerial);
+  return true;
+}
+
+bool CNetworkEX::MakeTrapRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_make_trap_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  _STORAGE_LIST::_db_con *trapItem = nullptr;
+  _base_fld *itemRecord = nullptr;
+
+  trapItem = _STORAGE_LIST::GetPtrFromSerial(&player->m_Param.m_dbInven, request->wTrapItemSerial);
+  if (trapItem)
+  {
+    itemRecord = CRecordData::GetRecord(&g_Main.m_tblItemData[26], trapItem->m_wItemIndex);
+  }
+
+  if (trapItem && itemRecord)
+  {
+    if (*reinterpret_cast<int *>(itemRecord[1].m_strCode) == 1)
+    {
+      CNuclearBombMgr *nuclearMgr = CNuclearBombMgr::Instance();
+      CNuclearBombMgr::SendMsg_Result(nuclearMgr, n, 1u);
+      return true;
+    }
+
+    if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+    {
+      return true;
+    }
+
+    const int recordNum = CRecordData::GetRecordNum(&g_Main.m_tblEffectData[2]);
+    if (request->wSkillIndex < recordNum)
+    {
+      float makePos[3]{};
+      ShortToFloat(request->zPos, makePos, 3);
+      player->pc_MakeTrapRequest(request->wSkillIndex, request->wTrapItemSerial, makePos, request->wConsumeItemSerial);
+      return true;
+    }
+
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: MakeTrapRequest()..  if(pRecv->wSkillIndex >= g_Main.m_tblEffectData[effect_code_class].GetRecordNum())",
+      charName);
+    return false;
+  }
+
+  CNuclearBombMgr *nuclearMgr = CNuclearBombMgr::Instance();
+  CNuclearBombMgr::SendMsg_Result(nuclearMgr, n, 0xBu);
+  return false;
+}
+
+bool CNetworkEX::DecideRecallRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_decide_recall_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  CRecallEffectController *recall = CRecallEffectController::Instance();
+  CRecallEffectController::DecideRecall(recall, request->wRequestID, request->byAgree, player);
+  return true;
+}
+
+bool CNetworkEX::BackTrapRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_back_trap_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  player->pc_BackTrapRequest(request->dwTrapObjSerial, request->wAddSerial);
+  return true;
+}
+
+bool CNetworkEX::ForceRecallTeleportRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_force_recall_teleport_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  CPlayer *targetPlayer = GetPtrPlayerFromName(g_Player, MAX_PLAYER, request->wszRecallName);
+  if (targetPlayer)
+  {
+    _CHRID targetId{};
+    targetId.byID = targetPlayer->m_ObjID.m_byID;
+    targetId.dwSerial = targetPlayer->m_ObjID.m_wIndex;
+    targetId.wIndex = static_cast<unsigned __int16>(targetPlayer->m_dwObjSerial);
+    player->pc_ForceRequest(request->wForceSerial, &targetId, request->wConsumeItemSerial);
+  }
+  else
+  {
+    CRecallEffectController *recall = CRecallEffectController::Instance();
+    CRecallEffectController::SendRecallReqeustResult(recall, 0x11u, player);
+  }
+  return true;
+}
+
+bool CNetworkEX::SkillRecallTeleportRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_skill_recall_teleport_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  const int recordNum = CRecordData::GetRecordNum(g_Main.m_tblEffectData);
+  if (request->wSkillIndex < recordNum)
+  {
+    CPlayer *targetPlayer = GetPtrPlayerFromName(g_Player, MAX_PLAYER, request->wszRecallName);
+    if (targetPlayer)
+    {
+      _CHRID targetId{};
+      targetId.byID = targetPlayer->m_ObjID.m_byID;
+      targetId.dwSerial = targetPlayer->m_ObjID.m_wIndex;
+      targetId.wIndex = static_cast<unsigned __int16>(targetPlayer->m_dwObjSerial);
+      player->pc_SkillRequest(static_cast<unsigned __int8>(request->wSkillIndex), &targetId, request->wConsumeItemSerial);
+    }
+    else
+    {
+      CRecallEffectController *recall = CRecallEffectController::Instance();
+      CRecallEffectController::SendRecallReqeustResult(recall, 0x11u, player);
+    }
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: SkillRecallTeleportRequest()..  if(pRecv->wSkillIndex >= g_Main.m_tblEffectData[effect_code_skill].GetRecordNum())",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::ClassSkillRecallTeleportRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_class_skill_recall_teleport_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  const int recordNum = CRecordData::GetRecordNum(g_Main.m_tblEffectData);
+  if (request->wSkillIndex < recordNum)
+  {
+    CPlayer *targetPlayer = GetPtrPlayerFromName(g_Player, MAX_PLAYER, request->wszRecallName);
+    if (targetPlayer)
+    {
+      _CHRID targetId{};
+      targetId.byID = targetPlayer->m_ObjID.m_byID;
+      targetId.dwSerial = targetPlayer->m_ObjID.m_wIndex;
+      targetId.wIndex = static_cast<unsigned __int16>(targetPlayer->m_dwObjSerial);
+      player->pc_ClassSkillRequest(request->wSkillIndex, &targetId, request->wConsumeItemSerial);
+    }
+    else
+    {
+      CRecallEffectController *recall = CRecallEffectController::Instance();
+      CRecallEffectController::SendRecallReqeustResult(recall, 0x11u, player);
+    }
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: ClassSkillRecallTeleportRequest()..  if(pRecv->wSkillIndex >= g_Main.m_tblEffectData[effect_code_skill].GetRecordNum())",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::ThrowSkillRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_thorw_skill_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (CMainThread::GetObjectA(&g_Main, 0, request->idDst.byID, request->idDst.wIndex))
+  {
+    player->pc_ThrowSkillRequest(request->wBulletSerial, &request->idDst, request->wConsumeItemSerial);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: ThrowSkillRequest()..  if(!g_Main.GetObject(obj_kind_char, pRecv->idDst.byID, pRecv->idDst.wIndex))",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::ThrowUnitRequest(unsigned int n, char *pBuf)
+{
+  auto *destId = reinterpret_cast<_CHRID *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (CMainThread::GetObjectA(&g_Main, 0, destId->byID, destId->wIndex))
+  {
+    auto *consumeSerial = &destId[1].wIndex;
+    player->pc_ThrowUnitRequest(destId, consumeSerial);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: ThrowUnitRequest()..  if(!g_Main.GetObject(obj_kind_char, pRecv->idDst.byID, pRecv->idDst.wIndex))",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::DTradeAskRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_d_trade_ask_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  CPlayer *target = &g_Player[request->wDstIndex];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (_effect_parameter::GetEff_Have(&player->m_EP, 50) > 0.0)
+  {
+    player->SendMsg_JadeEffectErr(3u);
+    return true;
+  }
+
+  if (_effect_parameter::GetEff_State(&player->m_EP, 26) || _effect_parameter::GetEff_State(&target->m_EP, 26))
+  {
+    player->SendMsg_DTradeAskResult(0x20u);
+    return true;
+  }
+
+  if (request->wDstIndex < MAX_PLAYER)
+  {
+    player->pc_DTradeAskRequest(request->wDstIndex);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: DTradeAskRequest().. if(pRecv->wDstIndex >= MAX_PLAYER)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::DTradeAnswerRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_d_trade_answer_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (request->wIndex < MAX_PLAYER)
+  {
+    _CLID askerId{};
+    askerId.wIndex = request->wIndex;
+    askerId.dwSerial = request->dwSerial;
+    player->pc_DTradeAnswerRequest(&askerId);
+    return true;
+  }
+
+  const int askerIndex = request->wIndex;
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: DTradeAnswerRequest() : pRecv->idAsker.wIndex(%d) >= MAX_PLAYER(%d)",
+    charName,
+    askerIndex,
+    MAX_PLAYER);
+  return false;
+}
+
+bool CNetworkEX::DTradeCancleRequest(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  if (player->m_bOper)
+  {
+    player->pc_DTradeCancleRequest();
+  }
+  return true;
+}
+
+bool CNetworkEX::DTradeLockRequest(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  player->pc_DTradeLockRequest();
+  return true;
+}
+
+bool CNetworkEX::DTradeAddRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_d_trade_add_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (request->bySlotIndex <= 0xFu)
+  {
+    if (request->byStorageCode < 8u)
+    {
+      player->pc_DTradeAddRequest(
+        request->bySlotIndex,
+        request->byStorageCode,
+        request->dwSerial,
+        request->byAmount);
+      return true;
+    }
+
+    const int storageCode = request->byStorageCode;
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: DTradeAddRequest() : pRecv->byStorageCode(%d) >= _STORAGE_POS::STORAGE_NUM(%d)",
+      charName,
+      storageCode,
+      8);
+    return false;
+  }
+
+  const int slotIndex = request->bySlotIndex;
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: DTradeAddRequest() : pRecv->bySlotIndex(%d) > max_d_trade_item(%d)",
+    charName,
+    slotIndex,
+    15);
+  return false;
+}
+
+bool CNetworkEX::DTradeDelRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_d_trade_del_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (request->bySlotIndex <= 0xFu)
+  {
+    player->pc_DTradeDelRequest(request->bySlotIndex);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: DTradeDelRequest().. if(pRecv->bySlotIndex > max_d_trade_item)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::DTradeBetRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_d_trade_bet_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (request->byMoneyUnit == 0 || request->byMoneyUnit == 1)
+  {
+    player->pc_DTradeBetRequest(request->byMoneyUnit, request->dwBetAmount);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: DTradeBetRequest().. if(pRecv->byMoneyUnit != money_unit_dalant && pRecv->byMoneyUnit != money_unit_gold)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::DTradeOKRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_d_trade_ok_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  player->pc_DTradeOKRequest(request->dwKey);
+  return true;
+}
+
+bool CNetworkEX::AnimusRecallRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_animus_recall_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  player->pc_AnimusRecallRequest(
+    static_cast<unsigned __int16>(request->dwAnimusItemSerial),
+    request->wAnimusClientHP,
+    request->wAnimusClientFP);
+  return true;
+}
+
+bool CNetworkEX::AnimusReturnRequest(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  player->pc_AnimusReturnRequest();
+  return true;
+}
+
+bool CNetworkEX::AnimusCommandRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_animus_command_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (request->byCommandCode < 2u)
+  {
+    player->pc_AnimusCommandRequest(request->byCommandCode);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: AnimusCommandRequest()..  if(pRecv->byCommandCode >= ANIMUS_ACT_TYPE_NUM)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::AnimusTargetRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_animus_target_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (CMainThread::GetObjectA(&g_Main, 0, request->byObjectID, request->wObjectIndex))
+  {
+    player->pc_AnimusTargetRequest(request->byObjectID, request->wObjectIndex, request->dwObjectSerial);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: AnimusTargetRequest()..  if(!g_Main.GetObject(obj_kind_char, pRecv->byObjectID, pRecv->wObjectIndex))",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::ObjectServerPosRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_object_server_pos_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper)
+  {
+    return true;
+  }
+  if (!player->m_byUserDgr)
+  {
+    return true;
+  }
+
+  unsigned __int8 resultCode = 0;
+  CGameObject *object = CMainThread::GetObjectA(&g_Main, request->byKind, request->byID, request->wIndex);
+  if (object)
+  {
+    if (object->m_bLive)
+    {
+      if (object->m_dwObjSerial != request->dwSerial)
+      {
+        resultCode = 3;
+      }
+    }
+    else
+    {
+      resultCode = 2;
+    }
+  }
+  else
+  {
+    resultCode = 1;
+  }
+
+  unsigned __int8 msg[0x15];
+  msg[0] = resultCode;
+  msg[1] = request->byKind;
+  msg[2] = request->byID;
+  memcpy_0(&msg[3], &request->wIndex, sizeof(request->wIndex));
+  memcpy_0(&msg[5], &request->dwSerial, sizeof(request->dwSerial));
+  if (resultCode == 0)
+  {
+    memcpy_0(&msg[9], object->m_fCurPos, 0xCuLL);
+  }
+
+  unsigned __int8 type[2];
+  type[0] = 20;
+  type[1] = 2;
+  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], n, type, reinterpret_cast<char *>(msg), 0x15u);
+  return true;
+}
+
+bool CNetworkEX::UnitFrameBuyRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_unit_frame_buy_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (request->byFrameCode < 4u)
+  {
+    player->pc_UnitFrameBuyRequest(request->byFrameCode, request->bUseNPCLinkIntem);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: UnitFrameBuyRequest().. if(pRecv->byFrameCode >= UNIT_FRAME_CODE_NUM)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::UnitSellRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_unit_sell_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (request->bySlotIndex < 4u)
+  {
+    player->pc_UnitSellRequest(request->bySlotIndex, request->bUseNPCLinkIntem);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: UnitSellRequest().. if(pRecv->bySlotIndex >= unit_storage_num)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::UnitPartTuningRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_unit_part_tuning_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (request->bySlotIndex < 4u)
+  {
+    if (request->byTuningNum <= 6u)
+    {
+      for (int j = 0; j < request->byTuningNum; ++j)
+      {
+        if (request->TuningList[j].byPartCode >= 6u)
+        {
+          const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+          CLogFile::Write(
+            &m_LogFile,
+            "odd.. %s: UnitPartTuningRequest().. if(pRecv->TuningList[i].byPartCode >= UNIT_PART_NUM)",
+            charName);
+          return false;
+        }
+      }
+      player->pc_UnitPartTuningRequest(
+        request->bySlotIndex,
+        request->byTuningNum,
+        request->TuningList,
+        request->bUseNPCLinkIntem);
+      return true;
+    }
+
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: UnitPartTuningRequest().. if(pRecv->byTuningNum > UNIT_PART_NUM)",
+      charName);
+    return false;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: UnitPartTuningRequest().. if(pRecv->bySlotIndex >= unit_storage_num)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::UnitFrameRepairRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_unit_frame_repair_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (request->bySlotIndex < 4u)
+  {
+    player->pc_UnitFrameRepairRequest(request->bySlotIndex, request->bUseNPCLinkIntem);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: UnitFrameRepairRequest().. if(pRecv->bySlotIndex >= unit_storage_num)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::UnitBulletFillRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_unit_bullet_fill_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (request->bySlotIndex < 4u)
+  {
+    unsigned __int8 byFill = 0;
+    for (int j = 0; j < 2; ++j)
+    {
+      if (request->wBulletIndex[j] != 0xFFFF)
+      {
+        if (!CRecordData::GetRecord(&g_Main.m_tblUnitBullet, request->wBulletIndex[j]))
+        {
+          const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+          CLogFile::Write(
+            &m_LogFile,
+            "odd.. %s: UnitBulletFillRequest().. if(!g_Main.m_tblUnitBullet.GetRecord(pRecv->wBulletIndex[i]))",
+            charName);
+          return false;
+        }
+        byFill |= static_cast<unsigned __int8>(1u << j);
+      }
+    }
+    if (byFill)
+    {
+      player->pc_UnitBulletFillRequest(request->bySlotIndex, request->wBulletIndex, request->bUseNPCLinkIntem);
+      return true;
+    }
+
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(&m_LogFile, "odd.. %s: UnitBulletFillRequest().. if(!byFill)", charName);
+    return false;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: UnitBulletFillRequest().. if(pRecv->bySlotIndex >= unit_storage_num)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::UnitPackFillRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_unit_pack_fill_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (request->bySlotIndex < 4u)
+  {
+    if (request->byFillNum <= 8u)
+    {
+      unsigned __int8 spareUsed[8]{};
+      for (int j = 0; j < request->byFillNum; ++j)
+      {
+        if (request->List[j].bySpareIndex >= 8u)
+        {
+          const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+          CLogFile::Write(
+            &m_LogFile,
+            "odd.. %s: UnitBulletFillRequest().. if(pRecv->List[i].bySpareIndex >= max_unit_spare)",
+            charName);
+          return false;
+        }
+        if (!CRecordData::GetRecord(&g_Main.m_tblUnitBullet, request->List[j].wBulletIndex))
+        {
+          const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+          CLogFile::Write(
+            &m_LogFile,
+            "odd.. %s: UnitBulletFillRequest().. if(pRecv->List[i].bySpareIndex >= max_unit_spare)",
+            charName);
+          return false;
+        }
+        if (spareUsed[request->List[j].bySpareIndex])
+        {
+          const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+          CLogFile::Write(
+            &m_LogFile,
+            "odd.. %s: UnitBulletFillRequest().. if(bSpare[pRecv->List[i].bySpareIndex])",
+            charName);
+          return false;
+        }
+        spareUsed[request->List[j].bySpareIndex] = 1;
+      }
+
+      player->pc_UnitPackFillRequest(
+        request->bySlotIndex,
+        request->byFillNum,
+        request->List,
+        request->bUseNPCLinkIntem);
+      return true;
+    }
+
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: UnitBulletFillRequest().. if(pRecv->byFillNum > max_unit_spare)",
+      charName);
+    return false;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: UnitBulletFillRequest().. if(pRecv->bySlotIndex >= unit_storage_num)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::UnitDeliveryRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_unit_delivery_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (request->bySlotIndex >= 4u)
+  {
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: UnitDeliveryRequest().. if(pRecv->bySlotIndex >= unit_storage_num)",
+      charName);
+    return false;
+  }
+
+  CItemStore *store = nullptr;
+  if (request->dwStoreIndex != static_cast<unsigned int>(-1))
+  {
+    const int mapSerial = CMapData::GetMapCode(player->m_pCurMap);
+    CItemStoreManager *storeManager = CItemStoreManager::Instance();
+    CMapItemStoreList *storeList = CItemStoreManager::GetMapItemStoreListBySerial(storeManager, mapSerial);
+    if (!storeList)
+    {
+      return true;
+    }
+
+    for (int j = 0; j < storeList->m_nItemStoreNum; ++j)
+    {
+      CItemStore *candidate = &storeList->m_ItemStore[j];
+      if (candidate->m_pRec->m_dwIndex == request->dwStoreIndex)
+      {
+        store = candidate;
+        break;
+      }
+    }
+
+    if (!store)
+    {
+      return true;
+    }
+  }
+
+  float newPos[3]{};
+  ShortToFloat(request->zUnitNewPos, newPos, 3);
+  player->pc_UnitDeliveryRequest(request->bySlotIndex, store, true, newPos, request->bUseNPCLinkIntem);
+  return true;
+}
+
+bool CNetworkEX::UnitReturnRequest(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  player->pc_UnitReturnRequest();
+  return true;
+}
+
+bool CNetworkEX::UnitTakeRequest(unsigned int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  player->pc_UnitTakeRequest();
+  return true;
+}
+
+bool CNetworkEX::UnitLeaveRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_unit_leave_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  float newPos[3]{};
+  ShortToFloat(request->zPlayerNewPos, newPos, 3);
+  player->pc_UnitLeaveRequest(newPos);
+  return true;
+}
+
+bool CNetworkEX::UnitBulletReplaceRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_unit_bullet_replace_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  if (request->bySlotIndex < 4u)
+  {
+    if (request->byPackIndex < 8u)
+    {
+      if (request->byBulletPart < 2u)
+      {
+        player->pc_UnitBulletReplaceRequest(request->bySlotIndex, request->byPackIndex, request->byBulletPart);
+        return true;
+      }
+
+      const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+      CLogFile::Write(
+        &m_LogFile,
+        "odd.. %s: UnitBulletReplaceRequest().. if(pRecv->byBulletPart >= UNIT_BULLET_NUM)",
+        charName);
+      return false;
+    }
+
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: UnitBulletReplaceRequest().. if(pRecv->byPackIndex >= max_unit_spare)",
+      charName);
+    return false;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: UnitBulletReplaceRequest().. if(pRecv->bySlotIndex >= unit_storage_num)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::SelectWaitedQuestReport(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_select_waited_quest_report_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode)
+  {
+    return true;
+  }
+
+  if (request->bySelectQuestIndex < 5u)
+  {
+    player->pc_SelectQuestAfterHappenEvent(request->bySelectQuestIndex);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: SelectClassRequest()..  if(pRecv->bySelectRewardItem >= max_class_bns_item)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::QuestSelectRewardReport(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_quest_select_reward_repart_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode)
+  {
+    return true;
+  }
+
+  if (request->byQuestDBSlot < 0x1Eu)
+  {
+    if (request->bySelectItemSlotIndex == 0xFF || request->bySelectItemSlotIndex < 6u)
+    {
+      if (request->byLinkQuestIndex == 0xFF || request->byLinkQuestIndex < 5u)
+      {
+        if (request->bySelectItemSlotIndex == 0xFF && request->byLinkQuestIndex == 0xFF)
+        {
+          const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+          CLogFile::Write(
+            &m_LogFile,
+            "odd.. %s: QuestSelectRewardReport()..  if(pRecv->bySelectItemSlotIndex == 0xFF && pRecv->byLinkQuestIndex == 0xFF)",
+            charName);
+          return false;
+        }
+
+        player->pc_SelectQuestReward(
+          request->byQuestDBSlot,
+          request->bySelectItemSlotIndex,
+          request->byLinkQuestIndex);
+        return true;
+      }
+
+      const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+      CLogFile::Write(
+        &m_LogFile,
+        "odd.. %s: QuestSelectRewardReport()..  if(pRecv->byLinkQuestIndex >= link_quest_num)",
+        charName);
+      return false;
+    }
+
+    const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+    CLogFile::Write(
+      &m_LogFile,
+      "odd.. %s: QuestSelectRewardReport()..  if(pRecv->bySelectItemSlotIndex >= reward_item_num)",
+      charName);
+    return false;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: QuestSelectRewardReport()..  if(pRecv->byQuestDBSlot >= quest_storage_num)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::NPCDialogRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_npc_quest_list_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper)
+  {
+    return true;
+  }
+
+  const unsigned int recordNum = CRecordData::GetRecordNum(&CItemStoreManager::Instance()->m_tblItemStore);
+  if (request->dwStoreIndex >= recordNum)
+  {
+    return true;
+  }
+
+  const int mapCode = CMapData::GetMapCode(player->m_pCurMap);
+  CMapItemStoreList *mapStores = CItemStoreManager::GetMapItemStoreListBySerial(CItemStoreManager::Instance(), mapCode);
+  if (!mapStores)
+  {
+    return true;
+  }
+
+  CItemStore *store = CMapItemStoreList::GetItemStoreFromRecIndex(mapStores, request->dwStoreIndex);
+  if (store)
+  {
+    player->pc_RequestDialogWithNPC(store);
+  }
+  return true;
+}
+
+bool CNetworkEX::NPCWatchingRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_npc_quest_list_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper)
+  {
+    return true;
+  }
+
+  const unsigned int recordNum = CRecordData::GetRecordNum(&CItemStoreManager::Instance()->m_tblItemStore);
+  if (request->dwStoreIndex >= recordNum)
+  {
+    return true;
+  }
+
+  const int mapCode = CMapData::GetMapCode(player->m_pCurMap);
+  CMapItemStoreList *mapStores = CItemStoreManager::GetMapItemStoreListBySerial(CItemStoreManager::Instance(), mapCode);
+  if (!mapStores)
+  {
+    return true;
+  }
+
+  CItemStore *store = CMapItemStoreList::GetItemStoreFromRecIndex(mapStores, request->dwStoreIndex);
+  if (store)
+  {
+    player->pc_RequestWatchingWithNPC(store);
+  }
+  return true;
+}
+
+bool CNetworkEX::BriefPassReport(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_brief_pass_report_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper)
+  {
+    return true;
+  }
+
+  if (request->bySlotIndex < 0x1Eu)
+  {
+    player->pc_BriefPass(request->bySlotIndex);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: BriefPassReport()..  if(pRecv->bySlotIndex >= quest_storage_num)",
+    charName);
+  return false;
+}
+
+bool CNetworkEX::NPCQuestRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_npc_quest_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  const unsigned int recordNum = CRecordData::GetRecordNum(&CItemStoreManager::Instance()->m_tblItemStore);
+  if (request->dwStoreIndex >= recordNum)
+  {
+    return true;
+  }
+
+  const int mapCode = CMapData::GetMapCode(player->m_pCurMap);
+  CMapItemStoreList *mapStores = CItemStoreManager::GetMapItemStoreListBySerial(CItemStoreManager::Instance(), mapCode);
+  if (!mapStores)
+  {
+    return true;
+  }
+
+  CItemStore *store = CMapItemStoreList::GetItemStoreFromRecIndex(mapStores, request->dwStoreIndex);
+  if (store)
+  {
+    player->pc_RequestQuestFromNPC(store, request->dwNPCQuestIndex);
+  }
+  return true;
+}
+
+bool CNetworkEX::NPCQuestListRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_npc_quest_list_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return true;
+  }
+
+  const unsigned int recordNum = CRecordData::GetRecordNum(&CItemStoreManager::Instance()->m_tblItemStore);
+  if (request->dwStoreIndex >= recordNum)
+  {
+    return true;
+  }
+
+  const int mapCode = CMapData::GetMapCode(player->m_pCurMap);
+  CMapItemStoreList *mapStores = CItemStoreManager::GetMapItemStoreListBySerial(CItemStoreManager::Instance(), mapCode);
+  if (!mapStores)
+  {
+    return true;
+  }
+
+  CItemStore *store = CMapItemStoreList::GetItemStoreFromRecIndex(mapStores, request->dwStoreIndex);
+  if (store)
+  {
+    player->pc_RequestQuestListFromNPC(store);
+  }
+  return true;
+}
+
+bool CNetworkEX::QuestGiveupRequest(unsigned int n, char *pBuf)
+{
+  auto *request = reinterpret_cast<_quest_give_up_request_clzo *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper)
+  {
+    return true;
+  }
+
+  if (request->byQuestDBSlot < 0x1Eu)
+  {
+    player->pc_QuestGiveupRequest(request->byQuestDBSlot);
+    return true;
+  }
+
+  const char *charName = CPlayerDB::GetCharNameA(&player->m_Param);
+  CLogFile::Write(
+    &m_LogFile,
+    "odd.. %s: QuestGiveupRequest()..  if(pRecv->byQuestDBSlot >= quest_storage_num)",
+    charName);
+  return false;
 }

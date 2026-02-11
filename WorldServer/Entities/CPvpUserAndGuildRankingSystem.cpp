@@ -57,6 +57,15 @@ unsigned __int8 CPvpUserAndGuildRankingSystem::GetBossType(unsigned __int8 byRac
   return m_kUserRankingProcess.GetBossType(byRace, dwSerial);
 }
 
+void CPvpUserAndGuildRankingSystem::PvpRankListRequest(
+  unsigned __int16 wIndex,
+  unsigned __int8 byRace,
+  unsigned __int8 byVersion,
+  unsigned __int8 byPage)
+{
+  m_kUserRankingProcess.PvpRankListRequest(wIndex, byRace, byVersion, byPage);
+}
+
 void CPvpUserAndGuildRankingSystem::Log(const char *fmt, ...)
 {
   if (!m_pkLogger)

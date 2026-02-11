@@ -32,6 +32,7 @@ public:
   unsigned int GetMaxLevel();
   bool IsClassChangeableLv();
   unsigned __int8 GetTrunkSlotNum();
+  char *GetTrunkPasswdW();
   unsigned __int8 GetExtTrunkSlotNum();
   _class_fld *GetPtrCurClass();
   _class_fld *GetPtrBaseClass();
@@ -61,6 +62,8 @@ public:
   char ConvertGeneralDB(_AVATOR_DATA *pData, _AVATOR_DATA *pOutData);
   void AppointSerialStorageItem();
   char PushLink(int nLinkIndex, unsigned __int16 wSerial, bool bInit);
+  void PopLink(int nLinkIndex);
+  _STORAGE_LIST::_db_con *GetPtrItemStorage(unsigned __int16 wSerial, unsigned __int8 *pbyStorageCode);
 
   unsigned __int8 m_byPvPGrade;
   __unaligned __declspec(align(1)) _character_db_load m_dbChar;

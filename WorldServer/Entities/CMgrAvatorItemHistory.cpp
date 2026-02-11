@@ -2374,8 +2374,8 @@ void CMgrAvatorItemHistory::auto_trade_sell(
 }
 
 void CMgrAvatorItemHistory::auto_trade_buy(
-  const char *szSellerName,
-  unsigned int dwSellerSerial,
+    const char *szSellerName,
+    unsigned int dwSellerSerial,
   const char *szSellerID,
   unsigned int dwRegistSerial,
   _STORAGE_LIST::_db_con *pItem,
@@ -2404,6 +2404,135 @@ void CMgrAvatorItemHistory::auto_trade_buy(
   const char *upgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, pItem->m_dwLv);
   sprintf_s(sBuf, sizeof(sBuf), "\t+ %s_%u_@%s[%I64u]\r\n", record->m_strCode, pItem->m_dwDur, upgradeInfo, pItem->m_lnUID);
   strcat_s(sData, sizeof(sData), sBuf);
+
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::trade(
+  int n,
+  _STORAGE_LIST::_db_con *pOutItem,
+  int nOutItemNum,
+  unsigned int dwOutDalant,
+  unsigned int dwOutGold,
+  _STORAGE_LIST::_db_con *pInItem,
+  int nInItemNum,
+  unsigned int dwInDalant,
+  unsigned int dwInGold,
+  char *pszDstName,
+  unsigned int dwDstSerial,
+  char *pszDstID,
+  unsigned int dwSumDalant,
+  unsigned int dwSumGold,
+  char *pMapCode,
+  float *pfPos,
+  char *pszFileName)
+{
+  (void)n;
+  sData[0] = 0;
+  sprintf(
+    sBuf,
+    "TRADE: dst(%s:%d id:%s) pay(D:%u G:%u) rev(D:%u G:%u) $D:%u $G:%u \t{POS:%s (%d, %d, %d)} [%s %s]\r\n",
+    pszDstName,
+    dwDstSerial,
+    pszDstID,
+    dwOutDalant,
+    dwOutGold,
+    dwInDalant,
+    dwInGold,
+    dwSumDalant,
+    dwSumGold,
+    pMapCode,
+    static_cast<int>(pfPos[0]),
+    static_cast<int>(pfPos[1]),
+    static_cast<int>(pfPos[2]),
+    m_szCurDate,
+    m_szCurTime);
+  strcat_0(sData, sBuf);
+
+  for (int j = 0; j < nOutItemNum; ++j)
+  {
+    _base_fld *record =
+      CRecordData::GetRecord(&g_Main.m_tblItemData[pOutItem[j].m_byTableCode], pOutItem[j].m_wItemIndex);
+    const char *upgradeInfo = DisplayItemUpgInfo(pOutItem[j].m_byTableCode, pOutItem[j].m_dwLv);
+    sprintf(sBuf, "\t- %s_%u_@%s[%I64u]\r\n", record->m_strCode, pOutItem[j].m_dwDur, upgradeInfo, pOutItem[j].m_lnUID);
+    strcat_0(sData, sBuf);
+  }
+
+  for (int j = 0; j < nInItemNum; ++j)
+  {
+    _base_fld *record =
+      CRecordData::GetRecord(&g_Main.m_tblItemData[pInItem[j].m_byTableCode], pInItem[j].m_wItemIndex);
+    const char *upgradeInfo = DisplayItemUpgInfo(pInItem[j].m_byTableCode, pInItem[j].m_dwLv);
+    sprintf(sBuf, "\t+ %s_%u_@%s[%I64u]\r\n", record->m_strCode, pInItem[j].m_dwDur, upgradeInfo, pInItem[j].m_lnUID);
+    strcat_0(sData, sBuf);
+  }
+
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::cut_item(
+  int n,
+  _STORAGE_LIST::_db_con *pOreItem,
+  int nOreNum,
+  unsigned __int16 *pwCuttingResBuffer,
+  unsigned int dwCostDalant,
+  unsigned int dwNewDalant,
+  char *pszFileName)
+{
+  (void)n;
+  sData[0] = 0;
+  _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[pOreItem->m_byTableCode], pOreItem->m_wItemIndex);
+  sprintf(
+    sBuf,
+    "CUT: %s * %d pay(D:%u) $D:%u [%s %s]\r\n",
+    record->m_strCode,
+    nOreNum,
+    dwCostDalant,
+    dwNewDalant,
+    m_szCurDate,
+    m_szCurTime);
+  strcat_0(sData, sBuf);
+
+  for (int index = 0; index < GetMaxResKind(); ++index)
+  {
+    if (pwCuttingResBuffer[index])
+    {
+      _base_fld *resRecord = CRecordData::GetRecord(&g_Main.m_tblItemData[18], index);
+      sprintf(sBuf, "\t+ %s_%d\r\n", resRecord->m_strCode, pwCuttingResBuffer[index]);
+      strcat_0(sData, sBuf);
+    }
+  }
+
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::cut_clear_item(
+  int n,
+  unsigned __int16 *pwCuttingResBuffer,
+  unsigned int dwAddGold,
+  unsigned int dwNewGold,
+  char *pszFileName)
+{
+  (void)n;
+  sData[0] = 0;
+  sprintf(
+    sBuf,
+    "CUT SELL: rev(G:%u) $G:%u [%s %s]\r\n",
+    dwAddGold,
+    dwNewGold,
+    m_szCurDate,
+    m_szCurTime);
+  strcat_0(sData, sBuf);
+
+  for (int index = 0; index < GetMaxResKind(); ++index)
+  {
+    if (pwCuttingResBuffer[index])
+    {
+      _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[18], index);
+      sprintf(sBuf, "\t- %s_%d\r\n", record->m_strCode, pwCuttingResBuffer[index]);
+      strcat_0(sData, sBuf);
+    }
+  }
 
   WriteFile(pszFileName, sData);
 }

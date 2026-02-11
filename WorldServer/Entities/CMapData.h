@@ -39,6 +39,7 @@ public:
   _portal_dummy *GetPortal(int nPortalIndex);
   _portal_dummy *GetPortal(char *pPortalCode);
   int GetPortalInx(char *pPortalCode);
+  int GetResDummySector(int nDummyIndex, float *pCurPos);
 
   bool _LoadBspSec(char *pszMapCode);
   bool _LoadMonBlk(char *pszMapCode, _map_fld *pMapFld);

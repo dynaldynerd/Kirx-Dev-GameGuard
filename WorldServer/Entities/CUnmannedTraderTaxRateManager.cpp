@@ -112,3 +112,37 @@ void CUnmannedTraderTaxRateManager::SetPatriarchTaxMoney(unsigned __int8 byRace,
     autoTrade->SetPatriarchTaxMoney(static_cast<int>(dwTax));
   }
 }
+
+void CUnmannedTraderTaxRateManager::SendTaxRatePatriarch(unsigned int n, unsigned __int8 byRace)
+{
+  if (!m_vecTRC.empty() && m_vecTRC.size() > byRace)
+  {
+    TRC_AutoTrade *autoTrade = m_vecTRC[byRace];
+    autoTrade->SendMsg_PatriarchTaxRate(n);
+  }
+}
+
+unsigned int CUnmannedTraderTaxRateManager::GetSuggestedTime(unsigned __int8 byRace)
+{
+  if (m_vecTRC.empty() || m_vecTRC.size() <= byRace)
+  {
+    return static_cast<unsigned int>(-1);
+  }
+
+  TRC_AutoTrade *autoTrade = m_vecTRC[byRace];
+  return autoTrade->getSuggestedTime();
+}
+
+void CUnmannedTraderTaxRateManager::SetSuggested(
+  unsigned __int8 byRace,
+  unsigned __int8 byMatterType,
+  unsigned int dwMatterDst,
+  char *wszMatterDst,
+  unsigned int dwNext)
+{
+  if (!m_vecTRC.empty() && m_vecTRC.size() > byRace)
+  {
+    TRC_AutoTrade *autoTrade = m_vecTRC[byRace];
+    autoTrade->set_suggested(byMatterType, dwMatterDst, wszMatterDst, dwNext);
+  }
+}

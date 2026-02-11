@@ -6,6 +6,7 @@
 #include "weeklyguildrank_owner_info.h"
 
 class CRFWorldDatabase;
+class CPlayer;
 
 class __cppobj CWeeklyGuildRankManager
 {
@@ -30,6 +31,7 @@ public:
   void CompleteLoadeTodayRank(unsigned __int8 byRet, _pvppoint_guild_rank_info *pLoadData);
   void CompleteUpdateWeeklyOwner(unsigned __int8 byRet, _weeklyguildrank_owner_info *pLoadData);
   void CompleteUpdateClear(unsigned __int8 byRet);
+  void Send(unsigned int dwVer, unsigned __int8 byTabRace, CPlayer *pkPlayer);
   bool CreatePvpPointGuildRank(char *szDate);
 
   long long m_tNextUpdateTime;

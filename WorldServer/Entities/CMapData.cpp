@@ -872,6 +872,48 @@ int CMapData::GetPortalInx(char *pPortalCode)
   return -1;
 }
 
+int CMapData::GetResDummySector(int nDummyIndex, float *pCurPos)
+{
+  if (m_nResDumNum <= 0)
+  {
+    return -1;
+  }
+
+  _res_dummy *resDummy = &m_pResDummy[nDummyIndex];
+  if (!m_Dummy.IsInBBox(resDummy->m_pDumPos->m_wLineIndex, pCurPos))
+  {
+    return -1;
+  }
+
+  int sectorIndex = -1;
+  if (resDummy->GetQualityGrade())
+  {
+    return 100;
+  }
+
+  _dummy_position *dumPos = resDummy->m_pDumPos;
+  _EXT_DUMMY *dummy = m_Dummy.GetDummy(dumPos->m_wLineIndex);
+  if (!dummy)
+  {
+    return -1;
+  }
+
+  for (int j = 0; j < 3; ++j)
+  {
+    memcpy_0(dummy->mBBmin, resDummy->m_fMinLocal[j], sizeof(dummy->mBBmin));
+    memcpy_0(dummy->mBBmax, resDummy->m_fMaxLocal[j], sizeof(dummy->mBBmax));
+    if (m_Dummy.IsInBBox(dumPos->m_wLineIndex, pCurPos))
+    {
+      sectorIndex = j;
+      break;
+    }
+  }
+
+  memcpy_0(dummy->mBBmin, resDummy->m_fMinLocal[2], sizeof(dummy->mBBmin));
+  memcpy_0(dummy->mBBmax, resDummy->m_fMaxLocal[2], sizeof(dummy->mBBmax));
+  return sectorIndex;
+}
+
 _portal_dummy *CMapData::GetPortal(int nPortalIndex)
 {
     if (nPortalIndex < 0 || nPortalIndex >= this->m_nPortalNum) return nullptr;

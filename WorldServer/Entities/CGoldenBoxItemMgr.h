@@ -107,6 +107,9 @@ public:
   void BoxItemDataCopy();
 
   unsigned __int8 Get_Event_Status();
+  unsigned __int16 GetGoldBoxItemIndex(unsigned __int16 wIndex);
+  unsigned __int16 Get_Box_Count(unsigned __int8 byIndex);
+  void Set_Box_Count(unsigned __int8 byIndex);
 
   CLogFile _kLogger;
   CMyTimer m_tmLoopTimer;

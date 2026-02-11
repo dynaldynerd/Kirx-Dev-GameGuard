@@ -63,3 +63,14 @@ CGuardTower *CreateSystemTower(
   unsigned __int8 byRaceCode,
   int nIniIndex);
 
+CGuardTower *CreateGuardTower(
+  CMapData *pMap,
+  unsigned __int16 wLayer,
+  float *fPos,
+  _STORAGE_LIST::_db_con *pItem,
+  CPlayer *pMaster,
+  unsigned __int8 byRaceCode,
+  bool bQuick);
+
+bool IsOtherTowerNear(CGameObject *pEster, float *pfEstPos, CGuardTower *pEstObj);
+

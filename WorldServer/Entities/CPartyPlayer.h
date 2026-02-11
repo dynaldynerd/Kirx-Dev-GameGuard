@@ -25,11 +25,18 @@ public:
   bool IsPartyLock();
   bool IsPartyMember(CPlayer *pkObj);
   CPartyPlayer **GetPtrPartyMember();
+  CPartyPlayer *GetPtrFromSerial(unsigned int dwWorldSerial);
+  bool InsertPartyMember(CPartyPlayer *pJoiner);
+  bool FoundParty(CPartyPlayer *pParticiper);
+  bool SetLockMode(bool bLock);
+  bool SetLootShareMode(unsigned __int8 byLootShareMode);
   CPlayer *GetLootAuthor();
   void SetNextLootAuthor();
   unsigned int GetPopPartyMember();
+  bool IsJoinPartyLevel(int nJoinerLevel, float fProf);
   bool DisjointParty();
   bool RemovePartyMember(CPartyPlayer *pExiter, CPartyPlayer **ppoutNewBoss);
+  bool InheritBoss(CPartyPlayer *pSuccessor);
   void ExitWorld(CPartyPlayer **ppoutNewBoss);
 };
 

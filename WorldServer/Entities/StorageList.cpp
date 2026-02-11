@@ -17,6 +17,21 @@ void _STORAGE_LIST::_storage_con::Init()
   m_dwLv = 0xFFFFFFF;
 }
 
+_STORAGE_LIST::_storage_con::_storage_con(
+  unsigned __int8 byTableCode,
+  unsigned __int16 wItemIndex,
+  unsigned int dwDur,
+  unsigned int dwLv,
+  unsigned __int16 wSerial)
+{
+  memset_0(this, 0, sizeof(_STORAGE_LIST::_storage_con));
+  m_byTableCode = byTableCode;
+  m_wItemIndex = wItemIndex;
+  m_dwDur = dwDur;
+  m_dwLv = dwLv;
+  m_wSerial = wSerial;
+}
+
 void _STORAGE_LIST::_db_con::Init()
 {
   m_pInList = nullptr;

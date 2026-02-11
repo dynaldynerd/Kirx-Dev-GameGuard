@@ -784,6 +784,84 @@ bool CUserDB::Update_Money(unsigned int dalant, unsigned int gold)
   return true;
 }
 
+char CUserDB::Update_CuttingPush(unsigned __int8 resnum, _CUTTING_DB_BASE::_LIST *plist)
+{
+  if (resnum <= 0x14u)
+  {
+    for (int j = 0; j < resnum; ++j)
+    {
+      const int wItemIndex = plist[j].Key.wItemIndex;
+      if (wItemIndex >= GetMaxResKind())
+      {
+        g_Main.m_logSystemError.Write(
+          "%s : Update_CuttingPush(CODE) List[%d].byResIndex (%d) => failed ",
+          m_aszAvatorName,
+          j,
+          plist[j].Key.wItemIndex);
+        return 0;
+      }
+    }
+
+    m_AvatorData.dbCutting.Init();
+    m_AvatorData.dbCutting.m_byLeftNum = resnum;
+    memcpy_0(m_AvatorData.dbCutting.m_List, plist, 8ULL * resnum);
+    m_bDataUpdate = true;
+    return 1;
+  }
+
+  g_Main.m_logSystemError.Write(
+    "%s : Update_CuttingPush(CODE) byResNum (%d) => failed ",
+    m_aszAvatorName,
+    resnum);
+  return 0;
+}
+
+char CUserDB::Update_CuttingTrans(unsigned __int16 wResItemIndex, unsigned __int16 wLeftAmt)
+{
+  if (wResItemIndex < GetMaxResKind())
+  {
+    bool found = false;
+    for (int j = 0; j < 20; ++j)
+    {
+      if (m_AvatorData.dbCutting.m_List[j].Key.wItemIndex == wResItemIndex)
+      {
+        m_AvatorData.dbCutting.m_List[j].dwDur = wLeftAmt;
+        if (!wLeftAmt)
+        {
+          m_AvatorData.dbCutting.m_List[j].Init();
+          --m_AvatorData.dbCutting.m_byLeftNum;
+        }
+        found = true;
+        break;
+      }
+    }
+    if (found)
+    {
+      m_bDataUpdate = true;
+      return 1;
+    }
+
+    g_Main.m_logSystemError.Write(
+      "%s:Update_TransRes(Idx:%d)",
+      m_aszAvatorName,
+      wResItemIndex);
+    return 0;
+  }
+
+  g_Main.m_logSystemError.Write(
+    "%s : Update_CuttingTrans(CODE) wResItemIndex (%d) => failed ",
+    m_aszAvatorName,
+    wResItemIndex);
+  return 0;
+}
+
+char CUserDB::Update_CuttingEmpty()
+{
+  m_AvatorData.dbCutting.Init();
+  m_bDataUpdate = true;
+  return 1;
+}
+
 bool CUserDB::Update_SFContDelete(unsigned __int8 byContCode, unsigned __int8 bySlotIndex)
 {
   if (byContCode < 2)
@@ -959,6 +1037,11 @@ __int64 _INVENKEY::CovDBKey()
 bool _INVENKEY::IsFilled()
 {
   return bySlotIndex != 0xFF || byTableCode != 0xFF || wItemIndex != 0xFFFF;
+}
+
+bool _INVENKEY::IsOverlapItem() const
+{
+  return IsOverLapItem(byTableCode) != 0;
 }
 
 void _INVENKEY::SetRelease()

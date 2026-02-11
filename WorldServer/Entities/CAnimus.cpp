@@ -3,6 +3,7 @@
 #include "CAnimus.h"
 #include "animus_fld.h"
 #include "CGameObject.h"
+#include "CPlayer.h"
 
 #include <cstring>
 #include <mmsystem.h>
@@ -28,6 +29,18 @@ _animus_fld *GetAnimusFldFromLv(int nAnimusClass, unsigned int dwLv)
   }
   const int recordNum = static_cast<int>(table->GetRecordNum());
   return reinterpret_cast<_animus_fld *>(table->GetRecord(recordNum - 1));
+}
+
+CAnimus *FindEmptyAnimus(CAnimus *pObjArray, int nMax)
+{
+  for (int index = 0; index < nMax; ++index)
+  {
+    if (!pObjArray[index].m_bLive)
+    {
+      return &pObjArray[index];
+    }
+  }
+  return nullptr;
 }
 
 bool CAnimus::SetStaticMember()
@@ -120,4 +133,104 @@ void CAnimus::SendMsg_Destroy()
   pbyType[0] = 3;
   pbyType[1] = 26;
   CircleReport(pbyType, szMsg, 7, false);
+}
+
+void CAnimus::ChangeMode(unsigned int mode)
+{
+  if (m_dwAIMode != mode)
+  {
+    m_dwAIMode = mode;
+    AlterMode_MasterReport(static_cast<unsigned __int8>(m_dwAIMode));
+  }
+}
+
+void CAnimus::ChangeMode_MasterCommand(unsigned int nMode)
+{
+  ChangeMode(nMode);
+}
+
+bool CAnimus::ChangeTarget_MasterCommand(CPlayer *pTarget)
+{
+  if (m_byRoleCode == 3)
+  {
+    if (pTarget->m_ObjID.m_byID)
+    {
+      return false;
+    }
+    if (pTarget->m_bInGuildBattle && m_pMaster->m_bInGuildBattle)
+    {
+      if (pTarget->m_byGuildBattleColorInx != m_pMaster->m_byGuildBattleColorInx)
+      {
+        return false;
+      }
+    }
+    else
+    {
+      if (pTarget->m_bInGuildBattle || m_pMaster->m_bInGuildBattle)
+      {
+        return false;
+      }
+      if (GetObjRace() != pTarget->GetObjRace())
+      {
+        return false;
+      }
+    }
+  }
+  else
+  {
+    if (IsInTown())
+    {
+      return false;
+    }
+    if (!pTarget->IsAttackableInTown() && pTarget->IsInTown())
+    {
+      return false;
+    }
+    if (!pTarget->IsBeDamagedAble(this))
+    {
+      return false;
+    }
+    if (pTarget->m_ObjID.m_byID)
+    {
+      if (GetObjRace() == pTarget->GetObjRace())
+      {
+        return false;
+      }
+    }
+    else
+    {
+      if (pTarget->m_bInGuildBattle && m_pMaster->m_bInGuildBattle)
+      {
+        if (pTarget->m_byGuildBattleColorInx == m_pMaster->m_byGuildBattleColorInx)
+        {
+          return false;
+        }
+      }
+      else
+      {
+        if (pTarget->m_bInGuildBattle || m_pMaster->m_bInGuildBattle)
+        {
+          return false;
+        }
+        if (GetObjRace() == pTarget->GetObjRace()
+            && !m_pMaster->IsChaosMode()
+            && !pTarget->IsPunished(1u, false))
+        {
+          return false;
+        }
+      }
+    }
+  }
+
+  ChangeMode(0);
+  m_pTarget = pTarget;
+  return true;
+}
+
+void CAnimus::AlterMode_MasterReport(unsigned __int8 byMode)
+{
+  if (m_pMaster)
+  {
+    m_pMaster->AlterMode_Animus(byMode);
+  }
 }

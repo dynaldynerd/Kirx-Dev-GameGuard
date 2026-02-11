@@ -192,6 +192,8 @@ public:
   virtual __int64 GetHP();
   virtual __int64 GetLevel();
   virtual __int64 GetMaxHP();
+  virtual __int64 CalcCurHPRate();
+  virtual void BeTargeted(CCharacter *pSeacher);
   virtual void SendMsg_FixPosition(int n);
   virtual void SendMsg_RealMovePoint(int n);
   virtual void SendMsg_SetHPInform();

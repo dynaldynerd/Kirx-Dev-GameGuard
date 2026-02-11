@@ -18,13 +18,19 @@ public:
     int nResNum;
     unsigned int dwTotalRate;
     _res_list ResList[100];
+
+    _ore_cut_list();
   };
 
+  COreCuttingTable();
   bool ReadRecord(const char *fileName, CRecordData *oreTable, CRecordData *resTable, char *errCode);
+  int GetOreIndexFromRate(unsigned int dwOreIndex, unsigned int dwRate);
 
-  virtual ~COreCuttingTable() = default;
+  virtual ~COreCuttingTable();
 
 private:
+  char Indexing(CRecordData *pOreRec, CRecordData *pResRec, char *pszErrMsg);
+
   CRecordData m_tblOreCutting;
   int m_nOreNum;
   _ore_cut_list *pOreList;

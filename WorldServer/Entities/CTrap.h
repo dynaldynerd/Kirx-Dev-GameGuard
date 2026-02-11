@@ -2,6 +2,24 @@
 
 #include "IdaCompat.h"
 #include "CCharacter.h"
+#include "ObjectCreateSetData.h"
+
+class CPlayer;
+struct _TrapItem_fld;
+
+struct __cppobj __declspec(align(8)) _trap_create_setdata : _character_create_setdata
+{
+  int nHP;
+  CPlayer *pMaster;
+  int nTrapMaxAttackPnt;
+
+  _trap_create_setdata()
+  {
+    nHP = 0;
+    pMaster = nullptr;
+    nTrapMaxAttackPnt = 0;
+  }
+};
 
 /* 1746 */
 class __cppobj CTrap : public CCharacter
@@ -23,4 +41,17 @@ public:
   void Init(_object_id *pID);
   void MasterNetClose(long double dPvPPoint);
 };
+
+CTrap *CreateTrap(
+  CMapData *pMap,
+  unsigned __int16 wLayer,
+  float *fPos,
+  CPlayer *pMaster,
+  int nTrapItemIndex);
+
+unsigned __int8 IsOtherInvalidObjNear(
+  CGameObject *pEster,
+  float *pfEstPos,
+  CTrap *pEstObj,
+  _TrapItem_fld *pEstTrapItemInfo);
 

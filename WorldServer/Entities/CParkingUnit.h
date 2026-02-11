@@ -4,12 +4,14 @@
 #include "CGameObject.h"
 
 class CPlayer;
+struct _parkingunit_create_setdata;
 
 /* 1773 */
 class __cppobj __declspec(align(8)) CParkingUnit : CGameObject
 {
 public:
   static int s_nLiveNum;
+  static unsigned int s_dwSerialCounter;
 
   CPlayer *m_pOwner;
   unsigned int m_dwOwnerSerial;
@@ -22,7 +24,11 @@ public:
   unsigned int m_dwLastDestroyTime;
 
   void Init(_object_id *pID);
+  bool Create(_parkingunit_create_setdata *pParam);
   bool Destroy(unsigned __int8 byDestoryType);
+  void SendMsg_Create();
   void SendMsg_Destroy(unsigned __int8 byDestoryType);
 };
+
+CParkingUnit *FindEmptyParkingUnit(CParkingUnit *pItem, int nMax);
 

@@ -60,6 +60,20 @@ public:
     int nMaxOreNum,
     _STORAGE_LIST::_db_con *pItem,
     const char *szFileName);
+  void cut_item(
+    int n,
+    _STORAGE_LIST::_db_con *pOreItem,
+    int nOreNum,
+    unsigned __int16 *pwCuttingResBuffer,
+    unsigned int dwCostDalant,
+    unsigned int dwNewDalant,
+    char *pszFileName);
+  void cut_clear_item(
+    int n,
+    unsigned __int16 *pwCuttingResBuffer,
+    unsigned int dwAddGold,
+    unsigned int dwNewGold,
+    char *pszFileName);
   void lenditem_del_from_inven(
     unsigned __int8 byTblCode,
     unsigned __int16 wItemIndex,
@@ -147,6 +161,24 @@ public:
     unsigned int dwPrice,
     unsigned int dwLeftDalant,
     unsigned int dwLeftGold,
+    char *pszFileName);
+  void trade(
+    int n,
+    _STORAGE_LIST::_db_con *pOutItem,
+    int nOutItemNum,
+    unsigned int dwOutDalant,
+    unsigned int dwOutGold,
+    _STORAGE_LIST::_db_con *pInItem,
+    int nInItemNum,
+    unsigned int dwInDalant,
+    unsigned int dwInGold,
+    char *pszDstName,
+    unsigned int dwDstSerial,
+    char *pszDstID,
+    unsigned int dwSumDalant,
+    unsigned int dwSumGold,
+    char *pMapCode,
+    float *pfPos,
     char *pszFileName);
   void take_ground_item(
     int n,

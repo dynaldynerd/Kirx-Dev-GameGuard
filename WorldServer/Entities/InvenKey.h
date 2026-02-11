@@ -16,6 +16,7 @@ struct __cppobj _INVENKEY
 
   void LoadDBKey(int pl_nKey);
   bool IsFilled();
+  bool IsOverlapItem() const;
   void SetRelease();
   __int64 CovDBKey();
 };

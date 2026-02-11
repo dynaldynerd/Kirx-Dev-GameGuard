@@ -135,6 +135,11 @@ unsigned __int8 CPlayerDB::GetTrunkSlotNum()
   return this->m_byTrunkSlotNum;
 }
 
+char *CPlayerDB::GetTrunkPasswdW()
+{
+  return this->m_wszTrunkPasswd;
+}
+
 unsigned __int8 CPlayerDB::GetExtTrunkSlotNum()
 {
   return this->m_byExtTrunkSlotNum;
@@ -426,4 +431,46 @@ void _SFCONT_DB_BASE::_LIST::SetLeftTime(unsigned __int16 wLeftTime)
 void _SFCONT_DB_BASE::_LIST::SetOrder(unsigned __int8 byOrder)
 {
   dwKey = (dwKey & 0x0FFFFFFF) | (static_cast<unsigned int>(byOrder) << 28);
+}
+
+_STORAGE_LIST::_db_con *CPlayerDB::GetPtrItemStorage(
+  unsigned __int16 wSerial,
+  unsigned __int8 *pbyStorageCode)
+{
+  for (int storageIndex = 0; storageIndex < 8; ++storageIndex)
+  {
+    _STORAGE_LIST::_db_con *item = _STORAGE_LIST::GetPtrFromSerial(m_pStoragePtr[storageIndex], wSerial);
+    if (item)
+    {
+      if (pbyStorageCode)
+      {
+        *pbyStorageCode = static_cast<unsigned __int8>(storageIndex);
+      }
+      return item;
+    }
+  }
+  return nullptr;
+}
+
+char CPlayerDB::PushLink(int nLinkIndex, unsigned __int16 wSerail, bool bInit)
+{
+  if (bInit)
+  {
+    for (int j = 0; j < 50; ++j)
+    {
+      if (m_QLink[j].byLinkIndex != 0xFF && m_QLink[j].wSerial == wSerail)
+      {
+        return 0;
+      }
+    }
+  }
+
+  m_QLink[nLinkIndex].byLinkIndex = static_cast<unsigned __int8>(nLinkIndex);
+  m_QLink[nLinkIndex].wSerial = wSerail;
+  return 1;
+}
+
+void CPlayerDB::PopLink(int nLinkIndex)
+{
+  _quick_link::init(&m_QLink[nLinkIndex]);
 }

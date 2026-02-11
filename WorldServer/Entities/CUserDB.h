@@ -89,6 +89,9 @@ public:
   char Update_ItemUpgrade(unsigned __int8 storage, unsigned __int8 slot, unsigned int upg, bool bUpdate);
   char Update_ItemDur(unsigned __int8 storage, unsigned __int8 slot, unsigned __int64 amount, bool bUpdate);
   bool Update_Money(unsigned int dalant, unsigned int gold);
+  char Update_CuttingPush(unsigned __int8 resnum, _CUTTING_DB_BASE::_LIST *plist);
+  char Update_CuttingTrans(unsigned __int16 wResItemIndex, unsigned __int16 wLeftAmt);
+  char Update_CuttingEmpty();
   bool Update_SFContDelete(unsigned __int8 byContCode, unsigned __int8 bySlotIndex);
   bool Update_SFContInsert(
     unsigned __int8 byContCode,

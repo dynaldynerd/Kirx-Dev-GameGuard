@@ -65,6 +65,94 @@ CPartyPlayer **CPartyPlayer::GetPtrPartyMember()
   return nullptr;
 }
 
+CPartyPlayer *CPartyPlayer::GetPtrFromSerial(unsigned int dwWorldSerial)
+{
+  if (!m_pPartyBoss)
+  {
+    return nullptr;
+  }
+
+  for (int index = 0; index < 8; ++index)
+  {
+    if (!m_pPartyBoss->m_pPartyMember[index])
+    {
+      return nullptr;
+    }
+    if (m_pPartyBoss->m_pPartyMember[index]->m_id.dwSerial == dwWorldSerial)
+    {
+      return m_pPartyBoss->m_pPartyMember[index];
+    }
+  }
+  return nullptr;
+}
+
+bool CPartyPlayer::InsertPartyMember(CPartyPlayer *pJoiner)
+{
+  if (!IsPartyBoss())
+  {
+    return false;
+  }
+
+  for (int index = 0; index < 8; ++index)
+  {
+    if (!m_pPartyMember[index])
+    {
+      m_pPartyMember[index] = pJoiner;
+      pJoiner->m_pPartyBoss = this;
+      return true;
+    }
+  }
+  return false;
+}
+
+bool CPartyPlayer::FoundParty(CPartyPlayer *pParticiper)
+{
+  if (IsPartyMode())
+  {
+    return false;
+  }
+  if (pParticiper->IsPartyMode())
+  {
+    return false;
+  }
+
+  PartyListInit();
+  m_pPartyBoss = this;
+  m_pPartyMember[0] = this;
+  m_byLootShareSystem = 0;
+  m_pLootAuthor = this;
+  InsertPartyMember(pParticiper);
+  return true;
+}
+
+bool CPartyPlayer::SetLockMode(bool bLock)
+{
+  if (!IsPartyBoss())
+  {
+    return false;
+  }
+  if (m_bLock == bLock)
+  {
+    return false;
+  }
+  m_bLock = bLock;
+  return true;
+}
+
+bool CPartyPlayer::SetLootShareMode(unsigned __int8 byLootShareMode)
+{
+  if (!IsPartyBoss())
+  {
+    return false;
+  }
+  if (m_byLootShareSystem == byLootShareMode)
+  {
+    return false;
+  }
+  m_byLootShareSystem = byLootShareMode;
+  return true;
+}
+
 unsigned int CPartyPlayer::GetPopPartyMember()
 {
   if (!IsPartyMode())
@@ -78,6 +166,57 @@ unsigned int CPartyPlayer::GetPopPartyMember()
     ++count;
   }
   return count;
+}
+
+bool CPartyPlayer::IsJoinPartyLevel(int nJoinerLevel, float fProf)
+{
+  if (IsPartyMode())
+  {
+    int minLevel = 255;
+    int maxLevel = 0;
+    CPartyPlayer **members = GetPtrPartyMember();
+    for (int index = 0; index < 8 && members[index]; ++index)
+    {
+      CPlayer *memberPlayer = &g_Player[members[index]->m_wZoneIndex];
+      const int level = static_cast<int>(memberPlayer->GetLevel());
+      if (minLevel > level)
+      {
+        minLevel = level;
+      }
+      if (maxLevel < level)
+      {
+        maxLevel = level;
+      }
+    }
+    if (minLevel == 255 || maxLevel == 0 || minLevel > maxLevel)
+    {
+      return false;
+    }
+    if (nJoinerLevel > maxLevel && static_cast<float>(nJoinerLevel - minLevel) > fProf + 10.0f)
+    {
+      return false;
+    }
+    if (nJoinerLevel < minLevel && static_cast<float>(maxLevel - nJoinerLevel) > fProf + 10.0f)
+    {
+      return false;
+    }
+  }
+  else
+  {
+    CPlayer *memberPlayer = &g_Player[m_wZoneIndex];
+    const int level = static_cast<int>(memberPlayer->GetLevel());
+    int diff = level - nJoinerLevel;
+    if (diff < 0)
+    {
+      diff = -diff;
+    }
+    if (static_cast<float>(diff) > fProf + 10.0f)
+    {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 bool CPartyPlayer::DisjointParty()
@@ -236,6 +375,86 @@ bool CPartyPlayer::RemovePartyMember(CPartyPlayer *pExiter, CPartyPlayer **ppout
   if (ppoutNewBoss)
   {
     *ppoutNewBoss = nullptr;
+  }
+  return true;
+}
+
+bool CPartyPlayer::InheritBoss(CPartyPlayer *pSuccessor)
+{
+  if (!IsPartyBoss())
+  {
+    return false;
+  }
+  if (pSuccessor->m_pPartyBoss != this)
+  {
+    return false;
+  }
+
+  if (m_pLootAuthor == pSuccessor)
+  {
+    for (int index = 0; index < 8 && m_pPartyMember[index]; ++index)
+    {
+      if (m_pLootAuthor == m_pPartyMember[index])
+      {
+        if (index == 7)
+        {
+          m_pLootAuthor = m_pPartyMember[0];
+        }
+        else if (m_pPartyMember[index + 1])
+        {
+          m_pLootAuthor = m_pPartyMember[index + 1];
+        }
+        else
+        {
+          m_pLootAuthor = m_pPartyMember[0];
+        }
+        break;
+      }
+    }
+  }
+
+  bool movedSuccessor = false;
+  for (int index = 0; index < 8; ++index)
+  {
+    if (m_pPartyMember[index] == pSuccessor)
+    {
+      CPartyPlayer *prev = m_pPartyMember[0];
+      for (int moveIndex = 0; moveIndex < index; ++moveIndex)
+      {
+        CPartyPlayer *next = prev;
+        prev = m_pPartyMember[moveIndex + 1];
+        m_pPartyMember[moveIndex + 1] = next;
+      }
+      m_pPartyMember[0] = pSuccessor;
+      movedSuccessor = true;
+      break;
+    }
+  }
+  if (!movedSuccessor)
+  {
+    return false;
+  }
+
+  for (int index = 0; index < 8; ++index)
+  {
+    pSuccessor->m_pPartyMember[index] = m_pPartyMember[index];
+  }
+  pSuccessor->m_byLootShareSystem = m_byLootShareSystem;
+  pSuccessor->m_pLootAuthor = m_pLootAuthor;
+  for (int index = 0; index < 8 && pSuccessor->m_pPartyMember[index]; ++index)
+  {
+    pSuccessor->m_pPartyMember[index]->m_pPartyBoss = pSuccessor;
+  }
+  for (int index = 0; index < 8 && pSuccessor->m_pPartyMember[index]; ++index)
+  {
+    CPlayer *memberPlayer = &g_Player[pSuccessor->m_pPartyMember[index]->m_wZoneIndex];
+    if (memberPlayer->m_bOper)
+    {
+      if (memberPlayer->GetGroupTarget(0)->pObject)
+      {
+        memberPlayer->SendMsg_ReleaseGroupTargetObjectResult(0);
+      }
+    }
   }
   return true;
 }

@@ -4,6 +4,7 @@
 #include "CItemBox.h"
 #include "CNetworkEX.h"
 #include "KorLocalTime.h"
+#include "WorldServerUtil.h"
 
 #include <cstdio>
 #include <cstring>
@@ -24,6 +25,11 @@ void _personal_amine_mineore_zocl::clear()
   dwObjSerial = static_cast<unsigned int>(-1);
   dwBattery = 0;
   byChangedNum = 0;
+}
+
+unsigned int _personal_amine_mineore_zocl::size() const
+{
+  return 330U - 8U * (40U - byChangedNum);
 }
 
 _personal_automine_uninstall_zocl::_personal_automine_uninstall_zocl()
@@ -54,6 +60,76 @@ _personal_automine_current_state_zocl::_personal_automine_current_state_zocl()
 unsigned int _personal_automine_current_state_zocl::size() const
 {
   return 7;
+}
+
+_personal_automine_install_zocl::_personal_automine_install_zocl()
+{
+  std::memset(this, 0, sizeof(*this));
+}
+
+unsigned int _personal_automine_install_zocl::size() const
+{
+  return 27;
+}
+
+_personal_automine_battery_insert_zocl::_personal_automine_battery_insert_zocl()
+{
+  std::memset(this, 0, sizeof(*this));
+}
+
+unsigned int _personal_automine_battery_insert_zocl::size() const
+{
+  return 10;
+}
+
+_personal_automine_battery_extract_zocl::_personal_automine_battery_extract_zocl()
+{
+  std::memset(this, 0, sizeof(*this));
+}
+
+unsigned int _personal_automine_battery_extract_zocl::size() const
+{
+  return 11;
+}
+
+_personal_automine_selore_zocl::_personal_automine_selore_zocl()
+{
+  std::memset(this, 0, sizeof(*this));
+}
+
+unsigned int _personal_automine_selore_zocl::size() const
+{
+  return 5;
+}
+
+_personal_automine_popore_zocl::_personal_automine_popore_zocl()
+{
+  std::memset(this, 0, sizeof(*this));
+}
+
+unsigned int _personal_automine_popore_zocl::size() const
+{
+  return 3;
+}
+
+_personal_automine_stop_zocl::_personal_automine_stop_zocl()
+{
+  std::memset(this, 0, sizeof(*this));
+}
+
+unsigned int _personal_automine_stop_zocl::size() const
+{
+  return 11;
+}
+
+_personal_amine_infoui_open_zocl::_personal_amine_infoui_open_zocl()
+{
+  std::memset(this, 0, sizeof(*this));
+}
+
+unsigned int _personal_amine_infoui_open_zocl::size() const
+{
+  return 12;
 }
 
 AP_BatterySlot::AP_BatterySlot()
@@ -94,9 +170,53 @@ unsigned int AP_BatterySlot::get_dur()
   return 0;
 }
 
+__int64 AP_BatterySlot::insert(_STORAGE_LIST::_db_con *pItem)
+{
+  if (m_bFill)
+  {
+    return -1;
+  }
+  if (!is_private_item(pItem))
+  {
+    return -2;
+  }
+  if (!pItem->m_dwDur)
+  {
+    return -3;
+  }
+
+  m_bFill = true;
+  battery_.m_bLoad = 1;
+  memcpy_0(&battery_, pItem, sizeof(battery_));
+  return 0;
+}
+
+bool AP_BatterySlot::is_private_item(_STORAGE_LIST::_db_con *pItem)
+{
+  _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[pItem->m_byTableCode], pItem->m_wItemIndex);
+  if (!strcmp_0(record->m_strCode, "itttt04"))
+  {
+    return true;
+  }
+  if (!strcmp_0(record->m_strCode, "itttt05"))
+  {
+    return true;
+  }
+  if (!strcmp_0(record->m_strCode, "itcsa01"))
+  {
+    return true;
+  }
+  return strcmp_0(record->m_strCode, "itcsa02") == 0;
+}
+
 bool AutominePersonal::is_installed()
 {
   return m_bInstalled;
+}
+
+unsigned int AutominePersonal::get_objserial()
+{
+  return m_dwObjSerial;
 }
 
 unsigned int AutominePersonal::get_ownerserial()
@@ -108,9 +228,66 @@ unsigned int AutominePersonal::get_ownerserial()
   return static_cast<unsigned int>(-1);
 }
 
+unsigned __int16 AutominePersonal::get_itemserial()
+{
+  return m_wItemSerial;
+}
+
+_STORAGE_LIST::_db_con *AutominePersonal::get_item()
+{
+  return m_pItem;
+}
+
+CPlayer *AutominePersonal::get_owner()
+{
+  return m_pOwner;
+}
+
 CPlayer *AutominePersonal::GetOwner()
 {
   return m_pOwner;
+}
+
+bool AutominePersonal::is_run()
+{
+  return m_bStart;
+}
+
+void AutominePersonal::set_selore(unsigned __int8 bySelOre)
+{
+  m_bySelOre = bySelOre;
+}
+
+void AutominePersonal::set_openUI_Inven(bool bFlag)
+{
+  m_bOpenUI_Inven = bFlag;
+}
+
+void AutominePersonal::set_openUI_battery(bool bFlag)
+{
+  m_bOpenUI_Battery = bFlag;
+}
+
+void AutominePersonal::send_changed_packet(unsigned int n)
+{
+  if (m_bChanged)
+  {
+    m_bChanged = false;
+    unsigned __int8 pbyType[2] = {14, 55};
+    const unsigned __int16 nLen = static_cast<unsigned __int16>(m_changed_packet.size());
+    g_Network.m_pProcess[0]->LoadSendMsg(n, pbyType, reinterpret_cast<char *>(&m_changed_packet), nLen);
+    m_changed_packet.clear();
+  }
+}
+
+void AutominePersonal::set_work(bool bWork)
+{
+  m_bStart = bWork;
+}
+
+void AutominePersonal::sub_filledslot()
+{
+  --m_byFilledSlotCnt;
 }
 
 AutominePersonal::AutominePersonal()
@@ -338,4 +515,185 @@ bool AutominePersonal::unregist_from_map(unsigned __int8 byDestroyType)
   m_wItemSerial = static_cast<unsigned __int16>(-1);
   m_byFilledSlotCnt = 0;
   return CGameObject::Destroy();
+}
+
+bool AutominePersonal::insert_battery(unsigned __int8 bySlotIdx, unsigned __int16 wItemSerial)
+{
+  if (bySlotIdx < 2u)
+  {
+    _STORAGE_LIST::_db_con *item =
+      _STORAGE_LIST::GetPtrFromSerial(m_pOwner->m_Param.m_pStoragePtr[0], wItemSerial);
+    if (!item)
+    {
+      m_logSysErr.Write("Is not exist battery.");
+      return false;
+    }
+
+    if (m_pBatterySlot[bySlotIdx].insert(item))
+    {
+      return false;
+    }
+
+    m_byUseBattery = bySlotIdx;
+    if (CPlayer::Emb_DelStorage(
+          m_pOwner,
+          0,
+          item->m_byStorageIndex,
+          0,
+          1,
+          "AutominePersonal::insert_battery()"))
+    {
+      if (!m_bStart)
+      {
+        m_dwNextMineTime = m_dwDelay + timeGetTime();
+        m_bStart = true;
+      }
+
+      send_current_state();
+      m_dwNextSendTime_CurState = GetLoopTime() + 60000;
+      CPlayer::s_MgrItemHistory.personal_amine_itemlog(
+        "BATTERY_IN",
+        bySlotIdx,
+        item->m_byTableCode,
+        item->m_wItemIndex,
+        item->m_dwDur,
+        m_pOwner->m_szItemHistoryFileName);
+      return true;
+    }
+
+    m_logSysErr.Write("insert_battery() - Emb_DelStorage Fail");
+    m_pBatterySlot[bySlotIdx].clear();
+    return false;
+  }
+
+  m_logSysErr.Write("insert_battery(%d, n)::excess of max solt index", bySlotIdx);
+  return false;
+}
+
+bool AutominePersonal::regist_to_map(
+  CPlayer *pOne,
+  _STORAGE_LIST::_db_con *pDstItem,
+  unsigned __int8 byDummyIndex,
+  unsigned int dwObjSerial,
+  float fDelayProf)
+{
+  if (m_bInstalled)
+  {
+    return false;
+  }
+
+  if (byDummyIndex >= pOne->m_pCurMap->m_nResDumNum)
+  {
+    return false;
+  }
+
+  _res_dummy *resDummy = &pOne->m_pCurMap->m_pResDummy[byDummyIndex];
+  const int resDummySector = CMapData::GetResDummySector(pOne->m_pCurMap, byDummyIndex, pOne->m_fCurPos);
+  if (resDummySector == -1)
+  {
+    return false;
+  }
+
+  if (resDummy == nullptr || _res_dummy::GetQualityGrade(resDummy) == 2)
+  {
+    return false;
+  }
+
+  const bool isPcBangType = _BILLING_INFO::IsPcBangType(&pOne->m_pUserDB->m_BillingInfo);
+  m_dwDelay = static_cast<int>(
+    static_cast<double>(
+      _res_dummy::GetDelay(&pOne->m_pCurMap->m_pResDummy[byDummyIndex], resDummySector, isPcBangType))
+    * 1.2);
+
+  const double playerPenalty =
+    TimeLimitMgr::GetPlayerPenalty(g_Main.m_pTimeLimitMgr, pOne->m_id.wIndex);
+  int penaltyFactor = 0;
+  if (playerPenalty != 0.0)
+  {
+    penaltyFactor = static_cast<int>(1.0 / playerPenalty);
+  }
+
+  if (fDelayProf > 1.0f)
+  {
+    m_dwDelay = static_cast<int>(static_cast<float>(static_cast<int>(m_dwDelay)) / fDelayProf);
+  }
+
+  m_dwDelaySec = static_cast<unsigned __int8>(m_dwDelay / 1000);
+  m_dwDelay *= penaltyFactor;
+
+  _object_create_setdata createData{};
+  _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[pDstItem->m_byTableCode], pDstItem->m_wItemIndex);
+  if (record == nullptr)
+  {
+    return false;
+  }
+
+  const int playerLevel = CPlayerDB::GetLevel(&pOne->m_Param);
+  if (playerLevel < *reinterpret_cast<unsigned int *>(&record[4].m_strCode[52]))
+  {
+    return false;
+  }
+
+  createData.m_pRecordSet = record;
+  createData.m_pMap = pOne->m_pCurMap;
+  createData.m_nLayerIndex = pOne->m_wMapLayerIndex;
+  CMapData::GetRandPosInRange(pOne->m_pCurMap, pOne->m_fCurPos, 10, createData.m_fStartPos);
+
+  if (CGameObject::Create(&createData))
+  {
+    pDstItem->m_bLock = 1;
+    m_bMove = false;
+    m_dwObjSerial = dwObjSerial;
+    m_pItem = pDstItem;
+    m_pOwner = pOne;
+    m_dwNextMineTime = static_cast<unsigned int>(-1);
+    m_dwChangeSendTime = timeGetTime() + m_dwDelay + 3000;
+    m_nMaxHP = *reinterpret_cast<int *>(&record[5].m_strCode[44]);
+    m_wItemSerial = pDstItem->m_wSerial;
+    m_byFilledSlotCnt = _STORAGE_LIST::GetNumUseCon(&pOne->m_Param.m_dbPersonalAmineInven);
+    send_installed();
+    m_bInstalled = true;
+    std::memset(m_dwMineCount, 0, sizeof(m_dwMineCount));
+    CPlayer::s_MgrItemHistory.personal_amine_install(
+      m_pItem->m_byTableCode,
+      m_pItem->m_wItemIndex,
+      &m_pOwner->m_Param.m_dbPersonalAmineInven,
+      m_pOwner->m_szItemHistoryFileName);
+    return true;
+  }
+
+  m_logSysErr.Write("regist_to_map()::Failed CGameObject::Create(...)");
+  return false;
+}
+
+void AutominePersonal::send_installed()
+{
+  _personal_automine_install_zocl packet{};
+  packet.dwObjSerial = m_dwObjSerial;
+  packet.wObjIndex = m_ObjID.m_wIndex;
+  packet.dwOwnerSerial = get_ownerserial();
+  packet.wItemSerial = m_pItem->m_wSerial;
+  packet.wItemTblIndex = m_pItem->m_wItemIndex;
+  memcpy_0(packet.fPos, m_fCurPos, sizeof(packet.fPos));
+  packet.byFilledSlotCnt = m_byFilledSlotCnt;
+
+  unsigned __int8 pbyType[2] = {14, 45};
+  const unsigned int passObjSerial = get_ownerserial();
+  const unsigned __int16 nLen = static_cast<unsigned __int16>(packet.size());
+  CircleReport(pbyType, reinterpret_cast<char *>(&packet), nLen, passObjSerial, false);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    m_pOwner->m_id.wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(packet.size()));
+}
+
+void AutominePersonal::set_delay(unsigned int dwDelay)
+{
+  m_dwDelay = dwDelay;
+}
+
+void AutominePersonal::set_delaysec(unsigned __int8 dwDS)
+{
+  m_dwDelaySec = dwDS;
 }
