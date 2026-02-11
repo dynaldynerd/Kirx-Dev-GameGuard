@@ -1197,6 +1197,7 @@ char CPlayer::dev_SetGuildGradeByName(char *uszGuildName, unsigned __int8 byGrad
     return 1;
 }
 
+#if 0 // duplicate implementation exists in CPlayer.cpp
 char CPlayer::dev_trap_attack_grade(int nPoint)
 {
 
@@ -1212,6 +1213,7 @@ char CPlayer::dev_trap_attack_grade(int nPoint)
     }
     return 1;
 }
+#endif
 
 char CPlayer::dev_up_all(int nCum)
 {
@@ -2460,6 +2462,7 @@ char CPlayer::mgr_matchless(bool bMatchless)
     return 1;
 }
 
+#if 0 // duplicate implementation exists in CPlayer.cpp
 char CPlayer::mgr_MaxAttackPoint(int nMax)
 {
 
@@ -2468,6 +2471,7 @@ char CPlayer::mgr_MaxAttackPoint(int nMax)
     this->m_nMaxAttackPnt = nMax;
     return 1;
 }
+#endif
 
 char CPlayer::mgr_pass_sch_one_step()
 {
@@ -2641,6 +2645,7 @@ bool CPlayer::mgr_resurrect_player(char *pwszCharName)
     return v7->m_bLive && v7->pc_Resurrect( 0);
 }
 
+#if 0 // duplicate implementation exists in CPlayer.cpp
 char CPlayer::mgr_set_animus_attack_point(int nPoint)
 {
 
@@ -2653,6 +2658,7 @@ char CPlayer::mgr_set_animus_attack_point(int nPoint)
       this->m_pRecalledAnimusChar->m_nMaxAttackPnt = nPoint;
     return 1;
 }
+#endif
 
 char CPlayer::mgr_TrunkInit()
 {

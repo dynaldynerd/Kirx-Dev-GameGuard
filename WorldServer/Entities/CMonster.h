@@ -69,6 +69,7 @@ public:
   void UpdateLookAtPos(float *vLookAt);
   float GetVisualField();
   float GetVisualAngle();
+  bool IsViewArea(CCharacter *pTarget);
   bool GetViewAngleCap(int nCapKind, int *nOutValue);
   __int64 GetMob_AsistType();
   __int64 GetMob_SubRace();
@@ -144,6 +145,7 @@ public:
     unsigned int nSendTargetIndex);
   void CheckEmotionPresentation();
   void CheckLootItem(CPlayer *pOwner);
+  char AddEventItem(_event_loot_item *pItem);
   char _LootItem_Std(CPlayer *pOwner);
   char _LootItem_Rwp(CPlayer *pOwner);
   char _LootItem_EventSet(CPlayer *pOwner);

@@ -45,7 +45,17 @@ public:
   bool m_bMoveNextMission;
 
   char ClearMember(CPlayer *pMember, bool bDisconnect, _dh_player_mgr::_pos *poutPlayerPos);
+  _dh_player_mgr *GetPlayerInfo(unsigned int dwSerial);
   char CheckEvent(EM_DH_EVENT eventType, int nContentTable, int nContentIndex, int nCount, CGameObject *pObj);
+  void AddMonster();
+  void ChangeMonster();
+  void ShareItemToMonster();
+  unsigned int GetLeaderSerial();
+  bool IsMoveNextMission(int nPortalIndex);
+  char IsAllMemberNearPosition(float *pfCenterPos, int nLen);
+  _dh_mission_setup *SearchMissionFromPos(float *pfStartPos);
+  char GotoNextMissionByPosition(float *pfStartPos);
+  void NextMissionOtherQuester(CPlayer *pLeader, _dh_mission_setup *pNextMission);
   void SendMsg_JobCount(unsigned __int8 nJobIndex, unsigned __int16 nCount);
   void SendMsg_RealMsgInform(char *pMsg);
   void SendMsg_RealAddLimTime(int nAddSec, char *pMsg);

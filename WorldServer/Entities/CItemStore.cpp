@@ -315,7 +315,7 @@ void CItemStore::InitLimitItemInfo()
     }
 
     auto *record = reinterpret_cast<unsigned __int16 *>(
-      CRecordData::GetRecord(&g_Main.m_tblItemData[tableCode], m_pRec->m_sellLimitList[j].m_strItemCode));
+      g_Main.m_tblItemData[tableCode].GetRecord(m_pRec->m_sellLimitList[j].m_strItemCode));
     if (!record)
     {
       m_pLimitStorageItem[j].init();

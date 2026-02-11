@@ -37,6 +37,11 @@ bool CPvpUserAndGuildRankingSystem::Init()
   return InitLogger() && m_kUserRankingProcess.Init();
 }
 
+bool CPvpUserAndGuildRankingSystem::Load()
+{
+  return m_kUserRankingProcess.Load();
+}
+
 bool CPvpUserAndGuildRankingSystem::IsCurrentRaceBossGroup(unsigned __int8 byRace, unsigned int dwSerial)
 {
   return m_kUserRankingProcess.IsCurrentRaceBossGroup(byRace, dwSerial);
@@ -45,6 +50,15 @@ bool CPvpUserAndGuildRankingSystem::IsCurrentRaceBossGroup(unsigned __int8 byRac
 unsigned int CPvpUserAndGuildRankingSystem::GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth)
 {
   return m_kUserRankingProcess.GetCurrentRaceBossSerial(byRace, byNth);
+}
+
+void CPvpUserAndGuildRankingSystem::PvpRankListRequest(
+  unsigned __int16 wIndex,
+  unsigned __int8 byRace,
+  unsigned __int8 byVersion,
+  unsigned __int8 byPage)
+{
+  m_kUserRankingProcess.PvpRankListRequest(wIndex, byRace, byVersion, byPage);
 }
 
 bool CPvpUserAndGuildRankingSystem::IsRaceViceBoss(unsigned __int8 byRace, unsigned int dwSerial)

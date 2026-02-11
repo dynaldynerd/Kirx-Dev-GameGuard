@@ -38,6 +38,8 @@ During the implementation of `CMapOperation::Init` and its sub-flows, the follow
 | `DfAIMgr.cpp` | `Condition_OnLoop` | `CMonster::m_pRecordSet` | `_base_fld *` | Uses `Record[25].m_strCode[4]` and `Record[29].m_strCode[48/52/56]` via raw offsets (1708, 2024, 2028, 2032). |
 | `DfAIMgr.cpp` | `CheckEmotionBad` | `CMonster::m_pRecordSet` | `_monster_fld *` | Casts to `_monster_fld` to use `m_fEmoType` (decompiled shows `Record[29].m_strCode[28]`). |
 | `CMonster.cpp` | `GetOffensiveType` | `CMonster::m_pRecordSet` | `_base_fld *` | Uses `Record[29].m_strCode[36]` for offensive type. |
+| `CQuestMgr.cpp` | `CQuestMgr::CheckFailCondition` | `CQuestMgr::s_tblQuest` | `_base_fld *` | Uses `record[32].m_strCode[28]` as quest code for `GetRecord`; offset likely non-base layout. |
+| `CPlayer.cpp` | `_MASTERY_PARAM::Init` | `_MASTERY_PARAM::s_pSkillData` | `_base_fld *` | Uses `Record[4].m_strCode[60]` and `Record[1].m_strCode[4]` for skill level/mastery grouping; verify offsets. |
 | `CMonster.cpp` | `IsPreAttackAbleMon` | `CMonster::m_pRecordSet` | `_base_fld *` | Uses `Record[29].m_strCode[28]` compared to `5.0f`. |
 | `CMonster.cpp` | `GeEmotionImpStdTime` | `CMonster::m_pRecordSet` | `_base_fld *` | Uses `Record[29].m_strCode[44]` for emotion impulse timing. |
 | `CMonster.cpp` | `GetAggroShortTime / GetAggroResetTime` | `CMonster::m_pRecordSet` | `_base_fld *` | Uses `Record[3].m_strCode[48]` and `Record[3].m_strCode[52]` (scaled by 1000). |

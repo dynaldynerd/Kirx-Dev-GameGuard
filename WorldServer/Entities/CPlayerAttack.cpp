@@ -58,8 +58,7 @@ __int64 CPlayerAttack::_CalcSkillAttPnt(bool bUseEffBullet)
 
   if (maxAttack < 0)
   {
-    CLogFile::Write(
-      &g_Main.m_logSystemError,
+    g_Main.m_logSystemError.Write(
       "Skill Attack Error : Skill(%s), SIndex(%d), l_fConst(%f), l_nLvConst(%d), nMastery(%d), nMaxAF(%d), nMinAF(%d)",
       skillRecord->m_strCode,
       skillRecord->m_dwIndex,
@@ -86,10 +85,10 @@ __int64 CPlayerAttack::_CalcSkillAttPnt(bool bUseEffBullet)
   const unsigned int midAttack = static_cast<int>(((static_cast<float>(maxAttack + minAttack) / 2.0f) + 0.5f));
   const int randValue = m_pAttChar->m_rtPer100.GetRand();
 
-  int minSel = static_cast<int>(static_cast<float>(m_pp->nMinSel) - _effect_parameter::GetEff_Plus(&m_pAttChar->m_EP, 14));
+  int minSel = static_cast<int>(static_cast<float>(m_pp->nMinSel) - m_pAttChar->m_EP.GetEff_Plus(14));
   if (m_pp->pDst && m_pp->pDst != m_pAttChar)
   {
-    minSel = static_cast<int>(static_cast<float>(minSel) + _effect_parameter::GetEff_Plus(&m_pp->pDst->m_EP, 37));
+    minSel = static_cast<int>(static_cast<float>(minSel) + m_pp->pDst->m_EP.GetEff_Plus(37));
     minSel += MonsterCritical_Exception_Rate(reinterpret_cast<CMonster *>(m_pp->pDst), m_pp->bBackAttack);
   }
   if (minSel < 0)
@@ -98,10 +97,10 @@ __int64 CPlayerAttack::_CalcSkillAttPnt(bool bUseEffBullet)
   }
 
   int maxSel =
-    static_cast<int>(static_cast<float>(m_pp->nMaxSel + m_pp->nMinSel) - _effect_parameter::GetEff_Plus(&m_pAttChar->m_EP, 14));
+    static_cast<int>(static_cast<float>(m_pp->nMaxSel + m_pp->nMinSel) - m_pAttChar->m_EP.GetEff_Plus(14));
   if (m_pp->pDst && m_pp->pDst != m_pAttChar)
   {
-    maxSel = static_cast<int>(static_cast<float>(maxSel) + _effect_parameter::GetEff_Plus(&m_pp->pDst->m_EP, 37));
+    maxSel = static_cast<int>(static_cast<float>(maxSel) + m_pp->pDst->m_EP.GetEff_Plus(37));
     maxSel += MonsterCritical_Exception_Rate(reinterpret_cast<CMonster *>(m_pp->pDst), m_pp->bBackAttack);
   }
   if (maxSel < 0)
@@ -137,7 +136,7 @@ void CPlayerAttack::AttackSkill(_attack_param *pParam, bool bUseEffBullet)
   m_pp = pParam;
   _base_fld *skillRecord = m_pp->pFld;
   bool canHit = true;
-  CCharacter::BreakStealth(m_pAttChar);
+  m_pAttChar->BreakStealth();
 
   int attackType = 0;
   if (m_pp->byEffectCode)
@@ -152,37 +151,37 @@ void CPlayerAttack::AttackSkill(_attack_param *pParam, bool bUseEffBullet)
   if (m_pp->pDst)
   {
     bool isAvoided = false;
-    if (_effect_parameter::GetEff_State(&m_pp->pDst->m_EP, 14))
+    if (m_pp->pDst->m_EP.GetEff_State(14))
     {
       isAvoided = true;
     }
-    else if (_effect_parameter::GetEff_Plus(&m_pp->pDst->m_EP, 27) > 0.0f)
+    else if (m_pp->pDst->m_EP.GetEff_Plus(27) > 0.0f)
     {
       const float roll = static_cast<float>(rand() % 100);
-      if (_effect_parameter::GetEff_Plus(&m_pp->pDst->m_EP, 27) > roll)
+      if (m_pp->pDst->m_EP.GetEff_Plus(27) > roll)
       {
         isAvoided = true;
       }
     }
     if (isAvoided)
     {
-      if (!m_pp->bPassCount && !m_pp->nClass && !m_pp->pDst->GetWeaponClass(m_pp->pDst))
+      if (!m_pp->bPassCount && !m_pp->nClass && !m_pp->pDst->GetWeaponClass())
       {
-        const float targetRange = m_pp->pDst->GetAttackRange(m_pp->pDst);
-        const float attackerWidth = m_pAttChar->GetWidth(m_pAttChar);
+        const float targetRange = m_pp->pDst->GetAttackRange();
+        const float attackerWidth = m_pAttChar->GetWidth();
         const float rangeLimit =
-          targetRange + (attackerWidth / 2.0f) + _effect_parameter::GetEff_Plus(&m_pp->pDst->m_EP, 4);
+          targetRange + (attackerWidth / 2.0f) + m_pp->pDst->m_EP.GetEff_Plus(4);
         const float dist = GetSqrt(m_pp->pDst->m_fCurPos, m_pAttChar->m_fCurPos);
         if (rangeLimit >= dist)
         {
           m_DamList[0].m_pChar = m_pp->pDst;
           m_DamList[0].m_nDamage = -1;
           m_nDamagedObjNum = 1;
-          CCharacter::SendMsg_AttackActEffect(m_pAttChar, 0, m_pp->pDst);
+          m_pAttChar->SendMsg_AttackActEffect(0, m_pp->pDst);
           return;
         }
       }
-      if (_effect_parameter::GetEff_Plus(&m_pp->pDst->m_EP, 27) > 0.0f)
+      if (m_pp->pDst->m_EP.GetEff_Plus(27) > 0.0f)
       {
         m_DamList[0].m_pChar = m_pp->pDst;
         m_DamList[0].m_nDamage = 0;
@@ -191,18 +190,18 @@ void CPlayerAttack::AttackSkill(_attack_param *pParam, bool bUseEffBullet)
       }
     }
 
-    if (_effect_parameter::GetEff_State(&m_pp->pDst->m_EP, 8))
+    if (m_pp->pDst->m_EP.GetEff_State(8))
     {
       canHit = false;
     }
     else
     {
-      const float baseChance = _effect_parameter::GetEff_Plus(&m_pAttChar->m_EP, 30) + 100.0f;
-      const int avoid = m_pp->pDst->GetAvoidRate(m_pp->pDst);
+      const float baseChance = m_pAttChar->m_EP.GetEff_Plus(30) + 100.0f;
+      const int avoid = m_pp->pDst->GetAvoidRate();
       int chance = static_cast<int>(baseChance - static_cast<float>(avoid));
       if (!m_pAttChar->m_ObjID.m_byID)
       {
-        const float add = _effect_parameter::GetEff_Plus(&m_pAttChar->m_EP, 40);
+        const float add = m_pAttChar->m_EP.GetEff_Plus(40);
         chance = static_cast<int>(static_cast<float>(chance) + add);
       }
       if (chance < 0)
@@ -231,8 +230,8 @@ void CPlayerAttack::AttackSkill(_attack_param *pParam, bool bUseEffBullet)
   int normalAttack = m_pp->nAddAttPnt + static_cast<int>(_CalcSkillAttPnt(false));
   int effAttack = m_pp->nAddAttPnt + static_cast<int>(_CalcSkillAttPnt(bUseEffBullet));
   if (!m_pAttChar->m_ObjID.m_byID
-    && (CHolyStoneSystem::GetDestroyerSerial(&g_HolySys) == m_pAttChar->m_dwObjSerial
-      || CPlayer::IsLastAttBuff(reinterpret_cast<CPlayer *>(m_pAttChar))))
+    && (g_HolySys.GetDestroyerSerial() == m_pAttChar->m_dwObjSerial
+      || reinterpret_cast<CPlayer *>(m_pAttChar)->IsLastAttBuff()))
   {
     normalAttack = static_cast<int>(static_cast<float>(normalAttack) * 1.3f);
     effAttack = static_cast<int>(static_cast<float>(effAttack) * 1.3f);
@@ -240,10 +239,10 @@ void CPlayerAttack::AttackSkill(_attack_param *pParam, bool bUseEffBullet)
 
   if (!m_pAttPlayer->m_bInGuildBattle)
   {
-    const unsigned int dwSerial = CPlayerDB::GetCharSerial(&m_pAttPlayer->m_Param);
-    const int raceCode = CPlayerDB::GetRaceCode(&m_pAttPlayer->m_Param);
+    const unsigned int dwSerial = m_pAttPlayer->m_Param.GetCharSerial();
+    const int raceCode = m_pAttPlayer->m_Param.GetRaceCode();
     CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
-    const unsigned __int8 bossType = CPvpUserAndGuildRankingSystem::GetBossType(ranking, raceCode, dwSerial);
+    const unsigned __int8 bossType = ranking->GetBossType(raceCode, dwSerial);
     if (bossType)
     {
       if (bossType == 2 || bossType == 6)
@@ -262,18 +261,18 @@ void CPlayerAttack::AttackSkill(_attack_param *pParam, bool bUseEffBullet)
   if (m_pp->nWpType == 7)
   {
     normalAttack =
-      static_cast<int>(static_cast<float>(normalAttack) * _effect_parameter::GetEff_Rate(&m_pAttChar->m_EP, 29));
+      static_cast<int>(static_cast<float>(normalAttack) * m_pAttChar->m_EP.GetEff_Rate(29));
     effAttack =
-      static_cast<int>(static_cast<float>(effAttack) * _effect_parameter::GetEff_Rate(&m_pAttChar->m_EP, 29));
+      static_cast<int>(static_cast<float>(effAttack) * m_pAttChar->m_EP.GetEff_Rate(29));
   }
   else
   {
     normalAttack =
       static_cast<int>(
-        static_cast<float>(normalAttack) * _effect_parameter::GetEff_Rate(&m_pAttChar->m_EP, m_pp->nClass + 2));
+        static_cast<float>(normalAttack) * m_pAttChar->m_EP.GetEff_Rate(m_pp->nClass + 2));
     effAttack =
       static_cast<int>(
-        static_cast<float>(effAttack) * _effect_parameter::GetEff_Rate(&m_pAttChar->m_EP, m_pp->nClass + 2));
+        static_cast<float>(effAttack) * m_pAttChar->m_EP.GetEff_Rate(m_pp->nClass + 2));
   }
 
   switch (attackType)
@@ -287,9 +286,7 @@ void CPlayerAttack::AttackSkill(_attack_param *pParam, bool bUseEffBullet)
         m_DamList[0].m_pChar = m_pp->pDst;
         if (bUseEffBullet)
         {
-          m_DamList[0].m_nDamage = CCharacter::GetAttackDamPoint(
-            m_pAttChar,
-            effAttack,
+          m_DamList[0].m_nDamage = m_pAttChar->GetAttackDamPoint(effAttack,
             m_pp->nPart,
             m_pp->nTol,
             m_pp->pDst,
@@ -297,9 +294,7 @@ void CPlayerAttack::AttackSkill(_attack_param *pParam, bool bUseEffBullet)
         }
         else
         {
-          m_DamList[0].m_nDamage = CCharacter::GetAttackDamPoint(
-            m_pAttChar,
-            normalAttack,
+          m_DamList[0].m_nDamage = m_pAttChar->GetAttackDamPoint(normalAttack,
             m_pp->nPart,
             m_pp->nTol,
             m_pp->pDst,
@@ -349,7 +344,7 @@ void CPlayerAttack::AttackUnit(_attack_param *pParam)
   m_pp = pParam;
   _base_fld *weaponField = m_pp->pFld;
   bool canHit = true;
-  CCharacter::BreakStealth(m_pAttChar);
+  m_pAttChar->BreakStealth();
 
   if (m_pp->pDst)
   {
@@ -357,37 +352,37 @@ void CPlayerAttack::AttackUnit(_attack_param *pParam)
     if (effectGroup != 4)
     {
       bool isAvoided = false;
-      if (_effect_parameter::GetEff_State(&m_pp->pDst->m_EP, 14))
+      if (m_pp->pDst->m_EP.GetEff_State(14))
       {
         isAvoided = true;
       }
-      else if (_effect_parameter::GetEff_Plus(&m_pp->pDst->m_EP, 27) > 0.0f)
+      else if (m_pp->pDst->m_EP.GetEff_Plus(27) > 0.0f)
       {
         const float roll = static_cast<float>(rand() % 100);
-        if (_effect_parameter::GetEff_Plus(&m_pp->pDst->m_EP, 27) > roll)
+        if (m_pp->pDst->m_EP.GetEff_Plus(27) > roll)
         {
           isAvoided = true;
         }
       }
       if (isAvoided)
       {
-        if (!m_pp->bPassCount && !m_pp->nClass && !m_pp->pDst->GetWeaponClass(m_pp->pDst))
+        if (!m_pp->bPassCount && !m_pp->nClass && !m_pp->pDst->GetWeaponClass())
         {
-          const float targetRange = m_pp->pDst->GetAttackRange(m_pp->pDst);
-          const float attackerWidth = m_pAttChar->GetWidth(m_pAttChar);
+          const float targetRange = m_pp->pDst->GetAttackRange();
+          const float attackerWidth = m_pAttChar->GetWidth();
           const float rangeLimit =
-            targetRange + (attackerWidth / 2.0f) + _effect_parameter::GetEff_Plus(&m_pp->pDst->m_EP, 4);
+            targetRange + (attackerWidth / 2.0f) + m_pp->pDst->m_EP.GetEff_Plus(4);
           const float dist = GetSqrt(m_pp->pDst->m_fCurPos, m_pAttChar->m_fCurPos);
           if (rangeLimit >= dist)
           {
             m_DamList[0].m_pChar = m_pp->pDst;
             m_DamList[0].m_nDamage = -1;
             m_nDamagedObjNum = 1;
-            CCharacter::SendMsg_AttackActEffect(m_pAttChar, 0, m_pp->pDst);
+            m_pAttChar->SendMsg_AttackActEffect(0, m_pp->pDst);
             return;
           }
         }
-        if (_effect_parameter::GetEff_Plus(&m_pp->pDst->m_EP, 27) > 0.0f)
+        if (m_pp->pDst->m_EP.GetEff_Plus(27) > 0.0f)
         {
           m_DamList[0].m_pChar = m_pp->pDst;
           m_DamList[0].m_nDamage = 0;
@@ -396,7 +391,7 @@ void CPlayerAttack::AttackUnit(_attack_param *pParam)
         }
       }
 
-      if (_effect_parameter::GetEff_State(&m_pp->pDst->m_EP, 8))
+      if (m_pp->pDst->m_EP.GetEff_State(8))
       {
         canHit = false;
       }
@@ -421,14 +416,14 @@ void CPlayerAttack::AttackUnit(_attack_param *pParam)
 
     int normalAttack = m_pp->nAddAttPnt + static_cast<int>(_CalcGenAttPnt(false));
     normalAttack =
-      static_cast<int>(static_cast<float>(normalAttack) * _effect_parameter::GetEff_Rate(&m_pAttChar->m_EP, 21));
+      static_cast<int>(static_cast<float>(normalAttack) * m_pAttChar->m_EP.GetEff_Rate(21));
 
     if (!m_pAttPlayer->m_bInGuildBattle)
     {
-      const unsigned int dwSerial = CPlayerDB::GetCharSerial(&m_pAttPlayer->m_Param);
-      const int raceCode = CPlayerDB::GetRaceCode(&m_pAttPlayer->m_Param);
+      const unsigned int dwSerial = m_pAttPlayer->m_Param.GetCharSerial();
+      const int raceCode = m_pAttPlayer->m_Param.GetRaceCode();
       CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
-      const unsigned __int8 bossType = CPvpUserAndGuildRankingSystem::GetBossType(ranking, raceCode, dwSerial);
+      const unsigned __int8 bossType = ranking->GetBossType(raceCode, dwSerial);
       if (bossType)
       {
         if (bossType == 2 || bossType == 6)
@@ -448,25 +443,24 @@ void CPlayerAttack::AttackUnit(_attack_param *pParam)
       defSum = static_cast<float>(m_pAttPlayer->GetDefFC(part, m_pAttPlayer, nullptr));
     }
     const float defAvg = defSum / 5.0f;
-    const float addDef = defAvg * (_effect_parameter::GetEff_Rate(&m_pAttPlayer->m_EP, 44) - 1.0f);
+    const float addDef = defAvg * (m_pAttPlayer->m_EP.GetEff_Rate(44) - 1.0f);
 
     const float attackFcA = GetAttackFC(m_pAttPlayer, 2u, true, true);
-    const float addAttackA = attackFcA * (_effect_parameter::GetEff_Rate(&m_pAttPlayer->m_EP, 43) - 1.0f);
+    const float addAttackA = attackFcA * (m_pAttPlayer->m_EP.GetEff_Rate(43) - 1.0f);
 
     const float attackFcB0 = GetAttackFC(m_pAttPlayer, 0, true, true);
     const float attackFcB1 = GetAttackFC(m_pAttPlayer, 1u, true, true);
     const float addAttackB =
-      (attackFcB0 + attackFcB1) * (_effect_parameter::GetEff_Rate(&m_pAttPlayer->m_EP, 41) - 1.0f);
+      (attackFcB0 + attackFcB1) * (m_pAttPlayer->m_EP.GetEff_Rate(41) - 1.0f);
 
     const float attackFcC0 = GetAttackFC(m_pAttPlayer, 0, false, true);
     const float attackFcC1 = GetAttackFC(m_pAttPlayer, 1u, false, true);
     const float addAttackC =
-      (attackFcC0 + attackFcC1) * (_effect_parameter::GetEff_Rate(&m_pAttPlayer->m_EP, 42) - 1.0f);
+      (attackFcC0 + attackFcC1) * (m_pAttPlayer->m_EP.GetEff_Rate(42) - 1.0f);
 
     normalAttack =
       static_cast<int>(static_cast<float>(normalAttack) + addAttackA + addDef + addAttackB + addAttackC);
 
-    const int effectGroup = weaponField[4].m_dwIndex;
     if (effectGroup >= 0)
     {
       if (effectGroup <= 3)
@@ -474,9 +468,7 @@ void CPlayerAttack::AttackUnit(_attack_param *pParam)
         if (m_pp->pDst)
         {
           m_DamList[0].m_pChar = m_pp->pDst;
-          m_DamList[0].m_nDamage = CCharacter::GetAttackDamPoint(
-            m_pAttChar,
-            normalAttack,
+          m_DamList[0].m_nDamage = m_pAttChar->GetAttackDamPoint(normalAttack,
             m_pp->nPart,
             m_pp->nTol,
             m_pp->pDst,
@@ -512,7 +504,7 @@ void CPlayerAttack::WPActiveAttackSkill(_attack_param *pParam)
   m_bIsCrtAtt = false;
   m_pp = pParam;
   _base_fld *skillRecord = m_pp->pFld;
-  CCharacter::BreakStealth(m_pAttChar);
+  m_pAttChar->BreakStealth();
 
   int attackType = 0;
   if (m_pp->byEffectCode)
@@ -528,21 +520,21 @@ void CPlayerAttack::WPActiveAttackSkill(_attack_param *pParam)
   if (m_pp->nWpType == 7)
   {
     normalAttack =
-      static_cast<int>(static_cast<float>(normalAttack) * _effect_parameter::GetEff_Rate(&m_pAttChar->m_EP, 29));
+      static_cast<int>(static_cast<float>(normalAttack) * m_pAttChar->m_EP.GetEff_Rate(29));
   }
   else
   {
     normalAttack =
       static_cast<int>(
-        static_cast<float>(normalAttack) * _effect_parameter::GetEff_Rate(&m_pAttChar->m_EP, m_pp->nClass + 2));
+        static_cast<float>(normalAttack) * m_pAttChar->m_EP.GetEff_Rate(m_pp->nClass + 2));
   }
 
   if (!m_pAttPlayer->m_bInGuildBattle)
   {
-    const unsigned int dwSerial = CPlayerDB::GetCharSerial(&m_pAttPlayer->m_Param);
-    const int raceCode = CPlayerDB::GetRaceCode(&m_pAttPlayer->m_Param);
+    const unsigned int dwSerial = m_pAttPlayer->m_Param.GetCharSerial();
+    const int raceCode = m_pAttPlayer->m_Param.GetRaceCode();
     CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
-    const unsigned __int8 bossType = CPvpUserAndGuildRankingSystem::GetBossType(ranking, raceCode, dwSerial);
+    const unsigned __int8 bossType = ranking->GetBossType(raceCode, dwSerial);
     if (bossType)
     {
       if (bossType == 2 || bossType == 6)
@@ -565,9 +557,7 @@ void CPlayerAttack::WPActiveAttackSkill(_attack_param *pParam)
       if (m_pp->pDst)
       {
         m_DamList[0].m_pChar = m_pp->pDst;
-        m_DamList[0].m_nDamage = CCharacter::GetAttackDamPoint(
-          m_pAttChar,
-          normalAttack,
+        m_DamList[0].m_nDamage = m_pAttChar->GetAttackDamPoint(normalAttack,
           m_pp->nPart,
           m_pp->nTol,
           m_pp->pDst,
@@ -617,14 +607,14 @@ void CPlayerAttack::WPActiveAttackForce(_attack_param *pParam)
   _base_fld *forceField = m_pp->pFld;
 
   float normalAttack = static_cast<float>(m_pp->nAddAttPnt + _CalcForceAttPnt(false));
-  normalAttack *= _effect_parameter::GetEff_Rate(&m_pAttChar->m_EP, 4);
+  normalAttack *= m_pAttChar->m_EP.GetEff_Rate(4);
 
   if (!m_pAttPlayer->m_bInGuildBattle)
   {
-    const unsigned int dwSerial = CPlayerDB::GetCharSerial(&m_pAttPlayer->m_Param);
-    const int raceCode = CPlayerDB::GetRaceCode(&m_pAttPlayer->m_Param);
+    const unsigned int dwSerial = m_pAttPlayer->m_Param.GetCharSerial();
+    const int raceCode = m_pAttPlayer->m_Param.GetRaceCode();
     CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
-    const unsigned __int8 bossType = CPvpUserAndGuildRankingSystem::GetBossType(ranking, raceCode, dwSerial);
+    const unsigned __int8 bossType = ranking->GetBossType(raceCode, dwSerial);
     if (bossType)
     {
       if (bossType == 2 || bossType == 6)
@@ -644,9 +634,7 @@ void CPlayerAttack::WPActiveAttackForce(_attack_param *pParam)
     if (m_pp->pDst)
     {
       m_DamList[0].m_pChar = m_pp->pDst;
-      m_DamList[0].m_nDamage = CCharacter::GetAttackDamPoint(
-        m_pAttChar,
-        static_cast<int>(normalAttack),
+      m_DamList[0].m_nDamage = m_pAttChar->GetAttackDamPoint(static_cast<int>(normalAttack),
         m_pp->nPart,
         m_pp->nTol,
         m_pp->pDst,
@@ -672,3 +660,8 @@ void CPlayerAttack::WPActiveAttackForce(_attack_param *pParam)
     CalcAvgDamage();
   }
 }
+
+
+
+
+

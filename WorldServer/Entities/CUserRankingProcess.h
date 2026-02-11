@@ -18,6 +18,21 @@ public:
   void ClearTomorrowPvpRankData();
   void DoDayChangedWork(CLogFile *pkLogger);
   unsigned __int8 GetPvpRankDataVersion();
+  void PvpRankListRequest(
+    unsigned __int16 wIndex,
+    unsigned __int8 byRace,
+    unsigned __int8 byVersion,
+    unsigned __int8 byPage);
+  void SendMsg_PvpRankListData(
+    unsigned __int16 wIndex,
+    unsigned __int8 byRace,
+    unsigned __int8 byVersion,
+    unsigned __int8 byPage);
+  void SendMsg_PvpRankListNodata(
+    unsigned __int16 wIndex,
+    char byRace,
+    char byPage,
+    unsigned __int8 byRet);
   bool IsCurrentRaceBossGroup(unsigned __int8 byRace, unsigned int dwSerial);
   unsigned int GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth);
   unsigned __int8 GetBossType(unsigned __int8 byRaceCode, unsigned int dwSerial);
@@ -100,6 +115,7 @@ public:
 
   bool Init();
   void SetLogger(CLogFile *pkLogger);
+  char Load();
   void LoadINI(unsigned int *piHour, unsigned int *piMin);
   bool SetRankingStartTime(int iHour, int iMin);
   bool AllocObject();
@@ -113,6 +129,11 @@ public:
   void SetUpdateRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth, unsigned int dwSerial);
   void FlipPvPRankTop();
   void PvpRankDataPacking();
+  void PvpRankListRequest(
+    unsigned __int16 wIndex,
+    unsigned __int8 byRace,
+    unsigned __int8 byVersion,
+    unsigned __int8 byPage);
   void IncreaseVesion();
 
   void ProcWait();

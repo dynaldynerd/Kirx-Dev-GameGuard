@@ -5,12 +5,46 @@
 #include "PotionItem_fld.h"
 
 class CRFWorldDatabase;
+class CCharacter;
+class CMapData;
+class CPlayer;
+struct _CheckPotion_fld;
+struct _skill_fld;
 
 class __cppobj CPotionMgr
 {
 public:
   bool DatafileInit();
   bool SetPotionDataName();
+  unsigned __int8 UsePotion(
+    CPlayer *pUsePlayer,
+    CCharacter *pTargetCharacter,
+    _PotionItem_fld *pfB,
+    unsigned int nCurTime);
+  unsigned int PreCheckPotion(
+    CPlayer *pUsePlayer,
+    CCharacter **pTargetCharacter,
+    const _PotionItem_fld *pfB,
+    unsigned int nCurTime,
+    _skill_fld *pFld,
+    bool bCheckDist);
+  unsigned int ApplyPotion(
+    CPlayer *pUsePlayer,
+    CPlayer *pApplyPlayer,
+    _skill_fld *pEffecFld,
+    _CheckPotion_fld *pCheckFld,
+    const _PotionItem_fld *pfB,
+    bool bCommonPotion);
+  unsigned int RemovePotionContEffect(CPlayer *pApplyPlayer, _ContPotionData *contPotionData);
+  unsigned int InsertPotionContEffect(
+    CPlayer *pApplyPlayer,
+    _ContPotionData *contPotionData,
+    _skill_fld *pEffecFld,
+    unsigned int dwDurTime);
+  void UpdatePotionContEffect(CPlayer *pPlayer);
+  unsigned int SelectDeleteBuf(CPlayer *pOne, bool bUse, bool bRemove);
+  char CheckPotionUsableMap(const _PotionItem_fld *pPotionFld, CMapData *pMap);
+  void InsertMovePotionStoneEffect(CPlayer *pApplyPlayer);
   bool InsertRenamePotion(CRFWorldDatabase *pkWorldDB, char *pData);
   bool IsPotionDelayUseIndex(unsigned int nIndex);
   void Complete_RenameChar_DB_Select(unsigned __int8 byRet, char *p);

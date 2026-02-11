@@ -4,10 +4,73 @@
 
 #include <cstring>
 
+#include "CashItemRemoteStore.h"
 #include "CNetProcess.h"
 #include "GlobalObjects.h"
 #include "limitedsale_event_inform_zocl.h"
 #include "WorldServerUtil.h"
+
+#pragma pack(push, 1)
+struct _cash_discount_event_inform_zocl_local
+{
+  unsigned __int8 byEventType;
+  unsigned __int16 wCsDiscount;
+  unsigned __int16 wYear[2];
+  unsigned __int8 byMonth[2];
+  unsigned __int8 byDay[2];
+  unsigned __int8 byHour[2];
+  unsigned __int8 byMinute[2];
+
+  unsigned __int16 size() const
+  {
+    return static_cast<unsigned __int16>(sizeof(*this));
+  }
+};
+
+struct _cash_event_inform_zocl_local
+{
+  struct _limited_sale_item
+  {
+    unsigned __int8 byTableCode;
+    unsigned int dwIndex;
+    unsigned __int16 wNum;
+  };
+
+  struct _limited_sale_info
+  {
+    unsigned __int8 byCount;
+    unsigned __int8 byDiscount;
+    _limited_sale_item item[20];
+  };
+
+  unsigned __int8 byEventType;
+  unsigned __int8 byEventStatus;
+  unsigned __int16 wYear[2];
+  unsigned __int8 byMonth[2];
+  unsigned __int8 byDay[2];
+  unsigned __int8 byHour[2];
+  unsigned __int8 byMinute[2];
+  _limited_sale_info LimitedSale;
+
+  unsigned __int16 size() const
+  {
+    return static_cast<unsigned __int16>(sizeof(*this));
+  }
+};
+
+struct _conditional_event_inform_zocl_local
+{
+  unsigned __int8 byEventType;
+  unsigned __int16 wCsDiscount;
+  unsigned __int8 byEventStatus;
+  char szMsgCode[8];
+
+  unsigned __int16 size() const
+  {
+    return static_cast<unsigned __int16>(sizeof(*this));
+  }
+};
+#pragma pack(pop)
 
 void ICsSendInterface::SendMsg_GoodsList(unsigned __int16 wSock, const _param_cash_select *psheet)
 {
@@ -39,6 +102,131 @@ void ICsSendInterface::SendMsg_Error(unsigned __int16 wSock, unsigned __int8 eCo
   strcpy(reinterpret_cast<char *>(pbyType), "9");
   const unsigned __int16 nLen = msg.size();
   g_Network.m_pProcess[0]->LoadSendMsg(wSock, pbyType, reinterpret_cast<char *>(&msg), nLen);
+}
+
+void ICsSendInterface::SendMsg_CashDiscountEventInform(
+  unsigned __int16 wSock,
+  unsigned __int8 byEventType,
+  _cash_discount_ini_ *pIni)
+{
+  _cash_discount_event_inform_zocl_local msg{};
+  if (byEventType < 8u)
+  {
+    msg.byEventType = (pIni && pIni->m_bCoEvent) ? 2 : byEventType;
+  }
+  else
+  {
+    msg.byEventType = 6;
+  }
+
+  if (pIni)
+  {
+    msg.wCsDiscount = pIni->m_wCsDiscount;
+    for (unsigned __int8 j = 0; j < 2u; ++j)
+    {
+      msg.wYear[j] = static_cast<unsigned __int16>(pIni->m_wYear[j]);
+      msg.byMonth[j] = static_cast<unsigned __int8>(pIni->m_byMonth[j]);
+      msg.byDay[j] = static_cast<unsigned __int8>(pIni->m_byDay[j]);
+      msg.byHour[j] = static_cast<unsigned __int8>(pIni->m_byHour[j]);
+      msg.byMinute[j] = static_cast<unsigned __int8>(pIni->m_byMinute[j]);
+    }
+  }
+  else
+  {
+    msg.byEventType = 6;
+  }
+
+  unsigned __int8 pbyType[2]{57, 7};
+  g_Network.m_pProcess[0]->LoadSendMsg(wSock, pbyType, reinterpret_cast<char *>(&msg), msg.size());
+}
+
+void ICsSendInterface::SendMsg_CashEventInform(
+  unsigned __int16 wSock,
+  unsigned __int8 byEventType,
+  unsigned __int8 byStatus,
+  _cash_event_ini *pIni,
+  _cash_lim_sale *pLim)
+{
+  _cash_event_inform_zocl_local msg{};
+  msg.byEventType = (byEventType < 3u) ? byEventType : 6;
+  if (byStatus < 8u)
+  {
+    msg.byEventStatus = byStatus;
+  }
+  else
+  {
+    msg.byEventType = 6;
+  }
+
+  if (pIni)
+  {
+    if (byEventType == 2)
+    {
+      msg.LimitedSale.byCount = pIni->m_byLimited_sale_num;
+      msg.LimitedSale.byDiscount = pIni->m_byLimDiscout;
+      for (int j = 0; j < msg.LimitedSale.byCount; ++j)
+      {
+        msg.LimitedSale.item[j].byTableCode = pLim->m_EventItemInfo[j].byTableCode;
+        msg.LimitedSale.item[j].dwIndex = pLim->m_EventItemInfo[j].dwIndex;
+        msg.LimitedSale.item[j].wNum = pLim->m_EventItemInfo[j].wCount;
+      }
+
+      _SYSTEMTIME systemTime{};
+      GetLocalTime(&systemTime);
+      msg.wYear[0] = systemTime.wYear;
+      msg.byMonth[0] = static_cast<unsigned __int8>(systemTime.wMonth);
+      msg.byDay[0] = static_cast<unsigned __int8>(systemTime.wDay);
+      msg.byHour[0] = static_cast<unsigned __int8>(systemTime.wHour);
+      msg.byMinute[0] = static_cast<unsigned __int8>(systemTime.wMinute);
+      msg.wYear[1] = static_cast<unsigned __int16>(pIni->m_wYear[1]);
+      msg.byMonth[1] = static_cast<unsigned __int8>(pIni->m_byMonth[1]);
+      msg.byDay[1] = static_cast<unsigned __int8>(pIni->m_byDay[1]);
+      msg.byHour[1] = static_cast<unsigned __int8>(pIni->m_byHour[1]);
+      msg.byMinute[1] = static_cast<unsigned __int8>(pIni->m_byMinute[1]);
+    }
+    else
+    {
+      for (int k = 0; k < 2; ++k)
+      {
+        msg.wYear[k] = static_cast<unsigned __int16>(pIni->m_wYear[k]);
+        msg.byMonth[k] = static_cast<unsigned __int8>(pIni->m_byMonth[k]);
+        msg.byDay[k] = static_cast<unsigned __int8>(pIni->m_byDay[k]);
+        msg.byHour[k] = static_cast<unsigned __int8>(pIni->m_byHour[k]);
+        msg.byMinute[k] = static_cast<unsigned __int8>(pIni->m_byMinute[k]);
+      }
+    }
+  }
+  else
+  {
+    msg.byEventType = 6;
+  }
+
+  unsigned __int8 pbyType[2]{57, 8};
+  g_Network.m_pProcess[0]->LoadSendMsg(wSock, pbyType, reinterpret_cast<char *>(&msg), msg.size());
+}
+
+void ICsSendInterface::SendMsg_ConditionalEventInform(
+  unsigned __int16 wSock,
+  unsigned __int8 byEventType,
+  unsigned __int16 wCsDiscount,
+  unsigned __int8 byStatus,
+  const char *pEMsg)
+{
+  _conditional_event_inform_zocl_local msg{};
+  msg.byEventType = byEventType;
+  msg.wCsDiscount = wCsDiscount;
+  msg.byEventStatus = byStatus;
+  if (pEMsg)
+  {
+    strcpy_0(msg.szMsgCode, pEMsg);
+  }
+  else
+  {
+    msg.szMsgCode[0] = '\0';
+  }
+
+  unsigned __int8 pbyType[2]{57, 9};
+  g_Network.m_pProcess[0]->LoadSendMsg(wSock, pbyType, reinterpret_cast<char *>(&msg), msg.size());
 }
 
 void ICsSendInterface::SendMsg_LimitedsaleEventInform(

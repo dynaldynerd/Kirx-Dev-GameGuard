@@ -600,6 +600,7 @@ void CPlayer::SendMsg_GuildJoinOtherInform()
 }
 
 
+#if 0 // duplicate implementation exists in CPlayer.cpp
 void CPlayer::SendMsg_SelectQuestReward(char byQuestDBSlot)
 {
   char szMsg[32]; // [rsp+34h] [rbp-44h] BYREF
@@ -610,6 +611,7 @@ void CPlayer::SendMsg_SelectQuestReward(char byQuestDBSlot)
   pbyType[1] = 8;
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, szMsg, 1u);
 }
+#endif
 
 void CPlayer::SendMsg_AlterUnitHPInform(char bySlotIndex, unsigned int dwGauge)
 {
@@ -637,6 +639,7 @@ void CPlayer::SendMsg_FcitemInform(unsigned __int16 wItemSerial, unsigned int dw
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, szMsg, 6u);
 }
 
+#if 0 // duplicate implementation exists in CPlayer.cpp
 void CPlayer::SendMsg_QuestFailure(char byFailCode, char byQuestDBSlot)
 {
   char szMsg[32]{}; // [rsp+34h] [rbp-44h] BYREF
@@ -648,6 +651,7 @@ void CPlayer::SendMsg_QuestFailure(char byFailCode, char byQuestDBSlot)
   pbyType[1] = 7;
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, szMsg, 2u);
 }
+#endif
 
 void CPlayer::SendMsg_InsertQuestFailure(char byEventType, unsigned int dwEventIndex, unsigned __int8 byEventNodeIndex)
 {
@@ -664,6 +668,7 @@ void CPlayer::SendMsg_InsertQuestFailure(char byEventType, unsigned int dwEventI
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, &szMsg, 6u);
 }
 
+#if 0 // duplicate implementation exists in CPlayer.cpp
 void CPlayer::SendMsg_InsertNextQuest(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pQuestDB)
 {
   _insert_next_quest_inform_zocl msg{};
@@ -679,6 +684,7 @@ void CPlayer::SendMsg_InsertNextQuest(unsigned __int8 bySlotIndex, _QUEST_DB_BAS
     reinterpret_cast<char *>(&msg),
     0xEu);
 }
+#endif
 
 void CPlayer::SetLevel(unsigned __int8 byNewLevel)
 {
@@ -789,6 +795,7 @@ void CPlayer::AlterPvPCashBag(long double dAlter, int IOCode)
   }
 }
 
+#if 0 // duplicate implementation exists in CPlayer.cpp
 void CPlayer::Emb_ItemUpgrade(
   unsigned __int8 byUpgradeType,
   unsigned __int8 byStorageCode,
@@ -852,7 +859,9 @@ void CPlayer::Emb_ItemUpgrade(
     this->m_pUserDB->Update_ItemUpgrade(byStorageCode, byStorageIndex, dwGradeInfo, 1);
   }
 }
+#endif
 
+#if 0 // duplicate implementation exists in CPlayer.cpp
 void CPlayer::Emb_CompleteQuest(
   unsigned __int8 byQuestDBSlot,
   unsigned __int8 byRewardItemIndex,
@@ -1061,6 +1070,7 @@ void CPlayer::Emb_CompleteQuest(
     }
   }
 }
+#endif
 
 void CPlayer::Guild_Insert_Complete(_DB_QRY_SYN_DATA *pData)
 {
@@ -1620,26 +1630,26 @@ void CPlayer::Guild_Pop_Money_Complete(_DB_QRY_SYN_DATA *pData)
   if ( v19->m_dwSerial == v10 )
   {
     v19->m_bIOWait = 0;
-    if ( m_sData[64] )
-    {
-      LODWORD(v8) = (unsigned __int8)m_sData[64];
-      LODWORD(bInPut) = *(_DWORD *)m_sData;
-      LODWORD(dTotalGold) = dwPopGold;
-      LODWORD(dTotalDalant) = dwPush;
-      g_Main.m_logSystemError.Write(
-        
-        "CPlayer::Guild_Pop_Money_Complete(...) : \r\n"
-        "\t\tGuild(%u) TotD(%f) TotG(%f) SubD(%u) SubG(%u) %s(%u)\r\n"
-        "\t\t_qry_case_outputgmoney Ret(%u) Fail!",
-        v10,
-        v16,
-        v15,
-        dTotalDalant,
-        dTotalGold,
-        Destination,
-        bInPut,
-        v8);
-    }
+	    if ( m_sData[64] )
+	    {
+	      const unsigned __int8 qryRet = static_cast<unsigned __int8>(m_sData[64]);
+	      const unsigned int ioerSerialForLog = *reinterpret_cast<unsigned int *>(m_sData);
+	      const unsigned int subGold = dwPopGold;
+	      const unsigned int subDalant = dwPush;
+	      g_Main.m_logSystemError.Write(
+	        
+	        "CPlayer::Guild_Pop_Money_Complete(...) : \r\n"
+	        "\t\tGuild(%u) TotD(%f) TotG(%f) SubD(%u) SubG(%u) %s(%u)\r\n"
+	        "\t\t_qry_case_outputgmoney Ret(%u) Fail!",
+	        v10,
+	        v16,
+	        v15,
+	        subDalant,
+	        subGold,
+	        Destination,
+	        ioerSerialForLog,
+	        qryRet);
+	    }
     else if ( !pData->m_byResult )
     {
       
@@ -1738,24 +1748,24 @@ void CPlayer::Guild_Buy_Emblem_Complete(_DB_QRY_SYN_DATA *pData)
   if ( v19->m_dwSerial == v8 )
   {
     v19->m_bIOWait = 0;
-    if ( m_sData[64] )
-    {
-      *(_DWORD *)bInPut = (unsigned __int8)m_sData[64];
-      LODWORD(pbyDate) = *((_DWORD *)m_sData + 4);
-      LODWORD(dTotalDalant) = v14;
-      g_Main.m_logSystemError.Write(
-        
-        "CPlayer::Guild_Buy_Emblem_Complete(...) : \r\n"
-        "\t\tGuild(%u) TotD(%f) TotG(%f) SubD(%d) %s(%u)\r\n"
-        "\t\tqry_case_buyemblem Ret(%u) Fail!",
-        v8,
-        v16,
-        dTotalGold,
-        dTotalDalant,
-        m_sData + 28,
-        pbyDate,
-        *(_QWORD *)bInPut);
-    }
+	    if ( m_sData[64] )
+	    {
+	      const unsigned __int8 qryRet = static_cast<unsigned __int8>(m_sData[64]);
+	      const unsigned int ioerSerialForLog = *((_DWORD *)m_sData + 4);
+	      const int subDalant = v14;
+	      g_Main.m_logSystemError.Write(
+	        
+	        "CPlayer::Guild_Buy_Emblem_Complete(...) : \r\n"
+	        "\t\tGuild(%u) TotD(%f) TotG(%f) SubD(%d) %s(%u)\r\n"
+	        "\t\tqry_case_buyemblem Ret(%u) Fail!",
+	        v8,
+	        v16,
+	        dTotalGold,
+	        subDalant,
+	        m_sData + 28,
+	        ioerSerialForLog,
+	        qryRet);
+	    }
     else if ( !pData->m_byResult )
     {
       v19->m_byMoneyOutputKind = 1;

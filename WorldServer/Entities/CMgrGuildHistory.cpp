@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <cstring>
 
+#include "CGuild.h"
 #include "WorldServerUtil.h"
 
 namespace
@@ -13,6 +14,14 @@ namespace
   char s_guildHistoryLogData[10000]{};
   const char kGuildHistoryMoneyFmt[] =
     "GUILD MONEY : Name(%s) Serial(%u) D:%d G:%d TotalD:%.0f TotalG:%.0f [%s]\r\n";
+  const char kGuildHistoryStartFmt[] =
+    "START GUILD : Name(%s) Serial(%u) Grade(%d) TotalD:%.0f TotalG:%.0f [%s]\r\n";
+  const char kGuildHistoryMemberCountFmt[] = "MEMBER COUNT : %u\r\n";
+  const char kGuildHistoryJoinFmt[] =
+    "JOIN MEMBER : Name(%s) Serial(%u) Approver(%s,%u) total(%d) [%s]\r\n";
+  const char kGuildHistoryLeaveSelfFmt[] = "SELF LEAVE ( %s , %u ) total(%d) [%s]\r\n";
+  const char kGuildHistoryLeavePunishFmt[] = "FORCED LEAVE ( %s , %u ) total(%d) [%s]\r\n";
+  const char kGuildHistoryLeaveFmt[] = "LEAVE MEMBER ( %s , %u ) total(%d) [%s]\r\n";
 }
 
 CMgrGuildHistory::CMgrGuildHistory()
@@ -104,6 +113,114 @@ void CMgrGuildHistory::WriteFile(const char *pszFileName, const char *pszLog)
   {
     IOFileWrite_3(pszFileName, logSize, pszLog);
   }
+}
+
+void CMgrGuildHistory::GetNewFileName(unsigned int dwGuildSerial, char *pszFileName)
+{
+  sprintf(pszFileName, "%s\\%u.ghi", m_szStdPath, dwGuildSerial);
+}
+
+void CMgrGuildHistory::start_guild(CGuild *pGuild, char *pszFileName)
+{
+  char memberName[128]{};
+  s_guildHistoryLogData[0] = 0;
+
+  char line[128]{};
+  sprintf_s(
+    line,
+    sizeof(line),
+    kGuildHistoryStartFmt,
+    pGuild->m_aszName,
+    pGuild->m_dwSerial,
+    pGuild->m_byGrade,
+    pGuild->m_dTotalDalant,
+    pGuild->m_dTotalGold,
+    m_szCurTime);
+  strcat_s(s_guildHistoryLogData, sizeof(s_guildHistoryLogData), line);
+
+  sprintf_s(line, sizeof(line), kGuildHistoryMemberCountFmt, static_cast<unsigned int>(pGuild->m_nMemberNum));
+  strcat_s(s_guildHistoryLogData, sizeof(s_guildHistoryLogData), line);
+
+  for (int j = 0; j < pGuild->m_nMemberNum; ++j)
+  {
+    W2M(pGuild->m_MemberData[j].wszName, memberName, sizeof(memberName));
+    sprintf_s(line, sizeof(line), "\t %s %u\r\n", memberName, pGuild->m_MemberData[j].dwSerial);
+    strcat_s(s_guildHistoryLogData, sizeof(s_guildHistoryLogData), line);
+  }
+
+  s_guildHistoryLogData[9999] = 0;
+  WriteFile(pszFileName, s_guildHistoryLogData);
+}
+
+void CMgrGuildHistory::join_member(
+  char *pszJoinerName,
+  unsigned int dwJoinerSerial,
+  char *pszOKerName,
+  unsigned int dwOKSerial,
+  int nMemNum,
+  char *pszFileName)
+{
+  s_guildHistoryLogData[0] = 0;
+  sprintf_s(
+    s_guildHistoryLogData,
+    sizeof(s_guildHistoryLogData),
+    kGuildHistoryJoinFmt,
+    pszJoinerName,
+    dwJoinerSerial,
+    pszOKerName,
+    dwOKSerial,
+    nMemNum,
+    m_szCurTime);
+  s_guildHistoryLogData[9999] = 0;
+  WriteFile(pszFileName, s_guildHistoryLogData);
+}
+
+void CMgrGuildHistory::leave_member(
+  char *pszLeaverName,
+  unsigned int dwLeaverSerial,
+  bool bSelf,
+  int nMemNum,
+  char *pszFileName,
+  bool bPunish)
+{
+  s_guildHistoryLogData[0] = 0;
+
+  if (bSelf)
+  {
+    sprintf_s(
+      s_guildHistoryLogData,
+      sizeof(s_guildHistoryLogData),
+      kGuildHistoryLeaveSelfFmt,
+      pszLeaverName,
+      dwLeaverSerial,
+      nMemNum,
+      m_szCurTime);
+  }
+  else if (bPunish)
+  {
+    sprintf_s(
+      s_guildHistoryLogData,
+      sizeof(s_guildHistoryLogData),
+      kGuildHistoryLeavePunishFmt,
+      pszLeaverName,
+      dwLeaverSerial,
+      nMemNum,
+      m_szCurTime);
+  }
+  else
+  {
+    sprintf_s(
+      s_guildHistoryLogData,
+      sizeof(s_guildHistoryLogData),
+      kGuildHistoryLeaveFmt,
+      pszLeaverName,
+      dwLeaverSerial,
+      nMemNum,
+      m_szCurTime);
+  }
+
+  s_guildHistoryLogData[9999] = 0;
+  WriteFile(pszFileName, s_guildHistoryLogData);
 }
 
 void CMgrGuildHistory::push_money(

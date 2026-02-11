@@ -16,6 +16,7 @@
 #include "combine_ex_item_request_clzo.h"
 #include "combine_ex_item_result_zocl.h"
 #include "exchange_lend_item_result_zocl.h"
+#include "guildroom_out_result_zocl.h"
 #include "buy_offer.h"
 #include "sell_offer.h"
 #include "buy_store_failure_zocl.h"
@@ -43,6 +44,8 @@
 #include "CTransportShip.h"
 #include "CUserDB.h"
 #include "CItemStore.h"
+#include "CItemStoreManager.h"
+#include "CMapItemStoreList.h"
 #include "CItemBox.h"
 #include "CMoneySupplyMgr.h"
 #include "COreAmountMgr.h"
@@ -51,6 +54,7 @@
 #include "CParkingUnit.h"
 #include "CHolyStoneSystem.h"
 #include "CHolyStone.h"
+#include "CPvpCashMng.h"
 #include "CPvpUserAndGuildRankingSystem.h"
 #include "CGuildBattleController.h"
 #include "CGuild.h"
@@ -62,6 +66,7 @@
 #include "CRaceBuffManager.h"
 #include "CRaceBossWinRate.h"
 #include "CashItemRemoteStore.h"
+#include "ICsSendInterface.h"
 #include "CLogFile.h"
 #include "CTSingleton.h"
 #include "LendItemMng.h"
@@ -70,11 +75,22 @@
 #include "TimeLimitJadeMng.h"
 #include "TimeItem.h"
 #include "ResourceItem_fld.h"
+#include "BulletItem_fld.h"
+#include "UnitPart_fld.h"
+#include "UnitBullet_fld.h"
+#include "PotionItem_fld.h"
+#include "StoreList_fld.h"
 #include "portal_fld.h"
 #include "UIDGenerator.h"
+#include "ItemDataLoader.h"
 #include "WorldServerUtil.h"
 #include "CExchangeEvent.h"
 #include "CPcBangFavor.h"
+#include "PCBANG_PRIMIUM_FAVOR.h"
+#include "CPotionMgr.h"
+#include "CSUItemSystem.h"
+#include "CSetItemType.h"
+#include "CTalkCrystalCombineManager.h"
 #include "CUnmannedTraderController.h"
 #include "CUnmannedTraderRegistItemInfo.h"
 #include "CMoveMapLimitManager.h"
@@ -90,6 +106,7 @@
 #include "CSetItemEffect.h"
 #include "DqsDbStructs.h"
 #include "exit_alter_param.h"
+#include "alter_action_point_zocl.h"
 #include "alter_cont_effect_time_zocl.h"
 #include "notify_not_use_premium_cashitem_zocl.h"
 #include "post_content_result_zocl.h"
@@ -116,6 +133,7 @@
 #include "personal_automine_download_zocl.h"
 #include "player_macro_result_zocl.h"
 #include "Init_action_point_zocl.h"
+#include "RadarItem_fld.h"
 #include "w_name.h"
 #include "CChatStealSystem.h"
 #include "CObjectList.h"
@@ -123,6 +141,7 @@
 #include "target_monster_aggro_inform_zocl.h"
 #include "CNetworkEX.h"
 #include "GlobalObjects.h"
+#include "cStaticMember_Player.h"
 
 #include <cstdio>
 #include <cstring>
@@ -144,10 +163,162 @@ int CPlayer::s_nStdDefPoint = 0;
 int CPlayer::s_nRevDefPoint = 0;
 CRecordData CPlayer::s_tblLimMastery[3][4];
 CRecordData CPlayer::s_tblLimMasteryContinue[3][4];
+
+bool CheckSameItemFromString_CodeIndex(char *psItemCode, unsigned __int8 byTableCode, unsigned __int16 wIndex)
+{
+  if (!psItemCode)
+  {
+    return false;
+  }
+  if (byTableCode >= 0x25u)
+  {
+    return false;
+  }
+
+  _base_fld *record = g_Main.m_tblItemData[byTableCode].GetRecord(wIndex);
+  return record && strcmp_0(record->m_strCode, psItemCode) == 0;
+}
+
+bool IsTalikAboutTol(int nTalikIndex)
+{
+  return nTalikIndex == 7 || nTalikIndex == 8 || nTalikIndex == 9 || nTalikIndex == 10;
+}
+
+char IsAddAbleTalikToItem(
+  unsigned __int8 byItemTableCode,
+  unsigned __int16 wItemIndex,
+  unsigned int dwItemCurLv,
+  unsigned __int16 wTalikIndex,
+  int *pnTalikLim)
+{
+  CRecordData *itemTable = &g_Main.m_tblItemData[byItemTableCode];
+  if (wTalikIndex >= 0xDu)
+  {
+    return 0;
+  }
+
+  if (byItemTableCode == 6 && IsTalikAboutTol(wTalikIndex))
+  {
+    const unsigned __int8 itemUpgedLv = GetItemUpgedLv(dwItemCurLv);
+    for (int j = 0; j < itemUpgedLv; ++j)
+    {
+      const unsigned __int8 talikEffect = GetTalikFromSocket(dwItemCurLv, j);
+      if (IsTalikAboutTol(talikEffect))
+      {
+        return 0;
+      }
+    }
+  }
+
+  int tableGroup = byItemTableCode;
+  switch (byItemTableCode)
+  {
+    case 6u:
+    {
+      _base_fld *itemRecord = itemTable->GetRecord(wItemIndex);
+      if (!itemRecord)
+      {
+        return 0;
+      }
+      const int classCode = *reinterpret_cast<int *>(&itemRecord[6].m_strCode[8]);
+      if (classCode == 6 || classCode == 8 || classCode == 7 || classCode == 5)
+      {
+        tableGroup = 7;
+      }
+      break;
+    }
+    case 0x13u:
+      tableGroup = 8;
+      break;
+    case 7u:
+      tableGroup = 9;
+      break;
+    default:
+      break;
+  }
+
+  if (tableGroup > 9)
+  {
+    return 0;
+  }
+
+  if (byItemTableCode == 7)
+  {
+    float *record = reinterpret_cast<float *>(itemTable->GetRecord(wItemIndex));
+    if (!record)
+    {
+      return 0;
+    }
+
+    if (record[93] <= 0.0f)
+    {
+      if (record[94] <= 0.0f)
+      {
+        if (record[95] <= 0.0f)
+        {
+          if (record[96] <= 0.0f)
+          {
+            if (wTalikIndex != 3)
+            {
+              return 0;
+            }
+          }
+          else if (wTalikIndex != 10)
+          {
+            return 0;
+          }
+        }
+        else if (wTalikIndex != 9)
+        {
+          return 0;
+        }
+      }
+      else if (wTalikIndex != 8)
+      {
+        return 0;
+      }
+    }
+    else if (wTalikIndex != 7)
+    {
+      return 0;
+    }
+  }
+
+  if (pnTalikLim[tableGroup] <= 0)
+  {
+    return 0;
+  }
+
+  int talikCount = 0;
+  const unsigned __int8 currentUpgLv = GetItemUpgedLv(dwItemCurLv);
+  for (int k = 0; k < currentUpgLv; ++k)
+  {
+    if (GetTalikFromSocket(dwItemCurLv, k) == wTalikIndex)
+    {
+      ++talikCount;
+    }
+    if (talikCount > pnTalikLim[tableGroup])
+    {
+      return 0;
+    }
+  }
+
+  return 1;
+}
+
+int FixTalikItemIndex(unsigned __int8 byTalikEffectNum)
+{
+  if (byTalikEffectNum < 0xDu)
+  {
+    return static_cast<int>(byTalikEffectNum + 20);
+  }
+  return -1;
+}
 CRecordData CPlayer::s_tblLimMasteryCum[3][4];
 CRecordData CPlayer::s_tblLimMasteryCumContinue[3][4];
 _BILLING_FORCE_CLOSE_DELAY CPlayer::s_BillingForceCloseDelay{};
 int CPlayer::s_nRaceNum[3] = {};
+float CPlayer::s_fExpDivUnderParty_Kill[8] = {1.0f, 0.93f, 0.88f, 0.84f, 0.80f, 0.77f, 0.75f, 0.73f};
 unsigned int CPlayer::s_dwTotalCloseCount = 0;
 unsigned int CPlayer::s_dwAbnormalCloseCount = 0;
 CRecordData *_WEAPON_PARAM::s_pWeaponData = nullptr;
@@ -160,6 +331,8 @@ CRecordData ItemCombineMgr::ms_tbl_ItemCombine_Link_Result;
 
 namespace
 {
+  int nMPL[4] = {0, 30, 60, 90};
+  int nSpMPL[4] = {0, 30, 60, 90};
   const char *sType[10] = {
     "kill_s_inc",
     "kill_p_inc",
@@ -172,6 +345,168 @@ namespace
     "cheat",
     "guildbattle",
   };
+
+  char check_sf_class(int nClassCode, unsigned __int8 byEffectCode, _base_fld *pSFFld)
+  {
+    if (nClassCode != 0)
+    {
+      switch (nClassCode)
+      {
+        case 1:
+          if (byEffectCode)
+          {
+            if (byEffectCode == 1 && *reinterpret_cast<int *>(&pSFFld[4].m_strCode[60]) > 0)
+            {
+              return 0;
+            }
+          }
+          else if (!pSFFld[1].m_dwIndex && *reinterpret_cast<int *>(&pSFFld[4].m_strCode[60]) > 0)
+          {
+            return 0;
+          }
+          break;
+        case 2:
+          if (!byEffectCode && *reinterpret_cast<int *>(&pSFFld[4].m_strCode[60]) > 0)
+          {
+            return 0;
+          }
+          break;
+        case 3:
+          if (byEffectCode)
+          {
+            if (byEffectCode == 1 && *reinterpret_cast<int *>(&pSFFld[4].m_strCode[60]) > 0)
+            {
+              return 0;
+            }
+          }
+          else if (*reinterpret_cast<int *>(&pSFFld[4].m_strCode[60]) > 1)
+          {
+            return 0;
+          }
+          break;
+        default:
+          return 0;
+      }
+    }
+    else if (byEffectCode)
+    {
+      if (byEffectCode == 1 && *reinterpret_cast<int *>(&pSFFld[4].m_strCode[60]) > 0)
+      {
+        return 0;
+      }
+    }
+    else if (pSFFld[1].m_dwIndex == 1 && *reinterpret_cast<int *>(&pSFFld[4].m_strCode[60]) > 0)
+    {
+      return 0;
+    }
+
+    return 1;
+  }
+}
+
+CGuardTower *CreateGuardTower(
+  CMapData *pMap,
+  unsigned __int16 wLayer,
+  float *fPos,
+  _STORAGE_LIST::_db_con *pItem,
+  CPlayer *pMaster,
+  unsigned __int8 byRaceCode,
+  bool bQuick)
+{
+  CGuardTower *tower = nullptr;
+  for (int index = 0; index < MAX_TOWER; ++index)
+  {
+    if (!g_Tower[index].m_bLive)
+    {
+      tower = &g_Tower[index];
+      break;
+    }
+  }
+
+  if (!tower)
+  {
+    return nullptr;
+  }
+
+  _tower_create_setdata data{};
+  data.m_pMap = pMap;
+  data.m_nLayerIndex = wLayer;
+  data.m_pRecordSet = g_Main.m_tblItemData[25].GetRecord(pItem->m_wItemIndex);
+  if (!data.m_pRecordSet)
+  {
+    return nullptr;
+  }
+
+  memcpy_0(data.m_fStartPos, fPos, sizeof(data.m_fStartPos));
+  data.pMaster = pMaster;
+  data.byRaceCode = byRaceCode;
+  data.pItem = pItem;
+  data.bQuick = bQuick;
+
+  return tower->Create(&data) ? tower : nullptr;
+}
+
+char IsOtherTowerNear(CGameObject *pEster, float *pfEstPos, CGuardTower *pEstObj)
+{
+  if (!pEster || !pEster->m_pCurMap)
+  {
+    return 0;
+  }
+
+  _pnt_rect rect{};
+  const int curSecNum = static_cast<int>(pEster->GetCurSecNum());
+  pEster->m_pCurMap->GetRectInRadius(&rect, 3, curSecNum);
+
+  for (int y = rect.nStarty; y <= rect.nEndy; ++y)
+  {
+    for (int x = rect.nStartx; x <= rect.nEndx; ++x)
+    {
+      _sec_info *secInfo = pEster->m_pCurMap->GetSecInfo();
+      const unsigned int secIndex = secInfo->m_nSecNumW * y + x;
+      CObjectList *sectorList = pEster->m_pCurMap->GetSectorListObj(pEster->m_wMapLayerIndex, secIndex);
+      if (!sectorList)
+      {
+        continue;
+      }
+
+      _object_list_point *node = sectorList->m_Head.m_pNext;
+      while (node != &sectorList->m_Tail)
+      {
+        CGuardTower *tower = static_cast<CGuardTower *>(node->m_pItem);
+        node = node->m_pNext;
+
+        if (!tower->m_ObjID.m_byKind
+            && tower->m_ObjID.m_byID == 4
+            && pEstObj != tower
+            && std::abs(tower->m_fCurPos[1] - pfEstPos[1]) <= 100.0f)
+        {
+          const int nearRange = *reinterpret_cast<int *>(&tower->m_pRecordSet[5].m_strCode[24]);
+          const double dist = GetSqrt(tower->m_fCurPos, pfEstPos);
+          if (static_cast<double>(nearRange) > dist)
+          {
+            return 1;
+          }
+        }
+      }
+    }
+  }
+
+  return 0;
+}
+
+bool IsUsableTempEffectAtStoneState(int nTempEffectType)
+{
+  if (nTempEffectType < 0)
+  {
+    return false;
+  }
+
+  if (nTempEffectType == 5)
+  {
+    return true;
+  }
+
+  return (nTempEffectType > 6 && nTempEffectType <= 14) || nTempEffectType == 28;
 }
 
 bool ItemCombineMgr::LoadData()
@@ -526,6 +861,33 @@ bool _TRAP_PARAM::_param::isLoad()
   return pItem != nullptr;
 }
 
+void _TRAP_PARAM::_param::init()
+{
+  pItem = nullptr;
+}
+
+void _TRAP_PARAM::Init()
+{
+  for (int j = 0; j < 20; ++j)
+  {
+    m_Item[j].init();
+  }
+  m_nCount = 0;
+}
+
+void _CRYMSG_LIST::_LIST::Init()
+{
+  wszCryMsg[0] = 0;
+}
+
+void _CRYMSG_LIST::Init()
+{
+  for (int j = 0; j < 10; ++j)
+  {
+    m_List[j].Init();
+  }
+}
+
 _UNIT_DB_BASE::_LIST::_LIST()
 {
   Init(0xFFu);
@@ -633,6 +995,14 @@ void _happen_event_cont::init()
 bool _happen_event_cont::isset() const
 {
   return m_pEvent != nullptr;
+}
+
+void _happen_event_cont::set(_happen_event_node *pPoint, QUEST_HAPPEN QtHpType, int nIndexInType, int nRaceCode)
+{
+  m_pEvent = pPoint;
+  m_QtHpType = QtHpType;
+  m_nIndexInType = nIndexInType;
+  m_nRaceCode = nRaceCode;
 }
 
 void _COMBINEKEY::SetRelease()
@@ -1259,6 +1629,11 @@ unsigned int _WEAPON_PARAM::GetAttackToolType()
   return 0;
 }
 
+void _RENAME_POTION_USE_INFO::Init()
+{
+  memset_0(this, 0, sizeof(*this));
+}
+
 CPlayer::CashChangeStateFlag::CashChangeStateFlag(char cashrename)
 {
   const unsigned __int8 current = m_byStateFlag;
@@ -1270,6 +1645,140 @@ void _MASTERY_PARAM::SetStaticMember(CRecordData *pSkillData, CRecordData *pForc
   s_pSkillData = pSkillData;
   s_pForceData = pForceData;
   InitMasteryFormula(pSkillData, pForceData);
+}
+
+char _MASTERY_PARAM::Init(_STAT_DB_BASE *pStatBase, unsigned __int8 byRaceCode)
+{
+  m_byRaceCode = byRaceCode;
+  memcpy_0(&m_BaseCum, pStatBase, sizeof(m_BaseCum));
+  memset_0(m_dwForceLvCum, 0, sizeof(m_dwForceLvCum));
+  m_MastUpData.init();
+  m_SkillUpData.init();
+  m_bUpdateEquipMast = 0;
+
+  for (int nMasteryIndex = 0; nMasteryIndex < 2; ++nMasteryIndex)
+  {
+    const unsigned __int8 mastery =
+      static_cast<unsigned __int8>(CalcMastery(0, nMasteryIndex, m_BaseCum.m_dwDamWpCnt[nMasteryIndex], m_byRaceCode));
+    m_mtyWp[nMasteryIndex] = mastery;
+  }
+
+  m_mtySuffer =
+    static_cast<unsigned __int8>(CalcMastery(1, 0, m_BaseCum.m_dwDefenceCnt, m_byRaceCode));
+  m_mtyShield =
+    static_cast<unsigned __int8>(CalcMastery(2, 0, m_BaseCum.m_dwShieldCnt, m_byRaceCode));
+
+  memset_0(m_dwSkillMasteryCum, 0, sizeof(m_dwSkillMasteryCum));
+  for (int nMasteryIndex = 0; nMasteryIndex < 48; ++nMasteryIndex)
+  {
+    _base_fld *record = s_pSkillData->GetRecord(nMasteryIndex);
+    if (!record)
+    {
+      return 0;
+    }
+    if (*reinterpret_cast<int *>(&record[4].m_strCode[60]) > 3)
+    {
+      return 0;
+    }
+    if (*reinterpret_cast<int *>(&record[4].m_strCode[60]) >= 0)
+    {
+      const unsigned __int8 sfLevel = GetSFLevel(
+        *reinterpret_cast<int *>(&record[4].m_strCode[60]),
+        m_BaseCum.m_dwSkillCum[nMasteryIndex]);
+      m_lvSkill[nMasteryIndex] = sfLevel;
+    }
+    if (*reinterpret_cast<unsigned int *>(&record[1].m_strCode[4]) < 8u)
+    {
+      m_dwSkillMasteryCum[*reinterpret_cast<int *>(&record[1].m_strCode[4])] +=
+        m_BaseCum.m_dwSkillCum[nMasteryIndex];
+    }
+  }
+
+  for (int nMasteryIndex = 0; nMasteryIndex < 8; ++nMasteryIndex)
+  {
+    const unsigned __int8 mastery =
+      static_cast<unsigned __int8>(CalcMastery(3, nMasteryIndex, m_dwSkillMasteryCum[nMasteryIndex], m_byRaceCode));
+    m_mtySkill[nMasteryIndex] = mastery;
+  }
+
+  for (int nMasteryIndex = 0; nMasteryIndex < 24; ++nMasteryIndex)
+  {
+    const unsigned __int8 mastery =
+      static_cast<unsigned __int8>(CalcMastery(4, nMasteryIndex, m_BaseCum.m_dwForceCum[nMasteryIndex], m_byRaceCode));
+    m_mtyForce[nMasteryIndex] = mastery;
+    m_dwForceLvCum[nMasteryIndex % 4] = m_BaseCum.m_dwForceCum[nMasteryIndex] + m_dwForceLvCum[nMasteryIndex % 4];
+  }
+
+  m_mtyStaff = GetStaffMastery(m_dwForceLvCum);
+  m_mtyMakeItem[0] = static_cast<unsigned __int8>(CalcMastery(5, 0, m_BaseCum.m_dwMakeCum[0], m_byRaceCode));
+  m_mtyMakeItem[1] = static_cast<unsigned __int8>(CalcMastery(5, 1, m_BaseCum.m_dwMakeCum[1], m_byRaceCode));
+  m_mtyMakeItem[2] = static_cast<unsigned __int8>(CalcMastery(5, 2, m_BaseCum.m_dwMakeCum[2], m_byRaceCode));
+  m_mtySpecial = static_cast<unsigned __int8>(CalcMastery(6, 0, m_BaseCum.m_dwSpecialCum, m_byRaceCode));
+
+  m_ppdwMasteryCumPtr[0] = m_BaseCum.m_dwDamWpCnt;
+  m_ppbyMasteryPtr[0] = m_mtyWp;
+  m_ppdwMasteryCumPtr[1] = &m_BaseCum.m_dwDefenceCnt;
+  m_ppbyMasteryPtr[1] = &m_mtySuffer;
+  m_ppdwMasteryCumPtr[2] = &m_BaseCum.m_dwShieldCnt;
+  m_ppbyMasteryPtr[2] = &m_mtyShield;
+  m_ppdwMasteryCumPtr[3] = m_dwSkillMasteryCum;
+  m_ppbyMasteryPtr[3] = m_mtySkill;
+  m_ppdwMasteryCumPtr[4] = m_BaseCum.m_dwForceCum;
+  m_ppbyMasteryPtr[4] = m_mtyForce;
+  m_ppdwMasteryCumPtr[5] = m_BaseCum.m_dwMakeCum;
+  m_ppbyMasteryPtr[5] = m_mtyMakeItem;
+  m_ppdwMasteryCumPtr[6] = &m_BaseCum.m_dwSpecialCum;
+  m_ppbyMasteryPtr[6] = &m_mtySpecial;
+  m_ppbyEquipMasteryPrt[0] = m_mtyWp;
+  m_ppbyEquipMasteryPrt[1] = &m_mtyWp[1];
+  m_ppbyEquipMasteryPrt[2] = &m_mtySpecial;
+  m_ppbyEquipMasteryPrt[3] = &m_mtyStaff;
+  m_ppbyEquipMasteryPrt[4] = &m_mtyShield;
+  m_ppbyEquipMasteryPrt[5] = &m_mtySuffer;
+  return 1;
+}
+
+char _MASTERY_PARAM::IsValidMasteryCode(unsigned __int8 byCode, unsigned __int8 byIndex)
+{
+  if (byCode)
+  {
+    switch (byCode)
+    {
+      case 3u:
+        if (byIndex >= 8u)
+        {
+          return 0;
+        }
+        break;
+      case 4u:
+        if (byIndex >= 0x18u)
+        {
+          return 0;
+        }
+        break;
+      case 5u:
+        if (byIndex >= 3u)
+        {
+          return 0;
+        }
+        break;
+      case 1u:
+      case 2u:
+      case 6u:
+        if (byIndex)
+        {
+          return 0;
+        }
+        break;
+      default:
+        return 0;
+    }
+  }
+  else if (byIndex >= 2u)
+  {
+    return 0;
+  }
+  return 1;
 }
 
 void _mastery_up_data::init()
@@ -1847,7 +2356,7 @@ void CPlayer::SendMsg_MovePortal(
   memcpy_0(msg + 2, pfStartPos, 12);
   msg[14] = static_cast<unsigned __int8>(!bEqualZone);
   unsigned __int8 type[2] = {8, 2};
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_ObjID.m_wIndex, type, reinterpret_cast<char *>(msg), 15u);
+  g_Network.m_pProcess[0]->LoadSendMsg( m_ObjID.m_wIndex, type, reinterpret_cast<char *>(msg), 15u);
 }
 
 void CPlayer::SendMsg_MovePortal(char byMapIndex, float *pfStartPos, unsigned __int8 byZoneCode)
@@ -1858,7 +2367,27 @@ void CPlayer::SendMsg_MovePortal(char byMapIndex, float *pfStartPos, unsigned __
   memcpy_0(msg + 2, pfStartPos, 12);
   msg[14] = byZoneCode;
   unsigned __int8 type[2] = {8, 2};
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_ObjID.m_wIndex, type, reinterpret_cast<char *>(msg), 15u);
+  g_Network.m_pProcess[0]->LoadSendMsg( m_ObjID.m_wIndex, type, reinterpret_cast<char *>(msg), 15u);
+}
+
+void CPlayer::SendMsg_GuildRoomOutResult(
+  unsigned __int8 byRetCode,
+  unsigned __int8 byMapIndex,
+  unsigned __int16 wMapLayer,
+  float *pPos)
+{
+  _guildroom_out_result_zocl msg{};
+  msg.byRetCode = byRetCode;
+  msg.byMapIndex = byMapIndex;
+  msg.wMapLayerIndex = wMapLayer;
+  if (pPos)
+  {
+    FloatToShort(pPos, msg.sNewPos, 3);
+  }
+
+  unsigned __int8 type[2] = {27, 107};
+  unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
+  g_Network.m_pProcess[0]->LoadSendMsg( m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), nLen);
 }
 
 void CPlayer::SendMsg_RegistBindResult(char byRetCode)
@@ -1866,7 +2395,7 @@ void CPlayer::SendMsg_RegistBindResult(char byRetCode)
   char msg[1]{};
   msg[0] = byRetCode;
   unsigned __int8 type[2] = {8, 4};
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_ObjID.m_wIndex, type, msg, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg( m_ObjID.m_wIndex, type, msg, 1u);
 }
 
 void CPlayer::SendMsg_MoveError(char byRetCode)
@@ -2025,24 +2554,24 @@ void CPlayer::pc_MoveNext(unsigned __int8 byMoveType, float *pfCur, float *pfTar
   {
     errorCode = 1;
   }
-  else if (_effect_parameter::GetEff_State(&m_EP, 6))
+  else if (m_EP.GetEff_State(6))
   {
     errorCode = 2;
   }
-  else if (_effect_parameter::GetEff_State(&m_EP, 7) && byMoveType == 1)
+  else if (m_EP.GetEff_State(7) && byMoveType == 1)
   {
     errorCode = 3;
   }
-  else if (_effect_parameter::GetEff_State(&m_EP, 20))
+  else if (m_EP.GetEff_State(20))
   {
     errorCode = 13;
   }
-  else if (CMapData::IsMapIn(m_pCurMap, pfCur))
+  else if (m_pCurMap->IsMapIn(pfCur))
   {
     if (m_byUserDgr || (std::fabs(m_fCurPos[0] - pfCur[0]) <= 100.0f && std::fabs(m_fCurPos[2] - pfCur[2]) <= 100.0f))
     {
       const int raceTown = m_byPosRaceTown;
-      const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+      const int raceCode = m_Param.GetRaceCode();
       if (raceTown != raceCode && (byMoveType == 1 || byMoveType == 2))
       {
         if (IsRidingUnit())
@@ -2082,13 +2611,13 @@ void CPlayer::pc_MoveNext(unsigned __int8 byMoveType, float *pfCur, float *pfTar
     {
       const bool outExtra = IsOutExtraStopPos(m_fCurPos);
       SendMsg_Stop(outExtra);
-      CCharacter::Stop(this);
+      Stop();
     }
     return;
   }
 
   const int raceTown = m_byPosRaceTown;
-  const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+  const int raceCode = m_Param.GetRaceCode();
   if (raceTown != raceCode && !IsRidingUnit() && !m_bMove && byMoveType == 1)
   {
     int sp = GetSP();
@@ -2126,12 +2655,12 @@ void CPlayer::pc_MoveNext(unsigned __int8 byMoveType, float *pfCur, float *pfTar
   }
 
   memcpy_0(m_fTarPos, pfTar, sizeof(m_fTarPos));
-  CCharacter::ResetSlot(this);
-  CCharacter::Go(this);
+  ResetSlot();
+  Go();
   SendMsg_MoveNext(otherSend);
-  if (_effect_parameter::GetEff_State(&m_EP, 14))
+  if (m_EP.GetEff_State(14))
   {
-    CCharacter::RemoveSFContHelpByEffect(this, 2, 14);
+    RemoveSFContHelpByEffect(2, 14);
   }
   m_dwLastSetPointTime = GetLoopTime();
   if (m_bMineMode)
@@ -2147,7 +2676,7 @@ void CPlayer::pc_RealMovPos(float *pfCur)
   unsigned __int8 errorCode = 0;
   if (m_bMove)
   {
-    if (CRealMoveRequestDelayChecker::Check(&m_kMoveDelayChecker, this))
+    if (m_kMoveDelayChecker.Check(this))
     {
       if (m_pmTrd.bDTradeMode)
       {
@@ -2169,7 +2698,7 @@ void CPlayer::pc_RealMovPos(float *pfCur)
       {
         errorCode = 10;
       }
-      else if (_effect_parameter::GetEff_State(&m_EP, 20))
+      else if (m_EP.GetEff_State(20))
       {
         errorCode = 13;
       }
@@ -2177,7 +2706,7 @@ void CPlayer::pc_RealMovPos(float *pfCur)
                || (std::fabs(m_fCurPos[0] - pfCur[0]) <= 200.0f
                    && std::fabs(m_fCurPos[2] - pfCur[2]) <= 200.0f))
       {
-        if (!CMapData::IsMapIn(m_pCurMap, pfCur))
+        if (!m_pCurMap->IsMapIn(pfCur))
         {
           errorCode = 4;
         }
@@ -2204,7 +2733,7 @@ void CPlayer::pc_RealMovPos(float *pfCur)
     {
       const bool outExtra = IsOutExtraStopPos(m_fCurPos);
       SendMsg_Stop(outExtra);
-      CCharacter::Stop(this);
+      Stop();
     }
   }
   else
@@ -2241,7 +2770,7 @@ void CPlayer::pc_MoveStop(float *pfCur)
              || (std::fabs(m_fCurPos[0] - pfCur[0]) <= 200.0f
                  && std::fabs(m_fCurPos[2] - pfCur[2]) <= 200.0f))
     {
-      if (!CMapData::IsMapIn(m_pCurMap, pfCur))
+      if (!m_pCurMap->IsMapIn(pfCur))
       {
         errorCode = 4;
       }
@@ -2256,7 +2785,7 @@ void CPlayer::pc_MoveStop(float *pfCur)
     errorCode = 6;
   }
 
-  CRealMoveRequestDelayChecker::Reset(&m_kMoveDelayChecker);
+  m_kMoveDelayChecker.Reset();
   if (errorCode)
   {
     SendMsg_MoveError(static_cast<char>(errorCode));
@@ -2264,7 +2793,7 @@ void CPlayer::pc_MoveStop(float *pfCur)
     {
       const bool outExtra = IsOutExtraStopPos(m_fCurPos);
       SendMsg_Stop(outExtra);
-      CCharacter::Stop(this);
+      Stop();
     }
   }
   else
@@ -2274,7 +2803,7 @@ void CPlayer::pc_MoveStop(float *pfCur)
     ++m_nCheckMovePacket;
     const bool outExtra = IsOutExtraStopPos(m_fCurPos);
     SendMsg_Stop(outExtra);
-    CCharacter::Stop(this);
+    Stop();
   }
 }
 
@@ -2290,7 +2819,7 @@ void CPlayer::pc_GotoBasePortalRequest(unsigned __int16 wItemSerial)
   {
     resultCode = 12;
   }
-  else if (CGameObject::GetCurSecNum(this) == -1 || m_bMapLoading)
+  else if (GetCurSecNum() == -1 || m_bMapLoading)
   {
     resultCode = 5;
   }
@@ -2314,18 +2843,18 @@ void CPlayer::pc_GotoBasePortalRequest(unsigned __int16 wItemSerial)
   {
     resultCode = 8;
   }
-  else if (_effect_parameter::GetEff_State(&m_EP, 20))
+  else if (m_EP.GetEff_State(20))
   {
     resultCode = 9;
   }
-  else if (_effect_parameter::GetEff_State(&m_EP, 28))
+  else if (m_EP.GetEff_State(28))
   {
     resultCode = 9;
   }
   else if (wItemSerial == 0xFFFF)
   {
-    const unsigned __int8 raceCode = CPlayerDB::GetRaceCode(&m_Param);
-    intoMap = CMapOperation::GetPosStartMap(&g_MapOper, raceCode, 0, newPos);
+    const unsigned __int8 raceCode = m_Param.GetRaceCode();
+    intoMap = g_MapOper.GetPosStartMap(raceCode, 0, newPos);
     if (!intoMap)
     {
       resultCode = 11;
@@ -2333,12 +2862,12 @@ void CPlayer::pc_GotoBasePortalRequest(unsigned __int16 wItemSerial)
   }
   else
   {
-    item = _STORAGE_LIST::GetPtrFromSerial(&m_Param.m_dbInven, wItemSerial);
+    item = m_Param.m_dbInven.GetPtrFromSerial(wItemSerial);
     if (item)
     {
       if (item->m_byTableCode == 22)
       {
-        if (CHolyStoneSystem::IsUseReturnItem(&g_HolySys, m_dwObjSerial))
+        if (g_HolySys.IsUseReturnItem(m_dwObjSerial))
         {
           if (item->m_bLock)
           {
@@ -2346,7 +2875,7 @@ void CPlayer::pc_GotoBasePortalRequest(unsigned __int16 wItemSerial)
           }
           else
           {
-            record = CRecordData::GetRecord(&g_Main.m_tblItemData[22], item->m_wItemIndex);
+            record = g_Main.m_tblItemData[22].GetRecord(item->m_wItemIndex);
             if (record)
             {
               if (m_pCurMap->m_pMapSet->m_nMapType == 2)
@@ -2358,7 +2887,7 @@ void CPlayer::pc_GotoBasePortalRequest(unsigned __int16 wItemSerial)
                        && (strcmp_0(m_pCurMap->m_pMapSet->m_strCode, "Elan")
                            || (!strcmp_0(m_pCurMap->m_pMapSet->m_strCode, "Platform01")
                                || !strcmp_0(m_pCurMap->m_pMapSet->m_strCode, "Medicallab"))
-                             && _effect_parameter::GetEff_Have(&m_EP, 55) == 0.0)
+                             && m_EP.GetEff_Have(55) == 0.0)
                        && strcmp_0(record[4].m_strCode, m_pCurMap->m_pMapSet->m_strCode))
               {
                 resultCode = 11;
@@ -2371,13 +2900,13 @@ void CPlayer::pc_GotoBasePortalRequest(unsigned __int16 wItemSerial)
                   if (*reinterpret_cast<int *>(&record[6].m_strCode[24]) == -1
                     || static_cast<int>(GetLevel()) <= *reinterpret_cast<int *>(&record[6].m_strCode[24]))
                   {
-                    intoMap = CMapOperation::GetMap(&g_MapOper, record[4].m_strCode);
+                    intoMap = g_MapOper.GetMap(record[4].m_strCode);
                     if (intoMap)
                     {
-                      _dummy_position *pos = CMapData::GetDummyPostion(intoMap, reinterpret_cast<char *>(&record[5]));
+                      _dummy_position *pos = intoMap->GetDummyPostion(reinterpret_cast<char *>(&record[5]));
                       if (pos)
                       {
-                        if (CMapData::GetRandPosInDummy(intoMap, pos, newPos, 1))
+                        if (intoMap->GetRandPosInDummy(pos, newPos, 1))
                         {
                           if (Major_Scroll_Item && record)
                           {
@@ -2464,7 +2993,7 @@ void CPlayer::pc_GotoBasePortalRequest(unsigned __int16 wItemSerial)
   SendMsg_GotoBasePortalResult(static_cast<char>(resultCode));
 }
 
-void CPlayer::pc_GotoAvatorRequest(char *pwszAvatorName)
+void CPlayer::pc_GotoAvatorRequest(const char *pwszAvatorName)
 {
   unsigned __int8 resultCode = 0;
   CPlayer *target = nullptr;
@@ -2473,7 +3002,7 @@ void CPlayer::pc_GotoAvatorRequest(char *pwszAvatorName)
   {
     resultCode = 6;
   }
-  else if (CGameObject::GetCurSecNum(this) == -1 || m_bMapLoading)
+  else if (GetCurSecNum() == -1 || m_bMapLoading)
   {
     resultCode = 5;
   }
@@ -2488,7 +3017,7 @@ void CPlayer::pc_GotoAvatorRequest(char *pwszAvatorName)
       CPlayer *player = &g_Player[j];
       if (player->m_bLive)
       {
-        const char *name = CPlayerDB::GetCharNameW(&player->m_Param);
+        const char *name = player->m_Param.GetCharNameW();
         if (!strcmp_0(name, pwszAvatorName))
         {
           target = player;
@@ -2511,7 +3040,7 @@ void CPlayer::pc_GotoAvatorRequest(char *pwszAvatorName)
     OutOfMap(target->m_pCurMap, target->m_wMapLayerIndex, 4, startPos);
   }
 
-  const unsigned __int8 mapCode = CPlayerDB::GetMapCode(&m_Param);
+  const unsigned __int8 mapCode = m_Param.GetMapCode();
   SendMsg_GotoRecallResult(static_cast<char>(resultCode), mapCode, startPos, 4);
 }
 
@@ -2532,7 +3061,7 @@ void CPlayer::pc_MovePortal(int nPortalIndex, unsigned __int16 *pConsumeSerial)
   {
     retCode = 19;
   }
-  else if (CGameObject::GetCurSecNum(this) == -1 || m_bMapLoading)
+  else if (GetCurSecNum() == -1 || m_bMapLoading)
   {
     retCode = 1;
   }
@@ -2550,13 +3079,13 @@ void CPlayer::pc_MovePortal(int nPortalIndex, unsigned __int16 *pConsumeSerial)
   }
   else
   {
-    portal = CMapData::GetPortal(m_pCurMap, nPortalIndex);
+    portal = m_pCurMap->GetPortal(nPortalIndex);
     if (portal)
     {
       if (!m_byUserDgr)
       {
         _portal_fld *portalRec = portal->m_pPortalRec;
-        const int raceSexCode = CPlayerDB::GetRaceSexCode(&m_Param);
+        const int raceSexCode = m_Param.GetRaceSexCode();
         if (portalRec->m_strUseRace[raceSexCode] == '0')
         {
           retCode = 6;
@@ -2565,7 +3094,7 @@ void CPlayer::pc_MovePortal(int nPortalIndex, unsigned __int16 *pConsumeSerial)
 
         const unsigned int lineIndex = portal->m_pDumPos->m_wLineIndex;
         CExtDummy *dummy = &m_pCurMap->m_Dummy;
-        if (!CExtDummy::IsInBBox(dummy, lineIndex, m_fCurPos))
+        if (!dummy->IsInBBox(lineIndex, m_fCurPos))
         {
           retCode = 7;
           goto Result;
@@ -2574,7 +3103,7 @@ void CPlayer::pc_MovePortal(int nPortalIndex, unsigned __int16 *pConsumeSerial)
 
       if (portal->m_pPortalRec)
       {
-        intoMap = CMapOperation::GetMap(&g_MapOper, portal->m_pPortalRec->m_strLinkMapCode);
+        intoMap = g_MapOper.GetMap(portal->m_pPortalRec->m_strLinkMapCode);
         if (intoMap)
         {
           mapIndex = static_cast<unsigned __int8>(intoMap->m_pMapSet->m_dwIndex);
@@ -2585,17 +3114,17 @@ void CPlayer::pc_MovePortal(int nPortalIndex, unsigned __int16 *pConsumeSerial)
               retCode = 15;
               goto Result;
             }
-            if (CDarkHoleChannel::GetLeaderSerial(m_pDHChannel) != m_dwObjSerial)
+            if (m_pDHChannel->GetLeaderSerial() != m_dwObjSerial)
             {
               retCode = 16;
               goto Result;
             }
-            if (!CDarkHoleChannel::IsMoveNextMission(m_pDHChannel, nPortalIndex))
+            if (!m_pDHChannel->IsMoveNextMission(nPortalIndex))
             {
               retCode = 17;
               goto Result;
             }
-            if (!CDarkHoleChannel::IsAllMemberNearPosition(m_pDHChannel, portal->m_pDumPos->m_fCenterPos, 50))
+            if (!m_pDHChannel->IsAllMemberNearPosition(portal->m_pDumPos->m_fCenterPos, 50))
             {
               retCode = 18;
               goto Result;
@@ -2604,7 +3133,7 @@ void CPlayer::pc_MovePortal(int nPortalIndex, unsigned __int16 *pConsumeSerial)
           }
           else
           {
-            const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+            const int raceCode = m_Param.GetRaceCode();
             if (intoMap == g_TransportShip[raceCode].m_pLinkShipMap)
             {
               CTransportShip *ship = &g_TransportShip[raceCode];
@@ -2613,24 +3142,24 @@ void CPlayer::pc_MovePortal(int nPortalIndex, unsigned __int16 *pConsumeSerial)
                 retCode = 9;
                 goto Result;
               }
-              if (CTransportShip::GetMapCurDirect(ship) != m_pCurMap)
+              if (ship->GetMapCurDirect() != m_pCurMap)
               {
                 retCode = 11;
                 goto Result;
               }
 
               const int level = static_cast<int>(GetLevel());
-              const int rideLimit = CTransportShip::GetRideLimLevel(ship);
+              const int rideLimit = ship->GetRideLimLevel();
               if (level < rideLimit)
               {
                 retCode = 14;
                 goto Result;
               }
 
-              if (CTransportShip::GetRideUpLimLevel(ship) != -1)
+              if (ship->GetRideUpLimLevel() != -1)
               {
                 const int upperLevel = static_cast<int>(GetLevel());
-                const int rideUpLimit = CTransportShip::GetRideUpLimLevel(ship);
+                const int rideUpLimit = ship->GetRideUpLimLevel();
                 if (upperLevel > rideUpLimit)
                 {
                   retCode = 14;
@@ -2647,8 +3176,8 @@ void CPlayer::pc_MovePortal(int nPortalIndex, unsigned __int16 *pConsumeSerial)
                   if (item->m_byTableCode == 28)
                   {
                     auto *ticketRecord = reinterpret_cast<_TicketItem_fld *>(
-                      CRecordData::GetRecord(&g_Main.m_tblItemData[28], item->m_wItemIndex));
-                    if (CTransportShip::GetCurRideShipThisTicket(ship, ticketRecord))
+                      g_Main.m_tblItemData[28].GetRecord(item->m_wItemIndex));
+                    if (ship->GetCurRideShipThisTicket(ticketRecord))
                     {
                       hasTicket = true;
                       break;
@@ -2662,7 +3191,7 @@ void CPlayer::pc_MovePortal(int nPortalIndex, unsigned __int16 *pConsumeSerial)
                 retCode = 12;
                 goto Result;
               }
-              layerIndex = CPlayerDB::GetRaceCode(&m_Param);
+              layerIndex = m_Param.GetRaceCode();
             }
             else if (m_pCurMap == g_TransportShip[raceCode].m_pLinkShipMap)
             {
@@ -2673,13 +3202,13 @@ void CPlayer::pc_MovePortal(int nPortalIndex, unsigned __int16 *pConsumeSerial)
                 goto Result;
               }
 
-              if (CTransportShip::GetMapCurDirect(ship) != intoMap)
+              if (ship->GetMapCurDirect() != intoMap)
               {
                 retCode = 11;
                 goto Result;
               }
 
-              const int raceCodeValue = CPlayerDB::GetRaceCode(&m_Param);
+              const int raceCodeValue = m_Param.GetRaceCode();
               if (nPortalIndex != 3 * ship->m_byDirect + raceCodeValue)
               {
                 retCode = 5;
@@ -2687,20 +3216,20 @@ void CPlayer::pc_MovePortal(int nPortalIndex, unsigned __int16 *pConsumeSerial)
               }
             }
             else if (!strcmp_0(intoMap->m_pMapSet->m_strCode, "Cauldron01")
-              && CPlayerDB::GetLevel(&m_Param) < 40)
+              && m_Param.GetLevel() < 40)
             {
               retCode = 14;
               goto Result;
             }
           }
 
-          linkPortal = CMapData::GetPortal(intoMap, portal->m_pPortalRec->m_strLinkPortalCode);
+          linkPortal = intoMap->GetPortal(portal->m_pPortalRec->m_strLinkPortalCode);
           if (linkPortal)
           {
             linkPortalIndex = static_cast<unsigned __int8>(linkPortal->m_pPortalRec->m_dwIndex);
-            if (CMapData::GetRandPosInDummy(intoMap, linkPortal->m_pDumPos, newPos, 1))
+            if (intoMap->GetRandPosInDummy(linkPortal->m_pDumPos, newPos, 1))
             {
-              if (!m_pDHChannel || CDarkHoleChannel::SearchMissionFromPos(m_pDHChannel, newPos))
+              if (!m_pDHChannel || m_pDHChannel->SearchMissionFromPos(newPos))
               {
                 _portal_fld *portalRec = portal->m_pPortalRec;
                 if (portalRec->m_bNeedConCheck)
@@ -2748,11 +3277,11 @@ void CPlayer::pc_MovePortal(int nPortalIndex, unsigned __int16 *pConsumeSerial)
 
                 if (m_Param.m_pGuild)
                 {
-                  const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+                  const int raceCode = m_Param.GetRaceCode();
                   CGuildRoomSystem *guildRoom = CGuildRoomSystem::GetInstance();
-                  if (m_pCurMap == CGuildRoomSystem::GetMapData(guildRoom, raceCode, 0)
+                  if (m_pCurMap == guildRoom->GetMapData(raceCode, 0)
                     || (guildRoom = CGuildRoomSystem::GetInstance(),
-                        m_pCurMap == CGuildRoomSystem::GetMapData(guildRoom, CPlayerDB::GetRaceCode(&m_Param), 1u)))
+                        m_pCurMap == guildRoom->GetMapData(m_Param.GetRaceCode(), 1u)))
                   {
                     CGuildRoomSystem *roomSystem = CGuildRoomSystem::GetInstance();
                     CGuild *guild = m_Param.m_pGuild;
@@ -2814,12 +3343,9 @@ Result:
     OutOfMap(intoMap, layerIndex, 1u, newPos);
     if (m_pDHChannel)
     {
-      if (CDarkHoleChannel::GotoNextMissionByPosition(m_pDHChannel, newPos))
+      if (m_pDHChannel->GotoNextMissionByPosition(newPos))
       {
-        CDarkHoleChannel::NextMissionOtherQuester(
-          m_pDHChannel,
-          this,
-          m_pDHChannel->m_MissionMgr.pCurMssionPtr);
+        m_pDHChannel->NextMissionOtherQuester(this, m_pDHChannel->m_MissionMgr.pCurMssionPtr);
       }
     }
   }
@@ -2916,6 +3442,22 @@ bool CPlayer::IsHaveMentalTicket()
   return m_MinigTicket.AuthLastCriTicket(startYear, startMonth, startDay, byCurrentHour, byNumOfTime);
 }
 
+bool CPlayer::IsMiningByMinigTicket()
+{
+  if (!g_HolySys.IsMinigeTicketCheck())
+  {
+    return true;
+  }
+
+  const unsigned __int8 byNumOfTime = g_HolySys.GetNumOfTime();
+  const unsigned __int8 byCurrentHour = g_HolySys.GetStartHour();
+  const unsigned __int8 startDay = g_HolySys.GetStartDay();
+  const unsigned __int8 startMonth = g_HolySys.GetStartMonth();
+  const unsigned __int16 startYear = g_HolySys.GetStartYear();
+
+  return m_MinigTicket.AuthLastCriTicket(startYear, startMonth, startDay, byCurrentHour, byNumOfTime) != 0;
+}
+
 bool CPlayer::IsUseReleaseRaceBuffPotion()
 {
   const unsigned __int8 byNumOfTime = g_HolySys.GetNumOfTime();
@@ -2980,6 +3522,18 @@ void CPlayer::SendMsg_MineCancle()
 
   char msg{};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, &msg, 1);
+}
+
+void CPlayer::SendMsg_HonorGuildMark(char byRank)
+{
+  unsigned __int8 msg[5]{};
+  msg[0] = static_cast<unsigned __int8>(byRank);
+  memcpy_0(&msg[1], &m_dwObjSerial, sizeof(m_dwObjSerial));
+
+  unsigned __int8 type[2]{};
+  type[0] = 27;
+  type[1] = 122;
+  CircleReport(type, reinterpret_cast<char *>(msg), 5, true);
 }
 
 void CPlayer::SendMsg_DeleteStorageInform(char byStorageCode, unsigned __int16 wSerial)
@@ -4935,6 +5489,51 @@ char CPlayer::SetHP(int nHP, bool bOver)
   return 1;
 }
 
+char CPlayer::SF_HFSInc_Once(CPlayer *pDstObj)
+{
+  bool bValidDst = false;
+  if (!pDstObj->m_ObjID.m_byID)
+  {
+    bValidDst = !pDstObj->m_bCorpse;
+  }
+  if (!bValidDst)
+  {
+    return 0;
+  }
+
+  const int hp = static_cast<int>(pDstObj->GetHP());
+  const int maxHp = static_cast<int>(pDstObj->GetMaxHP());
+  const int hpGap = maxHp - hp;
+  const int fp = pDstObj->GetFP();
+  const int maxFp = pDstObj->GetMaxFP();
+  const int fpGap = maxFp - fp;
+  const int sp = pDstObj->GetSP();
+  const int maxSp = pDstObj->GetMaxSP();
+  const int spGap = maxSp - sp;
+
+  if (static_cast<float>(hp) / static_cast<float>(maxHp) > 0.80000001f)
+  {
+    return 0;
+  }
+
+  if (hpGap > 0)
+  {
+    pDstObj->SetHP(maxHp, false);
+    pDstObj->SendMsg_SetHPInform();
+  }
+  if (fpGap > 0)
+  {
+    pDstObj->SetFP(maxFp, false);
+    pDstObj->SendMsg_SetFPInform();
+  }
+  if (spGap > 0)
+  {
+    pDstObj->SetSP(maxSp, false);
+    pDstObj->SendMsg_SetSPInform();
+  }
+  return 1;
+}
+
 void CPlayer::RecvHSKQuest(
   unsigned __int8 byHSKQuestCode,
   unsigned __int8 byCristalBattleDBInfo,
@@ -5533,6 +6132,76 @@ unsigned int CPlayer::_check_equipmastery_lim(int EquipMasteryCode)
     default:
       return 99;
   }
+}
+
+bool CPlayer::_check_equip_part(_STORAGE_LIST::_db_con *pFixingItem)
+{
+  const unsigned __int8 raceSexCode = m_Param.GetRaceSexCode();
+  const int itemIndex = pFixingItem->m_wItemIndex;
+  const int tableCode = pFixingItem->m_byTableCode;
+  if (!IsItemEquipCivil(tableCode, itemIndex, raceSexCode))
+  {
+    return false;
+  }
+  if (!IsEffectableEquip(pFixingItem))
+  {
+    return false;
+  }
+  if (pFixingItem->m_byTableCode == 6)
+  {
+    _base_fld *record = g_Main.m_tblItemData[6].GetRecord(pFixingItem->m_wItemIndex);
+    const int equipCode = *reinterpret_cast<int *>(&record[4].m_strCode[12]);
+    if (equipCode == 100 && m_Param.m_dbEquip.m_pStorageList[5].m_bLoad)
+    {
+      return false;
+    }
+    bool hasClassMatch = false;
+    for (int j = 0; j < 4; ++j)
+    {
+      _class_fld *historyClass = *m_Param.m_ppHistoryEffect[j];
+      if (!historyClass || historyClass->m_nClass >= 4u)
+      {
+        break;
+      }
+      if (record[7].m_strCode[historyClass->m_nClass + 12] == '1')
+      {
+        hasClassMatch = true;
+        break;
+      }
+    }
+    if (!hasClassMatch)
+    {
+      return false;
+    }
+  }
+  if (pFixingItem->m_byTableCode == 5)
+  {
+    _STORAGE_LIST::_db_con *shieldItem = m_Param.m_dbEquip.m_pStorageList + 6;
+    if (shieldItem->m_bLoad)
+    {
+      _base_fld *record = g_Main.m_tblItemData[6].GetRecord(shieldItem->m_wItemIndex);
+      if (*reinterpret_cast<int *>(&record[4].m_strCode[12]) == 100)
+      {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+bool CPlayer::_check_embel_part(_STORAGE_LIST::_db_con *pFixingItem)
+{
+  const unsigned __int8 raceSexCode = m_Param.GetRaceSexCode();
+  const int itemIndex = pFixingItem->m_wItemIndex;
+  const int tableCode = pFixingItem->m_byTableCode;
+  if (!IsItemEquipCivil(tableCode, itemIndex, raceSexCode))
+  {
+    return false;
+  }
+  const float itemEquipLevel = static_cast<float>(GetItemEquipLevel(pFixingItem->m_byTableCode, pFixingItem->m_wItemIndex));
+  const float level = static_cast<float>(m_Param.GetLevel());
+  const float effHave = m_EP.GetEff_Have(4);
+  return itemEquipLevel <= (level + effHave);
 }
 
 __int64 CPlayer::_check_mastery_lim(unsigned __int8 byMasteryClass, unsigned __int8 byIndex)
@@ -7601,6 +8270,34 @@ void CPlayer::AlterDalant(double dDalant)
   }
 }
 
+void CPlayer::AlterMaxLevel(unsigned __int8 byMaxLevel)
+{
+  const int currentLevel = static_cast<int>(GetLevel());
+  if (byMaxLevel <= currentLevel)
+  {
+    return;
+  }
+
+  const int currentMaxLevel = static_cast<int>(m_Param.GetMaxLevel());
+  if (byMaxLevel <= currentMaxLevel)
+  {
+    return;
+  }
+
+  cStaticMember_Player *playerStatic = cStaticMember_Player::Instance();
+  const int allowedMaxLv = playerStatic->GetMaxLv();
+  if (byMaxLevel > allowedMaxLv)
+  {
+    return;
+  }
+
+  m_Param.SetMaxLevel(byMaxLevel);
+  if (m_pUserDB)
+  {
+    m_pUserDB->Update_MaxLevel(byMaxLevel);
+  }
+}
+
 void CPlayer::SubDalant(unsigned int dwSub)
 {
   unsigned int nextDalant = m_Param.GetDalant() - dwSub;
@@ -7998,10 +8695,10 @@ void CPlayer::SendMsg_TLStatusInfo(unsigned int /*dwFatigue*/, unsigned __int8 /
   msg.dwFatigue = this->m_pUserDB->m_AvatorData.dbTimeLimitInfo.dwFatigue;
   msg.byTLStatus = this->m_pUserDB->m_AvatorData.dbTimeLimitInfo.byTLStatus;
 
-  const unsigned int playDegree = TimeLimitMgr::GetPlayFDegree(g_Main.m_pTimeLimitMgr);
+  const unsigned int playDegree = g_Main.m_pTimeLimitMgr->GetPlayFDegree();
   msg.dwPlayValue = (playDegree / 1000) * msg.dwFatigue;
 
-  const unsigned __int16 endPlayTime = TimeLimitMgr::GetEndPlayTime(g_Main.m_pTimeLimitMgr);
+  const unsigned __int16 endPlayTime = g_Main.m_pTimeLimitMgr->GetEndPlayTime();
   if (msg.dwPlayValue < 60u * endPlayTime)
   {
     msg.dwRemainTime = 60u * endPlayTime - msg.dwPlayValue;
@@ -8012,8 +8709,7 @@ void CPlayer::SendMsg_TLStatusInfo(unsigned int /*dwFatigue*/, unsigned __int8 /
   }
 
   unsigned __int8 pbyType[2] = {13, static_cast<unsigned __int8>(-113)};
-  CNetProcess::LoadSendMsg(
-    g_Network.m_pProcess[0],
+  g_Network.m_pProcess[0]->LoadSendMsg(
     this->m_ObjID.m_wIndex,
     pbyType,
     reinterpret_cast<char *>(&msg),
@@ -8423,7 +9119,7 @@ void CPlayer::SendMsg_ChangeClassCommand()
   *reinterpret_cast<unsigned __int16 *>(szMsg) = this->m_Param.m_pClassData->m_dwIndex;
 
   unsigned __int8 pbyType[2] = {11, 5};
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], this->m_ObjID.m_wIndex, pbyType, szMsg, 2u);
+  g_Network.m_pProcess[0]->LoadSendMsg( this->m_ObjID.m_wIndex, pbyType, szMsg, 2u);
 }
 
 void CPlayer::SendMsg_SelectClassResult(char byErrCode, unsigned __int16 wSelClassIndex)
@@ -8432,7 +9128,7 @@ void CPlayer::SendMsg_SelectClassResult(char byErrCode, unsigned __int16 wSelCla
   szMsg[0] = byErrCode;
 
   unsigned __int8 type[2]{11, 7};
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_ObjID.m_wIndex, type, szMsg, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg( m_ObjID.m_wIndex, type, szMsg, 1u);
 
   if (!byErrCode)
   {
@@ -8440,7 +9136,7 @@ void CPlayer::SendMsg_SelectClassResult(char byErrCode, unsigned __int16 wSelCla
     *reinterpret_cast<unsigned int *>(circleMsg) = m_dwObjSerial;
     *reinterpret_cast<unsigned __int16 *>(circleMsg + 4) = wSelClassIndex;
     unsigned __int8 circleType[2]{17, 8};
-    CGameObject::CircleReport(this, circleType, circleMsg, 6, 0);
+    this->CircleReport(circleType, circleMsg, 6, 0);
   }
 }
 
@@ -8450,7 +9146,88 @@ void CPlayer::SendMsg_PcRoomCharClass(unsigned int dwPcRoomClassIndex)
   *reinterpret_cast<unsigned int *>(szMsg) = dwPcRoomClassIndex;
 
   unsigned __int8 type[2]{11, 32};
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_ObjID.m_wIndex, type, szMsg, 4u);
+  g_Network.m_pProcess[0]->LoadSendMsg( m_ObjID.m_wIndex, type, szMsg, 4u);
+}
+
+void CPlayer::SendMsg_PcRoomError(char byErrorCode)
+{
+  char szMsg[32]{};
+  szMsg[0] = byErrorCode;
+  unsigned __int8 pbyType[2]{11, 34};
+  g_Network.m_pProcess[0]->LoadSendMsg( m_ObjID.m_wIndex, pbyType, szMsg, 1u);
+}
+
+void CPlayer::SendMsg_BillingExipreInform(char byKind, unsigned __int16 wWaitSec)
+{
+  char szMsg[3]{};
+  szMsg[0] = byKind;
+  *reinterpret_cast<unsigned __int16 *>(&szMsg[1]) = wWaitSec;
+
+  unsigned __int8 pbyType[2]{29, 5};
+  g_Network.m_pProcess[0]->LoadSendMsg( m_ObjID.m_wIndex, pbyType, szMsg, 3u);
+}
+
+void CPlayer::ReservationForceClose()
+{
+  s_BillingForceCloseDelay.Push(m_ObjID.m_wIndex, m_dwObjSerial);
+}
+
+void CPlayer::Billing_Logout()
+{
+  CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
+  unsigned __int16 delaySec = 0;
+  if (manager)
+  {
+    delaySec = manager->GetBillingForceCloseDelay();
+  }
+  SendMsg_BillingExipreInform(0, delaySec);
+  ReservationForceClose();
+}
+
+void CPlayer::PushDQSCheatPlyerVoteInfo()
+{
+  _qry_case_cheat_player_vote_info query{};
+  query.dwAccountSerial = m_pUserDB->m_dwAccountSerial;
+  query.dwCharSerial = m_Param.GetCharSerial();
+  strcpy_0(query.wszCharName, m_Param.GetCharNameW());
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x97u, reinterpret_cast<char *>(&query), query.size());
+}
+
+void CPlayer::PushDQSUpdatePlyerVoteInfo()
+{
+  _qry_case_update_player_vote_info query{};
+  query.dwAccumPlayTime = m_pUserDB->m_AvatorData.dbSupplement.dwAccumPlayTime;
+  query.byIsVoted = m_pUserDB->m_AvatorData.dbSupplement.byVoted;
+  query.byVoteEnable = m_pUserDB->m_AvatorData.dbSupplement.VoteEnable;
+  query.wScaner = m_pUserDB->m_AvatorData.dbSupplement.wScanerCnt;
+
+  char scanerDataBuffer[30]{};
+  sprintf_s(
+    scanerDataBuffer,
+    sizeof(scanerDataBuffer),
+    "%d%d",
+    m_pUserDB->m_AvatorData.dbSupplement.dwScanerGetDate,
+    m_pUserDB->m_AvatorData.dbSupplement.wScanerCnt);
+  query.dwScanerData = _atoi64(scanerDataBuffer);
+  query.dwAccountSerial = m_pUserDB->m_dwAccountSerial;
+  query.dwCharSerial = m_Param.GetCharSerial();
+  strcpy_0(query.wszCharName, m_Param.GetCharNameW());
+
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x96u, reinterpret_cast<char *>(&query), query.size());
+}
+
+void CPlayer::SendMsg_Alter_Action_Point(unsigned __int8 byActCode, unsigned int dwActPoint)
+{
+  _alter_action_point_zocl msg{};
+  msg.byActionCode = byActCode;
+  msg.dwActionPoint = dwActPoint;
+
+  unsigned __int8 pbyType[2]{11, 36};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    msg.size());
 }
 
 unsigned int CPlayer::GetInitClassCost()
@@ -8467,7 +9244,7 @@ unsigned int CPlayer::GetInitClassCost()
 unsigned __int8 CPlayer::pc_InitClassRequest()
 {
   const unsigned int cost = GetInitClassCost();
-  if (cost > CPlayerDB::GetGold(&m_Param))
+  if (cost > m_Param.GetGold())
   {
     return 3;
   }
@@ -8495,7 +9272,7 @@ unsigned __int8 CPlayer::pc_InitClass()
   {
     return 4;
   }
-  if (_STORAGE_LIST::GetNumUseCon(&m_Param.m_dbAnimus) > 0)
+  if (m_Param.m_dbAnimus.GetNumUseCon() > 0)
   {
     return 5;
   }
@@ -8512,31 +9289,30 @@ unsigned __int8 CPlayer::pc_InitClass()
   oldMaxPoint[2] = m_nMaxPoint[2];
   memset(&oldMaxPoint[3], 0, sizeof(int));
 
-  CPlayerDB::InitClass(&m_Param);
+  m_Param.InitClass();
   CalcAddPointByClass();
   m_nAddDfnMstByClass = 0;
   RewardChangeClassMastery(m_Param.m_pClassData);
-  CUserDB::InitClass(m_pUserDB, m_Param.m_pClassData->m_strCode);
+  m_pUserDB->InitClass(m_Param.m_pClassData->m_strCode);
   ReCalcMaxHFSP(false, false);
   _TowerAllReturn(3u, true);
 
   for (int j = 0; j < 20; ++j)
   {
     _TRAP_PARAM::_param *trap = &m_pmTrp.m_Item[j];
-    if (_TRAP_PARAM::_param::isLoad(trap) && trap->pItem->m_dwObjSerial == trap->dwSerial)
+    if (trap->isLoad() && trap->pItem->m_dwObjSerial == trap->dwSerial)
     {
-      CTrap::Destroy(trap->pItem, 4u);
+      trap->pItem->Destroy();
     }
   }
 
   m_fUnitPv_AttFc = FLOAT_1_0;
   m_fUnitPv_DefFc = FLOAT_1_0;
   m_fUnitPv_RepPr = FLOAT_1_0;
-  CCharacter::RemoveAllContinousEffect(this);
+  RemoveAllContinousEffect();
   SendMsg_AlterMoneyInform(0);
 
-  CMgrAvatorItemHistory::InitClass(
-    &CPlayer::s_MgrItemHistory,
+  CPlayer::s_MgrItemHistory.InitClass(
     0,
     m_pUserDB->m_AvatorData.dbAvator.m_dwClassInitCnt,
     m_pUserDB->m_AvatorData.dbAvator.m_byLastClassGrade,
@@ -8545,7 +9321,7 @@ unsigned __int8 CPlayer::pc_InitClass()
     oldMaxPoint,
     m_nMaxPoint,
     m_szItemHistoryFileName);
-  CUserDB::WriteLog_ChangeClassAfterInitClass(m_pUserDB, 0, prevClass);
+  m_pUserDB->WriteLog_ChangeClassAfterInitClass(0, prevClass);
   m_bDownCheckEquipEffect = 1;
   return 0;
 }
@@ -8569,8 +9345,8 @@ void CPlayer::RewardChangeClassMastery(_class_fld *pClassFld)
   CPlayer::s_MgrLvHistory.update_mastery(
     m_ObjID.m_wIndex,
     m_byUserDgr,
-    CPlayerDB::GetLevel(&m_Param),
-    CPlayerDB::GetExp(&m_Param),
+    m_Param.GetLevel(),
+    m_Param.GetExp(),
     m_dwExpRate,
     m_Param.m_byPvPGrade,
     m_nMaxPoint,
@@ -8579,7 +9355,7 @@ void CPlayer::RewardChangeClassMastery(_class_fld *pClassFld)
     m_szLvHistoryFileName,
     0,
     nullptr);
-  CPlayerDB::InitAlterMastery(&m_Param);
+  m_Param.InitAlterMastery();
 
   for (int j = 0; j < 2; ++j)
   {
@@ -8703,8 +9479,8 @@ void CPlayer::RewardChangeClassMastery(_class_fld *pClassFld)
   CPlayer::s_MgrLvHistory.update_mastery(
     m_ObjID.m_wIndex,
     m_byUserDgr,
-    CPlayerDB::GetLevel(&m_Param),
-    CPlayerDB::GetExp(&m_Param),
+    m_Param.GetLevel(),
+    m_Param.GetExp(),
     m_dwExpRate,
     m_Param.m_byPvPGrade,
     m_nMaxPoint,
@@ -8713,7 +9489,7 @@ void CPlayer::RewardChangeClassMastery(_class_fld *pClassFld)
     m_szLvHistoryFileName,
     3u,
     pClassFld->m_strCode);
-  CPlayerDB::InitAlterMastery(&m_Param);
+  m_Param.InitAlterMastery();
   m_dwUMWHLastTime = GetLoopTime();
 }
 
@@ -8730,25 +9506,22 @@ void CPlayer::RewardChangeClassRewardItem(_class_fld *pClassFld, unsigned __int8
         const int tableCode = GetItemTableCode(entry);
         if (tableCode == -1)
         {
-          CLogFile::Write(
-            &g_Main.m_logSystemError,
+          g_Main.m_logSystemError.Write(
             "error bonus item of class change .., class: %s, error table code",
             pClassFld->m_strCode);
           continue;
         }
         if (tableCode == 19)
         {
-          CLogFile::Write(
-            &g_Main.m_logSystemError,
+          g_Main.m_logSystemError.Write(
             "error bonus item of class change .., class: %s, unit key",
             pClassFld->m_strCode);
           continue;
         }
-        _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[tableCode], entry);
+        _base_fld *record = g_Main.m_tblItemData[tableCode].GetRecord(entry);
         if (!record)
         {
-          CLogFile::Write(
-            &g_Main.m_logSystemError,
+          g_Main.m_logSystemError.Write(
             "error bonus item of class change .., class: %s, nothing in table",
             pClassFld->m_strCode);
           continue;
@@ -8777,7 +9550,7 @@ void CPlayer::RewardChangeClassRewardItem(_class_fld *pClassFld, unsigned __int8
         rewardItem.m_dwDur = static_cast<unsigned int>(itemExp);
         rewardItem.m_dwLv = static_cast<unsigned int>(itemExp >> 32);
 
-        if (_STORAGE_LIST::GetIndexEmptyCon(&m_Param.m_dbInven) == 0xFF)
+        if (m_Param.m_dbInven.GetIndexEmptyCon() == 0xFF)
         {
           CreateItemBox(
             &rewardItem,
@@ -8792,8 +9565,7 @@ void CPlayer::RewardChangeClassRewardItem(_class_fld *pClassFld, unsigned __int8
             0);
           char clause[144]{};
           sprintf(clause, "Class G (%s)", pClassFld->m_strCode);
-          CMgrAvatorItemHistory::reward_add_item(
-            &CPlayer::s_MgrItemHistory,
+          CPlayer::s_MgrItemHistory.reward_add_item(
             m_ObjID.m_wIndex,
             clause,
             &rewardItem,
@@ -8801,14 +9573,13 @@ void CPlayer::RewardChangeClassRewardItem(_class_fld *pClassFld, unsigned __int8
         }
         else
         {
-          rewardItem.m_wSerial = CPlayerDB::GetNewItemSerial(&m_Param);
+          rewardItem.m_wSerial = m_Param.GetNewItemSerial();
           if (Emb_AddStorage(0, &rewardItem, false, true))
           {
             SendMsg_RewardAddItem(&rewardItem, 1u);
             char clause[160]{};
             sprintf(clause, "Class (%s)", pClassFld->m_strCode);
-            CMgrAvatorItemHistory::reward_add_item(
-              &CPlayer::s_MgrItemHistory,
+            CPlayer::s_MgrItemHistory.reward_add_item(
               m_ObjID.m_wIndex,
               clause,
               &rewardItem,
@@ -8825,8 +9596,8 @@ void CPlayer::RewardChangeClass(_class_fld *pClassFld, unsigned __int8 bySelectR
   CPlayer::s_MgrLvHistory.update_mastery(
     m_ObjID.m_wIndex,
     m_byUserDgr,
-    CPlayerDB::GetLevel(&m_Param),
-    CPlayerDB::GetExp(&m_Param),
+    m_Param.GetLevel(),
+    m_Param.GetExp(),
     m_dwExpRate,
     m_Param.m_byPvPGrade,
     m_nMaxPoint,
@@ -8835,7 +9606,7 @@ void CPlayer::RewardChangeClass(_class_fld *pClassFld, unsigned __int8 bySelectR
     m_szLvHistoryFileName,
     0,
     nullptr);
-  CPlayerDB::InitAlterMastery(&m_Param);
+  m_Param.InitAlterMastery();
 
   for (int j = 0; j < 2; ++j)
   {
@@ -8967,25 +9738,22 @@ void CPlayer::RewardChangeClass(_class_fld *pClassFld, unsigned __int8 bySelectR
         const int tableCode = GetItemTableCode(entry);
         if (tableCode == -1)
         {
-          CLogFile::Write(
-            &g_Main.m_logSystemError,
+          g_Main.m_logSystemError.Write(
             "error bonus item of class change .., class: %s, error table code",
             pClassFld->m_strCode);
           continue;
         }
         if (tableCode == 19)
         {
-          CLogFile::Write(
-            &g_Main.m_logSystemError,
+          g_Main.m_logSystemError.Write(
             "error bonus item of class change .., class: %s, unit key",
             pClassFld->m_strCode);
           continue;
         }
-        _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[tableCode], entry);
+        _base_fld *record = g_Main.m_tblItemData[tableCode].GetRecord(entry);
         if (!record)
         {
-          CLogFile::Write(
-            &g_Main.m_logSystemError,
+          g_Main.m_logSystemError.Write(
             "error bonus item of class change .., class: %s, nothing in table",
             pClassFld->m_strCode);
           continue;
@@ -9014,7 +9782,7 @@ void CPlayer::RewardChangeClass(_class_fld *pClassFld, unsigned __int8 bySelectR
         rewardItem.m_dwDur = static_cast<unsigned int>(itemExp);
         rewardItem.m_dwLv = static_cast<unsigned int>(itemExp >> 32);
 
-        if (_STORAGE_LIST::GetIndexEmptyCon(&m_Param.m_dbInven) == 0xFF)
+        if (m_Param.m_dbInven.GetIndexEmptyCon() == 0xFF)
         {
           CreateItemBox(
             &rewardItem,
@@ -9029,8 +9797,7 @@ void CPlayer::RewardChangeClass(_class_fld *pClassFld, unsigned __int8 bySelectR
             0);
           char clause[144]{};
           sprintf(clause, "Class G (%s)", pClassFld->m_strCode);
-          CMgrAvatorItemHistory::reward_add_item(
-            &CPlayer::s_MgrItemHistory,
+          CPlayer::s_MgrItemHistory.reward_add_item(
             m_ObjID.m_wIndex,
             clause,
             &rewardItem,
@@ -9038,14 +9805,13 @@ void CPlayer::RewardChangeClass(_class_fld *pClassFld, unsigned __int8 bySelectR
         }
         else
         {
-          rewardItem.m_wSerial = CPlayerDB::GetNewItemSerial(&m_Param);
+          rewardItem.m_wSerial = m_Param.GetNewItemSerial();
           if (Emb_AddStorage(0, &rewardItem, false, true))
           {
             SendMsg_RewardAddItem(&rewardItem, 1u);
             char clause[160]{};
             sprintf(clause, "Class (%s)", pClassFld->m_strCode);
-            CMgrAvatorItemHistory::reward_add_item(
-              &CPlayer::s_MgrItemHistory,
+            CPlayer::s_MgrItemHistory.reward_add_item(
               m_ObjID.m_wIndex,
               clause,
               &rewardItem,
@@ -9053,8 +9819,7 @@ void CPlayer::RewardChangeClass(_class_fld *pClassFld, unsigned __int8 bySelectR
           }
           else
           {
-            CMgrAvatorItemHistory::add_storage_fail(
-              &CPlayer::s_MgrItemHistory,
+            CPlayer::s_MgrItemHistory.add_storage_fail(
               m_ObjID.m_wIndex,
               &rewardItem,
               "RewardChangeClass - Emb_AddStorage() Fail",
@@ -9068,8 +9833,8 @@ void CPlayer::RewardChangeClass(_class_fld *pClassFld, unsigned __int8 bySelectR
   CPlayer::s_MgrLvHistory.update_mastery(
     m_ObjID.m_wIndex,
     m_byUserDgr,
-    CPlayerDB::GetLevel(&m_Param),
-    CPlayerDB::GetExp(&m_Param),
+    m_Param.GetLevel(),
+    m_Param.GetExp(),
     m_dwExpRate,
     m_Param.m_byPvPGrade,
     m_nMaxPoint,
@@ -9078,7 +9843,7 @@ void CPlayer::RewardChangeClass(_class_fld *pClassFld, unsigned __int8 bySelectR
     m_szLvHistoryFileName,
     3u,
     pClassFld->m_strCode);
-  CPlayerDB::InitAlterMastery(&m_Param);
+  m_Param.InitAlterMastery();
   m_dwUMWHLastTime = GetLoopTime();
 }
 
@@ -9100,14 +9865,14 @@ void CPlayer::pc_SelectClassRequest(unsigned __int16 wSelClassIndex, unsigned __
 {
   unsigned __int8 errCode = 0;
   _class_fld *currentClass = m_Param.m_pClassData;
-  _class_fld *classRecord = (_class_fld *)CRecordData::GetRecord(&g_Main.m_tblClass, wSelClassIndex);
+  _class_fld *classRecord = (_class_fld *)g_Main.m_tblClass.GetRecord(wSelClassIndex);
   unsigned __int8 classSlot = 0xFF;
   unsigned __int8 changeSlot = 0xFF;
   bool rewardClassUp = false;
 
   if (m_pUserDB)
   {
-    if (CPlayerDB::IsClassChangeableLv(&m_Param))
+    if (m_Param.IsClassChangeableLv())
     {
       if (classRecord)
       {
@@ -9151,7 +9916,7 @@ void CPlayer::pc_SelectClassRequest(unsigned __int16 wSelClassIndex, unsigned __
                 else
                 {
                   const int rewardCount = GetRewardItemNumChangeClass(classRecord);
-                  const int emptyCount = _STORAGE_LIST::GetNumEmptyCon(&m_Param.m_dbInven);
+                  const int emptyCount = m_Param.m_dbInven.GetNumEmptyCon();
                   if (emptyCount < rewardCount)
                   {
                     errCode = 5;
@@ -9165,7 +9930,7 @@ void CPlayer::pc_SelectClassRequest(unsigned __int16 wSelClassIndex, unsigned __
                 {
                   errCode = 4;
                 }
-                else if (_STORAGE_LIST::GetNumEmptyCon(&m_Param.m_dbInven) < 1)
+                else if (m_Param.m_dbInven.GetNumEmptyCon() < 1)
                 {
                   errCode = 5;
                 }
@@ -9198,40 +9963,42 @@ void CPlayer::pc_SelectClassRequest(unsigned __int16 wSelClassIndex, unsigned __
       oldMaxPoint[2] = m_nMaxPoint[2];
       memset(&oldMaxPoint[3], 0, sizeof(int));
 
-      CPlayerDB::SelectClass(&m_Param, classSlot, classRecord);
+      m_Param.SelectClass(classSlot, classRecord);
       if (m_Param.m_pClassData->m_dwIndex == 49
           && m_Param.m_pClassHistory[0]
           && m_Param.m_pClassHistory[0]->m_dwIndex == 45)
       {
-        m_fUnitPv_AttFc = FLOAT_1_1;
+        m_fUnitPv_AttFc = 1.1f;
         CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
-        CNationSettingManager::SetUnitPassiveValue(manager, &m_fUnitPv_DefFc);
-        m_fUnitPv_RepPr = FLOAT_0_60000002;
+        manager->SetUnitPassiveValue(&m_fUnitPv_DefFc);
+        m_fUnitPv_RepPr = 0.60000002f;
       }
       CalcAddPointByClass();
       m_nAddDfnMstByClass = 0;
       for (int j = 0; j < 4; ++j)
       {
-        _DWORD *historyEffect = *m_Param.m_ppHistoryEffect[j];
+        _class_fld *historyEffect = *m_Param.m_ppHistoryEffect[j];
         if (!historyEffect)
         {
           break;
         }
         m_nAddDfnMstByClass += *reinterpret_cast<int *>(reinterpret_cast<char *>(historyEffect) + 1476);
       }
-      if (rewardClassUp && TimeLimitMgr::GetPlayerStatus(g_Main.m_pTimeLimitMgr, m_id.wIndex) != 99)
+      if (rewardClassUp && g_Main.m_pTimeLimitMgr->GetPlayerStatus(m_id.wIndex) != 99)
       {
         RewardChangeClassMastery(classRecord);
         RewardChangeClassRewardItem(classRecord, bySelectRewardItem);
       }
       ReCalcMaxHFSP(false, false);
-      CUserDB::Update_Class(m_pUserDB, classRecord->m_strCode, classSlot, m_Param.m_pClassHistory[classSlot]->m_dwIndex);
+      m_pUserDB->Update_Class(
+        classRecord->m_strCode,
+        classSlot,
+        static_cast<unsigned __int16>(m_Param.m_pClassHistory[classSlot]->m_dwIndex));
       if (rewardClassUp)
       {
         Emb_CreateQuestEvent(quest_happen_type_class, classRecord->m_strCode);
       }
-      CMgrAvatorItemHistory::ClassUP(
-        &CPlayer::s_MgrItemHistory,
+      CPlayer::s_MgrItemHistory.ClassUP(
         classSlot + 1,
         m_pUserDB->m_AvatorData.dbAvator.m_byLastClassGrade,
         oldClass,
@@ -9239,7 +10006,7 @@ void CPlayer::pc_SelectClassRequest(unsigned __int16 wSelClassIndex, unsigned __
         oldMaxPoint,
         m_nMaxPoint,
         m_szItemHistoryFileName);
-      CUserDB::WriteLog_ChangeClassAfterInitClass(m_pUserDB, 1u, oldClass);
+      m_pUserDB->WriteLog_ChangeClassAfterInitClass(1u, oldClass);
       m_bUpCheckEquipEffect = 1;
     }
     SendMsg_SelectClassResult(errCode, wSelClassIndex);
@@ -9248,7 +10015,7 @@ void CPlayer::pc_SelectClassRequest(unsigned __int16 wSelClassIndex, unsigned __
 
 unsigned __int8 CPlayer::pc_CanSelectClassRequest(bool *pIsRealClassUp)
 {
-  if (!CPlayerDB::IsClassChangeableLv(&m_Param))
+  if (!m_Param.IsClassChangeableLv())
   {
     return 1;
   }
@@ -9277,16 +10044,16 @@ unsigned __int8 CPlayer::pc_CanSelectClassRequest(bool *pIsRealClassUp)
 void CPlayer::SendMsg_StoreListResult()
 {
   _store_list_result_zocl msg{};
-  const int mapIndex = CPlayerDB::GetMapCode(&m_Param);
+  const int mapIndex = m_Param.GetMapCode();
   CMapData *map = g_MapOper.GetMap(mapIndex);
   if (!map)
   {
     return;
   }
 
-  const int serial = CMapData::GetMapCode(map);
+  const int serial = map->GetMapCode();
   CItemStoreManager *manager = CItemStoreManager::Instance();
-  CMapItemStoreList *storeList = CItemStoreManager::GetMapItemStoreListBySerial(manager, serial);
+  CMapItemStoreList *storeList = manager->GetMapItemStoreListBySerial(serial);
   if (!storeList)
   {
     return;
@@ -9302,7 +10069,7 @@ void CPlayer::SendMsg_StoreListResult()
 
   unsigned __int8 type[2]{12, 9};
   const unsigned __int16 len = msg.size();
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
+  g_Network.m_pProcess[0]->LoadSendMsg( m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
 }
 
 void CPlayer::SendMsg_BuyItemStoreResult(
@@ -9314,18 +10081,17 @@ void CPlayer::SendMsg_BuyItemStoreResult(
   if (byErrCode)
   {
     _buy_store_failure_zocl msg{};
-    msg.dwDalant = CPlayerDB::GetDalant(&m_Param);
-    msg.dwGold = CPlayerDB::GetGold(&m_Param);
-    msg.dPoint = CPvpOrderView::GetPvpCash(&m_kPvpOrderView);
+    msg.dwDalant = m_Param.GetDalant();
+    msg.dwGold = m_Param.GetGold();
+    msg.dPoint = m_kPvpOrderView.GetPvpCash();
     for (int j = 0; j < 3; ++j)
     {
-      msg.dwActPoint[j] = CUserDB::GetActPoint(m_pUserDB, j);
+      msg.dwActPoint[j] = m_pUserDB->GetActPoint(static_cast<unsigned __int8>(j));
     }
     msg.byRetCode = byErrCode;
 
     unsigned __int8 type[2]{12, 3};
-    CNetProcess::LoadSendMsg(
-      g_Network.m_pProcess[0],
+    g_Network.m_pProcess[0]->LoadSendMsg(
       m_ObjID.m_wIndex,
       type,
       reinterpret_cast<char *>(&msg),
@@ -9334,21 +10100,21 @@ void CPlayer::SendMsg_BuyItemStoreResult(
   }
 
   _buy_store_success_zocl msg{};
-  msg.dwLeftDalant = CPlayerDB::GetDalant(&m_Param);
-  msg.dwLeftGold = CPlayerDB::GetGold(&m_Param);
-  msg.dwConsumDanlant = CItemStore::GetLastTradeDalant(pStore);
-  msg.dwConsumGold = CItemStore::GetLastTradeGold(pStore);
-  msg.dwLeftPoint = static_cast<unsigned int>(CPvpOrderView::GetPvpCash(&m_kPvpOrderView));
-  msg.dwConsumPoint = CItemStore::GetLastTradePoint(pStore);
+  msg.dwLeftDalant = m_Param.GetDalant();
+  msg.dwLeftGold = m_Param.GetGold();
+  msg.dwConsumDanlant = pStore->GetLastTradeDalant();
+  msg.dwConsumGold = pStore->GetLastTradeGold();
+  msg.dwLeftPoint = static_cast<unsigned int>(m_kPvpOrderView.GetPvpCash());
+  msg.dwConsumPoint = pStore->GetLastTradePoint();
   for (int j = 0; j < 3; ++j)
   {
-    msg.dwConsumActPoint[j] = CItemStore::GetLastTradeActPoint(pStore, j);
+    msg.dwConsumActPoint[j] = pStore->GetLastTradeActPoint(j);
   }
   for (int j = 0; j < 3; ++j)
   {
-    msg.dwLeftActPoint[j] = CUserDB::GetActPoint(m_pUserDB, j);
+    msg.dwLeftActPoint[j] = m_pUserDB->GetActPoint(static_cast<unsigned __int8>(j));
   }
-  msg.byDiscountRate = 100 * static_cast<unsigned __int8>(_effect_parameter::GetEff_Have(&m_EP, 1));
+  msg.byDiscountRate = 100 * static_cast<unsigned __int8>(m_EP.GetEff_Have(1));
   msg.byBuyNum = static_cast<unsigned __int8>(nOfferNum);
   for (int j = 0; j < nOfferNum; ++j)
   {
@@ -9359,22 +10125,22 @@ void CPlayer::SendMsg_BuyItemStoreResult(
 
   unsigned __int8 type[2]{12, 2};
   const unsigned __int16 len = msg.size();
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
+  g_Network.m_pProcess[0]->LoadSendMsg( m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
 }
 
 void CPlayer::SendMsg_SellItemStoreResult(CItemStore *pStore, unsigned __int8 byErrCode)
 {
   _sell_store_result_zocl msg{};
   msg.bSucc = byErrCode == 0;
-  msg.dwLeftDalant = CPlayerDB::GetDalant(&m_Param);
-  msg.dwLeftGold = CPlayerDB::GetGold(&m_Param);
-  msg.dwProfitDanlant = CItemStore::GetLastTradeDalant(pStore);
-  msg.dwProfitGold = CItemStore::GetLastTradeGold(pStore);
-  msg.byDiscountRate = 100 * static_cast<unsigned __int8>(_effect_parameter::GetEff_Have(&m_EP, 1));
+  msg.dwLeftDalant = m_Param.GetDalant();
+  msg.dwLeftGold = m_Param.GetGold();
+  msg.dwProfitDanlant = pStore->GetLastTradeDalant();
+  msg.dwProfitGold = pStore->GetLastTradeGold();
+  msg.byDiscountRate = 100 * static_cast<unsigned __int8>(m_EP.GetEff_Have(1));
   msg.byRetCode = byErrCode;
 
   unsigned __int8 type[2]{12, 5};
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0x13u);
+  g_Network.m_pProcess[0]->LoadSendMsg( m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0x13u);
 }
 
 void CPlayer::SendMsg_StoreLimitItemAmountInfo(unsigned int dwStoreIndex, _limit_amount_info *pAmountInfo)
@@ -9390,7 +10156,7 @@ void CPlayer::SendMsg_StoreLimitItemAmountInfo(unsigned int dwStoreIndex, _limit
 
   unsigned __int8 type[2]{12, 18};
   const unsigned __int16 len = msg.size();
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
+  g_Network.m_pProcess[0]->LoadSendMsg( m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
 }
 
 void CPlayer::pc_BuyItemStore(
@@ -9403,16 +10169,17 @@ void CPlayer::pc_BuyItemStore(
   unsigned __int8 storageCounts[16]{};
   memset(storageCounts, 0, 8);
 
-  CTransportShip *ship = &g_TransportShip[CPlayerDB::GetRaceCode(&m_Param)];
+  CTransportShip *ship = &g_TransportShip[m_Param.GetRaceCode()];
   unsigned __int8 resultCode = 0;
-  if (TimeLimitMgr::GetPlayerStatus(g_Main.m_pTimeLimitMgr, m_id.wIndex) == 99)
+  unsigned __int8 buyRaceBossGoldBox = static_cast<unsigned __int8>(-1);
+  if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(m_id.wIndex) == 99)
   {
     resultCode = 23;
   }
   else if (bUseNPCLinkIntem || pStore->m_pExistMap == m_pCurMap)
   {
     const int npcRace = pStore->m_byNpcRaceCode;
-    const int playerRace = CPlayerDB::GetRaceCode(&m_Param);
+    const int playerRace = m_Param.GetRaceCode();
     if (npcRace == playerRace || pStore->m_byNpcRaceCode == 255)
     {
       if (bUseNPCLinkIntem || GetSqrt(pStore->m_pDum->m_pDumPos->m_fCenterPos, m_fCurPos) <= 100.0)
@@ -9423,7 +10190,7 @@ void CPlayer::pc_BuyItemStore(
         }
         for (int j = 0; j < 8; ++j)
         {
-          const int emptyCount = _STORAGE_LIST::GetNumEmptyCon(m_Param.m_pStoragePtr[j]);
+          const int emptyCount = m_Param.m_pStoragePtr[j]->GetNumEmptyCon();
           if (emptyCount < storageCounts[j])
           {
             resultCode = 4;
@@ -9438,15 +10205,14 @@ void CPlayer::pc_BuyItemStore(
           offers[j].byStorageCode = pList[j].byStorageCode;
         }
 
-        const float discount = _effect_parameter::GetEff_Have(&m_EP, 1) + _effect_parameter::GetEff_Have(&m_EP, 11);
+        const float discount = m_EP.GetEff_Have(1) + m_EP.GetEff_Have(11);
         unsigned __int8 actCode[16]{};
-        const int race = CPlayerDB::GetRaceCode(&m_Param);
-        unsigned int *actPoints = CUserDB::GetPtrActPoint(m_pUserDB);
-        const double pvpCash = CPvpOrderView::GetPvpCash(&m_kPvpOrderView);
-        const unsigned int hasGold = CPlayerDB::GetGold(&m_Param);
-        const unsigned int hasDalant = CPlayerDB::GetDalant(&m_Param);
-        resultCode = CItemStore::IsSell(
-          pStore,
+        const int race = m_Param.GetRaceCode();
+        unsigned int *actPoints = m_pUserDB->GetPtrActPoint();
+        const double pvpCash = static_cast<double>(m_kPvpOrderView.GetPvpCash());
+        const unsigned int hasGold = m_Param.GetGold();
+        const unsigned int hasDalant = m_Param.GetDalant();
+        resultCode = pStore->IsSell(
           byOfferNum,
           offers,
           hasDalant,
@@ -9458,22 +10224,20 @@ void CPlayer::pc_BuyItemStore(
           race,
           m_Param.m_byPvPGrade);
 
-        unsigned __int8 buyRaceBossGoldBox = static_cast<unsigned __int8>(-1);
         if (!resultCode)
         {
-          CTransportShip::InitTicketReserver(ship);
+          ship->InitTicketReserver();
           for (int j = 0; j < byOfferNum; ++j)
           {
             if (offers[j].Item.m_byTableCode == 26)
             {
-              _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[26], offers[j].Item.m_wItemIndex);
+              _base_fld *record = g_Main.m_tblItemData[26].GetRecord(offers[j].Item.m_wItemIndex);
               if (record && *reinterpret_cast<unsigned int *>(record[1].m_strCode) == 1)
               {
-                const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+                const int raceCode = m_Param.GetRaceCode();
                 CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
-                const unsigned int bossSerial =
-                  CPvpUserAndGuildRankingSystem::GetCurrentRaceBossSerial(rank, raceCode, 0);
-                const unsigned int charSerial = CPlayerDB::GetCharSerial(&m_Param);
+                const unsigned int bossSerial = rank->GetCurrentRaceBossSerial(raceCode, 0);
+                const unsigned int charSerial = m_Param.GetCharSerial();
                 if (bossSerial != charSerial)
                 {
                   resultCode = 6;
@@ -9485,14 +10249,14 @@ void CPlayer::pc_BuyItemStore(
             if (pStore->m_pRec->m_nStore_trade == 18 && offers[j].Item.m_byTableCode == 28)
             {
               char *civil = GetItemEquipCivil(28, offers[j].Item.m_wItemIndex);
-              const int raceSexCode = CPlayerDB::GetRaceSexCode(&m_Param);
+              const int raceSexCode = m_Param.GetRaceSexCode();
               if (civil[raceSexCode] != '1')
               {
                 resultCode = 16;
                 break;
               }
-              _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[28], offers[j].Item.m_wItemIndex);
-              if (CTransportShip::GetLeftTicketIncludeReserNum(ship, &record[4].m_strCode[8], 1) <= 0)
+              _base_fld *record = g_Main.m_tblItemData[28].GetRecord(offers[j].Item.m_wItemIndex);
+              if (ship->GetLeftTicketIncludeReserNum(&record[4].m_strCode[8], 1) <= 0)
               {
                 resultCode = 16;
                 break;
@@ -9501,7 +10265,7 @@ void CPlayer::pc_BuyItemStore(
 
             if (offers[j].Item.m_byTableCode == 31)
             {
-              _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[31], offers[j].Item.m_wItemIndex);
+              _base_fld *record = g_Main.m_tblItemData[31].GetRecord(offers[j].Item.m_wItemIndex);
               if (*reinterpret_cast<unsigned int *>(&record[4].m_strCode[4]) == 11
                   && !strcmp_0(record->m_strCode, "bxgol01"))
               {
@@ -9510,7 +10274,7 @@ void CPlayer::pc_BuyItemStore(
                   offers[j].byGoodAmount = 1;
                 }
                 CGoldenBoxItemMgr *goldMgr = CGoldenBoxItemMgr::Instance();
-                buyRaceBossGoldBox = CGoldenBoxItemMgr::IsBuyRaceBossGoldBox(goldMgr, this);
+                buyRaceBossGoldBox = goldMgr->IsBuyRaceBossGoldBox(this);
                 if (buyRaceBossGoldBox)
                 {
                   resultCode = buyRaceBossGoldBox;
@@ -9619,7 +10383,7 @@ void CPlayer::pc_BuyItemStore(
 Result:
   if (!resultCode)
   {
-    CTransportShip::ApplyTicketReserver(ship);
+    ship->ApplyTicketReserver();
 
     bool limitUpdated = false;
     for (int j = 0; j < byOfferNum; ++j)
@@ -9627,43 +10391,42 @@ Result:
       _good_storage_info *good = &pStore->m_pStorageItem[offers[j].byGoodIndex];
       if (good->byType == 1)
       {
-        CItemStore::SubLimitItemNum(pStore, good->dwLimitIndex, offers[j].byGoodAmount);
+        pStore->SubLimitItemNum(good->dwLimitIndex, offers[j].byGoodAmount);
         limitUpdated = true;
       }
     }
     if (limitUpdated)
     {
-      CItemStore::UpdateLimitItemNum(pStore, true);
+      pStore->UpdateLimitItemNum(true);
     }
 
-    SubDalant(CItemStore::GetLastTradeDalant(pStore));
-    SubGold(CItemStore::GetLastTradeGold(pStore));
-    SubPoint(CItemStore::GetLastTradePoint(pStore));
+    SubDalant(pStore->GetLastTradeDalant());
+    SubGold(pStore->GetLastTradeGold());
+    SubPoint(static_cast<int>(pStore->GetLastTradePoint()));
     for (int j = 0; j < 3; ++j)
     {
-      SubActPoint(j, CItemStore::GetLastTradeActPoint(pStore, j));
+      SubActPoint(static_cast<unsigned __int8>(j), pStore->GetLastTradeActPoint(j));
     }
 
     for (int j = 0; j < byOfferNum; ++j)
     {
-      offers[j].wSerial = CPlayerDB::GetNewItemSerial(&m_Param);
+      offers[j].wSerial = m_Param.GetNewItemSerial();
       offers[j].Item.m_wSerial = offers[j].wSerial;
       if (!Emb_AddStorage(pList[j].byStorageCode, &offers[j].Item, false, true))
       {
-        SubDalant(-static_cast<int>(CItemStore::GetLastTradeDalant(pStore)));
-        SubGold(-static_cast<int>(CItemStore::GetLastTradeGold(pStore)));
-        SubPoint(-static_cast<int>(CItemStore::GetLastTradePoint(pStore)));
+        SubDalant(-static_cast<int>(pStore->GetLastTradeDalant()));
+        SubGold(-static_cast<int>(pStore->GetLastTradeGold()));
+        SubPoint(-static_cast<int>(pStore->GetLastTradePoint()));
         int actPointIndex = 0;
         for (; actPointIndex < 3; ++actPointIndex)
         {
           SubActPoint(
-            actPointIndex,
-            -static_cast<int>(CItemStore::GetLastTradeActPoint(pStore, actPointIndex)));
+            static_cast<unsigned __int8>(actPointIndex),
+            -static_cast<int>(pStore->GetLastTradeActPoint(actPointIndex)));
         }
         SendMsg_BuyItemStoreResult(pStore, byOfferNum, offers, 0x11u);
         // IDA uses the act-point loop index after completion; keep exact behavior.
-        CMgrAvatorItemHistory::add_storage_fail(
-          &CPlayer::s_MgrItemHistory,
+        CPlayer::s_MgrItemHistory.add_storage_fail(
           m_ObjID.m_wIndex,
           &offers[actPointIndex].Item,
           " CPlayer::pc_BuyItemStore - Emb_AddStorage() Fail",
@@ -9673,13 +10436,13 @@ Result:
 
       if (!buyRaceBossGoldBox && offers[j].Item.m_byTableCode == 31)
       {
-        _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[31], offers[j].Item.m_wItemIndex);
+        _base_fld *record = g_Main.m_tblItemData[31].GetRecord(offers[j].Item.m_wItemIndex);
         if (!strcmp_0(record->m_strCode, "bxgol01"))
         {
-          CHolyStoneSystem::SetGoldBoxConsumable(&g_HolySys, 0);
+          g_HolySys.SetGoldBoxConsumable(false);
           _STORAGE_LIST::_db_con *item = &offers[j].Item;
-          char *charName = CPlayerDB::GetCharNameA(&m_Param);
-          const unsigned int charSerial = CPlayerDB::GetCharSerial(&m_Param);
+          char *charName = m_Param.GetCharNameA();
+          const unsigned int charSerial = m_Param.GetCharSerial();
           SendMsg_Notify_Get_Golden_Box(1u, charSerial, charName, item, 0);
         }
       }
@@ -9687,49 +10450,48 @@ Result:
 
     if (!m_byUserDgr)
     {
-      if (CItemStore::GetLastTradeDalant(pStore) > 0)
+      if (pStore->GetLastTradeDalant() > 0)
       {
-        const int addDalant = CItemStore::GetLastTradeDalant(pStore);
-        const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+        const int addDalant = static_cast<int>(pStore->GetLastTradeDalant());
+        const int raceCode = m_Param.GetRaceCode();
         eAddDalant(raceCode, addDalant);
       }
-      if (CItemStore::GetLastTradeGold(pStore) > 0)
+      if (pStore->GetLastTradeGold() > 0)
       {
-        const int addGold = CItemStore::GetLastTradeGold(pStore);
-        const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+        const int addGold = static_cast<int>(pStore->GetLastTradeGold());
+        const int raceCode = m_Param.GetRaceCode();
         eAddGold(raceCode, addGold);
       }
     }
 
-    const int level = CPlayerDB::GetLevel(&m_Param);
+    const int level = m_Param.GetLevel();
     if (level == 30 || level == 40 || level == 50 || level == 60)
     {
-      if (CItemStore::GetLastTradeDalant(pStore) > 0)
+      if (pStore->GetLastTradeDalant() > 0)
       {
-        const unsigned int amount = CItemStore::GetLastTradeDalant(pStore);
-        char *classCode = CPlayerDB::GetPtrCurClass(&m_Param)->m_strCode;
-        const int curLevel = CPlayerDB::GetLevel(&m_Param);
-        const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+        const unsigned int amount = pStore->GetLastTradeDalant();
+        char *classCode = m_Param.GetPtrCurClass()->m_strCode;
+        const int curLevel = m_Param.GetLevel();
+        const int raceCode = m_Param.GetRaceCode();
         CMoneySupplyMgr *moneyMgr = CMoneySupplyMgr::Instance();
-        CMoneySupplyMgr::UpdateBuyData(moneyMgr, raceCode, curLevel, classCode, amount);
+        moneyMgr->UpdateBuyData(raceCode, curLevel, classCode, amount);
       }
-      if (CItemStore::GetLastTradeGold(pStore) > 0)
+      if (pStore->GetLastTradeGold() > 0)
       {
-        const unsigned int amount = 2000 * CItemStore::GetLastTradeGold(pStore);
-        char *classCode = CPlayerDB::GetPtrCurClass(&m_Param)->m_strCode;
-        const int curLevel = CPlayerDB::GetLevel(&m_Param);
-        const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+        const unsigned int amount = 2000 * pStore->GetLastTradeGold();
+        char *classCode = m_Param.GetPtrCurClass()->m_strCode;
+        const int curLevel = m_Param.GetLevel();
+        const int raceCode = m_Param.GetRaceCode();
         CMoneySupplyMgr *moneyMgr = CMoneySupplyMgr::Instance();
-        CMoneySupplyMgr::UpdateBuyData(moneyMgr, raceCode, curLevel, classCode, amount);
+        moneyMgr->UpdateBuyData(raceCode, curLevel, classCode, amount);
       }
     }
 
-    const unsigned int newGold = CPlayerDB::GetGold(&m_Param);
-    const unsigned int newDalant = CPlayerDB::GetDalant(&m_Param);
-    const unsigned int costGold = CItemStore::GetLastTradeGold(pStore);
-    const unsigned int costDalant = CItemStore::GetLastTradeDalant(pStore);
-    CMgrAvatorItemHistory::buy_item(
-      &CPlayer::s_MgrItemHistory,
+    const unsigned int newGold = m_Param.GetGold();
+    const unsigned int newDalant = m_Param.GetDalant();
+    const unsigned int costGold = pStore->GetLastTradeGold();
+    const unsigned int costDalant = pStore->GetLastTradeDalant();
+    CPlayer::s_MgrItemHistory.buy_item(
       m_ObjID.m_wIndex,
       offers,
       byOfferNum,
@@ -9743,7 +10505,7 @@ Result:
   if (!resultCode || resultCode == 19)
   {
     _limit_amount_info amountInfo{};
-    CItemStore::GetLimitItemAmount(pStore, &amountInfo);
+    pStore->GetLimitItemAmount(&amountInfo);
     SendMsg_StoreLimitItemAmountInfo(pStore->m_pRec->m_dwIndex, &amountInfo);
   }
 
@@ -9758,7 +10520,12 @@ void CPlayer::pc_SellItemStore(
 {
   _sell_offer offers[100]{};
   unsigned __int8 resultCode = 0;
-  if (TimeLimitMgr::GetPlayerStatus(g_Main.m_pTimeLimitMgr, m_id.wIndex) == 99)
+  int npcRace = 0;
+  int playerRace = 0;
+  int offerIndex = 0;
+  float discount = 0.0f;
+  unsigned __int8 race = 0;
+  if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(m_id.wIndex) == 99)
   {
     resultCode = 23;
     goto Result;
@@ -9768,8 +10535,8 @@ void CPlayer::pc_SellItemStore(
     resultCode = 1;
     goto Result;
   }
-  const int npcRace = pStore->m_byNpcRaceCode;
-  const int playerRace = CPlayerDB::GetRaceCode(&m_Param);
+  npcRace = pStore->m_byNpcRaceCode;
+  playerRace = m_Param.GetRaceCode();
   if (npcRace != playerRace && pStore->m_byNpcRaceCode != 255)
   {
     resultCode = 2;
@@ -9781,7 +10548,7 @@ void CPlayer::pc_SellItemStore(
     goto Result;
   }
 
-  int offerIndex = 0;
+  offerIndex = 0;
   while (true)
   {
     if (offerIndex >= byOfferNum)
@@ -9789,9 +10556,8 @@ void CPlayer::pc_SellItemStore(
       break;
     }
 
-    _STORAGE_LIST::_db_con *item = _STORAGE_LIST::GetPtrFromSerial(
-      m_Param.m_pStoragePtr[pList[offerIndex].byStorageCode],
-      pList[offerIndex].wSerial);
+    _STORAGE_LIST::_db_con *item =
+      m_Param.m_pStoragePtr[pList[offerIndex].byStorageCode]->GetPtrFromSerial(pList[offerIndex].wSerial);
     offers[offerIndex].pItem = item;
     if (!offers[offerIndex].pItem)
     {
@@ -9839,17 +10605,17 @@ void CPlayer::pc_SellItemStore(
     ++offerIndex;
   }
 
-  const float discount = _effect_parameter::GetEff_Have(&m_EP, 1) + _effect_parameter::GetEff_Have(&m_EP, 10);
-  const unsigned __int8 race = static_cast<unsigned __int8>(CPlayerDB::GetRaceCode(&m_Param));
-  resultCode = CItemStore::IsBuy(pStore, byOfferNum, offers, discount, race);
+  discount = m_EP.GetEff_Have(1) + m_EP.GetEff_Have(10);
+  race = static_cast<unsigned __int8>(m_Param.GetRaceCode());
+  resultCode = pStore->IsBuy(byOfferNum, offers, discount, race);
   if (!resultCode)
   {
-    if (CItemStore::GetLastTradeDalant(pStore) <= 0
-        || CanAddMoneyForMaxLimMoney(CItemStore::GetLastTradeDalant(pStore), CPlayerDB::GetDalant(&m_Param)))
+    if (pStore->GetLastTradeDalant() <= 0
+        || CanAddMoneyForMaxLimMoney(static_cast<int>(pStore->GetLastTradeDalant()), m_Param.GetDalant()))
     {
-      if (CItemStore::GetLastTradeGold(pStore) > 0)
+      if (pStore->GetLastTradeGold() > 0)
       {
-        if (!CanAddMoneyForMaxLimGold(CItemStore::GetLastTradeGold(pStore), CPlayerDB::GetGold(&m_Param)))
+        if (!CanAddMoneyForMaxLimGold(static_cast<int>(pStore->GetLastTradeGold()), m_Param.GetGold()))
         {
           resultCode = 18;
         }
@@ -9864,15 +10630,14 @@ void CPlayer::pc_SellItemStore(
 Result:
   if (!resultCode)
   {
-    AddDalant(CItemStore::GetLastTradeDalant(pStore), true);
-    AddGold(CItemStore::GetLastTradeGold(pStore), true);
+    AddDalant(static_cast<int>(pStore->GetLastTradeDalant()), true);
+    AddGold(static_cast<int>(pStore->GetLastTradeGold()), true);
 
-    const unsigned int newGold = CPlayerDB::GetGold(&m_Param);
-    const unsigned int newDalant = CPlayerDB::GetDalant(&m_Param);
-    const unsigned int incomeGold = CItemStore::GetLastTradeGold(pStore);
-    const unsigned int incomeDalant = CItemStore::GetLastTradeDalant(pStore);
-    CMgrAvatorItemHistory::sell_item(
-      &CPlayer::s_MgrItemHistory,
+    const unsigned int newGold = m_Param.GetGold();
+    const unsigned int newDalant = m_Param.GetDalant();
+    const unsigned int incomeGold = pStore->GetLastTradeGold();
+    const unsigned int incomeDalant = pStore->GetLastTradeDalant();
+    CPlayer::s_MgrItemHistory.sell_item(
       m_ObjID.m_wIndex,
       offers,
       byOfferNum,
@@ -9897,8 +10662,8 @@ Result:
                  true,
                  "CPlayer::pc_SellItemStore()"))
       {
-        AddGold(-static_cast<int>(CItemStore::GetLastTradeDalant(pStore)), true);
-        AddGold(-static_cast<int>(CItemStore::GetLastTradeGold(pStore)), true);
+        AddGold(-static_cast<int>(pStore->GetLastTradeDalant()), true);
+        AddGold(-static_cast<int>(pStore->GetLastTradeGold()), true);
         SendMsg_SellItemStoreResult(pStore, 0xFFu);
         return;
       }
@@ -9907,29 +10672,29 @@ Result:
 
     if (!m_byUserDgr)
     {
-      if (CItemStore::GetLastTradeDalant(pStore) > 0)
+      if (pStore->GetLastTradeDalant() > 0)
       {
-        const int addDalant = CItemStore::GetLastTradeDalant(pStore);
-        const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+        const int addDalant = static_cast<int>(pStore->GetLastTradeDalant());
+        const int raceCode = m_Param.GetRaceCode();
         eAddDalant(raceCode, addDalant);
       }
-      if (CItemStore::GetLastTradeGold(pStore) > 0)
+      if (pStore->GetLastTradeGold() > 0)
       {
-        const int addGold = CItemStore::GetLastTradeGold(pStore);
-        const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+        const int addGold = static_cast<int>(pStore->GetLastTradeGold());
+        const int raceCode = m_Param.GetRaceCode();
         eAddGold(raceCode, addGold);
       }
     }
 
-    const int level = CPlayerDB::GetLevel(&m_Param);
+    const int level = m_Param.GetLevel();
     if (level == 30 || level == 40 || level == 50 || level == 60)
     {
-      const unsigned int amount = CItemStore::GetLastTradeDalant(pStore);
-      char *classCode = CPlayerDB::GetPtrCurClass(&m_Param)->m_strCode;
-      const int curLevel = CPlayerDB::GetLevel(&m_Param);
-      const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+      const unsigned int amount = pStore->GetLastTradeDalant();
+      char *classCode = m_Param.GetPtrCurClass()->m_strCode;
+      const int curLevel = m_Param.GetLevel();
+      const int raceCode = m_Param.GetRaceCode();
       CMoneySupplyMgr *moneyMgr = CMoneySupplyMgr::Instance();
-      CMoneySupplyMgr::UpdateSellData(moneyMgr, raceCode, curLevel, classCode, amount);
+      moneyMgr->UpdateSellData(raceCode, curLevel, classCode, amount);
     }
   }
   SendMsg_SellItemStoreResult(pStore, resultCode);
@@ -9938,9 +10703,9 @@ Result:
 void CPlayer::pc_ExchangeDalantForGold(unsigned int dwDalant)
 {
   unsigned __int8 resultCode = 0;
-  const unsigned int curDalant = CPlayerDB::GetDalant(&m_Param);
-  const unsigned int curGold = CPlayerDB::GetGold(&m_Param);
-  const int rate = eGetRate(CPlayerDB::GetRaceCode(&m_Param));
+  const unsigned int curDalant = m_Param.GetDalant();
+  const unsigned int curGold = m_Param.GetGold();
+  const int rate = eGetRate(m_Param.GetRaceCode());
   const int exchangeDalant = static_cast<int>(dwDalant - dwDalant % rate);
   const unsigned int feeDalant = static_cast<unsigned int>(static_cast<float>(exchangeDalant) * 0.1f);
   const int addGold = exchangeDalant / rate;
@@ -9948,11 +10713,11 @@ void CPlayer::pc_ExchangeDalantForGold(unsigned int dwDalant)
   if (IsBeNearStore(this, 10))
   {
     const unsigned int totalDalant = feeDalant + exchangeDalant;
-    if (totalDalant <= CPlayerDB::GetDalant(&m_Param))
+    if (totalDalant <= m_Param.GetDalant())
     {
       if (addGold)
       {
-        const unsigned int gold = CPlayerDB::GetGold(&m_Param);
+        const unsigned int gold = m_Param.GetGold();
         if (!CanAddMoneyForMaxLimGold(addGold, gold))
         {
           resultCode = 2;
@@ -9974,22 +10739,21 @@ void CPlayer::pc_ExchangeDalantForGold(unsigned int dwDalant)
     SubDalant(feeDalant + exchangeDalant);
     AddGold(addGold, false);
 
-    CMgrAvatorItemHistory::exchange_money(
-      &CPlayer::s_MgrItemHistory,
+    CPlayer::s_MgrItemHistory.exchange_money(
       m_ObjID.m_wIndex,
       curDalant,
       curGold,
-      CPlayerDB::GetDalant(&m_Param),
-      CPlayerDB::GetGold(&m_Param),
+      m_Param.GetDalant(),
+      m_Param.GetGold(),
       m_szItemHistoryFileName);
 
-    const unsigned int level = CPlayerDB::GetLevel(&m_Param);
+    const unsigned int level = m_Param.GetLevel();
     if (level == 30 || level == 40 || level == 50 || level == 60)
     {
-      const int lv = CPlayerDB::GetLevel(&m_Param);
-      const int race = CPlayerDB::GetRaceCode(&m_Param);
+      const int lv = m_Param.GetLevel();
+      const int race = m_Param.GetRaceCode();
       CMoneySupplyMgr *moneyMgr = CMoneySupplyMgr::Instance();
-      CMoneySupplyMgr::UpdateFeeMoneyData(moneyMgr, race, lv, feeDalant);
+      moneyMgr->UpdateFeeMoneyData(static_cast<unsigned __int8>(race), lv, feeDalant);
     }
   }
   SendMsg_ExchangeMoneyResult(resultCode);
@@ -9998,9 +10762,9 @@ void CPlayer::pc_ExchangeDalantForGold(unsigned int dwDalant)
 void CPlayer::pc_ExchangeGoldForDalant(unsigned int dwGold)
 {
   unsigned __int8 resultCode = 0;
-  const unsigned int curGold = CPlayerDB::GetGold(&m_Param);
-  const unsigned int curDalant = CPlayerDB::GetDalant(&m_Param);
-  const int rate = eGetRate(CPlayerDB::GetRaceCode(&m_Param));
+  const unsigned int curGold = m_Param.GetGold();
+  const unsigned int curDalant = m_Param.GetDalant();
+  const int rate = eGetRate(m_Param.GetRaceCode());
   const unsigned int dalantTotal = rate * dwGold;
   const unsigned int feeDalant = static_cast<unsigned int>(static_cast<float>(dalantTotal) * 0.1f);
   const unsigned int addDalant = dalantTotal - feeDalant;
@@ -10011,7 +10775,7 @@ void CPlayer::pc_ExchangeGoldForDalant(unsigned int dwGold)
     {
       if (addDalant)
       {
-        const unsigned int dalant = CPlayerDB::GetDalant(&m_Param);
+        const unsigned int dalant = m_Param.GetDalant();
         if (!CanAddMoneyForMaxLimMoney(addDalant, dalant))
         {
           resultCode = 2;
@@ -10033,22 +10797,21 @@ void CPlayer::pc_ExchangeGoldForDalant(unsigned int dwGold)
     SubGold(dwGold);
     AddDalant(addDalant, false);
 
-    CMgrAvatorItemHistory::exchange_money(
-      &CPlayer::s_MgrItemHistory,
+    CPlayer::s_MgrItemHistory.exchange_money(
       m_ObjID.m_wIndex,
       curDalant,
       curGold,
-      CPlayerDB::GetDalant(&m_Param),
-      CPlayerDB::GetGold(&m_Param),
+      m_Param.GetDalant(),
+      m_Param.GetGold(),
       m_szItemHistoryFileName);
 
-    const unsigned int level = CPlayerDB::GetLevel(&m_Param);
+    const unsigned int level = m_Param.GetLevel();
     if (level == 30 || level == 40 || level == 50 || level == 60)
     {
-      const int lv = CPlayerDB::GetLevel(&m_Param);
-      const int race = CPlayerDB::GetRaceCode(&m_Param);
+      const int lv = m_Param.GetLevel();
+      const int race = m_Param.GetRaceCode();
       CMoneySupplyMgr *moneyMgr = CMoneySupplyMgr::Instance();
-      CMoneySupplyMgr::UpdateFeeMoneyData(moneyMgr, race, lv, feeDalant);
+      moneyMgr->UpdateFeeMoneyData(static_cast<unsigned __int8>(race), lv, feeDalant);
     }
   }
   SendMsg_ExchangeMoneyResult(resultCode);
@@ -10062,7 +10825,7 @@ void CPlayer::pc_LimitItemNumRequest(unsigned int dwStoreIndex)
   }
 
   CItemStoreManager *storeMgr = CItemStoreManager::Instance();
-  if (dwStoreIndex >= CRecordData::GetRecordNum(&storeMgr->m_tblItemStore))
+  if (dwStoreIndex >= storeMgr->m_tblItemStore.GetRecordNum())
   {
     return;
   }
@@ -10073,22 +10836,18 @@ void CPlayer::pc_LimitItemNumRequest(unsigned int dwStoreIndex)
     if (m_Param.m_pGuild)
     {
       CGuildRoomSystem *room = CGuildRoomSystem::GetInstance();
-      if (CGuildRoomSystem::IsGuildRoomMemberIn(
-            room,
-            m_Param.m_pGuild->m_dwSerial,
-            m_ObjID.m_wIndex,
-            m_pUserDB->m_dwSerial))
+      if (room->IsGuildRoomMemberIn(m_Param.m_pGuild->m_dwSerial, m_ObjID.m_wIndex, m_pUserDB->m_dwSerial))
       {
         CItemStoreManager *manager = CItemStoreManager::Instance();
-        storeList = CItemStoreManager::GetInstanceStoreListBySerial(manager, m_Param.m_pGuild->m_dwSerial);
+        storeList = manager->GetInstanceStoreListBySerial(m_Param.m_pGuild->m_dwSerial);
       }
     }
   }
   else
   {
-    const int serial = CMapData::GetMapCode(m_pCurMap);
+    const int serial = m_pCurMap->GetMapCode();
     CItemStoreManager *manager = CItemStoreManager::Instance();
-    storeList = CItemStoreManager::GetMapItemStoreListBySerial(manager, serial);
+    storeList = manager->GetMapItemStoreListBySerial(serial);
   }
 
   if (!storeList)
@@ -10096,29 +10855,29 @@ void CPlayer::pc_LimitItemNumRequest(unsigned int dwStoreIndex)
     return;
   }
 
-  CItemStore *store = CMapItemStoreList::GetItemStoreFromRecIndex(storeList, dwStoreIndex);
+  CItemStore *store = storeList->GetItemStoreFromRecIndex(dwStoreIndex);
   if (!store)
   {
     return;
   }
 
   _limit_amount_info amountInfo{};
-  CItemStore::GetLimitItemAmount(store, &amountInfo);
+  store->GetLimitItemAmount(&amountInfo);
   SendMsg_StoreLimitItemAmountInfo(store->m_pRec->m_dwIndex, &amountInfo);
 }
 
 void CPlayer::pc_PvpCashRecorver(unsigned __int16 dwItemSerial, unsigned __int8 byItemCnt)
 {
   unsigned __int8 resultCode = 0;
-  _STORAGE_LIST::_db_con *item = _STORAGE_LIST::GetPtrFromSerial(&m_Param.m_dbInven, dwItemSerial);
+  _STORAGE_LIST::_db_con *item = m_Param.m_dbInven.GetPtrFromSerial(dwItemSerial);
   _base_fld *record = nullptr;
   if (item && item->m_dwDur >= byItemCnt)
   {
-    record = CRecordData::GetRecord(&g_Main.m_tblItemData[18], item->m_wItemIndex);
+    record = g_Main.m_tblItemData[18].GetRecord(item->m_wItemIndex);
     if (record)
     {
       CPvpCashMng *cashMng = CPvpCashMng::Instance();
-      if (!CPvpCashMng::IsTalikItem(cashMng, record->m_strCode))
+      if (!cashMng->IsTalikItem(record->m_strCode))
       {
         resultCode = 1;
       }
@@ -10135,19 +10894,19 @@ void CPlayer::pc_PvpCashRecorver(unsigned __int16 dwItemSerial, unsigned __int8 
 
   if (resultCode)
   {
-    CPvpCashPoint::SendMsg_RecoverResult(&m_kPvpCashPoint, m_ObjID.m_wIndex, resultCode, 0);
+    m_kPvpCashPoint.SendMsg_RecoverResult(m_ObjID.m_wIndex, resultCode, 0);
     return;
   }
 
-  const int recoverPoint = CPvpCashPoint::GetTalikRecvrPoint(&m_kPvpCashPoint, item->m_byTableCode, record->m_dwIndex);
+  const int recoverPoint = m_kPvpCashPoint.GetTalikRecvrPoint(item->m_byTableCode, record->m_dwIndex);
   int addedPoint = 0;
   int appliedCount = 0;
-  const double pvpCash = CPvpOrderView::GetPvpCash(&m_kPvpOrderView);
+  const double pvpCash = static_cast<double>(m_kPvpOrderView.GetPvpCash());
   if (pvpCash >= 0.0)
   {
     resultCode = 2;
   }
-  CPvpCashPoint::SendMsg_RecoverResult(&m_kPvpCashPoint, m_ObjID.m_wIndex, resultCode, recoverPoint);
+  m_kPvpCashPoint.SendMsg_RecoverResult(m_ObjID.m_wIndex, resultCode, recoverPoint);
   if (!resultCode)
   {
     long double alter = 0.0;
@@ -10169,7 +10928,7 @@ void CPlayer::pc_PvpCashRecorver(unsigned __int16 dwItemSerial, unsigned __int8 
     }
     else if (Emb_DelStorage(0, item->m_byStorageIndex, 0, 1, "CPlayer::pc_PvpCashRecorver"))
     {
-      CMgrAvatorItemHistory::consume_del_item(&CPlayer::s_MgrItemHistory, m_ObjID.m_wIndex, item, m_szItemHistoryFileName);
+      CPlayer::s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex, item, m_szItemHistoryFileName);
     }
     else
     {
@@ -10184,7 +10943,7 @@ void CPlayer::SendMsg_RadarDelayTime(unsigned int dwDelay)
   *reinterpret_cast<unsigned int *>(szMsg) = dwDelay;
 
   unsigned __int8 pbyType[2] = {7, 53};
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], this->m_ObjID.m_wIndex, pbyType, szMsg, 4u);
+  g_Network.m_pProcess[0]->LoadSendMsg( this->m_ObjID.m_wIndex, pbyType, szMsg, 4u);
 }
 
 void CPlayer::SendMsg_StartNewPos(char byMapInMode)
@@ -10193,7 +10952,7 @@ void CPlayer::SendMsg_StartNewPos(char byMapInMode)
   szMsg[0] = byMapInMode;
 
   unsigned __int8 pbyType[2] = {3, 2};
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], this->m_ObjID.m_wIndex, pbyType, szMsg, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg( this->m_ObjID.m_wIndex, pbyType, szMsg, 1u);
 }
 
 void CPlayer::SendMsg_ExitWorldResult(unsigned __int8 byRetCode)
@@ -10202,7 +10961,7 @@ void CPlayer::SendMsg_ExitWorldResult(unsigned __int8 byRetCode)
   char szMsg[32];
 
   unsigned __int8 pbyType[2] = {3, 42};
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], this->m_ObjID.m_wIndex, pbyType, szMsg, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg( this->m_ObjID.m_wIndex, pbyType, szMsg, 1u);
 }
 
 void CPlayer::SendMsg_Revival(char byRet, bool bEquialZone)
@@ -10223,17 +10982,16 @@ void CPlayer::SendMsg_Revival(char byRet, bool bEquialZone)
 
   RevivalMsg msg{};
   msg.byRet = byRet;
-  msg.byLevel = CPlayerDB::GetLevel(&this->m_Param);
-  msg.wFP = CPlayerDB::GetFP(&this->m_Param);
-  msg.wHP = CPlayerDB::GetHP(&this->m_Param);
-  msg.wSP = CPlayerDB::GetSP(&this->m_Param);
-  msg.wMap = CMapOperation::GetMap(&g_MapOper, this->m_pCurMap);
+  msg.byLevel = this->m_Param.GetLevel();
+  msg.wFP = this->m_Param.GetFP();
+  msg.wHP = this->m_Param.GetHP();
+  msg.wSP = this->m_Param.GetSP();
+  msg.wMap = g_MapOper.GetMap(this->m_pCurMap);
   FloatToShort(this->m_fCurPos, msg.wPos, 3);
   msg.bNotEqualZone = !bEquialZone;
 
   unsigned __int8 pbyType[2] = {3, 38};
-  CNetProcess::LoadSendMsg(
-    g_Network.m_pProcess[0],
+  g_Network.m_pProcess[0]->LoadSendMsg(
     this->m_ObjID.m_wIndex,
     pbyType,
     reinterpret_cast<char *>(&msg),
@@ -10255,8 +11013,7 @@ void CPlayer::SendMsg_OtherShapeError(CPlayer *pDst, unsigned __int8 byErrCode)
   msg.byErrCode = byErrCode;
 
   unsigned __int8 pbyType[2] = {3, 33};
-  CNetProcess::LoadSendMsg(
-    g_Network.m_pProcess[0],
+  g_Network.m_pProcess[0]->LoadSendMsg(
     pDst->m_ObjID.m_wIndex,
     pbyType,
     reinterpret_cast<char *>(&msg),
@@ -10271,8 +11028,7 @@ void CPlayer::SendMsg_OtherShapeAll(CPlayer *pDst)
     {
       unsigned __int8 pbyType[2] = {3, 31};
       const unsigned __int16 nLen = static_cast<unsigned __int16>(this->m_bufShapeAll.size());
-      CNetProcess::LoadSendMsg(
-        g_Network.m_pProcess[0],
+      g_Network.m_pProcess[0]->LoadSendMsg(
         pDst->m_ObjID.m_wIndex,
         pbyType,
         reinterpret_cast<char *>(&this->m_bufShapeAll),
@@ -10293,8 +11049,7 @@ void CPlayer::SendMsg_OtherShapePart(CPlayer *pDst)
     {
       unsigned __int8 pbyType[2] = {3, 32};
       const unsigned __int16 nLen = static_cast<unsigned __int16>(this->m_bufSpapePart.size());
-      CNetProcess::LoadSendMsg(
-        g_Network.m_pProcess[0],
+      g_Network.m_pProcess[0]->LoadSendMsg(
         pDst->m_ObjID.m_wIndex,
         pbyType,
         reinterpret_cast<char *>(&this->m_bufSpapePart),
@@ -10327,12 +11082,11 @@ void CPlayer::SendMsg_OtherShapePartEx_CashChange(
     OtherShapeCashChangeMsg msg{};
     msg.wIndex = this->m_ObjID.m_wIndex;
     msg.dwSerial = this->m_dwObjSerial;
-    const char *charName = CPlayerDB::GetCharNameW(&this->m_Param);
+    const char *charName = this->m_Param.GetCharNameW();
     strcpy_0(msg.wszName, charName);
 
     unsigned __int8 pbyType[2] = {3, 61};
-    CNetProcess::LoadSendMsg(
-      g_Network.m_pProcess[0],
+    g_Network.m_pProcess[0]->LoadSendMsg(
       pDst->m_ObjID.m_wIndex,
       pbyType,
       reinterpret_cast<char *>(&msg),
@@ -10349,8 +11103,7 @@ void CPlayer::SendMsg_Init_Action_Point()
   }
 
   unsigned __int8 pbyType[2] = {11, 37};
-  CNetProcess::LoadSendMsg(
-    g_Network.m_pProcess[0],
+  g_Network.m_pProcess[0]->LoadSendMsg(
     this->m_ObjID.m_wIndex,
     pbyType,
     reinterpret_cast<char *>(&msg),
@@ -10361,10 +11114,10 @@ void CPlayer::SendMsg_BuyCashItemMode()
 {
   char szMsg[32];
   CashItemRemoteStore *store = CashItemRemoteStore::Instance();
-  szMsg[0] = !CashItemRemoteStore::IsBuyCashItemByGold(store);
+  szMsg[0] = !store->_bIsBuyCashItemByGold;
 
   unsigned __int8 pbyType[2] = {59, 17};
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], this->m_ObjID.m_wIndex, pbyType, szMsg, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg( this->m_ObjID.m_wIndex, pbyType, szMsg, 1u);
 }
 
 void CPlayer::SendMsg_BaseDownloadResult()
@@ -10386,25 +11139,25 @@ void CPlayer::SendMsg_BaseDownloadResult()
       msg.wClassHistory[j] = static_cast<unsigned __int16>(-1);
     }
   }
-  msg.wHP = CPlayerDB::GetHP(&this->m_Param);
-  msg.wSP = CPlayerDB::GetSP(&this->m_Param);
-  msg.wFP = CPlayerDB::GetFP(&this->m_Param);
-  msg.wDP = CPlayerDB::GetDP(&this->m_Param);
-  msg.dPvpPoint = CPlayerDB::GetPvPPoint(&this->m_Param);
-  msg.dPvpCashBag = CPvpOrderView::GetPvpCash(&this->m_kPvpOrderView);
-  msg.dPvpTempCash = CPvpOrderView::GetPvpTempCash(&this->m_kPvpOrderView);
+  msg.wHP = this->m_Param.GetHP();
+  msg.wSP = this->m_Param.GetSP();
+  msg.wFP = this->m_Param.GetFP();
+  msg.wDP = this->m_Param.GetDP();
+  msg.dPvpPoint = this->m_Param.GetPvPPoint();
+  msg.dPvpCashBag = this->m_kPvpOrderView.GetPvpCash();
+  msg.dPvpTempCash = m_kPvpOrderView.GetPvpTempCash();
   msg.dwPvpRank = this->m_Param.m_dbChar.m_dwRank;
   msg.byPvpClass = this->m_Param.m_byPvPGrade;
   msg.wMaxHP = this->m_nMaxPoint[0];
   msg.wMaxSP = this->m_nMaxPoint[2];
   msg.wMaxFP = this->m_nMaxPoint[1];
-  msg.wMaxDP = static_cast<unsigned __int16>(CPlayer::GetMaxDP(this));
+  msg.wMaxDP = static_cast<unsigned __int16>(GetMaxDP());
 
-  const int mapCode = CPlayerDB::GetMapCode(&this->m_Param);
+  const int mapCode = this->m_Param.GetMapCode();
   unsigned __int16 *record =
     reinterpret_cast<unsigned __int16 *>(g_MapOper.m_tblMapData.GetRecord(mapCode));
   msg.wMapIndex = *record;
-  float *curPos = CPlayerDB::GetCurPos(&this->m_Param);
+  float *curPos = this->m_Param.GetCurPos();
   memcpy_0(msg.fPos, curPos, sizeof(msg.fPos));
   msg.byUseTrunkSlotNum = this->m_Param.m_dbTrunk.m_nUsedNum;
 
@@ -10443,9 +11196,9 @@ void CPlayer::SendMsg_BaseDownloadResult()
     }
   }
 
-  if (CHolyStoneSystem::GetHolyMasterRace(&g_HolySys) == -1)
+  if (g_HolySys.GetHolyMasterRace() == -1)
   {
-    if (CHolyStoneSystem::GetSceneCode(&g_HolySys) == 1)
+    if (g_HolySys.GetSceneCode() == 1)
     {
       msg.byHolyMasterState = static_cast<unsigned __int8>(-1);
     }
@@ -10456,7 +11209,7 @@ void CPlayer::SendMsg_BaseDownloadResult()
   }
   else
   {
-    msg.byHolyMasterState = CHolyStoneSystem::GetHolyMasterRace(&g_HolySys);
+    msg.byHolyMasterState = static_cast<unsigned __int8>(g_HolySys.GetHolyMasterRace());
   }
 
   msg.byPlusKey = this->m_byPlusKey;
@@ -10465,9 +11218,9 @@ void CPlayer::SendMsg_BaseDownloadResult()
   if (this->m_Param.m_pGuild)
   {
     msg.dwGuildSerial = this->m_Param.m_pGuild->m_dwSerial;
-    const int raceCode = CPlayerDB::GetRaceCode(&this->m_Param);
+    const int raceCode = this->m_Param.GetRaceCode();
     CHonorGuild *honorGuild = CHonorGuild::Instance();
-    msg.byHonorGuildRank = CHonorGuild::FindHonorGuildRank(honorGuild, raceCode, msg.dwGuildSerial);
+    msg.byHonorGuildRank = honorGuild->FindHonorGuildRank(static_cast<unsigned __int8>(raceCode), msg.dwGuildSerial);
   }
   else
   {
@@ -10481,22 +11234,21 @@ void CPlayer::SendMsg_BaseDownloadResult()
   if (this->m_Param.m_pGuild)
   {
     CGuildMasterEffect *effect = CGuildMasterEffect::GetInstance();
-    const int adjustableGrade = CGuildMasterEffect::get_AdjustableGrade(effect);
-    const unsigned __int8 grade = CGuild::GetGrade(this->m_Param.m_pGuild);
+    const int adjustableGrade = effect->get_AdjustableGrade();
+    const unsigned __int8 grade = this->m_Param.m_pGuild->GetGrade();
     if (adjustableGrade <= grade && this->m_Param.m_byClassInGuild == 2)
     {
-      msg.byGuildGrade = CGuild::GetGrade(this->m_Param.m_pGuild);
+      msg.byGuildGrade = this->m_Param.m_pGuild->GetGrade();
       effect = CGuildMasterEffect::GetInstance();
-      msg.byEffectValue[0] = CGuildMasterEffect::get_AttactValueByGrade(effect, msg.byGuildGrade);
+      msg.byEffectValue[0] = effect->get_AttactValueByGrade(msg.byGuildGrade);
       effect = CGuildMasterEffect::GetInstance();
-      msg.byEffectValue[1] = CGuildMasterEffect::get_DefenceValueByGrade(effect, msg.byGuildGrade);
+      msg.byEffectValue[1] = effect->get_DefenceValueByGrade(msg.byGuildGrade);
     }
   }
 
   unsigned __int8 pbyType[2] = {3, 4};
   const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
-  CNetProcess::LoadSendMsg(
-    g_Network.m_pProcess[0],
+  g_Network.m_pProcess[0]->LoadSendMsg(
     this->m_ObjID.m_wIndex,
     pbyType,
     reinterpret_cast<char *>(&msg),
@@ -10511,7 +11263,7 @@ void CPlayer::SendMsg_InvenDownloadResult()
   msg.byRetCode = 0;
   msg.byBagNum = this->m_Param.m_dbChar.m_byUseBagNum;
   int count = 0;
-  const int useSlot = CPlayerDB::GetUseSlot(&this->m_Param);
+  const int useSlot = this->m_Param.GetUseSlot();
   for (int j = 0; j < useSlot; ++j)
   {
     _STORAGE_LIST::_db_con *item = &this->m_Param.m_dbInven.m_pStorageList[j];
@@ -10530,8 +11282,7 @@ void CPlayer::SendMsg_InvenDownloadResult()
 
   unsigned __int8 pbyType[2] = {3, 6};
   const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
-  CNetProcess::LoadSendMsg(
-    g_Network.m_pProcess[0],
+  g_Network.m_pProcess[0]->LoadSendMsg(
     this->m_ObjID.m_wIndex,
     pbyType,
     reinterpret_cast<char *>(&msg),
@@ -10560,8 +11311,7 @@ void CPlayer::SendMsg_CumDownloadResult()
 
   unsigned __int8 pbyType[2] = {3, 8};
   const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
-  CNetProcess::LoadSendMsg(
-    g_Network.m_pProcess[0],
+  g_Network.m_pProcess[0]->LoadSendMsg(
     this->m_ObjID.m_wIndex,
     pbyType,
     reinterpret_cast<char *>(&msg),
@@ -10590,8 +11340,7 @@ void CPlayer::SendMsg_ForceDownloadResult()
 
   unsigned __int8 pbyType[2] = {3, 10};
   const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
-  CNetProcess::LoadSendMsg(
-    g_Network.m_pProcess[0],
+  g_Network.m_pProcess[0]->LoadSendMsg(
     this->m_ObjID.m_wIndex,
     pbyType,
     reinterpret_cast<char *>(&msg),
@@ -10619,8 +11368,7 @@ void CPlayer::SendMsg_QuestDownloadResult()
 
   unsigned __int8 pbyType[2] = {3, 12};
   const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
-  CNetProcess::LoadSendMsg(
-    g_Network.m_pProcess[0],
+  g_Network.m_pProcess[0]->LoadSendMsg(
     this->m_ObjID.m_wIndex,
     pbyType,
     reinterpret_cast<char *>(&msg),
@@ -10644,8 +11392,7 @@ void CPlayer::SendMsg_QuestHistoryDownloadResult()
 
   unsigned __int8 pbyType[2] = {3, 57};
   const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
-  CNetProcess::LoadSendMsg(
-    g_Network.m_pProcess[0],
+  g_Network.m_pProcess[0]->LoadSendMsg(
     this->m_ObjID.m_wIndex,
     pbyType,
     reinterpret_cast<char *>(&msg),
@@ -10655,7 +11402,7 @@ void CPlayer::SendMsg_QuestHistoryDownloadResult()
 void CPlayer::SendMsg_SpecialDownloadResult()
 {
   this->m_bSpecialDownload = 1;
-  const unsigned int raceCode = static_cast<unsigned int>(CPlayerDB::GetRaceCode(&this->m_Param));
+  const unsigned int raceCode = static_cast<unsigned int>(this->m_Param.GetRaceCode());
 
   if (raceCode)
   {
@@ -10679,8 +11426,7 @@ void CPlayer::SendMsg_SpecialDownloadResult()
 
       unsigned __int8 pbyType[2] = {3, 15};
       const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
-      CNetProcess::LoadSendMsg(
-        g_Network.m_pProcess[0],
+      g_Network.m_pProcess[0]->LoadSendMsg(
         this->m_ObjID.m_wIndex,
         pbyType,
         reinterpret_cast<char *>(&msg),
@@ -10691,8 +11437,7 @@ void CPlayer::SendMsg_SpecialDownloadResult()
       _animus_download_result_zocl msg;
       unsigned __int8 pbyType[2] = {3, 15};
       const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
-      CNetProcess::LoadSendMsg(
-        g_Network.m_pProcess[0],
+      g_Network.m_pProcess[0]->LoadSendMsg(
         this->m_ObjID.m_wIndex,
         pbyType,
         reinterpret_cast<char *>(&msg),
@@ -10719,8 +11464,7 @@ void CPlayer::SendMsg_SpecialDownloadResult()
 
     unsigned __int8 pbyType[2] = {3, 14};
     const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
-    CNetProcess::LoadSendMsg(
-      g_Network.m_pProcess[0],
+    g_Network.m_pProcess[0]->LoadSendMsg(
       this->m_ObjID.m_wIndex,
       pbyType,
       reinterpret_cast<char *>(&msg),
@@ -10740,12 +11484,12 @@ void CPlayer::SendMsg_LinkBoardDownloadResult()
   {
     _LINKKEY *key = &this->m_pUserDB->m_AvatorData.dbLink.m_LinkList[j].Key;
     msg.m_LinkList[j].Key = *key;
-    if (_LINKKEY::IsFilled(key))
+    if (key->IsFilled())
     {
-      const unsigned __int16 code = _LINKKEY::GetCode(key);
+      const unsigned __int16 code = key->GetCode();
       if (code == 4)
       {
-        const unsigned __int16 index = _LINKKEY::GetIndex(key);
+        const unsigned __int16 index = key->GetIndex();
         const int storageIndex = static_cast<int>(index) >> 8;
         const unsigned __int8 slotIndex = static_cast<unsigned __int8>(index);
         if (IsStorageRange(static_cast<unsigned __int8>(index >> 8), slotIndex))
@@ -10772,8 +11516,7 @@ void CPlayer::SendMsg_LinkBoardDownloadResult()
   msg.m_dwInven = this->m_pUserDB->m_AvatorData.dbLink.m_dwInven;
 
   unsigned __int8 pbyType[2] = {3, 45};
-  CNetProcess::LoadSendMsg(
-    g_Network.m_pProcess[0],
+  g_Network.m_pProcess[0]->LoadSendMsg(
     this->m_ObjID.m_wIndex,
     pbyType,
     reinterpret_cast<char *>(&msg),
@@ -10807,8 +11550,7 @@ void CPlayer::SendMsg_MacroRequest()
   }
 
   unsigned __int8 pbyType[2] = {3, 50};
-  CNetProcess::LoadSendMsg(
-    g_Network.m_pProcess[0],
+  g_Network.m_pProcess[0]->LoadSendMsg(
     this->m_ObjID.m_wIndex,
     pbyType,
     reinterpret_cast<char *>(&msg),
@@ -10820,7 +11562,7 @@ void CPlayer::SendMsg_AMPInvenDownloadResult()
   _personal_automine_download_zocl msg{};
 
   this->m_bAMPInvenDownload = 1;
-  msg.byHaveBag = CPlayerDB::BeHaveBoxOfAMP(&this->m_Param);
+  msg.byHaveBag = this->m_Param.BeHaveBoxOfAMP();
 
   int count = 0;
   for (int j = 0; j < 40; ++j)
@@ -10838,8 +11580,7 @@ void CPlayer::SendMsg_AMPInvenDownloadResult()
 
   unsigned __int8 pbyType[2] = {3, 55};
   const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
-  CNetProcess::LoadSendMsg(
-    g_Network.m_pProcess[0],
+  g_Network.m_pProcess[0]->LoadSendMsg(
     this->m_ObjID.m_wIndex,
     pbyType,
     reinterpret_cast<char *>(&msg),
@@ -10874,8 +11615,7 @@ void CPlayer::SendMsg_SetGroupTargetObjectResult(char byRetCode, char byGroupTyp
   }
 
   unsigned __int8 pbyType[2] = {13, 107};
-  CNetProcess::LoadSendMsg(
-    g_Network.m_pProcess[0],
+  g_Network.m_pProcess[0]->LoadSendMsg(
     this->m_ObjID.m_wIndex,
     pbyType,
     reinterpret_cast<char *>(&msg),
@@ -10908,8 +11648,7 @@ void CPlayer::SendMsg_SetGroupMapPoint(
   memcpy_0(msg.fPos, pzTar, sizeof(msg.fPos));
 
   unsigned __int8 pbyType[2] = {13, 114};
-  CNetProcess::LoadSendMsg(
-    g_Network.m_pProcess[0],
+  g_Network.m_pProcess[0]->LoadSendMsg(
     this->m_ObjID.m_wIndex,
     pbyType,
     reinterpret_cast<char *>(&msg),
@@ -10956,10 +11695,10 @@ void CPlayer::pc_NewPosStart()
 
   if (resultCode)
   {
-    const char *charName = CPlayerDB::GetCharNameA(&this->m_Param);
+    const char *charName = this->m_Param.GetCharNameA();
     char buffer[144]{};
     sprintf(buffer, "Close.. %s: MapInMode(%u) Reason(%d)", charName, this->m_byMapInModeBuffer, resultCode);
-    CNetworkEX::Close(&g_Network, 0, this->m_ObjID.m_wIndex, false, buffer);
+    g_Network.Close(0, this->m_ObjID.m_wIndex, false, buffer);
   }
   else
   {
@@ -10987,7 +11726,7 @@ void CPlayer::pc_NewPosStart()
     CheckGroupTargeting();
     CheckGroupMapPoint();
     CNuclearBombMgr *manager = CNuclearBombMgr::Instance();
-    CNuclearBombMgr::CheckNuclearState(manager, this);
+    manager->CheckNuclearState(this);
   }
 }
 
@@ -11047,9 +11786,8 @@ void CPlayer::CheckGroupTargeting()
           continue;
         }
 
-        const unsigned int guildMasterSerial = CGuild::GetGuildMasterSerial(this->m_Param.m_pGuild);
-        _guild_member_info *member =
-          CGuild::GetMemberFromSerial(this->m_Param.m_pGuild, guildMasterSerial);
+        const unsigned int guildMasterSerial = this->m_Param.m_pGuild->GetGuildMasterSerial();
+        _guild_member_info *member = this->m_Param.m_pGuild->GetMemberFromSerial(guildMasterSerial);
         if (!member || !member->pPlayer)
         {
           continue;
@@ -11058,9 +11796,9 @@ void CPlayer::CheckGroupTargeting()
       }
       else if (groupType == 2)
       {
-        const int raceCode = CPlayerDB::GetRaceCode(&this->m_Param);
+        const int raceCode = this->m_Param.GetRaceCode();
         CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
-        const unsigned int bossSerial = CPvpUserAndGuildRankingSystem::GetCurrentRaceBossSerial(ranking, raceCode, 0);
+        const unsigned int bossSerial = ranking->GetCurrentRaceBossSerial(raceCode, 0);
         groupPlayer = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, bossSerial);
       }
     }
@@ -11090,7 +11828,7 @@ void CPlayer::CheckGroupTargeting()
       }
       else if (this->m_GroupTargetObject[groupType].pObject)
       {
-        CPlayer::__target::init(&this->m_GroupTargetObject[groupType]);
+        this->m_GroupTargetObject[groupType].init();
         SendMsg_ReleaseGroupTargetObjectResult(static_cast<unsigned __int8>(groupType));
       }
     }
@@ -11113,9 +11851,8 @@ void CPlayer::CheckGroupMapPoint()
           continue;
         }
 
-        const unsigned int guildMasterSerial = CGuild::GetGuildMasterSerial(this->m_Param.m_pGuild);
-        _guild_member_info *member =
-          CGuild::GetMemberFromSerial(this->m_Param.m_pGuild, guildMasterSerial);
+        const unsigned int guildMasterSerial = this->m_Param.m_pGuild->GetGuildMasterSerial();
+        _guild_member_info *member = this->m_Param.m_pGuild->GetMemberFromSerial(guildMasterSerial);
         if (!member || !member->pPlayer)
         {
           continue;
@@ -11124,9 +11861,9 @@ void CPlayer::CheckGroupMapPoint()
       }
       else if (groupType == 2)
       {
-        const int raceCode = CPlayerDB::GetRaceCode(&this->m_Param);
+        const int raceCode = this->m_Param.GetRaceCode();
         CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
-        const unsigned int bossSerial = CPvpUserAndGuildRankingSystem::GetCurrentRaceBossSerial(ranking, raceCode, 0);
+        const unsigned int bossSerial = ranking->GetCurrentRaceBossSerial(raceCode, 0);
         groupPlayer = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, bossSerial);
       }
     }
@@ -11188,12 +11925,12 @@ void CPlayer::pc_Revival(bool bUseableJade)
     {
       if (this->m_pDHChannel)
       {
-        _dh_player_mgr *playerInfo = CDarkHoleChannel::GetPlayerInfo(this->m_pDHChannel, this->m_dwObjSerial);
+        _dh_player_mgr *playerInfo = this->m_pDHChannel->GetPlayerInfo(this->m_dwObjSerial);
         if (playerInfo)
         {
           intoMap = playerInfo->LastPos.pMap;
           memcpy_0(revivePos, playerInfo->LastPos.fPos, sizeof(revivePos));
-          CDarkHoleChannel::ClearMember(this->m_pDHChannel, this, 0, nullptr);
+          this->m_pDHChannel->ClearMember(this, false, nullptr);
         }
       }
     }
@@ -11231,7 +11968,7 @@ void CPlayer::pc_Revival(bool bUseableJade)
     {
       pc_NuclearAfterEffect();
       CNuclearBombMgr *manager = CNuclearBombMgr::Instance();
-      CNuclearBombMgr::CheckNuclearState(manager, this);
+      manager->CheckNuclearState(this);
     }
   }
 
@@ -11247,22 +11984,20 @@ void CPlayer::pc_ExitWorldRequest()
 
   if (this->m_bLoad && this->m_bOper)
   {
-    TimeLimitMgr::Pop_Data(
-      g_Main.m_pTimeLimitMgr,
-      this->m_pUserDB->m_dwAccountSerial,
+    g_Main.m_pTimeLimitMgr->Pop_Data(this->m_pUserDB->m_dwAccountSerial,
       this->m_id.wIndex);
   }
 
   this->m_bOper = 0;
   if (this->m_pmTrd.bDTradeMode)
   {
-    CPlayer *dst = nullptr;
-    if (DTradeEqualPerson(this, &dst))
-    {
-      dst->m_pmTrd.Init();
-      SendMsg_DTradeCloseInform(dst, 0);
-    }
-    this->m_pmTrd.Init();
+      CPlayer *dst = nullptr;
+      if (DTradeEqualPerson(this, &dst))
+      {
+        dst->m_pmTrd.Init();
+        dst->SendMsg_DTradeCloseInform(0);
+      }
+      this->m_pmTrd.Init();
   }
 
   SendMsg_ExitWorldResult(0);
@@ -11288,7 +12023,7 @@ char CPlayer::IntoMap(unsigned __int8 byMapInMode)
   if (byMapInMode == 6)
   {
     CGuildBattleController *controller = CGuildBattleController::Instance();
-    (void)CGuildBattleController::Start(controller, this);
+    (void)controller->Start(this);
   }
 
   const unsigned int secIndex = static_cast<unsigned int>(CalcSecIndex());
@@ -11302,10 +12037,10 @@ char CPlayer::IntoMap(unsigned __int8 byMapInMode)
   SetCurSecNum(secIndex);
   SendData_PartyMemberPos();
 
-  if (this->m_pCurMap == g_TransportShip[static_cast<int>(CPlayerDB::GetRaceCode(&this->m_Param))].m_pLinkShipMap)
+  if (this->m_pCurMap == g_TransportShip[static_cast<int>(this->m_Param.GetRaceCode())].m_pLinkShipMap)
   {
-    const int raceCode = CPlayerDB::GetRaceCode(&this->m_Param);
-    CTransportShip::EnterMember(&g_TransportShip[raceCode], this);
+    const int raceCode = this->m_Param.GetRaceCode();
+    g_TransportShip[raceCode].EnterMember(this);
   }
 
   SetStateFlag();
@@ -11324,7 +12059,7 @@ char CPlayer::Create()
   this->m_dwObjSerial = this->m_id.dwSerial;
 
   _character_create_setdata createData;
-  createData.m_pMap = CMapOperation::GetMap(&g_MapOper, this->m_Param.m_dbChar.m_sStartMapCode);
+  createData.m_pMap = g_MapOper.GetMap(this->m_Param.m_dbChar.m_sStartMapCode);
   if (createData.m_pMap->m_pMapSet->m_nMapType == 2)
   {
     createData.m_nLayerIndex = static_cast<int>(this->m_Param.m_dbChar.m_byRaceSexCode) >> 1;
@@ -11337,7 +12072,7 @@ char CPlayer::Create()
   createData.m_fStartPos[1] = this->m_Param.m_dbChar.m_fStartPos[1];
   createData.m_fStartPos[2] = this->m_Param.m_dbChar.m_fStartPos[2];
   createData.m_pRecordSet =
-    CRecordData::GetRecord(&g_Main.m_tblPlayer, this->m_Param.m_dbChar.m_byRaceSexCode);
+    g_Main.m_tblPlayer.GetRecord(this->m_Param.m_dbChar.m_byRaceSexCode);
 
   if (!CCharacter::Create(&createData))
   {
@@ -11345,10 +12080,10 @@ char CPlayer::Create()
     const int posY = static_cast<int>(this->m_fCurPos[1]);
     const int posZ = static_cast<int>(this->m_fCurPos[2]);
     const char *mapCode = this->m_pCurMap->m_pMapSet->m_strCode;
-    const char *charName = CPlayerDB::GetCharNameA(&this->m_Param);
+    const char *charName = this->m_Param.GetCharNameA();
     char buffer[132]{};
     sprintf(buffer, "Close.. %s: Create() Map(%s) Pos(%d, %d, %d)", charName, mapCode, posX, posY, posZ);
-    CNetworkEX::Close(&g_Network, 0, this->m_ObjID.m_wIndex, false, buffer);
+    g_Network.Close(0, this->m_ObjID.m_wIndex, false, buffer);
     return 0;
   }
 
@@ -11384,25 +12119,25 @@ char CPlayer::Create()
   this->m_pSiegeItem = nullptr;
   this->m_dwLastTakeItemTime = 0;
 
-  CMyTimer::TermTimeRun(&this->m_tmrIntervalSec);
-  CMyTimer::TermTimeRun(&this->m_tmrBilling);
-  CMyTimer::TermTimeRun(&this->m_tmrGroupTargeting);
+  this->m_tmrIntervalSec.TermTimeRun();
+  this->m_tmrBilling.TermTimeRun();
+  this->m_tmrGroupTargeting.TermTimeRun();
   if (IsApplyPcbangPrimium())
   {
-    CMyTimer::TermTimeRun(&this->m_tmrPremiumPVPInform);
+    this->m_tmrPremiumPVPInform.TermTimeRun();
   }
 
-  _RENAME_POTION_USE_INFO::Init(&this->m_ReNamePotionUseInfo);
+  this->m_ReNamePotionUseInfo.Init();
   GetLocalTime(&this->m_tmLoginTime);
   GetLocalTime(&this->m_tmCalcTime);
   this->m_dwUMWHLastTime = GetLoopTime();
 
   const int currentMinuteSeconds = 60 * GetCurrentMin();
   const int currentSec = GetCurrentSec();
-  CMyTimer::BeginTimerAddLapse(&this->m_tmrEffectStartTime, 0x36EE80u, 1000 * (currentSec + currentMinuteSeconds));
+  this->m_tmrEffectStartTime.BeginTimerAddLapse(0x36EE80u, 1000 * (currentSec + currentMinuteSeconds));
 
-  CPotionParam::Init(&this->m_PotionParam, this);
-  if (CPlayerDB::GetHP(&this->m_Param))
+  this->m_PotionParam.Init(this);
+  if (this->m_Param.GetHP())
   {
     this->m_bCorpse = 0;
   }
@@ -11414,13 +12149,13 @@ char CPlayer::Create()
   CalcDefTol();
   PastWhisperInit();
   SetHaveEffect(1);
-  CQuestMgr::InitMgr(&this->m_QuestMgr, this, &this->m_Param.m_QuestDB);
-  ItemCombineMgr::InitMgr(&this->m_ItemCombineMgr, this);
+  this->m_QuestMgr.InitMgr(this, &this->m_Param.m_QuestDB);
+  this->m_ItemCombineMgr.InitMgr(this);
 
-  CPlayer::__target::init(&this->m_TargetObject);
+  this->m_TargetObject.init();
   for (int j = 0; j < 3; ++j)
   {
-    CPlayer::__target::init(&this->m_GroupTargetObject[j]);
+    this->m_GroupTargetObject[j].init();
   }
 
   this->m_wPointRate_PartySend[0] = 10000;
@@ -11453,13 +12188,13 @@ char CPlayer::Create()
   this->m_nChaosMode = 0;
   this->m_dwChaosModeTime10Per = 0;
   this->m_dwChaosModeEndTime = 0;
-  CEquipItemSFAgent::Init(&this->EquipItemSFAgent, this);
+  this->EquipItemSFAgent.Init(this);
   this->m_bSnowMan = 0;
 
-  char *charNameW = CPlayerDB::GetCharNameW(&this->m_Param);
-  const unsigned int charSerial = CPlayerDB::GetCharSerial(&this->m_Param);
+  char *charNameW = this->m_Param.GetCharNameW();
+  const unsigned int charSerial = this->m_Param.GetCharSerial();
   this->m_byBattleTournamentGrade =
-    CBattleTournamentInfo::GetWinnerGrade(&g_Main.m_BattleTournamentInfo, charSerial, charNameW);
+    g_Main.m_BattleTournamentInfo.GetWinnerGrade(charSerial, charNameW);
 
   this->m_fUnitPv_AttFc = FLOAT_1_0;
   this->m_fUnitPv_DefFc = FLOAT_1_0;
@@ -11470,7 +12205,7 @@ char CPlayer::Create()
   {
     this->m_fUnitPv_AttFc = FLOAT_1_1;
     CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
-    CNationSettingManager::SetUnitPassiveValue(manager, &this->m_fUnitPv_DefFc);
+    manager->SetUnitPassiveValue(&this->m_fUnitPv_DefFc);
     this->m_fUnitPv_RepPr = FLOAT_0_60000002;
   }
 
@@ -11479,32 +12214,19 @@ char CPlayer::Create()
 
   if (this->m_pUserDB)
   {
-    CUserDB::StartFieldMode(this->m_pUserDB);
+    m_pUserDB->StartFieldMode();
     const unsigned int radarDelay = 1000 * this->m_pUserDB->m_AvatorData.dbAvator.m_dwRadarDelayTime;
-    CRadarItemMgr::Init(&this->m_pUserDB->m_RadarItemMgr, radarDelay);
-    MiningTicket::SetLastMentalTicket(
-      &this->m_MinigTicket,
-      this->m_pUserDB->m_AvatorData.dbAvator.m_dwTakeLastMentalTicket);
-    MiningTicket::SetLastCriTicket(
-      &this->m_MinigTicket,
-      this->m_pUserDB->m_AvatorData.dbAvator.m_dwTakeLastCriTicket);
-    MiningTicket::_AuthKeyTicket::Set(
-      &this->m_dwRaceBuffClearKey,
-      this->m_pUserDB->m_AvatorData.dbSupplement.dwRaceBuffClear);
+    this->m_pUserDB->m_RadarItemMgr.Init(radarDelay);
+    this->m_MinigTicket.SetLastMentalTicket(this->m_pUserDB->m_AvatorData.dbAvator.m_dwTakeLastMentalTicket);
+    this->m_MinigTicket.SetLastCriTicket(this->m_pUserDB->m_AvatorData.dbAvator.m_dwTakeLastCriTicket);
+    this->m_dwRaceBuffClearKey.Set(this->m_pUserDB->m_AvatorData.dbSupplement.dwRaceBuffClear);
 
-    CMgrAvatorItemHistory::GetNewFileName(
-      &CPlayer::s_MgrItemHistory,
-      this->m_pUserDB->m_dwSerial,
+    CPlayer::s_MgrItemHistory.GetNewFileName(this->m_pUserDB->m_dwSerial,
       this->m_szItemHistoryFileName);
-    CMgrAvatorLvHistory::GetNewFileName(
-      &CPlayer::s_MgrLvHistory,
-      this->m_pUserDB->m_dwSerial,
-      this->m_szLvHistoryFileName);
+    CPlayer::s_MgrLvHistory.GetNewFileName(this->m_pUserDB->m_dwSerial, this->m_szLvHistoryFileName);
 
-    CMgrAvatorItemHistory::have_item(
-      &CPlayer::s_MgrItemHistory,
-      this->m_ObjID.m_wIndex,
-      CPlayerDB::GetCharNameA(&this->m_Param),
+    CPlayer::s_MgrItemHistory.have_item(this->m_ObjID.m_wIndex,
+      this->m_Param.GetCharNameA(),
       &this->m_pUserDB->m_AvatorData,
       &this->m_pUserDB->m_AvatorData_bk,
       this->m_pUserDB->m_szAccountID,
@@ -11515,19 +12237,18 @@ char CPlayer::Create()
       true,
       this->m_szItemHistoryFileName);
 
-    CMgrAvatorLvHistory::start_mastery(
-      &CPlayer::s_MgrLvHistory,
+    CPlayer::s_MgrLvHistory.start_mastery(
       this->m_ObjID.m_wIndex,
-      CPlayerDB::GetCharNameA(&this->m_Param),
-      CPlayerDB::GetLevel(&this->m_Param),
-      CPlayerDB::GetExp(&this->m_Param),
+      this->m_Param.GetCharNameA(),
+      this->m_Param.GetLevel(),
+      this->m_Param.GetExp(),
       this->m_dwExpRate,
       this->m_Param.m_byPvPGrade,
       this->m_nMaxPoint,
       &this->m_pmMst,
       this->m_szLvHistoryFileName);
 
-    CUserDB::WriteLog_CharSelect(this->m_pUserDB);
+    m_pUserDB->WriteLog_CharSelect();
   }
 
   if (this->m_pUserDB->m_AvatorData.dbAvator.m_dwDalant
@@ -11537,16 +12258,15 @@ char CPlayer::Create()
   }
 
   CMoveMapLimitManager *moveMapLimit = CMoveMapLimitManager::Instance();
-  CMoveMapLimitManager::LogIn(moveMapLimit, this);
+  moveMapLimit->LogIn(this);
 
   this->m_pBindMapData =
-    CMapOperation::GetMap(&g_MapOper, this->m_pUserDB->m_AvatorData.dbAvator.m_szBindMapCode);
+    g_MapOper.GetMap(this->m_pUserDB->m_AvatorData.dbAvator.m_szBindMapCode);
   if (this->m_pBindMapData)
   {
     this->m_pBindDummyData =
-      CDummyPosTable::GetRecord(
-        &this->m_pBindMapData->m_tbBindDumPos,
-        this->m_pUserDB->m_AvatorData.dbAvator.m_szBindDummy);
+      reinterpret_cast<_dummy_position *>(this->m_pBindMapData->m_tbBindDumPos.GetRecord(
+        this->m_pUserDB->m_AvatorData.dbAvator.m_szBindDummy));
     if (!this->m_pBindDummyData)
     {
       this->m_pBindMapData = nullptr;
@@ -11555,23 +12275,25 @@ char CPlayer::Create()
 
   if (this->m_pUserDB && !this->m_pBindMapData)
   {
-    CUserDB::Update_Bind(this->m_pUserDB, "0", "0", 0);
+    char bindMapCode[] = "0";
+    char bindDummyCode[] = "0";
+    m_pUserDB->Update_Bind(bindMapCode, bindDummyCode, false);
   }
 
   SendMsg_EconomyHistoryInform();
   SendMsg_EconomyRateInform(1);
 
   ++CPlayer::s_nLiveNum;
-  ++CPlayer::s_nRaceNum[static_cast<int>(CPlayerDB::GetRaceCode(&this->m_Param))];
+  ++CPlayer::s_nRaceNum[static_cast<int>(this->m_Param.GetRaceCode())];
 
   _WA_AVATOR_CODE waCode{};
   memcpy_0(&waCode, &this->m_id, 6u);
-  char *playerNameW = CPlayerDB::GetCharNameW(&this->m_Param);
+  char *playerNameW = this->m_Param.GetCharNameW();
   strcpy_0(waCode.m_wszName, playerNameW);
   wa_EnterWorld(&waCode, this->m_ObjID.m_wIndex);
 
   _set_db_sf_effect(&this->m_pUserDB->m_AvatorData.dbSfcont);
-  CHolyStoneSystem::SendMsg_HolyStoneSystemState(&g_HolySys, this->m_ObjID.m_wIndex);
+  g_HolySys.SendMsg_HolyStoneSystemState(this->m_ObjID.m_wIndex);
 
   this->m_nAddDfnMstByClass = 0;
   for (int i = 0; i < 4; ++i)
@@ -11584,35 +12306,28 @@ char CPlayer::Create()
     this->m_nAddDfnMstByClass += *reinterpret_cast<int *>(reinterpret_cast<char *>(effectRecord) + 1476);
   }
 
-  if (this->m_Param.m_pGuild && _effect_parameter::GetEff_Have(&this->m_EP, 50) <= 0.0)
+  if (this->m_Param.m_pGuild && this->m_EP.GetEff_Have(50) <= 0.0)
   {
-    _guild_member_info *member = CGuild::LoginMember(this->m_Param.m_pGuild, this->m_dwObjSerial, this);
+    _guild_member_info *member = this->m_Param.m_pGuild->LoginMember(this->m_dwObjSerial, this);
     if (member)
     {
       this->m_Param.m_pGuildMemPtr = member;
-      CGuild::SendMsg_GuildMemberLogin(
-        this->m_Param.m_pGuild,
-        this->m_dwObjSerial,
-        this->m_wRegionMapIndex,
-        this->m_wRegionIndex);
+      this->m_Param.m_pGuild->SendMsg_GuildMemberLogin(this->m_dwObjSerial, this->m_wRegionMapIndex, this->m_wRegionIndex);
 
       CGuildBattleController *controller = CGuildBattleController::Instance();
-      CGuildBattleController::LogIn(controller, this);
+      controller->LogIn(this);
 
       if (member->byClassInGuild == 2)
       {
-        const unsigned __int8 raceCode = CPlayerDB::GetRaceCode(&this->m_Param);
-        CGuildBattleController::SendPossibleBattleGuildListFirst(
-          controller,
-          this->m_ObjID.m_wIndex,
-          raceCode);
+        const unsigned __int8 raceCode = this->m_Param.GetRaceCode();
+        controller->SendPossibleBattleGuildListFirst(this->m_ObjID.m_wIndex, raceCode);
       }
 
       if (member->byClassInGuild == 2)
       {
-        const unsigned __int8 grade = CGuild::GetGrade(this->m_Param.m_pGuild);
+        const unsigned __int8 grade = this->m_Param.m_pGuild->GetGrade();
         CGuildMasterEffect *effect = CGuildMasterEffect::GetInstance();
-        CGuildMasterEffect::in_player(effect, this, grade);
+        effect->in_player(this, grade);
       }
     }
     else
@@ -11623,7 +12338,7 @@ char CPlayer::Create()
 
   if (!this->m_bInGuildBattle
       && this->m_pCurMap->m_pMapSet->m_nRaceVillageCode < 3
-      && static_cast<unsigned int>(CPlayerDB::GetRaceCode(&this->m_Param))
+      && static_cast<unsigned int>(this->m_Param.GetRaceCode())
         != this->m_pCurMap->m_pMapSet->m_nRaceVillageCode
       && this->m_byUserDgr >= 2u)
   {
@@ -11634,23 +12349,23 @@ char CPlayer::Create()
   this->m_byDefMatCount = 0;
   this->m_dwLastSetPointTime = GetLoopTime();
 
-  const int raceCode = CPlayerDB::GetRaceCode(&this->m_Param);
-  CTransportShip::SendMsg_TransportShipState(&g_TransportShip[raceCode], this->m_ObjID.m_wIndex);
+  const int raceCode = this->m_Param.GetRaceCode();
+  g_TransportShip[raceCode].SendMsg_TransportShipState(this->m_ObjID.m_wIndex);
   if (this->m_pCurMap == g_TransportShip[raceCode].m_pLinkShipMap)
   {
-    CTransportShip::ReEnterMember(&g_TransportShip[raceCode], this);
+    g_TransportShip[raceCode].ReEnterMember(this);
   }
 
   if (!this->m_pUserDB->m_byUserDgr)
   {
     CBillingManager *billing = CTSingleton<CBillingManager>::Instance();
-    CBillingManager::Login(billing, this->m_pUserDB);
+    billing->Login(this->m_pUserDB);
   }
 
   SenseState();
   this->m_nCheckMovePacket = 0;
   this->m_bCheckMovePacket = 0;
-  CHolyStoneSystem::SendHolyStoneHP(&g_HolySys, this);
+  g_HolySys.SendHolyStoneHP(this);
   this->m_byStoneMapMoveInfo = 0;
   this->m_dwPatriarchAppointTime = static_cast<unsigned int>(-1);
   this->m_byPatriarchAppointPropose = static_cast<unsigned __int8>(-1);
@@ -11659,8 +12374,7 @@ char CPlayer::Create()
 
   if (this->m_pUserDB)
   {
-    CMgrAccountLobbyHistory::player_create(
-      &CUserDB::s_MgrLobbyHistory,
+    CUserDB::s_MgrLobbyHistory.player_create(
       this->m_bFirstStart,
       &this->m_pUserDB->m_AvatorData,
       this->m_pUserDB->m_szLobbyHistoryFileName);
@@ -11678,12 +12392,12 @@ void CPlayer::CreateComplete()
 
   this->m_bCreateComplete = 1;
   CheckUnitCutTime();
-  if (CPlayerDB::IsClassChangeableLv(&this->m_Param))
+  if (this->m_Param.IsClassChangeableLv())
   {
     SendMsg_ChangeClassCommand();
   }
   CalcEquipSpeed();
-  CPvpOrderView::Notify_OrderView(&this->m_kPvpOrderView, this->m_ObjID.m_wIndex);
+  m_kPvpOrderView.Notify_OrderView(this->m_ObjID.m_wIndex);
 
   for (int j = 0; j < 30; ++j)
   {
@@ -11702,7 +12416,7 @@ void CPlayer::CreateComplete()
 
       if (isAllEmpty)
       {
-        _base_fld *record = CRecordData::GetRecord(CQuestMgr::s_tblQuest, quest->wIndex);
+        _base_fld *record = CQuestMgr::s_tblQuest->GetRecord(quest->wIndex);
         if (*reinterpret_cast<unsigned int *>(&record[13].m_strCode[60])
             || *reinterpret_cast<unsigned int *>(&record[1].m_strCode[24]))
         {
@@ -11716,11 +12430,11 @@ void CPlayer::CreateComplete()
     }
   }
 
-  ItemCombineMgr::OnPlayerCreateCompleteProc(&this->m_ItemCombineMgr);
+  this->m_ItemCombineMgr.OnPlayerCreateCompleteProc();
 
-  if (CRadarItemMgr::GetDelayTime(&this->m_pUserDB->m_RadarItemMgr))
+  if (this->m_pUserDB->m_RadarItemMgr.GetDelayTime())
   {
-    const unsigned int delay = CRadarItemMgr::GetDelayTime(&this->m_pUserDB->m_RadarItemMgr);
+    const unsigned int delay = this->m_pUserDB->m_RadarItemMgr.GetDelayTime();
     SendMsg_RadarDelayTime(delay);
   }
 
@@ -11736,11 +12450,11 @@ void CPlayer::CreateComplete()
     CTrap *trap = &g_Trap[j];
     if (trap->m_bLive && !trap->m_pMaster && trap->m_dwMasterSerial == this->m_dwObjSerial)
     {
-      if (!_TRAP_PARAM::PushItem(&this->m_pmTrp, trap, trap->m_dwObjSerial))
+      if (!this->m_pmTrp.PushItem(trap, trap->m_dwObjSerial))
       {
         break;
       }
-      CTrap::MasterReStart(trap, this);
+      trap->MasterReStart(this);
     }
   }
   if (this->m_pmTrp.m_nCount > 0)
@@ -11755,32 +12469,32 @@ void CPlayer::CreateComplete()
     {
       entry->dwMasterSerial = static_cast<unsigned int>(-1);
       const int itemIndex = entry->byItemIndex;
-      const unsigned __int8 bagNum = CPlayerDB::GetBagNum(&this->m_Param);
+      const unsigned __int8 bagNum = this->m_Param.GetBagNum();
       if (itemIndex < 20 * bagNum)
       {
         _STORAGE_LIST::_db_con *item = &this->m_Param.m_dbInven.m_pStorageList[itemIndex];
         if (item->m_bLoad && item->m_byTableCode == 25 && !item->m_bLock)
         {
-          _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[25], item->m_wItemIndex);
+          _base_fld *record = g_Main.m_tblItemData[25].GetRecord(item->m_wItemIndex);
           if (record)
           {
-            const int raceSexCode = CPlayerDB::GetRaceSexCode(&this->m_Param);
+            const int raceSexCode = this->m_Param.GetRaceSexCode();
             if (record[3].m_strCode[raceSexCode + 52] == 49)
             {
               const bool quick = entry->bComplete;
-              const unsigned __int8 raceCode = CPlayerDB::GetRaceCode(&this->m_Param);
+              const unsigned __int8 raceCode = this->m_Param.GetRaceCode();
               CGuardTower *tower =
                 CreateGuardTower(entry->pMap, 0, entry->fPos, item, this, raceCode, quick);
               if (tower)
               {
                 if (IsOtherTowerNear(this, entry->fPos, tower))
                 {
-                  CGuardTower::Destroy(tower, 0, 0);
+                  tower->Destroy(0, 0);
                 }
                 else
                 {
-                  _STORAGE_LIST::_storage_con::lock(item, 1);
-                  _TOWER_PARAM::PushList(&this->m_pmTwr, item, tower);
+                  item->lock(1);
+                  this->m_pmTwr.PushList(item, tower);
                   ++this->m_pmTwr.m_nCount;
                   SendMsg_TowerContinue(item->m_wSerial, tower);
                 }
@@ -11792,9 +12506,9 @@ void CPlayer::CreateComplete()
     }
   }
 
-  const int raceCode = CPlayerDB::GetRaceCode(&this->m_Param);
+  const int raceCode = this->m_Param.GetRaceCode();
   CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
-  if (CPvpUserAndGuildRankingSystem::IsCurrentRaceBossGroup(ranking, raceCode, this->m_dwObjSerial))
+  if (ranking->IsCurrentRaceBossGroup(raceCode, this->m_dwObjSerial))
   {
     SendMsg_RaceTopInform(1);
   }
@@ -11805,18 +12519,18 @@ void CPlayer::CreateComplete()
     char *levelStr = cvt_string(level);
     Emb_CreateQuestEvent(quest_happen_type_lv, levelStr);
     CGoldenBoxItemMgr *golden = CGoldenBoxItemMgr::Instance();
-    if (CGoldenBoxItemMgr::Get_Event_Status(golden) == 2)
+    if (golden->Get_Event_Status() == 2)
     {
       CGoldenBoxItemMgr *countMgr = CGoldenBoxItemMgr::Instance();
-      if (CGoldenBoxItemMgr::Get_StarterBox_Count(countMgr))
+      if (countMgr->Get_StarterBox_Count())
       {
         bool inserted = false;
         for (int m = 0; m < 2; ++m)
         {
           CGoldenBoxItemMgr *boxMgr = CGoldenBoxItemMgr::Instance();
-          char *itemCode = CGoldenBoxItemMgr::GetStarterBoxCode(boxMgr, m);
+          char *itemCode = boxMgr->GetStarterBoxCode(m);
           CGoldenBoxItemMgr *insertMgr = CGoldenBoxItemMgr::Instance();
-          if (CGoldenBoxItemMgr::StarterBox_InsertToInven(insertMgr, this, itemCode))
+          if (insertMgr->StarterBox_InsertToInven(this, itemCode))
           {
             inserted = true;
           }
@@ -11824,38 +12538,38 @@ void CPlayer::CreateComplete()
         if (inserted)
         {
           CGoldenBoxItemMgr *setMgr = CGoldenBoxItemMgr::Instance();
-          CGoldenBoxItemMgr::Set_StarterBox_Count(setMgr, 1u, 0);
+          setMgr->Set_StarterBox_Count(1u, 0);
         }
       }
     }
   }
 
-  CVoteSystem *voteSystem = &g_VoteSys[static_cast<int>(CPlayerDB::GetRaceCode(&this->m_Param))];
+  CVoteSystem *voteSystem = &g_VoteSys[static_cast<int>(this->m_Param.GetRaceCode())];
   if (voteSystem->m_bActive)
   {
     if (voteSystem->m_bPunishment)
     {
-      const unsigned int serial = CPlayerDB::GetCharSerial(&this->m_Param);
-      const int voteRace = CPlayerDB::GetRaceCode(&this->m_Param);
+      const unsigned int serial = this->m_Param.GetCharSerial();
+      const int voteRace = this->m_Param.GetRaceCode();
       CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
-      if (CPvpUserAndGuildRankingSystem::GetBossType(rank, voteRace, serial) == 0xFF)
+      if (rank->GetBossType(voteRace, serial) == 0xFF)
       {
-        CVoteSystem::SendMsg_StartedVoteInform(voteSystem, this->m_ObjID.m_wIndex, this->m_dwObjSerial, 1);
+        voteSystem->SendMsg_StartedVoteInform(this->m_ObjID.m_wIndex, this->m_dwObjSerial, 1);
       }
       else
       {
-        CVoteSystem::SendMsg_StartedVoteInform(voteSystem, this->m_ObjID.m_wIndex, this->m_dwObjSerial, 0);
+        voteSystem->SendMsg_StartedVoteInform(this->m_ObjID.m_wIndex, this->m_dwObjSerial, 0);
       }
     }
     else
     {
-      CVoteSystem::SendMsg_StartedVoteInform(voteSystem, this->m_ObjID.m_wIndex, this->m_dwObjSerial, 0);
+      voteSystem->SendMsg_StartedVoteInform(this->m_ObjID.m_wIndex, this->m_dwObjSerial, 0);
     }
   }
 
-  if (CHolyStoneSystem::GetSceneCode(&g_HolySys) == 1)
+  if (g_HolySys.GetSceneCode() == 1)
   {
-    _QUEST_CASH *questCash = CHolyStoneSystem::FindStoragedQuestCash(&g_HolySys, this->m_dwObjSerial);
+    _QUEST_CASH *questCash = g_HolySys.FindStoragedQuestCash(this->m_dwObjSerial);
     if (questCash)
     {
       RecvHSKQuest(
@@ -11868,7 +12582,7 @@ void CPlayer::CreateComplete()
     }
     else if (GetLevel() >= 25)
     {
-      const unsigned __int8 numOfTime = CHolyStoneSystem::GetNumOfTime(&g_HolySys);
+      const unsigned __int8 numOfTime = g_HolySys.GetNumOfTime();
       const int randVal = rand();
       RecvHSKQuest(randVal % 2, 0, 0, 0, 0, numOfTime);
     }
@@ -11877,23 +12591,23 @@ void CPlayer::CreateComplete()
   for (int j = 0; j < 50; ++j)
   {
     _BUDDY_LIST::__list *buddy = &this->m_pmBuddy.m_List[j];
-    if (_BUDDY_LIST::__list::fill(buddy))
+    if (buddy->fill())
     {
       for (int n = 0; n < MAX_PLAYER; ++n)
       {
         CPlayer *ptr = &g_Player[n];
         if (ptr->m_bLive
             && ptr != this
-            && _effect_parameter::GetEff_Have(&ptr->m_EP, 50) <= 0.0
+            && ptr->m_EP.GetEff_Have(50) <= 0.0
             && ptr->m_dwObjSerial == buddy->dwSerial)
         {
-          if (_BUDDY_LIST::IsBuddy(&ptr->m_pmBuddy, this->m_dwObjSerial))
+          if (ptr->m_pmBuddy.IsBuddy(this->m_dwObjSerial))
           {
-            char *nameW = CPlayerDB::GetCharNameW(&ptr->m_Param);
-            _BUDDY_LIST::__list::ON(buddy, nameW, ptr);
-            char *selfNameW = CPlayerDB::GetCharNameW(&this->m_Param);
-            _BUDDY_LIST::SearchBuddyLogin(&ptr->m_pmBuddy, this, this->m_dwObjSerial, selfNameW);
-            SendMsg_BuddyLoginInform(ptr, this->m_dwObjSerial, this->m_wRegionMapIndex, this->m_wRegionIndex);
+            char *nameW = ptr->m_Param.GetCharNameW();
+            buddy->ON(nameW, ptr);
+            char *selfNameW = this->m_Param.GetCharNameW();
+            ptr->m_pmBuddy.SearchBuddyLogin(this, this->m_dwObjSerial, selfNameW);
+            ptr->SendMsg_BuddyLoginInform(this->m_dwObjSerial, this->m_wRegionMapIndex, this->m_wRegionIndex);
           }
           break;
         }
@@ -11902,17 +12616,13 @@ void CPlayer::CreateComplete()
   }
 
   CUserDB *userDb = this->m_pUserDB;
-  TimeLimitMgr::InsertPlayerStatus(
-    g_Main.m_pTimeLimitMgr,
-    this->m_id.wIndex,
+  g_Main.m_pTimeLimitMgr->InsertPlayerStatus(this->m_id.wIndex,
     userDb->m_dwAccountSerial,
     userDb->m_AvatorData.dbTimeLimitInfo.byTLStatus,
     userDb->m_AvatorData.dbTimeLimitInfo.dwFatigue,
     userDb->m_AvatorData.dbTimeLimitInfo.dwLastLogoutTime,
     userDb->m_BillingInfo.bAgeLimit);
-  TimeLimitMgr::CheckPlayerStatus(
-    g_Main.m_pTimeLimitMgr,
-    this->m_id.wIndex,
+  g_Main.m_pTimeLimitMgr->CheckPlayerStatus(this->m_id.wIndex,
     this->m_pUserDB->m_AvatorData.dbTimeLimitInfo.dwLastLogoutTime,
     &this->m_pUserDB->m_AvatorData.dbTimeLimitInfo.byTLStatus,
     &this->m_pUserDB->m_AvatorData.dbTimeLimitInfo.dwFatigue);
@@ -11923,10 +12633,10 @@ void CPlayer::CreateComplete()
   SendMsg_Init_Action_Point();
 
   CUnmannedTraderController *trader = CUnmannedTraderController::Instance();
-  CUnmannedTraderController::CompleteCreate(trader, this->m_ObjID.m_wIndex);
+  trader->CompleteCreate(this->m_ObjID.m_wIndex);
 
   CDarkHoleChannel *channel =
-    CDarkHoleDungeonQuest::SearchOncePlayedChannel(&g_DarkHoleQuest, this->m_dwObjSerial);
+    g_DarkHoleQuest.SearchOncePlayedChannel(this->m_dwObjSerial);
   if (channel)
   {
     SendMsg_ReEnterAsk(channel->m_wChannelIndex, channel->m_dwChannelSerial);
@@ -11940,7 +12650,7 @@ void CPlayer::CreateComplete()
 
     if (g_HolySys.m_bScheduleCodePre == 1)
     {
-      questCashOther = CHolyStoneSystem::PopStoredQuestCash_Other(&g_HolySys, this->m_dwObjSerial);
+      questCashOther = g_HolySys.PopStoredQuestCash_Other(this->m_dwObjSerial);
       if (questCashOther)
       {
         stoneMapMoveInfo = questCashOther->byStoneMapMoveInfo;
@@ -11949,11 +12659,11 @@ void CPlayer::CreateComplete()
       {
         stoneMapMoveInfo = 1;
       }
-      CHolyStoneSystem::SendMsg_NoticeNextQuest(&g_HolySys, this->m_ObjID.m_wIndex, stoneMapMoveInfo);
+      g_HolySys.SendMsg_NoticeNextQuest(this->m_ObjID.m_wIndex, stoneMapMoveInfo);
     }
-    else if (CHolyStoneSystem::GetSceneCode(&g_HolySys) == 1)
+    else if (g_HolySys.GetSceneCode() == 1)
     {
-      questCashOther = CHolyStoneSystem::PopStoredQuestCash_Other(&g_HolySys, this->m_dwObjSerial);
+      questCashOther = g_HolySys.PopStoredQuestCash_Other(this->m_dwObjSerial);
       if (questCashOther)
       {
         stoneMapMoveInfo = questCashOther->byStoneMapMoveInfo;
@@ -11966,13 +12676,13 @@ void CPlayer::CreateComplete()
     }
 
     this->m_byStoneMapMoveInfo = stoneMapMoveInfo;
-    if (g_HolySys.bFreeMining && CHolyStoneSystem::IsMentalPass(&g_HolySys))
+    if (g_HolySys.bFreeMining && g_HolySys.IsMentalPass())
     {
-      const unsigned __int8 numOfTime = CHolyStoneSystem::GetNumOfTime(&g_HolySys);
-      const unsigned __int8 startHour = CHolyStoneSystem::GetStartHour(&g_HolySys);
-      const unsigned __int8 startDay = CHolyStoneSystem::GetStartDay(&g_HolySys);
-      const unsigned __int8 startMonth = CHolyStoneSystem::GetStartMonth(&g_HolySys);
-      const unsigned __int16 startYear = CHolyStoneSystem::GetStartYear(&g_HolySys);
+      const unsigned __int8 numOfTime = g_HolySys.GetNumOfTime();
+      const unsigned __int8 startHour = g_HolySys.GetStartHour();
+      const unsigned __int8 startDay = g_HolySys.GetStartDay();
+      const unsigned __int8 startMonth = g_HolySys.GetStartMonth();
+      const unsigned __int16 startYear = g_HolySys.GetStartYear();
       UpdateLastCriTicket(startYear, startMonth, startDay, startHour, numOfTime);
     }
   }
@@ -11985,16 +12695,16 @@ void CPlayer::CreateComplete()
   }
 
   PatriarchElectProcessor *patriarch = PatriarchElectProcessor::Instance();
-  PatriarchElectProcessor::SendMsg_ConnectNewUser(patriarch, this);
+  patriarch->SendMsg_ConnectNewUser(this);
   SendMsg_GM_Greeting(g_Main.m_wszGMName, g_Main.m_wszMainGreetingMsg);
 
-  char *raceGreeting = g_Main.m_wszRaceGreetingMsg[static_cast<int>(CPlayerDB::GetRaceCode(&this->m_Param))];
-  const int raceGreetingIndex = CPlayerDB::GetRaceCode(&this->m_Param);
+  char *raceGreeting = g_Main.m_wszRaceGreetingMsg[static_cast<int>(this->m_Param.GetRaceCode())];
+  const int raceGreetingIndex = this->m_Param.GetRaceCode();
   SendMsg_RACE_Greeting(g_Main.m_wszBossName[raceGreetingIndex], raceGreeting);
 
   if (this->m_Param.m_pGuild && this->m_Param.m_pGuild->m_wszGreetingMsg[0])
   {
-    char *guildMasterName = CGuild::GetGuildMasterName(this->m_Param.m_pGuild);
+    char *guildMasterName = this->m_Param.m_pGuild->GetGuildMasterName();
     if (!guildMasterName)
     {
       guildMasterName = this->m_Param.m_pGuild->m_wszName;
@@ -12002,39 +12712,39 @@ void CPlayer::CreateComplete()
     SendMsg_GUILD_Greeting(guildMasterName, this->m_Param.m_pGuild->m_wszGreetingMsg);
   }
 
-  const unsigned __int8 notifyRace = CPlayerDB::GetRaceCode(&this->m_Param);
-  CNotifyNotifyRaceLeaderSownerUTaxrate::Notify(&g_Main.m_kEtcNotifyInfo, notifyRace, this->m_ObjID.m_wIndex);
+  const unsigned __int8 notifyRace = this->m_Param.GetRaceCode();
+  g_Main.m_kEtcNotifyInfo.Notify(notifyRace, this->m_ObjID.m_wIndex);
 
-  const int notifyTradeRace = CPlayerDB::GetRaceCode(&this->m_Param);
+  const int notifyTradeRace = this->m_Param.GetRaceCode();
   CUnmannedTraderController *tradeInfo = CUnmannedTraderController::Instance();
-  CUnmannedTraderController::CompleteCreateNotifyTradeInfo(tradeInfo, notifyTradeRace, this->m_ObjID.m_wIndex);
+  tradeInfo->CompleteCreateNotifyTradeInfo(notifyTradeRace, this->m_ObjID.m_wIndex);
 
   CMoveMapLimitManager *moveMapLimit = CMoveMapLimitManager::Instance();
-  CMoveMapLimitManager::CreateComplete(moveMapLimit, this);
+  moveMapLimit->CreateComplete(this);
 
   if (!IsUseReleaseRaceBuffPotion())
   {
     CRaceBuffManager *raceBuff = CRaceBuffManager::Instance();
-    CRaceBuffManager::CreateComplete(raceBuff, this);
+    raceBuff->CreateComplete(this);
   }
 
   _qry_case_select_patriarch_comm query{};
-  query.dwSerial = CPlayerDB::GetCharSerial(&this->m_Param);
-  const int querySize = _qry_case_select_patriarch_comm::size(&query);
-  CMainThread::PushDQSData(&g_Main, 0xFFFFFFFF, nullptr, 0x82u, reinterpret_cast<char *>(&query), querySize);
+  query.dwSerial = this->m_Param.GetCharSerial();
+  const int querySize = query.size();
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x82u, reinterpret_cast<char *>(&query), querySize);
 
-  const int bossRace = CPlayerDB::GetRaceCode(&this->m_Param);
+  const int bossRace = this->m_Param.GetRaceCode();
   CPvpUserAndGuildRankingSystem *bossRank = CPvpUserAndGuildRankingSystem::Instance();
-  if (CPvpUserAndGuildRankingSystem::GetCurrentRaceBossSerial(bossRank, bossRace, 0) == this->m_dwObjSerial)
+  if (bossRank->GetCurrentRaceBossSerial(bossRace, 0) == this->m_dwObjSerial)
   {
-    const int honorRace = CPlayerDB::GetRaceCode(&this->m_Param);
+    const int honorRace = this->m_Param.GetRaceCode();
     CHonorGuild *honor = CHonorGuild::Instance();
-    CHonorGuild::SendInformChange(honor, honorRace, this->m_ObjID.m_wIndex);
+    honor->SendInformChange(honorRace, this->m_ObjID.m_wIndex);
   }
 
-  const int winRateRace = CPlayerDB::GetRaceCode(&this->m_Param);
+  const int winRateRace = this->m_Param.GetRaceCode();
   CRaceBossWinRate *winRate = CRaceBossWinRate::Instance();
-  CRaceBossWinRate::Notify(winRate, winRateRace, this->m_ObjID.m_wIndex);
+  winRate->Notify();
 
   int number = 0;
   for (int ii = 0; ii < 3; ++ii)
@@ -12047,7 +12757,7 @@ void CPlayer::CreateComplete()
   {
     if (number < 0)
     {
-      const double pvpPoint = CPlayerDB::GetPvPPoint(&this->m_Param);
+      const double pvpPoint = this->m_Param.GetPvPPoint();
       if (std::fabs(static_cast<double>(number)) > pvpPoint)
       {
         number = static_cast<int>(-pvpPoint);
@@ -12058,15 +12768,64 @@ void CPlayer::CreateComplete()
   }
 
   CashItemRemoteStore *cashStore = CashItemRemoteStore::Instance();
-  CashItemRemoteStore::inform_cashdiscount_event(cashStore, this->m_ObjID.m_wIndex);
-  CashItemRemoteStore *cashEvent = CashItemRemoteStore::Instance();
-  CashItemRemoteStore::Inform_CashEvent(cashEvent, this->m_ObjID.m_wIndex);
-  CashItemRemoteStore *conditionalEvent = CashItemRemoteStore::Instance();
-  CashItemRemoteStore::Inform_ConditionalEvent(conditionalEvent, this->m_ObjID.m_wIndex);
+  ICsSendInterface::SendMsg_CashDiscountEventInform(
+    this->m_ObjID.m_wIndex,
+    cashStore->m_cde.m_cde_status,
+    &cashStore->m_cde.m_ini);
+
+  for (int eventType = 0; eventType < 3; ++eventType)
+  {
+    if (!cashStore->m_cash_event[eventType].m_ini.m_bUseCashEvent)
+    {
+      continue;
+    }
+
+    ICsSendInterface::SendMsg_CashEventInform(
+      this->m_ObjID.m_wIndex,
+      static_cast<unsigned __int8>(eventType),
+      cashStore->m_cash_event[eventType].m_event_status,
+      &cashStore->m_cash_event[eventType].m_ini,
+      &cashStore->m_lim_event);
+  }
+
+  if (cashStore->m_con_event.m_ini.m_bUseConEvent)
+  {
+    unsigned __int16 discount = 0;
+    if (cashStore->m_con_event.m_ini.m_byEventKind == 2)
+    {
+      discount = cashStore->m_cde.m_ini.m_wCsDiscount;
+    }
+
+    const unsigned __int8 conStatus = cashStore->m_con_event.m_conevent_status;
+    const char *eventMsg = nullptr;
+    if (conStatus == 2u)
+    {
+      eventMsg = cashStore->m_con_event.m_ini.m_szStartMsg;
+    }
+    else if (conStatus == 3u)
+    {
+      eventMsg = cashStore->m_con_event.m_ini.m_szMiddletMsg;
+    }
+    else if (conStatus == 4u)
+    {
+      eventMsg = cashStore->m_con_event.m_ini.m_szEndMsg;
+      discount = 0;
+    }
+
+    if (eventMsg)
+    {
+      ICsSendInterface::SendMsg_ConditionalEventInform(
+        this->m_ObjID.m_wIndex,
+        cashStore->m_con_event.m_ini.m_byEventKind,
+        discount,
+        conStatus,
+        eventMsg);
+    }
+  }
 
   if (IsOverOneDay() && !this->m_bFirstStart)
   {
-    double pvpPoint = CPlayerDB::GetPvPPoint(&this->m_Param);
+    double pvpPoint = this->m_Param.GetPvPPoint();
     double alter = pvpPoint * 0.2000000029802322;
     if (pvpPoint < 0.0)
     {
@@ -12101,25 +12860,25 @@ void CPlayer::CreateComplete()
     }
   }
 
-  CQuestMgr::CheckFailLoop(&this->m_QuestMgr, 2, nullptr);
+  this->m_QuestMgr.CheckFailLoop(2, nullptr);
   SendMsg_RemainOreRate();
   SendMsg_OreTransferCount();
 
   if (IsApplyPcbangPrimium())
   {
-    CCouponMgr::Init(&this->m_kPcBangCoupon, this->m_ObjID.m_wIndex);
+    this->m_kPcBangCoupon.Init(this->m_ObjID.m_wIndex);
   }
 
   if (this->m_Param.m_pGuild)
   {
-    const unsigned int destroyerSerial = CHolyStoneSystem::GetDestroyerGuildSerial(&g_HolySys);
+    const unsigned int destroyerSerial = g_HolySys.GetDestroyerGuildSerial();
     if (destroyerSerial == static_cast<unsigned int>(-1))
     {
       SetLastAttBuff(0);
     }
     else
     {
-      const unsigned int guildSerial = CPlayerDB::GetGuildSerial(&this->m_Param);
+      const unsigned int guildSerial = this->m_Param.GetGuildSerial();
       if (destroyerSerial != guildSerial)
       {
         SetLastAttBuff(0);
@@ -12130,33 +12889,32 @@ void CPlayer::CreateComplete()
   const unsigned int endTime = this->m_pUserDB->m_AvatorData.dbSupplement.dwBufPotionEndTime;
   if (endTime <= GetKorLocalTime())
   {
-    CExtPotionBuf::SetExtPotionBufUse(&this->m_PotionBufUse, 0);
+    this->m_PotionBufUse.SetExtPotionBufUse(0);
   }
   else
   {
-    CExtPotionBuf::SetExtPotionBufUse(&this->m_PotionBufUse, 1);
-    CExtPotionBuf::SetExtPotionEndTime(&this->m_PotionBufUse, endTime);
-    CExtPotionBuf::CalcRemainTime(&this->m_PotionBufUse, this->m_ObjID.m_wIndex, 1);
+    this->m_PotionBufUse.SetExtPotionBufUse(1);
+    this->m_PotionBufUse.SetExtPotionEndTime(endTime);
+    this->m_PotionBufUse.CalcRemainTime(this->m_ObjID.m_wIndex, 1);
   }
 
   CPcBangFavor *pcBang = CPcBangFavor::Instance();
-  CPcBangFavor::PcBangDeleteItem(pcBang, this);
+  pcBang->PcBangDeleteItem(this);
 
   CPcBangFavor *pcBangEnable = CPcBangFavor::Instance();
-  if (CPcBangFavor::IsEnable(pcBangEnable))
+  if (pcBangEnable->IsEnable())
   {
     if (IsApplyPcbangPrimium())
     {
       _AVATOR_DATA *data = &this->m_pUserDB->m_AvatorData;
       CPcBangFavor *parser = CPcBangFavor::Instance();
-      CPcBangFavor::ClassCodePasing(parser, data, this);
+      parser->ClassCodePasing(data, this);
     }
   }
 
   if (this->m_pUserDB)
   {
-    CMgrAccountLobbyHistory::player_create_complete_money(
-      &CUserDB::s_MgrLobbyHistory,
+    CUserDB::s_MgrLobbyHistory.player_create_complete_money(
       &this->m_pUserDB->m_AvatorData,
       this->m_pUserDB->m_szLobbyHistoryFileName);
     if (this->m_bFirstStart
@@ -12167,8 +12925,7 @@ void CPlayer::CreateComplete()
       const unsigned int oldGold = this->m_pUserDB->m_AvatorData.dbAvator.m_dwGold;
       this->m_pUserDB->m_AvatorData.dbAvator.m_dwDalant = 0;
       this->m_pUserDB->m_AvatorData.dbAvator.m_dwGold = 0;
-      CMgrAccountLobbyHistory::player_money_fix(
-        &CUserDB::s_MgrLobbyHistory,
+      CUserDB::s_MgrLobbyHistory.player_money_fix(
         oldDalant,
         oldGold,
         &this->m_pUserDB->m_AvatorData,
@@ -12178,7 +12935,7 @@ void CPlayer::CreateComplete()
   }
 
   CNationSettingManager *nation = CTSingleton<CNationSettingManager>::Instance();
-  CNationSettingManager::CreateComplete(nation, this);
+  nation->CreateComplete(this);
   SendMsg_BuyCashItemMode();
 }
 
@@ -12232,12 +12989,12 @@ char CPlayer::Emb_CheckActForQuest(int nActCode, char *pszReqCode, unsigned __in
       }
       if (m_pUserDB)
       {
-        CUserDB::Update_QuestUpdate(m_pUserDB, node->byQuestDBSlot, slot, update);
+        m_pUserDB->Update_QuestUpdate(node->byQuestDBSlot, slot, update);
       }
 
       if (isAllComplete)
       {
-        _base_fld *record = CRecordData::GetRecord(CQuestMgr::s_tblQuest, slot->wIndex);
+        _base_fld *record = CQuestMgr::s_tblQuest->GetRecord(slot->wIndex);
         if (*reinterpret_cast<unsigned int *>(&record[13].m_strCode[60])
             || *reinterpret_cast<unsigned int *>(&record[1].m_strCode[24]))
         {
@@ -12308,7 +13065,7 @@ char CPlayer::Emb_StartQuest(unsigned __int8 bySelectQuest, _happen_event_cont *
     {
       SendMsg_QuestFailure(5, static_cast<char>(slotIndex));
       m_QuestMgr.DeleteQuestData(static_cast<unsigned __int8>(slotIndex));
-      CUserDB::Update_QuestDelete(m_pUserDB, static_cast<unsigned __int8>(slotIndex));
+      m_pUserDB->Update_QuestDelete(static_cast<unsigned __int8>(slotIndex));
     }
   }
 
@@ -12333,7 +13090,7 @@ char CPlayer::Emb_StartQuest(unsigned __int8 bySelectQuest, _happen_event_cont *
       slot->wNum[k] = 0xFFFF;
     }
   }
-  CUserDB::Update_QuestInsert(m_pUserDB, static_cast<unsigned __int8>(slotIndex), slot);
+  m_pUserDB->Update_QuestInsert(static_cast<unsigned __int8>(slotIndex), slot);
   SendMsg_InsertNewQuest(static_cast<unsigned __int8>(slotIndex), slot);
 
   if (pHappenEvent->m_pEvent->m_nQuestType == 1)
@@ -12343,7 +13100,7 @@ char CPlayer::Emb_StartQuest(unsigned __int8 bySelectQuest, _happen_event_cont *
       if (pHappenEvent->m_pEvent->m_CondNode[m].m_nCondType == 8)
       {
         _STORAGE_LIST::_db_con *item =
-          _STORAGE_LIST::GetPtrFromItemCode(&m_Param.m_dbInven, pHappenEvent->m_pEvent->m_CondNode[m].m_sCondVal);
+          m_Param.m_dbInven.GetPtrFromItemCode(pHappenEvent->m_pEvent->m_CondNode[m].m_sCondVal);
         if (item)
         {
           if (IsOverLapItem(item->m_byTableCode))
@@ -12355,9 +13112,7 @@ char CPlayer::Emb_StartQuest(unsigned __int8 bySelectQuest, _happen_event_cont *
             }
             else
             {
-              CMgrAvatorItemHistory::delete_npc_quest_item(
-                &CPlayer::s_MgrItemHistory,
-                m_ObjID.m_wIndex,
+              CPlayer::s_MgrItemHistory.delete_npc_quest_item(m_ObjID.m_wIndex,
                 item,
                 m_szItemHistoryFileName);
             }
@@ -12368,9 +13123,7 @@ char CPlayer::Emb_StartQuest(unsigned __int8 bySelectQuest, _happen_event_cont *
             {
               return 0;
             }
-            CMgrAvatorItemHistory::delete_npc_quest_item(
-              &CPlayer::s_MgrItemHistory,
-              m_ObjID.m_wIndex,
+            CPlayer::s_MgrItemHistory.delete_npc_quest_item(m_ObjID.m_wIndex,
               item,
               m_szItemHistoryFileName);
           }
@@ -12385,11 +13138,11 @@ char CPlayer::Emb_StartQuest(unsigned __int8 bySelectQuest, _happen_event_cont *
 _Quest_fld *CPlayer::_Reward_Quest(_Quest_fld *pQuestFld, unsigned __int8 byRewardItemIndex)
 {
   _Quest_fld *linkedQuest = nullptr;
-  const long double penalty = TimeLimitMgr::GetPlayerPenalty(g_Main.m_pTimeLimitMgr, m_id.wIndex);
+  const long double penalty = g_Main.m_pTimeLimitMgr->GetPlayerPenalty(m_id.wIndex);
 
   if (pQuestFld->m_nMaxLevel != -1)
   {
-    AlterMaxLevel(pQuestFld->m_nMaxLevel);
+    this->AlterMaxLevel(pQuestFld->m_nMaxLevel);
   }
   if (pQuestFld->m_dConsExp > 0.0)
   {
@@ -12415,11 +13168,9 @@ _Quest_fld *CPlayer::_Reward_Quest(_Quest_fld *pQuestFld, unsigned __int8 byRewa
       static_cast<double>(pQuestFld->m_nConsDalant) * penalty);
     const unsigned int addGold = static_cast<unsigned int>(
       static_cast<double>(pQuestFld->m_nConsGold) * penalty);
-    const unsigned int sumGold = CPlayerDB::GetGold(&m_Param);
-    const unsigned int sumDalant = CPlayerDB::GetDalant(&m_Param);
-    CMgrAvatorItemHistory::reward_add_money(
-      &CPlayer::s_MgrItemHistory,
-      m_ObjID.m_wIndex,
+    const unsigned int sumGold = m_Param.GetGold();
+    const unsigned int sumDalant = m_Param.GetDalant();
+    CPlayer::s_MgrItemHistory.reward_add_money(m_ObjID.m_wIndex,
       "Quest",
       addDalant,
       addGold,
@@ -12427,25 +13178,25 @@ _Quest_fld *CPlayer::_Reward_Quest(_Quest_fld *pQuestFld, unsigned __int8 byRewa
       sumGold,
       m_szItemHistoryFileName);
 
-    const int level = CPlayerDB::GetLevel(&m_Param);
+    const int level = m_Param.GetLevel();
     if (level == 30 || level == 40 || level == 50 || level == 60)
     {
       if (pQuestFld->m_nConsDalant > 0)
       {
-        const char *classCode = CPlayerDB::GetPtrCurClass(&m_Param)->m_strCode;
-        const int curLevel = CPlayerDB::GetLevel(&m_Param);
-        const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+        const char *classCode = m_Param.GetPtrCurClass()->m_strCode;
+        const int curLevel = m_Param.GetLevel();
+        const int raceCode = m_Param.GetRaceCode();
         CMoneySupplyMgr *money = CMoneySupplyMgr::Instance();
-        CMoneySupplyMgr::UpdateQuestRewardMoneyData(money, raceCode, curLevel, classCode, pQuestFld->m_nConsDalant);
+        money->UpdateQuestRewardMoneyData(raceCode, curLevel, const_cast<char *>(classCode), pQuestFld->m_nConsDalant);
       }
       if (pQuestFld->m_nConsGold > 0)
       {
         const unsigned int amount = 2000 * pQuestFld->m_nConsGold;
-        const char *classCode = CPlayerDB::GetPtrCurClass(&m_Param)->m_strCode;
-        const int curLevel = CPlayerDB::GetLevel(&m_Param);
-        const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+        const char *classCode = m_Param.GetPtrCurClass()->m_strCode;
+        const int curLevel = m_Param.GetLevel();
+        const int raceCode = m_Param.GetRaceCode();
         CMoneySupplyMgr *money = CMoneySupplyMgr::Instance();
-        CMoneySupplyMgr::UpdateQuestRewardMoneyData(money, raceCode, curLevel, classCode, amount);
+        money->UpdateQuestRewardMoneyData(raceCode, curLevel, const_cast<char *>(classCode), amount);
       }
     }
   }
@@ -12453,7 +13204,7 @@ _Quest_fld *CPlayer::_Reward_Quest(_Quest_fld *pQuestFld, unsigned __int8 byRewa
   for (int j = 0; j < 6; ++j)
   {
     const char *itemCode = pQuestFld->m_RewardItem[j].m_strConsITCode;
-    if (TimeLimitMgr::GetPlayerStatus(g_Main.m_pTimeLimitMgr, m_id.wIndex) == 99)
+    if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(m_id.wIndex) == 99)
     {
       break;
     }
@@ -12466,9 +13217,8 @@ _Quest_fld *CPlayer::_Reward_Quest(_Quest_fld *pQuestFld, unsigned __int8 byRewa
       }
       if (pQuestFld->m_RewardItem[j].m_nLinkQuestIdx != -1)
       {
-        linkedQuest = reinterpret_cast<_Quest_fld *>(CRecordData::GetRecord(
-          CQuestMgr::s_tblQuest,
-          pQuestFld->m_strLinkQuest[pQuestFld->m_RewardItem[j].m_nLinkQuestIdx]));
+        linkedQuest = reinterpret_cast<_Quest_fld *>(
+          CQuestMgr::s_tblQuest->GetRecord(pQuestFld->m_strLinkQuest[pQuestFld->m_RewardItem[j].m_nLinkQuestIdx]));
       }
     }
 
@@ -12484,7 +13234,7 @@ _Quest_fld *CPlayer::_Reward_Quest(_Quest_fld *pQuestFld, unsigned __int8 byRewa
     }
 
     auto *record = reinterpret_cast<unsigned __int16 *>(
-      CRecordData::GetRecord(&g_Main.m_tblItemData[tableCode], itemCode));
+      g_Main.m_tblItemData[tableCode].GetRecord(itemCode));
     if (!record)
     {
       continue;
@@ -12504,9 +13254,9 @@ _Quest_fld *CPlayer::_Reward_Quest(_Quest_fld *pQuestFld, unsigned __int8 byRewa
     const unsigned __int8 socketNum = GetDefItemUpgSocketNum(tableCode, *reinterpret_cast<unsigned int *>(record));
     item.m_dwLv = GetBitAfterSetLimSocket(socketNum);
 
-    if (_STORAGE_LIST::GetIndexEmptyCon(&m_Param.m_dbInven) == 0xFF)
+    if (m_Param.m_dbInven.GetIndexEmptyCon() == 0xFF)
     {
-      if (TimeLimitMgr::GetPlayerStatus(g_Main.m_pTimeLimitMgr, m_id.wIndex) == 99)
+      if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(m_id.wIndex) == 99)
       {
         break;
       }
@@ -12525,16 +13275,14 @@ _Quest_fld *CPlayer::_Reward_Quest(_Quest_fld *pQuestFld, unsigned __int8 byRewa
 
       char clause[136]{};
       sprintf(clause, "Quest G (%s)", pQuestFld->m_strCode);
-      CMgrAvatorItemHistory::reward_add_item(
-        &CPlayer::s_MgrItemHistory,
-        m_ObjID.m_wIndex,
+      CPlayer::s_MgrItemHistory.reward_add_item(m_ObjID.m_wIndex,
         clause,
         &item,
         m_szItemHistoryFileName);
     }
     else
     {
-      item.m_wSerial = CPlayerDB::GetNewItemSerial(&m_Param);
+      item.m_wSerial = m_Param.GetNewItemSerial();
       const _TimeItem_fld *timeRec = TimeItem::FindTimeRec(tableCode, *reinterpret_cast<unsigned int *>(record));
       if (timeRec && timeRec->m_nCheckType)
       {
@@ -12546,9 +13294,7 @@ _Quest_fld *CPlayer::_Reward_Quest(_Quest_fld *pQuestFld, unsigned __int8 byRewa
       }
       if (!Emb_AddStorage(0, &item, false, true))
       {
-        CMgrAvatorItemHistory::add_storage_fail(
-          &CPlayer::s_MgrItemHistory,
-          m_ObjID.m_wIndex,
+        CPlayer::s_MgrItemHistory.add_storage_fail(m_ObjID.m_wIndex,
           &item,
           "CPlayer::_Reward_Quest() - Emb_AddStorage() Fail",
           m_szItemHistoryFileName);
@@ -12559,9 +13305,7 @@ _Quest_fld *CPlayer::_Reward_Quest(_Quest_fld *pQuestFld, unsigned __int8 byRewa
 
       char clause[160]{};
       sprintf(clause, "Quest (%s)", pQuestFld->m_strCode);
-      CMgrAvatorItemHistory::reward_add_item(
-        &CPlayer::s_MgrItemHistory,
-        m_ObjID.m_wIndex,
+      CPlayer::s_MgrItemHistory.reward_add_item(m_ObjID.m_wIndex,
         clause,
         &item,
         m_szItemHistoryFileName);
@@ -12589,7 +13333,7 @@ _Quest_fld *CPlayer::_Reward_Quest(_Quest_fld *pQuestFld, unsigned __int8 byRewa
   if (std::strncmp(pQuestFld->m_strConsSkillCode, "-1", 2) != 0)
   {
     auto *record = reinterpret_cast<unsigned __int8 *>(
-      CRecordData::GetRecord(g_Main.m_tblEffectData, pQuestFld->m_strConsSkillCode));
+      g_Main.m_tblEffectData[0].GetRecord(pQuestFld->m_strConsSkillCode));
     if (record)
     {
       Emb_AlterStat(3, *record, pQuestFld->m_nConsSkillCnt, 2, "CPlayer::_Reward_Quest()---1", true);
@@ -12598,7 +13342,7 @@ _Quest_fld *CPlayer::_Reward_Quest(_Quest_fld *pQuestFld, unsigned __int8 byRewa
 
   if (std::strncmp(pQuestFld->m_strConsForceCode, "-1", 2) != 0)
   {
-    _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblEffectData[1], pQuestFld->m_strConsSkillCode);
+    _base_fld *record = g_Main.m_tblEffectData[1].GetRecord(pQuestFld->m_strConsSkillCode);
     if (record)
     {
       for (int k = 0; k < 88; ++k)
@@ -12642,11 +13386,11 @@ void CPlayer::Emb_CompleteQuest(
     }
   }
 
-  CMgrAvatorLvHistory::update_mastery(
+  CPlayer::s_MgrLvHistory.update_mastery(
     m_ObjID.m_wIndex,
     m_byUserDgr,
-    CPlayerDB::GetLevel(&m_Param),
-    CPlayerDB::GetExp(&m_Param),
+    m_Param.GetLevel(),
+    m_Param.GetExp(),
     m_dwExpRate,
     m_Param.m_byPvPGrade,
     m_nMaxPoint,
@@ -12655,9 +13399,9 @@ void CPlayer::Emb_CompleteQuest(
     m_szLvHistoryFileName,
     0,
     nullptr);
-  CPlayerDB::InitAlterMastery(&m_Param);
+  m_Param.InitAlterMastery();
 
-  auto *quest = reinterpret_cast<_Quest_fld *>(CRecordData::GetRecord(CQuestMgr::s_tblQuest, slot->wIndex));
+  auto *quest = reinterpret_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(slot->wIndex));
   _Quest_fld *linkedQuest = _Reward_Quest(quest, byRewardItemIndex);
   SendMsg_QuestComplete(static_cast<char>(byQuestDBSlot));
 
@@ -12668,18 +13412,18 @@ void CPlayer::Emb_CompleteQuest(
       static_cast<char>(quest->m_nDifficultyLevel),
       quest->m_dRepeatTime);
     _QUEST_DB_BASE::_NPC_QUEST_HISTORY *history = &m_Param.m_QuestDB.m_History[inserted];
-    CUserDB::Update_NPCQuestHistory(m_pUserDB, inserted, history);
+    m_pUserDB->Update_NPCQuestHistory(inserted, history);
     SendMsg_NpcQuestHistoryInform(static_cast<char>(inserted));
   }
 
   m_QuestMgr.DeleteQuestData(byQuestDBSlot);
-  CUserDB::Update_QuestDelete(m_pUserDB, byQuestDBSlot);
+  m_pUserDB->Update_QuestDelete(byQuestDBSlot);
 
-  CMgrAvatorLvHistory::update_mastery(
+  CPlayer::s_MgrLvHistory.update_mastery(
     m_ObjID.m_wIndex,
     m_byUserDgr,
-    CPlayerDB::GetLevel(&m_Param),
-    CPlayerDB::GetExp(&m_Param),
+    m_Param.GetLevel(),
+    m_Param.GetExp(),
     m_dwExpRate,
     m_Param.m_byPvPGrade,
     m_nMaxPoint,
@@ -12688,21 +13432,21 @@ void CPlayer::Emb_CompleteQuest(
     m_szLvHistoryFileName,
     2,
     quest->m_strCode);
-  CPlayerDB::InitAlterMastery(&m_Param);
+  m_Param.InitAlterMastery();
 
   m_dwUMWHLastTime = GetLoopTime();
   if (quest->m_nLinkDummyCond == 1)
   {
     if (strcmp_0(quest->m_strLinkDummyCode, "-1") != 0)
     {
-      _dummy_position *pos = CMapData::GetDummyPostion(m_pCurMap, quest->m_strLinkDummyCode);
+      _dummy_position *pos = m_pCurMap->GetDummyPostion(quest->m_strLinkDummyCode);
       if (pos)
       {
         float newPos[3]{};
-        if (CMapData::GetRandPosInDummy(m_pCurMap, pos, newPos, 1))
+        if (m_pCurMap->GetRandPosInDummy(pos, newPos, 1))
         {
           OutOfMap(m_pCurMap, m_wMapLayerIndex, 3, newPos);
-          const unsigned __int8 mapCode = CPlayerDB::GetMapCode(&m_Param);
+          const unsigned __int8 mapCode = m_Param.GetMapCode();
           SendMsg_GotoRecallResult(0, mapCode, newPos, 4);
         }
       }
@@ -12726,7 +13470,7 @@ void CPlayer::Emb_CompleteQuest(
       {
         linkIndex = static_cast<unsigned __int8>(rand() % linkCount);
       }
-      linkedQuest = reinterpret_cast<_Quest_fld *>(CRecordData::GetRecord(CQuestMgr::s_tblQuest, quest->m_strLinkQuest[linkIndex]));
+      linkedQuest = reinterpret_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(quest->m_strLinkQuest[linkIndex]));
     }
   }
 
@@ -12743,7 +13487,7 @@ void CPlayer::Emb_CompleteQuest(
         nextSlot->wNum[k] = 0;
       }
     }
-    CUserDB::Update_QuestInsert(m_pUserDB, byQuestDBSlot, nextSlot);
+    m_pUserDB->Update_QuestInsert(byQuestDBSlot, nextSlot);
     SendMsg_InsertNextQuest(byQuestDBSlot, nextSlot);
   }
 
@@ -12755,10 +13499,10 @@ void CPlayer::Emb_CompleteQuest(
       Emb_StartQuest(0xFFu, &m_QuestMgr.m_pTempHappenEvent[m]);
       if (m_QuestMgr.m_pTempHappenEvent[m].m_QtHpType == quest_happen_type_maxlevel)
       {
-        CPlayerDB::SetMaxLevel(&m_Param, 50);
+        m_Param.SetMaxLevel(50);
         if (m_pUserDB)
         {
-          CUserDB::Update_MaxLevel(m_pUserDB, 0x32u);
+          m_pUserDB->Update_MaxLevel(0x32u);
         }
       }
       m_QuestMgr.m_pTempHappenEvent[m].init();
@@ -12799,9 +13543,9 @@ unsigned int CPlayer::GetMoney(unsigned __int8 byMoneyCode)
 {
   if (byMoneyCode)
   {
-    return CPlayerDB::GetGold(&m_Param);
+    return m_Param.GetGold();
   }
-  return CPlayerDB::GetDalant(&m_Param);
+  return m_Param.GetDalant();
 }
 
 CPlayer *CPlayer::FindFarChatPlayerWithTemp(char *pwszName)
@@ -12817,7 +13561,7 @@ CPlayer *CPlayer::FindFarChatPlayerWithTemp(char *pwszName)
       if (entry->pDst
           && entry->pDst->m_bLive
           && entry->pDst->m_Param.m_byNameLen == nameLen
-          && !strncmp(CPlayerDB::GetCharNameW(&entry->pDst->m_Param), entry->wszName, nameLen))
+          && !strncmp(entry->pDst->m_Param.GetCharNameW(), entry->wszName, nameLen))
       {
         dst = entry->pDst;
       }
@@ -12836,7 +13580,7 @@ CPlayer *CPlayer::FindFarChatPlayerWithTemp(char *pwszName)
       CPlayer *candidate = &g_Player[k];
       if (candidate->m_bLive && candidate->m_Param.m_byNameLen == nameLen)
       {
-        if (!strncmp(CPlayerDB::GetCharNameW(&candidate->m_Param), pwszName, nameLen))
+        if (!strncmp(candidate->m_Param.GetCharNameW(), pwszName, nameLen))
         {
           dst = candidate;
           break;
@@ -12872,7 +13616,7 @@ CPlayer *CPlayer::FindFarChatPlayerWithTemp(char *pwszName)
       slot->bMemory = true;
       slot->dwMemoryTime = timeGetTime();
       slot->pDst = dst;
-      strcpy_0(slot->wszName, CPlayerDB::GetCharNameW(&dst->m_Param));
+      strcpy_0(slot->wszName, dst->m_Param.GetCharNameW());
       slot->byNameLen = static_cast<unsigned __int8>(strlen_0(slot->wszName));
     }
   }
@@ -12888,7 +13632,7 @@ void CPlayer::pc_ChatOperatorRequest(unsigned __int8 byRaceCode, char *pwszChatD
     {
       CPlayer *target = &g_Player[j];
       if (target->m_bLive
-          && (byRaceCode == 0xFF || target->m_byUserDgr || CPlayerDB::GetRaceCode(&target->m_Param) == byRaceCode))
+          && (byRaceCode == 0xFF || target->m_byUserDgr || target->m_Param.GetRaceCode() == byRaceCode))
       {
         target->SendData_ChatTrans(0, 0xFFFFFFFF, byRaceCode, false, pwszChatData, 0xFFu, nullptr);
       }
@@ -12900,35 +13644,35 @@ void CPlayer::pc_ChatCircleRequest(char *pwszChatData)
 {
   if ((!m_pUserDB || !m_pUserDB->m_bChatLock)
       && m_pCurMap
-      && CGameObject::GetCurSecNum(this) != -1
+      && GetCurSecNum() != -1
       && !m_bMapLoading)
   {
     _chat_message_receipt_udp msg{};
     msg.byMessageType = 1;
     msg.dwSenderSerial = m_dwObjSerial;
-    msg.byRaceCode = CPlayerDB::GetRaceCode(&m_Param);
+    msg.byRaceCode = m_Param.GetRaceCode();
     msg.bFiltering = false;
     msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszChatData));
     memcpy_0(msg.wszChatData, pwszChatData, msg.bySize);
     msg.wszChatData[msg.bySize] = 0;
-    strcpy_0(msg.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+    strcpy_0(msg.wszSenderName, m_Param.GetCharNameW());
     msg.byPvpGrade = m_Param.m_byPvPGrade;
 
     _chat_message_receipt_udp filtered{};
     filtered.byMessageType = 1;
     filtered.dwSenderSerial = m_dwObjSerial;
-    filtered.byRaceCode = CPlayerDB::GetRaceCode(&m_Param);
+    filtered.byRaceCode = m_Param.GetRaceCode();
     filtered.bFiltering = true;
     filtered.wszChatData[0] = 0;
     filtered.bySize = 0;
-    strcpy_0(filtered.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+    strcpy_0(filtered.wszSenderName, m_Param.GetCharNameW());
     filtered.byPvpGrade = m_Param.m_byPvPGrade;
 
     unsigned __int8 type[2] = {2, 10};
-    _sec_info *secInfo = CMapData::GetSecInfo(m_pCurMap);
-    const int curSec = CGameObject::GetCurSecNum(this);
+    _sec_info *secInfo = m_pCurMap->GetSecInfo();
+    const int curSec = GetCurSecNum();
     _pnt_rect rect{};
-    CMapData::GetRectInRadius(m_pCurMap, &rect, 3, curSec);
+    m_pCurMap->GetRectInRadius(&rect, 3, curSec);
 
     CChatStealSystem *stealSystem = CChatStealSystem::Instance();
     stealSystem->StealChatMsg(this, 1u, pwszChatData);
@@ -12938,7 +13682,7 @@ void CPlayer::pc_ChatCircleRequest(char *pwszChatData)
       for (int x = rect.nStartx; x <= rect.nEndx; ++x)
       {
         const unsigned int secIndex = secInfo->m_nSecNumW * y + x;
-        CObjectList *list = CMapData::GetSectorListPlayer(m_pCurMap, m_wMapLayerIndex, secIndex);
+        CObjectList *list = m_pCurMap->GetSectorListPlayer(m_wMapLayerIndex, secIndex);
         if (!list)
         {
           continue;
@@ -12956,7 +13700,7 @@ void CPlayer::pc_ChatCircleRequest(char *pwszChatData)
           {
             sendFull = true;
           }
-          else if (CPlayerDB::GetRaceCode(&target->m_Param) == CPlayerDB::GetRaceCode(&m_Param))
+          else if (target->m_Param.GetRaceCode() == m_Param.GetRaceCode())
           {
             sendFull = true;
           }
@@ -12964,15 +13708,15 @@ void CPlayer::pc_ChatCircleRequest(char *pwszChatData)
           {
             sendFull = true;
           }
-          else if (_effect_parameter::GetEff_Have(&target->m_EP, 3) != 0.0)
+          else if (target->m_EP.GetEff_Have(3) != 0.0)
           {
             sendFull = true;
           }
           else
           {
-            const int raceCode = CPlayerDB::GetRaceCode(&target->m_Param);
+            const int raceCode = target->m_Param.GetRaceCode();
             CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
-            const unsigned int bossSerial = CPvpUserAndGuildRankingSystem::GetCurrentRaceBossSerial(rank, raceCode, 0);
+            const unsigned int bossSerial = rank->GetCurrentRaceBossSerial(raceCode, 0);
             if (bossSerial == target->m_dwObjSerial)
             {
               sendFull = true;
@@ -12982,13 +13726,12 @@ void CPlayer::pc_ChatCircleRequest(char *pwszChatData)
           if (sendFull)
           {
             const unsigned __int16 len = msg.size();
-            CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], target->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
+            g_Network.m_pProcess[0]->LoadSendMsg( target->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
           }
           else
           {
             const unsigned __int16 len = filtered.size();
-            CNetProcess::LoadSendMsg(
-              g_Network.m_pProcess[0],
+            g_Network.m_pProcess[0]->LoadSendMsg(
               target->m_ObjID.m_wIndex,
               type,
               reinterpret_cast<char *>(&filtered),
@@ -13017,13 +13760,13 @@ void CPlayer::pc_ChatFarRequest(char *pwszName, char *pwszChatData)
         }
         else
         {
-          const int dstRace = CPlayerDB::GetRaceCode(&dst->m_Param);
-          const int myRace = CPlayerDB::GetRaceCode(&m_Param);
-          if (dstRace != myRace && dst->m_byUserDgr < 2u && _effect_parameter::GetEff_Have(&dst->m_EP, 3) == 0.0)
+          const int dstRace = dst->m_Param.GetRaceCode();
+          const int myRace = m_Param.GetRaceCode();
+          if (dstRace != myRace && dst->m_byUserDgr < 2u && dst->m_EP.GetEff_Have(3) == 0.0)
           {
-            const int raceCode = CPlayerDB::GetRaceCode(&dst->m_Param);
+            const int raceCode = dst->m_Param.GetRaceCode();
             CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
-            const unsigned int bossSerial = CPvpUserAndGuildRankingSystem::GetCurrentRaceBossSerial(rank, raceCode, 0);
+            const unsigned int bossSerial = rank->GetCurrentRaceBossSerial(raceCode, 0);
             if (bossSerial != dst->m_dwObjSerial)
             {
               filter = true;
@@ -13031,8 +13774,8 @@ void CPlayer::pc_ChatFarRequest(char *pwszName, char *pwszChatData)
           }
         }
 
-        char *senderName = CPlayerDB::GetCharNameW(&m_Param);
-        const unsigned __int8 senderRace = CPlayerDB::GetRaceCode(&m_Param);
+        char *senderName = m_Param.GetCharNameW();
+        const unsigned __int8 senderRace = m_Param.GetRaceCode();
         dst->SendData_ChatTrans(
           chatType,
           m_dwObjSerial,
@@ -13042,8 +13785,8 @@ void CPlayer::pc_ChatFarRequest(char *pwszName, char *pwszChatData)
           m_Param.m_byPvPGrade,
           senderName);
 
-        char *dstName = CPlayerDB::GetCharNameW(&dst->m_Param);
-        const unsigned __int8 selfRace = CPlayerDB::GetRaceCode(&m_Param);
+        char *dstName = dst->m_Param.GetCharNameW();
+        const unsigned __int8 selfRace = m_Param.GetRaceCode();
         SendData_ChatTrans(chatType, m_dwObjSerial, selfRace, false, pwszChatData, m_Param.m_byPvPGrade, dstName);
 
         char buffer[288]{};
@@ -13066,21 +13809,21 @@ void CPlayer::pc_ChatFarRequest(char *pwszName, char *pwszChatData)
 
 void CPlayer::pc_ChatPartyRequest(char *pwszChatData)
 {
-  if ((!m_pUserDB || (!m_pUserDB->m_bChatLock && !IsPunished(0, true))) && CPartyPlayer::IsPartyMode(m_pPartyMgr))
+  if ((!m_pUserDB || (!m_pUserDB->m_bChatLock && !IsPunished(0, true))) && m_pPartyMgr->IsPartyMode())
   {
     _chat_message_receipt_udp msg{};
     msg.byMessageType = 3;
     msg.dwSenderSerial = m_dwObjSerial;
-    msg.byRaceCode = CPlayerDB::GetRaceCode(&m_Param);
+    msg.byRaceCode = m_Param.GetRaceCode();
     msg.bFiltering = false;
     msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszChatData));
     memcpy_0(msg.wszChatData, pwszChatData, msg.bySize);
     msg.wszChatData[msg.bySize] = 0;
-    strcpy_0(msg.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+    strcpy_0(msg.wszSenderName, m_Param.GetCharNameW());
     msg.byPvpGrade = static_cast<unsigned __int8>(-1);
 
     unsigned __int8 type[2] = {2, 10};
-    CPartyPlayer **members = CPartyPlayer::GetPtrPartyMember(m_pPartyMgr);
+    CPartyPlayer **members = m_pPartyMgr->GetPtrPartyMember();
 
     CChatStealSystem *stealSystem = CChatStealSystem::Instance();
     stealSystem->StealChatMsg(this, msg.byMessageType, pwszChatData);
@@ -13090,8 +13833,7 @@ void CPlayer::pc_ChatPartyRequest(char *pwszChatData)
       if (members[j])
       {
         const unsigned __int16 len = msg.size();
-        CNetProcess::LoadSendMsg(
-          g_Network.m_pProcess[0],
+        g_Network.m_pProcess[0]->LoadSendMsg(
           members[j]->m_wZoneIndex,
           type,
           reinterpret_cast<char *>(&msg),
@@ -13105,15 +13847,15 @@ void CPlayer::pc_ChatRaceRequest(char *pwszChatData)
 {
   if (m_pUserDB && !m_pUserDB->m_bChatLock && !IsPunished(0, true))
   {
-    const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+    const int raceCode = m_Param.GetRaceCode();
     CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
-    if (CPvpUserAndGuildRankingSystem::IsCurrentRaceBossGroup(rank, raceCode, m_dwObjSerial))
+    if (rank->IsCurrentRaceBossGroup(raceCode, m_dwObjSerial))
     {
       _announ_message_receipt_udp msg{};
       msg.byMessageType = 4;
-      msg.bySenderRace = CPlayerDB::GetRaceCode(&m_Param);
+      msg.bySenderRace = m_Param.GetRaceCode();
       msg.dwSenderSerial = m_dwObjSerial;
-      strcpy_0(msg.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+      strcpy_0(msg.wszSenderName, m_Param.GetCharNameW());
       msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszChatData));
       memcpy_0(msg.wszChatData, pwszChatData, msg.bySize);
       msg.wszChatData[msg.bySize] = 0;
@@ -13131,10 +13873,9 @@ void CPlayer::pc_ChatRaceRequest(char *pwszChatData)
         if (target->m_bLive)
         {
           if (target->m_byUserDgr >= 2u
-              || CPlayerDB::GetRaceCode(&target->m_Param) == CPlayerDB::GetRaceCode(&m_Param))
+              || target->m_Param.GetRaceCode() == m_Param.GetRaceCode())
           {
-            CNetProcess::LoadSendMsg(
-              g_Network.m_pProcess[0],
+            g_Network.m_pProcess[0]->LoadSendMsg(
               target->m_ObjID.m_wIndex,
               type,
               reinterpret_cast<char *>(&msg),
@@ -13159,18 +13900,18 @@ void CPlayer::pc_ChatMapRequest(char *pwszChatData)
   if (m_pUserDB
       && !m_pUserDB->m_bChatLock
       && !IsPunished(0, true)
-      && CGameObject::GetCurSecNum(this) != -1
+      && GetCurSecNum() != -1
       && !m_bMapLoading)
   {
     _chat_message_receipt_udp msg{};
     msg.byMessageType = 9;
     msg.dwSenderSerial = m_dwObjSerial;
-    msg.byRaceCode = CPlayerDB::GetRaceCode(&m_Param);
+    msg.byRaceCode = m_Param.GetRaceCode();
     msg.bFiltering = false;
     msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszChatData));
     memcpy_0(msg.wszChatData, pwszChatData, msg.bySize);
     msg.wszChatData[msg.bySize] = 0;
-    strcpy_0(msg.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+    strcpy_0(msg.wszSenderName, m_Param.GetCharNameW());
     msg.byPvpGrade = m_Param.m_byPvPGrade;
 
     unsigned __int8 type[2] = {2, 10};
@@ -13178,13 +13919,13 @@ void CPlayer::pc_ChatMapRequest(char *pwszChatData)
     stealSystem->StealChatMsg(this, msg.byMessageType, pwszChatData);
 
     const int len = msg.size();
-    _sec_info *secInfo = CMapData::GetSecInfo(m_pCurMap);
+    _sec_info *secInfo = m_pCurMap->GetSecInfo();
     for (int j = 0; j < secInfo->m_nSecNumH; ++j)
     {
       for (int k = 0; k < secInfo->m_nSecNumW; ++k)
       {
         const unsigned int secIndex = k + secInfo->m_nSecNumW * j;
-        CObjectList *list = CMapData::GetSectorListPlayer(m_pCurMap, m_wMapLayerIndex, secIndex);
+        CObjectList *list = m_pCurMap->GetSectorListPlayer(m_wMapLayerIndex, secIndex);
         if (!list)
         {
           continue;
@@ -13197,12 +13938,11 @@ void CPlayer::pc_ChatMapRequest(char *pwszChatData)
           node = node->m_pNext;
 
           CPlayer *target = static_cast<CPlayer *>(obj);
-          if (CPlayerDB::GetRaceCode(&target->m_Param) == CPlayerDB::GetRaceCode(&m_Param))
+          if (target->m_Param.GetRaceCode() == m_Param.GetRaceCode())
           {
             if (target->m_bRecvMapChat)
             {
-              CNetProcess::LoadSendMsg(
-                g_Network.m_pProcess[0],
+              g_Network.m_pProcess[0]->LoadSendMsg(
                 target->m_ObjID.m_wIndex,
                 type,
                 reinterpret_cast<char *>(&msg),
@@ -13219,15 +13959,15 @@ void CPlayer::pc_ChatRaceBossRequest(char *pwszChatData)
 {
   if (m_pUserDB && !m_pUserDB->m_bChatLock && !IsPunished(0, true))
   {
-    const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+    const int raceCode = m_Param.GetRaceCode();
     CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
-    if (CPvpUserAndGuildRankingSystem::IsCurrentRaceBossGroup(rank, raceCode, m_dwObjSerial))
+    if (rank->IsCurrentRaceBossGroup(raceCode, m_dwObjSerial))
     {
       _announ_message_receipt_udp msg{};
       msg.byMessageType = 10;
-      msg.bySenderRace = CPlayerDB::GetRaceCode(&m_Param);
+      msg.bySenderRace = m_Param.GetRaceCode();
       msg.dwSenderSerial = m_dwObjSerial;
-      strcpy_0(msg.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+      strcpy_0(msg.wszSenderName, m_Param.GetCharNameW());
       msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszChatData));
       memcpy_0(msg.wszChatData, pwszChatData, msg.bySize);
       msg.wszChatData[msg.bySize] = 0;
@@ -13243,15 +13983,14 @@ void CPlayer::pc_ChatRaceBossRequest(char *pwszChatData)
         CPlayer *target = &g_Player[j];
         if (target->m_bLive)
         {
-          if (CPlayerDB::GetRaceCode(&target->m_Param) == CPlayerDB::GetRaceCode(&m_Param))
+          if (target->m_Param.GetRaceCode() == m_Param.GetRaceCode())
           {
-            const unsigned int serial = CPlayerDB::GetCharSerial(&target->m_Param);
-            const int myRace = CPlayerDB::GetRaceCode(&m_Param);
+            const unsigned int serial = target->m_Param.GetCharSerial();
+            const int myRace = m_Param.GetRaceCode();
             CPvpUserAndGuildRankingSystem *rankSys = CPvpUserAndGuildRankingSystem::Instance();
-            if (CPvpUserAndGuildRankingSystem::IsCurrentRaceBossGroup(rankSys, myRace, serial))
+            if (rankSys->IsCurrentRaceBossGroup(myRace, serial))
             {
-              CNetProcess::LoadSendMsg(
-                g_Network.m_pProcess[0],
+              g_Network.m_pProcess[0]->LoadSendMsg(
                 target->m_ObjID.m_wIndex,
                 type,
                 reinterpret_cast<char *>(&msg),
@@ -13274,9 +14013,9 @@ void CPlayer::pc_ChatGuildEstSenRequest(char *pwszChatData)
   {
     _announ_message_receipt_udp msg{};
     msg.byMessageType = 11;
-    msg.bySenderRace = CPlayerDB::GetRaceCode(&m_Param);
+    msg.bySenderRace = m_Param.GetRaceCode();
     msg.dwSenderSerial = m_dwObjSerial;
-    strcpy_0(msg.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+    strcpy_0(msg.wszSenderName, m_Param.GetCharNameW());
     msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszChatData));
     memcpy_0(msg.wszChatData, pwszChatData, msg.bySize);
     msg.wszChatData[msg.bySize] = 0;
@@ -13292,13 +14031,12 @@ void CPlayer::pc_ChatGuildEstSenRequest(char *pwszChatData)
     const int len = msg.size();
     for (int j = 0; j < guild->m_nMemberNum; ++j)
     {
-      if (_guild_member_info::IsFill(&members[j])
+      if (members[j].IsFill()
           && members[j].pPlayer
           && (members[j].byClassInGuild == 1 || members[j].byClassInGuild == 2))
       {
         CPlayer *target = members[j].pPlayer;
-        CNetProcess::LoadSendMsg(
-          g_Network.m_pProcess[0],
+        g_Network.m_pProcess[0]->LoadSendMsg(
           target->m_ObjID.m_wIndex,
           type,
           reinterpret_cast<char *>(&msg),
@@ -13314,16 +14052,16 @@ void CPlayer::pc_ChatRePresentationRequest(char *pwszChatData)
   {
     if (!m_pUserDB->m_bChatLock)
     {
-      const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+      const int raceCode = m_Param.GetRaceCode();
       CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
-      if (CPvpUserAndGuildRankingSystem::IsCurrentRaceBossGroup(rank, raceCode, m_dwObjSerial)
+      if (rank->IsCurrentRaceBossGroup(raceCode, m_dwObjSerial)
           || (m_Param.m_byClassInGuild == 2 && m_Param.m_pGuild))
       {
         _announ_message_receipt_udp msg{};
         msg.byMessageType = 13;
-        msg.bySenderRace = CPlayerDB::GetRaceCode(&m_Param);
+        msg.bySenderRace = m_Param.GetRaceCode();
         msg.dwSenderSerial = m_dwObjSerial;
-        strcpy_0(msg.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+        strcpy_0(msg.wszSenderName, m_Param.GetCharNameW());
         msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszChatData));
         memcpy_0(msg.wszChatData, pwszChatData, msg.bySize);
         msg.wszChatData[msg.bySize] = 0;
@@ -13339,15 +14077,14 @@ void CPlayer::pc_ChatRePresentationRequest(char *pwszChatData)
           CPlayer *target = &g_Player[j];
           if (target->m_bLive)
           {
-            if (CPlayerDB::GetRaceCode(&target->m_Param) == CPlayerDB::GetRaceCode(&m_Param))
+            if (target->m_Param.GetRaceCode() == m_Param.GetRaceCode())
             {
-              const int myRace = CPlayerDB::GetRaceCode(&m_Param);
+              const int myRace = m_Param.GetRaceCode();
               CPvpUserAndGuildRankingSystem *rankSys = CPvpUserAndGuildRankingSystem::Instance();
-              if (CPvpUserAndGuildRankingSystem::IsCurrentRaceBossGroup(rankSys, myRace, target->m_dwObjSerial)
+              if (rankSys->IsCurrentRaceBossGroup(myRace, target->m_dwObjSerial)
                   || (target->m_Param.m_byClassInGuild == 2 && target->m_Param.m_pGuild))
               {
-                CNetProcess::LoadSendMsg(
-                  g_Network.m_pProcess[0],
+                g_Network.m_pProcess[0]->LoadSendMsg(
                   target->m_ObjID.m_wIndex,
                   type,
                   reinterpret_cast<char *>(&msg),
@@ -13375,7 +14112,7 @@ void CPlayer::pc_ChatAllRequest(char *pwszChatData)
   {
     return;
   }
-  if (CGameObject::GetCurSecNum(this) == -1)
+  if (GetCurSecNum() == -1)
   {
     return;
   }
@@ -13387,7 +14124,7 @@ void CPlayer::pc_ChatAllRequest(char *pwszChatData)
   _STORAGE_LIST::_db_con *item = nullptr;
   if (g_Main.m_bAllRaceChatItemConsume)
   {
-    item = _STORAGE_LIST::GetPtrFromItemCode(&m_Param.m_dbInven, g_Main.m_strAllRaceChatItemCode);
+    item = m_Param.m_dbInven.GetPtrFromItemCode(g_Main.m_strAllRaceChatItemCode);
     if (!item)
     {
       return;
@@ -13415,7 +14152,7 @@ void CPlayer::pc_ChatAllRequest(char *pwszChatData)
       return;
     }
 
-    CMgrAvatorItemHistory::consume_del_item(&CPlayer::s_MgrItemHistory, m_ObjID.m_wIndex, item, m_szItemHistoryFileName);
+    CPlayer::s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex, item, m_szItemHistoryFileName);
   }
 
 LABEL_AFTER_ITEM:
@@ -13428,8 +14165,8 @@ LABEL_AFTER_ITEM:
   _announ_message_receipt_udp msg{};
   msg.byMessageType = 14;
   msg.dwSenderSerial = m_dwObjSerial;
-  msg.bySenderRace = CPlayerDB::GetRaceCode(&m_Param);
-  strcpy_0(msg.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+  msg.bySenderRace = m_Param.GetRaceCode();
+  strcpy_0(msg.wszSenderName, m_Param.GetCharNameW());
   msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszChatData));
   memcpy_0(msg.wszChatData, pwszChatData, msg.bySize);
   msg.wszChatData[msg.bySize] = 0;
@@ -13445,10 +14182,9 @@ LABEL_AFTER_ITEM:
     CPlayer *target = &g_Player[j];
     if (target->m_bLive)
     {
-      if (CPlayerDB::GetRaceCode(&target->m_Param) == CPlayerDB::GetRaceCode(&m_Param))
+      if (target->m_Param.GetRaceCode() == m_Param.GetRaceCode())
       {
-        CNetProcess::LoadSendMsg(
-          g_Network.m_pProcess[0],
+        g_Network.m_pProcess[0]->LoadSendMsg(
           target->m_ObjID.m_wIndex,
           type,
           reinterpret_cast<char *>(&msg),
@@ -13462,7 +14198,7 @@ void CPlayer::pc_ChatGmNoticeRequest(char *pwszChatData)
 {
   if (m_pUserDB && m_byUserDgr == 2)
   {
-    CMainThread::pc_AllUserGMNoticeInform(&g_Main, pwszChatData);
+    g_Main.pc_AllUserGMNoticeInform(pwszChatData);
   }
 }
 
@@ -13471,25 +14207,25 @@ void CPlayer::pc_ChatTradeRequestMsg(unsigned __int8 bySubType, char *pwszTradeM
   if (m_pUserDB
       && !m_pUserDB->m_bChatLock
       && !IsPunished(0, true)
-      && CPlayerDB::GetDalant(&m_Param) >= 0x3E8)
+      && m_Param.GetDalant() >= 0x3E8)
   {
     SubDalant(0x3E8u);
     SendMsg_AlterMoneyInform(0);
 
-    const int level = CPlayerDB::GetLevel(&m_Param);
+    const int level = m_Param.GetLevel();
     if (level == 30 || level == 40 || level == 50 || level == 60)
     {
-      const int lv = CPlayerDB::GetLevel(&m_Param);
-      const int race = CPlayerDB::GetRaceCode(&m_Param);
+      const int lv = m_Param.GetLevel();
+      const int race = m_Param.GetRaceCode();
       CMoneySupplyMgr *mgr = CMoneySupplyMgr::Instance();
-      CMoneySupplyMgr::UpdateFeeMoneyData(mgr, race, lv, 0x3E8u);
+      mgr->UpdateFeeMoneyData(static_cast<unsigned __int8>(race), lv, 0x3E8u);
     }
 
     _announ_message_receipt_udp msg{};
     msg.byMessageType = 19;
     msg.dwSenderSerial = m_dwObjSerial;
-    msg.bySenderRace = CPlayerDB::GetRaceCode(&m_Param);
-    strcpy_0(msg.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+    msg.bySenderRace = m_Param.GetRaceCode();
+    strcpy_0(msg.wszSenderName, m_Param.GetCharNameW());
     msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszTradeMsg));
     memcpy_0(msg.wszChatData, pwszTradeMsg, msg.bySize);
     msg.wszChatData[msg.bySize] = 0;
@@ -13506,10 +14242,9 @@ void CPlayer::pc_ChatTradeRequestMsg(unsigned __int8 bySubType, char *pwszTradeM
       CPlayer *target = &g_Player[j];
       if (target->m_bLive)
       {
-        if (CPlayerDB::GetRaceCode(&target->m_Param) == CPlayerDB::GetRaceCode(&m_Param))
+        if (target->m_Param.GetRaceCode() == m_Param.GetRaceCode())
         {
-          CNetProcess::LoadSendMsg(
-            g_Network.m_pProcess[0],
+          g_Network.m_pProcess[0]->LoadSendMsg(
             target->m_ObjID.m_wIndex,
             type,
             reinterpret_cast<char *>(&msg),
@@ -13529,7 +14264,7 @@ void CPlayer::pc_ChatGuildRequest(unsigned int dwDstSerial, char *pwszChatData)
   {
     if (dwDstSerial != static_cast<unsigned int>(-1))
     {
-      _guild_member_info *member = CGuild::GetMemberFromSerial(m_Param.m_pGuild, dwDstSerial);
+      _guild_member_info *member = m_Param.m_pGuild->GetMemberFromSerial(dwDstSerial);
       if (member)
       {
         if (member->pPlayer)
@@ -13557,14 +14292,14 @@ void CPlayer::pc_ChatGuildRequest(unsigned int dwDstSerial, char *pwszChatData)
     _chat_guild_failure_zocl msg{};
     msg.byErrCode = static_cast<unsigned __int8>(errCode);
     unsigned __int8 type[2] = {2, 100};
-    CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), msg.size());
+    g_Network.m_pProcess[0]->LoadSendMsg( m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), msg.size());
   }
   else
   {
     _announ_message_receipt_udp msg{};
-    msg.bySenderRace = CPlayerDB::GetRaceCode(&m_Param);
+    msg.bySenderRace = m_Param.GetRaceCode();
     msg.dwSenderSerial = m_dwObjSerial;
-    strcpy_0(msg.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+    strcpy_0(msg.wszSenderName, m_Param.GetCharNameW());
     msg.byPvpGrade = m_Param.m_byPvPGrade;
     msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszChatData));
     memcpy_0(msg.wszChatData, pwszChatData, msg.bySize);
@@ -13577,8 +14312,7 @@ void CPlayer::pc_ChatGuildRequest(unsigned int dwDstSerial, char *pwszChatData)
     {
       msg.byMessageType = 8;
       const unsigned __int16 len = msg.size();
-      CNetProcess::LoadSendMsg(
-        g_Network.m_pProcess[0],
+      g_Network.m_pProcess[0]->LoadSendMsg(
         dstPlayer->m_ObjID.m_wIndex,
         type,
         reinterpret_cast<char *>(&msg),
@@ -13590,12 +14324,11 @@ void CPlayer::pc_ChatGuildRequest(unsigned int dwDstSerial, char *pwszChatData)
       for (int j = 0; j < 50; ++j)
       {
         _guild_member_info *member = &m_Param.m_pGuild->m_MemberData[j];
-        if (_guild_member_info::IsFill(member))
+        if (member->IsFill())
         {
           if (member->pPlayer)
           {
-            CNetProcess::LoadSendMsg(
-              g_Network.m_pProcess[0],
+            g_Network.m_pProcess[0]->LoadSendMsg(
               member->pPlayer->m_ObjID.m_wIndex,
               type,
               reinterpret_cast<char *>(&msg),
@@ -13642,15 +14375,15 @@ void CPlayer::pc_ChatMultiFarRequest(unsigned __int8 byDstNum, _w_name *pDstName
         if (!failCode)
         {
           if (m_byUserDgr != 2 && dst->m_byUserDgr != 2
-              && _effect_parameter::GetEff_Have(&dst->m_EP, 3) <= 0.0)
+              && dst->m_EP.GetEff_Have(3) <= 0.0)
           {
-            const int raceCode = CPlayerDB::GetRaceCode(&dst->m_Param);
+            const int raceCode = dst->m_Param.GetRaceCode();
             CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
-            const unsigned int bossSerial = CPvpUserAndGuildRankingSystem::GetCurrentRaceBossSerial(rank, raceCode, 0);
+            const unsigned int bossSerial = rank->GetCurrentRaceBossSerial(raceCode, 0);
             if (bossSerial != dst->m_dwObjSerial)
             {
-              const int dstRace = CPlayerDB::GetRaceCode(&dst->m_Param);
-              const int myRace = CPlayerDB::GetRaceCode(&m_Param);
+              const int dstRace = dst->m_Param.GetRaceCode();
+              const int myRace = m_Param.GetRaceCode();
               if (dstRace != myRace)
               {
                 failCode = 3;
@@ -13671,8 +14404,7 @@ void CPlayer::pc_ChatMultiFarRequest(unsigned __int8 byDstNum, _w_name *pDstName
       strcpy_0(fail.wszDstName, pDstName[j].name);
       fail.byFailCode = static_cast<unsigned __int8>(failCode);
       unsigned __int8 type[2] = {2, 103};
-      CNetProcess::LoadSendMsg(
-        g_Network.m_pProcess[0],
+      g_Network.m_pProcess[0]->LoadSendMsg(
         m_ObjID.m_wIndex,
         type,
         reinterpret_cast<char *>(&fail),
@@ -13693,7 +14425,7 @@ void CPlayer::pc_ChatMultiFarRequest(unsigned __int8 byDstNum, _w_name *pDstName
     int writePos = 0;
     char *sData = msg.sData;
 
-    char *senderName = CPlayerDB::GetCharNameW(&m_Param);
+    char *senderName = m_Param.GetCharNameW();
     unsigned __int8 senderLen = static_cast<unsigned __int8>(strlen_0(senderName));
     memcpy_0(&sData[writePos++], &senderLen, sizeof(senderLen));
     memcpy_0(&sData[writePos], senderName, senderLen);
@@ -13702,7 +14434,7 @@ void CPlayer::pc_ChatMultiFarRequest(unsigned __int8 byDstNum, _w_name *pDstName
     memcpy_0(&sData[writePos++], &dstCount, sizeof(dstCount));
     for (int m = 0; m < dstCount; ++m)
     {
-      char *dstName = CPlayerDB::GetCharNameW(&targets[m]->m_Param);
+      char *dstName = targets[m]->m_Param.GetCharNameW();
       unsigned __int8 dstLen = static_cast<unsigned __int8>(strlen_0(dstName));
       memcpy_0(&sData[writePos++], &dstLen, sizeof(dstLen));
       memcpy_0(&sData[writePos], dstName, dstLen);
@@ -13723,14 +14455,13 @@ void CPlayer::pc_ChatMultiFarRequest(unsigned __int8 byDstNum, _w_name *pDstName
     const unsigned __int16 len = msg.size();
     for (int m = 0; m < dstCount; ++m)
     {
-      CNetProcess::LoadSendMsg(
-        g_Network.m_pProcess[0],
+      g_Network.m_pProcess[0]->LoadSendMsg(
         targets[m]->m_ObjID.m_wIndex,
         type,
         reinterpret_cast<char *>(&msg),
         len);
     }
-    CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
+    g_Network.m_pProcess[0]->LoadSendMsg( m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
   }
 }
 
@@ -13738,16 +14469,16 @@ void CPlayer::pc_ChatRaceBossCryRequest(char *pwszChatData)
 {
   if (m_pUserDB)
   {
-    const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+    const int raceCode = m_Param.GetRaceCode();
     CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
-    const unsigned int bossSerial = CPvpUserAndGuildRankingSystem::GetCurrentRaceBossSerial(rank, raceCode, 0);
-    const unsigned int charSerial = CPlayerDB::GetCharSerial(&m_Param);
+    const unsigned int bossSerial = rank->GetCurrentRaceBossSerial(raceCode, 0);
+    const unsigned int charSerial = m_Param.GetCharSerial();
     if (bossSerial == charSerial)
     {
       _announ_message_receipt_udp msg{};
       msg.byMessageType = 18;
-      msg.bySenderRace = CPlayerDB::GetRaceCode(&m_Param);
-      strcpy_0(msg.wszSenderName, CPlayerDB::GetCharNameW(&m_Param));
+      msg.bySenderRace = m_Param.GetRaceCode();
+      strcpy_0(msg.wszSenderName, m_Param.GetCharNameW());
       msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszChatData));
       memcpy_0(msg.wszChatData, pwszChatData, msg.bySize);
       msg.wszChatData[msg.bySize] = 0;
@@ -13761,12 +14492,11 @@ void CPlayer::pc_ChatRaceBossCryRequest(char *pwszChatData)
         CPlayer *target = &g_Player[j];
         if (target->m_bOper)
         {
-          if (CPlayerDB::GetRaceCode(&target->m_Param) == CPlayerDB::GetRaceCode(&m_Param)
+          if (target->m_Param.GetRaceCode() == m_Param.GetRaceCode()
               && target->m_pCurMap == m_pCurMap
               && target->m_wMapLayerIndex == m_wMapLayerIndex)
           {
-            CNetProcess::LoadSendMsg(
-              g_Network.m_pProcess[0],
+            g_Network.m_pProcess[0]->LoadSendMsg(
               target->m_ObjID.m_wIndex,
               type,
               reinterpret_cast<char *>(&msg),
@@ -13935,6 +14665,498 @@ CPlayer *GetPtrPlayerFromAccountSerial(CPlayer *pData, int nNum, unsigned int dw
   return nullptr;
 }
 
+__int64 GetItemEquipGrade(int nTableCode, int nItemIndex)
+{
+  CRecordData *table = &s_ptblItemData[nTableCode];
+
+  switch (nTableCode)
+  {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[16]) : 1;
+    }
+    case 6:
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[8].m_strCode[16]) : 1;
+    }
+    case 7:
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[16]) : 1;
+    }
+    case 8:
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[12]) : 1;
+    }
+    case 9:
+    {
+      _base_fld *record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[12]) : 1;
+    }
+    default:
+      return 1;
+  }
+}
+
+__int64 GetItemEquipGrade(int nTableCode, const char *szRecordCode)
+{
+  CRecordData *table = &s_ptblItemData[nTableCode];
+
+  switch (nTableCode)
+  {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    {
+      _base_fld *record = table->GetRecord(szRecordCode);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[16]) : 1;
+    }
+    case 6:
+    {
+      _base_fld *record = table->GetRecord(szRecordCode);
+      return record ? *reinterpret_cast<unsigned int *>(&record[8].m_strCode[16]) : 1;
+    }
+    case 7:
+    {
+      _base_fld *record = table->GetRecord(szRecordCode);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[16]) : 1;
+    }
+    case 8:
+    {
+      _base_fld *record = table->GetRecord(szRecordCode);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[12]) : 1;
+    }
+    case 9:
+    {
+      _base_fld *record = table->GetRecord(szRecordCode);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[12]) : 1;
+    }
+    default:
+      return 1;
+  }
+}
+
+_STORAGE_LIST::_db_con *CPlayer::IsBulletValidity(unsigned __int16 wBulletSerial)
+{
+  if (wBulletSerial == 0xFFFF)
+  {
+    return nullptr;
+  }
+
+  _STORAGE_LIST::_db_con *item = m_Param.m_dbEmbellish.GetPtrFromSerial(wBulletSerial);
+  if (!item)
+  {
+    return nullptr;
+  }
+
+  _STORAGE_LIST::_db_con *weapon = m_Param.m_dbEquip.m_pStorageList + 6;
+  if (!weapon->m_bLoad)
+  {
+    return nullptr;
+  }
+
+  if (item->m_byTableCode != 10)
+  {
+    return nullptr;
+  }
+
+  const int cashType = GetUsePcCashType(item->m_byTableCode, item->m_wItemIndex);
+  if (!IsUsableAccountType(cashType))
+  {
+    SendMsg_PremiumCashItemUse(0xFFFFu);
+    return nullptr;
+  }
+
+  _base_fld *weaponRecord = g_Main.m_tblItemData[6].GetRecord(weapon->m_wItemIndex);
+  if (!weaponRecord)
+  {
+    return nullptr;
+  }
+
+  if (!std::strncmp(&weaponRecord[4].m_strCode[16], "-1", 2u))
+  {
+    return item;
+  }
+
+  _base_fld *bulletRecord = g_Main.m_tblItemData[10].GetRecord(item->m_wItemIndex);
+  if (!bulletRecord)
+  {
+    return nullptr;
+  }
+
+  const size_t bulletLenRaw = strlen_0(bulletRecord[4].m_strCode);
+  const int bulletLen = static_cast<int>(bulletLenRaw >= 0x40 ? 64 : bulletLenRaw);
+  for (int j = 0; j < bulletLen; ++j)
+  {
+    if (strchr(&weaponRecord[4].m_strCode[16], bulletRecord[4].m_strCode[j]))
+    {
+      return item;
+    }
+  }
+
+  return nullptr;
+}
+
+_STORAGE_LIST::_db_con *CPlayer::IsEffBulletValidity(unsigned __int16 wEffBulletSerial)
+{
+  if (wEffBulletSerial == 0xFFFF)
+  {
+    return nullptr;
+  }
+
+  _STORAGE_LIST::_db_con *item = m_Param.m_dbEmbellish.GetPtrFromSerial(wEffBulletSerial);
+  if (!item)
+  {
+    return nullptr;
+  }
+
+  _STORAGE_LIST::_db_con *weapon = m_Param.m_dbEquip.m_pStorageList + 6;
+  if (!weapon)
+  {
+    return nullptr;
+  }
+
+  if (item->m_byTableCode != 10)
+  {
+    return nullptr;
+  }
+
+  const int cashType = GetUsePcCashType(item->m_byTableCode, item->m_wItemIndex);
+  if (!IsUsableAccountType(cashType))
+  {
+    SendMsg_PremiumCashItemUse(0xFFFFu);
+    return nullptr;
+  }
+
+  _base_fld *weaponRecord = g_Main.m_tblItemData[6].GetRecord(weapon->m_wItemIndex);
+  _base_fld *bulletRecord = g_Main.m_tblItemData[10].GetRecord(item->m_wItemIndex);
+  if (!weaponRecord || !bulletRecord)
+  {
+    return nullptr;
+  }
+
+  if (!std::strncmp(&weaponRecord[5].m_strCode[12], "-1", 2u))
+  {
+    return nullptr;
+  }
+
+  if (!std::strncmp(&weaponRecord[5].m_strCode[12], "D", 1u))
+  {
+    return std::strncmp(reinterpret_cast<const char *>(&bulletRecord[5]), "-1", 2u) ? item : nullptr;
+  }
+
+  const size_t bulletLenRaw = strlen_0(bulletRecord[4].m_strCode);
+  const int bulletLen = static_cast<int>(bulletLenRaw >= 0x40 ? 64 : bulletLenRaw);
+  for (int j = 0; j < bulletLen; ++j)
+  {
+    if (strchr(&weaponRecord[4].m_strCode[16], bulletRecord[4].m_strCode[j]))
+    {
+      return item;
+    }
+  }
+
+  return nullptr;
+}
+
+char CPlayer::IsSFUsableGauge(unsigned __int8 byEffectCode, unsigned __int16 wEffectIndex, unsigned __int16 *pwDelPoint)
+{
+  int hpCost = 0;
+  int fpCost = 0;
+  int spCost = 0;
+
+  if (byEffectCode == 1)
+  {
+    _base_fld *record = g_Main.m_tblEffectData[byEffectCode].GetRecord(wEffectIndex);
+    hpCost = *reinterpret_cast<int *>(&record[9].m_strCode[4]);
+    const float fpBase = static_cast<float>(*reinterpret_cast<int *>(&record[9].m_strCode[8]));
+    fpCost = static_cast<int>(fpBase * m_EP.GetEff_Rate(7));
+    spCost = *reinterpret_cast<int *>(&record[9].m_strCode[12]);
+  }
+  else
+  {
+    _base_fld *record = g_Main.m_tblEffectData[byEffectCode].GetRecord(wEffectIndex);
+    hpCost = *reinterpret_cast<int *>(&record[9].m_strCode[4]);
+    const float fpBase = static_cast<float>(*reinterpret_cast<int *>(&record[9].m_strCode[8]));
+    fpCost = static_cast<int>(fpBase * m_EP.GetEff_Rate(7));
+    spCost = *reinterpret_cast<int *>(&record[9].m_strCode[12]);
+  }
+
+  if (hpCost < 0)
+  {
+    hpCost = 0;
+  }
+  if (fpCost < 0)
+  {
+    fpCost = 0;
+  }
+  if (spCost < 0)
+  {
+    spCost = 0;
+  }
+
+  if (GetHP() < hpCost || GetFP() < fpCost || GetSP() < spCost)
+  {
+    return 0;
+  }
+
+  if (pwDelPoint)
+  {
+    pwDelPoint[0] = static_cast<unsigned __int16>(hpCost);
+    pwDelPoint[1] = static_cast<unsigned __int16>(fpCost);
+    pwDelPoint[2] = static_cast<unsigned __int16>(spCost);
+  }
+
+  return 1;
+}
+
+char CPlayer::IsSFUsableSFMastery(unsigned __int8 byMasteryCode, int nMasteryIndex)
+{
+  if (nMasteryIndex < 0)
+  {
+    return 0;
+  }
+
+  if (byMasteryCode == 4)
+  {
+    if (nMasteryIndex >= 24)
+    {
+      return 0;
+    }
+  }
+  else
+  {
+    if (byMasteryCode != 3 || nMasteryIndex >= 8)
+    {
+      return 0;
+    }
+  }
+
+  int *limits = nMPL;
+  if (m_Param.m_pClassHistory[0])
+  {
+    if (m_Param.m_pClassHistory[0]->m_nClass == 3 && m_Param.m_pClassData->m_nClass == 3)
+    {
+      limits = nSpMPL;
+    }
+  }
+
+  const unsigned __int8 subIndex = static_cast<unsigned __int8>(nMasteryIndex % 4);
+  const int baseIndex = nMasteryIndex - subIndex;
+  for (int j = 0; j < static_cast<int>(subIndex); ++j)
+  {
+    const int mastery = m_pmMst.GetMasteryPerMast(byMasteryCode, static_cast<unsigned __int8>(j + baseIndex));
+    if (mastery < limits[j])
+    {
+      return 0;
+    }
+  }
+
+  return 1;
+}
+
+char CPlayer::IsSFActableByClass(unsigned __int8 byEffectCode, _base_fld *pSFFld)
+{
+  if (byEffectCode == 2 || m_bFreeSFByClass)
+  {
+    return 1;
+  }
+
+  int classCount = 1;
+  int classCode = m_Param.m_pClassData->m_nClass;
+  int prevClass = -1;
+
+  if (m_Param.m_pClassHistory[0])
+  {
+    if (m_Param.m_pClassHistory[0]->m_nClass != m_Param.m_pClassData->m_nClass)
+    {
+      prevClass = m_Param.m_pClassHistory[0]->m_nClass;
+      classCount = 2;
+    }
+  }
+  else if (m_Param.m_pClassData->m_nClass == 3 && !byEffectCode
+           && *reinterpret_cast<int *>(&pSFFld[4].m_strCode[60]) > 0)
+  {
+    return 0;
+  }
+
+  for (int j = 0; j < classCount; ++j)
+  {
+    const int checkClass = (j == 0) ? classCode : prevClass;
+    if (check_sf_class(checkClass, byEffectCode, pSFFld))
+    {
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
+unsigned __int8 CPlayer::_GetPartyMemberInCircle(CPlayer **out_ppMember, int nMax, bool bOne)
+{
+  (void)nMax;
+
+  if (!m_pPartyMgr)
+  {
+    return 0;
+  }
+
+  CPartyPlayer **partyMembers = m_pPartyMgr->GetPtrPartyMember();
+  if (!partyMembers)
+  {
+    return 0;
+  }
+
+  unsigned __int8 count = 0;
+  for (int j = 0; j < 8 && partyMembers[j]; ++j)
+  {
+    CPlayer *member = &g_Player[partyMembers[j]->m_wZoneIndex];
+    if ((bOne || member != this)
+        && member->m_bLive
+        && !member->m_bCorpse
+        && member->m_pCurMap == m_pCurMap
+        && member->m_wMapLayerIndex == m_wMapLayerIndex
+        && std::fabs(member->m_fCurPos[0] - m_fCurPos[0]) <= 540.0f
+        && std::fabs(member->m_fCurPos[2] - m_fCurPos[2]) <= 540.0f
+        && std::fabs(member->m_fCurPos[1] - m_fCurPos[1]) <= 100.0f)
+    {
+      out_ppMember[count++] = member;
+    }
+  }
+
+  return count;
+}
+
+void CPlayer::Emb_CheckActForQuestParty(int nActCode, char *pszReqCode, unsigned __int16 wAddCount)
+{
+  if (!m_pPartyMgr || !m_pPartyMgr->IsPartyMode())
+  {
+    return;
+  }
+
+  CPlayer *partyMembers[8]{};
+  const unsigned __int8 partyCount = _GetPartyMemberInCircle(partyMembers, 8, true);
+  for (int j = 0; j < partyCount; ++j)
+  {
+    if (partyMembers[j] != this)
+    {
+      partyMembers[j]->Emb_CheckActForQuest(nActCode, pszReqCode, wAddCount, true);
+    }
+  }
+}
+
+void CPlayer::Emb_EquipLink()
+{
+  for (int linkIndex = 0; linkIndex < 50; ++linkIndex)
+  {
+    _quick_link *link = &m_Param.m_QLink[linkIndex];
+    if (link->byLinkIndex == 0xFF)
+    {
+      continue;
+    }
+
+    unsigned __int8 storageCode = 0;
+    _STORAGE_LIST::_db_con *item = m_Param.GetPtrItemStorage(link->wSerial, &storageCode);
+    if (item)
+    {
+      const unsigned __int16 packedIndex = static_cast<unsigned __int16>(item->m_byStorageIndex | (storageCode << 8));
+      m_pUserDB->Update_LinkBoardSlot(static_cast<unsigned __int8>(linkIndex), 4u, packedIndex);
+    }
+    else
+    {
+      m_Param.PopLink(linkIndex);
+      m_pUserDB->Update_LinkBoardSlot(static_cast<unsigned __int8>(linkIndex), 0xFFu, 0xFFFFu);
+    }
+  }
+}
+
+void CPlayer::SendMsg_InsertItemInform(char byStorageCode, _STORAGE_LIST::_db_con *pItem)
+{
+  #pragma pack(push, 1)
+  struct
+  {
+    char byStorageCode;
+    unsigned __int8 byTableCode;
+    unsigned __int16 wItemIndex;
+    unsigned int dwDur;
+    unsigned __int16 wSerial;
+    unsigned int dwLv;
+  } msg{};
+  #pragma pack(pop)
+
+  msg.byStorageCode = byStorageCode;
+  msg.byTableCode = pItem->m_byTableCode;
+  msg.wItemIndex = pItem->m_wItemIndex;
+  msg.dwDur = pItem->m_dwDur;
+  msg.wSerial = pItem->m_wSerial;
+  msg.dwLv = pItem->m_dwLv;
+
+  unsigned __int8 pbyType[2] = {17, 15};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), 0xEu);
+}
+
+char CPlayer::IsEquipAbleGrade(unsigned __int8 byGradeLv)
+{
+  if (byGradeLv >= 8u)
+  {
+    if (byGradeLv == 8)
+    {
+      if (!m_Param.m_pGuild)
+      {
+        return 0;
+      }
+
+      const unsigned int guildMasterSerial = m_Param.m_pGuild->GetGuildMasterSerial();
+      if (guildMasterSerial != m_Param.GetCharSerial())
+      {
+        return 0;
+      }
+    }
+    else if (byGradeLv == 9)
+    {
+      const unsigned int charSerial = m_Param.GetCharSerial();
+      const int raceCode = m_Param.GetRaceCode();
+      CPvpUserAndGuildRankingSystem *rankingSystem = CPvpUserAndGuildRankingSystem::Instance();
+      if (!rankingSystem->IsCurrentRaceBossGroup(raceCode, charSerial))
+      {
+        return 0;
+      }
+    }
+    else
+    {
+      if (byGradeLv != 10)
+      {
+        return 0;
+      }
+
+      const unsigned int charSerial = m_Param.GetCharSerial();
+      const int raceCode = m_Param.GetRaceCode();
+      CPvpUserAndGuildRankingSystem *rankingSystem = CPvpUserAndGuildRankingSystem::Instance();
+      const unsigned int raceBossSerial = rankingSystem->GetCurrentRaceBossSerial(raceCode, 0);
+      if (charSerial != raceBossSerial)
+      {
+        return 0;
+      }
+    }
+  }
+  else if (byGradeLv > static_cast<unsigned int>(m_Param.m_byPvPGrade))
+  {
+    return 0;
+  }
+
+  return 1;
+}
+
 char CPlayer::_pre_check_normal_attack(
   CCharacter *pDst,
   unsigned __int16 wBulletSerial,
@@ -13961,12 +15183,12 @@ char CPlayer::_pre_check_normal_attack(
     return static_cast<char>(-6);
   }
 
-  if (static_cast<unsigned int>(CPlayerDB::GetRaceCode(&m_Param)) == 2 && IsActingSiegeMode())
+  if (static_cast<unsigned int>(m_Param.GetRaceCode()) == 2 && IsActingSiegeMode())
   {
     return static_cast<char>(-60);
   }
 
-  if (!pDst->m_bLive || pDst->m_bCorpse || pDst->m_pCurMap != m_pCurMap || CGameObject::GetCurSecNum(pDst) == -1)
+  if (!pDst->m_bLive || pDst->m_bCorpse || pDst->m_pCurMap != m_pCurMap || pDst->GetCurSecNum() == -1)
   {
     return static_cast<char>(-6);
   }
@@ -13987,17 +15209,17 @@ char CPlayer::_pre_check_normal_attack(
     return static_cast<char>(guildResult);
   }
 
-  if (!IsAttackableInTown() && !pDst->IsAttackableInTown(pDst) && (IsInTown() || pDst->IsInTown(pDst)))
+  if (!IsAttackableInTown() && !pDst->IsAttackableInTown() && (IsInTown() || pDst->IsInTown()))
   {
     return static_cast<char>(-31);
   }
 
-  if (!pDst->IsBeDamagedAble(pDst, this))
+  if (!pDst->IsBeDamagedAble(this))
   {
     return static_cast<char>(-6);
   }
 
-  if (!pDst->IsBeAttackedAble(pDst, true))
+  if (!pDst->IsBeAttackedAble(true))
   {
     return static_cast<char>(-6);
   }
@@ -14036,17 +15258,17 @@ char CPlayer::_pre_check_normal_attack(
     return static_cast<char>(-21);
   }
 
-  if (_effect_parameter::GetEff_State(&m_EP, 20))
+  if (m_EP.GetEff_State(20))
   {
     return static_cast<char>(-37);
   }
 
-  if (_effect_parameter::GetEff_State(&m_EP, 28))
+  if (m_EP.GetEff_State(28))
   {
     return static_cast<char>(-37);
   }
 
-  if (_effect_parameter::GetEff_State(&m_EP, 21))
+  if (m_EP.GetEff_State(21))
   {
     return static_cast<char>(-38);
   }
@@ -14065,7 +15287,7 @@ char CPlayer::_pre_check_normal_attack(
       return static_cast<char>(-17);
     }
     bulletField = reinterpret_cast<_BulletItem_fld *>(
-      CRecordData::GetRecord(&g_Main.m_tblItemData[10], bulletItem->m_wItemIndex));
+      g_Main.m_tblItemData[10].GetRecord(bulletItem->m_wItemIndex));
     if (bulletItem->m_bLock)
     {
       return static_cast<char>(-29);
@@ -14087,7 +15309,7 @@ char CPlayer::_pre_check_normal_attack(
       return static_cast<char>(-63);
     }
     effBulletField = reinterpret_cast<_BulletItem_fld *>(
-      CRecordData::GetRecord(&g_Main.m_tblItemData[10], effBulletItem->m_wItemIndex));
+      g_Main.m_tblItemData[10].GetRecord(effBulletItem->m_wItemIndex));
     *ppEffBtProp = effBulletItem;
     *ppfldEffBt = effBulletField;
   }
@@ -14096,17 +15318,17 @@ char CPlayer::_pre_check_normal_attack(
   if (m_pmWpn.byWpType == 7)
   {
     const float baseRange = static_cast<float>(m_pmWpn.wGaAttRange);
-    const float width = pDst->GetWidth(pDst);
+    const float width = pDst->GetWidth();
     const float rangeWithWidth = baseRange + (width / 2.0f);
-    const float effPlus = _effect_parameter::GetEff_Plus(&m_EP, 36);
+    const float effPlus = m_EP.GetEff_Plus(36);
     attackRange = rangeWithWidth + effPlus;
   }
   else
   {
     const float baseRange = static_cast<float>(m_pmWpn.wGaAttRange);
-    const float width = pDst->GetWidth(pDst);
+    const float width = pDst->GetWidth();
     const float rangeWithWidth = baseRange + (width / 2.0f);
-    const float effPlus = _effect_parameter::GetEff_Plus(&m_EP, m_pmWpn.byWpClass + 4);
+    const float effPlus = m_EP.GetEff_Plus(m_pmWpn.byWpClass + 4);
     attackRange = rangeWithWidth + effPlus;
   }
 
@@ -14154,7 +15376,7 @@ char CPlayer::_pre_check_skill_attack(
     return static_cast<char>(-9);
   }
 
-  if (static_cast<unsigned int>(CPlayerDB::GetRaceCode(&m_Param)) == 2 && IsActingSiegeMode())
+  if (static_cast<unsigned int>(m_Param.GetRaceCode()) == 2 && IsActingSiegeMode())
   {
     return static_cast<char>(-60);
   }
@@ -14166,7 +15388,7 @@ char CPlayer::_pre_check_skill_attack(
       return static_cast<char>(-6);
     }
 
-    if (!pDst->m_bLive || pDst->m_bCorpse || pDst->m_pCurMap != m_pCurMap || CGameObject::GetCurSecNum(pDst) == -1)
+    if (!pDst->m_bLive || pDst->m_bCorpse || pDst->m_pCurMap != m_pCurMap || pDst->GetCurSecNum() == -1)
     {
       return static_cast<char>(-6);
     }
@@ -14182,17 +15404,17 @@ char CPlayer::_pre_check_skill_attack(
       return static_cast<char>(guildResult);
     }
 
-    if (!pDst->IsBeAttackedAble(pDst, true))
+    if (!pDst->IsBeAttackedAble(true))
     {
       return static_cast<char>(-6);
     }
 
-    if (!IsAttackableInTown() && !pDst->IsAttackableInTown(pDst) && (IsInTown() || pDst->IsInTown(pDst)))
+    if (!IsAttackableInTown() && !pDst->IsAttackableInTown() && (IsInTown() || pDst->IsInTown()))
     {
       return static_cast<char>(-31);
     }
 
-    if (!pDst->IsBeDamagedAble(pDst, this))
+    if (!pDst->IsBeDamagedAble(this))
     {
       return static_cast<char>(-6);
     }
@@ -14221,7 +15443,7 @@ char CPlayer::_pre_check_skill_attack(
       return static_cast<char>(-17);
     }
     bulletField = reinterpret_cast<_BulletItem_fld *>(
-      CRecordData::GetRecord(&g_Main.m_tblItemData[10], bulletItem->m_wItemIndex));
+      g_Main.m_tblItemData[10].GetRecord(bulletItem->m_wItemIndex));
     if (bulletItem->m_bLock)
     {
       return static_cast<char>(-29);
@@ -14243,7 +15465,7 @@ char CPlayer::_pre_check_skill_attack(
       return static_cast<char>(-63);
     }
     effBulletField = reinterpret_cast<_BulletItem_fld *>(
-      CRecordData::GetRecord(&g_Main.m_tblItemData[10], effBulletItem->m_wItemIndex));
+      g_Main.m_tblItemData[10].GetRecord(effBulletItem->m_wItemIndex));
     *ppEffBtProp = effBulletItem;
     *ppfldEffBt = effBulletField;
   }
@@ -14254,7 +15476,7 @@ char CPlayer::_pre_check_skill_attack(
   {
     if (byEffectCode == 2)
     {
-      if (!CPlayerDB::IsActableClassSkill(&m_Param, pSkillFld->m_strCode, classGrade))
+      if (!m_Param.IsActableClassSkill(pSkillFld->m_strCode, classGrade))
       {
         return static_cast<char>(-15);
       }
@@ -14311,22 +15533,22 @@ char CPlayer::_pre_check_skill_attack(
     return static_cast<char>(-21);
   }
 
-  if (_effect_parameter::GetEff_State(&m_EP, 0))
+  if (m_EP.GetEff_State(0))
   {
     return static_cast<char>(-50);
   }
 
-  if (_effect_parameter::GetEff_State(&m_EP, 20))
+  if (m_EP.GetEff_State(20))
   {
     return static_cast<char>(-37);
   }
 
-  if (_effect_parameter::GetEff_State(&m_EP, 28))
+  if (m_EP.GetEff_State(28))
   {
     return static_cast<char>(-37);
   }
 
-  if (_effect_parameter::GetEff_State(&m_EP, 21))
+  if (m_EP.GetEff_State(21))
   {
     return static_cast<char>(-38);
   }
@@ -14360,27 +15582,27 @@ char CPlayer::_pre_check_skill_attack(
     if (m_pmWpn.byWpType == 7)
     {
       const float baseRange = static_cast<float>(m_pmWpn.wGaAttRange);
-      const float width = pDst->GetWidth(pDst);
+      const float width = pDst->GetWidth();
       const float rangeWithWidth = baseRange + (width / 2.0f);
-      const float effPlus = _effect_parameter::GetEff_Plus(&m_EP, 36);
+      const float effPlus = m_EP.GetEff_Plus(36);
       const float rangePlus = rangeWithWidth + effPlus;
-      const float classPlus = _effect_parameter::GetEff_Plus(&m_EP, m_pmWpn.byWpClass + 6);
+      const float classPlus = m_EP.GetEff_Plus(m_pmWpn.byWpClass + 6);
       attackRange = (rangePlus + classPlus) + static_cast<float>(pSkillFld->m_nBonusDistance);
     }
     else
     {
       const float baseRange = static_cast<float>(m_pmWpn.wGaAttRange);
-      const float width = pDst->GetWidth(pDst);
+      const float width = pDst->GetWidth();
       const float rangeWithWidth = baseRange + (width / 2.0f);
-      const float effPlus = _effect_parameter::GetEff_Plus(&m_EP, m_pmWpn.byWpClass + 4);
+      const float effPlus = m_EP.GetEff_Plus(m_pmWpn.byWpClass + 4);
       const float rangePlus = rangeWithWidth + effPlus;
-      const float classPlus = _effect_parameter::GetEff_Plus(&m_EP, m_pmWpn.byWpClass + 6);
+      const float classPlus = m_EP.GetEff_Plus(m_pmWpn.byWpClass + 6);
       attackRange = (rangePlus + classPlus) + static_cast<float>(pSkillFld->m_nBonusDistance);
     }
 
     if (IsSiegeMode())
     {
-      _base_fld *siegeRecord = CRecordData::GetRecord(&g_Main.m_tblItemData[27], m_pSiegeItem->m_wItemIndex);
+      _base_fld *siegeRecord = g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex);
       attackRange = attackRange + *reinterpret_cast<float *>(&siegeRecord[5].m_strCode[16]);
     }
 
@@ -14396,7 +15618,7 @@ char CPlayer::_pre_check_skill_attack(
 
     if (IsSiegeMode())
     {
-      _base_fld *siegeRecord = CRecordData::GetRecord(&g_Main.m_tblItemData[27], m_pSiegeItem->m_wItemIndex);
+      _base_fld *siegeRecord = g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex);
       if (*reinterpret_cast<float *>(&siegeRecord[5].m_strCode[12]) > dist)
       {
         return static_cast<char>(-3);
@@ -14409,23 +15631,23 @@ char CPlayer::_pre_check_skill_attack(
     if (m_pmWpn.byWpType == 7)
     {
       const float baseRange = static_cast<float>(m_pmWpn.wGaAttRange);
-      const float effPlus = _effect_parameter::GetEff_Plus(&m_EP, 36);
+      const float effPlus = m_EP.GetEff_Plus(36);
       const float rangePlus = baseRange + effPlus;
-      const float classPlus = _effect_parameter::GetEff_Plus(&m_EP, m_pmWpn.byWpClass + 6);
+      const float classPlus = m_EP.GetEff_Plus(m_pmWpn.byWpClass + 6);
       attackRange = (rangePlus + classPlus) + static_cast<float>(pSkillFld->m_nBonusDistance);
     }
     else
     {
       const float baseRange = static_cast<float>(m_pmWpn.wGaAttRange);
-      const float effPlus = _effect_parameter::GetEff_Plus(&m_EP, m_pmWpn.byWpClass + 4);
+      const float effPlus = m_EP.GetEff_Plus(m_pmWpn.byWpClass + 4);
       const float rangePlus = baseRange + effPlus;
-      const float classPlus = _effect_parameter::GetEff_Plus(&m_EP, m_pmWpn.byWpClass + 6);
+      const float classPlus = m_EP.GetEff_Plus(m_pmWpn.byWpClass + 6);
       attackRange = (rangePlus + classPlus) + static_cast<float>(pSkillFld->m_nBonusDistance);
     }
 
     if (IsSiegeMode())
     {
-      _base_fld *siegeRecord = CRecordData::GetRecord(&g_Main.m_tblItemData[27], m_pSiegeItem->m_wItemIndex);
+      _base_fld *siegeRecord = g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex);
       attackRange = attackRange + *reinterpret_cast<float *>(&siegeRecord[5].m_strCode[16]);
     }
 
@@ -14437,7 +15659,7 @@ char CPlayer::_pre_check_skill_attack(
 
     if (IsSiegeMode())
     {
-      _base_fld *siegeRecord = CRecordData::GetRecord(&g_Main.m_tblItemData[27], m_pSiegeItem->m_wItemIndex);
+      _base_fld *siegeRecord = g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex);
       if (*reinterpret_cast<float *>(&siegeRecord[5].m_strCode[12]) > dist)
       {
         return static_cast<char>(-3);
@@ -14471,17 +15693,17 @@ char CPlayer::_pre_check_force_attack(
     return static_cast<char>(-21);
   }
 
-  if (_effect_parameter::GetEff_State(&m_EP, 20))
+  if (m_EP.GetEff_State(20))
   {
     return static_cast<char>(-37);
   }
 
-  if (_effect_parameter::GetEff_State(&m_EP, 28))
+  if (m_EP.GetEff_State(28))
   {
     return static_cast<char>(-37);
   }
 
-  if (_effect_parameter::GetEff_State(&m_EP, 21))
+  if (m_EP.GetEff_State(21))
   {
     return static_cast<char>(-38);
   }
@@ -14491,7 +15713,7 @@ char CPlayer::_pre_check_force_attack(
     return static_cast<char>(-41);
   }
 
-  forceItem = _STORAGE_LIST::GetPtrFromSerial(&m_Param.m_dbForce, wForceItemSerial);
+  forceItem = m_Param.m_dbForce.GetPtrFromSerial(wForceItemSerial);
   if (!forceItem)
   {
     return static_cast<char>(-16);
@@ -14503,7 +15725,7 @@ char CPlayer::_pre_check_force_attack(
   }
 
   forceField = reinterpret_cast<_force_fld *>(
-    CRecordData::GetRecord(&g_Main.m_tblEffectData[1], CPlayer::s_pnLinkForceItemToEffect[forceItem->m_wItemIndex]));
+    g_Main.m_tblEffectData[1].GetRecord(CPlayer::s_pnLinkForceItemToEffect[forceItem->m_wItemIndex]));
   if (!forceField)
   {
     return static_cast<char>(-16);
@@ -14531,7 +15753,7 @@ char CPlayer::_pre_check_force_attack(
     pDst = nullptr;
   }
 
-  if (static_cast<unsigned int>(CPlayerDB::GetRaceCode(&m_Param)) == 2 && IsActingSiegeMode())
+  if (static_cast<unsigned int>(m_Param.GetRaceCode()) == 2 && IsActingSiegeMode())
   {
     return static_cast<char>(-60);
   }
@@ -14543,7 +15765,7 @@ char CPlayer::_pre_check_force_attack(
       return static_cast<char>(-6);
     }
 
-    if (!pDst->m_bLive || pDst->m_bCorpse || pDst->m_pCurMap != m_pCurMap || CGameObject::GetCurSecNum(pDst) == -1)
+    if (!pDst->m_bLive || pDst->m_bCorpse || pDst->m_pCurMap != m_pCurMap || pDst->GetCurSecNum() == -1)
     {
       return static_cast<char>(-6);
     }
@@ -14559,17 +15781,17 @@ char CPlayer::_pre_check_force_attack(
       return static_cast<char>(guildResult);
     }
 
-    if (!pDst->IsBeAttackedAble(pDst, true))
+    if (!pDst->IsBeAttackedAble(true))
     {
       return static_cast<char>(-6);
     }
 
-    if (!IsAttackableInTown() && !pDst->IsAttackableInTown(pDst) && (IsInTown() || pDst->IsInTown(pDst)))
+    if (!IsAttackableInTown() && !pDst->IsAttackableInTown() && (IsInTown() || pDst->IsInTown()))
     {
       return static_cast<char>(-31);
     }
 
-    if (!pDst->IsBeDamagedAble(pDst, this))
+    if (!pDst->IsBeDamagedAble(this))
     {
       return static_cast<char>(-6);
     }
@@ -14594,22 +15816,22 @@ char CPlayer::_pre_check_force_attack(
     return static_cast<char>(-24);
   }
 
-  if (_effect_parameter::GetEff_State(&m_EP, 1))
+  if (m_EP.GetEff_State(1))
   {
     return static_cast<char>(-50);
   }
 
-  if (_effect_parameter::GetEff_State(&m_EP, 20))
+  if (m_EP.GetEff_State(20))
   {
     return static_cast<char>(-37);
   }
 
-  if (_effect_parameter::GetEff_State(&m_EP, 28))
+  if (m_EP.GetEff_State(28))
   {
     return static_cast<char>(-37);
   }
 
-  if (_effect_parameter::GetEff_State(&m_EP, 21))
+  if (m_EP.GetEff_State(21))
   {
     return static_cast<char>(-38);
   }
@@ -14624,7 +15846,7 @@ char CPlayer::_pre_check_force_attack(
     return static_cast<char>(-50);
   }
 
-  if (forceField->m_nEffectGroup == 6 && !CMapData::IsMapIn(m_pCurMap, pfTarPos))
+  if (forceField->m_nEffectGroup == 6 && !m_pCurMap->IsMapIn(pfTarPos))
   {
     return static_cast<char>(-50);
   }
@@ -14632,9 +15854,9 @@ char CPlayer::_pre_check_force_attack(
   if (pDst)
   {
     const float rangeBase = static_cast<float>(forceField->m_nActDistance + 40);
-    const float width = pDst->GetWidth(pDst);
+    const float width = pDst->GetWidth();
     const float rangeWithWidth = rangeBase + (width / 2.0f);
-    const float effPlus = _effect_parameter::GetEff_Plus(&m_EP, 8);
+    const float effPlus = m_EP.GetEff_Plus(8);
     const int range = static_cast<int>(rangeWithWidth + effPlus);
     float dist = GetSqrt(pDst->m_fCurPos, m_fCurPos);
     if (dist > static_cast<float>(range))
@@ -14651,7 +15873,7 @@ char CPlayer::_pre_check_force_attack(
     int range = forceField->m_nActDistance + 40;
     if (forceField->m_nEffectGroup == 6 || forceField->m_nEffectGroup == 5 || forceField->m_nEffectGroup == 7)
     {
-      const float effPlus = _effect_parameter::GetEff_Plus(&m_EP, 8);
+      const float effPlus = m_EP.GetEff_Plus(8);
       range = static_cast<int>(static_cast<float>(range) + effPlus);
     }
 
@@ -14678,7 +15900,7 @@ char CPlayer::_pre_check_force_attack(
       return static_cast<char>(-63);
     }
     effBulletField = reinterpret_cast<_BulletItem_fld *>(
-      CRecordData::GetRecord(&g_Main.m_tblItemData[10], effBulletItem->m_wItemIndex));
+      g_Main.m_tblItemData[10].GetRecord(effBulletItem->m_wItemIndex));
     *ppEffBtProp = effBulletItem;
     *ppfldEffBt = effBulletField;
   }
@@ -14717,12 +15939,12 @@ char CPlayer::_pre_check_unit_attack(
     return static_cast<char>(-41);
   }
 
-  if (_effect_parameter::GetEff_State(&m_EP, 20))
+  if (m_EP.GetEff_State(20))
   {
     return static_cast<char>(-37);
   }
 
-  if (_effect_parameter::GetEff_State(&m_EP, 28))
+  if (m_EP.GetEff_State(28))
   {
     return static_cast<char>(-37);
   }
@@ -14733,7 +15955,7 @@ char CPlayer::_pre_check_unit_attack(
     return static_cast<char>(-17);
   }
 
-  bulletField = reinterpret_cast<_UnitBullet_fld *>(CRecordData::GetRecord(&g_Main.m_tblUnitBullet, bulletParam->wBulletIndex));
+  bulletField = reinterpret_cast<_UnitBullet_fld *>(g_Main.m_tblUnitBullet.GetRecord(bulletParam->wBulletIndex));
   if (!bulletField)
   {
     return static_cast<char>(-60);
@@ -14741,11 +15963,11 @@ char CPlayer::_pre_check_unit_attack(
 
   if (byWeaponPart)
   {
-    weaponField = reinterpret_cast<_UnitPart_fld *>(CRecordData::GetRecord(&g_Main.m_tblUnitPart[4], m_pUsingUnit->byPart[4]));
+    weaponField = reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[4].GetRecord(m_pUsingUnit->byPart[4]));
   }
   else
   {
-    weaponField = reinterpret_cast<_UnitPart_fld *>(CRecordData::GetRecord(&g_Main.m_tblUnitPart[3], m_pUsingUnit->byPart[3]));
+    weaponField = reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[3].GetRecord(m_pUsingUnit->byPart[3]));
   }
 
   if (!weaponField)
@@ -14758,17 +15980,17 @@ char CPlayer::_pre_check_unit_attack(
     return static_cast<char>(-6);
   }
 
-  if (!pDst->m_bLive || pDst->m_bCorpse || pDst->m_pCurMap != m_pCurMap || CGameObject::GetCurSecNum(pDst) == -1)
+  if (!pDst->m_bLive || pDst->m_bCorpse || pDst->m_pCurMap != m_pCurMap || pDst->GetCurSecNum() == -1)
   {
     return static_cast<char>(-6);
   }
 
-  if (!IsAttackableInTown() && !pDst->IsAttackableInTown(pDst) && (IsInTown() || pDst->IsInTown(pDst)))
+  if (!IsAttackableInTown() && !pDst->IsAttackableInTown() && (IsInTown() || pDst->IsInTown()))
   {
     return static_cast<char>(-31);
   }
 
-  if (!pDst->IsBeDamagedAble(pDst, this))
+  if (!pDst->IsBeDamagedAble(this))
   {
     return static_cast<char>(-6);
   }
@@ -14779,7 +16001,7 @@ char CPlayer::_pre_check_unit_attack(
     return static_cast<char>(guildResult);
   }
 
-  if (!pDst->IsBeAttackedAble(pDst, true))
+  if (!pDst->IsBeAttackedAble(true))
   {
     return static_cast<char>(-6);
   }
@@ -14835,7 +16057,7 @@ char CPlayer::_pre_check_siege_attack(
     return static_cast<char>(-35);
   }
 
-  _base_fld *siegeRecord = CRecordData::GetRecord(&g_Main.m_tblItemData[27], m_pSiegeItem->m_wItemIndex);
+  _base_fld *siegeRecord = g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex);
   if (*reinterpret_cast<int *>(&siegeRecord[3].m_strCode[4]) != m_pmWpn.byWpType)
   {
     return static_cast<char>(-33);
@@ -14884,7 +16106,7 @@ char CPlayer::_pre_check_siege_attack(
       return static_cast<char>(-17);
     }
     bulletField = reinterpret_cast<_BulletItem_fld *>(
-      CRecordData::GetRecord(&g_Main.m_tblItemData[10], bulletItem->m_wItemIndex));
+      g_Main.m_tblItemData[10].GetRecord(bulletItem->m_wItemIndex));
     if (bulletItem->m_bLock)
     {
       return static_cast<char>(-29);
@@ -14900,7 +16122,7 @@ char CPlayer::_pre_check_siege_attack(
       return static_cast<char>(-63);
     }
     effBulletField = reinterpret_cast<_BulletItem_fld *>(
-      CRecordData::GetRecord(&g_Main.m_tblItemData[10], effBulletItem->m_wItemIndex));
+      g_Main.m_tblItemData[10].GetRecord(effBulletItem->m_wItemIndex));
     if (effBulletItem->m_bLock)
     {
       return static_cast<char>(-29);
@@ -14914,7 +16136,7 @@ char CPlayer::_pre_check_siege_attack(
       return static_cast<char>(-6);
     }
 
-    if (!pDst->m_bLive || pDst->m_bCorpse || pDst->m_pCurMap != m_pCurMap || CGameObject::GetCurSecNum(pDst) == -1)
+    if (!pDst->m_bLive || pDst->m_bCorpse || pDst->m_pCurMap != m_pCurMap || pDst->GetCurSecNum() == -1)
     {
       return static_cast<char>(-6);
     }
@@ -14925,7 +16147,7 @@ char CPlayer::_pre_check_siege_attack(
       return static_cast<char>(guildResult);
     }
 
-    if (!pDst->IsBeAttackedAble(pDst, true))
+    if (!pDst->IsBeAttackedAble(true))
     {
       return static_cast<char>(-6);
     }
@@ -14934,16 +16156,16 @@ char CPlayer::_pre_check_siege_attack(
     if (m_pmWpn.byWpType == 7)
     {
       const float baseRange = static_cast<float>(m_pmWpn.wGaAttRange);
-      const float width = pDst->GetWidth(pDst);
+      const float width = pDst->GetWidth();
       const float rangeWithWidth = baseRange + (width / 2.0f);
       attackRange = rangeWithWidth + *reinterpret_cast<float *>(&siegeRecord[5].m_strCode[16]);
     }
     else
     {
       const float baseRange = static_cast<float>(m_pmWpn.wGaAttRange);
-      const float width = pDst->GetWidth(pDst);
+      const float width = pDst->GetWidth();
       const float rangeWithWidth = baseRange + (width / 2.0f);
-      const float effPlus = _effect_parameter::GetEff_Plus(&m_EP, m_pmWpn.byWpClass + 4);
+      const float effPlus = m_EP.GetEff_Plus(m_pmWpn.byWpClass + 4);
       attackRange = (rangeWithWidth + *reinterpret_cast<float *>(&siegeRecord[5].m_strCode[16])) + effPlus;
     }
 
@@ -14962,12 +16184,12 @@ char CPlayer::_pre_check_siege_attack(
       return static_cast<char>(-3);
     }
 
-    if (!IsAttackableInTown() && !pDst->IsAttackableInTown(pDst) && (IsInTown() || pDst->IsInTown(pDst)))
+    if (!IsAttackableInTown() && !pDst->IsAttackableInTown() && (IsInTown() || pDst->IsInTown()))
     {
       return static_cast<char>(-31);
     }
 
-    if (!pDst->IsBeDamagedAble(pDst, this))
+    if (!pDst->IsBeDamagedAble(this))
     {
       return static_cast<char>(-6);
     }
@@ -14979,7 +16201,7 @@ char CPlayer::_pre_check_siege_attack(
       return static_cast<char>(-6);
     }
 
-    if (!CMapData::IsMapIn(m_pCurMap, pfAttackPos))
+    if (!m_pCurMap->IsMapIn(pfAttackPos))
     {
       return static_cast<char>(-36);
     }
@@ -14988,13 +16210,13 @@ char CPlayer::_pre_check_siege_attack(
     if (m_pmWpn.byWpType == 7)
     {
       const float baseRange = static_cast<float>(m_pmWpn.wGaAttRange) + *reinterpret_cast<float *>(&siegeRecord[5].m_strCode[16]);
-      const float effPlus = _effect_parameter::GetEff_Plus(&m_EP, 36);
+      const float effPlus = m_EP.GetEff_Plus(36);
       attackRange = baseRange + effPlus;
     }
     else
     {
       const float baseRange = static_cast<float>(m_pmWpn.wGaAttRange) + *reinterpret_cast<float *>(&siegeRecord[5].m_strCode[16]);
-      const float effPlus = _effect_parameter::GetEff_Plus(&m_EP, m_pmWpn.byWpClass + 4);
+      const float effPlus = m_EP.GetEff_Plus(m_pmWpn.byWpClass + 4);
       attackRange = baseRange + effPlus;
     }
 
@@ -15046,7 +16268,7 @@ char CPlayer::_pre_check_wpactive_skill_attack(
       return 0;
     }
     bulletField = reinterpret_cast<_BulletItem_fld *>(
-      CRecordData::GetRecord(&g_Main.m_tblItemData[10], bulletItem->m_wItemIndex));
+      g_Main.m_tblItemData[10].GetRecord(bulletItem->m_wItemIndex));
     if (bulletItem->m_bLock)
     {
       return 0;
@@ -15143,7 +16365,7 @@ int CPlayer::_pre_check_in_guild_battle(CPlayer *pDst)
       if (pDst->m_ObjID.m_byID == 3)
       {
         CPlayer *master = *reinterpret_cast<CPlayer **>(&pDst->m_bBaseDownload);
-        if (master && CPlayer::IsPunished(master, 1u, 0))
+        if (master && master->IsPunished(1u, 0))
         {
           return 0;
         }
@@ -15151,14 +16373,14 @@ int CPlayer::_pre_check_in_guild_battle(CPlayer *pDst)
     }
     else
     {
-      if (CPlayer::IsPunished(pDst, 1u, 0))
+      if (pDst->IsPunished(1u, 0))
       {
         return 0;
       }
     }
 
     const int myRace = GetObjRace();
-    const int dstRace = pDst->GetObjRace(pDst);
+    const int dstRace = pDst->GetObjRace();
     if (myRace == dstRace)
     {
       return -6;
@@ -15185,18 +16407,18 @@ bool CPlayer::_pre_check_in_guild_battle_race(CPlayer *pDst, bool bEqueal)
         {
           return false;
         }
-        if (!pDst->m_ObjID.m_byID && CPlayer::IsPunished(pDst, 1u, 0))
+        if (!pDst->m_ObjID.m_byID && pDst->IsPunished(1u, 0))
         {
           return false;
         }
-        if (pDst->GetObjRace(pDst) == GetObjRace())
+        if (pDst->GetObjRace() == GetObjRace())
         {
           return true;
         }
       }
       else
       {
-        if (pDst->GetObjRace(pDst) != GetObjRace())
+        if (pDst->GetObjRace() != GetObjRace())
         {
           return true;
         }
@@ -15229,18 +16451,18 @@ bool CPlayer::_pre_check_in_guild_battle_race(CPlayer *pDst, bool bEqueal)
             {
               return false;
             }
-            if (!pDst->m_ObjID.m_byID && CPlayer::IsPunished(pDst, 1u, 0))
+            if (!pDst->m_ObjID.m_byID && pDst->IsPunished(1u, 0))
             {
               return false;
             }
-            if (pDst->GetObjRace(pDst) == GetObjRace())
+            if (pDst->GetObjRace() == GetObjRace())
             {
               return true;
             }
           }
           else
           {
-            if (pDst->GetObjRace(pDst) != GetObjRace())
+            if (pDst->GetObjRace() != GetObjRace())
             {
               return true;
             }
@@ -15253,18 +16475,18 @@ bool CPlayer::_pre_check_in_guild_battle_race(CPlayer *pDst, bool bEqueal)
         {
           return false;
         }
-        if (!pDst->m_ObjID.m_byID && CPlayer::IsPunished(pDst, 1u, 0))
+        if (!pDst->m_ObjID.m_byID && pDst->IsPunished(1u, 0))
         {
           return false;
         }
-        if (pDst->GetObjRace(pDst) == GetObjRace())
+        if (pDst->GetObjRace() == GetObjRace())
         {
           return true;
         }
       }
       else
       {
-        if (pDst->GetObjRace(pDst) != GetObjRace())
+        if (pDst->GetObjRace() != GetObjRace())
         {
           return true;
         }
@@ -15295,18 +16517,18 @@ bool CPlayer::_pre_check_in_guild_battle_race(CPlayer *pDst, bool bEqueal)
         {
           return false;
         }
-        if (!pDst->m_ObjID.m_byID && CPlayer::IsPunished(pDst, 1u, 0))
+        if (!pDst->m_ObjID.m_byID && pDst->IsPunished(1u, 0))
         {
           return false;
         }
-        if (pDst->GetObjRace(pDst) == GetObjRace())
+        if (pDst->GetObjRace() == GetObjRace())
         {
           return true;
         }
       }
       else
       {
-        if (pDst->GetObjRace(pDst) != GetObjRace())
+        if (pDst->GetObjRace() != GetObjRace())
         {
           return true;
         }
@@ -15344,10 +16566,10 @@ char CPlayer::_pre_check_skill_gradelimit(_skill_fld *pSkillFld)
           break;
         case 1:
         {
-          const unsigned int charSerial = CPlayerDB::GetCharSerial(&m_Param);
-          const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+          const unsigned int charSerial = m_Param.GetCharSerial();
+          const int raceCode = m_Param.GetRaceCode();
           CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
-          const unsigned int bossSerial = CPvpUserAndGuildRankingSystem::GetCurrentRaceBossSerial(rank, raceCode, 0);
+          const unsigned int bossSerial = rank->GetCurrentRaceBossSerial(raceCode, 0);
           if (charSerial == bossSerial)
           {
             pass = true;
@@ -15356,10 +16578,10 @@ char CPlayer::_pre_check_skill_gradelimit(_skill_fld *pSkillFld)
         }
         case 2:
         {
-          const unsigned int charSerial = CPlayerDB::GetCharSerial(&m_Param);
-          const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+          const unsigned int charSerial = m_Param.GetCharSerial();
+          const int raceCode = m_Param.GetRaceCode();
           CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
-          if (CPvpUserAndGuildRankingSystem::GetBossType(rank, raceCode, charSerial) == 1)
+          if (rank->GetBossType(raceCode, charSerial) == 1)
           {
             pass = true;
           }
@@ -15367,10 +16589,10 @@ char CPlayer::_pre_check_skill_gradelimit(_skill_fld *pSkillFld)
         }
         case 3:
         {
-          const unsigned int charSerial = CPlayerDB::GetCharSerial(&m_Param);
-          const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+          const unsigned int charSerial = m_Param.GetCharSerial();
+          const int raceCode = m_Param.GetRaceCode();
           CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
-          if (CPvpUserAndGuildRankingSystem::GetBossType(rank, raceCode, charSerial) == 5)
+          if (rank->GetBossType(raceCode, charSerial) == 5)
           {
             pass = true;
           }
@@ -15378,10 +16600,10 @@ char CPlayer::_pre_check_skill_gradelimit(_skill_fld *pSkillFld)
         }
         case 4:
         {
-          const unsigned int charSerial = CPlayerDB::GetCharSerial(&m_Param);
-          const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+          const unsigned int charSerial = m_Param.GetCharSerial();
+          const int raceCode = m_Param.GetRaceCode();
           CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
-          if (CPvpUserAndGuildRankingSystem::GetBossType(rank, raceCode, charSerial) == 2)
+          if (rank->GetBossType(raceCode, charSerial) == 2)
           {
             pass = true;
           }
@@ -15389,10 +16611,10 @@ char CPlayer::_pre_check_skill_gradelimit(_skill_fld *pSkillFld)
         }
         case 5:
         {
-          const unsigned int charSerial = CPlayerDB::GetCharSerial(&m_Param);
-          const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+          const unsigned int charSerial = m_Param.GetCharSerial();
+          const int raceCode = m_Param.GetRaceCode();
           CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
-          if (CPvpUserAndGuildRankingSystem::GetBossType(rank, raceCode, charSerial) == 6)
+          if (rank->GetBossType(raceCode, charSerial) == 6)
           {
             pass = true;
           }
@@ -15400,10 +16622,10 @@ char CPlayer::_pre_check_skill_gradelimit(_skill_fld *pSkillFld)
         }
         case 6:
         {
-          const unsigned int charSerial = CPlayerDB::GetCharSerial(&m_Param);
-          const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+          const unsigned int charSerial = m_Param.GetCharSerial();
+          const int raceCode = m_Param.GetRaceCode();
           CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
-          if (CPvpUserAndGuildRankingSystem::GetBossType(rank, raceCode, charSerial) == 3)
+          if (rank->GetBossType(raceCode, charSerial) == 3)
           {
             pass = true;
           }
@@ -15411,10 +16633,10 @@ char CPlayer::_pre_check_skill_gradelimit(_skill_fld *pSkillFld)
         }
         case 7:
         {
-          const unsigned int charSerial = CPlayerDB::GetCharSerial(&m_Param);
-          const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+          const unsigned int charSerial = m_Param.GetCharSerial();
+          const int raceCode = m_Param.GetRaceCode();
           CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
-          if (CPvpUserAndGuildRankingSystem::GetBossType(rank, raceCode, charSerial) == 7)
+          if (rank->GetBossType(raceCode, charSerial) == 7)
           {
             pass = true;
           }
@@ -15422,10 +16644,10 @@ char CPlayer::_pre_check_skill_gradelimit(_skill_fld *pSkillFld)
         }
         case 8:
         {
-          const unsigned int charSerial = CPlayerDB::GetCharSerial(&m_Param);
-          const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+          const unsigned int charSerial = m_Param.GetCharSerial();
+          const int raceCode = m_Param.GetRaceCode();
           CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
-          if (CPvpUserAndGuildRankingSystem::GetBossType(rank, raceCode, charSerial) == 4)
+          if (rank->GetBossType(raceCode, charSerial) == 4)
           {
             pass = true;
           }
@@ -15433,10 +16655,10 @@ char CPlayer::_pre_check_skill_gradelimit(_skill_fld *pSkillFld)
         }
         case 9:
         {
-          const unsigned int charSerial = CPlayerDB::GetCharSerial(&m_Param);
-          const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+          const unsigned int charSerial = m_Param.GetCharSerial();
+          const int raceCode = m_Param.GetRaceCode();
           CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
-          if (CPvpUserAndGuildRankingSystem::GetBossType(rank, raceCode, charSerial) == 8)
+          if (rank->GetBossType(raceCode, charSerial) == 8)
           {
             pass = true;
           }
@@ -15445,8 +16667,8 @@ char CPlayer::_pre_check_skill_gradelimit(_skill_fld *pSkillFld)
         case 10:
           if (m_Param.m_pGuild)
           {
-            const unsigned int charSerial = CPlayerDB::GetCharSerial(&m_Param);
-            const unsigned int guildMasterSerial = CGuild::GetGuildMasterSerial(m_Param.m_pGuild);
+            const unsigned int charSerial = m_Param.GetCharSerial();
+            const unsigned int guildMasterSerial = m_Param.m_pGuild->GetGuildMasterSerial();
             if (charSerial == guildMasterSerial)
             {
               pass = true;
@@ -15454,7 +16676,7 @@ char CPlayer::_pre_check_skill_gradelimit(_skill_fld *pSkillFld)
           }
           break;
         case 11:
-          if (m_pPartyMgr && CPartyPlayer::IsPartyMode(m_pPartyMgr) && CPartyPlayer::IsPartyBoss(m_pPartyMgr))
+          if (m_pPartyMgr && m_pPartyMgr->IsPartyMode() && m_pPartyMgr->IsPartyBoss())
           {
             pass = true;
           }
@@ -15511,32 +16733,32 @@ void CPlayer::make_gen_attack_param(
   int masteryBonus = 1;
   if (m_pmWpn.byWpType == 7)
   {
-    masteryBonus = _MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 6u, 0);
+    masteryBonus = m_pmMst.GetMasteryPerMast(6u, 0);
   }
   else
   {
-    masteryBonus = _MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 0, m_pmWpn.byWpClass);
+    masteryBonus = m_pmMst.GetMasteryPerMast(0, m_pmWpn.byWpClass);
   }
 
   if (strncmp(m_pmWpn.strEffBulletType, "-1", 2u) && pEffBtFld)
   {
     const float minAf = static_cast<float>(m_pmWpn.nGaMinAF);
-    const float effRate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+    const float effRate = m_EP.GetEff_Rate(32);
     pAP->nMinAFPlus = static_cast<int>(
       static_cast<float>(((minAf * effRate) * fAddBulletFc) * fAddEffBtFc) + static_cast<float>(CPlayer::s_nAddMstFc[masteryBonus]));
 
     const float maxAf = static_cast<float>(m_pmWpn.nGaMaxAF);
-    const float maxRate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+    const float maxRate = m_EP.GetEff_Rate(32);
     pAP->nMaxAFPlus = static_cast<int>(
       static_cast<float>(((maxAf * maxRate) * fAddBulletFc) * fAddEffBtFc) + static_cast<float>(CPlayer::s_nAddMstFc[masteryBonus]));
   }
 
   const float minAf = static_cast<float>(m_pmWpn.nGaMinAF);
-  const float minRate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+  const float minRate = m_EP.GetEff_Rate(32);
   pAP->nMinAF = static_cast<int>((minAf * minRate) * fAddBulletFc + static_cast<float>(CPlayer::s_nAddMstFc[masteryBonus]));
 
   const float maxAf = static_cast<float>(m_pmWpn.nGaMaxAF);
-  const float maxRate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+  const float maxRate = m_EP.GetEff_Rate(32);
   pAP->nMaxAF = static_cast<int>((maxAf * maxRate) * fAddBulletFc + static_cast<float>(CPlayer::s_nAddMstFc[masteryBonus]));
 
   pAP->nMinSel = m_pmWpn.byGaMinSel;
@@ -15561,7 +16783,7 @@ void CPlayer::make_gen_attack_param(
 
   pAP->bMatchless = m_bCheat_Matchless;
   pAP->nMaxAttackPnt = m_nMaxAttackPnt;
-  if (pDst && pDst->m_ObjID.m_byKind == 1 && !CMonster::IsViewArea(reinterpret_cast<CMonster *>(pDst), this))
+  if (pDst && pDst->m_ObjID.m_byKind == 1 && !reinterpret_cast<CMonster *>(pDst)->IsViewArea(this))
   {
     pAP->bBackAttack = 1;
   }
@@ -15585,7 +16807,7 @@ void CPlayer::make_skill_attack_param(
 
   if (pBulletItem)
   {
-    _base_fld *bulletRecord = CRecordData::GetRecord(&g_Main.m_tblItemData[10], pBulletItem->m_wItemIndex);
+    _base_fld *bulletRecord = g_Main.m_tblItemData[10].GetRecord(pBulletItem->m_wItemIndex);
     pAP->nTol = *reinterpret_cast<int *>(&bulletRecord[6].m_strCode[40]);
   }
   else
@@ -15595,11 +16817,10 @@ void CPlayer::make_skill_attack_param(
 
   pAP->nClass = m_pmWpn.byWpClass;
 
-  if (m_pmWpn.nGaMaxAF < 0 || _effect_parameter::GetEff_Rate(&m_EP, 32) < 0.0f || fAddBulletFc < 0.0f)
+  if (m_pmWpn.nGaMaxAF < 0 || m_EP.GetEff_Rate(32) < 0.0f || fAddBulletFc < 0.0f)
   {
-    const float effRate = _effect_parameter::GetEff_Rate(&m_EP, 32);
-    CLogFile::Write(
-      &g_Main.m_logSystemError,
+    const float effRate = m_EP.GetEff_Rate(32);
+    g_Main.m_logSystemError.Write(
       "Skill Attack Warning : nGaMaxAF(%d), Potion_Inc_Fc(%f), fAddBulletFc(%f)",
       m_pmWpn.nGaMaxAF,
       effRate,
@@ -15609,29 +16830,29 @@ void CPlayer::make_skill_attack_param(
   if (m_pmWpn.byWpType == 7)
   {
     const float minAf = static_cast<float>(m_pmWpn.nGaMinAF);
-    const float rate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+    const float rate = m_EP.GetEff_Rate(32);
     const float tempMin = (minAf * rate) * fAddBulletFc;
-    const int mastery = _MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 6u, 0);
+    const int mastery = m_pmMst.GetMasteryPerMast(6u, 0);
     pAP->nMinAF = static_cast<int>(tempMin + static_cast<float>(mastery));
 
     const float maxAf = static_cast<float>(m_pmWpn.nGaMaxAF);
-    const float maxRate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+    const float maxRate = m_EP.GetEff_Rate(32);
     const float tempMax = (maxAf * maxRate) * fAddBulletFc;
-    const int maxMastery = _MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 6u, 0);
+    const int maxMastery = m_pmMst.GetMasteryPerMast(6u, 0);
     pAP->nMaxAF = static_cast<int>(tempMax + static_cast<float>(maxMastery));
   }
   else
   {
     const float minAf = static_cast<float>(m_pmWpn.nGaMinAF);
-    const float rate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+    const float rate = m_EP.GetEff_Rate(32);
     const float tempMin = (minAf * rate) * fAddBulletFc;
-    const int mastery = _MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 0, m_pmWpn.byWpClass);
+    const int mastery = m_pmMst.GetMasteryPerMast(0, m_pmWpn.byWpClass);
     pAP->nMinAF = static_cast<int>(tempMin + static_cast<float>(mastery));
 
     const float maxAf = static_cast<float>(m_pmWpn.nGaMaxAF);
-    const float maxRate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+    const float maxRate = m_EP.GetEff_Rate(32);
     const float tempMax = (maxAf * maxRate) * fAddBulletFc;
-    const int maxMastery = _MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 0, m_pmWpn.byWpClass);
+    const int maxMastery = m_pmMst.GetMasteryPerMast(0, m_pmWpn.byWpClass);
     pAP->nMaxAF = static_cast<int>(tempMax + static_cast<float>(maxMastery));
   }
 
@@ -15640,52 +16861,52 @@ void CPlayer::make_skill_attack_param(
     if (m_pmWpn.byWpType == 7)
     {
       const float minAf = static_cast<float>(m_pmWpn.nGaMinAF);
-      const float rate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+      const float rate = m_EP.GetEff_Rate(32);
       const float tempMin = ((minAf * rate) * fAddBulletFc) * fAddEffBulletFc;
-      const int mastery = _MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 6u, 0);
+      const int mastery = m_pmMst.GetMasteryPerMast(6u, 0);
       pAP->nMinAFPlus = static_cast<int>(tempMin + static_cast<float>(mastery));
 
       const float maxAf = static_cast<float>(m_pmWpn.nGaMaxAF);
-      const float maxRate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+      const float maxRate = m_EP.GetEff_Rate(32);
       const float tempMax = ((maxAf * maxRate) * fAddBulletFc) * fAddEffBulletFc;
-      const int maxMastery = _MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 6u, 0);
+      const int maxMastery = m_pmMst.GetMasteryPerMast(6u, 0);
       pAP->nMaxAFPlus = static_cast<int>(tempMax + static_cast<float>(maxMastery));
     }
     else
     {
       const float minAf = static_cast<float>(m_pmWpn.nGaMinAF);
-      const float rate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+      const float rate = m_EP.GetEff_Rate(32);
       const float tempMin = ((minAf * rate) * fAddBulletFc) * fAddEffBulletFc;
-      const int mastery = _MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 0, m_pmWpn.byWpClass);
+      const int mastery = m_pmMst.GetMasteryPerMast(0, m_pmWpn.byWpClass);
       pAP->nMinAFPlus = static_cast<int>(tempMin + static_cast<float>(mastery));
 
       const float maxAf = static_cast<float>(m_pmWpn.nGaMaxAF);
-      const float maxRate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+      const float maxRate = m_EP.GetEff_Rate(32);
       const float tempMax = ((maxAf * maxRate) * fAddBulletFc) * fAddEffBulletFc;
-      const int maxMastery = _MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 0, m_pmWpn.byWpClass);
+      const int maxMastery = m_pmMst.GetMasteryPerMast(0, m_pmWpn.byWpClass);
       pAP->nMaxAFPlus = static_cast<int>(tempMax + static_cast<float>(maxMastery));
     }
   }
 
   if (IsSiegeMode())
   {
-    _base_fld *siegeRecord = CRecordData::GetRecord(&g_Main.m_tblItemData[27], m_pSiegeItem->m_wItemIndex);
-    const float effRate = _effect_parameter::GetEff_Rate(&m_EP, 23);
+    _base_fld *siegeRecord = g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex);
+    const float effRate = m_EP.GetEff_Rate(23);
     pAP->nMinAF = static_cast<int>(static_cast<float>(pAP->nMinAF)
                                    * (*reinterpret_cast<float *>(&siegeRecord[5].m_strCode[24]) * effRate));
     if (strncmp(m_pmWpn.strEffBulletType, "-1", 2u) && pEffBulletItem)
     {
-      const float rate = _effect_parameter::GetEff_Rate(&m_EP, 23);
+      const float rate = m_EP.GetEff_Rate(23);
       pAP->nMinAFPlus = static_cast<int>(static_cast<float>(pAP->nMinAFPlus)
                                          * (*reinterpret_cast<float *>(&siegeRecord[5].m_strCode[24]) * rate));
     }
 
-    const float maxRate = _effect_parameter::GetEff_Rate(&m_EP, 23);
+    const float maxRate = m_EP.GetEff_Rate(23);
     pAP->nMaxAF = static_cast<int>(static_cast<float>(pAP->nMaxAF)
                                    * (*reinterpret_cast<float *>(&siegeRecord[5].m_strCode[24]) * maxRate));
     if (strncmp(m_pmWpn.strEffBulletType, "-1", 2u) && pEffBulletItem)
     {
-      const float rate = _effect_parameter::GetEff_Rate(&m_EP, 23);
+      const float rate = m_EP.GetEff_Rate(23);
       pAP->nMaxAFPlus = static_cast<int>(static_cast<float>(pAP->nMaxAFPlus)
                                          * (*reinterpret_cast<float *>(&siegeRecord[5].m_strCode[24]) * rate));
     }
@@ -15727,18 +16948,18 @@ void CPlayer::make_skill_attack_param(
   }
   else
   {
-    pAP->nLevel = _MASTERY_PARAM::GetSkillLv(&m_pmMst, pSkillFld->m_dwIndex);
-    pAP->nLevel = static_cast<int>(static_cast<float>(pAP->nLevel) + _effect_parameter::GetEff_Plus(&m_EP, 19));
+    pAP->nLevel = m_pmMst.GetSkillLv(pSkillFld->m_dwIndex);
+    pAP->nLevel = static_cast<int>(static_cast<float>(pAP->nLevel) + m_EP.GetEff_Plus(19));
     if (pAP->nLevel > 7)
     {
       pAP->nLevel = 7;
     }
-    pAP->nMastery = _MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 3u, pSkillFld->m_nMastIndex);
+    pAP->nMastery = m_pmMst.GetMasteryPerMast(3u, pSkillFld->m_nMastIndex);
   }
 
   memcpy_0(pAP->fArea, pfAttackPos, sizeof(pAP->fArea));
   pAP->nMaxAttackPnt = m_nMaxAttackPnt;
-  if (pDst && pDst->m_ObjID.m_byKind == 1 && !CMonster::IsViewArea(reinterpret_cast<CMonster *>(pDst), this))
+  if (pDst && pDst->m_ObjID.m_byKind == 1 && !reinterpret_cast<CMonster *>(pDst)->IsViewArea(this))
   {
     pAP->bBackAttack = 1;
   }
@@ -15762,20 +16983,20 @@ void CPlayer::make_force_attack_param(
   if (strncmp(m_pmWpn.strEffBulletType, "-1", 2u) && pEffBulletItem)
   {
     const float minAf = static_cast<float>(m_pmWpn.nMaMinAF);
-    const float rate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+    const float rate = m_EP.GetEff_Rate(32);
     pAP->nMinAFPlus = static_cast<int>(((minAf * rate) * fAddEffBtFc) + static_cast<float>(m_pmMst.m_mtyStaff));
 
     const float maxAf = static_cast<float>(m_pmWpn.nMaMaxAF);
-    const float maxRate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+    const float maxRate = m_EP.GetEff_Rate(32);
     pAP->nMaxAFPlus = static_cast<int>(((maxAf * maxRate) * fAddEffBtFc) + static_cast<float>(m_pmMst.m_mtyStaff));
   }
 
   const float minAf = static_cast<float>(m_pmWpn.nMaMinAF);
-  const float minRate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+  const float minRate = m_EP.GetEff_Rate(32);
   pAP->nMinAF = static_cast<int>((minAf * minRate) + static_cast<float>(m_pmMst.m_mtyStaff));
 
   const float maxAf = static_cast<float>(m_pmWpn.nMaMaxAF);
-  const float maxRate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+  const float maxRate = m_EP.GetEff_Rate(32);
   pAP->nMaxAF = static_cast<int>((maxAf * maxRate) + static_cast<float>(m_pmMst.m_mtyStaff));
 
   pAP->nMinSel = m_pmWpn.byMaMinSel;
@@ -15783,7 +17004,7 @@ void CPlayer::make_force_attack_param(
   pAP->pFld = pForceFld;
   pAP->byEffectCode = 1;
   pAP->nLevel = GetSFLevel(pForceFld->m_nLv, pForceItem->m_dwDur);
-  pAP->nMastery = _MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 4u, pForceFld->m_nMastIndex);
+  pAP->nMastery = m_pmMst.GetMasteryPerMast(4u, pForceFld->m_nMastIndex);
 
   if (pDst)
   {
@@ -15795,7 +17016,7 @@ void CPlayer::make_force_attack_param(
   }
 
   pAP->nMaxAttackPnt = m_nMaxAttackPnt;
-  if (pDst && pDst->m_ObjID.m_byKind == 1 && !CMonster::IsViewArea(reinterpret_cast<CMonster *>(pDst), this))
+  if (pDst && pDst->m_ObjID.m_byKind == 1 && !reinterpret_cast<CMonster *>(pDst)->IsViewArea(this))
   {
     pAP->bBackAttack = 1;
   }
@@ -15816,7 +17037,7 @@ void CPlayer::make_unit_attack_param(CCharacter *pDst, _UnitPart_fld *pWeaponFld
   pAP->nMinAF = static_cast<int>(static_cast<float>(pWeaponFld->m_nGAMinAF) * fAddBulletFc * m_fUnitPv_AttFc);
 
   const float maxAf = static_cast<float>(pWeaponFld->m_nGAMaxAF) * fAddBulletFc;
-  const int mastery = _MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 6u, 0);
+  const int mastery = m_pmMst.GetMasteryPerMast(6u, 0);
   pAP->nMaxAF = static_cast<int>((maxAf + static_cast<float>(mastery)) * m_fUnitPv_AttFc);
 
   pAP->nMinSel = pWeaponFld->m_nGAMinSelProb;
@@ -15824,7 +17045,7 @@ void CPlayer::make_unit_attack_param(CCharacter *pDst, _UnitPart_fld *pWeaponFld
   pAP->nExtentRange = static_cast<int>(pWeaponFld->m_fAttackRange);
   pAP->pFld = pWeaponFld;
   pAP->nMaxAttackPnt = m_nMaxAttackPnt;
-  if (pDst && pDst->m_ObjID.m_byKind == 1 && !CMonster::IsViewArea(reinterpret_cast<CMonster *>(pDst), this))
+  if (pDst && pDst->m_ObjID.m_byKind == 1 && !reinterpret_cast<CMonster *>(pDst)->IsViewArea(this))
   {
     pAP->bBackAttack = 1;
   }
@@ -15870,47 +17091,47 @@ void CPlayer::make_siege_attack_param(
   int masteryBonus = 1;
   if (m_pmWpn.byWpType == 7)
   {
-    masteryBonus = _MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 6u, 0);
+    masteryBonus = m_pmMst.GetMasteryPerMast(6u, 0);
   }
   else
   {
-    masteryBonus = _MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 0, m_pmWpn.byWpClass);
+    masteryBonus = m_pmMst.GetMasteryPerMast(0, m_pmWpn.byWpClass);
   }
 
-  _base_fld *siegeRecord = CRecordData::GetRecord(&g_Main.m_tblItemData[27], m_pSiegeItem->m_wItemIndex);
+  _base_fld *siegeRecord = g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex);
 
   if (strncmp(m_pmWpn.strEffBulletType, "-1", 2u) && pEffBulletFld)
   {
     const float minAf = static_cast<float>(m_pmWpn.nGaMinAF);
-    const float minRate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+    const float minRate = m_EP.GetEff_Rate(32);
     const float minValue =
       ((minAf * minRate) * fAddBulletFc) * fAddEffBtFc + static_cast<float>(CPlayer::s_nAddMstFc[masteryBonus]);
     const float minMul = minValue * (*reinterpret_cast<float *>(&siegeRecord[5].m_strCode[24]));
-    const float minEffRate = _effect_parameter::GetEff_Rate(&m_EP, 23);
+    const float minEffRate = m_EP.GetEff_Rate(23);
     pAP->nMinAFPlus = static_cast<int>(minMul * minEffRate);
 
     const float maxAf = static_cast<float>(m_pmWpn.nGaMaxAF);
-    const float maxRate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+    const float maxRate = m_EP.GetEff_Rate(32);
     const float maxValue =
       ((maxAf * maxRate) * fAddBulletFc) * fAddEffBtFc + static_cast<float>(CPlayer::s_nAddMstFc[masteryBonus]);
     const float maxMul = maxValue * (*reinterpret_cast<float *>(&siegeRecord[5].m_strCode[24]));
-    const float maxEffRate = _effect_parameter::GetEff_Rate(&m_EP, 23);
+    const float maxEffRate = m_EP.GetEff_Rate(23);
     pAP->nMaxAFPlus = static_cast<int>(maxMul * maxEffRate);
     pAP->nEffShotNum = 1;
   }
 
   const float minAf = static_cast<float>(m_pmWpn.nGaMinAF);
-  const float minRate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+  const float minRate = m_EP.GetEff_Rate(32);
   const float minValue = (minAf * minRate) * fAddBulletFc + static_cast<float>(CPlayer::s_nAddMstFc[masteryBonus]);
   const float minMul = minValue * (*reinterpret_cast<float *>(&siegeRecord[5].m_strCode[24]));
-  const float minEffRate = _effect_parameter::GetEff_Rate(&m_EP, 23);
+  const float minEffRate = m_EP.GetEff_Rate(23);
   pAP->nMinAF = static_cast<int>(minMul * minEffRate);
 
   const float maxAf = static_cast<float>(m_pmWpn.nGaMaxAF);
-  const float maxRate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+  const float maxRate = m_EP.GetEff_Rate(32);
   const float maxValue = (maxAf * maxRate) * fAddBulletFc + static_cast<float>(CPlayer::s_nAddMstFc[masteryBonus]);
   const float maxMul = maxValue * (*reinterpret_cast<float *>(&siegeRecord[5].m_strCode[24]));
-  const float maxEffRate = _effect_parameter::GetEff_Rate(&m_EP, 23);
+  const float maxEffRate = m_EP.GetEff_Rate(23);
   pAP->nMaxAF = static_cast<int>(maxMul * maxEffRate);
 
   pAP->nMinSel = m_pmWpn.byGaMinSel;
@@ -15925,7 +17146,7 @@ void CPlayer::make_siege_attack_param(
 
   memcpy_0(pAP->fArea, pfAttackPos, sizeof(pAP->fArea));
   pAP->nMaxAttackPnt = m_nMaxAttackPnt;
-  if (pDst && pDst->m_ObjID.m_byKind == 1 && !CMonster::IsViewArea(reinterpret_cast<CMonster *>(pDst), this))
+  if (pDst && pDst->m_ObjID.m_byKind == 1 && !reinterpret_cast<CMonster *>(pDst)->IsViewArea(this))
   {
     pAP->bBackAttack = 1;
   }
@@ -15948,7 +17169,7 @@ void CPlayer::make_wpactive_skill_attack_param(
 
   if (pBulletItem)
   {
-    _base_fld *bulletRecord = CRecordData::GetRecord(&g_Main.m_tblItemData[10], pBulletItem->m_wItemIndex);
+    _base_fld *bulletRecord = g_Main.m_tblItemData[10].GetRecord(pBulletItem->m_wItemIndex);
     pAP->nTol = *reinterpret_cast<int *>(&bulletRecord[6].m_strCode[40]);
   }
   else
@@ -15960,29 +17181,29 @@ void CPlayer::make_wpactive_skill_attack_param(
   if (m_pmWpn.byWpType == 7)
   {
     const float minAf = static_cast<float>(m_pmWpn.nGaMinAF);
-    const float minRate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+    const float minRate = m_EP.GetEff_Rate(32);
     const float tempMin = (minAf * minRate) * fAddBulletFc;
-    const int mastery = _MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 6u, 0);
+    const int mastery = m_pmMst.GetMasteryPerMast(6u, 0);
     pAP->nMinAF = static_cast<int>(tempMin + static_cast<float>(mastery));
 
     const float maxAf = static_cast<float>(m_pmWpn.nGaMaxAF);
-    const float maxRate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+    const float maxRate = m_EP.GetEff_Rate(32);
     const float tempMax = (maxAf * maxRate) * fAddBulletFc;
-    const int maxMastery = _MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 6u, 0);
+    const int maxMastery = m_pmMst.GetMasteryPerMast(6u, 0);
     pAP->nMaxAF = static_cast<int>(tempMax + static_cast<float>(maxMastery));
   }
   else
   {
     const float minAf = static_cast<float>(m_pmWpn.nGaMinAF);
-    const float minRate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+    const float minRate = m_EP.GetEff_Rate(32);
     const float tempMin = (minAf * minRate) * fAddBulletFc;
-    const int mastery = _MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 0, m_pmWpn.byWpClass);
+    const int mastery = m_pmMst.GetMasteryPerMast(0, m_pmWpn.byWpClass);
     pAP->nMinAF = static_cast<int>(tempMin + static_cast<float>(mastery));
 
     const float maxAf = static_cast<float>(m_pmWpn.nGaMaxAF);
-    const float maxRate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+    const float maxRate = m_EP.GetEff_Rate(32);
     const float tempMax = (maxAf * maxRate) * fAddBulletFc;
-    const int maxMastery = _MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 0, m_pmWpn.byWpClass);
+    const int maxMastery = m_pmMst.GetMasteryPerMast(0, m_pmWpn.byWpClass);
     pAP->nMaxAF = static_cast<int>(tempMax + static_cast<float>(maxMastery));
   }
 
@@ -16019,12 +17240,12 @@ void CPlayer::make_wpactive_skill_attack_param(
     {
       pAP->nLevel = 7;
     }
-    pAP->nMastery = _MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 3u, pSkillFld->m_nMastIndex);
+    pAP->nMastery = m_pmMst.GetMasteryPerMast(3u, pSkillFld->m_nMastIndex);
   }
 
   memcpy_0(pAP->fArea, pfAttackPos, sizeof(pAP->fArea));
   pAP->nMaxAttackPnt = m_nMaxAttackPnt;
-  if (pDst && pDst->m_ObjID.m_byKind == 1 && !CMonster::IsViewArea(reinterpret_cast<CMonster *>(pDst), this))
+  if (pDst && pDst->m_ObjID.m_byKind == 1 && !reinterpret_cast<CMonster *>(pDst)->IsViewArea(this))
   {
     pAP->bBackAttack = 1;
   }
@@ -16042,11 +17263,11 @@ void CPlayer::make_wpactive_force_attack_param(
   pAP->nTol = pForceFld->m_nProperty;
 
   const float minAf = static_cast<float>(m_pmWpn.nMaMinAF);
-  const float minRate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+  const float minRate = m_EP.GetEff_Rate(32);
   pAP->nMinAF = static_cast<int>((minAf * minRate) + static_cast<float>(m_pmMst.m_mtyStaff));
 
   const float maxAf = static_cast<float>(m_pmWpn.nMaMaxAF);
-  const float maxRate = _effect_parameter::GetEff_Rate(&m_EP, 32);
+  const float maxRate = m_EP.GetEff_Rate(32);
   pAP->nMaxAF = static_cast<int>((maxAf * maxRate) + static_cast<float>(m_pmMst.m_mtyStaff));
 
   pAP->nMinSel = m_pmWpn.byMaMinSel;
@@ -16054,10 +17275,10 @@ void CPlayer::make_wpactive_force_attack_param(
   pAP->pFld = pForceFld;
   pAP->byEffectCode = 1;
   pAP->nLevel = m_pmWpn.nActiveEffLvl;
-  pAP->nMastery = _MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 4u, pForceFld->m_nMastIndex);
+  pAP->nMastery = m_pmMst.GetMasteryPerMast(4u, pForceFld->m_nMastIndex);
   memcpy_0(pAP->fArea, pfAttackPos, sizeof(pAP->fArea));
   pAP->nMaxAttackPnt = m_nMaxAttackPnt;
-  if (pDst && pDst->m_ObjID.m_byKind == 1 && !CMonster::IsViewArea(reinterpret_cast<CMonster *>(pDst), this))
+  if (pDst && pDst->m_ObjID.m_byKind == 1 && !reinterpret_cast<CMonster *>(pDst)->IsViewArea(this))
   {
     pAP->bBackAttack = 1;
   }
@@ -16081,7 +17302,7 @@ char CPlayer::WeaponSFActive(
     if (effectCode == 1)
     {
       _force_fld *forceField = reinterpret_cast<_force_fld *>(
-        CRecordData::GetRecordByHash(&g_Main.m_tblEffectData[effectCode], m_pmWpn.strActiveCode_key, 0, 4));
+        g_Main.m_tblEffectData[effectCode].GetRecordByHash(m_pmWpn.strActiveCode_key, 0, 4));
       if (forceField)
       {
         if (forceField->m_bAttackable)
@@ -16094,7 +17315,7 @@ char CPlayer::WeaponSFActive(
     else if (effectCode == 2)
     {
       _skill_fld *skillField = reinterpret_cast<_skill_fld *>(
-        CRecordData::GetRecordByHash(&g_Main.m_tblEffectData[effectCode], m_pmWpn.strActiveCode_key, 0, 5));
+        g_Main.m_tblEffectData[effectCode].GetRecordByHash(m_pmWpn.strActiveCode_key, 0, 5));
       if (skillField)
       {
         if (skillField->m_nAttackable <= 0)
@@ -16108,7 +17329,7 @@ char CPlayer::WeaponSFActive(
   else
   {
     _skill_fld *skillField = reinterpret_cast<_skill_fld *>(
-      CRecordData::GetRecordByHash(g_Main.m_tblEffectData, m_pmWpn.strActiveCode_key, 0, 5));
+      g_Main.m_tblEffectData->GetRecordByHash(m_pmWpn.strActiveCode_key, 0, 5));
     if (skillField)
     {
       if (skillField->m_nAttackable <= 0)
@@ -16282,24 +17503,24 @@ bool CPlayer::WPActiveSkill(
 
   if (nDamagedObjNum <= 1)
   {
-    if (!CCharacter::IsEffectableDst(this, pSkillFld->m_strActableDst, target))
+    if (!IsEffectableDst(pSkillFld->m_strActableDst, target))
     {
       return false;
     }
 
-    if (pSkillFld->m_nContEffectType != -1 && !target->IsRecvableContEffect(target))
+    if (pSkillFld->m_nContEffectType != -1 && !target->IsRecvableContEffect())
     {
       return false;
     }
 
-    if (!pSkillFld->m_nContEffectType && !IsAttackableInTown() && !target->IsAttackableInTown(target))
+    if (!pSkillFld->m_nContEffectType && !IsAttackableInTown() && !target->IsAttackableInTown())
     {
       if (IsInTown())
       {
         return false;
       }
 
-      if (target->IsInTown(target))
+      if (target->IsInTown())
       {
         return false;
       }
@@ -16307,11 +17528,7 @@ bool CPlayer::WPActiveSkill(
       if (m_Param.m_pGuild)
       {
         CGuildRoomSystem *roomSystem = CGuildRoomSystem::GetInstance();
-        if (CGuildRoomSystem::IsGuildRoomMemberIn(
-              roomSystem,
-              m_Param.m_pGuild->m_dwSerial,
-              m_ObjID.m_wIndex,
-              m_pUserDB->m_dwSerial))
+        if (roomSystem->IsGuildRoomMemberIn(m_Param.m_pGuild->m_dwSerial, m_ObjID.m_wIndex, m_pUserDB->m_dwSerial))
         {
           return false;
         }
@@ -16320,7 +17537,7 @@ bool CPlayer::WPActiveSkill(
 
     unsigned __int8 errorCode[32]{};
     bool upMastery = false;
-    success = CCharacter::AssistSkill(this, target, nEffectCode, pSkillFld, skillLevel, errorCode, &upMastery);
+    success = AssistSkill(target, nEffectCode, pSkillFld, skillLevel, errorCode, &upMastery);
     if (!errorCode[0])
     {
       pDamList->m_bActiveSucc = 1;
@@ -16330,23 +17547,21 @@ bool CPlayer::WPActiveSkill(
   {
     for (int j = 0; j < nDamagedObjNum; ++j)
     {
-      if (CCharacter::IsEffectableDst(this, pSkillFld->m_strActableDst, target)
-          && (pSkillFld->m_nContEffectType == -1 || target->IsRecvableContEffect(target))
-          && (!_effect_parameter::GetEff_State(&target->m_EP, 20)
+      if (IsEffectableDst(pSkillFld->m_strActableDst, target)
+          && (pSkillFld->m_nContEffectType == -1 || target->IsRecvableContEffect())
+          && (!target->m_EP.GetEff_State(20)
               || (pSkillFld->m_nTempEffectType != -1 && usableTemp))
-          && !_effect_parameter::GetEff_State(&target->m_EP, 28))
+          && !target->m_EP.GetEff_State(28))
       {
-        if (pSkillFld->m_nContEffectType || IsAttackableInTown() || target->IsAttackableInTown(target)
-            || (!IsInTown() && !target->IsInTown(target)
+        if (pSkillFld->m_nContEffectType || IsAttackableInTown() || target->IsAttackableInTown()
+            || (!IsInTown() && !target->IsInTown()
                 && (!m_Param.m_pGuild
-                    || (CGuildRoomSystem::GetInstance(),
-                        !CGuildRoomSystem::IsGuildRoomMemberIn(
-                          CGuildRoomSystem::GetInstance(),
-                          m_Param.m_pGuild->m_dwSerial,
-                          m_ObjID.m_wIndex,
-                          m_pUserDB->m_dwSerial)))))
+                    || !CGuildRoomSystem::GetInstance()->IsGuildRoomMemberIn(
+                         m_Param.m_pGuild->m_dwSerial,
+                         m_ObjID.m_wIndex,
+                         m_pUserDB->m_dwSerial))))
         {
-          if (CCharacter::AssistSkillToOne(this, pDamList[j].m_pChar, nEffectCode, pSkillFld, skillLevel))
+          if (AssistSkillToOne(pDamList[j].m_pChar, nEffectCode, pSkillFld, skillLevel))
           {
             pDamList[j].m_bActiveSucc = 1;
             success = true;
@@ -16387,24 +17602,24 @@ bool CPlayer::WPActiveForce(_be_damaged_char *pDamList, int nDamagedObjNum, _for
 
   if (nDamagedObjNum <= 1)
   {
-    if (!CCharacter::IsEffectableDst(this, pForceFld->m_strActableDst, target))
+    if (!IsEffectableDst(pForceFld->m_strActableDst, target))
     {
       return false;
     }
 
-    if (pForceFld->m_nContEffectType != -1 && !target->IsRecvableContEffect(target))
+    if (pForceFld->m_nContEffectType != -1 && !target->IsRecvableContEffect())
     {
       return false;
     }
 
-    if (!pForceFld->m_nContEffectType && !IsAttackableInTown() && !target->IsAttackableInTown(target))
+    if (!pForceFld->m_nContEffectType && !IsAttackableInTown() && !target->IsAttackableInTown())
     {
       if (IsInTown())
       {
         return false;
       }
 
-      if (target->IsInTown(target))
+      if (target->IsInTown())
       {
         return false;
       }
@@ -16412,11 +17627,7 @@ bool CPlayer::WPActiveForce(_be_damaged_char *pDamList, int nDamagedObjNum, _for
       if (m_Param.m_pGuild)
       {
         CGuildRoomSystem *roomSystem = CGuildRoomSystem::GetInstance();
-        if (CGuildRoomSystem::IsGuildRoomMemberIn(
-              roomSystem,
-              m_Param.m_pGuild->m_dwSerial,
-              m_ObjID.m_wIndex,
-              m_pUserDB->m_dwSerial))
+        if (roomSystem->IsGuildRoomMemberIn(m_Param.m_pGuild->m_dwSerial, m_ObjID.m_wIndex, m_pUserDB->m_dwSerial))
         {
           return false;
         }
@@ -16425,7 +17636,7 @@ bool CPlayer::WPActiveForce(_be_damaged_char *pDamList, int nDamagedObjNum, _for
 
     unsigned __int8 errorCode[32]{};
     bool upMastery = false;
-    success = CCharacter::AssistForce(this, target, pForceFld, forceLevel, errorCode, &upMastery);
+    success = AssistForce(target, pForceFld, forceLevel, errorCode, &upMastery);
     if (!errorCode[0])
     {
       pDamList->m_bActiveSucc = 1;
@@ -16435,23 +17646,21 @@ bool CPlayer::WPActiveForce(_be_damaged_char *pDamList, int nDamagedObjNum, _for
   {
     for (int j = 0; j < nDamagedObjNum; ++j)
     {
-      if (CCharacter::IsEffectableDst(this, pForceFld->m_strActableDst, pDamList[j].m_pChar)
-          && (pForceFld->m_nContEffectType == -1 || pDamList[j].m_pChar->IsRecvableContEffect(pDamList[j].m_pChar))
-          && (!_effect_parameter::GetEff_State(&pDamList[j].m_pChar->m_EP, 20)
+      if (IsEffectableDst(pForceFld->m_strActableDst, pDamList[j].m_pChar)
+          && (pForceFld->m_nContEffectType == -1 || pDamList[j].m_pChar->IsRecvableContEffect())
+          && (!pDamList[j].m_pChar->m_EP.GetEff_State(20)
               || (pForceFld->m_nTempEffectType != -1 && usableTemp))
-          && !_effect_parameter::GetEff_State(&pDamList[j].m_pChar->m_EP, 28))
+          && !pDamList[j].m_pChar->m_EP.GetEff_State(28))
       {
-        if (pForceFld->m_nContEffectType || IsAttackableInTown() || target->IsAttackableInTown(target)
-            || (!IsInTown() && !target->IsInTown(target)
+        if (pForceFld->m_nContEffectType || IsAttackableInTown() || target->IsAttackableInTown()
+            || (!IsInTown() && !target->IsInTown()
                 && (!m_Param.m_pGuild
-                    || (CGuildRoomSystem::GetInstance(),
-                        !CGuildRoomSystem::IsGuildRoomMemberIn(
-                          CGuildRoomSystem::GetInstance(),
-                          m_Param.m_pGuild->m_dwSerial,
-                          m_ObjID.m_wIndex,
-                          m_pUserDB->m_dwSerial)))))
+                    || !CGuildRoomSystem::GetInstance()->IsGuildRoomMemberIn(
+                         m_Param.m_pGuild->m_dwSerial,
+                         m_ObjID.m_wIndex,
+                         m_pUserDB->m_dwSerial))))
         {
-          if (CCharacter::AssistForceToOne(this, pDamList[j].m_pChar, pForceFld, forceLevel))
+          if (AssistForceToOne(pDamList[j].m_pChar, pForceFld, forceLevel))
           {
             pDamList[j].m_bActiveSucc = 1;
             success = true;
@@ -16493,8 +17702,8 @@ void CPlayer::pc_PlayAttack_Gen(
       SendMsg_AttackResult_Error(errCode);
       if (m_bMove)
       {
-        CCharacter::Stop(this);
-        CGameObject::SendMsg_BreakStop(this);
+        Stop();
+        SendMsg_BreakStop();
       }
       return;
     }
@@ -16537,7 +17746,7 @@ void CPlayer::pc_PlayAttack_Gen(
       int effPlus = 0;
       if (m_pmWpn.byWpType != 7)
       {
-        effPlus = static_cast<int>(_effect_parameter::GetEff_Plus(&m_EP, m_pmWpn.byWpClass + 9));
+        effPlus = static_cast<int>(m_EP.GetEff_Plus(m_pmWpn.byWpClass + 9));
       }
 
       const int addDelay = static_cast<int>(CalcEquipAttackDelay());
@@ -16546,23 +17755,23 @@ void CPlayer::pc_PlayAttack_Gen(
       int delay = effPlus + static_cast<int>(attackDelay);
       if (m_pmWpn.byWpType == 7)
       {
-        const float effPlusInner = _effect_parameter::GetEff_Plus(&m_EP, 11);
+        const float effPlusInner = m_EP.GetEff_Plus(11);
         delay = static_cast<int>(static_cast<float>(delay) + effPlusInner);
       }
       _ATTACK_DELAY_CHECKER::SetDelay(&m_AttDelayChker, static_cast<unsigned int>(delay));
     }
 
-    if (_effect_parameter::GetEff_State(&m_EP, 14))
+    if (m_EP.GetEff_State(14))
     {
-      CCharacter::RemoveSFContHelpByEffect(this, 2, 14);
+      RemoveSFContHelpByEffect(2, 14);
     }
-    if (_effect_parameter::GetEff_State(&m_EP, 21))
+    if (m_EP.GetEff_State(21))
     {
       if (pAP.nAttactType != 4 && pAP.nAttactType != 5 && pAP.nAttactType != 6 && pAP.nAttactType != 7)
       {
         return;
       }
-      CCharacter::RemoveSFContHelpByEffect(this, 2, 21);
+      RemoveSFContHelpByEffect(2, 21);
     }
 
     if (m_bFreeSFByClass)
@@ -16596,22 +17805,22 @@ void CPlayer::pc_PlayAttack_Gen(
     {
       const unsigned int totalDamage =
         static_cast<unsigned int>(pAt.m_DamList[j].m_nActiveDamage + pAt.m_DamList[j].m_nDamage);
-      const int level = static_cast<int>(CPlayerDB::GetLevel(&m_Param));
+      const int level = static_cast<int>(m_Param.GetLevel());
       CCharacter *damaged = pAt.m_DamList[j].m_pChar;
       damaged->SetDamage(static_cast<int>(totalDamage), this, level, pAt.m_bIsCrtAtt, -1, 0, true);
 
       if (IsChaosMode())
       {
-        if (GetObjRace() == damaged->GetObjRace(damaged))
+        if (GetObjRace() == damaged->GetObjRace())
         {
           continue;
         }
       }
 
-      if (GetObjRace() == damaged->GetObjRace(damaged) && !damaged->m_ObjID.m_byID)
+      if (GetObjRace() == damaged->GetObjRace() && !damaged->m_ObjID.m_byID)
       {
         CPlayer *damagedPlayer = static_cast<CPlayer *>(damaged);
-        if (CPlayer::IsPunished(damagedPlayer, 1u, 0))
+        if (damagedPlayer->IsPunished(1u, 0))
         {
           continue;
         }
@@ -16619,15 +17828,15 @@ void CPlayer::pc_PlayAttack_Gen(
 
       if (!pAt.m_bFailure)
       {
-        const int dstLevel = static_cast<int>(damaged->GetLevel(damaged));
+        const int dstLevel = static_cast<int>(damaged->GetLevel());
         if (IsPassMasteryLimitLvDiff(dstLevel))
         {
           const float damageRatio =
             static_cast<float>(pAt.m_DamList[j].m_nDamage)
-            / static_cast<float>(damaged->GetMaxHP(damaged));
+            / static_cast<float>(damaged->GetMaxHP());
           if (damageRatio >= 0.0099999998f)
           {
-            const int level = static_cast<int>(damaged->GetLevel(damaged));
+            const int level = static_cast<int>(damaged->GetLevel());
             masterySum += static_cast<int>(GetMasteryCumAfterAttack(level));
             ++masteryCount;
           }
@@ -16651,13 +17860,13 @@ void CPlayer::pc_PlayAttack_Gen(
       }
     }
 
-    if (pDst && m_pRecalledAnimusChar && pDst->GetHP(pDst) > 0)
+    if (pDst && m_pRecalledAnimusChar && pDst->GetHP() > 0)
     {
-      CAnimus::MasterAttack_MasterInform(m_pRecalledAnimusChar, pDst);
+      m_pRecalledAnimusChar->MasterAttack_MasterInform(pDst);
     }
-    if (pDst && pDst->GetHP(pDst) > 0)
+    if (pDst && pDst->GetHP() > 0)
     {
-      _TOWER_PARAM::NotifyOwnerAttackInform(&m_pmTwr, pDst);
+      m_pmTwr.NotifyOwnerAttackInform(pDst);
     }
 
     if (pItem)
@@ -16669,9 +17878,7 @@ void CPlayer::pc_PlayAttack_Gen(
       }
       else
       {
-        CMgrAvatorItemHistory::consume_del_item(
-          &CPlayer::s_MgrItemHistory,
-          m_ObjID.m_wIndex,
+        CPlayer::s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex,
           pItem,
           m_szItemHistoryFileName);
       }
@@ -16688,9 +17895,7 @@ void CPlayer::pc_PlayAttack_Gen(
       }
       else
       {
-        CMgrAvatorItemHistory::consume_del_item(
-          &CPlayer::s_MgrItemHistory,
-          m_ObjID.m_wIndex,
+        CPlayer::s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex,
           pEffBulletItem,
           m_szItemHistoryFileName);
       }
@@ -16713,7 +17918,7 @@ void CPlayer::pc_PlayAttack_Skill(
   _STORAGE_LIST::_db_con *pEffBulletItem = nullptr;
   _BulletItem_fld *pEffBulletFld = nullptr;
 
-  pSkillFld = reinterpret_cast<_skill_fld *>(CRecordData::GetRecord(&g_Main.m_tblEffectData[byEffectCode], wSkillIndex));
+  pSkillFld = reinterpret_cast<_skill_fld *>(g_Main.m_tblEffectData[byEffectCode].GetRecord(wSkillIndex));
   int nAttType = 0;
   if (byEffectCode)
   {
@@ -16721,7 +17926,7 @@ void CPlayer::pc_PlayAttack_Skill(
   }
   else
   {
-    const int skillLv = _MASTERY_PARAM::GetSkillLv(&m_pmMst, pSkillFld->m_dwIndex);
+    const int skillLv = m_pmMst.GetSkillLv(pSkillFld->m_dwIndex);
     nAttType = *reinterpret_cast<int *>(&pSkillFld->m_strEffectCode[4 * skillLv + 64]);
   }
 
@@ -16764,8 +17969,8 @@ void CPlayer::pc_PlayAttack_Skill(
     SendMsg_AttackResult_Error(errCode);
     if (m_bMove)
     {
-      CCharacter::Stop(this);
-      CGameObject::SendMsg_BreakStop(this);
+      Stop();
+      SendMsg_BreakStop();
     }
     return;
   }
@@ -16815,20 +18020,20 @@ void CPlayer::pc_PlayAttack_Skill(
   }
   pAt.SetActiveSucc(bActiveSucc);
 
-  const float effPlus = _effect_parameter::GetEff_Plus(&m_EP, 12);
+  const float effPlus = m_EP.GetEff_Plus(12);
   _ATTACK_DELAY_CHECKER::SetDelay(&m_AttDelayChker, static_cast<unsigned int>(pSkillFld->m_fActDelay + effPlus));
 
-  if (_effect_parameter::GetEff_State(&m_EP, 14))
+  if (m_EP.GetEff_State(14))
   {
-    CCharacter::RemoveSFContHelpByEffect(this, 2, 14);
+    RemoveSFContHelpByEffect(2, 14);
   }
-  if (_effect_parameter::GetEff_State(&m_EP, 21))
+  if (m_EP.GetEff_State(21))
   {
     if (pAP.nAttactType != 4 && pAP.nAttactType != 5 && pAP.nAttactType != 6 && pAP.nAttactType != 7)
     {
       return;
     }
-    CCharacter::RemoveSFContHelpByEffect(this, 2, 21);
+    RemoveSFContHelpByEffect(2, 21);
   }
 
   for (int nParamCode = 0; nParamCode < 3; ++nParamCode)
@@ -16862,9 +18067,7 @@ void CPlayer::pc_PlayAttack_Skill(
     }
     else
     {
-      CMgrAvatorItemHistory::consume_del_item(
-        &CPlayer::s_MgrItemHistory,
-        m_ObjID.m_wIndex,
+      CPlayer::s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex,
         pBulletItem,
         m_szItemHistoryFileName);
     }
@@ -16879,9 +18082,7 @@ void CPlayer::pc_PlayAttack_Skill(
     }
     else
     {
-      CMgrAvatorItemHistory::consume_del_item(
-        &CPlayer::s_MgrItemHistory,
-        m_ObjID.m_wIndex,
+      CPlayer::s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex,
         pEffBulletItem,
         m_szItemHistoryFileName);
     }
@@ -16902,7 +18103,7 @@ void CPlayer::pc_PlayAttack_Skill(
   {
     const unsigned int totalDamage =
       static_cast<unsigned int>(pAt.m_DamList[j].m_nActiveDamage + pAt.m_DamList[j].m_nDamage);
-    const int level = static_cast<int>(CPlayerDB::GetLevel(&m_Param));
+    const int level = static_cast<int>(m_Param.GetLevel());
     CCharacter *damaged = pAt.m_DamList[j].m_pChar;
     damaged->SetDamage(
       static_cast<int>(totalDamage),
@@ -16915,16 +18116,16 @@ void CPlayer::pc_PlayAttack_Skill(
 
     if (IsChaosMode())
     {
-      if (GetObjRace() == damaged->GetObjRace(damaged))
+      if (GetObjRace() == damaged->GetObjRace())
       {
         continue;
       }
     }
 
-    if (GetObjRace() == damaged->GetObjRace(damaged) && !damaged->m_ObjID.m_byID)
+    if (GetObjRace() == damaged->GetObjRace() && !damaged->m_ObjID.m_byID)
     {
       CPlayer *damagedPlayer = static_cast<CPlayer *>(damaged);
-      if (CPlayer::IsPunished(damagedPlayer, 1u, 0))
+      if (damagedPlayer->IsPunished(1u, 0))
       {
         continue;
       }
@@ -16932,22 +18133,22 @@ void CPlayer::pc_PlayAttack_Skill(
 
     if (!pAt.m_bFailure && !byEffectCode && pSkillFld->m_nMastIndex < 8u)
     {
-      const int dstLevel = static_cast<int>(damaged->GetLevel(damaged));
+      const int dstLevel = static_cast<int>(damaged->GetLevel());
       if (IsPassMasteryLimitLvDiff(dstLevel))
       {
         const float damageRatio =
           static_cast<float>(pAt.m_DamList[j].m_nDamage)
-          / static_cast<float>(damaged->GetMaxHP(damaged));
+          / static_cast<float>(damaged->GetMaxHP());
         if (damageRatio >= 0.0099999998f)
         {
           if (pSkillFld->m_nClass == 1)
           {
-            const int level = static_cast<int>(damaged->GetLevel(damaged));
+            const int level = static_cast<int>(damaged->GetLevel());
             masterySum += 2 * static_cast<int>(GetMasteryCumAfterAttack(level));
           }
           else
           {
-            const int level = static_cast<int>(damaged->GetLevel(damaged));
+            const int level = static_cast<int>(damaged->GetLevel());
             masterySum += static_cast<int>(GetMasteryCumAfterAttack(level));
           }
           ++masteryCount;
@@ -16973,13 +18174,13 @@ void CPlayer::pc_PlayAttack_Skill(
     }
   }
 
-  if (pTarget && m_pRecalledAnimusChar && pTarget->GetHP(pTarget) > 0)
+  if (pTarget && m_pRecalledAnimusChar && pTarget->GetHP() > 0)
   {
-    CAnimus::MasterAttack_MasterInform(m_pRecalledAnimusChar, pTarget);
+    m_pRecalledAnimusChar->MasterAttack_MasterInform(pTarget);
   }
-  if (pTarget && pTarget->GetHP(pTarget) > 0)
+  if (pTarget && pTarget->GetHP() > 0)
   {
-    _TOWER_PARAM::NotifyOwnerAttackInform(&m_pmTwr, pTarget);
+    m_pmTwr.NotifyOwnerAttackInform(pTarget);
   }
 
   if (IsSiegeMode())
@@ -16987,9 +18188,7 @@ void CPlayer::pc_PlayAttack_Skill(
     _STORAGE_LIST::_db_con *pItem = m_pSiegeItem;
     if (!Emb_AlterDurPoint(0, m_pSiegeItem->m_byStorageIndex, -1, 0, 1))
     {
-      CMgrAvatorItemHistory::consume_del_item(
-        &CPlayer::s_MgrItemHistory,
-        m_ObjID.m_wIndex,
+      CPlayer::s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex,
         pItem,
         m_szItemHistoryFileName);
     }
@@ -17049,8 +18248,8 @@ void CPlayer::pc_PlayAttack_Force(
     SendMsg_AttackResult_Error(errCode);
     if (m_bMove)
     {
-      CCharacter::Stop(this);
-      CGameObject::SendMsg_BreakStop(this);
+      Stop();
+      SendMsg_BreakStop();
     }
     return;
   }
@@ -17065,9 +18264,9 @@ void CPlayer::pc_PlayAttack_Force(
   }
 
   CAttack pAt(this);
-  if (_effect_parameter::GetEff_State(&m_EP, 14))
+  if (m_EP.GetEff_State(14))
   {
-    CCharacter::RemoveSFContHelpByEffect(this, 2, 14);
+    RemoveSFContHelpByEffect(2, 14);
   }
 
   _attack_param pAP{};
@@ -17096,16 +18295,16 @@ void CPlayer::pc_PlayAttack_Force(
   }
   pAt.SetActiveSucc(bActiveSucc);
 
-  const float effPlus = _effect_parameter::GetEff_Plus(&m_EP, 13);
+  const float effPlus = m_EP.GetEff_Plus(13);
   _ATTACK_DELAY_CHECKER::SetDelay(&m_AttDelayChker, static_cast<unsigned int>(pForceFld->m_fActDelay + effPlus));
 
-  if (_effect_parameter::GetEff_State(&m_EP, 21))
+  if (m_EP.GetEff_State(21))
   {
     if (pAP.nAttactType != 4 && pAP.nAttactType != 5 && pAP.nAttactType != 6 && pAP.nAttactType != 7)
     {
       return;
     }
-    CCharacter::RemoveSFContHelpByEffect(this, 2, 21);
+    RemoveSFContHelpByEffect(2, 21);
   }
 
   for (int nParamCode = 0; nParamCode < 3; ++nParamCode)
@@ -17144,7 +18343,7 @@ void CPlayer::pc_PlayAttack_Force(
   {
     const unsigned int totalDamage =
       static_cast<unsigned int>(pAt.m_DamList[j].m_nActiveDamage + pAt.m_DamList[j].m_nDamage);
-    const int level = static_cast<int>(CPlayerDB::GetLevel(&m_Param));
+    const int level = static_cast<int>(m_Param.GetLevel());
     CCharacter *damaged = pAt.m_DamList[j].m_pChar;
     damaged->SetDamage(
       static_cast<int>(totalDamage),
@@ -17157,16 +18356,16 @@ void CPlayer::pc_PlayAttack_Force(
 
     if (IsChaosMode())
     {
-      if (GetObjRace() == damaged->GetObjRace(damaged))
+      if (GetObjRace() == damaged->GetObjRace())
       {
         continue;
       }
     }
 
-    if (GetObjRace() == damaged->GetObjRace(damaged) && !damaged->m_ObjID.m_byID)
+    if (GetObjRace() == damaged->GetObjRace() && !damaged->m_ObjID.m_byID)
     {
       CPlayer *damagedPlayer = static_cast<CPlayer *>(damaged);
-      if (CPlayer::IsPunished(damagedPlayer, 1u, 0))
+      if (damagedPlayer->IsPunished(1u, 0))
       {
         continue;
       }
@@ -17174,15 +18373,15 @@ void CPlayer::pc_PlayAttack_Force(
 
     if (!pAt.m_bFailure && pForceFld->m_nMastIndex < 0x18u)
     {
-      const int dstLevel = static_cast<int>(damaged->GetLevel(damaged));
+      const int dstLevel = static_cast<int>(damaged->GetLevel());
       if (IsPassMasteryLimitLvDiff(dstLevel))
       {
         const float damageRatio =
           static_cast<float>(pAt.m_DamList[j].m_nDamage)
-          / static_cast<float>(damaged->GetMaxHP(damaged));
+          / static_cast<float>(damaged->GetMaxHP());
         if (damageRatio >= 0.0099999998f)
         {
-          const int level = static_cast<int>(damaged->GetLevel(damaged));
+          const int level = static_cast<int>(damaged->GetLevel());
           masterySum += static_cast<int>(GetMasteryCumAfterAttack(level));
           ++masteryCount;
         }
@@ -17213,7 +18412,7 @@ void CPlayer::pc_PlayAttack_Force(
           + static_cast<float>(baseAlter)
               * static_cast<float>(FORCE_LIVER_ACCUM_RATE - 1.0));
       }
-      const float effHave = _effect_parameter::GetEff_Have(&m_EP, 6);
+      const float effHave = m_EP.GetEff_Have(6);
       if (effHave > 1.0f)
       {
         nAlter = static_cast<int>(
@@ -17226,13 +18425,13 @@ void CPlayer::pc_PlayAttack_Force(
     }
   }
 
-  if (pTarget && m_pRecalledAnimusChar && pTarget->GetHP(pTarget) > 0)
+  if (pTarget && m_pRecalledAnimusChar && pTarget->GetHP() > 0)
   {
-    CAnimus::MasterAttack_MasterInform(m_pRecalledAnimusChar, pTarget);
+    m_pRecalledAnimusChar->MasterAttack_MasterInform(pTarget);
   }
-  if (pTarget && pTarget->GetHP(pTarget) > 0)
+  if (pTarget && pTarget->GetHP() > 0)
   {
-    _TOWER_PARAM::NotifyOwnerAttackInform(&m_pmTwr, pTarget);
+    m_pmTwr.NotifyOwnerAttackInform(pTarget);
   }
 
   SetBattleMode(true);
@@ -17246,9 +18445,7 @@ void CPlayer::pc_PlayAttack_Force(
     }
     else
     {
-      CMgrAvatorItemHistory::consume_del_item(
-        &CPlayer::s_MgrItemHistory,
-        m_ObjID.m_wIndex,
+      CPlayer::s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex,
         pEffBulletItem,
         m_szItemHistoryFileName);
     }
@@ -17267,8 +18464,8 @@ void CPlayer::pc_PlayAttack_Unit(CCharacter *pDst, unsigned __int8 byWeaponPart)
     SendMsg_AttackResult_Error(errCode);
     if (m_bMove)
     {
-      CCharacter::Stop(this);
-      CGameObject::SendMsg_BreakStop(this);
+      Stop();
+      SendMsg_BreakStop();
     }
     return;
   }
@@ -17290,17 +18487,17 @@ void CPlayer::pc_PlayAttack_Unit(CCharacter *pDst, unsigned __int8 byWeaponPart)
 
   _ATTACK_DELAY_CHECKER::SetDelay(&m_AttDelayChker, static_cast<unsigned int>(pWeaponFld->m_nAttackDel));
 
-  if (_effect_parameter::GetEff_State(&m_EP, 14))
+  if (m_EP.GetEff_State(14))
   {
-    CCharacter::RemoveSFContHelpByEffect(this, 2, 14);
+    RemoveSFContHelpByEffect(2, 14);
   }
-  if (_effect_parameter::GetEff_State(&m_EP, 21))
+  if (m_EP.GetEff_State(21))
   {
     if (pAP.nAttactType != 4 && pAP.nAttactType != 5 && pAP.nAttactType != 6 && pAP.nAttactType != 7)
     {
       return;
     }
-    CCharacter::RemoveSFContHelpByEffect(this, 2, 21);
+    RemoveSFContHelpByEffect(2, 21);
   }
 
   CPartyModeKillMonsterExpNotify kPartyExpNotify;
@@ -17331,7 +18528,7 @@ void CPlayer::pc_PlayAttack_Unit(CCharacter *pDst, unsigned __int8 byWeaponPart)
 
   for (int j = 0; j < pAt.m_nDamagedObjNum; ++j)
   {
-    const int level = static_cast<int>(CPlayerDB::GetLevel(&m_Param));
+    const int level = static_cast<int>(m_Param.GetLevel());
     CCharacter *damaged = pAt.m_DamList[j].m_pChar;
     damaged->SetDamage(pAt.m_DamList[j].m_nDamage, this, level, pAt.m_bIsCrtAtt, -1, 0, true);
   }
@@ -17370,8 +18567,8 @@ void CPlayer::pc_PlayAttack_Siege(
     SendMsg_AttackResult_Error(errCode);
     if (m_bMove)
     {
-      CCharacter::Stop(this);
-      CGameObject::SendMsg_BreakStop(this);
+      Stop();
+      SendMsg_BreakStop();
     }
     return;
   }
@@ -17413,7 +18610,7 @@ void CPlayer::pc_PlayAttack_Siege(
   int effPlus = 0;
   if (m_pmWpn.byWpType != 7)
   {
-    effPlus = static_cast<int>(_effect_parameter::GetEff_Plus(&m_EP, m_pmWpn.byWpClass + 9));
+    effPlus = static_cast<int>(m_EP.GetEff_Plus(m_pmWpn.byWpClass + 9));
   }
 
   const int addDelay = static_cast<int>(CalcEquipAttackDelay());
@@ -17422,22 +18619,22 @@ void CPlayer::pc_PlayAttack_Siege(
   int delay = effPlus + static_cast<int>(attackDelay);
   if (m_pmWpn.byWpType == 7)
   {
-    const float effPlusInner = _effect_parameter::GetEff_Plus(&m_EP, 11);
+    const float effPlusInner = m_EP.GetEff_Plus(11);
     delay = static_cast<int>(static_cast<float>(delay) + effPlusInner);
   }
   _ATTACK_DELAY_CHECKER::SetDelay(&m_AttDelayChker, static_cast<unsigned int>(delay));
 
-  if (_effect_parameter::GetEff_State(&m_EP, 14))
+  if (m_EP.GetEff_State(14))
   {
-    CCharacter::RemoveSFContHelpByEffect(this, 2, 14);
+    RemoveSFContHelpByEffect(2, 14);
   }
-  if (_effect_parameter::GetEff_State(&m_EP, 21))
+  if (m_EP.GetEff_State(21))
   {
     if (pAP.nAttactType != 4 && pAP.nAttactType != 5 && pAP.nAttactType != 6 && pAP.nAttactType != 7)
     {
       return;
     }
-    CCharacter::RemoveSFContHelpByEffect(this, 2, 21);
+    RemoveSFContHelpByEffect(2, 21);
   }
 
   if (m_bFreeSFByClass)
@@ -17462,22 +18659,22 @@ void CPlayer::pc_PlayAttack_Siege(
   int masteryCount = 0;
   for (int j = 0; j < pAt.m_nDamagedObjNum; ++j)
   {
-    const int level = static_cast<int>(CPlayerDB::GetLevel(&m_Param));
+    const int level = static_cast<int>(m_Param.GetLevel());
     CCharacter *damaged = pAt.m_DamList[j].m_pChar;
     damaged->SetDamage(pAt.m_DamList[j].m_nDamage, this, level, pAt.m_bIsCrtAtt, -1, 0, true);
 
     if (IsChaosMode())
     {
-      if (GetObjRace() == damaged->GetObjRace(damaged))
+      if (GetObjRace() == damaged->GetObjRace())
       {
         continue;
       }
     }
 
-    if (GetObjRace() == damaged->GetObjRace(damaged) && !damaged->m_ObjID.m_byID)
+    if (GetObjRace() == damaged->GetObjRace() && !damaged->m_ObjID.m_byID)
     {
       CPlayer *damagedPlayer = static_cast<CPlayer *>(damaged);
-      if (CPlayer::IsPunished(damagedPlayer, 1u, 0))
+      if (damagedPlayer->IsPunished(1u, 0))
       {
         continue;
       }
@@ -17485,15 +18682,15 @@ void CPlayer::pc_PlayAttack_Siege(
 
     if (!pAt.m_bFailure)
     {
-      const int dstLevel = static_cast<int>(damaged->GetLevel(damaged));
+      const int dstLevel = static_cast<int>(damaged->GetLevel());
       if (IsPassMasteryLimitLvDiff(dstLevel))
       {
         const float damageRatio =
           static_cast<float>(pAt.m_DamList[j].m_nDamage)
-          / static_cast<float>(damaged->GetMaxHP(damaged));
+          / static_cast<float>(damaged->GetMaxHP());
         if (damageRatio >= 0.029999999f)
         {
-          const int level = static_cast<int>(damaged->GetLevel(damaged));
+          const int level = static_cast<int>(damaged->GetLevel());
           masterySum += static_cast<int>(GetMasteryCumAfterAttack(level));
           ++masteryCount;
         }
@@ -17526,9 +18723,7 @@ void CPlayer::pc_PlayAttack_Siege(
     }
     else
     {
-      CMgrAvatorItemHistory::consume_del_item(
-        &CPlayer::s_MgrItemHistory,
-        m_ObjID.m_wIndex,
+      CPlayer::s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex,
         pItem,
         m_szItemHistoryFileName);
     }
@@ -17539,9 +18734,7 @@ void CPlayer::pc_PlayAttack_Siege(
     _STORAGE_LIST::_db_con *siegeItem = m_pSiegeItem;
     if (!Emb_AlterDurPoint(0, m_pSiegeItem->m_byStorageIndex, -1, 0, 1))
     {
-      CMgrAvatorItemHistory::consume_del_item(
-        &CPlayer::s_MgrItemHistory,
-        m_ObjID.m_wIndex,
+      CPlayer::s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex,
         siegeItem,
         m_szItemHistoryFileName);
     }
@@ -17558,9 +18751,7 @@ void CPlayer::pc_PlayAttack_Siege(
     }
     else
     {
-      CMgrAvatorItemHistory::consume_del_item(
-        &CPlayer::s_MgrItemHistory,
-        m_ObjID.m_wIndex,
+      CPlayer::s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex,
         pEffBulletItem,
         m_szItemHistoryFileName);
     }
@@ -17592,9 +18783,7 @@ void CPlayer::pc_PlayAttack_Test(
         }
         else
         {
-          CMgrAvatorItemHistory::consume_del_item(
-            &CPlayer::s_MgrItemHistory,
-            m_ObjID.m_wIndex,
+          CPlayer::s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex,
             pItem,
             m_szItemHistoryFileName);
         }
@@ -17605,7 +18794,7 @@ void CPlayer::pc_PlayAttack_Test(
     {
       if (byEffectCode == 1)
       {
-        _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblEffectData[1], byEffectIndex);
+        _base_fld *record = g_Main.m_tblEffectData[1].GetRecord(byEffectIndex);
         _STORAGE_LIST::_db_con *forceItem = nullptr;
         for (int j = 0; j < 88; ++j)
         {
@@ -17625,16 +18814,16 @@ void CPlayer::pc_PlayAttack_Test(
     }
     else
     {
-      unsigned __int8 *record = reinterpret_cast<unsigned __int8 *>(CRecordData::GetRecord(g_Main.m_tblEffectData, byEffectIndex));
+      unsigned __int8 *record = reinterpret_cast<unsigned __int8 *>(g_Main.m_tblEffectData[1].GetRecord(byEffectIndex));
       if (record)
       {
-        sfLevel = _MASTERY_PARAM::GetSkillLv(&m_pmMst, *record);
+        sfLevel = m_pmMst.GetSkillLv(*record);
       }
     }
 
-    if (_effect_parameter::GetEff_State(&m_EP, 14))
+    if (m_EP.GetEff_State(14))
     {
-      CCharacter::RemoveSFContHelpByEffect(this, 2, 14);
+      RemoveSFContHelpByEffect(2, 14);
     }
     SendMsg_TestAttackResult(byEffectCode, byEffectIndex, bulletIndex, sfLevel, byWeaponPart, pzTar);
     return;
@@ -17647,11 +18836,11 @@ void CPlayer::pc_PlayAttack_Test(
     _base_fld *unitRecord = nullptr;
     if (byWeaponPart)
     {
-      unitRecord = CRecordData::GetRecord(&g_Main.m_tblUnitPart[4], m_pUsingUnit->byPart[4]);
+      unitRecord = g_Main.m_tblUnitPart[4].GetRecord(m_pUsingUnit->byPart[4]);
     }
     else
     {
-      unitRecord = CRecordData::GetRecord(&g_Main.m_tblUnitPart[3], m_pUsingUnit->byPart[3]);
+      unitRecord = g_Main.m_tblUnitPart[3].GetRecord(m_pUsingUnit->byPart[3]);
     }
     if (unitRecord)
     {
@@ -17670,9 +18859,9 @@ void CPlayer::pc_PlayAttack_Test(
         *reinterpret_cast<unsigned int *>(unitBullet) = static_cast<unsigned int>(-1);
       }
 
-      if (_effect_parameter::GetEff_State(&m_EP, 14))
+      if (m_EP.GetEff_State(14))
       {
-        CCharacter::RemoveSFContHelpByEffect(this, 2, 14);
+        RemoveSFContHelpByEffect(2, 14);
       }
       SendMsg_TestAttackResult(byEffectCode, byEffectIndex, bulletIndex, sfLevel, byWeaponPart, pzTar);
     }
@@ -17694,15 +18883,15 @@ void CPlayer::pc_PlayAttack_SelfDestruction()
   {
     errCode = -21;
   }
-  if (_effect_parameter::GetEff_State(&m_EP, 20))
+  if (m_EP.GetEff_State(20))
   {
     errCode = -37;
   }
-  if (_effect_parameter::GetEff_State(&m_EP, 28))
+  if (m_EP.GetEff_State(28))
   {
     errCode = -37;
   }
-  if (_effect_parameter::GetEff_State(&m_EP, 21))
+  if (m_EP.GetEff_State(21))
   {
     errCode = -38;
   }
@@ -17716,8 +18905,8 @@ void CPlayer::pc_PlayAttack_SelfDestruction()
     SendMsg_AttackResult_Error(errCode);
     if (m_bMove)
     {
-      CCharacter::Stop(this);
-      CGameObject::SendMsg_BreakStop(this);
+      Stop();
+      SendMsg_BreakStop();
     }
     return;
   }
@@ -17726,14 +18915,14 @@ void CPlayer::pc_PlayAttack_SelfDestruction()
   _attack_param pAP{};
   pAP.pDst = nullptr;
   memcpy_0(pAP.fArea, m_fCurPos, sizeof(pAP.fArea));
-  pAP.nPart = CCharacter::GetAttackRandomPart(this);
+  pAP.nPart = static_cast<int>(GetAttackRandomPart());
   pAP.nTol = -1;
   pAP.nClass = 1;
 
   const float nGaMinAF = static_cast<float>(m_pmWpn.nGaMinAF);
-  const float effRate32 = _effect_parameter::GetEff_Rate(&m_EP, 32);
+  const float effRate32 = m_EP.GetEff_Rate(32);
   const float minBase = nGaMinAF * effRate32;
-  const float effRate29 = _effect_parameter::GetEff_Rate(&m_EP, 29);
+  const float effRate29 = m_EP.GetEff_Rate(29);
   pAP.nMinAF = static_cast<int>(minBase * effRate29 * m_fSelfDestructionDamage);
 
   const float nGaMaxAF = static_cast<float>(m_pmWpn.nGaMaxAF);
@@ -17748,9 +18937,9 @@ void CPlayer::pc_PlayAttack_SelfDestruction()
 
   pAt.AttackGen(&pAP, false, false);
 
-  if (_effect_parameter::GetEff_State(&m_EP, 14))
+  if (m_EP.GetEff_State(14))
   {
-    CCharacter::RemoveSFContHelpByEffect(this, 2, 14);
+    RemoveSFContHelpByEffect(2, 14);
   }
 
   CPartyModeKillMonsterExpNotify kPartyExpNotify;
@@ -17765,7 +18954,7 @@ void CPlayer::pc_PlayAttack_SelfDestruction()
 
   for (int j = 0; j < pAt.m_nDamagedObjNum; ++j)
   {
-    const int level = static_cast<int>(CPlayerDB::GetLevel(&m_Param));
+    const int level = static_cast<int>(m_Param.GetLevel());
     CCharacter *damaged = pAt.m_DamList[j].m_pChar;
     damaged->SetDamage(pAt.m_DamList[j].m_nDamage, this, level, pAt.m_bIsCrtAtt, -1, 0, true);
   }
@@ -17794,7 +18983,7 @@ unsigned int CPlayer::_check_exp_after_attack(
       totalDamage += entry->m_nDamage;
       totalDamage += entry->m_nActiveDamage;
     }
-    if (entry->m_pChar->IsRewardExp(entry->m_pChar) && entry->m_nDamage > 1)
+    if (entry->m_pChar->IsRewardExp() && entry->m_nDamage > 1)
     {
       const int nDam = entry->m_nActiveDamage + entry->m_nDamage;
       CalcExp(entry->m_pChar, nDam, kPartyExpNotify);
@@ -17805,14 +18994,14 @@ unsigned int CPlayer::_check_exp_after_attack(
 
 void CPlayer::_check_dst_param_after_attack(int nTotalDam, CCharacter *pTarget)
 {
-  if (_effect_parameter::GetEff_Rate(&m_EP, 13) > 1.0f)
+  if (m_EP.GetEff_Rate(13) > 1.0f)
   {
     const float base = static_cast<float>(nTotalDam);
-    const float effRate = _effect_parameter::GetEff_Rate(&m_EP, 13);
+    const float effRate = m_EP.GetEff_Rate(13);
     const float rateBase = base * (effRate - 1.0f);
-    const float rateMul = _effect_parameter::GetEff_Rate(&m_EP, 19);
+    const float rateMul = m_EP.GetEff_Rate(19);
     const int addFp = static_cast<int>(rateBase * rateMul);
-    int newFp = CPlayerDB::GetFP(&m_Param) + addFp;
+    int newFp = m_Param.GetFP() + addFp;
     const int maxFp = GetMaxFP();
     if (newFp > maxFp)
     {
@@ -17821,25 +19010,25 @@ void CPlayer::_check_dst_param_after_attack(int nTotalDam, CCharacter *pTarget)
     SetFP(newFp, false);
   }
 
-  if (_effect_parameter::GetEff_Rate(&m_EP, 12) > 1.0f)
+  if (m_EP.GetEff_Rate(12) > 1.0f)
   {
     const float base = static_cast<float>(nTotalDam);
-    const float effRate = _effect_parameter::GetEff_Rate(&m_EP, 12);
+    const float effRate = m_EP.GetEff_Rate(12);
     const float rateBase = base * (effRate - 1.0f);
-    const float rateMul = _effect_parameter::GetEff_Rate(&m_EP, 18);
+    const float rateMul = m_EP.GetEff_Rate(18);
     const int addHp = static_cast<int>(rateBase * rateMul);
-    const int curHp = CPlayerDB::GetHP(&m_Param);
+    const int curHp = m_Param.GetHP();
     SetHP(curHp + addHp, false);
   }
 
-  if (_effect_parameter::GetEff_Rate(&m_EP, 40) > 1.0f)
+  if (m_EP.GetEff_Rate(40) > 1.0f)
   {
     const float base = static_cast<float>(nTotalDam);
-    const float effRate = _effect_parameter::GetEff_Rate(&m_EP, 40);
+    const float effRate = m_EP.GetEff_Rate(40);
     const float rateBase = base * (effRate - 1.0f);
-    const float rateMul = _effect_parameter::GetEff_Rate(&m_EP, 20);
+    const float rateMul = m_EP.GetEff_Rate(20);
     const int addSp = static_cast<int>(rateBase * rateMul);
-    int newSp = CPlayerDB::GetSP(&m_Param) + addSp;
+    int newSp = m_Param.GetSP() + addSp;
     const int maxSp = GetMaxSP();
     if (newSp > maxSp)
     {
@@ -17850,31 +19039,31 @@ void CPlayer::_check_dst_param_after_attack(int nTotalDam, CCharacter *pTarget)
 
   if (pTarget)
   {
-    if (_effect_parameter::GetEff_State(&m_EP, 13))
+    if (m_EP.GetEff_State(13))
     {
-      if (pTarget->GetHP(pTarget) > 0)
+      if (pTarget->GetHP() > 0)
       {
         const bool byte2Zero = BYTE2(pTarget[1].m_fCurPos[2]) == 0;
         const bool byte0Zero = reinterpret_cast<unsigned char *>(&pTarget[1].m_fCurPos[2])[0] == 0;
         if (pTarget->m_ObjID.m_byID || byte2Zero || byte0Zero)
         {
           pTarget->SetStun(true);
-          pTarget->SendMsg_StunInform(pTarget);
+          pTarget->SendMsg_StunInform();
         }
       }
     }
-    else if (_effect_parameter::GetEff_Rate(&m_EP, 5) > 1.0f)
+    else if (m_EP.GetEff_Rate(5) > 1.0f)
     {
       const unsigned __int16 stunRate = static_cast<unsigned __int16>(
-        (_effect_parameter::GetEff_Rate(&m_EP, 5) - 1.0f) * 100.0f);
-      if (stunRate > rand() % 1000 && pTarget->GetHP(pTarget) > 0)
+        (m_EP.GetEff_Rate(5) - 1.0f) * 100.0f);
+      if (stunRate > rand() % 1000 && pTarget->GetHP() > 0)
       {
         const bool byte2Zero = BYTE2(pTarget[1].m_fCurPos[2]) == 0;
         const bool byte0Zero = reinterpret_cast<unsigned char *>(&pTarget[1].m_fCurPos[2])[0] == 0;
         if (pTarget->m_ObjID.m_byID || byte2Zero || byte0Zero)
         {
           pTarget->SetStun(true);
-          pTarget->SendMsg_StunInform(pTarget);
+          pTarget->SendMsg_StunInform();
         }
       }
     }
@@ -17885,7 +19074,7 @@ bool CPlayer::IsPassExpLimitLvDiff(int iDstLevel, bool *bGetAttackExp)
 {
   *bGetAttackExp = true;
   const int diff = static_cast<int>(GetLevel()) - iDstLevel;
-  const float effHave = _effect_parameter::GetEff_Have(&m_EP, 52);
+  const float effHave = m_EP.GetEff_Have(52);
   if (static_cast<float>(diff) > effHave + 3.0f)
   {
     *bGetAttackExp = false;
@@ -17893,7 +19082,7 @@ bool CPlayer::IsPassExpLimitLvDiff(int iDstLevel, bool *bGetAttackExp)
   }
   if ((-10.0f - effHave) > static_cast<float>(diff))
   {
-    if (!CPartyPlayer::IsPartyMode(m_pPartyMgr))
+    if (!m_pPartyMgr->IsPartyMode())
     {
       *bGetAttackExp = false;
       return false;
@@ -17928,12 +19117,12 @@ void CPlayer::CalcExp(CCharacter *pDst, int nDam, CPartyModeKillMonsterExpNotify
   if (pMon->m_ObjID.m_byID == 1 && nDam > 0 && !IsInTown())
   {
     bool bGetAttackExp = true;
-    const int dstLevel = static_cast<int>(pMon->GetLevel(pMon));
+    const int dstLevel = static_cast<int>(pMon->GetLevel());
     if (IsPassExpLimitLvDiff(dstLevel, &bGetAttackExp))
     {
       _base_fld *record = pMon->m_pRecordSet;
-      int remainHp = static_cast<int>(pMon->GetHP(pMon)) - nDam;
-      if (CMonster::IsBossMonster(pMon))
+      int remainHp = static_cast<int>(pMon->GetHP()) - nDam;
+      if (pMon->IsBossMonster())
       {
         bGetAttackExp = false;
       }
@@ -17943,7 +19132,7 @@ void CPlayer::CalcExp(CCharacter *pDst, int nDam, CPartyModeKillMonsterExpNotify
         if (remainHp < 0)
         {
           remainHp = 0;
-          dam = static_cast<int>(pMon->GetHP(pMon));
+          dam = static_cast<int>(pMon->GetHP());
         }
         const float baseExp =
           (*(float *)&record[4].m_strCode[16] * 0.69999999f)
@@ -17951,7 +19140,7 @@ void CPlayer::CalcExp(CCharacter *pDst, int nDam, CPartyModeKillMonsterExpNotify
         if (IsRidingUnit())
         {
           const float expUnit = baseExp / 180.0f;
-          const int level = static_cast<int>(pMon->GetLevel(pMon));
+          const int level = static_cast<int>(pMon->GetLevel());
           Emb_AlterStat(6u, 0, static_cast<int>(expUnit + static_cast<float>(level)), 0, "CPlayer::CalcExp()--0", 1);
         }
         else
@@ -17963,7 +19152,7 @@ void CPlayer::CalcExp(CCharacter *pDst, int nDam, CPartyModeKillMonsterExpNotify
       if (!remainHp)
       {
         float killExp = 0.0f;
-        const int emoState = CMonster::GetEmotionState(pMon);
+        const int emoState = pMon->GetEmotionState();
         if (emoState == 4)
         {
           killExp = *reinterpret_cast<float *>(&record[4].m_strCode[16]) * 0.5f;
@@ -17973,7 +19162,7 @@ void CPlayer::CalcExp(CCharacter *pDst, int nDam, CPartyModeKillMonsterExpNotify
           killExp = *reinterpret_cast<float *>(&record[4].m_strCode[16]) * 0.30000001f;
         }
 
-        if (CPartyPlayer::IsPartyMode(m_pPartyMgr))
+        if (m_pPartyMgr->IsPartyMode())
         {
           CPlayer *members[8]{};
           const unsigned __int8 memberCount = _GetPartyMemberInCircle(members, 8, 1);
@@ -17987,7 +19176,7 @@ void CPlayer::CalcExp(CCharacter *pDst, int nDam, CPartyModeKillMonsterExpNotify
           float levelSum = 0.0f;
           for (int j = 0; j < memberCount; ++j)
           {
-            const int level = static_cast<int>(members[j]->GetLevel(members[j]));
+            const int level = static_cast<int>(members[j]->GetLevel());
             levelSum = levelSum + static_cast<float>(level);
             if (level <= maxLevel)
             {
@@ -18008,9 +19197,9 @@ void CPlayer::CalcExp(CCharacter *pDst, int nDam, CPartyModeKillMonsterExpNotify
             kPartyExpNotify->SetKillMonsterFlag();
             for (int j = 0; j < memberCount; ++j)
             {
-              const int level = static_cast<int>(members[j]->GetLevel(members[j]));
+              const int level = static_cast<int>(members[j]->GetLevel());
               float fExp = (killExp * static_cast<float>(level)) / levelSum;
-              const int memberLevel = static_cast<int>(members[j]->GetLevel(members[j]));
+              const int memberLevel = static_cast<int>(members[j]->GetLevel());
               const float partyRate = GetPartyExpDistributionRate(memberLevel, maxLevel, secondLevel);
               fExp = fExp + (partyRate * fExp);
               if (fExp >= 1.0f)
@@ -18018,7 +19207,7 @@ void CPlayer::CalcExp(CCharacter *pDst, int nDam, CPartyModeKillMonsterExpNotify
                 if (members[j]->IsRidingUnit())
                 {
                   const float expUnit = fExp / 180.0f;
-                  const int monLevel = static_cast<int>(pMon->GetLevel(pMon));
+                  const int monLevel = static_cast<int>(pMon->GetLevel());
                   members[j]->Emb_AlterStat(
                     6u,
                     0,
@@ -18039,7 +19228,7 @@ void CPlayer::CalcExp(CCharacter *pDst, int nDam, CPartyModeKillMonsterExpNotify
         else if (IsRidingUnit())
         {
           const float expUnit = killExp / 180.0f;
-          const int level = static_cast<int>(pMon->GetLevel(pMon));
+          const int level = static_cast<int>(pMon->GetLevel());
           Emb_AlterStat(6u, 0, static_cast<int>(expUnit + static_cast<float>(level)), 0, "CPlayer::CalcExp()--1", 1);
         }
         else
@@ -18210,7 +19399,7 @@ void CPlayer::SendMsg_AttackResult_Error(char nErrCode)
   char msg[32]{};
   msg[0] = nErrCode;
   unsigned __int8 type[2]{5, 6};
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_ObjID.m_wIndex, type, msg, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg( m_ObjID.m_wIndex, type, msg, 1u);
 }
 
 void CPlayer::SendMsg_TestAttackResult(
@@ -18241,7 +19430,7 @@ void CPlayer::SendMsg_AlterWeaponBulletInform(unsigned __int16 wItemSerial, unsi
   *reinterpret_cast<unsigned __int16 *>(msg) = wItemSerial;
   *reinterpret_cast<unsigned __int16 *>(msg + 2) = wLeftNum;
   unsigned __int8 type[2]{5, 21};
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_ObjID.m_wIndex, type, msg, 4u);
+  g_Network.m_pProcess[0]->LoadSendMsg( m_ObjID.m_wIndex, type, msg, 4u);
 }
 
 void CPlayer::SendMsg_AlterUnitBulletInform(char byPart, unsigned __int16 wLeftNum)
@@ -18250,18 +19439,18 @@ void CPlayer::SendMsg_AlterUnitBulletInform(char byPart, unsigned __int16 wLeftN
   msg[0] = byPart;
   *reinterpret_cast<unsigned __int16 *>(msg + 1) = wLeftNum;
   unsigned __int8 type[2]{5, 22};
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_ObjID.m_wIndex, type, msg, 3u);
+  g_Network.m_pProcess[0]->LoadSendMsg( m_ObjID.m_wIndex, type, msg, 3u);
 }
 
 void CPlayer::SendMsg_Recover()
 {
   char msg[8]{};
-  *reinterpret_cast<unsigned __int16 *>(msg) = static_cast<unsigned __int16>(CPlayerDB::GetHP(&m_Param));
-  *reinterpret_cast<unsigned __int16 *>(msg + 2) = static_cast<unsigned __int16>(CPlayerDB::GetFP(&m_Param));
-  *reinterpret_cast<unsigned __int16 *>(msg + 4) = static_cast<unsigned __int16>(CPlayerDB::GetSP(&m_Param));
-  *reinterpret_cast<unsigned __int16 *>(msg + 6) = static_cast<unsigned __int16>(CPlayerDB::GetDP(&m_Param));
+  *reinterpret_cast<unsigned __int16 *>(msg) = static_cast<unsigned __int16>(m_Param.GetHP());
+  *reinterpret_cast<unsigned __int16 *>(msg + 2) = static_cast<unsigned __int16>(m_Param.GetFP());
+  *reinterpret_cast<unsigned __int16 *>(msg + 4) = static_cast<unsigned __int16>(m_Param.GetSP());
+  *reinterpret_cast<unsigned __int16 *>(msg + 6) = static_cast<unsigned __int16>(m_Param.GetDP());
   unsigned __int8 type[2]{11, 2};
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_ObjID.m_wIndex, type, msg, 8u);
+  g_Network.m_pProcess[0]->LoadSendMsg( m_ObjID.m_wIndex, type, msg, 8u);
 }
 
 char CPlayer::GetUseConsumeItem(
@@ -18285,12 +19474,12 @@ char CPlayer::GetUseConsumeItem(
       {
         return 0;
       }
-      _STORAGE_LIST::_db_con *item = _STORAGE_LIST::GetPtrFromSerial(&m_Param.m_dbInven, pItemSerials[j]);
+      _STORAGE_LIST::_db_con *item = m_Param.m_dbInven.GetPtrFromSerial(pItemSerials[j]);
       if (!item)
       {
         return 0;
       }
-      _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[item->m_byTableCode], item->m_wItemIndex);
+      _base_fld *record = g_Main.m_tblItemData[item->m_byTableCode].GetRecord(item->m_wItemIndex);
       if (strcmp_0(pConsumeList[j].m_itmNeedItemCode, record->m_strCode))
       {
         return 0;
@@ -18338,9 +19527,7 @@ char CPlayer::DeleteUseConsumeItem(
         }
         else
         {
-          CMgrAvatorItemHistory::consume_del_item(
-            &CPlayer::s_MgrItemHistory,
-            m_ObjID.m_wIndex,
+          CPlayer::s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex,
             ppConsumeItems[j],
             m_szItemHistoryFileName);
         }
@@ -18353,9 +19540,7 @@ char CPlayer::DeleteUseConsumeItem(
           0,
           1,
           "CPlayer::DeleteUseConsumeItem()");
-        CMgrAvatorItemHistory::consume_del_item(
-          &CPlayer::s_MgrItemHistory,
-          m_ObjID.m_wIndex,
+        CPlayer::s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex,
           ppConsumeItems[j],
           m_szItemHistoryFileName);
       }
@@ -18372,7 +19557,7 @@ __int64 CPlayer::CalcEquipAttackDelay()
     _STORAGE_LIST::_db_con *equip = &m_Param.m_dbEquip.m_pStorageList[j];
     if (equip->m_bLoad)
     {
-      _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[j], equip->m_wItemIndex);
+      _base_fld *record = g_Main.m_tblItemData[j].GetRecord(equip->m_wItemIndex);
       totalDelay += *reinterpret_cast<unsigned int *>(&record[5].m_strCode[20]);
     }
   }
@@ -18380,20 +19565,20 @@ __int64 CPlayer::CalcEquipAttackDelay()
   _STORAGE_LIST::_db_con *equip6 = m_Param.m_dbEquip.m_pStorageList + 6;
   if (equip6->m_bLoad)
   {
-    _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[6], equip6->m_wItemIndex);
+    _base_fld *record = g_Main.m_tblItemData[6].GetRecord(equip6->m_wItemIndex);
     totalDelay += *reinterpret_cast<unsigned int *>(&record[9].m_strCode[52]);
   }
 
   _STORAGE_LIST::_db_con *equip5 = m_Param.m_dbEquip.m_pStorageList + 5;
   if (equip5->m_bLoad)
   {
-    _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[5], equip5->m_wItemIndex);
+    _base_fld *record = g_Main.m_tblItemData[5].GetRecord(equip5->m_wItemIndex);
     totalDelay += *reinterpret_cast<unsigned int *>(&record[5].m_strCode[20]);
   }
 
   if (IsSiegeMode())
   {
-    _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[27], m_pSiegeItem->m_wItemIndex);
+    _base_fld *record = g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex);
     totalDelay += *reinterpret_cast<unsigned int *>(&record[5].m_strCode[20]);
   }
 
@@ -18460,7 +19645,7 @@ __int64 CPlayer::GetAttackDP()
 {
   if (IsRidingUnit())
   {
-    _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblUnitPart[3], m_pUsingUnit->byPart[3]);
+    _base_fld *record = g_Main.m_tblUnitPart[3].GetRecord(m_pUsingUnit->byPart[3]);
     if (record)
     {
       return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[40]);
@@ -18471,7 +19656,7 @@ __int64 CPlayer::GetAttackDP()
     _STORAGE_LIST::_db_con *equip = m_Param.m_dbEquip.m_pStorageList + 6;
     if (equip->m_bLoad)
     {
-      _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[6], equip->m_wItemIndex);
+      _base_fld *record = g_Main.m_tblItemData[6].GetRecord(equip->m_wItemIndex);
       if (record)
       {
         return *reinterpret_cast<unsigned int *>(&record[9].m_strCode[44]);
@@ -18485,7 +19670,7 @@ __int64 CPlayer::GetAttackLevel()
 {
   if (IsRidingUnit())
   {
-    _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblUnitPart[3], m_pUsingUnit->byPart[3]);
+    _base_fld *record = g_Main.m_tblUnitPart[3].GetRecord(m_pUsingUnit->byPart[3]);
     if (record)
     {
       return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[12]);
@@ -18496,7 +19681,7 @@ __int64 CPlayer::GetAttackLevel()
     _STORAGE_LIST::_db_con *equip = m_Param.m_dbEquip.m_pStorageList + 6;
     if (equip->m_bLoad)
     {
-      _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[6], equip->m_wItemIndex);
+      _base_fld *record = g_Main.m_tblItemData[6].GetRecord(equip->m_wItemIndex);
       if (record)
       {
         return *reinterpret_cast<unsigned int *>(&record[8].m_strCode[8]);
@@ -18520,20 +19705,18 @@ __int64 CPlayer::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
   }
   else
   {
-    masteryPerMast = static_cast<float>(_MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 0, m_pmWpn.byWpClass));
+    masteryPerMast = static_cast<float>(m_pmMst.GetMasteryPerMast(0, m_pmWpn.byWpClass));
   }
 
   float baseValue = FLOAT_1_0;
   if (IsRidingUnit())
   {
-    _base_fld *record = CRecordData::GetRecord(
-      &g_Main.m_tblUnitPart[m_byUsingWeaponPart],
-      m_pUsingUnit->byPart[m_byUsingWeaponPart]);
+    _base_fld *record = g_Main.m_tblUnitPart[m_byUsingWeaponPart].GetRecord(m_pUsingUnit->byPart[m_byUsingWeaponPart]);
     if (record)
     {
       baseValue = static_cast<float>(static_cast<int>(record[5].m_dwIndex));
     }
-    _base_fld *baseRecord = CRecordData::GetRecord(g_Main.m_tblUnitPart, m_pUsingUnit->byPart[0]);
+    _base_fld *baseRecord = g_Main.m_tblUnitPart[0].GetRecord(m_pUsingUnit->byPart[0]);
     if (baseRecord)
     {
       baseValue = baseValue + static_cast<float>(static_cast<int>(baseRecord[5].m_dwIndex));
@@ -18541,7 +19724,7 @@ __int64 CPlayer::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
   }
   else
   {
-    const int level = static_cast<int>(CPlayerDB::GetLevel(&m_Param));
+    const int level = static_cast<int>(m_Param.GetLevel());
     baseValue = static_cast<float>(level) + masteryPerMast;
   }
 
@@ -18550,7 +19733,7 @@ __int64 CPlayer::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
   {
     if (pDst->m_ObjID.m_byID == 1)
     {
-      defSkill = static_cast<float>(pDst->GetDefSkill(pDst, bBackAttack));
+      defSkill = static_cast<float>(pDst->GetDefSkill(bBackAttack));
     }
   }
   else
@@ -18560,9 +19743,10 @@ __int64 CPlayer::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
     {
       scale = 2;
     }
-    const int dstLevel = static_cast<int>(CPlayerDB::GetLevel(reinterpret_cast<CPlayerDB *>(&pDst[1].m_fOldPos[2])));
+    const int dstLevel =
+      static_cast<int>(reinterpret_cast<CPlayerDB *>(&pDst[1].m_fOldPos[2])->GetLevel());
     const int extra = scale * dstLevel;
-    defSkill = static_cast<float>(static_cast<int>(pDst->GetDefSkill(pDst, bBackAttack)) + extra);
+    defSkill = static_cast<float>(static_cast<int>(pDst->GetDefSkill(bBackAttack)) + extra);
   }
 
   int attackProb = static_cast<int>((baseValue - defSkill) / 4.0f) + 95;
@@ -18573,14 +19757,14 @@ __int64 CPlayer::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
   int effPlus = 0;
   if (m_pmWpn.byWpType == 7)
   {
-    effPlus = static_cast<int>(_effect_parameter::GetEff_Plus(&m_EP, 2));
+    effPlus = static_cast<int>(m_EP.GetEff_Plus(2));
   }
   else
   {
-    effPlus = static_cast<int>(_effect_parameter::GetEff_Plus(&m_EP, m_pmWpn.byWpClass));
+    effPlus = static_cast<int>(m_EP.GetEff_Plus(m_pmWpn.byWpClass));
   }
-  const int avoidRate = static_cast<int>(pDst->GetAvoidRate(pDst));
-  const float effPlus2 = _effect_parameter::GetEff_Plus(&m_EP, 40);
+  const int avoidRate = static_cast<int>(pDst->GetAvoidRate());
+  const float effPlus2 = m_EP.GetEff_Plus(40);
   effPlus = static_cast<int>(static_cast<float>(effPlus) + effPlus2);
   attackProb += effPlus - avoidRate;
 
@@ -18601,15 +19785,15 @@ bool CPlayer::IsBeAttackedAble(bool bFirst)
   {
     return false;
   }
-  if (_effect_parameter::GetEff_State(&m_EP, 20))
+  if (m_EP.GetEff_State(20))
   {
     return false;
   }
-  if (_effect_parameter::GetEff_State(&m_EP, 28))
+  if (m_EP.GetEff_State(28))
   {
     return false;
   }
-  return !bFirst || !_effect_parameter::GetEff_State(&m_EP, 21);
+  return !bFirst || !m_EP.GetEff_State(21);
 }
 
 void CPlayer::SetAttackPart(int nAttactPart)
@@ -18622,7 +19806,7 @@ char CPlayer::dev_trap_attack_grade(int nPoint)
   m_nTrapMaxAttackPnt = nPoint;
   for (int j = 0; j < 20; ++j)
   {
-    if (_TRAP_PARAM::_param::isLoad(&m_pmTrp.m_Item[j]))
+    if (m_pmTrp.m_Item[j].isLoad())
     {
       m_pmTrp.m_Item[j].pItem->m_nTrapMaxAttackPnt = nPoint;
     }
@@ -18715,9 +19899,9 @@ void CPlayer::SendMsg_UsePotionResult(char byErrCode, unsigned __int16 wSerial, 
   char msg[10]{};
   msg[0] = byErrCode;
   *reinterpret_cast<unsigned __int16 *>(msg + 1) = wSerial;
-  *reinterpret_cast<short *>(msg + 3) = static_cast<short>(CPlayerDB::GetHP(&m_Param));
-  *reinterpret_cast<short *>(msg + 5) = static_cast<short>(CPlayerDB::GetFP(&m_Param));
-  *reinterpret_cast<short *>(msg + 7) = static_cast<short>(CPlayerDB::GetSP(&m_Param));
+  *reinterpret_cast<short *>(msg + 3) = static_cast<short>(m_Param.GetHP());
+  *reinterpret_cast<short *>(msg + 5) = static_cast<short>(m_Param.GetFP());
+  *reinterpret_cast<short *>(msg + 7) = static_cast<short>(m_Param.GetSP());
   msg[9] = static_cast<char>(byLeftNum);
 
   unsigned __int8 type[2]{7, 8};
@@ -18804,7 +19988,7 @@ void CPlayer::SendMsg_CombineItemResult(char byErrCode, unsigned int dwFee, _STO
 
   msg.byErrCode = byErrCode;
   msg.dwFee = dwFee;
-  msg.dwLeftDalant = CPlayerDB::GetDalant(&m_Param);
+  msg.dwLeftDalant = m_Param.GetDalant();
   msg.byTableCode = pNewItem->m_byTableCode;
   msg.wItemIndex = pNewItem->m_wItemIndex;
   msg.dwDur = pNewItem->m_dwDur;
@@ -18824,7 +20008,7 @@ void CPlayer::SendMsg_CombineLendItemResult(
   if (!byErrCode)
   {
     msg.dwFee = dwFee;
-    msg.dwLeftDalant = CPlayerDB::GetDalant(&m_Param);
+    msg.dwLeftDalant = m_Param.GetDalant();
     msg.Item.byTblCode = pNewItem->m_byTableCode;
     msg.Item.wItemIdx = pNewItem->m_wItemIndex;
     msg.Item.dwDur = pNewItem->m_dwDur;
@@ -18907,7 +20091,7 @@ void CPlayer::SendMsg_RadarCharSearchResult()
 
 void CPlayer::SendMsg_FanfareItem(unsigned __int8 byGetType, _STORAGE_LIST::_db_con *pItem, CItemBox *pItemBox)
 {
-  if (!CRecordData::GetRecord(&g_Main.m_tblItemData[pItem->m_byTableCode], pItem->m_wItemIndex))
+  if (!g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex))
   {
     return;
   }
@@ -18961,7 +20145,7 @@ void CPlayer::SendMsg_FanfareItem(unsigned __int8 byGetType, _STORAGE_LIST::_db_
   msg.dwCharacterSerial = m_dwObjSerial;
   msg.wMonsterIndex = pItemBox ? pItemBox->m_wMonRecIndex : static_cast<unsigned __int16>(-1);
   msg.wMapIndex = static_cast<unsigned __int16>(m_pCurMap->m_nMapIndex);
-  const char *charName = CPlayerDB::GetCharNameW(&m_Param);
+  const char *charName = m_Param.GetCharNameW();
   strcpy_0(msg.strCharacterName, charName);
   msg.bAllSend = allSend;
 
@@ -18974,8 +20158,8 @@ void CPlayer::SendMsg_FanfareItem(unsigned __int8 byGetType, _STORAGE_LIST::_db_
         CPlayer *targetPlayer = &g_Player[index];
         if (targetPlayer->m_bLive)
         {
-          const int targetRace = CPlayerDB::GetRaceCode(&targetPlayer->m_Param);
-          const int myRace = CPlayerDB::GetRaceCode(&m_Param);
+          const int targetRace = targetPlayer->m_Param.GetRaceCode();
+          const int myRace = m_Param.GetRaceCode();
           if (targetRace == myRace)
           {
             g_Network.m_pProcess[0]->LoadSendMsg(
@@ -19015,7 +20199,7 @@ void CPlayer::SendMsg_PartyLootItemInform(
   msg[7] = static_cast<char>(byNum);
 
   unsigned __int8 type[2]{16, 30};
-  CPartyPlayer **partyMembers = CPartyPlayer::GetPtrPartyMember(m_pPartyMgr);
+  CPartyPlayer **partyMembers = m_pPartyMgr->GetPtrPartyMember();
   if (partyMembers)
   {
     for (int index = 0; index < 8 && partyMembers[index]; ++index)
@@ -19028,7 +20212,7 @@ void CPlayer::SendMsg_PartyLootItemInform(
 void CPlayer::SendMsg_Notify_Get_Golden_Box(
   char byBoxType,
   unsigned int dwCharSerial,
-  char *szCharName,
+  const char *szCharName,
   _STORAGE_LIST::_db_con *pItem,
   bool bCircle)
 {
@@ -19087,8 +20271,8 @@ void CPlayer::SendMsg_Notify_Me_Get_Golden_Box(char byBoxType, _STORAGE_LIST::_d
   msg.byTableCode = pItem->m_byTableCode;
   msg.wItemIndex = pItem->m_wItemIndex;
   msg.byDur = static_cast<unsigned __int8>(pItem->m_dwDur);
-  msg.dwCharSerial = CPlayerDB::GetCharSerial(&m_Param);
-  const char *charName = CPlayerDB::GetCharNameA(&m_Param);
+  msg.dwCharSerial = m_Param.GetCharSerial();
+  const char *charName = m_Param.GetCharNameA();
   strcpy_0(msg.szCharName, charName);
 
   unsigned __int8 type[2]{13, static_cast<unsigned __int8>(0x95)};
@@ -19172,7 +20356,7 @@ void CPlayer::pc_TakeGroundingItem(CItemBox *pBox, unsigned __int16 wAddSerial)
   int saveItem = 1;
   _STORAGE_LIST::_db_con *addedItem = nullptr;
 
-  if (TimeLimitMgr::GetPlayerStatus(g_Main.m_pTimeLimitMgr, m_id.wIndex) == 99)
+  if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(m_id.wIndex) == 99)
   {
     errCode = 16;
     goto RESULT;
@@ -19187,7 +20371,7 @@ void CPlayer::pc_TakeGroundingItem(CItemBox *pBox, unsigned __int16 wAddSerial)
     errCode = 4;
     goto RESULT;
   }
-  if (!CItemBox::IsTakeRight(pBox, this))
+  if (!pBox->IsTakeRight(this))
   {
     errCode = 5;
     goto RESULT;
@@ -19205,12 +20389,12 @@ void CPlayer::pc_TakeGroundingItem(CItemBox *pBox, unsigned __int16 wAddSerial)
     errCode = 8;
     goto RESULT;
   }
-  if (_effect_parameter::GetEff_State(&m_EP, 20))
+  if (m_EP.GetEff_State(20))
   {
     errCode = 13;
     goto RESULT;
   }
-  if (_effect_parameter::GetEff_State(&m_EP, 28))
+  if (m_EP.GetEff_State(28))
   {
     errCode = 13;
     goto RESULT;
@@ -19219,7 +20403,7 @@ void CPlayer::pc_TakeGroundingItem(CItemBox *pBox, unsigned __int16 wAddSerial)
   {
     if (wAddSerial == 0xFFFF)
     {
-      if (_STORAGE_LIST::GetIndexEmptyCon(&m_Param.m_dbInven) == 0xFF)
+      if (m_Param.m_dbInven.GetIndexEmptyCon() == 0xFF)
       {
         errCode = 1;
       }
@@ -19231,7 +20415,7 @@ void CPlayer::pc_TakeGroundingItem(CItemBox *pBox, unsigned __int16 wAddSerial)
         errCode = 7;
         goto RESULT;
       }
-      addTarget = _STORAGE_LIST::GetPtrFromSerial(&m_Param.m_dbInven, wAddSerial);
+      addTarget = m_Param.m_dbInven.GetPtrFromSerial(wAddSerial);
       if (!addTarget)
       {
         SendMsg_AdjustAmountInform(0, wAddSerial, 0);
@@ -19240,7 +20424,7 @@ void CPlayer::pc_TakeGroundingItem(CItemBox *pBox, unsigned __int16 wAddSerial)
       }
       if (addTarget->m_byCsMethod && item.m_byCsMethod && addTarget->m_dwT != item.m_dwT)
       {
-        if (_STORAGE_LIST::GetIndexEmptyCon(&m_Param.m_dbInven) == 0xFF)
+        if (m_Param.m_dbInven.GetIndexEmptyCon() == 0xFF)
         {
           errCode = 1;
           goto RESULT;
@@ -19281,7 +20465,7 @@ RESULT:
     {
       if (wAddSerial == 0xFFFF)
       {
-        item.m_wSerial = CPlayerDB::GetNewItemSerial(&m_Param);
+        item.m_wSerial = m_Param.GetNewItemSerial();
         addedItem = Emb_AddStorage(0, &item, false, true);
         if (!addedItem)
         {
@@ -19300,29 +20484,29 @@ RESULT:
       }
       if (m_pUserDB && m_bCntEnable && item.m_byTableCode == 20)
       {
-        _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[item.m_byTableCode], item.m_wItemIndex);
+        _base_fld *record = g_Main.m_tblItemData[item.m_byTableCode].GetRecord(item.m_wItemIndex);
         if (!record)
         {
           return;
         }
         if (!strcmp_0(record->m_strCode, "iyhol01"))
         {
-          const unsigned __int8 numOfTime = CHolyStoneSystem::GetNumOfTime(&g_HolySys);
-          CUserDB::Update_UserGetScaner(m_pUserDB, 1u, numOfTime);
+          const unsigned __int8 numOfTime = g_HolySys.GetNumOfTime();
+          m_pUserDB->Update_UserGetScaner(1u, numOfTime);
         }
       }
       CGoldenBoxItemMgr *goldenMgr = CGoldenBoxItemMgr::Instance();
-      if (CGoldenBoxItemMgr::Get_Event_Status(goldenMgr) == 2 && m_pUserDB && item.m_byTableCode == 31)
+      if (goldenMgr->Get_Event_Status() == 2 && m_pUserDB && item.m_byTableCode == 31)
       {
-        _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[item.m_byTableCode], item.m_wItemIndex);
+        _base_fld *record = g_Main.m_tblItemData[item.m_byTableCode].GetRecord(item.m_wItemIndex);
         if (!record)
         {
           return;
         }
         if (!strcmp_0(record->m_strCode, "bxgol03") && pBox->m_dwThrowerCharSerial == static_cast<unsigned int>(-1))
         {
-          char *charName = CPlayerDB::GetCharNameA(&m_Param);
-          const unsigned int charSerial = CPlayerDB::GetCharSerial(&m_Param);
+          char *charName = m_Param.GetCharNameA();
+          const unsigned int charSerial = m_Param.GetCharSerial();
           SendMsg_Notify_Get_Golden_Box(3u, charSerial, charName, &item, false);
         }
       }
@@ -19335,12 +20519,11 @@ RESULT:
       {
         if (pBox->m_wMonRecIndex != 0xFFFF && pBox->m_bBossMob)
         {
-          _base_fld *monRecord = CRecordData::GetRecord(&g_Main.m_tblMonster, pBox->m_wMonRecIndex);
-          _base_fld *itemRecord = CRecordData::GetRecord(&g_Main.m_tblItemData[item.m_byTableCode], item.m_wItemIndex);
+          _base_fld *monRecord = g_Main.m_tblMonster.GetRecord(pBox->m_wMonRecIndex);
+          _base_fld *itemRecord = g_Main.m_tblItemData[item.m_byTableCode].GetRecord(item.m_wItemIndex);
           const unsigned int nowSec = timeGetTime() / 0x3E8;
-          char *charName = CPlayerDB::GetCharNameA(&m_Param);
-          CLogFile::Write(
-            &CMonster::s_logTrace_Boss_Looting,
+          char *charName = m_Param.GetCharNameA();
+          CMonster::s_logTrace_Boss_Looting.Write(
             "\t Mob: %s Item: %s => %s ( %d ), Sec: %d",
             monRecord->m_strCode,
             itemRecord->m_strCode,
@@ -19348,9 +20531,7 @@ RESULT:
             m_dwObjSerial,
             nowSec);
         }
-        CMgrAvatorItemHistory::take_ground_item(
-          &CPlayer::s_MgrItemHistory,
-          m_ObjID.m_wIndex,
+        CPlayer::s_MgrItemHistory.take_ground_item(m_ObjID.m_wIndex,
           pBox->m_byCreateCode,
           &item,
           pBox->m_aszThrowerName,
@@ -19364,10 +20545,8 @@ RESULT:
             && pBox->m_dwThrowerCharSerial != m_dwObjSerial)
         {
           char *takerId = m_pUserDB->m_szAccountID;
-          char *charName = CPlayerDB::GetCharNameA(&m_Param);
-          CMgrAvatorItemHistory::trans_ground_item(
-            &CPlayer::s_MgrItemHistory,
-            &item,
+          char *charName = m_Param.GetCharNameA();
+          CPlayer::s_MgrItemHistory.trans_ground_item(&item,
             charName,
             m_dwObjSerial,
             takerId,
@@ -19375,13 +20554,12 @@ RESULT:
         }
       }
     }
-    _base_fld *itemRecord = CRecordData::GetRecord(&g_Main.m_tblItemData[item.m_byTableCode], item.m_wItemIndex);
-    CQuestMgr::CheckFailLoop(&m_QuestMgr, 4, itemRecord->m_strCode);
+    _base_fld *itemRecord = g_Main.m_tblItemData[item.m_byTableCode].GetRecord(item.m_wItemIndex);
+    m_QuestMgr.CheckFailLoop(4, itemRecord->m_strCode);
     bool darkHoleEvent = false;
     if (pBox->m_byCreateCode == 5 && m_pDHChannel)
     {
-      darkHoleEvent = CDarkHoleChannel::CheckEvent(
-        m_pDHChannel,
+      darkHoleEvent = m_pDHChannel->CheckEvent(
         dh_event_take,
         item.m_byTableCode,
         item.m_wItemIndex,
@@ -19392,15 +20570,15 @@ RESULT:
     {
       if (!darkHoleEvent)
       {
-        _base_fld *questItemRecord = CRecordData::GetRecord(&g_Main.m_tblItemData[item.m_byTableCode], item.m_wItemIndex);
+        _base_fld *questItemRecord = g_Main.m_tblItemData[item.m_byTableCode].GetRecord(item.m_wItemIndex);
         Emb_CheckActForQuest(4, questItemRecord->m_strCode, 1u, 0);
-        if (CPartyPlayer::IsPartyMode(m_pPartyMgr))
+        if (m_pPartyMgr->IsPartyMode())
         {
           Emb_CheckActForQuestParty(4, questItemRecord->m_strCode, 1u);
         }
         CheckMentalTakeAndUpdateLastMetalTicket(questItemRecord->m_strCode);
       }
-      if (CPartyPlayer::IsPartyMode(m_pPartyMgr)
+      if (m_pPartyMgr->IsPartyMode()
           && pBox->m_dwPartyBossSerial == m_pPartyMgr->m_pPartyBoss->m_id.dwSerial)
       {
         unsigned __int8 dur = 1;
@@ -19411,7 +20589,7 @@ RESULT:
         SendMsg_PartyLootItemInform(m_dwObjSerial, item.m_byTableCode, item.m_wItemIndex, dur);
       }
     }
-    CItemBox::Destroy(pBox);
+    pBox->Destroy();
   }
 
   if (wAddSerial == 0xFFFF)
@@ -19422,8 +20600,7 @@ RESULT:
     }
     else
     {
-      CLogFile::Write(
-        &g_Main.m_logSystemError,
+      g_Main.m_logSystemError.Write(
         "pc_TakeGroundingItem() : Error Take New Item Result : BoxItem TableCode(%u), ItemIndex(%u)",
         item.m_byTableCode,
         item.m_wItemIndex);
@@ -19436,8 +20613,7 @@ RESULT:
   }
   else
   {
-    CLogFile::Write(
-      &g_Main.m_logSystemError,
+    g_Main.m_logSystemError.Write(
       "pc_TakeGroundingItem() : Error Take Add Item Result : BoxItem TableCode(%u), ItemIndex(%u)",
       item.m_byTableCode,
       item.m_wItemIndex);
@@ -19453,17 +20629,17 @@ void CPlayer::pc_ThrowStorageItem(_STORAGE_POS_INDIV *pItem)
 
   if (m_pUserDB)
   {
-    if (_effect_parameter::GetEff_State(&m_EP, 20))
+    if (m_EP.GetEff_State(20))
     {
       errCode = 5;
     }
-    else if (_effect_parameter::GetEff_State(&m_EP, 28))
+    else if (m_EP.GetEff_State(28))
     {
       errCode = 5;
     }
     else
     {
-      srcItem = _STORAGE_LIST::GetPtrFromSerial(storage, pItem->wItemSerial);
+      srcItem = storage->GetPtrFromSerial(pItem->wItemSerial);
       if (srcItem)
       {
         if (srcItem->m_bLock)
@@ -19474,7 +20650,7 @@ void CPlayer::pc_ThrowStorageItem(_STORAGE_POS_INDIV *pItem)
         {
           __int16 *billingType = &m_pUserDB->m_BillingInfo.iType;
           CNationSettingManager *nationSetting = CTSingleton<CNationSettingManager>::Instance();
-          if (CNationSettingManager::IsPersonalFreeFixedAmountBillingType(nationSetting, billingType, nullptr))
+          if (nationSetting->IsPersonalFreeFixedAmountBillingType(billingType, nullptr))
           {
             errCode = 9;
           }
@@ -19532,14 +20708,12 @@ void CPlayer::pc_ThrowStorageItem(_STORAGE_POS_INDIV *pItem)
                    true,
                    "CPlayer::pc_ThrowStorageItem()"))
         {
-          CItemBox::Destroy(itemBox);
+          itemBox->Destroy();
           SendMsg_ThrowStorageResult(0xFFu);
           return;
         }
         _map_fld *mapRecord = m_pCurMap->m_pMapSet;
-        CMgrAvatorItemHistory::throw_ground_item(
-          &CPlayer::s_MgrItemHistory,
-          m_ObjID.m_wIndex,
+        CPlayer::s_MgrItemHistory.throw_ground_item(m_ObjID.m_wIndex,
           &dropItem,
           mapRecord->m_strCode,
           m_fCurPos,
@@ -19570,7 +20744,7 @@ void CPlayer::pc_UsePotionItem(CPlayer *pTargetPlayer, _STORAGE_POS_INDIV *pItem
     }
     else
     {
-      useItem = _STORAGE_LIST::GetPtrFromSerial(storage, pItem->wItemSerial);
+      useItem = storage->GetPtrFromSerial(pItem->wItemSerial);
       if (useItem)
       {
         if (useItem->m_byTableCode == 13)
@@ -19589,18 +20763,19 @@ void CPlayer::pc_UsePotionItem(CPlayer *pTargetPlayer, _STORAGE_POS_INDIV *pItem
               return;
             }
             currTime = timeGetTime();
-            potionFld = (_PotionItem_fld *)CRecordData::GetRecord(&g_Main.m_tblItemData[13], useItem->m_wItemIndex);
+            potionFld = (_PotionItem_fld *)g_Main.m_tblItemData[13].GetRecord(useItem->m_wItemIndex);
             if (potionFld)
             {
-              if (potionFld->m_nUseState == 3 || CPlayerDB::GetHP(&m_Param))
+              if (potionFld->m_nUseState == 3 || m_Param.GetHP())
               {
-                const int level = CPlayerDB::GetLevel(&m_Param);
+                const int level = m_Param.GetLevel();
                 if (level >= potionFld->m_nLevelLim)
                 {
                   if (potionFld->m_nUpLevelLim == -1
-                      || CPlayerDB::GetLevel(&m_Param) <= potionFld->m_nUpLevelLim)
+                      || m_Param.GetLevel() <= potionFld->m_nUpLevelLim)
                   {
-                    errCode = CPotionMgr::UsePotion(&g_PotionMgr, this, pTargetPlayer, potionFld, currTime);
+                    errCode = static_cast<unsigned __int8>(
+                      g_PotionMgr.UsePotion(this, pTargetPlayer, potionFld, currTime));
                   }
                   else
                   {
@@ -19621,9 +20796,8 @@ void CPlayer::pc_UsePotionItem(CPlayer *pTargetPlayer, _STORAGE_POS_INDIV *pItem
             {
               const int itemIndex = useItem->m_wItemIndex;
               const int tableCode = useItem->m_byTableCode;
-              char *charName = CPlayerDB::GetCharNameA(&m_Param);
-              CLogFile::Write(
-                &g_Main.m_logSystemError,
+              char *charName = m_Param.GetCharNameA();
+              g_Main.m_logSystemError.Write(
                 "CPlayer::pc_UsePotionItem(...) : User %s(%u) Item Table(%u) Index(%u) Not Exist!",
                 charName,
                 m_dwObjSerial,
@@ -19652,18 +20826,14 @@ void CPlayer::pc_UsePotionItem(CPlayer *pTargetPlayer, _STORAGE_POS_INDIV *pItem
         Emb_AlterDurPoint(storage->m_nListCode, useItem->m_byStorageIndex, -1, false, false));
       if (potionFld->m_bIsCash == 1)
       {
-        CMgrAvatorItemHistory::cash_item_use(
-          &CPlayer::s_MgrItemHistory,
-          m_ObjID.m_wIndex,
+        CPlayer::s_MgrItemHistory.cash_item_use(m_ObjID.m_wIndex,
           useItem,
           m_szItemHistoryFileName);
       }
-      _base_fld *effectRecord = CRecordData::GetRecord(&g_PotionMgr.m_tblPotionEffectData, potionFld->m_strEffCode);
+      _base_fld *effectRecord = g_PotionMgr.m_tblPotionEffectData.GetRecord(potionFld->m_strEffCode);
       if (effectRecord && (effectRecord[13].m_dwIndex == 50 || effectRecord[13].m_dwIndex == 51))
       {
-        CMgrAvatorItemHistory::consume_del_item(
-          &CPlayer::s_MgrItemHistory,
-          m_ObjID.m_wIndex,
+        CPlayer::s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex,
           useItem,
           m_szItemHistoryFileName);
       }
@@ -19680,21 +20850,22 @@ void CPlayer::pc_EquipPart(_STORAGE_POS_INDIV *pItem)
   _STORAGE_LIST::_db_con *fixingItem = nullptr;
   _STORAGE_LIST::_db_con *equipSlot = nullptr;
   _base_fld *record = nullptr;
+  _STORAGE_LIST::_db_con equipItem{};
 
-  if (_effect_parameter::GetEff_State(&m_EP, 20))
+  if (m_EP.GetEff_State(20))
   {
     errCode = 8;
   }
-  else if (_effect_parameter::GetEff_State(&m_EP, 28))
+  else if (m_EP.GetEff_State(28))
   {
     errCode = 8;
   }
   else
   {
-    fixingItem = _STORAGE_LIST::GetPtrFromSerial(inventory, pItem->wItemSerial);
+    fixingItem = inventory->GetPtrFromSerial(pItem->wItemSerial);
     if (fixingItem)
     {
-      record = CRecordData::GetRecord(&g_Main.m_tblItemData[fixingItem->m_byTableCode], fixingItem->m_wItemIndex);
+      record = g_Main.m_tblItemData[fixingItem->m_byTableCode].GetRecord(fixingItem->m_wItemIndex);
       if (fixingItem->m_byTableCode < 8u)
       {
         if (fixingItem->m_bLock)
@@ -19752,7 +20923,6 @@ void CPlayer::pc_EquipPart(_STORAGE_POS_INDIV *pItem)
     }
     if (equipSlot->m_bLoad)
     {
-      _STORAGE_LIST::_db_con equipItem{};
       memcpy_0(&equipItem, equipSlot, sizeof(equipItem));
       if (!Emb_AddStorage(inventory->m_nListCode, &equipItem, true, false))
       {
@@ -19790,18 +20960,19 @@ void CPlayer::pc_EmbellishPart(_STORAGE_POS_INDIV *pItem, unsigned __int16 wChan
   _STORAGE_LIST::_db_con *fixingItem = nullptr;
   _STORAGE_LIST::_db_con *embelItem = nullptr;
   int sameTypeCount = 0;
+  _STORAGE_LIST::_db_con oldEmbel{};
 
-  if (_effect_parameter::GetEff_State(&m_EP, 20))
+  if (m_EP.GetEff_State(20))
   {
     errCode = 8;
     goto RESULT;
   }
-  if (_effect_parameter::GetEff_State(&m_EP, 28))
+  if (m_EP.GetEff_State(28))
   {
     errCode = 8;
     goto RESULT;
   }
-  fixingItem = _STORAGE_LIST::GetPtrFromSerial(inventory, pItem->wItemSerial);
+  fixingItem = inventory->GetPtrFromSerial(pItem->wItemSerial);
   if (!fixingItem)
   {
     errCode = 2;
@@ -19819,7 +20990,7 @@ void CPlayer::pc_EmbellishPart(_STORAGE_POS_INDIV *pItem, unsigned __int16 wChan
   }
   if (wChangeSerial != 0xFFFF)
   {
-    embelItem = _STORAGE_LIST::GetPtrFromSerial(embellish, wChangeSerial);
+    embelItem = embellish->GetPtrFromSerial(wChangeSerial);
     if (!embelItem)
     {
       errCode = 2;
@@ -19841,7 +21012,7 @@ void CPlayer::pc_EmbellishPart(_STORAGE_POS_INDIV *pItem, unsigned __int16 wChan
     errCode = 10;
     goto RESULT;
   }
-  if (wChangeSerial == 0xFFFF && _STORAGE_LIST::GetIndexEmptyCon(embellish) == 0xFF)
+  if (wChangeSerial == 0xFFFF && embellish->GetIndexEmptyCon() == 0xFF)
   {
     errCode = 5;
     goto RESULT;
@@ -19897,7 +21068,6 @@ RESULT:
     }
     if (embelItem)
     {
-      _STORAGE_LIST::_db_con oldEmbel{};
       memcpy_0(&oldEmbel, embelItem, sizeof(oldEmbel));
       if (!Emb_AddStorage(inventory->m_nListCode, &oldEmbel, true, false))
       {
@@ -19953,25 +21123,25 @@ void CPlayer::pc_OffPart(_STORAGE_POS_INDIV *pItem)
   _STORAGE_LIST *inventory = &m_Param.m_dbInven;
   _STORAGE_LIST::_db_con *srcItem = nullptr;
 
-  if (_effect_parameter::GetEff_State(&m_EP, 20))
+  if (m_EP.GetEff_State(20))
   {
     errCode = 8;
   }
-  else if (_effect_parameter::GetEff_State(&m_EP, 28))
+  else if (m_EP.GetEff_State(28))
   {
     errCode = 8;
   }
   else if (pItem->byStorageCode == 1 || pItem->byStorageCode == 2)
   {
     storage = m_Param.m_pStoragePtr[pItem->byStorageCode];
-    srcItem = _STORAGE_LIST::GetPtrFromSerial(storage, pItem->wItemSerial);
+    srcItem = storage->GetPtrFromSerial(pItem->wItemSerial);
     if (srcItem)
     {
       if (srcItem->m_bLock)
       {
         errCode = 11;
       }
-      else if (_STORAGE_LIST::GetIndexEmptyCon(inventory) == 0xFF)
+      else if (inventory->GetIndexEmptyCon() == 0xFF)
       {
         errCode = 3;
       }
@@ -20051,7 +21221,7 @@ void CPlayer::Emb_ItemUpgrade(
     }
     if (item->m_byTableCode == 6)
     {
-      _WEAPON_PARAM::FixWeapon(&m_pmWpn, item);
+      m_pmWpn.FixWeapon(item);
     }
   }
 
@@ -20064,7 +21234,7 @@ void CPlayer::Emb_ItemUpgrade(
 
   if (m_pUserDB)
   {
-    CUserDB::Update_ItemUpgrade(m_pUserDB, byStorageCode, byStorageIndex, dwGradeInfo, 1);
+    m_pUserDB->Update_ItemUpgrade(byStorageCode, byStorageIndex, dwGradeInfo, 1);
   }
 }
 
@@ -20081,10 +21251,17 @@ void CPlayer::pc_MakeItem(
 
   unsigned __int8 errCode = 0;
   _STORAGE_LIST::_db_con *makeToolItem = nullptr;
-  _base_fld *manualRecord = CRecordData::GetRecord(&g_Main.m_tblItemMakeData, wManualIndex);
+  _base_fld *manualRecord = g_Main.m_tblItemMakeData.GetRecord(wManualIndex);
   int tableCode = 0;
   _base_fld *makeItemRecord = nullptr;
   bool useRandomResult = false;
+  int raceSexCode = 0;
+  unsigned __int8 masteryType = 0;
+  int masteryValue = 0;
+  _STORAGE_LIST::_db_con *materialItems[100]{};
+  int requiredMaterial[19]{};
+  _STORAGE_LIST::_db_con historyMaterials[100]{};
+  unsigned __int8 materialCounts[116]{};
 
   if (!manualRecord)
   {
@@ -20094,14 +21271,13 @@ void CPlayer::pc_MakeItem(
 
   tableCode = GetItemTableCode(manualRecord->m_strCode);
 
-  const int raceSexCode = CPlayerDB::GetRaceSexCode(&m_Param);
+  raceSexCode = m_Param.GetRaceSexCode();
   if (manualRecord[1].m_strCode[raceSexCode] != '1')
   {
     errCode = 11;
     goto RESULT;
   }
 
-  unsigned __int8 masteryType = 0;
   if (tableCode < 5)
   {
     masteryType = 1;
@@ -20119,7 +21295,7 @@ void CPlayer::pc_MakeItem(
     masteryType = 1;
   }
 
-  const int masteryValue = _MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 5u, masteryType);
+  masteryValue = m_pmMst.GetMasteryPerMast(5u, masteryType);
   if (static_cast<int>(manualRecord[1].m_dwIndex) > masteryValue)
   {
     errCode = 13;
@@ -20135,7 +21311,8 @@ void CPlayer::pc_MakeItem(
     bool hasHistory = false;
     for (int historyIndex = 0; historyIndex < 4; ++historyIndex)
     {
-      _DWORD *historyEffect = *m_Param.m_ppHistoryEffect[historyIndex];
+      unsigned int *historyEffect =
+        reinterpret_cast<unsigned int *>(*m_Param.m_ppHistoryEffect[historyIndex]);
       if (!historyEffect)
       {
         break;
@@ -20173,18 +21350,18 @@ void CPlayer::pc_MakeItem(
     }
   }
 
-  if (CPlayerDB::GetPtrCurClass(&m_Param)->m_nGrade > 1
-      && CPlayerDB::GetPtrCurClass(&m_Param)->m_nClass == 3)
+  if (m_Param.GetPtrCurClass()->m_nGrade > 1
+      && m_Param.GetPtrCurClass()->m_nClass == 3)
   {
-    _class_fld *curClass = CPlayerDB::GetPtrCurClass(&m_Param);
-    _class_fld *baseClass = CPlayerDB::GetPtrBaseClass(&m_Param);
+    _class_fld *curClass = m_Param.GetPtrCurClass();
+    _class_fld *baseClass = m_Param.GetPtrBaseClass();
     if (curClass->m_nClass == baseClass->m_nClass && m_Param.m_pClassData->m_dwIndex != 49)
     {
       useRandomResult = true;
     }
   }
 
-  makeToolItem = _STORAGE_LIST::GetPtrFromSerial(&m_Param.m_dbInven, pipMakeTool->wItemSerial);
+  makeToolItem = m_Param.m_dbInven.GetPtrFromSerial(pipMakeTool->wItemSerial);
   if (!makeToolItem)
   {
     errCode = 1;
@@ -20200,7 +21377,7 @@ void CPlayer::pc_MakeItem(
     errCode = 10;
     goto RESULT;
   }
-  if (_STORAGE_LIST::GetIndexEmptyCon(&m_Param.m_dbInven) == 0xFF)
+  if (m_Param.m_dbInven.GetIndexEmptyCon() == 0xFF)
   {
     errCode = 3;
     goto RESULT;
@@ -20223,7 +21400,7 @@ void CPlayer::pc_MakeItem(
         const unsigned __int8 entryTableCode = GetItemTableCode(entry);
         if (entryTableCode != 0xFF)
         {
-          makeItemRecord = CRecordData::GetRecordByHash(&g_Main.m_tblItemData[entryTableCode], entry, 2, 5);
+          makeItemRecord = g_Main.m_tblItemData[entryTableCode].GetRecordByHash(entry, 2, 5);
         }
         break;
       }
@@ -20231,7 +21408,7 @@ void CPlayer::pc_MakeItem(
   }
   else
   {
-    makeItemRecord = CRecordData::GetRecordByHash(&g_Main.m_tblItemData[tableCode], manualRecord->m_strCode, 2, 5);
+    makeItemRecord = g_Main.m_tblItemData[tableCode].GetRecordByHash(manualRecord->m_strCode, 2, 5);
     if (!makeItemRecord)
     {
       errCode = 9;
@@ -20239,8 +21416,6 @@ void CPlayer::pc_MakeItem(
     }
   }
 
-  _STORAGE_LIST::_db_con *materialItems[100]{};
-  int requiredMaterial[19]{};
   if (makeItemRecord)
   {
     memcpy_0(requiredMaterial, &manualRecord[2], 0x3Cu);
@@ -20248,7 +21423,7 @@ void CPlayer::pc_MakeItem(
     {
       for (int j = 0; j < byMaterialNum; ++j)
       {
-        materialItems[j] = _STORAGE_LIST::GetPtrFromSerial(&m_Param.m_dbInven, pipMaterials[j].wItemSerial);
+        materialItems[j] = m_Param.m_dbInven.GetPtrFromSerial(pipMaterials[j].wItemSerial);
         if (!materialItems[j])
         {
           SendMsg_AdjustAmountInform(0, pipMaterials[j].wItemSerial, 0);
@@ -20278,9 +21453,7 @@ void CPlayer::pc_MakeItem(
           }
         }
         bool matched = false;
-        _base_fld *materialRecord = CRecordData::GetRecord(
-          &g_Main.m_tblItemData[materialItems[j]->m_byTableCode],
-          materialItems[j]->m_wItemIndex);
+        _base_fld *materialRecord = g_Main.m_tblItemData[materialItems[j]->m_byTableCode].GetRecord(materialItems[j]->m_wItemIndex);
         for (int n = 0; n < 5; ++n)
         {
           if (!std::strncmp(materialRecord->m_strCode, reinterpret_cast<const char *>(&requiredMaterial[3 * n]), 7u))
@@ -20314,8 +21487,8 @@ void CPlayer::pc_MakeItem(
 RESULT:
   if (!errCode)
   {
-    _STORAGE_LIST::_db_con historyMaterials[100]{};
-    unsigned __int8 materialCounts[116]{};
+    memset_0(historyMaterials, 0, sizeof(historyMaterials));
+    memset_0(materialCounts, 0, sizeof(materialCounts));
     if (!m_bCheat_makeitem_no_use_matrial)
     {
       for (int j = 0; j < byMaterialNum; ++j)
@@ -20325,7 +21498,7 @@ RESULT:
       }
     }
 
-    const int masteryValue = _MASTERY_PARAM::GetMasteryPerMast(&m_pmMst, 5u, masteryType);
+    const int masteryValue = m_pmMst.GetMasteryPerMast(5u, masteryType);
     int successRate = 0;
     int baseLevel = 0;
     int itemEquipLevel = 0;
@@ -20352,7 +21525,7 @@ RESULT:
       successRate = 100;
     }
 
-    const unsigned __int16 randValue = _100_per_random_table::GetRand(&m_MakeRandTable);
+    const unsigned __int16 randValue = m_MakeRandTable.GetRand();
     if (successRate < randValue)
     {
       errCode = 100;
@@ -20381,7 +21554,7 @@ RESULT:
         socketCount = static_cast<unsigned __int8>(rand() % defSocketNum + 1);
       }
       newItem.m_dwLv = GetBitAfterSetLimSocket(socketCount);
-      newItem.m_wSerial = CPlayerDB::GetNewItemSerial(&m_Param);
+      newItem.m_wSerial = m_Param.GetNewItemSerial();
       if (!Emb_AddStorage(0, &newItem, 0, 1))
       {
         SendMsg_MakeItemResult(0xFFu);
@@ -20397,24 +21570,20 @@ RESULT:
       {
         Emb_AlterStat(5u, masteryType, 1u, 0, "CPlayer::pc_MakeItem()---0", 1);
       }
-      _base_fld *itemRecord = CRecordData::GetRecord(&g_Main.m_tblItemData[tableCode], makeItemRecord->m_dwIndex);
+      _base_fld *itemRecord = g_Main.m_tblItemData[tableCode].GetRecord(makeItemRecord->m_dwIndex);
       Emb_CheckActForQuest(5, itemRecord->m_strCode, 1u, 0);
     }
 
     if (m_bCheat_makeitem_no_use_matrial)
     {
-      CMgrAvatorItemHistory::cheat_make_item_no_material(
-        &CPlayer::s_MgrItemHistory,
-        m_ObjID.m_wIndex,
+      CPlayer::s_MgrItemHistory.cheat_make_item_no_material(m_ObjID.m_wIndex,
         errCode,
         &newItem,
         m_szItemHistoryFileName);
     }
     else
     {
-      CMgrAvatorItemHistory::make_item(
-        &CPlayer::s_MgrItemHistory,
-        m_ObjID.m_wIndex,
+      CPlayer::s_MgrItemHistory.make_item(m_ObjID.m_wIndex,
         historyMaterials,
         materialCounts,
         byMaterialNum,
@@ -20445,17 +21614,17 @@ void CPlayer::pc_UpgradeItem(
   _ItemUpgrade_fld *primaryTalikRecord = nullptr;
   unsigned __int8 itemUpgLimSocket = 0;
 
-  if (_effect_parameter::GetEff_State(&m_EP, 20))
+  if (m_EP.GetEff_State(20))
   {
     errCode = 8;
   }
-  else if (_effect_parameter::GetEff_State(&m_EP, 28))
+  else if (m_EP.GetEff_State(28))
   {
     errCode = 8;
   }
   else
   {
-    upgradeItem = _STORAGE_LIST::GetPtrFromSerial(storage, pposUpgItem->wItemSerial);
+    upgradeItem = storage->GetPtrFromSerial(pposUpgItem->wItemSerial);
     if (upgradeItem)
     {
       if (upgradeItem->m_bLock)
@@ -20472,7 +21641,7 @@ void CPlayer::pc_UpgradeItem(
         const unsigned __int8 upgLevel = GetItemUpgedLv(upgradeItem->m_dwLv);
         if (upgLevel < itemUpgLimSocket)
         {
-          talikItem = _STORAGE_LIST::GetPtrFromSerial(&m_Param.m_dbInven, pposTalik->wItemSerial);
+          talikItem = m_Param.m_dbInven.GetPtrFromSerial(pposTalik->wItemSerial);
           if (talikItem)
           {
             if (talikItem->m_byTableCode == 18)
@@ -20483,13 +21652,12 @@ void CPlayer::pc_UpgradeItem(
               }
               else
               {
-                primaryTalikRecord =
-                  CItemUpgradeTable::GetRecordFromRes(&g_Main.m_tblItemUpgrade, talikItem->m_wItemIndex);
+                primaryTalikRecord = g_Main.m_tblItemUpgrade.GetRecordFromRes(talikItem->m_wItemIndex);
                 if (primaryTalikRecord)
                 {
                   if (primaryTalikRecord->m_dwIndex < 0xD)
                   {
-                    toolItem = _STORAGE_LIST::GetPtrFromSerial(&m_Param.m_dbInven, pposToolItem->wItemSerial);
+                    toolItem = m_Param.m_dbInven.GetPtrFromSerial(pposToolItem->wItemSerial);
                     if (toolItem)
                     {
                       if (toolItem->m_byTableCode == 11)
@@ -20503,7 +21671,7 @@ void CPlayer::pc_UpgradeItem(
                           for (int j = 0; j < byJewelNum; ++j)
                           {
                             jewelItems[j] =
-                              _STORAGE_LIST::GetPtrFromSerial(&m_Param.m_dbInven, pposUpgJewel[j].wItemSerial);
+                              m_Param.m_dbInven.GetPtrFromSerial(pposUpgJewel[j].wItemSerial);
                             if (!jewelItems[j])
                             {
                               SendMsg_AdjustAmountInform(0, pposUpgJewel[j].wItemSerial, 0);
@@ -20520,9 +21688,8 @@ void CPlayer::pc_UpgradeItem(
                               errCode = 13;
                               goto RESULT_UPGRADE;
                             }
-                            jewelRecords[j] = CItemUpgradeTable::GetRecordFromRes(
-                              &g_Main.m_tblItemUpgrade,
-                              jewelItems[j]->m_wItemIndex);
+                            jewelRecords[j] =
+                              g_Main.m_tblItemUpgrade.GetRecordFromRes(jewelItems[j]->m_wItemIndex);
                             if (!jewelRecords[j])
                             {
                               return;
@@ -20642,13 +21809,13 @@ RESULT_UPGRADE:
     }
 
     bool recordUse = true;
-    if (CMainThread::IsReleaseServiceMode(&g_Main) && m_byUserDgr)
+    if (g_Main.IsReleaseServiceMode() && m_byUserDgr)
     {
       recordUse = false;
     }
     if (recordUse)
     {
-      CGameStatistics::_DAY *stats = CGameStatistics::CurWriteData(&g_GameStatistics);
+      CGameStatistics::_DAY *stats = g_GameStatistics.CurWriteData();
       stats->dwDaePokUse_Evt += static_cast<int>(successBonus);
     }
 
@@ -20716,19 +21883,17 @@ RESULT_UPGRADE:
         GetBitAfterUpgrade(upgradeItem->m_dwLv, primaryTalikRecord->m_dwIndex, curUpgLv);
       Emb_ItemUpgrade(0, storage->m_nListCode, upgradeItem->m_byStorageIndex, newGradeInfo);
       SendMsg_FanfareItem(0, upgradeItem, nullptr);
-      _base_fld *record = CRecordData::GetRecord(
-        &g_Main.m_tblItemData[upgradeItem->m_byTableCode],
-        upgradeItem->m_wItemIndex);
+      _base_fld *record = g_Main.m_tblItemData[upgradeItem->m_byTableCode].GetRecord(upgradeItem->m_wItemIndex);
       Emb_CheckActForQuest(10, record->m_strCode, 1u, 0);
 
       bool recordSuccess = true;
-      if (CMainThread::IsReleaseServiceMode(&g_Main) && m_byUserDgr)
+      if (g_Main.IsReleaseServiceMode() && m_byUserDgr)
       {
         recordSuccess = false;
       }
       if (recordSuccess)
       {
-        CGameStatistics::_DAY *stats = CGameStatistics::CurWriteData(&g_GameStatistics);
+        CGameStatistics::_DAY *stats = g_GameStatistics.CurWriteData();
         if (curUpgLv == 3)
         {
           if (primaryTalikRecord->m_dwIndex)
@@ -20793,9 +21958,7 @@ RESULT_UPGRADE:
       }
     }
 
-    CMgrAvatorItemHistory::grade_up_item(
-      &CPlayer::s_MgrItemHistory,
-      m_ObjID.m_wIndex,
+    CPlayer::s_MgrItemHistory.grade_up_item(m_ObjID.m_wIndex,
       &itemSnapshot,
       &talikSnapshot,
       jewelSnapshot,
@@ -20820,17 +21983,17 @@ void CPlayer::pc_DowngradeItem(
   _STORAGE_LIST::_db_con *upgradeItem = nullptr;
   _ItemUpgrade_fld *talikRecord = nullptr;
 
-  if (_effect_parameter::GetEff_State(&m_EP, 20))
+  if (m_EP.GetEff_State(20))
   {
     errCode = 7;
   }
-  else if (_effect_parameter::GetEff_State(&m_EP, 28))
+  else if (m_EP.GetEff_State(28))
   {
     errCode = 7;
   }
   else
   {
-    upgradeItem = _STORAGE_LIST::GetPtrFromSerial(storage, pposUpgItem->wItemSerial);
+    upgradeItem = storage->GetPtrFromSerial(pposUpgItem->wItemSerial);
     if (upgradeItem)
     {
       if (upgradeItem->m_bLock)
@@ -20845,7 +22008,7 @@ void CPlayer::pc_DowngradeItem(
       {
         if (GetItemUpgedLv(upgradeItem->m_dwLv))
         {
-          talikItem = _STORAGE_LIST::GetPtrFromSerial(&m_Param.m_dbInven, pposTalik->wItemSerial);
+          talikItem = m_Param.m_dbInven.GetPtrFromSerial(pposTalik->wItemSerial);
           if (talikItem)
           {
             if (talikItem->m_byTableCode == 18)
@@ -20856,12 +22019,12 @@ void CPlayer::pc_DowngradeItem(
               }
               else
               {
-                talikRecord = CItemUpgradeTable::GetRecordFromRes(&g_Main.m_tblItemUpgrade, talikItem->m_wItemIndex);
+                talikRecord = g_Main.m_tblItemUpgrade.GetRecordFromRes(talikItem->m_wItemIndex);
                 if (talikRecord)
                 {
                   if (talikRecord->m_nDataEffect == 14)
                   {
-                    toolItem = _STORAGE_LIST::GetPtrFromSerial(&m_Param.m_dbInven, pposToolItem->wItemSerial);
+                    toolItem = m_Param.m_dbInven.GetPtrFromSerial(pposToolItem->wItemSerial);
                     if (toolItem)
                     {
                       if (toolItem->m_byTableCode == 11)
@@ -20942,7 +22105,7 @@ void CPlayer::pc_DowngradeItem(
       rewardItem.m_wItemIndex = static_cast<unsigned __int16>(talikItemIndex);
       rewardItem.m_dwDur = GetItemDurPoint(18, talikItemIndex);
       rewardItem.m_dwLv = 0xFFFFFFF;
-      if (_STORAGE_LIST::GetIndexEmptyCon(&m_Param.m_dbInven) == 0xFF)
+      if (m_Param.m_dbInven.GetIndexEmptyCon() == 0xFF)
       {
         CreateItemBox(
           &rewardItem,
@@ -20955,31 +22118,25 @@ void CPlayer::pc_DowngradeItem(
           m_wMapLayerIndex,
           m_fCurPos,
           false);
-        CMgrAvatorItemHistory::reward_add_item(
-          &CPlayer::s_MgrItemHistory,
-          m_ObjID.m_wIndex,
+        CPlayer::s_MgrItemHistory.reward_add_item(m_ObjID.m_wIndex,
           "GradeDown Ground Reward",
           &rewardItem,
           m_szItemHistoryFileName);
       }
       else
       {
-        rewardItem.m_wSerial = CPlayerDB::GetNewItemSerial(&m_Param);
+        rewardItem.m_wSerial = m_Param.GetNewItemSerial();
         if (!Emb_AddStorage(0, &rewardItem, 0, 1))
         {
           SendMsg_ItemDowngrade(0xFFu);
-          CMgrAvatorItemHistory::add_storage_fail(
-            &CPlayer::s_MgrItemHistory,
-            m_ObjID.m_wIndex,
+          CPlayer::s_MgrItemHistory.add_storage_fail(m_ObjID.m_wIndex,
             &rewardItem,
             "CPlayer::pc_DowngradeItem - Emb_AddStorage() Fail",
             m_szItemHistoryFileName);
           return;
         }
         SendMsg_RewardAddItem(&rewardItem, 0);
-        CMgrAvatorItemHistory::reward_add_item(
-          &CPlayer::s_MgrItemHistory,
-          m_ObjID.m_wIndex,
+        CPlayer::s_MgrItemHistory.reward_add_item(m_ObjID.m_wIndex,
           "GradeDown Reward",
           &rewardItem,
           m_szItemHistoryFileName);
@@ -20987,9 +22144,7 @@ void CPlayer::pc_DowngradeItem(
     }
 
     (void)talikSnapshot;
-    CMgrAvatorItemHistory::grade_down_item(
-      &CPlayer::s_MgrItemHistory,
-      m_ObjID.m_wIndex,
+    CPlayer::s_MgrItemHistory.grade_down_item(m_ObjID.m_wIndex,
       &itemSnapshot,
       talikItem,
       upgradeItem->m_dwLv,
@@ -21007,20 +22162,25 @@ void CPlayer::pc_CombineItem(
 {
   unsigned __int8 errCode = 0;
   _STORAGE_LIST::_db_con *materialItems[100]{};
-  _base_fld *manualRecord = CRecordData::GetRecord(&g_Main.m_tblItemCombineData, wManualIndex);
+  int requiredMaterial[19]{};
+  _STORAGE_LIST::_db_con historyMaterials[100]{};
+  unsigned __int8 materialCounts[117]{};
+  unsigned __int8 defSocketNum = 0;
+  unsigned __int8 socketCount = 0;
+  _base_fld *manualRecord = g_Main.m_tblItemCombineData.GetRecord(wManualIndex);
   unsigned __int8 itemTableCode = static_cast<unsigned __int8>(-1);
   _base_fld *combineRecord = nullptr;
   _STORAGE_LIST::_db_con *overlapItem = nullptr;
 
   if (manualRecord)
   {
-    const int raceSexCode = CPlayerDB::GetRaceSexCode(&m_Param);
+    const int raceSexCode = m_Param.GetRaceSexCode();
     if (manualRecord[1].m_strCode[raceSexCode + 4] == '1')
     {
-      const unsigned int dalant = CPlayerDB::GetDalant(&m_Param);
+      const unsigned int dalant = m_Param.GetDalant();
       if (*reinterpret_cast<unsigned int *>(manualRecord[1].m_strCode) <= dalant)
       {
-        if (_STORAGE_LIST::GetIndexEmptyCon(&m_Param.m_dbInven) == 0xFF)
+        if (m_Param.m_dbInven.GetIndexEmptyCon() == 0xFF)
         {
           errCode = 3;
         }
@@ -21034,13 +22194,13 @@ void CPlayer::pc_CombineItem(
           else
           {
             combineRecord =
-              CRecordData::GetRecordByHash(&g_Main.m_tblItemData[itemTableCode], manualRecord->m_strCode, 2, 5);
+              g_Main.m_tblItemData[itemTableCode].GetRecordByHash(manualRecord->m_strCode, 2, 5);
             if (combineRecord)
             {
               if (wOverlapItemSerial != 0xFFFF)
               {
                 _STORAGE_LIST::_db_con *candidate =
-                  _STORAGE_LIST::GetPtrFromSerial(&m_Param.m_dbInven, wOverlapItemSerial);
+                  m_Param.m_dbInven.GetPtrFromSerial(wOverlapItemSerial);
                 if (candidate && candidate->m_byTableCode == itemTableCode
                     && candidate->m_wItemIndex == combineRecord->m_dwIndex && candidate->m_dwDur < 0x63
                     && !candidate->m_bLock)
@@ -21049,11 +22209,11 @@ void CPlayer::pc_CombineItem(
                 }
               }
 
-              int requiredMaterial[19]{};
+              memset_0(requiredMaterial, 0, sizeof(requiredMaterial));
               memcpy_0(requiredMaterial, &manualRecord[2].m_strCode[8], 0x3Cu);
               for (int j = 0; j < byMaterialNum; ++j)
               {
-                materialItems[j] = _STORAGE_LIST::GetPtrFromSerial(&m_Param.m_dbInven, pipMaterials[j].wItemSerial);
+                materialItems[j] = m_Param.m_dbInven.GetPtrFromSerial(pipMaterials[j].wItemSerial);
                 if (!materialItems[j])
                 {
                   SendMsg_AdjustAmountInform(0, pipMaterials[j].wItemSerial, 0);
@@ -21083,9 +22243,7 @@ void CPlayer::pc_CombineItem(
                   }
                 }
                 bool matched = false;
-                _base_fld *materialRecord = CRecordData::GetRecord(
-                  &g_Main.m_tblItemData[materialItems[j]->m_byTableCode],
-                  materialItems[j]->m_wItemIndex);
+                _base_fld *materialRecord = g_Main.m_tblItemData[materialItems[j]->m_byTableCode].GetRecord(materialItems[j]->m_wItemIndex);
                 for (int m = 0; m < 5; ++m)
                 {
                   if (!std::strncmp(
@@ -21117,17 +22275,14 @@ void CPlayer::pc_CombineItem(
                   && *reinterpret_cast<unsigned int *>(manualRecord[2].m_strCode) == 6)
               {
                 CGoldenBoxItemMgr *goldenBox = CGoldenBoxItemMgr::Instance();
-                if (CGoldenBoxItemMgr::Get_Event_Status(goldenBox) == 2)
+                if (goldenBox->Get_Event_Status() == 2)
                 {
-                  unsigned int actPoint = CUserDB::GetActPoint(m_pUserDB, 2u);
+                  unsigned int actPoint = m_pUserDB->GetActPoint(2u);
                   if (actPoint >= *reinterpret_cast<unsigned int *>(&manualRecord[2].m_strCode[4]))
                   {
-                    unsigned int curActPoint = CUserDB::GetActPoint(m_pUserDB, 2u);
-                    CUserDB::SetActPoint(
-                      m_pUserDB,
-                      2u,
-                      curActPoint - *reinterpret_cast<unsigned int *>(&manualRecord[2].m_strCode[4]));
-                    unsigned int leftActPoint = CUserDB::GetActPoint(m_pUserDB, 2u);
+                    unsigned int curActPoint = m_pUserDB->GetActPoint(2u);
+                    m_pUserDB->SetActPoint(2u, curActPoint - *reinterpret_cast<unsigned int *>(&manualRecord[2].m_strCode[4]));
+                    unsigned int leftActPoint = m_pUserDB->GetActPoint(2u);
                     SendMsg_Alter_Action_Point(2u, leftActPoint);
                   }
                   else
@@ -21172,8 +22327,8 @@ RESULT_COMBINE:
     goto SEND_COMBINE_RESULT;
   }
 
-  _STORAGE_LIST::_db_con historyMaterials[100]{};
-  unsigned __int8 materialCounts[117]{};
+  memset_0(historyMaterials, 0, sizeof(historyMaterials));
+  memset_0(materialCounts, 0, sizeof(materialCounts));
   for (int j = 0; j < byMaterialNum; ++j)
   {
     memcpy_0(&historyMaterials[j], materialItems[j], sizeof(_STORAGE_LIST::_db_con));
@@ -21193,14 +22348,14 @@ RESULT_COMBINE:
   newItem.m_wItemIndex = combineRecord->m_dwIndex;
   newItem.m_dwDur = GetItemDurPoint(itemTableCode, combineRecord->m_dwIndex);
   materialCounts[116] = GetItemKindCode(itemTableCode);
-  const unsigned __int8 defSocketNum = GetDefItemUpgSocketNum(itemTableCode, combineRecord->m_dwIndex);
-  unsigned __int8 socketCount = 0;
+  defSocketNum = GetDefItemUpgSocketNum(itemTableCode, combineRecord->m_dwIndex);
+  socketCount = 0;
   if (defSocketNum)
   {
     socketCount = static_cast<unsigned __int8>(rand() % defSocketNum + 1);
   }
   newItem.m_dwLv = GetBitAfterSetLimSocket(socketCount);
-  newItem.m_wSerial = CPlayerDB::GetNewItemSerial(&m_Param);
+  newItem.m_wSerial = m_Param.GetNewItemSerial();
   if (timeRec && timeRec->m_nCheckType)
   {
     newItem.m_byCsMethod = timeRec->m_nCheckType;
@@ -21217,18 +22372,18 @@ RESULT_COMBINE:
         && *reinterpret_cast<unsigned int *>(manualRecord[2].m_strCode) == 6)
     {
       CGoldenBoxItemMgr *goldenBox = CGoldenBoxItemMgr::Instance();
-      if (CGoldenBoxItemMgr::Get_Event_Status(goldenBox) == 2)
+      if (goldenBox->Get_Event_Status() == 2)
       {
         _base_fld *itemRecord =
-          CRecordData::GetRecord(&g_Main.m_tblItemData[newItem.m_byTableCode], newItem.m_wItemIndex);
+          g_Main.m_tblItemData[newItem.m_byTableCode].GetRecord(newItem.m_wItemIndex);
         if (!itemRecord)
         {
           return;
         }
         if (!strcmp_0(itemRecord->m_strCode, "bxgol04"))
         {
-          const char *charName = CPlayerDB::GetCharNameA(&m_Param);
-          const unsigned int charSerial = CPlayerDB::GetCharSerial(&m_Param);
+          const char *charName = m_Param.GetCharNameA();
+          const unsigned int charSerial = m_Param.GetCharSerial();
           SendMsg_Notify_Get_Golden_Box(5u, charSerial, charName, &newItem, 0);
         }
       }
@@ -21244,23 +22399,18 @@ RESULT_COMBINE:
   {
     SendMsg_CombineItemResult(0xFFu, feeDalant, &newItem);
   }
-  CMgrAvatorItemHistory::add_storage_fail(
-    &CPlayer::s_MgrItemHistory,
-    m_ObjID.m_wIndex,
+  CPlayer::s_MgrItemHistory.add_storage_fail(m_ObjID.m_wIndex,
     &newItem,
     "CPlayer::pc_CombineItem - Emb_AddStorage() Fail",
     m_szItemHistoryFileName);
   if (*reinterpret_cast<unsigned int *>(manualRecord[2].m_strCode) == 6)
   {
     CGoldenBoxItemMgr *goldenBox = CGoldenBoxItemMgr::Instance();
-    if (CGoldenBoxItemMgr::Get_Event_Status(goldenBox) == 2)
+    if (goldenBox->Get_Event_Status() == 2)
     {
-      unsigned int actPoint = CUserDB::GetActPoint(m_pUserDB, 2u);
-      CUserDB::SetActPoint(
-        m_pUserDB,
-        2u,
-        *reinterpret_cast<unsigned int *>(&manualRecord[2].m_strCode[4]) + actPoint);
-      unsigned int leftActPoint = CUserDB::GetActPoint(m_pUserDB, 2u);
+      unsigned int actPoint = m_pUserDB->GetActPoint(2u);
+      m_pUserDB->SetActPoint(2u, *reinterpret_cast<unsigned int *>(&manualRecord[2].m_strCode[4]) + actPoint);
+      unsigned int leftActPoint = m_pUserDB->GetActPoint(2u);
       SendMsg_Alter_Action_Point(
         2u,
         *reinterpret_cast<unsigned int *>(&manualRecord[2].m_strCode[4]) + leftActPoint);
@@ -21277,21 +22427,19 @@ APPLY_COMBINE_COST:
   if (feeDalant)
   {
     SubDalant(feeDalant);
-    const int level = CPlayerDB::GetLevel(&m_Param);
+    const int level = m_Param.GetLevel();
     if (level == 30 || level == 40 || level == 50 || level == 60)
     {
-      const int lv = CPlayerDB::GetLevel(&m_Param);
-      const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+      const int lv = m_Param.GetLevel();
+      const int raceCode = m_Param.GetRaceCode();
       CMoneySupplyMgr *moneySupply = CMoneySupplyMgr::Instance();
-      CMoneySupplyMgr::UpdateFeeMoneyData(moneySupply, raceCode, lv, feeDalant);
+      moneySupply->UpdateFeeMoneyData(static_cast<unsigned __int8>(raceCode), lv, feeDalant);
     }
   }
   SendMsg_ExchangeMoneyResult(0);
   {
-    const unsigned int leftDalant = CPlayerDB::GetDalant(&m_Param);
-    CMgrAvatorItemHistory::combine_item(
-      &CPlayer::s_MgrItemHistory,
-      m_ObjID.m_wIndex,
+    const unsigned int leftDalant = m_Param.GetDalant();
+    CPlayer::s_MgrItemHistory.combine_item(m_ObjID.m_wIndex,
       historyMaterials,
       materialCounts,
       byMaterialNum,
@@ -21315,13 +22463,18 @@ SEND_COMBINE_RESULT:
 void CPlayer::pc_ExchangeItem(unsigned __int16 wManualIndex, unsigned __int16 wItemSerial)
 {
   unsigned __int8 errCode = 0;
+  _STORAGE_LIST::_db_con *useItem = nullptr;
   _base_fld *exchangeRecord = nullptr;
+  _base_fld *useItemRecord = nullptr;
   _base_fld *outItemRecord = nullptr;
+  unsigned __int8 useTableCode = 0;
+  unsigned __int16 useItemIndex = 0;
+  int cashType = 0;
   int newTableCode = -1;
   unsigned __int8 newDur = 0;
 
-  exchangeRecord = CRecordData::GetRecord(&g_Main.m_tblItemExchangeData, wManualIndex);
-  _STORAGE_LIST::_db_con *useItem = _STORAGE_LIST::GetPtrFromSerial(&m_Param.m_dbInven, wItemSerial);
+  exchangeRecord = g_Main.m_tblItemExchangeData.GetRecord(wManualIndex);
+  useItem = m_Param.m_dbInven.GetPtrFromSerial(wItemSerial);
   if (!useItem)
   {
     errCode = 4;
@@ -21333,17 +22486,16 @@ void CPlayer::pc_ExchangeItem(unsigned __int16 wManualIndex, unsigned __int16 wI
     goto RESULT_EXCHANGE;
   }
 
-  _base_fld *useItemRecord =
-    CRecordData::GetRecord(&g_Main.m_tblItemData[useItem->m_byTableCode], useItem->m_wItemIndex);
+  useItemRecord = g_Main.m_tblItemData[useItem->m_byTableCode].GetRecord(useItem->m_wItemIndex);
   if (!useItemRecord)
   {
     errCode = 12;
     goto RESULT_EXCHANGE;
   }
 
-  const unsigned __int8 useTableCode = useItem->m_byTableCode;
-  const unsigned __int16 useItemIndex = useItem->m_wItemIndex;
-  const int cashType = GetUsePcCashType(useItem->m_byTableCode, useItem->m_wItemIndex);
+  useTableCode = useItem->m_byTableCode;
+  useItemIndex = useItem->m_wItemIndex;
+  cashType = GetUsePcCashType(useItem->m_byTableCode, useItem->m_wItemIndex);
   if (!IsUsableAccountType(cashType))
   {
     SendMsg_PremiumCashItemUse(0xFFFFu);
@@ -21353,13 +22505,13 @@ void CPlayer::pc_ExchangeItem(unsigned __int16 wManualIndex, unsigned __int16 wI
 
   if (useItem->m_byTableCode == 17)
   {
-    _base_fld *goldRecord = CRecordData::GetRecord(&g_Main.m_tblItemData[17], useItem->m_wItemIndex);
+    _base_fld *goldRecord = g_Main.m_tblItemData[17].GetRecord(useItem->m_wItemIndex);
     if (!goldRecord)
     {
       errCode = 12;
       goto RESULT_EXCHANGE;
     }
-    if (_STORAGE_LIST::GetIndexEmptyCon(&m_Param.m_dbInven) == 0xFF)
+    if (m_Param.m_dbInven.GetIndexEmptyCon() == 0xFF)
     {
       errCode = 3;
       goto RESULT_EXCHANGE;
@@ -21368,7 +22520,7 @@ void CPlayer::pc_ExchangeItem(unsigned __int16 wManualIndex, unsigned __int16 wI
     if (*reinterpret_cast<unsigned int *>(&goldRecord[3].m_strCode[4]))
     {
       CGoldenBoxItemMgr *goldenBox = CGoldenBoxItemMgr::Instance();
-      if (CGoldenBoxItemMgr::Get_Event_Status(goldenBox) != 2)
+      if (goldenBox->Get_Event_Status() != 2)
       {
         errCode = 12;
         goto RESULT_EXCHANGE;
@@ -21377,12 +22529,12 @@ void CPlayer::pc_ExchangeItem(unsigned __int16 wManualIndex, unsigned __int16 wI
       unsigned __int8 boxIndex = 0;
       char goldItems[640]{};
       CGoldenBoxItemMgr *goldenBoxItems = CGoldenBoxItemMgr::Instance();
-      char *goldItemPtr = CGoldenBoxItemMgr::GetGoldBoxItemPtr(goldenBoxItems);
+      char *goldItemPtr = goldenBoxItems->GetGoldBoxItemPtr();
       memcpy_0(goldItems, goldItemPtr, 0x280u);
       for (int j = 0;; ++j)
       {
         CGoldenBoxItemMgr *loopMgr = CGoldenBoxItemMgr::Instance();
-        const unsigned __int8 loopCount = CGoldenBoxItemMgr::GetLoopCount(loopMgr);
+        const unsigned __int8 loopCount = loopMgr->GetLoopCount();
         if (j >= loopCount)
         {
           break;
@@ -21395,7 +22547,7 @@ void CPlayer::pc_ExchangeItem(unsigned __int16 wManualIndex, unsigned __int16 wI
       }
 
       CGoldenBoxItemMgr *boxMgr = CGoldenBoxItemMgr::Instance();
-      char *itemCode = static_cast<char *>(CGoldenBoxItemMgr::BoxItemOpen(boxMgr, boxIndex));
+      char *itemCode = static_cast<char *>(boxMgr->BoxItemOpen(boxIndex));
       if (itemCode)
       {
         const int tableCode = GetItemTableCode(itemCode);
@@ -21405,8 +22557,7 @@ void CPlayer::pc_ExchangeItem(unsigned __int16 wManualIndex, unsigned __int16 wI
           goto RESULT_EXCHANGE;
         }
         newTableCode = tableCode;
-        outItemRecord = CRecordData::GetRecordByHash(
-          &g_Main.m_tblItemData[static_cast<unsigned __int8>(tableCode)],
+        outItemRecord = g_Main.m_tblItemData[static_cast<unsigned __int8>(tableCode)].GetRecordByHash(
           itemCode,
           2,
           5);
@@ -21414,7 +22565,7 @@ void CPlayer::pc_ExchangeItem(unsigned __int16 wManualIndex, unsigned __int16 wI
         if (outItemRecord)
         {
           CGoldenBoxItemMgr *updateMgr = CGoldenBoxItemMgr::Instance();
-          CGoldenBoxItemMgr::Set_BoxItem_Count(updateMgr, boxIndex, outItemRecord->m_dwIndex);
+          updateMgr->Set_BoxItem_Count(boxIndex, outItemRecord->m_dwIndex);
         }
       }
     }
@@ -21437,13 +22588,13 @@ void CPlayer::pc_ExchangeItem(unsigned __int16 wManualIndex, unsigned __int16 wI
       goto RESULT_EXCHANGE;
     }
     _base_fld *itemRecord =
-      CRecordData::GetRecord(&g_Main.m_tblItemData[useItem->m_byTableCode], useItem->m_wItemIndex);
+      g_Main.m_tblItemData[useItem->m_byTableCode].GetRecord(useItem->m_wItemIndex);
     if (!itemRecord)
     {
       errCode = 12;
       goto RESULT_EXCHANGE;
     }
-    const int level = CPlayerDB::GetLevel(&m_Param);
+    const int level = m_Param.GetLevel();
     if (level < *reinterpret_cast<unsigned int *>(itemRecord[4].m_strCode))
     {
       errCode = 21;
@@ -21451,14 +22602,14 @@ void CPlayer::pc_ExchangeItem(unsigned __int16 wManualIndex, unsigned __int16 wI
     }
     if (*reinterpret_cast<unsigned int *>(&itemRecord[4].m_strCode[8]) != 0xFFFFFFFF)
     {
-      const int curLevel = CPlayerDB::GetLevel(&m_Param);
+      const int curLevel = m_Param.GetLevel();
       if (curLevel > *reinterpret_cast<unsigned int *>(&itemRecord[4].m_strCode[8]))
       {
         errCode = 21;
         goto RESULT_EXCHANGE;
       }
     }
-    if (_STORAGE_LIST::GetIndexEmptyCon(&m_Param.m_dbInven) == 0xFF)
+    if (m_Param.m_dbInven.GetIndexEmptyCon() == 0xFF)
     {
       errCode = 3;
       goto RESULT_EXCHANGE;
@@ -21482,8 +22633,7 @@ void CPlayer::pc_ExchangeItem(unsigned __int16 wManualIndex, unsigned __int16 wI
           break;
         }
         newTableCode = entryTableCode;
-        outItemRecord = CRecordData::GetRecordByHash(
-          &g_Main.m_tblItemData[static_cast<unsigned __int8>(entryTableCode)],
+        outItemRecord = g_Main.m_tblItemData[static_cast<unsigned __int8>(entryTableCode)].GetRecordByHash(
           entry,
           2,
           5);
@@ -21491,13 +22641,12 @@ void CPlayer::pc_ExchangeItem(unsigned __int16 wManualIndex, unsigned __int16 wI
         if (outItemRecord)
         {
           char *itemEquipCivil = GetItemEquipCivil(static_cast<unsigned __int8>(newTableCode), outItemRecord->m_dwIndex);
-          const int raceSex = CPlayerDB::GetRaceSexCode(&m_Param);
+          const int raceSex = m_Param.GetRaceSexCode();
           if (itemEquipCivil[raceSex] != '1')
           {
             entry = reinterpret_cast<char *>(&exchangeRecord[1]);
             newTableCode = GetItemTableCode(entry);
-            outItemRecord = CRecordData::GetRecordByHash(
-              &g_Main.m_tblItemData[static_cast<unsigned __int8>(newTableCode)],
+            outItemRecord = g_Main.m_tblItemData[static_cast<unsigned __int8>(newTableCode)].GetRecordByHash(
               entry,
               2,
               5);
@@ -21555,7 +22704,7 @@ RESULT_EXCHANGE:
       socketCount = static_cast<unsigned __int8>(rand() % defSocketNum + 1);
     }
     newItem.m_dwLv = GetBitAfterSetLimSocket(socketCount);
-    newItem.m_wSerial = CPlayerDB::GetNewItemSerial(&m_Param);
+    newItem.m_wSerial = m_Param.GetNewItemSerial();
     if (timeRec && timeRec->m_nCheckType)
     {
       newItem.m_byCsMethod = timeRec->m_nCheckType;
@@ -21578,14 +22727,14 @@ RESULT_EXCHANGE:
 
     SendMsg_FanfareItem(2u, &newItem, nullptr);
     CGoldenBoxItemMgr *goldenBox = CGoldenBoxItemMgr::Instance();
-    if (CGoldenBoxItemMgr::Get_Event_Status(goldenBox) == 2)
+    if (goldenBox->Get_Event_Status() == 2)
     {
       unsigned __int8 effectType[32]{};
       bool bCircle = true;
       _base_fld *useRecord =
-        CRecordData::GetRecord(&g_Main.m_tblItemData[useTableCode], useItemIndex);
+        g_Main.m_tblItemData[useTableCode].GetRecord(useItemIndex);
       _base_fld *newRecord =
-        CRecordData::GetRecord(&g_Main.m_tblItemData[newItem.m_byTableCode], newItem.m_wItemIndex);
+        g_Main.m_tblItemData[newItem.m_byTableCode].GetRecord(newItem.m_wItemIndex);
       if (!useRecord || !newRecord)
       {
         return;
@@ -21593,21 +22742,21 @@ RESULT_EXCHANGE:
       char *newItemCode = newRecord->m_strCode;
       char *useItemCode = useRecord->m_strCode;
       CGoldenBoxItemMgr *effectMgr = CGoldenBoxItemMgr::Instance();
-      CGoldenBoxItemMgr::BoxItemOpenEffectType(effectMgr, useItemCode, newItemCode, effectType, &bCircle);
+      effectMgr->BoxItemOpenEffectType(useItemCode, newItemCode, effectType, &bCircle);
       if (effectType[0] == 6 || effectType[0] == 8)
       {
-        const char *charName = CPlayerDB::GetCharNameA(&m_Param);
-        const unsigned int charSerial = CPlayerDB::GetCharSerial(&m_Param);
+        const char *charName = m_Param.GetCharNameA();
+        const unsigned int charSerial = m_Param.GetCharSerial();
         SendMsg_Notify_Get_Golden_Box(effectType[0], charSerial, charName, &newItem, 0);
         if (effectType[0] == 6)
         {
           CGoldenBoxItemMgr *logMgr = CGoldenBoxItemMgr::Instance();
-          CGoldenBoxItemMgr::WriteGetGoldBarLog(logMgr, this, &newItem);
+          logMgr->WriteGetGoldBarLog(this, &newItem);
         }
         else if (effectType[0] == 8)
         {
           CGoldenBoxItemMgr *logMgr = CGoldenBoxItemMgr::Instance();
-          CGoldenBoxItemMgr::WriteEventCouponLog(logMgr, this, &newItem);
+          logMgr->WriteEventCouponLog(this, &newItem);
         }
       }
       else
@@ -21616,9 +22765,7 @@ RESULT_EXCHANGE:
       }
     }
 
-    CMgrAvatorItemHistory::exchange_item(
-      &CPlayer::s_MgrItemHistory,
-      m_ObjID.m_wIndex,
+    CPlayer::s_MgrItemHistory.exchange_item(m_ObjID.m_wIndex,
       useItem,
       &newItem,
       m_szItemHistoryFileName);
@@ -21642,17 +22789,17 @@ void CPlayer::pc_AddBag(unsigned __int16 wBagItemSerial)
 
   if (m_pUserDB)
   {
-    if (_effect_parameter::GetEff_State(&m_EP, 20))
+    if (m_EP.GetEff_State(20))
     {
       errCode = 3;
     }
-    else if (_effect_parameter::GetEff_State(&m_EP, 28))
+    else if (m_EP.GetEff_State(28))
     {
       errCode = 3;
     }
     else
     {
-      bagItem = _STORAGE_LIST::GetPtrFromSerial(inventory, wBagItemSerial);
+      bagItem = inventory->GetPtrFromSerial(wBagItemSerial);
       if (bagItem)
       {
         if (bagItem->m_byTableCode == 12)
@@ -21661,7 +22808,7 @@ void CPlayer::pc_AddBag(unsigned __int16 wBagItemSerial)
           {
             errCode = 11;
           }
-          else if (CPlayerDB::GetBagNum(&m_Param) >= 5u)
+          else if (m_Param.GetBagNum() >= 5u)
           {
             errCode = 2;
           }
@@ -21679,24 +22826,22 @@ void CPlayer::pc_AddBag(unsigned __int16 wBagItemSerial)
 
     if (!errCode)
     {
-      const unsigned __int8 oldBagNum = CPlayerDB::GetBagNum(&m_Param);
-      CPlayerDB::SetBagNum(&m_Param, static_cast<unsigned __int8>(oldBagNum + 1));
-      inventory->SetUseListNum(20 * CPlayerDB::GetBagNum(&m_Param));
+      const unsigned __int8 oldBagNum = m_Param.GetBagNum();
+      m_Param.SetBagNum(static_cast<unsigned __int8>(oldBagNum + 1));
+      inventory->SetUseListNum(20 * m_Param.GetBagNum());
       if (!Emb_DelStorage(inventory->m_nListCode, bagItem->m_byStorageIndex, 0, true, "CPlayer::pc_AddBag()"))
       {
-        CPlayerDB::SetBagNum(&m_Param, oldBagNum);
-        inventory->SetUseListNum(20 * CPlayerDB::GetBagNum(&m_Param));
+        m_Param.SetBagNum(oldBagNum);
+        inventory->SetUseListNum(20 * m_Param.GetBagNum());
         SendMsg_AddBagResult(0xFFu);
         return;
       }
-      CMgrAvatorItemHistory::consume_del_item(
-        &CPlayer::s_MgrItemHistory,
-        m_ObjID.m_wIndex,
+      CPlayer::s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex,
         bagItem,
         m_szItemHistoryFileName);
       if (m_pUserDB)
       {
-        CUserDB::Update_BagNum(m_pUserDB, CPlayerDB::GetBagNum(&m_Param));
+        m_pUserDB->Update_BagNum(m_Param.GetBagNum());
       }
     }
     SendMsg_AddBagResult(errCode);
@@ -21705,11 +22850,11 @@ void CPlayer::pc_AddBag(unsigned __int16 wBagItemSerial)
 
 char CPlayer::pc_UseRecoverLossExpItem(unsigned __int16 wItemSerial)
 {
-  if (CPlayerDB::GetLossExp(&m_Param) == 0.0)
+  if (m_Param.GetLossExp() == 0.0)
   {
     return -1;
   }
-  if (CGameObject::GetCurSecNum(this) == -1 || m_bMapLoading)
+  if (GetCurSecNum() == -1 || m_bMapLoading)
   {
     return -2;
   }
@@ -21729,16 +22874,16 @@ char CPlayer::pc_UseRecoverLossExpItem(unsigned __int16 wItemSerial)
   {
     return -6;
   }
-  if (_effect_parameter::GetEff_State(&m_EP, 20))
+  if (m_EP.GetEff_State(20))
   {
     return -7;
   }
-  if (_effect_parameter::GetEff_State(&m_EP, 28))
+  if (m_EP.GetEff_State(28))
   {
     return -7;
   }
 
-  _STORAGE_LIST::_db_con *item = _STORAGE_LIST::GetPtrFromSerial(&m_Param.m_dbInven, wItemSerial);
+  _STORAGE_LIST::_db_con *item = m_Param.m_dbInven.GetPtrFromSerial(wItemSerial);
   if (!item)
   {
     SendMsg_AdjustAmountInform(0, wItemSerial, 0);
@@ -21749,7 +22894,7 @@ char CPlayer::pc_UseRecoverLossExpItem(unsigned __int16 wItemSerial)
     return -8;
   }
 
-  _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[30], item->m_wItemIndex);
+  _base_fld *record = g_Main.m_tblItemData[30].GetRecord(item->m_wItemIndex);
   if (!record)
   {
     return -8;
@@ -21759,13 +22904,13 @@ char CPlayer::pc_UseRecoverLossExpItem(unsigned __int16 wItemSerial)
     return -9;
   }
 
-  const int level = CPlayerDB::GetLevel(&m_Param);
+  const int level = m_Param.GetLevel();
   if (level < *reinterpret_cast<int *>(record[4].m_strCode))
   {
     return -9;
   }
   if (*reinterpret_cast<int *>(&record[4].m_strCode[4]) != -1
-      && CPlayerDB::GetLevel(&m_Param) > *reinterpret_cast<int *>(&record[4].m_strCode[4]))
+      && m_Param.GetLevel() > *reinterpret_cast<int *>(&record[4].m_strCode[4]))
   {
     return -9;
   }
@@ -21778,7 +22923,7 @@ char CPlayer::pc_UseRecoverLossExpItem(unsigned __int16 wItemSerial)
   }
   const int prob = *reinterpret_cast<int *>(&record[4].m_strCode[36]) + rand() % range;
 
-  long double alterExp = CPlayerDB::GetLossExp(&m_Param) * (double)prob / 100.0;
+  long double alterExp = m_Param.GetLossExp() * (double)prob / 100.0;
   if (alterExp < 0.0)
   {
     alterExp = 0.0;
@@ -21788,26 +22933,23 @@ char CPlayer::pc_UseRecoverLossExpItem(unsigned __int16 wItemSerial)
     return -10;
   }
 
-  const long double oldExp = CPlayerDB::GetExp(&m_Param);
+  const long double oldExp = m_Param.GetExp();
   const unsigned int oldRate = m_dwExpRate;
-  const long double oldLossExp = CPlayerDB::GetLossExp(&m_Param);
+  const long double oldLossExp = m_Param.GetLossExp();
 
   AlterExp(static_cast<double>(alterExp), 1, 1, 0);
-  CPlayerDB::SetLossExp(&m_Param, 0.0);
-  CUserDB::Update_LossExp(m_pUserDB, 0.0);
+  m_Param.SetLossExp(0.0);
+  m_pUserDB->Update_LossExp(0.0);
   Emb_AlterDurPoint(0, item->m_byStorageIndex, -1, false, false);
-  CMgrAvatorItemHistory::consume_del_item(
-    &CPlayer::s_MgrItemHistory,
-    m_ObjID.m_wIndex,
+  CPlayer::s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex,
     item,
     m_szItemHistoryFileName);
 
-  CMgrAvatorLvHistory::recovery_exp(
-    &CPlayer::s_MgrLvHistory,
+  CPlayer::s_MgrLvHistory.recovery_exp(
     m_ObjID.m_wIndex,
     oldExp,
     oldRate,
-    CPlayerDB::GetExp(&m_Param),
+    m_Param.GetExp(),
     m_dwExpRate,
     oldLossExp,
     prob,
@@ -21819,14 +22961,14 @@ char CPlayer::pc_UseRecoverLossExpItem(unsigned __int16 wItemSerial)
 void CPlayer::pc_CombineItemEx(_combine_ex_item_request_clzo *pRecv)
 {
   _combine_ex_item_result_zocl send{};
-  ItemCombineMgr::RequestCombineProcess(&m_ItemCombineMgr, pRecv, &send);
+  m_ItemCombineMgr.RequestCombineProcess(pRecv, &send);
   SendMsg_CombineItemExResult(&send);
 }
 
 void CPlayer::pc_CombineItemExAccept(_combine_ex_item_accept_request_clzo *pRecv)
 {
   _combine_ex_item_accept_result_zocl send{};
-  unsigned __int8 errCode = ItemCombineMgr::RequestCombineAcceptProcess(&m_ItemCombineMgr, pRecv, &send);
+  unsigned __int8 errCode = m_ItemCombineMgr.RequestCombineAcceptProcess(pRecv, &send);
   if (errCode)
   {
     send.byErrCode = errCode;
@@ -21836,7 +22978,7 @@ void CPlayer::pc_CombineItemExAccept(_combine_ex_item_accept_request_clzo *pRecv
 
 __int64 CPlayer::pc_UseFireCracker(unsigned __int16 wItemSerial)
 {
-  if (CGameObject::GetCurSecNum(this) == -1 || m_bMapLoading)
+  if (GetCurSecNum() == -1 || m_bMapLoading)
   {
     return -1;
   }
@@ -21856,16 +22998,16 @@ __int64 CPlayer::pc_UseFireCracker(unsigned __int16 wItemSerial)
   {
     return -5;
   }
-  if (_effect_parameter::GetEff_State(&m_EP, 20))
+  if (m_EP.GetEff_State(20))
   {
     return -6;
   }
-  if (_effect_parameter::GetEff_State(&m_EP, 28))
+  if (m_EP.GetEff_State(28))
   {
     return -6;
   }
 
-  _STORAGE_LIST::_db_con *item = _STORAGE_LIST::GetPtrFromSerial(&m_Param.m_dbInven, wItemSerial);
+  _STORAGE_LIST::_db_con *item = m_Param.m_dbInven.GetPtrFromSerial(wItemSerial);
   if (!item)
   {
     SendMsg_AdjustAmountInform(0, wItemSerial, 0);
@@ -21875,7 +23017,7 @@ __int64 CPlayer::pc_UseFireCracker(unsigned __int16 wItemSerial)
   {
     return -7;
   }
-  if (!CRecordData::GetRecord(&g_Main.m_tblItemData[32], item->m_wItemIndex))
+  if (!g_Main.m_tblItemData[32].GetRecord(item->m_wItemIndex))
   {
     return -7;
   }
@@ -21885,9 +23027,7 @@ __int64 CPlayer::pc_UseFireCracker(unsigned __int16 wItemSerial)
   }
 
   Emb_AlterDurPoint(0, item->m_byStorageIndex, -1, false, false);
-  CMgrAvatorItemHistory::consume_del_item(
-    &CPlayer::s_MgrItemHistory,
-    m_ObjID.m_wIndex,
+  CPlayer::s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex,
     item,
     m_szItemHistoryFileName);
   return item->m_wItemIndex;
@@ -21895,7 +23035,7 @@ __int64 CPlayer::pc_UseFireCracker(unsigned __int16 wItemSerial)
 
 unsigned __int8 CPlayer::pc_UserSoccerBall(unsigned __int16 wItemSerial, unsigned __int16 *wItemIndex)
 {
-  if (CGameObject::GetCurSecNum(this) == -1 || m_bMapLoading)
+  if (GetCurSecNum() == -1 || m_bMapLoading)
   {
     return 1;
   }
@@ -21915,16 +23055,16 @@ unsigned __int8 CPlayer::pc_UserSoccerBall(unsigned __int16 wItemSerial, unsigne
   {
     return 5;
   }
-  if (_effect_parameter::GetEff_State(&m_EP, 20))
+  if (m_EP.GetEff_State(20))
   {
     return 6;
   }
-  if (_effect_parameter::GetEff_State(&m_EP, 28))
+  if (m_EP.GetEff_State(28))
   {
     return 6;
   }
 
-  _STORAGE_LIST::_db_con *item = _STORAGE_LIST::GetPtrFromSerial(&m_Param.m_dbInven, wItemSerial);
+  _STORAGE_LIST::_db_con *item = m_Param.m_dbInven.GetPtrFromSerial(wItemSerial);
   if (!item)
   {
     SendMsg_AdjustAmountInform(0, wItemSerial, 0);
@@ -21934,7 +23074,7 @@ unsigned __int8 CPlayer::pc_UserSoccerBall(unsigned __int16 wItemSerial, unsigne
   {
     return 7;
   }
-  if (!CRecordData::GetRecord(&g_Main.m_tblItemData[27], item->m_wItemIndex))
+  if (!g_Main.m_tblItemData[27].GetRecord(item->m_wItemIndex))
   {
     return 7;
   }
@@ -21963,7 +23103,7 @@ char CPlayer::pc_UseRadarItem(_STORAGE_POS_INDIV *pItem, unsigned __int16 *pCons
   int consumeCounts[11]{};
   bool overlapFlags[36]{};
 
-  if (CPlayerDB::GetHP(&m_Param))
+  if (m_Param.GetHP())
   {
     if (IsRidingUnit())
     {
@@ -21976,12 +23116,12 @@ char CPlayer::pc_UseRadarItem(_STORAGE_POS_INDIV *pItem, unsigned __int16 *pCons
     else if (pItem->byStorageCode < 8u)
     {
       storage = m_Param.m_pStoragePtr[pItem->byStorageCode];
-      radarItem = _STORAGE_LIST::GetPtrFromSerial(storage, pItem->wItemSerial);
+      radarItem = storage->GetPtrFromSerial(pItem->wItemSerial);
       if (radarItem)
       {
         if (radarItem->m_byTableCode == 34)
         {
-          radarFld = (_RadarItem_fld *)CRecordData::GetRecord(&g_Main.m_tblItemData[34], radarItem->m_wItemIndex);
+          radarFld = (_RadarItem_fld *)g_Main.m_tblItemData[34].GetRecord(radarItem->m_wItemIndex);
           if (radarFld)
           {
             delay = static_cast<unsigned int>(radarFld->m_fActDelay);
@@ -21993,8 +23133,8 @@ char CPlayer::pc_UseRadarItem(_STORAGE_POS_INDIV *pItem, unsigned __int16 *pCons
               }
               else
               {
-                CUserDB::CalcRadarDelay(m_pUserDB);
-                if (CRadarItemMgr::IsUse(radarMgr))
+                m_pUserDB->CalcRadarDelay();
+                if (radarMgr->IsUse())
                 {
                   errCode = 8;
                 }
@@ -22018,9 +23158,7 @@ char CPlayer::pc_UseRadarItem(_STORAGE_POS_INDIV *pItem, unsigned __int16 *pCons
                     {
                       errCode = 9;
                       Emb_AlterDurPoint(storage->m_nListCode, radarItem->m_byStorageIndex, -1, false, false);
-                      CMgrAvatorItemHistory::consume_del_item(
-                        &CPlayer::s_MgrItemHistory,
-                        m_ObjID.m_wIndex,
+                      CPlayer::s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex,
                         radarItem,
                         m_szItemHistoryFileName);
                     }
@@ -22066,14 +23204,13 @@ char CPlayer::pc_UseRadarItem(_STORAGE_POS_INDIV *pItem, unsigned __int16 *pCons
   if (!errCode)
   {
     Emb_AlterDurPoint(storage->m_nListCode, radarItem->m_byStorageIndex, -1, false, false);
-    CRadarItemMgr::SetUseRadar(
-      radarMgr,
+    radarMgr->SetUseRadar(
       reinterpret_cast<char (*)[64]>(radarFld->m_strCode),
       this,
       radarFld->m_nDuration,
       delay);
-    CUserDB::SetRadarDelay(m_pUserDB, delay);
-    CRadarItemMgr::RadarProc(radarMgr, radarFld);
+    m_pUserDB->SetRadarDelay(delay);
+    radarMgr->RadarProc(radarFld);
     SendMsg_RadarCharSearchResult();
   }
   return 1;
@@ -22086,16 +23223,14 @@ char CPlayer::pc_RadarCharInfo()
     return 0;
   }
   CRadarItemMgr *radarMgr = &m_pUserDB->m_RadarItemMgr;
-  if (CRadarItemMgr::IsUse(radarMgr))
+  if (radarMgr->IsUse())
   {
-    _RadarItem_fld *radarFld = (_RadarItem_fld *)CRecordData::GetRecord(
-      &g_Main.m_tblItemData[34],
-      radarMgr->m_strRadarCode);
+    _RadarItem_fld *radarFld = (_RadarItem_fld *)g_Main.m_tblItemData[34].GetRecord(radarMgr->m_strRadarCode);
     if (!radarFld)
     {
       return 0;
     }
-    CRadarItemMgr::RadarProc(radarMgr, radarFld);
+    radarMgr->RadarProc(radarFld);
     SendMsg_RadarCharSearchResult();
   }
   return 1;
@@ -22116,12 +23251,12 @@ unsigned __int8 CPlayer::pc_NPCLinkCheckItemRequest_Check(_STORAGE_POS_INDIV *pS
   }
 
   _STORAGE_LIST *storage = m_Param.m_pStoragePtr[pStorage->byStorageCode];
-  _STORAGE_LIST::_db_con *item = _STORAGE_LIST::GetPtrFromSerial(storage, pStorage->wItemSerial);
+  _STORAGE_LIST::_db_con *item = storage->GetPtrFromSerial(pStorage->wItemSerial);
   if (!item || !storage)
   {
     return 1;
   }
-  if (TimeLimitMgr::GetPlayerStatus(g_Main.m_pTimeLimitMgr, m_id.wIndex) == 99)
+  if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(m_id.wIndex) == 99)
   {
     return 13;
   }
@@ -22145,7 +23280,7 @@ unsigned __int8 CPlayer::pc_NPCLinkCheckItemRequest_Check(_STORAGE_POS_INDIV *pS
   {
     return 9;
   }
-  if (CGameObject::GetCurSecNum(this) == -1 || m_bMapLoading)
+  if (GetCurSecNum() == -1 || m_bMapLoading)
   {
     return 10;
   }
@@ -22153,11 +23288,11 @@ unsigned __int8 CPlayer::pc_NPCLinkCheckItemRequest_Check(_STORAGE_POS_INDIV *pS
   {
     return 11;
   }
-  if (_effect_parameter::GetEff_State(&m_EP, 20))
+  if (m_EP.GetEff_State(20))
   {
     return 12;
   }
-  if (_effect_parameter::GetEff_State(&m_EP, 28))
+  if (m_EP.GetEff_State(28))
   {
     return 12;
   }
@@ -22169,7 +23304,7 @@ unsigned __int8 CPlayer::pc_NPCLinkCheckItemRequest_Check(_STORAGE_POS_INDIV *pS
   {
     return 2;
   }
-  if (!CRecordData::GetRecord(&g_Main.m_tblItemData[35], item->m_wItemIndex))
+  if (!g_Main.m_tblItemData[35].GetRecord(item->m_wItemIndex))
   {
     return 3;
   }
@@ -22186,8 +23321,8 @@ unsigned __int8 CPlayer::pc_NPCLinkCheckItemRequest_Use(_STORAGE_POS_INDIV *pSto
   if (!result)
   {
     _STORAGE_LIST *storage = m_Param.m_pStoragePtr[pStorage->byStorageCode];
-    _STORAGE_LIST::_db_con *useItem = _STORAGE_LIST::GetPtrFromSerial(storage, pStorage->wItemSerial);
-    _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblItemData[35], useItem->m_wItemIndex);
+    _STORAGE_LIST::_db_con *useItem = storage->GetPtrFromSerial(pStorage->wItemSerial);
+    _base_fld *record = g_Main.m_tblItemData[35].GetRecord(useItem->m_wItemIndex);
     if (record)
     {
       if (!*reinterpret_cast<int *>(&record[5].m_strCode[56]))
@@ -22199,9 +23334,7 @@ unsigned __int8 CPlayer::pc_NPCLinkCheckItemRequest_Use(_STORAGE_POS_INDIV *pSto
         {
           if (*reinterpret_cast<int *>(&record[7].m_strCode[8]) == 1)
           {
-            CMgrAvatorItemHistory::cash_item_use(
-              &CPlayer::s_MgrItemHistory,
-              m_ObjID.m_wIndex,
+            CPlayer::s_MgrItemHistory.cash_item_use(m_ObjID.m_wIndex,
               useItem,
               m_szItemHistoryFileName);
           }
@@ -22225,7 +23358,7 @@ unsigned __int8 CPlayer::pc_NPCLinkCheckItemRequest_Use(_STORAGE_POS_INDIV *pSto
 void CPlayer::pc_TalikCrystalExchange(unsigned __int8 byExchangeNum, _talik_crystal_exchange_clzo::_list *pList)
 {
   CTalkCrystalCombineManager *manager = CTalkCrystalCombineManager::Instance();
-  CTalkCrystalCombineManager::Doit(manager, this, byExchangeNum, pList);
+  manager->Doit(this, byExchangeNum, pList);
 }
 
 unsigned __int8 CPlayer::pc_RenameItemNConditionCheck(_STORAGE_POS_INDIV *pItemInfo, _STORAGE_LIST::_db_con **ppItem)
@@ -22236,12 +23369,12 @@ unsigned __int8 CPlayer::pc_RenameItemNConditionCheck(_STORAGE_POS_INDIV *pItemI
   }
 
   _STORAGE_LIST *storage = m_Param.m_pStoragePtr[pItemInfo->byStorageCode];
-  _STORAGE_LIST::_db_con *item = _STORAGE_LIST::GetPtrFromSerial(storage, pItemInfo->wItemSerial);
+  _STORAGE_LIST::_db_con *item = storage->GetPtrFromSerial(pItemInfo->wItemSerial);
   if (!item)
   {
     return 1;
   }
-  if (!CPlayerDB::GetHP(&m_Param))
+  if (!m_Param.GetHP())
   {
     return 2;
   }
@@ -22251,16 +23384,16 @@ unsigned __int8 CPlayer::pc_RenameItemNConditionCheck(_STORAGE_POS_INDIV *pItemI
   }
   if (m_Param.m_pGuild)
   {
-    const unsigned int mySerial = CPlayerDB::GetCharSerial(&m_Param);
-    const unsigned int guildMasterSerial = CGuild::GetGuildMasterSerial(m_Param.m_pGuild);
+    const unsigned int mySerial = m_Param.GetCharSerial();
+    const unsigned int guildMasterSerial = m_Param.m_pGuild->GetGuildMasterSerial();
     if (mySerial == guildMasterSerial)
     {
       return 7;
     }
   }
-  const int raceCode = CPlayerDB::GetRaceCode(&m_Param);
+  const int raceCode = m_Param.GetRaceCode();
   CPvpUserAndGuildRankingSystem *rankSystem = CPvpUserAndGuildRankingSystem::Instance();
-  if (CPvpUserAndGuildRankingSystem::IsCurrentRaceBossGroup(rankSystem, raceCode, m_dwObjSerial))
+  if (rankSystem->IsCurrentRaceBossGroup(raceCode, m_dwObjSerial))
   {
     return 8;
   }
@@ -22314,31 +23447,30 @@ char CPlayer::pc_CharacterRenameCash(bool bChange, _STORAGE_POS_INDIV *pItem, co
     if (m_ReNamePotionUseInfo.wszChangeName[0])
     {
       const unsigned int currTime = timeGetTime();
-      _PotionItem_fld *potionFld = (_PotionItem_fld *)CRecordData::GetRecord(&g_Main.m_tblItemData[13], item->m_wItemIndex);
+      _PotionItem_fld *potionFld = (_PotionItem_fld *)g_Main.m_tblItemData[13].GetRecord(item->m_wItemIndex);
       if (potionFld)
       {
-        _base_fld *effectRecord = CRecordData::GetRecord(&g_PotionMgr.m_tblPotionEffectData, potionFld->m_strEffCode);
+        _base_fld *effectRecord = g_PotionMgr.m_tblPotionEffectData.GetRecord(potionFld->m_strEffCode);
         if (effectRecord && !errCode && effectRecord[13].m_dwIndex == 47)
         {
-          _STORAGE_LIST::_storage_con::lock(item, true);
-          errCode = CPotionMgr::UsePotion(&g_PotionMgr, this, this, potionFld, currTime);
+          item->lock(true);
+          errCode = static_cast<unsigned __int8>(g_PotionMgr.UsePotion(this, this, potionFld, currTime));
           if (errCode)
           {
-            _RENAME_POTION_USE_INFO::Init(&m_ReNamePotionUseInfo);
+            m_ReNamePotionUseInfo.Init();
             SendMsg_CharacterRenameCashResult(1, errCode);
             return 0;
           }
           return 1;
         }
-        _RENAME_POTION_USE_INFO::Init(&m_ReNamePotionUseInfo);
+        m_ReNamePotionUseInfo.Init();
         SendMsg_CharacterRenameCashResult(1, 9u);
         return 0;
       }
 
-      _RENAME_POTION_USE_INFO::Init(&m_ReNamePotionUseInfo);
-      char *charName = CPlayerDB::GetCharNameA(&m_Param);
-      CLogFile::Write(
-        &g_Main.m_logSystemError,
+      m_ReNamePotionUseInfo.Init();
+      char *charName = m_Param.GetCharNameA();
+      g_Main.m_logSystemError.Write(
         "CPlayer::pc_CharacterRenameCash(...) : User %s(%u) Item Table(%u) Index(%u) Not Exist!",
         charName,
         m_dwObjSerial,
@@ -22348,7 +23480,7 @@ char CPlayer::pc_CharacterRenameCash(bool bChange, _STORAGE_POS_INDIV *pItem, co
       return 0;
     }
 
-    _RENAME_POTION_USE_INFO::Init(&m_ReNamePotionUseInfo);
+    m_ReNamePotionUseInfo.Init();
     SendMsg_CharacterRenameCashResult(1, 0x30u);
     return 0;
   }
@@ -22360,14 +23492,14 @@ char CPlayer::pc_CharacterRenameCash(bool bChange, _STORAGE_POS_INDIV *pItem, co
   }
   else
   {
-    _STORAGE_LIST::_storage_con::lock(item, true);
+    item->lock(true);
     _qry_case_character_rename qry{};
     qry.dwCharSerial = m_pUserDB->m_dwSerial;
     qry.dwAlreadySerial = static_cast<unsigned int>(-1);
     memcpy_s(&qry.ItemInfo, sizeof(qry.ItemInfo), &itemInfo, sizeof(itemInfo));
     strcpy_s(qry.wszCharName, 0x11u, strCharacterName);
-    const int size = static_cast<int>(qry.size());
-    if (!CMainThread::PushDQSData(&g_Main, 0xFFFFFFFF, nullptr, 0x91u, reinterpret_cast<char *>(&qry), size))
+    const int size = static_cast<int>(sizeof(qry));
+    if (!g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x91u, reinterpret_cast<char *>(&qry), size))
     {
       SendMsg_CharacterRenameCashResult(0, 0xAu);
     }
@@ -22379,7 +23511,7 @@ char CPlayer::pc_CharacterRenameCheck(const char *strCharacterName)
 {
   char errCode = 0;
   char dest[17]{};
-  strncpy_s<17>(reinterpret_cast<char (*)[17]>(dest), strCharacterName, 0x10u);
+  strncpy_s(dest, strCharacterName, 0x10u);
   if (dest[0] == 42 || dest[0] == 33)
   {
     errCode = 5;
@@ -22394,11 +23526,29 @@ char CPlayer::pc_CharacterRenameCheck(const char *strCharacterName)
   }
 
   CNationSettingManager *nationSetting = CTSingleton<CNationSettingManager>::Instance();
-  if (!CNationSettingManager::IsNormalString(nationSetting, dest))
+  if (!nationSetting->IsNormalString(dest))
   {
     return 5;
   }
   return errCode;
+}
+
+void CPlayer::ApplySetItemEffect(
+  si_interpret *pSI,
+  unsigned int dwSetItem,
+  unsigned __int8 bySetItemNum,
+  unsigned __int8 bySetEffectNum,
+  bool bSetEffect)
+{
+  (void)dwSetItem;
+  (void)bySetItemNum;
+
+  for (unsigned __int8 idx = 0; idx < bySetEffectNum; ++idx)
+  {
+    const int effCode = pSI->GetEffectCode(idx);
+    const float effValue = pSI->GetEffectValue(idx);
+    apply_normal_item_std_effect(effCode, effValue, bSetEffect);
+  }
 }
 
 char CPlayer::pc_SetItemCheckRequest(
@@ -22408,14 +23558,14 @@ char CPlayer::pc_SetItemCheckRequest(
   bool bSet)
 {
   CSUItemSystem *suSystem = CSUItemSystem::Instance();
-  CSetItemType *setType = CSUItemSystem::GetCSetItemType(suSystem);
+  CSetItemType *setType = suSystem->GetCSetItemType();
   if (!setType)
   {
     SendMsg_SetItemCheckResult(7u, 0, 0);
     return 0;
   }
 
-  si_interpret *si = CSetItemType::Getsi_interpret(setType, dwSetItem);
+  si_interpret *si = setType->Getsi_interpret(dwSetItem);
   if (!si)
   {
     SendMsg_SetItemCheckResult(2u, 0, 0);
@@ -22427,7 +23577,7 @@ char CPlayer::pc_SetItemCheckRequest(
   {
     bool gradeOk = false;
     char strCode[68]{};
-    const int tableCode = CSUItemSystem::GetSetItemTableInfo(suSystem, dwSetItem, strCode, 64);
+    const int tableCode = suSystem->GetSetItemTableInfo(dwSetItem, strCode, 64);
     if (tableCode > -1)
     {
       const unsigned __int8 grade = GetItemEquipGrade(tableCode, strCode);
@@ -22438,7 +23588,8 @@ char CPlayer::pc_SetItemCheckRequest(
     }
     if (gradeOk)
     {
-      result = CSetItemEffect::SetOnEffect(&m_clsSetItem, &m_pUserDB->m_AvatorData, dwSetItem, bySetItemNum, bySetEffectNum);
+      result = static_cast<int>(
+        m_clsSetItem.SetOnEffect(&m_pUserDB->m_AvatorData, dwSetItem, bySetItemNum, bySetEffectNum));
       switch (result)
       {
         case 0:
@@ -22451,9 +23602,9 @@ char CPlayer::pc_SetItemCheckRequest(
           break;
         case 8:
         {
-          const unsigned __int8 resetEffect = CSetItemEffect::GetResetEffectNum(&m_clsSetItem);
-          const unsigned __int8 resetItem = CSetItemEffect::GetResetItemNum(&m_clsSetItem);
-          const unsigned int resetIdx = CSetItemEffect::GetResetIdx(&m_clsSetItem);
+          const unsigned __int8 resetEffect = m_clsSetItem.GetResetEffectNum();
+          const unsigned __int8 resetItem = m_clsSetItem.GetResetItemNum();
+          const unsigned int resetIdx = static_cast<unsigned int>(m_clsSetItem.GetResetIdx());
           ApplySetItemEffect(si, resetIdx, resetItem, resetEffect, false);
           ApplySetItemEffect(si, dwSetItem, bySetItemNum, bySetEffectNum, true);
           break;
@@ -22466,7 +23617,7 @@ char CPlayer::pc_SetItemCheckRequest(
   }
   else
   {
-    result = CSetItemEffect::SetOffEffect(&m_clsSetItem, dwSetItem, bySetItemNum, bySetEffectNum);
+    result = static_cast<int>(m_clsSetItem.SetOffEffect(dwSetItem, bySetItemNum, bySetEffectNum));
     if (result == 1)
     {
       ApplySetItemEffect(si, dwSetItem, bySetItemNum, bySetEffectNum, false);
@@ -22638,6 +23789,41 @@ void CPlayer::SubGold(unsigned int dwSub)
     m_Param.SetGold(newGold);
     const unsigned int dalant = m_Param.GetDalant();
     m_pUserDB->Update_Money(dalant, m_Param.GetGold());
+  }
+}
+
+void CPlayer::SubPoint(int dwSub)
+{
+  if (!dwSub)
+  {
+    return;
+  }
+
+  long double newPvpCash = m_kPvpOrderView.GetPvpCash() - static_cast<double>(dwSub);
+  const double subAsDouble = static_cast<double>(dwSub);
+  if (subAsDouble > m_kPvpOrderView.GetPvpCash() && m_kPvpOrderView.GetPvpCash() > 0.0)
+  {
+    newPvpCash = 0.0;
+  }
+
+  if (newPvpCash != m_kPvpOrderView.GetPvpCash())
+  {
+    m_kPvpOrderView.SetPvpCash(newPvpCash);
+    m_kPvpOrderView.UpdatePvpCash(newPvpCash);
+  }
+}
+
+void CPlayer::SubActPoint(unsigned __int8 byCode, unsigned int dwSub)
+{
+  unsigned int leftPoint = m_pUserDB->GetActPoint(byCode) - dwSub;
+  if (dwSub > m_pUserDB->GetActPoint(byCode))
+  {
+    leftPoint = 0;
+  }
+
+  if (leftPoint != m_pUserDB->GetActPoint(byCode))
+  {
+    m_pUserDB->Update_User_Action_Point(byCode, leftPoint);
   }
 }
 
@@ -22824,3 +24010,223 @@ void CPlayer::UpdatePost(unsigned int dwIndex)
   CPostSystemManager *manager = CPostSystemManager::Instace();
   manager->Log("CPlayer::UpdatePost() : pPost Is Null : Index(%u)", dwIndex);
 }
+
+void CPlayer::pc_RequestPatriarchPunishment(unsigned __int8 byType, char *pwszName, char *pwszCont)
+{
+  unsigned __int8 result = 0;
+  int raceCode = 0;
+  if (!g_Main.IsReleaseServiceMode()
+    || (raceCode = m_Param.GetRaceCode(),
+        CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(raceCode, 0) == m_dwObjSerial))
+  {
+    if (g_VoteSys[raceCode].m_bActive)
+    {
+      result = 2;
+    }
+    else if (byType == 2)
+    {
+      result = 9;
+    }
+    else if (!IsSQLValidString(pwszName))
+    {
+      const char *charName = m_Param.GetCharNameA();
+      g_Main.m_logSystemError.Write(
+        "CPlayer::pc_RequestPatriarchPunishment() : %u(%s) ::IsSQLValidString(pwszName(%s)) Invalid!",
+        m_dwObjSerial,
+        charName,
+        pwszName);
+      result = 7;
+    }
+  }
+  else
+  {
+    result = 1;
+  }
+
+  if (result)
+  {
+    SendMsg_ProposeVoteResult(result);
+    return;
+  }
+
+  _qry_case_select_charserial pQryData{};
+  pQryData.byRace = static_cast<unsigned __int8>(m_Param.GetRaceCode());
+  pQryData.byType = byType;
+  strcpy_0(pQryData.wszCharName, pwszName);
+  strcpy_0(pQryData.wszContent, pwszCont);
+  pQryData.dwAvatorSerial = static_cast<unsigned int>(-1);
+  const int nSize = static_cast<int>(pQryData.size());
+  g_Main.PushDQSData(0xFFFFFFFFu, nullptr, 0x80u, reinterpret_cast<char *>(&pQryData), nSize);
+}
+
+void CPlayer::SendMsg_QuestGiveUpResult(char byReturnSlot)
+{
+  char szMsg[1]{byReturnSlot};
+  unsigned __int8 pbyType[2]{24, 50};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, szMsg, 1u);
+}
+
+void CPlayer::SendMsg_SelectWaitedQuest(
+  char byEventType,
+  unsigned int dwEventIndex,
+  unsigned __int8 byEventNodeIndex)
+{
+  #pragma pack(push, 1)
+  struct
+  {
+    char byEventType;
+    unsigned int dwEventIndex;
+    unsigned __int8 byEventNodeIndex;
+  } msg{};
+  #pragma pack(pop)
+
+  msg.byEventType = byEventType;
+  msg.dwEventIndex = dwEventIndex;
+  msg.byEventNodeIndex = byEventNodeIndex;
+
+  unsigned __int8 pbyType[2]{24, 2};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    6u);
+}
+
+void CPlayer::SendMsg_GuildManageResult(char byRetCode)
+{
+  char szMsg[1]{byRetCode};
+  unsigned __int8 pbyType[2]{27, 124};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, szMsg, 1u);
+}
+
+void CPlayer::pc_QuestGiveupRequest(unsigned __int8 byQuestDBSlot)
+{
+  unsigned __int8 result = byQuestDBSlot;
+  if (m_QuestMgr.CanGiveupQuest(byQuestDBSlot))
+  {
+    m_QuestMgr.DeleteQuestData(byQuestDBSlot);
+    m_pUserDB->Update_QuestDelete(byQuestDBSlot);
+  }
+  else
+  {
+    result = static_cast<unsigned __int8>(-1);
+  }
+  SendMsg_QuestGiveUpResult(result);
+}
+
+char CPlayer::Emb_CreateQuestEvent(__int32 HappenType, char *pszEventCode)
+{
+  const unsigned __int8 raceCode = static_cast<unsigned __int8>(m_Param.GetRaceCode());
+  _happen_event_cont *src =
+    m_QuestMgr.CheckQuestHappenEvent(static_cast<QUEST_HAPPEN>(HappenType), pszEventCode, raceCode);
+  if (!src)
+  {
+    return 0;
+  }
+
+  _happen_event_cont happenEvent{};
+  happenEvent.init();
+  memcpy_0(&happenEvent, src, sizeof(happenEvent));
+  if (happenEvent.m_pEvent->m_bSelectQuestManual)
+  {
+    SendMsg_SelectWaitedQuest(HappenType, happenEvent.m_nIndexInType, happenEvent.m_nRaceCode);
+    return 1;
+  }
+
+  if (Emb_StartQuest(0xFFu, &happenEvent))
+  {
+    return 1;
+  }
+
+  for (int j = 0; j < 3; ++j)
+  {
+    if (!m_QuestMgr.m_pTempHappenEvent[j].isset())
+    {
+      memcpy_0(&m_QuestMgr.m_pTempHappenEvent[j], &happenEvent, sizeof(m_QuestMgr.m_pTempHappenEvent[j]));
+      return 0;
+    }
+  }
+  return 0;
+}
+
+void CPlayer::pc_GuildManageRequest(
+  unsigned __int8 byType,
+  unsigned int dwDst,
+  unsigned int dwObj1,
+  unsigned int dwObj2,
+  unsigned int dwObj3)
+{
+  unsigned __int8 result = 0;
+  CGuild *guild = m_Param.m_pGuild;
+  if (!guild)
+  {
+    result = static_cast<unsigned __int8>(-54);
+  }
+
+  const unsigned int charSerial = m_Param.GetCharSerial();
+  if (guild->m_MasterData.dwSerial != charSerial)
+  {
+    result = static_cast<unsigned __int8>(-53);
+  }
+
+  if (!result)
+  {
+    switch (byType)
+    {
+      case 0:
+        result = guild->ManageProposeGuildBattle(dwDst, dwObj1, dwObj2, dwObj3);
+        break;
+      case 1:
+        result = guild->ManageExpulseMember(dwDst);
+        break;
+      case 2:
+        result = guild->ManagePopGuildMoney(dwDst, dwObj1, dwObj2);
+        break;
+      case 3:
+        result = guild->ManageBuyGuildEmblem(dwDst, dwObj1, dwObj2);
+        break;
+      case 4:
+        result = guild->ManageGuildCommittee(dwDst, dwObj1 != 0);
+        break;
+      case 5:
+        result = guild->ManageAcceptORRefuseGuildBattle(dwDst != 0);
+        break;
+      default:
+        break;
+    }
+  }
+  SendMsg_GuildManageResult(result);
+}
+
+void CPlayer::SendMsg_AlterPvPCash(char nIOCode)
+{
+  char szMsg[9]{};
+  *reinterpret_cast<unsigned __int64 *>(szMsg) = m_kPvpOrderView.GetPvpCash();
+  szMsg[8] = nIOCode;
+  unsigned __int8 pbyType[2]{};
+  memset(pbyType, 11, 2);
+  g_Network.m_pProcess[0]->LoadSendMsg( m_ObjID.m_wIndex, pbyType, szMsg, 9u);
+}
+
+void CPlayer::SendMsg_GuildForceLeaveBoradori()
+{
+  char szMsg[1]{};
+  unsigned __int8 pbyType[2]{};
+  pbyType[0] = 27;
+  pbyType[1] = 121;
+  g_Network.m_pProcess[0]->LoadSendMsg( m_ObjID.m_wIndex, pbyType, szMsg, 1u);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

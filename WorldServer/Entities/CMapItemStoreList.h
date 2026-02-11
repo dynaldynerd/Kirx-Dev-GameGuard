@@ -17,6 +17,7 @@ public:
   CItemStore *m_ItemStore;
 
   void SetTypeNSerial(unsigned __int8 byType, int nSerial);
+  char CopyItemStoreData(CMapItemStoreList *pDest);
   bool CreateStores(CMapData *pMap);
   bool SetItemStores(CMapData *pMap);
   CItemStore *GetItemStoreFromRecIndex(unsigned int dwRecIndex);

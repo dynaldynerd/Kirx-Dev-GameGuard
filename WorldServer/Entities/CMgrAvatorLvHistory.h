@@ -35,6 +35,16 @@ public:
 
   void char_copy(int n, char *pszDstName, unsigned int dwDstSerial, char *pszFileName);
   void alter_pvp(int n, long double dPvpVariation, CPartyPlayer *pParty, char *pszFileName);
+  void recovery_exp(
+    int n,
+    long double dOldExp,
+    unsigned __int16 wOldExpRate,
+    long double dNewExp,
+    unsigned __int16 wNewExpRate,
+    long double dLossExp,
+    int nProbPro,
+    char *pCause,
+    char *pszFileName);
   void GetNewFileName(unsigned int dwAvatorSerial, char *pszFileName);
   void start_mastery(
     int n,

@@ -129,6 +129,9 @@ public:
   void SendSearchErrorResult(unsigned __int16 wInx, char byRet);
   void SendSearchResult(unsigned __int16 wInx, char *pLoadData);
   void LogOut(unsigned int dwSerial, CLogFile *pkLogger);
+  bool CheatCancelRegist(unsigned __int8 byNth);
+  bool CheatCancelRegistAll();
+  bool CheatCancelRegistSingle(unsigned __int8 byNth);
 
   bool operator==(unsigned int dwSerial);
   CUnmannedTraderUserInfo &operator=(const CUnmannedTraderUserInfo &rhs);

@@ -4,6 +4,8 @@
 #include "CMapData.h"
 #include "StoreList_fld.h"
 
+#include <cstring>
+
 CMapItemStoreList::CMapItemStoreList()
 {
     m_bUse = false;
@@ -27,6 +29,46 @@ void CMapItemStoreList::SetTypeNSerial(unsigned __int8 byType, int nSerial)
     this->m_bUse = true;
     this->m_byType = byType;
     this->m_nSerial = nSerial;
+}
+
+char CMapItemStoreList::CopyItemStoreData(CMapItemStoreList *pDest)
+{
+    if (m_bUse || !pDest)
+    {
+        return 0;
+    }
+
+    m_nItemStoreNum = pDest->m_nItemStoreNum;
+    if (m_nItemStoreNum <= 0)
+    {
+        return 0;
+    }
+
+    m_ItemStore = new CItemStore[m_nItemStoreNum];
+    memcpy_s(m_ItemStore, 120ULL * m_nItemStoreNum, pDest->m_ItemStore, 120ULL * pDest->m_nItemStoreNum);
+
+    for (int j = 0; j < m_nItemStoreNum; ++j)
+    {
+        m_ItemStore[j].m_bUpdate = true;
+        m_ItemStore[j].m_dwDBSerial = 0;
+        m_ItemStore[j].SetLimitItemInitTime();
+
+        m_ItemStore[j].m_pLimitStorageItem = new _limit_item_info[16];
+        m_ItemStore[j].m_pStorageItem = new _good_storage_info[216];
+
+        memcpy_s(
+            m_ItemStore[j].m_pLimitStorageItem,
+            0x100uLL,
+            pDest->m_ItemStore[j].m_pLimitStorageItem,
+            0x100uLL);
+        memcpy_s(
+            m_ItemStore[j].m_pStorageItem,
+            0x2590uLL,
+            pDest->m_ItemStore[j].m_pStorageItem,
+            0x2590uLL);
+    }
+
+    return 1;
 }
 
 bool CMapItemStoreList::CreateStores(CMapData *pMap)

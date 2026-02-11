@@ -735,3 +735,52 @@ char CRaceBossMsgController::Cancel(unsigned __int8 ucRace, unsigned int dwMsgID
   m_kManager.CleanUpCancel(ucRace, pkMsg);
   return 1;
 }
+
+void CRaceBossMsgController::SendCancleInfomSender(unsigned int dwSerial)
+{
+  CPlayer *player = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, dwSerial);
+  if (player && player->m_bLive)
+  {
+    unsigned __int8 pbyType[2] = {52, 3};
+    char szMsg[1]{};
+    g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, pbyType, szMsg, 1u);
+  }
+}
+
+void CRaceBossMsgController::SendCancleInfomManager(
+  unsigned __int16 usInx,
+  char ucRet,
+  unsigned int dwMsgID,
+  const char *pwszName)
+{
+  (void)dwMsgID;
+  char szMsg[0x16]{};
+  szMsg[0] = ucRet;
+  if (pwszName)
+  {
+    strncpy_s(szMsg + 1, 0x10u, pwszName, 0x10u);
+    szMsg[17] = '\0';
+  }
+
+  unsigned __int8 pbyType[2] = {52, 5};
+  g_Network.m_pProcess[0]->LoadSendMsg(usInx, pbyType, szMsg, 0x16u);
+}
+
+void CRaceBossMsgController::SendCancelWeb(unsigned __int8 ucRace, RACE_BOSS_MSG::CMsg *pkMsg)
+{
+  if (!g_Main.m_bWorldOpen || !g_Main.m_bWorldService)
+  {
+    return;
+  }
+
+  char szMsg[9]{};
+  *reinterpret_cast<unsigned int *>(szMsg) = pkMsg->GetID();
+  *reinterpret_cast<int *>(szMsg + 4) = g_Main.m_byWorldCode;
+  szMsg[8] = static_cast<char>(ucRace);
+
+  unsigned __int8 pbyType[2] = {51, 11};
+  if (g_Main.m_bConnectedWebAgentServer)
+  {
+    g_Network.m_pProcess[2]->LoadSendMsg(g_Main.m_byWebAgentServerNetInx, pbyType, szMsg, 9u);
+  }
+}

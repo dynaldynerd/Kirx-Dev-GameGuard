@@ -10,6 +10,7 @@
 #include <ctime>
 
 #include "AutominePersonalMgr.h"
+#include "AutoMineMachineMng.h"
 #include "CActionPointSystemMgr.h"
 #include "CAsyncLogger.h"
 #include "CAttack.h"
@@ -29,13 +30,15 @@
 #include "CMonsterEventSet.h"
 #include "CMoveMapLimitManager.h"
 #include "CNetworkEX.h"
-#include "CNetSocket.h"
+#include "CNetProcess.h"
 #include "CPcBangFavor.h"
 #include "CPostSystemManager.h"
 #include "CPvpUserAndGuildRankingSystem.h"
 #include "CRaceBuffManager.h"
+#include "CRaceBossWinRate.h"
 #include "CTotalGuildRankManager.h"
 #include "CUnmannedTraderController.h"
+#include "CUnmannedTraderTaxRateManager.h"
 #include "CWeeklyGuildRankManager.h"
 #include "CashItemRemoteStore.h"
 #include "DqsDbStructs.h"
@@ -103,6 +106,7 @@
 #include "CRecallEffectController.h"
 #include "CReturnGateController.h"
 #include "CRaceBossMsgController.h"
+#include "CMoneySupplyMgr.h"
 #include "CUserDB.h"
 #include "ItemDataLoader.h"
 #include "KorLocalTime.h"
@@ -113,6 +117,9 @@
 #include "NetUtil.h"
 #include "WheatyExceptionReport.h"
 #include "WorldServerUtil.h"
+#include "EconomySystemFunctions.h"
+#include "economy_history_data.h"
+#include "CItemStoreManager.h"
 #include "cStaticMember_Player.h"
 #include "GlobalObjects.h"
 #include "CGameServerDoc.h"
@@ -125,6 +132,8 @@
 #include "trans_account_report_wrac.h"
 #include "trans_gm_msg_inform_zocl.h"
 
+#include <mmsystem.h>
+
 unsigned int TimeLimitMgr::m_dwCnt = 0;
 
 _BILLING_INFO::_BILLING_INFO()
@@ -134,7 +143,7 @@ _BILLING_INFO::_BILLING_INFO()
 
 _WAIT_ENTER_ACCOUNT::_WAIT_ENTER_ACCOUNT()
 {
-  _BILLING_INFO::_BILLING_INFO(&m_BillingInfo);
+  m_BillingInfo = _BILLING_INFO();
   m_bLoad = false;
   m_byUserDgr = 0;
 }
@@ -328,6 +337,66 @@ CPlayer *CMainThread::GetCharW(char *wpszCharName)
   return nullptr;
 }
 
+CGameObject *CMainThread::GetObjectA(_object_id *pObjID)
+{
+  if (!pObjID)
+  {
+    return nullptr;
+  }
+
+  return GetObjectA(pObjID->m_byKind, pObjID->m_byID, pObjID->m_wIndex);
+}
+
+CGameObject *CMainThread::GetObjectA(int kind, int id, unsigned int index)
+{
+  if (kind == 0)
+  {
+    switch (id)
+    {
+      case 0:
+        return index < MAX_PLAYER ? &g_Player[index] : nullptr;
+      case 1:
+        return index < MAX_MONSTER ? &g_Monster[index] : nullptr;
+      case 2:
+        return index < MAX_NPC ? &g_NPC[index] : nullptr;
+      case 3:
+        return index < MAX_ANIMUS ? &g_Animus[index] : nullptr;
+      case 4:
+        return index < MAX_TOWER ? &g_Tower[index] : nullptr;
+      case 5:
+        return index < MAX_STONE ? &g_Stone[index] : nullptr;
+      case 6:
+        return index < MAX_KEEPER ? g_Keeper : nullptr;
+      case 7:
+        return index < MAX_TRAP ? &g_Trap[index] : nullptr;
+      case 11:
+      {
+        AutominePersonalMgr *automineMgr = AutominePersonalMgr::instance();
+        return automineMgr ? automineMgr->get_machine(index) : nullptr;
+      }
+      default:
+        return nullptr;
+    }
+  }
+
+  if (kind == 1)
+  {
+    switch (id)
+    {
+      case 0:
+        return index < MAX_ITEMBOX ? &g_ItemBox[index] : nullptr;
+      case 1:
+        return index < MAX_DARKHOLE ? &g_DarkHole[index] : nullptr;
+      case 2:
+        return index < MAX_PARKING_UNIT ? &g_ParkingUnit[index] : nullptr;
+      default:
+        return nullptr;
+    }
+  }
+
+  return nullptr;
+}
+
 _DB_QRY_SYN_DATA *CMainThread::PushDQSData(
   unsigned int dwAccountSerial,
   _CLID *pidWorld,
@@ -405,6 +474,16 @@ void GuildCreateEventInfo::Init()
   m_dwEmblemDalant = 0;
   m_tmDataFileCheckTime.BeginTimer(0);
   std::memset(&m_ftWrite, 0, sizeof(m_ftWrite));
+}
+
+__int64 GuildCreateEventInfo::GetEstConsumeDalant() const
+{
+  return m_dwEstConsumeDalant;
+}
+
+__int64 GuildCreateEventInfo::GetEmblemDalant() const
+{
+  return m_dwEmblemDalant;
 }
 
 TimeLimitMgr *TimeLimitMgr::Instance()
@@ -497,6 +576,34 @@ void TimeLimitMgr::InitializeTLMgr()
 void TimeLimitMgr::SetTLEnable(unsigned __int16 wState)
 {
   m_wEnable = wState;
+}
+
+unsigned __int16 TimeLimitMgr::GetPeriodCnt()
+{
+  return m_wPeriodCnt;
+}
+
+void TimeLimitMgr::SetTime(unsigned __int16 dwTime, unsigned __int16 iIndex)
+{
+  m_pwTime[iIndex] = dwTime;
+}
+
+void TimeLimitMgr::ReInitFatigue()
+{
+  for (int j = 0; j < m_wPeriodCnt; ++j)
+  {
+    m_pwFatigue[j] = static_cast<unsigned __int16>(100 * m_pwTime[j] / m_pwTime[m_wPeriodCnt - 1]);
+  }
+}
+
+void TimeLimitMgr::SetPlayFDegree(unsigned int dwDegree)
+{
+  m_dwPlayFDegree = dwDegree;
+}
+
+void TimeLimitMgr::SetLogoutFDegree(unsigned int dwDegree)
+{
+  m_dwLogoutFDegree = dwDegree;
 }
 
 long double TimeLimitMgr::GetPlayerPenalty(unsigned __int16 wIndex)
@@ -2967,7 +3074,7 @@ void CMainThread::pc_OpenWorldSuccessResult(unsigned __int8 byWorldCode, char *p
   else
   {
     WriteServerStartHistory("DBInit Fail >>");
-    CLogFile::WriteString(&m_logSystemError, "init DB fail");
+    m_logSystemError.WriteString("init DB fail");
     g_pFrame->SendMessage(0x10u, 0, 0);
   }
 }
@@ -3060,9 +3167,9 @@ void CMainThread::pc_TransIPKeyInform(
           entry->m_dwRequestMoveCharacterSerialList[j] = pdwRequestMoveCharacterSerialList[j];
           entry->m_dwTournamentCharacterSerialList[j] = pdwTournamentCharacterSerialList[j];
         }
-        CLogFile::Write(&m_logBillCheck, "id:%s Bill:%d bAgeLimit:%d", pszAccountID, iType, bAgeLimit);
+        m_logBillCheck.Write("id:%s Bill:%d bAgeLimit:%d", pszAccountID, iType, bAgeLimit);
         if (g_Network.m_Process[0].m_Type.m_bAcceptIPCheck
-            && !CNetSocket::PushIPCheckList(&g_Network.m_Process[0].m_NetSocket, dwClientIP))
+            && !g_Network.m_Process[0].m_NetSocket.PushIPCheckList(dwClientIP))
         {
           retCode = 8;
           goto RESULT_125;
@@ -3258,16 +3365,14 @@ void CMainThread::pc_CashDBInfoRecvResult(
       szAccount,
       szPassword,
       dwPort);
-    CLogFile::Write(
-      &m_logLoadingError,
+    m_logLoadingError.Write(
       "CMainThread::pc_CashDBInfoRecvResult : DSN : szIP(%s), szDBName(%s), szAccount(%s), szPassword(%s) dwPort(%d) Invalid",
       szIP,
       szDBName,
       szAccount,
       szPassword,
       dwPort);
-    CLogFile::Write(
-      &m_logSystemError,
+    m_logSystemError.Write(
       "CMainThread::pc_CashDBInfoRecvResult : DSN : szIP(%s), szDBName(%s), szAccount(%s), szPassword(%s) dwPort(%d) Invalid",
       szIP,
       szDBName,
@@ -3286,16 +3391,14 @@ void CMainThread::pc_CashDBInfoRecvResult(
       szAccount,
       szPassword,
       dwPort);
-    CLogFile::Write(
-      &m_logLoadingError,
+    m_logLoadingError.Write(
       "CMainThread::pc_CashDBInfoRecvResult : CashDBInit( szIP(%s), szDBName(%s), szAccount(%s), szPassword(%s) dwPort(%d) ) Fail!",
       szIP,
       szDBName,
       szAccount,
       szPassword,
       dwPort);
-    CLogFile::Write(
-      &m_logSystemError,
+    m_logSystemError.Write(
       "CMainThread::pc_CashDBInfoRecvResult : CashDBInit( szIP(%s), szDBName(%s), szAccount(%s), szPassword(%s) dwPort(%d) ) Fail!",
       szIP,
       szDBName,
@@ -3305,7 +3408,7 @@ void CMainThread::pc_CashDBInfoRecvResult(
     ServerProgramExit("CMainThread::pc_CashDBInfoRecvResult CashDBInit Fail!", 1);
   }
   WriteServerStartHistory("Cash DB Init Complete >>");
-  CLogFile::WriteString(&m_logLoadingError, "Cash DB Init Complete >>");
+  m_logLoadingError.WriteString("Cash DB Init Complete >>");
   CCashDBWorkManager::Instance()->Start();
   __trace("%s-%s: Open Cash DB", dateBuf, timeBuf);
 }
@@ -3355,9 +3458,158 @@ char CMainThread::_CheckTotalSales()
   return 1;
 }
 
+char CMainThread::_GameDataBaseInit()
+{
+  m_logLoadingError.Write("Avators DBRestore Complete!!");
+
+  const unsigned int dwDate = eGetLocalDate();
+  int nHisNum[11]{};
+  _economy_history_data history[12]{};
+  _economy_history_data curData{};
+  unsigned int pnCurMgrValue[8]{};
+  unsigned int pnNextMgrValue[8]{};
+  int pnDBSerial[4]{};
+
+  pnCurMgrValue[0] = 1000;
+  pnNextMgrValue[0] = 1000;
+  if (db_Select_Economy_History(&curData, pnCurMgrValue, pnNextMgrValue, history, nHisNum, dwDate))
+  {
+    MyMessageBox("DatabaseInit", "Economy data load fail");
+    return 0;
+  }
+
+  if (eInitEconomySystem(pnCurMgrValue[0], pnNextMgrValue[0], history, nHisNum[0], &curData))
+  {
+    CMoneySupplyMgr::Instance()->Initialize();
+    m_logLoadingError.Write("Economy History Load Complete!!");
+    if (CPvpUserAndGuildRankingSystem::Instance()->Load())
+    {
+      if (CGuildBattleController::Instance()->Load())
+      {
+        if (CTotalGuildRankManager::Instance()->Load())
+        {
+          if (CWeeklyGuildRankManager::Instance()->Load())
+          {
+            if (AutoMineMachineMng::Instance()->Initialzie())
+            {
+              if (m_pWorldDB->create_table_atrade_taxrate())
+              {
+                if (CUnmannedTraderTaxRateManager::Instance()->Load())
+                {
+                  if (!AutominePersonalMgr::instance()->CreateDBTable())
+                  {
+                    MyMessageBox("CMainThread::_GameDataBaseInit()", "AutominePersonalMgr::CreateDBTable Fail!");
+                    m_logLoadingError.Write("AutominePersonalMgr Create Database table Fail!");
+                  }
+                  if (CUnmannedTraderController::Instance()->Load())
+                  {
+                    if (CGuildRoomSystem::GetInstance()->Load_db())
+                    {
+                      if (CPostSystemManager::Instace()->Load())
+                      {
+                        if (db_LoadGreetingMsg())
+                        {
+                          if (CItemStoreManager::Instance()->Load())
+                          {
+                            CreateSelectCharacterLogTable(1u);
+                            if (CHonorGuild::Instance()->LoadDB())
+                            {
+                              if (CRaceBossWinRate::Instance()->LoadDB())
+                              {
+                                _db_Load_BattleTournamentInfo();
+                                if (LoadLimitInfo())
+                                {
+                                  CCashDBWorkManager::Instance()->Start();
+                                  pnDBSerial[0] = 0;
+                                  if (_db_Load_GoldBoxItem(
+                                        reinterpret_cast<qry_case_select_golden_box_item *>(
+                                          CGoldenBoxItemMgr::Instance()->GetGodBoxItemInfoPtr()),
+                                        pnDBSerial))
+                                  {
+                                    MyMessageBox("CMainThread::_GameDataBaseInit()", "_db_Load_GoldBoxItem() Fail!");
+                                    m_logLoadingError.Write("_db_Load_GoldBoxItem Fail!");
+                                    return 0;
+                                  }
+
+                                  CGoldenBoxItemMgr::Instance()->SetDBSerial(pnDBSerial[0]);
+                                  if (CGoldenBoxItemMgr::Instance()->Get_Event_Status() == 2)
+                                  {
+                                    CGoldenBoxItemMgr::Instance()->SynchINIANDDB();
+                                  }
+                                  return 1;
+                                }
+                                return 0;
+                              }
+                              MyMessageBox(
+                                "CMainThread::_GameDataBaseInit()",
+                                "CRaceBossWinRate::Instance()->LoadDB() Fail!");
+                              m_logLoadingError.Write("CRaceBossWinRate::Instance()->LoadDB() Fail!");
+                              return 0;
+                            }
+                            MyMessageBox(
+                              "CMainThread::_GameDataBaseInit()",
+                              "CHonorGuild::Instance()->LoadDB() Fail!");
+                            m_logLoadingError.Write("CHonorGuild::Instance()->LoadDB() Fail!");
+                            return 0;
+                          }
+                          MyMessageBox(
+                            "CMainThread::_GameDataBaseInit()",
+                            "CItemStoreManager::Instance()->Load() Fail!");
+                          m_logLoadingError.Write("CItemStoreManager::Instance()->Load() Fail!");
+                          return 0;
+                        }
+                        MyMessageBox("CMainThread::_GameDataBaseInit()", "db_LoadGreetingMsg() Fail!");
+                        m_logLoadingError.Write("db_LoadGreetingMsg() Fail!");
+                        return 0;
+                      }
+                      MyMessageBox("CMainThread::_GameDataBaseInit()", "CPostSystemManager::Instace()->Load() Fail!");
+                      m_logLoadingError.Write("CPostSystemManager::Instace()->Load() Fail!");
+                      return 0;
+                    }
+                    MyMessageBox("CMainThread::Init() : ", "CGuildRoomSystem::GetInstance()->Load_db()");
+                    m_logLoadingError.Write("CGuildRoomSystem::GetInstance()->Load_db()");
+                    return 0;
+                  }
+                  MyMessageBox(
+                    "CMainThread::_GameDataBaseInit()",
+                    "CUnmannedTraderController::Instance()->Load() Fail!");
+                  m_logLoadingError.Write("CUnmannedTraderController::Instance()->Load() Fail!");
+                  return 0;
+                }
+                MyMessageBox("CMainThread::_GameDataBaseInit()", "ATradeTaxRateTable() Fail!");
+                m_logLoadingError.Write("ATradeTaxRateTable() Fail!");
+                return 0;
+              }
+              return 0;
+            }
+            MyMessageBox("CMainThread::_GameDataBaseInit()", "InitAutoMineMachines() Fail!");
+            m_logLoadingError.Write("InitAutoMineMachines() Fail!");
+            return 0;
+          }
+          MyMessageBox("CMainThread::_GameDataBaseInit()", "CWeeklyGuildRankManager::Instance()->Load() Fail!");
+          m_logLoadingError.Write("CWeeklyGuildRankManager::Instance()->Load() Fail!");
+          return 0;
+        }
+        MyMessageBox("CMainThread::_GameDataBaseInit()", "CTotalGuildRankManager::Instance()->Load() Fail!");
+        m_logLoadingError.Write("CGuildBattleController::Instance()->Load() Fail!");
+        return 0;
+      }
+      MyMessageBox("CMainThread::_GameDataBaseInit()", "CGuildBattleController::Instance()->Load() Fail!");
+      m_logLoadingError.Write("CGuildBattleController::Instance()->Load() Fail!");
+      return 0;
+    }
+    MyMessageBox("CMainThread::_GameDataBaseInit()", "CPvpUserRankingAndGuildRankingSystem::Instance()->Load() Fail!");
+    m_logLoadingError.Write("CPvpUserRankingAndGuildRankingSystem::Instance()->Load() Fail!");
+    return 0;
+  }
+
+  MyMessageBox("DatabaseInit", "Economy data init fail");
+  return 0;
+}
+
 bool CMainThread::DatabaseInit(char *pszDBName, char *pszDBIP)
 {
-  CLogFile::Write(&m_logLoadingError, "DataBase Setting Start!! (%s : %s)", pszDBIP, pszDBName);
+  m_logLoadingError.Write("DataBase Setting Start!! (%s : %s)", pszDBIP, pszDBName);
   strcpy_0(m_szWorldDBName, pszDBName);
   g_pFrame->SendMessage(0xCu, 0, 0);
 
@@ -3365,21 +3617,21 @@ bool CMainThread::DatabaseInit(char *pszDBName, char *pszDBIP)
   {
     CRFWorldDatabase *worldDb = new CRFWorldDatabase();
     m_pWorldDB = worldDb;
-    CRFNewDatabase::SetLogFile(m_pWorldDB, "..\\ZoneServerLog\\", m_szWorldDBName);
-    if (!CRFNewDatabase::ConfigUserODBC(m_pWorldDB, pszDBName, pszDBIP, pszDBName, 0xEFF9u))
+    m_pWorldDB->SetLogFile("..\\ZoneServerLog\\", m_szWorldDBName);
+    if (!m_pWorldDB->ConfigUserODBC(pszDBName, pszDBIP, pszDBName, 0xEFF9u))
     {
       MyMessageBox("DatabaseInit", "World DB ODBC Setting Faild!");
       return false;
     }
-    CLogFile::Write(&m_logLoadingError, "World DB ODBC Config Complete!!");
+    m_logLoadingError.Write("World DB ODBC Config Complete!!");
     char *passWord = CNationSettingManager::Instance()->GetWorldDBPW();
     const char *worldDbId = CNationSettingManager::Instance()->GetWorldDBID();
-    if (!CRFNewDatabase::StartDataBase(m_pWorldDB, m_szWorldDBName, worldDbId, passWord))
+    if (!m_pWorldDB->StartDataBase(m_szWorldDBName, worldDbId, passWord))
     {
       MyMessageBox("DatabaseInit", "Connect World DB Failed!");
       return false;
     }
-    CLogFile::Write(&m_logLoadingError, "Start World DataBase Complete!!");
+    m_logLoadingError.Write("Start World DataBase Complete!!");
     if (!_GameDataBaseInit())
     {
       return false;
@@ -3394,7 +3646,7 @@ bool CMainThread::DatabaseInit(char *pszDBName, char *pszDBIP)
     }
   }
 
-  CLogFile::Write(&m_logLoadingError, "DataBase Setting Complete!! (%s : %s)", pszDBIP, pszDBName);
+  m_logLoadingError.Write("DataBase Setting Complete!! (%s : %s)", pszDBIP, pszDBName);
   return true;
 }
 
@@ -3408,8 +3660,7 @@ bool CMainThread::CashDBInit(
   CNationSettingManager::Instance()->SetCashDBDSN(szIP, szDBName, szAccount, szPassword, dwPort);
   if (CCashDBWorkManager::Instance()->InitializeWorker())
   {
-    CLogFile::Write(
-      &m_logLoadingError,
+    m_logLoadingError.Write(
       "CMainThread::CashDBInit() : Cash Item DataBase Setting Complete!! (%s : %s)",
       szIP,
       szDBName);
@@ -3417,7 +3668,7 @@ bool CMainThread::CashDBInit(
   }
 
   MyMessageBox("CMainThread::Init() : ", "CCashDBWorkManager::Instance()->Initialize() Fail!");
-  CLogFile::Write(&m_logLoadingError, "CashDbWorker::Instance()->Initialize() Fail!");
+  m_logLoadingError.Write("CashDbWorker::Instance()->Initialize() Fail!");
   return false;
 }
 

@@ -11,7 +11,11 @@ class __cppobj CPostSystemManager
 public:
   static CPostSystemManager *Instace();
   bool Init();
+  bool Load();
   bool InitLogger();
+  char UpdateDisappearOwnerRecord();
+  char InsertDefaultPSRecord();
+  char PostRegistryLoad();
   unsigned __int8 UpdateRegist(char *pData);
   unsigned __int8 PostSend(char *pData);
   unsigned __int8 PostReceiverCheck(char *pData);

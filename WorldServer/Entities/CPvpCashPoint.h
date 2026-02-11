@@ -12,6 +12,9 @@ public:
   ~CPvpCashPoint();
   void Init(_PVP_ORDER_VIEW_DB_BASE *pkInfo);
   void KillerListInit();
+  void SendMsg_TalikList(unsigned int n);
+  int GetTalikRecvrPoint(unsigned __int8 byTblCode, unsigned int dwIndex);
+  void SendMsg_RecoverResult(unsigned int n, char byRet, int nRecvrPoint);
 
   CIndexList m_KillerList;
   unsigned __int8 m_byContPvpHave;

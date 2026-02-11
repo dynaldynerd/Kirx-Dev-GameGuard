@@ -18,6 +18,11 @@ _param_cash::~_param_cash()
   // this is not a stub
 }
 
+_param_cash_select::_param_cash_select(unsigned int dwAc, unsigned int dwAv, unsigned __int16 wSock)
+  : _param_cash(dwAc, dwAv, wSock)
+{
+}
+
 _param_cash_select::~_param_cash_select()
 {
   // this is not a stub
@@ -26,6 +31,11 @@ _param_cash_select::~_param_cash_select()
 __int64 _param_cash_select::size()
 {
   return 44;
+}
+
+__int64 _param_cash_total_selling::size()
+{
+  return 4;
 }
 
 _param_cash_update::__item::__item()

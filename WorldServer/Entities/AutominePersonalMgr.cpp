@@ -5,12 +5,23 @@
 #include "CMainThread.h"
 #include "CNetProcess.h"
 #include "CPlayer.h"
+#include "CMapData.h"
+#include "COreAmountMgr.h"
 #include "CRFWorldDatabase.h"
+#include "CUserDB.h"
 #include "KorLocalTime.h"
 #include "GlobalObjects.h"
 #include "DqsDbStructs.h"
+#include "CMgrAvatorItemHistory.h"
 #include "personal_amine_errmsg_zocl.h"
+#include "personal_amine_infoui_open_zocl.h"
 #include "personal_amine_make_storage_zocl.h"
+#include "personal_automine_battery_extract_zocl.h"
+#include "personal_automine_battery_insert_zocl.h"
+#include "personal_automine_popore_zocl.h"
+#include "personal_automine_selore_zocl.h"
+#include "personal_automine_stop_zocl.h"
+#include "qry_case_make_storage.h"
 
 #include <cstdio>
 #include <cstring>

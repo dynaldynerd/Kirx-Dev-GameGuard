@@ -18,12 +18,18 @@ struct __unaligned __declspec(align(4)) _MONEY_SUPPLY_DATA
   int nHonorGuildRace[2][3];
   int nUnitRepairLv[4];
   int nBuyUnitLv[4];
+
+  void init();
 };
 
 class __cppobj CMoneySupplyMgr
 {
 public:
   static CMoneySupplyMgr *Instance();
+  void Initialize();
+  void UpdateBuyData(unsigned __int8 byRace, int nLv, char *szClass, unsigned int nAmount);
+  void UpdateSellData(unsigned __int8 byRace, int nLv, char *szClass, unsigned int nAmount);
+  void UpdateQuestRewardMoneyData(unsigned __int8 byRace, int nLv, char *szClass, unsigned int nAmount);
   void UpdateBuyUnitData(int nLv, unsigned int nAmount);
   void UpdateFeeMoneyData(unsigned __int8 byRace, int nLv, unsigned int nAmount);
   void UpdateHonorGuildMoneyData(unsigned __int8 byTradeType, unsigned __int8 byRace, unsigned int nAmount);

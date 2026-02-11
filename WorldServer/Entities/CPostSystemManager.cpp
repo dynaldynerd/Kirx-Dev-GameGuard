@@ -3,6 +3,7 @@
 #include "CPostSystemManager.h"
 
 #include <cstdarg>
+#include <cstring>
 
 #include "CMgrAvatorItemHistory.h"
 #include "CMainThread.h"
@@ -69,6 +70,84 @@ bool CPostSystemManager::Init()
   }
 
   return true;
+}
+
+bool CPostSystemManager::Load()
+{
+  if (!UpdateDisappearOwnerRecord())
+  {
+    return false;
+  }
+
+  if (InsertDefaultPSRecord())
+  {
+    return PostRegistryLoad() != 0;
+  }
+
+  return false;
+}
+
+char CPostSystemManager::UpdateDisappearOwnerRecord()
+{
+  if (g_Main.m_pWorldDB->Update_DisappearOwnerRecord())
+  {
+    return 1;
+  }
+
+  Log(
+    "CPostSystemManager::UpdateDisappearOwner\r\n\t\tg_Main.m_pWorldDB->Update_DisappearOwnerRecord() Fail!\r\n");
+  return 0;
+}
+
+char CPostSystemManager::InsertDefaultPSRecord()
+{
+  const int emptyCount = g_Main.m_pWorldDB->Select_PostStorageEmptyRecord();
+  if (emptyCount >= 0)
+  {
+    if (emptyCount >= 5000 || g_Main.m_pWorldDB->Insert_PSDefaultRecord(0x1388u))
+    {
+      return 1;
+    }
+
+    Log(
+      "CPostSystemManager::InsertDefaultPSRecord\r\n\t\tg_Main.m_pWorldDB->Insert_PSDefaultRecord( %d ) Fail!\r\n",
+      5000);
+    return 0;
+  }
+
+  Log(
+    "CPostSystemManager::InsertDefaultPSRecord\r\n"
+    "\t\tnCount(%d) = g_Main.m_pWorldDB->Select_PostStorageEmptyRecord() Fail!\r\n",
+    emptyCount);
+  return 0;
+}
+
+char CPostSystemManager::PostRegistryLoad()
+{
+  CPostData temp[500]{};
+  const unsigned __int8 result = g_Main.m_pWorldDB->Select_PostRegistryData(0x1F4u, temp);
+  if (result)
+  {
+    if (result == 2)
+    {
+      return 1;
+    }
+    return 0;
+  }
+
+  memcpy_s(m_PostData, sizeof(CPostData) * 500, temp, sizeof(CPostData) * 500);
+  for (unsigned int dwIndex = 0; static_cast<int>(dwIndex) < 500; ++dwIndex)
+  {
+    if (!m_PostData[dwIndex].m_byState)
+    {
+      if (m_listEmpty.FindNode(dwIndex))
+      {
+        m_listRegist.PushNode_Back(dwIndex);
+      }
+    }
+  }
+
+  return 1;
 }
 
 

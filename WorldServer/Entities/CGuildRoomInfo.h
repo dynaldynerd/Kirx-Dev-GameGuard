@@ -5,6 +5,7 @@
 #include <vector>
 
 class CMapData;
+struct tagTIMESTAMP_STRUCT;
 struct _LAYER_SET;
 struct _dummy_position;
 
@@ -35,7 +36,25 @@ public:
   void SetRoomMapInfo(CMapData *pMap, unsigned __int16 wMapLayer, unsigned __int8 byRoomType, unsigned __int8 byRace);
   bool IsRent();
   unsigned int GetGuildSerial();
+  CMapData *GetMapData();
+  unsigned __int16 GetMapLayer();
+  unsigned __int8 GetRoomType();
+  bool GetMapPos(float *pPos);
+  int GetRestTime();
+  char IsMemberIn(int n, unsigned int dwCharSerial);
+  char SetRoom_Restore(int iGuildInx, unsigned int dwGuildSerial, tagTIMESTAMP_STRUCT *ts);
+  char SetRoom(int iGuildInx, unsigned int dwGuildSerial);
+  void SetRoomTime();
+  void SetRoomTime_Restore(tagTIMESTAMP_STRUCT *ts);
+  void SendDQS_RoomInsert();
+  void SendDQS_RoomUpdate();
+  void SendMsg_RoomTimeOver();
+  void OutAllRoomMember();
+  void TimeOver();
+  void RoomTimer();
+  int RoomIn(int n, unsigned int dwCharSerial);
   int RoomOut(int n, unsigned int dwCharSerial);
+  char SetPlayerOut(int n, unsigned int dwCharSerial, int iMemberIdx);
 
   bool m_bRent;
   unsigned __int8 m_byRoomType;

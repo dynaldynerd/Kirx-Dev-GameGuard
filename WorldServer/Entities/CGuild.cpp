@@ -2,9 +2,13 @@
 
 #include "CGuild.h"
 
+#include <cstdlib>
+
 #include "CGuildMasterEffect.h"
 #include "CMgrGuildHistory.h"
+#include "CNationSettingManager.h"
 #include "CNetworkEX.h"
+#include "CGuildRoomSystem.h"
 #include "CUnmannedTraderTaxRateManager.h"
 #include "GlobalObjects.h"
 #include "CGuildBattleController.h"
@@ -16,9 +20,188 @@
 #include "guild_member_refresh_data.h"
 #include "guild_alter_member_grade_inform_zocl.h"
 #include "guild_alter_member_state_inform_zocl.h"
+#include "guild_vote_process_inform_zocl.h"
 
 CGuildList CGuild::s_GuildList;
 CMgrGuildHistory CGuild::s_MgrHistory;
+
+static const char kUnknownGuildEmblemName[] = "<unknown>";
+
+namespace
+{
+  struct GuildRankSortEntry
+  {
+    unsigned __int8 byGrade;
+    unsigned int dwPvpPoint;
+    int nIndex;
+  };
+
+  int CompareGradeAndPvpPoint(const void *arg1, const void *arg2)
+  {
+    GuildRankSortEntry lhs{};
+    GuildRankSortEntry rhs{};
+    memcpy_0(&lhs, arg1, sizeof(lhs));
+    memcpy_0(&rhs, arg2, sizeof(rhs));
+
+    if (lhs.byGrade == rhs.byGrade)
+    {
+      if (lhs.dwPvpPoint == rhs.dwPvpPoint)
+      {
+        return 0;
+      }
+      return lhs.dwPvpPoint >= rhs.dwPvpPoint ? -1 : 1;
+    }
+
+    return lhs.byGrade >= rhs.byGrade ? -1 : 1;
+  }
+
+  void SortRankInGuild(CGuild *pGuild)
+  {
+    GuildRankSortEntry entries[50]{};
+
+    for (int j = 0; j < pGuild->m_nMemberNum; ++j)
+    {
+      _guild_member_info *member = &pGuild->m_MemberData[j];
+      if (member->IsFill())
+      {
+        entries[j].byGrade = member->byGrade;
+        entries[j].dwPvpPoint = member->dwPvpPoint;
+        entries[j].nIndex = j;
+      }
+    }
+
+    qsort(entries, pGuild->m_nMemberNum, sizeof(GuildRankSortEntry), CompareGradeAndPvpPoint);
+
+    for (int j = 0; j < pGuild->m_nMemberNum; ++j)
+    {
+      pGuild->m_MemberData[entries[j].nIndex].byRank = static_cast<unsigned __int8>(j);
+    }
+  }
+
+  void BuildBuddyPacket(CGuild *pGuild)
+  {
+    pGuild->m_Buddy_List->wDataSize = 0;
+
+    struct GuildBuddyData
+    {
+      unsigned int dwSerial;
+      unsigned __int16 wMapCode;
+      unsigned __int8 byRegionIndex;
+    };
+
+    GuildBuddyData buddyData[50]{};
+    unsigned __int8 memberCount = 0;
+
+    for (int j = 0; j < 50; ++j)
+    {
+      _guild_member_info *member = &pGuild->m_MemberData[j];
+      if (member->IsFill() && member->pPlayer)
+      {
+        buddyData[memberCount].dwSerial = member->dwSerial;
+        buddyData[memberCount].wMapCode = member->pPlayer->m_wRegionMapIndex;
+        buddyData[memberCount].byRegionIndex = static_cast<unsigned __int8>(member->pPlayer->m_wRegionIndex);
+        ++memberCount;
+      }
+    }
+
+    int dataSize = 0;
+    void *sData = pGuild->m_Buddy_List->sData;
+
+    memcpy_0(sData, &memberCount, 1u);
+    sData = static_cast<char *>(sData) + 1;
+    ++dataSize;
+
+    for (int j = 0; j < memberCount; ++j)
+    {
+      memcpy_0(sData, &buddyData[j].dwSerial, 4u);
+      sData = static_cast<char *>(sData) + 4;
+      dataSize += 4;
+
+      memcpy_0(sData, &buddyData[j].wMapCode, 2u);
+      sData = static_cast<char *>(sData) + 2;
+      dataSize += 2;
+
+      memcpy_0(sData, &buddyData[j].byRegionIndex, 1u);
+      sData = static_cast<char *>(sData) + 1;
+      ++dataSize;
+    }
+
+    pGuild->m_Buddy_List->wDataSize = static_cast<unsigned __int16>(dataSize);
+  }
+
+  void SendMsg_VoteStop(CGuild *pGuild, unsigned int dwMatterVoteSynKey)
+  {
+    char szMsg[4]{};
+    *reinterpret_cast<unsigned int *>(szMsg) = dwMatterVoteSynKey;
+
+    unsigned __int8 pbyType[2] = {27, 28};
+    for (int j = 0; j < 50; ++j)
+    {
+      _guild_member_info *member = &pGuild->m_MemberData[j];
+      if (member->IsFill() && member->pPlayer)
+      {
+        g_Network.m_pProcess[0]->LoadSendMsg(member->pPlayer->m_ObjID.m_wIndex, pbyType, szMsg, 4u);
+      }
+    }
+  }
+
+  void SendMsg_VoteProcessInform_Continue(CGuild *pGuild, _guild_member_info *pMem)
+  {
+    if (!pGuild->m_bNowProcessSgtMter
+      || !pMem->pPlayer
+      || (pGuild->m_SuggestedMatter.byMatterType == 5 && pMem->byClassInGuild != 2))
+    {
+      return;
+    }
+
+    int loginSeniorNum = 0;
+    for (int j = 0; j < pGuild->m_SuggestedMatter.nTotal_VotableMemNum; ++j)
+    {
+      if (pGuild->m_SuggestedMatter.VotableMem[j]->pPlayer)
+      {
+        ++loginSeniorNum;
+      }
+    }
+
+    _guild_vote_process_inform_zocl msg{};
+    msg.bStart = false;
+    msg.byMatterType = pGuild->m_SuggestedMatter.byMatterType;
+    msg.dwMatterDst = pGuild->m_SuggestedMatter.dwMatterDst;
+    msg.dwMatterObj1 = pGuild->m_SuggestedMatter.dwMatterObj1;
+    msg.dwMatterObj2 = pGuild->m_SuggestedMatter.dwMatterObj2;
+    msg.dwMatterObj3 = pGuild->m_SuggestedMatter.dwMatterObj3;
+    msg.dwMatterVoteSynKey = pGuild->m_SuggestedMatter.dwMatterVoteSynKey;
+    msg.dwSuggesterSerial = pGuild->m_dwSuggesterSerial;
+    msg.byTotalSeniorNum = static_cast<unsigned __int8>(pGuild->m_SuggestedMatter.nTotal_VotableMemNum);
+    msg.byLoginSeniorNum = static_cast<unsigned __int8>(loginSeniorNum);
+    msg.bActed = pMem->bVote;
+    msg.byApprPoint = pGuild->m_SuggestedMatter.byVoteState[0];
+    msg.byOppoPoint = pGuild->m_SuggestedMatter.byVoteState[1];
+    msg.byCommentLen = static_cast<unsigned __int8>(strlen_0(pGuild->m_SuggestedMatter.wszComment));
+    strcpy_0(msg.wszComment, pGuild->m_SuggestedMatter.wszComment);
+
+    if (msg.byMatterType == 4)
+    {
+      strcpy_0(msg.wszDestGuildName, pGuild->m_GuildBattleSugestMatter.pkDest->m_wszName);
+      msg.byDestGuildGrade = pGuild->m_GuildBattleSugestMatter.pkDest->m_byGrade;
+      msg.byDestGuildRace = pGuild->m_GuildBattleSugestMatter.pkDest->m_byRace;
+    }
+    else if (msg.byMatterType == 5)
+    {
+      strcpy_0(msg.wszDestGuildName, pGuild->m_GuildBattleSugestMatter.pkSrc->m_wszName);
+      msg.byDestGuildGrade = pGuild->m_GuildBattleSugestMatter.pkSrc->m_byGrade;
+      msg.byDestGuildRace = pGuild->m_GuildBattleSugestMatter.pkSrc->m_byRace;
+    }
+
+    unsigned __int8 pbyType[2] = {27, 24};
+    const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      pMem->pPlayer->m_ObjID.m_wIndex,
+      pbyType,
+      reinterpret_cast<char *>(&msg.bStart),
+      nLen);
+  }
+}
 
 _guild_master_info::_guild_master_info()
 {
@@ -45,6 +228,66 @@ void CGuild::Init(unsigned int index)
 bool CGuild::IsFill()
 {
   return m_dwSerial != static_cast<unsigned int>(-1);
+}
+
+void CGuild::ReleaseTemp()
+{
+  m_bDBWait = false;
+}
+
+void CGuild::EstGuild(
+  unsigned int dwSerial,
+  char *pwszName,
+  unsigned __int8 byRace,
+  int nMemberNum,
+  _guild_member_info *pEstMember)
+{
+  m_dwSerial = dwSerial;
+  strcpy_0(m_wszName, pwszName);
+  W2M(m_wszName, m_aszName, 0x11u);
+
+  s_MgrHistory.GetNewFileName(dwSerial, m_szHistoryFileName);
+
+  m_nApplierNum = 0;
+  m_nMemberNum = nMemberNum;
+  memcpy_0(m_MemberData, pEstMember, sizeof(_guild_member_info) * nMemberNum);
+  m_bDBWait = false;
+  m_bIOWait = false;
+  m_bRankWait = false;
+  m_byMoneyOutputKind = 0;
+  m_dwEmblemBack = static_cast<unsigned int>(-1);
+  m_dwEmblemMark = static_cast<unsigned int>(-1);
+  m_dTotalDalant = 0.0;
+  m_dTotalGold = 0.0;
+  m_nIOMoneyHistoryNum = 0;
+  m_byGrade = 1;
+  m_byRace = byRace;
+  m_MasterData.init();
+
+  SortRankInGuild(this);
+  m_bPossibleElectMaster = true;
+
+  MakeDownMemberPacket();
+  MakeDownApplierPacket();
+  MakeQueryInfoPacket();
+  MakeMoneyIOPacket();
+  BuildBuddyPacket(this);
+
+  m_dwLastLoopTime = GetLoopTime();
+
+  char *pwszMasterName = nullptr;
+  if (m_MasterData.pMember)
+  {
+    pwszMasterName = m_MasterData.pMember->wszName;
+  }
+  else
+  {
+    CNationSettingManager *nationMgr = CTSingleton<CNationSettingManager>::Instance();
+    pwszMasterName = nationMgr->GetNoneString();
+  }
+
+  s_GuildList.AddList(m_byRace, m_byGrade, m_wszName, pwszMasterName);
+  s_MgrHistory.start_guild(this, m_szHistoryFileName);
 }
 
 void CGuild::ClearVote()
@@ -76,6 +319,72 @@ void CGuild::StartRankJob()
 void CGuild::EndRankJob()
 {
   m_bRankWait = false;
+}
+
+void CGuild::SendMsg_DownPacket(unsigned __int8 bDowntype, _guild_member_info *pMem)
+{
+  if (!pMem->pPlayer)
+  {
+    return;
+  }
+
+  m_DownPacket_Member->byDownType = bDowntype;
+
+  int guildRoomRestTime = 0;
+  unsigned __int8 guildRoomType = 2;
+
+  CGuildRoomSystem *guildRoomSystem = CGuildRoomSystem::GetInstance();
+  guildRoomType = guildRoomSystem->GetRoomType(m_dwSerial);
+  guildRoomSystem->GetRestTime(m_dwSerial, &guildRoomRestTime);
+
+  m_DownPacket_Member->byGuildRoomType = guildRoomType;
+  m_DownPacket_Member->GuildRoomRestTime = guildRoomRestTime;
+
+  unsigned __int8 memberType[2] = {27, 3};
+  const unsigned __int16 memberLen =
+    static_cast<unsigned __int16>(sizeof(*m_DownPacket_Member) - sizeof(m_DownPacket_Member->sData) + m_DownPacket_Member->wDataSize);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    pMem->pPlayer->m_ObjID.m_wIndex,
+    memberType,
+    reinterpret_cast<char *>(m_DownPacket_Member),
+    memberLen);
+
+  if (pMem->byClassInGuild == 1 || pMem->byClassInGuild == 2)
+  {
+    unsigned __int8 applierType[2] = {27, 4};
+    const unsigned __int16 applierLen =
+      static_cast<unsigned __int16>(sizeof(*m_DownPacket_Applier) - sizeof(m_DownPacket_Applier->sData) + m_DownPacket_Applier->wDataSize);
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      pMem->pPlayer->m_ObjID.m_wIndex,
+      applierType,
+      reinterpret_cast<char *>(m_DownPacket_Applier),
+      applierLen);
+  }
+
+  if (m_bNowProcessSgtMter)
+  {
+    SendMsg_VoteProcessInform_Continue(this, pMem);
+  }
+
+  unsigned __int8 moneyType[2] = {27, 41};
+  const unsigned __int16 moneyLen =
+    static_cast<unsigned __int16>(sizeof(*m_MoneyIO_List) - sizeof(m_MoneyIO_List->sData) + m_MoneyIO_List->wDataSize);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    pMem->pPlayer->m_ObjID.m_wIndex,
+    moneyType,
+    reinterpret_cast<char *>(m_MoneyIO_List),
+    moneyLen);
+
+  BuildBuddyPacket(this);
+
+  unsigned __int8 buddyType[2] = {27, 43};
+  const unsigned __int16 buddyLen =
+    static_cast<unsigned __int16>(sizeof(*m_Buddy_List) - sizeof(m_Buddy_List->sData) + m_Buddy_List->wDataSize);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    pMem->pPlayer->m_ObjID.m_wIndex,
+    buddyType,
+    reinterpret_cast<char *>(m_Buddy_List),
+    buddyLen);
 }
 
 void CGuild::SendMsg_VoteComplete(bool bPass)
@@ -188,6 +497,37 @@ void CGuild::SendMsg_GuildMemberLogin(unsigned int dwSerial, unsigned __int16 wM
   }
 }
 
+_guild_applier_info *CGuild::GetApplierFromSerial(unsigned int dwApplierSerial)
+{
+  for (int j = 0; j < 32; ++j)
+  {
+    if (m_ApplierData[j].IsFill() && m_ApplierData[j].pPlayer->m_dwObjSerial == dwApplierSerial)
+    {
+      return &m_ApplierData[j];
+    }
+  }
+
+  return nullptr;
+}
+
+void CGuild::SendMsg_GuildRoomRented(char byRoomType)
+{
+  char szMsg[1] = {byRoomType};
+  unsigned __int8 pbyType[2] = {27, 110};
+
+  for (int j = 0; j < 50; ++j)
+  {
+    if (m_MemberData[j].IsFill() && m_MemberData[j].pPlayer)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        m_MemberData[j].pPlayer->m_ObjID.m_wIndex,
+        pbyType,
+        szMsg,
+        1u);
+    }
+  }
+}
+
 char CGuild::PopApplier(unsigned int dwApplierSerial, unsigned __int8 byDelCode)
 {
   for (int j = 0; j < 32; ++j)
@@ -227,6 +567,157 @@ char CGuild::PushApplier(CPlayer *pApplier)
   return 0;
 }
 
+_guild_member_info *CGuild::PushMember(_guild_member_info *pSheet)
+{
+  if (m_nMemberNum >= 50)
+  {
+    return nullptr;
+  }
+
+  for (int j = 0; j < 50; ++j)
+  {
+    if (!m_MemberData[j].IsFill())
+    {
+      memcpy_0(&m_MemberData[j], pSheet, sizeof(m_MemberData[j]));
+      m_MemberData[j].byRank = static_cast<unsigned __int8>(m_nMemberNum);
+      ++m_nMemberNum;
+      MakeDownMemberPacket();
+      return &m_MemberData[j];
+    }
+  }
+
+  return nullptr;
+}
+
+void CGuild::SendMsg_GuildJoinAcceptInform(_guild_member_info *p, unsigned int dwAcceptSerial)
+{
+  #pragma pack(push, 1)
+  struct GuildJoinAcceptMsg
+  {
+    unsigned int dwAcceptSerial;
+    unsigned int dwSerial;
+    char wszNameAndClassAndLv[19];
+    unsigned int dwPvpPoint;
+    unsigned __int8 byRank;
+  };
+  #pragma pack(pop)
+
+  GuildJoinAcceptMsg msg{};
+  msg.dwAcceptSerial = dwAcceptSerial;
+  msg.dwSerial = p->dwSerial;
+  strcpy_0(msg.wszNameAndClassAndLv, p->wszName);
+  msg.wszNameAndClassAndLv[17] = static_cast<char>(p->byClassInGuild);
+  msg.wszNameAndClassAndLv[18] = static_cast<char>(p->byLv);
+  msg.dwPvpPoint = p->dwPvpPoint;
+  msg.byRank = p->byRank;
+
+  unsigned __int8 pbyType[2] = {27, 15};
+
+  for (int j = 0; j < 50; ++j)
+  {
+    if (m_MemberData[j].IsFill() && m_MemberData[j].pPlayer)
+    {
+      if (p == &m_MemberData[j])
+      {
+        SendMsg_DownPacket(2u, &m_MemberData[j]);
+      }
+      else
+      {
+        g_Network.m_pProcess[0]->LoadSendMsg(
+          m_MemberData[j].pPlayer->m_ObjID.m_wIndex,
+          pbyType,
+          reinterpret_cast<char *>(&msg),
+          0x20u);
+      }
+    }
+  }
+}
+
+void CGuild::SendMsg_LeaveMember(unsigned int dwMemberSerial, char bSelf, char bPunish)
+{
+  #pragma pack(push, 1)
+  struct GuildLeaveMsg
+  {
+    char bSelf;
+    char bPunish;
+    unsigned int dwMemberSerial;
+  };
+  #pragma pack(pop)
+
+  GuildLeaveMsg msg{};
+  msg.bSelf = bSelf;
+  msg.bPunish = bPunish;
+  msg.dwMemberSerial = dwMemberSerial;
+
+  unsigned __int8 pbyType[2] = {27, 18};
+  for (int j = 0; j < 50; ++j)
+  {
+    if (m_MemberData[j].IsFill()
+      && m_MemberData[j].pPlayer
+      && dwMemberSerial != m_MemberData[j].pPlayer->m_dwObjSerial)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        m_MemberData[j].pPlayer->m_ObjID.m_wIndex,
+        pbyType,
+        reinterpret_cast<char *>(&msg),
+        6u);
+    }
+  }
+}
+
+char CGuild::PopMember(unsigned int dwMemberSerial)
+{
+  int memberIndex = -1;
+  for (int j = 0; j < 50; ++j)
+  {
+    if (m_MemberData[j].IsFill() && m_MemberData[j].dwSerial == dwMemberSerial)
+    {
+      memberIndex = j;
+      break;
+    }
+  }
+
+  if (memberIndex < 0)
+  {
+    return 0;
+  }
+
+  for (int k = 0; k < 3; ++k)
+  {
+    if (m_pGuildCommittee[k] && m_pGuildCommittee[k]->dwSerial == dwMemberSerial)
+    {
+      m_pGuildCommittee[k] = nullptr;
+      break;
+    }
+  }
+
+  m_MemberData[memberIndex].init();
+  --m_nMemberNum;
+  MakeDownMemberPacket();
+
+  if (m_bNowProcessSgtMter)
+  {
+    if (m_dwSuggesterSerial == dwMemberSerial)
+    {
+      InitVote();
+      SendMsg_VoteStop(this, m_SuggestedMatter.dwMatterVoteSynKey);
+    }
+
+    if (m_SuggestedMatter.byMatterType == 6 && dwMemberSerial == m_SuggestedMatter.dwMatterDst)
+    {
+      InitVote();
+      SendMsg_VoteStop(this, dwMemberSerial);
+    }
+  }
+
+  if (m_MasterData.dwSerial == dwMemberSerial && m_MasterData.IsFill())
+  {
+    DB_Update_GuildMaster(nullptr);
+  }
+
+  return 1;
+}
+
 unsigned __int8 CGuild::GetGrade()
 {
   return m_byGrade;
@@ -262,6 +753,16 @@ void CGuild::UpdateGrade(unsigned __int8 byGrade)
   }
 
   CGuild::s_GuildList.SetGrade(m_byRace, m_wszName, m_byGrade);
+}
+
+void CGuild::UpdateEmblem(unsigned int dwEmblemBack, unsigned int dwEmblemMark)
+{
+  m_dwEmblemBack = dwEmblemBack;
+  m_dwEmblemMark = dwEmblemMark;
+  MakeQueryInfoPacket();
+  MakeDownMemberPacket();
+  m_byMoneyOutputKind = 0;
+  SendMsg_GuildInfoUpdateInform();
 }
 
 void CGuild::SendMsg_AddJoinApplier(_guild_applier_info *p)
@@ -512,6 +1013,28 @@ void CGuild::SendMsg_GuildInfoUpdateInform()
   }
 }
 
+void CGuild::SendMsg_GuildDisjointInform()
+{
+  if (m_nApplierNum <= 0)
+  {
+    return;
+  }
+
+  char szMsg[4]{};
+  *reinterpret_cast<unsigned int *>(szMsg) = m_dwSerial;
+
+  unsigned __int8 pbyType[2] = {27, 42};
+  for (int j = 0; j < 32; ++j)
+  {
+    _guild_applier_info *applier = &m_ApplierData[j];
+    if (applier->IsFill())
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(applier->pPlayer->m_ObjID.m_wIndex, pbyType, szMsg, 4u);
+      applier->pPlayer->m_Param.m_pApplyGuild = nullptr;
+    }
+  }
+}
+
 void CGuild::RefreshGuildMemberData(_guild_member_refresh_data *pRefreshMember)
 {
   for (int j = 0; j < m_nMemberNum; ++j)
@@ -588,6 +1111,255 @@ void CGuild::SendMsg_AlterMemberGrade()
       g_Network.m_pProcess[0]->LoadSendMsg(m_MemberData[j].pPlayer->m_ObjID.m_wIndex, pbyType, (char *)&msg, nLen);
     }
   }
+}
+
+unsigned __int8 CGuild::ManageProposeGuildBattle(
+  unsigned int dwDestGuild,
+  unsigned int dwStartTimeIdx,
+  unsigned int dwMemberCountIdx,
+  unsigned int dwMapIdx)
+{
+  if (m_dTotalGold < 5000.0)
+  {
+    return 116;
+  }
+
+  unsigned __int8 retCode =
+    CGuildBattleController::Instance()->IsAvailableSuggest(this, dwDestGuild, dwStartTimeIdx, dwMemberCountIdx, dwMapIdx);
+  if (!retCode)
+  {
+    CGuild *destGuild = GetGuildDataFromSerial(g_Guild, MAX_GUILD, dwDestGuild);
+    if (!destGuild)
+    {
+      return 111;
+    }
+
+    retCode = destGuild->CheckGuildBattleSuggestRequestToDestGuild(
+      m_dwSerial,
+      dwStartTimeIdx,
+      dwMemberCountIdx,
+      dwMapIdx);
+    if (!retCode)
+    {
+      m_GuildBattleSugestMatter.pkSrc = this;
+      m_GuildBattleSugestMatter.pkDest = destGuild;
+      m_GuildBattleSugestMatter.eState = _guild_battle_suggest_matter::BATTLE_REQUEST_SUGGEST;
+      m_GuildBattleSugestMatter.dwStartTime = dwStartTimeIdx;
+      m_GuildBattleSugestMatter.dwNumber = dwMemberCountIdx;
+      m_GuildBattleSugestMatter.dwMapIdx = dwMapIdx;
+      PushDQSSourceGuildOutputGuildBattleCost();
+    }
+  }
+  return retCode;
+}
+
+unsigned __int8 CGuild::ManageExpulseMember(unsigned int dwMemberSerial)
+{
+  _guild_member_info *member = GetMemberFromSerial(dwMemberSerial);
+  if (!member)
+  {
+    return static_cast<unsigned __int8>(-54);
+  }
+
+  if (member->pPlayer)
+  {
+    member->pPlayer->m_Param.m_bGuildLock = true;
+  }
+
+  _qry_case_forceleave qry{};
+  qry.in_leaverserial = dwMemberSerial;
+  qry.in_guildIndex = m_nIndex;
+  qry.in_guildserial = m_dwSerial;
+  qry.in_seniornum = static_cast<int>(GetMemberNum() - 1);
+  qry.in_apprnum = static_cast<unsigned __int8>(GetMemberNum() - 1);
+  qry.in_MemberNum = static_cast<int>(GetMemberNum() - 1);
+  qry.in_bPunish = false;
+
+  const int nSize = static_cast<int>(qry.size());
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x12u, reinterpret_cast<char *>(&qry), nSize);
+  return 0;
+}
+
+unsigned __int8 CGuild::ManagePopGuildMoney(unsigned int dwDest, unsigned int dwDalant, unsigned int dwGold)
+{
+  _guild_member_info *member = GetMemberFromSerial(dwDest);
+  if (!member || !member->pPlayer)
+  {
+    return static_cast<unsigned __int8>(-54);
+  }
+
+  if (dwDalant > 0xB2D05E00u || dwGold > 0xB2D05E00u)
+  {
+    return 101;
+  }
+
+  if (static_cast<long double>(dwDalant) > GetTotalDalant()
+    || static_cast<long double>(dwGold) > GetTotalGold())
+  {
+    return 102;
+  }
+
+  const unsigned int curDalant = member->pPlayer->m_Param.GetDalant();
+  if (!CanAddMoneyForMaxLimMoney(dwDalant, curDalant))
+  {
+    return 105;
+  }
+
+  const unsigned int curGold = member->pPlayer->m_Param.GetGold();
+  if (!CanAddMoneyForMaxLimGold(dwGold, curGold))
+  {
+    return 105;
+  }
+
+  _qry_case_outputgmoney qry{};
+  qry.in_poperserial = dwDest;
+  qry.tmp_guildindex = m_nIndex;
+  qry.in_guildserial = m_dwSerial;
+  qry.dwSubDalant = dwDalant;
+  qry.dwSubGold = dwGold;
+  qry.out_totalgold = 0.0;
+  qry.out_totaldalant = 0.0;
+  qry.in_date[0] = GetCurrentMonth();
+  qry.in_date[1] = GetCurrentDay();
+  qry.in_date[2] = GetCurrentHour();
+  qry.in_date[3] = GetCurrentMin();
+  strcpy_0(qry.in_w_popername, member->pPlayer->m_Param.GetCharNameW());
+
+  const int nSize = static_cast<int>(qry.size());
+  if (!g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x14u, reinterpret_cast<char *>(&qry), nSize))
+  {
+    return 6;
+  }
+
+  m_bIOWait = true;
+  return 0;
+}
+
+unsigned __int8 CGuild::ManageBuyGuildEmblem(unsigned int dwBuyer, unsigned int dwBack, unsigned int dwMark)
+{
+  if (GetGrade() < 2u)
+  {
+    return static_cast<unsigned __int8>(-53);
+  }
+
+  const long double totalDalant = GetTotalDalant();
+  const double emblemDalant = static_cast<double>(static_cast<int>(g_Main.m_GuildCreateEventInfo.GetEmblemDalant()));
+  if (emblemDalant > totalDalant)
+  {
+    return 102;
+  }
+
+  for (int j = 0; j < MAX_GUILD; ++j)
+  {
+    if ((g_Guild[j].IsFill() || g_Guild[j].m_bDBWait)
+      && dwBack == g_Guild[j].m_dwEmblemBack
+      && dwMark == g_Guild[j].m_dwEmblemMark)
+    {
+      return 65;
+    }
+  }
+
+  _qry_case_buyemblem qry{};
+  qry.in_guildserial = m_dwSerial;
+  qry.in_emblemback = dwBack;
+  qry.in_emblemmark = dwMark;
+  qry.in_emblemdlant = -static_cast<int>(g_Main.m_GuildCreateEventInfo.GetEmblemDalant());
+  qry.tmp_guildindex = m_nIndex;
+  qry.in_suggestorSerial = dwBuyer;
+  strcpy_0(qry.tmp_w_suggestorname, kUnknownGuildEmblemName);
+  qry.in_date[0] = GetCurrentMonth();
+  qry.in_date[1] = GetCurrentDay();
+  qry.in_date[2] = GetCurrentHour();
+  qry.in_date[3] = GetCurrentMin();
+  qry.byProcRet = 0;
+
+  const int nSize = static_cast<int>(qry.size());
+  if (!g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x15u, reinterpret_cast<char *>(&qry), nSize))
+  {
+    return 6;
+  }
+
+  m_bIOWait = true;
+  return 0;
+}
+
+unsigned __int8 CGuild::ManageGuildCommittee(unsigned int dwDestSerial, bool bAppoint)
+{
+  _guild_member_info *member = GetMemberFromSerial(dwDestSerial);
+  if (!member)
+  {
+    return static_cast<unsigned __int8>(-54);
+  }
+
+  if (member->pPlayer)
+  {
+    member->pPlayer->m_Param.m_bGuildLock = true;
+  }
+
+  if (bAppoint)
+  {
+    if (member->byClassInGuild == 1)
+    {
+      return static_cast<unsigned __int8>(-82);
+    }
+    if (member->byClassInGuild == 2)
+    {
+      return static_cast<unsigned __int8>(-81);
+    }
+
+    int emptyIndex = -1;
+    for (int j = 0; j < 3; ++j)
+    {
+      if (!m_pGuildCommittee[j])
+      {
+        emptyIndex = j;
+        break;
+      }
+    }
+    if (emptyIndex == -1)
+    {
+      return static_cast<unsigned __int8>(-80);
+    }
+
+    _qry_case_update_user_guild_data qry{};
+    qry.dwAvatorSerial = dwDestSerial;
+    qry.dwGuildIndex = m_nIndex;
+    qry.dwGuildSerial = m_dwSerial;
+    qry.byGrade = 1;
+    const int nSize = static_cast<int>(qry.size());
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x8Fu, reinterpret_cast<char *>(&qry), nSize);
+  }
+  else
+  {
+    if (member->byClassInGuild != 1)
+    {
+      return static_cast<unsigned __int8>(-79);
+    }
+
+    int foundIndex = -1;
+    for (int k = 0; k < 3; ++k)
+    {
+      if (m_pGuildCommittee[k] && m_pGuildCommittee[k]->dwSerial == dwDestSerial)
+      {
+        foundIndex = k;
+        break;
+      }
+    }
+    if (foundIndex == -1)
+    {
+      return static_cast<unsigned __int8>(-79);
+    }
+
+    _qry_case_update_user_guild_data qry{};
+    qry.dwAvatorSerial = dwDestSerial;
+    qry.dwGuildIndex = m_nIndex;
+    qry.dwGuildSerial = m_dwSerial;
+    qry.byGrade = 0;
+    const int nSize = static_cast<int>(qry.size());
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x8Fu, reinterpret_cast<char *>(&qry), nSize);
+  }
+
+  return 0;
 }
 
 unsigned __int8 CGuild::ManageAcceptORRefuseGuildBattle(bool bAccept)
@@ -774,6 +1546,30 @@ unsigned __int8 CGuild::CheckGuildBattleSuggestRequestToDestGuild(
   return 111;
 }
 
+void CGuild::SetCopmlteGuildBattleSuggest()
+{
+  m_GuildBattleSugestMatter.eState = _guild_battle_suggest_matter::COMPLETE_BATTLE_REQUEST;
+}
+
+unsigned __int8 CGuild::SrcGuildIsAvailableBattleRequestState()
+{
+  switch (m_GuildBattleSugestMatter.eState)
+  {
+    case _guild_battle_suggest_matter::WAIT_BATTLE_REQUEST:
+      return 0;
+    case _guild_battle_suggest_matter::BATTLE_REQUEST_SUGGEST:
+      return 61;
+    case _guild_battle_suggest_matter::COMPLETE_REQUEST:
+      return static_cast<unsigned __int8>(-105);
+    case _guild_battle_suggest_matter::APPLY_BATTLE_REQUEST_SUGGEST:
+      return static_cast<unsigned __int8>(-104);
+    case _guild_battle_suggest_matter::COMPLETE_BATTLE_REQUEST:
+      return static_cast<unsigned __int8>(-103);
+    default:
+      return 110;
+  }
+}
+
 unsigned __int8 CGuild::DestGuildIsAvailableBattleRequestState()
 {
   switch (m_GuildBattleSugestMatter.eState)
@@ -868,6 +1664,30 @@ void CGuild::PushDQSInGuildBattleCost()
 
   const int nSize = qry.size();
   g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x25u, reinterpret_cast<char *>(&qry), nSize);
+  m_bIOWait = true;
+}
+
+void CGuild::PushDQSSourceGuildOutputGuildBattleCost()
+{
+  _qry_case_src_guild_out_guildbattlecost qry{};
+  qry.dwGuildIndex = m_nIndex;
+  qry.dwGuildSerial = m_dwSerial;
+  qry.dwSubDalant = 0;
+  qry.dwSubGold = 5000;
+  qry.out_totalgold = 0.0;
+  qry.out_totaldalant = 0.0;
+  qry.byDate[0] = GetCurrentMonth();
+  qry.byDate[1] = GetCurrentDay();
+  qry.byDate[2] = GetCurrentHour();
+  qry.byDate[3] = GetCurrentMin();
+  qry.dwSrcGuildSerial = m_dwSerial;
+  qry.dwStartTimeInx = m_GuildBattleSugestMatter.dwStartTime;
+  qry.dwMemberCntInx = m_GuildBattleSugestMatter.dwNumber;
+  qry.dwMapInx = m_GuildBattleSugestMatter.dwMapIdx;
+  qry.byProcRet = 0;
+
+  const int nSize = static_cast<int>(qry.size());
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x26u, reinterpret_cast<char *>(&qry), nSize);
   m_bIOWait = true;
 }
 
@@ -1050,23 +1870,6 @@ void CGuild::SendMsg_IOMoney(
   }
 }
 
-unsigned int CGuild::GetGuildMasterSerial()
-{
-  return m_MasterData.dwSerial;
-}
-
-_guild_member_info *CGuild::GetMemberFromSerial(unsigned int dwMemberSerial)
-{
-  for (int j = 0; j < 50; ++j)
-  {
-    if (_guild_member_info::IsFill(&m_MemberData[j]) && m_MemberData[j].dwSerial == dwMemberSerial)
-    {
-      return &m_MemberData[j];
-    }
-  }
-  return nullptr;
-}
-
 void CGuild::SetGreetingmsg_GUILD(char *wszgreetmsg)
 {
   _qry_case_guild_greetingmsg qry{};
@@ -1078,7 +1881,7 @@ void CGuild::SetGreetingmsg_GUILD(char *wszgreetmsg)
 
   strcpy_s(qry.in_guildgreetingmsg, 0x100u, m_wszGreetingMsg);
   qry.in_guildserial = m_dwSerial;
-  const int size = qry.size();
+  const int size = static_cast<int>(sizeof(qry));
   g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x4Cu, reinterpret_cast<char *>(&qry), size);
 }
 
@@ -1090,6 +1893,125 @@ long double CGuild::GetTotalDalant()
 long double CGuild::GetTotalGold()
 {
   return m_dTotalGold;
+}
+
+char CGuild::DB_Update_GuildMaster(_guild_member_info *pNewguildMaster)
+{
+  _qry_case_update_guildmaster qry{};
+  qry.tmp_guildindex = m_nIndex;
+  qry.in_guildserial = m_dwSerial;
+  if (m_MasterData.IsFill())
+  {
+    qry.in_guild_prev_masterSerial = m_MasterData.dwSerial;
+    qry.in_guild_prev_masterPrevGrade = m_MasterData.byPrevGrade;
+  }
+  else
+  {
+    qry.in_guild_prev_masterSerial = static_cast<unsigned int>(-1);
+    qry.in_guild_prev_masterPrevGrade = static_cast<unsigned __int8>(-1);
+  }
+
+  if (pNewguildMaster)
+  {
+    qry.in_guild_new_masterSerial = pNewguildMaster->dwSerial;
+    qry.in_guild_new_masterPrevGrade = pNewguildMaster->byClassInGuild;
+  }
+  else
+  {
+    qry.in_guild_new_masterSerial = static_cast<unsigned int>(-1);
+    qry.in_guild_new_masterPrevGrade = static_cast<unsigned __int8>(-1);
+  }
+
+  const int nSize = static_cast<int>(qry.size());
+  if (!g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x31u, reinterpret_cast<char *>(&qry), nSize))
+  {
+    return 0;
+  }
+  return 1;
+}
+
+void CGuild::DB_Update_GuildMaster_Complete(
+  unsigned int in_guild_prev_masterSerial,
+  unsigned __int8 in_guild_prev_masterPrevGrade,
+  unsigned int in_guild_new_masterSerial,
+  unsigned __int8 in_guild_new_masterPrevGrade)
+{
+  _guild_member_info *prevMember =
+    (in_guild_prev_masterSerial == static_cast<unsigned int>(-1))
+    ? nullptr
+    : GetMemberFromSerial(in_guild_prev_masterSerial);
+  _guild_member_info *newMember =
+    (in_guild_new_masterSerial == static_cast<unsigned int>(-1))
+    ? nullptr
+    : GetMemberFromSerial(in_guild_new_masterSerial);
+
+  _guild_alter_member_grade_inform_zocl msg{};
+  int alterCount = 0;
+
+  if (prevMember)
+  {
+    prevMember->byClassInGuild = 0;
+    msg.MemberList[alterCount].dwMemberSerial = prevMember->dwSerial;
+    msg.MemberList[alterCount].byRank = prevMember->byRank;
+    msg.MemberList[alterCount].byGrade = 0;
+    if (prevMember->pPlayer)
+    {
+      prevMember->pPlayer->m_Param.m_byClassInGuild = 0;
+      CGuildMasterEffect::GetInstance()->out_player(prevMember->pPlayer, m_byGrade);
+    }
+    ++alterCount;
+  }
+
+  m_MasterData.init();
+  m_bPossibleElectMaster = true;
+
+  if (newMember)
+  {
+    for (int j = 0; j < 3; ++j)
+    {
+      if (m_pGuildCommittee[j] && m_pGuildCommittee[j]->dwSerial == newMember->dwSerial)
+      {
+        m_pGuildCommittee[j] = nullptr;
+        break;
+      }
+    }
+
+    newMember->byClassInGuild = 2;
+    m_MasterData.pMember = newMember;
+    m_MasterData.dwSerial = newMember->dwSerial;
+    m_MasterData.byPrevGrade = in_guild_new_masterPrevGrade;
+
+    msg.MemberList[alterCount].dwMemberSerial = newMember->dwSerial;
+    msg.MemberList[alterCount].byRank = newMember->byRank;
+    msg.MemberList[alterCount].byGrade = 2;
+    if (newMember->pPlayer)
+    {
+      newMember->pPlayer->m_Param.m_byClassInGuild = 2;
+      CGuildMasterEffect::GetInstance()->in_player(newMember->pPlayer, m_byGrade);
+    }
+    m_bPossibleElectMaster = false;
+    ++alterCount;
+    s_GuildList.SetGuildMaster(m_byRace, m_wszName, m_MasterData.pMember->wszName);
+  }
+
+  MakeDownMemberPacket();
+  msg.byAlterMemberNum = static_cast<unsigned __int8>(alterCount);
+  if (alterCount)
+  {
+    unsigned __int8 pbyType[2] = {27, 32};
+    for (int k = 0; k < 50; ++k)
+    {
+      if (m_MemberData[k].IsFill() && m_MemberData[k].pPlayer)
+      {
+        const unsigned __int16 len = static_cast<unsigned __int16>(msg.size());
+        g_Network.m_pProcess[0]->LoadSendMsg(
+          m_MemberData[k].pPlayer->m_ObjID.m_wIndex,
+          pbyType,
+          reinterpret_cast<char *>(&msg),
+          len);
+      }
+    }
+  }
 }
 
 void CGuild::Complete_DB_Update_Committee(char *pData)
@@ -1180,6 +2102,30 @@ unsigned int CGuild::GetGuildMasterSerial()
   return m_MasterData.dwSerial;
 }
 
+char *CGuild::GetGuildMasterName()
+{
+  int memberCount = 0;
+
+  for (int j = 0; j < 50; ++j)
+  {
+    if (m_MemberData[j].IsFill())
+    {
+      if (m_MemberData[j].byClassInGuild == 2)
+      {
+        return m_MemberData[j].wszName;
+      }
+
+      ++memberCount;
+      if (memberCount >= m_nMemberNum)
+      {
+        break;
+      }
+    }
+  }
+
+  return nullptr;
+}
+
 void CGuild::SendMsg_ManageGuildCommitteeResult(char bAppoint, char *pwszCommitteeName)
 {
   struct CommitteeResultMsg
@@ -1246,6 +2192,60 @@ void CGuild::CompleteSelectMasterLastConn(unsigned int dwLastConnTime)
 unsigned int CGuild::GetMemberNum()
 {
   return static_cast<unsigned int>(m_nMemberNum);
+}
+
+void CGuild::Release()
+{
+  m_dwSerial = static_cast<unsigned int>(-1);
+  m_nMemberNum = 0;
+  m_nApplierNum = 0;
+  m_bNowProcessSgtMter = false;
+  m_nTempMemberNum = 0;
+  m_dTotalDalant = 0.0;
+  m_dTotalGold = 0.0;
+  m_dwEmblemBack = static_cast<unsigned int>(-1);
+  m_dwEmblemMark = static_cast<unsigned int>(-1);
+  m_nIOMoneyHistoryNum = 0;
+  m_MasterData.init();
+  m_dwGuildBattleTotWin = 0;
+  m_dwGuildBattleTotDraw = 0;
+  m_dwGuildBattleTotLose = 0;
+  m_bPossibleElectMaster = false;
+
+  for (int j = 0; j < 3; ++j)
+  {
+    m_pGuildCommittee[j] = nullptr;
+  }
+
+  memset_0(m_IOMoneyHistory, 0, sizeof(m_IOMoneyHistory));
+
+  m_wszName[0] = 0;
+  m_aszName[0] = 0;
+  m_byGrade = 0;
+  m_byRace = static_cast<unsigned __int8>(-1);
+  m_wszGreetingMsg[0] = 0;
+  m_dwSuggesterSerial = 0;
+
+  memset_0(&m_SuggestedMatter, 0, sizeof(m_SuggestedMatter));
+  m_GuildBattleSugestMatter.Clear();
+  m_bInGuildBattle = false;
+
+  if (m_DownPacket_Member)
+  {
+    memset_0(m_DownPacket_Member, 0, sizeof(*m_DownPacket_Member));
+  }
+
+  if (m_QueryPacket_Info)
+  {
+    memset_0(m_QueryPacket_Info, 0, sizeof(*m_QueryPacket_Info));
+  }
+
+  m_bDBWait = false;
+  m_bIOWait = false;
+  m_bRankWait = false;
+  m_byMoneyOutputKind = static_cast<unsigned __int8>(-1);
+  m_dwLastLoopTime = 0;
+  m_szHistoryFileName[0] = 0;
 }
 
 CGuild *GetGuildDataFromSerial(CGuild *pData, int nNum, unsigned int dwSerial)

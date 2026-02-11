@@ -9,6 +9,7 @@
 #include "raceboss_acc_winrate.h"
 #include "GlobalObjects.h"
 #include "DqsDbStructs.h"
+#include "WorldServerUtil.h"
 
 CRaceBossWinRate *CRaceBossWinRate::m_Inst = nullptr;
 
@@ -55,6 +56,55 @@ void CRaceBossWinRate::UpdateRaceBossWinRate()
   }
   m_byTotalBattleCnt = 0;
   Notify();
+}
+
+char CRaceBossWinRate::LoadBossCurrentWinRate()
+{
+  char outDay[48]{};
+  _SYSTEMTIME systemTime{};
+  GetLocalTime(&systemTime);
+
+  int subDay = 0;
+  if (systemTime.wDayOfWeek <= 1u)
+  {
+    if (systemTime.wDayOfWeek == 0)
+    {
+      subDay = 6;
+    }
+  }
+  else
+  {
+    subDay = systemTime.wDayOfWeek - 1;
+  }
+
+  GetSubDayStr(subDay, outDay);
+
+  for (int j = 0; j < 3; ++j)
+  {
+    CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
+    const unsigned int bossSerial = ranking->GetCurrentRaceBossSerial(static_cast<unsigned __int8>(j), 0);
+    if (bossSerial != static_cast<unsigned int>(-1))
+    {
+      unsigned int totalCnt = 0;
+      unsigned int winCnt = 0;
+      const unsigned __int8 result =
+        g_Main.m_pWorldDB->Select_RaceBossCurrentWinRate(j, outDay, &totalCnt, &winCnt);
+      if (result == 1)
+      {
+        return 0;
+      }
+
+      m_byTotalBattleCnt = static_cast<unsigned __int8>(totalCnt);
+      m_byWinCnt[j] = static_cast<unsigned __int8>(winCnt);
+    }
+  }
+
+  return 1;
+}
+
+bool CRaceBossWinRate::LoadDB()
+{
+  return LoadBossCurrentWinRate() && LoadBossAccmulationWinRate(nullptr) == 0;
 }
 
 unsigned __int8 CRaceBossWinRate::LoadBossAccmulationWinRate(_qry_case_raceboss_accumulation_winrate *pData)

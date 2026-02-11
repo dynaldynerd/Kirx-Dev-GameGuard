@@ -277,6 +277,47 @@ bool CMapData::GetRandPosInDummy(_dummy_position *pPos, float *pNewPos, bool bRe
     return true;
 }
 
+__int64 CMapData::GetResDummySector(int nDummyIndex, float *pCurPos)
+{
+  if (m_nResDumNum <= 0)
+  {
+    return 0xFFFFFFFFLL;
+  }
+
+  _res_dummy *dummy = &m_pResDummy[nDummyIndex];
+  if (!m_Dummy.IsInBBox(dummy->m_pDumPos->m_wLineIndex, pCurPos))
+  {
+    return 0xFFFFFFFFLL;
+  }
+
+  unsigned int sectorIndex = static_cast<unsigned int>(-1);
+  if (dummy->GetQualityGrade())
+  {
+    return 100;
+  }
+
+  _dummy_position *dumPos = dummy->m_pDumPos;
+  if (!m_Dummy.mDummy || !m_Dummy.mNum || dumPos->m_wLineIndex >= m_Dummy.mNum)
+  {
+    return 0xFFFFFFFFLL;
+  }
+
+  _EXT_DUMMY *extDummy = &m_Dummy.mDummy[dumPos->m_wLineIndex];
+  for (int j = 0; j < 3; ++j)
+  {
+    memcpy_0(extDummy->mBBmin, dummy->m_fMinLocal[j], sizeof(extDummy->mBBmin));
+    memcpy_0(extDummy->mBBmax, dummy->m_fMaxLocal[j], sizeof(extDummy->mBBmax));
+    if (m_Dummy.IsInBBox(dumPos->m_wLineIndex, pCurPos))
+    {
+      sectorIndex = static_cast<unsigned int>(j);
+      break;
+    }
+  }
+  memcpy_0(extDummy->mBBmin, dummy->m_fMinLocal[2], sizeof(extDummy->mBBmin));
+  memcpy_0(extDummy->mBBmax, dummy->m_fMaxLocal[2], sizeof(extDummy->mBBmax));
+  return sectorIndex;
+}
+
 bool CMapData::GetRandPosInRange(float *pStdPos, int nRange, float *pNewPos)
 {
   float crossPoint[3];

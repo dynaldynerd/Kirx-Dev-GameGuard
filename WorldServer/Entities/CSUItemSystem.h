@@ -10,6 +10,8 @@ public:
   static CSUItemSystem *Instance();
   bool SUItemSystem_Init();
   bool SUItemSystem_CheckData();
+  CSetItemType *GetCSetItemType();
+  int GetSetItemTableInfo(int dwSetItemEff, char *pStrCode, int nBufSize);
 
   void Class_Init();
 

@@ -14,6 +14,7 @@
 #include "QuestHappenEvent_fld.h"
 
 #include <cstring>
+#include <mmsystem.h>
 
 CRecordData *CQuestMgr::s_tblQuest = nullptr;
 CRecordData *CQuestMgr::s_tblQuestHappenEvent = nullptr;
@@ -21,6 +22,33 @@ CRecordData *CQuestMgr::s_tblQuestHappenEvent = nullptr;
 namespace
 {
   _quest_check_result s_QuestCKRet{};
+  _quest_fail_result s_QuestFTRet{};
+}
+
+void CQuestMgr::InitMgr(CPlayer *pMaster, _QUEST_DB_BASE *pQuestData)
+{
+  m_pMaster = pMaster;
+  m_pQuestData = pQuestData;
+  m_LastHappenEvent.init();
+  m_dwOldTimeoutChecktime = timeGetTime();
+
+  for (int j = 0; j < 3; ++j)
+  {
+    m_pTempHappenEvent[j].init();
+  }
+}
+
+void CQuestMgr::CheckFailLoop(int nFailCond, char *pszCode)
+{
+  if (!m_pMaster)
+  {
+    return;
+  }
+
+  for (int j = 0; j < 30; ++j)
+  {
+    CheckFailCondition(static_cast<unsigned __int8>(j), nFailCond, pszCode);
+  }
 }
 
 void _quest_check_result::init()
@@ -284,7 +312,7 @@ _quest_check_result *CQuestMgr::CheckReqAct(
       continue;
     }
 
-    _base_fld *record = CRecordData::GetRecord(CQuestMgr::s_tblQuest, slot->wIndex);
+    _base_fld *record = CQuestMgr::s_tblQuest->GetRecord(slot->wIndex);
     if (!record)
     {
       continue;
@@ -337,7 +365,7 @@ _quest_check_result *CQuestMgr::CheckReqAct(
       }
 
       if (std::strncmp(actBase + 132, "-1", 2) == 0
-        || CMapOperation::IsInRegion(&g_MapOper, actBase + 132, m_pMaster))
+        || g_MapOper.IsInRegion(actBase + 132, m_pMaster))
       {
         bool allowAct = true;
         const int reqCond = *reinterpret_cast<int *>(actBase + 268);
@@ -368,9 +396,8 @@ _quest_check_result *CQuestMgr::CheckReqAct(
             if (nActCode == 14
               && !DeleteQuestItem(actBase + 68, *reinterpret_cast<unsigned __int16 *>(actBase + 196)))
             {
-              const char *charName = CPlayerDB::GetCharNameA(&m_pMaster->m_Param);
-              CLogFile::Write(
-                &g_Main.m_logSystemError,
+              const char *charName = m_pMaster->m_Param.GetCharNameA();
+              g_Main.m_logSystemError.Write(
                 "CQuestMgr::CheckReqAct : DeleteQuestItem(%s, %d) : %s",
                 actBase + 68,
                 *reinterpret_cast<int *>(actBase + 196),
@@ -414,7 +441,7 @@ char CQuestMgr::CheckFailCondition(unsigned __int8 byQuestDBSlot, int nFailCond,
     return failed;
   }
 
-  _base_fld *record = CRecordData::GetRecord(CQuestMgr::s_tblQuest, slot->wIndex);
+  _base_fld *record = CQuestMgr::s_tblQuest->GetRecord(slot->wIndex);
   if (!record)
   {
     return failed;
@@ -465,20 +492,20 @@ char CQuestMgr::CheckFailCondition(unsigned __int8 byQuestDBSlot, int nFailCond,
     {
       m_pMaster->SendMsg_QuestFailure(static_cast<char>(nFailCond), static_cast<char>(byQuestDBSlot));
       DeleteQuestData(byQuestDBSlot);
-      CUserDB::Update_QuestDelete(m_pMaster->m_pUserDB, byQuestDBSlot);
+      m_pMaster->m_pUserDB->Update_QuestDelete(byQuestDBSlot);
 
       if (!*reinterpret_cast<int *>(&record[31].m_strCode[28]))
       {
         if (strcmp_0(&record[31].m_strCode[32], "-1") != 0)
         {
-          _dummy_position *pos = CMapData::GetDummyPostion(m_pMaster->m_pCurMap, &record[31].m_strCode[32]);
+          _dummy_position *pos = m_pMaster->m_pCurMap->GetDummyPostion(&record[31].m_strCode[32]);
           if (pos)
           {
             float newPos[3]{};
-            if (CMapData::GetRandPosInDummy(m_pMaster->m_pCurMap, pos, newPos, 1))
+            if (m_pMaster->m_pCurMap->GetRandPosInDummy(pos, newPos, 1))
             {
               m_pMaster->OutOfMap(m_pMaster->m_pCurMap, m_pMaster->m_wMapLayerIndex, 3, newPos);
-              const unsigned __int8 mapCode = CPlayerDB::GetMapCode(&m_pMaster->m_Param);
+              const unsigned __int8 mapCode = m_pMaster->m_Param.GetMapCode();
               m_pMaster->SendMsg_GotoRecallResult(0, mapCode, newPos, 4);
             }
           }
@@ -490,7 +517,7 @@ char CQuestMgr::CheckFailCondition(unsigned __int8 byQuestDBSlot, int nFailCond,
         return failed;
       }
 
-      _base_fld *nextRecord = CRecordData::GetRecord(CQuestMgr::s_tblQuest, &record[32].m_strCode[28]);
+      _base_fld *nextRecord = CQuestMgr::s_tblQuest->GetRecord(&record[32].m_strCode[28]);
       if (!nextRecord)
       {
         return failed;
@@ -516,7 +543,7 @@ char CQuestMgr::CheckFailCondition(unsigned __int8 byQuestDBSlot, int nFailCond,
           }
         }
 
-        CUserDB::Update_QuestInsert(m_pMaster->m_pUserDB, byQuestDBSlot, slot);
+        m_pMaster->m_pUserDB->Update_QuestInsert(byQuestDBSlot, slot);
         m_pMaster->SendMsg_InsertNextQuest(byQuestDBSlot, slot);
         return failed;
       }
@@ -534,7 +561,7 @@ char CQuestMgr::DeleteQuestItem(char *pszItemCode, unsigned __int16 wCount)
     return 0;
   }
 
-  _base_fld *record = CRecordData::GetRecordByHash(&g_Main.m_tblItemData[itemTableCode], pszItemCode, 2, 5);
+  _base_fld *record = g_Main.m_tblItemData[itemTableCode].GetRecordByHash(pszItemCode, 2, 5);
   if (!record)
   {
     return 0;
@@ -543,7 +570,7 @@ char CQuestMgr::DeleteQuestItem(char *pszItemCode, unsigned __int16 wCount)
   int leftCount = wCount;
   for (int index = 0; ; ++index)
   {
-    const unsigned __int8 bagNum = CPlayerDB::GetBagNum(&m_pMaster->m_Param);
+    const unsigned __int8 bagNum = m_pMaster->m_Param.GetBagNum();
     if (index >= 20 * bagNum)
     {
       break;
@@ -559,15 +586,14 @@ char CQuestMgr::DeleteQuestItem(char *pszItemCode, unsigned __int16 wCount)
       {
         const unsigned __int64 consume = item->m_dwDur > leftCount ? leftCount : item->m_dwDur;
         const unsigned __int64 newDur =
-          CPlayer::Emb_AlterDurPoint(m_pMaster, 0, index, -static_cast<int>(consume), true, true);
+          m_pMaster->Emb_AlterDurPoint(0, index, -static_cast<int>(consume), true, true);
         if (newDur)
         {
-          CPlayer::SendMsg_AdjustAmountInform(m_pMaster, 0, item->m_wSerial, newDur);
+          m_pMaster->SendMsg_AdjustAmountInform(0, item->m_wSerial, newDur);
         }
         else
         {
-          CMgrAvatorItemHistory::delete_npc_quest_item(
-            &CPlayer::s_MgrItemHistory,
+          CPlayer::s_MgrItemHistory.delete_npc_quest_item(
             m_pMaster->m_ObjID.m_wIndex,
             item,
             m_pMaster->m_szItemHistoryFileName);
@@ -576,9 +602,8 @@ char CQuestMgr::DeleteQuestItem(char *pszItemCode, unsigned __int16 wCount)
       }
       else
       {
-        CPlayer::Emb_DelStorage(m_pMaster, 0, index, false, true, "CQuestMgr::GiveItem() -- 1");
-        CMgrAvatorItemHistory::delete_npc_quest_item(
-          &CPlayer::s_MgrItemHistory,
+        m_pMaster->Emb_DelStorage(0, index, false, true, "CQuestMgr::GiveItem() -- 1");
+        CPlayer::s_MgrItemHistory.delete_npc_quest_item(
           m_pMaster->m_ObjID.m_wIndex,
           item,
           m_pMaster->m_szItemHistoryFileName);
@@ -603,7 +628,7 @@ char CQuestMgr::__CheckCond_Have(int nAmonut, char *pszItemCode)
     return 0;
   }
 
-  _base_fld *record = CRecordData::GetRecordByHash(&g_Main.m_tblItemData[itemTableCode], pszItemCode, 2, 5);
+  _base_fld *record = g_Main.m_tblItemData[itemTableCode].GetRecordByHash(pszItemCode, 2, 5);
   if (!record)
   {
     return 0;
@@ -612,7 +637,7 @@ char CQuestMgr::__CheckCond_Have(int nAmonut, char *pszItemCode)
   int count = 0;
   for (int index = 0; ; ++index)
   {
-    const unsigned __int8 bagNum = CPlayerDB::GetBagNum(&m_pMaster->m_Param);
+    const unsigned __int8 bagNum = m_pMaster->m_Param.GetBagNum();
     if (index >= 20 * bagNum)
     {
       break;
@@ -651,6 +676,12 @@ void CQuestMgr::DeleteQuestData(unsigned __int8 bySlot)
   }
 }
 
+bool CQuestMgr::CanGiveupQuest(unsigned __int8 byQuestDBSlot)
+{
+  _QUEST_DB_BASE::_LIST *slot = &m_pQuestData->m_List[byQuestDBSlot];
+  return slot->byQuestType != 0xFF && slot->byQuestType == 1;
+}
+
 char CQuestMgr::IsCompleteNpcQuest(char *pszCode, int bQuestRepeat)
 {
   for (int j = 0; j < 70; ++j)
@@ -673,7 +704,7 @@ char CQuestMgr::IsProcNpcQuest(char *pszCode)
     _QUEST_DB_BASE::_LIST *slot = &m_pQuestData->m_List[j];
     if (slot->byQuestType == 1)
     {
-      _base_fld *record = CRecordData::GetRecord(CQuestMgr::s_tblQuest, slot->wIndex);
+      _base_fld *record = CQuestMgr::s_tblQuest->GetRecord(slot->wIndex);
       if (record && std::strncmp(record->m_strCode, pszCode, 7) == 0)
       {
         return 1;
@@ -730,7 +761,7 @@ _Quest_fld *CQuestMgr::GetQuestFromEvent(unsigned __int8 bySelect)
   m_LastHappenEvent.init();
   if (recordCode)
   {
-    return reinterpret_cast<_Quest_fld *>(CRecordData::GetRecord(CQuestMgr::s_tblQuest, recordCode));
+    return reinterpret_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(recordCode));
   }
   return nullptr;
 }

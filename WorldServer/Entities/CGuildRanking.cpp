@@ -4,6 +4,9 @@
 
 #include "CLogFile.h"
 #include "GlobalObjects.h"
+#include "worlddb_guild_info.h"
+#include "worlddb_guild_member_info.h"
+#include "worlddb_guild_money_io_info.h"
 #include "worlddb_rankinguild_info.h"
 
 #include <algorithm>

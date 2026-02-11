@@ -34,7 +34,7 @@ bool AuthorityFilter(CHEAT_COMMAND *pCmd, CPlayer *pOne)
 {
   if (pOne)
   {
-    if (CMainThread::IsReleaseServiceMode(&g_Main))
+    if (g_Main.IsReleaseServiceMode())
     {
       const unsigned int useMask = 1u << pOne->m_byUserDgr;
       if ((useMask & static_cast<unsigned int>(pCmd->nUseDegree)) == 0)
@@ -68,7 +68,7 @@ bool ProcessCheatCommand(CPlayer *pOne, char *pwszCommand)
   if (strchr(pwszCommand, '%'))
   {
     sprintf(wszRespon, "%s >> FAIL(grammar or logic)", pwszCommand);
-    CPlayer::SendData_ChatTrans(pOne, 0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
+    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
     return true;
   }
 
@@ -90,7 +90,7 @@ bool ProcessCheatCommand(CPlayer *pOne, char *pwszCommand)
           if (pOne)
           {
             sprintf(wszRespon, "%s >> OK", pwszCommand);
-            CPlayer::SendData_ChatTrans(pOne, 0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
+            pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
           }
           return true;
         }
@@ -98,13 +98,13 @@ bool ProcessCheatCommand(CPlayer *pOne, char *pwszCommand)
         if (pOne)
         {
           sprintf(wszRespon, "%s >> FAIL(grammar or logic)", pwszCommand);
-          CPlayer::SendData_ChatTrans(pOne, 0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
+          pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
         }
         return false;
       }
 
       sprintf(wszRespon, "%s >> ERROR (authority)", pwszCommand);
-      CPlayer::SendData_ChatTrans(pOne, 0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
+      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
       return false;
     }
   }
@@ -112,7 +112,7 @@ bool ProcessCheatCommand(CPlayer *pOne, char *pwszCommand)
   if (pOne)
   {
     sprintf(wszRespon, "%s >> ERROR (command)", pwszCommand);
-    CPlayer::SendData_ChatTrans(pOne, 0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
+    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
   }
   return false;
 }
@@ -123,7 +123,7 @@ void WriteCheatLog(char *pwszCommand, CPlayer *pOne)
   std::memset(buffer, 0, 1280);
   if (pOne)
   {
-    const char *charName = CPlayerDB::GetCharNameA(&pOne->m_Param);
+    const char *charName = pOne->m_Param.GetCharNameA();
     sprintf(buffer, "[ %s ] >> ", charName);
   }
   else
@@ -133,7 +133,7 @@ void WriteCheatLog(char *pwszCommand, CPlayer *pOne)
 
   const int offset = static_cast<int>(strlen_0(buffer));
   W2M(pwszCommand, &buffer[offset], 1280 - offset);
-  CLogFile::Write(&s_logCheat, buffer);
+  s_logCheat.Write(buffer);
 }
 
 void InitCheatCommand(CHEAT_COMMAND *pCmdList, unsigned __int8 *byCommandSizeList)
@@ -151,5 +151,5 @@ void InitCheatCommand(CHEAT_COMMAND *pCmdList, unsigned __int8 *byCommandSizeLis
   const unsigned int korLocalTime = GetKorLocalTime();
   char buffer[144]{};
   sprintf(buffer, "..\\ZoneServerLog\\ServiceLog\\Cheat%d.log", korLocalTime);
-  CLogFile::SetWriteLogFile(&s_logCheat, buffer, 1, 0, 1, 1);
+  s_logCheat.SetWriteLogFile(buffer, 1, 0, 1, 1);
 }

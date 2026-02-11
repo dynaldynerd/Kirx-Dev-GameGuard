@@ -12,10 +12,17 @@ class CPlayer;
 class __cppobj CTransportShip
 {
 public:
+  struct __mgr_member;
+  struct __mgr_ticket;
+
   bool InitShip(CMapData *pLinkShipMap, CMapData *pLinkMainbaseMap, CMapData *pLinkPlatformMap, int nIndex);
   void AlterState(bool bAnchor, unsigned __int8 byDirect, int nPassMin, int nNextSubEventTerm);
   void KickFreeMember();
   void KickOldMember(unsigned __int8 byKickDirectCode);
+  __mgr_member *GetEmptyNewMember();
+  char RenewOldMember(CPlayer *pMember);
+  void EnterMember(CPlayer *pEnter);
+  void ReEnterMember(CPlayer *pExiter);
   void ExitMember(CPlayer *pExiter, bool bLogoff);
   bool Ticketting(CPlayer *pExiter);
   void SendMsg_KickForSail(unsigned int n);
@@ -25,6 +32,12 @@ public:
   void CheckTicket_Kick(CPlayer *pPtr, int nPortalIndex);
   int GetOutPortalIndex(int nRaceCode, unsigned __int8 byExitDirect);
   bool GetCurRideShipThisTicket(_TicketItem_fld *pTicketFld);
+  CMapData *GetMapCurDirect();
+  int GetRideLimLevel();
+  int GetRideUpLimLevel();
+  void InitTicketReserver();
+  void ApplyTicketReserver();
+  int GetLeftTicketIncludeReserNum(char *pszTarMapCode, int nAdd);
   bool IsMemberBeforeLogoff(unsigned int dwPlayerSerial);
   void GetStartPosInShip(float *pfPos);
 

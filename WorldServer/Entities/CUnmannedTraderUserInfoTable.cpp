@@ -55,6 +55,30 @@ bool CUnmannedTraderUserInfoTable::Init()
   return true;
 }
 
+bool CUnmannedTraderUserInfoTable::Load(
+  unsigned __int8 byType,
+  unsigned __int16 wInx,
+  unsigned int dwSerial,
+  _TRADE_DB_BASE *kInfo)
+{
+  (void)byType;
+  (void)kInfo;
+
+  CUnmannedTraderUserInfo *user = FindByIndex(wInx);
+  if (!user || user->IsNull())
+  {
+    return false;
+  }
+
+  user->Clear();
+  user->m_eState = CUnmannedTraderUserInfo::LOG_IN_STATE::UTUI_LOGIN;
+  user->m_wInx = wInx;
+  user->m_dwUserSerial = dwSerial;
+  user->m_byMaxRegistCnt = 10;
+  user->CountRegistItem();
+  return true;
+}
+
 void CUnmannedTraderUserInfoTable::SetLogger(CLogFile *pkLogger, CLogFile *pkServiceLogger)
 {
   this->m_pkLogger = pkLogger;
@@ -89,6 +113,26 @@ CUnmannedTraderUserInfo *CUnmannedTraderUserInfoTable::FindUser(unsigned __int16
     return user;
   }
   return Find(dwSerial);
+}
+
+bool CUnmannedTraderUserInfoTable::CheatCancelRegist(
+  unsigned __int16 wInx,
+  unsigned int dwOwnerSerial,
+  unsigned __int8 byNth)
+{
+  CUnmannedTraderUserInfo *user = FindUser(wInx, dwOwnerSerial);
+  if (!user || user->IsNull())
+  {
+    return false;
+  }
+
+  CPlayer *owner = user->FindOwner();
+  if (!owner || !owner->m_bOper)
+  {
+    return false;
+  }
+
+  return user->CheatCancelRegist(byNth);
 }
 
 unsigned __int8 CUnmannedTraderUserInfoTable::GetMaxRegistCnt(unsigned __int16 wInx, unsigned int dwSerial)

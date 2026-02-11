@@ -139,6 +139,8 @@ public:
   bool Initialize();
   static const _CashShop_fld *FindCashRec(unsigned int nTbl, int nIdx);
   void Check_Grosssales(unsigned int dwTotalSellCash);
+  void Check_Total_Selling();
+  void Loop_Check_Total_Selling();
   void Set_LimitedSale_count(unsigned __int8 byTableCode, unsigned int dwIndex);
   void Set_DB_LimitedSale_Event();
   void Set_FROMDB_LimitedSale_Event(_db_cash_limited_sale *Sheet);

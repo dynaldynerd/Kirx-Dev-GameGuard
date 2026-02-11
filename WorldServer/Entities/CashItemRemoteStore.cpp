@@ -5,6 +5,7 @@
 
 #include "CashShop_fld.h"
 #include "CashShop_str_fld.h"
+#include "CCashDBWorkManager.h"
 #include "CMainThread.h"
 #include "CNationSettingManager.h"
 #include "CTSingleton.h"
@@ -12,6 +13,7 @@
 #include "ICsSendInterface.h"
 #include "TimeItem.h"
 #include "WorldServerUtil.h"
+#include "param_cash.h"
 #include "qry_case_cash_limsale.h"
 
 #include <cstdio>
@@ -140,6 +142,22 @@ void CashItemRemoteStore::Check_Grosssales(unsigned int dwTotalSellCash)
       }
     }
   }
+}
+
+void CashItemRemoteStore::Check_Total_Selling()
+{
+  if (m_con_event.m_ini.m_bUseConEvent == 1 && !m_con_event.m_bConEvent)
+  {
+    _param_cash_total_selling info{};
+    const unsigned __int64 size = static_cast<unsigned __int64>(info.size());
+    CCashDBWorkManager *manager = CTSingleton<CCashDBWorkManager>::Instance();
+    manager->PushTask(4, reinterpret_cast<unsigned __int8 *>(&info), size);
+  }
+}
+
+void CashItemRemoteStore::Loop_Check_Total_Selling()
+{
+  // this is not a stub
 }
 
 bool CashItemRemoteStore::_InitLoggers()

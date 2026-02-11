@@ -17,6 +17,8 @@ public:
   static bool CalcStartNPCQuestCnt(unsigned int *pdwCnt);
   static CRecordData *s_tblQuest;
   static CRecordData *s_tblQuestHappenEvent;
+  void InitMgr(CPlayer *pMaster, _QUEST_DB_BASE *pQuestData);
+  void CheckFailLoop(int nFailCond, char *pszCode);
 
   _quest_check_result *CheckReqAct(int nActCode, char *pszReqCode, unsigned __int16 wActCount, bool bPartyState);
   _happen_event_cont *CheckQuestHappenEvent(QUEST_HAPPEN HappenType, char *pszEventCode, unsigned __int8 byRaceCode);
@@ -37,6 +39,7 @@ public:
   bool __CheckCond_Race(char *pszRaceSexFlag);
   char __CheckCond_Class(char *pszClassCode);
   char DeleteQuestItem(char *pszItemCode, unsigned __int16 wCount);
+  bool CanGiveupQuest(unsigned __int8 byQuestDBSlot);
   char CheckFailCondition(unsigned __int8 byQuestDBSlot, int nFailCond, char *pszCode);
   void DeleteQuestData(unsigned __int8 bySlot);
   unsigned __int8 InsertNpcQuestHistory(char *pszQuestCode, char byLevel, long double dRepeatTime);

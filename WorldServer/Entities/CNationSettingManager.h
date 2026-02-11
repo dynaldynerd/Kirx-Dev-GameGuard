@@ -28,6 +28,7 @@ public:
   bool IsCashDBUseExtRef();
   bool IsCashDBInit();
   bool IsCashDBDSNSetted();
+  void SetUnitPassiveValue(float *fUnitPv_DefFc);
   unsigned __int16 GetBillingForceCloseDelay();
   char *GetCashDBName();
   char *GetCashDBDBIP();
@@ -43,6 +44,8 @@ public:
   void OnConnectSession(unsigned int n);
   void OnDisConnectSession(unsigned int n);
   bool CheckEnterWorldRequest(unsigned int n, char *pBuf);
+  bool IsPersonalFreeFixedAmountBillingType(__int16 *pDest1, __int16 *pDest2);
+  void CreateComplete(CPlayer *pOne);
   bool IsNormalString(const char *szString);
   bool RecvGameGuardData(unsigned int n, _MSG_HEADER *pHeader, char *pBuff);
   void SendCashDBDSNRequest();

@@ -107,6 +107,36 @@ bool CPvpCashMng::LoadData()
   return false;
 }
 
+char CPvpCashMng::IsTalikItem(const char *strCode)
+{
+  for (int j = 0; j < 14; ++j)
+  {
+    if (!strcmp_0(m_TalikList.TalikInfo[j].m_pFld->m_strCode, strCode))
+    {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+int CPvpCashMng::GetTalikRecvrPoint(unsigned __int8 byTblCode, unsigned int dwIndex)
+{
+  for (int j = 0; j < m_TalikList.byTalikNum; ++j)
+  {
+    if (m_TalikList.TalikInfo[j].byTableCode == byTblCode
+        && m_TalikList.TalikInfo[j].m_pFld->m_dwIndex == dwIndex)
+    {
+      return m_TalikList.TalikInfo[j].nRecvrPoint;
+    }
+  }
+  return 0;
+}
+
+int CPvpCashMng::GetTalikRecvrPoint(int i)
+{
+  return m_TalikList.TalikInfo[i].nRecvrPoint;
+}
+
 bool CPvpCashMng::Parsing(
   const char *szTitle,
   const char *szItem,

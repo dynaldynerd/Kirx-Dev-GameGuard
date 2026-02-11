@@ -9,6 +9,7 @@ struct _patriarch_comm_list;
 struct _post_storage_list;
 struct _return_post_list;
 struct _rege_char_data;
+struct _guild_honor_list_result_zocl;
 struct _qry_case_gm_greetingmsg;
 struct _qry_case_guild_greetingmsg;
 struct _qry_case_race_greetingmsg;
@@ -20,8 +21,11 @@ struct _worlddb_character_general_info;
 struct _worlddb_character_base_info_array;
 struct _worlddb_crymsg_info;
 struct _worlddb_economy_history_info;
+struct _worlddb_economy_history_info_array;
 struct _worlddb_guild_info;
+struct _worlddb_guild_battle_info;
 struct _worlddb_guild_battle_rank_list;
+struct _worlddb_guild_battle_schedule_list;
 struct _worlddb_guild_battle_reserved_schedule_info;
 struct _worlddb_inven_info;
 struct _worlddb_itemcombineex_info;
@@ -44,8 +48,15 @@ struct _total_guild_rank_info;
 struct _unmannedtrader_buy_item_info;
 struct _unmannedtrader_registsingleitem;
 struct _unmannedtrader_seller_info;
+struct _unmannedtrader_stade_id_info;
 struct _weeklyguildrank_owner_info;
 struct _worlddb_rankinguild_info;
+struct _worlddb_golden_box_item;
+struct _guildroom_info;
+struct TournamentWinner;
+struct _qry_case_all_store_limit_item;
+struct _DB_LOAD_AUTOMINE_MACHINE;
+class CPostData;
 
 /* 1133 */
 class __cppobj CRFWorldDatabase : public CRFNewDatabase
@@ -131,7 +142,27 @@ public:
   bool Insert_Level_Log(unsigned int dwCharacterSerial, unsigned __int8 byLevel, unsigned int dwTotalPlayMin);
   bool Insert_UserNum_Log(int nAvgUserNum, int nMaxUserNum);
   unsigned __int8 Select_Exist_Economy(unsigned int dwDate, _worlddb_economy_history_info *pEconomyData);
+  unsigned __int8 Select_Economy_History(_worlddb_economy_history_info_array *pEconomyData, unsigned int dwDate);
   bool Insert_Economy_History(unsigned int dwDate, _worlddb_economy_history_info *pEconomyData);
+  char Select_BattleTournamentInfo(TournamentWinner *pWinnerInfo, int nMax);
+  char Select_CheckGreetRecord(int nUseType);
+  bool Insert_GreetingRecord(int nUseType, const char *wszName, const char *wszMessage);
+  char LoadGreetingMsg(
+    char *pwszGMGreetingmsg,
+    char *pwszRaceGreetingmsgA,
+    char *pwszRaceGreetingmsgB,
+    char *pwszRaceGreetingmsgC,
+    char *pwszGMName,
+    char *pwszNameA,
+    char *pwszNameB,
+    char *pwszNameC);
+  unsigned __int8 Select_LimitInfo(unsigned __int8 *pData, unsigned __int64 tDataSize);
+  __int64 Select_GodenBoxItem(_worlddb_golden_box_item *goldenboxitem, int *pnSerial);
+  bool Insert_GoldenBoxItem();
+  char Select_GuildRoomInfo(_guildroom_info *pInfo);
+  char Select_UsedLimitItemRecordNum(unsigned int *pdwUsedNum);
+  char Select_TotalRecordNum(unsigned int *pdwTotalNum);
+  unsigned __int8 Select_StoreLimitItem(_qry_case_all_store_limit_item *pData);
   bool CreateCharacterSelectLogTable(const char *szTableName);
   bool InsertCharacterSelectLog(
     unsigned int dwAccountSerial,
@@ -155,11 +186,17 @@ public:
   bool Insert_Guild(char *pwszGuildName, unsigned __int8 byRace);
   bool Select_GuildSerial(char *pwszGuildName, unsigned int *dwGuildSerial);
   bool Insert_WeeklyGuildPvpPointSum(unsigned int dwGuildSerial);
+  bool Insert_DefaultWeeklyGuildPvpPointSumRecord();
   bool Update_UserGuildData(unsigned int dwAvatorSerial, unsigned int dwGuildSerial, unsigned __int8 byGrade);
   unsigned __int8 Select_RaceBossAccumulationWinRate(
     unsigned __int8 byRace,
     unsigned int dwBossSerial,
     _raceboss_acc_winrate *windata);
+  unsigned __int8 Select_RaceBossCurrentWinRate(
+    unsigned __int8 byRace,
+    char *szDate,
+    unsigned int *dwTotalCnt,
+    unsigned int *dwWinCnt);
   bool Check_GuildMemberCount(unsigned int dwGuildSerial);
   bool Update_GuildMemberCount(unsigned int dwGuildSerial, unsigned __int16 wMemberNum);
   bool Update_InputGuildMoney(
@@ -218,6 +255,9 @@ public:
     unsigned __int16 wDiePoint);
   bool update_cristalbattle_date(unsigned int dwCharSerial, unsigned __int8 bHSKTime);
   bool Insert_Supplement(unsigned int dwSerial);
+  bool create_automine_table();
+  unsigned __int8 select_automine(_DB_LOAD_AUTOMINE_MACHINE *pData);
+  unsigned __int8 exist_automine(unsigned __int8 byCollisionType, unsigned __int8 byRace);
   bool create_amine_personal();
   unsigned __int8 select_amine_personal(unsigned int dwSerial);
   unsigned __int8 select_amine_personal(unsigned int dwSerial, _personal_amine_inven *pInven);
@@ -250,6 +290,10 @@ public:
   char Select_PostStorageRecordCheck();
   bool Insert_PostStorageRecord();
   char Select_PostStorageEmptyRecordSerial(unsigned int *pdwStorageSerial);
+  bool Update_DisappearOwnerRecord();
+  __int64 Select_PostStorageEmptyRecord();
+  char Insert_PSDefaultRecord(unsigned int dwCum);
+  unsigned __int8 Select_PostRegistryData(unsigned int dwMax, CPostData *pPostData);
   bool Update_PostStorageSendToRecver(
     unsigned int dwOwner,
     unsigned int dwPostSerial,
@@ -359,6 +403,21 @@ public:
     const char *szSortQuery,
     _unmannedtrader_page_info *pkInfo);
 
+  __int64 SelectRowCountGuildBattleInfo();
+  __int64 SelectRowCountGuildBattleScheduleInfo();
+  char LoadGuildBattleInfo(unsigned int dwStartID, unsigned int dwRowCnt, _worlddb_guild_battle_info *pkInfo);
+  unsigned __int8 LoadGuildBattleScheduleInfo(
+    unsigned int uiStartListID,
+    unsigned int uiScheduleUnitCnt,
+    _worlddb_guild_battle_schedule_list *pkInfo);
+  bool DeleteGuildBattleInfo();
+  bool DeleteGuildBattleScheduleInfo();
+  char InsertGuildBattleDefaultRecord(unsigned int dwRowCnt);
+  char InsertGuildBattleScheduleDefaultRecord(
+    unsigned int uiDayCnt,
+    unsigned int uiMapCnt,
+    unsigned __int8 byMaxHour,
+    unsigned __int8 byUnitTimeCntPerTime);
   bool CreateGuildBattleRankTable(char *szDate);
   bool UpdateClearGuildBattleRank();
   bool UpdateClearGuildBattleInfo(unsigned int dwStartID, unsigned int dwEndID);
@@ -552,6 +611,12 @@ public:
   char Insert_LimitItemRecord(unsigned int *pdwSerial);
   bool Update_LimitItemNum(char *pszQuery);
   bool Update_DisableInstanceStore(unsigned int dwSerial);
+  bool create_table_atrade_taxrate();
+  __int64 select_atrade_taxrate(
+    unsigned __int8 byRace,
+    char *pwszName,
+    unsigned __int8 *byCurrTax,
+    unsigned __int8 *byNextTax);
 
   bool insert_atrade_taxrate(
     unsigned __int8 byRace,
@@ -562,11 +627,20 @@ public:
     unsigned __int8 byCurrTax,
     unsigned int dwNext);
 
+  char Select_HonorGuild(unsigned __int8 byRace, _guild_honor_list_result_zocl *pOutList, bool bNext);
+  char Select_ClearHonorGuild(unsigned __int8 byRace, unsigned int *dwSerial);
+
   char Select_CharacterName(unsigned int dwSerial, char *pwszCharacterName, char *szAccount);
 
   unsigned __int8 Select_UnmannedTraderReservedSchedule(
     unsigned int dwMaxCnt,
     _unmannedtrader_reserved_schedule_info *pkInfo);
+  __int64 Select_UnmannedTraderItemStateInfoCnt(unsigned int *pdwCnt);
+  __int64 Select_UnmannedTraderItemStateInfo(_unmannedtrader_stade_id_info *pkInfo, unsigned int dwMaxCnt);
+  bool Truncate_UnmannedTraderItemStateRecord();
+  char Insert_UnmannedTraderItemStateRecord(unsigned int dwRowCnt, wchar_t **ppwszStr);
+  bool Update_UnmannedTraderClearDanglingOwnerRecord();
+  __int64 Select_UnmannedTraderSingleItemEmptyRecordCnt();
   __int64 Select_UnmannedTraderSingleItemEmptyRecordSerial(unsigned int *dwSerial);
   char Select_UnmannedTraderSingleItemBottomSerial(unsigned int *dwSerial);
   char Insert_UnmannedTraderSingleDefaultRecord(unsigned int dwRowCnt);

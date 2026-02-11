@@ -3,6 +3,8 @@
 #include "CUserDB.h"
 
 #include <cstring>
+#include <ctime>
+#include <cstdlib>
 
 #include "CMapOperation.h"
 #include "CNationSettingManager.h"
@@ -32,6 +34,7 @@
 #include "sel_char_result_zone.h"
 #include "select_avator_report_wrac.h"
 #include "server_notify_inform_zone.h"
+#include "log_case_charselect.h"
 #include "wrac_packets.h"
 #include "qry_logout.h"
 #include "exit_alter_param.h"
@@ -188,16 +191,14 @@ char CUserDB::Update_QuestInsert(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_L
       return 1;
     }
 
-    CLogFile::Write(
-      &g_Main.m_logSystemError,
+    g_Main.m_logSystemError.Write(
       "%s : Update_QuestInsert(EXIST) : slot : %d",
       m_aszAvatorName,
       bySlotIndex);
     return 0;
   }
 
-  CLogFile::Write(
-    &g_Main.m_logSystemError,
+  g_Main.m_logSystemError.Write(
     "%s : Update_QuestInsert(SlotIndex OVER) : slot : %d",
     m_aszAvatorName,
     bySlotIndex);
@@ -210,8 +211,7 @@ char CUserDB::Update_QuestDelete(unsigned __int8 bySlotIndex)
   {
     if (m_AvatorData.dbQuest.m_List[bySlotIndex].byQuestType == 0xFF)
     {
-      CLogFile::Write(
-        &g_Main.m_logSystemError,
+      g_Main.m_logSystemError.Write(
         "%s : Update_QuestDelete(EXIST) : slot : %d",
         m_aszAvatorName,
         bySlotIndex);
@@ -223,8 +223,7 @@ char CUserDB::Update_QuestDelete(unsigned __int8 bySlotIndex)
     return 1;
   }
 
-  CLogFile::Write(
-    &g_Main.m_logSystemError,
+  g_Main.m_logSystemError.Write(
     "%s : Update_QuestDelete(SlotIndex OVER) : slot : %d",
     m_aszAvatorName,
     bySlotIndex);
@@ -237,8 +236,7 @@ char CUserDB::Update_QuestUpdate(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_L
   {
     if (m_AvatorData.dbQuest.m_List[bySlotIndex].byQuestType == 0xFF)
     {
-      CLogFile::Write(
-        &g_Main.m_logSystemError,
+      g_Main.m_logSystemError.Write(
         "%s : Update_QuestUpdate(NOTHING) : slot : %d",
         m_aszAvatorName,
         bySlotIndex);
@@ -256,8 +254,7 @@ char CUserDB::Update_QuestUpdate(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_L
     return 1;
   }
 
-  CLogFile::Write(
-    &g_Main.m_logSystemError,
+  g_Main.m_logSystemError.Write(
     "%s : Update_QuestUpdate(SlotIndex OVER) : slot : %d",
     m_aszAvatorName,
     bySlotIndex);
@@ -275,8 +272,7 @@ char CUserDB::Update_NPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BASE::_N
     return 1;
   }
 
-  CLogFile::Write(
-    &g_Main.m_logSystemError,
+  g_Main.m_logSystemError.Write(
     "%s : Update_NPCQuestHistory(Index OVER) : %d",
     m_aszAvatorName,
     byIndex);
@@ -337,7 +333,7 @@ void CUserDB::SetBillingData(char *szCMSCode, __int16 iType, int lRemainTime, _S
   {
     memcpy_0(&m_BillingInfo.stEndDate, pstEndDate, sizeof(m_BillingInfo.stEndDate));
   }
-  if (!CMainThread::IsReleaseServiceMode(&g_Main) && m_BillingInfo.bPCCheat)
+  if (!g_Main.IsReleaseServiceMode() && m_BillingInfo.bPCCheat)
   {
     m_BillingInfo.bIsPcBang = 1;
     m_BillingInfo.iType = 7;
@@ -369,12 +365,7 @@ void CUserDB::SendMsg_BillingInfo()
   memcpy_0(&msg.stEndDate, &m_BillingInfo.stEndDate, sizeof(msg.stEndDate));
 
   unsigned __int8 pbyType[2]{29, 2};
-  CNetProcess::LoadSendMsg(
-    g_Network.m_pProcess[0],
-    m_idWorld.wIndex,
-    pbyType,
-    reinterpret_cast<char *>(&msg),
-    0x16u);
+  g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, pbyType, reinterpret_cast<char *>(&msg), 0x16u);
 }
 
 void CUserDB::SetRemainTime(int lRemainTime)
@@ -420,7 +411,7 @@ void CUserDB::UILockInfo_Init(char *pMsg)
   }
 
   unsigned __int8 pbyType[2]{13, 0x80};
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_idWorld.wIndex, pbyType, msg, 2u);
+  g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, pbyType, msg, 2u);
 }
 
 void CUserDB::UILockInfo_Update(char *pMsg)
@@ -463,7 +454,7 @@ void CUserDB::UILockInfo_Update(char *pMsg)
   }
 
   unsigned __int8 pbyType[2]{13, static_cast<unsigned __int8>(-124)};
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_idWorld.wIndex, pbyType, msg, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, pbyType, msg, 1u);
 }
 
 void CUserDB::SetChatLock(bool bLock)
@@ -475,12 +466,7 @@ void CUserDB::SetChatLock(bool bLock)
     msg.bLock = 1;
     unsigned __int8 pbyType[2]{2, 12};
     const unsigned __int16 len = msg.size();
-    CNetProcess::LoadSendMsg(
-      g_Network.m_pProcess[0],
-      m_idWorld.wIndex,
-      pbyType,
-      reinterpret_cast<char *>(&msg.bLock),
-      len);
+    g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, pbyType, reinterpret_cast<char *>(&msg.bLock), len);
   }
 }
 
@@ -1570,12 +1556,12 @@ bool CUserDB::Enter_Account(
 {
   if (m_bActive)
   {
-    CLogFile::Write(&g_Main.m_logSystemError, "%d.. Enter_Account : m_bActive == true", dwAccountSerial);
+    g_Main.m_logSystemError.Write( "%d.. Enter_Account : m_bActive == true", dwAccountSerial);
     return false;
   }
   if (!m_ss.chk_enter())
   {
-    CLogFile::Write(&g_Main.m_logSystemError, "%d.. Enter_Account : if(!m_ss.chk_enter())", dwAccountSerial);
+    g_Main.m_logSystemError.Write( "%d.. Enter_Account : if(!m_ss.chk_enter())", dwAccountSerial);
     return false;
   }
 
@@ -1605,23 +1591,21 @@ bool CUserDB::Enter_Account(
 
   if (!waitData)
   {
-    CLogFile::Write(&g_Main.m_logSystemError, "%d.. Enter_Account : pWaitData == NULL", dwAccountSerial);
+    g_Main.m_logSystemError.Write( "%d.. Enter_Account : pWaitData == NULL", dwAccountSerial);
     return false;
   }
 
   bool valid = true;
   if (!waitData->m_byUserDgr && dwProtocolVer != 126455)
   {
-    CLogFile::Write(
-      &g_Main.m_logSystemError,
+    g_Main.m_logSystemError.Write(
       "%s.. Enter_Account : if(dwProtocolVer != __PROTOCOL_VER)",
       waitData->m_szAccountID);
     valid = false;
   }
   if (g_Player[m_idWorld.wIndex].m_bLoad)
   {
-    CLogFile::Write(
-      &g_Main.m_logSystemError,
+    g_Main.m_logSystemError.Write(
       "%s.. Enter_Account : if(g_Player[m_idWorld.wIndex].m_bLoad)",
       waitData->m_szAccountID);
     valid = false;
@@ -1631,8 +1615,7 @@ bool CUserDB::Enter_Account(
     CUserDB *user = &g_UserDB[j];
     if (user->m_bActive && dwAccountSerial == user->m_dwAccountSerial)
     {
-      CLogFile::Write(
-        &g_Main.m_logSystemError,
+      g_Main.m_logSystemError.Write(
         "%s.. Enter_Account : if(dwAccountSerial == p->m_dwAccountSerial)",
         waitData->m_szAccountID);
       valid = false;
@@ -1650,7 +1633,7 @@ bool CUserDB::Enter_Account(
   }
 
   m_bActive = true;
-  m_dwOperLobbyTime = timeGetTime();
+  m_dwOperLobbyTime = GetTickCount();
   m_dwAccountSerial = dwAccountSerial;
   strcpy_0(m_szAccountID, waitData->m_szAccountID);
   m_byUserDgr = waitData->m_byUserDgr;
@@ -1682,13 +1665,12 @@ bool CUserDB::Enter_Account(
   {
     if (!m_BillingInfo.iType)
     {
-      CLogFile::Write(&g_Main.m_logSystemError, "%s.. Enter_Account Billing Type = 0", waitData->m_szAccountID);
+      g_Main.m_logSystemError.Write( "%s.. Enter_Account Billing Type = 0", waitData->m_szAccountID);
       return false;
     }
     if (!m_BillingInfo.lRemainTime && (m_BillingInfo.iType == 5 || m_BillingInfo.iType == 2))
     {
-      CLogFile::Write(
-        &g_Main.m_logSystemError,
+      g_Main.m_logSystemError.Write(
         "%s.. Enter_Account Billing lRemainTime = 0",
         waitData->m_szAccountID);
       return false;
@@ -1782,7 +1764,7 @@ bool CUserDB::Lobby_Char_Request()
   const int size = static_cast<int>(qry.size());
   if (g_Main.PushDQSData(m_dwAccountSerial, &m_idWorld, 6u, reinterpret_cast<char *>(&qry), size))
   {
-    m_dwOperLobbyTime = timeGetTime();
+    m_dwOperLobbyTime = GetTickCount();
     m_bDBWaitState = true;
     return true;
   }
@@ -1889,7 +1871,7 @@ bool CUserDB::Insert_Char_Request(
 
   if (IsSQLValidString(pwszCharName))
   {
-    _base_fld *record = CRecordData::GetRecord(&g_Main.m_tblClass, pszClassCode);
+    _base_fld *record = g_Main.m_tblClass.GetRecord(pszClassCode);
     if (!record)
     {
       return false;
@@ -1920,8 +1902,7 @@ bool CUserDB::Insert_Char_Request(
     return false;
   }
 
-  CLogFile::Write(
-    &g_Main.m_logSystemError,
+  g_Main.m_logSystemError.Write(
     "CUserDB::Insert_Char_Request() : Account : %s(%u) ::IsSQLValidString(pwszCharName(%s)) Invalid!",
     m_szAccountID,
     m_dwAccountSerial,
@@ -2090,29 +2071,24 @@ bool CUserDB::Alive_Char_Request(
     return false;
   }
 
-  if (!byCase)
+  if (byCase)
   {
-    goto check_not_arranged;
-  }
-
-  bool hasArranged = false;
-  for (int j = 0; j < 50; ++j)
-  {
-    if (m_dwArrangePassCase0[j] == dwSerial)
+    bool hasArranged = false;
+    for (int j = 0; j < 50; ++j)
     {
-      hasArranged = true;
-      break;
+      if (m_dwArrangePassCase0[j] == dwSerial)
+      {
+        hasArranged = true;
+        break;
+      }
+    }
+    if (!hasArranged)
+    {
+      Alive_Char_Complete(0x32u, byCase, dwSerial, nullptr);
+      return false;
     }
   }
-  if (hasArranged)
-  {
-    goto check_not_arranged;
-  }
 
-  Alive_Char_Complete(0x32u, byCase, dwSerial, nullptr);
-  return false;
-
-check_not_arranged:
   {
     bool found = false;
     for (int k = 0; k < 50; ++k)
@@ -2179,7 +2155,7 @@ check_not_arranged:
 void CUserDB::Insert_Char_Complete(unsigned __int8 byRetCode, _REGED_AVATOR_DB *pInsertData)
 {
   m_bDBWaitState = false;
-  m_dwOperLobbyTime = timeGetTime();
+  m_dwOperLobbyTime = GetTickCount();
 
   unsigned __int8 slotIndex = static_cast<unsigned __int8>(-1);
   if (!byRetCode && pInsertData)
@@ -2666,6 +2642,12 @@ bool _INVENKEY::operator==(const _INVENKEY &rhs) const
 }
 
 
+bool _INVENKEY::IsOverlapItem() const
+{
+  return IsOverLapItem(byTableCode) != 0;
+}
+
+
 _INVEN_DB_BASE::_LIST &_INVEN_DB_BASE::_LIST::operator=(const _LIST &rhs)
 {
   Key = rhs.Key;
@@ -2733,6 +2715,95 @@ char CUserDB::Update_DelBuddy(unsigned __int8 bySlotIndex)
   return 1;
 }
 
+char CUserDB::Update_UserGetScaner(unsigned __int16 wScanerCnt, unsigned __int16 wBattleTime)
+{
+  _SYSTEMTIME systemTime{};
+  GetLocalTime(&systemTime);
+
+  char buffer[56]{};
+  memset_0(buffer, 0, 30);
+  m_AvatorData.dbSupplement.wScanerCnt += wScanerCnt;
+  sprintf_s(
+    buffer,
+    30,
+    "%04d%02d%02d%d",
+    systemTime.wYear,
+    systemTime.wMonth,
+    systemTime.wDay,
+    wBattleTime);
+  m_AvatorData.dbSupplement.dwScanerGetDate = static_cast<unsigned int>(atoi(buffer));
+  m_bDataUpdate = true;
+  return 1;
+}
+
+char CUserDB::Update_LinkBoardSlot(unsigned __int8 bySlot, unsigned __int8 byLinkCode, unsigned __int16 wIndex)
+{
+  if (bySlot >= 0x32u)
+  {
+    return 0;
+  }
+
+  if (byLinkCode == 0xFF)
+  {
+    m_AvatorData.dbLink.m_LinkList[bySlot].Key.SetRelease();
+  }
+  else if (byLinkCode < 7u)
+  {
+    m_AvatorData.dbLink.m_LinkList[bySlot].Key.SetData(byLinkCode, wIndex);
+  }
+  return 1;
+}
+
+char CUserDB::Update_BagNum(unsigned __int8 bagnum)
+{
+  if (bagnum > 5u)
+  {
+    g_Main.m_logSystemError.Write(
+      "%s : Update_BagNum(CODE) byBagNum (%d) => failed ",
+      m_aszAvatorName,
+      bagnum);
+    return 0;
+  }
+
+  if (m_AvatorData.dbAvator.m_byBagNum < bagnum)
+  {
+    m_AvatorData.dbAvator.m_byBagNum = bagnum;
+    m_bDataUpdate = true;
+    return 1;
+  }
+
+  g_Main.m_logSystemError.Write(
+    "%s : Update_BagNum(CODE) m_AvatorData.dbAvator.m_byBagNum(%d) > pCon->byBagNum(%d) => failed ",
+    m_aszAvatorName,
+    m_AvatorData.dbAvator.m_byBagNum,
+    bagnum);
+  return 0;
+}
+
+void CUserDB::CalcRadarDelay()
+{
+  if (m_RadarItemMgr.IsUse())
+  {
+    const unsigned int delayMs = m_RadarItemMgr.CalcDelay();
+    unsigned int delaySec = 0;
+    if (delayMs)
+    {
+      delaySec = delayMs / 1000;
+      if (delayMs % 1000 >= 500)
+      {
+        ++delaySec;
+      }
+    }
+    SetRadarDelay(delaySec);
+  }
+}
+
+void CUserDB::SetRadarDelay(unsigned int dwDelay)
+{
+  m_AvatorData.dbAvator.m_dwRadarDelayTime = dwDelay;
+  m_bDataUpdate = true;
+}
+
 
 char CUserDB::Update_LossExp(long double dLossExp)
 {
@@ -2763,6 +2834,136 @@ char CUserDB::Update_UserTLStatus(unsigned __int8 byStatus)
   m_AvatorData.dbTimeLimitInfo.byTLStatus = byStatus;
   m_bDataUpdate = true;
   return 1;
+}
+
+unsigned int CUserDB::GetActPoint(unsigned __int8 byCode)
+{
+  return m_AvatorData.dbSupplement.dwActionPoint[byCode];
+}
+
+unsigned int *CUserDB::GetPtrActPoint()
+{
+  return m_AvatorData.dbSupplement.dwActionPoint;
+}
+
+void CUserDB::SetActPoint(unsigned __int8 byCode, unsigned int dwLeftPoint)
+{
+  unsigned int dwPoint = dwLeftPoint;
+  if (byCode == 2)
+  {
+    if (dwLeftPoint > 0xF423F)
+    {
+      dwPoint = 999999;
+    }
+  }
+  else if (dwLeftPoint > 0x98967F)
+  {
+    dwPoint = 9999999;
+  }
+  Update_User_Action_Point(byCode, dwPoint);
+}
+
+char CUserDB::Update_User_Action_Point(unsigned __int8 byActionCode, unsigned int dwPoint)
+{
+  unsigned int clampedPoint = dwPoint;
+  if (byActionCode == 2)
+  {
+    if (dwPoint > 0xF423F)
+    {
+      clampedPoint = 999999;
+    }
+  }
+  else if (dwPoint > 0x98967F)
+  {
+    clampedPoint = 9999999;
+  }
+
+  m_AvatorData.dbSupplement.dwActionPoint[byActionCode] = clampedPoint;
+  m_bDataUpdate = true;
+  return 1;
+}
+
+char CUserDB::InitClass(char *pszClassCode)
+{
+  unsigned __int8 nextHistory = 0;
+  int j = 2;
+  for (; j >= 0 && m_AvatorData.dbAvator.m_zClassHistory[j] == -1; --j)
+  {
+  }
+
+  nextHistory = static_cast<unsigned __int8>(j + 1);
+  if (nextHistory && nextHistory > m_AvatorData.dbAvator.m_byLastClassGrade)
+  {
+    m_AvatorData.dbAvator.m_byLastClassGrade = nextHistory;
+  }
+
+  strcpy_0(m_AvatorData.dbAvator.m_szClassCode, pszClassCode);
+  for (j = 0; j < 3; ++j)
+  {
+    m_AvatorData.dbAvator.m_zClassHistory[j] = -1;
+  }
+  m_bDataUpdate = true;
+  return 1;
+}
+
+char CUserDB::Update_Class(char *pszClassCode, unsigned __int8 byHistoryRecordNum, unsigned __int16 wHistoryClassIndex)
+{
+  if (byHistoryRecordNum >= 3u)
+  {
+    g_Main.m_logSystemError.Write(
+      "%s : Update_Class(): byHistoryRecordNum (%d) => failed ",
+      m_aszAvatorName,
+      byHistoryRecordNum);
+    return 0;
+  }
+
+  strcpy_0(m_AvatorData.dbAvator.m_szClassCode, pszClassCode);
+  m_AvatorData.dbAvator.m_zClassHistory[byHistoryRecordNum] = static_cast<signed __int16>(wHistoryClassIndex);
+  if (byHistoryRecordNum + 1 > m_AvatorData.dbAvator.m_byLastClassGrade)
+  {
+    m_AvatorData.dbAvator.m_byLastClassGrade = byHistoryRecordNum + 1;
+  }
+  m_bDataUpdate = true;
+  return 1;
+}
+
+void CUserDB::WriteLog_ChangeClassAfterInitClass(unsigned __int8 byType, char *szPrevClass)
+{
+  if (byType == 1 && !m_AvatorData.dbAvator.m_dwClassInitCnt)
+  {
+    return;
+  }
+
+  const std::time_t now = std::time(nullptr);
+  if (now == static_cast<std::time_t>(-1))
+  {
+    return;
+  }
+
+  std::tm localTime{};
+  if (localtime_s(&localTime, &now) != 0)
+  {
+    return;
+  }
+
+  g_Main.db_Insert_ChangeClass_AfterInitClass(
+    m_dwSerial,
+    byType,
+    szPrevClass,
+    m_AvatorData.dbAvator.m_szClassCode,
+    m_AvatorData.dbAvator.m_dwClassInitCnt,
+    m_AvatorData.dbAvator.m_byLastClassGrade,
+    static_cast<unsigned __int16>(localTime.tm_year + 1900),
+    static_cast<unsigned __int8>(localTime.tm_mon + 1),
+    static_cast<unsigned __int8>(localTime.tm_mday),
+    static_cast<unsigned __int8>(localTime.tm_hour),
+    static_cast<unsigned __int8>(localTime.tm_min),
+    static_cast<unsigned __int8>(localTime.tm_sec));
+}
+
+void CUserDB::StartFieldMode()
+{
+  m_bField = true;
 }
 
 
@@ -2937,7 +3138,7 @@ void CUserDB::Reged_Char_Complete(
 void CUserDB::Delete_Char_Complete(unsigned __int8 byRetCode, unsigned __int8 bySlotIndex)
 {
   m_bDBWaitState = false;
-  m_dwOperLobbyTime = timeGetTime();
+  m_dwOperLobbyTime = GetTickCount();
 
   if (!byRetCode)
   {
@@ -2971,7 +3172,7 @@ void CUserDB::Select_Char_Complete(
   unsigned __int8 byExtTrunkOldSlot)
 {
   m_bDBWaitState = false;
-  const DWORD now = timeGetTime();
+  const DWORD now = GetTickCount();
   m_dwOperLobbyTime = now;
   m_bCreateTrunkFree = bCreateTrunkFree;
   if (m_nTrans == 1)
@@ -3177,3 +3378,47 @@ void CUserDB::Select_Char_Complete(
   const unsigned __int16 outLen = result.size();
   g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, outType, reinterpret_cast<char *>(&result), outLen);
 }
+
+void CUserDB::WriteLog_CharSelect()
+{
+  _log_case_charselect logData{};
+  strcpy_0(logData.szID, m_szAccountID);
+  logData.dwIDSerial = m_dwAccountSerial;
+  strcpy_0(logData.wszName, m_wszAvatorName);
+  logData.dwNameSerial = m_dwSerial;
+
+  __time64_t now = 0;
+  _time64(&now);
+  tm *localTime = _localtime64(&now);
+  logData.dwYear = static_cast<unsigned __int16>(localTime->tm_year + 1900);
+  logData.byMonth = static_cast<unsigned __int8>(localTime->tm_mon + 1);
+  logData.byDay = static_cast<unsigned __int8>(localTime->tm_mday);
+  logData.byHour = static_cast<unsigned __int8>(localTime->tm_hour);
+  logData.byMin = static_cast<unsigned __int8>(localTime->tm_min);
+  logData.bySec = static_cast<unsigned __int8>(localTime->tm_sec);
+
+  const int size = static_cast<int>(logData.size());
+  g_Main.PushDQSData(m_dwAccountSerial, &m_idWorld, 0xAu, logData.szID, size);
+}
+
+char CUserDB::Update_CombineExResult_Push(_ITEMCOMBINE_DB_BASE *pItemCombineDB_IN)
+{
+  memcpy_0(&m_AvatorData.dbItemCombineEx, pItemCombineDB_IN, sizeof(m_AvatorData.dbItemCombineEx));
+  m_bDataUpdate = 1;
+  return 1;
+}
+
+char CUserDB::Update_CombineExResult_Pop()
+{
+  m_AvatorData.dbItemCombineEx.Init();
+  m_bDataUpdate = 1;
+  return 1;
+}
+
+char CUserDB::Update_TakeLastCriTicket(unsigned int dwCriTicket)
+{
+  m_AvatorData.dbAvator.m_dwTakeLastCriTicket = dwCriTicket;
+  m_bDataUpdate = 1;
+  return 1;
+}
+

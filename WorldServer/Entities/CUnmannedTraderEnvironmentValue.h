@@ -15,4 +15,9 @@ public:
   static unsigned int Unmanned_Trader_Max_Row_Count_Search;
   static const char *Unmanned_Trader_Default_Sort_Type_Name;
   static const char *Unmanned_Trader_Default_Sort_Query;
+  static unsigned int Unmanned_Trader_Min_Limit_Empty_Record_Cnt;
+  static unsigned int Unmanned_Trader_Default_Empty_Record_Cnt;
+  static unsigned int UNMANNEDTRADETRADEINFO_LOOP_DELAY;
+  static const char *UNMANNEDTRADETRADEINFO_SAVE_INI_SECTION_NAME;
+  static const char *UNMANNEDTRADETRADEINFO_SAVE_INI_FILE_NAME;
 };

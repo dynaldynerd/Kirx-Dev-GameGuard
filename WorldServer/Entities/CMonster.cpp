@@ -10,6 +10,7 @@
 #include "CLogFile.h"
 #include "CMonsterSkill.h"
 #include "CMonsterAttack.h"
+#include "CMonsterHelper.h"
 #include "CMonsterEventRespawn.h"
 #include "CMonsterEventSet.h"
 #include "CItemLootTable.h"
@@ -308,6 +309,35 @@ float CMonster::GetVisualField()
 float CMonster::GetVisualAngle()
 {
   return static_cast<float>(*reinterpret_cast<int *>(&m_pRecordSet[25].m_strCode[32]));
+}
+
+bool CMonster::IsViewArea(CCharacter *pTarget)
+{
+  if (!pTarget)
+  {
+    return false;
+  }
+
+  float pfDist[4]{};
+  const float angle = GetVisualAngle();
+  const float radius = GetVisualField();
+
+  float viewDirection[3]{};
+  viewDirection[0] = m_fLookAtPos[0] - m_fCurPos[0];
+  viewDirection[1] = m_fLookAtPos[1] - m_fCurPos[1];
+  viewDirection[2] = m_fLookAtPos[2] - m_fCurPos[2];
+  Normalize(viewDirection);
+
+  viewDirection[0] = 3.0f * viewDirection[0];
+  viewDirection[1] = 3.0f * viewDirection[1];
+  viewDirection[2] = 3.0f * viewDirection[2];
+
+  float src[3]{};
+  src[0] = m_fCurPos[0] - viewDirection[0];
+  src[1] = m_fCurPos[1] - viewDirection[1];
+  src[2] = m_fCurPos[2] - viewDirection[2];
+
+  return CMonsterHelper::IsInSector(pTarget->m_fCurPos, src, m_fLookAtPos, angle, radius, pfDist);
 }
 
 bool CMonster::GetViewAngleCap(int nCapKind, int *nOutValue)
@@ -1568,6 +1598,17 @@ void CMonster::CheckLootItem(CPlayer *pOwner)
       }
     }
   }
+}
+
+char CMonster::AddEventItem(_event_loot_item *pItem)
+{
+  if (m_nEventItemNum >= 16)
+  {
+    return 0;
+  }
+  memcpy_0(&m_eventItem[m_nEventItemNum], pItem, sizeof(m_eventItem[m_nEventItemNum]));
+  ++m_nEventItemNum;
+  return 1;
 }
 
 char CMonster::_LootItem_Rwp(CPlayer *pOwner)

@@ -2,6 +2,7 @@
 
 #include "CItemStoreManager.h"
 #include "CItemStore.h"
+#include "StoreList_fld.h"
 
 #include <cstdarg>
 #include <cstdio>
@@ -59,6 +60,68 @@ bool CItemStoreManager::Init(int nNormalListNum, int nInstanceListNum)
     MyMessageBox("CItemStoreManager::Init() : StorList.dat Read Fail!", pszErrMsg);
   }
   return false;
+}
+
+char CItemStoreManager::Load()
+{
+  unsigned int storeNum = 0;
+  for (unsigned int j = 0; static_cast<int>(j) < this->m_nMapItemStoreListNum; ++j)
+  {
+    for (int k = 0; k < this->m_MapItemStoreList[j].m_nItemStoreNum; ++k)
+    {
+      if (this->m_MapItemStoreList[j].m_ItemStore[k].m_nLimitStorageItemNum > 0)
+      {
+        ++storeNum;
+      }
+    }
+  }
+
+  unsigned int usedNum = 0;
+  if (!SelectUsedRecordNum(&usedNum))
+  {
+    return 0;
+  }
+
+  storeNum += 90;
+  if (storeNum)
+  {
+    if (storeNum < usedNum)
+    {
+      storeNum = usedNum;
+    }
+
+    unsigned int totalNum = 0;
+    if (!SelectTotalRecordNum(&totalNum))
+    {
+      return 0;
+    }
+
+    if (storeNum > totalNum && !InsertNotEnoughLimitItemRecord(storeNum - totalNum))
+    {
+      return 0;
+    }
+
+    if (!this->m_Sheet.Init(storeNum))
+    {
+      return 0;
+    }
+
+    if (!SelectStoreLimitItem())
+    {
+      return 0;
+    }
+
+    for (unsigned int j = 0; j < this->m_Sheet.dwCount; ++j)
+    {
+      SetStoreLimitItemData(&this->m_Sheet.pStoreList[j]);
+    }
+
+    SetEnforceInitNormalStore();
+  }
+
+  SetUpdateDBDataDoNotCheck();
+  this->m_Sheet.DataInit();
+  return 1;
 }
 
 bool CItemStoreManager::InitLogger()
@@ -146,19 +209,6 @@ void CItemStoreManager::MakeLimitItemUpdateQuery(
   strlen_0(pszQuery);
 }
 
-CMapItemStoreList *CItemStoreManager::GetMapItemStoreListBySerial(int nSerial)
-{
-  for (int j = 0; j < m_nMapItemStoreListNum; ++j)
-  {
-    CMapItemStoreList *list = &m_MapItemStoreList[j];
-    if (list->m_nSerial == nSerial)
-    {
-      return list;
-    }
-  }
-  return nullptr;
-}
-
 CMapItemStoreList *CItemStoreManager::GetInstanceStoreListBySerial(int nSerial)
 {
   for (int j = 0; j < m_nInstanceItemStoreListNum; ++j)
@@ -166,6 +216,18 @@ CMapItemStoreList *CItemStoreManager::GetInstanceStoreListBySerial(int nSerial)
     if (m_InstanceItemStoreList[j].m_bUse && m_InstanceItemStoreList[j].m_nSerial == nSerial)
     {
       return &m_InstanceItemStoreList[j];
+    }
+  }
+  return nullptr;
+}
+
+CMapItemStoreList *CItemStoreManager::GetEmptyInstanceItemStore()
+{
+  for (int j = 0; j < this->m_nInstanceItemStoreListNum; ++j)
+  {
+    if (!this->m_InstanceItemStoreList[j].m_bUse)
+    {
+      return &this->m_InstanceItemStoreList[j];
     }
   }
   return nullptr;
@@ -179,6 +241,30 @@ void _qry_case_all_store_limit_item::__list::init()
   {
     ItemData[j].Key.SetRelease();
   }
+}
+
+char _qry_case_all_store_limit_item::Init(unsigned int dwStoreNum)
+{
+  if (!dwStoreNum)
+  {
+    return 0;
+  }
+
+  if (pStoreList)
+  {
+    operator delete[](pStoreList);
+  }
+
+  pStoreList = new (std::nothrow) __list[dwStoreNum];
+  if (!pStoreList)
+  {
+    return 0;
+  }
+
+  dwMax = dwStoreNum;
+  dwCount = 0;
+  DataInit();
+  return 1;
 }
 
 void _qry_case_all_store_limit_item::DataInit()
@@ -201,6 +287,225 @@ void CItemStoreManager::Log(const char *fmt, ...)
   va_start(va, fmt);
   m_pkLogger->WriteFromArg(fmt, va);
   va_end(va);
+}
+
+char CItemStoreManager::SelectUsedRecordNum(unsigned int *pdwUsedNum)
+{
+  if (g_Main.m_pWorldDB->Select_UsedLimitItemRecordNum(pdwUsedNum) != 1)
+  {
+    return 1;
+  }
+
+  Log(
+    "CItemStoreManager::SelectUsedRecordNum\r\n\t\tg_Main.m_pWorldDB->Select_UsedLimitItemRecordNum() Fail!\r\n");
+  return 0;
+}
+
+char CItemStoreManager::SelectTotalRecordNum(unsigned int *pdwTotalNum)
+{
+  if (g_Main.m_pWorldDB->Select_TotalRecordNum(pdwTotalNum) != 1)
+  {
+    return 1;
+  }
+
+  Log(
+    "CItemStoreManager::SelectTotalRecordNum\r\n\t\tg_Main.m_pWorldDB->Select_TotalRecordNum() Fail!\r\n");
+  return 0;
+}
+
+char CItemStoreManager::InsertNotEnoughLimitItemRecord(int nNum)
+{
+  unsigned int serial[4]{};
+  for (int j = 0; j < nNum; ++j)
+  {
+    if (!g_Main.m_pWorldDB->Insert_LimitItemRecord(serial))
+    {
+      Log(
+        "CItemStoreManager::InsertNotEnoughLimitItemRecord\r\n\t\tg_Main.m_pWorldDB->Insert_LimitItemRecord() Fail!\r\n");
+      return 0;
+    }
+  }
+
+  return 1;
+}
+
+char CItemStoreManager::SelectStoreLimitItem()
+{
+  if (g_Main.m_pWorldDB->Select_StoreLimitItem(&m_Sheet) != 1)
+  {
+    return 1;
+  }
+
+  Log(
+    "CItemStoreManager::SelectStoreLimitItem\r\n\t\tg_Main.m_pWorldDB->Select_StoreLimitItem() Fail!\r\n");
+  return 0;
+}
+
+void CItemStoreManager::SetStoreLimitItemData(_qry_case_all_store_limit_item::__list *pData)
+{
+  if (!pData || pData->nTypeSerial < 0)
+  {
+    return;
+  }
+
+  CMapItemStoreList *storeList = nullptr;
+  if (pData->byType)
+  {
+    if (pData->byType == 1)
+    {
+      storeList = GetInstanceStoreListBySerial(pData->nTypeSerial);
+    }
+  }
+  else
+  {
+    storeList = GetMapItemStoreListBySerial(pData->nTypeSerial);
+  }
+
+  if (!storeList)
+  {
+    return;
+  }
+
+  CItemStore *store = storeList->GetItemStoreFromRecIndex(pData->dwStoreIndex);
+  if (!store)
+  {
+    return;
+  }
+
+  store->m_dwDBSerial = pData->dwDBSerial;
+  if (pData->dwLimitInitTime)
+  {
+    store->m_dwLimitInitTime = pData->dwLimitInitTime;
+  }
+  else
+  {
+    store->UpdateLimitItemNum(true);
+  }
+
+  char changed = 0;
+  for (int nIndex = 0; nIndex < 16; ++nIndex)
+  {
+    _limit_item_info *limitItem = store->GetLimitItem(nIndex);
+    if (limitItem)
+    {
+      const int storeKey = static_cast<int>(limitItem->Key.CovDBKey());
+      const int dbKey = static_cast<int>(pData->ItemData[nIndex].Key.CovDBKey());
+      if (storeKey != dbKey)
+      {
+        changed = 1;
+      }
+      if (storeKey != -1 && storeKey == dbKey)
+      {
+        limitItem->nLimitNum = pData->ItemData[nIndex].nLimitNum;
+      }
+    }
+  }
+
+  if (changed)
+  {
+    store->UpdateLimitItemNum(true);
+  }
+
+  store->m_bDBDataCheck = true;
+}
+
+void CItemStoreManager::SetEnforceInitNormalStore()
+{
+  const char *codes[3] = {"030F1", "040F1", "050F1"};
+  int found = 0;
+
+  for (int j = 0; j < m_nMapItemStoreListNum && found < 3; ++j)
+  {
+    CMapItemStoreList *list = &m_MapItemStoreList[j];
+    for (int k = 0; k < list->m_nItemStoreNum && found < 3; ++k)
+    {
+      CItemStore *store = &list->m_ItemStore[k];
+      for (int codeIdx = found; codeIdx < 3; ++codeIdx)
+      {
+        if (!strcmp_0(codes[codeIdx], store->m_pRec->m_strStore_NPCcode))
+        {
+          m_pLimitInitNormalStore[found++] = store;
+          break;
+        }
+      }
+    }
+  }
+}
+
+void CItemStoreManager::SetUpdateDBDataDoNotCheck()
+{
+  for (int j = 0; j < m_nMapItemStoreListNum; ++j)
+  {
+    for (int k = 0; k < m_MapItemStoreList[j].m_nItemStoreNum; ++k)
+    {
+      if (m_MapItemStoreList[j].m_ItemStore[k].m_nLimitStorageItemNum > 0
+          && !m_MapItemStoreList[j].m_ItemStore[k].m_bDBDataCheck)
+      {
+        m_MapItemStoreList[j].m_ItemStore[k].UpdateLimitItemNum(true);
+      }
+    }
+  }
+}
+
+char CItemStoreManager::ResetInstanceItemStore(unsigned __int8 byStoreType, int nSerial)
+{
+  if (byStoreType >= 2u)
+  {
+    return 0;
+  }
+
+  unsigned int itemCount = 0;
+  void *serialBuffer = nullptr;
+
+  for (int j = 0; j < m_nInstanceItemStoreListNum; ++j)
+  {
+    CMapItemStoreList *list = &m_InstanceItemStoreList[j];
+    if (list->m_bUse && list->m_byType == byStoreType && list->m_nSerial == nSerial)
+    {
+      list->m_bUse = false;
+      if (list->m_nItemStoreNum > 0)
+      {
+        itemCount = list->m_nItemStoreNum;
+        serialBuffer = operator new[](saturated_mul(itemCount, 8uLL));
+        memset_0(serialBuffer, 0, 8ULL * list->m_nItemStoreNum);
+      }
+
+      int removed = 0;
+      for (int k = 0; k < list->m_nItemStoreNum; ++k)
+      {
+        operator delete[](list->m_ItemStore[k].m_pStorageItem);
+        operator delete[](list->m_ItemStore[k].m_pLimitStorageItem);
+        list->m_ItemStore[k].m_pStorageItem = nullptr;
+        list->m_ItemStore[k].m_pLimitStorageItem = nullptr;
+        if (serialBuffer)
+        {
+          reinterpret_cast<unsigned int *>(serialBuffer)[2 * k + 1] = list->m_ItemStore->m_dwDBSerial;
+        }
+        ++removed;
+      }
+
+      if (list->m_nItemStoreNum > 0)
+      {
+        delete[] list->m_ItemStore;
+        list->m_nItemStoreNum -= removed;
+        if (list->m_nItemStoreNum < 0)
+        {
+          list->m_nItemStoreNum = 0;
+        }
+      }
+
+      list->m_ItemStore = nullptr;
+      break;
+    }
+  }
+
+  if (static_cast<int>(itemCount) <= 0)
+  {
+    return 0;
+  }
+
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x71u, reinterpret_cast<char *>(&itemCount), 16);
+  return 1;
 }
 
 unsigned __int8 CItemStoreManager::UpdateStoreLimitItem()

@@ -13,6 +13,7 @@ struct __cppobj _INVENKEY
 
   _INVENKEY &operator=(const _INVENKEY &rhs);
   bool operator==(const _INVENKEY &rhs) const;
+  bool IsOverlapItem() const;
 
   void LoadDBKey(int pl_nKey);
   bool IsFilled();

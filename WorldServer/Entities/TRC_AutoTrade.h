@@ -27,11 +27,14 @@ public:
 
   bool Initialzie();
   bool IsOwnerGuild(unsigned int nGuildSerial);
+  void sendmsg_taxrate(unsigned int n, unsigned __int8 byRet);
   float get_taxrate();
   void AddGDalant(char *pdata);
   unsigned int CalcPrice(unsigned int nGuildSerial, unsigned int nPrice);
   int ChangeOwner(CGuild *pGuild);
   void SetPatriarchTaxMoney(int dwTax);
+  void set_owner(CGuild *pGuild);
+  char _db_load(unsigned __int8 byRace);
   static unsigned __int8 _insert_info(char *pdata);
 
   bool m_bInit;

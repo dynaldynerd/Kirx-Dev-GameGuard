@@ -3,6 +3,7 @@
 #include "CUserRankingProcess.h"
 
 #include "GlobalObjects.h"
+#include "pvp_rank_list_result_data_zocl.h"
 #include "qry_case_rank_racerank_guildrank.h"
 #include "WorldServerUtil.h"
 
@@ -234,6 +235,67 @@ unsigned __int8 CPvpUserRankingInfo::GetPvpRankDataVersion()
   return m_byPvpRankDataVersion;
 }
 
+void CPvpUserRankingInfo::PvpRankListRequest(
+  unsigned __int16 wIndex,
+  unsigned __int8 byRace,
+  unsigned __int8 byVersion,
+  unsigned __int8 byPage)
+{
+  if (m_byPvpRankDataVersion == byVersion)
+  {
+    SendMsg_PvpRankListNodata(wIndex, static_cast<char>(byRace), static_cast<char>(byPage), 0);
+  }
+  else
+  {
+    SendMsg_PvpRankListData(wIndex, byRace, m_byPvpRankDataVersion, byPage);
+  }
+}
+
+void CPvpUserRankingInfo::SendMsg_PvpRankListData(
+  unsigned __int16 wIndex,
+  unsigned __int8 byRace,
+  unsigned __int8 byVersion,
+  unsigned __int8 byPage)
+{
+  if (byRace >= 3u || byPage >= 10u)
+  {
+    return;
+  }
+
+  _PVP_RANK_PACKED_DATA *packed = &(m_vecPackedRankData[byRace][byPage]);
+  if (!packed)
+  {
+    return;
+  }
+
+  if (!packed->wDataLen)
+  {
+    SendMsg_PvpRankListNodata(wIndex, static_cast<char>(byRace), static_cast<char>(byPage), 1u);
+  }
+
+  _pvp_rank_list_result_data_zocl result;
+  result.byRace = byRace;
+  result.byVersion = byVersion;
+  result.byPage = byPage;
+  result.wRankDataLen = packed->wDataLen;
+  memcpy_0(result.szPvpRankData, packed->szPackedData, packed->wDataLen);
+
+  unsigned __int8 type[2]{13, 20};
+  const unsigned __int16 len = static_cast<unsigned __int16>(result.size());
+  g_Network.m_pProcess[0]->LoadSendMsg(wIndex, type, reinterpret_cast<char *>(&result), len);
+}
+
+void CPvpUserRankingInfo::SendMsg_PvpRankListNodata(
+  unsigned __int16 wIndex,
+  char byRace,
+  char byPage,
+  unsigned __int8 byRet)
+{
+  char payload[3]{byRace, byPage, static_cast<char>(byRet)};
+  unsigned __int8 type[2]{13, 19};
+  g_Network.m_pProcess[0]->LoadSendMsg(wIndex, type, payload, 3u);
+}
+
 void CPvpUserRankingInfo::PvpRankDataPacking(CLogFile *pkLogger)
 {
   if (pkLogger)
@@ -300,6 +362,15 @@ void CUserRankingProcess::FlipPvPRankTop()
 void CUserRankingProcess::PvpRankDataPacking()
 {
   m_kPvpRankingInfo.PvpRankDataPacking(m_pkLogger);
+}
+
+void CUserRankingProcess::PvpRankListRequest(
+  unsigned __int16 wIndex,
+  unsigned __int8 byRace,
+  unsigned __int8 byVersion,
+  unsigned __int8 byPage)
+{
+  m_kPvpRankingInfo.PvpRankListRequest(wIndex, byRace, byVersion, byPage);
 }
 
 void CUserRankingProcess::IncreaseVesion()

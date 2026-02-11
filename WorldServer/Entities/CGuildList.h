@@ -25,7 +25,9 @@ public:
   CGuildList();
   virtual ~CGuildList();
   char Init();
+  void AddList(unsigned __int8 byRace, unsigned __int8 byGrade, char *pwszGuildName, char *pwszMasterName);
   void SetGrade(unsigned __int8 byRace, char *pwszGuildName, unsigned __int8 byGrade);
+  void SetGuildMaster(unsigned __int8 byRace, char *pwszGuildName, char *pwszMasterName);
 
   bool m_bInit;
   unsigned __int8 m_byMaxPage[3];

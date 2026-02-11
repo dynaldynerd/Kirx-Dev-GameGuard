@@ -42,6 +42,19 @@ bool _dh_player_mgr::IsFill()
   return pOne != nullptr;
 }
 
+_dh_player_mgr *CDarkHoleChannel::GetPlayerInfo(unsigned int dwSerial)
+{
+  for (int j = 0; j < 32; ++j)
+  {
+    if (m_Quester[j].IsFill() && m_Quester[j].dwSerial == dwSerial)
+    {
+      return &m_Quester[j];
+    }
+  }
+
+  return nullptr;
+}
+
 CDarkHoleChannel::__enter_member::__enter_member()
 {
   bActive = false;
@@ -55,6 +68,363 @@ CDarkHoleChannel::__enter_member::__enter_member(bool active, bool disnormal, un
   bActive = active;
   bDisnormalClose = disnormal;
   dwDisconnectTime = timeGetTime();
+}
+
+void CDarkHoleChannel::AddMonster()
+{
+  _dh_mission_setup *mission = m_MissionMgr.pCurMssionPtr;
+  if (!mission)
+  {
+    return;
+  }
+
+  for (int j = 0; j < mission->nAddMonsterNum; ++j)
+  {
+    __add_monster *addMonster = mission->pAddMonster[j];
+    _dummy_position *dummyPos = nullptr;
+
+    if (addMonster->ReactArea.AreaDefType == at_dummy)
+    {
+      dummyPos = addMonster->ReactArea.obj.dummy.pPos;
+    }
+    else if (addMonster->ReactArea.AreaDefType == at_block)
+    {
+      _dummy_position *block = addMonster->ReactArea.obj.dummy.pPos;
+      dummyPos = *reinterpret_cast<_dummy_position **>(
+        &block->m_szCode[8 * (rand() % *reinterpret_cast<int *>(&block->m_szCode[8])) + 16]);
+    }
+
+    if (!dummyPos)
+    {
+      continue;
+    }
+
+    for (int k = 0; k < addMonster->ReactObj.wNum; ++k)
+    {
+      float newPos[3]{};
+      if (!m_pQuestSetup->pUseMap->GetRandPosInDummy(dummyPos, newPos, true))
+      {
+        continue;
+      }
+
+      if (addMonster->ReactObj.ObjDefType == react_kind_monster)
+      {
+        _monster_fld *monsterFld = addMonster->ReactObj.obj.monster.pMonsterFld;
+        CreateRepMonster(
+          m_pQuestSetup->pUseMap,
+          m_wLayerIndex,
+          newPos,
+          monsterFld->m_strCode,
+          nullptr,
+          false,
+          true,
+          true,
+          true,
+          false);
+      }
+      else if (addMonster->ReactObj.ObjDefType == react_kind_mgrp)
+      {
+        _monster_fld *monsterFld = addMonster->ReactObj.obj.monster.pMonsterFld;
+        const int count = *reinterpret_cast<int *>(&monsterFld->m_strCode[4]);
+        const __int64 entry =
+          *reinterpret_cast<__int64 *>(&monsterFld->m_strCode[8 * (rand() % count) + 12]);
+        CreateRepMonster(
+          m_pQuestSetup->pUseMap,
+          m_wLayerIndex,
+          newPos,
+          reinterpret_cast<char *>(entry + 4),
+          nullptr,
+          false,
+          true,
+          true,
+          true,
+          false);
+      }
+    }
+  }
+}
+
+void CDarkHoleChannel::ChangeMonster()
+{
+  _dh_mission_setup *mission = m_MissionMgr.pCurMssionPtr;
+  if (!mission || mission->nChangeMonsterNum <= 0)
+  {
+    return;
+  }
+
+  CMonster *aliveMonsters[MAX_MONSTER]{};
+  int aliveCount = 0;
+  for (int j = 0; j < MAX_MONSTER; ++j)
+  {
+    CMonster *monster = &g_Monster[j];
+    if (monster->m_bLive && monster->m_pCurMap == m_pQuestSetup->pUseMap
+        && monster->m_wMapLayerIndex == m_wLayerIndex)
+    {
+      if (!mission->pAreaDummy
+          || m_pQuestSetup->pUseMap->m_Dummy.IsInBBox(mission->pAreaDummy->m_wLineIndex, monster->m_fCurPos))
+      {
+        aliveMonsters[aliveCount++] = monster;
+      }
+    }
+  }
+
+  for (int k = 0; k < mission->nChangeMonsterNum; ++k)
+  {
+    __change_monster *changeMonster = mission->pChangeMonster[k];
+    if (rand() % 100 > changeMonster->nProb)
+    {
+      continue;
+    }
+
+    _dh_mission_mgr::_if_change *missionCont = m_MissionMgr.GetMissionCont(mission);
+    if (missionCont)
+    {
+      m_pQuestSetup->SetRealBoss(false);
+      if (changeMonster->pszIfMissionDescirptCode)
+      {
+        if (!missionCont->pMissionPtr)
+        {
+          missionCont->pMissionPtr = mission;
+        }
+        missionCont->pszDespt = changeMonster->pszIfMissionDescirptCode;
+      }
+      if (changeMonster->pszifCompleteMsg)
+      {
+        if (!missionCont->pMissionPtr)
+        {
+          missionCont->pMissionPtr = mission;
+        }
+        missionCont->pszComMsg = changeMonster->pszifCompleteMsg;
+      }
+    }
+
+    for (int m = 0; m < aliveCount; ++m)
+    {
+      CMonster *monster = aliveMonsters[m];
+      _monster_create_setdata data{};
+      memcpy_0(data.m_fStartPos, monster->m_fCreatePos, sizeof(data.m_fStartPos));
+      data.m_nLayerIndex = monster->m_wMapLayerIndex;
+      data.m_pMap = monster->m_pCurMap;
+      data.m_pRecordSet = changeMonster->pMonsterFldB;
+      data.pActiveRec = monster->m_pActiveRec;
+      data.bDungeon = monster->m_bDungeon;
+      data.pDumPosition = monster->m_pDumPosition;
+      data.pParent = nullptr;
+      monster->Destroy(1u, nullptr);
+      monster->Create(&data);
+    }
+  }
+}
+
+void CDarkHoleChannel::ShareItemToMonster()
+{
+  _dh_mission_setup *mission = m_MissionMgr.pCurMssionPtr;
+  if (!mission || mission->nLootItemNum <= 0)
+  {
+    return;
+  }
+
+  CMonster *aliveMonsters[MAX_MONSTER]{};
+  int aliveCount = 0;
+  for (int j = 0; j < MAX_MONSTER; ++j)
+  {
+    CMonster *monster = &g_Monster[j];
+    if (monster->m_bLive && monster->m_pCurMap == m_pQuestSetup->pUseMap
+        && monster->m_wMapLayerIndex == m_wLayerIndex)
+    {
+      if (!mission->pAreaDummy
+          || m_pQuestSetup->pUseMap->m_Dummy.IsInBBox(mission->pAreaDummy->m_wLineIndex, monster->m_fCurPos))
+      {
+        aliveMonsters[aliveCount++] = monster;
+      }
+    }
+  }
+
+  for (int k = 0; k < mission->nLootItemNum; ++k)
+  {
+    __add_loot_item *loot = mission->pLootItem[k];
+    if (!loot->dwDur)
+    {
+      continue;
+    }
+
+    CMonster *targets[MAX_MONSTER]{};
+    int targetCount = 0;
+    for (int m = 0; m < aliveCount; ++m)
+    {
+      CMonster *monster = aliveMonsters[m];
+      if (loot->ReactObj.ObjDefType == react_kind_monster)
+      {
+        if (!loot->ReactObj.obj.monster.pMonsterFld || monster->m_pMonRec == loot->ReactObj.obj.monster.pMonsterFld)
+        {
+          targets[targetCount++] = monster;
+        }
+      }
+      else if (loot->ReactObj.ObjDefType == react_kind_mgrp)
+      {
+        _monster_fld *monsterGroup = loot->ReactObj.obj.monster.pMonsterFld;
+        bool found = false;
+        for (int n = 0; n < *reinterpret_cast<int *>(&monsterGroup->m_strCode[4]); ++n)
+        {
+          if (*reinterpret_cast<_monster_fld **>(&monsterGroup->m_strCode[8 * n + 12]) == monster->m_pMonRec)
+          {
+            found = true;
+            break;
+          }
+        }
+        if (found)
+        {
+          targets[targetCount++] = monster;
+        }
+      }
+    }
+
+    if (!targetCount)
+    {
+      continue;
+    }
+
+    for (int j = 0; j < targetCount; ++j)
+    {
+      const unsigned __int16 lhs = static_cast<unsigned __int16>(rand() % targetCount);
+      const unsigned __int16 rhs = static_cast<unsigned __int16>(rand() % targetCount);
+      CMonster *tmp = targets[rhs];
+      targets[rhs] = targets[lhs];
+      targets[lhs] = tmp;
+    }
+
+    _event_loot_item item{};
+    item.byItemTable = loot->byItemTableCode;
+    item.wItemIndex = loot->pItemFld->m_dwIndex;
+
+    const int quotient = static_cast<int>(loot->dwDur) / targetCount;
+    const int remainder = static_cast<int>(loot->dwDur) % targetCount;
+
+    for (int j = 0; j < quotient; ++j)
+    {
+      for (int m = 0; m < targetCount; ++m)
+      {
+        targets[m]->AddEventItem(&item);
+        __trace("eventitem: mon: %s, item: %s", targets[m]->m_pMonRec->m_strCode, loot->pItemFld->m_strCode);
+      }
+    }
+
+    for (int j = 0; j < remainder; ++j)
+    {
+      targets[j]->AddEventItem(&item);
+    }
+  }
+}
+
+unsigned int CDarkHoleChannel::GetLeaderSerial()
+{
+  if (!m_pQuestSetup)
+  {
+    return static_cast<unsigned int>(-1);
+  }
+  if (!m_pLeaderPtr)
+  {
+    return static_cast<unsigned int>(-1);
+  }
+  if (m_pLeaderPtr->IsFill())
+  {
+    return m_pLeaderPtr->dwSerial;
+  }
+  return static_cast<unsigned int>(-1);
+}
+
+bool CDarkHoleChannel::IsMoveNextMission(int nPortalIndex)
+{
+  if (!m_pQuestSetup)
+  {
+    return false;
+  }
+  if (m_bMoveNextMission)
+  {
+    return m_MissionMgr.IsOpenPortal(nPortalIndex);
+  }
+  return false;
+}
+
+char CDarkHoleChannel::IsAllMemberNearPosition(float *pfCenterPos, int nLen)
+{
+  if (!m_pQuestSetup)
+  {
+    return 0;
+  }
+
+  for (int j = 0; j < 32; ++j)
+  {
+    _dh_player_mgr *entry = &m_Quester[j];
+    if (entry->IsFill() && entry->pOne->m_dwObjSerial == entry->dwSerial
+        && GetSqrt(pfCenterPos, entry->pOne->m_fCurPos) > static_cast<float>(nLen))
+    {
+      return 0;
+    }
+  }
+  return 1;
+}
+
+_dh_mission_setup *CDarkHoleChannel::SearchMissionFromPos(float *pfStartPos)
+{
+  if (!m_pQuestSetup)
+  {
+    return nullptr;
+  }
+
+  CMapData *useMap = m_pQuestSetup->pUseMap;
+  for (int j = 0; j < m_pQuestSetup->nEmbMissionSetupNum; ++j)
+  {
+    _dh_mission_setup *mission = m_pQuestSetup->EmbMissionSetup[j];
+    if (mission->pAreaDummy && useMap->m_Dummy.IsInBBox(mission->pAreaDummy->m_wLineIndex, pfStartPos))
+    {
+      return mission;
+    }
+  }
+  return nullptr;
+}
+
+char CDarkHoleChannel::GotoNextMissionByPosition(float *pfStartPos)
+{
+  _dh_mission_setup *nextMission = SearchMissionFromPos(pfStartPos);
+  if (!nextMission)
+  {
+    return 0;
+  }
+
+  m_MissionMgr.NextMission(nextMission);
+  AddMonster();
+  ChangeMonster();
+  ShareItemToMonster();
+  m_dwSendNewMissionMsgNextTime = timeGetTime() + 3000;
+  m_bMoveNextMission = false;
+  return 1;
+}
+
+void CDarkHoleChannel::NextMissionOtherQuester(CPlayer *pLeader, _dh_mission_setup *pNextMission)
+{
+  for (int j = 0; j < 32; ++j)
+  {
+    _dh_player_mgr *entry = &m_Quester[j];
+    if (!entry->IsFill() || entry->dwSerial == pLeader->m_dwObjSerial)
+    {
+      continue;
+    }
+
+    float newPos[3]{};
+    if (m_pQuestSetup->pUseMap->GetRandPosInDummy(pNextMission->pStartDummy, newPos, true))
+    {
+      entry->pOne->OutOfMap(m_pQuestSetup->pUseMap, m_wLayerIndex, 4u, newPos);
+      const unsigned __int8 mapCode = static_cast<unsigned __int8>(m_pQuestSetup->pUseMap->m_pMapSet->m_dwIndex);
+      entry->pOne->SendMsg_GotoRecallResult(0, mapCode, newPos, 4u);
+    }
+    else
+    {
+      entry->pOne->OutOfMap(m_pQuestSetup->pUseMap, m_wLayerIndex, 4u, pLeader->m_fCurPos);
+      const unsigned __int8 mapCode = static_cast<unsigned __int8>(m_pQuestSetup->pUseMap->m_pMapSet->m_dwIndex);
+      entry->pOne->SendMsg_GotoRecallResult(0, mapCode, pLeader->m_fCurPos, 4u);
+    }
+  }
 }
 
 void CDarkHoleChannel::SendMsg_PopMember(CPlayer *pPopMember, bool bDisconnect)

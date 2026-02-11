@@ -4,6 +4,7 @@
 
 class CPlayer;
 struct _sf_continous;
+struct _skill_fld;
 
 /* 1763 */
 class __cppobj CEquipItemSFAgent
@@ -12,6 +13,9 @@ public:
   struct _requireSlot
   {
     bool m_SlotIndex[8];
+
+    _requireSlot();
+    void Init();
   };
 
 private:
@@ -19,6 +23,12 @@ private:
   _sf_continous *m_pContSF[8];
 
 public:
+  void Init(CPlayer *pMaster);
+  void AllEndContSF();
+  void EndContSF(_sf_continous *pSF_Cont);
+  char GetRequireSFSlot(_requireSlot *pSlot, _skill_fld *pSkillFld);
+  void SetSFCont(unsigned int nEquipTblIndex, _sf_continous *pSF);
+  void StartContSF(_sf_continous *pSF_Cont);
   _sf_continous *GetEquipSFCont(unsigned int nEquipTblIndex);
   void ReleaseSFCont(int nEquipTblIndex);
 };

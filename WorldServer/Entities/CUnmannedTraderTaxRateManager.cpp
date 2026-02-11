@@ -2,6 +2,8 @@
 
 #include "CUnmannedTraderTaxRateManager.h"
 #include "CUnmannedTraderEnvironmentValue.h"
+#include "CWeeklyGuildRankManager.h"
+#include "CGuild.h"
 
 CUnmannedTraderTaxRateManager *CUnmannedTraderTaxRateManager::ms_Instance = nullptr;
 
@@ -50,6 +52,32 @@ bool CUnmannedTraderTaxRateManager::Init(CLogFile *pkLogger)
   return true;
 }
 
+char CUnmannedTraderTaxRateManager::Load()
+{
+  if (this->m_vecTRC.empty())
+  {
+    return 0;
+  }
+
+  for (int j = 0; j < 3; ++j)
+  {
+    if (!this->m_vecTRC[j])
+    {
+      return 0;
+    }
+
+    CWeeklyGuildRankManager *rankMgr = CWeeklyGuildRankManager::Instance();
+    CGuild *ownerGuild = rankMgr->GetPrevOwnerGuild(j, 0);
+    this->m_vecTRC[j]->set_owner(ownerGuild);
+    if (!this->m_vecTRC[j]->_db_load(j))
+    {
+      return 0;
+    }
+  }
+
+  return 1;
+}
+
 bool CUnmannedTraderTaxRateManager::IsOwnerGuild(unsigned __int8 byRace, unsigned int dwGuildSerial)
 {
   if (m_vecTRC.empty() || m_vecTRC.size() <= byRace)
@@ -68,6 +96,17 @@ float CUnmannedTraderTaxRateManager::GetTaxRate(unsigned __int8 byRace)
   }
 
   return m_vecTRC[byRace]->get_taxrate();
+}
+
+void CUnmannedTraderTaxRateManager::SendTaxRate(int n, unsigned __int8 byRace)
+{
+  if (m_vecTRC.empty() || m_vecTRC.size() <= byRace)
+  {
+    return;
+  }
+
+  TRC_AutoTrade *autoTrade = m_vecTRC[byRace];
+  autoTrade->sendmsg_taxrate(n, 0);
 }
 
 void CUnmannedTraderTaxRateManager::DQSCompleteInAtradTaxMoney(unsigned __int8 byRace, char *pdata)

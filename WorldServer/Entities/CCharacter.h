@@ -101,6 +101,8 @@ public:
   void SendMsg_AttackActEffect(unsigned __int8 byActEffect, CCharacter *pDamer);
   bool GetStealth(bool bInvisible);
   bool GetInvisible();
+  char RemoveAllContinousEffect();
+  bool RemoveAllContinousEffectGroup(unsigned int uiEffectCodeType);
   void RemoveSFContEffect(unsigned __int8 byContCode, unsigned __int16 wListIndex, bool bInit, bool bAura);
   void AlterContDurSec(unsigned __int8 byContCode, unsigned __int16 wListIndex, unsigned int dwStartSec, unsigned __int16 wNewDur);
   void RemoveSFContHelpByEffect(int nContParamCode, int nContParamIndex);

@@ -25,6 +25,7 @@ struct __cppobj __declspec(align(8)) _be_damaged_char
 class __cppobj __declspec(align(8)) CAttack
 {
   friend class CMonster;
+  friend class CPlayer;
 protected:
   _attack_param *m_pp;
   CCharacter *m_pAttChar;

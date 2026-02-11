@@ -167,6 +167,9 @@ public:
     bool bToOne);
   void Init(_object_id *pID);
   virtual bool IsAttackableInTown();
+  virtual char IsRecvableContEffect();
+  virtual bool IsRewardExp();
+  virtual bool Is_Battle_Mode();
   bool IsInTown();
   __int64 GetCurSecNum();
   virtual __int64 GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart);
@@ -195,7 +198,9 @@ public:
   virtual void SendMsg_FixPosition(int n);
   virtual void SendMsg_RealMovePoint(int n);
   virtual void SendMsg_SetHPInform();
+  virtual void SendMsg_StunInform();
   virtual void SetAttackPart(int nAttactPart);
+  virtual void SetStun(bool bStun);
   virtual __int64 SetDamage(
     int nDam,
     CCharacter *pDst,

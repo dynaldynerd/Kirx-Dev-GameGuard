@@ -29,9 +29,9 @@ CReturnGate *CReturnGateController::GetGate(unsigned int uiInx)
 void CReturnGateController::Close(CReturnGate *pkGate)
 {
   const unsigned __int16 index = pkGate->GetIndex();
-  if (!CNetIndexList::IsInList(m_pkEmptyInxList, index))
+  if (!m_pkEmptyInxList->IsInList(index))
   {
-    CNetIndexList::PushNode_Front(m_pkEmptyInxList, pkGate->GetIndex());
+    m_pkEmptyInxList->PushNode_Front(pkGate->GetIndex());
     pkGate->Close();
   }
 }
@@ -63,7 +63,7 @@ void CReturnGateController::SendEnterResult(char iResult, CPlayer *pkObj)
   char msg[1]{};
   msg[0] = iResult;
   unsigned __int8 pbyType[2] = {8, 10};
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], pkObj->m_ObjID.m_wIndex, pbyType, msg, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(pkObj->m_ObjID.m_wIndex, pbyType, msg, 1u);
 }
 
 char CReturnGateController::Enter(unsigned int uiGateInx, CPlayer *pkObj)

@@ -9,7 +9,7 @@ _combine_ex_item_result_zocl::__item::__item()
 
 void _combine_ex_item_result_zocl::__item::Init()
 {
-  _COMBINEKEY::SetRelease(&Key);
+  Key.SetRelease();
   dwDur = 0;
   dwUpt = 0xFFFFFFF;
 }

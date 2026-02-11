@@ -15,6 +15,7 @@ struct _REGED;
 struct _REGED_AVATOR_DB;
 struct _NOT_ARRANGED_AVATOR_DB;
 struct qry_case_cash_limsale;
+struct qry_case_select_golden_box_item;
 struct _db_cash_limited_sale;
 struct _SUPPLEMENT_DB_BASE;
 struct _TIMELIMITINFO_DB_BASE;
@@ -24,6 +25,7 @@ struct _BUDDY_DB_BASE;
 struct _TRUNK_DB_BASE;
 struct _TRADE_DB_BASE;
 struct _AIOC_A_MACRODATA;
+struct _economy_history_data;
 struct _CRYMSG_DB_BASE;
 struct _worlddb_sf_delay_info;
 struct _POTION_NEXT_USE_TIME_DB_BASE;
@@ -348,6 +350,8 @@ struct _event_info
 struct __cppobj GuildCreateEventInfo
 {
   void Init();
+  __int64 GetEstConsumeDalant() const;
+  __int64 GetEmblemDalant() const;
 
   bool m_bStartedEvent;
   _event_info m_EventInfo;
@@ -541,6 +545,8 @@ public:
   void OnDQSRun();
   void DQSCompleteProcess();
   CPlayer *GetCharW(char *wpszCharName);
+  CGameObject *GetObjectA(_object_id *pObjID);
+  CGameObject *GetObjectA(int kind, int id, unsigned int index);
   unsigned __int8 db_Reged_Avator(
     unsigned int dwAccountSerial,
     _REGED *pRegedList,
@@ -580,6 +586,13 @@ public:
   unsigned __int8 db_Log_AvatorLevel(unsigned int dwSerial, unsigned int dwAccountSerial, unsigned __int8 byLevel);
   unsigned __int8 db_Log_UserNum(unsigned int dwRace, unsigned int dwUserNum);
   bool db_Insert_Economy_History(unsigned int dwDate, _worlddb_economy_history_info *pEconomyData);
+  unsigned __int8 db_Select_Economy_History(
+    _economy_history_data *pCurData,
+    unsigned int *pnCurMgrValue,
+    unsigned int *pnNextMgrValue,
+    _economy_history_data *pHisData,
+    int *pHistoryNum,
+    unsigned int dwDate);
   unsigned __int8 db_Insert_CharacSelect_Log(
     unsigned int dwAccountSerial,
     char *szAccount,
@@ -735,6 +748,11 @@ public:
   unsigned __int8 _db_Load_PotionDelay(unsigned int dwSerial, _POTION_NEXT_USE_TIME_DB_BASE *pPotionDelay);
   unsigned __int8 _db_Load_OreCutting(unsigned int dwSerial, _CUTTING_DB_BASE *pCutting);
   unsigned __int8 _db_Load_PcBangFavor(unsigned int dwSerial, _PCBANG_FAVOR_ITEM_DB_BASE *pFavorItem);
+  bool db_LoadGreetingMsg();
+  void CreateSelectCharacterLogTable(unsigned __int8 byMonth);
+  void _db_Load_BattleTournamentInfo();
+  char LoadLimitInfo();
+  unsigned __int8 _db_Load_GoldBoxItem(qry_case_select_golden_box_item *pDbGoldenboxitem, int *pnDBSerial);
   unsigned __int8 _db_Check_NpcData(unsigned int dwSerial, _AVATOR_DATA *pData);
   unsigned __int8 _db_load_raceboss(unsigned int dwSerial, _AVATOR_DATA *pData);
   unsigned __int8 _db_load_punishment(unsigned int dwSerial, _AVATOR_DATA *pData);
@@ -948,6 +966,7 @@ public:
   char _CheckTotalSales();
   bool DatabaseInit(char *pszDBName, char *pszDBIP);
   bool CashDBInit(char *szIP, char *szDBName, char *szAccount, char *szPassword, unsigned int dwPort);
+  char _GameDataBaseInit();
   void SerivceSelfStart();
   void SerivceForceSet(bool bService);
   virtual ~CMainThread() = default;
@@ -1038,6 +1057,7 @@ struct __cppobj __declspec(align(4)) RFEventBase
   unsigned int _nOldLoopTime;
   event_date_range _kDateRange;
   virtual ~RFEventBase() = default;
+  virtual unsigned __int8 DoEvent(CPlayer *pOne);
   virtual bool IsDbUpdate(unsigned int nIdx);
   virtual _event_participant_classrefine *GetPlayerState(unsigned int nIdx, unsigned int nAvator);
   virtual bool SetPlayerState(void *const p, int size);
@@ -1066,10 +1086,29 @@ struct __cppobj TimeLimitMgr
   void LoadTLINIFile();
   void InitializeTLMgr();
   void SetTLEnable(unsigned __int16 wState);
+  unsigned __int16 GetPeriodCnt();
+  void SetTime(unsigned __int16 dwTime, unsigned __int16 iIndex);
+  void ReInitFatigue();
+  void SetPlayFDegree(unsigned int dwDegree);
+  void SetLogoutFDegree(unsigned int dwDegree);
   long double GetPlayerPenalty(unsigned __int16 wIndex);
   unsigned __int8 GetPlayerStatus(unsigned __int16 wIndex);
+  void InsertPlayerStatus(
+    unsigned __int16 wIndex,
+    unsigned int dwAccountSerial,
+    unsigned __int8 byStatus,
+    unsigned int dwFatigue,
+    unsigned int dwLastLogoutTime,
+    bool bAgeLimit);
+  char CheckPlayerStatus(
+    unsigned __int16 wIndex,
+    unsigned int dwLastContSaveTime,
+    unsigned __int8 *pbyStatus,
+    unsigned int *pdwFatigue);
   void Pop_Data(unsigned int dwAccountSerial, unsigned __int16 wIndex);
+  void Push_Data(Player_TL_Status *data, unsigned __int16 wIndex);
   __int64 ClacLastLogoutTimeSec(unsigned int dwLastConnTime);
+  __int64 ClacLastLogoutTimeToFatigue(unsigned int dwLastConnTime);
   unsigned __int16 GetEndPlayTime();
   char UpdatePlayerStatus(unsigned __int16 wIndex, unsigned int dwFatigue, unsigned __int8 wStatus);
   void ReSetPercent(unsigned __int16 wIndex);
@@ -2009,6 +2048,8 @@ struct __cppobj _dh_mission_mgr
   {
     int nCount;
     bool bPass;
+
+    void Init();
   };
 
   struct _if_change
@@ -2016,6 +2057,9 @@ struct __cppobj _dh_mission_mgr
     _dh_mission_setup *pMissionPtr;
     char *pszDespt;
     char *pszComMsg;
+
+    void Init();
+    bool IsFill();
   };
 
   struct _respawn_monster_act
@@ -2031,6 +2075,8 @@ struct __cppobj _dh_mission_mgr
     unsigned int dwLastRespawnTime;
     _monster_data NowMonster[128];
     bool bStart;
+
+    void set(__respawn_monster *data);
   };
 
   _dh_mission_setup *pCurMssionPtr;
@@ -2044,6 +2090,11 @@ struct __cppobj _dh_mission_mgr
   int nRespawnActNum;
   _respawn_monster_act RespawnMonsterAct[32];
 
+  void Init();
+  bool IsOpenPortal(int nIndex);
+  void NextMission(_dh_mission_setup *pNextMssionPtr);
+  _if_change *GetMissionCont(_dh_mission_setup *pMsSetup);
+  _if_change *SearchCurMissionCont();
   void OpenPortal(int nIndex);
   __int64 GetLimMSecTime();
 };
@@ -2372,6 +2423,7 @@ struct __cppobj __declspec(align(4)) _res_dummy
   _res_dummy();
   bool SetDummy(_dummy_position *pDumPos, unsigned char byQualityGrade);
   void SetRangeGrade();
+  unsigned __int8 GetQualityGrade();
 };
 
 /* 1522 */

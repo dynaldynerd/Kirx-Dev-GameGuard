@@ -183,7 +183,16 @@
     <ClCompile Include="Net\InternalPacketProcessor.cpp" />
     <ClCompile Include="Entities\*.cpp" />
     <ClCompile Include="ThirdParty\tinyxml\*.cpp" />
-</ItemGroup>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ClCompile Update="Entities\CHEAT_COMMAND.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Update="Entities\quest_check_result.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
+  </ItemGroup>
 
   <ItemGroup>
     <ClCompile Include="ThirdParty\lua-5.1.5\src\lapi.c">

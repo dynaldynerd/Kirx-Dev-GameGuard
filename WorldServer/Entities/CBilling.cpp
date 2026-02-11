@@ -27,7 +27,7 @@ void CBilling::SendMsg_StartBilling()
   memcpy_0(szMsg, g_Main.m_szWorldName, 0x21u);
 
   unsigned __int8 pbyType[2]{29, 1};
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[3], 0, pbyType, szMsg, 0x21u);
+  g_Network.m_pProcess[3]->LoadSendMsg(0, pbyType, szMsg, 0x21u);
 }
 
 void CBilling::SendMsg_CurAllUserLogin()
@@ -87,7 +87,7 @@ void CBilling::Alive(CUserDB *pUserDB)
     *reinterpret_cast<__int16 *>(msg + 36) = pUserDB->m_BillingInfo.iType;
 
     unsigned __int8 pbyType[2]{29, 5};
-    CNetProcess::LoadSendMsg(g_Network.m_pProcess[3], 0, pbyType, msg, 0x27u);
+    g_Network.m_pProcess[3]->LoadSendMsg(0, pbyType, msg, 0x27u);
   }
 }
 
@@ -107,7 +107,7 @@ void CBilling::Logout(CUserDB *pUserDB)
     *reinterpret_cast<__int16 *>(msg + 36) = pUserDB->m_BillingInfo.iType;
 
     unsigned __int8 pbyType[2]{29, 6};
-    CNetProcess::LoadSendMsg(g_Network.m_pProcess[3], 0, pbyType, msg, 0x26u);
+    g_Network.m_pProcess[3]->LoadSendMsg(0, pbyType, msg, 0x26u);
   }
 }
 
@@ -121,7 +121,7 @@ void CBilling::BillingClose(char *szID)
       const int billingType = player->m_pUserDB->GetBillingType();
       if (billingType == 6 || billingType == 7)
       {
-        player->Billing_Logout();
+        player->m_pUserDB->ForceCloseCommand(1u, 0xFFFFFFFFu, false, "Billing close");
         player->m_pUserDB->m_BillingInfo.iType = 1;
       }
     }
@@ -164,7 +164,7 @@ bool CBilling::SendMsg_Login(
   }
 
   unsigned __int8 pbyType[2]{29, 4};
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[3], 0, pbyType, msg, 0x3Au);
+  g_Network.m_pProcess[3]->LoadSendMsg(0, pbyType, msg, 0x3Au);
   return true;
 }
 
@@ -187,8 +187,8 @@ void CBilling::Remaintime_Personal(
       if (player->m_pUserDB->m_BillingInfo.iType >= 100
           && (player->m_pUserDB->m_BillingInfo.iType == 6 || player->m_pUserDB->m_BillingInfo.iType == 7))
       {
-        player->SendMsg_RemainTimeInform(iType, lRemaintime, pstEndDate);
-        player->m_pUserDB->SetRemainTime(lRemaintime);
+        player->m_pUserDB->SetBillingData(player->m_pUserDB->m_BillingInfo.szCMS, iType, lRemaintime, pstEndDate);
+        player->m_pUserDB->SendMsg_BillingInfo();
       }
     }
   }
@@ -207,8 +207,8 @@ void CBilling::Remaintime_PCBang(
       CPlayer *player = &g_Player[j];
       if (player && player->m_bLive && !strcmp_0(player->m_pUserDB->m_BillingInfo.szCMS, szCMSCode))
       {
-        player->SendMsg_RemainTimeInform(iType, lRemaintime, pstEndDate);
-        player->m_pUserDB->SetRemainTime(lRemaintime);
+        player->m_pUserDB->SetBillingData(player->m_pUserDB->m_BillingInfo.szCMS, iType, lRemaintime, pstEndDate);
+        player->m_pUserDB->SendMsg_BillingInfo();
       }
     }
   }
@@ -229,7 +229,6 @@ void CBilling::Change_BillingType(
     {
       if (player->m_pUserDB->m_BillingInfo.iType == 6 || player->m_pUserDB->m_BillingInfo.iType == 7)
       {
-        player->SendMsg_BillingTypeChangeInform(iType, lRemainTime, pstEndDate, byReason);
         if (iType == 6 || iType == 7)
         {
           player->m_pUserDB->SetBillingData(szCMSCode, iType, lRemainTime, pstEndDate);
@@ -238,6 +237,7 @@ void CBilling::Change_BillingType(
         {
           player->m_pUserDB->SetBillingData(nullptr, iType, lRemainTime, pstEndDate);
         }
+        player->m_pUserDB->SendMsg_BillingInfo();
       }
     }
   }
@@ -258,7 +258,7 @@ void CBilling::Expire_PCBang(char *szCMS)
       CPlayer *player = &g_Player[j];
       if (player && player->m_bLive && !strcmp_0(player->m_pUserDB->m_BillingInfo.szCMS, szCMS))
       {
-        player->Billing_Logout();
+        player->m_pUserDB->ForceCloseCommand(1u, 0xFFFFFFFFu, false, "Billing expire");
         player->m_pUserDB->m_BillingInfo.iType = 1;
       }
     }
@@ -283,5 +283,5 @@ void CBilling::SendMsg_ZoneAliveCheck(unsigned int dwData)
   char szMsg[4]{};
   *reinterpret_cast<unsigned int *>(szMsg) = dwData;
   unsigned __int8 pbyType[2]{29, 91};
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[3], 0, pbyType, szMsg, 4u);
+  g_Network.m_pProcess[3]->LoadSendMsg(0, pbyType, szMsg, 4u);
 }

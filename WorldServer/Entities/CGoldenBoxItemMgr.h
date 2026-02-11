@@ -5,6 +5,7 @@
 #include "CLogFile.h"
 #include "CMyTimer.h"
 #include "CNetProcess.h"
+#include "StorageList.h"
 
 struct _goldbox_index
 {
@@ -82,6 +83,8 @@ struct _db_golden_box_item
   _db_golden_box_item_List List[2][100];
 };
 
+class CPlayer;
+
 class __cppobj CGoldenBoxItemMgr
 {
 public:
@@ -101,10 +104,28 @@ public:
   bool Load_Event_INI(_golden_box_item_ini *pIni);
   void Check_Loaded_Event_Status();
   bool SetGoldBoxItemIndex();
+  _db_golden_box_item *GetGodBoxItemInfoPtr();
+  void SetDBSerial(int nDBSerial);
+  char SynchINIANDDB();
   unsigned __int8 GetLoopCount();
+  unsigned __int16 Get_Box_Count(unsigned __int8 byIndex);
+  unsigned __int16 Get_BoxItem_Count(unsigned __int8 byIndex, unsigned int dwIndex);
   void Set_FromINIToStruct(_golden_box_item_ini *pIni);
   void Set_ToStruct();
   void BoxItemDataCopy();
+  void RateCheck(unsigned __int8 byIndex);
+  char *GetGoldBoxItemPtr();
+  char *BoxItemOpen(unsigned __int8 byIndex);
+  void Set_BoxItem_Count(unsigned __int8 byIndex, unsigned int dwIndex);
+  void BoxItemOpenEffectType(char *szUseItem, char *szNewItem, unsigned __int8 *pbyType, bool *bCircle);
+  void WriteGetGoldBarLog(CPlayer *pOne, _STORAGE_LIST::_db_con *pItem);
+  void WriteEventCouponLog(CPlayer *pOne, _STORAGE_LIST::_db_con *pItem);
+  unsigned __int8 IsBuyRaceBossGoldBox(CPlayer *pOne);
+  unsigned __int16 Get_StarterBox_Count();
+  char *GetStarterBoxCode(unsigned __int16 wIndex);
+  bool StarterBox_InsertToInven(CPlayer *pOne, char *szItemCode);
+  char _insert_to_inven(CPlayer *pOne, unsigned __int8 byTableCode, unsigned __int16 wItemIndex);
+  void Set_StarterBox_Count(unsigned int dwNum, bool bAdd);
 
   unsigned __int8 Get_Event_Status();
 

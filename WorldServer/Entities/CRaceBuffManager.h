@@ -10,6 +10,7 @@ public:
   static CRaceBuffManager *Instance();
   bool Init();
   bool RequestHolyQuestRaceBuff(int iType);
+  bool CreateComplete(CPlayer *pkPlayer);
 
   CRaceBuffByHolyQuestProcedure m_kBuffByHolyQuest;
 };

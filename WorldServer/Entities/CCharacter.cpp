@@ -316,6 +316,34 @@ bool CCharacter::GetInvisible()
   return m_EP.GetEff_State(26);
 }
 
+char CCharacter::RemoveAllContinousEffect()
+{
+  char removed = 0;
+  for (unsigned int effectCodeType = 0; effectCodeType < 2; ++effectCodeType)
+  {
+    if (RemoveAllContinousEffectGroup(effectCodeType))
+    {
+      removed = 1;
+    }
+  }
+  return removed;
+}
+
+bool CCharacter::RemoveAllContinousEffectGroup(unsigned int uiEffectCodeType)
+{
+  int removeCount = 0;
+  for (int j = 0; j < 8; ++j)
+  {
+    _sf_continous *cont = &m_SFCont[uiEffectCodeType][j];
+    if (cont->m_bExist)
+    {
+      RemoveSFContEffect(static_cast<unsigned __int8>(uiEffectCodeType), static_cast<unsigned __int16>(j), false, false);
+      ++removeCount;
+    }
+  }
+  return removeCount > 0;
+}
+
 void CCharacter::RemoveSFContEffect(
   unsigned __int8 byContCode,
   unsigned __int16 wListIndex,

@@ -58,6 +58,7 @@ struct __cppobj __unaligned __declspec(align(4)) _STORAGE_LIST
   void SetLock(int n, bool bLock);
   int TransInCon(_storage_con *pCon);
   int GetIndexEmptyCon();
+  int GetNumUseCon() const;
   int GetNumEmptyCon();
   char AlterCurDur(int n, int nAlter, unsigned __int64 *pdwLeftDur);
   char UpdateCurDur(int n, int nUpdate);

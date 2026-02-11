@@ -2,6 +2,8 @@
 
 #include "IdaCompat.h"
 
+class CPlayer;
+
 /* 1735 */
 class __cppobj __declspec(align(8)) CRealMoveRequestDelayChecker
 {
@@ -16,5 +18,10 @@ public:
   unsigned __int16 m_wTotalContinueValiedCount;
 
   bool Init(unsigned int listCount);
+  bool Check(CPlayer *pkUser);
+  void Reset();
+  bool GetCurInx(unsigned int *pInx);
+  bool CheckDelay(unsigned int dwCurTime, unsigned int dwIndex);
+  void IncNodeIndex();
 };
 

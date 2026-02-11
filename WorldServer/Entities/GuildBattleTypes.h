@@ -33,6 +33,24 @@ struct __declspec(align(8)) _qry_case_dest_guild_out_guildbattlecost
   __int64 size();
 };
 
+struct __declspec(align(8)) _qry_case_src_guild_out_guildbattlecost
+{
+  unsigned int dwGuildIndex;
+  unsigned int dwGuildSerial;
+  unsigned int dwSubGold;
+  unsigned int dwSubDalant;
+  unsigned __int8 byDate[4];
+  long double out_totalgold;
+  long double out_totaldalant;
+  unsigned int dwSrcGuildSerial;
+  unsigned int dwStartTimeInx;
+  unsigned int dwMemberCntInx;
+  unsigned int dwMapInx;
+  unsigned __int8 byProcRet;
+
+  __int64 size();
+};
+
 struct __declspec(align(8)) _qry_case_addguildbattleschedule
 {
   unsigned int dwID;
@@ -95,6 +113,8 @@ struct _guild_battle_rank_list_result_zocl
   unsigned __int8 byExistSelfGuildInfo;
   unsigned __int8 byCnt;
   _guild_battle_rank_list_result_zocl_list list[11];
+
+  __int64 size();
 };
 #pragma pack(pop)
 
@@ -122,6 +142,8 @@ struct _guild_battle_reserved_schedule_result_zocl
   unsigned __int8 bySelfScheduleInx;
   unsigned __int8 byCnt;
   __list List[5];
+
+  __int64 size();
 };
 #pragma pack(pop)
 

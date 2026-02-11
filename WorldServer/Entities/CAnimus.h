@@ -40,6 +40,7 @@ public:
   void Init(_object_id *pID);
   bool Destroy();
   void SendMsg_Destroy();
+  void MasterAttack_MasterInform(CCharacter *pDst);
 
   static CRecordData s_tblParameter[8];
   static unsigned int MAX_EXP[8];

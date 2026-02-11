@@ -5,6 +5,10 @@
 #include "CUserDB.h"
 #include "CPvpUserAndGuildRankingSystem.h"
 #include "GuildBattle.h"
+#include "WorldServerUtil.h"
+#include "GlobalObjects.h"
+
+#include <cstdlib>
 
 CGuildBattleController *CGuildBattleController::Instance()
 {
@@ -52,6 +56,243 @@ bool CGuildBattleController::Init()
 
   auto *stateListPool = GUILD_BATTLE::CNormalGuildBattleStateListPool::Instance();
   return stateListPool->Init();
+}
+
+char CGuildBattleController::Load()
+{
+  auto *logger = GUILD_BATTLE::CGuildBattleLogger::Instance();
+  const int curDay = GetCurDay();
+  if (curDay < 0)
+  {
+    logger->Log("CGuildBattleController::Load(%d) ::GetCurDay() Fail!", curDay);
+    return 0;
+  }
+
+  unsigned int uiMapCnt = 0;
+  unsigned int iToday = 0;
+  unsigned int iTodayDayID = 0;
+  int iTomorrow = 0;
+  int iTomorrowDayID = 1;
+
+  if (!LoadINI(&uiMapCnt, &iToday, &iTodayDayID, &iTomorrow, &iTomorrowDayID))
+  {
+    logger->Log("CGuildBattleController::Load(%d) LoadINI() Fail!", curDay);
+  }
+
+  auto *rankManager = GUILD_BATTLE::CGuildBattleRankManager::Instance();
+  if (!rankManager->Load())
+  {
+    logger->Log("CGuildBattleController::Load() CGuildBattleRankManager::Instance()->Load() Fail!");
+    return 0;
+  }
+
+  auto *scheduleManager = GUILD_BATTLE::CGuildBattleScheduleManager::Instance();
+  if (!scheduleManager->Load(curDay, uiMapCnt, iToday, iTodayDayID, iTomorrow, iTomorrowDayID))
+  {
+    logger->Log("CGuildBattleScheduleManager::Load() CGuildBattleScheduleManager::Instance()->Load() Fail!");
+    return 0;
+  }
+
+  auto *battleManager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
+  if (!battleManager->Load(curDay, uiMapCnt, iToday, iTodayDayID, iTomorrow, iTomorrowDayID))
+  {
+    logger->Log("CGuildBattleController::Load() CNormalGuildBattleManager::Instance()->Load() Fail!");
+    return 0;
+  }
+
+  auto *reservedManager = GUILD_BATTLE::CGuildBattleReservedScheduleListManager::Instance();
+  if (!reservedManager->Load(curDay, uiMapCnt, iToday, iTomorrow))
+  {
+    logger->Log(
+      "CGuildBattleController::Load() CGuildBattleReservedScheduleListManager::Instance()->Load() Fail!");
+    return 0;
+  }
+
+  auto *possibleList = GUILD_BATTLE::CPossibleBattleGuildListManager::Instance();
+  if (!possibleList->Load())
+  {
+    logger->Log("CGuildBattleController::Load() CPossibleBattleGuildListManager::Instance()->Load() Fail!");
+    return 0;
+  }
+
+  if (!SaveINI())
+  {
+    logger->Log("CGuildBattleController::Load() SaveINI() Fail!");
+    return 0;
+  }
+
+  return 1;
+}
+
+char CGuildBattleController::LoadINI(
+  unsigned int *uiMapCnt,
+  unsigned int *iToday,
+  unsigned int *iTodayDayID,
+  int *iTomorrow,
+  int *iTomorrowDayID)
+{
+  *iToday = GetPrivateProfileIntA("GuildBattle", "Today", -1, "..\\SystemSave\\ServerState.ini");
+  *iTodayDayID = GetPrivateProfileIntA("GuildBattle", "TodayDayID", 0, "..\\SystemSave\\ServerState.ini");
+  *iTomorrow = GetPrivateProfileIntA("GuildBattle", "Tomorrow", -1, "..\\SystemSave\\ServerState.ini");
+  *iTomorrowDayID = GetPrivateProfileIntA("GuildBattle", "TomorrowDayID", 1, "..\\SystemSave\\ServerState.ini");
+  *uiMapCnt = GetPrivateProfileIntA("GuildBattle", "MapCnt", 0, "..\\SystemSave\\ServerState.ini");
+
+  auto *logger = GUILD_BATTLE::CGuildBattleLogger::Instance();
+  logger->Log(
+    "CGuildBattleController::LoadINI(...) : iToday : %d, iTodayDayID : %d, iTommorow : %d, iTomorrowDayID : %d, uiMapCnt : %u Load!",
+    *iToday,
+    *iTodayDayID,
+    *iTomorrow,
+    *iTomorrowDayID,
+    *uiMapCnt);
+  return 1;
+}
+
+char CGuildBattleController::SaveINI()
+{
+  auto *scheduleManager = GUILD_BATTLE::CGuildBattleScheduleManager::Instance();
+  auto *fieldList = GUILD_BATTLE::CNormalGuildBattleFieldList::Instance();
+
+  const int mapCnt = fieldList->GetMapCnt();
+  const int today = GetCurDay();
+  const int todayDayID = scheduleManager->GetTodayDayID();
+  const int tomorrow = GetNextDay();
+  const int tomorrowDayID = scheduleManager->GetTomorrowDayID();
+
+  char buffer[260]{};
+  if (!WritePrivateProfileStringA("GuildBattle", "Today", _itoa(today, buffer, 10), "..\\SystemSave\\ServerState.ini"))
+  {
+    return 0;
+  }
+  if (!WritePrivateProfileStringA(
+        "GuildBattle",
+        "TodayDayID",
+        _itoa(todayDayID, buffer, 10),
+        "..\\SystemSave\\ServerState.ini"))
+  {
+    return 0;
+  }
+  if (!WritePrivateProfileStringA(
+        "GuildBattle",
+        "Tomorrow",
+        _itoa(tomorrow, buffer, 10),
+        "..\\SystemSave\\ServerState.ini"))
+  {
+    return 0;
+  }
+  if (!WritePrivateProfileStringA(
+        "GuildBattle",
+        "TomorrowDayID",
+        _itoa(tomorrowDayID, buffer, 10),
+        "..\\SystemSave\\ServerState.ini"))
+  {
+    return 0;
+  }
+  if (!WritePrivateProfileStringA(
+        "GuildBattle",
+        "MapCnt",
+        _ltoa(mapCnt, buffer, 10),
+        "..\\SystemSave\\ServerState.ini"))
+  {
+    return 0;
+  }
+
+  auto *logger = GUILD_BATTLE::CGuildBattleLogger::Instance();
+  logger->Log(
+    "CGuildBattleController::SaveINI() : iToday : %d, iTodayDayID : %u, iTommorow : %d, iTomorrowDayID : %u, uiMapCnt : %u Save!",
+    today,
+    todayDayID,
+    tomorrow,
+    tomorrowDayID,
+    mapCnt);
+  return 1;
+}
+
+unsigned __int8 CGuildBattleController::IsAvailableSuggest(
+  CGuild *pSrcGuild,
+  unsigned int dwDestGuild,
+  unsigned int dwStartTime,
+  unsigned int dwNumber,
+  unsigned int dwMapCode)
+{
+  if (pSrcGuild->m_dwSerial == dwDestGuild)
+  {
+    return 118;
+  }
+  if (10 * (dwNumber + 1) > 0x32)
+  {
+    return 126;
+  }
+
+  unsigned __int8 ret = pSrcGuild->SrcGuildIsAvailableBattleRequestState();
+  if (ret)
+  {
+    return ret;
+  }
+
+  CGuild *destGuild = GetGuildDataFromSerial(g_Guild, MAX_GUILD, dwDestGuild);
+  if (!destGuild)
+  {
+    return 111;
+  }
+
+  unsigned int mapIndex[9]{};
+  auto *fieldList = GUILD_BATTLE::CNormalGuildBattleFieldList::Instance();
+  if (!fieldList->GetMapInx(pSrcGuild->m_byRace, dwMapCode, mapIndex))
+  {
+    return 120;
+  }
+
+  auto *scheduleManager = GUILD_BATTLE::CGuildBattleScheduleManager::Instance();
+  ret = scheduleManager->IsEmptyTime(mapIndex[0], dwStartTime + 1);
+  if (ret)
+  {
+    return ret;
+  }
+
+  if (pSrcGuild->m_byGrade < GUILD_BATTLE::LIMIT_SRC_GRADE)
+  {
+    return 113;
+  }
+  if (destGuild->m_byGrade < GUILD_BATTLE::LIMIT_DEST_GRADE)
+  {
+    return 114;
+  }
+  if (std::abs(pSrcGuild->m_byGrade - destGuild->m_byGrade) > 4)
+  {
+    return 115;
+  }
+  if (pSrcGuild->m_dTotalGold < 5000.0)
+  {
+    return 116;
+  }
+  if (pSrcGuild->m_byRace == destGuild->m_byRace)
+  {
+    return destGuild->DestGuildIsAvailableBattleRequestState();
+  }
+  return 117;
+}
+
+void CGuildBattleController::UpdatePossibleBattleGuildList()
+{
+  auto *manager = GUILD_BATTLE::CPossibleBattleGuildListManager::Instance();
+  manager->UpdateGuildList();
+}
+
+void CGuildBattleController::JoinGuild(int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial)
+{
+  auto *manager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
+  manager->JoinGuild(n, dwGuildSerial, dwCharacSerial);
+}
+
+void CGuildBattleController::LeaveGuild(CPlayer *pkPlayer)
+{
+  if (pkPlayer && pkPlayer->m_bOper && pkPlayer->m_Param.m_pGuild
+    && pkPlayer->m_Param.m_pGuild->m_dwSerial != static_cast<unsigned int>(-1))
+  {
+    auto *manager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
+    manager->LeaveGuild(pkPlayer);
+  }
 }
 
 unsigned __int8 CGuildBattleController::Add(
@@ -243,6 +484,32 @@ void CGuildBattleController::PushClearGuildBattleRank()
   manager->PushClearGuildBattleRank();
 }
 
+unsigned __int8 CGuildBattleController::Start(CPlayer *pkPlayer)
+{
+  if (!pkPlayer)
+  {
+    return static_cast<unsigned __int8>(-114);
+  }
+
+  unsigned int guildSerial = static_cast<unsigned int>(-1);
+  if (pkPlayer->m_Param.m_pGuild)
+  {
+    guildSerial = pkPlayer->m_Param.m_pGuild->m_dwSerial;
+  }
+
+  if (guildSerial == static_cast<unsigned int>(-1))
+  {
+    return static_cast<unsigned __int8>(-115);
+  }
+
+  const int playerIndex = pkPlayer->m_ObjID.m_wIndex;
+  const unsigned int charSerial = pkPlayer->m_pUserDB->m_dwSerial;
+  GUILD_BATTLE::CNormalGuildBattleManager *manager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
+  manager->JoinGuild(playerIndex, guildSerial, charSerial);
+  manager->LogIn(playerIndex, guildSerial, charSerial);
+  return 0;
+}
+
 void CGuildBattleController::LogIn(CPlayer *pkPlayer)
 {
   const int n = pkPlayer->m_ObjID.m_wIndex;
@@ -281,6 +548,126 @@ void CGuildBattleController::NetClose(CPlayer *pkPlayer)
       charSerial,
       result);
   }
+}
+
+void CGuildBattleController::SendPossibleBattleGuildList(
+  int n,
+  unsigned __int8 byRace,
+  unsigned __int8 byPage,
+  unsigned int dwVer)
+{
+  GUILD_BATTLE::CPossibleBattleGuildListManager *manager = GUILD_BATTLE::CPossibleBattleGuildListManager::Instance();
+  manager->SendInfo(n, byRace, byPage, dwVer);
+}
+
+void CGuildBattleController::SendRankList(
+  int n,
+  unsigned __int8 bySelfRace,
+  unsigned int dwCurVer,
+  unsigned __int8 uiMapID,
+  unsigned __int8 byPage,
+  unsigned int dwGuildSerial)
+{
+  GUILD_BATTLE::CGuildBattleRankManager *manager = GUILD_BATTLE::CGuildBattleRankManager::Instance();
+  manager->Send(n, bySelfRace, dwCurVer, static_cast<char>(uiMapID), byPage, dwGuildSerial);
+}
+
+void CGuildBattleController::Join(CPlayer *pkPlayer)
+{
+  if (!pkPlayer)
+  {
+    return;
+  }
+
+  const int n = pkPlayer->m_ObjID.m_wIndex;
+  unsigned int guildSerial = static_cast<unsigned int>(-1);
+  if (pkPlayer->m_Param.m_pGuild)
+  {
+    guildSerial = pkPlayer->m_Param.m_pGuild->m_dwSerial;
+  }
+  const unsigned int charSerial = pkPlayer->m_pUserDB->m_dwSerial;
+
+  GUILD_BATTLE::CNormalGuildBattleManager *manager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
+  manager->JoinGuild(n, guildSerial, charSerial);
+}
+
+void CGuildBattleController::SendReservedScheduleList(
+  int n,
+  unsigned int uiMapID,
+  unsigned int dwVer,
+  unsigned __int8 byDay,
+  unsigned __int8 byPage,
+  unsigned int dwGuildSerial)
+{
+  GUILD_BATTLE::CGuildBattleReservedScheduleListManager *manager =
+    GUILD_BATTLE::CGuildBattleReservedScheduleListManager::Instance();
+  manager->Send(uiMapID, n, dwVer, byDay, byPage, dwGuildSerial);
+}
+
+void CGuildBattleController::SendCurrentBattleInfoRequest(int n, unsigned int uiMapID)
+{
+  GUILD_BATTLE::CCurrentGuildBattleInfoManager *manager = GUILD_BATTLE::CCurrentGuildBattleInfoManager::Instance();
+  manager->Send(n, uiMapID);
+}
+
+void CGuildBattleController::CheckTakeGravityStone(int iPortalInx, CPlayer *pkPlayer)
+{
+  if (!pkPlayer)
+  {
+    return;
+  }
+
+  const int n = pkPlayer->m_ObjID.m_wIndex;
+  unsigned int guildSerial = static_cast<unsigned int>(-1);
+  if (pkPlayer->m_Param.m_pGuild)
+  {
+    guildSerial = pkPlayer->m_Param.m_pGuild->m_dwSerial;
+  }
+  const unsigned int charSerial = pkPlayer->m_pUserDB->m_dwSerial;
+
+  GUILD_BATTLE::CNormalGuildBattleManager *manager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
+  manager->CheckTakeGravityStone(iPortalInx, n, guildSerial, charSerial);
+}
+
+void CGuildBattleController::CheckGetGravityStone(
+  unsigned __int16 wIndex,
+  unsigned int dwObjSerial,
+  CPlayer *pkPlayer)
+{
+  if (!pkPlayer)
+  {
+    return;
+  }
+
+  const int n = pkPlayer->m_ObjID.m_wIndex;
+  unsigned int guildSerial = static_cast<unsigned int>(-1);
+  if (pkPlayer->m_Param.m_pGuild)
+  {
+    guildSerial = pkPlayer->m_Param.m_pGuild->m_dwSerial;
+  }
+  const unsigned int charSerial = pkPlayer->m_pUserDB->m_dwSerial;
+
+  GUILD_BATTLE::CNormalGuildBattleManager *manager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
+  manager->CheckGetGravityStone(wIndex, dwObjSerial, n, guildSerial, charSerial);
+}
+
+void CGuildBattleController::CheckGoal(CPlayer *pkPlayer, int iPortalInx)
+{
+  if (!pkPlayer)
+  {
+    return;
+  }
+
+  const int n = pkPlayer->m_ObjID.m_wIndex;
+  unsigned int guildSerial = static_cast<unsigned int>(-1);
+  if (pkPlayer->m_Param.m_pGuild)
+  {
+    guildSerial = pkPlayer->m_Param.m_pGuild->m_dwSerial;
+  }
+  const unsigned int charSerial = pkPlayer->m_pUserDB->m_dwSerial;
+
+  GUILD_BATTLE::CNormalGuildBattleManager *manager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
+  manager->CheckGoal(n, guildSerial, charSerial, iPortalInx);
 }
 
 void CGuildBattleController::SendPossibleBattleGuildListFirst(int n, unsigned __int8 byRace)

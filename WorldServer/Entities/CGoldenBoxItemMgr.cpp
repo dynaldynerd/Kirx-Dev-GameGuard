@@ -6,6 +6,10 @@
 #include <new>
 
 #include "CAsyncLogger.h"
+#include "CHolyStoneSystem.h"
+#include "CPlayer.h"
+#include "CUserDB.h"
+#include "CPvpUserAndGuildRankingSystem.h"
 #include "CRecordData.h"
 #include "GlobalObjects.h"
 #include "InvenKey.h"
@@ -68,6 +72,82 @@ void CGoldenBoxItemMgr::BoxItemDataCopy()
   _db_golden_box_item temp{};
   memcpy_0(&temp, &m_golden_box_item_New, sizeof(m_golden_box_item_New));
   memcpy_0(&m_golden_box_item_Old, &temp, sizeof(m_golden_box_item_Old));
+}
+
+_db_golden_box_item *CGoldenBoxItemMgr::GetGodBoxItemInfoPtr()
+{
+  return &m_temp_db;
+}
+
+void CGoldenBoxItemMgr::SetDBSerial(int nDBSerial)
+{
+  m_nDBSerial = nDBSerial;
+}
+
+char CGoldenBoxItemMgr::SynchINIANDDB()
+{
+  for (int j = 0; j < 2; ++j)
+  {
+    if (!m_temp_db.bygolden_item_num[j])
+    {
+      return 0;
+    }
+  }
+
+  for (int k = 0; k < 2; ++k)
+  {
+    if (m_temp_db.nBoxcode[k] <= 0)
+    {
+      return 0;
+    }
+  }
+
+  for (int m = 0; m < 2; ++m)
+  {
+    for (int n = 0; n < m_temp_db.bygolden_item_num[m]; ++n)
+    {
+      if (m_temp_db.List[m][n].ncode <= 0)
+      {
+        return 0;
+      }
+    }
+  }
+
+  if (!m_temp_db.bydck)
+  {
+    return 0;
+  }
+
+  m_golden_box_item.m_bydck = m_temp_db.bydck;
+  m_golden_box_item.m_dwStarterBoxCnt = m_temp_db.dwStarterBoxCnt;
+
+  for (int ii = 0; ii < 2; ++ii)
+  {
+    m_golden_box_item.m_wBoxMax[ii] = m_temp_db.wBoxMax[ii];
+  }
+
+  for (int jj = 0; jj < 2; ++jj)
+  {
+    m_golden_box_item.m_byBoxTableCode[jj] = static_cast<unsigned __int8>((m_temp_db.nBoxcode[jj] >> 8) & 0xFF);
+    m_golden_box_item.m_dwBoxIndex[jj] = static_cast<unsigned __int16>((m_temp_db.nBoxcode[jj] >> 16) & 0xFFFF);
+    m_golden_box_item.m_wBoxMax[jj] = m_temp_db.wBoxMax[jj];
+    m_golden_box_item.m_bygolden_item_num[jj] = m_temp_db.bygolden_item_num[jj];
+
+    for (int kk = 0; kk < m_temp_db.bygolden_item_num[jj]; ++kk)
+    {
+      _db_golden_box_item::_db_golden_box_item_List *listEntry = &m_temp_db.List[jj][kk];
+      m_golden_box_item.m_golden_box_item_info[jj][kk].m_byTableCode = static_cast<unsigned __int8>((listEntry->ncode >> 8) & 0xFF);
+      m_golden_box_item.m_golden_box_item_info[jj][kk].m_dwIndex = static_cast<unsigned __int16>((listEntry->ncode >> 16) & 0xFFFF);
+      m_golden_box_item.m_golden_box_item_info[jj][kk].m_wNum = m_temp_db.List[jj][kk].wcount;
+    }
+  }
+
+  Set_ToStruct();
+
+  unsigned __int8 temp[sizeof(m_golden_box_item_New)]{};
+  memcpy_0(temp, &m_golden_box_item_New, sizeof(m_golden_box_item_New));
+  memcpy_0(&m_golden_box_item_Old, temp, sizeof(m_golden_box_item_Old));
+  return 1;
 }
 
 bool CGoldenBoxItemMgr::Load_Golden_Box_Item_Event()
@@ -455,6 +535,166 @@ unsigned __int8 CGoldenBoxItemMgr::GetLoopCount()
   return m_golden_box_event.m_ini.m_byLoopCnt;
 }
 
+unsigned __int16 CGoldenBoxItemMgr::Get_Box_Count(unsigned __int8 byIndex)
+{
+  return m_golden_box_item.m_wBoxMax[byIndex];
+}
+
+unsigned __int16 CGoldenBoxItemMgr::Get_BoxItem_Count(unsigned __int8 byIndex, unsigned int dwIndex)
+{
+  for (int j = 0; j < m_golden_box_item.m_bygolden_item_num[byIndex]; ++j)
+  {
+    if (m_golden_box_item.m_golden_box_item_info[byIndex][j].m_dwIndex == dwIndex)
+    {
+      return m_golden_box_item.m_golden_box_item_info[byIndex][j].m_wNum;
+    }
+  }
+  return 0;
+}
+
+void CGoldenBoxItemMgr::RateCheck(unsigned __int8 byIndex)
+{
+  unsigned __int16 zeroRateTotal = 0;
+  int zeroCount = 0;
+
+  for (int j = 0; j < m_golden_box_item.m_bygolden_item_num[byIndex]; ++j)
+  {
+    if (!Get_BoxItem_Count(byIndex, m_golden_box_item.m_golden_box_item_info[byIndex][j].m_dwIndex))
+    {
+      zeroRateTotal += m_golden_box_item.m_golden_box_item_info[byIndex][j].m_wRate;
+      m_golden_box_item.m_golden_box_item_info[byIndex][j].m_wRate = 0;
+      ++zeroCount;
+    }
+  }
+
+  if (zeroCount >= m_golden_box_item.m_bygolden_item_num[byIndex])
+  {
+    zeroCount = 0;
+  }
+  const __int16 addRate = static_cast<__int16>(
+    zeroRateTotal / (m_golden_box_item.m_bygolden_item_num[byIndex] - zeroCount));
+
+  for (int j = 0; j < m_golden_box_item.m_bygolden_item_num[byIndex]; ++j)
+  {
+    if (m_golden_box_item.m_golden_box_item_info[byIndex][j].m_wRate)
+    {
+      m_golden_box_item.m_golden_box_item_info[byIndex][j].m_wRate += addRate;
+    }
+  }
+}
+
+char *CGoldenBoxItemMgr::GetGoldBoxItemPtr()
+{
+  return m_golden_box_event.m_ini.m_szGoldenBoxcode[0];
+}
+
+char *CGoldenBoxItemMgr::BoxItemOpen(unsigned __int8 byIndex)
+{
+  const unsigned int randomRate = rand() % 10000;
+  unsigned int accRate = 0;
+
+  RateCheck(byIndex);
+  const unsigned __int64 count = m_golden_box_item.m_bygolden_item_num[byIndex];
+  m_pBoxItemOpen = static_cast<_BoxItemOpen_output *>(operator new[](saturated_mul(count, 0x10uLL)));
+  for (int j = 0; j < m_golden_box_item.m_bygolden_item_num[byIndex]; ++j)
+  {
+    m_pBoxItemOpen[j].m_dwProb = m_golden_box_item.m_golden_box_item_info[byIndex][j].m_wRate;
+    strcpy_0(
+      m_pBoxItemOpen[j].m_itmPdOutput,
+      m_golden_box_event.m_ini.m_golden_box_item_list[byIndex][j].m_szLimcode);
+    m_pBoxItemOpen[j].m_nPdProCnt = 1;
+
+    char *itemCode = m_pBoxItemOpen[j].m_itmPdOutput;
+    if (!itemCode)
+    {
+      return nullptr;
+    }
+    if (strlen_0(itemCode) < 2 || !strncmp(itemCode, "-", 1u) || !strncmp(itemCode, "-1", 2u))
+    {
+      return nullptr;
+    }
+
+    accRate += m_pBoxItemOpen[j].m_dwProb;
+    if (Get_BoxItem_Count(byIndex, m_golden_box_item.m_golden_box_item_info[byIndex][j].m_dwIndex)
+        && randomRate < accRate)
+    {
+      return itemCode;
+    }
+  }
+
+  return nullptr;
+}
+
+void CGoldenBoxItemMgr::Set_BoxItem_Count(unsigned __int8 byIndex, unsigned int dwIndex)
+{
+  for (int j = 0; j < m_golden_box_item.m_bygolden_item_num[byIndex]; ++j)
+  {
+    if (m_golden_box_item.m_golden_box_item_info[byIndex][j].m_dwIndex == dwIndex)
+    {
+      if (!m_golden_box_item.m_golden_box_item_info[byIndex][j].m_wNum)
+      {
+        return;
+      }
+      --m_golden_box_item.m_golden_box_item_info[byIndex][j].m_wNum;
+      break;
+    }
+  }
+  Set_ToStruct();
+}
+
+void CGoldenBoxItemMgr::BoxItemOpenEffectType(
+  char *szUseItem,
+  char *szNewItem,
+  unsigned __int8 *pbyType,
+  bool *bCircle)
+{
+  *bCircle = true;
+  if (!strcmp_0(szUseItem, "bxgol01"))
+  {
+    *pbyType = 9;
+  }
+  else if (!strcmp_0(szUseItem, "bxgol02"))
+  {
+    *pbyType = 10;
+  }
+  else if (!strcmp_0(szUseItem, "bxgol03"))
+  {
+    *pbyType = 11;
+  }
+  else if (!strcmp_0(szUseItem, "bxgol05"))
+  {
+    *pbyType = 10;
+  }
+  else if (!strcmp_0(szUseItem, "iogld01"))
+  {
+    if (!strcmp_0(szNewItem, "iygld01") || !strcmp_0(szNewItem, "iygld02"))
+    {
+      *pbyType = 8;
+      *bCircle = false;
+    }
+  }
+  else if (!strcmp_0(szUseItem, "iogld02"))
+  {
+    *pbyType = 12;
+  }
+  else if (!strcmp_0(szUseItem, "bxgol04"))
+  {
+    if (!strcmp_0(szNewItem, "iygld11"))
+    {
+      *pbyType = 6;
+      *bCircle = false;
+    }
+    else if (!strcmp_0(szNewItem, "iygld12"))
+    {
+      *pbyType = 7;
+    }
+  }
+  else
+  {
+    *pbyType = 0;
+  }
+}
+
 void CGoldenBoxItemMgr::Set_FromINIToStruct(_golden_box_item_ini *pIni)
 {
   if (!pIni)
@@ -525,7 +765,163 @@ void CGoldenBoxItemMgr::Set_ToStruct()
   }
 }
 
+unsigned __int8 CGoldenBoxItemMgr::IsBuyRaceBossGoldBox(CPlayer *pOne)
+{
+  const int raceCode = pOne->m_Param.GetRaceCode();
+  CPvpUserAndGuildRankingSystem *rankingSystem = CPvpUserAndGuildRankingSystem::Instance();
+  if (pOne->m_dwObjSerial != rankingSystem->GetCurrentRaceBossSerial(raceCode, 0))
+  {
+    return 29;
+  }
+  if (raceCode != g_HolySys.GetHolyMasterRace())
+  {
+    return 30;
+  }
+  if (!g_HolySys.GetGoldBoxConsumable())
+  {
+    return 31;
+  }
+  if (Get_Event_Status() == 2)
+  {
+    return 0;
+  }
+  return 17;
+}
+
 unsigned __int8 CGoldenBoxItemMgr::Get_Event_Status()
 {
   return m_golden_box_event.m_event_status;
+}
+
+unsigned __int16 CGoldenBoxItemMgr::Get_StarterBox_Count()
+{
+  return static_cast<unsigned __int16>(m_golden_box_item.m_dwStarterBoxCnt);
+}
+
+char *CGoldenBoxItemMgr::GetStarterBoxCode(unsigned __int16 wIndex)
+{
+  return m_golden_box_event.m_ini.m_szStarterBoxCode[wIndex];
+}
+
+bool CGoldenBoxItemMgr::StarterBox_InsertToInven(CPlayer *pOne, char *szItemCode)
+{
+  const unsigned __int8 itemTableCode = GetItemTableCode(szItemCode);
+  if (itemTableCode == 0xFF)
+  {
+    return false;
+  }
+
+  unsigned __int16 *record =
+    reinterpret_cast<unsigned __int16 *>(g_Main.m_tblItemData[itemTableCode].GetRecord(szItemCode));
+  return record && _insert_to_inven(pOne, itemTableCode, *record);
+}
+
+char CGoldenBoxItemMgr::_insert_to_inven(
+  CPlayer *pOne,
+  unsigned __int8 byTableCode,
+  unsigned __int16 wItemIndex)
+{
+  _base_fld *record = g_Main.m_tblItemData[byTableCode].GetRecord(wItemIndex);
+  if (!record)
+  {
+    return 0;
+  }
+
+  _STORAGE_LIST::_db_con item{};
+  item.m_byTableCode = byTableCode;
+  item.m_wItemIndex = wItemIndex;
+  if (IsOverLapItem(byTableCode))
+  {
+    item.m_dwDur = 1;
+  }
+  else
+  {
+    item.m_dwDur = GetItemDurPoint(byTableCode, wItemIndex);
+  }
+
+  const unsigned int upSocketNum = GetDefItemUpgSocketNum(byTableCode, wItemIndex);
+  item.m_dwLv = GetBitAfterSetLimSocket(upSocketNum);
+  item.m_wSerial = pOne->m_Param.GetNewItemSerial();
+
+  _STORAGE_LIST::_db_con *addedItem = pOne->Emb_AddStorage(0, &item, 0, 1);
+  if (!addedItem)
+  {
+    const char *itemName = GetItemKorName(byTableCode, wItemIndex);
+    _kLogger.Write("Failed _insert_to_inven() >> %s", itemName);
+    return 0;
+  }
+
+  pOne->SendMsg_RewardAddItem(addedItem, 0xAu);
+  char *charName = pOne->m_Param.GetCharNameA();
+  const unsigned int charSerial = pOne->m_Param.GetCharSerial();
+  pOne->SendMsg_Notify_Get_Golden_Box(2u, charSerial, charName, addedItem, 0);
+  return 1;
+}
+
+void CGoldenBoxItemMgr::Set_StarterBox_Count(unsigned int dwNum, bool bAdd)
+{
+  if (bAdd)
+  {
+    m_golden_box_item.m_dwStarterBoxCnt += dwNum;
+  }
+  else
+  {
+    if (!m_golden_box_item.m_dwStarterBoxCnt)
+    {
+      return;
+    }
+
+    if (m_golden_box_item.m_dwStarterBoxCnt == dwNum)
+    {
+      m_golden_box_item.m_dwStarterBoxCnt = 0;
+    }
+    else
+    {
+      m_golden_box_item.m_dwStarterBoxCnt -= dwNum;
+    }
+  }
+
+  Set_ToStruct();
+}
+
+void CGoldenBoxItemMgr::WriteGetGoldBarLog(CPlayer *pOne, _STORAGE_LIST::_db_con *pItem)
+{
+  _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
+  char *itemKorName = GetItemKorName(pItem->m_byTableCode, pItem->m_wItemIndex);
+  char *itemCode = record->m_strCode;
+  CUserDB *userDB = pOne->m_pUserDB;
+  char *accountID = pOne->m_pUserDB->m_szAccountID;
+  const unsigned int charSerial = pOne->m_Param.GetCharSerial();
+  char *charName = pOne->m_Param.GetCharNameA();
+
+  CAsyncLogger::Instance()->FormatLog(
+    ALT_GETGOLDBAR_LOG,
+    "Name: %s(%d), AccountID: %s(%d), Item: %s(%s) ",
+    charName,
+    charSerial,
+    accountID,
+    userDB->m_dwAccountSerial,
+    itemCode,
+    itemKorName);
+}
+
+void CGoldenBoxItemMgr::WriteEventCouponLog(CPlayer *pOne, _STORAGE_LIST::_db_con *pItem)
+{
+  _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
+  char *itemKorName = GetItemKorName(pItem->m_byTableCode, pItem->m_wItemIndex);
+  char *itemCode = record->m_strCode;
+  CUserDB *userDB = pOne->m_pUserDB;
+  char *accountID = pOne->m_pUserDB->m_szAccountID;
+  const unsigned int charSerial = pOne->m_Param.GetCharSerial();
+  char *charName = pOne->m_Param.GetCharNameA();
+
+  CAsyncLogger::Instance()->FormatLog(
+    ALT_GETEVENTCOUPON_LOG,
+    "Name: %s(%d), AccountID: %s(%d), Item: %s(%s) ",
+    charName,
+    charSerial,
+    accountID,
+    userDB->m_dwAccountSerial,
+    itemCode,
+    itemKorName);
 }

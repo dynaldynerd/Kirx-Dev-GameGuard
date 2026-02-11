@@ -3,6 +3,7 @@
 #include "IdaCompat.h"
 
 #include "CCharacter.h"
+#include "nuclear_create_setdata.h"
 
 class CPlayer;
 
@@ -28,9 +29,20 @@ class __cppobj CNuclearBomb : public CCharacter
 {
 public:
   bool Init(_object_id *pID);
+  bool Create(_nuclear_create_setdata *pData);
   bool GetUse();
   unsigned __int8 GetBombStatus();
   float *GetMissilePos();
+  unsigned __int16 GetItemIndex();
+  void SetNuclearIndex(unsigned __int16 wItemIndex);
+  unsigned __int16 GetControlSerial();
+  void SetControlSerial(unsigned __int16 wControlSerial);
+  unsigned __int8 GetMasterClass();
+  void SendMsg_NuclearFind(unsigned int n, unsigned __int8 race);
+
+  static __int64 GetNewSerial();
+
+  static unsigned int s_dwSerialCnt;
 
   unsigned __int16 m_wItemIndex;
   unsigned __int16 m_wControlSerial;

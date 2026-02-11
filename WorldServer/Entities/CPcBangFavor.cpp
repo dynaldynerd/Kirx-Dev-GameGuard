@@ -1,8 +1,13 @@
 #include "pch.h"
 
 #include "CPcBangFavor.h"
+
+#include <array>
+
 #include "CPlayer.h"
 #include "CUserDB.h"
+#include "GlobalObjects.h"
+#include "WorldServerUtil.h"
 
 CPcBangFavor *CPcBangFavor::Instance()
 {
@@ -34,6 +39,190 @@ bool CPcBangFavor::LoadPcBangData()
   }
   MyMessageBox("DatafileInit", pszErrMsg);
   return false;
+}
+
+bool CPcBangFavor::IsEnable()
+{
+  return m_bEnable != 0;
+}
+
+int CPcBangFavor::ClassCodePasing(_AVATOR_DATA *pData, CPlayer *pOne)
+{
+  if (!m_bEnable || !pData || !pOne)
+  {
+    return -1;
+  }
+
+  char codeBuffer[32]{};
+  char classCode[32]{};
+  char classPrefix[20]{};
+
+  _base_fld *record = g_Main.m_tblClass.GetRecord(pData->dbAvator.m_szClassCode);
+  if (!record)
+  {
+    return -1;
+  }
+
+  strcpy_0(classCode, record->m_strCode);
+  if (static_cast<unsigned int>(pOne->m_Param.GetRaceCode()) == 2
+      && classCode[1] == 'R'
+      && classCode[3] == '1')
+  {
+    strncpy(classPrefix, record->m_strCode, 1u);
+    const int level = static_cast<int>(pOne->m_Param.GetLevel());
+    sprintf(codeBuffer, "%sf%02d", classPrefix, level);
+  }
+  else
+  {
+    strncpy(classPrefix, record->m_strCode, 2u);
+    const int level = static_cast<int>(pOne->m_Param.GetLevel());
+    sprintf(codeBuffer, "%s%02d", classPrefix, level);
+  }
+
+  _strlwr(codeBuffer);
+  _base_fld *pcRoomRecord = m_tblPcRoomData.GetRecord(codeBuffer);
+  if (!pcRoomRecord)
+  {
+    return -1;
+  }
+
+  pOne->m_dwPcBangGiveItemListIndex = pcRoomRecord->m_dwIndex;
+  pOne->SendMsg_PcRoomCharClass(pcRoomRecord->m_dwIndex);
+  return static_cast<int>(pcRoomRecord->m_dwIndex);
+}
+
+bool CPcBangFavor::PcBangGiveItem(
+  CPlayer *pOne,
+  int dwRecIndex,
+  unsigned __int8 *bySeletItemIndex,
+  int nSelectCount)
+{
+  if (!pOne || !pOne->m_bOper)
+  {
+    return false;
+  }
+  if (nSelectCount > 5)
+  {
+    return false;
+  }
+  if (dwRecIndex != static_cast<int>(pOne->m_dwPcBangGiveItemListIndex)
+      && pOne->m_dwPcBangGiveItemListIndex != static_cast<unsigned int>(-1))
+  {
+    return false;
+  }
+
+  pOne->m_dwPcBangGiveItemListIndex = static_cast<unsigned int>(-1);
+  _base_fld *record = m_tblPcRoomData.GetRecord(dwRecIndex);
+  if (!record)
+  {
+    return false;
+  }
+
+  std::array<_STORAGE_LIST::_db_con, 15> makeItems{};
+  int makeItemCount = 0;
+
+  for (int j = 0; j < 5; ++j)
+  {
+    const int itemCount = *reinterpret_cast<int *>(&record[3].m_strCode[84 * j + 8]);
+    if (itemCount < 0)
+    {
+      continue;
+    }
+
+    const unsigned __int8 selectedItemIndex = bySeletItemIndex[j];
+    if (selectedItemIndex >= 10u)
+    {
+      continue;
+    }
+
+    const char *itemCode = reinterpret_cast<char *>(&record[2]) + 84 * j + 8 * selectedItemIndex;
+    const int tableCode = GetItemTableCode(itemCode);
+    if (tableCode == -1)
+    {
+      continue;
+    }
+
+    _base_fld *itemRecord = g_Main.m_tblItemData[tableCode].GetRecordByHash(itemCode, 2, 5);
+    if (!itemRecord)
+    {
+      continue;
+    }
+
+    _STORAGE_LIST::_db_con *loot = MakeLoot(static_cast<unsigned __int8>(tableCode), itemRecord->m_dwIndex);
+    if (!loot)
+    {
+      continue;
+    }
+
+    if (IsOverLapItem(tableCode))
+    {
+      loot->m_dwDur = static_cast<unsigned __int64>(itemCount);
+    }
+
+    makeItems[makeItemCount++] = *loot;
+  }
+
+  for (int j = 0; j < 10; ++j)
+  {
+    const int itemCount = *reinterpret_cast<int *>(&record[8].m_strCode[12 * j + 16]);
+    if (itemCount < 0)
+    {
+      continue;
+    }
+
+    const char *itemCode = &record[8].m_strCode[12 * j + 8];
+    const int tableCode = GetItemTableCode(itemCode);
+    if (tableCode == -1)
+    {
+      continue;
+    }
+
+    _base_fld *itemRecord = g_Main.m_tblItemData[tableCode].GetRecordByHash(itemCode, 2, 5);
+    if (!itemRecord)
+    {
+      continue;
+    }
+
+    _STORAGE_LIST::_db_con *loot = MakeLoot(static_cast<unsigned __int8>(tableCode), itemRecord->m_dwIndex);
+    if (!loot)
+    {
+      continue;
+    }
+
+    if (IsOverLapItem(tableCode))
+    {
+      loot->m_dwDur = static_cast<unsigned __int64>(itemCount);
+    }
+
+    makeItems[makeItemCount++] = *loot;
+  }
+
+  if (makeItemCount <= 0)
+  {
+    return false;
+  }
+
+  const int emptySlotCount = pOne->m_Param.m_dbInven.GetNumEmptyCon();
+  if (makeItemCount >= emptySlotCount)
+  {
+    pOne->SendMsg_PcRoomError(1);
+    return false;
+  }
+
+  for (int j = 0; j < makeItemCount; ++j)
+  {
+    _STORAGE_LIST::_db_con *makeItem = &makeItems[j];
+    makeItem->m_wSerial = pOne->m_Param.GetNewItemSerial();
+    _STORAGE_LIST::_db_con *addedItem = pOne->Emb_AddStorage(0, makeItem, false, true);
+    pOne->SendMsg_RewardAddItem(makeItem, 9u);
+    if (addedItem)
+    {
+      pOne->m_pUserDB->m_AvatorData.dbPcBangFavorItem.InsertItem(addedItem);
+    }
+  }
+
+  pOne->SendMsg_PcRoomError(0);
+  return true;
 }
 
 void CPcBangFavor::PcBangDeleteItem(CPlayer *pOne)

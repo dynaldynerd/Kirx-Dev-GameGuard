@@ -20,7 +20,9 @@ public:
     int iUserInx,
     char *pRequest);
   bool RequestElanMapUserForceMoveHQ();
+  void LogIn(CPlayer *pkPlayer);
   void LogOut(CPlayer *pkPlayer);
+  void CreateComplete(CPlayer *pkPlayer);
 
   CMoveMapLimitRightInfoList m_kRightInfo;
   CMoveMapLimitInfoList m_kLimitInfo;

@@ -31,17 +31,31 @@ public:
   virtual ~CGuild() = default;
   void Init(unsigned int index);
   bool IsFill();
+  void ReleaseTemp();
+  void EstGuild(
+    unsigned int dwSerial,
+    char *pwszName,
+    unsigned __int8 byRace,
+    int nMemberNum,
+    _guild_member_info *pEstMember);
   void ClearVote();
   void StartRankJob();
   void EndRankJob();
+  void SendMsg_DownPacket(unsigned __int8 bDowntype, _guild_member_info *pMem);
   char LogoffMember(unsigned int dwMemberSerial);
   _guild_member_info *LoginMember(unsigned int dwMemberSerial, CPlayer *pPtr);
   void SendMsg_GuildMemberLogoff(unsigned int dwSerial);
   void SendMsg_GuildMemberLogin(unsigned int dwSerial, unsigned __int16 wMapCode, unsigned __int16 wRegionIndex);
+  _guild_applier_info *GetApplierFromSerial(unsigned int dwApplierSerial);
   char PopApplier(unsigned int dwApplierSerial, unsigned __int8 byDelCode);
   char PushApplier(CPlayer *pApplier);
+  _guild_member_info *PushMember(_guild_member_info *pSheet);
+  void SendMsg_GuildJoinAcceptInform(_guild_member_info *p, unsigned int dwAcceptSerial);
+  void SendMsg_LeaveMember(unsigned int dwMemberSerial, char bSelf, char bPunish);
+  char PopMember(unsigned int dwMemberSerial);
   unsigned __int8 GetGrade();
   void UpdateGrade(unsigned __int8 byGrade);
+  void UpdateEmblem(unsigned int dwEmblemBack, unsigned int dwEmblemMark);
   void RefreshGuildMemberData(_guild_member_refresh_data *pRefreshMember);
   void SendMsg_AlterMemberState();
   void SendMsg_AlterMemberGrade();
@@ -52,16 +66,35 @@ public:
   void SendMsg_GuildInfoUpdateInform();
   void SendMsg_AddJoinApplier(_guild_applier_info *p);
   void SendMsg_DelJoinApplier(_guild_applier_info *p, unsigned __int8 byDelCode);
+  void SendMsg_GuildRoomRented(char byRoomType);
   void MakeDownApplierPacket();
   unsigned int GetGuildMasterSerial();
+  char *GetGuildMasterName();
   _guild_member_info *GetMemberFromSerial(unsigned int dwMemberSerial);
   void SetGreetingmsg_GUILD(char *wszgreetmsg);
+  unsigned __int8 ManageProposeGuildBattle(
+    unsigned int dwSrcGuildSerial,
+    unsigned int dwStartTimeInx,
+    unsigned int dwMemberCntInx,
+    unsigned int dwMapInx);
+  unsigned __int8 ManageExpulseMember(unsigned int dwDstSerial);
+  unsigned __int8 ManagePopGuildMoney(unsigned int dwDstSerial, unsigned int dwDalant, unsigned int dwGold);
+  unsigned __int8 ManageBuyGuildEmblem(unsigned int dwDstSerial, unsigned int dwBack, unsigned int dwMark);
+  unsigned __int8 ManageGuildCommittee(unsigned int dwDstSerial, bool bAppoint);
   unsigned __int8 ManageAcceptORRefuseGuildBattle(bool bAccept);
+  char DB_Update_GuildMaster(_guild_member_info *pNewguildMaster);
+  void DB_Update_GuildMaster_Complete(
+    unsigned int in_guild_prev_masterSerial,
+    unsigned __int8 in_guild_prev_masterPrevGrade,
+    unsigned int in_guild_new_masterSerial,
+    unsigned __int8 in_guild_new_masterPrevGrade);
   void SendMsg_ApplyGuildBattleResultInform(char byRet, char *wszDestGuildName);
   void SendMsg_GuildBattleRefused(char *pwszName);
   void SendMsg_GuildBattleSuggestResult(unsigned __int8 byRet, char *wszDestGuildName);
   char SendMsg_GuildBattleProposed(char *pwszName);
+  void SendMsg_GuildDisjointInform();
   void PushDQSInGuildBattleCost();
+  void PushDQSSourceGuildOutputGuildBattleCost();
   void PushDQSDestGuildOutputGuildBattleCost();
   void CompleteOutGuildbattleCost(
     unsigned int dwSrcGuildSerial,
@@ -74,6 +107,8 @@ public:
     unsigned int dwStartTimeInx,
     unsigned int dwMemberCntInx,
     unsigned int dwMapInx);
+  void SetCopmlteGuildBattleSuggest();
+  unsigned __int8 SrcGuildIsAvailableBattleRequestState();
   unsigned __int8 DestGuildIsAvailableBattleRequestState();
   void SetGuildBattleMatter(
     unsigned int dwSrcGuildSerial,
@@ -107,13 +142,12 @@ public:
     unsigned __int8 *pbyDate);
   long double GetTotalDalant();
   long double GetTotalGold();
-  _guild_member_info *GetMemberFromSerial(unsigned int dwMemberSerial);
-  unsigned int GetGuildMasterSerial();
   void SendMsg_ManageGuildCommitteeResult(char bAppoint, char *pwszCommitteeName);
   void SendMsg_MasterElectPossible(char bPossible);
   void Complete_DB_Update_Committee(char *pData);
   void CompleteSelectMasterLastConn(unsigned int dwLastConnTime);
   unsigned int GetMemberNum();
+  void Release();
 
 public:
   int m_nIndex;

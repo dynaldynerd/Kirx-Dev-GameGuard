@@ -7,11 +7,37 @@
 #include "guild_member_refresh_data.h"
 
 class CLogFile;
+struct _worlddb_guild_info;
+struct _guild_member_info;
+struct _io_money_data;
 
 class __cppobj __declspec(align(8)) CGuildRanking
 {
 public:
   bool Init();
+  char Load();
+  char UpdateRankAndGrade();
+  char LoadAllGuildData(struct _worlddb_guild_info *pkInfo);
+  char SetLoadAllGuildInfo(struct _worlddb_guild_info *pkInfo);
+  char LoadMemberInfo(
+    unsigned int dwMasterSerial,
+    unsigned int dwGuildSerial,
+    struct _guild_member_info *pkMemberInfo,
+    unsigned __int16 *pwMemberCnt);
+  char LoadGuildMoneyIOInfo(
+    unsigned int dwGuildSerial,
+    struct _io_money_data *pkIOInfo,
+    int *pnIOMonHisNum);
+  char CheckGuildCheckSum(
+    unsigned int dwSerial,
+    char *wszGuildName,
+    long double *dDalant,
+    long double *dGold);
+  void CheckMaxGuildMoney(
+    unsigned int dwGuildSerial,
+    char *wszGuildName,
+    long double *pdDalant,
+    long double *pdGold);
   void SetLogger(CLogFile *pkLogger);
   void ApplyGuildGrade();
   bool ApplyRankInGuild();

@@ -132,7 +132,7 @@ void CExchangeEvent::GiveEventItem(CPlayer *pOne)
   {
     if (pOne->m_Param.m_dbInven.GetIndexEmptyCon() == 0xFF)
     {
-      CPlayer::SendMsg_BuddhaEventMsg(pOne, 1u);
+      pOne->SendMsg_BuddhaEventMsg(1u);
       return;
     }
 
@@ -144,16 +144,15 @@ void CExchangeEvent::GiveEventItem(CPlayer *pOne)
       {
         _STORAGE_LIST::_db_con itemCopy{};
         memcpy_0(&itemCopy, lootItem, sizeof(itemCopy));
-        itemCopy.m_wSerial = CPlayerDB::GetNewItemSerial(&pOne->m_Param);
-        if (CPlayer::Emb_AddStorage(
-              pOne,
+        itemCopy.m_wSerial = pOne->m_Param.GetNewItemSerial();
+        if (pOne->Emb_AddStorage(
               0,
               reinterpret_cast<_STORAGE_LIST::_storage_con *>(&itemCopy),
               false,
               true))
         {
-          CPlayer::SendMsg_RewardAddItem(pOne, &itemCopy, 7u);
-          CPlayer::SendMsg_BuddhaEventMsg(pOne, 0);
+          pOne->SendMsg_RewardAddItem(&itemCopy, 7u);
+          pOne->SendMsg_BuddhaEventMsg(0);
         }
       }
     }

@@ -11,8 +11,14 @@ public:
   static CPvpUserAndGuildRankingSystem *Instance();
   bool Init();
   bool InitLogger();
+  bool Load();
   bool IsCurrentRaceBossGroup(unsigned __int8 byRace, unsigned int dwSerial);
   unsigned int GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth);
+  void PvpRankListRequest(
+    unsigned __int16 wIndex,
+    unsigned __int8 byRace,
+    unsigned __int8 byVersion,
+    unsigned __int8 byPage);
   bool IsRaceViceBoss(unsigned __int8 byRace, unsigned int dwSerial);
   unsigned __int8 GetBossType(unsigned __int8 byRace, unsigned int dwSerial);
   void Log(const char *fmt, ...);

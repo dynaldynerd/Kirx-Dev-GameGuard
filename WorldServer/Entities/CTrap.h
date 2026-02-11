@@ -22,5 +22,6 @@ public:
 
   void Init(_object_id *pID);
   void MasterNetClose(long double dPvPPoint);
+  void MasterReStart(CPlayer *pMaster);
 };
 

@@ -16,6 +16,12 @@
 #include "talik_crystal_exchange_clzo.h"
 #include "buy_store_request_clzo.h"
 #include "sell_store_request_clzo.h"
+#include "alter_item_slot_request_clzo.h"
+#include "alter_link_slot_request_clzo.h"
+#include "make_tower_request_clzo.h"
+#include "unit_pack_fill_request_clzo.h"
+#include "tuning_data.h"
+#include "combine_ex_item_request_clzo.h"
 #include <vector>
 
 
@@ -35,16 +41,21 @@ struct _BulletItem_fld;
 struct _UnitBullet_fld;
 struct _UnitPart_fld;
 struct _unit_bullet_param;
-struct _combine_ex_item_request_clzo;
 struct _combine_ex_item_accept_request_clzo;
 struct _combine_ex_item_result_zocl;
 struct _combine_ex_item_accept_result_zocl;
+struct _ItemCombine_exp_fld;
+struct _guildroom_enter_request_clzo;
+struct _guildroom_out_request_clzo;
+struct _guildroom_rent_request_clzo;
+struct _guild_honor_set_request_clzo;
 struct _attack_param;
 struct _be_damaged_char;
 class CAttack;
 class CGameObject;
 class CItemBox;
 class CItemStore;
+class CMerchant;
 struct _buy_offer;
 struct _sell_offer;
 struct _limit_amount_info;
@@ -107,6 +118,7 @@ struct _start_dummy;
 struct _bind_dummy;
 struct _res_dummy;
 struct _quest_dummy;
+struct si_interpret;
 struct _safe_dummy;
 struct _effect_parameter::__param_data;
 class CUserDB;
@@ -406,6 +418,19 @@ struct __unaligned __declspec(align(2)) _CLID
   unsigned int dwSerial;
 };
 
+struct __unaligned __declspec(align(1)) _WA_AVATOR_CODE
+{
+  _CLID m_id;
+  char m_wszName[17];
+};
+
+struct __unaligned __declspec(align(1)) _CHRID
+{
+  unsigned __int8 byID;
+  unsigned __int16 wIndex;
+  unsigned int dwSerial;
+};
+
 /* 1692 */
 #include "CSyncCS.h"
 
@@ -542,6 +567,8 @@ struct __cppobj __declspec(align(8)) _MASTERY_PARAM
   static CRecordData *s_pSkillData;
   static CRecordData *s_pForceData;
   static void SetStaticMember(CRecordData *effectTable, CRecordData *forceTable);
+  char Init(_STAT_DB_BASE *pStatBase, unsigned __int8 byRaceCode);
+  static char IsValidMasteryCode(unsigned __int8 byCode, unsigned __int8 byIndex);
   unsigned __int8 GetMasteryPerMast(unsigned __int8 byCode, unsigned __int8 byMast);
   unsigned int GetCumPerMast(unsigned __int8 byCode, unsigned __int8 byMast);
   unsigned __int8 GetSkillLv(unsigned __int8 bySkillIndex);
@@ -567,6 +594,8 @@ struct _TOWER_PARAM
   _list m_List[6];
 
   void Init();
+  char PushList(_STORAGE_LIST::_db_con *pTowerItem, CGuardTower *pTowerObj);
+  void NotifyOwnerAttackInform(CCharacter *pDst);
 };
 
 /* 1749 */
@@ -577,11 +606,15 @@ struct __cppobj __declspec(align(8)) _TRAP_PARAM
     CTrap *pItem;
     unsigned int dwSerial;
 
+    void init();
     bool isLoad();
   };
 
   _param m_Item[20];
   int m_nCount;
+
+  void Init();
+  char PushItem(CTrap *pTrap, unsigned int dwTrapSerial);
 };
 
 /* 1131 */
@@ -652,6 +685,13 @@ enum PVP_POINT_ALTER_TYPE : int
   guildbattle = 9,
 };
 
+enum PVP_CASH_IO_CODE : int
+{
+  pm_kill = 0,
+  pm_reward = 1,
+  pm_quest = 2,
+};
+
 /* 1754 */
 struct __cppobj __declspec(align(8)) _happen_event_cont
 {
@@ -662,6 +702,7 @@ struct __cppobj __declspec(align(8)) _happen_event_cont
 
   void init();
   bool isset() const;
+  void set(_happen_event_node *pPoint, QUEST_HAPPEN QtHpType, int nIndexInType, int nRaceCode);
 };
 
 /* 1755 */
@@ -672,6 +713,27 @@ struct __cppobj ItemCombineMgr
 {
   static bool LoadData();
   static bool CheckLoadData();
+  void InitMgr(CPlayer *pOne);
+  void OnPlayerCreateCompleteProc();
+  unsigned __int8 RequestCombineProcess(_combine_ex_item_request_clzo *pRecv, _combine_ex_item_result_zocl *pSend);
+  unsigned __int8 RequestCombineAcceptProcess(
+    _combine_ex_item_accept_request_clzo *pRecv,
+    _combine_ex_item_accept_result_zocl *pSend);
+  unsigned __int8 LoadDB_CombineResult(_combine_ex_item_result_zocl *pLoadData);
+  char ClearDB_CombineResult();
+  unsigned __int8 MakeNewItems(
+    _ITEMCOMBINE_DB_BASE *pPlayerItemDB,
+    _combine_ex_item_accept_request_clzo *pRecv,
+    _combine_ex_item_accept_result_zocl *pSend);
+  char ConsumeMeterial_And_CalculateNewItems(
+    _STORAGE_LIST::_db_con **pMt_Sv_Inv,
+    unsigned __int8 byMtSlotNum,
+    _combine_ex_item_request_clzo::_list *pipMaterials,
+    _combine_ex_item_result_zocl *pSaveData,
+    _ItemCombine_exp_fld *pfld,
+    unsigned __int8 byLinkTableIndex,
+    int nType);
+  char UpdateDB_CombineResult(_combine_ex_item_result_zocl *pSaveData);
   static CRecordData ms_tbl_ItemCombine;
   static CRecordData ms_tbl_ItemCombine_Link_Stuff;
   static CRecordData ms_tbl_ItemCombine_Link_Result;
@@ -759,9 +821,13 @@ struct __cppobj _CRYMSG_LIST
   struct _LIST
   {
     char wszCryMsg[65];
+
+    void Init();
   };
 
   _LIST m_List[10];
+
+  void Init();
 };
 
 /* 1766 */
@@ -772,6 +838,8 @@ struct __cppobj _RENAME_POTION_USE_INFO
 {
   _STORAGE_POS_INDIV ItemInfo;
   char wszChangeName[17];
+
+  void Init();
 };
 
 /* 1769 */
@@ -812,6 +880,11 @@ struct __cppobj _ContPotionData
   unsigned int m_dwStartSec;
   unsigned __int16 m_wDurCapSec;
   unsigned int m_dwID;
+
+  void Init();
+  void Set(unsigned int dwPotionIndex, unsigned int dwStartTime, unsigned __int16 wDurCapSec);
+  bool IsLive();
+  unsigned int GetEffectIndex();
 };
 
 /* 1783 */
@@ -980,6 +1053,7 @@ struct __cppobj __unaligned __declspec(align(2)) _other_shape_part_zocl
 /* 1310 */
 class __cppobj __declspec(align(8)) CPlayer : public CCharacter
 {
+public:
   union CashChangeStateFlag
   {
     $621D0DDFB6A4DE55506A65C7CCDC95CE __s0;
@@ -988,6 +1062,7 @@ class __cppobj __declspec(align(8)) CPlayer : public CCharacter
     CashChangeStateFlag(char cashrename = 0);
   };
 
+private:
   struct __declspec(align(8)) __target
   {
     CGameObject *pObject;
@@ -1023,6 +1098,7 @@ public:
   static CRecordData s_tblLimMasteryCumContinue[3][4];
   static _BILLING_FORCE_CLOSE_DELAY s_BillingForceCloseDelay;
   static int s_nRaceNum[3];
+  static float s_fExpDivUnderParty_Kill[8];
   static unsigned int s_dwTotalCloseCount;
   static unsigned int s_dwAbnormalCloseCount;
   static void SetStaticMember();
@@ -1061,6 +1137,14 @@ public:
     unsigned int dwGradeInfo);
   char Create();
   char IntoMap(unsigned __int8 byMapInMode);
+  void SendData_PartyMemberPos();
+  void CheckPos_Region();
+  void CheckUnitCutTime();
+  void SendMsg_EconomyHistoryInform();
+  void SendMsg_EconomyRateInform(char bStart);
+  void SendMsg_SFDelayRequest();
+  void SendMsg_PotionDelayTime(unsigned int *pdwPotionNextUseTime, unsigned int dwCurTime);
+  void _set_db_sf_effect(_SFCONT_DB_BASE *pDBBase);
   bool OutOfMap(CMapData *pIntoMap, unsigned __int16 wLayerIndex, unsigned __int8 byMapOutType, float *pfStartPos);
   void SendMsg_GotoRecallResult(
     char byErrCode,
@@ -1075,6 +1159,11 @@ public:
     float *pfStartPos,
     bool bEqualZone);
   void SendMsg_MovePortal(char byMapIndex, float *pfStartPos, unsigned __int8 byZoneCode);
+  void SendMsg_GuildRoomOutResult(
+    unsigned __int8 byRetCode,
+    unsigned __int8 byMapIndex,
+    unsigned __int16 wMapLayer,
+    float *pPos);
   void SendMsg_RegistBindResult(char byRetCode);
   void SendMsg_MoveError(char byRetCode);
   void SendMsg_Stop(bool bAll);
@@ -1082,7 +1171,13 @@ public:
   void SendMsg_MapEnvInform(char byMapCode, unsigned int dwMapEnvCode);
   void SendMsg_MapOut(unsigned __int8 byMapOutCode, unsigned __int8 byNextMapCode);
   void SendMsg_MineCancle();
+  void SendMsg_SetFPInform();
+  void SendMsg_SetSPInform();
+  void SendMsg_GestureInform(unsigned __int8 byGestureType);
+  void SendMsg_JadeEffectErr(char byErrorCode);
+  void SendMsg_HonorGuildMark(char byRank);
   void SendMsg_AdjustAmountInform(char byStorageCode, unsigned __int16 wSerial, unsigned int dwDur);
+  void SendMsg_AlterPvPCash(char nIOCode);
   void SendMsg_AlterMoneyInform(char byReasonCode);
   void SendMsg_DeleteStorageInform(char byStorageCode, unsigned __int16 wSerial);
   void SendMsg_BuddhaEventMsg(char byErrorCode);
@@ -1115,7 +1210,7 @@ public:
   void SendMsg_Notify_Get_Golden_Box(
     char byBoxType,
     unsigned int dwCharSerial,
-    char *szCharName,
+    const char *szCharName,
     _STORAGE_LIST::_db_con *pItem,
     bool bCircle);
   void SendMsg_Notify_Me_Get_Golden_Box(char byBoxType, _STORAGE_LIST::_db_con *pItem);
@@ -1126,6 +1221,9 @@ public:
     _STORAGE_LIST::_db_con *pNewItem);
   void SendMsg_CharacterRenameCashResult(char bChange, char byErrCode);
   void SendMsg_SetItemCheckResult(char byResult, unsigned int dwSetItem, unsigned __int8 bySetEffectNum);
+  void SendMsg_QuestGiveUpResult(char byReturnSlot);
+  void SendMsg_SelectWaitedQuest(char byEventType, unsigned int dwEventIndex, unsigned __int8 byEventNodeIndex);
+  void SendMsg_GuildManageResult(char byRetCode);
   void SendMsg_NPCLinkItemCheckResult(unsigned __int8 byResCode, _STORAGE_POS_INDIV *pStorage);
   void SendMsg_PostDelivery(
     char byIndex,
@@ -1167,6 +1265,8 @@ public:
     char *pwszSender);
   void AddGold(int dwPush, bool bApply);
   void SubGold(unsigned int dwSub);
+  void SubPoint(int dwSub);
+  void SubActPoint(unsigned __int8 byCode, unsigned int dwSub);
   void AlterGold(double dGold);
   unsigned int GetMoney(unsigned __int8 byMoneyCode);
   void SendMsg_ChatFarFailure(char bBlock);
@@ -1187,12 +1287,138 @@ public:
   void pc_ChatGuildRequest(unsigned int dwDstSerial, char *pwszChatData);
   void pc_ChatMultiFarRequest(unsigned __int8 byDstNum, _w_name *pDstName, char *pwszMsg);
   void pc_ChatRaceBossCryRequest(char *pwszChatData);
+  void pc_NotifyRaceBossCryMsg();
+  void pc_SetRaceBossCryMsg(unsigned __int8 bySlot, char *pwszCryMsg);
+  void pc_ForceInvenChange(_STORAGE_POS_INDIV *pItem, unsigned __int16 wReplaceSerial);
+  void pc_AnimusInvenChange(_STORAGE_POS_INDIV *pItem, unsigned __int16 wReplaceSerial);
+  void pc_ResSeparation(unsigned __int16 wStartSerial, unsigned __int8 byMoveAmount);
+  void pc_ResDivision(unsigned __int16 wStartSerial, unsigned __int16 wTarSerial, unsigned __int8 byMoveAmount);
+  void pc_PotionSeparation(unsigned __int16 wSerial, unsigned __int8 byAmount);
+  void pc_PotionDivision(unsigned __int16 wSerial, unsigned __int16 wTarSerial, unsigned __int8 byAmount);
+  void pc_AlterItemSlotRequest(unsigned __int8 byNum, _alter_item_slot_request_clzo::__list *pList);
+  void pc_AlterLinkBoardSlotRequest(
+    unsigned __int8 byNum,
+    _alter_link_slot_request_clzo::__list *pList,
+    unsigned __int8 byLBLock);
+  void pc_SkillRequest(unsigned __int8 bySkillIndex, _CHRID *pidDst, unsigned __int16 *pConsumeSerial);
+  void pc_ClassSkillRequest(unsigned __int16 wSkillIndex, _CHRID *pidDst, unsigned __int16 *pConsumeSerial);
+  void pc_ForceRequest(unsigned __int16 wForceSerial, _CHRID *pidDst, unsigned __int16 *pConsumeSerial);
+  void pc_ThrowSkillRequest(unsigned __int16 wBulletSerial, _CHRID *pidDst, unsigned __int16 *pConsumeSerial);
+  void pc_ThrowUnitRequest(_CHRID *pidDst, unsigned __int16 *pConsumeSerial);
+  void pc_MakeTowerRequest(
+    unsigned __int16 wSkillIndex,
+    unsigned __int16 wTowerItemSerial,
+    unsigned __int8 byMaterialNum,
+    _make_tower_request_clzo::__material *pMaterial,
+    float *pfPos,
+    unsigned __int16 *pConsumeSerial);
+  void pc_BackTowerRequest(unsigned int dwTowerObjSerial);
+  void pc_MakeTrapRequest(
+    unsigned __int16 wSkillIndex,
+    unsigned __int16 wTrapItemSerial,
+    float *pfPos,
+    unsigned __int16 *pConsumeSerial);
+  void pc_BackTrapRequest(unsigned int dwTrapObjSerial, unsigned __int16 wAddSerial);
+  void pc_ChangeModeType(unsigned __int8 nModeType, unsigned __int8 nStandType);
+  void pc_GestureRequest(unsigned __int8 byGestureType);
+  void pc_AlterWindowInfoRequest(
+    unsigned int *pdwSkill,
+    unsigned int *pdwForce,
+    unsigned int *pdwChar,
+    unsigned int *pdwAnimus,
+    unsigned int dwInven,
+    unsigned int *pdwInvenBag);
+  void pc_SetTargetObjectRequest(CGameObject *pTar, unsigned int dwSerial, bool bForce);
+  void pc_ReleaseTargetObjectRequest();
+  void pc_SetGroupTargetObjectRequest(CGameObject *pTar, unsigned int dwSerial, unsigned __int8 byGroupType);
+  void pc_ReleaseGroupTargetObjectRequest(unsigned __int8 byGroupType);
+  void pc_SetGroupMapPointRequest(unsigned __int8 byGroupType, float *pzTar);
+  void pc_PartyReqBlock(bool bBlock);
+  void pc_WhisperBlock(bool bBlock);
+  void pc_TradeBlock(bool bBlock);
+  void pc_GuildBattleBlock(bool bBlock);
+  void pc_MacroUpdate(char *pBuf);
+  void pc_RequestTaxRate();
+  void pc_RequestChangeTaxRate(unsigned __int8 byTaxRate);
+  void pc_RequestUILockInit(
+    CUserDB *pUserDB,
+    char *szUILockPW,
+    char *szUILockPW_Confirm,
+    unsigned __int8 byUILock_HintIndex,
+    char *uszUILock_HintAnswer);
+  void pc_RequestUILockCertify(CUserDB *pUserDB, char *uszUILockPW);
+  void pc_RequestUILockUpdate(
+    char *uszUILockPWOld,
+    char *uszUILockPW,
+    char *uszUILockPW_Confirm,
+    unsigned __int8 byUILock_HintIndex,
+    char *uszUILock_HintAnswer);
+  void pc_RequestUILockFindPW(CUserDB *pUserDB, char *uszHintAnswer);
+  void pc_MineStart(unsigned __int8 byMineIndex, unsigned __int8 byOreIndex, unsigned __int16 wBatterySerial);
+  void pc_MineCancle();
+  void pc_OreCutting(unsigned __int16 wOreSerial, unsigned __int8 byProcessNum);
+  void pc_OreIntoBag(unsigned __int16 wResIndex, unsigned __int16 wSerial, unsigned __int8 byAddAmount);
+  void pc_CuttingComplete(unsigned __int8 byNpcRace);
+  void pc_PartyJoinInvitation(unsigned __int16 wDstIndex);
+  void pc_PartyJoinInvitationAnswer(_CLID *pidBoss);
+  void pc_PartyJoinApplication(unsigned __int16 wBossIndex);
+  void pc_PartyJoinApplicationAnswer(_CLID *pidApplicant);
+  void pc_PartyLeaveCompulsionReqeuest(unsigned int dwExiterSerial);
+  void pc_PartyDisJointReqeuest();
+  void pc_PartySuccessionReqeuest(unsigned int dwSuccessorSerial);
+  void pc_PartyLockReqeuest(bool bLock);
+  void pc_PartyAlterLootShareReqeuest(unsigned __int8 byLootShareMode);
+  void pc_AwaypartyInvitationRequest(char *pwszCharName);
+  void pc_AwayPartyJoinInvitationAnswer(_CLID *pidBoss, unsigned __int8 byRetCode);
+  void pc_MoveToOwnStoneMapRequest();
+  void SendMsg_DTradeAskResult(char byErrCode);
+  void pc_DTradeAskRequest(unsigned __int16 wDstIndex);
+  void pc_DTradeAnswerRequest(_CLID *pidAsker);
+  void pc_DTradeCancleRequest();
+  void pc_DTradeLockRequest();
+  void pc_DTradeAddRequest(unsigned __int8 bySlotIndex, unsigned __int8 byStorageCode, unsigned int dwSerial, unsigned __int8 byAmount);
+  void pc_DTradeDelRequest(unsigned __int8 bySlotIndex);
+  void pc_DTradeBetRequest(unsigned __int8 byMoneyUnit, unsigned int dwBetAmount);
+  void pc_DTradeOKRequest(unsigned int *pdwKey);
+  void pc_AnimusRecallRequest(
+    unsigned __int16 wAnimusItemSerial,
+    unsigned __int16 wAnimusClientHP,
+    unsigned __int16 wAnimusClientFP);
+  void pc_AnimusReturnRequest();
+  void pc_AnimusCommandRequest(unsigned __int8 byCommandCode);
+  void pc_AnimusTargetRequest(unsigned __int8 byObjectID, unsigned __int16 wObjectIndex, unsigned int dwObjectSerial);
+  void pc_UnitFrameBuyRequest(unsigned __int8 byFrameCode, int bUseNPCLinkIntem);
+  void pc_UnitSellRequest(unsigned __int8 bySlotIndex, int bUseNPCLinkIntem);
+  void pc_UnitPartTuningRequest(unsigned __int8 bySlotIndex, unsigned __int8 byTuningNum, _tuning_data *pTuningData, int bUseNPCLinkIntem);
+  void pc_UnitFrameRepairRequest(unsigned __int8 bySlotIndex, int bUseNPCLinkIntem);
+  void pc_UnitBulletFillRequest(unsigned __int8 bySlotIndex, unsigned __int16 *pwBulletIndex, int bUseNPCLinkIntem);
+  void pc_UnitPackFillRequest(
+    unsigned __int8 bySlotIndex,
+    unsigned __int8 byFillNum,
+    _unit_pack_fill_request_clzo::__list *pList,
+    int bUseNPCLinkIntem);
+  void pc_UnitDeliveryRequest(unsigned __int8 bySlotIndex, CItemStore *pStore, bool bPayFee, float *pfNewPos, int bUseNPCLinkIntem);
+  void pc_UnitReturnRequest();
+  void pc_UnitTakeRequest();
+  void pc_UnitLeaveRequest(float *pfNewPos);
+  void pc_UnitBulletReplaceRequest(unsigned __int8 bySlotIndex, unsigned __int8 byPackIndex, unsigned __int8 byBulletPart);
+  void pc_SelectQuestAfterHappenEvent(unsigned __int8 bySelectIndex);
+  void pc_SelectQuestReward(
+    unsigned __int8 byQuestDBSlot,
+    unsigned __int8 bySelectItemSlotIndex,
+    unsigned __int8 bySelectLinkQuestIndex);
+  void pc_RequestDialogWithNPC(CItemStore *pStore);
+  void pc_RequestWatchingWithNPC(CItemStore *pStore);
+  void pc_RequestQuestListFromNPC(CItemStore *pStore);
+  void pc_RequestQuestFromNPC(CItemStore *pStore, unsigned int dwNPCQuestIndex);
+  void pc_BriefPass(unsigned __int8 byQuestSlotIndex);
+  void pc_CastVoteRequest(int nVoteSerial, unsigned __int8 byCode);
   void pc_MoveNext(unsigned __int8 byMoveType, float *pfCur, float *pfTar, unsigned __int8 byDirect);
   void pc_RealMovPos(float *pfCur);
   void pc_MoveStop(float *pfCur);
   void pc_MoveModeChangeRequest(unsigned __int8 byMoveType);
   void pc_GotoBasePortalRequest(unsigned __int16 wItemSerial);
-  void pc_GotoAvatorRequest(char *pwszAvatorName);
+  void pc_GotoAvatorRequest(const char *pwszAvatorName);
   void RecallRandomPositionInRange(
     CMapData *pIntoMap,
     unsigned __int16 wMapLayerIndex,
@@ -1202,7 +1428,9 @@ public:
   void pc_RegistBind(CItemStore *pStore);
   bool IsOutExtraStopPos(float *pfStopPos);
   char Emb_CheckActForQuest(int nActCode, char *pszReqCode, unsigned __int16 wAddCount, bool bParty);
+  void Emb_CheckActForQuestParty(int nActCode, char *pszReqCode, unsigned __int16 wAddCount);
   char Emb_StartQuest(unsigned __int8 bySelectQuest, _happen_event_cont *pHappenEvent);
+  char Emb_CreateQuestEvent(__int32 HappenType, char *pszEventCode);
   void Emb_CompleteQuest(
     unsigned __int8 byQuestDBSlot,
     unsigned __int8 byRewardItemIndex,
@@ -1211,15 +1439,34 @@ public:
   void SendMsg_QuestProcess(char byQuestDBSlot, char byActIndex, unsigned __int16 wCount);
   void SendMsg_SelectQuestReward(char byQuestDBSlot);
   void SendMsg_QuestFailure(char byFailCode, char byQuestDBSlot);
+  void SendMsg_InsertQuestFailure(char byEventType, unsigned int dwEventIndex, unsigned __int8 byEventNodeIndex);
   void SendMsg_InsertNextQuest(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pQuestDB);
   void SendMsg_InsertNewQuest(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pQuestDB);
   void SendMsg_QuestComplete(char byQuestDBSlot);
   void SendMsg_NpcQuestHistoryInform(char bySlotIndex);
   void SendMsg_HSKQuestActCum();
+  void pc_QuestGiveupRequest(unsigned __int8 byQuestDBSlot);
   void SendMsg_MakeItemCheatSendButtonEnable(char bEnableSendButton);
   void AlterDalant(double dDalant);
+  void SendMsg_AlterExpInform();
+  void SendMsg_NotifyGetExpInfo(long double dOldExp, long double dAlterExp, long double dCurExp);
+  void AlterExp(double dAlterExp, bool bReward, bool bUseExpRecoverItem, bool bUseExpAdditionItem);
+  void AlterMaxLevel(unsigned __int8 byMaxLevel);
+  void SetLevel(unsigned __int8 byNewLevel);
+  void SetLevelD(unsigned __int8 byDownLevel);
+  void AlterPvPCashBag(long double dAlter, int IOCode);
+  void SendMsg_Level(char nLevel);
+  void SendData_PartyMemberLv();
+  void LimLvNpcQuestDelete(unsigned __int8 byQuestDBSlot);
+  void IncCriEffPvPCashBag(double dAlter);
+  void SendMsg_EquipItemLevelLimit(int nCurPlayerLv);
+  void SendMsg_GuildEstablishFail(char byRetCode);
+  void SendMsg_GuildJoinOtherInform();
+  void SendMsg_AlterUnitHPInform(char bySlotIndex, unsigned int dwGauge);
+  void SendMsg_FcitemInform(unsigned __int16 wItemSerial, unsigned int dwNewStat);
   void SendMsg_ExchangeMoneyResult(char byErrCode);
   void SendMsg_InformTaxIncome(unsigned __int8 byRet, unsigned int dwComm, char *pwszDate);
+  void SendMsg_InsertItemInform(char byStorageCode, _STORAGE_LIST::_db_con *pItem);
   unsigned __int16 GetVisualVer();
   void UpdateVisualVer(CashChangeStateFlag byChangeFlagMask);
   unsigned __int8 GetEffectEquipCode(unsigned __int8 byStorageCode, unsigned __int8 bySlotIndex);
@@ -1228,7 +1475,16 @@ public:
   char ApplyEquipItemEffect(int iItemEffectCode, bool bEquip);
   char IsEffectableEquip(_STORAGE_LIST::_storage_con *pCon);
   unsigned int _check_equipmastery_lim(int EquipMasteryCode);
+  bool _check_equip_part(_STORAGE_LIST::_db_con *pFixingItem);
+  bool _check_embel_part(_STORAGE_LIST::_db_con *pFixingItem);
   __int64 _check_mastery_lim(unsigned __int8 byMasteryClass, unsigned __int8 byIndex);
+  void Emb_AlterStat(
+    unsigned __int8 byMasteryClass,
+    unsigned __int8 byIndex,
+    int dwAlter,
+    unsigned __int8 byReason,
+    const char *strErrorCodePos,
+    bool bNoUseExpMasteryBonus);
   void apply_normal_item_std_effect(int nEffCode, float fVal, bool bEquip);
   void apply_case_equip_std_effect(_STORAGE_LIST::_db_con *pItem, bool bEquip);
   void apply_case_equip_upgrade_effect(_STORAGE_LIST::_db_con *pItem, bool bEquip);
@@ -1241,12 +1497,15 @@ public:
   void CalcDefTol();
   bool IsRidingUnit();
   void CalcEquipSpeed();
-    void SendMsg_AlterEquipSPInform();
-    void CalcEquipMaxDP(int bSendMsg);
-    bool IsSiegeMode();
-    bool IsActingSiegeMode();
-    bool IsChaosMode();
-    void SetSiege(_STORAGE_LIST::_db_con *pItem);
+  float GetAddSpeed();
+  void BreakCloakBooster();
+  void SendMsg_AlterSPInform();
+  void SendMsg_AlterEquipSPInform();
+  void CalcEquipMaxDP(int bSendMsg);
+  bool IsSiegeMode();
+  bool IsActingSiegeMode();
+  bool IsChaosMode();
+  void SetSiege(_STORAGE_LIST::_db_con *pItem);
   void SetHaveEffect(char bSet);
   void SetMstHaveEffect(_ResourceItem_fld *pFld, _STORAGE_LIST::_db_con *pItem, int a3, int a4);
   void SetHaveEffectUseTime(_STORAGE_LIST::_db_con *pItem, bool bAdd);
@@ -1268,7 +1527,14 @@ public:
   void SendMsg_AnimusReturnResult(char byRetCode, unsigned __int16 wAnimusItemSerial, unsigned __int8 byReturnType);
   CAnimus *GetRecallAnimus();
   bool IsHaveMentalTicket();
+  bool IsMiningByMinigTicket();
   void UpdateLastMetalTicket(
+    unsigned __int16 byCurrentYear,
+    unsigned __int8 byCurrentMonth,
+    unsigned __int8 byCurrentDay,
+    unsigned __int8 byCurrentHour,
+    unsigned __int8 byNumOfTime);
+  void UpdateLastCriTicket(
     unsigned __int16 byCurrentYear,
     unsigned __int8 byCurrentMonth,
     unsigned __int8 byCurrentDay,
@@ -1277,7 +1543,9 @@ public:
   void CheckMentalTakeAndUpdateLastMetalTicket(const char *strItemCode);
   bool IsUseReleaseRaceBuffPotion();
   void SetUseReleaseRaceBuffPotion();
+  char IsOverOneDay();
   char mgr_tracing(int bOper);
+  void SendMsg_AlterTol();
   void SendMsg_AlterTowerHP(unsigned __int16 wItemSerial, unsigned __int16 wLeftHP);
   void SendMsg_Destroy();
   void SendMsg_NewViewOther(unsigned __int8 byViewType);
@@ -1312,6 +1580,7 @@ public:
   bool SetFP(int nFP, bool bOver);
   bool SetSP(int nSP, bool bOver);
   char SetHP(int nHP, bool bOver);
+  char SF_HFSInc_Once(CPlayer *pDstObj);
   char SetDP(int nDP, bool bOver);
   void SendMsg_SetDPInform();
   void SendMsg_AlterMaxDP();
@@ -1337,6 +1606,8 @@ public:
   void SendMsg_RaceTopInform(char bTop);
   void SendMsg_PvpRankListVersionUp(char byVersion);
   void SendMsg_AlterPvPPoint();
+  CPvpPointLimiter *GetPvpPointLimiter(CPvpPointLimiter *result);
+  CPvpOrderView *GetPvpOrderView();
   void SendMsg_RaceBattlePenelty(int nAlterPoint, char byAlterType);
   void SetCntEnable(bool bSet);
   void ExtractStringToTime(unsigned int dwTemp, _SYSTEMTIME *tm);
@@ -1356,6 +1627,7 @@ public:
     int Emb_UpdateStat(unsigned int dwStatIndex, unsigned int dwNewData, unsigned int dwOldData);
     void SendMsg_StatInform(unsigned __int8 byStatIndex, unsigned int dwNewStat, unsigned __int8 byReason);
     void SendMsg_ProposeVoteResult(char byRetCode);
+    void pc_RequestPatriarchPunishment(unsigned __int8 byType, char *pwszName, char *pwszCont);
     CGameObject *GetTargetObj();
     __target *GetGroupTarget(unsigned __int8 byGroupType);
   void SendMsg_SetGroupTargetObjectResult(char byRetCode, char byGroupType);
@@ -1363,6 +1635,10 @@ public:
   void SendMsg_ReleaseGroupTargetObjectResult(unsigned __int8 byGroupType);
   void SendMsg_BuddyLogoffInform(unsigned int dwObjSerial);
   void SendMsg_BuddyLoginInform(unsigned int dwObjSerial, unsigned __int8 byMapIndex, unsigned __int8 byPosCode);
+  void SendMsg_GM_Greeting(char *wszGMName, char *wszMsg);
+  void SendMsg_RACE_Greeting(char *wszBossName, char *wszMsg);
+  void SendMsg_GUILD_Greeting(char *wszName, char *wszMsg);
+  void SendMsg_Notify_ExceptFromRaceRanking(int bExcepted);
   void SendMsg_GuildMasterEffect(
     char byState,
     char byGrade,
@@ -1372,6 +1648,41 @@ public:
     unsigned __int8 byEffAddDefence);
   void SendMsg_GuildSelfLeaveResult(char byRetCode);
   void pc_GuildSelfLeaveRequest();
+  void pc_GuildManageRequest(
+    unsigned __int8 byType,
+    unsigned int dwDst,
+    unsigned int dwObj1,
+    unsigned int dwObj2,
+    unsigned int dwObj3);
+  void pc_ProposeVoteRequest(unsigned __int8 byLimGrade, char *pwszCont);
+  void pc_GuildEstablishRequest(char *pwszGuildName);
+  void pc_GuildDownLoadRequest();
+  void pc_GuildJoinApplyRequest(char *pwszGuildName);
+  void pc_GuildJoinApplyCancelRequest();
+  void pc_GuildJoinAcceptRequest(unsigned int dwApplierSerial, bool bAccept);
+  void pc_GuildOfferSuggestRequest(
+    unsigned __int8 byMatterType,
+    unsigned int dwMatterDst,
+    char *pwszComment,
+    unsigned int dwMatterObj1,
+    unsigned int dwMatterObj2,
+    unsigned int dwMatterObj3);
+  void pc_GuildCancelSuggestRequest(unsigned int dwMatterVoteSynKey);
+  void pc_GuildVoteRequest(unsigned int dwMatterVoteSynKey, unsigned __int8 byVoteCode);
+  void pc_GuildQueryInfoRequest(unsigned int dwGuildSerial);
+  void pc_GuildPushMoneyRequest(unsigned int dwPushDalant, unsigned int dwPushGold);
+  void pc_GuildRoomRentRequest(_guildroom_rent_request_clzo *pProtocol);
+  void pc_GuildRoomEnterRequest(_guildroom_enter_request_clzo *pProtocol);
+  void pc_GuildRoomOutRequest(_guildroom_out_request_clzo *pProtocol);
+  void pc_GuildHonorListRequest(unsigned __int8 byUI);
+  void pc_GuildSetHonorRequest(_guild_honor_set_request_clzo *pData);
+  void pc_GuildListRequest(unsigned __int8 byPage);
+  void pc_GuildNextHonorListRequest();
+  void pc_BuddyDownloadRequest();
+  void pc_BuddyAddRequest(unsigned __int16 wDstIndex, unsigned int dwDstSerial, char *pwszDstName);
+  void pc_BuddyAddAnswer(bool bAccept, unsigned __int16 wAskerIndex, unsigned int dwAskerSerial);
+  void pc_BuddyDelRequest(unsigned int dwSerial);
+  void SendMsg_GuildForceLeaveBoradori();
   void pc_PartyLeaveSelfReqeuest();
   void SendMsg_PartyLeaveSelfResult(CPartyPlayer *pLeaver, bool bWorldExit);
   void SendMsg_PartySuccessResult(CPartyPlayer *pSuccessor);
@@ -1388,6 +1699,8 @@ public:
   void pc_TakeGroundingItem(CItemBox *pBox, unsigned __int16 wAddSerial);
   void pc_ThrowStorageItem(_STORAGE_POS_INDIV *pItem);
   void pc_UsePotionItem(CPlayer *pTargetPlayer, _STORAGE_POS_INDIV *pItem);
+  char IsEquipAbleGrade(unsigned __int8 byGradeLv);
+  void Emb_EquipLink();
   void pc_EquipPart(_STORAGE_POS_INDIV *pItem);
   void pc_EmbellishPart(_STORAGE_POS_INDIV *pItem, unsigned __int16 wChangeSerial);
   void pc_OffPart(_STORAGE_POS_INDIV *pItem);
@@ -1429,12 +1742,23 @@ public:
     unsigned __int8 bySetItemNum,
     unsigned __int8 bySetEffectNum,
     bool bSet);
+  void ApplySetItemEffect(
+    si_interpret *pSI,
+    unsigned int dwSetItem,
+    unsigned __int8 bySetItemNum,
+    unsigned __int8 bySetEffectNum,
+    bool bSetEffect);
   void pc_NewPosStart();
   void pc_Revival(bool bUseableJade);
   void pc_ExitWorldRequest();
   void pc_LinkBoardRequest();
+  void CheckPosInTown();
   void NewViewCircleObject();
   void CreateComplete();
+  void SendMsg_MadeTrapNumInform(char byNum);
+  void SendMsg_TowerContinue(unsigned __int16 wItemSerial, CGuardTower *pTwr);
+  void SendMsg_ReEnterAsk(unsigned __int16 wChannelIndex, unsigned int dwChannelSerial);
+  void SendMsg_MoveToOwnStoneMapInform(unsigned __int8 byStoneMapMoveInfo);
   void CheckGroupTargeting();
   void CheckGroupMapPoint();
   void SendMsg_StartNewPos(char byMapInMode);
@@ -1451,6 +1775,13 @@ public:
   void SendMsg_ChangeClassCommand();
   void SendMsg_SelectClassResult(char byErrCode, unsigned __int16 wSelClassIndex);
   void SendMsg_PcRoomCharClass(unsigned int dwPcRoomClassIndex);
+  void SendMsg_PcRoomError(char byErrorCode);
+  void SendMsg_BillingExipreInform(char byKind, unsigned __int16 wWaitSec);
+  void ReservationForceClose();
+  void Billing_Logout();
+  void PushDQSCheatPlyerVoteInfo();
+  void PushDQSUpdatePlyerVoteInfo();
+  void SendMsg_Alter_Action_Point(unsigned __int8 byActCode, unsigned int dwActPoint);
   unsigned int GetInitClassCost();
   unsigned __int8 pc_InitClassRequest();
   unsigned __int8 pc_InitClass();
@@ -1550,6 +1881,12 @@ public:
   bool _pre_check_wpactive_force_attack();
   int _pre_check_in_guild_battle(CPlayer *pDst);
   bool _pre_check_in_guild_battle_race(CPlayer *pDst, bool bEqueal);
+  _STORAGE_LIST::_db_con *IsBulletValidity(unsigned __int16 wBulletSerial);
+  _STORAGE_LIST::_db_con *IsEffBulletValidity(unsigned __int16 wEffBulletSerial);
+  char IsSFUsableGauge(unsigned __int8 byEffectCode, unsigned __int16 wEffectIndex, unsigned __int16 *pwDelPoint);
+  char IsSFUsableSFMastery(unsigned __int8 byMasteryCode, int nMasteryIndex);
+  char IsSFActableByClass(unsigned __int8 byEffectCode, _base_fld *pSFFld);
+  unsigned __int8 _GetPartyMemberInCircle(CPlayer **out_ppMember, int nMax, bool bOne);
   bool _pre_check_skill_enable(_skill_fld *pSkillFld);
   char _pre_check_skill_gradelimit(_skill_fld *pSkillFld);
   void make_gen_attack_param(
@@ -1695,9 +2032,90 @@ public:
   __int64 GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack);
   bool IsBeAttackedAble(bool bFirst);
   void SetAttackPart(int nAttactPart);
+  char Load(CUserDB *pUser, bool bFirstStart);
+  char dev_after_effect();
+  char dev_all_kill();
+  char dev_animus_recall_time_free(bool bFree);
+  char dev_avator_copy(char *pwszDstName);
+  bool dev_change_class(char *pszClassCode);
+  char dev_cont_effect_del();
+  char dev_cont_effect_time(unsigned int dwSec);
+  char dev_dalant(unsigned int dwDalant);
+  char dev_die();
+  char dev_drop_item(char *pszItemCode, int nNum, char *pszUpTalCode);
+  char dev_free_sf_by_class();
+  char dev_full_animus_gauge();
+  bool dev_full_force();
+  char dev_full_point();
+  char dev_gold(unsigned int dwGold);
+  char dev_goto_monster(CMonster *pMon);
+  char dev_goto_npc(CMerchant *pNpc);
+  char dev_half_inven_amount(unsigned __int64 dwAmount);
+  char dev_half_point();
+  char dev_init_monster();
+  char dev_inven_empty();
+  char dev_item_make_no_use_matrial(bool noUsingMatrial);
+  char dev_loot_bag();
+  char dev_loot_free(bool bFree);
+  char dev_loot_fullitem(unsigned __int8 byLv);
+  bool dev_loot_item(char *pszItemCode, int nNum, char *pszUpTalCode, int nUpNum);
+  char dev_loot_material();
+  char dev_loot_mine();
+  char dev_loot_tower();
+  char dev_lv(int nLv);
+  char dev_make_succ(bool bSucc);
+  char dev_max_level_ext(unsigned __int8 byMaxLevel);
+  char dev_never_die(bool bSet);
+  char dev_quest_complete();
+  char dev_quest_complete_other(char *pwszCharName);
+  char dev_set_animus_exp(unsigned __int64 dwExpPoint);
+  char dev_set_animus_lv(int nAnimusLv);
+  char dev_set_hp(float prob);
+  char dev_SetGuildGrade(unsigned __int8 byGrade);
+  char dev_SetGuildGradeByGuildSerial(unsigned int dwGuildSerial, unsigned __int8 byGrade);
+  char dev_SetGuildGradeByName(char *uszGuildName, unsigned __int8 byGrade);
   char dev_trap_attack_grade(int nPoint);
+  char dev_up_all(int nCum);
+  char dev_up_all_pt(int nLv);
+  char dev_up_cashbag(long double dPoint);
+  char dev_up_forceitem(int nCum);
+  char dev_up_forcemastery(unsigned int nCum);
+  char dev_up_mastery(int nMasteryCode, unsigned int nMasteryIndex, int nLv);
+  char dev_up_pvp(long double dPoint);
+  char dev_up_skill(char *pszSkillCode, unsigned int nCum);
+  char dev_view_boss();
+  char dev_view_method(char *pwszDstName);
+  char mgr_all_item_muzi(unsigned int nLv);
+  char mgr_change_degree(unsigned __int8 nDegree);
+  char mgr_defense_item_grace(unsigned __int8 byItemCode, unsigned int nLv);
+  char mgr_destroy_system_tower();
+  char mgr_dungeon_pass();
+  bool mgr_exit_keeper();
+  bool mgr_exit_stone();
+  char mgr_free_ride_ship();
+  char mgr_goto_mine();
+  char mgr_goto_shipport(int nRaceCode, int nPort);
+  char mgr_goto_stone(unsigned __int8 byRaceCode);
+  char mgr_goto_store(unsigned __int8 nRaceCode, char *pszNPCName);
+  char mgr_gotoCoordinates(char *pszMapCode, float fX, float fY, float fZ);
+  char mgr_gotoDstCoordinates(char *pwszDstName, char *pszMapCode, float fX, float fY, float fZ);
+  bool mgr_holykeeper_start(int nRace);
+  bool mgr_holystone_start(int nNumOfTime);
+  char mgr_item_telekinesis();
+  char mgr_kick(char *pwszCharName);
+  char mgr_make_system_tower(char *pszTowerCode);
+  char mgr_matchless(bool bMatchless);
   char mgr_MaxAttackPoint(int nMax);
+  char mgr_pass_sch_one_step();
+  char mgr_recall_guild_player(char *wszDestCharName);
+  char mgr_recall_mon(char *pszMonCode, int nCreateNum);
+  char mgr_recall_party_player(char *wszDestCharName);
+  char mgr_recall_player(char *pwszCharName);
+  bool mgr_resurrect_player(char *pwszCharName);
   char mgr_set_animus_attack_point(int nPoint);
+  char mgr_TrunkInit();
+  char mgr_user_ban(char *uszCharName, int iPeriod, char *uszReason, char byBlockType);
+  char mgr_whisper(char *pwszMsg);
 
   bool m_bLoad;
   bool m_bOper;
@@ -1897,6 +2315,7 @@ public:
 
 bool LoadMasteryLimFile(char *pszErrMsg);
 bool DTradeEqualPerson(CPlayer *lp_pOne, CPlayer **lpp_pDst);
+void wa_EnterWorld(_WA_AVATOR_CODE *pData, unsigned __int16 wZoneIndex);
 void wa_PartySelfLeave(_CLID *pidLeaver);
 void wa_ExitWorld(_CLID *pidWorld);
 CPlayer *GetPtrPlayerFromSerial(CPlayer *pData, int nNum, unsigned int dwSerial);

@@ -1,10 +1,13 @@
 #include "pch.h"
 
 #include "TRC_AutoTrade.h"
+#include "atrade_taxrate_result_zocl.h"
+#include "CNetProcess.h"
 #include "KorLocalTime.h"
 #include "GlobalObjects.h"
 #include "CMgrGuildHistory.h"
 #include "CPvpUserAndGuildRankingSystem.h"
+#include "CNotifyNotifyRaceLeaderSownerUTaxrate.h"
 #include "DqsDbStructs.h"
 
 _suggested_matter_change_taxrate::_suggested_matter_change_taxrate()
@@ -92,6 +95,30 @@ float TRC_AutoTrade::get_taxrate()
   return m_Controller.getCurTaxRate();
 }
 
+void TRC_AutoTrade::sendmsg_taxrate(unsigned int n, unsigned __int8 byRet)
+{
+  (void)byRet;
+
+  _atrade_taxrate_result_zocl result{};
+  result.byTaxRate = static_cast<unsigned __int8>(get_taxrate() * 100.0f);
+
+  if (m_pOwnerGuild)
+  {
+    result.dwEmblemBack = m_pOwnerGuild->m_dwEmblemBack;
+    result.dwEmblemMark = m_pOwnerGuild->m_dwEmblemMark;
+    memcpy_0(result.wszGuildName, m_pOwnerGuild->m_wszName, sizeof(result.wszGuildName));
+  }
+  else
+  {
+    result.dwEmblemBack = static_cast<unsigned int>(-1);
+    result.dwEmblemMark = static_cast<unsigned int>(-1);
+  }
+
+  unsigned __int8 type[2]{30, 24};
+  const unsigned __int16 len = static_cast<unsigned __int16>(result.size());
+  g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&result), len);
+}
+
 void TRC_AutoTrade::AddGDalant(char *pdata)
 {
   char *data = pdata;
@@ -167,6 +194,45 @@ void TRC_AutoTrade::SetPatriarchTaxMoney(int dwTax)
   g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x83u, reinterpret_cast<char *>(&qry), size);
   ++m_dwTrade;
   m_dIncomeMoney = m_dIncomeMoney + static_cast<double>(dwTax);
+}
+
+void TRC_AutoTrade::set_owner(CGuild *pGuild)
+{
+  m_pOwnerGuild = pGuild;
+}
+
+char TRC_AutoTrade::_db_load(unsigned __int8 byRace)
+{
+  unsigned __int8 byCurrTax[32]{};
+  unsigned __int8 byNextTax[36]{};
+  char pwszName[28]{};
+
+  const int result = g_Main.m_pWorldDB->select_atrade_taxrate(byRace, pwszName, byCurrTax, byNextTax);
+  if (result == 1)
+  {
+    return 0;
+  }
+
+  if (byCurrTax[0] < 5u || byCurrTax[0] > 0x14u)
+  {
+    byCurrTax[0] = 5;
+  }
+  if (byNextTax[0] < 5u || byNextTax[0] > 0x14u)
+  {
+    byNextTax[0] = 5;
+  }
+
+  m_Controller.setCurTaxRate(static_cast<float>(byCurrTax[0]) / 100.0f);
+  m_serviceLog.Write(
+    "Init tax rate : Suggester:%s tax: %.2f",
+    pwszName,
+    static_cast<float>(byCurrTax[0]) / 100.0f);
+
+  m_suggested.dwNext = byNextTax[0];
+  strcpy_0(m_suggested.wszMatterDst, pwszName);
+  g_Main.m_kEtcNotifyInfo.UpdateTaxRate(byRace, byCurrTax[0]);
+  m_bInit = true;
+  return 1;
 }
 
 unsigned __int8 TRC_AutoTrade::_insert_info(char *pdata)

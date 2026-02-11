@@ -6,6 +6,9 @@
 class __cppobj CCouponMgr
 {
 public:
+  void Init(unsigned __int16 wIdx);
+  void ReceivePrimiumCoupon(unsigned __int16 wIdx);
+  char SetCheetContTime(unsigned __int16 wIdx, int nMin);
   void LoadData(unsigned int dwAccSerial, _PCBANG_PLAY_TIME *pkInfo);
   void LogOut(bool bForceClose);
 

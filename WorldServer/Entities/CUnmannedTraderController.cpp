@@ -4,12 +4,14 @@
 
 #include <cstdarg>
 #include <cstring>
+#include <cwchar>
 #include "CRFWorldDatabase.h"
 #include "CNetProcess.h"
 #include "CPlayer.h"
 #include "CPlayerDB.h"
 #include "CUnmannedTraderEnvironmentValue.h"
 #include "CUnmannedTraderGroupItemInfoTable.h"
+#include "CUnmannedTraderItemState.h"
 #include "CUnmannedTraderScheduler.h"
 #include "CUnmannedTraderTaxRateManager.h"
 #include "CUnmannedTraderUserInfoTable.h"
@@ -22,6 +24,7 @@
 #include "unmannedtrader_buy_item_result_zocl.h"
 #include "unmannedtrader_registsingleitem.h"
 #include "unmannedtrader_seller_info.h"
+#include "unmannedtrader_stade_id_info.h"
 
 CUnmannedTraderController *CUnmannedTraderController::Instance()
 {
@@ -58,10 +61,67 @@ bool CUnmannedTraderController::Init()
   return taxRateManager->Init(this->m_pkLogger) && this->m_kLazyCleaner.Init();
 }
 
+bool CUnmannedTraderController::Load()
+{
+  if (!InsertStateRecord())
+  {
+    return false;
+  }
+
+  if (!UpdateClearDanglingOwnerRecord())
+  {
+    return false;
+  }
+
+  if (!InsertDefalutRecord())
+  {
+    return false;
+  }
+
+  CUnmannedTraderScheduler *scheduler = CUnmannedTraderScheduler::Instance();
+  return scheduler->Load() && this->m_kTradeInfo.Init();
+}
+
 bool CUnmannedTraderController::Load(unsigned __int16 wInx, unsigned int dwSerial, _TRADE_DB_BASE *kInfo)
 {
   CUnmannedTraderUserInfoTable *userInfoTable = CUnmannedTraderUserInfoTable::Instance();
   return userInfoTable->Load(0, wInx, dwSerial, kInfo);
+}
+
+void CUnmannedTraderController::Regist(unsigned __int16 wInx, _a_trade_reg_item_request_clzo *pRequest)
+{
+  (void)wInx;
+  (void)pRequest;
+}
+
+void CUnmannedTraderController::ModifyPrice(unsigned __int16 wInx, _a_trade_adjust_price_request_clzo *pRequest)
+{
+  (void)wInx;
+  (void)pRequest;
+}
+
+void CUnmannedTraderController::CancelRegist(unsigned __int16 wInx, _a_trade_clear_item_request_clzo *pRequest)
+{
+  (void)wInx;
+  (void)pRequest;
+}
+
+void CUnmannedTraderController::Buy(unsigned __int16 wInx, _unmannedtrader_buy_item_request_clzo *pRequest)
+{
+  (void)wInx;
+  (void)pRequest;
+}
+
+void CUnmannedTraderController::Search(unsigned __int16 wInx, _unmannedtrader_search_list_request_clzo *pRequest)
+{
+  (void)wInx;
+  (void)pRequest;
+}
+
+void CUnmannedTraderController::ReRegist(unsigned __int16 wInx, _unmannedtrader_re_regist_request_clzo *pRequest)
+{
+  (void)wInx;
+  (void)pRequest;
 }
 
 unsigned __int8 CUnmannedTraderController::GetMaxRegistCnt(unsigned __int16 wInx, unsigned int dwSerial)
@@ -82,6 +142,15 @@ void CUnmannedTraderController::LogOut(unsigned __int16 wInx, unsigned int dwSer
 {
   CUnmannedTraderUserInfoTable *userInfoTable = CUnmannedTraderUserInfoTable::Instance();
   userInfoTable->LogOut(wInx, dwSerial);
+}
+
+bool CUnmannedTraderController::CheatCancelRegist(
+  unsigned __int16 wInx,
+  unsigned int dwOwnerSerial,
+  unsigned __int8 byNth)
+{
+  CUnmannedTraderUserInfoTable *userInfoTable = CUnmannedTraderUserInfoTable::Instance();
+  return userInfoTable->CheatCancelRegist(wInx, dwOwnerSerial, byNth);
 }
 
 bool CUnmannedTraderController::InitLogger()
@@ -278,6 +347,118 @@ unsigned __int8 CUnmannedTraderController::CheckDBItemState(
       return 0;
   }
 
+  return 0;
+}
+
+char CUnmannedTraderController::InsertStateRecord()
+{
+  unsigned int stateCount = 0;
+  char result = g_Main.m_pWorldDB->Select_UnmannedTraderItemStateInfoCnt(&stateCount);
+  if (!result || result == 2)
+  {
+    _unmannedtrader_stade_id_info *stateInfo =
+      static_cast<_unmannedtrader_stade_id_info *>(operator new[](saturated_mul(stateCount, 0x104uLL)));
+    if (!stateInfo)
+    {
+      Log(
+        "CUnmannedTraderController::InsertStateRecord()\r\n\t\tnew _unmannedtrader_stade_id_info[%u] NULL!\r\n",
+        stateCount);
+      return 0;
+    }
+
+    result = g_Main.m_pWorldDB->Select_UnmannedTraderItemStateInfo(stateInfo, stateCount);
+    if (!result || result == 2)
+    {
+      unsigned int maxCompare = stateCount >= 14 ? 14 : stateCount;
+      bool matched = true;
+      for (unsigned int uiInx = 0; uiInx < maxCompare; ++uiInx)
+      {
+        const wchar_t *stateStr = CUnmannedTraderItemState::GetStateStrW(uiInx);
+        if (wcscmp(stateStr, stateInfo[uiInx].wszDesc) != 0)
+        {
+          matched = false;
+          break;
+        }
+      }
+
+      operator delete(stateInfo);
+
+      if (matched && stateCount == 14)
+      {
+        return 1;
+      }
+
+      if (g_Main.m_pWorldDB->Truncate_UnmannedTraderItemStateRecord())
+      {
+        wchar_t **stateList = CUnmannedTraderItemState::GetStateStrList();
+        unsigned int maxStateCnt = CUnmannedTraderItemState::GetMaxStateCnt();
+        if (g_Main.m_pWorldDB->Insert_UnmannedTraderItemStateRecord(maxStateCnt, stateList))
+        {
+          return 1;
+        }
+
+        Log(
+          "CUnmannedTraderController::InsertStateRecord()\r\n"
+          "\t\tg_Main.m_pWorldDB->Insert_UnmannedTraderItemStateRecord( %u, wszStateName ) Fail!\r\n",
+          CUnmannedTraderItemState::GetMaxStateCnt());
+        return 0;
+      }
+
+      Log(
+        "CUnmannedTraderController::InsertStateRecord()\r\n"
+        "\t\tg_Main.m_pWorldDB->Truncate_UnmannedTraderItemStateRecord() Fail!\r\n");
+      return 0;
+    }
+
+    Log(
+      "CUnmannedTraderController::InsertStateRecord()\r\n"
+      "\t\tg_Main.m_pWorldDB->Select_UnmannedTraderItemStateInfo() Fail!\r\n");
+    operator delete(stateInfo);
+    return 0;
+  }
+
+  Log(
+    "CUnmannedTraderController::InsertStateRecord()\r\n"
+    "\t\tg_Main.m_pWorldDB->Select_UnmannedTraderItemStateInfoCnt() Fail!\r\n");
+  return 0;
+}
+
+char CUnmannedTraderController::UpdateClearDanglingOwnerRecord()
+{
+  if (g_Main.m_pWorldDB->Update_UnmannedTraderClearDanglingOwnerRecord())
+  {
+    return 1;
+  }
+
+  Log(
+    "CUnmannedTraderController::UpdateClearDanglingOwnerRecord()\r\n"
+    "\t\tg_Main.m_pWorldDB->Update_UnmannedTraderClearDanglingOwnerRecord() Fail!\r\n");
+  return 0;
+}
+
+char CUnmannedTraderController::InsertDefalutRecord()
+{
+  int emptyCount = g_Main.m_pWorldDB->Select_UnmannedTraderSingleItemEmptyRecordCnt();
+  if (emptyCount >= 0)
+  {
+    if (CUnmannedTraderEnvironmentValue::Unmanned_Trader_Min_Limit_Empty_Record_Cnt <= emptyCount
+      || g_Main.m_pWorldDB->Insert_UnmannedTraderSingleDefaultRecord(
+        CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Empty_Record_Cnt))
+    {
+      return 1;
+    }
+
+    Log(
+      "CUnmannedTraderController::InsertDefalutRecord()\r\n"
+      "\t\tg_Main.m_pWorldDB->Insert_UnmannedTraderSingleDefaultRecord( %u ) Fail!\r\n",
+      CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Empty_Record_Cnt);
+    return 0;
+  }
+
+  Log(
+    "CUnmannedTraderController::InsertDefalutRecord()\r\n"
+    "\t\tiCnt(%d) = g_Main.m_pWorldDB->Select_UnmannedTraderItemEmptyRecordCnt()!\r\n",
+    emptyCount);
   return 0;
 }
 

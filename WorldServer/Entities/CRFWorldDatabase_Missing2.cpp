@@ -1,10 +1,20 @@
 #include "pch.h"
 
 #include "CRFWorldDatabase.h"
+#include "CMainThread.h"
 #include "CPotionMgr.h"
 #include "CUserRankingProcess.h"
+#include "CGoldenBoxItemMgr.h"
+#include "CItemStoreManager.h"
+#include "worlddb_golden_box_item.h"
+#include "guildroom_info.h"
 #include "worlddb_guild_battle_rank_list.h"
+#include "worlddb_guild_battle_schedule_list.h"
+#include "worlddb_guild_battle_info.h"
 #include "worlddb_guild_battle_reserved_schedule_info.h"
+#include "CPostData.h"
+#include "WorldServerUtil.h"
+#include "unmannedtrader_stade_id_info.h"
 
 #include <cstring>
 #include <cstdio>
@@ -1253,6 +1263,1714 @@ unsigned __int8 CRFWorldDatabase::Select_CashLimSale(_worlddb_cash_limited_sale 
   }
 }
 
+bool CRFWorldDatabase::Update_DisappearOwnerRecord()
+{
+  char Buffer[1040]{};
+  sprintf_s(
+    Buffer,
+    0x400u,
+    "update [dbo].[tbl_PostStorage] set [dbo].[tbl_PostStorage].dck=1 from (select p.serial from [dbo].[tbl_PostStorage] "
+    "as p join [dbo].[tbl_base] as b on p.owner <> 0 and p.owner = b.serial and b.dck=1) as d where [dbo].[tbl_PostStorag"
+    "e].serial = d.serial");
+  return ExecUpdateQuery(Buffer, 0);
+}
+
+__int64 CRFWorldDatabase::Select_PostStorageEmptyRecord()
+{
+  SQLLEN StrLen_or_IndPtr = 0;
+  SQLRETURN ret = 0;
+  char Buffer[148]{};
+  unsigned int TargetValue[4]{};
+
+  sprintf_s(Buffer, 0x80u, "select count(serial) from tbl_PostStorage where dck=1");
+  if (m_bSaveDBLog)
+  {
+    Log(Buffer);
+  }
+
+  if (m_hStmtSelect || ReConnectDataBase())
+  {
+    ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(Buffer), -3);
+    if (!ret || ret == 1)
+    {
+      ret = SQLFetch(m_hStmtSelect);
+      if (!ret || ret == 1)
+      {
+        TargetValue[0] = 0;
+        ret = SQLGetData(m_hStmtSelect, 1u, 4, TargetValue, 0, &StrLen_or_IndPtr);
+        if (ret == 100)
+        {
+          if (m_hStmtSelect)
+          {
+            SQLCloseCursor(m_hStmtSelect);
+          }
+          return 4294967290LL;
+        }
+
+        if (m_hStmtSelect)
+        {
+          SQLCloseCursor(m_hStmtSelect);
+        }
+        if (m_bSaveDBLog)
+        {
+          FmtLog("%s Success", Buffer);
+        }
+        return TargetValue[0];
+      }
+
+      unsigned int result = 0;
+      if (ret == 100)
+      {
+        result = 0xFFFFFFFCu;
+      }
+      else
+      {
+        ErrorMsgLog(ret, Buffer, "SQLFetch", m_hStmtSelect);
+        ErrorAction(ret, m_hStmtSelect);
+        result = 0xFFFFFFFBu;
+      }
+      if (m_hStmtSelect)
+      {
+        SQLCloseCursor(m_hStmtSelect);
+      }
+      return result;
+    }
+    if (ret == 100)
+    {
+      return 0xFFFFFFFEu;
+    }
+
+    ErrorMsgLog(ret, Buffer, "SQLExecDirectA", m_hStmtSelect);
+    ErrorAction(ret, m_hStmtSelect);
+    return 0xFFFFFFFDu;
+  }
+
+  ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
+  return 0xFFFFFFFFLL;
+}
+
+unsigned __int8 CRFWorldDatabase::Select_PostRegistryData(unsigned int dwMax, CPostData *pPostData)
+{
+  SQLLEN StrLen_or_IndPtr = 0;
+  SQLRETURN ret = 0;
+  char Buffer[84]{};
+  unsigned __int8 v11[32]{};
+  unsigned __int8 v12[32]{};
+  unsigned int TargetValue[8]{};
+  int pl_nKey[8]{};
+  unsigned char v15[28]{};
+
+  sprintf_s(Buffer, 0x40u, "select * from tbl_PostRegistry where dck=0");
+  if (m_bSaveDBLog)
+  {
+    Log(Buffer);
+  }
+
+  if (m_hStmtSelect || ReConnectDataBase())
+  {
+    ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(Buffer), -3);
+    if (!ret || ret == 1)
+    {
+      while (true)
+      {
+        ret = SQLFetch(m_hStmtSelect);
+        if (ret && ret != 1)
+        {
+          break;
+        }
+
+        ret = SQLGetData(m_hStmtSelect, 1u, 65518, TargetValue, 0, &StrLen_or_IndPtr);
+        if (TargetValue[0] < dwMax)
+        {
+          ret = SQLGetData(m_hStmtSelect, 2u, 65529, v15, 0, &StrLen_or_IndPtr);
+          ret = SQLGetData(
+            m_hStmtSelect,
+            3u,
+            4,
+            &pPostData[TargetValue[0]].m_dwSenderSerial,
+            0,
+            &StrLen_or_IndPtr);
+          ret = SQLGetData(
+            m_hStmtSelect,
+            4u,
+            1,
+            pPostData[TargetValue[0]].m_wszSendName,
+            17,
+            &StrLen_or_IndPtr);
+          ret = SQLGetData(
+            m_hStmtSelect,
+            5u,
+            1,
+            pPostData[TargetValue[0]].m_wszRecvName,
+            17,
+            &StrLen_or_IndPtr);
+          ret = SQLGetData(
+            m_hStmtSelect,
+            6u,
+            1,
+            pPostData[TargetValue[0]].m_wszTitle,
+            21,
+            &StrLen_or_IndPtr);
+          ret = SQLGetData(
+            m_hStmtSelect,
+            7u,
+            1,
+            pPostData[TargetValue[0]].m_wszContent,
+            201,
+            &StrLen_or_IndPtr);
+          ret = SQLGetData(m_hStmtSelect, 8u, 4, pl_nKey, 0, &StrLen_or_IndPtr);
+          ret = SQLGetData(m_hStmtSelect, 9u, 65511, &pPostData[TargetValue[0]].m_dwDur, 0, &StrLen_or_IndPtr);
+          ret = SQLGetData(m_hStmtSelect, 0xAu, 4, &pPostData[TargetValue[0]].m_dwUpt, 0, &StrLen_or_IndPtr);
+          ret = SQLGetData(m_hStmtSelect, 0xBu, 4, &pPostData[TargetValue[0]].m_dwGold, 0, &StrLen_or_IndPtr);
+          ret = SQLGetData(m_hStmtSelect, 0xCu, 5, v11, 0, &StrLen_or_IndPtr);
+          ret = SQLGetData(m_hStmtSelect, 0xDu, 5, v12, 0, &StrLen_or_IndPtr);
+          ret = SQLGetData(
+            m_hStmtSelect,
+            0xEu,
+            65511,
+            &pPostData[TargetValue[0]].m_lnUID,
+            0,
+            &StrLen_or_IndPtr);
+          pPostData[TargetValue[0]].m_bySendRace = v11[0];
+          pPostData[TargetValue[0]].m_bySenderDgr = v12[0];
+          pPostData[TargetValue[0]].m_Key.LoadDBKey(pl_nKey[0]);
+          pPostData[TargetValue[0]].m_byState = 0;
+        }
+      }
+
+      if (m_hStmtSelect)
+      {
+        SQLCloseCursor(m_hStmtSelect);
+      }
+      if (m_bSaveDBLog)
+      {
+        FmtLog("%s Success", Buffer);
+      }
+      return 0;
+    }
+
+    if (ret == 100)
+    {
+      return 2;
+    }
+
+    ErrorMsgLog(ret, Buffer, "SQLExecDirect", m_hStmtSelect);
+    ErrorAction(ret, m_hStmtSelect);
+    return 1;
+  }
+
+  ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
+  return 1;
+}
+
+char CRFWorldDatabase::Insert_PSDefaultRecord(unsigned int dwCum)
+{
+  char Buffer[68]{};
+  sprintf_s(Buffer, 0x40u, "{ CALL pInsert_PostStorageRecord }");
+  for (unsigned int j = 0; j < dwCum; ++j)
+  {
+    if (!ExecUpdateQuery(Buffer, 1))
+    {
+      return 0;
+    }
+  }
+  return 1;
+}
+
+unsigned __int8 CRFWorldDatabase::Select_RaceBossCurrentWinRate(
+  unsigned __int8 byRace,
+  char *szDate,
+  unsigned int *dwTotalCnt,
+  unsigned int *dwWinCnt)
+{
+  SQLLEN StrLen_or_IndPtr = 0;
+  SQLRETURN ret = 0;
+  char query[256]{};
+
+  sprintf_s(
+    query,
+    "{ CALL pSelect_BossWinRate(%d, N'%s', '%s') }",
+    byRace,
+    g_Main.m_wszWorldName,
+    szDate);
+
+  if (m_bSaveDBLog)
+  {
+    Log(query);
+  }
+
+  if (m_hStmtSelect || ReConnectDataBase())
+  {
+    ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), -3);
+    if (!ret || ret == 1)
+    {
+      ret = SQLFetch(m_hStmtSelect);
+      if (!ret || ret == 1)
+      {
+        ret = SQLGetData(m_hStmtSelect, 1u, 65518, dwTotalCnt, 0, &StrLen_or_IndPtr);
+        if (!ret || ret == 1)
+        {
+          ret = SQLGetData(m_hStmtSelect, 2u, 65518, dwWinCnt, 0, &StrLen_or_IndPtr);
+          if (!ret || ret == 1)
+          {
+            if (m_hStmtSelect)
+            {
+              SQLCloseCursor(m_hStmtSelect);
+            }
+            if (m_bSaveDBLog)
+            {
+              FmtLog("%s Success", query);
+            }
+            return 0;
+          }
+          unsigned __int8 result = 0;
+          if (ret == 100)
+          {
+            result = 2;
+          }
+          else
+          {
+            ErrorMsgLog(ret, query, "SQLGetData", m_hStmtSelect);
+            ErrorAction(ret, m_hStmtSelect);
+            result = 1;
+          }
+          if (m_hStmtSelect)
+          {
+            SQLCloseCursor(m_hStmtSelect);
+          }
+          return result;
+        }
+
+        unsigned __int8 result = 0;
+        if (ret == 100)
+        {
+          result = 2;
+        }
+        else
+        {
+          ErrorMsgLog(ret, query, "SQLGetData", m_hStmtSelect);
+          ErrorAction(ret, m_hStmtSelect);
+          result = 1;
+        }
+        if (m_hStmtSelect)
+        {
+          SQLCloseCursor(m_hStmtSelect);
+        }
+        return result;
+      }
+
+      unsigned __int8 result = 0;
+      if (ret == 100)
+      {
+        result = 2;
+      }
+      else
+      {
+        ErrorMsgLog(ret, query, "SQLFetch", m_hStmtSelect);
+        ErrorAction(ret, m_hStmtSelect);
+        result = 1;
+      }
+      if (m_hStmtSelect)
+      {
+        SQLCloseCursor(m_hStmtSelect);
+      }
+      return result;
+    }
+
+    if (ret == 100)
+    {
+      return 2;
+    }
+
+    ErrorMsgLog(ret, query, "SQLExecDirectA", m_hStmtSelect);
+    ErrorAction(ret, m_hStmtSelect);
+    return 1;
+  }
+
+  ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+  return 1;
+}
+
+__int64 CRFWorldDatabase::Select_UnmannedTraderItemStateInfoCnt(unsigned int *pdwCnt)
+{
+  SQLLEN StrLen_or_IndPtr = 0;
+  SQLRETURN ret = 0;
+  char Buffer[260]{};
+
+  sprintf_s(Buffer, 0x100u, "select count([id]) from [dbo].[tbl_utresultstateid]");
+  if (m_bSaveDBLog)
+  {
+    Log(Buffer);
+  }
+
+  if (m_hStmtSelect || ReConnectDataBase())
+  {
+    ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(Buffer), -3);
+    if (!ret || ret == 1)
+    {
+      ret = SQLFetch(m_hStmtSelect);
+      if (!ret || ret == 1)
+      {
+        *pdwCnt = 0;
+        ret = SQLGetData(m_hStmtSelect, 1u, 4, pdwCnt, 0, &StrLen_or_IndPtr);
+        if (ret == 100)
+        {
+          if (m_hStmtSelect)
+          {
+            SQLCloseCursor(m_hStmtSelect);
+          }
+          return 2;
+        }
+
+        if (m_hStmtSelect)
+        {
+          SQLCloseCursor(m_hStmtSelect);
+        }
+        if (m_bSaveDBLog)
+        {
+          FmtLog("%s Success", Buffer);
+        }
+        return 0;
+      }
+
+      if (ret != 100)
+      {
+        ErrorMsgLog(ret, Buffer, "SQLFetch", m_hStmtSelect);
+        ErrorAction(ret, m_hStmtSelect);
+      }
+      if (m_hStmtSelect)
+      {
+        SQLCloseCursor(m_hStmtSelect);
+      }
+      return 1;
+    }
+
+    if (ret == 100)
+    {
+      return 2;
+    }
+
+    ErrorMsgLog(ret, Buffer, "SQLExecDirectA", m_hStmtSelect);
+    ErrorAction(ret, m_hStmtSelect);
+    return 1;
+  }
+
+  ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
+  return 1;
+}
+
+__int64 CRFWorldDatabase::Select_UnmannedTraderItemStateInfo(
+  _unmannedtrader_stade_id_info *pkInfo,
+  unsigned int dwMaxCnt)
+{
+  SQLLEN StrLen_or_IndPtr = 0;
+  SQLRETURN ret = 0;
+  char Buffer[260]{};
+
+  sprintf_s(Buffer, sizeof(Buffer), "select top %u [id], [desc] from [dbo].[tbl_utresultstateid]", dwMaxCnt);
+  if (m_bSaveDBLog)
+  {
+    Log(Buffer);
+  }
+
+  if (m_hStmtSelect || ReConnectDataBase())
+  {
+    ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(Buffer), -3);
+    if (!ret || ret == 1)
+    {
+      for (int j = 0;; ++j)
+      {
+        ret = SQLFetch(m_hStmtSelect);
+        if (ret && ret != 1)
+        {
+          break;
+        }
+
+        ret = SQLGetData(m_hStmtSelect, 1u, 65518, &pkInfo[j].dwID, 0, &StrLen_or_IndPtr);
+        ret = SQLGetData(m_hStmtSelect, 2u, 65528, pkInfo[j].wszDesc, 128, &StrLen_or_IndPtr);
+      }
+      if (m_hStmtSelect)
+      {
+        SQLCloseCursor(m_hStmtSelect);
+      }
+      if (m_bSaveDBLog)
+      {
+        FmtLog("%s Success", Buffer);
+      }
+      return 0;
+    }
+
+    if (ret == 100)
+    {
+      return 2;
+    }
+
+    ErrorMsgLog(ret, Buffer, "SQLExecDirectA", m_hStmtSelect);
+    ErrorAction(ret, m_hStmtSelect);
+    return 1;
+  }
+
+  ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
+  return 1;
+}
+
+bool CRFWorldDatabase::Truncate_UnmannedTraderItemStateRecord()
+{
+  char Buffer[1040]{};
+  sprintf_s(Buffer, sizeof(Buffer), "truncate table [dbo].[tbl_utresultstateid]");
+  return ExecUpdateQuery(Buffer, 1);
+}
+
+char CRFWorldDatabase::Insert_UnmannedTraderItemStateRecord(unsigned int dwRowCnt, wchar_t **ppwszStr)
+{
+  if (!dwRowCnt)
+  {
+    return 0;
+  }
+
+  SetAutoCommitMode(0);
+  for (unsigned int j = 0; j < dwRowCnt; ++j)
+  {
+    wchar_t query[1026]{};
+    swprintf_s(
+      query,
+      L"insert into [dbo].[tbl_utresultstateid] ([id], [desc]) values ( %u, N'%s' )",
+      j,
+      ppwszStr[j]);
+    if (!ExecUpdateQuery(query, 1))
+    {
+      RollbackTransaction();
+      SetAutoCommitMode(1);
+      return 0;
+    }
+  }
+  CommitTransaction();
+  SetAutoCommitMode(1);
+  return 1;
+}
+
+bool CRFWorldDatabase::Update_UnmannedTraderClearDanglingOwnerRecord()
+{
+  char Buffer[1040]{};
+  sprintf_s(
+    Buffer,
+    "update [dbo].[tbl_utresultinfo] set [dbo].[tbl_utresultinfo].state = 0 from ( select s.type, s.serial, s.owner, r.st"
+    "ate from [dbo].[tbl_utsellinfo] as s join [dbo].[tbl_utresultinfo] as r on s.owner <> 0 and r.type = s.type and s.se"
+    "rial = r.serial join [dbo].[tbl_base] as b on s.owner = b.serial and b.dck = 1 ) as d where [dbo].[tbl_utresultinfo]"
+    ".type = d.type and [dbo].[tbl_utresultinfo].serial = d.serial");
+  return ExecUpdateQuery(Buffer, 0);
+}
+
+__int64 CRFWorldDatabase::Select_UnmannedTraderSingleItemEmptyRecordCnt()
+{
+  SQLLEN StrLen_or_IndPtr = 0;
+  SQLRETURN ret = 0;
+  char Buffer[260]{};
+  unsigned int TargetValue[7]{};
+
+  sprintf_s(Buffer, sizeof(Buffer), "select count(serial) from tbl_utresultinfo where type = 0 and state = 0");
+  if (m_bSaveDBLog)
+  {
+    Log(Buffer);
+  }
+
+  if (m_hStmtSelect || ReConnectDataBase())
+  {
+    ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(Buffer), -3);
+    if (!ret || ret == 1)
+    {
+      ret = SQLFetch(m_hStmtSelect);
+      if (!ret || ret == 1)
+      {
+        TargetValue[0] = 0;
+        ret = SQLGetData(m_hStmtSelect, 1u, 4, TargetValue, 0, &StrLen_or_IndPtr);
+        if (ret == 100)
+        {
+          if (m_hStmtSelect)
+          {
+            SQLCloseCursor(m_hStmtSelect);
+          }
+          return 4294967290LL;
+        }
+
+        if (m_hStmtSelect)
+        {
+          SQLCloseCursor(m_hStmtSelect);
+        }
+        if (m_bSaveDBLog)
+        {
+          FmtLog("%s Success", Buffer);
+        }
+        return TargetValue[0];
+      }
+
+      unsigned int result = 0;
+      if (ret == 100)
+      {
+        result = 0xFFFFFFFCu;
+      }
+      else
+      {
+        ErrorMsgLog(ret, Buffer, "SQLFetch", m_hStmtSelect);
+        ErrorAction(ret, m_hStmtSelect);
+        result = 0xFFFFFFFBu;
+      }
+      if (m_hStmtSelect)
+      {
+        SQLCloseCursor(m_hStmtSelect);
+      }
+      return result;
+    }
+
+    if (ret == 100)
+    {
+      return 0xFFFFFFFEu;
+    }
+
+    ErrorMsgLog(ret, Buffer, "SQLExecDirectA", m_hStmtSelect);
+    ErrorAction(ret, m_hStmtSelect);
+    return 0xFFFFFFFDu;
+  }
+
+  ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
+  return 0xFFFFFFFFLL;
+}
+
+__int64 CRFWorldDatabase::select_atrade_taxrate(
+  unsigned __int8 byRace,
+  char *pwszName,
+  unsigned __int8 *byCurrTax,
+  unsigned __int8 *byNextTax)
+{
+  SQLLEN StrLen_or_IndPtr = 0;
+  SQLRETURN ret = 0;
+  char Buffer[132]{};
+
+  memset(Buffer, 0, 128);
+  sprintf(
+    Buffer,
+    "SELECT TOP 1 SuggesterName, Tax, NextTax FROM [dbo].[tbl_ATradeTaxRate] WHERE Race=%d ORDER BY serial DESC",
+    byRace);
+  if (m_bSaveDBLog)
+  {
+    Log(Buffer);
+  }
+
+  if (m_hStmtSelect || ReConnectDataBase())
+  {
+    ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(Buffer), -3);
+    if (!ret || ret == 1)
+    {
+      ret = SQLFetch(m_hStmtSelect);
+      if (!ret || ret == 1)
+      {
+        ret = SQLGetData(m_hStmtSelect, 1u, 1, pwszName, 17, &StrLen_or_IndPtr);
+        ret = SQLGetData(m_hStmtSelect, 2u, 65530, byCurrTax, 0, &StrLen_or_IndPtr);
+        ret = SQLGetData(m_hStmtSelect, 3u, 65530, byNextTax, 0, &StrLen_or_IndPtr);
+        if (!ret || ret == 1)
+        {
+          if (m_hStmtSelect)
+          {
+            SQLCloseCursor(m_hStmtSelect);
+          }
+          if (m_bSaveDBLog)
+          {
+            FmtLog("%s Success", Buffer);
+          }
+          return 0;
+        }
+
+        unsigned __int8 result = 0;
+        if (ret == 100)
+        {
+          result = 2;
+        }
+        else
+        {
+          ErrorMsgLog(ret, Buffer, "SQLExecDirect", m_hStmtSelect);
+          ErrorAction(ret, m_hStmtSelect);
+          result = 1;
+        }
+        if (m_hStmtSelect)
+        {
+          SQLCloseCursor(m_hStmtSelect);
+        }
+        return result;
+      }
+
+      unsigned __int8 result = 0;
+      if (ret == 100)
+      {
+        result = 2;
+      }
+      else
+      {
+        ErrorMsgLog(ret, Buffer, "SQLExecDirect", m_hStmtSelect);
+        ErrorAction(ret, m_hStmtSelect);
+        result = 1;
+      }
+      if (m_hStmtSelect)
+      {
+        SQLCloseCursor(m_hStmtSelect);
+      }
+      return result;
+    }
+
+    if (ret == 100)
+    {
+      return 2;
+    }
+
+    ErrorMsgLog(ret, Buffer, "SQLExecDirect", m_hStmtSelect);
+    ErrorAction(ret, m_hStmtSelect);
+    return 1;
+  }
+
+  ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
+  return 1;
+}
+
+char CRFWorldDatabase::Select_CheckGreetRecord(int nUseType)
+{
+  char Buffer[152]{};
+  SQLLEN strLen = 0;
+  SQLRETURN ret = 0;
+  unsigned int targetValue[4]{};
+
+  sprintf(Buffer, "select count(useType) from tbl_GreetMsg where useType = %d", nUseType);
+  if (this->m_bSaveDBLog)
+  {
+    this->Log(Buffer);
+  }
+
+  if (this->m_hStmtSelect || this->ReConnectDataBase())
+  {
+    ret = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(Buffer), -3);
+    if (!ret || ret == 1)
+    {
+      ret = SQLFetch(this->m_hStmtSelect);
+      if (!ret || ret == 1)
+      {
+        ret = SQLGetData(this->m_hStmtSelect, 1u, 65530, targetValue, 0, &strLen);
+        if (ret != 100 && targetValue[0])
+        {
+          if (this->m_hStmtSelect)
+          {
+            SQLCloseCursor(this->m_hStmtSelect);
+          }
+          if (this->m_bSaveDBLog)
+          {
+            this->FmtLog("%s Success", Buffer);
+          }
+          return 0;
+        }
+
+        if (this->m_hStmtSelect)
+        {
+          SQLCloseCursor(this->m_hStmtSelect);
+        }
+        return 2;
+      }
+      else
+      {
+        char result = 0;
+        if (ret == 100)
+        {
+          result = 2;
+        }
+        else
+        {
+          this->ErrorMsgLog(ret, Buffer, "SQLFetch", this->m_hStmtSelect);
+          this->ErrorAction(ret, this->m_hStmtSelect);
+          result = 1;
+        }
+        if (this->m_hStmtSelect)
+        {
+          SQLCloseCursor(this->m_hStmtSelect);
+        }
+        return result;
+      }
+    }
+    else if (ret == 100)
+    {
+      return 2;
+    }
+    else
+    {
+      this->ErrorMsgLog(ret, Buffer, "SQLExecDirect", this->m_hStmtSelect);
+      this->ErrorAction(ret, this->m_hStmtSelect);
+      return 1;
+    }
+  }
+
+  this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
+  return 1;
+}
+
+bool CRFWorldDatabase::Insert_GreetingRecord(int nUseType, const char *wszName, const char *wszMessage)
+{
+  char Buffer[528]{};
+
+  sprintf(Buffer, "{CALL pInsert_GreetingMsgRecord_071119(%d,'%s','%s')}", nUseType, wszName, wszMessage);
+  return this->ExecUpdateQuery(Buffer, true);
+}
+
+char CRFWorldDatabase::LoadGreetingMsg(
+  char *pwszGMGreetingmsg,
+  char *pwszRaceGreetingmsgA,
+  char *pwszRaceGreetingmsgB,
+  char *pwszRaceGreetingmsgC,
+  char *pwszGMName,
+  char *pwszNameA,
+  char *pwszNameB,
+  char *pwszNameC)
+{
+  char Buffer[280]{};
+  SQLLEN strLen = 0;
+  SQLRETURN ret = 0;
+
+  sprintf(Buffer, "select GMsg,Name from tbl_GreetMsg where usetype = %d", 0);
+  if (this->m_bSaveDBLog)
+  {
+    this->Log(Buffer);
+  }
+  if (this->m_hStmtSelect || this->ReConnectDataBase())
+  {
+    ret = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(Buffer), -3);
+    if (!ret || ret == 1)
+    {
+      ret = SQLFetch(this->m_hStmtSelect);
+      if (!ret || ret == 1)
+      {
+        ret = SQLGetData(this->m_hStmtSelect, 1u, 1, pwszRaceGreetingmsgA, 256, &strLen);
+        ret = SQLGetData(this->m_hStmtSelect, 2u, 1, pwszNameA, 17, &strLen);
+        if (this->m_hStmtSelect)
+        {
+          SQLCloseCursor(this->m_hStmtSelect);
+        }
+
+        sprintf(Buffer, "select GMsg,Name from tbl_GreetMsg where usetype = %d", 1);
+        if (this->m_bSaveDBLog)
+        {
+          this->Log(Buffer);
+        }
+        if (this->m_hStmtSelect || this->ReConnectDataBase())
+        {
+          ret = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(Buffer), -3);
+          if (!ret || ret == 1)
+          {
+            ret = SQLFetch(this->m_hStmtSelect);
+            if (!ret || ret == 1)
+            {
+              ret = SQLGetData(this->m_hStmtSelect, 1u, 1, pwszRaceGreetingmsgB, 256, &strLen);
+              ret = SQLGetData(this->m_hStmtSelect, 2u, 1, pwszNameB, 17, &strLen);
+              if (this->m_hStmtSelect)
+              {
+                SQLCloseCursor(this->m_hStmtSelect);
+              }
+
+              sprintf(Buffer, "select GMsg,Name from tbl_GreetMsg where usetype = %d", 2);
+              if (this->m_bSaveDBLog)
+              {
+                this->Log(Buffer);
+              }
+              if (this->m_hStmtSelect || this->ReConnectDataBase())
+              {
+                ret = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(Buffer), -3);
+                if (!ret || ret == 1)
+                {
+                  ret = SQLFetch(this->m_hStmtSelect);
+                  if (!ret || ret == 1)
+                  {
+                    ret = SQLGetData(this->m_hStmtSelect, 1u, 1, pwszRaceGreetingmsgC, 256, &strLen);
+                    ret = SQLGetData(this->m_hStmtSelect, 2u, 1, pwszNameC, 17, &strLen);
+                    if (this->m_hStmtSelect)
+                    {
+                      SQLCloseCursor(this->m_hStmtSelect);
+                    }
+
+                    sprintf(Buffer, "select GMsg,Name from tbl_GreetMsg where usetype = %d", 255);
+                    if (this->m_bSaveDBLog)
+                    {
+                      this->Log(Buffer);
+                    }
+                    if (this->m_hStmtSelect || this->ReConnectDataBase())
+                    {
+                      ret = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(Buffer), -3);
+                      if (!ret || ret == 1)
+                      {
+                        ret = SQLFetch(this->m_hStmtSelect);
+                        if (!ret || ret == 1)
+                        {
+                          ret = SQLGetData(this->m_hStmtSelect, 1u, 1, pwszGMGreetingmsg, 256, &strLen);
+                          ret = SQLGetData(this->m_hStmtSelect, 2u, 1, pwszGMName, 17, &strLen);
+                          if (this->m_hStmtSelect)
+                          {
+                            SQLCloseCursor(this->m_hStmtSelect);
+                          }
+                          if (this->m_bSaveDBLog)
+                          {
+                            this->FmtLog("%s Success", Buffer);
+                          }
+                          return 1;
+                        }
+                        else
+                        {
+                          if (ret != 100)
+                          {
+                            this->ErrorMsgLog(ret, Buffer, "SQLFetch", this->m_hStmtSelect);
+                            this->ErrorAction(ret, this->m_hStmtSelect);
+                          }
+                          if (this->m_hStmtSelect)
+                          {
+                            SQLCloseCursor(this->m_hStmtSelect);
+                          }
+                          return 0;
+                        }
+                      }
+                      else
+                      {
+                        if (ret != 100)
+                        {
+                          this->ErrorMsgLog(ret, Buffer, "SQLExecDirect", this->m_hStmtSelect);
+                          this->ErrorAction(ret, this->m_hStmtSelect);
+                        }
+                        return 0;
+                      }
+                    }
+                    else
+                    {
+                      this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
+                      return 0;
+                    }
+                  }
+                  else
+                  {
+                    if (ret != 100)
+                    {
+                      this->ErrorMsgLog(ret, Buffer, "SQLFetch", this->m_hStmtSelect);
+                      this->ErrorAction(ret, this->m_hStmtSelect);
+                    }
+                    if (this->m_hStmtSelect)
+                    {
+                      SQLCloseCursor(this->m_hStmtSelect);
+                    }
+                    return 0;
+                  }
+                }
+                else
+                {
+                  if (ret != 100)
+                  {
+                    this->ErrorMsgLog(ret, Buffer, "SQLExecDirect", this->m_hStmtSelect);
+                    this->ErrorAction(ret, this->m_hStmtSelect);
+                  }
+                  return 0;
+                }
+              }
+              else
+              {
+                this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
+                return 0;
+              }
+            }
+            else
+            {
+              if (ret != 100)
+              {
+                this->ErrorMsgLog(ret, Buffer, "SQLFetch", this->m_hStmtSelect);
+                this->ErrorAction(ret, this->m_hStmtSelect);
+              }
+              if (this->m_hStmtSelect)
+              {
+                SQLCloseCursor(this->m_hStmtSelect);
+              }
+              return 0;
+            }
+          }
+          else
+          {
+            if (ret != 100)
+            {
+              this->ErrorMsgLog(ret, Buffer, "SQLExecDirect", this->m_hStmtSelect);
+              this->ErrorAction(ret, this->m_hStmtSelect);
+            }
+            return 0;
+          }
+        }
+        else
+        {
+          this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
+          return 0;
+        }
+      }
+      else
+      {
+        if (ret != 100)
+        {
+          this->ErrorMsgLog(ret, Buffer, "SQLFetch", this->m_hStmtSelect);
+          this->ErrorAction(ret, this->m_hStmtSelect);
+        }
+        if (this->m_hStmtSelect)
+        {
+          SQLCloseCursor(this->m_hStmtSelect);
+        }
+        return 0;
+      }
+    }
+    else
+    {
+      if (ret != 100)
+      {
+        this->ErrorMsgLog(ret, Buffer, "SQLExecDirect", this->m_hStmtSelect);
+        this->ErrorAction(ret, this->m_hStmtSelect);
+      }
+      return 0;
+    }
+  }
+  else
+  {
+    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
+    return 0;
+  }
+}
+
+unsigned __int8 CRFWorldDatabase::Select_LimitInfo(unsigned __int8 *pData, unsigned __int64 tDataSize)
+{
+  char query[1024]{};
+  unsigned __int16 columnNumber[14]{};
+
+  sprintf_s(query, sizeof(query), "select [effect] from [dbo].[tbl_sf_delay] where [aserial] = 0");
+  unsigned __int8 ret = SQLExecDirect_RetErrCode(query);
+  if (ret)
+  {
+    return ret;
+  }
+  ret = SQLFetch_RetErrCode(query);
+  if (ret)
+  {
+    return ret;
+  }
+  columnNumber[0] = 1;
+  ret = SQLGetData_Binary_RetErrCode(query, columnNumber, pData, tDataSize);
+  if (ret)
+  {
+    return ret;
+  }
+  SelectCleanUp(query);
+  return 0;
+}
+
+char CRFWorldDatabase::Select_BattleTournamentInfo(TournamentWinner *pWinnerInfo, int nMax)
+{
+  char Buffer[152]{};
+  SQLLEN strLen = 0;
+  SQLRETURN ret = 0;
+
+  sprintf_s(
+    Buffer,
+    sizeof(Buffer),
+    "Select top %d CharacterSerial,CharacterName,BattleWinGrade from tbl_battletournament",
+    nMax);
+  if (this->m_bSaveDBLog)
+  {
+    this->Log(Buffer);
+  }
+
+  if (this->m_hStmtSelect || this->ReConnectDataBase())
+  {
+    ret = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(Buffer), -3);
+    if (!ret || ret == 1)
+    {
+      for (int j = 0; ; ++j)
+      {
+        ret = SQLFetch(this->m_hStmtSelect);
+        if (ret == 100)
+        {
+          break;
+        }
+        if (ret && ret != 1)
+        {
+          this->ErrorMsgLog(ret, Buffer, "SQLFetch", this->m_hStmtSelect);
+          this->ErrorAction(ret, this->m_hStmtSelect);
+          if (this->m_hStmtSelect)
+          {
+            SQLCloseCursor(this->m_hStmtSelect);
+          }
+          return 0;
+        }
+        if (j >= nMax)
+        {
+          break;
+        }
+        ret = SQLGetData(this->m_hStmtSelect, 1u, 4, &pWinnerInfo[j], 0, &strLen);
+        ret = SQLGetData(this->m_hStmtSelect, 2u, 1, pWinnerInfo[j].wszCharName, 17, &strLen);
+        ret = SQLGetData(this->m_hStmtSelect, 3u, 65530, &pWinnerInfo[j].byGrade, 0, &strLen);
+        if (ret && ret != 1)
+        {
+          if (ret != 100)
+          {
+            this->ErrorMsgLog(ret, Buffer, "SQLGetData", this->m_hStmtSelect);
+            this->ErrorAction(ret, this->m_hStmtSelect);
+          }
+          if (this->m_hStmtSelect)
+          {
+            SQLCloseCursor(this->m_hStmtSelect);
+          }
+          return 0;
+        }
+      }
+      if (this->m_hStmtSelect)
+      {
+        SQLCloseCursor(this->m_hStmtSelect);
+      }
+      if (this->m_bSaveDBLog)
+      {
+        this->FmtLog("%s Success", Buffer);
+      }
+      return 1;
+    }
+    else if (ret == 100)
+    {
+      return 1;
+    }
+    else
+    {
+      this->ErrorMsgLog(ret, Buffer, "SQLExecDirect", this->m_hStmtSelect);
+      this->ErrorAction(ret, this->m_hStmtSelect);
+      return 0;
+    }
+  }
+
+  this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
+  return 0;
+}
+
+__int64 CRFWorldDatabase::Select_GodenBoxItem(_worlddb_golden_box_item *goldenboxitem, int *pnSerial)
+{
+  char query[1024]{};
+  SQLLEN strLen = 0;
+  SQLRETURN ret = 0;
+
+  sprintf_s(query, sizeof(query), "{ CALL pSelect_GoldBoxItem }");
+  if (this->m_bSaveDBLog)
+  {
+    this->Log(query);
+  }
+  if (this->m_hStmtSelect || this->ReConnectDataBase())
+  {
+    ret = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), -3);
+    if (!ret || ret == 1)
+    {
+      ret = SQLFetch(this->m_hStmtSelect);
+      if (!ret || ret == 1)
+      {
+        int column = 1;
+        ret = SQLGetData(this->m_hStmtSelect, 1u, 4, pnSerial, 0, &strLen);
+        ret = SQLGetData(this->m_hStmtSelect, ++column, 65530, &goldenboxitem->bydck, 0, &strLen);
+        ret = SQLGetData(this->m_hStmtSelect, ++column, 4, &goldenboxitem->dwStarterBoxCnt, 0, &strLen);
+        for (int j = 0; ; ++j)
+        {
+          const unsigned __int8 loopCount = CGoldenBoxItemMgr::Instance()->GetLoopCount();
+          if (j >= loopCount)
+          {
+            break;
+          }
+          int maxCount = -1;
+          ret = SQLGetData(
+            this->m_hStmtSelect,
+            ++column,
+            4,
+            &goldenboxitem->nBox_item_code[j],
+            0,
+            &strLen);
+          ret = SQLGetData(this->m_hStmtSelect, ++column, 4, &maxCount, 0, &strLen);
+          goldenboxitem->wBox_item_max[j] = static_cast<unsigned __int16>(maxCount);
+          ret = SQLGetData(
+            this->m_hStmtSelect,
+            ++column,
+            65530,
+            &goldenboxitem->bygolden_item_num[j],
+            0,
+            &strLen);
+        }
+        for (int k = 0; ; ++k)
+        {
+          const unsigned __int8 loopCount = CGoldenBoxItemMgr::Instance()->GetLoopCount();
+          if (k >= loopCount)
+          {
+            break;
+          }
+          for (int m = 0; m < 100; ++m)
+          {
+            ret = SQLGetData(
+              this->m_hStmtSelect,
+              ++column,
+              4,
+              &goldenboxitem->List[k][m],
+              0,
+              &strLen);
+            ret = SQLGetData(
+              this->m_hStmtSelect,
+              ++column,
+              4,
+              &goldenboxitem->List[k][m].wGoldencount,
+              0,
+              &strLen);
+          }
+        }
+        if (this->m_hStmtSelect)
+        {
+          SQLCloseCursor(this->m_hStmtSelect);
+        }
+        if (this->m_bSaveDBLog)
+        {
+          this->FmtLog("%s Success", query);
+        }
+        return 0;
+      }
+      else
+      {
+        unsigned __int8 result = 0;
+        if (ret == 100)
+        {
+          result = 2;
+        }
+        else
+        {
+          this->ErrorMsgLog(ret, query, "SQLFetch", this->m_hStmtSelect);
+          this->ErrorAction(ret, this->m_hStmtSelect);
+          result = 1;
+        }
+        if (this->m_hStmtSelect)
+        {
+          SQLCloseCursor(this->m_hStmtSelect);
+        }
+        return result;
+      }
+    }
+    else if (ret == 100)
+    {
+      return 2;
+    }
+    else
+    {
+      this->ErrorMsgLog(ret, query, "SQLExecDirect", this->m_hStmtSelect);
+      this->ErrorAction(ret, this->m_hStmtSelect);
+      return 1;
+    }
+  }
+
+  this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+  return 1;
+}
+
+char CRFWorldDatabase::Select_GuildRoomInfo(_guildroom_info *pInfo)
+{
+  char query[256]{};
+  SQLLEN strLen = 0;
+  SQLRETURN ret = 0;
+  unsigned __int8 count = 0;
+
+  memset_0(query, 0, sizeof(query));
+  sprintf_s(
+    query,
+    "select gr.guildserial, g.id, gr.roomtype, gr.roomrace, gr.roomrentdate from tbl_GuildRoom as gr inner join tbl_Guild"
+    " as g on gr.guildserial = g.serial where gr.dck = 0 order by g.serial desc");
+
+  if (this->m_bSaveDBLog)
+  {
+    this->Log(query);
+  }
+
+  if (this->m_hStmtSelect || this->ReConnectDataBase())
+  {
+    ret = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), -3);
+    if (!ret || ret == 1)
+    {
+      count = 0;
+      do
+      {
+        ret = SQLFetch(this->m_hStmtSelect);
+        if (ret && ret != 1)
+        {
+          break;
+        }
+        ret = SQLGetData(this->m_hStmtSelect, 1u, 65518, &pInfo->info[count], 0, &strLen);
+        ret = SQLGetData(this->m_hStmtSelect, 2u, 1, pInfo->info[count].uszGuildName, 17, &strLen);
+        ret = SQLGetData(this->m_hStmtSelect, 3u, 65530, &pInfo->info[count].byRoomType, 0, &strLen);
+        ret = SQLGetData(this->m_hStmtSelect, 4u, 65530, &pInfo->info[count].byRace, 0, &strLen);
+        ret = SQLGetData(this->m_hStmtSelect, 5u, 93, &pInfo->info[count++].ts, 0, &strLen);
+        if (count >= 0x5Au)
+        {
+          break;
+        }
+      } while (!ret || ret == 1);
+
+      pInfo->byCount = count;
+      if (this->m_hStmtSelect)
+      {
+        SQLCloseCursor(this->m_hStmtSelect);
+      }
+      if (this->m_bSaveDBLog)
+      {
+        this->FmtLog("%s Success", query);
+      }
+      return 1;
+    }
+    else
+    {
+      if (ret != 100)
+      {
+        this->ErrorMsgLog(ret, query, "SQLExecDirect", this->m_hStmtSelect);
+        this->ErrorAction(ret, this->m_hStmtSelect);
+      }
+      return 0;
+    }
+  }
+
+  this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+  return 0;
+}
+
+char CRFWorldDatabase::Select_UsedLimitItemRecordNum(unsigned int *pdwUsedNum)
+{
+  char query[132]{};
+  SQLLEN strLen = 0;
+  SQLRETURN ret = 0;
+
+  memset(query, 0, 128);
+  sprintf_s(query, 0x80uLL, "select count(serial) from tbl_StoreLimitItem_061212 where dck=0");
+  if (this->m_bSaveDBLog)
+  {
+    this->Log(query);
+  }
+
+  if (this->m_hStmtSelect || this->ReConnectDataBase())
+  {
+    ret = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), -3);
+    if (!ret || ret == 1)
+    {
+      ret = SQLFetch(this->m_hStmtSelect);
+      if (!ret || ret == 1)
+      {
+        ret = SQLGetData(this->m_hStmtSelect, 1u, 65518, pdwUsedNum, 0, &strLen);
+        if (!ret || ret == 1)
+        {
+          if (this->m_hStmtSelect)
+          {
+            SQLCloseCursor(this->m_hStmtSelect);
+          }
+          if (this->m_bSaveDBLog)
+          {
+            this->FmtLog("%s Success", query);
+          }
+          return 0;
+        }
+
+        this->ErrorMsgLog(ret, query, "SQLGetData", this->m_hStmtSelect);
+        this->ErrorAction(ret, this->m_hStmtSelect);
+        if (this->m_hStmtSelect)
+        {
+          SQLCloseCursor(this->m_hStmtSelect);
+        }
+        return 1;
+      }
+
+      unsigned __int8 result = 0;
+      if (ret == 100)
+      {
+        result = 2;
+      }
+      else
+      {
+        this->ErrorMsgLog(ret, query, "SQLFetch", this->m_hStmtSelect);
+        this->ErrorAction(ret, this->m_hStmtSelect);
+        result = 1;
+      }
+      if (this->m_hStmtSelect)
+      {
+        SQLCloseCursor(this->m_hStmtSelect);
+      }
+      return result;
+    }
+
+    if (ret == 100)
+    {
+      return 2;
+    }
+
+    this->ErrorMsgLog(ret, query, "SQLExecDirect", this->m_hStmtSelect);
+    this->ErrorAction(ret, this->m_hStmtSelect);
+    return 1;
+  }
+
+  this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+  return 1;
+}
+
+char CRFWorldDatabase::Select_TotalRecordNum(unsigned int *pdwTotalNum)
+{
+  char query[132]{};
+  SQLLEN strLen = 0;
+  SQLRETURN ret = 0;
+
+  memset(query, 0, 128);
+  sprintf_s(query, 0x80uLL, "select count(serial) from tbl_StoreLimitItem_061212");
+  if (this->m_bSaveDBLog)
+  {
+    this->Log(query);
+  }
+
+  if (this->m_hStmtSelect || this->ReConnectDataBase())
+  {
+    ret = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), -3);
+    if (!ret || ret == 1)
+    {
+      ret = SQLFetch(this->m_hStmtSelect);
+      if (!ret || ret == 1)
+      {
+        ret = SQLGetData(this->m_hStmtSelect, 1u, 65518, pdwTotalNum, 0, &strLen);
+        if (!ret || ret == 1)
+        {
+          if (this->m_hStmtSelect)
+          {
+            SQLCloseCursor(this->m_hStmtSelect);
+          }
+          if (this->m_bSaveDBLog)
+          {
+            this->FmtLog("%s Success", query);
+          }
+          return 0;
+        }
+
+        this->ErrorMsgLog(ret, query, "SQLGetData", this->m_hStmtSelect);
+        this->ErrorAction(ret, this->m_hStmtSelect);
+        if (this->m_hStmtSelect)
+        {
+          SQLCloseCursor(this->m_hStmtSelect);
+        }
+        return 1;
+      }
+
+      unsigned __int8 result = 0;
+      if (ret == 100)
+      {
+        result = 2;
+      }
+      else
+      {
+        this->ErrorMsgLog(ret, query, "SQLFetch", this->m_hStmtSelect);
+        this->ErrorAction(ret, this->m_hStmtSelect);
+        result = 1;
+      }
+      if (this->m_hStmtSelect)
+      {
+        SQLCloseCursor(this->m_hStmtSelect);
+      }
+      return result;
+    }
+
+    if (ret == 100)
+    {
+      return 2;
+    }
+
+    this->ErrorMsgLog(ret, query, "SQLExecDirect", this->m_hStmtSelect);
+    this->ErrorAction(ret, this->m_hStmtSelect);
+    return 1;
+  }
+
+  this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+  return 1;
+}
+
+unsigned __int8 CRFWorldDatabase::Select_StoreLimitItem(_qry_case_all_store_limit_item *pData)
+{
+  char query[516]{};
+  SQLLEN strLen = 0;
+  SQLRETURN ret = 0;
+  int j = 0;
+  unsigned int count = 0;
+  int targetValue[8]{};
+  int limitValues[4]{};
+  const int maxItems = 16;
+
+  memset(query, 0, 512);
+  sprintf_s(
+    query,
+    0x200uLL,
+    "select k0,k1,k2,k3,k4,k5,k6,k7,k8,k9,k10,k11,k12,k13,k14,k15,num0,num1,num2,num3,num4,num5,num6,num7,num8,num9,num10"
+    ",num11,num12,num13,num14,num15,serial,type,typeserial,storeinx,resettime from tbl_StoreLimitItem_061212 where dck=0");
+
+  if (this->m_bSaveDBLog)
+  {
+    this->Log(query);
+  }
+
+  if (this->m_hStmtSelect || this->ReConnectDataBase())
+  {
+    ret = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), -3);
+    if (!ret || ret == 1)
+    {
+      count = 0;
+      while (true)
+      {
+        ret = SQLFetch(this->m_hStmtSelect);
+        if (ret && ret != 1)
+        {
+          pData->dwCount = count;
+          if (this->m_hStmtSelect)
+          {
+            SQLCloseCursor(this->m_hStmtSelect);
+          }
+          if (this->m_bSaveDBLog)
+          {
+            this->FmtLog("%s Success", query);
+          }
+          return 0;
+        }
+
+        for (j = 1; j <= maxItems; ++j)
+        {
+          ret = SQLGetData(this->m_hStmtSelect, j, 4, targetValue, 0, &strLen);
+          if (ret && ret != 1)
+          {
+            this->ErrorMsgLog(ret, query, "SQLExecDirect", this->m_hStmtSelect);
+            this->ErrorAction(ret, this->m_hStmtSelect);
+            if (this->m_hStmtSelect)
+            {
+              SQLCloseCursor(this->m_hStmtSelect);
+            }
+            return 1;
+          }
+          pData->pStoreList[count].ItemData[j - 1].Key.LoadDBKey(targetValue[0]);
+        }
+
+        while (true)
+        {
+          if (j > 2 * maxItems)
+          {
+            ret = SQLGetData(this->m_hStmtSelect, j, 65518, &pData->pStoreList[count], 0, &strLen);
+            ret = SQLGetData(this->m_hStmtSelect, j + 1, 5, &pData->pStoreList[count].byType, 0, &strLen);
+            ret = SQLGetData(this->m_hStmtSelect, j + 2, 65518, &pData->pStoreList[count].nTypeSerial, 0, &strLen);
+            ret = SQLGetData(this->m_hStmtSelect, j + 3, 65518, &pData->pStoreList[count].dwStoreIndex, 0, &strLen);
+            ret = SQLGetData(
+              this->m_hStmtSelect,
+              j + 4,
+              65511,
+              &pData->pStoreList[count++].dwLimitInitTime,
+              0,
+              &strLen);
+            break;
+          }
+
+          ret = SQLGetData(this->m_hStmtSelect, j, 4, limitValues, 0, &strLen);
+          if (ret && ret != 1)
+          {
+            this->ErrorMsgLog(ret, query, "SQLExecDirect", this->m_hStmtSelect);
+            this->ErrorAction(ret, this->m_hStmtSelect);
+            if (this->m_hStmtSelect)
+            {
+              SQLCloseCursor(this->m_hStmtSelect);
+            }
+            return 1;
+          }
+          pData->pStoreList[count].ItemData[j - maxItems - 1].nLimitNum = limitValues[0];
+          ++j;
+        }
+      }
+    }
+
+    if (ret == 100)
+    {
+      return 2;
+    }
+
+    this->ErrorMsgLog(ret, query, "SQLExecDirect", this->m_hStmtSelect);
+    this->ErrorAction(ret, this->m_hStmtSelect);
+    return 1;
+  }
+
+  this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+  return 1;
+}
+
+bool CRFWorldDatabase::Insert_GoldenBoxItem()
+{
+  char Buffer[1040]{};
+
+  sprintf_s(Buffer, sizeof(Buffer), "{ CALL pInsert_GoldBoxItem( %d ) }", 0);
+  return this->ExecUpdateQuery(Buffer, true);
+}
+
+bool CRFWorldDatabase::Insert_DefaultWeeklyGuildPvpPointSumRecord()
+{
+  char Buffer[272]{};
+
+  sprintf(Buffer, "{ CALL pInsert_DefaultRecordWeeklyGuildPVPPointSum }");
+  return this->ExecUpdateQuery(Buffer, false);
+}
+
+unsigned __int8 CRFWorldDatabase::Select_Economy_History(
+  _worlddb_economy_history_info_array *pEconomyData,
+  unsigned int dwDate)
+{
+  SQLLEN StrLen_or_IndPtr{};
+  char Buffer[260]{};
+  int rowCount = 0;
+
+  sprintf(Buffer, "{ CALL pSelect_Last_Economy_History ( %d )}", dwDate);
+  if (m_bSaveDBLog)
+  {
+    Log(Buffer);
+  }
+
+  if (m_hStmtSelect || ReConnectDataBase())
+  {
+    SQLRETURN ret = SQLExecDirectA(m_hStmtSelect, (SQLCHAR *)Buffer, -3);
+    if (!ret || ret == 1)
+    {
+      while (true)
+      {
+        ret = SQLFetch(m_hStmtSelect);
+        if (ret && ret != 1)
+        {
+          break;
+        }
+
+        ret = SQLGetData(
+          m_hStmtSelect,
+          1u,
+          8,
+          pEconomyData->EconomyData[rowCount].dTradeDalant,
+          0LL,
+          &StrLen_or_IndPtr);
+        ret = SQLGetData(
+          m_hStmtSelect,
+          2u,
+          8,
+          &pEconomyData->EconomyData[rowCount].dTradeDalant[1],
+          0LL,
+          &StrLen_or_IndPtr);
+        ret = SQLGetData(
+          m_hStmtSelect,
+          3u,
+          8,
+          &pEconomyData->EconomyData[rowCount].dTradeDalant[2],
+          0LL,
+          &StrLen_or_IndPtr);
+        ret = SQLGetData(
+          m_hStmtSelect,
+          4u,
+          8,
+          &pEconomyData->EconomyData[rowCount],
+          0LL,
+          &StrLen_or_IndPtr);
+        ret = SQLGetData(
+          m_hStmtSelect,
+          5u,
+          8,
+          &pEconomyData->EconomyData[rowCount].dTradeGold[1],
+          0LL,
+          &StrLen_or_IndPtr);
+        ret = SQLGetData(
+          m_hStmtSelect,
+          6u,
+          8,
+          &pEconomyData->EconomyData[rowCount].dTradeGold[2],
+          0LL,
+          &StrLen_or_IndPtr);
+        ret = SQLGetData(
+          m_hStmtSelect,
+          7u,
+          4,
+          &pEconomyData->EconomyData[rowCount].dwManageValue,
+          0LL,
+          &StrLen_or_IndPtr);
+
+        SQLUSMALLINT column = 8;
+        for (int j = 0; j < 3; ++j)
+        {
+          for (int k = 0; k < 3; ++k)
+          {
+            ret = SQLGetData(
+              m_hStmtSelect,
+              column++,
+              8,
+              &pEconomyData->EconomyData[rowCount].dMineOre[k][j],
+              0LL,
+              &StrLen_or_IndPtr);
+            if (ret)
+            {
+              if (ret != 1)
+              {
+                break;
+              }
+            }
+          }
+        }
+
+        for (int j = 0; j < 3; ++j)
+        {
+          for (int m = 0; m < 3; ++m)
+          {
+            ret = SQLGetData(
+              m_hStmtSelect,
+              column++,
+              8,
+              &pEconomyData->EconomyData[rowCount].dCutOre[m][j],
+              0LL,
+              &StrLen_or_IndPtr);
+            if (ret)
+            {
+              if (ret != 1)
+              {
+                break;
+              }
+            }
+          }
+        }
+
+        ++rowCount;
+        if (ret)
+        {
+          if (ret != 1)
+          {
+            break;
+          }
+        }
+      }
+
+      pEconomyData->wRowCount = static_cast<unsigned __int16>(rowCount);
+      if (m_hStmtUpdate)
+      {
+        SQLCloseCursor(m_hStmtSelect);
+      }
+      if (m_bSaveDBLog)
+      {
+        FmtLog("%s Success", Buffer);
+      }
+      return 0;
+    }
+    else if (ret == 100)
+    {
+      return 2;
+    }
+    else
+    {
+      ErrorMsgLog(ret, Buffer, "SQLExecDirectA", m_hStmtSelect);
+      ErrorAction(ret, m_hStmtSelect);
+      return 1;
+    }
+  }
+  else
+  {
+    ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
+    return 1;
+  }
+}
+
 bool CRFWorldDatabase::UpdateClearGuildBattleInfo(unsigned int dwStartID, unsigned int dwEndID)
 {
   char buffer[1040]{};
@@ -1433,6 +3151,383 @@ bool CRFWorldDatabase::UpdateClearGuildBattleScheduleInfo(unsigned int uiStartLi
   char buffer[1040]{};
   sprintf(buffer, "{ CALL pUpdate_ClearGuildBattleScheduleInfo( %u, %u ) }", uiStartListID, uiEndListID);
   return ExecUpdateQuery(buffer, 1);
+}
+
+__int64 CRFWorldDatabase::SelectRowCountGuildBattleInfo()
+{
+  SQLLEN strLenOrInd = 0;
+  char buffer[1028]{};
+
+  sprintf(buffer, "select count(id) from [dbo].[tbl_ReservedGuildBattleInfo]");
+  if (m_bSaveDBLog)
+  {
+    Log(buffer);
+  }
+
+  if (m_hStmtSelect || ReConnectDataBase())
+  {
+    SQLRETURN ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(buffer), -3);
+    if (!ret || ret == 1)
+    {
+      ret = SQLFetch(m_hStmtSelect);
+      if (!ret || ret == 1)
+      {
+        unsigned int count = 0;
+        ret = SQLGetData(m_hStmtSelect, 1u, 4, &count, 0, &strLenOrInd);
+        if (ret == 100)
+        {
+          if (m_hStmtSelect)
+          {
+            SQLCloseCursor(m_hStmtSelect);
+          }
+          return 0xFFFFFFFA;
+        }
+
+        if (m_hStmtSelect)
+        {
+          SQLCloseCursor(m_hStmtSelect);
+        }
+        if (m_bSaveDBLog)
+        {
+          FmtLog("%s Success", buffer);
+        }
+        return count;
+      }
+
+      unsigned int result = 0;
+      if (ret == 100)
+      {
+        result = static_cast<unsigned int>(-4);
+      }
+      else
+      {
+        ErrorMsgLog(ret, buffer, "SQLFetch", m_hStmtSelect);
+        ErrorAction(ret, m_hStmtSelect);
+        result = static_cast<unsigned int>(-5);
+      }
+
+      if (m_hStmtSelect)
+      {
+        SQLCloseCursor(m_hStmtSelect);
+      }
+      return result;
+    }
+    if (ret == 100)
+    {
+      return 0xFFFFFFFE;
+    }
+
+    ErrorMsgLog(ret, buffer, "SQLExecDirectA", m_hStmtSelect);
+    ErrorAction(ret, m_hStmtSelect);
+    return 0xFFFFFFFD;
+  }
+
+  ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
+  return static_cast<__int64>(0xFFFFFFFF);
+}
+
+__int64 CRFWorldDatabase::SelectRowCountGuildBattleScheduleInfo()
+{
+  SQLLEN strLenOrInd = 0;
+  char buffer[260]{};
+
+  sprintf(buffer, "select count(id) from [dbo].[tbl_GuildBattleScheduleInfo]");
+  if (m_bSaveDBLog)
+  {
+    Log(buffer);
+  }
+
+  if (m_hStmtSelect || ReConnectDataBase())
+  {
+    SQLRETURN ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(buffer), -3);
+    if (!ret || ret == 1)
+    {
+      ret = SQLFetch(m_hStmtSelect);
+      if (!ret || ret == 1)
+      {
+        unsigned int count = 0;
+        ret = SQLGetData(m_hStmtSelect, 1u, 4, &count, 0, &strLenOrInd);
+        if (ret == 100)
+        {
+          if (m_hStmtSelect)
+          {
+            SQLCloseCursor(m_hStmtSelect);
+          }
+          return 0xFFFFFFFB;
+        }
+
+        if (m_hStmtSelect)
+        {
+          SQLCloseCursor(m_hStmtSelect);
+        }
+        if (m_bSaveDBLog)
+        {
+          FmtLog("%s Success", buffer);
+        }
+        return count;
+      }
+
+      unsigned int result = 0;
+      if (ret == 100)
+      {
+        result = static_cast<unsigned int>(-3);
+      }
+      else
+      {
+        ErrorMsgLog(ret, buffer, "SQLFetch", m_hStmtSelect);
+        ErrorAction(ret, m_hStmtSelect);
+        result = static_cast<unsigned int>(-4);
+      }
+
+      if (m_hStmtSelect)
+      {
+        SQLCloseCursor(m_hStmtSelect);
+      }
+      return result;
+    }
+    if (ret == 100)
+    {
+      return 0xFFFFFFFE;
+    }
+
+    ErrorMsgLog(ret, buffer, "SQLExecDirectA", m_hStmtSelect);
+    ErrorAction(ret, m_hStmtSelect);
+    return 0;
+  }
+
+  ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
+  return static_cast<__int64>(0xFFFFFFFF);
+}
+
+char CRFWorldDatabase::LoadGuildBattleInfo(
+  unsigned int dwStartID,
+  unsigned int dwRowCnt,
+  _worlddb_guild_battle_info *pkInfo)
+{
+  if (!pkInfo)
+  {
+    return 0;
+  }
+
+  SQLLEN strLenOrInd = 0;
+  char buffer[1028]{};
+  unsigned int count = 0;
+
+  sprintf(buffer, "{ CALL pSelect_ReservedGuildBattleInfo(%u,%u) }", dwStartID, dwRowCnt + dwStartID);
+  if (m_bSaveDBLog)
+  {
+    Log(buffer);
+  }
+
+  if (m_hStmtSelect || ReConnectDataBase())
+  {
+    SQLRETURN ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(buffer), -3);
+    if (!ret || ret == 1)
+    {
+      do
+      {
+        ret = SQLFetch(m_hStmtSelect);
+        if (ret && ret != 1)
+        {
+          break;
+        }
+        SQLGetData(m_hStmtSelect, 1u, 65518, &pkInfo->list[count], 0, &strLenOrInd);
+        SQLGetData(m_hStmtSelect, 2u, 65518, &pkInfo->list[count].dwP1GuildSerial, 0, &strLenOrInd);
+        SQLGetData(m_hStmtSelect, 3u, 65518, &pkInfo->list[count].dwP2GuildSerial, 0, &strLenOrInd);
+        SQLGetData(m_hStmtSelect, 4u, 65518, &pkInfo->list[count].dwMapID, 0, &strLenOrInd);
+        SQLGetData(m_hStmtSelect, 5u, 65530, &pkInfo->list[count++].byNumber, 0, &strLenOrInd);
+      }
+      while (dwRowCnt > count);
+
+      pkInfo->wCount = count;
+      if (m_hStmtSelect)
+      {
+        SQLCloseCursor(m_hStmtSelect);
+      }
+      if (m_bSaveDBLog)
+      {
+        FmtLog("%s Success", buffer);
+      }
+      return 1;
+    }
+
+    if (ret != 100)
+    {
+      ErrorMsgLog(ret, buffer, "SQLExecDirect", m_hStmtSelect);
+      ErrorAction(ret, m_hStmtSelect);
+    }
+    return 0;
+  }
+
+  ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
+  return 0;
+}
+
+unsigned __int8 CRFWorldDatabase::LoadGuildBattleScheduleInfo(
+  unsigned int uiStartListID,
+  unsigned int uiScheduleUnitCnt,
+  _worlddb_guild_battle_schedule_list *pkInfo)
+{
+  if (!uiScheduleUnitCnt || !pkInfo)
+  {
+    return 0;
+  }
+
+  SQLLEN strLenOrInd = 0;
+  char buffer[1028]{};
+
+  sprintf(buffer, "{ CALL pSelect_ReservedGuildBattleSchedule( %u, %u ) }", uiStartListID, uiStartListID);
+  if (m_bSaveDBLog)
+  {
+    Log(buffer);
+  }
+
+  if (m_hStmtSelect || ReConnectDataBase())
+  {
+    SQLRETURN ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(buffer), -3);
+    if (!ret || ret == 1)
+    {
+      unsigned int count = 0;
+      pkInfo->wCount = 0;
+      do
+      {
+        ret = SQLFetch(m_hStmtSelect);
+        if (ret && ret != 1)
+        {
+          break;
+        }
+        SQLGetData(m_hStmtSelect, 1u, 65518, &pkInfo->list[count], 0, &strLenOrInd);
+        SQLGetData(m_hStmtSelect, 2u, 65518, &pkInfo->list[count].dwSLID, 0, &strLenOrInd);
+        SQLGetData(m_hStmtSelect, 3u, 65530, &pkInfo->list[count].ucState, 0, &strLenOrInd);
+
+        _WORD targetValue[24]{};
+        SQLGetData(m_hStmtSelect, 4u, 93, targetValue, 0, &strLenOrInd);
+        SQLGetData(m_hStmtSelect, 5u, 65519, &pkInfo->list[count].wTumeMin, 0, &strLenOrInd);
+
+        tm timeInfo{};
+        timeInfo.tm_year = targetValue[0] - 1900;
+        timeInfo.tm_mon = targetValue[1] - 1;
+        timeInfo.tm_mday = targetValue[2];
+        timeInfo.tm_hour = targetValue[3];
+        timeInfo.tm_min = targetValue[4];
+        timeInfo.tm_sec = targetValue[5];
+        timeInfo.tm_isdst = -1;
+        __time64_t timestamp = mktime_3(&timeInfo);
+        if (timestamp == -1)
+        {
+          timestamp = 0;
+        }
+        pkInfo->list[count++].tStartTime = timestamp;
+        pkInfo->wCount = count;
+      }
+      while (uiScheduleUnitCnt > count);
+
+      if (m_hStmtSelect)
+      {
+        SQLCloseCursor(m_hStmtSelect);
+      }
+      if (m_bSaveDBLog)
+      {
+        FmtLog("%s Success", buffer);
+      }
+      return 0;
+    }
+
+    if (ret == 100)
+    {
+      return 2;
+    }
+
+    ErrorMsgLog(ret, buffer, "SQLExecDirect", m_hStmtSelect);
+    ErrorAction(ret, m_hStmtSelect);
+    return 1;
+  }
+
+  ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
+  return 1;
+}
+
+bool CRFWorldDatabase::DeleteGuildBattleInfo()
+{
+  char buffer[1040]{};
+  sprintf(buffer, "truncate table tbl_ReservedGuildBattleInfo");
+  return ExecUpdateQuery(buffer, 1);
+}
+
+bool CRFWorldDatabase::DeleteGuildBattleScheduleInfo()
+{
+  char buffer[1040]{};
+  sprintf(buffer, "truncate table [dbo].[tbl_GuildBattleScheduleInfo]");
+  return ExecUpdateQuery(buffer, 1);
+}
+
+char CRFWorldDatabase::InsertGuildBattleDefaultRecord(unsigned int dwRowCnt)
+{
+  if (!dwRowCnt)
+  {
+    return 0;
+  }
+  if (!DeleteGuildBattleInfo())
+  {
+    return 0;
+  }
+
+  char buffer[1028]{};
+  for (unsigned int j = 0; j < dwRowCnt; ++j)
+  {
+    sprintf(buffer, "{ CALL pInsert_GuildBattleInfo( %u, 0, 0, 0, 0 ) }", j);
+    if (!ExecUpdateQuery(buffer, 1))
+    {
+      DeleteGuildBattleInfo();
+      return 0;
+    }
+  }
+  return 1;
+}
+
+char CRFWorldDatabase::InsertGuildBattleScheduleDefaultRecord(
+  unsigned int uiDayCnt,
+  unsigned int uiMapCnt,
+  unsigned __int8 byMaxHour,
+  unsigned __int8 byUnitTimeCntPerTime)
+{
+  if (!uiDayCnt || !uiMapCnt || !byUnitTimeCntPerTime)
+  {
+    return 0;
+  }
+  if (uiDayCnt > 0x1E || byMaxHour > 0x18u)
+  {
+    return 0;
+  }
+  if (!DeleteGuildBattleScheduleInfo())
+  {
+    return 0;
+  }
+
+  char buffer[1028]{};
+  const unsigned int unitPerDay = byUnitTimeCntPerTime * byMaxHour;
+  for (unsigned int j = 0; j < uiDayCnt; ++j)
+  {
+    for (unsigned int k = 0; k < uiMapCnt; ++k)
+    {
+      const unsigned int slid = k + uiMapCnt * j;
+      for (unsigned int m = 0; m < unitPerDay; ++m)
+      {
+        const unsigned int id = j * unitPerDay * uiMapCnt + m + k * unitPerDay;
+        sprintf(
+          buffer,
+          "INSERT INTO [dbo].[tbl_GuildBattleScheduleInfo]( [ID], [SLID], [State], [StartTime], [BattleTurm] )VALUES( %d, %d, 0, 0, 0 )",
+          id,
+          slid);
+        if (!ExecUpdateQuery(buffer, 1))
+        {
+          DeleteGuildBattleScheduleInfo();
+          return 0;
+        }
+      }
+    }
+  }
+  return 1;
 }
 
 unsigned __int8 CRFWorldDatabase::Select_CharNumInWorld(unsigned int dwAccountSerial,

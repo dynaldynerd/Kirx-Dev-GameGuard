@@ -56,6 +56,59 @@ bool RFEvent_ClassRefine::Initialzie()
   return true;
 }
 
+unsigned __int8 RFEvent_ClassRefine::CanDoEvent(CPlayer *pOne)
+{
+  if (!_kEvent.bEnable)
+  {
+    return 6;
+  }
+
+  const unsigned int localDate = GetLocalDate();
+  if (localDate < static_cast<unsigned int>(_kEvent.nStartDate)
+      || localDate > static_cast<unsigned int>(_kEvent.nEndDate))
+  {
+    return 6;
+  }
+
+  if (!pOne->m_bLive || !pOne->m_bOper)
+  {
+    return 8;
+  }
+
+  const unsigned __int16 playerIndex = pOne->m_ObjID.m_wIndex;
+  if (pOne->m_Param.GetCharSerial() == _pkParticipant[playerIndex].nAvatorSerial)
+  {
+    return 10;
+  }
+
+  if (_pkParticipant[playerIndex].nCurRefineCnt < _kEvent.nMaxRefineCnt)
+  {
+    return 0;
+  }
+
+  return 7;
+}
+
+unsigned __int8 RFEvent_ClassRefine::DoEvent(CPlayer *pOne)
+{
+  unsigned __int8 result = CanDoEvent(pOne);
+  if (result)
+  {
+    return result;
+  }
+
+  result = pOne->pc_InitClass();
+  if (result)
+  {
+    return result;
+  }
+
+  const unsigned __int16 playerIndex = pOne->m_ObjID.m_wIndex;
+  ++_pkParticipant[playerIndex].nCurRefineCnt;
+  _pkParticipant[playerIndex].bChange = true;
+  return 0;
+}
+
 bool RFEvent_ClassRefine::IsDbUpdate(unsigned int nIdx)
 {
   return nIdx < 0x9E4 && _pkParticipant[nIdx].IsChanged();

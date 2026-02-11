@@ -259,35 +259,6 @@ void CMgrAccountLobbyHistory::sel_char_request(
   WriteFile(pszFileName, sLData);
 }
 
-void CMgrAccountLobbyHistory::add_char_complete(
-  unsigned __int8 byRetCode,
-  _REGED_AVATOR_DB *pInsertData,
-  char *pszFileName)
-{
-  sLData[0] = '\0';
-  const bool ok = byRetCode == 0;
-  const char *result = ok ? "SUCCESS" : "ERROR";
-  sprintf_s(sLBuf, "Add Result: %d (%s)\r\n", byRetCode, result);
-  strcat_s(sLData, sLBuf);
-  if (ok && pInsertData)
-  {
-    sprintf_s(
-      sLBuf,
-      "[Slot%d]\r\nNAME: %s\r\nCharSR: %d\r\nLV: %d\r\n$D: %d\r\n$G: %d\r\n\r\n",
-      pInsertData->m_bySlotIndex,
-      pInsertData->m_wszAvatorName,
-      pInsertData->m_dwRecordNum,
-      pInsertData->m_byLevel,
-      pInsertData->m_dwDalant,
-      pInsertData->m_dwGold);
-    strcat_s(sLData, sLBuf);
-  }
-  sprintf_s(sLBuf, "Add Character Complete [%s %s]\r\n", m_szCurDate, m_szCurTime);
-  strcat_s(sLData, sLBuf);
-  strcat_s(sLData, "\r\n\t============\r\n\r\n");
-  WriteFile(pszFileName, sLData);
-}
-
 void CMgrAccountLobbyHistory::tutorial_process_report_recv(char *pszFileName)
 {
   sLData[0] = '\0';
@@ -441,6 +412,61 @@ void CMgrAccountLobbyHistory::sel_char_complete(
       dwAddGold);
     strcat_s(sLData, sLBuf);
   }
+  strcat_s(sLData, "\r\n\t============\r\n\r\n");
+  WriteFile(pszFileName, sLData);
+}
+
+void CMgrAccountLobbyHistory::player_create(bool bFirstStart, _AVATOR_DATA *pAvator, char *pszFileName)
+{
+  sLData[0] = 0;
+  const char *createState = bFirstStart ? "First Connect Character" : "Old Character";
+  sprintf_s(sLBuf, "Player Create: %s [%s %s]\r\n", createState, m_szCurDate, m_szCurTime);
+  strcat_s(sLData, sLBuf);
+
+  if (bFirstStart && (pAvator->dbAvator.m_dwDalant || pAvator->dbAvator.m_dwGold))
+  {
+    sprintf_s(
+      sLBuf,
+      "WARNNING : First Connect Char Money Wrong : $D(%d), $G(%d)",
+      pAvator->dbAvator.m_dwDalant,
+      pAvator->dbAvator.m_dwGold);
+    strcat_s(sLData, sLBuf);
+  }
+
+  strcat_s(sLData, "\r\n\t============\r\n\r\n");
+  WriteFile(pszFileName, sLData);
+}
+
+void CMgrAccountLobbyHistory::player_create_complete_money(_AVATOR_DATA *pAvator, char *pszFileName)
+{
+  sLData[0] = 0;
+  sprintf_s(
+    sLBuf,
+    "Create Complete Player Money: $D(%d), $G(%d)\r\n",
+    pAvator->dbAvator.m_dwDalant,
+    pAvator->dbAvator.m_dwGold);
+  strcat_s(sLData, sLBuf);
+  strcat_s(sLData, "\r\n\t============\r\n\r\n");
+  WriteFile(pszFileName, sLData);
+}
+
+void CMgrAccountLobbyHistory::player_money_fix(
+  unsigned int dwOldDalant,
+  unsigned int dwOldGold,
+  _AVATOR_DATA *pAvator,
+  char *pszFileName)
+{
+  sLData[0] = 0;
+  sprintf_s(
+    sLBuf,
+    "Player Money FIX: $D(%d -> %d), $G(%d -> %d) [%s %s]\r\n",
+    dwOldDalant,
+    pAvator->dbAvator.m_dwDalant,
+    dwOldGold,
+    pAvator->dbAvator.m_dwGold,
+    m_szCurDate,
+    m_szCurTime);
+  strcat_s(sLData, sLBuf);
   strcat_s(sLData, "\r\n\t============\r\n\r\n");
   WriteFile(pszFileName, sLData);
 }

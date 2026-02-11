@@ -25,6 +25,7 @@ struct __cppobj __declspec(align(2)) _param_cash_select : _param_cash
   unsigned __int16 out_bReturn;
   unsigned __int8 in_byLimDiscount;
 
+  _param_cash_select(unsigned int dwAc, unsigned int dwAv, unsigned __int16 wSock);
   ~_param_cash_select();
   __int64 size();
 };
@@ -127,4 +128,6 @@ struct __cppobj _param_cashitem_dblog : _param_cash
 struct _param_cash_total_selling
 {
   unsigned int dwTotalSellCash;
+
+  __int64 size();
 };

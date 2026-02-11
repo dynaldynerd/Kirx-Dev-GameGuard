@@ -12,6 +12,7 @@
 #include "CRFWorldDatabase.h"
 #include "DqsDbStructs.h"
 #include "GlobalObjects.h"
+#include "economy_history_data.h"
 #include "qry_case_cash_limsale.h"
 #include "WorldServerUtil.h"
 
@@ -173,6 +174,61 @@ unsigned __int8 CMainThread::db_Log_UserNum(unsigned int dwRace, unsigned int dw
 bool CMainThread::db_Insert_Economy_History(unsigned int dwDate, _worlddb_economy_history_info *pEconomyData)
 {
   return m_pWorldDB->Insert_Economy_History(dwDate, pEconomyData);
+}
+
+unsigned __int8 CMainThread::db_Select_Economy_History(
+  _economy_history_data *pCurData,
+  unsigned int *pnCurMgrValue,
+  unsigned int *pnNextMgrValue,
+  _economy_history_data *pHisData,
+  int *pHistoryNum,
+  unsigned int dwDate)
+{
+  _worlddb_economy_history_info pEconomyData{};
+  if (!m_pWorldDB->Select_Exist_Economy(dwDate, &pEconomyData))
+  {
+    for (int j = 0; j < 3; ++j)
+    {
+      pCurData->dTradeDalant[j] = pEconomyData.dTradeDalant[j];
+      pCurData->dTradeGold[j] = pEconomyData.dTradeGold[j];
+      for (int k = 0; k < 3; ++k)
+      {
+        pCurData->dOreMineCount[j][k] = pEconomyData.dMineOre[j][k];
+        pCurData->dOreCutCount[j][k] = pEconomyData.dCutOre[j][k];
+      }
+    }
+    *pnCurMgrValue = pEconomyData.dwManageValue;
+    *pnNextMgrValue = pEconomyData.dwManageValue;
+  }
+
+  _worlddb_economy_history_info_array history{};
+  const unsigned __int8 result = m_pWorldDB->Select_Economy_History(&history, dwDate);
+  if (result == 1)
+  {
+    return 24;
+  }
+
+  int slot = 12;
+  for (int m = 0; m < history.wRowCount; ++m)
+  {
+    if (--slot < 0)
+    {
+      break;
+    }
+    for (int n = 0; n < 3; ++n)
+    {
+      pHisData[slot].dTradeDalant[n] = history.EconomyData[m].dTradeDalant[n];
+      pHisData[slot].dTradeGold[n] = history.EconomyData[m].dTradeGold[n];
+      for (int ii = 0; ii < 3; ++ii)
+      {
+        pHisData[slot].dOreMineCount[n][ii] = history.EconomyData[m].dMineOre[n][ii];
+        pHisData[slot].dOreCutCount[n][ii] = history.EconomyData[m].dCutOre[n][ii];
+      }
+    }
+  }
+
+  *pHistoryNum = history.wRowCount;
+  return 0;
 }
 
 unsigned __int8 CMainThread::db_Insert_CharacSelect_Log(

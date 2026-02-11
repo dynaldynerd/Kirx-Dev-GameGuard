@@ -5,6 +5,8 @@
 #include "CCharacter.h"
 #include "CNetIndexList.h"
 
+class CGuild;
+
 class __cppobj __declspec(align(8)) CMgrGuildHistory
 {
 public:
@@ -13,6 +15,22 @@ public:
 
   static void IOThread(void *pv);
   void WriteFile(const char *pszFileName, const char *pszLog);
+  void GetNewFileName(unsigned int dwGuildSerial, char *pszFileName);
+  void start_guild(CGuild *pGuild, char *pszFileName);
+  void join_member(
+    char *pszJoinerName,
+    unsigned int dwJoinerSerial,
+    char *pszOKerName,
+    unsigned int dwOKSerial,
+    int nMemNum,
+    char *pszFileName);
+  void leave_member(
+    char *pszLeaverName,
+    unsigned int dwLeaverSerial,
+    bool bSelf,
+    int nMemNum,
+    char *pszFileName,
+    bool bPunish);
   void push_money(
     const char *pszIOerName,
     unsigned int dwIOerSerial,

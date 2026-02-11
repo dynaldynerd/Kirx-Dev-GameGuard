@@ -8,7 +8,9 @@ class CPlayer;
 class __cppobj CPotionParam
 {
 public:
+  void Init(CPlayer *pMaster);
   void SetPotionActDelay(unsigned __int8 byPotionClass, unsigned int dwCurrTime, unsigned int dwActDelay);
+  bool IsUsableActDelay(unsigned __int8 byPotionClass, unsigned int dwCurrTime);
 
   _ContPotionData m_ContCommonPotionData[2];
   _ContPotionData m_StoneOfMovePotionData;

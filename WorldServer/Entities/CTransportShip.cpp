@@ -28,6 +28,7 @@ bool CTransportShip::__mgr_member::is_fill() const
 void CTransportShip::__mgr_ticket::init()
 {
   nCurTicketNum = 100;
+  nReserTicketNum = 0;
   dwNextUpdateTime = static_cast<unsigned int>(-1);
 }
 
@@ -382,6 +383,70 @@ bool CTransportShip::GetCurRideShipThisTicket(_TicketItem_fld *pTicketFld)
   }
 
   return std::strcmp(m_pLinkPortMap[direct]->m_pMapSet->m_strCode, pTicketFld->m_strMapCode) == 0;
+}
+
+CMapData *CTransportShip::GetMapCurDirect()
+{
+  return m_pLinkPortMap[m_byDirect];
+}
+
+int CTransportShip::GetRideLimLevel()
+{
+  if (m_bAnchor)
+  {
+    const BOOL oppositeDirection = (m_byDirect == 0);
+    return m_MgrTicket[oppositeDirection].pLinkTicketItem->m_nLevelLim;
+  }
+  return m_MgrTicket[m_byDirect].pLinkTicketItem->m_nLevelLim;
+}
+
+int CTransportShip::GetRideUpLimLevel()
+{
+  if (m_bAnchor)
+  {
+    const BOOL oppositeDirection = (m_byDirect == 0);
+    return m_MgrTicket[oppositeDirection].pLinkTicketItem->m_nUpLevelLim;
+  }
+  return m_MgrTicket[m_byDirect].pLinkTicketItem->m_nUpLevelLim;
+}
+
+void CTransportShip::InitTicketReserver()
+{
+  for (int j = 0; j < 2; ++j)
+  {
+    m_MgrTicket[j].nReserTicketNum = 0;
+  }
+}
+
+void CTransportShip::ApplyTicketReserver()
+{
+  for (int j = 0; j < 2; ++j)
+  {
+    m_MgrTicket[j].nCurTicketNum -= m_MgrTicket[j].nReserTicketNum;
+    if (m_MgrTicket[j].nCurTicketNum < 0)
+    {
+      m_MgrTicket[j].nCurTicketNum = 0;
+    }
+  }
+}
+
+int CTransportShip::GetLeftTicketIncludeReserNum(char *pszTarMapCode, int nAdd)
+{
+  int leftTicket = 0;
+  for (int j = 0; j < 2; ++j)
+  {
+    if (!strcmp_0(m_pLinkPortMap[j]->m_pMapSet->m_strCode, pszTarMapCode))
+    {
+      leftTicket = m_MgrTicket[j].nCurTicketNum - m_MgrTicket[j].nReserTicketNum;
+      if (leftTicket < 0)
+      {
+        leftTicket = 0;
+      }
+      m_MgrTicket[j].nReserTicketNum += nAdd;
+      return leftTicket;
+    }
+  }
+  return leftTicket;
 }
 
 bool CTransportShip::IsMemberBeforeLogoff(unsigned int dwPlayerSerial)

@@ -12,6 +12,8 @@ class CPostReturnStorage;
 class CPostData;
 class CUnmannedTraderRegistItemInfo;
 struct _AVATOR_DATA;
+struct _buy_offer;
+struct _sell_offer;
 
 class __cppobj CMgrAvatorItemHistory
 {
@@ -46,7 +48,88 @@ public:
   void cheat_del_item(int n, _STORAGE_LIST::_db_con *pItem, unsigned __int8 byDelNum, char *pszFileName);
   void delete_npc_quest_item(int n, _STORAGE_LIST::_db_con *pItem, char *pszFileName);
   void consume_del_item(int n, _STORAGE_LIST::_db_con *pItem, const char *pszFileName);
-  void reward_add_item(int n, char *pszClause, _STORAGE_LIST::_db_con *pItem, char *pszFileName);
+  void reward_add_money(
+    int n,
+    const char *pszClause,
+    unsigned int dwAddDalant,
+    unsigned int dwAddGold,
+    unsigned int dwSumDalant,
+    unsigned int dwSumGold,
+    char *pszFileName);
+  void reward_add_item(int n, const char *pszClause, _STORAGE_LIST::_db_con *pItem, char *pszFileName);
+  void exchange_money(
+    int n,
+    unsigned int dwCurDalant,
+    unsigned int dwCurGold,
+    unsigned int dwNewDalant,
+    unsigned int dwNewGold,
+    char *pszFileName);
+  void buy_item(
+    int n,
+    _buy_offer *pOffer,
+    unsigned __int8 byOfferNum,
+    unsigned int dwCostDalant,
+    unsigned int dwCostGold,
+    unsigned int dwNewDalant,
+    unsigned int dwNewGold,
+    char *pszFileName);
+  void sell_item(
+    int n,
+    _sell_offer *pOffer,
+    unsigned __int8 byOfferNum,
+    unsigned int dwCostDalant,
+    unsigned int dwCostGold,
+    unsigned int dwNewDalant,
+    unsigned int dwNewGold,
+    char *pszFileName);
+  void add_storage_fail(
+    int n,
+    _STORAGE_LIST::_db_con *pItem,
+    const char *strErrorCodePos,
+    char *pszFileName);
+  void make_item(
+    int n,
+    _STORAGE_LIST::_db_con *pMaterial,
+    unsigned __int8 *pbyMtrNum,
+    unsigned __int8 byMaterialNum,
+    unsigned __int8 byRetCode,
+    bool bInsert,
+    _STORAGE_LIST::_db_con *pMakeItem,
+    char *pszFileName);
+  void cheat_make_item_no_material(
+    int n,
+    unsigned __int8 byRetCode,
+    _STORAGE_LIST::_db_con *pMakeItem,
+    char *pszFileName);
+  void grade_up_item(
+    int n,
+    _STORAGE_LIST::_db_con *pItem,
+    _STORAGE_LIST::_db_con *pTalik,
+    _STORAGE_LIST::_db_con *pJewel,
+    unsigned __int8 byJewelNum,
+    unsigned __int8 byErrCode,
+    unsigned int dwAfterLv,
+    char *pszFileName);
+  void grade_down_item(
+    int n,
+    _STORAGE_LIST::_db_con *pItem,
+    _STORAGE_LIST::_db_con *pTalik,
+    unsigned int dwAfterLv,
+    char *pszFileName);
+  void combine_item(
+    int n,
+    _STORAGE_LIST::_db_con *pMaterial,
+    unsigned __int8 *pbyMtrNum,
+    unsigned __int8 byMaterialNum,
+    _STORAGE_LIST::_db_con *pMakeItem,
+    unsigned int dwFee,
+    unsigned int dwLeftDalant,
+    char *pszFileName);
+  void exchange_item(
+    int n,
+    _STORAGE_LIST::_db_con *pUseItem,
+    _STORAGE_LIST::_db_con *pOutItem,
+    char *pszFileName);
   void personal_amine_itemlog(
     const char *szLogDesc,
     unsigned __int8 byPos,
@@ -71,6 +154,23 @@ public:
     bool bAdd,
     char *pszFileName);
   void exp_prof_log(int count, char *szFile);
+  void InitClass(
+    int iCostGold,
+    unsigned int dwInitClassCnt,
+    unsigned __int8 byLastClassGrade,
+    char *szOldClass,
+    char *szCurClass,
+    int *piOldMaxPoint,
+    int *piAlterMaxPoint,
+    char *pszFileName);
+  void ClassUP(
+    unsigned __int8 byCurClassGrade,
+    unsigned __int8 byLastClassGrade,
+    char *szOldClass,
+    char *szCurClass,
+    int *piOldMaxPoint,
+    int *piAlterMaxPoint,
+    char *pszFileName);
   void mastery_change_jade(
     int nMstCode,
     unsigned int dwOldCum,
@@ -79,7 +179,20 @@ public:
     float fVal,
     char *szFileName,
     int nWpType);
+  void GetNewFileName(unsigned int dwAvatorSerial, char *pszFileName);
   void have_auto_item(int n, const CUnmannedTraderRegistItemInfo *pkInfo, unsigned __int8 byMaxCnt);
+  void have_item(
+    int n,
+    char *pszName,
+    _AVATOR_DATA *pLoadData,
+    _AVATOR_DATA *pBackupData,
+    char *pszID,
+    unsigned int dwIDSerial,
+    unsigned __int8 byDgr,
+    unsigned int dwIP,
+    unsigned int dwExpRate,
+    bool bStart,
+    char *pszFileName);
   void have_item_close(
     int n,
     char *pszName,
@@ -165,6 +278,12 @@ public:
     unsigned int dwTakerSerial,
     const char *pszTakerID,
     const char *pszFileName);
+  void throw_ground_item(
+    int n,
+    _STORAGE_LIST::_db_con *pItem,
+    char *pMapCode,
+    float *pfPos,
+    char *pszFileName);
   void post_receive(CPostData *pPost, char *pFileName);
   void post_storage(CPostStorage *pStorage, char *pFileName);
   void post_returnreceive(CPostData *pPost, char *pFileName);
@@ -180,6 +299,22 @@ public:
     char *pszGuildName,
     unsigned int dwEstDalant,
     unsigned int dwLeftDalant,
+    char *pszFileName);
+  void guild_pop_money(
+    int n,
+    char *pszGuildName,
+    unsigned int dwPopDalant,
+    unsigned int dwPopGold,
+    unsigned int dwLeftDalant,
+    unsigned int dwLeftGold,
+    char *pszFileName);
+  void guild_pop_money_rollback(
+    int n,
+    char *pszGuildName,
+    unsigned int dwPopDalant,
+    unsigned int dwPopGold,
+    unsigned int dwLeftDalant,
+    unsigned int dwLeftGold,
     char *pszFileName);
   void close(int n, char *pCloseCode, char *pszFileName);
   void read_cashamount(unsigned int dwAC, unsigned int dwAV, int nCash, char *pFileName);

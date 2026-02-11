@@ -2,6 +2,10 @@
 
 #include "IdaCompat.h"
 
+class CPlayer;
+class CMapData;
+struct _RadarItem_fld;
+
 /* 1596 */
 class __cppobj __declspec(align(8)) CRadarItemMgr
 {
@@ -25,5 +29,13 @@ public:
   _detected_char_list m_RadarResult;
 
   void Init();
+  void Init(unsigned int dwDelayTime);
+  bool IsUse();
+  void SetUseRadar(char (*strRadarCode)[64], CPlayer *pMaster, unsigned int dwDurTime, unsigned int dwDelayTime);
+  char RadarProc(_RadarItem_fld *pRadarFld);
+  void ResetFlags();
+  void ResetUpdate();
+  unsigned int CalcDelay();
+  unsigned int GetDelayTime();
 };
 

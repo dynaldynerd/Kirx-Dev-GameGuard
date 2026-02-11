@@ -7,6 +7,7 @@ class __cppobj __declspec(align(8)) CMyTimer
 public:
   CMyTimer();
   void BeginTimer(unsigned int tickTerm);
+  void BeginTimerAddLapse(int dwTerm, unsigned int dwAddLapse);
   bool CountingTimer();
   void TermTimeRun();
   void StopTimer();

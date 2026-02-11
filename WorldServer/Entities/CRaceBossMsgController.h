@@ -107,6 +107,13 @@ public:
   void SendConfirmCtrl(unsigned __int8 ucRace, RACE_BOSS_MSG::CMsg *pkMsg);
   char Cancel(unsigned __int8 ucRace, unsigned int dwMsgID);
   char Cancel(unsigned __int8 ucRace, unsigned int dwMsgID, CPlayer *pkManager);
+  void SendCancleInfomSender(unsigned int dwSerial);
+  void SendCancleInfomManager(
+    unsigned __int16 usInx,
+    char ucRet,
+    unsigned int dwMsgID,
+    const char *pwszName);
+  void SendCancelWeb(unsigned __int8 ucRace, RACE_BOSS_MSG::CMsg *pkMsg);
 
   int GetCurDay();
   bool LoadCurTime(unsigned int *dwCurTime);

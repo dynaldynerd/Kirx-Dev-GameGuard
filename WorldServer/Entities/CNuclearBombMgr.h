@@ -28,6 +28,17 @@ public:
   bool MissileInit();
   bool LoadIni();
   void CheckNuclearState(CPlayer *pOne);
+  char Request_EnableNuclearControl(int n, char *pMsg);
+  char Request_SelectDropPosition(int n, float *pMsg);
+  void SendMsg_Result(unsigned int n, unsigned __int8 byCode);
+  unsigned __int8 GetBossType(unsigned __int8 byRace, unsigned int dwSerial);
+  bool IsPatriarch(CPlayer *pOne);
+  bool CreateMissile(
+    CPlayer *pMaster,
+    float *fPos,
+    unsigned int warnTime,
+    unsigned int informTime,
+    unsigned int startTime);
 
   virtual ~CNuclearBombMgr() = default;
 

@@ -138,6 +138,11 @@ int _STORAGE_LIST::GetIndexEmptyCon()
   return 255;
 }
 
+int _STORAGE_LIST::GetNumUseCon() const
+{
+  return m_nUsedNum;
+}
+
 int _STORAGE_LIST::GetNumEmptyCon()
 {
   unsigned int count = 0;
@@ -149,19 +154,6 @@ int _STORAGE_LIST::GetNumEmptyCon()
     }
   }
   return static_cast<int>(count);
-}
-
-void _STORAGE_LIST::SetUseListNum(int n)
-{
-  if (n < 0)
-  {
-    n = 0;
-  }
-  if (n > m_nListNum)
-  {
-    n = m_nListNum;
-  }
-  m_nUsedNum = n;
 }
 
 int _STORAGE_LIST::GetIndexFromSerial(unsigned __int16 wSerial)
@@ -186,25 +178,6 @@ _STORAGE_LIST::_db_con *_STORAGE_LIST::GetPtrFromSerial(unsigned __int16 wSerial
     return nullptr;
   }
   return &m_pStorageList[index];
-}
-
-char _STORAGE_LIST::GradeUp(int n, unsigned int dwUptInfo)
-{
-  m_pStorageList[n].m_dwLv = dwUptInfo;
-  return 1;
-}
-
-char _STORAGE_LIST::GradeDown(int n, unsigned int dwUptInfo)
-{
-  m_pStorageList[n].m_dwLv = dwUptInfo;
-  return 1;
-}
-
-char _STORAGE_LIST::SetGrade(int n, unsigned __int8 byLv, unsigned int dwUptInfo)
-{
-  (void)byLv;
-  m_pStorageList[n].m_dwLv = dwUptInfo;
-  return 1;
 }
 
 char _STORAGE_LIST::AlterCurDur(int n, int nAlter, unsigned __int64 *pdwLeftDur)

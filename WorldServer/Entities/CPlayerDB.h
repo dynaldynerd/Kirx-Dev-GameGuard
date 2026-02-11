@@ -22,6 +22,7 @@ public:
   void SetExp(long double dExp);
   void SetLossExp(long double dLossExp);
   float *GetCurPos();
+  unsigned int GetPvpRank();
   long double GetPvPPoint();
   void SetPvPPoint(long double dPoint);
   unsigned int GetGuildSerial();
@@ -49,6 +50,8 @@ public:
   void SetGold(unsigned int dwGold);
   void SetCurPos(float *fPos);
   unsigned __int8 GetBagNum();
+  void SetBagNum(unsigned __int8 byNum);
+  int GetUseSlot();
   unsigned __int16 GetNewItemSerial();
   static char CalcCharGrade(unsigned __int8 byLv, unsigned __int16 wRankRate);
   bool BeHaveBoxOfAMP();
@@ -56,11 +59,16 @@ public:
   void InitPlayerDB(CPlayer *pThis);
   void InitResBuffer();
   void InitAlterMastery();
+  void InitClass();
+  void SelectClass(unsigned __int8 byHistoryRecordNum, _class_fld *pSelectClass);
+  bool IsActableClassSkill(char *pszSkillCode, int *pnClassGrade);
   void SetMaxLevel(unsigned __int8 nLv);
   char ConvertAvatorDB(_AVATOR_DATA *pData);
   char ConvertGeneralDB(_AVATOR_DATA *pData, _AVATOR_DATA *pOutData);
   void AppointSerialStorageItem();
   char PushLink(int nLinkIndex, unsigned __int16 wSerial, bool bInit);
+  _STORAGE_LIST::_db_con *GetPtrItemStorage(unsigned __int16 wSerial, unsigned __int8 *pbyStorageCode);
+  void PopLink(int nLinkIndex);
 
   unsigned __int8 m_byPvPGrade;
   __unaligned __declspec(align(1)) _character_db_load m_dbChar;

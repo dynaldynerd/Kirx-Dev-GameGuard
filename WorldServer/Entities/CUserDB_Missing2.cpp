@@ -92,6 +92,7 @@ char CUserDB::Update_Level(unsigned __int8 lv, long double exp)
   return 0;
 }
 
+#if 0 // duplicate implementations exist in CUserDB.cpp
 void CUserDB::Update_MaxLevel(unsigned __int8 byMaxLevel)
 {
   this->m_AvatorData.dbAvator.m_byMaxLevel = byMaxLevel;
@@ -198,6 +199,7 @@ char CUserDB::Update_NPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BASE::_N
     byIndex);
   return 0;
 }
+#endif
 
 char CUserDB::Update_TakeLastMentalTicket(unsigned int dwMentalTicket)
 {
@@ -1005,6 +1007,7 @@ char CUserDB::UpdateContUserSave(bool bDirect)
   return 0;
 }
 
+#if 0 // duplicate implementation exists in CUserDB.cpp
 CUserDB *SearchAvatorWithName(CUserDB *pList, int nMax, char *pwszName)
 {
   if (!pList || !pwszName)
@@ -1024,6 +1027,7 @@ CUserDB *SearchAvatorWithName(CUserDB *pList, int nMax, char *pwszName)
   }
   return nullptr;
 }
+#endif
 
 char CUserDB::Setting_Class(char *pszClassCode)
 {

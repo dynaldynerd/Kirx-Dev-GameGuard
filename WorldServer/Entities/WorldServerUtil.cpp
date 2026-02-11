@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <intrin.h>
 #include <atlstr.h>
+#include <atltime.h>
 
 #include <windows.h>
 #include <mmsystem.h>
@@ -17,8 +18,11 @@
 #include "CMerchant.h"
 #include "CRecordData.h"
 #include "CashItemRemoteStore.h"
+#include "CItemStore.h"
 #include "CItemStoreManager.h"
 #include "CMapData.h"
+#include "CPlayer.h"
+#include "StoreList_fld.h"
 #include "GlobalObjectDefs.h"
 #include "GlobalObjects.h"
 #include "ItemDataLoader.h"
@@ -62,6 +66,25 @@ static void MakeMipMap(unsigned short a1, unsigned short a2, unsigned short *a3,
 unsigned int GetLoopTime()
 {
   return timeGetTime();
+}
+
+CPlayer *GetPtrPlayerFromName(CPlayer *pData, int nNum, char *pwszName)
+{
+  const unsigned __int8 nameLength = static_cast<unsigned __int8>(strlen_0(pwszName));
+  for (int j = 0; j < nNum; ++j)
+  {
+    CPlayer *player = &pData[j];
+    if (player->m_bLive && player->m_Param.m_byNameLen == nameLength)
+    {
+      const size_t maxCount = nameLength;
+      const char *charName = player->m_Param.GetCharNameW();
+      if (!strncmp(charName, pwszName, maxCount))
+      {
+        return player;
+      }
+    }
+  }
+  return nullptr;
 }
 
 unsigned int GetConnectTime_AddBySec(int iSec)
@@ -171,9 +194,9 @@ void eAddGold(int nRaceCode, int nAdd)
 CItemStore *IsBeNearStore(CPlayer *p, int nStoreCode)
 {
   CMapItemStoreList *storeList = nullptr;
-  const int mapCode = CMapData::GetMapCode(p->m_pCurMap);
+  const int mapCode = p->m_pCurMap->GetMapCode();
   CItemStoreManager *manager = CItemStoreManager::Instance();
-  storeList = CItemStoreManager::GetMapItemStoreListBySerial(manager, mapCode);
+  storeList = manager->GetMapItemStoreListBySerial(mapCode);
   if (!storeList)
   {
     return nullptr;
@@ -235,7 +258,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     case 5:
     case 7:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -244,7 +267,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 6:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -253,7 +276,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 8:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -262,7 +285,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 9:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -271,7 +294,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 10:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -280,7 +303,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 11:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -289,7 +312,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 12:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -298,7 +321,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 13:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -307,7 +330,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 14:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -316,7 +339,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 15:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -325,7 +348,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 16:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -334,7 +357,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 18:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -343,7 +366,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 19:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -352,7 +375,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 20:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -361,7 +384,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 21:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -370,7 +393,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 22:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -379,7 +402,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 23:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -388,7 +411,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 24:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -397,7 +420,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 25:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -406,7 +429,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 26:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -415,7 +438,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 27:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -424,7 +447,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 28:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -433,7 +456,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 30:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -442,7 +465,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 31:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -451,7 +474,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 32:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -460,7 +483,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 33:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -469,7 +492,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 35:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -478,7 +501,7 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     }
     case 36:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return szDefCivilCode;
@@ -532,7 +555,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     case 5:
     case 7:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -541,7 +564,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 6:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -550,7 +573,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 8:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -559,7 +582,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 9:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -568,7 +591,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 10:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -577,7 +600,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 11:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -586,7 +609,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 12:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -595,7 +618,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 13:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -604,7 +627,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 15:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -613,7 +636,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 16:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -622,7 +645,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 17:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -631,7 +654,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 18:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -640,7 +663,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 19:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -649,7 +672,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 20:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -658,7 +681,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 21:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -667,7 +690,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 22:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -676,7 +699,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 23:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -685,7 +708,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 24:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -694,7 +717,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 25:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -703,7 +726,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 26:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -712,7 +735,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 27:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -721,7 +744,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 28:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -730,7 +753,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 30:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -739,7 +762,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 31:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -748,7 +771,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 32:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -757,7 +780,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 33:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -766,7 +789,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 34:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -775,7 +798,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 35:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -784,7 +807,7 @@ int IsSellItem(int nTableCode, int nItemIndex)
     }
     case 36:
     {
-      _base_fld *record = CRecordData::GetRecord(table, nItemIndex);
+      _base_fld *record = table->GetRecord(nItemIndex);
       if (!record)
       {
         return 0;
@@ -858,7 +881,7 @@ static unsigned __int64 dw64Cnt = 0;
 
 void OutputDebugLog(const char *szFormat, ...)
 {
-  if (CMainThread::IsReleaseServiceMode(&g_Main))
+  if (g_Main.IsReleaseServiceMode())
   {
     return;
   }
@@ -1030,6 +1053,45 @@ unsigned __int8 GetItemKindCode(int nTableCode)
     return 2;
   }
   return nTableCode == 24;
+}
+
+void GetSubDayStr(int nSubDay, char *szOutDay)
+{
+  if (!szOutDay)
+  {
+    return;
+  }
+
+  char monthBuf[32]{};
+  char dayBuf[36]{};
+
+  ATL::CTime now = ATL::CTime::GetTickCount();
+  ATL::CTimeSpan span(nSubDay, 0, 0, 0);
+  ATL::CTime target = now - span;
+
+  const unsigned __int16 year = static_cast<unsigned __int16>(target.GetYear());
+  const unsigned __int16 month = static_cast<unsigned __int16>(target.GetMonth());
+  const unsigned __int16 day = static_cast<unsigned __int16>(target.GetDay());
+
+  if (month > 9u)
+  {
+    sprintf(monthBuf, "%d", month);
+  }
+  else
+  {
+    sprintf(monthBuf, "0%d", month);
+  }
+
+  if (day > 9u)
+  {
+    sprintf(dayBuf, "%d", day);
+  }
+  else
+  {
+    sprintf(dayBuf, "0%d", day);
+  }
+
+  sprintf(szOutDay, "%d%s%s", year, monthBuf, dayBuf);
 }
 
 char *DisplayItemUpgInfo(int nTableCode, int dwLvBit)
@@ -1236,6 +1298,14 @@ void FloatToShort(float *pFloat, short *pShort, int size)
   for (int j = 0; j < size; ++j)
   {
     pShort[j] = static_cast<short>(static_cast<int>(pFloat[j]));
+  }
+}
+
+void ShortToFloat(__int16 *pShort, float *pFloat, int size)
+{
+  for (int j = 0; j < size; ++j)
+  {
+    pFloat[j] = static_cast<float>(pShort[j]);
   }
 }
 
@@ -3385,7 +3455,7 @@ int ParsingCommandW(char *pwszSrc, int nMaxWordNum, char **ppwszDst, int nMaxWor
       return 0;
     }
 
-    char *dst = ppszDst[j];
+    char *dst = ppwszDst[j];
     int len = 0;
 
     while (*src == ' ' || *src == '\t')
@@ -3405,10 +3475,10 @@ int ParsingCommandW(char *pwszSrc, int nMaxWordNum, char **ppwszDst, int nMaxWor
 
     if (*src == '\0')
     {
-      return strlen_0(ppszDst[j]) ? (j + 1) : j;
+      return strlen_0(ppwszDst[j]) ? (j + 1) : j;
     }
 
-    if (dst == ppszDst[j])
+    if (dst == ppwszDst[j])
     {
       return j;
     }
@@ -6140,3 +6210,4 @@ bool IsSaveItem(int nTableCode)
 {
   return nTableCode != 14 && nTableCode != 29;
 }
+

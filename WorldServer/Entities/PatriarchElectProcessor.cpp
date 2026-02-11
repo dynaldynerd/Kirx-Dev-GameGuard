@@ -21,6 +21,7 @@
 #include "pt_result_code_zocl.h"
 #include "qry_case_request_refund.h"
 #include "sel_patriarch_elect_state.h"
+#include "DqsDbStructs.h"
 
 #include <cstdio>
 #include <cstring>
@@ -214,6 +215,79 @@ ElectProcessor::ProcessorType PatriarchElectProcessor::GetProcessorType()
   return _eProcessType;
 }
 
+void PatriarchElectProcessor::SetTimeCheck(bool bFlag)
+{
+  _bTimeCheck = bFlag;
+}
+
+bool PatriarchElectProcessor::ForceChangeProcessor(ElectProcessor::ProcessorType eProc)
+{
+  if (_bTimeCheck)
+  {
+    return false;
+  }
+
+  if (eProc == ElectProcessor::_eNonProcessor)
+  {
+    _eProcessType = ElectProcessor::_eNonProcessor;
+    _kRunningProcessor = nullptr;
+    return true;
+  }
+
+  if (eProc < ElectProcessor::_eCandidateRegister || eProc >= ElectProcessor::_eProcessorNum)
+  {
+    return false;
+  }
+
+  bool allowedTransition = false;
+  if (_eProcessType == ElectProcessor::_eNonProcessor)
+  {
+    allowedTransition = (eProc == ElectProcessor::_eCandidateRegister);
+  }
+  else
+  {
+    switch (_eProcessType)
+    {
+      case ElectProcessor::_eCandidateRegister:
+        allowedTransition = (eProc == ElectProcessor::_eSecondCandidateCrystallizer);
+        break;
+      case ElectProcessor::_eSecondCandidateCrystallizer:
+        allowedTransition = (eProc == ElectProcessor::_eVoter);
+        break;
+      case ElectProcessor::_eVoter:
+        allowedTransition = (eProc == ElectProcessor::_eFinalDecisionProcessor);
+        break;
+      case ElectProcessor::_eFinalDecisionProcessor:
+        allowedTransition = (eProc == ElectProcessor::_eFinalDecisionApplyer);
+        break;
+      case ElectProcessor::_eFinalDecisionApplyer:
+        allowedTransition = (eProc == ElectProcessor::_eClassOrderProcessor);
+        break;
+      case ElectProcessor::_eClassOrderProcessor:
+        allowedTransition = (eProc == ElectProcessor::_eCandidateRegister);
+        break;
+      default:
+        allowedTransition = false;
+        break;
+    }
+  }
+
+  if (!allowedTransition)
+  {
+    return false;
+  }
+
+  ElectProcessor *nextProcessor = _kProcessor[static_cast<int>(eProc)];
+  if (!nextProcessor)
+  {
+    return false;
+  }
+
+  _eProcessType = eProc;
+  _kRunningProcessor = nextProcessor;
+  return _kRunningProcessor->Initialize();
+}
+
 __int64 PatriarchElectProcessor::Insert_Elect()
 {
   char buffer[1040]{};
@@ -304,6 +378,164 @@ __int64 PatriarchElectProcessor::Insert_PatrirchItemChargeRefund(char *pData)
     *reinterpret_cast<unsigned long long *>(pData + 8));
 
   return g_Main.m_pWorldDB->ExecUpdateQuery(buffer, true) ? 0 : 24;
+}
+
+bool PatriarchElectProcessor::CheatClearPatriarch()
+{
+  char buffer[260]{};
+  sprintf(
+    buffer,
+    "Delete [dbo].[tbl_patriarch_candidate] Where\teSerial = %d And\tClassType >= %d ",
+    _dwElectSerial,
+    5);
+  if (!g_Main.m_pWorldDB->ExecUpdateQuery(buffer, true))
+  {
+    return false;
+  }
+
+  CandidateMgr *candidateMgr = CandidateMgr::Instance();
+  CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
+  ClassOrderProcessor *orderProcessor = ClassOrderProcessor::Instance();
+  char emptyName[1]{};
+
+  for (int race = 0; race < 3; ++race)
+  {
+    for (int classType = 5; classType < CandidateMgr::_candidate_info::patriarch_group_num; ++classType)
+    {
+      CandidateMgr::_candidate_info *patriarchGroup =
+        candidateMgr->GetPatriarchGroup(race, static_cast<CandidateMgr::_candidate_info::ClassType>(classType));
+      if (!patriarchGroup || !patriarchGroup->bLoad)
+      {
+        continue;
+      }
+
+      ranking->SetUpdateRaceBossSerial(
+        patriarchGroup->byRace,
+        static_cast<unsigned __int8>(patriarchGroup->eClassType),
+        0);
+      g_Main.m_kEtcNotifyInfo.UpdateRaceLeader(
+        patriarchGroup->byRace,
+        static_cast<unsigned __int8>(patriarchGroup->eClassType),
+        emptyName);
+      ranking->ApplyUpdatedBossInfo();
+      patriarchGroup->_Init();
+      orderProcessor->UpdatePacket(static_cast<unsigned __int8>(race), static_cast<unsigned __int8>(classType));
+    }
+  }
+
+  for (int index = 0; index < MAX_PLAYER; ++index)
+  {
+    CPlayer *player = &g_Player[index];
+    if (player->m_bOper)
+    {
+      const unsigned __int8 raceCode = static_cast<unsigned __int8>(player->m_Param.GetRaceCode());
+      g_Main.m_kEtcNotifyInfo.Notify(raceCode, player->m_ObjID.m_wIndex);
+    }
+  }
+
+  return true;
+}
+
+bool PatriarchElectProcessor::CheatSetPatriarch(CPlayer *pOne, int eClass)
+{
+  const int raceCode = pOne->m_Param.GetRaceCode();
+  if (raceCode < 0 || raceCode >= 3)
+  {
+    return false;
+  }
+
+  CandidateMgr *candidateMgr = CandidateMgr::Instance();
+  CandidateMgr::_candidate_info *patriarchGroup =
+    candidateMgr->GetPatriarchGroup(raceCode, static_cast<CandidateMgr::_candidate_info::ClassType>(eClass));
+  if (!patriarchGroup)
+  {
+    for (int index = 0; index < 9; ++index)
+    {
+      CandidateMgr::_candidate_info *candidate = &candidateMgr->m_kPatriarchGroup[raceCode][index];
+      if (!candidate->bLoad)
+      {
+        patriarchGroup = candidate;
+        break;
+      }
+    }
+
+    if (!patriarchGroup)
+    {
+      return false;
+    }
+  }
+
+  patriarchGroup->bLoad = true;
+  patriarchGroup->byRace = static_cast<unsigned __int8>(raceCode);
+  patriarchGroup->dwAvatorSerial = pOne->m_Param.GetCharSerial();
+  patriarchGroup->dwRank = pOne->m_Param.GetPvpRank();
+  patriarchGroup->dPvpPoint = pOne->m_Param.GetPvPPoint();
+  patriarchGroup->byLevel = static_cast<unsigned __int8>(pOne->m_Param.GetLevel());
+  patriarchGroup->eClassType = static_cast<CandidateMgr::_candidate_info::ClassType>(eClass);
+  if (eClass >= 5)
+  {
+    patriarchGroup->eStatus = CandidateMgr::_candidate_info::candidate_appoint;
+  }
+  else
+  {
+    patriarchGroup->eStatus = CandidateMgr::_candidate_info::candidate_2st;
+  }
+
+  strcpy_s(patriarchGroup->wszName, sizeof(patriarchGroup->wszName), pOne->m_Param.GetCharNameW());
+  if (pOne->m_Param.m_pGuild)
+  {
+    patriarchGroup->dwGuildSerial = pOne->m_Param.m_pGuild->m_dwSerial;
+    strcpy_s(
+      patriarchGroup->wszGuildName,
+      sizeof(patriarchGroup->wszGuildName),
+      pOne->m_Param.m_pGuild->m_wszName);
+  }
+  else
+  {
+    patriarchGroup->dwGuildSerial = static_cast<unsigned int>(-1);
+    memset_0(patriarchGroup->wszGuildName, 0, sizeof(patriarchGroup->wszGuildName));
+  }
+
+  if (pOne->m_Param.GetPvpRank() == static_cast<unsigned int>(-1))
+  {
+    patriarchGroup->dwRank = 255;
+  }
+
+  CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
+  ranking->SetUpdateRaceBossSerial(
+    patriarchGroup->byRace,
+    static_cast<unsigned __int8>(patriarchGroup->eClassType),
+    patriarchGroup->dwAvatorSerial);
+  g_Main.m_kEtcNotifyInfo.UpdateRaceLeader(
+    patriarchGroup->byRace,
+    static_cast<unsigned __int8>(patriarchGroup->eClassType),
+    patriarchGroup->wszName);
+  ranking->ApplyUpdatedBossInfo();
+
+  if (eClass >= 5)
+  {
+    ClassOrderProcessor *orderProcessor = ClassOrderProcessor::Instance();
+    orderProcessor->UpdatePacket(patriarchGroup->byRace, static_cast<unsigned __int8>(eClass));
+  }
+
+  for (int index = 0; index < MAX_PLAYER; ++index)
+  {
+    CPlayer *player = &g_Player[index];
+    if (player->m_bOper && player->m_Param.GetRaceCode() == raceCode)
+    {
+      const unsigned __int8 playerRace = static_cast<unsigned __int8>(player->m_Param.GetRaceCode());
+      g_Main.m_kEtcNotifyInfo.Notify(playerRace, player->m_ObjID.m_wIndex);
+    }
+  }
+
+  if (!eClass)
+  {
+    _qry_case_raceboss_accumulation_winrate qryData{};
+    const int size = static_cast<int>(sizeof(qryData));
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x8Eu, reinterpret_cast<char *>(&qryData), size);
+  }
+
+  return true;
 }
 
 void PatriarchElectProcessor::CompleteInsertElect()

@@ -99,6 +99,32 @@ void CMgrAvatorLvHistory::alter_pvp(
   WriteFile(pszFileName, sData_0);
 }
 
+void CMgrAvatorLvHistory::recovery_exp(
+  int /*n*/,
+  long double dOldExp,
+  unsigned __int16 wOldExpRate,
+  long double dNewExp,
+  unsigned __int16 wNewExpRate,
+  long double dLossExp,
+  int nProbPro,
+  char *pCause,
+  char *pszFileName)
+{
+  sprintf(
+    sData_0,
+    "EXP RECOV %.0f(%d) -> %.0f(%d) : %s (%.0f * %d / 100)[%s %s]\r\n\r\n",
+    static_cast<double>(dOldExp),
+    wOldExpRate,
+    static_cast<double>(dNewExp),
+    wNewExpRate,
+    pCause,
+    static_cast<double>(dLossExp),
+    nProbPro,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pszFileName, sData_0);
+}
+
 void CMgrAvatorLvHistory::update_mastery(
   int /*n*/,
   unsigned __int8 byUserDgr,

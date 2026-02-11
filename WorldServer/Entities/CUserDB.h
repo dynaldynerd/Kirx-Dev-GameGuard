@@ -9,6 +9,7 @@
 #include <cstddef>
 
 struct _EXIT_ALTER_PARAM;
+struct _ITEMCOMBINE_DB_BASE;
 
 /* 1536 */
 class __cppobj __declspec(align(8)) CUserDB
@@ -74,10 +75,23 @@ public:
   bool Update_Map(unsigned __int8 map, float *pos);
   char Update_Bind(char *pszMapCode, char *pDummyCode, bool bUpdate);
   char Update_DelBuddy(unsigned __int8 bySlotIndex);
+  char Update_UserGetScaner(unsigned __int16 wScanerCnt, unsigned __int16 wBattleTime);
+  char Update_LinkBoardSlot(unsigned __int8 bySlot, unsigned __int8 byLinkCode, unsigned __int16 wIndex);
+  char Update_BagNum(unsigned __int8 bagnum);
+  void CalcRadarDelay();
+  void SetRadarDelay(unsigned int dwDelay);
   void Update_PvpPointLeak(long double dValue);
   void Update_LastAttBuff(bool bSet);
   char Update_UserFatigue(unsigned int dwFatigue);
   char Update_UserTLStatus(unsigned __int8 byStatus);
+  unsigned int GetActPoint(unsigned __int8 byCode);
+  unsigned int *GetPtrActPoint();
+  void SetActPoint(unsigned __int8 byCode, unsigned int dwLeftPoint);
+  char Update_User_Action_Point(unsigned __int8 byActionCode, unsigned int dwPoint);
+  char InitClass(char *pszClassCode);
+  char Update_Class(char *pszClassCode, unsigned __int8 byHistoryRecordNum, unsigned __int16 wHistoryClassIndex);
+  void WriteLog_ChangeClassAfterInitClass(unsigned __int8 byType, char *szPrevClass);
+  void StartFieldMode();
   void Update_PotionNextUseTime(unsigned __int8 byPotionClass, unsigned int dwNextUseTime);
   bool Update_AlterPvPPoint(long double dNewPoint);
   bool Update_ItemAdd(
@@ -113,6 +127,10 @@ public:
   char Update_Exp(long double exp);
   char Setting_Class(char *pszClassCode);
   void WriteLog_Level(unsigned __int8 byLv);
+  void WriteLog_CharSelect();
+  char Update_CombineExResult_Push(_ITEMCOMBINE_DB_BASE *pItemCombineDB_IN);
+  char Update_CombineExResult_Pop();
+  char Update_TakeLastCriTicket(unsigned int dwCriTicket);
   void SetDBPostData(
     unsigned int n,
     unsigned int dwSerial,

@@ -38,6 +38,34 @@ Only unresolved static strings/arrays/data from IDA go here. Remove entries once
 - "CNetworkEX::CheckIsBlockIPResult(...) : \r\nIP(%u.%u.%u.%u) Account : %u(%s) Invalid Return(%u) Value!" (CNetworkEX::CheckIsBlockIPResult)
 - "CNetworkEX::CheckIsBlockIPResult(...) : \r\nIP(%u.%u.%u.%u) pRecv->idLocal.wIndex(%u) >= MAX_PLAYER(%u) Invalid!" (CNetworkEX::CheckIsBlockIPResult)
 - "CLOSE>> ForceCloseCommand Account: %s(%u) Type: %d, IP: %u.%u.%u.%u" (CNetworkEX::CheckIsBlockIPResult)
+- "CUnmannedTraderController::InsertStateRecord()\r\n\t\tnew _unmannedtrader_stade_id_info[%u] NULL!\r\n" (CUnmannedTraderController::InsertStateRecord)
+- "CUnmannedTraderController::InsertStateRecord()\r\n\t\tg_Main.m_pWorldDB->Insert_UnmannedTraderItemStateRecord( %u, wszStateName ) Fail!\r\n" (CUnmannedTraderController::InsertStateRecord)
+- "CUnmannedTraderController::InsertStateRecord()\r\n\t\tg_Main.m_pWorldDB->Truncate_UnmannedTraderItemStateRecord() Fail!\r\n" (CUnmannedTraderController::InsertStateRecord)
+- "CUnmannedTraderController::InsertStateRecord()\r\n\t\tg_Main.m_pWorldDB->Select_UnmannedTraderItemStateInfo() Fail!\r\n" (CUnmannedTraderController::InsertStateRecord)
+- "CUnmannedTraderController::InsertStateRecord()\r\n\t\tg_Main.m_pWorldDB->Select_UnmannedTraderItemStateInfoCnt() Fail!\r\n" (CUnmannedTraderController::InsertStateRecord)
+- "CUnmannedTraderController::UpdateClearDanglingOwnerRecord()\r\n\t\tg_Main.m_pWorldDB->Update_UnmannedTraderClearDanglingOwnerRecord() Fail!\r\n" (CUnmannedTraderController::UpdateClearDanglingOwnerRecord)
+- "CUnmannedTraderController::InsertDefalutRecord()\r\n\t\tg_Main.m_pWorldDB->Insert_UnmannedTraderSingleDefaultRecord( %u ) Fail!\r\n" (CUnmannedTraderController::InsertDefalutRecord)
+- "CUnmannedTraderController::InsertDefalutRecord()\r\n\t\tiCnt(%d) = g_Main.m_pWorldDB->Select_UnmannedTraderItemEmptyRecordCnt()!\r\n" (CUnmannedTraderController::InsertDefalutRecord)
+- "CPostSystemManager::UpdateDisappearOwner\r\n\t\tg_Main.m_pWorldDB->Update_DisappearOwnerRecord() Fail!\r\n" (CPostSystemManager::UpdateDisappearOwnerRecord)
+- "CPostSystemManager::InsertDefaultPSRecord\r\n\t\tg_Main.m_pWorldDB->Insert_PSDefaultRecord( %d ) Fail!\r\n" (CPostSystemManager::InsertDefaultPSRecord)
+- "CPostSystemManager::InsertDefaultPSRecord\r\n\t\tnCount(%d) = g_Main.m_pWorldDB->Select_PostStorageEmptyRecord() Fail!\r\n" (CPostSystemManager::InsertDefaultPSRecord)
+- "CGuildRoomSystem::Load_db() : g_Main.m_pWorldDB->Select_GuildRoomInfo(...) Fail!" (CGuildRoomSystem::Load_db)
+- "CGuildRoomSystem::Load_db() : RentRoom(...) %uth Fail!" (CGuildRoomSystem::Load_db)
+- "CGuildRoomSystem::Load_db() : CGuildRoomSystem::GetInstance()->GetMapData( byRace(%u), byRoomType(%u) ) %uth NULL!" (CGuildRoomSystem::Load_db)
+- "CGuildRoomSystem::Load_db() : CItemStoreManager::Instance()->GetMapItemStoreListBySerial(pMap->m_nMapIndex(%d)) %uth NULL!" (CGuildRoomSystem::Load_db)
+- "CGuildRoomSystem::Load_db() : CItemStoreManager::Instance()->GetEmptyInstanceItemStore() %uth NULL!" (CGuildRoomSystem::Load_db)
+- "CGuildRoomSystem::Load_db() : pGuildStoreList->CopyItemStoreData(pBaseStoreList) %uth Fail!\r\nMap(%s) GuildRoom Store NPC Not Exist!" (CGuildRoomSystem::Load_db)
+- "select gr.guildserial, g.id, gr.roomtype, gr.roomrace, gr.roomrentdate from tbl_GuildRoom as gr inner join tbl_Guild as g on gr.guildserial = g.serial where gr.dck = 0 order by g.serial desc" (CRFWorldDatabase::Select_GuildRoomInfo)
+- "CItemStoreManager::SelectUsedRecordNum\r\n\t\tg_Main.m_pWorldDB->Select_UsedLimitItemRecordNum() Fail!\r\n" (CItemStoreManager::SelectUsedRecordNum)
+- "CItemStoreManager::SelectTotalRecordNum\r\n\t\tg_Main.m_pWorldDB->Select_TotalRecordNum() Fail!\r\n" (CItemStoreManager::SelectTotalRecordNum)
+- "CItemStoreManager::InsertNotEnoughLimitItemRecord\r\n\t\tg_Main.m_pWorldDB->Insert_LimitItemRecord() Fail!\r\n" (CItemStoreManager::InsertNotEnoughLimitItemRecord)
+- "CItemStoreManager::SelectStoreLimitItem\r\n\t\tg_Main.m_pWorldDB->Select_StoreLimitItem() Fail!\r\n" (CItemStoreManager::SelectStoreLimitItem)
+- "030F1" (CItemStoreManager::SetEnforceInitNormalStore)
+- "040F1" (CItemStoreManager::SetEnforceInitNormalStore)
+- "050F1" (CItemStoreManager::SetEnforceInitNormalStore)
+- "select count(serial) from tbl_StoreLimitItem_061212 where dck=0" (CRFWorldDatabase::Select_UsedLimitItemRecordNum)
+- "select count(serial) from tbl_StoreLimitItem_061212" (CRFWorldDatabase::Select_TotalRecordNum)
+- "select k0,k1,k2,k3,k4,k5,k6,k7,k8,k9,k10,k11,k12,k13,k14,k15,num0,num1,num2,num3,num4,num5,num6,num7,num8,num9,num10,num11,num12,num13,num14,num15,serial,type,typeserial,storeinx,resettime from tbl_StoreLimitItem_061212 where dck=0" (CRFWorldDatabase::Select_StoreLimitItem)
 - "Kick By GM-Tool" (CNetworkEX::DisconnectGuildWarCharacterRequest)
 - "%s-%s: Open World" (CMainThread::pc_OpenWorldSuccessResult)
 - "DBInit Begin >> name: %s, ip: %s" (CMainThread::pc_OpenWorldSuccessResult)
@@ -393,3 +421,283 @@ Only unresolved static strings/arrays/data from IDA go here. Remove entries once
 - Attack scaling constants fR / fRLf / fRMf / fR_0 / fRLf_0 / fRMf_0 / fR_1 / fRLf_1 / fRMf_1 (used by CAttack/CMonsterAttack/CPlayerAttack; values not recovered, currently zeroed)
 - "17" (CCharacter::InsertSFContEffect GetRecord key for effect code 3)
 - "-1" (CCharacter::InsertSFContEffect compares effectRecord[12].m_strCode)
+- e_nTaxDft (economy default tax value; initialization not recovered)
+- e_nMgrDft (economy default manager value; initialization not recovered)
+
+## Newly logged (CheatCommands)
+- aCheatHelpSynta_0 (ct_period_time_set help syntax string; currently "<unknown>")
+- aCheatHelpSynta_1 (ct_tl_info_set help syntax string; currently "<unknown>")
+- aCheatHelpSynta_2 (ct_action_point_set help syntax string; currently "<unknown>")
+- aCheatHelpSynta_3 (ct_Gold_Age_Set_Event_Status help syntax string; currently "<unknown>")
+- aOne_3 (ct_Gold_Age_Event_Status disabled-state text; currently "<unknown>")
+- aCoacE (ct_Gold_Age_Event_Status response format; currently "<unknown>")
+- aCoacCodeDBoxAc (ct_Gold_Age_Get_Box_Cnt response format; currently "<unknown>")
+- aCoacE_0 (ct_Gold_Age_Get_Box_Cnt inactive-state text; currently "<unknown>")
+- byte_1407AF104 / byte_1407AF0F8 / byte_1407AF110 (ct_Gold_Age_Event_Status state labels; currently "<unknown>")
+
+## Newly logged (CHonorGuild)
+- "Changed Honor Guild (RACE:%d) : (%s:%d%%)" (CHonorGuild::ChangeHonorGuild)
+- "Faild Current CHonorGuild::LoadDB(RACE:%d)"
+- "Faild Next CHonorGuild::LoadDB(RACE:%d)"
+- "Faild Load ClearHonorGuild(RACE:%d)"
+- "Success CHonorGuild::LoadDB()"
+
+## Newly logged (CMainThread::_GameDataBaseInit)
+- "Avators DBRestore Complete!!"
+- "Economy data load fail"
+- "Economy data init fail"
+- "Economy History Load Complete!!"
+- "CMainThread::_GameDataBaseInit()"
+- "AutominePersonalMgr::CreateDBTable Fail!"
+- "AutominePersonalMgr Create Database table Fail!"
+- "CUnmannedTraderController::Instance()->Load() Fail!"
+- "CGuildRoomSystem::GetInstance()->Load_db()"
+- "CPostSystemManager::Instace()->Load() Fail!"
+- "db_LoadGreetingMsg() Fail!"
+- "CItemStoreManager::Instance()->Load() Fail!"
+- "CHonorGuild::Instance()->LoadDB() Fail!"
+- "CRaceBossWinRate::Instance()->LoadDB() Fail!"
+- "_db_Load_GoldBoxItem() Fail!"
+- "_db_Load_GoldBoxItem Fail!"
+- "InitAutoMineMachines() Fail!"
+- "ATradeTaxRateTable() Fail!"
+- "CWeeklyGuildRankManager::Instance()->Load() Fail!"
+- "CTotalGuildRankManager::Instance()->Load() Fail!"
+- "CGuildBattleController::Instance()->Load() Fail!"
+- "CPvpUserRankingAndGuildRankingSystem::Instance()->Load() Fail!"
+
+## Newly logged (CRFWorldDatabase::create_table_atrade_taxrate)
+- "CREATE TABLE [dbo].[tbl_ATradeTaxRate] ( [serial] [int] IDENTITY (1, 1) NOT NULL , [Race] [tinyint] NOT NULL , [GSerial] [int] NOT NULL , [GName] [nvarchar] (24) NOT NULL , [Tax] [tinyint] NOT NULL , [NextTax] [tinyint] NOT NULL , [UpdateTime] [datetime] NOT NULL ) ON [PRIMARY] ALTER TABLE [dbo].[tbl_ATradeTaxRate] WITH NOCHECK ADD CONSTRAINT [PK_tbl_ATradeTaxRate] PRIMARY KEY  CLUSTERED ([serial])  ON [PRIMARY] ALTER TABLE [dbo].[tbl_ATradeTaxRate] WITH NOCHECK ADD CONSTRAINT [DF_tbl_ATradeTaxRate_GSerial] DEFAULT (-1) FOR [GSerial], CONSTRAINT [DF_tbl_ATradeTaxRate_GName] DEFAULT ('*') FOR [GName], CONSTRAINT [DF_tbl_ATradeTaxRate_Tax] DEFAULT (5) FOR [Tax], CONSTRAINT [DF_tbl_ATradeTaxRate_NextTax] DEFAULT (5) FOR [NextTax], CONSTRAINT [DF_tbl_ATradeTaxRate_UpdateTime] DEFAULT (getdate()) FOR [UpdateTime] CREATE  INDEX [IX_Race] ON [dbo].[tbl_ATradeTaxRate]([Race]) ON [PRIMARY]"
+
+## Newly logged (CRFWorldDatabase HonorGuild)
+- "{ CALL pSelect_HonorGuild( %d, %d ) }"
+- "SQLFetch"
+- "SQLGetData"
+- "SQLExecDirectA"
+- "ReConnectDataBase Fail. Query : %s"
+- "Select GuildSerial From tbl_honor_guild Where Race=%d AND GuildSerial=0xFFFFFFFF And DCK=0 AND IsNext=1"
+
+## Newly logged (Ranking System)
+- "Race_%d Ranking Start!!"
+- "Race_%d Ranking Complete!!"
+- "DatabaseInit"
+- "load race rank fail"
+- "PvpRankData Packing Complete!!"
+- "!!! Failed init(Patriarch Elect system.)"
+- "tbl_PvpRank%s"
+- "create race-rank-table fail"
+- "Today Rank Table(%s) Make Complete!!"
+- "CUserRankingProcess::Load() : LoadPvpRank(szDate(%s)) Fail!"
+- "CUserRankingProcess::Load() : CheckAndCreateTodayPvpRankTable(szDate(%s)) Fail!"
+- "Tommorrow Rank Table(%s) Not Exist!!"
+- "Guild Rank Table Make Start!!"
+- "tbl_GuildRank%s"
+- "Create guild-rank-table fail\r\nUpdate_GuildRank Fail!"
+- "Guild Rank Table Make Complete!!"
+- "update guild-grade fail"
+- "bool CGuildRanking::Load() : SetLoadAllGuildInfo(..) Fail!\r\n"
+- "bool CGuildRanking::Load() : UpdateRankAndGrade(..) Fail!\r\n"
+- "Guild List(%d) Load Complete!!"
+- "Select_AllGuildData() fail"
+- "Guild(%u, %s) CheckSum Load Fail!"
+- "Guild(%u, %s) CheckSum Insert Fail!"
+- "Guild(%u, %s) Diff Value  dalant(%f) -> %f, Gold(%f) -> %f"
+- "guild_master_data_error and modify Data(guild:%u, user:%u:, ClassInGuild:%d )"
+- "Update_GuildMemberCount guild(%u) cnt(%u) Fail!"
+- "CGuildRanking::SetLoadAllGuildInfo(...) : %d > g_Main.check_min_max_guild_money(...) Fail!"
+- "Error"
+- "CGuildRanking::SetLoadAllGuildInfo(...) : \r\n%d > g_Main.check_min_max_guild_money(...) Fail!"
+- "Guild List(%d) Setting Complete!!"
+- "%d : %s > Guild DALANT (%d) (ADJUST %d)"
+- "%d : %s > Guild GOLD (%d) (ADJUST %d)"
+- "%s Success"
+
+## Newly logged (Economy System)
+- "Economy"
+- "Default_OreVal"
+- ".\\Initialize\\WorldSystem.ini"
+- "Economy Error"
+- "Nothing Default MgrValue"
+- "number of history(%d) is more than MAX_ECONOMY_HISTORY (%d)"
+
+## Newly logged (CGuild::ManageBuyGuildEmblem)
+- "<unknown>"
+
+## Newly logged (CMainThread Greeting/Limit)
+- "GM"
+- "Welcome to RF World "
+- "RaceBoss"
+- "There is no Message "
+- "tbl_characterselect_log_%s"
+- "CMainThread::_GameDataBaseInit()"
+- "Create %s Table Failed!"
+- "Character Select Log Table(%s) Make Complete!!"
+- "CMainThread::LoadLimitInfo() : Set Force Close Time( %u Min %u Sec )"
+- "Battle Tournament Winner Info Setting Fail! Winner Info Disable!"
+- "Can't Battle Tournament Winner Info Getting From DB!"
+
+## Newly logged (CRFWorldDatabase Greeting/Limit/GoldenBox)
+- "select count(useType) from tbl_GreetMsg where useType = %d"
+- "{CALL pInsert_GreetingMsgRecord_071119(%d,'%s','%s')}"
+- "select GMsg,Name from tbl_GreetMsg where usetype = %d"
+- "select [effect] from [dbo].[tbl_sf_delay] where [aserial] = 0"
+- "Select top %d CharacterSerial,CharacterName,BattleWinGrade from tbl_battletournament"
+- "{ CALL pSelect_GoldBoxItem }"
+- "{ CALL pInsert_GoldBoxItem( %d ) }"
+
+## Newly logged (CWeeklyGuildRankManager)
+- "CWeeklyGuildRankManager::Load() : LoadPrevOwner() %s"
+- "Success"
+- "Fail"
+- "CWeeklyGuildRankManager::InsertDefaultRecord() : g_Main.m_pWorldDB->Insert_DefaultRecordWeeklyGuildPvpPointSum() Fail!"
+- "{ CALL pInsert_DefaultRecordWeeklyGuildPVPPointSum }"
+- "tbl_PvpPointGuildRank%s"
+- "PvpPointGuildRank"
+- "Year"
+- "Month"
+- "Day"
+- "..\\SystemSave\\ServerState.ini"
+
+## GuildBattle additions (2026-02-10)
+- "CNormalGuildBattle::Init(%u,%u,%u,%u)GetID() != dwID Fail!"
+- "CNormalGuildBattle::Init(%u,%u,%u,%u)byNumber(%u) Invalid!"
+- "CNormalGuildBattle::Init( %u, %u, %u, %u, %u, %u ) : %s : Init( %s, %s, %d, %u, pkStateList )"
+- "CNormalGuildBattle::Init( %u, %u, %u, %u, %u, %u ) : %s : Init( ... ) Skip!"
+- "CNormalGuildBattle::LeaveGuild( %u ) : (%u) m_pkField->DropBall( %s ) Fail(%u)!"
+- "CNormalGuildBattle::LeaveGuild( %u ) : %s %s %s %s"
+- "CNormalGuildBattleManager::Load( iCurDay(%d), uiOldMapCnt(%u), iToday(%d), iTodayDayID(%d), iTomorrow(%d) iTomorrowDayID(%d) : AddDefaultDBRecord()"
+- "CNormalGuildBattleManager::Load( iCurDay(%d), uiOldMapCnt(%u), iToday(%d), iTodayDayID(%d), iTomorrow(%d) iTomorrowDayID(%d) : ( iToday == iCurDay ) : Load( true, %d, m_ppkTodayBattle ) Fail!"
+- "CNormalGuildBattleManager::Load( iCurDay(%d), uiOldMapCnt(%u), iToday(%d), iTodayDayID(%d), iTomorrow(%d) iTomorrowDayID(%d) : ( iToday == iCurDay ) : Load( false, %d, m_ppkTomorrowBattle ) Fail!"
+- "CNormalGuildBattleManager::Load( iCurDay(%d), uiOldMapCnt(%u), iToday(%d), iTodayDayID(%d), iTomorrow(%d) iTomorrowDayID(%d) : ( iTomorrow == iCurDay ) : Load( true, %d, m_ppkTodayBattle ) Fail!"
+- "CNormalGuildBattleManager::Load( iCurDay(%d), uiOldMapCnt(%u), iToday(%d), iTodayDayID(%d), iTomorrow(%d) AddDefaultDBRecord()"
+- "CNormalGuildBattleManager::Load( iCurDay(%d), uiOldMapCnt(%u), iToday(%d), iTodayDayID(%d), iTomorrow(%d) CGuildBattleScheduleManager::Instance()->CleanUpDanglingReservedSchedule() Fail!"
+- "CNormalGuildBattleManager::LoadDBGuildBattleInfo() : g_Main.m_pWorldDB->LoadGuildBattleInfo() Fail!"
+- "CNormalGuildBattleManager::AddDefaultDBRecord() g_Main.m_pWorldDB->InsertGuildBattleDefaultRecord( %u ) Fail!"
+- "CGuildBattleScheduleManager::Load( iCurDay(%d), uiOldMapCnt(%u), iToday(%d), iTodayDayID(%d), iTomorrow(%d) iTomorrowDayID(%d) : AddDefaultDBTable()"
+- "CGuildBattleScheduleManager::Load( iCurDay(%d), uiOldMapCnt(%u), iToday(%d), iTodayDayID(%d), iTomorrow(%d) iTomorrowDayID(%d) : ( iToday == iCurDay ) : m_pkTodaySchedule->Load(true) Fail!"
+- "CGuildBattleScheduleManager::Load( iCurDay(%d), uiOldMapCnt(%u), iToday(%d), iTodayDayID(%d), iTomorrow(%d) iTomorrowDayID(%d) : ( iToday == iCurDay ) : m_pkTomorrowSchedule->Load(false) Fail!"
+- "CGuildBattleScheduleManager::Load( iCurDay(%d), uiOldMapCnt(%u), iToday(%d), iTodayDayID(%d), iTomorrow(%d) iTomorrowDayID(%d) : ( iTomorrow == iCurDay ) : m_pkTodaySchedule->Load(true) Fail!"
+- "CGuildBattleScheduleManager::AddDefaultDBTable() :  g_Main.m_pWorldDB->InsertGuildBattleScheduleDefaultRecord( 2 DAY, %u, %u, %u ) Fail!"
+- "CGuildBattleReservedScheduleMapGroup::Load() new _worlddb_guild_battle_schedule_list[%u] Fail!"
+- "CGuildBattleReservedScheduleMapGroup::Load() g_Main.m_pWorldDB->LoadGuildBattleScheduleInfo( %u, %u, ms_pkDBInfo )"
+- "CGuildBattleReservedScheduleMapGroup::Load( %d ) m_ppkReservedSchedule[%u]->Load( ms_pkDBScheduleInfo )"
+- "CGuildBattleReservedSchedule::Load()  m_uiScheduleID(%u) != pkInfo->list[%u].uiSLID(%u) Fail!"
+- "CGuildBattleReservedSchedule::Load() CGuildBattleSchedulePool::Instance()->Get( %u ) Fail!"
+- "CGuildBattleReservedSchedule::Load() : %s : pkSchedule->Load( %u, %u, %04d-%02d-%02d %02d:%02d:%02d, %u ) Load!"
+- "CGuildBattleReservedSchedule::Load() : %s : pkSchedule->Load( %u, %u, %04d-%02d-%02d %02d:%02d:%02d, %u ) Skip!"
+- "CGuildBattleReservedSchedule::Flip() : SLID(%u) m_pkSchedule[%u]->Clear() Elapased Time!"
+- "CGuildBattleReservedSchedule::CleanUpDanglingReservedSchedule() : m_pkSchedule[%u]->Clear() ID(%u)!"
+- "CGuildBattleReservedScheduleListManager::Load(%d,%u,%d,%d) : LoadTodaySchedule() Fail!"
+- "CGuildBattleReservedScheduleListManager::Load(%d,%u,%d,%d) : LoadTomorrowSchedule() Fail!"
+- "CGuildBattleReservedScheduleListManager::LoadTodaySchedule() : UpdateTodaySchedule( %u ) Fail!"
+- "CGuildBattleReservedScheduleListManager::LoadTodaySchedule() : UpdateTomorrowSchedule( %u ) Fail!"
+- "CGuildBattleReservedScheduleListManager::UpdateTodaySchedule(%u) : m_pkToday->Load( %u ) Fail!"
+- "CGuildBattleReservedScheduleListManager::UpdateTodaySchedule(%u) : g_Main.m_pWorldDB->SelectGuildBattleRerservedList( %u, %u ) Fail!"
+- "CGuildBattleReservedScheduleListManager::UpdateTodaySchedule(%u) : CGuildBattleScheduler::Instance()->GetTodaySLIDByMap( %u, %u ) Fail!"
+- "CGuildBattleReservedScheduleListManager::UpdateTomorrowScheduleLoad(%u) : m_pkTomorrow->Load( %u ) Fail!"
+- "CGuildBattleReservedScheduleListManager::UpdateTomorrowSchedule(%u) : g_Main.m_pWorldDB->SelectGuildBattleRerservedList( %u, %u ) Fail!"
+- "CGuildBattleReservedScheduleListManager::UpdateTomorrowSchedule(%u) : CGuildBattleScheduler::Instance()->GetTomorrowSLIDRange( %u, %u ) Fail!"
+- "CReservedGuildSchedulePage::InitClear(%u) : -1 == iToDay || -1 == iTomorrow Fail!"
+- "select count(id) from [dbo].[tbl_ReservedGuildBattleInfo]"
+- "select count(id) from [dbo].[tbl_GuildBattleScheduleInfo]"
+- "{ CALL pSelect_ReservedGuildBattleInfo(%u,%u) }"
+- "{ CALL pSelect_ReservedGuildBattleSchedule( %u, %u ) }"
+- "truncate table tbl_ReservedGuildBattleInfo"
+- "truncate table [dbo].[tbl_GuildBattleScheduleInfo]"
+- "{ CALL pInsert_GuildBattleInfo( %u, 0, 0, 0, 0 ) }"
+- "INSERT INTO [dbo].[tbl_GuildBattleScheduleInfo]( [ID], [SLID], [State], [StartTime], [BattleTurm] )VALUES( %d, %d, 0, 0, 0 )"
+
+## Post/UnmannedTrader additions (2026-02-10)
+- "update [dbo].[tbl_PostStorage] set [dbo].[tbl_PostStorage].dck=1 from (select p.serial from [dbo].[tbl_PostStorage] as p join [dbo].[tbl_base] as b on p.owner <> 0 and p.owner = b.serial and b.dck=1) as d where [dbo].[tbl_PostStorage].serial = d.serial"
+- "select count(serial) from tbl_PostStorage where dck=1"
+- "select * from tbl_PostRegistry where dck=0"
+- "{ CALL pInsert_PostStorageRecord }"
+- "{ CALL pSelect_BossWinRate(%d, N'%s', '%s') }"
+- "select count([id]) from [dbo].[tbl_utresultstateid]"
+- "select top %u [id], [desc] from [dbo].[tbl_utresultstateid]"
+- "truncate table [dbo].[tbl_utresultstateid]"
+- "insert into [dbo].[tbl_utresultstateid] ([id], [desc]) values ( %u, N'%s' )"
+- "update [dbo].[tbl_utresultinfo] set [dbo].[tbl_utresultinfo].state = 0 from ( select s.type, s.serial, s.owner, r.state from [dbo].[tbl_utsellinfo] as s join [dbo].[tbl_utresultinfo] as r on s.owner <> 0 and r.type = s.type and s.serial = r.serial join [dbo].[tbl_base] as b on s.owner = b.serial and b.dck = 1 ) as d where [dbo].[tbl_utresultinfo].type = d.type and [dbo].[tbl_utresultinfo].serial = d.serial"
+- "select count(serial) from tbl_utresultinfo where type = 0 and state = 0"
+- "SELECT TOP 1 SuggesterName, Tax, NextTax FROM [dbo].[tbl_ATradeTaxRate] WHERE Race=%d ORDER BY serial DESC"
+- "OldIncome"
+- "CurrentIncome"
+- "Init tax rate : Suggester:%s tax: %.2f"
+
+## AutoMine/Personal additions (2026-02-10)
+- "..\\ZoneServerLog\\systemlog\\Concession"
+- "..\\ZoneServerLog\\systemlog\\Concession\\AutoMine_R%d_T%d_%d.log"
+- "..\\ZoneServerLog\\systemlog\\Concession\\err_automineR%d_T%d_%d.log"
+- "AutoMine Charge"
+- "Failed AutoMineMachine[%d]::m_Inven.create()"
+- "Failed AutoMineMachine[%d]::_set_mineore()"
+- "[Load DB]GuildSerial:%d Run:%d, Race:%d, Ore:%d, Gage:%d, SlotCnt:%d"
+- "[ERR-Load DB]::m_Inven.push(%d,%d,[%d/%d/%d],%d)"
+- "[Load DB]Page:%d,Slot:%d [ORE Pos:%d,name_%s, num_%d]"
+- "[ERR-Load DB]::Invalid value of race code.(%d-%d)"
+- "Prev Owner:%d"
+- "Prev Owner:NULL"
+- "Changed Owner:%d"
+- "Changed Owner:NULL"
+- "Set Owner:%d"
+- "Set Owner:NULL"
+- "[START] Owner:%d Master:%d"
+- "[ERR-Start]:Have not owner guild"
+- "[STOP] Owner:%d Master:%d"
+- "[ERR-Stop]:Have not owner guild"
+- "[SELECT ORE] Owner:%d Master:%d [Ore:%d]"
+- "[ERR-SelectOre]:max_kind_automine_ore(%d)"
+- "[ERR-Charge]:automine_guild_db_io_wait"
+- "[ERR-Charge]:utomine_nonmatch_charge_value"
+- "[ERR-Charge]:automine_not_enough_gold(T:%u, Cost:%d)"
+- "[ERR-Charge]:Have not owner guild"
+- "Owner:%d Charge:%d GuildGold:%.0f - Cost:%d"
+- "Cost : serial:%d, out:%d, total:%.0f)"
+- "ERR::m_Inven.push(%d,%d,[%d/%d/%d],1)_%d"
+- "STOP : %d"
+- "ERR::Invalid value of table code.(%d)"
+- "ERR::Is not exist ore(%s)"
+- "[ERR-GetOutOreInAutoMine]:automine_invalid_values(%d,%d,%d,%d)"
+- "[ERR-GetOutOreInAutoMine]::m_Inven.push(%d, %d, [%d/%d/%d], %d)_LINE:%d"
+- "[ERR-GetOutOreInAutoMine]:automine_isnot_owner_guild"
+- "ERR - get_slot(%d, %d) is NULL"
+- "[POP ORE] GuildSerial%d MasterSerial:%d [Page:%d_Slot:%d_Ore:%s], Num:%d"
+- "[ERR-MoveOreInAutoMine]:automine_invalid_values(%d,%d,%d,%d)"
+- "[ERR-MoveOreInAutoMine]:automine_isnot_owner_guild"
+- "[ERR-OreMerge]:automine_invalid_values(%d,%d,%d,%d)"
+- "tbl_aminepersonal_inven"
+- "AutominePersonalMgr::CreateDBTable() >> g_Main.m_pWorldDB is NULL."
+- "AutominePersonalMgr::init_Objects() >> Failed allocate memory of AutoMinePersonal[MAX_PLAYER]."
+- "AutominePersonalMgr::init_Objects() >> m_Machine[%d].initialize(%d) failed"
+- "AutominePersonalMgr::initialize() >> init_objects() failed."
+- "AutominePersonalMgr::install() [LINE:%d]"
+- "AutominePersonalMgr::uninstall() [LINE:%d]"
+- "AutominePersonalMgr::check_machine() >> not exist machine"
+- "AutominePersonalMgr::pop_ore() >> Failed CPlayer::CUserDB::Update_ItemSlot()"
+- "AutominePersonalMgr::pop_ore() >> Failed CPlayer::Emb_AddStorage()"
+- "AutominePersonalMgr::pop_ore() >> Is not exist item(%d)"
+- "AutominePersonalMgr::pop_ore()"
+- "AutominePersonalMgr::pop_ore() - Delete Fail"
+- "[dbo].[tbl_automine_inven]"
+- "{ CALL pcreate_automine }"
+- "{ CALL pselect_automine_inven(%d, %d) }"
+- "s_szOreKind_160 = {\"ioblu03\", \"iored03\", \"ioyel03\", \"iogre03\", \"iobla03\"}"
+- "s_szAMPOreKind = {\"ioblu03\", \"iored03\", \"ioyel03\", \"iogre03\", \"iobla03\"}"
+
+## Newly logged (Build fix batch 2026-02-10)
+- "Calc Region time : %d" (CPlayer::CheckPos_Region)
+- "%s: error stored effect, code: %d, idx: %d: lv: %d" (CPlayer::_set_db_sf_effect)
+- "Player Create: %s [%s %s]\r\n" (CMgrAccountLobbyHistory::player_create)
+- "WARNNING : First Connect Char Money Wrong : $D(%d), $G(%d)" (CMgrAccountLobbyHistory::player_create)
+- "Create Complete Player Money: $D(%d), $G(%d)\r\n" (CMgrAccountLobbyHistory::player_create_complete_money)
+- "Player Money FIX: $D(%d -> %d), $G(%d -> %d) [%s %s]\r\n" (CMgrAccountLobbyHistory::player_money_fix)
+- "Failed _insert_to_inven() >> %s" (CGoldenBoxItemMgr::_insert_to_inven)
+- "ItemCombineMgr::ConsumeMeterial_And_CalculateNewItems()" (ItemCombineMgr::ConsumeMeterial_And_CalculateNewItems)
+
+## Newly logged (CMgrGuildHistory additions 2026-02-11)
+- byte_140793818 (CMgrGuildHistory::start_guild header format; current guess: "START GUILD : Name(%s) Serial(%u) Grade(%d) TotalD:%.0f TotalG:%.0f [%s]\r\n")
+- byte_140793850 (CMgrGuildHistory::start_guild member count format; current guess: "MEMBER COUNT : %u\r\n")
+- asc_140793878 (CMgrGuildHistory::join_member format; current guess: "JOIN MEMBER : Name(%s) Serial(%u) Approver(%s,%u) total(%d) [%s]\r\n")
+- aSelfLeaveFmt (CMgrGuildHistory::leave_member self format; original bytes unresolved, current guess: "SELF LEAVE ( %s , %u ) total(%d) [%s]\r\n")
+- aCo (CMgrGuildHistory::leave_member punish format; current guess: "FORCED LEAVE ( %s , %u ) total(%d) [%s]\r\n")
+- asc_140793908 (CMgrGuildHistory::leave_member format; current guess: "LEAVE MEMBER ( %s , %u ) total(%d) [%s]\r\n")

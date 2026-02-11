@@ -10,6 +10,7 @@
 #include <vector>
 
 class CPlayer;
+struct _TRADE_DB_BASE;
 
 class __cppobj CUnmannedTraderUserInfoTable
 {
@@ -18,10 +19,12 @@ public:
 
   CUnmannedTraderUserInfoTable();
   bool Init();
+  bool Load(unsigned __int8 byType, unsigned __int16 wInx, unsigned int dwSerial, _TRADE_DB_BASE *kInfo);
   void SetLogger(CLogFile *pkLogger, CLogFile *pkServiceLogger);
   CUnmannedTraderUserInfo *Find(unsigned int dwSerial);
   CUnmannedTraderUserInfo *FindByIndex(unsigned __int16 wInx);
   CUnmannedTraderUserInfo *FindUser(unsigned __int16 wInx, unsigned int dwSerial);
+  bool CheatCancelRegist(unsigned __int16 wInx, unsigned int dwOwnerSerial, unsigned __int8 byNth);
   unsigned __int8 GetMaxRegistCnt(unsigned __int16 wInx, unsigned int dwSerial);
   const CUnmannedTraderRegistItemInfo *GetRegItemInfo(unsigned __int16 wInx, unsigned int dwSerial);
   CUnmannedTraderItemState::STATE GetCloseItemForPassTimeUpdateInfo(

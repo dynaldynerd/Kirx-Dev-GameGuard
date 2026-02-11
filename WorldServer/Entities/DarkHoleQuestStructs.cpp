@@ -2,6 +2,8 @@
 
 #include "CMainThread.h"
 
+#include <mmsystem.h>
+
 _dh_reward_sub_setup::_dh_reward_sub_setup()
 {
   for (int i = 0; i < 4; ++i)
@@ -327,6 +329,98 @@ _react_sub_setup::_react_sub_setup()
 {
   byReactType = 0;
   pPortalDummy = nullptr;
+}
+
+void _dh_mission_mgr::_count::Init()
+{
+  nCount = 0;
+  bPass = false;
+}
+
+void _dh_mission_mgr::_if_change::Init()
+{
+  pMissionPtr = nullptr;
+  pszDespt = nullptr;
+  pszComMsg = nullptr;
+}
+
+bool _dh_mission_mgr::_if_change::IsFill()
+{
+  return pMissionPtr != nullptr;
+}
+
+void _dh_mission_mgr::_respawn_monster_act::set(__respawn_monster *data)
+{
+  pData = data;
+  nCum = 0;
+  dwLastRespawnTime = 0;
+  if (!data->bCallEvent)
+  {
+    bStart = true;
+  }
+}
+
+void _dh_mission_mgr::Init()
+{
+  pCurMssionPtr = nullptr;
+  for (int j = 0; j < 8; ++j)
+  {
+    Count[j].Init();
+  }
+  memset_0(bOpenPortal, 0, sizeof(bOpenPortal));
+  dwMissionStartTime = timeGetTime();
+  for (int j = 0; j < 100; ++j)
+  {
+    IfCont[j].Init();
+  }
+  memset_0(bInnerCheck, 0, sizeof(bInnerCheck));
+  nRespawnActNum = 0;
+  nAddLimMSecTime = 0;
+}
+
+bool _dh_mission_mgr::IsOpenPortal(int nIndex)
+{
+  return bOpenPortal[nIndex];
+}
+
+void _dh_mission_mgr::NextMission(_dh_mission_setup *pNextMssionPtr)
+{
+  Init();
+  pCurMssionPtr = pNextMssionPtr;
+  dwMissionEndTime += 1000 * pCurMssionPtr->dwLimTimeMSec + dwMissionStartTime;
+  for (int j = 0; j < pNextMssionPtr->nRespawnMonsterNum; ++j)
+  {
+    RespawnMonsterAct[j].set(pNextMssionPtr->pRespawnMonster[j]);
+    ++nRespawnActNum;
+  }
+}
+
+_dh_mission_mgr::_if_change *_dh_mission_mgr::GetMissionCont(_dh_mission_setup *pMsSetup)
+{
+  for (int j = 0; j < 100; ++j)
+  {
+    if (!IfCont[j].IsFill())
+    {
+      return &IfCont[j];
+    }
+    if (IfCont[j].pMissionPtr == pMsSetup)
+    {
+      return &IfCont[j];
+    }
+  }
+  return nullptr;
+}
+
+_dh_mission_mgr::_if_change *_dh_mission_mgr::SearchCurMissionCont()
+{
+  for (int j = 0; j < 100; ++j)
+  {
+    if (IfCont[j].IsFill() && IfCont[j].pMissionPtr == pCurMssionPtr)
+    {
+      return &IfCont[j];
+    }
+  }
+  return nullptr;
 }
 
 void _dh_mission_mgr::OpenPortal(int nIndex)

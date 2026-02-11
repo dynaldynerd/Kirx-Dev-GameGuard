@@ -121,3 +121,11 @@ void CAnimus::SendMsg_Destroy()
   pbyType[1] = 26;
   CircleReport(pbyType, szMsg, 7, false);
 }
+
+void CAnimus::MasterAttack_MasterInform(CCharacter *pDst)
+{
+  if (!m_pTarget)
+  {
+    m_pTarget = pDst;
+  }
+}

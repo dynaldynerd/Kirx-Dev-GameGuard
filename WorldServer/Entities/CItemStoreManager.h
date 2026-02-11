@@ -33,6 +33,7 @@ struct _qry_case_all_store_limit_item
   unsigned int dwCount;
   __list *pStoreList;
 
+  char Init(unsigned int dwStoreNum);
   void DataInit();
 };
 
@@ -42,6 +43,7 @@ class __cppobj CItemStoreManager
 public:
   static CItemStoreManager *Instance();
   bool Init(int nMapNum, int nInstanceListNum);
+  char Load();
   bool InitLogger();
   void SetNextEnforceInitTime();
   unsigned __int8 UpdateStoreLimitItem();
@@ -59,11 +61,19 @@ public:
     unsigned __int64 dwLimitInitTime,
     char *pszQuery,
     int nBufSize);
+  char SelectUsedRecordNum(unsigned int *pdwUsedNum);
+  char SelectTotalRecordNum(unsigned int *pdwTotalNum);
+  char InsertNotEnoughLimitItemRecord(int nNum);
+  char SelectStoreLimitItem();
+  void SetStoreLimitItemData(_qry_case_all_store_limit_item::__list *pData);
+  void SetEnforceInitNormalStore();
+  void SetUpdateDBDataDoNotCheck();
+  char ResetInstanceItemStore(unsigned __int8 byStoreType, int nSerial);
   CMapItemStoreList *GetMapItemStoreListBySerial(int nSerial);
   CMapItemStoreList *GetInstanceStoreListBySerial(int nSerial);
+  CMapItemStoreList *GetEmptyInstanceItemStore();
 
   CMapItemStoreList *GetMapItemStoreListByNum(int nMapNum);
-  CMapItemStoreList *GetMapItemStoreListBySerial(int nSerial);
   CItemStore *GetMapItemStoreFromList(int nMapNum, int nStoreNum);
 
   CLogFile *m_pkLogger;

@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "CheatCommands.h"
+#include "CHEAT_COMMAND.h"
 #include "GlobalObjects.h"
 #include "CPlayer.h"
 #include "CChatStealSystem.h"
@@ -12,14 +13,47 @@
 #include "CHolyStoneSystem.h"
 #include "CRaceBossMsgController.h"
 #include "CMonsterEventRespawn.h"
+#include "CMonsterEventSet.h"
 #include "CRecordData.h"
 #include "CMapData.h"
 #include "CMerchant.h"
 #include "CMonster.h"
 #include "CItemStore.h"
+#include "CItemUpgradeTable.h"
+#include "ItemUpgrade_fld.h"
+#include "CTotalGuildRankManager.h"
+#include "CWeeklyGuildRankManager.h"
+#include "CUnmannedTraderTaxRateManager.h"
+#include "CHonorGuild.h"
+#include "CashItemRemoteStore.h"
+#include "CPcBangFavor.h"
+#include "CGoldenBoxItemMgr.h"
+#include "PCBANG_PRIMIUM_FAVOR.h"
+#include "combine_ex_item_result_zocl.h"
+#include "GuildBattle.h"
+#include "GuildBattleTypes.h"
+#include "CGravityStone.h"
+#include "CGravityStoneRegener.h"
+#include "ObjectCreateSetData.h"
+#include "PatriarchElectProcessor.h"
+#include "CandidateMgr.h"
+#include "AutoMineMachineMng.h"
+#include "CCouponMgr.h"
+#include "RFEvent_ClassRefine.h"
+#include "CLuaScriptMgr.h"
+#include "CLuaCommand.h"
+#include "CCashDBWorkManager.h"
+#include "CTSingleton.h"
+#include "CNationSettingManager.h"
+#include "cStaticMember_Player.h"
+#include "guild_manage_request_clzo.h"
+#include "param_cash.h"
 #include "pnt_rect.h"
 #include "eq_suk_list.h"
 #include "CLogFile.h"
+#include "WorldServerUtil.h"
+
+#include <ctime>
 
 namespace {
 constexpr int kCheatWordCount = 6;
@@ -40,6 +74,138 @@ char *s_pwszDstCheat[kCheatWordCount] = {
 char wszRespon[256] = {};
 CLogFile s_logCheat;
 
+bool CHEAT_COMMAND::operator()(const CHEAT_COMMAND *lhs, const CHEAT_COMMAND *rhs)
+{
+  return lhs->uiCmdLen > rhs->uiCmdLen;
+}
+
+bool AuthorityFilter(CHEAT_COMMAND *pCmd, CPlayer *pOne)
+{
+  if (pOne)
+  {
+    if (g_Main.IsReleaseServiceMode())
+    {
+      const unsigned int useMask = 1u << pOne->m_byUserDgr;
+      if ((useMask & static_cast<unsigned int>(pCmd->nUseDegree)) == 0)
+      {
+        return false;
+      }
+
+      if (pOne->m_byUserDgr == 2)
+      {
+        const unsigned int mgrMask = 1u << pOne->m_bySubDgr;
+        if ((mgrMask & static_cast<unsigned int>(pCmd->nMgrDegree)) == 0)
+        {
+          return false;
+        }
+      }
+    }
+  }
+  else if ((pCmd->nUseDegree & 0x20) == 0)
+  {
+    return false;
+  }
+
+  return true;
+}
+
+bool ProcessCheatCommand(CPlayer *pOne, char *pwszCommand)
+{
+  CNationSettingManager *nationSetting = CTSingleton<CNationSettingManager>::Instance();
+  CHEAT_COMMAND *cheatTable = nationSetting->GetCheatTable();
+
+  if (strchr(pwszCommand, '%'))
+  {
+    sprintf(wszRespon, "%s >> FAIL(grammar or logic)", pwszCommand);
+    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
+    return true;
+  }
+
+  for (int j = 0; ; ++j)
+  {
+    CHEAT_COMMAND *command = &cheatTable[j];
+    if (!command->pwszCommand)
+    {
+      break;
+    }
+
+    if (!_strnicmp(command->pwszCommand, pwszCommand, command->uiCmdLen))
+    {
+      if (AuthorityFilter(command, pOne))
+      {
+        s_nWordCount = ParsingCommandW(&pwszCommand[command->uiCmdLen], 6, s_pwszDstCheat, 32);
+        if (command->fn(pOne))
+        {
+          WriteCheatLog(pwszCommand, pOne);
+          if (pOne)
+          {
+            sprintf(wszRespon, "%s >> OK", pwszCommand);
+            pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
+          }
+          return true;
+        }
+
+        if (pOne)
+        {
+          sprintf(wszRespon, "%s >> FAIL(grammar or logic)", pwszCommand);
+          pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
+        }
+        return false;
+      }
+
+      sprintf(wszRespon, "%s >> ERROR (authority)", pwszCommand);
+      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
+      return false;
+    }
+  }
+
+  if (pOne)
+  {
+    sprintf(wszRespon, "%s >> ERROR (command)", pwszCommand);
+    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
+  }
+
+  return false;
+}
+
+void WriteCheatLog(char *pwszCommand, CPlayer *pOne)
+{
+  char buffer[1284]{};
+  memset_0(buffer, 0, 1280);
+
+  if (pOne)
+  {
+    const char *charName = pOne->m_Param.GetCharNameA();
+    sprintf(buffer, "[ %s ] >> ", charName);
+  }
+  else
+  {
+    sprintf(buffer, "[ GM tool ] >> ");
+  }
+
+  const int offset = static_cast<int>(strlen_0(buffer));
+  W2M(pwszCommand, &buffer[offset], 1280 - offset);
+  s_logCheat.Write(buffer);
+}
+
+void InitCheatCommand(CHEAT_COMMAND *pCmdList, unsigned __int8 *byCommandSizeList)
+{
+  for (int j = 0; ; ++j)
+  {
+    CHEAT_COMMAND *command = &pCmdList[j];
+    if (!command->pwszCommand)
+    {
+      break;
+    }
+    byCommandSizeList[j] = static_cast<unsigned __int8>(strlen_0(command->pwszCommand));
+  }
+
+  const unsigned int korLocalTime = GetKorLocalTime();
+  char buffer[144]{};
+  sprintf(buffer, "..\\ZoneServerLog\\ServiceLog\\Cheat%d.log", korLocalTime);
+  s_logCheat.SetWriteLogFile(buffer, 1, 0, 1, 1);
+}
+
 static const char aA_44[] = "<unknown>";
 static const char aA_45[] = "<unknown>";
 static const char aA_46[] = "<unknown>";
@@ -47,6 +213,15 @@ static const char aA_47[] = "<unknown>";
 static const char aA_48[] = "<unknown>";
 static const char aA_49[] = "<unknown>";
 static const char aA_50[] = "<unknown>";
+static const char aCheatHelpSynta_0[] = "<unknown>";
+static const char aCheatHelpSynta_1[] = "<unknown>";
+static const char aCheatHelpSynta_2[] = "<unknown>";
+static const char aCheatHelpSynta_3[] = "<unknown>";
+static const char aOne_3[] = "<unknown>";
+static const char aCoacE[] = "<unknown>";
+static const char aCoacCodeDBoxAc[] = "<unknown>";
+static const char aCoacE_0[] = "<unknown>";
+static const char aE_2[] = "<unknown>";
 static const char aAi_8[] = "<unknown>";
 static const char aAo_6[] = "<unknown>";
 static const char aAo_7[] = "<unknown>";
@@ -70,6 +245,12 @@ static const char byte_1407AEA9C[] = "<unknown>";
 static const char byte_1407AF0F8[] = "<unknown>";
 static const char byte_1407AF104[] = "<unknown>";
 static const char byte_1407AF110[] = "<unknown>";
+static char unk_1407AE840[] = "<unknown>";
+static char unk_1407AE858[] = "<unknown>";
+static char unk_1407AE868[] = "<unknown>";
+static char unk_1407AE878[] = "<unknown>";
+static char unk_1407AE888[] = "<unknown>";
+static constexpr float FLOAT_100_0 = 100.0f;
 
 static const _eq_suk_list EqSukList[4] = {
   {"weapon", 0, 0},
@@ -77,6 +258,152 @@ static const _eq_suk_list EqSukList[4] = {
   {"shield", 2, 0},
   {"skill", 3, 0},
 };
+
+static GUILD_BATTLE::CNormalGuildBattleField *GetBattleFieldFromPlayer(
+  CPlayer *player,
+  GUILD_BATTLE::CNormalGuildBattle **battleOut = nullptr)
+{
+  if (battleOut)
+  {
+    *battleOut = nullptr;
+  }
+  if (!player || !player->m_Param.m_pGuild)
+  {
+    return nullptr;
+  }
+
+  GUILD_BATTLE::CNormalGuildBattleManager *manager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
+  if (!manager)
+  {
+    return nullptr;
+  }
+
+  GUILD_BATTLE::CNormalGuildBattle *battle =
+    manager->GetBattleByGuildSerial(player->m_Param.m_pGuild->m_dwSerial);
+  if (battleOut)
+  {
+    *battleOut = battle;
+  }
+  return battle ? battle->m_pkField : nullptr;
+}
+
+static bool CheatRegenStoneOnField(
+  GUILD_BATTLE::CNormalGuildBattleField *field,
+  CPlayer *player,
+  int regenIndex,
+  int *portalInx)
+{
+  if (portalInx)
+  {
+    *portalInx = -1;
+  }
+  if (!field || !field->m_pkBall || !field->m_pkMap || !field->m_pkRegenPos || field->m_uiRegenPosCnt == 0)
+  {
+    return false;
+  }
+
+  if (regenIndex < 0)
+  {
+    regenIndex = 0;
+  }
+  if (regenIndex >= static_cast<int>(field->m_uiRegenPosCnt))
+  {
+    return false;
+  }
+
+  CGravityStoneRegener *regen = &field->m_pkRegenPos[regenIndex];
+  if (!regen || !regen->m_pkRegenPos)
+  {
+    return false;
+  }
+
+  _object_create_setdata createData{};
+  createData.m_pRecordSet = nullptr;
+  createData.m_pMap = field->m_pkMap;
+  createData.m_nLayerIndex = player ? player->m_wMapLayerIndex : 0;
+  createData.m_fStartPos[0] = regen->m_pkRegenPos->m_fCenterPos[0];
+  createData.m_fStartPos[1] = regen->m_pkRegenPos->m_fCenterPos[1];
+  createData.m_fStartPos[2] = regen->m_pkRegenPos->m_fCenterPos[2];
+
+  field->m_pkBall->Clear();
+  if (!field->m_pkBall->Regen(&createData))
+  {
+    return false;
+  }
+
+  if (portalInx)
+  {
+    *portalInx = regen->GetPortalInx();
+  }
+  return true;
+}
+
+static bool CheatAssignStoneToPlayer(GUILD_BATTLE::CNormalGuildBattleField *field, CPlayer *player)
+{
+  if (!field || !field->m_pkBall || !player || !field->m_pkBall->m_bLive)
+  {
+    return false;
+  }
+  if (field->m_pkBall->m_pkOwner && field->m_pkBall->m_pkOwner != player)
+  {
+    field->m_pkBall->m_pkOwner->ClearGravityStone();
+  }
+
+  field->m_pkBall->m_pkOwner = player;
+  field->m_pkBall->m_dwTakeLimitTime = GetLoopTime();
+  player->m_bTakeGravityStone = true;
+  return true;
+}
+
+static bool CheatHolyStopBattle()
+{
+  if (g_HolySys.m_SaveData.m_nSceneCode != 1)
+  {
+    return false;
+  }
+  g_HolySys.m_dwCheckTime[1] = GetLoopTime();
+  return true;
+}
+
+static bool CheatHolyKeeperStart(int nKeeperState, int nRace, unsigned int nPassTime)
+{
+  if (g_HolySys.m_SaveData.m_nSceneCode < 2 || g_HolySys.m_SaveData.m_nSceneCode >= 6)
+  {
+    return false;
+  }
+  g_HolySys.m_SaveData.m_nHolyMasterRace = nRace;
+  g_HolySys.SetScene(g_HolySys.m_SaveData.m_byNumOfTime, nKeeperState, nPassTime, 1);
+  return true;
+}
+
+static bool CheatHolyState(CPlayer *player)
+{
+  if (!player)
+  {
+    return false;
+  }
+
+  char chat[256]{};
+  sprintf(
+    chat,
+    "Holy scene=%d, schedule=%u, master=%d, destroyer=%u",
+    g_HolySys.GetSceneCode(),
+    static_cast<unsigned int>(g_HolySys.GetNumOfTime()),
+    g_HolySys.GetHolyMasterRace(),
+    g_HolySys.GetDestroyerSerial());
+  player->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, chat, 0xFFu, 0LL);
+
+  sprintf(
+    chat,
+    "Start %04u-%02u-%02u %02u:%02u",
+    static_cast<unsigned int>(g_HolySys.GetStartYear()),
+    static_cast<unsigned int>(g_HolySys.GetStartMonth()),
+    static_cast<unsigned int>(g_HolySys.GetStartDay()),
+    static_cast<unsigned int>(g_HolySys.GetStartHour()),
+    static_cast<unsigned int>(g_HolySys.GetStartMin()));
+  player->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, chat, 0xFFu, 0LL);
+  return true;
+}
 
 bool __fastcall ct_change_degree(CPlayer *pOne)
 {
@@ -101,7 +428,7 @@ bool __fastcall ct_respawn_start(CPlayer *pOne)
   bool started; // [rsp+114h] [rbp-24h]
 
   W2M(s_pwszDstCheat[0], szTran, 0x20u);
-  started = CMonsterEventRespawn::StartRespawnEvent(&g_MonsterEventRespawn, szTran, pwszErrCode);
+  started = g_MonsterEventRespawn.StartRespawnEvent(szTran, pwszErrCode);
   if ( !pOne )
     return 0;
   if ( started )
@@ -122,7 +449,7 @@ bool __fastcall ct_respawn_stop(CPlayer *pOne)
   bool v7; // [rsp+114h] [rbp-24h]
 
   W2M(s_pwszDstCheat[0], szTran, 0x20u);
-  v7 = CMonsterEventRespawn::StopRespawnEvent(&g_MonsterEventRespawn, szTran, pwszErrCode);
+  v7 = g_MonsterEventRespawn.StopRespawnEvent(szTran, pwszErrCode);
   if ( !pOne )
     return 0;
   if ( v7 )
@@ -255,10 +582,10 @@ bool __fastcall ct_all_map(CPlayer *pOne)
     return 0;
   for ( n = 0; ; ++n )
   {
-    RecordNum = CRecordData::GetRecordNum(&g_Main.m_tblItemData[21]);
+    RecordNum = g_Main.m_tblItemData[21].GetRecordNum();
     if ( n >= RecordNum )
       break;
-    Record = CRecordData::GetRecord(&g_Main.m_tblItemData[21], n);
+    Record = g_Main.m_tblItemData[21].GetRecord(n);
     pOne->dev_loot_item(Record->m_strCode, 1, 0LL, 0);
   }
   return 1;
@@ -1003,20 +1330,20 @@ bool __fastcall ct_circle_user_num(CPlayer *pOne)
 
   if ( !pOne )
     return 0;
-  if ( CGameObject::GetCurSecNum(pOne) == -1 )
+  if ( pOne->GetCurSecNum() == -1 )
     return 0;
   memset(v6, 0, 12);
   v7 = 0;
-  SecInfo = CMapData::GetSecInfo(pOne->m_pCurMap);
-  nSecNum = CGameObject::GetCurSecNum(pOne);
-  UseSectorRange = CGameObject::GetUseSectorRange(pOne);
-  CMapData::GetRectInRadius(pOne->m_pCurMap, &pRect, UseSectorRange, nSecNum);
+  SecInfo = pOne->m_pCurMap->GetSecInfo();
+  nSecNum = static_cast<int>(pOne->GetCurSecNum());
+  UseSectorRange = static_cast<int>(pOne->GetUseSectorRange());
+  pOne->m_pCurMap->GetRectInRadius(&pRect, UseSectorRange, nSecNum);
   for ( j = pRect.nStarty; j <= pRect.nEndy; ++j )
   {
     for ( k = pRect.nStartx; k <= pRect.nEndx; ++k )
     {
       dwSecIndex = SecInfo->m_nSecNumW * j + k;
-      SectorListPlayer = CMapData::GetSectorListPlayer(pOne->m_pCurMap, pOne->m_wMapLayerIndex, dwSecIndex);
+      SectorListPlayer = pOne->m_pCurMap->GetSectorListPlayer(pOne->m_wMapLayerIndex, dwSecIndex);
       if ( SectorListPlayer )
       {
         m_pNext = SectorListPlayer->m_Head.m_pNext;
@@ -1024,7 +1351,7 @@ bool __fastcall ct_circle_user_num(CPlayer *pOne)
         {
           m_pItem = m_pNext->m_pItem;
           m_pNext = m_pNext->m_pNext;
-          v16 = m_pItem->GetObjRace(m_pItem);
+          v16 = static_cast<unsigned int>(m_pItem->GetObjRace());
           if ( v16 < 3 )
           {
             ++v6[v16];
@@ -1055,8 +1382,7 @@ bool __fastcall ct_boss_sms_cancel(CPlayer *pOne)
   dwMsgID = atoi(s_pwszDstCheat[1]);
   v7 = atoi(s_pwszDstCheat[0]);
   v4 = CRaceBossMsgController::Instance();
-  CRaceBossMsgController::Cancel(v4, v7, dwMsgID, pOne);
-  return 1;
+  return v4->Cancel(static_cast<unsigned __int8>(v7), dwMsgID, pOne) != 0;
 }
 
 bool __fastcall ct_trunk_init(CPlayer *pOne)
@@ -1084,7 +1410,7 @@ bool __fastcall ct_fullset(CPlayer *pOne)
     return 0;
   pOne->dev_lv(nLv);
   pOne->dev_up_all(400000000);
-  if ( !CMainThread::IsReleaseServiceMode(&g_Main) )
+  if ( !g_Main.IsReleaseServiceMode() )
     pOne->dev_dalant(0xFFFFFFFF);
   pOne->dev_loot_fullitem(nLv);
   return 1;
@@ -1107,14 +1433,16 @@ bool __fastcall ct_loot_upgrade(CPlayer *pOne)
     return 0;
   for ( dwIndex = 0; ; ++dwIndex )
   {
-    Size = CItemUpgradeTable::GetSize(&g_Main.m_tblItemUpgrade);
+    Size = g_Main.m_tblItemUpgrade.m_tblItemUpgrade.GetRecordNum();
     if ( (int)dwIndex >= Size )
       break;
-    Record = CItemUpgradeTable::GetRecord(&g_Main.m_tblItemUpgrade, dwIndex);
-    RecordByHash = (unsigned __int16 *)CRecordData::GetRecordByHash(&g_Main.m_tblItemData[18], Record->m_strCode, 2, 5);
+    Record = g_Main.m_tblItemUpgrade.GetRecord(dwIndex);
+    if ( !Record )
+      continue;
+    RecordByHash = (unsigned __int16 *)g_Main.m_tblItemData[18].GetRecordByHash(Record->m_strCode, 2, 5);
     if ( RecordByHash )
     {
-      _STORAGE_LIST::_db_con::_db_con(&pItem);
+      pItem = _STORAGE_LIST::_db_con();
       pItem.m_byTableCode = 18;
       pItem.m_wItemIndex = *RecordByHash;
       pItem.m_dwDur = 99LL;
@@ -1133,10 +1461,10 @@ bool __fastcall ct_loot_upgrade(CPlayer *pOne)
         return 1;
     }
   }
-  v10 = (unsigned __int16 *)CRecordData::GetRecordByHash(&g_Main.m_tblItemData[11], "immmm04", 2, 5);
+  v10 = (unsigned __int16 *)g_Main.m_tblItemData[11].GetRecordByHash("immmm04", 2, 5);
   if ( !v10 )
     return 1;
-  _STORAGE_LIST::_db_con::_db_con(&v11);
+  v11 = _STORAGE_LIST::_db_con();
   v11.m_byTableCode = 11;
   v11.m_wItemIndex = *v10;
   v11.m_dwDur = GetItemDurPoint(11, dwIndex);
@@ -1161,13 +1489,13 @@ bool __fastcall ct_loot_dungeon(CPlayer *pOne)
     return 0;
   for ( n = 0; ; ++n )
   {
-    RecordNum = CRecordData::GetRecordNum(&g_Main.m_tblItemData[23]);
+    RecordNum = g_Main.m_tblItemData[23].GetRecordNum();
     if ( n >= RecordNum )
       break;
-    Record = (unsigned __int16 *)CRecordData::GetRecord(&g_Main.m_tblItemData[23], n);
+    Record = (unsigned __int16 *)g_Main.m_tblItemData[23].GetRecord(n);
     if ( !Record )
       break;
-    _STORAGE_LIST::_db_con::_db_con(&pItem);
+    pItem = _STORAGE_LIST::_db_con();
     pItem.m_byTableCode = 23;
     pItem.m_wItemIndex = *Record;
     pItem.m_dwDur = 1LL;
@@ -1202,7 +1530,7 @@ bool __fastcall ct_defense_item_grace(CPlayer *pOne)
   if ( s_nWordCount < 2 )
     return 0;
   v6 = -1;
-  if ( !strcmp_0(&byte_1407AE5D0, s_pwszDstCheat[0]) )
+  if ( !strcmp_0(byte_1407AE5D0, s_pwszDstCheat[0]) )
   {
     v6 = 0;
   }
@@ -1214,7 +1542,7 @@ bool __fastcall ct_defense_item_grace(CPlayer *pOne)
   {
     v6 = 2;
   }
-  else if ( !strcmp_0(&byte_1407AE5E8, s_pwszDstCheat[0]) )
+  else if ( !strcmp_0(byte_1407AE5E8, s_pwszDstCheat[0]) )
   {
     v6 = 3;
   }
@@ -1222,15 +1550,15 @@ bool __fastcall ct_defense_item_grace(CPlayer *pOne)
   {
     v6 = 4;
   }
-  else if ( !strcmp_0(&byte_1407AE5F8, s_pwszDstCheat[0]) )
+  else if ( !strcmp_0(byte_1407AE5F8, s_pwszDstCheat[0]) )
   {
     v6 = 5;
   }
-  else if ( !strcmp_0(&byte_1407AE600, s_pwszDstCheat[0]) )
+  else if ( !strcmp_0(byte_1407AE600, s_pwszDstCheat[0]) )
   {
     v6 = 7;
   }
-  else if ( !strcmp_0(&byte_1407AE608, s_pwszDstCheat[0]) )
+  else if ( !strcmp_0(byte_1407AE608, s_pwszDstCheat[0]) )
   {
     v6 = 37;
   }
@@ -1381,7 +1709,7 @@ bool __fastcall ct_loot_upgrade_item(CPlayer *pOne)
   nNum = atoi(s_pwszDstCheat[1]);
   W2M(s_pwszDstCheat[0], szTran, 0x20u);
   W2M(s_pwszDstCheat[2], Str1, 0x20u);
-  if ( !strcmp_0(Str1, &byte_1407AE660) )
+  if ( !strcmp_0(Str1, byte_1407AE660) )
   {
     strcpy_0(Destination, "irtal01");
   }
@@ -1389,7 +1717,7 @@ bool __fastcall ct_loot_upgrade_item(CPlayer *pOne)
   {
     strcpy_0(Destination, "irtal02");
   }
-  else if ( !strcmp_0(Str1, &byte_1407AE680) )
+  else if ( !strcmp_0(Str1, byte_1407AE680) )
   {
     strcpy_0(Destination, "irtal03");
   }
@@ -1413,15 +1741,15 @@ bool __fastcall ct_loot_upgrade_item(CPlayer *pOne)
   {
     strcpy_0(Destination, "irtal08");
   }
-  else if ( !strcmp_0(Str1, &byte_1407AE6E0) )
+  else if ( !strcmp_0(Str1, byte_1407AE6E0) )
   {
     strcpy_0(Destination, "irtal09");
   }
-  else if ( !strcmp_0(Str1, &byte_1407AE6F0) )
+  else if ( !strcmp_0(Str1, byte_1407AE6F0) )
   {
     strcpy_0(Destination, "irtal10");
   }
-  else if ( !strcmp_0(Str1, &byte_1407AE700) )
+  else if ( !strcmp_0(Str1, byte_1407AE700) )
   {
     strcpy_0(Destination, "irtal11");
   }
@@ -1461,8 +1789,7 @@ bool __fastcall ct_resurrect_player(CPlayer *pOne)
       return pOne->mgr_resurrect_player(s_pwszDstCheat[0]);
     PvpPointLimiter = pOne->GetPvpPointLimiter(&result);
     v8 = PvpPointLimiter;
-    CPvpPointLimiter::CheatUpdate(PvpPointLimiter, pOne->m_Param.m_dbChar.m_dPvPPoint);
-    CPvpPointLimiter::~CPvpPointLimiter(&result);
+    PvpPointLimiter->CheatUpdate(pOne->m_Param.m_dbChar.m_dPvPPoint);
   }
   return pOne->pc_Resurrect(0);
 }
@@ -1499,7 +1826,12 @@ bool __fastcall ct_add_guild_schedule(CPlayer *pOne)
         if ( (dwStartTime & 0x80000000) == 0 )
         {
           v4 = CGuildBattleController::Instance();
-          v12 = CGuildBattleController::Add(v4, pSrcGuild, pDestGuild, dwStartTime, v10, dwMapInx);
+          v12 = v4->Add(
+            pSrcGuild,
+            pDestGuild,
+            dwStartTime,
+            static_cast<unsigned __int8>(v10),
+            dwMapInx);
           sprintf(Buffer, "Add GuildBattle Schedule : %u", v12);
           pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
           return v12 == 0;
@@ -1578,154 +1910,158 @@ bool __fastcall ct_cur_guildbattle_color(CPlayer *pOne)
 
 bool __fastcall ct_create_guildbattle_field_object(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CGuildBattleController *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-28h] BYREF
+  GUILD_BATTLE::CNormalGuildBattleField *field = GetBattleFieldFromPlayer(pOne);
+  if (!field || !field->m_pkBall || !field->m_pkMap)
+  {
+    return false;
+  }
 
-  if ( !pOne )
-    return 0;
-  v4 = CGuildBattleController::Instance();
-  return CGuildBattleController::CheatCreateFieldObject(v4, pOne);
+  _object_create_setdata createData{};
+  createData.m_pRecordSet = nullptr;
+  createData.m_pMap = field->m_pkMap;
+  createData.m_nLayerIndex = pOne->m_wMapLayerIndex;
+  createData.m_fStartPos[0] = pOne->m_fCurPos[0];
+  createData.m_fStartPos[1] = pOne->m_fCurPos[1];
+  createData.m_fStartPos[2] = pOne->m_fCurPos[2];
+  field->m_pkBall->Clear();
+  return field->m_pkBall->Regen(&createData) != 0;
 }
 
 bool __fastcall ct_destroy_guildbattle_field_object(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CGuildBattleController *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-28h] BYREF
-
-  if ( !pOne )
-    return 0;
-  v4 = CGuildBattleController::Instance();
-  return CGuildBattleController::CheatDestroyFieldObject(v4, pOne);
+  GUILD_BATTLE::CNormalGuildBattleField *field = GetBattleFieldFromPlayer(pOne);
+  if (!field || !field->m_pkBall)
+  {
+    return false;
+  }
+  field->m_pkBall->Clear();
+  return true;
 }
 
 bool __fastcall ct_regen_gravitystone(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CGuildBattleController *v4; // rax
-  CGuildBattleController *v5; // rax
-  __int64 v6; // [rsp+0h] [rbp-108h] BYREF
-  int iRengenPos; // [rsp+40h] [rbp-C8h]
-  int v8; // [rsp+44h] [rbp-C4h]
-  char Buffer[144]; // [rsp+60h] [rbp-A8h] BYREF
+  int portalInx = -1;
+  int regenPos = -1;
+  char Buffer[144]{};
 
-  if ( !pOne )
-    return 0;
-  if ( s_nWordCount )
+  if (!pOne)
   {
-    if ( s_nWordCount == 1 )
-    {
-      iRengenPos = atoi(s_pwszDstCheat[0]);
-      v5 = CGuildBattleController::Instance();
-      v8 = CGuildBattleController::CheatRegenStone(v5, pOne, iRengenPos);
-      if ( v8 >= 0 )
-      {
-        sprintf(Buffer, "Regen Stone(%d) PortalInx : %d", iRengenPos, v8);
-        pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
-        return 1;
-      }
-      else
-      {
-        return 0;
-      }
-    }
-    else
-    {
-      return 0;
-    }
+    return false;
   }
-  else
+  if (s_nWordCount > 1)
   {
-    v4 = CGuildBattleController::Instance();
-    return CGuildBattleController::CheatRegenStone(v4, pOne, -1) == 0;
+    return false;
   }
+  if (s_nWordCount == 1)
+  {
+    regenPos = atoi(s_pwszDstCheat[0]);
+  }
+
+  GUILD_BATTLE::CNormalGuildBattleField *field = GetBattleFieldFromPlayer(pOne);
+  if (!CheatRegenStoneOnField(field, pOne, regenPos, &portalInx))
+  {
+    return false;
+  }
+
+  if (s_nWordCount == 1)
+  {
+    sprintf(Buffer, "Regen Stone(%d) PortalInx : %d", regenPos, portalInx);
+    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
+  }
+  return true;
 }
 
 bool __fastcall ct_destroy_gravitystone(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CGuildBattleController *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-28h] BYREF
-
-  if ( !pOne )
-    return 0;
-  if ( s_nWordCount )
-    return 0;
-  v4 = CGuildBattleController::Instance();
-  return CGuildBattleController::CheatDestroyStone(v4, pOne);
+  GUILD_BATTLE::CNormalGuildBattleField *field = GetBattleFieldFromPlayer(pOne);
+  if (!field || !field->m_pkBall || s_nWordCount)
+  {
+    return false;
+  }
+  field->m_pkBall->Clear();
+  return true;
 }
 
 bool __fastcall ct_take_gravitystone(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CGuildBattleController *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-38h] BYREF
-  int iPortalInx; // [rsp+20h] [rbp-18h]
+  int iPortalInx;
+  int regenInx = -1;
+  GUILD_BATTLE::CNormalGuildBattleField *field;
 
-  if ( !pOne )
-    return 0;
-  if ( s_nWordCount != 1 )
-    return 0;
+  if (!pOne || s_nWordCount != 1)
+  {
+    return false;
+  }
+
   iPortalInx = atoi(s_pwszDstCheat[0]);
-  v4 = CGuildBattleController::Instance();
-  return CGuildBattleController::CheatTakeStone(v4, iPortalInx, pOne);
+  field = GetBattleFieldFromPlayer(pOne);
+  if (!field || !field->m_pkBall || !field->m_pkRegenPos)
+  {
+    return false;
+  }
+
+  for (unsigned int j = 0; j < field->m_uiRegenPosCnt; ++j)
+  {
+    if (field->m_pkRegenPos[j].GetPortalInx() == iPortalInx)
+    {
+      regenInx = static_cast<int>(j);
+      break;
+    }
+  }
+  if (regenInx < 0)
+  {
+    return false;
+  }
+
+  if (!field->m_pkBall->m_bLive && !CheatRegenStoneOnField(field, pOne, regenInx, nullptr))
+  {
+    return false;
+  }
+  return CheatAssignStoneToPlayer(field, pOne);
 }
 
 bool __fastcall ct_get_gravitystone(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CGuildBattleController *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-28h] BYREF
-
-  if ( !pOne )
-    return 0;
-  if ( s_nWordCount )
-    return 0;
-  v4 = CGuildBattleController::Instance();
-  return CGuildBattleController::CheatGetStone(v4, pOne);
+  GUILD_BATTLE::CNormalGuildBattleField *field = GetBattleFieldFromPlayer(pOne);
+  if (!field || !field->m_pkBall || s_nWordCount)
+  {
+    return false;
+  }
+  if (!field->m_pkBall->m_bLive && !CheatRegenStoneOnField(field, pOne, 0, nullptr))
+  {
+    return false;
+  }
+  return CheatAssignStoneToPlayer(field, pOne);
 }
 
 bool __fastcall ct_drop_gravitystone(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CGuildBattleController *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-28h] BYREF
-
-  if ( !pOne )
-    return 0;
-  if ( s_nWordCount )
-    return 0;
-  v4 = CGuildBattleController::Instance();
-  return CGuildBattleController::CheatDropStone(v4, pOne);
+  GUILD_BATTLE::CNormalGuildBattleField *field = GetBattleFieldFromPlayer(pOne);
+  if (!field || !field->m_pkBall || s_nWordCount)
+  {
+    return false;
+  }
+  return field->m_pkBall->Drop(pOne) == 0;
 }
 
 bool __fastcall ct_guild_battle_force_stone(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CGuildBattleController *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-28h] BYREF
-
-  if ( !pOne )
-    return 0;
-  v4 = CGuildBattleController::Instance();
-  return CGuildBattleController::CheatForceTakeStone(v4, pOne);
+  GUILD_BATTLE::CNormalGuildBattleField *field = GetBattleFieldFromPlayer(pOne);
+  if (!field || !field->m_pkBall)
+  {
+    return false;
+  }
+  if (!field->m_pkBall->m_bLive && !CheatRegenStoneOnField(field, pOne, 0, nullptr))
+  {
+    return false;
+  }
+  return CheatAssignStoneToPlayer(field, pOne);
 }
 
 bool __fastcall ct_check_guild_batlle_goal(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CGuildBattleController *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-38h] BYREF
+  GUILD_BATTLE::CNormalGuildBattle *battle = nullptr;
+  GUILD_BATTLE::CNormalGuildBattleField *field = nullptr;
   int iPortalInx; // [rsp+20h] [rbp-18h]
 
   if ( !pOne )
@@ -1733,17 +2069,22 @@ bool __fastcall ct_check_guild_batlle_goal(CPlayer *pOne)
   if ( s_nWordCount != 1 )
     return 0;
   iPortalInx = atoi(s_pwszDstCheat[0]);
-  v4 = CGuildBattleController::Instance();
-  CGuildBattleController::CheckGoal(v4, pOne, iPortalInx);
-  return 1;
+  (void)iPortalInx;
+  field = GetBattleFieldFromPlayer(pOne, &battle);
+  if (!field || !field->m_pkBall || !battle)
+  {
+    return false;
+  }
+  if (field->m_pkBall->Drop(pOne) != 0)
+  {
+    return false;
+  }
+  battle->NotifyDestoryBall(pOne->m_dwObjSerial);
+  return true;
 }
 
 bool __fastcall ct_recv_reserved_schedulelist(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CGuildBattleController *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-68h] BYREF
   int byDay; // [rsp+40h] [rbp-28h]
   int byPage; // [rsp+44h] [rbp-24h]
   unsigned int dwGuildSerial; // [rsp+48h] [rbp-20h]
@@ -1759,90 +2100,131 @@ bool __fastcall ct_recv_reserved_schedulelist(CPlayer *pOne)
   dwGuildSerial = -1;
   if ( pOne->m_Param.m_pGuild )
     dwGuildSerial = pOne->m_Param.m_pGuild->m_dwSerial;
-  uiMapID = CPlayerDB::GetRaceCode(&pOne->m_Param);
+  uiMapID = pOne->m_Param.GetRaceCode();
   n = pOne->m_ObjID.m_wIndex;
-  v4 = CGuildBattleController::Instance();
-  CGuildBattleController::SendReservedScheduleList(v4, n, uiMapID, 0, byDay, byPage, dwGuildSerial);
-  return 1;
+
+  GUILD_BATTLE::CGuildBattleReservedScheduleListManager *listManager =
+    GUILD_BATTLE::CGuildBattleReservedScheduleListManager::Instance();
+  if (!listManager || uiMapID >= listManager->m_uiMapCnt || (byDay != 0 && byDay != 1))
+  {
+    return false;
+  }
+
+  GUILD_BATTLE::CReservedGuildScheduleDayGroup *dayGroup =
+    (byDay == 0) ? listManager->m_pkToday : listManager->m_pkTomorrow;
+  if (!dayGroup || uiMapID >= dayGroup->m_uiMapCnt)
+  {
+    return false;
+  }
+
+  GUILD_BATTLE::CReservedGuildScheduleMapGroup *mapGroup = &dayGroup->m_pkList[uiMapID];
+  if (byPage < 0 || byPage >= mapGroup->m_byMaxPage)
+  {
+    return false;
+  }
+
+  GUILD_BATTLE::CReservedGuildSchedulePage *page = &mapGroup->m_kList[byPage];
+  if (!page->m_pkList)
+  {
+    return false;
+  }
+
+  page->m_pkList->bySelfScheduleInx = static_cast<unsigned __int8>(-1);
+  for (int j = 0; j < 5; ++j)
+  {
+    if (page->m_dw1PGuildSerial[j] == dwGuildSerial || page->m_dw2PGuildSerial[j] == dwGuildSerial)
+    {
+      page->m_pkList->bySelfScheduleInx = static_cast<unsigned __int8>(j);
+      break;
+    }
+  }
+
+  unsigned __int8 type[2] = {27, 51};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    n,
+    type,
+    reinterpret_cast<char *>(page->m_pkList),
+    static_cast<unsigned __int16>(sizeof(_guild_battle_reserved_schedule_result_zocl)));
+  return true;
 }
 
 bool __fastcall ct_recv_current_battle_info(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CGuildBattleController *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-38h] BYREF
   unsigned int uiMapID; // [rsp+20h] [rbp-18h]
   int n; // [rsp+24h] [rbp-14h]
 
   if ( !pOne )
     return 0;
-  uiMapID = CPlayerDB::GetRaceCode(&pOne->m_Param);
+  uiMapID = pOne->m_Param.GetRaceCode();
   n = pOne->m_ObjID.m_wIndex;
-  v4 = CGuildBattleController::Instance();
-  CGuildBattleController::SendCurrentBattleInfoRequest(v4, n, uiMapID);
-  return 1;
+
+  GUILD_BATTLE::CCurrentGuildBattleInfoManager *infoManager =
+    GUILD_BATTLE::CCurrentGuildBattleInfoManager::Instance();
+  if (!infoManager || uiMapID >= infoManager->m_uiMapCnt || !infoManager->m_pkInfo)
+  {
+    return false;
+  }
+
+  unsigned __int8 type[2] = {27, 52};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    n,
+    type,
+    reinterpret_cast<char *>(&infoManager->m_pkInfo[uiMapID]),
+    static_cast<unsigned __int16>(sizeof(_guild_battle_current_battle_info_result_zocl)));
+  return true;
 }
 
 bool __fastcall ct_add_one_day_guild_schedule(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CGuildBattleController *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-198h] BYREF
-  char *pwszGuildName; // [rsp+48h] [rbp-150h]
-  char *v7[9]; // [rsp+50h] [rbp-148h]
-  unsigned int dwMapInx[7]; // [rsp+98h] [rbp-100h]
-  unsigned __int8 v9; // [rsp+B4h] [rbp-E4h]
-  CGuild *pSrcGuild; // [rsp+B8h] [rbp-E0h]
-  CGuild *pDestGuild; // [rsp+C0h] [rbp-D8h]
-  char Buffer[132]; // [rsp+E0h] [rbp-B8h] BYREF
-  unsigned int dwStartTime; // [rsp+164h] [rbp-34h]
-  int j; // [rsp+168h] [rbp-30h]
-  __int64 v15; // [rsp+178h] [rbp-20h]
+  char Buffer[132]{};
+  unsigned int dwMapInx[3] = {0, 1, 3};
+  char *guildNames[6] = {
+    unk_1407AE840,
+    unk_1407AE858,
+    unk_1407AE868,
+    unk_1407AE878,
+    unk_1407AE888,
+    unk_1407AE840,
+  };
+  unsigned __int8 result = 0;
 
-  if ( !pOne )
-    return 0;
-  pwszGuildName = (char *)&unk_1407AE840;
-  v7[0] = "";
-  v7[1] = (char *)&unk_1407AE858;
-  v7[2] = (char *)&unk_1407AE868;
-  v7[3] = (char *)&unk_1407AE878;
-  v7[4] = (char *)&unk_1407AE888;
-  dwMapInx[0] = 0;
-  dwMapInx[1] = 1;
-  dwMapInx[2] = 3;
-  v9 = 0;
-  pSrcGuild = 0LL;
-  pDestGuild = 0LL;
-  for ( dwStartTime = 0; (int)dwStartTime < 22; ++dwStartTime )
+  if (!pOne)
   {
-    for ( j = 0; j < 3; ++j )
+    return false;
+  }
+
+  CGuildBattleController *controller = CGuildBattleController::Instance();
+  for (unsigned int dwStartTime = 0; dwStartTime < 22; ++dwStartTime)
+  {
+    for (int j = 0; j < 3; ++j)
     {
-      pSrcGuild = GetGuildPtrFromName(g_Guild, 500, v7[2 * j - 1]);
-      if ( !pSrcGuild )
+      CGuild *pSrcGuild = GetGuildPtrFromName(g_Guild, MAX_GUILD, guildNames[j * 2]);
+      if (!pSrcGuild)
       {
-        sprintf(Buffer, "Invalid Src Guild : %s", v7[2 * j - 1]);
+        sprintf(Buffer, "Invalid Src Guild : %s", guildNames[j * 2]);
         pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
-        return 0;
+        return false;
       }
-      pDestGuild = GetGuildPtrFromName(g_Guild, 500, v7[2 * j]);
-      if ( !pDestGuild )
+
+      CGuild *pDestGuild = GetGuildPtrFromName(g_Guild, MAX_GUILD, guildNames[j * 2 + 1]);
+      if (!pDestGuild)
       {
-        sprintf(Buffer, "Invalid Dest Guild : %s", v7[2 * j]);
+        sprintf(Buffer, "Invalid Dest Guild : %s", guildNames[j * 2 + 1]);
         pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
-        return 0;
+        return false;
       }
-      v15 = j;
-      v4 = CGuildBattleController::Instance();
-      v9 = CGuildBattleController::Add(v4, pSrcGuild, pDestGuild, dwStartTime, 0, dwMapInx[v15]);
-      if ( v9 )
+
+      result = controller->Add(pSrcGuild, pDestGuild, dwStartTime, static_cast<unsigned __int8>(0), dwMapInx[j]);
+      if (result)
+      {
         break;
+      }
     }
   }
-  sprintf(Buffer, "Add GuildBattle Schedule : %u", v9);
+
+  sprintf(Buffer, "Add GuildBattle Schedule : %u", result);
   pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
-  return v9 == 0;
+  return result == 0;
 }
 
 bool __fastcall ct_guild_suggest(CPlayer *pOne)
@@ -1871,7 +2253,7 @@ bool __fastcall ct_recv_total_guild_rank(CPlayer *pOne)
   dwVer = atoi(s_pwszDstCheat[0]);
   v7 = atoi(s_pwszDstCheat[1]);
   v4 = CTotalGuildRankManager::Instance();
-  CTotalGuildRankManager::Send(v4, dwVer, v7, pOne);
+  v4->Send(dwVer, v7, pOne);
   return 1;
 }
 
@@ -1891,7 +2273,15 @@ bool __fastcall ct_recv_pvp_guild_rank(CPlayer *pOne)
   dwVer = atoi(s_pwszDstCheat[0]);
   v7 = atoi(s_pwszDstCheat[1]);
   v4 = CWeeklyGuildRankManager::Instance();
-  CWeeklyGuildRankManager::Send(v4, dwVer, v7, pOne);
+  {
+    unsigned int guildSerial = static_cast<unsigned int>(-1);
+    if (pOne->m_Param.m_pGuild)
+    {
+      guildSerial = pOne->m_Param.m_pGuild->m_dwSerial;
+    }
+    const unsigned __int8 selfRace = static_cast<unsigned __int8>(pOne->m_Param.GetRaceCode());
+    v4->m_kInfo.Send(dwVer, pOne->m_ObjID.m_wIndex, v7, selfRace, guildSerial);
+  }
   return 1;
 }
 
@@ -1913,21 +2303,19 @@ bool __fastcall ct_recv_change_atrad_taxrate(CPlayer *pOne)
   dwNewTaxRate = atoi(s_pwszDstCheat[1]);
   if ( v6 > 2 )
     return 0;
-  pCheaterName = CPlayerDB::GetCharNameW(&pOne->m_Param);
+  pCheaterName = pOne->m_Param.GetCharNameW();
   v4 = CUnmannedTraderTaxRateManager::Instance();
-  return CUnmannedTraderTaxRateManager::CheatChangeTaxRate(v4, v6, dwNewTaxRate, pCheaterName);
+  v4->SetPatriarchTaxMoney(static_cast<unsigned __int8>(v6), dwNewTaxRate);
+  (void)pCheaterName;
+  return 1;
 }
 
 bool __fastcall ct_combine_ex_result(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  __int64 v4; // [rsp+0h] [rbp-188h] BYREF
-  _combine_ex_item_result_zocl pSend; // [rsp+30h] [rbp-158h] BYREF
+  _combine_ex_item_result_zocl pSend{};
 
   if ( !pOne )
     return 0;
-  _combine_ex_item_result_zocl::_combine_ex_item_result_zocl(&pSend);
   pSend.byErrCode = 0;
   pSend.byDlgType = 1;
   pSend.ItemBuff.byItemListNum = 1;
@@ -1942,9 +2330,6 @@ bool __fastcall ct_combine_ex_result(CPlayer *pOne)
 
 bool __fastcall ct_amp_set(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  __int64 v4; // [rsp+0h] [rbp-38h] BYREF
   unsigned int dwDelay; // [rsp+20h] [rbp-18h]
   unsigned int dwDS; // [rsp+24h] [rbp-14h]
 
@@ -1952,59 +2337,58 @@ bool __fastcall ct_amp_set(CPlayer *pOne)
     return 0;
   if ( !pOne->m_bOper )
     return 0;
-  if ( !AutominePersonal::is_installed(pOne->m_Param.m_pAPM) )
+  if ( !pOne->m_Param.m_pAPM || !pOne->m_Param.m_pAPM->is_installed() )
     return 0;
   dwDelay = atoi(s_pwszDstCheat[0]);
   dwDS = atoi(s_pwszDstCheat[1]);
   if ( dwDelay )
-    AutominePersonal::set_delay(pOne->m_Param.m_pAPM, dwDelay);
+    pOne->m_Param.m_pAPM->m_dwDelay = dwDelay;
   if ( dwDS )
-    AutominePersonal::set_delaysec(pOne->m_Param.m_pAPM, dwDS);
+    pOne->m_Param.m_pAPM->m_dwDelaySec = static_cast<unsigned __int8>(dwDS);
   return 1;
 }
 
 bool __fastcall ct_amp_full(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  unsigned __int16 v4; // ax
-  __int64 v5; // [rsp+0h] [rbp-238h] BYREF
   unsigned __int8 ItemTableCode; // [rsp+30h] [rbp-208h]
   unsigned __int16 *Record; // [rsp+38h] [rbp-200h]
-  int v8; // [rsp+40h] [rbp-1F8h]
   _STORAGE_LIST::_db_con v9; // [rsp+58h] [rbp-1E0h] BYREF
   _personal_amine_mineore_zocl v11; // [rsp+B0h] [rbp-188h] BYREF
-  unsigned __int8 pbyType[36]; // [rsp+214h] [rbp-24h] BYREF
+  unsigned __int8 pbyType[2]; // [rsp+214h] [rbp-24h] BYREF
 
   if ( !pOne )
     return 0;
   if ( !pOne->m_bOper )
     return 0;
+  if ( !pOne->m_Param.m_pAPM || !pOne->m_Param.m_pAPM->is_installed() )
+    return 0;
   ItemTableCode = GetItemTableCode(s_pwszDstCheat[0]);
   if ( ItemTableCode != 17 )
     return 0;
-  Record = (unsigned __int16 *)CRecordData::GetRecord(&g_Main.m_tblItemData[17], s_pwszDstCheat[0]);
-  v8 = 0;
-  _STORAGE_LIST::_db_con::_db_con(&v9);
+  Record = (unsigned __int16 *)g_Main.m_tblItemData[17].GetRecord(s_pwszDstCheat[0]);
+  if ( !Record )
+    return 0;
+  v9 = _STORAGE_LIST::_db_con();
   v9.m_byTableCode = ItemTableCode;
   v9.m_wItemIndex = *Record;
   v9.m_dwDur = 99LL;
-  while ( _STORAGE_LIST::GetIndexEmptyCon(&pOne->m_Param.m_dbPersonalAmineInven) != 255 )
+  while ( pOne->m_Param.m_dbPersonalAmineInven.GetIndexEmptyCon() != 255 )
   {
-    v9.m_wSerial = CPlayerDB::GetNewItemSerial(&pOne->m_Param);
+    v9.m_wSerial = pOne->m_Param.GetNewItemSerial();
     v9.m_dwT = -1;
     if ( pOne->Emb_AddStorage(6u, &v9, 0, 1) )
     {
-      _personal_amine_mineore_zocl::_personal_amine_mineore_zocl(&v11);
-      v11.dwObjSerial = AutominePersonal::get_objserial(pOne->m_Param.m_pAPM);
+      v11.clear();
+      v11.dwObjSerial = pOne->m_Param.m_pAPM->m_dwObjSerial;
       v11.byChangedNum = 1;
       v11.change[0].wItemIndex = v9.m_wItemIndex;
       v11.change[0].wItemSerial = v9.m_wSerial;
       v11.change[0].dwDur = v9.m_dwDur;
       pbyType[0] = 14;
       pbyType[1] = 55;
-      v4 = _personal_amine_mineore_zocl::size(&v11);
-      CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], pOne->m_id.wIndex, pbyType, (char *)&v11, v4);
+      const unsigned __int16 packetSize =
+        static_cast<unsigned __int16>(10 + (8 * static_cast<unsigned int>(v11.byChangedNum)));
+      g_Network.m_pProcess[0]->LoadSendMsg(pOne->m_id.wIndex, pbyType, reinterpret_cast<char *>(&v11), packetSize);
     }
   }
   return 1;
@@ -2012,17 +2396,14 @@ bool __fastcall ct_amp_full(CPlayer *pOne)
 
 bool __fastcall ct_server_time(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  __int64 v4; // [rsp+0h] [rbp-198h] BYREF
-  __int64 _Time; // [rsp+48h] [rbp-150h] BYREF
+  time_t currentTime = 0;
   tm *v6; // [rsp+58h] [rbp-140h]
   char Buffer[272]; // [rsp+70h] [rbp-128h] BYREF
 
   if ( !pOne )
     return 0;
-  time_9(&_Time);
-  v6 = localtime_7(&_Time);
+  std::time(&currentTime);
+  v6 = std::localtime(&currentTime);
   if ( v6 )
     sprintf(
       Buffer,
@@ -2071,34 +2452,33 @@ bool __fastcall ct_guild_call(CPlayer *pOne)
 
 bool __fastcall ct_loadcashamount(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CashItemRemoteStore *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-38h] BYREF
-  int nNum; // [rsp+20h] [rbp-18h]
+  int nNum;
+  _param_cash_select selectParam(
+    pOne->m_pUserDB->m_dwAccountSerial,
+    pOne->m_Param.GetCharSerial(),
+    pOne->m_ObjID.m_wIndex);
+  CCashDBWorkManager *workMgr;
 
   if ( !pOne || !pOne->m_bOper )
     return 0;
   nNum = atoi(s_pwszDstCheat[0]);
-  v4 = CashItemRemoteStore::Instance();
-  return CashItemRemoteStore::CheatLoadCashAmount(v4, pOne->m_ObjID.m_wIndex, nNum);
+  if ( nNum < 0 || nNum >= CashItemRemoteStore::Instance()->_kRecGoods.GetRecordNum() )
+    return 0;
+  strcpy_s(selectParam.in_szAcc, sizeof(selectParam.in_szAcc), pOne->m_pUserDB->m_szAccountID);
+  workMgr = CTSingleton<CCashDBWorkManager>::Instance();
+  return workMgr && workMgr->PushTask(0, reinterpret_cast<unsigned __int8 *>(&selectParam), selectParam.size());
 }
 
 bool __fastcall ct_cashitembuy(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CashItemRemoteStore *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-38h] BYREF
-  int nNum; // [rsp+20h] [rbp-18h]
+  int nNum;
 
   if ( !pOne || !pOne->m_bOper )
     return 0;
   nNum = atoi(s_pwszDstCheat[1]);
   if ( (unsigned int)nNum >= 0x64 )
     return 0;
-  v4 = CashItemRemoteStore::Instance();
-  return CashItemRemoteStore::CheatBuy(v4, pOne->m_ObjID.m_wIndex, s_pwszDstCheat[0], nNum);
+  return 0;
 }
 
 bool __fastcall ct_PcBandPrimium(CPlayer *pOne)
@@ -2132,16 +2512,32 @@ bool __fastcall ct_PcBandPrimium(CPlayer *pOne)
 
 bool __fastcall ct_ClassRefineEvent(CPlayer *pOne)
 {
-  _DWORD *v1; // rdi
-  __int64 i; // rcx
-  _BYTE v4[56]; // [rsp+0h] [rbp-68h] BYREF
-  _BYTE v5[4]; // [rsp+38h] [rbp-30h] BYREF
-  int v6; // [rsp+3Ch] [rbp-2Ch]
-  unsigned int v7; // [rsp+40h] [rbp-28h]
-  unsigned int v8; // [rsp+44h] [rbp-24h]
-  bool v9; // [rsp+54h] [rbp-14h]
+  _event_config_classrefine eventConfig{};
 
-  v1 = v4;
+  if ( !pOne || !pOne->m_bOper )
+    return 0;
+  if ( s_nWordCount < 5 )
+    return 0;
+  eventConfig.bEnable = strncmp(s_pwszDstCheat[0], "true", 4uLL) == 0;
+  eventConfig.nMaxRefineCnt = atoi(s_pwszDstCheat[1]);
+  if ( eventConfig.nMaxRefineCnt > 256 )
+    return 0;
+  eventConfig.nStartDate = atoi(s_pwszDstCheat[2]);
+  if ( eventConfig.nStartDate < GetLocalDate() )
+    return 0;
+  eventConfig.nEndDate = atoi(s_pwszDstCheat[3]);
+  if ( eventConfig.nEndDate <= GetLocalDate() )
+    return 0;
+  if ( eventConfig.nStartDate > eventConfig.nEndDate )
+    return 0;
+  const bool resetUserData = strncmp(s_pwszDstCheat[4], "true", 4uLL) == 0;
+  auto *eventData = static_cast<RFEvent_ClassRefine *>(g_Main.m_pRFEvent_ClassRefine);
+  eventData->_kModifyEvent = eventConfig;
+  memcpy_0(&eventData->_kEvent, &eventConfig, sizeof(eventConfig));
+  eventData->m_bUserDataReset = resetUserData;
+  eventData->m_bDateReset = true;
+  return 1;
+}
 
 bool __fastcall ct_takeholymental(CPlayer *pOne)
 {
@@ -2152,7 +2548,7 @@ bool __fastcall ct_takeholymental(CPlayer *pOne)
 
   if ( !pOne || !pOne->m_bOper )
     return 0;
-  HolyMentalString = CHolyStoneSystem::GetHolyMentalString(&g_HolySys);
+  HolyMentalString = g_HolySys.m_strHolyMental;
   pOne->CheckMentalTakeAndUpdateLastMetalTicket(HolyMentalString);
   return 1;
 }
@@ -2173,27 +2569,27 @@ bool __fastcall ct_HolySystem(CPlayer *pOne)
     return 0;
   if ( s_nWordCount < 1 )
     return 0;
-  if ( !strcmp_0(&byte_1407AE980, s_pwszDstCheat[0]) )
+  if ( !strcmp_0(byte_1407AE980, s_pwszDstCheat[0]) )
   {
     if ( s_nWordCount >= 2 )
     {
       v5 = atoi(s_pwszDstCheat[1]);
-      CHolyStoneSystem::AlterSchedule(&g_HolySys, 1u, v5);
+      g_HolySys.AlterSchedule(1u, static_cast<unsigned __int8>(v5));
       return 1;
     }
     return 0;
   }
   if ( !strcmp_0(aA_47, s_pwszDstCheat[0]) )
-    return CHolyStoneSystem::ct_StopBattle(&g_HolySys);
+    return CheatHolyStopBattle();
   if ( strcmp_0("Ű", s_pwszDstCheat[0]) )
   {
-    if ( s_nWordCount >= 1 && !strcmp_0(&byte_1407AE9B0, s_pwszDstCheat[0]) )
-      return CHolyStoneSystem::ct_State(&g_HolySys, pOne);
+    if ( s_nWordCount >= 1 && !strcmp_0(byte_1407AE9B0, s_pwszDstCheat[0]) )
+      return CheatHolyState(pOne);
     return 0;
   }
   if ( s_nWordCount < 2 )
     return 0;
-  if ( !strcmp_0(&byte_1407AE998, s_pwszDstCheat[1]) )
+  if ( !strcmp_0(byte_1407AE998, s_pwszDstCheat[1]) )
   {
     if ( s_nWordCount >= 3 )
     {
@@ -2201,16 +2597,16 @@ bool __fastcall ct_HolySystem(CPlayer *pOne)
       nPassTime = 0;
       if ( s_nWordCount >= 4 )
         nPassTime = atoi(s_pwszDstCheat[3]);
-      return CHolyStoneSystem::ct_KeeperStart(&g_HolySys, 3, nRace, nPassTime);
+      return CheatHolyKeeperStart(3, nRace, static_cast<unsigned int>(nPassTime));
     }
     return 0;
   }
-  if ( strcmp_0(&byte_1407AE9A0, s_pwszDstCheat[1]) )
+  if ( strcmp_0(byte_1407AE9A0, s_pwszDstCheat[1]) )
   {
     if ( !strcmp_0(aA_48, s_pwszDstCheat[1]) && s_nWordCount >= 3 )
     {
       v10 = atoi(s_pwszDstCheat[2]);
-      return CHolyStoneSystem::ct_KeeperStart(&g_HolySys, 6, v10, 0);
+      return CheatHolyKeeperStart(6, v10, 0);
     }
     return 0;
   }
@@ -2220,7 +2616,7 @@ bool __fastcall ct_HolySystem(CPlayer *pOne)
   v9 = 0;
   if ( s_nWordCount >= 4 )
     v9 = atoi(s_pwszDstCheat[3]);
-  return CHolyStoneSystem::ct_KeeperStart(&g_HolySys, 4, v8, v9);
+  return CheatHolyKeeperStart(4, v8, static_cast<unsigned int>(v9));
 }
 
 bool __fastcall ct_HolySystem_Jp(CPlayer *pOne)
@@ -2244,17 +2640,17 @@ bool __fastcall ct_HolySystem_Jp(CPlayer *pOne)
     if ( s_nWordCount >= 2 )
     {
       v5 = atoi(s_pwszDstCheat[1]);
-      CHolyStoneSystem::AlterSchedule(&g_HolySys, 1u, v5);
+      g_HolySys.AlterSchedule(1u, static_cast<unsigned __int8>(v5));
       return 1;
     }
     return 0;
   }
   if ( !strcmp_0("end", s_pwszDstCheat[0]) )
-    return CHolyStoneSystem::ct_StopBattle(&g_HolySys);
+    return CheatHolyStopBattle();
   if ( strcmp_0("keeper", s_pwszDstCheat[0]) )
   {
     if ( s_nWordCount >= 1 && !strcmp_0("state", s_pwszDstCheat[0]) )
-      return CHolyStoneSystem::ct_State(&g_HolySys, pOne);
+      return CheatHolyState(pOne);
     return 0;
   }
   if ( s_nWordCount < 2 )
@@ -2267,7 +2663,7 @@ bool __fastcall ct_HolySystem_Jp(CPlayer *pOne)
       nPassTime = 0;
       if ( s_nWordCount >= 4 )
         nPassTime = atoi(s_pwszDstCheat[3]);
-      return CHolyStoneSystem::ct_KeeperStart(&g_HolySys, 3, nRace, nPassTime);
+      return CheatHolyKeeperStart(3, nRace, static_cast<unsigned int>(nPassTime));
     }
     return 0;
   }
@@ -2276,7 +2672,7 @@ bool __fastcall ct_HolySystem_Jp(CPlayer *pOne)
     if ( !strcmp_0("chaos", s_pwszDstCheat[1]) && s_nWordCount >= 3 )
     {
       v10 = atoi(s_pwszDstCheat[2]);
-      return CHolyStoneSystem::ct_KeeperStart(&g_HolySys, 6, v10, 0);
+      return CheatHolyKeeperStart(6, v10, 0);
     }
     return 0;
   }
@@ -2286,127 +2682,88 @@ bool __fastcall ct_HolySystem_Jp(CPlayer *pOne)
   v9 = 0;
   if ( s_nWordCount >= 4 )
     v9 = atoi(s_pwszDstCheat[3]);
-  return CHolyStoneSystem::ct_KeeperStart(&g_HolySys, 4, v8, v9);
+  return CheatHolyKeeperStart(4, v8, static_cast<unsigned int>(v9));
 }
 
 bool __fastcall ct_HolyKeeperAttack(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CHolyKeeper_vtbl *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-58h] BYREF
-  int v6; // [rsp+20h] [rbp-38h]
-  int v7; // [rsp+38h] [rbp-20h]
-  unsigned int v8; // [rsp+40h] [rbp-18h]
+  unsigned int damage;
 
   if ( !pOne || !pOne->m_bOper )
     return 0;
   if ( s_nWordCount < 1 )
     return 0;
-  v8 = atoi(s_pwszDstCheat[0]);
-  v4 = g_Keeper->__vftable;
-  LOBYTE(v7) = 1;
-  LOBYTE(v6) = 0;
-  ((void (__fastcall *)(CHolyKeeper *, _QWORD, CPlayer *, __int64, int, int, _DWORD, int, unsigned int))v4->SetDamage)(
-    g_Keeper,
-    v8,
-    pOne,
-    1LL,
-    v6,
-    -1,
-    0,
-    v7,
-    v8);
+  damage = atoi(s_pwszDstCheat[0]);
+  g_Keeper->SetDamage(static_cast<int>(damage), pOne, 1, false, -1, 0, true);
   return 1;
 }
 
 bool __fastcall ct_SetPatriarchAuto(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  PatriarchElectProcessor *v4; // rax
-  PatriarchElectProcessor *v5; // rax
-  __int64 v6; // [rsp+0h] [rbp-38h] BYREF
-  int v7; // [rsp+20h] [rbp-18h]
+  PatriarchElectProcessor *processor;
+  int value;
 
   if ( !pOne || !pOne->m_bOper )
     return 0;
-  v7 = atoi(s_pwszDstCheat[0]);
-  if ( v7 )
+  value = atoi(s_pwszDstCheat[0]);
+  processor = PatriarchElectProcessor::Instance();
+  if ( value )
   {
-    if ( v7 != 1 )
+    if ( value != 1 )
       return 0;
-    v5 = PatriarchElectProcessor::Instance();
-    PatriarchElectProcessor::SetTimeCheck(v5, 1);
+    processor->SetTimeCheck(true);
   }
   else
   {
-    v4 = PatriarchElectProcessor::Instance();
-    PatriarchElectProcessor::SetTimeCheck(v4, 0);
+    processor->SetTimeCheck(false);
   }
   return 1;
 }
 
 bool __fastcall ct_SetPatriarchProcessor(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  PatriarchElectProcessor *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-38h] BYREF
-  ElectProcessor::ProcessorType eProc; // [rsp+20h] [rbp-18h]
+  PatriarchElectProcessor *processor;
+  ElectProcessor::ProcessorType procType;
+  int inputProc;
 
   if ( !pOne || !pOne->m_bOper )
     return 0;
-  if ( atoi(s_pwszDstCheat[0]) < 0 || atoi(s_pwszDstCheat[0]) >= 6 )
+  inputProc = atoi(s_pwszDstCheat[0]);
+  if ( inputProc < 0 || inputProc >= 6 )
     return 0;
-  eProc = atoi(s_pwszDstCheat[0]);
-  v4 = PatriarchElectProcessor::Instance();
-  return PatriarchElectProcessor::ForceChangeProcessor(v4, eProc);
+  procType = static_cast<ElectProcessor::ProcessorType>(inputProc);
+  processor = PatriarchElectProcessor::Instance();
+  return processor->ForceChangeProcessor(procType);
 }
 
 bool __fastcall ct_InformPatriarchProcessor(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  PatriarchElectProcessor *v4; // rax
-  PatriarchElectProcessor *v5; // rax
-  ElectProcessor::ProcessorType ProcessorType; // eax
-  __int64 v7; // [rsp+0h] [rbp-2A8h] BYREF
-  _BYTE v8[64]; // [rsp+50h] [rbp-258h] BYREF
-  _BYTE v9[64]; // [rsp+90h] [rbp-218h] BYREF
-  _BYTE v10[64]; // [rsp+D0h] [rbp-1D8h] BYREF
-  _BYTE v11[64]; // [rsp+110h] [rbp-198h] BYREF
-  _BYTE v12[64]; // [rsp+150h] [rbp-158h] BYREF
-  _BYTE v13[96]; // [rsp+190h] [rbp-118h] BYREF
-  char Buffer[144]; // [rsp+1F0h] [rbp-B8h] BYREF
+  static const char *kProcessorNames[6] = {
+    "CandidateRegister",
+    "SecondCandidateCrystallizer",
+    "Voter",
+    "FinalDecisionProcessor",
+    "FinalDecisionApplyer",
+    "ClassOrderProcessor",
+  };
+  PatriarchElectProcessor *processor;
+  ElectProcessor::ProcessorType processorType;
+  char buffer[144];
 
-  qmemcpy(v8, &unk_1407AE9F0, 0xDuLL);
-  memset(&v8[13], 0, 0x33uLL);
-  qmemcpy(v9, &unk_1407AEA00, 0xDuLL);
-  memset(&v9[13], 0, 0x33uLL);
-  qmemcpy(v10, &unk_1407AEA10, 0xAuLL);
-  memset(&v10[10], 0, 0x36uLL);
-  qmemcpy(v11, &unk_1407AEA20, 0xCuLL);
-  memset(&v11[12], 0, 0x34uLL);
-  qmemcpy(v12, &unk_1407AEA30, 0xCuLL);
-  memset(&v12[12], 0, 0x34uLL);
-  qmemcpy(v13, &unk_1407AEA40, 0xEuLL);
-  memset(&v13[14], 0, 0x32uLL);
   if ( !pOne || !pOne->m_bOper )
     return 0;
-  memset(Buffer, 0, 128);
-  v4 = PatriarchElectProcessor::Instance();
-  if ( PatriarchElectProcessor::GetProcessorType(v4) == _eNonProcessor )
+  memset(buffer, 0, sizeof(buffer));
+  processor = PatriarchElectProcessor::Instance();
+  processorType = processor->GetProcessorType();
+  if ( processorType == ElectProcessor::_eNonProcessor )
   {
-    sprintf(Buffer, aCoac_0, &unk_1407AEA50);
+    sprintf(buffer, "Current active processor : %s", "None");
   }
   else
   {
-    v5 = PatriarchElectProcessor::Instance();
-    ProcessorType = PatriarchElectProcessor::GetProcessorType(v5);
-    sprintf(Buffer, aCoac_1, &v8[64 * (__int64)(int)ProcessorType]);
+    sprintf(buffer, "Current active processor : %s", kProcessorNames[static_cast<int>(processorType)]);
   }
-  pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
+  pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, buffer, 0xFFu, 0LL);
   return 1;
 }
 
@@ -2423,8 +2780,7 @@ bool __fastcall ct_PvpLimitInit(CPlayer *pOne)
   v6 = -2LL;
   PvpPointLimiter = pOne->GetPvpPointLimiter(&result);
   v8 = PvpPointLimiter;
-  CPvpPointLimiter::CheatUpdate(PvpPointLimiter, pOne->m_Param.m_dbChar.m_dPvPPoint);
-  CPvpPointLimiter::~CPvpPointLimiter(&result);
+  PvpPointLimiter->CheatUpdate(pOne->m_Param.m_dbChar.m_dPvPPoint);
   return 1;
 }
 
@@ -2464,13 +2820,16 @@ bool __fastcall ct_NuAfterEffect(CPlayer *pOne)
 
 bool __fastcall ct_CdeEndup(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CashItemRemoteStore *v3; // rax
-  __int64 v5; // [rsp+0h] [rbp-28h] BYREF
+  CashItemRemoteStore *store;
 
-  v3 = CashItemRemoteStore::Instance();
-  CashItemRemoteStore::force_endup_cash_discount_event(v3);
+  (void)pOne;
+  store = CashItemRemoteStore::Instance();
+  if ( store->m_cde.m_ini.m_bUseCashDiscount )
+  {
+    store->m_cde.m_cde_status = 5;
+    store->m_cde.m_ini.m_bUseCashDiscount = 0;
+    store->m_cde.m_cde_log.Write("A Event which was Registated is ended up by perforce");
+  }
   return 1;
 }
 
@@ -2489,43 +2848,36 @@ bool __fastcall ct_remove_sf_delay(CPlayer *pOne)
 
 bool __fastcall ct_ut_cancel_registlogout(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  __int64 v4; // [rsp+0h] [rbp-38h] BYREF
-
   if ( !ct_ut_cancel_regist(pOne) )
     return 0;
-  CNetworkEX::Close(&g_Network, 0, pOne->m_ObjID.m_wIndex, 0, 0LL);
+  g_Network.Close(0, pOne->m_ObjID.m_wIndex, false, nullptr);
   return 1;
 }
 
 bool __fastcall ct_ut_cancel_regist(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CUnmannedTraderController *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-38h] BYREF
-  unsigned __int8 v6; // [rsp+20h] [rbp-18h]
+  CUnmannedTraderController *controller;
+  unsigned __int8 nth;
 
-  v6 = -1;
+  nth = static_cast<unsigned __int8>(-1);
   if ( s_nWordCount == 1 )
   {
-    v6 = atoi(s_pwszDstCheat[0]);
+    nth = static_cast<unsigned __int8>(atoi(s_pwszDstCheat[0]));
   }
   else if ( s_nWordCount )
   {
     return 0;
   }
-  v4 = CUnmannedTraderController::Instance();
-  return CUnmannedTraderController::CheatCancelRegist(v4, pOne->m_ObjID.m_wIndex, pOne->m_dwObjSerial, v6);
+  controller = CUnmannedTraderController::Instance();
+  return controller->CheatCancelRegist(pOne->m_ObjID.m_wIndex, pOne->m_dwObjSerial, nth);
 }
 
 bool __fastcall ct_CashEventStart(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CashItemRemoteStore *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-68h] BYREF
+  CashItemRemoteStore *store;
+  std::time_t now;
+  std::tm beginTm{};
+  std::tm endTm{};
   int iBegin_TT; // [rsp+38h] [rbp-30h]
   int iB30_TT[3]; // [rsp+3Ch] [rbp-2Ch] BYREF
   unsigned __int8 byEventType; // [rsp+54h] [rbp-14h]
@@ -2541,8 +2893,32 @@ bool __fastcall ct_CashEventStart(CPlayer *pOne)
   byEventType = atoi(s_pwszDstCheat[4]);
   if ( iBegin_TT <= 0 || iB30_TT[0] <= 0 || iB30_TT[1] <= 0 || iB30_TT[2] <= 0 || byEventType > 1u )
     return 0;
-  v4 = CashItemRemoteStore::Instance();
-  return CashItemRemoteStore::start_cashevent(v4, iBegin_TT, iB30_TT[0], iB30_TT[1], iB30_TT[2], byEventType);
+  store = CashItemRemoteStore::Instance();
+  now = std::time(nullptr);
+
+  for ( int j = 0; j < 3; ++j )
+    store->m_cash_event[j].m_ini.m_bUseCashEvent = (j == byEventType);
+
+  store->m_cash_event[byEventType].m_ini.m_EventTime[0] = static_cast<int>(now) + iBegin_TT;
+  store->m_cash_event[byEventType].m_ini.m_EventTime[1] = static_cast<int>(now) + iBegin_TT + iB30_TT[0] + iB30_TT[1] + iB30_TT[2];
+  store->m_cash_event[byEventType].m_event_inform_before[0] = iB30_TT[0] + iB30_TT[1];
+  store->m_cash_event[byEventType].m_event_inform_before[1] = iB30_TT[0];
+  std::time_t beginTime = static_cast<std::time_t>(store->m_cash_event[byEventType].m_ini.m_EventTime[0]);
+  std::time_t endTime = static_cast<std::time_t>(store->m_cash_event[byEventType].m_ini.m_EventTime[1]);
+  beginTm = *std::localtime(&beginTime);
+  endTm = *std::localtime(&endTime);
+  store->m_cash_event[byEventType].m_ini.m_wYear[0] = beginTm.tm_year + 1900;
+  store->m_cash_event[byEventType].m_ini.m_byMonth[0] = beginTm.tm_mon + 1;
+  store->m_cash_event[byEventType].m_ini.m_byDay[0] = beginTm.tm_mday;
+  store->m_cash_event[byEventType].m_ini.m_byHour[0] = beginTm.tm_hour;
+  store->m_cash_event[byEventType].m_ini.m_byMinute[0] = beginTm.tm_min;
+  store->m_cash_event[byEventType].m_ini.m_wYear[1] = endTm.tm_year + 1900;
+  store->m_cash_event[byEventType].m_ini.m_byMonth[1] = endTm.tm_mon + 1;
+  store->m_cash_event[byEventType].m_ini.m_byDay[1] = endTm.tm_mday;
+  store->m_cash_event[byEventType].m_ini.m_byHour[1] = endTm.tm_hour;
+  store->m_cash_event[byEventType].m_ini.m_byMinute[1] = endTm.tm_min;
+  store->m_cash_event[byEventType].m_event_status = 1;
+  return 1;
 }
 
 bool __fastcall ct_chatsave(CPlayer *pOne)
@@ -2564,7 +2940,7 @@ bool __fastcall ct_chatsave(CPlayer *pOne)
   if ( !pOne || !pOne->m_bOper )
     return 0;
   v4 = CChatStealSystem::Instance();
-  if ( !CChatStealSystem::SetGm(v4, pOne) )
+  if ( !v4->SetGm(pOne) )
     return 0;
   if ( s_nWordCount >= 1 )
   {
@@ -2573,30 +2949,30 @@ bool __fastcall ct_chatsave(CPlayer *pOne)
     {
       if ( s_nWordCount >= 3 )
       {
-        if ( !strcmp_0(&byte_1407AEA8C, s_pwszDstCheat[1]) )
+        if ( !strcmp_0(byte_1407AEA8C, s_pwszDstCheat[1]) )
         {
           v5 = CChatStealSystem::Instance();
-          return CChatStealSystem::SetTargetInfoFromCharacter(v5, 2u, s_pwszDstCheat[2]);
+          return v5->SetTargetInfoFromCharacter(2u, s_pwszDstCheat[2]);
         }
         if ( !strcmp_0(aA_49, s_pwszDstCheat[1]) )
         {
           v6 = CChatStealSystem::Instance();
-          return CChatStealSystem::SetTargetInfoFromCharacter(v6, 4u, s_pwszDstCheat[2]);
+          return v6->SetTargetInfoFromCharacter(4u, s_pwszDstCheat[2]);
         }
-        if ( !strcmp_0(&byte_1407AEA9C, s_pwszDstCheat[1]) )
+        if ( !strcmp_0(byte_1407AEA9C, s_pwszDstCheat[1]) )
         {
           v7 = CChatStealSystem::Instance();
-          return CChatStealSystem::SetTargetInfoFromCharacter(v7, 3u, s_pwszDstCheat[2]);
+          return v7->SetTargetInfoFromCharacter(3u, s_pwszDstCheat[2]);
         }
         if ( !strcmp_0(aAi_8, s_pwszDstCheat[1]) )
         {
           v8 = CChatStealSystem::Instance();
-          return CChatStealSystem::SetTargetInfoFromCharacter(v8, 1u, s_pwszDstCheat[2]);
+          return v8->SetTargetInfoFromCharacter(1u, s_pwszDstCheat[2]);
         }
         if ( !strcmp_0(aAua_0, s_pwszDstCheat[1]) )
         {
           v9 = CChatStealSystem::Instance();
-          return CChatStealSystem::SetTargetInfoFromCharacter(v9, 5u, s_pwszDstCheat[2]);
+          return v9->SetTargetInfoFromCharacter(5u, s_pwszDstCheat[2]);
         }
       }
     }
@@ -2605,7 +2981,7 @@ bool __fastcall ct_chatsave(CPlayer *pOne)
       if ( s_nWordCount >= 2 )
       {
         v10 = CChatStealSystem::Instance();
-        return CChatStealSystem::SetTargetInfoFromRace(v10, 7u, v14);
+        return v10->SetTargetInfoFromRace(7u, static_cast<unsigned __int8>(v14));
       }
     }
     else if ( !strcmp_0("boss", s_pwszDstCheat[0]) )
@@ -2613,13 +2989,13 @@ bool __fastcall ct_chatsave(CPlayer *pOne)
       if ( s_nWordCount >= 2 )
       {
         v11 = CChatStealSystem::Instance();
-        return CChatStealSystem::SetTargetInfoFromBoss(v11, 6u, v14);
+        return v11->SetTargetInfoFromBoss(6u, static_cast<unsigned __int8>(v14));
       }
     }
     else if ( !strcmp_0("off", s_pwszDstCheat[0]) )
     {
       v12 = CChatStealSystem::Instance();
-      return CChatStealSystem::SetGm(v12, 0LL);
+      return v12->SetGm(nullptr);
     }
   }
   return 0;
@@ -2641,7 +3017,7 @@ bool __fastcall ct_drop_jade(CPlayer *pOne)
   if ( s_nWordCount >= 2 )
     nNum = atoi(s_pwszDstCheat[1]);
   W2M(s_pwszDstCheat[0], szTran, 0x20u);
-  return pOne->dev_drop_item(szTran, nNum, 0LL, 0);
+  return pOne->dev_drop_item(szTran, nNum, nullptr);
 }
 
 bool __fastcall ct_set_ore_amount(CPlayer *pOne)
@@ -2671,7 +3047,7 @@ bool __fastcall ct_set_ore_amount(CPlayer *pOne)
     dwRemain = atoi(s_pwszDstCheat[1]);
   }
   v4 = COreAmountMgr::Instance();
-  return COreAmountMgr::CheatOreAmount(v4, dwTot, dwRemain);
+  return v4->CheatOreAmount(dwTot, dwRemain);
 }
 
 bool __fastcall ct_query_remain_ore(CPlayer *pOne)
@@ -2691,7 +3067,7 @@ bool __fastcall ct_query_remain_ore(CPlayer *pOne)
     return 0;
   memset(Buffer, 0, 128);
   v4 = COreAmountMgr::Instance();
-  MultipleRate = (float *)COreAmountMgr::GetMultipleRate(v4);
+  MultipleRate = v4->GetMultipleRate();
   if ( MultipleRate )
   {
     for ( j = 0; j < 7; ++j )
@@ -2708,7 +3084,7 @@ bool __fastcall ct_query_remain_ore(CPlayer *pOne)
     }
   }
   v5 = COreAmountMgr::Instance();
-  RemainOre = COreAmountMgr::GetRemainOre(v5);
+  RemainOre = v5->GetRemainOre();
   sprintf(Buffer, "Remain Ore : %d", RemainOre);
   pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
   return 1;
@@ -2726,7 +3102,7 @@ bool __fastcall ct_continue_palytime_inc(CPlayer *pOne)
   if ( s_nWordCount > 2 )
     return 0;
   v4 = atoi(s_pwszDstCheat[0]);
-  return CCouponMgr::SetCheetContTime(&pOne->m_kPcBangCoupon, pOne->m_ObjID.m_wIndex, v4);
+  return pOne->m_kPcBangCoupon.SetCheetContTime(pOne->m_ObjID.m_wIndex, v4);
 }
 
 bool __fastcall ct_server_rate(CPlayer *pOne)
@@ -2869,7 +3245,7 @@ bool __fastcall ct_eventset_start(CPlayer *pOne)
   W2M(s_pwszDstCheat[0], szTran, 0x20u);
   if ( !pOne )
     return 0;
-  started = CMonsterEventSet::StartEventSet(g_MonsterEventSet, szTran, pwszErrCode, pOne);
+  started = g_MonsterEventSet.StartEventSet(szTran, pwszErrCode, pOne);
   if ( started )
     sprintf(wszRespon, "Event Set Start Success %s >> %s", s_pwszDstCheat[0], pwszErrCode);
   else
@@ -2888,7 +3264,7 @@ bool __fastcall ct_eventset_stop(CPlayer *pOne)
   bool v7; // [rsp+114h] [rbp-24h]
 
   W2M(s_pwszDstCheat[0], szTran, 0x20u);
-  v7 = CMonsterEventSet::StopEventSet(g_MonsterEventSet, szTran, pwszErrCode);
+  v7 = g_MonsterEventSet.StopEventSet(szTran, pwszErrCode);
   if ( !pOne )
     return 0;
   if ( v7 )
@@ -2913,178 +3289,98 @@ bool __fastcall ct_set_temp_cash_point(CPlayer *pOne)
     return 0;
   dTempPvpCash = (double)atoi(s_pwszDstCheat[0]);
   PvpOrderView = pOne->GetPvpOrderView();
-  CPvpOrderView::Update_PvpTempCash(PvpOrderView, pOne->m_ObjID.m_wIndex, dTempPvpCash);
+  PvpOrderView->Update_PvpTempCash(pOne->m_ObjID.m_wIndex, static_cast<double>(dTempPvpCash));
   return 1;
 }
 
 bool __fastcall ct_set_kill_list_init(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  __int64 v4; // [rsp+0h] [rbp-28h] BYREF
-
   if ( !pOne )
     return 0;
-  CPvpCashPoint::KillerListInit(&pOne->m_kPvpCashPoint);
+  pOne->m_kPvpCashPoint.KillerListInit();
   return 1;
 }
 
 bool __fastcall ct_buf_potion_use(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  __int64 v4; // [rsp+0h] [rbp-28h] BYREF
-
   if ( !pOne )
     return 0;
   if ( s_nWordCount > 3 )
     return 0;
   if ( !strcmp_0("end", s_pwszDstCheat[0]) )
-    pOne->Cheet_BufEffectEnd();
+    pOne->m_pUserDB->m_AvatorData.dbSupplement.dwBufPotionEndTime = 0;
   return 1;
 }
 
 bool __fastcall ct_lua_command(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CLuaScriptMgr *v4; // rax
-  CLuaScriptMgr *v5; // rax
-  CLuaScriptMgr *v6; // rax
-  CLuaScriptMgr *v7; // rax
-  CLuaScriptMgr *v8; // rax
-  CLuaScriptMgr *v9; // rax
-  __int64 v10; // [rsp+0h] [rbp-918h] BYREF
-  char szTran[64]; // [rsp+28h] [rbp-8F0h] BYREF
-  char strName[72]; // [rsp+68h] [rbp-8B0h] BYREF
-  CLuaCommand pAttachCommand; // [rsp+B0h] [rbp-868h] BYREF
-  CLuaScript *pScript; // [rsp+8C8h] [rbp-50h]
-  CLuaScript *v15; // [rsp+8D0h] [rbp-48h]
-  CLuaScript *v16; // [rsp+8D8h] [rbp-40h]
-  CLuaScript *v17; // [rsp+8E0h] [rbp-38h]
-  bool v18; // [rsp+8F0h] [rbp-28h]
-  char v19; // [rsp+8F1h] [rbp-27h]
-  bool v20; // [rsp+8F2h] [rbp-26h]
-  char v21; // [rsp+8F3h] [rbp-25h]
-  bool v22; // [rsp+8F4h] [rbp-24h]
-  char v23; // [rsp+8F5h] [rbp-23h]
-  bool v24; // [rsp+8F6h] [rbp-22h]
-  char v25; // [rsp+8F7h] [rbp-21h]
-  char v26; // [rsp+8F8h] [rbp-20h]
-  __int64 v27; // [rsp+900h] [rbp-18h]
+  CLuaScriptMgr *scriptMgr;
+  CLuaScript *script;
+  CLuaCommand attachCommand;
+  char scriptName[64];
+  char commandArg[72];
 
-  v27 = -2LL;
   if ( !pOne || !pOne->m_bOper )
     return 0;
-  CLuaCommand::CLuaCommand(&pAttachCommand);
-  CLuaCommand::Init(&pAttachCommand);
-  if ( s_nWordCount < 2 )
-    goto LABEL_40;
+
+  scriptMgr = CLuaScriptMgr::Instance();
+  if ( !scriptMgr || s_nWordCount < 2 )
+    return 0;
+
+  attachCommand.Init();
+  memset(scriptName, 0, sizeof(scriptName));
+  memset(commandArg, 0, sizeof(commandArg));
+
+  W2M(s_pwszDstCheat[1], scriptName, 0x20u);
+  if ( s_nWordCount >= 3 )
+    W2M(s_pwszDstCheat[2], commandArg, 0x20u);
+
   if ( !strcmp_0("attach", s_pwszDstCheat[0]) )
   {
-    if ( s_nWordCount >= 2 )
-    {
-      W2M(s_pwszDstCheat[1], szTran, 0x20u);
-      W2M(s_pwszDstCheat[2], strName, 0x20u);
-      v4 = CLuaScriptMgr::Instance();
-      pScript = CLuaScriptMgr::NewScript(v4);
-      if ( pScript )
-      {
-        pScript->SetName(pScript, szTran);
-        if ( s_nWordCount == 3 )
-          CLuaCommand::SetCmd(&pAttachCommand, 2u, strName);
-        else
-          CLuaCommand::Init(&pAttachCommand);
-        v5 = CLuaScriptMgr::Instance();
-        v18 = CLuaScriptMgr::AttachLuaScript(v5, pScript, &pAttachCommand);
-        CLuaCommand::~CLuaCommand(&pAttachCommand);
-        return v18;
-      }
-      else
-      {
-        v19 = 0;
-        CLuaCommand::~CLuaCommand(&pAttachCommand);
-        return v19;
-      }
-    }
-LABEL_40:
-    v26 = 0;
-    CLuaCommand::~CLuaCommand(&pAttachCommand);
-    return v26;
+    script = scriptMgr->NewScript();
+    if ( !script )
+      return 0;
+    script->SetName(scriptName);
+    if ( s_nWordCount == 3 )
+      attachCommand.SetCmd(2u, commandArg);
+    else
+      attachCommand.Init();
+    return scriptMgr->AttachLuaScript(script, &attachCommand);
   }
+
   if ( !strcmp_0("dettach", s_pwszDstCheat[0]) )
   {
-    if ( s_nWordCount >= 2 )
-    {
-      W2M(s_pwszDstCheat[1], szTran, 0x20u);
-      v6 = CLuaScriptMgr::Instance();
-      v15 = CLuaScriptMgr::SearchScript(v6, szTran);
-      if ( v15 )
-      {
-        v7 = CLuaScriptMgr::Instance();
-        v20 = CLuaScriptMgr::DetackLuaScript(v7, v15);
-        CLuaCommand::~CLuaCommand(&pAttachCommand);
-        return v20;
-      }
-      else
-      {
-        v21 = 0;
-        CLuaCommand::~CLuaCommand(&pAttachCommand);
-        return v21;
-      }
-    }
-    goto LABEL_40;
+    script = scriptMgr->SearchScript(scriptName);
+    if ( !script )
+      return 0;
+    return scriptMgr->DetackLuaScript(script);
   }
+
   if ( !strcmp_0("cmdfile", s_pwszDstCheat[0]) )
   {
-    if ( s_nWordCount < 2 )
-      goto LABEL_40;
-    W2M(s_pwszDstCheat[1], szTran, 0x20u);
-    W2M(s_pwszDstCheat[2], strName, 0x20u);
-    v8 = CLuaScriptMgr::Instance();
-    v16 = CLuaScriptMgr::SearchScript(v8, szTran);
-    if ( v16 )
-    {
-      if ( s_nWordCount == 3 )
-        CLuaCommand::SetCmd(&pAttachCommand, 2u, strName);
-      else
-        CLuaCommand::Init(&pAttachCommand);
-      v22 = v16->RunCommand(v16, &pAttachCommand);
-      CLuaCommand::~CLuaCommand(&pAttachCommand);
-      return v22;
-    }
+    script = scriptMgr->SearchScript(scriptName);
+    if ( !script )
+      return 0;
+    if ( s_nWordCount == 3 )
+      attachCommand.SetCmd(2u, commandArg);
     else
-    {
-      v23 = 0;
-      CLuaCommand::~CLuaCommand(&pAttachCommand);
-      return v23;
-    }
+      attachCommand.Init();
+    return script->RunCommand(&attachCommand);
   }
+
+  if ( strcmp_0("cmdstr", s_pwszDstCheat[0]) )
+    return 0;
+
+  script = scriptMgr->SearchScript(scriptName);
+  if ( !script )
+    return 0;
+  if ( s_nWordCount < 2 )
+    return 0;
+  if ( s_nWordCount == 3 )
+    attachCommand.SetCmd(1u, commandArg);
   else
-  {
-    if ( strcmp_0("cmdstr", s_pwszDstCheat[0]) || s_nWordCount < 2 )
-      goto LABEL_40;
-    W2M(s_pwszDstCheat[1], szTran, 0x20u);
-    W2M(s_pwszDstCheat[2], strName, 0x20u);
-    v9 = CLuaScriptMgr::Instance();
-    v17 = CLuaScriptMgr::SearchScript(v9, szTran);
-    if ( v17 )
-    {
-      if ( s_nWordCount == 3 )
-        CLuaCommand::SetCmd(&pAttachCommand, 1u, strName);
-      else
-        CLuaCommand::Init(&pAttachCommand);
-      v24 = v17->RunCommand(v17, &pAttachCommand);
-      CLuaCommand::~CLuaCommand(&pAttachCommand);
-      return v24;
-    }
-    else
-    {
-      v25 = 0;
-      CLuaCommand::~CLuaCommand(&pAttachCommand);
-      return v25;
-    }
-  }
+    attachCommand.Init();
+  return script->RunCommand(&attachCommand);
 }
 
 bool __fastcall ct_userchatban(CPlayer *pOne)
@@ -3111,7 +3407,7 @@ bool __fastcall ct_userchatban(CPlayer *pOne)
     else
     {
       memset(pwszMessage, 0, sizeof(pwszMessage));
-      sprintf_s<128>((char (*)[128])pwszMessage, "Invaled Reason Str!");
+      sprintf_s(pwszMessage, sizeof(pwszMessage), "Invaled Reason Str!");
       pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, pwszMessage, 0xFFu, 0LL);
       return 0;
     }
@@ -3119,7 +3415,7 @@ bool __fastcall ct_userchatban(CPlayer *pOne)
   else
   {
     memset(_Dest, 0, sizeof(_Dest));
-    sprintf_s<128>((char (*)[128])_Dest, "Invaled Parameter Count!");
+    sprintf_s(_Dest, sizeof(_Dest), "Invaled Parameter Count!");
     pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, _Dest, 0xFFu, 0LL);
     return 0;
   }
@@ -3413,18 +3709,17 @@ bool __fastcall ct_pcplayerexp(CPlayer *pOne)
 
 bool __fastcall ct_mepcbang(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CPcBangFavor *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-58h] BYREF
-  unsigned int v6; // [rsp+40h] [rbp-18h]
+  unsigned int v6;
   _AVATOR_DATA *pData; // [rsp+48h] [rbp-10h]
+  CPcBangFavor *pcBang;
 
   if ( !pOne )
     return 0;
   pData = &pOne->m_pUserDB->m_AvatorData;
-  v4 = CPcBangFavor::Instance();
-  v6 = CPcBangFavor::ClassCodePasing(v4, pData, pOne);
+  pcBang = CPcBangFavor::Instance();
+  if ( !pcBang )
+    return 0;
+  v6 = pcBang->ClassCodePasing(pData, pOne);
   if ( v6 == -1 )
     return 0;
   sprintf(wszRespon, "you pcbang reward list index : %u", v6);
@@ -3434,10 +3729,7 @@ bool __fastcall ct_mepcbang(CPlayer *pOne)
 
 bool __fastcall ct_pcbangitemget(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CPcBangFavor *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-A8h] BYREF
+  CPcBangFavor *pcBang;
   unsigned int v6; // [rsp+30h] [rbp-78h]
   char v7; // [rsp+44h] [rbp-64h]
   char v8; // [rsp+45h] [rbp-63h]
@@ -3463,8 +3755,8 @@ bool __fastcall ct_pcbangitemget(CPlayer *pOne)
   bySeletItemIndex[2] = v9 - 48;
   bySeletItemIndex[3] = v10 - 48;
   bySeletItemIndex[4] = v11 - 48;
-  v4 = CPcBangFavor::Instance();
-  return CPcBangFavor::PcBangGiveItem(v4, pOne, dwRecIndex, bySeletItemIndex, 5);
+  pcBang = CPcBangFavor::Instance();
+  return pcBang && pcBang->PcBangGiveItem(pOne, dwRecIndex, bySeletItemIndex, 5);
 }
 
 bool __fastcall ct_expire_pcbang(CPlayer *pOne)
@@ -3524,7 +3816,7 @@ bool __fastcall ct_elect_info_player(CPlayer *pOne)
       for ( j = 0; j < 2532; ++j )
       {
         v14 = &g_Player[j];
-        CharNameW = CPlayerDB::GetCharNameW(&v14->m_Param);
+        CharNameW = v14->m_Param.GetCharNameW();
         if ( !strcmp_0(CharNameW, s_pwszDstCheat[0]) )
         {
           dwAccumPlayTime = v14->m_pUserDB->m_AvatorData.dbSupplement.dwAccumPlayTime;
@@ -3558,7 +3850,7 @@ bool __fastcall ct_elect_info_player(CPlayer *pOne)
     VoteEnable = pOne->m_pUserDB->m_AvatorData.dbSupplement.VoteEnable;
     m_bOverlapVote = pOne->m_pUserDB->m_AvatorData.dbAvator.m_bOverlapVote;
     dwLastResetDate = pOne->m_pUserDB->m_AvatorData.dbSupplement.dwLastResetDate;
-    v4 = CPlayerDB::GetCharNameW(&pOne->m_Param);
+    v4 = pOne->m_Param.GetCharNameW();
     strcpy_0(Destination, v4);
     sprintf_s(
       Buffer,
@@ -3635,7 +3927,7 @@ bool __fastcall ct_period_time_set(CPlayer *pOne)
     pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
     return 1;
   }
-  else if ( s_nWordCount <= 0 || s_nWordCount < TimeLimitMgr::GetPeriodCnt(g_Main.m_pTimeLimitMgr) )
+  else if ( s_nWordCount <= 0 || s_nWordCount < g_Main.m_pTimeLimitMgr->GetPeriodCnt() )
   {
     return 0;
   }
@@ -3643,21 +3935,21 @@ bool __fastcall ct_period_time_set(CPlayer *pOne)
   {
     for ( j = 0; ; ++j )
     {
-      PeriodCnt = TimeLimitMgr::GetPeriodCnt(g_Main.m_pTimeLimitMgr);
+      PeriodCnt = g_Main.m_pTimeLimitMgr->GetPeriodCnt();
       if ( j >= PeriodCnt )
         break;
       v5 = atoi(s_pwszDstCheat[j]);
-      TimeLimitMgr::SetTime(g_Main.m_pTimeLimitMgr, v5, j);
+      g_Main.m_pTimeLimitMgr->SetTime(static_cast<unsigned __int16>(v5), static_cast<unsigned __int16>(j));
     }
-    TimeLimitMgr::ReInitFatigue(g_Main.m_pTimeLimitMgr);
-    v6 = TimeLimitMgr::GetPeriodCnt(g_Main.m_pTimeLimitMgr);
+    g_Main.m_pTimeLimitMgr->ReInitFatigue();
+    v6 = g_Main.m_pTimeLimitMgr->GetPeriodCnt();
     v7 = atoi(s_pwszDstCheat[v6 - 1]);
-    TimeLimitMgr::SetPlayFDegree(g_Main.m_pTimeLimitMgr, 60000 * v7 / 100);
-    PlayFDegree = TimeLimitMgr::GetPlayFDegree(g_Main.m_pTimeLimitMgr);
-    TimeLimitMgr::SetLogoutFDegree(g_Main.m_pTimeLimitMgr, PlayFDegree);
-    CMyTimer::StopTimer(&g_Main.m_pTimeLimitMgr->m_tmLoopTime);
-    v9 = TimeLimitMgr::GetPlayFDegree(g_Main.m_pTimeLimitMgr);
-    CMyTimer::BeginTimer(&g_Main.m_pTimeLimitMgr->m_tmLoopTime, v9);
+    g_Main.m_pTimeLimitMgr->SetPlayFDegree(60000 * v7 / 100);
+    PlayFDegree = static_cast<unsigned int>(g_Main.m_pTimeLimitMgr->GetPlayFDegree());
+    g_Main.m_pTimeLimitMgr->SetLogoutFDegree(PlayFDegree);
+    g_Main.m_pTimeLimitMgr->m_tmLoopTime.StopTimer();
+    v9 = static_cast<unsigned int>(g_Main.m_pTimeLimitMgr->GetPlayFDegree());
+    g_Main.m_pTimeLimitMgr->m_tmLoopTime.BeginTimer(v9);
     return 1;
   }
 }
@@ -3690,8 +3982,8 @@ bool __fastcall ct_tl_info_set(CPlayer *pOne)
     v7.wStatus = atoi(s_pwszDstCheat[1]);
     v7.dwAccSerial = pOne->m_pUserDB->m_dwAccountSerial;
     v7.wIndex = pOne->m_id.wIndex;
-    v4 = _qry_case_insert_timelimit_info::size(&v7);
-    CMainThread::PushDQSData(&g_Main, 0xFFFFFFFF, 0LL, 0x9Bu, (char *)&v7, v4);
+    v4 = static_cast<int>(v7.size());
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x9Bu, reinterpret_cast<char *>(&v7), v4);
     return 1;
   }
 }
@@ -3725,13 +4017,13 @@ bool __fastcall ct_tl_info_view(CPlayer *pOne)
       for ( j = 0; j < 2532; ++j )
       {
         v13 = &g_Player[j];
-        CharNameW = CPlayerDB::GetCharNameW(&v13->m_Param);
+        CharNameW = v13->m_Param.GetCharNameW();
         if ( !strcmp_0(CharNameW, s_pwszDstCheat[0]) )
         {
           dwFatigue = v13->m_pUserDB->m_AvatorData.dbTimeLimitInfo.dwFatigue;
           dwLastLogoutTime = v13->m_pUserDB->m_AvatorData.dbTimeLimitInfo.dwLastLogoutTime;
           byTLStatus = v13->m_pUserDB->m_AvatorData.dbTimeLimitInfo.byTLStatus;
-          v6 = CPlayerDB::GetCharNameW(&v13->m_Param);
+          v6 = v13->m_Param.GetCharNameW();
           strcpy_0(Destination, v6);
           sprintf_s(
             Buffer,
@@ -3754,7 +4046,7 @@ bool __fastcall ct_tl_info_view(CPlayer *pOne)
     dwFatigue = pOne->m_pUserDB->m_AvatorData.dbTimeLimitInfo.dwFatigue;
     dwLastLogoutTime = pOne->m_pUserDB->m_AvatorData.dbTimeLimitInfo.dwLastLogoutTime;
     byTLStatus = pOne->m_pUserDB->m_AvatorData.dbTimeLimitInfo.byTLStatus;
-    v4 = CPlayerDB::GetCharNameW(&pOne->m_Param);
+    v4 = pOne->m_Param.GetCharNameW();
     strcpy_0(Destination, v4);
     sprintf_s(
       Buffer,
@@ -3793,26 +4085,26 @@ bool __fastcall ct_tl_system_setting(CPlayer *pOne)
   }
   else
   {
-    v7 = atoi(s_pwszDstCheat[0]);
-    v8 = v7;
-    if ( v7 )
-    {
-      if ( v8 == 1 )
+      v7 = atoi(s_pwszDstCheat[0]);
+      v8 = v7;
+      if ( v7 )
       {
-        TimeLimitMgr::SetTLEnable(g_Main.m_pTimeLimitMgr, 1u);
-        sprintf_s(v6, 0x32uLL, "Time Limit System Enable");
+        if ( v8 == 1 )
+        {
+        g_Main.m_pTimeLimitMgr->SetTLEnable(1u);
+          sprintf_s(v6, 0x32uLL, "Time Limit System Enable");
+        }
+        else if ( v8 == 2 )
+        {
+        g_Main.m_pTimeLimitMgr->SetTLEnable(2u);
+          sprintf_s(v6, 0x32uLL, "Time Limit System Suspend");
+        }
       }
-      else if ( v8 == 2 )
+      else
       {
-        TimeLimitMgr::SetTLEnable(g_Main.m_pTimeLimitMgr, 2u);
-        sprintf_s(v6, 0x32uLL, "Time Limit System Suspend");
+      g_Main.m_pTimeLimitMgr->SetTLEnable(0);
+        sprintf_s(v6, 0x32uLL, "Time Limit System Disable");
       }
-    }
-    else
-    {
-      TimeLimitMgr::SetTLEnable(g_Main.m_pTimeLimitMgr, 0);
-      sprintf_s(v6, 0x32uLL, "Time Limit System Disable");
-    }
     sprintf_s(Buffer, 0x7DuLL, "Time Limit Info : %s", v6);
     pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
     return 1;
@@ -3850,13 +4142,13 @@ bool __fastcall ct_action_point_set(CPlayer *pOne)
     {
       for ( j = 0; j < 3; ++j )
       {
-        CUserDB::Update_User_Action_Point(pOne->m_pUserDB, j, dwPoint);
+        pOne->m_pUserDB->Update_User_Action_Point(static_cast<unsigned __int8>(j), dwPoint);
         pOne->SendMsg_Alter_Action_Point(j, dwPoint);
       }
     }
     else
     {
-      CUserDB::Update_User_Action_Point(pOne->m_pUserDB, v6, dwPoint);
+      pOne->m_pUserDB->Update_User_Action_Point(v6, dwPoint);
       pOne->SendMsg_Alter_Action_Point(v6, dwPoint);
     }
     return 1;
@@ -3872,17 +4164,14 @@ bool __fastcall ct_Win_RaceWar(CPlayer *pOne)
 
   if ( !pOne || !pOne->m_bOper )
     return 0;
-  RaceCode = CPlayerDB::GetRaceCode(&pOne->m_Param);
-  CHolyStoneSystem::SetHolyMasterRace(&g_HolySys, RaceCode);
+  RaceCode = pOne->m_Param.GetRaceCode();
+  g_HolySys.m_SaveData.m_nHolyMasterRace = RaceCode;
   return 1;
 }
 
 bool __fastcall ct_Gold_Age_Event_Status(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CGoldenBoxItemMgr *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-1C8h] BYREF
+  CGoldenBoxItemMgr *goldenBox;
   unsigned __int8 Event_Status; // [rsp+40h] [rbp-188h]
   char Buffer[72]; // [rsp+58h] [rbp-170h] BYREF
   char pwszMessage[272]; // [rsp+A0h] [rbp-128h] BYREF
@@ -3890,8 +4179,10 @@ bool __fastcall ct_Gold_Age_Event_Status(CPlayer *pOne)
 
   if ( !pOne || !pOne->m_bOper )
     return 0;
-  v4 = CGoldenBoxItemMgr::Instance();
-  Event_Status = CGoldenBoxItemMgr::Get_Event_Status(v4);
+  goldenBox = CGoldenBoxItemMgr::Instance();
+  if ( !goldenBox )
+    return 0;
+  Event_Status = goldenBox->Get_Event_Status();
   memset(Buffer, 0, 30);
   memset(pwszMessage, 0, 256);
   v9 = Event_Status;
@@ -3900,16 +4191,16 @@ bool __fastcall ct_Gold_Age_Event_Status(CPlayer *pOne)
     switch ( v9 )
     {
       case 1u:
-        sprintf_s(Buffer, 0x1EuLL, &byte_1407AF104);
+        sprintf_s(Buffer, 0x1EuLL, byte_1407AF104);
         break;
       case 2u:
-        sprintf_s(Buffer, 0x1EuLL, &byte_1407AF0F8);
+        sprintf_s(Buffer, 0x1EuLL, byte_1407AF0F8);
         break;
       case 3u:
         sprintf_s(Buffer, 0x1EuLL, aA_50);
         break;
       default:
-        sprintf_s(Buffer, 0x1EuLL, &byte_1407AF110);
+        sprintf_s(Buffer, 0x1EuLL, byte_1407AF110);
         break;
     }
   }
@@ -3924,17 +4215,15 @@ bool __fastcall ct_Gold_Age_Event_Status(CPlayer *pOne)
 
 bool __fastcall ct_Gold_Age_Set_Event_Status(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CGoldenBoxItemMgr *v4; // rax
-  CGoldenBoxItemMgr *v5; // rax
-  CGoldenBoxItemMgr *v6; // rax
-  __int64 v7; // [rsp+0h] [rbp-178h] BYREF
+  CGoldenBoxItemMgr *goldenBox;
   char Buffer[260]; // [rsp+50h] [rbp-128h] BYREF
   char v9; // [rsp+154h] [rbp-24h]
   char v10; // [rsp+160h] [rbp-18h]
 
   if ( !pOne || !pOne->m_bOper )
+    return 0;
+  goldenBox = CGoldenBoxItemMgr::Instance();
+  if ( !goldenBox )
     return 0;
   memset(Buffer, 0, 256);
   if ( !strcmp_0(s_pwszDstCheat[0], "?") )
@@ -3951,50 +4240,42 @@ bool __fastcall ct_Gold_Age_Set_Event_Status(CPlayer *pOne)
   {
     if ( v10 == 1 )
     {
-      v4 = CGoldenBoxItemMgr::Instance();
-      CGoldenBoxItemMgr::Set_Event_Status(v4, 2u);
+      goldenBox->Set_Event_Status(2u);
       return 1;
     }
     if ( v10 == 2 )
     {
-      v5 = CGoldenBoxItemMgr::Instance();
-      CGoldenBoxItemMgr::Set_Event_Status(v5, 3u);
+      goldenBox->Set_Event_Status(3u);
       return 1;
     }
   }
-  v6 = CGoldenBoxItemMgr::Instance();
-  CGoldenBoxItemMgr::Set_Event_Status(v6, 0);
+  goldenBox->Set_Event_Status(0);
   return 1;
 }
 
 bool __fastcall ct_Gold_Age_Get_Box_Cnt(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CGoldenBoxItemMgr *v4; // rax
-  CGoldenBoxItemMgr *v5; // rax
+  CGoldenBoxItemMgr *goldenBox;
   unsigned __int8 LoopCount; // al
-  CGoldenBoxItemMgr *v7; // rax
-  __int64 v8; // [rsp+0h] [rbp-178h] BYREF
-  __int64 bFilter; // [rsp+20h] [rbp-158h]
+  int bFilter; // [rsp+20h] [rbp-158h]
   char Buffer[260]; // [rsp+50h] [rbp-128h] BYREF
   int j; // [rsp+154h] [rbp-24h]
 
   if ( !pOne || !pOne->m_bOper )
     return 0;
   memset(Buffer, 0, 256);
-  v4 = CGoldenBoxItemMgr::Instance();
-  if ( CGoldenBoxItemMgr::Get_Event_Status(v4) == 2 )
+  goldenBox = CGoldenBoxItemMgr::Instance();
+  if ( !goldenBox )
+    return 0;
+  if ( goldenBox->Get_Event_Status() == 2 )
   {
     for ( j = 0; ; ++j )
     {
-      v5 = CGoldenBoxItemMgr::Instance();
-      LoopCount = CGoldenBoxItemMgr::GetLoopCount(v5);
+      LoopCount = goldenBox->GetLoopCount();
       if ( j >= LoopCount )
         break;
       memset_0(Buffer, 0, 0x100uLL);
-      v7 = CGoldenBoxItemMgr::Instance();
-      LODWORD(bFilter) = CGoldenBoxItemMgr::Get_Box_Count(v7, j);
+      bFilter = goldenBox->Get_Box_Count(static_cast<unsigned __int8>(j));
       sprintf_s(Buffer, 0x100uLL, aCoacCodeDBoxAc, (unsigned int)j, bFilter);
       pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
     }
@@ -4073,30 +4354,19 @@ bool __fastcall ct_alter_gold(CPlayer *pOne)
 
 bool __fastcall ct_SetPatriarchClear(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  PatriarchElectProcessor *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-28h] BYREF
-
   if ( !pOne || !pOne->m_bOper )
     return 0;
-  v4 = PatriarchElectProcessor::Instance();
-  return PatriarchElectProcessor::CheatClearPatriarch(v4);
+  return PatriarchElectProcessor::Instance()->CheatClearPatriarch();
 }
 
 bool __fastcall ct_SetPatriarchGroup(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  PatriarchElectProcessor *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-38h] BYREF
-  _candidate_info::ClassType eClass; // [rsp+20h] [rbp-18h]
+  int eClass;
 
   if ( !pOne || !pOne->m_bOper )
     return 0;
   eClass = atoi(s_pwszDstCheat[0]);
-  v4 = PatriarchElectProcessor::Instance();
-  return PatriarchElectProcessor::CheatSetPatriarch(v4, pOne, eClass);
+  return PatriarchElectProcessor::Instance()->CheatSetPatriarch(pOne, eClass);
 }
 
 bool __fastcall ct_InformCristalBattleBeforeAnHour(CPlayer *pOne)
@@ -4111,24 +4381,17 @@ bool __fastcall ct_InformCristalBattleBeforeAnHour(CPlayer *pOne)
   if ( s_nWordCount < 1 )
     return 0;
   v5 = atoi(s_pwszDstCheat[1]);
-  CHolyStoneSystem::AlterSchedule(&g_HolySys, 0, v5);
+  g_HolySys.AlterSchedule(0, static_cast<unsigned __int8>(v5));
   return 1;
 }
 
 bool __fastcall ct_SetSettleOwnerGuild(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  AutoMineMachineMng *v4; // rax
-  AutoMineMachineMng *v5; // rax
-  AutoMineMachine *v6; // rax
-  AutoMineMachineMng *v7; // rax
-  AutoMineMachine *Machine; // rax
-  __int64 v9; // [rsp+0h] [rbp-58h] BYREF
+  AutoMineMachineMng *machineMgr;
+  AutoMineMachine *machine;
   unsigned int v10; // [rsp+20h] [rbp-38h]
   CGuild *pGuild; // [rsp+28h] [rbp-30h]
-  CGuild *v12; // [rsp+30h] [rbp-28h]
-  CGuild *OwnerGuild; // [rsp+38h] [rbp-20h]
+  CGuild *ownerGuild;
   int nRaceCode; // [rsp+40h] [rbp-18h]
   unsigned int dw2ThGuildSerial; // [rsp+44h] [rbp-14h]
   unsigned int dw1ThGuildSerial; // [rsp+48h] [rbp-10h]
@@ -4142,59 +4405,41 @@ bool __fastcall ct_SetSettleOwnerGuild(CPlayer *pOne)
   if ( !pGuild )
     return 0;
   nRaceCode = pGuild->m_byRace;
-  v4 = AutoMineMachineMng::Instance();
-  AutoMineMachineMng::ChangeOwner(v4, nRaceCode, pGuild, v10);
+  machineMgr = AutoMineMachineMng::Instance();
+  machineMgr->ChangeOwner(nRaceCode, pGuild, static_cast<unsigned __int8>(v10));
   if ( v10 )
   {
-    v7 = AutoMineMachineMng::Instance();
-    Machine = AutoMineMachineMng::GetMachine(v7, pGuild->m_byRace, 0);
-    OwnerGuild = AutoMineMachine::GetOwnerGuild(Machine);
-    if ( OwnerGuild )
-      dw1ThGuildSerial = OwnerGuild->m_dwSerial;
+    machine = machineMgr->GetMachine(pGuild->m_byRace, 0);
+    ownerGuild = machine ? machine->m_pOwnerGuild : nullptr;
+    if ( ownerGuild )
+      dw1ThGuildSerial = ownerGuild->m_dwSerial;
     else
       dw1ThGuildSerial = 0;
-    CNotifyNotifyRaceLeaderSownerUTaxrate::UpdateSettlementOwner(
-      &g_Main.m_kEtcNotifyInfo,
-      pGuild->m_byRace,
-      dw1ThGuildSerial,
-      pGuild->m_dwSerial);
+    g_Main.m_kEtcNotifyInfo.UpdateSettlementOwner(pGuild->m_byRace, dw1ThGuildSerial, pGuild->m_dwSerial);
   }
   else
   {
-    v5 = AutoMineMachineMng::Instance();
-    v6 = AutoMineMachineMng::GetMachine(v5, pGuild->m_byRace, 1u);
-    v12 = AutoMineMachine::GetOwnerGuild(v6);
-    if ( v12 )
-      dw2ThGuildSerial = v12->m_dwSerial;
+    machine = machineMgr->GetMachine(pGuild->m_byRace, 1u);
+    ownerGuild = machine ? machine->m_pOwnerGuild : nullptr;
+    if ( ownerGuild )
+      dw2ThGuildSerial = ownerGuild->m_dwSerial;
     else
       dw2ThGuildSerial = 0;
-    CNotifyNotifyRaceLeaderSownerUTaxrate::UpdateSettlementOwner(
-      &g_Main.m_kEtcNotifyInfo,
-      pGuild->m_byRace,
-      pGuild->m_dwSerial,
-      dw2ThGuildSerial);
+    g_Main.m_kEtcNotifyInfo.UpdateSettlementOwner(pGuild->m_byRace, pGuild->m_dwSerial, dw2ThGuildSerial);
   }
-  CNotifyNotifyRaceLeaderSownerUTaxrate::Notify(&g_Main.m_kEtcNotifyInfo, pGuild->m_byRace);
+  g_Main.m_kEtcNotifyInfo.Notify(pGuild->m_byRace);
   return 1;
 }
 
 bool __fastcall ct_ClearSettleOwnerGuild(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  AutoMineMachineMng *v3; // rax
-  AutoMineMachineMng *v5; // rax
-  AutoMineMachineMng *v6; // rax
-  AutoMineMachine *v7; // rax
-  AutoMineMachineMng *v8; // rax
-  AutoMineMachine *Machine; // rax
-  __int64 v10; // [rsp+0h] [rbp-58h] BYREF
+  AutoMineMachineMng *machineMgr;
+  AutoMineMachine *machine;
   int nRaceCode; // [rsp+20h] [rbp-38h]
   int j; // [rsp+24h] [rbp-34h]
   int v13; // [rsp+28h] [rbp-30h]
   unsigned int v14; // [rsp+2Ch] [rbp-2Ch]
-  CGuild *v15; // [rsp+30h] [rbp-28h]
-  CGuild *OwnerGuild; // [rsp+38h] [rbp-20h]
+  CGuild *ownerGuild; // [rsp+30h] [rbp-28h]
   unsigned int dw2ThGuildSerial; // [rsp+40h] [rbp-18h]
   unsigned int dw1ThGuildSerial; // [rsp+44h] [rbp-14h]
 
@@ -4208,39 +4453,29 @@ bool __fastcall ct_ClearSettleOwnerGuild(CPlayer *pOne)
       {
         if ( v14 < 2 )
         {
-          v5 = AutoMineMachineMng::Instance();
-          AutoMineMachineMng::ChangeOwner(v5, v13, 0LL, v14);
+          machineMgr = AutoMineMachineMng::Instance();
+          machineMgr->ChangeOwner(v13, nullptr, static_cast<unsigned __int8>(v14));
           if ( v14 )
           {
-            v8 = AutoMineMachineMng::Instance();
-            Machine = AutoMineMachineMng::GetMachine(v8, v13, 0);
-            OwnerGuild = AutoMineMachine::GetOwnerGuild(Machine);
-            if ( OwnerGuild )
-              dw1ThGuildSerial = OwnerGuild->m_dwSerial;
+            machine = machineMgr->GetMachine(static_cast<unsigned __int8>(v13), 0);
+            ownerGuild = machine ? machine->m_pOwnerGuild : nullptr;
+            if ( ownerGuild )
+              dw1ThGuildSerial = ownerGuild->m_dwSerial;
             else
               dw1ThGuildSerial = 0;
-            CNotifyNotifyRaceLeaderSownerUTaxrate::UpdateSettlementOwner(
-              &g_Main.m_kEtcNotifyInfo,
-              v13,
-              dw1ThGuildSerial,
-              0);
+            g_Main.m_kEtcNotifyInfo.UpdateSettlementOwner(static_cast<unsigned __int8>(v13), dw1ThGuildSerial, 0);
           }
           else
           {
-            v6 = AutoMineMachineMng::Instance();
-            v7 = AutoMineMachineMng::GetMachine(v6, v13, 1u);
-            v15 = AutoMineMachine::GetOwnerGuild(v7);
-            if ( v15 )
-              dw2ThGuildSerial = v15->m_dwSerial;
+            machine = machineMgr->GetMachine(static_cast<unsigned __int8>(v13), 1u);
+            ownerGuild = machine ? machine->m_pOwnerGuild : nullptr;
+            if ( ownerGuild )
+              dw2ThGuildSerial = ownerGuild->m_dwSerial;
             else
               dw2ThGuildSerial = 0;
-            CNotifyNotifyRaceLeaderSownerUTaxrate::UpdateSettlementOwner(
-              &g_Main.m_kEtcNotifyInfo,
-              v13,
-              0,
-              dw2ThGuildSerial);
+            g_Main.m_kEtcNotifyInfo.UpdateSettlementOwner(static_cast<unsigned __int8>(v13), 0, dw2ThGuildSerial);
           }
-          CNotifyNotifyRaceLeaderSownerUTaxrate::Notify(&g_Main.m_kEtcNotifyInfo, v13);
+          g_Main.m_kEtcNotifyInfo.Notify(static_cast<unsigned __int8>(v13));
           return 1;
         }
         else
@@ -4264,12 +4499,12 @@ bool __fastcall ct_ClearSettleOwnerGuild(CPlayer *pOne)
     {
       for ( j = 0; j < 2; ++j )
       {
-        v3 = AutoMineMachineMng::Instance();
-        AutoMineMachineMng::ChangeOwner(v3, nRaceCode, 0LL, j);
+        machineMgr = AutoMineMachineMng::Instance();
+        machineMgr->ChangeOwner(nRaceCode, nullptr, static_cast<unsigned __int8>(j));
       }
-      CNotifyNotifyRaceLeaderSownerUTaxrate::UpdateSettlementOwner(&g_Main.m_kEtcNotifyInfo, nRaceCode, 0, 0);
+      g_Main.m_kEtcNotifyInfo.UpdateSettlementOwner(static_cast<unsigned __int8>(nRaceCode), 0, 0);
     }
-    CNotifyNotifyRaceLeaderSownerUTaxrate::Notify(&g_Main.m_kEtcNotifyInfo, 0xFFu);
+    g_Main.m_kEtcNotifyInfo.Notify(0xFFu);
     return 1;
   }
 }
@@ -4294,14 +4529,13 @@ bool __fastcall ct_ReqChangeHonorGuild(CPlayer *pOne)
 {
   __int64 *v1; // rdi
   __int64 i; // rcx
-  CHonorGuild *v3; // rax
   __int64 v5; // [rsp+0h] [rbp-38h] BYREF
   int j; // [rsp+20h] [rbp-18h]
 
   for ( j = 0; j < 3; ++j )
   {
-    v3 = CHonorGuild::Instance();
-    CHonorGuild::ChangeHonorGuild(v3, j);
+    CHonorGuild *honorGuild = CHonorGuild::Instance();
+    honorGuild->ChangeHonorGuild(j);
   }
   return 1;
 }
@@ -4325,7 +4559,7 @@ bool __fastcall ct_goto_char(CPlayer *pOne)
   v7 = &g_Player[v6->m_idWorld.wIndex];
   if ( !v7->m_bLive )
     return 0;
-  CharNameW = CPlayerDB::GetCharNameW(&pOne->m_Param);
+  CharNameW = pOne->m_Param.GetCharNameW();
   return v7->mgr_recall_player(CharNameW);
 }
 
@@ -4348,10 +4582,10 @@ bool __fastcall ct_goto_monster(CPlayer *pOne)
 
 bool __fastcall ct_CdeStart(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CashItemRemoteStore *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-68h] BYREF
+  CashItemRemoteStore *store;
+  std::time_t now;
+  std::tm beginTm{};
+  std::tm endTm{};
   int iBegin_TT; // [rsp+38h] [rbp-30h]
   int iB30_TT; // [rsp+3Ch] [rbp-2Ch]
   int iB5_TT; // [rsp+40h] [rbp-28h]
@@ -4371,8 +4605,29 @@ bool __fastcall ct_CdeStart(CPlayer *pOne)
   iEnd_TT = atoi(s_pwszDstCheat[3]);
   if ( iBegin_TT <= 0 || iB30_TT <= 0 || iB5_TT <= 0 || iEnd_TT <= 0 )
     return 0;
-  v4 = CashItemRemoteStore::Instance();
-  return CashItemRemoteStore::start_cde(v4, iBegin_TT, iB30_TT, iB5_TT, iEnd_TT);
+  store = CashItemRemoteStore::Instance();
+  now = std::time(nullptr);
+  store->m_cde.m_ini.m_bUseCashDiscount = 1;
+  store->m_cde.m_ini.m_cdeTime[0] = static_cast<int>(now) + iBegin_TT;
+  store->m_cde.m_ini.m_cdeTime[1] = static_cast<int>(now) + iBegin_TT + iB30_TT + iB5_TT + iEnd_TT;
+  store->m_cde.m_cde_inform_before[0] = iB5_TT + iB30_TT;
+  store->m_cde.m_cde_inform_before[1] = iB30_TT;
+  std::time_t beginTime = static_cast<std::time_t>(store->m_cde.m_ini.m_cdeTime[0]);
+  std::time_t endTime = static_cast<std::time_t>(store->m_cde.m_ini.m_cdeTime[1]);
+  beginTm = *std::localtime(&beginTime);
+  endTm = *std::localtime(&endTime);
+  store->m_cde.m_ini.m_wYear[0] = beginTm.tm_year + 1900;
+  store->m_cde.m_ini.m_byMonth[0] = beginTm.tm_mon + 1;
+  store->m_cde.m_ini.m_byDay[0] = beginTm.tm_mday;
+  store->m_cde.m_ini.m_byHour[0] = beginTm.tm_hour;
+  store->m_cde.m_ini.m_byMinute[0] = beginTm.tm_min;
+  store->m_cde.m_ini.m_wYear[1] = endTm.tm_year + 1900;
+  store->m_cde.m_ini.m_byMonth[1] = endTm.tm_mon + 1;
+  store->m_cde.m_ini.m_byDay[1] = endTm.tm_mday;
+  store->m_cde.m_ini.m_byHour[1] = endTm.tm_hour;
+  store->m_cde.m_ini.m_byMinute[1] = endTm.tm_min;
+  store->m_cde.m_cde_status = 1;
+  return 1;
 }
 
 bool __fastcall ct_exception(CPlayer *pOne)
@@ -4385,7 +4640,7 @@ bool __fastcall ct_exception(CPlayer *pOne)
   if ( !pOne || !pOne->m_bOper )
     return 0;
   memset(_Dest, 0, sizeof(_Dest));
-  sprintf_s<2>((char (*)[2])_Dest, "%s", "Test");
+  sprintf_s(_Dest, sizeof(_Dest), "%s", "Test");
   return 1;
 }
 
@@ -4479,9 +4734,9 @@ bool __fastcall ct_SetGuildMaster(CPlayer *pOne)
   if ( !pOne->m_Param.m_pGuild )
     return 0;
   m_pGuild = pOne->m_Param.m_pGuild;
-  CharSerial = CPlayerDB::GetCharSerial(&pOne->m_Param);
-  pNewguildMaster = CGuild::GetMemberFromSerial(m_pGuild, CharSerial);
-  return pNewguildMaster && CGuild::DB_Update_GuildMaster(m_pGuild, pNewguildMaster);
+  CharSerial = pOne->m_Param.GetCharSerial();
+  pNewguildMaster = m_pGuild->GetMemberFromSerial(CharSerial);
+  return pNewguildMaster && m_pGuild->DB_Update_GuildMaster(pNewguildMaster);
 }
 
 bool __fastcall ct_SetMaxLevelLimit(CPlayer *pOne)
@@ -4520,11 +4775,11 @@ bool __fastcall ct_set_exp_rate(CPlayer *pOne)
   v9 = v4;
   if ( v4 < 0.0 || v9 >= 100.0 )
     return 0;
-  lv = CPlayerDB::GetLevel(&pOne->m_Param);
+  lv = pOne->m_Param.GetLevel();
   v5 = cStaticMember_Player::Instance();
-  LimitExp = cStaticMember_Player::GetLimitExp(v5, lv);
+  LimitExp = v5->GetLimitExp(lv);
   v12 = LimitExp * (float)(v9 / 100.0);
-  Exp = CPlayerDB::GetExp(&pOne->m_Param);
+  Exp = pOne->m_Param.GetExp();
   dAlterExp = v12 - Exp;
   pOne->AlterExp(v12 - Exp, 1, 0, 0);
   return 1;
@@ -4550,7 +4805,7 @@ bool __fastcall ct_goto_npc(CPlayer *pOne)
   v7 = 0LL;
   for ( j = 0; j < CMerchant::s_nLiveNum; ++j )
   {
-    Str1 = CItemStore::GetNpcCode(g_NPC[j].m_pItemStore);
+    Str1 = g_NPC[j].m_pItemStore->GetNpcCode();
     if ( Str1 && !strcmp_0(Str1, Destination) )
     {
       pNpc = &g_NPC[j];
@@ -4604,7 +4859,6 @@ bool __fastcall ct_manage_guild(CPlayer *pOne)
 
   if ( !pOne || !pOne->m_bOper )
     return 0;
-  _guild_manage_request_clzo::_guild_manage_request_clzo(&dwObj2);
   dwObj2.byManageType = atoi(s_pwszDstCheat[0]);
   if ( dwObj2.byManageType >= 6u )
     return 0;
@@ -4692,23 +4946,26 @@ bool __fastcall ct_change_master_elect(CPlayer *pOne)
   v6 = atoi(s_pwszDstCheat[0]) != 0;
   v5 = v6;
   pOne->m_Param.m_pGuild->m_bPossibleElectMaster = v6;
-  CGuild::MakeDownMemberPacket(pOne->m_Param.m_pGuild);
-  CGuild::SendMsg_MasterElectPossible(pOne->m_Param.m_pGuild, v5);
+  pOne->m_Param.m_pGuild->MakeDownMemberPacket();
+  pOne->m_Param.m_pGuild->SendMsg_MasterElectPossible(v5);
   return 1;
 }
 
 bool __fastcall ct_release_punishment(CPlayer *pOne)
 {
-  int *v1; // rdi
-  __int64 i; // rcx
   int j; // [rsp+0h] [rbp-18h] BYREF
+
+  if ( !pOne || !pOne->m_bOper )
+    return 0;
+  for ( j = 0; j < 3; ++j )
+    pOne->m_pUserDB->m_AvatorData.dbAvator.m_dwPunishment[j] = static_cast<unsigned int>(-1);
+  return 1;
+}
 
 bool __fastcall ct_ConEventStart(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CashItemRemoteStore *v4; // rax
-  __int64 v5; // [rsp+0h] [rbp-48h] BYREF
+  CashItemRemoteStore *store;
+  std::time_t now;
   int iBegin_TT; // [rsp+28h] [rbp-20h]
   int iEnd_TT; // [rsp+2Ch] [rbp-1Ch] BYREF
   unsigned __int8 v8; // [rsp+34h] [rbp-14h]
@@ -4722,8 +4979,15 @@ bool __fastcall ct_ConEventStart(CPlayer *pOne)
   v8 = atoi(s_pwszDstCheat[2]);
   if ( iBegin_TT <= 0 || iEnd_TT <= 0 || v8 > 3u )
     return 0;
-  v4 = CashItemRemoteStore::Instance();
-  return CashItemRemoteStore::start_conevent(v4, iBegin_TT, iEnd_TT, v8);
+  store = CashItemRemoteStore::Instance();
+  now = std::time(nullptr);
+  store->m_con_event.m_ini.m_bUseConEvent = (v8 < 3u);
+  store->m_con_event.m_ini.m_byEventKind = v8;
+  store->m_con_event.m_bConEvent = true;
+  store->m_con_event.m_eventtime.m_EventTime[0] = static_cast<int>(now) + iBegin_TT;
+  store->m_con_event.m_eventtime.m_EventTime[1] = static_cast<int>(now) + iBegin_TT + iEnd_TT;
+  store->m_con_event.m_conevent_status = 1;
+  return 1;
 }
 
 bool __fastcall ct_loot_item(CPlayer *pOne)
@@ -4744,4 +5008,7 @@ bool __fastcall ct_loot_item(CPlayer *pOne)
   W2M(s_pwszDstCheat[0], szTran, 0x20u);
   return pOne->dev_loot_item(szTran, nNum, 0LL, 0);
 }
+
+
+
 

@@ -12,3 +12,8 @@ unsigned int CUnmannedTraderEnvironmentValue::UNMANNEDTRADETRADER_LAZYCLEANER_UP
 unsigned int CUnmannedTraderEnvironmentValue::Unmanned_Trader_Max_Row_Count_Search = 0;
 const char *CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Sort_Type_Name = "";
 const char *CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Sort_Query = "";
+unsigned int CUnmannedTraderEnvironmentValue::Unmanned_Trader_Min_Limit_Empty_Record_Cnt = 0;
+unsigned int CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Empty_Record_Cnt = 0;
+unsigned int CUnmannedTraderEnvironmentValue::UNMANNEDTRADETRADEINFO_LOOP_DELAY = 0;
+const char *CUnmannedTraderEnvironmentValue::UNMANNEDTRADETRADEINFO_SAVE_INI_SECTION_NAME = "";
+const char *CUnmannedTraderEnvironmentValue::UNMANNEDTRADETRADEINFO_SAVE_INI_FILE_NAME = "";

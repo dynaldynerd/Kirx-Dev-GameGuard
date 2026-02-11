@@ -6,7 +6,7 @@
 class CPlayer;
 
 /* 1773 */
-class __cppobj __declspec(align(8)) CParkingUnit : CGameObject
+class __cppobj __declspec(align(8)) CParkingUnit : public CGameObject
 {
 public:
   static int s_nLiveNum;

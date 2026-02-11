@@ -1,8 +1,10 @@
 #include "pch.h"
 
 #include "CRFWorldDatabase.h"
+#include "CHonorGuild.h"
 #include "WorldServerUtil.h"
 
+#include "DB_LOAD_AUTOMINE_MACHINE.h"
 #include "CNationSettingManager.h"
 #include "pvppoint_guild_rank_info.h"
 #include "total_guild_rank_info.h"
@@ -998,6 +1000,177 @@ bool CRFWorldDatabase::create_amine_personal()
   memset(buffer, 0, 256);
   sprintf(buffer, "{ call pcreate_aminepersonal_inven }");
   return ExecUpdateQuery(buffer, true);
+}
+
+bool CRFWorldDatabase::create_automine_table()
+{
+  return TableExist("[dbo].[tbl_automine_inven]") || ExecUpdateQuery("{ CALL pcreate_automine }", true);
+}
+
+unsigned __int8 CRFWorldDatabase::select_automine(_DB_LOAD_AUTOMINE_MACHINE *pdata)
+{
+  SQLLEN indicator{};
+  SQLRETURN ret{};
+  char buffer[260]{};
+
+  memset(buffer, 0, 256);
+  sprintf(buffer, "{ CALL pselect_automine_inven(%d, %d) }", pdata->byCollisionType, pdata->byRace);
+  if (m_bSaveDBLog)
+  {
+    Log(buffer);
+  }
+
+  if (m_hStmtSelect || ReConnectDataBase())
+  {
+    ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(buffer), SQL_NTS);
+    if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+    {
+      ret = SQLFetch(m_hStmtSelect);
+      if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+      {
+        int column = 1;
+        SQLGetData(m_hStmtSelect, column, SQL_C_UTINYINT, &pdata->byRace, 0, &indicator);
+        SQLGetData(m_hStmtSelect, ++column, SQL_C_ULONG, &pdata->dwGuildSerial, 0, &indicator);
+        SQLGetData(m_hStmtSelect, ++column, SQL_C_UTINYINT, &pdata->bWorking, 0, &indicator);
+        SQLGetData(m_hStmtSelect, ++column, SQL_C_UTINYINT, &pdata->bySelectedOre, 0, &indicator);
+        SQLGetData(m_hStmtSelect, ++column, SQL_C_ULONG, &pdata->dwBatteryGage, 0, &indicator);
+
+        for (int j = 0; j < 80; ++j)
+        {
+          int targetValue = 0;
+          unsigned __int8 byNum = 0;
+          ret = SQLGetData(m_hStmtSelect, ++column, SQL_C_LONG, &targetValue, 0, &indicator);
+          ret = SQLGetData(m_hStmtSelect, ++column, SQL_C_UTINYINT, &byNum, 0, &indicator);
+          if (ret && ret != SQL_SUCCESS_WITH_INFO)
+          {
+            unsigned __int8 result = 0;
+            if (ret == SQL_NO_DATA)
+            {
+              result = 2;
+            }
+            else
+            {
+              ErrorMsgLog(ret, buffer, "SQLExecDirect", m_hStmtSelect);
+              ErrorAction(ret, m_hStmtSelect);
+              result = 1;
+            }
+            if (m_hStmtSelect)
+            {
+              SQLCloseCursor(m_hStmtSelect);
+            }
+            return result;
+          }
+          if (targetValue != -1 && byNum)
+          {
+            pdata->slot[pdata->bySlotCnt].nLumpIndex = j / 40;
+            memcpy_0(&pdata->slot[pdata->bySlotCnt].item, &targetValue, sizeof(pdata->slot[pdata->bySlotCnt].item));
+            pdata->slot[pdata->bySlotCnt++].nOverlapNum = byNum;
+          }
+        }
+        if (m_hStmtSelect)
+        {
+          SQLCloseCursor(m_hStmtSelect);
+        }
+        if (m_bSaveDBLog)
+        {
+          FmtLog("%s Success", buffer);
+        }
+        return 0;
+      }
+
+      unsigned __int8 result = 0;
+      if (ret == SQL_NO_DATA)
+      {
+        result = 2;
+      }
+      else
+      {
+        ErrorMsgLog(ret, buffer, "SQLExecDirect", m_hStmtSelect);
+        ErrorAction(ret, m_hStmtSelect);
+        result = 1;
+      }
+      if (m_hStmtSelect)
+      {
+        SQLCloseCursor(m_hStmtSelect);
+      }
+      return result;
+    }
+
+    if (ret == SQL_NO_DATA)
+    {
+      return 2;
+    }
+
+    ErrorMsgLog(ret, buffer, "SQLExecDirect", m_hStmtSelect);
+    ErrorAction(ret, m_hStmtSelect);
+    return 1;
+  }
+
+  ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
+  return 1;
+}
+
+unsigned __int8 CRFWorldDatabase::exist_automine(unsigned __int8 byCollisionType, unsigned __int8 byRace)
+{
+  SQLRETURN ret{};
+  char buffer[260]{};
+
+  memset(buffer, 0, 256);
+  sprintf(buffer, "{ CALL pselect_automine_inven(%d, %d) }", byCollisionType, byRace);
+  if (m_bSaveDBLog)
+  {
+    Log(buffer);
+  }
+
+  if (m_hStmtSelect || ReConnectDataBase())
+  {
+    ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(buffer), SQL_NTS);
+    if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+    {
+      ret = SQLFetch(m_hStmtSelect);
+      if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+      {
+        if (m_hStmtSelect)
+        {
+          SQLCloseCursor(m_hStmtSelect);
+        }
+        if (m_bSaveDBLog)
+        {
+          FmtLog("%s Success", buffer);
+        }
+        return 0;
+      }
+
+      unsigned __int8 result = 0;
+      if (ret == SQL_NO_DATA)
+      {
+        result = 2;
+      }
+      else
+      {
+        ErrorMsgLog(ret, buffer, "SQLExecDirect", m_hStmtSelect);
+        ErrorAction(ret, m_hStmtSelect);
+        result = 1;
+      }
+      if (m_hStmtSelect)
+      {
+        SQLCloseCursor(m_hStmtSelect);
+      }
+      return result;
+    }
+
+    if (ret == SQL_NO_DATA)
+    {
+      return 2;
+    }
+
+    ErrorMsgLog(ret, buffer, "SQLExecDirect", m_hStmtSelect);
+    ErrorAction(ret, m_hStmtSelect);
+    return 1;
+  }
+
+  ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
+  return 1;
 }
 
 unsigned __int8 CRFWorldDatabase::select_amine_personal(unsigned int dwSerial)
@@ -3060,6 +3233,28 @@ char CRFWorldDatabase::Select_PvpRate(
   return 1;
 }
 
+bool CRFWorldDatabase::create_table_atrade_taxrate()
+{
+  if (TableExist("tbl_ATradeTaxRate"))
+  {
+    return true;
+  }
+
+  char buffer[1040]{};
+  memset(buffer, 0, 1024);
+  sprintf(
+    buffer,
+    "CREATE TABLE [dbo].[tbl_ATradeTaxRate] ( [serial] [int] IDENTITY (1, 1) NOT NULL , [Race] [tinyint] NOT NULL , [GSer"
+    "ial] [int] NOT NULL , [GName] [nvarchar] (24) NOT NULL , [Tax] [tinyint] NOT NULL , [NextTax] [tinyint] NOT NULL , ["
+    "UpdateTime] [datetime] NOT NULL ) ON [PRIMARY] ALTER TABLE [dbo].[tbl_ATradeTaxRate] WITH NOCHECK ADD CONSTRAINT [PK"
+    "_tbl_ATradeTaxRate] PRIMARY KEY  CLUSTERED ([serial])  ON [PRIMARY] ALTER TABLE [dbo].[tbl_ATradeTaxRate] WITH NOCHE"
+    "CK ADD CONSTRAINT [DF_tbl_ATradeTaxRate_GSerial] DEFAULT (-1) FOR [GSerial], CONSTRAINT [DF_tbl_ATradeTaxRate_GName]"
+    " DEFAULT ('*') FOR [GName], CONSTRAINT [DF_tbl_ATradeTaxRate_Tax] DEFAULT (5) FOR [Tax], CONSTRAINT [DF_tbl_ATradeTa"
+    "xRate_NextTax] DEFAULT (5) FOR [NextTax], CONSTRAINT [DF_tbl_ATradeTaxRate_UpdateTime] DEFAULT (getdate()) FOR [Upda"
+    "teTime] CREATE  INDEX [IX_Race] ON [dbo].[tbl_ATradeTaxRate]([Race]) ON [PRIMARY]");
+  return ExecUpdateQuery(buffer, true);
+}
+
 bool CRFWorldDatabase::insert_atrade_taxrate(
   unsigned __int8 byRace,
   unsigned int dwSerial,
@@ -3083,6 +3278,210 @@ bool CRFWorldDatabase::insert_atrade_taxrate(
     dwMatterDst,
     wszMatterDst);
   return ExecUpdateQuery(buffer, true);
+}
+
+char CRFWorldDatabase::Select_HonorGuild(unsigned __int8 byRace, _guild_honor_list_result_zocl *pOutList, bool bNext)
+{
+  char buffer[128]{};
+  sprintf_s(buffer, "{ CALL pSelect_HonorGuild( %d, %d ) }", byRace, bNext ? 1 : 0);
+  if (m_bSaveDBLog)
+  {
+    Log(buffer);
+  }
+
+  if (m_hStmtSelect || ReConnectDataBase())
+  {
+    SQLRETURN ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(buffer), SQL_NTS);
+    if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+    {
+      while (true)
+      {
+        ret = SQLFetch(m_hStmtSelect);
+        if (ret && ret != SQL_SUCCESS_WITH_INFO)
+        {
+          char result = 0;
+          if (ret == SQL_NO_DATA)
+          {
+            result = 2;
+          }
+          else
+          {
+            ErrorMsgLog(ret, buffer, "SQLFetch", m_hStmtSelect);
+            ErrorAction(ret, m_hStmtSelect);
+            result = 1;
+          }
+          if (m_hStmtSelect)
+          {
+            SQLCloseCursor(m_hStmtSelect);
+          }
+          return result;
+        }
+
+        SQLLEN indicator = 0;
+        ret = SQLGetData(
+          m_hStmtSelect,
+          1u,
+          SQL_C_LONG,
+          &pOutList->GuildList[pOutList->byListNum],
+          0,
+          &indicator);
+        ret = SQLGetData(
+          m_hStmtSelect,
+          2u,
+          SQL_C_LONG,
+          &pOutList->GuildList[pOutList->byListNum].dwEmblemBack,
+          0,
+          &indicator);
+        ret = SQLGetData(
+          m_hStmtSelect,
+          3u,
+          SQL_C_LONG,
+          &pOutList->GuildList[pOutList->byListNum].dwEmblemMark,
+          0,
+          &indicator);
+        ret = SQLGetData(
+          m_hStmtSelect,
+          4u,
+          SQL_C_CHAR,
+          pOutList->GuildList[pOutList->byListNum].wszGuildName,
+          17,
+          &indicator);
+        ret = SQLGetData(
+          m_hStmtSelect,
+          5u,
+          SQL_C_CHAR,
+          pOutList->GuildList[pOutList->byListNum].wszMasterName,
+          17,
+          &indicator);
+        ret = SQLGetData(
+          m_hStmtSelect,
+          6u,
+          SQL_C_TINYINT,
+          &pOutList->GuildList[pOutList->byListNum].byTaxRate,
+          0,
+          &indicator);
+        if (ret && ret != SQL_SUCCESS_WITH_INFO)
+        {
+          break;
+        }
+        ++pOutList->byListNum;
+      }
+
+      char result = 0;
+      if (ret == SQL_NO_DATA)
+      {
+        result = 2;
+      }
+      else
+      {
+        ErrorMsgLog(ret, buffer, "SQLGetData", m_hStmtSelect);
+        ErrorAction(ret, m_hStmtSelect);
+        result = 1;
+      }
+      if (m_hStmtSelect)
+      {
+        SQLCloseCursor(m_hStmtSelect);
+      }
+      return result;
+    }
+
+    if (ret == SQL_NO_DATA)
+    {
+      return 2;
+    }
+
+    ErrorMsgLog(ret, buffer, "SQLExecDirectA", m_hStmtSelect);
+    ErrorAction(ret, m_hStmtSelect);
+    return 1;
+  }
+
+  ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
+  return 1;
+}
+
+char CRFWorldDatabase::Select_ClearHonorGuild(unsigned __int8 byRace, unsigned int *dwSerial)
+{
+  char buffer[256]{};
+  sprintf_s(
+    buffer,
+    "Select GuildSerial From tbl_honor_guild Where Race=%d AND GuildSerial=0xFFFFFFFF And DCK=0 AND IsNext=1",
+    byRace);
+  if (m_bSaveDBLog)
+  {
+    Log(buffer);
+  }
+
+  if (m_hStmtSelect || ReConnectDataBase())
+  {
+    SQLRETURN ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(buffer), SQL_NTS);
+    if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+    {
+      ret = SQLFetch(m_hStmtSelect);
+      if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+      {
+        SQLLEN indicator = 0;
+        ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_LONG, dwSerial, 0, &indicator);
+        if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+        {
+          if (m_hStmtSelect)
+          {
+            SQLCloseCursor(m_hStmtSelect);
+          }
+          if (m_bSaveDBLog)
+          {
+            FmtLog("%s Success", buffer);
+          }
+          return 0;
+        }
+
+        char result = 0;
+        if (ret == SQL_NO_DATA)
+        {
+          result = 2;
+        }
+        else
+        {
+          ErrorMsgLog(ret, buffer, "SQLGetData", m_hStmtSelect);
+          ErrorAction(ret, m_hStmtSelect);
+          result = 1;
+        }
+        if (m_hStmtSelect)
+        {
+          SQLCloseCursor(m_hStmtSelect);
+        }
+        return result;
+      }
+
+      char result = 0;
+      if (ret == SQL_NO_DATA)
+      {
+        result = 2;
+      }
+      else
+      {
+        ErrorMsgLog(ret, buffer, "SQLFetch", m_hStmtSelect);
+        ErrorAction(ret, m_hStmtSelect);
+        result = 1;
+      }
+      if (m_hStmtSelect)
+      {
+        SQLCloseCursor(m_hStmtSelect);
+      }
+      return result;
+    }
+
+    if (ret == SQL_NO_DATA)
+    {
+      return 2;
+    }
+
+    ErrorMsgLog(ret, buffer, "SQLExecDirectA", m_hStmtSelect);
+    ErrorAction(ret, m_hStmtSelect);
+    return 1;
+  }
+
+  ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
+  return 1;
 }
 
 char CRFWorldDatabase::Select_CharacterName(

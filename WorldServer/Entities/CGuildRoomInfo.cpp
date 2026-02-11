@@ -2,7 +2,15 @@
 
 #include "CGuildRoomInfo.h"
 
+#include <ctime>
+
 #include "CMapData.h"
+#include "CMainThread.h"
+#include "CItemStoreManager.h"
+#include "CPlayer.h"
+#include "CGuild.h"
+#include "DqsDbStructs.h"
+#include "GlobalObjects.h"
 
 CMapData *CGuildRoomInfo::sm_neutal_map[3] = {};
 _dummy_position *CGuildRoomInfo::sm_neutral_hq_dummy[3] = {};
@@ -86,6 +94,209 @@ unsigned int CGuildRoomInfo::GetGuildSerial()
   return m_dwGuildSerial;
 }
 
+CMapData *CGuildRoomInfo::GetMapData()
+{
+  return m_pRoomMap;
+}
+
+unsigned __int16 CGuildRoomInfo::GetMapLayer()
+{
+  return m_wRoomMapLayer;
+}
+
+unsigned __int8 CGuildRoomInfo::GetRoomType()
+{
+  return m_byRoomType;
+}
+
+bool CGuildRoomInfo::GetMapPos(float *pPos)
+{
+  return m_pRoomMap->GetRandPosInDummy(m_pRoomStartDummy, pPos, 1);
+}
+
+int CGuildRoomInfo::GetRestTime()
+{
+  __time32_t now{};
+  _time32(&now);
+  return static_cast<int>(m_timer - now);
+}
+
+char CGuildRoomInfo::IsMemberIn(int n, unsigned int dwCharSerial)
+{
+  for (size_t j = 0; j < m_vecRoomMember.size(); ++j)
+  {
+    RoomCharInfo &member = m_vecRoomMember[j];
+    if (member.bIn && member.iCharIdx == n && member.dwCharSerial == dwCharSerial)
+    {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+char CGuildRoomInfo::SetRoom_Restore(int iGuildInx, unsigned int dwGuildSerial, tagTIMESTAMP_STRUCT *ts)
+{
+  if (IsRent())
+  {
+    return 0;
+  }
+
+  RoomCharInfo value{};
+  m_vecRoomMember.assign(0x64u, value);
+  if (m_vecRoomMember.size() != 100)
+  {
+    return 0;
+  }
+
+  m_bRent = true;
+  m_iGuildIdx = iGuildInx;
+  m_dwGuildSerial = dwGuildSerial;
+
+  _MULTI_BLOCK *pMB = m_pRoomMap->m_mb;
+  m_pLayerSet->ActiveLayer(pMB);
+
+  tagTIMESTAMP_STRUCT restoreTs{};
+  memcpy_0(&restoreTs, ts, sizeof(restoreTs));
+  SetRoomTime_Restore(&restoreTs);
+  return 1;
+}
+
+char CGuildRoomInfo::SetRoom(int iGuildInx, unsigned int dwGuildSerial)
+{
+  if (IsRent())
+  {
+    return 0;
+  }
+
+  RoomCharInfo value{};
+  m_vecRoomMember.assign(0x64u, value);
+  if (m_vecRoomMember.size() != 100)
+  {
+    return 0;
+  }
+
+  for (size_t j = 0; j < m_vecRoomMember.size(); ++j)
+  {
+    m_vecRoomMember[j].bIn = false;
+  }
+
+  m_bRent = true;
+  m_iGuildIdx = iGuildInx;
+  m_dwGuildSerial = dwGuildSerial;
+
+  _MULTI_BLOCK *pMB = m_pRoomMap->m_mb;
+  m_pLayerSet->ActiveLayer(pMB);
+  SetRoomTime();
+  SendDQS_RoomInsert();
+  return 1;
+}
+
+void CGuildRoomInfo::SetRoomTime()
+{
+  __time32_t now = 0;
+  _time32(&now);
+  m_timeBegin = static_cast<int>(now);
+  m_timer = CGuildRoomInfo::sm_RoomInfo[m_byRoomType].dwTime + m_timeBegin;
+}
+
+void CGuildRoomInfo::SetRoomTime_Restore(tagTIMESTAMP_STRUCT *ts)
+{
+  std::tm tm{};
+  tm.tm_year = ts->year - 1900;
+  tm.tm_mon = ts->month - 1;
+  tm.tm_mday = ts->day;
+  tm.tm_hour = ts->hour;
+  tm.tm_min = ts->minute;
+  tm.tm_sec = ts->second;
+  tm.tm_isdst = -1;
+
+  m_timeBegin = _mktime32(&tm);
+  if (m_timeBegin == -1)
+  {
+    m_timeBegin = 0;
+  }
+  m_timer = CGuildRoomInfo::sm_RoomInfo[m_byRoomType].dwTime + m_timeBegin;
+}
+
+void CGuildRoomInfo::SendDQS_RoomInsert()
+{
+  _qry_case_guildroom_insert query{};
+  query.dwGuildSerial = m_dwGuildSerial;
+  query.byRoomType = m_byRoomType;
+  query.byRace = m_byRace;
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x47u, reinterpret_cast<char *>(&query), sizeof(query));
+}
+
+void CGuildRoomInfo::SendDQS_RoomUpdate()
+{
+  _qry_case_guildroom_update query{};
+  query.dwGuildSerial = m_dwGuildSerial;
+  query.byRoomType = m_byRoomType;
+  query.byRace = m_byRace;
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x48u, reinterpret_cast<char *>(&query), sizeof(query));
+}
+
+void CGuildRoomInfo::SendMsg_RoomTimeOver()
+{
+  CGuild *guild = &g_Guild[m_iGuildIdx];
+  if (guild && guild->m_dwSerial == m_dwGuildSerial)
+  {
+    guild->SendMsg_GuildRoomRented(0x64u);
+  }
+}
+
+void CGuildRoomInfo::OutAllRoomMember()
+{
+  for (int iMemberIdx = 0; iMemberIdx < static_cast<int>(m_vecRoomMember.size()); ++iMemberIdx)
+  {
+    if (m_vecRoomMember[iMemberIdx].bIn)
+    {
+      RoomCharInfo &member = m_vecRoomMember[iMemberIdx];
+      SetPlayerOut(member.iCharIdx, member.dwCharSerial, iMemberIdx);
+    }
+  }
+}
+
+void CGuildRoomInfo::TimeOver()
+{
+  OutAllRoomMember();
+  SendDQS_RoomUpdate();
+  SendMsg_RoomTimeOver();
+  CItemStoreManager::Instance()->ResetInstanceItemStore(1u, m_dwGuildSerial);
+  Room_Initialize();
+}
+
+void CGuildRoomInfo::RoomTimer()
+{
+  __time32_t now{};
+  _time32(&now);
+  if (now >= m_timer)
+  {
+    TimeOver();
+  }
+}
+
+int CGuildRoomInfo::RoomIn(int n, unsigned int dwCharSerial)
+{
+  if (IsMemberIn(n, dwCharSerial))
+  {
+    return 2;
+  }
+
+  for (size_t j = 0; j < m_vecRoomMember.size(); ++j)
+  {
+    if (!m_vecRoomMember[j].bIn)
+    {
+      m_vecRoomMember[j].bIn = true;
+      m_vecRoomMember[j].iCharIdx = n;
+      m_vecRoomMember[j].dwCharSerial = dwCharSerial;
+      return 0;
+    }
+  }
+
+  return 3;
+}
+
 int CGuildRoomInfo::RoomOut(int n, unsigned int dwCharSerial)
 {
   for (size_t index = 0; index < m_vecRoomMember.size(); ++index)
@@ -98,4 +309,54 @@ int CGuildRoomInfo::RoomOut(int n, unsigned int dwCharSerial)
     }
   }
   return 1;
+}
+
+char CGuildRoomInfo::SetPlayerOut(int n, unsigned int dwCharSerial, int iMemberIdx)
+{
+  if (iMemberIdx >= 100)
+  {
+    return 0;
+  }
+
+  if (iMemberIdx == -1)
+  {
+    for (size_t j = 0; j < m_vecRoomMember.size(); ++j)
+    {
+      RoomCharInfo &member = m_vecRoomMember[j];
+      if (member.bIn && member.iCharIdx == n && member.dwCharSerial == dwCharSerial)
+      {
+        member.bIn = false;
+        break;
+      }
+    }
+  }
+  else
+  {
+    m_vecRoomMember[iMemberIdx].bIn = false;
+  }
+
+  float newPos[8]{};
+  if (!CGuildRoomInfo::sm_neutal_map[m_byRace]
+      || !CGuildRoomInfo::sm_neutral_hq_dummy[m_byRace]
+      || !CGuildRoomInfo::sm_neutal_map[m_byRace]->GetRandPosInDummy(
+        CGuildRoomInfo::sm_neutral_hq_dummy[m_byRace],
+        newPos,
+        1))
+  {
+    return 0;
+  }
+
+  CPlayer *player = &g_Player[n];
+  if (player->m_bOper)
+  {
+    player->OutOfMap(CGuildRoomInfo::sm_neutal_map[m_byRace], 0, 3u, newPos);
+    player->SendMsg_GuildRoomOutResult(
+      0xAu,
+      CGuildRoomInfo::sm_neutal_map[m_byRace]->m_pMapSet->m_dwIndex,
+      0,
+      newPos);
+    return 1;
+  }
+
+  return 0;
 }

@@ -31,4 +31,8 @@ struct __declspec(align(8)) _ECONOMY_SYSTEM
   unsigned int m_dwLastUpdateTime;
   unsigned int m_dwSystemOperStartTime;
   unsigned int m_dwLastDate;
+
+  _ECONOMY_SYSTEM();
+  void Init();
+  void CurTradeMoneyInit();
 };

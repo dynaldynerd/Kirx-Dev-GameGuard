@@ -572,6 +572,16 @@ void CHolyStoneSystem::DestroyHolyKeeper()
   }
 }
 
+bool CHolyStoneSystem::IsUseReturnItem(unsigned int dwObjSerial)
+{
+  return m_SaveData.m_eDestroyerState != 2 || dwObjSerial != m_SaveData.m_dwDestroyerSerial;
+}
+
+bool CHolyStoneSystem::GetGoldBoxConsumable()
+{
+  return m_bConsumable;
+}
+
 void CHolyStoneSystem::SetGoldBoxConsumable(bool bFlag)
 {
   m_bConsumable = bFlag;
@@ -637,6 +647,55 @@ void CHolyStoneSystem::SendIsArriveDestroyer(char byArrive)
     {
       g_Network.m_pProcess[0]->LoadSendMsg( index, type, reinterpret_cast<char *>(&msg), 0x17u);
     }
+  }
+}
+
+void CHolyStoneSystem::SendMsg_HolyStoneSystemState(int nPlayerIndex)
+{
+  switch (m_SaveData.m_nSceneCode)
+  {
+    case 0:
+      SendMsg_WaitStone(nPlayerIndex);
+      break;
+    case 1:
+      SendMsg_EnterStone(nPlayerIndex);
+      break;
+    case 2:
+      SendMsg_WaitKeeper(nPlayerIndex, 0);
+      break;
+    case 3:
+    case 4:
+    case 6:
+      SendMsg_EnterKeeper(nPlayerIndex);
+      break;
+    case 5:
+      SendMsg_WaitKeeper(nPlayerIndex, 1u);
+      break;
+    default:
+      break;
+  }
+}
+
+void CHolyStoneSystem::SendMsg_WaitStone(unsigned int n)
+{
+  unsigned __int8 type[2]{};
+  type[0] = 25;
+  type[1] = 45;
+  char msg[1]{};
+
+  if (n == static_cast<unsigned int>(-1))
+  {
+    for (int index = 0; index < MAX_PLAYER; ++index)
+    {
+      if (g_Player[index].m_bLive)
+      {
+        g_Network.m_pProcess[0]->LoadSendMsg(index, type, msg, 1u);
+      }
+    }
+  }
+  else
+  {
+    g_Network.m_pProcess[0]->LoadSendMsg(n, type, msg, 1u);
   }
 }
 
@@ -1002,6 +1061,34 @@ void CHolyStoneSystem::SendHolyStoneHPToRaceBoss()
   }
 }
 
+void CHolyStoneSystem::SendHolyStoneHP(CPlayer *pkPlayer)
+{
+  if (m_SaveData.m_nSceneCode != 1 || m_SaveData.m_nHolyMasterRace != -1)
+  {
+    return;
+  }
+
+  const unsigned int serial = pkPlayer->m_Param.GetCharSerial();
+  const unsigned __int8 raceCode = pkPlayer->m_Param.GetRaceCode();
+  CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
+  if (!ranking->IsCurrentRaceBossGroup(raceCode, serial))
+  {
+    return;
+  }
+
+  unsigned __int8 msg[6]{};
+  for (int j = 0; j < 3; ++j)
+  {
+    const unsigned __int16 hpRate = static_cast<unsigned __int16>(g_Stone[j].CalcCurHPRate());
+    *reinterpret_cast<unsigned __int16 *>(&msg[2 * j]) = hpRate;
+  }
+
+  unsigned __int8 type[2]{};
+  type[0] = 13;
+  type[1] = 33;
+  g_Network.m_pProcess[0]->LoadSendMsg(pkPlayer->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(msg), 6u);
+}
+
 void CHolyStoneSystem::SendNotifyHolyStoneDestroyedToRaceBoss()
 {
   char msg[1]{};
@@ -1278,6 +1365,20 @@ void CHolyStoneSystem::PushStoreQuestCash(
   }
 }
 
+_QUEST_CASH *CHolyStoneSystem::FindStoragedQuestCash(unsigned int dwAvatorSerial)
+{
+  for (int j = 0; j < 5064; ++j)
+  {
+    if (m_cashQuest[j].dwAvatorSerial == dwAvatorSerial)
+    {
+      m_cashQuest[j].init();
+      return &m_cashQuest[j];
+    }
+  }
+
+  return nullptr;
+}
+
 void CHolyStoneSystem::PushQuestCash_Other(unsigned int dwAvatorSerial, unsigned __int8 byStoneMapMoveInfo)
 {
   for (int j = 0; j < 5064; ++j)
@@ -1299,4 +1400,23 @@ void CHolyStoneSystem::PushQuestCash_Other(unsigned int dwAvatorSerial, unsigned
       return;
     }
   }
+}
+
+_QUEST_CASH_OTHER *CHolyStoneSystem::PopStoredQuestCash_Other(unsigned int dwAvatorSerial)
+{
+  for (int j = 0; j < 5064; ++j)
+  {
+    if (m_cashQuestOther[j].dwAvatorSerial == dwAvatorSerial)
+    {
+      m_cashQuestOther[j].init();
+      return &m_cashQuestOther[j];
+    }
+  }
+
+  return nullptr;
+}
+
+bool CHolyStoneSystem::IsMentalPass()
+{
+  return m_pMentalPass;
 }

@@ -2,6 +2,12 @@
 
 #include "CMainThread.h"
 
+unsigned __int8 RFEventBase::DoEvent(CPlayer * /*pOne*/)
+{
+  // this is not a stub
+  return 0;
+}
+
 bool RFEventBase::IsDbUpdate(unsigned int /*nIdx*/)
 {
   // this is not a stub

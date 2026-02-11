@@ -30,6 +30,7 @@ public:
   unsigned int GetPopPartyMember();
   bool DisjointParty();
   bool RemovePartyMember(CPartyPlayer *pExiter, CPartyPlayer **ppoutNewBoss);
+  void EnterWorld(_WA_AVATOR_CODE *pData, unsigned __int16 wZoneIndex);
   void ExitWorld(CPartyPlayer **ppoutNewBoss);
 };
 

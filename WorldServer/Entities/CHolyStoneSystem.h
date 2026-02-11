@@ -92,10 +92,14 @@ public:
   void DestroyHolyStone();
   void CreateHolyKeeper(int nCreateType);
   void DestroyHolyKeeper();
+  bool IsUseReturnItem(unsigned int dwObjSerial);
+  bool GetGoldBoxConsumable();
   void SetGoldBoxConsumable(bool bFlag);
   void SetKeeperDestroyRace(unsigned __int8 byRace);
   void UnAllRegisterPerAutoMine();
   void SendIsArriveDestroyer(char byArrive);
+  void SendMsg_HolyStoneSystemState(int nPlayerIndex);
+  void SendMsg_WaitStone(unsigned int n);
   void SendMsg_NoticeNextQuest(unsigned int n, unsigned __int8 byStoneMapMoveInfo);
   void SendMsg_NotifyHolyKeeperAttackTimeBeKeepKeeper(char bKeepKeeper);
   void SendMsg_EnterStone(unsigned int n);
@@ -107,7 +111,11 @@ public:
   void SendMsg_HolyKeeperStateChaos();
   void GiveHSKQuest();
   void SendHolyStoneHPToRaceBoss();
+  void SendHolyStoneHP(CPlayer *pkPlayer);
   void SendNotifyHolyStoneDestroyedToRaceBoss();
+  _QUEST_CASH *FindStoragedQuestCash(unsigned int dwAvatorSerial);
+  _QUEST_CASH_OTHER *PopStoredQuestCash_Other(unsigned int dwAvatorSerial);
+  bool IsMentalPass();
   void PushStoreQuestCash(
     unsigned int dwAvatorSerial,
     unsigned __int8 byQuestType,

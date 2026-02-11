@@ -28,7 +28,7 @@ void CPartyModeKillMonsterExpNotify::CExpInfo::Notify()
     *reinterpret_cast<float *>(msg) = m_fExp;
 
     unsigned __int8 type[2]{11, 30};
-    CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], m_pkMember->m_ObjID.m_wIndex, type, msg, 4u);
+    g_Network.m_pProcess[0]->LoadSendMsg( m_pkMember->m_ObjID.m_wIndex, type, msg, 4u);
   }
 }
 
@@ -46,7 +46,7 @@ CPartyModeKillMonsterExpNotify::~CPartyModeKillMonsterExpNotify() = default;
 
 char CPartyModeKillMonsterExpNotify::Add(CPlayer *pkMember, float fExp)
 {
-  if (!pkMember || !CPartyPlayer::IsPartyMode(pkMember->m_pPartyMgr))
+  if (!pkMember || !pkMember->m_pPartyMgr || !pkMember->m_pPartyMgr->IsPartyMode())
   {
     return 0;
   }
@@ -82,3 +82,4 @@ void CPartyModeKillMonsterExpNotify::SetKillMonsterFlag()
 {
   m_bKillMonster = true;
 }
+

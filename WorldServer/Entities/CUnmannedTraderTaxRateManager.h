@@ -14,8 +14,10 @@ public:
 
   CUnmannedTraderTaxRateManager();
   bool Init(CLogFile *pkLogger);
+  char Load();
   bool IsOwnerGuild(unsigned __int8 byRace, unsigned int dwGuildSerial);
   float GetTaxRate(unsigned __int8 byRace);
+  void SendTaxRate(int n, unsigned __int8 byRace);
   void DQSCompleteInAtradTaxMoney(unsigned __int8 byRace, char *pdata);
   unsigned int GetTax(unsigned __int8 byRace, unsigned int dwGuildSerial, unsigned int dwPrice);
   int ChangeOwner(unsigned __int8 byRace, CGuild *pGuild);

@@ -43,7 +43,7 @@ int CReturnGate::Enter(CPlayer *pkObj)
     return 3;
   }
 
-  if (m_pkOwner != pkObj && !CPartyPlayer::IsPartyMember(m_pkOwner->m_pPartyMgr, pkObj))
+  if (m_pkOwner != pkObj && !m_pkOwner->m_pPartyMgr->IsPartyMember(pkObj))
   {
     return 4;
   }
@@ -64,7 +64,7 @@ void CReturnGate::Close()
   m_eState = CUnmannedTraderSchedule::STATE::WAIT_CANCEL;
   SendMsg_Destroy();
   m_dwObjSerial = 0;
-  CGameObject::Destroy(this);
+  Destroy();
 }
 
 void CReturnGate::SendMsg_Destroy()
@@ -72,7 +72,7 @@ void CReturnGate::SendMsg_Destroy()
   unsigned int objSerial = m_dwObjSerial;
   unsigned __int8 pbyType[2];
   std::memset(pbyType, 8, sizeof(pbyType));
-  CGameObject::CircleReport(this, pbyType, reinterpret_cast<char *>(&objSerial), sizeof(objSerial), 0);
+  CircleReport(pbyType, reinterpret_cast<char *>(&objSerial), sizeof(objSerial), false);
 }
 
 void CReturnGate::SendMsg_MovePortal(CPlayer *pkObj)
@@ -83,5 +83,5 @@ void CReturnGate::SendMsg_MovePortal(CPlayer *pkObj)
   memcpy_0(msg + 2, m_fBindPos, 12);
   msg[14] = 2;
   unsigned __int8 pbyType[2] = {8, 2};
-  CNetProcess::LoadSendMsg(g_Network.m_pProcess[0], pkObj->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(msg), 15u);
+  g_Network.m_pProcess[0]->LoadSendMsg(pkObj->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(msg), 15u);
 }

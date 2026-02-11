@@ -19,6 +19,8 @@
 #include "a_trade_clear_item_result_zocl.h"
 #include "qry_case_unmandtrader_log_in_proc_update_complete.h"
 #include "unmannedtrader_Regist_item_inform_zocl.h"
+
+#include <ctime>
 #include "unmannedtrader_close_item_inform_zocl.h"
 #include "unmannedtrader_continue_item_inform_zocl.h"
 #include "unmannedtrader_re_regist_result_zocl.h"
@@ -30,6 +32,26 @@
 #include <ctime>
 
 CUnmannedTraderUserInfo CUnmannedTraderUserInfo::ms_kNull;
+
+namespace
+{
+struct _qry_case_unmandtrader_cheat_updateregisttime
+{
+  struct __list
+  {
+    unsigned __int8 byProcRet;
+    unsigned __int8 byState;
+    unsigned __int16 wReserved;
+    unsigned int dwRegistSerial;
+  };
+
+  unsigned __int8 byType;
+  unsigned __int8 byNum;
+  unsigned __int16 wInx;
+  unsigned int dwOwnerSerial;
+  __list List[10];
+};
+} // namespace
 
 CUnmannedTraderUserInfo::CUnmannedTraderUserInfo()
   : m_eState(LOG_IN_STATE::UTUI_NONE),
@@ -174,6 +196,91 @@ void CUnmannedTraderUserInfo::LogOut(unsigned int dwSerial, CLogFile *pkLogger)
   }
   Clear();
   this->m_eState = LOG_IN_STATE::UTUI_EMPTY;
+}
+
+bool CUnmannedTraderUserInfo::CheatCancelRegist(unsigned __int8 byNth)
+{
+  if (byNth == static_cast<unsigned __int8>(-1))
+  {
+    return CheatCancelRegistAll();
+  }
+
+  if (m_vecLoadItemInfo.size() <= byNth)
+  {
+    return false;
+  }
+
+  return CheatCancelRegistSingle(byNth);
+}
+
+bool CUnmannedTraderUserInfo::CheatCancelRegistAll()
+{
+  _qry_case_unmandtrader_cheat_updateregisttime qryData{};
+  qryData.byType = 0;
+  qryData.byNum = 0;
+  qryData.wInx = m_wInx;
+  qryData.dwOwnerSerial = m_dwUserSerial;
+
+  for (auto it = m_vecRegistItemInfo.begin(); it != m_vecRegistItemInfo.end(); ++it)
+  {
+    if (!it->IsRegist())
+    {
+      continue;
+    }
+
+    if (qryData.byNum >= 10)
+    {
+      break;
+    }
+
+    qryData.List[qryData.byNum].dwRegistSerial = it->GetRegistSerial();
+    ++qryData.byNum;
+  }
+
+  if (qryData.byNum)
+  {
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x8Du, reinterpret_cast<char *>(&qryData), sizeof(qryData));
+  }
+
+  return true;
+}
+
+bool CUnmannedTraderUserInfo::CheatCancelRegistSingle(unsigned __int8 byNth)
+{
+  CPlayer *owner = FindOwner();
+  if (!owner)
+  {
+    return false;
+  }
+
+  unsigned __int8 currentNth = 0;
+  for (auto it = m_vecRegistItemInfo.begin(); it != m_vecRegistItemInfo.end(); ++it)
+  {
+    if (!it->IsRegist())
+    {
+      continue;
+    }
+
+    ++currentNth;
+    if (currentNth < byNth)
+    {
+      continue;
+    }
+
+    _qry_case_unmandtrader_cheat_updateregisttime qryData{};
+    qryData.byType = 0;
+    qryData.byNum = 1;
+    qryData.wInx = m_wInx;
+    qryData.dwOwnerSerial = m_dwUserSerial;
+    qryData.List[0].dwRegistSerial = it->GetRegistSerial();
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x8Du, reinterpret_cast<char *>(&qryData), sizeof(qryData));
+    return true;
+  }
+
+  char buffer[288]{};
+  sprintf(buffer, "Not Exist (%u)th Index!", byNth);
+  owner->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, buffer, 0xFFu, 0LL);
+  return false;
 }
 
 void CUnmannedTraderUserInfo::SendSearchResult(unsigned __int16 wInx, char *pLoadData)
@@ -1280,7 +1387,7 @@ unsigned __int8 CUnmannedTraderUserInfo::SellComplete(
     leftGold,
     pkSellPlayer->m_szItemHistoryFileName);
 
-  tm *timeInfo = localtime_13(&tResultTime);
+  tm *timeInfo = std::localtime(&tResultTime);
   char buffer[64]{};
   if (timeInfo)
   {

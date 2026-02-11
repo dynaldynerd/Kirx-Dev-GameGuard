@@ -76,6 +76,11 @@ float *CPlayerDB::GetCurPos()
   return this->m_dbChar.m_fStartPos;
 }
 
+unsigned int CPlayerDB::GetPvpRank()
+{
+  return this->m_dbChar.m_dwRank;
+}
+
 long double CPlayerDB::GetPvPPoint()
 {
   return this->m_dbChar.m_dPvPPoint;
@@ -229,6 +234,16 @@ unsigned __int8 CPlayerDB::GetBagNum()
   return this->m_dbChar.m_byUseBagNum;
 }
 
+void CPlayerDB::SetBagNum(unsigned __int8 byNum)
+{
+  this->m_dbChar.m_byUseBagNum = byNum;
+}
+
+int CPlayerDB::GetUseSlot()
+{
+  return 20 * static_cast<unsigned int>(this->m_dbChar.m_byUseBagNum);
+}
+
 unsigned __int16 CPlayerDB::GetNewItemSerial()
 {
   return this->m_wSerialCount++;
@@ -296,6 +311,82 @@ void CPlayerDB::InitResBuffer()
 void CPlayerDB::InitAlterMastery()
 {
   memset_0(m_dwAlterMastery, 0, sizeof(m_dwAlterMastery));
+}
+
+void CPlayerDB::InitClass()
+{
+  m_pClassData = m_pClassHistory[0];
+  for (int j = 0; j < 3; ++j)
+  {
+    m_pClassHistory[j] = nullptr;
+  }
+}
+
+void CPlayerDB::SelectClass(unsigned __int8 byHistoryRecordNum, _class_fld *pSelectClass)
+{
+  m_pClassHistory[byHistoryRecordNum] = m_pClassData;
+  m_pClassData = pSelectClass;
+  const int maxTrap =
+    (m_nMakeTrapMaxNum <= pSelectClass->m_nMakeTrapMaxNum) ? pSelectClass->m_nMakeTrapMaxNum : m_nMakeTrapMaxNum;
+  m_nMakeTrapMaxNum = maxTrap;
+}
+
+bool CPlayerDB::IsActableClassSkill(char *pszSkillCode, int *pnClassGrade)
+{
+  if (pnClassGrade)
+  {
+    *pnClassGrade = -1;
+  }
+
+  _class_fld *currentClass = *m_ppHistoryEffect[1];
+  if (!currentClass)
+  {
+    currentClass = m_pClassData;
+  }
+
+  const int skillLen = static_cast<int>(strlen_0(pszSkillCode));
+  _class_fld *found = nullptr;
+
+  for (int j = 0; j < 4; ++j)
+  {
+    _class_fld *classInfo = *m_ppHistoryEffect[j];
+    if (!classInfo)
+    {
+      break;
+    }
+
+    bool matched = false;
+    for (int k = 0; k < 10
+         && strncmp_0(reinterpret_cast<const char *>(classInfo) + (static_cast<__int64>(k) << 6) + 796, "-1", 2u);
+         ++k)
+    {
+      if (!strncmp_0(
+            reinterpret_cast<const char *>(classInfo) + (static_cast<__int64>(k) << 6) + 796,
+            pszSkillCode,
+            skillLen))
+      {
+        matched = true;
+        break;
+      }
+    }
+
+    if (matched)
+    {
+      found = classInfo;
+      break;
+    }
+  }
+
+  if (!found)
+  {
+    return false;
+  }
+
+  if (pnClassGrade)
+  {
+    *pnClassGrade = *reinterpret_cast<int *>(reinterpret_cast<char *>(found) + 80);
+  }
+  return currentClass->m_nClass == *reinterpret_cast<int *>(reinterpret_cast<char *>(found) + 72);
 }
 
 void CPlayerDB::InitPlayerDB(CPlayer *pThis)
@@ -426,4 +517,26 @@ void _SFCONT_DB_BASE::_LIST::SetLeftTime(unsigned __int16 wLeftTime)
 void _SFCONT_DB_BASE::_LIST::SetOrder(unsigned __int8 byOrder)
 {
   dwKey = (dwKey & 0x0FFFFFFF) | (static_cast<unsigned int>(byOrder) << 28);
+}
+
+_STORAGE_LIST::_db_con *CPlayerDB::GetPtrItemStorage(unsigned __int16 wSerial, unsigned __int8 *pbyStorageCode)
+{
+  for (int j = 0; j < 8; ++j)
+  {
+    _STORAGE_LIST::_db_con *item = m_pStoragePtr[j]->GetPtrFromSerial(wSerial);
+    if (item)
+    {
+      if (pbyStorageCode)
+      {
+        *pbyStorageCode = static_cast<unsigned __int8>(j);
+      }
+      return item;
+    }
+  }
+  return nullptr;
+}
+
+void CPlayerDB::PopLink(int nLinkIndex)
+{
+  m_QLink[nLinkIndex].init();
 }

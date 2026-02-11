@@ -74,3 +74,8 @@ void _res_dummy::SetRangeGrade()
         this->m_byGrade[v5 % 3] = (v6 == 1) ? 2 : 1;
     }
 }
+
+unsigned __int8 _res_dummy::GetQualityGrade()
+{
+    return this->m_byQualityGrade;
+}

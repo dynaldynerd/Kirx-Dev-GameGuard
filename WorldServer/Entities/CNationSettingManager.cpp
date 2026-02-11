@@ -96,6 +96,11 @@ bool CNationSettingManager::IsCashDBDSNSetted()
   return m_pData->IsCashDBDSNSetted();
 }
 
+void CNationSettingManager::SetUnitPassiveValue(float *fUnitPv_DefFc)
+{
+  m_pData->SetUnitPassiveValue(fUnitPv_DefFc);
+}
+
 unsigned __int16 CNationSettingManager::GetBillingForceCloseDelay()
 {
   return m_pData->m_wBillingForceCloseDelay;
@@ -187,6 +192,23 @@ bool CNationSettingManager::CheckEnterWorldRequest(unsigned int n, char *pBuf)
     return false;
   }
   return m_pData->CheckEnterWorldRequest(static_cast<int>(n), pBuf);
+}
+
+bool CNationSettingManager::IsPersonalFreeFixedAmountBillingType(__int16 *pDest1, __int16 *pDest2)
+{
+  if (!m_pData)
+  {
+    return false;
+  }
+  return m_pData->IsPersonalFreeFixedAmountBillingType(pDest1, pDest2);
+}
+
+void CNationSettingManager::CreateComplete(CPlayer *pOne)
+{
+  if (m_pData)
+  {
+    m_pData->CreateComplete(pOne);
+  }
 }
 
 bool CNationSettingManager::IsNormalString(const char *szString)

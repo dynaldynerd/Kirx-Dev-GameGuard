@@ -41,6 +41,9 @@ public:
 
   static CPvpCashMng *Instance();
   bool LoadData();
+  char IsTalikItem(const char *strCode);
+  int GetTalikRecvrPoint(unsigned __int8 byTblCode, unsigned int dwIndex);
+  int GetTalikRecvrPoint(int i);
 
 private:
   bool Parsing(const char *szTitle, const char *szItem, char **szBuff, int nInx, unsigned __int8 byParseType);
