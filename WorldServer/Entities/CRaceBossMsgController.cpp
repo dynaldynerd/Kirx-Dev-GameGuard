@@ -743,6 +743,50 @@ bool CRaceBossMsgController::Init()
   return true;
 }
 
+void CRaceBossMsgController::OnLoop()
+{
+  if (!m_pkTimer)
+  {
+    return;
+  }
+
+  if (m_pkTimer->CountingTimer())
+  {
+    SaveCurTime();
+    if (IsDayChanged())
+    {
+      m_kManager.Save();
+    }
+  }
+}
+
+bool CRaceBossMsgController::IsDayChanged()
+{
+  const int curDay = GetCurDay();
+  if (curDay < 0)
+  {
+    return false;
+  }
+  if (curDay == m_iOldDay)
+  {
+    return false;
+  }
+
+  m_iOldDay = curDay;
+  return true;
+}
+
+void CRaceBossMsgController::SaveCurTime()
+{
+  char buffer[272]{};
+  const DWORD now = timeGetTime();
+  sprintf(buffer, "%d", now);
+  if (!WritePrivateProfileStringA("RaceBossSMSCurTime", "Time", buffer, "..\\SystemSave\\ServerState.ini"))
+  {
+    WritePrivateProfileStringA("RaceBossSMSCurTime", "Time", buffer, "..\\SystemSave\\ServerState.ini");
+  }
+}
+
 char CRaceBossMsgController::Cancel(unsigned __int8 ucRace, unsigned int dwMsgID)
 {
   RACE_BOSS_MSG::CMsg *pkMsg = nullptr;

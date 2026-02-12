@@ -10,6 +10,7 @@
 
 int CGuardTower::s_nLiveNum = 0;
 unsigned int CGuardTower::s_dwSerialCnt = 0;
+unsigned int CGuardTower::s_dwOldTick_CheckTemp = 0;
 __TEMP_WAIT_TOWER CGuardTower::s_Temp[MAX_PLAYER]{};
 
 void CGuardTower::Init(_object_id *pID)
@@ -57,6 +58,23 @@ bool CGuardTower::Destroy(unsigned __int8 byDesType, bool bSystemBack)
   m_dwObjSerial = static_cast<unsigned int>(GetNewSerial());
   SendMsg_Create();
   return true;
+}
+
+void CGuardTower::OnLoop_Static()
+{
+  const DWORD currentTime = timeGetTime();
+  if (currentTime - CGuardTower::s_dwOldTick_CheckTemp >= 0x2710)
+  {
+    CGuardTower::s_dwOldTick_CheckTemp = currentTime;
+    for (int playerIndex = 0; playerIndex < MAX_PLAYER; ++playerIndex)
+    {
+      __TEMP_WAIT_TOWER *tempInfo = &CGuardTower::s_Temp[playerIndex];
+      if (tempInfo->dwMasterSerial != static_cast<unsigned int>(-1) && currentTime - tempInfo->dwPushTime > 0x493E0)
+      {
+        tempInfo->dwMasterSerial = static_cast<unsigned int>(-1);
+      }
+    }
+  }
 }
 
 void CGuardTower::SendMsg_Destroy(unsigned __int8 byDesType)

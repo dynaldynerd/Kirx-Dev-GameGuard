@@ -10,6 +10,11 @@ CMoveMapLimitManager *CMoveMapLimitManager::Instance()
   return &s_instance;
 }
 
+void CMoveMapLimitManager::Loop()
+{
+  m_kLimitInfo.Loop();
+}
+
 bool CMoveMapLimitManager::Init()
 {
   if (!CMoveMapLimitEnviromentValues::Init())

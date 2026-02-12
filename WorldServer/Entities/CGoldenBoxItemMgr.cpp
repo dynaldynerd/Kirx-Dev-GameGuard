@@ -39,6 +39,93 @@ bool CGoldenBoxItemMgr::Initialize()
   return true;
 }
 
+void CGoldenBoxItemMgr::Loop_Event()
+{
+  if (!g_Main.m_pWorldDB || !g_Main.m_pWorldDB->IsConectionActive())
+  {
+    return;
+  }
+
+  GetLocalTime(&tm);
+  if (!tm.wHour && !tm.wMinute)
+  {
+    if (tm1.wMinute >= tm.wMinute && tm1.wSecond >= tm.wSecond && tm1.wMilliseconds >= tm.wMilliseconds)
+    {
+      m_bInit = false;
+    }
+
+    if (!m_bInit)
+    {
+      const unsigned __int16 starterBoxCount = Get_StarterBox_Count();
+      Set_StarterBox_Count(starterBoxCount, false);
+      Set_StarterBox_Count(m_wStarterBoxNum, true);
+      Set_ToStruct();
+      GetLocalTime(&tm1);
+      m_bInit = true;
+    }
+  }
+
+  if (m_tmLoopTimer.CountingTimer())
+  {
+    Check_Event_Status();
+  }
+
+  if (g_Main.m_bWorldOpen && m_golden_box_event.m_event_timer.CountingTimer() && m_golden_box_event.m_event_status == 2)
+  {
+    PushDQSUpdate();
+  }
+}
+
+void CGoldenBoxItemMgr::Check_Event_Status()
+{
+  const unsigned __int8 eventStatus = Get_Event_Status();
+  __time32_t currentTime = 0;
+  _time32(&currentTime);
+
+  if (!eventStatus)
+  {
+    if (!m_golden_box_event.m_ini.m_bUse_event)
+    {
+      Set_Event_Status(0);
+      m_golden_box_item.m_bydck = 0;
+      Set_ToStruct();
+    }
+    return;
+  }
+
+  if (eventStatus == 1)
+  {
+    if (currentTime >= m_golden_box_event.m_ini.m_EventTime[0])
+    {
+      Set_Event_Status(2);
+      m_golden_box_item.m_bydck = 1;
+      Set_ToStruct();
+    }
+    return;
+  }
+
+  if (eventStatus == 2 && m_golden_box_event.m_ini.m_EventTime[1] <= currentTime)
+  {
+    Set_Event_Status(3);
+    m_golden_box_item.m_bydck = 0;
+    Set_ToStruct();
+  }
+}
+
+void CGoldenBoxItemMgr::PushDQSUpdate()
+{
+  constexpr size_t kPayloadSize = 4 + sizeof(_db_golden_box_item) + sizeof(_db_golden_box_item);
+  char payload[kPayloadSize]{};
+  *reinterpret_cast<int *>(payload) = m_nDBSerial;
+  memcpy_0(payload + 4, &m_golden_box_item_New, sizeof(m_golden_box_item_New));
+  memcpy_0(
+    payload + 4 + sizeof(m_golden_box_item_New),
+    &m_golden_box_item_Old,
+    sizeof(m_golden_box_item_Old));
+
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0xA5u, payload, static_cast<int>(sizeof(payload)));
+}
+
 bool CGoldenBoxItemMgr::_init_loggers()
 {
   auto *logger = CAsyncLogger::Instance();

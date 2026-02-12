@@ -1,6 +1,11 @@
 # Static Data Log
 Only unresolved static strings/arrays/data from IDA go here. Remove entries once recovered.
 
+## Recent loop-chain literals (2026-02-12)
+- "RaceBossSMSCurTime" / "Time" / "..\\SystemSave\\ServerState.ini" (CRaceBossMsgController::SaveCurTime)
+- "cursor:%u hour:%u min:%u msec:%u time:%s" (CWorldSchedule::CheckSch)
+- "code:%s event:%u info1:%u info2:%u" (CWorldSchedule::CheckSch)
+
 ## Unknown string labels (bytes not recovered)
 - aRpkAaiAo (CMergeFileManager::InitMergeFile when .rpk count > 255)
 - aA_14 / aA_15 / aA_16 (CNuclearBombMgr::LoadIni error messages for zero times)
@@ -923,3 +928,13 @@ Only unresolved static strings/arrays/data from IDA go here. Remove entries once
 - Packet type bytes {27, 103} (CPlayer::SendMsg_GuildRoomRentResult)
 - Packet type bytes {27, 105} (CPlayer::SendMsg_GuildRoomEnterResult)
 - Packet type bytes {27, 114} (CPlayer::SendMsg_GuildSetHonorResult)
+
+## Newly logged (CMainThread run parity batch 2026-02-12-4)
+- "Current : %.10f Limit : %.10f Rate : %d Init Limit!" (CPvpPointLimiter::Clear debug chat string)
+
+## Newly logged (CMainThread run parity batch 2026-02-12-5)
+- "Post Use Count > Total Use: %d, Return Post: %d\\r\\n" (CPostSystemManager::Loop periodic stats log)
+- "pass_min:%u" (CWorldSchedule::Init/CheckSch schedule log format)
+- "cursor:%u hour:%u min:%u msec:%u time:%s" (CWorldSchedule::Init/CheckSch schedule log format)
+- "code:%s event:%u info1:%u info2:%u" (CWorldSchedule::Init/CheckSch schedule log format)
+- "PatriarchElectProcessor::TimeCheck() Process Initialize Error (_eProcessType:%d)" (PatriarchElectProcessor::TimeCheck system log)

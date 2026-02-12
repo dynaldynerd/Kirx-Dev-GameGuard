@@ -218,6 +218,8 @@ public:
   unsigned __int8 IsExistRequestMoveCharacterList(unsigned int dwCharSerial);
   char DataValidCheckRevise(_AVATOR_DATA *pData, bool *pDataUpdated);
   bool FirstSettingData();
+  char Update_PlayTime(unsigned int dwTotalTimeMin);
+  void TotalPlayMinCheck();
   char UpdateContUserSave(bool bDirect);
   void Insert_Char_Complete(unsigned __int8 byRetCode, _REGED_AVATOR_DB *pInsertData);
   void Reged_Char_Complete(unsigned __int8 byRetCode, _REGED *pRegedList, _NOT_ARRANGED_AVATOR_DB *pArrangedList);
@@ -248,6 +250,7 @@ public:
   void Exit_Account_Complete(unsigned __int8 byRetCode);
   static void ReRangeClientIndex(_AVATOR_DATA *pData);
   static char CheckDQSLoadCharacterData(_AVATOR_DATA *pData);
+  static void OnLoop_Static();
   virtual ~CUserDB() = default;
 };
 

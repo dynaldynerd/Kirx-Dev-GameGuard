@@ -2,6 +2,7 @@
 
 #include "CPvpPointLimiter.h"
 
+#include "CPlayer.h"
 #include "CMainThread.h"
 #include "WorldServerUtil.h"
 
@@ -44,6 +45,34 @@ void CPvpPointLimiter::CheatUpdate(long double dOriginalPvpPoint)
   __int64 now = 0;
   time_20(&now);
   Update(now, dOriginalPvpPoint, 0.0, 0);
+}
+
+void CPvpPointLimiter::Clear(__int64 tUpdateTime, long double dOriginalPvpPoint, CPlayer *pkSelf)
+{
+  if (!m_pkInfo)
+  {
+    return;
+  }
+
+  m_pkInfo->tUpdatedate = tUpdateTime;
+  m_pkInfo->bUseUp = false;
+  m_pkInfo->byLimitRate = 3;
+  m_pkInfo->dOriginalPoint = dOriginalPvpPoint;
+  m_pkInfo->dLimitPoint = m_pkInfo->dOriginalPoint * 3.0 / 100.0;
+  m_pkInfo->dUsePoint = 0.0;
+
+  if (!g_Main.IsReleaseServiceMode() && pkSelf)
+  {
+    char buffer[1024]{};
+    sprintf_s(
+      buffer,
+      sizeof(buffer),
+      "Current : %.10f Limit : %.10f Rate : %d Init Limit!",
+      static_cast<double>(m_pkInfo->dOriginalPoint),
+      static_cast<double>(m_pkInfo->dLimitPoint),
+      3);
+    pkSelf->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, buffer, 0xFFu, nullptr);
+  }
 }
 
 void CPvpPointLimiter::Update(__int64 tUpdateTime, long double dOriginalPvpPoint, double dUsePoint, int /*unused*/)

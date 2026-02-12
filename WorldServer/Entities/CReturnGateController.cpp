@@ -17,6 +17,35 @@ bool CReturnGateController::Init(unsigned int gateCount)
   return true;
 }
 
+void CReturnGateController::OnLoop()
+{
+  if (m_pkTimer && m_pkTimer->CountingTimer())
+  {
+    UpdateClose();
+  }
+}
+
+void CReturnGateController::UpdateClose()
+{
+  if (m_pkUseInxList->size() <= 0)
+  {
+    return;
+  }
+
+  unsigned int outIndex[5]{};
+  if (m_pkUseInxList->CopyFront(outIndex))
+  {
+    CReturnGate *gate = m_ppkGatePool[outIndex[0]];
+    if (gate && gate->IsClose())
+    {
+      if (m_pkUseInxList->PopNode_Front(outIndex))
+      {
+        Close(gate);
+      }
+    }
+  }
+}
+
 CReturnGate *CReturnGateController::GetGate(unsigned int uiInx)
 {
   if (m_uiGateTotCnt >= uiInx && m_ppkGatePool)

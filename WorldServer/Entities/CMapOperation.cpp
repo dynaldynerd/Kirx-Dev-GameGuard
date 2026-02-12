@@ -9,6 +9,9 @@
 #include "CMapData.h"
 #include "CItemStore.h"
 #include "CItemStoreManager.h"
+#include "CMonsterEventRespawn.h"
+#include "CMonsterEventSet.h"
+#include "CPlayer.h"
 #include "CTransportShip.h"
 #include "CHolyStoneSystem.h"
 #include "CWorldSchedule.h"
@@ -125,6 +128,17 @@ bool CMapOperation::Init()
 
   MyMessageBox("CMapOperation::Init() Error", "if(!pShipMap || !pPlatformMap)");
   return false;
+}
+
+void CMapOperation::OnLoop()
+{
+  (void)m_tmrRecover.CountingTimer();
+  (void)m_tmrSystem.CountingTimer();
+  if (m_tmrObjTerm.CountingTimer())
+  {
+    ++m_nLoopStartPoint;
+    m_nLoopStartPoint %= 10;
+  }
 }
 
 CMapData *CMapOperation::GetStartMap(unsigned __int8 byRaceCode)

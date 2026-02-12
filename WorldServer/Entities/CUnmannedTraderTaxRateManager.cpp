@@ -22,6 +22,17 @@ CUnmannedTraderTaxRateManager *CUnmannedTraderTaxRateManager::Instance()
   return CUnmannedTraderTaxRateManager::ms_Instance;
 }
 
+void CUnmannedTraderTaxRateManager::Loop()
+{
+  if (m_pkTimer && !m_vecTRC.empty() && m_pkTimer->CountingTimer())
+  {
+    for (int race = 0; race < 3; ++race)
+    {
+      m_vecTRC[race]->ChangeTaxRate();
+    }
+  }
+}
+
 bool CUnmannedTraderTaxRateManager::Init(CLogFile *pkLogger)
 {
   this->m_pkTimer = new CMyTimer();

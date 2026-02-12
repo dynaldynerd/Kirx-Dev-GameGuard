@@ -26,6 +26,15 @@ bool CReturnGate::IsOpen()
   return m_eState == CUnmannedTraderSchedule::STATE::REG_WAIT;
 }
 
+bool CReturnGate::IsClose()
+{
+  if (!m_dwCloseTime)
+  {
+    return false;
+  }
+  return !IsValidOwner() || GetLoopTime() > m_dwCloseTime;
+}
+
 bool CReturnGate::IsValidOwner()
 {
   return m_pkOwner && m_dwOwnerSerial == m_pkOwner->m_dwObjSerial;

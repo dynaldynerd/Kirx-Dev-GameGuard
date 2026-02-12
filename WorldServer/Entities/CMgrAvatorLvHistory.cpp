@@ -14,6 +14,17 @@ namespace
   char sBuf_0[512]{};
 }
 
+void CMgrAvatorLvHistory::OnLoop()
+{
+  if (m_tmrUpdateTime.CountingTimer())
+  {
+    _strdate(m_szCurDate);
+    m_szCurDate[5] = 0;
+    _strtime(m_szCurTime);
+    m_szCurTime[5] = 0;
+  }
+}
+
 void CMgrAvatorLvHistory::WriteFile(char *pszFileName, char *pszLog)
 {
   const int logLen = static_cast<int>(strlen_0(pszLog));

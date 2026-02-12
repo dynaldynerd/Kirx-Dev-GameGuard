@@ -52,6 +52,7 @@ public:
   void Log(const char *szFileName, const char *szLog, int iLenStr);
   void SystemLog(const char *fmt, ...);
   int Init();
+  void Loop();
   void ProcWrite();
   static void __cdecl ProcThread(void *param);
 

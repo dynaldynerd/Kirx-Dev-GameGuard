@@ -72,6 +72,17 @@ bool CMoveMapLimitInfoList::Init(std::vector<int> *vecRightTypeList)
   return true;
 }
 
+void CMoveMapLimitInfoList::Loop()
+{
+  for (CMoveMapLimitInfo *limitInfo : m_vecLimitInfo)
+  {
+    if (limitInfo)
+    {
+      limitInfo->Loop();
+    }
+  }
+}
+
 CMoveMapLimitInfo *CMoveMapLimitInfoList::Get(int iLimitType, int iMapInx, unsigned int dwStoreRecordIndex)
 {
   for (CMoveMapLimitInfo *info : m_vecLimitInfo)

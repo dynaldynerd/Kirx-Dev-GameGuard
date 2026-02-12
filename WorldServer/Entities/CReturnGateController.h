@@ -18,6 +18,8 @@ public:
 
   static CReturnGateController *Instance();
   bool Init(unsigned int gateCount);
+  void OnLoop();
+  void UpdateClose();
   CReturnGate *GetGate(unsigned int uiInx);
   void Close(CReturnGate *pkGate);
   int ProcessEnter(unsigned int uiGateInx, CPlayer *pkObj);

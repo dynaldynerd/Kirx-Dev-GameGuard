@@ -54,6 +54,30 @@ unsigned __int8 CNuclearBomb::GetBombStatus()
   return m_byBombState;
 }
 
+__int64 CNuclearBomb::GetDamagedObjNum()
+{
+  return static_cast<unsigned int>(m_nDamagedObjNum);
+}
+
+void CNuclearBomb::SetBombStatus()
+{
+  ++m_byBombState;
+}
+
+void CNuclearBomb::Attack(int startNum, int objCount)
+{
+  const int beginIndex = 30 * startNum;
+  for (int index = beginIndex; index < beginIndex + objCount; ++index)
+  {
+    _be_damaged_player &damageInfo = m_DamList[index];
+    if (damageInfo.m_pChar->m_bLive && damageInfo.m_pChar->m_dwObjSerial == damageInfo.m_dwDamCharSerial)
+    {
+      const int level = static_cast<int>(GetLevel());
+      damageInfo.m_pChar->SetDamage(damageInfo.m_nDamage, this, level, false, -1, 0, true);
+    }
+  }
+}
+
 float *CNuclearBomb::GetMissilePos()
 {
   return m_fDropPos;

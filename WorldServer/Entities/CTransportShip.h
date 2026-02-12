@@ -16,6 +16,9 @@ public:
   struct __mgr_ticket;
 
   bool InitShip(CMapData *pLinkShipMap, CMapData *pLinkMainbaseMap, CMapData *pLinkPlatformMap, int nIndex);
+  void Loop();
+  void CheckHurry();
+  void CheckTicket();
   void AlterState(bool bAnchor, unsigned __int8 byDirect, int nPassMin, int nNextSubEventTerm);
   void KickFreeMember();
   void KickOldMember(unsigned __int8 byKickDirectCode);

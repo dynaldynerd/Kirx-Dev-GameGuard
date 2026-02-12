@@ -21,6 +21,7 @@
 #include "guild_alter_member_grade_inform_zocl.h"
 #include "guild_alter_member_state_inform_zocl.h"
 #include "guild_vote_process_inform_zocl.h"
+#include "WorldServerUtil.h"
 
 CGuildList CGuild::s_GuildList;
 CMgrGuildHistory CGuild::s_MgrHistory;
@@ -319,6 +320,132 @@ void CGuild::StartRankJob()
 void CGuild::EndRankJob()
 {
   m_bRankWait = false;
+}
+
+void CGuild::Loop(bool bChangeDay)
+{
+  if (bChangeDay && !m_bPossibleElectMaster && m_MasterData.IsFill() && !m_MasterData.pMember->pPlayer)
+  {
+    PushDQSGuildMasterLastConnn();
+  }
+
+  if (GetLoopTime() - m_dwLastLoopTime <= 0x3E8)
+  {
+    return;
+  }
+
+  m_dwLastLoopTime = GetLoopTime();
+  if (!m_bNowProcessSgtMter)
+  {
+    return;
+  }
+
+  bool votePass = false;
+  if (m_SuggestedMatter.nTotal_VotableMemNum > 0)
+  {
+    votePass = static_cast<float>(m_SuggestedMatter.byVoteState[0])
+             / static_cast<float>(m_SuggestedMatter.nTotal_VotableMemNum)
+             > 0.5f;
+    if (static_cast<float>(m_SuggestedMatter.byVoteState[1]) / static_cast<float>(m_SuggestedMatter.nTotal_VotableMemNum)
+        >= 0.5f)
+    {
+      if (m_SuggestedMatter.byMatterType == 4)
+      {
+        m_GuildBattleSugestMatter.Clear();
+      }
+      else if (m_SuggestedMatter.byMatterType == 5)
+      {
+        m_GuildBattleSugestMatter.pkSrc->m_GuildBattleSugestMatter.Clear();
+        m_GuildBattleSugestMatter.pkSrc->PushDQSInGuildBattleCost();
+        m_GuildBattleSugestMatter.pkSrc->SendMsg_ApplyGuildBattleResultInform(0xAAu, m_wszName);
+        m_GuildBattleSugestMatter.Clear();
+      }
+      SendMsg_VoteComplete(false);
+      InitVote();
+      return;
+    }
+  }
+
+  if (!votePass && GetLoopTime() - m_SuggestedMatter.dwStartTime > 0x6DDD00)
+  {
+    if (m_SuggestedMatter.byVoteState[0] > static_cast<int>(m_SuggestedMatter.byVoteState[1]))
+    {
+      votePass = true;
+    }
+
+    if (!votePass)
+    {
+      if (m_SuggestedMatter.byMatterType == 4)
+      {
+        m_GuildBattleSugestMatter.Clear();
+      }
+      else if (m_SuggestedMatter.byMatterType == 5)
+      {
+        m_GuildBattleSugestMatter.pkSrc->m_GuildBattleSugestMatter.Clear();
+        m_GuildBattleSugestMatter.pkSrc->PushDQSInGuildBattleCost();
+        m_GuildBattleSugestMatter.pkSrc->SendMsg_ApplyGuildBattleResultInform(0xAAu, m_wszName);
+        m_GuildBattleSugestMatter.Clear();
+      }
+      SendMsg_VoteComplete(false);
+      InitVote();
+      return;
+    }
+  }
+
+  if (!votePass)
+  {
+    return;
+  }
+
+  SendMsg_VoteComplete(true);
+  const unsigned __int8 matterType = m_SuggestedMatter.byMatterType;
+  if (matterType == 5)
+  {
+    unsigned __int8 result = CGuildBattleController::Instance()->Add(
+      m_GuildBattleSugestMatter.pkSrc,
+      m_GuildBattleSugestMatter.pkDest,
+      m_SuggestedMatter.dwMatterObj1,
+      m_SuggestedMatter.dwMatterObj2,
+      m_SuggestedMatter.dwMatterObj3);
+    if (result)
+    {
+      if (result == 112)
+      {
+        result = 119;
+      }
+      m_GuildBattleSugestMatter.pkSrc->m_GuildBattleSugestMatter.Clear();
+      m_GuildBattleSugestMatter.pkSrc->PushDQSInGuildBattleCost();
+    }
+    else
+    {
+      PushDQSDestGuildOutputGuildBattleCost();
+    }
+
+    m_GuildBattleSugestMatter.pkSrc->SendMsg_ApplyGuildBattleResultInform(result, m_GuildBattleSugestMatter.pkDest->m_wszName);
+    m_GuildBattleSugestMatter.Clear();
+  }
+  else if (matterType == 6)
+  {
+    _guild_member_info *newMaster = GetMemberFromSerial(m_SuggestedMatter.dwMatterDst);
+    DB_Update_GuildMaster(newMaster);
+  }
+  InitVote();
+}
+
+void CGuild::PushDQSGuildMasterLastConnn()
+{
+  _qry_case_select_guild_master_lastconn query{};
+  query.dwSerial = m_MasterData.dwSerial;
+  query.dwGuildIndex = m_nIndex;
+  query.dwGuildSerial = m_dwSerial;
+  query.dwLimitConnTime = GetConnectTime_AddBySec(-1814400);
+
+  g_Main.PushDQSData(
+    0xFFFFFFFF,
+    nullptr,
+    0x90u,
+    reinterpret_cast<char *>(&query),
+    static_cast<int>(sizeof(query)));
 }
 
 void CGuild::SendMsg_DownPacket(unsigned __int8 bDowntype, _guild_member_info *pMem)

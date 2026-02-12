@@ -10,6 +10,8 @@
 #include "CMgrGuildHistory.h"
 #include "CPvpUserAndGuildRankingSystem.h"
 #include "CNotifyNotifyRaceLeaderSownerUTaxrate.h"
+#include "CPlayer.h"
+#include "CHonorGuild.h"
 #include "DqsDbStructs.h"
 
 _suggested_matter_change_taxrate::_suggested_matter_change_taxrate()
@@ -128,6 +130,89 @@ void TRC_AutoTrade::set_suggested(
   this->m_suggested.dwSuggestedTime = GetKorLocalTime();
   this->m_serviceLog.Write("[Suggest Change Tax Rate]:[SUBPATRIARCH:%s] - %d(%%)", wszMatterDst, dwNext);
   this->PushDQSData();
+}
+
+void TRC_AutoTrade::ChangeTaxRate()
+{
+  if (!m_bInit)
+  {
+    return;
+  }
+
+  _SYSTEMTIME systemTime{};
+  GetLocalTime(&systemTime);
+  if (m_byCurDay < systemTime.wDay || m_wCurMonth < systemTime.wMonth || m_wCurYear < systemTime.wYear)
+  {
+    if (m_bChangeTaxRate)
+    {
+      ChangeTaxRate(static_cast<float>(static_cast<int>(m_suggested.dwNext)) / 100.0f);
+    }
+
+    m_byCurDay = systemTime.wDay;
+    m_wCurMonth = systemTime.wMonth;
+    m_wCurYear = systemTime.wYear;
+    his_income_money();
+
+    CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
+    const unsigned int serial = ranking->GetCurrentRaceBossSerial(m_byRace, 0);
+    CPlayer *raceBoss = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, serial);
+    if (raceBoss && raceBoss->m_bOper)
+    {
+      char payload[4]{};
+      *reinterpret_cast<unsigned int *>(payload) = raceBoss->m_Param.GetCharSerial();
+      g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x82u, payload, sizeof(payload));
+    }
+
+    CHonorGuild::Instance()->ChangeHonorGuild(m_byRace);
+  }
+}
+
+__int64 TRC_AutoTrade::ChangeTaxRate(float fNewTaxRate)
+{
+  if (!m_Controller.checkLimitTaxRate(fNewTaxRate))
+  {
+    m_serviceLog.Write("[ChangeTaxRate]:Invalid value :: (%.2f)", fNewTaxRate);
+    return 3;
+  }
+
+  if (m_Controller.getCurTaxRate() != fNewTaxRate)
+  {
+    const float currentTaxRate = m_Controller.getCurTaxRate();
+    m_Controller.setCurTaxRate(fNewTaxRate);
+    m_serviceLog.Write("[ChangeTaxRate]:Current(%.2f) ==> Next(%.2f)", currentTaxRate, fNewTaxRate);
+  }
+
+  PushDQSData();
+  m_bChangeTaxRate = false;
+
+  const float taxRate = get_taxrate();
+  g_Main.m_kEtcNotifyInfo.UpdateTaxRate(m_byRace, static_cast<int>(taxRate * 100.0f));
+  g_Main.m_kEtcNotifyInfo.Notify(m_byRace);
+
+  CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
+  const unsigned int patriarchSerial = ranking->GetCurrentRaceBossSerial(m_byRace, 5u);
+  CPlayer *patriarch = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, patriarchSerial);
+  if (patriarch)
+  {
+    SendMsg_PatriarchTaxRate(patriarch->m_ObjID.m_wIndex);
+  }
+
+  return 0;
+}
+
+void TRC_AutoTrade::his_income_money()
+{
+  CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
+  const unsigned int serial = ranking->GetCurrentRaceBossSerial(m_byRace, 0);
+  const float currentTaxRate = m_Controller.getCurTaxRate();
+  m_serviceLog.Write(
+    "PS:%d tax:%.2f tcnt:%d money:%.0f",
+    serial,
+    currentTaxRate,
+    m_dwTrade,
+    static_cast<double>(m_dIncomeMoney));
+  m_dIncomeMoney = 0.0;
+  m_dwTrade = 0;
 }
 
 void TRC_AutoTrade::PushDQSData()

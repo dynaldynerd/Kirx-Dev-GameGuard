@@ -98,6 +98,9 @@ public:
   static CGoldenBoxItemMgr *Instance();
 
   bool Initialize();
+  void Loop_Event();
+  void Check_Event_Status();
+  void PushDQSUpdate();
   bool Load_Golden_Box_Item_Event();
   bool _init_loggers();
   void Set_Event_Status(unsigned __int8 byStatus);

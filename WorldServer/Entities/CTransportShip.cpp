@@ -109,6 +109,37 @@ void CTransportShip::AlterState(bool bAnchor, unsigned __int8 byDirect, int nPas
   SendMsg_TransportShipState(-1);
 }
 
+void CTransportShip::CheckHurry()
+{
+  if (m_bAnchor && !m_bHurry && timeGetTime() >= m_dwNextHurryTime)
+  {
+    m_bHurry = true;
+    SendMsg_TransportShipState(-1);
+    KickOldMember(m_byDirect);
+  }
+}
+
+void CTransportShip::CheckTicket()
+{
+  for (int ticketIndex = 0; ticketIndex < 2; ++ticketIndex)
+  {
+    __mgr_ticket *ticket = &m_MgrTicket[ticketIndex];
+    if (ticket->dwNextUpdateTime != static_cast<unsigned int>(-1) && GetLoopTime() >= ticket->dwNextUpdateTime)
+    {
+      ticket->init();
+    }
+  }
+}
+
+void CTransportShip::Loop()
+{
+  if (m_tmrCheckState.CountingTimer())
+  {
+    CheckTicket();
+    CheckHurry();
+  }
+}
+
 void CTransportShip::KickFreeMember()
 {
   const unsigned __int8 kickDirectCode = (m_byDirect == 0);

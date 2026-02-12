@@ -36,6 +36,17 @@ namespace
   };
 }
 
+void CMgrAvatorItemHistory::OnLoop()
+{
+  if (m_tmrUpdateTime.CountingTimer())
+  {
+    _strdate(m_szCurDate);
+    m_szCurDate[5] = 0;
+    _strtime(m_szCurTime);
+    m_szCurTime[5] = 0;
+  }
+}
+
 void CMgrAvatorItemHistory::lenditem_del_from_inven(
   unsigned __int8 byTblCode,
   unsigned __int16 wItemIndex,

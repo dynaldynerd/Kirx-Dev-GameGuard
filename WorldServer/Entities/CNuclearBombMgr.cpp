@@ -11,6 +11,13 @@
 #include "nuclear_position_result_zocl.h"
 #include "nuclear_result_code_zocl.h"
 
+namespace
+{
+int damCnt[3][3]{};
+int StartNum[3][3]{};
+int LoopCnt[3][3]{};
+}
+
 int _nuclear_bomb_current_state_zocl::size() const
 {
   return 127 - 14 * (9 - nNum);
@@ -20,6 +27,52 @@ CNuclearBombMgr *CNuclearBombMgr::Instance()
 {
   static CNuclearBombMgr s_instance;
   return &s_instance;
+}
+
+void CNuclearBombMgr::Loop()
+{
+  for (int raceIndex = 0; raceIndex < 3; ++raceIndex)
+  {
+    for (int missileIndex = 0; missileIndex < 3; ++missileIndex)
+    {
+      CNuclearBomb *missile = &m_Missile[raceIndex][missileIndex];
+      if (!missile->m_bLive)
+      {
+        continue;
+      }
+
+      if (missile->GetBombStatus() <= 3u)
+      {
+        damCnt[raceIndex][missileIndex] = 0;
+        StartNum[raceIndex][missileIndex] = 0;
+        LoopCnt[raceIndex][missileIndex] = 0;
+      }
+
+      if (missile->GetBombStatus() == 4)
+      {
+        damCnt[raceIndex][missileIndex] = missile->GetDamagedObjNum();
+        missile->SetBombStatus();
+        LoopCnt[raceIndex][missileIndex] = damCnt[raceIndex][missileIndex] / 30;
+      }
+
+      if (missile->GetBombStatus() >= 5u)
+      {
+        const int remainCount = damCnt[raceIndex][missileIndex] % 30;
+        if (StartNum[raceIndex][missileIndex] <= LoopCnt[raceIndex][missileIndex])
+        {
+          if (StartNum[raceIndex][missileIndex] >= LoopCnt[raceIndex][missileIndex])
+          {
+            missile->Attack(StartNum[raceIndex][missileIndex], remainCount);
+          }
+          else
+          {
+            missile->Attack(StartNum[raceIndex][missileIndex], 30);
+          }
+          ++StartNum[raceIndex][missileIndex];
+        }
+      }
+    }
+  }
 }
 
 bool CNuclearBombMgr::MissileInit()

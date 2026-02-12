@@ -349,6 +349,38 @@ void CPvpUserRankingInfo::PvpRankDataPacking(CLogFile *pkLogger)
   }
 }
 
+void CUserRankingProcess::Loop()
+{
+  if (m_eState > PS_RANK_SUCCESS)
+  {
+    if (m_eState < PS_USER_RANK_PROCESS || m_eState > PS_UPDATE_AND_LOAD_GRADE || m_eState == PS_NONE)
+    {
+      if (m_pkLogger)
+      {
+        m_pkLogger->Write("CUserRankingProcess::Loop() : m_eState(%d) Invalid State!", m_eState);
+      }
+      m_eState = PS_INVALID;
+    }
+    return;
+  }
+
+  if (m_eState < 0 || static_cast<size_t>(m_eState) >= m_vecProc.size())
+  {
+    if (m_pkLogger)
+    {
+      m_pkLogger->Write("CUserRankingProcess::Loop() : m_eState(%d) Invalid Proc Index!", m_eState);
+    }
+    m_eState = PS_INVALID;
+    return;
+  }
+
+  const auto proc = m_vecProc[static_cast<size_t>(m_eState)];
+  if (proc)
+  {
+    (this->*proc)();
+  }
+}
+
 void CUserRankingProcess::SetUpdateRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth, unsigned int dwSerial)
 {
   m_kPvpRankingInfo.SetUpdateRaceBossSerial(byRace, byNth, dwSerial);

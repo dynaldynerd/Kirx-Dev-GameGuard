@@ -8,6 +8,11 @@ CRaceBuffManager *CRaceBuffManager::Instance()
   return &s_instance;
 }
 
+void CRaceBuffManager::Loop()
+{
+  m_kBuffByHolyQuest.Loop();
+}
+
 bool CRaceBuffManager::Init()
 {
   return m_kBuffByHolyQuest.Init();

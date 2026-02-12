@@ -2284,6 +2284,12 @@ public:
   void SendMsg_AlterWeaponBulletInform(unsigned __int16 wItemSerial, unsigned __int16 wLeftNum);
   void SendMsg_AlterUnitBulletInform(char byPart, unsigned __int16 wLeftNum);
   void SendMsg_Recover();
+  static void OnLoop_Static();
+  void UpdatePvpPointLimiter(__int64 tCurTime);
+  void UpdatePvpOrderView(__int64 tCurTime);
+  void AutoRecover();
+  void AutoRecover_Animus();
+  void AutoCharge_Booster();
   char GetUseConsumeItem(
     _consume_item_list *pConsumeList,
     unsigned __int16 *pItemSerials,

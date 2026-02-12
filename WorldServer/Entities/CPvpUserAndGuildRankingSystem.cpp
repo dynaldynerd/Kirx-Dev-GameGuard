@@ -14,6 +14,14 @@ CPvpUserAndGuildRankingSystem *CPvpUserAndGuildRankingSystem::Instance()
   return &s_instance;
 }
 
+void CPvpUserAndGuildRankingSystem::Loop()
+{
+  if (g_Main.m_bWorldOpen)
+  {
+    m_kUserRankingProcess.Loop();
+  }
+}
+
 bool CPvpUserAndGuildRankingSystem::InitLogger()
 {
   m_pkLogger = new CLogFile();

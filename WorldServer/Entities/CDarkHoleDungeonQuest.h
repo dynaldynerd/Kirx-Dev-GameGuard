@@ -11,6 +11,7 @@ class __cppobj CDarkHoleDungeonQuest : public CDarkHoleDungeonQuestSetup
 {
 public:
   bool LoadDarkHoleQuest();
+  void CheckQuestOnLoop();
   CDarkHoleChannel *GetChannel(unsigned int dwChannelIndex);
   CDarkHoleChannel *CanOpenChannel(int nQuestIndex);
   int SearchEmptyDarkHoleChannel();

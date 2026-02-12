@@ -3,6 +3,7 @@
 #include "RFEvent_ClassRefine.h"
 
 #include "CAsyncLogger.h"
+#include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
 #include <cstring>
@@ -54,6 +55,65 @@ bool RFEvent_ClassRefine::Initialzie()
     _kEvent.nEndDate);
 
   return true;
+}
+
+void RFEvent_ClassRefine::Loop()
+{
+  if (m_tmDataFileCheckTime.CountingTimer() && CheckRefineEventData())
+  {
+    memcpy_0(&_kEvent, &_kModifyEvent, sizeof(_kEvent));
+    if (m_bUserDataReset)
+    {
+      ResetRefineData();
+    }
+  }
+}
+
+bool RFEvent_ClassRefine::CheckRefineEventData()
+{
+  _FILETIME fileWriteTime{};
+  if (!GetLastWriteFileTime(".\\Initialize\\WorldSystem.ini", &fileWriteTime))
+  {
+    return false;
+  }
+
+  if (m_ftWrite.dwHighDateTime == fileWriteTime.dwHighDateTime
+      && m_ftWrite.dwLowDateTime == fileWriteTime.dwLowDateTime)
+  {
+    return false;
+  }
+
+  memcpy_s(&m_ftWrite, sizeof(m_ftWrite), &fileWriteTime, sizeof(fileWriteTime));
+  ReadClassRefineEventInfo();
+
+  if (_kEvent.bEnable == _kModifyEvent.bEnable && _kEvent.nStartDate == _kModifyEvent.nStartDate
+      && _kEvent.nEndDate == _kModifyEvent.nEndDate && _kEvent.nMaxRefineCnt == _kModifyEvent.nMaxRefineCnt)
+  {
+    return false;
+  }
+
+  if ((!_kEvent.bEnable && _kModifyEvent.bEnable) || _kModifyEvent.nStartDate > _kEvent.nStartDate)
+  {
+    m_bUserDataReset = true;
+  }
+
+  return true;
+}
+
+void RFEvent_ClassRefine::ResetRefineData()
+{
+  for (int playerIndex = 0; playerIndex < MAX_PLAYER; ++playerIndex)
+  {
+    CPlayer *player = &g_Player[playerIndex];
+    if (!player->m_bOper)
+    {
+      continue;
+    }
+
+    _pkParticipant[playerIndex].dwRefineDate = _kEvent.nStartDate;
+    _pkParticipant[playerIndex].nCurRefineCnt = 0;
+    _pkParticipant[playerIndex].bChange = true;
+  }
 }
 
 unsigned __int8 RFEvent_ClassRefine::CanDoEvent(CPlayer *pOne)

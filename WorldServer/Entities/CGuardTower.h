@@ -31,6 +31,7 @@ class __cppobj __declspec(align(8)) CGuardTower : public CCharacter
 public:
   static int s_nLiveNum;
   static unsigned int s_dwSerialCnt;
+  static unsigned int s_dwOldTick_CheckTemp;
   static __TEMP_WAIT_TOWER s_Temp[MAX_PLAYER];
 
   int m_nHP;
@@ -53,6 +54,7 @@ public:
   void SendMsg_Destroy(unsigned __int8 byDesType);
   void SendMsg_Create();
   void NotifyOwnerAttackInform(CCharacter *pDst);
+  static void OnLoop_Static();
   static __int64 GetNewSerial();
 };
 

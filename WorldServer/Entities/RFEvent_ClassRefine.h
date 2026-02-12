@@ -35,6 +35,9 @@ class __cppobj RFEvent_ClassRefine : public RFEventBase
 {
 public:
   bool Initialzie();
+  void Loop();
+  bool CheckRefineEventData();
+  void ResetRefineData();
   unsigned __int8 CanDoEvent(CPlayer *pOne);
   unsigned __int8 DoEvent(CPlayer *pOne) override;
   bool IsDbUpdate(unsigned int nIdx) override;

@@ -3,7 +3,9 @@
 #include "CPostSystemManager.h"
 
 #include <cstdarg>
+#include <ctime>
 #include <cstring>
+#include <vector>
 
 #include "CMgrAvatorItemHistory.h"
 #include "CMainThread.h"
@@ -18,6 +20,7 @@
 #include "qry_case_post_send.h"
 
 #include <cstdio>
+#include <atltime.h>
 
 CPostSystemManager *CPostSystemManager::Instace()
 {
@@ -70,6 +73,115 @@ bool CPostSystemManager::Init()
   }
 
   return true;
+}
+
+void CPostSystemManager::SetNextWriteTime()
+{
+  ATL::CTimeSpan oneDay(1, 0, 0, 0);
+  ATL::CTime tomorrow = ATL::CTime::GetCurrentTime() + oneDay;
+  ATL::CTime nextWriteTime(tomorrow.GetYear(), tomorrow.GetMonth(), tomorrow.GetDay(), 0, 0, 0, -1);
+  m_tNextWrite = nextWriteTime.GetTime();
+}
+
+void CPostSystemManager::Loop()
+{
+  if (!g_Main.m_pWorldDB)
+  {
+    return;
+  }
+
+  if (m_tmrRegiTime.CountingTimer())
+  {
+      const int pendingRegistCount = m_listRegist.size();
+      if (pendingRegistCount > 0)
+      {
+        const int sendCount = pendingRegistCount < 20 ? pendingRegistCount : 20;
+      constexpr int kRecordSize = 304;
+      constexpr int kHeaderSize = 8;
+      std::vector<char> payload(kHeaderSize + sendCount * kRecordSize, 0);
+      *reinterpret_cast<unsigned int *>(&payload[0]) = static_cast<unsigned int>(sendCount);
+
+      for (int recordIndex = 0; recordIndex < sendCount; ++recordIndex)
+      {
+        unsigned int outIndex[5]{};
+        m_listRegist.PopNode_Front(outIndex);
+
+        CPostData *postData = &m_PostData[outIndex[0]];
+        char *entry = payload.data() + kHeaderSize + recordIndex * kRecordSize;
+        *reinterpret_cast<unsigned int *>(entry) = outIndex[0];
+        entry[5] = static_cast<char>(postData->m_bySendRace);
+        entry[6] = static_cast<char>(postData->m_bySenderDgr);
+        *reinterpret_cast<unsigned int *>(entry + 8) = postData->m_dwSenderSerial;
+        *reinterpret_cast<_INVENKEY *>(entry + 268) = postData->m_Key;
+        *reinterpret_cast<unsigned __int64 *>(entry + 272) = postData->m_dwDur;
+        *reinterpret_cast<unsigned int *>(entry + 280) = postData->m_dwUpt;
+        *reinterpret_cast<unsigned __int64 *>(entry + 288) = postData->m_lnUID;
+        *reinterpret_cast<unsigned int *>(entry + 296) = postData->m_dwGold;
+        strcpy_s(entry + 12, 17, postData->m_wszSendName);
+        strcpy_s(entry + 29, 17, postData->m_wszRecvName);
+        strcpy_s(entry + 46, 21, postData->m_wszTitle);
+        strcpy_s(entry + 67, 201, postData->m_wszContent);
+      }
+
+      g_Main.PushDQSData(
+        0xFFFFFFFF,
+        nullptr,
+        0x4Du,
+        payload.data(),
+        static_cast<int>(payload.size()));
+    }
+  }
+
+  if (m_tmrProcTime.CountingTimer())
+  {
+      const int pendingProcCount = m_listProc.size();
+      if (pendingProcCount > 0)
+      {
+        const int sendCount = pendingProcCount < 15 ? pendingProcCount : 15;
+      constexpr int kRecordSize = 32;
+      constexpr int kHeaderSize = 4;
+      std::vector<char> payload(kHeaderSize + sendCount * kRecordSize, 0);
+      *reinterpret_cast<unsigned int *>(&payload[0]) = static_cast<unsigned int>(sendCount);
+
+      for (int recordIndex = 0; recordIndex < sendCount; ++recordIndex)
+      {
+        unsigned int outIndex[5]{};
+        m_listProc.PopNode_Front(outIndex);
+
+        CPostData *postData = &m_PostData[outIndex[0]];
+        char *entry = payload.data() + kHeaderSize + recordIndex * kRecordSize;
+        *reinterpret_cast<unsigned int *>(entry) = outIndex[0];
+        entry[4] = static_cast<char>(postData->m_bySenderDgr);
+        entry[5] = static_cast<char>(postData->m_bySendRace);
+        strcpy_s(entry + 7, 17, postData->m_wszRecvName);
+        if (postData->m_Key.IsFilled() || postData->m_dwGold || postData->m_bySenderDgr >= 2u)
+        {
+          entry[6] = 1;
+        }
+      }
+
+      m_nPostProcCountPerDay += sendCount;
+      g_Main.PushDQSData(
+        0xFFFFFFFF,
+        nullptr,
+        0x81u,
+        payload.data(),
+        static_cast<int>(payload.size()));
+    }
+  }
+
+  __int64 now = 0;
+  _time64(&now);
+  if (now > m_tNextWrite)
+  {
+    Log(
+      "Post Use Count > Total Use: %d, Return Post: %d\r\n",
+      m_nPostProcCountPerDay,
+      m_nPostReturnCountPerDay);
+    m_nPostProcCountPerDay = 0;
+    m_nPostReturnCountPerDay = 0;
+    SetNextWriteTime();
+  }
 }
 
 bool CPostSystemManager::Load()

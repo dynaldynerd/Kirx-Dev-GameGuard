@@ -49,6 +49,7 @@ public:
   bool IsNormalString(const char *szString);
   bool RecvGameGuardData(unsigned int n, _MSG_HEADER *pHeader, char *pBuff);
   void SendCashDBDSNRequest();
+  void Loop();
   void NetClose(CPlayer *pOne);
 
   CNationSettingData *m_pData;

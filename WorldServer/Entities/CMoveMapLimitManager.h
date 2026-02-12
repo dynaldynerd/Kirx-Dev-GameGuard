@@ -11,6 +11,7 @@ class __cppobj CMoveMapLimitManager
 {
 public:
   static CMoveMapLimitManager *Instance();
+  void Loop();
   bool Init();
   bool Request(
     int iLimitType,

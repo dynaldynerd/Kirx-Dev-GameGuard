@@ -12,6 +12,7 @@ class __cppobj CMoveMapLimitInfoList
 {
 public:
   bool Init(std::vector<int> *vecRightTypeList);
+  void Loop();
   CMoveMapLimitInfo *Get(int iLimitType, int iMapInx, unsigned int dwStoreRecordIndex);
   void Load(CPlayer *pkPlayer, CMoveMapLimitRightInfo *pkRight);
   void LogIn(CPlayer *pkPlayer, CMoveMapLimitRightInfo *pkRight);

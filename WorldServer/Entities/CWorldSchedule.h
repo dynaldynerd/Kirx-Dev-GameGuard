@@ -10,6 +10,8 @@ class __cppobj CWorldSchedule
 {
 public:
   bool Init();
+  void Loop();
+  void CheckSch();
   bool DataCheck();
   int CalcScheduleCursor(int nHour, int nMin);
   void ChangeSchCursor(_WorldSchedule_fld *pFld, int nPassMin);

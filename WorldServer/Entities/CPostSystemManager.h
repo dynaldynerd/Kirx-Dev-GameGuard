@@ -15,6 +15,7 @@ class __cppobj CPostSystemManager
 public:
   static CPostSystemManager *Instace();
   bool Init();
+  void Loop();
   bool Load();
   bool InitLogger();
   char UpdateDisappearOwnerRecord();
@@ -39,6 +40,7 @@ public:
   void CompleteRegist(char *pData);
   void CompleteSend(char *pData);
   void CompletePostReceiverCheck(char *pData);
+  void SetNextWriteTime();
   void Log(const char *fmt, ...);
   void Log(const wchar_t *fmt, ...);
 

@@ -48,6 +48,10 @@
 #define MAX_GUILD 500
 #endif
 
+#ifndef CANDIDATE_MGR_INIT_COUNT
+#define CANDIDATE_MGR_INIT_COUNT 500
+#endif
+
 #ifndef MAX_AUTOMINE
 #define MAX_AUTOMINE MAX_PLAYER
 #endif

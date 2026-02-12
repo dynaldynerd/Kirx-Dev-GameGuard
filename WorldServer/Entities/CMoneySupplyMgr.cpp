@@ -5,6 +5,9 @@
 #include <new>
 #include <mmsystem.h>
 
+#include "GlobalObjects.h"
+#include "WorldServerUtil.h"
+
 CMoneySupplyMgr *CMoneySupplyMgr::pInstance = nullptr;
 
 namespace
@@ -275,6 +278,36 @@ void CMoneySupplyMgr::Initialize()
   m_dwLastSendTime = timeGetTime();
   m_dwSystemOperStartTime = timeGetTime();
   m_MS_data.init();
+}
+
+void CMoneySupplyMgr::SendMsg_MoneySupplyDataToWeb(_MONEY_SUPPLY_DATA *pMSData)
+{
+  char packet[0x4CC]{};
+  memcpy_0(packet, pMSData, sizeof(packet));
+
+  unsigned __int8 type[2]{51, 20};
+  if (g_Main.m_bConnectedWebAgentServer)
+  {
+    g_Network.m_pProcess[2]->LoadSendMsg(g_Main.m_byWebAgentServerNetInx, type, packet, sizeof(packet));
+  }
+}
+
+void CMoneySupplyMgr::LoopMoneySupply()
+{
+  if (!g_Main.m_bWorldOpen)
+  {
+    return;
+  }
+
+  const unsigned int loopTime = GetLoopTime();
+  if (loopTime >= m_dwLastSendTime + 60000)
+  {
+    m_MS_Senddata.init();
+    memcpy_0(&m_MS_Senddata, &m_MS_data, sizeof(_MONEY_SUPPLY_DATA));
+    m_MS_data.init();
+    SendMsg_MoneySupplyDataToWeb(&m_MS_Senddata);
+    m_dwLastSendTime = loopTime;
+  }
 }
 
 void CMoneySupplyMgr::UpdateBuyData(unsigned __int8 byRace, int nLv, char *szClass, unsigned int nAmount)

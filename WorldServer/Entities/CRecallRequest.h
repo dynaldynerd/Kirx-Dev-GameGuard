@@ -8,6 +8,9 @@ class CPlayer;
 class __cppobj __declspec(align(8)) CRecallRequest
 {
 public:
+  bool IsClose();
+  CPlayer *GetOwner();
+
   unsigned __int16 m_usID;
   CUnmannedTraderSchedule::STATE m_eState;
   CPlayer *m_pkOwner;

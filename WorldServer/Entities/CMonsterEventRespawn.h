@@ -65,6 +65,7 @@ class __cppobj CMonsterEventRespawn
 {
 public:
   bool SetEventRespawn();
+  void CheckRespawnEvent();
   bool StartRespawnEvent(char *pszEventCode, char *pwszErrCode);
   bool StopRespawnEvent(char *pszEventCode, char *pwszErrCode);
 

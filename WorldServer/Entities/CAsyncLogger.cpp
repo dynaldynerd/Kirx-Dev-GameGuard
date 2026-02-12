@@ -182,6 +182,23 @@ void CAsyncLogger::ProcWrite()
   }
 }
 
+void CAsyncLogger::Loop()
+{
+  if (!m_kCheckUpdateLogFileNameDelay.CountingTimer())
+  {
+    return;
+  }
+
+  for (auto &entry : m_mapLogInfo)
+  {
+    CAsyncLogInfo *logInfo = entry.second;
+    if (logInfo)
+    {
+      logInfo->UpdateLogFileName();
+    }
+  }
+}
+
 void CAsyncLogger::Log(const char *szFileName, const char *szLog, int iLenStr)
 {
   if (m_kBufferList == nullptr || szFileName == nullptr || szLog == nullptr || iLenStr <= 0)

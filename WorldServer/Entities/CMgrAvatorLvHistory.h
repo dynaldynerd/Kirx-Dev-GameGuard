@@ -33,6 +33,7 @@ public:
     char sData[200];
   };
 
+  void OnLoop();
   void char_copy(int n, char *pszDstName, unsigned int dwDstSerial, char *pszFileName);
   void alter_pvp(int n, long double dPvpVariation, CPartyPlayer *pParty, char *pszFileName);
   void recovery_exp(

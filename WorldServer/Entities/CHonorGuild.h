@@ -27,6 +27,10 @@ class __cppobj CHonorGuild
 public:
   static CHonorGuild *Instance();
   bool Init();
+  void Loop();
+  void LoopSubProcSendInform(unsigned __int8 byRace);
+  void SendCurrHonorGuildList(unsigned __int16 wIndex, unsigned __int8 byRace, unsigned __int8 byUI);
+  void SendNextHonorGuildList(unsigned __int16 wIndex, unsigned __int8 byRace);
   char LoadDB();
   unsigned __int8 FindHonorGuildRank(unsigned __int8 byRace, unsigned int dwGuildSerial);
   char CheckHonorGuild(unsigned __int8 byRace, unsigned int dwSerial);

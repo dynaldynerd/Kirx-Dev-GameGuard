@@ -11,6 +11,9 @@ class __cppobj PatriarchElectProcessor
 public:
   static PatriarchElectProcessor *Instance();
   bool Initialize();
+  void Loop();
+  bool InitProcess();
+  void TimeCheck(unsigned __int16 wDayOfWeek, unsigned __int16 wHour);
   unsigned int GetElectSerial();
   ElectProcessor::ProcessorType GetProcessorType();
   void SetTimeCheck(bool bFlag);

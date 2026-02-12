@@ -147,3 +147,19 @@ CDarkHoleChannel *CDarkHoleDungeonQuest::SearchOncePlayedChannel(unsigned int dw
   }
   return nullptr;
 }
+
+void CDarkHoleDungeonQuest::CheckQuestOnLoop()
+{
+  if (!m_bLoad)
+  {
+    return;
+  }
+
+  const DWORD now = timeGetTime();
+  if (now - m_dwCheckLastTime < 1000)
+  {
+    return;
+  }
+
+  m_dwCheckLastTime = now;
+}

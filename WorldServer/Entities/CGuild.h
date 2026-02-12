@@ -41,6 +41,7 @@ public:
   void ClearVote();
   void StartRankJob();
   void EndRankJob();
+  void Loop(bool bChangeDay);
   void SendMsg_DownPacket(unsigned __int8 bDowntype, _guild_member_info *pMem);
   char LogoffMember(unsigned int dwMemberSerial);
   _guild_member_info *LoginMember(unsigned int dwMemberSerial, CPlayer *pPtr);
@@ -107,6 +108,7 @@ public:
   void PushDQSInGuildBattleCost();
   void PushDQSSourceGuildOutputGuildBattleCost();
   void PushDQSDestGuildOutputGuildBattleCost();
+  void PushDQSGuildMasterLastConnn();
   void CompleteOutGuildbattleCost(
     unsigned int dwSrcGuildSerial,
     unsigned int dwStartTimeInx,

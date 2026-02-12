@@ -1040,3 +1040,22 @@ char CUserDB::Setting_Class(char *pszClassCode)
   this->m_bDataUpdate = 1;
   return 1;
 }
+
+char CUserDB::Update_PlayTime(unsigned int dwTotalTimeMin)
+{
+  this->m_AvatorData.dbAvator.m_dwTotalPlayMin = dwTotalTimeMin;
+  return 1;
+}
+
+void CUserDB::TotalPlayMinCheck()
+{
+  if (this->m_dwSerial != static_cast<unsigned int>(-1) && this->m_tmrCheckPlayMin.CountingTimer())
+  {
+    Update_PlayTime(this->m_AvatorData.dbAvator.m_dwTotalPlayMin + 1);
+  }
+}
+
+void CUserDB::OnLoop_Static()
+{
+  CUserDB::s_MgrLobbyHistory.OnLoop();
+}

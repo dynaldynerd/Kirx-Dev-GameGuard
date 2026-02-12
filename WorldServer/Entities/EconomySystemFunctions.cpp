@@ -2,11 +2,33 @@
 
 #include "EconomySystemFunctions.h"
 
+#include "CGuild.h"
+#include "CMainThread.h"
 #include "ECONOMY_SYSTEM.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
 #include <cmath>
+#include <ctime>
+
+namespace
+{
+struct _log_sheet_economy
+{
+  unsigned int dwDate;
+  unsigned int m_dwAlignPad;
+  long double dTradeGold[3];
+  long double dTradeDalant[3];
+  int nMgrValue;
+  int m_nAlignPad;
+  long double dCutOre[6][3];
+
+  int size() const
+  {
+    return sizeof(*this);
+  }
+};
+}
 
 char _ReadEconomyIniFile()
 {
@@ -234,4 +256,228 @@ char eInitEconomySystem(
   (void)nCurMgrValue;
   (void)nNextMgrValue;
   return 1;
+}
+
+void eUpdateEconomySystem(bool *pbChangeDay)
+{
+  if (pbChangeDay)
+  {
+    *pbChangeDay = false;
+  }
+
+  if (!e_EconomySystem.m_bLoad)
+  {
+    return;
+  }
+
+  const unsigned int loopTime = GetLoopTime();
+  if (loopTime - e_EconomySystem.m_dwLastUpdateTime < 0xEA60)
+  {
+    return;
+  }
+
+  e_EconomySystem.m_dwLastUpdateTime = loopTime;
+  ++e_dwMinCount;
+  for (int race = 0; race < 3; ++race)
+  {
+    e_dwUserCumCount[race] += CPlayer::s_nRaceNum[race];
+  }
+
+  const unsigned __int8 currentHour = static_cast<unsigned __int8>(GetCurrentHour());
+  if (e_EconomySystem.m_byCurHour == currentHour)
+  {
+    return;
+  }
+
+  e_EconomySystem.m_byCurHour = currentHour;
+  const int avgBellato = static_cast<int>(e_dwUserCumCount[0] / e_dwMinCount);
+  const int avgCora = static_cast<int>(e_dwUserCumCount[1] / e_dwMinCount);
+  const int avgAccretia = static_cast<int>(e_dwUserCumCount[2] / e_dwMinCount);
+  e_dwMinCount = 0;
+  memset_0(e_dwUserCumCount, 0, sizeof(e_dwUserCumCount));
+
+  for (int race = 0; race < 3; ++race)
+  {
+    if (avgBellato > 10 && avgCora > 10 && avgAccretia > 10)
+    {
+      e_EconomySystem.m_dCurTradeDalant[race] += e_EconomySystem.m_dBufTradeDalant[race];
+      if (e_EconomySystem.m_dCurTradeDalant[race] < 1.0)
+      {
+        e_EconomySystem.m_dCurTradeDalant[race] = DOUBLE_1_0;
+      }
+
+      e_EconomySystem.m_dCurTradeGold[race] += e_EconomySystem.m_dBufTradeGold[race];
+      if (e_EconomySystem.m_dCurTradeGold[race] < 1.0)
+      {
+        e_EconomySystem.m_dCurTradeGold[race] = DOUBLE_1_0;
+      }
+
+      for (int oreType = 0; oreType < 3; ++oreType)
+      {
+        e_EconomySystem.m_dCurOreMineCount[race][oreType] += e_EconomySystem.m_dBufOreMineCount[race][oreType];
+        e_EconomySystem.m_dCurOreCutCount[race][oreType] += e_EconomySystem.m_dBufOreCutCount[race][oreType];
+      }
+    }
+
+    e_EconomySystem.m_dBufTradeDalant[race] = 0.0;
+    e_EconomySystem.m_dBufTradeGold[race] = 0.0;
+    for (int oreType = 0; oreType < 3; ++oreType)
+    {
+      e_EconomySystem.m_dBufOreMineCount[race][oreType] = 0.0;
+      e_EconomySystem.m_dBufOreCutCount[race][oreType] = 0.0;
+    }
+  }
+
+  if (g_Main.IsReleaseServiceMode() && avgBellato > 10 && avgCora > 10 && avgAccretia > 10)
+  {
+    _log_sheet_economy qryData{};
+    qryData.dwDate = e_EconomySystem.m_dwLastDate;
+    memcpy_0(qryData.dTradeDalant, e_EconomySystem.m_dCurTradeDalant, sizeof(qryData.dTradeDalant));
+    memcpy_0(qryData.dTradeGold, e_EconomySystem.m_dCurTradeGold, sizeof(qryData.dTradeGold));
+    qryData.nMgrValue = 1000;
+    for (int race = 0; race < 3; ++race)
+    {
+      for (int oreType = 0; oreType < 3; ++oreType)
+      {
+        qryData.dCutOre[race][oreType] = e_EconomySystem.m_dCurOreMineCount[race][oreType];
+        qryData.dCutOre[race + 3][oreType] = e_EconomySystem.m_dCurOreCutCount[race][oreType];
+      }
+    }
+    g_Main.PushDQSData(0xFFFFFFFFu, nullptr, 9u, reinterpret_cast<char *>(&qryData), qryData.size());
+  }
+
+  SendMsg_EconomyDataToWeb();
+
+  const unsigned int localDate = eGetLocalDate();
+  if (localDate == e_EconomySystem.m_dwLastDate)
+  {
+    return;
+  }
+
+  if (pbChangeDay)
+  {
+    *pbChangeDay = true;
+  }
+
+  e_EconomySystem.m_dwLastDate = localDate;
+  _ReadEconomyIniFile();
+
+  double totalTradeDalant = 0.0;
+  _economy_calc_data calcData{};
+  for (int race = 0; race < 3; ++race)
+  {
+    calcData.dTradeDalant[race] = e_EconomySystem.m_dCurTradeDalant[race];
+    calcData.dTradeGold[race] = DOUBLE_1_0;
+    for (int oreType = 0; oreType < 3; ++oreType)
+    {
+      calcData.dOreMineCount[race][oreType] = e_EconomySystem.m_dCurOreMineCount[race][oreType];
+      calcData.dOreCutCount[race][oreType] = e_EconomySystem.m_dCurOreCutCount[race][oreType];
+    }
+    totalTradeDalant += static_cast<double>(e_EconomySystem.m_dCurTradeDalant[race]);
+  }
+
+  if (totalTradeDalant > 3.0)
+  {
+    _UpdateNewEconomy(&calcData);
+    for (int race = 0; race < 3; ++race)
+    {
+      e_EconomySystem.m_CurRate[race].dOldTradeDalant = calcData.dTradeDalant[race];
+      e_EconomySystem.m_CurRate[race].dOldTradeGold = calcData.dTradeGold[race];
+      e_EconomySystem.m_CurRate[race].fPayExgRate = calcData.out_fPayExgRate[race];
+      e_EconomySystem.m_CurRate[race].fTexRate = calcData.out_fTexRate[race];
+      e_EconomySystem.m_CurRate[race].fOreRate = calcData.out_fOreRate[race];
+      e_EconomySystem.m_CurRate[race].wEconomyGuide = calcData.out_wEconomyGuide[race];
+      e_EconomySystem.m_CurRate[race].dwTexRate = calcData.out_dwTexRate[race];
+      for (int oreType = 0; oreType < 3; ++oreType)
+      {
+        e_EconomySystem.m_CurRate[race].dOldOreMineCount[oreType] = calcData.dOreMineCount[race][oreType];
+        e_EconomySystem.m_CurRate[race].dOldOreCutCount[oreType] = calcData.dOreCutCount[race][oreType];
+      }
+    }
+
+    _economy_history_data src{};
+    memcpy_0(src.dTradeGold, e_EconomySystem.m_dCurTradeGold, sizeof(src.dTradeGold));
+    memcpy_0(src.dTradeDalant, e_EconomySystem.m_dCurTradeDalant, sizeof(src.dTradeDalant));
+    for (int race = 0; race < 3; ++race)
+    {
+      src.wEconomyGuide[race] = e_EconomySystem.m_CurRate[race].wEconomyGuide;
+      for (int oreType = 0; oreType < 3; ++oreType)
+      {
+        src.dOreMineCount[race][oreType] = e_EconomySystem.m_dCurOreMineCount[race][oreType];
+        src.dOreCutCount[race][oreType] = e_EconomySystem.m_dCurOreCutCount[race][oreType];
+      }
+    }
+
+    memcpy_0(e_EconomyHistory, &e_EconomyHistory[1], sizeof(_economy_history_data) * 11);
+    memcpy_0(&e_EconomyHistory[11], &src, sizeof(_economy_history_data));
+    _UpdateRateSendToAllPlayer();
+  }
+
+  e_EconomySystem.CurTradeMoneyInit();
+  SendMsg_EconomyDataToWeb();
+}
+
+void SendMsg_EconomyDataToWeb()
+{
+  struct EconomyDataToWeb
+  {
+    float rate[3];
+    float tex[3];
+    unsigned __int16 guide[3];
+    __int16 year;
+    char month;
+    char day;
+  };
+
+  EconomyDataToWeb packet{};
+  for (int race = 0; race < 3; ++race)
+  {
+    packet.rate[race] = static_cast<float>(eGetRate(race));
+    packet.tex[race] = eGetTex(race);
+    packet.guide[race] = eGetGuide(race);
+  }
+
+  packet.year = GetCurrentYear();
+  packet.month = static_cast<char>(GetCurrentMonth());
+  packet.day = static_cast<char>(GetCurrentDay());
+
+  unsigned __int8 messageType[2]{51, 5};
+  if (g_Main.m_bConnectedWebAgentServer)
+  {
+    g_Network.m_pProcess[2]->LoadSendMsg(
+      g_Main.m_byWebAgentServerNetInx,
+      messageType,
+      reinterpret_cast<char *>(&packet),
+      0x22u);
+  }
+}
+
+void _UpdateRateSendToAllPlayer()
+{
+  for (int playerIndex = 0; playerIndex < MAX_PLAYER; ++playerIndex)
+  {
+    if (g_Player[playerIndex].m_bLive)
+    {
+      g_Player[playerIndex].SendMsg_EconomyRateInform(0);
+    }
+  }
+}
+
+void OnLoop_VoteSystem()
+{
+  for (int race = 0; race < 3; ++race)
+  {
+    g_VoteSys[race].Loop();
+  }
+}
+
+void OnLoop_GuildSystem(bool bChangeDay)
+{
+  for (int guildIndex = 0; guildIndex < MAX_GUILD; ++guildIndex)
+  {
+    if (g_Guild[guildIndex].IsFill())
+    {
+      g_Guild[guildIndex].Loop(bChangeDay);
+    }
+  }
 }

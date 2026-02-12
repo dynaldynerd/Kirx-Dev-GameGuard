@@ -10,6 +10,7 @@ class __cppobj CPvpUserAndGuildRankingSystem
 public:
   static CPvpUserAndGuildRankingSystem *Instance();
   bool Init();
+  void Loop();
   bool InitLogger();
   bool Load();
   bool IsCurrentRaceBossGroup(unsigned __int8 byRace, unsigned int dwSerial);

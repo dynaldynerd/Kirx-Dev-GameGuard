@@ -77,6 +77,7 @@ namespace RACE_BOSS_MSG
       unsigned int dbWebSendDBID);
     int Cancel(unsigned __int8 ucRace, unsigned int dwMsgID, CMsg **pkMsg);
     void CleanUpCancel(unsigned __int8 ucRace, CMsg *pkMsg);
+    void Refresh();
     bool IsHaveBeenSave();
     bool Load(unsigned int dwCurTime);
     void Save();
@@ -95,6 +96,10 @@ public:
 
   static CRaceBossMsgController *Instance();
   bool Init();
+  void OnLoop();
+  bool IsDayChanged();
+  void SaveCurTime();
+  void UpdateSend();
 
   char Send(CPlayer *pkSender, const char *pwszMsg);
   char Send(

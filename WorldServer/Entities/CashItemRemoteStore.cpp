@@ -73,6 +73,17 @@ bool CashItemRemoteStore::Initialize()
   return LoadBuyCashMode();
 }
 
+void CashItemRemoteStore::Loop_TatalCashEvent()
+{
+  if (m_TotalEventTimer.CountingTimer())
+  {
+    load_cash_discount_event();
+    check_loaded_cde_status();
+    Load_Cash_Event();
+    Load_Conditional_Event();
+  }
+}
+
 const _CashShop_fld *CashItemRemoteStore::FindCashRec(unsigned int nTbl, int nIdx)
 {
   if (nTbl > 0x24)
@@ -1844,6 +1855,11 @@ bool CashItemRemoteStore::LoadBuyCashMode()
   }
 
   return true;
+}
+
+bool CashItemRemoteStore::IsBuyCashItemByGold() const
+{
+  return _bIsBuyCashItemByGold;
 }
 
 void Get_CashEvent_Name(unsigned __int8 byEventType, char *szEventName)

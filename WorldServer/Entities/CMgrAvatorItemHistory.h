@@ -41,6 +41,7 @@ public:
 
   CMgrAvatorItemHistory();
   static void IOThread(void *pv);
+  void OnLoop();
   void WriteFile(const char *pszFileName, const char *pszLog);
   void char_copy(int n, char *pszDstName, unsigned int dwDstSerial, char *pszFileName);
   void cheat_alter_money(int n, unsigned int dwNewDalant, unsigned int dwNewGold, char *pszFileName);

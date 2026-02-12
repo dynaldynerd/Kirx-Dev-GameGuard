@@ -32,6 +32,14 @@ CUnmannedTraderController *CUnmannedTraderController::Instance()
   return &s_instance;
 }
 
+void CUnmannedTraderController::Loop()
+{
+  CUnmannedTraderScheduler::Instance()->Loop();
+  CUnmannedTraderTaxRateManager::Instance()->Loop();
+  m_kTradeInfo.Loop();
+  m_kLazyCleaner.Loop();
+}
+
 bool CUnmannedTraderController::Init()
 {
   if (!InitLogger())

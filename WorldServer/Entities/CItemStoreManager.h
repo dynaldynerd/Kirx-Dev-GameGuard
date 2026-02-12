@@ -43,6 +43,7 @@ class __cppobj CItemStoreManager
 public:
   static CItemStoreManager *Instance();
   bool Init(int nMapNum, int nInstanceListNum);
+  void Loop();
   char Load();
   bool InitLogger();
   void SetNextEnforceInitTime();

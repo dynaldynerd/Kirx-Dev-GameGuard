@@ -101,6 +101,69 @@ bool CWorldSchedule::Init()
   return false;
 }
 
+void CWorldSchedule::Loop()
+{
+  if (m_bOper && m_tmrCheck.CountingTimer())
+  {
+    CheckSch();
+  }
+}
+
+void CWorldSchedule::CheckSch()
+{
+  const DWORD currentTick = timeGetTime();
+  const DWORD elapsedTick = currentTick - m_dwLastCheckTime;
+  m_dwLastCheckTime = currentTick;
+
+  m_nCurMilSec += static_cast<int>(elapsedTick);
+  const int passMinute = m_nCurMilSec / 60000;
+  m_nCurMilSec %= 60000;
+
+  if (passMinute > 0)
+  {
+    m_nCurMin += passMinute;
+    const int passHour = m_nCurMin / 60;
+    m_nCurMin %= 60;
+    if (passHour > 0)
+    {
+      m_nCurHour += passHour;
+      m_nCurHour %= 24;
+    }
+  }
+
+  int nextCursor = m_nSchCursor + 1;
+  if (nextCursor >= m_nMaxSchNum)
+  {
+    nextCursor = 0;
+  }
+
+  _WorldSchedule_fld *current = reinterpret_cast<_WorldSchedule_fld *>(m_tblSch.GetRecord(m_nSchCursor));
+  _WorldSchedule_fld *next = reinterpret_cast<_WorldSchedule_fld *>(m_tblSch.GetRecord(nextCursor));
+
+  const bool timeWindowOpen = next->m_nHour >= current->m_nHour || m_nCurHour < current->m_nHour;
+  if (timeWindowOpen && m_nCurHour >= next->m_nHour && m_nCurMin >= next->m_nMin)
+  {
+    char timeBuffer[144]{};
+    _strtime(timeBuffer);
+    g_logSchedule.Write(
+      kScheduleCursorFmt,
+      static_cast<unsigned int>(m_nSchCursor),
+      static_cast<unsigned int>(m_nCurHour),
+      static_cast<unsigned int>(m_nCurMin),
+      static_cast<unsigned int>(m_nCurMilSec),
+      timeBuffer);
+
+    ChangeSchCursor(next, 0);
+    g_logSchedule.Write(
+      kScheduleEventFmt,
+      next->m_strCode,
+      static_cast<unsigned int>(next->m_nEventCode),
+      static_cast<unsigned int>(next->m_nEventInfo1),
+      static_cast<unsigned int>(next->m_nEventInfo2));
+    m_nSchCursor = static_cast<int>(next->m_dwIndex);
+  }
+}
+
 bool CWorldSchedule::DataCheck()
 {
   int prevAnchor = -1;

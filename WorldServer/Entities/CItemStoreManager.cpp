@@ -7,6 +7,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
+#include <ctime>
 #include <new>
 #include <atltime.h>
 #include "CRFWorldDatabase.h"
@@ -146,6 +147,149 @@ void CItemStoreManager::SetNextEnforceInitTime()
   CTime nextDay = current + CTimeSpan(1, 0, 0, 0);
   CTime nextMidnight(nextDay.GetYear(), nextDay.GetMonth(), nextDay.GetDay(), 0, 0, 0);
   this->m_tNextInitTime = nextMidnight.GetTime();
+}
+
+void CItemStoreManager::Loop()
+{
+  if (!m_tmrCheckTime.CountingTimer())
+  {
+    return;
+  }
+
+  __time64_t currentTime = 0;
+  _time64(&currentTime);
+
+  if (currentTime > m_tNextInitTime)
+  {
+    for (int normalIndex = 0; normalIndex < 3; ++normalIndex)
+    {
+      CItemStore *normalStore = m_pLimitInitNormalStore[normalIndex];
+      if (!normalStore)
+      {
+        continue;
+      }
+
+      normalStore->SetLimitItemInitTime();
+      if (normalStore->m_nLimitStorageItemNum > 0)
+      {
+        normalStore->InitLimitItemInfo();
+        normalStore->UpdateLimitItemNum(true);
+      }
+    }
+
+    for (int listIndex = 0; listIndex < m_nInstanceItemStoreListNum; ++listIndex)
+    {
+      CMapItemStoreList *storeList = &m_InstanceItemStoreList[listIndex];
+      for (int storeIndex = 0; storeIndex < storeList->m_nItemStoreNum; ++storeIndex)
+      {
+        CItemStore *store = &storeList->m_ItemStore[storeIndex];
+        store->SetLimitItemInitTime();
+        if (store->m_nLimitStorageItemNum > 0)
+        {
+          store->InitLimitItemInfo();
+          store->UpdateLimitItemNum(true);
+        }
+      }
+    }
+
+    SetNextEnforceInitTime();
+  }
+
+  for (int listIndex = 0; listIndex < m_nMapItemStoreListNum; ++listIndex)
+  {
+    CMapItemStoreList *storeList = &m_MapItemStoreList[listIndex];
+    for (int storeIndex = 0; storeIndex < storeList->m_nItemStoreNum; ++storeIndex)
+    {
+      CItemStore *store = &storeList->m_ItemStore[storeIndex];
+      if (store->m_nLimitStorageItemNum > 0 && store->m_dwLimitInitTime <= static_cast<unsigned __int64>(currentTime))
+      {
+        store->SetLimitItemInitTime();
+        store->InitLimitItemInfo();
+        store->UpdateLimitItemNum(true);
+      }
+    }
+  }
+
+  for (int listIndex = 0; listIndex < m_nInstanceItemStoreListNum; ++listIndex)
+  {
+    CMapItemStoreList *storeList = &m_InstanceItemStoreList[listIndex];
+    if (!storeList->m_bUse)
+    {
+      continue;
+    }
+
+    for (int storeIndex = 0; storeIndex < storeList->m_nItemStoreNum; ++storeIndex)
+    {
+      CItemStore *store = &storeList->m_ItemStore[storeIndex];
+      if (store->m_nLimitStorageItemNum > 0 && store->m_dwLimitInitTime <= static_cast<unsigned __int64>(currentTime))
+      {
+        store->SetLimitItemInitTime();
+        store->InitLimitItemInfo();
+        store->UpdateLimitItemNum(true);
+      }
+    }
+  }
+
+  if (!m_tmrSaveTime.CountingTimer())
+  {
+    return;
+  }
+
+  unsigned int updateCount = 0;
+  bool hasUpdate = false;
+  auto copyUpdatedStore = [&](CMapItemStoreList *storeList)
+  {
+    if (!storeList->m_bUse)
+    {
+      return;
+    }
+
+    for (int storeIndex = 0; storeIndex < storeList->m_nItemStoreNum; ++storeIndex)
+    {
+      CItemStore *store = &storeList->m_ItemStore[storeIndex];
+      if (!store->m_bUpdate || store->m_nLimitStorageItemNum <= 0)
+      {
+        continue;
+      }
+
+      _qry_case_all_store_limit_item::__list *sheetEntry = &m_Sheet.pStoreList[updateCount];
+      sheetEntry->dwDBSerial = store->m_dwDBSerial;
+      sheetEntry->bNewSerial = false;
+      sheetEntry->byType = storeList->m_byType;
+      sheetEntry->nTypeSerial = storeList->m_nSerial;
+      sheetEntry->dwStoreIndex = store->m_pRec->m_dwIndex;
+      sheetEntry->dwLimitInitTime = store->m_dwLimitInitTime;
+
+      for (int itemIndex = 0; itemIndex < 16; ++itemIndex)
+      {
+        if (store->m_pLimitStorageItem[itemIndex].Key.CovDBKey() != -1)
+        {
+          sheetEntry->ItemData[itemIndex].Key = store->m_pLimitStorageItem[itemIndex].Key;
+          sheetEntry->ItemData[itemIndex].nLimitNum = store->m_pLimitStorageItem[itemIndex].nLimitNum;
+        }
+      }
+
+      ++updateCount;
+      store->m_bUpdate = false;
+      hasUpdate = true;
+    }
+  };
+
+  for (int listIndex = 0; listIndex < m_nMapItemStoreListNum; ++listIndex)
+  {
+    copyUpdatedStore(&m_MapItemStoreList[listIndex]);
+  }
+
+  for (int listIndex = 0; listIndex < m_nInstanceItemStoreListNum; ++listIndex)
+  {
+    copyUpdatedStore(&m_InstanceItemStoreList[listIndex]);
+  }
+
+  if (hasUpdate && g_Main.m_pWorldDB)
+  {
+    m_Sheet.dwCount = updateCount;
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x70u, nullptr, 0);
+  }
 }
 
 CMapItemStoreList *CItemStoreManager::GetMapItemStoreListByNum(int nMapNum)

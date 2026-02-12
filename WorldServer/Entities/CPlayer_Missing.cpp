@@ -15082,3 +15082,31 @@ void CPlayer::pc_UnitLeaveRequest(float *pfNewPos)
 
   this->SendMsg_UnitLeaveResult(static_cast<char>(byRetCode));
 }
+
+void CPlayer::OnLoop_Static()
+{
+  CPlayer::s_MgrItemHistory.OnLoop();
+  CPlayer::s_MgrLvHistory.OnLoop();
+  CPlayer::s_AnimusReturnDelay.CheckOnLoop();
+  CPlayer::s_BillingForceCloseDelay.CheckOnLoop();
+}
+
+void CPlayer::UpdatePvpPointLimiter(__int64 tCurTime)
+{
+  const long double pvpPoint = m_Param.GetPvPPoint();
+  m_kPvpPointLimiter.Clear(tCurTime, pvpPoint, this);
+}
+
+void CPlayer::UpdatePvpOrderView(__int64 tCurTime)
+{
+  const long double pvpTempCash = m_kPvpOrderView.GetPvpTempCash();
+  AlterPvPCashBag(pvpTempCash, pm_kill);
+  m_kPvpOrderView.Update_RaceWarRecvr(false);
+
+  const long double pvpPoint = m_Param.GetPvPPoint();
+  m_kPvpOrderView.Update(tCurTime, false, false, 0.0, pvpPoint, 0.0);
+  m_kPvpOrderView.ResetPvPOrderView();
+  m_kPvpOrderView.Notify_PvpTempCash(m_ObjID.m_wIndex);
+  m_kPvpOrderView.Notify_OrderView(m_ObjID.m_wIndex);
+  SendMsg_AlterPvPCash(0);
+}

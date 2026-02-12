@@ -78,6 +78,7 @@ public:
   bool IsINIFileChanged(const char *pszFileName, _FILETIME ftCurr);
   bool StartEventSet(char *pszEventCode, char *pwszErrCode, CPlayer *pOne);
   bool StopEventSet(char *pszEventCode, char *pwszErrCode);
+  void CheckEventSetRespawn();
   bool LoadEventSet(char *errBuffer);
   bool LoadEventSetLooting();
   _event_set_looting *GetEvenSetLooting(const char *pszCode);

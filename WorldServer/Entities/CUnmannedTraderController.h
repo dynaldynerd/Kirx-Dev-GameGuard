@@ -21,6 +21,7 @@ class __cppobj CUnmannedTraderController
 public:
   static CUnmannedTraderController *Instance();
   bool Init();
+  void Loop();
   bool Load();
   bool Load(unsigned __int16 wInx, unsigned int dwSerial, _TRADE_DB_BASE *kInfo);
   void Regist(unsigned __int16 wInx, _a_trade_reg_item_request_clzo *pRequest);

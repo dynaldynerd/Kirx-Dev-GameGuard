@@ -10,6 +10,7 @@ class __cppobj CGuildBattleController
 public:
   static CGuildBattleController *Instance();
   bool Init();
+  void Loop();
   char Load();
   char LoadINI(
     unsigned int *uiMapCnt,

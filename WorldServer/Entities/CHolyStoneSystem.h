@@ -63,6 +63,7 @@ class __cppobj __declspec(align(8)) CHolyStoneSystem
 {
 public:
   bool InitHolySystem();
+  void OnLoop();
   void AlterSchedule(unsigned __int8 byScheduleCode, unsigned __int8 byNumOfTime);
   bool ContinueStartSystem();
   void InitQuestCash_Other();
@@ -113,6 +114,9 @@ public:
   void SendHolyStoneHPToRaceBoss();
   void SendHolyStoneHP(CPlayer *pkPlayer);
   void SendNotifyHolyStoneDestroyedToRaceBoss();
+  void CheckDestroyerIsArriveMine();
+  void HSKRespawnSystem();
+  void UpdateNotifyHolyStoneHPToRaceBoss();
   _QUEST_CASH *FindStoragedQuestCash(unsigned int dwAvatorSerial);
   _QUEST_CASH_OTHER *PopStoredQuestCash_Other(unsigned int dwAvatorSerial);
   bool IsMentalPass();

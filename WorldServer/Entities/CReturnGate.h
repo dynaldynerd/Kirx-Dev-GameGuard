@@ -20,6 +20,7 @@ public:
   void Clear();
   unsigned __int16 GetIndex();
   bool IsOpen();
+  bool IsClose();
   bool IsValidOwner();
   bool IsValidPosition(float *pfCurPos);
   int Enter(CPlayer *pkObj);

@@ -38,7 +38,10 @@ public:
     unsigned int dwMatterDst,
     char *wszMatterDst,
     unsigned int dwNext);
+  void ChangeTaxRate();
+  __int64 ChangeTaxRate(float fNewTaxRate);
   void PushDQSData();
+  void his_income_money();
   void AddGDalant(char *pdata);
   unsigned int CalcPrice(unsigned int nGuildSerial, unsigned int nPrice);
   int ChangeOwner(CGuild *pGuild);

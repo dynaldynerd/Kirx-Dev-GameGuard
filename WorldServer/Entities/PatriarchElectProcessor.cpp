@@ -12,6 +12,7 @@
 #include "CMainThread.h"
 #include "CNotifyNotifyRaceLeaderSownerUTaxrate.h"
 #include "CPlayer.h"
+#include "CUserDB.h"
 #include "CPvpUserAndGuildRankingSystem.h"
 #include "CRFWorldDatabase.h"
 #include "WorldServerUtil.h"
@@ -126,6 +127,154 @@ bool PatriarchElectProcessor::Initialize()
   _eProcessType = ElectProcessor::_eNonProcessor;
   _dwNextCheckTime = timeGetTime() + 60000;
   return true;
+}
+
+void PatriarchElectProcessor::Loop()
+{
+  if (!g_Main.m_bWorldOpen)
+  {
+    return;
+  }
+
+  if (!_bInitProce)
+  {
+    InitProcess();
+  }
+
+  const DWORD now = timeGetTime();
+  if (now > _dwNextCheckTime)
+  {
+    _dwNextCheckTime = timeGetTime() + 60000;
+    SYSTEMTIME localTime{};
+    GetLocalTime(&localTime);
+    if (_bTimeCheck)
+    {
+      TimeCheck(localTime.wDayOfWeek, localTime.wHour);
+    }
+  }
+}
+
+bool PatriarchElectProcessor::InitProcess()
+{
+  if (_eProcessType < ElectProcessor::_eProcessorNum)
+  {
+    if (!_kProcessor[_eProcessType])
+    {
+      return false;
+    }
+
+    _kRunningProcessor = _kProcessor[_eProcessType];
+    if (_eProcessType == ElectProcessor::_eCandidateRegister)
+    {
+      if (!_kRunningProcessor->Initialize())
+      {
+        return false;
+      }
+      _kRunningProcessor->Doit(_eRequestInitCandidate, nullptr, nullptr);
+    }
+    else if (_eProcessType == ElectProcessor::_eVoter)
+    {
+      if (!_kRunningProcessor->Initialize())
+      {
+        return false;
+      }
+    }
+    else if (_eProcessType == ElectProcessor::_eFinalDecisionProcessor)
+    {
+      _kRunningProcessor->Doit(_eReqQrySetWinner, nullptr, nullptr);
+    }
+  }
+
+  _bInitProce = true;
+  return true;
+}
+
+void PatriarchElectProcessor::TimeCheck(unsigned __int16 wDayOfWeek, unsigned __int16 wHour)
+{
+  bool changed = false;
+  if (wDayOfWeek == 1)
+  {
+    if (_eProcessType == ElectProcessor::_eFinalDecisionApplyer
+        || _eProcessType == ElectProcessor::_eClassOrderProcessor)
+    {
+      if (_eProcessType != ElectProcessor::_eClassOrderProcessor)
+      {
+        _eProcessType = ElectProcessor::_eClassOrderProcessor;
+        changed = true;
+      }
+    }
+    else
+    {
+      _eProcessType = ElectProcessor::_eFinalDecisionApplyer;
+      changed = true;
+    }
+  }
+  else if (wDayOfWeek > 1)
+  {
+    if (wDayOfWeek <= 5)
+    {
+      if (_eProcessType != ElectProcessor::_eCandidateRegister)
+      {
+        _eProcessType = ElectProcessor::_eCandidateRegister;
+        changed = true;
+      }
+    }
+    else if (wDayOfWeek == 6)
+    {
+      if (_eProcessType != ElectProcessor::_eCandidateRegister && wHour < 17)
+      {
+        _eProcessType = ElectProcessor::_eCandidateRegister;
+        changed = true;
+      }
+      else if (_eProcessType == ElectProcessor::_eSecondCandidateCrystallizer || wHour != 17)
+      {
+        if (_eProcessType != ElectProcessor::_eVoter && wHour >= 18)
+        {
+          _eProcessType = ElectProcessor::_eVoter;
+          changed = true;
+        }
+      }
+      else
+      {
+        _eProcessType = ElectProcessor::_eSecondCandidateCrystallizer;
+        changed = true;
+      }
+    }
+  }
+  else if (_eProcessType != ElectProcessor::_eFinalDecisionProcessor && wHour >= 22 && wHour < 24)
+  {
+    _eProcessType = ElectProcessor::_eFinalDecisionProcessor;
+    changed = true;
+  }
+
+  if (changed)
+  {
+    if (_eProcessType == ElectProcessor::_eCandidateRegister)
+    {
+      g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x77u, nullptr, 0);
+    }
+
+    _kRunningProcessor = _kProcessor[_eProcessType];
+    if (!_kRunningProcessor || !_kRunningProcessor->Initialize())
+    {
+      _kSysLog.Write(
+        "PatriarchElectProcessor::TimeCheck() Process Initialize Error (_eProcessType:%d)",
+        _eProcessType);
+      return;
+    }
+
+    if (_eProcessType == ElectProcessor::_eFinalDecisionProcessor)
+    {
+      // Update_RaceVoteInfoInit / PushResetServerToken symbol chain is not reconstructed yet.
+    }
+  }
+
+  if (_kRunningProcessor
+      && _kRunningProcessor->GetProcessorType() == ElectProcessor::_eVoter)
+  {
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x73u, nullptr, 0);
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x78u, nullptr, 0);
+  }
 }
 
 unsigned int PatriarchElectProcessor::GetCurrPatriarchElectSerial()

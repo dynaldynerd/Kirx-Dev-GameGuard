@@ -27,6 +27,7 @@ public:
   static CNuclearBombMgr *Instance();
   bool MissileInit();
   bool LoadIni();
+  void Loop();
   void CheckNuclearState(CPlayer *pOne);
   char Request_EnableNuclearControl(int n, char *pMsg);
   char Request_SelectDropPosition(int n, float *pMsg);

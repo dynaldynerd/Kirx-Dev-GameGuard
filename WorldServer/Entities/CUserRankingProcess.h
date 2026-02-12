@@ -114,6 +114,7 @@ public:
   CGuildRanking m_kGuildRanking;
 
   bool Init();
+  void Loop();
   void SetLogger(CLogFile *pkLogger);
   char Load();
   void LoadINI(unsigned int *piHour, unsigned int *piMin);

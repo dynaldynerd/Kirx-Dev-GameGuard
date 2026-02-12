@@ -163,6 +163,34 @@ bool CRecallEffectController::Init(unsigned int infoCount)
   return true;
 }
 
+void CRecallEffectController::OnLoop()
+{
+  if (m_pkTimer && m_pkTimer->CountingTimer())
+  {
+    UpdateClose();
+  }
+}
+
+void CRecallEffectController::UpdateClose()
+{
+  if (!m_pkUseInxList || !m_ppkReqeust || m_pkUseInxList->size() <= 0)
+  {
+    return;
+  }
+
+  unsigned int outIndex[5]{};
+  if (m_pkUseInxList->CopyFront(outIndex))
+  {
+    CRecallRequest *request = m_ppkReqeust[outIndex[0]];
+    if (request && request->IsClose())
+    {
+      CPlayer *owner = request->GetOwner();
+      SendRecallReqeustResult(5u, owner);
+      CloseRecallRequest(this, request, false);
+    }
+  }
+}
+
 void CRecallEffectController::SendRecallReqeustResult(char byRet, CPlayer *pkObj)
 {
   if (!pkObj)

@@ -96,6 +96,11 @@ bool CHolyStoneSystem::InitHolySystem()
   return true;
 }
 
+void CHolyStoneSystem::OnLoop()
+{
+  (void)this;
+}
+
 bool CHolyStoneSystem::ContinueStartSystem()
 {
   int storedStoneHp[3]{};

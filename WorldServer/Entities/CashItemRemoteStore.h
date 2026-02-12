@@ -137,6 +137,10 @@ public:
   CashItemRemoteStore();
   static CashItemRemoteStore *Instance();
   bool Initialize();
+  void Loop_TatalCashEvent();
+  void Loop_Cash_Event();
+  void Loop_ContEvent();
+  void loop_cash_discount_event();
   static const _CashShop_fld *FindCashRec(unsigned int nTbl, int nIdx);
   void Check_Grosssales(unsigned int dwTotalSellCash);
   void Check_Total_Selling();
@@ -146,6 +150,7 @@ public:
   void Set_FROMDB_LimitedSale_Event(_db_cash_limited_sale *Sheet);
   char LimitedSale_check_count(unsigned __int8 byTableCode, unsigned int dwIndex);
   unsigned __int16 BuyLimSale(unsigned __int8 byTableCode, unsigned int dwIndex);
+  bool IsBuyCashItemByGold() const;
 
   CLogFile _kLoggers[2];
   CRecordData _kRecGoods;

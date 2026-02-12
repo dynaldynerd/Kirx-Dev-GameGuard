@@ -17,6 +17,8 @@ class __cppobj CMapOperation
 {
 public:
   bool Init();
+  void OnLoop();
+  void RespawnMonster();
   CMapData *GetMap(const char *szMapCode);
   CMapData *GetMap(int nIndex);
   int GetMap(CMapData *pMap);

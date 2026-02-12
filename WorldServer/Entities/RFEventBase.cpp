@@ -2,6 +2,11 @@
 
 #include "CMainThread.h"
 
+void RFEventBase::Loop()
+{
+  // this is not a stub
+}
+
 unsigned __int8 RFEventBase::DoEvent(CPlayer * /*pOne*/)
 {
   // this is not a stub

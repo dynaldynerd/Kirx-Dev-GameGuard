@@ -235,3 +235,13 @@ void CNationSettingManager::NetClose(CPlayer *pOne)
 {
   m_pData->NetClose(pOne);
 }
+
+void CNationSettingManager::Loop()
+{
+  m_pData->Loop();
+  INationGameGuardSystem *gameGuard = m_pData->GetGameGuardSystem();
+  if (gameGuard)
+  {
+    gameGuard->OnLoop();
+  }
+}

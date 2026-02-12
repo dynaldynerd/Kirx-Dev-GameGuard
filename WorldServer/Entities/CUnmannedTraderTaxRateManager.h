@@ -14,6 +14,7 @@ public:
 
   CUnmannedTraderTaxRateManager();
   bool Init(CLogFile *pkLogger);
+  void Loop();
   char Load();
   void CompleteCreate(unsigned __int16 wInx);
   bool IsOwnerGuild(unsigned __int8 byRace, unsigned int dwGuildSerial);

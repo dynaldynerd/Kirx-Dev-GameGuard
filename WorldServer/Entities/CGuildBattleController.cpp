@@ -16,6 +16,11 @@ CGuildBattleController *CGuildBattleController::Instance()
   return &s_instance;
 }
 
+void CGuildBattleController::Loop()
+{
+  (void)this;
+}
+
 bool CGuildBattleController::Init()
 {
   auto *logger = GUILD_BATTLE::CGuildBattleLogger::Instance();

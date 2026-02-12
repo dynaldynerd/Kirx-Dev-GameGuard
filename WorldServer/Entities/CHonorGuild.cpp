@@ -60,6 +60,61 @@ bool CHonorGuild::Init()
   return true;
 }
 
+void CHonorGuild::Loop()
+{
+  for (unsigned __int8 race = 0; race < 3; ++race)
+  {
+    if (m_bChageInform[race])
+    {
+      LoopSubProcSendInform(race);
+    }
+  }
+}
+
+void CHonorGuild::LoopSubProcSendInform(unsigned __int8 byRace)
+{
+  const unsigned int processEnd = m_uiProccessIndex[byRace] + 50;
+  unsigned int processIndex = m_uiProccessIndex[byRace];
+  for (; processIndex < processEnd && processIndex < MAX_PLAYER; ++processIndex)
+  {
+    CPlayer *player = &g_Player[processIndex];
+    if (player->m_bOper && player->m_Param.GetRaceCode() == byRace)
+    {
+      SendCurrHonorGuildList(player->m_ObjID.m_wIndex, byRace, 0xFFu);
+    }
+  }
+
+  m_uiProccessIndex[byRace] = processIndex;
+  if (m_uiProccessIndex[byRace] >= MAX_PLAYER)
+  {
+    m_uiProccessIndex[byRace] = 0;
+    m_bChageInform[byRace] = false;
+  }
+}
+
+void CHonorGuild::SendCurrHonorGuildList(unsigned __int16 wIndex, unsigned __int8 byRace, unsigned __int8 byUI)
+{
+  unsigned __int8 type[2]{27, 112};
+  m_pCurrHonorGuild[byRace]->byUI = byUI;
+  const unsigned __int16 len = static_cast<unsigned __int16>(m_pCurrHonorGuild[byRace]->size());
+  g_Network.m_pProcess[0]->LoadSendMsg(wIndex, type, reinterpret_cast<char *>(m_pCurrHonorGuild[byRace]), len);
+}
+
+void CHonorGuild::SendNextHonorGuildList(unsigned __int16 wIndex, unsigned __int8 byRace)
+{
+  unsigned __int8 type[2]{27, 119};
+  if (m_bNext[byRace])
+  {
+    const unsigned __int16 len = static_cast<unsigned __int16>(m_pNextHonorGuild[byRace]->size());
+    g_Network.m_pProcess[0]->LoadSendMsg(wIndex, type, reinterpret_cast<char *>(m_pNextHonorGuild[byRace]), len);
+  }
+  else
+  {
+    const unsigned __int16 len = static_cast<unsigned __int16>(m_pCurrHonorGuild[byRace]->size());
+    g_Network.m_pProcess[0]->LoadSendMsg(wIndex, type, reinterpret_cast<char *>(m_pCurrHonorGuild[byRace]), len);
+  }
+}
+
 char CHonorGuild::LoadDB()
 {
   for (int j = 0; j < 3; ++j)

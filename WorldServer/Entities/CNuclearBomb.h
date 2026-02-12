@@ -32,6 +32,9 @@ public:
   bool Create(_nuclear_create_setdata *pData);
   bool GetUse();
   unsigned __int8 GetBombStatus();
+  __int64 GetDamagedObjNum();
+  void SetBombStatus();
+  void Attack(int startNum, int objCount);
   float *GetMissilePos();
   unsigned __int16 GetItemIndex();
   void SetNuclearIndex(unsigned __int16 wItemIndex);

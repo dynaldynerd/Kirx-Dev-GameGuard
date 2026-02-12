@@ -27,6 +27,8 @@ class __cppobj CMoneySupplyMgr
 public:
   static CMoneySupplyMgr *Instance();
   void Initialize();
+  void LoopMoneySupply();
+  void SendMsg_MoneySupplyDataToWeb(_MONEY_SUPPLY_DATA *pMSData);
   void UpdateBuyData(unsigned __int8 byRace, int nLv, char *szClass, unsigned int nAmount);
   void UpdateSellData(unsigned __int8 byRace, int nLv, char *szClass, unsigned int nAmount);
   void UpdateQuestRewardMoneyData(unsigned __int8 byRace, int nLv, char *szClass, unsigned int nAmount);

@@ -350,6 +350,11 @@ struct _event_info
 struct __cppobj GuildCreateEventInfo
 {
   void Init();
+  void Loop();
+  void ReadEventInfo();
+  char CheckEventDate();
+  char ApplyModifiedGuildEventInfo();
+  void SetConsumeDalantFree(bool bEnable);
   __int64 GetEstConsumeDalant() const;
   __int64 GetEmblemDalant() const;
 
@@ -972,6 +977,20 @@ public:
   virtual ~CMainThread() = default;
 
 private:
+  void OnRun();
+  void CheckAvatorState();
+  void CheckAccountLineState();
+  void ForceCloseUserInTiming();
+  void CheckConnNumLog();
+  void ContUserSaveJobCheck();
+  void CheckDayChangedPvpPointClear();
+  void CheckRadarItemDelay();
+  void CheckServerRateINIFile();
+  void CheckForceClose();
+  void ServerStateMsgGotoWebAgent();
+  void PingToAccount();
+  char LoadServerRateINIFile();
+  void SetServerRate();
   bool LoadINI();
   int LoadWorldSystemINI();
   int LoadWorldInfoINI();
@@ -1057,6 +1076,7 @@ struct __cppobj __declspec(align(4)) RFEventBase
   unsigned int _nOldLoopTime;
   event_date_range _kDateRange;
   virtual ~RFEventBase() = default;
+  virtual void Loop();
   virtual unsigned __int8 DoEvent(CPlayer *pOne);
   virtual bool IsDbUpdate(unsigned int nIdx);
   virtual _event_participant_classrefine *GetPlayerState(unsigned int nIdx, unsigned int nAvator);
@@ -1085,6 +1105,7 @@ struct __cppobj TimeLimitMgr
   static TimeLimitMgr *Instance();
   void LoadTLINIFile();
   void InitializeTLMgr();
+  void Chack_Time();
   void SetTLEnable(unsigned __int16 wState);
   unsigned __int16 GetPeriodCnt();
   void SetTime(unsigned __int16 dwTime, unsigned __int16 iIndex);

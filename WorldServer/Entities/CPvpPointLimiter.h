@@ -3,6 +3,7 @@
 #include "IdaCompat.h"
 
 struct _PVPPOINT_LIMIT_DB_BASE;
+class CPlayer;
 
 /* 1793 */
 class __cppobj CPvpPointLimiter
@@ -12,6 +13,7 @@ public:
   ~CPvpPointLimiter();
   char Set(long double dOriginalPvpPoint, _PVPPOINT_LIMIT_DB_BASE *pkInfo);
   void CheatUpdate(long double dOriginalPvpPoint);
+  void Clear(__int64 tUpdateTime, long double dOriginalPvpPoint, CPlayer *pkSelf);
 
 private:
   void Update(__int64 tUpdateTime, long double dOriginalPvpPoint, double dUsePoint, int unused);
