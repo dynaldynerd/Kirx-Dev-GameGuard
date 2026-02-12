@@ -1922,7 +1922,115 @@ public:
   void SendMsg_MadeTrapNumInform(char byNum);
   void SendMsg_TowerContinue(unsigned __int16 wItemSerial, CGuardTower *pTwr);
   void SendMsg_ReEnterAsk(unsigned __int16 wChannelIndex, unsigned int dwChannelSerial);
+  void SendMsg_MoveToOwnStoneMapResult(unsigned __int8 byRetCode, unsigned __int8 byMapIndex, float *pos);
   void SendMsg_MoveToOwnStoneMapInform(unsigned __int8 byStoneMapMoveInfo);
+  void SendMsg_AnimusRecallResult(unsigned __int8 byResultCode, unsigned __int16 wLeftFP, CAnimus *pNewAnimus);
+  void SendMsg_AnimusTargetResult(char byRetCode);
+  void SendMsg_BackTowerResult(char byErrCode, unsigned __int16 wItemSerial, unsigned __int16 wLeftHP);
+  void SendMsg_BackTrapResult(char byErrCode);
+  void SendMsg_CancelSuggestResult(char byRetCode);
+  void SendMsg_ClassSkillResult(
+    unsigned __int8 byErrCode,
+    const _CHRID *targetId,
+    unsigned __int16 wSkillIndex);
+  void SendMsg_CreateTowerResult(char byErrCode, unsigned int dwTowerObjSerial);
+  void SendMsg_CreateTrapResult(char byErrCode, unsigned int dwTrapObjSerial);
+  void SendMsg_DTradeAccomplishInform(bool bSucc, unsigned __int16 wStartSerial);
+  void SendMsg_DTradeOKInform();
+  void SendMsg_DTradeOKResult(char byErrCode);
+  void SendMsg_ForceResult(
+    unsigned __int8 byErrCode,
+    const _CHRID *targetId,
+    _STORAGE_LIST::_db_con *pForceItem,
+    unsigned __int8 nSFLv);
+  void SendMsg_GroupTargetInform(char byGroupType, const char *pwszName);
+  void SendMsg_GuildJoinAcceptFail(char byRetCode, unsigned int dwApplierSerial);
+  void SendMsg_GuildJoinApplyCancelResult(char byRetCode);
+  void SendMsg_GuildJoinApplyRejectInform();
+  void SendMsg_GuildJoinApplyResult(char byRetCode, CGuild *pApplyGuild);
+  void SendMsg_GuildPushMoneyResult(char byRetCode);
+  void SendMsg_GuildRoomEnterResult(
+    unsigned __int8 byRetCode,
+    unsigned __int8 bySubRetCode,
+    unsigned __int8 byMapIndex,
+    unsigned __int16 wMapLayer,
+    float *pPos,
+    int nRestTime);
+  void SendMsg_GuildRoomRentResult(
+    unsigned __int8 byRetCode,
+    unsigned __int8 bySubRetCode,
+    unsigned __int8 byRoomType);
+  void SendMsg_GuildSetHonorResult(char byRetCode);
+  void SendMsg_MineStartResult(unsigned __int8 resultCode);
+  void SendMsg_NpcQuestListResult(_NPCQuestIndexTempData *pQuestIndexData);
+  void SendMsg_OfferSuggestResult(char byRetCode);
+  void SendMsg_OreCuttingResult(unsigned __int8 resultCode, unsigned __int8 leftOreCount, unsigned int consumedDalant);
+  void SendMsg_OreIntoBagResult(char resultCode, unsigned __int16 newSerial, unsigned __int8 lendType, unsigned int lendTime);
+  void SendMsg_ResultNpcQuest(char bSucc);
+  void SendMsg_SetTargetObjectResult(char byRetCode, bool bForce);
+  void SendMsg_SkillResult(
+    unsigned __int8 byErrCode,
+    const _CHRID *targetId,
+    unsigned __int8 bySkillIndex,
+    unsigned __int8 nSFLv);
+  void SendMsg_ThrowSkillResult(unsigned __int8 byErrCode, _CHRID *pidDst, unsigned __int8 bySkillIndex);
+  void SendMsg_ThrowUnitResult(unsigned __int8 byErrCode, _CHRID *pidDst, unsigned __int16 wBulletIndex);
+  void SendMsg_UILock_FindPW_Result(char resultCode, const char *password, char failCount);
+  void SendMsg_UILock_Init_Request_ToAccount(
+    unsigned int accountSerial,
+    unsigned __int16 userIndex,
+    const char *password,
+    unsigned __int8 hintIndex,
+    const char *hintAnswer);
+  void SendMsg_UILock_Init_Result(char resultCode);
+  void SendMsg_UILock_Login_Result(char resultCode, char failCount);
+  void SendMsg_UILock_Update_Request_ToAccount(
+    unsigned int accountSerial,
+    unsigned __int16 userIndex,
+    const char *password,
+    unsigned __int8 hintIndex,
+    const char *hintAnswer);
+  void SendMsg_UILock_Update_Result(char resultCode);
+  void SendMsg_UnitBulletFillResult(
+    char byRetCode,
+    char bySlotIndex,
+    unsigned __int16 *pwBulletIndex,
+    unsigned int *pdwConsumMoney);
+  void SendMsg_UnitDeliveryResult(
+    char byRetCode,
+    char bySlotIndex,
+    unsigned int dwParkingUnitSerial,
+    unsigned int dwPayDalant);
+  void SendMsg_UnitFrameBuyResult(
+    char byRetCode,
+    char byFrameCode,
+    char byUnitSlotIndex,
+    unsigned __int16 wKeyIndex,
+    unsigned __int16 wKeySerial,
+    unsigned int *pdwConsumMoney);
+  void SendMsg_UnitFrameRepairResult(
+    char byRetCode,
+    char bySlotIndex,
+    unsigned int dwNewGauge,
+    unsigned int dwConsumDalant);
+  void SendMsg_UnitLeaveResult(char byRetCode);
+  void SendMsg_UnitPackFillResult(
+    unsigned __int8 byRetCode,
+    unsigned __int8 bySlotIndex,
+    unsigned __int8 byFillNum,
+    _unit_pack_fill_request_clzo::__list *pList,
+    unsigned int *pdwConsumMoney);
+  void SendMsg_UnitPartTuningResult(char byRetCode, char bySlotIndex, int *pnCost);
+  void SendMsg_UnitSellResult(
+    char byRetCode,
+    char bySlotIndex,
+    unsigned __int16 wKeySerial,
+    int nAddMoney,
+    unsigned int dwTotalNonpay,
+    unsigned int dwSumDalant,
+    unsigned int dwSumGold);
+  void SendMsg_UnitTakeResult(char byRetCode);
+  void SendMsg_VoteResult(unsigned int dwMatterVoteSynKey, unsigned __int8 byRetCode);
   void CheckGroupTargeting();
   void CheckGroupMapPoint();
   void SendMsg_StartNewPos(char byMapInMode);

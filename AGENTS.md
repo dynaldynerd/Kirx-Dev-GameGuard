@@ -35,3 +35,8 @@
 20. before rebasing, always create a backup branch first (and push it to remote before continuing).
 21. when fixing merge conflicts, do the simplest merge: list all conflicted functions/headers and only add missing function/struct/class/global variable/static variable from both sides. Example: if one side has A, B, E and the other has B, C, D then merge into A, B, C, D, E with no duplicate B.
 22. for `Record.md` conflicts, combine both sides and then remove duplicate entries.
+
+## Special helper/non-standard function rules
+- don't fix the helper yet, but check the function caller and check if the function caller is already match the ida decompiled logic while maintaining sane variable and modern C++ practice
+- if the caller is fixed, implement the correct member function
+- if the correct member function has been fixed, remove the helper from todo.md list

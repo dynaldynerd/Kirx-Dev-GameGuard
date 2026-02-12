@@ -61,6 +61,7 @@
 #include "insert_new_quest_inform_zocl.h"
 #include "insert_next_quest_inform_zocl.h"
 #include "move_to_own_stonemap_inform_zocl.h"
+#include "move_to_own_stonemap_result_zocl.h"
 #include "pt_result_change_tax_rate_zocl.h"
 #include "PCBANG_PRIMIUM_FAVOR.h"
 #include "economy_history_data.h"
@@ -237,517 +238,57 @@ struct __declspec(align(8)) _qry_case_inputgmoney_local
   }
 };
 
-void SendGuildJoinApplyResultPacket(CPlayer *player, char byRetCode, CGuild *pApplyGuild)
-{
-  GuildJoinApplyResultPacket packet{};
-  packet.byRetCode = byRetCode;
-  if (pApplyGuild)
-  {
-    packet.dwGuildSerial = pApplyGuild->m_dwSerial;
-    strcpy_0(packet.szGuildName, pApplyGuild->m_wszName);
-  }
-  else
-  {
-    packet.dwGuildSerial = static_cast<unsigned int>(-1);
-  }
 
-  unsigned __int8 type[2] = {27, 7};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
-}
 
-void SendGuildJoinApplyCancelResultPacket(CPlayer *player, char byRetCode)
-{
-  unsigned __int8 type[2] = {27, 11};
-  g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, type, &byRetCode, 1u);
-}
 
-void SendGuildJoinApplyRejectInformPacket(CPlayer *player)
-{
-  char payload = 0;
-  unsigned __int8 type[2] = {27, 12};
-  g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, type, &payload, 1u);
-}
 
-void SendGuildJoinAcceptFailPacket(CPlayer *player, char byRetCode, unsigned int dwApplierSerial)
-{
-  GuildJoinAcceptFailPacket packet{};
-  packet.byRetCode = byRetCode;
-  packet.dwApplierSerial = dwApplierSerial;
 
-  unsigned __int8 type[2] = {27, 14};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
-}
 
-void SendSingleBytePacket(CPlayer *player, unsigned __int8 majorType, unsigned __int8 minorType, char value)
-{
-  unsigned __int8 type[2] = {majorType, minorType};
-  g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, type, &value, 1u);
-}
 
-void SendGuildVoteResultPacket(CPlayer *player, unsigned int dwMatterVoteSynKey, unsigned __int8 byRetCode)
-{
-  GuildVoteResultPacket packet{};
-  packet.dwMatterVoteSynKey = dwMatterVoteSynKey;
-  packet.byRetCode = byRetCode;
 
-  unsigned __int8 type[2] = {27, 26};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
-}
 
-void SendGuildPushMoneyResultPacket(CPlayer *player, char byRetCode)
-{
-  GuildPushMoneyResultPacket packet{};
-  packet.byRetCode = byRetCode;
-  packet.dwDalant = player->m_Param.GetDalant();
-  packet.dwGold = player->m_Param.GetGold();
 
-  unsigned __int8 type[2] = {27, 36};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
-}
 
-void SendCreateTowerResultPacket(CPlayer *player, char byErrCode, unsigned int dwTowerObjSerial)
-{
-#pragma pack(push, 1)
-  struct CreateTowerResultPacket
-  {
-    char byErrCode;
-    unsigned int dwTowerObjSerial;
-    unsigned __int16 wFP;
-  };
-#pragma pack(pop)
 
-  CreateTowerResultPacket packet{};
-  packet.byErrCode = byErrCode;
-  packet.dwTowerObjSerial = dwTowerObjSerial;
-  packet.wFP = static_cast<unsigned __int16>(player->GetFP());
 
-  unsigned __int8 type[2] = {17, 19};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
-}
 
-void SendBackTowerResultPacket(
-  CPlayer *player,
-  char byErrCode,
-  unsigned __int16 wItemSerial,
-  unsigned __int16 wLeftHP)
-{
-#pragma pack(push, 1)
-  struct BackTowerResultPacket
-  {
-    char byErrCode;
-    unsigned __int16 wItemSerial;
-    unsigned __int16 wLeftHP;
-  };
-#pragma pack(pop)
 
-  BackTowerResultPacket packet{};
-  packet.byErrCode = byErrCode;
-  packet.wItemSerial = wItemSerial;
-  packet.wLeftHP = wLeftHP;
 
-  unsigned __int8 type[2] = {17, 21};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
-}
 
-void SendCreateTrapResultPacket(CPlayer *player, char byErrCode, unsigned int dwTrapObjSerial)
-{
-#pragma pack(push, 1)
-  struct CreateTrapResultPacket
-  {
-    char byErrCode;
-    unsigned int dwTrapObjSerial;
-    unsigned __int16 wFP;
-  };
-#pragma pack(pop)
 
-  CreateTrapResultPacket packet{};
-  packet.byErrCode = byErrCode;
-  packet.dwTrapObjSerial = dwTrapObjSerial;
-  packet.wFP = static_cast<unsigned __int16>(player->GetFP());
 
-  unsigned __int8 type[2] = {17, 28};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
-}
 
-void SendBackTrapResultPacket(CPlayer *player, char byErrCode)
-{
-  SendSingleBytePacket(player, 17, 39, byErrCode);
-}
 
-void SendDTradeOKResultPacket(CPlayer *player, char byErrCode)
-{
-  SendSingleBytePacket(player, 18, 23, byErrCode);
-}
 
-void SendDTradeOKInformPacket(CPlayer *player)
-{
-  char payload = 0;
-  unsigned __int8 type[2] = {18, 24};
-  g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, type, &payload, 1u);
-}
 
-void SendDTradeAccomplishInformPacket(CPlayer *player, bool bSucc, unsigned __int16 wStartSerial)
-{
-#pragma pack(push, 1)
-  struct DTradeAccomplishInformPacket
-  {
-    unsigned int dwDalant;
-    unsigned int dwGold;
-    unsigned __int16 wStartSerial;
-    bool bSucc;
-  };
-#pragma pack(pop)
 
-  DTradeAccomplishInformPacket packet{};
-  packet.dwDalant = player->m_Param.GetDalant();
-  packet.dwGold = player->m_Param.GetGold();
-  packet.wStartSerial = wStartSerial;
-  packet.bSucc = bSucc;
 
-  unsigned __int8 type[2] = {18, 25};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
-}
 
-void SendUnitFrameBuyResultPacket(
-  CPlayer *player,
-  char byRetCode,
-  char byFrameCode,
-  char byUnitSlotIndex,
-  unsigned __int16 wKeyIndex,
-  unsigned __int16 wKeySerial,
-  unsigned int *pdwConsumMoney)
-{
-#pragma pack(push, 1)
-  struct UnitFrameBuyResultPacket
-  {
-    char byRetCode;
-    char byFrameCode;
-    char byUnitSlotIndex;
-    unsigned __int16 wKeyIndex;
-    unsigned __int16 wKeySerial;
-    unsigned int dwLeftDalant;
-    unsigned int dwLeftGold;
-    unsigned int dwConsumDalant;
-    unsigned int dwConsumGold;
-  };
-#pragma pack(pop)
 
-  UnitFrameBuyResultPacket packet{};
-  packet.byRetCode = byRetCode;
-  packet.byFrameCode = byFrameCode;
-  packet.byUnitSlotIndex = byUnitSlotIndex;
-  packet.wKeyIndex = wKeyIndex;
-  packet.wKeySerial = wKeySerial;
-  packet.dwLeftDalant = player->m_Param.GetDalant();
-  packet.dwLeftGold = player->m_Param.GetGold();
-  packet.dwConsumDalant = pdwConsumMoney[0];
-  packet.dwConsumGold = pdwConsumMoney[1];
 
-  unsigned __int8 type[2] = {23, 2};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
-}
 
-void SendUnitSellResultPacket(
-  CPlayer *player,
-  char byRetCode,
-  char bySlotIndex,
-  unsigned __int16 wKeySerial,
-  int nAddMoney,
-  unsigned int dwTotalNonpay,
-  unsigned int dwSumDalant,
-  unsigned int dwSumGold)
-{
-#pragma pack(push, 1)
-  struct UnitSellResultPacket
-  {
-    char byRetCode;
-    char bySlotIndex;
-    unsigned __int16 wKeySerial;
-    unsigned int dwTotalNonpay;
-    int nAddMoney;
-    int nReserved;
-    unsigned int dwSumDalant;
-    unsigned int dwSumGold;
-  };
-#pragma pack(pop)
 
-  UnitSellResultPacket packet{};
-  packet.byRetCode = byRetCode;
-  packet.bySlotIndex = bySlotIndex;
-  packet.wKeySerial = wKeySerial;
-  packet.dwTotalNonpay = dwTotalNonpay;
-  packet.nAddMoney = nAddMoney;
-  packet.dwSumDalant = dwSumDalant;
-  packet.dwSumGold = dwSumGold;
 
-  unsigned __int8 type[2] = {23, 4};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
-}
 
-void SendUnitPartTuningResultPacket(CPlayer *player, char byRetCode, char bySlotIndex, int *pnCost)
-{
-#pragma pack(push, 1)
-  struct UnitPartTuningResultPacket
-  {
-    char byRetCode;
-    char bySlotIndex;
-    unsigned __int8 byPart[6];
-    unsigned int dwBullet[2];
-    int nCostDalant;
-    int nCostGold;
-    unsigned int dwLeftDalant;
-    unsigned int dwLeftGold;
-  };
-#pragma pack(pop)
 
-  UnitPartTuningResultPacket packet{};
-  packet.byRetCode = byRetCode;
-  packet.bySlotIndex = bySlotIndex;
-  std::memcpy(packet.byPart, player->m_Param.m_UnitDB.m_List[static_cast<unsigned __int8>(bySlotIndex)].byPart, sizeof(packet.byPart));
-  std::memcpy(packet.dwBullet, player->m_Param.m_UnitDB.m_List[static_cast<unsigned __int8>(bySlotIndex)].dwBullet, sizeof(packet.dwBullet));
-  packet.nCostDalant = pnCost[0];
-  packet.nCostGold = pnCost[1];
-  packet.dwLeftDalant = player->m_Param.GetDalant();
-  packet.dwLeftGold = player->m_Param.GetGold();
 
-  unsigned __int8 type[2] = {23, 6};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
-}
 
-void SendUnitFrameRepairResultPacket(
-  CPlayer *player,
-  char byRetCode,
-  char bySlotIndex,
-  unsigned int dwNewGauge,
-  unsigned int dwConsumDalant)
-{
-#pragma pack(push, 1)
-  struct UnitFrameRepairResultPacket
-  {
-    char byRetCode;
-    char bySlotIndex;
-    unsigned int dwNewGauge;
-    unsigned int dwConsumDalant;
-    unsigned int dwLeftDalant;
-  };
-#pragma pack(pop)
 
-  UnitFrameRepairResultPacket packet{};
-  packet.byRetCode = byRetCode;
-  packet.bySlotIndex = bySlotIndex;
-  packet.dwNewGauge = dwNewGauge;
-  packet.dwConsumDalant = dwConsumDalant;
-  packet.dwLeftDalant = player->m_Param.GetDalant();
 
-  unsigned __int8 type[2] = {23, 8};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
-}
 
-void SendUnitBulletFillResultPacket(
-  CPlayer *player,
-  char byRetCode,
-  char bySlotIndex,
-  unsigned __int16 *pwBulletIndex,
-  unsigned int *pdwConsumMoney)
-{
-#pragma pack(push, 1)
-  struct UnitBulletFillResultPacket
-  {
-    char byRetCode;
-    char bySlotIndex;
-    unsigned __int16 wBulletIndex[2];
-    int nCostDalant;
-    unsigned int nCostGold;
-    unsigned int dwLeftDalant;
-    unsigned int dwLeftGold;
-  };
-#pragma pack(pop)
 
-  UnitBulletFillResultPacket packet{};
-  packet.byRetCode = byRetCode;
-  packet.bySlotIndex = bySlotIndex;
-  packet.wBulletIndex[0] = pwBulletIndex[0];
-  packet.wBulletIndex[1] = pwBulletIndex[1];
-  packet.nCostDalant = static_cast<int>(pdwConsumMoney[0]);
-  packet.nCostGold = pdwConsumMoney[1];
-  packet.dwLeftDalant = player->m_Param.GetDalant();
-  packet.dwLeftGold = player->m_Param.GetGold();
 
-  unsigned __int8 type[2] = {23, 10};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
-}
 
-void SendUnitPackFillResultPacket(
-  CPlayer *player,
-  unsigned __int8 byRetCode,
-  unsigned __int8 bySlotIndex,
-  unsigned __int8 byFillNum,
-  _unit_pack_fill_request_clzo::__list *pList,
-  unsigned int *pdwConsumMoney)
-{
-#pragma pack(push, 1)
-  struct UnitPackFillResultPacket
-  {
-    unsigned __int8 byRetCode;
-    unsigned __int8 bySlotIndex;
-    unsigned __int8 byFillNum;
-    _unit_pack_fill_request_clzo::__list List[8];
-    unsigned int dwComsumMoney[2];
-    unsigned int dwLeftMoney[2];
-  };
-#pragma pack(pop)
 
-  UnitPackFillResultPacket packet{};
-  packet.byRetCode = byRetCode;
-  packet.bySlotIndex = bySlotIndex;
-  packet.byFillNum = byFillNum;
-  if (byFillNum > 0)
-  {
-    std::memcpy(packet.List, pList, static_cast<size_t>(byFillNum) * sizeof(_unit_pack_fill_request_clzo::__list));
-  }
-  packet.dwComsumMoney[0] = pdwConsumMoney[0];
-  packet.dwComsumMoney[1] = pdwConsumMoney[1];
-  packet.dwLeftMoney[0] = player->m_Param.GetDalant();
-  packet.dwLeftMoney[1] = player->m_Param.GetGold();
 
-  unsigned __int8 type[2] = {23, 12};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
-}
 
-void SendUnitDeliveryResultPacket(
-  CPlayer *player,
-  char byRetCode,
-  char bySlotIndex,
-  unsigned int dwParkingUnitSerial,
-  unsigned int dwPayDalant)
-{
-#pragma pack(push, 1)
-  struct UnitDeliveryResultPacket
-  {
-    char byRetCode;
-    char bySlotIndex;
-    unsigned int dwParkingUnitSerial;
-    unsigned int dwPayDalant;
-    unsigned int dwLeftDalant;
-  };
-#pragma pack(pop)
 
-  UnitDeliveryResultPacket packet{};
-  packet.byRetCode = byRetCode;
-  packet.bySlotIndex = bySlotIndex;
-  packet.dwParkingUnitSerial = dwParkingUnitSerial;
-  packet.dwPayDalant = dwPayDalant;
-  packet.dwLeftDalant = player->m_Param.GetDalant();
 
-  unsigned __int8 type[2] = {23, 14};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
-}
 
-void SendUnitTakeResultPacket(CPlayer *player, char byRetCode)
-{
-  SendSingleBytePacket(player, 23, 18, byRetCode);
-}
 
-void SendUnitLeaveResultPacket(CPlayer *player, char byRetCode)
-{
-  SendSingleBytePacket(player, 23, 20, byRetCode);
-}
 
-void SendNpcQuestListResultPacket(CPlayer *player, _NPCQuestIndexTempData *pQuestIndexData)
-{
-#pragma pack(push, 1)
-  struct NpcQuestListResultPacket
-  {
-    unsigned __int8 byQuestNum;
-    unsigned int QuestIndexList[30];
-  };
-#pragma pack(pop)
 
-  NpcQuestListResultPacket packet{};
-  packet.byQuestNum = static_cast<unsigned __int8>(pQuestIndexData->nQuestNum);
-  const int questCount = std::min<int>(pQuestIndexData->nQuestNum, 30);
-  for (int index = 0; index < questCount; ++index)
-  {
-    packet.QuestIndexList[index] = pQuestIndexData->IndexData[index].dwQuestIndex;
-  }
 
-  unsigned __int8 type[2] = {24, 21};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
-}
-
-void SendResultNpcQuestPacket(CPlayer *player, char bSucc)
-{
-  SendSingleBytePacket(player, 24, 18, bSucc);
-}
-
-void SendOfferSuggestResultPacket(CPlayer *player, char byRetCode)
-{
-  SendSingleBytePacket(player, 27, 20, byRetCode);
-}
 
 char IsOtherTowerNear(CGameObject *pEster, float *pfEstPos, CGuardTower *pEstObj);
 
@@ -773,185 +314,11 @@ bool IsUsableTempEffectAtStoneState(int nTempEffectType)
   return (nTempEffectType > 6 && nTempEffectType <= 14) || nTempEffectType == 28;
 }
 
-void SendSkillResultPackets(
-  CPlayer *player,
-  unsigned __int8 byErrCode,
-  const _CHRID *targetId,
-  unsigned __int8 bySkillIndex,
-  unsigned __int8 nSFLv)
-{
-#pragma pack(push, 1)
-  struct SkillResultSelf
-  {
-    unsigned __int8 byErrCode;
-    unsigned __int8 byUnused;
-  };
 
-  struct SkillResultOther
-  {
-    unsigned __int8 byErrCode;
-    _CHRID idDster;
-    unsigned __int8 byPerformerId;
-    unsigned __int16 wPerformerIndex;
-    unsigned int dwPerformerSerial;
-    unsigned __int8 bySkillIndex;
-    unsigned __int8 bySkillLv;
-  };
-#pragma pack(pop)
 
-  SkillResultSelf toSelf{};
-  toSelf.byErrCode = byErrCode;
-  unsigned __int8 selfType[2] = {17, 5};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    selfType,
-    reinterpret_cast<char *>(&toSelf),
-    static_cast<unsigned __int16>(sizeof(toSelf)));
 
-  if (!((byErrCode == 0 || byErrCode == 100)
-      && (player->m_nCirclePlayerNum <= 500 || !IsSameTargetAsPerformer(player, targetId))))
-  {
-    return;
-  }
 
-  SkillResultOther toOther{};
-  toOther.byErrCode = byErrCode;
-  if (targetId)
-  {
-    toOther.idDster = *targetId;
-  }
-  toOther.byPerformerId = player->m_ObjID.m_byID;
-  toOther.wPerformerIndex = player->m_ObjID.m_wIndex;
-  toOther.dwPerformerSerial = player->m_dwObjSerial;
-  toOther.bySkillIndex = bySkillIndex;
-  toOther.bySkillLv = nSFLv;
 
-  unsigned __int8 otherType[2] = {17, 6};
-  player->CircleReport(otherType, reinterpret_cast<char *>(&toOther), sizeof(toOther), false);
-}
-
-void SendClassSkillResultPackets(
-  CPlayer *player,
-  unsigned __int8 byErrCode,
-  const _CHRID *targetId,
-  unsigned __int16 wSkillIndex)
-{
-#pragma pack(push, 1)
-  struct ClassSkillResultSelf
-  {
-    unsigned __int8 byErrCode;
-    unsigned __int8 byUnused;
-  };
-
-  struct ClassSkillResultOther
-  {
-    unsigned __int8 byErrCode;
-    _CHRID idDster;
-    unsigned __int8 byPerformerId;
-    unsigned __int16 wPerformerIndex;
-    unsigned int dwPerformerSerial;
-    unsigned __int16 wSkillIndex;
-  };
-#pragma pack(pop)
-
-  ClassSkillResultSelf toSelf{};
-  toSelf.byErrCode = byErrCode;
-  unsigned __int8 selfType[2] = {17, 8};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    selfType,
-    reinterpret_cast<char *>(&toSelf),
-    static_cast<unsigned __int16>(sizeof(toSelf)));
-
-  if (!((byErrCode == 0 || byErrCode == 100)
-      && (player->m_nCirclePlayerNum <= 500 || !IsSameTargetAsPerformer(player, targetId))))
-  {
-    return;
-  }
-
-  ClassSkillResultOther toOther{};
-  toOther.byErrCode = byErrCode;
-  if (targetId)
-  {
-    toOther.idDster = *targetId;
-  }
-  toOther.byPerformerId = player->m_ObjID.m_byID;
-  toOther.wPerformerIndex = player->m_ObjID.m_wIndex;
-  toOther.dwPerformerSerial = player->m_dwObjSerial;
-  toOther.wSkillIndex = wSkillIndex;
-
-  unsigned __int8 otherType[2] = {17, 9};
-  player->CircleReport(otherType, reinterpret_cast<char *>(&toOther), sizeof(toOther), false);
-}
-
-void SendForceResultPackets(
-  CPlayer *player,
-  unsigned __int8 byErrCode,
-  const _CHRID *targetId,
-  _STORAGE_LIST::_db_con *pForceItem,
-  unsigned __int8 nSFLv)
-{
-#pragma pack(push, 1)
-  struct ForceResultSelf
-  {
-    unsigned __int8 byErrCode;
-    unsigned int dwDur;
-  };
-
-  struct ForceResultOther
-  {
-    unsigned __int8 byErrCode;
-    _CHRID idDster;
-    unsigned __int8 byPerformerId;
-    unsigned __int16 wPerformerIndex;
-    unsigned int dwPerformerSerial;
-    unsigned __int8 byForceIndex;
-    unsigned __int8 byForceLv;
-  };
-#pragma pack(pop)
-
-  ForceResultSelf toSelf{};
-  toSelf.byErrCode = byErrCode;
-  if (pForceItem)
-  {
-    toSelf.dwDur = pForceItem->m_dwDur;
-  }
-
-  unsigned __int8 selfType[2] = {17, 2};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    selfType,
-    reinterpret_cast<char *>(&toSelf),
-    static_cast<unsigned __int16>(sizeof(toSelf)));
-
-  if (!((byErrCode == 0 || byErrCode == 100)
-      && (player->m_nCirclePlayerNum <= 500 || !IsSameTargetAsPerformer(player, targetId))))
-  {
-    return;
-  }
-
-  ForceResultOther toOther{};
-  toOther.byErrCode = byErrCode;
-  if (targetId)
-  {
-    toOther.idDster = *targetId;
-  }
-  toOther.byPerformerId = player->m_ObjID.m_byID;
-  toOther.wPerformerIndex = player->m_ObjID.m_wIndex;
-  toOther.dwPerformerSerial = player->m_dwObjSerial;
-  if (pForceItem && CPlayer::s_pnLinkForceItemToEffect)
-  {
-    toOther.byForceIndex = static_cast<unsigned __int8>(CPlayer::s_pnLinkForceItemToEffect[pForceItem->m_wItemIndex]);
-  }
-  else
-  {
-    toOther.byForceIndex = static_cast<unsigned __int8>(-1);
-  }
-  toOther.byForceLv = nSFLv;
-
-  unsigned __int8 otherType[2] = {17, 3};
-  player->CircleReport(otherType, reinterpret_cast<char *>(&toOther), sizeof(toOther), false);
-}
 
 #pragma pack(push, 1)
 struct ThrowResultEffectInfo
@@ -1017,108 +384,11 @@ void FillThrowEffectList(ThrowResultEffectInfo *outList, unsigned __int8 *outCou
   *outCount = effected;
 }
 
-void SendThrowSkillResultPackets(CPlayer *player, unsigned __int8 byErrCode, _CHRID *pidDst, unsigned __int8 bySkillIndex)
-{
-  ThrowSkillResultSelf toSelf{};
-  toSelf.byErrCode = byErrCode;
-  if (pidDst)
-  {
-    toSelf.idDster = *pidDst;
-  }
-  FillThrowEffectList(toSelf.list, &toSelf.byEffectedNum);
 
-  unsigned __int8 selfType[2] = {17, 100};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    selfType,
-    reinterpret_cast<char *>(&toSelf),
-    static_cast<unsigned __int16>(sizeof(toSelf)));
 
-  if (byErrCode != 0)
-  {
-    return;
-  }
 
-  ThrowSkillResultOther toOther{};
-  toOther.byRetCode = 0;
-  toOther.idPerformer.byID = player->m_ObjID.m_byID;
-  toOther.idPerformer.wIndex = player->m_ObjID.m_wIndex;
-  toOther.idPerformer.dwSerial = player->m_dwObjSerial;
-  toOther.bySkillIndex = bySkillIndex;
-  if (pidDst)
-  {
-    toOther.idDster = *pidDst;
-  }
-  toOther.byEffectedNum = toSelf.byEffectedNum;
-  std::memcpy(toOther.list, toSelf.list, sizeof(ThrowResultEffectInfo) * toSelf.byEffectedNum);
 
-  unsigned __int8 otherType[2] = {17, 101};
-  player->CircleReport(otherType, reinterpret_cast<char *>(&toOther), sizeof(toOther), false);
-}
 
-void SendThrowUnitResultPackets(CPlayer *player, unsigned __int8 byErrCode, _CHRID *pidDst, unsigned __int16 wBulletIndex)
-{
-  ThrowSkillResultSelf toSelf{};
-  toSelf.byErrCode = byErrCode;
-  if (pidDst)
-  {
-    toSelf.idDster = *pidDst;
-  }
-  FillThrowEffectList(toSelf.list, &toSelf.byEffectedNum);
-
-  unsigned __int8 selfType[2] = {17, 103};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    selfType,
-    reinterpret_cast<char *>(&toSelf),
-    static_cast<unsigned __int16>(sizeof(toSelf)));
-
-  if (byErrCode != 0)
-  {
-    return;
-  }
-
-  ThrowUnitResultOther toOther{};
-  toOther.byRetCode = 0;
-  toOther.idPerformer.byID = player->m_ObjID.m_byID;
-  toOther.idPerformer.wIndex = player->m_ObjID.m_wIndex;
-  toOther.idPerformer.dwSerial = player->m_dwObjSerial;
-  toOther.wBulletIndex = wBulletIndex;
-  if (pidDst)
-  {
-    toOther.idDster = *pidDst;
-  }
-  toOther.byEffectedNum = toSelf.byEffectedNum;
-  std::memcpy(toOther.list, toSelf.list, sizeof(ThrowResultEffectInfo) * toSelf.byEffectedNum);
-
-  unsigned __int8 otherType[2] = {17, 104};
-  player->CircleReport(otherType, reinterpret_cast<char *>(&toOther), sizeof(toOther), false);
-}
-
-void SendAnimusRecallResultPacket(
-  CPlayer *player,
-  unsigned __int8 byResultCode,
-  unsigned __int16 wLeftFP,
-  CAnimus *pNewAnimus)
-{
-  AnimusRecallResultPacket packet{};
-  packet.byResultCode = byResultCode;
-  packet.wLeftFP = wLeftFP;
-  if (byResultCode == 0 && pNewAnimus)
-  {
-    packet.dwAnimusSerial = pNewAnimus->m_dwObjSerial;
-    packet.wAnimusHP = static_cast<unsigned __int16>(pNewAnimus->m_nHP);
-    packet.wAnimusFP = static_cast<unsigned __int16>(pNewAnimus->m_nFP);
-    packet.dwAnimusExp = pNewAnimus->m_dwExp;
-  }
-
-  unsigned __int8 type[2] = {22, 2};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
-}
 
 char IsOtherInvalidObjNear(CGameObject *pEster, float *pfEstPos, CTrap *pEstObj, _TrapItem_fld *pEstTrapItemInfo)
 {
@@ -1717,98 +987,13 @@ bool IsTargetingObject(CGameObject *target)
   return target->m_ObjID.m_byKind == 1 && target->m_ObjID.m_byID == 2;
 }
 
-void SendSetTargetObjectResultPacket(CPlayer *player, char byRetCode, bool bForce)
-{
-  SetTargetObjectResultPacket packet{};
-  packet.byRetCode = byRetCode;
 
-  if (!byRetCode && player->m_TargetObject.pObject)
-  {
-    packet.byKind = player->m_TargetObject.byKind;
-    packet.byID = player->m_TargetObject.byID;
-    packet.dwSerial = player->m_TargetObject.dwSerial;
-    packet.wHPRate = player->m_TargetObject.wHPRate;
 
-    if (player->m_TargetObject.byKind == 0 && player->m_TargetObject.byID == 0)
-    {
-      CPlayer *targetPlayer = static_cast<CPlayer *>(player->m_TargetObject.pObject);
-      packet.bCorpse = targetPlayer->m_bCorpse;
-    }
-  }
 
-  packet.bForce = bForce;
 
-  unsigned __int8 type[2] = {13, 27};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
-}
 
-void SendGroupTargetInformPacket(CPlayer *player, char byGroupType, const char *pwszName)
-{
-  GroupTargetInformPacket packet{};
-  packet.byGroupType = byGroupType;
-  if (pwszName)
-  {
-    strcpy_0(packet.szName, pwszName);
-  }
 
-  unsigned __int8 type[2] = {13, 111};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
-}
 
-void SendGuildRoomRentResultPacket(
-  CPlayer *player,
-  unsigned __int8 byRetCode,
-  unsigned __int8 bySubRetCode,
-  unsigned __int8 byRoomType)
-{
-  GuildRoomRentResultPacket packet{};
-  packet.byRetCode = byRetCode;
-  packet.bySubRetCode = bySubRetCode;
-  packet.byRoomType = byRoomType;
-
-  unsigned __int8 type[2] = {27, 103};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
-}
-
-void SendGuildRoomEnterResultPacket(
-  CPlayer *player,
-  unsigned __int8 byRetCode,
-  unsigned __int8 bySubRetCode,
-  unsigned __int8 byMapIndex,
-  unsigned __int16 wMapLayer,
-  float *pPos,
-  int nRestTime)
-{
-  GuildRoomEnterResultPacket packet{};
-  packet.byRetCode = byRetCode;
-  packet.bySubRetCode = bySubRetCode;
-  packet.byMapIndex = byMapIndex;
-  packet.wMapLayerIndex = wMapLayer;
-  if (pPos)
-  {
-    FloatToShort(pPos, packet.sNewPos, 3);
-  }
-  packet.nRestTime = nRestTime;
-
-  unsigned __int8 type[2] = {27, 105};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    player->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
-}
 
 bool IsAsciiAlpha(char ch)
 {
@@ -1891,30 +1076,886 @@ int GetResDummyDelayForMining(const _res_dummy &resDummy, int sectorIndex, bool 
   return static_cast<int>(resDummy.m_dwDelay[sectorIndex][gradeIndex]);
 }
 
-void SendUiLockInitResultPacket(CPlayer *player, char resultCode)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+
+
+void CPlayer::SendMsg_GuildJoinApplyResult(char byRetCode, CGuild *pApplyGuild)
+{
+  GuildJoinApplyResultPacket packet{};
+  packet.byRetCode = byRetCode;
+  if (pApplyGuild)
+  {
+    packet.dwGuildSerial = pApplyGuild->m_dwSerial;
+    strcpy_0(packet.szGuildName, pApplyGuild->m_wszName);
+  }
+  else
+  {
+    packet.dwGuildSerial = static_cast<unsigned int>(-1);
+  }
+
+  unsigned __int8 type[2] = {27, 7};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_GuildJoinApplyCancelResult(char byRetCode)
+{
+  unsigned __int8 type[2] = {27, 11};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &byRetCode, 1u);
+}
+
+void CPlayer::SendMsg_GuildJoinApplyRejectInform()
+{
+  char payload = 0;
+  unsigned __int8 type[2] = {27, 12};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &payload, 1u);
+}
+
+void CPlayer::SendMsg_GuildJoinAcceptFail(char byRetCode, unsigned int dwApplierSerial)
+{
+  GuildJoinAcceptFailPacket packet{};
+  packet.byRetCode = byRetCode;
+  packet.dwApplierSerial = dwApplierSerial;
+
+  unsigned __int8 type[2] = {27, 14};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_VoteResult(unsigned int dwMatterVoteSynKey, unsigned __int8 byRetCode)
+{
+  GuildVoteResultPacket packet{};
+  packet.dwMatterVoteSynKey = dwMatterVoteSynKey;
+  packet.byRetCode = byRetCode;
+
+  unsigned __int8 type[2] = {27, 26};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_AnimusTargetResult(char byRetCode)
+{
+  unsigned __int8 type[2] = {22, 8};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &byRetCode, 1u);
+}
+
+void CPlayer::SendMsg_CancelSuggestResult(char byRetCode)
+{
+  unsigned __int8 type[2] = {27, 22};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &byRetCode, 1u);
+}
+
+void CPlayer::SendMsg_GuildSetHonorResult(char byRetCode)
+{
+  unsigned __int8 type[2] = {27, 114};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &byRetCode, 1u);
+}
+
+void CPlayer::SendMsg_GuildPushMoneyResult(char byRetCode)
+{
+  GuildPushMoneyResultPacket packet{};
+  packet.byRetCode = byRetCode;
+  packet.dwDalant = this->m_Param.GetDalant();
+  packet.dwGold = this->m_Param.GetGold();
+
+  unsigned __int8 type[2] = {27, 36};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_CreateTowerResult(char byErrCode, unsigned int dwTowerObjSerial)
+{
+#pragma pack(push, 1)
+  struct CreateTowerResultPacket
+  {
+    char byErrCode;
+    unsigned int dwTowerObjSerial;
+    unsigned __int16 wFP;
+  };
+#pragma pack(pop)
+
+  CreateTowerResultPacket packet{};
+  packet.byErrCode = byErrCode;
+  packet.dwTowerObjSerial = dwTowerObjSerial;
+  packet.wFP = static_cast<unsigned __int16>(this->GetFP());
+
+  unsigned __int8 type[2] = {17, 19};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_BackTowerResult(char byErrCode, unsigned __int16 wItemSerial, unsigned __int16 wLeftHP)
+{
+#pragma pack(push, 1)
+  struct BackTowerResultPacket
+  {
+    char byErrCode;
+    unsigned __int16 wItemSerial;
+    unsigned __int16 wLeftHP;
+  };
+#pragma pack(pop)
+
+  BackTowerResultPacket packet{};
+  packet.byErrCode = byErrCode;
+  packet.wItemSerial = wItemSerial;
+  packet.wLeftHP = wLeftHP;
+
+  unsigned __int8 type[2] = {17, 21};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_CreateTrapResult(char byErrCode, unsigned int dwTrapObjSerial)
+{
+#pragma pack(push, 1)
+  struct CreateTrapResultPacket
+  {
+    char byErrCode;
+    unsigned int dwTrapObjSerial;
+    unsigned __int16 wFP;
+  };
+#pragma pack(pop)
+
+  CreateTrapResultPacket packet{};
+  packet.byErrCode = byErrCode;
+  packet.dwTrapObjSerial = dwTrapObjSerial;
+  packet.wFP = static_cast<unsigned __int16>(this->GetFP());
+
+  unsigned __int8 type[2] = {17, 28};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_BackTrapResult(char byErrCode)
+{
+  unsigned __int8 type[2] = {17, 39};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &byErrCode, 1u);
+}
+
+void CPlayer::SendMsg_DTradeOKResult(char byErrCode)
+{
+  unsigned __int8 type[2] = {18, 23};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &byErrCode, 1u);
+}
+
+void CPlayer::SendMsg_DTradeOKInform()
+{
+  char payload = 0;
+  unsigned __int8 type[2] = {18, 24};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &payload, 1u);
+}
+
+void CPlayer::SendMsg_DTradeAccomplishInform(bool bSucc, unsigned __int16 wStartSerial)
+{
+#pragma pack(push, 1)
+  struct DTradeAccomplishInformPacket
+  {
+    unsigned int dwDalant;
+    unsigned int dwGold;
+    unsigned __int16 wStartSerial;
+    bool bSucc;
+  };
+#pragma pack(pop)
+
+  DTradeAccomplishInformPacket packet{};
+  packet.dwDalant = this->m_Param.GetDalant();
+  packet.dwGold = this->m_Param.GetGold();
+  packet.wStartSerial = wStartSerial;
+  packet.bSucc = bSucc;
+
+  unsigned __int8 type[2] = {18, 25};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_UnitFrameBuyResult(char byRetCode, char byFrameCode, char byUnitSlotIndex, unsigned __int16 wKeyIndex, unsigned __int16 wKeySerial, unsigned int *pdwConsumMoney)
+{
+#pragma pack(push, 1)
+  struct UnitFrameBuyResultPacket
+  {
+    char byRetCode;
+    char byFrameCode;
+    char byUnitSlotIndex;
+    unsigned __int16 wKeyIndex;
+    unsigned __int16 wKeySerial;
+    unsigned int dwLeftDalant;
+    unsigned int dwLeftGold;
+    unsigned int dwConsumDalant;
+    unsigned int dwConsumGold;
+  };
+#pragma pack(pop)
+
+  UnitFrameBuyResultPacket packet{};
+  packet.byRetCode = byRetCode;
+  packet.byFrameCode = byFrameCode;
+  packet.byUnitSlotIndex = byUnitSlotIndex;
+  packet.wKeyIndex = wKeyIndex;
+  packet.wKeySerial = wKeySerial;
+  packet.dwLeftDalant = this->m_Param.GetDalant();
+  packet.dwLeftGold = this->m_Param.GetGold();
+  packet.dwConsumDalant = pdwConsumMoney[0];
+  packet.dwConsumGold = pdwConsumMoney[1];
+
+  unsigned __int8 type[2] = {23, 2};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_UnitSellResult(char byRetCode, char bySlotIndex, unsigned __int16 wKeySerial, int nAddMoney, unsigned int dwTotalNonpay, unsigned int dwSumDalant, unsigned int dwSumGold)
+{
+#pragma pack(push, 1)
+  struct UnitSellResultPacket
+  {
+    char byRetCode;
+    char bySlotIndex;
+    unsigned __int16 wKeySerial;
+    unsigned int dwTotalNonpay;
+    int nAddMoney;
+    int nReserved;
+    unsigned int dwSumDalant;
+    unsigned int dwSumGold;
+  };
+#pragma pack(pop)
+
+  UnitSellResultPacket packet{};
+  packet.byRetCode = byRetCode;
+  packet.bySlotIndex = bySlotIndex;
+  packet.wKeySerial = wKeySerial;
+  packet.dwTotalNonpay = dwTotalNonpay;
+  packet.nAddMoney = nAddMoney;
+  packet.dwSumDalant = dwSumDalant;
+  packet.dwSumGold = dwSumGold;
+
+  unsigned __int8 type[2] = {23, 4};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_UnitPartTuningResult(char byRetCode, char bySlotIndex, int *pnCost)
+{
+#pragma pack(push, 1)
+  struct UnitPartTuningResultPacket
+  {
+    char byRetCode;
+    char bySlotIndex;
+    unsigned __int8 byPart[6];
+    unsigned int dwBullet[2];
+    int nCostDalant;
+    int nCostGold;
+    unsigned int dwLeftDalant;
+    unsigned int dwLeftGold;
+  };
+#pragma pack(pop)
+
+  UnitPartTuningResultPacket packet{};
+  packet.byRetCode = byRetCode;
+  packet.bySlotIndex = bySlotIndex;
+  std::memcpy(packet.byPart, this->m_Param.m_UnitDB.m_List[static_cast<unsigned __int8>(bySlotIndex)].byPart, sizeof(packet.byPart));
+  std::memcpy(packet.dwBullet, this->m_Param.m_UnitDB.m_List[static_cast<unsigned __int8>(bySlotIndex)].dwBullet, sizeof(packet.dwBullet));
+  packet.nCostDalant = pnCost[0];
+  packet.nCostGold = pnCost[1];
+  packet.dwLeftDalant = this->m_Param.GetDalant();
+  packet.dwLeftGold = this->m_Param.GetGold();
+
+  unsigned __int8 type[2] = {23, 6};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_UnitFrameRepairResult(char byRetCode, char bySlotIndex, unsigned int dwNewGauge, unsigned int dwConsumDalant)
+{
+#pragma pack(push, 1)
+  struct UnitFrameRepairResultPacket
+  {
+    char byRetCode;
+    char bySlotIndex;
+    unsigned int dwNewGauge;
+    unsigned int dwConsumDalant;
+    unsigned int dwLeftDalant;
+  };
+#pragma pack(pop)
+
+  UnitFrameRepairResultPacket packet{};
+  packet.byRetCode = byRetCode;
+  packet.bySlotIndex = bySlotIndex;
+  packet.dwNewGauge = dwNewGauge;
+  packet.dwConsumDalant = dwConsumDalant;
+  packet.dwLeftDalant = this->m_Param.GetDalant();
+
+  unsigned __int8 type[2] = {23, 8};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_UnitBulletFillResult(char byRetCode, char bySlotIndex, unsigned __int16 *pwBulletIndex, unsigned int *pdwConsumMoney)
+{
+#pragma pack(push, 1)
+  struct UnitBulletFillResultPacket
+  {
+    char byRetCode;
+    char bySlotIndex;
+    unsigned __int16 wBulletIndex[2];
+    int nCostDalant;
+    unsigned int nCostGold;
+    unsigned int dwLeftDalant;
+    unsigned int dwLeftGold;
+  };
+#pragma pack(pop)
+
+  UnitBulletFillResultPacket packet{};
+  packet.byRetCode = byRetCode;
+  packet.bySlotIndex = bySlotIndex;
+  packet.wBulletIndex[0] = pwBulletIndex[0];
+  packet.wBulletIndex[1] = pwBulletIndex[1];
+  packet.nCostDalant = static_cast<int>(pdwConsumMoney[0]);
+  packet.nCostGold = pdwConsumMoney[1];
+  packet.dwLeftDalant = this->m_Param.GetDalant();
+  packet.dwLeftGold = this->m_Param.GetGold();
+
+  unsigned __int8 type[2] = {23, 10};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_UnitPackFillResult(unsigned __int8 byRetCode, unsigned __int8 bySlotIndex, unsigned __int8 byFillNum, _unit_pack_fill_request_clzo::__list *pList, unsigned int *pdwConsumMoney)
+{
+#pragma pack(push, 1)
+  struct UnitPackFillResultPacket
+  {
+    unsigned __int8 byRetCode;
+    unsigned __int8 bySlotIndex;
+    unsigned __int8 byFillNum;
+    _unit_pack_fill_request_clzo::__list List[8];
+    unsigned int dwComsumMoney[2];
+    unsigned int dwLeftMoney[2];
+  };
+#pragma pack(pop)
+
+  UnitPackFillResultPacket packet{};
+  packet.byRetCode = byRetCode;
+  packet.bySlotIndex = bySlotIndex;
+  packet.byFillNum = byFillNum;
+  if (byFillNum > 0)
+  {
+    std::memcpy(packet.List, pList, static_cast<size_t>(byFillNum) * sizeof(_unit_pack_fill_request_clzo::__list));
+  }
+  packet.dwComsumMoney[0] = pdwConsumMoney[0];
+  packet.dwComsumMoney[1] = pdwConsumMoney[1];
+  packet.dwLeftMoney[0] = this->m_Param.GetDalant();
+  packet.dwLeftMoney[1] = this->m_Param.GetGold();
+
+  unsigned __int8 type[2] = {23, 12};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_UnitDeliveryResult(char byRetCode, char bySlotIndex, unsigned int dwParkingUnitSerial, unsigned int dwPayDalant)
+{
+#pragma pack(push, 1)
+  struct UnitDeliveryResultPacket
+  {
+    char byRetCode;
+    char bySlotIndex;
+    unsigned int dwParkingUnitSerial;
+    unsigned int dwPayDalant;
+    unsigned int dwLeftDalant;
+  };
+#pragma pack(pop)
+
+  UnitDeliveryResultPacket packet{};
+  packet.byRetCode = byRetCode;
+  packet.bySlotIndex = bySlotIndex;
+  packet.dwParkingUnitSerial = dwParkingUnitSerial;
+  packet.dwPayDalant = dwPayDalant;
+  packet.dwLeftDalant = this->m_Param.GetDalant();
+
+  unsigned __int8 type[2] = {23, 14};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_UnitTakeResult(char byRetCode)
+{
+  unsigned __int8 type[2] = {23, 18};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &byRetCode, 1u);
+}
+
+void CPlayer::SendMsg_UnitLeaveResult(char byRetCode)
+{
+  unsigned __int8 type[2] = {23, 20};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &byRetCode, 1u);
+}
+
+void CPlayer::SendMsg_NpcQuestListResult(_NPCQuestIndexTempData *pQuestIndexData)
+{
+#pragma pack(push, 1)
+  struct NpcQuestListResultPacket
+  {
+    unsigned __int8 byQuestNum;
+    unsigned int QuestIndexList[30];
+  };
+#pragma pack(pop)
+
+  NpcQuestListResultPacket packet{};
+  packet.byQuestNum = static_cast<unsigned __int8>(pQuestIndexData->nQuestNum);
+  const int questCount = std::min<int>(pQuestIndexData->nQuestNum, 30);
+  for (int index = 0; index < questCount; ++index)
+  {
+    packet.QuestIndexList[index] = pQuestIndexData->IndexData[index].dwQuestIndex;
+  }
+
+  unsigned __int8 type[2] = {24, 21};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_ResultNpcQuest(char bSucc)
+{
+  unsigned __int8 type[2] = {24, 18};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &bSucc, 1u);
+}
+
+void CPlayer::SendMsg_OfferSuggestResult(char byRetCode)
+{
+  unsigned __int8 type[2] = {27, 20};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &byRetCode, 1u);
+}
+
+void CPlayer::SendMsg_SkillResult(unsigned __int8 byErrCode, const _CHRID *targetId, unsigned __int8 bySkillIndex, unsigned __int8 nSFLv)
+{
+#pragma pack(push, 1)
+  struct SkillResultSelf
+  {
+    unsigned __int8 byErrCode;
+    unsigned __int8 byUnused;
+  };
+
+  struct SkillResultOther
+  {
+    unsigned __int8 byErrCode;
+    _CHRID idDster;
+    unsigned __int8 byPerformerId;
+    unsigned __int16 wPerformerIndex;
+    unsigned int dwPerformerSerial;
+    unsigned __int8 bySkillIndex;
+    unsigned __int8 bySkillLv;
+  };
+#pragma pack(pop)
+
+  SkillResultSelf toSelf{};
+  toSelf.byErrCode = byErrCode;
+  unsigned __int8 selfType[2] = {17, 5};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    selfType,
+    reinterpret_cast<char *>(&toSelf),
+    static_cast<unsigned __int16>(sizeof(toSelf)));
+
+  if (!((byErrCode == 0 || byErrCode == 100)
+      && (this->m_nCirclePlayerNum <= 500 || !IsSameTargetAsPerformer(this, targetId))))
+  {
+    return;
+  }
+
+  SkillResultOther toOther{};
+  toOther.byErrCode = byErrCode;
+  if (targetId)
+  {
+    toOther.idDster = *targetId;
+  }
+  toOther.byPerformerId = this->m_ObjID.m_byID;
+  toOther.wPerformerIndex = this->m_ObjID.m_wIndex;
+  toOther.dwPerformerSerial = this->m_dwObjSerial;
+  toOther.bySkillIndex = bySkillIndex;
+  toOther.bySkillLv = nSFLv;
+
+  unsigned __int8 otherType[2] = {17, 6};
+  this->CircleReport(otherType, reinterpret_cast<char *>(&toOther), sizeof(toOther), false);
+}
+
+void CPlayer::SendMsg_ClassSkillResult(unsigned __int8 byErrCode, const _CHRID *targetId, unsigned __int16 wSkillIndex)
+{
+#pragma pack(push, 1)
+  struct ClassSkillResultSelf
+  {
+    unsigned __int8 byErrCode;
+    unsigned __int8 byUnused;
+  };
+
+  struct ClassSkillResultOther
+  {
+    unsigned __int8 byErrCode;
+    _CHRID idDster;
+    unsigned __int8 byPerformerId;
+    unsigned __int16 wPerformerIndex;
+    unsigned int dwPerformerSerial;
+    unsigned __int16 wSkillIndex;
+  };
+#pragma pack(pop)
+
+  ClassSkillResultSelf toSelf{};
+  toSelf.byErrCode = byErrCode;
+  unsigned __int8 selfType[2] = {17, 8};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    selfType,
+    reinterpret_cast<char *>(&toSelf),
+    static_cast<unsigned __int16>(sizeof(toSelf)));
+
+  if (!((byErrCode == 0 || byErrCode == 100)
+      && (this->m_nCirclePlayerNum <= 500 || !IsSameTargetAsPerformer(this, targetId))))
+  {
+    return;
+  }
+
+  ClassSkillResultOther toOther{};
+  toOther.byErrCode = byErrCode;
+  if (targetId)
+  {
+    toOther.idDster = *targetId;
+  }
+  toOther.byPerformerId = this->m_ObjID.m_byID;
+  toOther.wPerformerIndex = this->m_ObjID.m_wIndex;
+  toOther.dwPerformerSerial = this->m_dwObjSerial;
+  toOther.wSkillIndex = wSkillIndex;
+
+  unsigned __int8 otherType[2] = {17, 9};
+  this->CircleReport(otherType, reinterpret_cast<char *>(&toOther), sizeof(toOther), false);
+}
+
+void CPlayer::SendMsg_ForceResult(unsigned __int8 byErrCode, const _CHRID *targetId, _STORAGE_LIST::_db_con *pForceItem, unsigned __int8 nSFLv)
+{
+#pragma pack(push, 1)
+  struct ForceResultSelf
+  {
+    unsigned __int8 byErrCode;
+    unsigned int dwDur;
+  };
+
+  struct ForceResultOther
+  {
+    unsigned __int8 byErrCode;
+    _CHRID idDster;
+    unsigned __int8 byPerformerId;
+    unsigned __int16 wPerformerIndex;
+    unsigned int dwPerformerSerial;
+    unsigned __int8 byForceIndex;
+    unsigned __int8 byForceLv;
+  };
+#pragma pack(pop)
+
+  ForceResultSelf toSelf{};
+  toSelf.byErrCode = byErrCode;
+  if (pForceItem)
+  {
+    toSelf.dwDur = pForceItem->m_dwDur;
+  }
+
+  unsigned __int8 selfType[2] = {17, 2};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    selfType,
+    reinterpret_cast<char *>(&toSelf),
+    static_cast<unsigned __int16>(sizeof(toSelf)));
+
+  if (!((byErrCode == 0 || byErrCode == 100)
+      && (this->m_nCirclePlayerNum <= 500 || !IsSameTargetAsPerformer(this, targetId))))
+  {
+    return;
+  }
+
+  ForceResultOther toOther{};
+  toOther.byErrCode = byErrCode;
+  if (targetId)
+  {
+    toOther.idDster = *targetId;
+  }
+  toOther.byPerformerId = this->m_ObjID.m_byID;
+  toOther.wPerformerIndex = this->m_ObjID.m_wIndex;
+  toOther.dwPerformerSerial = this->m_dwObjSerial;
+  if (pForceItem && CPlayer::s_pnLinkForceItemToEffect)
+  {
+    toOther.byForceIndex = static_cast<unsigned __int8>(CPlayer::s_pnLinkForceItemToEffect[pForceItem->m_wItemIndex]);
+  }
+  else
+  {
+    toOther.byForceIndex = static_cast<unsigned __int8>(-1);
+  }
+  toOther.byForceLv = nSFLv;
+
+  unsigned __int8 otherType[2] = {17, 3};
+  this->CircleReport(otherType, reinterpret_cast<char *>(&toOther), sizeof(toOther), false);
+}
+
+void CPlayer::SendMsg_ThrowSkillResult(unsigned __int8 byErrCode, _CHRID *pidDst, unsigned __int8 bySkillIndex)
+{
+  ThrowSkillResultSelf toSelf{};
+  toSelf.byErrCode = byErrCode;
+  if (pidDst)
+  {
+    toSelf.idDster = *pidDst;
+  }
+  FillThrowEffectList(toSelf.list, &toSelf.byEffectedNum);
+
+  unsigned __int8 selfType[2] = {17, 100};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    selfType,
+    reinterpret_cast<char *>(&toSelf),
+    static_cast<unsigned __int16>(sizeof(toSelf)));
+
+  if (byErrCode != 0)
+  {
+    return;
+  }
+
+  ThrowSkillResultOther toOther{};
+  toOther.byRetCode = 0;
+  toOther.idPerformer.byID = this->m_ObjID.m_byID;
+  toOther.idPerformer.wIndex = this->m_ObjID.m_wIndex;
+  toOther.idPerformer.dwSerial = this->m_dwObjSerial;
+  toOther.bySkillIndex = bySkillIndex;
+  if (pidDst)
+  {
+    toOther.idDster = *pidDst;
+  }
+  toOther.byEffectedNum = toSelf.byEffectedNum;
+  std::memcpy(toOther.list, toSelf.list, sizeof(ThrowResultEffectInfo) * toSelf.byEffectedNum);
+
+  unsigned __int8 otherType[2] = {17, 101};
+  this->CircleReport(otherType, reinterpret_cast<char *>(&toOther), sizeof(toOther), false);
+}
+
+void CPlayer::SendMsg_ThrowUnitResult(unsigned __int8 byErrCode, _CHRID *pidDst, unsigned __int16 wBulletIndex)
+{
+  ThrowSkillResultSelf toSelf{};
+  toSelf.byErrCode = byErrCode;
+  if (pidDst)
+  {
+    toSelf.idDster = *pidDst;
+  }
+  FillThrowEffectList(toSelf.list, &toSelf.byEffectedNum);
+
+  unsigned __int8 selfType[2] = {17, 103};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    selfType,
+    reinterpret_cast<char *>(&toSelf),
+    static_cast<unsigned __int16>(sizeof(toSelf)));
+
+  if (byErrCode != 0)
+  {
+    return;
+  }
+
+  ThrowUnitResultOther toOther{};
+  toOther.byRetCode = 0;
+  toOther.idPerformer.byID = this->m_ObjID.m_byID;
+  toOther.idPerformer.wIndex = this->m_ObjID.m_wIndex;
+  toOther.idPerformer.dwSerial = this->m_dwObjSerial;
+  toOther.wBulletIndex = wBulletIndex;
+  if (pidDst)
+  {
+    toOther.idDster = *pidDst;
+  }
+  toOther.byEffectedNum = toSelf.byEffectedNum;
+  std::memcpy(toOther.list, toSelf.list, sizeof(ThrowResultEffectInfo) * toSelf.byEffectedNum);
+
+  unsigned __int8 otherType[2] = {17, 104};
+  this->CircleReport(otherType, reinterpret_cast<char *>(&toOther), sizeof(toOther), false);
+}
+
+void CPlayer::SendMsg_AnimusRecallResult(unsigned __int8 byResultCode, unsigned __int16 wLeftFP, CAnimus *pNewAnimus)
+{
+  AnimusRecallResultPacket packet{};
+  packet.byResultCode = byResultCode;
+  packet.wLeftFP = wLeftFP;
+  if (byResultCode == 0 && pNewAnimus)
+  {
+    packet.dwAnimusSerial = pNewAnimus->m_dwObjSerial;
+    packet.wAnimusHP = static_cast<unsigned __int16>(pNewAnimus->m_nHP);
+    packet.wAnimusFP = static_cast<unsigned __int16>(pNewAnimus->m_nFP);
+    packet.dwAnimusExp = pNewAnimus->m_dwExp;
+  }
+
+  unsigned __int8 type[2] = {22, 2};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_SetTargetObjectResult(char byRetCode, bool bForce)
+{
+  SetTargetObjectResultPacket packet{};
+  packet.byRetCode = byRetCode;
+
+  if (!byRetCode && this->m_TargetObject.pObject)
+  {
+    packet.byKind = this->m_TargetObject.byKind;
+    packet.byID = this->m_TargetObject.byID;
+    packet.dwSerial = this->m_TargetObject.dwSerial;
+    packet.wHPRate = this->m_TargetObject.wHPRate;
+
+    if (this->m_TargetObject.byKind == 0 && this->m_TargetObject.byID == 0)
+    {
+      CPlayer *targetPlayer = static_cast<CPlayer *>(this->m_TargetObject.pObject);
+      packet.bCorpse = targetPlayer->m_bCorpse;
+    }
+  }
+
+  packet.bForce = bForce;
+
+  unsigned __int8 type[2] = {13, 27};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_GroupTargetInform(char byGroupType, const char *pwszName)
+{
+  GroupTargetInformPacket packet{};
+  packet.byGroupType = byGroupType;
+  if (pwszName)
+  {
+    strcpy_0(packet.szName, pwszName);
+  }
+
+  unsigned __int8 type[2] = {13, 111};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_GuildRoomRentResult(unsigned __int8 byRetCode, unsigned __int8 bySubRetCode, unsigned __int8 byRoomType)
+{
+  GuildRoomRentResultPacket packet{};
+  packet.byRetCode = byRetCode;
+  packet.bySubRetCode = bySubRetCode;
+  packet.byRoomType = byRoomType;
+
+  unsigned __int8 type[2] = {27, 103};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_GuildRoomEnterResult(unsigned __int8 byRetCode, unsigned __int8 bySubRetCode, unsigned __int8 byMapIndex, unsigned __int16 wMapLayer, float *pPos, int nRestTime)
+{
+  GuildRoomEnterResultPacket packet{};
+  packet.byRetCode = byRetCode;
+  packet.bySubRetCode = bySubRetCode;
+  packet.byMapIndex = byMapIndex;
+  packet.wMapLayerIndex = wMapLayer;
+  if (pPos)
+  {
+    FloatToShort(pPos, packet.sNewPos, 3);
+  }
+  packet.nRestTime = nRestTime;
+
+  unsigned __int8 type[2] = {27, 105};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_UILock_Init_Result(char resultCode)
 {
   char payload[2] = {};
   payload[0] = resultCode;
   unsigned __int8 type[2] = {13, 0x80};
-  g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, type, payload, 2u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 2u);
 }
 
-void SendUiLockLoginResultPacket(CPlayer *player, char resultCode, char failCount)
+void CPlayer::SendMsg_UILock_Login_Result(char resultCode, char failCount)
 {
   char payload[2] = {};
   payload[0] = resultCode;
   payload[1] = failCount;
   unsigned __int8 type[2] = {13, 0x82};
-  g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, type, payload, 2u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 2u);
 }
 
-void SendUiLockUpdateResultPacket(CPlayer *player, char resultCode)
+void CPlayer::SendMsg_UILock_Update_Result(char resultCode)
 {
   unsigned __int8 type[2] = {13, 0x84};
-  g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, type, &resultCode, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &resultCode, 1u);
 }
 
-void SendUiLockFindPwResultPacket(CPlayer *player, char resultCode, const char *password, char failCount)
+void CPlayer::SendMsg_UILock_FindPW_Result(char resultCode, const char *password, char failCount)
 {
   char payload[15] = {};
   payload[0] = resultCode;
@@ -1925,41 +1966,17 @@ void SendUiLockFindPwResultPacket(CPlayer *player, char resultCode, const char *
   }
 
   unsigned __int8 type[2] = {13, 0x87};
-  g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, type, payload, 15u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 15u);
 }
 
-void SendUiLockRequestToAccount(
-  unsigned __int8 minorType,
-  unsigned int accountSerial,
-  unsigned __int16 userIndex,
-  const char *password,
-  unsigned __int8 hintIndex,
-  const char *hintAnswer)
-{
-  char payload[0x25] = {};
-  *reinterpret_cast<unsigned __int16 *>(&payload[0]) = userIndex;
-  *reinterpret_cast<unsigned int *>(&payload[2]) = accountSerial;
-  strcpy_s(&payload[6], 13uLL, password);
-  payload[19] = static_cast<char>(hintIndex);
-  strcpy_s(&payload[20], 17uLL, hintAnswer);
-
-  unsigned __int8 type[2] = {1, minorType};
-  g_Network.m_pProcess[1]->LoadSendMsg(0, type, payload, 0x25u);
-}
-
-void SendMineStartResultPacket(CPlayer *player, unsigned __int8 resultCode)
+void CPlayer::SendMsg_MineStartResult(unsigned __int8 resultCode)
 {
   char payload = static_cast<char>(resultCode);
   unsigned __int8 type[2] = {14, 2};
-  g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, type, &payload, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &payload, 1u);
 }
 
-void SendOreIntoBagResultPacket(
-  CPlayer *player,
-  char resultCode,
-  unsigned __int16 newSerial,
-  unsigned __int8 lendType,
-  unsigned int lendTime)
+void CPlayer::SendMsg_OreIntoBagResult(char resultCode, unsigned __int16 newSerial, unsigned __int8 lendType, unsigned int lendTime)
 {
   char payload[8] = {};
   payload[0] = resultCode;
@@ -1968,14 +1985,10 @@ void SendOreIntoBagResultPacket(
   *reinterpret_cast<unsigned int *>(&payload[4]) = lendTime;
 
   unsigned __int8 type[2] = {14, 12};
-  g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, type, payload, 8u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 8u);
 }
 
-void SendOreCuttingResultPacket(
-  CPlayer *player,
-  unsigned __int8 resultCode,
-  unsigned __int8 leftOreCount,
-  unsigned int consumedDalant)
+void CPlayer::SendMsg_OreCuttingResult(unsigned __int8 resultCode, unsigned __int8 leftOreCount, unsigned int consumedDalant)
 {
   char payload[11 + 100 * 3] = {};
   payload[0] = static_cast<char>(resultCode);
@@ -1983,14 +1996,14 @@ void SendOreCuttingResultPacket(
   if (!resultCode)
   {
     payload[1] = static_cast<char>(leftOreCount);
-    *reinterpret_cast<unsigned int *>(&payload[2]) = player->m_Param.GetDalant();
+    *reinterpret_cast<unsigned int *>(&payload[2]) = this->m_Param.GetDalant();
     *reinterpret_cast<unsigned int *>(&payload[6]) = consumedDalant;
 
     unsigned __int8 resultCount = 0;
     const int maxResKind = GetMaxResKind();
     for (int resIndex = 0; resIndex < maxResKind && resultCount < 100; ++resIndex)
     {
-      const unsigned __int16 addedAmount = player->m_Param.m_wCuttingResBuffer[resIndex];
+      const unsigned __int16 addedAmount = this->m_Param.m_wCuttingResBuffer[resIndex];
       if (!addedAmount)
       {
         continue;
@@ -2007,10 +2020,44 @@ void SendOreCuttingResultPacket(
   const unsigned __int8 resultCount = static_cast<unsigned __int8>(payload[10]);
   const unsigned __int16 payloadLength = static_cast<unsigned __int16>(11 + 3 * resultCount);
   unsigned __int8 type[2] = {14, 10};
-  g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, type, payload, payloadLength);
-}
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, payloadLength);
 }
 
+void CPlayer::SendMsg_UILock_Init_Request_ToAccount(
+  unsigned int accountSerial,
+  unsigned __int16 userIndex,
+  const char *password,
+  unsigned __int8 hintIndex,
+  const char *hintAnswer)
+{
+  char payload[0x25] = {};
+  *reinterpret_cast<unsigned __int16 *>(&payload[0]) = userIndex;
+  *reinterpret_cast<unsigned int *>(&payload[2]) = accountSerial;
+  strcpy_s(&payload[6], 13uLL, password);
+  payload[19] = static_cast<char>(hintIndex);
+  strcpy_s(&payload[20], 17uLL, hintAnswer);
+
+  unsigned __int8 type[2] = {1, 15};
+  g_Network.m_pProcess[1]->LoadSendMsg(0, type, payload, 0x25u);
+}
+
+void CPlayer::SendMsg_UILock_Update_Request_ToAccount(
+  unsigned int accountSerial,
+  unsigned __int16 userIndex,
+  const char *password,
+  unsigned __int8 hintIndex,
+  const char *hintAnswer)
+{
+  char payload[0x25] = {};
+  *reinterpret_cast<unsigned __int16 *>(&payload[0]) = userIndex;
+  *reinterpret_cast<unsigned int *>(&payload[2]) = accountSerial;
+  strcpy_s(&payload[6], 13uLL, password);
+  payload[19] = static_cast<char>(hintIndex);
+  strcpy_s(&payload[20], 17uLL, hintAnswer);
+
+  unsigned __int8 type[2] = {1, 17};
+  g_Network.m_pProcess[1]->LoadSendMsg(0, type, payload, 0x25u);
+}
 
 char CPlayer::Load(CUserDB *pUser, bool bFirstStart)
 {
@@ -4327,106 +4374,92 @@ void CPlayer::SendMsg_MoveToOwnStoneMapInform(unsigned __int8 byStoneMapMoveInfo
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
 }
 
+void CPlayer::SendMsg_MoveToOwnStoneMapResult(unsigned __int8 byRetCode, unsigned __int8 byMapIndex, float *pos)
+{
+  _move_to_own_stonemap_result_zocl msg{};
+  msg.byRetCode = byRetCode;
+  msg.byMapIndex = byMapIndex;
+  FloatToShort(pos, msg.sNewPos, 3);
+
+  unsigned __int8 type[2] = {25, 25};
+  const unsigned __int16 len = msg.size();
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
+}
+
 void CPlayer::pc_MoveToOwnStoneMapRequest()
 {
-  float newPos[3] = {0.0f, 0.0f, 0.0f};
-  auto sendResult = [this](unsigned __int8 byRetCode, unsigned __int8 byMapIndex, float *pos)
-  {
-    char msg[8] = {};
-    __int16 compressedPos[3] = {};
-    msg[0] = static_cast<char>(byRetCode);
-    msg[1] = static_cast<char>(byMapIndex);
-    FloatToShort(pos, compressedPos, 3);
-    memcpy_0(msg + 2, compressedPos, sizeof(compressedPos));
+  float pos[3] = {0.0f, 0.0f, 0.0f};
+  CMapData *intoMap = nullptr;
+  _portal_dummy *portalDummy = nullptr;
 
-    unsigned __int8 type[2] = {25, 25};
-    g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, msg, 8u);
-  };
-
-  if (this->m_byStoneMapMoveInfo != 1)
+  if (this->m_byStoneMapMoveInfo == 1)
   {
-    sendResult(1u, 0, newPos);
-    return;
+    if (this->GetCurSecNum() == static_cast<unsigned int>(-1) || this->m_bMapLoading)
+    {
+      this->SendMsg_MoveToOwnStoneMapResult(2u, 0, pos);
+    }
+    else if (this->IsRidingUnit())
+    {
+      this->SendMsg_MoveToOwnStoneMapResult(3u, 0, pos);
+    }
+    else if (this->m_byStandType == 1)
+    {
+      this->SendMsg_MoveToOwnStoneMapResult(4u, 0, pos);
+    }
+    else if (this->m_pmTrd.bDTradeMode)
+    {
+      this->SendMsg_MoveToOwnStoneMapResult(5u, 0, pos);
+    }
+    else if (this->IsSiegeMode())
+    {
+      this->SendMsg_MoveToOwnStoneMapResult(6u, 0, pos);
+    }
+    else if (this->m_bCorpse)
+    {
+      this->SendMsg_MoveToOwnStoneMapResult(7u, 0, pos);
+    }
+    else if (this->m_pCurMap == g_TransportShip[this->m_Param.GetRaceCode()].m_pLinkShipMap)
+    {
+      this->SendMsg_MoveToOwnStoneMapResult(8u, 0, pos);
+    }
+    else if (this->m_bInGuildBattle)
+    {
+      this->SendMsg_MoveToOwnStoneMapResult(11u, 0, pos);
+    }
+    else if (this->m_pCurMap->m_pMapSet->m_nMapType || this->m_EP.GetEff_State(20) || this->m_EP.GetEff_State(28))
+    {
+      this->SendMsg_MoveToOwnStoneMapResult(12u, 0, pos);
+    }
+    else
+    {
+      intoMap = g_HolySys.m_HolyKeeperData.pCreateMap;
+      portalDummy = g_HolySys.m_pPortalDummy[this->m_Param.GetRaceCode()];
+      if (portalDummy && intoMap)
+      {
+        if (intoMap->GetRandPosInDummy(portalDummy->m_pDumPos, pos, true))
+        {
+          this->OutOfMap(intoMap, 0, 3u, pos);
+          this->m_byStoneMapMoveInfo = 2;
+          this->SendMsg_MoveToOwnStoneMapResult(
+            50u,
+            static_cast<unsigned __int8>(intoMap->m_pMapSet->m_dwIndex),
+            pos);
+        }
+        else
+        {
+          this->SendMsg_MoveToOwnStoneMapResult(10u, 0, pos);
+        }
+      }
+      else
+      {
+        this->SendMsg_MoveToOwnStoneMapResult(9u, 0, pos);
+      }
+    }
   }
-
-  if (this->GetCurSecNum() == static_cast<unsigned int>(-1) || this->m_bMapLoading)
+  else
   {
-    sendResult(2u, 0, newPos);
-    return;
+    this->SendMsg_MoveToOwnStoneMapResult(1u, 0, pos);
   }
-
-  if (this->IsRidingUnit())
-  {
-    sendResult(3u, 0, newPos);
-    return;
-  }
-
-  if (this->m_byStandType == 1)
-  {
-    sendResult(4u, 0, newPos);
-    return;
-  }
-
-  if (this->m_pmTrd.bDTradeMode)
-  {
-    sendResult(5u, 0, newPos);
-    return;
-  }
-
-  if (this->IsSiegeMode())
-  {
-    sendResult(6u, 0, newPos);
-    return;
-  }
-
-  if (this->m_bCorpse)
-  {
-    sendResult(7u, 0, newPos);
-    return;
-  }
-
-  const int raceCode = this->m_Param.GetRaceCode();
-  if (raceCode < 0 || raceCode >= 3)
-  {
-    sendResult(9u, 0, newPos);
-    return;
-  }
-
-  if (this->m_pCurMap == g_TransportShip[raceCode].m_pLinkShipMap)
-  {
-    sendResult(8u, 0, newPos);
-    return;
-  }
-
-  if (this->m_bInGuildBattle)
-  {
-    sendResult(11u, 0, newPos);
-    return;
-  }
-
-  if (this->m_pCurMap->m_pMapSet->m_nMapType || this->m_EP.GetEff_State(20) || this->m_EP.GetEff_State(28))
-  {
-    sendResult(12u, 0, newPos);
-    return;
-  }
-
-  CMapData *intoMap = g_HolySys.m_HolyKeeperData.pCreateMap;
-  _portal_dummy *portalDummy = g_HolySys.m_pPortalDummy[raceCode];
-  if (!portalDummy || !intoMap)
-  {
-    sendResult(9u, 0, newPos);
-    return;
-  }
-
-  if (!intoMap->GetRandPosInDummy(portalDummy->m_pDumPos, newPos, true))
-  {
-    sendResult(10u, 0, newPos);
-    return;
-  }
-
-  this->OutOfMap(intoMap, 0, 3u, newPos);
-  this->m_byStoneMapMoveInfo = 2;
-  sendResult(50u, static_cast<unsigned __int8>(intoMap->m_pMapSet->m_dwIndex), newPos);
 }
 
 void CPlayer::SendMsg_JadeEffectErr(char byErrorCode)
@@ -5952,7 +5985,7 @@ void CPlayer::pc_SetTargetObjectRequest(CGameObject *pTar, unsigned int dwSerial
     }
   }
 
-  SendSetTargetObjectResultPacket(this, static_cast<char>(result), bForce);
+  this->SendMsg_SetTargetObjectResult(static_cast<char>(result), bForce);
 }
 
 void CPlayer::pc_SetGroupTargetObjectRequest(CGameObject *pTar, unsigned int dwSerial, unsigned __int8 byGroupType)
@@ -6103,7 +6136,7 @@ void CPlayer::pc_SetGroupTargetObjectRequest(CGameObject *pTar, unsigned int dwS
 
       if (targetName[0] && groupPlayer->GetLevel() >= 25)
       {
-        SendGroupTargetInformPacket(groupPlayer, 2, targetName);
+        groupPlayer->SendMsg_GroupTargetInform(2, targetName);
       }
 
       if (groupPlayer->m_pCurMap != this->m_pCurMap || groupPlayer->m_wMapLayerIndex != this->m_wMapLayerIndex)
@@ -8769,7 +8802,7 @@ void CPlayer::pc_AnimusRecallRequest(
   }
 
   const unsigned __int16 leftFP = static_cast<unsigned __int16>(this->GetFP());
-  SendAnimusRecallResultPacket(this, resultCode, leftFP, newAnimus);
+  this->SendMsg_AnimusRecallResult(resultCode, leftFP, newAnimus);
 }
 
 void CPlayer::pc_AnimusReturnRequest()
@@ -9184,7 +9217,7 @@ void CPlayer::pc_GuildJoinApplyRequest(char *pwszGuildName)
     this->m_Param.m_pApplyGuild = applyGuild;
   }
 
-  SendGuildJoinApplyResultPacket(this, static_cast<char>(result), applyGuild);
+  this->SendMsg_GuildJoinApplyResult(static_cast<char>(result), applyGuild);
 }
 
 void CPlayer::pc_GuildJoinApplyCancelRequest()
@@ -9211,7 +9244,7 @@ void CPlayer::pc_GuildJoinApplyCancelRequest()
     this->m_Param.m_pApplyGuild = nullptr;
   }
 
-  SendGuildJoinApplyCancelResultPacket(this, static_cast<char>(result));
+  this->SendMsg_GuildJoinApplyCancelResult(static_cast<char>(result));
 }
 
 void CPlayer::pc_GuildJoinAcceptRequest(unsigned int dwApplierSerial, bool bAccept)
@@ -9289,7 +9322,7 @@ void CPlayer::pc_GuildJoinAcceptRequest(unsigned int dwApplierSerial, bool bAcce
     }
     else
     {
-      SendGuildJoinApplyRejectInformPacket(applierInfo->pPlayer);
+      applierInfo->pPlayer->SendMsg_GuildJoinApplyRejectInform();
       applierInfo->pPlayer->m_Param.m_pApplyGuild = nullptr;
       guild->PopApplier(dwApplierSerial, 1u);
     }
@@ -9297,7 +9330,7 @@ void CPlayer::pc_GuildJoinAcceptRequest(unsigned int dwApplierSerial, bool bAcce
 
   if (result)
   {
-    SendGuildJoinAcceptFailPacket(this, static_cast<char>(result), dwApplierSerial);
+    this->SendMsg_GuildJoinAcceptFail(static_cast<char>(result), dwApplierSerial);
   }
 }
 
@@ -9359,7 +9392,7 @@ void CPlayer::pc_GuildPushMoneyRequest(unsigned int dwPushDalant, unsigned int d
     }
   }
 
-  SendGuildPushMoneyResultPacket(this, static_cast<char>(result));
+  this->SendMsg_GuildPushMoneyResult(static_cast<char>(result));
 }
 
 void CPlayer::pc_GuildRoomRentRequest(_guildroom_rent_request_clzo *pProtocol)
@@ -9371,14 +9404,14 @@ void CPlayer::pc_GuildRoomRentRequest(_guildroom_rent_request_clzo *pProtocol)
   if (roomType >= 2u)
   {
     retCode = 7;
-    SendGuildRoomRentResultPacket(this, retCode, subRetCode, roomType);
+    this->SendMsg_GuildRoomRentResult(retCode, subRetCode, roomType);
     return;
   }
 
   if (!this->m_Param.m_pGuild || !pProtocol || pProtocol->dwGuildSerial != this->m_Param.m_pGuild->m_dwSerial)
   {
     retCode = 6;
-    SendGuildRoomRentResultPacket(this, retCode, subRetCode, roomType);
+    this->SendMsg_GuildRoomRentResult(retCode, subRetCode, roomType);
     return;
   }
 
@@ -9386,28 +9419,28 @@ void CPlayer::pc_GuildRoomRentRequest(_guildroom_rent_request_clzo *pProtocol)
   if (this->m_Param.m_byClassInGuild != 1 && this->m_Param.m_byClassInGuild != 2)
   {
     retCode = 2;
-    SendGuildRoomRentResultPacket(this, retCode, subRetCode, roomType);
+    this->SendMsg_GuildRoomRentResult(retCode, subRetCode, roomType);
     return;
   }
 
   if (guild->m_bIOWait)
   {
     retCode = 11;
-    SendGuildRoomRentResultPacket(this, retCode, subRetCode, roomType);
+    this->SendMsg_GuildRoomRentResult(retCode, subRetCode, roomType);
     return;
   }
 
   if (static_cast<long double>(CGuildRoomInfo::sm_RoomInfo[roomType].dwCost) > guild->GetTotalDalant())
   {
     retCode = 8;
-    SendGuildRoomRentResultPacket(this, retCode, subRetCode, roomType);
+    this->SendMsg_GuildRoomRentResult(retCode, subRetCode, roomType);
     return;
   }
 
   if (guild->GetGrade() < CGuildRoomInfo::sm_RoomInfo[roomType].byRestrict)
   {
     retCode = 9;
-    SendGuildRoomRentResultPacket(this, retCode, subRetCode, roomType);
+    this->SendMsg_GuildRoomRentResult(retCode, subRetCode, roomType);
     return;
   }
 
@@ -9415,7 +9448,7 @@ void CPlayer::pc_GuildRoomRentRequest(_guildroom_rent_request_clzo *pProtocol)
   if (roomSystem->IsRoomRented(pProtocol->dwGuildSerial))
   {
     retCode = 3;
-    SendGuildRoomRentResultPacket(this, retCode, subRetCode, roomType);
+    this->SendMsg_GuildRoomRentResult(retCode, subRetCode, roomType);
     return;
   }
 
@@ -9425,7 +9458,7 @@ void CPlayer::pc_GuildRoomRentRequest(_guildroom_rent_request_clzo *pProtocol)
   if (subRetCode)
   {
     retCode = 5;
-    SendGuildRoomRentResultPacket(this, retCode, subRetCode, roomType);
+    this->SendMsg_GuildRoomRentResult(retCode, subRetCode, roomType);
     return;
   }
 
@@ -9461,7 +9494,7 @@ void CPlayer::pc_GuildRoomRentRequest(_guildroom_rent_request_clzo *pProtocol)
     }
   }
 
-  SendGuildRoomRentResultPacket(this, retCode, subRetCode, roomType);
+  this->SendMsg_GuildRoomRentResult(retCode, subRetCode, roomType);
   guild->SendMsg_GuildRoomRented(static_cast<char>(roomType));
 }
 
@@ -9477,28 +9510,28 @@ void CPlayer::pc_GuildRoomEnterRequest(_guildroom_enter_request_clzo *pProtocol)
   if (this->GetCurSecNum() == static_cast<unsigned int>(-1) || this->m_bMapLoading)
   {
     retCode = 5;
-    SendGuildRoomEnterResultPacket(this, retCode, subRetCode, mapIndex, mapLayer, startPos, restTime[0]);
+    this->SendMsg_GuildRoomEnterResult(retCode, subRetCode, mapIndex, mapLayer, startPos, restTime[0]);
     return;
   }
 
   if (this->IsRidingUnit())
   {
     retCode = 6;
-    SendGuildRoomEnterResultPacket(this, retCode, subRetCode, mapIndex, mapLayer, startPos, restTime[0]);
+    this->SendMsg_GuildRoomEnterResult(retCode, subRetCode, mapIndex, mapLayer, startPos, restTime[0]);
     return;
   }
 
   if (this->m_byStandType == 1)
   {
     retCode = 7;
-    SendGuildRoomEnterResultPacket(this, retCode, subRetCode, mapIndex, mapLayer, startPos, restTime[0]);
+    this->SendMsg_GuildRoomEnterResult(retCode, subRetCode, mapIndex, mapLayer, startPos, restTime[0]);
     return;
   }
 
   if (!this->m_Param.m_pGuild || !pProtocol || pProtocol->dwGuildSerial != this->m_Param.m_pGuild->m_dwSerial)
   {
     retCode = 1;
-    SendGuildRoomEnterResultPacket(this, retCode, subRetCode, mapIndex, mapLayer, startPos, restTime[0]);
+    this->SendMsg_GuildRoomEnterResult(retCode, subRetCode, mapIndex, mapLayer, startPos, restTime[0]);
     return;
   }
 
@@ -9507,7 +9540,7 @@ void CPlayer::pc_GuildRoomEnterRequest(_guildroom_enter_request_clzo *pProtocol)
   if (!roomSystem->IsRoomRented(guild->m_dwSerial))
   {
     retCode = 2;
-    SendGuildRoomEnterResultPacket(this, retCode, subRetCode, mapIndex, mapLayer, startPos, restTime[0]);
+    this->SendMsg_GuildRoomEnterResult(retCode, subRetCode, mapIndex, mapLayer, startPos, restTime[0]);
     return;
   }
 
@@ -9516,7 +9549,7 @@ void CPlayer::pc_GuildRoomEnterRequest(_guildroom_enter_request_clzo *pProtocol)
   if (subRetCode)
   {
     retCode = 3;
-    SendGuildRoomEnterResultPacket(this, retCode, subRetCode, mapIndex, mapLayer, startPos, restTime[0]);
+    this->SendMsg_GuildRoomEnterResult(retCode, subRetCode, mapIndex, mapLayer, startPos, restTime[0]);
     return;
   }
 
@@ -9526,7 +9559,7 @@ void CPlayer::pc_GuildRoomEnterRequest(_guildroom_enter_request_clzo *pProtocol)
   {
     roomSystem->RoomOut(guild->m_dwSerial, this->m_ObjID.m_wIndex, this->m_pUserDB->m_dwSerial);
     retCode = 4;
-    SendGuildRoomEnterResultPacket(this, retCode, subRetCode, mapIndex, mapLayer, startPos, restTime[0]);
+    this->SendMsg_GuildRoomEnterResult(retCode, subRetCode, mapIndex, mapLayer, startPos, restTime[0]);
     return;
   }
 
@@ -9535,7 +9568,7 @@ void CPlayer::pc_GuildRoomEnterRequest(_guildroom_enter_request_clzo *pProtocol)
   {
     roomSystem->RoomOut(guild->m_dwSerial, this->m_ObjID.m_wIndex, this->m_pUserDB->m_dwSerial);
     retCode = 4;
-    SendGuildRoomEnterResultPacket(this, retCode, subRetCode, mapIndex, mapLayer, startPos, restTime[0]);
+    this->SendMsg_GuildRoomEnterResult(retCode, subRetCode, mapIndex, mapLayer, startPos, restTime[0]);
     return;
   }
 
@@ -9543,7 +9576,7 @@ void CPlayer::pc_GuildRoomEnterRequest(_guildroom_enter_request_clzo *pProtocol)
   this->OutOfMap(roomMap, mapLayer, 3u, startPos);
   mapIndex = static_cast<unsigned __int8>(roomMap->m_pMapSet->m_dwIndex);
   roomSystem->GetRestTime(guild->m_dwSerial, restTime);
-  SendGuildRoomEnterResultPacket(this, retCode, subRetCode, mapIndex, mapLayer, startPos, restTime[0]);
+  this->SendMsg_GuildRoomEnterResult(retCode, subRetCode, mapIndex, mapLayer, startPos, restTime[0]);
 }
 
 void CPlayer::pc_GuildRoomOutRequest(_guildroom_out_request_clzo *pProtocol)
@@ -9594,7 +9627,7 @@ void CPlayer::pc_GuildSetHonorRequest(_guild_honor_set_request_clzo *pData)
     _guild_honor_list_result_zocl *nextList = honorGuild->m_pNextHonorGuild[raceCode];
     if (!nextList)
     {
-      SendSingleBytePacket(this, 27, 114, 1);
+      this->SendMsg_GuildSetHonorResult(1);
       return;
     }
 
@@ -9610,7 +9643,7 @@ void CPlayer::pc_GuildSetHonorRequest(_guild_honor_set_request_clzo *pData)
       CGuild *guild = GetGuildPtrFromName(g_Guild, MAX_GUILD, pData->GuildList[listIndex].wszGuildName);
       if (!guild || !guild->IsFill() || guild->m_byRace != raceCode)
       {
-        SendSingleBytePacket(this, 27, 114, 1);
+        this->SendMsg_GuildSetHonorResult(1);
         return;
       }
 
@@ -9629,11 +9662,11 @@ void CPlayer::pc_GuildSetHonorRequest(_guild_honor_set_request_clzo *pData)
     nextList->byListNum = listNum;
     honorGuild->m_bNext[raceCode] = listNum > 0;
     const unsigned __int8 result = honorGuild->UpdateNextHonorGuild(raceCode);
-    SendSingleBytePacket(this, 27, 114, static_cast<char>(result));
+    this->SendMsg_GuildSetHonorResult(static_cast<char>(result));
     return;
   }
 
-  SendSingleBytePacket(this, 27, 114, 1);
+  this->SendMsg_GuildSetHonorResult(1);
 }
 
 void CPlayer::pc_BuddyDelRequest(unsigned int dwSerial)
@@ -9781,7 +9814,7 @@ void CPlayer::pc_AnimusTargetRequest(
     this->m_pRecalledAnimusChar->MasterAttack_MasterInform(target);
   }
 
-  SendSingleBytePacket(this, 22, 8, static_cast<char>(result));
+  this->SendMsg_AnimusTargetResult(static_cast<char>(result));
 }
 
 void CPlayer::pc_GuildQueryInfoRequest(unsigned int dwGuildSerial)
@@ -10621,8 +10654,8 @@ void CPlayer::pc_DTradeOKRequest(unsigned int *pdwKey)
     return;
   }
 
-  SendDTradeOKResultPacket(this, 0);
-  SendDTradeOKInformPacket(tradeDst);
+  this->SendMsg_DTradeOKResult(0);
+  tradeDst->SendMsg_DTradeOKInform();
   this->m_pmTrd.bDTradeOK = true;
 
   if (!(tradeDst->m_pmTrd.bDTradeOK && this->m_pmTrd.bDTradeOK))
@@ -10742,7 +10775,7 @@ void CPlayer::pc_DTradeOKRequest(unsigned int *pdwKey)
 
     current->AlterDalant(dalantDelta);
     current->AlterGold(goldDelta);
-    SendDTradeAccomplishInformPacket(current, true, firstReceivedSerial);
+    current->SendMsg_DTradeAccomplishInform(true, firstReceivedSerial);
   }
 
   this->pc_UpdateDataForTrade(tradeDst);
@@ -11074,14 +11107,7 @@ void CPlayer::pc_UnitFrameBuyRequest(unsigned __int8 byFrameCode, int bUseNPCLin
 
     if (!Emb_AddStorage(0, &keyItem, false, true))
     {
-      SendUnitFrameBuyResultPacket(
-        this,
-        static_cast<char>(0xFF),
-        static_cast<char>(byFrameCode),
-        static_cast<char>(emptyUnitSlot),
-        keyIndex,
-        keySerial,
-        consumeMoney);
+      this->SendMsg_UnitFrameBuyResult(static_cast<char>(0xFF), static_cast<char>(byFrameCode), static_cast<char>(emptyUnitSlot), keyIndex, keySerial, consumeMoney);
       return;
     }
 
@@ -11115,14 +11141,7 @@ void CPlayer::pc_UnitFrameBuyRequest(unsigned __int8 byFrameCode, int bUseNPCLin
     }
   }
 
-  SendUnitFrameBuyResultPacket(
-    this,
-    static_cast<char>(resultCode),
-    static_cast<char>(byFrameCode),
-    static_cast<char>(emptyUnitSlot),
-    keyIndex,
-    keySerial,
-    consumeMoney);
+  this->SendMsg_UnitFrameBuyResult(static_cast<char>(resultCode), static_cast<char>(byFrameCode), static_cast<char>(emptyUnitSlot), keyIndex, keySerial, consumeMoney);
 }
 
 void CPlayer::pc_UnitSellRequest(unsigned __int8 bySlotIndex, int bUseNPCLinkIntem)
@@ -11224,15 +11243,7 @@ void CPlayer::pc_UnitSellRequest(unsigned __int8 bySlotIndex, int bUseNPCLinkInt
     }
   }
 
-  SendUnitSellResultPacket(
-    this,
-    static_cast<char>(resultCode),
-    static_cast<char>(bySlotIndex),
-    removedKeySerial,
-    static_cast<int>(sellMoney),
-    totalDebt,
-    m_Param.GetDalant(),
-    m_Param.GetGold());
+  this->SendMsg_UnitSellResult(static_cast<char>(resultCode), static_cast<char>(bySlotIndex), removedKeySerial, static_cast<int>(sellMoney), totalDebt, m_Param.GetDalant(), m_Param.GetGold());
 }
 
 void CPlayer::pc_UnitPartTuningRequest(
@@ -11466,7 +11477,7 @@ void CPlayer::pc_UnitPartTuningRequest(
     }
   }
 
-  SendUnitPartTuningResultPacket(this, static_cast<char>(resultCode), static_cast<char>(bySlotIndex), consumeMoney);
+  this->SendMsg_UnitPartTuningResult(static_cast<char>(resultCode), static_cast<char>(bySlotIndex), consumeMoney);
 }
 
 void CPlayer::pc_UnitFrameRepairRequest(unsigned __int8 bySlotIndex, int bUseNPCLinkIntem)
@@ -11589,12 +11600,7 @@ void CPlayer::pc_UnitFrameRepairRequest(unsigned __int8 bySlotIndex, int bUseNPC
     }
   }
 
-  SendUnitFrameRepairResultPacket(
-    this,
-    static_cast<char>(resultCode),
-    static_cast<char>(bySlotIndex),
-    newGauge,
-    consumeDalant);
+  this->SendMsg_UnitFrameRepairResult(static_cast<char>(resultCode), static_cast<char>(bySlotIndex), newGauge, consumeDalant);
 }
 
 void CPlayer::pc_UnitBulletFillRequest(
@@ -11733,12 +11739,7 @@ void CPlayer::pc_UnitBulletFillRequest(
     }
   }
 
-  SendUnitBulletFillResultPacket(
-    this,
-    static_cast<char>(resultCode),
-    static_cast<char>(bySlotIndex),
-    pwBulletIndex,
-    consumeMoney);
+  this->SendMsg_UnitBulletFillResult(static_cast<char>(resultCode), static_cast<char>(bySlotIndex), pwBulletIndex, consumeMoney);
 }
 
 void CPlayer::pc_UnitPackFillRequest(
@@ -11877,7 +11878,7 @@ void CPlayer::pc_UnitPackFillRequest(
     }
   }
 
-  SendUnitPackFillResultPacket(this, resultCode, bySlotIndex, byFillNum, pList, consumeMoney);
+  this->SendMsg_UnitPackFillResult(resultCode, bySlotIndex, byFillNum, pList, consumeMoney);
 }
 
 void CPlayer::pc_UnitDeliveryRequest(
@@ -12037,12 +12038,7 @@ void CPlayer::pc_UnitDeliveryRequest(
     }
   }
 
-  SendUnitDeliveryResultPacket(
-    this,
-    static_cast<char>(resultCode),
-    static_cast<char>(bySlotIndex),
-    parkingSerial,
-    consumeDalant);
+  this->SendMsg_UnitDeliveryResult(static_cast<char>(resultCode), static_cast<char>(bySlotIndex), parkingSerial, consumeDalant);
 }
 
 void ItemCombineMgr::InitMgr(CPlayer *pOne)
@@ -12845,17 +12841,11 @@ void CPlayer::pc_RequestUILockInit(
 
   if (resultCode)
   {
-    SendUiLockInitResultPacket(this, static_cast<char>(resultCode));
+    this->SendMsg_UILock_Init_Result(static_cast<char>(resultCode));
     return;
   }
 
-  SendUiLockRequestToAccount(
-    15,
-    pUserDB->m_dwAccountSerial,
-    pUserDB->m_idWorld.wIndex,
-    szUILockPW,
-    byUILock_HintIndex,
-    uszUILock_HintAnswer);
+  this->SendMsg_UILock_Init_Request_ToAccount(pUserDB->m_dwAccountSerial, pUserDB->m_idWorld.wIndex, szUILockPW, byUILock_HintIndex, uszUILock_HintAnswer);
 }
 
 void CPlayer::pc_RequestUILockCertify(CUserDB *pUserDB, char *uszUILockPW)
@@ -12894,18 +12884,12 @@ void CPlayer::pc_RequestUILockCertify(CUserDB *pUserDB, char *uszUILockPW)
   {
     if (resultCode == 4)
     {
-      SendUiLockLoginResultPacket(
-        this,
-        static_cast<char>(resultCode),
-        static_cast<char>(pUserDB->m_byUILock_FailCnt));
+      this->SendMsg_UILock_Login_Result(static_cast<char>(resultCode), static_cast<char>(pUserDB->m_byUILock_FailCnt));
       pUserDB->ForceCloseCommand(8u, 0, true, "UILOCK Certify Fail");
     }
     else
     {
-      SendUiLockLoginResultPacket(
-        this,
-        static_cast<char>(resultCode),
-        static_cast<char>(pUserDB->m_byUILock_FailCnt));
+      this->SendMsg_UILock_Login_Result(static_cast<char>(resultCode), static_cast<char>(pUserDB->m_byUILock_FailCnt));
     }
     return;
   }
@@ -12913,7 +12897,7 @@ void CPlayer::pc_RequestUILockCertify(CUserDB *pUserDB, char *uszUILockPW)
   pUserDB->m_byUILock = 2;
   pUserDB->m_byUILock_FailCnt = 0;
   pUserDB->m_byUILockFindPassFailCount = 0;
-  SendUiLockLoginResultPacket(this, 0, 0);
+  this->SendMsg_UILock_Login_Result(0, 0);
 }
 
 void CPlayer::pc_RequestUILockUpdate(
@@ -13008,17 +12992,11 @@ void CPlayer::pc_RequestUILockUpdate(
 
   if (resultCode)
   {
-    SendUiLockUpdateResultPacket(this, static_cast<char>(resultCode));
+    this->SendMsg_UILock_Update_Result(static_cast<char>(resultCode));
     return;
   }
 
-  SendUiLockRequestToAccount(
-    17,
-    m_pUserDB->m_dwAccountSerial,
-    m_pUserDB->m_idWorld.wIndex,
-    uszUILockPW,
-    byUILock_HintIndex,
-    uszUILock_HintAnswer);
+  this->SendMsg_UILock_Update_Request_ToAccount(m_pUserDB->m_dwAccountSerial, m_pUserDB->m_idWorld.wIndex, uszUILockPW, byUILock_HintIndex, uszUILock_HintAnswer);
 }
 
 void CPlayer::pc_RequestUILockFindPW(CUserDB *pUserDB, char *uszHintAnswer)
@@ -13055,11 +13033,7 @@ void CPlayer::pc_RequestUILockFindPW(CUserDB *pUserDB, char *uszHintAnswer)
 
   if (resultCode)
   {
-    SendUiLockFindPwResultPacket(
-      this,
-      static_cast<char>(resultCode),
-      nullptr,
-      static_cast<char>(pUserDB->m_byUILockFindPassFailCount));
+    this->SendMsg_UILock_FindPW_Result(static_cast<char>(resultCode), nullptr, static_cast<char>(pUserDB->m_byUILockFindPassFailCount));
     if (resultCode == 5)
     {
       pUserDB->ForceCloseCommand(9u, 0, true, "UILOCK Find Password Fail");
@@ -13068,7 +13042,7 @@ void CPlayer::pc_RequestUILockFindPW(CUserDB *pUserDB, char *uszHintAnswer)
   }
 
   pUserDB->m_byUILockFindPassFailCount = 0;
-  SendUiLockFindPwResultPacket(this, 0, pUserDB->m_szUILock_PW, 0);
+  this->SendMsg_UILock_FindPW_Result(0, pUserDB->m_szUILock_PW, 0);
 }
 
 void CPlayer::pc_MineStart(
@@ -13211,7 +13185,7 @@ void CPlayer::pc_MineStart(
     BreakStealth();
   }
 
-  SendMineStartResultPacket(this, resultCode);
+  this->SendMsg_MineStartResult(resultCode);
 }
 
 void CPlayer::pc_OreCutting(unsigned __int16 wOreSerial, unsigned __int8 byProcessNum)
@@ -13343,11 +13317,7 @@ void CPlayer::pc_OreCutting(unsigned __int16 wOreSerial, unsigned __int8 byProce
     }
   }
 
-  SendOreCuttingResultPacket(
-    this,
-    resultCode,
-    static_cast<unsigned __int8>(leftOreCount),
-    consumedDalant);
+  this->SendMsg_OreCuttingResult(resultCode, static_cast<unsigned __int8>(leftOreCount), consumedDalant);
 }
 
 void CPlayer::pc_OreIntoBag(
@@ -13413,7 +13383,7 @@ void CPlayer::pc_OreIntoBag(
 
       if (!Emb_AddStorage(0, &newItem, false, false))
       {
-        SendOreIntoBagResultPacket(this, static_cast<char>(0xFF), newSerial, 0, 0);
+        this->SendMsg_OreIntoBagResult(static_cast<char>(0xFF), newSerial, 0, 0);
         return;
       }
       newSerial = newItem.m_wSerial;
@@ -13430,7 +13400,7 @@ void CPlayer::pc_OreIntoBag(
     }
   }
 
-  SendOreIntoBagResultPacket(this, static_cast<char>(resultCode), newSerial, newItem.m_byCsMethod, newItem.m_dwT);
+  this->SendMsg_OreIntoBagResult(static_cast<char>(resultCode), newSerial, newItem.m_byCsMethod, newItem.m_dwT);
 }
 
 void CPlayer::pc_SelectQuestReward(
@@ -13516,7 +13486,7 @@ void CPlayer::pc_GuildCancelSuggestRequest(unsigned int dwMatterVoteSynKey)
     guild->InitVote();
   }
 
-  SendSingleBytePacket(this, 27, 22, static_cast<char>(resultCode));
+  this->SendMsg_CancelSuggestResult(static_cast<char>(resultCode));
 }
 
 void CPlayer::pc_GuildVoteRequest(unsigned int dwMatterVoteSynKey, unsigned __int8 byVoteCode)
@@ -13557,7 +13527,7 @@ void CPlayer::pc_GuildVoteRequest(unsigned int dwMatterVoteSynKey, unsigned __in
     }
   }
 
-  SendGuildVoteResultPacket(this, dwMatterVoteSynKey, resultCode);
+  this->SendMsg_VoteResult(dwMatterVoteSynKey, resultCode);
 }
 
 namespace
@@ -13680,7 +13650,7 @@ void CPlayer::pc_SkillRequest(unsigned __int8 bySkillIndex, _CHRID *pidDst, unsi
   {
     BreakStealth();
   }
-  SendSkillResultPackets(this, byErrCode, pidDst, bySkillIndex, sfLevel);
+  this->SendMsg_SkillResult(byErrCode, pidDst, bySkillIndex, sfLevel);
 }
 
 void CPlayer::pc_ClassSkillRequest(unsigned __int16 wSkillIndex, _CHRID *pidDst, unsigned __int16 *pConsumeSerial)
@@ -13771,7 +13741,7 @@ void CPlayer::pc_ClassSkillRequest(unsigned __int16 wSkillIndex, _CHRID *pidDst,
   {
     BreakStealth();
   }
-  SendClassSkillResultPackets(this, byErrCode, pidDst, wSkillIndex);
+  this->SendMsg_ClassSkillResult(byErrCode, pidDst, wSkillIndex);
 }
 
 void CPlayer::pc_ForceRequest(unsigned __int16 wForceSerial, _CHRID *pidDst, unsigned __int16 *pConsumeSerial)
@@ -13993,7 +13963,7 @@ void CPlayer::pc_ForceRequest(unsigned __int16 wForceSerial, _CHRID *pidDst, uns
     }
   }
 
-  SendForceResultPackets(this, byErrCode, pidDst, forceItem, static_cast<unsigned __int8>(forceLevel));
+  this->SendMsg_ForceResult(byErrCode, pidDst, forceItem, static_cast<unsigned __int8>(forceLevel));
 }
 
 void CPlayer::pc_ThrowSkillRequest(unsigned __int16 wBulletSerial, _CHRID *pidDst, unsigned __int16 *pConsumeSerial)
@@ -14177,7 +14147,7 @@ void CPlayer::pc_ThrowSkillRequest(unsigned __int16 wBulletSerial, _CHRID *pidDs
     }
   }
 
-  SendThrowSkillResultPackets(this, byErrCode, pidDst, bySkillIndex);
+  this->SendMsg_ThrowSkillResult(byErrCode, pidDst, bySkillIndex);
 }
 
 void CPlayer::pc_ThrowUnitRequest(_CHRID *pidDst, unsigned __int16 *pConsumeSerial)
@@ -14324,7 +14294,7 @@ void CPlayer::pc_ThrowUnitRequest(_CHRID *pidDst, unsigned __int16 *pConsumeSeri
     }
   }
 
-  SendThrowUnitResultPackets(this, byErrCode, pidDst, wBulletIndex);
+  this->SendMsg_ThrowUnitResult(byErrCode, pidDst, wBulletIndex);
 }
 
 void CPlayer::pc_MakeTowerRequest(
@@ -14521,7 +14491,7 @@ void CPlayer::pc_MakeTowerRequest(
     }
   }
 
-  SendCreateTowerResultPacket(this, static_cast<char>(byErrCode), dwTowerObjSerial);
+  this->SendMsg_CreateTowerResult(static_cast<char>(byErrCode), dwTowerObjSerial);
 }
 
 void CPlayer::pc_BackTowerRequest(unsigned int dwTowerObjSerial)
@@ -14582,7 +14552,7 @@ void CPlayer::pc_BackTowerRequest(unsigned int dwTowerObjSerial)
     }
   }
 
-  SendBackTowerResultPacket(this, static_cast<char>(byErrCode), wItemSerial, wLeftHp);
+  this->SendMsg_BackTowerResult(static_cast<char>(byErrCode), wItemSerial, wLeftHp);
 }
 
 void CPlayer::pc_MakeTrapRequest(
@@ -14700,7 +14670,7 @@ void CPlayer::pc_MakeTrapRequest(
       }
       else if (!Emb_DelStorage(0u, trapItem->m_byStorageIndex, false, true, "CPlayer::pc_MakeTrapRequest()"))
       {
-        SendCreateTrapResultPacket(this, 12, dwTrapObjSerial);
+        this->SendMsg_CreateTrapResult(12, dwTrapObjSerial);
         return;
       }
 
@@ -14716,7 +14686,7 @@ void CPlayer::pc_MakeTrapRequest(
     }
   }
 
-  SendCreateTrapResultPacket(this, static_cast<char>(byErrCode), dwTrapObjSerial);
+  this->SendMsg_CreateTrapResult(static_cast<char>(byErrCode), dwTrapObjSerial);
 }
 
 void CPlayer::pc_BackTrapRequest(unsigned int dwTrapObjSerial, unsigned __int16 wAddSerial)
@@ -14823,7 +14793,7 @@ void CPlayer::pc_BackTrapRequest(unsigned int dwTrapObjSerial, unsigned __int16 
     }
   }
 
-  SendBackTrapResultPacket(this, static_cast<char>(byErrCode));
+  this->SendMsg_BackTrapResult(static_cast<char>(byErrCode));
 }
 
 void CPlayer::pc_RequestQuestListFromNPC(CItemStore *pStore)
@@ -14857,7 +14827,7 @@ void CPlayer::pc_RequestQuestListFromNPC(CItemStore *pStore)
     eventCode,
     static_cast<unsigned __int8>(m_Param.GetRaceCode()),
     &m_NPCQuestIndexTempData);
-  SendNpcQuestListResultPacket(this, &m_NPCQuestIndexTempData);
+  this->SendMsg_NpcQuestListResult(&m_NPCQuestIndexTempData);
 }
 
 void CPlayer::pc_RequestQuestFromNPC(CItemStore *pStore, unsigned int dwNPCQuestIndex)
@@ -14887,7 +14857,7 @@ void CPlayer::pc_RequestQuestFromNPC(CItemStore *pStore, unsigned int dwNPCQuest
   }
 
   const bool created = Emb_CreateNPCQuest(eventCode, dwNPCQuestIndex);
-  SendResultNpcQuestPacket(this, created ? 1 : 0);
+  this->SendMsg_ResultNpcQuest(created ? 1 : 0);
 }
 
 bool CPlayer::Emb_CreateNPCQuest(char *pszEventCode, unsigned int dwNPCQuestIndex)
@@ -14988,7 +14958,7 @@ void CPlayer::pc_GuildOfferSuggestRequest(
     byRetCode = 64;
   }
 
-  SendOfferSuggestResultPacket(this, static_cast<char>(byRetCode));
+  this->SendMsg_OfferSuggestResult(static_cast<char>(byRetCode));
 }
 
 void CPlayer::pc_UnitTakeRequest()
@@ -15071,7 +15041,7 @@ void CPlayer::pc_UnitTakeRequest()
     SendMsg_AlterUnitHPInform(static_cast<char>(m_pUsingUnit->bySlotIndex), m_pUsingUnit->dwGauge);
   }
 
-  SendUnitTakeResultPacket(this, static_cast<char>(byRetCode));
+  this->SendMsg_UnitTakeResult(static_cast<char>(byRetCode));
 }
 
 void CPlayer::pc_UnitLeaveRequest(float *pfNewPos)
@@ -15110,5 +15080,5 @@ void CPlayer::pc_UnitLeaveRequest(float *pfNewPos)
     SetShapeAllBuffer();
   }
 
-  SendUnitLeaveResultPacket(this, static_cast<char>(byRetCode));
+  this->SendMsg_UnitLeaveResult(static_cast<char>(byRetCode));
 }
