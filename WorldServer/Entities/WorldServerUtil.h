@@ -19,6 +19,7 @@ struct _READ_ANI_OBJECT;
 struct _LIGHTMAP;
 struct _animus_fld;
 struct _EQUIP_MASTERY_LIM;
+struct _economy_history_data;
 struct tm;
 
 struct R3Texture
@@ -68,6 +69,7 @@ int GetItemKillPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 
 int GetItemGoldPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind);
 int GetUsePcCashType(unsigned __int8 byTblCode, int nIndex);
 int IsCashItem(unsigned __int8 byTblCode, int dwIndex);
+int IsExchangeItem(int nTableCode, int nItemIndex);
 unsigned int IsExistItem(int nTableCode, int nItemIndex);
 unsigned int IsGroundableItem(int nTableCode, int nItemIndex);
 unsigned int GetItemDurPoint(int nTableCode, int nIndex);
@@ -142,6 +144,9 @@ struct IDirect3DDevice8 *GetD3dDevice();
 unsigned __int64 SplitString(char *strSrc, const char *_Delim, std::vector<std::string> *stringlist);
 
 int eGetRate(int nRaceCode);
+int eGetMgrValue();
+_economy_history_data *eGetGuideHistory();
+unsigned __int16 eGetGuide(int nRaceCode);
 float eGetTex(int nRaceCode);
 unsigned int eGetTexRate(int nRaceCode);
 float eGetOreRate(int nRaceCode);
@@ -149,6 +154,8 @@ CItemStore *IsBeNearStore(CPlayer *p, int nStoreCode);
 void eAddDalant(int nRaceCode, int nAdd);
 void eAddGold(int nRaceCode, int nAdd);
 int IsStorageCodeWithItemKind(int nTableCode, int nStorageCode);
+int GetItemStoragePrice(int nTableCode, int nItemIndex, int nRace);
+bool IsTrunkIOAble(int nTableCode, int nItemIndex);
 
 float DotProduct(const float *a1, const float *a2);
 float GetSqrt(float *fPos, float *fTar);

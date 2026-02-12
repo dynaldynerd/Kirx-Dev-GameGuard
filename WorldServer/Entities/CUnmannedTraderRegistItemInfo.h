@@ -3,11 +3,20 @@
 #include "IdaCompat.h"
 #include "CUnmannedTraderItemState.h"
 
+class CLogFile;
+struct _TRADE_DB_BASE;
+
 class __cppobj CUnmannedTraderRegistItemInfo
 {
 public:
   CUnmannedTraderRegistItemInfo();
   void Clear();
+  bool Set(
+    unsigned __int16 wInx,
+    unsigned __int8 byInvenIndex,
+    unsigned int uiInx,
+    _TRADE_DB_BASE *kInfo,
+    CLogFile *pkLogger);
   void RegistItem(
     unsigned int dwRegistSerial,
     unsigned __int16 wItemSerial,
@@ -29,10 +38,14 @@ public:
     __int64 tResultTime,
     const char *wszBuyerName,
     const char *szBuyerAccount);
+  unsigned __int8 SellWaitItem(unsigned __int16 wInx, CLogFile *pkLogger, __int64 tResultTime, unsigned __int8 *byStorageInx);
+  void ClearBuyerInfo();
   void ClearRegist();
   void ClearToWaitState();
   bool IsEmpty();
   bool IsRegist();
+  bool IsSellWait();
+  bool IsSellUpdateWait();
   bool IsOverRegistTime();
   unsigned __int16 GetItemIndex();
   unsigned __int16 GetItemSerial();
@@ -45,6 +58,7 @@ public:
   __int64 GetLeftSec();
   unsigned __int8 GetSellTurm();
   unsigned int GetPrice();
+  unsigned int GetTax();
   unsigned int GetETSerial();
   unsigned int GetU();
   unsigned __int64 GetD();

@@ -244,6 +244,22 @@ int CPlayerDB::GetUseSlot()
   return 20 * static_cast<unsigned int>(this->m_dbChar.m_byUseBagNum);
 }
 
+_STORAGE_LIST::_db_con *CPlayerDB::GetItem(unsigned __int8 byInvenIndex)
+{
+  const unsigned __int8 maxSlot = static_cast<unsigned __int8>(GetUseSlot());
+  if (byInvenIndex > maxSlot)
+  {
+    return nullptr;
+  }
+
+  _STORAGE_LIST::_db_con *item = &this->m_dbInven.m_pStorageList[byInvenIndex];
+  if (item->m_bLoad)
+  {
+    return item;
+  }
+  return nullptr;
+}
+
 unsigned __int16 CPlayerDB::GetNewItemSerial()
 {
   return this->m_wSerialCount++;
@@ -442,6 +458,580 @@ void CPlayerDB::InitPlayerDB(CPlayer *pThis)
   m_dPvpPointLeak = 0.0;
 }
 
+char CPlayerDB::ConvertAvatorDB(_AVATOR_DATA *pData)
+{
+  strcpy_0(this->m_dbChar.m_wszCharID, pData->dbAvator.m_wszAvatorName);
+  W2M(this->m_dbChar.m_wszCharID, this->m_aszName, 0x11u);
+  this->m_byNameLen = static_cast<unsigned __int8>(strlen_0(this->m_dbChar.m_wszCharID));
+  this->m_dbChar.m_dwSerial = pData->dbAvator.m_dwRecordNum;
+  this->m_dbChar.m_byRaceSexCode = pData->dbAvator.m_byRaceSexCode;
+  this->m_dbChar.m_dwHP = pData->dbAvator.m_dwHP;
+  this->m_dbChar.m_dwFP = pData->dbAvator.m_dwFP;
+  this->m_dbChar.m_dwSP = pData->dbAvator.m_dwSP;
+  this->m_dbChar.m_dwDP = pData->dbAvator.m_dwDP;
+  this->m_dbChar.m_dExp = pData->dbAvator.m_dExp;
+  this->m_dbChar.m_dLossExp = pData->dbAvator.m_dLossExp;
+  this->m_dbChar.m_dwDalant = pData->dbAvator.m_dwDalant;
+  this->m_dbChar.m_dwGold = pData->dbAvator.m_dwGold;
+  this->m_dbChar.m_dwRank = pData->dbAvator.m_dwPvpRank;
+  this->m_dbChar.m_wRankRate = pData->dbAvator.m_wRankRate;
+  this->m_dbChar.m_dPvPPoint = pData->dbAvator.m_dPvPPoint;
+  this->m_dbChar.m_dPvPCashBag = pData->dbAvator.m_dPvPCashBag;
+
+  for (int index = 0; index < 5; ++index)
+  {
+    const unsigned int part = (pData->dbAvator.m_dwBaseShape >> (4 * index)) & 0xF;
+    this->m_dbChar.m_byDftPart[index] =
+      static_cast<unsigned __int8>(16 * pData->dbAvator.m_byRaceSexCode + part);
+  }
+
+  const unsigned int face = (pData->dbAvator.m_dwBaseShape >> 20) & 0xF;
+  this->m_dbChar.m_byDftPart_Face =
+    static_cast<unsigned __int8>(16 * pData->dbAvator.m_byRaceSexCode + face);
+
+  this->m_dbChar.m_byUseBagNum = pData->dbAvator.m_byBagNum;
+  this->m_dbChar.m_byLevel = pData->dbAvator.m_byLevel;
+  this->m_dbChar.m_sStartMapCode = pData->dbAvator.m_byMapCode;
+  memcpy_0(this->m_dbChar.m_fStartPos, pData->dbAvator.m_fStartPos, sizeof(this->m_dbChar.m_fStartPos));
+  this->m_dbChar.m_byMaxLevel = pData->dbAvator.m_byMaxLevel;
+  this->m_dbInven.SetUseListNum(20 * pData->dbAvator.m_byBagNum);
+
+  this->m_pClassData = reinterpret_cast<_class_fld *>(g_Main.m_tblClass.GetRecord(pData->dbAvator.m_szClassCode));
+  if (!this->m_pClassData)
+  {
+    return 0;
+  }
+
+  this->m_nMakeTrapMaxNum = this->m_pClassData->m_nMakeTrapMaxNum;
+  for (int index = 0; index < 3 && pData->dbAvator.m_zClassHistory[index] != -1; ++index)
+  {
+    _class_fld *record = reinterpret_cast<_class_fld *>(
+      g_Main.m_tblClass.GetRecord(pData->dbAvator.m_zClassHistory[index]));
+    if (!record)
+    {
+      return 0;
+    }
+
+    this->m_pClassHistory[index] = record;
+    this->m_nMakeTrapMaxNum =
+      (this->m_nMakeTrapMaxNum <= record->m_nMakeTrapMaxNum) ? record->m_nMakeTrapMaxNum : this->m_nMakeTrapMaxNum;
+  }
+
+  this->m_byPvPGrade = CPlayerDB::CalcCharGrade(this->m_dbChar.m_byLevel, this->m_dbChar.m_wRankRate);
+  this->m_pGuild = nullptr;
+  this->m_pGuildMemPtr = nullptr;
+
+  if (pData->dbAvator.m_dwGuildSerial == static_cast<unsigned int>(-1))
+  {
+    this->m_pGuild = nullptr;
+    this->m_pGuildMemPtr = nullptr;
+  }
+  else
+  {
+    for (int index = 0; index < MAX_GUILD; ++index)
+    {
+      CGuild *guild = &g_Guild[index];
+      if (guild->IsFill() && guild->m_dwSerial == pData->dbAvator.m_dwGuildSerial)
+      {
+        this->m_pGuild = guild;
+        this->m_pGuildMemPtr = guild->GetMemberFromSerial(this->m_dbChar.m_dwSerial);
+        if (!this->m_pGuildMemPtr)
+        {
+          g_Main.m_logSystemError.Write(
+            "Guild Member Fail: guild:%s, name:%s",
+            this->m_pGuild->m_aszName,
+            this->m_aszName);
+          this->m_pGuild = nullptr;
+        }
+        this->m_byClassInGuild = pData->dbAvator.m_byClassInGuild;
+        return 1;
+      }
+    }
+  }
+
+  return 1;
+}
+
+char CPlayerDB::ConvertGeneralDB(_AVATOR_DATA *pData, _AVATOR_DATA *pOutData)
+{
+  __time32_t now{};
+  _time32(&now);
+  const unsigned int nowSec = static_cast<unsigned int>(now);
+
+  const int maxInven = 20 * pData->dbAvator.m_byBagNum;
+  for (int index = 0; index < maxInven; ++index)
+  {
+    _INVEN_DB_BASE::_LIST &inven = pData->dbInven.m_List[index];
+    if (!inven.Key.IsFilled())
+    {
+      continue;
+    }
+
+    _STORAGE_LIST::_db_con *storage = &this->m_dbInven.m_pStorageList[index];
+    storage->m_byTableCode = inven.Key.byTableCode;
+    storage->m_byClientIndex = inven.Key.bySlotIndex;
+    storage->m_wItemIndex = inven.Key.wItemIndex;
+    storage->m_dwDur = inven.dwDur;
+    storage->m_dwLv = inven.dwUpt;
+    storage->m_bLoad = 1;
+    storage->SetSerialNumber(inven.dwItemETSerial);
+
+    pOutData->dbInven.m_List[index].dwItemETSerial = storage->GetSerialNumber();
+    if (inven.lnUID)
+    {
+      storage->m_lnUID = inven.lnUID;
+    }
+    else
+    {
+      storage->m_lnUID = UIDGenerator::getuid(g_Main.m_byWorldCode);
+      pOutData->dbInven.m_List[index].lnUID = storage->m_lnUID;
+    }
+
+    const _TimeItem_fld *timeRec = TimeItem::FindTimeRec(storage->m_byTableCode, storage->m_wItemIndex);
+    if (timeRec && timeRec->m_nCheckType)
+    {
+      if (timeRec->m_nCheckType == 1)
+      {
+        storage->m_dwT = inven.dwT + nowSec;
+      }
+      else if (timeRec->m_nCheckType == 2)
+      {
+        storage->m_dwT = inven.dwT;
+      }
+
+      inven.byCsMethod = timeRec->m_nCheckType;
+      storage->m_byCsMethod = inven.byCsMethod;
+      inven.dwLendRegdTime = nowSec;
+      storage->m_dwLendRegdTime = nowSec;
+      pOutData->dbInven.m_List[index].byCsMethod = storage->m_byCsMethod;
+      pOutData->dbInven.m_List[index].dwT = storage->m_dwT;
+
+      LendItemMng::Instance()->InsertLink(this->m_pThis->m_ObjID.m_wIndex, 0, storage);
+    }
+    else
+    {
+      inven.byCsMethod = 0;
+      storage->m_byCsMethod = 0;
+    }
+  }
+
+  for (int index = 0; index < 8; ++index)
+  {
+    _EQUIPKEY &equipKey = pData->dbAvator.m_EquipKey[index];
+    if (!equipKey.IsFilled())
+    {
+      continue;
+    }
+
+    _STORAGE_LIST::_db_con *storage = &this->m_dbEquip.m_pStorageList[index];
+    storage->m_byTableCode = static_cast<unsigned __int8>(index);
+    storage->m_byClientIndex = static_cast<unsigned __int8>(index);
+    storage->m_wItemIndex = static_cast<unsigned __int16>(equipKey.zItemIndex);
+    storage->m_dwDur = 0;
+    storage->m_dwLv = pData->dbAvator.m_dwFixEquipLv[index];
+    storage->m_bLoad = 1;
+    storage->m_bLock = 0;
+    storage->SetSerialNumber(pData->dbAvator.m_dwItemETSerial[index]);
+
+    pOutData->dbAvator.m_dwItemETSerial[index] = storage->GetSerialNumber();
+    if (pData->dbAvator.m_lnUID[index])
+    {
+      storage->m_lnUID = pData->dbAvator.m_lnUID[index];
+    }
+    else
+    {
+      storage->m_lnUID = UIDGenerator::getuid(g_Main.m_byWorldCode);
+      pOutData->dbAvator.m_lnUID[index] = storage->m_lnUID;
+    }
+
+    const _TimeItem_fld *timeRec = TimeItem::FindTimeRec(storage->m_byTableCode, storage->m_wItemIndex);
+    if (timeRec && timeRec->m_nCheckType)
+    {
+      if (timeRec->m_nCheckType == 1)
+      {
+        storage->m_dwT = pData->dbAvator.m_dwET[index] + nowSec;
+      }
+      else if (timeRec->m_nCheckType == 2)
+      {
+        storage->m_dwT = pData->dbAvator.m_dwET[index];
+      }
+
+      pData->dbAvator.m_byCsMethod[index] = timeRec->m_nCheckType;
+      storage->m_byCsMethod = pData->dbAvator.m_byCsMethod[index];
+      pData->dbAvator.m_dwLendRegdTime[index] = nowSec;
+      storage->m_dwLendRegdTime = nowSec;
+
+      LendItemMng::Instance()->InsertLink(this->m_pThis->m_ObjID.m_wIndex, 1u, storage);
+    }
+    else
+    {
+      pData->dbAvator.m_byCsMethod[index] = 0;
+      storage->m_byCsMethod = 0;
+    }
+
+    this->m_pThis->SetEffectEquipCode(1u, static_cast<unsigned __int8>(index), 2u);
+  }
+
+  for (int index = 0; index < 7; ++index)
+  {
+    _EQUIP_DB_BASE::_EMBELLISH_LIST &embellish = pData->dbEquip.m_EmbellishList[index];
+    if (!embellish.Key.IsFilled())
+    {
+      continue;
+    }
+
+    _STORAGE_LIST::_db_con *storage = &this->m_dbEmbellish.m_pStorageList[index];
+    storage->m_byTableCode = embellish.Key.byTableCode;
+    storage->m_byClientIndex = embellish.Key.bySlotIndex;
+    storage->m_wItemIndex = embellish.Key.wItemIndex;
+    storage->m_dwDur = embellish.wAmount;
+    storage->m_dwLv = 0xFFFFFFF;
+    storage->m_bLoad = 1;
+    storage->m_bLock = 0;
+    storage->SetSerialNumber(embellish.dwItemETSerial);
+
+    pOutData->dbEquip.m_EmbellishList[index].dwItemETSerial = storage->GetSerialNumber();
+    if (embellish.lnUID)
+    {
+      storage->m_lnUID = embellish.lnUID;
+    }
+    else
+    {
+      storage->m_lnUID = UIDGenerator::getuid(g_Main.m_byWorldCode);
+      pOutData->dbEquip.m_EmbellishList[index].lnUID = storage->m_lnUID;
+    }
+
+    const _TimeItem_fld *timeRec = TimeItem::FindTimeRec(storage->m_byTableCode, storage->m_wItemIndex);
+    if (timeRec && timeRec->m_nCheckType)
+    {
+      if (timeRec->m_nCheckType == 1)
+      {
+        storage->m_dwT = embellish.dwT + nowSec;
+      }
+      else if (timeRec->m_nCheckType == 2)
+      {
+        storage->m_dwT = embellish.dwT;
+      }
+
+      embellish.byCsMethod = timeRec->m_nCheckType;
+      storage->m_byCsMethod = embellish.byCsMethod;
+      embellish.dwLendRegdTime = nowSec;
+      storage->m_dwLendRegdTime = nowSec;
+
+      LendItemMng::Instance()->InsertLink(this->m_pThis->m_ObjID.m_wIndex, 2u, storage);
+    }
+    else
+    {
+      embellish.byCsMethod = 0;
+      storage->m_byCsMethod = 0;
+    }
+
+    this->m_pThis->SetEffectEquipCode(2u, static_cast<unsigned __int8>(index), 2u);
+  }
+
+  for (int index = 0; index < 88; ++index)
+  {
+    _FORCE_DB_BASE::_LIST &force = pData->dbForce.m_List[index];
+    if (!force.Key.IsFilled())
+    {
+      continue;
+    }
+
+    _STORAGE_LIST::_db_con *storage = &this->m_dbForce.m_pStorageList[index];
+    storage->m_byTableCode = 15;
+    storage->m_wItemIndex = force.Key.GetIndex();
+    storage->m_dwDur = force.Key.GetStat();
+    storage->m_dwLv = 0xFFFFFFF;
+    storage->m_bLoad = 1;
+    storage->m_bLock = 0;
+    storage->SetSerialNumber(force.dwItemETSerial);
+
+    pOutData->dbForce.m_List[index].dwItemETSerial = storage->GetSerialNumber();
+    if (force.lnUID)
+    {
+      storage->m_lnUID = force.lnUID;
+    }
+    else
+    {
+      storage->m_lnUID = UIDGenerator::getuid(g_Main.m_byWorldCode);
+      pOutData->dbForce.m_List[index].lnUID = storage->m_lnUID;
+    }
+
+    const _TimeItem_fld *timeRec = TimeItem::FindTimeRec(storage->m_byTableCode, storage->m_wItemIndex);
+    if (timeRec && timeRec->m_nCheckType)
+    {
+      if (timeRec->m_nCheckType == 1)
+      {
+        storage->m_dwT = force.dwT + nowSec;
+      }
+      else if (timeRec->m_nCheckType == 2)
+      {
+        storage->m_dwT = force.dwT;
+      }
+
+      force.byCsMethod = timeRec->m_nCheckType;
+      storage->m_byCsMethod = force.byCsMethod;
+      force.m_dwLendRegdTime = nowSec;
+      storage->m_dwLendRegdTime = nowSec;
+
+      LendItemMng::Instance()->InsertLink(this->m_pThis->m_ObjID.m_wIndex, 3u, storage);
+    }
+    else
+    {
+      force.byCsMethod = 0;
+      storage->m_byCsMethod = 0;
+    }
+  }
+
+  for (int index = 0; index < 20; ++index)
+  {
+    if (pData->dbCutting.m_List[index].Key.IsFilled())
+    {
+      this->m_wCuttingResBuffer[pData->dbCutting.m_List[index].Key.wItemIndex] =
+        pData->dbCutting.m_List[index].dwDur;
+    }
+  }
+
+  memcpy_0(&this->m_QuestDB, &pData->dbQuest, sizeof(this->m_QuestDB));
+  memcpy_0(&this->m_UnitDB, &pData->dbUnit, sizeof(this->m_UnitDB));
+  memcpy_0(&this->m_ItemCombineDB, &pData->dbItemCombineEx, sizeof(this->m_ItemCombineDB));
+
+  for (int index = 0; index < 4; ++index)
+  {
+    _ANIMUS_DB_BASE::_LIST &animus = pData->dbAnimus.m_List[index];
+    if (!animus.Key.IsFilled())
+    {
+      continue;
+    }
+
+    _STORAGE_LIST::_db_con *storage = &this->m_dbAnimus.m_pStorageList[index];
+    storage->m_byTableCode = 24;
+    storage->m_wItemIndex = animus.Key.byItemIndex;
+    storage->m_dwDur = animus.dwExp;
+    storage->m_dwLv = animus.dwParam;
+    storage->m_bLoad = 1;
+    storage->m_bLock = 0;
+    storage->SetSerialNumber(animus.dwItemETSerial);
+
+    pOutData->dbAnimus.m_List[index].dwItemETSerial = storage->GetSerialNumber();
+    if (animus.lnUID)
+    {
+      storage->m_lnUID = animus.lnUID;
+    }
+    else
+    {
+      storage->m_lnUID = UIDGenerator::getuid(g_Main.m_byWorldCode);
+      pOutData->dbAnimus.m_List[index].lnUID = storage->m_lnUID;
+    }
+
+    const _TimeItem_fld *timeRec = TimeItem::FindTimeRec(storage->m_byTableCode, storage->m_wItemIndex);
+    if (timeRec && timeRec->m_nCheckType)
+    {
+      if (timeRec->m_nCheckType == 1)
+      {
+        storage->m_dwT = animus.dwT + nowSec;
+      }
+      else if (timeRec->m_nCheckType == 2)
+      {
+        storage->m_dwT = animus.dwT;
+      }
+
+      animus.byCsMethod = timeRec->m_nCheckType;
+      storage->m_byCsMethod = animus.byCsMethod;
+      animus.dwLendRegdTime = nowSec;
+      storage->m_dwLendRegdTime = nowSec;
+
+      LendItemMng::Instance()->InsertLink(this->m_pThis->m_ObjID.m_wIndex, 4u, storage);
+    }
+    else
+    {
+      animus.byCsMethod = 0;
+      storage->m_byCsMethod = 0;
+    }
+  }
+
+  strcpy_0(this->m_wszTrunkPasswd, pData->dbTrunk.wszPasswd);
+  this->m_dTrunkDalant = pData->dbTrunk.dDalant;
+  this->m_dTrunkGold = pData->dbTrunk.dGold;
+  this->m_byTrunkHintIndex = pData->dbTrunk.byHintIndex;
+  strcpy_0(this->m_wszTrunkHintAnswer, pData->dbTrunk.wszHintAnswer);
+  this->m_byTrunkSlotNum = pData->dbTrunk.bySlotNum;
+
+  for (int index = 0; index < this->m_byTrunkSlotNum; ++index)
+  {
+    _TRUNK_DB_BASE::_LIST &trunk = pData->dbTrunk.m_List[index];
+    if (!trunk.Key.IsFilled())
+    {
+      continue;
+    }
+
+    _STORAGE_LIST::_db_con *storage = &this->m_dbTrunk.m_pStorageList[index];
+    storage->m_byTableCode = trunk.Key.byTableCode;
+    storage->m_byClientIndex = trunk.Key.bySlotIndex;
+    storage->m_wItemIndex = trunk.Key.wItemIndex;
+    storage->m_dwDur = trunk.dwDur;
+    storage->m_dwLv = trunk.dwUpt;
+    storage->m_bLoad = 1;
+    storage->m_bLock = 0;
+    storage->SetSerialNumber(trunk.dwItemETSerial);
+
+    pOutData->dbTrunk.m_List[index].dwItemETSerial = storage->GetSerialNumber();
+    this->m_dbTrunk.m_byItemSlotRace[index] = trunk.byRace;
+
+    if (trunk.lnUID)
+    {
+      storage->m_lnUID = trunk.lnUID;
+    }
+    else
+    {
+      storage->m_lnUID = UIDGenerator::getuid(g_Main.m_byWorldCode);
+      pOutData->dbTrunk.m_List[index].lnUID = storage->m_lnUID;
+    }
+
+    const _TimeItem_fld *timeRec = TimeItem::FindTimeRec(storage->m_byTableCode, storage->m_wItemIndex);
+    if (timeRec && timeRec->m_nCheckType)
+    {
+      if (timeRec->m_nCheckType == 1)
+      {
+        storage->m_dwT = trunk.dwT + nowSec;
+      }
+      else if (timeRec->m_nCheckType == 2)
+      {
+        storage->m_dwT = trunk.dwT;
+      }
+
+      trunk.byCsMethod = timeRec->m_nCheckType;
+      storage->m_byCsMethod = trunk.byCsMethod;
+      trunk.dwLendRegdTime = nowSec;
+      storage->m_dwLendRegdTime = nowSec;
+
+      LendItemMng::Instance()->InsertLink(this->m_pThis->m_ObjID.m_wIndex, 5u, storage);
+    }
+    else
+    {
+      trunk.byCsMethod = 0;
+      storage->m_byCsMethod = 0;
+    }
+  }
+
+  this->m_byExtTrunkSlotNum = pData->dbTrunk.byExtSlotNum;
+  for (int index = 0; index < this->m_byExtTrunkSlotNum; ++index)
+  {
+    _TRUNK_DB_BASE::_LIST &extTrunk = pData->dbTrunk.m_ExtList[index];
+    if (!extTrunk.Key.IsFilled())
+    {
+      continue;
+    }
+
+    _STORAGE_LIST::_db_con *storage = &this->m_dbExtTrunk.m_pStorageList[index];
+    storage->m_byTableCode = extTrunk.Key.byTableCode;
+    storage->m_byClientIndex = extTrunk.Key.bySlotIndex;
+    storage->m_wItemIndex = extTrunk.Key.wItemIndex;
+    storage->m_dwDur = extTrunk.dwDur;
+    storage->m_dwLv = extTrunk.dwUpt;
+    storage->m_bLoad = 1;
+    storage->m_bLock = 0;
+    storage->SetSerialNumber(extTrunk.dwItemETSerial);
+
+    pOutData->dbTrunk.m_ExtList[index].dwItemETSerial = storage->GetSerialNumber();
+    this->m_dbExtTrunk.m_byItemSlotRace[index] = extTrunk.byRace;
+
+    if (extTrunk.lnUID)
+    {
+      storage->m_lnUID = extTrunk.lnUID;
+    }
+    else
+    {
+      storage->m_lnUID = UIDGenerator::getuid(g_Main.m_byWorldCode);
+      pOutData->dbTrunk.m_ExtList[index].lnUID = storage->m_lnUID;
+    }
+
+    const _TimeItem_fld *timeRec = TimeItem::FindTimeRec(storage->m_byTableCode, storage->m_wItemIndex);
+    if (timeRec && timeRec->m_nCheckType)
+    {
+      if (timeRec->m_nCheckType == 1)
+      {
+        storage->m_dwT = extTrunk.dwT + nowSec;
+      }
+      else if (timeRec->m_nCheckType == 2)
+      {
+        storage->m_dwT = extTrunk.dwT;
+      }
+
+      extTrunk.byCsMethod = timeRec->m_nCheckType;
+      storage->m_byCsMethod = extTrunk.byCsMethod;
+      extTrunk.dwLendRegdTime = nowSec;
+      storage->m_dwLendRegdTime = nowSec;
+
+      LendItemMng::Instance()->InsertLink(this->m_pThis->m_ObjID.m_wIndex, 7u, storage);
+    }
+    else
+    {
+      extTrunk.byCsMethod = 0;
+      storage->m_byCsMethod = 0;
+    }
+  }
+
+  this->m_bTrunkOpen = false;
+  this->m_dbTrunk.SetUseListNum(this->m_byTrunkSlotNum);
+  this->m_dbExtTrunk.SetUseListNum(this->m_byExtTrunkSlotNum);
+
+  this->m_bPersonalAmineInven = pData->dbPersonalAmineInven.bUsable;
+  for (int index = 0; index < 40; ++index)
+  {
+    _PERSONALAMINE_INVEN_DB_BASE::_LIST &ampItem = pData->dbPersonalAmineInven.m_List[index];
+    if (!ampItem.Key.IsFilled())
+    {
+      continue;
+    }
+
+    _STORAGE_LIST::_db_con *storage = &this->m_dbPersonalAmineInven.m_pStorageList[index];
+    storage->m_byTableCode = ampItem.Key.byTableCode;
+    storage->m_byClientIndex = ampItem.Key.bySlotIndex;
+    storage->m_wItemIndex = ampItem.Key.wItemIndex;
+    storage->m_dwDur = ampItem.dwDur;
+    storage->m_bLoad = 1;
+    storage->m_bLock = 0;
+  }
+
+  if (this->m_pAPM)
+  {
+    this->m_pAPM->LoadDBComplete();
+  }
+
+  AppointSerialStorageItem();
+
+  for (int index = 0; index < 50; ++index)
+  {
+    _LINK_DB_BASE::_LIST &link = pData->dbLink.m_LinkList[index];
+    if (!link.Key.IsFilled() || link.Key.GetCode() != 4)
+    {
+      continue;
+    }
+
+    const unsigned __int16 linkIndex = link.Key.GetIndex();
+    const unsigned __int8 storageCode = static_cast<unsigned __int8>(linkIndex >> 8);
+    const unsigned __int8 storageIndex = static_cast<unsigned __int8>(linkIndex);
+    if (IsStorageRange(storageCode, storageIndex))
+    {
+      _STORAGE_LIST::_db_con *storage = &this->m_pStoragePtr[storageCode]->m_pStorageList[storageIndex];
+      if (storage->m_bLoad)
+      {
+        if (!PushLink(index, storage->m_wSerial, true))
+        {
+          link.Init();
+        }
+        continue;
+      }
+    }
+
+    link.Init();
+  }
+
+  this->m_dPvpPointLeak = pData->dbSupplement.dPvpPointLeak;
+  return 1;
+}
+
 _SFCONT_DB_BASE::_SFCONT_DB_BASE()
 {
   Init();
@@ -539,4 +1129,89 @@ _STORAGE_LIST::_db_con *CPlayerDB::GetPtrItemStorage(unsigned __int16 wSerial, u
 void CPlayerDB::PopLink(int nLinkIndex)
 {
   m_QLink[nLinkIndex].init();
+}
+
+void CPlayerDB::AppointSerialStorageItem()
+{
+  for (int index = 0; index < 8; ++index)
+  {
+    if (this->m_dbEquip.m_pStorageList[index].m_bLoad)
+    {
+      this->m_dbEquip.m_pStorageList[index].m_wSerial = this->GetNewItemSerial();
+    }
+  }
+
+  for (int index = 0; index < 7; ++index)
+  {
+    if (this->m_dbEmbellish.m_pStorageList[index].m_bLoad)
+    {
+      this->m_dbEmbellish.m_pStorageList[index].m_wSerial = this->GetNewItemSerial();
+    }
+  }
+
+  for (int index = 0; index < 100; ++index)
+  {
+    if (this->m_dbInven.m_pStorageList[index].m_bLoad)
+    {
+      this->m_dbInven.m_pStorageList[index].m_wSerial = this->GetNewItemSerial();
+    }
+  }
+
+  for (int index = 0; index < 88; ++index)
+  {
+    if (this->m_dbForce.m_pStorageList[index].m_bLoad)
+    {
+      this->m_dbForce.m_pStorageList[index].m_wSerial = this->GetNewItemSerial();
+    }
+  }
+
+  for (int index = 0; index < 4; ++index)
+  {
+    if (this->m_dbAnimus.m_pStorageList[index].m_bLoad)
+    {
+      this->m_dbAnimus.m_pStorageList[index].m_wSerial = this->GetNewItemSerial();
+    }
+  }
+
+  for (int index = 0; index < 40; ++index)
+  {
+    if (this->m_dbPersonalAmineInven.m_pStorageList[index].m_bLoad)
+    {
+      this->m_dbPersonalAmineInven.m_pStorageList[index].m_wSerial = this->GetNewItemSerial();
+    }
+  }
+
+  for (int index = 0; index < 100; ++index)
+  {
+    if (this->m_dbTrunk.m_pStorageList[index].m_bLoad)
+    {
+      this->m_dbTrunk.m_pStorageList[index].m_wSerial = this->GetNewItemSerial();
+    }
+  }
+
+  for (int index = 0; index < 40; ++index)
+  {
+    if (this->m_dbExtTrunk.m_pStorageList[index].m_bLoad)
+    {
+      this->m_dbExtTrunk.m_pStorageList[index].m_wSerial = this->GetNewItemSerial();
+    }
+  }
+}
+
+char CPlayerDB::PushLink(int nLinkIndex, unsigned __int16 wSerial, bool bInit)
+{
+  if (bInit)
+  {
+    for (int index = 0; index < 50; ++index)
+    {
+      if (this->m_QLink[index].byLinkIndex != 255 && this->m_QLink[index].wSerial == wSerial)
+      {
+        return 0;
+      }
+    }
+  }
+
+  this->m_QLink[nLinkIndex].byLinkIndex = static_cast<unsigned __int8>(nLinkIndex);
+  this->m_QLink[nLinkIndex].wSerial = wSerial;
+  return 1;
 }

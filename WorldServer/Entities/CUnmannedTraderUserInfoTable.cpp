@@ -61,22 +61,13 @@ bool CUnmannedTraderUserInfoTable::Load(
   unsigned int dwSerial,
   _TRADE_DB_BASE *kInfo)
 {
-  (void)byType;
-  (void)kInfo;
-
-  CUnmannedTraderUserInfo *user = FindByIndex(wInx);
-  if (!user || user->IsNull())
+  if (this->m_veckInfo.empty() && this->m_veckInfo.size() <= wInx)
   {
     return false;
   }
 
-  user->Clear();
-  user->m_eState = CUnmannedTraderUserInfo::LOG_IN_STATE::UTUI_LOGIN;
-  user->m_wInx = wInx;
-  user->m_dwUserSerial = dwSerial;
-  user->m_byMaxRegistCnt = 10;
-  user->CountRegistItem();
-  return true;
+  CUnmannedTraderUserInfo &user = this->m_veckInfo[wInx];
+  return user.Load(byType, wInx, dwSerial, kInfo, this->m_pkLogger);
 }
 
 void CUnmannedTraderUserInfoTable::SetLogger(CLogFile *pkLogger, CLogFile *pkServiceLogger)
@@ -175,6 +166,15 @@ const CUnmannedTraderRegistItemInfo *CUnmannedTraderUserInfoTable::GetRegItemInf
   }
 
   return info.GetRegItemInfo();
+}
+
+void CUnmannedTraderUserInfoTable::CompleteCreate(unsigned __int16 wInx)
+{
+  if (!this->m_veckInfo.empty() && this->m_veckInfo.size() > wInx)
+  {
+    CUnmannedTraderUserInfo &info = this->m_veckInfo[wInx];
+    info.CompleteCreate(this->m_pkLogger);
+  }
 }
 
 void CUnmannedTraderUserInfoTable::CompleteSearch(

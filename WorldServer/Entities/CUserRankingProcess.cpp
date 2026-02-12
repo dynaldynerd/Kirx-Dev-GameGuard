@@ -485,6 +485,13 @@ void CUserRankingProcess::SetLogger(CLogFile *pkLogger)
   m_kGuildRanking.SetLogger(pkLogger);
 }
 
+char CUserRankingProcess::Load()
+{
+  m_kPvpRankingInfo.IncreaseVesion();
+  m_eState = PS_WAIT;
+  return 1;
+}
+
 void CUserRankingProcess::LoadINI(unsigned int *piHour, unsigned int *piMin)
 {
   *piHour = GetPrivateProfileIntA("RankJob", "JobHour", 23, ".\\Initialize\\WorldSystem.ini");

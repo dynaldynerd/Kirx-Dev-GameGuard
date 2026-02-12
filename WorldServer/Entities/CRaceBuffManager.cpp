@@ -17,3 +17,8 @@ bool CRaceBuffManager::RequestHolyQuestRaceBuff(int iType)
 {
   return m_kBuffByHolyQuest.Request(iType);
 }
+
+bool CRaceBuffManager::CreateComplete(CPlayer *pkPlayer)
+{
+  return m_kBuffByHolyQuest.CreateComplete(pkPlayer);
+}

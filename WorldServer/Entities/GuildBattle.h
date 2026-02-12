@@ -535,6 +535,7 @@ namespace GUILD_BATTLE
   public:
     CGuildBattleReservedSchedule(unsigned int uiScheduleListID);
     void Clear();
+    char Clear(unsigned int dwID);
     unsigned int GetID();
     unsigned __int8 Add(unsigned int dwStartTimeInx, unsigned int dwElapseTimeCnt, CGuildBattleSchedule **ppkSchedule);
     unsigned __int8 IsEmptyTime(unsigned int dwStartTimeInx, unsigned int dwElapseTimeCnt);

@@ -46,6 +46,7 @@ public:
   _guild_member_info *LoginMember(unsigned int dwMemberSerial, CPlayer *pPtr);
   void SendMsg_GuildMemberLogoff(unsigned int dwSerial);
   void SendMsg_GuildMemberLogin(unsigned int dwSerial, unsigned __int16 wMapCode, unsigned __int16 wRegionIndex);
+  void SendMsg_GuildMemberPosInform(unsigned int dwSerial, unsigned __int16 wMapCode, unsigned __int16 wRegionIndex);
   _guild_applier_info *GetApplierFromSerial(unsigned int dwApplierSerial);
   char PopApplier(unsigned int dwApplierSerial, unsigned __int8 byDelCode);
   char PushApplier(CPlayer *pApplier);
@@ -59,6 +60,15 @@ public:
   void RefreshGuildMemberData(_guild_member_refresh_data *pRefreshMember);
   void SendMsg_AlterMemberState();
   void SendMsg_AlterMemberGrade();
+  char RegSuggestedMatter(
+    unsigned int dwSuggesterSerial,
+    unsigned __int8 byMatterType,
+    unsigned int dwMatterDst,
+    char *pwszComment,
+    unsigned int dwMatterObj1,
+    unsigned int dwMatterObj2,
+    unsigned int dwMatterObj3);
+  void SendMsg_VoteProcessInform_Start();
   void SendMsg_VoteComplete(bool bPass);
   void InitVote();
   void MakeDownMemberPacket();
@@ -91,6 +101,7 @@ public:
   void SendMsg_ApplyGuildBattleResultInform(char byRet, char *wszDestGuildName);
   void SendMsg_GuildBattleRefused(char *pwszName);
   void SendMsg_GuildBattleSuggestResult(unsigned __int8 byRet, char *wszDestGuildName);
+  void AddScheduleComplete(unsigned __int8 byRet, CGuild *pSrcGuild);
   char SendMsg_GuildBattleProposed(char *pwszName);
   void SendMsg_GuildDisjointInform();
   void PushDQSInGuildBattleCost();

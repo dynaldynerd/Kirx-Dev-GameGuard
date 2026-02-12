@@ -4,11 +4,17 @@
 #include "CGameObject.h"
 
 class CDarkHoleChannel;
+class CPlayer;
+struct _darkhole_create_setdata;
+struct _ENTER_DUNGEON_NEW_POS;
 
 /* 1600 */
 class __cppobj __declspec(align(4)) CDarkHole : public CGameObject
 {
 public:
+  static int s_nLiveNum;
+  static unsigned int s_dwSerialCounter;
+
   CDarkHoleChannel *m_pChannel;
   unsigned int m_dwChannelSerial;
   unsigned int m_dwOpenerSerial;
@@ -19,5 +25,18 @@ public:
   bool m_bHurry;
 
   void Init(_object_id *pID);
+  char Create(_darkhole_create_setdata *pParam);
+  bool EnterPlayer(
+    CPlayer *pEnter,
+    CMapData *pOldMap,
+    unsigned __int16 wOldLayer,
+    float *fOldPos,
+    bool bReconnect);
+  bool IsNewEnterAbleNum();
+  bool IsNewEnterAblePlayer(CPlayer *pEnter);
+  bool GetEnterNewPos(_ENTER_DUNGEON_NEW_POS *pNewPos);
 };
+
+CDarkHole *SerarchEmptyDarkHole();
+char IsExistDarkHoleOpenGate();
 

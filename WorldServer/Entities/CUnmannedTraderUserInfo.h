@@ -7,6 +7,7 @@
 
 class CPlayer;
 class CLogFile;
+struct _TRADE_DB_BASE;
 
 class __cppobj CUnmannedTraderUserInfo
 {
@@ -21,6 +22,13 @@ public:
   CUnmannedTraderUserInfo();
 
   bool Init(unsigned short wInx);
+  bool Load(
+    unsigned __int8 byType,
+    unsigned __int16 wInx,
+    unsigned int dwSerial,
+    _TRADE_DB_BASE *kInfo,
+    CLogFile *pkLogger);
+  bool SetLoadInfo(unsigned __int8 byType, unsigned int dwSerial, _TRADE_DB_BASE *kInfo, CLogFile *pkLogger);
   void Clear();
   void ClearLoadItemInfo();
   void ClearRequest();
@@ -32,6 +40,7 @@ public:
     unsigned int dwRegistSerial,
     CPlayer **pkOwner);
   bool CompleteUpdateState(unsigned int dwRegistSerial, unsigned __int8 byState, bool bReCountRegist);
+  void CompleteCreate(CLogFile *pkLogger);
   void CompleteRegist(unsigned __int8 byRet, char *pLoadData, CLogFile *pkLogger);
   bool CompleteRegistItem(
     unsigned int dwRegistSerial,

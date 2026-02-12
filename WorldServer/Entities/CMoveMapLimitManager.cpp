@@ -52,9 +52,21 @@ bool CMoveMapLimitManager::RequestElanMapUserForceMoveHQ()
     nullptr);
 }
 
+void CMoveMapLimitManager::LogIn(CPlayer *pkPlayer)
+{
+  m_kRightInfo.LogIn(pkPlayer);
+  CMoveMapLimitRightInfo *rightInfo = m_kRightInfo.Get(pkPlayer->m_ObjID.m_wIndex);
+  m_kLimitInfo.LogIn(pkPlayer, rightInfo);
+}
+
 void CMoveMapLimitManager::LogOut(CPlayer *pkPlayer)
 {
   m_kRightInfo.LogOut(pkPlayer);
   CMoveMapLimitRightInfo *rightInfo = m_kRightInfo.Get(pkPlayer->m_ObjID.m_wIndex);
   m_kLimitInfo.LogOut(pkPlayer, rightInfo);
+}
+
+void CMoveMapLimitManager::CreateComplete(CPlayer *pkPlayer)
+{
+  m_kRightInfo.CreateComplete(pkPlayer);
 }

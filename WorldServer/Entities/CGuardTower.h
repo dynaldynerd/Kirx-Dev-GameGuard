@@ -52,6 +52,7 @@ public:
   bool Destroy(unsigned __int8 byDesType, bool bSystemBack);
   void SendMsg_Destroy(unsigned __int8 byDesType);
   void SendMsg_Create();
+  void NotifyOwnerAttackInform(CCharacter *pDst);
   static __int64 GetNewSerial();
 };
 

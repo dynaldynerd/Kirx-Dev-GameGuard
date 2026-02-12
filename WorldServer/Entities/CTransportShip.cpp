@@ -155,6 +155,86 @@ void CTransportShip::KickOldMember(unsigned __int8 byKickDirectCode)
   }
 }
 
+CTransportShip::__mgr_member *CTransportShip::GetEmptyNewMember()
+{
+  for (int j = 0; j < MAX_PLAYER; ++j)
+  {
+    __mgr_member *member = &m_NewMember[j];
+    if (!member->is_fill())
+    {
+      return member;
+    }
+  }
+  return nullptr;
+}
+
+void CTransportShip::EnterMember(CPlayer *pEnter)
+{
+  if (this->m_bAnchor || this->Ticketting(pEnter))
+  {
+    for (int j = 0; j < MAX_PLAYER; ++j)
+    {
+      __mgr_member *member = &this->m_OldMember[j];
+      if (member->is_fill() && member->pPtr == pEnter && member->dwSerial == pEnter->m_dwObjSerial)
+      {
+        member->init();
+      }
+    }
+
+    for (int j = 0; j < MAX_PLAYER; ++j)
+    {
+      __mgr_member *member = &this->m_NewMember[j];
+      if (member->is_fill() && member->pPtr == pEnter && member->dwSerial == pEnter->m_dwObjSerial)
+      {
+        member->init();
+      }
+    }
+
+    __mgr_member *emptyMember = this->GetEmptyNewMember();
+    if (emptyMember)
+    {
+      emptyMember->pPtr = pEnter;
+      emptyMember->dwSerial = pEnter->m_dwObjSerial;
+    }
+  }
+}
+
+void CTransportShip::ReEnterMember(CPlayer *pExiter)
+{
+  this->m_listLogoffMember.FindNode(pExiter->m_dwObjSerial);
+  __mgr_member *emptyMember = this->GetEmptyNewMember();
+  if (emptyMember)
+  {
+    emptyMember->pPtr = pExiter;
+    emptyMember->dwSerial = pExiter->m_dwObjSerial;
+  }
+}
+
+char CTransportShip::RenewOldMember(CPlayer *pMember)
+{
+  for (int index = 0; index < MAX_PLAYER; ++index)
+  {
+    __mgr_member *oldMember = &m_OldMember[index];
+    if (!oldMember->is_fill() || oldMember->pPtr != pMember || oldMember->dwSerial != pMember->m_dwObjSerial)
+    {
+      continue;
+    }
+
+    __mgr_member *emptyNewMember = GetEmptyNewMember();
+    if (!emptyNewMember)
+    {
+      return 0;
+    }
+
+    emptyNewMember->pPtr = pMember;
+    emptyNewMember->dwSerial = pMember->m_dwObjSerial;
+    oldMember->init();
+    return 1;
+  }
+
+  return 0;
+}
+
 void CTransportShip::ExitMember(CPlayer *pExiter, bool bLogoff)
 {
   for (int j = 0; j < MAX_PLAYER; ++j)

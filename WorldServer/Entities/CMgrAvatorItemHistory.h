@@ -130,6 +130,12 @@ public:
     _STORAGE_LIST::_db_con *pUseItem,
     _STORAGE_LIST::_db_con *pOutItem,
     char *pszFileName);
+  void cut_clear_item(
+    int n,
+    unsigned __int16 *pwCuttingResBuffer,
+    unsigned int dwAddGold,
+    unsigned int dwNewGold,
+    char *pszFileName);
   void personal_amine_itemlog(
     const char *szLogDesc,
     unsigned __int8 byPos,
@@ -284,6 +290,27 @@ public:
     char *pMapCode,
     float *pfPos,
     char *pszFileName);
+  void post_delete(CPostData *pPost, char *pFileName);
+  void post_getpresent(
+    char *wszSendName,
+    unsigned int dwPostSerial,
+    _STORAGE_LIST::_db_con *Item,
+    unsigned __int64 dwDur,
+    unsigned int dwGold,
+    char *pFileName);
+  void post_senditem(
+    char *wszRecvName,
+    _STORAGE_LIST::_db_con *Item,
+    unsigned __int64 dwDur,
+    unsigned int dwGold,
+    char *pFileName);
+  void post_return(
+    char *wszRecvName,
+    unsigned int dwPostSerial,
+    _STORAGE_LIST::_db_con *Item,
+    unsigned __int64 dwDur,
+    unsigned int dwGold,
+    char *pFileName);
   void post_receive(CPostData *pPost, char *pFileName);
   void post_storage(CPostStorage *pStorage, char *pFileName);
   void post_returnreceive(CPostData *pPost, char *pFileName);

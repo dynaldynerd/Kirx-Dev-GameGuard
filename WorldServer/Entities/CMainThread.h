@@ -1474,6 +1474,8 @@ struct __cppobj _TRADE_DB_BASE
     __int64 tResultTime;
     char wszBuyerName[17];
     char szBuyerAccount[13];
+
+    bool IsEmpty();
   };
 
   _LIST m_List[20];
@@ -1908,11 +1910,32 @@ public:
   AutominePersonal();
   ~AutominePersonal();
   bool initialize(unsigned __int16 wIndex);
+  void LoadDBComplete();
   bool is_installed();
+  bool regist_to_map(
+    CPlayer *pOwner,
+    _STORAGE_LIST::_db_con *pInstallItem,
+    unsigned __int8 byDummyIndex,
+    unsigned int dwObjSerial,
+    float fDelayProf);
+  unsigned int get_objserial();
+  unsigned __int16 get_itemserial();
+  _STORAGE_LIST::_db_con *get_item();
+  CPlayer *get_owner();
   unsigned int get_ownerserial();
   CPlayer *GetOwner();
+  int insert_battery(unsigned __int8 bySlotIdx, unsigned __int16 wItemSerial);
   bool unregist_from_map(unsigned __int8 byDestroyType);
   bool extract_battery(unsigned __int8 bySlotIdx, _STORAGE_LIST::_db_con *pBattery);
+  void set_selore(unsigned __int8 bySelOre);
+  void set_work(bool bWork);
+  bool is_run();
+  void sub_filledslot();
+  void set_openUI_Inven(bool bFlag);
+  void set_openUI_battery(bool bFlag);
+  void send_changed_packet(unsigned int n);
+  void send_installed();
+  void send_ecode(unsigned __int8 byCode);
   void send_current_state();
   unsigned int get_battery();
   unsigned int get_battery(int n);
@@ -2448,6 +2471,8 @@ struct __cppobj _safe_dummy
 struct __cppobj __unaligned __declspec(align(1)) AP_BatterySlot
 {
   AP_BatterySlot();
+  int insert(_STORAGE_LIST::_db_con *pItem);
+  bool is_private_item(_STORAGE_LIST::_db_con *pItem);
   void clear();
   bool extract(_STORAGE_LIST::_db_con *pout_item);
   unsigned int get_dur();

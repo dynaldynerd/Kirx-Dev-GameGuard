@@ -580,6 +580,52 @@ char CRaceBossMsgController::Send(
   return 0;
 }
 
+char CRaceBossMsgController::Send(CPlayer *pkSender, const char *pwszMsg)
+{
+  if (!pkSender)
+  {
+    return 0;
+  }
+
+  if (g_Main.m_bConnectedWebAgentServer)
+  {
+    const unsigned __int8 raceCode = pkSender->m_Param.GetRaceCode();
+    const unsigned int serial = pkSender->m_Param.GetCharSerial();
+    CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
+    if (ranking->GetCurrentRaceBossSerial(raceCode, 0) == serial)
+    {
+      RACE_BOSS_MSG::CMsg *msg = nullptr;
+      const char *name = pkSender->m_Param.GetCharNameW();
+      const int ret = m_kManager.Send(raceCode, serial, name, pwszMsg, &msg, 0);
+      if (ret)
+      {
+        SendMsgRequestResult(pkSender->m_ObjID.m_wIndex, static_cast<char>(ret));
+        return 0;
+      }
+
+      SendMsgRequestResult(pkSender->m_ObjID.m_wIndex, 0);
+      SendComfirmWeb(raceCode, msg);
+      SendConfirmCtrl(raceCode, msg);
+      return 1;
+    }
+
+    SendMsgRequestResult(pkSender->m_ObjID.m_wIndex, 3);
+    return 0;
+  }
+
+  SendMsgRequestResult(pkSender->m_ObjID.m_wIndex, 1);
+  return 0;
+}
+
+void CRaceBossMsgController::SendMsgRequestResult(unsigned __int16 usInx, char ucRet)
+{
+  char msg[32]{};
+  unsigned __int8 type[2]{52, 2};
+
+  msg[0] = ucRet;
+  g_Network.m_pProcess[0]->LoadSendMsg(usInx, type, msg, 1u);
+}
+
 void CRaceBossMsgController::SendWebRaceBossSMSErrorResult(char iRet, unsigned int dwWebDBID)
 {
   _racebosssms_fromweb_send_error_result_zowb msg{};

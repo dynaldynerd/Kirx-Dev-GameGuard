@@ -74,9 +74,20 @@ public:
   void ParamInit();
   bool Update_Map(unsigned __int8 map, float *pos);
   char Update_Bind(char *pszMapCode, char *pDummyCode, bool bUpdate);
+  char Update_AddBuddy(unsigned __int8 bySlotIndex, unsigned int dwAdderSerial, char *pwszAdderName);
   char Update_DelBuddy(unsigned __int8 bySlotIndex);
   char Update_UserGetScaner(unsigned __int16 wScanerCnt, unsigned __int16 wBattleTime);
   char Update_LinkBoardSlot(unsigned __int8 bySlot, unsigned __int8 byLinkCode, unsigned __int16 wIndex);
+  char Update_LinkBoardLock(unsigned __int8 byLBLock);
+  char Update_WindowInfo(
+    unsigned int *pdwSkill,
+    unsigned int *pdwForce,
+    unsigned int *pdwChar,
+    unsigned int *pdwAnimus,
+    unsigned int dwInven,
+    unsigned int *pdwInvenBag);
+  char Update_Macro(char *pBuf);
+  void Update_BossCryMsg(unsigned __int8 bySlot, char *pwszCryMsg);
   char Update_BagNum(unsigned __int8 bagnum);
   void CalcRadarDelay();
   void SetRadarDelay(unsigned int dwDelay);
@@ -100,6 +111,7 @@ public:
     const _STORAGE_LIST::_db_con *pItem,
     bool bUpdate);
   bool Update_ItemDelete(unsigned __int8 storage, unsigned __int8 slot, bool bUpdate);
+  char Update_ItemSlot(unsigned __int8 storage, unsigned __int8 slot, unsigned __int8 clientpos);
   char Update_ItemUpgrade(unsigned __int8 storage, unsigned __int8 slot, unsigned int upg, bool bUpdate);
   char Update_ItemDur(unsigned __int8 storage, unsigned __int8 slot, unsigned __int64 amount, bool bUpdate);
   bool Update_Money(unsigned int dalant, unsigned int gold);
@@ -130,6 +142,7 @@ public:
   void WriteLog_CharSelect();
   char Update_CombineExResult_Push(_ITEMCOMBINE_DB_BASE *pItemCombineDB_IN);
   char Update_CombineExResult_Pop();
+  char Update_CuttingEmpty();
   char Update_TakeLastCriTicket(unsigned int dwCriTicket);
   void SetDBPostData(
     unsigned int n,
@@ -166,6 +179,9 @@ public:
     unsigned int dwUpt,
     unsigned int dwGold,
     unsigned __int64 lnUID);
+  char Update_DelPost(unsigned int dwSerial, unsigned int nIndex);
+  bool IsReturnPostUpdate();
+  void Update_ReturnPost(unsigned int dwSerial);
   void DelPostData(unsigned int dwIndex);
   char Update_Param(_EXIT_ALTER_PARAM *pCon);
   char Update_CopyAll(_AVATOR_DATA *pSrc);

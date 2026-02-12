@@ -27,3 +27,9 @@ void CTrap::MasterNetClose(long double dPvPPoint)
   m_dMasterPvPPoint = dPvPPoint;
 }
 
+void CTrap::MasterReStart(CPlayer *pMaster)
+{
+  m_pMaster = pMaster;
+  m_dMasterPvPPoint = pMaster->m_Param.GetPvPPoint();
+}
+

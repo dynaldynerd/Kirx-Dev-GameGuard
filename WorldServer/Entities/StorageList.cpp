@@ -2,6 +2,8 @@
 
 #include "StorageList.h"
 
+#include "CRecordData.h"
+#include "GlobalObjects.h"
 #include "TimeItem.h"
 #include "WorldServerUtil.h"
 
@@ -178,6 +180,27 @@ _STORAGE_LIST::_db_con *_STORAGE_LIST::GetPtrFromSerial(unsigned __int16 wSerial
     return nullptr;
   }
   return &m_pStorageList[index];
+}
+
+_STORAGE_LIST::_db_con *_STORAGE_LIST::GetPtrFromItemCode(char *pwszItemCode)
+{
+  for (int j = 0; j < this->m_nUsedNum; ++j)
+  {
+    if (this->m_pStorageList[j].m_bLoad)
+    {
+      _base_fld *record =
+        g_Main.m_tblItemData[this->m_pStorageList[j].m_byTableCode].GetRecord(
+          this->m_pStorageList[j].m_wItemIndex);
+      if (record)
+      {
+        if (!strcmp_0(record->m_strCode, pwszItemCode))
+        {
+          return &this->m_pStorageList[j];
+        }
+      }
+    }
+  }
+  return nullptr;
 }
 
 char _STORAGE_LIST::AlterCurDur(int n, int nAlter, unsigned __int64 *pdwLeftDur)

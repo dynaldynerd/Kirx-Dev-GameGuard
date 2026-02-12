@@ -2,6 +2,8 @@
 
 #include "TRC_AutoTrade.h"
 #include "atrade_taxrate_result_zocl.h"
+#include "insert_trc_info.h"
+#include "pt_inform_tax_rate_zocl.h"
 #include "CNetProcess.h"
 #include "KorLocalTime.h"
 #include "GlobalObjects.h"
@@ -95,6 +97,60 @@ float TRC_AutoTrade::get_taxrate()
   return m_Controller.getCurTaxRate();
 }
 
+float TRC_AutoTrade::get_next_tax()
+{
+  return static_cast<float>(static_cast<int>(this->m_suggested.dwNext));
+}
+
+unsigned int TRC_AutoTrade::getSuggestedTime()
+{
+  return this->m_suggested.dwSuggestedTime;
+}
+
+void TRC_AutoTrade::set_suggested(
+  unsigned __int8 byMatterType,
+  unsigned int dwMatterDst,
+  char *wszMatterDst,
+  unsigned int dwNext)
+{
+  this->m_suggested.init();
+  this->m_suggested.byMatterType = byMatterType;
+  this->m_suggested.dwMatterDst = dwMatterDst;
+  strcpy_0(this->m_suggested.wszMatterDst, wszMatterDst);
+
+  if (dwNext < 5 || dwNext > 0x14)
+  {
+    dwNext = 5;
+  }
+
+  this->m_suggested.dwNext = dwNext;
+  this->m_bChangeTaxRate = true;
+  this->m_suggested.dwSuggestedTime = GetKorLocalTime();
+  this->m_serviceLog.Write("[Suggest Change Tax Rate]:[SUBPATRIARCH:%s] - %d(%%)", wszMatterDst, dwNext);
+  this->PushDQSData();
+}
+
+void TRC_AutoTrade::PushDQSData()
+{
+  _insert_trc_info query{};
+  query.byRace = this->m_byRace;
+  query.byMatterType = this->m_suggested.byMatterType;
+  query.dwMatterDst = this->m_suggested.dwMatterDst;
+  strcpy_0(query.wszMatterDst, this->m_suggested.wszMatterDst);
+  query.dwGSerial = static_cast<unsigned int>(-1);
+  strcpy_0(query.szGuildName, "*");
+
+  if (this->m_suggested.dwNext < 5 || this->m_suggested.dwNext > 0x14)
+  {
+    this->m_suggested.dwNext = 5;
+  }
+
+  query.dwNext = this->m_suggested.dwNext;
+  query.byCurrTax = static_cast<unsigned __int8>(this->get_taxrate() * 100.0f);
+  const int size = static_cast<int>(query.size());
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x33u, reinterpret_cast<char *>(&query), size);
+}
+
 void TRC_AutoTrade::sendmsg_taxrate(unsigned int n, unsigned __int8 byRet)
 {
   (void)byRet;
@@ -117,6 +173,24 @@ void TRC_AutoTrade::sendmsg_taxrate(unsigned int n, unsigned __int8 byRet)
   unsigned __int8 type[2]{30, 24};
   const unsigned __int16 len = static_cast<unsigned __int16>(result.size());
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&result), len);
+}
+
+void TRC_AutoTrade::SendMsg_PatriarchTaxRate(unsigned int n)
+{
+  _pt_inform_tax_rate_zocl result{};
+  result.byCurrTax = static_cast<unsigned __int8>(this->get_taxrate() * 100.0f);
+  result.byNextTax = static_cast<unsigned __int8>(this->get_next_tax());
+
+  unsigned __int8 type[2]{13, 119};
+  const unsigned __int16 len = static_cast<unsigned __int16>(result.size());
+  g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&result), len);
+}
+
+void TRC_AutoTrade::SendMsg_UserLogInNotifyTaxRate(unsigned int n)
+{
+  char msg[1] = {1};
+  unsigned __int8 type[2] = {30, 39};
+  g_Network.m_pProcess[0]->LoadSendMsg(n, type, msg, 1u);
 }
 
 void TRC_AutoTrade::AddGDalant(char *pdata)

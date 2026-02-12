@@ -330,6 +330,240 @@ unsigned __int8 CPostSystemManager::PostReceiverCheck(char *pData)
   return 0;
 }
 
+unsigned __int8 CPostSystemManager::CheckRegister(
+  CPlayer *pOne,
+  _STORAGE_POS_INDIV *pItemInfo,
+  unsigned int dwGold,
+  _STORAGE_LIST::_db_con **pItem)
+{
+  if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(pOne->m_id.wIndex) == 99)
+  {
+    return 17;
+  }
+  if (m_listEmpty.size() <= 0)
+  {
+    return 1;
+  }
+
+  const unsigned __int64 totalGold = static_cast<unsigned __int64>(dwGold) + 5u;
+  if (totalGold > 0x7A120)
+  {
+    return 4;
+  }
+
+  const unsigned int curGold = pOne->m_Param.GetGold();
+  if (totalGold > curGold)
+  {
+    return 4;
+  }
+
+  if (pItemInfo->byStorageCode >= 8u || pItemInfo->byStorageCode)
+  {
+    return 3;
+  }
+  if (pItemInfo->wItemSerial == 0xFFFF)
+  {
+    return 0;
+  }
+
+  _STORAGE_LIST *storage = pOne->m_Param.m_pStoragePtr[pItemInfo->byStorageCode];
+  *pItem = storage->GetPtrFromSerial(pItemInfo->wItemSerial);
+  if (!*pItem)
+  {
+    return 3;
+  }
+  if ((*pItem)->m_byTableCode == 19 || (*pItem)->m_bLock)
+  {
+    return 6;
+  }
+  if ((*pItem)->m_byCsMethod)
+  {
+    return 6;
+  }
+  if (!IsExchangeItem((*pItem)->m_byTableCode, (*pItem)->m_wItemIndex))
+  {
+    return 2;
+  }
+  if (!IsOverLapItem((*pItem)->m_byTableCode)
+      || pItemInfo->byNum <= (*pItem)->m_dwDur)
+  {
+    return 0;
+  }
+
+  return 5;
+}
+
+char CPostSystemManager::PostSendRequest(
+  CPlayer *pOne,
+  char *wszRecvName,
+  char *wszTitle,
+  char *wszContent,
+  _STORAGE_POS_INDIV *pItemInfo,
+  unsigned int dwGold,
+  unsigned __int8 byRace)
+{
+  _STORAGE_LIST::_db_con *item = nullptr;
+  if (!pOne->m_bPostLoad)
+  {
+    pOne->SendMsg_PostSendReply(8u);
+    return 0;
+  }
+
+  unsigned __int8 errCode = CheckRegister(pOne, pItemInfo, dwGold, &item);
+  if (errCode != 17)
+  {
+    for (int j = 0; j < MAX_PLAYER; ++j)
+    {
+      CPlayer *player = &g_Player[j];
+      if (player
+          && player->m_bOper
+          && player->m_bLive
+          && !strcmp_0(wszRecvName, player->m_pUserDB->m_AvatorData.dbAvator.m_wszAvatorName))
+      {
+        if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(player->m_id.wIndex) == 99)
+        {
+          errCode = 18;
+        }
+        break;
+      }
+    }
+  }
+
+  if (!IsSQLValidString(wszRecvName))
+  {
+    const char *name = pOne->m_Param.GetCharNameA();
+    g_Main.m_logSystemError.Write(
+      "CPostSystemManager::PostSendRequest() : %u(%s) ::IsSQLValidString( wszRecvName(%s) ) Invalid!",
+      pOne->m_dwObjSerial,
+      name,
+      wszRecvName);
+    errCode = 16;
+  }
+  if (!IsSQLValidString(wszTitle))
+  {
+    const char *name = pOne->m_Param.GetCharNameA();
+    g_Main.m_logSystemError.Write(
+      "CPostSystemManager::PostSendRequest() : %u(%s) ::IsSQLValidString( wszTitle(%s) ) Invalid!",
+      pOne->m_dwObjSerial,
+      name,
+      wszTitle);
+    errCode = 16;
+  }
+  if (!IsSQLValidString(wszContent))
+  {
+    const char *name = pOne->m_Param.GetCharNameA();
+    g_Main.m_logSystemError.Write(
+      "CPostSystemManager::PostSendRequest() : %u(%s) ::IsSQLValidString( wszContent(%s) ) Invalid!",
+      pOne->m_dwObjSerial,
+      name,
+      wszContent);
+    errCode = 16;
+  }
+
+  if (!strlen_0(wszTitle) || !strlen_0(wszRecvName))
+  {
+    errCode = 8;
+  }
+  if (!strlen_0(wszContent))
+  {
+    strcpy_0(wszContent, " ");
+  }
+
+  if (!errCode)
+  {
+    int isOverlap = 0;
+    _STORAGE_LIST::_db_con itemCopy;
+    bool hasItem = false;
+    if (item)
+    {
+      hasItem = true;
+      itemCopy = *item;
+      isOverlap = IsOverLapItem(itemCopy.m_byTableCode);
+      if (isOverlap)
+      {
+        itemCopy.m_dwDur = pItemInfo->byNum;
+        pOne->Emb_AlterDurPoint(0, itemCopy.m_byStorageIndex, -static_cast<int>(itemCopy.m_dwDur), false, false);
+        itemCopy.m_lnUID = 0;
+      }
+      else if (!pOne->Emb_DelStorage(0, itemCopy.m_byStorageIndex, false, true, "CPostSystemManager::PostSendRequest()"))
+      {
+        pOne->SendMsg_PostSendReply(8u);
+        return 0;
+      }
+    }
+
+    pOne->SubGold(dwGold + 5u);
+    pOne->SendMsg_AlterMoneyInform(0);
+
+    if (hasItem || dwGold)
+    {
+      if (isOverlap || item)
+      {
+        CPlayer::s_MgrItemHistory.post_senditem(
+          wszRecvName,
+          &itemCopy,
+          itemCopy.m_dwDur,
+          dwGold,
+          pOne->m_szItemHistoryFileName);
+      }
+      else
+      {
+        CPlayer::s_MgrItemHistory.post_senditem(
+          wszRecvName,
+          nullptr,
+          0,
+          dwGold,
+          pOne->m_szItemHistoryFileName);
+      }
+    }
+
+    _INVENKEY key;
+    unsigned __int64 dwDur = 0;
+    unsigned int dwUpt = 0xFFFFFFF;
+    unsigned __int64 lnUID = 0;
+    key.SetRelease();
+    if (hasItem)
+    {
+      key.byTableCode = itemCopy.m_byTableCode;
+      key.wItemIndex = itemCopy.m_wItemIndex;
+      dwDur = itemCopy.m_dwDur;
+      dwUpt = itemCopy.m_dwLv;
+      lnUID = itemCopy.m_lnUID;
+    }
+
+    unsigned int outIndex[5]{};
+    m_listEmpty.PopNode_Front(outIndex);
+    m_PostData[outIndex[0]].SetState(0);
+    CPostData *post = &m_PostData[outIndex[0]];
+    post->SetPostData(
+      outIndex[0],
+      pOne->m_pUserDB->m_dwSerial,
+      pOne->m_pUserDB->m_wszAvatorName,
+      wszRecvName,
+      wszTitle,
+      key,
+      dwDur,
+      dwUpt,
+      dwGold,
+      0,
+      byRace,
+      pOne->m_byUserDgr);
+    post->SetPostContent(wszContent);
+    post->SetPostItemSerial(lnUID);
+    m_listRegist.PushNode_Back(outIndex[0]);
+  }
+
+  if (errCode)
+  {
+    pOne->SendMsg_PostSendReply(errCode);
+  }
+  else
+  {
+    pOne->pc_UpdateDataForPostSend();
+  }
+  return 1;
+}
+
 
 void CPostSystemManager::CompleteRegist(char *pData)
 {

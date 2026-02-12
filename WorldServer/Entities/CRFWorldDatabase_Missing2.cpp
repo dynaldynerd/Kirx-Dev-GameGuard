@@ -2999,6 +2999,77 @@ bool CRFWorldDatabase::UpdateDrawGuildBattleResult(unsigned int dwGuildSerial, u
   return ExecUpdateQuery(buffer, 1);
 }
 
+char CRFWorldDatabase::SelectGuildBattleRankRecord(unsigned int dwGuildSerial)
+{
+  SQLLEN strLenOrInd = 0;
+  char buffer[1044]{};
+  sprintf(buffer, "{ CALL pSelect_GuildBattleRank(%u) }", dwGuildSerial);
+  if (m_bSaveDBLog)
+  {
+    Log(buffer);
+  }
+
+  if (m_hStmtSelect || ReConnectDataBase())
+  {
+    SQLRETURN ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(buffer), -3);
+    if (!ret || ret == 1)
+    {
+      ret = SQLFetch(m_hStmtSelect);
+      if (!ret || ret == 1)
+      {
+        unsigned int value = 0;
+        ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_ULONG, &value, 0, &strLenOrInd);
+        if (ret == SQL_NO_DATA)
+        {
+          if (m_hStmtSelect)
+          {
+            SQLCloseCursor(m_hStmtSelect);
+          }
+          return 0;
+        }
+
+        if (m_hStmtSelect)
+        {
+          SQLCloseCursor(m_hStmtSelect);
+        }
+        if (m_bSaveDBLog)
+        {
+          FmtLog("%s Success", buffer);
+        }
+        return 1;
+      }
+
+      if (ret != SQL_NO_DATA)
+      {
+        ErrorMsgLog(ret, buffer, "SQLFetch", m_hStmtSelect);
+        ErrorAction(ret, m_hStmtSelect);
+      }
+      if (m_hStmtSelect)
+      {
+        SQLCloseCursor(m_hStmtSelect);
+      }
+      return 0;
+    }
+
+    if (ret != SQL_NO_DATA)
+    {
+      ErrorMsgLog(ret, buffer, "SQLExecDirectA", m_hStmtSelect);
+      ErrorAction(ret, m_hStmtSelect);
+    }
+    return 0;
+  }
+
+  ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
+  return 0;
+}
+
+bool CRFWorldDatabase::InsertGuildBattleRankRecord(unsigned int dwGuildSerial)
+{
+  char buffer[1040]{};
+  sprintf(buffer, "{ CALL pInsert_GuildBattleRank( %u ) }", dwGuildSerial);
+  return ExecUpdateQuery(buffer, 1);
+}
+
 char CRFWorldDatabase::SelectGuildBattleRankList(
   unsigned __int8 byRace,
   _worlddb_guild_battle_rank_list *pkInfo)

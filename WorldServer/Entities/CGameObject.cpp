@@ -1675,6 +1675,24 @@ char CGameObject::IsBeDamagedAble(CCharacter *pAtter)
   return 1;
 }
 
+char CGameObject::IsRecvableContEffect()
+{
+  // this is not a stub
+  return 1;
+}
+
+bool CGameObject::IsRewardExp()
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::Is_Battle_Mode()
+{
+  // this is not a stub
+  return false;
+}
+
 __int64 CGameObject::GetAttackDP()
 {
   return 0LL;
@@ -1740,6 +1758,15 @@ char CGameObject::SetCurPos(float *pPos)
 void CGameObject::SetCurSecNum(unsigned int dwNewSecNum)
 {
   m_dwCurSec = dwNewSecNum;
+}
+
+void CGameObject::SetStun(bool bStun)
+{
+  m_bStun = bStun;
+  if (m_bStun)
+  {
+    m_dwNextFreeStunTime = GetLoopTime() + 1000;
+  }
 }
 
 char CGameObject::Destroy()
@@ -1867,6 +1894,16 @@ void CGameObject::SendMsg_RealMovePoint(int n)
 {
   // this is not a stub
   (void)n;
+}
+
+void CGameObject::SendMsg_SetHPInform()
+{
+  // this is not a stub
+}
+
+void CGameObject::SendMsg_StunInform()
+{
+  // this is not a stub
 }
 
 char CGameObject::SetHP(int /*nHP*/, bool /*bOver*/)

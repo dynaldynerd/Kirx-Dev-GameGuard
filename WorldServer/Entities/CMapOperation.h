@@ -54,3 +54,5 @@ public:
 extern CMapOperation g_MapOper;
 extern AreaList *g_AreaIndexTable[100];
 extern std::map<std::string, AreaList> g_strLMapMap;
+
+int GetRegionIndex(int nMapIndex, unsigned int x, unsigned int y, unsigned int dwMaxX, unsigned int dwMaxY);

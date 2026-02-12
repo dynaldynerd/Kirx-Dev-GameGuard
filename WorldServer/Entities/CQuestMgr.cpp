@@ -898,6 +898,161 @@ _happen_event_cont *CQuestMgr::CheckQuestHappenEvent(
   return nullptr;
 }
 
+void CQuestMgr::CheckNPCQuestList(
+  char *pszEventCode,
+  unsigned __int8 byRaceCode,
+  _NPCQuestIndexTempData *pQuestIndexData)
+{
+  if (!pszEventCode || !pQuestIndexData || !CQuestMgr::s_tblQuestHappenEvent || !CQuestMgr::s_tblQuest)
+  {
+    return;
+  }
+
+  _base_fld *record = CQuestMgr::s_tblQuestHappenEvent[1].GetRecord(pszEventCode);
+  if (!record)
+  {
+    return;
+  }
+
+  int happenIndex = static_cast<int>(record->m_dwIndex);
+  for (int slot = 0; slot < 30; ++slot)
+  {
+    record = CQuestMgr::s_tblQuestHappenEvent[1].GetRecord(happenIndex);
+    if (!record || std::strcmp(record->m_strCode, pszEventCode) != 0)
+    {
+      return;
+    }
+
+    auto *eventNode =
+      reinterpret_cast<_happen_event_node *>(&record[1].m_strCode[704 * static_cast<int>(byRaceCode)]);
+    if (!eventNode->m_bUse)
+    {
+      ++happenIndex;
+      continue;
+    }
+
+    bool conditionPassed = true;
+    for (int condIndex = 0; condIndex < 5; ++condIndex)
+    {
+      _happen_event_condition_node *condition = &eventNode->m_CondNode[condIndex];
+      if (condition->m_nCondType == -1)
+      {
+        break;
+      }
+      if (!_CheckCondition(condition))
+      {
+        conditionPassed = false;
+        break;
+      }
+    }
+    if (!conditionPassed)
+    {
+      ++happenIndex;
+      continue;
+    }
+
+    _base_fld *questRecord = CQuestMgr::s_tblQuest->GetRecord(eventNode->m_strLinkQuest[0]);
+    if (!questRecord)
+    {
+      ++happenIndex;
+      continue;
+    }
+
+    if (questRecord[1].m_dwIndex != static_cast<unsigned int>(-1))
+    {
+      const int level = static_cast<int>(m_pMaster->m_Param.GetLevel());
+      if (static_cast<int>(questRecord[1].m_dwIndex) < level)
+      {
+        ++happenIndex;
+        continue;
+      }
+    }
+
+    const int repeatType = *reinterpret_cast<int *>(&questRecord[1].m_strCode[4]);
+    if (!IsCompleteNpcQuest(questRecord->m_strCode, repeatType) && !IsProcNpcQuest(questRecord->m_strCode))
+    {
+      if (repeatType == 1)
+      {
+        const int linkGroup = *reinterpret_cast<int *>(&questRecord[27].m_strCode[24]);
+        if (!IsProcLinkNpcQuest(questRecord->m_strCode, linkGroup))
+        {
+          ++happenIndex;
+          continue;
+        }
+        if (!IsPossibleRepeatNpcQuest(questRecord->m_strCode, linkGroup))
+        {
+          ++happenIndex;
+          continue;
+        }
+      }
+
+      pQuestIndexData->IndexData[pQuestIndexData->nQuestNum].dwQuestIndex = questRecord->m_dwIndex;
+      pQuestIndexData->IndexData[pQuestIndexData->nQuestNum].dwQuestHappenIndex =
+        static_cast<unsigned int>(happenIndex);
+      ++pQuestIndexData->nQuestNum;
+    }
+
+    ++happenIndex;
+  }
+}
+
+_happen_event_cont *CQuestMgr::CheckNPCQuestStartable(
+  char *pszEventCode,
+  unsigned __int8 byRaceCode,
+  int dwQuestIndex,
+  unsigned int dwHappenIndex)
+{
+  if (!pszEventCode || !CQuestMgr::s_tblQuestHappenEvent || !CQuestMgr::s_tblQuest)
+  {
+    return nullptr;
+  }
+
+  _base_fld *eventRecord = CQuestMgr::s_tblQuestHappenEvent[1].GetRecord(dwHappenIndex);
+  if (!eventRecord || std::strcmp(pszEventCode, eventRecord->m_strCode) != 0)
+  {
+    return nullptr;
+  }
+
+  _base_fld *questRecord = CQuestMgr::s_tblQuest->GetRecord(dwQuestIndex);
+  if (!questRecord)
+  {
+    return nullptr;
+  }
+
+  auto *eventNode =
+    reinterpret_cast<_happen_event_node *>(&eventRecord[1].m_strCode[704 * static_cast<int>(byRaceCode)]);
+  if (!eventNode->m_bUse)
+  {
+    return nullptr;
+  }
+
+  _base_fld *linkedQuest = CQuestMgr::s_tblQuest->GetRecord(eventNode->m_strLinkQuest[0]);
+  if (!linkedQuest || linkedQuest != questRecord)
+  {
+    return nullptr;
+  }
+
+  for (int condIndex = 0; condIndex < 5; ++condIndex)
+  {
+    _happen_event_condition_node *condition = &eventNode->m_CondNode[condIndex];
+    if (condition->m_nCondType == -1)
+    {
+      break;
+    }
+    if (!_CheckCondition(condition))
+    {
+      return nullptr;
+    }
+  }
+
+  m_LastHappenEvent.set(
+    eventNode,
+    quest_happen_type_npc,
+    static_cast<int>(eventRecord->m_dwIndex),
+    static_cast<int>(byRaceCode));
+  return &m_LastHappenEvent;
+}
+
 
 _quest_fail_result *CQuestMgr::CheckLimLv(int nNewLv)
 {

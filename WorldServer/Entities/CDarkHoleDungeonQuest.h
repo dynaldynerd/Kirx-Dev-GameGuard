@@ -4,10 +4,18 @@
 #include "CDarkHoleChannel.h"
 #include "CDarkHoleDungeonQuestSetup.h"
 
+class CPlayer;
+class CDarkHole;
+
 class __cppobj CDarkHoleDungeonQuest : public CDarkHoleDungeonQuestSetup
 {
 public:
   bool LoadDarkHoleQuest();
+  CDarkHoleChannel *GetChannel(unsigned int dwChannelIndex);
+  CDarkHoleChannel *CanOpenChannel(int nQuestIndex);
+  int SearchEmptyDarkHoleChannel();
+  int SearchEmptyDarkHoleLayer(int nQuestIndex);
+  CDarkHoleChannel *OpenChannel(int nQuestIndex, CPlayer *pOpener, CDarkHole *pHoleObj);
   CDarkHoleChannel *SearchOncePlayedChannel(unsigned int dwMemberSerial);
 
   bool m_bLoad;

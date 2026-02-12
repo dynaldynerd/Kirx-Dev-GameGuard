@@ -944,6 +944,59 @@ unsigned __int8 CMapData::GetMapCode()
   return static_cast<unsigned __int8>(this->m_pMapSet->m_dwIndex);
 }
 
+unsigned __int8 CMapData::GetRaceTown(float *fPos, unsigned __int8 byRaceCode)
+{
+  if (!m_pExtDummy_Town)
+  {
+    return static_cast<unsigned __int8>(-1);
+  }
+
+  if (m_pMapSet->m_nMapType == 2)
+  {
+    if (byRaceCode >= 3u)
+    {
+      return static_cast<unsigned __int8>(-1);
+    }
+    return byRaceCode;
+  }
+
+  const unsigned int totalNum = m_pExtDummy_Town->GetTotalNum();
+  unsigned int idx = 0;
+  for (; idx < totalNum; ++idx)
+  {
+    if (m_pExtDummy_Town->IsInBBox(idx, fPos))
+    {
+      break;
+    }
+  }
+
+  if (idx >= totalNum)
+  {
+    return static_cast<unsigned __int8>(-1);
+  }
+
+  char *dummyName = reinterpret_cast<char *>(m_pExtDummy_Town->GetDummy(idx));
+  switch (*dummyName)
+  {
+    case 'b':
+      return 0;
+    case 'c':
+      return 1;
+    case 'a':
+      return 2;
+    default:
+      if (!_strnicmp(dummyName, "elan", 4u))
+      {
+        return 3;
+      }
+      if (byRaceCode >= 3u)
+      {
+        return static_cast<unsigned __int8>(-1);
+      }
+      return byRaceCode;
+  }
+}
+
 int CMapData::GetSectorIndex(float *pPos)
 {
   const float localX = static_cast<float>(-this->m_BspInfo.m_nMapMinSize[0]) + pPos[0];

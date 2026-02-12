@@ -5,6 +5,7 @@
 #include "WorldServerUtil.h"
 #include "GlobalObjects.h"
 
+#include <cmath>
 #include <mmsystem.h>
 
 int CGuardTower::s_nLiveNum = 0;
@@ -102,6 +103,27 @@ void CGuardTower::SendMsg_Create()
 
   unsigned __int8 type[2] = {3, 19};
   CircleReport(type, reinterpret_cast<char *>(&msg), sizeof(msg), false);
+}
+
+void CGuardTower::NotifyOwnerAttackInform(CCharacter *pDst)
+{
+  if (!pDst || m_pMasterSetTarget == pDst)
+  {
+    return;
+  }
+
+  if (std::fabs(pDst->m_fCurPos[1] - m_fCurPos[1]) > 400.0f)
+  {
+    return;
+  }
+
+  const int attackRange = *reinterpret_cast<int *>(&m_pRecordSet[5].m_strCode[24]);
+  const float searchRadius = static_cast<float>(attackRange) + pDst->GetWidth() / 2.0f;
+  if (GetSqrt(m_fCurPos, pDst->m_fCurPos) <= searchRadius)
+  {
+    m_pMasterSetTarget = pDst;
+    m_pTarget = nullptr;
+  }
 }
 
 __int64 CGuardTower::GetNewSerial()

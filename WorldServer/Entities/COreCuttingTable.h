@@ -21,6 +21,7 @@ public:
   };
 
   bool ReadRecord(const char *fileName, CRecordData *oreTable, CRecordData *resTable, char *errCode);
+  unsigned int GetOreIndexFromRate(unsigned int dwOreIndex, unsigned int dwRate);
 
   virtual ~COreCuttingTable() = default;
 

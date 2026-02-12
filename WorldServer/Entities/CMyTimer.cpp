@@ -18,6 +18,13 @@ void CMyTimer::BeginTimer(unsigned int tickTerm)
   m_bOper = true;
 }
 
+void CMyTimer::BeginTimerAddLapse(int dwTerm, unsigned int dwAddLapse)
+{
+  m_bOper = true;
+  m_nTickTerm = dwTerm;
+  m_dwTickOld = dwAddLapse + timeGetTime();
+}
+
 bool CMyTimer::CountingTimer()
 {
   if (!m_bOper)

@@ -261,6 +261,13 @@ char CUserDB::Update_QuestUpdate(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_L
   return 0;
 }
 
+char CUserDB::Update_CuttingEmpty()
+{
+  m_AvatorData.dbCutting.Init();
+  m_bDataUpdate = true;
+  return 1;
+}
+
 char CUserDB::Update_NPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BASE::_NPC_QUEST_HISTORY *pHisData)
 {
   if (byIndex < 0x46u)
@@ -1166,6 +1173,46 @@ void CUserDB::SetNewDBPostData(
     m_AvatorData.dbPostData.dbPost.m_bUpdate = 1;
     m_bDataUpdate = 1;
   }
+}
+
+char CUserDB::Update_DelPost(unsigned int dwSerial, unsigned int nIndex)
+{
+  if (nIndex >= 50)
+  {
+    return 0;
+  }
+
+  if (m_AvatorData.dbPostData.dbPost.m_PostList[nIndex].bNew)
+  {
+    return 1;
+  }
+
+  _DELPOST_DB_BASE *delPost = &m_AvatorData.dbPostData.dbDelPost;
+  if (delPost->m_nCum >= delPost->m_nMax)
+  {
+    return 0;
+  }
+
+  delPost->m_List[delPost->m_nCum].dwDelSerial = dwSerial;
+  delPost->m_List[delPost->m_nCum].nStorageIndex = static_cast<int>(nIndex);
+  ++delPost->m_nCum;
+  delPost->m_bUpdate = 1;
+  m_bDataUpdate = 1;
+  return 1;
+}
+
+bool CUserDB::IsReturnPostUpdate()
+{
+  return m_AvatorData.dbPostData.dbRetPost.m_nCum < m_AvatorData.dbPostData.dbRetPost.m_nMax;
+}
+
+void CUserDB::Update_ReturnPost(unsigned int dwSerial)
+{
+  _RETURNPOST_DB_BASE *retPost = &m_AvatorData.dbPostData.dbRetPost;
+  retPost->m_RetSerials[retPost->m_nCum] = dwSerial;
+  ++retPost->m_nCum;
+  retPost->m_bUpdate = 1;
+  m_bDataUpdate = 1;
 }
 
 void CUserDB::DelPostData(unsigned int dwIndex)
@@ -2707,6 +2754,13 @@ void _NOT_ARRANGED_AVATOR_DB::Init()
   dwSerial = static_cast<unsigned int>(-1);
 }
 
+char CUserDB::Update_AddBuddy(unsigned __int8 bySlotIndex, unsigned int dwAdderSerial, char *pwszAdderName)
+{
+  m_AvatorData.dbBuddy.m_List[bySlotIndex].dwSerial = dwAdderSerial;
+  strcpy_0(m_AvatorData.dbBuddy.m_List[bySlotIndex].wszName, pwszAdderName);
+  m_bDataUpdate = true;
+  return 1;
+}
 
 char CUserDB::Update_DelBuddy(unsigned __int8 bySlotIndex)
 {
@@ -2752,6 +2806,171 @@ char CUserDB::Update_LinkBoardSlot(unsigned __int8 bySlot, unsigned __int8 byLin
     m_AvatorData.dbLink.m_LinkList[bySlot].Key.SetData(byLinkCode, wIndex);
   }
   return 1;
+}
+
+char CUserDB::Update_LinkBoardLock(unsigned __int8 byLBLock)
+{
+  m_AvatorData.dbLink.m_byLinkBoardLock = byLBLock;
+  return 1;
+}
+
+char CUserDB::Update_ItemSlot(unsigned __int8 storage, unsigned __int8 slot, unsigned __int8 clientpos)
+{
+  bool outOfRange = false;
+  if (!storage)
+  {
+    outOfRange = slot >= 0x64u;
+  }
+  else if (storage == 2)
+  {
+    outOfRange = slot >= 7u;
+  }
+  else if (storage == 5)
+  {
+    outOfRange = slot >= 0x64u;
+  }
+  else if (storage == 6 || storage == 7)
+  {
+    outOfRange = slot >= 0x28u;
+  }
+  else
+  {
+    return 0;
+  }
+
+  if (outOfRange)
+  {
+    g_Main.m_logSystemError.Write(
+      "%s : Update_ItemSlot(CODE) : scode : %d, icode : %d  ",
+      m_aszAvatorName,
+      storage,
+      slot);
+    return 0;
+  }
+
+  if (!storage)
+  {
+    _INVENKEY *key = &m_AvatorData.dbInven.m_List[slot].Key;
+    if (!key->IsFilled())
+    {
+      g_Main.m_logSystemError.Write("%s:Update_ItemSlot(INVEN, Idx:%d)", m_aszAvatorName, slot);
+      return 0;
+    }
+    key->bySlotIndex = clientpos;
+    return 1;
+  }
+
+  if (storage == 2)
+  {
+    _EMBELLKEY *key = &m_AvatorData.dbEquip.m_EmbellishList[slot].Key;
+    if (!key->IsFilled())
+    {
+      g_Main.m_logSystemError.Write("%s:Update_ItemSlot(EMBELL, Idx:%d)", m_aszAvatorName, slot);
+      return 0;
+    }
+    key->bySlotIndex = clientpos;
+    return 1;
+  }
+
+  if (storage == 5)
+  {
+    _INVENKEY *key = &m_AvatorData.dbTrunk.m_List[slot].Key;
+    if (!key->IsFilled())
+    {
+      g_Main.m_logSystemError.Write("%s:Update_ItemSlot(TRUNK, Idx:%d)", m_aszAvatorName, slot);
+      return 0;
+    }
+    key->bySlotIndex = clientpos;
+    return 1;
+  }
+
+  if (storage == 6)
+  {
+    _INVENKEY *key = &m_AvatorData.dbPersonalAmineInven.m_List[slot].Key;
+    if (!key->IsFilled())
+    {
+      g_Main.m_logSystemError.Write("%s:Update_ItemSlot(TRUNK, Idx:%d)", m_aszAvatorName, slot);
+      return 0;
+    }
+    key->bySlotIndex = clientpos;
+    return 1;
+  }
+
+  _INVENKEY *key = &m_AvatorData.dbTrunk.m_ExtList[slot].Key;
+  if (!key->IsFilled())
+  {
+    g_Main.m_logSystemError.Write("%s:Update_ItemSlot(EXT_TRUNK, Idx:%d)", m_aszAvatorName, slot);
+    return 0;
+  }
+  key->bySlotIndex = clientpos;
+  return 1;
+}
+
+char CUserDB::Update_WindowInfo(
+  unsigned int *pdwSkill,
+  unsigned int *pdwForce,
+  unsigned int *pdwChar,
+  unsigned int *pdwAnimus,
+  unsigned int dwInven,
+  unsigned int *pdwInvenBag)
+{
+  memcpy_0(m_AvatorData.dbLink.m_dwSkill, pdwSkill, sizeof(m_AvatorData.dbLink.m_dwSkill));
+  memcpy_0(m_AvatorData.dbLink.m_dwForce, pdwForce, sizeof(m_AvatorData.dbLink.m_dwForce));
+  memcpy_0(m_AvatorData.dbLink.m_dwCharacter, pdwChar, sizeof(m_AvatorData.dbLink.m_dwCharacter));
+  memcpy_0(m_AvatorData.dbLink.m_dwAnimus, pdwAnimus, sizeof(m_AvatorData.dbLink.m_dwAnimus));
+  m_AvatorData.dbLink.m_dwInven = dwInven;
+  memcpy_0(m_AvatorData.dbLink.m_dwInvenBag, pdwInvenBag, sizeof(m_AvatorData.dbLink.m_dwInvenBag));
+  return 1;
+}
+
+char CUserDB::Update_Macro(char *pBuf)
+{
+  _AIOC_A_MACRODATA *macro = &m_AvatorData.dbMacro;
+
+  for (int belt = 0; belt < 1; ++belt)
+  {
+    for (int slot = 0; slot < 3; ++slot)
+    {
+      macro->mcr_Potion[belt].Potion[slot] = *reinterpret_cast<unsigned int *>(&pBuf[4 * slot]);
+      macro->mcr_Potion[belt].PotionValue[slot] = *reinterpret_cast<unsigned int *>(&pBuf[4 * slot + 12]);
+    }
+  }
+
+  for (int belt = 0; belt < 3; ++belt)
+  {
+    for (int slot = 0; slot < 10; ++slot)
+    {
+      macro->mcr_Action[belt].Action[slot] = *reinterpret_cast<unsigned int *>(&pBuf[40 * belt + 24 + 4 * slot]);
+    }
+  }
+
+  for (int belt = 0; belt < 2; ++belt)
+  {
+    for (int slot = 0; slot < 5; ++slot)
+    {
+      char *chat = &pBuf[405 * belt + 144 + 81 * slot];
+      if (!IsSQLValidString(chat))
+      {
+        g_Main.m_logSystemError.Write(
+          "%u(%s) CUserDB::Update_Macro() : ::IsSQLValidString( pMacro->chatting[iBelt][iSock](%s) ) Invalid!",
+          m_dwSerial,
+          m_aszAvatorName,
+          chat);
+        return 1;
+      }
+
+      memset_0(macro->mcr_Chat[belt].Chat[slot], 0, 0x51u);
+      strncpy(macro->mcr_Chat[belt].Chat[slot], chat, 0x51u);
+    }
+  }
+
+  m_bDataUpdate = 1;
+  return 1;
+}
+
+void CUserDB::Update_BossCryMsg(unsigned __int8 bySlot, char *pwszCryMsg)
+{
+  strcpy_0(m_AvatorData.dbBossCry.m_List[bySlot].wszCryMsg, pwszCryMsg);
 }
 
 char CUserDB::Update_BagNum(unsigned __int8 bagnum)

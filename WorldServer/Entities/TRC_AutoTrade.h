@@ -28,7 +28,17 @@ public:
   bool Initialzie();
   bool IsOwnerGuild(unsigned int nGuildSerial);
   void sendmsg_taxrate(unsigned int n, unsigned __int8 byRet);
+  void SendMsg_PatriarchTaxRate(unsigned int n);
+  void SendMsg_UserLogInNotifyTaxRate(unsigned int n);
   float get_taxrate();
+  float get_next_tax();
+  unsigned int getSuggestedTime();
+  void set_suggested(
+    unsigned __int8 byMatterType,
+    unsigned int dwMatterDst,
+    char *wszMatterDst,
+    unsigned int dwNext);
+  void PushDQSData();
   void AddGDalant(char *pdata);
   unsigned int CalcPrice(unsigned int nGuildSerial, unsigned int nPrice);
   int ChangeOwner(CGuild *pGuild);

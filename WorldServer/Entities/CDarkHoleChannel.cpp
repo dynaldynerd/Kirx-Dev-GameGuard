@@ -8,17 +8,26 @@
 #include "CMonster.h"
 #include "CRecordData.h"
 #include "CPlayer.h"
+#include "CPlayerDB.h"
+#include "CPartyPlayer.h"
 #include "DummyPosition.h"
+#include "ENTER_DUNGEON_NEW_POS.h"
 #include "darkhole_leader_change_inform_zocl.h"
 #include "darkhole_job_count_inform_zocl.h"
 #include "darkhole_outof_member_inform_zocl.h"
 #include "darkhole_real_add_time_inform_zocl.h"
 #include "darkhole_real_msg_inform_zocl.h"
+#include "darkhole_member_info_inform_zocl.h"
+#include "darkhole_mission_info_inform_zocl.h"
+#include "darkhole_new_member_inform_zocl.h"
+#include "darkhole_quest_info_inform_zocl.h"
 #include "GlobalObjects.h"
 #include "monster_fld.h"
 #include "StorageList.h"
 
 #include <mmsystem.h>
+
+unsigned int CDarkHoleChannel::s_dwChannelSerialCounter = 0;
 
 void _dh_player_mgr::_pos::init()
 {
@@ -814,5 +823,381 @@ char CDarkHoleChannel::CheckEvent(
   }
 
   return matched;
+}
+
+void CDarkHoleChannel::Init()
+{
+  m_pQuestSetup = nullptr;
+  m_wLayerIndex = static_cast<unsigned __int16>(-1);
+  m_pLayerSet = nullptr;
+  m_MissionMgr.Init();
+  m_pHoleObj = nullptr;
+  m_dwHoleSerial = static_cast<unsigned int>(-1);
+  m_dwOpenerSerial = static_cast<unsigned int>(-1);
+  for (int j = 0; j < 32; ++j)
+  {
+    m_Quester[j].Init();
+  }
+  m_pLeaderPtr = nullptr;
+  m_dwEnterOrderCounter = 0;
+  m_listEnterMember.ResetList();
+  m_dwNextCloseTime = static_cast<unsigned int>(-1);
+  m_bMoveNextMission = false;
+  m_dwSendNewMissionMsgNextTime = static_cast<unsigned int>(-1);
+  m_dwQuestStartTime = 0;
+  m_bCheckMemberClose = false;
+}
+
+void CDarkHoleChannel::OpenDungeon(
+  _dh_quest_setup *pQuestSetup,
+  int nLayerIndex,
+  CPlayer *pOpener,
+  CDarkHole *pHoleObj)
+{
+  Init();
+  m_pQuestSetup = pQuestSetup;
+  m_wLayerIndex = static_cast<unsigned __int16>(nLayerIndex);
+  m_dwOpenerSerial = pOpener->m_dwObjSerial;
+
+  const char *name = pOpener->m_Param.GetCharNameW();
+  strcpy_0(m_wszOpenerName, name);
+  W2M(m_wszOpenerName, m_aszOpenerName, 0x11u);
+
+  m_nOpenerDegree = pOpener->m_pUserDB->m_byUserDgr;
+  m_nOpenerSubDegree = pOpener->m_pUserDB->m_bySubDgr;
+  m_MissionMgr.pCurMssionPtr = pQuestSetup->pStartMissionSetup;
+  m_dwChannelSerial = s_dwChannelSerialCounter++;
+  m_pHoleObj = pHoleObj;
+  m_dwHoleSerial = pHoleObj->m_dwObjSerial;
+
+  if (pQuestSetup->bPartyOnly)
+  {
+    CPlayer *outMember = nullptr;
+    (void)pOpener->_GetPartyMemberInCircle(&outMember, 8, 1);
+    m_pPartyMng = pOpener->m_pPartyMgr;
+  }
+
+  m_pLayerSet = &pQuestSetup->pUseMap->m_ls[nLayerIndex];
+  _MULTI_BLOCK *multiBlock = &pQuestSetup->pUseMap->m_mb[pQuestSetup->dwMonRepIndex];
+  m_pLayerSet->ActiveLayer(multiBlock);
+  CreateMonster();
+  AddMonster();
+  ChangeMonster();
+  ShareItemToMonster();
+  m_dwQuestStartTime = timeGetTime();
+}
+
+void CDarkHoleChannel::CreateMonster()
+{
+  if (!m_pLayerSet->IsActiveLayer())
+  {
+    return;
+  }
+
+  CMapData *map = m_pQuestSetup->pUseMap;
+  _MULTI_BLOCK *multiBlock = m_pLayerSet->m_pMB;
+  for (int j = 0; j < map->m_nMonBlockNum; ++j)
+  {
+    _mon_block *block = &map->m_pMonBlock[j];
+    const int recordNum = multiBlock->m_ptbMonBlock[j].GetRecordNum();
+    for (int k = 0; k < recordNum; ++k)
+    {
+      _mon_active *active = &m_pLayerSet->m_MonAct[j][k];
+      _mon_active_fld *activeRec = active->m_pActRec;
+      const unsigned int regenLimit = activeRec->m_dwRegenLimNum;
+      if (active->m_dwCumMonNum < regenLimit
+          && active->m_wMonRecIndex != 0xFFFF
+          && activeRec->m_dwRegenProp > static_cast<unsigned int>(rand() % 100))
+      {
+        int spawnCount = static_cast<int>(regenLimit - active->m_dwCumMonNum);
+        if (spawnCount < 0)
+        {
+          spawnCount = 0;
+        }
+        for (int m = 0; m < spawnCount; ++m)
+        {
+          const int dummyIndex = block->SelectDummyIndex();
+          if (dummyIndex != -1 && block->m_pDumPos[dummyIndex]->m_bPosAble)
+          {
+            CreateRespawnMonster(
+              map,
+              m_wLayerIndex,
+              active->m_wMonRecIndex,
+              active,
+              block->m_pDumPos[dummyIndex],
+              0,
+              1,
+              1,
+              1,
+              0);
+          }
+        }
+      }
+    }
+  }
+}
+
+bool CDarkHoleChannel::IsFill()
+{
+  return m_pQuestSetup != nullptr;
+}
+
+int CDarkHoleChannel::GetAllMemberNum()
+{
+  return static_cast<int>(m_listEnterMember.GetSize());
+}
+
+unsigned int CDarkHoleChannel::GetCurrentMemberNum()
+{
+  unsigned int count = 0;
+  for (int j = 0; j < 32; ++j)
+  {
+    if (m_Quester[j].IsFill())
+    {
+      ++count;
+    }
+  }
+  return count;
+}
+
+bool CDarkHoleChannel::CanYouEnterHole(CPlayer *pEnter)
+{
+  if (GetCurrentMemberNum() >= 32)
+  {
+    return false;
+  }
+
+  for (int j = 0; j < 32; ++j)
+  {
+    if (m_Quester[j].IsFill() && m_Quester[j].dwSerial == pEnter->m_dwObjSerial)
+    {
+      return false;
+    }
+  }
+
+  if (m_pQuestSetup->bPartyOnly)
+  {
+    for (int k = 0; k < 8; ++k)
+    {
+      if (m_pPartyMng->IsPartyMember(pEnter))
+      {
+        return true;
+      }
+    }
+    return pEnter->m_EP.GetEff_Have(50) > 0.0f;
+  }
+
+  if (m_dwOpenerSerial == pEnter->m_dwObjSerial)
+  {
+    return true;
+  }
+  if (m_nOpenerDegree != pEnter->m_byUserDgr)
+  {
+    if (pEnter->m_byUserDgr)
+    {
+      if (!m_nOpenerDegree)
+      {
+        return false;
+      }
+    }
+    else if (m_nOpenerDegree != 2)
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool CDarkHoleChannel::GetEnterNewPos(_ENTER_DUNGEON_NEW_POS *pNewPos)
+{
+  if (!m_MissionMgr.pCurMssionPtr)
+  {
+    return false;
+  }
+
+  pNewPos->byMapCode = m_pQuestSetup->pUseMap->m_pMapSet->m_dwIndex;
+  pNewPos->wLayerIndex = m_wLayerIndex;
+  _dh_mission_setup *mission = m_MissionMgr.pCurMssionPtr;
+  _dh_quest_setup *questSetup = m_pQuestSetup;
+  return questSetup->pUseMap->GetRandPosInDummy(mission->pStartDummy, pNewPos->fPos, true);
+}
+
+bool CDarkHoleChannel::IsReEnterable(unsigned int dwEnterSerial)
+{
+  __enter_member info;
+  return m_listEnterMember.IsInList(dwEnterSerial, reinterpret_cast<char *>(&info)) && info.bDisnormalClose;
+}
+
+char CDarkHoleChannel::PushMember(
+  CPlayer *pMember,
+  bool bReconnect,
+  CMapData *pOldMap,
+  unsigned __int16 wLastLayer,
+  float *pfOldPos)
+{
+  if (GetCurrentMemberNum() >= 32)
+  {
+    return 0;
+  }
+
+  _dh_player_mgr *slot = nullptr;
+  for (int j = 0; j < 32; ++j)
+  {
+    if (!m_Quester[j].IsFill())
+    {
+      slot = &m_Quester[j];
+      break;
+    }
+  }
+
+  if (!slot)
+  {
+    return 0;
+  }
+
+  slot->pOne = pMember;
+  slot->dwSerial = pMember->m_dwObjSerial;
+  slot->LastPos.pMap = pOldMap;
+  slot->LastPos.wLayer = wLastLayer;
+  slot->LastPos.fPos[0] = pfOldPos[0];
+  slot->LastPos.fPos[1] = pfOldPos[1];
+  slot->LastPos.fPos[2] = pfOldPos[2];
+  slot->nEnterOrder = m_dwEnterOrderCounter++;
+
+  SendMsg_NewMember(pMember, bReconnect);
+  if (m_dwOpenerSerial == pMember->m_dwObjSerial)
+  {
+    m_pLeaderPtr = slot;
+  }
+  SendMsg_LeaderChange(pMember);
+  SendMsg_QuestInfo(pMember);
+  SendMsg_MissionInfo(pMember);
+  SendMsg_MemberInfo(pMember);
+
+  pMember->m_pDHChannel = this;
+  if (!m_listEnterMember.IsInList(pMember->m_dwObjSerial, nullptr))
+  {
+    __enter_member entry(true, false, 0);
+    m_listEnterMember.PushNode_Back(pMember->m_dwObjSerial, reinterpret_cast<char *>(&entry));
+  }
+  m_bCheckMemberClose = true;
+  return 1;
+}
+
+void CDarkHoleChannel::SendMsg_NewMember(CPlayer *pNewMember, bool bReconnect)
+{
+  _darkhole_new_member_inform_zocl msg{};
+  msg.dwNewMemberSerial = pNewMember->m_dwObjSerial;
+  const char *name = pNewMember->m_Param.GetCharNameW();
+  strcpy_0(msg.wszNewMemberName, name);
+  msg.bReconnect = bReconnect;
+
+  unsigned __int8 type[2]{35, 1};
+  for (int j = 0; j < 32; ++j)
+  {
+    _dh_player_mgr *entry = &m_Quester[j];
+    if (entry->IsFill())
+    {
+      const unsigned __int16 len = msg.size();
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        entry->pOne->m_ObjID.m_wIndex,
+        type,
+        reinterpret_cast<char *>(&msg),
+        len);
+    }
+  }
+}
+
+void CDarkHoleChannel::SendMsg_QuestInfo(CPlayer *pDst)
+{
+  _darkhole_quest_info_inform_zocl msg{};
+  msg.dwLimTimeSec = static_cast<unsigned int>(-1);
+  strcpy_0(msg.szDescirptCode, m_pQuestSetup->szDescirptCode);
+  msg.dwPassTimeSec = (timeGetTime() - m_dwQuestStartTime) / 1000;
+
+  _dh_reward_sub_setup *reward =
+    (pDst->m_dwObjSerial == m_dwOpenerSerial) ? &m_pQuestSetup->RewardOne : &m_pQuestSetup->RewardOther;
+  msg.dRwExp = reward->dExp;
+  msg.dwRwPvp = reward->dwPvp;
+  msg.dwRwDalant = reward->dwDalant;
+
+  unsigned __int8 type[2]{35, 4};
+  const unsigned __int16 len = msg.size();
+  g_Network.m_pProcess[0]->LoadSendMsg(pDst->m_ObjID.m_wIndex, type, msg.szDescirptCode, len);
+}
+
+void CDarkHoleChannel::SendMsg_MissionInfo(CPlayer *pDst)
+{
+  _darkhole_mission_info_inform_zocl msg;
+  strcpy_0(msg.szDescirptCode, m_MissionMgr.pCurMssionPtr->szDescirptCode);
+  if (m_MissionMgr.GetLimMSecTime() == -1)
+  {
+    msg.dwLimTimeSec = static_cast<unsigned int>(-1);
+  }
+  else
+  {
+    msg.dwLimTimeSec = m_MissionMgr.GetLimMSecTime() / 1000;
+  }
+  msg.dwPassTimeSec = (timeGetTime() - m_MissionMgr.dwMissionStartTime) / 1000;
+  msg.byOrder = m_MissionMgr.pCurMssionPtr->byJobOrder;
+  msg.byJobNum = m_MissionMgr.pCurMssionPtr->nEmbJobSetupNum;
+
+  for (int j = 0; j < m_MissionMgr.pCurMssionPtr->nEmbJobSetupNum; ++j)
+  {
+    _dh_job_setup *job = m_MissionMgr.pCurMssionPtr->EmbJobSetup[j];
+    msg.Job[j].byType = job->eventType;
+    msg.Job[j].byTableCode = job->JobSetup.byTable;
+    if (job->JobSetup.pEventFld)
+    {
+      msg.Job[j].wRecordIndex = job->JobSetup.pEventFld->m_dwIndex;
+    }
+    else
+    {
+      msg.Job[j].wRecordIndex = static_cast<unsigned __int16>(-1);
+    }
+    msg.Job[j].zNeedCount = static_cast<__int16>(job->JobSetup.nEventCount);
+    strcpy_0(msg.Job[j].szDescirptCode, job->szDescirptCode);
+    msg.Job[j].bPass = m_MissionMgr.Count[j].bPass;
+    msg.Job[j].wCurCount = static_cast<unsigned __int16>(m_MissionMgr.Count[j].nCount);
+    msg.Job[j].bDisable = true;
+
+    _dh_mission_mgr::_if_change *ifChange = m_MissionMgr.SearchCurMissionCont();
+    if (ifChange && ifChange->pszDespt)
+    {
+      strcpy_0(msg.szDescirptCode, ifChange->pszDespt);
+    }
+  }
+
+  unsigned __int8 type[2]{35, 17};
+  const unsigned __int16 len = msg.size();
+  g_Network.m_pProcess[0]->LoadSendMsg(pDst->m_ObjID.m_wIndex, type, msg.szDescirptCode, len);
+}
+
+void CDarkHoleChannel::SendMsg_MemberInfo(CPlayer *pDst)
+{
+  _darkhole_member_info_inform_zocl msg;
+  msg.dwLeaderSerial = m_pLeaderPtr ? m_pLeaderPtr->dwSerial : static_cast<unsigned int>(-1);
+
+  int memberCount = 0;
+  for (int j = 0; j < 32; ++j)
+  {
+    _dh_player_mgr *entry = &m_Quester[j];
+    if (entry->IsFill())
+    {
+      msg.List[memberCount].dwSerial = entry->dwSerial;
+      const char *name = entry->pOne->m_Param.GetCharNameW();
+      strcpy_0(msg.List[memberCount].wszName, name);
+      ++memberCount;
+    }
+  }
+
+  msg.wMemberNum = static_cast<unsigned __int16>(memberCount);
+  unsigned __int8 type[2]{35, 5};
+  const unsigned __int16 len = msg.size();
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    pDst->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    len);
 }
 

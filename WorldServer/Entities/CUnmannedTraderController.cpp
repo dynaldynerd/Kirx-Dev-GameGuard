@@ -144,6 +144,20 @@ void CUnmannedTraderController::LogOut(unsigned __int16 wInx, unsigned int dwSer
   userInfoTable->LogOut(wInx, dwSerial);
 }
 
+void CUnmannedTraderController::CompleteCreate(unsigned __int16 wInx)
+{
+  CUnmannedTraderUserInfoTable *userInfoTable = CUnmannedTraderUserInfoTable::Instance();
+  userInfoTable->CompleteCreate(wInx);
+
+  CUnmannedTraderTaxRateManager *taxRateManager = CUnmannedTraderTaxRateManager::Instance();
+  taxRateManager->CompleteCreate(wInx);
+}
+
+void CUnmannedTraderController::CompleteCreateNotifyTradeInfo(unsigned __int8 byRace, unsigned __int16 wInx)
+{
+  m_kTradeInfo.NotifyIncome(byRace, wInx);
+}
+
 bool CUnmannedTraderController::CheatCancelRegist(
   unsigned __int16 wInx,
   unsigned int dwOwnerSerial,

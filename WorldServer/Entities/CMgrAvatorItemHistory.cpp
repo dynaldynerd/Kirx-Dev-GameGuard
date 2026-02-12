@@ -1063,6 +1063,143 @@ void CMgrAvatorItemHistory::trans_ground_item(
   WriteFile(pszFileName, sData);
 }
 
+void CMgrAvatorItemHistory::post_delete(CPostData *pPost, char *pFileName)
+{
+  char sender[17]{};
+  sData[0] = 0;
+
+  W2M(pPost->m_wszSendName, sender, 0x11u);
+  if (pPost->m_Key.IsFilled())
+  {
+    _base_fld *record = g_Main.m_tblItemData[pPost->m_Key.byTableCode].GetRecord(pPost->m_Key.wItemIndex);
+    const char *upgInfo = DisplayItemUpgInfo(pPost->m_Key.byTableCode, pPost->m_dwUpt);
+    sprintf_s(sBuf, 0x2800uLL, "%s_%I64u_@%s[%I64u]", record->m_strCode, pPost->m_dwDur, upgInfo, pPost->m_lnUID);
+  }
+  else
+  {
+    sprintf_s(sBuf, 0x2800uLL, "NoItem");
+  }
+
+  sprintf_s(
+    sData,
+    0x4E20uLL,
+    "[PostSystem : Post Delete] - PostSerial[%u] - No[%d] - Item[%s] - Gold[%u] - Sender[%s] - [%s %s]\r\n",
+    pPost->m_dwPSSerial,
+    pPost->m_nNumber,
+    sBuf,
+    pPost->m_dwGold,
+    sender,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pFileName, sData);
+}
+
+void CMgrAvatorItemHistory::post_getpresent(
+  char *wszSendName,
+  unsigned int dwPostSerial,
+  _STORAGE_LIST::_db_con *Item,
+  unsigned __int64 dwDur,
+  unsigned int dwGold,
+  char *pFileName)
+{
+  char sender[17]{};
+  char buffer[64]{};
+  sData[0] = 0;
+
+  W2M(wszSendName, sender, 0x11u);
+  if (Item)
+  {
+    _base_fld *record = g_Main.m_tblItemData[Item->m_byTableCode].GetRecord(Item->m_wItemIndex);
+    const char *upgInfo = DisplayItemUpgInfo(Item->m_byTableCode, Item->m_dwLv);
+    sprintf_s(buffer, 0x40uLL, "%s_%I64u_@%s[%I64u]", record->m_strCode, dwDur, upgInfo, Item->m_lnUID);
+  }
+  else
+  {
+    sprintf_s(buffer, 0x40uLL, "NoItem");
+  }
+
+  sprintf(
+    sData,
+    "[PostSystem : Get Item & Gold In Inven] - PostSerial[%u] - Item[%s] - Gold[%u] - Sender[%s] - [%s %s]\r\n",
+    dwPostSerial,
+    buffer,
+    dwGold,
+    sender,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pFileName, sData);
+}
+
+void CMgrAvatorItemHistory::post_senditem(
+  char *wszRecvName,
+  _STORAGE_LIST::_db_con *Item,
+  unsigned __int64 dwDur,
+  unsigned int dwGold,
+  char *pFileName)
+{
+  char receiver[17]{};
+  char buffer[64]{};
+  sData[0] = 0;
+
+  W2M(wszRecvName, receiver, 0x11u);
+  if (Item)
+  {
+    _base_fld *record = g_Main.m_tblItemData[Item->m_byTableCode].GetRecord(Item->m_wItemIndex);
+    const char *upgInfo = DisplayItemUpgInfo(Item->m_byTableCode, Item->m_dwLv);
+    sprintf_s(buffer, 0x40uLL, "%s_%I64u_@%s[%I64u]", record->m_strCode, dwDur, upgInfo, Item->m_lnUID);
+  }
+  else
+  {
+    sprintf_s(buffer, 0x40uLL, "NoItem");
+  }
+
+  sprintf(
+    sData,
+    "[PostSystem : Send Item & Gold] - Item[%s] - Gold[%u] - Receiver[%s] - [%s %s]\r\n",
+    buffer,
+    dwGold,
+    receiver,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pFileName, sData);
+}
+
+void CMgrAvatorItemHistory::post_return(
+  char *wszRecvName,
+  unsigned int dwPostSerial,
+  _STORAGE_LIST::_db_con *Item,
+  unsigned __int64 dwDur,
+  unsigned int dwGold,
+  char *pFileName)
+{
+  char receiver[17]{};
+  char buffer[64]{};
+  sData[0] = 0;
+
+  W2M(wszRecvName, receiver, 0x11u);
+  if (Item)
+  {
+    _base_fld *record = g_Main.m_tblItemData[Item->m_byTableCode].GetRecord(Item->m_wItemIndex);
+    const char *upgInfo = DisplayItemUpgInfo(Item->m_byTableCode, Item->m_dwLv);
+    sprintf_s(buffer, 0x40uLL, "%s_%I64u_@%s[%I64u]", record->m_strCode, dwDur, upgInfo, Item->m_lnUID);
+  }
+  else
+  {
+    sprintf_s(buffer, 0x40uLL, "NoItem");
+  }
+
+  sprintf(
+    sData,
+    "[PostSystem : Get Return Item & Gold In Inven] - PostSerial[%u] - Item[%s] - Gold[%u] - Receiver[%s] - [%s %s]\r\n",
+    dwPostSerial,
+    buffer,
+    dwGold,
+    receiver,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pFileName, sData);
+}
+
 void CMgrAvatorItemHistory::post_receive(CPostData *pPost, char *pFileName)
 {
   char sender[17]{};
@@ -2217,6 +2354,34 @@ void CMgrAvatorItemHistory::exchange_item(
   strcat_0(sData, sBuf);
 
   (void)n;
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::cut_clear_item(
+  int n,
+  unsigned __int16 *pwCuttingResBuffer,
+  unsigned int dwAddGold,
+  unsigned int dwNewGold,
+  char *pszFileName)
+{
+  (void)n;
+
+  sData[0] = '\0';
+  std::sprintf(sBuf, "CUT SELL: rev(G:%u) $G:%u [%s %s]\r\n", dwAddGold, dwNewGold, m_szCurDate, m_szCurTime);
+  strcat_0(sData, sBuf);
+
+  for (int resourceIndex = 0; resourceIndex < GetMaxResKind(); ++resourceIndex)
+  {
+    if (!pwCuttingResBuffer[resourceIndex])
+    {
+      continue;
+    }
+
+    _base_fld *record = g_Main.m_tblItemData[18].GetRecord(resourceIndex);
+    std::sprintf(sBuf, "\t- %s_%d\r\n", record->m_strCode, pwCuttingResBuffer[resourceIndex]);
+    strcat_0(sData, sBuf);
+  }
+
   WriteFile(pszFileName, sData);
 }
 

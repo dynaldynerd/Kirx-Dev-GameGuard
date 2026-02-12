@@ -34,6 +34,8 @@ public:
   bool PushNode_Front(unsigned int index, char *infoData);
   bool PopNode_Front(unsigned int *pdwOutIndex, char *pInfoData);
   bool FindNode(unsigned int dwIndex, char *pInfoData);
+  bool IsInList(unsigned int dwIndex, char *pInfoData);
+  unsigned int GetSize();
   void ResetList();
   virtual ~CIndexList() = default;
 };

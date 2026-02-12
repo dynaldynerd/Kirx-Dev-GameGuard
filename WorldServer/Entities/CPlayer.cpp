@@ -76,6 +76,7 @@
 #include "TimeItem.h"
 #include "ResourceItem_fld.h"
 #include "BulletItem_fld.h"
+#include "UnitFrame_fld.h"
 #include "UnitPart_fld.h"
 #include "UnitBullet_fld.h"
 #include "PotionItem_fld.h"
@@ -873,6 +874,48 @@ void _TRAP_PARAM::Init()
     m_Item[j].init();
   }
   m_nCount = 0;
+}
+
+char _TOWER_PARAM::PushList(_STORAGE_LIST::_db_con *pTowerItem, CGuardTower *pTowerObj)
+{
+  for (int index = 0; index < 6; ++index)
+  {
+    if (!m_List[index].m_pTowerItem)
+    {
+      m_List[index].m_pTowerItem = pTowerItem;
+      m_List[index].m_wItemSerial = pTowerItem->m_wSerial;
+      m_List[index].m_pTowerObj = pTowerObj;
+      return 1;
+    }
+  }
+  return 0;
+}
+
+void _TOWER_PARAM::NotifyOwnerAttackInform(CCharacter *pDst)
+{
+  for (int index = 0; index < 6; ++index)
+  {
+    CGuardTower *tower = m_List[index].m_pTowerObj;
+    if (tower)
+    {
+      tower->NotifyOwnerAttackInform(pDst);
+    }
+  }
+}
+
+char _TRAP_PARAM::PushItem(CTrap *pTrap, unsigned int dwTrapSerial)
+{
+  for (int index = 0; index < 20; ++index)
+  {
+    if (!m_Item[index].isLoad())
+    {
+      m_Item[index].pItem = pTrap;
+      m_Item[index].dwSerial = dwTrapSerial;
+      ++m_nCount;
+      return 1;
+    }
+  }
+  return 0;
 }
 
 void _CRYMSG_LIST::_LIST::Init()
@@ -1814,6 +1857,182 @@ unsigned __int8 _MASTERY_PARAM::GetMasteryPerMast(unsigned __int8 byCode, unsign
 unsigned int _MASTERY_PARAM::GetCumPerMast(unsigned __int8 byCode, unsigned __int8 byMast)
 {
   return m_ppdwMasteryCumPtr[byCode][byMast];
+}
+
+bool _MASTERY_PARAM::AlterCumPerMast(
+  unsigned __int8 byClass,
+  unsigned __int8 byIndex,
+  unsigned int dwAlterCum,
+  unsigned int *pdwAfterCum)
+{
+  bool updated = false;
+
+  m_MastUpData.init();
+  m_SkillUpData.init();
+  m_bUpdateEquipMast = false;
+
+  switch (byClass)
+  {
+    case 0:
+    {
+      m_BaseCum.m_dwDamWpCnt[byIndex] += dwAlterCum;
+      *pdwAfterCum = m_BaseCum.m_dwDamWpCnt[byIndex];
+      if (m_mtyWp[byIndex] < 0x63u)
+      {
+        const unsigned int mastery = CalcMastery(0, byIndex, m_BaseCum.m_dwDamWpCnt[byIndex], m_byRaceCode);
+        if (m_mtyWp[byIndex] < mastery)
+        {
+          m_mtyWp[byIndex] = static_cast<unsigned __int8>(mastery);
+          m_MastUpData.set(0, byIndex, static_cast<unsigned __int8>(mastery));
+          updated = true;
+          m_bUpdateEquipMast = true;
+        }
+      }
+      break;
+    }
+    case 1:
+    {
+      m_BaseCum.m_dwDefenceCnt += dwAlterCum;
+      *pdwAfterCum = m_BaseCum.m_dwDefenceCnt;
+      if (m_mtySuffer < 0x63u)
+      {
+        const unsigned int mastery = CalcMastery(1, 0, m_BaseCum.m_dwDefenceCnt, m_byRaceCode);
+        if (m_mtySuffer < mastery)
+        {
+          m_mtySuffer = static_cast<unsigned __int8>(mastery);
+          m_MastUpData.set(1u, 0, static_cast<unsigned __int8>(mastery));
+          updated = true;
+          m_bUpdateEquipMast = true;
+        }
+      }
+      break;
+    }
+    case 2:
+    {
+      m_BaseCum.m_dwShieldCnt += dwAlterCum;
+      *pdwAfterCum = m_BaseCum.m_dwShieldCnt;
+      if (m_mtyShield < 0x63u)
+      {
+        const unsigned int mastery = CalcMastery(2, 0, m_BaseCum.m_dwShieldCnt, m_byRaceCode);
+        if (m_mtyShield < mastery)
+        {
+          m_mtyShield = static_cast<unsigned __int8>(mastery);
+          m_MastUpData.set(2u, 0, static_cast<unsigned __int8>(mastery));
+          updated = true;
+          m_bUpdateEquipMast = true;
+        }
+      }
+      break;
+    }
+    case 3:
+    {
+      m_BaseCum.m_dwSkillCum[byIndex] += dwAlterCum;
+      *pdwAfterCum = m_BaseCum.m_dwSkillCum[byIndex];
+      _base_fld *record = s_pSkillData->GetRecord(byIndex);
+      const unsigned __int8 sfLevel = static_cast<unsigned __int8>(
+        GetSFLevel(*reinterpret_cast<int *>(&record[4].m_strCode[60]), m_BaseCum.m_dwSkillCum[byIndex]));
+      if (sfLevel > m_lvSkill[byIndex])
+      {
+        m_lvSkill[byIndex] = sfLevel;
+        m_SkillUpData.set(byIndex, sfLevel);
+        updated = true;
+      }
+      const int skillClass = *reinterpret_cast<int *>(&record[1].m_strCode[4]);
+      if (m_mtySkill[skillClass] < 0x63u)
+      {
+        m_dwSkillMasteryCum[skillClass] += dwAlterCum;
+        const unsigned int mastery =
+          CalcMastery(3, skillClass, m_dwSkillMasteryCum[skillClass], m_byRaceCode);
+        if (m_mtySkill[skillClass] < mastery)
+        {
+          m_mtySkill[skillClass] = static_cast<unsigned __int8>(mastery);
+          m_MastUpData.set(3u, static_cast<unsigned __int8>(record[1].m_strCode[4]),
+                           static_cast<unsigned __int8>(mastery));
+          updated = true;
+        }
+      }
+      break;
+    }
+    case 4:
+    {
+      m_BaseCum.m_dwForceCum[byIndex] += dwAlterCum;
+      *pdwAfterCum = m_BaseCum.m_dwForceCum[byIndex];
+      const unsigned int forceLvCum = dwAlterCum + m_dwForceLvCum[byIndex & 3];
+      m_dwForceLvCum[byIndex & 3] = forceLvCum;
+      if (m_mtyForce[byIndex] < 0x63u)
+      {
+        const unsigned int mastery = CalcMastery(4, byIndex, m_BaseCum.m_dwForceCum[byIndex], m_byRaceCode);
+        if (m_mtyForce[byIndex] < mastery)
+        {
+          m_mtyForce[byIndex] = static_cast<unsigned __int8>(mastery);
+          m_MastUpData.set(4u, byIndex, static_cast<unsigned __int8>(mastery));
+          updated = true;
+        }
+      }
+      if (m_mtyForce[byIndex] < 0x63u)
+      {
+        const unsigned int staffMastery = GetStaffMastery(m_dwForceLvCum);
+        if (m_mtyStaff < staffMastery)
+        {
+          m_mtyStaff = static_cast<unsigned __int8>(staffMastery);
+          updated = true;
+          m_bUpdateEquipMast = true;
+        }
+      }
+      break;
+    }
+    case 5:
+    {
+      m_BaseCum.m_dwMakeCum[byIndex] += dwAlterCum;
+      *pdwAfterCum = m_BaseCum.m_dwMakeCum[byIndex];
+      if (m_mtyMakeItem[byIndex] < 0x63u)
+      {
+        unsigned int mastery = 0;
+        if (byIndex)
+        {
+          if (byIndex == 1)
+          {
+            mastery = CalcMastery(5, 1, m_BaseCum.m_dwMakeCum[byIndex], m_byRaceCode);
+          }
+          else if (byIndex == 2)
+          {
+            mastery = CalcMastery(5, 2, m_BaseCum.m_dwMakeCum[byIndex], m_byRaceCode);
+          }
+        }
+        else
+        {
+          mastery = CalcMastery(5, 0, m_BaseCum.m_dwMakeCum[0], m_byRaceCode);
+        }
+        if (m_mtyMakeItem[byIndex] < mastery)
+        {
+          m_mtyMakeItem[byIndex] = static_cast<unsigned __int8>(mastery);
+          m_MastUpData.set(5u, byIndex, static_cast<unsigned __int8>(mastery));
+          updated = true;
+        }
+      }
+      break;
+    }
+    case 6:
+    {
+      m_BaseCum.m_dwSpecialCum += dwAlterCum;
+      *pdwAfterCum = m_BaseCum.m_dwSpecialCum;
+      if (m_mtySpecial < 0x63u)
+      {
+        const unsigned int mastery = CalcMastery(6, 0, m_BaseCum.m_dwSpecialCum, m_byRaceCode);
+        if (m_mtySpecial < mastery)
+        {
+          m_mtySpecial = static_cast<unsigned __int8>(mastery);
+          m_MastUpData.set(6u, 0, static_cast<unsigned __int8>(mastery));
+          updated = true;
+        }
+      }
+      break;
+    }
+    default:
+      return updated;
+  }
+
+  return updated;
 }
 
 unsigned __int8 _MASTERY_PARAM::GetSkillLv(unsigned __int8 bySkillIndex)
@@ -4888,6 +5107,39 @@ __int64 CPlayer::GetMaxHP()
     return 1;
   }
   return maxHp;
+}
+
+__int64 CPlayer::CalcCurHPRate()
+{
+  if (IsRidingUnit())
+  {
+    int maxGauge = 10000;
+    _UnitFrame_fld *frameRecord = reinterpret_cast<_UnitFrame_fld *>(g_Main.m_tblUnitFrame.GetRecord(m_pUsingUnit->byFrame));
+    if (frameRecord && frameRecord->m_nUnit_HP > 0)
+    {
+      maxGauge = frameRecord->m_nUnit_HP;
+    }
+    return static_cast<unsigned int>(
+      static_cast<int>((static_cast<float>(static_cast<int>(m_pUsingUnit->dwGauge)) / static_cast<float>(maxGauge)) * 10000.0f));
+  }
+
+  const float hp = static_cast<float>(GetHP());
+  const int maxHp = static_cast<int>(GetMaxHP());
+  return static_cast<unsigned int>(static_cast<int>((hp / static_cast<float>(maxHp)) * 10000.0f));
+}
+
+__int64 CPlayer::CalcCurFPRate()
+{
+  const int scaledFp = 10000 * GetFP();
+  const int maxFp = GetMaxFP();
+  return static_cast<unsigned int>(scaledFp / maxFp);
+}
+
+__int64 CPlayer::CalcCurSPRate()
+{
+  const int scaledSp = 10000 * GetSP();
+  const int maxSp = GetMaxSP();
+  return static_cast<unsigned int>(scaledSp / maxSp);
 }
 
 unsigned __int64 CPlayer::GetStateFlag()
@@ -8487,6 +8739,83 @@ void CPlayer::SendMsg_BuddyLoginInform(unsigned int dwObjSerial, unsigned __int8
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 6u);
 }
 
+void CPlayer::SendMsg_BuddyAddFail(char byRetCode, char *pwszDstName)
+{
+#pragma pack(push, 1)
+  struct BuddyAddFailMsg
+  {
+    char byRetCode;
+    char wszDstName[17];
+  };
+#pragma pack(pop)
+
+  BuddyAddFailMsg msg{};
+  msg.byRetCode = byRetCode;
+  strcpy_0(msg.wszDstName, pwszDstName);
+
+  unsigned __int8 type[2] = {31, 10};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+}
+
+void CPlayer::SendMsg_BuddyAddAsk(
+  unsigned __int16 wAskerIndex,
+  unsigned int dwAskerSerial,
+  char *pwszAskerName)
+{
+#pragma pack(push, 1)
+  struct BuddyAddAskMsg
+  {
+    unsigned __int16 wAskerIndex;
+    unsigned int dwAskerSerial;
+    char wszAskerName[17];
+  };
+#pragma pack(pop)
+
+  BuddyAddAskMsg msg{};
+  msg.wAskerIndex = wAskerIndex;
+  msg.dwAskerSerial = dwAskerSerial;
+  strcpy_0(msg.wszAskerName, pwszAskerName);
+
+  unsigned __int8 type[2] = {31, 11};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+}
+
+void CPlayer::SendMsg_BuddyAddAnswerResult(
+  char byRetCode,
+  char bAccept,
+  unsigned int dwAskerSerial,
+  unsigned __int16 wIndex,
+  unsigned int dwSerial,
+  char *pwszCharName)
+{
+#pragma pack(push, 1)
+  struct BuddyAddAnswerResultMsg
+  {
+    unsigned __int8 byRetCode;
+    bool bAccept;
+    unsigned int dwAskerSerial;
+    unsigned __int16 wAdderIndex;
+    unsigned int dwAdderSerial;
+    char wszAdderName[17];
+  };
+#pragma pack(pop)
+
+  BuddyAddAnswerResultMsg msg{};
+  msg.byRetCode = static_cast<unsigned __int8>(byRetCode);
+  msg.bAccept = bAccept != 0;
+  msg.dwAskerSerial = dwAskerSerial;
+  msg.wAdderIndex = wIndex;
+  msg.dwAdderSerial = dwSerial;
+  if (!byRetCode)
+  {
+    memcpy_0(msg.wszAdderName, pwszCharName, 16u);
+    msg.wszAdderName[16] = 0;
+  }
+
+  unsigned __int8 type[2] = {31, 13};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+}
+
 void CPlayer::SendMsg_PartyLeaveSelfResult(CPartyPlayer *pLeaver, bool bWorldExit)
 {
 #pragma pack(push, 1)
@@ -8521,6 +8850,309 @@ void CPlayer::SendMsg_PartySuccessResult(CPartyPlayer *pSuccessor)
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, 4u);
 }
 
+void CPlayer::SendMsg_PartyJoinInvitationQuestion(unsigned __int16 wJoinerIndex)
+{
+#pragma pack(push, 1)
+  struct PartyJoinInvitationQuestionMsg
+  {
+    unsigned __int16 wIndex;
+    unsigned int dwSerial;
+  };
+#pragma pack(pop)
+
+  PartyJoinInvitationQuestionMsg msg{};
+  msg.wIndex = m_ObjID.m_wIndex;
+  msg.dwSerial = m_dwObjSerial;
+
+  unsigned __int8 type[2] = {16, 2};
+  g_Network.m_pProcess[0]->LoadSendMsg(wJoinerIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+}
+
+void CPlayer::SendMsg_PartyJoinApplicationQuestion(CPlayer *pJoiner)
+{
+#pragma pack(push, 1)
+  struct PartyJoinApplicationQuestionMsg
+  {
+    unsigned __int16 wIndex;
+    unsigned int dwSerial;
+  };
+#pragma pack(pop)
+
+  PartyJoinApplicationQuestionMsg msg{};
+  msg.wIndex = pJoiner->m_ObjID.m_wIndex;
+  msg.dwSerial = pJoiner->m_dwObjSerial;
+
+  unsigned __int8 type[2] = {16, 5};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+}
+
+void CPlayer::SendMsg_PartyJoinJoinerResult()
+{
+#pragma pack(push, 1)
+  struct PartyJoinJoinerResultEntry
+  {
+    unsigned __int16 wIndex;
+    unsigned int dwSerial;
+    char wszAvatorName[17];
+  };
+
+  struct PartyJoinJoinerResultMsg
+  {
+    unsigned __int8 byLootShareMode;
+    unsigned __int8 byListNum;
+    PartyJoinJoinerResultEntry list[8];
+  };
+#pragma pack(pop)
+
+  CPartyPlayer **partyMembers = m_pPartyMgr->GetPtrPartyMember();
+  if (!partyMembers)
+  {
+    return;
+  }
+
+  PartyJoinJoinerResultMsg msg{};
+  msg.byLootShareMode = m_pPartyMgr->m_pPartyBoss->m_byLootShareSystem;
+  msg.byListNum = static_cast<unsigned __int8>(m_pPartyMgr->GetPopPartyMember() - 1);
+  for (int index = 0; index < msg.byListNum && partyMembers[index]; ++index)
+  {
+    if (partyMembers[index] != m_pPartyMgr)
+    {
+      msg.list[index].wIndex = partyMembers[index]->m_id.wIndex;
+      msg.list[index].dwSerial = partyMembers[index]->m_id.dwSerial;
+      strcpy_0(msg.list[index].wszAvatorName, partyMembers[index]->m_wszName);
+    }
+  }
+
+  unsigned __int16 msgLength = static_cast<unsigned __int16>(
+    2 + msg.byListNum * sizeof(PartyJoinJoinerResultEntry));
+  unsigned __int8 type[2] = {16, 7};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    msgLength);
+}
+
+void CPlayer::SendMsg_PartyJoinMemberResult(CPartyPlayer *pJoiner, char byLootShareMode)
+{
+#pragma pack(push, 1)
+  struct PartyJoinMemberResultMsg
+  {
+    unsigned int dwJoinerSerial;
+    char wszJoinerName[17];
+    unsigned __int8 byLootShareMode;
+    unsigned __int16 wIndex;
+  };
+#pragma pack(pop)
+
+  PartyJoinMemberResultMsg msg{};
+  msg.dwJoinerSerial = pJoiner->m_id.dwSerial;
+  strcpy_0(msg.wszJoinerName, pJoiner->m_wszName);
+  msg.byLootShareMode = static_cast<unsigned __int8>(byLootShareMode);
+  msg.wIndex = pJoiner->m_id.wIndex;
+
+  unsigned __int8 type[2] = {16, 8};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+}
+
+void CPlayer::SendMsg_PartyJoinFailLevel()
+{
+  char msg[1]{};
+  unsigned __int8 type[2] = {16, 66};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, sizeof(msg));
+}
+
+void CPlayer::SendMsg_AwayPartyRequestResult(char byRetCode)
+{
+  char msg[1]{byRetCode};
+  unsigned __int8 type[2] = {16, 32};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, sizeof(msg));
+}
+
+void CPlayer::SendMsg_AwayPartyInvitationQuestion(unsigned __int16 wJoinerIndex)
+{
+#pragma pack(push, 1)
+  struct AwayPartyInvitationQuestionMsg
+  {
+    unsigned __int16 wIndex;
+    unsigned int dwSerial;
+    char wszName[17];
+  };
+#pragma pack(pop)
+
+  AwayPartyInvitationQuestionMsg msg{};
+  msg.wIndex = m_ObjID.m_wIndex;
+  msg.dwSerial = m_dwObjSerial;
+  strcpy_0(msg.wszName, m_Param.GetCharNameA());
+
+  unsigned __int8 type[2] = {16, 33};
+  g_Network.m_pProcess[0]->LoadSendMsg(wJoinerIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+}
+
+void CPlayer::SendMsg_PartyLeaveCompulsionResult(CPartyPlayer *pLeaver)
+{
+#pragma pack(push, 1)
+  struct PartyLeaveCompulsionResultMsg
+  {
+    unsigned int dwExiterSerial;
+  };
+#pragma pack(pop)
+
+  PartyLeaveCompulsionResultMsg msg{};
+  msg.dwExiterSerial = pLeaver ? pLeaver->m_id.dwSerial : static_cast<unsigned int>(-1);
+
+  unsigned __int8 type[2] = {16, 12};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+}
+
+void CPlayer::SendMsg_PartyDisjointResult(char bSuccess)
+{
+  char msg[1]{bSuccess};
+  unsigned __int8 type[2] = {16, 14};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, sizeof(msg));
+}
+
+void CPlayer::SendMsg_PartyLockResult(char byRet)
+{
+  char msg[1]{byRet};
+  unsigned __int8 type[2] = {16, 18};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, sizeof(msg));
+}
+
+void CPlayer::SendMsg_PartyAlterLootShareResult(char byLootShareMode)
+{
+  char msg[1]{byLootShareMode};
+  unsigned __int8 type[2] = {16, 29};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, sizeof(msg));
+}
+
+void CPlayer::SendData_PartyMemberInfo(unsigned __int16 wDstIndex)
+{
+#pragma pack(push, 1)
+  struct PartyMemberEffect
+  {
+    unsigned __int16 wEffectCode;
+    unsigned __int8 byEffectLv;
+  };
+
+  struct PartyMemberInfoUpd
+  {
+    unsigned int dwMemSerial;
+    unsigned __int16 wHPRate;
+    unsigned __int16 wFPRate;
+    unsigned __int16 wSPRate;
+    unsigned __int8 byLv;
+    unsigned __int8 byMapCode;
+    __int16 zPos[2];
+    unsigned __int8 byContEffectNum;
+    PartyMemberEffect effect[16];
+  };
+#pragma pack(pop)
+
+  PartyMemberInfoUpd msg{};
+  msg.dwMemSerial = m_dwObjSerial;
+  msg.wHPRate = static_cast<unsigned __int16>(CalcCurHPRate());
+  msg.wFPRate = static_cast<unsigned __int16>(CalcCurFPRate());
+  msg.wSPRate = static_cast<unsigned __int16>(CalcCurSPRate());
+  msg.byLv = static_cast<unsigned __int8>(m_Param.GetLevel());
+  msg.byMapCode = static_cast<unsigned __int8>(m_Param.GetMapCode());
+  msg.zPos[0] = static_cast<__int16>(m_fCurPos[0]);
+  msg.zPos[1] = static_cast<__int16>(m_fCurPos[2]);
+
+  unsigned __int8 effectCount = 0;
+  for (int row = 0; row < 2; ++row)
+  {
+    for (int col = 0; col < 8; ++col)
+    {
+      _sf_continous *cont = &m_SFCont[row][col];
+      if (cont->m_bExist)
+      {
+        msg.effect[effectCount].wEffectCode = CalcEffectBit(cont->m_byEffectCode, cont->m_wEffectIndex);
+        msg.effect[effectCount].byEffectLv = cont->m_byLv;
+        ++effectCount;
+      }
+    }
+  }
+
+  msg.byContEffectNum = effectCount;
+
+  const unsigned __int16 msgLength = static_cast<unsigned __int16>(17 + effectCount * sizeof(PartyMemberEffect));
+  unsigned __int8 type[2] = {16, 19};
+  g_Network.m_pProcess[0]->LoadSendMsg(wDstIndex, type, reinterpret_cast<char *>(&msg), msgLength);
+}
+
+void CPlayer::SendData_PartyMemberInfoToMembers()
+{
+#pragma pack(push, 1)
+  struct PartyMemberEffect
+  {
+    unsigned __int16 wEffectCode;
+    unsigned __int8 byEffectLv;
+  };
+
+  struct PartyMemberInfoUpd
+  {
+    unsigned int dwMemSerial;
+    unsigned __int16 wHPRate;
+    unsigned __int16 wFPRate;
+    unsigned __int16 wSPRate;
+    unsigned __int8 byLv;
+    unsigned __int8 byMapCode;
+    __int16 zPos[2];
+    unsigned __int8 byContEffectNum;
+    PartyMemberEffect effect[16];
+  };
+#pragma pack(pop)
+
+  PartyMemberInfoUpd msg{};
+  msg.dwMemSerial = m_dwObjSerial;
+  msg.wHPRate = static_cast<unsigned __int16>(CalcCurHPRate());
+  msg.wFPRate = static_cast<unsigned __int16>(CalcCurFPRate());
+  msg.wSPRate = static_cast<unsigned __int16>(CalcCurSPRate());
+  msg.byLv = static_cast<unsigned __int8>(m_Param.GetLevel());
+  msg.byMapCode = static_cast<unsigned __int8>(m_Param.GetMapCode());
+  msg.zPos[0] = static_cast<__int16>(m_fCurPos[0]);
+  msg.zPos[1] = static_cast<__int16>(m_fCurPos[2]);
+
+  unsigned __int8 effectCount = 0;
+  for (int row = 0; row < 2; ++row)
+  {
+    for (int col = 0; col < 8; ++col)
+    {
+      _sf_continous *cont = &m_SFCont[row][col];
+      if (cont->m_bExist)
+      {
+        msg.effect[effectCount].wEffectCode = CalcEffectBit(cont->m_byEffectCode, cont->m_wEffectIndex);
+        msg.effect[effectCount].byEffectLv = cont->m_byLv;
+        ++effectCount;
+      }
+    }
+  }
+
+  msg.byContEffectNum = effectCount;
+
+  CPartyPlayer **partyMembers = m_pPartyMgr->GetPtrPartyMember();
+  if (!partyMembers)
+  {
+    return;
+  }
+
+  const int popPartyMember = static_cast<int>(m_pPartyMgr->GetPopPartyMember());
+  const unsigned __int16 msgLength = static_cast<unsigned __int16>(17 + effectCount * sizeof(PartyMemberEffect));
+  unsigned __int8 type[2] = {16, 19};
+  for (int index = 0; index < popPartyMember; ++index)
+  {
+    if (partyMembers[index] != m_pPartyMgr)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        partyMembers[index]->m_wZoneIndex,
+        type,
+        reinterpret_cast<char *>(&msg),
+        msgLength);
+    }
+  }
+}
+
 void CPlayer::SendMsg_GuildMasterEffect(
   char byState,
   char byGrade,
@@ -8551,6 +9183,969 @@ void CPlayer::SendMsg_GuildMasterEffect(
 
   unsigned __int8 type[2] = {27, 120};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 6u);
+}
+
+void CPlayer::pc_PartyJoinInvitation(unsigned __int16 wDstIndex)
+{
+  if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(m_id.wIndex) == 99)
+  {
+    SendMsg_TLStatusPenalty(1u);
+    return;
+  }
+  if (IsPunished(2u, true))
+  {
+    return;
+  }
+
+  CPlayer *targetPlayer = &g_Player[wDstIndex];
+  if (!targetPlayer->m_bLive || targetPlayer->m_bCorpse || targetPlayer->m_pCurMap != m_pCurMap)
+  {
+    return;
+  }
+  if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(targetPlayer->m_id.wIndex) == 99)
+  {
+    SendMsg_TLStatusPenalty(3u);
+    return;
+  }
+  if (targetPlayer->IsPunished(2u, false))
+  {
+    return;
+  }
+  if (targetPlayer->m_EP.GetEff_Have(50) > 0.0f)
+  {
+    SendMsg_JadeEffectErr(1u);
+    return;
+  }
+
+  const int sourceRaceCode = m_Param.GetRaceCode();
+  const int targetRaceCode = targetPlayer->m_Param.GetRaceCode();
+  if (sourceRaceCode != targetRaceCode)
+  {
+    return;
+  }
+  if (targetPlayer->m_byUserDgr)
+  {
+    if (!m_byUserDgr)
+    {
+      return;
+    }
+  }
+  else if (m_byUserDgr)
+  {
+    return;
+  }
+
+  __int16 *dstBillingType = &targetPlayer->m_pUserDB->m_BillingInfo.iType;
+  __int16 *srcBillingType = &m_pUserDB->m_BillingInfo.iType;
+  CNationSettingManager *nationSetting = CTSingleton<CNationSettingManager>::Instance();
+  if (nationSetting->IsPersonalFreeFixedAmountBillingType(srcBillingType, dstBillingType)
+      || targetPlayer->m_pPartyMgr->IsPartyMode()
+      || m_pPartyMgr->m_bLock)
+  {
+    return;
+  }
+
+  const float profileBonus = targetPlayer->m_EP.GetEff_Have(53);
+  const int targetLevel = static_cast<int>(targetPlayer->GetLevel());
+  if (!m_pPartyMgr->IsJoinPartyLevel(targetLevel, profileBonus))
+  {
+    SendMsg_PartyJoinFailLevel();
+    return;
+  }
+
+  if (m_pPartyMgr->IsPartyBoss() || !m_pPartyMgr->IsPartyMode())
+  {
+    SendMsg_PartyJoinInvitationQuestion(wDstIndex);
+  }
+}
+
+void CPlayer::pc_PartyJoinInvitationAnswer(_CLID *pidBoss)
+{
+  if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(m_id.wIndex) == 99)
+  {
+    SendMsg_TLStatusPenalty(1u);
+    return;
+  }
+  if (IsPunished(2u, true))
+  {
+    return;
+  }
+
+  CPlayer *partyBoss = &g_Player[pidBoss->wIndex];
+  if (partyBoss->m_dwObjSerial != pidBoss->dwSerial || !partyBoss->m_bLive || partyBoss->IsPunished(2u, false))
+  {
+    return;
+  }
+
+  const int sourceRaceCode = m_Param.GetRaceCode();
+  const int bossRaceCode = partyBoss->m_Param.GetRaceCode();
+  if (sourceRaceCode != bossRaceCode)
+  {
+    return;
+  }
+  if (partyBoss->m_byUserDgr)
+  {
+    if (!m_byUserDgr)
+    {
+      return;
+    }
+  }
+  else if (m_byUserDgr)
+  {
+    return;
+  }
+
+  if (m_pPartyMgr->IsPartyMode() || partyBoss->m_pPartyMgr->m_bLock)
+  {
+    return;
+  }
+
+  const float profileBonus = m_EP.GetEff_Have(53);
+  const int myLevel = static_cast<int>(GetLevel());
+  if (!partyBoss->m_pPartyMgr->IsJoinPartyLevel(myLevel, profileBonus))
+  {
+    SendMsg_PartyJoinFailLevel();
+    return;
+  }
+
+  wa_PartyJoin(&partyBoss->m_id, &m_id);
+  if (m_pPartyMgr->IsPartyMode() && partyBoss->m_GroupTargetObject[0].pObject)
+  {
+    m_GroupTargetObject[0].init();
+    m_GroupTargetObject[0].pObject = partyBoss->m_GroupTargetObject[0].pObject;
+    m_GroupTargetObject[0].byKind = partyBoss->m_GroupTargetObject[0].byKind;
+    m_GroupTargetObject[0].byID = partyBoss->m_GroupTargetObject[0].byID;
+    m_GroupTargetObject[0].dwSerial = partyBoss->m_GroupTargetObject[0].dwSerial;
+    SendMsg_SetGroupTargetObjectResult(0, 0);
+  }
+}
+
+void CPlayer::pc_PartyJoinApplication(unsigned __int16 wBossIndex)
+{
+  if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(m_id.wIndex) == 99)
+  {
+    SendMsg_TLStatusPenalty(1u);
+    return;
+  }
+  if (IsPunished(2u, true))
+  {
+    return;
+  }
+
+  CPlayer *partyBoss = &g_Player[wBossIndex];
+  if (!partyBoss->m_bLive || partyBoss->m_bCorpse)
+  {
+    return;
+  }
+  if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(partyBoss->m_id.wIndex) == 99)
+  {
+    SendMsg_TLStatusPenalty(3u);
+    return;
+  }
+  if (partyBoss->IsPunished(2u, false))
+  {
+    return;
+  }
+
+  const int sourceRaceCode = m_Param.GetRaceCode();
+  const int bossRaceCode = partyBoss->m_Param.GetRaceCode();
+  if (sourceRaceCode != bossRaceCode || m_pPartyMgr->IsPartyMode() || !partyBoss->m_pPartyMgr->IsPartyBoss())
+  {
+    return;
+  }
+  if (partyBoss->m_byUserDgr)
+  {
+    if (!m_byUserDgr)
+    {
+      return;
+    }
+  }
+  else if (m_byUserDgr)
+  {
+    return;
+  }
+
+  __int16 *srcBillingType = &m_pUserDB->m_BillingInfo.iType;
+  CNationSettingManager *nationSetting = CTSingleton<CNationSettingManager>::Instance();
+  if (nationSetting->IsPersonalFreeFixedAmountBillingType(srcBillingType, nullptr) || partyBoss->m_pPartyMgr->m_bLock)
+  {
+    return;
+  }
+
+  const float profileBonus = m_EP.GetEff_Have(53);
+  const int myLevel = static_cast<int>(GetLevel());
+  if (partyBoss->m_pPartyMgr->IsJoinPartyLevel(myLevel, profileBonus))
+  {
+    partyBoss->SendMsg_PartyJoinApplicationQuestion(this);
+  }
+  else
+  {
+    SendMsg_PartyJoinFailLevel();
+  }
+}
+
+void CPlayer::pc_PartyJoinApplicationAnswer(_CLID *pidApplicant)
+{
+  if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(m_id.wIndex) == 99)
+  {
+    SendMsg_TLStatusPenalty(1u);
+    return;
+  }
+  if (IsPunished(2u, true))
+  {
+    return;
+  }
+
+  CPlayer *applicant = &g_Player[pidApplicant->wIndex];
+  if (applicant->m_id.dwSerial != pidApplicant->dwSerial
+      || !applicant->m_bLive
+      || applicant->m_bCorpse
+      || applicant->m_pCurMap != m_pCurMap
+      || applicant->IsPunished(2u, false))
+  {
+    return;
+  }
+
+  const int sourceRaceCode = m_Param.GetRaceCode();
+  const int applicantRaceCode = applicant->m_Param.GetRaceCode();
+  if (sourceRaceCode != applicantRaceCode)
+  {
+    return;
+  }
+  if (applicant->m_byUserDgr)
+  {
+    if (!m_byUserDgr)
+    {
+      return;
+    }
+  }
+  else if (m_byUserDgr)
+  {
+    return;
+  }
+  if (m_pPartyMgr->m_bLock)
+  {
+    return;
+  }
+
+  const float profileBonus = applicant->m_EP.GetEff_Have(53);
+  const int applicantLevel = static_cast<int>(applicant->GetLevel());
+  if (m_pPartyMgr->IsJoinPartyLevel(applicantLevel, profileBonus))
+  {
+    wa_PartyJoin(&m_id, &applicant->m_id);
+  }
+  else
+  {
+    SendMsg_PartyJoinFailLevel();
+  }
+}
+
+void CPlayer::pc_PartyLeaveCompulsionReqeuest(unsigned int dwExiterSerial)
+{
+  CPartyPlayer *exiter = nullptr;
+  if (m_pPartyMgr->IsPartyBoss() && (exiter = m_pPartyMgr->GetPtrFromSerial(dwExiterSerial)) != nullptr)
+  {
+    wa_PartyForceLeave(&m_id, &exiter->m_id);
+  }
+  else
+  {
+    SendMsg_PartyLeaveCompulsionResult(nullptr);
+  }
+}
+
+void CPlayer::pc_PartyDisJointReqeuest()
+{
+  if (m_pPartyMgr->IsPartyBoss())
+  {
+    wa_PartyDisjoint(&m_id);
+  }
+  else
+  {
+    SendMsg_PartyDisjointResult(0);
+  }
+}
+
+void CPlayer::pc_PartySuccessionReqeuest(unsigned int dwSuccessorSerial)
+{
+  CPartyPlayer *successor = nullptr;
+  if (m_pPartyMgr->IsPartyBoss() && (successor = m_pPartyMgr->GetPtrFromSerial(dwSuccessorSerial)) != nullptr)
+  {
+    wa_PartySuccession(&m_id, &successor->m_id);
+  }
+  else
+  {
+    SendMsg_PartySuccessResult(nullptr);
+  }
+}
+
+void CPlayer::pc_PartyLockReqeuest(bool bLock)
+{
+  if (!m_pPartyMgr->IsPartyBoss() || m_pPartyMgr->m_bLock == bLock)
+  {
+    SendMsg_PartyLockResult(static_cast<char>(0xFFu));
+  }
+  else
+  {
+    wa_PartyLock(&m_id, bLock);
+  }
+}
+
+void CPlayer::pc_PartyAlterLootShareReqeuest(unsigned __int8 byLootShareMode)
+{
+  if (m_pPartyMgr->IsPartyBoss())
+  {
+    wa_PartyLootShareSystem(&m_id, byLootShareMode);
+  }
+  else
+  {
+    SendMsg_PartyAlterLootShareResult(static_cast<char>(0xFFu));
+  }
+}
+
+void CPlayer::pc_AwaypartyInvitationRequest(char *pwszCharName)
+{
+  if (IsPunished(2u, true) || g_Main.m_pTimeLimitMgr->GetPlayerStatus(m_id.wIndex) == 99)
+  {
+    return;
+  }
+
+  CPlayer *targetPlayer = g_Main.GetCharW(pwszCharName);
+  if (!targetPlayer || targetPlayer->m_dwObjSerial == m_dwObjSerial)
+  {
+    SendMsg_AwayPartyRequestResult(1u);
+    return;
+  }
+  if (targetPlayer->m_Param.GetRaceCode() != m_Param.GetRaceCode())
+  {
+    SendMsg_AwayPartyRequestResult(2u);
+    return;
+  }
+  if (!targetPlayer->m_bOper || targetPlayer->m_bCorpse)
+  {
+    SendMsg_AwayPartyRequestResult(3u);
+    return;
+  }
+  if (targetPlayer->IsPunished(2u, false))
+  {
+    return;
+  }
+  if (targetPlayer->m_byUserDgr)
+  {
+    if (!m_byUserDgr)
+    {
+      SendMsg_AwayPartyRequestResult(3u);
+      return;
+    }
+  }
+  else if (m_byUserDgr)
+  {
+    SendMsg_AwayPartyRequestResult(3u);
+    return;
+  }
+
+  if (targetPlayer->m_pPartyMgr->IsPartyMode())
+  {
+    SendMsg_AwayPartyRequestResult(4u);
+    return;
+  }
+  if (m_pPartyMgr->IsPartyMode() && !m_pPartyMgr->IsPartyBoss())
+  {
+    SendMsg_AwayPartyRequestResult(8u);
+    return;
+  }
+  if (m_pPartyMgr->m_bLock)
+  {
+    SendMsg_AwayPartyRequestResult(7u);
+    return;
+  }
+
+  const float profileBonus = targetPlayer->m_EP.GetEff_Have(53);
+  const int targetLevel = static_cast<int>(targetPlayer->GetLevel());
+  if (!m_pPartyMgr->IsJoinPartyLevel(targetLevel, profileBonus))
+  {
+    SendMsg_AwayPartyRequestResult(5u);
+    return;
+  }
+  if (targetPlayer->m_bBlockParty)
+  {
+    SendMsg_AwayPartyRequestResult(6u);
+    return;
+  }
+  if (g_Main.m_bAwayPartyConsumeItem
+      && targetPlayer->m_Param.m_dbInven.GetPtrFromItemCode(g_Main.m_strAwayPartyItemCode) == nullptr)
+  {
+    SendMsg_AwayPartyRequestResult(9u);
+    return;
+  }
+  if (g_Main.m_bAwayPartyConsumeMoney && g_Main.m_dwAwayPartyMoney > targetPlayer->GetMoney(0))
+  {
+    SendMsg_AwayPartyRequestResult(11u);
+    return;
+  }
+
+  SendMsg_AwayPartyRequestResult(0);
+  SendMsg_AwayPartyInvitationQuestion(targetPlayer->m_ObjID.m_wIndex);
+}
+
+void CPlayer::pc_AwayPartyJoinInvitationAnswer(_CLID *pidBoss, unsigned __int8 byRetCode)
+{
+  if (IsPunished(2u, true))
+  {
+    return;
+  }
+
+  CPlayer *partyBoss = &g_Player[pidBoss->wIndex];
+  if (partyBoss->m_dwObjSerial != pidBoss->dwSerial || !partyBoss->m_bLive || !partyBoss->m_bOper)
+  {
+    return;
+  }
+  if (m_Param.GetRaceCode() != partyBoss->m_Param.GetRaceCode() || partyBoss->IsPunished(2u, false))
+  {
+    return;
+  }
+  if (partyBoss->m_byUserDgr)
+  {
+    if (!m_byUserDgr)
+    {
+      return;
+    }
+  }
+  else if (m_byUserDgr)
+  {
+    return;
+  }
+
+  if (partyBoss->m_pPartyMgr->m_bLock)
+  {
+    SendMsg_AwayPartyRequestResult(7u);
+    partyBoss->SendMsg_AwayPartyRequestResult(7u);
+    return;
+  }
+  if (partyBoss->m_pPartyMgr->IsPartyMode() && !partyBoss->m_pPartyMgr->IsPartyBoss())
+  {
+    SendMsg_AwayPartyRequestResult(8u);
+    partyBoss->SendMsg_AwayPartyRequestResult(8u);
+    return;
+  }
+  if (m_pPartyMgr->IsPartyMode())
+  {
+    SendMsg_AwayPartyRequestResult(4u);
+    partyBoss->SendMsg_AwayPartyRequestResult(4u);
+    return;
+  }
+
+  const float profileBonus = m_EP.GetEff_Have(53);
+  const int myLevel = static_cast<int>(GetLevel());
+  if (!partyBoss->m_pPartyMgr->IsJoinPartyLevel(myLevel, profileBonus))
+  {
+    SendMsg_AwayPartyRequestResult(5u);
+    partyBoss->SendMsg_AwayPartyRequestResult(5u);
+    return;
+  }
+
+  _STORAGE_LIST::_db_con *consumeItem = nullptr;
+  if (g_Main.m_bAwayPartyConsumeItem)
+  {
+    consumeItem = m_Param.m_dbInven.GetPtrFromItemCode(g_Main.m_strAwayPartyItemCode);
+    if (!consumeItem)
+    {
+      SendMsg_AwayPartyRequestResult(9u);
+      partyBoss->SendMsg_AwayPartyRequestResult(9u);
+      return;
+    }
+  }
+  if (g_Main.m_bAwayPartyConsumeMoney && g_Main.m_dwAwayPartyMoney > GetMoney(0))
+  {
+    SendMsg_AwayPartyRequestResult(11u);
+    partyBoss->SendMsg_AwayPartyRequestResult(11u);
+    return;
+  }
+
+  if (byRetCode)
+  {
+    partyBoss->SendMsg_AwayPartyRequestResult(10u);
+    return;
+  }
+
+  wa_PartyJoin(&partyBoss->m_id, &m_id);
+  if (!m_pPartyMgr->IsPartyMode())
+  {
+    SendMsg_AwayPartyRequestResult(7u);
+    partyBoss->SendMsg_AwayPartyRequestResult(7u);
+    return;
+  }
+
+  if (g_Main.m_bAwayPartyConsumeItem && consumeItem)
+  {
+    const unsigned __int64 remainingDur =
+      Emb_AlterDurPoint(0, consumeItem->m_byStorageIndex, -1, false, true);
+    if (remainingDur)
+    {
+      SendMsg_AdjustAmountInform(0, consumeItem->m_wSerial, static_cast<unsigned int>(remainingDur));
+    }
+    else
+    {
+      CPlayer::s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex, consumeItem, m_szItemHistoryFileName);
+    }
+  }
+
+  if (g_Main.m_bAwayPartyConsumeMoney)
+  {
+    SubDalant(g_Main.m_dwAwayPartyMoney);
+    SendMsg_AlterMoneyInform(0);
+
+    const int level = m_Param.GetLevel();
+    if (level == 30 || level == 40 || level == 50 || level == 60)
+    {
+      CMoneySupplyMgr *moneySupplyMgr = CMoneySupplyMgr::Instance();
+      moneySupplyMgr->UpdateFeeMoneyData(m_Param.GetRaceCode(), level, g_Main.m_dwAwayPartyMoney);
+    }
+  }
+}
+
+void CPlayer::pc_BuddyDownloadRequest()
+{
+#pragma pack(push, 1)
+  struct BuddyDownloadResultMsg
+  {
+    unsigned __int16 wDataSize;
+    char sData[10000];
+  };
+#pragma pack(pop)
+
+  BuddyDownloadResultMsg msg{};
+  int dataSize = 0;
+  void *cursor = msg.sData;
+
+  const unsigned __int8 buddyCount = static_cast<unsigned __int8>(m_pmBuddy.GetBuddyNum());
+  memcpy_0(cursor, &buddyCount, 1uLL);
+  cursor = static_cast<char *>(cursor) + 1;
+  ++dataSize;
+
+  for (int index = 0; index < 50; ++index)
+  {
+    _BUDDY_LIST::__list *buddy = &m_pmBuddy.m_List[index];
+    if (buddy->fill())
+    {
+      const unsigned __int8 nameLen = static_cast<unsigned __int8>(strlen_0(buddy->wszName));
+      memcpy_0(cursor, &nameLen, 1uLL);
+      cursor = static_cast<char *>(cursor) + 1;
+      ++dataSize;
+
+      memcpy_0(cursor, buddy->wszName, nameLen);
+      cursor = static_cast<char *>(cursor) + nameLen;
+      dataSize += nameLen;
+
+      memcpy_0(cursor, buddy, 4uLL);
+      cursor = static_cast<char *>(cursor) + 4;
+      dataSize += 4;
+
+      const unsigned __int8 isOnline = buddy->pPtr ? 1 : 0;
+      memcpy_0(cursor, &isOnline, 1uLL);
+      cursor = static_cast<char *>(cursor) + 1;
+      ++dataSize;
+
+      if (buddy->pPtr)
+      {
+        memcpy_0(cursor, &buddy->pPtr->m_wRegionMapIndex, 1uLL);
+        cursor = static_cast<char *>(cursor) + 1;
+        ++dataSize;
+
+        memcpy_0(cursor, &buddy->pPtr->m_wRegionIndex, 1uLL);
+        cursor = static_cast<char *>(cursor) + 1;
+        ++dataSize;
+      }
+    }
+  }
+
+  msg.wDataSize = static_cast<unsigned __int16>(dataSize);
+  const unsigned __int16 msgLength = static_cast<unsigned __int16>(2 + msg.wDataSize);
+  unsigned __int8 type[2] = {31, 4};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), msgLength);
+}
+
+void CPlayer::pc_BuddyAddRequest(unsigned __int16 wDstIndex, unsigned int dwDstSerial, char *pwszDstName)
+{
+  unsigned __int8 retCode = 0;
+  CPlayer *targetPlayer = nullptr;
+  unsigned int targetSerial = static_cast<unsigned int>(-1);
+
+  if (!m_pmBuddy.GetEmptyData())
+  {
+    retCode = 1;
+    SendMsg_BuddyAddFail(retCode, pwszDstName);
+    return;
+  }
+  if (m_pmBuddy.IsBuddy(wDstIndex))
+  {
+    retCode = 2;
+    SendMsg_BuddyAddFail(retCode, pwszDstName);
+    return;
+  }
+
+  if (wDstIndex == static_cast<unsigned __int16>(-1))
+  {
+    targetPlayer = GetPtrPlayerFromName(g_Player, MAX_PLAYER, pwszDstName);
+    if (!targetPlayer || !targetPlayer->m_bLive)
+    {
+      retCode = 3;
+      SendMsg_BuddyAddFail(retCode, pwszDstName);
+      return;
+    }
+    targetSerial = targetPlayer->m_dwObjSerial;
+  }
+  else
+  {
+    targetPlayer = &g_Player[wDstIndex];
+    if (!targetPlayer->m_bLive || targetPlayer->m_dwObjSerial != dwDstSerial)
+    {
+      retCode = 3;
+      SendMsg_BuddyAddFail(retCode, pwszDstName);
+      return;
+    }
+    targetSerial = dwDstSerial;
+  }
+
+  if (targetPlayer->m_Param.GetRaceCode() == m_Param.GetRaceCode())
+  {
+    if (targetPlayer == this)
+    {
+      retCode = 3;
+    }
+    else if (!targetPlayer->m_pmBuddy.GetEmptyData() && !targetPlayer->m_pmBuddy.IsBuddy(m_dwObjSerial))
+    {
+      retCode = 4;
+    }
+  }
+  else
+  {
+    retCode = 7;
+  }
+
+  if (retCode)
+  {
+    SendMsg_BuddyAddFail(retCode, pwszDstName);
+  }
+  else
+  {
+    m_pmBuddy.PushLastApplyTemp(targetSerial);
+    targetPlayer->SendMsg_BuddyAddAsk(m_ObjID.m_wIndex, m_dwObjSerial, m_Param.GetCharNameA());
+  }
+}
+
+void CPlayer::pc_BuddyAddAnswer(bool bAccept, unsigned __int16 wAskerIndex, unsigned int dwAskerSerial)
+{
+  unsigned __int8 retCode = 0;
+  CPlayer *askerPlayer = nullptr;
+  CPlayer *notifyAsker = nullptr;
+
+  if (!bAccept || m_pmBuddy.GetEmptyData() || m_pmBuddy.IsBuddy(dwAskerSerial))
+  {
+    askerPlayer = &g_Player[wAskerIndex];
+    if (askerPlayer->m_bLive)
+    {
+      if (askerPlayer->m_dwObjSerial == dwAskerSerial)
+      {
+        if (askerPlayer->m_pmBuddy.IsPushLastApply(m_dwObjSerial))
+        {
+          notifyAsker = askerPlayer;
+          if (askerPlayer->m_Param.GetRaceCode() == m_Param.GetRaceCode())
+          {
+            if (notifyAsker == this)
+            {
+              retCode = 3;
+            }
+            else if (
+              bAccept && !notifyAsker->m_pmBuddy.GetEmptyData() && !notifyAsker->m_pmBuddy.IsBuddy(m_dwObjSerial))
+            {
+              retCode = 4;
+            }
+          }
+          else
+          {
+            retCode = 3;
+          }
+        }
+        else
+        {
+          retCode = 5;
+        }
+      }
+      else
+      {
+        retCode = 3;
+      }
+    }
+    else
+    {
+      retCode = 3;
+    }
+  }
+  else
+  {
+    retCode = 1;
+  }
+
+  if (retCode)
+  {
+    SendMsg_BuddyAddAnswerResult(
+      retCode,
+      static_cast<char>(bAccept),
+      dwAskerSerial,
+      static_cast<unsigned __int16>(-1),
+      static_cast<unsigned int>(-1),
+      const_cast<char *>("fail"));
+    if (notifyAsker)
+    {
+      notifyAsker->SendMsg_BuddyAddAnswerResult(
+        retCode,
+        static_cast<char>(bAccept),
+        dwAskerSerial,
+        static_cast<unsigned __int16>(-1),
+        static_cast<unsigned int>(-1),
+        const_cast<char *>("fail"));
+    }
+    return;
+  }
+
+  if (bAccept)
+  {
+    int slotIndex = m_pmBuddy.PushBuddy(notifyAsker->m_dwObjSerial, notifyAsker->m_Param.GetCharNameA(), notifyAsker);
+    if (slotIndex != -1)
+    {
+      m_pUserDB->Update_AddBuddy(slotIndex, notifyAsker->m_dwObjSerial, notifyAsker->m_Param.GetCharNameA());
+    }
+
+    slotIndex = notifyAsker->m_pmBuddy.PushBuddy(m_dwObjSerial, m_Param.GetCharNameA(), this);
+    if (slotIndex != -1)
+    {
+      notifyAsker->m_pUserDB->Update_AddBuddy(slotIndex, m_dwObjSerial, m_Param.GetCharNameA());
+    }
+  }
+
+  SendMsg_BuddyAddAnswerResult(
+    retCode,
+    static_cast<char>(bAccept),
+    dwAskerSerial,
+    notifyAsker->m_ObjID.m_wIndex,
+    notifyAsker->m_dwObjSerial,
+    notifyAsker->m_Param.GetCharNameA());
+  SendMsg_BuddyPosInform(notifyAsker->m_dwObjSerial, notifyAsker->m_wRegionMapIndex, notifyAsker->m_wRegionIndex);
+
+  notifyAsker->SendMsg_BuddyAddAnswerResult(
+    retCode,
+    static_cast<char>(bAccept),
+    dwAskerSerial,
+    m_ObjID.m_wIndex,
+    m_dwObjSerial,
+    m_Param.GetCharNameA());
+  notifyAsker->SendMsg_BuddyPosInform(m_dwObjSerial, m_wRegionMapIndex, m_wRegionIndex);
+  notifyAsker->m_pmBuddy.PopLastApplyTemp(m_dwObjSerial);
+}
+
+void wa_PartyJoin(_CLID *pidBoss, _CLID *pidJoiner)
+{
+  CPartyPlayer *partyBoss = &g_PartyPlayer[pidBoss->wIndex];
+  CPartyPlayer *joiner = &g_PartyPlayer[pidJoiner->wIndex];
+
+  if (partyBoss->m_id.dwSerial != pidBoss->dwSerial
+      || joiner->m_id.dwSerial != pidJoiner->dwSerial
+      || !partyBoss->m_bLogin
+      || !joiner->m_bLogin
+      || joiner->IsPartyMode()
+      || (partyBoss->IsPartyMode() && !partyBoss->IsPartyBoss())
+      || partyBoss->IsPartyLock())
+  {
+    return;
+  }
+
+  if (partyBoss->IsPartyBoss())
+  {
+    if (!partyBoss->InsertPartyMember(joiner))
+    {
+      return;
+    }
+  }
+  else if (!partyBoss->IsPartyMode() && !partyBoss->FoundParty(joiner))
+  {
+    return;
+  }
+
+  CPlayer *joinerPlayer = &g_Player[joiner->m_wZoneIndex];
+  for (int index = 0; index < 8; ++index)
+  {
+    CPartyPlayer *member = partyBoss->m_pPartyMember[index];
+    if (!member)
+    {
+      break;
+    }
+    if (member != joiner)
+    {
+      CPlayer *memberPlayer = &g_Player[member->m_wZoneIndex];
+      memberPlayer->SendMsg_PartyJoinMemberResult(joiner, static_cast<char>(partyBoss->m_byLootShareSystem));
+    }
+  }
+
+  if (joinerPlayer)
+  {
+    joinerPlayer->SendMsg_PartyJoinJoinerResult();
+  }
+
+  for (int index = 0; index < 8; ++index)
+  {
+    CPartyPlayer *member = partyBoss->m_pPartyMember[index];
+    if (!member)
+    {
+      break;
+    }
+    if (member != joiner)
+    {
+      CPlayer *memberPlayer = &g_Player[member->m_wZoneIndex];
+      memberPlayer->SendData_PartyMemberInfo(joiner->m_wZoneIndex);
+    }
+  }
+
+  if (joinerPlayer)
+  {
+    joinerPlayer->SendData_PartyMemberInfoToMembers();
+  }
+}
+
+void wa_PartyForceLeave(_CLID *pidBoss, _CLID *pidLeaver)
+{
+  CPartyPlayer *partyBoss = &g_PartyPlayer[pidBoss->wIndex];
+  CPartyPlayer *exiter = &g_PartyPlayer[pidLeaver->wIndex];
+
+  if (partyBoss->m_id.dwSerial != pidBoss->dwSerial
+      || exiter->m_id.dwSerial != pidLeaver->dwSerial
+      || !partyBoss->m_bLogin
+      || !exiter->m_bLogin
+      || !exiter->IsPartyMode()
+      || !partyBoss->IsPartyBoss()
+      || exiter->m_pPartyBoss != partyBoss)
+  {
+    return;
+  }
+
+  CPartyPlayer *prevMembers[8]{};
+  for (int index = 0; index < 8; ++index)
+  {
+    prevMembers[index] = partyBoss->m_pPartyMember[index];
+  }
+
+  CPartyPlayer *newBoss = nullptr;
+  if (!partyBoss->RemovePartyMember(exiter, &newBoss))
+  {
+    return;
+  }
+
+  for (int index = 0; index < 8 && prevMembers[index]; ++index)
+  {
+    CPlayer *notifyPlayer = &g_Player[prevMembers[index]->m_wZoneIndex];
+    notifyPlayer->SendMsg_PartyLeaveCompulsionResult(exiter);
+  }
+}
+
+void wa_PartyDisjoint(_CLID *pidBoss)
+{
+  CPartyPlayer *partyBoss = &g_PartyPlayer[pidBoss->wIndex];
+  if (partyBoss->m_id.dwSerial != pidBoss->dwSerial || !partyBoss->IsPartyBoss())
+  {
+    return;
+  }
+
+  CPartyPlayer *prevMembers[8]{};
+  for (int index = 0; index < 8; ++index)
+  {
+    prevMembers[index] = partyBoss->m_pPartyMember[index];
+  }
+
+  partyBoss->DisjointParty();
+
+  for (int index = 0; index < 8 && prevMembers[index]; ++index)
+  {
+    CPlayer *notifyPlayer = &g_Player[prevMembers[index]->m_wZoneIndex];
+    notifyPlayer->SendMsg_PartyDisjointResult(1u);
+  }
+}
+
+void wa_PartySuccession(_CLID *pidBoss, _CLID *pidSuccessor)
+{
+  CPartyPlayer *partyBoss = &g_PartyPlayer[pidBoss->wIndex];
+  CPartyPlayer *successor = &g_PartyPlayer[pidSuccessor->wIndex];
+
+  if (partyBoss->m_id.dwSerial != pidBoss->dwSerial
+      || successor->m_id.dwSerial != pidSuccessor->dwSerial
+      || !partyBoss->m_bLogin
+      || !successor->m_bLogin
+      || !partyBoss->IsPartyBoss()
+      || !successor->IsPartyMode()
+      || successor->m_pPartyBoss != partyBoss
+      || !partyBoss->InheritBoss(successor))
+  {
+    return;
+  }
+
+  for (int index = 0; index < 8; ++index)
+  {
+    CPartyPlayer *member = successor->m_pPartyMember[index];
+    if (!member)
+    {
+      break;
+    }
+
+    CPlayer *memberPlayer = &g_Player[member->m_wZoneIndex];
+    memberPlayer->SendMsg_PartySuccessResult(successor);
+  }
+}
+
+void wa_PartyLock(_CLID *pidBoss, bool bLock)
+{
+  CPartyPlayer *partyBoss = &g_PartyPlayer[pidBoss->wIndex];
+  if (partyBoss->m_id.dwSerial != pidBoss->dwSerial
+      || !partyBoss->m_bLogin
+      || !partyBoss->IsPartyBoss()
+      || partyBoss->m_bLock == bLock
+      || !partyBoss->SetLockMode(bLock))
+  {
+    return;
+  }
+
+  for (int index = 0; index < 8; ++index)
+  {
+    CPartyPlayer *member = partyBoss->m_pPartyMember[index];
+    if (!member)
+    {
+      break;
+    }
+
+    CPlayer *memberPlayer = &g_Player[member->m_wZoneIndex];
+    memberPlayer->SendMsg_PartyLockResult(static_cast<char>(bLock));
+  }
+}
+
+void wa_PartyLootShareSystem(_CLID *pidBoss, unsigned __int8 byLootShareMode)
+{
+  CPartyPlayer *partyBoss = &g_PartyPlayer[pidBoss->wIndex];
+  if (partyBoss->m_id.dwSerial != pidBoss->dwSerial
+      || !partyBoss->m_bLogin
+      || !partyBoss->IsPartyBoss()
+      || !partyBoss->SetLootShareMode(byLootShareMode))
+  {
+    return;
+  }
+
+  for (int index = 0; index < 8; ++index)
+  {
+    CPartyPlayer *member = partyBoss->m_pPartyMember[index];
+    if (!member)
+    {
+      break;
+    }
+
+    CPlayer *memberPlayer = &g_Player[member->m_wZoneIndex];
+    memberPlayer->SendMsg_PartyAlterLootShareResult(static_cast<char>(byLootShareMode));
+  }
 }
 
 void CPlayer::pc_PartyLeaveSelfReqeuest()

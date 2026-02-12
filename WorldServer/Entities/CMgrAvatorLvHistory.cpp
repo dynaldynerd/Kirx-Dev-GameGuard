@@ -59,6 +59,164 @@ void CMgrAvatorLvHistory::WriteFile(char *pszFileName, char *pszLog)
   IOFileWrite_1(pszFileName, static_cast<unsigned int>(logLen), pszLog);
 }
 
+void CMgrAvatorLvHistory::GetNewFileName(unsigned int dwAvatorSerial, char *pszFileName)
+{
+  const unsigned int localDate = GetLocalDate();
+
+  char dateDir[132]{};
+  sprintf(dateDir, "%s\\%d", m_szStdPath, localDate);
+  CreateDirectoryA(dateDir, nullptr);
+  m_dwLastLocalDate = localDate;
+
+  const unsigned int currentHour = GetCurrentHour();
+  char hourDir[148]{};
+  sprintf(hourDir, "%s\\%d\\%d", m_szStdPath, m_dwLastLocalDate, currentHour);
+  CreateDirectoryA(hourDir, nullptr);
+  m_dwLastLocalHour = currentHour;
+
+  char hourText[32]{};
+  if (currentHour <= 9)
+  {
+    sprintf(hourText, "0%d", currentHour);
+  }
+  else
+  {
+    sprintf(hourText, "%d", currentHour);
+  }
+
+  const unsigned int currentMinute = GetCurrentMin();
+  char minuteText[32]{};
+  if (currentMinute <= 9)
+  {
+    sprintf(minuteText, "0%d", currentMinute);
+  }
+  else
+  {
+    sprintf(minuteText, "%d", currentMinute);
+  }
+
+  const unsigned int currentSecond = GetCurrentSec();
+  char secondText[16]{};
+  if (currentSecond <= 9)
+  {
+    sprintf(secondText, "0%d", currentSecond);
+  }
+  else
+  {
+    sprintf(secondText, "%d", currentSecond);
+  }
+
+  char hmsText[32]{};
+  sprintf(hmsText, "%s%s%s", hourText, minuteText, secondText);
+  sprintf(
+    pszFileName,
+    "%s\\%d\\%d\\%d_%s.lhi",
+    m_szStdPath,
+    m_dwLastLocalDate,
+    m_dwLastLocalHour,
+    dwAvatorSerial,
+    hmsText);
+}
+
+void CMgrAvatorLvHistory::start_mastery(
+  int /*n*/,
+  char *pszAvatorName,
+  unsigned int dwLv,
+  long double dExp,
+  unsigned int dwExpRate,
+  int nGrade,
+  int *pnMaxPoint,
+  _MASTERY_PARAM *pData,
+  char *pszFileName)
+{
+  sData_0[0] = 0;
+  sprintf(
+    sBuf_0,
+    "%s lv:%d xp:%.0f(%d) grade:%d max:%d/%d/%d [%s %s]\r\n",
+    pszAvatorName,
+    dwLv,
+    static_cast<double>(dExp),
+    dwExpRate,
+    nGrade,
+    pnMaxPoint[0],
+    pnMaxPoint[1],
+    pnMaxPoint[2],
+    m_szCurDate,
+    m_szCurTime);
+  strcat_0(sData_0, sBuf_0);
+
+  for (int index = 0; index < 2; ++index)
+  {
+    if (pData->GetCumPerMast(0, index) > 0)
+    {
+      const int mastery = pData->GetMasteryPerMast(0, index);
+      const int cum = pData->GetCumPerMast(0, index);
+      sprintf(sBuf_0, "\tW%d: %d (%d)\r\n", index, cum, mastery);
+      strcat_0(sData_0, sBuf_0);
+    }
+  }
+
+  if (pData->GetCumPerMast(1u, 0) > 0)
+  {
+    const int mastery = pData->GetMasteryPerMast(1u, 0);
+    const int cum = pData->GetCumPerMast(1u, 0);
+    sprintf(sBuf_0, "\tD: %d (%d)\r\n", cum, mastery);
+    strcat_0(sData_0, sBuf_0);
+  }
+
+  if (pData->GetCumPerMast(2u, 0) > 0)
+  {
+    const int mastery = pData->GetMasteryPerMast(2u, 0);
+    const int cum = pData->GetCumPerMast(2u, 0);
+    sprintf(sBuf_0, "\tP: %d (%d)\r\n", cum, mastery);
+    strcat_0(sData_0, sBuf_0);
+  }
+
+  for (int index = 0; index < 48; ++index)
+  {
+    if (pData->m_BaseCum.m_dwSkillCum[index])
+    {
+      const int skillLv = pData->GetSkillLv(static_cast<unsigned __int8>(index));
+      sprintf(sBuf_0, "\tS%d: %d (%d)\r\n", index, pData->m_BaseCum.m_dwSkillCum[index], skillLv);
+      strcat_0(sData_0, sBuf_0);
+    }
+  }
+
+  for (int index = 0; index < 24; ++index)
+  {
+    if (pData->GetCumPerMast(4u, index) > 0)
+    {
+      const int mastery = pData->GetMasteryPerMast(4u, index);
+      const int cum = pData->GetCumPerMast(4u, index);
+      sprintf(sBuf_0, "\tF%d: %d (%d)\r\n", index, cum, mastery);
+      strcat_0(sData_0, sBuf_0);
+    }
+  }
+
+  for (int index = 0; index < 3; ++index)
+  {
+    if (pData->GetCumPerMast(5u, index) > 0)
+    {
+      const int mastery = pData->GetMasteryPerMast(5u, index);
+      const int cum = pData->GetCumPerMast(5u, index);
+      sprintf(sBuf_0, "\tM%d: %d (%d)\r\n", index, cum, mastery);
+      strcat_0(sData_0, sBuf_0);
+    }
+  }
+
+  if (pData->GetCumPerMast(6u, 0) > 0)
+  {
+    const int mastery = pData->GetMasteryPerMast(6u, 0);
+    const int cum = pData->GetCumPerMast(6u, 0);
+    sprintf(sBuf_0, "\tR: %d (%d)\r\n", cum, mastery);
+    strcat_0(sData_0, sBuf_0);
+  }
+
+  sprintf(sBuf_0, "\r\n");
+  strcat_0(sData_0, sBuf_0);
+  WriteFile(pszFileName, sData_0);
+}
+
 void CMgrAvatorLvHistory::char_copy(
   int /*n*/,
   char *pszDstName,

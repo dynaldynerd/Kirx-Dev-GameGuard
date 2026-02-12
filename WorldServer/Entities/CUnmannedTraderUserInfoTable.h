@@ -27,6 +27,7 @@ public:
   bool CheatCancelRegist(unsigned __int16 wInx, unsigned int dwOwnerSerial, unsigned __int8 byNth);
   unsigned __int8 GetMaxRegistCnt(unsigned __int16 wInx, unsigned int dwSerial);
   const CUnmannedTraderRegistItemInfo *GetRegItemInfo(unsigned __int16 wInx, unsigned int dwSerial);
+  void CompleteCreate(unsigned __int16 wInx);
   CUnmannedTraderItemState::STATE GetCloseItemForPassTimeUpdateInfo(
     unsigned int dwOwnerSerial,
     unsigned int dwRegistSerial,

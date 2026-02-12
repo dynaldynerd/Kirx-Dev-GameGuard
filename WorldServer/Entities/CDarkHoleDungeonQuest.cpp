@@ -4,6 +4,10 @@
 
 #include <mmsystem.h>
 
+#include "CDarkHole.h"
+#include "CMapData.h"
+#include "CPartyPlayer.h"
+#include "GlobalObjects.h"
 namespace
 {
   static const char kDarkHoleQuestMatchSection[] = "MATCH";
@@ -49,4 +53,97 @@ bool CDarkHoleDungeonQuest::LoadDarkHoleQuest()
   m_bLoad = true;
   m_dwCheckLastTime = timeGetTime();
   return true;
+}
+
+CDarkHoleChannel *CDarkHoleDungeonQuest::GetChannel(unsigned int dwChannelIndex)
+{
+  return &m_Channel[dwChannelIndex];
+}
+
+CDarkHoleChannel *CDarkHoleDungeonQuest::CanOpenChannel(int nQuestIndex)
+{
+  int layerIndex = SearchEmptyDarkHoleLayer(nQuestIndex);
+  if (layerIndex == -1)
+  {
+    return nullptr;
+  }
+  const int channelIndex = SearchEmptyDarkHoleChannel();
+  if (channelIndex == -1)
+  {
+    return nullptr;
+  }
+  return &m_Channel[channelIndex];
+}
+
+int CDarkHoleDungeonQuest::SearchEmptyDarkHoleChannel()
+{
+  for (int j = 0; j < 128; ++j)
+  {
+    if (!m_Channel[j].IsFill())
+    {
+      return j;
+    }
+  }
+  return -1;
+}
+
+int CDarkHoleDungeonQuest::SearchEmptyDarkHoleLayer(int nQuestIndex)
+{
+  if (nQuestIndex >= m_nLoadQuest)
+  {
+    return -1;
+  }
+
+  CMapData *useMap = m_QuestSetup[nQuestIndex]->pUseMap;
+  for (int j = 0; j < useMap->m_pMapSet->m_nLayerNum; ++j)
+  {
+    if (!useMap->m_ls[j].IsActiveLayer())
+    {
+      return j;
+    }
+  }
+  return -1;
+}
+
+CDarkHoleChannel *CDarkHoleDungeonQuest::OpenChannel(int nQuestIndex, CPlayer *pOpener, CDarkHole *pHoleObj)
+{
+  _dh_quest_setup *questSetup = m_QuestSetup[nQuestIndex];
+  if (questSetup->bPartyOnly && !pOpener->m_pPartyMgr->IsPartyMode())
+  {
+    return nullptr;
+  }
+
+  const int layerIndex = SearchEmptyDarkHoleLayer(nQuestIndex);
+  if (layerIndex == -1)
+  {
+    return nullptr;
+  }
+
+  const int channelIndex = SearchEmptyDarkHoleChannel();
+  if (channelIndex == -1)
+  {
+    return nullptr;
+  }
+
+  CDarkHoleChannel *channel = &m_Channel[channelIndex];
+  questSetup->SetRealBoss(true);
+  channel->OpenDungeon(m_QuestSetup[nQuestIndex], layerIndex, pOpener, pHoleObj);
+  return channel;
+}
+
+CDarkHoleChannel *CDarkHoleDungeonQuest::SearchOncePlayedChannel(unsigned int dwMemberSerial)
+{
+  for (int j = 0; j < 128; ++j)
+  {
+    if (m_Channel[j].IsFill())
+    {
+      CDarkHoleChannel::__enter_member enterInfo;
+      if (m_Channel[j].m_listEnterMember.IsInList(dwMemberSerial, reinterpret_cast<char *>(&enterInfo))
+          && enterInfo.bDisnormalClose)
+      {
+        return &m_Channel[j];
+      }
+    }
+  }
+  return nullptr;
 }

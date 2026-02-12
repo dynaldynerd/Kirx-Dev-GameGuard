@@ -640,6 +640,28 @@ void CMoneySupplyMgr::UpdateBuyUnitData(int nLv, unsigned int nAmount)
   }
 }
 
+void CMoneySupplyMgr::UpdateUnitRepairingChargesData(int nLv, unsigned int nAmount)
+{
+  m_MS_data.dwAmount[8] += nAmount;
+  switch (nLv)
+  {
+    case 30:
+      ++m_MS_data.nUnitRepairLv[0];
+      break;
+    case 40:
+      ++m_MS_data.nUnitRepairLv[1];
+      break;
+    case 50:
+      ++m_MS_data.nUnitRepairLv[2];
+      break;
+    case 60:
+      ++m_MS_data.nUnitRepairLv[3];
+      break;
+    default:
+      break;
+  }
+}
+
 void CMoneySupplyMgr::UpdateFeeMoneyData(unsigned __int8 byRace, int nLv, unsigned int nAmount)
 {
   m_MS_data.dwAmount[5] += nAmount;

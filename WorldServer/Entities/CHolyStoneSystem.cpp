@@ -592,6 +592,59 @@ void CHolyStoneSystem::SetKeeperDestroyRace(unsigned __int8 byRace)
   m_byKeeperDestroyRace = byRace;
 }
 
+unsigned __int8 CHolyStoneSystem::GetKeeperDestroyRace()
+{
+  return m_byKeeperDestroyRace;
+}
+
+char CHolyStoneSystem::IsItemLootAuthority(CPlayer *pOne, unsigned __int8 byCreateCode)
+{
+  if (byCreateCode == 4)
+  {
+    if (g_Main.IsReleaseServiceMode())
+    {
+      if (pOne->m_Param.GetLevel() >= 25)
+      {
+        const int raceCode = pOne->m_Param.GetRaceCode();
+        if (raceCode == GetHolyMasterRace() && !pOne->m_byUserDgr)
+        {
+          return 1;
+        }
+      }
+    }
+    else if (pOne->m_Param.GetLevel() >= 25)
+    {
+      if (pOne->m_Param.GetRaceCode() == GetHolyMasterRace())
+      {
+        return 1;
+      }
+    }
+  }
+  else if (byCreateCode == 6)
+  {
+    if (g_Main.IsReleaseServiceMode())
+    {
+      if (pOne->m_Param.GetLevel() >= 25)
+      {
+        const int raceCode = pOne->m_Param.GetRaceCode();
+        if (raceCode == GetKeeperDestroyRace() && !pOne->m_byUserDgr)
+        {
+          return 1;
+        }
+      }
+    }
+    else if (pOne->m_Param.GetLevel() >= 25)
+    {
+      if (pOne->m_Param.GetRaceCode() == GetKeeperDestroyRace())
+      {
+        return 1;
+      }
+    }
+  }
+
+  return 0;
+}
+
 void CHolyStoneSystem::UnAllRegisterPerAutoMine()
 {
   for (int j = 0; j < MAX_PLAYER; ++j)

@@ -6,7 +6,23 @@ AreaList::AreaList()
     Count = 0;
     Width = 0;
     Height = 0;
+    pData = nullptr;
     DataEnd = 0;
+    pRealData = nullptr;
+}
+
+AreaList::~AreaList()
+{
+    if (pData)
+    {
+        operator delete[](pData);
+        pData = nullptr;
+    }
+    if (pRealData)
+    {
+        operator delete[](pRealData);
+        pRealData = nullptr;
+    }
 }
 
 void AreaList::Push(AreaData *adata)
@@ -17,18 +33,17 @@ void AreaList::Push(AreaData *adata)
 
 void AreaList::ExtractData()
 {
-    if (m_RealData.empty() && !m_Data.empty())
+    if (!pRealData && pData)
     {
-        m_RealData.resize(Height * Width);
+        pRealData = new char[Height * Width];
         int v4 = 0;
         for (unsigned int j = 0; j < DataEnd; j += 3)
         {
-            unsigned short v6 = *(unsigned short *)&m_Data[j];
-            char v7 = m_Data[j + 2];
+            unsigned short v6 = *reinterpret_cast<unsigned short *>(&pData[j]);
+            char v7 = pData[j + 2];
             for (int k = 0; k < v6 + 1; ++k)
             {
-                if ((size_t)v4 < m_RealData.size())
-                    m_RealData[v4++] = v7;
+                pRealData[v4++] = v7;
             }
         }
     }

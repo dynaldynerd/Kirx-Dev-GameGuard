@@ -387,6 +387,158 @@ void CGuild::SendMsg_DownPacket(unsigned __int8 bDowntype, _guild_member_info *p
     buddyLen);
 }
 
+char CGuild::RegSuggestedMatter(
+  unsigned int dwSuggesterSerial,
+  unsigned __int8 byMatterType,
+  unsigned int dwMatterDst,
+  char *pwszComment,
+  unsigned int dwMatterObj1,
+  unsigned int dwMatterObj2,
+  unsigned int dwMatterObj3)
+{
+  m_dwSuggesterSerial = dwSuggesterSerial;
+  m_SuggestedMatter.byMatterType = byMatterType;
+  m_SuggestedMatter.dwMatterDst = dwMatterDst;
+  m_SuggestedMatter.wszMatterDst[0] = 0;
+  m_SuggestedMatter.dwMatterObj1 = dwMatterObj1;
+  m_SuggestedMatter.dwMatterObj2 = dwMatterObj2;
+  m_SuggestedMatter.dwMatterObj3 = dwMatterObj3;
+
+  if (!byMatterType || byMatterType == 1 || byMatterType == 2 || byMatterType == 6)
+  {
+    _guild_member_info *matterDstMember = GetMemberFromSerial(dwMatterDst);
+    if (matterDstMember)
+    {
+      strcpy_0(m_SuggestedMatter.wszMatterDst, matterDstMember->wszName);
+    }
+  }
+
+  memset_0(m_SuggestedMatter.byVoteState, 0, sizeof(m_SuggestedMatter.byVoteState));
+  if (*pwszComment)
+  {
+    strcpy_0(m_SuggestedMatter.wszComment, pwszComment);
+  }
+  else
+  {
+    memset_0(m_SuggestedMatter.wszComment, 0, sizeof(m_SuggestedMatter.wszComment));
+  }
+
+  m_SuggestedMatter.dwStartTime = GetLoopTime();
+  ++m_SuggestedMatter.dwMatterVoteSynKey;
+  m_bNowProcessSgtMter = true;
+
+  if (byMatterType != 5)
+  {
+    ++m_SuggestedMatter.byVoteState[0];
+  }
+
+  int votableMemberCount = 0;
+  for (int memberIndex = 0; memberIndex < 50; ++memberIndex)
+  {
+    _guild_member_info *member = &m_MemberData[memberIndex];
+    if (member->IsFill())
+    {
+      member->bVote = false;
+      if (byMatterType == 5)
+      {
+        if (member->byClassInGuild == 2)
+        {
+          m_SuggestedMatter.VotableMem[votableMemberCount++] = member;
+        }
+      }
+      else if (byMatterType == 6)
+      {
+        m_SuggestedMatter.VotableMem[votableMemberCount++] = member;
+      }
+    }
+  }
+
+  if (!votableMemberCount)
+  {
+    return 0;
+  }
+
+  if (byMatterType == 4)
+  {
+    m_GuildBattleSugestMatter.pkSrc = this;
+    m_GuildBattleSugestMatter.pkDest = GetGuildDataFromSerial(g_Guild, MAX_GUILD, dwMatterDst);
+    m_GuildBattleSugestMatter.eState = _guild_battle_suggest_matter::BATTLE_REQUEST_SUGGEST;
+  }
+  else if (byMatterType == 5)
+  {
+    m_GuildBattleSugestMatter.pkSrc = GetGuildDataFromSerial(g_Guild, MAX_GUILD, dwMatterDst);
+    m_GuildBattleSugestMatter.pkDest = this;
+    m_GuildBattleSugestMatter.eState = _guild_battle_suggest_matter::APPLY_BATTLE_REQUEST_SUGGEST;
+  }
+
+  m_SuggestedMatter.nTotal_VotableMemNum = votableMemberCount;
+  SendMsg_VoteProcessInform_Start();
+  return 1;
+}
+
+void CGuild::SendMsg_VoteProcessInform_Start()
+{
+  if (!m_bNowProcessSgtMter)
+  {
+    return;
+  }
+
+  int loginSeniorCount = 0;
+  for (int memberIndex = 0; memberIndex < m_SuggestedMatter.nTotal_VotableMemNum; ++memberIndex)
+  {
+    if (m_SuggestedMatter.VotableMem[memberIndex]->pPlayer)
+    {
+      ++loginSeniorCount;
+    }
+  }
+
+  _guild_vote_process_inform_zocl msg{};
+  memset_0(&msg, 0, sizeof(msg));
+  msg.bStart = true;
+  msg.byMatterType = m_SuggestedMatter.byMatterType;
+  msg.dwMatterDst = m_SuggestedMatter.dwMatterDst;
+  msg.dwMatterObj1 = m_SuggestedMatter.dwMatterObj1;
+  msg.dwMatterObj2 = m_SuggestedMatter.dwMatterObj2;
+  msg.dwMatterObj3 = m_SuggestedMatter.dwMatterObj3;
+  msg.dwMatterVoteSynKey = m_SuggestedMatter.dwMatterVoteSynKey;
+  msg.dwSuggesterSerial = m_dwSuggesterSerial;
+  msg.byTotalSeniorNum = static_cast<unsigned __int8>(m_SuggestedMatter.nTotal_VotableMemNum);
+  msg.byLoginSeniorNum = static_cast<unsigned __int8>(loginSeniorCount);
+  msg.bActed = false;
+  msg.byApprPoint = m_SuggestedMatter.byVoteState[0];
+  msg.byOppoPoint = m_SuggestedMatter.byVoteState[1];
+  msg.byCommentLen = static_cast<unsigned __int8>(strlen_0(m_SuggestedMatter.wszComment));
+  strcpy_0(msg.wszComment, m_SuggestedMatter.wszComment);
+
+  if (msg.byMatterType == 4)
+  {
+    strcpy_0(msg.wszDestGuildName, m_GuildBattleSugestMatter.pkDest->m_wszName);
+    msg.byDestGuildGrade = m_GuildBattleSugestMatter.pkDest->m_byGrade;
+    msg.byDestGuildRace = m_GuildBattleSugestMatter.pkDest->m_byRace;
+  }
+  else if (msg.byMatterType == 5)
+  {
+    strcpy_0(msg.wszDestGuildName, m_GuildBattleSugestMatter.pkSrc->m_wszName);
+    msg.byDestGuildGrade = m_GuildBattleSugestMatter.pkSrc->m_byGrade;
+    msg.byDestGuildRace = m_GuildBattleSugestMatter.pkSrc->m_byRace;
+  }
+
+  unsigned __int8 pbyType[2] = {27, 24};
+  for (int memberIndex = 0; memberIndex < 50; ++memberIndex)
+  {
+    _guild_member_info *member = &m_MemberData[memberIndex];
+    if (member->IsFill() && member->pPlayer && (msg.byMatterType != 5 || member->byClassInGuild == 2))
+    {
+      const unsigned __int16 messageSize = static_cast<unsigned __int16>(msg.size());
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        member->pPlayer->m_ObjID.m_wIndex,
+        pbyType,
+        reinterpret_cast<char *>(&msg.bStart),
+        messageSize);
+    }
+  }
+}
+
 void CGuild::SendMsg_VoteComplete(bool bPass)
 {
   #pragma pack(push, 1)
@@ -493,6 +645,34 @@ void CGuild::SendMsg_GuildMemberLogin(unsigned int dwSerial, unsigned __int16 wM
         pbyType,
         szMsg,
         7u);
+    }
+  }
+}
+
+void CGuild::SendMsg_GuildMemberPosInform(
+  unsigned int dwSerial,
+  unsigned __int16 wMapCode,
+  unsigned __int16 wRegionIndex)
+{
+  char szMsg[7]{};
+  unsigned __int8 pbyType[2] = {27, 46};
+
+  *reinterpret_cast<unsigned int *>(szMsg) = dwSerial;
+  *reinterpret_cast<unsigned __int16 *>(szMsg + 4) = wMapCode;
+  szMsg[6] = static_cast<char>(wRegionIndex);
+
+  for (int j = 0; j < 50; ++j)
+  {
+    if (m_MemberData[j].IsFill())
+    {
+      if (m_MemberData[j].pPlayer)
+      {
+        g_Network.m_pProcess[0]->LoadSendMsg(
+          m_MemberData[j].pPlayer->m_ObjID.m_wIndex,
+          pbyType,
+          szMsg,
+          7u);
+      }
     }
   }
 }
@@ -1486,6 +1666,28 @@ void CGuild::SendMsg_GuildBattleSuggestResult(unsigned __int8 byRet, char *wszDe
         len);
     }
   }
+}
+
+void CGuild::AddScheduleComplete(unsigned __int8 byRet, CGuild *pSrcGuild)
+{
+  if (!pSrcGuild)
+  {
+    return;
+  }
+
+  if (byRet)
+  {
+    m_GuildBattleSugestMatter.Clear();
+    pSrcGuild->m_GuildBattleSugestMatter.Clear();
+    pSrcGuild->SendMsg_ApplyGuildBattleResultInform(byRet, m_wszName);
+    SendMsg_ApplyGuildBattleResultInform(byRet, pSrcGuild->m_wszName);
+    return;
+  }
+
+  pSrcGuild->SendMsg_ApplyGuildBattleResultInform(0, m_wszName);
+  SendMsg_ApplyGuildBattleResultInform(0, pSrcGuild->m_wszName);
+  SetCopmlteGuildBattleSuggest();
+  pSrcGuild->SetCopmlteGuildBattleSuggest();
 }
 
 char CGuild::SendMsg_GuildBattleProposed(char *pwszName)

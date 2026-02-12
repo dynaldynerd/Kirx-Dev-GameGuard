@@ -571,6 +571,7 @@ struct __cppobj __declspec(align(8)) _MASTERY_PARAM
   static char IsValidMasteryCode(unsigned __int8 byCode, unsigned __int8 byIndex);
   unsigned __int8 GetMasteryPerMast(unsigned __int8 byCode, unsigned __int8 byMast);
   unsigned int GetCumPerMast(unsigned __int8 byCode, unsigned __int8 byMast);
+  bool AlterCumPerMast(unsigned __int8 byClass, unsigned __int8 byIndex, unsigned int dwAlterCum, unsigned int *pdwAfterCum);
   unsigned __int8 GetSkillLv(unsigned __int8 bySkillIndex);
   unsigned __int8 GetEquipMastery(int nEquipMasteryCode);
   void UpdateCumPerMast(unsigned __int8 byClass, unsigned __int8 byIndex, unsigned int dwNewCum);
@@ -1137,6 +1138,8 @@ public:
     unsigned int dwGradeInfo);
   char Create();
   char IntoMap(unsigned __int8 byMapInMode);
+  void SendData_PartyMemberInfo(unsigned __int16 wDstIndex);
+  void SendData_PartyMemberInfoToMembers();
   void SendData_PartyMemberPos();
   void CheckPos_Region();
   void CheckUnitCutTime();
@@ -1165,12 +1168,15 @@ public:
     unsigned __int16 wMapLayer,
     float *pPos);
   void SendMsg_RegistBindResult(char byRetCode);
-  void SendMsg_MoveError(char byRetCode);
-  void SendMsg_Stop(bool bAll);
-  void SendMsg_MoveNext(bool bOtherSend);
-  void SendMsg_MapEnvInform(char byMapCode, unsigned int dwMapEnvCode);
-  void SendMsg_MapOut(unsigned __int8 byMapOutCode, unsigned __int8 byNextMapCode);
+    void SendMsg_MoveError(char byRetCode);
+    void SendMsg_Stop(bool bAll);
+    void SendMsg_MoveNext(bool bOtherSend);
+    void SendMsg_MapEnvInform(char byMapCode, unsigned int dwMapEnvCode);
+    void SendMsg_MapOut(unsigned __int8 byMapOutCode, unsigned __int8 byNextMapCode);
+    void SendMsg_AlterTownOrField();
+    void SendMsg_AlterRegionInform(__int16 nRegionIndex);
   void SendMsg_MineCancle();
+  void SendMsg_CuttingCompleteResult(unsigned __int8 byRet);
   void SendMsg_SetFPInform();
   void SendMsg_SetSPInform();
   void SendMsg_GestureInform(unsigned __int8 byGestureType);
@@ -1207,6 +1213,17 @@ public:
     unsigned __int8 byTableCode,
     unsigned __int16 wItemIndex,
     unsigned __int8 byNum);
+  void SendMsg_PartyJoinInvitationQuestion(unsigned __int16 wJoinerIndex);
+  void SendMsg_PartyJoinApplicationQuestion(CPlayer *pJoiner);
+  void SendMsg_PartyJoinJoinerResult();
+  void SendMsg_PartyJoinMemberResult(CPartyPlayer *pJoiner, char byLootShareMode);
+  void SendMsg_PartyJoinFailLevel();
+  void SendMsg_AwayPartyRequestResult(char byRetCode);
+  void SendMsg_AwayPartyInvitationQuestion(unsigned __int16 wJoinerIndex);
+  void SendMsg_PartyLeaveCompulsionResult(CPartyPlayer *pLeaver);
+  void SendMsg_PartyDisjointResult(char bSuccess);
+  void SendMsg_PartyLockResult(char byRet);
+  void SendMsg_PartyAlterLootShareResult(char byLootShareMode);
   void SendMsg_Notify_Get_Golden_Box(
     char byBoxType,
     unsigned int dwCharSerial,
@@ -1254,7 +1271,28 @@ public:
     unsigned int dwLv,
     unsigned int dwGold);
   void SendMsg_PostSendReply(unsigned __int8 byErrCode);
+  void SendMsg_PostItemGold(char byErrCode);
+  void SendMsg_PostDelete(unsigned __int8 byErrCode, unsigned int dwPostSerial);
+  void SendMsg_PostReturnConfirm(char byErrCode, unsigned int dwPostSerial);
+  void SendMsg_DarkHoleOpenFail(unsigned int n, unsigned __int8 byErrCode);
+  void SendMsg_DarkHoleOpenResult(
+    unsigned int n,
+    int bPartyOnly,
+    unsigned __int8 byErrCode,
+    unsigned __int16 wHoleIndex,
+    unsigned int dwHoleSerial);
+  void SendMsg_EnterDarkHole(unsigned __int8 byErrCode, unsigned int dwHoleSerial);
+  void SendMsg_GiveupDarkHole(unsigned __int8 byErrCode);
+  void SendMsg_ClearDarkHole(unsigned __int8 byErrCode);
+  void SendMsg_ReEnterDarkHoleResult(unsigned __int8 byRetCode);
+  bool UpdateDelPost(unsigned int dwPostSerial, int nIndex);
+  void DelPostData(unsigned int dwIndex);
+  void SortPost(int nNumber);
+  void UpdatePostAddLog(int dwIndex, bool bLog, int nItemKey);
+  bool IsReturnPostUpdate();
+  void UpdateReturnPost(unsigned int dwSerial);
   void UpdatePost(unsigned int dwIndex);
+  void pc_UpdateDataForPostSend();
   void SendData_ChatTrans(
     unsigned __int8 byChatType,
     unsigned int dwSenderSerial,
@@ -1300,6 +1338,22 @@ public:
     unsigned __int8 byNum,
     _alter_link_slot_request_clzo::__list *pList,
     unsigned __int8 byLBLock);
+  void SendMsg_ResSeparation(char byErrCode, _STORAGE_LIST::_db_con *pStartOre, _STORAGE_LIST::_db_con *pNewOre);
+  void SendMsg_PotionSeparation(
+    unsigned __int16 wParentSerial,
+    unsigned __int8 byParentAmount,
+    unsigned __int16 wChildSerial,
+    unsigned __int8 byChildAmount,
+    char nRet);
+  void SendMsg_ResDivision(char byErrCode, _STORAGE_LIST::_db_con *pStartOre, _STORAGE_LIST::_db_con *pTargetOre);
+  void SendMsg_PotionDivision(
+    unsigned __int16 wSerial,
+    unsigned __int8 byParentAmount,
+    unsigned __int16 wChildSerial,
+    unsigned __int8 byChildAmount,
+    char nRet);
+  void SendMsg_ForceInvenChange(char byErrCode);
+  void SendMsg_AnimusInvenChange(char byErrCode);
   void pc_SkillRequest(unsigned __int8 bySkillIndex, _CHRID *pidDst, unsigned __int16 *pConsumeSerial);
   void pc_ClassSkillRequest(unsigned __int16 wSkillIndex, _CHRID *pidDst, unsigned __int16 *pConsumeSerial);
   void pc_ForceRequest(unsigned __int16 wForceSerial, _CHRID *pidDst, unsigned __int16 *pConsumeSerial);
@@ -1340,6 +1394,48 @@ public:
   void pc_MacroUpdate(char *pBuf);
   void pc_RequestTaxRate();
   void pc_RequestChangeTaxRate(unsigned __int8 byTaxRate);
+  void pc_ReleaseSiegeModeRequest();
+  void pc_TransformSiegeModeRequest(unsigned __int16 wItemSerial);
+  void pc_TransShipRenewTicketRequest(unsigned __int16 wTicketItemSerial);
+  void pc_TrunkEstRequest(char *pwszPassword, unsigned __int8 byHintIndex, char *pwszHintAnswer);
+  void pc_TrunkDownloadRequest(char *pwszPassword);
+  void pc_TrunkChangePasswdRequest(
+    char *pwszPrevPassword,
+    char *pwszChngPassword,
+    unsigned __int8 byHintIndex,
+    char *pwszHintAnswer);
+  void pc_TrunkExtendRequest();
+  void pc_TrunkAlterItemSlotRequest(unsigned int dwItemSerial, unsigned __int8 byClientSlotIndex, unsigned __int8 byStorageIndex);
+  void pc_TrunkResDivision(
+    unsigned __int16 wStartSerial,
+    unsigned __int16 wTarSerial,
+    unsigned __int16 wMoveAmount,
+    unsigned __int8 byStorageIndex);
+  void pc_TrunkPotionDivision(
+    unsigned __int16 wStartSerial,
+    unsigned __int16 wTarSerial,
+    unsigned __int16 wMoveAmount,
+    unsigned __int8 byStorageIndex);
+  void pc_TrunkIoMoveRequest(
+    unsigned __int8 byStartStorageIndex,
+    unsigned __int8 byTarStorageIndex,
+    unsigned __int16 wItemSerial,
+    unsigned __int8 byClientSlotIndex);
+  void pc_TrunkIoSwapRequest(
+    unsigned __int8 byStartStorageIndex,
+    unsigned __int8 byTarStorageIndex,
+    unsigned __int16 wStartItemSerial,
+    unsigned __int16 wTarItemSerial);
+  void pc_TrunkIoMergeRequest(
+    unsigned __int8 byStartStorageIndex,
+    unsigned __int8 byTarStorageIndex,
+    unsigned __int16 wStartItemSerial,
+    unsigned __int16 wTarItemSerial,
+    unsigned __int16 wMoveAmount);
+  void pc_TrunkIoMoneyRequest(unsigned __int8 byCase, int dwDalant, int dwGold);
+  void pc_TrunkPwHintIndexRequest();
+  void pc_TrunkHintAnswerRequest(char *pwszAnswer);
+  unsigned __int8 pc_TrunkCreateCostIsFreeRequest();
   void pc_RequestUILockInit(
     CUserDB *pUserDB,
     char *szUILockPW,
@@ -1371,6 +1467,14 @@ public:
   void pc_AwaypartyInvitationRequest(char *pwszCharName);
   void pc_AwayPartyJoinInvitationAnswer(_CLID *pidBoss, unsigned __int8 byRetCode);
   void pc_MoveToOwnStoneMapRequest();
+  void pc_DarkHoleOpenRequest(unsigned __int16 dwItemSerial);
+  void pc_DarkHoleEnterRequest(unsigned __int16 wHoleIndex, unsigned int dwHoleSerial);
+  void pc_DarkHoleGiveupOutRequest();
+  void pc_DarkHoleClearOutRequest();
+  void pc_DarkHoleAnswerReenterRequest(
+    bool bEnter,
+    unsigned __int16 wChannelIndex,
+    unsigned int dwChannelSerial);
   void SendMsg_DTradeAskResult(char byErrCode);
   void pc_DTradeAskRequest(unsigned __int16 wDstIndex);
   void pc_DTradeAnswerRequest(_CLID *pidAsker);
@@ -1379,6 +1483,7 @@ public:
   void pc_DTradeAddRequest(unsigned __int8 bySlotIndex, unsigned __int8 byStorageCode, unsigned int dwSerial, unsigned __int8 byAmount);
   void pc_DTradeDelRequest(unsigned __int8 bySlotIndex);
   void pc_DTradeBetRequest(unsigned __int8 byMoneyUnit, unsigned int dwBetAmount);
+  void pc_UpdateDataForTrade(CPlayer *pTrader);
   void pc_DTradeOKRequest(unsigned int *pdwKey);
   void pc_AnimusRecallRequest(
     unsigned __int16 wAnimusItemSerial,
@@ -1430,6 +1535,7 @@ public:
   char Emb_CheckActForQuest(int nActCode, char *pszReqCode, unsigned __int16 wAddCount, bool bParty);
   void Emb_CheckActForQuestParty(int nActCode, char *pszReqCode, unsigned __int16 wAddCount);
   char Emb_StartQuest(unsigned __int8 bySelectQuest, _happen_event_cont *pHappenEvent);
+  bool Emb_CreateNPCQuest(char *pszEventCode, unsigned int dwNPCQuestIndex);
   char Emb_CreateQuestEvent(__int32 HappenType, char *pszEventCode);
   void Emb_CompleteQuest(
     unsigned __int8 byQuestDBSlot,
@@ -1466,6 +1572,8 @@ public:
   void SendMsg_FcitemInform(unsigned __int16 wItemSerial, unsigned int dwNewStat);
   void SendMsg_ExchangeMoneyResult(char byErrCode);
   void SendMsg_InformTaxIncome(unsigned __int8 byRet, unsigned int dwComm, char *pwszDate);
+  void SendMsg_RaceBossCryMsg();
+  void SendMsg_ResultChangeTaxRate(unsigned __int8 byRetCode, unsigned __int8 byNextTax);
   void SendMsg_InsertItemInform(char byStorageCode, _STORAGE_LIST::_db_con *pItem);
   unsigned __int16 GetVisualVer();
   void UpdateVisualVer(CashChangeStateFlag byChangeFlagMask);
@@ -1478,6 +1586,7 @@ public:
   bool _check_equip_part(_STORAGE_LIST::_db_con *pFixingItem);
   bool _check_embel_part(_STORAGE_LIST::_db_con *pFixingItem);
   __int64 _check_mastery_lim(unsigned __int8 byMasteryClass, unsigned __int8 byIndex);
+  unsigned int _check_mastery_cum_lim(unsigned __int8 byMasteryClass, unsigned __int8 byIndex);
   void Emb_AlterStat(
     unsigned __int8 byMasteryClass,
     unsigned __int8 byIndex,
@@ -1517,6 +1626,7 @@ public:
   void SetCashAmount(int nAmount);
   void DeleteCouponItem(_STORAGE_POS_INDIV *CouponItem, int n);
   void DTradeInit();
+  void SendMsg_DTradeCancleResult(char byErrCode);
   void SendMsg_DTradeCancleInform();
   void SendMsg_DTradeCloseInform(char byCloseCode);
   void NetClose(bool bMoveOutLobby);
@@ -1555,6 +1665,9 @@ public:
   __int64 GetLevel();
   __int64 GetHP();
   __int64 GetMaxHP();
+  __int64 CalcCurHPRate();
+  __int64 CalcCurFPRate();
+  __int64 CalcCurSPRate();
   unsigned __int64 GetStateFlag();
   void SetStateFlag();
   void SenseState();
@@ -1586,6 +1699,36 @@ public:
   void SendMsg_AlterMaxDP();
   void SendMsg_TransformSiegeModeResult(char byRetCode);
   void SendMsg_ReleaseSiegeModeResult(char byRetCode);
+  void SendMsg_TransShipRenewTicketResult(char byErrCode);
+  void SendMsg_TrunkEstResult(unsigned __int8 byRetCode, unsigned int dwLeftDalant);
+  void SendMsg_TrunkDownloadResult(unsigned __int8 byRetCode);
+  void SendMsg_TrunkChangPasswdResult(char byRetCode);
+  void SendMsg_TrunkExtendResult(
+    char byRetCode,
+    unsigned __int8 bySlotNum,
+    unsigned int dwLeftDalant,
+    unsigned int dwConsumDanlant);
+  void SendMsg_TrunkResDivision(char byErrCode, _STORAGE_LIST::_db_con *pStartOre, _STORAGE_LIST::_db_con *pTargetOre);
+  void SendMsg_TrunkPotionDivision(
+    unsigned __int16 wSerial,
+    unsigned __int16 wParentAmount,
+    unsigned __int16 wChildSerial,
+    unsigned __int16 wChildAmount,
+    char nRet);
+  void SendMsg_TrunkIoResult(
+    char byCase,
+    char byRetCode,
+    unsigned int dwLeftDalant,
+    unsigned int dwConsumDanlant);
+  void SendMsg_TrunkIoMoneyResult(
+    char byRetCode,
+    long double dTrunkDalant,
+    long double dTrunkGold,
+    unsigned int dwDalant,
+    unsigned int dwGold,
+    unsigned int dwFeeDalant);
+  void SendMsg_TrunkPwHintIndexResult(char byRetCode, char byHintIndex);
+  void SendMsg_TrunkHintAnswerResult(char byRetCode, char *pwszPassword);
   void ReCalcMaxHFSP(bool bSend, bool bRatio);
   int _CalcMaxHP();
   int _CalcMaxFP();
@@ -1619,6 +1762,11 @@ public:
   void pc_NuclearAfterEffect();
     void SendMsg_RewardAddItem(_STORAGE_LIST::_db_con *pItem, unsigned __int8 byReason);
     void SendMsg_StartContSF(_sf_continous *pCont);
+    void SendMsg_Circle_DelEffect(
+      unsigned __int8 byEffectCode,
+      unsigned __int16 wEffectIndex,
+      unsigned __int8 byLv,
+      bool bToOne);
     void SendMsg_AlterContEffectTime(unsigned __int8 byContType);
     void SendMsg_TLStatusPenalty(char byErrCode);
     void SendMsg_TLStatusInfo(unsigned int dwFatigue, unsigned __int8 wStatus);
@@ -1633,8 +1781,10 @@ public:
   void SendMsg_SetGroupTargetObjectResult(char byRetCode, char byGroupType);
   void SendMsg_SetGroupMapPoint(char byRetCode, char byGroupType, char byMapCode, float *pzTar, unsigned __int8 byRemain);
   void SendMsg_ReleaseGroupTargetObjectResult(unsigned __int8 byGroupType);
+  void SendMsg_BuddyDelResult(char byRetCode, unsigned int dwSerial);
   void SendMsg_BuddyLogoffInform(unsigned int dwObjSerial);
   void SendMsg_BuddyLoginInform(unsigned int dwObjSerial, unsigned __int8 byMapIndex, unsigned __int8 byPosCode);
+  void SendMsg_BuddyPosInform(unsigned int dwDstSerial, unsigned __int8 byMapIndex, unsigned __int8 byPosCode);
   void SendMsg_GM_Greeting(char *wszGMName, char *wszMsg);
   void SendMsg_RACE_Greeting(char *wszBossName, char *wszMsg);
   void SendMsg_GUILD_Greeting(char *wszName, char *wszMsg);
@@ -1682,6 +1832,15 @@ public:
   void pc_BuddyAddRequest(unsigned __int16 wDstIndex, unsigned int dwDstSerial, char *pwszDstName);
   void pc_BuddyAddAnswer(bool bAccept, unsigned __int16 wAskerIndex, unsigned int dwAskerSerial);
   void pc_BuddyDelRequest(unsigned int dwSerial);
+  void SendMsg_BuddyAddFail(char byRetCode, char *pwszDstName);
+  void SendMsg_BuddyAddAsk(unsigned __int16 wAskerIndex, unsigned int dwAskerSerial, char *pwszAskerName);
+  void SendMsg_BuddyAddAnswerResult(
+    char byRetCode,
+    char bAccept,
+    unsigned int dwAskerSerial,
+    unsigned __int16 wIndex,
+    unsigned int dwSerial,
+    char *pwszCharName);
   void SendMsg_GuildForceLeaveBoradori();
   void pc_PartyLeaveSelfReqeuest();
   void SendMsg_PartyLeaveSelfResult(CPartyPlayer *pLeaver, bool bWorldExit);
@@ -1752,6 +1911,11 @@ public:
   void pc_Revival(bool bUseableJade);
   void pc_ExitWorldRequest();
   void pc_LinkBoardRequest();
+  void pc_PostListRequest();
+  void pc_PostContentRequest(unsigned int dwIndex);
+  void pc_PostItemGoldRequest(unsigned int dwIndex);
+  void pc_PostDeleteRequest(unsigned int dwIndex);
+  void pc_PostReturnConfirmRequest(unsigned int dwPostSerial);
   void CheckPosInTown();
   void NewViewCircleObject();
   void CreateComplete();
@@ -2316,6 +2480,12 @@ public:
 bool LoadMasteryLimFile(char *pszErrMsg);
 bool DTradeEqualPerson(CPlayer *lp_pOne, CPlayer **lpp_pDst);
 void wa_EnterWorld(_WA_AVATOR_CODE *pData, unsigned __int16 wZoneIndex);
+void wa_PartyJoin(_CLID *pidBoss, _CLID *pidJoiner);
+void wa_PartyForceLeave(_CLID *pidBoss, _CLID *pidLeaver);
+void wa_PartyDisjoint(_CLID *pidBoss);
+void wa_PartySuccession(_CLID *pidBoss, _CLID *pidSuccessor);
+void wa_PartyLock(_CLID *pidBoss, bool bLock);
+void wa_PartyLootShareSystem(_CLID *pidBoss, unsigned __int8 byLootShareMode);
 void wa_PartySelfLeave(_CLID *pidLeaver);
 void wa_ExitWorld(_CLID *pidWorld);
 CPlayer *GetPtrPlayerFromSerial(CPlayer *pData, int nNum, unsigned int dwSerial);

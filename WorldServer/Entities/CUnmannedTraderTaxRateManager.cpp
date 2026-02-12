@@ -4,6 +4,7 @@
 #include "CUnmannedTraderEnvironmentValue.h"
 #include "CWeeklyGuildRankManager.h"
 #include "CGuild.h"
+#include "GlobalObjects.h"
 
 CUnmannedTraderTaxRateManager *CUnmannedTraderTaxRateManager::ms_Instance = nullptr;
 
@@ -78,6 +79,27 @@ char CUnmannedTraderTaxRateManager::Load()
   return 1;
 }
 
+void CUnmannedTraderTaxRateManager::CompleteCreate(unsigned __int16 wInx)
+{
+  if (wInx >= MAX_PLAYER || this->m_vecTRC.empty())
+  {
+    return;
+  }
+
+  CPlayer *player = &g_Player[wInx];
+  const size_t raceCode = static_cast<size_t>(player->m_Param.GetRaceCode());
+  if (this->m_vecTRC.size() <= raceCode)
+  {
+    return;
+  }
+
+  TRC_AutoTrade *autoTrade = this->m_vecTRC[raceCode];
+  if (autoTrade)
+  {
+    autoTrade->SendMsg_UserLogInNotifyTaxRate(wInx);
+  }
+}
+
 bool CUnmannedTraderTaxRateManager::IsOwnerGuild(unsigned __int8 byRace, unsigned int dwGuildSerial)
 {
   if (m_vecTRC.empty() || m_vecTRC.size() <= byRace)
@@ -107,6 +129,40 @@ void CUnmannedTraderTaxRateManager::SendTaxRate(int n, unsigned __int8 byRace)
 
   TRC_AutoTrade *autoTrade = m_vecTRC[byRace];
   autoTrade->sendmsg_taxrate(n, 0);
+}
+
+void CUnmannedTraderTaxRateManager::SendTaxRatePatriarch(int n, unsigned __int8 byRace)
+{
+  if (!m_vecTRC.empty() && m_vecTRC.size() > byRace)
+  {
+    TRC_AutoTrade *autoTrade = m_vecTRC[byRace];
+    autoTrade->SendMsg_PatriarchTaxRate(n);
+  }
+}
+
+unsigned int CUnmannedTraderTaxRateManager::GetSuggestedTime(unsigned __int8 byRace)
+{
+  if (m_vecTRC.empty() || m_vecTRC.size() <= byRace)
+  {
+    return static_cast<unsigned int>(-1);
+  }
+
+  TRC_AutoTrade *autoTrade = m_vecTRC[byRace];
+  return autoTrade->getSuggestedTime();
+}
+
+void CUnmannedTraderTaxRateManager::SetSuggested(
+  unsigned __int8 byRace,
+  unsigned __int8 byMatterType,
+  unsigned int dwMatterDst,
+  char *wszMatterDst,
+  unsigned int dwNext)
+{
+  if (!m_vecTRC.empty() && m_vecTRC.size() > byRace)
+  {
+    TRC_AutoTrade *autoTrade = m_vecTRC[byRace];
+    autoTrade->set_suggested(byMatterType, dwMatterDst, wszMatterDst, dwNext);
+  }
 }
 
 void CUnmannedTraderTaxRateManager::DQSCompleteInAtradTaxMoney(unsigned __int8 byRace, char *pdata)

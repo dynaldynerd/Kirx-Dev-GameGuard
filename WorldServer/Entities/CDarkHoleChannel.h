@@ -5,11 +5,14 @@
 #include "CIndexList.h"
 
 class CGameObject;
+struct _ENTER_DUNGEON_NEW_POS;
 
 /* 1598 */
 class __cppobj __declspec(align(8)) CDarkHoleChannel
 {
 public:
+  static unsigned int s_dwChannelSerialCounter;
+
   struct __cppobj __enter_member
   {
     bool bActive;
@@ -44,8 +47,23 @@ public:
   CIndexList m_listEnterMember;
   bool m_bMoveNextMission;
 
+  void Init();
+  void OpenDungeon(_dh_quest_setup *pQuestSetup, int nLayerIndex, CPlayer *pOpener, CDarkHole *pHoleObj);
+  void CreateMonster();
   char ClearMember(CPlayer *pMember, bool bDisconnect, _dh_player_mgr::_pos *poutPlayerPos);
   _dh_player_mgr *GetPlayerInfo(unsigned int dwSerial);
+  bool IsFill();
+  int GetAllMemberNum();
+  unsigned int GetCurrentMemberNum();
+  bool CanYouEnterHole(CPlayer *pEnter);
+  bool GetEnterNewPos(_ENTER_DUNGEON_NEW_POS *pNewPos);
+  bool IsReEnterable(unsigned int dwEnterSerial);
+  char PushMember(
+    CPlayer *pMember,
+    bool bReconnect,
+    CMapData *pOldMap,
+    unsigned __int16 wLastLayer,
+    float *pfOldPos);
   char CheckEvent(EM_DH_EVENT eventType, int nContentTable, int nContentIndex, int nCount, CGameObject *pObj);
   void AddMonster();
   void ChangeMonster();
@@ -57,6 +75,10 @@ public:
   char GotoNextMissionByPosition(float *pfStartPos);
   void NextMissionOtherQuester(CPlayer *pLeader, _dh_mission_setup *pNextMission);
   void SendMsg_JobCount(unsigned __int8 nJobIndex, unsigned __int16 nCount);
+  void SendMsg_NewMember(CPlayer *pNewMember, bool bReconnect);
+  void SendMsg_QuestInfo(CPlayer *pDst);
+  void SendMsg_MissionInfo(CPlayer *pDst);
+  void SendMsg_MemberInfo(CPlayer *pDst);
   void SendMsg_RealMsgInform(char *pMsg);
   void SendMsg_RealAddLimTime(int nAddSec, char *pMsg);
   void SendMsg_PopMember(CPlayer *pPopMember, bool bDisconnect);

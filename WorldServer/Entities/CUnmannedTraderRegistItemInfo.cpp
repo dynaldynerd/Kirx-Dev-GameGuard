@@ -1,7 +1,13 @@
 #include "pch.h"
 
 #include "CUnmannedTraderRegistItemInfo.h"
+#include "CLogFile.h"
+#include "CPlayerDB.h"
+#include "GlobalObjects.h"
 #include "WorldServerUtil.h"
+
+#include <cstdio>
+#include <ctime>
 
 CUnmannedTraderRegistItemInfo::CUnmannedTraderRegistItemInfo()
   : m_dwRegistSerial(0),
@@ -44,6 +50,73 @@ void CUnmannedTraderRegistItemInfo::Clear()
   this->m_byStorageIndex = static_cast<unsigned char>(-1);
   this->m_dwD = static_cast<unsigned long long>(-1);
   this->m_dwU = 0x7FFFFFF;
+}
+
+bool CUnmannedTraderRegistItemInfo::Set(
+  unsigned __int16 wInx,
+  unsigned __int8 byInvenIndex,
+  unsigned int uiInx,
+  _TRADE_DB_BASE *kInfo,
+  CLogFile *pkLogger)
+{
+  _STORAGE_LIST::_db_con *item = g_Player[wInx].m_Param.GetItem(byInvenIndex);
+  if (uiInx < 10 && item)
+  {
+    if (m_kState.Set(kInfo->m_List[uiInx].byState))
+    {
+      m_dwRegistSerial = kInfo->m_List[uiInx].dwRegistSerial;
+      m_wItemSerial = item->m_wSerial;
+      m_dwETSerialNumber = item->m_dwETSerialNumber;
+      m_dwPrice = kInfo->m_List[uiInx].dwPrice;
+      m_tStartTime = kInfo->m_List[uiInx].tStartTime;
+      m_bySellTurm = kInfo->m_List[uiInx].bySellTurm;
+      m_dwTax = kInfo->m_List[uiInx].dwTax;
+      m_tResultTime = kInfo->m_List[uiInx].tResultTime;
+      if (IsSellWait())
+      {
+        m_dwBuyerSerial = kInfo->m_List[uiInx].dwBuyerSerial;
+        strcpy_s(m_wszBuyerName, sizeof(m_wszBuyerName), kInfo->m_List[uiInx].wszBuyerName);
+        strcpy_s(m_szBuyerAccount, sizeof(m_szBuyerAccount), kInfo->m_List[uiInx].szBuyerAccount);
+      }
+      m_byTableCode = item->m_byTableCode;
+      m_wItemIndex = item->m_wItemIndex;
+      m_byStorageIndex = item->m_byStorageIndex;
+      m_dwD = item->m_dwDur;
+      m_dwU = item->m_dwLv;
+      if (IsRegist())
+      {
+        item->lock(true);
+      }
+      return true;
+    }
+
+    if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderRegistItemInfo::Set(...)\r\n"
+        "\t\tdwRegistSerial(%u)\r\n"
+        "\t\tm_kState.Set( kInfo.m_List[uiInx(%u)].byState(%u) ) Faili!\r\n",
+        kInfo->m_List[uiInx].dwRegistSerial,
+        uiInx,
+        kInfo->m_List[uiInx].byState);
+    }
+    return false;
+  }
+
+  if (pkLogger)
+  {
+    const unsigned __int8 maxSlot = static_cast<unsigned __int8>(g_Player[wInx].m_Param.GetUseSlot());
+    pkLogger->Write(
+      "CUnmannedTraderRegistItemInfo::Set(...)\r\n"
+      "\t\tdwRegistSerial(%u) MaxSlot(%u) byInvenIndex(%u)\r\n"
+      "\t\t( max_used_trade_num <= uiInx(%u) || 0 == pkItem(%p) ) == false!\r\n",
+      kInfo->m_List[uiInx].dwRegistSerial,
+      maxSlot,
+      byInvenIndex,
+      uiInx,
+      item);
+  }
+  return false;
 }
 
 void CUnmannedTraderRegistItemInfo::RegistItem(
@@ -115,6 +188,154 @@ void CUnmannedTraderRegistItemInfo::SellComplete(
   m_kState.Set(3u);
 }
 
+unsigned __int8 CUnmannedTraderRegistItemInfo::SellWaitItem(
+  unsigned __int16 wInx,
+  CLogFile *pkLogger,
+  __int64 tResultTime,
+  unsigned __int8 *byStorageInx)
+{
+  if (wInx >= MAX_PLAYER)
+  {
+    return 99;
+  }
+
+  if (!m_dwBuyerSerial)
+  {
+    if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderRegistItemInfo::SellWaitItem(...)\r\n"
+        "\t\t(0 == m_dwBuyerSerial) m_dwRegistSerial(%u) Serial(%u) State(%d)\r\n",
+        g_Player[wInx].m_id.dwSerial,
+        m_dwRegistSerial,
+        static_cast<int>(m_kState.GetState()));
+    }
+    return 94;
+  }
+
+  CPlayer *seller = &g_Player[wInx];
+  _STORAGE_LIST::_storage_con *item = seller->m_Param.m_dbInven.GetPtrFromSerial(m_wItemSerial);
+  if (!item)
+  {
+    if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderRegistItemInfo::SellWaitItem( WORD wInx(%u), CLogFile * pkLogger )\r\n"
+        "\t\tName(%s) Serial(%u) Invalid DB Data!\r\n"
+        "\t\tm_dwRegistSerial(%u)\r\n"
+        "\t\tpkPlayer->m_Param.m_dbInven.GetPtrFromSerial( m_wItemSerial(%u) ) == NULL!\r\n",
+        wInx,
+        seller->m_Param.GetCharNameA(),
+        seller->m_id.dwSerial,
+        m_dwRegistSerial,
+        m_wItemSerial);
+    }
+    return 37;
+  }
+
+  if (m_dwPrice <= m_dwTax)
+  {
+    if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderController::SellWaitItem(...) Exceed Tax Price!\r\n"
+        "\t\t dwRegistSerial(%u) dwSeller(%u) dwBuyer(%u)\r\n"
+        "\t\t dwPrice(%u) dwTax(%u)\r\n",
+        m_dwRegistSerial,
+        seller->m_dwObjSerial,
+        m_dwBuyerSerial,
+        m_dwPrice,
+        m_dwTax);
+    }
+    m_dwTax = static_cast<unsigned int>(static_cast<float>(m_dwPrice) * 0.050000001f);
+  }
+
+  const unsigned int realSellDalant = m_dwPrice - m_dwTax;
+  if (!realSellDalant || CanAddMoneyForMaxLimMoney(realSellDalant, seller->m_Param.GetDalant()))
+  {
+    _STORAGE_LIST::_db_con *dbItem = reinterpret_cast<_STORAGE_LIST::_db_con *>(item);
+    item->lock(false);
+    *byStorageInx = dbItem->m_byStorageIndex;
+    seller->AddDalant(static_cast<int>(realSellDalant), true);
+
+    char buyerName[17]{};
+    W2M(m_wszBuyerName, buyerName, 0x11u);
+    CPlayer::s_MgrItemHistory.auto_trade_sell(
+      buyerName,
+      m_dwBuyerSerial,
+      m_szBuyerAccount,
+      m_dwRegistSerial,
+      reinterpret_cast<_STORAGE_LIST::_db_con *>(item),
+      realSellDalant,
+      m_dwTax,
+      seller->m_Param.GetDalant(),
+      seller->m_Param.GetGold(),
+      seller->m_szItemHistoryFileName);
+
+    std::time_t resultTime = static_cast<std::time_t>(tResultTime);
+    tm *timeInfo = std::localtime(&resultTime);
+    char timeBuffer[64]{};
+    if (timeInfo)
+    {
+      std::sprintf(
+        timeBuffer,
+        "%04d-%02d-%02d %02d:%02d:%02d",
+        timeInfo->tm_year + 1900,
+        timeInfo->tm_mon + 1,
+        timeInfo->tm_mday,
+        timeInfo->tm_hour,
+        timeInfo->tm_min,
+        timeInfo->tm_sec);
+    }
+    else
+    {
+      std::sprintf(timeBuffer, "Invalid(%u)", static_cast<unsigned int>(tResultTime));
+    }
+
+    _base_fld *record = g_Main.m_tblItemData[item->m_byTableCode].GetRecord(item->m_wItemIndex);
+    g_Main.m_logAutoTrade.Write(
+      "%s %s >> sellwait (%u) user(%u)%s -> user(%u)%s price(%u) tax(%u)",
+      record->m_strCode,
+      timeBuffer,
+      m_dwRegistSerial,
+      m_dwBuyerSerial,
+      buyerName,
+      seller->m_dwObjSerial,
+      seller->m_Param.GetCharNameA(),
+      m_dwPrice,
+      m_dwTax);
+    return 0;
+  }
+
+  _STORAGE_LIST::_db_con *dbItem = reinterpret_cast<_STORAGE_LIST::_db_con *>(item);
+  seller->Emb_DelStorage(0, dbItem->m_byStorageIndex, false, true, "CUnmannedTraderRegistItemInfo::SellWaitItem()");
+  if (pkLogger)
+  {
+    pkLogger->Write(
+      "CUnmannedTraderRegistItemInfo::SellWaitItem( WORD wInx(%u), DWORD & dwRealSellDalant, CLogFile * pkLogger )\r\n"
+      "\t\tm_dwRegistSerial(%u) dwRealSellDalant(%u) = m_dwPrice(%u) - m_dwTax(%u)\r\n"
+      "\t\tName(%s) Serial(%u) Cur(%u) Sell(%u) Exceed Max Money!\r\n",
+      wInx,
+      m_dwRegistSerial,
+      realSellDalant,
+      m_dwPrice,
+      m_dwTax,
+      seller->m_Param.GetCharNameA(),
+      seller->m_id.dwSerial,
+      seller->m_Param.GetDalant(),
+      realSellDalant);
+  }
+  return 34;
+}
+
+void CUnmannedTraderRegistItemInfo::ClearBuyerInfo()
+{
+  m_dwBuyerSerial = 0;
+  m_dwTax = 0;
+  m_wszBuyerName[0] = '\0';
+  m_szBuyerAccount[0] = '\0';
+}
+
 void CUnmannedTraderRegistItemInfo::ClearRegist()
 {
   Clear();
@@ -145,6 +366,16 @@ bool CUnmannedTraderRegistItemInfo::IsRegist()
   const unsigned int state = m_kState.GetState();
   return state == static_cast<unsigned int>(CUnmannedTraderItemState::STATE::WATEREL)
       || state == static_cast<unsigned int>(CUnmannedTraderItemState::STATE::SOILEL);
+}
+
+bool CUnmannedTraderRegistItemInfo::IsSellWait()
+{
+  return m_kState.GetState() == 4;
+}
+
+bool CUnmannedTraderRegistItemInfo::IsSellUpdateWait()
+{
+  return m_kState.GetState() == 10;
 }
 
 bool CUnmannedTraderRegistItemInfo::IsOverRegistTime()
@@ -214,6 +445,11 @@ unsigned __int8 CUnmannedTraderRegistItemInfo::GetSellTurm()
 unsigned int CUnmannedTraderRegistItemInfo::GetPrice()
 {
   return m_dwPrice;
+}
+
+unsigned int CUnmannedTraderRegistItemInfo::GetTax()
+{
+  return m_dwTax;
 }
 
 unsigned int CUnmannedTraderRegistItemInfo::GetETSerial()

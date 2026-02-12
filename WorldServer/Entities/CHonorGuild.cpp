@@ -25,7 +25,11 @@ _guild_honor_list_result_zocl::_guild_honor_list_result_zocl()
 
 int _guild_honor_list_result_zocl::size() const
 {
-  return sizeof(*this);
+  if (byListNum > 5u)
+  {
+    return 2;
+  }
+  return 237 - 47 * (5 - byListNum);
 }
 
 CHonorGuild *CHonorGuild::Instance()

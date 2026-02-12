@@ -10,11 +10,12 @@ struct AreaList
     unsigned int Count;
     unsigned int Width;
     unsigned int Height;
-    std::vector<char> m_Data;
+    char *pData;
     unsigned int DataEnd;
-    std::vector<char> m_RealData;
+    char *pRealData;
 
     AreaList();
+    ~AreaList();
     void ExtractData();
     void Push(AreaData *adata);
 };

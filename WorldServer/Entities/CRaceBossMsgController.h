@@ -96,12 +96,14 @@ public:
   static CRaceBossMsgController *Instance();
   bool Init();
 
+  char Send(CPlayer *pkSender, const char *pwszMsg);
   char Send(
     unsigned __int8 ucRace,
     unsigned int dwSerial,
     const char *wszName,
     const char *pwszMsg,
     unsigned int dwWebSendDBID);
+  void SendMsgRequestResult(unsigned __int16 usInx, char ucRet);
   void SendWebRaceBossSMSErrorResult(char iRet, unsigned int dwWebDBID);
   void SendComfirmWeb(unsigned __int8 ucRace, RACE_BOSS_MSG::CMsg *pkMsg);
   void SendConfirmCtrl(unsigned __int8 ucRace, RACE_BOSS_MSG::CMsg *pkMsg);

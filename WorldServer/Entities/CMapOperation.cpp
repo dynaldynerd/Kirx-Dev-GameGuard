@@ -28,6 +28,33 @@ std::map<std::string, AreaList> g_strLMapMap;
 
 bool LoadRegionData(int nMapNum, char **ppszMapNameList, char *pszErrMsg);
 
+int GetRegionIndex(int nMapIndex, unsigned int x, unsigned int y, unsigned int dwMaxX, unsigned int dwMaxY)
+{
+  AreaList *areaList = g_AreaIndexTable[nMapIndex];
+  if (!areaList)
+  {
+    return -1;
+  }
+
+  const unsigned int regionX = areaList->Width * x / dwMaxX;
+  const unsigned int regionY = areaList->Height * y / dwMaxY;
+  if (regionX > areaList->Width)
+  {
+    return 0;
+  }
+  if (regionY > areaList->Height)
+  {
+    return 0;
+  }
+
+  const unsigned int regionIndex = areaList->pRealData[areaList->Width * regionY + regionX];
+  if (regionIndex >= areaList->Count)
+  {
+    return -1;
+  }
+  return static_cast<int>(regionIndex);
+}
+
 bool CMapOperation::Init()
 {
   if (!m_tblMapData.ReadScript(".\\Map\\Map_Data.spt"))
@@ -254,16 +281,16 @@ bool LoadRegionData(int nMapNum, char **ppszMapNameList, char *pszErrMsg)
 
         fread(&areaList.DataEnd, 4, 1, Stream);
         
-        g_strLMapMap[szMapCode] = areaList;
-        AreaList *pListInMap = &g_strLMapMap[szMapCode];
+          g_strLMapMap[szMapCode] = areaList;
+          AreaList *pListInMap = &g_strLMapMap[szMapCode];
 
-        if (areaList.DataEnd > 0)
-        {
-            pListInMap->m_Data.resize(areaList.DataEnd);
-            fread(pListInMap->m_Data.data(), areaList.DataEnd, 1, Stream);
-        }
-        
-        pListInMap->ExtractData();
+          if (areaList.DataEnd > 0)
+          {
+              pListInMap->pData = new char[areaList.DataEnd];
+          }
+          fread(pListInMap->pData, pListInMap->DataEnd, 1, Stream);
+          
+          pListInMap->ExtractData();
 
         for (int n = 0; n < nMapNum; ++n)
         {

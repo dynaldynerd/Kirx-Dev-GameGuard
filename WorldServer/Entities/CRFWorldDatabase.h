@@ -424,6 +424,8 @@ public:
   bool UpdateWinGuildBattleResult(unsigned int dwGuildSerial, unsigned int dwScore);
   bool UpdateLoseGuildBattleResult(unsigned int dwGuildSerial, unsigned int dwScore);
   bool UpdateDrawGuildBattleResult(unsigned int dwGuildSerial, unsigned int dwScore);
+  char SelectGuildBattleRankRecord(unsigned int dwGuildSerial);
+  bool InsertGuildBattleRankRecord(unsigned int dwGuildSerial);
   char SelectGuildBattleRankList(unsigned __int8 byRace, _worlddb_guild_battle_rank_list *pkInfo);
   char SelectGuildBattleRerservedList(
     unsigned int uiStartSLID,

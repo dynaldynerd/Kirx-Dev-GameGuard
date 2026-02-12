@@ -8,6 +8,7 @@
 
 class CRecordData;
 class CPlayer;
+struct _NPCQuestIndexTempData;
 /* 1755 */
 class __cppobj __declspec(align(8)) CQuestMgr
 {
@@ -22,6 +23,12 @@ public:
 
   _quest_check_result *CheckReqAct(int nActCode, char *pszReqCode, unsigned __int16 wActCount, bool bPartyState);
   _happen_event_cont *CheckQuestHappenEvent(QUEST_HAPPEN HappenType, char *pszEventCode, unsigned __int8 byRaceCode);
+  void CheckNPCQuestList(char *pszEventCode, unsigned __int8 byRaceCode, _NPCQuestIndexTempData *pQuestIndexData);
+  _happen_event_cont *CheckNPCQuestStartable(
+    char *pszEventCode,
+    unsigned __int8 byRaceCode,
+    int dwQuestIndex,
+    unsigned int dwHappenIndex);
   _Quest_fld *GetQuestFromEvent(unsigned __int8 bySelect);
   __int64 GetCountQuestType(int nType);
   bool _CheckCondition(_happen_event_condition_node *pCond);

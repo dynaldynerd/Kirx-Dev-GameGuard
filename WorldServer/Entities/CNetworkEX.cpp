@@ -24,6 +24,7 @@
 #include "CheatCommands.h"
 #include "PatriarchElectProcessor.h"
 #include "CPlayer.h"
+#include "CPostSystemManager.h"
 #include "CItemStoreManager.h"
 #include "CItemStore.h"
 #include "CMapData.h"
@@ -5297,6 +5298,179 @@ bool CNetworkEX::LogInControllServer(unsigned int n, char *pBuf)
   return true;
 }
 
+char CNetworkEX::DarkHoleOpenRequest(int n, char *pBuf)
+{
+  const unsigned int itemSerial = *reinterpret_cast<unsigned int *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (player->m_bOper)
+  {
+    player->pc_DarkHoleOpenRequest(static_cast<unsigned __int16>(itemSerial));
+  }
+  return 1;
+}
+
+char CNetworkEX::DarkHoleEnterRequest(int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper)
+  {
+    return 1;
+  }
+
+  const unsigned __int16 holeIndex = *reinterpret_cast<unsigned __int16 *>(pBuf);
+  const unsigned int holeSerial = *reinterpret_cast<unsigned int *>(pBuf + 2);
+  if (holeIndex < MAX_DARKHOLE)
+  {
+    player->pc_DarkHoleEnterRequest(holeIndex, holeSerial);
+    return 1;
+  }
+
+  const char *charName = player->m_Param.GetCharNameA();
+  m_LogFile.Write(
+    "odd.. %s: DarkHoleEnterRequest()..  if(pRecv->wHoleIndex >= MAX_DARKHOLE)",
+    charName);
+  return 0;
+}
+
+char CNetworkEX::DarkHoleGiveupOutRequest(int n, char *pBuf)
+{
+  (void)n;
+  (void)pBuf;
+  // this is not a stub
+  return 1;
+}
+
+char CNetworkEX::DarkHoleClearOutRequest(int n, char *pBuf)
+{
+  (void)n;
+  (void)pBuf;
+  // this is not a stub
+  return 1;
+}
+
+char CNetworkEX::DarkHoleAnswerReenterRequest(int n, char *pBuf)
+{
+  (void)n;
+  (void)pBuf;
+  // this is not a stub
+  return 1;
+}
+
+char CNetworkEX::BossSMSMsgRequest(int n, char *pBuf)
+{
+  CPlayer *sender = &g_Player[n];
+  if (!sender->m_bOper)
+  {
+    return 1;
+  }
+
+  const unsigned __int8 msgSize = static_cast<unsigned __int8>(pBuf[0]);
+  if (msgSize <= 0x30u)
+  {
+    if (IsSQLValidString(pBuf + 1))
+    {
+      char msg[72]{};
+      memcpy_0(msg, pBuf + 1, msgSize);
+      msg[msgSize] = 0;
+      CRaceBossMsgController::Instance()->Send(sender, msg);
+      return 1;
+    }
+
+    const char *invalidMsg = pBuf + 1;
+    const char *charName = sender->m_Param.GetCharNameA();
+    g_Main.m_logSystemError.Write(
+      "CNetworkEX::BossSMSMsgRequest() : %u(%s) !::IsSQLValidString( pRecv->wszChatData(%s) ) Invalid!",
+      sender->m_dwObjSerial,
+      charName,
+      invalidMsg);
+    return 0;
+  }
+
+  const char *charName = sender->m_Param.GetCharNameA();
+  m_LogFile.Write(
+    "odd.. %s: BossSMSMsgRequest()..  if(pRecv->bySize > max_boss_sms_msg_size)",
+    charName);
+  return 0;
+}
+
+char CNetworkEX::PostSendRequest(int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (player->m_bOper)
+  {
+    const unsigned __int8 race = static_cast<unsigned __int8>(player->m_Param.GetRaceCode());
+    char *recvName = pBuf;
+    char *title = recvName + 17;
+    char *content = recvName + 38;
+    auto *itemInfo = reinterpret_cast<_STORAGE_POS_INDIV *>(recvName + 239);
+    const unsigned int gold = *reinterpret_cast<unsigned int *>(recvName + 243);
+    CPostSystemManager::Instace()->PostSendRequest(
+      player,
+      recvName,
+      title,
+      content,
+      itemInfo,
+      gold,
+      race);
+  }
+  return 1;
+}
+
+char CNetworkEX::PostListRequest(int n, char *pBuf)
+{
+  (void)pBuf;
+  CPlayer *player = &g_Player[n];
+  if (player->m_bLoad)
+  {
+    player->pc_PostListRequest();
+  }
+  return 1;
+}
+
+char CNetworkEX::PostContentRequest(int n, char *pBuf)
+{
+  const unsigned int postIndex = *reinterpret_cast<unsigned int *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (player->m_bOper)
+  {
+    player->pc_PostContentRequest(postIndex);
+  }
+  return 1;
+}
+
+char CNetworkEX::PostItemGoldRequest(int n, char *pBuf)
+{
+  const unsigned int postIndex = *reinterpret_cast<unsigned int *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (player->m_bOper)
+  {
+    player->pc_PostItemGoldRequest(postIndex);
+  }
+  return 1;
+}
+
+char CNetworkEX::PostDeleteRequest(int n, char *pBuf)
+{
+  const unsigned int postIndex = *reinterpret_cast<unsigned int *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (player->m_bOper)
+  {
+    player->pc_PostDeleteRequest(postIndex);
+  }
+  return 1;
+}
+
+char CNetworkEX::PostReturnConfirmRequest(int n, char *pBuf)
+{
+  const unsigned int postSerial = *reinterpret_cast<unsigned int *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (player->m_bOper)
+  {
+    player->pc_PostReturnConfirmRequest(postSerial);
+  }
+  return 1;
+}
+
 bool CNetworkEX::CancelRaceBossSMSMsg(int n, char *pBuf)
 {
   (void)n;
@@ -5878,6 +6052,499 @@ char CNetworkEX::NotifyRaceBossCryMsg(int n, char *pBuf)
   (void)pBuf;
   CPlayer *player = &g_Player[n];
   player->pc_NotifyRaceBossCryMsg();
+  return 1;
+}
+
+char CNetworkEX::BillingInfoRequest(int n, char *pBuf)
+{
+  (void)pBuf;
+
+  CUserDB *user = &g_UserDB[n];
+  if (user)
+  {
+    user->SendMsg_BillingInfo();
+  }
+
+  return 1;
+}
+
+char CNetworkEX::ReleaseSiegeModeRequest(int n, char *pBuf)
+{
+  (void)pBuf;
+
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return 1;
+  }
+
+  player->pc_ReleaseSiegeModeRequest();
+  return 1;
+}
+
+char CNetworkEX::TransformSiegeModeRequest(int n, char *pBuf)
+{
+  const unsigned __int16 itemSerial = *reinterpret_cast<unsigned __int16 *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return 1;
+  }
+
+  player->pc_TransformSiegeModeRequest(itemSerial);
+  return 1;
+}
+
+char CNetworkEX::TransShipRenewTicketRequest(int n, char *pBuf)
+{
+  const unsigned __int16 ticketSerial = *reinterpret_cast<unsigned __int16 *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (player->m_bOper)
+  {
+    player->pc_TransShipRenewTicketRequest(ticketSerial);
+  }
+
+  return 1;
+}
+
+char CNetworkEX::TrunkEstRequest(int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return 1;
+  }
+
+  char password[128]{};
+  memcpy_0(password, pBuf, 0xCu);
+  password[12] = 0;
+
+  const unsigned __int8 hintIndex = static_cast<unsigned __int8>(pBuf[13]);
+
+  char hintAnswer[128]{};
+  memcpy_0(hintAnswer, pBuf + 14, 0x10u);
+  hintAnswer[16] = 0;
+
+  player->pc_TrunkEstRequest(password, hintIndex, hintAnswer);
+  return 1;
+}
+
+char CNetworkEX::TrunkDownloadRequest(int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return 1;
+  }
+
+  char password[128]{};
+  memcpy_0(password, pBuf, 0xCu);
+  password[12] = 0;
+
+  player->pc_TrunkDownloadRequest(password);
+  return 1;
+}
+
+char CNetworkEX::TrunkChangePasswdRequest(int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return 1;
+  }
+
+  char prevPassword[128]{};
+  memcpy_0(prevPassword, pBuf, 0xCu);
+  prevPassword[12] = 0;
+
+  char changedPassword[128]{};
+  memcpy_0(changedPassword, pBuf + 13, 0xCu);
+  changedPassword[12] = 0;
+
+  const unsigned __int8 hintIndex = static_cast<unsigned __int8>(pBuf[26]);
+
+  char hintAnswer[128]{};
+  memcpy_0(hintAnswer, pBuf + 27, 0x10u);
+  hintAnswer[16] = 0;
+
+  player->pc_TrunkChangePasswdRequest(prevPassword, changedPassword, hintIndex, hintAnswer);
+  return 1;
+}
+
+char CNetworkEX::TrunkExtendRequest(int n, char *pBuf)
+{
+  (void)pBuf;
+
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return 1;
+  }
+
+  player->pc_TrunkExtendRequest();
+  return 1;
+}
+
+char CNetworkEX::TrunkAlterItemSlotRequest(int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper)
+  {
+    return 1;
+  }
+
+  const unsigned __int8 clientSlotIndex = static_cast<unsigned __int8>(pBuf[4]);
+  const unsigned __int8 storageIndex = static_cast<unsigned __int8>(pBuf[5]);
+  if (storageIndex == 5)
+  {
+    if (clientSlotIndex >= 0x64u)
+    {
+      const char *charName = player->m_Param.GetCharNameA();
+      m_LogFile.Write(
+        "odd.. %s: TrunkAlterItemSlotRequest() : if(pRecv->byClientSlotIndex >= trunk_storage_num)",
+        charName);
+      return 0;
+    }
+  }
+  else if (storageIndex == 7)
+  {
+    if (clientSlotIndex >= 0x28u)
+    {
+      const char *charName = player->m_Param.GetCharNameA();
+      m_LogFile.Write(
+        "odd.. %s: TrunkAlterItemSlotRequest() : if(pRecv->byClientSlotIndex >= extend_trunk_storage_num)",
+        charName);
+      return 0;
+    }
+  }
+  else if (storageIndex >= 8u)
+  {
+    const char *charName = player->m_Param.GetCharNameA();
+    m_LogFile.Write(
+      "odd.. %s: TrunkAlterItemSlotRequest() : pRecv->byStorageIndex Is Invalid!",
+      charName);
+    return 0;
+  }
+
+  player->pc_TrunkAlterItemSlotRequest(
+    *reinterpret_cast<unsigned int *>(pBuf),
+    clientSlotIndex,
+    storageIndex);
+  return 1;
+}
+
+char CNetworkEX::TrunkResDivisionRequest(int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode)
+  {
+    return 1;
+  }
+
+  const unsigned __int16 moveAmount = *reinterpret_cast<unsigned __int16 *>(pBuf + 4);
+  if (moveAmount >= 0x63u)
+  {
+    const char *charName = player->m_Param.GetCharNameA();
+    m_LogFile.Write(
+      "odd.. %s: TrunkResDivisionRequest() : pRecv->wMoveAmount(%d)",
+      charName,
+      moveAmount);
+    return 0;
+  }
+
+  const unsigned __int8 storageIndex = static_cast<unsigned __int8>(pBuf[6]);
+  if (storageIndex >= 8u)
+  {
+    const char *charName = player->m_Param.GetCharNameA();
+    m_LogFile.Write(
+      "odd.. %s: TrunkResDivisionRequest() : pRecv->byStorageIndex Invalid!",
+      charName);
+    return 0;
+  }
+
+  player->pc_TrunkResDivision(
+    *reinterpret_cast<unsigned __int16 *>(pBuf),
+    *reinterpret_cast<unsigned __int16 *>(pBuf + 2),
+    moveAmount,
+    storageIndex);
+  return 1;
+}
+
+char CNetworkEX::TrunkPotionDivisionRequest(int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode)
+  {
+    return 1;
+  }
+
+  const unsigned __int16 moveAmount = *reinterpret_cast<unsigned __int16 *>(pBuf + 4);
+  if (moveAmount >= 0x63u)
+  {
+    const char *charName = player->m_Param.GetCharNameA();
+    m_LogFile.Write(
+      "odd.. %s: TrunkPotionDivisionRequest() : pRecv->byMoveAmount(%d)",
+      charName,
+      moveAmount);
+    return 0;
+  }
+
+  const unsigned __int8 storageIndex = static_cast<unsigned __int8>(pBuf[6]);
+  if (storageIndex >= 8u)
+  {
+    const char *charName = player->m_Param.GetCharNameA();
+    m_LogFile.Write(
+      "odd.. %s: TrunkPotionDivisionRequest() : pRecv->byStorageIndex Invalid!",
+      charName);
+    return 0;
+  }
+
+  player->pc_TrunkPotionDivision(
+    *reinterpret_cast<unsigned __int16 *>(pBuf),
+    *reinterpret_cast<unsigned __int16 *>(pBuf + 2),
+    moveAmount,
+    storageIndex);
+  return 1;
+}
+
+char CNetworkEX::TrunkIoMoveRequest(int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return 1;
+  }
+
+  const unsigned __int8 startStorage = static_cast<unsigned __int8>(pBuf[0]);
+  const unsigned __int8 targetStorage = static_cast<unsigned __int8>(pBuf[1]);
+  const char *charName = player->m_Param.GetCharNameA();
+
+  if (targetStorage != 5 && startStorage != 5 && targetStorage != 7 && startStorage != 7)
+  {
+    m_LogFile.Write(
+      "odd.. %s: TrunkIoMoveRequest() : if(pRecv->byTarStorageIndex != _STORAGE_POS::TRUNK && pRecv->byStartStorageIndex != _STORAGE_POS::TRUNK)",
+      charName);
+    return 0;
+  }
+
+  if ((targetStorage == 5 && startStorage == 5) || (targetStorage == 7 && startStorage == 7))
+  {
+    m_LogFile.Write(
+      "odd.. %s: TrunkIoMoveRequest() : if(pRecv->byTarStorageIndex == _STORAGE_POS::TRUNK && pRecv->byStartStorageIndex == _STORAGE_POS::TRUNK)",
+      charName);
+    return 0;
+  }
+
+  if ((targetStorage == 5 && startStorage != 0 && startStorage != 1 && startStorage != 7 && startStorage != 2)
+      || (targetStorage == 7 && startStorage != 0 && startStorage != 1 && startStorage != 5 && startStorage != 2))
+  {
+    m_LogFile.Write(
+      "odd.. %s: TrunkIoMoveRequest() : if(pRecv->byStartStorageIndex != _STORAGE_POS::INVEN && pRecv->byStartStorageIndex != _STORAGE_POS::EQUIP",
+      charName);
+    return 0;
+  }
+
+  if ((startStorage == 5 && targetStorage != 0 && targetStorage != 1 && targetStorage != 7 && targetStorage != 2)
+      || (startStorage == 7 && targetStorage != 0 && targetStorage != 1 && targetStorage != 5 && targetStorage != 2))
+  {
+    m_LogFile.Write(
+      "odd.. %s: TrunkIoMoveRequest() : if(pRecv->byTarStorageIndex != _STORAGE_POS::INVEN && pRecv->byTarStorageIndex != _STORAGE_POS::EQUIP)",
+      charName);
+    return 0;
+  }
+
+  player->pc_TrunkIoMoveRequest(
+    startStorage,
+    targetStorage,
+    *reinterpret_cast<unsigned __int16 *>(pBuf + 2),
+    static_cast<unsigned __int8>(pBuf[4]));
+  return 1;
+}
+
+char CNetworkEX::TrunkIoSwapRequest(int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return 1;
+  }
+
+  const unsigned __int8 startStorage = static_cast<unsigned __int8>(pBuf[0]);
+  const unsigned __int8 targetStorage = static_cast<unsigned __int8>(pBuf[1]);
+  const char *charName = player->m_Param.GetCharNameA();
+
+  if (targetStorage != 5 && startStorage != 5 && targetStorage != 7 && startStorage != 7)
+  {
+    m_LogFile.Write(
+      "odd.. %s: TrunkIoSwapRequest() : if(pRecv->byTarStorageIndex != _STORAGE_POS::TRUNK && pRecv->byStartStorageIndex != _STORAGE_POS::TRUNK)",
+      charName);
+    return 0;
+  }
+
+  if ((targetStorage == 5 && startStorage == 5) || (targetStorage == 7 && startStorage == 7))
+  {
+    m_LogFile.Write(
+      "odd.. %s: TrunkIoSwapRequest() : if(pRecv->byTarStorageIndex == _STORAGE_POS::TRUNK && pRecv->byStartStorageIndex == _STORAGE_POS::TRUNK)",
+      charName);
+    return 0;
+  }
+
+  if ((targetStorage == 5 && startStorage != 0 && startStorage != 1 && startStorage != 7 && startStorage != 2)
+      || (targetStorage == 7 && startStorage != 0 && startStorage != 1 && startStorage != 5 && startStorage != 2))
+  {
+    m_LogFile.Write(
+      "odd.. %s: TrunkIoSwapRequest() : if(pRecv->byStartStorageIndex != _STORAGE_POS::INVEN && pRecv->byStartStorageIndex != _STORAGE_POS::EQUIP",
+      charName);
+    return 0;
+  }
+
+  if ((startStorage == 5 && targetStorage != 0 && targetStorage != 1 && targetStorage != 7 && targetStorage != 2)
+      || (startStorage == 7 && targetStorage != 0 && targetStorage != 1 && targetStorage != 5 && targetStorage != 2))
+  {
+    m_LogFile.Write(
+      "odd.. %s: TrunkIoSwapRequest() : if(pRecv->byTarStorageIndex != _STORAGE_POS::INVEN && pRecv->byTarStorageIndex != _STORAGE_POS::EQUIP)",
+      charName);
+    return 0;
+  }
+
+  player->pc_TrunkIoSwapRequest(
+    startStorage,
+    targetStorage,
+    *reinterpret_cast<unsigned __int16 *>(pBuf + 2),
+    *reinterpret_cast<unsigned __int16 *>(pBuf + 4));
+  return 1;
+}
+
+char CNetworkEX::TrunkIoMergeRequest(int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return 1;
+  }
+
+  const unsigned __int8 startStorage = static_cast<unsigned __int8>(pBuf[0]);
+  const unsigned __int8 targetStorage = static_cast<unsigned __int8>(pBuf[1]);
+  const char *charName = player->m_Param.GetCharNameA();
+
+  if (targetStorage != 5 && startStorage != 5 && targetStorage != 7 && startStorage != 7)
+  {
+    m_LogFile.Write(
+      "odd.. %s: TrunkIoMergeRequest() : if(pRecv->byTarStorageIndex != _STORAGE_POS::TRUNK && pRecv->byStartStorageIndex != _STORAGE_POS::TRUNK)",
+      charName);
+    return 0;
+  }
+
+  if ((targetStorage == 5 && startStorage == 5) || (targetStorage == 7 && startStorage == 7))
+  {
+    m_LogFile.Write(
+      "odd.. %s: TrunkIoMergeRequest() : if(pRecv->byTarStorageIndex == _STORAGE_POS::TRUNK && pRecv->byStartStorageIndex == _STORAGE_POS::TRUNK)",
+      charName);
+    return 0;
+  }
+
+  if ((targetStorage == 5 && startStorage != 0 && startStorage != 7)
+      || (targetStorage == 7 && startStorage != 0 && startStorage != 5))
+  {
+    m_LogFile.Write(
+      "odd.. %s: TrunkIoMergeRequest() : if(pRecv->byStartStorageIndex != _STORAGE_POS::INVEN)",
+      charName);
+    return 0;
+  }
+
+  if ((startStorage == 5 && targetStorage != 0 && targetStorage != 7)
+      || (startStorage == 7 && targetStorage != 0 && targetStorage != 5))
+  {
+    m_LogFile.Write(
+      "odd.. %s: TrunkIoMergeRequest() : if(pRecv->byTarStorageIndex != _STORAGE_POS::INVEN)",
+      charName);
+    return 0;
+  }
+
+  const unsigned __int16 moveAmount = *reinterpret_cast<unsigned __int16 *>(pBuf + 6);
+  if (moveAmount >= 0x63u || moveAmount == 0)
+  {
+    m_LogFile.Write(
+      "odd.. %s: TrunkIoMergeRequest() : if(pRecv->wMoveAmount >= max_overlap_num || pRecv->wMoveAmount == 0)",
+      charName);
+    return 0;
+  }
+
+  player->pc_TrunkIoMergeRequest(
+    startStorage,
+    targetStorage,
+    *reinterpret_cast<unsigned __int16 *>(pBuf + 2),
+    *reinterpret_cast<unsigned __int16 *>(pBuf + 4),
+    moveAmount);
+  return 1;
+}
+
+char CNetworkEX::TrunkIoMoneyRequest(int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode)
+  {
+    return 1;
+  }
+
+  const int dalant = *reinterpret_cast<int *>(pBuf + 1);
+  const int gold = *reinterpret_cast<int *>(pBuf + 5);
+  if (dalant == 0 && gold == 0)
+  {
+    const char *charName = player->m_Param.GetCharNameA();
+    m_LogFile.Write(
+      "odd.. %s: TrunkIoMoneyRequest() : if(pRecv->dwDalant == 0 && pRecv->dwGold == 0)",
+      charName);
+    return 0;
+  }
+
+  player->pc_TrunkIoMoneyRequest(static_cast<unsigned __int8>(pBuf[0]), dalant, gold);
+  return 1;
+}
+
+char CNetworkEX::TrunkPwHintIndexRequest(int n, char *pBuf)
+{
+  (void)pBuf;
+
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode)
+  {
+    return 1;
+  }
+
+  player->pc_TrunkPwHintIndexRequest();
+  return 1;
+}
+
+char CNetworkEX::TrunkHintAnswerRequest(int n, char *pBuf)
+{
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode)
+  {
+    return 1;
+  }
+
+  char answer[128]{};
+  memcpy_0(answer, pBuf, 0x10u);
+  answer[16] = 0;
+
+  player->pc_TrunkHintAnswerRequest(answer);
+  return 1;
+}
+
+char CNetworkEX::TrunkCreateCostIsFreeRequest(int n, char *pBuf)
+{
+  (void)pBuf;
+
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode)
+  {
+    return 1;
+  }
+
+  char msg[1]{static_cast<char>(player->pc_TrunkCreateCostIsFreeRequest())};
+  unsigned __int8 type[2] = {34, 25};
+  g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, type, msg, 1u);
   return 1;
 }
 

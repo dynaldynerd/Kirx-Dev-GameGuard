@@ -38,6 +38,11 @@
 #include "CRaceBossWinRate.h"
 #include "CTotalGuildRankManager.h"
 #include "CUnmannedTraderController.h"
+
+bool _TRADE_DB_BASE::_LIST::IsEmpty()
+{
+  return this->dwRegistSerial == 0;
+}
 #include "CUnmannedTraderTaxRateManager.h"
 #include "CWeeklyGuildRankManager.h"
 #include "CashItemRemoteStore.h"
@@ -655,6 +660,36 @@ void TimeLimitMgr::Pop_Data(unsigned int dwAccountSerial, unsigned __int16 wInde
   }
 }
 
+void TimeLimitMgr::Push_Data(Player_TL_Status *data, unsigned __int16 wIndex)
+{
+  m_lstTLStaus[wIndex].m_bUse = true;
+  m_lstTLStaus[wIndex].m_byTL_Status = data->m_byTL_Status;
+  m_lstTLStaus[wIndex].m_dwStartTime = data->m_dwStartTime;
+  m_lstTLStaus[wIndex].m_dwAccountSerial = data->m_dwAccountSerial;
+  m_lstTLStaus[wIndex].m_dwLastLogoutTime = data->m_dwLastLogoutTime;
+  m_lstTLStaus[wIndex].m_dwFatigue = data->m_dwFatigue;
+  m_lstTLStaus[wIndex].m_bAgeLimit = data->m_bAgeLimit;
+  ++TimeLimitMgr::m_dwCnt;
+}
+
+void TimeLimitMgr::InsertPlayerStatus(
+  unsigned __int16 wIndex,
+  unsigned int dwAccountSerial,
+  unsigned __int8 byStatus,
+  unsigned int dwFatigue,
+  unsigned int dwLastLogoutTime,
+  bool bAgeLimit)
+{
+  Player_TL_Status data{};
+  data.m_dwFatigue = dwFatigue;
+  data.m_byTL_Status = byStatus;
+  data.m_dwStartTime = timeGetTime();
+  data.m_dwAccountSerial = dwAccountSerial;
+  data.m_dwLastLogoutTime = dwLastLogoutTime;
+  data.m_bAgeLimit = bAgeLimit;
+  Push_Data(&data, wIndex);
+}
+
 __int64 TimeLimitMgr::ClacLastLogoutTimeSec(unsigned int dwLastConnTime)
 {
   char buffer[28]{};
@@ -699,9 +734,110 @@ __int64 TimeLimitMgr::ClacLastLogoutTimeSec(unsigned int dwLastConnTime)
   return SumMinuteBetweenSec(&tmLast);
 }
 
+__int64 TimeLimitMgr::ClacLastLogoutTimeToFatigue(unsigned int dwLastConnTime)
+{
+  char buffer[28]{};
+  sprintf_s(buffer, 0xFu, "%d", dwLastConnTime);
+  const int len = static_cast<int>(strlen_0(buffer));
+
+  tm tmLast{};
+  tmLast.tm_isdst = -1;
+
+  char temp[32]{};
+  char yearString[16]{};
+
+  memcpy_0(temp, buffer, static_cast<size_t>(len - 8));
+  if (len == 9)
+  {
+    sprintf(yearString, "200%s", temp);
+  }
+  else if (len == 10)
+  {
+    sprintf(yearString, "20%s", temp);
+  }
+  yearString[4] = 0;
+  tmLast.tm_year = atoi(yearString) - 1900;
+
+  memset_0(temp, 0, 3u);
+  memcpy_0(temp, &buffer[len - 8], 2u);
+  tmLast.tm_mon = atoi(temp) - 1;
+
+  memset_0(temp, 0, 3u);
+  memcpy_0(temp, &buffer[len - 6], 2u);
+  tmLast.tm_mday = atoi(temp);
+
+  memset_0(temp, 0, 3u);
+  memcpy_0(temp, &buffer[len - 4], 2u);
+  tmLast.tm_hour = atoi(temp);
+
+  memset_0(temp, 0, 3u);
+  memcpy_0(temp, &buffer[len - 2], 2u);
+  tmLast.tm_min = atoi(temp);
+
+  memset_0(temp, 0, 3u);
+  const unsigned int minutes = static_cast<unsigned int>(SumMinuteBetweenSec(&tmLast));
+  if (minutes)
+  {
+    return 1000 * minutes / m_dwLogoutFDegree;
+  }
+  return 0;
+}
+
 unsigned __int16 TimeLimitMgr::GetEndPlayTime()
 {
   return m_pwTime[m_wPeriodCnt - 1];
+}
+
+char TimeLimitMgr::CheckPlayerStatus(
+  unsigned __int16 wIndex,
+  unsigned int dwLastContSaveTime,
+  unsigned __int8 *pbyStatus,
+  unsigned int *pdwFatigue)
+{
+  Player_TL_Status *data = Find_Data(wIndex);
+  if (!data)
+  {
+    return 0;
+  }
+
+  const unsigned int logoutFatigue = static_cast<unsigned int>(
+    g_Main.m_pTimeLimitMgr->ClacLastLogoutTimeToFatigue(dwLastContSaveTime));
+  if (logoutFatigue < 100 || data->m_dwFatigue > logoutFatigue)
+  {
+    if (data->m_dwFatigue == 100 && logoutFatigue <= 100)
+    {
+      data->m_dwFatigue = 100;
+      *pdwFatigue = 100;
+      data->m_byTL_Status = 99;
+      *pbyStatus = 99;
+      data->m_dPercent = m_pdPercent[m_wPeriodCnt - 1];
+      return 1;
+    }
+
+    if (data->m_dwFatigue < 100)
+    {
+      for (int j = 0; j < m_wPeriodCnt; ++j)
+      {
+        if (data->m_dwFatigue >= m_pwFatigue[j] && data->m_dwFatigue < m_pwFatigue[j + 1])
+        {
+          data->m_dPercent = m_pdPercent[j];
+          data->m_byTL_Status = static_cast<unsigned __int8>(j);
+          break;
+        }
+      }
+    }
+
+    *pbyStatus = data->m_byTL_Status;
+    *pdwFatigue = data->m_dwFatigue;
+    return 1;
+  }
+
+  data->m_dwFatigue = 0;
+  *pdwFatigue = 0;
+  data->m_byTL_Status = 0;
+  *pbyStatus = 0;
+  data->m_dPercent = 1.0L;
+  return 1;
 }
 
 char TimeLimitMgr::UpdatePlayerStatus(unsigned __int16 wIndex, unsigned int dwFatigue, unsigned __int8 wStatus)

@@ -19,6 +19,7 @@ public:
   _bsp_info *GetBspInfo();
   _sec_info *GetSecInfo();
   unsigned __int8 GetMapCode();
+  unsigned __int8 GetRaceTown(float *fPos, unsigned __int8 byRaceCode);
   int GetSectorIndex(float *pPos);
   CObjectList *GetSectorListObj(unsigned __int16 wLayerIndex, unsigned int dwSecIndex);
   CObjectList *GetSectorListPlayer(unsigned __int16 wLayerIndex, unsigned int dwSecIndex);

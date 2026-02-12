@@ -52,6 +52,7 @@ public:
   unsigned __int8 GetBagNum();
   void SetBagNum(unsigned __int8 byNum);
   int GetUseSlot();
+  _STORAGE_LIST::_db_con *GetItem(unsigned __int8 byInvenIndex);
   unsigned __int16 GetNewItemSerial();
   static char CalcCharGrade(unsigned __int8 byLv, unsigned __int16 wRankRate);
   bool BeHaveBoxOfAMP();

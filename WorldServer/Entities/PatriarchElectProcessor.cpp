@@ -205,6 +205,45 @@ void PatriarchElectProcessor::SendMsg_ResultCode(unsigned int n, unsigned __int8
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), len);
 }
 
+void PatriarchElectProcessor::SendMsg_ConnectNewUser(CPlayer *pOne)
+{
+  _AVATOR_DATA *avatorData = &pOne->m_pUserDB->m_AvatorData;
+  if (avatorData->dbAvator.m_dwGivebackCount)
+  {
+    const unsigned __int64 addMoney = 10000000ULL * avatorData->dbAvator.m_dwGivebackCount;
+    const unsigned int dalant = pOne->m_Param.GetDalant();
+    if (CanAddMoneyForMaxLimMoney(addMoney, dalant))
+    {
+      const unsigned int charSerial = pOne->m_Param.GetCharSerial();
+      const unsigned __int8 raceCode = pOne->m_Param.GetRaceCode();
+      _qry_case_request_refund query(raceCode, pOne->m_id.wIndex, charSerial, addMoney);
+      const int size = query.size();
+      g_Main.PushDQSData(static_cast<unsigned __int8>(-1), nullptr, 0x7B, reinterpret_cast<char *>(&query), size);
+    }
+    else
+    {
+      SendMsg_ResultCode(pOne->m_id.wIndex, 0xFu);
+    }
+  }
+
+  const ElectProcessor::ProcessorType processType = _eProcessType;
+  if (processType == ElectProcessor::_eVoter)
+  {
+    if (_kRunningProcessor)
+    {
+      _kRunningProcessor->Doit(_eSendVotePaper, pOne, nullptr);
+      _kRunningProcessor->Doit(_eVoteScore, pOne, nullptr);
+    }
+  }
+  else if (processType == ElectProcessor::_eFinalDecisionProcessor)
+  {
+    if (_kRunningProcessor)
+    {
+      _kRunningProcessor->Doit(_eReqNetFinalDecision, pOne, nullptr);
+    }
+  }
+}
+
 unsigned int PatriarchElectProcessor::GetElectSerial()
 {
   return _dwElectSerial;

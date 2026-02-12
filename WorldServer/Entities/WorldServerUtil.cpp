@@ -146,6 +146,21 @@ int eGetRate(int nRaceCode)
   return static_cast<int>(e_EconomySystem.m_CurRate[nRaceCode].fPayExgRate);
 }
 
+int eGetMgrValue()
+{
+  return e_nMgrDft;
+}
+
+_economy_history_data *eGetGuideHistory()
+{
+  return e_EconomyHistory;
+}
+
+unsigned __int16 eGetGuide(int nRaceCode)
+{
+  return e_EconomySystem.m_CurRate[nRaceCode].wEconomyGuide;
+}
+
 float eGetTex(int nRaceCode)
 {
   if (e_EconomySystem.m_CurRate[nRaceCode].fTexRate < 0.0099999998f)
@@ -2129,6 +2144,214 @@ int GetItemStdPrice(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *
       return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
     default:
       return 0;
+  }
+}
+
+int GetItemStoragePrice(int nTableCode, int nItemIndex, int nRace)
+{
+  (void)nRace;
+
+  CRecordData *table = &s_ptblItemData[nTableCode];
+  _base_fld *record = nullptr;
+
+  switch (nTableCode)
+  {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 7:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[60]) : 0;
+    case 6:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[8].m_strCode[60]) : 0;
+    case 8:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[40]) : 0;
+    case 9:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[40]) : 0;
+    case 10:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[24]) : 0;
+    case 11:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[32]) : 0;
+    case 12:
+      return 0;
+    case 13:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[7].m_strCode[0]) : 0;
+    case 15:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[24]) : 0;
+    case 16:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[24]) : 0;
+    case 17:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[3].m_strCode[40]) : 0;
+    case 18:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[5].m_strCode[40]) : 0;
+    case 19:
+      return 0;
+    case 20:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[24]) : 0;
+    case 21:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[5].m_strCode[20]) : 0;
+    case 22:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[16]) : 0;
+    case 23:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[20]) : 0;
+    case 24:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[28]) : 0;
+    case 25:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[7].m_strCode[0]) : 0;
+    case 26:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[8].m_strCode[4]) : 0;
+    case 27:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[56]) : 0;
+    case 28:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[24]) : 0;
+    case 30:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[32]) : 0;
+    case 31:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[36]) : 0;
+    case 32:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[32]) : 0;
+    case 33:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[4]) : 0;
+    case 34:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[5].m_strCode[4]) : 0;
+    case 35:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[5].m_strCode[44]) : 0;
+    case 36:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[36]) : 0;
+    default:
+      return 0;
+  }
+}
+
+bool IsTrunkIOAble(int nTableCode, int nItemIndex)
+{
+  CRecordData *table = &s_ptblItemData[nTableCode];
+  _base_fld *record = nullptr;
+
+  switch (nTableCode)
+  {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 7:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[6].m_strCode[44]) != 0;
+    case 6:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[11].m_strCode[8]) != 0;
+    case 8:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[5].m_strCode[44]) != 0;
+    case 9:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[5].m_strCode[44]) != 0;
+    case 10:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[8].m_strCode[4]) != 0;
+    case 11:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[5].m_strCode[0]) != 0;
+    case 12:
+      return false;
+    case 13:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[8].m_strCode[28]) != 0;
+    case 15:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[5].m_strCode[36]) != 0;
+    case 16:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[4].m_strCode[44]) != 0;
+    case 17:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[3].m_strCode[56]) != 0;
+    case 18:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[7].m_strCode[4]) != 0;
+    case 19:
+      return false;
+    case 20:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[4].m_strCode[40]) != 0;
+    case 21:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[5].m_strCode[36]) != 0;
+    case 22:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[6].m_strCode[40]) != 0;
+    case 23:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[8].m_strCode[0]) != 0;
+    case 24:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[4].m_strCode[44]) != 0;
+    case 25:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[10].m_strCode[16]) != 0;
+    case 26:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[8].m_strCode[24]) != 0;
+    case 27:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[6].m_strCode[8]) != 0;
+    case 28:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[6].m_strCode[40]) != 0;
+    case 30:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[4].m_strCode[56]) != 0;
+    case 31:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[4].m_strCode[52]) != 0;
+    case 32:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[4].m_strCode[60]) != 0;
+    case 33:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[6].m_strCode[20]) != 0;
+    case 34:
+      record = table->GetRecord(nItemIndex);
+      return record && record[1].m_dwIndex != 0;
+    case 35:
+      record = table->GetRecord(nItemIndex);
+      return record && *reinterpret_cast<unsigned int *>(&record[6].m_strCode[4]) != 0;
+    case 36:
+      record = table->GetRecord(nItemIndex);
+      return record && record[5].m_dwIndex != 0;
+    default:
+      return false;
   }
 }
 
@@ -6183,6 +6406,111 @@ unsigned int IsGroundableItem(int nTableCode, int nItemIndex)
       return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[60]) : 0u;
     default:
       return 0u;
+  }
+}
+
+int IsExchangeItem(int nTableCode, int nItemIndex)
+{
+  CRecordData *table = &s_ptblItemData[nTableCode];
+  _base_fld *record = nullptr;
+
+  switch (nTableCode)
+  {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 7:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[36]) : 0;
+    case 6:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(record[11].m_strCode) : 0;
+    case 8:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[5].m_strCode[36]) : 0;
+    case 9:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[5].m_strCode[36]) : 0;
+    case 10:
+      record = table->GetRecord(nItemIndex);
+      return record ? static_cast<int>(record[8].m_dwIndex) : 0;
+    case 11:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[60]) : 0;
+    case 12:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[32]) : 0;
+    case 13:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[8].m_strCode[20]) : 0;
+    case 15:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[5].m_strCode[28]) : 0;
+    case 16:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[36]) : 0;
+    case 17:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[3].m_strCode[48]) : 0;
+    case 18:
+      record = table->GetRecord(nItemIndex);
+      return record ? static_cast<int>(record[7].m_dwIndex) : 0;
+    case 19:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(record[4].m_strCode) : 0;
+    case 20:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[32]) : 0;
+    case 21:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[5].m_strCode[28]) : 0;
+    case 22:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[32]) : 0;
+    case 23:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[7].m_strCode[60]) : 0;
+    case 24:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[36]) : 0;
+    case 25:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[10].m_strCode[8]) : 0;
+    case 26:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[8].m_strCode[16]) : 0;
+    case 27:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(record[6].m_strCode) : 0;
+    case 28:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[32]) : 0;
+    case 30:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[48]) : 0;
+    case 31:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[44]) : 0;
+    case 32:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[52]) : 0;
+    case 33:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[12]) : 0;
+    case 34:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[24]) : 0;
+    case 35:
+      record = table->GetRecord(nItemIndex);
+      return record ? static_cast<int>(record[6].m_dwIndex) : 0;
+    case 36:
+      record = table->GetRecord(nItemIndex);
+      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[56]) : 0;
+    default:
+      return 0;
   }
 }
 
