@@ -107,11 +107,13 @@ public:
   bool Load_Event_INI(_golden_box_item_ini *pIni);
   void Check_Loaded_Event_Status();
   bool SetGoldBoxItemIndex();
+  unsigned __int16 GetGoldBoxItemIndex(unsigned __int16 wIndex);
   _db_golden_box_item *GetGodBoxItemInfoPtr();
   void SetDBSerial(int nDBSerial);
   char SynchINIANDDB();
   unsigned __int8 GetLoopCount();
   unsigned __int16 Get_Box_Count(unsigned __int8 byIndex);
+  void Set_Box_Count(unsigned __int8 byIndex);
   unsigned __int16 Get_BoxItem_Count(unsigned __int8 byIndex, unsigned int dwIndex);
   void Set_FromINIToStruct(_golden_box_item_ini *pIni);
   void Set_ToStruct();

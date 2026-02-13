@@ -82,6 +82,7 @@ public:
   virtual float GetWidth();
   virtual __int64 GetWindTol();
   void Init(_object_id *pID);
+  void OnLoop();
   virtual bool IsAttackableInTown();
   virtual bool IsBeAttackedAble(bool bFirst);
   char IsBeCirclePlayer(int nRange);
@@ -166,10 +167,17 @@ public:
     unsigned int dwPassObjSerial,
     bool bToOne);
   void Init(_object_id *pID);
+  void OnLoop();
   virtual bool IsAttackableInTown();
+  virtual void AlterSec();
   virtual char IsRecvableContEffect();
   virtual bool IsRewardExp();
   virtual bool Is_Battle_Mode();
+  virtual void Loop();
+  virtual void OutOfSec();
+  __int64 CalcCirclePlayerNum(int nRange);
+  __int64 RerangeSecIndex(unsigned int dwOld, unsigned int dwNew);
+  void ResetSector(unsigned int dwOldSec, unsigned int dwNewSec);
   bool IsInTown();
   __int64 GetCurSecNum();
   virtual __int64 GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart);
@@ -196,6 +204,7 @@ public:
   virtual __int64 GetLevel();
   virtual __int64 GetMaxHP();
   virtual void SendMsg_FixPosition(int n);
+  virtual void SendMsg_RealFixPosition(bool bCircle);
   virtual void SendMsg_RealMovePoint(int n);
   virtual void SendMsg_SetHPInform();
   virtual void SendMsg_StunInform();
@@ -212,6 +221,7 @@ public:
   void SetBreakTranspar(bool bBreak);
   char SetCurPos(float *pPos);
   void SetCurSecNum(unsigned int dwNewSecNum);
+  char UpdateSecList();
   void SFContDelMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, bool bSend, bool bAura = false);
   void SFContInsertMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, bool bAura);
   void SFContUpdateTimeMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, int nLeftTime);

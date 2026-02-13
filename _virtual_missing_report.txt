@@ -1,0 +1,3 @@
+# Virtual Override Audit
+
+No remaining derived-class virtual override gaps found in the current report scope.

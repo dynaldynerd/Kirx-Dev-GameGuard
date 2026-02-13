@@ -6,7 +6,9 @@
 
 #include "CGameObject.h"
 #include "CMapData.h"
+#include "CNetProcess.h"
 #include "DummyPosition.h"
+#include "GlobalObjects.h"
 #include "GuildBattle.h"
 
 CCircleZone::CCircleZone()
@@ -82,4 +84,18 @@ bool CCircleZone::Init(
 int CCircleZone::GetPortalInx() const
 {
   return m_iPortalInx;
+}
+
+void CCircleZone::SendMsg_FixPosition(int n)
+{
+  char msg[5]{};
+  *reinterpret_cast<int *>(msg) = m_iPortalInx;
+  msg[4] = static_cast<char>(m_byColor);
+
+  unsigned __int8 packetType[2] = {4, static_cast<unsigned __int8>(-81)};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    n,
+    packetType,
+    msg,
+    static_cast<unsigned __int16>(sizeof(msg)));
 }

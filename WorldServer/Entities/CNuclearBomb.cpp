@@ -7,7 +7,78 @@
 #include "GlobalObjects.h"
 #include "nuclear_find_rader_result_zocl.h"
 
+#include <mmsystem.h>
+
 unsigned int CNuclearBomb::s_dwSerialCnt = 0;
+
+__int64 CNuclearBomb::GetGenAttackProb(CCharacter * /*pDst*/, int /*nPart*/, bool /*bBackAttack*/)
+{
+  return 100;
+}
+
+void CNuclearBomb::Loop()
+{
+  const DWORD currentTime = timeGetTime();
+
+  if (m_pMaster != nullptr && (m_pMaster->m_bCorpse || !m_pMaster->m_bLive))
+  {
+    if (m_bIsLive)
+    {
+      m_bIsLive = false;
+    }
+
+    if (m_bUse && m_byBombState <= 4u)
+    {
+      m_byBombState = 6;
+      m_bUse = false;
+      CCharacter::Destroy();
+    }
+  }
+
+  const DWORD triggerTime = m_dwStartTime + m_dwDurTime;
+  if (m_byBombState == 0)
+  {
+    if (currentTime >= triggerTime - m_dwWarnTime)
+    {
+      m_byBombState = 1;
+    }
+    return;
+  }
+
+  switch (m_byBombState)
+  {
+  case 1:
+    if (currentTime >= triggerTime - m_dwAttInformTime)
+    {
+      ++m_byBombState;
+    }
+    break;
+  case 2:
+    if (currentTime >= triggerTime - m_dwAttStartTime)
+    {
+      ++m_byBombState;
+    }
+    break;
+  case 3:
+    if (currentTime >= triggerTime)
+    {
+      ++m_byBombState;
+    }
+    break;
+  case 5:
+    if (currentTime >= m_dwStartTime + m_dwDelayTime)
+    {
+      m_byBombState = 6;
+      if (m_bLive)
+      {
+        CCharacter::Destroy();
+      }
+    }
+    break;
+  default:
+    break;
+  }
+}
 
 bool CNuclearBomb::Init(_object_id *pID)
 {

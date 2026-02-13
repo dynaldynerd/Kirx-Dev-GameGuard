@@ -16,10 +16,12 @@ public:
   void TimeCheck(unsigned __int16 wDayOfWeek, unsigned __int16 wHour);
   unsigned int GetElectSerial();
   ElectProcessor::ProcessorType GetProcessorType();
+  bool GetTimeCheck();
   void SetTimeCheck(bool bFlag);
   bool ForceChangeProcessor(ElectProcessor::ProcessorType eProc);
   unsigned int GetCurrPatriarchElectSerial();
   char Doit(Cmd eCmd, CPlayer *pOne, char *pdata);
+  void PushDQSCheckInvalidChar();
   void SendMsg_ResultCode(unsigned int n, unsigned __int8 byCode);
   void SendMsg_ConnectNewUser(CPlayer *pOne);
   __int64 Insert_Elect();

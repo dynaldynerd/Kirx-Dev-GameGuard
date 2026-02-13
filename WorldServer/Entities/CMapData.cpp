@@ -1134,3 +1134,14 @@ void CMapData::ExitMap(CGameObject *pObj, unsigned int dwSecIndex)
     SectorListPlayer->DeleteItem(pNetPoint);
   }
 }
+
+void CMapData::OnLoop()
+{
+  if (m_tmrMineGradeReSet.CountingTimer())
+  {
+    for (int resourceIndex = 0; resourceIndex < m_nResDumNum; ++resourceIndex)
+    {
+      m_pResDummy[resourceIndex].SetRangeGrade();
+    }
+  }
+}

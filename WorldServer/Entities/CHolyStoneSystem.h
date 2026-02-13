@@ -110,6 +110,7 @@ public:
   void SendMsg_EnterKeeper(unsigned int n);
   void SendMsg_WaitKeeper(unsigned int n, char byWaitType);
   void SendMsg_HolyKeeperStateChaos();
+  void SendSMS_MineTimeExtend(int nControlSec);
   void GiveHSKQuest();
   void SendHolyStoneHPToRaceBoss();
   void SendHolyStoneHP(CPlayer *pkPlayer);

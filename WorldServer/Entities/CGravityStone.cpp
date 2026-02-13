@@ -7,6 +7,8 @@
 #include "CPlayer.h"
 #include "CUserDB.h"
 #include "ObjectCreateSetData.h"
+#include "CNetProcess.h"
+#include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
 unsigned int CGravityStone::ms_dwSerialCnt = 0;
@@ -85,6 +87,18 @@ void CGravityStone::SendMsg_Destroy()
   *reinterpret_cast<unsigned int *>(msg + 2) = m_dwObjSerial;
   unsigned __int8 type[2] = {3, 52};
   CircleReport(type, msg, 6, false);
+}
+
+void CGravityStone::SendMsg_FixPosition(int n)
+{
+  char msg[14]{};
+  *reinterpret_cast<unsigned __int16 *>(msg) = m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned __int16 *>(msg + 2) = 89;
+  *reinterpret_cast<unsigned int *>(msg + 4) = m_dwObjSerial;
+  FloatToShort(m_fCurPos, reinterpret_cast<short *>(msg + 8), 3);
+
+  unsigned __int8 packetType[2] = {4, static_cast<unsigned __int8>(-85)};
+  g_Network.m_pProcess[0]->LoadSendMsg(n, packetType, msg, static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CGravityStone::Destroy()

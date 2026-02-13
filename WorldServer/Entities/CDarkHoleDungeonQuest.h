@@ -10,6 +10,7 @@ class CDarkHole;
 class __cppobj CDarkHoleDungeonQuest : public CDarkHoleDungeonQuestSetup
 {
 public:
+  ~CDarkHoleDungeonQuest() override;
   bool LoadDarkHoleQuest();
   void CheckQuestOnLoop();
   CDarkHoleChannel *GetChannel(unsigned int dwChannelIndex);

@@ -26,6 +26,7 @@ public:
 
   void Init(_object_id *pID);
   char Create(_darkhole_create_setdata *pParam);
+  bool Destroy();
   bool EnterPlayer(
     CPlayer *pEnter,
     CMapData *pOldMap,
@@ -35,6 +36,11 @@ public:
   bool IsNewEnterAbleNum();
   bool IsNewEnterAblePlayer(CPlayer *pEnter);
   bool GetEnterNewPos(_ENTER_DUNGEON_NEW_POS *pNewPos);
+  void Loop() override;
+  void SendMsg_Create();
+  void SendMsg_Destroy();
+  void SendMsg_StateChange();
+  void SendMsg_FixPosition(int n) override;
 };
 
 CDarkHole *SerarchEmptyDarkHole();

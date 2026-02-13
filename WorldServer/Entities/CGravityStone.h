@@ -17,6 +17,7 @@ public:
   unsigned __int8 Drop(CPlayer *pkPlayer);
   void SendMsg_Create();
   void SendMsg_Destroy();
+  void SendMsg_FixPosition(int n) override;
   void Destroy();
   void Clear();
 

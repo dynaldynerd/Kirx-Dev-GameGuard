@@ -4,8 +4,13 @@
 
 #include <new>
 #include <mmsystem.h>
+#include <cmath>
 
 #include "CAttack.h"
+#include "CHolyStoneSystem.h"
+#include "CNetProcess.h"
+#include "CObjectList.h"
+#include "CPlayerDB.h"
 #include "CEventLootTable.h"
 #include "CItemLootTable.h"
 #include "CItemBox.h"
@@ -14,6 +19,12 @@
 #include "GlobalObjects.h"
 #include "TimeItem.h"
 #include "WorldServerUtil.h"
+
+namespace
+{
+char s_keeperObjectName[256]{};
+float s_attackPivot[3]{};
+}
 
 int CHolyKeeper::s_nLiveNum = 0;
 unsigned int CHolyKeeper::s_dwSerialCnt = 0;
@@ -40,6 +51,151 @@ CHolyKeeper::CHolyKeeper()
     m_wRange(0),
     m_wDropCntOnce(0)
 {
+}
+
+__int64 CHolyKeeper::GetAttackDP()
+{
+  return static_cast<unsigned int>(m_pRec->m_nAttack_DP);
+}
+
+float CHolyKeeper::GetAttackRange()
+{
+  return m_pRec->m_fAttExt;
+}
+
+__int64 CHolyKeeper::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
+{
+  (void)pAttChar;
+  (void)pnConvertPart;
+  if (nAttactPart == -1)
+    return static_cast<unsigned int>(m_nDefPart[rand() % 5]);
+
+  return static_cast<unsigned int>(m_nDefPart[nAttactPart]);
+}
+
+float CHolyKeeper::GetDefFacing(int nPart)
+{
+  (void)nPart;
+  return m_pRec->m_fDefFacing;
+}
+
+float CHolyKeeper::GetDefGap(int nPart)
+{
+  (void)nPart;
+  return m_pRec->m_fDefGap;
+}
+
+__int64 CHolyKeeper::GetDefSkill(bool bBackAttackDamage)
+{
+  (void)bBackAttackDamage;
+  return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fDefSklUnit));
+}
+
+__int64 CHolyKeeper::GetFireTol()
+{
+  return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fFireTol));
+}
+
+__int64 CHolyKeeper::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
+{
+  (void)nPart;
+
+  int hitRate = static_cast<int>(
+    (m_pRec->m_fAttSklUnit - (static_cast<float>(pDst->GetLevel()) + static_cast<float>(pDst->GetDefSkill(bBackAttack)))) / 4.0f
+    + 95.0f);
+  hitRate -= static_cast<int>(pDst->GetAvoidRate());
+
+  if (pDst->m_bMove)
+    hitRate = static_cast<int>(static_cast<float>(hitRate) * 0.5f);
+
+  if (hitRate < 5)
+    return 5;
+  if (hitRate > 95)
+    return 95;
+  return static_cast<unsigned int>(hitRate);
+}
+
+__int64 CHolyKeeper::GetHP()
+{
+  return static_cast<unsigned int>(m_nHP);
+}
+
+__int64 CHolyKeeper::GetLevel()
+{
+  return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fLevel));
+}
+
+__int64 CHolyKeeper::GetMaxHP()
+{
+  return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fMaxHP));
+}
+
+char *CHolyKeeper::GetObjName()
+{
+  std::snprintf(
+    s_keeperObjectName,
+    sizeof(s_keeperObjectName),
+    "[KEEPER][%d] >> %s (pos: %s {%d, %d, %d})",
+    static_cast<int>(GetObjRace()),
+    m_pRec->m_strName,
+    m_pCurMap->m_pMapSet->m_strCode,
+    static_cast<int>(m_fCurPos[0]),
+    static_cast<int>(m_fCurPos[1]),
+    static_cast<int>(m_fCurPos[2]));
+  return s_keeperObjectName;
+}
+
+__int64 CHolyKeeper::GetObjRace()
+{
+  if (m_nMasterRace == -1)
+    return 16;
+
+  return static_cast<unsigned int>(m_nMasterRace);
+}
+
+__int64 CHolyKeeper::GetSoilTol()
+{
+  return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fSoilTol));
+}
+
+__int64 CHolyKeeper::GetWaterTol()
+{
+  return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fWaterTol));
+}
+
+float CHolyKeeper::GetWeaponAdjust()
+{
+  return m_pRec->m_fDefGap;
+}
+
+__int64 CHolyKeeper::GetWeaponClass()
+{
+  return 1;
+}
+
+float CHolyKeeper::GetWidth()
+{
+  return m_pRec->m_fWidth;
+}
+
+__int64 CHolyKeeper::GetWindTol()
+{
+  return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fWindTol));
+}
+
+bool CHolyKeeper::IsBeAttackedAble(bool bFirst)
+{
+  (void)bFirst;
+  return true;
+}
+
+char CHolyKeeper::IsBeDamagedAble(CCharacter *pAtter)
+{
+  if (pAtter->m_ObjID.m_byID != 0)
+    return true;
+
+  CPlayer *player = static_cast<CPlayer *>(pAtter);
+  return static_cast<char>(!g_Main.IsReleaseServiceMode() || player->m_byUserDgr == 0);
 }
 
 void CHolyKeeper::Init(_object_id *pID)
@@ -394,4 +550,390 @@ void CHolyKeeper::DropItem()
   m_dwObjSerial = static_cast<unsigned int>(-1);
   --s_nLiveNum;
   CCharacter::Destroy();
+}
+
+void CHolyKeeper::Loop()
+{
+  if (m_tmrDropTime.m_bOper)
+  {
+    if (m_tmrDropTime.CountingTimer())
+      DropItem();
+    return;
+  }
+
+  if (g_HolySys.GetSceneCode() != 3)
+    CheckAttack();
+  CheckExit();
+}
+
+void CHolyKeeper::OutOfSec()
+{
+  Destroy(1u, nullptr);
+}
+
+void CHolyKeeper::SendMsg_FixPosition(int n)
+{
+#pragma pack(push, 1)
+  struct KeeperFixPosMsg
+  {
+    unsigned __int16 wRecordIndex;
+    unsigned __int16 wIndex;
+    unsigned int dwObjSerial;
+    __int16 pos[3];
+  };
+#pragma pack(pop)
+
+  KeeperFixPosMsg msg{};
+  msg.wRecordIndex = static_cast<unsigned __int16>(m_pRec->m_dwIndex);
+  msg.wIndex = m_ObjID.m_wIndex;
+  msg.dwObjSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, msg.pos, 3);
+
+  unsigned __int8 type[2] = {4, 167};
+  g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+}
+
+void CHolyKeeper::SendMsg_RealMovePoint(int n)
+{
+#pragma pack(push, 1)
+  struct KeeperRealMoveMsg
+  {
+    unsigned __int16 wRecordIndex;
+    unsigned __int16 wIndex;
+    unsigned int dwObjSerial;
+    __int16 posAndTarget[5];
+  };
+#pragma pack(pop)
+
+  KeeperRealMoveMsg msg{};
+  msg.wRecordIndex = static_cast<unsigned __int16>(m_pRec->m_dwIndex);
+  msg.wIndex = m_ObjID.m_wIndex;
+  msg.dwObjSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, msg.posAndTarget, 3);
+  msg.posAndTarget[3] = static_cast<__int16>(static_cast<int>(m_fTarPos[0]));
+  msg.posAndTarget[4] = static_cast<__int16>(static_cast<int>(m_fTarPos[2]));
+
+  unsigned __int8 type[2] = {4, 125};
+  g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+}
+
+__int64 CHolyKeeper::SetDamage(int nDam, CCharacter *pDst, int nDstLv)
+{
+  (void)nDstLv;
+
+  if (g_HolySys.GetSceneCode() != 3)
+    return static_cast<unsigned int>(m_nHP);
+  if (g_HolySys.GetHolyMasterRace() == pDst->GetObjRace())
+    return static_cast<unsigned int>(m_nHP);
+
+  if (nDam > 1)
+  {
+    m_nHP -= nDam;
+    if (m_nHP < 0)
+      m_nHP = 0;
+  }
+
+  if (m_nHP == 0)
+    Destroy(0, nullptr);
+
+  return static_cast<unsigned int>(m_nHP);
+}
+
+__int64 CHolyKeeper::SetDamage(
+  int nDam,
+  CCharacter *pDst,
+  int nDstLv,
+  bool bCrt,
+  int nAttackType,
+  unsigned int dwAttackSerial,
+  bool bJadeReturn)
+{
+  (void)bCrt;
+  (void)nAttackType;
+  (void)dwAttackSerial;
+  (void)bJadeReturn;
+  return SetDamage(nDam, pDst, nDstLv);
+}
+
+void CHolyKeeper::CheckAttack()
+{
+  if (m_bMove || m_bExit || m_nHP <= 0)
+    return;
+
+  const unsigned int now = GetLoopTime();
+  if (now < m_dwNextGenAttackTime)
+    return;
+
+  const float speedFactor = m_bChaos ? 4.0f : 2.0f;
+  m_dwNextGenAttackTime = static_cast<unsigned int>(static_cast<float>(m_dwNextGenAttackTime) + m_pRec->m_fAttSpd * speedFactor);
+
+  CCharacter *target = SearchAttackTarget();
+  if (target == nullptr)
+    return;
+
+  m_ap.pDst = target;
+  memcpy_0(m_ap.fArea, target->m_fCurPos, sizeof(m_ap.fArea));
+  m_ap.nPart = 0;
+
+  m_at->AttackGen(&m_ap, false, false);
+  for (int i = 0; i < m_at->m_nDamagedObjNum; ++i)
+  {
+    _be_damaged_char &damaged = m_at->m_DamList[i];
+    damaged.m_pChar->SetDamage(
+      damaged.m_nDamage,
+      this,
+      static_cast<int>(GetLevel()),
+      false,
+      -1,
+      0,
+      true);
+  }
+
+  SendMsg_Attack();
+}
+
+void CHolyKeeper::CheckExit()
+{
+  if (!m_bExit)
+    return;
+
+  bool shouldDestroy = false;
+  if (m_bMove)
+    shouldDestroy = m_pCurMap->m_Dummy.IsInBBox(m_pPosCreate->m_wLineIndex, m_fCurPos);
+  else
+    shouldDestroy = true;
+
+  if (shouldDestroy)
+  {
+    Destroy(1u, nullptr);
+    m_bExit = false;
+  }
+}
+
+void CHolyKeeper::CheckMove()
+{
+  if (m_bMove)
+    return;
+
+  if (m_pLastMoveTarget == nullptr)
+  {
+    const unsigned int now = GetLoopTime();
+    if (m_dwLastStopTime == static_cast<unsigned int>(-1))
+    {
+      m_dwLastStopTime = now;
+      return;
+    }
+    if (m_pRec->m_fWaitTime >= static_cast<float>(static_cast<int>(now - m_dwLastStopTime)))
+      return;
+  }
+
+  if (SearchAttackTarget() != nullptr)
+  {
+    m_dwLastStopTime = static_cast<unsigned int>(-1);
+    return;
+  }
+
+  const int maxMoveDistance = m_pRec->m_nMaxMoveDistance;
+  CPlayer *moveTarget = SearchMoveTarget();
+  float targetPos[3]{m_fCurPos[0], m_fCurPos[1], m_fCurPos[2]};
+
+  if (moveTarget != nullptr)
+  {
+    int range = static_cast<int>(m_pRec->m_fAttExt);
+    if (m_bChaos)
+      range /= 2;
+
+    if (GetSqrt(m_fCurPos, moveTarget->m_fCurPos) <= static_cast<float>(range))
+    {
+      m_dwLastStopTime = static_cast<unsigned int>(-1);
+      return;
+    }
+
+    const float angle = GetYAngle(m_fCurPos, moveTarget->m_fCurPos);
+    const float rad = (6.283185307f * angle) / 65535.0f;
+    targetPos[0] = m_fCurPos[0] - std::sin(rad) * static_cast<float>(2 * maxMoveDistance);
+    targetPos[2] = m_fCurPos[2] - std::cos(rad) * static_cast<float>(2 * maxMoveDistance);
+    if (!m_pCurMap->m_Dummy.IsInBBox(m_pPosActive->m_wLineIndex, targetPos))
+      moveTarget = nullptr;
+  }
+
+  if (moveTarget == nullptr)
+  {
+    if (GetSqrt(m_fCurPos, m_pPosCreate->m_fCenterPos) <= static_cast<float>(maxMoveDistance))
+    {
+      m_dwLastStopTime = static_cast<unsigned int>(-1);
+      return;
+    }
+
+    const float angle = GetYAngle(m_fCurPos, m_pPosCreate->m_fCenterPos);
+    const float rad = (6.283185307f * angle) / 65535.0f;
+    targetPos[0] = m_fCurPos[0] - std::sin(rad) * static_cast<float>(maxMoveDistance);
+    targetPos[2] = m_fCurPos[2] - std::cos(rad) * static_cast<float>(maxMoveDistance);
+  }
+
+  if (SetTarPos(targetPos, false))
+  {
+    SendMsg_Move();
+    m_pLastMoveTarget = moveTarget;
+  }
+  m_dwLastStopTime = static_cast<unsigned int>(-1);
+}
+
+void CHolyKeeper::CheckCurPos()
+{
+  if (m_pCurMap->m_Dummy.IsInBBox(m_pPosActive->m_wLineIndex, m_fCurPos))
+    return;
+
+  m_pLastMoveTarget = nullptr;
+  memcpy_0(m_fCurPos, m_pPosCreate->m_fCenterPos, sizeof(m_fCurPos));
+  Stop();
+  g_Main.m_logSystemError.Write("Out of Area Keeper");
+}
+
+CPlayer *CHolyKeeper::SearchMoveTarget()
+{
+  CPlayer *candidates[MAX_PLAYER]{};
+  int count = 0;
+
+  for (int i = 0; i < MAX_PLAYER; ++i)
+  {
+    if (!m_bPlayerCircleList[i])
+      continue;
+
+    CPlayer *player = &g_Player[i];
+    if (!player->m_bLive || player->m_bCorpse)
+      continue;
+    if (player->m_Param.GetRaceCode() == m_nMasterRace)
+      continue;
+    if (g_Main.IsReleaseServiceMode() && player->m_byUserDgr != 0)
+      continue;
+    if (player->GetStealth(1))
+      continue;
+    if (std::fabs(player->m_fCurPos[1] - m_fCurPos[1]) > 200.0f)
+      continue;
+    if (player->m_pCurMap != m_pCurMap)
+      continue;
+    if (player->GetCurSecNum() == static_cast<unsigned int>(-1))
+      continue;
+    if (!m_pCurMap->m_Dummy.IsInBBox(m_pPosActive->m_wLineIndex, player->m_fCurPos))
+      continue;
+
+    if (m_pLastMoveTarget == player)
+      return player;
+
+    candidates[count++] = player;
+    if (count >= MAX_PLAYER)
+      break;
+  }
+
+  m_pLastMoveTarget = nullptr;
+  if (count == 0)
+    return nullptr;
+
+  return candidates[rand() % count];
+}
+
+CCharacter *CHolyKeeper::SearchAttackTarget()
+{
+  CCharacter *candidates[MAX_PLAYER]{};
+  int count = 0;
+  const float *attackPivot = GetAttackPivot();
+
+  int attackRange = static_cast<int>(m_pRec->m_fAttExt);
+  if (m_bChaos)
+    attackRange /= 2;
+
+  for (int i = 0; i < MAX_PLAYER; ++i)
+  {
+    if (!m_bPlayerCircleList[i])
+      continue;
+
+    CPlayer *player = &g_Player[i];
+    if (!player->m_bLive || player->m_bCorpse)
+      continue;
+    if (player->m_Param.GetRaceCode() == m_nMasterRace)
+      continue;
+    if (g_Main.IsReleaseServiceMode() && player->m_byUserDgr != 0)
+      continue;
+    if (player->GetStealth(1))
+      continue;
+    if (std::fabs(player->m_fCurPos[1] - attackPivot[1]) > 200.0f)
+      continue;
+    if (player->m_pCurMap != m_pCurMap)
+      continue;
+    if (player->GetCurSecNum() == static_cast<unsigned int>(-1))
+      continue;
+
+    const float dx = std::fabs(player->m_fCurPos[0] - attackPivot[0]);
+    const float dz = std::fabs(player->m_fCurPos[2] - attackPivot[2]);
+    const int chebyshev = static_cast<int>((dx > dz) ? dx : dz);
+    if (chebyshev > attackRange)
+      continue;
+
+    if (m_pLastMoveTarget == nullptr
+        && !m_pCurMap->m_Dummy.IsInBBox(m_pPosActive->m_wLineIndex, player->m_fCurPos))
+    {
+      continue;
+    }
+
+    if (m_pLastMoveTarget == player)
+      return player;
+
+    candidates[count++] = player;
+    if (count >= MAX_PLAYER)
+      break;
+  }
+
+  if (count == 0)
+    return nullptr;
+
+  return candidates[rand() % count];
+}
+
+float *CHolyKeeper::GetAttackPivot()
+{
+  if (m_pRec == nullptr)
+    return m_fCurPos;
+
+  const float radius = (m_pRec->m_fAttExt * 4.0f) / 7.0f;
+  const int slot = rand() % 8;
+  const float rad = (6.283185307f * static_cast<float>(slot)) / 8.0f;
+  s_attackPivot[0] = m_fCurPos[0] + std::cos(rad) * radius;
+  s_attackPivot[2] = m_fCurPos[2] + std::sin(rad) * radius;
+  s_attackPivot[1] = m_fCurPos[1];
+  return s_attackPivot;
+}
+
+void CHolyKeeper::SendMsg_Attack()
+{
+#pragma pack(push, 1)
+  struct KeeperDamageEntry
+  {
+    unsigned __int8 byDstID;
+    unsigned int dwDstSerial;
+    unsigned __int16 wDamage;
+  };
+
+  struct AttackKeeperInform
+  {
+    unsigned int dwAtterSerial;
+    unsigned __int8 bCritical;
+    unsigned __int8 byListNum;
+    KeeperDamageEntry DamList[30];
+  };
+#pragma pack(pop)
+
+  AttackKeeperInform msg{};
+  msg.dwAtterSerial = m_dwObjSerial;
+  msg.bCritical = static_cast<unsigned __int8>(m_at->m_bIsCrtAtt);
+  msg.byListNum = static_cast<unsigned __int8>(m_at->m_nDamagedObjNum);
+  for (int i = 0; i < m_at->m_nDamagedObjNum; ++i)
+  {
+    msg.DamList[i].byDstID = m_at->m_DamList[i].m_pChar->m_ObjID.m_byID;
+    msg.DamList[i].dwDstSerial = m_at->m_DamList[i].m_pChar->m_dwObjSerial;
+    msg.DamList[i].wDamage = static_cast<unsigned __int16>(m_at->m_DamList[i].m_nDamage);
+  }
+
+  const unsigned __int8 type[2] = {5, 151};
+  CircleReport(const_cast<unsigned __int8 *>(type), reinterpret_cast<char *>(&msg), sizeof(msg), false);
 }

@@ -1900,3 +1900,14 @@ void CCharacter::_set_sf_cont(
     }
   }
 }
+
+void CCharacter::SendMsg_StunInform()
+{
+  char msg[7]{};
+  msg[0] = static_cast<char>(m_ObjID.m_byID);
+  *reinterpret_cast<unsigned __int16 *>(&msg[1]) = m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned int *>(&msg[3]) = m_dwObjSerial;
+
+  unsigned __int8 packetType[2] = {17, 16};
+  CircleReport(packetType, msg, sizeof(msg), false);
+}

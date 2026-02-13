@@ -75,6 +75,7 @@ public:
   void SendMsg_Destroy();
   void SendMsg_StateChange();
   void SendMsg_FixPosition(unsigned int n);
+  void Loop() override;
   bool IsTakeRight(CPlayer *pOne);
 };
 

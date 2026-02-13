@@ -138,6 +138,58 @@ bool CMonsterEventRespawn::StopRespawnEvent(char *pszEventCode, char *pwszErrCod
   return true;
 }
 
+void CMonsterEventRespawn::CheckRespawnEvent()
+{
+  const DWORD now = timeGetTime();
+  for (int eventIndex = 0; eventIndex < m_nLoadEventRespawn; ++eventIndex)
+  {
+    _event_respawn *eventRespawn = &m_EventRespawn[eventIndex];
+    if (!eventRespawn->bLoad
+        || !eventRespawn->bActive
+        || now - eventRespawn->State.dwLastUpdateTime < eventRespawn->dwTermMSec)
+    {
+      continue;
+    }
+
+    for (int monIndex = 0; monIndex < eventRespawn->State.nRespawnNum; ++monIndex)
+    {
+      _event_respawn::_state::_mon *monInfo = &eventRespawn->State.MonInfo[monIndex];
+      if (monInfo->pMon && monInfo->pMon->m_bLive && monInfo->pMon->m_dwObjSerial == monInfo->dwSerial)
+      {
+        continue;
+      }
+
+      CMonster *monster = CreateRepMonster(
+        eventRespawn->pMap,
+        0,
+        eventRespawn->fPos,
+        monInfo->pMonFld->m_strCode,
+        nullptr,
+        eventRespawn->Option.bExpPenalty,
+        eventRespawn->Option.bExpReward,
+        false,
+        false,
+        false);
+      if (monster)
+      {
+        monInfo->pMon = monster;
+        monInfo->dwSerial = monster->m_dwObjSerial;
+        if (!eventRespawn->Option.bItemLoot)
+        {
+          monster->DisableStdItemLoot();
+        }
+        monster->LinkEventRespawn(eventRespawn);
+      }
+      else
+      {
+        monInfo->pMon = nullptr;
+      }
+    }
+
+    eventRespawn->State.dwLastUpdateTime = now;
+  }
+}
+
 bool CMonsterEventRespawn::SetEventRespawn()
 {
   if (!s_iniExtLenInit)

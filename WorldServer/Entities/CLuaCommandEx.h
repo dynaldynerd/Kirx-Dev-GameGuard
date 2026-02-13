@@ -6,6 +6,8 @@
 class __cppobj __declspec(align(8)) CLuaCommandEx : public CLuaCommand
 {
 public:
+  ~CLuaCommandEx() override;
+
   class _State
   {
   public:

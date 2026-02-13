@@ -1693,6 +1693,268 @@ bool CGameObject::Is_Battle_Mode()
   return false;
 }
 
+void CGameObject::Loop()
+{
+  // this is not a stub
+}
+
+void CGameObject::OnLoop()
+{
+  const unsigned int loopTime = GetLoopTime();
+  if (m_pCurMap && m_pCurMap->IsMapIn(m_fCurPos))
+  {
+    if (m_bStun && loopTime > m_dwNextFreeStunTime)
+    {
+      SetStun(false);
+    }
+
+    if (m_bBreakTranspar && loopTime - m_dwOldTickBreakTranspar > 0x7530)
+    {
+      SetBreakTranspar(false);
+    }
+
+    if (!m_bMapLoading && m_dwCurSec != static_cast<unsigned int>(-1))
+    {
+      UpdateSecList();
+    }
+
+    _ResetCirclePlayer();
+    Loop();
+
+    if (loopTime - m_dwLastSendTime > 0xFA0)
+    {
+      m_dwLastSendTime = GetLoopTime();
+      SendMsg_RealFixPosition(true);
+    }
+
+    if (!m_ObjID.m_byKind && !m_ObjID.m_byID)
+    {
+      SendMsg_RealFixPosition(false);
+      m_nCirclePlayerNum = CalcCirclePlayerNum(static_cast<int>(GetUseSectorRange()));
+    }
+  }
+  else
+  {
+    OutOfSec();
+  }
+}
+
+void CGameObject::AlterSec()
+{
+  // this is not a stub
+}
+
+void CGameObject::OutOfSec()
+{
+  // this is not a stub
+}
+
+__int64 CGameObject::CalcCirclePlayerNum(int nRange)
+{
+  if (m_bPlayerCircleList)
+  {
+    return 1;
+  }
+
+  _sec_info *secInfo = m_pCurMap->GetSecInfo();
+  _pnt_rect rect{};
+  m_pCurMap->GetRectInRadius(&rect, nRange, m_dwCurSec);
+
+  unsigned int count = 0;
+  for (int y = rect.nStarty; y <= rect.nEndy; ++y)
+  {
+    for (int x = rect.nStartx; x <= rect.nEndx; ++x)
+    {
+      const unsigned int secIndex = secInfo->m_nSecNumW * y + x;
+      CObjectList *sectorList = m_pCurMap->GetSectorListPlayer(m_wMapLayerIndex, secIndex);
+      if (sectorList)
+      {
+        count += sectorList->m_nSize;
+      }
+    }
+  }
+
+  return count;
+}
+
+__int64 CGameObject::RerangeSecIndex(unsigned int dwOld, unsigned int dwNew)
+{
+  if (dwOld == static_cast<unsigned int>(-1))
+  {
+    return static_cast<unsigned int>(-1);
+  }
+
+  _sec_info *secInfo = m_pCurMap->GetSecInfo();
+  const unsigned int oldX = dwOld % secInfo->m_nSecNumW;
+  const unsigned int oldY = dwOld / secInfo->m_nSecNumW;
+  unsigned int newX = dwNew % secInfo->m_nSecNumW;
+  unsigned int newY = dwNew / secInfo->m_nSecNumW;
+
+  const int deltaX = static_cast<int>(newX) - static_cast<int>(oldX);
+  const int deltaY = static_cast<int>(newY) - static_cast<int>(oldY);
+
+  if (deltaX > 1)
+  {
+    newX = oldX + 1;
+  }
+  else if (deltaX < -1)
+  {
+    newX = oldX - 1;
+  }
+
+  if (deltaY > 1)
+  {
+    newY = oldY + 1;
+  }
+  else if (deltaY < -1)
+  {
+    newY = oldY - 1;
+  }
+
+  return secInfo->m_nSecNumW * newY + newX;
+}
+
+void CGameObject::ResetSector(unsigned int dwOldSec, unsigned int dwNewSec)
+{
+  if (m_bMaxVision)
+  {
+    return;
+  }
+
+  _sec_info *secInfo = m_pCurMap->GetSecInfo();
+  const int deltaX = static_cast<int>(dwNewSec % secInfo->m_nSecNumW)
+    - static_cast<int>(dwOldSec % secInfo->m_nSecNumW);
+  const int deltaY = static_cast<int>(dwNewSec / secInfo->m_nSecNumW)
+    - static_cast<int>(dwOldSec / secInfo->m_nSecNumW);
+
+  const int currentSec = static_cast<int>(GetCurSecNum());
+  const int useSectorRange = static_cast<int>(GetUseSectorRange());
+
+  _pnt_rect rect{};
+  m_pCurMap->GetRectInRadius(&rect, useSectorRange, currentSec);
+
+  for (int y = rect.nStarty; y <= rect.nEndy; ++y)
+  {
+    for (int x = rect.nStartx; x <= rect.nEndx; ++x)
+    {
+      bool isBoundary = false;
+
+      if (deltaX > 0)
+      {
+        isBoundary = (x == rect.nEndx);
+      }
+      else if (deltaX < 0)
+      {
+        isBoundary = (x == rect.nStartx);
+      }
+
+      if (!isBoundary)
+      {
+        if (deltaY > 0)
+        {
+          isBoundary = (y == rect.nEndy);
+        }
+        else if (deltaY < 0)
+        {
+          isBoundary = (y == rect.nStarty);
+        }
+      }
+
+      if (!isBoundary)
+      {
+        continue;
+      }
+
+      const unsigned int sectorIndex = secInfo->m_nSecNumW * y + x;
+      CObjectList *sectorList = m_pCurMap->GetSectorListObj(m_wMapLayerIndex, sectorIndex);
+      if (!sectorList)
+      {
+        continue;
+      }
+
+      for (_object_list_point *node = sectorList->m_Head.m_pNext; node != &sectorList->m_Tail; node = node->m_pNext)
+      {
+        CGameObject *other = node->m_pItem;
+        if (!other || other == this || other->m_bMaxVision)
+        {
+          continue;
+        }
+
+        if (!other->m_ObjID.m_byKind && !other->m_ObjID.m_byID)
+        {
+          if (m_bMove)
+          {
+            SendMsg_RealMovePoint(other->m_ObjID.m_wIndex);
+          }
+          else
+          {
+            SendMsg_FixPosition(other->m_ObjID.m_wIndex);
+          }
+        }
+
+        if (!m_ObjID.m_byKind && !m_ObjID.m_byID)
+        {
+          if (other->m_bMove)
+          {
+            other->SendMsg_RealMovePoint(m_ObjID.m_wIndex);
+          }
+          else
+          {
+            other->SendMsg_FixPosition(m_ObjID.m_wIndex);
+          }
+        }
+      }
+    }
+  }
+}
+
+char CGameObject::UpdateSecList()
+{
+  unsigned int newSec = static_cast<unsigned int>(CalcSecIndex());
+  if (m_dwCurSec == newSec)
+  {
+    return 1;
+  }
+
+  const unsigned int oldSec = m_dwCurSec;
+  if (!m_ObjID.m_byKind && !m_ObjID.m_byID)
+  {
+    newSec = static_cast<unsigned int>(RerangeSecIndex(m_dwCurSec, newSec));
+  }
+
+  if (!m_pCurMap)
+  {
+    return 0;
+  }
+
+  m_pCurMap->ExitMap(this, m_dwCurSec);
+  m_pCurMap->EnterMap(this, newSec);
+
+  SetCurSecNum(newSec);
+  ResetSector(oldSec, newSec);
+  AlterSec();
+  return 1;
+}
+
+void CGameObject::SendMsg_RealFixPosition(bool bCircle)
+{
+  char payload[8]{};
+  payload[0] = static_cast<char>(m_ObjID.m_byKind);
+  payload[1] = static_cast<char>(m_ObjID.m_byID);
+  *reinterpret_cast<unsigned __int16 *>(&payload[2]) = m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned int *>(&payload[4]) = m_dwObjSerial;
+
+  unsigned __int8 type[2]{4, 10};
+  if (bCircle)
+  {
+    CircleReport(type, payload, sizeof(payload), false);
+  }
+  else
+  {
+    g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, payload, sizeof(payload));
+  }
+}
+
 __int64 CGameObject::GetAttackDP()
 {
   return 0LL;

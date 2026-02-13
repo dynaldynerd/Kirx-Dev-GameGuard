@@ -6,7 +6,9 @@
 
 #include "CGameObject.h"
 #include "CMapData.h"
+#include "CNetProcess.h"
 #include "DummyPosition.h"
+#include "GlobalObjects.h"
 #include "GuildBattle.h"
 
 CGravityStoneRegener::CGravityStoneRegener() : m_eState(GSR_NONE), m_iPortalInx(-1), m_pkRegenPos(nullptr)
@@ -82,4 +84,18 @@ bool CGravityStoneRegener::Init(unsigned int uiMapInx, unsigned __int16 wInx, CM
 int CGravityStoneRegener::GetPortalInx() const
 {
   return m_iPortalInx;
+}
+
+void CGravityStoneRegener::SendMsg_FixPosition(int n)
+{
+  char msg[5]{};
+  *reinterpret_cast<int *>(msg) = m_iPortalInx;
+  msg[4] = static_cast<char>(m_eState == GSR_REGEN);
+
+  unsigned __int8 packetType[2] = {4, static_cast<unsigned __int8>(-84)};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    n,
+    packetType,
+    msg,
+    static_cast<unsigned __int16>(sizeof(msg)));
 }

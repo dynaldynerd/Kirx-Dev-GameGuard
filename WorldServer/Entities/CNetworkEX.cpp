@@ -10,6 +10,7 @@
 #include "AutominePersonalMgr.h"
 #include "CashItemRemoteStore.h"
 #include "FireGuard.h"
+#include "ccrfg_detect_alret.h"
 #include "CBillingManager.h"
 #include "CCashDBWorkManager.h"
 #include "CLogTypeDBTaskManager.h"
@@ -74,6 +75,12 @@
 #include "w_name.h"
 #include "qry_case_select_timelimit_info.h"
 #include "StoreList_fld.h"
+
+namespace
+{
+unsigned __int8 sbyCcrFgBlock[2] = {102, 5};
+_ccrfg_detect_alret sCcrFgBlock{};
+}
 
 void DeCrypt_Move(char *pStr, int nSize, unsigned __int8 byPlus, unsigned __int16 wCryptKey)
 {
@@ -329,6 +336,146 @@ bool CNetWorking::ExpulsionSocket(unsigned int dwProID, unsigned int dwIndex, un
   (void)pvInfo;
   CloseSocket(dwProID, dwIndex, false);
   return true;
+}
+
+bool CNetworkEX::ExpulsionSocket(unsigned int dwProID, unsigned int dwIndex, unsigned __int8 byReason, void *pvInfo)
+{
+  if (dwProID != 0)
+  {
+    return true;
+  }
+
+  if (byReason == 3)
+  {
+    CUserDB *user = &g_UserDB[dwIndex];
+    char accountId[48]{};
+    strcpy_0(accountId, "null");
+    if (user->m_bActive)
+    {
+      strcpy_0(accountId, user->m_szAccountID);
+    }
+
+    _socket *socket = GetSocket(0, dwIndex);
+    const char *ip = socket ? inet_ntoa(socket->m_Addr.sin_addr) : "0.0.0.0";
+    char logBuffer[136]{};
+    sprintf(logBuffer, "CLOSE>> ExpulsionSocket[Buffer: Send Buffer Full] ID: %s, IP: %s", accountId, ip);
+    Close(0, dwIndex, false, logBuffer);
+    return true;
+  }
+
+  if (byReason == 0)
+  {
+    CUserDB *user = &g_UserDB[dwIndex];
+    char accountId[48]{};
+    strcpy_0(accountId, "null");
+    if (user->m_bActive)
+    {
+      strcpy_0(accountId, user->m_szAccountID);
+    }
+
+    _socket *socket = GetSocket(0, dwIndex);
+    const char *ip = socket ? inet_ntoa(socket->m_Addr.sin_addr) : "0.0.0.0";
+    char logBuffer[136]{};
+    sprintf(logBuffer, "CLOSE>> ExpulsionSocket[SpeedHack: No Respon] ID: %s, IP: %s", accountId, ip);
+    Close(0, dwIndex, false, logBuffer);
+    return true;
+  }
+
+  switch (byReason)
+  {
+    case 1:
+    {
+      auto *info = reinterpret_cast<unsigned __int16 *>(pvInfo);
+      _socket *socket = GetSocket(0, dwIndex);
+      if (!socket || !socket->m_bAccept)
+      {
+        return false;
+      }
+
+      const unsigned __int8 *raw = reinterpret_cast<const unsigned __int8 *>(info);
+      if (raw[2] == 1 && raw[3] == 1)
+      {
+        socket->m_bEnterCheck = true;
+        return false;
+      }
+
+      const char *ip = inet_ntoa(socket->m_Addr.sin_addr);
+      char logBuffer[136]{};
+      sprintf(
+        logBuffer,
+        "CLOSE>> ExpulsionSocket[Certify None: %d,%d, size:%d] IP: %s",
+        raw[2],
+        raw[3],
+        *info,
+        ip);
+      Close(0, dwIndex, false, logBuffer);
+      return true;
+    }
+    case 2:
+    {
+      _socket *socket = GetSocket(0, dwIndex);
+      if (!socket || !socket->m_bAccept)
+      {
+        return false;
+      }
+
+      const char *ip = inet_ntoa(socket->m_Addr.sin_addr);
+      char logBuffer[136]{};
+      sprintf(logBuffer, "CLOSE>> ExpulsionSocket[Certify Delay] IP: %s", ip);
+      Close(0, dwIndex, false, logBuffer);
+      return true;
+    }
+    case 5:
+    {
+      if (!m_bUseFG)
+      {
+        return true;
+      }
+
+      _socket *socket = GetSocket(0, dwIndex);
+      if (!socket || !socket->m_bAccept)
+      {
+        return false;
+      }
+
+      CUserDB *user = &g_UserDB[dwIndex];
+      const int fgStatus = *reinterpret_cast<int *>(pvInfo);
+      if (!user->m_bActive)
+      {
+        Close(0, dwIndex, true, "FireGuard Detect !pUser->m_bActive !!");
+        return true;
+      }
+
+      CAsyncLogger::Instance()->FormatLog(
+        7,
+        "IP(%s) : Account(%s) : AccountSerial(%u) : FGStatus(%#x)",
+        inet_ntoa(socket->m_Addr.sin_addr),
+        user->m_szAccountID,
+        user->m_dwAccountSerial,
+        fgStatus);
+
+      if (fgStatus < 11 || fgStatus > 14)
+      {
+        CAsyncLogger::Instance()->FormatLog(
+          7,
+          "Fire Guard Punishment type Invaild : Type(%#x)",
+          fgStatus);
+      }
+      else
+      {
+        const unsigned __int16 packetLen = sCcrFgBlock.size();
+        g_Network.m_pProcess[0]->LoadSendMsg(
+          dwIndex,
+          sbyCcrFgBlock,
+          reinterpret_cast<char *>(&sCcrFgBlock),
+          packetLen);
+        Close(0, dwIndex, true, nullptr);
+      }
+      return true;
+    }
+    default:
+      return true;
+  }
 }
 
 void CNetWorking::AnsyncConnectComplete(unsigned int dwProID, unsigned int dwIndex, int nResult)

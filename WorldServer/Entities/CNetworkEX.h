@@ -60,6 +60,7 @@ public:
     char *pMsg) override;
   void AcceptClientCheck(unsigned int dwProID, unsigned int dwIndex, unsigned int dwSerial) override;
   void CloseClientCheck(unsigned int dwProID, unsigned int dwIndex, unsigned int dwSerial) override;
+  bool ExpulsionSocket(unsigned int dwProID, unsigned int dwIndex, unsigned __int8 byReason, void *pvInfo) override;
   void AnsyncConnectComplete(unsigned int dwProID, unsigned int dwIndex, int nResult) override;
 
   void SetPassablePacket(unsigned int dwProID, unsigned __int8 byHeader1, unsigned __int8 byHeader2);

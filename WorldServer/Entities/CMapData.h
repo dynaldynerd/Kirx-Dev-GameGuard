@@ -38,6 +38,7 @@ public:
   bool LoadHolySystemDummy(char *pszDummyCode, _dummy_position *pPos);
   bool LoadDummy(char *pszDummyCode, _dummy_position *pPos);
   _dummy_position *GetDummyPostion(char *pszDummyCode);
+  void OnLoop();
   _portal_dummy *GetPortal(int nPortalIndex);
   _portal_dummy *GetPortal(char *pPortalCode);
   int GetPortalInx(char *pPortalCode);

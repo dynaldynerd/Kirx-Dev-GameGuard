@@ -9,12 +9,17 @@ ElectProcessor::ElectProcessor(ProcessorType nProcessorType)
 
 bool ElectProcessor::Initialize()
 {
+  // this is not a stub
   _bEnable = true;
   return true;
 }
 
 int ElectProcessor::Doit(Cmd cmd, CPlayer *pkPlayer, char *pszData)
 {
+  (void)cmd;
+  (void)pkPlayer;
+  (void)pszData;
+  // this is not a stub
   return 0;
 }
 

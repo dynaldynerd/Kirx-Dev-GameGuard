@@ -26,6 +26,8 @@
 #include "attack_gen_result_zocl.h"
 #include "attack_skill_result_zocl.h"
 #include "CMapData.h"
+#include "CGuardTower.h"
+#include "CTrap.h"
 
 #include <cstring>
 #include <cmath>
@@ -39,6 +41,10 @@ unsigned int CMonster::s_dwSerialCnt = 0;
 int CMonster::s_nLiveNum = 0;
 CLogFile CMonster::s_logTrace_Boss_BirthAndDeath{};
 CLogFile CMonster::s_logTrace_Boss_Looting{};
+namespace
+{
+char s_monsterObjectName[256]{};
+}
 
 void CMonster::Init(_object_id *pID)
 {
@@ -535,6 +541,163 @@ float CMonster::GetAttackRange()
   return m_pMonRec->m_fAttExt;
 }
 
+__int64 CMonster::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
+{
+  (void)pnConvertPart;
+
+  if (m_pMonRec == nullptr)
+    return 0;
+
+  if (pAttChar != nullptr && m_pMonRec->m_nShieldBlock == 1)
+  {
+    int blockPercent = m_pMonRec->m_nBlockPer;
+    if (blockPercent > 100)
+      blockPercent = 100;
+    if (rand() % 100 < blockPercent)
+      return static_cast<unsigned int>(-2);
+  }
+
+  float defValue = 0.0f;
+  if (nAttactPart == -1)
+    defValue = static_cast<float>(m_DefPart[rand() % 5]);
+  else
+    defValue = static_cast<float>(m_DefPart[nAttactPart]);
+
+  return static_cast<unsigned int>(static_cast<int>(defValue * m_EP.GetEff_Rate(6)));
+}
+
+float CMonster::GetDefFacing(int nPart)
+{
+  (void)nPart;
+  return *reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[8]);
+}
+
+float CMonster::GetDefGap(int nPart)
+{
+  (void)nPart;
+  return *reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[4]);
+}
+
+__int64 CMonster::GetDefSkill(bool bBackAttackDamage)
+{
+  float defSkill = *reinterpret_cast<float *>(&m_pRecordSet[4].m_strCode[56]);
+  if (bBackAttackDamage)
+  {
+    int cap = -1;
+    if (GetViewAngleCap(3, &cap))
+    {
+      if (cap > 100)
+        cap = 100;
+      if (cap < 0)
+        cap = 0;
+      defSkill = defSkill * static_cast<float>(100 - cap) / 100.0f;
+    }
+  }
+
+  return static_cast<unsigned int>(static_cast<int>(defSkill));
+}
+
+__int64 CMonster::GetFireTol()
+{
+  float value = *reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[20]) + m_EP.GetEff_Plus(15);
+  int finalValue = static_cast<int>(value * m_EP.GetEff_Rate(25));
+  if (finalValue < -200)
+    finalValue = -200;
+  if (finalValue > 200)
+    finalValue = 200;
+  if (m_EP.GetEff_State(19) && finalValue > 0)
+    finalValue = -finalValue;
+  return static_cast<unsigned int>(finalValue);
+}
+
+__int64 CMonster::GetHP()
+{
+  return static_cast<unsigned int>(m_nHP);
+}
+
+__int64 CMonster::GetLevel()
+{
+  return static_cast<unsigned int>(static_cast<int>(*reinterpret_cast<float *>(&m_pRecordSet[3].m_strCode[60])));
+}
+
+__int64 CMonster::GetMaxHP()
+{
+  return static_cast<unsigned int>(static_cast<int>(m_pMonRec->m_fMaxHP));
+}
+
+char *CMonster::GetObjName()
+{
+  std::snprintf(
+    s_monsterObjectName,
+    sizeof(s_monsterObjectName),
+    "[MONSTER] >> %s (pos: %s {%d, %d, %d})",
+    m_pMonRec->m_strName,
+    m_pCurMap->m_pMapSet->m_strCode,
+    static_cast<int>(m_fCurPos[0]),
+    static_cast<int>(m_fCurPos[1]),
+    static_cast<int>(m_fCurPos[2]));
+  return s_monsterObjectName;
+}
+
+__int64 CMonster::GetObjRace()
+{
+  return 16;
+}
+
+__int64 CMonster::GetSoilTol()
+{
+  float value = *reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[28]) + m_EP.GetEff_Plus(17);
+  int finalValue = static_cast<int>(value * m_EP.GetEff_Rate(27));
+  if (finalValue < -200)
+    finalValue = -200;
+  if (finalValue > 200)
+    finalValue = 200;
+  if (m_EP.GetEff_State(19) && finalValue > 0)
+    finalValue = -finalValue;
+  return static_cast<unsigned int>(finalValue);
+}
+
+__int64 CMonster::GetWaterTol()
+{
+  float value = *reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[24]) + m_EP.GetEff_Plus(16);
+  int finalValue = static_cast<int>(value * m_EP.GetEff_Rate(26));
+  if (finalValue < -200)
+    finalValue = -200;
+  if (finalValue > 200)
+    finalValue = 200;
+  if (m_EP.GetEff_State(19) && finalValue > 0)
+    finalValue = -finalValue;
+  return static_cast<unsigned int>(finalValue);
+}
+
+float CMonster::GetWeaponAdjust()
+{
+  return *reinterpret_cast<float *>(&m_pRecordSet[4].m_strCode[32]);
+}
+
+__int64 CMonster::GetWeaponClass()
+{
+  return static_cast<unsigned int>(m_pMonRec->m_bAttRangeType);
+}
+
+float CMonster::GetWidth()
+{
+  return m_pMonRec->m_fWidth;
+}
+
+__int64 CMonster::GetWindTol()
+{
+  float value = *reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[32]) + m_EP.GetEff_Plus(18);
+  int finalValue = static_cast<int>(value * m_EP.GetEff_Rate(28));
+  if (finalValue < -200)
+    finalValue = -200;
+  if (finalValue > 200)
+    finalValue = 200;
+  if (m_EP.GetEff_State(19) && finalValue > 0)
+    finalValue = -finalValue;
+  return static_cast<unsigned int>(finalValue);
+}
+
 __int64 CMonster::GetCritical_Exception_Rate()
 {
   return *reinterpret_cast<unsigned int *>(m_pRecordSet[4].m_strCode);
@@ -625,6 +788,21 @@ int CMonster::IsValidPlayer()
   return 0;
 }
 
+bool CMonster::IsAttackableInTown()
+{
+  return true;
+}
+
+bool CMonster::IsBeAttackedAble(bool bFirst)
+{
+  (void)bFirst;
+  if (!m_bLive || m_bObserver || m_bCorpse)
+    return false;
+  if (m_EP.GetEff_State(20))
+    return false;
+  return !m_EP.GetEff_State(28);
+}
+
 char CMonster::IsBeDamagedAble(CCharacter *pAtter)
 {
   const unsigned __int8 attackerId = pAtter->m_ObjID.m_byID;
@@ -650,6 +828,16 @@ char CMonster::IsBeDamagedAble(CCharacter *pAtter)
       || !*reinterpret_cast<unsigned char *>(*reinterpret_cast<unsigned long long *>(&pAtter[1].m_bLive) + 1922ULL);
 }
 
+char CMonster::IsRecvableContEffect()
+{
+  return static_cast<char>(!m_EP.GetEff_State(20) && !m_EP.GetEff_State(28));
+}
+
+bool CMonster::IsRewardExp()
+{
+  return m_bRewardExp;
+}
+
 CCharacter *CMonster::GetAttackTarget()
 {
   return m_pTargetChar;
@@ -663,6 +851,69 @@ void CMonster::SetAttackTarget(CCharacter *p)
   }
   m_pTargetChar = p;
   SendMsg_Change_MonsterTarget(m_pTargetChar);
+}
+
+void CMonster::Loop()
+{
+  if (!m_bLive)
+    return;
+
+  if (m_EP.GetEff_State(20) || m_EP.GetEff_State(28))
+    return;
+
+  if (!m_bStun && m_bMove)
+  {
+    if (m_EP.GetEff_State(6))
+    {
+      const float moveSpeed = GetMoveSpeed();
+      Move(moveSpeed);
+      MoveBreak(moveSpeed);
+      Stop();
+      SendMsg_BreakStop();
+    }
+    else
+    {
+      Move(GetMoveSpeed());
+      UpdateLookAtPos();
+    }
+  }
+
+  if (!m_bStun)
+    m_AI.OnProcess(GetLoopTime());
+
+  CheckEmotionPresentation();
+}
+
+void CMonster::OutOfSec()
+{
+  Destroy(1u, nullptr);
+}
+
+bool CMonster::IsMovable()
+{
+  return m_pMonRec->m_fMovSpd > 0.0f || m_pMonRec->m_fWarMovSpd > 0.0f;
+}
+
+CPlayer *CMonster::SearchNearPlayer()
+{
+  return CMonsterHelper::SearchNearPlayer(this, 0);
+}
+
+__int64 CMonster::AttackObject(int nDamage, CGameObject *pOri)
+{
+  (void)nDamage;
+  (void)pOri;
+  m_LifeCicle = GetLoopTime();
+  return 1;
+}
+
+void CMonster::ChangeApparition(bool bApparition, unsigned int dwAfterKillTerm)
+{
+  m_bApparition = bApparition;
+  if (dwAfterKillTerm != static_cast<unsigned int>(-1))
+  {
+    m_dwDestroyNextTime = dwAfterKillTerm + GetLoopTime();
+  }
 }
 
 void CMonster::SendMsg_Change_MonsterTarget(CCharacter *pChar)
@@ -1303,6 +1554,62 @@ void CMonster::SendMsg_Destroy(unsigned __int8 byDestroyCode)
   CircleReport(type, reinterpret_cast<char *>(msg), 7, 0);
 }
 
+void CMonster::SendMsg_FixPosition(int n)
+{
+#pragma pack(push, 1)
+  struct MonsterFixPosMsg
+  {
+    unsigned __int16 wRecordIndex;
+    unsigned __int16 wIndex;
+    unsigned int dwObjSerial;
+    __int16 pos[3];
+    unsigned __int16 wContEffect;
+    unsigned __int8 byYAngle;
+    unsigned __int16 wMonState;
+  };
+#pragma pack(pop)
+
+  MonsterFixPosMsg msg{};
+  msg.wRecordIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
+  msg.wIndex = m_ObjID.m_wIndex;
+  msg.dwObjSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, msg.pos, 3);
+  msg.wContEffect = m_wLastContEffect;
+  msg.byYAngle = GetYAngleByte();
+  msg.wMonState = static_cast<unsigned __int16>(GetMonStateInfo());
+
+  unsigned __int8 type[2] = {4, 11};
+  g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+}
+
+void CMonster::SendMsg_RealMovePoint(int n)
+{
+#pragma pack(push, 1)
+  struct MonsterRealMoveMsg
+  {
+    unsigned __int16 wRecordIndex;
+    unsigned __int16 wIndex;
+    unsigned int dwObjSerial;
+    __int16 posAndTarget[5];
+    unsigned __int16 wContEffect;
+    unsigned __int16 wMonState;
+  };
+#pragma pack(pop)
+
+  MonsterRealMoveMsg msg{};
+  msg.wRecordIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
+  msg.wIndex = m_ObjID.m_wIndex;
+  msg.dwObjSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, msg.posAndTarget, 3);
+  msg.posAndTarget[3] = static_cast<__int16>(static_cast<int>(m_fTarPos[0]));
+  msg.posAndTarget[4] = static_cast<__int16>(static_cast<int>(m_fTarPos[2]));
+  msg.wContEffect = m_wLastContEffect;
+  msg.wMonState = static_cast<unsigned __int16>(GetMonStateInfo());
+
+  unsigned __int8 type[2] = {4, 22};
+  g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+}
+
 void CMonster::DisableStdItemLoot()
 {
   m_bStdItemLoot = false;
@@ -1311,6 +1618,11 @@ void CMonster::DisableStdItemLoot()
 void CMonster::LinkEventRespawn(_event_respawn *pEventRespawn)
 {
   m_pEventRespawn = pEventRespawn;
+}
+
+void CMonster::LinkEventSet(_event_set *pEventSet)
+{
+  m_pEventSet = pEventSet;
 }
 
 void CMonster::SendMsg_Assist_Skill(
@@ -2253,6 +2565,76 @@ unsigned __int8 CMonster::InsertSFContEffect(
 CLuaSignalReActor *CMonster::GetSignalReActor()
 {
   return &m_LuaSignalReActor;
+}
+
+__int64 CMonster::SetDamage(
+  int nDam,
+  CCharacter *pDst,
+  int nDstLv,
+  bool bCrt,
+  int nAttackType,
+  unsigned int dwAttackSerial,
+  bool bJadeReturn)
+{
+  (void)nDstLv;
+  (void)nAttackType;
+  (void)dwAttackSerial;
+  (void)bJadeReturn;
+
+  if (pDst != nullptr)
+    AttackObject(nDam, static_cast<CGameObject *>(pDst));
+
+  if (nDam >= 1)
+  {
+    m_nHP -= nDam;
+    if (m_nHP < 0)
+      m_nHP = 0;
+  }
+
+  if (m_nHP == 0)
+  {
+    Destroy(0, nullptr);
+  }
+
+  if (bCrt && !m_pMonRec->m_bMonsterCondition)
+    SetStun(true);
+
+  m_AI.SendExternMsg(0, pDst, nDam);
+  return static_cast<unsigned int>(m_nHP);
+}
+
+char CMonster::SetHP(int nHP, bool bOver)
+{
+  int newHP = nHP;
+  if (newHP < 0)
+    newHP = 0;
+
+  if (!bOver)
+  {
+    const int maxHP = static_cast<int>(GetMaxHP());
+    if (newHP > maxHP)
+      newHP = maxHP;
+  }
+
+  if (m_nHP == newHP)
+    return 0;
+
+  m_nHP = newHP;
+  return 1;
+}
+
+void CMonster::SetStun(bool bStun)
+{
+  m_bStun = bStun;
+  if (!m_bStun)
+    return;
+
+  m_dwNextFreeStunTime = static_cast<unsigned int>(static_cast<float>(GetLoopTime() + 1000) + m_pMonRec->m_fCrtMoTime);
+  if (m_bMove)
+  {
+    MoveBreak(GetMoveSpeed());
+    Stop();
+  }
 }
 
 CMonster *SearchEmptyMonster(bool bWithoutFail)

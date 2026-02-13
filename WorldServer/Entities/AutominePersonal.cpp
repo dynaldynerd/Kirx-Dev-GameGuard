@@ -2,12 +2,24 @@
 
 #include "CMainThread.h"
 #include "CItemBox.h"
+#include "CNetProcess.h"
 #include "CNetworkEX.h"
 #include "CUserDB.h"
+#include "CGoldenBoxItemMgr.h"
+#include "CMgrAvatorItemHistory.h"
+#include "COreAmountMgr.h"
+#include "CPlayerDB.h"
 #include "KorLocalTime.h"
 #include "personal_amine_errmsg_zocl.h"
+#include "personal_amine_fixpos_zocl.h"
+#include "personal_amine_infoui_open_zocl.h"
 #include "personal_automine_install_zocl.h"
+#include "personal_automine_alter_dur_zocl.h"
+#include "personal_automine_attacked_zocl.h"
+#include "personal_automine_delbattery_zocl.h"
+#include "personal_automine_stop_zocl.h"
 
+#include <cstdlib>
 #include <cstdio>
 #include <cstring>
 #include <mmsystem.h>
@@ -102,6 +114,35 @@ unsigned int AP_BatterySlot::get_dur()
     return static_cast<unsigned int>(battery_.m_dwDur);
   }
   return 0;
+}
+
+_STORAGE_LIST::_db_con *AP_BatterySlot::get_battery()
+{
+  return &battery_;
+}
+
+unsigned int AP_BatterySlot::sub_dur(unsigned int dwSub)
+{
+  if (!m_bFill)
+  {
+    return dwSub;
+  }
+  if (battery_.m_dwDur == 0)
+  {
+    return dwSub;
+  }
+
+  unsigned int remain = 0;
+  if (battery_.m_dwDur >= dwSub)
+  {
+    battery_.m_dwDur -= dwSub;
+  }
+  else
+  {
+    remain = dwSub - static_cast<unsigned int>(battery_.m_dwDur);
+    battery_.m_dwDur = 0;
+  }
+  return remain;
 }
 
 bool AP_BatterySlot::is_private_item(_STORAGE_LIST::_db_con *pItem)
@@ -652,4 +693,531 @@ bool AutominePersonal::unregist_from_map(unsigned __int8 byDestroyType)
   m_wItemSerial = static_cast<unsigned __int16>(-1);
   m_byFilledSlotCnt = 0;
   return CGameObject::Destroy();
+}
+
+__int64 AutominePersonal::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
+{
+  (void)nAttactPart;
+  (void)pAttChar;
+  (void)pnConvertPart;
+
+  if (m_pItem == nullptr)
+  {
+    return 1;
+  }
+
+  _base_fld *record = g_Main.m_tblItemData[33].GetRecord(m_pItem->m_wItemIndex);
+  if (record == nullptr)
+  {
+    return 1;
+  }
+
+  return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[16]);
+}
+
+float AutominePersonal::GetDefFacing(int nPart)
+{
+  (void)nPart;
+  if (m_pItem == nullptr)
+  {
+    return 0.5f;
+  }
+
+  _base_fld *record = g_Main.m_tblItemData[33].GetRecord(m_pItem->m_wItemIndex);
+  if (record == nullptr)
+  {
+    return 0.5f;
+  }
+
+  return *reinterpret_cast<float *>(&record[5].m_strCode[24]);
+}
+
+float AutominePersonal::GetDefGap(int nPart)
+{
+  (void)nPart;
+  if (m_pItem == nullptr)
+  {
+    return 0.5f;
+  }
+
+  _base_fld *record = g_Main.m_tblItemData[33].GetRecord(m_pItem->m_wItemIndex);
+  if (record == nullptr)
+  {
+    return 0.5f;
+  }
+
+  return *reinterpret_cast<float *>(&record[5].m_strCode[20]);
+}
+
+__int64 AutominePersonal::GetHP()
+{
+  if (m_pItem == nullptr)
+  {
+    return 0;
+  }
+  return static_cast<unsigned int>(m_pItem->m_dwDur);
+}
+
+__int64 AutominePersonal::GetMaxHP()
+{
+  return static_cast<unsigned int>(m_nMaxHP);
+}
+
+__int64 AutominePersonal::GetObjRace()
+{
+  if (m_pOwner == nullptr)
+  {
+    return 255;
+  }
+  return static_cast<unsigned int>(m_pOwner->m_Param.GetRaceCode());
+}
+
+bool AutominePersonal::IsBeAttackedAble(bool bFirst)
+{
+  (void)bFirst;
+  return true;
+}
+
+char AutominePersonal::IsBeDamagedAble(CCharacter *pAtter)
+{
+  (void)pAtter;
+  return 1;
+}
+
+void AutominePersonal::Loop()
+{
+  if (!m_bStart || m_pOwner == nullptr || !m_pOwner->m_bOper)
+  {
+    return;
+  }
+
+  COreAmountMgr *oreAmountMgr = COreAmountMgr::Instance();
+  if (!oreAmountMgr->IsOreRemain())
+  {
+    m_bStart = false;
+
+    _personal_automine_stop_zocl stopPacket{};
+    stopPacket.dwObjSerial = m_dwObjSerial;
+    stopPacket.dwOwnerSerial = get_ownerserial();
+    stopPacket.byStopType = 2;
+    stopPacket.wItemSerial = m_wItemSerial;
+
+    unsigned __int8 packetType[2] = {14, 58};
+    const unsigned int passSerial = get_ownerserial();
+    CircleReport(
+      packetType,
+      reinterpret_cast<char *>(&stopPacket),
+      static_cast<unsigned __int16>(stopPacket.size()),
+      passSerial,
+      false);
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      m_pOwner->m_id.wIndex,
+      packetType,
+      reinterpret_cast<char *>(&stopPacket),
+      static_cast<unsigned __int16>(stopPacket.size()));
+    return;
+  }
+
+  const unsigned int loopTime = GetLoopTime();
+  if (loopTime > m_dwNextMineTime)
+  {
+    if (get_battery())
+    {
+      const unsigned __int8 removedSlot = sub_battery(m_dwDelaySec);
+      if (removedSlot != static_cast<unsigned __int8>(-1))
+      {
+        _personal_automine_delbattery_zocl deletePacket{};
+        deletePacket.dwObjSerial = m_dwObjSerial;
+        deletePacket.bySlot = removedSlot;
+
+        unsigned __int8 packetType[2] = {14, 54};
+        g_Network.m_pProcess[0]->LoadSendMsg(
+          m_pOwner->m_id.wIndex,
+          packetType,
+          reinterpret_cast<char *>(&deletePacket),
+          deletePacket.size());
+      }
+
+      if (m_bOpenUI_Battery)
+      {
+        _personal_amine_infoui_open_zocl infoPacket{};
+        infoPacket.dwObjSerial = m_dwObjSerial;
+        infoPacket.dwBattery[0] = m_pBatterySlot[0].get_dur();
+        infoPacket.dwBattery[1] = m_pBatterySlot[1].get_dur();
+
+        unsigned __int8 packetType[2] = {14, 64};
+        g_Network.m_pProcess[0]->LoadSendMsg(
+          m_pOwner->m_id.wIndex,
+          packetType,
+          reinterpret_cast<char *>(&infoPacket),
+          static_cast<unsigned __int16>(infoPacket.size()));
+      }
+    }
+    else
+    {
+      m_bStart = false;
+
+      _personal_automine_stop_zocl stopPacket{};
+      stopPacket.dwObjSerial = m_dwObjSerial;
+      stopPacket.dwOwnerSerial = get_ownerserial();
+      stopPacket.byStopType = 1;
+      stopPacket.wItemSerial = m_wItemSerial;
+
+      unsigned __int8 packetType[2] = {14, 58};
+      const unsigned int ownerSerial = get_ownerserial();
+      CircleReport(
+        packetType,
+        reinterpret_cast<char *>(&stopPacket),
+        static_cast<unsigned __int16>(stopPacket.size()),
+        ownerSerial,
+        false);
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        m_pOwner->m_id.wIndex,
+        packetType,
+        reinterpret_cast<char *>(&stopPacket),
+        static_cast<unsigned __int16>(stopPacket.size()));
+
+      CPlayer::s_MgrItemHistory.personal_amine_stop(
+        m_dwMineCount,
+        15,
+        m_pItem->m_byTableCode,
+        m_pItem->m_wItemIndex,
+        m_pOwner->m_szItemHistoryFileName);
+    }
+
+    if (!do_automine(loopTime))
+    {
+      m_bStart = false;
+      send_ecode(10);
+
+      _personal_automine_stop_zocl stopPacket{};
+      stopPacket.dwObjSerial = m_dwObjSerial;
+      stopPacket.dwOwnerSerial = get_ownerserial();
+      stopPacket.byStopType = 0;
+      stopPacket.wItemSerial = m_wItemSerial;
+
+      unsigned __int8 packetType[2] = {14, 58};
+      CircleReport(
+        packetType,
+        reinterpret_cast<char *>(&stopPacket),
+        static_cast<unsigned __int16>(stopPacket.size()),
+        0,
+        false);
+    }
+  }
+
+  if (m_bOpenUI_Inven && m_pOwner != nullptr && m_pOwner->m_bOper)
+  {
+    send_changed_packet(m_pOwner->m_id.wIndex);
+  }
+  if (loopTime >= m_dwNextSendTime_CurState)
+  {
+    send_current_state();
+  }
+}
+
+void AutominePersonal::SendMsg_FixPosition(int n)
+{
+  if (!m_bInstalled)
+  {
+    return;
+  }
+
+  _personal_amine_fixpos_zocl packet{};
+  packet.wObjIndex = m_ObjID.m_wIndex;
+  packet.dwObjSerial = m_dwObjSerial;
+  packet.wItemTblIndex = m_pItem->m_wItemIndex;
+  memcpy_0(packet.fFixPos, m_fCurPos, sizeof(packet.fFixPos));
+  packet.wItemSerial = m_pItem->m_wSerial;
+  packet.byAct = static_cast<unsigned __int8>(m_bStart);
+  packet.dwOwnerSeiral = get_ownerserial();
+
+  unsigned __int8 packetType[2] = {14, 59};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    n,
+    packetType,
+    reinterpret_cast<char *>(&packet),
+    packet.size());
+}
+
+__int64 AutominePersonal::SetDamage(
+  int nDam,
+  CCharacter *pDst,
+  int nDstLv,
+  bool bCrt,
+  int nAttackType,
+  unsigned int dwAttackSerial,
+  bool bJadeReturn)
+{
+  (void)pDst;
+  (void)nDstLv;
+  (void)bCrt;
+  (void)nAttackType;
+  (void)dwAttackSerial;
+  (void)bJadeReturn;
+
+  if (m_pItem == nullptr)
+  {
+    return 0;
+  }
+
+  if (nDam > 1)
+  {
+    m_pOwner->Emb_AlterDurPoint(0, m_pItem->m_byStorageIndex, -nDam, false, true);
+  }
+
+  if (GetHP() > 0)
+  {
+    send_attacked();
+    return GetHP();
+  }
+
+  CPlayer::s_MgrItemHistory.consume_del_item(
+    m_pOwner->m_id.wIndex,
+    m_pItem,
+    m_pOwner->m_szItemHistoryFileName);
+  unregist_from_map(1);
+  return 0;
+}
+
+void AutominePersonal::make_minepacket(
+  unsigned __int16 wItemIndex,
+  unsigned __int16 wItemSerial,
+  unsigned __int8 byStorageIndex,
+  unsigned __int16 nNewOre,
+  unsigned int dwDur)
+{
+  (void)byStorageIndex;
+
+  m_changed_packet.dwObjSerial = get_objserial();
+  m_changed_packet.m_byUseBattery = m_byUseBattery;
+  m_changed_packet.dwBattery = get_battery();
+
+  bool updated = false;
+  for (int index = 0; index < m_changed_packet.byChangedNum; ++index)
+  {
+    if (m_changed_packet.change[index].wItemSerial == wItemSerial)
+    {
+      updated = true;
+      if (!m_bChanged)
+      {
+        m_bChanged = true;
+      }
+      m_changed_packet.change[index].wItemIndex = wItemIndex;
+      m_changed_packet.change[index].dwDur = dwDur;
+    }
+  }
+
+  if (!updated)
+  {
+    if (!m_bChanged)
+    {
+      m_bChanged = true;
+    }
+    m_changed_packet.change[m_changed_packet.byChangedNum].wItemIndex = wItemIndex;
+    m_changed_packet.change[m_changed_packet.byChangedNum].wItemSerial = wItemSerial;
+    m_changed_packet.change[m_changed_packet.byChangedNum].dwDur = dwDur;
+    ++m_changed_packet.byChangedNum;
+  }
+
+  ++m_dwMineCount[nNewOre];
+}
+
+void AutominePersonal::set_delay(unsigned int dwDelay)
+{
+  m_dwDelay = dwDelay;
+}
+
+void AutominePersonal::set_delaysec(unsigned __int8 dwDS)
+{
+  m_dwDelaySec = dwDS;
+}
+
+void AutominePersonal::send_attacked()
+{
+  const float hp = static_cast<float>(GetHP());
+  const float maxHp = static_cast<float>(GetMaxHP());
+  _personal_automine_alter_dur_zocl alterDurPacket{};
+  alterDurPacket.dwObjSerial = m_dwObjSerial;
+  alterDurPacket.wHPRate = static_cast<unsigned __int16>(static_cast<int>((hp / maxHp) * 10000.0f));
+
+  unsigned __int8 circleType[2] = {14, 60};
+  CircleReport(
+    circleType,
+    reinterpret_cast<char *>(&alterDurPacket),
+    alterDurPacket.size(),
+    0,
+    false);
+
+  _personal_automine_attacked_zocl attackedPacket{};
+  attackedPacket.wItemSerial = m_wItemSerial;
+  unsigned __int8 ownerType[2] = {14, 66};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    m_pOwner->m_id.wIndex,
+    ownerType,
+    reinterpret_cast<char *>(&attackedPacket),
+    attackedPacket.size());
+}
+
+unsigned __int8 AutominePersonal::sub_battery(unsigned int dwUsed)
+{
+  if (m_byUseBattery == static_cast<unsigned __int8>(-1))
+  {
+    return static_cast<unsigned __int8>(-1);
+  }
+
+  unsigned __int8 dischargedSlot = static_cast<unsigned __int8>(-1);
+  unsigned int remainUsage = m_pBatterySlot[m_byUseBattery].sub_dur(dwUsed);
+  if (!m_pBatterySlot[m_byUseBattery].get_dur())
+  {
+    dischargedSlot = m_byUseBattery;
+    m_pBatterySlot[dischargedSlot].clear();
+
+    m_byUseBattery = s_conver_index[m_byUseBattery];
+    if (remainUsage)
+    {
+      remainUsage = m_pBatterySlot[m_byUseBattery].sub_dur(remainUsage);
+      if (remainUsage)
+      {
+        m_pBatterySlot[m_byUseBattery].clear();
+        m_byUseBattery = static_cast<unsigned __int8>(-1);
+      }
+    }
+
+    _STORAGE_LIST::_db_con *dischargedBattery = m_pBatterySlot[dischargedSlot].get_battery();
+    CPlayer::s_MgrItemHistory.personal_amine_itemlog(
+      "BATTERY_DISCHARGE",
+      dischargedSlot,
+      dischargedBattery->m_byTableCode,
+      dischargedBattery->m_wItemIndex,
+      static_cast<unsigned int>(dischargedBattery->m_dwDur),
+      m_pOwner->m_szItemHistoryFileName);
+  }
+
+  return dischargedSlot;
+}
+
+bool AutominePersonal::do_automine(unsigned int dwTime)
+{
+  m_dwNextMineTime = m_dwDelay + dwTime;
+
+  unsigned __int16 oreItemIndex = 0;
+  _STORAGE_LIST::_db_con minedItem{};
+  bool selectedGoldenBox = false;
+  bool minedOre = false;
+  unsigned __int8 selectedGoldenIndex = 0;
+
+  CGoldenBoxItemMgr *goldBoxMgr = CGoldenBoxItemMgr::Instance();
+  if (goldBoxMgr->Get_Event_Status() == 2)
+  {
+    for (unsigned int index = 0; index < goldBoxMgr->GetLoopCount(); ++index)
+    {
+      const unsigned __int16 goldItemIndex = goldBoxMgr->GetGoldBoxItemIndex(static_cast<unsigned __int16>(index));
+      _base_fld *goldRecord = g_Main.m_tblItemData[17].GetRecord(goldItemIndex);
+      if (goldRecord == nullptr)
+      {
+        continue;
+      }
+
+      const int triggerRate = *reinterpret_cast<int *>(&goldRecord[3].m_strCode[4]);
+      if (triggerRate == 0)
+      {
+        continue;
+      }
+
+      const unsigned int randomValue = (rand() + (rand() << 16)) % 0x1770u + 1;
+      if (triggerRate <= static_cast<int>(randomValue) && goldBoxMgr->Get_Box_Count(static_cast<unsigned __int8>(index)))
+      {
+        oreItemIndex = goldItemIndex;
+        selectedGoldenBox = true;
+        selectedGoldenIndex = static_cast<unsigned __int8>(index);
+        break;
+      }
+    }
+  }
+
+  if (!selectedGoldenBox && !minedOre)
+  {
+    oreItemIndex = static_cast<unsigned __int16>(m_bySelOre + rand() % 3);
+  }
+
+  const int recordNum = static_cast<int>(g_Main.m_tblItemData[17].GetRecordNum());
+  if (oreItemIndex >= recordNum)
+  {
+    m_logSysErr.Write("!CRITICAL! AutominePersonal::do_automine() >> New Ore is not exist(%d)", oreItemIndex);
+    return false;
+  }
+
+  _base_fld *oreRecord = g_Main.m_tblItemData[17].GetRecord(oreItemIndex);
+  for (int slot = 0; slot < 40; ++slot)
+  {
+    _STORAGE_LIST::_db_con *inventoryItem = &m_pOwner->m_Param.m_dbPersonalAmineInven.m_List[slot];
+    if (!inventoryItem->m_bLoad
+        || inventoryItem->m_byTableCode != 17
+        || inventoryItem->m_wItemIndex != oreItemIndex
+        || inventoryItem->m_dwDur >= 99
+        || inventoryItem->m_bLock)
+    {
+      continue;
+    }
+
+    const unsigned int newDur = static_cast<unsigned int>(
+      m_pOwner->Emb_AlterDurPoint(6u, inventoryItem->m_byStorageIndex, 1, false, false));
+    make_minepacket(
+      inventoryItem->m_wItemIndex,
+      inventoryItem->m_wSerial,
+      inventoryItem->m_byStorageIndex,
+      inventoryItem->m_wItemIndex,
+      newDur);
+    eAddMineOre(m_pOwner->m_Param.GetRaceCode(), oreRecord[3].m_strCode[0], 1);
+    COreAmountMgr::Instance()->DecreaseOre(1u);
+
+    minedOre = true;
+    memcpy_0(&minedItem, inventoryItem, sizeof(minedItem));
+    minedItem.m_dwDur = 1;
+    goto RESULT_DONE;
+  }
+
+  if (m_pOwner->m_Param.m_dbPersonalAmineInven.GetIndexEmptyCon() != 255)
+  {
+    _STORAGE_LIST::_db_con newOre{};
+    newOre.m_byTableCode = 17;
+    newOre.m_dwDur = 1;
+    newOre.m_wItemIndex = oreItemIndex;
+    newOre.m_dwLv = 0xFFFFFFF;
+    newOre.m_wSerial = m_pOwner->m_Param.GetNewItemSerial();
+    if (m_pOwner->Emb_AddStorage(6u, &newOre, false, true) == nullptr)
+    {
+      m_logSysErr.Write("!CRITICAL! AutominePersonal::do_automine() >> Emb_AddStorage() is faield");
+      return false;
+    }
+
+    ++m_byFilledSlotCnt;
+    send_current_state();
+    make_minepacket(newOre.m_wItemIndex, newOre.m_wSerial, newOre.m_byStorageIndex, newOre.m_wItemIndex, 1u);
+    eAddMineOre(m_pOwner->m_Param.GetRaceCode(), oreRecord[3].m_strCode[0], 1);
+    COreAmountMgr::Instance()->DecreaseOre(1u);
+
+    minedOre = true;
+    memcpy_0(&minedItem, &newOre, sizeof(minedItem));
+    minedItem.m_dwDur = 1;
+  }
+
+RESULT_DONE:
+  if (selectedGoldenBox)
+  {
+    if (goldBoxMgr->Get_Event_Status() == 2)
+    {
+      goldBoxMgr->Set_Box_Count(selectedGoldenIndex);
+      m_pOwner->SendMsg_Notify_Get_Golden_Box(
+        4u,
+        m_pOwner->m_Param.GetCharSerial(),
+        m_pOwner->m_Param.GetCharNameA(),
+        &minedItem,
+        false);
+    }
+    return true;
+  }
+
+  return minedOre;
 }

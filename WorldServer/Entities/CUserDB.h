@@ -95,6 +95,7 @@ public:
   void Update_LastAttBuff(bool bSet);
   char Update_UserFatigue(unsigned int dwFatigue);
   char Update_UserTLStatus(unsigned __int8 byStatus);
+  char Update_RaceVoteInfoInit();
   unsigned int GetActPoint(unsigned __int8 byCode);
   unsigned int *GetPtrActPoint();
   void SetActPoint(unsigned __int8 byCode, unsigned int dwLeftPoint);

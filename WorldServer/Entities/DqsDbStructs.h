@@ -670,6 +670,8 @@ struct _qry_case_raceboss_accumulation_winrate
 {
   unsigned int dwTotalCnt[3];
   unsigned int dwWinCnt[3];
+
+  __int64 size() const;
 };
 
 struct __declspec(align(4)) _qry_case_update_vote_available
@@ -678,6 +680,8 @@ struct __declspec(align(4)) _qry_case_update_vote_available
   unsigned int dwAccountSerial;
   unsigned int dwCharSerial;
   char wszCharName[17];
+
+  __int64 size() const;
 };
 
 struct __declspec(align(4)) _qry_case_cheat_player_vote_info
@@ -734,6 +738,16 @@ struct __declspec(align(4)) _qry_case_update_user_guild_data
 inline __int64 _qry_case_select_charserial::size() const
 {
   return 1308;
+}
+
+inline __int64 _qry_case_raceboss_accumulation_winrate::size() const
+{
+  return 24;
+}
+
+inline __int64 _qry_case_update_vote_available::size() const
+{
+  return 32;
 }
 
 inline __int64 _qry_case_update_user_guild_data::size() const

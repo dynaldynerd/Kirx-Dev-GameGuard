@@ -24,14 +24,45 @@ struct __cppobj __declspec(align(8)) _stone_create_setdata : _character_create_s
 class __cppobj CHolyStone : public CCharacter
 {
 public:
+  __int64 GetAttackDP() override;
+  __int64 GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart) override;
+  float GetDefFacing(int nPart) override;
+  float GetDefGap(int nPart) override;
+  __int64 GetDefSkill(bool bBackAttackDamage) override;
+  __int64 GetFireTol() override;
+  __int64 GetLevel() override;
+  __int64 GetMaxHP() override;
+  char *GetObjName() override;
+  __int64 GetObjRace() override;
+  __int64 GetSoilTol() override;
+  __int64 GetWaterTol() override;
+  float GetWeaponAdjust() override;
+  float GetWidth() override;
+  __int64 GetWindTol() override;
+  bool IsBeAttackedAble(bool bFirst) override;
+  char IsBeDamagedAble(CCharacter *pAtter) override;
+  void Loop() override;
+  void OutOfSec() override;
+  void SendMsg_FixPosition(int n) override;
+
   bool Create(_stone_create_setdata *pData);
   static unsigned int GetNewStoneSerial();
   void SendMsg_Create();
   void SetOper(bool bOper, float fHPRate);
   void SendMsg_StoneAlterOper();
   unsigned int CalcCurHPRate();
+  char IsChangedHP(unsigned __int16 wAlterRate);
   __int64 GetHP();
   char SetHP(int nHP, bool bOver = false);
+  __int64 SetDamage(
+    int nDam,
+    CCharacter *pDst,
+    int nDstLv,
+    bool bCrt,
+    int nAttackType,
+    unsigned int dwAttackSerial,
+    bool bJadeReturn) override;
+  __int64 SetDamage(int nDam, CCharacter *pDst, int nDstLv);
 
   static int s_nLiveNum;
   static unsigned int s_dwSerialCnt;

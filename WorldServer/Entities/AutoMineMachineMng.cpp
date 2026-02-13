@@ -1286,27 +1286,28 @@ AutoMineMachineMng *AutoMineMachineMng::Instance()
 
 unsigned __int8 AutoMineMachineMng::request_db_query(char *pdata)
 {
-  if (pdata == nullptr)
+  if (!pdata)
   {
     return 24;
   }
 
-  switch (*pdata)
+  const unsigned __int8 subQueryCase = static_cast<unsigned __int8>(pdata[0]);
+  switch (subQueryCase)
   {
     case 0:
-      return _db_qry_insert_newowner(pdata);
+      return _db_qry_insert_newowner(reinterpret_cast<_qry_case_amine_newowner *>(pdata));
     case 1:
-      return _db_qry_update_battery_charge(pdata);
+      return _db_qry_update_battery_charge(reinterpret_cast<_qry_case_amine_batterycharge *>(pdata));
     case 2:
-      return _db_qry_update_mineore(pdata);
+      return _db_qry_update_mineore(reinterpret_cast<_qry_case_amine_mineore *>(pdata));
     case 3:
-      return _db_qry_update_workstate(pdata);
+      return _db_qry_update_workstate(reinterpret_cast<_qry_case_amine_workstate *>(pdata));
     case 4:
-      return _db_qry_update_selore(pdata);
+      return _db_qry_update_selore(reinterpret_cast<_qry_case_amine_selore *>(pdata));
     case 5:
-      return _db_qry_update_battery_discharge(pdata);
+      return _db_qry_update_battery_discharge(reinterpret_cast<_qry_case_amine_battery_discharge *>(pdata));
     case 6:
-      return _db_qry_update_moveore(pdata);
+      return _db_qry_update_moveore(reinterpret_cast<_qry_case_amine_moveore *>(pdata));
     default:
       return 24;
   }
@@ -1319,10 +1320,17 @@ void AutoMineMachineMng::result_db_query(unsigned __int8 byRet, char *pdata)
     return;
   }
 
-  if (*pdata == 1)
+  switch (static_cast<unsigned __int8>(pdata[0]))
   {
-    AutoMineMachine *machine = GetMachine(pdata[2], pdata[1]);
-    machine->SubChargeCost(byRet, pdata);
+    case 1:
+    {
+      auto *batteryChargeQuery = reinterpret_cast<_qry_case_amine_batterycharge *>(pdata);
+      AutoMineMachine *machine = GetMachine(batteryChargeQuery->byRace, batteryChargeQuery->byCollisionType);
+      machine->SubChargeCost(byRet, reinterpret_cast<char *>(batteryChargeQuery));
+      break;
+    }
+    default:
+      break;
   }
 }
 
@@ -1336,11 +1344,16 @@ void AutoMineMachineMng::ChangeOwner(int nRaceCode, CGuild *pGuild, unsigned __i
   m_Machine[nRaceCode][byCollisionType].ChangeOwner(pGuild);
 }
 
-unsigned __int8 AutoMineMachineMng::_db_qry_insert_newowner(char *pdata)
+unsigned __int8 AutoMineMachineMng::_db_qry_insert_newowner(const _qry_case_amine_newowner *query)
 {
+  if (!query)
+  {
+    return 24;
+  }
+
   g_Main.m_pWorldDB->SetAutoCommitMode(false);
-  if (g_Main.m_pWorldDB->update_amine_dck(pdata[1], pdata[2], *reinterpret_cast<unsigned int *>(pdata + 3))
-      && g_Main.m_pWorldDB->insert_amine_newowner(pdata[1], pdata[2], *reinterpret_cast<unsigned int *>(pdata + 3)))
+  if (g_Main.m_pWorldDB->update_amine_dck(query->byCollisionType, query->byRace, query->dwGuildSerial)
+      && g_Main.m_pWorldDB->insert_amine_newowner(query->byCollisionType, query->byRace, query->dwGuildSerial))
   {
     g_Main.m_pWorldDB->CommitTransaction();
     g_Main.m_pWorldDB->SetAutoCommitMode(true);
@@ -1352,39 +1365,49 @@ unsigned __int8 AutoMineMachineMng::_db_qry_insert_newowner(char *pdata)
   return 24;
 }
 
-unsigned __int8 AutoMineMachineMng::_db_qry_update_battery_charge(char *pdata)
+unsigned __int8 AutoMineMachineMng::_db_qry_update_battery_charge(_qry_case_amine_batterycharge *query)
 {
+  if (!query)
+  {
+    return 24;
+  }
+
   if (g_Main.m_pWorldDB->update_amine_battery(
-        pdata[1],
-        pdata[2],
-        *reinterpret_cast<unsigned int *>(pdata + 3),
-        *reinterpret_cast<unsigned int *>(pdata + 7)))
+        query->byCollisionType,
+        query->byRace,
+        query->dwGuildSerial,
+        query->dwBattery))
   {
     return g_Main.db_output_guild_money(
-      *reinterpret_cast<unsigned int *>(pdata + 13),
-      *reinterpret_cast<unsigned int *>(pdata + 3),
+      query->in_master,
+      query->dwGuildSerial,
       0,
-      *reinterpret_cast<unsigned int *>(pdata + 21),
-      reinterpret_cast<long double *>(pdata + 25),
-      reinterpret_cast<long double *>(pdata + 33),
-      reinterpret_cast<unsigned __int8 *>(pdata + 41),
+      static_cast<unsigned int>(query->in_gold),
+      &query->out_totaldalant,
+      &query->out_totalgold,
+      query->byDate,
       "AutoMine Charge",
-      reinterpret_cast<unsigned __int8 *>(pdata + 45));
+      &query->byProcRet);
   }
 
   return 24;
 }
 
-unsigned __int8 AutoMineMachineMng::_db_qry_update_mineore(char *pdata)
+unsigned __int8 AutoMineMachineMng::_db_qry_update_mineore(const _qry_case_amine_mineore *query)
 {
+  if (!query)
+  {
+    return 24;
+  }
+
   if (g_Main.m_pWorldDB->update_amine_mineore(
-        pdata[1],
-        pdata[2],
-        *reinterpret_cast<unsigned int *>(pdata + 3),
-        pdata[7],
-        *reinterpret_cast<unsigned int *>(pdata + 8),
-        pdata[12],
-        *reinterpret_cast<unsigned int *>(pdata + 13)))
+        query->byCollisionType,
+        query->byRace,
+        query->dwGuildSerial,
+        query->byColmID,
+        query->dwK,
+        query->byOverlapNum,
+        query->dwGage))
   {
     return 0;
   }
@@ -1392,13 +1415,18 @@ unsigned __int8 AutoMineMachineMng::_db_qry_update_mineore(char *pdata)
   return 24;
 }
 
-unsigned __int8 AutoMineMachineMng::_db_qry_update_workstate(char *pdata)
+unsigned __int8 AutoMineMachineMng::_db_qry_update_workstate(const _qry_case_amine_workstate *query)
 {
+  if (!query)
+  {
+    return 24;
+  }
+
   if (g_Main.m_pWorldDB->update_amine_workstate(
-        pdata[1],
-        pdata[2],
-        *reinterpret_cast<unsigned int *>(pdata + 3),
-        pdata[7]))
+        query->byCollisionType,
+        query->byRace,
+        query->dwGuildSerial,
+        query->bWorking))
   {
     return 0;
   }
@@ -1406,13 +1434,18 @@ unsigned __int8 AutoMineMachineMng::_db_qry_update_workstate(char *pdata)
   return 24;
 }
 
-unsigned __int8 AutoMineMachineMng::_db_qry_update_selore(char *pdata)
+unsigned __int8 AutoMineMachineMng::_db_qry_update_selore(const _qry_case_amine_selore *query)
 {
+  if (!query)
+  {
+    return 24;
+  }
+
   if (g_Main.m_pWorldDB->update_amine_selore(
-        pdata[1],
-        pdata[2],
-        *reinterpret_cast<unsigned int *>(pdata + 3),
-        pdata[7]))
+        query->byCollisionType,
+        query->byRace,
+        query->dwGuildSerial,
+        query->byOreIdx))
   {
     return 0;
   }
@@ -1420,13 +1453,18 @@ unsigned __int8 AutoMineMachineMng::_db_qry_update_selore(char *pdata)
   return 24;
 }
 
-unsigned __int8 AutoMineMachineMng::_db_qry_update_battery_discharge(char *pdata)
+unsigned __int8 AutoMineMachineMng::_db_qry_update_battery_discharge(const _qry_case_amine_battery_discharge *query)
 {
+  if (!query)
+  {
+    return 24;
+  }
+
   if (g_Main.m_pWorldDB->update_amine_battery(
-        pdata[2],
-        pdata[1],
-        *reinterpret_cast<unsigned int *>(pdata + 3),
-        *reinterpret_cast<unsigned int *>(pdata + 7)))
+        query->byCollisionType,
+        query->byRace,
+        query->dwGuildSerial,
+        query->dwBattery))
   {
     return 0;
   }
@@ -1434,18 +1472,23 @@ unsigned __int8 AutoMineMachineMng::_db_qry_update_battery_discharge(char *pdata
   return 24;
 }
 
-unsigned __int8 AutoMineMachineMng::_db_qry_update_moveore(char *pdata)
+unsigned __int8 AutoMineMachineMng::_db_qry_update_moveore(const _qry_case_amine_moveore *query)
 {
+  if (!query)
+  {
+    return 24;
+  }
+
   if (g_Main.m_pWorldDB->update_amine_moveore(
-        pdata[1],
-        pdata[2],
-        *reinterpret_cast<unsigned int *>(pdata + 3),
-        pdata[7],
-        *reinterpret_cast<unsigned int *>(pdata + 8),
-        pdata[12],
-        pdata[13],
-        *reinterpret_cast<unsigned int *>(pdata + 14),
-        pdata[18]))
+        query->byCollisionType,
+        query->byRace,
+        query->dwGuildSerial,
+        query->bySColmID,
+        query->dwSK,
+        query->bySOverlapNum,
+        query->byDColmID,
+        query->dwDK,
+        query->byDOverlapNum))
   {
     return 0;
   }

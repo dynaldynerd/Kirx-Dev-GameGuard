@@ -18,6 +18,7 @@ public:
   CExchangeEvent();
   static CExchangeEvent *Instance();
   bool Initialzie();
+  void Loop() override;
   bool IsEnable();
   bool IsDelete();
   bool IsWait();
@@ -26,6 +27,8 @@ public:
   void GiveEventItem(CPlayer *pOne);
 
 private:
+  bool CheckBuddhaEventData(bool *pbDelete);
+  void ChangeData();
   void ReadBuddhaEventInfo();
 
   bool m_bEnable;

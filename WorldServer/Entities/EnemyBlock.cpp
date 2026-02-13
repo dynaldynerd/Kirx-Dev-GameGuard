@@ -107,6 +107,12 @@ void _LAYER_SET::ActiveLayer(_MULTI_BLOCK *pMB)
     this->m_dwStartActiveTime = timeGetTime();
 }
 
+char _LAYER_SET::InertLayer()
+{
+    this->m_pMB = nullptr;
+    return 1;
+}
+
 bool _LAYER_SET::IsActiveLayer()
 {
     return this->m_pMB != nullptr;

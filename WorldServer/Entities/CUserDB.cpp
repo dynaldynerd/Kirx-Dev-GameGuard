@@ -2790,6 +2790,18 @@ char CUserDB::Update_UserGetScaner(unsigned __int16 wScanerCnt, unsigned __int16
   return 1;
 }
 
+char CUserDB::Update_RaceVoteInfoInit()
+{
+  m_AvatorData.dbSupplement.VoteEnable = 1;
+  m_AvatorData.dbSupplement.dwAccumPlayTime = 0;
+  m_AvatorData.dbSupplement.byVoted = 0;
+  m_AvatorData.dbSupplement.wScanerCnt = 0;
+  m_AvatorData.dbSupplement.dwScanerGetDate = 0;
+  m_AvatorData.dbSupplement.dwLastResetDate = g_Main.m_dwServerResetToken;
+  m_bDataUpdate = true;
+  return 1;
+}
+
 char CUserDB::Update_LinkBoardSlot(unsigned __int8 bySlot, unsigned __int8 byLinkCode, unsigned __int16 wIndex)
 {
   if (bySlot >= 0x32u)

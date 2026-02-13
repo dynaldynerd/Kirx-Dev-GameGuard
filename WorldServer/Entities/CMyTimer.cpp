@@ -47,6 +47,11 @@ bool CMyTimer::CountingTimer()
   return true;
 }
 
+unsigned int CMyTimer::GetTerm()
+{
+  return static_cast<unsigned int>(m_nTickTerm);
+}
+
 void CMyTimer::TermTimeRun()
 {
   m_dwTickOld = timeGetTime();

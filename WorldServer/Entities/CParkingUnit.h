@@ -24,5 +24,7 @@ public:
   void Init(_object_id *pID);
   bool Destroy(unsigned __int8 byDestoryType);
   void SendMsg_Destroy(unsigned __int8 byDestoryType);
+  void Loop() override;
+  void SendMsg_FixPosition(int n) override;
 };
 

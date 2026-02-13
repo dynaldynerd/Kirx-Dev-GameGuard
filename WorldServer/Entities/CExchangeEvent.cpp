@@ -4,6 +4,7 @@
 
 #include "CRecordData.h"
 #include "CPlayer.h"
+#include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 #include "base_fld.h"
 
@@ -65,6 +66,85 @@ bool CExchangeEvent::Initialzie()
 
   m_tmDataFileCheckTime.BeginTimer(0x2710u);
   return true;
+}
+
+void CExchangeEvent::Loop()
+{
+  if (m_byState != 0)
+  {
+    if (m_byState == 1)
+    {
+      int processedCount = 0;
+      while (m_dwPlayerArrayNo < MAX_PLAYER)
+      {
+        CPlayer *player = &g_Player[m_dwPlayerArrayNo];
+        if (player->m_bOper && player->IsApplyPcbangPrimium())
+        {
+          DeleteExchangeEventItem(player);
+          ++processedCount;
+          if (processedCount >= 100)
+          {
+            ++m_dwPlayerArrayNo;
+            break;
+          }
+        }
+        ++m_dwPlayerArrayNo;
+      }
+
+      if (m_dwPlayerArrayNo >= MAX_PLAYER)
+      {
+        m_dwPlayerArrayNo = 0;
+        m_byState = 2;
+      }
+      return;
+    }
+
+    if (m_byState == 2)
+    {
+      ChangeData();
+      m_byState = 3;
+      return;
+    }
+
+    if (m_byState == 3)
+    {
+      if (m_bGiveItem)
+      {
+        for (int playerIndex = 0; playerIndex < MAX_PLAYER; ++playerIndex)
+        {
+          CPlayer *player = &g_Player[playerIndex];
+          if (player->m_bOper && player->IsApplyPcbangPrimium())
+          {
+            GiveEventItem(player);
+          }
+        }
+      }
+
+      m_bWait = false;
+      m_byState = 4;
+      return;
+    }
+
+    if (m_byState == 4)
+    {
+      m_bGiveItem = false;
+    }
+    else
+    {
+      g_Main.m_logSystemError.Write(
+        "CExchangeEvent::Loop() : Buddha Event Setting Change Check Fail, Invalid State(%u)",
+        m_byState);
+    }
+
+    m_byState = 0;
+    return;
+  }
+
+  bool shouldDelete = false;
+  if (m_tmDataFileCheckTime.CountingTimer() && CheckBuddhaEventData(&shouldDelete))
+  {
+    m_byState = static_cast<unsigned __int8>(shouldDelete ? 1 : 2);
+  }
 }
 
 bool CExchangeEvent::IsEnable()
@@ -209,4 +289,97 @@ void CExchangeEvent::ReadBuddhaEventInfo()
 
   m_bModifyEnable = strcmp_0(enableStr, "TRUE") == 0;
   m_bModifyDelete = strcmp_0(deleteStr, "TRUE") == 0;
+}
+
+void CExchangeEvent::ChangeData()
+{
+  m_bEnable = m_bModifyEnable;
+  m_bDelete = m_bModifyDelete;
+  memcpy_0(m_EventItemCode, m_ModifyItemCode, sizeof(m_EventItemCode));
+
+  for (int index = 0; index < 4; ++index)
+  {
+    m_EventItemInfo[index].byTableCode = static_cast<unsigned __int8>(-1);
+    m_EventItemInfo[index].dwIndex = 255;
+
+    const unsigned __int8 itemTableCode =
+      static_cast<unsigned __int8>(GetItemTableCode(m_EventItemCode[index]));
+    if (itemTableCode == static_cast<unsigned __int8>(-1))
+    {
+      continue;
+    }
+
+    _base_fld *record = g_Main.m_tblItemData[itemTableCode].GetRecord(m_EventItemCode[index]);
+    if (record)
+    {
+      m_EventItemInfo[index].byTableCode = itemTableCode;
+      m_EventItemInfo[index].dwIndex = record->m_dwIndex;
+    }
+  }
+}
+
+bool CExchangeEvent::CheckBuddhaEventData(bool *pbDelete)
+{
+  _FILETIME fileWriteTime{};
+  if (!GetLastWriteFileTime(".\\Initialize\\WorldSystem.ini", &fileWriteTime))
+  {
+    return false;
+  }
+
+  if (m_ftWrite.dwHighDateTime == fileWriteTime.dwHighDateTime
+      && m_ftWrite.dwLowDateTime == fileWriteTime.dwLowDateTime)
+  {
+    return false;
+  }
+
+  memcpy_s(&m_ftWrite, sizeof(m_ftWrite), &fileWriteTime, sizeof(fileWriteTime));
+  *pbDelete = false;
+
+  ReadBuddhaEventInfo();
+
+  const bool item0Changed = strcmp_0(m_EventItemCode[0], m_ModifyItemCode[0]) != 0;
+  const bool item1Changed = strcmp_0(m_EventItemCode[1], m_ModifyItemCode[1]) != 0;
+  const bool item2Changed = strcmp_0(m_EventItemCode[2], m_ModifyItemCode[2]) != 0;
+  const bool item3Changed = strcmp_0(m_EventItemCode[3], m_ModifyItemCode[3]) != 0;
+
+  if (m_bEnable == m_bModifyEnable
+      && m_bDelete == m_bModifyDelete
+      && !item0Changed
+      && !item1Changed
+      && !item2Changed
+      && !item3Changed)
+  {
+    return false;
+  }
+
+  if (m_bEnable)
+  {
+    if (m_bEnable != m_bModifyEnable)
+    {
+      *pbDelete = true;
+      m_bWait = true;
+      m_bGiveItem = false;
+    }
+
+    if (m_bEnable == m_bModifyEnable && item0Changed)
+    {
+      *pbDelete = true;
+      m_bWait = true;
+      m_bGiveItem = true;
+    }
+  }
+  else if (m_bEnable == m_bModifyEnable)
+  {
+    *pbDelete = false;
+    m_bWait = false;
+    m_bGiveItem = false;
+  }
+  else
+  {
+    *pbDelete = false;
+    m_bWait = true;
+    m_bGiveItem = true;
+  }
+
+  return true;
 }

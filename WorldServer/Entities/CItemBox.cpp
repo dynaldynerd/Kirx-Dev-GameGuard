@@ -414,6 +414,48 @@ void CItemBox::SendMsg_FixPosition(unsigned int n)
   g_Network.m_pProcess[0]->LoadSendMsg(n, pbyType, reinterpret_cast<char *>(&msg), 0x12u);
 }
 
+void CItemBox::Loop()
+{
+  const unsigned int loopTime = GetLoopTime();
+  if (loopTime <= m_dwLootStartTime)
+  {
+    return;
+  }
+
+  if (m_nStateCode == 0)
+  {
+    const unsigned int elapsed = loopTime - m_dwLootStartTime;
+    if (elapsed > 20000)
+    {
+      if (m_byCreateCode == 2 || m_byCreateCode == 3 || m_byCreateCode == 6 || m_byCreateCode == 4)
+      {
+        Destroy();
+      }
+      else
+      {
+        m_nStateCode = 1;
+        SendMsg_StateChange();
+      }
+    }
+    return;
+  }
+
+  if (m_nStateCode == 1)
+  {
+    if (loopTime - m_dwLootStartTime > 50000)
+    {
+      m_nStateCode = 2;
+      SendMsg_StateChange();
+    }
+    return;
+  }
+
+  if (m_nStateCode == 2 && loopTime - m_dwLootStartTime > 60000)
+  {
+    Destroy();
+  }
+}
+
 CItemBox *CreateItemBox(
   _STORAGE_LIST::_db_con *pItem,
   CPlayer *pOwner,

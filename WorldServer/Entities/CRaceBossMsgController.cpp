@@ -113,6 +113,22 @@ bool RACE_BOSS_MSG::CMsg::IsDayChanged()
   return m_uiState == 2;
 }
 
+bool RACE_BOSS_MSG::CMsg::IsSendTime()
+{
+  if (!m_uiState || m_uiState == 3)
+  {
+    return false;
+  }
+
+  const DWORD now = timeGetTime();
+  return m_dwSendTime <= now;
+}
+
+bool RACE_BOSS_MSG::CMsg::IsSendFromWeb()
+{
+  return m_dwWebSendDBID != 0;
+}
+
 RACE_BOSS_MSG::CMsgList::CMsgList(unsigned __int8 ucRace, unsigned int uiSize)
   : m_ucRace(ucRace),
     m_ppMsg(nullptr),
@@ -249,6 +265,57 @@ void RACE_BOSS_MSG::CMsgList::Release(CMsg *pkMsg)
     m_kWaitInxList.PushNode_Back(dwIndex);
     pkMsg->Clear();
     pkMsg->SetDone();
+  }
+}
+
+RACE_BOSS_MSG::CMsg *RACE_BOSS_MSG::CMsgList::GetSendMsg()
+{
+  unsigned int outIndex = 0;
+  if (!m_kUseInxList.CopyFront(&outIndex))
+  {
+    return nullptr;
+  }
+
+  CMsg *msg = m_ppMsg[outIndex];
+  if (msg->IsSendTime())
+  {
+    return msg;
+  }
+  return nullptr;
+}
+
+int RACE_BOSS_MSG::CMsgList::GetRemainCnt()
+{
+  return static_cast<int>(m_kEmptyInxList.size());
+}
+
+void RACE_BOSS_MSG::CMsgList::Refresh()
+{
+  if (!m_uiSize)
+  {
+    return;
+  }
+
+  if (m_kUseInxList.size() > 0)
+  {
+    m_kUseInxList.m_csList.Lock();
+    for (CNetIndexList::_index_node *node = m_kUseInxList.m_Head.m_pNext;
+         node != &m_kUseInxList.m_Tail;
+         node = node->m_pNext)
+    {
+      m_ppMsg[node->m_dwIndex]->SetDayChanged();
+    }
+    m_kUseInxList.m_csList.Unlock();
+  }
+
+  const int moveCount = 2 - static_cast<int>(m_kEmptyInxList.size());
+  if (moveCount > 0)
+  {
+    unsigned int outIndex = 0;
+    for (int index = 0; index < moveCount && m_kWaitInxList.PopNode_Front(&outIndex); ++index)
+    {
+      m_kEmptyInxList.PushNode_Back(outIndex);
+    }
   }
 }
 
@@ -401,6 +468,66 @@ void RACE_BOSS_MSG::CMsgListManager::Save()
     }
   }
   WritePrivateProfileStringA("RaceBossSMSSave", "Flag", "TRUE", "..\\SystemSave\\ServerState.ini");
+}
+
+RACE_BOSS_MSG::CMsg *RACE_BOSS_MSG::CMsgListManager::GetSendMsg(unsigned __int8 *ucRace)
+{
+  if (m_bEmpty)
+  {
+    return nullptr;
+  }
+
+  for (int race = 0; race < 3; ++race)
+  {
+    CMsg *msg = m_pkMsgList[race]->GetSendMsg();
+    if (msg)
+    {
+      *ucRace = static_cast<unsigned __int8>(race);
+      return msg;
+    }
+  }
+
+  return nullptr;
+}
+
+unsigned __int8 RACE_BOSS_MSG::CMsgListManager::GetRemainCnt(unsigned __int8 ucRace)
+{
+  if (m_bEmpty || ucRace >= 3)
+  {
+    return 0;
+  }
+
+  return static_cast<unsigned __int8>(m_pkMsgList[ucRace]->GetRemainCnt());
+}
+
+void RACE_BOSS_MSG::CMsgListManager::Release(unsigned __int8 ucRace, CMsg *pkMsg)
+{
+  if (!m_bEmpty && ucRace < 3)
+  {
+    m_pkMsgList[ucRace]->Release(pkMsg);
+  }
+}
+
+void RACE_BOSS_MSG::CMsgListManager::Refresh()
+{
+  if (m_bEmpty)
+  {
+    return;
+  }
+
+  for (int race = 0; race < 3; ++race)
+  {
+    m_pkMsgList[race]->Refresh();
+  }
+}
+
+void RACE_BOSS_MSG::CMsgListManager::Save(unsigned __int8 ucRace)
+{
+  if (!m_bEmpty && ucRace < 3)
+  {
+    m_pkMsgList[ucRace]->Save();
+    WritePrivateProfileStringA("RaceBossSMSSave", "Flag", "TRUE", "..\\SystemSave\\ServerState.ini");
+  }
 }
 
 bool RACE_BOSS_MSG::CMsgList::Load(unsigned int dwCurTime)
@@ -750,13 +877,103 @@ void CRaceBossMsgController::OnLoop()
     return;
   }
 
+  if (g_Main.m_bConnectedWebAgentServer)
+  {
+    UpdateSend();
+  }
+
   if (m_pkTimer->CountingTimer())
   {
     SaveCurTime();
     if (IsDayChanged())
     {
+      m_kManager.Refresh();
       m_kManager.Save();
     }
+  }
+}
+
+void CRaceBossMsgController::UpdateSend()
+{
+  unsigned __int8 raceCode = 0;
+  RACE_BOSS_MSG::CMsg *msg = m_kManager.GetSendMsg(&raceCode);
+  if (!msg)
+  {
+    return;
+  }
+
+  if (!msg->IsSendFromWeb())
+  {
+    const unsigned __int8 remainCount = m_kManager.GetRemainCnt(raceCode);
+    SendInfomSender(msg->GetSerial(), remainCount);
+  }
+
+  SendRequestWeb(raceCode, msg);
+  m_kManager.Release(raceCode, msg);
+  m_kManager.Save(raceCode);
+  SaveCurTime();
+}
+
+void CRaceBossMsgController::SendInfomSender(unsigned int dwSerial, unsigned __int8 ucRemainCnt)
+{
+  CPlayer *player = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, dwSerial);
+  if (!player || !player->m_bLive)
+  {
+    return;
+  }
+
+  char payload[1]{};
+  payload[0] = static_cast<char>(ucRemainCnt);
+  unsigned __int8 type[2]{52, 4};
+  g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, type, payload, 1u);
+}
+
+void CRaceBossMsgController::SendRequestWeb(unsigned __int8 ucRace, RACE_BOSS_MSG::CMsg *pkMsg)
+{
+  if (!g_Main.m_bWorldOpen || !g_Main.m_bWorldService)
+  {
+    return;
+  }
+
+  if (pkMsg->IsSendFromWeb())
+  {
+#pragma pack(push, 1)
+    struct FromWebAck
+    {
+      unsigned int webSendDbId;
+      unsigned int msgIndex;
+      int worldCode;
+      unsigned __int8 raceCode;
+    };
+#pragma pack(pop)
+
+    FromWebAck payload{};
+    payload.webSendDbId = pkMsg->GetWebDBID();
+    payload.msgIndex = pkMsg->GetID();
+    payload.worldCode = static_cast<int>(g_Main.m_byWorldCode);
+    payload.raceCode = ucRace;
+
+    unsigned __int8 type[2]{51, 14};
+    if (g_Main.m_bConnectedWebAgentServer)
+    {
+      g_Network.m_pProcess[2]->LoadSendMsg(
+        g_Main.m_byWebAgentServerNetInx,
+        type,
+        reinterpret_cast<char *>(&payload),
+        sizeof(payload));
+    }
+    return;
+  }
+
+  unsigned __int8 type[2]{51, 10};
+  char payload[9]{};
+  *reinterpret_cast<unsigned int *>(payload) = pkMsg->GetID();
+  *reinterpret_cast<int *>(payload + 4) = static_cast<int>(g_Main.m_byWorldCode);
+  payload[8] = static_cast<char>(ucRace);
+
+  if (g_Main.m_bConnectedWebAgentServer)
+  {
+    g_Network.m_pProcess[2]->LoadSendMsg(g_Main.m_byWebAgentServerNetInx, type, payload, 9u);
   }
 }
 

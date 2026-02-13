@@ -12,6 +12,9 @@ struct __unaligned __declspec(align(1)) _pt_trans_votepaper_zocl
     unsigned int dwWinCnt;
   };
 
+  _pt_trans_votepaper_zocl();
+  __int64 size() const;
+
   unsigned __int8 byCnt;
   __body body[8];
 };
@@ -25,6 +28,9 @@ struct _pt_notify_vote_score_zocl
     unsigned __int8 byScoreRate;
   };
 
+  _pt_notify_vote_score_zocl();
+  __int64 size() const;
+
   unsigned __int8 byRace;
   unsigned __int8 byVoteRate;
   unsigned __int8 byNonvoteRate;
@@ -34,6 +40,8 @@ struct _pt_notify_vote_score_zocl
 
 struct _pt_notify_final_decision
 {
+  __int64 size() const;
+
   char wszAvatorName[5][17];
 };
 
@@ -68,4 +76,29 @@ inline _pt_query_appoint_zocl::_pt_query_appoint_zocl()
 inline __int64 _pt_query_appoint_zocl::size()
 {
   return 19;
+}
+
+inline _pt_trans_votepaper_zocl::_pt_trans_votepaper_zocl()
+{
+  memset_0(this, 0, sizeof(*this));
+}
+
+inline __int64 _pt_trans_votepaper_zocl::size() const
+{
+  return 313 - 39LL * (8 - byCnt);
+}
+
+inline _pt_notify_vote_score_zocl::_pt_notify_vote_score_zocl()
+{
+  memset_0(this, 0, sizeof(*this));
+}
+
+inline __int64 _pt_notify_vote_score_zocl::size() const
+{
+  return 156 - 19LL * (8 - byCnt);
+}
+
+inline __int64 _pt_notify_final_decision::size() const
+{
+  return 85;
 }

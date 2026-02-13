@@ -7,7 +7,11 @@
 class __cppobj CNationSettingDataRU : public CNationSettingData
 {
 public:
+  int Init() override;
   CashDbWorker *CreateWorker() override;
   CBilling *CreateBilling() override;
+  const char *GetItemName(_NameTxt_fld *pFld) override;
+  void SendCashDBDSNRequest() override;
+  bool ReadSystemPass() override;
   int GetCashItemPrice(_CashShop_str_fld *pFld) override;
 };

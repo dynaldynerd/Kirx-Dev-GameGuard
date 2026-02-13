@@ -14,6 +14,8 @@ CMoveMapLimitRightPortal::CMoveMapLimitRightPortal(int iType)
 {
 }
 
+CMoveMapLimitRightPortal::~CMoveMapLimitRightPortal() = default;
+
 void CMoveMapLimitRightPortal::Load(CPlayer *pkPlayer)
 {
   m_pkRight = &pkPlayer->m_MinigTicket;

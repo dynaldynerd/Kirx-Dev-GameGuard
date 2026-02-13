@@ -235,6 +235,112 @@ bool CMonsterEventSet::StopEventSet(char *pszEventCode, char *pwszErrCode)
   return false;
 }
 
+void CMonsterEventSet::CheckEventSetRespawn()
+{
+  const DWORD now = timeGetTime();
+  for (int eventIndex = 0; eventIndex < 10; ++eventIndex)
+  {
+    _event_set *eventSet = &m_EventSet[eventIndex];
+    if (!eventSet->m_bOper)
+    {
+      continue;
+    }
+
+    bool hasRunningMonsterSet = false;
+    for (int setIndex = 0; setIndex < 10; ++setIndex)
+    {
+      _event_set::_monster_set *monsterSet = &eventSet->m_MonSet[setIndex];
+      if (!monsterSet->bIsSet || !monsterSet->m_State.bOper)
+      {
+        continue;
+      }
+
+      hasRunningMonsterSet = true;
+      if (monsterSet->dwDuring && now - monsterSet->m_State.dwStartTime >= monsterSet->dwDuring)
+      {
+        for (int monIndex = 0; monIndex < monsterSet->m_State.nRespawnNum; ++monIndex)
+        {
+          _event_set::_monster_set::_state::_mon *monInfo = &monsterSet->m_State.MonInfo[monIndex];
+          if (monInfo->pMon && monInfo->pMon->m_bLive && monInfo->pMon->m_dwObjSerial == monInfo->dwSerial)
+          {
+            monInfo->pMon->Destroy(1u, nullptr);
+          }
+        }
+
+        ResetMonsterState(&monsterSet->m_State);
+        g_Main.m_logEvent.Write("Stop Event Monster Set (by during) >> %s", monsterSet->pMonsterFld->m_strCode);
+      }
+      else if (now - monsterSet->m_State.dwLastUpdateTime >= monsterSet->dwRegenTerm)
+      {
+        int regenRange = 20 * monsterSet->m_State.nRespawnNum;
+        if (regenRange >= 500)
+        {
+          regenRange = 500;
+        }
+
+        for (int monIndex = 0; monIndex < monsterSet->m_State.nRespawnNum; ++monIndex)
+        {
+          _event_set::_monster_set::_state::_mon *monInfo = &monsterSet->m_State.MonInfo[monIndex];
+          if (monInfo->pMon && monInfo->pMon->m_bLive && monInfo->pMon->m_dwObjSerial == monInfo->dwSerial)
+          {
+            continue;
+          }
+
+          if (monsterSet->byRegenProb < static_cast<unsigned __int8>(rand() % 100))
+          {
+            continue;
+          }
+
+          float spawnPos[3]{};
+          if (!monsterSet->pMap->GetRandPosVirtualDumExcludeStdRange(monsterSet->fPos, regenRange, 0, spawnPos))
+          {
+            memcpy_0(spawnPos, monsterSet->fPos, sizeof(spawnPos));
+          }
+
+          CMonster *monster = CreateRepMonster(
+            monsterSet->pMap,
+            0,
+            spawnPos,
+            monsterSet->pMonsterFld->m_strCode,
+            nullptr,
+            false,
+            true,
+            false,
+            false,
+            false);
+          if (monster)
+          {
+            monInfo->pMon = monster;
+            monInfo->dwSerial = monster->m_dwObjSerial;
+            monInfo->pMonFld = monsterSet->pMonsterFld;
+            monster->DisableStdItemLoot();
+            monster->LinkEventSet(eventSet);
+          }
+          else
+          {
+            monInfo->pMon = nullptr;
+          }
+        }
+
+        monsterSet->m_State.dwLastUpdateTime = now;
+      }
+    }
+
+    if (!hasRunningMonsterSet)
+    {
+      eventSet->m_bOper = false;
+      g_Main.m_logEvent.Write("Stop Event Set (by during) >> %s", eventSet->m_strId);
+    }
+  }
+
+  if (IsINIFileChanged(".\\Initialize\\EventSetLooting.ini", m_ftLootingWrite) && !LoadEventSetLooting())
+  {
+    g_Main.m_logEvent.Write(
+      "Reload Event set looting INI file fail >> %s",
+      ".\\Initialize\\EventSetLooting.ini");
+  }
+}
+
 bool CMonsterEventSet::LoadEventSet(char *errBuffer)
 {
   if (errBuffer != nullptr)

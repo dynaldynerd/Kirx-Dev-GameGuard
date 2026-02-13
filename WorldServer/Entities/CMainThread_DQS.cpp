@@ -32,14 +32,35 @@
 #include "CWeeklyGuildRankManager.h"
 #include "CVoteSystem.h"
 #include "DqsDbStructs.h"
+#include "DqsOnRunPayloads.h"
 #include "GlobalObjects.h"
+#include "GuildBattleTypes.h"
+#include "insert_trc_info.h"
 #include "PatriarchElectProcessor.h"
 #include "RFEvent_ClassRefine.h"
 #include "TRC_AutoTrade.h"
 #include "log_case_charselect.h"
+#include "log_sheet_lv.h"
+#include "qry_case_alive_char.h"
 #include "qry_case_cash_limsale.h"
+#include "qry_case_contsave.h"
+#include "qry_case_disjointguild.h"
+#include "qry_case_insert_orelog.h"
+#include "qry_case_insertitem.h"
+#include "qry_case_in_atrade_tax.h"
+#include "qry_case_make_storage.h"
+#include "qry_case_post_send.h"
+#include "qry_case_rank_racerank_guildrank.h"
+#include "qry_case_request_refund.h"
+#include "qry_case_select_timelimit_info.h"
+#include "qry_case_selfleave.h"
+#include "qry_case_unmandtrader_buy_update.h"
+#include "qry_case_unmandtrader_log_in_proc_update_complete.h"
+#include "qry_case_unmandtrader_updateitemstate.h"
+#include "qry_case_updatereservedschedule.h"
 #include "qry_sheet_delete.h"
 #include "qry_sheet_insert.h"
+#include "qry_sheet_lobby.h"
 #include "qry_sheet_load.h"
 #include "qry_sheet_reged.h"
 #include "qry_logout.h"
@@ -431,62 +452,68 @@ void CMainThread::OnDQSRun()
         break;
       }
       case 5:
-        v186 = queryEntry->m_sData;
-        updated = db_Update_Avator(*(_DWORD *)queryEntry->m_sData,
-                    (_AVATOR_DATA *)&queryEntry->m_sData[4],
-                    (_AVATOR_DATA *)&queryEntry->m_sData[37219],
-                    queryEntry->m_sData[74434]);
-        queryEntry->m_byResult = updated;
-        db_Update_PostStorage(*(_DWORD *)v186,
-          (_AVATOR_DATA *)(v186 + 4),
-          (_AVATOR_DATA *)(v186 + 37219));
-        if (v186[74435] )
+      {
+        auto *logoutQuery = reinterpret_cast<_qry_sheet_logout *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_Update_Avator(
+          logoutQuery->dwAvatorSerial,
+          &logoutQuery->NewData,
+          &logoutQuery->OldData,
+          logoutQuery->bCheckLowHigh);
+        db_Update_PostStorage(logoutQuery->dwAvatorSerial, &logoutQuery->NewData, &logoutQuery->OldData);
+        if (logoutQuery->bUpdateRefineCnt)
         {
-          v8 = _db_update_event_classrefine(queryEntry->m_idWorld.wIndex,
-                 *(_DWORD *)v186,
-                 v186[74436],
-                 *((_DWORD *)v186 + 18610));
-          queryEntry->m_byResult = v8;
+          queryEntry->m_byResult = _db_update_event_classrefine(
+            queryEntry->m_idWorld.wIndex,
+            logoutQuery->dwAvatorSerial,
+            logoutQuery->byRefinedCnt,
+            logoutQuery->dwRefineDate);
         }
-        _db_Update_SFDelayData(*(_DWORD *)v186, (_AVATOR_DATA *)(v186 + 4));
+        _db_Update_SFDelayData(logoutQuery->dwAvatorSerial, &logoutQuery->NewData);
         break;
+      }
       case 6:
-        v187 = queryEntry->m_sData;
-        v9 = db_Update_Avator(*(_DWORD *)queryEntry->m_sData,
-               (_AVATOR_DATA *)&queryEntry->m_sData[4],
-               (_AVATOR_DATA *)&queryEntry->m_sData[37219],
-               1);
-        queryEntry->m_byResult = v9;
-        db_Update_PostStorage(*(_DWORD *)v187,
-          (_AVATOR_DATA *)(v187 + 4),
-          (_AVATOR_DATA *)(v187 + 37219));
-        if (v187[74434] )
+      {
+        auto *lobbyQuery = reinterpret_cast<_qry_sheet_lobby *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_Update_Avator(
+          lobbyQuery->dwAvatorSerial,
+          &lobbyQuery->NewData,
+          &lobbyQuery->OldData,
+          1);
+        db_Update_PostStorage(lobbyQuery->dwAvatorSerial, &lobbyQuery->NewData, &lobbyQuery->OldData);
+        if (lobbyQuery->bUpdateRefineCnt)
         {
-          v10 = _db_update_event_classrefine(queryEntry->m_idWorld.wIndex,
-                  *(_DWORD *)v187,
-                  v187[74435],
-                  *((_DWORD *)v187 + 18609));
-          queryEntry->m_byResult = v10;
+          queryEntry->m_byResult = _db_update_event_classrefine(
+            queryEntry->m_idWorld.wIndex,
+            lobbyQuery->dwAvatorSerial,
+            lobbyQuery->byRefinedCnt,
+            lobbyQuery->dwRefineDate);
         }
-        _db_Update_SFDelayData(*(_DWORD *)v187, (_AVATOR_DATA *)(v187 + 4));
+        _db_Update_SFDelayData(lobbyQuery->dwAvatorSerial, &lobbyQuery->NewData);
         break;
+      }
       case 7:
-        v188 = queryEntry->m_sData;
-        db_Log_AvatorLevel(*(_DWORD *)&queryEntry->m_sData[8], *(_DWORD *)queryEntry->m_sData, queryEntry->m_sData[4]);
+      {
+        auto *levelLog = reinterpret_cast<_log_sheet_lv *>(queryEntry->m_sData);
+        db_Log_AvatorLevel(levelLog->dwTotalPlayMin, levelLog->dwAvatorSerial, levelLog->byLv);
         break;
+      }
       case 8:
-        v189 = queryEntry->m_sData;
-        db_Log_UserNum(*(_DWORD *)queryEntry->m_sData, *(_DWORD *)&queryEntry->m_sData[4]);
+      {
+        auto *userNumLog = reinterpret_cast<_log_sheet_usernum *>(queryEntry->m_sData);
+        db_Log_UserNum(userNumLog->nAveragePerHour, userNumLog->nMaxPerHour);
         break;
+      }
       case 9:
-        v190 = (unsigned int *)queryEntry->m_sData;
-        pEconomyData.dwManageValue = *(_DWORD *)&queryEntry->m_sData[56];
-        memcpy_0(pEconomyData.dTradeDalant, &queryEntry->m_sData[32], sizeof(pEconomyData.dTradeDalant));
-        memcpy_0(&pEconomyData, v190 + 2, 0x18uLL);
-        memcpy_0(pEconomyData.dMineOre, v190 + 16, sizeof(pEconomyData.dMineOre));
-        memcpy_0(pEconomyData.dCutOre, v190 + 34, sizeof(pEconomyData.dCutOre));
-        db_Insert_Economy_History(*v190, &pEconomyData);
+      {
+        auto *economyLog = reinterpret_cast<_log_sheet_economy *>(queryEntry->m_sData);
+        pEconomyData.dwManageValue = static_cast<unsigned int>(economyLog->nMgrValue);
+        memcpy_0(pEconomyData.dTradeGold, economyLog->dTradeGold, sizeof(pEconomyData.dTradeGold));
+        memcpy_0(pEconomyData.dTradeDalant, economyLog->dTradeDalant, sizeof(pEconomyData.dTradeDalant));
+        memcpy_0(pEconomyData.dMineOre, economyLog->dCutOre, sizeof(pEconomyData.dMineOre));
+        memcpy_0(pEconomyData.dCutOre, &economyLog->dCutOre[3], sizeof(pEconomyData.dCutOre));
+        db_Insert_Economy_History(economyLog->dwDate, &pEconomyData);
         break;
+      }
       case 10:
       {
         _log_case_charselect *charSelectLog = reinterpret_cast<_log_case_charselect *>(queryEntry->m_sData);
@@ -511,24 +538,24 @@ void CMainThread::OnDQSRun()
           *(long double *)&queryEntry->m_sData[16]);
         break;
       case 12:
-        v194 = queryEntry->m_sData;
-        v11 = db_Update_Avator(*(_DWORD *)queryEntry->m_sData,
-                (_AVATOR_DATA *)&queryEntry->m_sData[4],
-                (_AVATOR_DATA *)&queryEntry->m_sData[37219],
-                1);
-        queryEntry->m_byResult = v11;
-        if (v194[74434] )
+      {
+        auto *contSaveQuery = reinterpret_cast<_qry_case_contsave *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_Update_Avator(
+          contSaveQuery->dwAvatorSerial,
+          &contSaveQuery->NewData,
+          &contSaveQuery->OldData,
+          1);
+        if (contSaveQuery->bUpdateRefineCnt)
         {
-          v12 = _db_update_event_classrefine(queryEntry->m_idWorld.wIndex,
-                  *(_DWORD *)v194,
-                  v194[74435],
-                  *((_DWORD *)v194 + 18609));
-          queryEntry->m_byResult = v12;
+          queryEntry->m_byResult = _db_update_event_classrefine(
+            queryEntry->m_idWorld.wIndex,
+            contSaveQuery->dwAvatorSerial,
+            contSaveQuery->byRefinedCnt,
+            contSaveQuery->dwRefineDate);
         }
-        db_Update_PostStorage(*(_DWORD *)v194,
-          (_AVATOR_DATA *)(v194 + 4),
-          (_AVATOR_DATA *)(v194 + 37219));
+        db_Update_PostStorage(contSaveQuery->dwAvatorSerial, &contSaveQuery->NewData, &contSaveQuery->OldData);
         break;
+      }
       case 13:
         v195 = queryEntry->m_sData;
         v13 = db_Add_PvpPoint(*(_DWORD *)queryEntry->m_sData,
@@ -537,98 +564,117 @@ void CMainThread::OnDQSRun()
         queryEntry->m_byResult = v13;
         break;
       case 14:
-        v196 = queryEntry->m_sData;
-        v14 = db_Insert_Item(*(_DWORD *)queryEntry->m_sData,
-                *(_DWORD *)&queryEntry->m_sData[4],
-                *(_DWORD *)&queryEntry->m_sData[8],
-                *(_DWORD *)&queryEntry->m_sData[12],
-                queryEntry->m_sData[16]);
-        queryEntry->m_byResult = v14;
+      {
+        auto *insertItemQuery = reinterpret_cast<_qry_case_insertitem *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_Insert_Item(
+          insertItemQuery->dwSerial,
+          insertItemQuery->dwItemCodeK,
+          insertItemQuery->dwItemCodeD,
+          insertItemQuery->dwItemCodeU,
+          insertItemQuery->byType);
         break;
+      }
       case 15:
-        v197 = queryEntry->m_sData;
-        v15 = db_Insert_guild((unsigned int *)&queryEntry->m_sData[56],
-                &queryEntry->m_sData[4],
-                queryEntry->m_sData[21],
-                (unsigned int *)&queryEntry->m_sData[272]);
-        queryEntry->m_byResult = v15;
+      {
+        auto *insertGuildQuery = reinterpret_cast<_qry_case_insertguild_local *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_Insert_guild(
+          insertGuildQuery->in_memberserial,
+          insertGuildQuery->in_w_guildName,
+          insertGuildQuery->in_guildRace,
+          &insertGuildQuery->out_guildserial);
         break;
+      }
       case 16:
-        v198 = queryEntry->m_sData;
-        v16 = db_update_guildmember_add(*(_DWORD *)&queryEntry->m_sData[12],
-                *(_DWORD *)&queryEntry->m_sData[4],
-                queryEntry->m_sData[20],
-                *(_DWORD *)&queryEntry->m_sData[24]);
-        queryEntry->m_byResult = v16;
+      {
+        auto *joinAcceptQuery = reinterpret_cast<_qry_case_joinacguild_local *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_update_guildmember_add(
+          joinAcceptQuery->in_applierserial,
+          joinAcceptQuery->in_guildserial,
+          static_cast<unsigned __int8>(joinAcceptQuery->in_Grade),
+          static_cast<unsigned int>(joinAcceptQuery->in_MemberNum));
         break;
+      }
       case 17:
-        v199 = queryEntry->m_sData;
-        v17 = db_update_guildmember_del(*(_DWORD *)queryEntry->m_sData,
-                *(_DWORD *)&queryEntry->m_sData[16],
-                *(_DWORD *)&queryEntry->m_sData[4]);
-        queryEntry->m_byResult = v17;
+      {
+        auto *selfLeaveQuery = reinterpret_cast<_qry_case_selfleave *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_update_guildmember_del(
+          selfLeaveQuery->in_leaverserial,
+          selfLeaveQuery->tmp_guildserial,
+          static_cast<unsigned int>(selfLeaveQuery->in_MemberNum));
         break;
+      }
       case 18:
-        v200 = queryEntry->m_sData;
-        v18 = db_update_guildmember_del(*(_DWORD *)queryEntry->m_sData,
-                *(_DWORD *)&queryEntry->m_sData[8],
-                *(_DWORD *)&queryEntry->m_sData[20]);
-        queryEntry->m_byResult = v18;
+      {
+        auto *forceLeaveQuery = reinterpret_cast<_qry_case_forceleave *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_update_guildmember_del(
+          forceLeaveQuery->in_leaverserial,
+          forceLeaveQuery->in_guildserial,
+          static_cast<unsigned int>(forceLeaveQuery->in_seniornum));
         break;
+      }
       case 19:
-        v201 = queryEntry->m_sData;
-        v19 = db_input_guild_money(*(_DWORD *)queryEntry->m_sData,
-                *(_DWORD *)&queryEntry->m_sData[28],
-                *(_DWORD *)&queryEntry->m_sData[36],
-                *(_DWORD *)&queryEntry->m_sData[32],
-                (long double *)&queryEntry->m_sData[56],
-                (long double *)&queryEntry->m_sData[48],
-                (unsigned __int8 *)&queryEntry->m_sData[40],
-                &queryEntry->m_sData[4]);
-        queryEntry->m_byResult = v19;
+      {
+        auto *pushMoneyQuery = reinterpret_cast<_qry_case_inputgmoney_local *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_input_guild_money(
+          pushMoneyQuery->in_pusherserial,
+          pushMoneyQuery->tmp_guildindex,
+          pushMoneyQuery->dwAddDalant,
+          pushMoneyQuery->dwAddGold,
+          &pushMoneyQuery->out_totalgold,
+          &pushMoneyQuery->out_totaldalant,
+          pushMoneyQuery->in_date,
+          pushMoneyQuery->in_w_pushername);
         break;
+      }
       case 20:
-        v202 = queryEntry->m_sData;
-        v20 = db_output_guild_money(*(_DWORD *)queryEntry->m_sData,
-                *(_DWORD *)&queryEntry->m_sData[28],
-                *(_DWORD *)&queryEntry->m_sData[36],
-                *(_DWORD *)&queryEntry->m_sData[32],
-                (long double *)&queryEntry->m_sData[56],
-                (long double *)&queryEntry->m_sData[48],
-                (unsigned __int8 *)&queryEntry->m_sData[40],
-                &queryEntry->m_sData[4],
-                (unsigned __int8 *)&queryEntry->m_sData[64]);
-        queryEntry->m_byResult = v20;
+      {
+        auto *outputMoneyQuery = reinterpret_cast<_qry_case_outputgmoney *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_output_guild_money(
+          outputMoneyQuery->in_poperserial,
+          outputMoneyQuery->tmp_guildindex,
+          outputMoneyQuery->dwSubDalant,
+          outputMoneyQuery->dwSubGold,
+          &outputMoneyQuery->out_totalgold,
+          &outputMoneyQuery->out_totaldalant,
+          outputMoneyQuery->in_date,
+          outputMoneyQuery->in_w_popername,
+          &outputMoneyQuery->byProcRet);
         break;
+      }
       case 21:
-        v203 = queryEntry->m_sData;
-        v21 = db_buy_emblem(*(_DWORD *)queryEntry->m_sData,
-                *(_DWORD *)&queryEntry->m_sData[12],
-                *(_DWORD *)&queryEntry->m_sData[4],
-                *(_DWORD *)&queryEntry->m_sData[8],
-                *(_DWORD *)&queryEntry->m_sData[16],
-                (long double *)&queryEntry->m_sData[56],
-                (long double *)&queryEntry->m_sData[48],
-                (unsigned __int8 *)&queryEntry->m_sData[20],
-                &queryEntry->m_sData[28],
-                (unsigned __int8 *)&queryEntry->m_sData[64]);
-        queryEntry->m_byResult = v21;
+      {
+        auto *buyEmblemQuery = reinterpret_cast<_qry_case_buyemblem *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_buy_emblem(
+          buyEmblemQuery->in_guildserial,
+          static_cast<unsigned int>(buyEmblemQuery->in_emblemdlant),
+          buyEmblemQuery->in_emblemback,
+          buyEmblemQuery->in_emblemmark,
+          buyEmblemQuery->in_suggestorSerial,
+          &buyEmblemQuery->out_totalgold,
+          &buyEmblemQuery->out_totaldalant,
+          buyEmblemQuery->in_date,
+          buyEmblemQuery->tmp_w_suggestorname,
+          &buyEmblemQuery->byProcRet);
         break;
+      }
       case 22:
-        v207 = queryEntry->m_sData;
-        v25 = db_disjoint_guild(*(_DWORD *)queryEntry->m_sData);
-        queryEntry->m_byResult = v25;
+      {
+        auto *disjointGuildQuery = reinterpret_cast<_qry_case_disjointguild *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_disjoint_guild(disjointGuildQuery->in_guildserial);
         break;
+      }
       case 23:
-        v208 = queryEntry->m_sData;
-        v26 = db_char_set_alive(queryEntry->m_dwAccountSerial,
-                queryEntry->m_sData[0],
-                *(_DWORD *)&queryEntry->m_sData[4],
-                &queryEntry->m_sData[8],
-                queryEntry->m_sData[25],
-                (_REGED *)&queryEntry->m_sData[26]);
-        queryEntry->m_byResult = v26;
+      {
+        auto *aliveCharQuery = reinterpret_cast<_qry_case_alive_char_payload *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_char_set_alive(
+          queryEntry->m_dwAccountSerial,
+          aliveCharQuery->in_byCase,
+          aliveCharQuery->in_dwSerial,
+          aliveCharQuery->in_w_szName,
+          aliveCharQuery->in_bySlot,
+          reinterpret_cast<_REGED *>(aliveCharQuery->out_AliveAvator));
         break;
+      }
       case 24:
         v209 = queryEntry->m_sData;
         db_Insert_ChangeClass_AfterInitClass(*(_DWORD *)queryEntry->m_sData,
@@ -645,16 +691,18 @@ void CMainThread::OnDQSRun()
           queryEntry->m_sData[28]);
         break;
       case 25:
-        v210 = (_qry_case_sendwebracebosssms *)queryEntry->m_sData;
-        v27 = db_sendwebracebosssms((_qry_case_sendwebracebosssms *)queryEntry->m_sData);
-        queryEntry->m_byResult = v27;
+      {
+        auto *raceBossSmsQuery = reinterpret_cast<_qry_case_sendwebracebosssms *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_sendwebracebosssms(raceBossSmsQuery);
         break;
+      }
       case 30:
-        szData = queryEntry->m_sData;
+      {
+        auto *addScheduleQuery = reinterpret_cast<_qry_case_addguildbattleschedule *>(queryEntry->m_sData);
         v28 = CGuildBattleController::Instance();
-        v29 = v28->AddSchedule(szData);
-        queryEntry->m_byResult = v29;
+        queryEntry->m_byResult = v28->AddSchedule(reinterpret_cast<char *>(addScheduleQuery));
         break;
+      }
       case 31:
         v211 = queryEntry->m_sData;
         queryEntry->m_byResult = 0;
@@ -670,17 +718,26 @@ void CMainThread::OnDQSRun()
           queryEntry->m_byResult = 24;
         break;
       case 33:
-        v213 = (unsigned __int8 *)queryEntry->m_sData;
-        byOutData = (unsigned __int8 *)&queryEntry->m_sData[1];
+      {
+        auto *loadGuildBattleRankQuery = reinterpret_cast<_qry_case_loadguildbattlerank *>(queryEntry->m_sData);
         v32 = CGuildBattleController::Instance();
-        if (!v32->UpdateRank(*v213, byOutData) )
+        if (!v32->UpdateRank(loadGuildBattleRankQuery->byRace, &loadGuildBattleRankQuery->byLoadDataStartPosition))
+        {
           queryEntry->m_byResult = 24;
+        }
         break;
+      }
       case 34:
+      {
+        using GuildBattleRankDate = char[10];
+        auto *guildBattleRankDate = reinterpret_cast<GuildBattleRankDate *>(queryEntry->m_sData);
         queryEntry->m_byResult = 0;
-        if (!g_Main.m_pWorldDB->CreateGuildBattleRankTable(queryEntry->m_sData) )
+        if (!g_Main.m_pWorldDB->CreateGuildBattleRankTable(*guildBattleRankDate))
+        {
           queryEntry->m_byResult = 24;
+        }
         break;
+      }
       case 35:
         queryEntry->m_byResult = 0;
         if (!g_Main.m_pWorldDB->UpdateClearGuildBattleRank() )
@@ -694,30 +751,35 @@ void CMainThread::OnDQSRun()
           queryEntry->m_byResult = 24;
         break;
       case 37:
-        v215 = queryEntry->m_sData;
-        v34 = db_input_guild_money(*(_DWORD *)&queryEntry->m_sData[4],
-                *(_DWORD *)&queryEntry->m_sData[4],
-                *(_DWORD *)&queryEntry->m_sData[12],
-                *(_DWORD *)&queryEntry->m_sData[8],
-                (long double *)&queryEntry->m_sData[32],
-                (long double *)&queryEntry->m_sData[24],
-                (unsigned __int8 *)&queryEntry->m_sData[16],
-                "Scramble Cost");
-        queryEntry->m_byResult = v34;
+      {
+        auto *inBattleCostQuery = reinterpret_cast<_qry_case_in_guildbattlecost *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_input_guild_money(
+          inBattleCostQuery->dwGuildIndex,
+          inBattleCostQuery->dwGuildIndex,
+          inBattleCostQuery->dwAddDalant,
+          inBattleCostQuery->dwAddGold,
+          &inBattleCostQuery->out_totalgold,
+          &inBattleCostQuery->out_totaldalant,
+          inBattleCostQuery->byDate,
+          "Scramble Cost");
         break;
+      }
       case 38:
-        v216 = queryEntry->m_sData;
-        v35 = db_output_guild_money(*(_DWORD *)&queryEntry->m_sData[4],
-                *(_DWORD *)&queryEntry->m_sData[4],
-                *(_DWORD *)&queryEntry->m_sData[12],
-                *(_DWORD *)&queryEntry->m_sData[8],
-                (long double *)&queryEntry->m_sData[32],
-                (long double *)&queryEntry->m_sData[24],
-                (unsigned __int8 *)&queryEntry->m_sData[16],
-                "Scramble Cost",
-                (unsigned __int8 *)&queryEntry->m_sData[56]);
-        queryEntry->m_byResult = v35;
+      {
+        auto *srcGuildOutBattleCostQuery =
+          reinterpret_cast<_qry_case_src_guild_out_guildbattlecost *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_output_guild_money(
+          srcGuildOutBattleCostQuery->dwGuildIndex,
+          srcGuildOutBattleCostQuery->dwGuildIndex,
+          srcGuildOutBattleCostQuery->dwSubDalant,
+          srcGuildOutBattleCostQuery->dwSubGold,
+          &srcGuildOutBattleCostQuery->out_totalgold,
+          &srcGuildOutBattleCostQuery->out_totaldalant,
+          srcGuildOutBattleCostQuery->byDate,
+          "Scramble Cost",
+          &srcGuildOutBattleCostQuery->byProcRet);
         break;
+      }
       case 39:
         v218 = queryEntry->m_sData;
         v37 = db_input_guild_money(*(_DWORD *)&queryEntry->m_sData[4],
@@ -734,13 +796,18 @@ void CMainThread::OnDQSRun()
         queryEntry->m_byResult = 0;
         break;
       case 41:
+      {
+        auto *updateReservedScheduleQuery = reinterpret_cast<_qry_case_updatereservedschedule *>(queryEntry->m_sData);
         queryEntry->m_byResult = 0;
-        v219 = queryEntry->m_sData;
-        v259 = (unsigned __int8 *)&queryEntry->m_sData[8];
         v38 = CGuildBattleController::Instance();
-        if (!v38->UpdateReservedGuildBattleSchedule(*((_DWORD *)v219 + 1), v259) )
+        if (!v38->UpdateReservedGuildBattleSchedule(
+              updateReservedScheduleQuery->dwSLID,
+              &updateReservedScheduleQuery->byLoadDataStartPosition))
+        {
           queryEntry->m_byResult = 24;
+        }
         break;
+      }
       case 43:
         queryEntry->m_byResult = 0;
         pLoadData = queryEntry->m_sData;
@@ -776,10 +843,11 @@ void CMainThread::OnDQSRun()
           queryEntry->m_byResult = 24;
         break;
       case 49:
-        v221 = (_qry_case_update_guildmaster *)queryEntry->m_sData;
-        v40 = db_update_guildmaster((_qry_case_update_guildmaster *)queryEntry->m_sData);
-        queryEntry->m_byResult = v40;
+      {
+        auto *updateGuildMasterQuery = reinterpret_cast<_qry_case_update_guildmaster *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_update_guildmaster(updateGuildMasterQuery);
         break;
+      }
       case 50:
         v222 = queryEntry->m_sData;
         if (_db_Update_MacroData(*(_DWORD *)queryEntry->m_sData,
@@ -795,9 +863,11 @@ void CMainThread::OnDQSRun()
         queryEntry->m_byResult = v260;
         break;
       case 51:
-        v44 = TRC_AutoTrade::_insert_info(queryEntry->m_sData);
-        queryEntry->m_byResult = v44;
+      {
+        auto *insertTrcInfo = reinterpret_cast<_insert_trc_info *>(queryEntry->m_sData);
+        queryEntry->m_byResult = TRC_AutoTrade::_insert_info(reinterpret_cast<char *>(insertTrcInfo));
         break;
+      }
       case 52:
         v220 = queryEntry->m_sData;
         v39 = db_input_guild_money_atradetax(*(_DWORD *)&queryEntry->m_sData[8],
@@ -815,31 +885,44 @@ void CMainThread::OnDQSRun()
         queryEntry->m_byResult = v46;
         break;
       case 56:
-        v265 = queryEntry->m_sData;
+      {
+        auto *makeStorageQuery = reinterpret_cast<_qry_case_make_storage *>(queryEntry->m_sData);
         v47 = AutominePersonalMgr::instance();
-        v48 = v47->request_query(v265);
-        queryEntry->m_byResult = v48;
+        queryEntry->m_byResult = v47->request_query(reinterpret_cast<char *>(makeStorageQuery));
         break;
+      }
       case 57:
-        pkInfo = (_guildbattle_totalrecord *)queryEntry->m_sData;
+      {
+        auto *loadGuildBattleTotalRecordQuery =
+          reinterpret_cast<_qry_case_load_guildbattle_totalrecord *>(queryEntry->m_sData);
         queryEntry->m_byResult = 0;
-        if (!g_Main.m_pWorldDB->Select_GuildBattleRecord(pkInfo->dwGuildSerial, pkInfo) )
+        if (!g_Main.m_pWorldDB->Select_GuildBattleRecord(
+              loadGuildBattleTotalRecordQuery->dwGuildSerial,
+              reinterpret_cast<_guildbattle_totalrecord *>(loadGuildBattleTotalRecordQuery)))
+        {
           queryEntry->m_byResult = 24;
+        }
         break;
+      }
       case 58:
-        v225 = (_unmannedtrader_reserved_schedule_info *)queryEntry->m_sData;
+      {
+        auto *reservedScheduleInfo = reinterpret_cast<_unmannedtrader_reserved_schedule_info *>(queryEntry->m_sData);
         v226 = g_Main.m_pWorldDB->Select_UnmannedTraderReservedSchedule(
-                 CUnmannedTraderEnvironmentValue::Unmanned_Trader_Max_Schdule_Cnt,
-                 (_unmannedtrader_reserved_schedule_info *)queryEntry->m_sData);
-        if (v226 != 2 && v226 )
+          CUnmannedTraderEnvironmentValue::Unmanned_Trader_Max_Schdule_Cnt,
+          reservedScheduleInfo);
+        if (v226 != 2 && v226)
+        {
           queryEntry->m_byResult = 24;
+        }
         break;
+      }
       case 59:
-        pData = queryEntry->m_sData;
+      {
+        auto *updateItemStateQuery = reinterpret_cast<_qry_case_unmandtrader_updateitemstate *>(queryEntry->m_sData);
         v49 = CUnmannedTraderController::Instance();
-        v50 = v49->UpdateItemState(pData);
-        queryEntry->m_byResult = v50;
+        queryEntry->m_byResult = v49->UpdateItemState(reinterpret_cast<char *>(updateItemStateQuery));
         break;
+      }
       case 60:
         v267 = queryEntry->m_sData;
         v51 = CUnmannedTraderController::Instance();
@@ -853,11 +936,13 @@ void CMainThread::OnDQSRun()
         queryEntry->m_byResult = v54;
         break;
       case 62:
-        v269 = queryEntry->m_sData;
+      {
+        auto *timeOutCancelRegistQuery =
+          reinterpret_cast<_qry_case_unmandtrader_time_out_cancelitem *>(queryEntry->m_sData);
         v55 = CUnmannedTraderController::Instance();
-        v56 = v55->UpdateTimeOutCancelRegist(v269);
-        queryEntry->m_byResult = v56;
+        queryEntry->m_byResult = v55->UpdateTimeOutCancelRegist(reinterpret_cast<char *>(timeOutCancelRegistQuery));
         break;
+      }
       case 63:
         v270 = queryEntry->m_sData;
         v57 = CUnmannedTraderController::Instance();
@@ -871,81 +956,97 @@ void CMainThread::OnDQSRun()
         queryEntry->m_byResult = v60;
         break;
       case 65:
-        v272 = queryEntry->m_sData;
+      {
+        auto *updateBuyWaitQuery = reinterpret_cast<_qry_case_unmandtrader_buy_update_wait *>(queryEntry->m_sData);
         v61 = CUnmannedTraderController::Instance();
-        v62 = v61->UpdateBuy(v272);
-        queryEntry->m_byResult = v62;
+        queryEntry->m_byResult = v61->UpdateBuy(reinterpret_cast<char *>(updateBuyWaitQuery));
         break;
+      }
       case 66:
-        v273 = queryEntry->m_sData;
+      {
+        auto *updateBuyRollbackQuery =
+          reinterpret_cast<_qry_case_unmandtrader_buy_update_rollback *>(queryEntry->m_sData);
         v63 = CUnmannedTraderController::Instance();
-        v64 = v63->UpdateBuyRollBack(v273);
-        queryEntry->m_byResult = v64;
+        queryEntry->m_byResult = v63->UpdateBuyRollBack(reinterpret_cast<char *>(updateBuyRollbackQuery));
         break;
+      }
       case 67:
-        v274 = queryEntry->m_sData;
+      {
+        auto *lazyCleanFlags = reinterpret_cast<_qry_case_unmandtrader_lazyclean_flags *>(queryEntry->m_sData);
         v65 = CUnmannedTraderController::Instance();
-        v66 = v65->UpdateLazyClean(v274);
-        queryEntry->m_byResult = v66;
+        queryEntry->m_byResult = v65->UpdateLazyClean(reinterpret_cast<char *>(lazyCleanFlags));
         break;
+      }
       case 68:
-        v275 = queryEntry->m_sData;
+      {
+        auto *updateBuyCompleteQuery =
+          reinterpret_cast<_qry_case_unmandtrader_buy_update_complete *>(queryEntry->m_sData);
         v67 = CUnmannedTraderController::Instance();
-        v68 = v67->UpdateBuyComplete(v275);
-        queryEntry->m_byResult = v68;
+        queryEntry->m_byResult = v67->UpdateBuyComplete(reinterpret_cast<char *>(updateBuyCompleteQuery));
         break;
+      }
       case 71:
-        v227 = (_qry_case_guildroom_insert *)queryEntry->m_sData;
-        v77 = _db_GuildRoom_Insert((_qry_case_guildroom_insert *)queryEntry->m_sData);
-        queryEntry->m_byResult = v77;
+      {
+        auto *guildRoomInsertQuery = reinterpret_cast<_qry_case_guildroom_insert *>(queryEntry->m_sData);
+        queryEntry->m_byResult = _db_GuildRoom_Insert(guildRoomInsertQuery);
         break;
+      }
       case 72:
-        v228 = (_qry_case_guildroom_update *)queryEntry->m_sData;
-        if (_db_GuildRoom_Update((_qry_case_guildroom_update *)queryEntry->m_sData) )
-          v280 = 0;
-        else
-          v280 = 24;
-        queryEntry->m_byResult = v280;
+      {
+        auto *guildRoomUpdateQuery = reinterpret_cast<_qry_case_guildroom_update *>(queryEntry->m_sData);
+        queryEntry->m_byResult = _db_GuildRoom_Update(guildRoomUpdateQuery) ? 0 : 24;
         break;
+      }
       case 74:
-        pSheet = (_qry_case_gm_greetingmsg *)queryEntry->m_sData;
-        v22 = db_GM_GreetingMsg((_qry_case_gm_greetingmsg *)queryEntry->m_sData);
-        queryEntry->m_byResult = v22;
+      {
+        auto *gmGreetingQuery = reinterpret_cast<_qry_case_gm_greetingmsg *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_GM_GreetingMsg(gmGreetingQuery);
         break;
+      }
       case 75:
-        v205 = (_qry_case_race_greetingmsg *)queryEntry->m_sData;
-        v23 = db_RACE_GreetingMsg((_qry_case_race_greetingmsg *)queryEntry->m_sData);
-        queryEntry->m_byResult = v23;
+      {
+        auto *raceGreetingQuery = reinterpret_cast<_qry_case_race_greetingmsg *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_RACE_GreetingMsg(raceGreetingQuery);
         break;
+      }
       case 76:
-        v206 = (_qry_case_guild_greetingmsg *)queryEntry->m_sData;
-        v24 = db_GUILD_GreetingMsg((_qry_case_guild_greetingmsg *)queryEntry->m_sData);
-        queryEntry->m_byResult = v24;
+      {
+        auto *guildGreetingQuery = reinterpret_cast<_qry_case_guild_greetingmsg *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_GUILD_GreetingMsg(guildGreetingQuery);
         break;
+      }
       case 77:
-        v281 = queryEntry->m_sData;
+      {
+        auto *postListRegiQuery = reinterpret_cast<_qry_case_post_list_regi *>(queryEntry->m_sData);
         v78 = CPostSystemManager::Instace();
-        v79 = v78->UpdateRegist(v281);
-        queryEntry->m_byResult = v79;
+        queryEntry->m_byResult = v78->UpdateRegist(reinterpret_cast<char *>(postListRegiQuery));
         break;
+      }
       case 78:
-        v282 = queryEntry->m_sData;
+      {
+        auto *postSendQuery = reinterpret_cast<_qry_case_post_send *>(queryEntry->m_sData);
         v80 = CPostSystemManager::Instace();
-        v81 = v80->PostSend(v282);
-        queryEntry->m_byResult = v81;
+        queryEntry->m_byResult = v80->PostSend(reinterpret_cast<char *>(postSendQuery));
         break;
+      }
       case 79:
-        PostStorage = db_Load_PostStorage(queryEntry->m_sData);
-        queryEntry->m_byResult = PostStorage;
+      {
+        auto *postStorageListQuery = reinterpret_cast<_qry_case_post_storage_list_get *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_Load_PostStorage(reinterpret_cast<char *>(postStorageListQuery));
         break;
+      }
       case 80:
-        ReturnPost = db_Load_ReturnPost(queryEntry->m_sData);
-        queryEntry->m_byResult = ReturnPost;
+      {
+        auto *postReturnListQuery = reinterpret_cast<_qry_case_post_return_list_get *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_Load_ReturnPost(reinterpret_cast<char *>(postReturnListQuery));
         break;
+      }
       case 82:
-        Content = db_Load_Content(queryEntry->m_sData);
-        queryEntry->m_byResult = Content;
+      {
+        auto *postContentQuery = reinterpret_cast<_qry_case_post_content_get *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_Load_Content(reinterpret_cast<char *>(postContentQuery));
         break;
+      }
       case 83:
         inited = _db_init_classrefine_count();
         queryEntry->m_byResult = inited;
@@ -979,154 +1080,78 @@ void CMainThread::OnDQSRun()
           queryEntry->m_byResult = 24;
         break;
       case 85:
-        v283 = queryEntry->m_sData;
-        v86 = CPvpUserAndGuildRankingSystem::Instance();
-        v87 = v86->UpdateRaceRankStep1(v283);
-        queryEntry->m_byResult = v87;
-        break;
       case 86:
-        v284 = queryEntry->m_sData;
-        v88 = CPvpUserAndGuildRankingSystem::Instance();
-        v89 = v88->UpdateRaceRankStep2(v284);
-        queryEntry->m_byResult = v89;
-        break;
       case 87:
-        v285 = queryEntry->m_sData;
-        v90 = CPvpUserAndGuildRankingSystem::Instance();
-        v91 = v90->UpdateRaceRankStep3(v285);
-        queryEntry->m_byResult = v91;
-        break;
       case 88:
-        v286 = queryEntry->m_sData;
-        v92 = CPvpUserAndGuildRankingSystem::Instance();
-        v93 = v92->UpdateRaceRankStep4(v286);
-        queryEntry->m_byResult = v93;
-        break;
       case 89:
-        v287 = queryEntry->m_sData;
-        v94 = CPvpUserAndGuildRankingSystem::Instance();
-        v95 = v94->UpdateRaceRankStep5(v287);
-        queryEntry->m_byResult = v95;
-        break;
       case 90:
-        v288 = queryEntry->m_sData;
-        v96 = CPvpUserAndGuildRankingSystem::Instance();
-        v97 = v96->UpdateRaceRankStep6(v288);
-        queryEntry->m_byResult = v97;
-        break;
       case 91:
-        v289 = queryEntry->m_sData;
-        v98 = CPvpUserAndGuildRankingSystem::Instance();
-        v99 = v98->UpdateRaceRankStep7(v289);
-        queryEntry->m_byResult = v99;
-        break;
       case 92:
-        v290 = queryEntry->m_sData;
-        v100 = CPvpUserAndGuildRankingSystem::Instance();
-        v101 = v100->UpdateRaceRankStep8(v290);
-        queryEntry->m_byResult = v101;
-        break;
       case 93:
-        v291 = queryEntry->m_sData;
-        v102 = CPvpUserAndGuildRankingSystem::Instance();
-        v103 = v102->UpdateRaceRankStep9(v291);
-        queryEntry->m_byResult = v103;
-        break;
       case 94:
-        v292 = queryEntry->m_sData;
-        v104 = CPvpUserAndGuildRankingSystem::Instance();
-        v105 = v104->UpdateRaceRankStep10(v292);
-        queryEntry->m_byResult = v105;
-        break;
       case 95:
-        v293 = queryEntry->m_sData;
-        v106 = CPvpUserAndGuildRankingSystem::Instance();
-        v107 = v106->UpdateRaceRankStep11(v293);
-        queryEntry->m_byResult = v107;
-        break;
       case 97:
-        v294 = queryEntry->m_sData;
-        v108 = CPvpUserAndGuildRankingSystem::Instance();
-        v109 = v108->UpdateGuildRankStep1(v294);
-        queryEntry->m_byResult = v109;
-        break;
       case 98:
-        v295 = queryEntry->m_sData;
-        v110 = CPvpUserAndGuildRankingSystem::Instance();
-        v111 = v110->UpdateGuildRankStep2(v295);
-        queryEntry->m_byResult = v111;
-        break;
       case 99:
-        v296 = queryEntry->m_sData;
-        v112 = CPvpUserAndGuildRankingSystem::Instance();
-        v113 = v112->UpdateGuildRankStep3(v296);
-        queryEntry->m_byResult = v113;
-        break;
       case 100:
-        v297 = queryEntry->m_sData;
-        v114 = CPvpUserAndGuildRankingSystem::Instance();
-        v115 = v114->UpdateGuildRankStep4(v297);
-        queryEntry->m_byResult = v115;
-        break;
       case 101:
-        v298 = queryEntry->m_sData;
-        v116 = CPvpUserAndGuildRankingSystem::Instance();
-        v117 = v116->UpdateRankinGuildStep1(v298);
-        queryEntry->m_byResult = v117;
-        break;
       case 102:
-        v299 = queryEntry->m_sData;
-        v118 = CPvpUserAndGuildRankingSystem::Instance();
-        v119 = v118->UpdateRankinGuildStep2(v299);
-        queryEntry->m_byResult = v119;
-        break;
       case 103:
-        v300 = queryEntry->m_sData;
-        v120 = CPvpUserAndGuildRankingSystem::Instance();
-        v121 = v120->UpdateRankinGuildStep3(v300);
-        queryEntry->m_byResult = v121;
-        break;
       case 104:
-        v301 = queryEntry->m_sData;
-        v122 = CPvpUserAndGuildRankingSystem::Instance();
-        v123 = v122->UpdateRankinGuildStep4(v301);
-        queryEntry->m_byResult = v123;
-        break;
       case 105:
-        v302 = queryEntry->m_sData;
-        v124 = CPvpUserAndGuildRankingSystem::Instance();
-        v125 = v124->UpdateRankinGuildStep5(v302);
-        queryEntry->m_byResult = v125;
-        break;
       case 106:
-        v303 = queryEntry->m_sData;
-        v126 = CPvpUserAndGuildRankingSystem::Instance();
-        v127 = v126->UpdateRankinGuildStep6(v303);
-        queryEntry->m_byResult = v127;
-        break;
       case 107:
-        v304 = queryEntry->m_sData;
-        v128 = CPvpUserAndGuildRankingSystem::Instance();
-        v129 = v128->UpdateAndSelectGuildGrade(v304);
-        queryEntry->m_byResult = v129;
+      {
+        auto *rankQuery = reinterpret_cast<_qry_case_rank_racerank_guildrank *>(queryEntry->m_sData);
+        CPvpUserAndGuildRankingSystem *rankingSystem = CPvpUserAndGuildRankingSystem::Instance();
+        switch (queryCase)
+        {
+          case 85: queryEntry->m_byResult = rankingSystem->UpdateRaceRankStep1(reinterpret_cast<char *>(rankQuery)); break;
+          case 86: queryEntry->m_byResult = rankingSystem->UpdateRaceRankStep2(reinterpret_cast<char *>(rankQuery)); break;
+          case 87: queryEntry->m_byResult = rankingSystem->UpdateRaceRankStep3(reinterpret_cast<char *>(rankQuery)); break;
+          case 88: queryEntry->m_byResult = rankingSystem->UpdateRaceRankStep4(reinterpret_cast<char *>(rankQuery)); break;
+          case 89: queryEntry->m_byResult = rankingSystem->UpdateRaceRankStep5(reinterpret_cast<char *>(rankQuery)); break;
+          case 90: queryEntry->m_byResult = rankingSystem->UpdateRaceRankStep6(reinterpret_cast<char *>(rankQuery)); break;
+          case 91: queryEntry->m_byResult = rankingSystem->UpdateRaceRankStep7(reinterpret_cast<char *>(rankQuery)); break;
+          case 92: queryEntry->m_byResult = rankingSystem->UpdateRaceRankStep8(reinterpret_cast<char *>(rankQuery)); break;
+          case 93: queryEntry->m_byResult = rankingSystem->UpdateRaceRankStep9(reinterpret_cast<char *>(rankQuery)); break;
+          case 94: queryEntry->m_byResult = rankingSystem->UpdateRaceRankStep10(reinterpret_cast<char *>(rankQuery)); break;
+          case 95: queryEntry->m_byResult = rankingSystem->UpdateRaceRankStep11(reinterpret_cast<char *>(rankQuery)); break;
+          case 97: queryEntry->m_byResult = rankingSystem->UpdateGuildRankStep1(reinterpret_cast<char *>(rankQuery)); break;
+          case 98: queryEntry->m_byResult = rankingSystem->UpdateGuildRankStep2(reinterpret_cast<char *>(rankQuery)); break;
+          case 99: queryEntry->m_byResult = rankingSystem->UpdateGuildRankStep3(reinterpret_cast<char *>(rankQuery)); break;
+          case 100: queryEntry->m_byResult = rankingSystem->UpdateGuildRankStep4(reinterpret_cast<char *>(rankQuery)); break;
+          case 101: queryEntry->m_byResult = rankingSystem->UpdateRankinGuildStep1(reinterpret_cast<char *>(rankQuery)); break;
+          case 102: queryEntry->m_byResult = rankingSystem->UpdateRankinGuildStep2(reinterpret_cast<char *>(rankQuery)); break;
+          case 103: queryEntry->m_byResult = rankingSystem->UpdateRankinGuildStep3(reinterpret_cast<char *>(rankQuery)); break;
+          case 104: queryEntry->m_byResult = rankingSystem->UpdateRankinGuildStep4(reinterpret_cast<char *>(rankQuery)); break;
+          case 105: queryEntry->m_byResult = rankingSystem->UpdateRankinGuildStep5(reinterpret_cast<char *>(rankQuery)); break;
+          case 106: queryEntry->m_byResult = rankingSystem->UpdateRankinGuildStep6(reinterpret_cast<char *>(rankQuery)); break;
+          case 107: queryEntry->m_byResult = rankingSystem->UpdateAndSelectGuildGrade(reinterpret_cast<char *>(rankQuery)); break;
+          default: break;
+        }
         break;
+      }
       case 111:
-        v276 = queryEntry->m_sData;
+      {
+        auto *loginCompleteCreateQuery =
+          reinterpret_cast<_qry_case_unmandtrader_log_in_proc_update_complete_create *>(queryEntry->m_sData);
         v69 = CUnmannedTraderController::Instance();
-        v70 = v69->UpdateLogInComplete(v276);
-        queryEntry->m_byResult = v70;
+        queryEntry->m_byResult = v69->UpdateLogInComplete(reinterpret_cast<char *>(loginCompleteCreateQuery));
         break;
+      }
       case 112:
         v130 = CItemStoreManager::Instance();
         v131 = v130->UpdateStoreLimitItem();
         queryEntry->m_byResult = v131;
         break;
       case 113:
-        v305 = queryEntry->m_sData;
+      {
+        auto *disableInstanceStoreData = reinterpret_cast<unsigned __int64 *>(queryEntry->m_sData);
         v132 = CItemStoreManager::Instance();
-        v133 = v132->UpdateDisableInstanceStore(v305);
-        queryEntry->m_byResult = v133;
+        queryEntry->m_byResult = v132->UpdateDisableInstanceStore(reinterpret_cast<char *>(disableInstanceStoreData));
         break;
+      }
       case 114:
         v134 = CandidateMgr::Instance();
         v135 = v134->Update_RegistCandidate_2st();
@@ -1149,18 +1174,21 @@ void CMainThread::OnDQSRun()
         queryEntry->m_byResult = v141;
         break;
       case 118:
-        v217 = queryEntry->m_sData;
-        v36 = db_output_guild_money(*(_DWORD *)&queryEntry->m_sData[4],
-                *(_DWORD *)&queryEntry->m_sData[4],
-                *(_DWORD *)&queryEntry->m_sData[12],
-                *(_DWORD *)&queryEntry->m_sData[8],
-                (long double *)&queryEntry->m_sData[32],
-                (long double *)&queryEntry->m_sData[24],
-                (unsigned __int8 *)&queryEntry->m_sData[16],
-                "Scramble Cost",
-                (unsigned __int8 *)&queryEntry->m_sData[56]);
-        queryEntry->m_byResult = v36;
+      {
+        auto *destGuildOutBattleCostQuery =
+          reinterpret_cast<_qry_case_dest_guild_out_guildbattlecost *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_output_guild_money(
+          destGuildOutBattleCostQuery->dwGuildIndex,
+          destGuildOutBattleCostQuery->dwGuildIndex,
+          destGuildOutBattleCostQuery->dwSubDalant,
+          destGuildOutBattleCostQuery->dwSubGold,
+          &destGuildOutBattleCostQuery->out_totalgold,
+          &destGuildOutBattleCostQuery->out_totaldalant,
+          destGuildOutBattleCostQuery->byDate,
+          "Scramble Cost",
+          &destGuildOutBattleCostQuery->byProcRet);
         break;
+      }
       case 119:
         v142 = PatriarchElectProcessor::Instance();
         v143 = v142->Insert_Elect();
@@ -1183,17 +1211,19 @@ void CMainThread::OnDQSRun()
           queryEntry->m_byResult = 24;
         break;
       case 123:
-        v306 = queryEntry->m_sData;
+      {
+        auto *requestRefundQuery = reinterpret_cast<_qry_case_request_refund *>(queryEntry->m_sData);
         v149 = PatriarchElectProcessor::Instance();
-        v150 = v149->Request_Refund(v306);
-        queryEntry->m_byResult = v150;
+        queryEntry->m_byResult = v149->Request_Refund(reinterpret_cast<char *>(requestRefundQuery));
         break;
+      }
       case 124:
-        v307 = queryEntry->m_sData;
+      {
+        auto *requestRefundQuery = reinterpret_cast<_qry_case_request_refund *>(queryEntry->m_sData);
         v151 = PatriarchElectProcessor::Instance();
-        v152 = v151->Insert_PatrirchItemChargeRefund(v307);
-        queryEntry->m_byResult = v152;
+        queryEntry->m_byResult = v151->Insert_PatrirchItemChargeRefund(reinterpret_cast<char *>(requestRefundQuery));
         break;
+      }
       case 126:
         v308 = queryEntry->m_sData;
         v153 = CandidateMgr::Instance();
@@ -1201,39 +1231,53 @@ void CMainThread::OnDQSRun()
         queryEntry->m_byResult = v154;
         break;
       case 127:
-        queryEntry->m_byResult = 0;
-        if (!g_Main.m_pWorldDB->Update_Punishment(queryEntry->m_sData) )
-          queryEntry->m_byResult = 24;
+      {
+        auto *updatePunishmentQuery = reinterpret_cast<_qry_case_update_punishment *>(queryEntry->m_sData);
+        queryEntry->m_byResult = g_Main.m_pWorldDB->Update_Punishment(reinterpret_cast<char *>(updatePunishmentQuery))
+          ? 0
+          : 24;
         break;
+      }
       case 128:
-        v230 = queryEntry->m_sData;
+      {
+        auto *selectCharSerialQuery = reinterpret_cast<_qry_case_select_charserial *>(queryEntry->m_sData);
         queryEntry->m_byResult = 0;
         CharSerialByNameRace = g_Main.m_pWorldDB->Select_GetCharSerialByNameRace(
-                                 v230 + 8,
-                                 *v230,
-                                 (unsigned int *)v230 + 1);
-        if (CharSerialByNameRace != 2 && CharSerialByNameRace )
+          selectCharSerialQuery->wszCharName,
+          selectCharSerialQuery->byRace,
+          &selectCharSerialQuery->dwAvatorSerial);
+        if (CharSerialByNameRace != 2 && CharSerialByNameRace)
+        {
           queryEntry->m_byResult = 24;
+        }
         break;
+      }
       case 129:
-        v309 = queryEntry->m_sData;
+      {
+        auto *postSerialCheckQuery = reinterpret_cast<_qry_case_post_serial_check *>(queryEntry->m_sData);
         v155 = CPostSystemManager::Instace();
-        v156 = v155->PostReceiverCheck(v309);
-        queryEntry->m_byResult = v156;
+        queryEntry->m_byResult = v155->PostReceiverCheck(reinterpret_cast<char *>(postSerialCheckQuery));
         break;
+      }
       case 130:
-        PatriarchComm = _db_Load_PatriarchComm(queryEntry->m_sData);
-        queryEntry->m_byResult = PatriarchComm;
+      {
+        auto *selectPatriarchCommQuery = reinterpret_cast<_qry_case_select_patriarch_comm *>(queryEntry->m_sData);
+        queryEntry->m_byResult = _db_Load_PatriarchComm(reinterpret_cast<char *>(selectPatriarchCommQuery));
         break;
+      }
       case 131:
+      {
+        auto *insertPatriarchCommQuery = reinterpret_cast<_qry_case_insert_patriarch_comm *>(queryEntry->m_sData);
         queryEntry->m_byResult = 0;
-        v232 = queryEntry->m_sData;
         if (!g_Main.m_pWorldDB->Insert_PatriarchComm(
-                *(_DWORD *)queryEntry->m_sData,
-                *(_DWORD *)&queryEntry->m_sData[4],
-                &queryEntry->m_sData[8]) )
+              insertPatriarchCommQuery->dwSerial,
+              insertPatriarchCommQuery->dwDalant,
+              insertPatriarchCommQuery->szDepDate))
+        {
           queryEntry->m_byResult = 24;
+        }
         break;
+      }
       case 134:
         v233 = (unsigned __int8 *)queryEntry->m_sData;
         v158 = CHonorGuild::Instance();
@@ -1241,27 +1285,34 @@ void CMainThread::OnDQSRun()
         queryEntry->m_byResult = v159;
         break;
       case 135:
-        v234 = (unsigned __int8 *)queryEntry->m_sData;
+      {
+        auto *updateHonorGuildQuery = reinterpret_cast<_qry_case_update_honor_guild *>(queryEntry->m_sData);
         v160 = CHonorGuild::Instance();
-        v161 = v160->UpdateChangeHonorGuild(*v234);
-        queryEntry->m_byResult = v161;
+        queryEntry->m_byResult = v160->UpdateChangeHonorGuild(updateHonorGuildQuery->byRace);
         break;
+      }
       case 136:
-        v235 = queryEntry->m_sData;
-        v162 = db_input_guild_money_atradetax(*(_DWORD *)&queryEntry->m_sData[8],
-                 *(_DWORD *)&queryEntry->m_sData[4],
-                 *(_DWORD *)&queryEntry->m_sData[12],
-                 (long double *)&queryEntry->m_sData[16],
-                 (long double *)&queryEntry->m_sData[24],
-                 (unsigned __int8 *)&queryEntry->m_sData[32]);
-        queryEntry->m_byResult = v162;
+      {
+        auto *inATradeTaxQuery = reinterpret_cast<_qry_case_in_atrade_tax *>(queryEntry->m_sData);
+        queryEntry->m_byResult = db_input_guild_money_atradetax(
+          inATradeTaxQuery->in_seller,
+          inATradeTaxQuery->dwGuildSerial,
+          inATradeTaxQuery->in_dalant,
+          &inATradeTaxQuery->out_totaldalant,
+          &inATradeTaxQuery->out_totalgold,
+          inATradeTaxQuery->byDate);
         break;
+      }
       case 137:
+      {
+        auto *raceBattleLogInfo = reinterpret_cast<_race_battle_log_info *>(queryEntry->m_sData);
         queryEntry->m_byResult = 0;
-        pInfo = (_race_battle_log_info *)queryEntry->m_sData;
-        if (!g_Main.m_pWorldDB->Insert_RaceBattleLog((_race_battle_log_info *)queryEntry->m_sData) )
+        if (!g_Main.m_pWorldDB->Insert_RaceBattleLog(raceBattleLogInfo))
+        {
           queryEntry->m_byResult = 24;
+        }
         break;
+      }
       case 138:
         v237 = (unsigned __int8 *)queryEntry->m_sData;
         v163 = CandidateMgr::Instance();
@@ -1281,50 +1332,53 @@ void CMainThread::OnDQSRun()
         queryEntry->m_byResult = v72;
         break;
       case 141:
-        v278 = queryEntry->m_sData;
+      {
+        auto *cheatUpdateRegistTimeQuery =
+          reinterpret_cast<_qry_case_unmandtrader_cheat_updateregisttime *>(queryEntry->m_sData);
         v73 = CUnmannedTraderController::Instance();
-        v74 = v73->UpdateCheatRegistTime(v278);
-        queryEntry->m_byResult = v74;
+        queryEntry->m_byResult = v73->UpdateCheatRegistTime(reinterpret_cast<char *>(cheatUpdateRegistTimeQuery));
         break;
+      }
       case 142:
-        v239 = (_qry_case_raceboss_accumulation_winrate *)queryEntry->m_sData;
+      {
+        auto *raceBossAccumulationWinRate = reinterpret_cast<_qry_case_raceboss_accumulation_winrate *>(queryEntry->m_sData);
         v167 = CRaceBossWinRate::Instance();
-        BossAccmulationWinRate = v167->LoadBossAccmulationWinRate(v239);
-        queryEntry->m_byResult = BossAccmulationWinRate;
+        queryEntry->m_byResult = v167->LoadBossAccmulationWinRate(raceBossAccumulationWinRate);
         break;
+      }
       case 143:
-        v240 = queryEntry->m_sData;
+      {
+        auto *updateUserGuildDataQuery = reinterpret_cast<_qry_case_update_user_guild_data *>(queryEntry->m_sData);
         queryEntry->m_byResult = 0;
         if (!g_Main.m_pWorldDB->Update_UserGuildData(
-                *(_DWORD *)v240,
-                *((_DWORD *)v240 + 2),
-                v240[12]) )
+              updateUserGuildDataQuery->dwAvatorSerial,
+              updateUserGuildDataQuery->dwGuildSerial,
+              updateUserGuildDataQuery->byGrade))
+        {
           queryEntry->m_byResult = 24;
+        }
         break;
+      }
       case 144:
-        v241 = queryEntry->m_sData;
+      {
+        auto *guildMasterLastConnQuery = reinterpret_cast<_qry_case_select_guild_master_lastconn *>(queryEntry->m_sData);
         Conn = g_Main.m_pWorldDB->Select_GuildMasterLastConn(
-                 *(_DWORD *)queryEntry->m_sData,
-                 *(_DWORD *)&queryEntry->m_sData[12],
-                 (unsigned int *)&queryEntry->m_sData[16]);
-        if (Conn == 2 || !Conn )
-          queryEntry->m_byResult = 0;
-        else
-          queryEntry->m_byResult = 24;
+          guildMasterLastConnQuery->dwSerial,
+          guildMasterLastConnQuery->dwLimitConnTime,
+          &guildMasterLastConnQuery->dwLastConnTime);
+        queryEntry->m_byResult = (Conn == 2 || !Conn) ? 0 : 24;
         break;
+      }
       case 145:
-        v243 = queryEntry->m_sData;
-        if (g_Main.m_pWorldDB->Select_CharacterReName(
-               &queryEntry->m_sData[12],
-               (unsigned int *)&queryEntry->m_sData[4]) )
-        {
-          queryEntry->m_byResult = 0;
-        }
-        else
-        {
-          queryEntry->m_byResult = 24;
-        }
+      {
+        auto *characterRenameQuery = reinterpret_cast<_qry_case_character_rename *>(queryEntry->m_sData);
+        queryEntry->m_byResult = g_Main.m_pWorldDB->Select_CharacterReName(
+          characterRenameQuery->wszCharName,
+          &characterRenameQuery->dwAlreadySerial)
+          ? 0
+          : 24;
         break;
+      }
       case 146:
         v244 = queryEntry->m_sData;
         if (g_Main.m_pWorldDB->Update_CharacterReName(&queryEntry->m_sData[12], *(_DWORD *)queryEntry->m_sData) )
@@ -1333,11 +1387,13 @@ void CMainThread::OnDQSRun()
           queryEntry->m_byResult = 24;
         break;
       case 147:
-        v279 = queryEntry->m_sData;
+      {
+        auto *loginProcUpdateCompleteQuery =
+          reinterpret_cast<_qry_case_unmandtrader_log_in_proc_update_complete *>(queryEntry->m_sData);
         v75 = CUnmannedTraderController::Instance();
-        v76 = v75->UpdateReRegistRollBack(v279);
-        queryEntry->m_byResult = v76;
+        queryEntry->m_byResult = v75->UpdateReRegistRollBack(reinterpret_cast<char *>(loginProcUpdateCompleteQuery));
         break;
+      }
       case 149:
         byVoteEnable = (unsigned __int8 *)queryEntry->m_sData;
         if (g_Main.m_pWorldDB->Updatet_Account_Vote_Available(
@@ -1352,28 +1408,26 @@ void CMainThread::OnDQSRun()
         }
         break;
       case 150:
-        v246 = queryEntry->m_sData;
-        if (g_Main.m_pWorldDB->Update_Player_Vote_Info(
-               *(_DWORD *)&queryEntry->m_sData[20],
-               *(_DWORD *)queryEntry->m_sData,
-               queryEntry->m_sData[4],
-               queryEntry->m_sData[5],
-               *(_DWORD *)&queryEntry->m_sData[8]) )
-        {
-          queryEntry->m_byResult = 0;
-        }
-        else
-        {
-          queryEntry->m_byResult = 24;
-        }
+      {
+        auto *updatePlayerVoteInfoQuery = reinterpret_cast<_qry_case_update_player_vote_info *>(queryEntry->m_sData);
+        queryEntry->m_byResult = g_Main.m_pWorldDB->Update_Player_Vote_Info(
+          updatePlayerVoteInfoQuery->dwCharSerial,
+          updatePlayerVoteInfoQuery->dwAccumPlayTime,
+          updatePlayerVoteInfoQuery->byIsVoted,
+          updatePlayerVoteInfoQuery->byVoteEnable,
+          static_cast<unsigned int>(updatePlayerVoteInfoQuery->dwScanerData))
+          ? 0
+          : 24;
         break;
+      }
       case 151:
-        v247 = queryEntry->m_sData;
-        if (g_Main.m_pWorldDB->UpdateVotedReset_Cheat(*(_DWORD *)&queryEntry->m_sData[4]) )
-          queryEntry->m_byResult = 0;
-        else
-          queryEntry->m_byResult = 24;
+      {
+        auto *cheatPlayerVoteInfoQuery = reinterpret_cast<_qry_case_cheat_player_vote_info *>(queryEntry->m_sData);
+        queryEntry->m_byResult = g_Main.m_pWorldDB->UpdateVotedReset_Cheat(cheatPlayerVoteInfoQuery->dwCharSerial)
+          ? 0
+          : 24;
         break;
+      }
       case 152:
         v248 = queryEntry->m_sData;
         if (g_Main.m_pWorldDB->UpdateServerResetToken(
@@ -1389,21 +1443,19 @@ void CMainThread::OnDQSRun()
         }
         break;
       case 153:
-        v252 = queryEntry->m_sData;
+      {
+        auto *selectTimeLimitInfoQuery = reinterpret_cast<_qry_case_select_timelimit_info *>(queryEntry->m_sData);
         LogoutTime = g_Main.m_pWorldDB->Select_Player_Last_LogoutTime(
-                       *(_DWORD *)&queryEntry->m_sData[4],
-                       (unsigned int *)&queryEntry->m_sData[8]);
-        if (LogoutTime == 1 )
-          queryEntry->m_byResult = 24;
-        else
-          queryEntry->m_byResult = 0;
-        if (LogoutTime == 2 )
+          selectTimeLimitInfoQuery->dwAccountSerial,
+          &selectTimeLimitInfoQuery->dwLastLogoutTime);
+        queryEntry->m_byResult = (LogoutTime == 1) ? 24 : 0;
+        if (LogoutTime == 2)
         {
-          if (m_pWorldDB->Insert_PlayerTimeLimitInfo(*((_DWORD *)v252 + 1)) )
+          if (m_pWorldDB->Insert_PlayerTimeLimitInfo(selectTimeLimitInfoQuery->dwAccountSerial))
           {
             if (m_pWorldDB->Select_Player_Last_LogoutTime(
-                   *((_DWORD *)v252 + 1),
-                   (unsigned int *)v252 + 2) )
+                  selectTimeLimitInfoQuery->dwAccountSerial,
+                  &selectTimeLimitInfoQuery->dwLastLogoutTime))
             {
               queryEntry->m_byResult = 24;
             }
@@ -1414,20 +1466,18 @@ void CMainThread::OnDQSRun()
           }
         }
         break;
+      }
       case 155:
-        v251 = queryEntry->m_sData;
-        if (g_Main.m_pWorldDB->Update_Player_TimeLimit_Info(
-               *(_DWORD *)&queryEntry->m_sData[4],
-               *(_DWORD *)&queryEntry->m_sData[12],
-               queryEntry->m_sData[16]) )
-        {
-          queryEntry->m_byResult = 0;
-        }
-        else
-        {
-          queryEntry->m_byResult = 24;
-        }
+      {
+        auto *insertTimeLimitInfoQuery = reinterpret_cast<_qry_case_insert_timelimit_info *>(queryEntry->m_sData);
+        queryEntry->m_byResult = g_Main.m_pWorldDB->Update_Player_TimeLimit_Info(
+          insertTimeLimitInfoQuery->dwAccSerial,
+          insertTimeLimitInfoQuery->dwFatigue,
+          static_cast<unsigned __int8>(insertTimeLimitInfoQuery->wStatus))
+          ? 0
+          : 24;
         break;
+      }
       case 157:
         pDbLimitedSale = (qry_case_cash_limsale *)queryEntry->m_sData;
         Cash_LimSale = _db_Load_Cash_LimSale((qry_case_cash_limsale *)queryEntry->m_sData);
@@ -1439,44 +1489,59 @@ void CMainThread::OnDQSRun()
         }
         break;
       case 158:
-        pNewData = (_db_cash_limited_sale *)queryEntry->m_sData;
-        v171 = _db_Update_Cash_LimSale((_db_cash_limited_sale *)queryEntry->m_sData,
-                 (_db_cash_limited_sale *)&queryEntry->m_sData[164]);
-        queryEntry->m_byResult = v171;
+      {
+        auto *cashLimSaleQuery = reinterpret_cast<qry_case_cash_limsale *>(queryEntry->m_sData);
+        queryEntry->m_byResult = _db_Update_Cash_LimSale(&cashLimSaleQuery->NewSale, &cashLimSaleQuery->OldSale);
         break;
+      }
       case 161:
-        v172 = _db_Update_Set_Limit_Run();
-        queryEntry->m_byResult = v172;
+      {
+        auto *limitRunRequest = reinterpret_cast<_manage_client_limit_run_request_acwr *>(queryEntry->m_sData);
+        (void)limitRunRequest;
+        queryEntry->m_byResult = _db_Update_Set_Limit_Run();
         break;
+      }
       case 165:
-        v254 = queryEntry->m_sData;
-        v173 = _db_Update_GoldBoxItem(*(_DWORD *)queryEntry->m_sData,
-                 (_db_golden_box_item *)&queryEntry->m_sData[4],
-                 (_db_golden_box_item *)&queryEntry->m_sData[1628]);
-        queryEntry->m_byResult = v173;
+      {
+        auto *goldenBoxItemQuery = reinterpret_cast<qry_case_golden_box_item *>(queryEntry->m_sData);
+        queryEntry->m_byResult = _db_Update_GoldBoxItem(
+          goldenBoxItemQuery->nDBSerial,
+          &goldenBoxItemQuery->NewData,
+          &goldenBoxItemQuery->OldData);
         break;
+      }
       case 171:
-        v174 = _db_Select_RegeAvator_For_Lobby_Logout(queryEntry->m_sData);
-        queryEntry->m_byResult = v174;
+      {
+        auto *lobbyLogoutQuery = reinterpret_cast<_qry_case_lobby_logout *>(queryEntry->m_sData);
+        queryEntry->m_byResult = _db_Select_RegeAvator_For_Lobby_Logout(reinterpret_cast<char *>(lobbyLogoutQuery));
         break;
+      }
       case 172:
-        v255 = queryEntry->m_sData;
+      {
+        auto *insertOreLogQuery = reinterpret_cast<_qry_case_insert_orelog *>(queryEntry->m_sData);
         queryEntry->m_byResult = 0;
         if (!m_pWorldDB->Insert_OreReset_Log(
-                *v255,
-                *((_DWORD *)v255 + 5),
-                *((_DWORD *)v255 + 6),
-                *((_DWORD *)v255 + 7)) )
+              insertOreLogQuery->byType,
+              insertOreLogQuery->nLiveUsercnt,
+              insertOreLogQuery->dwOreRemain,
+              insertOreLogQuery->dwTAmount))
+        {
           queryEntry->m_byResult = 24;
+        }
         break;
+      }
       case 175:
-        v175 = _db_Update_Data_For_Post_Send(queryEntry->m_sData);
-        queryEntry->m_byResult = v175;
+      {
+        auto *updateDataForPostSendQuery = reinterpret_cast<_qry_case_update_data_for_post_send *>(queryEntry->m_sData);
+        queryEntry->m_byResult = _db_Update_Data_For_Post_Send(reinterpret_cast<char *>(updateDataForPostSendQuery));
         break;
+      }
       case 176:
-        v176 = _db_Update_Data_For_Trade(queryEntry->m_sData);
-        queryEntry->m_byResult = v176;
+      {
+        auto *updateDataForTradeQuery = reinterpret_cast<_qry_case_update_data_for_trade *>(queryEntry->m_sData);
+        queryEntry->m_byResult = _db_Update_Data_For_Trade(reinterpret_cast<char *>(updateDataForTradeQuery));
         break;
+      }
       default:
         break;
     }

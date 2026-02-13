@@ -3,6 +3,9 @@
 #include "IdaCompat.h"
 #include "CLogFile.h"
 
+class CPlayer;
+struct _PVP_RANK_DATA;
+
 class __cppobj CandidateMgr
 {
 public:
@@ -56,10 +59,28 @@ public:
 
   static CandidateMgr *Instance();
   bool Initialize(int maxCount);
+  void InitCandidate();
+  _candidate_info *GetEmpty(unsigned __int8 byRace);
+  bool Regist(CPlayer *pOne);
+  bool Regist(unsigned __int8 byRace, const _PVP_RANK_DATA *pData);
+  int GetCandidateCnt_1st(unsigned __int8 byRace);
+  int GetCandidateCnt_2st(unsigned __int8 byRace);
+  const _candidate_info *GetCandidate(unsigned __int8 byRace, unsigned int dwIdx);
+  const _candidate_info *GetLeader(unsigned __int8 byRace, unsigned int nIdx);
+  int GetMaxNum();
+  unsigned int GetWinCnt(unsigned __int8 byRace, unsigned int dwAvatorSerial);
+  bool IsRegistedAvator_1(unsigned __int8 byRace, unsigned int dwAvatorSerial);
+  bool IsRegistedAvator_2(unsigned __int8 byRace, unsigned int dwAvatorSerial);
+  void AddScore(unsigned __int8 byRace, char *wszName, unsigned __int8 byScore);
   _candidate_info *GetCandidateBySerial(unsigned __int8 byRace, unsigned int dwASerial);
   _candidate_info *GetPatriarchGroup(unsigned __int8 byRace, _candidate_info::ClassType eType);
   _candidate_info *GetPatriarchGroupBySerial(unsigned __int8 byRace, unsigned int dwASerial);
+  _candidate_info *GetEmptyPatriarchGroup(unsigned __int8 byRace);
+  bool AppointPatriarchGroup(CPlayer *pOne, _candidate_info::ClassType eClassType);
+  bool DischargePatriarchGroup(unsigned __int8 byRace, _candidate_info::ClassType eClassType);
   const _candidate_info *GetCandidate_2st(unsigned __int8 byRace, unsigned int nIdx);
+  void FinalDecision();
+  void ApplyPatriarchGroup();
   void ChangeState_1to2();
   __int64 Update_RegistCandidate_2st();
   __int64 Update_Score();
@@ -71,6 +92,9 @@ public:
   __int64 Update_VoteTime(unsigned int dwSerial);
   void CompleteInsertCandidate(unsigned __int8 byRet, char *p);
   __int64 __SortByPvpPoint();
+  __int64 __SortByRank();
+  __int64 __SortByScore();
+  void __AddWinner(unsigned __int8 byRace, unsigned __int8 byNum);
 
   int m_nMaxNum;
   _candidate_info *m_kCandidate[3];

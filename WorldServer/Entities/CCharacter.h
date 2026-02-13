@@ -163,6 +163,7 @@ public:
     unsigned __int8 byLv,
     bool *pbUpMty,
     CPlayer *pActChar);
+  void SendMsg_StunInform() override;
   void _set_sf_cont(
     _sf_continous *pCont,
     unsigned __int8 byEffectCode,

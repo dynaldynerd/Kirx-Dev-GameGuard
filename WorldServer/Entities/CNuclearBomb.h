@@ -28,6 +28,8 @@ struct __cppobj __declspec(align(8)) _be_damaged_char
 class __cppobj CNuclearBomb : public CCharacter
 {
 public:
+  __int64 GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack) override;
+  void Loop() override;
   bool Init(_object_id *pID);
   bool Create(_nuclear_create_setdata *pData);
   bool GetUse();

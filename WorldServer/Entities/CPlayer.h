@@ -59,6 +59,7 @@ class CMerchant;
 struct _buy_offer;
 struct _sell_offer;
 struct _limit_amount_info;
+struct _dh_reward_sub_setup;
 class CPlayer;
 class CPlayerAttack;
 class CMapData;
@@ -1285,6 +1286,17 @@ public:
   void SendMsg_GiveupDarkHole(unsigned __int8 byErrCode);
   void SendMsg_ClearDarkHole(unsigned __int8 byErrCode);
   void SendMsg_ReEnterDarkHoleResult(unsigned __int8 byRetCode);
+  void Reward_DarkDungeon(
+    _dh_reward_sub_setup *pSetup,
+    char *pszTitle,
+    bool bRealBoss,
+    _STORAGE_LIST::_db_con *pItem,
+    int *bIsRewarded);
+  int GetRewardItems_DarkDungeon(
+    _dh_reward_sub_setup *pSetup,
+    _STORAGE_LIST::_db_con *pItems,
+    bool bRealBoss);
+  void SendMsg_DarkHoleRewardMessage(_STORAGE_LIST::_db_con *pItem, unsigned int dwMemberIndex, int isRewarded);
   bool UpdateDelPost(unsigned int dwPostSerial, int nIndex);
   void DelPostData(unsigned int dwIndex);
   void SortPost(int nNumber);
@@ -1631,6 +1643,7 @@ public:
   void SendMsg_DTradeCloseInform(char byCloseCode);
   void NetClose(bool bMoveOutLobby);
   void _TowerAllReturn(unsigned __int8 byDestroyType, bool bForceReturn);
+  __int16 _TowerReturn(_STORAGE_LIST::_db_con *pTowerItem);
   void _TowerDestroy(CGuardTower *pTowerObj);
   void ExitUpdateDataToWorld();
   void _AnimusReturn(unsigned __int8 byReturnType);
@@ -1850,6 +1863,7 @@ public:
   bool _LockUnitKey(unsigned __int8 bySlotIndex, bool bLock);
   void SendMsg_UnitForceReturnInform(char bySlotIndex, unsigned int dwDebt);
   void SendMsg_UnitAlterFeeInform(char bySlotIndex, unsigned int dwPullingFee);
+  void SendMsg_AlterBooster();
   void AddDalant(int dwPush, bool bApply);
   void SubDalant(unsigned int dwSub);
   void SendMsg_RemainOreRate();
@@ -2053,6 +2067,7 @@ public:
   void Billing_Logout();
   void PushDQSCheatPlyerVoteInfo();
   void PushDQSUpdatePlyerVoteInfo();
+  void PushDQSUpdateVoteAvilable();
   void SendMsg_Alter_Action_Point(unsigned __int8 byActCode, unsigned int dwActPoint);
   unsigned int GetInitClassCost();
   unsigned __int8 pc_InitClassRequest();
@@ -2303,12 +2318,43 @@ public:
   __int64 GetMasteryCumAfterAttack(int nDstLv);
   bool IsPassMasteryLimitLvDiff(int iDstLevel);
   void SetBattleMode(bool bAttack);
+  void AlterSec() override;
   __int64 AttackableHeight();
   __int64 GetAttackDP();
   __int64 GetAttackLevel();
   float GetAttackRange();
+  __int64 GetAvoidRate() override;
+  __int64 GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart) override;
+  float GetDefFacing(int nPart) override;
+  float GetDefGap(int nPart) override;
+  __int64 GetDefSkill(bool bBackAttackDamage) override;
+  __int64 GetFireTol() override;
+  char *GetObjName() override;
+  __int64 GetObjRace() override;
+  __int64 GetSoilTol() override;
+  __int64 GetWaterTol() override;
+  float GetWeaponAdjust() override;
+  __int64 GetWeaponClass() override;
+  float GetWidth() override;
+  __int64 GetWindTol() override;
   __int64 GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack);
   bool IsBeAttackedAble(bool bFirst);
+  char IsBeDamagedAble(CCharacter *pAtter) override;
+  char IsRecvableContEffect() override;
+  bool Is_Battle_Mode() override;
+  void Loop() override;
+  void OutOfSec() override;
+  void SendMsg_FixPosition(int n) override;
+  void SendMsg_RealMovePoint(int n) override;
+  void SendMsg_SetHPInform() override;
+  __int64 SetDamage(
+    int nDam,
+    CCharacter *pDst,
+    int nDstLv,
+    bool bCrt,
+    int nAttackType,
+    unsigned int dwAttackSerial,
+    bool bJadeReturn) override;
   void SetAttackPart(int nAttactPart);
   char Load(CUserDB *pUser, bool bFirstStart);
   char dev_after_effect();

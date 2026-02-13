@@ -22,6 +22,8 @@ namespace
 
 CDarkHoleDungeonQuest g_DarkHoleQuest;
 
+CDarkHoleDungeonQuest::~CDarkHoleDungeonQuest() = default;
+
 bool CDarkHoleDungeonQuest::LoadDarkHoleQuest()
 {
 
@@ -162,4 +164,12 @@ void CDarkHoleDungeonQuest::CheckQuestOnLoop()
   }
 
   m_dwCheckLastTime = now;
+  for (int channelIndex = 0; channelIndex < 128; ++channelIndex)
+  {
+    CDarkHoleChannel *channel = &m_Channel[channelIndex];
+    if (channel->IsFill())
+    {
+      channel->OnLoop();
+    }
+  }
 }

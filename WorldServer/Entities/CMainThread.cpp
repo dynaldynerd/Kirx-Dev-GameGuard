@@ -145,11 +145,18 @@ class CMapDisplay
 {
 public:
   static void DrawDisplay(CMapDisplay *display);
+  static void OffDisplay(CMapDisplay *display);
 };
 
 extern CMapDisplay g_MapDisplay;
 
 void CMapDisplay::DrawDisplay(CMapDisplay *display)
+{
+  (void)display;
+  // TODO: temporary non-GUI stub; replace with real MapDisplay integration when GUI subsystem is restored.
+}
+
+void CMapDisplay::OffDisplay(CMapDisplay *display)
 {
   (void)display;
   // TODO: temporary non-GUI stub; replace with real MapDisplay integration when GUI subsystem is restored.
@@ -461,6 +468,30 @@ _DB_QRY_SYN_DATA *CMainThread::PushDQSData(
 
   m_logSystemError.Write("%d : m_listDQSData.PushNode_Back() => failed ", byQryCase);
   return nullptr;
+}
+
+unsigned int CMainThread::CreateDataResetToken(_SYSTEMTIME *tm)
+{
+  char buffer[40]{};
+  sprintf_s(buffer, 0x14u, "%04d%02d%0d", tm->wYear, tm->wMonth, tm->wDay);
+  return static_cast<unsigned int>(atoi(buffer));
+}
+
+void CMainThread::PushResetServerToken()
+{
+  _SYSTEMTIME systemTime{};
+  GetLocalTime(&systemTime);
+
+  _qry_case_update_server_reset_token queryData{};
+  queryData.dwServerToken = CreateDataResetToken(&systemTime);
+  m_dwServerResetToken = queryData.dwServerToken;
+
+  PatriarchElectProcessor *processor = PatriarchElectProcessor::Instance();
+  queryData.dwESerial = processor->GetElectSerial();
+  queryData.wProcType = processor->GetProcessorType();
+
+  const int querySize = static_cast<int>(sizeof(queryData));
+  PushDQSData(0xFFFFFFFF, nullptr, 0x98u, reinterpret_cast<char *>(&queryData), querySize);
 }
 
 bool CMainThread::Push_ChargeItem(

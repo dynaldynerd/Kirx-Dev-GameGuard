@@ -29,6 +29,8 @@ namespace RACE_BOSS_MSG
     void SetDone();
     bool IsWait();
     bool IsDayChanged();
+    bool IsSendTime();
+    bool IsSendFromWeb();
     bool Save(unsigned __int8 ucRace);
   };
 
@@ -52,6 +54,9 @@ namespace RACE_BOSS_MSG
     int Cancel(unsigned int dwMsgID, CMsg **pkMsg);
     void AddEmpty(CMsg *pkMsg);
     void Release(CMsg *pkMsg);
+    CMsg *GetSendMsg();
+    int GetRemainCnt();
+    void Refresh();
     bool Load(unsigned int dwCurTime);
     bool Save();
     bool SaveIndexList(unsigned int iType, CNetIndexList *kInxList);
@@ -75,12 +80,16 @@ namespace RACE_BOSS_MSG
       const char *pwszMsg,
       CMsg **pkSend,
       unsigned int dbWebSendDBID);
+    CMsg *GetSendMsg(unsigned __int8 *ucRace);
+    unsigned __int8 GetRemainCnt(unsigned __int8 ucRace);
     int Cancel(unsigned __int8 ucRace, unsigned int dwMsgID, CMsg **pkMsg);
     void CleanUpCancel(unsigned __int8 ucRace, CMsg *pkMsg);
+    void Release(unsigned __int8 ucRace, CMsg *pkMsg);
     void Refresh();
     bool IsHaveBeenSave();
     bool Load(unsigned int dwCurTime);
     void Save();
+    void Save(unsigned __int8 ucRace);
   };
 }
 
@@ -100,6 +109,8 @@ public:
   bool IsDayChanged();
   void SaveCurTime();
   void UpdateSend();
+  void SendInfomSender(unsigned int dwSerial, unsigned __int8 ucRemainCnt);
+  void SendRequestWeb(unsigned __int8 ucRace, RACE_BOSS_MSG::CMsg *pkMsg);
 
   char Send(CPlayer *pkSender, const char *pwszMsg);
   char Send(

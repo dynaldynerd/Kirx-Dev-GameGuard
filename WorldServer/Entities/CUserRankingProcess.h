@@ -35,6 +35,8 @@ public:
     unsigned __int8 byRet);
   bool IsCurrentRaceBossGroup(unsigned __int8 byRace, unsigned int dwSerial);
   unsigned int GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth);
+  unsigned int FindRank(unsigned __int8 byRaceCode, unsigned int dwAvatorSerial);
+  const _PVP_RANK_DATA *GetCurrentPvpRankData(unsigned __int8 byRace, unsigned __int8 byNth);
   unsigned __int8 GetBossType(unsigned __int8 byRaceCode, unsigned int dwSerial);
   char IsRaceViceBoss(unsigned __int8 byRace, unsigned int dwSerial);
   void SetUpdateRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth, unsigned int dwSerial);
@@ -125,6 +127,8 @@ public:
 
   bool IsCurrentRaceBossGroup(unsigned __int8 byRace, unsigned int dwSerial);
   unsigned int GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth);
+  unsigned int FindRank(unsigned __int8 byRaceCode, unsigned int dwAvatorSerial);
+  const _PVP_RANK_DATA *GetCurrentPvpRankData(unsigned __int8 byRace, unsigned __int8 byNth);
   unsigned __int8 GetBossType(unsigned __int8 byRace, unsigned int dwSerial);
   bool IsRaceViceBoss(unsigned __int8 byRace, unsigned int dwSerial);
   void SetUpdateRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth, unsigned int dwSerial);

@@ -4,6 +4,9 @@
 
 #include <mmsystem.h>
 
+#include "CNetProcess.h"
+#include "GlobalObjects.h"
+
 int CParkingUnit::s_nLiveNum = 0;
 
 void CParkingUnit::Init(_object_id *pID)
@@ -49,5 +52,28 @@ void CParkingUnit::SendMsg_Destroy(unsigned __int8 byDestoryType)
 
   unsigned __int8 type[2] = {3, 29};
   CircleReport(type, reinterpret_cast<char *>(&msg), 7, false);
+}
+
+void CParkingUnit::Loop()
+{
+  // this is not a stub
+}
+
+void CParkingUnit::SendMsg_FixPosition(int n)
+{
+  char msg[23]{};
+  *reinterpret_cast<unsigned __int16 *>(msg) = m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned int *>(msg + 2) = m_dwObjSerial;
+  msg[6] = static_cast<char>(m_byFrame);
+  memcpy_0(msg + 7, m_byPartCode, sizeof(m_byPartCode));
+  FloatToShort(m_fCurPos, reinterpret_cast<short *>(msg + 13), 3);
+  *reinterpret_cast<unsigned int *>(msg + 19) = m_pOwner->m_dwObjSerial;
+
+  unsigned __int8 packetType[2] = {4, 16};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    n,
+    packetType,
+    msg,
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 

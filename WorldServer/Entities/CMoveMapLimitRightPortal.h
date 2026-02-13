@@ -10,6 +10,7 @@ class __cppobj __declspec(align(8)) CMoveMapLimitRightPortal : public CMoveMapLi
 {
 public:
   CMoveMapLimitRightPortal(int iType);
+  ~CMoveMapLimitRightPortal() override;
 
   void Load(CPlayer *pkPlayer) override;
   void CreateComplete(CPlayer *pkPlayer) override;

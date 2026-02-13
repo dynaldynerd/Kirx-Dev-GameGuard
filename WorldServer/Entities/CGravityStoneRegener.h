@@ -24,6 +24,7 @@ public:
   CGravityStoneRegener();
   bool Init(unsigned int uiMapInx, unsigned __int16 wInx, CMapData *pkMap);
   int GetPortalInx() const;
+  void SendMsg_FixPosition(int n) override;
 
   GSR_STATE m_eState;
   int m_iPortalInx;

@@ -25,6 +25,7 @@ public:
   bool IsValidPosition(float *pfCurPos);
   int Enter(CPlayer *pkObj);
   void Close();
+  void SendMsg_FixPosition(int n) override;
   void SendMsg_Destroy();
   void SendMsg_MovePortal(CPlayer *pkObj);
 };

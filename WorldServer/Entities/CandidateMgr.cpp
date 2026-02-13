@@ -4,13 +4,42 @@
 
 #include "CMainThread.h"
 #include "CPlayer.h"
+#include "CPvpUserAndGuildRankingSystem.h"
 #include "CRFWorldDatabase.h"
+#include "CUserRankingProcess.h"
+#include "ClassOrderProcessor.h"
 #include "GlobalObjects.h"
 #include "PatriarchElectProcessor.h"
+#include "qry_case_insert_candidate.h"
 #include "qry_case_request_refund.h"
 #include "update_candidate_wincount_packing.h"
 
 #include <new>
+
+namespace
+{
+#pragma pack(push, 1)
+struct _qry_case_discharge_patriarch
+{
+  unsigned __int8 byRace;
+  unsigned int dwAvatorSerial;
+  unsigned int dwElectSerial;
+
+  _qry_case_discharge_patriarch(
+    unsigned __int8 race,
+    unsigned int avatorSerial,
+    unsigned int electSerial)
+    : byRace(race), dwAvatorSerial(avatorSerial), dwElectSerial(electSerial)
+  {
+  }
+
+  int size() const
+  {
+    return sizeof(*this);
+  }
+};
+#pragma pack(pop)
+}
 
 CandidateMgr *CandidateMgr::Instance()
 {
@@ -77,6 +106,276 @@ bool CandidateMgr::Initialize(int maxCount)
   }
 
   return true;
+}
+
+void CandidateMgr::InitCandidate()
+{
+  for (int raceIndex = 0; raceIndex < 3; ++raceIndex)
+  {
+    m_nCandidateCnt_1st[raceIndex] = 0;
+    m_nCandidateCnt_2st[raceIndex] = 0;
+
+    for (int candidateIndex = 0; candidateIndex < 500; ++candidateIndex)
+    {
+      m_pkCandidateLink_1st[raceIndex][candidateIndex] = nullptr;
+      m_kCandidate[raceIndex][candidateIndex]._Init();
+    }
+
+    for (int rankIndex = 0; rankIndex < 8; ++rankIndex)
+    {
+      m_pkCandidateLink_2st[raceIndex][rankIndex] = nullptr;
+    }
+
+    for (int leaderIndex = 0; leaderIndex < 9; ++leaderIndex)
+    {
+      m_pkLeader[raceIndex][leaderIndex] = nullptr;
+    }
+  }
+}
+
+CandidateMgr::_candidate_info *CandidateMgr::GetEmpty(unsigned __int8 byRace)
+{
+  for (int index = 0; index < m_nMaxNum; ++index)
+  {
+    if (!m_kCandidate[byRace][index].bLoad)
+    {
+      return &m_kCandidate[byRace][index];
+    }
+  }
+
+  return nullptr;
+}
+
+CandidateMgr::_candidate_info *CandidateMgr::GetEmptyPatriarchGroup(unsigned __int8 byRace)
+{
+  for (int index = 0; index < 9; ++index)
+  {
+    if (!m_kPatriarchGroup[byRace][index].bLoad)
+      return &m_kPatriarchGroup[byRace][index];
+  }
+
+  return nullptr;
+}
+
+bool CandidateMgr::AppointPatriarchGroup(CPlayer *pOne, _candidate_info::ClassType eClassType)
+{
+  _candidate_info *candidate = GetEmptyPatriarchGroup(pOne->m_Param.GetRaceCode());
+  if (candidate == nullptr)
+    return false;
+
+  candidate->bLoad = true;
+  candidate->byRace = pOne->m_Param.GetRaceCode();
+  candidate->byLevel = pOne->m_Param.GetLevel();
+  candidate->dwRank = pOne->m_Param.GetPvpRank();
+  candidate->dPvpPoint = pOne->m_Param.GetPvPPoint();
+  candidate->byGrade = pOne->m_Param.m_byPvPGrade;
+  candidate->dwAvatorSerial = pOne->m_Param.GetCharSerial();
+  candidate->eClassType = eClassType;
+  candidate->eStatus = _candidate_info::candidate_appoint;
+  strcpy_s(candidate->wszName, sizeof(candidate->wszName), pOne->m_Param.GetCharNameW());
+
+  if (pOne->m_Param.m_pGuild != nullptr)
+  {
+    candidate->dwGuildSerial = pOne->m_Param.m_pGuild->m_dwSerial;
+    strcpy_s(candidate->wszGuildName, sizeof(candidate->wszGuildName), pOne->m_Param.m_pGuild->m_wszName);
+  }
+  else
+  {
+    candidate->dwGuildSerial = 0xFFFFFFFFu;
+    memset_0(candidate->wszGuildName, 0, sizeof(candidate->wszGuildName));
+  }
+
+  const unsigned int electSerial = PatriarchElectProcessor::Instance()->GetElectSerial();
+  _qry_case_insert_candidate query(candidate->byRace, pOne->m_id.wIndex, electSerial, candidate->dwAvatorSerial);
+  g_Main.PushDQSData(0xFFFFFFFFu, nullptr, 0x7Du, reinterpret_cast<char *>(&query), query.size());
+  return true;
+}
+
+bool CandidateMgr::DischargePatriarchGroup(unsigned __int8 byRace, _candidate_info::ClassType eClassType)
+{
+  _candidate_info *candidate = GetPatriarchGroup(byRace, eClassType);
+  if (candidate == nullptr)
+    return false;
+
+  candidate->eStatus = _candidate_info::candidate_discharge;
+  ClassOrderProcessor::Instance()->UpdatePacket(byRace, static_cast<unsigned __int8>(eClassType));
+
+  const unsigned int electSerial = PatriarchElectProcessor::Instance()->GetCurrPatriarchElectSerial();
+  _qry_case_discharge_patriarch query(candidate->byRace, candidate->dwAvatorSerial, electSerial);
+  g_Main.PushDQSData(0xFFFFFFFFu, nullptr, 0x7Eu, reinterpret_cast<char *>(&query), query.size());
+  return true;
+}
+
+bool CandidateMgr::Regist(CPlayer *pOne)
+{
+  const unsigned __int8 raceCode = pOne->m_Param.GetRaceCode();
+  _candidate_info *const empty = GetEmpty(raceCode);
+  if (empty == nullptr)
+  {
+    return false;
+  }
+
+  empty->bLoad = true;
+  empty->byRace = raceCode;
+  empty->dwAvatorSerial = pOne->m_Param.GetCharSerial();
+  empty->byGrade = pOne->m_Param.m_byPvPGrade;
+  empty->dwRank = pOne->m_Param.GetPvpRank();
+  empty->dPvpPoint = pOne->m_Param.GetPvPPoint();
+  empty->byLevel = pOne->m_Param.GetLevel();
+  empty->eStatus = _candidate_info::candidate_1st;
+  strcpy_s(empty->wszName, sizeof(empty->wszName), pOne->m_Param.GetCharNameW());
+
+  if (pOne->m_Param.m_pGuild != nullptr)
+  {
+    empty->dwGuildSerial = pOne->m_Param.m_pGuild->m_dwSerial;
+    strcpy_s(empty->wszGuildName, sizeof(empty->wszGuildName), pOne->m_Param.m_pGuild->m_wszName);
+  }
+  else
+  {
+    empty->dwGuildSerial = static_cast<unsigned int>(-1);
+    memset_0(empty->wszGuildName, 0, sizeof(empty->wszGuildName));
+  }
+
+  m_pkCandidateLink_1st[empty->byRace][m_nCandidateCnt_1st[empty->byRace]++] = empty;
+
+  const unsigned int electSerial = PatriarchElectProcessor::Instance()->GetElectSerial();
+  _qry_case_insert_candidate query(
+    empty->byRace,
+    pOne->m_id.wIndex,
+    electSerial,
+    empty->dwAvatorSerial);
+  g_Main.PushDQSData(0xFFFFFFFFu, nullptr, 0x75u, reinterpret_cast<char *>(&query), query.size());
+
+  return true;
+}
+
+bool CandidateMgr::Regist(unsigned __int8 byRace, const _PVP_RANK_DATA *pData)
+{
+  _candidate_info *const empty = GetEmpty(byRace);
+  if (empty == nullptr)
+  {
+    return false;
+  }
+
+  empty->bLoad = true;
+  empty->byRace = byRace;
+  empty->dwAvatorSerial = pData->dwAvatorSerial;
+  empty->dwRank = pData->byRank;
+  empty->dPvpPoint = pData->dPvpPoint;
+  empty->byLevel = pData->byLv;
+  empty->eStatus = _candidate_info::candidate_1st;
+  empty->dwGuildSerial = pData->dwGuildSerial;
+  empty->byGrade = pData->byGrade;
+  strcpy_s(empty->wszName, sizeof(empty->wszName), pData->wszName);
+  strcpy_s(empty->wszGuildName, sizeof(empty->wszGuildName), pData->wszGuildName);
+
+  m_pkCandidateLink_1st[empty->byRace][m_nCandidateCnt_1st[empty->byRace]++] = empty;
+
+  const unsigned int electSerial = PatriarchElectProcessor::Instance()->GetElectSerial();
+  _qry_case_insert_candidate query(
+    empty->byRace,
+    0xFFFFu,
+    electSerial,
+    empty->dwAvatorSerial);
+  g_Main.PushDQSData(0xFFFFFFFFu, nullptr, 0x75u, reinterpret_cast<char *>(&query), query.size());
+
+  return true;
+}
+
+int CandidateMgr::GetCandidateCnt_1st(unsigned __int8 byRace)
+{
+  return m_nCandidateCnt_1st[byRace];
+}
+
+int CandidateMgr::GetCandidateCnt_2st(unsigned __int8 byRace)
+{
+  return m_nCandidateCnt_2st[byRace];
+}
+
+const CandidateMgr::_candidate_info *CandidateMgr::GetCandidate(unsigned __int8 byRace, unsigned int dwIdx)
+{
+  if (byRace > 3u || dwIdx > static_cast<unsigned int>(m_nMaxNum))
+  {
+    return nullptr;
+  }
+
+  return &m_kCandidate[byRace][dwIdx];
+}
+
+const CandidateMgr::_candidate_info *CandidateMgr::GetLeader(unsigned __int8 byRace, unsigned int nIdx)
+{
+  if (byRace >= 3u)
+  {
+    return nullptr;
+  }
+  if (nIdx < 9u)
+  {
+    return m_pkLeader[byRace][nIdx];
+  }
+  return nullptr;
+}
+
+int CandidateMgr::GetMaxNum()
+{
+  return m_nMaxNum;
+}
+
+unsigned int CandidateMgr::GetWinCnt(unsigned __int8 byRace, unsigned int dwAvatorSerial)
+{
+  for (int index = 0; index < m_nMaxNum; ++index)
+  {
+    if (m_kCandidate[byRace][index].dwAvatorSerial == dwAvatorSerial)
+    {
+      return m_kCandidate[byRace][index].dwWinCnt;
+    }
+  }
+
+  return 0;
+}
+
+bool CandidateMgr::IsRegistedAvator_1(unsigned __int8 byRace, unsigned int dwAvatorSerial)
+{
+  for (int index = 0; index < m_nCandidateCnt_1st[byRace]; ++index)
+  {
+    _candidate_info *const candidate = m_pkCandidateLink_1st[byRace][index];
+    if (candidate != nullptr
+        && candidate->eStatus == _candidate_info::candidate_1st
+        && candidate->dwAvatorSerial == dwAvatorSerial)
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool CandidateMgr::IsRegistedAvator_2(unsigned __int8 byRace, unsigned int dwAvatorSerial)
+{
+  for (int index = 0; index < m_nCandidateCnt_2st[byRace]; ++index)
+  {
+    _candidate_info *candidate = m_pkCandidateLink_2st[static_cast<unsigned __int64>(byRace)][index];
+    if (candidate != nullptr
+        && candidate->eStatus == _candidate_info::candidate_2st
+        && candidate->dwAvatorSerial == dwAvatorSerial)
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+void CandidateMgr::AddScore(unsigned __int8 byRace, char *wszName, unsigned __int8 byScore)
+{
+  for (int index = 0; index < m_nCandidateCnt_2st[byRace]; ++index)
+  {
+    _candidate_info *candidate = m_pkCandidateLink_2st[static_cast<unsigned __int64>(byRace)][index];
+    if (candidate != nullptr && !strcmp_0(candidate->wszName, wszName))
+    {
+      candidate->dwScore += byScore;
+      return;
+    }
+  }
 }
 
 CandidateMgr::_candidate_info *CandidateMgr::GetCandidateBySerial(unsigned __int8 byRace, unsigned int dwASerial)
@@ -192,6 +491,68 @@ __int64 CandidateMgr::__SortByPvpPoint()
   return 0;
 }
 
+__int64 CandidateMgr::__SortByRank()
+{
+  for (int race = 0; race < 3; ++race)
+  {
+    for (int lhs = 1; lhs < m_nCandidateCnt_1st[race]; ++lhs)
+    {
+      for (int rhs = 1; rhs < m_nCandidateCnt_1st[race]; ++rhs)
+      {
+        if (m_pkCandidateLink_1st[race][lhs]->dwRank >= m_pkCandidateLink_1st[race][rhs]->dwRank)
+        {
+          if (m_pkCandidateLink_1st[race][lhs]->dwRank == m_pkCandidateLink_1st[race][rhs]->dwRank
+              && m_pkCandidateLink_1st[race][lhs]->dPvpPoint > m_pkCandidateLink_1st[race][rhs]->dPvpPoint)
+          {
+            _candidate_info *swap = m_pkCandidateLink_1st[race][lhs];
+            m_pkCandidateLink_1st[race][lhs] = m_pkCandidateLink_1st[race][rhs];
+            m_pkCandidateLink_1st[race][rhs] = swap;
+          }
+        }
+        else
+        {
+          _candidate_info *swap = m_pkCandidateLink_1st[race][lhs];
+          m_pkCandidateLink_1st[race][lhs] = m_pkCandidateLink_1st[race][rhs];
+          m_pkCandidateLink_1st[race][rhs] = swap;
+        }
+      }
+    }
+  }
+
+  return 0;
+}
+
+__int64 CandidateMgr::__SortByScore()
+{
+  for (int race = 0; race < 3; ++race)
+  {
+    for (int lhs = 0; lhs < m_nCandidateCnt_2st[race]; ++lhs)
+    {
+      for (int rhs = 0; rhs < m_nCandidateCnt_2st[race]; ++rhs)
+      {
+        if (m_pkCandidateLink_2st[race][lhs]->dwScore <= m_pkCandidateLink_2st[race][rhs]->dwScore)
+        {
+          if (m_pkCandidateLink_2st[race][lhs]->dwScore == m_pkCandidateLink_2st[race][rhs]->dwScore
+              && m_pkCandidateLink_2st[race][lhs]->dPvpPoint > m_pkCandidateLink_2st[race][rhs]->dPvpPoint)
+          {
+            _candidate_info *swap = m_pkCandidateLink_2st[race][lhs];
+            m_pkCandidateLink_2st[race][lhs] = m_pkCandidateLink_2st[race][rhs];
+            m_pkCandidateLink_2st[race][rhs] = swap;
+          }
+        }
+        else
+        {
+          _candidate_info *swap = m_pkCandidateLink_2st[race][lhs];
+          m_pkCandidateLink_2st[race][lhs] = m_pkCandidateLink_2st[race][rhs];
+          m_pkCandidateLink_2st[race][rhs] = swap;
+        }
+      }
+    }
+  }
+
+  return 0;
+}
+
 void CandidateMgr::ChangeState_1to2()
 {
   __SortByPvpPoint();
@@ -224,6 +585,113 @@ void CandidateMgr::ChangeState_1to2()
   }
 
   g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x72u, nullptr, 0);
+}
+
+void CandidateMgr::__AddWinner(unsigned __int8 byRace, unsigned __int8 byNum)
+{
+  int addedCount = 0;
+
+  for (int rankIndex = 0; addedCount < byNum && rankIndex < 5; ++rankIndex)
+  {
+    const _PVP_RANK_DATA *rankData =
+      CPvpUserAndGuildRankingSystem::Instance()->GetCurrentPvpRankData(byRace, static_cast<unsigned __int8>(rankIndex));
+    if (rankData == nullptr || rankData->wszName[0] == '\0'
+        || IsRegistedAvator_2(byRace, rankData->dwAvatorSerial))
+    {
+      continue;
+    }
+
+    _candidate_info *empty = GetEmpty(byRace);
+    empty->bLoad = true;
+    empty->bUpdateClassType = true;
+    empty->byRace = byRace;
+    empty->dwAvatorSerial = rankData->dwAvatorSerial;
+    empty->dwGuildSerial = rankData->dwGuildSerial;
+    empty->dwRank = rankData->byRank;
+    empty->byLevel = rankData->byLv;
+    empty->dPvpPoint = rankData->dPvpPoint;
+    empty->byGrade = rankData->byGrade;
+    strcpy_s(empty->wszName, sizeof(empty->wszName), rankData->wszName);
+    strcpy_s(empty->wszGuildName, sizeof(empty->wszGuildName), rankData->wszGuildName);
+    empty->eClassType = static_cast<_candidate_info::ClassType>(addedCount + 5 - byNum);
+    m_pkLeader[byRace][empty->eClassType] = empty;
+
+    ++m_nCandidateCnt_1st[empty->byRace];
+    ++addedCount;
+
+    m_kSysLog.Write(
+      "RANK_AUTO ADD : Serial=%d, Name=%s, CurCandidateCnd=%d",
+      empty->dwAvatorSerial,
+      empty->wszName,
+      m_nCandidateCnt_1st[empty->byRace]);
+
+    const unsigned int electSerial = PatriarchElectProcessor::Instance()->GetElectSerial();
+    _qry_case_insert_candidate query(empty->byRace, 0xFFFFu, electSerial, empty->dwAvatorSerial);
+    const int querySize = static_cast<int>(query.size());
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x75u, reinterpret_cast<char *>(&query), querySize);
+  }
+}
+
+void CandidateMgr::FinalDecision()
+{
+  __SortByScore();
+
+  for (int race = 0; race < 3; ++race)
+  {
+    _candidate_info::ClassType classType = _candidate_info::patriarch;
+    m_kVoteResultLog.Write("================================================ [Race:%d]", race);
+
+    for (int candidateIndex = 0; candidateIndex < 8 && classType < 5; ++candidateIndex)
+    {
+      _candidate_info *candidate = m_pkCandidateLink_2st[race][candidateIndex];
+      if (candidate != nullptr && candidate->bValidChar)
+      {
+        candidate->eClassType = classType;
+        candidate->bUpdateClassType = true;
+        m_pkLeader[race][classType] = candidate;
+        m_kVoteResultLog.Write(
+          "RACE(%d) IDX(%d) Serial(%d) Name(%s) Score(%d)",
+          race,
+          candidateIndex,
+          candidate->dwAvatorSerial,
+          candidate->wszName,
+          candidate->dwScore);
+        classType = static_cast<_candidate_info::ClassType>(classType + 1);
+      }
+    }
+
+    PatriarchElectProcessor *electProcessor = PatriarchElectProcessor::Instance();
+    m_kVoteResultLog.Write(
+      "RACE(%d) TOTAL_VOTE(%d) NON_VOTE(%d) HIGH_GRADE(%d)",
+      race,
+      electProcessor->m_dwTotalVoteCnt[race],
+      electProcessor->m_dwNonvoteCnt[race],
+      electProcessor->m_dwHighGradeNum[race]);
+    m_kVoteResultLog.Write("------------------------------------------------ [Race:%d]", race);
+
+    if (classType < 5)
+    {
+      __AddWinner(static_cast<unsigned __int8>(race), static_cast<unsigned __int8>(5 - classType));
+    }
+  }
+
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x74u, nullptr, 0);
+}
+
+void CandidateMgr::ApplyPatriarchGroup()
+{
+  for (int race = 0; race < 3; ++race)
+  {
+    for (int index = 0; index < 9; ++index)
+    {
+      m_kPatriarchGroup[race][index]._Init();
+      const _candidate_info *leader = GetLeader(static_cast<unsigned __int8>(race), index);
+      if (leader != nullptr)
+      {
+        memcpy_0(&m_kPatriarchGroup[race][index], leader, sizeof(m_kPatriarchGroup[race][index]));
+      }
+    }
+  }
 }
 
 __int64 CandidateMgr::Update_RegistCandidate_2st()

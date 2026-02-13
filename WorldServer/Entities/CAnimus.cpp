@@ -3,13 +3,44 @@
 #include "CAnimus.h"
 #include "animus_fld.h"
 #include "CGameObject.h"
+#include "CNetProcess.h"
+#include "GlobalObjects.h"
 
+#include <cstdio>
 #include <cstring>
 #include <mmsystem.h>
 
 CRecordData CAnimus::s_tblParameter[8];
 unsigned int CAnimus::MAX_EXP[8]{};
 int CAnimus::s_nLiveNum = 0;
+
+namespace
+{
+  struct __unaligned __declspec(align(1)) _animus_fixpos_packet
+  {
+    unsigned __int16 wRecordIndex;
+    unsigned __int16 wObjIndex;
+    unsigned int dwObjSerial;
+    short pos[3];
+    char byLevel;
+    unsigned __int16 wContEffect;
+    unsigned int dwMasterSerial;
+  };
+
+  struct __unaligned __declspec(align(1)) _animus_realmove_packet
+  {
+    unsigned __int16 wRecordIndex;
+    unsigned __int16 wObjIndex;
+    unsigned int dwObjSerial;
+    short posAndTarget[5];
+    char byLevel;
+    unsigned __int16 wContEffect;
+    unsigned int dwMasterSerial;
+    float fMoveSpeed;
+  };
+
+  static char s_animusObjectName[256]{};
+}
 
 _animus_fld *GetAnimusFldFromLv(int nAnimusClass, unsigned int dwLv)
 {
@@ -128,4 +159,233 @@ void CAnimus::MasterAttack_MasterInform(CCharacter *pDst)
   {
     m_pTarget = pDst;
   }
+}
+
+__int64 CAnimus::GetAttackDP()
+{
+  return static_cast<unsigned int>(m_pRecord->m_nAttack_DP);
+}
+
+float CAnimus::GetAttackRange()
+{
+  return static_cast<float>(m_pRecord->m_nAttExt);
+}
+
+__int64 CAnimus::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
+{
+  (void)nAttactPart;
+  (void)pAttChar;
+  (void)pnConvertPart;
+
+  int baseDefFc = m_pRecord->m_nStdDefFc;
+  if (m_pMaster != nullptr && m_byRoleCode == 1)
+  {
+    baseDefFc = static_cast<int>(static_cast<float>(baseDefFc) * m_pMaster->m_EP.GetEff_Rate(30));
+  }
+  return static_cast<unsigned int>(baseDefFc);
+}
+
+float CAnimus::GetDefFacing(int nPart)
+{
+  (void)nPart;
+  return m_pRecord->m_fDefFacing;
+}
+
+float CAnimus::GetDefGap(int nPart)
+{
+  (void)nPart;
+  return m_pRecord->m_fDefGap;
+}
+
+__int64 CAnimus::GetDefSkill(bool bBackAttackDamage)
+{
+  (void)bBackAttackDamage;
+  return static_cast<unsigned int>(m_pRecord->m_nDefSklUnit);
+}
+
+__int64 CAnimus::GetFireTol()
+{
+  return static_cast<unsigned int>(m_pRecord->m_nFireTol);
+}
+
+__int64 CAnimus::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
+{
+  (void)nPart;
+
+  const double attackSkill = static_cast<double>(m_pRecord->m_nAttSklUnit);
+  const float targetLevel = static_cast<float>(pDst->GetLevel());
+  const int targetDefSkill = static_cast<int>(m_pTarget->GetDefSkill(bBackAttack));
+  int probability = static_cast<int>(attackSkill - (targetLevel + static_cast<float>(targetDefSkill)) / 4.0f + 95.0f);
+  probability -= static_cast<int>(pDst->GetAvoidRate());
+
+  if (probability < 5)
+  {
+    return 5;
+  }
+  if (probability > 95)
+  {
+    return 95;
+  }
+  return static_cast<unsigned int>(probability);
+}
+
+__int64 CAnimus::GetHP()
+{
+  return static_cast<unsigned int>(m_nHP);
+}
+
+__int64 CAnimus::GetLevel()
+{
+  return static_cast<unsigned int>(m_pRecord->m_nLevel);
+}
+
+__int64 CAnimus::GetMaxHP()
+{
+  if (m_nMaxHP <= 1)
+  {
+    return 1;
+  }
+  return static_cast<unsigned int>(m_nMaxHP);
+}
+
+char *CAnimus::GetObjName()
+{
+  const int raceCode = static_cast<int>(GetObjRace());
+  const int posX = static_cast<int>(m_fCurPos[0]);
+  const int posY = static_cast<int>(m_fCurPos[1]);
+  const int posZ = static_cast<int>(m_fCurPos[2]);
+  sprintf(
+    s_animusObjectName,
+    "[ANIMUS][%d] >> %s (pos: %s {%d, %d, %d}) (master: %s)",
+    raceCode,
+    m_pRecord->m_strCode,
+    m_pCurMap->m_pMapSet->m_strCode,
+    posX,
+    posY,
+    posZ,
+    m_aszMasterName);
+  return s_animusObjectName;
+}
+
+__int64 CAnimus::GetObjRace()
+{
+  if (m_pMaster != nullptr)
+  {
+    return m_pMaster->GetObjRace();
+  }
+  return static_cast<unsigned int>(-1);
+}
+
+__int64 CAnimus::GetSoilTol()
+{
+  return static_cast<unsigned int>(m_pRecord->m_nSoilTol);
+}
+
+__int64 CAnimus::GetWaterTol()
+{
+  return static_cast<unsigned int>(m_pRecord->m_nWaterTol);
+}
+
+float CAnimus::GetWeaponAdjust()
+{
+  return m_pRecord->m_fAttGap;
+}
+
+__int64 CAnimus::GetWeaponClass()
+{
+  return m_byRoleCode != 1;
+}
+
+float CAnimus::GetWidth()
+{
+  return static_cast<float>(m_pRecord->m_nWidth);
+}
+
+__int64 CAnimus::GetWindTol()
+{
+  return static_cast<unsigned int>(m_pRecord->m_nWindTol);
+}
+
+bool CAnimus::IsBeAttackedAble(bool bFirst)
+{
+  (void)bFirst;
+  return true;
+}
+
+void CAnimus::Loop()
+{
+  if (m_dwStunTime != 0)
+  {
+    const unsigned int elapsed = GetLoopTime() - m_dwStunTime;
+    if (elapsed > static_cast<unsigned int>(m_pRecord->m_nCrtMoTime + 1000))
+      m_dwStunTime = 0;
+  }
+}
+
+void CAnimus::OutOfSec()
+{
+  Destroy();
+}
+
+void CAnimus::SendMsg_FixPosition(int n)
+{
+  _animus_fixpos_packet packet{};
+  packet.wRecordIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
+  packet.wObjIndex = m_ObjID.m_wIndex;
+  packet.dwObjSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, packet.pos, 3);
+  packet.byLevel = m_pRecord != nullptr ? static_cast<char>(m_pRecord->m_nLevel) : 1;
+  packet.wContEffect = m_wLastContEffect;
+  packet.dwMasterSerial = m_pMaster->m_dwObjSerial;
+
+  unsigned __int8 packetType[2] = {4, 13};
+  g_Network.m_pProcess[0]->LoadSendMsg(n, packetType, reinterpret_cast<char *>(&packet), sizeof(packet));
+}
+
+void CAnimus::SendMsg_RealMovePoint(int n)
+{
+  _animus_realmove_packet packet{};
+  packet.wRecordIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
+  packet.wObjIndex = m_ObjID.m_wIndex;
+  packet.dwObjSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, packet.posAndTarget, 3);
+  packet.posAndTarget[3] = static_cast<short>(static_cast<int>(m_fTarPos[0]));
+  packet.posAndTarget[4] = static_cast<short>(static_cast<int>(m_fTarPos[2]));
+  packet.byLevel = m_pRecord != nullptr ? static_cast<char>(m_pRecord->m_nLevel) : 1;
+  packet.wContEffect = m_wLastContEffect;
+  packet.dwMasterSerial = m_pMaster->m_dwObjSerial;
+  packet.fMoveSpeed = m_fMoveSpeed;
+
+  unsigned __int8 packetType[2] = {4, 24};
+  g_Network.m_pProcess[0]->LoadSendMsg(n, packetType, reinterpret_cast<char *>(&packet), sizeof(packet));
+}
+
+__int64 CAnimus::SetDamage(int nDam, CCharacter *pDst, int nDstLv, bool bCrt)
+{
+  (void)pDst;
+  (void)nDstLv;
+
+  if (nDam > 1)
+  {
+    m_nHP -= nDam;
+    if (m_nHP <= 0)
+      m_nHP = 0;
+
+    if (bCrt)
+    {
+      m_dwStunTime = GetLoopTime();
+      if (m_bMove)
+      {
+        MoveBreak(m_fMoveSpeed);
+        Stop();
+      }
+    }
+  }
+
+  if (m_nHP == 0)
+  {
+    Destroy();
+  }
+
+  return static_cast<unsigned int>(m_nHP);
 }

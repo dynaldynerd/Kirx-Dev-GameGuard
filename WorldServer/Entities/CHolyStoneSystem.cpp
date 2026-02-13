@@ -21,6 +21,32 @@
 #include "CNetworkEX.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
+#include "trand_tbl.h"
+
+namespace
+{
+const _trand_tbl sTransTBL[6] = {
+  {1, 1, 2},
+  {2, 2, 3},
+  {3, 3, 4},
+  {4, 5, 6},
+  {5, 5, 6},
+  {6, 6, 0},
+};
+
+const _trand_tbl *_GetTransTBL(int nState)
+{
+  for (int index = 0; index < static_cast<int>(std::size(sTransTBL)); ++index)
+  {
+    if (sTransTBL[index].nState == nState)
+    {
+      return &sTransTBL[index];
+    }
+  }
+
+  return nullptr;
+}
+} // namespace
 
 bool CHolyStoneSystem::InitHolySystem()
 {
@@ -98,7 +124,162 @@ bool CHolyStoneSystem::InitHolySystem()
 
 void CHolyStoneSystem::OnLoop()
 {
-  (void)this;
+  if (m_tmrHSKSystem.CountingTimer())
+  {
+    HSKRespawnSystem();
+  }
+
+  const int sceneCode = GetSceneCode();
+  if (sceneCode == 1)
+  {
+    UpdateNotifyHolyStoneHPToRaceBoss();
+  }
+  else if (sceneCode == 2)
+  {
+    CheckDestroyerIsArriveMine();
+  }
+}
+
+void CHolyStoneSystem::HSKRespawnSystem()
+{
+  m_SaveData.m_dwPassTimeInScene += m_tmrHSKSystem.GetTerm();
+
+  const _trand_tbl *transition = _GetTransTBL(m_SaveData.m_nSceneCode);
+  if (transition && GetLoopTime() >= m_dwCheckTime[transition->nCheckTimeIndex])
+  {
+    const unsigned __int8 numOfTime = GetNumOfTime();
+    if (transition->nNextState == 4)
+    {
+      SetScene(numOfTime, transition->nNextState, 0, 4);
+    }
+    else
+    {
+      SetScene(numOfTime, transition->nNextState, 0, 0);
+    }
+  }
+
+  if (m_tmrCumPlayer.CountingTimer())
+  {
+    m_SaveData.m_dwCumPlayerNum += CPlayer::s_nLiveNum;
+    ++m_SaveData.m_dwCumCount;
+  }
+
+  for (int stoneIndex = 0; stoneIndex < MAX_STONE; ++stoneIndex)
+  {
+    if (g_Stone[stoneIndex].m_bOper)
+    {
+      m_SaveData.m_nStoneHP_Buffer[stoneIndex] = static_cast<int>(g_Stone[stoneIndex].GetHP());
+    }
+  }
+
+  COreAmountMgr *oreMgr = COreAmountMgr::Instance();
+  m_SaveData.m_dwOreRemainAmount = oreMgr->GetRemainOre();
+  oreMgr = COreAmountMgr::Instance();
+  m_SaveData.m_dwOreTotalAmount = oreMgr->GetTotalOre();
+  oreMgr = COreAmountMgr::Instance();
+  m_SaveData.m_byOreTransferCount = oreMgr->GetOreTransferCount();
+  oreMgr = COreAmountMgr::Instance();
+  m_SaveData.m_dwOreTransferAmount = oreMgr->GetOreTransferAmount();
+
+  CHolyStoneSystemDataMgr::SaveStateData(&m_SaveData);
+}
+
+void CHolyStoneSystem::UpdateNotifyHolyStoneHPToRaceBoss()
+{
+  for (int stoneIndex = 0; stoneIndex < MAX_STONE; ++stoneIndex)
+  {
+    if (g_Stone[stoneIndex].m_bLive && g_Stone[stoneIndex].IsChangedHP(1u))
+    {
+      SendHolyStoneHPToRaceBoss();
+      return;
+    }
+  }
+}
+
+void CHolyStoneSystem::CheckDestroyerIsArriveMine()
+{
+  if (GetHolyMasterRace() == -1 || GetSceneCode() != 2 || m_SaveData.m_eDestroyerState != 2)
+  {
+    return;
+  }
+
+  const bool hasMatchedDestroyer =
+    m_pkDestroyer && GetDestroyerSerial() == m_pkDestroyer->m_dwObjSerial;
+  if (!hasMatchedDestroyer)
+  {
+    m_pkDestroyer = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, GetDestroyerSerial());
+  }
+
+  if (!m_pkDestroyer || !m_pkDestroyer->m_bLive || !m_pkDestroyer->m_bOper)
+  {
+    return;
+  }
+
+  if (m_pkDestroyer->m_bCorpse)
+  {
+    m_SaveData.m_eDestroyerState = 0;
+    m_SaveData.m_dwDestroyerSerial = static_cast<unsigned int>(-1);
+    ReleaseLastAttBuff();
+    m_SaveData.m_dwDestroyerGuildSerial = static_cast<unsigned int>(-1);
+    CHolyStoneSystemDataMgr::SaveStateData(&m_SaveData);
+    SendIsArriveDestroyer(0);
+    return;
+  }
+
+  CExtDummy *dummy = &m_HolyKeeperData.pCreateMap->m_Dummy;
+  if (!dummy->IsInBBox(m_HolyKeeperData.ActiveDummy.m_wLineIndex, m_pkDestroyer->m_fCurPos))
+  {
+    return;
+  }
+
+  const unsigned __int8 numOfTime = GetNumOfTime();
+  CHolyScheduleData::__HolyScheduleNode *scheduleNode = m_ScheculeData.GetIndex(numOfTime);
+  m_SaveData.m_dwTerm[1] += scheduleNode->m_nSceneTime[6];
+  m_dwCheckTime[5] = m_SaveData.m_dwTerm[1] + m_SaveData.m_dwTerm[0] + m_dwCheckTime[3];
+  m_SaveData.m_eDestroyerState = 1;
+  CHolyStoneSystemDataMgr::SaveStateData(&m_SaveData);
+  SendIsArriveDestroyer(1u);
+  m_logQuestDestroy.Write(">> Arrive!");
+
+  const unsigned int loopTime = GetLoopTime();
+  const int remainControlSec = static_cast<int>(
+    (scheduleNode->m_nSceneTime[2] + m_SaveData.m_dwTerm[1] + m_SaveData.m_dwTerm[0] + m_dwCheckTime[2] - loopTime)
+    / 1000);
+  SendSMS_MineTimeExtend(remainControlSec);
+}
+
+void CHolyStoneSystem::SendSMS_MineTimeExtend(int nControlSec)
+{
+  const int currentHour = GetCurrentHour();
+  int targetHour = (nControlSec / 60 / 60 + currentHour) % 24;
+
+  const int currentMin = GetCurrentMin();
+  const int targetMin = (nControlSec / 60 + currentMin) % 60;
+  if (targetMin < currentMin)
+  {
+    targetHour = (targetHour + 1) % 24;
+  }
+
+#pragma pack(push, 1)
+  struct
+  {
+    unsigned int dwWorldCode;
+    char byHour;
+    char byMin;
+    unsigned __int8 byNumOfTime;
+  } msg{};
+#pragma pack(pop)
+
+  msg.dwWorldCode = g_Main.m_byWorldCode;
+  msg.byHour = static_cast<char>(targetHour);
+  msg.byMin = static_cast<char>(targetMin);
+  msg.byNumOfTime = GetNumOfTime();
+
+  unsigned __int8 type[2]{51, 2};
+  if (g_Main.m_bConnectedWebAgentServer)
+  {
+    g_Network.m_pProcess[2]->LoadSendMsg(g_Main.m_byWebAgentServerNetInx, type, reinterpret_cast<char *>(&msg), 7u);
+  }
 }
 
 bool CHolyStoneSystem::ContinueStartSystem()

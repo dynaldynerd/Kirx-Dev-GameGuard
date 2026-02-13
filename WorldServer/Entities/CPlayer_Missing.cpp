@@ -10,6 +10,7 @@
 #include "pnt_rect.h"
 #include "CMainThread.h"
 #include "CItemStore.h"
+#include "CNetworkEX.h"
 #include "StoreList_fld.h"
 #include "CActionPointSystemMgr.h"
 #include "CItemStoreManager.h"
@@ -108,6 +109,20 @@
 namespace
 {
 unsigned int s_ExpNotifyIndex = 0;
+char s_playerObjectName[256]{};
+
+int ClampToleranceValue(int value)
+{
+  if (value < -100)
+  {
+    return -100;
+  }
+  if (value > 100)
+  {
+    return 100;
+  }
+  return value;
+}
 
 #pragma pack(push, 1)
 struct GuildJoinApplyResultPacket
@@ -4972,6 +4987,222 @@ void CPlayer::SendMsg_ReEnterDarkHoleResult(unsigned __int8 byRetCode)
 
   unsigned __int8 type[2]{35, static_cast<unsigned __int8>(-45)};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), msg.size());
+}
+
+int CPlayer::GetRewardItems_DarkDungeon(
+  _dh_reward_sub_setup *pSetup,
+  _STORAGE_LIST::_db_con *pItems,
+  bool bRealBoss)
+{
+  if (!pSetup || !pItems)
+  {
+    return 0;
+  }
+
+  unsigned int minMatchedPercent = 0x7FFF8000u;
+  int rewardCount = 0;
+
+  const int high = rand() << 16;
+  unsigned int drawValue = static_cast<unsigned int>(rand() + high);
+  if (!bRealBoss)
+  {
+    drawValue *= 10;
+  }
+
+  for (int index = 0; index < pSetup->nItemNum; ++index)
+  {
+    const unsigned int percent = pSetup->m_dwGivePercent[index];
+    if (drawValue <= percent)
+    {
+      if (minMatchedPercent > percent)
+      {
+        minMatchedPercent = percent;
+      }
+    }
+  }
+
+  for (int index = 0; index < pSetup->nItemNum; ++index)
+  {
+    if (pSetup->m_dwGivePercent[index] == minMatchedPercent)
+    {
+      const unsigned __int8 raceSexCode = m_pUserDB->m_AvatorData.dbAvator.m_byRaceSexCode;
+      _STORAGE_LIST::_db_con *candidate = pSetup->Item[index];
+      if (candidate
+          && IsItemEquipCivil(candidate->m_byTableCode, candidate->m_wItemIndex, raceSexCode))
+      {
+        memcpy_0(&pItems[rewardCount], candidate, sizeof(_STORAGE_LIST::_db_con));
+        ++rewardCount;
+      }
+    }
+  }
+
+  return rewardCount;
+}
+
+void CPlayer::Reward_DarkDungeon(
+  _dh_reward_sub_setup *pSetup,
+  char *pszTitle,
+  bool bRealBoss,
+  _STORAGE_LIST::_db_con *pItem,
+  int *bIsRewarded)
+{
+  if (!pSetup || !bIsRewarded)
+  {
+    return;
+  }
+
+  _STORAGE_LIST::_db_con rewardCandidates[128]{};
+  const long double playerPenalty = g_Main.m_pTimeLimitMgr->GetPlayerPenalty(m_id.wIndex);
+  const int rewardCandidateCount = GetRewardItems_DarkDungeon(pSetup, rewardCandidates, bRealBoss);
+
+  if (rewardCandidateCount > 0 && g_Main.m_pTimeLimitMgr->GetPlayerStatus(m_id.wIndex) != 99)
+  {
+    _STORAGE_LIST::_db_con rewardItem{};
+    const int pick = rand() % rewardCandidateCount;
+    memcpy_0(&rewardItem, &rewardCandidates[pick], sizeof(rewardItem));
+
+    if (m_Param.m_dbInven.GetIndexEmptyCon() == 0xFF)
+    {
+      CreateItemBox(
+        &rewardItem,
+        this,
+        static_cast<unsigned int>(-1),
+        false,
+        nullptr,
+        3u,
+        m_pCurMap,
+        m_wMapLayerIndex,
+        m_fCurPos,
+        false);
+
+      char historyClause[132]{};
+      sprintf(historyClause, "Quest G (%s)", pszTitle ? pszTitle : "");
+      CPlayer::s_MgrItemHistory.reward_add_item(
+        m_ObjID.m_wIndex,
+        historyClause,
+        &rewardItem,
+        m_szItemHistoryFileName);
+    }
+    else
+    {
+      rewardItem.m_wSerial = m_Param.GetNewItemSerial();
+
+      const _TimeItem_fld *timeRec = TimeItem::FindTimeRec(rewardItem.m_byTableCode, rewardItem.m_wItemIndex);
+      if (timeRec && timeRec->m_nCheckType)
+      {
+        __time32_t now[11]{};
+        _time32(now);
+        rewardItem.m_byCsMethod = static_cast<unsigned __int8>(timeRec->m_nCheckType);
+        rewardItem.m_dwT = timeRec->m_nUseTime + now[0];
+        rewardItem.m_dwLendRegdTime = now[0];
+      }
+
+      if (!Emb_AddStorage(0, &rewardItem, false, true))
+      {
+        CPlayer::s_MgrItemHistory.add_storage_fail(
+          m_ObjID.m_wIndex,
+          &rewardItem,
+          "CPlayer::Reward_DarkDungeon - Emb_AddStorage() Fail",
+          m_szItemHistoryFileName);
+      }
+      else
+      {
+        SendMsg_RewardAddItem(&rewardItem, 2u);
+
+        char historyClause[160]{};
+        sprintf(historyClause, "Quest (%s)", pszTitle ? pszTitle : "");
+        CPlayer::s_MgrItemHistory.reward_add_item(
+          m_ObjID.m_wIndex,
+          historyClause,
+          &rewardItem,
+          m_szItemHistoryFileName);
+      }
+    }
+
+    SendMsg_FanfareItem(4u, &rewardItem, nullptr);
+
+    if (pItem)
+    {
+      *bIsRewarded = 1;
+      pItem->m_byTableCode = rewardItem.m_byTableCode;
+      pItem->m_wItemIndex = rewardItem.m_wItemIndex;
+    }
+  }
+  else if (rewardCandidateCount <= 0)
+  {
+    *bIsRewarded = 0;
+  }
+
+  if (pSetup->dwDalant)
+  {
+    AddDalant(pSetup->dwDalant, true);
+    SendMsg_ExchangeMoneyResult(0);
+
+    const unsigned int addDalant =
+      static_cast<unsigned int>(static_cast<double>(static_cast<int>(pSetup->dwDalant)) * static_cast<double>(playerPenalty));
+    const unsigned int sumGold = m_Param.GetGold();
+    const unsigned int sumDalant = m_Param.GetDalant();
+
+    char historyClause[132]{};
+    sprintf(historyClause, "Quest (%s)", pszTitle ? pszTitle : "");
+    CPlayer::s_MgrItemHistory.reward_add_money(
+      m_ObjID.m_wIndex,
+      historyClause,
+      addDalant,
+      0,
+      sumDalant,
+      sumGold,
+      m_szItemHistoryFileName);
+
+    const int level = m_Param.GetLevel();
+    if (level == 30 || level == 40 || level == 50 || level == 60)
+    {
+      CMoneySupplyMgr *moneySupplyMgr = CMoneySupplyMgr::Instance();
+      moneySupplyMgr->UpdateQuestRewardMoneyData(
+        static_cast<unsigned __int8>(m_Param.GetRaceCode()),
+        level,
+        const_cast<char *>(m_Param.GetPtrCurClass()->m_strCode),
+        pSetup->dwDalant);
+    }
+  }
+
+  if (pSetup->dExp > 0.0)
+  {
+    AlterExp(static_cast<double>(pSetup->dExp), true, false, true);
+  }
+
+  if (pSetup->dwPvp)
+  {
+    AlterPvPPoint(static_cast<double>(static_cast<int>(pSetup->dwPvp)), quest_inc, static_cast<unsigned int>(-1));
+  }
+}
+
+void CPlayer::SendMsg_DarkHoleRewardMessage(
+  _STORAGE_LIST::_db_con *pItem,
+  unsigned int dwMemberIndex,
+  int isRewarded)
+{
+#pragma pack(push, 1)
+  struct DarkHoleRewardMessage
+  {
+    int isRewarded;
+    unsigned int memberSerial;
+    unsigned __int8 itemTableCode;
+    unsigned __int16 itemIndex;
+  };
+#pragma pack(pop)
+
+  DarkHoleRewardMessage msg{};
+  msg.isRewarded = isRewarded;
+  msg.memberSerial = dwMemberIndex;
+  if (pItem)
+  {
+    msg.itemTableCode = pItem->m_byTableCode;
+    msg.itemIndex = pItem->m_wItemIndex;
+  }
+
+  unsigned __int8 type[2]{35, static_cast<unsigned __int8>(-44)};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
 void CPlayer::pc_DarkHoleOpenRequest(unsigned __int16 dwItemSerial)
@@ -15109,4 +15340,1128 @@ void CPlayer::UpdatePvpOrderView(__int64 tCurTime)
   m_kPvpOrderView.Notify_PvpTempCash(m_ObjID.m_wIndex);
   m_kPvpOrderView.Notify_OrderView(m_ObjID.m_wIndex);
   SendMsg_AlterPvPCash(0);
+}
+
+void CPlayer::AutoRecover()
+{
+  float moveDelta = 1.0f;
+  if (!m_byUserDgr)
+  {
+    if (m_byLastRecvMapIndex == m_pCurMap->m_pMapSet->m_dwIndex)
+    {
+      const float deltaX = std::fabs(m_fCurPos[0] - m_fLastRecvPos[0]);
+      const float deltaZ = std::fabs(m_fCurPos[2] - m_fLastRecvPos[2]);
+      moveDelta = (deltaX > deltaZ) ? deltaX : deltaZ;
+    }
+
+    if (moveDelta > 400.0f)
+    {
+      OutOfMap(m_pCurMap, m_wMapLayerIndex, 4u, m_fLastRecvPos);
+      SendMsg_GotoRecallResult(0, static_cast<unsigned __int8>(m_pCurMap->m_pMapSet->m_dwIndex), m_fLastRecvPos, 4u);
+      g_Main.m_logMove.Write(
+        "move dist check >> char: %s (%d) id: %s (%d) dist: %d, map: %d",
+        m_Param.GetCharNameA(),
+        m_dwObjSerial,
+        m_pUserDB->m_szAccountID,
+        m_pUserDB->m_dwAccountSerial,
+        static_cast<int>(moveDelta),
+        m_pCurMap->m_pMapSet->m_dwIndex);
+      return;
+    }
+
+    memcpy_0(m_fLastRecvPos, m_fCurPos, sizeof(m_fLastRecvPos));
+    m_byLastRecvMapIndex = static_cast<unsigned __int8>(m_pCurMap->m_pMapSet->m_dwIndex);
+  }
+
+  if (IsRidingUnit())
+  {
+    return;
+  }
+
+  const int oldHp = GetHP();
+  const int oldFp = GetFP();
+  const int oldSp = GetSP();
+  const int oldDp = GetDP();
+
+  int hpDelta = 0;
+  int fpDelta = 0;
+  int spDelta = 0;
+  int dpDelta = 0;
+
+  if (!m_EP.GetEff_State(10))
+  {
+    if (!m_EP.GetEff_State(15))
+    {
+      if (oldHp < GetMaxHP())
+      {
+        int baseRecover = 0;
+        if (m_bMove)
+        {
+          baseRecover = m_byMoveType ? 0 : 2;
+        }
+        else
+        {
+          baseRecover = (m_byStandType == 1) ? 6 : 4;
+        }
+
+        if (baseRecover > 0)
+        {
+          hpDelta = static_cast<int>(static_cast<float>(baseRecover) * m_EP.GetEff_Rate(14));
+        }
+      }
+    }
+
+    if (!m_EP.GetEff_State(16))
+    {
+      if (oldFp < GetMaxFP())
+      {
+        const int fpPlus = static_cast<int>(m_EP.GetEff_Plus(25));
+        const float fpRate = m_EP.GetEff_Rate(15);
+        if (m_bMove)
+        {
+          if (!m_byMoveType)
+          {
+            fpDelta = static_cast<int>((1.0f * fpRate) + static_cast<float>(fpPlus / 100));
+          }
+        }
+        else
+        {
+          const float standMul = (m_byStandType == 1) ? 3.0f : 2.0f;
+          fpDelta = static_cast<int>((standMul * fpRate) + static_cast<float>(fpPlus / 100));
+        }
+      }
+    }
+
+    if (!m_EP.GetEff_State(17))
+    {
+      const float spRate = m_EP.GetEff_Rate(16);
+      if (m_bMove)
+      {
+        if (!m_byMoveType)
+        {
+          spDelta = static_cast<int>(1.0f * spRate);
+        }
+      }
+      else
+      {
+        const float standMul = (m_byStandType == 1) ? 3.0f : 2.0f;
+        spDelta = static_cast<int>(standMul * spRate);
+      }
+    }
+  }
+
+  if (!spDelta && moveDelta > 0.0f)
+  {
+    if (m_bMove && m_byMoveType == 1 && m_byPosRaceTown != m_Param.GetRaceCode())
+    {
+      spDelta = -2;
+    }
+    else if (m_bMove && m_byMoveType == 2 && m_byPosRaceTown != m_Param.GetRaceCode())
+    {
+      spDelta = -60;
+    }
+  }
+
+  if (oldDp < GetMaxDP())
+  {
+    dpDelta = s_nRevDefPoint;
+  }
+
+  if (m_EP.GetEff_Plus(32) != 0.0f)
+  {
+    hpDelta += static_cast<int>(m_EP.GetEff_Plus(32));
+  }
+  if (m_EP.GetEff_Plus(33) != 0.0f)
+  {
+    fpDelta += static_cast<int>(m_EP.GetEff_Plus(33));
+  }
+  if (m_EP.GetEff_Plus(34) != 0.0f)
+  {
+    spDelta += static_cast<int>(m_EP.GetEff_Plus(34));
+  }
+
+  if (m_EP.GetEff_Have(12) > 0.0f)
+  {
+    hpDelta += static_cast<int>(m_EP.GetEff_Have(12) * static_cast<float>(GetMaxHP()));
+  }
+  if (m_EP.GetEff_Have(13) > 0.0f)
+  {
+    fpDelta += static_cast<int>(m_EP.GetEff_Have(13) * static_cast<float>(GetMaxFP()));
+  }
+  if (m_EP.GetEff_Have(14) > 0.0f)
+  {
+    spDelta += static_cast<int>(m_EP.GetEff_Have(14) * static_cast<float>(GetMaxSP()));
+  }
+
+  if (hpDelta)
+  {
+    if (hpDelta < 0)
+    {
+      const int minHp = GetMaxHP() / 10;
+      if (hpDelta + oldHp <= minHp)
+      {
+        hpDelta = 0;
+      }
+    }
+
+    if (hpDelta)
+    {
+      SetHP(oldHp + hpDelta, false);
+    }
+  }
+
+  if (fpDelta)
+  {
+    SetFP(oldFp + fpDelta, false);
+  }
+  if (spDelta)
+  {
+    SetSP(oldSp + spDelta, false);
+  }
+  if (dpDelta)
+  {
+    SetDP(oldDp + dpDelta, false);
+  }
+
+  if (oldHp > GetMaxHP())
+  {
+    SetHP(GetMaxHP(), false);
+  }
+  if (oldDp > GetMaxDP())
+  {
+    SetDP(GetMaxDP(), false);
+  }
+  if (oldFp > GetMaxFP())
+  {
+    SetFP(GetMaxFP(), false);
+  }
+  if (oldSp > GetMaxSP())
+  {
+    SetSP(GetMaxSP(), false);
+  }
+
+  if (oldHp != GetHP() || oldFp != GetFP() || oldSp != GetSP() || oldDp != GetDP())
+  {
+    SendMsg_Recover();
+  }
+}
+
+void CPlayer::AutoRecover_Animus()
+{
+  for (int animusIndex = 0; animusIndex < 4; ++animusIndex)
+  {
+    _STORAGE_LIST::_db_con *animus = &m_Param.m_dbAnimus.m_pStorageList[animusIndex];
+    if (!animus->m_bLoad || animus == m_pRecalledAnimusItem)
+    {
+      continue;
+    }
+
+    _animus_fld *animusFld = GetAnimusFldFromExp(animus->m_wItemIndex, animus->m_dwDur);
+    if (!animusFld)
+    {
+      continue;
+    }
+
+    const unsigned int previousLv = animus->m_dwLv;
+    unsigned int *packedStatus = &animus->m_dwLv;
+    if (LOWORD(animus->m_dwLv) < animusFld->m_nMaxHP)
+    {
+      *reinterpret_cast<unsigned __int16 *>(packedStatus) += LOWORD(animusFld->m_nHPRecUnit);
+      if (*reinterpret_cast<unsigned __int16 *>(packedStatus) > animusFld->m_nMaxHP)
+      {
+        *reinterpret_cast<unsigned __int16 *>(packedStatus) = static_cast<unsigned __int16>(animusFld->m_nMaxHP);
+      }
+    }
+
+    if (HIWORD(animus->m_dwLv) < animusFld->m_nMaxFP)
+    {
+      reinterpret_cast<unsigned __int16 *>(packedStatus)[1] += LOWORD(animusFld->m_nFPRecUnit);
+      if (reinterpret_cast<unsigned __int16 *>(packedStatus)[1] > animusFld->m_nMaxFP)
+      {
+        reinterpret_cast<unsigned __int16 *>(packedStatus)[1] = static_cast<unsigned __int16>(animusFld->m_nMaxFP);
+      }
+    }
+
+    if (previousLv != animus->m_dwLv && m_pUserDB)
+    {
+      m_pUserDB->Update_ItemUpgrade(4u, static_cast<unsigned __int8>(animusIndex), animus->m_dwLv, false);
+    }
+  }
+}
+
+void CPlayer::SendMsg_AlterBooster()
+{
+  char payload[3]{};
+  payload[0] = static_cast<char>(m_pUsingUnit->bySlotIndex);
+  *reinterpret_cast<unsigned __int16 *>(&payload[1]) = m_pUsingUnit->wBooster;
+
+  unsigned __int8 type[2]{23, 25};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, payload, sizeof(payload));
+}
+
+void CPlayer::AutoCharge_Booster()
+{
+  if (!m_pUsingUnit)
+  {
+    return;
+  }
+
+  _base_fld *unitPartRecord = g_Main.m_tblUnitPart[5].GetRecord(m_pUsingUnit->byPart[5]);
+  if (!unitPartRecord)
+  {
+    return;
+  }
+
+  const int maxBooster = *reinterpret_cast<int *>(&unitPartRecord[5].m_strCode[56]);
+  if (!maxBooster)
+  {
+    return;
+  }
+
+  const int currentBooster = m_pUsingUnit->wBooster;
+  int delta = 0;
+  if (m_bMove && !m_pParkingUnit)
+  {
+    if (m_byMoveType == 1)
+    {
+      delta = -2;
+    }
+  }
+  else
+  {
+    delta = 2;
+  }
+
+  if (!delta)
+  {
+    return;
+  }
+
+  int nextBooster = currentBooster + delta;
+  if (nextBooster < 0)
+  {
+    nextBooster = 0;
+  }
+  else if (nextBooster > maxBooster)
+  {
+    nextBooster = maxBooster;
+  }
+
+  m_pUsingUnit->wBooster = static_cast<unsigned __int16>(nextBooster);
+  if (currentBooster != nextBooster)
+  {
+    SendMsg_AlterBooster();
+  }
+}
+
+void CPlayer::AlterSec()
+{
+  if (m_pPartyMgr && m_pPartyMgr->IsPartyMode())
+  {
+    SendData_PartyMemberPos();
+  }
+}
+
+__int64 CPlayer::GetAvoidRate()
+{
+  if (m_fTalik_AvoidPoint <= 0.0f)
+  {
+    return static_cast<unsigned int>(static_cast<int>(m_EP.GetEff_Plus(3)));
+  }
+
+  const int maxDp = GetMaxDP();
+  float dpRate = 0.0f;
+  if (maxDp > 0)
+  {
+    dpRate = (2.0f * static_cast<float>(GetDP()) / static_cast<float>(maxDp)) - 0.4f;
+    if (dpRate < 0.0f)
+    {
+      dpRate = 0.0f;
+    }
+    else if (dpRate > 1.0f)
+    {
+      dpRate = 1.0f;
+    }
+  }
+
+  const int talikPenalty = static_cast<int>(m_fTalik_AvoidPoint * (1.0f - dpRate));
+  const float avoidValue = m_EP.GetEff_Plus(3) - static_cast<float>(talikPenalty);
+  return static_cast<unsigned int>(static_cast<int>(avoidValue));
+}
+
+__int64 CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
+{
+  m_nLastBeatenPart = nAttactPart;
+
+  float defenseValue = 0.0f;
+  if (IsRidingUnit())
+  {
+    defenseValue = static_cast<float>(m_nUnitDefFc) * m_fUnitPv_DefFc;
+  }
+  else
+  {
+    bool ignoreShieldByEffect = false;
+    if (pAttChar && pAttChar->m_ObjID.m_byID == 0)
+    {
+      ignoreShieldByEffect = pAttChar->m_EP.GetEff_State(11);
+      if (!ignoreShieldByEffect)
+      {
+        float ignoreProb = pAttChar->m_EP.GetEff_Plus(28);
+        if (ignoreProb > 0.0f)
+        {
+          ignoreProb += pAttChar->m_EP.GetEff_Plus(41);
+          if ((rand() % 100) <= static_cast<int>(ignoreProb))
+          {
+            ignoreShieldByEffect = true;
+          }
+        }
+      }
+      if (ignoreShieldByEffect)
+      {
+        pAttChar->SendMsg_AttackActEffect(1u, this);
+      }
+    }
+
+    _STORAGE_LIST::_db_con *shieldItem = &m_Param.m_dbEquip.m_pStorageList[5];
+    bool shieldEnabled = false;
+    if (shieldItem->m_bLoad)
+    {
+      shieldEnabled = GetEffectEquipCode(1u, 5u) == 1;
+      if (shieldEnabled)
+      {
+        _STORAGE_LIST::_db_con *weaponItem = &m_Param.m_dbEquip.m_pStorageList[6];
+        if (weaponItem->m_bLoad)
+        {
+          _base_fld *weaponRecord = g_Main.m_tblItemData[6].GetRecord(weaponItem->m_wItemIndex);
+          if (weaponRecord && *reinterpret_cast<int *>(&weaponRecord[4].m_strCode[12]) == 100)
+          {
+            shieldEnabled = false;
+          }
+        }
+      }
+    }
+
+    if (pAttChar && shieldEnabled && !ignoreShieldByEffect)
+    {
+      const int masteryValue = m_pmMst.GetMasteryPerMast(2u, 0u);
+      int blockChance = static_cast<int>((static_cast<float>(masteryValue) / 99.0f) * 20.0f + 5.0f);
+      blockChance += static_cast<int>(m_EP.GetEff_Plus(29));
+      if (blockChance > 100)
+      {
+        blockChance = 100;
+      }
+      if ((rand() % 100) < blockChance)
+      {
+        m_nLastBeatenPart = 5;
+        if (pnConvertPart)
+        {
+          *pnConvertPart = m_nLastBeatenPart;
+        }
+        return 0xFFFFFFFEu;
+      }
+    }
+
+    if (m_nLastBeatenPart < 0 || m_nLastBeatenPart >= 5)
+    {
+      m_nLastBeatenPart = rand() % 5;
+    }
+
+    const int partIndex = m_nLastBeatenPart;
+    int partCode = m_Param.m_dbChar.m_byDftPart[partIndex];
+    _STORAGE_LIST::_db_con *partItem = &m_Param.m_dbEquip.m_pStorageList[partIndex];
+    if (partItem->m_bLoad && GetEffectEquipCode(1u, static_cast<unsigned __int8>(partIndex)) == 1)
+    {
+      partCode = partItem->m_wItemIndex;
+    }
+
+    _base_fld *partRecord = g_Main.m_tblItemData[partIndex].GetRecord(partCode);
+    if (partRecord)
+    {
+      defenseValue = *reinterpret_cast<float *>(&partRecord[5].m_strCode[44]);
+    }
+
+    if (shieldEnabled && m_nLastBeatenPart == 5)
+    {
+      _base_fld *shieldRecord = g_Main.m_tblItemData[5].GetRecord(shieldItem->m_wItemIndex);
+      if (shieldRecord)
+      {
+        defenseValue = *reinterpret_cast<float *>(&shieldRecord[5].m_strCode[44]);
+      }
+    }
+
+    if (pnConvertPart)
+    {
+      *pnConvertPart = m_nLastBeatenPart;
+    }
+
+    defenseValue *= m_EP.GetEff_Rate(33);
+    if (IsSiegeMode())
+    {
+      defenseValue *= m_EP.GetEff_Rate(24);
+    }
+  }
+
+  if (!m_bInGuildBattle)
+  {
+    const unsigned int charSerial = m_Param.GetCharSerial();
+    const int raceCode = m_Param.GetRaceCode();
+    const unsigned __int8 bossType =
+      CPvpUserAndGuildRankingSystem::Instance()->GetBossType(raceCode, charSerial);
+    switch (bossType)
+    {
+    case 0:
+      defenseValue *= 1.3f;
+      break;
+    case 1:
+    case 5:
+      defenseValue *= 1.5f;
+      break;
+    case 3:
+    case 7:
+      defenseValue *= 1.2f;
+      break;
+    default:
+      break;
+    }
+  }
+
+  if (g_HolySys.GetDestroyerSerial() == m_dwObjSerial || IsLastAttBuff())
+  {
+    defenseValue *= 1.3f;
+  }
+
+  if (!IsRidingUnit())
+  {
+    const int maxDp = GetMaxDP();
+    float dpRate = 0.0f;
+    if (maxDp > 0)
+    {
+      dpRate = (2.0f * static_cast<float>(GetDP()) / static_cast<float>(maxDp)) - 0.4f;
+      if (dpRate < 0.0f)
+      {
+        dpRate = 0.0f;
+      }
+      else if (dpRate > 1.0f)
+      {
+        dpRate = 1.0f;
+      }
+    }
+
+    if (m_fTalik_DefencePoint > 0.0f)
+    {
+      const float talikPenalty = m_fTalik_DefencePoint * (1.0f - dpRate);
+      defenseValue *= (m_EP.GetEff_Rate(6) - talikPenalty);
+    }
+    else
+    {
+      defenseValue *= m_EP.GetEff_Rate(6);
+    }
+  }
+
+  return static_cast<unsigned int>(static_cast<int>(defenseValue));
+}
+
+float CPlayer::GetDefFacing(int nPart)
+{
+  if (IsRidingUnit())
+  {
+    if (m_pUsingUnit)
+    {
+      _base_fld *record = g_Main.m_tblUnitFrame.GetRecord(m_pUsingUnit->byFrame);
+      if (record)
+      {
+        return *reinterpret_cast<float *>(&record[1].m_strCode[8]);
+      }
+    }
+    return FLOAT_0_5;
+  }
+
+  if (nPart >= 8)
+  {
+    return FLOAT_0_5;
+  }
+
+  int partCode = m_Param.m_dbChar.m_byDftPart[nPart];
+  _STORAGE_LIST::_db_con *equipPart = &m_Param.m_dbEquip.m_pStorageList[nPart];
+  if (equipPart->m_bLoad && GetEffectEquipCode(1u, static_cast<unsigned __int8>(nPart)) == 1)
+  {
+    partCode = equipPart->m_wItemIndex;
+  }
+
+  _base_fld *record = g_Main.m_tblItemData[nPart].GetRecord(partCode);
+  if (!record)
+  {
+    return FLOAT_0_5;
+  }
+  return *reinterpret_cast<float *>(&record[5].m_strCode[60]);
+}
+
+float CPlayer::GetDefGap(int nPart)
+{
+  if (IsRidingUnit())
+  {
+    if (m_pUsingUnit)
+    {
+      _base_fld *record = g_Main.m_tblUnitFrame.GetRecord(m_pUsingUnit->byFrame);
+      if (record)
+      {
+        return *reinterpret_cast<float *>(&record[1].m_strCode[4]);
+      }
+    }
+    return FLOAT_0_5;
+  }
+
+  if (nPart >= 8)
+  {
+    return FLOAT_0_5;
+  }
+
+  int partCode = m_Param.m_dbChar.m_byDftPart[nPart];
+  _STORAGE_LIST::_db_con *equipPart = &m_Param.m_dbEquip.m_pStorageList[nPart];
+  if (equipPart->m_bLoad && GetEffectEquipCode(1u, static_cast<unsigned __int8>(nPart)) == 1)
+  {
+    partCode = equipPart->m_wItemIndex;
+  }
+
+  _base_fld *record = g_Main.m_tblItemData[nPart].GetRecord(partCode);
+  if (!record)
+  {
+    return FLOAT_0_5;
+  }
+  return *reinterpret_cast<float *>(&record[5].m_strCode[56]);
+}
+
+__int64 CPlayer::GetDefSkill(bool bBackAttackDamage)
+{
+  (void)bBackAttackDamage;
+
+  if (!IsRidingUnit())
+  {
+    return m_pmMst.GetMasteryPerMast(1u, 0u);
+  }
+
+  int totalDefSkill = 0;
+  _base_fld *leftPart = g_Main.m_tblUnitPart[0].GetRecord(m_pUsingUnit->byPart[0]);
+  if (leftPart)
+  {
+    totalDefSkill += *reinterpret_cast<int *>(&leftPart[5].m_strCode[12]);
+  }
+
+  _base_fld *rightPart = g_Main.m_tblUnitPart[1].GetRecord(m_pUsingUnit->byPart[1]);
+  if (rightPart)
+  {
+    totalDefSkill += *reinterpret_cast<int *>(&rightPart[5].m_strCode[12]);
+  }
+
+  return static_cast<unsigned int>(totalDefSkill);
+}
+
+__int64 CPlayer::GetFireTol()
+{
+  const float total = static_cast<float>(m_nTolValue[0]) + m_EP.GetEff_Plus(15);
+  int value = static_cast<int>(total * m_EP.GetEff_Rate(25));
+  value = ClampToleranceValue(value);
+  if (m_EP.GetEff_State(19) && value > 0)
+  {
+    value = -value;
+  }
+  return static_cast<unsigned int>(value);
+}
+
+char *CPlayer::GetObjName()
+{
+  std::snprintf(
+    s_playerObjectName,
+    sizeof(s_playerObjectName),
+    "[PLAYER][%d] >> %s (pos: %s {%d, %d, %d})",
+    static_cast<int>(GetObjRace()),
+    m_Param.GetCharNameA(),
+    m_pCurMap ? m_pCurMap->m_pMapSet->m_strCode : "<null-map>",
+    static_cast<int>(m_fCurPos[0]),
+    static_cast<int>(m_fCurPos[1]),
+    static_cast<int>(m_fCurPos[2]));
+  return s_playerObjectName;
+}
+
+__int64 CPlayer::GetObjRace()
+{
+  return static_cast<unsigned int>(m_Param.GetRaceCode());
+}
+
+__int64 CPlayer::GetSoilTol()
+{
+  const float total = static_cast<float>(m_nTolValue[2]) + m_EP.GetEff_Plus(17);
+  int value = static_cast<int>(total * m_EP.GetEff_Rate(27));
+  value = ClampToleranceValue(value);
+  if (m_EP.GetEff_State(19) && value > 0)
+  {
+    value = -value;
+  }
+  return static_cast<unsigned int>(value);
+}
+
+__int64 CPlayer::GetWaterTol()
+{
+  const float total = static_cast<float>(m_nTolValue[1]) + m_EP.GetEff_Plus(16);
+  int value = static_cast<int>(total * m_EP.GetEff_Rate(26));
+  value = ClampToleranceValue(value);
+  if (m_EP.GetEff_State(19) && value > 0)
+  {
+    value = -value;
+  }
+  return static_cast<unsigned int>(value);
+}
+
+float CPlayer::GetWeaponAdjust()
+{
+  if (IsRidingUnit())
+  {
+    return FLOAT_1_0;
+  }
+
+  _STORAGE_LIST::_db_con *weaponItem = &m_Param.m_dbEquip.m_pStorageList[6];
+  if (!weaponItem->m_bLoad || GetEffectEquipCode(1u, 6u) != 1)
+  {
+    return 0.0f;
+  }
+
+  _base_fld *weaponRecord = g_Main.m_tblItemData[6].GetRecord(weaponItem->m_wItemIndex);
+  if (!weaponRecord)
+  {
+    return 0.0f;
+  }
+  if (*reinterpret_cast<int *>(&weaponRecord[6].m_strCode[8]) == 10)
+  {
+    return 0.0f;
+  }
+
+  return *reinterpret_cast<float *>(&weaponRecord[9].m_strCode[40]);
+}
+
+__int64 CPlayer::GetWeaponClass()
+{
+  return m_pmWpn.byWpClass;
+}
+
+float CPlayer::GetWidth()
+{
+  return *reinterpret_cast<float *>(&m_pRecordSet[2].m_strCode[12]);
+}
+
+__int64 CPlayer::GetWindTol()
+{
+  const float total = static_cast<float>(m_nTolValue[3]) + m_EP.GetEff_Plus(18);
+  int value = static_cast<int>(total * m_EP.GetEff_Rate(28));
+  value = ClampToleranceValue(value);
+  if (m_EP.GetEff_State(19) && value > 0)
+  {
+    value = -value;
+  }
+  return static_cast<unsigned int>(value);
+}
+
+char CPlayer::IsBeDamagedAble(CCharacter *pAtter)
+{
+  if (!pAtter)
+  {
+    return 0;
+  }
+
+  if (pAtter->m_ObjID.m_byID != 0)
+  {
+    return 1;
+  }
+
+  CPlayer *attacker = static_cast<CPlayer *>(pAtter);
+  if (!attacker->m_bInGuildBattle && m_bInGuildBattle)
+  {
+    return 0;
+  }
+  if (attacker->m_bInGuildBattle && !m_bInGuildBattle)
+  {
+    return 0;
+  }
+  if (!attacker->m_bInGuildBattle && !m_bInGuildBattle)
+  {
+    return 1;
+  }
+
+  return attacker->m_byGuildBattleColorInx != m_byGuildBattleColorInx;
+}
+
+char CPlayer::IsRecvableContEffect()
+{
+  if (IsRidingUnit())
+  {
+    return 0;
+  }
+  if (m_EP.GetEff_State(20))
+  {
+    return 0;
+  }
+  return m_EP.GetEff_State(28) ? 0 : 1;
+}
+
+bool CPlayer::Is_Battle_Mode()
+{
+  return m_byBattleMode != 0;
+}
+
+void CPlayer::Loop()
+{
+  if (!m_bOper)
+  {
+    return;
+  }
+
+  const unsigned int currentTime = timeGetTime();
+
+  if (CCharacter::GetStealth(true) && m_pRecalledAnimusChar != nullptr)
+  {
+    if (!g_Main.IsReleaseServiceMode() || m_byUserDgr)
+    {
+      _AnimusReturn(2u);
+    }
+  }
+
+  if (m_byNextRecallReturn != 0xFF)
+  {
+    _AnimusReturn(m_byNextRecallReturn);
+    m_byNextRecallReturn = 0xFF;
+  }
+
+  if (m_dwSelfDestructionTime && m_dwSelfDestructionTime < currentTime)
+  {
+    pc_PlayAttack_SelfDestruction();
+    m_dwSelfDestructionTime = 0;
+    m_fSelfDestructionDamage = 0.0f;
+  }
+
+  if (m_tmrIntervalSec.CountingTimer())
+  {
+    if (m_pCurMap && m_pUserDB && m_pCurMap->m_pMapSet && !m_pCurMap->m_pMapSet->m_nMapType)
+    {
+      m_pUserDB->Update_Map(static_cast<unsigned __int8>(m_pCurMap->m_pMapSet->m_dwIndex), m_fCurPos);
+    }
+
+    CheckPosInTown();
+    AutoRecover();
+    AutoRecover_Animus();
+    AutoCharge_Booster();
+
+    unsigned __int16 currentTol[4]{};
+    currentTol[0] = static_cast<unsigned __int16>(GetFireTol());
+    currentTol[1] = static_cast<unsigned __int16>(GetWaterTol());
+    currentTol[2] = static_cast<unsigned __int16>(GetSoilTol());
+    currentTol[3] = static_cast<unsigned __int16>(GetWindTol());
+    if (memcmp_0(m_zLastTol, currentTol, sizeof(currentTol)) != 0)
+    {
+      memcpy_0(m_zLastTol, currentTol, sizeof(currentTol));
+      SendMsg_AlterTol();
+    }
+
+    m_byDefMatCount = 0;
+  }
+
+  SenseState();
+
+  if (m_dwNextTimeDungeonDie && m_dwNextTimeDungeonDie < currentTime)
+  {
+    if (m_bCorpse && m_pCurMap && m_pCurMap->m_pMapSet->m_nMapType == 1)
+    {
+      pc_Revival(true);
+    }
+    m_dwNextTimeDungeonDie = 0;
+  }
+
+  if (m_bMineMode && GetLoopTime() > m_dwMineNextTime)
+  {
+    pc_MineCancle();
+  }
+
+  if (m_bMove && GetLoopTime() > m_dwLastSetPointTime && (GetLoopTime() - m_dwLastSetPointTime) > 3000)
+  {
+    const bool outOfStopRange = IsOutExtraStopPos(m_fCurPos);
+    SendMsg_Stop(outOfStopRange);
+    CCharacter::Stop();
+  }
+
+  if ((currentTime - m_dwLastCheckRegionTime) > 0x1388)
+  {
+    if (CGameObject::GetCurSecNum() != static_cast<unsigned int>(-1))
+    {
+      CheckPos_Region();
+    }
+
+    if (m_nCheckMovePacket > 17)
+    {
+      m_bCheckMovePacket = true;
+      g_Main.m_logMove.Write(
+        "id: %s >> %s ( %d ), Move Count : %d, map(%s)",
+        m_pUserDB ? m_pUserDB->m_szAccountID : "<null-id>",
+        m_Param.GetCharNameA(),
+        m_dwObjSerial,
+        m_nCheckMovePacket,
+        (m_pCurMap && m_pCurMap->m_pMapSet) ? m_pCurMap->m_pMapSet->m_strCode : "<null-map>");
+    }
+
+    m_nCheckMovePacket = 0;
+    m_dwLastCheckRegionTime = currentTime;
+  }
+
+  if (m_tmrSiegeTime.CountingTimer())
+  {
+    m_bIsSiegeActing = false;
+    m_tmrSiegeTime.StopTimer();
+  }
+
+  if (m_PotionBufUse.IsExtPotionUse())
+  {
+    m_PotionBufUse.CheckPotionTime(this);
+  }
+
+  if (m_Param.m_bTrunkOpen && !IsBeNearStore(this, 10))
+  {
+    m_Param.m_bTrunkOpen = false;
+  }
+
+  (void)m_tmrPremiumPVPInform;
+}
+
+void CPlayer::OutOfSec()
+{
+  if (m_pUserDB)
+  {
+    char buffer[144]{};
+    std::snprintf(
+      buffer,
+      sizeof(buffer),
+      "CLOSE>> OutOfSec() ID: %s, NM: %s",
+      m_pUserDB->m_szAccountID,
+      m_Param.GetCharNameA());
+    g_Network.Close(0, m_ObjID.m_wIndex, false, buffer);
+  }
+  else
+  {
+    g_Network.Close(0, m_ObjID.m_wIndex, false, nullptr);
+  }
+
+  m_bOutOfMap = true;
+}
+
+void CPlayer::SendMsg_FixPosition(int n)
+{
+#pragma pack(push, 1)
+  struct PlayerFixPosMsg
+  {
+    unsigned __int16 wIndex;
+    unsigned int dwObjSerial;
+    unsigned __int16 wVisualVer;
+    unsigned __int8 byRaceSexCode;
+    __int16 posAndCont[4];
+    unsigned __int64 qwStateFlag;
+    unsigned __int8 byGuildBattleColorInx;
+  };
+#pragma pack(pop)
+
+  if (m_bObserver && !g_Player[n].m_byUserDgr)
+  {
+    return;
+  }
+
+  PlayerFixPosMsg msg{};
+  msg.wIndex = m_ObjID.m_wIndex;
+  msg.dwObjSerial = m_dwObjSerial;
+  msg.wVisualVer = static_cast<unsigned __int16>(GetVisualVer());
+  msg.byRaceSexCode = m_Param.GetRaceSexCode();
+  FloatToShort(m_fCurPos, msg.posAndCont, 3);
+  msg.posAndCont[3] = static_cast<__int16>(m_wLastContEffect);
+  msg.qwStateFlag = GetStateFlag();
+  msg.byGuildBattleColorInx = m_byGuildBattleColorInx;
+
+  unsigned __int8 type[2] = {4, 9};
+  g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+}
+
+void CPlayer::SendMsg_RealMovePoint(int n)
+{
+#pragma pack(push, 1)
+  struct PlayerRealMoveMsg
+  {
+    unsigned __int16 wIndex;
+    unsigned int dwObjSerial;
+    unsigned __int16 wVisualVer;
+    unsigned __int8 byRaceSexCode;
+    __int16 posTarAndCont[6];
+    unsigned __int64 qwStateFlag;
+    __int16 sAddSpeed;
+    unsigned __int8 byMoveDirect;
+    unsigned __int8 byGuildBattleColorInx;
+  };
+#pragma pack(pop)
+
+  if (m_bObserver && !g_Player[n].m_byUserDgr)
+  {
+    return;
+  }
+
+  PlayerRealMoveMsg msg{};
+  msg.wIndex = m_ObjID.m_wIndex;
+  msg.dwObjSerial = m_dwObjSerial;
+  msg.wVisualVer = static_cast<unsigned __int16>(GetVisualVer());
+  msg.byRaceSexCode = m_Param.GetRaceSexCode();
+  FloatToShort(m_fCurPos, msg.posTarAndCont, 3);
+  msg.posTarAndCont[3] = static_cast<__int16>(static_cast<int>(m_fTarPos[0]));
+  msg.posTarAndCont[4] = static_cast<__int16>(static_cast<int>(m_fTarPos[2]));
+  msg.posTarAndCont[5] = static_cast<__int16>(m_wLastContEffect);
+  msg.qwStateFlag = GetStateFlag();
+  msg.sAddSpeed = static_cast<__int16>(static_cast<int>(GetAddSpeed()));
+  msg.byMoveDirect = m_byMoveDirect;
+  msg.byGuildBattleColorInx = m_byGuildBattleColorInx;
+
+  unsigned __int8 type[2] = {4, 21};
+  g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+}
+
+void CPlayer::SendMsg_SetHPInform()
+{
+  unsigned __int16 hp = static_cast<unsigned __int16>(m_Param.GetHP());
+  unsigned __int8 type[2] = {17, 13};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&hp), sizeof(hp));
+}
+
+__int64 CPlayer::SetDamage(
+  int nDam,
+  CCharacter *pDst,
+  int nDstLv,
+  bool bCrt,
+  int nAttackType,
+  unsigned int dwAttackSerial,
+  bool bJadeReturn)
+{
+  (void)nAttackType;
+  (void)dwAttackSerial;
+
+  if (m_bCorpse || m_bMapLoading || CGameObject::GetCurSecNum() == static_cast<unsigned int>(-1))
+  {
+    return static_cast<unsigned int>(m_Param.GetHP());
+  }
+
+  if (pDst && m_EP.GetEff_Have(54) > 0.0f && bJadeReturn && pDst->m_ObjID.m_byID == 0)
+  {
+    const int returnDamage = static_cast<int>(static_cast<float>(nDam) * m_EP.GetEff_Have(54));
+    if (returnDamage > 0)
+    {
+      pDst->SetDamage(returnDamage, this, static_cast<int>(GetLevel()), false, -1, 0, false);
+    }
+  }
+
+  CCharacter::BreakStealth();
+  BreakCloakBooster();
+
+  if (m_EP.GetEff_State(14))
+  {
+    CCharacter::RemoveSFContHelpByEffect(2, 14);
+  }
+
+  if (nDam <= 0)
+  {
+    if (nDam == -1)
+    {
+      const int attackPart = pDst ? static_cast<int>(pDst->GetAttackRandomPart()) : static_cast<int>(GetAttackRandomPart());
+      pc_PlayAttack_Gen(pDst, static_cast<unsigned __int8>(attackPart), 0xFFFFu, 0xFFFFu, true);
+    }
+    else if (nDam == -2 && m_nLastBeatenPart == 5 && pDst && !IsInTown() && IsPassMasteryLimitLvDiff(nDstLv))
+    {
+      if (m_byDefMatCount < 2)
+      {
+        ++m_byDefMatCount;
+        const unsigned int masteryCum = GetMasteryCumAfterAttack(nDstLv);
+        Emb_AlterStat(2u, 0u, static_cast<int>(masteryCum), 0, "CPlayer::SetDamage() shield-defense", true);
+      }
+    }
+
+    m_nLastBeatenPart = 0;
+    SetBattleMode(false);
+    return static_cast<unsigned int>(m_Param.GetHP());
+  }
+
+  if (IsRidingUnit() && m_pUsingUnit)
+  {
+    if (!m_bNeverDie)
+    {
+      if (m_pUsingUnit->dwGauge <= static_cast<unsigned int>(nDam))
+      {
+        m_pUsingUnit->dwGauge = 0;
+      }
+      else
+      {
+        m_pUsingUnit->dwGauge -= static_cast<unsigned int>(nDam);
+      }
+    }
+
+    if (m_pUsingUnit->dwGauge > 0)
+    {
+      SendMsg_AlterUnitHPInform(static_cast<char>(m_pUsingUnit->bySlotIndex), m_pUsingUnit->dwGauge);
+    }
+    else
+    {
+      SetHP(0, false);
+      SendMsg_SetHPInform();
+      ForcePullUnit(false);
+    }
+  }
+  else
+  {
+    if (m_Param.GetFP() > 0 && m_EP.GetEff_State(22))
+    {
+      int fpDamage = 2 * nDam;
+      const int currentFp = m_Param.GetFP();
+      if (fpDamage > currentFp)
+      {
+        const int overflow = fpDamage - currentFp;
+        SetHP(m_Param.GetHP() - (overflow / 2), false);
+        SendMsg_SetHPInform();
+        fpDamage = m_Param.GetFP();
+      }
+
+      SetFP(m_Param.GetFP() - fpDamage, false);
+      SendMsg_SetFPInform();
+    }
+    else
+    {
+      SetHP(m_Param.GetHP() - nDam, false);
+      SendMsg_SetHPInform();
+    }
+
+    if (pDst && !IsInTown() && IsPassMasteryLimitLvDiff(nDstLv) && GetHP() > 0)
+    {
+      const float hpRateDamage = static_cast<float>(nDam) / static_cast<float>(GetMaxHP());
+      if (hpRateDamage >= 0.02f && m_byDefMatCount < 2)
+      {
+        ++m_byDefMatCount;
+        const unsigned int masteryCum = GetMasteryCumAfterAttack(nDstLv);
+        const int addValue = m_nAddDfnMstByClass * static_cast<int>(masteryCum);
+        if (m_nLastBeatenPart != 5 && addValue > 0)
+        {
+          Emb_AlterStat(1u, 0u, addValue, 0, "CPlayer::SetDamage() defense", true);
+        }
+      }
+    }
+  }
+
+  if (GetHP() == 0)
+  {
+    m_bCorpse = true;
+    m_bMove = false;
+  }
+
+  if (bCrt)
+  {
+    SetStun(true);
+  }
+
+  m_nLastBeatenPart = 0;
+  SetBattleMode(false);
+  return static_cast<unsigned int>(m_Param.GetHP());
 }

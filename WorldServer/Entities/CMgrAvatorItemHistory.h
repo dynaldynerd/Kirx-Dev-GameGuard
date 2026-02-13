@@ -144,6 +144,12 @@ public:
     unsigned __int16 wItemIndex,
     unsigned int dwDur,
     const char *szFileName);
+  void personal_amine_stop(
+    const unsigned int *pdwMineCnt,
+    int nMaxOreNum,
+    unsigned __int8 byTblCode,
+    unsigned __int16 wItemIndex,
+    char *szFileName);
   void personal_amine_uninstall(
     unsigned __int8 byType,
     const unsigned int *pdwMineCnt,
@@ -321,6 +327,7 @@ public:
     unsigned int dwPushDalant,
     unsigned int dwLeftDalant,
     char *pszFileName);
+  void raceboss_candidate(int ncost, unsigned int dwSerial, char *pszFileName);
   void raceboss_giveback(unsigned int dwSerial, unsigned int dwDalant, char *pszFileName);
   void guild_est_money_rollback(
     int n,

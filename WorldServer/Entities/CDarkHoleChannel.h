@@ -47,11 +47,24 @@ public:
   CIndexList m_listEnterMember;
   bool m_bMoveNextMission;
 
+  void OnLoop();
   void Init();
   void OpenDungeon(_dh_quest_setup *pQuestSetup, int nLayerIndex, CPlayer *pOpener, CDarkHole *pHoleObj);
   void CreateMonster();
+  void CheckWaitNextMission();
+  void CheckCurrentMission();
+  void CheckMember();
+  void CloseDungeon();
+  void CheckInnerEventDummy();
+  void CheckRespawnMonster();
+  void CheckSendNewMissionMsg();
   char ClearMember(CPlayer *pMember, bool bDisconnect, _dh_player_mgr::_pos *poutPlayerPos);
   _dh_player_mgr *GetPlayerInfo(unsigned int dwSerial);
+  void ChangeMonsterApparition(unsigned int nTermMSec);
+  unsigned int GetMonsterNumInCurMissionArea(int nMonsterRecIndex);
+  bool GotoNextMission();
+  void WaitNextMission();
+  bool IsOpenPartyMember(CPlayer *pOpener);
   bool IsFill();
   int GetAllMemberNum();
   unsigned int GetCurrentMemberNum();
@@ -74,6 +87,16 @@ public:
   _dh_mission_setup *SearchMissionFromPos(float *pfStartPos);
   char GotoNextMissionByPosition(float *pfStartPos);
   void NextMissionOtherQuester(CPlayer *pLeader, _dh_mission_setup *pNextMission);
+  void SendMsg_AskReEnter(CPlayer *pDst);
+  void SendMsg_ChannelClose();
+  void SendMsg_GateDestroy(unsigned __int8 *byType, char *pSend, unsigned __int16 nSize);
+  void SendMsg_JobPass(unsigned __int8 nJobIndex);
+  void SendMsg_MissionPass();
+  void SendMsg_NewMission();
+  void SendMsg_OpenPortalByReact(unsigned __int16 nPortalIndex);
+  void SendMsg_OpenPortalByResult(int nPortalIndex);
+  void SendMsg_QuestPass();
+  void SendMsg_TimeOut();
   void SendMsg_JobCount(unsigned __int8 nJobIndex, unsigned __int16 nCount);
   void SendMsg_NewMember(CPlayer *pNewMember, bool bReconnect);
   void SendMsg_QuestInfo(CPlayer *pDst);
@@ -83,6 +106,7 @@ public:
   void SendMsg_RealAddLimTime(int nAddSec, char *pMsg);
   void SendMsg_PopMember(CPlayer *pPopMember, bool bDisconnect);
   void SendMsg_LeaderChange(CPlayer *pNewLeader);
+  char _Reward();
 
   virtual ~CDarkHoleChannel() = default;
 };

@@ -3,6 +3,124 @@
 #include "CMerchant.h"
 
 #include <cstring>
+#include <mmsystem.h>
+
+#include "CMapData.h"
+#include "CNetProcess.h"
+#include "CTransportShip.h"
+#include "CItemStore.h"
+#include "GlobalObjects.h"
+#include "pnt_rect.h"
+#include "StoreList_fld.h"
+
+__int64 CMerchant::GetFireTol()
+{
+  return static_cast<unsigned int>(static_cast<int>(*reinterpret_cast<float *>(&m_pRecordSet[2].m_strCode[40])));
+}
+
+char *CMerchant::GetObjName()
+{
+  static char objectName[128];
+  std::snprintf(
+    objectName,
+    sizeof(objectName),
+    "[NPC][%d] >> %s (pos: %s {%d, %d, %d})",
+    static_cast<int>(GetObjRace()),
+    reinterpret_cast<const char *>(&m_pRecordSet[1]),
+    m_pCurMap->m_pMapSet->m_strCode,
+    static_cast<int>(m_fCurPos[0]),
+    static_cast<int>(m_fCurPos[1]),
+    static_cast<int>(m_fCurPos[2]));
+  return objectName;
+}
+
+__int64 CMerchant::GetObjRace()
+{
+  return m_byRaceCode;
+}
+
+__int64 CMerchant::GetSoilTol()
+{
+  return static_cast<unsigned int>(static_cast<int>(*reinterpret_cast<float *>(&m_pRecordSet[2].m_strCode[48])));
+}
+
+__int64 CMerchant::GetWaterTol()
+{
+  return static_cast<unsigned int>(static_cast<int>(*reinterpret_cast<float *>(&m_pRecordSet[2].m_strCode[44])));
+}
+
+__int64 CMerchant::GetWindTol()
+{
+  return static_cast<unsigned int>(static_cast<int>(*reinterpret_cast<float *>(&m_pRecordSet[2].m_strCode[52])));
+}
+
+void CMerchant::Loop()
+{
+  SendMsg_TransShipTicketNumInform(static_cast<unsigned int>(-1));
+}
+
+void CMerchant::OutOfSec()
+{
+  Destroy(nullptr);
+}
+
+void CMerchant::SendMsg_FixPosition(int n)
+{
+#pragma pack(push, 1)
+  struct MerchantFixPosMsg
+  {
+    unsigned __int16 wRecordIndex;
+    unsigned __int16 wIndex;
+    unsigned int dwObjSerial;
+    __int16 pos[3];
+    unsigned __int16 wLastContEffect;
+  };
+#pragma pack(pop)
+
+  MerchantFixPosMsg msg{};
+  msg.wRecordIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
+  msg.wIndex = m_ObjID.m_wIndex;
+  msg.dwObjSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, msg.pos, 3);
+  msg.wLastContEffect = m_wLastContEffect;
+
+  unsigned __int8 packetType[2] = {4, 12};
+  g_Network.m_pProcess[0]->LoadSendMsg(static_cast<unsigned int>(n), packetType, reinterpret_cast<char *>(&msg), sizeof(msg));
+  SendMsg_TransShipTicketNumInform(static_cast<unsigned int>(n));
+}
+
+void CMerchant::SendMsg_RealFixPosition(bool /*bCircle*/)
+{
+  // this is not a stub
+}
+
+void CMerchant::SendMsg_RealMovePoint(int n)
+{
+#pragma pack(push, 1)
+  struct MerchantRealMoveMsg
+  {
+    unsigned __int16 wRecordIndex;
+    unsigned __int16 wIndex;
+    unsigned int dwObjSerial;
+    __int16 pos[3];
+    __int16 nTarX;
+    __int16 nTarZ;
+    unsigned __int16 wLastContEffect;
+  };
+#pragma pack(pop)
+
+  MerchantRealMoveMsg msg{};
+  msg.wRecordIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
+  msg.wIndex = m_ObjID.m_wIndex;
+  msg.dwObjSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, msg.pos, 3);
+  msg.nTarX = static_cast<__int16>(m_fTarPos[0]);
+  msg.nTarZ = static_cast<__int16>(m_fTarPos[2]);
+  msg.wLastContEffect = m_wLastContEffect;
+
+  unsigned __int8 packetType[2] = {4, 23};
+  g_Network.m_pProcess[0]->LoadSendMsg(static_cast<unsigned int>(n), packetType, reinterpret_cast<char *>(&msg), sizeof(msg));
+}
 
 bool CMerchant::Init(_object_id *pID)
 {
@@ -31,6 +149,14 @@ bool CMerchant::Create(_npc_create_setdata *pData)
   return true;
 }
 
+bool CMerchant::Destroy(CGameObject * /*pAttObj*/)
+{
+  m_dwLastDestroyTime = timeGetTime();
+  SendMsg_Destroy();
+  --s_nLiveNum;
+  return CCharacter::Destroy();
+}
+
 unsigned int CMerchant::GetNewMonSerial()
 {
   return s_dwSerialCnt++;
@@ -52,4 +178,134 @@ void CMerchant::SendMsg_Create()
   pbyType[0] = 3;
   pbyType[1] = 17;
   CircleReport(pbyType, reinterpret_cast<char *>(msg), 14, false);
+}
+
+void CMerchant::SendMsg_Destroy()
+{
+#pragma pack(push, 1)
+  struct MerchantDestroyMsg
+  {
+    unsigned __int16 wIndex;
+    unsigned int dwObjSerial;
+  };
+#pragma pack(pop)
+
+  MerchantDestroyMsg msg{};
+  msg.wIndex = m_ObjID.m_wIndex;
+  msg.dwObjSerial = m_dwObjSerial;
+  unsigned __int8 packetType[2] = {3, 25};
+  CircleReport(packetType, reinterpret_cast<char *>(&msg), sizeof(msg), false);
+}
+
+void CMerchant::SendMsg_Move()
+{
+#pragma pack(push, 1)
+  struct MerchantMoveMsg
+  {
+    unsigned int dwObjSerial;
+    __int16 pos[3];
+    __int16 nTarX;
+    __int16 nTarZ;
+  };
+#pragma pack(pop)
+
+  MerchantMoveMsg msg{};
+  msg.dwObjSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, msg.pos, 3);
+  msg.nTarX = static_cast<__int16>(m_fTarPos[0]);
+  msg.nTarZ = static_cast<__int16>(m_fTarPos[2]);
+  unsigned __int8 packetType[2] = {4, 6};
+  CircleReport(packetType, reinterpret_cast<char *>(&msg), sizeof(msg), false);
+}
+
+void CMerchant::SendMsg_TransShipTicketNumInform(unsigned int n)
+{
+  if (!m_pItemStore
+      || !m_pItemStore->m_pRec
+      || m_pItemStore->m_pRec->m_nStore_trade != 18
+      || static_cast<unsigned int>(GetObjRace()) >= 3)
+  {
+    return;
+  }
+
+  CTransportShip *transportShip = &g_TransportShip[GetObjRace()];
+
+#pragma pack(push, 1)
+  struct TicketNumMsg
+  {
+    unsigned int dwObjSerial;
+    struct Entry
+    {
+      unsigned __int8 byTicketType;
+      unsigned __int16 wTicketNum;
+    } entry[2];
+  };
+#pragma pack(pop)
+
+  TicketNumMsg msg{};
+  msg.dwObjSerial = m_dwObjSerial;
+
+  bool changed = false;
+  for (int ticketIndex = 0; ticketIndex < 2; ++ticketIndex)
+  {
+    msg.entry[ticketIndex].byTicketType = static_cast<unsigned __int8>(ticketIndex);
+    msg.entry[ticketIndex].wTicketNum = static_cast<unsigned __int16>(transportShip->m_MgrTicket[ticketIndex].nCurTicketNum);
+
+    if (n == static_cast<unsigned int>(-1))
+    {
+      if (m_nLeftTicketNum[ticketIndex] != transportShip->m_MgrTicket[ticketIndex].nCurTicketNum)
+      {
+        changed = true;
+      }
+      m_nLeftTicketNum[ticketIndex] = transportShip->m_MgrTicket[ticketIndex].nCurTicketNum;
+    }
+  }
+
+  if (n != static_cast<unsigned int>(-1) || changed)
+  {
+    unsigned __int8 packetType[2] = {33, 4};
+    if (n == static_cast<unsigned int>(-1))
+    {
+      _sec_info *secInfo = m_pCurMap->GetSecInfo();
+      const int radius = static_cast<int>(GetUseSectorRange());
+      _pnt_rect rect{};
+      m_pCurMap->GetRectInRadius(&rect, radius, static_cast<unsigned int>(GetCurSecNum()));
+      for (int y = rect.nStarty; y <= rect.nEndy; ++y)
+      {
+        for (int x = rect.nStartx; x <= rect.nEndx; ++x)
+        {
+          const unsigned int secIndex = static_cast<unsigned int>(secInfo->m_nSecNumW * y + x);
+          CObjectList *sectorList = m_pCurMap->GetSectorListPlayer(m_wMapLayerIndex, secIndex);
+          if (!sectorList)
+          {
+            continue;
+          }
+
+          _object_list_point *node = sectorList->m_Head.m_pNext;
+          while (node != &sectorList->m_Tail)
+          {
+            CGameObject *obj = node->m_pItem;
+            node = node->m_pNext;
+            if (!obj)
+            {
+              continue;
+            }
+
+            if (obj->GetObjRace() == GetObjRace())
+            {
+              g_Network.m_pProcess[0]->LoadSendMsg(
+                obj->m_ObjID.m_wIndex,
+                packetType,
+                reinterpret_cast<char *>(&msg),
+                sizeof(msg));
+            }
+          }
+        }
+      }
+    }
+    else
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(n, packetType, reinterpret_cast<char *>(&msg), sizeof(msg));
+    }
+  }
 }

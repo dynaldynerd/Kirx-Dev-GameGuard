@@ -9,6 +9,13 @@
 class CGuild;
 class CPlayer;
 struct _DB_LOAD_AUTOMINE_MACHINE;
+struct _qry_case_amine_newowner;
+struct _qry_case_amine_batterycharge;
+struct _qry_case_amine_mineore;
+struct _qry_case_amine_workstate;
+struct _qry_case_amine_selore;
+struct _qry_case_amine_battery_discharge;
+struct _qry_case_amine_moveore;
 
 struct _AUTOMINE_BATTERY
 {
@@ -553,13 +560,13 @@ public:
 private:
   unsigned __int8 get_type(CPlayer *pUser, unsigned __int8 byRace);
 
-  unsigned __int8 _db_qry_insert_newowner(char *pdata);
-  unsigned __int8 _db_qry_update_battery_charge(char *pdata);
-  unsigned __int8 _db_qry_update_mineore(char *pdata);
-  unsigned __int8 _db_qry_update_workstate(char *pdata);
-  unsigned __int8 _db_qry_update_selore(char *pdata);
-  unsigned __int8 _db_qry_update_battery_discharge(char *pdata);
-  unsigned __int8 _db_qry_update_moveore(char *pdata);
+  unsigned __int8 _db_qry_insert_newowner(const _qry_case_amine_newowner *query);
+  unsigned __int8 _db_qry_update_battery_charge(_qry_case_amine_batterycharge *query);
+  unsigned __int8 _db_qry_update_mineore(const _qry_case_amine_mineore *query);
+  unsigned __int8 _db_qry_update_workstate(const _qry_case_amine_workstate *query);
+  unsigned __int8 _db_qry_update_selore(const _qry_case_amine_selore *query);
+  unsigned __int8 _db_qry_update_battery_discharge(const _qry_case_amine_battery_discharge *query);
+  unsigned __int8 _db_qry_update_moveore(const _qry_case_amine_moveore *query);
 
   AutoMineMachine m_Machine[3][2];
 

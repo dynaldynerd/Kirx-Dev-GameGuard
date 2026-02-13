@@ -1434,6 +1434,13 @@ void CMgrAvatorItemHistory::raceboss_giveback(unsigned int dwSerial, unsigned in
   WriteFile(pszFileName, sData);
 }
 
+void CMgrAvatorItemHistory::raceboss_candidate(int ncost, unsigned int dwSerial, char *pszFileName)
+{
+  const unsigned int korTime = GetKorLocalTime();
+  sprintf(sData, "[RACE BOSS]candidate >> Avator Serial:%d\t$D:%d \t^Time:%d\n", dwSerial, ncost, korTime);
+  WriteFile(pszFileName, sData);
+}
+
 void CMgrAvatorItemHistory::guild_est_money_rollback(
   int n,
   char *pszGuildName,
@@ -2417,6 +2424,31 @@ void CMgrAvatorItemHistory::personal_amine_itemlog(
     static_cast<int>(wItemIndex),
     static_cast<int>(dwDur));
   WriteFile(szFileName, s_personal_amine_log);
+}
+
+void CMgrAvatorItemHistory::personal_amine_stop(
+  const unsigned int *pdwMineCnt,
+  int nMaxOreNum,
+  unsigned __int8 byTblCode,
+  unsigned __int16 wItemIndex,
+  char *szFileName)
+{
+  std::memset(sData, 0, sizeof(sData));
+  sprintf_s(sData, sizeof(sData), "[PERSONAL_AMINE_STOP] - %s\r\n", GetItemKorName(byTblCode, wItemIndex));
+
+  char *buffer = &sData[strlen_0(sData)];
+  for (int itemIndex = 0; itemIndex < nMaxOreNum; ++itemIndex)
+  {
+    sprintf_s(
+      buffer,
+      sizeof(sData) - static_cast<size_t>(buffer - sData),
+      "%s >> num:%d\r\n",
+      GetItemKorName(17, itemIndex),
+      pdwMineCnt[itemIndex]);
+    buffer += strlen_0(buffer);
+  }
+
+  WriteFile(szFileName, sData);
 }
 
 void CMgrAvatorItemHistory::personal_amine_uninstall(

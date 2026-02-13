@@ -9,6 +9,7 @@ public:
   void BeginTimer(unsigned int tickTerm);
   void BeginTimerAddLapse(int dwTerm, unsigned int dwAddLapse);
   bool CountingTimer();
+  unsigned int GetTerm();
   void TermTimeRun();
   void StopTimer();
   virtual ~CMyTimer();

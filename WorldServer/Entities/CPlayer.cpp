@@ -9153,6 +9153,38 @@ void CPlayer::SendData_PartyMemberInfoToMembers()
   }
 }
 
+__int16 CPlayer::_TowerReturn(_STORAGE_LIST::_db_con *pTowerItem)
+{
+  if (!pTowerItem)
+  {
+    return 0;
+  }
+
+  for (int index = 0; index < 6; ++index)
+  {
+    if (m_pmTwr.m_List[index].m_pTowerItem == pTowerItem)
+    {
+      m_pmTwr.m_List[index].m_pTowerItem->m_bLock = false;
+
+      const int alterDur = static_cast<int>(m_pmTwr.m_List[index].m_pTowerObj->m_nHP)
+        - static_cast<int>(m_pmTwr.m_List[index].m_pTowerItem->m_dwDur);
+      const __int16 result = Emb_AlterDurPoint(
+        0,
+        m_pmTwr.m_List[index].m_pTowerItem->m_byStorageIndex,
+        alterDur,
+        false,
+        false);
+
+      m_pmTwr.m_List[index].m_pTowerObj->Destroy(0u, false);
+      m_pmTwr.m_List[index].init();
+      --m_pmTwr.m_nCount;
+      return result;
+    }
+  }
+
+  return 0;
+}
+
 void CPlayer::SendMsg_GuildMasterEffect(
   char byState,
   char byGrade,
@@ -10786,6 +10818,17 @@ void CPlayer::PushDQSCheatPlyerVoteInfo()
   query.dwCharSerial = m_Param.GetCharSerial();
   strcpy_0(query.wszCharName, m_Param.GetCharNameW());
   g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x97u, reinterpret_cast<char *>(&query), query.size());
+}
+
+void CPlayer::PushDQSUpdateVoteAvilable()
+{
+  _qry_case_update_vote_available query{};
+  query.byVoteEnable = 0;
+  query.dwAccountSerial = m_pUserDB->m_dwAccountSerial;
+  query.dwCharSerial = m_Param.GetCharSerial();
+  strcpy_0(query.wszCharName, m_Param.GetCharNameW());
+
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x95u, reinterpret_cast<char *>(&query), query.size());
 }
 
 void CPlayer::PushDQSUpdatePlyerVoteInfo()

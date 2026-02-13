@@ -2,6 +2,7 @@
 
 #include "CReturnGate.h"
 #include "CMapData.h"
+#include "CNetProcess.h"
 #include "CPartyPlayer.h"
 #include "CPlayer.h"
 #include "GlobalObjects.h"
@@ -74,6 +75,23 @@ void CReturnGate::Close()
   SendMsg_Destroy();
   m_dwObjSerial = 0;
   Destroy();
+}
+
+void CReturnGate::SendMsg_FixPosition(int n)
+{
+  char msg[33]{};
+  *reinterpret_cast<unsigned __int16 *>(msg) = m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned int *>(msg + 2) = m_dwObjSerial;
+  *reinterpret_cast<unsigned int *>(msg + 6) = m_dwOwnerSerial;
+  strcpy_0(msg + 10, m_pkOwner->m_Param.GetCharNameW());
+  FloatToShort(m_fCurPos, reinterpret_cast<short *>(msg + 27), 3);
+
+  unsigned __int8 packetType[2] = {4, static_cast<unsigned __int8>(-86)};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    n,
+    packetType,
+    msg,
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CReturnGate::SendMsg_Destroy()

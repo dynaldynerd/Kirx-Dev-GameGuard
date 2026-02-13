@@ -4,6 +4,8 @@
 
 CLuaCommandEx::_State CLuaCommandEx::_State::ms_cEmpty{};
 
+CLuaCommandEx::~CLuaCommandEx() = default;
+
 CLuaCommandEx::_State::_State() : m_bExist(false) {}
 
 bool CLuaCommandEx::_State::operator==(const _State &rhs) const

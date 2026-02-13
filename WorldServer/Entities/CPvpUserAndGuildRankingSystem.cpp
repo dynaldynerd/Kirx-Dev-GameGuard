@@ -60,6 +60,16 @@ unsigned int CPvpUserAndGuildRankingSystem::GetCurrentRaceBossSerial(unsigned __
   return m_kUserRankingProcess.GetCurrentRaceBossSerial(byRace, byNth);
 }
 
+unsigned int CPvpUserAndGuildRankingSystem::FindRank(unsigned __int8 byRaceCode, unsigned int dwAvatorSerial)
+{
+  return m_kUserRankingProcess.FindRank(byRaceCode, dwAvatorSerial);
+}
+
+const _PVP_RANK_DATA *CPvpUserAndGuildRankingSystem::GetCurrentPvpRankData(unsigned __int8 byRace, unsigned __int8 byNth)
+{
+  return m_kUserRankingProcess.GetCurrentPvpRankData(byRace, byNth);
+}
+
 void CPvpUserAndGuildRankingSystem::PvpRankListRequest(
   unsigned __int16 wIndex,
   unsigned __int8 byRace,

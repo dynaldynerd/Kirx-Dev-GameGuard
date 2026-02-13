@@ -87,6 +87,30 @@ unsigned int CPvpUserRankingInfo::GetCurrentRaceBossSerial(unsigned __int8 byRac
   return m_dwCurrentRaceBossSerial[byRace][byNth];
 }
 
+unsigned int CPvpUserRankingInfo::FindRank(unsigned __int8 byRaceCode, unsigned int dwAvatorSerial)
+{
+  for (int rankIndex = 0; rankIndex < 100; ++rankIndex)
+  {
+    _PVP_RANK_DATA **const raceData = &m_vecPvpRankDataCurrent[byRaceCode];
+    if ((*raceData)[rankIndex].dwAvatorSerial == dwAvatorSerial)
+    {
+      return static_cast<unsigned int>(rankIndex + 1);
+    }
+  }
+
+  return static_cast<unsigned int>(-1);
+}
+
+const _PVP_RANK_DATA *CPvpUserRankingInfo::GetCurrentPvpRankData(unsigned __int8 byRace, unsigned __int8 byNth)
+{
+  if (m_vecPvpRankDataCurrent.size() > byRace && byNth < 100u)
+  {
+    return &m_vecPvpRankDataCurrent[byRace][byNth];
+  }
+
+  return nullptr;
+}
+
 unsigned __int8 CPvpUserRankingInfo::GetBossType(unsigned __int8 byRaceCode, unsigned int dwSerial)
 {
   if (byRaceCode >= 3)
@@ -590,6 +614,16 @@ bool CUserRankingProcess::IsCurrentRaceBossGroup(unsigned __int8 byRace, unsigne
 unsigned int CUserRankingProcess::GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth)
 {
   return m_kPvpRankingInfo.GetCurrentRaceBossSerial(byRace, byNth);
+}
+
+unsigned int CUserRankingProcess::FindRank(unsigned __int8 byRaceCode, unsigned int dwAvatorSerial)
+{
+  return m_kPvpRankingInfo.FindRank(byRaceCode, dwAvatorSerial);
+}
+
+const _PVP_RANK_DATA *CUserRankingProcess::GetCurrentPvpRankData(unsigned __int8 byRace, unsigned __int8 byNth)
+{
+  return m_kPvpRankingInfo.GetCurrentPvpRankData(byRace, byNth);
 }
 
 unsigned __int8 CUserRankingProcess::GetBossType(unsigned __int8 byRace, unsigned int dwSerial)

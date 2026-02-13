@@ -974,6 +974,8 @@ public:
   char _GameDataBaseInit();
   void SerivceSelfStart();
   void SerivceForceSet(bool bService);
+  unsigned int CreateDataResetToken(_SYSTEMTIME *tm);
+  void PushResetServerToken();
   virtual ~CMainThread() = default;
 
 private:
@@ -1930,6 +1932,24 @@ class __cppobj AutominePersonal : public CCharacter
 public:
   AutominePersonal();
   ~AutominePersonal();
+  __int64 GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart) override;
+  float GetDefFacing(int nPart) override;
+  float GetDefGap(int nPart) override;
+  __int64 GetHP() override;
+  __int64 GetMaxHP() override;
+  __int64 GetObjRace() override;
+  bool IsBeAttackedAble(bool bFirst) override;
+  char IsBeDamagedAble(CCharacter *pAtter) override;
+  void Loop() override;
+  void SendMsg_FixPosition(int n) override;
+  __int64 SetDamage(
+    int nDam,
+    CCharacter *pDst,
+    int nDstLv,
+    bool bCrt,
+    int nAttackType,
+    unsigned int dwAttackSerial,
+    bool bJadeReturn) override;
   bool initialize(unsigned __int16 wIndex);
   void LoadDBComplete();
   bool is_installed();
@@ -1960,6 +1980,17 @@ public:
   void send_current_state();
   unsigned int get_battery();
   unsigned int get_battery(int n);
+  void make_minepacket(
+    unsigned __int16 wItemIndex,
+    unsigned __int16 wItemSerial,
+    unsigned __int8 byStorageIndex,
+    unsigned __int16 nNewOre,
+    unsigned int dwDur);
+  void set_delay(unsigned int dwDelay);
+  void set_delaysec(unsigned __int8 dwDS);
+  void send_attacked();
+  unsigned __int8 sub_battery(unsigned int dwUsed);
+  bool do_automine(unsigned int dwTime);
 
   bool m_bDBLoad;
   bool m_bOpenUI_Inven;
@@ -2400,6 +2431,7 @@ struct __cppobj _LAYER_SET
 
   void CreateLayer(int nSecNum);
   void ActiveLayer(_MULTI_BLOCK *pMB);
+  char InertLayer();
   bool IsActiveLayer();
 };
 
@@ -2497,6 +2529,8 @@ struct __cppobj __unaligned __declspec(align(1)) AP_BatterySlot
   void clear();
   bool extract(_STORAGE_LIST::_db_con *pout_item);
   unsigned int get_dur();
+  _STORAGE_LIST::_db_con *get_battery();
+  unsigned int sub_dur(unsigned int dwSub);
 
   bool m_bFill;
   _STORAGE_LIST::_db_con battery_;

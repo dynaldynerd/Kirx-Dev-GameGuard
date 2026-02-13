@@ -251,6 +251,7 @@ void PatriarchElectProcessor::TimeCheck(unsigned __int16 wDayOfWeek, unsigned __
   {
     if (_eProcessType == ElectProcessor::_eCandidateRegister)
     {
+      CandidateMgr::Instance()->InitCandidate();
       g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x77u, nullptr, 0);
     }
 
@@ -265,7 +266,16 @@ void PatriarchElectProcessor::TimeCheck(unsigned __int16 wDayOfWeek, unsigned __
 
     if (_eProcessType == ElectProcessor::_eFinalDecisionProcessor)
     {
-      // Update_RaceVoteInfoInit / PushResetServerToken symbol chain is not reconstructed yet.
+      g_Main.PushResetServerToken();
+
+      for (int playerIndex = 0; playerIndex < MAX_PLAYER; ++playerIndex)
+      {
+        CPlayer *player = &g_Player[playerIndex];
+        if (player && player->m_bOper)
+        {
+          player->m_pUserDB->Update_RaceVoteInfoInit();
+        }
+      }
     }
   }
 
@@ -344,6 +354,13 @@ char PatriarchElectProcessor::Doit(Cmd eCmd, CPlayer *pOne, char *pdata)
   return 1;
 }
 
+void PatriarchElectProcessor::PushDQSCheckInvalidChar()
+{
+  char queryData[1]{};
+  queryData[0] = static_cast<char>(_eProcessType);
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x8Au, queryData, 1);
+}
+
 void PatriarchElectProcessor::SendMsg_ResultCode(unsigned int n, unsigned __int8 byCode)
 {
   _pt_result_code_zocl msg{};
@@ -401,6 +418,11 @@ unsigned int PatriarchElectProcessor::GetElectSerial()
 ElectProcessor::ProcessorType PatriarchElectProcessor::GetProcessorType()
 {
   return _eProcessType;
+}
+
+bool PatriarchElectProcessor::GetTimeCheck()
+{
+  return _bTimeCheck;
 }
 
 void PatriarchElectProcessor::SetTimeCheck(bool bFlag)

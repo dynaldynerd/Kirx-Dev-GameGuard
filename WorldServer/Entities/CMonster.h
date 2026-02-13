@@ -12,9 +12,11 @@
 class CPlayer;
 class CMonsterSkill;
 class CMonsterAttack;
+class CGameObject;
 struct _monster_create_setdata;
 struct _skill_fld;
 struct _force_fld;
+struct _event_set;
 
 /* 1635 */
 class __cppobj CMonster : public CCharacter
@@ -89,10 +91,30 @@ public:
   __int64 GetAttackPart();
   __int64 GetAttackDP();
   float GetAttackRange();
+  __int64 GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart) override;
+  float GetDefFacing(int nPart) override;
+  float GetDefGap(int nPart) override;
+  __int64 GetDefSkill(bool bBackAttackDamage) override;
+  __int64 GetFireTol() override;
+  __int64 GetHP() override;
+  __int64 GetLevel() override;
+  __int64 GetMaxHP() override;
+  char *GetObjName() override;
+  __int64 GetObjRace() override;
+  __int64 GetSoilTol() override;
+  __int64 GetWaterTol() override;
+  float GetWeaponAdjust() override;
+  __int64 GetWeaponClass() override;
+  float GetWidth() override;
+  __int64 GetWindTol() override;
   __int64 GetCritical_Exception_Rate();
   __int64 GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack);
   int IsValidPlayer();
-  char IsBeDamagedAble(CCharacter *pAtter);
+  bool IsAttackableInTown() override;
+  bool IsBeAttackedAble(bool bFirst) override;
+  char IsBeDamagedAble(CCharacter *pAtter) override;
+  char IsRecvableContEffect() override;
+  bool IsRewardExp() override;
   __int64 GetMyDMGSFContCount();
   __int64 GetMaxDMGSFContCount();
   unsigned __int8 InsertSFContEffect(
@@ -104,6 +126,10 @@ public:
     bool *pbUpMty);
   CCharacter *GetAttackTarget();
   void SetAttackTarget(CCharacter *p);
+  bool IsMovable();
+  CPlayer *SearchNearPlayer();
+  __int64 AttackObject(int nDamage, CGameObject *pOri);
+  void ChangeApparition(bool bApparition, unsigned int dwAfterKillTerm);
   void SendMsg_Change_MonsterTarget(CCharacter *pChar);
   bool CheckEventEmotionPresentation(unsigned __int8 byCheckType, CCharacter *pTarget);
   __int64 GetOffensiveType();
@@ -125,8 +151,11 @@ public:
   void SendMsg_Move();
   void SendMsg_Create();
   void SendMsg_Destroy(unsigned __int8 byDestroyCode);
+  void SendMsg_FixPosition(int n) override;
+  void SendMsg_RealMovePoint(int n) override;
   void DisableStdItemLoot();
   void LinkEventRespawn(_event_respawn *pEventRespawn);
+  void LinkEventSet(_event_set *pEventSet);
   void SendMsg_Assist_Skill(
     char byErrCode,
     int nEffectCode,
@@ -157,6 +186,18 @@ public:
   void SetDefPart(_monster_fld *pMonRec);
   __int64 CreateAI(int nType);
   void Command_ChildMonDestroy(unsigned int dwTime);
+  void Loop() override;
+  void OutOfSec() override;
+  __int64 SetDamage(
+    int nDam,
+    CCharacter *pDst,
+    int nDstLv,
+    bool bCrt,
+    int nAttackType,
+    unsigned int dwAttackSerial,
+    bool bJadeReturn) override;
+  char SetHP(int nHP, bool bOver) override;
+  void SetStun(bool bStun) override;
   CLuaSignalReActor *GetSignalReActor();
 
   struct _monster_loot_index

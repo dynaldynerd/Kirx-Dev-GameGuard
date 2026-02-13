@@ -206,6 +206,15 @@ void eAddGold(int nRaceCode, int nAdd)
   e_EconomySystem.m_dBufTradeGold[nRaceCode] += static_cast<double>(nAdd);
 }
 
+void eAddMineOre(int nRaceCode, unsigned __int8 byKind, int nAdd)
+{
+  e_EconomySystem.m_dBufOreMineCount[nRaceCode][byKind] += static_cast<double>(nAdd);
+  if (e_EconomySystem.m_dBufOreMineCount[nRaceCode][byKind] < 0.0)
+  {
+    e_EconomySystem.m_dBufOreMineCount[nRaceCode][byKind] = 0.0;
+  }
+}
+
 CItemStore *IsBeNearStore(CPlayer *p, int nStoreCode)
 {
   CMapItemStoreList *storeList = nullptr;

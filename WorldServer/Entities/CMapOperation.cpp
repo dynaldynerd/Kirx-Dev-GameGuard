@@ -7,16 +7,21 @@
 #include <cstring>
 
 #include "CMapData.h"
+#include "CGameObject.h"
 #include "CItemStore.h"
 #include "CItemStoreManager.h"
+#include "CMonster.h"
 #include "CMonsterEventRespawn.h"
 #include "CMonsterEventSet.h"
 #include "CPlayer.h"
+#include "CBossMonsterScheduleSystem.h"
 #include "CTransportShip.h"
 #include "CHolyStoneSystem.h"
 #include "CWorldSchedule.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
+#include <atltime.h>
+#include <mmsystem.h>
 
 const char *CMapOperation::ms_szSettlementMapName[3][2] = {
     {"NeutralBS1", "NeutralBS2"},
@@ -132,12 +137,228 @@ bool CMapOperation::Init()
 
 void CMapOperation::OnLoop()
 {
-  (void)m_tmrRecover.CountingTimer();
-  (void)m_tmrSystem.CountingTimer();
+  if (m_tmrRecover.CountingTimer())
+  {
+    for (int playerIndex = 0; playerIndex < MAX_PLAYER; ++playerIndex)
+    {
+      CPlayer *player = &g_Player[playerIndex];
+      if (!player->m_bLive)
+      {
+        continue;
+      }
+
+      if (!player->m_bCorpse)
+      {
+        player->AutoRecover();
+        if (player->m_Param.GetRaceCode() == 1)
+        {
+          player->AutoRecover_Animus();
+        }
+      }
+
+      if (player->m_Param.GetRaceCode() == 0)
+      {
+        player->AutoCharge_Booster();
+      }
+    }
+  }
+
+  if (m_tmrSystem.CountingTimer())
+  {
+    if (m_bReSpawnMonster)
+    {
+      RespawnMonster();
+    }
+
+    for (int mapIndex = 0; mapIndex < m_nMapNum; ++mapIndex)
+    {
+      if (m_Map[mapIndex].m_bUse)
+      {
+        m_Map[mapIndex].OnLoop();
+      }
+    }
+
+    g_MonsterEventRespawn.CheckRespawnEvent();
+    g_MonsterEventSet.CheckEventSetRespawn();
+  }
+
   if (m_tmrObjTerm.CountingTimer())
   {
+    if (!m_nLoopStartPoint)
+    {
+      R3CalculateTime();
+    }
+
+    for (int objectIndex = m_nLoopStartPoint; objectIndex < CGameObject::s_nTotalObjectNum; objectIndex += 10)
+    {
+      if (CGameObject::s_pTotalObject[objectIndex]->m_bLive)
+      {
+        CGameObject::s_pTotalObject[objectIndex]->OnLoop();
+      }
+    }
+
     ++m_nLoopStartPoint;
     m_nLoopStartPoint %= 10;
+  }
+}
+
+void CMapOperation::RespawnMonster()
+{
+  CBossMonsterScheduleSystem::Instance()->RespawnMonster();
+  if (CMonster::s_nLiveNum >= MAX_MONSTER)
+  {
+    return;
+  }
+
+  const DWORD now = timeGetTime();
+  for (int mapIndex = 0; mapIndex < m_nMapNum; ++mapIndex)
+  {
+    CMapData *map = &m_Map[mapIndex];
+    if (!map->m_bUse || map->m_pMapSet->m_nMapType || !map->m_ls->IsActiveLayer())
+    {
+      continue;
+    }
+
+    _MULTI_BLOCK *multiBlock = map->m_ls->m_pMB;
+    for (int blockIndex = 0; blockIndex < map->m_nMonBlockNum; ++blockIndex)
+    {
+      _mon_block *block = &map->m_pMonBlock[blockIndex];
+      const int activeCount = multiBlock->m_ptbMonBlock[blockIndex].GetRecordNum();
+      for (int activeIndex = 0; activeIndex < activeCount; ++activeIndex)
+      {
+        _mon_active *active = &map->m_ls->m_MonAct[blockIndex][activeIndex];
+        if (active->m_nLimRegenNum <= 0)
+        {
+          continue;
+        }
+
+        _mon_active_fld *activeRec = active->m_pActRec;
+        BossSchedule *bossSchedule = active->GetBossSchedule();
+        if (bossSchedule)
+        {
+          const ATL::CTime emptyTime(0);
+          if (bossSchedule->m_LastRespawnSystemTime != emptyTime)
+          {
+            const ATL::CTime currentTime = ATL::CTime::GetCurrentTime();
+            const ATL::CTimeSpan diff = currentTime - bossSchedule->m_LastRespawnSystemTime;
+            const ATL::CTimeSpan regenSpan(static_cast<__time64_t>(activeRec->m_dwRegenTime / 1000));
+            if (diff < regenSpan)
+            {
+              continue;
+            }
+          }
+
+          ATL::CTime currentTime = ATL::CTime::GetCurrentTime();
+          bossSchedule->Save_LastRespawnSystemTime(&currentTime);
+        }
+        else
+        {
+          if (active->m_dwLastRespawnTime && now - active->m_dwLastRespawnTime <= activeRec->m_dwRegenTime)
+          {
+            continue;
+          }
+          active->m_dwLastRespawnTime = now;
+        }
+
+        if (active->m_wMonRecIndex == 0xFFFF || activeRec->m_dwRegenProp <= static_cast<unsigned int>(rand() % 100))
+        {
+          continue;
+        }
+
+        const int missingCount = active->m_nLimRegenNum - active->m_zCurMonNum;
+        if (missingCount <= 0)
+        {
+          continue;
+        }
+
+        const float dummyPerSpawn = static_cast<float>(active->m_pBlk->m_pBlkRec->m_dwDummyNum)
+          / static_cast<float>(missingCount);
+        const int fixedDummySpan = missingCount / static_cast<int>(active->m_pBlk->m_pBlkRec->m_dwDummyNum);
+        int lastDummyIndex = 0;
+        const bool noAliveInBlock = (active->m_zCurMonNum == 0);
+
+        for (int spawnIndex = 0; spawnIndex < missingCount && active->m_zCurMonNum < active->m_nLimRegenNum; ++spawnIndex)
+        {
+          int dummyIndex = -1;
+          if (noAliveInBlock)
+          {
+            if (dummyPerSpawn <= 1.0f)
+            {
+              if (dummyPerSpawn >= 1.0f)
+              {
+                dummyIndex = spawnIndex;
+              }
+              else
+              {
+                const int fixedSpanEnd = static_cast<int>(active->m_pBlk->m_pBlkRec->m_dwDummyNum) * fixedDummySpan;
+                if (spawnIndex <= fixedSpanEnd)
+                {
+                  dummyIndex = spawnIndex / fixedDummySpan;
+                }
+                else
+                {
+                  dummyIndex = block->SelectDummyIndex();
+                }
+              }
+            }
+            else
+            {
+              if (spawnIndex)
+              {
+                dummyIndex = static_cast<int>(static_cast<float>(lastDummyIndex) + dummyPerSpawn);
+              }
+              else
+              {
+                dummyIndex = rand() % static_cast<int>(dummyPerSpawn);
+              }
+              lastDummyIndex = dummyIndex;
+            }
+          }
+          else
+          {
+            unsigned int fallbackIndex = 0;
+            int minActiveMon = block->m_pDumPos[0]->m_wActiveMon;
+            for (unsigned int dummy = 0; dummy < active->m_pBlk->m_pBlkRec->m_dwDummyNum; ++dummy)
+            {
+              if (block->m_pDumPos[dummy]->m_bPosAble && !block->m_pDumPos[dummy]->m_wActiveMon)
+              {
+                dummyIndex = static_cast<int>(dummy);
+                break;
+              }
+
+              if (minActiveMon > block->m_pDumPos[dummy]->m_wActiveMon)
+              {
+                minActiveMon = block->m_pDumPos[dummy]->m_wActiveMon;
+                fallbackIndex = dummy;
+              }
+            }
+
+            if (dummyIndex == -1)
+            {
+              dummyIndex = static_cast<int>(fallbackIndex);
+            }
+          }
+
+          if (dummyIndex >= 0
+              && static_cast<unsigned int>(dummyIndex) < active->m_pBlk->m_pBlkRec->m_dwDummyNum
+              && block->m_pDumPos[dummyIndex]->m_bPosAble
+              && !CreateRespawnMonster(
+                map,
+                0,
+                active->m_wMonRecIndex,
+                active,
+                block->m_pDumPos[dummyIndex],
+                true,
+                true,
+                false,
+                false,
+                true))
+          {
+            return;
+          }
+        }
+      }
+    }
   }
 }
 

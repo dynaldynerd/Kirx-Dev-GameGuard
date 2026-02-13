@@ -15,6 +15,8 @@ public:
   bool Load();
   bool IsCurrentRaceBossGroup(unsigned __int8 byRace, unsigned int dwSerial);
   unsigned int GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth);
+  unsigned int FindRank(unsigned __int8 byRaceCode, unsigned int dwAvatorSerial);
+  const _PVP_RANK_DATA *GetCurrentPvpRankData(unsigned __int8 byRace, unsigned __int8 byNth);
   void PvpRankListRequest(
     unsigned __int16 wIndex,
     unsigned __int8 byRace,

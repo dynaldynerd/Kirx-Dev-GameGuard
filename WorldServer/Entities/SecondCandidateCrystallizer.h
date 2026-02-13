@@ -7,4 +7,6 @@ class __cppobj SecondCandidateCrystallizer : public ElectProcessor
 {
 public:
   SecondCandidateCrystallizer();
+  bool Initialize() override;
+  int Doit(Cmd cmd, CPlayer *player, char *data) override;
 };
