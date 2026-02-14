@@ -1,0 +1,1544 @@
+packages\Microsoft.Web.WebView2.1.0.3179.45\build\native\include\WebView2EnvironmentOptions.h	237	static const COREWEBVIEW2_RELEASE_CHANNELS kInternalChannel =
+packages\Microsoft.Web.WebView2.1.0.3179.45\build\native\include\WebView2EnvironmentOptions.h	239	static const COREWEBVIEW2_RELEASE_CHANNELS kAllChannels =
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\com_apartment_variable.h	72	static auto CoInitializeEx(DWORD coinitFlags = 0 /*COINIT_MULTITHREADED*/)
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\com_apartment_variable.h	92	static INIT_ONCE s_initLeakModule{}; // avoiding magic statics
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\com.h	3165	static auto test(int) -> decltype(wistd::declval<U>()->Next(0, nullptr, nullptr), wistd::true_type{});
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\com.h	3170	static constexpr bool value = decltype(test<T>(0))::value;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\common.h	669	static const bool enabled = wil::variadic_logical_or<WilFeature<Rest>::enabled...>::value;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\common.h	696	static const unsigned long long value = flag;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\cppwinrt_helpers.h	257	static constexpr bool value = get_value<T>(0);
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\cppwinrt_helpers.h	276	static constexpr bool value = get_value<T>(0);
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\cppwinrt_notifiable_module_lock.h	94	static notifiable_module_lock lock;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\cppwinrt.h	442	static bool IsEnabled() { return Version2::IsEnabled() || Version3::IsEnabled(); }
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\filesystem.h	947	static bool const isFixed = IsFixed; \
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\filesystem.h	948	static size_t const extraSize = Extra; \
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\resource.h	289	static auto invoke(int) -> wistd::bool_constant<sizeof(U) >= 0>; // Always true, but SFINAE's if incomplete type
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\resource.h	299	static constexpr const bool value = wistd::conjunction_v<
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\resource.h	6766	static void clear_state(wdf_request_completer& completer, WDFREQUEST newWdfRequest = WDF_NO_HANDLE) WI_NOEXCEPT
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\resource.h	7520	static constexpr bool allows_shared = true;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\resource.h	7526	static constexpr bool allows_exclusive = true;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2029	static bool fetchedRtlDisownModuleHeapAllocation = false;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2030	static NTSTATUS(__stdcall * pfnRtlDisownModuleHeapAllocation)(HANDLE, PVOID) WI_PFN_NOEXCEPT = nullptr;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2528	static HRESULT volatile s_hrErrorLast = S_OK;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2529	static long volatile s_cErrorCount = 0;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2536	static HRESULT volatile s_hrErrorLast = S_OK;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2537	static long volatile s_cErrorCount = 0;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2544	static HRESULT volatile s_hrErrorLast = S_OK;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2545	static long volatile s_cErrorCount = 0;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2552	static HRESULT volatile s_hrErrorLast = S_OK;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2611	static char s_szModule[64] = {};
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2612	static volatile bool s_fModuleValid = false;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2691	static constexpr NTSTATUS WIL_STATUS_INVALID_PARAMETER = 0xC000000D;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2692	static constexpr NTSTATUS WIL_STATUS_INTERNAL_ERROR = 0xC00000E5;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2693	static constexpr NTSTATUS WIL_STATUS_INTEGER_OVERFLOW = 0xC0000095;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2694	static constexpr NTSTATUS WIL_STATUS_OBJECT_PATH_NOT_FOUND = 0xC000003A;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2695	static constexpr NTSTATUS WIL_STATUS_OBJECT_NAME_NOT_FOUND = 0xC0000034;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2696	static constexpr NTSTATUS WIL_STATUS_NOT_IMPLEMENTED = 0xC0000002;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2697	static constexpr NTSTATUS WIL_STATUS_BUFFER_OVERFLOW = 0x80000005;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2698	static constexpr NTSTATUS WIL_STATUS_IMPLEMENTATION_LIMIT = 0xC000042B;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2699	static constexpr NTSTATUS WIL_STATUS_NO_MORE_MATCHES = 0xC0000273;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2700	static constexpr NTSTATUS WIL_STATUS_ILLEGAL_CHARACTER = 0xC0000161;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2701	static constexpr NTSTATUS WIL_STATUS_UNDEFINED_CHARACTER = 0xC0000163;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2702	static constexpr NTSTATUS WIL_STATUS_BUFFER_TOO_SMALL = 0xC0000023;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2703	static constexpr NTSTATUS WIL_STATUS_DISK_FULL = 0xC000007F;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2704	static constexpr NTSTATUS WIL_STATUS_OBJECT_NAME_INVALID = 0xC0000033;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2705	static constexpr NTSTATUS WIL_STATUS_DLL_NOT_FOUND = 0xC0000135;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2706	static constexpr NTSTATUS WIL_STATUS_REVISION_MISMATCH = 0xC0000059;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2707	static constexpr NTSTATUS WIL_STATUS_XML_PARSE_ERROR = 0xC000A083;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	2708	static constexpr HRESULT WIL_E_FAIL = 0x80004005;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result_macros.h	4370	static long volatile s_failureId = 0;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result.h	96	static HRESULT TryGetValue(PCWSTR name, _Out_ T* value, _Out_opt_ bool* retrieved = nullptr)
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result.h	765	static volatile unsigned int lastThread = 0;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result.h	769	static volatile long depth = 0;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result.h	1077	static long volatile s_telemetryId;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result.h	1153	static unsigned char s_processLocalData[sizeof(*details_abi::g_pProcessLocalData)];
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\result.h	1154	static unsigned char s_threadFailureCallbacks[sizeof(*details::g_pThreadFailureCallbacks)];
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	47	static constexpr TOKEN_INFORMATION_CLASS infoClass = TokenAccessInformation;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	48	static constexpr bool FixedSize = false;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	53	static constexpr TOKEN_INFORMATION_CLASS infoClass = TokenAppContainerSid;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	54	static constexpr bool FixedSize = false;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	59	static constexpr TOKEN_INFORMATION_CLASS infoClass = TokenDefaultDacl;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	60	static constexpr bool FixedSize = false;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	65	static constexpr TOKEN_INFORMATION_CLASS infoClass = TokenGroupsAndPrivileges;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	66	static constexpr bool FixedSize = false;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	71	static constexpr TOKEN_INFORMATION_CLASS infoClass = TokenIntegrityLevel;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	72	static constexpr bool FixedSize = false;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	77	static constexpr TOKEN_INFORMATION_CLASS infoClass = TokenOwner;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	78	static constexpr bool FixedSize = false;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	83	static constexpr TOKEN_INFORMATION_CLASS infoClass = TokenPrimaryGroup;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	84	static constexpr bool FixedSize = false;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	89	static constexpr TOKEN_INFORMATION_CLASS infoClass = TokenPrivileges;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	90	static constexpr bool FixedSize = false;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	95	static constexpr TOKEN_INFORMATION_CLASS infoClass = TokenUser;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	96	static constexpr bool FixedSize = false;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	103	static constexpr TOKEN_INFORMATION_CLASS infoClass = TokenElevationType;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	104	static constexpr bool FixedSize = true;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	109	static constexpr TOKEN_INFORMATION_CLASS infoClass = TokenMandatoryPolicy;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	110	static constexpr bool FixedSize = true;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	115	static constexpr TOKEN_INFORMATION_CLASS infoClass = TokenOrigin;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	116	static constexpr bool FixedSize = true;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	121	static constexpr TOKEN_INFORMATION_CLASS infoClass = TokenSource;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	122	static constexpr bool FixedSize = true;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	127	static constexpr TOKEN_INFORMATION_CLASS infoClass = TokenStatistics;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	128	static constexpr bool FixedSize = true;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	133	static constexpr TOKEN_INFORMATION_CLASS infoClass = TokenType;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	134	static constexpr bool FixedSize = true;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	139	static constexpr TOKEN_INFORMATION_CLASS infoClass = TokenImpersonationLevel;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	140	static constexpr bool FixedSize = true;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	145	static constexpr TOKEN_INFORMATION_CLASS infoClass = TokenElevation;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\token_helpers.h	146	static constexpr bool FixedSize = true;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\Tracelogging.h	532	static long volatile s_lastFailureSeen = -1;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\Tracelogging.h	761	static UINT64 const Keyword = keyword;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\Tracelogging.h	762	static UINT8 const Level = level;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\Tracelogging.h	763	static UINT64 const PrivacyTag = privacyTag;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\Tracelogging.h	1305	static constexpr const UINT64 _tlgActivity_Keyword = _tlg_Activity_t::Keyword; \
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\Tracelogging.h	1306	static constexpr const UINT8 _tlgActivity_Level = _tlg_Activity_t::Level; \
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\Tracelogging.h	1307	static constexpr const UINT64 _tlgActivityPrivacyTag = _tlg_Activity_t::PrivacyTag; \
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\Tracelogging.h	1342	static constexpr const UINT64 _tlgActivity_Keyword = _tlg_Activity_t::Keyword; \
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\Tracelogging.h	1343	static constexpr const UINT8 _tlgActivity_Level = _tlg_Activity_t::Level; \
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\Tracelogging.h	1344	static constexpr const UINT64 _tlgActivityPrivacyTag = _tlg_Activity_t::PrivacyTag; \
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\Tracelogging.h	2288	static wil::details::static_lazy<TraceLoggingClassName> wrapper; \
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\Tracelogging.h	6082	static const UINT64 PrivacyTag = 0; \
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\Tracelogging.h	6689	static volatile long __wil_apiCallCounter = 0; \
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\win32_helpers.h	66	static const weak_ordering less;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\win32_helpers.h	67	static const weak_ordering equivalent;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\win32_helpers.h	68	static const weak_ordering greater;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\win32_helpers.h	980	static constexpr const CharT empty_string[] = {'\0'};
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\win32_helpers.h	981	static constexpr const CharT single_quote_string[] = {'"', '\0'};
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\win32_helpers.h	982	static constexpr const CharT space_string[] = {' ', '\0'};
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\win32_helpers.h	983	static constexpr const CharT quoted_space_string[] = {'"', ' ', '"', '\0'};
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\win32_helpers.h	985	static constexpr const CharT search_string_no_space[] = {'\\', '"', '\0'};
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\win32_helpers.h	986	static constexpr const CharT search_string_with_space[] = {'\\', '"', ' ', '\t', '\0'};
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\winrt.h	115	static wistd::enable_if_t<
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\winrt.h	126	static wistd::enable_if_t<Enable, const wchar_t*> get_buffer(const wchar_t (&str)[Size], UINT32* length) WI_NOEXCEPT
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\winrt.h	133	static wistd::enable_if_t<Enable, const wchar_t*> get_buffer(wchar_t (&str)[Size], UINT32* length) WI_NOEXCEPT
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\winrt.h	142	static wistd::enable_if_t<
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_functional.h	302	static const bool value = is_same<void, _Rp>::value || is_convertible<typename __invoke_of<_Fp&, _ArgTypes...>::type, _Rp>::value;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_functional.h	308	static constexpr bool value = false;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_functional.h	314	static const bool value =
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	143	static __WI_LIBCPP_CONSTEXPR const _Tp value = __v;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	1543	static const size_t __v = 0;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	1549	static const size_t __v = sizeof(_Tp);
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	1599	static const size_t __complete_check1 = __is_convertible_check<_T1>::__v;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	1600	static const size_t __complete_check2 = __is_convertible_check<_T2>::__v;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	1756	static const size_t value = alignment_of<_Tp>::value;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	1814	static const size_t __min = _A2 < _A1 ? _A2 : _A1;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	1815	static const size_t __max = _A1 < _A2 ? _A2 : _A1;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	1818	static const size_t value = _Len < __max ? __min : __max;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	1890	static const size_t value = _I0;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	1896	static const size_t value = _I0 >= _I1 ? __static_max<_I0, _In...>::value : __static_max<_I1, _In...>::value;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	1902	static const size_t alignment_value = __static_max<__alignof__(_Type0), __alignof__(_Types)...>::value;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	1903	static const size_t __len = __static_max<_Len, sizeof(_Type0), sizeof(_Types)...>::value;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	1930	static const bool value = !is_same<type, void>::value;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	1936	static const bool value = true;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	1945	static const bool value = false;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	1958	static const bool value = true;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	1970	static const bool value = true;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	1978	static const bool value = true;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	2441	static const bool value = sizeof(__test<_Tp>(12)) == sizeof(char);
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	3266	static const bool value =
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	3281	static const bool value =
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	4508	static const bool value = type::value;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	4517	static const bool value = false;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	4528	static const bool value = noexcept(_ThisT::__test_noexcept<_Ret>(__invoke(declval<_Fp>(), declval<_Args>()...)));
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	4534	static const bool value = noexcept(__invoke(declval<_Fp>(), declval<_Args>()...));
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	4673	static const bool value = !is_same<__swap1, __nat>::value && !is_same<__swap2, __nat>::value;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	4684	static const bool value =
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	4851	static const bool value = decltype(__test<_Tp>(0))::value;
+packages\Microsoft.Windows.ImplementationLibrary.1.0.250325.1\include\wil\wistd_type_traits.h	4862	static const bool value = decltype(__test<_Tp>(0))::value;
+packages\Microsoft.WindowsAppSDK.Foundation.1.8.251104000\include\decimal.h	153	static std::unique_ptr<WCHAR[]> to_wide_string(PCSTR source)
+packages\Microsoft.WindowsAppSDK.Foundation.1.8.251104000\include\decimal.h	170	static std::unique_ptr<char[]> to_narrow_string(PCWSTR source)
+packages\Microsoft.WindowsAppSDK.Foundation.1.8.251104000\include\UndockedRegFreeWinRT-AutoInitializer.cpp	30	static HMODULE dll{ LoadLibraryExW(L"Microsoft.WindowsAppRuntime.dll", nullptr, 0) };
+packages\Microsoft.WindowsAppSDK.Foundation.1.8.251104000\include\WindowsAppRuntimeAutoInitializer.cpp	64	static AutoInitialize g_autoInitialize;
+packages\Microsoft.WindowsAppSDK.Foundation.1.8.251104000\include\WindowsAppRuntimeInsights.h	24	static std::string version{ LoadStringFromResource(c_versionResourceId) };
+packages\Microsoft.WindowsAppSDK.Foundation.1.8.251104000\include\WindowsAppRuntimeInsights.h	31	static std::string channel{ LoadStringFromResource(c_channelResourceId) };
+packages\Microsoft.WindowsAppSDK.Foundation.1.8.251104000\include\WindowsAppRuntimeInsights.h	40	static wil::unique_hmodule module{ LoadResourceModule() };
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\WindowsMLAutoInitializer.cpp	17	static const OrtApiBase* s_ortApiBase = []() -> const OrtApiBase* {
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\WindowsMLAutoInitializer.Passthrough.cpp	13	static const OrtApiBase* s_ortApiBase = []() -> const OrtApiBase* {
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\WindowsMLAutoInitializer.SelfContained.cpp	18	static const OrtApiBase* s_ortApiBase = []() -> const OrtApiBase* {
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_api.h	88	static const OrtApi* api_;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_api.h	371	static constexpr BFloat16_t FromBits(uint16_t v) noexcept { return BFloat16_t(v); }
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_api.h	2788	static constexpr int INVALID_INT_DIM = -2;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_inline.h	89	static constexpr ONNXTensorElementDataType type = ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_inline.h	93	static constexpr ONNXTensorElementDataType type = ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT16;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_inline.h	97	static constexpr ONNXTensorElementDataType type = ONNX_TENSOR_ELEMENT_DATA_TYPE_BFLOAT16;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_inline.h	101	static constexpr ONNXTensorElementDataType type = ONNX_TENSOR_ELEMENT_DATA_TYPE_DOUBLE;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_inline.h	105	static constexpr ONNXTensorElementDataType type = ONNX_TENSOR_ELEMENT_DATA_TYPE_INT8;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_inline.h	109	static constexpr ONNXTensorElementDataType type = ONNX_TENSOR_ELEMENT_DATA_TYPE_INT16;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_inline.h	113	static constexpr ONNXTensorElementDataType type = ONNX_TENSOR_ELEMENT_DATA_TYPE_INT32;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_inline.h	117	static constexpr ONNXTensorElementDataType type = ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_inline.h	121	static constexpr ONNXTensorElementDataType type = ONNX_TENSOR_ELEMENT_DATA_TYPE_UINT8;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_inline.h	125	static constexpr ONNXTensorElementDataType type = ONNX_TENSOR_ELEMENT_DATA_TYPE_UINT16;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_inline.h	129	static constexpr ONNXTensorElementDataType type = ONNX_TENSOR_ELEMENT_DATA_TYPE_UINT32;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_inline.h	133	static constexpr ONNXTensorElementDataType type = ONNX_TENSOR_ELEMENT_DATA_TYPE_UINT64;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_inline.h	137	static constexpr ONNXTensorElementDataType type = ONNX_TENSOR_ELEMENT_DATA_TYPE_BOOL;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_inline.h	142	static constexpr ONNXTensorElementDataType type = ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT8E4M3FN;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_inline.h	146	static constexpr ONNXTensorElementDataType type = ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT8E4M3FNUZ;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_inline.h	150	static constexpr ONNXTensorElementDataType type = ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT8E5M2;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_inline.h	154	static constexpr ONNXTensorElementDataType type = ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT8E5M2FNUZ;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_inline.h	2601	static Status GetValue(const OrtOpAttr* attr, T& out) {
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_inline.h	2604	static Status GetValues(const OrtOpAttr* attr, std::vector<T>& out) {
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_inline.h	2627	static Status GetValue(const OrtOpAttr* attr, std::string& out) {
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_cxx_inline.h	2646	static Status GetValues(const OrtOpAttr* attr, std::vector<std::string>& out) {
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_ep_device_ep_metadata_keys.h	10	static const char* const kOrtEpDevice_EpMetadataKey_Version = "version";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_ep_device_ep_metadata_keys.h	15	static const char* const kOrtModelMetadata_EpCompatibilityInfoPrefix = "ep_compatibility_info.";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_ep_device_ep_metadata_keys.h	18	static const char* const kOrtEpDevice_EpMetadataKey_LibraryPath = "library_path";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_float16.h	72	static constexpr uint16_t kSignMask = 0x8000U;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_float16.h	73	static constexpr uint16_t kBiasedExponentMask = 0x7C00U;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_float16.h	74	static constexpr uint16_t kPositiveInfinityBits = 0x7C00U;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_float16.h	75	static constexpr uint16_t kNegativeInfinityBits = 0xFC00U;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_float16.h	76	static constexpr uint16_t kPositiveQNaNBits = 0x7E00U;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_float16.h	77	static constexpr uint16_t kNegativeQNaNBits = 0xFE00U;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_float16.h	78	static constexpr uint16_t kMaxValueBits = 0x7BFFU;  // Largest normal number
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_float16.h	79	static constexpr uint16_t kOneBits = 0x3C00U;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_float16.h	80	static constexpr uint16_t kMinusOneBits = 0xBC00U;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_float16.h	185	static bool AreZero(const Float16Impl& lhs, const Float16Impl& rhs) noexcept {
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_float16.h	359	static constexpr uint16_t kSignMask = 0x8000U;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_float16.h	360	static constexpr uint16_t kBiasedExponentMask = 0x7F80U;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_float16.h	361	static constexpr uint16_t kPositiveInfinityBits = 0x7F80U;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_float16.h	362	static constexpr uint16_t kNegativeInfinityBits = 0xFF80U;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_float16.h	363	static constexpr uint16_t kPositiveQNaNBits = 0x7FC1U;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_float16.h	364	static constexpr uint16_t kNegativeQNaNBits = 0xFFC1U;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_float16.h	365	static constexpr uint16_t kMaxValueBits = 0x7F7FU;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_float16.h	366	static constexpr uint16_t kRoundToNearest = 0x7FFFU;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_float16.h	367	static constexpr uint16_t kOneBits = 0x3F80U;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_float16.h	368	static constexpr uint16_t kMinusOneBits = 0xBF80U;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_float16.h	473	static bool AreZero(const BFloat16Impl& lhs, const BFloat16Impl& rhs) noexcept {
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	138	static TT GetT() { return (TT)0; }
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	417	static typename std::enable_if<sizeof...(Ts) == 0, std::tuple<>>::type
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	423	static typename std::enable_if<std::is_same<T, OrtKernelContext*>::value, std::tuple<T, Ts...>>::type
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	431	static typename std::enable_if<std::is_same<T, OrtKernelContext&>::value, std::tuple<T, Ts...>>::type
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	440	static typename std::enable_if<std::is_same<T, const CudaContext&>::value, std::tuple<T, Ts...>>::type
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	452	static typename std::enable_if<std::is_same<T, const RocmContext&>::value, std::tuple<T, Ts...>>::type
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	463	static typename std::enable_if<std::is_same<T, const TensorArray*>::value, std::tuple<T, Ts...>>::type
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	472	static typename std::enable_if<std::is_same<T, const TensorArray&>::value, std::tuple<T, Ts...>>::type
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	481	static typename std::enable_if<std::is_same<T, TensorArray*>::value, std::tuple<T, Ts...>>::type
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	490	static typename std::enable_if<std::is_same<T, TensorArray&>::value, std::tuple<T, Ts...>>::type
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	500	static typename std::enable_if<std::is_same<T, const Custom::Tensor<data_type>*>::value, std::tuple<T, Ts...>>::type                \
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	508	static typename std::enable_if<std::is_same<T, const Custom::Tensor<data_type>&>::value, std::tuple<T, Ts...>>::type                \
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	516	static typename std::enable_if<std::is_same<T, std::optional<const Custom::Tensor<data_type>*>>::value, std::tuple<T, Ts...>>::type \
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	530	static typename std::enable_if<std::is_same<T, const Custom::Span<data_type>*>::value, std::tuple<T, Ts...>>::type                  \
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	541	static typename std::enable_if<std::is_same<T, const Custom::Span<data_type>&>::value, std::tuple<T, Ts...>>::type                  \
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	552	static typename std::enable_if<std::is_same<T, std::optional<const Custom::Span<data_type>*>>::value, std::tuple<T, Ts...>>::type   \
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	569	static typename std::enable_if<std::is_same<T, data_type>::value, std::tuple<T, Ts...>>::type                                       \
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	580	static typename std::enable_if<std::is_same<T, std::optional<data_type>>::value, std::tuple<T, Ts...>>::type                        \
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	598	static typename std::enable_if<std::is_same<T, Custom::Tensor<data_type>*>::value, std::tuple<T, Ts...>>::type                \
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	606	static typename std::enable_if<std::is_same<T, Custom::Tensor<data_type>&>::value, std::tuple<T, Ts...>>::type                \
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	614	static typename std::enable_if<std::is_same<T, std::optional<Custom::Tensor<data_type>*>>::value, std::tuple<T, Ts...>>::type \
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	653	static typename std::enable_if<0 == sizeof...(Ts)>::type
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	658	static typename std::enable_if<0 <= sizeof...(Ts) && std::is_same<T, OrtKernelContext*>::value>::type
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	664	static typename std::enable_if<0 <= sizeof...(Ts) && std::is_same<T, OrtKernelContext&>::value>::type
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	671	static typename std::enable_if<0 <= sizeof...(Ts) && std::is_same<T, const CudaContext&>::value>::type
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	679	static typename std::enable_if<0 <= sizeof...(Ts) && std::is_same<T, const RocmContext&>::value>::type
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	686	static typename std::enable_if<0 <= sizeof...(Ts) && std::is_same<T, const TensorArray&>::value>::type
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	693	static typename std::enable_if<0 <= sizeof...(Ts) && std::is_same<T, const TensorArray*>::value>::type
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	700	static typename std::enable_if<0 <= sizeof...(Ts) && std::is_same<T, TensorArray&>::value>::type
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	707	static typename std::enable_if<0 <= sizeof...(Ts) && std::is_same<T, TensorArray*>::value>::type
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	715	static typename std::enable_if<0 <= sizeof...(Ts) && std::is_same<T, pack_type>::value>::type                          \
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	721	static typename std::enable_if<0 <= sizeof...(Ts) && std::is_same<T, const std::optional<pack_type>>::value>::type     \
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	727	static typename std::enable_if<0 <= sizeof...(Ts) && std::is_same<T, std::optional<pack_type>>::value>::type           \
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	742	static typename std::enable_if<0 <= sizeof...(Ts) && std::is_same<T, Custom::Tensor<data_type>*>::value>::type                \
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	748	static typename std::enable_if<0 <= sizeof...(Ts) && std::is_same<T, Custom::Tensor<data_type>&>::value>::type                \
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_lite_custom_op.h	754	static typename std::enable_if<0 <= sizeof...(Ts) && std::is_same<T, std::optional<Custom::Tensor<data_type>*>>::value>::type \
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_run_options_config_keys.h	27	static const char* const kOrtRunOptionsConfigEnableMemoryArenaShrinkage = "memory.enable_memory_arena_shrinkage";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_run_options_config_keys.h	32	static const char* const kOrtRunOptionsConfigDisableSynchronizeExecutionProviders = "disable_synchronize_execution_providers";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_run_options_config_keys.h	38	static const char* const kOrtRunOptionsConfigQnnPerfMode = "qnn.htp_perf_mode";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_run_options_config_keys.h	41	static const char* const kOrtRunOptionsConfigQnnPerfModePostRun = "qnn.htp_perf_mode_post_run";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_run_options_config_keys.h	44	static const char* const kOrtRunOptionsConfigQnnRpcControlLatency = "qnn.rpc_control_latency";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_run_options_config_keys.h	47	static const char* const kOrtRunOptionsConfigQnnLoraConfig = "qnn.lora_config";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_run_options_config_keys.h	54	static const char* const kOrtRunOptionsConfigCudaGraphAnnotation = "gpu_graph_id";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	21	static const char* const kOrtSessionOptionsConfigDisablePrepacking = "session.disable_prepacking";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	25	static const char* const kOrtSessionOptionsConfigUseEnvAllocators = "session.use_env_allocators";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	29	static const char* const kOrtSessionOptionsConfigLoadModelFormat = "session.load_model_format";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	33	static const char* const kOrtSessionOptionsConfigSaveModelFormat = "session.save_model_format";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	42	static const char* const kOrtSessionOptionsConfigSetDenormalAsZero = "session.set_denormal_as_zero";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	48	static const char* const kOrtSessionOptionsDisableQuantQDQ = "session.disable_quant_qdq";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	54	static const char* const kOrtSessionOptionsDisableDoubleQDQRemover = "session.disable_double_qdq_remover";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	64	static const char* const kOrtSessionOptionsEnableQuantQDQCleanup = "session.enable_quant_qdq_cleanup";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	68	static const char* const kOrtSessionOptionsEnableGeluApproximation = "optimization.enable_gelu_approximation";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	72	static const char* const kOrtSessionOptionsEnableCastChainElimination = "optimization.enable_cast_chain_elimination";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	82	static const char* const kOrtSessionOptionsDisableAheadOfTimeFunctionInlining = "session.disable_aot_function_inlining";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	98	static const char* const kOrtSessionOptionsMemoryOptimizerApplyConfig = "optimization.memory_optimizer_config";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	102	static const char* const kOrtSessionOptionsMemoryOptimizerProbeConfig = "optimization.enable_memory_probe_recompute_config";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	112	static const char* const kOrtSessionOptionsDisableSpecifiedOptimizers = "optimization.disable_specified_optimizers";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	143	static const char* const kOrtSessionOptionsGraphOptimizationsLoopLevel = "session.graph_optimizations_loop_level";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	147	static const char* const kOrtSessionOptionsUseDeviceAllocatorForInitializers = "session.use_device_allocator_for_initializers";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	154	static const char* const kOrtSessionOptionsConfigAllowInterOpSpinning = "session.inter_op.allow_spinning";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	155	static const char* const kOrtSessionOptionsConfigAllowIntraOpSpinning = "session.intra_op.allow_spinning";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	163	static const char* const kOrtSessionOptionsConfigUseORTModelBytesDirectly = "session.use_ort_model_bytes_directly";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	172	static const char* const kOrtSessionOptionsConfigUseORTModelBytesForInitializers =
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	178	static const char* const kOrtSessionOptionsQDQIsInt8Allowed = "session.qdqisint8allowed";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	184	static const char* const kOrtSessionOptionsAvx2PrecisionMode = "session.x64quantprecision";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	193	static const char* const kOrtSessionOptionsConfigMinimalBuildOptimizations =
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	204	static const char* const kOrtSessionOptionsConfigNnapiEpPartitioningStopOps = "ep.nnapi.partitioning_stop_ops";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	214	static const char* const kOrtSessionOptionsConfigDynamicBlockBase = "session.dynamic_block_base";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	221	static const char* const kOrtSessionOptionsConfigForceSpinningStop = "session.force_spinning_stop";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	227	static const char* const kOrtSessionOptionsConfigStrictShapeTypeInference = "session.strict_shape_type_inference";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	232	static const char* const kOrtSessionOptionsConfigStrictAllowReleasedOpsetsOnly = "session.allow_released_opsets_only";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	235	static const char* const kNodePartitionConfigFile = "session.node_partition_config_file";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	252	static const char* const kOrtSessionOptionsConfigIntraOpThreadAffinities = "session.intra_op_thread_affinities";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	265	static const char* const kDebugLayoutTransformation = "session.debug_layout_transformation";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	280	static const char* const kOrtSessionOptionsDisableCPUEPFallback = "session.disable_cpu_ep_fallback";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	283	static const char* const kOrtSessionOptionsOptimizedModelExternalInitializersFileName =
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	287	static const char* const kOrtSessionOptionsOptimizedModelExternalInitializersMinSizeInBytes =
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	293	static const char* const kOrtSessionOptionsModelExternalInitializersFileFolderPath =
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	304	static const char* const kOrtSessionOptionsSavePrePackedConstantInitializers =
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	323	static const char* const kOrtSessionOptionsCollectNodeMemoryStatsToFile = "session.collect_node_memory_stats_to_file";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	332	static const char* const kOrtSessionOptionsResourceCudaPartitioningSettings =
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	339	static const char* const kOrtSessionOptionEpContextEnable = "ep.context_enable";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	344	static const char* const kOrtSessionOptionEpContextFilePath = "ep.context_file_path";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	349	static const char* const kOrtSessionOptionEpContextEmbedMode = "ep.context_embed_mode";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	353	static const char* const kOrtSessionOptionEpContextNodeNamePrefix = "ep.context_node_name_prefix";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	356	static const char* const kOrtSessionOptionShareEpContexts = "ep.share_ep_contexts";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	359	static const char* const kOrtSessionOptionStopShareEpContexts = "ep.stop_share_ep_contexts";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	368	static const char* const kOrtSessionOptionsEpContextModelExternalInitializersFileName =
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	375	static const char* const kOrtSessionOptionsMlasGemmFastMathArm64Bfloat16 = "mlas.enable_gemm_fastmath_arm64_bfloat16";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	380	static const char* const kOrtSessionOptionsQDQMatMulNBitsAccuracyLevel = "session.qdq_matmulnbits_accuracy_level";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	387	static const char* const kOrtEpDynamicOptionsWorkloadType = "ep.dynamic.workload_type";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	403	static const char* const kOrtSessionOptionsDisableModelCompile = "session.disable_model_compile";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	409	static const char* const kOrtSessionOptionsFailOnSuboptimalCompiledModel =
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\onnxruntime_session_options_config_keys.h	417	static const char* const kOrtEpDynamicOptionsQnnHtpPerformanceMode = "ep.dynamic.qnn_htp_performance_mode";
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\ortdevice.h	27	static const DeviceType CPU = 0;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\ortdevice.h	28	static const DeviceType GPU = 1;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\ortdevice.h	29	static const DeviceType FPGA = 2;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\ortdevice.h	30	static const DeviceType NPU = 3;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\ortdevice.h	33	static const DeviceType DML = 4;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\ortdevice.h	36	static const MemoryType DEFAULT = 0;
+packages\Microsoft.WindowsAppSDK.ML.1.8.2109\include\winml\ortdevice.h	52	static const MemoryType HOST_ACCESSIBLE = 5;
+WorldServer\Entities\AutoMineMachineMng.cpp	33	static SYSTEMTIME s_tmLocal{};
+WorldServer\Entities\AutoMineMachineMng.cpp	34	static const char *s_szOreKind_160[5] = {
+WorldServer\Entities\AutoMineMachineMng.h	573	static AutoMineMachineMng *m_pInstance;
+WorldServer\Entities\AutominePersonalMgr.cpp	42	static AutominePersonalMgr s_instance;
+WorldServer\Entities\CActionPointSystemMgr.cpp	25	static CActionPointSystemMgr s_instance;
+WorldServer\Entities\CandidateMgr.cpp	46	static CandidateMgr s_instance;
+WorldServer\Entities\CAnimus.cpp	54	static char s_animusObjectName[256]{};
+WorldServer\Entities\CAnimus.cpp	78	static const char *kFiles[8] = {
+WorldServer\Entities\CAnimus.h	81	static CRecordData s_tblParameter[8];
+WorldServer\Entities\CAnimus.h	82	static unsigned int MAX_EXP[8];
+WorldServer\Entities\CAnimus.h	83	static int s_nLiveNum;
+WorldServer\Entities\CashItemRemoteStore.h	220	static CashItemRemoteStore *_pkInstance;
+WorldServer\Entities\CashItemRemoteStore.h	221	static CashMap *_phmapTbl;
+WorldServer\Entities\CAsyncLogger.cpp	40	static CAsyncLogger s_instance;
+WorldServer\Entities\CAsyncLogger.h	27	static constexpr ASYNC_LOG_TYPE ALT_ASYNC_LOGGER_SYSTEM_LOG = ::ALT_ASYNC_LOGGER_SYSTEM_LOG;
+WorldServer\Entities\CAsyncLogger.h	28	static constexpr ASYNC_LOG_TYPE ALT_PERFORMANCE_COUNTER_SYSTEM = ::ALT_PERFORMANCE_COUNTER_SYSTEM;
+WorldServer\Entities\CAsyncLogger.h	29	static constexpr ASYNC_LOG_TYPE ALT_PERFORMANCE_MAIN_LOOP = ::ALT_PERFORMANCE_MAIN_LOOP;
+WorldServer\Entities\CAsyncLogger.h	30	static constexpr ASYNC_LOG_TYPE ALT_PERFORMANCE_MAIN_DQS = ::ALT_PERFORMANCE_MAIN_DQS;
+WorldServer\Entities\CAsyncLogger.h	31	static constexpr ASYNC_LOG_TYPE ALT_PERFORMANCE_LOG_DQS = ::ALT_PERFORMANCE_LOG_DQS;
+WorldServer\Entities\CAsyncLogger.h	32	static constexpr ASYNC_LOG_TYPE ALT_PERFORMANCE_CASH_DQS = ::ALT_PERFORMANCE_CASH_DQS;
+WorldServer\Entities\CAsyncLogger.h	33	static constexpr ASYNC_LOG_TYPE ALT_PERFORMANCE_NETWORK_DQS = ::ALT_PERFORMANCE_NETWORK_DQS;
+WorldServer\Entities\CAsyncLogger.h	34	static constexpr ASYNC_LOG_TYPE ALT_FIREGUARD_DETECT_LOG = ::ALT_FIREGUARD_DETECT_LOG;
+WorldServer\Entities\CAsyncLogger.h	35	static constexpr ASYNC_LOG_TYPE ALT_HONOR_GUILD_LOG = ::ALT_HONOR_GUILD_LOG;
+WorldServer\Entities\CAsyncLogger.h	36	static constexpr ASYNC_LOG_TYPE ALT_CLASSREFINE_SERVICE_LOG = ::ALT_CLASSREFINE_SERVICE_LOG;
+WorldServer\Entities\CAsyncLogger.h	37	static constexpr ASYNC_LOG_TYPE ALT_BUY_CASH_ITEM_LOG = ::ALT_BUY_CASH_ITEM_LOG;
+WorldServer\Entities\CAsyncLogger.h	38	static constexpr ASYNC_LOG_TYPE ALT_HACKSHIELD_SYSTEM_LOG = ::ALT_HACKSHIELD_SYSTEM_LOG;
+WorldServer\Entities\CAsyncLogger.h	39	static constexpr ASYNC_LOG_TYPE ALT_APEX_SYSTEM_LOG = ::ALT_APEX_SYSTEM_LOG;
+WorldServer\Entities\CAsyncLogger.h	40	static constexpr ASYNC_LOG_TYPE ALT_GETGOLDBAR_LOG = ::ALT_GETGOLDBAR_LOG;
+WorldServer\Entities\CAsyncLogger.h	41	static constexpr ASYNC_LOG_TYPE ALT_GETEVENTCOUPON_LOG = ::ALT_GETEVENTCOUPON_LOG;
+WorldServer\Entities\CAsyncLogger.h	42	static constexpr ASYNC_LOG_TYPE ALT_MAX = ::ALT_MAX;
+WorldServer\Entities\CAsyncLogger.h	43	static constexpr ASYNC_LOG_TYPE ALT_NONE = ::ALT_NONE;
+WorldServer\Entities\CAsyncLogger.h	62	static bool m_bProcThread;
+WorldServer\Entities\CAttack.h	46	static CRecordData *s_pSkillData;
+WorldServer\Entities\CAttack.h	47	static _attack_param s_DefParam;
+WorldServer\Entities\CBillingNULL.h	8	static CBillingNULL ms_NULL;
+WorldServer\Entities\CBossMonsterScheduleSystem.h	22	static CBossMonsterScheduleSystem *m_pInstance;
+WorldServer\Entities\CCashDbWorkerNULL.h	13	static CCashDbWorkerNULL ms_NULL;
+WorldServer\Entities\CCharacter.h	38	static int m_nInitCount;
+WorldServer\Entities\CChatStealSystem.h	30	static CChatStealSystem *ms_pInstance;
+WorldServer\Entities\CCheckSumBaseConverter.h	11	static const unsigned int *ms_dwKeys[8];
+WorldServer\Entities\CCheckSumBaseConverter.h	12	static const long long *ms_i64Keys[8];
+WorldServer\Entities\CChiNetworkEX.h	24	static CChiNetworkEX *ms_pInstance;
+WorldServer\Entities\CDarkHole.h	15	static int s_nLiveNum;
+WorldServer\Entities\CDarkHole.h	16	static unsigned int s_dwSerialCounter;
+WorldServer\Entities\CDarkHoleChannel.h	14	static unsigned int s_dwChannelSerialCounter;
+WorldServer\Entities\CDarkHoleDungeonQuest.cpp	13	static const char kDarkHoleQuestMatchSection[] = "MATCH";
+WorldServer\Entities\CDarkHoleDungeonQuest.cpp	14	static const char kDarkHoleQuestDefaultValue[] = "default";
+WorldServer\Entities\CDarkHoleDungeonQuest.cpp	15	static const char kDarkHoleQuestIndexIni[] = ".\\Quest\\Index.ini";
+WorldServer\Entities\CDarkHoleDungeonQuest.cpp	16	static const char kDarkHoleQuestNoMatch[] = "X";
+WorldServer\Entities\CDarkHoleDungeonQuest.cpp	17	static const char kDarkHoleQuestPathFmt[] = ".\\Quest\\%s.txt";
+WorldServer\Entities\CDarkHoleDungeonQuestSetup.cpp	13	static const char kDHQuestSectionStart[] = "###";
+WorldServer\Entities\CDarkHoleDungeonQuestSetup.cpp	14	static const char kDHMissionSectionStart[] = "##";
+WorldServer\Entities\CDarkHoleDungeonQuestSetup.cpp	15	static const char kDHJobSectionStart[] = "#";
+WorldServer\Entities\CDarkHoleDungeonQuestSetup.cpp	16	static const char kDHConditionStart[] = "*";
+WorldServer\Entities\CDarkHoleDungeonQuestSetup.cpp	17	static char szEOF[] = "EOF";
+WorldServer\Entities\CDarkHoleDungeonQuestSetup.cpp	18	static unsigned int nEOFLen = 0;
+WorldServer\Entities\CDarkHoleDungeonQuestSetup.cpp	19	static unsigned int _S1_1 = 0;
+WorldServer\Entities\CDummyPosTable.h	17	static _dummy_position *ms_pHeroes_Dummy[3];
+WorldServer\Entities\CExchangeEvent.cpp	34	static CExchangeEvent s_instance;
+WorldServer\Entities\CGameObject.h	31	static bool s_bRecordSet;
+WorldServer\Entities\CGameObject.h	32	static unsigned __int16 s_wRecord[10][100];
+WorldServer\Entities\CGameObject.h	238	static CGameObject *s_pSelectObject;
+WorldServer\Entities\CGameObject.h	239	static CGameObject *s_pTotalObject[MAX_TOTAL_CGAMEOBJECT];
+WorldServer\Entities\CGameObject.h	240	static int s_nTotalObjectNum;
+WorldServer\Entities\CGoldenBoxItemMgr.cpp	60	static CGoldenBoxItemMgr s_instance;
+WorldServer\Entities\CGravityStone.h	14	static unsigned int ms_dwSerialCnt;
+WorldServer\Entities\CGuardTower.cpp	98	static char objectName[256];
+WorldServer\Entities\CGuardTower.h	68	static int s_nLiveNum;
+WorldServer\Entities\CGuardTower.h	69	static unsigned int s_dwSerialCnt;
+WorldServer\Entities\CGuardTower.h	70	static unsigned int s_dwOldTick_CheckTemp;
+WorldServer\Entities\CGuardTower.h	71	static __TEMP_WAIT_TOWER s_Temp[MAX_PLAYER];
+WorldServer\Entities\CGuild.cpp	30	static const char kUnknownGuildEmblemName[] = "<unknown>";
+WorldServer\Entities\CGuild.h	13	static CGuildList s_GuildList;
+WorldServer\Entities\CGuild.h	14	static CMgrGuildHistory s_MgrHistory;
+WorldServer\Entities\CGuildBattleController.cpp	17	static CGuildBattleController s_instance;
+WorldServer\Entities\CGuildMasterEffect.cpp	10	static CGuildMasterEffect s_instance;
+WorldServer\Entities\CGuildRoomInfo.h	72	static CMapData *sm_neutal_map[3];
+WorldServer\Entities\CGuildRoomInfo.h	73	static _dummy_position *sm_neutral_hq_dummy[3];
+WorldServer\Entities\CGuildRoomInfo.h	74	static RoomInfo sm_RoomInfo[2];
+WorldServer\Entities\CGuildRoomSystem.cpp	25	static CGuildRoomSystem s_instance;
+WorldServer\Entities\CheatCommands.cpp	209	static const char aA_44[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	210	static const char aA_45[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	211	static const char aA_46[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	212	static const char aA_47[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	213	static const char aA_48[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	214	static const char aA_49[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	215	static const char aA_50[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	216	static const char aCheatHelpSynta_0[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	217	static const char aCheatHelpSynta_1[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	218	static const char aCheatHelpSynta_2[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	219	static const char aCheatHelpSynta_3[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	220	static const char aOne_3[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	221	static const char aCoacE[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	222	static const char aCoacCodeDBoxAc[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	223	static const char aCoacE_0[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	224	static const char aE_2[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	225	static const char aAi_8[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	226	static const char aAo_6[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	227	static const char aAo_7[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	228	static const char aAua_0[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	229	static const char byte_1407AE5D0[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	230	static const char byte_1407AE5E8[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	231	static const char byte_1407AE5F8[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	232	static const char byte_1407AE600[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	233	static const char byte_1407AE608[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	234	static const char byte_1407AE660[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	235	static const char byte_1407AE680[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	236	static const char byte_1407AE6E0[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	237	static const char byte_1407AE6F0[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	238	static const char byte_1407AE700[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	239	static const char byte_1407AE980[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	240	static const char byte_1407AE998[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	241	static const char byte_1407AE9A0[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	242	static const char byte_1407AE9B0[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	243	static const char byte_1407AEA8C[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	244	static const char byte_1407AEA9C[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	245	static const char byte_1407AF0F8[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	246	static const char byte_1407AF104[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	247	static const char byte_1407AF110[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	248	static char unk_1407AE840[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	249	static char unk_1407AE858[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	250	static char unk_1407AE868[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	251	static char unk_1407AE878[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	252	static char unk_1407AE888[] = "<unknown>";
+WorldServer\Entities\CheatCommands.cpp	253	static constexpr float FLOAT_100_0 = 100.0f;
+WorldServer\Entities\CheatCommands.cpp	255	static const _eq_suk_list EqSukList[4] = {
+WorldServer\Entities\CheatCommands.cpp	2736	static const char *kProcessorNames[6] = {
+WorldServer\Entities\CHolyKeeper.h	45	static int s_nLiveNum;
+WorldServer\Entities\CHolyKeeper.h	46	static unsigned int s_dwSerialCnt;
+WorldServer\Entities\CHolyStone.h	71	static int s_nLiveNum;
+WorldServer\Entities\CHolyStone.h	72	static unsigned int s_dwSerialCnt;
+WorldServer\Entities\CHolyStoneSystemDataMgr.cpp	17	static const char *c_TempPair[7] =
+WorldServer\Entities\CHonorGuild.cpp	47	static CHonorGuild s_instance;
+WorldServer\Entities\CItemBox.h	37	static int s_nLiveNum;
+WorldServer\Entities\CItemBox.h	38	static unsigned int s_dwSerialCounter;
+WorldServer\Entities\CItemStoreManager.cpp	19	static CItemStoreManager instance;
+WorldServer\Entities\CLogTypeDBTaskManager.h	111	static CLogTypeDBTaskManager *ms_Instance;
+WorldServer\Entities\CLuaCommandEx.h	19	static _State ms_cEmpty;
+WorldServer\Entities\CLuaEventMgr.h	26	static CLuaEventMgr *ms_Instance;
+WorldServer\Entities\CLuaEventNode.h	19	static _State ms_cEmpty;
+WorldServer\Entities\CLuaLootingMgr.h	22	static _State ms_cEmpty;
+WorldServer\Entities\CLuaLootingMgr.h	59	static CLuaLootingMgr *ms_Instance;
+WorldServer\Entities\CLuaScript.h	28	static _State ms_cEmpty;
+WorldServer\Entities\CLuaScriptMgr.h	43	static CLuaScriptMgr *ms_Instance;
+WorldServer\Entities\CMainThread.cpp	650	static TimeLimitMgr s_instance;
+WorldServer\Entities\CMainThread.h	527	static char ms_szClientVerCheck[33];
+WorldServer\Entities\CMainThread.h	1144	static unsigned int m_dwCnt;
+WorldServer\Entities\CMainThread.h	3160	static const char *ms_KeyPair[3];
+WorldServer\Entities\CMainThread.h	3301	static unsigned int ms_uiObjects;
+WorldServer\Entities\CMapOperation.h	34	static const char *ms_szSettlementMapName[3][2];
+WorldServer\Entities\CMerchant.cpp	31	static char objectName[128];
+WorldServer\Entities\CMerchant.h	32	static int s_nLiveNum;
+WorldServer\Entities\CMerchant.h	33	static unsigned int s_dwSerialCnt;
+WorldServer\Entities\CMoneySupplyMgr.h	42	static CMoneySupplyMgr *pInstance;
+WorldServer\Entities\CMonster.h	214	static _monster_loot_index *s_idxMonsterLoot;
+WorldServer\Entities\CMonster.h	215	static unsigned int s_dwSerialCnt;
+WorldServer\Entities\CMonster.h	216	static int s_nAllocNum;
+WorldServer\Entities\CMonster.h	217	static int s_nLiveNum;
+WorldServer\Entities\CMonster.h	218	static CLogFile s_logTrace_Boss_BirthAndDeath;
+WorldServer\Entities\CMonster.h	219	static CLogFile s_logTrace_Boss_Looting;
+WorldServer\Entities\CMonsterEventRespawn.cpp	21	static bool s_iniExtLenInit = false;
+WorldServer\Entities\CMonsterEventRespawn.cpp	22	static size_t s_iniExtLen = 0;
+WorldServer\Entities\CMonsterHelper.h	27	static void GetDirection(float (*cur)[3], float (*tar)[3], float (*out)[3], float deg);
+WorldServer\Entities\CMonsterHelper.h	33	static bool SearchPatrolMovePos(CMonster *mon, float (*NewTar)[3]);
+WorldServer\Entities\CMonsterHelper.h	34	static bool SearchTargetMovePos_MovingTarget(CMonster *pMon, CCharacter *pTargetCharacter, float (*tarPos)[3]);
+WorldServer\Entities\CMonsterHelper.h	35	static bool SearchTargetMovePos_StopTarget(CMonster *pMon, CCharacter *pTargetCharacter, float (*tarPos)[3]);
+WorldServer\Entities\CMoveMapLimitEnviromentValues.h	9	static int ELAN_MAP_CODE;
+WorldServer\Entities\CMoveMapLimitEnviromentValues.h	10	static int ELAN_1TH_LIMIT_NPC_RECORD_INDEX;
+WorldServer\Entities\CMoveMapLimitManager.cpp	17	static CMoveMapLimitManager s_instance;
+WorldServer\Entities\CNationSettingDataNULL.h	10	static CNationSettingDataNULL ms_NULL;
+WorldServer\Entities\CNuclearBomb.h	63	static unsigned int s_dwSerialCnt;
+WorldServer\Entities\CNuclearBombMgr.cpp	28	static CNuclearBombMgr s_instance;
+WorldServer\Entities\COreAmountMgr.h	38	static COreAmountMgr *m_pInstance;
+WorldServer\Entities\CParkingUnit.h	12	static int s_nLiveNum;
+WorldServer\Entities\CPathFinder.cpp	52	static char s_pathfinder_stack_overflow[] = "pathfinder stack overflow";
+WorldServer\Entities\CPathMgr.h	23	static CPathMgr ms_BackupPath;
+WorldServer\Entities\CPcBangFavor.cpp	21	static CPcBangFavor s_instance;
+WorldServer\Entities\CPlayer_Cheat.cpp	45	static float fPos[3] = {13.0f, -108.0f, 37.0f};
+WorldServer\Entities\CPlayer_Cheat.cpp	46	static float fTarPos[3] = {-249.0f, -1737.0f, -242.0f};
+WorldServer\Entities\CPlayer_Missing.cpp	448	static unsigned int s_serialCounter = 1;
+WorldServer\Entities\CPlayer_Missing.cpp	12393	static constexpr int kBulletSlotPerPart[6] = {-1, -1, -1, 0, 1, -1};
+WorldServer\Entities\CPlayer_Missing.cpp	12749	static constexpr unsigned __int8 kWeaponPartPerBullet[2] = {3, 4};
+WorldServer\Entities\CPlayer.cpp	23506	static const unsigned int successTable[77] = {
+WorldServer\Entities\CPlayer.cpp	23519	static const unsigned int zeroTable[77] = {
+WorldServer\Entities\CPlayer.cpp	23532	static const unsigned int destroyTable[77] = {
+WorldServer\Entities\CPlayer.h	469	static CRecordData *s_pWeaponData;
+WorldServer\Entities\CPlayer.h	568	static CRecordData *s_pSkillData;
+WorldServer\Entities\CPlayer.h	569	static CRecordData *s_pForceData;
+WorldServer\Entities\CPlayer.h	739	static CRecordData ms_tbl_ItemCombine;
+WorldServer\Entities\CPlayer.h	740	static CRecordData ms_tbl_ItemCombine_Link_Stuff;
+WorldServer\Entities\CPlayer.h	741	static CRecordData ms_tbl_ItemCombine_Link_Result;
+WorldServer\Entities\CPlayer.h	885	static unsigned int ms_dwCount;
+WorldServer\Entities\CPlayer.h	973	static int s_nSpareTime;
+WorldServer\Entities\CPlayer.h	1089	static _skill_fld *ms_pXmas_Snow_Effect;
+WorldServer\Entities\CPlayer.h	1090	static _skill_fld *ms_pXmas_Snow_Bullet_Effect;
+WorldServer\Entities\CPlayer.h	1091	static CMgrAvatorItemHistory s_MgrItemHistory;
+WorldServer\Entities\CPlayer.h	1092	static CMgrAvatorLvHistory s_MgrLvHistory;
+WorldServer\Entities\CPlayer.h	1093	static int s_nLiveNum;
+WorldServer\Entities\CPlayer.h	1094	static _DELAY_PROCESS s_AnimusReturnDelay;
+WorldServer\Entities\CPlayer.h	1095	static int *s_pnLinkForceItemToEffect;
+WorldServer\Entities\CPlayer.h	1096	static _SKILL_IDX_PER_MASTERY s_SkillIndexPerMastery[8];
+WorldServer\Entities\CPlayer.h	1097	static int s_nAddMstFc[100];
+WorldServer\Entities\CPlayer.h	1098	static int s_nStdDefPoint;
+WorldServer\Entities\CPlayer.h	1099	static int s_nRevDefPoint;
+WorldServer\Entities\CPlayer.h	1100	static CRecordData s_tblLimMastery[3][4];
+WorldServer\Entities\CPlayer.h	1101	static CRecordData s_tblLimMasteryContinue[3][4];
+WorldServer\Entities\CPlayer.h	1102	static CRecordData s_tblLimMasteryCum[3][4];
+WorldServer\Entities\CPlayer.h	1103	static CRecordData s_tblLimMasteryCumContinue[3][4];
+WorldServer\Entities\CPlayer.h	1104	static _BILLING_FORCE_CLOSE_DELAY s_BillingForceCloseDelay;
+WorldServer\Entities\CPlayer.h	1105	static int s_nRaceNum[3];
+WorldServer\Entities\CPlayer.h	1106	static float s_fExpDivUnderParty_Kill[8];
+WorldServer\Entities\CPlayer.h	1107	static unsigned int s_dwTotalCloseCount;
+WorldServer\Entities\CPlayer.h	1108	static unsigned int s_dwAbnormalCloseCount;
+WorldServer\Entities\CPostSystemManager.cpp	50	static CPostSystemManager s_instance;
+WorldServer\Entities\CPvpCashMng.cpp	45	static CPvpCashMng s_instance;
+WorldServer\Entities\CPvpUserAndGuildRankingSystem.cpp	17	static CPvpUserAndGuildRankingSystem s_instance;
+WorldServer\Entities\CQuestMgr.h	19	static CRecordData *s_tblQuest;
+WorldServer\Entities\CQuestMgr.h	20	static CRecordData *s_tblQuestHappenEvent;
+WorldServer\Entities\CRaceBossMsgController.cpp	22	static CRaceBossMsgController s_instance;
+WorldServer\Entities\CRaceBossWinRate.h	21	static CRaceBossWinRate *m_Inst;
+WorldServer\Entities\CRaceBuffInfoByHolyQuestfGroup.h	28	static const char *TYPE_NAME[4];
+WorldServer\Entities\CRaceBuffManager.cpp	7	static CRaceBuffManager s_instance;
+WorldServer\Entities\CRecallEffectController.cpp	171	static CRecallEffectController s_instance;
+WorldServer\Entities\CRecordData.cpp	341	static unsigned char s_hashTable[256] = {};
+WorldServer\Entities\CRecordData.cpp	342	static bool s_hashTableLoaded = false;
+WorldServer\Entities\CReturnGateController.cpp	61	static CReturnGateController s_instance;
+WorldServer\Entities\CRFMonsterAIMgr.h	17	static CRFMonsterAIMgr *ms_Instance;
+WorldServer\Entities\CRFWorldDatabase.cpp	178	static const char kEmptySortOuter[] = "";
+WorldServer\Entities\CRFWorldDatabase.cpp	179	static const char kEmptySortInner[] = "";
+WorldServer\Entities\CRtc.h	27	static CRtc *ms_Instance;
+WorldServer\Entities\CRusiaBillingMgr.h	29	static CRusiaBillingMgr *m_pRusiaBill;
+WorldServer\Entities\cStaticMember_Player.h	9	static cStaticMember_Player *_pInstance;
+WorldServer\Entities\CSUItemSystem.cpp	7	static CSUItemSystem s_instance;
+WorldServer\Entities\CTalkCrystalCombineManager.h	71	static CTalkCrystalCombineManager *ms_pInstance;
+WorldServer\Entities\CTotalGuildRankManager.cpp	14	static CTotalGuildRankManager s_instance;
+WorldServer\Entities\CTSingleton.h	11	static T s_instance;
+WorldServer\Entities\CUnmannedTraderController.cpp	31	static CUnmannedTraderController s_instance;
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	8	static const char *Unmanned_Trader_Setting_Xml_File;
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	9	static unsigned int Unmanned_Trader_Dev_Account_Start_Serial;
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	10	static unsigned int Unmanned_Trader_Max_Schdule_Cnt;
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	11	static unsigned int Unmanned_Trader_Check_Schedule_Delay;
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	12	static unsigned int Unmanned_Trader_Change_Taxrate_Check_Changed_Day_Delay;
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	13	static unsigned int UNMANNEDTRADETRADER_LAZYCLEANER_LOOP_DELAY;
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	14	static unsigned int UNMANNEDTRADETRADER_LAZYCLEANER_UPDATE_MAX_RETRY_CNT;
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	15	static unsigned int Unmanned_Trader_Max_Row_Count_Search;
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	16	static unsigned int Unmanned_Trader_Nomal_Max_Regist_Item_Cnt;
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	17	static unsigned __int8 Unmanned_Trader_Default_Sell_Turm;
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	18	static const char *Unmanned_Trader_Default_Sort_Type_Name;
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	19	static const char *Unmanned_Trader_Default_Sort_Query;
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	20	static unsigned int Unmanned_Trader_Min_Limit_Empty_Record_Cnt;
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	21	static unsigned int Unmanned_Trader_Default_Empty_Record_Cnt;
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	22	static unsigned int UNMANNEDTRADETRADEINFO_LOOP_DELAY;
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	23	static const char *UNMANNEDTRADETRADEINFO_SAVE_INI_SECTION_NAME;
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	24	static const char *UNMANNEDTRADETRADEINFO_SAVE_INI_FILE_NAME;
+WorldServer\Entities\CUnmannedTraderGroupItemInfoTable.h	41	static CUnmannedTraderGroupItemInfoTable *ms_Instance;
+WorldServer\Entities\CUnmannedTraderItemState.h	37	static wchar_t *ms_wszStateName[15];
+WorldServer\Entities\CUnmannedTraderScheduler.h	39	static CUnmannedTraderScheduler *ms_Instance;
+WorldServer\Entities\CUnmannedTraderTaxRateManager.h	38	static CUnmannedTraderTaxRateManager *ms_Instance;
+WorldServer\Entities\CUnmannedTraderUserInfo.h	223	static CUnmannedTraderUserInfo ms_kNull;
+WorldServer\Entities\CUnmannedTraderUserInfoTable.h	97	static CUnmannedTraderUserInfoTable *ms_Instance;
+WorldServer\Entities\CUnmannedTraderUserInfoTable.h	98	static unsigned int m_uiBuyRollBackCallCountSum;
+WorldServer\Entities\CUserDB_Missing2.cpp	17	static const char aAe[] = "FirstSettingData (%s) Item[%d] Invalid Table Code (%s)";
+WorldServer\Entities\CUserDB_Missing2.cpp	18	static const char aAe_0[] = "FirstSettingData (%s) Item[%d] Unit Item Not Allowed (%s)";
+WorldServer\Entities\CUserDB_Missing2.cpp	19	static const char aAe_1[] = "FirstSettingData (%s) Item[%d] Record Not Found (%s)";
+WorldServer\Entities\CUserDB_Missing2.cpp	20	static const char aDDatavalidchec_21[] = "%d > DataValidCheckRevise EMBELL.. INDEX (%d : %d) (DEL)";
+WorldServer\Entities\CUserDB_Missing2.cpp	21	static const char aDDatavalidchec_22[] = "%d > DataValidCheckRevise EMBELL.. COUNT OVER (%d : %d)";
+WorldServer\Entities\CUserDB_Missing2.cpp	22	static const char aDDatavalidchec_23[] = "%d > DataValidCheckRevise EMBELL.. COUNT OVER (%d : %d)";
+WorldServer\Entities\CUserDB_Missing2.cpp	23	static const char aDDatavalidchec_24[] = "%d > DataValidCheckRevise FORCE.. INDEX (%d) (DEL)";
+WorldServer\Entities\CUserDB_Missing2.cpp	24	static const char aDDatavalidchec_25[] = "%d > DataValidCheckRevise ANIMUS.. INDEX (%d) (DEL)";
+WorldServer\Entities\CUserDB_Missing2.cpp	25	static const char aDDDatavalidche[] = "%d > DataValidCheckRevise UNIT.. SLOT (%d) (DEL)";
+WorldServer\Entities\CUserDB_Missing2.cpp	26	static const char aDDDatavalidche_0[] = "%d > DataValidCheckRevise QUEST.. TYPE (%d : %d) (DEL)";
+WorldServer\Entities\CUserDB_Missing2.cpp	27	static const char aDDDatavalidche_1[] = "%d > DataValidCheckRevise QUEST.. INDEX (%d : %d) (DEL)";
+WorldServer\Entities\CUserDB_Missing2.cpp	28	static const char aDDatavalidchec_26[] = "DataValidCheckRevise SFDelay.. EFFECT (%d : %d) (DEL)";
+WorldServer\Entities\CUserDB_Missing2.cpp	29	static const char aDDatavalidchec_27[] = "DataValidCheckRevise SFDelay.. MASTERY (%d : %d) (DEL)";
+WorldServer\Entities\CUserDB.cpp	2534	static const char kDataValidCheckRace[] = "D_DataValidCheck (Serial:%d) Race:%d";
+WorldServer\Entities\CUserDB.cpp	2542	static const char kDataValidCheckLevel[] = "D_DataValidCheck (Serial:%d) Level:%d Max:%d";
+WorldServer\Entities\CUserDB.h	18	static int s_nLoginNum;
+WorldServer\Entities\CUserDB.h	19	static CLogFile s_logAvatorDB;
+WorldServer\Entities\CUserDB.h	20	static CMgrAccountLobbyHistory s_MgrLobbyHistory;
+WorldServer\Entities\CUserDB.h	21	static _MOVE_LOBBY_DELAY s_MoveLobbyDelay;
+WorldServer\Entities\CUserRankingProcess.cpp	882	static unsigned int s_rankInGuildTh = 0;
+WorldServer\Entities\CWeeklyGuildRankManager.cpp	23	static CWeeklyGuildRankManager s_instance;
+WorldServer\Entities\DarkHoleQuestCommands.cpp	20	static const char kDHReactAreaNoValue[] = "-1";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	21	static const char kDHReactAreaDummyToken[] = "dummy:";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	22	static const char kDHReactAreaBlockToken[] = "block:";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	23	static const char kDHReactObjectMonsterToken[] = "monster:";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	24	static const char kDHReactObjectGroupToken[] = "m_group:";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	25	static const char kDHReactObjectItemToken[] = "item:";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	26	static const char kDHQuestCommandMembershipParty[] = "membership_party";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	27	static const char kDHQuestCommandMemberNum[] = "member_num";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	28	static const char kDHQuestCommandUseMap[] = "use_map";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	29	static const char kDHQuestCommandStartMission[] = "start_mission";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	30	static const char kDHQuestCommandLimitLvMin[] = "limit_lv_min";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	31	static const char kDHQuestCommandLimitLvMax[] = "limit_lv_max";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	32	static const char kDHQuestCommandDummyBlock[] = "dummy_block";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	33	static const char kDHQuestCommandMonsterGroup[] = "monster_group";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	34	static const char kDHQuestCommandRewardItem[] = "reward_item";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	35	static const char kDHQuestCommandRewardExp[] = "reward_exp";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	36	static const char kDHQuestCommandRewardPvp[] = "reward_pvp";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	37	static const char kDHQuestCommandRewardDalant[] = "reward_dalant";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	38	static const char kDHQuestCommandDescription[] = "description";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	39	static const char kDHMissionCommandArea[] = "area";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	40	static const char kDHMissionCommandStartPos[] = "start_pos";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	41	static const char kDHMissionCommandGatePos[] = "gate_pos";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	42	static const char kDHMissionCommandJobOrder[] = "job_order";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	43	static const char kDHMissionCommandLimTimeSec[] = "lim_time_sec";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	44	static const char kDHMissionCommandResultType[] = "result_type";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	45	static const char kDHMissionCommandResultContents[] = "result_contents";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	46	static const char kDHMissionCommandDescription[] = "description";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	47	static const char kDHMissionCommandCompleteMsg[] = "complete_msg";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	48	static const char kDHMissionCommandLootItem[] = "loot_item";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	49	static const char kDHMissionCommandAddMonster[] = "add_monster";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	50	static const char kDHMissionCommandRespawnMonster[] = "respawn_monster";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	51	static const char kDHMissionCommandRespawnMonsterOption[] = "respawn_monster_option";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	52	static const char kDHMissionCommandChangeMonster[] = "change_monster";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	53	static const char kDHMissionCommandIf[] = "if";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	54	static const char kDHMissionCommandInner[] = "inner";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	55	static const char kDHMissionCommandRespond[] = "respond";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	56	static const char kDHMissionCommandAddTime[] = "add_time";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	57	static const char kDHJobCommandType[] = "type";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	58	static const char kDHJobCommandContents[] = "contents";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	59	static const char kDHJobCommandCount[] = "count";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	60	static const char kDHJobCommandReactType[] = "react_type";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	61	static const char kDHJobCommandReactContents[] = "react_contents";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	62	static const char kDHJobCommandDescription[] = "description";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	63	static const char kDHRewardScopeOne[] = "one";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	64	static const char kDHJobOrderAnd[] = "AND";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	65	static const char kDHJobOrderOr[] = "OR";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	66	static const char kDHMissionResultComplete[] = "COMPLETE";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	67	static const char kDHMissionResultPortal[] = "PORTAL";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	68	static const char kDHMissionResultNext[] = "NEXT";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	69	static const char kDHRespawnTermToken[] = "term:";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	70	static const char kDHRespawnLimToken[] = "lim:";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	71	static const char kDHIfChangeMonster[] = "change_monster";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	72	static const char kDHIfDescription[] = "description";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	73	static const char kDHIfCompleteMsg[] = "complete_msg";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	74	static const char kDHInnerMsgToken[] = "msg:";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	75	static const char kDHInnerRespawnToken[] = "respawn_monster:";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	76	static const char kDHRespondHuntToken[] = "hunt:";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	77	static const char kDHJobTypeTake[] = "TAKE";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	78	static const char kDHJobTypeHunt[] = "HUNT";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	79	static const char kDHJobContentsAny[] = "ANY";
+WorldServer\Entities\DarkHoleQuestCommands.cpp	80	static const char kDHJobReactPortal[] = "PORTAL";
+WorldServer\Entities\DfAIMgr.cpp	383	static _NEAR_DATA nearMon[20];
+WorldServer\Entities\DfAIMgr.cpp	459	static float fNextTarPos[3];
+WorldServer\Entities\DfAIMgr.cpp	1243	static float vTargetPos_0[3];
+WorldServer\Entities\DfAIMgr.cpp	1268	static float vTargetPos[3];
+WorldServer\Entities\DfAIMgr.cpp	1329	static float NewTar[3];
+WorldServer\Entities\DfAIMgr.cpp	1330	static float fBeforeTar[3];
+WorldServer\Entities\DfAIMgr.h	82	static __int64(__fastcall *ms_CheckMotiveFunction[4])(
+WorldServer\Entities\FinalDecisionApplyer.cpp	47	static char kEmptyLeaderName[1] = {'\0'};
+WorldServer\Entities\GuildBattle.cpp	98	static CGuildBattleState GUILD_BATTLE_STATE_NULL_11{};
+WorldServer\Entities\GuildBattle.cpp	100	static CNormalGuildBattleStateList NORMAL_GUILD_BATTLE_STATE_NULL_11;
+WorldServer\Entities\GuildBattle.cpp	4594	static CGuildBattleScheduleManager s_instance;
+WorldServer\Entities\GuildBattle.h	248	static CNormalGuildBattleStateListPool *ms_Instance;
+WorldServer\Entities\GuildBattle.h	296	static CNormalGuildBattleFieldList *ms_Instance;
+WorldServer\Entities\GuildBattle.h	520	static CNormalGuildBattleManager *ms_Instance;
+WorldServer\Entities\GuildBattle.h	582	static CGuildBattleSchedulePool *ms_Instance;
+WorldServer\Entities\GuildBattle.h	641	static _worlddb_guild_battle_schedule_list *ms_pkDBScheduleInfo;
+WorldServer\Entities\GuildBattle.h	696	static CGuildBattleLogger *ms_Instance;
+WorldServer\Entities\GuildBattle.h	711	static CGuildBattleRewardItem ms_kNullObj;
+WorldServer\Entities\GuildBattle.h	725	static CGuildBattleRewardItemManager *ms_Instance;
+WorldServer\Entities\GuildBattle.h	763	static CGuildBattleRankManager *ms_Instance;
+WorldServer\Entities\GuildBattle.h	851	static CGuildBattleReservedScheduleListManager *ms_Instance;
+WorldServer\Entities\GuildBattle.h	866	static CGuildBattleScheduler *ms_Instance;
+WorldServer\Entities\GuildBattle.h	880	static CCurrentGuildBattleInfoManager *ms_Instance;
+WorldServer\Entities\GuildBattle.h	902	static CPossibleBattleGuildListManager *ms_Instance;
+WorldServer\Entities\HACKSHEILD_PARAM_ANTICP.cpp	28	static HMODULE s_hModule = nullptr;
+WorldServer\Entities\HACKSHEILD_PARAM_ANTICP.cpp	78	static AntiCpMakeGuidReqMsgFn s_fn = nullptr;
+WorldServer\Entities\HACKSHEILD_PARAM_ANTICP.cpp	79	static bool s_resolved = false;
+WorldServer\Entities\HACKSHEILD_PARAM_ANTICP.cpp	91	static AntiCpMakeReqMsgFn s_fn = nullptr;
+WorldServer\Entities\HACKSHEILD_PARAM_ANTICP.cpp	92	static bool s_resolved = false;
+WorldServer\Entities\HACKSHEILD_PARAM_ANTICP.cpp	104	static AntiCpAnalyzeGuidAckMsgFn s_fn = nullptr;
+WorldServer\Entities\HACKSHEILD_PARAM_ANTICP.cpp	105	static bool s_resolved = false;
+WorldServer\Entities\IdaCompat.h	72	static constexpr float FLOAT_0_5 = 0.5f;
+WorldServer\Entities\IdaCompat.h	73	static constexpr float FLOAT_1_0 = 1.0f;
+WorldServer\Entities\IdaCompat.h	74	static constexpr float FLOAT_1_1 = 1.1f;
+WorldServer\Entities\IdaCompat.h	75	static constexpr float FLOAT_N1_0 = -1.0f;
+WorldServer\Entities\IdaCompat.h	76	static constexpr float FLOAT_0_60000002 = 0.600000024f;
+WorldServer\Entities\IdaCompat.h	77	static constexpr float FLOAT_8_0 = 8.0f;
+WorldServer\Entities\IdaCompat.h	78	static constexpr float FLOAT_255_0 = 255.0f;
+WorldServer\Entities\IdaCompat.h	79	static constexpr float FLOAT_32767_0 = 32767.0f;
+WorldServer\Entities\IdaCompat.h	80	static constexpr float FLOAT_23_0 = 23.0f;
+WorldServer\Entities\IdaCompat.h	81	static constexpr float FLOAT_25_0 = 25.0f;
+WorldServer\Entities\IdaCompat.h	82	static constexpr float FLOAT_30_0 = 30.0f;
+WorldServer\Entities\IdaCompat.h	83	static constexpr float FLOAT_9999_0 = 9999.0f;
+WorldServer\Entities\IdaCompat.h	84	static constexpr double DOUBLE_1_0 = 1.0;
+WorldServer\Entities\IdaCompat.h	85	static constexpr float FLOAT_1000000_0 = 1000000.0f;
+WorldServer\Entities\IdaCompat.h	86	static constexpr float FLOAT_N32000_0 = -32000.0f;
+WorldServer\Entities\IdaCompat.h	87	static constexpr float FLOAT_N100000_0 = -100000.0f;
+WorldServer\Entities\ItemDataLoader.cpp	14	static const ItemDataFileEntry kItemDataFiles[] =
+WorldServer\Entities\LendItemMng.h	23	static LendItemMng *_pkInstance;
+WorldServer\Entities\LuaTinker.h	129	static T arg;
+WorldServer\Entities\LuaTinker.h	130	static const bool value = ( (sizeof(int_conv_tester(arg)) == sizeof(yes_type)) && (sizeof(vfnd_ptr_tester(add_ptr(arg))) == sizeof(yes_type)) );
+WorldServer\Entities\LuaTinker.h	328	static int invoke(lua_State *L) { push(L,upvalue_<RVal(*)(T1,T2,T3,T4,T5)>(L)(read<T1>(L,1),read<T2>(L,2),read<T3>(L,3),read<T4>(L,4),read<T5>(L,5))); return 1; }
+WorldServer\Entities\LuaTinker.h	334	static int invoke(lua_State *L) { push(L,upvalue_<RVal(*)(T1,T2,T3,T4)>(L)(read<T1>(L,1),read<T2>(L,2),read<T3>(L,3),read<T4>(L,4))); return 1; }
+WorldServer\Entities\LuaTinker.h	340	static int invoke(lua_State *L) { push(L,upvalue_<RVal(*)(T1,T2,T3)>(L)(read<T1>(L,1),read<T2>(L,2),read<T3>(L,3))); return 1; }
+WorldServer\Entities\LuaTinker.h	346	static int invoke(lua_State *L) { push(L,upvalue_<RVal(*)(T1,T2)>(L)(read<T1>(L,1),read<T2>(L,2))); return 1; }
+WorldServer\Entities\LuaTinker.h	352	static int invoke(lua_State *L) { push(L,upvalue_<RVal(*)(T1)>(L)(read<T1>(L,1))); return 1; }
+WorldServer\Entities\LuaTinker.h	358	static int invoke(lua_State *L) { push(L,upvalue_<RVal(*)()>(L)()); return 1; }
+WorldServer\Entities\LuaTinker.h	365	static int invoke(lua_State *L) { upvalue_<void(*)(T1,T2,T3,T4,T5)>(L)(read<T1>(L,1),read<T2>(L,2),read<T3>(L,3),read<T4>(L,4),read<T5>(L,5)); return 0; }
+WorldServer\Entities\LuaTinker.h	371	static int invoke(lua_State *L) { upvalue_<void(*)(T1,T2,T3,T4)>(L)(read<T1>(L,1),read<T2>(L,2),read<T3>(L,3),read<T4>(L,4)); return 0; }
+WorldServer\Entities\LuaTinker.h	377	static int invoke(lua_State *L) { upvalue_<void(*)(T1,T2,T3)>(L)(read<T1>(L,1),read<T2>(L,2),read<T3>(L,3)); return 0; }
+WorldServer\Entities\LuaTinker.h	383	static int invoke(lua_State *L) { upvalue_<void(*)(T1,T2)>(L)(read<T1>(L,1),read<T2>(L,2)); return 0; }
+WorldServer\Entities\LuaTinker.h	389	static int invoke(lua_State *L) { upvalue_<void(*)(T1)>(L)(read<T1>(L,1)); return 0; }
+WorldServer\Entities\LuaTinker.h	395	static int invoke(lua_State *L) { upvalue_<void(*)()>(L)(); return 0; }
+WorldServer\Entities\LuaTinker.h	402	static int invoke(lua_State *L) { return upvalue_<int(*)(lua_State*,T1)>(L)(L,read<T1>(L,1)); }
+WorldServer\Entities\LuaTinker.h	408	static int invoke(lua_State *L) { return upvalue_<int(*)(lua_State*)>(L)(L); }
+WorldServer\Entities\LuaTinker.h	481	static int invoke(lua_State *L) { push(L,(read<T*>(L,1)->*upvalue_<RVal(T::*)(T1,T2,T3,T4,T5)>(L))(read<T1>(L,2),read<T2>(L,3),read<T3>(L,4),read<T4>(L,5),read<T5>(L,6)));; return 1; }
+WorldServer\Entities\LuaTinker.h	487	static int invoke(lua_State *L) { push(L,(read<T*>(L,1)->*upvalue_<RVal(T::*)(T1,T2,T3,T4)>(L))(read<T1>(L,2),read<T2>(L,3),read<T3>(L,4),read<T4>(L,5))); return 1; }
+WorldServer\Entities\LuaTinker.h	493	static int invoke(lua_State *L) { push(L,(read<T*>(L,1)->*upvalue_<RVal(T::*)(T1,T2,T3)>(L))(read<T1>(L,2),read<T2>(L,3),read<T3>(L,4))); return 1; }
+WorldServer\Entities\LuaTinker.h	499	static int invoke(lua_State *L) { push(L,(read<T*>(L,1)->*upvalue_<RVal(T::*)(T1,T2)>(L))(read<T1>(L,2),read<T2>(L,3))); return 1; }
+WorldServer\Entities\LuaTinker.h	505	static int invoke(lua_State *L) { push(L,(read<T*>(L,1)->*upvalue_<RVal(T::*)(T1)>(L))(read<T1>(L,2))); return 1; }
+WorldServer\Entities\LuaTinker.h	511	static int invoke(lua_State *L) { push(L,(read<T*>(L,1)->*upvalue_<RVal(T::*)()>(L))()); return 1; }
+WorldServer\Entities\LuaTinker.h	518	static int invoke(lua_State *L)  { (read<T*>(L,1)->*upvalue_<void(T::*)(T1,T2,T3,T4,T5)>(L))(read<T1>(L,2),read<T2>(L,3),read<T3>(L,4),read<T4>(L,5),read<T5>(L,6)); return 0; }
+WorldServer\Entities\LuaTinker.h	524	static int invoke(lua_State *L)  { (read<T*>(L,1)->*upvalue_<void(T::*)(T1,T2,T3,T4)>(L))(read<T1>(L,2),read<T2>(L,3),read<T3>(L,4),read<T4>(L,5)); return 0; }
+WorldServer\Entities\LuaTinker.h	530	static int invoke(lua_State *L)  { (read<T*>(L,1)->*upvalue_<void(T::*)(T1,T2,T3)>(L))(read<T1>(L,2),read<T2>(L,3),read<T3>(L,4)); return 0; }
+WorldServer\Entities\LuaTinker.h	536	static int invoke(lua_State *L)  { (read<T*>(L,1)->*upvalue_<void(T::*)(T1,T2)>(L))(read<T1>(L,2),read<T2>(L,3)); return 0; }
+WorldServer\Entities\LuaTinker.h	542	static int invoke(lua_State *L)  { (read<T*>(L,1)->*upvalue_<void(T::*)(T1)>(L))(read<T1>(L,2)); return 0; }
+WorldServer\Entities\LuaTinker.h	548	static int invoke(lua_State *L)  { (read<T*>(L,1)->*upvalue_<void(T::*)()>(L))(); return 0; }
+WorldServer\Entities\LuaTinker.h	555	static int invoke(lua_State *L) { return (read<T*>(L,1)->*upvalue_<int(T::*)(lua_State*,T1)>(L))(L, read<T1>(L,2)); }
+WorldServer\Entities\LuaTinker.h	561	static int invoke(lua_State *L) { return (read<T*>(L,1)->*upvalue_<int(T::*)(lua_State*)>(L))(L); }
+WorldServer\Entities\LuaTinker.h	932	static const char* name(const char* name = NULL)
+WorldServer\Entities\LuaTinker.h	934	static char temp[256] = "";
+WorldServer\Entities\MathUtil.cpp	748	static void sub_14051FF20(float (*a1)[4], unsigned short a2, __int64 a3, double a4)
+WorldServer\Entities\MyTimer.h	23	static TIME _time;
+WorldServer\Entities\PatriarchElectProcessor.cpp	33	static PatriarchElectProcessor s_instance;
+WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h	8	static float MINING_SPEED;
+WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h	9	static float PLAYER_EXP;
+WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h	10	static float ANIMUS_EXP;
+WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h	11	static float BASE_MASTERY;
+WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h	12	static float SKILL_FORCE_MASTERY;
+WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h	13	static float ITEM_DROP;
+WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h	14	static float PVP_RATE;
+WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h	15	static float PLAYER_LOST_EXP;
+WorldServer\Entities\StorageList.cpp	13	static unsigned int s_makeLootInitFlag = 0;
+WorldServer\Entities\StorageList.cpp	14	static _STORAGE_LIST::_db_con s_makeLootItem{};
+WorldServer\Entities\TimeItem.cpp	16	static TimeItem s_instance;
+WorldServer\Entities\TimeItem.h	30	static TimeItemMap *_phmapTbl;
+WorldServer\Entities\TimeLimitJadeMng.h	20	static TimeLimitJadeMng *_pkInstance;
+WorldServer\Entities\UIDGenerator.h	13	static CNetCriticalSection _cs;
+WorldServer\Entities\WheatyExceptionReport.h	10	static char m_szLogName[256];
+WorldServer\Entities\WheatyExceptionReport.h	11	static char m_szDescription[256];
+WorldServer\Entities\WorldServerUtil.cpp	44	static char szDefItemName[] = "noname";
+WorldServer\Entities\WorldServerUtil.cpp	45	static float sR[4] = {200.0f, 200.0f, 200.0f, 200.0f};
+WorldServer\Entities\WorldServerUtil.cpp	46	static int s_nSkillLvPerMastery[8] = {};
+WorldServer\Entities\WorldServerUtil.cpp	47	static int s_nForceLvPerMastery[24] = {};
+WorldServer\Entities\WorldServerUtil.cpp	48	static char sBuffer[64] = {};
+WorldServer\Entities\WorldServerUtil.cpp	903	static unsigned __int64 dw64Cnt = 0;
+WorldServer\Entities\WorldServerUtil.cpp	1122	static char g_szLv[32] = "00000000";
+WorldServer\Entities\WorldServerUtil.cpp	1123	static char g_szUPT[32] = "f";
+WorldServer\Entities\WorldServerUtil.cpp	1124	static char szBufUpt[32]{};
+WorldServer\Entities\WorldServerUtil.cpp	4058	static const float kSeeDistanceTable[3] = {0.6f, 0.8f, 1.0f};
+WorldServer\Entities\WorldServerUtil.cpp	5343	static const unsigned char asc_140884708[4] = { 0x3C, 0x2D, 0xBF, 0xA1 }; // "<-?"
+WorldServer\Entities\WorldServerUtil.cpp	5368	static const char kSuffix[] = "\x3C\x2D\xBF\xA1\xB7\xAF"; // "<-??"
+WorldServer\Entities\WorldServerUtil.cpp	5614	static IDA_IUnknown_vtbl g_TextureVtable = {Texture_QueryInterface, Texture_AddRef, Texture_Release};
+WorldServer\ThirdParty\cryptopp\adhoc.cpp	36	static int s_i = (AdhocTest = &MyAdhocTest, 0);
+WorldServer\ThirdParty\cryptopp\aria.cpp	93	static const unsigned int Q = 4-(N/32);
+WorldServer\ThirdParty\cryptopp\aria.cpp	94	static const unsigned int R = N % 32;
+WorldServer\ThirdParty\cryptopp\blake2.cpp	464	static const word32 zero[2] = {0,0};
+WorldServer\ThirdParty\cryptopp\blake2.cpp	470	static const word64 zero[2] = {0,0};
+WorldServer\ThirdParty\cryptopp\blowfish.h	37	static const word32 p_init[ROUNDS+2];
+WorldServer\ThirdParty\cryptopp\blowfish.h	38	static const word32 s_init[4*256];
+WorldServer\ThirdParty\cryptopp\camellia.h	33	static const word32 SP[4][256];
+WorldServer\ThirdParty\cryptopp\cast.h	20	static const word32 S[8][256];
+WorldServer\ThirdParty\cryptopp\cast.h	86	static const word32 t_m[8][24];
+WorldServer\ThirdParty\cryptopp\cast.h	87	static const unsigned int t_r[8][24];
+WorldServer\ThirdParty\cryptopp\cast.h	89	static void Omega(int i, word32 kappa[8]);
+WorldServer\ThirdParty\cryptopp\cbcmac.h	54	static std::string StaticAlgorithmName() {return std::string("CBC-MAC(") + T::StaticAlgorithmName() + ")";}
+WorldServer\ThirdParty\cryptopp\chacha.h	50	static const char* StaticAlgorithmName() {
+WorldServer\ThirdParty\cryptopp\chacha.h	107	static const char* StaticAlgorithmName() {
+WorldServer\ThirdParty\cryptopp\chacha.h	173	static const char* StaticAlgorithmName() {
+WorldServer\ThirdParty\cryptopp\cmac.h	67	static std::string StaticAlgorithmName() {return std::string("CMAC(") + T::StaticAlgorithmName() + ")";}
+WorldServer\ThirdParty\cryptopp\cpu.cpp	96	static jmp_buf s_jmpNoCPUID;
+WorldServer\ThirdParty\cryptopp\cpu.cpp	296	static const AppleMachineInfo info;
+WorldServer\ThirdParty\cryptopp\cpu.cpp	309	static unsigned int arch;
+WorldServer\ThirdParty\cryptopp\cpu.cpp	320	static unsigned int arch;
+WorldServer\ThirdParty\cryptopp\cpu.cpp	331	static unsigned int arch;
+WorldServer\ThirdParty\cryptopp\cpu.cpp	342	static unsigned int arch;
+WorldServer\ThirdParty\cryptopp\crc_simd.cpp	51	static jmp_buf s_jmpSIGILL;
+WorldServer\ThirdParty\cryptopp\crc.h	51	static const word32 m_tab[256];
+WorldServer\ThirdParty\cryptopp\crc.h	84	static const word32 m_tab[256];
+WorldServer\ThirdParty\cryptopp\cryptlib.cpp	42	static BitBucket bitBucket;
+WorldServer\ThirdParty\cryptopp\cryptlib.cpp	402	static ClassNullRNG s_nullRNG;
+WorldServer\ThirdParty\cryptopp\cryptlib.h	142	static ENUM_TYPE ToEnum() {return static_cast<ENUM_TYPE>(VALUE);}
+WorldServer\ThirdParty\cryptopp\datatest.cpp	364	static member_ptr<PK_Signer> signer;
+WorldServer\ThirdParty\cryptopp\datatest.cpp	365	static member_ptr<PK_Verifier> verifier;
+WorldServer\ThirdParty\cryptopp\datatest.cpp	366	static std::string lastName;
+WorldServer\ThirdParty\cryptopp\datatest.cpp	478	static member_ptr<PK_Signer> signer;
+WorldServer\ThirdParty\cryptopp\datatest.cpp	479	static member_ptr<PK_Verifier> verifier;
+WorldServer\ThirdParty\cryptopp\datatest.cpp	480	static std::string lastName;
+WorldServer\ThirdParty\cryptopp\datatest.cpp	543	static member_ptr<PK_Encryptor> encryptor;
+WorldServer\ThirdParty\cryptopp\datatest.cpp	544	static member_ptr<PK_Decryptor> decryptor;
+WorldServer\ThirdParty\cryptopp\datatest.cpp	545	static std::string lastName;
+WorldServer\ThirdParty\cryptopp\datatest.cpp	614	static member_ptr<SymmetricCipher> encryptor, decryptor;
+WorldServer\ThirdParty\cryptopp\datatest.cpp	615	static std::string lastName;
+WorldServer\ThirdParty\cryptopp\datatest.cpp	784	static member_ptr<SymmetricCipher> encryptor, decryptor;
+WorldServer\ThirdParty\cryptopp\datatest.cpp	785	static std::string lastName;
+WorldServer\ThirdParty\cryptopp\datatest.cpp	871	static member_ptr<SymmetricCipher> encryptor, decryptor;
+WorldServer\ThirdParty\cryptopp\datatest.cpp	872	static std::string lastName;
+WorldServer\ThirdParty\cryptopp\datatest.cpp	981	static member_ptr<AuthenticatedSymmetricCipher> encryptor;
+WorldServer\ThirdParty\cryptopp\datatest.cpp	982	static member_ptr<AuthenticatedSymmetricCipher> decryptor;
+WorldServer\ThirdParty\cryptopp\datatest.cpp	983	static std::string lastName;
+WorldServer\ThirdParty\cryptopp\datatest.cpp	1158	static member_ptr<KeyDerivationFunction> kdf;
+WorldServer\ThirdParty\cryptopp\datatest.cpp	1159	static std::string lastName;
+WorldServer\ThirdParty\cryptopp\des.cpp	139	static byte ip[] = {
+WorldServer\ThirdParty\cryptopp\des.cpp	151	static byte fp[] = {
+WorldServer\ThirdParty\cryptopp\des.cpp	162	static byte ei[] = {
+WorldServer\ThirdParty\cryptopp\des.cpp	173	static byte sbox[8][64] = {
+WorldServer\ThirdParty\cryptopp\des.h	23	static const word32 Spbox[8][64];
+WorldServer\ThirdParty\cryptopp\dll.cpp	69	static PNew s_pNew = NULLPTR;
+WorldServer\ThirdParty\cryptopp\dll.cpp	70	static PDelete s_pDelete = NULLPTR;
+WorldServer\ThirdParty\cryptopp\dlltest.cpp	182	static PNew s_pNew = NULLPTR;
+WorldServer\ThirdParty\cryptopp\dlltest.cpp	183	static PDelete s_pDelete = NULLPTR;
+WorldServer\ThirdParty\cryptopp\dmac.h	21	static std::string StaticAlgorithmName() {return std::string("DMAC(") + T::StaticAlgorithmName() + ")";}
+WorldServer\ThirdParty\cryptopp\drbg.h	183	static std::string StaticAlgorithmName() { return std::string("Hash_DRBG(") + HASH::StaticAlgorithmName() + std::string(")"); }
+WorldServer\ThirdParty\cryptopp\drbg.h	307	static std::string StaticAlgorithmName() { return std::string("HMAC_DRBG(") + HASH::StaticAlgorithmName() + std::string(")"); }
+WorldServer\ThirdParty\cryptopp\ec2n.cpp	202	static const EC2N::Point g_identity;
+WorldServer\ThirdParty\cryptopp\eccrypto.cpp	150	static const EcRecommendedParameters<EC2N> rec[] = {
+WorldServer\ThirdParty\cryptopp\eccrypto.cpp	286	static const EcRecommendedParameters<ECP> rec[] = {
+WorldServer\ThirdParty\cryptopp\eccrypto.h	135	static std::string CRYPTOPP_API StaticAlgorithmNamePrefix() {return "EC";}
+WorldServer\ThirdParty\cryptopp\eccrypto.h	395	static std::string CRYPTOPP_API StaticAlgorithmName() {return std::string("ECDSA-RFC6979/") + H::StaticAlgorithmName();}
+WorldServer\ThirdParty\cryptopp\eccrypto.h	583	static std::string CRYPTOPP_API StaticAlgorithmName() {return std::string("ECGDSA-ISO15946/") + H::StaticAlgorithmName();}
+WorldServer\ThirdParty\cryptopp\ecp.cpp	245	static const ECP::Point g_identity;
+WorldServer\ThirdParty\cryptopp\emsa2.h	26	static const byte id;
+WorldServer\ThirdParty\cryptopp\factory.h	101	static ObjectFactoryRegistry<AbstractClass, instance> s_registry;
+WorldServer\ThirdParty\cryptopp\filters.cpp	1244	static const byte nullBytes[128] = {0};
+WorldServer\ThirdParty\cryptopp\fips140.cpp	43	static bool s_inProgress = false;
+WorldServer\ThirdParty\cryptopp\fipsalgt.cpp	1292	static int s_i = (AdhocTest = &FIPS_140_AlgorithmTest, 0);
+WorldServer\ThirdParty\cryptopp\fipstest.cpp	67	static const byte s_moduleMac[CryptoPP::HMAC<CryptoPP::SHA1>::DIGESTSIZE] = CRYPTOPP_DUMMY_DLL_MAC;
+WorldServer\ThirdParty\cryptopp\fipstest.cpp	71	static HMODULE s_hModule = NULLPTR;
+WorldServer\ThirdParty\cryptopp\gcm_simd.cpp	65	static jmp_buf s_jmpSIGILL;
+WorldServer\ThirdParty\cryptopp\gcm.h	96	static word16 s_reductionTable[256];
+WorldServer\ThirdParty\cryptopp\gcm.h	97	static volatile bool s_reductionTableInitialized;
+WorldServer\ThirdParty\cryptopp\gf2n.cpp	188	static const PolynomialMod2 g_zero;
+WorldServer\ThirdParty\cryptopp\gf2n.cpp	342	static const word map[16] = {0, 1, 4, 5, 16, 17, 20, 21, 64, 65, 68, 69, 80, 81, 84, 85};
+WorldServer\ThirdParty\cryptopp\gf2n.cpp	571	static const char upper[]="0123456789ABCDEF";
+WorldServer\ThirdParty\cryptopp\gf2n.cpp	572	static const char lower[]="0123456789abcdef";
+WorldServer\ThirdParty\cryptopp\gfpcrypt.h	164	static std::string CRYPTOPP_API StaticAlgorithmNamePrefix() {return "";}
+WorldServer\ThirdParty\cryptopp\gfpcrypt.h	361	static const byte zero = 0, one = 1;
+WorldServer\ThirdParty\cryptopp\gfpcrypt.h	832	static std::string CRYPTOPP_API StaticAlgorithmName() {return "DSA/" + (std::string)H::StaticAlgorithmName();}
+WorldServer\ThirdParty\cryptopp\gfpcrypt.h	847	static std::string CRYPTOPP_API StaticAlgorithmName() {return std::string("DSA-RFC6979/") + H::StaticAlgorithmName();}
+WorldServer\ThirdParty\cryptopp\gfpcrypt.h	1027	static std::string CRYPTOPP_API StaticAlgorithmName() {return "DLIES";}    // TODO: fix this after name is standardized
+WorldServer\ThirdParty\cryptopp\gost.h	35	static const byte sBox[8][16];
+WorldServer\ThirdParty\cryptopp\gost.h	36	static volatile bool sTableCalculated;
+WorldServer\ThirdParty\cryptopp\gost.h	37	static word32 sTable[4][256];
+WorldServer\ThirdParty\cryptopp\gzip.cpp	10	static inline bool Is8859Character(char c) {
+WorldServer\ThirdParty\cryptopp\hkdf.h	30	static std::string StaticAlgorithmName () {
+WorldServer\ThirdParty\cryptopp\hkdf.h	86	static const NullVectorType& GetNullVector() {
+WorldServer\ThirdParty\cryptopp\hkdf.h	87	static const NullVectorType s_NullVector = {0};
+WorldServer\ThirdParty\cryptopp\hmac.h	68	static std::string StaticAlgorithmName() {return std::string("HMAC(") + T::StaticAlgorithmName() + ")";}
+WorldServer\ThirdParty\cryptopp\hrtimer.cpp	44	static const word64 freq = InitializePerformanceCounterFrequency();
+WorldServer\ThirdParty\cryptopp\hrtimer.cpp	53	static unsigned long unitsPerSecondTable[] = {1, 1000, 1000*1000, 1000*1000*1000};
+WorldServer\ThirdParty\cryptopp\hrtimer.cpp	124	static bool getCurrentThreadImplemented = true;
+WorldServer\ThirdParty\cryptopp\hrtimer.cpp	164	static const TimerWord ticksPerSecond = PerformanceCounterFrequency();
+WorldServer\ThirdParty\cryptopp\hrtimer.cpp	167	static const long ticksPerSecond = sysconf(_SC_CLK_TCK);
+WorldServer\ThirdParty\cryptopp\idea.cpp	10	static const int IDEA_KEYLEN=(6*IDEA::ROUNDS+4);  // key schedule length in # of word16s
+WorldServer\ThirdParty\cryptopp\idea.h	51	static volatile bool tablesBuilt;
+WorldServer\ThirdParty\cryptopp\idea.h	52	static word16 log[0x10000], antilog[0x10000];
+WorldServer\ThirdParty\cryptopp\integer.cpp	123	static bool s_flag;
+WorldServer\ThirdParty\cryptopp\integer.cpp	2158	static PAdd s_pAdd = &Baseline_Add, s_pSub = &Baseline_Sub;
+WorldServer\ThirdParty\cryptopp\integer.cpp	2159	static size_t s_recursionLimit = 8;
+WorldServer\ThirdParty\cryptopp\integer.cpp	2161	static const size_t s_recursionLimit = 16;
+WorldServer\ThirdParty\cryptopp\integer.cpp	2164	static PMul s_pMul[9], s_pBot[9];
+WorldServer\ThirdParty\cryptopp\integer.cpp	2165	static PSqu s_pSqu[9];
+WorldServer\ThirdParty\cryptopp\integer.cpp	2166	static PMulTop s_pTop[9];
+WorldServer\ThirdParty\cryptopp\integer.cpp	2950	static const unsigned int RoundupSizeTable[] = {2, 2, 2, 4, 4, 8, 8, 8, 8};
+WorldServer\ThirdParty\cryptopp\integer.cpp	3733	static const char upper[]="0123456789ABCDEF";
+WorldServer\ThirdParty\cryptopp\integer.cpp	3734	static const char lower[]="0123456789abcdef";
+WorldServer\ThirdParty\cryptopp\integer.cpp	4774	static const unsigned int BIT_32 = (1U << 31);
+WorldServer\ThirdParty\cryptopp\integer.cpp	4776	static const unsigned int BIT_31 = (1U << 30);
+WorldServer\ThirdParty\cryptopp\integer.cpp	4840	static const unsigned int HIGH_BIT = (1U << 31);
+WorldServer\ThirdParty\cryptopp\kalyna.cpp	76	static const unsigned int U = (NB == 2) ? 16 : (NB == 4) ? 32 : (NB == 8) ? 64 : -1;
+WorldServer\ThirdParty\cryptopp\kalyna.cpp	77	static const unsigned int V = (NB == 2) ?  7 : (NB == 4) ? 11 : (NB == 8) ? 19 : -1;
+WorldServer\ThirdParty\cryptopp\kalyna.cpp	153	static inline void AddConstant(word64 src[NB], word64 dst[NB], word64 constant)
+WorldServer\ThirdParty\cryptopp\lsh.h	93	static std::string StaticAlgorithmName() { return "LSH-224"; }
+WorldServer\ThirdParty\cryptopp\lsh.h	122	static std::string StaticAlgorithmName() { return "LSH-256"; }
+WorldServer\ThirdParty\cryptopp\lsh.h	193	static std::string StaticAlgorithmName() { return "LSH-384"; }
+WorldServer\ThirdParty\cryptopp\lsh.h	222	static std::string StaticAlgorithmName() { return "LSH-512"; }
+WorldServer\ThirdParty\cryptopp\lsh.h	251	static std::string StaticAlgorithmName() { return "LSH-512-256"; }
+WorldServer\ThirdParty\cryptopp\lubyrack.h	18	static std::string StaticAlgorithmName() {return std::string("LR/")+T::StaticAlgorithmName();}
+WorldServer\ThirdParty\cryptopp\luc.h	133	static std::string StaticAlgorithmName() {return "LUC";}
+WorldServer\ThirdParty\cryptopp\mars.h	33	static const word32 Sbox[512];
+WorldServer\ThirdParty\cryptopp\md2.cpp	40	static const byte S[256] = {
+WorldServer\ThirdParty\cryptopp\mdc.h	24	static std::string StaticAlgorithmName() {return std::string("MDC/")+B::StaticAlgorithmName();}
+WorldServer\ThirdParty\cryptopp\mersenne.h	168	static const word32 magic[2]={0x0UL, K};
+WorldServer\ThirdParty\cryptopp\misc.h	160	static char dummy[2*b-1];
+WorldServer\ThirdParty\cryptopp\misc.h	332	static std::mutex s_mutex;
+WorldServer\ThirdParty\cryptopp\misc.h	333	static std::atomic<T*> s_pObject;
+WorldServer\ThirdParty\cryptopp\misc.h	354	static volatile simple_ptr<T> s_pObject;
+WorldServer\ThirdParty\cryptopp\misc.h	1088	static const int MultiplyDeBruijnBitPosition[32] =
+WorldServer\ThirdParty\cryptopp\misc.h	3055	static inline GetBlock<T, B, GA> Get(const void *block) {return GetBlock<T, B, GA>(block);}
+WorldServer\ThirdParty\cryptopp\modarith.h	272	static const RandomizationParameter DefaultRandomizationParameter;
+WorldServer\ThirdParty\cryptopp\neon_simd.cpp	42	static jmp_buf s_jmpSIGILL;
+WorldServer\ThirdParty\cryptopp\oaep.h	41	static std::string CRYPTOPP_API StaticAlgorithmName() {return std::string("OAEP-") + MGF::StaticAlgorithmName() + "(" + H::StaticAlgorithmName() + ")";}
+WorldServer\ThirdParty\cryptopp\osrng.cpp	185	static const MicrosoftCryptoProvider hProvider = MicrosoftCryptoProvider();
+WorldServer\ThirdParty\cryptopp\osrng.h	193	static std::string StaticAlgorithmName() {
+WorldServer\ThirdParty\cryptopp\pkcspad.h	37	static const byte decoration[];
+WorldServer\ThirdParty\cryptopp\pkcspad.h	38	static const unsigned int length;
+WorldServer\ThirdParty\cryptopp\poly1305.h	49	static std::string StaticAlgorithmName() {return std::string("Poly1305(") + T::StaticAlgorithmName() + ")";}
+WorldServer\ThirdParty\cryptopp\poly1305.h	167	static std::string StaticAlgorithmName() {return std::string("Poly1305TLS");}
+WorldServer\ThirdParty\cryptopp\polynomi.h	310	static const Ring ms_fixedRing;
+WorldServer\ThirdParty\cryptopp\power7_ppc.cpp	32	static jmp_buf s_jmpSIGILL;
+WorldServer\ThirdParty\cryptopp\power8_ppc.cpp	32	static jmp_buf s_jmpSIGILL;
+WorldServer\ThirdParty\cryptopp\power9_ppc.cpp	32	static jmp_buf s_jmpSIGILL;
+WorldServer\ThirdParty\cryptopp\ppc_simd.cpp	35	static jmp_buf s_jmpSIGILL;
+WorldServer\ThirdParty\cryptopp\pssr.h	82	static std::string CRYPTOPP_API StaticAlgorithmName() {return std::string(ALLOW_RECOVERY ? "PSSR-" : "PSS-") + MGF::StaticAlgorithmName();}
+WorldServer\ThirdParty\cryptopp\pubkey.h	2298	static std::string CRYPTOPP_API StaticAlgorithmName() {return std::string(KEYS::StaticAlgorithmName()) + "/" + MessageEncodingMethod::StaticAlgorithmName();}
+WorldServer\ThirdParty\cryptopp\pubkey.h	2323	static std::string CRYPTOPP_API StaticAlgorithmName() {return std::string(KEYS::StaticAlgorithmName()) + "/" + MessageEncodingMethod::StaticAlgorithmName() + "(" + H::StaticAlgorithmName() + ")";}
+WorldServer\ThirdParty\cryptopp\pubkey.h	2346	static std::string StaticAlgorithmName() {return SA::StaticAlgorithmName() + std::string("/EMSA1(") + H::StaticAlgorithmName() + ")";}
+WorldServer\ThirdParty\cryptopp\pwdbased.h	34	static std::string StaticAlgorithmName () {
+WorldServer\ThirdParty\cryptopp\pwdbased.h	163	static std::string StaticAlgorithmName () {
+WorldServer\ThirdParty\cryptopp\pwdbased.h	325	static std::string StaticAlgorithmName () {
+WorldServer\ThirdParty\cryptopp\queue.cpp	14	static const unsigned int s_maxAutoNodeSize = 16*1024u;
+WorldServer\ThirdParty\cryptopp\rabin.h	108	static std::string StaticAlgorithmName() {return "Rabin-Crypto++Variant";}
+WorldServer\ThirdParty\cryptopp\rc2.cpp	18	static const unsigned char PITABLE[256] = {
+WorldServer\ThirdParty\cryptopp\rc5.cpp	17	static const RC5_WORD MAGIC_P = 0xb7e15163L;    // magic constant P for wordsize
+WorldServer\ThirdParty\cryptopp\rc5.cpp	18	static const RC5_WORD MAGIC_Q = 0x9e3779b9L;    // magic constant Q for wordsize
+WorldServer\ThirdParty\cryptopp\rc5.cpp	19	static const int U=sizeof(RC5_WORD);
+WorldServer\ThirdParty\cryptopp\rc6.cpp	18	static const RC6_WORD MAGIC_P = 0xb7e15163L;    // magic constant P for wordsize
+WorldServer\ThirdParty\cryptopp\rc6.cpp	19	static const RC6_WORD MAGIC_Q = 0x9e3779b9L;    // magic constant Q for wordsize
+WorldServer\ThirdParty\cryptopp\rc6.cpp	20	static const int U=sizeof(RC6_WORD);
+WorldServer\ThirdParty\cryptopp\regtest1.cpp	64	static bool s_registered = false;
+WorldServer\ThirdParty\cryptopp\rijndael_simd.cpp	75	static jmp_buf s_jmpSIGILL;
+WorldServer\ThirdParty\cryptopp\rijndael_simd.cpp	548	static const uint32_t s_rconBE[] = {
+WorldServer\ThirdParty\cryptopp\rijndael.cpp	116	static word64 Te[256];
+WorldServer\ThirdParty\cryptopp\rijndael.cpp	118	static word64 Td[256];
+WorldServer\ThirdParty\cryptopp\rijndael.cpp	128	static volatile bool s_TeFilled = false, s_TdFilled = false;
+WorldServer\ThirdParty\cryptopp\rijndael.cpp	1264	static const byte *zeros = (const byte*)(Te+256);
+WorldServer\ThirdParty\cryptopp\rijndael.h	61	static const byte Se[256];
+WorldServer\ThirdParty\cryptopp\rijndael.h	62	static const byte Sd[256];
+WorldServer\ThirdParty\cryptopp\rijndael.h	64	static const word32 rcon[];
+WorldServer\ThirdParty\cryptopp\rng.h	37	static const word32 m;
+WorldServer\ThirdParty\cryptopp\rng.h	38	static const word32 q;
+WorldServer\ThirdParty\cryptopp\rng.h	39	static const word16 a;
+WorldServer\ThirdParty\cryptopp\rng.h	40	static const word16 r;
+WorldServer\ThirdParty\cryptopp\safer.cpp	55	static const unsigned int BLOCKSIZE = 8;
+WorldServer\ThirdParty\cryptopp\safer.cpp	56	static const unsigned int MAX_ROUNDS = 13;
+WorldServer\ThirdParty\cryptopp\safer.h	29	static const byte exp_tab[256];
+WorldServer\ThirdParty\cryptopp\safer.h	30	static const byte log_tab[256];
+WorldServer\ThirdParty\cryptopp\salsa.h	33	static std::string StaticAlgorithmName() {return "Salsa20";}
+WorldServer\ThirdParty\cryptopp\salsa.h	77	static std::string StaticAlgorithmName() {return "XSalsa20";}
+WorldServer\ThirdParty\cryptopp\scrypt.h	38	static std::string StaticAlgorithmName () {
+WorldServer\ThirdParty\cryptopp\secblock.h	58	static const size_type ELEMS_MAX = ...;
+WorldServer\ThirdParty\cryptopp\secblock.h	60	static const size_type ELEMS_MAX = (~(size_type)0)/sizeof(T);
+WorldServer\ThirdParty\cryptopp\secblock.h	64	static const size_type ELEMS_MAX = SIZE_MAX/sizeof(T);
+WorldServer\ThirdParty\cryptopp\secblock.h	751	static const size_type ELEMS_MAX = ...;
+WorldServer\ThirdParty\cryptopp\secblock.h	753	static const size_type ELEMS_MAX = (~(size_type)0)/sizeof(T);
+WorldServer\ThirdParty\cryptopp\secblock.h	757	static const size_type ELEMS_MAX = SIZE_MAX/sizeof(T);
+WorldServer\ThirdParty\cryptopp\seed.cpp	35	static const byte s_s1[256] = {
+WorldServer\ThirdParty\cryptopp\sha_simd.cpp	66	static jmp_buf s_jmpSIGILL;
+WorldServer\ThirdParty\cryptopp\sha.cpp	503	static const word32 s[8] = {
+WorldServer\ThirdParty\cryptopp\sha.cpp	511	static const word32 s[8] = {
+WorldServer\ThirdParty\cryptopp\sha.h	126	static void CRYPTOPP_API Transform(HashWordType *digest, const HashWordType *data) {SHA256::Transform(digest, data);}
+WorldServer\ThirdParty\cryptopp\sha.h	199	static void CRYPTOPP_API Transform(HashWordType *digest, const HashWordType *data) {SHA512::Transform(digest, data);}
+WorldServer\ThirdParty\cryptopp\shacal2.h	37	static const word32 K[64];
+WorldServer\ThirdParty\cryptopp\shark.cpp	17	static const byte iG[8][8] = {
+WorldServer\ThirdParty\cryptopp\shark.h	51	static const byte sbox[256];
+WorldServer\ThirdParty\cryptopp\shark.h	52	static const word64 cbox[8][256];
+WorldServer\ThirdParty\cryptopp\shark.h	63	static const byte sbox[256];
+WorldServer\ThirdParty\cryptopp\shark.h	64	static const word64 cbox[8][256];
+WorldServer\ThirdParty\cryptopp\simple.h	46	static std::string CRYPTOPP_API StaticAlgorithmName() {return ALGORITHM_INFO::StaticAlgorithmName();}
+WorldServer\ThirdParty\cryptopp\siphash.h	54	static std::string StaticAlgorithmName() {
+WorldServer\ThirdParty\cryptopp\skipjack.h	45	static const byte fTable[256];
+WorldServer\ThirdParty\cryptopp\skipjack.h	56	static const byte Se[256];
+WorldServer\ThirdParty\cryptopp\skipjack.h	57	static const word32 Te[4][256];
+WorldServer\ThirdParty\cryptopp\skipjack.h	66	static const byte Sd[256];
+WorldServer\ThirdParty\cryptopp\skipjack.h	67	static const word32 Td[4][256];
+WorldServer\ThirdParty\cryptopp\square.cpp	22	static void SquareTransform (word32 in[4], word32 out[4])
+WorldServer\ThirdParty\cryptopp\square.cpp	24	static const byte G[4][4] =
+WorldServer\ThirdParty\cryptopp\square.cpp	51	static const word32 offset[ROUNDS] = {
+WorldServer\ThirdParty\cryptopp\square.h	40	static const byte Se[256];
+WorldServer\ThirdParty\cryptopp\square.h	41	static const word32 Te[4][256];
+WorldServer\ThirdParty\cryptopp\square.h	49	static const byte Sd[256];
+WorldServer\ThirdParty\cryptopp\square.h	50	static const word32 Td[4][256];
+WorldServer\ThirdParty\cryptopp\sse_simd.cpp	44	static jmp_buf s_jmpNoSSE2;
+WorldServer\ThirdParty\cryptopp\tea.cpp	16	static const word32 DELTA = 0x9e3779b9;
+WorldServer\ThirdParty\cryptopp\test.cpp	153	static const SignalHandler<SIGTRAP, false> s_dummyHandler;
+WorldServer\ThirdParty\cryptopp\tiger.h	56	static const word64 table[4*256+3];
+WorldServer\ThirdParty\cryptopp\ttmac.h	19	static std::string StaticAlgorithmName() {return std::string("Two-Track-MAC");}
+WorldServer\ThirdParty\cryptopp\tweetnacl.cpp	33	static const byte
+WorldServer\ThirdParty\cryptopp\tweetnacl.cpp	37	static const gf
+WorldServer\ThirdParty\cryptopp\tweetnacl.cpp	54	static word32 L32(word32 x,int c) { return (x << c) | ((x&0xffffffff) >> (32 - c)); }
+WorldServer\ThirdParty\cryptopp\tweetnacl.cpp	154	static const byte sigma[16] = {0x65,0x78,0x70,0x61,0x6E,0x64,0x20,0x33,0x32,0x2D,0x62,0x79,0x74,0x65,0x20,0x6B};
+WorldServer\ThirdParty\cryptopp\tweetnacl.cpp	212	static const word32 minusp[17] = {
+WorldServer\ThirdParty\cryptopp\tweetnacl.cpp	426	static int has_small_order(const byte s[32])
+WorldServer\ThirdParty\cryptopp\tweetnacl.cpp	578	static word64 R(word64 x,int c) { return (x >> c) | (x << (64 - c)); }
+WorldServer\ThirdParty\cryptopp\tweetnacl.cpp	579	static word64 Ch(word64 x,word64 y,word64 z) { return (x & y) ^ (~x & z); }
+WorldServer\ThirdParty\cryptopp\tweetnacl.cpp	580	static word64 Maj(word64 x,word64 y,word64 z) { return (x & y) ^ (x & z) ^ (y & z); }
+WorldServer\ThirdParty\cryptopp\tweetnacl.cpp	581	static word64 Sigma0(word64 x) { return R(x,28) ^ R(x,34) ^ R(x,39); }
+WorldServer\ThirdParty\cryptopp\tweetnacl.cpp	582	static word64 Sigma1(word64 x) { return R(x,14) ^ R(x,18) ^ R(x,41); }
+WorldServer\ThirdParty\cryptopp\tweetnacl.cpp	583	static word64 sigma0(word64 x) { return R(x, 1) ^ R(x, 8) ^ (x >> 7); }
+WorldServer\ThirdParty\cryptopp\tweetnacl.cpp	584	static word64 sigma1(word64 x) { return R(x,19) ^ R(x,61) ^ (x >> 6); }
+WorldServer\ThirdParty\cryptopp\tweetnacl.cpp	586	static const word64 K[80] =
+WorldServer\ThirdParty\cryptopp\tweetnacl.cpp	642	static const byte iv[64] = {
+WorldServer\ThirdParty\cryptopp\tweetnacl.cpp	679	static void add(gf p[4],gf q[4])
+WorldServer\ThirdParty\cryptopp\tweetnacl.cpp	704	static void cswap(gf p[4],gf q[4],byte b)
+WorldServer\ThirdParty\cryptopp\tweetnacl.cpp	711	static void pack(byte *r,gf p[4])
+WorldServer\ThirdParty\cryptopp\tweetnacl.cpp	721	static void scalarmult(gf p[4],gf q[4],const byte *s)
+WorldServer\ThirdParty\cryptopp\tweetnacl.cpp	737	static void scalarbase(gf p[4],const byte *s)
+WorldServer\ThirdParty\cryptopp\tweetnacl.cpp	785	static const word64 L[32] = {0xed, 0xd3, 0xf5, 0x5c, 0x1a, 0x63, 0x12, 0x58, 0xd6, 0x9c, 0xf7, 0xa2, 0xde, 0xf9, 0xde, 0x14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x10};
+WorldServer\ThirdParty\cryptopp\tweetnacl.cpp	787	static void modL(byte *r,sword64 x[64])
+WorldServer\ThirdParty\cryptopp\tweetnacl.cpp	853	static int unpackneg(gf r[4],const byte p[32])
+WorldServer\ThirdParty\cryptopp\twofish.cpp	15	static const unsigned int modulus = 0x14d;
+WorldServer\ThirdParty\cryptopp\twofish.h	35	static const byte q[2][256];
+WorldServer\ThirdParty\cryptopp\twofish.h	36	static const word32 mds[4][256];
+WorldServer\ThirdParty\cryptopp\validat1.cpp	615	static const byte str1[] = "abcdefghijklmnopqrstuvwxyz";
+WorldServer\ThirdParty\cryptopp\validat1.cpp	616	static const byte str2[] = "zyxwvutsrqponmlkjihgfedcba";
+WorldServer\ThirdParty\cryptopp\validat1.cpp	617	static const byte str3[] = "0123456789";
+WorldServer\ThirdParty\cryptopp\validat1.cpp	653	static const word32 str1[] = {2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97};
+WorldServer\ThirdParty\cryptopp\validat1.cpp	654	static const word32 str2[] = {97,89,83,79,73,71,67,61,59,53,47,43,41,37,31,29,23,19,17,13,11,7,5,3,2};
+WorldServer\ThirdParty\cryptopp\validat1.cpp	655	static const word32 str3[] = {0,1,2,3,4,5,6,7,8,9};
+WorldServer\ThirdParty\cryptopp\validat1.cpp	691	static const word64 str1[] = {2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97};
+WorldServer\ThirdParty\cryptopp\validat1.cpp	692	static const word64 str2[] = {97,89,83,79,73,71,67,61,59,53,47,43,41,37,31,29,23,19,17,13,11,7,5,3,2};
+WorldServer\ThirdParty\cryptopp\validat1.cpp	693	static const word64 str3[] = {0,1,2,3,4,5,6,7,8,9};
+WorldServer\ThirdParty\cryptopp\validat1.cpp	730	static const word128 str1[] = {2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97};
+WorldServer\ThirdParty\cryptopp\validat1.cpp	731	static const word128 str2[] = {97,89,83,79,73,71,67,61,59,53,47,43,41,37,31,29,23,19,17,13,11,7,5,3,2};
+WorldServer\ThirdParty\cryptopp\validat1.cpp	732	static const word128 str3[] = {0,1,2,3,4,5,6,7,8,9};
+WorldServer\ThirdParty\cryptopp\validat1.cpp	847	static const unsigned int SIZE = 8;
+WorldServer\ThirdParty\cryptopp\validat1.cpp	884	static const unsigned int SIZE = 8;
+WorldServer\ThirdParty\cryptopp\validat1.cpp	922	static const unsigned int SIZE = 8;
+WorldServer\ThirdParty\cryptopp\validat1.cpp	961	static const unsigned int SIZE = 8;
+WorldServer\ThirdParty\cryptopp\validat1.cpp	1007	static const size_t nCodes = 30;
+WorldServer\ThirdParty\cryptopp\validat1.cpp	1013	static const unsigned int maxCodeBits = nCodes >> 1;
+WorldServer\ThirdParty\cryptopp\validat10.cpp	178	static const byte small_order_p[crypto_box_PUBLICKEYBYTES] = {
+WorldServer\ThirdParty\cryptopp\validat2.cpp	43	static const Bitops_TestTuple tests[] = {
+WorldServer\ThirdParty\cryptopp\validat4.cpp	1514	static bool s_initialized = false;
+WorldServer\ThirdParty\cryptopp\validat4.cpp	1515	static MyDecoderAlphabet s_alpha;
+WorldServer\ThirdParty\cryptopp\validat4.cpp	1516	static MyDecoderArray s_array;
+WorldServer\ThirdParty\cryptopp\validat8.cpp	421	static void InitState(HashWordType *state) {
+WorldServer\ThirdParty\cryptopp\validat8.cpp	424	static void Transform(CryptoPP::word32 *digest, const CryptoPP::word32 *data) {
+WorldServer\ThirdParty\cryptopp\validat8.cpp	427	static const char *StaticAlgorithmName() {
+WorldServer\ThirdParty\cryptopp\validate.h	328	static std::string path = AddSeparator(GetDataDir());
+WorldServer\ThirdParty\cryptopp\vmac.h	81	static std::string StaticAlgorithmName() {return std::string("VMAC(") + T_BlockCipher::StaticAlgorithmName() + ")-" + IntToString(T_DigestBitSize);}
+WorldServer\ThirdParty\cryptopp\xtr.cpp	17	static const GFP2Element s_zero;
+WorldServer\ThirdParty\cryptopp\zdeflate.cpp	326	static const unsigned int configurationTable[10][4] = {
+WorldServer\ThirdParty\cryptopp\zdeflate.cpp	580	static const unsigned int lengthCodes[] = {
+WorldServer\ThirdParty\cryptopp\zdeflate.cpp	597	static const unsigned int lengthBases[] =
+WorldServer\ThirdParty\cryptopp\zdeflate.cpp	600	static const unsigned int distanceBases[30] =
+WorldServer\ThirdParty\cryptopp\zdeflate.cpp	706	static const unsigned int border[] = {    // Order of the bit length code lengths
+WorldServer\ThirdParty\cryptopp\zdeflate.cpp	730	static const unsigned int lengthExtraBits[] = {
+WorldServer\ThirdParty\cryptopp\zdeflate.cpp	733	static const unsigned int distanceExtraBits[] = {
+WorldServer\ThirdParty\cryptopp\zinflate.cpp	407	static const unsigned int border[] = {    // Order of the bit length code lengths
+WorldServer\ThirdParty\cryptopp\zinflate.cpp	505	static const unsigned int lengthStarts[] = {
+WorldServer\ThirdParty\cryptopp\zinflate.cpp	508	static const unsigned int lengthExtraBits[] = {
+WorldServer\ThirdParty\cryptopp\zinflate.cpp	511	static const unsigned int distanceStarts[] = {
+WorldServer\ThirdParty\cryptopp\zinflate.cpp	515	static const unsigned int distanceExtraBits[] = {
+WorldServer\ThirdParty\cryptopp\zlib.cpp	16	static const byte DEFLATE_METHOD = 8;
+WorldServer\ThirdParty\cryptopp\zlib.cpp	17	static const byte FDICT_FLAG = (1 << 5);
+WorldServer\ThirdParty\cryptopp\zlib.cpp	45	static const unsigned int deflateToCompressionLevel[] = {0, 1, 1, 1, 2, 2, 2, 2, 2, 3};
+WorldServer\ThirdParty\lua-5.1.5\src\lapi.c	49	static TValue *index2adr (lua_State *L, int idx) {
+WorldServer\ThirdParty\lua-5.1.5\src\lapi.c	79	static Table *getcurrenv (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lapi.c	798	static void f_call (lua_State *L, void *ud) {
+WorldServer\ThirdParty\lua-5.1.5\src\lapi.c	837	static void f_Ccall (lua_State *L, void *ud) {
+WorldServer\ThirdParty\lua-5.1.5\src\lapi.c	1039	static const char *aux_upvalue (StkId fi, int n, TValue **val) {
+WorldServer\ThirdParty\lua-5.1.5\src\lauxlib.c	68	static void tag_error (lua_State *L, int narg, int tag) {
+WorldServer\ThirdParty\lua-5.1.5\src\lauxlib.c	235	static int libsize (const luaL_Reg *l) {
+WorldServer\ThirdParty\lua-5.1.5\src\lauxlib.c	280	static int checkint (lua_State *L, int topop) {
+WorldServer\ThirdParty\lua-5.1.5\src\lauxlib.c	287	static void getsizes (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lauxlib.c	398	static int emptybuffer (luaL_Buffer *B) {
+WorldServer\ThirdParty\lua-5.1.5\src\lauxlib.c	410	static void adjuststack (luaL_Buffer *B) {
+WorldServer\ThirdParty\lua-5.1.5\src\lauxlib.c	529	static const char *getF (lua_State *L, void *ud, size_t *size) {
+WorldServer\ThirdParty\lua-5.1.5\src\lauxlib.c	543	static int errfile (lua_State *L, const char *what, int fnameindex) {
+WorldServer\ThirdParty\lua-5.1.5\src\lauxlib.c	599	static const char *getS (lua_State *L, void *ud, size_t *size) {
+WorldServer\ThirdParty\lua-5.1.5\src\lauxlib.c	627	static void *l_alloc (void *ud, void *ptr, size_t osize, size_t nsize) {
+WorldServer\ThirdParty\lua-5.1.5\src\lauxlib.c	639	static int panic (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	31	static int luaB_print (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	53	static int luaB_tonumber (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	81	static int luaB_error (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	93	static int luaB_getmetatable (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	104	static int luaB_setmetatable (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	117	static void getfunc (lua_State *L, int opt) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	133	static int luaB_getfenv (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	143	static int luaB_setfenv (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	161	static int luaB_rawequal (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	169	static int luaB_rawget (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	177	static int luaB_rawset (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	187	static int luaB_gcinfo (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	193	static int luaB_collectgarbage (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	194	static const char *const opts[] = {"stop", "restart", "collect",
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	196	static const int optsnum[] = {LUA_GCSTOP, LUA_GCRESTART, LUA_GCCOLLECT,
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	219	static int luaB_type (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	226	static int luaB_next (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	238	static int luaB_pairs (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	247	static int ipairsaux (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	257	static int luaB_ipairs (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	266	static int load_aux (lua_State *L, int status) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	277	static int luaB_loadstring (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	285	static int luaB_loadfile (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	297	static const char *generic_reader (lua_State *L, void *ud, size_t *size) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	315	static int luaB_load (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	325	static int luaB_dofile (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	334	static int luaB_assert (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	342	static int luaB_unpack (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	358	static int luaB_select (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	374	static int luaB_pcall (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	384	static int luaB_xpcall (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	396	static int luaB_tostring (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	421	static int luaB_newproxy (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	447	static const luaL_Reg base_funcs[] = {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	487	static const char *const statnames[] =
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	490	static int costatus (lua_State *L, lua_State *co) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	510	static int luaB_costatus (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	518	static int auxresume (lua_State *L, lua_State *co, int narg) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	543	static int luaB_coresume (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	561	static int luaB_auxwrap (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	576	static int luaB_cocreate (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	586	static int luaB_cowrap (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	593	static int luaB_yield (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	598	static int luaB_corunning (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	605	static const luaL_Reg co_funcs[] = {
+WorldServer\ThirdParty\lua-5.1.5\src\lbaselib.c	626	static void base_open (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	30	static int isnumeral(expdesc *e) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	74	static int condjump (FuncState *fs, OpCode op, int A, int B, int C) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	80	static void fixjump (FuncState *fs, int pc, int dest) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	100	static int getjump (FuncState *fs, int pc) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	109	static Instruction *getjumpcontrol (FuncState *fs, int pc) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	122	static int need_value (FuncState *fs, int list) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	131	static int patchtestreg (FuncState *fs, int node, int reg) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	144	static void removevalues (FuncState *fs, int list) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	163	static void dischargejpc (FuncState *fs) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	215	static void freereg (FuncState *fs, int reg) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	223	static void freeexp (FuncState *fs, expdesc *e) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	229	static int addk (FuncState *fs, TValue *k, TValue *v) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	264	static int boolK (FuncState *fs, int b) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	271	static int nilK (FuncState *fs) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	337	static int code_label (FuncState *fs, int A, int b, int jump) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	343	static void discharge2reg (FuncState *fs, expdesc *e, int reg) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	382	static void discharge2anyreg (FuncState *fs, expdesc *e) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	390	static void exp2reg (FuncState *fs, expdesc *e, int reg) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	516	static void invertjump (FuncState *fs, expdesc *e) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	524	static int jumponcond (FuncState *fs, expdesc *e, int cond) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	563	static void luaK_goiffalse (FuncState *fs, expdesc *e) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	586	static void codenot (FuncState *fs, expdesc *e) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	627	static int constfolding (OpCode op, expdesc *e1, expdesc *e2) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	653	static void codearith (FuncState *fs, OpCode op, expdesc *e1, expdesc *e2) {
+WorldServer\ThirdParty\lua-5.1.5\src\lcode.c	789	static int luaK_code (FuncState *fs, Instruction i, int line) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	22	static int db_getregistry (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	28	static int db_getmetatable (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	37	static int db_setmetatable (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	47	static int db_getfenv (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	54	static int db_setfenv (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	64	static void settabss (lua_State *L, const char *i, const char *v) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	70	static void settabsi (lua_State *L, const char *i, int v) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	76	static lua_State *getthread (lua_State *L, int *arg) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	88	static void treatstackoption (lua_State *L, lua_State *L1, const char *fname) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	99	static int db_getinfo (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	144	static int db_getlocal (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	165	static int db_setlocal (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	179	static int auxupvalue (lua_State *L, int get) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	192	static int db_getupvalue (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	197	static int db_setupvalue (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	204	static const char KEY_HOOK = 'h';
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	207	static void hookf (lua_State *L, lua_Debug *ar) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	208	static const char *const hooknames[] =
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	225	static int makemask (const char *smask, int count) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	235	static char *unmakemask (int mask, char *smask) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	245	static void gethooktable (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	258	static int db_sethook (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	282	static int db_gethook (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	302	static int db_debug (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	322	static int db_errorfb (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldblib.c	375	static const luaL_Reg dblib[] = {
+WorldServer\ThirdParty\lua-5.1.5\src\ldebug.c	36	static int currentpc (lua_State *L, CallInfo *ci) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldebug.c	44	static int currentline (lua_State *L, CallInfo *ci) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldebug.c	107	static Proto *getluaproto (CallInfo *ci) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldebug.c	112	static const char *findlocal (lua_State *L, CallInfo *ci, int n) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldebug.c	150	static void funcinfo (lua_Debug *ar, Closure *cl) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldebug.c	167	static void info_tailcall (lua_Debug *ar) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldebug.c	177	static void collectvalidlines (lua_State *L, Closure *f) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldebug.c	276	static int precheck (const Proto *pt) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldebug.c	304	static int checkArgMode (const Proto *pt, int r, enum OpArgMask mode) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldebug.c	317	static Instruction symbexec (const Proto *pt, int lastpc, int reg) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldebug.c	489	static const char *kname (Proto *p, int c) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldebug.c	544	static const char *getfuncname (lua_State *L, CallInfo *ci, const char **name) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldebug.c	559	static int isinstack (CallInfo *ci, const TValue *o) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldebug.c	607	static void addinfo (lua_State *L, const char *msg) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldo.c	71	static void restore_stack_limit (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldo.c	81	static void resetstack (lua_State *L, int status) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldo.c	126	static void correctstack (lua_State *L, TValue *oldstack) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldo.c	169	static CallInfo *growCI (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldo.c	208	static StkId adjust_varargs (lua_State *L, Proto *p, int actual) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldo.c	244	static StkId tryfuncTM (lua_State *L, StkId func) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldo.c	332	static StkId callrethooks (lua_State *L, StkId firstResult) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldo.c	384	static void resume (lua_State *L, void *ud) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldo.c	409	static int resume_error (lua_State *L, const char *msg) {
+WorldServer\ThirdParty\lua-5.1.5\src\ldo.c	491	static void f_parser (lua_State *L, void *ud) {
+WorldServer\ThirdParty\lua-5.1.5\src\lfunc.c	82	static void unlinkupval (UpVal *uv) {
+WorldServer\ThirdParty\lua-5.1.5\src\lgc.c	62	static void removeentry (Node *n) {
+WorldServer\ThirdParty\lua-5.1.5\src\lgc.c	69	static void reallymarkobject (global_State *g, GCObject *o) {
+WorldServer\ThirdParty\lua-5.1.5\src\lgc.c	115	static void marktmu (global_State *g) {
+WorldServer\ThirdParty\lua-5.1.5\src\lgc.c	158	static int traversetable (global_State *g, Table *h) {
+WorldServer\ThirdParty\lua-5.1.5\src\lgc.c	203	static void traverseproto (global_State *g, Proto *f) {
+WorldServer\ThirdParty\lua-5.1.5\src\lgc.c	224	static void traverseclosure (global_State *g, Closure *cl) {
+WorldServer\ThirdParty\lua-5.1.5\src\lgc.c	241	static void checkstacksizes (lua_State *L, StkId max) {
+WorldServer\ThirdParty\lua-5.1.5\src\lgc.c	256	static void traversestack (global_State *g, lua_State *l) {
+WorldServer\ThirdParty\lua-5.1.5\src\lgc.c	277	static l_mem propagatemark (global_State *g) {
+WorldServer\ThirdParty\lua-5.1.5\src\lgc.c	323	static size_t propagateall (global_State *g) {
+WorldServer\ThirdParty\lua-5.1.5\src\lgc.c	337	static int iscleared (const TValue *o, int iskey) {
+WorldServer\ThirdParty\lua-5.1.5\src\lgc.c	351	static void cleartable (GCObject *l) {
+WorldServer\ThirdParty\lua-5.1.5\src\lgc.c	378	static void freeobj (lua_State *L, GCObject *o) {
+WorldServer\ThirdParty\lua-5.1.5\src\lgc.c	407	static GCObject **sweeplist (lua_State *L, GCObject **p, lu_mem count) {
+WorldServer\ThirdParty\lua-5.1.5\src\lgc.c	431	static void checkSizes (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lgc.c	445	static void GCTM (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lgc.c	493	static void markmt (global_State *g) {
+WorldServer\ThirdParty\lua-5.1.5\src\lgc.c	501	static void markroot (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lgc.c	515	static void remarkupvals (global_State *g) {
+WorldServer\ThirdParty\lua-5.1.5\src\lgc.c	525	static void atomic (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lgc.c	556	static l_mem singlestep (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\linit.c	17	static const luaL_Reg lualibs[] = {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	27	static const char *const fnames[] = {"input", "output"};
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	30	static int pushresult (lua_State *L, int i, const char *filename) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	48	static void fileerror (lua_State *L, int arg, const char *filename) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	57	static int io_type (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	72	static FILE *tofile (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	86	static FILE **newfile (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	98	static int io_noclose (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	108	static int io_pclose (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	119	static int io_fclose (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	127	static int aux_close (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	134	static int io_close (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	142	static int io_gc (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	151	static int io_tostring (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	161	static int io_open (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	174	static int io_popen (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	183	static int io_tmpfile (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	190	static FILE *getiofile (lua_State *L, int findex) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	200	static int g_iofile (lua_State *L, int f, const char *mode) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	221	static int io_input (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	226	static int io_output (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	234	static void aux_lines (lua_State *L, int idx, int toclose) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	241	static int f_lines (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	248	static int io_lines (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	273	static int read_number (lua_State *L, FILE *f) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	286	static int test_eof (lua_State *L, FILE *f) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	294	static int read_line (lua_State *L, FILE *f) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	316	static int read_chars (lua_State *L, FILE *f, size_t n) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	334	static int g_read (lua_State *L, FILE *f, int first) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	381	static int io_read (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	386	static int f_read (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	391	static int io_readline (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	413	static int g_write (lua_State *L, FILE *f, int arg) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	432	static int io_write (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	437	static int f_write (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	442	static int f_seek (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	443	static const int mode[] = {SEEK_SET, SEEK_CUR, SEEK_END};
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	444	static const char *const modenames[] = {"set", "cur", "end", NULL};
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	458	static int f_setvbuf (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	459	static const int mode[] = {_IONBF, _IOFBF, _IOLBF};
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	460	static const char *const modenames[] = {"no", "full", "line", NULL};
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	470	static int io_flush (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	475	static int f_flush (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	480	static const luaL_Reg iolib[] = {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	496	static const luaL_Reg flib[] = {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	510	static void createmeta (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	518	static void createstdfile (lua_State *L, FILE *f, int k, const char *fname) {
+WorldServer\ThirdParty\lua-5.1.5\src\liolib.c	530	static void newfenv (lua_State *L, lua_CFunction cls) {
+WorldServer\ThirdParty\lua-5.1.5\src\llex.c	51	static void save (LexState *ls, int c) {
+WorldServer\ThirdParty\lua-5.1.5\src\llex.c	89	static const char *txtToken (LexState *ls, int token) {
+WorldServer\ThirdParty\lua-5.1.5\src\llex.c	129	static void inclinenumber (LexState *ls) {
+WorldServer\ThirdParty\lua-5.1.5\src\llex.c	163	static int check_next (LexState *ls, const char *set) {
+WorldServer\ThirdParty\lua-5.1.5\src\llex.c	171	static void buffreplace (LexState *ls, char from, char to) {
+WorldServer\ThirdParty\lua-5.1.5\src\llex.c	179	static void trydecpoint (LexState *ls, SemInfo *seminfo) {
+WorldServer\ThirdParty\lua-5.1.5\src\llex.c	194	static void read_numeral (LexState *ls, SemInfo *seminfo) {
+WorldServer\ThirdParty\lua-5.1.5\src\llex.c	210	static int skip_sep (LexState *ls) {
+WorldServer\ThirdParty\lua-5.1.5\src\llex.c	223	static void read_long_string (LexState *ls, SemInfo *seminfo, int sep) {
+WorldServer\ThirdParty\lua-5.1.5\src\llex.c	278	static void read_string (LexState *ls, int del, SemInfo *seminfo) {
+WorldServer\ThirdParty\lua-5.1.5\src\llex.c	334	static int llex (LexState *ls, SemInfo *seminfo) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	26	static int math_abs (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	31	static int math_sin (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	36	static int math_sinh (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	41	static int math_cos (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	46	static int math_cosh (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	51	static int math_tan (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	56	static int math_tanh (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	61	static int math_asin (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	66	static int math_acos (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	71	static int math_atan (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	76	static int math_atan2 (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	81	static int math_ceil (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	86	static int math_floor (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	91	static int math_fmod (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	96	static int math_modf (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	104	static int math_sqrt (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	109	static int math_pow (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	114	static int math_log (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	119	static int math_log10 (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	124	static int math_exp (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	129	static int math_deg (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	134	static int math_rad (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	139	static int math_frexp (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	146	static int math_ldexp (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	153	static int math_min (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	167	static int math_max (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	181	static int math_random (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	209	static int math_randomseed (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lmathlib.c	215	static const luaL_Reg mathlib[] = {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	63	static void ll_unloadlib (void *lib) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	68	static void *ll_load (lua_State *L, const char *path) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	75	static lua_CFunction ll_sym (lua_State *L, void *lib, const char *sym) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	97	static void setprogdir (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	112	static void pusherror (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	122	static void ll_unloadlib (void *lib) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	127	static void *ll_load (lua_State *L, const char *path) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	134	static lua_CFunction ll_sym (lua_State *L, void *lib, const char *sym) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	159	static void pusherror (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	169	static const char *errorfromcode (NSObjectFileImageReturnCode ret) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	186	static void ll_unloadlib (void *lib) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	191	static void *ll_load (lua_State *L, const char *path) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	212	static lua_CFunction ll_sym (lua_State *L, void *lib, const char *sym) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	239	static void ll_unloadlib (void *lib) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	244	static void *ll_load (lua_State *L, const char *path) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	251	static lua_CFunction ll_sym (lua_State *L, void *lib, const char *sym) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	262	static void **ll_register (lua_State *L, const char *path) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	286	static int gctm (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	294	static int ll_loadfunc (lua_State *L, const char *path, const char *sym) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	309	static int ll_loadlib (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	332	static int readable (const char *filename) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	340	static const char *pushnexttemplate (lua_State *L, const char *path) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	374	static void loaderror (lua_State *L, const char *filename) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	380	static int loader_Lua (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	391	static const char *mkfuncname (lua_State *L, const char *modname) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	402	static int loader_C (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	414	static int loader_Croot (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	435	static int loader_preload (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	447	static const int sentinel_ = 0;
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	451	static int ll_require (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	507	static void setfenv (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	519	static void dooptions (lua_State *L, int n) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	529	static void modinit (lua_State *L, const char *modname) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	544	static int ll_module (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	572	static int ll_seeall (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	609	static const luaL_Reg pk_funcs[] = {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	616	static const luaL_Reg ll_funcs[] = {
+WorldServer\ThirdParty\lua-5.1.5\src\loadlib.c	623	static const lua_CFunction loaders[] =
+WorldServer\ThirdParty\lua-5.1.5\src\lobject.c	55	static const lu_byte log_2[256] = {
+WorldServer\ThirdParty\lua-5.1.5\src\lobject.c	104	static void pushstr (lua_State *L, const char *str) {
+WorldServer\ThirdParty\lua-5.1.5\src\loslib.c	23	static int os_pushresult (lua_State *L, int i, const char *filename) {
+WorldServer\ThirdParty\lua-5.1.5\src\loslib.c	38	static int os_execute (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loslib.c	44	static int os_remove (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loslib.c	50	static int os_rename (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loslib.c	57	static int os_tmpname (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loslib.c	68	static int os_getenv (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loslib.c	74	static int os_clock (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loslib.c	88	static void setfield (lua_State *L, const char *key, int value) {
+WorldServer\ThirdParty\lua-5.1.5\src\loslib.c	93	static void setboolfield (lua_State *L, const char *key, int value) {
+WorldServer\ThirdParty\lua-5.1.5\src\loslib.c	100	static int getboolfield (lua_State *L, const char *key) {
+WorldServer\ThirdParty\lua-5.1.5\src\loslib.c	109	static int getfield (lua_State *L, const char *key, int d) {
+WorldServer\ThirdParty\lua-5.1.5\src\loslib.c	124	static int os_date (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loslib.c	170	static int os_time (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loslib.c	195	static int os_difftime (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loslib.c	204	static int os_setlocale (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loslib.c	205	static const int cat[] = {LC_ALL, LC_COLLATE, LC_CTYPE, LC_MONETARY,
+WorldServer\ThirdParty\lua-5.1.5\src\loslib.c	207	static const char *const catnames[] = {"all", "collate", "ctype", "monetary",
+WorldServer\ThirdParty\lua-5.1.5\src\loslib.c	216	static int os_exit (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\loslib.c	220	static const luaL_Reg syslib[] = {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	57	static void anchor_token (LexState *ls) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	65	static void error_expected (LexState *ls, int token) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	71	static void errorlimit (FuncState *fs, int limit, const char *what) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	80	static int testnext (LexState *ls, int c) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	89	static void check (LexState *ls, int c) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	94	static void checknext (LexState *ls, int c) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	104	static void check_match (LexState *ls, int what, int who, int where) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	117	static TString *str_checkname (LexState *ls) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	126	static void init_exp (expdesc *e, expkind k, int i) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	133	static void codestring (LexState *ls, expdesc *e, TString *s) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	138	static void checkname(LexState *ls, expdesc *e) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	143	static int registerlocalvar (LexState *ls, TString *varname) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	160	static void new_localvar (LexState *ls, TString *name, int n) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	167	static void adjustlocalvars (LexState *ls, int nvars) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	176	static void removevars (LexState *ls, int tolevel) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	183	static int indexupvalue (FuncState *fs, TString *name, expdesc *v) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	207	static int searchvar (FuncState *fs, TString *n) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	217	static void markupval (FuncState *fs, int level) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	224	static int singlevaraux (FuncState *fs, TString *n, expdesc *var, int base) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	248	static void singlevar (LexState *ls, expdesc *var) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	256	static void adjust_assign (LexState *ls, int nvars, int nexps, expdesc *e) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	276	static void enterlevel (LexState *ls) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	285	static void enterblock (FuncState *fs, BlockCnt *bl, lu_byte isbreakable) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	296	static void leaveblock (FuncState *fs) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	310	static void pushclosure (LexState *ls, FuncState *func, expdesc *v) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	328	static void open_func (LexState *ls, FuncState *fs) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	356	static void close_func (LexState *ls) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	407	static void field (LexState *ls, expdesc *v) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	418	static void yindex (LexState *ls, expdesc *v) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	443	static void recfield (LexState *ls, struct ConsControl *cc) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	464	static void closelistfield (FuncState *fs, struct ConsControl *cc) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	475	static void lastlistfield (FuncState *fs, struct ConsControl *cc) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	490	static void listfield (LexState *ls, struct ConsControl *cc) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	498	static void constructor (LexState *ls, expdesc *t) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	543	static void parlist (LexState *ls) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	576	static void body (LexState *ls, expdesc *e, int needself, int line) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	596	static int explist1 (LexState *ls, expdesc *v) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	609	static void funcargs (LexState *ls, expdesc *f) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	667	static void prefixexp (LexState *ls, expdesc *v) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	690	static void primaryexp (LexState *ls, expdesc *v) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	727	static void simpleexp (LexState *ls, expdesc *v) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	778	static UnOpr getunopr (int op) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	788	static BinOpr getbinopr (int op) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	810	static const struct {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	828	static BinOpr subexpr (LexState *ls, expdesc *v, unsigned int limit) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	856	static void expr (LexState *ls, expdesc *v) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	871	static int block_follow (int token) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	881	static void block (LexState *ls) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	908	static void check_conflict (LexState *ls, struct LHS_assign *lh, expdesc *v) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	931	static void assignment (LexState *ls, struct LHS_assign *lh, int nvars) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	965	static int cond (LexState *ls) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	975	static void breakstat (LexState *ls) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	991	static void whilestat (LexState *ls, int line) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	1010	static void repeatstat (LexState *ls, int line) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	1036	static int exp1 (LexState *ls) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	1046	static void forbody (LexState *ls, int base, int line, int nvars, int isnum) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	1067	static void fornum (LexState *ls, TString *varname, int line) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	1089	static void forlist (LexState *ls, TString *indexname) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	1112	static void forstat (LexState *ls, int line) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	1130	static int test_then_block (LexState *ls) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	1141	static void ifstat (LexState *ls, int line) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	1165	static void localfunc (LexState *ls) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	1179	static void localstat (LexState *ls) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	1198	static int funcname (LexState *ls, expdesc *v) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	1212	static void funcstat (LexState *ls, int line) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	1224	static void exprstat (LexState *ls) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	1238	static void retstat (LexState *ls) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	1271	static int statement (LexState *ls) {
+WorldServer\ThirdParty\lua-5.1.5\src\lparser.c	1325	static void chunk (LexState *ls) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstate.c	42	static void stack_init (lua_State *L1, lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstate.c	61	static void freestack (lua_State *L, lua_State *L1) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstate.c	70	static void f_luaopen (lua_State *L, void *ud) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstate.c	84	static void preinit_state (lua_State *L, global_State *g) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstate.c	105	static void close_state (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstate.c	193	static void callallgcTM (lua_State *L, void *ud) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	28	static int str_len (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	36	static ptrdiff_t posrelat (ptrdiff_t pos, size_t len) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	43	static int str_sub (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	57	static int str_reverse (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	68	static int str_lower (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	81	static int str_upper (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	93	static int str_rep (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	106	static int str_byte (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	125	static int str_char (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	140	static int writer (lua_State *L, const void* b, size_t size, void* B) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	147	static int str_dump (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	186	static int check_capture (MatchState *ms, int l) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	194	static int capture_to_close (MatchState *ms) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	202	static const char *classend (MatchState *ms, const char *p) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	226	static int match_class (int c, int cl) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	245	static int matchbracketclass (int c, const char *p, const char *ec) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	268	static int singlematch (int c, const char *p, const char *ep) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	354	static const char *match_capture (MatchState *ms, const char *s, int l) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	365	static const char *match (MatchState *ms, const char *s, const char *p) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	485	static int push_captures (MatchState *ms, const char *s, const char *e) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	495	static int str_find_aux (lua_State *L, int find) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	538	static int str_find (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	543	static int str_match (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	548	static int gmatch_aux (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	574	static int gmatch (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	584	static int gfind_nodef (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	644	static int str_gsub (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	696	static void addquoted (lua_State *L, luaL_Buffer *b, int arg) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	725	static const char *scanformat (lua_State *L, const char *strfrmt, char *form) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	747	static void addintlen (char *form) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	756	static int str_format (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	827	static const luaL_Reg strlib[] = {
+WorldServer\ThirdParty\lua-5.1.5\src\lstrlib.c	847	static void createmetatable (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltable.c	75	static const Node dummynode_ = {
+WorldServer\ThirdParty\lua-5.1.5\src\ltable.c	84	static Node *hashnum (const Table *t, lua_Number n) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltable.c	100	static Node *mainposition (const Table *t, const TValue *key) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltable.c	120	static int arrayindex (const TValue *key) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltable.c	137	static int findindex (lua_State *L, Table *t, StkId key) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltable.c	189	static int computesizes (int nums[], int *narray) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltable.c	211	static int countint (const TValue *key, int *nums) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltable.c	222	static int numusearray (const Table *t, int *nums) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltable.c	247	static int numusehash (const Table *t, int *nums, int *pnasize) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltable.c	263	static void setarrayvector (lua_State *L, Table *t, int size) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltable.c	272	static void setnodevector (lua_State *L, Table *t, int size) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltable.c	297	static void resize (lua_State *L, Table *t, int nasize, int nhsize) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltable.c	333	static void rehash (lua_State *L, Table *t, const TValue *ek) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltable.c	382	static Node *getfreepos (Table *t) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltable.c	399	static TValue *newkey (lua_State *L, Table *t, const TValue *key) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltable.c	532	static int unbound_search (Table *t, unsigned int j) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltablib.c	22	static int foreachi (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltablib.c	39	static int foreach (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltablib.c	56	static int maxn (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltablib.c	72	static int getn (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltablib.c	78	static int setn (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltablib.c	90	static int tinsert (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltablib.c	118	static int tremove (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltablib.c	135	static void addfield (lua_State *L, luaL_Buffer *b, int i) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltablib.c	144	static int tconcat (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltablib.c	173	static void set2 (lua_State *L, int i, int j) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltablib.c	178	static int sort_comp (lua_State *L, int a, int b) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltablib.c	193	static void auxsort (lua_State *L, int l, int u) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltablib.c	256	static int sort (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\ltablib.c	269	static const luaL_Reg tab_funcs[] = {
+WorldServer\ThirdParty\lua-5.1.5\src\ltm.c	31	static const char *const luaT_eventname[] = {  /* ORDER TM */
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	22	static lua_State *globalL = NULL;
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	24	static const char *progname = LUA_PROGNAME;
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	28	static void lstop (lua_State *L, lua_Debug *ar) {
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	35	static void laction (int i) {
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	42	static void print_usage (void) {
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	58	static void l_message (const char *pname, const char *msg) {
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	65	static int report (lua_State *L, int status) {
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	76	static int traceback (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	96	static int docall (lua_State *L, int narg, int clear) {
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	111	static void print_version (void) {
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	116	static int getargs (lua_State *L, char **argv, int n) {
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	134	static int dofile (lua_State *L, const char *name) {
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	140	static int dostring (lua_State *L, const char *s, const char *name) {
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	146	static int dolibrary (lua_State *L, const char *name) {
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	153	static const char *get_prompt (lua_State *L, int firstline) {
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	163	static int incomplete (lua_State *L, int status) {
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	177	static int pushline (lua_State *L, int firstline) {
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	196	static int loadline (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	216	static void dotty (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	239	static int handle_script (lua_State *L, char **argv, int n) {
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	261	static int collectargs (char **argv, int *pi, int *pv, int *pe) {
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	294	static int runargs (lua_State *L, char **argv, int n) {
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	323	static int handle_luainit (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\lua.c	340	static int pmain (lua_State *L) {
+WorldServer\ThirdParty\lua-5.1.5\src\luac.c	29	static int listing=0;			/* list bytecodes? */
+WorldServer\ThirdParty\lua-5.1.5\src\luac.c	30	static int dumping=1;			/* dump bytecodes? */
+WorldServer\ThirdParty\lua-5.1.5\src\luac.c	31	static int stripping=0;			/* strip debug information? */
+WorldServer\ThirdParty\lua-5.1.5\src\luac.c	32	static char Output[]={ OUTPUT };	/* default output file name */
+WorldServer\ThirdParty\lua-5.1.5\src\luac.c	33	static const char* output=Output;	/* actual output file name */
+WorldServer\ThirdParty\lua-5.1.5\src\luac.c	34	static const char* progname=PROGNAME;	/* actual program name */
+WorldServer\ThirdParty\lua-5.1.5\src\luac.c	70	static int doargs(int argc, char* argv[])
+WorldServer\ThirdParty\lua-5.1.5\src\lvm.c	60	static void traceexec (lua_State *L, const Instruction *pc) {
+WorldServer\ThirdParty\lua-5.1.5\src\lvm.c	203	static int l_strcmp (const TString *ls, const TString *rs) {
+WorldServer\ThirdParty\lua-5.1.5\src\lvm.c	239	static int lessequal (lua_State *L, const TValue *l, const TValue *r) {
+WorldServer\ThirdParty\tinyxml\tinystr.h	62	static const size_type npos; // = -1;
+WorldServer\ThirdParty\tinyxml\tinystr.h	250	static Rep nullrep_;
+WorldServer\ThirdParty\tinyxml\tinyxml.h	221	static void SetCondenseWhiteSpace( bool condense )		{ condenseWhiteSpace = condense; }
+WorldServer\ThirdParty\tinyxml\tinyxml.h	224	static bool IsWhiteSpaceCondensed()						{ return condenseWhiteSpace; }
+WorldServer\ThirdParty\tinyxml\tinyxml.h	253	static const int utf8ByteTable[256];
+WorldServer\ThirdParty\tinyxml\tinyxml.h	371	static const char* errorString[ TIXML_ERROR_STRING_COUNT ];
+WorldServer\ThirdParty\tinyxml\tinyxml.h	412	static Entity entity[ NUM_ENTITY ];
+WorldServer\ThirdParty\tinyxml\tinyxml.h	413	static bool condenseWhiteSpace;

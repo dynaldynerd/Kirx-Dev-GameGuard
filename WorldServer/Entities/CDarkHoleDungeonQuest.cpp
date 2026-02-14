@@ -14,10 +14,7 @@ namespace
   static const char kDarkHoleQuestDefaultValue[] = "default";
   static const char kDarkHoleQuestIndexIni[] = ".\\Quest\\Index.ini";
   static const char kDarkHoleQuestNoMatch[] = "X";
-  static const char kDarkHoleQuestLoadErrorTitle[] = "Quest Dungeon Load Error";
-  static const char kDarkHoleQuestItemNoMatchFmt[] = "%s item no match quest";
   static const char kDarkHoleQuestPathFmt[] = ".\\Quest\\%s.txt";
-  static const char kDarkHoleQuestErrorFmt[] = "%s";
 }
 
 CDarkHoleDungeonQuest g_DarkHoleQuest;
@@ -55,13 +52,13 @@ bool CDarkHoleDungeonQuest::LoadDarkHoleQuest()
       0x80u,
       kDarkHoleQuestIndexIni);
     if (!strcmp_0(returnedString, kDarkHoleQuestNoMatch))
-      MyMessageBox(kDarkHoleQuestLoadErrorTitle, kDarkHoleQuestItemNoMatchFmt, record->m_strCode);
+      MyMessageBox("Quest Dungeon Load Error", "%s item no match quest", record->m_strCode);
     char buffer[144]{};
     sprintf(buffer, kDarkHoleQuestPathFmt, returnedString);
     if (!SetupQuest(buffer))
     {
       const char *errorMsg = GetErrorMsg();
-      MyMessageBox(kDarkHoleQuestLoadErrorTitle, kDarkHoleQuestErrorFmt, errorMsg);
+      MyMessageBox("Quest Dungeon Load Error", "%s", errorMsg);
       return false;
     }
   }

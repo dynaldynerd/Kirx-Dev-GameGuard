@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-const char *BossSchedule::ms_KeyPair[3] = {"MonCode", "LastRespawnSystemTime", "LiveCount"};
+const char *BossSchedule::ms_KeyPair[3] = {"MOBCODE", "LTTM", "LIVE"};
 
 ScheduleMSG::ScheduleMSG()
 {

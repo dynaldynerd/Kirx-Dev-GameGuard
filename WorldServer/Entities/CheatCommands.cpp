@@ -1530,7 +1530,7 @@ bool __fastcall ct_defense_item_grace(CPlayer *pOne)
   if ( s_nWordCount < 2 )
     return 0;
   v6 = -1;
-  if ( !strcmp_0(byte_1407AE5D0, s_pwszDstCheat[0]) )
+  if ( !strcmp_0("upper", s_pwszDstCheat[0]) )
   {
     v6 = 0;
   }
@@ -1542,23 +1542,23 @@ bool __fastcall ct_defense_item_grace(CPlayer *pOne)
   {
     v6 = 2;
   }
-  else if ( !strcmp_0(byte_1407AE5E8, s_pwszDstCheat[0]) )
+  else if ( !strcmp_0("shoe", s_pwszDstCheat[0]) )
   {
     v6 = 3;
   }
-  else if ( !strcmp_0(aAo_6, s_pwszDstCheat[0]) )
+  else if ( !strcmp_0("helmet", s_pwszDstCheat[0]) )
   {
     v6 = 4;
   }
-  else if ( !strcmp_0(byte_1407AE5F8, s_pwszDstCheat[0]) )
+  else if ( !strcmp_0("shield", s_pwszDstCheat[0]) )
   {
     v6 = 5;
   }
-  else if ( !strcmp_0(byte_1407AE600, s_pwszDstCheat[0]) )
+  else if ( !strcmp_0("cloak", s_pwszDstCheat[0]) )
   {
     v6 = 7;
   }
-  else if ( !strcmp_0(byte_1407AE608, s_pwszDstCheat[0]) )
+  else if ( !strcmp_0("all", s_pwszDstCheat[0]) )
   {
     v6 = 37;
   }
@@ -2564,7 +2564,7 @@ bool __fastcall ct_HolySystem(CPlayer *pOne)
     return 0;
   if ( s_nWordCount < 1 )
     return 0;
-  if ( !strcmp_0(byte_1407AE980, s_pwszDstCheat[0]) )
+  if ( !strcmp_0("start", s_pwszDstCheat[0]) )
   {
     if ( s_nWordCount >= 2 )
     {
@@ -2574,17 +2574,17 @@ bool __fastcall ct_HolySystem(CPlayer *pOne)
     }
     return 0;
   }
-  if ( !strcmp_0(aA_47, s_pwszDstCheat[0]) )
+  if ( !strcmp_0("end", s_pwszDstCheat[0]) )
     return CheatHolyStopBattle();
   if ( strcmp_0("Ű", s_pwszDstCheat[0]) )
   {
-    if ( s_nWordCount >= 1 && !strcmp_0(byte_1407AE9B0, s_pwszDstCheat[0]) )
+    if ( s_nWordCount >= 1 && !strcmp_0("state", s_pwszDstCheat[0]) )
       return CheatHolyState(pOne);
     return 0;
   }
   if ( s_nWordCount < 2 )
     return 0;
-  if ( !strcmp_0(byte_1407AE998, s_pwszDstCheat[1]) )
+  if ( !strcmp_0("neutral", s_pwszDstCheat[1]) )
   {
     if ( s_nWordCount >= 3 )
     {
@@ -2596,9 +2596,9 @@ bool __fastcall ct_HolySystem(CPlayer *pOne)
     }
     return 0;
   }
-  if ( strcmp_0(byte_1407AE9A0, s_pwszDstCheat[1]) )
+  if ( strcmp_0("invincible", s_pwszDstCheat[1]) )
   {
-    if ( !strcmp_0(aA_48, s_pwszDstCheat[1]) && s_nWordCount >= 3 )
+    if ( !strcmp_0("chaos", s_pwszDstCheat[1]) && s_nWordCount >= 3 )
     {
       v10 = atoi(s_pwszDstCheat[2]);
       return CheatHolyKeeperStart(6, v10, 0);

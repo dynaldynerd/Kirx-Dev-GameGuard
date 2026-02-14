@@ -15,25 +15,6 @@ namespace
   static const char kDHJobSectionStart[] = "#";
   static const char kDHConditionStart[] = "*";
   static char szEOF[] = "EOF";
-  static const char kDHQuestExcessFmt[] = "excess of the number of quests >> max : %d";
-  static const char kDHQuestTitleSizeFmt[] = "quest title (%s) size over .. must be set up less than %d";
-  static const char kDHQuestTitleLoadError[] = "quest title load error";
-  static const char kDHMissionTitleSizeFmt[] = "mission title (%s) size over .. must be set up less than %d";
-  static const char kDHMissionTitleLoadError[] = "mission title load error";
-  static const char kDHJobTitleSizeFmt[] = "job title (%s) size over .. must be set up less than %d";
-  static const char kDHJobTitleLoadError[] = "job title load error";
-  static const char kDHQuestNoKeyFmt[] = "[QUEST] no definded key >> %s";
-  static const char kDHMissionNoKeyFmt[] = "[MISSION] no definded key >> %s";
-  static const char kDHJobNoKeyFmt[] = "[JOB] no definded key >> %s";
-  static const char kDHLastCheckNextMissionMissingFmt[] =
-    "next mission title must be defined if result type is NEXT  >> %s";
-  static const char kDHLastCheckNextMissionNotFoundFmt[] = "can not search a next mission >> %s";
-  static const char kDHLastCheckTimeLimitMissingFmt[] =
-    "time-limit must be defined by mission script >> mission: %s";
-  static const char kDHLastCheckStartDummyMissing[] = "start dummy is not defined";
-  static const char kDHLastCheckStartDummyOutsideFmt[] =
-    "%s start dummy is outside the limits of %s quest dummy >> %s";
-  static const char kDHLastCheckStartMissionNotFoundFmt[] = "can not search a start mission >> %s";
   static unsigned int nEOFLen = 0;
   static unsigned int _S1_1 = 0;
 }
@@ -155,7 +136,7 @@ bool CDarkHoleDungeonQuestSetup::SetupQuest(char *pszQuestFileName)
   }
   else
   {
-    sprintf(m_szLoadErrMsg, kDHQuestExcessFmt, 100);
+    sprintf(m_szLoadErrMsg, "excess of the number of quests >> max : %d", 100);
   }
 
   if (foundEOF)
@@ -197,10 +178,10 @@ bool CDarkHoleDungeonQuestSetup::_Analysis_Quest_Setting(strFILE *fstr)
       m_ErrorInfo.SetQuestTitle(poutszWord);
       return true;
     }
-    sprintf(m_szLoadErrMsg, kDHQuestTitleSizeFmt, poutszWord, 32);
+    sprintf(m_szLoadErrMsg, "quest title (%s) size over .. must be set up less than %d", poutszWord, 32);
     return _false(fstr, this);
   }
-  sprintf(m_szLoadErrMsg, kDHQuestTitleLoadError);
+  sprintf(m_szLoadErrMsg, "quest title load error");
   return _false(fstr, this);
 }
 
@@ -219,7 +200,7 @@ bool CDarkHoleDungeonQuestSetup::_Analysis_Quest_Condition(strFILE *fstr)
       strcpy_0(m_szLoadErrMsg, source);
     return ok;
   }
-  sprintf(m_szLoadErrMsg, kDHQuestNoKeyFmt, poutszWord);
+  sprintf(m_szLoadErrMsg, "[QUEST] no definded key >> %s", poutszWord);
   return false;
 }
 
@@ -247,10 +228,10 @@ bool CDarkHoleDungeonQuestSetup::_Analysis_Mission_Setting(strFILE *fstr)
       strcpy_0(m_pCurLoadMission->szMissionTitle, poutszWord);
       return true;
     }
-    sprintf(m_szLoadErrMsg, kDHMissionTitleSizeFmt, poutszWord, 32);
+    sprintf(m_szLoadErrMsg, "mission title (%s) size over .. must be set up less than %d", poutszWord, 32);
     return _false(fstr, this);
   }
-  sprintf(m_szLoadErrMsg, kDHMissionTitleLoadError);
+  sprintf(m_szLoadErrMsg, "mission title load error");
   return _false(fstr, this);
 }
 
@@ -269,7 +250,7 @@ bool CDarkHoleDungeonQuestSetup::_Analysis_Mission_Condition(strFILE *fstr)
       strcpy_0(m_szLoadErrMsg, source);
     return ok;
   }
-  sprintf(m_szLoadErrMsg, kDHMissionNoKeyFmt, poutszWord);
+  sprintf(m_szLoadErrMsg, "[MISSION] no definded key >> %s", poutszWord);
   return false;
 }
 
@@ -297,10 +278,10 @@ bool CDarkHoleDungeonQuestSetup::_Analysis_Job_Setting(strFILE *fstr)
       strcpy_0(m_pCurLoadJob->szJobTitle, poutszWord);
       return true;
     }
-    sprintf(m_szLoadErrMsg, kDHJobTitleSizeFmt, poutszWord, 32);
+    sprintf(m_szLoadErrMsg, "job title (%s) size over .. must be set up less than %d", poutszWord, 32);
     return _false(fstr, this);
   }
-  sprintf(m_szLoadErrMsg, kDHJobTitleLoadError);
+  sprintf(m_szLoadErrMsg, "job title load error");
   return _false(fstr, this);
 }
 
@@ -319,7 +300,7 @@ bool CDarkHoleDungeonQuestSetup::_Analysis_Job_Condition(strFILE *fstr)
       strcpy_0(m_szLoadErrMsg, source);
     return ok;
   }
-  sprintf(m_szLoadErrMsg, kDHJobNoKeyFmt, poutszWord);
+  sprintf(m_szLoadErrMsg, "[JOB] no definded key >> %s", poutszWord);
   return false;
 }
 
@@ -338,7 +319,7 @@ bool CDarkHoleDungeonQuestSetup::_LastCheckScipt(char *pszQuestFileName)
   }
   if (!quest->pStartMissionSetup)
   {
-    sprintf(m_szLoadErrMsg, kDHLastCheckStartMissionNotFoundFmt, pszQuestFileName);
+    sprintf(m_szLoadErrMsg, "can not search a start mission >> %s", pszQuestFileName);
     return _false(nullptr, this);
   }
 
@@ -349,13 +330,13 @@ bool CDarkHoleDungeonQuestSetup::_LastCheckScipt(char *pszQuestFileName)
     {
       if (!mission->pszNextMissionTitle)
       {
-        sprintf(m_szLoadErrMsg, kDHLastCheckNextMissionMissingFmt, mission->szMissionTitle);
+        sprintf(m_szLoadErrMsg, "next mission title must be defined if result type is NEXT  >> %s", mission->szMissionTitle);
         return _false(nullptr, this);
       }
       mission->pNextMission = quest->SearchMissionFromTitle(mission->pszNextMissionTitle);
       if (!mission->pNextMission)
       {
-        sprintf(m_szLoadErrMsg, kDHLastCheckNextMissionNotFoundFmt, mission->pszNextMissionTitle);
+        sprintf(m_szLoadErrMsg, "can not search a next mission >> %s", mission->pszNextMissionTitle);
         return _false(nullptr, this);
       }
     }
@@ -366,7 +347,7 @@ bool CDarkHoleDungeonQuestSetup::_LastCheckScipt(char *pszQuestFileName)
     _dh_mission_setup *mission = quest->EmbMissionSetup[j];
     if (!mission->dwLimTimeMSec)
     {
-      sprintf(m_szLoadErrMsg, kDHLastCheckTimeLimitMissingFmt, mission->szMissionTitle);
+      sprintf(m_szLoadErrMsg, "time-limit must be defined by mission script >> mission: %s", mission->szMissionTitle);
       return _false(nullptr, this);
     }
   }
@@ -376,7 +357,7 @@ bool CDarkHoleDungeonQuestSetup::_LastCheckScipt(char *pszQuestFileName)
     _dh_mission_setup *mission = quest->EmbMissionSetup[j];
     if (!mission->pStartDummy)
     {
-      sprintf(m_szLoadErrMsg, kDHLastCheckStartDummyMissing);
+      sprintf(m_szLoadErrMsg, "start dummy is not defined");
       return _false(nullptr, this);
     }
     if (mission->pAreaDummy)
@@ -388,7 +369,7 @@ bool CDarkHoleDungeonQuestSetup::_LastCheckScipt(char *pszQuestFileName)
       {
         sprintf(
           m_szLoadErrMsg,
-          kDHLastCheckStartDummyOutsideFmt,
+          "%s start dummy is outside the limits of %s quest dummy >> %s",
           mission->pStartDummy->m_szCode,
           mission->pAreaDummy->m_szCode,
           reinterpret_cast<const char *>(quest));

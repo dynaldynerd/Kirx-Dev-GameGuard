@@ -37,15 +37,15 @@
 
 namespace
 {
-  char szDefCivilCode[] = "111111";
+  char szDefCivilCode[] = "11111";
 }
 
-const char *dayofweek[7] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
-static char szDefItemName[] = "UNKNOWN";
+const char *dayofweek[7] = {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
+static char szDefItemName[] = "noname";
 static float sR[4] = {200.0f, 200.0f, 200.0f, 200.0f};
 static int s_nSkillLvPerMastery[8] = {};
 static int s_nForceLvPerMastery[24] = {};
-static char sBuffer[32] = {};
+static char sBuffer[64] = {};
 
 static __int64 D3DXCreateTextureFromFileInMemory_0(IDirect3DDevice8 *device, const void *data, unsigned int size, void *outTex);
 static __int64 sub_1404FFFB0(__int64 a1);

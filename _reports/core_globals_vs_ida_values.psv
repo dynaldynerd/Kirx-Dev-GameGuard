@@ -1,0 +1,453 @@
+file name|variable name|current value|ida value
+WorldServer\Entities\AutoMineMachineMng.cpp|s_szOreKind_160|<multiline-init>|0x140970BC8 char_ptr_array[5] [0x1407C59A0:"ioblu04", 0x1407C59A8:"iored04", 0x1407C59B0:"ioyel04", 0x1407C59B8:"iogre04", 0x1407C59C0:"iobla04"]
+WorldServer\Entities\AutoMineMachineMng.cpp|s_tmLocal|{}|0x184A6F5D8 bytes[16] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+WorldServer\Entities\AutoMineMachineMng.h|m_pInstance|<decl-only>|<ambiguous-name:6>
+WorldServer\Entities\AutominePersonalMgr.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\BossSchedule.cpp|BossSchedule::ms_KeyPair|{"MOBCODE", "LTTM", "LIVE"}|0x140973108 char_ptr_array[3] [0x1408369E8:"MOBCODE", 0x1408369F0:"LTTM", 0x1408369F8:"LIVE"]
+WorldServer\Entities\CActionPointSystemMgr.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\CandidateMgr.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\CAnimus.cpp|kFiles|<multiline-init>|<not-found>
+WorldServer\Entities\CAnimus.cpp|s_animusObjectName|{}|<not-found>
+WorldServer\Entities\CAnimus.h|MAX_EXP|<decl-only>|0x141344C80 bytes[64] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+WorldServer\Entities\CAnimus.h|s_nLiveNum|<decl-only>|<ambiguous-name:11>
+WorldServer\Entities\CAnimus.h|s_tblParameter|<decl-only>|0x141344CC0 bytes[1408] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CashItemRemoteStore.h|_phmapTbl|<decl-only>|<ambiguous-name:2>
+WorldServer\Entities\CashItemRemoteStore.h|_pkInstance|<decl-only>|<ambiguous-name:10>
+WorldServer\Entities\CAsyncLogger.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\CAsyncLogger.h|ALT_APEX_SYSTEM_LOG|::ALT_APEX_SYSTEM_LOG|<not-found>
+WorldServer\Entities\CAsyncLogger.h|ALT_ASYNC_LOGGER_SYSTEM_LOG|::ALT_ASYNC_LOGGER_SYSTEM_LOG|<not-found>
+WorldServer\Entities\CAsyncLogger.h|ALT_BUY_CASH_ITEM_LOG|::ALT_BUY_CASH_ITEM_LOG|<not-found>
+WorldServer\Entities\CAsyncLogger.h|ALT_CLASSREFINE_SERVICE_LOG|::ALT_CLASSREFINE_SERVICE_LOG|<not-found>
+WorldServer\Entities\CAsyncLogger.h|ALT_FIREGUARD_DETECT_LOG|::ALT_FIREGUARD_DETECT_LOG|<not-found>
+WorldServer\Entities\CAsyncLogger.h|ALT_GETEVENTCOUPON_LOG|::ALT_GETEVENTCOUPON_LOG|<not-found>
+WorldServer\Entities\CAsyncLogger.h|ALT_GETGOLDBAR_LOG|::ALT_GETGOLDBAR_LOG|<not-found>
+WorldServer\Entities\CAsyncLogger.h|ALT_HACKSHIELD_SYSTEM_LOG|::ALT_HACKSHIELD_SYSTEM_LOG|<not-found>
+WorldServer\Entities\CAsyncLogger.h|ALT_HONOR_GUILD_LOG|::ALT_HONOR_GUILD_LOG|<not-found>
+WorldServer\Entities\CAsyncLogger.h|ALT_MAX|::ALT_MAX|<not-found>
+WorldServer\Entities\CAsyncLogger.h|ALT_NONE|::ALT_NONE|<not-found>
+WorldServer\Entities\CAsyncLogger.h|ALT_PERFORMANCE_CASH_DQS|::ALT_PERFORMANCE_CASH_DQS|<not-found>
+WorldServer\Entities\CAsyncLogger.h|ALT_PERFORMANCE_COUNTER_SYSTEM|::ALT_PERFORMANCE_COUNTER_SYSTEM|<not-found>
+WorldServer\Entities\CAsyncLogger.h|ALT_PERFORMANCE_LOG_DQS|::ALT_PERFORMANCE_LOG_DQS|<not-found>
+WorldServer\Entities\CAsyncLogger.h|ALT_PERFORMANCE_MAIN_DQS|::ALT_PERFORMANCE_MAIN_DQS|<not-found>
+WorldServer\Entities\CAsyncLogger.h|ALT_PERFORMANCE_MAIN_LOOP|::ALT_PERFORMANCE_MAIN_LOOP|<not-found>
+WorldServer\Entities\CAsyncLogger.h|ALT_PERFORMANCE_NETWORK_DQS|::ALT_PERFORMANCE_NETWORK_DQS|<not-found>
+WorldServer\Entities\CAsyncLogger.h|m_bProcThread|<decl-only>|0x184A6FDF0 bytes[1] FF
+WorldServer\Entities\CAttack.h|s_DefParam|<decl-only>|0x141372B50 bytes[120] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CAttack.h|s_pSkillData|<decl-only>|<ambiguous-name:2>
+WorldServer\Entities\CBillingNULL.h|ms_NULL|<decl-only>|<ambiguous-name:3>
+WorldServer\Entities\CBossMonsterScheduleSystem.h|m_pInstance|<decl-only>|<ambiguous-name:6>
+WorldServer\Entities\CBsp.cpp|a4|<multiline-init>|<not-found>
+WorldServer\Entities\CCashDbWorkerNULL.h|ms_NULL|<decl-only>|<ambiguous-name:3>
+WorldServer\Entities\CCharacter.h|m_nInitCount|<decl-only>|0x141372DD0 bytes[4] FF FF FF FF
+WorldServer\Entities\CChatStealSystem.h|ms_pInstance|<decl-only>|<ambiguous-name:4>
+WorldServer\Entities\CCheckSumBaseConverter.cpp|CCheckSumBaseConverter::ms_dwKeys|<multiline-init>|0x140970610 bytes[240] AC 80 07 00 8D 4B 0D 00 C0 21 08 00 9D DD 00 00 97 10 05 00 81 44 0A 00 EF 21 0E 00 01 EC 02 00 7E 36 08 00 CD A2 05 00 EB 7B 03 00 6C 43 0D 00 90 C9 0D 00 50 8E 01 00 3C DE 00 00 0D 30 03 00 ...
+WorldServer\Entities\CCheckSumBaseConverter.cpp|CCheckSumBaseConverter::ms_i64Keys|<multiline-init>|0x140970700 bytes[640] 24 15 06 00 00 00 00 00 E8 BD 00 00 00 00 00 00 5B 45 00 00 00 00 00 00 96 AC 00 00 00 00 00 00 97 A9 18 00 00 00 00 00 0D 76 8E 02 00 00 00 00 F6 04 1A 00 00 00 00 00 B2 8D 02 00 00 00 00 00 ...
+WorldServer\Entities\CCheckSumBaseConverter.h|ms_dwKeys|<decl-only>|0x140970610 bytes[240] AC 80 07 00 8D 4B 0D 00 C0 21 08 00 9D DD 00 00 97 10 05 00 81 44 0A 00 EF 21 0E 00 01 EC 02 00 7E 36 08 00 CD A2 05 00 EB 7B 03 00 6C 43 0D 00 90 C9 0D 00 50 8E 01 00 3C DE 00 00 0D 30 03 00 ...
+WorldServer\Entities\CCheckSumBaseConverter.h|ms_i64Keys|<decl-only>|0x140970700 bytes[640] 24 15 06 00 00 00 00 00 E8 BD 00 00 00 00 00 00 5B 45 00 00 00 00 00 00 96 AC 00 00 00 00 00 00 97 A9 18 00 00 00 00 00 0D 76 8E 02 00 00 00 00 F6 04 1A 00 00 00 00 00 B2 8D 02 00 00 00 00 00 ...
+WorldServer\Entities\CChiNetworkEX.h|ms_pInstance|<decl-only>|<ambiguous-name:4>
+WorldServer\Entities\CDarkHole.h|s_dwSerialCounter|<decl-only>|<ambiguous-name:3>
+WorldServer\Entities\CDarkHole.h|s_nLiveNum|<decl-only>|<ambiguous-name:11>
+WorldServer\Entities\CDarkHoleChannel.h|s_dwChannelSerialCounter|<decl-only>|0x183F1C1B0 bytes[4] FF FF FF FF
+WorldServer\Entities\CDarkHoleDungeonQuest.cpp|kDarkHoleQuestDefaultValue|"default"|<not-found>
+WorldServer\Entities\CDarkHoleDungeonQuest.cpp|kDarkHoleQuestIndexIni|".\\Quest\\Index.ini"|<not-found>
+WorldServer\Entities\CDarkHoleDungeonQuest.cpp|kDarkHoleQuestMatchSection|"MATCH"|<not-found>
+WorldServer\Entities\CDarkHoleDungeonQuest.cpp|kDarkHoleQuestNoMatch|"X"|<not-found>
+WorldServer\Entities\CDarkHoleDungeonQuest.cpp|kDarkHoleQuestPathFmt|".\\Quest\\%s.txt"|<not-found>
+WorldServer\Entities\CDarkHoleDungeonQuestSetup.cpp|_S1_1|0|<not-found>
+WorldServer\Entities\CDarkHoleDungeonQuestSetup.cpp|kDHConditionStart|"*"|<not-found>
+WorldServer\Entities\CDarkHoleDungeonQuestSetup.cpp|kDHJobSectionStart|"#"|<not-found>
+WorldServer\Entities\CDarkHoleDungeonQuestSetup.cpp|kDHMissionSectionStart|"##"|<not-found>
+WorldServer\Entities\CDarkHoleDungeonQuestSetup.cpp|kDHQuestSectionStart|"###"|<not-found>
+WorldServer\Entities\CDarkHoleDungeonQuestSetup.cpp|nEOFLen|0|0x1849814B0 bytes[4] FF FF FF FF
+WorldServer\Entities\CDarkHoleDungeonQuestSetup.cpp|szEOF|"EOF"|0x14096F6B8 char_ptr [0x14079F280:"[END_OF_FILE]"]
+WorldServer\Entities\CDummyPosTable.cpp|C_HEROES_DUMMY_NAME|{"sd030f1", "sd040f1", "sd050f1"}|0x14096D3D0 char_ptr_array[3] [0x140746388:"sd030f1", 0x140746390:"sd040f1", 0x140746398:"sd050f1"]
+WorldServer\Entities\CDummyPosTable.h|ms_pHeroes_Dummy|<decl-only>|0x141470700 bytes[24] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+WorldServer\Entities\CExchangeEvent.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\CGameObject.h|s_bRecordSet|<decl-only>|0x184A71F70 bytes[1] FF
+WorldServer\Entities\CGameObject.h|s_nTotalObjectNum|<decl-only>|0x1413C62D8 bytes[4] FF FF FF FF
+WorldServer\Entities\CGameObject.h|s_pSelectObject|<decl-only>|0x1413C62D0 bytes[8] FF FF FF FF FF FF FF FF
+WorldServer\Entities\CGameObject.h|s_pTotalObject|<decl-only>|0x141372E40 bytes[341136] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CGameObject.h|s_wRecord|<decl-only>|0x184A717A0 bytes[2000] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CGoldenBoxItemMgr.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\CGravityStone.h|ms_dwSerialCnt|<decl-only>|<ambiguous-name:4>
+WorldServer\Entities\CGuardTower.cpp|objectName|<decl-only>|<not-found>
+WorldServer\Entities\CGuardTower.h|s_dwOldTick_CheckTemp|<decl-only>|0x141345428 bytes[4] FF FF FF FF
+WorldServer\Entities\CGuardTower.h|s_dwSerialCnt|<decl-only>|<ambiguous-name:8>
+WorldServer\Entities\CGuardTower.h|s_nLiveNum|<decl-only>|<ambiguous-name:11>
+WorldServer\Entities\CGuardTower.h|s_Temp|<decl-only>|0x141345430 bytes[101280] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CGuild.cpp|kUnknownGuildEmblemName|"<unknown>"|<not-found>
+WorldServer\Entities\CGuild.h|s_GuildList|<decl-only>|0x183D93EB0 bytes[40] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+WorldServer\Entities\CGuild.h|s_MgrHistory|<decl-only>|0x183D93F10 bytes[1094344] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CGuildBattleController.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\CGuildMasterEffect.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\CGuildRoomInfo.cpp|CGuildRoomInfo::operator|(const CGuildRoomInfo &other)|<not-found>
+WorldServer\Entities\CGuildRoomInfo.h|sm_neutal_map|<decl-only>|0x184A6F638 bytes[24] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+WorldServer\Entities\CGuildRoomInfo.h|sm_neutral_hq_dummy|<decl-only>|0x184A6F620 bytes[24] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+WorldServer\Entities\CGuildRoomInfo.h|sm_RoomInfo|<decl-only>|0x184A6F650 bytes[24] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+WorldServer\Entities\CGuildRoomSystem.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\CheatCommands.cpp|aA_44|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|aA_45|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|aA_46|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|aA_47|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|aA_48|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|aA_49|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|aA_50|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|aAi_8|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|aAo_6|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|aAo_7|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|aAua_0|"<unknown>"|0x1407A40C8 string "Å°ÆÛ Ä"
+WorldServer\Entities\CheatCommands.cpp|aCheatHelpSynta_0|"<unknown>"|0x1407AEE40 string "Cheat Help : Syntax = timeset "
+WorldServer\Entities\CheatCommands.cpp|aCheatHelpSynta_1|"<unknown>"|0x1407AEEA0 string "Cheat Help : Syntax = tlinfoset ÇÇ"
+WorldServer\Entities\CheatCommands.cpp|aCheatHelpSynta_2|"<unknown>"|0x1407AF0A8 string "Cheat Help : Syntax = %actpset ÇàÀ"
+WorldServer\Entities\CheatCommands.cpp|aCheatHelpSynta_3|"<unknown>"|0x1407AF150 string "Cheat Help : Syntax = %eventset "
+WorldServer\Entities\CheatCommands.cpp|aCoacCodeDBoxAc|"<unknown>"|0x1407AF1D0 string "ÇöÀç [Code_%d Box] ÀÇ ÀÜ"
+WorldServer\Entities\CheatCommands.cpp|aCoacE|"<unknown>"|0x1407AF120 string "ÇöÀç È"
+WorldServer\Entities\CheatCommands.cpp|aCoacE_0|"<unknown>"|0x1407AF190 string "ÇöÀç È"
+WorldServer\Entities\CheatCommands.cpp|aE_2|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|aOne_3|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|byte_1407AE5D0|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|byte_1407AE5E8|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|byte_1407AE5F8|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|byte_1407AE600|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|byte_1407AE608|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|byte_1407AE660|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|byte_1407AE680|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|byte_1407AE6E0|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|byte_1407AE6F0|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|byte_1407AE700|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|byte_1407AE980|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|byte_1407AE998|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|byte_1407AE9A0|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|byte_1407AE9B0|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|byte_1407AEA8C|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|byte_1407AEA9C|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|byte_1407AF0F8|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|byte_1407AF104|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|byte_1407AF110|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|EqSukList|<multiline-init>|0x14096FEA0 bytes[64] 30 E5 7A 40 01 00 00 00 00 00 00 00 00 00 00 00 2C E5 7A 40 01 00 00 00 00 00 00 00 01 00 00 00 28 E5 7A 40 01 00 00 00 01 00 00 00 00 00 00 00 24 E5 7A 40 01 00 00 00 02 00 00 00 00 00 00 00
+WorldServer\Entities\CheatCommands.cpp|FLOAT_100_0|100.0f|<not-found>
+WorldServer\Entities\CheatCommands.cpp|kCheatWordCount|6|<not-found>
+WorldServer\Entities\CheatCommands.cpp|kCheatWordSize|32|<not-found>
+WorldServer\Entities\CheatCommands.cpp|kProcessorNames|<multiline-init>|<not-found>
+WorldServer\Entities\CheatCommands.cpp|unk_1407AE840|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|unk_1407AE858|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|unk_1407AE868|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|unk_1407AE878|"<unknown>"|<not-found>
+WorldServer\Entities\CheatCommands.cpp|unk_1407AE888|"<unknown>"|<not-found>
+WorldServer\Entities\CHolyKeeper.h|s_dwSerialCnt|<decl-only>|<ambiguous-name:8>
+WorldServer\Entities\CHolyKeeper.h|s_nLiveNum|<decl-only>|<ambiguous-name:11>
+WorldServer\Entities\CHolyStone.h|s_dwSerialCnt|<decl-only>|<ambiguous-name:8>
+WorldServer\Entities\CHolyStone.h|s_nLiveNum|<decl-only>|<ambiguous-name:11>
+WorldServer\Entities\CHolyStoneSystemDataMgr.cpp|c_TempPair|<multiline-init>|0x14096FBC0 char_ptr_array[7] [0x1407A7138:"HSS_SCENE_CHANGE_TERM", 0x1407A7150:"HSS_SCENE_BATTLE_TERM", 0x1407A7168:"HSS_SCENE_ATTACKABLE_KEEPER_TERM", 0x1407A7190:"HSS_SCENE_DESATTACKABLE_KEEPER_TERM", 0x1407A71B8:"HSS_SCENE_CHAOS_KEEPER_TERM", 0x1407A71D8:"HSS_SCENE_BASE_MINIE_TERM", 0x1407A71F8:"HSS_SCENE_TOUCH_DOWN_ADD_TERM"]
+WorldServer\Entities\CHonorGuild.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\CItemBox.h|s_dwSerialCounter|<decl-only>|<ambiguous-name:3>
+WorldServer\Entities\CItemBox.h|s_nLiveNum|<decl-only>|<ambiguous-name:11>
+WorldServer\Entities\CItemStoreManager.cpp|instance|<decl-only>|<not-found>
+WorldServer\Entities\CLevel.cpp|a4|<decl-only>|<not-found>
+WorldServer\Entities\CLevel.cpp|a5|<decl-only>|<not-found>
+WorldServer\Entities\CLogTypeDBTaskManager.h|ms_Instance|<decl-only>|<ambiguous-name:41>
+WorldServer\Entities\CLuaCommandEx.cpp|CLuaCommandEx::_State::operator|=(const _State &rhs) const|<not-found>
+WorldServer\Entities\CLuaCommandEx.h|ms_cEmpty|<decl-only>|<ambiguous-name:4>
+WorldServer\Entities\CLuaEventMgr.h|ms_Instance|<decl-only>|<ambiguous-name:41>
+WorldServer\Entities\CLuaEventNode.cpp|CLuaEventNode::_State::operator|=(const _State &rhs) const|<not-found>
+WorldServer\Entities\CLuaEventNode.h|ms_cEmpty|<decl-only>|<ambiguous-name:4>
+WorldServer\Entities\CLuaLootingMgr.cpp|CLuaLooting_Novus_Item::_State::operator|=(const _State &rhs) const|<not-found>
+WorldServer\Entities\CLuaLootingMgr.h|ms_cEmpty|<decl-only>|<ambiguous-name:4>
+WorldServer\Entities\CLuaLootingMgr.h|ms_Instance|<decl-only>|<ambiguous-name:41>
+WorldServer\Entities\CLuaScript.cpp|CLuaScript::_State::operator|=(const _State &rhs) const|<not-found>
+WorldServer\Entities\CLuaScript.h|ms_cEmpty|<decl-only>|<ambiguous-name:4>
+WorldServer\Entities\CLuaScriptMgr.h|ms_Instance|<decl-only>|<ambiguous-name:41>
+WorldServer\Entities\CMainThread.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\CMainThread.h|m_dwCnt|<decl-only>|0x184A71550 bytes[4] FF FF FF FF
+WorldServer\Entities\CMainThread.h|ms_KeyPair|<decl-only>|0x140973108 char_ptr_array[3] [0x1408369E8:"MOBCODE", 0x1408369F0:"LTTM", 0x1408369F8:"LIVE"]
+WorldServer\Entities\CMainThread.h|ms_szClientVerCheck|<decl-only>|0x1414FFFC0 bytes[33] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+WorldServer\Entities\CMainThread.h|ms_uiObjects|<decl-only>|0x141372ACC bytes[4] FF FF FF FF
+WorldServer\Entities\CMapOperation.cpp|CMapOperation::ms_szSettlementMapName|<multiline-init>|0x14096D4D0 char_ptr_array[6] [0x14074A768:"NeutralBS1", 0x14074A778:"NeutralBS2", 0x14074A788:"NeutralCS1", 0x14074A798:"NeutralCS2", 0x14074A7A8:"NeutralAS1", 0x14074A7B8:"NeutralAS2"]
+WorldServer\Entities\CMapOperation.h|ms_szSettlementMapName|<decl-only>|0x14096D4D0 char_ptr_array[6] [0x14074A768:"NeutralBS1", 0x14074A778:"NeutralBS2", 0x14074A788:"NeutralCS1", 0x14074A798:"NeutralCS2", 0x14074A7A8:"NeutralAS1", 0x14074A7B8:"NeutralAS2"]
+WorldServer\Entities\CMerchant.cpp|objectName|<decl-only>|<not-found>
+WorldServer\Entities\CMerchant.h|s_dwSerialCnt|<decl-only>|<ambiguous-name:8>
+WorldServer\Entities\CMerchant.h|s_nLiveNum|<decl-only>|<ambiguous-name:11>
+WorldServer\Entities\CMoneySupplyMgr.h|pInstance|<decl-only>|0x184A71598 bytes[8] FF FF FF FF FF FF FF FF
+WorldServer\Entities\CMonster.h|s_dwSerialCnt|<decl-only>|<ambiguous-name:8>
+WorldServer\Entities\CMonster.h|s_idxMonsterLoot|<decl-only>|0x141363320 bytes[8] FF FF FF FF FF FF FF FF
+WorldServer\Entities\CMonster.h|s_logTrace_Boss_BirthAndDeath|<decl-only>|0x14136FAA0 bytes[184] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CMonster.h|s_logTrace_Boss_Looting|<decl-only>|0x14136F9E0 bytes[184] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CMonster.h|s_nAllocNum|<decl-only>|0x141363310 bytes[4] FF FF FF FF
+WorldServer\Entities\CMonster.h|s_nLiveNum|<decl-only>|<ambiguous-name:11>
+WorldServer\Entities\CMonsterEventRespawn.cpp|s_iniExtLen|0|<not-found>
+WorldServer\Entities\CMonsterEventRespawn.cpp|s_iniExtLenInit|false|<not-found>
+WorldServer\Entities\CMonsterHelper.h|cur|<decl-only>|0x14070D0A0 bytes[1] 01
+WorldServer\Entities\CMonsterHelper.h|NewTar|<decl-only>|0x141372688 bytes[12] FF FF FF FF FF FF FF FF FF FF FF FF
+WorldServer\Entities\CMonsterHelper.h|tarPos|<decl-only>|<not-found>
+WorldServer\Entities\CMoveMapLimitEnviromentValues.h|ELAN_1TH_LIMIT_NPC_RECORD_INDEX|<decl-only>|0x140971EDC bytes[4] FF FF FF FF
+WorldServer\Entities\CMoveMapLimitEnviromentValues.h|ELAN_MAP_CODE|<decl-only>|0x140971ED8 bytes[4] FF FF FF FF
+WorldServer\Entities\CMoveMapLimitManager.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\CMoveMapLimitRightInfo.cpp|CMoveMapLimitRightInfo::operator|(const CMoveMapLimitRightInfo &rhs)|<not-found>
+WorldServer\Entities\CNationSettingDataNULL.h|ms_NULL|<decl-only>|<ambiguous-name:3>
+WorldServer\Entities\CNuclearBomb.h|s_dwSerialCnt|<decl-only>|<ambiguous-name:8>
+WorldServer\Entities\CNuclearBombMgr.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\COreAmountMgr.h|m_pInstance|<decl-only>|<ambiguous-name:6>
+WorldServer\Entities\CParkingUnit.h|s_nLiveNum|<decl-only>|<ambiguous-name:11>
+WorldServer\Entities\CParticle.cpp|a3|<decl-only>|<not-found>
+WorldServer\Entities\CPathFinder.cpp|s_pathfinder_stack_overflow|"pathfinder stack overflow"|<not-found>
+WorldServer\Entities\CPathMgr.h|ms_BackupPath|<decl-only>|0x141372950 bytes[208] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CPcBangFavor.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\CPlayer_Cheat.cpp|fPos|{13.0f, -108.0f, 37.0f}|0x14096BBC0 bytes[12] 00 00 50 41 00 00 D8 C2 00 00 14 42
+WorldServer\Entities\CPlayer_Cheat.cpp|fTarPos|{-249.0f, -1737.0f, -242.0f}|0x14096BBB0 bytes[12] 00 00 79 C3 00 20 D9 C4 00 00 72 C3
+WorldServer\Entities\CPlayer_Missing.cpp|kBulletSlotPerPart|{-1, -1, -1, 0, 1, -1}|<not-found>
+WorldServer\Entities\CPlayer_Missing.cpp|kWeaponPartPerBullet|{3, 4}|<not-found>
+WorldServer\Entities\CPlayer_Missing.cpp|s_serialCounter|1|<not-found>
+WorldServer\Entities\CPlayer.cpp|destroyTable|<multiline-init>|<not-found>
+WorldServer\Entities\CPlayer.cpp|MiningTicket::_AuthKeyTicket::operator|=(const _AuthKeyTicket &src) const|<not-found>
+WorldServer\Entities\CPlayer.cpp|successTable|<multiline-init>|<not-found>
+WorldServer\Entities\CPlayer.cpp|zeroTable|<multiline-init>|<not-found>
+WorldServer\Entities\CPlayer.h|ms_dwCount|<decl-only>|0x184A6FBE0 bytes[4] FF FF FF FF
+WorldServer\Entities\CPlayer.h|ms_pXmas_Snow_Bullet_Effect|<decl-only>|0x140988FA8 bytes[8] FF FF FF FF FF FF FF FF
+WorldServer\Entities\CPlayer.h|ms_pXmas_Snow_Effect|<decl-only>|0x140988FA0 bytes[8] FF FF FF FF FF FF FF FF
+WorldServer\Entities\CPlayer.h|ms_tbl_ItemCombine|<decl-only>|0x184A67E60 bytes[176] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CPlayer.h|ms_tbl_ItemCombine_Link_Result|<decl-only>|0x184A67D00 bytes[176] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CPlayer.h|ms_tbl_ItemCombine_Link_Stuff|<decl-only>|0x184A67DB0 bytes[176] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CPlayer.h|s_AnimusReturnDelay|<decl-only>|0x14098A970 bytes[200] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CPlayer.h|s_BillingForceCloseDelay|<decl-only>|0x14098A030 bytes[200] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CPlayer.h|s_dwAbnormalCloseCount|<decl-only>|0x140988F94 bytes[4] FF FF FF FF
+WorldServer\Entities\CPlayer.h|s_dwTotalCloseCount|<decl-only>|0x140988F84 bytes[4] FF FF FF FF
+WorldServer\Entities\CPlayer.h|s_fExpDivUnderParty_Kill|<decl-only>|0x14096B228 bytes[32] 00 00 80 3F CD CC 8C 3F 00 00 C0 3F 00 00 00 40 00 00 20 40 00 00 40 40 00 00 60 40 00 00 90 40
+WorldServer\Entities\CPlayer.h|s_MgrItemHistory|<decl-only>|0x14098AA40 bytes[3508344] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CPlayer.h|s_MgrLvHistory|<decl-only>|0x140CE3C30 bytes[1476344] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CPlayer.h|s_nAddMstFc|<decl-only>|0x140988DF0 bytes[400] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CPlayer.h|s_nLiveNum|<decl-only>|<ambiguous-name:11>
+WorldServer\Entities\CPlayer.h|s_nRaceNum|<decl-only>|0x140988F88 bytes[12] FF FF FF FF FF FF FF FF FF FF FF FF
+WorldServer\Entities\CPlayer.h|s_nRevDefPoint|<decl-only>|0x14096B260 bytes[4] 0A 00 00 00
+WorldServer\Entities\CPlayer.h|s_nSpareTime|<decl-only>|0x14096BFB8 bytes[4] 64 00 00 00
+WorldServer\Entities\CPlayer.h|s_nStdDefPoint|<decl-only>|0x14096B25C bytes[4] 06 00 00 00
+WorldServer\Entities\CPlayer.h|s_pForceData|<decl-only>|0x140988DD8 bytes[8] FF FF FF FF FF FF FF FF
+WorldServer\Entities\CPlayer.h|s_pnLinkForceItemToEffect|<decl-only>|0x140988F98 bytes[8] FF FF FF FF FF FF FF FF
+WorldServer\Entities\CPlayer.h|s_pSkillData|<decl-only>|<ambiguous-name:2>
+WorldServer\Entities\CPlayer.h|s_pWeaponData|<decl-only>|0x140F40D10 bytes[8] FF FF FF FF FF FF FF FF
+WorldServer\Entities\CPlayer.h|s_SkillIndexPerMastery|<decl-only>|0x140E4C330 bytes[1568] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CPlayer.h|s_tblLimMastery|<decl-only>|0x140988FB0 bytes[2112] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CPlayer.h|s_tblLimMasteryContinue|<decl-only>|0x14098A130 bytes[2112] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CPlayer.h|s_tblLimMasteryCum|<decl-only>|0x140CE32C0 bytes[2112] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CPlayer.h|s_tblLimMasteryCumContinue|<decl-only>|0x1409897F0 bytes[2112] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CPostSystemManager.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\CPvpCashMng.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\CPvpUserAndGuildRankingSystem.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\CQuestMgr.h|s_tblQuest|<decl-only>|0x1849AC0C0 bytes[8] FF FF FF FF FF FF FF FF
+WorldServer\Entities\CQuestMgr.h|s_tblQuestHappenEvent|<decl-only>|0x1849AC0B8 bytes[8] FF FF FF FF FF FF FF FF
+WorldServer\Entities\CRaceBossMsgController.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\CRaceBossWinRate.h|m_Inst|<decl-only>|0x183D93CC0 bytes[8] FF FF FF FF FF FF FF FF
+WorldServer\Entities\CRaceBuffInfoByHolyQuestfGroup.cpp|CRaceBuffInfoByHolyQuestfGroup::TYPE_NAME|{"Win", "Fail", "Lose", "Chaos"}|0x140972080 char_ptr_array[4] [0x1408132F0:"WinGetScaner", 0x140813300:"WinEmptyScaner", 0x140813310:"Fail", 0x140813318:"Lose"]
+WorldServer\Entities\CRaceBuffInfoByHolyQuestfGroup.h|TYPE_NAME|<decl-only>|0x140972080 char_ptr_array[4] [0x1408132F0:"WinGetScaner", 0x140813300:"WinEmptyScaner", 0x140813310:"Fail", 0x140813318:"Lose"]
+WorldServer\Entities\CRaceBuffManager.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\CRecallEffectController.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\CRecordData.cpp|s_hashTable|{}|<not-found>
+WorldServer\Entities\CRecordData.cpp|s_hashTableLoaded|false|<not-found>
+WorldServer\Entities\CReturnGateController.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\CRFMonsterAIMgr.h|ms_Instance|<decl-only>|<ambiguous-name:41>
+WorldServer\Entities\CRFWorldDatabase.cpp|kEmptySortInner|""|<not-found>
+WorldServer\Entities\CRFWorldDatabase.cpp|kEmptySortOuter|""|<not-found>
+WorldServer\Entities\CRtc.h|ms_Instance|<decl-only>|<ambiguous-name:41>
+WorldServer\Entities\CRusiaBillingMgr.h|m_pRusiaBill|<decl-only>|0x184A6FAA8 bytes[8] FF FF FF FF FF FF FF FF
+WorldServer\Entities\cStaticMember_Player.h|_pInstance|<decl-only>|0x140F40D00 bytes[8] FF FF FF FF FF FF FF FF
+WorldServer\Entities\CSUItemSystem.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\CTalkCrystalCombineManager.h|ms_pInstance|<decl-only>|<ambiguous-name:4>
+WorldServer\Entities\CTotalGuildRankManager.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\CTSingleton.h|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\CUnmannedTraderController.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.cpp|CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Sort_Query|"si.serial asc"|0x1407FB738 char_ptr [0x1407FB728:"si.serial asc"]
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.cpp|CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Sort_Type_Name|"serial asc"|0x1407FB720 char_ptr [0x1407FB710:"serial asc"]
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.cpp|CUnmannedTraderEnvironmentValue::Unmanned_Trader_Setting_Xml_File|"./Initialize/UnmendTrader.xml"|0x1407FB6E0 char_ptr [0x1407FB6C0:"./Initialize/UnmendTrader.xml"]
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.cpp|CUnmannedTraderEnvironmentValue::UNMANNEDTRADETRADEINFO_SAVE_INI_FILE_NAME|""|0x1407FB760 char_ptr [0x1407FB740:"..\\SystemSave\\ServerState.ini"]
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.cpp|CUnmannedTraderEnvironmentValue::UNMANNEDTRADETRADEINFO_SAVE_INI_SECTION_NAME|""|0x1407FB780 char_ptr [0x1407FB768:"Unmannedtradetradeinfo"]
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h|Unmanned_Trader_Change_Taxrate_Check_Changed_Day_Delay|<decl-only>|0x1407FB700 bytes[4] 88 13 00 00
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h|Unmanned_Trader_Check_Schedule_Delay|<decl-only>|0x140971898 bytes[4] E8 03 00 00
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h|Unmanned_Trader_Default_Empty_Record_Cnt|<decl-only>|0x1407FB6EC bytes[4] 10 27 00 00
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h|Unmanned_Trader_Default_Sell_Turm|<decl-only>|0x1407FB6F4 bytes[4] 48 00 00 00
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h|Unmanned_Trader_Default_Sort_Query|<decl-only>|0x1407FB738 char_ptr [0x1407FB728:"si.serial asc"]
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h|Unmanned_Trader_Default_Sort_Type_Name|<decl-only>|0x1407FB720 char_ptr [0x1407FB710:"serial asc"]
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h|Unmanned_Trader_Dev_Account_Start_Serial|<decl-only>|0x1407FB704 bytes[4] 00 94 35 77
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h|Unmanned_Trader_Max_Row_Count_Search|<decl-only>|0x1407FB708 bytes[4] 0A 00 00 00
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h|Unmanned_Trader_Max_Schdule_Cnt|<decl-only>|0x1407FB6F0 bytes[4] 0A 00 00 00
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h|Unmanned_Trader_Min_Limit_Empty_Record_Cnt|<decl-only>|0x1407FB6E8 bytes[4] E8 03 00 00
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h|Unmanned_Trader_Nomal_Max_Regist_Item_Cnt|<decl-only>|0x1407FB6F8 bytes[4] 05 00 00 00
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h|Unmanned_Trader_Setting_Xml_File|<decl-only>|0x1407FB6E0 char_ptr [0x1407FB6C0:"./Initialize/UnmendTrader.xml"]
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h|UNMANNEDTRADETRADEINFO_LOOP_DELAY|<decl-only>|0x1407FB70C bytes[4] 60 EA 00 00
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h|UNMANNEDTRADETRADEINFO_SAVE_INI_FILE_NAME|<decl-only>|0x1407FB760 char_ptr [0x1407FB740:"..\\SystemSave\\ServerState.ini"]
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h|UNMANNEDTRADETRADEINFO_SAVE_INI_SECTION_NAME|<decl-only>|0x1407FB780 char_ptr [0x1407FB768:"Unmannedtradetradeinfo"]
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h|UNMANNEDTRADETRADER_LAZYCLEANER_LOOP_DELAY|<decl-only>|0x1407FB788 bytes[4] E0 93 04 00
+WorldServer\Entities\CUnmannedTraderEnvironmentValue.h|UNMANNEDTRADETRADER_LAZYCLEANER_UPDATE_MAX_RETRY_CNT|<decl-only>|0x1407FB78C bytes[2] C8 00
+WorldServer\Entities\CUnmannedTraderGroupItemInfoTable.h|ms_Instance|<decl-only>|<ambiguous-name:41>
+WorldServer\Entities\CUnmannedTraderItemCodeInfo.cpp|CUnmannedTraderItemCodeInfo::operator|(const CUnmannedTraderItemCodeInfo &lhs)|<not-found>
+WorldServer\Entities\CUnmannedTraderItemState.h|ms_wszStateName|<decl-only>|0x140971730 char_ptr_array[15] [0x1407F3278:"Wait", 0x1407F3288:"RegistAtWaitRecord", 0x1407F32B0:"RegistAtNewRecord", 0x1407F32D8:"Sell Complete", 0x1407F32F8:"Sell Complete And Wait", 0x1407F3328:"Cancel Regist", 0x1407F3350:"Close For Pass Time Wait Notify", 0x1407F3390:"Cancel Regist For Server Internal Error", 0x1407F33E0:"Cancel Sell Fail For Server Internal Error", 0x1407F3440:"Close Fail For Server Internal error", 0x1407F3490:"Sell Complete Update Wait", 0x1407F34C8:"Close For PassTime", 0x1407F34F0:"Regist Fail For Server Internal Error", 0x1407F3540:"Close For Pass Time Wait Reregistration", 0x1407F3590:"NULL"]
+WorldServer\Entities\CUnmannedTraderScheduler.h|ms_Instance|<decl-only>|<ambiguous-name:41>
+WorldServer\Entities\CUnmannedTraderSortType.cpp|CUnmannedTraderSortType::operator|(const CUnmannedTraderSortType *lhs)|<not-found>
+WorldServer\Entities\CUnmannedTraderTaxRateManager.h|ms_Instance|<decl-only>|<ambiguous-name:41>
+WorldServer\Entities\CUnmannedTraderUserInfo.cpp|CUnmannedTraderUserInfo::operator|(const CUnmannedTraderUserInfo &rhs)|<not-found>
+WorldServer\Entities\CUnmannedTraderUserInfo.h|ms_kNull|<decl-only>|0x184A6FB10 bytes[104] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CUnmannedTraderUserInfoTable.h|m_uiBuyRollBackCallCountSum|<decl-only>|0x184A6FB90 bytes[4] FF FF FF FF
+WorldServer\Entities\CUnmannedTraderUserInfoTable.h|ms_Instance|<decl-only>|<ambiguous-name:41>
+WorldServer\Entities\CUserDB_Missing2.cpp|aAe|"FirstSettingData (%s) Item[%d] Invalid Table Code (%s)"|<not-found>
+WorldServer\Entities\CUserDB_Missing2.cpp|aAe_0|"FirstSettingData (%s) Item[%d] Unit Item Not Allowed (%s)"|<not-found>
+WorldServer\Entities\CUserDB_Missing2.cpp|aAe_1|"FirstSettingData (%s) Item[%d] Record Not Found (%s)"|<not-found>
+WorldServer\Entities\CUserDB_Missing2.cpp|aDDatavalidchec_21|"%d > DataValidCheckRevise EMBELL.. INDEX (%d : %d) (DEL)"|0x140728280 string "%d > DataValidCheckRevise Àå"
+WorldServer\Entities\CUserDB_Missing2.cpp|aDDatavalidchec_22|"%d > DataValidCheckRevise EMBELL.. COUNT OVER (%d : %d)"|0x1407282C0 string "%d > DataValidCheckRevise "
+WorldServer\Entities\CUserDB_Missing2.cpp|aDDatavalidchec_23|"%d > DataValidCheckRevise EMBELL.. COUNT OVER (%d : %d)"|0x140728300 string "%d > DataValidCheckRevise Àå"
+WorldServer\Entities\CUserDB_Missing2.cpp|aDDatavalidchec_24|"%d > DataValidCheckRevise FORCE.. INDEX (%d) (DEL)"|0x140728340 string "%d > DataValidCheckRevise Æ"
+WorldServer\Entities\CUserDB_Missing2.cpp|aDDatavalidchec_25|"%d > DataValidCheckRevise ANIMUS.. INDEX (%d) (DEL)"|0x140728378 string "%d > DataValidCheckRevise "
+WorldServer\Entities\CUserDB_Missing2.cpp|aDDatavalidchec_26|"DataValidCheckRevise SFDelay.. EFFECT (%d : %d) (DEL)"|0x1407285C0 string "%d > DataValidCheckRevise ÀÌÆåÆ® ÀÎµ"
+WorldServer\Entities\CUserDB_Missing2.cpp|aDDatavalidchec_27|"DataValidCheckRevise SFDelay.. MASTERY (%d : %d) (DEL)"|0x140728600 string "%d > DataValidCheckRevise "
+WorldServer\Entities\CUserDB_Missing2.cpp|aDDDatavalidche|"%d > DataValidCheckRevise UNIT.. SLOT (%d) (DEL)"|0x1407283B8 string "%d > %d DataValidCheckRevise À"
+WorldServer\Entities\CUserDB_Missing2.cpp|aDDDatavalidche_0|"%d > DataValidCheckRevise QUEST.. TYPE (%d : %d) (DEL)"|0x1407283F0 string "%d > %d DataValidCheckRevise Äù"
+WorldServer\Entities\CUserDB_Missing2.cpp|aDDDatavalidche_1|"%d > DataValidCheckRevise QUEST.. INDEX (%d : %d) (DEL)"|0x140728428 string "%d > %d DataValidCheckRevise Äù"
+WorldServer\Entities\CUserDB.cpp|_INVEN_DB_BASE::_LIST::operator|(const _LIST &rhs)|<not-found>
+WorldServer\Entities\CUserDB.cpp|_INVEN_DB_BASE::operator|(const _INVEN_DB_BASE &rhs)|<not-found>
+WorldServer\Entities\CUserDB.cpp|_INVENKEY::operator|(const _INVENKEY &rhs)|<not-found>
+WorldServer\Entities\CUserDB.cpp|kDataValidCheckLevel|"D_DataValidCheck (Serial:%d) Level:%d Max:%d"|<not-found>
+WorldServer\Entities\CUserDB.cpp|kDataValidCheckRace|"D_DataValidCheck (Serial:%d) Race:%d"|<not-found>
+WorldServer\Entities\CUserDB.cpp|wszGMCmp|"GM"|0x14096C030 string "[GameMaster]"
+WorldServer\Entities\CUserDB.cpp|wszNonMakeName|{"GM", "ADMIN", "OPERATOR"}|0x14096BB50 bytes[24] 48 82 70 40 01 00 00 00 40 82 70 40 01 00 00 00 38 82 70 40 01 00 00 00
+WorldServer\Entities\CUserDB.cpp|wszNonMakeName_0|{"GM", "ADMIN", "OPERATOR"}|0x14096C0C8 bytes[24] A8 70 72 40 01 00 00 00 A0 70 72 40 01 00 00 00 34 70 72 40 01 00 00 00
+WorldServer\Entities\CUserDB.cpp|wszNonMakeName_1|{"GM", "ADMIN", "OPERATOR"}|0x14096D730 bytes[24] 54 FC 74 40 01 00 00 00 4C FC 74 40 01 00 00 00 44 FC 74 40 01 00 00 00
+WorldServer\Entities\CUserDB.h|s_logAvatorDB|<decl-only>|0x140F40E00 bytes[184] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CUserDB.h|s_MgrLobbyHistory|<decl-only>|0x140F40EC0 bytes[3508344] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CUserDB.h|s_MoveLobbyDelay|<decl-only>|0x140F40D30 bytes[200] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\CUserDB.h|s_nLoginNum|<decl-only>|0x140F40D20 bytes[4] FF FF FF FF
+WorldServer\Entities\CUserRankingProcess.cpp|s_rankInGuildTh|0|<not-found>
+WorldServer\Entities\CWeeklyGuildRankManager.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHIfChangeMonster|"change_monster"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHIfCompleteMsg|"complete_msg"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHIfDescription|"description"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHInnerMsgToken|"msg:"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHInnerRespawnToken|"respawn_monster:"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHJobCommandContents|"contents"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHJobCommandCount|"count"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHJobCommandDescription|"description"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHJobCommandReactContents|"react_contents"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHJobCommandReactType|"react_type"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHJobCommandType|"type"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHJobContentsAny|"ANY"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHJobOrderAnd|"AND"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHJobOrderOr|"OR"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHJobReactPortal|"PORTAL"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHJobTypeHunt|"HUNT"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHJobTypeTake|"TAKE"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHMissionCommandAddMonster|"add_monster"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHMissionCommandAddTime|"add_time"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHMissionCommandArea|"area"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHMissionCommandChangeMonster|"change_monster"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHMissionCommandCompleteMsg|"complete_msg"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHMissionCommandDescription|"description"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHMissionCommandGatePos|"gate_pos"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHMissionCommandIf|"if"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHMissionCommandInner|"inner"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHMissionCommandJobOrder|"job_order"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHMissionCommandLimTimeSec|"lim_time_sec"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHMissionCommandLootItem|"loot_item"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHMissionCommandRespawnMonster|"respawn_monster"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHMissionCommandRespawnMonsterOption|"respawn_monster_option"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHMissionCommandRespond|"respond"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHMissionCommandResultContents|"result_contents"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHMissionCommandResultType|"result_type"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHMissionCommandStartPos|"start_pos"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHMissionResultComplete|"COMPLETE"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHMissionResultNext|"NEXT"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHMissionResultPortal|"PORTAL"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHQuestCommandDescription|"description"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHQuestCommandDummyBlock|"dummy_block"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHQuestCommandLimitLvMax|"limit_lv_max"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHQuestCommandLimitLvMin|"limit_lv_min"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHQuestCommandMemberNum|"member_num"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHQuestCommandMembershipParty|"membership_party"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHQuestCommandMonsterGroup|"monster_group"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHQuestCommandRewardDalant|"reward_dalant"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHQuestCommandRewardExp|"reward_exp"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHQuestCommandRewardItem|"reward_item"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHQuestCommandRewardPvp|"reward_pvp"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHQuestCommandStartMission|"start_mission"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHQuestCommandUseMap|"use_map"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHReactAreaBlockToken|"block:"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHReactAreaDummyToken|"dummy:"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHReactAreaNoValue|"-1"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHReactObjectGroupToken|"m_group:"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHReactObjectItemToken|"item:"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHReactObjectMonsterToken|"monster:"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHRespawnLimToken|"lim:"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHRespawnTermToken|"term:"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHRespondHuntToken|"hunt:"|<not-found>
+WorldServer\Entities\DarkHoleQuestCommands.cpp|kDHRewardScopeOne|"one"|<not-found>
+WorldServer\Entities\DfAIMgr.cpp|fBeforeTar|<decl-only>|0x141372678 bytes[12] FF FF FF FF FF FF FF FF FF FF FF FF
+WorldServer\Entities\DfAIMgr.cpp|fNextTarPos|<decl-only>|0x141372668 bytes[12] FF FF FF FF FF FF FF FF FF FF FF FF
+WorldServer\Entities\DfAIMgr.cpp|nearMon|<decl-only>|0x141372420 bytes[480] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\DfAIMgr.cpp|NewTar|<decl-only>|0x141372688 bytes[12] FF FF FF FF FF FF FF FF FF FF FF FF
+WorldServer\Entities\DfAIMgr.cpp|vTargetPos|<decl-only>|0x141372698 bytes[12] FF FF FF FF FF FF FF FF FF FF FF FF
+WorldServer\Entities\DfAIMgr.cpp|vTargetPos_0|<decl-only>|0x1413726A8 bytes[12] FF FF FF FF FF FF FF FF FF FF FF FF
+WorldServer\Entities\FinalDecisionApplyer.cpp|kEmptyLeaderName|{'\0'}|<not-found>
+WorldServer\Entities\GuildBattle.cpp|GUILD_BATTLE_STATE_NULL_11|{}|0x184A70408 bytes[8] FF FF FF FF FF FF FF FF
+WorldServer\Entities\GuildBattle.cpp|NORMAL_GUILD_BATTLE_STATE_NULL_11|<decl-only>|0x184A70420 bytes[304] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\GuildBattle.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\GuildBattle.h|ms_Instance|<decl-only>|<ambiguous-name:41>
+WorldServer\Entities\GuildBattle.h|ms_kNullObj|<decl-only>|0x184A6FF70 bytes[16] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+WorldServer\Entities\GuildBattle.h|ms_pkDBScheduleInfo|<decl-only>|0x184A701F8 bytes[8] FF FF FF FF FF FF FF FF
+WorldServer\Entities\HACKSHEILD_PARAM_ANTICP.cpp|s_fn|nullptr|<not-found>
+WorldServer\Entities\HACKSHEILD_PARAM_ANTICP.cpp|s_hModule|nullptr|<not-found>
+WorldServer\Entities\HACKSHEILD_PARAM_ANTICP.cpp|s_resolved|false|<not-found>
+WorldServer\Entities\IdaCompat.h|DOUBLE_1_0|1.0|<not-found>
+WorldServer\Entities\IdaCompat.h|FLOAT_0_5|0.5f|<not-found>
+WorldServer\Entities\IdaCompat.h|FLOAT_0_60000002|0.600000024f|<not-found>
+WorldServer\Entities\IdaCompat.h|FLOAT_1_0|1.0f|<not-found>
+WorldServer\Entities\IdaCompat.h|FLOAT_1_1|1.1f|<not-found>
+WorldServer\Entities\IdaCompat.h|FLOAT_1000000_0|1000000.0f|<not-found>
+WorldServer\Entities\IdaCompat.h|FLOAT_23_0|23.0f|<not-found>
+WorldServer\Entities\IdaCompat.h|FLOAT_25_0|25.0f|<not-found>
+WorldServer\Entities\IdaCompat.h|FLOAT_255_0|255.0f|<not-found>
+WorldServer\Entities\IdaCompat.h|FLOAT_30_0|30.0f|<not-found>
+WorldServer\Entities\IdaCompat.h|FLOAT_32767_0|32767.0f|<not-found>
+WorldServer\Entities\IdaCompat.h|FLOAT_8_0|8.0f|<not-found>
+WorldServer\Entities\IdaCompat.h|FLOAT_9999_0|9999.0f|<not-found>
+WorldServer\Entities\IdaCompat.h|FLOAT_N1_0|-1.0f|<not-found>
+WorldServer\Entities\IdaCompat.h|FLOAT_N100000_0|-100000.0f|<not-found>
+WorldServer\Entities\IdaCompat.h|FLOAT_N32000_0|-32000.0f|<not-found>
+WorldServer\Entities\ItemDataLoader.cpp|kItemDataFiles|<multiline-init>|<not-found>
+WorldServer\Entities\LendItemMng.h|_pkInstance|<decl-only>|<ambiguous-name:10>
+WorldServer\Entities\LendItemSheet.cpp|LendItemSheet::Cell::operator|=(const Cell *rhs) const|<not-found>
+WorldServer\Entities\LuaTinker.h|arg|<decl-only>|<not-found>
+WorldServer\Entities\LuaTinker.h|name|NULL)|0x14082EF60 string "Param3"
+WorldServer\Entities\LuaTinker.h|temp|""|<ambiguous-name:6>
+WorldServer\Entities\LuaTinker.h|value|( (sizeof(int_conv_tester(arg)) == sizeof(yes_type)) && (sizeof(vfnd_ptr_tester(add_ptr(arg))) == sizeof(yes_type)) )|<ambiguous-name:53>
+WorldServer\Entities\MathUtil.cpp|a1|<decl-only>|<not-found>
+WorldServer\Entities\MyTimer.h|_time|<decl-only>|0x184A71778 bytes[24] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+WorldServer\Entities\PatriarchElectProcessor.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h|ANIMUS_EXP|<decl-only>|0x14096E018 bytes[4] 00 00 C0 3F
+WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h|BASE_MASTERY|<decl-only>|0x14096E01C bytes[4] 00 00 00 40
+WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h|ITEM_DROP|<decl-only>|0x14096E024 bytes[4] 00 00 00 40
+WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h|MINING_SPEED|<decl-only>|0x14096E010 bytes[4] 00 00 C0 3F
+WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h|PLAYER_EXP|<decl-only>|0x14096E014 bytes[4] 00 00 C0 3F
+WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h|PLAYER_LOST_EXP|<decl-only>|<ambiguous-name:2>
+WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h|PVP_RATE|<decl-only>|0x14096E028 bytes[4] 00 00 C0 3F
+WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h|SKILL_FORCE_MASTERY|<decl-only>|0x14096E020 bytes[4] 00 00 00 40
+WorldServer\Entities\StorageList.cpp|s_makeLootInitFlag|0|<not-found>
+WorldServer\Entities\StorageList.cpp|s_makeLootItem|{}|<not-found>
+WorldServer\Entities\TimeItem.cpp|s_instance|<decl-only>|<not-found>
+WorldServer\Entities\TimeItem.h|_phmapTbl|<decl-only>|<ambiguous-name:2>
+WorldServer\Entities\TimeLimitJade.cpp|TimeLimitJade::UseCell::operator|=(const UseCell *rhs) const|<not-found>
+WorldServer\Entities\TimeLimitJade.cpp|TimeLimitJade::WaitCell::operator|=(const WaitCell *rhs) const|<not-found>
+WorldServer\Entities\TimeLimitJadeMng.h|_pkInstance|<decl-only>|<ambiguous-name:10>
+WorldServer\Entities\UIDGenerator.h|_cs|<decl-only>|0x184A721D0 bytes[40] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+WorldServer\Entities\WheatyExceptionReport.h|m_szDescription|<decl-only>|0x184A72440 bytes[10240] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\WheatyExceptionReport.h|m_szLogName|<decl-only>|0x184A74D50 bytes[2048] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\WorldServerUtil.cpp|asc_140884708|{ 0x3C, 0x2D, 0xBF, 0xA1 }|<not-found>
+WorldServer\Entities\WorldServerUtil.cpp|dayofweek|{"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"}|0x1409736C0 char_ptr_array[7] [0x140842150:"SUN", 0x140842154:"MON", 0x140842158:"TUE", 0x14084215C:"WED", 0x140842160:"THU", 0x140842164:"FRI", 0x140842168:"SAT"]
+WorldServer\Entities\WorldServerUtil.cpp|dw64Cnt|0|0x1414FFFB0 bytes[8] FF FF FF FF FF FF FF FF
+WorldServer\Entities\WorldServerUtil.cpp|g_szLv|"00000000"|0x14096B0C8 bytes[32] 30 30 30 30 30 30 30 30 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+WorldServer\Entities\WorldServerUtil.cpp|g_szUPT|"f"|0x14096B0E8 bytes[32] 66 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+WorldServer\Entities\WorldServerUtil.cpp|g_TextureVtable|{Texture_QueryInterface, Texture_AddRef, Texture_Release}|<not-found>
+WorldServer\Entities\WorldServerUtil.cpp|kSeeDistanceTable|{0.6f, 0.8f, 1.0f}|<not-found>
+WorldServer\Entities\WorldServerUtil.cpp|kSuffix|"\x3C\x2D\xBF\xA1\xB7\xAF"|<not-found>
+WorldServer\Entities\WorldServerUtil.cpp|s_nForceLvPerMastery|{}|0x140988BC0 bytes[96] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF ...
+WorldServer\Entities\WorldServerUtil.cpp|s_nSkillLvPerMastery|{}|0x140988C20 bytes[32] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+WorldServer\Entities\WorldServerUtil.cpp|sBuffer|{}|0x1849AC1E0 bytes[64] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+WorldServer\Entities\WorldServerUtil.cpp|sR|{200.0f, 200.0f, 200.0f, 200.0f}|0x14096B190 bytes[16] 00 00 48 43 00 00 48 43 00 00 48 43 00 00 48 43
+WorldServer\Entities\WorldServerUtil.cpp|szBufUpt|{}|0x140988DA8 bytes[32] FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+WorldServer\Entities\WorldServerUtil.cpp|szDefItemName|"noname"|0x14096B0C0 string "noname"
+WorldServer\Entities\WorldServerUtil.h|a1|<decl-only>|<not-found>
+WorldServer\Entities\WorldServerUtil.h|a3|<decl-only>|<not-found>

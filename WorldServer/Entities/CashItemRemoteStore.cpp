@@ -25,14 +25,14 @@
 
 namespace
 {
-  const char kEventTypeDisable[] = "0 EventType Disable";
-  const char kEventTypeWait[] = "1 EventType Wait";
-  const char kEventTypeStart[] = "2 EventType Start";
-  const char kEventType30Before[] = "3 EventType 30 Before";
-  const char kEventType5Before[] = "4 EventType 5 Before";
-  const char kEventTypeEnd[] = "5 EventType End";
-  const char kEventTypeExpired[] = "7 EventType Expired";
-  const char kLimitedSaleDefault[] = "0";
+  const char kEventTypeDisable[] = " 0 - Event_type_disable : ";
+  const char kEventTypeWait[] = " 1 - Event_type_wait : ";
+  const char kEventTypeStart[] = " 2 - Event_type_start: ";
+  const char kEventType30Before[] = " 3 - Event_type_30_before: ";
+  const char kEventType5Before[] = " 4 - Event_type_5_before: ";
+  const char kEventTypeEnd[] = " 5 - Event_type_end : ";
+  const char kEventTypeExpired[] = " 7 - Event_type_expire : ";
+  const char kLimitedSaleDefault[] = "";
 }
 
 CashItemRemoteStore *CashItemRemoteStore::_pkInstance = nullptr;

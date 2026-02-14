@@ -1,0 +1,611 @@
+static	WorldServer\Entities\AutoMineMachineMng.cpp	33	static SYSTEMTIME s_tmLocal{};
+const	WorldServer\Entities\AutoMineMachineMng.cpp	34	static const char *s_szOreKind_160[5] = {
+static	WorldServer\Entities\AutoMineMachineMng.cpp	34	static const char *s_szOreKind_160[5] = {
+const	WorldServer\Entities\AutoMineMachineMng.h	144	TInvenSlot<T> &TInvenSlot<T>::operator=(const TInvenSlot &rhs)
+static	WorldServer\Entities\AutoMineMachineMng.h	573	static AutoMineMachineMng *m_pInstance;
+static	WorldServer\Entities\AutominePersonalMgr.cpp	42	static AutominePersonalMgr s_instance;
+const	WorldServer\Entities\BossSchedule.cpp	12	const char *BossSchedule::ms_KeyPair[3] = {"MOBCODE", "LTTM", "LIVE"};
+static	WorldServer\Entities\CActionPointSystemMgr.cpp	25	static CActionPointSystemMgr s_instance;
+static	WorldServer\Entities\CandidateMgr.cpp	46	static CandidateMgr s_instance;
+static	WorldServer\Entities\CAnimus.cpp	54	static char s_animusObjectName[256]{};
+static	WorldServer\Entities\CAnimus.cpp	78	static const char *kFiles[8] = {
+static	WorldServer\Entities\CAnimus.h	81	static CRecordData s_tblParameter[8];
+static	WorldServer\Entities\CAnimus.h	82	static unsigned int MAX_EXP[8];
+static	WorldServer\Entities\CAnimus.h	83	static int s_nLiveNum;
+static	WorldServer\Entities\CashItemRemoteStore.h	220	static CashItemRemoteStore *_pkInstance;
+static	WorldServer\Entities\CashItemRemoteStore.h	221	static CashMap *_phmapTbl;
+static	WorldServer\Entities\CAsyncLogger.cpp	40	static CAsyncLogger s_instance;
+static	WorldServer\Entities\CAsyncLogger.h	27	static constexpr ASYNC_LOG_TYPE ALT_ASYNC_LOGGER_SYSTEM_LOG = ::ALT_ASYNC_LOGGER_SYSTEM_LOG;
+static	WorldServer\Entities\CAsyncLogger.h	28	static constexpr ASYNC_LOG_TYPE ALT_PERFORMANCE_COUNTER_SYSTEM = ::ALT_PERFORMANCE_COUNTER_SYSTEM;
+static	WorldServer\Entities\CAsyncLogger.h	29	static constexpr ASYNC_LOG_TYPE ALT_PERFORMANCE_MAIN_LOOP = ::ALT_PERFORMANCE_MAIN_LOOP;
+static	WorldServer\Entities\CAsyncLogger.h	30	static constexpr ASYNC_LOG_TYPE ALT_PERFORMANCE_MAIN_DQS = ::ALT_PERFORMANCE_MAIN_DQS;
+static	WorldServer\Entities\CAsyncLogger.h	31	static constexpr ASYNC_LOG_TYPE ALT_PERFORMANCE_LOG_DQS = ::ALT_PERFORMANCE_LOG_DQS;
+static	WorldServer\Entities\CAsyncLogger.h	32	static constexpr ASYNC_LOG_TYPE ALT_PERFORMANCE_CASH_DQS = ::ALT_PERFORMANCE_CASH_DQS;
+static	WorldServer\Entities\CAsyncLogger.h	33	static constexpr ASYNC_LOG_TYPE ALT_PERFORMANCE_NETWORK_DQS = ::ALT_PERFORMANCE_NETWORK_DQS;
+static	WorldServer\Entities\CAsyncLogger.h	34	static constexpr ASYNC_LOG_TYPE ALT_FIREGUARD_DETECT_LOG = ::ALT_FIREGUARD_DETECT_LOG;
+static	WorldServer\Entities\CAsyncLogger.h	35	static constexpr ASYNC_LOG_TYPE ALT_HONOR_GUILD_LOG = ::ALT_HONOR_GUILD_LOG;
+static	WorldServer\Entities\CAsyncLogger.h	36	static constexpr ASYNC_LOG_TYPE ALT_CLASSREFINE_SERVICE_LOG = ::ALT_CLASSREFINE_SERVICE_LOG;
+static	WorldServer\Entities\CAsyncLogger.h	37	static constexpr ASYNC_LOG_TYPE ALT_BUY_CASH_ITEM_LOG = ::ALT_BUY_CASH_ITEM_LOG;
+static	WorldServer\Entities\CAsyncLogger.h	38	static constexpr ASYNC_LOG_TYPE ALT_HACKSHIELD_SYSTEM_LOG = ::ALT_HACKSHIELD_SYSTEM_LOG;
+static	WorldServer\Entities\CAsyncLogger.h	39	static constexpr ASYNC_LOG_TYPE ALT_APEX_SYSTEM_LOG = ::ALT_APEX_SYSTEM_LOG;
+static	WorldServer\Entities\CAsyncLogger.h	40	static constexpr ASYNC_LOG_TYPE ALT_GETGOLDBAR_LOG = ::ALT_GETGOLDBAR_LOG;
+static	WorldServer\Entities\CAsyncLogger.h	41	static constexpr ASYNC_LOG_TYPE ALT_GETEVENTCOUPON_LOG = ::ALT_GETEVENTCOUPON_LOG;
+static	WorldServer\Entities\CAsyncLogger.h	42	static constexpr ASYNC_LOG_TYPE ALT_MAX = ::ALT_MAX;
+static	WorldServer\Entities\CAsyncLogger.h	43	static constexpr ASYNC_LOG_TYPE ALT_NONE = ::ALT_NONE;
+static	WorldServer\Entities\CAsyncLogger.h	62	static bool m_bProcThread;
+static	WorldServer\Entities\CAttack.h	46	static CRecordData *s_pSkillData;
+static	WorldServer\Entities\CAttack.h	47	static _attack_param s_DefParam;
+static	WorldServer\Entities\CBillingNULL.h	8	static CBillingNULL ms_NULL;
+static	WorldServer\Entities\CBossMonsterScheduleSystem.h	22	static CBossMonsterScheduleSystem *m_pInstance;
+const	WorldServer\Entities\CBsp.cpp	361	int CBsp::GetFinalPath(float *a2, float *const a3, float (*const a4)[3])
+const	WorldServer\Entities\CBsp.cpp	419	int CBsp::GetPathFind(float *const a2, float *const a3, float (*const a4)[3], unsigned int *a5, int a6)
+const	WorldServer\Entities\CBsp.cpp	1294	__int64 CBsp::IsCollisionFace(float *const a2, float *const a3, float (*a4)[3], float (*a5)[4])
+const	WorldServer\Entities\CBsp.cpp	1728	bool CBsp::CanYouGoThere(float *const a2, float *const a3, float (*a4)[3]) {
+const	WorldServer\Entities\CBsp.cpp	1732	int CBsp::GetPathCrossPoint(float *const a2, float *const a3, float (*a4)[3], int a5, int a6)
+static	WorldServer\Entities\CCashDbWorkerNULL.h	13	static CCashDbWorkerNULL ms_NULL;
+static	WorldServer\Entities\CCharacter.h	38	static int m_nInitCount;
+static	WorldServer\Entities\CChatStealSystem.h	30	static CChatStealSystem *ms_pInstance;
+const	WorldServer\Entities\CCheckSumBaseConverter.cpp	13	const unsigned int *CCheckSumBaseConverter::ms_dwKeys[8] = {
+const	WorldServer\Entities\CCheckSumBaseConverter.cpp	24	const long long *CCheckSumBaseConverter::ms_i64Keys[8] = {
+static	WorldServer\Entities\CCheckSumBaseConverter.h	11	static const unsigned int *ms_dwKeys[8];
+static	WorldServer\Entities\CCheckSumBaseConverter.h	12	static const long long *ms_i64Keys[8];
+static	WorldServer\Entities\CChiNetworkEX.h	24	static CChiNetworkEX *ms_pInstance;
+static	WorldServer\Entities\CDarkHole.h	15	static int s_nLiveNum;
+static	WorldServer\Entities\CDarkHole.h	16	static unsigned int s_dwSerialCounter;
+static	WorldServer\Entities\CDarkHoleChannel.h	14	static unsigned int s_dwChannelSerialCounter;
+static	WorldServer\Entities\CDarkHoleDungeonQuest.cpp	13	static const char kDarkHoleQuestMatchSection[] = "MATCH";
+static	WorldServer\Entities\CDarkHoleDungeonQuest.cpp	14	static const char kDarkHoleQuestDefaultValue[] = "default";
+static	WorldServer\Entities\CDarkHoleDungeonQuest.cpp	15	static const char kDarkHoleQuestIndexIni[] = ".\\Quest\\Index.ini";
+static	WorldServer\Entities\CDarkHoleDungeonQuest.cpp	16	static const char kDarkHoleQuestNoMatch[] = "X";
+static	WorldServer\Entities\CDarkHoleDungeonQuest.cpp	17	static const char kDarkHoleQuestPathFmt[] = ".\\Quest\\%s.txt";
+static	WorldServer\Entities\CDarkHoleDungeonQuestSetup.cpp	13	static const char kDHQuestSectionStart[] = "###";
+static	WorldServer\Entities\CDarkHoleDungeonQuestSetup.cpp	14	static const char kDHMissionSectionStart[] = "##";
+static	WorldServer\Entities\CDarkHoleDungeonQuestSetup.cpp	15	static const char kDHJobSectionStart[] = "#";
+static	WorldServer\Entities\CDarkHoleDungeonQuestSetup.cpp	16	static const char kDHConditionStart[] = "*";
+static	WorldServer\Entities\CDarkHoleDungeonQuestSetup.cpp	17	static char szEOF[] = "EOF";
+static	WorldServer\Entities\CDarkHoleDungeonQuestSetup.cpp	18	static unsigned int nEOFLen = 0;
+static	WorldServer\Entities\CDarkHoleDungeonQuestSetup.cpp	19	static unsigned int _S1_1 = 0;
+const	WorldServer\Entities\CDummyPosTable.cpp	18	const char *C_HEROES_DUMMY_NAME[3] = {"sd030f1", "sd040f1", "sd050f1"};
+static	WorldServer\Entities\CDummyPosTable.h	17	static _dummy_position *ms_pHeroes_Dummy[3];
+static	WorldServer\Entities\CExchangeEvent.cpp	34	static CExchangeEvent s_instance;
+static	WorldServer\Entities\CGameObject.h	31	static bool s_bRecordSet;
+static	WorldServer\Entities\CGameObject.h	32	static unsigned __int16 s_wRecord[10][100];
+static	WorldServer\Entities\CGameObject.h	238	static CGameObject *s_pSelectObject;
+static	WorldServer\Entities\CGameObject.h	239	static CGameObject *s_pTotalObject[MAX_TOTAL_CGAMEOBJECT];
+static	WorldServer\Entities\CGameObject.h	240	static int s_nTotalObjectNum;
+static	WorldServer\Entities\CGoldenBoxItemMgr.cpp	60	static CGoldenBoxItemMgr s_instance;
+static	WorldServer\Entities\CGravityStone.h	14	static unsigned int ms_dwSerialCnt;
+static	WorldServer\Entities\CGuardTower.cpp	98	static char objectName[256];
+static	WorldServer\Entities\CGuardTower.h	68	static int s_nLiveNum;
+static	WorldServer\Entities\CGuardTower.h	69	static unsigned int s_dwSerialCnt;
+static	WorldServer\Entities\CGuardTower.h	70	static unsigned int s_dwOldTick_CheckTemp;
+static	WorldServer\Entities\CGuardTower.h	71	static __TEMP_WAIT_TOWER s_Temp[MAX_PLAYER];
+const	WorldServer\Entities\CGuild.cpp	30	static const char kUnknownGuildEmblemName[] = "<unknown>";
+static	WorldServer\Entities\CGuild.cpp	30	static const char kUnknownGuildEmblemName[] = "<unknown>";
+static	WorldServer\Entities\CGuild.h	13	static CGuildList s_GuildList;
+static	WorldServer\Entities\CGuild.h	14	static CMgrGuildHistory s_MgrHistory;
+static	WorldServer\Entities\CGuildBattleController.cpp	17	static CGuildBattleController s_instance;
+static	WorldServer\Entities\CGuildMasterEffect.cpp	10	static CGuildMasterEffect s_instance;
+const	WorldServer\Entities\CGuildRoomInfo.cpp	40	CGuildRoomInfo &CGuildRoomInfo::operator=(const CGuildRoomInfo &other)
+static	WorldServer\Entities\CGuildRoomInfo.h	72	static CMapData *sm_neutal_map[3];
+static	WorldServer\Entities\CGuildRoomInfo.h	73	static _dummy_position *sm_neutral_hq_dummy[3];
+static	WorldServer\Entities\CGuildRoomInfo.h	74	static RoomInfo sm_RoomInfo[2];
+static	WorldServer\Entities\CGuildRoomSystem.cpp	25	static CGuildRoomSystem s_instance;
+const	WorldServer\Entities\CheatCommands.cpp	59	constexpr int kCheatWordCount = 6;
+const	WorldServer\Entities\CheatCommands.cpp	60	constexpr int kCheatWordSize = 32;
+const	WorldServer\Entities\CheatCommands.cpp	209	static const char aA_44[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	209	static const char aA_44[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	210	static const char aA_45[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	210	static const char aA_45[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	211	static const char aA_46[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	211	static const char aA_46[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	212	static const char aA_47[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	212	static const char aA_47[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	213	static const char aA_48[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	213	static const char aA_48[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	214	static const char aA_49[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	214	static const char aA_49[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	215	static const char aA_50[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	215	static const char aA_50[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	216	static const char aCheatHelpSynta_0[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	216	static const char aCheatHelpSynta_0[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	217	static const char aCheatHelpSynta_1[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	217	static const char aCheatHelpSynta_1[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	218	static const char aCheatHelpSynta_2[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	218	static const char aCheatHelpSynta_2[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	219	static const char aCheatHelpSynta_3[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	219	static const char aCheatHelpSynta_3[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	220	static const char aOne_3[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	220	static const char aOne_3[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	221	static const char aCoacE[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	221	static const char aCoacE[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	222	static const char aCoacCodeDBoxAc[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	222	static const char aCoacCodeDBoxAc[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	223	static const char aCoacE_0[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	223	static const char aCoacE_0[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	224	static const char aE_2[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	224	static const char aE_2[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	225	static const char aAi_8[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	225	static const char aAi_8[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	226	static const char aAo_6[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	226	static const char aAo_6[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	227	static const char aAo_7[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	227	static const char aAo_7[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	228	static const char aAua_0[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	228	static const char aAua_0[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	229	static const char byte_1407AE5D0[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	229	static const char byte_1407AE5D0[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	230	static const char byte_1407AE5E8[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	230	static const char byte_1407AE5E8[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	231	static const char byte_1407AE5F8[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	231	static const char byte_1407AE5F8[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	232	static const char byte_1407AE600[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	232	static const char byte_1407AE600[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	233	static const char byte_1407AE608[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	233	static const char byte_1407AE608[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	234	static const char byte_1407AE660[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	234	static const char byte_1407AE660[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	235	static const char byte_1407AE680[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	235	static const char byte_1407AE680[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	236	static const char byte_1407AE6E0[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	236	static const char byte_1407AE6E0[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	237	static const char byte_1407AE6F0[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	237	static const char byte_1407AE6F0[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	238	static const char byte_1407AE700[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	238	static const char byte_1407AE700[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	239	static const char byte_1407AE980[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	239	static const char byte_1407AE980[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	240	static const char byte_1407AE998[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	240	static const char byte_1407AE998[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	241	static const char byte_1407AE9A0[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	241	static const char byte_1407AE9A0[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	242	static const char byte_1407AE9B0[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	242	static const char byte_1407AE9B0[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	243	static const char byte_1407AEA8C[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	243	static const char byte_1407AEA8C[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	244	static const char byte_1407AEA9C[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	244	static const char byte_1407AEA9C[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	245	static const char byte_1407AF0F8[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	245	static const char byte_1407AF0F8[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	246	static const char byte_1407AF104[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	246	static const char byte_1407AF104[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	247	static const char byte_1407AF110[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	247	static const char byte_1407AF110[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	248	static char unk_1407AE840[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	249	static char unk_1407AE858[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	250	static char unk_1407AE868[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	251	static char unk_1407AE878[] = "<unknown>";
+static	WorldServer\Entities\CheatCommands.cpp	252	static char unk_1407AE888[] = "<unknown>";
+const	WorldServer\Entities\CheatCommands.cpp	253	static constexpr float FLOAT_100_0 = 100.0f;
+static	WorldServer\Entities\CheatCommands.cpp	253	static constexpr float FLOAT_100_0 = 100.0f;
+const	WorldServer\Entities\CheatCommands.cpp	255	static const _eq_suk_list EqSukList[4] = {
+static	WorldServer\Entities\CheatCommands.cpp	255	static const _eq_suk_list EqSukList[4] = {
+static	WorldServer\Entities\CheatCommands.cpp	2736	static const char *kProcessorNames[6] = {
+static	WorldServer\Entities\CHolyKeeper.h	45	static int s_nLiveNum;
+static	WorldServer\Entities\CHolyKeeper.h	46	static unsigned int s_dwSerialCnt;
+static	WorldServer\Entities\CHolyStone.h	71	static int s_nLiveNum;
+static	WorldServer\Entities\CHolyStone.h	72	static unsigned int s_dwSerialCnt;
+const	WorldServer\Entities\CHolyStoneSystemDataMgr.cpp	17	static const char *c_TempPair[7] =
+static	WorldServer\Entities\CHolyStoneSystemDataMgr.cpp	17	static const char *c_TempPair[7] =
+static	WorldServer\Entities\CHonorGuild.cpp	47	static CHonorGuild s_instance;
+static	WorldServer\Entities\CItemBox.h	37	static int s_nLiveNum;
+static	WorldServer\Entities\CItemBox.h	38	static unsigned int s_dwSerialCounter;
+static	WorldServer\Entities\CItemStoreManager.cpp	19	static CItemStoreManager instance;
+const	WorldServer\Entities\CLevel.cpp	221	float (*const a4)[3],
+const	WorldServer\Entities\CLevel.cpp	246	float (*const a5)[3],
+static	WorldServer\Entities\CLogTypeDBTaskManager.h	111	static CLogTypeDBTaskManager *ms_Instance;
+const	WorldServer\Entities\CLuaCommandEx.cpp	11	bool CLuaCommandEx::_State::operator==(const _State &rhs) const
+static	WorldServer\Entities\CLuaCommandEx.h	19	static _State ms_cEmpty;
+static	WorldServer\Entities\CLuaEventMgr.h	26	static CLuaEventMgr *ms_Instance;
+const	WorldServer\Entities\CLuaEventNode.cpp	12	bool CLuaEventNode::_State::operator==(const _State &rhs) const
+static	WorldServer\Entities\CLuaEventNode.h	19	static _State ms_cEmpty;
+const	WorldServer\Entities\CLuaLootingMgr.cpp	19	bool CLuaLooting_Novus_Item::_State::operator==(const _State &rhs) const
+static	WorldServer\Entities\CLuaLootingMgr.h	22	static _State ms_cEmpty;
+static	WorldServer\Entities\CLuaLootingMgr.h	59	static CLuaLootingMgr *ms_Instance;
+const	WorldServer\Entities\CLuaScript.cpp	15	bool CLuaScript::_State::operator==(const _State &rhs) const
+static	WorldServer\Entities\CLuaScript.h	28	static _State ms_cEmpty;
+static	WorldServer\Entities\CLuaScriptMgr.h	43	static CLuaScriptMgr *ms_Instance;
+static	WorldServer\Entities\CMainThread.cpp	650	static TimeLimitMgr s_instance;
+static	WorldServer\Entities\CMainThread.h	527	static char ms_szClientVerCheck[33];
+static	WorldServer\Entities\CMainThread.h	1144	static unsigned int m_dwCnt;
+static	WorldServer\Entities\CMainThread.h	3160	static const char *ms_KeyPair[3];
+static	WorldServer\Entities\CMainThread.h	3301	static unsigned int ms_uiObjects;
+const	WorldServer\Entities\CMapOperation.cpp	26	const char *CMapOperation::ms_szSettlementMapName[3][2] = {
+static	WorldServer\Entities\CMapOperation.h	34	static const char *ms_szSettlementMapName[3][2];
+static	WorldServer\Entities\CMerchant.cpp	31	static char objectName[128];
+static	WorldServer\Entities\CMerchant.h	32	static int s_nLiveNum;
+static	WorldServer\Entities\CMerchant.h	33	static unsigned int s_dwSerialCnt;
+static	WorldServer\Entities\CMoneySupplyMgr.h	42	static CMoneySupplyMgr *pInstance;
+static	WorldServer\Entities\CMonster.h	214	static _monster_loot_index *s_idxMonsterLoot;
+static	WorldServer\Entities\CMonster.h	215	static unsigned int s_dwSerialCnt;
+static	WorldServer\Entities\CMonster.h	216	static int s_nAllocNum;
+static	WorldServer\Entities\CMonster.h	217	static int s_nLiveNum;
+static	WorldServer\Entities\CMonster.h	218	static CLogFile s_logTrace_Boss_BirthAndDeath;
+static	WorldServer\Entities\CMonster.h	219	static CLogFile s_logTrace_Boss_Looting;
+static	WorldServer\Entities\CMonsterEventRespawn.cpp	21	static bool s_iniExtLenInit = false;
+static	WorldServer\Entities\CMonsterEventRespawn.cpp	22	static size_t s_iniExtLen = 0;
+static	WorldServer\Entities\CMonsterHelper.h	27	static void GetDirection(float (*cur)[3], float (*tar)[3], float (*out)[3], float deg);
+static	WorldServer\Entities\CMonsterHelper.h	33	static bool SearchPatrolMovePos(CMonster *mon, float (*NewTar)[3]);
+static	WorldServer\Entities\CMonsterHelper.h	34	static bool SearchTargetMovePos_MovingTarget(CMonster *pMon, CCharacter *pTargetCharacter, float (*tarPos)[3]);
+static	WorldServer\Entities\CMonsterHelper.h	35	static bool SearchTargetMovePos_StopTarget(CMonster *pMon, CCharacter *pTargetCharacter, float (*tarPos)[3]);
+static	WorldServer\Entities\CMoveMapLimitEnviromentValues.h	9	static int ELAN_MAP_CODE;
+static	WorldServer\Entities\CMoveMapLimitEnviromentValues.h	10	static int ELAN_1TH_LIMIT_NPC_RECORD_INDEX;
+static	WorldServer\Entities\CMoveMapLimitManager.cpp	17	static CMoveMapLimitManager s_instance;
+const	WorldServer\Entities\CMoveMapLimitRightInfo.cpp	21	CMoveMapLimitRightInfo &CMoveMapLimitRightInfo::operator=(const CMoveMapLimitRightInfo &rhs)
+const	WorldServer\Entities\CNationCodeStr.cpp	40	bool operator==(const CNationCodeStr &lhs, const CNationCodeStr &rhs)
+const	WorldServer\Entities\CNationCodeStr.h	18	bool operator==(const CNationCodeStr &lhs, const CNationCodeStr &rhs);
+static	WorldServer\Entities\CNationSettingDataNULL.h	10	static CNationSettingDataNULL ms_NULL;
+static	WorldServer\Entities\CNuclearBomb.h	63	static unsigned int s_dwSerialCnt;
+static	WorldServer\Entities\CNuclearBombMgr.cpp	28	static CNuclearBombMgr s_instance;
+static	WorldServer\Entities\COreAmountMgr.h	38	static COreAmountMgr *m_pInstance;
+static	WorldServer\Entities\CParkingUnit.h	12	static int s_nLiveNum;
+const	WorldServer\Entities\CParticle.cpp	34	void Vector3fTransform(float *const a1, float *const a2, float (*const a3)[4])
+static	WorldServer\Entities\CPathFinder.cpp	52	static char s_pathfinder_stack_overflow[] = "pathfinder stack overflow";
+static	WorldServer\Entities\CPathMgr.h	23	static CPathMgr ms_BackupPath;
+static	WorldServer\Entities\CPcBangFavor.cpp	21	static CPcBangFavor s_instance;
+static	WorldServer\Entities\CPlayer_Cheat.cpp	45	static float fPos[3] = {13.0f, -108.0f, 37.0f};
+static	WorldServer\Entities\CPlayer_Cheat.cpp	46	static float fTarPos[3] = {-249.0f, -1737.0f, -242.0f};
+static	WorldServer\Entities\CPlayer_Missing.cpp	448	static unsigned int s_serialCounter = 1;
+static	WorldServer\Entities\CPlayer_Missing.cpp	12393	static constexpr int kBulletSlotPerPart[6] = {-1, -1, -1, 0, 1, -1};
+static	WorldServer\Entities\CPlayer_Missing.cpp	12749	static constexpr unsigned __int8 kWeaponPartPerBullet[2] = {3, 4};
+const	WorldServer\Entities\CPlayer.cpp	2231	bool MiningTicket::_AuthKeyTicket::operator==(const _AuthKeyTicket &src) const
+const	WorldServer\Entities\CPlayer.cpp	2236	bool MiningTicket::_AuthKeyTicket::operator!=(const _AuthKeyTicket &src) const
+static	WorldServer\Entities\CPlayer.cpp	23506	static const unsigned int successTable[77] = {
+static	WorldServer\Entities\CPlayer.cpp	23519	static const unsigned int zeroTable[77] = {
+static	WorldServer\Entities\CPlayer.cpp	23532	static const unsigned int destroyTable[77] = {
+static	WorldServer\Entities\CPlayer.h	469	static CRecordData *s_pWeaponData;
+static	WorldServer\Entities\CPlayer.h	568	static CRecordData *s_pSkillData;
+static	WorldServer\Entities\CPlayer.h	569	static CRecordData *s_pForceData;
+static	WorldServer\Entities\CPlayer.h	739	static CRecordData ms_tbl_ItemCombine;
+static	WorldServer\Entities\CPlayer.h	740	static CRecordData ms_tbl_ItemCombine_Link_Stuff;
+static	WorldServer\Entities\CPlayer.h	741	static CRecordData ms_tbl_ItemCombine_Link_Result;
+static	WorldServer\Entities\CPlayer.h	885	static unsigned int ms_dwCount;
+static	WorldServer\Entities\CPlayer.h	973	static int s_nSpareTime;
+static	WorldServer\Entities\CPlayer.h	1089	static _skill_fld *ms_pXmas_Snow_Effect;
+static	WorldServer\Entities\CPlayer.h	1090	static _skill_fld *ms_pXmas_Snow_Bullet_Effect;
+static	WorldServer\Entities\CPlayer.h	1091	static CMgrAvatorItemHistory s_MgrItemHistory;
+static	WorldServer\Entities\CPlayer.h	1092	static CMgrAvatorLvHistory s_MgrLvHistory;
+static	WorldServer\Entities\CPlayer.h	1093	static int s_nLiveNum;
+static	WorldServer\Entities\CPlayer.h	1094	static _DELAY_PROCESS s_AnimusReturnDelay;
+static	WorldServer\Entities\CPlayer.h	1095	static int *s_pnLinkForceItemToEffect;
+static	WorldServer\Entities\CPlayer.h	1096	static _SKILL_IDX_PER_MASTERY s_SkillIndexPerMastery[8];
+static	WorldServer\Entities\CPlayer.h	1097	static int s_nAddMstFc[100];
+static	WorldServer\Entities\CPlayer.h	1098	static int s_nStdDefPoint;
+static	WorldServer\Entities\CPlayer.h	1099	static int s_nRevDefPoint;
+static	WorldServer\Entities\CPlayer.h	1100	static CRecordData s_tblLimMastery[3][4];
+static	WorldServer\Entities\CPlayer.h	1101	static CRecordData s_tblLimMasteryContinue[3][4];
+static	WorldServer\Entities\CPlayer.h	1102	static CRecordData s_tblLimMasteryCum[3][4];
+static	WorldServer\Entities\CPlayer.h	1103	static CRecordData s_tblLimMasteryCumContinue[3][4];
+static	WorldServer\Entities\CPlayer.h	1104	static _BILLING_FORCE_CLOSE_DELAY s_BillingForceCloseDelay;
+static	WorldServer\Entities\CPlayer.h	1105	static int s_nRaceNum[3];
+static	WorldServer\Entities\CPlayer.h	1106	static float s_fExpDivUnderParty_Kill[8];
+static	WorldServer\Entities\CPlayer.h	1107	static unsigned int s_dwTotalCloseCount;
+static	WorldServer\Entities\CPlayer.h	1108	static unsigned int s_dwAbnormalCloseCount;
+static	WorldServer\Entities\CPostSystemManager.cpp	50	static CPostSystemManager s_instance;
+static	WorldServer\Entities\CPvpCashMng.cpp	45	static CPvpCashMng s_instance;
+static	WorldServer\Entities\CPvpUserAndGuildRankingSystem.cpp	17	static CPvpUserAndGuildRankingSystem s_instance;
+static	WorldServer\Entities\CQuestMgr.h	19	static CRecordData *s_tblQuest;
+static	WorldServer\Entities\CQuestMgr.h	20	static CRecordData *s_tblQuestHappenEvent;
+static	WorldServer\Entities\CRaceBossMsgController.cpp	22	static CRaceBossMsgController s_instance;
+static	WorldServer\Entities\CRaceBossWinRate.h	21	static CRaceBossWinRate *m_Inst;
+const	WorldServer\Entities\CRaceBuffInfoByHolyQuestfGroup.cpp	8	const char *CRaceBuffInfoByHolyQuestfGroup::TYPE_NAME[4] = {"Win", "Fail", "Lose", "Chaos"};
+static	WorldServer\Entities\CRaceBuffInfoByHolyQuestfGroup.h	28	static const char *TYPE_NAME[4];
+static	WorldServer\Entities\CRaceBuffManager.cpp	7	static CRaceBuffManager s_instance;
+static	WorldServer\Entities\CRecallEffectController.cpp	171	static CRecallEffectController s_instance;
+static	WorldServer\Entities\CRecordData.cpp	341	static unsigned char s_hashTable[256] = {};
+static	WorldServer\Entities\CRecordData.cpp	342	static bool s_hashTableLoaded = false;
+static	WorldServer\Entities\CReturnGateController.cpp	61	static CReturnGateController s_instance;
+static	WorldServer\Entities\CRFMonsterAIMgr.h	17	static CRFMonsterAIMgr *ms_Instance;
+static	WorldServer\Entities\CRFWorldDatabase.cpp	178	static const char kEmptySortOuter[] = "";
+static	WorldServer\Entities\CRFWorldDatabase.cpp	179	static const char kEmptySortInner[] = "";
+static	WorldServer\Entities\CRtc.h	27	static CRtc *ms_Instance;
+static	WorldServer\Entities\CRusiaBillingMgr.h	29	static CRusiaBillingMgr *m_pRusiaBill;
+static	WorldServer\Entities\cStaticMember_Player.h	9	static cStaticMember_Player *_pInstance;
+static	WorldServer\Entities\CSUItemSystem.cpp	7	static CSUItemSystem s_instance;
+static	WorldServer\Entities\CTalkCrystalCombineManager.h	71	static CTalkCrystalCombineManager *ms_pInstance;
+static	WorldServer\Entities\CTotalGuildRankManager.cpp	14	static CTotalGuildRankManager s_instance;
+static	WorldServer\Entities\CTSingleton.h	11	static T s_instance;
+static	WorldServer\Entities\CUnmannedTraderController.cpp	31	static CUnmannedTraderController s_instance;
+const	WorldServer\Entities\CUnmannedTraderEnvironmentValue.cpp	5	const char *CUnmannedTraderEnvironmentValue::Unmanned_Trader_Setting_Xml_File = "./Initialize/UnmendTrader.xml";
+const	WorldServer\Entities\CUnmannedTraderEnvironmentValue.cpp	15	const char *CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Sort_Type_Name = "serial asc";
+const	WorldServer\Entities\CUnmannedTraderEnvironmentValue.cpp	16	const char *CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Sort_Query = "si.serial asc";
+const	WorldServer\Entities\CUnmannedTraderEnvironmentValue.cpp	20	const char *CUnmannedTraderEnvironmentValue::UNMANNEDTRADETRADEINFO_SAVE_INI_SECTION_NAME = "";
+const	WorldServer\Entities\CUnmannedTraderEnvironmentValue.cpp	21	const char *CUnmannedTraderEnvironmentValue::UNMANNEDTRADETRADEINFO_SAVE_INI_FILE_NAME = "";
+static	WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	8	static const char *Unmanned_Trader_Setting_Xml_File;
+static	WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	9	static unsigned int Unmanned_Trader_Dev_Account_Start_Serial;
+static	WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	10	static unsigned int Unmanned_Trader_Max_Schdule_Cnt;
+static	WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	11	static unsigned int Unmanned_Trader_Check_Schedule_Delay;
+static	WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	12	static unsigned int Unmanned_Trader_Change_Taxrate_Check_Changed_Day_Delay;
+static	WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	13	static unsigned int UNMANNEDTRADETRADER_LAZYCLEANER_LOOP_DELAY;
+static	WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	14	static unsigned int UNMANNEDTRADETRADER_LAZYCLEANER_UPDATE_MAX_RETRY_CNT;
+static	WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	15	static unsigned int Unmanned_Trader_Max_Row_Count_Search;
+static	WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	16	static unsigned int Unmanned_Trader_Nomal_Max_Regist_Item_Cnt;
+static	WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	17	static unsigned __int8 Unmanned_Trader_Default_Sell_Turm;
+static	WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	18	static const char *Unmanned_Trader_Default_Sort_Type_Name;
+static	WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	19	static const char *Unmanned_Trader_Default_Sort_Query;
+static	WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	20	static unsigned int Unmanned_Trader_Min_Limit_Empty_Record_Cnt;
+static	WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	21	static unsigned int Unmanned_Trader_Default_Empty_Record_Cnt;
+static	WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	22	static unsigned int UNMANNEDTRADETRADEINFO_LOOP_DELAY;
+static	WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	23	static const char *UNMANNEDTRADETRADEINFO_SAVE_INI_SECTION_NAME;
+static	WorldServer\Entities\CUnmannedTraderEnvironmentValue.h	24	static const char *UNMANNEDTRADETRADEINFO_SAVE_INI_FILE_NAME;
+static	WorldServer\Entities\CUnmannedTraderGroupItemInfoTable.h	41	static CUnmannedTraderGroupItemInfoTable *ms_Instance;
+const	WorldServer\Entities\CUnmannedTraderItemCodeInfo.cpp	34	const CUnmannedTraderItemCodeInfo *CUnmannedTraderItemCodeInfo::operator=(const CUnmannedTraderItemCodeInfo &lhs)
+const	WorldServer\Entities\CUnmannedTraderItemCodeInfo.cpp	44	bool CUnmannedTraderItemCodeInfo::operator==(const char *szCode)
+static	WorldServer\Entities\CUnmannedTraderItemState.h	37	static wchar_t *ms_wszStateName[15];
+static	WorldServer\Entities\CUnmannedTraderScheduler.h	39	static CUnmannedTraderScheduler *ms_Instance;
+const	WorldServer\Entities\CUnmannedTraderSortType.cpp	63	const CUnmannedTraderSortType *CUnmannedTraderSortType::operator=(const CUnmannedTraderSortType *lhs)
+static	WorldServer\Entities\CUnmannedTraderTaxRateManager.h	38	static CUnmannedTraderTaxRateManager *ms_Instance;
+const	WorldServer\Entities\CUnmannedTraderUserInfo.cpp	1234	CUnmannedTraderUserInfo &CUnmannedTraderUserInfo::operator=(const CUnmannedTraderUserInfo &rhs)
+static	WorldServer\Entities\CUnmannedTraderUserInfo.h	223	static CUnmannedTraderUserInfo ms_kNull;
+static	WorldServer\Entities\CUnmannedTraderUserInfoTable.h	97	static CUnmannedTraderUserInfoTable *ms_Instance;
+static	WorldServer\Entities\CUnmannedTraderUserInfoTable.h	98	static unsigned int m_uiBuyRollBackCallCountSum;
+const	WorldServer\Entities\CUserDB_Missing2.cpp	17	static const char aAe[] = "FirstSettingData (%s) Item[%d] Invalid Table Code (%s)";
+static	WorldServer\Entities\CUserDB_Missing2.cpp	17	static const char aAe[] = "FirstSettingData (%s) Item[%d] Invalid Table Code (%s)";
+const	WorldServer\Entities\CUserDB_Missing2.cpp	18	static const char aAe_0[] = "FirstSettingData (%s) Item[%d] Unit Item Not Allowed (%s)";
+static	WorldServer\Entities\CUserDB_Missing2.cpp	18	static const char aAe_0[] = "FirstSettingData (%s) Item[%d] Unit Item Not Allowed (%s)";
+const	WorldServer\Entities\CUserDB_Missing2.cpp	19	static const char aAe_1[] = "FirstSettingData (%s) Item[%d] Record Not Found (%s)";
+static	WorldServer\Entities\CUserDB_Missing2.cpp	19	static const char aAe_1[] = "FirstSettingData (%s) Item[%d] Record Not Found (%s)";
+const	WorldServer\Entities\CUserDB_Missing2.cpp	20	static const char aDDatavalidchec_21[] = "%d > DataValidCheckRevise EMBELL.. INDEX (%d : %d) (DEL)";
+static	WorldServer\Entities\CUserDB_Missing2.cpp	20	static const char aDDatavalidchec_21[] = "%d > DataValidCheckRevise EMBELL.. INDEX (%d : %d) (DEL)";
+const	WorldServer\Entities\CUserDB_Missing2.cpp	21	static const char aDDatavalidchec_22[] = "%d > DataValidCheckRevise EMBELL.. COUNT OVER (%d : %d)";
+static	WorldServer\Entities\CUserDB_Missing2.cpp	21	static const char aDDatavalidchec_22[] = "%d > DataValidCheckRevise EMBELL.. COUNT OVER (%d : %d)";
+const	WorldServer\Entities\CUserDB_Missing2.cpp	22	static const char aDDatavalidchec_23[] = "%d > DataValidCheckRevise EMBELL.. COUNT OVER (%d : %d)";
+static	WorldServer\Entities\CUserDB_Missing2.cpp	22	static const char aDDatavalidchec_23[] = "%d > DataValidCheckRevise EMBELL.. COUNT OVER (%d : %d)";
+const	WorldServer\Entities\CUserDB_Missing2.cpp	23	static const char aDDatavalidchec_24[] = "%d > DataValidCheckRevise FORCE.. INDEX (%d) (DEL)";
+static	WorldServer\Entities\CUserDB_Missing2.cpp	23	static const char aDDatavalidchec_24[] = "%d > DataValidCheckRevise FORCE.. INDEX (%d) (DEL)";
+const	WorldServer\Entities\CUserDB_Missing2.cpp	24	static const char aDDatavalidchec_25[] = "%d > DataValidCheckRevise ANIMUS.. INDEX (%d) (DEL)";
+static	WorldServer\Entities\CUserDB_Missing2.cpp	24	static const char aDDatavalidchec_25[] = "%d > DataValidCheckRevise ANIMUS.. INDEX (%d) (DEL)";
+const	WorldServer\Entities\CUserDB_Missing2.cpp	25	static const char aDDDatavalidche[] = "%d > DataValidCheckRevise UNIT.. SLOT (%d) (DEL)";
+static	WorldServer\Entities\CUserDB_Missing2.cpp	25	static const char aDDDatavalidche[] = "%d > DataValidCheckRevise UNIT.. SLOT (%d) (DEL)";
+const	WorldServer\Entities\CUserDB_Missing2.cpp	26	static const char aDDDatavalidche_0[] = "%d > DataValidCheckRevise QUEST.. TYPE (%d : %d) (DEL)";
+static	WorldServer\Entities\CUserDB_Missing2.cpp	26	static const char aDDDatavalidche_0[] = "%d > DataValidCheckRevise QUEST.. TYPE (%d : %d) (DEL)";
+const	WorldServer\Entities\CUserDB_Missing2.cpp	27	static const char aDDDatavalidche_1[] = "%d > DataValidCheckRevise QUEST.. INDEX (%d : %d) (DEL)";
+static	WorldServer\Entities\CUserDB_Missing2.cpp	27	static const char aDDDatavalidche_1[] = "%d > DataValidCheckRevise QUEST.. INDEX (%d : %d) (DEL)";
+const	WorldServer\Entities\CUserDB_Missing2.cpp	28	static const char aDDatavalidchec_26[] = "DataValidCheckRevise SFDelay.. EFFECT (%d : %d) (DEL)";
+static	WorldServer\Entities\CUserDB_Missing2.cpp	28	static const char aDDatavalidchec_26[] = "DataValidCheckRevise SFDelay.. EFFECT (%d : %d) (DEL)";
+const	WorldServer\Entities\CUserDB_Missing2.cpp	29	static const char aDDatavalidchec_27[] = "DataValidCheckRevise SFDelay.. MASTERY (%d : %d) (DEL)";
+static	WorldServer\Entities\CUserDB_Missing2.cpp	29	static const char aDDatavalidchec_27[] = "DataValidCheckRevise SFDelay.. MASTERY (%d : %d) (DEL)";
+const	WorldServer\Entities\CUserDB.cpp	50	const char wszNonMakeName_0[3][17] = {"GM", "ADMIN", "OPERATOR"};
+const	WorldServer\Entities\CUserDB.cpp	51	const char wszNonMakeName_1[3][17] = {"GM", "ADMIN", "OPERATOR"};
+const	WorldServer\Entities\CUserDB.cpp	52	const char wszNonMakeName[3][17] = {"GM", "ADMIN", "OPERATOR"};
+const	WorldServer\Entities\CUserDB.cpp	53	const char wszGMCmp[] = "GM";
+static	WorldServer\Entities\CUserDB.cpp	2534	static const char kDataValidCheckRace[] = "D_DataValidCheck (Serial:%d) Race:%d";
+static	WorldServer\Entities\CUserDB.cpp	2542	static const char kDataValidCheckLevel[] = "D_DataValidCheck (Serial:%d) Level:%d Max:%d";
+const	WorldServer\Entities\CUserDB.cpp	2702	_INVENKEY &_INVENKEY::operator=(const _INVENKEY &rhs)
+const	WorldServer\Entities\CUserDB.cpp	2709	bool _INVENKEY::operator==(const _INVENKEY &rhs) const
+const	WorldServer\Entities\CUserDB.cpp	2721	_INVEN_DB_BASE::_LIST &_INVEN_DB_BASE::_LIST::operator=(const _LIST &rhs)
+const	WorldServer\Entities\CUserDB.cpp	2735	_INVEN_DB_BASE & _INVEN_DB_BASE::operator=(const _INVEN_DB_BASE &rhs)
+static	WorldServer\Entities\CUserDB.h	18	static int s_nLoginNum;
+static	WorldServer\Entities\CUserDB.h	19	static CLogFile s_logAvatorDB;
+static	WorldServer\Entities\CUserDB.h	20	static CMgrAccountLobbyHistory s_MgrLobbyHistory;
+static	WorldServer\Entities\CUserDB.h	21	static _MOVE_LOBBY_DELAY s_MoveLobbyDelay;
+static	WorldServer\Entities\CUserRankingProcess.cpp	882	static unsigned int s_rankInGuildTh = 0;
+static	WorldServer\Entities\CWeeklyGuildRankManager.cpp	23	static CWeeklyGuildRankManager s_instance;
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	20	static const char kDHReactAreaNoValue[] = "-1";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	21	static const char kDHReactAreaDummyToken[] = "dummy:";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	22	static const char kDHReactAreaBlockToken[] = "block:";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	23	static const char kDHReactObjectMonsterToken[] = "monster:";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	24	static const char kDHReactObjectGroupToken[] = "m_group:";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	25	static const char kDHReactObjectItemToken[] = "item:";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	26	static const char kDHQuestCommandMembershipParty[] = "membership_party";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	27	static const char kDHQuestCommandMemberNum[] = "member_num";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	28	static const char kDHQuestCommandUseMap[] = "use_map";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	29	static const char kDHQuestCommandStartMission[] = "start_mission";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	30	static const char kDHQuestCommandLimitLvMin[] = "limit_lv_min";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	31	static const char kDHQuestCommandLimitLvMax[] = "limit_lv_max";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	32	static const char kDHQuestCommandDummyBlock[] = "dummy_block";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	33	static const char kDHQuestCommandMonsterGroup[] = "monster_group";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	34	static const char kDHQuestCommandRewardItem[] = "reward_item";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	35	static const char kDHQuestCommandRewardExp[] = "reward_exp";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	36	static const char kDHQuestCommandRewardPvp[] = "reward_pvp";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	37	static const char kDHQuestCommandRewardDalant[] = "reward_dalant";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	38	static const char kDHQuestCommandDescription[] = "description";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	39	static const char kDHMissionCommandArea[] = "area";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	40	static const char kDHMissionCommandStartPos[] = "start_pos";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	41	static const char kDHMissionCommandGatePos[] = "gate_pos";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	42	static const char kDHMissionCommandJobOrder[] = "job_order";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	43	static const char kDHMissionCommandLimTimeSec[] = "lim_time_sec";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	44	static const char kDHMissionCommandResultType[] = "result_type";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	45	static const char kDHMissionCommandResultContents[] = "result_contents";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	46	static const char kDHMissionCommandDescription[] = "description";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	47	static const char kDHMissionCommandCompleteMsg[] = "complete_msg";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	48	static const char kDHMissionCommandLootItem[] = "loot_item";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	49	static const char kDHMissionCommandAddMonster[] = "add_monster";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	50	static const char kDHMissionCommandRespawnMonster[] = "respawn_monster";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	51	static const char kDHMissionCommandRespawnMonsterOption[] = "respawn_monster_option";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	52	static const char kDHMissionCommandChangeMonster[] = "change_monster";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	53	static const char kDHMissionCommandIf[] = "if";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	54	static const char kDHMissionCommandInner[] = "inner";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	55	static const char kDHMissionCommandRespond[] = "respond";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	56	static const char kDHMissionCommandAddTime[] = "add_time";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	57	static const char kDHJobCommandType[] = "type";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	58	static const char kDHJobCommandContents[] = "contents";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	59	static const char kDHJobCommandCount[] = "count";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	60	static const char kDHJobCommandReactType[] = "react_type";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	61	static const char kDHJobCommandReactContents[] = "react_contents";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	62	static const char kDHJobCommandDescription[] = "description";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	63	static const char kDHRewardScopeOne[] = "one";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	64	static const char kDHJobOrderAnd[] = "AND";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	65	static const char kDHJobOrderOr[] = "OR";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	66	static const char kDHMissionResultComplete[] = "COMPLETE";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	67	static const char kDHMissionResultPortal[] = "PORTAL";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	68	static const char kDHMissionResultNext[] = "NEXT";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	69	static const char kDHRespawnTermToken[] = "term:";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	70	static const char kDHRespawnLimToken[] = "lim:";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	71	static const char kDHIfChangeMonster[] = "change_monster";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	72	static const char kDHIfDescription[] = "description";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	73	static const char kDHIfCompleteMsg[] = "complete_msg";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	74	static const char kDHInnerMsgToken[] = "msg:";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	75	static const char kDHInnerRespawnToken[] = "respawn_monster:";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	76	static const char kDHRespondHuntToken[] = "hunt:";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	77	static const char kDHJobTypeTake[] = "TAKE";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	78	static const char kDHJobTypeHunt[] = "HUNT";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	79	static const char kDHJobContentsAny[] = "ANY";
+static	WorldServer\Entities\DarkHoleQuestCommands.cpp	80	static const char kDHJobReactPortal[] = "PORTAL";
+static	WorldServer\Entities\DfAIMgr.cpp	383	static _NEAR_DATA nearMon[20];
+static	WorldServer\Entities\DfAIMgr.cpp	459	static float fNextTarPos[3];
+static	WorldServer\Entities\DfAIMgr.cpp	1243	static float vTargetPos_0[3];
+static	WorldServer\Entities\DfAIMgr.cpp	1268	static float vTargetPos[3];
+static	WorldServer\Entities\DfAIMgr.cpp	1329	static float NewTar[3];
+static	WorldServer\Entities\DfAIMgr.cpp	1330	static float fBeforeTar[3];
+static	WorldServer\Entities\DfAIMgr.h	82	static __int64(__fastcall *ms_CheckMotiveFunction[4])(
+static	WorldServer\Entities\FinalDecisionApplyer.cpp	47	static char kEmptyLeaderName[1] = {'\0'};
+static	WorldServer\Entities\GuildBattle.cpp	98	static CGuildBattleState GUILD_BATTLE_STATE_NULL_11{};
+static	WorldServer\Entities\GuildBattle.cpp	100	static CNormalGuildBattleStateList NORMAL_GUILD_BATTLE_STATE_NULL_11;
+static	WorldServer\Entities\GuildBattle.cpp	4594	static CGuildBattleScheduleManager s_instance;
+static	WorldServer\Entities\GuildBattle.h	248	static CNormalGuildBattleStateListPool *ms_Instance;
+static	WorldServer\Entities\GuildBattle.h	296	static CNormalGuildBattleFieldList *ms_Instance;
+static	WorldServer\Entities\GuildBattle.h	520	static CNormalGuildBattleManager *ms_Instance;
+static	WorldServer\Entities\GuildBattle.h	582	static CGuildBattleSchedulePool *ms_Instance;
+static	WorldServer\Entities\GuildBattle.h	641	static _worlddb_guild_battle_schedule_list *ms_pkDBScheduleInfo;
+static	WorldServer\Entities\GuildBattle.h	696	static CGuildBattleLogger *ms_Instance;
+static	WorldServer\Entities\GuildBattle.h	711	static CGuildBattleRewardItem ms_kNullObj;
+static	WorldServer\Entities\GuildBattle.h	725	static CGuildBattleRewardItemManager *ms_Instance;
+static	WorldServer\Entities\GuildBattle.h	763	static CGuildBattleRankManager *ms_Instance;
+static	WorldServer\Entities\GuildBattle.h	851	static CGuildBattleReservedScheduleListManager *ms_Instance;
+static	WorldServer\Entities\GuildBattle.h	866	static CGuildBattleScheduler *ms_Instance;
+static	WorldServer\Entities\GuildBattle.h	880	static CCurrentGuildBattleInfoManager *ms_Instance;
+static	WorldServer\Entities\GuildBattle.h	902	static CPossibleBattleGuildListManager *ms_Instance;
+static	WorldServer\Entities\HACKSHEILD_PARAM_ANTICP.cpp	28	static HMODULE s_hModule = nullptr;
+static	WorldServer\Entities\HACKSHEILD_PARAM_ANTICP.cpp	78	static AntiCpMakeGuidReqMsgFn s_fn = nullptr;
+static	WorldServer\Entities\HACKSHEILD_PARAM_ANTICP.cpp	79	static bool s_resolved = false;
+static	WorldServer\Entities\HACKSHEILD_PARAM_ANTICP.cpp	91	static AntiCpMakeReqMsgFn s_fn = nullptr;
+static	WorldServer\Entities\HACKSHEILD_PARAM_ANTICP.cpp	92	static bool s_resolved = false;
+static	WorldServer\Entities\HACKSHEILD_PARAM_ANTICP.cpp	104	static AntiCpAnalyzeGuidAckMsgFn s_fn = nullptr;
+static	WorldServer\Entities\HACKSHEILD_PARAM_ANTICP.cpp	105	static bool s_resolved = false;
+const	WorldServer\Entities\IdaCompat.h	41	inline void *memcpy_0(void *dest, const void *src, size_t count) { return std::memcpy(dest, src, count); }
+const	WorldServer\Entities\IdaCompat.h	42	inline int memcmp_0(const void *a, const void *b, size_t count) { return std::memcmp(a, b, count); }
+const	WorldServer\Entities\IdaCompat.h	43	inline size_t strlen_0(const char *str) { return std::strlen(str); }
+const	WorldServer\Entities\IdaCompat.h	44	inline int strcmp_0(const char *a, const char *b) { return std::strcmp(a, b); }
+const	WorldServer\Entities\IdaCompat.h	45	inline int strncmp_0(const char *a, const char *b, size_t count) { return std::strncmp(a, b, count); }
+const	WorldServer\Entities\IdaCompat.h	46	inline char *strcpy_0(char *dest, const char *src) { return std::strcpy(dest, src); }
+const	WorldServer\Entities\IdaCompat.h	47	inline char *strcat_0(char *dest, const char *src) { return std::strcat(dest, src); }
+const	WorldServer\Entities\IdaCompat.h	72	static constexpr float FLOAT_0_5 = 0.5f;
+static	WorldServer\Entities\IdaCompat.h	72	static constexpr float FLOAT_0_5 = 0.5f;
+const	WorldServer\Entities\IdaCompat.h	73	static constexpr float FLOAT_1_0 = 1.0f;
+static	WorldServer\Entities\IdaCompat.h	73	static constexpr float FLOAT_1_0 = 1.0f;
+const	WorldServer\Entities\IdaCompat.h	74	static constexpr float FLOAT_1_1 = 1.1f;
+static	WorldServer\Entities\IdaCompat.h	74	static constexpr float FLOAT_1_1 = 1.1f;
+const	WorldServer\Entities\IdaCompat.h	75	static constexpr float FLOAT_N1_0 = -1.0f;
+static	WorldServer\Entities\IdaCompat.h	75	static constexpr float FLOAT_N1_0 = -1.0f;
+const	WorldServer\Entities\IdaCompat.h	76	static constexpr float FLOAT_0_60000002 = 0.600000024f;
+static	WorldServer\Entities\IdaCompat.h	76	static constexpr float FLOAT_0_60000002 = 0.600000024f;
+const	WorldServer\Entities\IdaCompat.h	77	static constexpr float FLOAT_8_0 = 8.0f;
+static	WorldServer\Entities\IdaCompat.h	77	static constexpr float FLOAT_8_0 = 8.0f;
+const	WorldServer\Entities\IdaCompat.h	78	static constexpr float FLOAT_255_0 = 255.0f;
+static	WorldServer\Entities\IdaCompat.h	78	static constexpr float FLOAT_255_0 = 255.0f;
+const	WorldServer\Entities\IdaCompat.h	79	static constexpr float FLOAT_32767_0 = 32767.0f;
+static	WorldServer\Entities\IdaCompat.h	79	static constexpr float FLOAT_32767_0 = 32767.0f;
+const	WorldServer\Entities\IdaCompat.h	80	static constexpr float FLOAT_23_0 = 23.0f;
+static	WorldServer\Entities\IdaCompat.h	80	static constexpr float FLOAT_23_0 = 23.0f;
+const	WorldServer\Entities\IdaCompat.h	81	static constexpr float FLOAT_25_0 = 25.0f;
+static	WorldServer\Entities\IdaCompat.h	81	static constexpr float FLOAT_25_0 = 25.0f;
+const	WorldServer\Entities\IdaCompat.h	82	static constexpr float FLOAT_30_0 = 30.0f;
+static	WorldServer\Entities\IdaCompat.h	82	static constexpr float FLOAT_30_0 = 30.0f;
+const	WorldServer\Entities\IdaCompat.h	83	static constexpr float FLOAT_9999_0 = 9999.0f;
+static	WorldServer\Entities\IdaCompat.h	83	static constexpr float FLOAT_9999_0 = 9999.0f;
+const	WorldServer\Entities\IdaCompat.h	84	static constexpr double DOUBLE_1_0 = 1.0;
+static	WorldServer\Entities\IdaCompat.h	84	static constexpr double DOUBLE_1_0 = 1.0;
+const	WorldServer\Entities\IdaCompat.h	85	static constexpr float FLOAT_1000000_0 = 1000000.0f;
+static	WorldServer\Entities\IdaCompat.h	85	static constexpr float FLOAT_1000000_0 = 1000000.0f;
+const	WorldServer\Entities\IdaCompat.h	86	static constexpr float FLOAT_N32000_0 = -32000.0f;
+static	WorldServer\Entities\IdaCompat.h	86	static constexpr float FLOAT_N32000_0 = -32000.0f;
+const	WorldServer\Entities\IdaCompat.h	87	static constexpr float FLOAT_N100000_0 = -100000.0f;
+static	WorldServer\Entities\IdaCompat.h	87	static constexpr float FLOAT_N100000_0 = -100000.0f;
+const	WorldServer\Entities\ItemDataLoader.cpp	14	static const ItemDataFileEntry kItemDataFiles[] =
+static	WorldServer\Entities\ItemDataLoader.cpp	14	static const ItemDataFileEntry kItemDataFiles[] =
+static	WorldServer\Entities\LendItemMng.h	23	static LendItemMng *_pkInstance;
+const	WorldServer\Entities\LendItemSheet.cpp	21	bool LendItemSheet::Cell::operator==(const Cell *rhs) const
+static	WorldServer\Entities\LuaTinker.h	129	static T arg;
+static	WorldServer\Entities\LuaTinker.h	130	static const bool value = ( (sizeof(int_conv_tester(arg)) == sizeof(yes_type)) && (sizeof(vfnd_ptr_tester(add_ptr(arg))) == sizeof(yes_type)) );
+static	WorldServer\Entities\LuaTinker.h	328	static int invoke(lua_State *L) { push(L,upvalue_<RVal(*)(T1,T2,T3,T4,T5)>(L)(read<T1>(L,1),read<T2>(L,2),read<T3>(L,3),read<T4>(L,4),read<T5>(L,5))); return 1; }
+static	WorldServer\Entities\LuaTinker.h	334	static int invoke(lua_State *L) { push(L,upvalue_<RVal(*)(T1,T2,T3,T4)>(L)(read<T1>(L,1),read<T2>(L,2),read<T3>(L,3),read<T4>(L,4))); return 1; }
+static	WorldServer\Entities\LuaTinker.h	340	static int invoke(lua_State *L) { push(L,upvalue_<RVal(*)(T1,T2,T3)>(L)(read<T1>(L,1),read<T2>(L,2),read<T3>(L,3))); return 1; }
+static	WorldServer\Entities\LuaTinker.h	346	static int invoke(lua_State *L) { push(L,upvalue_<RVal(*)(T1,T2)>(L)(read<T1>(L,1),read<T2>(L,2))); return 1; }
+static	WorldServer\Entities\LuaTinker.h	352	static int invoke(lua_State *L) { push(L,upvalue_<RVal(*)(T1)>(L)(read<T1>(L,1))); return 1; }
+static	WorldServer\Entities\LuaTinker.h	358	static int invoke(lua_State *L) { push(L,upvalue_<RVal(*)()>(L)()); return 1; }
+static	WorldServer\Entities\LuaTinker.h	365	static int invoke(lua_State *L) { upvalue_<void(*)(T1,T2,T3,T4,T5)>(L)(read<T1>(L,1),read<T2>(L,2),read<T3>(L,3),read<T4>(L,4),read<T5>(L,5)); return 0; }
+static	WorldServer\Entities\LuaTinker.h	371	static int invoke(lua_State *L) { upvalue_<void(*)(T1,T2,T3,T4)>(L)(read<T1>(L,1),read<T2>(L,2),read<T3>(L,3),read<T4>(L,4)); return 0; }
+static	WorldServer\Entities\LuaTinker.h	377	static int invoke(lua_State *L) { upvalue_<void(*)(T1,T2,T3)>(L)(read<T1>(L,1),read<T2>(L,2),read<T3>(L,3)); return 0; }
+static	WorldServer\Entities\LuaTinker.h	383	static int invoke(lua_State *L) { upvalue_<void(*)(T1,T2)>(L)(read<T1>(L,1),read<T2>(L,2)); return 0; }
+static	WorldServer\Entities\LuaTinker.h	389	static int invoke(lua_State *L) { upvalue_<void(*)(T1)>(L)(read<T1>(L,1)); return 0; }
+static	WorldServer\Entities\LuaTinker.h	395	static int invoke(lua_State *L) { upvalue_<void(*)()>(L)(); return 0; }
+static	WorldServer\Entities\LuaTinker.h	402	static int invoke(lua_State *L) { return upvalue_<int(*)(lua_State*,T1)>(L)(L,read<T1>(L,1)); }
+static	WorldServer\Entities\LuaTinker.h	408	static int invoke(lua_State *L) { return upvalue_<int(*)(lua_State*)>(L)(L); }
+static	WorldServer\Entities\LuaTinker.h	481	static int invoke(lua_State *L) { push(L,(read<T*>(L,1)->*upvalue_<RVal(T::*)(T1,T2,T3,T4,T5)>(L))(read<T1>(L,2),read<T2>(L,3),read<T3>(L,4),read<T4>(L,5),read<T5>(L,6)));; return 1; }
+static	WorldServer\Entities\LuaTinker.h	487	static int invoke(lua_State *L) { push(L,(read<T*>(L,1)->*upvalue_<RVal(T::*)(T1,T2,T3,T4)>(L))(read<T1>(L,2),read<T2>(L,3),read<T3>(L,4),read<T4>(L,5))); return 1; }
+static	WorldServer\Entities\LuaTinker.h	493	static int invoke(lua_State *L) { push(L,(read<T*>(L,1)->*upvalue_<RVal(T::*)(T1,T2,T3)>(L))(read<T1>(L,2),read<T2>(L,3),read<T3>(L,4))); return 1; }
+static	WorldServer\Entities\LuaTinker.h	499	static int invoke(lua_State *L) { push(L,(read<T*>(L,1)->*upvalue_<RVal(T::*)(T1,T2)>(L))(read<T1>(L,2),read<T2>(L,3))); return 1; }
+static	WorldServer\Entities\LuaTinker.h	505	static int invoke(lua_State *L) { push(L,(read<T*>(L,1)->*upvalue_<RVal(T::*)(T1)>(L))(read<T1>(L,2))); return 1; }
+static	WorldServer\Entities\LuaTinker.h	511	static int invoke(lua_State *L) { push(L,(read<T*>(L,1)->*upvalue_<RVal(T::*)()>(L))()); return 1; }
+static	WorldServer\Entities\LuaTinker.h	518	static int invoke(lua_State *L)  { (read<T*>(L,1)->*upvalue_<void(T::*)(T1,T2,T3,T4,T5)>(L))(read<T1>(L,2),read<T2>(L,3),read<T3>(L,4),read<T4>(L,5),read<T5>(L,6)); return 0; }
+static	WorldServer\Entities\LuaTinker.h	524	static int invoke(lua_State *L)  { (read<T*>(L,1)->*upvalue_<void(T::*)(T1,T2,T3,T4)>(L))(read<T1>(L,2),read<T2>(L,3),read<T3>(L,4),read<T4>(L,5)); return 0; }
+static	WorldServer\Entities\LuaTinker.h	530	static int invoke(lua_State *L)  { (read<T*>(L,1)->*upvalue_<void(T::*)(T1,T2,T3)>(L))(read<T1>(L,2),read<T2>(L,3),read<T3>(L,4)); return 0; }
+static	WorldServer\Entities\LuaTinker.h	536	static int invoke(lua_State *L)  { (read<T*>(L,1)->*upvalue_<void(T::*)(T1,T2)>(L))(read<T1>(L,2),read<T2>(L,3)); return 0; }
+static	WorldServer\Entities\LuaTinker.h	542	static int invoke(lua_State *L)  { (read<T*>(L,1)->*upvalue_<void(T::*)(T1)>(L))(read<T1>(L,2)); return 0; }
+static	WorldServer\Entities\LuaTinker.h	548	static int invoke(lua_State *L)  { (read<T*>(L,1)->*upvalue_<void(T::*)()>(L))(); return 0; }
+static	WorldServer\Entities\LuaTinker.h	555	static int invoke(lua_State *L) { return (read<T*>(L,1)->*upvalue_<int(T::*)(lua_State*,T1)>(L))(L, read<T1>(L,2)); }
+static	WorldServer\Entities\LuaTinker.h	561	static int invoke(lua_State *L) { return (read<T*>(L,1)->*upvalue_<int(T::*)(lua_State*)>(L))(L); }
+static	WorldServer\Entities\LuaTinker.h	932	static const char* name(const char* name = NULL)
+static	WorldServer\Entities\LuaTinker.h	934	static char temp[256] = "";
+const	WorldServer\Entities\MathUtil.cpp	243	void MatrixIdentity(float (*const a1)[4])
+const	WorldServer\Entities\MathUtil.cpp	252	void MatrixCopy(float (*const a1)[4], float (*const a2)[4])
+const	WorldServer\Entities\MathUtil.cpp	257	void MatrixMultiply(float (*a1)[4], float (*const a2)[4], float (*const a3)[4])
+const	WorldServer\Entities\MathUtil.cpp	285	int MatrixInvert(float (*const a1)[4], float (*const a2)[4])
+const	WorldServer\Entities\MathUtil.cpp	340	void MatrixFromQuaternion(float (*const a1)[4], float a2, float a3, float a4, float a5)
+const	WorldServer\Entities\MathUtil.cpp	360	void MatrixScale(float (*const a1)[4], float a2, float a3, float a4)
+const	WorldServer\Entities\MathUtil.cpp	380	void MatrixRotate(float (*const a1)[4], float a2, float a3, float a4)
+const	WorldServer\Entities\MathUtil.cpp	463	void MatrixRotateX(float (*const a1)[4], float a2)
+const	WorldServer\Entities\MathUtil.cpp	487	void MatrixRotateY(float (*const a1)[4], float a2)
+const	WorldServer\Entities\MathUtil.cpp	511	void MatrixRotateZ(float (*const a1)[4], float a2)
+const	WorldServer\Entities\MathUtil.cpp	594	void GetMatrixFrom3DSMAXMatrix(float (*const a1)[4])
+const	WorldServer\Entities\MathUtil.cpp	648	void GetAniMatrix(float (*const a1)[4], _ANI_OBJECT *a2, double a3)
+static	WorldServer\Entities\MathUtil.cpp	748	static void sub_14051FF20(float (*a1)[4], unsigned short a2, __int64 a3, double a4)
+const	WorldServer\Entities\MonsterStateData.cpp	109	bool MonsterStateData::operator!=(const MonsterStateData *rhs)
+static	WorldServer\Entities\MyTimer.h	23	static TIME _time;
+static	WorldServer\Entities\PatriarchElectProcessor.cpp	33	static PatriarchElectProcessor s_instance;
+static	WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h	8	static float MINING_SPEED;
+static	WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h	9	static float PLAYER_EXP;
+static	WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h	10	static float ANIMUS_EXP;
+static	WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h	11	static float BASE_MASTERY;
+static	WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h	12	static float SKILL_FORCE_MASTERY;
+static	WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h	13	static float ITEM_DROP;
+static	WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h	14	static float PVP_RATE;
+static	WorldServer\Entities\PCBANG_PRIMIUM_FAVOR.h	15	static float PLAYER_LOST_EXP;
+static	WorldServer\Entities\StorageList.cpp	13	static unsigned int s_makeLootInitFlag = 0;
+static	WorldServer\Entities\StorageList.cpp	14	static _STORAGE_LIST::_db_con s_makeLootItem{};
+static	WorldServer\Entities\TimeItem.cpp	16	static TimeItem s_instance;
+static	WorldServer\Entities\TimeItem.h	30	static TimeItemMap *_phmapTbl;
+const	WorldServer\Entities\TimeLimitJade.cpp	29	bool TimeLimitJade::WaitCell::operator==(const WaitCell *rhs) const
+const	WorldServer\Entities\TimeLimitJade.cpp	56	bool TimeLimitJade::UseCell::operator==(const UseCell *rhs) const
+static	WorldServer\Entities\TimeLimitJadeMng.h	20	static TimeLimitJadeMng *_pkInstance;
+static	WorldServer\Entities\UIDGenerator.h	13	static CNetCriticalSection _cs;
+static	WorldServer\Entities\WheatyExceptionReport.h	10	static char m_szLogName[256];
+static	WorldServer\Entities\WheatyExceptionReport.h	11	static char m_szDescription[256];
+const	WorldServer\Entities\WorldServerUtil.cpp	43	const char *dayofweek[7] = {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
+static	WorldServer\Entities\WorldServerUtil.cpp	44	static char szDefItemName[] = "noname";
+static	WorldServer\Entities\WorldServerUtil.cpp	45	static float sR[4] = {200.0f, 200.0f, 200.0f, 200.0f};
+static	WorldServer\Entities\WorldServerUtil.cpp	46	static int s_nSkillLvPerMastery[8] = {};
+static	WorldServer\Entities\WorldServerUtil.cpp	47	static int s_nForceLvPerMastery[24] = {};
+static	WorldServer\Entities\WorldServerUtil.cpp	48	static char sBuffer[64] = {};
+static	WorldServer\Entities\WorldServerUtil.cpp	903	static unsigned __int64 dw64Cnt = 0;
+static	WorldServer\Entities\WorldServerUtil.cpp	1122	static char g_szLv[32] = "00000000";
+static	WorldServer\Entities\WorldServerUtil.cpp	1123	static char g_szUPT[32] = "f";
+static	WorldServer\Entities\WorldServerUtil.cpp	1124	static char szBufUpt[32]{};
+static	WorldServer\Entities\WorldServerUtil.cpp	4058	static const float kSeeDistanceTable[3] = {0.6f, 0.8f, 1.0f};
+static	WorldServer\Entities\WorldServerUtil.cpp	5343	static const unsigned char asc_140884708[4] = { 0x3C, 0x2D, 0xBF, 0xA1 }; // "<-?"
+static	WorldServer\Entities\WorldServerUtil.cpp	5368	static const char kSuffix[] = "\x3C\x2D\xBF\xA1\xB7\xAF"; // "<-??"
+static	WorldServer\Entities\WorldServerUtil.cpp	5614	static IDA_IUnknown_vtbl g_TextureVtable = {Texture_QueryInterface, Texture_AddRef, Texture_Release};
+const	WorldServer\Entities\WorldServerUtil.h	185	void Vector3fTransform(float *const a1, float *const a2, float (*const a3)[4]);
+const	WorldServer\Entities\WorldServerUtil.h	192	void MatrixIdentity(float (*const a1)[4]);
+const	WorldServer\Entities\WorldServerUtil.h	193	void MatrixCopy(float (*const a1)[4], float (*const a2)[4]);
+const	WorldServer\Entities\WorldServerUtil.h	194	void MatrixMultiply(float (*a1)[4], float (*const a2)[4], float (*const a3)[4]);
+const	WorldServer\Entities\WorldServerUtil.h	195	int MatrixInvert(float (*const a1)[4], float (*const a2)[4]);
+const	WorldServer\Entities\WorldServerUtil.h	196	void MatrixFromQuaternion(float (*const a1)[4], float a2, float a3, float a4, float a5);
+const	WorldServer\Entities\WorldServerUtil.h	197	void MatrixScale(float (*const a1)[4], float a2, float a3, float a4);
+const	WorldServer\Entities\WorldServerUtil.h	198	void MatrixRotate(float (*const a1)[4], float a2, float a3, float a4);
+const	WorldServer\Entities\WorldServerUtil.h	199	void MatrixRotateX(float (*const a1)[4], float a2);
+const	WorldServer\Entities\WorldServerUtil.h	200	void MatrixRotateY(float (*const a1)[4], float a2);
+const	WorldServer\Entities\WorldServerUtil.h	201	void MatrixRotateZ(float (*const a1)[4], float a2);
+const	WorldServer\Entities\WorldServerUtil.h	216	void GetMatrixFrom3DSMAXMatrix(float (*const a1)[4]);
+const	WorldServer\Entities\WorldServerUtil.h	217	void GetAniMatrix(float (*const a1)[4], _ANI_OBJECT *a2, double a3);

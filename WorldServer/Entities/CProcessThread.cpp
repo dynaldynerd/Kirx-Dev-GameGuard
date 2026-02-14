@@ -6,15 +6,14 @@
 
 namespace
 {
-constexpr char kThreadConfigDefaultName[] = "NONAME";
 }
 
 CProcessThread::_THREAD_CONFIG::_THREAD_CONFIG()
 {
   bProgramExitWhenLackData = false;
   nSleepCount = 100;
-  sprintf(szThreadID, kThreadConfigDefaultName);
-  sprintf(szLogFileName, kThreadConfigDefaultName);
+  sprintf(szThreadID, "NONAME");
+  sprintf(szLogFileName, "NONAME");
 }
 
 CProcessThread::CProcessThread()
