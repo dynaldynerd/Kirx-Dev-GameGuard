@@ -11,6 +11,10 @@
 
 #include "GlobalObjects.h"
 
+#ifdef SQLConfigDataSource
+#undef SQLConfigDataSource
+#endif
+
 extern "C"
 {
   unsigned int __stdcall RFACC_Init();
@@ -52,7 +56,7 @@ CRusiaBillingMgr *CRusiaBillingMgr::Instance()
     szServer = const_cast<char *>("81.176.70.145");
     String = const_cast<char *>("1521");
   }
-if (!CRusiaBillingMgr::m_pRusiaBill)
+  if (!CRusiaBillingMgr::m_pRusiaBill)
   {
     auto *created = static_cast<CRusiaBillingMgr *>(operator new(sizeof(CRusiaBillingMgr)));
     if (created)
@@ -120,25 +124,12 @@ bool CRusiaBillingMgr::ConfigUserODBC(char *szDSN, char *szServer, char *szDatab
   unsigned __int16 offset = 0;
   char buffer[272]{};
 
+  memset_0(buffer, 0, 0x100u);
   offset = static_cast<unsigned __int16>(sprintf(buffer, "DSN=%s%c", szDSN, 0));
   offset = static_cast<unsigned __int16>(offset + sprintf(&buffer[offset], "DESCRIPTION=%s%c", szDatabase, 0));
   offset = static_cast<unsigned __int16>(offset + sprintf(&buffer[offset], "SERVER=%s,%u%c", szServer, wPort, 0));
   offset = static_cast<unsigned __int16>(offset + sprintf(&buffer[offset], "DATABASE=%s%c", szDatabase, 0));
-
-  wchar_t bufferW[272]{};
-  const int attributesLen = static_cast<int>(offset) + 2;
-  const int wideLen = MultiByteToWideChar(
-    CP_ACP,
-    0,
-    buffer,
-    attributesLen,
-    bufferW,
-    static_cast<int>(sizeof(bufferW) / sizeof(bufferW[0])));
-  if (wideLen <= 0)
-  {
-    return false;
-  }
-  return SQLConfigDataSourceW(nullptr, ODBC_ADD_SYS_DSN, L"SQL Server", bufferW) != 0;
+  return SQLConfigDataSource(nullptr, ODBC_ADD_SYS_DSN, "SQL Server", buffer) != 0;
 }
 
 bool CRusiaBillingMgr::LoadINIFile()

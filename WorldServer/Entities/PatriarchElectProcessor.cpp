@@ -28,6 +28,13 @@
 #include <cstring>
 #include <mmsystem.h>
 
+static_assert(sizeof(CandidateRegister) == 0x11438, "CandidateRegister size mismatch");
+static_assert(sizeof(SecondCandidateCrystallizer) == 0xC8, "SecondCandidateCrystallizer size mismatch");
+static_assert(sizeof(Voter) == 0x648, "Voter size mismatch");
+static_assert(sizeof(FinalDecisionProcessor) == 0x1C8, "FinalDecisionProcessor size mismatch");
+static_assert(sizeof(FinalDecisionApplyer) == 0xC8, "FinalDecisionApplyer size mismatch");
+static_assert(sizeof(ClassOrderProcessor) == 0x210, "ClassOrderProcessor size mismatch");
+
 PatriarchElectProcessor *PatriarchElectProcessor::Instance()
 {
   static PatriarchElectProcessor s_instance;

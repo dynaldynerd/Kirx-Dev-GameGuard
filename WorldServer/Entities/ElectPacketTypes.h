@@ -2,8 +2,9 @@
 
 #include "IdaCompat.h"
 
-struct __unaligned __declspec(align(1)) _pt_trans_votepaper_zocl
+struct _pt_trans_votepaper_zocl
 {
+#pragma pack(push, 1)
   struct __body
   {
     unsigned __int8 byRank;
@@ -11,6 +12,7 @@ struct __unaligned __declspec(align(1)) _pt_trans_votepaper_zocl
     char wszGuildName[17];
     unsigned int dwWinCnt;
   };
+#pragma pack(pop)
 
   _pt_trans_votepaper_zocl();
   __int64 size() const;
@@ -45,8 +47,9 @@ struct _pt_notify_final_decision
   char wszAvatorName[5][17];
 };
 
-struct __unaligned __declspec(align(1)) _pt_appoint_inform_request_zocl
+struct _pt_appoint_inform_request_zocl
 {
+#pragma pack(push, 1)
   struct __body
   {
     unsigned __int8 byLevel;
@@ -54,6 +57,7 @@ struct __unaligned __declspec(align(1)) _pt_appoint_inform_request_zocl
     long double dPvpPoint;
     char wszAvatorName[17];
   };
+#pragma pack(pop)
 
   __body body[4];
 };
@@ -102,3 +106,11 @@ inline __int64 _pt_notify_final_decision::size() const
 {
   return 85;
 }
+
+static_assert(sizeof(_pt_trans_votepaper_zocl::__body) == 39, "_pt_trans_votepaper_zocl::__body size mismatch");
+static_assert(sizeof(_pt_trans_votepaper_zocl) == 313, "_pt_trans_votepaper_zocl size mismatch");
+static_assert(sizeof(_pt_notify_vote_score_zocl::__body) == 19, "_pt_notify_vote_score_zocl::__body size mismatch");
+static_assert(sizeof(_pt_notify_vote_score_zocl) == 156, "_pt_notify_vote_score_zocl size mismatch");
+static_assert(sizeof(_pt_notify_final_decision) == 85, "_pt_notify_final_decision size mismatch");
+static_assert(sizeof(_pt_appoint_inform_request_zocl::__body) == 27, "_pt_appoint_inform_request_zocl::__body size mismatch");
+static_assert(sizeof(_pt_appoint_inform_request_zocl) == 108, "_pt_appoint_inform_request_zocl size mismatch");

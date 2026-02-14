@@ -23,3 +23,5 @@ protected:
 private:
   CRusiaBillingMgr *_pkBill;
 };
+
+static_assert(sizeof(CCashDbWorkerRU) == 0x230, "CCashDbWorkerRU size mismatch");

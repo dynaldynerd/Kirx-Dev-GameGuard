@@ -79,9 +79,14 @@ unsigned int _personal_automine_current_state_zocl::size() const
 }
 
 AP_BatterySlot::AP_BatterySlot()
-  : m_bFill(false)
+  : m_bFill(false),
+    battery_()
 {
-  std::memset(&battery_, 0, sizeof(battery_));
+}
+
+AP_BatterySlot::~AP_BatterySlot()
+{
+  // this is not a stub
 }
 
 void AP_BatterySlot::clear()

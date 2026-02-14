@@ -18,17 +18,35 @@ CLogFile::CLogFile()
   m_szFileName[0] = 0;
 }
 
-void CLogFile::SetWriteLogFile(const char *fileName, int addCount, int date, int trace, int init)
+CLogFile::~CLogFile()
 {
-  if (fileName != nullptr)
+}
+
+void CLogFile::SetWriteLogFile(const char *szFileName, int bWriteAble, bool bTrace, bool bDate, bool bAddCount)
+{
+  char normalizedPath[128]{};
+  if (szFileName != nullptr)
   {
-    strncpy_s(m_szFileName, sizeof(m_szFileName), fileName, _TRUNCATE);
+    strncpy_s(normalizedPath, sizeof(normalizedPath), szFileName, _TRUNCATE);
+    for (char *cursor = normalizedPath; *cursor != '\0'; ++cursor)
+    {
+      if (*cursor == '/' || *cursor == ':')
+      {
+        *cursor = '_';
+      }
+    }
   }
-  m_bAddCount = addCount != 0;
-  m_bDate = date != 0;
-  m_bTrace = trace != 0;
-  m_bInit = init != 0;
-  m_bWriteAble = 1;
+
+  m_szFileName[0] = 0;
+  wsprintfA(m_szFileName, "%s", normalizedPath);
+  DeleteFileA(m_szFileName);
+
+  m_dwLogCount = 0;
+  m_bInit = true;
+  m_bWriteAble = bWriteAble;
+  m_bAddCount = bAddCount;
+  m_bDate = bDate;
+  m_bTrace = bTrace;
 }
 
 void CLogFile::SetWriteAble(bool bAble)

@@ -2533,6 +2533,7 @@ struct __cppobj _safe_dummy
 struct __cppobj __unaligned __declspec(align(1)) AP_BatterySlot
 {
   AP_BatterySlot();
+  ~AP_BatterySlot();
   int insert(_STORAGE_LIST::_db_con *pItem);
   bool is_private_item(_STORAGE_LIST::_db_con *pItem);
   void clear();

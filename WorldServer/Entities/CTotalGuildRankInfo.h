@@ -20,9 +20,9 @@ public:
   char m_wszMasterName[17];
 };
 
-class __cppobj __declspec(align(1)) _total_guild_rank_result_zocl
+#pragma pack(push, 1)
+struct __cppobj _total_guild_rank_result_zocl
 {
-public:
   struct _list
   {
     unsigned __int8 byRank;
@@ -39,6 +39,9 @@ public:
 
   __int64 size();
 };
+#pragma pack(pop)
+
+static_assert(sizeof(_total_guild_rank_result_zocl) == 403, "_total_guild_rank_result_zocl size mismatch");
 
 class __cppobj CTotalGuildRankInfo
 {

@@ -37,3 +37,5 @@ public:
   char m_lpszAccount[50];
   char m_lpszPassword[50];
 };
+
+static_assert(sizeof(CRusiaBillingMgr) == 0x1F0, "CRusiaBillingMgr size mismatch");
