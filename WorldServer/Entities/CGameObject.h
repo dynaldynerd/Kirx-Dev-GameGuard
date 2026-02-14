@@ -175,6 +175,11 @@ public:
   virtual bool Is_Battle_Mode();
   virtual void Loop();
   virtual void OutOfSec();
+  virtual void RecvKillMessage(CCharacter *pDier)
+  {
+    // this is not a stub
+    (void)pDier;
+  }
   __int64 CalcCirclePlayerNum(int nRange);
   __int64 RerangeSecIndex(unsigned int dwOld, unsigned int dwNew);
   void ResetSector(unsigned int dwOldSec, unsigned int dwNewSec);

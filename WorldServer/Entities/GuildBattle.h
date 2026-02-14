@@ -24,6 +24,7 @@ struct _worlddb_guild_battle_schedule_list;
 struct _worlddb_guild_battle_info;
 struct _worlddb_guild_battle_reserved_schedule_info;
 struct _base_fld;
+struct _qry_case_guild_battel_result_log;
 
 namespace GUILD_BATTLE
 {
@@ -99,6 +100,16 @@ namespace GUILD_BATTLE
     void Clear();
     void SetWait();
     void SetReady();
+    bool IsProc();
+    void Process(CGuildBattle *pkBattle);
+    void Advance(int iAdvance);
+    int Next(bool bForce);
+    int CheckLoop();
+    ATL::CTimeSpan *GetTerm(ATL::CTimeSpan *result);
+    bool IsEmpty();
+    int Goto();
+    void ForceNext();
+    char GotoState(int iState);
 
     int m_iForceAdvance;
     int m_iState;
@@ -210,6 +221,7 @@ namespace GUILD_BATTLE
   {
   public:
     CNormalGuildBattleStateList();
+    void SetNextState() override;
     bool IsReadyOrCountState();
     bool IsInBattle();
     bool IsInBattleRegenState();
@@ -309,6 +321,7 @@ namespace GUILD_BATTLE
     void CleanUpBattle();
     void NetClose();
     void ReturnBindPos();
+    void PushDQSPvpPoint(int dwPvpPoint);
 
     unsigned int m_dwSerial;
     bool m_bRestart;
@@ -394,11 +407,20 @@ namespace GUILD_BATTLE
     bool IsMemberGuild(unsigned int dwGuildSerial);
     bool IsReadyOrCountState();
     bool IsInBattle();
+    bool IsProc();
+    void Process();
+    void SetReadyState();
     void AskJoin(int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial);
     void LogIn(int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial);
     unsigned __int8 NetClose(unsigned int dwCharacSerial, CPlayer *pkPlayer);
     unsigned __int8 LeaveGuild(CPlayer *pkPlayer);
     void NotifyDestoryBall(unsigned int dwOwnerSerial);
+    void PushDQSWinLoseRank();
+    void PushDQSDrawRank();
+    void GuildBattleResultLogPushDBLog(
+      _qry_case_guild_battel_result_log *sheet,
+      CNormalGuildBattleGuildMember *pkTopGoalMember,
+      CNormalGuildBattleGuildMember *pkTopKillMember);
     unsigned int GetID();
     CNormalGuildBattleGuild *Get1P();
     CNormalGuildBattleGuild *Get2P();
@@ -429,8 +451,13 @@ namespace GUILD_BATTLE
     char Load(bool bToday, unsigned int uiDayID, CNormalGuildBattle **ppkStart);
     char LoadDBGuildBattleInfo(unsigned int dwStartID, _worlddb_guild_battle_info *kInfo);
     char AddDefaultDBRecord();
+    void Loop();
     void Clear();
     void Clear(CNormalGuildBattle **ppkStart);
+    void Flip();
+    void DoDayChangedWork();
+    void SetReadyState(CNormalGuildBattle **ppkStart);
+    void SetNextEvent();
     void JoinGuild(int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial);
     unsigned __int8 LeaveGuild(CPlayer *pkPlayer);
     unsigned __int8 Add(
@@ -497,6 +524,10 @@ namespace GUILD_BATTLE
     __int64 GetRealStartTime();
     __int64 GetBattleTurm();
     bool IsProc();
+    int Check();
+    int Process();
+    bool IsWait();
+    void SetProcState();
     char GetLeftTime(unsigned __int8 *byHour, unsigned __int8 *byMin, unsigned __int8 *bySec);
     char Load(bool bToday, unsigned int dwScheduleID, unsigned __int8 ucState, __int64 tTime, unsigned __int16 wTumeMin);
     ATL::CTime *GetTime(ATL::CTime *result);
@@ -522,6 +553,7 @@ namespace GUILD_BATTLE
     CGuildBattleSchedule *Get(unsigned int dwSID);
     CGuildBattleSchedule *Get(unsigned int uiSLID, unsigned int dwStartInx);
     CGuildBattleSchedule *GetRef(unsigned int dwSID);
+    unsigned int GetSID(unsigned int uiSLID, unsigned int dwStartInx);
     void ClearByDayID(unsigned int uiDayID);
 
     static CGuildBattleSchedulePool *ms_Instance;
@@ -537,6 +569,10 @@ namespace GUILD_BATTLE
     void Clear();
     char Clear(unsigned int dwID);
     unsigned int GetID();
+    bool IsDone();
+    bool Loop();
+    char Next();
+    char CheckNextEvent(int iRet);
     unsigned __int8 Add(unsigned int dwStartTimeInx, unsigned int dwElapseTimeCnt, CGuildBattleSchedule **ppkSchedule);
     unsigned __int8 IsEmptyTime(unsigned int dwStartTimeInx, unsigned int dwElapseTimeCnt);
     void UpdateUseField(unsigned int dwStartTimeInx, unsigned int dwElapseTimeCnt);
@@ -569,11 +605,14 @@ namespace GUILD_BATTLE
     unsigned __int8 IsEmptyTime(unsigned int uiFieldInx, unsigned int dwStartTimeInx, unsigned int dwElapseTimeCnt);
     bool Clear();
     char Clear(unsigned int uiMapID, unsigned int dwID);
+    bool IsDone();
+    char Loop();
     CGuildBattleSchedule *UpdateUseFlag(unsigned int uiMapID, unsigned int dwID);
     unsigned int GetDayID();
     char GetSLID(unsigned int uiMapID, unsigned int *uiSLID);
     char CleanUpDanglingReservedSchedule();
     unsigned int GetCurScheduleID(unsigned int uiMapID);
+    void PushDQSClear();
     void Flip();
 
     static _worlddb_guild_battle_schedule_list *ms_pkDBScheduleInfo;
@@ -589,6 +628,12 @@ namespace GUILD_BATTLE
     static CGuildBattleScheduleManager *Instance();
     CGuildBattleScheduleManager();
     bool Init(unsigned int uiMapCnt);
+    void Loop();
+    void UpdateDayChangedWork();
+    int IsDayChanged();
+    void Clear();
+    void Flip();
+    void SetNextEvnet();
     char Load(int iCurDay, unsigned int uiOldMapCnt, int iToday, int iTodayDayID, int iTomorrow, int iTomorrowDayID);
     unsigned __int8 Add(
       unsigned int uiFieldInx,
@@ -767,6 +812,7 @@ namespace GUILD_BATTLE
     char LoadTomorrowSchedule();
     char UpdateTodaySchedule(unsigned int uiMapID);
     char UpdateTomorrowSchedule(unsigned int uiMapID);
+    void Clear();
     void Flip();
     void Send(
       unsigned int uiMapID,
@@ -822,6 +868,8 @@ namespace GUILD_BATTLE
     CPossibleBattleGuildListManager();
     bool Init();
     char Load();
+    void Clear();
+    void DoDayChangedWork();
     void SendFirst(int n, unsigned __int8 byRace);
     unsigned __int8 SendInfo(unsigned int n, unsigned __int8 byRace, unsigned __int8 byPage, unsigned int dwVer);
     void UpdateGuildList();

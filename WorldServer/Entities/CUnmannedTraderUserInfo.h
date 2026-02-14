@@ -8,6 +8,12 @@
 class CPlayer;
 class CLogFile;
 struct _TRADE_DB_BASE;
+struct _a_trade_adjust_price_request_clzo;
+struct _a_trade_clear_item_request_clzo;
+struct _a_trade_reg_item_request_clzo;
+struct _unmannedtrader_buy_item_request_clzo;
+struct _unmannedtrader_re_regist_request_clzo;
+struct _unmannedtrader_search_list_request_clzo;
 
 class __cppobj CUnmannedTraderUserInfo
 {
@@ -32,6 +38,64 @@ public:
   void Clear();
   void ClearLoadItemInfo();
   void ClearRequest();
+  void Regist(unsigned __int8 byType, _a_trade_reg_item_request_clzo *pRequest, CLogFile *pkLogger);
+  void ModifyPrice(unsigned __int8 byType, _a_trade_adjust_price_request_clzo *pRequest, CLogFile *pkLogger);
+  void CancelRegist(unsigned __int8 byType, _a_trade_clear_item_request_clzo *pRequest, CLogFile *pkLogger);
+  void Buy(unsigned __int8 byType, _unmannedtrader_buy_item_request_clzo *pRequest, CLogFile *pkLogger);
+  void Search(unsigned __int8 byType, _unmannedtrader_search_list_request_clzo *pRequest, CLogFile *pkLogger);
+  void ReRegist(unsigned __int8 byType, _unmannedtrader_re_regist_request_clzo *pRequest, CLogFile *pkLogger);
+  unsigned __int8 CheckRegist(
+    unsigned __int8 byType,
+    _a_trade_reg_item_request_clzo *pRequest,
+    CLogFile *pkLogger,
+    unsigned __int8 *byTempSlotIndex,
+    unsigned __int8 *byDivision,
+    unsigned __int8 *byClass,
+    unsigned __int8 *bySubClass,
+    unsigned int *dwListIndex,
+    unsigned int *dwTax);
+  unsigned __int8 RegistItem(
+    unsigned __int8 byType,
+    _a_trade_reg_item_request_clzo *pRequest,
+    unsigned __int8 byTempSlotIndex,
+    unsigned __int8 byDivision,
+    unsigned __int8 byClass,
+    unsigned __int8 bySubClass,
+    unsigned int dwListIndex,
+    unsigned int dwTax);
+  unsigned __int8 CheckModifyPrice(
+    unsigned __int8 byType,
+    _a_trade_adjust_price_request_clzo *pRequest,
+    unsigned int *dwOldPrice,
+    CLogFile *pkLogger,
+    unsigned int *pdwTax);
+  unsigned __int8 CheckCancelRegist(
+    unsigned __int8 byType,
+    _a_trade_clear_item_request_clzo *pRequest,
+    CLogFile *pkLogger);
+  unsigned __int8 CheckBuy(
+    unsigned __int8 byType,
+    _unmannedtrader_buy_item_request_clzo *pRequest,
+    CPlayer **pkBuyer);
+  unsigned __int8 CheckSearch(
+    unsigned __int8 byType,
+    _unmannedtrader_search_list_request_clzo *pRequest,
+    unsigned int *dwListIndex,
+    unsigned int *dwCurVer);
+  unsigned __int8 CheckReRegist(
+    unsigned __int8 byType,
+    CLogFile *pkLogger,
+    unsigned __int16 wItemSerial,
+    unsigned __int8 byAmount,
+    unsigned __int8 byItemTableCode,
+    unsigned __int16 wItemIndex,
+    unsigned int dwRegistSerial,
+    unsigned int dwPrice,
+    unsigned __int8 *pbyDivision,
+    unsigned __int8 *pbyClass,
+    unsigned __int8 *pbySubClass,
+    unsigned int *pdwTax,
+    unsigned int *pdwListIndex);
   std::vector<CUnmannedTraderRegistItemInfo>::iterator Find(unsigned int dwRegistSerial);
   std::vector<CUnmannedTraderRegistItemInfo>::iterator FindEmpty();
   void CountRegistItem();
@@ -116,6 +180,7 @@ public:
     unsigned int dwRegistSerial,
     unsigned int dwTax);
   void SendRepriceErrorResult(CPlayer *pReceiver, unsigned __int8 byRet);
+  void SendBuyErrorResult(unsigned __int16 wInx, unsigned __int8 byRet);
   void SendSellInfom(
     unsigned __int16 wInx,
     unsigned __int16 wItemSerial,

@@ -279,11 +279,7 @@ bool __fastcall GetReactArea(
   char *pszoutErrMsg,
   char *pszoutEventCode)
 {
-
-  (void)pszoutErrMsg;
-  (void)pszoutEventCode;
-
-  char poutszWord[160]{};
+char poutszWord[160]{};
   char targetName[136]{};
   if (!fstr->word(poutszWord) || !fstr->word(targetName))
     return _false(fstr, pSetup);

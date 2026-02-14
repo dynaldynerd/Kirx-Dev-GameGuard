@@ -165,6 +165,5 @@ void CMsgData::PumpMsgList()
 
 void CMsgData::ProcessMessage(_message *pMsg)
 {
-  (void)pMsg;
-  // this is not a stub
+// this is not a stub
 }

@@ -283,8 +283,7 @@ char _STORAGE_LIST::GradeDown(int n, unsigned int dwUptInfo)
 
 char _STORAGE_LIST::SetGrade(int n, unsigned __int8 byLv, unsigned int dwUptInfo)
 {
-  (void)byLv;
-  m_pStorageList[n].m_dwLv = dwUptInfo;
+m_pStorageList[n].m_dwLv = dwUptInfo;
   return 1;
 }
 

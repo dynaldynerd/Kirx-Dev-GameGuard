@@ -38,8 +38,7 @@ void CMoveMapLimitRightPortal::CreateComplete(CPlayer *pkPlayer)
 
 void CMoveMapLimitRightPortal::LogOut(CPlayer *pkPlayer)
 {
-  (void)pkPlayer;
-  m_pkRight = nullptr;
+m_pkRight = nullptr;
 }
 
 bool CMoveMapLimitRightPortal::IsHaveRight()

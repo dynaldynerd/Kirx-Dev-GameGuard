@@ -4,7 +4,9 @@
 
 #include "CNetProcess.h"
 #include "CPlayer.h"
+#include "CPlayerDB.h"
 #include "GlobalObjects.h"
+#include "qry_case_addpvppoint.h"
 
 #include <cstring>
 #include <cstdio>
@@ -27,28 +29,22 @@ float CTrap::GetAttackRange()
 
 __int64 CTrap::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
 {
-  (void)nAttactPart;
-  (void)pAttChar;
-  (void)pnConvertPart;
-  return *reinterpret_cast<unsigned int *>(m_pRecordSet[6].m_strCode);
+return *reinterpret_cast<unsigned int *>(m_pRecordSet[6].m_strCode);
 }
 
 float CTrap::GetDefFacing(int nPart)
 {
-  (void)nPart;
-  return *reinterpret_cast<float *>(&m_pRecordSet[6].m_strCode[8]);
+return *reinterpret_cast<float *>(&m_pRecordSet[6].m_strCode[8]);
 }
 
 float CTrap::GetDefGap(int nPart)
 {
-  (void)nPart;
-  return *reinterpret_cast<float *>(&m_pRecordSet[6].m_strCode[4]);
+return *reinterpret_cast<float *>(&m_pRecordSet[6].m_strCode[4]);
 }
 
 __int64 CTrap::GetDefSkill(bool bBackAttackDamage)
 {
-  (void)bBackAttackDamage;
-  return m_pRecordSet[6].m_dwIndex;
+return m_pRecordSet[6].m_dwIndex;
 }
 
 __int64 CTrap::GetFireTol()
@@ -58,9 +54,7 @@ __int64 CTrap::GetFireTol()
 
 __int64 CTrap::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
 {
-  (void)nPart;
-
-  int hitRate = static_cast<int>(
+int hitRate = static_cast<int>(
     static_cast<double>(*reinterpret_cast<int *>(&m_pRecordSet[5].m_strCode[40]))
     - (static_cast<float>(pDst->GetLevel()) * 10.0f + static_cast<float>(pDst->GetDefSkill(bBackAttack))) / 4.0f
     + 95.0f);
@@ -140,7 +134,7 @@ __int64 CTrap::GetWindTol()
 
 bool CTrap::IsBeAttackedAble(bool bFirst)
 {
-  (void)bFirst;
+// this is not a stub
   return true;
 }
 
@@ -207,6 +201,56 @@ void CTrap::OutOfSec()
   CCharacter::Destroy();
 }
 
+void CTrap::RecvKillMessage(CCharacter *pDier)
+{
+  if (m_pMaster)
+  {
+    if (m_pMaster->m_bLive && m_pMaster->m_bOper && m_pMaster->m_dwObjSerial == m_dwMasterSerial)
+    {
+      m_pMaster->RecvKillMessage(pDier);
+    }
+    return;
+  }
+
+  if (!pDier || pDier->m_ObjID.m_byID != 0 || m_dwMasterSerial == static_cast<unsigned int>(-1))
+  {
+    return;
+  }
+
+  auto *dierPlayer = reinterpret_cast<CPlayer *>(pDier);
+  const double dierPvpPoint = static_cast<double>(dierPlayer->m_Param.GetPvPPoint());
+  const double ratioNumerator = dierPvpPoint + 10000.0;
+  const double ratioDenominator = static_cast<double>(m_dMasterPvPPoint) + 10000.0;
+  double addPoint = ratioNumerator / ratioDenominator * 500.0 + 0.5;
+  if (addPoint > dierPvpPoint)
+  {
+    addPoint = dierPvpPoint;
+  }
+  if (addPoint < 1.0)
+  {
+    addPoint = 1.0;
+  }
+  if (addPoint > 100000000.0)
+  {
+    addPoint = 100000000.0;
+  }
+
+  _qry_case_addpvppoint query{};
+  query.dwSerial = m_dwMasterSerial;
+  query.dwPoint = static_cast<unsigned int>(addPoint);
+  query.dwCashBag = static_cast<unsigned int>(addPoint);
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x0Du, reinterpret_cast<char *>(&query), static_cast<int>(query.size()));
+
+  g_Main.m_logPvP.Write(
+    "%s [ %d ] DST: [ %d ] type: logoff_inc  >> pvp : %.0f  last: %.0f",
+    m_aszMasterName,
+    m_dwMasterSerial,
+    dierPlayer->m_dwObjSerial,
+    addPoint,
+    static_cast<double>(m_dMasterPvPPoint) + addPoint);
+  dierPlayer->AlterPvPPoint(-addPoint, die_dec, m_dwMasterSerial);
+}
+
 void CTrap::SendMsg_FixPosition(int n)
 {
 #pragma pack(push, 1)
@@ -243,10 +287,7 @@ void CTrap::SendMsg_FixPosition(int n)
 
 __int64 CTrap::SetDamage(int nDam, CCharacter *pDst, int nDstLv)
 {
-  (void)pDst;
-  (void)nDstLv;
-
-  if (nDam > 1)
+if (nDam > 1)
   {
     m_nHP -= nDam;
     if (m_nHP < 0)
@@ -274,10 +315,5 @@ __int64 CTrap::SetDamage(
   unsigned int dwAttackSerial,
   bool bJadeReturn)
 {
-  (void)bCrt;
-  (void)nAttackType;
-  (void)dwAttackSerial;
-  (void)bJadeReturn;
-  return SetDamage(nDam, pDst, nDstLv);
+return SetDamage(nDam, pDst, nDstLv);
 }
-

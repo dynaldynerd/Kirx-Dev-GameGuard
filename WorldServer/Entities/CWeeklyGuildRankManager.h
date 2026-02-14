@@ -39,6 +39,7 @@ public:
   __int64 LoadINILastRankTime();
   void GetPrevRankDate(char *szDate, int iBuffSize);
   char InsertDefaultWeeklyPvpPointSumRecord();
+  char PushDQSIncWeeklyPvpPointSum(unsigned int dwGuildSerial, long double dPoint);
   char IsEmptyRank(_pvppoint_guild_rank_info *pkInfo);
   CGuild *GetPrevOwnerGuild(unsigned __int8 byRace, unsigned __int8 byNth);
   void Send(unsigned int dwVer, unsigned __int8 byTabRace, CPlayer *pkPlayer);

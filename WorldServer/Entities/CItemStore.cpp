@@ -358,8 +358,7 @@ unsigned __int8 CItemStore::IsSell(
   unsigned __int8 byRace,
   unsigned __int8 byPvpGrade)
 {
-  (void)byPvpGrade;
-  if (!m_pStorageItem || !m_pLimitStorageItem)
+if (!m_pStorageItem || !m_pLimitStorageItem)
   {
     return 100;
   }
@@ -581,9 +580,7 @@ unsigned __int8 CItemStore::IsBuy(
     const unsigned int current = m_dwLastTradeDalant;
     m_dwLastTradeDalant = static_cast<unsigned int>(addValue / 0x2710 + current);
   }
-
-  (void)texAdjust;
-  return 0;
+return 0;
 }
 
 float CItemStore::CalcBuyPrice(unsigned __int8 byTableCode, unsigned __int16 wItemIndex, unsigned __int8 *pbyMoneyUnit)

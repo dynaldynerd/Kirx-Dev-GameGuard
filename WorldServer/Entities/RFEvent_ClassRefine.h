@@ -40,6 +40,7 @@ public:
   void ResetRefineData();
   unsigned __int8 CanDoEvent(CPlayer *pOne);
   unsigned __int8 DoEvent(CPlayer *pOne) override;
+  char SetEvent(const char *p, int size, bool bInit);
   bool IsDbUpdate(unsigned int nIdx) override;
   _event_participant_classrefine *GetPlayerState(unsigned int nIdx, unsigned int nAvator) override;
   bool SetPlayerState(void *const p, int size) override;

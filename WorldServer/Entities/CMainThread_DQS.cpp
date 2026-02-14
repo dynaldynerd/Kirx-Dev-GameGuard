@@ -1497,8 +1497,7 @@ void CMainThread::OnDQSRun()
       case 161:
       {
         auto *limitRunRequest = reinterpret_cast<_manage_client_limit_run_request_acwr *>(queryEntry->m_sData);
-        (void)limitRunRequest;
-        queryEntry->m_byResult = _db_Update_Set_Limit_Run();
+queryEntry->m_byResult = _db_Update_Set_Limit_Run();
         break;
       }
       case 165:

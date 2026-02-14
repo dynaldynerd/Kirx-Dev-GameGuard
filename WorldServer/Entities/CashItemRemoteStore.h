@@ -139,6 +139,7 @@ public:
   bool Initialize();
   void Loop_TatalCashEvent();
   void Loop_Cash_Event();
+  void Check_CashEvent_Status(unsigned __int8 byEventType);
   void Loop_ContEvent();
   void loop_cash_discount_event();
   static const _CashShop_fld *FindCashRec(unsigned int nTbl, int nIdx);
@@ -186,6 +187,11 @@ private:
   void set_cde_status(unsigned __int8 byStatus);
   bool SetNextDiscountEventTime();
   void Load_Cash_Event();
+  unsigned __int8 Get_CashEvent_Status(unsigned __int8 byEventType);
+  char ChangeEventTime(unsigned __int8 byEventType);
+  void Set_LimitedSale_DCK(unsigned __int8 byEventType, unsigned __int8 byDCK);
+  void Set_LimitedSale_Event();
+  void Inform_CashEvent_Status_All(unsigned __int8 byEventType, unsigned __int8 byStatus, _cash_event_ini *pIni);
   void Set_CashEvent_Status(unsigned __int8 byEventType, unsigned __int8 byStatus);
   void Load_Event_INI(_cash_event_ini *pIni, _FILETIME *pft, char *pEventType);
   void Load_LimitedSale_Event_INI(_cash_event_ini *pIni, _FILETIME *pft, char *pEventType);

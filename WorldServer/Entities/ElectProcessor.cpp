@@ -16,10 +16,7 @@ bool ElectProcessor::Initialize()
 
 int ElectProcessor::Doit(Cmd cmd, CPlayer *pkPlayer, char *pszData)
 {
-  (void)cmd;
-  (void)pkPlayer;
-  (void)pszData;
-  // this is not a stub
+// this is not a stub
   return 0;
 }
 

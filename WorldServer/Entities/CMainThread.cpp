@@ -152,14 +152,12 @@ extern CMapDisplay g_MapDisplay;
 
 void CMapDisplay::DrawDisplay(CMapDisplay *display)
 {
-  (void)display;
-  // TODO: temporary non-GUI stub; replace with real MapDisplay integration when GUI subsystem is restored.
+// TODO: temporary non-GUI stub; replace with real MapDisplay integration when GUI subsystem is restored.
 }
 
 void CMapDisplay::OffDisplay(CMapDisplay *display)
 {
-  (void)display;
-  // TODO: temporary non-GUI stub; replace with real MapDisplay integration when GUI subsystem is restored.
+// TODO: temporary non-GUI stub; replace with real MapDisplay integration when GUI subsystem is restored.
 }
 
 CMapDisplay g_MapDisplay{};
@@ -4180,8 +4178,7 @@ void CMainThread::pc_OpenWorldSuccessResult(unsigned __int8 byWorldCode, char *p
 
 void CMainThread::pc_OpenWorldFailureResult(char *szMsg)
 {
-  (void)szMsg;
-  MyMessageBox("pc_OpenWorldFailureResult", "request world-open fail");
+MyMessageBox("pc_OpenWorldFailureResult", "request world-open fail");
   g_pFrame->SendMessage(0x10u, 0, 0);
 }
 
@@ -4191,8 +4188,7 @@ void CMainThread::pc_ForceCloseCommand(
   unsigned __int8 byKickType,
   unsigned int dwPushIP)
 {
-  (void)bDirectly;
-  CUserDB *user = &g_UserDB[pidWorld->wIndex];
+CUserDB *user = &g_UserDB[pidWorld->wIndex];
   if (user->m_bActive && user->m_idWorld.dwSerial == pidWorld->dwSerial)
   {
     user->ForceCloseCommand(byKickType, dwPushIP, false, "Account Server Command");
@@ -4428,8 +4424,7 @@ void CMainThread::pc_AllUserKickInform()
 
 void CMainThread::pc_ChatLockCommand(_CLID *pidLocal, unsigned __int16 wBlockTimeH)
 {
-  (void)wBlockTimeH;
-  CUserDB *user = &g_UserDB[pidLocal->wIndex];
+CUserDB *user = &g_UserDB[pidLocal->wIndex];
   if (user->m_bActive && user->m_idWorld.dwSerial == pidLocal->dwSerial)
   {
     user->SetChatLock(true);
@@ -4514,9 +4509,7 @@ void CMainThread::pc_CashDBInfoRecvResult(
 
 void CMainThread::pc_TaiwanBillingUserCertify(char *szAccount, unsigned __int8 byCertify)
 {
-  (void)szAccount;
-  (void)byCertify;
-  // this is not a stub (intentionally unimplemented for non-RU per rule #19)
+// this is not a stub (intentionally unimplemented for non-RU per rule #19)
 }
 
 void CMainThread::ManageClientLimitRunRequest(char *pBuf)

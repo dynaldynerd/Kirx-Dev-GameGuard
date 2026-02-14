@@ -105,6 +105,7 @@ public:
   void AddScheduleComplete(unsigned __int8 byRet, CGuild *pSrcGuild);
   char SendMsg_GuildBattleProposed(char *pwszName);
   void SendMsg_GuildDisjointInform();
+  void PushDQSInGuildBattleRewardMoney();
   void PushDQSInGuildBattleCost();
   void PushDQSSourceGuildOutputGuildBattleCost();
   void PushDQSDestGuildOutputGuildBattleCost();
@@ -121,6 +122,7 @@ public:
     unsigned int dwMemberCntInx,
     unsigned int dwMapInx);
   void SetCopmlteGuildBattleSuggest();
+  void ClearGuildBattle();
   unsigned __int8 SrcGuildIsAvailableBattleRequestState();
   unsigned __int8 DestGuildIsAvailableBattleRequestState();
   void SetGuildBattleMatter(

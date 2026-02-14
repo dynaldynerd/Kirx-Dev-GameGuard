@@ -31,6 +31,7 @@ public:
   bool IsBeAttackedAble(bool bFirst) override;
   void Loop() override;
   void OutOfSec() override;
+  void RecvKillMessage(CCharacter *pDier) override;
   void SendMsg_FixPosition(int n) override;
 
   int m_nHP;

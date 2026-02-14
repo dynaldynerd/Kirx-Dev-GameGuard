@@ -190,9 +190,7 @@ char AutominePersonalMgr::make_storagebox(int n, char *pmsg)
 
 void AutominePersonalMgr::push_dqs_makestorage(int n, unsigned int dwAvatorSerial, unsigned int dwTotGold)
 {
-  (void)dwTotGold;
-
-  _qry_case_make_storage qry{};
+_qry_case_make_storage qry{};
   qry.nSockIdx = n;
   qry.dwAvatorSerial = dwAvatorSerial;
 

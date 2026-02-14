@@ -25,30 +25,24 @@ __int64 CHolyStone::GetAttackDP()
 
 __int64 CHolyStone::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
 {
-  (void)pAttChar;
-  (void)pnConvertPart;
-
-  if (nAttactPart == -1)
+if (nAttactPart == -1)
     return static_cast<unsigned int>(m_nDefPart[rand() % 5]);
   return static_cast<unsigned int>(m_nDefPart[nAttactPart]);
 }
 
 float CHolyStone::GetDefFacing(int nPart)
 {
-  (void)nPart;
-  return m_pRec->m_fDefFacing;
+return m_pRec->m_fDefFacing;
 }
 
 float CHolyStone::GetDefGap(int nPart)
 {
-  (void)nPart;
-  return m_pRec->m_fDefGap;
+return m_pRec->m_fDefGap;
 }
 
 __int64 CHolyStone::GetDefSkill(bool bBackAttackDamage)
 {
-  (void)bBackAttackDamage;
-  return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fDefSklUnit));
+return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fDefSklUnit));
 }
 
 __int64 CHolyStone::GetFireTol()
@@ -113,7 +107,7 @@ __int64 CHolyStone::GetWindTol()
 
 bool CHolyStone::IsBeAttackedAble(bool bFirst)
 {
-  (void)bFirst;
+// this is not a stub
   return true;
 }
 
@@ -194,9 +188,7 @@ void CHolyStone::SendMsg_FixPosition(int n)
 
 __int64 CHolyStone::SetDamage(int nDam, CCharacter *pDst, int nDstLv)
 {
-  (void)nDstLv;
-
-  if (g_HolySys.GetSceneCode() != 1)
+if (g_HolySys.GetSceneCode() != 1)
     return static_cast<unsigned int>(m_nHP);
 
   CCharacter *attacker = nullptr;
@@ -232,11 +224,7 @@ __int64 CHolyStone::SetDamage(
   unsigned int dwAttackSerial,
   bool bJadeReturn)
 {
-  (void)bCrt;
-  (void)nAttackType;
-  (void)dwAttackSerial;
-  (void)bJadeReturn;
-  return SetDamage(nDam, pDst, nDstLv);
+return SetDamage(nDam, pDst, nDstLv);
 }
 
 bool CHolyStone::Create(_stone_create_setdata *pData)

@@ -2069,8 +2069,7 @@ bool __fastcall ct_check_guild_batlle_goal(CPlayer *pOne)
   if ( s_nWordCount != 1 )
     return 0;
   iPortalInx = atoi(s_pwszDstCheat[0]);
-  (void)iPortalInx;
-  field = GetBattleFieldFromPlayer(pOne, &battle);
+field = GetBattleFieldFromPlayer(pOne, &battle);
   if (!field || !field->m_pkBall || !battle)
   {
     return false;
@@ -2306,8 +2305,7 @@ bool __fastcall ct_recv_change_atrad_taxrate(CPlayer *pOne)
   pCheaterName = pOne->m_Param.GetCharNameW();
   v4 = CUnmannedTraderTaxRateManager::Instance();
   v4->SetPatriarchTaxMoney(static_cast<unsigned __int8>(v6), dwNewTaxRate);
-  (void)pCheaterName;
-  return 1;
+return 1;
 }
 
 bool __fastcall ct_combine_ex_result(CPlayer *pOne)
@@ -2531,12 +2529,9 @@ bool __fastcall ct_ClassRefineEvent(CPlayer *pOne)
   if ( eventConfig.nStartDate > eventConfig.nEndDate )
     return 0;
   const bool resetUserData = strncmp(s_pwszDstCheat[4], "true", 4uLL) == 0;
-  auto *eventData = static_cast<RFEvent_ClassRefine *>(g_Main.m_pRFEvent_ClassRefine);
-  eventData->_kModifyEvent = eventConfig;
-  memcpy_0(&eventData->_kEvent, &eventConfig, sizeof(eventConfig));
-  eventData->m_bUserDataReset = resetUserData;
-  eventData->m_bDateReset = true;
-  return 1;
+  return static_cast<RFEvent_ClassRefine *>(g_Main.m_pRFEvent_ClassRefine)
+         ->SetEvent(reinterpret_cast<const char *>(&eventConfig), sizeof(eventConfig), resetUserData)
+      != 0;
 }
 
 bool __fastcall ct_takeholymental(CPlayer *pOne)
@@ -2821,9 +2816,7 @@ bool __fastcall ct_NuAfterEffect(CPlayer *pOne)
 bool __fastcall ct_CdeEndup(CPlayer *pOne)
 {
   CashItemRemoteStore *store;
-
-  (void)pOne;
-  store = CashItemRemoteStore::Instance();
+store = CashItemRemoteStore::Instance();
   if ( store->m_cde.m_ini.m_bUseCashDiscount )
   {
     store->m_cde.m_cde_status = 5;
@@ -5008,7 +5001,6 @@ bool __fastcall ct_loot_item(CPlayer *pOne)
   W2M(s_pwszDstCheat[0], szTran, 0x20u);
   return pOne->dev_loot_item(szTran, nNum, 0LL, 0);
 }
-
 
 
 

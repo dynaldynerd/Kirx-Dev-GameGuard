@@ -1024,11 +1024,6 @@ void CGameObject::OutOfSec()
   ;
 }
 
-void CGameObject::RecvKillMessage(CCharacter *pDier)
-{
-  ;
-}
-
 __int64 CGameObject::RerangeSecIndex(unsigned int dwOld, unsigned int dwNew)
 {
   __int64 *v3; // rdi
@@ -1405,7 +1400,7 @@ void CGameObject::SendMsg_BreakStop()
 
 void CGameObject::SendMsg_FixPosition(int n)
 {
-  (void)n;
+// this is not a stub
 }
 
 void CGameObject::SendMsg_RealFixPosition(bool bCircle)
@@ -1437,7 +1432,7 @@ void CGameObject::SendMsg_RealFixPosition(bool bCircle)
 
 void CGameObject::SendMsg_RealMovePoint(int n)
 {
-  (void)n;
+// this is not a stub
 }
 
 void CGameObject::SendMsg_SetHPInform()
@@ -1452,7 +1447,7 @@ void CGameObject::SendMsg_StunInform()
 
 void CGameObject::SetAttackPart(int nAttactPart)
 {
-  (void)nAttactPart;
+// this is not a stub
 }
 
 void CGameObject::SetBreakTranspar(bool bBreak)
@@ -1664,15 +1659,13 @@ __int64 CGameObject::GetCurSecNum()
 bool CGameObject::IsBeAttackedAble(bool bFirst)
 {
   // this is not a stub
-  (void)bFirst;
-  return 0;
+return 0;
 }
 
 char CGameObject::IsBeDamagedAble(CCharacter *pAtter)
 {
   // this is not a stub
-  (void)pAtter;
-  return 1;
+return 1;
 }
 
 char CGameObject::IsRecvableContEffect()
@@ -2149,13 +2142,11 @@ void CGameObject::SendMsg_BreakStop()
 void CGameObject::SendMsg_FixPosition(int n)
 {
   // this is not a stub
-  (void)n;
 }
 
 void CGameObject::SendMsg_RealMovePoint(int n)
 {
   // this is not a stub
-  (void)n;
 }
 
 void CGameObject::SendMsg_SetHPInform()
@@ -2348,27 +2339,23 @@ char CGameObject::Create(_object_create_setdata *pData)
 
 __int64 CGameObject::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
 {
-  (void)nAttactPart;
-  (void)pAttChar;
-  (void)pnConvertPart;
+// this is not a stub
   return 1LL;
 }
 
 float CGameObject::GetDefFacing(int nPart)
 {
-  (void)nPart;
-  return FLOAT_0_5;
+return FLOAT_0_5;
 }
 
 float CGameObject::GetDefGap(int nPart)
 {
-  (void)nPart;
-  return FLOAT_0_5;
+return FLOAT_0_5;
 }
 
 __int64 CGameObject::GetDefSkill(bool bBackAttackDamage)
 {
-  (void)bBackAttackDamage;
+// this is not a stub
   return 1LL;
 }
 
@@ -2409,9 +2396,7 @@ __int64 CGameObject::GetAvoidRate()
 
 __int64 CGameObject::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
 {
-  (void)pDst;
-  (void)nPart;
-  (void)bBackAttack;
+// this is not a stub
   return 0LL;
 }
 
@@ -2428,7 +2413,6 @@ float CGameObject::GetWidth()
 void CGameObject::SetAttackPart(int nAttactPart)
 {
   // this is not a stub
-  (void)nAttactPart;
 }
 
 void CGameObject::SetBreakTranspar(bool bBreak)

@@ -162,9 +162,7 @@ bool DfAIMgr::OnUsStateTBLInit()
 
 int DfAIMgr::OnDFInitHFSM(UsStateTBL *pStateTBL, Us_HFSM *pHFSM)
 {
-
-  (void)pStateTBL;
-  if (!pHFSM)
+if (!pHFSM)
   {
     return 0;
   }
@@ -258,11 +256,7 @@ void DfAIMgr::OnDfExternCallFun(Us_HFSM *pHFS, unsigned int dwEvent, void *lpPar
 
 void DfAIMgr::Atp_SearchStart_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
 {
-
-  (void)dwEvent;
-  (void)lpParam;
-
-  if (!pHFS)
+if (!pHFS)
   {
     return;
   }
@@ -298,11 +292,7 @@ void DfAIMgr::Atp_SearchStart_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *
 
 void DfAIMgr::Atp_Lost_Handler(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
 {
-
-  (void)dwEvent;
-  (void)lpParam;
-
-  if (!pHFS)
+if (!pHFS)
   {
     return;
   }
@@ -339,10 +329,7 @@ void DfAIMgr::Atp_Lost_Handler(Us_HFSM *pHFS, unsigned int dwEvent, void *lpPara
 
 void DfAIMgr::Atp_Searched_Handler(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
 {
-
-  (void)dwEvent;
-
-  if (!pHFS)
+if (!pHFS)
   {
     return;
   }
@@ -370,11 +357,7 @@ void DfAIMgr::Atp_Searched_Handler(Us_HFSM *pHFS, unsigned int dwEvent, void *lp
 
 void DfAIMgr::Mon_SearchStart_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
 {
-
-  (void)dwEvent;
-  (void)lpParam;
-
-  if (!pHFS)
+if (!pHFS)
   {
     return;
   }
@@ -430,18 +413,12 @@ void DfAIMgr::Mon_SearchStart_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *
 
 void DfAIMgr::Mon_Searched_Handler(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
 {
-  (void)pHFS;
-  (void)dwEvent;
-  (void)lpParam;
+// this is not a stub
 }
 
 void DfAIMgr::Mv_Stop_Handler(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
 {
-
-  (void)dwEvent;
-  (void)lpParam;
-
-  if (!pHFS)
+if (!pHFS)
   {
     return;
   }
@@ -467,11 +444,7 @@ void DfAIMgr::Mv_Stop_Handler(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam
 
 void DfAIMgr::Mv_Go_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
 {
-
-  (void)dwEvent;
-  (void)lpParam;
-
-  if (!pHFS)
+if (!pHFS)
   {
     return;
   }
@@ -493,11 +466,7 @@ void DfAIMgr::Mv_Go_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
 
 void DfAIMgr::Action_Change_Handler(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
 {
-
-  (void)dwEvent;
-  (void)lpParam;
-
-  if (!pHFS)
+if (!pHFS)
   {
     return;
   }
@@ -550,11 +519,7 @@ void DfAIMgr::Action_Change_Handler(Us_HFSM *pHFS, unsigned int dwEvent, void *l
 
 void DfAIMgr::Action_Wait_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
 {
-
-  (void)dwEvent;
-  (void)lpParam;
-
-  if (!pHFS)
+if (!pHFS)
   {
     return;
   }
@@ -568,11 +533,7 @@ void DfAIMgr::Action_Wait_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lpPa
 
 void DfAIMgr::Action_Patrol_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
 {
-
-  (void)dwEvent;
-  (void)lpParam;
-
-  if (!pHFS)
+if (!pHFS)
   {
     return;
   }
@@ -602,11 +563,7 @@ void DfAIMgr::Action_Patrol_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lp
 
 void DfAIMgr::Action_Attack_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
 {
-
-  (void)dwEvent;
-  (void)lpParam;
-
-  if (!pHFS)
+if (!pHFS)
   {
     return;
   }
@@ -678,18 +635,12 @@ void DfAIMgr::Action_Attack_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lp
 
 void DfAIMgr::Action_Runaway_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
 {
-  (void)pHFS;
-  (void)dwEvent;
-  (void)lpParam;
+// this is not a stub
 }
 
 void DfAIMgr::Emotion_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
 {
-
-  (void)dwEvent;
-  (void)lpParam;
-
-  if (!pHFS)
+if (!pHFS)
   {
     return;
   }
@@ -728,11 +679,7 @@ void DfAIMgr::Emotion_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
 
 void DfAIMgr::Emotion_OnChange(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
 {
-
-  (void)dwEvent;
-  (void)lpParam;
-
-  if (!pHFS)
+if (!pHFS)
   {
     return;
   }
@@ -792,11 +739,7 @@ void DfAIMgr::Emotion_OnChange(Us_HFSM *pHFS, unsigned int dwEvent, void *lpPara
 
 void DfAIMgr::Condition_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
 {
-
-  (void)dwEvent;
-  (void)lpParam;
-
-  if (!pHFS)
+if (!pHFS)
   {
     return;
   }
@@ -851,11 +794,7 @@ void DfAIMgr::Condition_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lpPara
 
 void DfAIMgr::Condition_OnChange(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
 {
-
-  (void)dwEvent;
-  (void)lpParam;
-
-  if (!pHFS)
+if (!pHFS)
   {
     return;
   }
@@ -879,10 +818,7 @@ void DfAIMgr::Condition_OnChange(Us_HFSM *pHFS, unsigned int dwEvent, void *lpPa
 
 void DfAIMgr::Assist_OnChange(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
 {
-
-  (void)dwEvent;
-
-  if (!pHFS)
+if (!pHFS)
   {
     return;
   }
@@ -929,11 +865,7 @@ void DfAIMgr::Assist_OnChange(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam
 
 void DfAIMgr::Assist_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
 {
-
-  (void)dwEvent;
-  (void)lpParam;
-
-  if (!pHFS)
+if (!pHFS)
   {
     return;
   }
@@ -947,9 +879,7 @@ void DfAIMgr::Assist_OnLoop(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
 
 bool DfAIMgr::CheckEmotionBad(CMonster *pMon, CMonsterAI *pAI, int nDamage)
 {
-
-  (void)nDamage;
-  if (!pMon || !pAI)
+if (!pMon || !pAI)
   {
     return false;
   }
@@ -1113,9 +1043,7 @@ __int64 DfAIMgr::CheckSPF(CMonsterAI *pAI, CMonster *pMon)
 
 int DfAIMgr::CheckSPFDelayTime(CMonsterAI *pAI, int nAttackType, unsigned int dwLoopTime)
 {
-
-  (void)dwLoopTime;
-  if (!pAI)
+if (!pAI)
   {
     return 0;
   }
@@ -1312,9 +1240,7 @@ __int64 DfAIMgr::CheckMonArea_N_ChangeState(CMonsterAI *pAI, CMonster *pMon, int
 
 void DfAIMgr::SearchPatrollPath(CMonsterAI *pAI, CMonster *pMon)
 {
-
-  (void)pAI;
-  static float vTargetPos_0[3];
+static float vTargetPos_0[3];
   if (CMonsterHelper::SearchPatrolMovePos(pMon, &vTargetPos_0))
   {
     DfAIMgr::ChangeTargetPos(pMon, vTargetPos_0);
@@ -1638,9 +1564,7 @@ __int64 DfAIMgr::CheckSPF_MON_MOTIVE_DF(
   CMonster *pMon,
   CCharacter **ppTar)
 {
-
-  (void)nMotiveValue;
-  if (!pMon || !pAI || !pSkill || !ppTar)
+if (!pMon || !pAI || !pSkill || !ppTar)
   {
     return 0LL;
   }

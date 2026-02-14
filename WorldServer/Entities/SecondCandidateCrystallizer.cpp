@@ -30,10 +30,7 @@ bool SecondCandidateCrystallizer::Initialize()
 
 int SecondCandidateCrystallizer::Doit(Cmd cmd, CPlayer *player, char *data)
 {
-  (void)player;
-  (void)data;
-
-  if (cmd == _eReg2ndCandidate)
+if (cmd == _eReg2ndCandidate)
   {
     PatriarchElectProcessor::Instance()->PushDQSCheckInvalidChar();
     return 0;

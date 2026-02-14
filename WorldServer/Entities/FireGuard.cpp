@@ -138,10 +138,7 @@ int __fastcall CcrFgCallback(
   int nParameterSize,
   void *pReservedParameter)
 {
-  (void)lCallbackCode;
-  (void)nParameterSize;
-
-  const unsigned __int16 socketIndex = *static_cast<unsigned __int16 *>(pReservedParameter);
+const unsigned __int16 socketIndex = *static_cast<unsigned __int16 *>(pReservedParameter);
   _socket *socket = g_FGSendData.pNetwork->GetSocket(0, socketIndex);
   if (socket)
   {

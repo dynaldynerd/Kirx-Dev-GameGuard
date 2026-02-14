@@ -18,8 +18,7 @@ void SendDecideRecallErrorResultToDest(
   CPlayer *destination,
   int callerMapCode)
 {
-  (void)controller;
-  if (!destination)
+if (!destination)
   {
     return;
   }

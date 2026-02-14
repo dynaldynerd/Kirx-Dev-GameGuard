@@ -33,10 +33,7 @@ bool FinalDecisionApplyer::Initialize()
 
 int FinalDecisionApplyer::Doit(Cmd cmd, CPlayer *player, char *data)
 {
-  (void)player;
-  (void)data;
-
-  if (cmd == _eReqQryFinalApplyer)
+if (cmd == _eReqQryFinalApplyer)
   {
     _FinalDecisionApply();
     return 0;

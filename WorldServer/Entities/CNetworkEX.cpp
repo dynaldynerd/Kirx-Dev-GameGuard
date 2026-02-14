@@ -15,6 +15,7 @@
 #include "CCashDBWorkManager.h"
 #include "CLogTypeDBTaskManager.h"
 #include "CAsyncLogger.h"
+#include "CChiNetworkEX.h"
 #include "CMainThread.h"
 #include "CNationSettingManager.h"
 #include "CNuclearBombMgr.h"
@@ -306,35 +307,23 @@ bool CNetWorking::DataAnalysis(
   _MSG_HEADER *pMsgHeader,
   char *pMsg)
 {
-  (void)dwProID;
-  (void)dwClientIndex;
-  (void)pMsgHeader;
-  (void)pMsg;
-  // this is not a stub
+// this is not a stub
   return true;
 }
 
 void CNetWorking::AcceptClientCheck(unsigned int dwProID, unsigned int dwIndex, unsigned int dwSerial)
 {
-  (void)dwProID;
-  (void)dwIndex;
-  (void)dwSerial;
-  // this is not a stub
+// this is not a stub
 }
 
 void CNetWorking::CloseClientCheck(unsigned int dwProID, unsigned int dwIndex, unsigned int dwSerial)
 {
-  (void)dwProID;
-  (void)dwIndex;
-  (void)dwSerial;
-  // this is not a stub
+// this is not a stub
 }
 
 bool CNetWorking::ExpulsionSocket(unsigned int dwProID, unsigned int dwIndex, unsigned __int8 byReason, void *pvInfo)
 {
-  (void)byReason;
-  (void)pvInfo;
-  CloseSocket(dwProID, dwIndex, false);
+CloseSocket(dwProID, dwIndex, false);
   return true;
 }
 
@@ -480,10 +469,7 @@ bool CNetworkEX::ExpulsionSocket(unsigned int dwProID, unsigned int dwIndex, uns
 
 void CNetWorking::AnsyncConnectComplete(unsigned int dwProID, unsigned int dwIndex, int nResult)
 {
-  (void)dwProID;
-  (void)dwIndex;
-  (void)nResult;
-  // this is not a stub
+// this is not a stub
 }
 
 void CNetworkEX::SetPassablePacket(unsigned int dwProID, unsigned __int8 byHeader1, unsigned __int8 byHeader2)
@@ -569,9 +555,7 @@ void CNetworkEX::AcceptClientCheck(unsigned int dwProID, unsigned int dwIndex, u
 
 void CNetworkEX::CloseClientCheck(unsigned int dwProID, unsigned int dwIndex, unsigned int dwSerial)
 {
-  (void)dwSerial;
-
-  if (dwProID)
+if (dwProID)
   {
     switch (dwProID)
     {
@@ -619,9 +603,7 @@ void CNetworkEX::CloseClientCheck(unsigned int dwProID, unsigned int dwIndex, un
 
 void CNetworkEX::AnsyncConnectComplete(unsigned int dwProID, unsigned int dwIndex, int nResult)
 {
-  (void)dwIndex;
-
-  if (dwProID == 1)
+if (dwProID == 1)
   {
     if (nResult)
     {
@@ -1972,29 +1954,30 @@ bool CNetworkEX::ClientLineAnalysis(unsigned int n, _MSG_HEADER *pMsgHeader, cha
 
 char CNetworkEX::Apex_R(int n, unsigned __int16 wSize, char *pBuf)
 {
-  (void)wSize;
-  (void)pBuf;
   CPlayer *player = &g_Player[n];
   if (player)
   {
-    return 1;
+    const unsigned int apexResult = *reinterpret_cast<unsigned int *>(pBuf);
+    CChiNetworkEX::Instance()->Send_Trans(player, static_cast<int>(apexResult));
   }
-  CAsyncLogger *logger = CAsyncLogger::Instance();
-  logger->FormatLog(12, "Apex_R - !pOne:g_Player[%d]", n);
+  else
+  {
+    CAsyncLogger::Instance()->FormatLog(12, "Apex_R - !pOne:g_Player[%d]", n);
+  }
   return 1;
 }
 
 char CNetworkEX::Apex_T(int n, unsigned __int16 wSize, char *pBuf)
 {
-  (void)wSize;
-  (void)pBuf;
   CPlayer *player = &g_Player[n];
   if (player)
   {
-    return 1;
+    CChiNetworkEX::Instance()->Send_ClienInform(player, wSize, pBuf);
   }
-  CAsyncLogger *logger = CAsyncLogger::Instance();
-  logger->FormatLog(12, "Apex_T - !pOne : g_Player[%d]", n);
+  else
+  {
+    CAsyncLogger::Instance()->FormatLog(12, "Apex_T - !pOne : g_Player[%d]", n);
+  }
   return 1;
 }
 
@@ -2022,8 +2005,7 @@ bool CNetworkEX::NewPosStartRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::BaseDownloadRequest(unsigned int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (!player->m_bLoad)
   {
     return true;
@@ -2043,8 +2025,7 @@ bool CNetworkEX::BaseDownloadRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::InvenDownloadRequest(unsigned int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (!player->m_bLoad)
   {
     return true;
@@ -2064,8 +2045,7 @@ bool CNetworkEX::InvenDownloadRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::CumDownloadRequest(unsigned int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (!player->m_bLoad)
   {
     return true;
@@ -2085,8 +2065,7 @@ bool CNetworkEX::CumDownloadRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::ForceDownloadRequest(unsigned int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (!player->m_bLoad)
   {
     return true;
@@ -2106,8 +2085,7 @@ bool CNetworkEX::ForceDownloadRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::QuestDownloadRequest(unsigned int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (!player->m_bLoad)
   {
     return true;
@@ -2126,9 +2104,8 @@ bool CNetworkEX::QuestDownloadRequest(unsigned int n, char *pBuf)
   return true;
 }
 
-bool CNetworkEX::SpecialDownloadRequest(unsigned int n, char *pBuf)
+bool CNetworkEX::SpecialDownloadRequest(unsigned int n, char * /*pBuf*/)
 {
-  (void)pBuf;
   CPlayer *player = &g_Player[n];
   if (!player->m_bLoad)
   {
@@ -2192,9 +2169,8 @@ bool CNetworkEX::OtherShapeRequest(unsigned int n, char *pBuf)
   return false;
 }
 
-bool CNetworkEX::Revival(unsigned int n, char *pBuf)
+bool CNetworkEX::Revival(unsigned int n, char * /*pBuf*/)
 {
-  (void)pBuf;
   CPlayer *player = &g_Player[n];
   if (player->m_bOper)
   {
@@ -2203,9 +2179,8 @@ bool CNetworkEX::Revival(unsigned int n, char *pBuf)
   return true;
 }
 
-bool CNetworkEX::ExitWorldRequest(unsigned int n, char *pBuf)
+bool CNetworkEX::ExitWorldRequest(unsigned int n, char * /*pBuf*/)
 {
-  (void)pBuf;
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
   {
@@ -2215,19 +2190,15 @@ bool CNetworkEX::ExitWorldRequest(unsigned int n, char *pBuf)
   if (m_bUseFG)
   {
     _socket *socket = GetSocket(0, n);
-    if (socket)
-    {
-      _CcrFG_rs_CloseUserContext(&socket->m_hFGContext);
-    }
+    _CcrFG_rs_CloseUserContext(&socket->m_hFGContext);
   }
 
   player->pc_ExitWorldRequest();
   return true;
 }
 
-bool CNetworkEX::LinkBoardDownloadRequest(unsigned int n, char *pBuf)
+bool CNetworkEX::LinkBoardDownloadRequest(unsigned int n, char * /*pBuf*/)
 {
-  (void)pBuf;
   CPlayer *player = &g_Player[n];
   if (player->m_bLoad)
   {
@@ -2236,9 +2207,8 @@ bool CNetworkEX::LinkBoardDownloadRequest(unsigned int n, char *pBuf)
   return true;
 }
 
-bool CNetworkEX::MacroDownLoadRequest(unsigned int n, char *pBuf)
+bool CNetworkEX::MacroDownLoadRequest(unsigned int n, char * /*pBuf*/)
 {
-  (void)pBuf;
   CPlayer *player = &g_Player[n];
   if (player->m_bLoad)
   {
@@ -2247,9 +2217,8 @@ bool CNetworkEX::MacroDownLoadRequest(unsigned int n, char *pBuf)
   return true;
 }
 
-bool CNetworkEX::AMP_DownloadRequest(unsigned int n, char *pBuf)
+bool CNetworkEX::AMP_DownloadRequest(unsigned int n, char * /*pBuf*/)
 {
-  (void)pBuf;
   CPlayer *player = &g_Player[n];
   if (!player->m_bLoad)
   {
@@ -2522,17 +2491,13 @@ bool CNetworkEX::MoveTypeChangeRequeset(unsigned int n, char *pBuf)
 
 bool CNetworkEX::MoveInfoRequeset(unsigned int n, char *pBuf)
 {
-  (void)n;
-  (void)pBuf;
-  // this is not a stub
+// this is not a stub
   return true;
 }
 
 bool CNetworkEX::PlayerInfoResult(unsigned int n, char *pBuf)
 {
-  (void)n;
-  (void)pBuf;
-  // this is not a stub
+// this is not a stub
   return true;
 }
 
@@ -2595,9 +2560,8 @@ bool CNetworkEX::InitClassRequest(unsigned int n, char *pBuf)
   return true;
 }
 
-bool CNetworkEX::InitClassCostRequest(unsigned int n, char *pBuf)
+bool CNetworkEX::InitClassCostRequest(unsigned int n, char * /*pBuf*/)
 {
-  (void)pBuf;
   CPlayer *player = &g_Player[n];
   if (player->m_bOper)
   {
@@ -2612,9 +2576,8 @@ bool CNetworkEX::InitClassCostRequest(unsigned int n, char *pBuf)
   return true;
 }
 
-bool CNetworkEX::CanSelectClassRequest(unsigned int n, char *pBuf)
+bool CNetworkEX::CanSelectClassRequest(unsigned int n, char * /*pBuf*/)
 {
-  (void)pBuf;
   CPlayer *player = &g_Player[n];
   if (player->m_bOper)
   {
@@ -2864,9 +2827,8 @@ bool CNetworkEX::SellStoreRequest(unsigned int n, char *pBuf)
   return true;
 }
 
-bool CNetworkEX::StoreListRequest(unsigned int n, char *pBuf)
+bool CNetworkEX::StoreListRequest(unsigned int n, char * /*pBuf*/)
 {
-  (void)pBuf;
   CPlayer *player = &g_Player[n];
   player->SendMsg_StoreListResult();
   return true;
@@ -2905,9 +2867,8 @@ bool CNetworkEX::LimitItemNumRequest(unsigned int n, char *pBuf)
   return true;
 }
 
-bool CNetworkEX::TalikRecorverList(unsigned int n, char *pBuf)
+bool CNetworkEX::TalikRecorverList(unsigned int n, char * /*pBuf*/)
 {
-  (void)pBuf;
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper || player->m_bCorpse)
   {
@@ -2930,8 +2891,7 @@ bool CNetworkEX::PvpCashRecorverWithTalik(unsigned int n, char *pBuf)
 
 bool CNetworkEX::PcBangPrimiumCouponRequest(unsigned int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (!player->m_bOper || player->m_bCorpse)
   {
     return true;
@@ -3722,8 +3682,7 @@ bool CNetworkEX::UseRadarItemRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::RadarCharListRequest(unsigned int n, char *pBuf)
 {
-  (void)pBuf;
-  auto *player = &g_Player[n];
+auto *player = &g_Player[n];
   if (player->m_bOper)
   {
     player->pc_RadarCharInfo();
@@ -3808,8 +3767,7 @@ bool CNetworkEX::CharacterRenameCash(unsigned int n, char *pBuf)
 
 bool CNetworkEX::TalikCrystalExchangeRequest(unsigned int n, _MSG_HEADER *pHeader, char *pBuf)
 {
-  (void)pHeader;
-  auto *player = &g_Player[n];
+auto *player = &g_Player[n];
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
   {
     return true;
@@ -3917,8 +3875,7 @@ bool CNetworkEX::EnterWorldRequest(unsigned int n, _MSG_HEADER *pMsgHeader, char
 
 bool CNetworkEX::MoveLobbyRequest(unsigned int n, char *pBuf)
 {
-  (void)pBuf;
-  if (!g_Player[n].m_bLive)
+if (!g_Player[n].m_bLive)
   {
     return true;
   }
@@ -3933,8 +3890,7 @@ bool CNetworkEX::MoveLobbyRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::RegedCharRequest(unsigned int n, char *pBuf)
 {
-  (void)pBuf;
-  if (!g_UserDB[n].m_bActive)
+if (!g_UserDB[n].m_bActive)
   {
     return true;
   }
@@ -4055,8 +4011,7 @@ bool CNetworkEX::SelCharRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::TutorialProcessReport(int n, char *pBuf)
 {
-  (void)pBuf;
-  if (g_UserDB[n].m_bActive)
+if (g_UserDB[n].m_bActive)
   {
     CUserDB::s_MgrLobbyHistory.tutorial_process_report_recv(g_UserDB[n].m_szLobbyHistoryFileName);
     g_UserDB[n].m_dwOperLobbyTime = GetLoopTime();
@@ -4105,8 +4060,7 @@ bool CNetworkEX::AliveCharRequest(int n, char *pBuf)
 
 bool CNetworkEX::NotifyLocalTimeRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-  _notify_local_time_result_zocl result{};
+_notify_local_time_result_zocl result{};
   memset_0(&result, 0, sizeof(result));
   unsigned __int8 type[2]{1, 27};
 
@@ -4334,9 +4288,7 @@ bool CNetworkEX::ChatCheatRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::ChatManageRequest(unsigned int n, char *pBuf)
 {
-  (void)n;
-  (void)pBuf;
-  // this is not a stub
+// this is not a stub
   return true;
 }
 
@@ -4953,8 +4905,7 @@ bool CNetworkEX::WebAgentLineAnalysis(int n, _MSG_HEADER *pMsgHeader, char *pMsg
 
 bool CNetworkEX::OpenWorldSuccessResult(unsigned int n, char *pMsg)
 {
-  (void)n;
-  if (g_Main.m_byWorldType == static_cast<unsigned __int8>(pMsg[50]))
+if (g_Main.m_byWorldType == static_cast<unsigned __int8>(pMsg[50]))
   {
     g_Main.pc_OpenWorldSuccessResult( static_cast<unsigned __int8>(pMsg[0]), pMsg + 1, pMsg + 33);
   }
@@ -4975,15 +4926,13 @@ bool CNetworkEX::OpenWorldSuccessResult(unsigned int n, char *pMsg)
 
 bool CNetworkEX::OpenWorldFailureResult(unsigned int n, char *pMsg)
 {
-  (void)n;
-  g_Main.pc_OpenWorldFailureResult( pMsg);
+g_Main.pc_OpenWorldFailureResult( pMsg);
   return true;
 }
 
 bool CNetworkEX::ForceCloseCommand(unsigned int n, _CLID *pMsg)
 {
-  (void)n;
-  _CLID *idWorld = pMsg;
+_CLID *idWorld = pMsg;
   if (idWorld->wIndex > 0x9E4u)
   {
     return false;
@@ -4999,8 +4948,7 @@ bool CNetworkEX::ForceCloseCommand(unsigned int n, _CLID *pMsg)
 
 bool CNetworkEX::TransAccountInform(unsigned int n, char *pMsg)
 {
-  (void)n;
-  char *msg = pMsg;
+char *msg = pMsg;
   g_Main.pc_TransIPKeyInform(
     reinterpret_cast<unsigned int *>(msg)[7],
     msg + 32,
@@ -5031,8 +4979,7 @@ bool CNetworkEX::TransAccountInform(unsigned int n, char *pMsg)
 
 bool CNetworkEX::EnterWorldResult(unsigned int n, _CLID *pMsg)
 {
-  (void)n;
-  _CLID *idWorld = pMsg;
+_CLID *idWorld = pMsg;
   if (idWorld->wIndex > 0x9E4u)
   {
     return false;
@@ -5043,8 +4990,7 @@ bool CNetworkEX::EnterWorldResult(unsigned int n, _CLID *pMsg)
 
 bool CNetworkEX::UILockInitResult(unsigned int n, char *pMsg)
 {
-  (void)n;
-  if (*reinterpret_cast<unsigned __int16 *>(pMsg + 1) >= 0x9E4u)
+if (*reinterpret_cast<unsigned __int16 *>(pMsg + 1) >= 0x9E4u)
   {
     return false;
   }
@@ -5054,8 +5000,7 @@ bool CNetworkEX::UILockInitResult(unsigned int n, char *pMsg)
 
 bool CNetworkEX::UILockUpdateResult(unsigned int n, char *pMsg)
 {
-  (void)n;
-  if (*reinterpret_cast<unsigned __int16 *>(pMsg + 1) >= 0x9E4u)
+if (*reinterpret_cast<unsigned __int16 *>(pMsg + 1) >= 0x9E4u)
   {
     return false;
   }
@@ -5065,8 +5010,7 @@ bool CNetworkEX::UILockUpdateResult(unsigned int n, char *pMsg)
 
 bool CNetworkEX::UILockRefreshResult(unsigned int n, char *pMsg)
 {
-  (void)n;
-  if (pMsg[4])
+if (pMsg[4])
   {
     g_Main.m_logSystemError.Write(
       "_uilock_update_result_acwr ret(%u) Account(%u) Fail!",
@@ -5078,8 +5022,7 @@ bool CNetworkEX::UILockRefreshResult(unsigned int n, char *pMsg)
 
 bool CNetworkEX::CheckIsBlockIPResult(unsigned int n, char *pMsg)
 {
-  (void)n;
-  char *msg = pMsg;
+char *msg = pMsg;
   unsigned __int8 *ipBytes = reinterpret_cast<unsigned __int8 *>(msg + 7);
   const unsigned __int16 index = *reinterpret_cast<unsigned __int16 *>(msg + 1);
   if (index < MAX_PLAYER)
@@ -5185,16 +5128,13 @@ bool CNetworkEX::CheckIsBlockIPResult(unsigned int n, char *pMsg)
 
 bool CNetworkEX::ConEventTotalSalesCheck(int n, char *pBuf)
 {
-  (void)n;
-  (void)pBuf;
-  g_Main._CheckTotalSales();
+g_Main._CheckTotalSales();
   return true;
 }
 
 bool CNetworkEX::DisconnectGuildWarCharacterRequest(int n, char *pBuf)
 {
-  (void)n;
-  _character_disconnect_result_wrac result{};
+_character_disconnect_result_wrac result{};
   result.wClientIndex = *reinterpret_cast<unsigned __int16 *>(pBuf);
   CUserDB *user = SearchAvatorWithName(g_UserDB, MAX_PLAYER, pBuf + 2);
   unsigned __int8 type[2]{50, 25};
@@ -5245,8 +5185,7 @@ bool CNetworkEX::ManageClientForceExitRequest()
 
 bool CNetworkEX::CashDBInfoRecvResult(int n, char *pBuf)
 {
-  (void)n;
-  g_Main.pc_CashDBInfoRecvResult(
+g_Main.pc_CashDBInfoRecvResult(
     pBuf,
     pBuf + 48,
     pBuf + 80,
@@ -5257,23 +5196,19 @@ bool CNetworkEX::CashDBInfoRecvResult(int n, char *pBuf)
 
 bool CNetworkEX::WorldServiceInform(unsigned int n, bool *pMsg)
 {
-  (void)n;
-  g_Main.pc_AlterWorldService( *pMsg);
+g_Main.pc_AlterWorldService( *pMsg);
   return true;
 }
 
 bool CNetworkEX::WorldExitInform(unsigned int n, char *pMsg)
 {
-  (void)n;
-  (void)pMsg;
-  g_Main.pc_AllUserKickInform();
+g_Main.pc_AllUserKickInform();
   return true;
 }
 
 bool CNetworkEX::WorldMsgInform(unsigned int n, char *pMsg)
 {
-  (void)n;
-  char msgBuf[1312]{};
+char msgBuf[1312]{};
   const unsigned __int16 msgLen = *reinterpret_cast<unsigned __int16 *>(pMsg);
   if (msgLen < 0x500u)
   {
@@ -5286,23 +5221,20 @@ bool CNetworkEX::WorldMsgInform(unsigned int n, char *pMsg)
 
 bool CNetworkEX::ChatLockCommand(unsigned int n, _CLID *pMsg)
 {
-  (void)n;
-  g_Main.pc_ChatLockCommand( pMsg, pMsg[1].wIndex);
+g_Main.pc_ChatLockCommand( pMsg, pMsg[1].wIndex);
   return true;
 }
 
 bool CNetworkEX::BillingCloseRequest(int n, char *pBuf)
 {
-  (void)n;
-  CBillingManager *billing = CTSingleton<CBillingManager>::Instance();
+CBillingManager *billing = CTSingleton<CBillingManager>::Instance();
   billing->BillingClose(pBuf);
   return true;
 }
 
 bool CNetworkEX::BillingRemaintimePersonal(int n, char *pBuf)
 {
-  (void)n;
-  CBillingManager *billing = CTSingleton<CBillingManager>::Instance();
+CBillingManager *billing = CTSingleton<CBillingManager>::Instance();
   billing->Remaintime_Personal(
     pBuf,
     *reinterpret_cast<unsigned __int16 *>(pBuf + 13),
@@ -5313,8 +5245,7 @@ bool CNetworkEX::BillingRemaintimePersonal(int n, char *pBuf)
 
 bool CNetworkEX::BillingRemaintimePCBang(int n, char *pBuf)
 {
-  (void)n;
-  CBillingManager *billing = CTSingleton<CBillingManager>::Instance();
+CBillingManager *billing = CTSingleton<CBillingManager>::Instance();
   billing->Remaintime_PCBang(
     pBuf,
     *reinterpret_cast<unsigned __int16 *>(pBuf + 7),
@@ -5325,8 +5256,7 @@ bool CNetworkEX::BillingRemaintimePCBang(int n, char *pBuf)
 
 bool CNetworkEX::BillingChangeType(int n, char *pBuf)
 {
-  (void)n;
-  CBillingManager *billing = CTSingleton<CBillingManager>::Instance();
+CBillingManager *billing = CTSingleton<CBillingManager>::Instance();
   billing->Change_BillingType(
     pBuf,
     pBuf + 13,
@@ -5339,55 +5269,47 @@ bool CNetworkEX::BillingChangeType(int n, char *pBuf)
 
 bool CNetworkEX::BillingExpirePersonal(int n, char *pBuf)
 {
-  (void)n;
-  CBillingManager *billing = CTSingleton<CBillingManager>::Instance();
+CBillingManager *billing = CTSingleton<CBillingManager>::Instance();
   billing->Expire_Personal(pBuf);
   return true;
 }
 
 bool CNetworkEX::BillingExpirePCBang(int n, char *pBuf)
 {
-  (void)n;
-  CBillingManager *billing = CTSingleton<CBillingManager>::Instance();
+CBillingManager *billing = CTSingleton<CBillingManager>::Instance();
   billing->Expire_PCBang(pBuf);
   return true;
 }
 
 bool CNetworkEX::BillingExpireIPOverflow(int n, char *pBuf)
 {
-  (void)n;
-  CBillingManager *billing = CTSingleton<CBillingManager>::Instance();
+CBillingManager *billing = CTSingleton<CBillingManager>::Instance();
   billing->Expire_IPOverflow(pBuf);
   return true;
 }
 
 bool CNetworkEX::BillingDestroyModule(int n, char *pBuf)
 {
-  (void)n;
-  (void)pBuf;
-  g_Main.EndServer();
+g_Main.EndServer();
   return true;
 }
 
 bool CNetworkEX::TaiwanBillingUserCertify(int n, char *pBuf)
 {
-  (void)n;
-  g_Main.pc_TaiwanBillingUserCertify( pBuf, static_cast<unsigned __int8>(pBuf[13]));
+g_Main.pc_TaiwanBillingUserCertify( pBuf, static_cast<unsigned __int8>(pBuf[13]));
   return true;
 }
 
 bool CNetworkEX::ChinaBillingChangePrimium(int n, char *pBuf)
 {
-  (void)n;
-  CBillingManager *billing = CTSingleton<CBillingManager>::Instance();
+CBillingManager *billing = CTSingleton<CBillingManager>::Instance();
   billing->Change_Primium(pBuf, static_cast<unsigned __int8>(pBuf[13]));
   return true;
 }
 
 bool CNetworkEX::ZoneAliveCheckRequest(int n, char *pBuf)
 {
-  (void)n;
-  CBillingManager *billing = CTSingleton<CBillingManager>::Instance();
+CBillingManager *billing = CTSingleton<CBillingManager>::Instance();
   billing->SendMsg_ZoneAliveCheck(*reinterpret_cast<unsigned int *>(pBuf));
   return true;
 }
@@ -5418,8 +5340,7 @@ bool CNetworkEX::LogInWebAgentServer(unsigned int n, char *pBuf)
 
 bool CNetworkEX::SendRaceBossMsgFromWebRequest(int n, char *pBuf)
 {
-  (void)n;
-  _qry_case_sendwebracebosssms qry{};
+_qry_case_sendwebracebosssms qry{};
   qry.dwWebSendDBID = *reinterpret_cast<unsigned int *>(pBuf);
   strcpy_0(qry.szCharacterName, pBuf + 4);
   strcpy_0(qry.wszMsg, pBuf + 21);
@@ -5481,25 +5402,19 @@ char CNetworkEX::DarkHoleEnterRequest(int n, char *pBuf)
 
 char CNetworkEX::DarkHoleGiveupOutRequest(int n, char *pBuf)
 {
-  (void)n;
-  (void)pBuf;
-  // this is not a stub
+// this is not a stub
   return 1;
 }
 
 char CNetworkEX::DarkHoleClearOutRequest(int n, char *pBuf)
 {
-  (void)n;
-  (void)pBuf;
-  // this is not a stub
+// this is not a stub
   return 1;
 }
 
 char CNetworkEX::DarkHoleAnswerReenterRequest(int n, char *pBuf)
 {
-  (void)n;
-  (void)pBuf;
-  // this is not a stub
+// this is not a stub
   return 1;
 }
 
@@ -5565,8 +5480,7 @@ char CNetworkEX::PostSendRequest(int n, char *pBuf)
 
 char CNetworkEX::PostListRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (player->m_bLoad)
   {
     player->pc_PostListRequest();
@@ -5620,8 +5534,7 @@ char CNetworkEX::PostReturnConfirmRequest(int n, char *pBuf)
 
 bool CNetworkEX::CancelRaceBossSMSMsg(int n, char *pBuf)
 {
-  (void)n;
-  if (!g_Main.m_bConnectedControllServer)
+if (!g_Main.m_bConnectedControllServer)
   {
     return false;
   }
@@ -5652,8 +5565,7 @@ bool CNetworkEX::CancelRaceBossSMSMsg(int n, char *pBuf)
 
 bool CNetworkEX::ConnectionStatusRequest(int n)
 {
-  (void)n;
-  _connection_status_result_zoct result{};
+_connection_status_result_zoct result{};
   memset_0(&result, 0, sizeof(result));
   for (unsigned __int8 index = 0; index < 6u; ++index)
   {
@@ -6088,8 +6000,7 @@ char CNetworkEX::SetTargetObjectRequest(int n, char *pBuf)
 
 char CNetworkEX::ReleaseTargetObjectRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (player->m_bOper)
   {
     player->pc_ReleaseTargetObjectRequest();
@@ -6196,17 +6107,14 @@ char CNetworkEX::SetRaceBossCryMsgRequest(int n, char *pBuf)
 
 char CNetworkEX::NotifyRaceBossCryMsg(int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   player->pc_NotifyRaceBossCryMsg();
   return 1;
 }
 
 char CNetworkEX::BillingInfoRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-
-  CUserDB *user = &g_UserDB[n];
+CUserDB *user = &g_UserDB[n];
   if (user)
   {
     user->SendMsg_BillingInfo();
@@ -6217,9 +6125,7 @@ char CNetworkEX::BillingInfoRequest(int n, char *pBuf)
 
 char CNetworkEX::ReleaseSiegeModeRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
   {
     return 1;
@@ -6320,9 +6226,7 @@ char CNetworkEX::TrunkChangePasswdRequest(int n, char *pBuf)
 
 char CNetworkEX::TrunkExtendRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
   {
     return 1;
@@ -6651,9 +6555,7 @@ char CNetworkEX::TrunkIoMoneyRequest(int n, char *pBuf)
 
 char CNetworkEX::TrunkPwHintIndexRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode)
   {
     return 1;
@@ -6681,9 +6583,7 @@ char CNetworkEX::TrunkHintAnswerRequest(int n, char *pBuf)
 
 char CNetworkEX::TrunkCreateCostIsFreeRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode)
   {
     return 1;
@@ -6812,8 +6712,7 @@ char CNetworkEX::RequestPatriarchPunishment(int n, char *pBuf)
 
 char CNetworkEX::RequestTaxRate(int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (player->m_bOper)
   {
     player->pc_RequestTaxRate();
@@ -6889,8 +6788,7 @@ char CNetworkEX::RequestUILockFindPW(int n, char *pBuf)
 
 char CNetworkEX::RequestTLLogoutTime(int n, char *pBuf)
 {
-  (void)pBuf;
-  CUserDB *userDb = &g_UserDB[n];
+CUserDB *userDb = &g_UserDB[n];
   if (!userDb)
   {
     return 0;
@@ -6951,8 +6849,7 @@ char CNetworkEX::MineStartRequest(int n, char *pBuf)
 
 char CNetworkEX::MineCancleRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
   {
     return 1;
@@ -7022,8 +6919,7 @@ char CNetworkEX::OreIntoBagRequest(int n, char *pBuf)
 
 char CNetworkEX::CuttingCompleteRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
   {
     return 1;
@@ -7127,8 +7023,7 @@ char CNetworkEX::PartyJoinApplicatiohAnswer(int n, _CLID *pBuf)
 
 char CNetworkEX::PartyLeaveSelfRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
   {
     return 1;
@@ -7152,8 +7047,7 @@ char CNetworkEX::PartyLeaveCompulsionRequest(int n, char *pBuf)
 
 char CNetworkEX::PartyDisjointRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
   {
     return 1;
@@ -7642,8 +7536,7 @@ char CNetworkEX::ForceRecallTeleportRequest(int n, char *pBuf)
 
 char CNetworkEX::MoveToOwnStoneMapRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (player->m_bOper)
   {
     player->pc_MoveToOwnStoneMapRequest();
@@ -7711,8 +7604,7 @@ char CNetworkEX::DTradeAnswerRequest(int n, _CLID *pBuf)
 
 char CNetworkEX::DTradeCancleRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (player->m_bOper)
   {
     player->pc_DTradeCancleRequest();
@@ -7722,8 +7614,7 @@ char CNetworkEX::DTradeCancleRequest(int n, char *pBuf)
 
 char CNetworkEX::DTradeLockRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (!player->m_bOper || player->m_bCorpse)
   {
     return 1;
@@ -7844,8 +7735,7 @@ char CNetworkEX::AnimusRecallRequest(int n, char *pBuf)
 
 char CNetworkEX::AnimusReturnRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
   {
     return 1;
@@ -8189,8 +8079,7 @@ char CNetworkEX::UnitDeliveryRequest(int n, char *pBuf)
 
 char CNetworkEX::UnitReturnRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
   {
     return 1;
@@ -8202,8 +8091,7 @@ char CNetworkEX::UnitReturnRequest(int n, char *pBuf)
 
 char CNetworkEX::UnitTakeRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
   {
     return 1;
@@ -8640,8 +8528,7 @@ char CNetworkEX::GuildEstablishRequest(int n, char *pBuf)
 
 char CNetworkEX::GuildDownloadRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (!player->m_bLoad)
   {
     return 1;
@@ -8673,8 +8560,7 @@ char CNetworkEX::GuildJoinApplyRequest(int n, char *pBuf)
 
 char CNetworkEX::GuildJoinApplyCancelRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (player->m_bOper)
   {
     player->pc_GuildJoinApplyCancelRequest();
@@ -8694,8 +8580,7 @@ char CNetworkEX::GuildJoinAcceptRequest(int n, char *pBuf)
 
 char CNetworkEX::GuildSelfLeaveRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (player->m_bOper)
   {
     player->pc_GuildSelfLeaveRequest();
@@ -8851,8 +8736,7 @@ char CNetworkEX::GuildBattleRankListRequest(int n, char *pBuf)
 
 char CNetworkEX::GuildBattleJoinGuildBattleRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (player->m_bOper)
   {
     CGuildBattleController *controller = CGuildBattleController::Instance();
@@ -8888,8 +8772,7 @@ char CNetworkEX::GuildBattleReservedScheduleRequest(int n, char *pBuf)
 
 char CNetworkEX::GuildBattleCurrentBattleInfoRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (player->m_bOper)
   {
     const unsigned int mapId = player->m_Param.GetRaceCode();
@@ -8964,8 +8847,7 @@ char CNetworkEX::GuildRoomOutRequest(int n, char *pBuf)
 
 char CNetworkEX::GuildRoomRestTimeRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (player->m_bOper)
   {
     // this is not a stub
@@ -9029,8 +8911,7 @@ char CNetworkEX::GuildListRequest(int n, char *pBuf)
 
 char CNetworkEX::GuildNextHonorListRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (player->m_bOper)
   {
     player->pc_GuildNextHonorListRequest();
@@ -9110,8 +8991,7 @@ char CNetworkEX::ATradeClearItemRequest(int n, char *pBuf)
 
 char CNetworkEX::ATradeTaxRateRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
   {
     return 1;
@@ -9176,8 +9056,7 @@ char CNetworkEX::ATradeReRegistRequest(int n, char *pBuf)
 
 char CNetworkEX::BuddyDownloadRequest(int n, char *pBuf)
 {
-  (void)pBuf;
-  CPlayer *player = &g_Player[n];
+CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
   {
     return 1;

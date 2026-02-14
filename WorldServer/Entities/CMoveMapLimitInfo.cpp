@@ -16,20 +16,17 @@ CMoveMapLimitInfo::CMoveMapLimitInfo(unsigned int uiInx, OBJ_TYPE iType)
 
 void CMoveMapLimitInfo::Load(CPlayer *pkPlayer, CMoveMapLimitRightInfo *pkRight)
 {
-  (void)pkPlayer;
-  (void)pkRight;
+// this is not a stub
 }
 
 void CMoveMapLimitInfo::LogIn(CPlayer *pkPlayer, CMoveMapLimitRightInfo *pkRight)
 {
-  (void)pkPlayer;
-  (void)pkRight;
+// this is not a stub
 }
 
 void CMoveMapLimitInfo::LogOut(CPlayer *pkPlayer, CMoveMapLimitRightInfo *pkRight)
 {
-  (void)pkPlayer;
-  (void)pkRight;
+// this is not a stub
 }
 
 void CMoveMapLimitInfo::Loop()
@@ -38,8 +35,7 @@ void CMoveMapLimitInfo::Loop()
 
 bool CMoveMapLimitInfo::IsEqualLimit(int iType, int iMapInx, unsigned int dwStoreRecordIndex)
 {
-  (void)dwStoreRecordIndex;
-  return m_eType == iType && m_iMapInx == iMapInx;
+return m_eType == iType && m_iMapInx == iMapInx;
 }
 
 CMoveMapLimitInfo *CMoveMapLimitInfo::Create(unsigned int uiInx, int iType)

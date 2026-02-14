@@ -11,8 +11,7 @@ CBilling *CNationSettingDataNULL::CreateBilling()
 
 int CNationSettingDataNULL::GetCashItemPrice(_CashShop_str_fld *pFld)
 {
-  (void)pFld;
-  // this is not a stub
+// this is not a stub
   return 0;
 }
 

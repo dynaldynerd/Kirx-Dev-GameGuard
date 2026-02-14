@@ -34,6 +34,7 @@
 #include "sel_char_result_zone.h"
 #include "select_avator_report_wrac.h"
 #include "server_notify_inform_zone.h"
+#include "log_change_class_after_init_class.h"
 #include "log_case_charselect.h"
 #include "wrac_packets.h"
 #include "qry_logout.h"
@@ -138,8 +139,7 @@ char CUserDB::Update_Bind(char *pszMapCode, char *pDummyCode, bool bUpdate)
   }
   strcpy_0(m_AvatorData.dbAvator.m_szBindMapCode, pszMapCode);
   strcpy_0(m_AvatorData.dbAvator.m_szBindDummy, pDummyCode);
-  (void)bUpdate;
-  return 1;
+return 1;
 }
 
 void CUserDB::Update_PvpPointLeak(long double dValue)
@@ -154,8 +154,7 @@ void CUserDB::Update_LastAttBuff(bool bSet)
 
 bool CUserDB::Update_Stat(unsigned __int8 byStatIndex, unsigned int dwNewCum, bool bUpdate)
 {
-  (void)bUpdate;
-  if (byStatIndex < 0x50u)
+if (byStatIndex < 0x50u)
   {
     if (m_AvatorData.dbStat.m_dwDamWpCnt[byStatIndex] <= dwNewCum || m_byUserDgr)
     {
@@ -3177,19 +3176,25 @@ void CUserDB::WriteLog_ChangeClassAfterInitClass(unsigned __int8 byType, char *s
     return;
   }
 
-  g_Main.db_Insert_ChangeClass_AfterInitClass(
-    m_dwSerial,
-    byType,
-    szPrevClass,
-    m_AvatorData.dbAvator.m_szClassCode,
-    m_AvatorData.dbAvator.m_dwClassInitCnt,
-    m_AvatorData.dbAvator.m_byLastClassGrade,
-    static_cast<unsigned __int16>(localTime.tm_year + 1900),
-    static_cast<unsigned __int8>(localTime.tm_mon + 1),
-    static_cast<unsigned __int8>(localTime.tm_mday),
-    static_cast<unsigned __int8>(localTime.tm_hour),
-    static_cast<unsigned __int8>(localTime.tm_min),
-    static_cast<unsigned __int8>(localTime.tm_sec));
+  _log_change_class_after_init_class query{};
+  query.dwCharacSerial = m_dwSerial;
+  query.byType = byType;
+  strcpy_0(query.szPrevClassCode, szPrevClass);
+  strcpy_0(query.szNextClassCode, m_AvatorData.dbAvator.m_szClassCode);
+  query.nClassInitCnt = static_cast<int>(m_AvatorData.dbAvator.m_dwClassInitCnt);
+  query.byLastClassGrade = m_AvatorData.dbAvator.m_byLastClassGrade;
+  query.dwYear = static_cast<unsigned __int16>(localTime.tm_year + 1900);
+  query.byMonth = static_cast<unsigned __int8>(localTime.tm_mon + 1);
+  query.byDay = static_cast<unsigned __int8>(localTime.tm_mday);
+  query.byHour = static_cast<unsigned __int8>(localTime.tm_hour);
+  query.byMin = static_cast<unsigned __int8>(localTime.tm_min);
+  query.bySec = static_cast<unsigned __int8>(localTime.tm_sec);
+  g_Main.PushDQSData(
+    m_dwAccountSerial,
+    &m_idWorld,
+    0x18u,
+    reinterpret_cast<char *>(&query),
+    static_cast<int>(query.size()));
 }
 
 void CUserDB::StartFieldMode()
@@ -3652,4 +3657,3 @@ char CUserDB::Update_TakeLastCriTicket(unsigned int dwCriTicket)
   m_bDataUpdate = 1;
   return 1;
 }
-

@@ -407,8 +407,7 @@ void CTransportShip::SendMsg_TransportShipState(int n)
   else
   {
     const DWORD elapsed = timeGetTime() - m_dwEventCreateTime;
-    (void)elapsed;
-    g_Network.m_pProcess[0]->LoadSendMsg(static_cast<unsigned int>(n), type, reinterpret_cast<char *>(message), 7);
+g_Network.m_pProcess[0]->LoadSendMsg(static_cast<unsigned int>(n), type, reinterpret_cast<char *>(message), 7);
   }
 }
 

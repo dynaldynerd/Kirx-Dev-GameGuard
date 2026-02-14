@@ -52,10 +52,7 @@ CRusiaBillingMgr *CRusiaBillingMgr::Instance()
     szServer = const_cast<char *>("81.176.70.145");
     String = const_cast<char *>("1521");
   }
-  (void)v8;
-  (void)v9;
-
-  if (!CRusiaBillingMgr::m_pRusiaBill)
+if (!CRusiaBillingMgr::m_pRusiaBill)
   {
     auto *created = static_cast<CRusiaBillingMgr *>(operator new(sizeof(CRusiaBillingMgr)));
     if (created)

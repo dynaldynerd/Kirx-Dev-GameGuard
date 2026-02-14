@@ -13,6 +13,7 @@
 #include "CPlayer.h"
 #include "CHonorGuild.h"
 #include "DqsDbStructs.h"
+#include "qry_case_in_atrade_tax.h"
 
 _suggested_matter_change_taxrate::_suggested_matter_change_taxrate()
 {
@@ -236,11 +237,31 @@ void TRC_AutoTrade::PushDQSData()
   g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x33u, reinterpret_cast<char *>(&query), size);
 }
 
+void TRC_AutoTrade::PushDQSData_GuildInMoney(unsigned int dwRetPrice, unsigned int dwSeller)
+{
+  if (!m_pOwnerGuild)
+  {
+    return;
+  }
+
+  _qry_case_in_atrade_tax query{};
+  query.byRace = m_byRace;
+  query.dwGuildSerial = m_pOwnerGuild->m_dwSerial;
+  query.in_seller = dwSeller;
+  query.out_totalgold = 0.0;
+  query.out_totaldalant = 0.0;
+  query.in_dalant = dwRetPrice;
+  g_Main.PushDQSData(
+    0xFFFFFFFF,
+    nullptr,
+    0x34u,
+    reinterpret_cast<char *>(&query),
+    static_cast<int>(query.size()));
+}
+
 void TRC_AutoTrade::sendmsg_taxrate(unsigned int n, unsigned __int8 byRet)
 {
-  (void)byRet;
-
-  _atrade_taxrate_result_zocl result{};
+_atrade_taxrate_result_zocl result{};
   result.byTaxRate = static_cast<unsigned __int8>(get_taxrate() * 100.0f);
 
   if (m_pOwnerGuild)
@@ -314,8 +335,7 @@ void TRC_AutoTrade::AddGDalant(char *pdata)
 
 unsigned int TRC_AutoTrade::CalcPrice(unsigned int nGuildSerial, unsigned int nPrice)
 {
-  (void)nGuildSerial;
-  return m_Controller.calcTaxRate(nPrice);
+return m_Controller.calcTaxRate(nPrice);
 }
 
 int TRC_AutoTrade::ChangeOwner(CGuild *pGuild)

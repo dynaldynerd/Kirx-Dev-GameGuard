@@ -35,9 +35,7 @@ bool FinalDecisionProcessor::Initialize()
 
 int FinalDecisionProcessor::Doit(Cmd cmd, CPlayer *player, char *data)
 {
-  (void)data;
-
-  if (cmd == _eReqQryFinalDecision)
+if (cmd == _eReqQryFinalDecision)
   {
     _FinalDecision();
   }

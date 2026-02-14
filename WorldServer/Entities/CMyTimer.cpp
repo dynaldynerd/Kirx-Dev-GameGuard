@@ -25,6 +25,11 @@ void CMyTimer::BeginTimerAddLapse(int dwTerm, unsigned int dwAddLapse)
   m_dwTickOld = dwAddLapse + timeGetTime();
 }
 
+void CMyTimer::CountingAddTickOld(unsigned int dwAddGap)
+{
+  m_dwTickOld -= dwAddGap;
+}
+
 bool CMyTimer::CountingTimer()
 {
   if (!m_bOper)

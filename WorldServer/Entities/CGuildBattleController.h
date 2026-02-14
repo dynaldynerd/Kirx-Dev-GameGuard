@@ -11,6 +11,8 @@ public:
   static CGuildBattleController *Instance();
   bool Init();
   void Loop();
+  void Clear();
+  void Flip();
   char Load();
   char LoadINI(
     unsigned int *uiMapCnt,

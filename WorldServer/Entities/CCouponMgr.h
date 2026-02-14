@@ -11,6 +11,13 @@ public:
   char SetCheetContTime(unsigned __int16 wIdx, int nMin);
   void LoadData(unsigned int dwAccSerial, _PCBANG_PLAY_TIME *pkInfo);
   void LogOut(bool bForceClose);
+  void InitCuponInfo();
+  CouponInfo *GetCouponInfo(unsigned __int8 byCouponTime);
+  void SendMsg_InPcBangTime(unsigned __int16 wIdx);
+  void SendMsg_CouponEnsure(unsigned __int16 wIdx, unsigned __int8 byCouponTime);
+  void SendMsg_RemainCouponInform(unsigned __int16 wIdx, unsigned __int8 byRemainCoupon);
+  void SendMsg_CouponError(unsigned __int16 wIdx, unsigned __int8 byRet);
+  void SendMsg_CouponLendResult(unsigned __int16 wIdx, _STORAGE_LIST::_db_con *pCoupon);
 
 private:
   CouponInfo m_Coupon[5];

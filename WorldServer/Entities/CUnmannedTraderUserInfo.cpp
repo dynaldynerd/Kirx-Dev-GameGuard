@@ -11,23 +11,32 @@
 #include "class_fld.h"
 #include "CHolyStoneSystem.h"
 #include "CHonorGuild.h"
+#include "CLogTypeDBTaskManager.h"
 #include "CUnmannedTraderEnvironmentValue.h"
 #include "CUnmannedTraderGroupItemInfoTable.h"
 #include "CUnmannedTraderItemState.h"
+#include "CUnmannedTraderSortType.h"
 #include "CUnmannedTraderTaxRateManager.h"
 #include "GlobalObjects.h"
 #include "InvenKey.h"
 #include "WorldServerUtil.h"
+#include "a_trade_adjust_price_request_clzo.h"
 #include "a_trade_adjust_price_result_zocl.h"
+#include "a_trade_clear_item_request_clzo.h"
 #include "a_trade_clear_item_result_zocl.h"
+#include "a_trade_reg_item_request_clzo.h"
 #include "qry_case_unmandtrader_log_in_proc_update_complete.h"
 #include "unmannedtrader_Regist_item_inform_zocl.h"
+#include "unmannedtrader_buy_item_request_clzo.h"
+#include "unmannedtrader_buy_item_result_zocl.h"
 
 #include <ctime>
 #include "unmannedtrader_close_item_inform_zocl.h"
 #include "unmannedtrader_continue_item_inform_zocl.h"
+#include "unmannedtrader_re_regist_request_clzo.h"
 #include "unmannedtrader_re_regist_result_zocl.h"
 #include "unmannedtrader_regist_item_success_result_zocl.h"
+#include "unmannedtrader_search_list_request_clzo.h"
 
 #include <algorithm>
 #include <cstring>
@@ -257,6 +266,744 @@ bool CUnmannedTraderUserInfo::IsNull()
 void CUnmannedTraderUserInfo::ClearRequest()
 {
   this->m_kRequestState.ClearRequset();
+}
+
+void CUnmannedTraderUserInfo::Regist(
+  unsigned __int8 byType,
+  _a_trade_reg_item_request_clzo *pRequest,
+  CLogFile *pkLogger)
+{
+  if (byType >= 2u)
+  {
+    return;
+  }
+
+  unsigned __int8 tempSlotIndex = 0xFF;
+  unsigned __int8 division = 0;
+  unsigned __int8 classCode = 0;
+  unsigned __int8 subClassCode = 0;
+  unsigned int listIndex = 0;
+  unsigned int retParam = 0;
+
+  CountRegistItem();
+  unsigned __int8 ret = CheckRegist(
+    byType,
+    pRequest,
+    pkLogger,
+    &tempSlotIndex,
+    &division,
+    &classCode,
+    &subClassCode,
+    &listIndex,
+    &retParam);
+  if (!ret)
+  {
+    ret = RegistItem(byType, pRequest, tempSlotIndex, division, classCode, subClassCode, listIndex, retParam);
+  }
+
+  if (ret)
+  {
+    SendRegistItemErrorResult(this->m_wInx, ret, pRequest->wItemSerial, retParam);
+  }
+}
+
+unsigned __int8 CUnmannedTraderUserInfo::CheckRegist(
+  unsigned __int8 byType,
+  _a_trade_reg_item_request_clzo *pRequest,
+  CLogFile *pkLogger,
+  unsigned __int8 *byTempSlotIndex,
+  unsigned __int8 *byDivision,
+  unsigned __int8 *byClass,
+  unsigned __int8 *bySubClass,
+  unsigned int *dwListIndex,
+  unsigned int *dwTax)
+{
+if (this->m_wInx >= 0x9E4u || byType >= 2u)
+  {
+    return 99;
+  }
+
+  CPlayer *owner = &g_Player[this->m_wInx];
+  if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(owner->m_id.wIndex) == 99)
+  {
+    return static_cast<unsigned __int8>(-52);
+  }
+  if (owner->m_dwObjSerial != this->m_dwUserSerial)
+  {
+    return 99;
+  }
+  if (!this->m_kRequestState.IsEmpty())
+  {
+    return 95;
+  }
+  if (!pRequest->bUseNpcLink && !IsBeNearStore(owner, -1))
+  {
+    return 2;
+  }
+  if (g_Main.IsReleaseServiceMode() && owner->m_byUserDgr)
+  {
+    return 21;
+  }
+
+  _STORAGE_LIST::_db_con *inventoryItem = owner->m_Param.m_dbInven.GetPtrFromSerial(pRequest->wItemSerial);
+  if (!inventoryItem)
+  {
+    return 8;
+  }
+  if (inventoryItem->m_bLock)
+  {
+    return 15;
+  }
+  if (this->m_byRegistCnt >= this->m_byMaxRegistCnt)
+  {
+    return 6;
+  }
+  if (inventoryItem->m_byCsMethod)
+  {
+    return 14;
+  }
+
+  *dwTax = pRequest->dwPrice / 1000u;
+  if (*dwTax > owner->m_Param.GetDalant())
+  {
+    return static_cast<unsigned __int8>(-55);
+  }
+  if (pRequest->dwPrice > 0x77359400u)
+  {
+    return 22;
+  }
+  if (inventoryItem->m_byTableCode != pRequest->byItemTableCode || inventoryItem->m_wItemIndex != pRequest->wItemIndex)
+  {
+    return 9;
+  }
+  if (!IsExchangeItem(inventoryItem->m_byTableCode, inventoryItem->m_wItemIndex))
+  {
+    return 3;
+  }
+  if (IsOverLapItem(inventoryItem->m_byTableCode) && pRequest->byAmount > inventoryItem->m_dwDur)
+  {
+    return 17;
+  }
+
+  if (IsOverLapItem(inventoryItem->m_byTableCode) && inventoryItem->m_dwDur > pRequest->byAmount)
+  {
+    *byTempSlotIndex = static_cast<unsigned __int8>(owner->m_Param.m_dbInven.GetIndexEmptyCon());
+    if (*byTempSlotIndex == 0xFFu)
+    {
+      return 13;
+    }
+  }
+
+  if (inventoryItem->m_byTableCode == 15
+      && !g_Main.m_tblEffectData[1].GetRecord(CPlayer::s_pnLinkForceItemToEffect[inventoryItem->m_wItemIndex]))
+  {
+    return 23;
+  }
+
+  CUnmannedTraderGroupItemInfoTable *groupTable = CUnmannedTraderGroupItemInfoTable::Instance();
+  if (!groupTable->GetGroupID(
+        inventoryItem->m_byTableCode,
+        inventoryItem->m_wItemIndex,
+        byDivision,
+        byClass,
+        bySubClass,
+        dwListIndex))
+  {
+    return 3;
+  }
+
+  return 0;
+}
+
+unsigned __int8 CUnmannedTraderUserInfo::RegistItem(
+  unsigned __int8 byType,
+  _a_trade_reg_item_request_clzo *pRequest,
+  unsigned __int8 byTempSlotIndex,
+  unsigned __int8 byDivision,
+  unsigned __int8 byClass,
+  unsigned __int8 bySubClass,
+  unsigned int dwListIndex,
+  unsigned int dwTax)
+{
+  CPlayer *owner = &g_Player[this->m_wInx];
+  _STORAGE_LIST::_db_con *sourceItem = owner->m_Param.m_dbInven.GetPtrFromSerial(pRequest->wItemSerial);
+  if (!sourceItem)
+  {
+    return 8;
+  }
+
+  const unsigned __int16 sourceItemSerial = sourceItem->m_wSerial;
+  const unsigned __int8 sourceStorageIndex = sourceItem->m_byStorageIndex;
+  unsigned __int16 splitItemSerial = 0xFFFFu;
+  _STORAGE_LIST::_db_con *registTarget = sourceItem;
+
+  if (byTempSlotIndex != 0xFFu)
+  {
+    owner->Emb_AlterDurPoint(0, sourceItem->m_byStorageIndex, -static_cast<int>(pRequest->byAmount), false, false);
+
+    _STORAGE_LIST::_db_con splitItem;
+    splitItem = *sourceItem;
+    splitItem.m_dwDur = pRequest->byAmount;
+    splitItem.m_wSerial = owner->m_Param.GetNewItemSerial();
+    splitItemSerial = splitItem.m_wSerial;
+    registTarget = owner->Emb_AddStorage(0, &splitItem, false, false);
+    if (!registTarget)
+    {
+      owner->Emb_AlterDurPoint(0, sourceItem->m_byStorageIndex, pRequest->byAmount, false, false);
+      return 8;
+    }
+  }
+
+  registTarget->lock(true);
+
+  owner->SubDalant(dwTax);
+  const int level = owner->m_Param.GetLevel();
+  if (level == 30 || level == 40 || level == 50 || level == 60)
+  {
+    CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(owner->m_Param.GetRaceCode(), level, dwTax);
+  }
+
+  char queryData[88]{};
+  *reinterpret_cast<unsigned __int16 *>(queryData + 0) = this->m_wInx;
+  *reinterpret_cast<unsigned __int16 *>(queryData + 2) = sourceItemSerial;
+  *reinterpret_cast<unsigned int *>(queryData + 4) = owner->m_Param.GetDalant();
+  *reinterpret_cast<unsigned __int16 *>(queryData + 8) = splitItemSerial;
+  queryData[10] = pRequest->byAmount;
+  queryData[11] = sourceStorageIndex;
+  queryData[12] = registTarget->m_byStorageIndex;
+  queryData[13] = byType;
+  queryData[14] = CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Sell_Turm;
+  queryData[15] = static_cast<char>(owner->m_Param.GetRaceCode());
+  queryData[16] = sourceStorageIndex;
+  queryData[17] = registTarget->m_byStorageIndex;
+  *reinterpret_cast<unsigned int *>(queryData + 20) = 0;
+  queryData[24] = 0;
+  queryData[25] = byType;
+  queryData[26] = CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Sell_Turm;
+  queryData[27] = static_cast<char>(owner->m_Param.GetRaceCode());
+  *reinterpret_cast<unsigned int *>(queryData + 28) = owner->m_dwObjSerial;
+  *reinterpret_cast<unsigned int *>(queryData + 32) = pRequest->dwPrice;
+  queryData[36] = registTarget->m_byStorageIndex;
+
+  _INVENKEY itemKey(0, registTarget->m_byTableCode, registTarget->m_wItemIndex);
+  *reinterpret_cast<unsigned int *>(queryData + 40) = static_cast<unsigned int>(itemKey.CovDBKey());
+  *reinterpret_cast<unsigned __int64 *>(queryData + 48) = registTarget->m_dwDur;
+  *reinterpret_cast<unsigned int *>(queryData + 56) = registTarget->m_dwLv;
+
+  if (registTarget->m_byTableCode == 15)
+  {
+    _base_fld *effectRecord = g_Main.m_tblEffectData[1].GetRecord(CPlayer::s_pnLinkForceItemToEffect[registTarget->m_wItemIndex]);
+    queryData[60] = effectRecord ? effectRecord[4].m_strCode[60] : 0;
+  }
+  else
+  {
+    queryData[60] = GetItemEquipLevel(registTarget->m_byTableCode, registTarget->m_wItemIndex);
+  }
+  queryData[61] = GetItemGrade(registTarget->m_byTableCode, registTarget->m_wItemIndex);
+  queryData[62] = byDivision;
+  queryData[63] = byClass;
+  queryData[64] = bySubClass;
+  *reinterpret_cast<unsigned int *>(queryData + 68) = registTarget->m_dwT;
+  *reinterpret_cast<unsigned __int64 *>(queryData + 72) = registTarget->m_lnUID;
+  *reinterpret_cast<unsigned int *>(queryData + 80) = dwTax;
+  *reinterpret_cast<unsigned int *>(queryData + 84) = dwListIndex;
+
+  this->m_kRequestState.SetRequest(static_cast<CUnmannedTraderRequestLimiter::REQUEST_TYPE>(0));
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x3Cu, queryData, sizeof(queryData));
+  return 0;
+}
+
+void CUnmannedTraderUserInfo::ModifyPrice(
+  unsigned __int8 byType,
+  _a_trade_adjust_price_request_clzo *pRequest,
+  CLogFile *pkLogger)
+{
+  if (byType >= 2u)
+  {
+    return;
+  }
+
+  unsigned int oldPrice = 0;
+  unsigned int taxDalant = 0;
+  const unsigned __int8 ret = CheckModifyPrice(byType, pRequest, &oldPrice, pkLogger, &taxDalant);
+  if (ret)
+  {
+    SendRepriceErrorResult(&g_Player[this->m_wInx], ret);
+    return;
+  }
+
+  char queryData[32]{};
+  *reinterpret_cast<unsigned int *>(queryData + 0) = oldPrice;
+  *reinterpret_cast<unsigned __int16 *>(queryData + 4) = this->m_wInx;
+  *reinterpret_cast<unsigned int *>(queryData + 8) = this->m_dwUserSerial;
+  *reinterpret_cast<unsigned __int16 *>(queryData + 12) = pRequest->wItemSerial;
+  *reinterpret_cast<unsigned int *>(queryData + 16) = taxDalant;
+  queryData[20] = 0;
+  queryData[21] = byType;
+  *reinterpret_cast<unsigned int *>(queryData + 24) = pRequest->dwRegistSerial;
+  *reinterpret_cast<unsigned int *>(queryData + 28) = pRequest->dwNewPrice;
+
+  g_Player[this->m_wInx].SubDalant(taxDalant);
+  const int level = g_Player[this->m_wInx].m_Param.GetLevel();
+  if (level == 30 || level == 40 || level == 50 || level == 60)
+  {
+    CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(g_Player[this->m_wInx].m_Param.GetRaceCode(), level, taxDalant);
+  }
+
+  this->m_kRequestState.SetRequest(static_cast<CUnmannedTraderRequestLimiter::REQUEST_TYPE>(1));
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x3Fu, queryData, sizeof(queryData));
+}
+
+unsigned __int8 CUnmannedTraderUserInfo::CheckModifyPrice(
+  unsigned __int8 byType,
+  _a_trade_adjust_price_request_clzo *pRequest,
+  unsigned int *dwOldPrice,
+  CLogFile *pkLogger,
+  unsigned int *pdwTax)
+{
+if (this->m_wInx >= 0x9E4u)
+  {
+    return 99;
+  }
+
+  CPlayer *owner = &g_Player[this->m_wInx];
+  if (owner->m_dwObjSerial != this->m_dwUserSerial)
+  {
+    return 99;
+  }
+  if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(owner->m_id.wIndex) == 99)
+  {
+    return static_cast<unsigned __int8>(-52);
+  }
+
+  *pdwTax = pRequest->dwNewPrice / 1000u;
+  if (*pdwTax > owner->m_Param.GetDalant())
+  {
+    return static_cast<unsigned __int8>(-55);
+  }
+  if (!this->m_kRequestState.IsEmpty())
+  {
+    return 95;
+  }
+  if (!owner->m_Param.m_dbInven.GetPtrFromSerial(pRequest->wItemSerial))
+  {
+    return 14;
+  }
+  if (!pRequest->dwRegistSerial)
+  {
+    return 70;
+  }
+
+  auto it = Find(pRequest->dwRegistSerial);
+  if (it == this->m_vecRegistItemInfo.end())
+  {
+    return 14;
+  }
+
+  *dwOldPrice = it->GetPrice();
+  return it->GetItemSerial() == pRequest->wItemSerial ? 0 : 25;
+}
+
+void CUnmannedTraderUserInfo::CancelRegist(
+  unsigned __int8 byType,
+  _a_trade_clear_item_request_clzo *pRequest,
+  CLogFile *pkLogger)
+{
+  if (byType >= 2u)
+  {
+    return;
+  }
+
+  const unsigned __int8 ret = CheckCancelRegist(byType, pRequest, pkLogger);
+  if (ret)
+  {
+    SendCancelRegistErrorResult(this->m_wInx, ret);
+    return;
+  }
+
+  char queryData[60]{};
+  *reinterpret_cast<unsigned __int16 *>(queryData + 0) = this->m_wInx;
+  *reinterpret_cast<unsigned __int16 *>(queryData + 2) = pRequest->wItemSerial;
+  *reinterpret_cast<unsigned int *>(queryData + 4) = this->m_dwUserSerial;
+  strcpy_s(queryData + 8, 13, g_Player[this->m_wInx].m_pUserDB->m_szAccountID);
+  strcpy_s(queryData + 21, 17, g_Player[this->m_wInx].m_Param.GetCharNameW());
+  queryData[38] = byType;
+  queryData[39] = 0;
+  *reinterpret_cast<unsigned int *>(queryData + 40) = pRequest->dwRegistSerial;
+  queryData[44] = 5;
+  queryData[45] = 0;
+
+  this->m_kRequestState.SetRequest(static_cast<CUnmannedTraderRequestLimiter::REQUEST_TYPE>(2));
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x3Du, queryData, sizeof(queryData));
+}
+
+unsigned __int8 CUnmannedTraderUserInfo::CheckCancelRegist(
+  unsigned __int8 byType,
+  _a_trade_clear_item_request_clzo *pRequest,
+  CLogFile *pkLogger)
+{
+if (this->m_wInx >= 0x9E4u)
+  {
+    return 99;
+  }
+
+  CPlayer *owner = &g_Player[this->m_wInx];
+  if (owner->m_dwObjSerial != this->m_dwUserSerial)
+  {
+    return 99;
+  }
+  if (!this->m_kRequestState.IsEmpty())
+  {
+    return 95;
+  }
+  if (!owner->m_Param.m_dbInven.GetPtrFromSerial(pRequest->wItemSerial))
+  {
+    return 14;
+  }
+  if (!pRequest->dwRegistSerial)
+  {
+    return 70;
+  }
+
+  auto it = Find(pRequest->dwRegistSerial);
+  if (it == this->m_vecRegistItemInfo.end())
+  {
+    return 14;
+  }
+
+  return it->GetItemSerial() == pRequest->wItemSerial ? 0 : 25;
+}
+
+void CUnmannedTraderUserInfo::Buy(
+  unsigned __int8 byType,
+  _unmannedtrader_buy_item_request_clzo *pRequest,
+  CLogFile *pkLogger)
+{
+if (byType >= 2u)
+  {
+    return;
+  }
+
+  CPlayer *buyer = nullptr;
+  const unsigned __int8 ret = CheckBuy(byType, pRequest, &buyer);
+  if (ret)
+  {
+    SendBuyErrorResult(this->m_wInx, ret);
+    return;
+  }
+
+  char queryData[736]{};
+  *reinterpret_cast<unsigned __int16 *>(queryData + 0) = this->m_wInx;
+  *reinterpret_cast<unsigned int *>(queryData + 4) = this->m_dwUserSerial;
+  queryData[8] = static_cast<char>(buyer->m_Param.GetRaceCode());
+  queryData[9] = buyer->m_byUserDgr;
+  queryData[10] = pRequest->byDivision;
+  queryData[11] = pRequest->byClass;
+  queryData[12] = pRequest->bySubClass;
+  queryData[13] = byType;
+  queryData[14] = pRequest->byNum;
+
+  for (int index = 0; index < pRequest->byNum; ++index)
+  {
+    *reinterpret_cast<unsigned int *>(queryData + 16 + index * 72) = pRequest->List[index].dwRegistSerial;
+    *reinterpret_cast<unsigned int *>(queryData + 20 + index * 72) = pRequest->List[index].dwPrice;
+  }
+
+  this->m_kRequestState.SetRequest(static_cast<CUnmannedTraderRequestLimiter::REQUEST_TYPE>(3));
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x40u, queryData, sizeof(queryData));
+}
+
+unsigned __int8 CUnmannedTraderUserInfo::CheckBuy(
+  unsigned __int8 byType,
+  _unmannedtrader_buy_item_request_clzo *pRequest,
+  CPlayer **pkBuyer)
+{
+  if (this->m_wInx >= 0x9E4u)
+  {
+    return 99;
+  }
+
+  *pkBuyer = &g_Player[this->m_wInx];
+  if ((*pkBuyer)->m_dwObjSerial != this->m_dwUserSerial)
+  {
+    return 99;
+  }
+  if (!this->m_kRequestState.IsEmpty())
+  {
+    return 95;
+  }
+  if (!pRequest->bUseNpcLink && !IsBeNearStore(*pkBuyer, -1))
+  {
+    return 2;
+  }
+
+  unsigned int curVersion = 0;
+  CUnmannedTraderGroupItemInfoTable *groupTable = CUnmannedTraderGroupItemInfoTable::Instance();
+  if (!groupTable->GetVersion(pRequest->byDivision, pRequest->byClass, &curVersion))
+  {
+    return 51;
+  }
+  return curVersion == pRequest->dwVer ? 0 : 52;
+}
+
+void CUnmannedTraderUserInfo::Search(
+  unsigned __int8 byType,
+  _unmannedtrader_search_list_request_clzo *pRequest,
+  CLogFile *pkLogger)
+{
+if (byType >= 2u)
+  {
+    return;
+  }
+
+  unsigned int listIndex = 0;
+  unsigned int currentVersion = 0;
+  const unsigned __int8 ret = CheckSearch(byType, pRequest, &listIndex, &currentVersion);
+  if (ret)
+  {
+    SendSearchErrorResult(this->m_wInx, ret);
+    return;
+  }
+
+  CUnmannedTraderSortType *sortType =
+    CUnmannedTraderGroupItemInfoTable::Instance()->GetSortType(pRequest->byDivision, pRequest->bySortType);
+  const char *queryText = sortType ? sortType->GetQuery() : nullptr;
+
+  char queryData[0x378]{};
+  *reinterpret_cast<unsigned __int16 *>(queryData + 0) = this->m_wInx;
+  *reinterpret_cast<unsigned int *>(queryData + 4) = this->m_dwUserSerial;
+  queryData[8] = byType;
+  queryData[9] = static_cast<char>(g_Player[this->m_wInx].m_Param.GetRaceCode());
+  *reinterpret_cast<unsigned int *>(queryData + 12) = listIndex;
+  queryData[16] = pRequest->byDivision;
+  queryData[17] = pRequest->byClass;
+  queryData[18] = pRequest->bySubClass;
+  queryData[19] = pRequest->bySortType;
+  *reinterpret_cast<unsigned int *>(queryData + 20) = currentVersion;
+  queryData[24] = pRequest->byPage;
+  if (queryText)
+  {
+    strcpy_0(queryData + 25, queryText);
+  }
+
+  this->m_kRequestState.SetRequest(static_cast<CUnmannedTraderRequestLimiter::REQUEST_TYPE>(4));
+  CLogTypeDBTaskManager::Instance()->Push(1u, queryData, 0x378u);
+}
+
+unsigned __int8 CUnmannedTraderUserInfo::CheckSearch(
+  unsigned __int8 byType,
+  _unmannedtrader_search_list_request_clzo *pRequest,
+  unsigned int *dwListIndex,
+  unsigned int *dwCurVer)
+{
+  if (this->m_wInx >= 0x9E4u)
+  {
+    return 99;
+  }
+
+  CPlayer *owner = &g_Player[this->m_wInx];
+  if (owner->m_dwObjSerial != this->m_dwUserSerial)
+  {
+    return 99;
+  }
+  if (!this->m_kRequestState.IsEmpty())
+  {
+    return 95;
+  }
+  if (!pRequest->bUseNpcLink && !IsBeNearStore(owner, -1))
+  {
+    return 2;
+  }
+
+  CUnmannedTraderGroupItemInfoTable *groupTable = CUnmannedTraderGroupItemInfoTable::Instance();
+  if (!groupTable->IsExistGroupID(
+        pRequest->byDivision,
+        pRequest->byClass,
+        pRequest->bySubClass,
+        pRequest->bySortType,
+        dwListIndex))
+  {
+    return 3;
+  }
+  if (!groupTable->GetVersion(pRequest->byDivision, pRequest->byClass, dwCurVer))
+  {
+    return 51;
+  }
+  return *dwCurVer == pRequest->dwVer ? 10 : 0;
+}
+
+void CUnmannedTraderUserInfo::ReRegist(
+  unsigned __int8 byType,
+  _unmannedtrader_re_regist_request_clzo *pRequest,
+  CLogFile *pkLogger)
+{
+  if (byType >= 2u || pRequest->byRegedNum == 0)
+  {
+    return;
+  }
+
+  CountRegistItem();
+  unsigned int totalTax = 0;
+
+  char queryData[292]{};
+  queryData[0] = 0;
+  *reinterpret_cast<unsigned __int16 *>(queryData + 2) = this->m_wInx;
+  queryData[4] = pRequest->byRegedNum;
+  *reinterpret_cast<unsigned int *>(queryData + 8) = this->m_dwUserSerial;
+
+  for (int index = 0; index < pRequest->byRegedNum; ++index)
+  {
+    const size_t entryOffset = 12u + static_cast<size_t>(index) * 28u;
+    queryData[entryOffset + 1] = pRequest->List[index].bRegist ? 1 : 0;
+    *reinterpret_cast<unsigned __int16 *>(queryData + entryOffset + 2) = pRequest->List[index].wItemSerial;
+    *reinterpret_cast<unsigned int *>(queryData + entryOffset + 16) = pRequest->List[index].dwPrice;
+    *reinterpret_cast<unsigned int *>(queryData + entryOffset + 20) = pRequest->List[index].dwRegistSerial;
+    queryData[entryOffset + 24] = 11;
+
+    if (!queryData[entryOffset + 1])
+    {
+      continue;
+    }
+
+    const unsigned __int8 ret = CheckReRegist(
+      byType,
+      pkLogger,
+      pRequest->List[index].wItemSerial,
+      pRequest->List[index].byAmount,
+      pRequest->List[index].byItemTableCode,
+      pRequest->List[index].wItemIndex,
+      pRequest->List[index].dwRegistSerial,
+      pRequest->List[index].dwPrice,
+      reinterpret_cast<unsigned __int8 *>(queryData + entryOffset + 25),
+      reinterpret_cast<unsigned __int8 *>(queryData + entryOffset + 26),
+      reinterpret_cast<unsigned __int8 *>(queryData + entryOffset + 27),
+      reinterpret_cast<unsigned int *>(queryData + entryOffset + 4),
+      reinterpret_cast<unsigned int *>(queryData + entryOffset + 8));
+    queryData[entryOffset] = ret;
+    if (!ret)
+    {
+      queryData[entryOffset + 24] = 1;
+      totalTax += *reinterpret_cast<unsigned int *>(queryData + entryOffset + 4);
+    }
+  }
+
+  if (totalTax)
+  {
+    g_Player[this->m_wInx].SubDalant(totalTax);
+    const int level = g_Player[this->m_wInx].m_Param.GetLevel();
+    if (level == 30 || level == 40 || level == 50 || level == 60)
+    {
+      CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(g_Player[this->m_wInx].m_Param.GetRaceCode(), level, totalTax);
+    }
+  }
+
+  this->m_kRequestState.SetRequest(static_cast<CUnmannedTraderRequestLimiter::REQUEST_TYPE>(5));
+  const int querySize = 12 + 28 * pRequest->byRegedNum;
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x8Cu, queryData, querySize);
+}
+
+unsigned __int8 CUnmannedTraderUserInfo::CheckReRegist(
+  unsigned __int8 byType,
+  CLogFile *pkLogger,
+  unsigned __int16 wItemSerial,
+  unsigned __int8 byAmount,
+  unsigned __int8 byItemTableCode,
+  unsigned __int16 wItemIndex,
+  unsigned int dwRegistSerial,
+  unsigned int dwPrice,
+  unsigned __int8 *pbyDivision,
+  unsigned __int8 *pbyClass,
+  unsigned __int8 *pbySubClass,
+  unsigned int *pdwTax,
+  unsigned int *pdwListIndex)
+{
+if (this->m_wInx >= 0x9E4u || byType >= 2u)
+  {
+    return 99;
+  }
+
+  CPlayer *owner = &g_Player[this->m_wInx];
+  if (owner->m_dwObjSerial != this->m_dwUserSerial)
+  {
+    return 99;
+  }
+  if (!this->m_kRequestState.IsEmpty())
+  {
+    return 95;
+  }
+  if (g_Main.IsReleaseServiceMode() && owner->m_byUserDgr)
+  {
+    return 21;
+  }
+
+  _STORAGE_LIST::_db_con *inventoryItem = owner->m_Param.m_dbInven.GetPtrFromSerial(wItemSerial);
+  if (!inventoryItem)
+  {
+    return 8;
+  }
+
+  auto it = Find(dwRegistSerial);
+  if (it == this->m_vecRegistItemInfo.end())
+  {
+    return 25;
+  }
+  if (!it->IsWaitNoitfyClose())
+  {
+    return static_cast<unsigned __int8>(-53);
+  }
+  if (this->m_byRegistCnt >= this->m_byMaxRegistCnt)
+  {
+    return 6;
+  }
+
+  *pdwTax = dwPrice / 1000u;
+  if (*pdwTax > owner->m_Param.GetDalant())
+  {
+    return static_cast<unsigned __int8>(-55);
+  }
+  if (dwPrice > 0x77359400u)
+  {
+    return 22;
+  }
+  if (inventoryItem->m_byTableCode != byItemTableCode || inventoryItem->m_wItemIndex != wItemIndex)
+  {
+    return 9;
+  }
+
+  if (IsOverLapItem(inventoryItem->m_byTableCode))
+  {
+    if (byAmount > inventoryItem->m_dwDur)
+    {
+      return 17;
+    }
+    if (byAmount < inventoryItem->m_dwDur)
+    {
+      return 9;
+    }
+  }
+
+  if (inventoryItem->m_byTableCode == 15
+      && !g_Main.m_tblEffectData[1].GetRecord(CPlayer::s_pnLinkForceItemToEffect[inventoryItem->m_wItemIndex]))
+  {
+    return 23;
+  }
+
+  CUnmannedTraderGroupItemInfoTable *groupTable = CUnmannedTraderGroupItemInfoTable::Instance();
+  if (!groupTable->GetGroupID(
+        inventoryItem->m_byTableCode,
+        inventoryItem->m_wItemIndex,
+        pbyDivision,
+        pbyClass,
+        pbySubClass,
+        pdwListIndex))
+  {
+    return 3;
+  }
+  if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(g_Player[this->m_wInx].m_id.wIndex) == 99)
+  {
+    return static_cast<unsigned __int8>(-52);
+  }
+  return 0;
 }
 
 CPlayer *CUnmannedTraderUserInfo::FindOwner()
@@ -1719,8 +2466,7 @@ unsigned __int8 CUnmannedTraderUserInfo::SellComplete(
   __int64 tResultTime,
   CLogFile *pkLogger)
 {
-  (void)pkLogger;
-  auto it = Find(dwRegistSerial);
+auto it = Find(dwRegistSerial);
   const unsigned __int16 itemSerial = it->GetItemSerial();
   _STORAGE_LIST::_db_con *pItem = pkSellPlayer->m_Param.m_dbInven.GetPtrFromSerial(itemSerial);
   if (!pItem)
@@ -1836,8 +2582,7 @@ unsigned __int8 CUnmannedTraderUserInfo::BuyComplete(
   CLogFile *pkLogger,
   unsigned __int16 *wAddItemSerial)
 {
-  (void)pkLogger;
-  _INVENKEY key;
+_INVENKEY key;
   key.LoadDBKey(dwK);
   _STORAGE_LIST::_db_con item;
   std::memset(&item, 0, sizeof(item));
@@ -2027,6 +2772,16 @@ void CUnmannedTraderUserInfo::SendRepriceErrorResult(CPlayer *pReceiver, unsigne
   g_Network.m_pProcess[0]->LoadSendMsg(pReceiver->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&result), len);
 }
 
+void CUnmannedTraderUserInfo::SendBuyErrorResult(unsigned __int16 wInx, unsigned __int8 byRet)
+{
+  _unmannedtrader_buy_item_result_zocl result{};
+  result.byRetCode = byRet;
+
+  unsigned __int8 pbyType[2]{30, 31};
+  const unsigned __int16 len = static_cast<unsigned __int16>(result.size());
+  g_Network.m_pProcess[0]->LoadSendMsg(wInx, pbyType, reinterpret_cast<char *>(&result), len);
+}
+
 void CUnmannedTraderUserInfo::SendSellInfom(
   unsigned __int16 wInx,
   unsigned __int16 wItemSerial,
@@ -2053,8 +2808,7 @@ void CUnmannedTraderUserInfo::SendNotifyCloseItem(
   unsigned int dwPrice,
   unsigned __int8 byTaxRate)
 {
-  (void)byTaxRate;
-  _unmannedtrader_close_item_inform_zocl inform{};
+_unmannedtrader_close_item_inform_zocl inform{};
   inform.byTaxRate = 1;
   inform.dwPrice = dwPrice;
   inform.wItemSerial = wItemSerial;

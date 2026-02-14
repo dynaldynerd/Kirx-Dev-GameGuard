@@ -98,38 +98,38 @@ bool CUnmannedTraderController::Load(unsigned __int16 wInx, unsigned int dwSeria
 
 void CUnmannedTraderController::Regist(unsigned __int16 wInx, _a_trade_reg_item_request_clzo *pRequest)
 {
-  (void)wInx;
-  (void)pRequest;
+  CUnmannedTraderUserInfoTable *userInfoTable = CUnmannedTraderUserInfoTable::Instance();
+  userInfoTable->Regist(wInx, 0, pRequest);
 }
 
 void CUnmannedTraderController::ModifyPrice(unsigned __int16 wInx, _a_trade_adjust_price_request_clzo *pRequest)
 {
-  (void)wInx;
-  (void)pRequest;
+  CUnmannedTraderUserInfoTable *userInfoTable = CUnmannedTraderUserInfoTable::Instance();
+  userInfoTable->ModifyPrice(wInx, 0, pRequest);
 }
 
 void CUnmannedTraderController::CancelRegist(unsigned __int16 wInx, _a_trade_clear_item_request_clzo *pRequest)
 {
-  (void)wInx;
-  (void)pRequest;
+  CUnmannedTraderUserInfoTable *userInfoTable = CUnmannedTraderUserInfoTable::Instance();
+  userInfoTable->CancelRegist(wInx, 0, pRequest);
 }
 
 void CUnmannedTraderController::Buy(unsigned __int16 wInx, _unmannedtrader_buy_item_request_clzo *pRequest)
 {
-  (void)wInx;
-  (void)pRequest;
+  CUnmannedTraderUserInfoTable *userInfoTable = CUnmannedTraderUserInfoTable::Instance();
+  userInfoTable->Buy(wInx, 0, pRequest);
 }
 
 void CUnmannedTraderController::Search(unsigned __int16 wInx, _unmannedtrader_search_list_request_clzo *pRequest)
 {
-  (void)wInx;
-  (void)pRequest;
+  CUnmannedTraderUserInfoTable *userInfoTable = CUnmannedTraderUserInfoTable::Instance();
+  userInfoTable->Search(wInx, 0, pRequest);
 }
 
 void CUnmannedTraderController::ReRegist(unsigned __int16 wInx, _unmannedtrader_re_regist_request_clzo *pRequest)
 {
-  (void)wInx;
-  (void)pRequest;
+  CUnmannedTraderUserInfoTable *userInfoTable = CUnmannedTraderUserInfoTable::Instance();
+  userInfoTable->ReRegist(wInx, 0, pRequest);
 }
 
 unsigned __int8 CUnmannedTraderController::GetMaxRegistCnt(unsigned __int16 wInx, unsigned int dwSerial)

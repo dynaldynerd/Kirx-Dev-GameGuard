@@ -65,9 +65,7 @@ float CHolyKeeper::GetAttackRange()
 
 __int64 CHolyKeeper::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
 {
-  (void)pAttChar;
-  (void)pnConvertPart;
-  if (nAttactPart == -1)
+if (nAttactPart == -1)
     return static_cast<unsigned int>(m_nDefPart[rand() % 5]);
 
   return static_cast<unsigned int>(m_nDefPart[nAttactPart]);
@@ -75,20 +73,17 @@ __int64 CHolyKeeper::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConv
 
 float CHolyKeeper::GetDefFacing(int nPart)
 {
-  (void)nPart;
-  return m_pRec->m_fDefFacing;
+return m_pRec->m_fDefFacing;
 }
 
 float CHolyKeeper::GetDefGap(int nPart)
 {
-  (void)nPart;
-  return m_pRec->m_fDefGap;
+return m_pRec->m_fDefGap;
 }
 
 __int64 CHolyKeeper::GetDefSkill(bool bBackAttackDamage)
 {
-  (void)bBackAttackDamage;
-  return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fDefSklUnit));
+return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fDefSklUnit));
 }
 
 __int64 CHolyKeeper::GetFireTol()
@@ -98,9 +93,7 @@ __int64 CHolyKeeper::GetFireTol()
 
 __int64 CHolyKeeper::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
 {
-  (void)nPart;
-
-  int hitRate = static_cast<int>(
+int hitRate = static_cast<int>(
     (m_pRec->m_fAttSklUnit - (static_cast<float>(pDst->GetLevel()) + static_cast<float>(pDst->GetDefSkill(bBackAttack)))) / 4.0f
     + 95.0f);
   hitRate -= static_cast<int>(pDst->GetAvoidRate());
@@ -185,7 +178,7 @@ __int64 CHolyKeeper::GetWindTol()
 
 bool CHolyKeeper::IsBeAttackedAble(bool bFirst)
 {
-  (void)bFirst;
+// this is not a stub
   return true;
 }
 
@@ -619,9 +612,7 @@ void CHolyKeeper::SendMsg_RealMovePoint(int n)
 
 __int64 CHolyKeeper::SetDamage(int nDam, CCharacter *pDst, int nDstLv)
 {
-  (void)nDstLv;
-
-  if (g_HolySys.GetSceneCode() != 3)
+if (g_HolySys.GetSceneCode() != 3)
     return static_cast<unsigned int>(m_nHP);
   if (g_HolySys.GetHolyMasterRace() == pDst->GetObjRace())
     return static_cast<unsigned int>(m_nHP);
@@ -648,11 +639,7 @@ __int64 CHolyKeeper::SetDamage(
   unsigned int dwAttackSerial,
   bool bJadeReturn)
 {
-  (void)bCrt;
-  (void)nAttackType;
-  (void)dwAttackSerial;
-  (void)bJadeReturn;
-  return SetDamage(nDam, pDst, nDstLv);
+return SetDamage(nDam, pDst, nDstLv);
 }
 
 void CHolyKeeper::CheckAttack()

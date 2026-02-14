@@ -14,6 +14,7 @@ public:
   static unsigned int UNMANNEDTRADETRADER_LAZYCLEANER_UPDATE_MAX_RETRY_CNT;
   static unsigned int Unmanned_Trader_Max_Row_Count_Search;
   static unsigned int Unmanned_Trader_Nomal_Max_Regist_Item_Cnt;
+  static unsigned __int8 Unmanned_Trader_Default_Sell_Turm;
   static const char *Unmanned_Trader_Default_Sort_Type_Name;
   static const char *Unmanned_Trader_Default_Sort_Query;
   static unsigned int Unmanned_Trader_Min_Limit_Empty_Record_Cnt;

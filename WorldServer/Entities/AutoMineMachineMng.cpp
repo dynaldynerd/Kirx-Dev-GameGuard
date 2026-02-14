@@ -1233,10 +1233,7 @@ bool AutoMineMachineMng::OreMerge(int n, char *pMsg)
 
 bool AutoMineMachineMng::Command(int n, int nType, char *pMsg)
 {
-  (void)n;
-  (void)nType;
-  (void)pMsg;
-  // this is not a stub
+// this is not a stub
   return false;
 }
 

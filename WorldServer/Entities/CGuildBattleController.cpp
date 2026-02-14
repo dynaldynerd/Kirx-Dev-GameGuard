@@ -18,7 +18,50 @@ CGuildBattleController *CGuildBattleController::Instance()
 
 void CGuildBattleController::Loop()
 {
-  (void)this;
+  GUILD_BATTLE::CGuildBattleScheduleManager *scheduleManager = GUILD_BATTLE::CGuildBattleScheduleManager::Instance();
+  scheduleManager->Loop();
+
+  GUILD_BATTLE::CNormalGuildBattleManager *battleManager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
+  battleManager->Loop();
+}
+
+void CGuildBattleController::Clear()
+{
+  GUILD_BATTLE::CNormalGuildBattleManager *battleManager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
+  battleManager->Clear();
+
+  GUILD_BATTLE::CGuildBattleReservedScheduleListManager *reservedManager =
+    GUILD_BATTLE::CGuildBattleReservedScheduleListManager::Instance();
+  reservedManager->Clear();
+
+  GUILD_BATTLE::CPossibleBattleGuildListManager *possibleListManager =
+    GUILD_BATTLE::CPossibleBattleGuildListManager::Instance();
+  possibleListManager->Clear();
+
+  if (!SaveINI())
+  {
+    GUILD_BATTLE::CGuildBattleLogger::Instance()->Log("CGuildBattleController::Clear() SaveINI() Fail!");
+  }
+}
+
+void CGuildBattleController::Flip()
+{
+  GUILD_BATTLE::CNormalGuildBattleManager *battleManager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
+  battleManager->Flip();
+  battleManager->DoDayChangedWork();
+
+  GUILD_BATTLE::CGuildBattleReservedScheduleListManager *reservedManager =
+    GUILD_BATTLE::CGuildBattleReservedScheduleListManager::Instance();
+  reservedManager->Flip();
+
+  GUILD_BATTLE::CPossibleBattleGuildListManager *possibleListManager =
+    GUILD_BATTLE::CPossibleBattleGuildListManager::Instance();
+  possibleListManager->DoDayChangedWork();
+
+  if (!SaveINI())
+  {
+    GUILD_BATTLE::CGuildBattleLogger::Instance()->Log("CGuildBattleController::Flip() SaveINI() Fail!");
+  }
 }
 
 bool CGuildBattleController::Init()

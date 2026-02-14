@@ -27,9 +27,7 @@ unsigned __int8 CMainThread::db_Reged_Avator(
   _NOT_ARRANGED_AVATOR_DB *pArrangedList,
   const char *pszIP)
 {
-  (void)pszIP;
-
-  _worlddb_character_base_info_array characterData{};
+_worlddb_character_base_info_array characterData{};
   unsigned __int8 result = m_pWorldDB->Select_CharacterBaseInfoBySerial(
     dwAccountSerial,
     &characterData);
@@ -142,8 +140,7 @@ unsigned __int8 CMainThread::db_Insert_Avator(
 
 unsigned __int8 CMainThread::db_Delete_Avator(unsigned int dwSerial, unsigned __int8 byRaceCode)
 {
-  (void)byRaceCode;
-  if (m_pWorldDB->Delete_CharacterData(dwSerial))
+if (m_pWorldDB->Delete_CharacterData(dwSerial))
   {
     return 0;
   }
@@ -1016,8 +1013,7 @@ unsigned __int8 CMainThread::_db_update_event_classrefine(
   unsigned __int8 byRefinedCnt,
   unsigned int dwRefineDate)
 {
-  (void)wIndex;
-  if (m_pWorldDB->Update_RFEvent_ClassRefine(dwSerial, byRefinedCnt, dwRefineDate))
+if (m_pWorldDB->Update_RFEvent_ClassRefine(dwSerial, byRefinedCnt, dwRefineDate))
   {
     return 0;
   }

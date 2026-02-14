@@ -737,9 +737,7 @@ __int64 CCharacter::GetAttackDamPoint(int nAttPnt, int nAttPart, int nTolType, C
       return static_cast<unsigned int>(rand() % 300 + 1);
     }
   }
-
-  (void)bBackAttack;
-  return static_cast<unsigned int>(damage);
+return static_cast<unsigned int>(damage);
 }
 
 __int64 CCharacter::GetAttackRandomPart()
@@ -774,10 +772,7 @@ void CCharacter::SendMsg_AttackActEffect(unsigned __int8 byActEffect, CCharacter
   const unsigned int objSerial = m_dwObjSerial;
   const unsigned __int8 damerId = pDamer->m_ObjID.m_byID;
   const unsigned int damerSerial = pDamer->m_dwObjSerial;
-  (void)objSerial;
-  (void)damerId;
-  (void)damerSerial;
-  unsigned __int8 pbyType[36]{};
+unsigned __int8 pbyType[36]{};
   pbyType[0] = 5;
   pbyType[1] = 24;
   CircleReport(pbyType, szMsg, 11, true);
@@ -1013,9 +1008,7 @@ __int64 CCharacter::_GetAreaEffectMember(
 
 __int64 CCharacter::_GetPartyEffectMember(CCharacter *pOriDst, bool bCircle, CCharacter **ppDsts)
 {
-  (void)pOriDst;
-  (void)bCircle;
-  (void)ppDsts;
+// this is not a stub
   return 0;
 }
 

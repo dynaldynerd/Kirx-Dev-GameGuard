@@ -167,9 +167,7 @@ int CandidateRegister::_SendList(unsigned __int16 wSock, unsigned __int8 byRace)
 
 int CandidateRegister::_Regist(CPlayer *pOne, char *pdata)
 {
-  (void)pdata;
-
-  if (!_bEnable)
+if (!_bEnable)
   {
     return 2;
   }

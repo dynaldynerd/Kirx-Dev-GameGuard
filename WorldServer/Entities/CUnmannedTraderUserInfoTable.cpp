@@ -70,6 +70,80 @@ bool CUnmannedTraderUserInfoTable::Load(
   return user.Load(byType, wInx, dwSerial, kInfo, this->m_pkLogger);
 }
 
+bool CUnmannedTraderUserInfoTable::CheckwIndexAndType(
+  unsigned __int16 wInx,
+  unsigned __int8 byType,
+  const char * /*szCallFuncName*/)
+{
+  return !this->m_veckInfo.empty() && this->m_veckInfo.size() > wInx && byType < 2u;
+}
+
+void CUnmannedTraderUserInfoTable::Regist(
+  unsigned __int16 wInx,
+  unsigned __int8 byType,
+  _a_trade_reg_item_request_clzo *pRequest)
+{
+  if (CheckwIndexAndType(wInx, byType, "CUnmannedTraderUserInfoTable::Regist(...)"))
+  {
+    this->m_veckInfo[wInx].Regist(byType, pRequest, this->m_pkLogger);
+  }
+}
+
+void CUnmannedTraderUserInfoTable::ModifyPrice(
+  unsigned __int16 wInx,
+  unsigned __int8 byType,
+  _a_trade_adjust_price_request_clzo *pRequest)
+{
+  if (CheckwIndexAndType(wInx, byType, "CUnmannedTraderUserInfoTable::ModifyPrice(...)"))
+  {
+    this->m_veckInfo[wInx].ModifyPrice(byType, pRequest, this->m_pkLogger);
+  }
+}
+
+void CUnmannedTraderUserInfoTable::CancelRegist(
+  unsigned __int16 wInx,
+  unsigned __int8 byType,
+  _a_trade_clear_item_request_clzo *pRequest)
+{
+  if (CheckwIndexAndType(wInx, byType, "CUnmannedTraderUserInfoTable::CancelRegist(...)"))
+  {
+    this->m_veckInfo[wInx].CancelRegist(byType, pRequest, this->m_pkLogger);
+  }
+}
+
+void CUnmannedTraderUserInfoTable::Buy(
+  unsigned __int16 wInx,
+  unsigned __int8 byType,
+  _unmannedtrader_buy_item_request_clzo *pRequest)
+{
+  if (CheckwIndexAndType(wInx, byType, "CUnmannedTraderUserInfoTable::Buy(...)"))
+  {
+    this->m_veckInfo[wInx].Buy(byType, pRequest, this->m_pkLogger);
+  }
+}
+
+void CUnmannedTraderUserInfoTable::Search(
+  unsigned __int16 wInx,
+  unsigned __int8 byType,
+  _unmannedtrader_search_list_request_clzo *pRequest)
+{
+  if (CheckwIndexAndType(wInx, byType, "CUnmannedTraderUserInfoTable::Search(...)"))
+  {
+    this->m_veckInfo[wInx].Search(byType, pRequest, this->m_pkLogger);
+  }
+}
+
+void CUnmannedTraderUserInfoTable::ReRegist(
+  unsigned __int16 wInx,
+  unsigned __int8 byType,
+  _unmannedtrader_re_regist_request_clzo *pRequest)
+{
+  if (CheckwIndexAndType(wInx, byType, "CUnmannedTraderUserInfoTable::ReRegist(...)"))
+  {
+    this->m_veckInfo[wInx].ReRegist(byType, pRequest, this->m_pkLogger);
+  }
+}
+
 void CUnmannedTraderUserInfoTable::SetLogger(CLogFile *pkLogger, CLogFile *pkServiceLogger)
 {
   this->m_pkLogger = pkLogger;
@@ -341,9 +415,7 @@ void CUnmannedTraderUserInfoTable::CompleteBuy(
   _qry_case_unmandtrader_buy_update_wait *pLoadData,
   CUnmannedTraderTradeInfo *pkTaradInfo)
 {
-  (void)byRet;
-
-  CUnmannedTraderUserInfo *pkBuyUser = nullptr;
+CUnmannedTraderUserInfo *pkBuyUser = nullptr;
   CPlayer *pkBuyPlayer = nullptr;
   if (SubCompleteBuyFindBuyer(pLoadData, &pkBuyUser, &pkBuyPlayer))
   {
@@ -495,9 +567,7 @@ void CUnmannedTraderUserInfoTable::CompleteReRegistRollBack(
   unsigned int dwOwnerSerial,
   char *pData)
 {
-  (void)wInx;
-  (void)dwOwnerSerial;
-  CUnmannedTraderUserInfo *user =
+CUnmannedTraderUserInfo *user =
     FindUser(*reinterpret_cast<unsigned __int16 *>(pData + 2), *reinterpret_cast<unsigned int *>(pData + 8));
   if (!user->IsNull())
   {

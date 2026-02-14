@@ -26,6 +26,7 @@ public:
   virtual ~COreCuttingTable() = default;
 
 private:
+  bool Indexing(CRecordData *oreTable, CRecordData *resTable, char *errCode);
   CRecordData m_tblOreCutting;
   int m_nOreNum;
   _ore_cut_list *pOreList;

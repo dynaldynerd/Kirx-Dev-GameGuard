@@ -173,11 +173,7 @@ float CAnimus::GetAttackRange()
 
 __int64 CAnimus::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
 {
-  (void)nAttactPart;
-  (void)pAttChar;
-  (void)pnConvertPart;
-
-  int baseDefFc = m_pRecord->m_nStdDefFc;
+int baseDefFc = m_pRecord->m_nStdDefFc;
   if (m_pMaster != nullptr && m_byRoleCode == 1)
   {
     baseDefFc = static_cast<int>(static_cast<float>(baseDefFc) * m_pMaster->m_EP.GetEff_Rate(30));
@@ -187,20 +183,17 @@ __int64 CAnimus::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertP
 
 float CAnimus::GetDefFacing(int nPart)
 {
-  (void)nPart;
-  return m_pRecord->m_fDefFacing;
+return m_pRecord->m_fDefFacing;
 }
 
 float CAnimus::GetDefGap(int nPart)
 {
-  (void)nPart;
-  return m_pRecord->m_fDefGap;
+return m_pRecord->m_fDefGap;
 }
 
 __int64 CAnimus::GetDefSkill(bool bBackAttackDamage)
 {
-  (void)bBackAttackDamage;
-  return static_cast<unsigned int>(m_pRecord->m_nDefSklUnit);
+return static_cast<unsigned int>(m_pRecord->m_nDefSklUnit);
 }
 
 __int64 CAnimus::GetFireTol()
@@ -210,9 +203,7 @@ __int64 CAnimus::GetFireTol()
 
 __int64 CAnimus::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
 {
-  (void)nPart;
-
-  const double attackSkill = static_cast<double>(m_pRecord->m_nAttSklUnit);
+const double attackSkill = static_cast<double>(m_pRecord->m_nAttSklUnit);
   const float targetLevel = static_cast<float>(pDst->GetLevel());
   const int targetDefSkill = static_cast<int>(m_pTarget->GetDefSkill(bBackAttack));
   int probability = static_cast<int>(attackSkill - (targetLevel + static_cast<float>(targetDefSkill)) / 4.0f + 95.0f);
@@ -308,7 +299,7 @@ __int64 CAnimus::GetWindTol()
 
 bool CAnimus::IsBeAttackedAble(bool bFirst)
 {
-  (void)bFirst;
+// this is not a stub
   return true;
 }
 
@@ -362,10 +353,7 @@ void CAnimus::SendMsg_RealMovePoint(int n)
 
 __int64 CAnimus::SetDamage(int nDam, CCharacter *pDst, int nDstLv, bool bCrt)
 {
-  (void)pDst;
-  (void)nDstLv;
-
-  if (nDam > 1)
+if (nDam > 1)
   {
     m_nHP -= nDam;
     if (m_nHP <= 0)

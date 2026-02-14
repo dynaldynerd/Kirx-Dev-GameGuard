@@ -26,22 +26,22 @@ CMoveMapLimitRight *CMoveMapLimitRight::Create(int iType)
 
 void CMoveMapLimitRight::Load(CPlayer *pkPlayer)
 {
-  (void)pkPlayer;
+// this is not a stub
 }
 
 void CMoveMapLimitRight::LogIn(CPlayer *pkPlayer)
 {
-  (void)pkPlayer;
+// this is not a stub
 }
 
 void CMoveMapLimitRight::CreateComplete(CPlayer *pkPlayer)
 {
-  (void)pkPlayer;
+// this is not a stub
 }
 
 void CMoveMapLimitRight::LogOut(CPlayer *pkPlayer)
 {
-  (void)pkPlayer;
+// this is not a stub
 }
 
 bool CMoveMapLimitRight::IsHaveRight()
@@ -51,8 +51,7 @@ bool CMoveMapLimitRight::IsHaveRight()
 
 void CMoveMapLimitRight::SetFlag(int iType, bool bFlag)
 {
-  (void)iType;
-  (void)bFlag;
+// this is not a stub
 }
 
 void CMoveMapLimitRight::CleanUp()

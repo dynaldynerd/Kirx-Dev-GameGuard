@@ -18,6 +18,7 @@ public:
   virtual ~CItemLootTable() = default;
 
 private:
+  bool Indexing(CRecordData *itemTables, char *errCode);
 public:
   CRecordData m_tblLoot;
   CEventLootTable *m_pTblEvent;

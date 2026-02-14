@@ -697,11 +697,7 @@ bool AutominePersonal::unregist_from_map(unsigned __int8 byDestroyType)
 
 __int64 AutominePersonal::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
 {
-  (void)nAttactPart;
-  (void)pAttChar;
-  (void)pnConvertPart;
-
-  if (m_pItem == nullptr)
+if (m_pItem == nullptr)
   {
     return 1;
   }
@@ -717,8 +713,7 @@ __int64 AutominePersonal::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *p
 
 float AutominePersonal::GetDefFacing(int nPart)
 {
-  (void)nPart;
-  if (m_pItem == nullptr)
+if (m_pItem == nullptr)
   {
     return 0.5f;
   }
@@ -734,8 +729,7 @@ float AutominePersonal::GetDefFacing(int nPart)
 
 float AutominePersonal::GetDefGap(int nPart)
 {
-  (void)nPart;
-  if (m_pItem == nullptr)
+if (m_pItem == nullptr)
   {
     return 0.5f;
   }
@@ -774,13 +768,13 @@ __int64 AutominePersonal::GetObjRace()
 
 bool AutominePersonal::IsBeAttackedAble(bool bFirst)
 {
-  (void)bFirst;
+// this is not a stub
   return true;
 }
 
 char AutominePersonal::IsBeDamagedAble(CCharacter *pAtter)
 {
-  (void)pAtter;
+// this is not a stub
   return 1;
 }
 
@@ -949,14 +943,7 @@ __int64 AutominePersonal::SetDamage(
   unsigned int dwAttackSerial,
   bool bJadeReturn)
 {
-  (void)pDst;
-  (void)nDstLv;
-  (void)bCrt;
-  (void)nAttackType;
-  (void)dwAttackSerial;
-  (void)bJadeReturn;
-
-  if (m_pItem == nullptr)
+if (m_pItem == nullptr)
   {
     return 0;
   }
@@ -987,9 +974,7 @@ void AutominePersonal::make_minepacket(
   unsigned __int16 nNewOre,
   unsigned int dwDur)
 {
-  (void)byStorageIndex;
-
-  m_changed_packet.dwObjSerial = get_objserial();
+m_changed_packet.dwObjSerial = get_objserial();
   m_changed_packet.m_byUseBattery = m_byUseBattery;
   m_changed_packet.dwBattery = get_battery();
 

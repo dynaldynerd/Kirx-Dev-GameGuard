@@ -11,6 +11,7 @@ unsigned int CUnmannedTraderEnvironmentValue::UNMANNEDTRADETRADER_LAZYCLEANER_LO
 unsigned int CUnmannedTraderEnvironmentValue::UNMANNEDTRADETRADER_LAZYCLEANER_UPDATE_MAX_RETRY_CNT = 0;
 unsigned int CUnmannedTraderEnvironmentValue::Unmanned_Trader_Max_Row_Count_Search = 0;
 unsigned int CUnmannedTraderEnvironmentValue::Unmanned_Trader_Nomal_Max_Regist_Item_Cnt = 0;
+unsigned __int8 CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Sell_Turm = 0;
 const char *CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Sort_Type_Name = "";
 const char *CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Sort_Query = "";
 unsigned int CUnmannedTraderEnvironmentValue::Unmanned_Trader_Min_Limit_Empty_Record_Cnt = 0;

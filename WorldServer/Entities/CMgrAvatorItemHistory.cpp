@@ -233,9 +233,7 @@ void CMgrAvatorItemHistory::have_auto_item(
   const CUnmannedTraderRegistItemInfo *pkInfo,
   unsigned __int8 byMaxCnt)
 {
-  (void)n;
-
-  if (pkInfo && byMaxCnt)
+if (pkInfo && byMaxCnt)
   {
     tm *localTime = nullptr;
     char buffer[260]{};
@@ -753,14 +751,7 @@ void CMgrAvatorItemHistory::have_item_close(
   unsigned __int8 byMaxCnt,
   char *pszFileName)
 {
-  (void)n;
-  (void)pszName;
-  (void)pBackupData;
-  (void)pszID;
-  (void)byDgr;
-  (void)dwIP;
-
-  sData[0] = 0;
+sData[0] = 0;
   g_Main.m_tblClass.GetRecord(pLoadData->dbAvator.m_zClassHistory[0]);
   g_Main.m_tblClass.GetRecord(pLoadData->dbAvator.m_zClassHistory[1]);
   g_Main.m_tblClass.GetRecord(pLoadData->dbAvator.m_zClassHistory[2]);
@@ -1457,7 +1448,6 @@ void CMgrAvatorItemHistory::guild_est_money_rollback(
     m_szCurDate,
     m_szCurTime);
   WriteFile(pszFileName, sData);
-  (void)n;
 }
 
 void CMgrAvatorItemHistory::guild_pop_money(
@@ -1480,7 +1470,6 @@ void CMgrAvatorItemHistory::guild_pop_money(
     m_szCurDate,
     m_szCurTime);
   WriteFile(pszFileName, sData);
-  (void)n;
 }
 
 void CMgrAvatorItemHistory::guild_pop_money_rollback(
@@ -1503,14 +1492,11 @@ void CMgrAvatorItemHistory::guild_pop_money_rollback(
     m_szCurDate,
     m_szCurTime);
   WriteFile(pszFileName, sData);
-  (void)n;
 }
 
 void CMgrAvatorItemHistory::close(int n, char *pCloseCode, char *pszFileName)
 {
-  (void)n;
-
-  std::sprintf(sData, "\r\nCLOSE %s [%s %s]\r\n\r\n", pCloseCode, this->m_szCurDate, this->m_szCurTime);
+std::sprintf(sData, "\r\nCLOSE %s [%s %s]\r\n\r\n", pCloseCode, this->m_szCurDate, this->m_szCurTime);
   WriteFile(pszFileName, sData);
 }
 
@@ -1537,8 +1523,7 @@ void CMgrAvatorItemHistory::buy_to_inven_cashitem(
   unsigned __int64 lnUID,
   unsigned __int8 byEventType)
 {
-  (void)nBuyPrice;
-  sData[0] = 0;
+sData[0] = 0;
   _base_fld *record = g_Main.m_tblItemData[byTbl].GetRecord(wIndex);
   __time32_t now[5];
   _time32(now);
@@ -1572,8 +1557,7 @@ void CMgrAvatorItemHistory::buy_to_inven_cashitem(
 
 void CMgrAvatorItemHistory::cash_item_use(int n, _STORAGE_LIST::_db_con *pUseItem, char *pszFileName)
 {
-  (void)n;
-  sData[0] = 0;
+sData[0] = 0;
   _base_fld *record = g_Main.m_tblItemData[pUseItem->m_byTableCode].GetRecord(pUseItem->m_wItemIndex);
   const char *upgInfo = DisplayItemUpgInfo(pUseItem->m_byTableCode, pUseItem->m_dwLv);
   sprintf(
@@ -1773,8 +1757,7 @@ void CMgrAvatorItemHistory::WriteFile(const char *pszFileName, const char *pszLo
 
 void CMgrAvatorItemHistory::char_copy(int n, char *pszDstName, unsigned int dwDstSerial, char *pszFileName)
 {
-  (void)n;
-  sprintf(sData, "CHAR COPY: dst(%s:%d) [%s %s]\r\n", pszDstName, dwDstSerial, m_szCurDate, m_szCurTime);
+sprintf(sData, "CHAR COPY: dst(%s:%d) [%s %s]\r\n", pszDstName, dwDstSerial, m_szCurDate, m_szCurTime);
   WriteFile(pszFileName, sData);
 }
 
@@ -1784,8 +1767,7 @@ void CMgrAvatorItemHistory::cheat_alter_money(
   unsigned int dwNewGold,
   char *pszFileName)
 {
-  (void)n;
-  sprintf(
+sprintf(
     sData,
     "CHEAT(MONEY): $D:%u $G:%u [%s %s]\r\n",
     dwNewDalant,
@@ -1801,9 +1783,7 @@ void CMgrAvatorItemHistory::cheat_add_item(
   unsigned __int8 byAddNum,
   char *pszFileName)
 {
-  (void)n;
-
-  sData[0] = 0;
+sData[0] = 0;
   sprintf(sBuf, "CHEAT(ITEM+): num:%d [%s %s]\r\n", byAddNum, m_szCurDate, m_szCurTime);
   strcat_0(sData, sBuf);
   for (int index = 0; index < byAddNum; ++index)
@@ -1831,9 +1811,7 @@ void CMgrAvatorItemHistory::cheat_del_item(
   unsigned __int8 byDelNum,
   char *pszFileName)
 {
-  (void)n;
-
-  sData[0] = 0;
+sData[0] = 0;
   sprintf(sBuf, "CHEAT(ITEM-): num:%d [%s %s]\r\n", byDelNum, m_szCurDate, m_szCurTime);
   strcat_0(sData, sBuf);
   for (int index = 0; index < byDelNum; ++index)
@@ -1857,9 +1835,7 @@ void CMgrAvatorItemHistory::cheat_del_item(
 
 void CMgrAvatorItemHistory::delete_npc_quest_item(int n, _STORAGE_LIST::_db_con *pItem, char *pszFileName)
 {
-  (void)n;
-
-  _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
+_base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
   sprintf(
     sData,
     "DELETE NPC QUEST ITEM : %s_%u_[%I64u] [%s %s]\r\n",
@@ -1885,9 +1861,7 @@ void CMgrAvatorItemHistory::consume_del_item(int n, _STORAGE_LIST::_db_con *pIte
     pItem->m_lnUID,
     m_szCurDate,
     m_szCurTime);
-
-  (void)n;
-  WriteFile(pszFileName, logBuffer);
+WriteFile(pszFileName, logBuffer);
 }
 
 void CMgrAvatorItemHistory::reward_add_money(
@@ -1910,7 +1884,6 @@ void CMgrAvatorItemHistory::reward_add_money(
     m_szCurDate,
     m_szCurTime);
   WriteFile(pszFileName, sData);
-  (void)n;
 }
 
 void CMgrAvatorItemHistory::reward_add_item(
@@ -1936,9 +1909,7 @@ void CMgrAvatorItemHistory::reward_add_item(
     pItem->m_lnUID,
     curDate,
     curTime);
-
-  (void)n;
-  WriteFile(pszFileName, sData);
+WriteFile(pszFileName, sData);
 }
 
 void CMgrAvatorItemHistory::throw_ground_item(
@@ -1967,7 +1938,6 @@ void CMgrAvatorItemHistory::throw_ground_item(
     m_szCurDate,
     m_szCurTime);
   WriteFile(pszFileName, sData);
-  (void)n;
 }
 
 void CMgrAvatorItemHistory::exchange_money(
@@ -1987,9 +1957,7 @@ void CMgrAvatorItemHistory::exchange_money(
     dwNewGold,
     m_szCurDate,
     m_szCurTime);
-
-  (void)n;
-  WriteFile(pszFileName, sData);
+WriteFile(pszFileName, sData);
 }
 
 void CMgrAvatorItemHistory::buy_item(
@@ -2024,9 +1992,7 @@ void CMgrAvatorItemHistory::buy_item(
     sprintf(sBuf, "\t+ %s_%u_@%s[%I64u]\r\n", record->m_strCode, pItem->m_dwDur, upgradeInfo, pItem->m_lnUID);
     strcat_0(sData, sBuf);
   }
-
-  (void)n;
-  WriteFile(pszFileName, sData);
+WriteFile(pszFileName, sData);
 }
 
 void CMgrAvatorItemHistory::sell_item(
@@ -2067,9 +2033,7 @@ void CMgrAvatorItemHistory::sell_item(
     }
     strcat_0(sData, sBuf);
   }
-
-  (void)n;
-  WriteFile(pszFileName, sData);
+WriteFile(pszFileName, sData);
 }
 
 void CMgrAvatorItemHistory::add_storage_fail(
@@ -2085,8 +2049,7 @@ void CMgrAvatorItemHistory::add_storage_fail(
     pItem->m_byTableCode,
     pItem->m_wItemIndex,
     strErrorCodePos);
-  (void)n;
-  WriteFile(pszFileName, sData);
+WriteFile(pszFileName, sData);
 }
 
 void CMgrAvatorItemHistory::make_item(
@@ -2144,9 +2107,7 @@ void CMgrAvatorItemHistory::make_item(
     std::sprintf(sBuf, "\t- %s_%d[%I64]\r\n", record->m_strCode, pbyMtrNum[j], pMaterial[j].m_lnUID);
     strcat_0(sData, sBuf);
   }
-
-  (void)n;
-  WriteFile(pszFileName, sData);
+WriteFile(pszFileName, sData);
 }
 
 void CMgrAvatorItemHistory::cheat_make_item_no_material(
@@ -2175,8 +2136,7 @@ void CMgrAvatorItemHistory::cheat_make_item_no_material(
       m_szCurTime);
   }
   strcat_0(sData, sBuf);
-  (void)n;
-  WriteFile(pszFileName, sData);
+WriteFile(pszFileName, sData);
 }
 
 void CMgrAvatorItemHistory::grade_up_item(
@@ -2270,9 +2230,7 @@ void CMgrAvatorItemHistory::grade_up_item(
     std::sprintf(sBuf, "\t- R %s\r\n", jewelRecord->m_strCode);
     strcat_0(sData, sBuf);
   }
-
-  (void)n;
-  WriteFile(pszFileName, sData);
+WriteFile(pszFileName, sData);
 }
 
 void CMgrAvatorItemHistory::grade_down_item(
@@ -2305,9 +2263,7 @@ void CMgrAvatorItemHistory::grade_down_item(
     g_Main.m_tblItemData[pTalik->m_byTableCode].GetRecord(pTalik->m_wItemIndex);
   std::sprintf(sBuf, "\t- T %s\r\n", talikRecord->m_strCode);
   strcat_0(sData, sBuf);
-
-  (void)n;
-  WriteFile(pszFileName, sData);
+WriteFile(pszFileName, sData);
 }
 
 void CMgrAvatorItemHistory::combine_item(
@@ -2342,9 +2298,7 @@ void CMgrAvatorItemHistory::combine_item(
     std::sprintf(sBuf, "\t- %s_%d\r\n", materialRecord->m_strCode, pbyMtrNum[j]);
     strcat_0(sData, sBuf);
   }
-
-  (void)n;
-  WriteFile(pszFileName, sData);
+WriteFile(pszFileName, sData);
 }
 
 void CMgrAvatorItemHistory::exchange_item(
@@ -2370,9 +2324,7 @@ void CMgrAvatorItemHistory::exchange_item(
   const char *useUpgradeInfo = DisplayItemUpgInfo(pUseItem->m_byTableCode, pUseItem->m_dwLv);
   std::sprintf(sBuf, "\t- %s_%u_%s\r\n", useRecord->m_strCode, pUseItem->m_dwDur, useUpgradeInfo);
   strcat_0(sData, sBuf);
-
-  (void)n;
-  WriteFile(pszFileName, sData);
+WriteFile(pszFileName, sData);
 }
 
 void CMgrAvatorItemHistory::cut_clear_item(
@@ -2382,9 +2334,7 @@ void CMgrAvatorItemHistory::cut_clear_item(
   unsigned int dwNewGold,
   char *pszFileName)
 {
-  (void)n;
-
-  sData[0] = '\0';
+sData[0] = '\0';
   std::sprintf(sBuf, "CUT SELL: rev(G:%u) $G:%u [%s %s]\r\n", dwAddGold, dwNewGold, m_szCurDate, m_szCurTime);
   strcat_0(sData, sBuf);
 
@@ -2515,7 +2465,6 @@ void CMgrAvatorItemHistory::reg_auto_trade(
     m_szCurTime);
 
   WriteFile(pszFileName, sData);
-  (void)n;
 }
 
 void CMgrAvatorItemHistory::self_cancel_auto_trade(
@@ -2539,7 +2488,6 @@ void CMgrAvatorItemHistory::self_cancel_auto_trade(
     m_szCurTime);
 
   WriteFile(pszFileName, sData);
-  (void)n;
 }
 
 void CMgrAvatorItemHistory::time_out_cancel_auto_trade(
@@ -2563,7 +2511,6 @@ void CMgrAvatorItemHistory::time_out_cancel_auto_trade(
     m_szCurTime);
 
   WriteFile(pszFileName, sData);
-  (void)n;
 }
 
 void CMgrAvatorItemHistory::price_auto_trade(
@@ -2593,7 +2540,6 @@ void CMgrAvatorItemHistory::price_auto_trade(
     m_szCurTime);
 
   WriteFile(pszFileName, sData);
-  (void)n;
 }
 
 void CMgrAvatorItemHistory::re_reg_auto_trade(
@@ -2623,7 +2569,6 @@ void CMgrAvatorItemHistory::re_reg_auto_trade(
     m_szCurTime);
 
   WriteFile(pszFileName, sData);
-  (void)n;
 }
 
 void CMgrAvatorItemHistory::auto_trade_sell(

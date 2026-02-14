@@ -12,6 +12,7 @@
 #include "CNotifyNotifyRaceLeaderSownerUTaxrate.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
+#include "qry_case_updateweeklyguildpvppointsum.h"
 
 #include <atlcomtime.h>
 #include <ctime>
@@ -467,6 +468,33 @@ char CWeeklyGuildRankManager::InsertDefaultWeeklyPvpPointSumRecord()
 
   CPvpUserAndGuildRankingSystem::Instance()->Log(
     "CWeeklyGuildRankManager::InsertDefaultRecord() : g_Main.m_pWorldDB->Insert_DefaultRecordWeeklyGuildPvpPointSum() Fail!");
+  return 0;
+}
+
+char CWeeklyGuildRankManager::PushDQSIncWeeklyPvpPointSum(unsigned int dwGuildSerial, long double dPoint)
+{
+  if (dPoint <= 0.0 || dwGuildSerial == 0)
+  {
+    return 0;
+  }
+
+  _qry_case_updateweeklyguildpvppointsum query{};
+  query.dwGuildSerial = dwGuildSerial;
+  query.dPvpPoint = dPoint;
+  if (g_Main.PushDQSData(
+        0xFFFFFFFF,
+        nullptr,
+        0x2Fu,
+        reinterpret_cast<char *>(&query),
+        static_cast<int>(query.size())))
+  {
+    return 1;
+  }
+
+  CPvpUserAndGuildRankingSystem::Instance()->Log(
+    "CWeeklyGuildRankManager::PushDQSIncWeeklyPvpPointSum( %u, %f ) Fail!",
+    dwGuildSerial,
+    static_cast<double>(dPoint));
   return 0;
 }
 

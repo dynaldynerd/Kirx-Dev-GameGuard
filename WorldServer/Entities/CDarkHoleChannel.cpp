@@ -84,8 +84,7 @@ CDarkHoleChannel::__enter_member::__enter_member()
 
 CDarkHoleChannel::__enter_member::__enter_member(bool active, bool disnormal, unsigned int time)
 {
-  (void)time;
-  bActive = active;
+bActive = active;
   bDisnormalClose = disnormal;
   dwDisconnectTime = timeGetTime();
 }
@@ -471,9 +470,7 @@ void CDarkHoleChannel::SendMsg_PopMember(CPlayer *pPopMember, bool bDisconnect)
 
 void CDarkHoleChannel::SendMsg_LeaderChange(CPlayer *pNewLeader)
 {
-  (void)pNewLeader;
-
-  _darkhole_leader_change_inform_zocl msg{};
+_darkhole_leader_change_inform_zocl msg{};
   msg.dwNewLeaderSerial = m_dwOpenerSerial;
 
   unsigned __int8 type[2] = {35, 3};
@@ -2032,9 +2029,7 @@ void CDarkHoleChannel::SendMsg_OpenPortalByReact(unsigned __int16 nPortalIndex)
 
 void CDarkHoleChannel::SendMsg_OpenPortalByResult(int nPortalIndex)
 {
-  (void)nPortalIndex;
-
-  _darkhole_open_all_portal_by_result_inform_zocl msg{};
+_darkhole_open_all_portal_by_result_inform_zocl msg{};
   unsigned __int8 type[2]{35, 8};
   if (!m_MissionMgr.pCurMssionPtr)
   {

@@ -543,9 +543,7 @@ float CMonster::GetAttackRange()
 
 __int64 CMonster::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
 {
-  (void)pnConvertPart;
-
-  if (m_pMonRec == nullptr)
+if (m_pMonRec == nullptr)
     return 0;
 
   if (pAttChar != nullptr && m_pMonRec->m_nShieldBlock == 1)
@@ -568,14 +566,12 @@ __int64 CMonster::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvert
 
 float CMonster::GetDefFacing(int nPart)
 {
-  (void)nPart;
-  return *reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[8]);
+return *reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[8]);
 }
 
 float CMonster::GetDefGap(int nPart)
 {
-  (void)nPart;
-  return *reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[4]);
+return *reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[4]);
 }
 
 __int64 CMonster::GetDefSkill(bool bBackAttackDamage)
@@ -705,9 +701,7 @@ __int64 CMonster::GetCritical_Exception_Rate()
 
 __int64 CMonster::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
 {
-  (void)pDst;
-  (void)nPart;
-  if (!IsValidPlayer())
+if (!IsValidPlayer())
   {
     return 0;
   }
@@ -795,8 +789,7 @@ bool CMonster::IsAttackableInTown()
 
 bool CMonster::IsBeAttackedAble(bool bFirst)
 {
-  (void)bFirst;
-  if (!m_bLive || m_bObserver || m_bCorpse)
+if (!m_bLive || m_bObserver || m_bCorpse)
     return false;
   if (m_EP.GetEff_State(20))
     return false;
@@ -901,9 +894,7 @@ CPlayer *CMonster::SearchNearPlayer()
 
 __int64 CMonster::AttackObject(int nDamage, CGameObject *pOri)
 {
-  (void)nDamage;
-  (void)pOri;
-  m_LifeCicle = GetLoopTime();
+m_LifeCicle = GetLoopTime();
   return 1;
 }
 
@@ -2100,9 +2091,7 @@ char CMonster::_LootItem_Qst(CPlayer *pOwner)
       looted = 1;
     }
   }
-
-  (void)pOwner;
-  return looted;
+return looted;
 }
 
 char CMonster::_LootItem_Std(CPlayer *pOwner)
@@ -2576,12 +2565,7 @@ __int64 CMonster::SetDamage(
   unsigned int dwAttackSerial,
   bool bJadeReturn)
 {
-  (void)nDstLv;
-  (void)nAttackType;
-  (void)dwAttackSerial;
-  (void)bJadeReturn;
-
-  if (pDst != nullptr)
+if (pDst != nullptr)
     AttackObject(nDam, static_cast<CGameObject *>(pDst));
 
   if (nDam >= 1)

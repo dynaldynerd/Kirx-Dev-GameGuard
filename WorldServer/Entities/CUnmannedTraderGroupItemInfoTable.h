@@ -21,6 +21,14 @@ public:
     unsigned __int8 *byClass,
     unsigned __int8 *bySubClass,
     unsigned int *dwListIndex);
+  bool GetVersion(unsigned __int8 byDivision, unsigned __int8 byClass, unsigned int *dwVer);
+  bool IsExistGroupID(
+    unsigned __int8 byDivision,
+    unsigned __int8 byClass,
+    unsigned __int8 bySubClass,
+    unsigned __int8 bySortType,
+    unsigned int *dwListIndex);
+  CUnmannedTraderSortType *GetSortType(unsigned __int8 byDivision, unsigned __int8 bySortType);
   char IncreaseVersion(unsigned __int8 byTableCode, unsigned __int16 wItemTableIndex);
   char IncreaseVersion(
     unsigned __int8 byTableCode,

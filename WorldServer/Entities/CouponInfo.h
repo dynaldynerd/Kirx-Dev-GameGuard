@@ -3,8 +3,9 @@
 #include "IdaCompat.h"
 
 /* 1796 */
-class CouponInfo
+struct CouponInfo
 {
+public:
   unsigned __int8 byTableCode;
   unsigned int dwIndex;
 };

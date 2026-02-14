@@ -84,6 +84,249 @@ void CashItemRemoteStore::Loop_TatalCashEvent()
   }
 }
 
+unsigned __int8 CashItemRemoteStore::Get_CashEvent_Status(unsigned __int8 byEventType)
+{
+  return m_cash_event[byEventType].m_event_status;
+}
+
+char CashItemRemoteStore::ChangeEventTime(unsigned __int8 byEventType)
+{
+  if (!m_cash_event[byEventType].m_ini.m_bRepeat)
+  {
+    return 0;
+  }
+
+  std::tm tmValue{};
+  tmValue.tm_year = m_cash_event[byEventType].m_ini.m_wYear[0] - 1900;
+  tmValue.tm_mon = m_cash_event[byEventType].m_ini.m_byMonth[0] - 1;
+  tmValue.tm_mday = m_cash_event[byEventType].m_ini.m_byDay[0] + m_cash_event[byEventType].m_ini.m_byRepeatDay;
+  tmValue.tm_hour = m_cash_event[byEventType].m_ini.m_byHour[0];
+  tmValue.tm_min = m_cash_event[byEventType].m_ini.m_byMinute[0];
+  tmValue.tm_sec = 0;
+  tmValue.tm_isdst = -1;
+  m_cash_event[byEventType].m_ini.m_EventTime[0] = _mktime32(&tmValue);
+  if (m_cash_event[byEventType].m_ini.m_EventTime[0] == -1)
+  {
+    m_cash_event[byEventType].m_ini.m_bRepeat = 0;
+    m_cash_event[byEventType].m_event_log.Write("ChangeEventTime() : Fail When Calculate Event Begin Time");
+    return 0;
+  }
+
+  m_cash_event[byEventType].m_ini.m_wYear[0] = tmValue.tm_year + 1900;
+  m_cash_event[byEventType].m_ini.m_byMonth[0] = tmValue.tm_mon + 1;
+  m_cash_event[byEventType].m_ini.m_byDay[0] = tmValue.tm_mday;
+  m_cash_event[byEventType].m_ini.m_byHour[0] = tmValue.tm_hour;
+  m_cash_event[byEventType].m_ini.m_byMinute[0] = tmValue.tm_min;
+
+  memset_0(&tmValue, 0, sizeof(tmValue));
+  tmValue.tm_year = m_cash_event[byEventType].m_ini.m_wYear[1] - 1900;
+  tmValue.tm_mon = m_cash_event[byEventType].m_ini.m_byMonth[1] - 1;
+  tmValue.tm_mday = m_cash_event[byEventType].m_ini.m_byDay[1] + m_cash_event[byEventType].m_ini.m_byRepeatDay;
+  tmValue.tm_hour = m_cash_event[byEventType].m_ini.m_byHour[1];
+  tmValue.tm_min = m_cash_event[byEventType].m_ini.m_byMinute[1];
+  tmValue.tm_sec = 0;
+  tmValue.tm_isdst = -1;
+  m_cash_event[byEventType].m_ini.m_EventTime[1] = _mktime32(&tmValue);
+  if (m_cash_event[byEventType].m_ini.m_EventTime[1] == -1)
+  {
+    m_cash_event[byEventType].m_ini.m_bRepeat = 0;
+    m_cash_event[byEventType].m_event_log.Write("ChangeEventTime() : Fail When Calculate Event End Time");
+    return 0;
+  }
+
+  m_cash_event[byEventType].m_ini.m_wYear[1] = tmValue.tm_year + 1900;
+  m_cash_event[byEventType].m_ini.m_byMonth[1] = tmValue.tm_mon + 1;
+  m_cash_event[byEventType].m_ini.m_byDay[1] = tmValue.tm_mday;
+  m_cash_event[byEventType].m_ini.m_byHour[1] = tmValue.tm_hour;
+  m_cash_event[byEventType].m_ini.m_byMinute[1] = tmValue.tm_min;
+  return 1;
+}
+
+void CashItemRemoteStore::Set_LimitedSale_DCK(unsigned __int8 /*byEventType*/, unsigned __int8 byDCK)
+{
+  m_lim_event.DCK = byDCK;
+}
+
+void CashItemRemoteStore::Set_LimitedSale_Event()
+{
+  _cash_lim_sale tmp{};
+  memcpy_0(&tmp, &m_lim_event_New, sizeof(tmp));
+  memcpy_0(&m_lim_event, &tmp, sizeof(m_lim_event));
+}
+
+void CashItemRemoteStore::Inform_CashEvent_Status_All(
+  unsigned __int8 byEventType,
+  unsigned __int8 byStatus,
+  _cash_event_ini *pIni)
+{
+  for (unsigned __int16 index = 0; index < MAX_PLAYER; ++index)
+  {
+    CPlayer *player = &g_Player[index];
+    if (player->m_bOper && player->m_bLive)
+    {
+      ICsSendInterface::SendMsg_CashEventInform(
+        player->m_ObjID.m_wIndex,
+        byEventType,
+        byStatus,
+        pIni,
+        &m_lim_event);
+    }
+  }
+
+  char eventName[80]{};
+  Get_CashEvent_Name(byEventType, eventName);
+  m_cash_event[byEventType].m_event_log.Write(
+    "[ %s CashEvent Inform when Event status change] [EventState : %d] [EventTime : %d/%d/%d %d:%d  ~ %d/%d/%d %d:%d ]",
+    eventName,
+    byStatus,
+    pIni->m_wYear[0],
+    pIni->m_byMonth[0],
+    pIni->m_byDay[0],
+    pIni->m_byHour[0],
+    pIni->m_byMinute[0],
+    pIni->m_wYear[1],
+    pIni->m_byMonth[1],
+    pIni->m_byDay[1],
+    pIni->m_byHour[1],
+    pIni->m_byMinute[1]);
+}
+
+void CashItemRemoteStore::Check_CashEvent_Status(unsigned __int8 byEventType)
+{
+  const unsigned __int8 eventStatus = Get_CashEvent_Status(byEventType);
+  __time32_t now[4]{};
+  _time32(now);
+
+  auto moveToEnd = [&]() { Set_CashEvent_Status(byEventType, 5u); };
+  switch (eventStatus)
+  {
+    case 0u:
+    {
+      if (!m_cash_event[byEventType].m_ini.m_bUseCashEvent || !m_cash_event[byEventType].m_ini.m_bRepeat)
+      {
+        moveToEnd();
+        break;
+      }
+
+      const bool changed = ChangeEventTime(byEventType) != 0;
+      if (m_cash_event[byEventType].m_ini.m_NextEventTime[1] <= now[0] || !changed)
+      {
+        moveToEnd();
+        break;
+      }
+
+      Set_CashEvent_Status(byEventType, 1u);
+      break;
+    }
+
+    case 1u:
+    {
+      if (m_cash_event[byEventType].m_ini.m_bRepeat
+          && m_cash_event[byEventType].m_ini.m_EventTime[2] <= now[0])
+      {
+        moveToEnd();
+      }
+      else if (now[0] >= m_cash_event[byEventType].m_ini.m_EventTime[0])
+      {
+        Set_CashEvent_Status(byEventType, 2u);
+        if (byEventType == 2)
+        {
+          Set_LimitedSale_DCK(byEventType, 1u);
+          g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x9Du, nullptr, 0);
+          Set_DB_LimitedSale_Event();
+        }
+        Inform_CashEvent_Status_All(byEventType, 2u, &m_cash_event[byEventType].m_ini);
+      }
+      break;
+    }
+
+    case 2u:
+    {
+      if (byEventType == 2 && m_lim_event.DCK != 1)
+      {
+        g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x9Du, nullptr, 0);
+        Set_LimitedSale_Event();
+      }
+
+      if (m_cash_event[byEventType].m_ini.m_EventTime[1] - now[0]
+          <= m_cash_event[byEventType].m_event_inform_before[0])
+      {
+        Set_CashEvent_Status(byEventType, 3u);
+        Inform_CashEvent_Status_All(byEventType, 3u, &m_cash_event[byEventType].m_ini);
+      }
+      break;
+    }
+
+    case 3u:
+    {
+      if (byEventType == 2 && m_lim_event.DCK != 1)
+      {
+        g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x9Du, nullptr, 0);
+        Set_LimitedSale_Event();
+      }
+
+      if (m_cash_event[byEventType].m_ini.m_EventTime[1] - now[0]
+          <= m_cash_event[byEventType].m_event_inform_before[1])
+      {
+        Set_CashEvent_Status(byEventType, 4u);
+        Inform_CashEvent_Status_All(byEventType, 4u, &m_cash_event[byEventType].m_ini);
+      }
+      break;
+    }
+
+    case 4u:
+    {
+      if (byEventType == 2 && m_lim_event.DCK != 1)
+      {
+        g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x9Du, nullptr, 0);
+        Set_LimitedSale_Event();
+      }
+
+      if (now[0] >= m_cash_event[byEventType].m_ini.m_EventTime[1])
+      {
+        Set_CashEvent_Status(byEventType, 5u);
+        if (byEventType == 2)
+        {
+          Set_LimitedSale_DCK(byEventType, 0);
+          Set_DB_LimitedSale_Event();
+        }
+        Inform_CashEvent_Status_All(byEventType, 5u, &m_cash_event[byEventType].m_ini);
+      }
+      break;
+    }
+
+    case 5u:
+    {
+      if (!m_cash_event[byEventType].m_ini.m_bUseCashEvent || !m_cash_event[byEventType].m_ini.m_bRepeat)
+      {
+        Set_CashEvent_Status(byEventType, 7u);
+        break;
+      }
+
+      if (m_cash_event[byEventType].m_ini.m_EventTime[2] <= now[0])
+      {
+        m_cash_event[byEventType].m_ini.m_bUseCashEvent = 0;
+        m_cash_event[byEventType].m_ini.m_bRepeat = 0;
+        Set_CashEvent_Status(byEventType, 7u);
+        return;
+      }
+
+      if (SetNextEventTime(byEventType))
+      {
+        Set_CashEvent_Status(byEventType, 0);
+      }
+      else
+      {
+        Set_CashEvent_Status(byEventType, 7u);
+      }
+      break;
+    }
+
+    default:
+      return;
+  }
+}
+
 const _CashShop_fld *CashItemRemoteStore::FindCashRec(unsigned int nTbl, int nIdx)
 {
   if (nTbl > 0x24)
@@ -175,10 +418,7 @@ bool CashItemRemoteStore::_InitLoggers()
 {
   const char *unusedSystem = "System.sys";
   const char *unusedProcess = "Process.his";
-  (void)unusedSystem;
-  (void)unusedProcess;
-
-  const char *logDir = "..\\ZoneServerLog\\SystemLog\\PartiallyPaid";
+const char *logDir = "..\\ZoneServerLog\\SystemLog\\PartiallyPaid";
   CreateDirectoryA(logDir, nullptr);
 
   char buffer[260];

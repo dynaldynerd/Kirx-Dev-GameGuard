@@ -314,8 +314,7 @@ bool CGuildRoomSystem::GetMapPos(
   unsigned __int16 *wMapLayer,
   unsigned __int8 *byRoomType)
 {
-  (void)pMap;
-  for (int j = 0; j < 90; ++j)
+for (int j = 0; j < 90; ++j)
   {
     CGuildRoomInfo &room = m_vecGuildRoom[j];
     if (room.IsRent() && room.GetGuildSerial() == dwGuildSerial)

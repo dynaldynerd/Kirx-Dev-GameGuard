@@ -68,9 +68,7 @@ char CPlayer::dev_after_effect()
   {
     this->m_bAfterEffect = 1;
   }
-  (void)unusedFlag;
-  (void)curTime;
-  return 1;
+return 1;
 }
 
 char CPlayer::dev_all_kill()

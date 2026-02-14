@@ -257,9 +257,7 @@ unsigned __int8 CTalkCrystalCombineManager::CombinePreProcess(
   unsigned __int8 byExchangeNum,
   _talik_crystal_exchange_clzo::_list *pList)
 {
-  (void)byExchangeNum;
-
-  Init();
+Init();
   m_pCurrentPlayer = pPlayer;
 
   const unsigned __int8 maxCount = 24;

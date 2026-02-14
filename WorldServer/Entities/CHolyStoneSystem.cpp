@@ -1465,12 +1465,7 @@ void CHolyStoneSystem::On_HS_SCENE_BATTLE_END_WAIT_TIME()
       const unsigned int raceBossSerial0 = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(0, 0);
       const unsigned int raceBossSerial1 = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(1, 0);
       const unsigned int raceBossSerial2 = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(2, 0);
-
-      (void)raceBossSerial0;
-      (void)raceBossSerial1;
-      (void)raceBossSerial2;
-
-      g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x89u, qryData, 24);
+g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x89u, qryData, 24);
       for (int j = 0; j < 3; ++j)
       {
         PeneltyFailRace(static_cast<unsigned __int8>(j));

@@ -12,6 +12,7 @@
 #include "CPlayerDB.h"
 #include "CRaceBuffManager.h"
 #include "CheckPotion_fld.h"
+#include "DqsDbStructs.h"
 #include "GlobalObjects.h"
 #include "NameTxt_fld.h"
 #include "skill_fld.h"
@@ -1127,4 +1128,31 @@ void CPotionMgr::PushRenamePotionDBLog(char *pInfo)
   CLogTypeDBTaskManager *mgr = CLogTypeDBTaskManager::Instance();
   mgr->Push(2, data, 0x28u);
   g_Main.m_logRename.Write("CPotionMgr::PushRenamePotionDBLog()!");
+}
+
+bool __fastcall DE_Potion_CharReName(
+  CCharacter *pActChar,
+  CCharacter * /*pTargetChar*/,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  if (!pActChar)
+  {
+    return false;
+  }
+
+  if (pActChar->m_ObjID.m_byID != 0)
+  {
+    return false;
+  }
+
+  auto *player = reinterpret_cast<CPlayer *>(pActChar);
+  _qry_case_character_rename query{};
+  query.dwCharSerial = player->m_pUserDB->m_dwSerial;
+  query.dwAlreadySerial = static_cast<unsigned int>(-1);
+  memcpy_0(&query.ItemInfo, &player->m_ReNamePotionUseInfo.ItemInfo, sizeof(query.ItemInfo));
+  strcpy_s(query.wszCharName, sizeof(query.wszCharName), player->m_ReNamePotionUseInfo.wszChangeName);
+  strcpy_s(query.wszOldName, sizeof(query.wszOldName), player->m_Param.GetCharNameW());
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x92u, reinterpret_cast<char *>(&query), sizeof(query));
+  return true;
 }

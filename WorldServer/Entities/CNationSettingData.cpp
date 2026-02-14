@@ -60,8 +60,7 @@ CBilling *CNationSettingData::CreateBilling()
 
 const char *CNationSettingData::GetItemName(_NameTxt_fld *pFld)
 {
-  (void)pFld;
-  // this is not a stub
+// this is not a stub
   return nullptr;
 }
 
@@ -83,8 +82,7 @@ bool CNationSettingData::IsNormalString(const wchar_t *wszString)
 
 bool CNationSettingData::IsNormalChar(const wchar_t wcChar)
 {
-  (void)wcChar;
-  // this is not a stub
+// this is not a stub
   return true;
 }
 
@@ -95,36 +93,29 @@ void CNationSettingData::SetUnitPassiveValue(float *fUnitPv_DefFc)
 
 bool CNationSettingData::IsPersonalFreeFixedAmountBillingType(__int16 *pDest1, __int16 *pDest2)
 {
-  (void)pDest1;
-  (void)pDest2;
-  // this is not a stub
+// this is not a stub
   return false;
 }
 
 bool CNationSettingData::CheckEnterWorldRequest(int n, char *pBuf)
 {
-  (void)n;
-  (void)pBuf;
-  // this is not a stub
+// this is not a stub
   return true;
 }
 
 void CNationSettingData::CreateComplete(CPlayer *pOne)
 {
-  (void)pOne;
-  // this is not a stub
+// this is not a stub
 }
 
 void CNationSettingData::NetClose(CPlayer *pOne)
 {
-  (void)pOne;
-  // this is not a stub
+// this is not a stub
 }
 
 int CNationSettingData::GetCashItemPrice(_CashShop_str_fld *pFld)
 {
-  (void)pFld;
-  // this is not a stub
+// this is not a stub
   return 0;
 }
 

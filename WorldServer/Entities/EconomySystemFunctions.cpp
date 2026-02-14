@@ -253,9 +253,7 @@ char eInitEconomySystem(
   }
 
   e_EconomySystem.m_bLoad = true;
-  (void)nCurMgrValue;
-  (void)nNextMgrValue;
-  return 1;
+return 1;
 }
 
 void eUpdateEconomySystem(bool *pbChangeDay)

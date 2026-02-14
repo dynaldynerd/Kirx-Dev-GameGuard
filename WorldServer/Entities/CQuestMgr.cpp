@@ -1088,8 +1088,7 @@ _quest_fail_result *CQuestMgr::CheckLimLv(int nNewLv)
 
 char CQuestMgr::IsProcLinkNpcQuest(char *pszCode, int nLinkQuestGroupID)
 {
-  (void)pszCode;
-  for (int j = 0; j < 30; ++j)
+for (int j = 0; j < 30; ++j)
   {
     _QUEST_DB_BASE::_LIST *slot = &this->m_pQuestData->m_List[j];
     if (slot->byQuestType == 1)
@@ -1110,8 +1109,7 @@ char CQuestMgr::IsProcLinkNpcQuest(char *pszCode, int nLinkQuestGroupID)
 
 bool CQuestMgr::IsPossibleRepeatNpcQuest(char *pszCode, int nLinkQuestGroupID)
 {
-  (void)pszCode;
-  int repeatCount = 0;
+int repeatCount = 0;
   for (int j = 0; j < 70; ++j)
   {
     _QUEST_DB_BASE::_NPC_QUEST_HISTORY &history = this->m_pQuestData->m_History[j];
@@ -1189,9 +1187,7 @@ char CQuestMgr::__CheckCond_Class(char *pszClassCode)
 
 char CQuestMgr::__CheckCond_Dummy(int bInclude, char *pszDummyCode)
 {
-  (void)bInclude;
-  (void)pszDummyCode;
-  return 1; // this is not a stub
+return 1; // this is not a stub
 }
 
 
@@ -1231,8 +1227,7 @@ bool CQuestMgr::__CheckCond_Guild(int belong)
 
 bool CQuestMgr::__CheckCond_Nation(int belong)
 {
-  (void)belong;
-  return false; // this is not a stub
+return false; // this is not a stub
 }
 
 
@@ -1255,8 +1250,7 @@ bool CQuestMgr::__CheckCond_Party(int belong)
 
 bool CQuestMgr::__CheckCond_Mastery(unsigned __int8 byCompare, char *pszMasteryPack)
 {
-  (void)byCompare;
-  char codeBuf[32]{};
+char codeBuf[32]{};
   char indexBuf[32]{};
   char levelBuf[16]{};
 

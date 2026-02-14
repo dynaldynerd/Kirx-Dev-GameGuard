@@ -33,6 +33,13 @@ public:
     unsigned int *dwListIndex);
   bool IsExistSortTypeID(unsigned int dwID);
   bool IsValidID(unsigned int dwID);
+  char IsExistGroupID(
+    unsigned __int8 byDivision,
+    unsigned __int8 byClass,
+    unsigned __int8 bySubClass,
+    unsigned __int8 bySortType,
+    unsigned int *dwListIndex);
+  CUnmannedTraderSortType *GetSortType(unsigned __int8 bySortType);
 
   unsigned int m_dwID;
   char m_szName[128];

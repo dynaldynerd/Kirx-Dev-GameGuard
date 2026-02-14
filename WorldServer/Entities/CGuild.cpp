@@ -16,6 +16,7 @@
 #include "CMoneySupplyMgr.h"
 #include "DqsDbStructs.h"
 #include "GuildBattleTypes.h"
+#include "qry_case_in_guildbattlerewardmoney.h"
 #include "guild_battle_suggest_request_result_zocl.h"
 #include "guild_member_refresh_data.h"
 #include "guild_alter_member_grade_inform_zocl.h"
@@ -1844,11 +1845,7 @@ unsigned __int8 CGuild::CheckGuildBattleSuggestRequestToDestGuild(
   unsigned int dwMemberCntInx,
   unsigned int dwMapInx)
 {
-  (void)dwStartTimeInx;
-  (void)dwMemberCntInx;
-  (void)dwMapInx;
-
-  if (m_bRankWait)
+if (m_bRankWait)
   {
     return static_cast<unsigned __int8>(-92);
   }
@@ -1878,6 +1875,12 @@ unsigned __int8 CGuild::CheckGuildBattleSuggestRequestToDestGuild(
 void CGuild::SetCopmlteGuildBattleSuggest()
 {
   m_GuildBattleSugestMatter.eState = _guild_battle_suggest_matter::COMPLETE_BATTLE_REQUEST;
+}
+
+void CGuild::ClearGuildBattle()
+{
+  m_GuildBattleSugestMatter.Clear();
+  m_bInGuildBattle = false;
 }
 
 unsigned __int8 CGuild::SrcGuildIsAvailableBattleRequestState()
@@ -1975,6 +1978,28 @@ void CGuild::UpdateGuildBattleWinCnt(unsigned int dwTotWin, unsigned int dwTotDr
   MakeDownMemberPacket();
   m_byMoneyOutputKind = 0;
   SendMsg_GuildInfoUpdateInform();
+}
+
+void CGuild::PushDQSInGuildBattleRewardMoney()
+{
+  _qry_case_in_guildbattlerewardmoney query{};
+  query.dwGuildIndex = m_nIndex;
+  query.dwGuildSerial = m_dwSerial;
+  query.dwAddDalant = 0;
+  query.dwAddGold = 10000;
+  query.out_totalgold = 0.0;
+  query.out_totaldalant = 0.0;
+  query.byDate[0] = GetCurrentMonth();
+  query.byDate[1] = GetCurrentDay();
+  query.byDate[2] = GetCurrentHour();
+  query.byDate[3] = GetCurrentMin();
+  g_Main.PushDQSData(
+    0xFFFFFFFF,
+    nullptr,
+    0x27u,
+    reinterpret_cast<char *>(&query),
+    static_cast<int>(query.size()));
+  m_bIOWait = true;
 }
 
 void CGuild::PushDQSInGuildBattleCost()
@@ -2600,4 +2625,3 @@ CGuild *GetGuildPtrFromName(CGuild *pData, int nNum, char *pwszGuildName)
   }
   return nullptr;
 }
-

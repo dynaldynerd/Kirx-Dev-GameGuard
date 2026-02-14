@@ -532,8 +532,7 @@ void RACE_BOSS_MSG::CMsgListManager::Save(unsigned __int8 ucRace)
 
 bool RACE_BOSS_MSG::CMsgList::Load(unsigned int dwCurTime)
 {
-  (void)dwCurTime;
-  return m_ppMsg != nullptr;
+return m_ppMsg != nullptr;
 }
 
 bool RACE_BOSS_MSG::CMsg::Save(unsigned __int8 ucRace)
@@ -1060,8 +1059,7 @@ void CRaceBossMsgController::SendCancleInfomManager(
   unsigned int dwMsgID,
   const char *pwszName)
 {
-  (void)dwMsgID;
-  char szMsg[0x16]{};
+char szMsg[0x16]{};
   szMsg[0] = ucRet;
   if (pwszName)
   {

@@ -145,6 +145,54 @@ bool CUnmannedTraderGroupIDInfo::GetGroupID(
   return false;
 }
 
+char CUnmannedTraderGroupIDInfo::IsExistGroupID(
+  unsigned __int8 byDivision,
+  unsigned __int8 byClass,
+  unsigned __int8 bySubClass,
+  unsigned __int8 bySortType,
+  unsigned int *dwListIndex)
+{
+  if (byDivision == 0xFFu)
+  {
+    return 0;
+  }
+
+  unsigned int accListIndex = 0;
+  unsigned int localListIndex = 0;
+  for (CUnmannedTraderDivisionInfo *division : this->m_vecDivisionInfo)
+  {
+    if (division->IsExistGroupID(byDivision, byClass, bySubClass, bySortType, &localListIndex))
+    {
+      *dwListIndex = localListIndex + accListIndex;
+      return 1;
+    }
+    accListIndex += static_cast<unsigned int>(division->GetMaxClassCnt());
+  }
+
+  return 0;
+}
+
+CUnmannedTraderSortType *CUnmannedTraderGroupIDInfo::GetSortType(
+  unsigned __int8 byDivision,
+  unsigned __int8 bySortType)
+{
+  if (byDivision == 0xFFu || bySortType == 0xFFu)
+  {
+    return nullptr;
+  }
+
+  for (CUnmannedTraderDivisionInfo *division : this->m_vecDivisionInfo)
+  {
+    CUnmannedTraderSortType *sortType = division->GetSortType(bySortType);
+    if (sortType)
+    {
+      return sortType;
+    }
+  }
+
+  return nullptr;
+}
+
 bool CUnmannedTraderGroupIDInfo::LoadXML(const char *szFileName)
 {
   if (!szFileName)

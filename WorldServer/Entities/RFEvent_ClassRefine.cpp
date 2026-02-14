@@ -169,6 +169,27 @@ unsigned __int8 RFEvent_ClassRefine::DoEvent(CPlayer *pOne)
   return 0;
 }
 
+char RFEvent_ClassRefine::SetEvent(const char *p, int size, bool bInit)
+{
+  if (size != 16)
+  {
+    return 0;
+  }
+
+  memcpy_0(&_kEvent, p, size);
+  if (bInit)
+  {
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x53u, nullptr, 0);
+    for (int index = 0; index < MAX_PLAYER; ++index)
+    {
+      _pkParticipant[index].bChange = false;
+      _pkParticipant[index].dwRefineDate = static_cast<unsigned int>(_kEvent.nStartDate);
+      _pkParticipant[index].nCurRefineCnt = 0;
+    }
+  }
+  return 1;
+}
+
 bool RFEvent_ClassRefine::IsDbUpdate(unsigned int nIdx)
 {
   return nIdx < 0x9E4 && _pkParticipant[nIdx].IsChanged();

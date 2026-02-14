@@ -245,8 +245,7 @@ void CBilling::Change_BillingType(
 
 void CBilling::Expire_Personal(char *szID)
 {
-  (void)szID;
-  // this is not a stub
+// this is not a stub
 }
 
 void CBilling::Expire_PCBang(char *szCMS)
@@ -267,15 +266,12 @@ void CBilling::Expire_PCBang(char *szCMS)
 
 void CBilling::Expire_IPOverflow(char *szID)
 {
-  (void)szID;
-  // this is not a stub
+// this is not a stub
 }
 
 void CBilling::Change_Primium(char *szID, bool bResult)
 {
-  (void)szID;
-  (void)bResult;
-  // this is not a stub
+// this is not a stub
 }
 
 void CBilling::SendMsg_ZoneAliveCheck(unsigned int dwData)

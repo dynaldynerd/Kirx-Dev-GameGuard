@@ -2,6 +2,8 @@
 
 #include "IdaCompat.h"
 
+struct _guild_honor_set_request_clzo;
+
 struct _guild_honor_list_result_zocl
 {
   struct __list
@@ -36,6 +38,7 @@ public:
   char CheckHonorGuild(unsigned __int8 byRace, unsigned int dwSerial);
   unsigned __int8 UpdateNextHonorGuild(unsigned __int8 byRace);
   unsigned __int8 UpdateChangeHonorGuild(unsigned __int8 byRace);
+  unsigned __int8 SetNextHonorGuild(unsigned __int8 byRace, _guild_honor_set_request_clzo *pRecv);
   void ChangeHonorGuild(unsigned __int8 byRace);
   void SendInformChange(unsigned __int8 byRace, unsigned __int16 wIndex);
   void UpdateHonorGuildMark(_guild_honor_list_result_zocl *pList, int bSet);

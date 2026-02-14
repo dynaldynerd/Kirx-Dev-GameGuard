@@ -11,6 +11,12 @@
 
 class CPlayer;
 struct _TRADE_DB_BASE;
+struct _a_trade_adjust_price_request_clzo;
+struct _a_trade_clear_item_request_clzo;
+struct _a_trade_reg_item_request_clzo;
+struct _unmannedtrader_buy_item_request_clzo;
+struct _unmannedtrader_re_regist_request_clzo;
+struct _unmannedtrader_search_list_request_clzo;
 
 class __cppobj CUnmannedTraderUserInfoTable
 {
@@ -20,6 +26,13 @@ public:
   CUnmannedTraderUserInfoTable();
   bool Init();
   bool Load(unsigned __int8 byType, unsigned __int16 wInx, unsigned int dwSerial, _TRADE_DB_BASE *kInfo);
+  bool CheckwIndexAndType(unsigned __int16 wInx, unsigned __int8 byType, const char *szCallFuncName);
+  void Regist(unsigned __int16 wInx, unsigned __int8 byType, _a_trade_reg_item_request_clzo *pRequest);
+  void ModifyPrice(unsigned __int16 wInx, unsigned __int8 byType, _a_trade_adjust_price_request_clzo *pRequest);
+  void CancelRegist(unsigned __int16 wInx, unsigned __int8 byType, _a_trade_clear_item_request_clzo *pRequest);
+  void Buy(unsigned __int16 wInx, unsigned __int8 byType, _unmannedtrader_buy_item_request_clzo *pRequest);
+  void Search(unsigned __int16 wInx, unsigned __int8 byType, _unmannedtrader_search_list_request_clzo *pRequest);
+  void ReRegist(unsigned __int16 wInx, unsigned __int8 byType, _unmannedtrader_re_regist_request_clzo *pRequest);
   void SetLogger(CLogFile *pkLogger, CLogFile *pkServiceLogger);
   CUnmannedTraderUserInfo *Find(unsigned int dwSerial);
   CUnmannedTraderUserInfo *FindByIndex(unsigned __int16 wInx);

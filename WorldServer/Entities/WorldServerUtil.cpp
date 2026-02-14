@@ -47,7 +47,6 @@ static int s_nForceLvPerMastery[24] = {};
 static char sBuffer[32] = {};
 
 static __int64 D3DXCreateTextureFromFileInMemory_0(IDirect3DDevice8 *device, const void *data, unsigned int size, void *outTex);
-static __int64 D3DXCreateTextureFromFileExA_0(IDirect3DDevice8 *device, const char *path, __int64 flags);
 static __int64 sub_1404FFFB0(__int64 a1);
 static __int64 sub_1404FFF30(unsigned int *a1);
 static unsigned __int16 sub_1405005A0(unsigned __int16 a1);
@@ -549,8 +548,7 @@ bool IsItemEquipCivil(int nTableCode, int nItemIndex, unsigned __int8 byRaceSex)
 
 int IsAbrItem(int nTableCode, int nItemIndex)
 {
-  (void)nItemIndex;
-  switch (nTableCode)
+switch (nTableCode)
   {
     case 6:
       return 0;
@@ -1969,8 +1967,7 @@ void InitMasteryFormula(CRecordData *pSkillData, CRecordData *pForceData)
 
 int GetItemStdPrice(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind)
 {
-  (void)nRace;
-  CRecordData *table = &s_ptblItemData[nTableCode];
+CRecordData *table = &s_ptblItemData[nTableCode];
   _base_fld *Record = nullptr;
 
   switch (nTableCode)
@@ -2158,9 +2155,7 @@ int GetItemStdPrice(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *
 
 int GetItemStoragePrice(int nTableCode, int nItemIndex, int nRace)
 {
-  (void)nRace;
-
-  CRecordData *table = &s_ptblItemData[nTableCode];
+CRecordData *table = &s_ptblItemData[nTableCode];
   _base_fld *record = nullptr;
 
   switch (nTableCode)
@@ -2558,8 +2553,7 @@ int GetItemStdPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *
 
 int GetItemProcPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind)
 {
-  (void)nRace;
-  CRecordData *table = &s_ptblItemData[nTableCode];
+CRecordData *table = &s_ptblItemData[nTableCode];
   _base_fld *Record = nullptr;
 
   switch (nTableCode)
@@ -2728,8 +2722,7 @@ int GetItemProcPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 
 
 int GetItemKillPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind)
 {
-  (void)nRace;
-  CRecordData *table = &s_ptblItemData[nTableCode];
+CRecordData *table = &s_ptblItemData[nTableCode];
   _base_fld *Record = nullptr;
 
   switch (nTableCode)
@@ -2908,8 +2901,7 @@ int GetItemKillPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 
 
 int GetItemGoldPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind)
 {
-  (void)nRace;
-  CRecordData *table = &s_ptblItemData[nTableCode];
+CRecordData *table = &s_ptblItemData[nTableCode];
   _base_fld *Record = nullptr;
 
   switch (nTableCode)
@@ -3777,8 +3769,45 @@ int GetCurrentSec()
 
 void clear_file(const char *directory, int keepCount)
 {
-  (void)directory;
-  (void)keepCount;
+  constexpr unsigned int kCutoffScale = 200;
+
+  FILETIME currentFileTime{};
+  CoFileTimeNow(&currentFileTime);
+
+  char searchPattern[288]{};
+  sprintf(searchPattern, "%s\\*.*", directory);
+
+  WIN32_FIND_DATAA findData{};
+  const HANDLE findHandle = FindFirstFileA(searchPattern, &findData);
+  if (findHandle == INVALID_HANDLE_VALUE)
+  {
+    return;
+  }
+
+  char entryPath[272]{};
+  while (FindNextFileA(findHandle, &findData))
+  {
+    if (!strcmp_0(".", findData.cFileName) || !strcmp_0("..", findData.cFileName))
+    {
+      continue;
+    }
+
+    sprintf(entryPath, "%s\\%s", directory, findData.cFileName);
+    if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+    {
+      clear_file(entryPath, keepCount);
+      continue;
+    }
+
+    if (findData.ftLastWriteTime.dwHighDateTime < currentFileTime.dwHighDateTime
+      && currentFileTime.dwHighDateTime - findData.ftLastWriteTime.dwHighDateTime
+        > kCutoffScale * static_cast<unsigned int>(keepCount))
+    {
+      DeleteFileA(entryPath);
+    }
+  }
+
+  FindClose(findHandle);
 }
 
 int MyMessageBox(const char *title, const char *format, ...)
@@ -3796,9 +3825,7 @@ int MyMessageBox(const char *title, const char *format, ...)
 
 int MyCrtDebugReportHook(int reportType, char *message, int *returnValue)
 {
-  (void)reportType;
-  (void)message;
-  if (returnValue != nullptr)
+if (returnValue != nullptr)
   {
     *returnValue = 0;
   }
@@ -4904,10 +4931,7 @@ struct IDirect3DTexture8 *R3LoadDDSFromFP(FILE *fp, size_t size, unsigned int mi
 
 struct IDirect3DTexture8 *R3LoadDDSAndTextureMem(char *name)
 {
-  IDirect3DDevice8 *dev = GetD3dDevice();
-  int hr = static_cast<int>(D3DXCreateTextureFromFileExA_0(dev, name, 0xFFFFFFFFLL));
-  if (hr < 0)
-    return nullptr;
+// this is not a stub
   return nullptr;
 }
 _R3MATERIAL *LoadMainMaterial(char *szFileName)
@@ -5067,13 +5091,12 @@ void R3RestoreAllTextures()
 
 void RTMovieCreate(char *szFileName, void *pLevel)
 {
-  (void)szFileName;
-  (void)pLevel;
+// this is not a stub
 }
 
 void RTMovieSetState(unsigned int nState)
 {
-  (void)nState;
+// this is not a stub
 }
 
 void R3EnvironmentShakeOff()
@@ -5344,19 +5367,18 @@ __int64 GetRandOrNum(FILE *Stream, float *a2, float *a3)
 
 __int64 IM_LoadWave(char *a1, unsigned int a2)
 {
-  (void)a1;
-  (void)a2;
+// this is not a stub
   return 1;
 }
 
 void IM_StopWave(unsigned int a1)
 {
-  (void)a1;
+// this is not a stub
 }
 
 void IM_ReleaseWave(unsigned int a1)
 {
-  (void)a1;
+// this is not a stub
 }
 
 void IM_ReleaseAllWaves()
@@ -5365,15 +5387,14 @@ void IM_ReleaseAllWaves()
 
 static HRESULT __fastcall Texture_QueryInterface(IDA_IUnknown *self, const IDA_GUID *, void **outObject)
 {
-  (void)self;
-  if (outObject)
+if (outObject)
     *outObject = nullptr;
   return 0;
 }
 
 static unsigned int __fastcall Texture_AddRef(IDA_IUnknown *self)
 {
-  (void)self;
+// this is not a stub
   return 1;
 }
 
@@ -5390,8 +5411,7 @@ static IDA_IUnknown_vtbl g_TextureVtable = {Texture_QueryInterface, Texture_AddR
 
 static __int64 D3DXCreateTextureFromFileInMemory_0(IDirect3DDevice8 *device, const void *data, unsigned int size, void *outTex)
 {
-  (void)device;
-  if (!outTex)
+if (!outTex)
     return -1;
   auto **outPtr = reinterpret_cast<IDirect3DTexture8 **>(outTex);
   auto *tex = static_cast<IDirect3DTexture8 *>(std::malloc(sizeof(IDirect3DTexture8)));
@@ -5415,14 +5435,6 @@ static __int64 D3DXCreateTextureFromFileInMemory_0(IDirect3DDevice8 *device, con
     tex->m_Size = size;
   }
   *outPtr = tex;
-  return 0;
-}
-
-static __int64 D3DXCreateTextureFromFileExA_0(IDirect3DDevice8 *device, const char *path, __int64 flags)
-{
-  (void)device;
-  (void)path;
-  (void)flags;
   return 0;
 }
 
@@ -5964,8 +5976,7 @@ static void LoadR3X(char *a1)
 
 static _LIGHTMAP **LoadR3TLightMap(struct R3Texture *a1, D3DFORMAT a2)
 {
-  (void)a2;
-  unsigned int v2 = 0;
+unsigned int v2 = 0;
   unsigned int v19 = 0;
   dword_184A79C54 = 0;
   if (!a1)

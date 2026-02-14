@@ -5,6 +5,7 @@
 #include <vector>
 
 class CUnmannedTraderDivisionInfo;
+class CUnmannedTraderSortType;
 
 class __cppobj CUnmannedTraderGroupIDInfo
 {
@@ -29,6 +30,13 @@ public:
     unsigned __int8 *byClass,
     unsigned __int8 *bySubClass,
     unsigned int *dwListIndex);
+  char IsExistGroupID(
+    unsigned __int8 byDivision,
+    unsigned __int8 byClass,
+    unsigned __int8 bySubClass,
+    unsigned __int8 bySortType,
+    unsigned int *dwListIndex);
+  CUnmannedTraderSortType *GetSortType(unsigned __int8 byDivision, unsigned __int8 bySortType);
   bool LoadXML(const char *szFileName);
 
   CLogFile *m_pkLogger;

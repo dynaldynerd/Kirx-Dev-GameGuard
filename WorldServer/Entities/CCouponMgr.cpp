@@ -1,100 +1,256 @@
 #include "pch.h"
 
 #include "CCouponMgr.h"
+
+#include "add_lend_item_result_zocl.h"
+#include "CNetProcess.h"
 #include "CNationSettingManager.h"
 #include "CTSingleton.h"
+#include "GlobalObjects.h"
 #include "KorLocalTime.h"
+#include "notify_cont_play_time_zocl.h"
+#include "notify_coupon_ensure_time_zocl.h"
+#include "notify_coupon_error_zocl.h"
+#include "notify_remain_coupon_zocl.h"
+#include "StorageList.h"
+#include "TimeItem.h"
 #include "WorldServerUtil.h"
 
 #include <cstdlib>
+#include <cstring>
 #include <ctime>
 
 void CCouponMgr::Init(unsigned __int16 wIdx)
 {
-  (void)wIdx;
+  CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
+  if (manager->GetNationCode() != 410)
+  {
+    return;
+  }
 
   m_tmrCheckConnMin.BeginTimer(0xEA60u);
+  const unsigned int minuteGap = m_dwContTime % 60u;
   m_tmrCouponEnableTime.BeginTimer(0x36EE80u);
-  if (m_byRemainTime > 5u)
+  if (minuteGap)
   {
-    m_byRemainTime = 5;
+    m_tmrCouponEnableTime.CountingAddTickOld(60000u * minuteGap);
   }
+
+  InitCuponInfo();
+  SendMsg_InPcBangTime(wIdx);
+  SendMsg_CouponEnsure(wIdx, m_byRemainTime);
+  SendMsg_RemainCouponInform(wIdx, static_cast<unsigned __int8>(5u - m_byReceiveCoupon));
   m_bTimeReset = false;
 }
 
 void CCouponMgr::ReceivePrimiumCoupon(unsigned __int16 wIdx)
 {
-  (void)wIdx;
-
-  if (!m_byRemainTime || m_byReceiveCoupon >= 5u)
+  CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
+  if (manager->GetNationCode() != 410)
   {
     return;
   }
 
-  unsigned __int8 toReceive = m_byRemainTime;
-  if (toReceive + m_byReceiveCoupon > 5u)
+  CPlayer *player = &g_Player[wIdx];
+  unsigned __int8 grantedCouponCount = 0;
+
+  if (!m_byRemainTime)
   {
-    toReceive = static_cast<unsigned __int8>(5u - m_byReceiveCoupon);
+    SendMsg_CouponError(wIdx, 1u);
+    return;
   }
 
-  m_byReceiveCoupon = static_cast<unsigned __int8>(m_byReceiveCoupon + toReceive);
-  m_byRemainTime = 0;
-
-  if (m_pkInfo)
+  if (m_byReceiveCoupon >= 5u)
   {
+    SendMsg_CouponError(wIdx, 2u);
+    return;
+  }
+
+  if (player->m_Param.m_dbInven.GetIndexEmptyCon() == 255)
+  {
+    SendMsg_CouponError(wIdx, 4u);
+    return;
+  }
+
+  if (m_byRemainTime + m_byReceiveCoupon <= 5u)
+  {
+    grantedCouponCount = m_byRemainTime;
+  }
+  else
+  {
+    grantedCouponCount = static_cast<unsigned __int8>(5u - m_byReceiveCoupon);
+  }
+
+  CouponInfo *couponInfo = GetCouponInfo(grantedCouponCount);
+  if (!couponInfo)
+  {
+    return;
+  }
+
+  _STORAGE_LIST::_db_con *loot = MakeLoot(couponInfo->byTableCode, static_cast<unsigned __int16>(couponInfo->dwIndex));
+  if (!loot)
+  {
+    return;
+  }
+
+  _STORAGE_LIST::_db_con couponData;
+  std::memcpy(&couponData, loot, sizeof(couponData));
+
+  const _TimeItem_fld *timeRecord = TimeItem::FindTimeRec(couponInfo->byTableCode, static_cast<unsigned __int16>(couponInfo->dwIndex));
+  if (timeRecord && timeRecord->m_nCheckType)
+  {
+    couponData.m_byCsMethod = static_cast<unsigned __int8>(timeRecord->m_nCheckType);
+    __time32_t currentTime{};
+    _time32(&currentTime);
+    couponData.m_dwT = static_cast<unsigned int>(timeRecord->m_nUseTime + currentTime);
+    couponData.m_dwDur = static_cast<unsigned int>(currentTime);
+  }
+
+  couponData.m_wSerial = player->m_Param.GetNewItemSerial();
+  if (player->Emb_AddStorage(0, reinterpret_cast<_STORAGE_LIST::_storage_con *>(&couponData), false, true))
+  {
+    SendMsg_CouponLendResult(wIdx, &couponData);
+    m_byRemainTime = 0;
+    SendMsg_InPcBangTime(wIdx);
+    m_byReceiveCoupon = static_cast<unsigned __int8>(m_byReceiveCoupon + grantedCouponCount);
     m_pkInfo->byReceiveCoupon = m_byReceiveCoupon;
     m_pkInfo->byEnsureTime = m_byRemainTime;
+
+    if (m_byReceiveCoupon == 5u)
+    {
+      SendMsg_CouponError(wIdx, 3u);
+    }
+    else
+    {
+      SendMsg_RemainCouponInform(wIdx, static_cast<unsigned __int8>(5u - m_byReceiveCoupon));
+    }
+  }
+  else
+  {
+    SendMsg_CouponError(wIdx, 5u);
   }
 }
 
 char CCouponMgr::SetCheetContTime(unsigned __int16 wIdx, int nMin)
 {
-  (void)wIdx;
-
   if (nMin)
   {
-    const unsigned __int8 prevHour = static_cast<unsigned __int8>(m_dwContTime / 60);
-    m_dwContTime += static_cast<unsigned int>(nMin);
-    if (m_dwContTime > 300)
+    const unsigned __int8 prevHour = static_cast<unsigned __int8>(m_dwContTime / 60u);
+    m_dwContTime += nMin;
+    const unsigned __int8 newHour = static_cast<unsigned __int8>(m_dwContTime / 60u);
+
+    if (m_dwContTime > 300u)
     {
       m_dwContTime = 300;
     }
 
-    const unsigned __int8 newHour = static_cast<unsigned __int8>(m_dwContTime / 60);
     m_tmrCheckConnMin.TermTimeRun();
     m_tmrCouponEnableTime.TermTimeRun();
-    m_tmrCouponEnableTime.BeginTimer(0x36EE80u);
+    m_tmrCouponEnableTime.CountingAddTickOld(60000u * (m_dwContTime % 60u));
 
     if (prevHour != newHour)
     {
-      m_byRemainTime = static_cast<unsigned __int8>(m_byRemainTime + (newHour - prevHour));
+      m_byRemainTime = static_cast<unsigned __int8>(m_byRemainTime + newHour - prevHour);
     }
+
     if (m_byRemainTime + m_byReceiveCoupon > 5u)
     {
       m_byRemainTime = static_cast<unsigned __int8>(5u - m_byReceiveCoupon);
     }
+
     if (m_byRemainTime > 5u)
     {
       m_byRemainTime = 5;
     }
-  }
-  else
-  {
-    m_dwContTime = 0;
-    m_byReceiveCoupon = 0;
-    m_byRemainTime = 0;
-    m_tmrCouponEnableTime.TermTimeRun();
-    m_tmrCheckConnMin.TermTimeRun();
+
+    SendMsg_InPcBangTime(wIdx);
+    SendMsg_CouponEnsure(wIdx, m_byRemainTime);
+    return 1;
   }
 
-  if (m_pkInfo)
-  {
-    m_pkInfo->dwContPlayTime = m_dwContTime;
-    m_pkInfo->byReceiveCoupon = m_byReceiveCoupon;
-    m_pkInfo->byEnsureTime = m_byRemainTime;
-  }
-
+  m_dwContTime = 0;
+  m_byReceiveCoupon = 0;
+  m_byRemainTime = 0;
+  m_tmrCouponEnableTime.TermTimeRun();
+  m_tmrCheckConnMin.TermTimeRun();
+  SendMsg_InPcBangTime(wIdx);
+  SendMsg_CouponEnsure(wIdx, m_byRemainTime);
+  SendMsg_RemainCouponInform(wIdx, static_cast<unsigned __int8>(5u - m_byReceiveCoupon));
   return 1;
+}
+
+void CCouponMgr::InitCuponInfo()
+{
+  for (int index = 0; index < 5; ++index)
+  {
+    _base_fld *record = g_Main.m_tblItemData[36].GetRecord(index);
+    if (record)
+    {
+      m_Coupon[index].byTableCode = 36;
+      m_Coupon[index].dwIndex = record->m_dwIndex;
+    }
+  }
+}
+
+CouponInfo *CCouponMgr::GetCouponInfo(unsigned __int8 byCouponTime)
+{
+  if (byCouponTime <= 5u)
+  {
+    return &m_Coupon[byCouponTime - 1];
+  }
+  return nullptr;
+}
+
+void CCouponMgr::SendMsg_InPcBangTime(unsigned __int16 wIdx)
+{
+  _notify_cont_play_time_zocl msg{};
+  msg.byContTime = static_cast<unsigned __int8>(m_dwContTime / 60u);
+  msg.byContMin = static_cast<unsigned __int8>(m_dwContTime % 60u);
+
+  unsigned __int8 type[2]{59, 7};
+  g_Network.m_pProcess[0]->LoadSendMsg(wIdx, type, reinterpret_cast<char *>(&msg), msg.size());
+}
+
+void CCouponMgr::SendMsg_CouponEnsure(unsigned __int16 wIdx, unsigned __int8 byCouponTime)
+{
+  _notify_coupon_ensure_time_zocl msg{};
+  msg.byCouponTime = byCouponTime;
+
+  unsigned __int8 type[2]{59, 6};
+  g_Network.m_pProcess[0]->LoadSendMsg(wIdx, type, reinterpret_cast<char *>(&msg), msg.size());
+}
+
+void CCouponMgr::SendMsg_RemainCouponInform(unsigned __int16 wIdx, unsigned __int8 byRemainCoupon)
+{
+  _notify_remain_coupon_zocl msg{};
+  msg.byRemainCoupon = byRemainCoupon;
+
+  unsigned __int8 type[2]{59, 9};
+  g_Network.m_pProcess[0]->LoadSendMsg(wIdx, type, reinterpret_cast<char *>(&msg), msg.size());
+}
+
+void CCouponMgr::SendMsg_CouponError(unsigned __int16 wIdx, unsigned __int8 byRet)
+{
+  _notify_coupon_error_zocl msg{};
+  msg.byRetCode = byRet;
+
+  unsigned __int8 type[2]{59, 8};
+  g_Network.m_pProcess[0]->LoadSendMsg(wIdx, type, reinterpret_cast<char *>(&msg), msg.size());
+}
+
+void CCouponMgr::SendMsg_CouponLendResult(unsigned __int16 wIdx, _STORAGE_LIST::_db_con *pCoupon)
+{
+  _add_lend_item_result_zocl msg{};
+  msg.byTblCode = pCoupon->m_byTableCode;
+  msg.wItemIdx = pCoupon->m_wItemIndex;
+  msg.dwDur = pCoupon->m_dwDur;
+  msg.dwUp = pCoupon->m_dwLv;
+  msg.dwItemSerial = pCoupon->m_wSerial;
+  msg.byCsMethod = pCoupon->m_byCsMethod;
+  msg.dwT = pCoupon->m_dwT;
+
+  unsigned __int8 type[2]{7, 69};
+  g_Network.m_pProcess[0]->LoadSendMsg(wIdx, type, reinterpret_cast<char *>(&msg), msg.size());
 }
 
 void CCouponMgr::LoadData(unsigned int dwAccSerial, _PCBANG_PLAY_TIME *pkInfo)
@@ -155,8 +311,6 @@ void CCouponMgr::LoadData(unsigned int dwAccSerial, _PCBANG_PLAY_TIME *pkInfo)
     m_byRemainTime = 0;
     m_pkInfo->byEnsureTime = 0;
   }
-
-  (void)dwAccSerial;
 }
 
 void CCouponMgr::LogOut(bool bForceClose)
@@ -164,14 +318,13 @@ void CCouponMgr::LogOut(bool bForceClose)
   CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
   if (manager->GetNationCode() == 410)
   {
-    if (this->m_pkInfo)
+    if (m_pkInfo)
     {
-      this->m_pkInfo->bForcedClose = bForceClose;
-      this->m_pkInfo->dwContPlayTime = this->m_dwContTime;
-      this->m_pkInfo->dwLastConnTime = GetKorLocalTime();
-      this->m_pkInfo->byReceiveCoupon = this->m_byReceiveCoupon;
-      this->m_pkInfo->byEnsureTime = this->m_byRemainTime;
+      m_pkInfo->bForcedClose = bForceClose;
+      m_pkInfo->dwContPlayTime = m_dwContTime;
+      m_pkInfo->dwLastConnTime = GetKorLocalTime();
+      m_pkInfo->byReceiveCoupon = m_byReceiveCoupon;
+      m_pkInfo->byEnsureTime = m_byRemainTime;
     }
   }
 }
-

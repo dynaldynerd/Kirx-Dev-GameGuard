@@ -534,8 +534,7 @@ bool CheckSameItem(
   unsigned __int8 *selectedLinkIndex,
   bool checkStuffTable)
 {
-  (void)checkStuffTable;
-  if (!linkItemCode || !dstItemCode)
+if (!linkItemCode || !dstItemCode)
   {
     return false;
   }
@@ -650,9 +649,7 @@ bool DestroyCombineItem(
   _combine_ex_item_request_clzo::_list *materialRequest,
   int socketIndex)
 {
-  (void)master;
-  (void)socketIndex;
-  if (!item || !savedItem || !materialRequest)
+if (!item || !savedItem || !materialRequest)
   {
     return false;
   }
@@ -4768,9 +4765,7 @@ void CPlayer::Emb_AlterStat(
   const char *strErrorCodePos,
   bool bNoUseExpMasteryBonus)
 {
-  (void)bNoUseExpMasteryBonus;
-
-  if (!dwAlter || (!byReason && this->m_bInGuildBattle))
+if (!dwAlter || (!byReason && this->m_bInGuildBattle))
   {
     return;
   }
@@ -5505,9 +5500,7 @@ void CPlayer::pc_DarkHoleAnswerReenterRequest(
   unsigned __int16 wChannelIndex,
   unsigned int dwChannelSerial)
 {
-  (void)bEnter;
-
-  unsigned __int8 errCode = 0;
+unsigned __int8 errCode = 0;
   _ENTER_DUNGEON_NEW_POS newPos{};
   CDarkHoleChannel *channel = g_DarkHoleQuest.GetChannel(wChannelIndex);
 
@@ -6003,9 +5996,7 @@ void CPlayer::SendMsg_Circle_DelEffect(
   unsigned __int8 byLv,
   bool bToOne)
 {
-  (void)byLv;
-
-  #pragma pack(push, 1)
+#pragma pack(push, 1)
   struct CircleDelEffectMsg
   {
     unsigned __int16 wEffectBit;
@@ -8227,9 +8218,7 @@ void CPlayer::SendMsg_AnimusInvenChange(char byErrCode)
 
 void CPlayer::pc_ResSeparation(unsigned __int16 wStartSerial, unsigned __int8 byMoveAmount)
 {
-  (void)wStartSerial;
-  (void)byMoveAmount;
-  SendMsg_ResSeparation(1u, nullptr, nullptr);
+SendMsg_ResSeparation(1u, nullptr, nullptr);
 }
 
 void CPlayer::pc_PotionSeparation(unsigned __int16 wSerial, unsigned __int8 byAmount)
@@ -9848,56 +9837,20 @@ void CPlayer::pc_GuildRoomOutRequest(_guildroom_out_request_clzo *pProtocol)
 void CPlayer::pc_GuildSetHonorRequest(_guild_honor_set_request_clzo *pData)
 {
   const unsigned int charSerial = this->m_Param.GetCharSerial();
-  const unsigned __int8 raceCode = static_cast<unsigned __int8>(this->m_Param.GetRaceCode());
+  const int raceCode = this->m_Param.GetRaceCode();
   const unsigned int raceBossSerial =
     CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(raceCode, 0);
 
   if (charSerial == raceBossSerial)
   {
-    CHonorGuild *honorGuild = CHonorGuild::Instance();
-    _guild_honor_list_result_zocl *nextList = honorGuild->m_pNextHonorGuild[raceCode];
-    if (!nextList)
-    {
-      this->SendMsg_GuildSetHonorResult(1);
-      return;
-    }
-
-    std::memset(nextList, 0, sizeof(*nextList));
-    unsigned __int8 listNum = pData ? pData->byListNum : 0;
-    if (listNum > 5u)
-    {
-      listNum = 5;
-    }
-
-    for (unsigned __int8 listIndex = 0; listIndex < listNum; ++listIndex)
-    {
-      CGuild *guild = GetGuildPtrFromName(g_Guild, MAX_GUILD, pData->GuildList[listIndex].wszGuildName);
-      if (!guild || !guild->IsFill() || guild->m_byRace != raceCode)
-      {
-        this->SendMsg_GuildSetHonorResult(1);
-        return;
-      }
-
-      _guild_honor_list_result_zocl::__list *dst = &nextList->GuildList[listIndex];
-      dst->dwGuildSerial = guild->m_dwSerial;
-      dst->dwEmblemBack = guild->m_dwEmblemBack;
-      dst->dwEmblemMark = guild->m_dwEmblemMark;
-      strcpy_0(dst->wszGuildName, guild->m_wszName);
-      if (guild->m_MasterData.pMember)
-      {
-        strcpy_0(dst->wszMasterName, guild->m_MasterData.pMember->wszName);
-      }
-      dst->byTaxRate = pData->GuildList[listIndex].byTaxRate;
-    }
-
-    nextList->byListNum = listNum;
-    honorGuild->m_bNext[raceCode] = listNum > 0;
-    const unsigned __int8 result = honorGuild->UpdateNextHonorGuild(raceCode);
+    const unsigned __int8 result =
+      CHonorGuild::Instance()->SetNextHonorGuild(static_cast<unsigned __int8>(raceCode), pData);
     this->SendMsg_GuildSetHonorResult(static_cast<char>(result));
-    return;
   }
-
-  this->SendMsg_GuildSetHonorResult(1);
+  else
+  {
+    this->SendMsg_GuildSetHonorResult(1u);
+  }
 }
 
 void CPlayer::pc_BuddyDelRequest(unsigned int dwSerial)
@@ -9931,9 +9884,7 @@ void CPlayer::SendMsg_CuttingCompleteResult(unsigned __int8 byRet)
 
 void CPlayer::pc_CuttingComplete(unsigned __int8 byNpcRace)
 {
-  (void)byNpcRace;
-
-  unsigned __int64 addGold = 0;
+unsigned __int64 addGold = 0;
   const unsigned int texRate = 10000 - eGetTexRate(this->m_Param.GetRaceCode());
   bool hasResource = false;
 
@@ -10021,9 +9972,7 @@ void CPlayer::pc_AnimusTargetRequest(
   unsigned __int16 wObjectIndex,
   unsigned int dwObjectSerial)
 {
-  (void)dwObjectSerial;
-
-  unsigned __int8 result = 0;
+unsigned __int8 result = 0;
   CCharacter *target = reinterpret_cast<CCharacter *>(g_Main.GetObjectA(0, byObjectID, wObjectIndex));
   if (!this->m_pRecalledAnimusItem || !this->m_pRecalledAnimusChar)
   {
@@ -12583,9 +12532,7 @@ unsigned __int8 ItemCombineMgr::MakeNewItems(
   _combine_ex_item_accept_request_clzo *pRecv,
   _combine_ex_item_accept_result_zocl *pSend)
 {
-  (void)pSend;
-
-  int selectedCount = pRecv->SelectItemBuff.bySelectNum >= 0x18u ? 24 : pRecv->SelectItemBuff.bySelectNum;
+int selectedCount = pRecv->SelectItemBuff.bySelectNum >= 0x18u ? 24 : pRecv->SelectItemBuff.bySelectNum;
   if (selectedCount >= pPlayerItemDB->m_bySelectItemCount)
   {
     selectedCount = pPlayerItemDB->m_bySelectItemCount;
@@ -12710,10 +12657,7 @@ unsigned __int8 ItemCombineMgr::MakeNewItems(
       m_pMaster->SendMsg_FanfareItem(1u, &rewardItem, nullptr);
     }
   }
-
-  (void)rewardTypeList;
-  (void)rewardUIDList;
-  return 0;
+return 0;
 }
 
 char ItemCombineMgr::ConsumeMeterial_And_CalculateNewItems(
@@ -13695,9 +13639,7 @@ void CPlayer::pc_SelectQuestReward(
 
 void CPlayer::pc_GuildCancelSuggestRequest(unsigned int dwMatterVoteSynKey)
 {
-  (void)dwMatterVoteSynKey;
-
-  unsigned __int8 resultCode = 0;
+unsigned __int8 resultCode = 0;
   CGuild *guild = m_Param.m_pGuild;
   if (!guild)
   {
@@ -15933,9 +15875,7 @@ float CPlayer::GetDefGap(int nPart)
 
 __int64 CPlayer::GetDefSkill(bool bBackAttackDamage)
 {
-  (void)bBackAttackDamage;
-
-  if (!IsRidingUnit())
+if (!IsRidingUnit())
   {
     return m_pmMst.GetMasteryPerMast(1u, 0u);
   }
@@ -16224,8 +16164,6 @@ void CPlayer::Loop()
   {
     m_Param.m_bTrunkOpen = false;
   }
-
-  (void)m_tmrPremiumPVPInform;
 }
 
 void CPlayer::OutOfSec()
@@ -16339,10 +16277,7 @@ __int64 CPlayer::SetDamage(
   unsigned int dwAttackSerial,
   bool bJadeReturn)
 {
-  (void)nAttackType;
-  (void)dwAttackSerial;
-
-  if (m_bCorpse || m_bMapLoading || CGameObject::GetCurSecNum() == static_cast<unsigned int>(-1))
+if (m_bCorpse || m_bMapLoading || CGameObject::GetCurSecNum() == static_cast<unsigned int>(-1))
   {
     return static_cast<unsigned int>(m_Param.GetHP());
   }

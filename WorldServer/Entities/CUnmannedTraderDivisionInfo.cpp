@@ -245,6 +245,59 @@ bool CUnmannedTraderDivisionInfo::GetGroupID(
   return false;
 }
 
+char CUnmannedTraderDivisionInfo::IsExistGroupID(
+  unsigned __int8 byDivision,
+  unsigned __int8 byClass,
+  unsigned __int8 bySubClass,
+  unsigned __int8 bySortType,
+  unsigned int *dwListIndex)
+{
+  *dwListIndex = 0;
+  if (this->m_dwID != byDivision)
+  {
+    return 0;
+  }
+  if (bySortType == 0xFFu)
+  {
+    return this->m_vecSortType.empty() ? 1 : 0;
+  }
+  if (!IsExistSortTypeID(bySortType))
+  {
+    return 0;
+  }
+
+  unsigned int classIndex = 0;
+  for (CUnmannedTraderClassInfo *info : this->m_vecClass)
+  {
+    if (info && info->IsExistGroupID(byClass, bySubClass))
+    {
+      *dwListIndex = classIndex;
+      return 1;
+    }
+    ++classIndex;
+  }
+
+  return 0;
+}
+
+CUnmannedTraderSortType *CUnmannedTraderDivisionInfo::GetSortType(unsigned __int8 bySortType)
+{
+  if (bySortType == 0xFFu || this->m_vecSortType.empty())
+  {
+    return nullptr;
+  }
+
+  for (CUnmannedTraderSortType *sortType : this->m_vecSortType)
+  {
+    if (sortType && sortType->GetID() == bySortType)
+    {
+      return sortType;
+    }
+  }
+
+  return nullptr;
+}
+
 bool CUnmannedTraderDivisionInfo::GetGroupID(
   unsigned __int8 byTableCode,
   unsigned __int16 wItemTableIndex,

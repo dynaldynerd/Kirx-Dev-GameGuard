@@ -31,6 +31,19 @@ bool CUnmannedTraderGroupVersionInfo::Init(std::vector<std::pair<unsigned long, 
   return this->m_vecVerInfo.size() == vecInfo->size();
 }
 
+bool CUnmannedTraderGroupVersionInfo::GetVersion(
+  unsigned __int8 byDivision,
+  unsigned __int8 byClass,
+  unsigned int *dwVer)
+{
+  if (this->m_vecVerInfo.size() <= byDivision)
+  {
+    return false;
+  }
+
+  return this->m_vecVerInfo[byDivision].GetVersion(byClass, dwVer) != 0;
+}
+
 bool CUnmannedTraderGroupVersionInfo::IncreaseVersion(unsigned __int8 byDivision, unsigned __int8 byClass)
 {
   if (this->m_vecVerInfo.size() <= byDivision)

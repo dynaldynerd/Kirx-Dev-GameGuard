@@ -71,3 +71,9 @@ public:
 };
 
 extern CPotionMgr g_PotionMgr;
+
+bool __fastcall DE_Potion_CharReName(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 *byRet);

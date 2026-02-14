@@ -146,8 +146,7 @@ BossSchedule_Map *CBossMonsterScheduleSystem::MakeMap(int nIndex, CMapData *pMap
         }
       }
     }
-    (void)blockRec;
-  }
+}
 
   if (!scheduleCount)
   {
@@ -197,8 +196,7 @@ BossSchedule_Map *CBossMonsterScheduleSystem::MakeMap(int nIndex, CMapData *pMap
         }
       }
     }
-    (void)blockRec;
-  }
+}
 
   DeleteFileA(iniPath);
   mapSchedule->SaveAll();

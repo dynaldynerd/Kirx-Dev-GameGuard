@@ -2568,8 +2568,7 @@ void CPlayer::SendMsg_MovePortal(
   float *pfStartPos,
   bool bEqualZone)
 {
-  (void)byPotalIndex;
-  unsigned __int8 msg[15]{};
+unsigned __int8 msg[15]{};
   msg[0] = static_cast<unsigned __int8>(byRet);
   msg[1] = static_cast<unsigned __int8>(byMapIndex);
   memcpy_0(msg + 2, pfStartPos, 12);
@@ -7795,9 +7794,7 @@ void CPlayer::HideNameEffect(bool bAdd)
 
 void CPlayer::SetEquipJadeEffect(int nParam, float fCurVal, bool bAdd)
 {
-  (void)nParam;
-
-  for (int slotIndex = 0; slotIndex < 7; ++slotIndex)
+for (int slotIndex = 0; slotIndex < 7; ++slotIndex)
   {
     _STORAGE_LIST::_db_con *item = &m_Param.m_pStoragePtr[1]->m_pStorageList[slotIndex];
     if (item && item->m_bLoad)
@@ -8035,8 +8032,7 @@ void CPlayer::SendMsg_AlterContEffectTime(unsigned __int8 byContType)
     if (cont->m_bExist)
     {
       _base_fld *record = g_Main.m_tblEffectData[cont->m_byEffectCode].GetRecord(cont->m_wEffectIndex);
-      (void)record;
-      const unsigned __int16 effectCode = CalcEffectBit(cont->m_byEffectCode, cont->m_wEffectIndex);
+const unsigned __int16 effectCode = CalcEffectBit(cont->m_byEffectCode, cont->m_wEffectIndex);
       msg.List[effectCount].wEffectCode = effectCode;
       const unsigned int elapsed = curTime - cont->m_dwStartSec;
       msg.List[effectCount].zLeftSec = static_cast<__int16>(cont->m_wDurSec - elapsed);
@@ -8695,10 +8691,7 @@ int CPlayer::_CalcMaxSP()
 
 void CPlayer::ReCalcMaxHFSP(bool bSend, bool bRatio)
 {
-  (void)bSend;
-  (void)bRatio;
-
-  m_nMaxPoint[0] = _CalcMaxHP();
+m_nMaxPoint[0] = _CalcMaxHP();
   m_nMaxPoint[1] = _CalcMaxFP();
   m_nMaxPoint[2] = _CalcMaxSP();
 }
@@ -12305,8 +12298,7 @@ Result:
         SendMsg_SellItemStoreResult(pStore, 0xFFu);
         return;
       }
-      (void)storageItem;
-    }
+}
 
     if (!m_byUserDgr)
     {
@@ -12595,8 +12587,7 @@ void CPlayer::SendMsg_StartNewPos(char byMapInMode)
 
 void CPlayer::SendMsg_ExitWorldResult(unsigned __int8 byRetCode)
 {
-  (void)byRetCode;
-  char szMsg[32];
+char szMsg[32];
 
   unsigned __int8 pbyType[2] = {3, 42};
   g_Network.m_pProcess[0]->LoadSendMsg( this->m_ObjID.m_wIndex, pbyType, szMsg, 1u);
@@ -13542,9 +13533,7 @@ void CPlayer::CheckGroupMapPoint()
 
 void CPlayer::pc_Revival(bool bUseableJade)
 {
-  (void)bUseableJade;
-
-  if (!this->m_pUserDB)
+if (!this->m_pUserDB)
   {
     return;
   }
@@ -16642,9 +16631,7 @@ char CPlayer::IsSFActableByClass(unsigned __int8 byEffectCode, _base_fld *pSFFld
 
 unsigned __int8 CPlayer::_GetPartyMemberInCircle(CPlayer **out_ppMember, int nMax, bool bOne)
 {
-  (void)nMax;
-
-  if (!m_pPartyMgr)
+if (!m_pPartyMgr)
   {
     return 0;
   }
@@ -21946,10 +21933,7 @@ void CPlayer::SendMsg_TalikCrystalExchangeResult(
   unsigned __int8 byExchangeNum,
   _STORAGE_LIST::_db_con *pNewItem)
 {
-  (void)byRet;
-  (void)byExchangeNum;
-  (void)pNewItem;
-  // this is not a stub
+// this is not a stub
 }
 
 void CPlayer::SendMsg_CharacterRenameCashResult(char bChange, char byErrCode)
@@ -23184,8 +23168,7 @@ RESULT:
       newItem.m_wItemIndex = makeItemRecord->m_dwIndex;
       newItem.m_dwDur = GetItemDurPoint(tableCode, makeItemRecord->m_dwIndex);
       const unsigned __int8 itemKindCode = GetItemKindCode(tableCode);
-      (void)itemKindCode;
-      const unsigned __int8 defSocketNum = GetDefItemUpgSocketNum(tableCode, makeItemRecord->m_dwIndex);
+const unsigned __int8 defSocketNum = GetDefItemUpgSocketNum(tableCode, makeItemRecord->m_dwIndex);
       unsigned __int8 socketCount = 0;
       if (defSocketNum)
       {
@@ -23780,9 +23763,7 @@ void CPlayer::pc_DowngradeItem(
           m_szItemHistoryFileName);
       }
     }
-
-    (void)talikSnapshot;
-    CPlayer::s_MgrItemHistory.grade_down_item(m_ObjID.m_wIndex,
+CPlayer::s_MgrItemHistory.grade_down_item(m_ObjID.m_wIndex,
       &itemSnapshot,
       talikItem,
       upgradeItem->m_dwLv,
@@ -24333,8 +24314,7 @@ RESULT_EXCHANGE:
       newItem.m_dwDur = GetItemDurPoint(static_cast<unsigned __int8>(newTableCode), outItemRecord->m_dwIndex);
     }
     const unsigned __int8 itemKindCode = GetItemKindCode(static_cast<unsigned __int8>(newTableCode));
-    (void)itemKindCode;
-    const unsigned __int8 defSocketNum =
+const unsigned __int8 defSocketNum =
       GetDefItemUpgSocketNum(static_cast<unsigned __int8>(newTableCode), outItemRecord->m_dwIndex);
     unsigned __int8 socketCount = 0;
     if (defSocketNum)
@@ -25178,10 +25158,7 @@ void CPlayer::ApplySetItemEffect(
   unsigned __int8 bySetEffectNum,
   bool bSetEffect)
 {
-  (void)dwSetItem;
-  (void)bySetItemNum;
-
-  for (unsigned __int8 idx = 0; idx < bySetEffectNum; ++idx)
+for (unsigned __int8 idx = 0; idx < bySetEffectNum; ++idx)
   {
     const int effCode = pSI->GetEffectCode(idx);
     const float effValue = pSI->GetEffectValue(idx);
@@ -25595,8 +25572,6 @@ void CPlayer::SendMsg_UpdateTLStatusInfo(unsigned int dwFatigue, unsigned __int8
   pbyType[0] = 13;
   pbyType[1] = static_cast<unsigned __int8>(-112);
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(msg), 0xEu);
-  (void)dwFatigue;
-  (void)wStatus;
 }
 
 void CPlayer::SendMsg_RaceTopInform(char bTop)

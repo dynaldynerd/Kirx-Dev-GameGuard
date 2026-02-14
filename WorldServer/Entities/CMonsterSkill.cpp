@@ -107,8 +107,7 @@ __int64 CMonsterSkill::SetSkill(
   }
   m_MaxDmg = 2 * m_StdDmg - m_MinDmg;
   const float damageRatio = static_cast<float>(m_MaxDmg + 125) / static_cast<float>(m_MaxDmg + 50);
-  (void)damageRatio;
-  m_MinProb = static_cast<int>(pMonsterFld->m_fMinAFSelProb);
+m_MinProb = static_cast<int>(pMonsterFld->m_fMinAFSelProb);
   m_MaxProb = static_cast<int>(pMonsterFld->m_fMaxAFSelProb);
   if (nEffectType)
   {
@@ -168,8 +167,7 @@ __int64 CMonsterSkill::SetForce(
   }
   m_MaxDmg = 2 * m_StdDmg - m_MinDmg;
   const float damageRatio = static_cast<float>(m_MaxDmg + 125) / static_cast<float>(m_MaxDmg + 50);
-  (void)damageRatio;
-  m_MinProb = static_cast<int>(pMonsterFld->m_fMinAFSelProb);
+m_MinProb = static_cast<int>(pMonsterFld->m_fMinAFSelProb);
   m_MaxProb = static_cast<int>(pMonsterFld->m_fMaxAFSelProb);
   m_UseType = _Check_SF_UseType(pForceFld, 1);
   m_nMotive = nMotive;
@@ -207,8 +205,7 @@ __int64 CMonsterSkill::SetGen(
   }
   m_MaxDmg = 2 * m_StdDmg - m_MinDmg;
   const float damageRatio = static_cast<float>(m_MaxDmg + 125) / static_cast<float>(m_MaxDmg + 50);
-  (void)damageRatio;
-  m_MinProb = static_cast<int>(pMonsterFld->m_fMinAFSelProb);
+m_MinProb = static_cast<int>(pMonsterFld->m_fMinAFSelProb);
   m_MaxProb = static_cast<int>(pMonsterFld->m_fMaxAFSelProb);
   m_UseType = 0;
   m_nMotive = 0;

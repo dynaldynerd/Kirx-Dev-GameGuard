@@ -16,5 +16,8 @@ public:
   int m_nResNum;
   unsigned __int16 *m_pwResIndex;
   virtual ~CItemUpgradeTable() = default;
+
+private:
+  bool Indexing(CRecordData *resTable, char *errCode);
 };
 

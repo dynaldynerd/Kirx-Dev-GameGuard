@@ -7,6 +7,7 @@
 
 #include "CAsyncLogger.h"
 #include "CNetProcess.h"
+#include "CNationSettingManager.h"
 #include "CPvpUserAndGuildRankingSystem.h"
 #include "CPlayer.h"
 #include "CGuild.h"
@@ -14,8 +15,11 @@
 #include "CMgrGuildHistory.h"
 #include "CRFNewDatabase.h"
 #include "CRFWorldDatabase.h"
+#include "CTSingleton.h"
 #include "DqsDbStructs.h"
 #include "GlobalObjects.h"
+#include "WorldServerUtil.h"
+#include "guild_honor_set_request_clzo.h"
 #include "qry_case_in_atrade_tax.h"
 
 _guild_honor_list_result_zocl::_guild_honor_list_result_zocl()
@@ -248,6 +252,67 @@ unsigned __int8 CHonorGuild::UpdateChangeHonorGuild(unsigned __int8 byRace)
 
   sprintf(buffer, "{ CALL pUpdate_ChangeHonorGuild ( %d )}", byRace);
   return g_Main.m_pWorldDB->ExecUpdateQuery(buffer, 0) ? 0 : 24;
+}
+
+unsigned __int8 CHonorGuild::SetNextHonorGuild(unsigned __int8 byRace, _guild_honor_set_request_clzo *pRecv)
+{
+  unsigned int totalTaxRate = 0;
+  _guild_honor_list_result_zocl nextList{};
+  for (int index = 0; index < pRecv->byListNum; ++index)
+  {
+    if (!IsSQLValidString(pRecv->GuildList[index].wszGuildName))
+    {
+      g_Main.m_logSystemError.Write(
+        "CHonorGuild::SetNextHonorGuild() : !::IsSQLValidString( pRecv->GuildList[i].wszGuildName(%s) ) Invalid!",
+        pRecv->GuildList[index].wszGuildName);
+      return 3;
+    }
+
+    CGuild *guild = GetGuildPtrFromName(g_Guild, MAX_GUILD, pRecv->GuildList[index].wszGuildName);
+    if (!guild)
+    {
+      return 3;
+    }
+
+    strcpy_0(nextList.GuildList[index].wszGuildName, pRecv->GuildList[index].wszGuildName);
+    nextList.GuildList[index].byTaxRate = pRecv->GuildList[index].byTaxRate;
+    nextList.GuildList[index].dwGuildSerial = guild->m_dwSerial;
+    nextList.GuildList[index].dwEmblemBack = guild->m_dwEmblemBack;
+    nextList.GuildList[index].dwEmblemMark = guild->m_dwEmblemMark;
+    if (guild->m_MasterData.pMember)
+    {
+      strcpy_0(nextList.GuildList[index].wszMasterName, guild->m_MasterData.pMember->wszName);
+    }
+    else
+    {
+      const char *noneString = CTSingleton<CNationSettingManager>::Instance()->GetNoneString();
+      strcpy_0(nextList.GuildList[index].wszMasterName, noneString);
+    }
+    ++nextList.byListNum;
+    totalTaxRate += pRecv->GuildList[index].byTaxRate;
+  }
+
+  if (totalTaxRate > 0x32)
+  {
+    return 2;
+  }
+
+  memcpy_0(m_pNextHonorGuild[byRace], &nextList, sizeof(_guild_honor_list_result_zocl));
+  m_bNext[byRace] = true;
+  _qry_case_update_honor_guild query{};
+  query.byRace = byRace;
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x86u, reinterpret_cast<char *>(&query), static_cast<int>(query.size()));
+
+  for (int index = 0; index < nextList.byListNum; ++index)
+  {
+    CAsyncLogger::Instance()->FormatLog(
+      8,
+      "Set Next Honor Guild (RACE:%d) : (%s:%d%%)",
+      byRace,
+      nextList.GuildList[index].wszGuildName,
+      nextList.GuildList[index].byTaxRate);
+  }
+  return 0;
 }
 
 void CHonorGuild::ChangeHonorGuild(unsigned __int8 byRace)

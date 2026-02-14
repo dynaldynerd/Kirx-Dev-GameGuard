@@ -74,6 +74,31 @@ bool CUnmannedTraderGroupItemInfoTable::GetGroupID(
   return m_kGroupIDInfo.GetGroupID(byTableCode, wItemTableIndex, byDivision, byClass, bySubClass, dwListIndex);
 }
 
+bool CUnmannedTraderGroupItemInfoTable::GetVersion(
+  unsigned __int8 byDivision,
+  unsigned __int8 byClass,
+  unsigned int *dwVer)
+{
+  return this->m_kVerInfo.GetVersion(byDivision, byClass, dwVer);
+}
+
+bool CUnmannedTraderGroupItemInfoTable::IsExistGroupID(
+  unsigned __int8 byDivision,
+  unsigned __int8 byClass,
+  unsigned __int8 bySubClass,
+  unsigned __int8 bySortType,
+  unsigned int *dwListIndex)
+{
+  return this->m_kGroupIDInfo.IsExistGroupID(byDivision, byClass, bySubClass, bySortType, dwListIndex) != 0;
+}
+
+CUnmannedTraderSortType *CUnmannedTraderGroupItemInfoTable::GetSortType(
+  unsigned __int8 byDivision,
+  unsigned __int8 bySortType)
+{
+  return this->m_kGroupIDInfo.GetSortType(byDivision, bySortType);
+}
+
 char CUnmannedTraderGroupItemInfoTable::IncreaseVersion(unsigned __int8 byTableCode, unsigned __int16 wItemTableIndex)
 {
   if (byTableCode == 0xFF || wItemTableIndex == 0xFFFF)

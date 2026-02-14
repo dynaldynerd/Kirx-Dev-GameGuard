@@ -41,6 +41,7 @@ public:
   void ChangeTaxRate();
   __int64 ChangeTaxRate(float fNewTaxRate);
   void PushDQSData();
+  void PushDQSData_GuildInMoney(unsigned int dwRetPrice, unsigned int dwSeller);
   void his_income_money();
   void AddGDalant(char *pdata);
   unsigned int CalcPrice(unsigned int nGuildSerial, unsigned int nPrice);

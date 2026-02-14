@@ -66,8 +66,7 @@ char CPvpOrderView::SetPvpOrderView(long double dPvpPoint, _PVP_ORDER_VIEW_DB_BA
   Update_RaceWarRecvr(false);
   ResetPvPOrderView();
   m_dOriginalPvpPoint = pkInfo->dPvpPoint;
-  (void)pOne;
-  return 1;
+return 1;
 }
 
 void CPvpOrderView::UpdatePvpCash(double dPvpCash)

@@ -219,8 +219,7 @@ bool CIniFile::SplitKey(unsigned __int8 *strBase, unsigned __int8 *strKey, int n
     strKey[j] = strBase[j];
   }
   strKey[j] = 0;
-  (void)nKeyLen;
-  return true;
+return true;
 }
 
 INI_Section *CIniFile::GetSection(unsigned int dwIndex)

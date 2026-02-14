@@ -275,9 +275,7 @@ void Voter::_SendVoteScore(CPlayer *player)
 
 void Voter::_SetVoteScoreInfo(unsigned __int8 raceCode, char *candidateName, bool abstention)
 {
-  (void)candidateName;
-
-  const int totalVoteCount = PatriarchElectProcessor::Instance()->m_dwTotalVoteCnt[raceCode];
+const int totalVoteCount = PatriarchElectProcessor::Instance()->m_dwTotalVoteCnt[raceCode];
   const int nonVoteCount = PatriarchElectProcessor::Instance()->m_dwNonvoteCnt[raceCode];
   const int totalCount = totalVoteCount + nonVoteCount;
 

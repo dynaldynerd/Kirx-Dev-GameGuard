@@ -25,12 +25,18 @@
 #include "CPlayerDB.h"
 #include "CRecordData.h"
 #include "CGuild.h"
+#include "CGuildBattleController.h"
 #include "GlobalObjects.h"
 #include "CUnmannedTraderEnvironmentValue.h"
 #include "StorageList.h"
 #include "WorldServerUtil.h"
 #include "base_fld.h"
 #include "qry_case_updatereservedschedule.h"
+#include "qry_case_updateclearguildbattleDayInfo.h"
+#include "qry_case_addpvppoint.h"
+#include "qry_case_updatewinloseguildbattlerank.h"
+#include "qry_case_updatedrawguildbattlerank.h"
+#include "qry_case_guild_battel_result_log.h"
 #include "worlddb_guild_battle_rank_list.h"
 #include "worlddb_guild_battle_schedule_list.h"
 #include "worlddb_guild_battle_info.h"
@@ -172,6 +178,184 @@ namespace GUILD_BATTLE
     m_iState = STATE_READY;
   }
 
+  bool CGuildBattleStateList::IsProc()
+  {
+    return m_iState != STATE_NONE && m_iState <= STATE_MAX && m_iState != STATE_WAIT && m_iState != STATE_READY;
+  }
+
+  void CGuildBattleStateList::Process(CGuildBattle *pkBattle)
+  {
+    if (m_bEnter && m_iState < STATE_MAX)
+    {
+      if (m_pkCurState != m_pkNextState)
+      {
+        m_pkCurState = m_pkNextState;
+      }
+
+      m_bEnter = false;
+      const int advanceResult = m_pkCurState->Enter(pkBattle);
+      Advance(advanceResult);
+      return;
+    }
+
+    if (m_pkCurState == m_pkNextState && m_iState != STATE_MAX)
+    {
+      if (m_iState < STATE_MAX)
+      {
+        const int loopResult = m_pkCurState->Loop(pkBattle);
+        Advance(loopResult);
+
+        if (m_iForceAdvance != STATE_NONE)
+        {
+          Advance(m_iForceAdvance);
+          m_iForceAdvance = STATE_NONE;
+        }
+      }
+      return;
+    }
+
+    m_pkCurState->Fin(pkBattle);
+    m_bEnter = true;
+    if (m_iState == STATE_MAX)
+    {
+      Next(true);
+    }
+  }
+
+  void CGuildBattleStateList::Advance(int iAdvance)
+  {
+    if (!iAdvance)
+    {
+      return;
+    }
+
+    switch (iAdvance)
+    {
+      case 1:
+        m_iState = STATE_MAX;
+        break;
+      case 2:
+        Next(false);
+        break;
+      case 3:
+        Goto();
+        break;
+      default:
+        break;
+    }
+  }
+
+  int CGuildBattleStateList::Next(bool bForce)
+  {
+    if (!bForce && IsEmpty())
+    {
+      return 0;
+    }
+
+    ++m_iState;
+    const int loopResult = CheckLoop();
+    if (loopResult != 2)
+    {
+      return loopResult;
+    }
+
+    SetNextState();
+    return 1;
+  }
+
+  int CGuildBattleStateList::CheckLoop()
+  {
+    if (m_eLoopType == GBS_ONCE)
+    {
+      if (m_iState == STATE_MAX)
+      {
+        return 1;
+      }
+      if (m_iState > STATE_MAX)
+      {
+        m_iState = STATE_MAX;
+        return 0;
+      }
+      return 2;
+    }
+
+    if (m_eLoopType == GBS_LOOP)
+    {
+      if (m_iState == STATE_MAX)
+      {
+        return 1;
+      }
+      if (m_iState > STATE_MAX)
+      {
+        m_iState = 0;
+      }
+      return 2;
+    }
+
+    if (m_eLoopType == GBS_COUNT)
+    {
+      if (m_iState == STATE_MAX)
+      {
+        return 1;
+      }
+      if (m_iState > STATE_MAX)
+      {
+        m_iState = 0;
+        if (m_uiLoopCnt <= ++m_uiCurLoopCnt)
+        {
+          return 0;
+        }
+      }
+      return 2;
+    }
+
+    return 2;
+  }
+
+  ATL::CTimeSpan *CGuildBattleStateList::GetTerm(ATL::CTimeSpan *result)
+  {
+    m_pkNextState->GetTerm(result);
+    return result;
+  }
+
+  bool CGuildBattleStateList::IsEmpty()
+  {
+    return m_iState == STATE_NONE || m_iState > STATE_MAX;
+  }
+
+  int CGuildBattleStateList::Goto()
+  {
+    if (IsEmpty())
+    {
+      return 0;
+    }
+
+    const int loopResult = CheckLoop();
+    if (loopResult != 2)
+    {
+      return loopResult;
+    }
+
+    SetNextState();
+    return 1;
+  }
+
+  void CGuildBattleStateList::ForceNext()
+  {
+    m_iForceAdvance = 2;
+  }
+
+  char CGuildBattleStateList::GotoState(int iState)
+  {
+    if (iState >= STATE_MAX)
+    {
+      return 0;
+    }
+
+    m_iState = iState;
+    return 1;
+  }
+
   CNormalGuildBattleState::CNormalGuildBattleState() = default;
 
   CNormalGuildBattleStateNotify::CNormalGuildBattleStateNotify() = default;
@@ -254,6 +438,11 @@ namespace GUILD_BATTLE
     m_pStateList[4] = &DIVIDE;
     m_pStateList[5] = &RETURN;
     m_pStateList[6] = &FIN;
+  }
+
+  void CNormalGuildBattleStateList::SetNextState()
+  {
+    m_pkNextState = m_pStateList[m_iState];
   }
 
   bool CNormalGuildBattleStateList::IsReadyOrCountState()
@@ -554,9 +743,7 @@ namespace GUILD_BATTLE
     char returned[256]{};
     char buffer[256]{};
     char tmp[256]{};
-    (void)tmp;
-
-    sprintf(buffer, "Map%d", uiMapInx);
+sprintf(buffer, "Map%d", uiMapInx);
     returned[0] = 0;
     GetPrivateProfileStringA(buffer, "Name", "X", returned, 0xFFu, "./Initialize/NormalGuildBattle.ini");
     if (returned[0] == 'X')
@@ -991,6 +1178,20 @@ namespace GUILD_BATTLE
     m_dPvpPoint = m_pkMember->pPlayer->m_Param.GetPvPPoint();
   }
 
+  void CNormalGuildBattleGuildMember::PushDQSPvpPoint(int dwPvpPoint)
+  {
+    _qry_case_addpvppoint query{};
+    query.dwSerial = m_dwSerial;
+    query.dwPoint = static_cast<unsigned int>(dwPvpPoint);
+    query.dwCashBag = 0;
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x0Du, reinterpret_cast<char *>(&query), static_cast<int>(query.size()));
+    g_Main.m_logPvP.Write(
+      "[ %d ] type: guildbattle  >> pvp : %d  last: %.0f",
+      m_dwSerial,
+      dwPvpPoint,
+      static_cast<double>(m_dPvpPoint) + static_cast<double>(dwPvpPoint));
+  }
+
   CNormalGuildBattleGuild::CNormalGuildBattleGuild(unsigned __int8 byID) : m_byID(byID)
   {
     Clear();
@@ -1132,8 +1333,7 @@ namespace GUILD_BATTLE
       g_Network.m_pProcess[0]->LoadSendMsg(n, pbyType, destination, 0x11u);
       CGuildBattleLogger::Instance()->Log("CNormalGuildBattleGuild::AskJoin( n(%d), %s )", n, wszDestGuildName);
     }
-    (void)kLogger;
-  }
+}
 
   void CNormalGuildBattleGuild::LogIn(
     int n,
@@ -1312,8 +1512,7 @@ namespace GUILD_BATTLE
 
   char CNormalGuildBattleGuild::NetClose(bool bInGuildBattle, unsigned int dwSerial, CNormalGuildBattleLogger *kLogger)
   {
-    (void)kLogger;
-    const int iMemberInx = static_cast<int>(GetMember(dwSerial));
+const int iMemberInx = static_cast<int>(GetMember(dwSerial));
     if (iMemberInx < 0)
     {
       return 0;
@@ -1340,9 +1539,7 @@ namespace GUILD_BATTLE
     bool bInGuildBattle,
     CNormalGuildBattleLogger *kLogger)
   {
-    (void)kLogger;
-
-    const int member = static_cast<int>(GetMember(dwSerial));
+const int member = static_cast<int>(GetMember(dwSerial));
     if (member < 0)
     {
       return;
@@ -1606,6 +1803,49 @@ namespace GUILD_BATTLE
     return m_pkStateList->IsInBattle();
   }
 
+  bool CNormalGuildBattle::IsProc()
+  {
+    return m_pkStateList->IsProc();
+  }
+
+  void CNormalGuildBattle::Process()
+  {
+    m_pkStateList->Process(this);
+  }
+
+  void CNormalGuildBattle::SetReadyState()
+  {
+    if (m_bInit && m_pkStateList)
+    {
+      m_pkStateList->SetReady();
+    }
+  }
+
+  void CNormalGuildBattle::PushDQSWinLoseRank()
+  {
+    if (!m_pkWin || !m_pkLose)
+    {
+      return;
+    }
+
+    _qry_case_updatewinloseguildbattlerank query{};
+    query.byWinRace = m_pkWin->GetGuild()->m_byRace;
+    query.dwWinGuildSerial = m_pkWin->GetGuildSerial();
+    query.byLoseRace = m_pkLose->GetGuild()->m_byRace;
+    query.dwLoseGuildSerial = m_pkLose->GetGuildSerial();
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x1Fu, reinterpret_cast<char *>(&query), static_cast<int>(query.size()));
+  }
+
+  void CNormalGuildBattle::PushDQSDrawRank()
+  {
+    _qry_case_updatedrawguildbattlerank query{};
+    query.by1PRace = m_k1P.GetGuild()->m_byRace;
+    query.dw1PGuildSerial = m_k1P.GetGuildSerial();
+    query.by2PRace = m_k2P.GetGuild()->m_byRace;
+    query.dw2PGuildSerial = m_k2P.GetGuildSerial();
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x20u, reinterpret_cast<char *>(&query), static_cast<int>(query.size()));
+  }
+
   void CNormalGuildBattle::AskJoin(int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial)
   {
     if (dwGuildSerial == m_k1P.GetGuildSerial())
@@ -1773,6 +2013,119 @@ namespace GUILD_BATTLE
     unsigned __int8 byType[2] = {27, 81};
     m_k1P.SendMsg(byType, msg, 4u);
     m_k2P.SendMsg(byType, msg, 4u);
+  }
+
+  void CNormalGuildBattle::GuildBattleResultLogPushDBLog(
+    _qry_case_guild_battel_result_log *sheet,
+    CNormalGuildBattleGuildMember *pkTopGoalMember,
+    CNormalGuildBattleGuildMember *pkTopKillMember)
+  {
+    if (!sheet)
+    {
+      return;
+    }
+
+    auto writeDefaultDate = [sheet]() {
+      strcpy_s(sheet->szStartTime, sizeof(sheet->szStartTime), "1900-00-00 00:00");
+      strcpy_s(sheet->szEndTime, sizeof(sheet->szEndTime), "1900-00-00 00:00");
+    };
+
+    CGuildBattleSchedule *schedule = CGuildBattleSchedulePool::Instance()->GetRef(m_dwID);
+    if (schedule)
+    {
+      __int64 startTime = schedule->GetRealStartTime();
+      ATL::CTimeSpan battleTime{};
+      schedule->GetBattleTime(&battleTime);
+      const __int64 endTime = startTime + battleTime.GetTotalSeconds();
+
+      tm *startTm = localtime_2(&startTime);
+      if (startTm)
+      {
+        sprintf_s(
+          sheet->szStartTime,
+          sizeof(sheet->szStartTime),
+          "%04d-%02d-%02d %02d:%02d",
+          startTm->tm_year + 1900,
+          startTm->tm_mon + 1,
+          startTm->tm_mday,
+          startTm->tm_hour,
+          startTm->tm_min);
+
+        tm *endTm = localtime_2(&endTime);
+        if (endTm)
+        {
+          sprintf_s(
+            sheet->szEndTime,
+            sizeof(sheet->szEndTime),
+            "%04d-%02d-%02d %02d:%02d",
+            endTm->tm_year + 1900,
+            endTm->tm_mon + 1,
+            endTm->tm_mday,
+            endTm->tm_hour,
+            endTm->tm_min);
+        }
+        else
+        {
+          strcpy_s(sheet->szEndTime, sizeof(sheet->szEndTime), "1900-00-00 00:00");
+        }
+      }
+      else
+      {
+        writeDefaultDate();
+      }
+    }
+    else
+    {
+      writeDefaultDate();
+    }
+
+    sheet->dwRedSerial = m_pkRed->GetGuildSerial();
+    strcpy_s(sheet->wszRedName, sizeof(sheet->wszRedName), m_pkRed->GetGuildName());
+    sheet->dwBlueSerial = m_pkBlue->GetGuildSerial();
+    strcpy_s(sheet->wszBlueName, sizeof(sheet->wszBlueName), m_pkBlue->GetGuildName());
+    sheet->dwRedScore = m_pkRed->m_dwScore;
+    sheet->dwBlueScore = m_pkBlue->m_dwScore;
+    sheet->dwRedMaxJoinCnt = m_pkRed->m_dwMaxJoinMemberCnt;
+    sheet->dwBlueMaxJoinCnt = m_pkBlue->m_dwMaxJoinMemberCnt;
+    sheet->dwRedGoalCnt = m_pkRed->m_dwGoalCnt;
+    sheet->dwBlueGoalCnt = m_pkBlue->m_dwGoalCnt;
+    sheet->dwRedKillCntSum = m_pkRed->m_dwKillCountSum;
+    sheet->dwBlueKillCntSum = m_pkBlue->m_dwKillCountSum;
+    sheet->byBattleResult = m_byWinResult;
+
+    CPlayer *topGoalPlayer = nullptr;
+    if (pkTopGoalMember && (topGoalPlayer = pkTopGoalMember->GetPlayer()) != nullptr)
+    {
+      sheet->dwMaxGoalCharacSerial = topGoalPlayer->m_dwObjSerial;
+      strcpy_s(sheet->wszMaxGoalCharacName, sizeof(sheet->wszMaxGoalCharacName), topGoalPlayer->m_Param.GetCharNameW());
+    }
+    else
+    {
+      sheet->dwMaxGoalCharacSerial = 0;
+      strcpy_s(sheet->wszMaxGoalCharacName, sizeof(sheet->wszMaxGoalCharacName), "NONE");
+    }
+
+    CPlayer *topKillPlayer = nullptr;
+    if (pkTopKillMember && (topKillPlayer = pkTopKillMember->GetPlayer()) != nullptr)
+    {
+      sheet->dwMaxKillCharacSerial = topKillPlayer->m_dwObjSerial;
+      strcpy_s(sheet->wszMaxKillCharacName, sizeof(sheet->wszMaxKillCharacName), topKillPlayer->m_Param.GetCharNameW());
+    }
+    else
+    {
+      sheet->dwMaxKillCharacSerial = 0;
+      strcpy_s(sheet->wszMaxKillCharacName, sizeof(sheet->wszMaxKillCharacName), "NONE");
+    }
+
+    sheet->byJoinLimit = m_byGuildBattleNumber;
+    sheet->dwGuildBattleCostGold = 5000;
+    const char *mapCode = "NONE";
+    if (m_pkField && m_pkField->m_pkMap && m_pkField->m_pkMap->m_pMapSet)
+    {
+      mapCode = m_pkField->m_pkMap->m_pMapSet->m_strCode;
+    }
+    strcpy_s(sheet->szBattleMapCode, sizeof(sheet->szBattleMapCode), mapCode);
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x54u, reinterpret_cast<char *>(sheet), sizeof(*sheet));
   }
 
   unsigned int CNormalGuildBattle::GetID()
@@ -2029,10 +2382,34 @@ namespace GUILD_BATTLE
     return 0;
   }
 
+  void CNormalGuildBattleManager::Loop()
+  {
+    if (!m_bLoad || !m_ppkTodayBattle)
+    {
+      return;
+    }
+
+    const unsigned int battleCount = 23 * m_uiMapCnt;
+    for (unsigned int battleIndex = 0; battleIndex < battleCount; ++battleIndex)
+    {
+      if (m_ppkTodayBattle[battleIndex]->IsProc())
+      {
+        m_ppkTodayBattle[battleIndex]->Process();
+      }
+    }
+  }
+
   void CNormalGuildBattleManager::Clear()
   {
     Clear(m_ppkTodayBattle);
     Clear(m_ppkTomorrowBattle);
+  }
+
+  void CNormalGuildBattleManager::Flip()
+  {
+    CNormalGuildBattle **tomorrowBattle = m_ppkTomorrowBattle;
+    m_ppkTomorrowBattle = m_ppkTodayBattle;
+    m_ppkTodayBattle = tomorrowBattle;
   }
 
   void CNormalGuildBattleManager::Clear(CNormalGuildBattle **ppkStart)
@@ -2042,6 +2419,29 @@ namespace GUILD_BATTLE
     {
       ppkStart[j]->Clear();
     }
+  }
+
+  void CNormalGuildBattleManager::DoDayChangedWork()
+  {
+    Clear(m_ppkTomorrowBattle);
+    SetReadyState(m_ppkTodayBattle);
+  }
+
+  void CNormalGuildBattleManager::SetReadyState(CNormalGuildBattle **ppkStart)
+  {
+    const unsigned int battleCount = 23 * m_uiMapCnt;
+    for (unsigned int battleIndex = 0; battleIndex < battleCount; ++battleIndex)
+    {
+      if (!ppkStart[battleIndex]->IsEmpty())
+      {
+        ppkStart[battleIndex]->SetReadyState();
+      }
+    }
+  }
+
+  void CNormalGuildBattleManager::SetNextEvent()
+  {
+    m_bDone = false;
   }
 
   void CNormalGuildBattleManager::JoinGuild(int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial)
@@ -2250,9 +2650,7 @@ namespace GUILD_BATTLE
     unsigned int dwGuildSerial,
     unsigned int dwCharacSerial)
   {
-    (void)iPortalInx;
-    (void)dwCharacSerial;
-    if (dwGuildSerial == static_cast<unsigned int>(-1))
+if (dwGuildSerial == static_cast<unsigned int>(-1))
     {
       return static_cast<unsigned __int8>(-115);
     }
@@ -2274,10 +2672,7 @@ namespace GUILD_BATTLE
     unsigned int dwGuildSerial,
     unsigned int dwCharacSerial)
   {
-    (void)wIndex;
-    (void)dwObjSerial;
-    (void)dwCharacSerial;
-    if (dwGuildSerial == static_cast<unsigned int>(-1))
+if (dwGuildSerial == static_cast<unsigned int>(-1))
     {
       return static_cast<unsigned __int8>(-115);
     }
@@ -2298,9 +2693,7 @@ namespace GUILD_BATTLE
     unsigned int dwCharacSerial,
     int iPortalInx)
   {
-    (void)dwCharacSerial;
-    (void)iPortalInx;
-    if (dwGuildSerial == static_cast<unsigned int>(-1))
+if (dwGuildSerial == static_cast<unsigned int>(-1))
     {
       return static_cast<unsigned __int8>(-115);
     }
@@ -2415,6 +2808,52 @@ namespace GUILD_BATTLE
   bool CGuildBattleSchedule::IsProc()
   {
     return m_eState == GS_PROC;
+  }
+
+  int CGuildBattleSchedule::Check()
+  {
+    if (m_eState == GS_NONE || m_eState == GS_DONE)
+    {
+      return -1;
+    }
+
+    ATL::CTime now = ATL::CTime::GetTickCount();
+    if (now < m_kNextStartTime)
+    {
+      return 1;
+    }
+
+    if (Process())
+    {
+      return 2;
+    }
+
+    m_eState = GS_DONE;
+    return 0;
+  }
+
+  int CGuildBattleSchedule::Process()
+  {
+    const int nextResult = m_pkStateList->Next(false);
+    if (!nextResult)
+    {
+      return 0;
+    }
+
+    ATL::CTimeSpan term;
+    m_pkStateList->GetTerm(&term);
+    m_kNextStartTime += term;
+    return nextResult;
+  }
+
+  bool CGuildBattleSchedule::IsWait()
+  {
+    return m_eState == GS_WAIT;
+  }
+
+  void CGuildBattleSchedule::SetProcState()
+  {
+    m_eState = GS_PROC;
   }
 
   char CGuildBattleSchedule::GetLeftTime(
@@ -2617,6 +3056,12 @@ namespace GUILD_BATTLE
     return Get(dwSID);
   }
 
+  unsigned int CGuildBattleSchedulePool::GetSID(unsigned int uiSLID, unsigned int dwStartInx)
+  {
+    CGuildBattleSchedule *schedule = Get(uiSLID, dwStartInx);
+    return schedule->GetSID();
+  }
+
   CGuildBattleSchedule *CGuildBattleSchedulePool::GetRef(unsigned int dwSID)
   {
     if (!m_ppkSchedule || m_dwMaxScheduleCnt <= dwSID)
@@ -2684,6 +3129,78 @@ namespace GUILD_BATTLE
   unsigned int CGuildBattleReservedSchedule::GetID()
   {
     return m_uiScheduleListID;
+  }
+
+  bool CGuildBattleReservedSchedule::IsDone()
+  {
+    return m_bDone;
+  }
+
+  bool CGuildBattleReservedSchedule::Loop()
+  {
+    if (m_bDone)
+    {
+      return false;
+    }
+
+    if (m_pkSchedule[m_uiCurScheduleInx] || Next())
+    {
+      const int checkResult = m_pkSchedule[m_uiCurScheduleInx]->Check();
+      return CheckNextEvent(checkResult) != 0;
+    }
+
+    m_bDone = true;
+    return false;
+  }
+
+  char CGuildBattleReservedSchedule::Next()
+  {
+    ++m_uiCurScheduleInx;
+
+    bool foundWaitSchedule = false;
+    for (unsigned int scheduleIndex = m_uiCurScheduleInx; scheduleIndex < 0x17; ++scheduleIndex)
+    {
+      if (m_pkSchedule[scheduleIndex] && m_pkSchedule[scheduleIndex]->IsWait())
+      {
+        m_uiCurScheduleInx = scheduleIndex;
+        m_pkSchedule[m_uiCurScheduleInx]->SetProcState();
+        foundWaitSchedule = true;
+        break;
+      }
+    }
+
+    if (foundWaitSchedule)
+    {
+      return 1;
+    }
+
+    m_uiCurScheduleInx = 0;
+    return 0;
+  }
+
+  char CGuildBattleReservedSchedule::CheckNextEvent(int iRet)
+  {
+    if (!iRet)
+    {
+      m_pkSchedule[m_uiCurScheduleInx] = nullptr;
+      return 0;
+    }
+
+    if (iRet == 1)
+    {
+      return 1;
+    }
+
+    if (iRet == -1)
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CGuildBattleReservedSchedule::CheckNextEvent( iRet(%d) ) : m_uiScheduleID(%u) : -1 == m_pkSchedule[%u]->Check() Invalid!",
+        -1,
+        m_uiCurScheduleInx,
+        m_uiCurScheduleInx);
+    }
+
+    return 0;
   }
 
   unsigned int CGuildBattleReservedSchedule::GetCurScheduleID()
@@ -3019,6 +3536,35 @@ namespace GUILD_BATTLE
     return 1;
   }
 
+  bool CGuildBattleReservedScheduleMapGroup::IsDone()
+  {
+    return m_bDone;
+  }
+
+  char CGuildBattleReservedScheduleMapGroup::Loop()
+  {
+    if (m_bDone || !m_ppkReservedSchedule)
+    {
+      return 0;
+    }
+
+    m_bDone = true;
+    char hasNewEvent = 0;
+    for (unsigned int mapIndex = 0; mapIndex < m_uiMapCnt; ++mapIndex)
+    {
+      if (!m_ppkReservedSchedule[mapIndex]->IsDone())
+      {
+        if (m_ppkReservedSchedule[mapIndex]->Loop())
+        {
+          hasNewEvent = 1;
+        }
+        m_bDone = false;
+      }
+    }
+
+    return hasNewEvent;
+  }
+
   bool CGuildBattleReservedScheduleMapGroup::Clear()
   {
     if (!m_ppkReservedSchedule)
@@ -3106,6 +3652,18 @@ namespace GUILD_BATTLE
     return 1;
   }
 
+  void CGuildBattleReservedScheduleMapGroup::PushDQSClear()
+  {
+    _qry_case_updateclearguildbattleDayInfo query{};
+    query.dwStartSLID = m_ppkReservedSchedule[0]->GetID();
+    query.dwEndSLID = m_ppkReservedSchedule[m_uiMapCnt - 1]->GetID();
+    query.dwStartSID = CGuildBattleSchedulePool::Instance()->GetSID(query.dwStartSLID, 0);
+    query.dwEndSID = CGuildBattleSchedulePool::Instance()->GetSID(query.dwEndSLID, 0x16u);
+
+    const int querySize = static_cast<int>(query.size());
+    g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x24u, reinterpret_cast<char *>(&query), querySize);
+  }
+
   void CGuildBattleReservedScheduleMapGroup::Flip()
   {
     if (m_ppkReservedSchedule)
@@ -3156,6 +3714,84 @@ namespace GUILD_BATTLE
     m_pkTimer->BeginTimer(1000u);
     m_uiMapCnt = uiMapCnt;
     return true;
+  }
+
+  void CGuildBattleScheduleManager::Loop()
+  {
+    if (m_bLoad && (!m_pkTimer || m_pkTimer->CountingTimer()))
+    {
+      UpdateDayChangedWork();
+      if (!m_pkTodaySchedule->IsDone() && m_pkTodaySchedule->Loop())
+      {
+        SetNextEvnet();
+      }
+    }
+  }
+
+  void CGuildBattleScheduleManager::UpdateDayChangedWork()
+  {
+    const int dayChangedResult = IsDayChanged();
+    if (dayChangedResult == -1)
+    {
+      Clear();
+      return;
+    }
+
+    if (dayChangedResult == 1)
+    {
+      Flip();
+    }
+  }
+
+  int CGuildBattleScheduleManager::IsDayChanged()
+  {
+    ATL::CTime now = ATL::CTime::GetTickCount();
+    const int previousDay = m_pkOldDayTime->GetDay();
+    if (previousDay == now.GetDay())
+    {
+      return 0;
+    }
+
+    ATL::CTime nextDay = *m_pkOldDayTime + ATL::CTimeSpan(1, 0, 0, 0);
+    *m_pkOldDayTime = now;
+    if (now.GetDay() == nextDay.GetDay())
+    {
+      return 1;
+    }
+
+    return -1;
+  }
+
+  void CGuildBattleScheduleManager::Clear()
+  {
+    const int day = m_pkOldDayTime->GetDay();
+    CGuildBattleLogger::Instance()->Log("CGuildBattleScheduleManager::Clear() : %d Day!", day);
+
+    m_pkTodaySchedule->Clear();
+    m_pkTomorrowSchedule->Clear();
+    CGuildBattleController::Instance()->Clear();
+    m_pkTodaySchedule->PushDQSClear();
+    m_pkTomorrowSchedule->PushDQSClear();
+  }
+
+  void CGuildBattleScheduleManager::Flip()
+  {
+    const int day = m_pkOldDayTime->GetDay();
+    CGuildBattleLogger::Instance()->Log("CGuildBattleScheduleManager::Flip() : %d Day!", day);
+
+    CGuildBattleReservedScheduleMapGroup *todaySchedule = m_pkTodaySchedule;
+    m_pkTodaySchedule = m_pkTomorrowSchedule;
+    m_pkTomorrowSchedule = todaySchedule;
+
+    m_pkTodaySchedule->Flip();
+    m_pkTomorrowSchedule->Clear();
+    m_pkTomorrowSchedule->PushDQSClear();
+    CGuildBattleController::Instance()->Flip();
+  }
+
+  void CGuildBattleScheduleManager::SetNextEvnet()
+  {
+    CNormalGuildBattleManager::Instance()->SetNextEvent();
   }
 
   CGuildBattleScheduleManager *CGuildBattleScheduleManager::Instance()
@@ -4523,6 +5159,12 @@ namespace GUILD_BATTLE
     return 0;
   }
 
+  void CGuildBattleReservedScheduleListManager::Clear()
+  {
+    m_pkToday->Clear();
+    m_pkTomorrow->Clear();
+  }
+
   void CGuildBattleReservedScheduleListManager::Flip()
   {
     CReservedGuildScheduleDayGroup *prevToday = m_pkToday;
@@ -4867,6 +5509,24 @@ namespace GUILD_BATTLE
       }
     }
     return 1;
+  }
+
+  void CPossibleBattleGuildListManager::Clear()
+  {
+    DoDayChangedWork();
+  }
+
+  void CPossibleBattleGuildListManager::DoDayChangedWork()
+  {
+    for (int guildIndex = 0; guildIndex < MAX_GUILD; ++guildIndex)
+    {
+      if (g_Guild[guildIndex].IsFill())
+      {
+        g_Guild[guildIndex].ClearGuildBattle();
+      }
+    }
+
+    UpdateGuildList();
   }
 
   void CPossibleBattleGuildListManager::UpdateGuildList()

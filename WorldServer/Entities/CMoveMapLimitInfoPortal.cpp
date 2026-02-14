@@ -362,10 +362,7 @@ unsigned __int8 CMoveMapLimitInfoPortal::ProcForceMoveHQ(
   char *pRequest,
   CMoveMapLimitRightInfo *pkRight)
 {
-  (void)iUserInx;
-  (void)pRequest;
-  (void)pkRight;
-  m_uiProcNotifyInx = 0;
+m_uiProcNotifyInx = 0;
   m_pkNotifyForceMoveHQTimer->BeginTimer(0xFA0u);
   m_eNotifyForceMoveHQState = FMHS_WAIT_NOTIFY_FORCE_MOVE;
   return 0;

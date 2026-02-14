@@ -651,9 +651,7 @@ __int64 CRFWorldDatabase::Select_PatriarchVoted(
   SQLLEN indicator = 0;
   SQLRETURN ret = 0;
   unsigned int targetValue[4]{};
-
-  (void)byRace;
-  sprintf(
+sprintf(
     buffer,
     "SELECT\tDATEDIFF(day, tmracebossvote, getdate()) as days FROM \t[dbo].[tbl_general] WHERE\tSerial = %d",
     dwSerial);
