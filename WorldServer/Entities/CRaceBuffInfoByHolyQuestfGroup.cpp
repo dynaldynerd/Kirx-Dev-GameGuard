@@ -12,6 +12,17 @@ CRaceBuffInfoByHolyQuestfGroup::CRaceBuffInfoByHolyQuestfGroup(unsigned int nth)
 {
 }
 
+CRaceBuffInfoByHolyQuestfGroup::~CRaceBuffInfoByHolyQuestfGroup()
+{
+  for (CRaceBuffInfoByHolyQuest *info : m_vecInfo)
+  {
+    if (info)
+    {
+      delete info;
+    }
+  }
+}
+
 bool CRaceBuffInfoByHolyQuestfGroup::Init()
 {
   m_vecInfo.assign(4, nullptr);

@@ -8,6 +8,8 @@ class CPlayer;
 class __cppobj CGuildBattleController
 {
 public:
+  CGuildBattleController();
+
   static CGuildBattleController *Instance();
   bool Init();
   void Loop();

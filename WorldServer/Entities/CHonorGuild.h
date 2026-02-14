@@ -27,6 +27,8 @@ struct _guild_honor_list_result_zocl
 class __cppobj CHonorGuild
 {
 public:
+  CHonorGuild();
+
   static CHonorGuild *Instance();
   bool Init();
   void Loop();

@@ -7,6 +7,7 @@
 #include <cstring>
 #include <ctime>
 #include <cstdlib>
+#include <cmath>
 #include <intrin.h>
 #include <atlstr.h>
 #include <atltime.h>
@@ -1157,6 +1158,18 @@ void IOFileWrite_0(char *pszFileName, unsigned int nLen, char *pszData)
 }
 
 void IOFileWrite_1(char *pszFileName, unsigned int nLen, char *pszData)
+{
+  HANDLE hFile = CreateFileA(pszFileName, 0x40000000u, 1u, nullptr, 4u, 0x80u, nullptr);
+  if (hFile != INVALID_HANDLE_VALUE)
+  {
+    SetFilePointer(hFile, 0, nullptr, 2u);
+    DWORD written = 0;
+    WriteFile(hFile, pszData, nLen, &written, nullptr);
+    CloseHandle(hFile);
+  }
+}
+
+void IOFileWrite_2(char *pszFileName, unsigned int nLen, char *pszData)
 {
   HANDLE hFile = CreateFileA(pszFileName, 0x40000000u, 1u, nullptr, 4u, 0x80u, nullptr);
   if (hFile != INVALID_HANDLE_VALUE)
@@ -3856,23 +3869,17 @@ void StripEXT(char *szPath)
 
 void StripPath(char *szPath)
 {
-  const int len = static_cast<int>(std::strlen(szPath));
-  int slash = len - 2;
-  for (int i = len - 2; i >= 0; --i)
+  const char *lastSlash = std::strrchr(szPath, '\\');
+  if (!lastSlash || !lastSlash[1])
   {
-    if (szPath[i] == '\\')
-      break;
-    --slash;
+    return;
   }
-  const int start = slash + 1;
-  if (start < len - 1)
-  {
-    const int count = len - 1 - start;
-    char temp[256]{};
-    memcpy_0(temp, &szPath[start], static_cast<unsigned int>(count));
-    temp[count] = '\0';
-    strcpy_s(szPath, 256, temp);
-  }
+
+  const size_t keepLen = std::strlen(lastSlash + 1);
+  char temp[256]{};
+  memcpy_0(temp, lastSlash + 1, static_cast<unsigned int>(keepLen));
+  temp[keepLen] = '\0';
+  strcpy_s(szPath, 256, temp);
 }
 
 void StripName(char *szPath)
@@ -3919,6 +3926,203 @@ char M2W(char *lpStr, char *wszTran, unsigned int wTranBuffSize)
 bool IsServerMode()
 {
     return dword_184A77F38 != 0;
+}
+
+void InitR3Engine(int use)
+{
+  const int currentMode = static_cast<int>(dword_184A77F38);
+  dword_184A77F3C = 1;
+  dword_184A77F38 = static_cast<unsigned int>(use == 1 ? 1 : currentMode);
+
+  std::memset(&stState, 0, sizeof(stState));
+  stState.mAsfectRatio = 640.0f / 480.0f;
+  stState.mNear = 2.0f;
+  stState.mFar = 6000.0f;
+  stState.mFov = 0.60000002f;
+  stState.mMipMapBias = 0.0f;
+  stState.mFogColor = 0;
+  stState.mFogStart = 0.0f;
+  stState.mFogEnd = 0.0f;
+  stState.mIsFog = 0;
+  stState.mFogRangeEnable = 0;
+  stState.mTempSize = 1024u * 256u;
+  stState.mGamma = 1.0f;
+  stState.mFlySpeed = 30.0f;
+  stState.mWideOn = 0;
+  stState.mIsDrawLogo = 0;
+  stState.mDLightTexture = nullptr;
+  stState.mLensFlareTex = -1;
+  for (int i = 0; i < 16; ++i)
+    stState.mLensFlareScale[i] = 1.0f;
+
+  auto setIdentity = [](float (&matrix)[4][4]) {
+    std::memset(matrix, 0, sizeof(matrix));
+    matrix[0][0] = 1.0f;
+    matrix[1][1] = 1.0f;
+    matrix[2][2] = 1.0f;
+    matrix[3][3] = 1.0f;
+  };
+  setIdentity(stState.mMatView);
+  setIdentity(stState.mMatWorld);
+  setIdentity(stState.mMatProj);
+
+  const char *const iniFile = ".\\R3Engine.ini";
+  char valueBuf[256]{};
+
+  auto readStr = [&](const char *section, const char *key, const char *def, char *out, DWORD outSize) {
+    GetPrivateProfileStringA(section, key, def, out, outSize, iniFile);
+  };
+
+  auto readInt = [&](const char *section, const char *key, const char *def) {
+    GetPrivateProfileStringA(section, key, def, valueBuf, static_cast<DWORD>(sizeof(valueBuf)), iniFile);
+    return std::atoi(valueBuf);
+  };
+
+  auto readFloat = [&](const char *section, const char *key, const char *def) {
+    GetPrivateProfileStringA(section, key, def, valueBuf, static_cast<DWORD>(sizeof(valueBuf)), iniFile);
+    return static_cast<float>(std::atof(valueBuf));
+  };
+
+  auto readBool = [&](const char *section, const char *key, const char *def) {
+    GetPrivateProfileStringA(section, key, def, valueBuf, static_cast<DWORD>(sizeof(valueBuf)), iniFile);
+    _strupr_s(valueBuf, sizeof(valueBuf));
+    return std::strcmp(valueBuf, "TRUE") == 0;
+  };
+
+  readStr("Path", "MapPath", ".\\Map\\", stState.MapPath, static_cast<DWORD>(sizeof(stState.MapPath)));
+  readStr("Path", "SystemPath", ".\\System\\", stState.SystemPath, static_cast<DWORD>(sizeof(stState.SystemPath)));
+  readStr("Path", "EntityPath", ".\\Map\\Entity\\", stState.EntityPath, static_cast<DWORD>(sizeof(stState.EntityPath)));
+  readStr("Path", "EffectPath", ".\\Effect\\", stState.EffectPath, static_cast<DWORD>(sizeof(stState.EffectPath)));
+  readStr(
+    "Path",
+    "ScreenShotsPath",
+    ".\\ScreenShots\\",
+    stState.ScreenShotsPath,
+    static_cast<DWORD>(sizeof(stState.ScreenShotsPath)));
+  readStr("Path", "SoundPath", ".\\Snd\\", stState.SoundPath, static_cast<DWORD>(sizeof(stState.SoundPath)));
+
+  stState.mScreenXsize = static_cast<float>(readInt("RenderState", "ScreenXSize", "1024"));
+  stState.mViewSx = 0;
+  stState.mViewXL = static_cast<long>(stState.mScreenXsize);
+  stState.mScreenYsize = static_cast<float>(readInt("RenderState", "ScreenYSize", "768"));
+  stState.mViewSy = 0;
+  stState.mViewYL = static_cast<long>(stState.mScreenYsize);
+  stState.mRenderBits = static_cast<unsigned int>(readInt("RenderState", "RenderBits", "32"));
+  stState.mZbufferBits = static_cast<unsigned int>(readInt("RenderState", "ZbufferBits", "24"));
+  stState.mbFullScreen = readBool("RenderState", "bFullScreen", "FALSE") ? 1 : 0;
+
+  int textureDetail = readInt("RenderState", "TextureDetail", "2");
+  if (textureDetail < 0)
+    textureDetail = 0;
+  if (textureDetail > 3)
+    textureDetail = 3;
+  stState.mTextureDetail = static_cast<unsigned int>(3 - textureDetail);
+  stState.mSceneTextureDetail = stState.mTextureDetail == 0 ? 0 : stState.mTextureDetail - 1;
+
+  int dynamicLight = readInt("RenderState", "DynamicLight", "1");
+  if (dynamicLight < 0)
+    dynamicLight = 0;
+  if (dynamicLight > 3)
+    dynamicLight = 3;
+  if (dynamicLight == 1)
+    stState.mDynamicLight = 3;
+  else if (dynamicLight == 2)
+    stState.mDynamicLight = 6;
+  else if (dynamicLight == 3)
+    stState.mDynamicLight = 10;
+  else
+    stState.mDynamicLight = 0;
+
+  int shadowDetail = readInt("RenderState", "ShadowDetail", "1");
+  if (shadowDetail < 0)
+    shadowDetail = 0;
+  if (shadowDetail > 3)
+    shadowDetail = 3;
+  if (shadowDetail == 1)
+    stState.mShadowDetail = 1;
+  else if (shadowDetail == 2)
+    stState.mShadowDetail = 10;
+  else if (shadowDetail == 3)
+    stState.mShadowDetail = static_cast<unsigned int>(-1);
+  else
+    stState.mShadowDetail = 0;
+
+  stState.mDetailTexture = readBool("RenderState", "bDetailTexture", "TRUE") ? 1 : 0;
+  stState.mMouseAccelation = readBool("RenderState", "bMouseAccelation", "TRUE") ? 1 : 0;
+
+  int seeDistanceIndex = readInt("RenderState", "SeeDistance", "2");
+  if (seeDistanceIndex < 0)
+    seeDistanceIndex = 0;
+  if (seeDistanceIndex > 2)
+    seeDistanceIndex = 2;
+  static const float kSeeDistanceTable[3] = {0.6f, 0.8f, 1.0f};
+  stState.mSeeDistance = kSeeDistanceTable[seeDistanceIndex];
+
+  stState.mSoundOn = readBool("Sound", "Sound", "TRUE") ? 1 : 0;
+  stState.mMusicOn = readBool("Sound", "Music", "TRUE") ? 1 : 0;
+  stState.mMusicVol = readFloat("Sound", "MusicVol", "1.0f");
+  stState.mSoundVol = readFloat("Sound", "SoundVol", "1.0f");
+  stState.mGamma = readFloat("RenderState", "Gamma", "1.0f");
+  stState.mbStartCamera = readBool("RenderState", "bStartCamera", "FALSE") ? 1 : 0;
+
+  readStr("SampleCharacter", "CharPath", ".\\Character\\", stState.CharPath, static_cast<DWORD>(sizeof(stState.CharPath)));
+  readStr(
+    "SampleCharacter",
+    "CharTexturePath",
+    ".\\Character\\tex\\",
+    stState.CharTexturePath,
+    static_cast<DWORD>(sizeof(stState.CharTexturePath)));
+  readStr("SampleCharacter", "MeshName", "SNWG_001.msh", stState.MeshName, static_cast<DWORD>(sizeof(stState.MeshName)));
+  readStr("SampleCharacter", "BoneName", "bone_b.bn", stState.BoneName, static_cast<DWORD>(sizeof(stState.BoneName)));
+  readStr("SampleCharacter", "StopAni", "Stop.ani", stState.StopAniName, static_cast<DWORD>(sizeof(stState.StopAniName)));
+  readStr("SampleCharacter", "RunAni", "Run_Loop.ani", stState.RunAniName, static_cast<DWORD>(sizeof(stState.RunAniName)));
+  readStr("SampleCharacter", "SwordAni", "", stState.SwordAniName, static_cast<DWORD>(sizeof(stState.SwordAniName)));
+  readStr("SampleCharacter", "SwordMesh", "", stState.SwordMeshName, static_cast<DWORD>(sizeof(stState.SwordMeshName)));
+  readStr(
+    "SampleCharacter",
+    "SwordTexturePath",
+    "",
+    stState.SwordTexturePath,
+    static_cast<DWORD>(sizeof(stState.SwordTexturePath)));
+
+  stState.mMainLightNomal[0] = 1.0f;
+  stState.mMainLightNomal[1] = 1.0f;
+  stState.mMainLightNomal[2] = 1.0f;
+  stState.mLightNomalForShadow[0] = 1.0f;
+  stState.mLightNomalForShadow[1] = 1.0f;
+  stState.mLightNomalForShadow[2] = 1.0f;
+
+  auto normalize3 = [](float (&vec)[3]) {
+    const float len = std::sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
+    if (len > 0.0f)
+    {
+      vec[0] /= len;
+      vec[1] /= len;
+      vec[2] /= len;
+    }
+  };
+
+  float sat = stState.mMainLightNomal[0] * stState.mMainLightNomal[0]
+            + stState.mMainLightNomal[2] * stState.mMainLightNomal[2];
+  if (sat < 0.1f)
+    sat = 0.1f;
+  sat = std::sqrt(sat);
+  stState.mLightNomalForShadow[1] = (sat * 5.0f) / 3.0f;
+
+  normalize3(stState.mLightNomalForShadow);
+  normalize3(stState.mMainLightNomal);
+
+  float tempLight[3] = {stState.mMainLightNomal[0], 0.0f, stState.mMainLightNomal[2]};
+  normalize3(tempLight);
+
+  float cosValue = tempLight[2];
+  if (cosValue > 1.0f)
+    cosValue = 1.0f;
+  if (cosValue < -1.0f)
+    cosValue = -1.0f;
+  stState.mMainLightYAngle = std::acos(cosValue);
+  if (tempLight[0] < 0.0f)
+    stState.mMainLightYAngle = -stState.mMainLightYAngle;
 }
 
 bool IsInitR3Engine() { return dword_184A77F3C != 0; }

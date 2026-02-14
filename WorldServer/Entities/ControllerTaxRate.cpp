@@ -2,6 +2,17 @@
 
 #include "ControllerTaxRate.h"
 
+ControllerTaxRate::ControllerTaxRate()
+{
+  m_bInit = false;
+  m_fCurTaxRate = 0.050000001f;
+}
+
+ControllerTaxRate::~ControllerTaxRate()
+{
+// this is not a stub
+}
+
 void ControllerTaxRate::setLimitTaxRate(float fMin, float fMax)
 {
   this->m_fMinTaxRate = fMin;

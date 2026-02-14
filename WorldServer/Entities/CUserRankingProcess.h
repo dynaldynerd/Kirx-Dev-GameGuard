@@ -14,6 +14,9 @@ struct _PVP_RANK_REFRESH_USER;
 class __cppobj CPvpUserRankingInfo
 {
 public:
+  CPvpUserRankingInfo();
+  ~CPvpUserRankingInfo();
+
   bool assign();
   void ClearTomorrowPvpRankData();
   void DoDayChangedWork(CLogFile *pkLogger);
@@ -66,6 +69,9 @@ public:
 class __cppobj CPvpUserRankingTargetUserList
 {
 public:
+  CPvpUserRankingTargetUserList();
+  ~CPvpUserRankingTargetUserList();
+
   bool assign();
   void ClearRankingStart();
   void Add(unsigned int dwSerial, unsigned __int8 byLv, unsigned __int8 byRace);
@@ -114,6 +120,9 @@ public:
   CPvpUserRankingInfo m_kPvpRankingInfo;
   CPvpUserRankingTargetUserList m_kTargetUserList;
   CGuildRanking m_kGuildRanking;
+
+  CUserRankingProcess();
+  ~CUserRankingProcess();
 
   bool Init();
   void Loop();

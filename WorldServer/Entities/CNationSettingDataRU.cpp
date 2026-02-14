@@ -10,6 +10,8 @@
 
 #include <new>
 
+CNationSettingDataRU::CNationSettingDataRU() = default;
+
 int CNationSettingDataRU::Init()
 {
   if (GetFireGuardEnableSetting())

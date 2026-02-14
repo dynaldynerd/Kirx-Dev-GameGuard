@@ -24,6 +24,7 @@ class __cppobj CLuaSignalReActor
 
 public:
   CLuaSignalReActor();
+  ~CLuaSignalReActor();
   void Init();
   void Free();
   bool SetSignalAndAction(unsigned __int8 bySignalCode);

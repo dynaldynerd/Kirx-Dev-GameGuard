@@ -18,6 +18,13 @@ namespace
 char s_trapObjectName[256]{};
 }
 
+CTrap::CTrap()
+{
+  m_pMaster = nullptr;
+}
+
+CTrap::~CTrap() = default;
+
 __int64 CTrap::GetAttackDP()
 {
   return *reinterpret_cast<unsigned int *>(&m_pRecordSet[5].m_strCode[28]);

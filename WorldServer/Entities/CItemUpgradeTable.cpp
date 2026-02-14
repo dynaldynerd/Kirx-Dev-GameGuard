@@ -5,6 +5,11 @@
 #include "CRecordData.h"
 #include "ItemUpgrade_fld.h"
 
+CItemUpgradeTable::CItemUpgradeTable()
+  : m_tblItemUpgrade(), m_nResNum(0), m_pwResIndex(nullptr)
+{
+}
+
 bool CItemUpgradeTable::ReadRecord(const char *fileName, CRecordData *resTable, char *errCode)
 {
   if (!m_tblItemUpgrade.ReadRecord(fileName, 0xD8, errCode))

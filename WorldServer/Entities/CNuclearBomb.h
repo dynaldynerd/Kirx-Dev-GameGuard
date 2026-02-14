@@ -12,6 +12,8 @@ struct __cppobj _be_damaged_player
   CCharacter *m_pChar;
   unsigned int m_dwDamCharSerial;
   int m_nDamage;
+
+  _be_damaged_player();
 };
 
 #ifndef BE_DAMAGED_CHAR_DEFINED
@@ -22,12 +24,17 @@ struct __cppobj __declspec(align(8)) _be_damaged_char
   int m_nDamage;
   bool m_bActiveSucc;
   int m_nActiveDamage;
+
+  _be_damaged_char();
 };
 #endif
 
 class __cppobj CNuclearBomb : public CCharacter
 {
 public:
+  CNuclearBomb();
+  ~CNuclearBomb();
+
   __int64 GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack) override;
   void Loop() override;
   bool Init(_object_id *pID);

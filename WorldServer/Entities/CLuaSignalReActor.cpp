@@ -23,6 +23,11 @@ CLuaSignalReActor::CLuaSignalReActor()
   }
 }
 
+CLuaSignalReActor::~CLuaSignalReActor()
+{
+  // this is not a stub
+}
+
 void CLuaSignalReActor::Init()
 {
   Free();

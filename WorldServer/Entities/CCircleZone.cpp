@@ -19,6 +19,8 @@ CCircleZone::CCircleZone()
 {
 }
 
+CCircleZone::~CCircleZone() = default;
+
 bool CCircleZone::Init(
   unsigned int uiMapInx,
   int iPlayerInx,

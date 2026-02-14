@@ -14,6 +14,7 @@ class __cppobj CHolyKeeper : public CCharacter
 {
 public:
   CHolyKeeper();
+  ~CHolyKeeper();
 
   __int64 GetAttackDP() override;
   float GetAttackRange() override;

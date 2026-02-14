@@ -8,7 +8,9 @@ class CUserDB;
 class __cppobj CBilling
 {
 public:
-  virtual ~CBilling() = default;
+  CBilling();
+  virtual ~CBilling();
+
   virtual void Login(CUserDB *pUserDB);
   virtual void Alive(CUserDB *pUserDB);
   virtual void Logout(CUserDB *pUserDB);

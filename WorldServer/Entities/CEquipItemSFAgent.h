@@ -11,6 +11,9 @@ struct _skill_fld;
 class __cppobj CEquipItemSFAgent
 {
 public:
+  CEquipItemSFAgent();
+  ~CEquipItemSFAgent();
+
   struct _requireSlot
   {
     bool m_SlotIndex[8];

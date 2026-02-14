@@ -15,6 +15,7 @@ public:
   };
 
   CUnmannedTraderItemState();
+  ~CUnmannedTraderItemState();
   void Clear();
   char Set(unsigned __int8 byState);
   unsigned int GetState() const;

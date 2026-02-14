@@ -32,6 +32,28 @@ CUnmannedTraderController *CUnmannedTraderController::Instance()
   return &s_instance;
 }
 
+CUnmannedTraderController::CUnmannedTraderController()
+  : m_pkLogger(nullptr), m_pkServiceLogger(nullptr), m_kTradeInfo(), m_kLazyCleaner()
+{
+}
+
+CUnmannedTraderController::~CUnmannedTraderController()
+{
+  if (m_pkLogger)
+  {
+    delete m_pkLogger;
+    m_pkLogger = nullptr;
+  }
+  if (m_pkServiceLogger)
+  {
+    delete m_pkServiceLogger;
+    m_pkServiceLogger = nullptr;
+  }
+
+  CUnmannedTraderUserInfoTable::Destroy();
+  CUnmannedTraderScheduler::Destroy();
+}
+
 void CUnmannedTraderController::Loop()
 {
   CUnmannedTraderScheduler::Instance()->Loop();

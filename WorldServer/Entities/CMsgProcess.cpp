@@ -2,17 +2,10 @@
 
 #include "CMsgProcess.h"
 #include "CMainThread.h"
+#include "CMapDisplay.h"
 #include "CMapOperation.h"
 #include "CGameServerDoc.h"
 #include "GlobalObjects.h"
-
-class CMapDisplay
-{
-public:
-  static void OffDisplay(CMapDisplay *display);
-};
-
-extern CMapDisplay g_MapDisplay;
 
 CMsgProcess::CMsgProcess()
   : CMsgData()
@@ -32,7 +25,7 @@ void CMsgProcess::ProcessMessage(_message *pMsg)
 
   if (message == 10001)
   {
-    CMapDisplay::OffDisplay(&g_MapDisplay);
+    g_MapDisplay.OffDisplay();
     SendMessageA(g_pDoc->m_pwndMainFrame->m_hWnd, 0x10u, 0, 0);
     return;
   }

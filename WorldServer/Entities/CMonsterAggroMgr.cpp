@@ -6,6 +6,24 @@
 #include "CPlayer.h"
 #include "WorldServerUtil.h"
 
+CMonsterAggroMgr::CMonsterAggroMgr()
+{
+  m_pTopAggroCharacter = nullptr;
+  m_pTopDamageCharacter = nullptr;
+  m_pKingPowerDamageCharacter = nullptr;
+  m_dwAggroCount = 0;
+  m_dwAllResetLastTime = 0;
+  m_dwShortRankLastTime = 0;
+  m_dwAllResetTimer = 30000;
+  m_dwShortRankTimer = 5000;
+  m_pMonster = nullptr;
+}
+
+CMonsterAggroMgr::~CMonsterAggroMgr()
+{
+  // this is not a stub
+}
+
 void CMonsterAggroMgr::Init()
 {
   for (int j = 0; j < 10; ++j)

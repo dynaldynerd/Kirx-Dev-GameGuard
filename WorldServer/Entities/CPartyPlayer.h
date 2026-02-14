@@ -7,6 +7,8 @@
 class __cppobj CPartyPlayer
 {
 public:
+  CPartyPlayer();
+
   bool m_bLogin;
   __unaligned __declspec(align(1)) _CLID m_id;
   char m_wszName[17];

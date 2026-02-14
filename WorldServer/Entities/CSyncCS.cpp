@@ -4,6 +4,11 @@
 
 #include <Windows.h>
 
+CSyncCS::CSyncCS()
+  : m_bUse(false)
+{
+}
+
 void CSyncCS::SetUse(bool use)
 {
   if (this == nullptr)

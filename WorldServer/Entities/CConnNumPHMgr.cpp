@@ -5,6 +5,16 @@
 #include <ctime>
 #include <mmsystem.h>
 
+CConnNumPHMgr::__cnt_per_h::__cnt_per_h()
+{
+  Init();
+}
+
+CConnNumPHMgr::CConnNumPHMgr()
+{
+  Init();
+}
+
 void CConnNumPHMgr::__cnt_per_h::Init()
 {
   memset_0(this, 0, sizeof(*this));

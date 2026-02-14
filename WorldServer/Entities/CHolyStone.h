@@ -24,6 +24,9 @@ struct __cppobj __declspec(align(8)) _stone_create_setdata : _character_create_s
 class __cppobj CHolyStone : public CCharacter
 {
 public:
+  CHolyStone();
+  ~CHolyStone();
+
   __int64 GetAttackDP() override;
   __int64 GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart) override;
   float GetDefFacing(int nPart) override;

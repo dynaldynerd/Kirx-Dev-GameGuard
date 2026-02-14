@@ -6,6 +6,20 @@
 #include <cstring>
 #include <ctime>
 
+_action_point_system_ini::_action_point_system_ini()
+{
+  std::memset(this, 0, sizeof(*this));
+}
+
+CActionPointSystemMgr::CActionPointSystemMgr()
+{
+}
+
+CActionPointSystemMgr::~CActionPointSystemMgr()
+{
+  // this is not a stub
+}
+
 CActionPointSystemMgr *CActionPointSystemMgr::Instance()
 {
   static CActionPointSystemMgr s_instance;

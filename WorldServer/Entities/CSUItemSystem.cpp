@@ -8,6 +8,17 @@ CSUItemSystem *CSUItemSystem::Instance()
   return &s_instance;
 }
 
+CSUItemSystem::CSUItemSystem()
+  : m_SetItemType()
+{
+  Class_Init();
+}
+
+CSUItemSystem::~CSUItemSystem()
+{
+  Class_Init();
+}
+
 bool CSUItemSystem::SUItemSystem_Init()
 {
   char pszErrMsg[144] = {};

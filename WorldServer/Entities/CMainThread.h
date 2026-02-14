@@ -2278,6 +2278,8 @@ struct __cppobj SKILL
   unsigned int m_bLoad;
   unsigned int m_Active;
   unsigned int m_BefTime;
+
+  SKILL();
 };
 
 /* 1779 */
@@ -2414,6 +2416,7 @@ struct __cppobj _mon_active
   int m_nLimRegenNum;
   BossSchedule *m_pBossSchedule;
 
+  _mon_active();
   bool SetActive(_mon_active_fld *pActRec, _mon_block *pBlk, int nMonRecIndex);
   void SetZeroMonNum();
   char SetCurMonNum(int nAlter);
@@ -2434,6 +2437,7 @@ struct __cppobj _LAYER_SET
   unsigned int m_dwStartActiveTime;
   unsigned int m_dwLastInertTime;
 
+  _LAYER_SET();
   void CreateLayer(int nSecNum);
   void ActiveLayer(_MULTI_BLOCK *pMB);
   char InertLayer();

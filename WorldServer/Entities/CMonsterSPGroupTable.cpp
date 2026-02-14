@@ -2,6 +2,21 @@
 
 #include "CMonsterSPGroupTable.h"
 
+CMonsterSPGroupTable::CMonsterSPGroupTable()
+  : m_dwRecordNum(0),
+    m_pRecordData(nullptr)
+{
+}
+
+CMonsterSPGroupTable::~CMonsterSPGroupTable()
+{
+  if (m_pRecordData)
+  {
+    operator delete[](m_pRecordData);
+    m_pRecordData = nullptr;
+  }
+}
+
 bool CMonsterSPGroupTable::Create(
   CRecordData * pMonsterRecordData,
   CRecordData * pMonsterSPRecordData,
@@ -15,9 +30,11 @@ bool CMonsterSPGroupTable::Create(
         return false;
     auto RecordNum = pMonsterRecordData->GetRecordNum();
     m_dwRecordNum = RecordNum;
-    auto __n = this->m_dwRecordNum;
-    _monster_sp_group* __t = new _monster_sp_group[310];
-    m_pRecordData = __t;
+    const size_t recordCount = static_cast<size_t>(m_dwRecordNum);
+    _monster_sp_group* groups = new (std::nothrow) _monster_sp_group[recordCount];
+    if (!groups)
+        return false;
+    m_pRecordData = groups;
     for (int n = 0; n < m_dwRecordNum; ++n)
     {
         auto v15 = &this->m_pRecordData[n];

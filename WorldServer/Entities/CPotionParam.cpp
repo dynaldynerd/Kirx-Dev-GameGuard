@@ -2,6 +2,24 @@
 
 #include "CPotionParam.h"
 
+unsigned int _ContPotionData::ms_dwCount = 0;
+
+_ContPotionData::_ContPotionData()
+{
+  m_dwID = ms_dwCount++;
+  Init();
+}
+
+CPotionParam::CPotionParam()
+{
+  m_pMaster = nullptr;
+}
+
+CPotionParam::~CPotionParam()
+{
+// this is not a stub
+}
+
 void CPotionParam::Init(CPlayer *pMaster)
 {
   m_pMaster = pMaster;

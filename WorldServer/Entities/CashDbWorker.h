@@ -13,7 +13,7 @@ class __cppobj CashDbWorker : public Worker
 {
 public:
   CashDbWorker();
-  ~CashDbWorker() override = default;
+  ~CashDbWorker() override;
 
   void DoWork() override;
 

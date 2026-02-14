@@ -23,6 +23,25 @@ CRaceBossMsgController *CRaceBossMsgController::Instance()
   return &s_instance;
 }
 
+CRaceBossMsgController::CRaceBossMsgController()
+  : m_pkTimer(nullptr), m_kManager()
+{
+}
+
+CRaceBossMsgController::~CRaceBossMsgController()
+{
+  CleanUp();
+}
+
+void CRaceBossMsgController::CleanUp()
+{
+  if (m_pkTimer)
+  {
+    delete m_pkTimer;
+    m_pkTimer = nullptr;
+  }
+}
+
 RACE_BOSS_MSG::CMsg::CMsg(unsigned __int8 /*ucRace*/, unsigned int dwID)
 {
   Clear();

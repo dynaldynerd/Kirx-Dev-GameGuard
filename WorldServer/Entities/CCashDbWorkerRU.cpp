@@ -13,6 +13,8 @@ CCashDbWorkerRU::CCashDbWorkerRU()
 {
 }
 
+CCashDbWorkerRU::~CCashDbWorkerRU() = default;
+
 void CCashDbWorkerRU::Release()
 {
   if (_pkBill)

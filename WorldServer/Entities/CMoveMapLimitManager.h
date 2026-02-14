@@ -10,6 +10,9 @@ class CPlayer;
 class __cppobj CMoveMapLimitManager
 {
 public:
+  CMoveMapLimitManager();
+  ~CMoveMapLimitManager();
+
   static CMoveMapLimitManager *Instance();
   void Loop();
   bool Init();

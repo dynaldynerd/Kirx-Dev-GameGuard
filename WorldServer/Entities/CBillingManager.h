@@ -9,6 +9,8 @@ class __cppobj CBillingManager : public CTSingleton<CBillingManager>
 {
 public:
   CBillingManager();
+  ~CBillingManager();
+
   bool Init();
   bool LoadINI();
   void Start();

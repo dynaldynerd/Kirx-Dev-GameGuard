@@ -13,6 +13,32 @@ CUnmannedTraderTaxRateManager::CUnmannedTraderTaxRateManager()
 {
 }
 
+CUnmannedTraderTaxRateManager::~CUnmannedTraderTaxRateManager()
+{
+  CleanUp();
+}
+
+void CUnmannedTraderTaxRateManager::CleanUp()
+{
+  if (m_pkTimer)
+  {
+    delete m_pkTimer;
+    m_pkTimer = nullptr;
+  }
+
+  if (!m_vecTRC.empty())
+  {
+    for (TRC_AutoTrade *autoTrade : m_vecTRC)
+    {
+      if (autoTrade)
+      {
+        delete autoTrade;
+      }
+    }
+    m_vecTRC.clear();
+  }
+}
+
 CUnmannedTraderTaxRateManager *CUnmannedTraderTaxRateManager::Instance()
 {
   if (!CUnmannedTraderTaxRateManager::ms_Instance)

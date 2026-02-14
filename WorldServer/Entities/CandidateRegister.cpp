@@ -36,6 +36,8 @@ CandidateRegister::CandidateRegister()
   m_byPtType[1] = 2;
 }
 
+CandidateRegister::~CandidateRegister() = default;
+
 bool CandidateRegister::Initialize()
 {
   char logPath[256]{};

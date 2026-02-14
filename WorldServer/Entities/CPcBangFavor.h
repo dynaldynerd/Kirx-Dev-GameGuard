@@ -9,6 +9,9 @@ struct _AVATOR_DATA;
 class __cppobj CPcBangFavor
 {
 public:
+  CPcBangFavor();
+  virtual ~CPcBangFavor();
+
   static CPcBangFavor *Instance();
   bool Initialzie();
   bool LoadPcBangData();

@@ -27,6 +27,7 @@ class __cppobj CWeeklyGuildRankRecord
 {
 public:
   CWeeklyGuildRankRecord();
+  ~CWeeklyGuildRankRecord();
   void Clear();
 
   unsigned int m_dwInx;

@@ -4,6 +4,7 @@
 
 #include <cstdio>
 #include <cstring>
+#include <process.h>
 
 #include "CPartyPlayer.h"
 #include "WorldServerUtil.h"
@@ -12,6 +13,104 @@ namespace
 {
   char sData_0[10000]{};
   char sBuf_0[512]{};
+  constexpr char kHistoryIniSection[] = "System";
+  constexpr char kHistoryPathKey[] = "HistoryPath";
+  constexpr char kHistoryPathDefault[] = "C:\\History";
+  constexpr char kHistoryIniFile[] = "..\\WorldInfo\\WorldInfo.ini";
+  constexpr char kHistoryLvSubdirFmt[] = "%s\\Lv";
+}
+
+CMgrAvatorLvHistory::CMgrAvatorLvHistory()
+{
+  m_dwLastLocalDate = 0;
+  m_dwLastLocalHour = 0;
+
+  char returnedString[132]{};
+  GetPrivateProfileStringA(
+    kHistoryIniSection,
+    kHistoryPathKey,
+    kHistoryPathDefault,
+    returnedString,
+    0x80u,
+    kHistoryIniFile);
+  CreateDirectoryA(returnedString, nullptr);
+
+  sprintf(m_szStdPath, kHistoryLvSubdirFmt, returnedString);
+  CreateDirectoryA(m_szStdPath, nullptr);
+
+  _strdate(m_szCurDate);
+  m_szCurDate[5] = 0;
+  _strtime(m_szCurTime);
+  m_szCurTime[5] = 0;
+
+  m_tmrUpdateTime.BeginTimer(0xEA60u);
+
+  m_listLogData_2K.SetList(0xFEu);
+  m_listLogDataEmpty_2K.SetList(0xFEu);
+  for (unsigned int index = 0; index < 254; ++index)
+  {
+    m_listLogDataEmpty_2K.PushNode_Back(index);
+  }
+
+  m_listLogData_1K.SetList(0xFEu);
+  m_listLogDataEmpty_1K.SetList(0xFEu);
+  for (unsigned int index = 0; index < 254; ++index)
+  {
+    m_listLogDataEmpty_1K.PushNode_Back(index);
+  }
+
+  m_listLogData_200.SetList(0x9E4u);
+  m_listLogDataEmpty_200.SetList(0x9E4u);
+  for (unsigned int index = 0; index < 2532; ++index)
+  {
+    m_listLogDataEmpty_200.PushNode_Back(index);
+  }
+
+  m_bIOThread = true;
+  _beginthread(&CMgrAvatorLvHistory::IOThread, 0, this);
+}
+
+CMgrAvatorLvHistory::~CMgrAvatorLvHistory()
+{
+  m_bIOThread = false;
+}
+
+void __cdecl CMgrAvatorLvHistory::IOThread(void *pv)
+{
+  CMgrAvatorLvHistory *const history = static_cast<CMgrAvatorLvHistory *>(pv);
+  unsigned int outIndex[5]{};
+  while (history->m_bIOThread)
+  {
+    history->m_FrameRate.CalcSpeedPerFrame();
+
+    while (history->m_listLogData_2K.PopNode_Front(outIndex))
+    {
+      __LOG_DATA_2K &entry = history->m_LogData_2K[outIndex[0]];
+      IOFileWrite_1(entry.szFileName, static_cast<unsigned int>(entry.nLen), entry.sData);
+      history->m_listLogDataEmpty_2K.PushNode_Back(outIndex[0]);
+      Sleep(0);
+    }
+
+    while (history->m_listLogData_1K.PopNode_Front(outIndex))
+    {
+      __LOG_DATA_1K &entry = history->m_LogData_1K[outIndex[0]];
+      IOFileWrite_1(entry.szFileName, static_cast<unsigned int>(entry.nLen), entry.sData);
+      history->m_listLogDataEmpty_1K.PushNode_Back(outIndex[0]);
+      Sleep(0);
+    }
+
+    while (history->m_listLogData_200.PopNode_Front(outIndex))
+    {
+      __LOG_DATA_200 &entry = history->m_LogData_200[outIndex[0]];
+      IOFileWrite_1(entry.szFileName, static_cast<unsigned int>(entry.nLen), entry.sData);
+      history->m_listLogDataEmpty_200.PushNode_Back(outIndex[0]);
+      Sleep(0);
+    }
+
+    Sleep(1u);
+  }
+
+  _endthreadex(0);
 }
 
 void CMgrAvatorLvHistory::OnLoop()

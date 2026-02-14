@@ -13,6 +13,9 @@ struct _STORAGE_POS_INDIV;
 class __cppobj CPostSystemManager
 {
 public:
+  CPostSystemManager();
+  ~CPostSystemManager();
+
   static CPostSystemManager *Instace();
   bool Init();
   void Loop();

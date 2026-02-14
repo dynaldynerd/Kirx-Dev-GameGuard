@@ -31,6 +31,11 @@ CUnmannedTraderRegistItemInfo::CUnmannedTraderRegistItemInfo()
   Clear();
 }
 
+CUnmannedTraderRegistItemInfo::~CUnmannedTraderRegistItemInfo()
+{
+  Clear();
+}
+
 void CUnmannedTraderRegistItemInfo::Clear()
 {
   this->m_kState.Clear();

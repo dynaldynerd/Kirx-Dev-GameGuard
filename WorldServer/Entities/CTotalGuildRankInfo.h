@@ -9,6 +9,7 @@ class __cppobj CTotalGuildRankRecord
 {
 public:
   CTotalGuildRankRecord() = default;
+  ~CTotalGuildRankRecord();
   void Clear();
 
   unsigned int m_dwInx;

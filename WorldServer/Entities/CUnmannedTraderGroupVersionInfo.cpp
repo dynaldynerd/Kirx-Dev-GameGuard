@@ -9,6 +9,8 @@ CUnmannedTraderGroupVersionInfo::CUnmannedTraderGroupVersionInfo()
 {
 }
 
+CUnmannedTraderGroupVersionInfo::~CUnmannedTraderGroupVersionInfo() = default;
+
 bool CUnmannedTraderGroupVersionInfo::Init(std::vector<std::pair<unsigned long, unsigned long>> *vecInfo)
 {
   if (vecInfo->empty())

@@ -7,6 +7,7 @@ protected:
 
 public:
     CMainFrame() noexcept;
+    virtual ~CMainFrame();
 
     virtual BOOL PreCreateWindow(CREATESTRUCT& cs) override;
 

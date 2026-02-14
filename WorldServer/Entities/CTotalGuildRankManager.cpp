@@ -15,6 +15,13 @@ CTotalGuildRankManager *CTotalGuildRankManager::Instance()
   return &s_instance;
 }
 
+CTotalGuildRankManager::CTotalGuildRankManager()
+  : m_iOldDay(-1), m_kInfo()
+{
+}
+
+CTotalGuildRankManager::~CTotalGuildRankManager() = default;
+
 bool CTotalGuildRankManager::Init()
 {
   m_iOldDay = GetCurDay();

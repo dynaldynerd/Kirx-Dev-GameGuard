@@ -8,6 +8,38 @@
 #include <cstdio>
 #include <cstdlib>
 
+CPvpCashMng::_talik_recvr_list::_talik_recvr_list()
+{
+  memset_0(this, 0, sizeof(_talik_recvr_list));
+}
+
+void CPvpCashMng::_class_value::init(_class_value *self)
+{
+  memset_0(self, 0, sizeof(_class_value));
+}
+
+CPvpCashMng::_class_value::_class_value()
+{
+  init(this);
+}
+
+void CPvpCashMng::_max_point::init(_max_point *self)
+{
+  memset_0(self, 0, sizeof(_max_point));
+}
+
+CPvpCashMng::_max_point::_max_point()
+{
+  init(this);
+}
+
+CPvpCashMng::CPvpCashMng() = default;
+
+CPvpCashMng::~CPvpCashMng()
+{
+// this is not a stub
+}
+
 CPvpCashMng *CPvpCashMng::Instance()
 {
   static CPvpCashMng s_instance;

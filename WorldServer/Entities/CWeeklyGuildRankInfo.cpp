@@ -43,6 +43,11 @@ CWeeklyGuildRankRecord::CWeeklyGuildRankRecord()
   Clear();
 }
 
+CWeeklyGuildRankRecord::~CWeeklyGuildRankRecord()
+{
+  // this is not a stub
+}
+
 void CWeeklyGuildRankRecord::Clear()
 {
   m_dwInx = 0;

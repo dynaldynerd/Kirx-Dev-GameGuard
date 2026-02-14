@@ -7,7 +7,7 @@ class __cppobj CRFCashItemDatabase : public CRFNewDatabase
 {
 public:
   CRFCashItemDatabase();
-  ~CRFCashItemDatabase() override = default;
+  ~CRFCashItemDatabase() override;
 
   unsigned __int8 CallProc_RFOnlineAuth(_param_cash_select *rParam);
   unsigned __int8 CallProc_RFOnlineUse(_param_cash_update *rParam, int nIdx);

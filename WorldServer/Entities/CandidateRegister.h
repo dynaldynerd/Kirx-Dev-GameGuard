@@ -27,7 +27,7 @@ public:
 #pragma pack(pop)
 
   CandidateRegister();
-  ~CandidateRegister() override = default;
+  ~CandidateRegister() override;
   bool Initialize() override;
   int Doit(Cmd eCmd, CPlayer *pOne, char *pdata) override;
 

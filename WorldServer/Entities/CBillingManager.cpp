@@ -11,6 +11,8 @@ CBillingManager::CBillingManager()
 {
 }
 
+CBillingManager::~CBillingManager() = default;
+
 bool CBillingManager::LoadINI()
 {
   const UINT billOper = GetPrivateProfileIntA("System", "BillOper", -1, "..\\WorldInfo\\WorldInfo.ini");

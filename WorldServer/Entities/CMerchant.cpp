@@ -13,6 +13,14 @@
 #include "pnt_rect.h"
 #include "StoreList_fld.h"
 
+CMerchant::CMerchant()
+{
+}
+
+CMerchant::~CMerchant()
+{
+}
+
 __int64 CMerchant::GetFireTol()
 {
   return static_cast<unsigned int>(static_cast<int>(*reinterpret_cast<float *>(&m_pRecordSet[2].m_strCode[40])));

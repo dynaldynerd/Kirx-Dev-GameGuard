@@ -25,6 +25,7 @@
 #include "CPotionMgr.h"
 #include "CLuaScriptMgr.h"
 #include "CLogTypeDBTaskManager.h"
+#include "CMapDisplay.h"
 #include "CMapOperation.h"
 #include "CMonsterEventRespawn.h"
 #include "CMonsterEventSet.h"
@@ -140,27 +141,6 @@ bool _TRADE_DB_BASE::_LIST::IsEmpty()
 #include "trans_gm_msg_inform_zocl.h"
 
 #include <mmsystem.h>
-
-class CMapDisplay
-{
-public:
-  static void DrawDisplay(CMapDisplay *display);
-  static void OffDisplay(CMapDisplay *display);
-};
-
-extern CMapDisplay g_MapDisplay;
-
-void CMapDisplay::DrawDisplay(CMapDisplay *display)
-{
-// TODO: temporary non-GUI stub; replace with real MapDisplay integration when GUI subsystem is restored.
-}
-
-void CMapDisplay::OffDisplay(CMapDisplay *display)
-{
-// TODO: temporary non-GUI stub; replace with real MapDisplay integration when GUI subsystem is restored.
-}
-
-CMapDisplay g_MapDisplay{};
 
 namespace
 {
@@ -2964,7 +2944,7 @@ bool CMainThread::ObjectInit()
     g_Player[index].Init(&id);
   }
 
-  g_Monster = static_cast<CMonster *>(operator new[](sizeof(CMonster) * MAX_MONSTER));
+  g_Monster = new CMonster[MAX_MONSTER];
   if (g_Monster == nullptr)
   {
     return false;
@@ -3394,7 +3374,7 @@ void CMainThread::AddPassablePacket()
 
 void CMainThread::OnRun()
 {
-  CMapDisplay::DrawDisplay(&g_MapDisplay);
+  g_MapDisplay.DrawDisplay();
   g_MapOper.OnLoop();
   g_HolySys.OnLoop();
   g_Network.OnLoop();

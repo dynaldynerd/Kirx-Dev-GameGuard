@@ -43,6 +43,8 @@ CashItemRemoteStore::CashItemRemoteStore()
   _bIsBuyCashItemByGold = false;
 }
 
+CashItemRemoteStore::~CashItemRemoteStore() = default;
+
 CashItemRemoteStore::_remain_num_of_good::_remain_num_of_good()
 {
   memset_0(this, 0, sizeof(CashItemRemoteStore::_remain_num_of_good));

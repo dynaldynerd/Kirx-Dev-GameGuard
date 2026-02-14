@@ -11,6 +11,9 @@ class CPlayer;
 class __cppobj CMoveMapLimitRightInfoList
 {
 public:
+  CMoveMapLimitRightInfoList();
+  ~CMoveMapLimitRightInfoList();
+
   bool Init(const std::vector<int> *vecRightTypeList);
   CMoveMapLimitRightInfo *Get(int iInx);
   void Load(CPlayer *pkPlayer);

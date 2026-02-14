@@ -6,6 +6,9 @@
 class __cppobj CCouponMgr
 {
 public:
+  CCouponMgr();
+  ~CCouponMgr();
+
   void Init(unsigned __int16 wIdx);
   void ReceivePrimiumCoupon(unsigned __int16 wIdx);
   char SetCheetContTime(unsigned __int16 wIdx, int nMin);

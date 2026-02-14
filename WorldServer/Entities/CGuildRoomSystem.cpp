@@ -12,6 +12,14 @@
 #include "guildroom_info.h"
 #include "GlobalObjects.h"
 
+CGuildRoomSystem::CGuildRoomSystem()
+{
+}
+
+CGuildRoomSystem::~CGuildRoomSystem()
+{
+}
+
 CGuildRoomSystem *CGuildRoomSystem::GetInstance()
 {
   static CGuildRoomSystem s_instance;

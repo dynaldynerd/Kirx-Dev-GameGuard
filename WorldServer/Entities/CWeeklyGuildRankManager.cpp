@@ -24,6 +24,13 @@ CWeeklyGuildRankManager *CWeeklyGuildRankManager::Instance()
   return &s_instance;
 }
 
+CWeeklyGuildRankManager::CWeeklyGuildRankManager()
+  : m_tNextUpdateTime(0), m_tNextSetOwnerTime(0), m_kInfo()
+{
+}
+
+CWeeklyGuildRankManager::~CWeeklyGuildRankManager() = default;
+
 bool CWeeklyGuildRankManager::Init()
 {
   if (!m_kInfo.Init())

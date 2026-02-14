@@ -23,6 +23,7 @@ public:
   };
 
   CLuaLooting_Novus_Item();
+  ~CLuaLooting_Novus_Item();
 
   _STORAGE_LIST::_db_con m_Item;
   CMapData *m_pMap;

@@ -15,6 +15,8 @@ CGravityStoneRegener::CGravityStoneRegener() : m_eState(GSR_NONE), m_iPortalInx(
 {
 }
 
+CGravityStoneRegener::~CGravityStoneRegener() = default;
+
 bool CGravityStoneRegener::Init(unsigned int uiMapInx, unsigned __int16 wInx, CMapData *pkMap)
 {
   _object_id id(0, 8u, wInx);

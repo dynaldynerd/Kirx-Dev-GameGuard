@@ -6,6 +6,9 @@
 class __cppobj CMonsterSPGroupTable
 {
 public:
+  CMonsterSPGroupTable();
+  ~CMonsterSPGroupTable();
+
   bool Create(
     CRecordData *monsterTable,
     CRecordData *monsterBaseSP,

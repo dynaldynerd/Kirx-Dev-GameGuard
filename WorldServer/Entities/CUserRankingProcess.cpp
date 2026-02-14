@@ -10,6 +10,71 @@
 #include <ctime>
 #include <cstring>
 
+CPvpUserRankingInfo::CPvpUserRankingInfo()
+{
+  m_byPvpRankDataVersion = 0;
+}
+
+CPvpUserRankingInfo::~CPvpUserRankingInfo()
+{
+  for (size_t index = 0; index < m_vecPvpRankDataCurrent.size(); ++index)
+  {
+    delete[] m_vecPvpRankDataCurrent[index];
+  }
+  m_vecPvpRankDataCurrent.clear();
+
+  for (size_t index = 0; index < m_vecPvpRankDataTomorrow.size(); ++index)
+  {
+    delete[] m_vecPvpRankDataTomorrow[index];
+  }
+  m_vecPvpRankDataTomorrow.clear();
+
+  for (size_t index = 0; index < m_vecPackedRankData.size(); ++index)
+  {
+    delete[] m_vecPackedRankData[index];
+  }
+  m_vecPackedRankData.clear();
+
+  for (size_t index = 0; index < m_dwUpdateRaceBossSerial.size(); ++index)
+  {
+    delete[] m_dwUpdateRaceBossSerial[index];
+  }
+  m_dwUpdateRaceBossSerial.clear();
+
+  for (size_t index = 0; index < m_dwCurrentRaceBossSerial.size(); ++index)
+  {
+    delete[] m_dwCurrentRaceBossSerial[index];
+  }
+  m_dwCurrentRaceBossSerial.clear();
+}
+
+CPvpUserRankingTargetUserList::CPvpUserRankingTargetUserList()
+{
+  m_uiAddTotalCnt = 0;
+  m_uiRefreshCnt = 0;
+}
+
+CPvpUserRankingTargetUserList::~CPvpUserRankingTargetUserList()
+{
+  for (size_t index = 0; index < m_PvpRankRefreshUser.size(); ++index)
+  {
+    delete m_PvpRankRefreshUser[index];
+  }
+  m_PvpRankRefreshUser.clear();
+}
+
+CUserRankingProcess::CUserRankingProcess()
+{
+  m_eState = PS_NONE;
+  m_tStartTime = -1;
+  m_tFailStartTime = -1;
+  m_iPvpSaveJobIndexOffset = 0;
+  m_iPvpRankDataVersionUpSendOffset = 0;
+  memset_0(m_szPvpRankDate, 0, sizeof(m_szPvpRankDate));
+}
+
+CUserRankingProcess::~CUserRankingProcess() = default;
+
 bool CPvpUserRankingInfo::assign()
 {
   m_vecPvpRankDataCurrent.assign(3, nullptr);

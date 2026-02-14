@@ -21,6 +21,40 @@ _goldbox_index::_goldbox_index()
   memset_0(this, 0, sizeof(_goldbox_index));
 }
 
+_golden_box_item_ini::_golden_box_item_ini()
+{
+  memset_0(this, 0, sizeof(_golden_box_item_ini));
+}
+
+_golden_box_item_event::_golden_box_item_event()
+{
+  memset_0(this, 0, sizeof(_golden_box_item_event));
+}
+
+_golden_box_item_event::~_golden_box_item_event()
+{
+}
+
+_golden_box_item::_golden_box_item()
+{
+  memset_0(this, 0, sizeof(_golden_box_item));
+}
+
+_db_golden_box_item::_db_golden_box_item()
+{
+  memset_0(this, 0, sizeof(_db_golden_box_item));
+}
+
+CGoldenBoxItemMgr::CGoldenBoxItemMgr()
+{
+  m_nDBSerial = 0;
+}
+
+CGoldenBoxItemMgr::~CGoldenBoxItemMgr()
+{
+  m_tmLoopTimer.StopTimer();
+}
+
 CGoldenBoxItemMgr *CGoldenBoxItemMgr::Instance()
 {
   static CGoldenBoxItemMgr s_instance;

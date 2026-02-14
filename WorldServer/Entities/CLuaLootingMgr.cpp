@@ -32,6 +32,11 @@ CLuaLooting_Novus_Item::CLuaLooting_Novus_Item()
 {
 }
 
+CLuaLooting_Novus_Item::~CLuaLooting_Novus_Item()
+{
+  // this is not a stub
+}
+
 CLuaLootingMgr::CLuaLootingMgr()
 {
   m_Loot_Novus_ItemArEx.Alloc(0x1F4u);

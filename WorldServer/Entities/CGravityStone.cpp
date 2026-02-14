@@ -21,6 +21,8 @@ CGravityStone::CGravityStone(unsigned __int16 wInx) : m_dwTakeLimitTime(0), m_pk
   m_dwTakeLimitTime = 0;
 }
 
+CGravityStone::~CGravityStone() = default;
+
 bool CGravityStone::IsValidOwner(CPlayer *pkPlayer)
 {
   return m_pkOwner && m_pkOwner == pkPlayer && m_pkOwner->m_pUserDB->m_dwSerial == pkPlayer->m_pUserDB->m_dwSerial;

@@ -23,6 +23,37 @@
 
 CMyTimer::~CMyTimer() = default;
 
+int _effect_parameter::m_nInitCount = 0;
+
+_sf_continous::_sf_continous()
+{
+  m_bExist = false;
+}
+
+_effect_parameter::_effect_parameter()
+{
+  m_pDataParam = nullptr;
+  m_bLock = false;
+  ++m_nInitCount;
+}
+
+_effect_parameter::~_effect_parameter()
+{
+  if (m_pDataParam)
+  {
+    operator delete(m_pDataParam);
+  }
+}
+
+CCharacter::CCharacter()
+{
+}
+
+CCharacter::~CCharacter()
+{
+  // this is not a stub
+}
+
 unsigned int _sf_continous::GetSFContCurTime()
 {
   return timeGetTime() / 1000;

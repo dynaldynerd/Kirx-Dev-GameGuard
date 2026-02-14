@@ -12,6 +12,8 @@ CUnmannedTraderGroupItemInfoTable::CUnmannedTraderGroupItemInfoTable()
 {
 }
 
+CUnmannedTraderGroupItemInfoTable::~CUnmannedTraderGroupItemInfoTable() = default;
+
 CUnmannedTraderGroupItemInfoTable *CUnmannedTraderGroupItemInfoTable::Instance()
 {
   if (!CUnmannedTraderGroupItemInfoTable::ms_Instance)

@@ -15,6 +15,9 @@ namespace CryptoPP
 class __cppobj CCryptor : public CTSingleton<CCryptor>
 {
 public:
+  CCryptor();
+  ~CCryptor();
+
   bool Init(const char *szKeyPath, bool bUseCreate);
   bool MakeHash(
     const unsigned __int8 *pBuff,

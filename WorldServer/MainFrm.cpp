@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Entities/CMainThread.h"
+#include "Entities/GlobalObjects.h"
 #include "MainFrm.h"
 
 #ifdef _DEBUG
@@ -15,7 +16,10 @@ END_MESSAGE_MAP()
 
 CMainFrame::CMainFrame() noexcept
 {
+    g_pFrame = this;
 }
+
+CMainFrame::~CMainFrame() = default;
 
 BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 {

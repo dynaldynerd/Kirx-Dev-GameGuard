@@ -6,6 +6,7 @@ class __cppobj CRaceBossWinRate
 {
 public:
   CRaceBossWinRate();
+  ~CRaceBossWinRate();
   static CRaceBossWinRate *Instance();
   void UpdateTotalCnt();
   void UpdateWinCnt(unsigned __int8 byRace);

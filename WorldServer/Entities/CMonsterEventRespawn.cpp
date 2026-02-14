@@ -23,6 +23,21 @@ namespace
   const char *pos_key[3] = {"x", "y", "z"};
 }
 
+_event_respawn::_state::_state()
+{
+  init();
+}
+
+_event_respawn::_event_respawn()
+  : bLoad(false), nUseRewardItemNum(0), bActive(false), State()
+{
+}
+
+CMonsterEventRespawn::CMonsterEventRespawn()
+  : m_nLoadEventRespawn(0)
+{
+}
+
 void _event_respawn::_state::init()
 {
   memset_0(this, 0, sizeof(*this));

@@ -25,6 +25,7 @@ struct __declspec(align(4)) _sf_continous
   unsigned int m_dwPlayerSerial;
   char m_wszPlayerName[17];
 
+  _sf_continous();
   static unsigned int GetSFContCurTime();
 };
 
@@ -32,9 +33,12 @@ struct __declspec(align(8)) _effect_parameter
 {
   struct __param_data;
 
-  __param_data *m_pDataParam;
-  bool m_bLock;
+  __param_data *m_pDataParam = nullptr;
+  bool m_bLock = false;
+  static int m_nInitCount;
 
+  _effect_parameter();
+  ~_effect_parameter();
   void AllocEffParam();
   void InitEffParam();
   void InitEffHave();
@@ -66,6 +70,9 @@ struct _tmp_effected_list
 class CCharacter : public CGameObject
 {
 public:
+  CCharacter();
+  ~CCharacter();
+
   float m_fTarPos[3];
   int m_AroundNum;
   CCharacter *m_AroundSlot[5];

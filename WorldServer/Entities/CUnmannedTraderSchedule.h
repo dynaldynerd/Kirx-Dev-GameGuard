@@ -15,6 +15,7 @@ public:
   };
 
   CUnmannedTraderSchedule();
+  ~CUnmannedTraderSchedule();
   void Clear();
   void Set(
     unsigned __int8 byType,

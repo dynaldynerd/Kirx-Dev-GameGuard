@@ -20,6 +20,14 @@
 #include <cstring>
 #include <ctime>
 
+CCouponMgr::CCouponMgr()
+{
+}
+
+CCouponMgr::~CCouponMgr()
+{
+}
+
 void CCouponMgr::Init(unsigned __int16 wIdx)
 {
   CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();

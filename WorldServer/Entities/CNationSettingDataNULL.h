@@ -7,6 +7,8 @@
 class __cppobj CNationSettingDataNULL : public CNationSettingData
 {
 public:
+  static CNationSettingDataNULL ms_NULL;
+
   CBilling *CreateBilling() override;
   int GetCashItemPrice(_CashShop_str_fld *pFld) override;
 };

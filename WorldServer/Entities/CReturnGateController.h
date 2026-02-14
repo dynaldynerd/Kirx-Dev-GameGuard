@@ -10,12 +10,16 @@ class CPlayer;
 class __cppobj CReturnGateController
 {
 public:
+  CReturnGateController();
+  ~CReturnGateController();
+
   CMyTimer *m_pkTimer;
   CNetIndexList *m_pkEmptyInxList;
   CNetIndexList *m_pkUseInxList;
   unsigned int m_uiGateTotCnt;
   CReturnGate **m_ppkGatePool;
 
+  void CleanUp();
   static CReturnGateController *Instance();
   bool Init(unsigned int gateCount);
   void OnLoop();

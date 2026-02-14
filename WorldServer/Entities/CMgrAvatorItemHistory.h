@@ -40,6 +40,7 @@ public:
   };
 
   CMgrAvatorItemHistory();
+  ~CMgrAvatorItemHistory();
   static void IOThread(void *pv);
   void OnLoop();
   void WriteFile(const char *pszFileName, const char *pszLog);

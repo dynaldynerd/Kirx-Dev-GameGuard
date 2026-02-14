@@ -89,6 +89,57 @@ namespace
     }
 }
 
+void CBsp::ClearVariable()
+{
+  mPickPoly = -1;
+  mStaticAlloc = nullptr;
+  mStaticAllocSize = 0;
+  mExtBspStaticAlloc = nullptr;
+  mExtBspStaticAllocSize = 0;
+  mMatGroupCacheSize = 0;
+  mMatGroupCache = nullptr;
+  mMultiLayerUV = nullptr;
+  mMultiLayerST = nullptr;
+  mStaticVBCnt = 0;
+  mCFVertexNum = 0;
+  mCFLineNum = 0;
+  mCFLineIdNum = 0;
+  ___u21.mEnvEntity[0] = nullptr;
+  ___u21.mEnvEntity[1] = nullptr;
+  mEntityCache = nullptr;
+  mEntityCacheSize = 0;
+  mNowCFaceId = 0;
+  mCNEdgeNormal = nullptr;
+  mEntity = nullptr;
+  mParticle = nullptr;
+  mEntityListNum = 0;
+  mLeafEntityListNum = 0;
+  mEntityIDNum = 0;
+  mMapEntitiesListNum = 0;
+  mSoundEntityIDNum = 0;
+  mLeafSoundEntityListNum = 0;
+  mSoundEntityListNum = 0;
+  mSoundEntitiesListNum = 0;
+  mSoundEntityCache = nullptr;
+  mSoundEntityCacheSize = 0;
+  mEventObjectID = nullptr;
+  mNowLeafNum = 0;
+  mEnvID[0] = 0;
+  mEnvID[1] = 0;
+  std::memset(&mBSPHeader, 0, sizeof(mBSPHeader));
+  std::memset(&mExtBSPHeader, 0, sizeof(mExtBSPHeader));
+}
+
+CBsp::CBsp()
+{
+  ClearVariable();
+}
+
+CBsp::~CBsp()
+{
+  // this is not a stub
+}
+
 void CBsp::GetFaceFrontPoint(float (*a2)[3], int a3)
 {
   const int idx = 3 * a3;

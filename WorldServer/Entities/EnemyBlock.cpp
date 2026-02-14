@@ -7,6 +7,16 @@
 #include <cstring>
 #include <mmsystem.h>
 
+_mon_active::_mon_active()
+{
+    this->m_pBossSchedule = nullptr;
+    this->m_pActRec = nullptr;
+    this->m_pBlk = nullptr;
+    this->m_zCurMonNum = 0;
+    this->m_dwCumMonNum = 0;
+    this->m_dwLastRespawnTime = 0;
+}
+
 bool _mon_block::SetBlock(_mon_block_fld *pBlkRec, CMapData *pMap, _dummy_position **ppDumPos)
 {
     this->m_pBlkRec = pBlkRec;
@@ -81,6 +91,16 @@ void _mon_active::BossScheduleSave()
     {
         bossSchedule->Save_LiveCount(static_cast<unsigned __int16>(this->m_zCurMonNum));
     }
+}
+
+_LAYER_SET::_LAYER_SET()
+{
+    this->m_pListSectorObj = nullptr;
+    this->m_pListSectorPlayer = nullptr;
+    this->m_pListSectorTower = nullptr;
+    this->m_pMB = nullptr;
+    this->m_nSecNum = 0;
+    this->m_dwLastInertTime = 0;
 }
 
 void _LAYER_SET::CreateLayer(int nSecNum)

@@ -10,6 +10,53 @@
 #include "map_fld.h"
 #include "GlobalObjects.h"
 
+CRecallEffectController::CRecallEffectController()
+{
+  m_uiInfoTotCnt = 0;
+  m_ppkReqeust = nullptr;
+  m_pkTimer = nullptr;
+  m_pkEmptyInxList = nullptr;
+  m_pkUseInxList = nullptr;
+}
+
+CRecallEffectController::~CRecallEffectController()
+{
+  CleanUp();
+}
+
+void CRecallEffectController::CleanUp()
+{
+  if (m_pkTimer)
+  {
+    delete m_pkTimer;
+    m_pkTimer = nullptr;
+  }
+
+  if (m_pkEmptyInxList)
+  {
+    delete m_pkEmptyInxList;
+    m_pkEmptyInxList = nullptr;
+  }
+
+  if (m_pkUseInxList)
+  {
+    delete m_pkUseInxList;
+    m_pkUseInxList = nullptr;
+  }
+
+  if (m_ppkReqeust)
+  {
+    for (unsigned int index = 0; index < m_uiInfoTotCnt; ++index)
+    {
+      delete m_ppkReqeust[index];
+      m_ppkReqeust[index] = nullptr;
+    }
+
+    operator delete[](m_ppkReqeust);
+    m_ppkReqeust = nullptr;
+  }
+}
+
 namespace
 {
 unsigned __int8 GetResistedRecall(

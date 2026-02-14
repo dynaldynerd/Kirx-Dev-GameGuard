@@ -174,6 +174,9 @@ class CExtDummy;
 class __cppobj CBsp
 {
 public:
+  CBsp();
+  ~CBsp();
+
   float (*mCVertex)[3];
   float (*mCNNormal)[3];
   unsigned int *mCVertexId;
@@ -280,6 +283,7 @@ public:
   void CalcEntitiesMainColor();
 
 private:
+  void ClearVariable();
   float GetFirstYpos(float *const a2, __int16 *const a3, __int16 *const a4);
   void GetFaceFrontPoint(float (*a2)[3], int a3);
   int IsExistSelfPoint(int a2, int a3);

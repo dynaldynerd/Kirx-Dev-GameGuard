@@ -53,6 +53,15 @@ CHolyKeeper::CHolyKeeper()
 {
 }
 
+CHolyKeeper::~CHolyKeeper()
+{
+  if (m_at)
+  {
+    delete m_at;
+    m_at = nullptr;
+  }
+}
+
 __int64 CHolyKeeper::GetAttackDP()
 {
   return static_cast<unsigned int>(m_pRec->m_nAttack_DP);

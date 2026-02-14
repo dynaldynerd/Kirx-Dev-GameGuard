@@ -24,6 +24,13 @@ CUnmannedTraderItemCodeInfo::CUnmannedTraderItemCodeInfo(const CUnmannedTraderIt
   operator=(lhs);
 }
 
+CUnmannedTraderItemCodeInfo::~CUnmannedTraderItemCodeInfo()
+{
+  m_dwStartInx = 0;
+  m_dwEndInx = 0;
+  m_szCode[0] = '\0';
+}
+
 const CUnmannedTraderItemCodeInfo *CUnmannedTraderItemCodeInfo::operator=(const CUnmannedTraderItemCodeInfo &lhs)
 {
   this->m_dwStartInx = lhs.m_dwStartInx;

@@ -98,6 +98,9 @@ class CPlayer;
 class __cppobj CRaceBossMsgController
 {
 public:
+  CRaceBossMsgController();
+  ~CRaceBossMsgController();
+
   bool m_bConnectWeb;
   int m_iOldDay;
   CMyTimer *m_pkTimer;
@@ -135,4 +138,5 @@ public:
 
   int GetCurDay();
   bool LoadCurTime(unsigned int *dwCurTime);
+  void CleanUp();
 };

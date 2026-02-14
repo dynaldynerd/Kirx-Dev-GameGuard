@@ -12,6 +12,9 @@ class CPlayer;
 class __cppobj CTransportShip
 {
 public:
+  CTransportShip();
+  ~CTransportShip();
+
   struct __mgr_member;
   struct __mgr_ticket;
 
@@ -46,6 +49,8 @@ public:
 
   struct __cppobj __declspec(align(8)) __mgr_member
   {
+    __mgr_member();
+
     CPlayer *pPtr;
     unsigned int dwSerial;
 
@@ -55,6 +60,8 @@ public:
 
   struct __cppobj __mgr_ticket
   {
+    __mgr_ticket();
+
     int nCurTicketNum;
     int nReserTicketNum;
     unsigned int dwNextUpdateTime;

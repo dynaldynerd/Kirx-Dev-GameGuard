@@ -11,6 +11,7 @@ public:
   static CUnmannedTraderGroupItemInfoTable *Instance();
 
   CUnmannedTraderGroupItemInfoTable();
+  ~CUnmannedTraderGroupItemInfoTable();
   bool Init();
   void SetLogger(CLogFile *pkLogger);
   void Log(const char *fmt, ...);

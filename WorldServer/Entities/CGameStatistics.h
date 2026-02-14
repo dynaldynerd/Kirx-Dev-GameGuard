@@ -34,6 +34,7 @@ public:
   };
 
   CGameStatistics();
+  ~CGameStatistics();
   void Init();
   void ConvertDay(char *pszWorldName);
   void WriteDayData(char *pszWorldName);

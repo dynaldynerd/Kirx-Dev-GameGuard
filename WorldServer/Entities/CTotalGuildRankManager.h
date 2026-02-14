@@ -9,6 +9,9 @@ class CPlayer;
 class __cppobj CTotalGuildRankManager
 {
 public:
+  CTotalGuildRankManager();
+  ~CTotalGuildRankManager();
+
   static CTotalGuildRankManager *Instance();
   bool Init();
   bool Load();

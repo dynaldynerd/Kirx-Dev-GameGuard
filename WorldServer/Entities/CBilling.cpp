@@ -10,6 +10,15 @@
 #include "CUserDB.h"
 #include "GlobalObjects.h"
 
+CBilling::CBilling()
+{
+}
+
+CBilling::~CBilling()
+{
+  // this is not a stub
+}
+
 void CBilling::Start()
 {
   SendMsg_StartBilling();

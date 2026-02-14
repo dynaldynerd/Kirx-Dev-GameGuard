@@ -5,6 +5,9 @@
 class __cppobj ControllerTaxRate
 {
 public:
+  ControllerTaxRate();
+  virtual ~ControllerTaxRate();
+
   void setLimitTaxRate(float fMin, float fMax);
   bool checkLimitTaxRate(float fTaxRate);
   float getCurTaxRate();

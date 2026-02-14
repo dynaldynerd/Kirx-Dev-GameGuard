@@ -15,6 +15,32 @@
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
+CTransportShip::__mgr_member::__mgr_member()
+{
+  pPtr = nullptr;
+}
+
+CTransportShip::__mgr_ticket::__mgr_ticket()
+{
+  init();
+}
+
+CTransportShip::CTransportShip()
+  : m_tmrCheckState(), m_listLogoffMember()
+{
+  m_pLinkShipMap = nullptr;
+  for (int index = 0; index < 2; ++index)
+  {
+    m_pLinkPortMap[index] = nullptr;
+  }
+  m_byRaceCode_Layer = static_cast<unsigned __int8>(-1);
+
+  m_tmrCheckState.BeginTimer(1000);
+  m_listLogoffMember.SetList(0x13C8u);
+}
+
+CTransportShip::~CTransportShip() = default;
+
 void CTransportShip::__mgr_member::init()
 {
   pPtr = nullptr;

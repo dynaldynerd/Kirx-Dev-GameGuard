@@ -1669,6 +1669,11 @@ CMgrAvatorItemHistory::CMgrAvatorItemHistory()
   _beginthread(&CMgrAvatorItemHistory::IOThread, 0, this);
 }
 
+CMgrAvatorItemHistory::~CMgrAvatorItemHistory()
+{
+  m_bIOThread = false;
+}
+
 void CMgrAvatorItemHistory::IOThread(void *pv)
 {
   auto *self = static_cast<CMgrAvatorItemHistory *>(pv);

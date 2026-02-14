@@ -2,6 +2,11 @@
 
 #include "COreCuttingTable.h"
 
+COreCuttingTable::COreCuttingTable()
+  : m_tblOreCutting(), m_nOreNum(0), pOreList(nullptr)
+{
+}
+
 bool COreCuttingTable::ReadRecord(const char *fileName, CRecordData *oreTable, CRecordData *resTable, char *errCode)
 {
   if (!m_tblOreCutting.ReadRecord(fileName, 0x88, errCode))

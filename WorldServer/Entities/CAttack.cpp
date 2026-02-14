@@ -51,6 +51,25 @@ _attack_param::_attack_param()
   memset_0(this, 0, sizeof(_attack_param));
 }
 
+SKILL::SKILL()
+{
+  m_Type = -1;
+  m_Element = -1;
+  m_MinDmg = 0;
+  m_StdDmg = 0;
+  m_MaxDmg = 0;
+  m_CritDmg = 0;
+  m_MinProb = 0;
+  m_MaxProb = 0;
+  m_IsCritical = 0;
+  m_Len = 0;
+  m_CastDelay = 0;
+  m_Delay = 0;
+  m_bLoad = 0;
+  m_Active = 0;
+  m_BefTime = 0;
+}
+
 CAttack::CAttack(CCharacter *pThis)
   : m_pp(&s_DefParam),
     m_pAttChar(pThis),

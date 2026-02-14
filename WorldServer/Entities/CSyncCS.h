@@ -6,6 +6,8 @@
 class __cppobj CSyncCS
 {
 public:
+  CSyncCS();
+
   bool m_bUse;
   _RTL_CRITICAL_SECTION m_cs;
 

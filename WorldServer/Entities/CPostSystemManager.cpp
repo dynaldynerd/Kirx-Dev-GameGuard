@@ -22,6 +22,29 @@
 #include <cstdio>
 #include <atltime.h>
 
+CPostSystemManager::CPostSystemManager()
+{
+  m_byRegiNum = 20;
+  m_byProcNum = 15;
+  m_nPostProcCountPerDay = 0;
+  m_nPostReturnCountPerDay = 0;
+}
+
+CPostSystemManager::~CPostSystemManager()
+{
+  if (m_pkLogger)
+  {
+    delete m_pkLogger;
+    m_pkLogger = nullptr;
+  }
+
+  if (m_PostData)
+  {
+    delete[] m_PostData;
+    m_PostData = nullptr;
+  }
+}
+
 CPostSystemManager *CPostSystemManager::Instace()
 {
   static CPostSystemManager s_instance;

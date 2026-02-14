@@ -38,12 +38,29 @@
 
 CMonster:: _monster_loot_index *CMonster::s_idxMonsterLoot = nullptr;
 unsigned int CMonster::s_dwSerialCnt = 0;
+int CMonster::s_nAllocNum = 0;
 int CMonster::s_nLiveNum = 0;
 CLogFile CMonster::s_logTrace_Boss_BirthAndDeath{};
 CLogFile CMonster::s_logTrace_Boss_Looting{};
 namespace
 {
 char s_monsterObjectName[256]{};
+}
+
+CMonster::CMonster()
+{
+  m_pTargetChar = nullptr;
+  m_AggroMgr.OnlyOnceInit(this);
+  m_MonHierarcy.OnlyOnceInit(this);
+  m_SFContDamageTolerance.OnlyOnceInit(this);
+  _InitSDM();
+  ++s_nAllocNum;
+}
+
+CMonster::~CMonster()
+{
+  --s_nAllocNum;
+  _DestroySDM();
 }
 
 void CMonster::Init(_object_id *pID)
@@ -266,6 +283,39 @@ void CMonster::Command_ChildMonDestroy(unsigned int dwAfterKillTerm)
   {
     m_dwDestroyNextTime = dwAfterKillTerm + GetLoopTime();
     m_MonHierarcy.SetParent(nullptr);
+  }
+}
+
+void CMonster::_InitSDM()
+{
+  char buffer[144]{};
+  if (!s_logTrace_Boss_Looting.m_bInit)
+  {
+    const unsigned int localTime = GetKorLocalTime();
+    sprintf(buffer, "..\\ZoneServerLog\\ServiceLog\\MonsterLoot%d.log", localTime);
+    s_logTrace_Boss_Looting.SetWriteLogFile(buffer, 1, 0, 0, 0);
+  }
+
+  if (!s_logTrace_Boss_BirthAndDeath.m_bInit)
+  {
+    const unsigned int localTime = GetKorLocalTime();
+    sprintf(buffer, "..\\ZoneServerLog\\ServiceLog\\MonsterBirth%d.log", localTime);
+    s_logTrace_Boss_BirthAndDeath.SetWriteLogFile(buffer, 1, 0, 1, 1);
+  }
+
+  if (!sPlayerDum.m_bLive)
+  {
+    sPlayerDum.m_dwObjSerial = static_cast<unsigned int>(-16);
+    sPlayerDum.m_bLive = true;
+  }
+}
+
+void CMonster::_DestroySDM()
+{
+  if (s_nAllocNum <= 0 && s_idxMonsterLoot)
+  {
+    operator delete[](s_idxMonsterLoot);
+    s_idxMonsterLoot = nullptr;
   }
 }
 

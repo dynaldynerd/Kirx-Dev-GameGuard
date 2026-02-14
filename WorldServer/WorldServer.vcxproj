@@ -26,6 +26,9 @@
     <RootNamespace>WorldServer</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
+  <PropertyGroup>
+    <ShouldUnsetParentConfigurationAndPlatform>false</ShouldUnsetParentConfigurationAndPlatform>
+  </PropertyGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
 
@@ -338,8 +341,14 @@
     <ProjectReference Include="ThirdParty\\cryptopp\\cryptlib.vcxproj">
       <Project>{c39f4b46-6e89-4074-902e-ca57073044d2}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <SetConfiguration>Configuration=$(Configuration)</SetConfiguration>
+      <SetPlatform>Platform=x64</SetPlatform>
     </ProjectReference>
   </ItemGroup>
+
+  <Target Name="EnforceX64Platform" BeforeTargets="PrepareForBuild" Condition="'$(Platform)' != 'x64' and '$(Platform)' != 'X64'">
+    <Error Text="WorldServer supports x64 builds only. Switch Visual Studio Platform to x64." />
+  </Target>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

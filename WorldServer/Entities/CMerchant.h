@@ -9,6 +9,9 @@
 class CMerchant : public CCharacter
 {
 public:
+  CMerchant();
+  ~CMerchant();
+
   __int64 GetFireTol() override;
   char *GetObjName() override;
   __int64 GetObjRace() override;

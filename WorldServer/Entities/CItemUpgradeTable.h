@@ -8,6 +8,8 @@ struct _ItemUpgrade_fld;
 class __cppobj CItemUpgradeTable
 {
 public:
+  CItemUpgradeTable();
+
   bool ReadRecord(const char *fileName, CRecordData *resTable, char *errCode);
   _ItemUpgrade_fld *GetRecord(unsigned int dwIndex);
   _ItemUpgrade_fld *GetRecordFromRes(unsigned int dwResIndex);

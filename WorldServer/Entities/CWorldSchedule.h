@@ -9,6 +9,9 @@ struct _WorldSchedule_fld;
 class __cppobj CWorldSchedule
 {
 public:
+  CWorldSchedule();
+  ~CWorldSchedule();
+
   bool Init();
   void Loop();
   void CheckSch();

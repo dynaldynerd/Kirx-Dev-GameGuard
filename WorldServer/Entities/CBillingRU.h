@@ -5,6 +5,8 @@
 class __cppobj CBillingRU : public CBillingID
 {
 public:
+  CBillingRU();
+
   ~CBillingRU() override;
 };
 

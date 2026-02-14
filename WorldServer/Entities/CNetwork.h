@@ -10,6 +10,8 @@ struct _NET_TYPE_PARAM;
 class __cppobj CNetwork
 {
 public:
+  CNetwork();
+
   virtual ~CNetwork() = default;
 
   HINSTANCE__ *m_hChinaDLL;

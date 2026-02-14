@@ -22,8 +22,10 @@ class __cppobj CUnmannedTraderUserInfoTable
 {
 public:
   static CUnmannedTraderUserInfoTable *Instance();
+  static void Destroy();
 
   CUnmannedTraderUserInfoTable();
+  ~CUnmannedTraderUserInfoTable();
   bool Init();
   bool Load(unsigned __int8 byType, unsigned __int16 wInx, unsigned int dwSerial, _TRADE_DB_BASE *kInfo);
   bool CheckwIndexAndType(unsigned __int16 wInx, unsigned __int8 byType, const char *szCallFuncName);

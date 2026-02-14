@@ -20,6 +20,7 @@ public:
   };
 
   explicit CRaceBuffInfoByHolyQuestfGroup(unsigned int nth);
+  ~CRaceBuffInfoByHolyQuestfGroup();
   bool Init();
   bool Apply(unsigned int iResultType, CPlayer *pkDest);
   bool Release(unsigned int iResultType, CPlayer *pkDest);

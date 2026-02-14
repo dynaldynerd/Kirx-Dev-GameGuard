@@ -882,6 +882,9 @@ struct __cppobj _ContPotionData
   unsigned int m_dwStartSec;
   unsigned __int16 m_wDurCapSec;
   unsigned int m_dwID;
+  static unsigned int ms_dwCount;
+
+  _ContPotionData();
 
   void Init();
   void Set(unsigned int dwPotionIndex, unsigned int dwStartTime, unsigned __int16 wDurCapSec);

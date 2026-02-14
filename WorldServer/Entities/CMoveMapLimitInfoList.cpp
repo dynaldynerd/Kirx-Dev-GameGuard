@@ -8,6 +8,14 @@
 #include "CMoveMapLimitInfo.h"
 #include "CMainThread.h"
 
+CMoveMapLimitInfoList::CMoveMapLimitInfoList()
+{
+}
+
+CMoveMapLimitInfoList::~CMoveMapLimitInfoList()
+{
+}
+
 bool CMoveMapLimitInfoList::Init(std::vector<int> *vecRightTypeList)
 {
   const unsigned int count =

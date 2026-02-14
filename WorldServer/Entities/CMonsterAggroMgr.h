@@ -22,6 +22,9 @@ class __cppobj CMonsterAggroMgr
   CMonster *m_pMonster;
 
 public:
+  CMonsterAggroMgr();
+  ~CMonsterAggroMgr();
+
   void Init();
   void ResetAggro();
   CCharacter *GetTopAggroCharacter();

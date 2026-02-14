@@ -9,6 +9,13 @@
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
+CPcBangFavor::CPcBangFavor()
+{
+  m_bEnable = 0;
+}
+
+CPcBangFavor::~CPcBangFavor() = default;
+
 CPcBangFavor *CPcBangFavor::Instance()
 {
   static CPcBangFavor s_instance;

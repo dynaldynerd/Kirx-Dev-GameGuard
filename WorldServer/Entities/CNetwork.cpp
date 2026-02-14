@@ -2,3 +2,7 @@
 
 #include "CNetwork.h"
 
+CNetwork::CNetwork()
+{
+}
+

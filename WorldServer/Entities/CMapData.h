@@ -16,6 +16,9 @@ struct _pnt_rect;
 class __cppobj __declspec(align(8)) CMapData
 {
 public:
+  CMapData();
+  virtual ~CMapData() = default;
+
   _bsp_info *GetBspInfo();
   _sec_info *GetSecInfo();
   unsigned __int8 GetMapCode();
@@ -100,6 +103,4 @@ public:
   _sec_info m_SecInfo;
   CMyTimer m_tmrMineGradeReSet;
   int m_nMonTotalCount;
-public:
-  virtual ~CMapData() = default;
 };

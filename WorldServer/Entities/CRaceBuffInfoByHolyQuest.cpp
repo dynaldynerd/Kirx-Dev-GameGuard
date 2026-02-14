@@ -16,6 +16,11 @@ CRaceBuffInfoByHolyQuest::CRaceBuffInfoByHolyQuest(_skill_fld *data, unsigned __
 {
 }
 
+CRaceBuffInfoByHolyQuest::~CRaceBuffInfoByHolyQuest()
+{
+  // this is not a stub
+}
+
 CRaceBuffInfoByHolyQuest *CRaceBuffInfoByHolyQuest::Create(unsigned int uiNTh, char *szItemName)
 {
   _skill_fld *field = nullptr;

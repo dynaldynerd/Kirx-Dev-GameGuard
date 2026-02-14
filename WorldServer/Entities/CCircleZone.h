@@ -19,6 +19,7 @@ public:
   };
 
   CCircleZone();
+  ~CCircleZone();
   bool Init(unsigned int uiMapInx, int iPlayerInx, int iNth, unsigned __int16 wInx, CMapData *pkMap);
   int GetPortalInx() const;
   void SendMsgCreate();

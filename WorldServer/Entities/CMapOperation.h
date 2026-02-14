@@ -16,6 +16,7 @@ class CGameObject;
 class __cppobj CMapOperation
 {
 public:
+  CMapOperation();
   bool Init();
   void OnLoop();
   void RespawnMonster();

@@ -14,6 +14,8 @@ CRFCashItemDatabase::CRFCashItemDatabase()
 {
 }
 
+CRFCashItemDatabase::~CRFCashItemDatabase() = default;
+
 unsigned __int8 CRFCashItemDatabase::CallProc_RFOnlineAuth(_param_cash_select *rParam)
 {
   char buffer[280]{};

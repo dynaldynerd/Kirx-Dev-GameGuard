@@ -13,6 +13,28 @@
 
 bool CAsyncLogger::m_bProcThread = false;
 
+CAsyncLogger::CAsyncLogger()
+  : m_pSystemLogInfo(nullptr),
+    m_kBufferList(nullptr)
+{
+}
+
+CAsyncLogger::~CAsyncLogger()
+{
+  m_bProcThread = false;
+
+  delete[] m_kBufferList;
+  m_kBufferList = nullptr;
+
+  for (auto &entry : m_mapLogInfo)
+  {
+    delete entry.second;
+    entry.second = nullptr;
+  }
+
+  m_mapLogInfo.clear();
+}
+
 CAsyncLogger *CAsyncLogger::Instance()
 {
   static CAsyncLogger s_instance;

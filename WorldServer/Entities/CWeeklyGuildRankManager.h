@@ -12,6 +12,9 @@ class CPlayer;
 class __cppobj CWeeklyGuildRankManager
 {
 public:
+  CWeeklyGuildRankManager();
+  ~CWeeklyGuildRankManager();
+
   static CWeeklyGuildRankManager *Instance();
   bool Init();
   bool InitNextSetOwnerDate();

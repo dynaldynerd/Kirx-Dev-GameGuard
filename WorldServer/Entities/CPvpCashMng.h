@@ -8,6 +8,9 @@ struct _class_fld;
 class __cppobj CPvpCashMng
 {
 public:
+  CPvpCashMng();
+  ~CPvpCashMng();
+
   struct __declspec(align(8)) _talik_recvr
   {
     unsigned __int8 byTableCode;
@@ -17,18 +20,26 @@ public:
 
   struct __cppobj _talik_recvr_list
   {
+    _talik_recvr_list();
+
     unsigned __int8 byTalikNum;
     _talik_recvr TalikInfo[14];
   };
 
   struct __declspec(align(8)) _class_value
   {
+    _class_value();
+    static void init(_class_value *self);
+
     _class_fld *m_pFld;
     unsigned __int8 byClassVal;
   };
 
   struct __cppobj _max_point
   {
+    _max_point();
+    static void init(_max_point *self);
+
     int nLv;
     int nMaxPoint;
     int nMinPoint;

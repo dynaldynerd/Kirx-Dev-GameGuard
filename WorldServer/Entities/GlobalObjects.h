@@ -30,6 +30,7 @@
 
 class CWnd;
 class CGameServerDoc;
+class CMapDisplay;
 struct _CCRFG_SEND_BUFFER;
 struct _CCRFG_RECV_BUFFER;
 struct _CCRFG_CALLBACK;
@@ -73,6 +74,7 @@ extern int e_nMgrDft;
 extern CVoteSystem g_VoteSys[3];
 extern CMainThread g_Main;
 extern CNetworkEX g_Network;
+extern CMapDisplay g_MapDisplay;
 extern CWnd *g_pFrame;
 extern CGameServerDoc *g_pDoc;
 extern CLogFile g_FgLogFile;

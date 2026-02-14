@@ -21,6 +21,16 @@ namespace
   const char *kScheduleEventFmt = "code:%s event:%u info1:%u info2:%u";
 }
 
+CWorldSchedule::CWorldSchedule()
+  : m_bOper(false), m_tblSch(), m_tmrCheck()
+{
+}
+
+CWorldSchedule::~CWorldSchedule()
+{
+  m_bOper = false;
+}
+
 bool CWorldSchedule::Init()
 {
   if (this->m_bOper)

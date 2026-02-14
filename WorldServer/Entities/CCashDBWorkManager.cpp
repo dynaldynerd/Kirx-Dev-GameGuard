@@ -11,6 +11,8 @@ CCashDBWorkManager::CCashDBWorkManager()
 {
 }
 
+CCashDBWorkManager::~CCashDBWorkManager() = default;
+
 bool CCashDBWorkManager::Initialize()
 {
   auto *nationSetting = CTSingleton<CNationSettingManager>::Instance();

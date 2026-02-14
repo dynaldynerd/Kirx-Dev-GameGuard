@@ -11,6 +11,8 @@ struct _limit_item_db_data
 {
   _INVENKEY Key;
   int nLimitNum;
+
+  _limit_item_db_data();
 };
 
 struct _qry_case_all_store_limit_item
@@ -26,12 +28,16 @@ struct _qry_case_all_store_limit_item
     _limit_item_db_data ItemData[16];
     unsigned __int8 byRet;
 
+    __list();
     void init();
   };
 
   unsigned int dwMax;
   unsigned int dwCount;
   __list *pStoreList;
+
+  _qry_case_all_store_limit_item();
+  ~_qry_case_all_store_limit_item();
 
   char Init(unsigned int dwStoreNum);
   void DataInit();
@@ -41,6 +47,9 @@ struct _qry_case_all_store_limit_item
 class __cppobj CItemStoreManager
 {
 public:
+  CItemStoreManager();
+  ~CItemStoreManager();
+
   static CItemStoreManager *Instance();
   bool Init(int nMapNum, int nInstanceListNum);
   void Loop();

@@ -10,6 +10,9 @@ class CMapData;
 class __cppobj CReturnGate : public CGameObject
 {
 public:
+  CReturnGate(_object_id *pID);
+  ~CReturnGate();
+
   CUnmannedTraderSchedule::STATE m_eState;
   CPlayer *m_pkOwner;
   unsigned int m_dwOwnerSerial;

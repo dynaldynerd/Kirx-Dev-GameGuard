@@ -16,6 +16,30 @@
 #include <cstdlib>
 #include <ctime>
 
+CPlayerDB::CPlayerDB()
+{
+  m_wSerialCount = 0;
+  m_pStoragePtr[0] = &m_dbInven;
+  m_pStoragePtr[1] = &m_dbEquip;
+  m_pStoragePtr[2] = &m_dbEmbellish;
+  m_pStoragePtr[3] = &m_dbForce;
+  m_pStoragePtr[4] = &m_dbAnimus;
+  m_pStoragePtr[5] = &m_dbTrunk;
+  m_pStoragePtr[6] = &m_dbPersonalAmineInven;
+  m_pStoragePtr[7] = &m_dbExtTrunk;
+  m_wCuttingResBuffer = nullptr;
+  m_bPersonalAmineInven = false;
+}
+
+CPlayerDB::~CPlayerDB()
+{
+  if (m_wCuttingResBuffer)
+  {
+    operator delete[](m_wCuttingResBuffer);
+    m_wCuttingResBuffer = nullptr;
+  }
+}
+
 int CPlayerDB::GetRaceCode()
 {
   return static_cast<int>(this->m_dbChar.m_byRaceSexCode) >> 1;

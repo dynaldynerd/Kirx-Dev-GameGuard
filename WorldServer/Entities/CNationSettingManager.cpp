@@ -3,9 +3,24 @@
 #include "CNationSettingManager.h"
 
 #include "CNationSettingData.h"
+#include "CNationSettingDataNULL.h"
 #include "CNationSettingFactoryGroup.h"
 #include "INationGameGuardSystem.h"
 #include "NameTxt_fld.h"
+
+CNationSettingManager::CNationSettingManager()
+{
+  m_pData = &CNationSettingDataNULL::ms_NULL;
+}
+
+CNationSettingManager::~CNationSettingManager()
+{
+  if (m_pData)
+  {
+    delete m_pData;
+    m_pData = nullptr;
+  }
+}
 
 int CNationSettingManager::Init(int nationCode, const char *nationCodeStr, bool serviceMode)
 {

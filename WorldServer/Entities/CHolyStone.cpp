@@ -18,6 +18,14 @@ char s_stoneObjectName[256]{};
 int CHolyStone::s_nLiveNum = 0;
 unsigned int CHolyStone::s_dwSerialCnt = 0;
 
+CHolyStone::CHolyStone()
+{
+}
+
+CHolyStone::~CHolyStone()
+{
+}
+
 __int64 CHolyStone::GetAttackDP()
 {
   return static_cast<unsigned int>(m_pRec->m_nAttack_DP);

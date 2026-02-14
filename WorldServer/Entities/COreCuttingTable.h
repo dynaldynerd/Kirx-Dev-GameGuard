@@ -20,6 +20,8 @@ public:
     _res_list ResList[100];
   };
 
+  COreCuttingTable();
+
   bool ReadRecord(const char *fileName, CRecordData *oreTable, CRecordData *resTable, char *errCode);
   unsigned int GetOreIndexFromRate(unsigned int dwOreIndex, unsigned int dwRate);
 

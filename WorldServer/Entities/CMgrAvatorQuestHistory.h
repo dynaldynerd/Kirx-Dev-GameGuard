@@ -9,6 +9,10 @@
 class __cppobj CMgrAvatorQuestHistory
 {
 public:
+  CMgrAvatorQuestHistory();
+  ~CMgrAvatorQuestHistory();
+  static void __cdecl IOThread(void *pv);
+
   struct __LOG_DATA
   {
     char szFileName[64];

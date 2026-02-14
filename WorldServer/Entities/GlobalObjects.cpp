@@ -3,6 +3,7 @@
 #include "GlobalObjects.h"
 
 #include "CCRFG_SEND_BUFFER.h"
+#include "CMapDisplay.h"
 #include "CGameServerDoc.h"
 
 CUserDB g_UserDB[MAX_PLAYER]{};
@@ -42,6 +43,7 @@ int e_nMgrDft = 0;
 CVoteSystem g_VoteSys[3]{};
 CMainThread g_Main{};
 CNetworkEX g_Network{};
+CMapDisplay g_MapDisplay{};
 int gAsci[256]{};
 CWnd *g_pFrame = nullptr;
 CGameServerDoc g_GameServerDoc{};

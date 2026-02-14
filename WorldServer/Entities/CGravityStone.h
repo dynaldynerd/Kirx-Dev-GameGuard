@@ -10,6 +10,7 @@ class CGravityStone : public CGameObject
 {
 public:
   explicit CGravityStone(unsigned __int16 wInx);
+  ~CGravityStone();
   static unsigned int ms_dwSerialCnt;
 
   bool IsValidOwner(CPlayer *pkPlayer);

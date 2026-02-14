@@ -14,6 +14,17 @@
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
+static const char *c_TempPair[7] =
+{
+  "HSS_SCENE_CHANGE_TERM",
+  "HSS_SCENE_BATTLE_TERM",
+  "HSS_SCENE_ATTACKABLE_KEEPER_TERM",
+  "HSS_SCENE_DESATTACKABLE_KEEPER_TERM",
+  "HSS_SCENE_CHAOS_KEEPER_TERM",
+  "HSS_SCENE_BASE_MINIE_TERM",
+  "HSS_SCENE_TOUCH_DOWN_ADD_TERM"
+};
+
 bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
 {
   char pszErrMsg[160]{};
@@ -338,20 +349,14 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
 
 bool CHolyStoneSystemDataMgr::LoadSceduleData(CHolyScheduleData *clsDummy)
 {
-  static const char *kScheduleKeys[7] =
-  {
-    "TIME0",
-    "TIME1",
-    "TIME2",
-    "TIME3",
-    "TIME4",
-    "TIME5",
-    "TIME6"
-  };
+  CHolyScheduleData::__HolyScheduleNode *scheduleNode = nullptr;
+  char sectionName[68]{};
+  int scheduleIndex = 0;
+  int timeIndex = 0;
+  char failCode = 0;
+  UINT scheduleValue = static_cast<UINT>(-1);
 
   clsDummy->Init();
-  int failCode = 0;
-
   clsDummy->m_nTotalSchedule = GetPrivateProfileIntA(
     "total_schedule_count",
     "schedule_count",
@@ -360,21 +365,22 @@ bool CHolyStoneSystemDataMgr::LoadSceduleData(CHolyScheduleData *clsDummy)
 
   if (clsDummy->m_nTotalSchedule > 0)
   {
-    const unsigned __int64 count = clsDummy->m_nTotalSchedule;
-    clsDummy->m_pSchedule = new CHolyScheduleData::__HolyScheduleNode[count];
-    for (int j = 0; j < clsDummy->m_nTotalSchedule; ++j)
+    const unsigned __int64 totalSchedule = static_cast<unsigned __int64>(clsDummy->m_nTotalSchedule);
+    clsDummy->m_pSchedule = new CHolyScheduleData::__HolyScheduleNode[totalSchedule];
+    for (scheduleIndex = 0; scheduleIndex < clsDummy->m_nTotalSchedule && !failCode; ++scheduleIndex)
     {
-      char section[68]{};
-      sprintf(section, "Schedule_%d", j);
-      for (int k = 0; k < 7; ++k)
+      scheduleValue = static_cast<UINT>(-1);
+      sprintf(sectionName, "Schedule_%d", scheduleIndex);
+      scheduleNode = &clsDummy->m_pSchedule[scheduleIndex];
+      for (timeIndex = 0; timeIndex < 7; ++timeIndex)
       {
-        const UINT value = GetPrivateProfileIntA(section, kScheduleKeys[k], -1, ".\\Initialize\\NewHolySystem.ini");
-        if (value == static_cast<UINT>(-1))
+        scheduleValue = GetPrivateProfileIntA(sectionName, c_TempPair[timeIndex], -1, ".\\Initialize\\NewHolySystem.ini");
+        if (scheduleValue == static_cast<UINT>(-1))
         {
-          failCode = k + 2;
-          goto LOAD_FAIL;
+          failCode = static_cast<char>(timeIndex + 2);
+          break;
         }
-        clsDummy->m_pSchedule[j].m_nSceneTime[k] = static_cast<int>(value);
+        scheduleNode->m_nSceneTime[timeIndex] = static_cast<int>(scheduleValue);
       }
     }
   }
@@ -383,7 +389,6 @@ bool CHolyStoneSystemDataMgr::LoadSceduleData(CHolyScheduleData *clsDummy)
     failCode = 1;
   }
 
-LOAD_FAIL:
   if (failCode)
   {
     clsDummy->Init();

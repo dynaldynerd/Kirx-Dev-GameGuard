@@ -14,6 +14,36 @@
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
+CMapData::CMapData()
+{
+  m_pMapSet = nullptr;
+  m_pPortal = nullptr;
+  m_pItemStoreDummy = nullptr;
+  m_pStartDummy = nullptr;
+  m_pBindDummy = nullptr;
+  m_pResDummy = nullptr;
+  m_pQuestDummy = nullptr;
+  m_pSafeDummy = nullptr;
+  m_pMonBlock = nullptr;
+  m_pExtDummy_Town = nullptr;
+  m_ls = nullptr;
+  m_mb = nullptr;
+  m_nMonBlockNum = 0;
+  m_nMonDumNum = 0;
+  m_nPortalNum = 0;
+  m_nStartDumNum = 0;
+  m_nBindDumNum = 0;
+  m_nResDumNum = 0;
+  m_nQuestDumNum = 0;
+  m_nSafeDumNum = 0;
+  m_nItemStoreDumNum = 0;
+  m_nMapInPlayerNum = 0;
+  m_nMapInMonsterNum = 0;
+  m_bUse = false;
+  m_bLoad = false;
+  m_nMonTotalCount = 0;
+}
+
 void CMapData::Init(_map_fld *pMapSet)
 {
   this->m_nMapCode = pMapSet->m_dwIndex;

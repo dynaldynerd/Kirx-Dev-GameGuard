@@ -10,6 +10,33 @@
 #include "CCryptParam.h"
 #include "CCryptParamCrete.h"
 
+CCryptor::CCryptor()
+  : m_pkParam(nullptr),
+    m_pHash(nullptr)
+{
+}
+
+CCryptor::~CCryptor()
+{
+  if (m_pkParam)
+  {
+    delete m_pkParam;
+    m_pkParam = nullptr;
+  }
+
+  if (m_prng)
+  {
+    delete m_prng;
+    m_prng = nullptr;
+  }
+
+  if (m_pHash)
+  {
+    delete m_pHash;
+    m_pHash = nullptr;
+  }
+}
+
 bool CCryptor::Init(const char *szKeyPath, bool bUseCreate)
 {
   m_prng = new (std::nothrow) CryptoPP::AutoSeededRandomPool(false, 0x20u);

@@ -21,6 +21,11 @@ CRaceBossWinRate::CRaceBossWinRate()
   memset_0(m_dwAccWinCnt, 0, sizeof(m_dwAccWinCnt));
 }
 
+CRaceBossWinRate::~CRaceBossWinRate()
+{
+  // this is not a stub
+}
+
 CRaceBossWinRate *CRaceBossWinRate::Instance()
 {
   if (!m_Inst)

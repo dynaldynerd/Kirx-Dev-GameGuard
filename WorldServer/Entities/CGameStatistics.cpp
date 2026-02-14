@@ -34,6 +34,11 @@ CGameStatistics::CGameStatistics()
   m_day.init();
 }
 
+CGameStatistics::~CGameStatistics()
+{
+  // this is not a stub
+}
+
 void CGameStatistics::Init()
 {
   m_day.init();

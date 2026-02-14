@@ -13,7 +13,9 @@ public:
   static CUnmannedTraderTaxRateManager *Instance();
 
   CUnmannedTraderTaxRateManager();
+  ~CUnmannedTraderTaxRateManager();
   bool Init(CLogFile *pkLogger);
+  void CleanUp();
   void Loop();
   char Load();
   void CompleteCreate(unsigned __int16 wInx);

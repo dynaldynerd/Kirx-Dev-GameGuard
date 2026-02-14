@@ -20,6 +20,7 @@ public:
   };
 
   CLuaEventNode();
+  ~CLuaEventNode();
   void Init();
   void SetName(const char *strName);
   void SetCallFun(const char *strCallFunName, unsigned long dwTime);

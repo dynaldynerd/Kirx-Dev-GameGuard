@@ -26,6 +26,8 @@ CUnmannedTraderUserInfoTable::CUnmannedTraderUserInfoTable()
 {
 }
 
+CUnmannedTraderUserInfoTable::~CUnmannedTraderUserInfoTable() = default;
+
 CUnmannedTraderUserInfoTable *CUnmannedTraderUserInfoTable::Instance()
 {
   if (!CUnmannedTraderUserInfoTable::ms_Instance)
@@ -33,6 +35,15 @@ CUnmannedTraderUserInfoTable *CUnmannedTraderUserInfoTable::Instance()
     CUnmannedTraderUserInfoTable::ms_Instance = new CUnmannedTraderUserInfoTable();
   }
   return CUnmannedTraderUserInfoTable::ms_Instance;
+}
+
+void CUnmannedTraderUserInfoTable::Destroy()
+{
+  if (CUnmannedTraderUserInfoTable::ms_Instance)
+  {
+    delete CUnmannedTraderUserInfoTable::ms_Instance;
+    CUnmannedTraderUserInfoTable::ms_Instance = nullptr;
+  }
 }
 
 bool CUnmannedTraderUserInfoTable::Init()

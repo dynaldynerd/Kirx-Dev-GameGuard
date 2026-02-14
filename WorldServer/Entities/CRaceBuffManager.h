@@ -7,6 +7,9 @@
 class __cppobj CRaceBuffManager
 {
 public:
+  CRaceBuffManager();
+  ~CRaceBuffManager();
+
   static CRaceBuffManager *Instance();
   void Loop();
   bool Init();

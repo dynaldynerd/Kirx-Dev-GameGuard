@@ -9,6 +9,7 @@ class __cppobj CUnmannedTraderSortType
 {
 public:
   CUnmannedTraderSortType(unsigned int dwID);
+  ~CUnmannedTraderSortType();
   bool LoadXML(TiXmlElement *pkElemSortType, CLogFile *kLogger, unsigned int dwDivisionID);
   unsigned int GetID();
   char *GetQuery();

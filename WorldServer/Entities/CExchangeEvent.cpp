@@ -27,6 +27,8 @@ CExchangeEvent::CExchangeEvent()
   memset_0(m_ModifyItemCode, 0, sizeof(m_ModifyItemCode));
 }
 
+CExchangeEvent::~CExchangeEvent() = default;
+
 CExchangeEvent *CExchangeEvent::Instance()
 {
   static CExchangeEvent s_instance;

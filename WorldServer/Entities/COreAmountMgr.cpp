@@ -45,6 +45,8 @@ COreAmountMgr::COreAmountMgr()
   m_bCheckExhOreLog = false;
 }
 
+COreAmountMgr::~COreAmountMgr() = default;
+
 void COreAmountMgr::Release()
 {
   if (m_pInstance)

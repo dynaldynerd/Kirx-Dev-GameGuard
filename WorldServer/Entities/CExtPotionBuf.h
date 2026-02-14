@@ -9,6 +9,7 @@ class __cppobj CExtPotionBuf
 {
 public:
   CExtPotionBuf();
+  ~CExtPotionBuf();
   void SetExtPotionBufUse(bool bUse);
   void SetExtPotionEndTime(unsigned int dwEndTime);
   void CalcRemainTime(unsigned __int16 wInx, bool bUse);

@@ -24,6 +24,12 @@ void CMonsterHierarchy::Init()
   m_dwChildRecallTime = 0;
 }
 
+void CMonsterHierarchy::OnlyOnceInit(CMonster *pThis)
+{
+  Init();
+  m_pThisMon = pThis;
+}
+
 CMonster *CMonsterHierarchy::GetParent()
 {
   return m_pParentMon;

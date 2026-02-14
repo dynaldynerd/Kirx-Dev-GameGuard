@@ -24,6 +24,7 @@ public:
   unsigned __int8 ChildKindCount();
   __int64 GetChildCount(unsigned int nKindIndex);
   CMonster *GetChild(int nKind, unsigned int nIndex);
+  void OnlyOnceInit(CMonster *pThis);
   __int64 PopChildMon(CMonster *pMon);
   __int64 SetParent(CMonster *pMon);
   void OnChildMonsterCreate(_monster_create_setdata *pData);

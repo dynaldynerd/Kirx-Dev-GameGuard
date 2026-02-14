@@ -13,6 +13,11 @@ CUnmannedTraderSchedule::CUnmannedTraderSchedule()
   Clear();
 }
 
+CUnmannedTraderSchedule::~CUnmannedTraderSchedule()
+{
+  // this is not a stub
+}
+
 void CUnmannedTraderSchedule::Clear()
 {
   this->m_eState = STATE::EMPTY;

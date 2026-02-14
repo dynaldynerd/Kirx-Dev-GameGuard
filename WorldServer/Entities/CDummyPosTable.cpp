@@ -4,6 +4,9 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <algorithm>
+#include <cctype>
+#include <string>
 
 CDummyPosTable::CDummyPosTable()
 {
@@ -22,58 +25,76 @@ CDummyPosTable::~CDummyPosTable()
 
 bool CDummyPosTable::LoadDummyPosition(const char *szFileName, const char *szLabel)
 {
-    FILE *Stream = nullptr;
-    if (fopen_s(&Stream, szFileName, "rt") != 0 || !Stream)
+    FILE *stream = nullptr;
+    if (fopen_s(&stream, szFileName, "rt") != 0 || !stream)
         return false;
 
-    char Str1[256];
-    int count = 0;
-    size_t prefixLen = strlen(szLabel);
+    char token[132]{};
+    const size_t prefixLength = strlen(szLabel);
 
-    while (fscanf_s(Stream, "%s", Str1, (unsigned int)sizeof(Str1)) != -1)
+    int matchedCount = 0;
+    while (fscanf_s(stream, "%s", token, static_cast<unsigned int>(sizeof(token))) != EOF)
     {
-        if (strncmp(Str1, szLabel, prefixLen) == 0)
+        if (strncmp(token, szLabel, prefixLength) == 0)
         {
-            count++;
+            ++matchedCount;
         }
-        else if (strcmp(Str1, "[HelperObjectEnd]") == 0)
+        else if (strcmp(token, "[HelperObjectEnd]") == 0)
         {
             break;
         }
     }
 
-    this->m_nDumPosDataNum = count;
-    this->m_pDumPos = new _dummy_position[count];
+    this->m_nDumPosDataNum = matchedCount;
+    this->m_pDumPos = new _dummy_position[matchedCount];
 
-    rewind(Stream);
-    int idx = 0;
-    int lineIdx = 0;
-    while (fscanf_s(Stream, "%s", Str1, (unsigned int)sizeof(Str1)) != -1)
+    rewind(stream);
+
+    int dummyIndex = 0;
+    int helperLineIndex = 0;
+    while (fscanf_s(stream, "%s", token, static_cast<unsigned int>(sizeof(token))) != EOF)
     {
-        if (Str1[0] == '*')
+        if (token[0] == '*')
         {
-            if (strncmp(Str1, szLabel, prefixLen) == 0)
+            if (strncmp(token, szLabel, prefixLength) == 0)
             {
-                this->m_pDumPos[idx].m_wLineIndex = (unsigned short)lineIdx;
-                char* pCode = Str1;
-                _strlwr_s(pCode, strlen(pCode) + 1);
-                strcpy_s(this->m_pDumPos[idx].m_szCode, pCode);
+                _dummy_position &dummy = this->m_pDumPos[dummyIndex];
+                dummy.m_wLineIndex = static_cast<unsigned short>(helperLineIndex);
 
-                for (int j = 0; j < 3; ++j)
-                    fscanf_s(Stream, "%d", &this->m_pDumPos[idx].m_zLocalMin[j]);
-                for (int j = 0; j < 3; ++j)
-                    fscanf_s(Stream, "%d", &this->m_pDumPos[idx].m_zLocalMax[j]);
-                idx++;
+                std::string loweredCode = token + 1; // Keep behavior: stored code excludes '*' prefix.
+                std::transform(
+                    loweredCode.begin(),
+                    loweredCode.end(),
+                    loweredCode.begin(),
+                    [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+                strcpy_s(dummy.m_szCode, loweredCode.c_str());
+
+                for (int axis = 0; axis < 3; ++axis)
+                {
+                    int value = 0;
+                    fscanf_s(stream, "%d", &value);
+                    dummy.m_zLocalMin[axis] = static_cast<short>(value);
+                }
+
+                for (int axis = 0; axis < 3; ++axis)
+                {
+                    int value = 0;
+                    fscanf_s(stream, "%d", &value);
+                    dummy.m_zLocalMax[axis] = static_cast<short>(value);
+                }
+
+                ++dummyIndex;
             }
-            lineIdx++;
+
+            ++helperLineIndex;
         }
-        else if (strcmp(Str1, "[HelperObjectEnd]") == 0)
+        else if (strcmp(token, "[HelperObjectEnd]") == 0)
         {
             break;
         }
     }
 
-    fclose(Stream);
+    fclose(stream);
     return true;
 }
 
@@ -122,9 +143,17 @@ bool CDummyPosTable::FindDummy(char *pszTextFileName, char *pszDummyCode, _dummy
                 _strlwr_s(token, sizeof(token));
                 strcpy_s(pDummyPos->m_szCode, token);
                 for (int j = 0; j < 3; ++j)
-                    fscanf_s(Stream, "%d", &pDummyPos->m_zLocalMin[j]);
+                {
+                    int value = 0;
+                    fscanf_s(Stream, "%d", &value);
+                    pDummyPos->m_zLocalMin[j] = static_cast<short>(value);
+                }
                 for (int j = 0; j < 3; ++j)
-                    fscanf_s(Stream, "%d", &pDummyPos->m_zLocalMax[j]);
+                {
+                    int value = 0;
+                    fscanf_s(Stream, "%d", &value);
+                    pDummyPos->m_zLocalMax[j] = static_cast<short>(value);
+                }
                 break;
             }
             ++lineIndex;
@@ -159,15 +188,22 @@ int CDummyPosTable::GetRecordNum()
 
 void *CDummyPosTable::GetRecord(int index)
 {
-    if (index < 0 || index >= m_nDumPosDataNum) return nullptr;
-    return &m_pDumPos[index];
+    if (index < m_nDumPosDataNum)
+        return &m_pDumPos[index];
+    return nullptr;
 }
 
 void *CDummyPosTable::GetRecord(const char *szLabel)
 {
+    char destination[72]{};
+    char *duplicatedCode = _strdup(szLabel);
+    char *lowerCode = _strlwr(duplicatedCode);
+    strcpy_s(destination, lowerCode);
+    free(duplicatedCode);
+
     for (int i = 0; i < m_nDumPosDataNum; ++i)
     {
-        if (strcmp(m_pDumPos[i].m_szCode, szLabel) == 0)
+        if (strcmp(m_pDumPos[i].m_szCode, destination) == 0)
             return &m_pDumPos[i];
     }
     return nullptr;

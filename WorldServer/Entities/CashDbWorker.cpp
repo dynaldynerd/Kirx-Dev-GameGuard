@@ -31,6 +31,8 @@ CashDbWorker::CashDbWorker()
 {
 }
 
+CashDbWorker::~CashDbWorker() = default;
+
 void CashDbWorker::Release()
 {
   if (_pkDb)

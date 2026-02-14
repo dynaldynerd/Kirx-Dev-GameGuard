@@ -5,6 +5,19 @@
 #include "CMainThread.h"
 #include "CLogFile.h"
 
+CRaceBuffInfoByHolyQuestList::CRaceBuffInfoByHolyQuestList()
+  : m_vecInfo()
+{
+}
+
+CRaceBuffInfoByHolyQuestList::~CRaceBuffInfoByHolyQuestList()
+{
+  for (CRaceBuffInfoByHolyQuestfGroup *info : m_vecInfo)
+  {
+    delete info;
+  }
+}
+
 bool CRaceBuffInfoByHolyQuestList::Init()
 {
   const unsigned int count =

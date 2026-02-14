@@ -8,6 +8,8 @@ class __cppobj CConnNumPHMgr
 public:
   struct __cnt_per_h
   {
+    __cnt_per_h();
+
     int nUserCumPerMin;
     unsigned int dwCounting;
     int nMaxUserNum;
@@ -15,6 +17,8 @@ public:
     void Init();
     int GetAverageUserNumPerHour();
   };
+
+  CConnNumPHMgr();
 
   void Init();
   _USER_NUM_SHEET *Check(int nLoginNum);

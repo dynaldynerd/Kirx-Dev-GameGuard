@@ -12,6 +12,9 @@ struct _MASTERY_PARAM;
 class __cppobj CMgrAvatorLvHistory
 {
 public:
+  CMgrAvatorLvHistory();
+  ~CMgrAvatorLvHistory();
+
   struct __LOG_DATA
   {
     char szFileName[64];
@@ -73,6 +76,7 @@ public:
   void upgrade_lv(int n, unsigned int dwLv, int nGrade, int *pnMaxPoint, char *pszFileName);
   void downgrade_lv(int n, unsigned int dwLv, int nGrade, int *pnMaxPoint, char *pszFileName);
   void WriteFile(char *pszFileName, char *pszLog);
+  static void __cdecl IOThread(void *pv);
 
   char m_szStdPath[128];
   unsigned int m_dwLastLocalDate;

@@ -8,6 +8,9 @@
 class __cppobj CPvpUserAndGuildRankingSystem
 {
 public:
+  CPvpUserAndGuildRankingSystem();
+  ~CPvpUserAndGuildRankingSystem();
+
   static CPvpUserAndGuildRankingSystem *Instance();
   bool Init();
   void Loop();

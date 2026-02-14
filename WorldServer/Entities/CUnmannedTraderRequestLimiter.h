@@ -15,6 +15,7 @@ public:
   };
 
   CUnmannedTraderRequestLimiter();
+  ~CUnmannedTraderRequestLimiter();
   void ClearRequset();
   bool IsEmpty();
   void SetRequest(REQUEST_TYPE iRequest);

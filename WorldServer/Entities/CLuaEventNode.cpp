@@ -24,6 +24,11 @@ CLuaEventNode::CLuaEventNode()
   m_pLuaScript = nullptr;
 }
 
+CLuaEventNode::~CLuaEventNode()
+{
+  // this is not a stub
+}
+
 void CLuaEventNode::Init()
 {
   m_bCallFunc = false;

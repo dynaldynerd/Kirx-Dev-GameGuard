@@ -124,6 +124,13 @@ CUnmannedTraderUserInfo::CUnmannedTraderUserInfo()
   Clear();
 }
 
+CUnmannedTraderUserInfo::~CUnmannedTraderUserInfo()
+{
+  m_wInx = static_cast<unsigned short>(-1);
+  m_byMaxRegistCnt = 0;
+  Clear();
+}
+
 bool CUnmannedTraderUserInfo::Init(unsigned short wInx)
 {
   this->m_wInx = wInx;

@@ -22,6 +22,9 @@ struct _event_set;
 class __cppobj CMonster : public CCharacter
 {
 public:
+  CMonster();
+  ~CMonster();
+
   bool m_bOper;
   bool m_bApparition;
   bool m_bDungeon;
@@ -210,9 +213,12 @@ public:
 
   static _monster_loot_index *s_idxMonsterLoot;
   static unsigned int s_dwSerialCnt;
+  static int s_nAllocNum;
   static int s_nLiveNum;
   static CLogFile s_logTrace_Boss_BirthAndDeath;
   static CLogFile s_logTrace_Boss_Looting;
+  static void _InitSDM();
+  static void _DestroySDM();
   static void _InitSDM_LootTBL();
 };
 

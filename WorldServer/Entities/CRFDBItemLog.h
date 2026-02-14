@@ -5,6 +5,8 @@
 class __cppobj CRFDBItemLog : public CRFNewDatabase
 {
 public:
+  explicit CRFDBItemLog(unsigned int dwLocalDate = 0);
+
   ~CRFDBItemLog() override;
 
   bool m_bTblLtd;

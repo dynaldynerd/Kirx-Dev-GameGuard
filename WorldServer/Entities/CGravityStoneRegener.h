@@ -22,6 +22,7 @@ public:
   };
 
   CGravityStoneRegener();
+  ~CGravityStoneRegener();
   bool Init(unsigned int uiMapInx, unsigned __int16 wInx, CMapData *pkMap);
   int GetPortalInx() const;
   void SendMsgAlterState();

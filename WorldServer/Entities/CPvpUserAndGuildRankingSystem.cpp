@@ -8,6 +8,10 @@
 #include <cstdarg>
 #include <cstdio>
 
+CPvpUserAndGuildRankingSystem::CPvpUserAndGuildRankingSystem() = default;
+
+CPvpUserAndGuildRankingSystem::~CPvpUserAndGuildRankingSystem() = default;
+
 CPvpUserAndGuildRankingSystem *CPvpUserAndGuildRankingSystem::Instance()
 {
   static CPvpUserAndGuildRankingSystem s_instance;

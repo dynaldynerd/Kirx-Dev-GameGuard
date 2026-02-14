@@ -10,6 +10,9 @@ class CPlayer;
 class __cppobj CRaceBuffInfoByHolyQuestList
 {
 public:
+  CRaceBuffInfoByHolyQuestList();
+  ~CRaceBuffInfoByHolyQuestList();
+
   bool Init();
   unsigned int GetMaxThCnt();
   bool Apply(unsigned int uiContinueCnt, int iResultType, CPlayer *pkDest);

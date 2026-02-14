@@ -6,6 +6,9 @@
 class __cppobj __declspec(align(8)) CLevel
 {
 public:
+  CLevel();
+  virtual ~CLevel();
+
   char mMapName[256];
   float mCamPos[3];
   D3DXMATRIX mMatView;
@@ -23,6 +26,7 @@ public:
 
   float GetFirstYpos(float *fCenterPos, float *fMin, float *fMax);
   void LoadLevel(const char *szFileName);
+  __int64 IsLoadedBsp();
   unsigned int GetEnvironment();
   void SetEnvironment(int nEnv);
   __int64 GetNextYposForServer(float *const a2, float *a3);
@@ -31,6 +35,5 @@ public:
   unsigned int GetPath(float *const a2, float *const a3, float (*const a4)[3], unsigned int *a5, int a6);
   unsigned int GetPathFromDepth(float *const a2, float *const a3, int a4, float (*const a5)[3], unsigned int *a6);
 public:
-  virtual ~CLevel() = default;
 };
 

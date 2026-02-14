@@ -20,6 +20,54 @@ CItemStoreManager *CItemStoreManager::Instance()
   return &instance;
 }
 
+_limit_item_db_data::_limit_item_db_data()
+{
+}
+
+_qry_case_all_store_limit_item::__list::__list()
+{
+  init();
+}
+
+_qry_case_all_store_limit_item::_qry_case_all_store_limit_item()
+  : dwMax(0),
+    dwCount(0),
+    pStoreList(nullptr)
+{
+}
+
+_qry_case_all_store_limit_item::~_qry_case_all_store_limit_item()
+{
+  if (pStoreList)
+  {
+    operator delete[](pStoreList);
+    pStoreList = nullptr;
+  }
+}
+
+CItemStoreManager::CItemStoreManager()
+{
+  m_nInstanceItemStoreListNum = 0;
+  m_InstanceItemStoreList = nullptr;
+  m_nMapItemStoreListNum = 0;
+  m_MapItemStoreList = nullptr;
+}
+
+CItemStoreManager::~CItemStoreManager()
+{
+  if (m_MapItemStoreList)
+  {
+    delete[] m_MapItemStoreList;
+    m_MapItemStoreList = nullptr;
+  }
+
+  if (m_InstanceItemStoreList)
+  {
+    delete[] m_InstanceItemStoreList;
+    m_InstanceItemStoreList = nullptr;
+  }
+}
+
 bool CItemStoreManager::Init(int nNormalListNum, int nInstanceListNum)
 {
   if (nNormalListNum <= 0)

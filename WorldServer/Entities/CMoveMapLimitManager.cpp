@@ -4,6 +4,14 @@
 #include "CMoveMapLimitEnviromentValues.h"
 #include "CPlayer.h"
 
+CMoveMapLimitManager::CMoveMapLimitManager()
+{
+}
+
+CMoveMapLimitManager::~CMoveMapLimitManager()
+{
+}
+
 CMoveMapLimitManager *CMoveMapLimitManager::Instance()
 {
   static CMoveMapLimitManager s_instance;

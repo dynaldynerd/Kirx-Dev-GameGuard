@@ -36,6 +36,12 @@ int _guild_honor_list_result_zocl::size() const
   return 237 - 47 * (5 - byListNum);
 }
 
+CHonorGuild::CHonorGuild()
+{
+  std::memset(m_bChageInform, 0, sizeof(m_bChageInform));
+  std::memset(m_uiProccessIndex, 0, sizeof(m_uiProccessIndex));
+}
+
 CHonorGuild *CHonorGuild::Instance()
 {
   static CHonorGuild s_instance;

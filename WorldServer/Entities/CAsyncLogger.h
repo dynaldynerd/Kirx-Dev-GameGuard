@@ -21,6 +21,9 @@ class CAsyncLogBufferList;
 class __cppobj CAsyncLogger
 {
 public:
+  CAsyncLogger();
+  ~CAsyncLogger();
+
   static constexpr ASYNC_LOG_TYPE ALT_ASYNC_LOGGER_SYSTEM_LOG = ::ALT_ASYNC_LOGGER_SYSTEM_LOG;
   static constexpr ASYNC_LOG_TYPE ALT_PERFORMANCE_COUNTER_SYSTEM = ::ALT_PERFORMANCE_COUNTER_SYSTEM;
   static constexpr ASYNC_LOG_TYPE ALT_PERFORMANCE_MAIN_LOOP = ::ALT_PERFORMANCE_MAIN_LOOP;

@@ -9,6 +9,9 @@ class CAttack;
 class __cppobj CAnimus : public CCharacter
 {
 public:
+  CAnimus();
+  ~CAnimus();
+
   __int64 GetAttackDP() override;
   float GetAttackRange() override;
   __int64 GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart) override;

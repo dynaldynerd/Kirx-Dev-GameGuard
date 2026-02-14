@@ -12,6 +12,8 @@ class __cppobj CProcessThread
 public:
   struct _THREAD_CONFIG
   {
+    _THREAD_CONFIG();
+
     char szThreadID[128];
     bool bProgramExitWhenLackData;
     char szLogFileName[128];
@@ -33,6 +35,7 @@ public:
     char *m_psData;
   };
 
+  CProcessThread();
   virtual ~CProcessThread();
   virtual void CrashThread();
   virtual unsigned char WorkProcess(_SYN_DATA *pSynData);

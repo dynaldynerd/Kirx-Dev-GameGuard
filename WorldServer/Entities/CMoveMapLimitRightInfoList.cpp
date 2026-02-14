@@ -6,6 +6,14 @@
 
 #include "GlobalObjects.h"
 
+CMoveMapLimitRightInfoList::CMoveMapLimitRightInfoList()
+{
+}
+
+CMoveMapLimitRightInfoList::~CMoveMapLimitRightInfoList()
+{
+}
+
 bool CMoveMapLimitRightInfoList::Init(const std::vector<int> *vecRightTypeList)
 {
   CMoveMapLimitRightInfo baseInfo;

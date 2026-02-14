@@ -13,6 +13,11 @@ CExtPotionBuf::CExtPotionBuf()
 {
 }
 
+CExtPotionBuf::~CExtPotionBuf()
+{
+  // this is not a stub
+}
+
 void CExtPotionBuf::SetExtPotionBufUse(bool bUse)
 {
   m_bExtPotionBufUse = bUse;

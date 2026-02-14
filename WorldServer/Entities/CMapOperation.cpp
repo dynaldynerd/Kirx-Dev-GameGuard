@@ -36,6 +36,28 @@ std::map<std::string, AreaList> g_strLMapMap;
 
 bool LoadRegionData(int nMapNum, char **ppszMapNameList, char *pszErrMsg);
 
+CMapOperation::CMapOperation()
+{
+  InitR3Engine(1);
+  m_bReSpawnMonster = true;
+  m_nMapNum = 0;
+  m_nStdMapNum = 0;
+  m_Map = nullptr;
+  m_nLoopStartPoint = 0;
+
+  m_tmrObjTerm.BeginTimer(0x32u);
+  m_tmrRecover.BeginTimer(0x7D0u);
+  m_tmrSystem.BeginTimer(0x3E8u);
+
+  m_nRegionNum = 0;
+  m_SettlementMapData[0][0] = nullptr;
+  m_SettlementMapData[0][1] = nullptr;
+  m_SettlementMapData[1][0] = nullptr;
+  m_SettlementMapData[1][1] = nullptr;
+  m_SettlementMapData[2][0] = nullptr;
+  m_SettlementMapData[2][1] = nullptr;
+}
+
 int GetRegionIndex(int nMapIndex, unsigned int x, unsigned int y, unsigned int dwMaxX, unsigned int dwMaxY)
 {
   AreaList *areaList = g_AreaIndexTable[nMapIndex];

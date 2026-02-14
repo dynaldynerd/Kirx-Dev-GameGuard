@@ -17,6 +17,9 @@ struct _MSG_HEADER;
 class __cppobj CNationSettingManager : public CTSingleton<CNationSettingManager>
 {
 public:
+  CNationSettingManager();
+  ~CNationSettingManager();
+
   int Init(int nationCode, const char *nationCodeStr, bool serviceMode);
   CBilling *CreateBilling();
   CashDbWorker *CreateWorker();

@@ -10,12 +10,16 @@ class CPlayer;
 class __cppobj CRecallEffectController
 {
 public:
+  CRecallEffectController();
+  ~CRecallEffectController();
+
   unsigned int m_uiInfoTotCnt;
   CRecallRequest **m_ppkReqeust;
   CMyTimer *m_pkTimer;
   CNetIndexList *m_pkEmptyInxList;
   CNetIndexList *m_pkUseInxList;
 
+  void CleanUp();
   static CRecallEffectController *Instance();
   bool Init(unsigned int infoCount);
   void OnLoop();

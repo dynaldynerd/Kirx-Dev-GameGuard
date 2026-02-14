@@ -12,6 +12,11 @@ CUnmannedTraderSortType::CUnmannedTraderSortType(unsigned int dwID)
   strcpy_0(this->m_szQuery, CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Sort_Query);
 }
 
+CUnmannedTraderSortType::~CUnmannedTraderSortType()
+{
+  // this is not a stub
+}
+
 bool CUnmannedTraderSortType::LoadXML(TiXmlElement *pkElemSortType, CLogFile *kLogger, unsigned int dwDivisionID)
 {
   const char *typeName = pkElemSortType->Attribute("type");

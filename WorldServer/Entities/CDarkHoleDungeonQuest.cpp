@@ -22,6 +22,19 @@ namespace
 
 CDarkHoleDungeonQuest g_DarkHoleQuest;
 
+CDarkHoleDungeonQuest::CDarkHoleDungeonQuest()
+  : m_bLoad(false)
+{
+  for (int index = 0; index < 100; ++index)
+  {
+    m_QuestSetup[index] = nullptr;
+  }
+  for (int index = 0; index < 128; ++index)
+  {
+    m_Channel[index].m_wChannelIndex = index;
+  }
+}
+
 CDarkHoleDungeonQuest::~CDarkHoleDungeonQuest() = default;
 
 bool CDarkHoleDungeonQuest::LoadDarkHoleQuest()

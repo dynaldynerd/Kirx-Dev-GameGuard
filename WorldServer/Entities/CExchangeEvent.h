@@ -16,6 +16,7 @@ class __cppobj CExchangeEvent : public RFEventBase
 {
 public:
   CExchangeEvent();
+  ~CExchangeEvent();
   static CExchangeEvent *Instance();
   bool Initialzie();
   void Loop() override;

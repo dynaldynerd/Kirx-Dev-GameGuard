@@ -10,6 +10,9 @@ class CAttack;
 class __cppobj CTrap : public CCharacter
 {
 public:
+  CTrap();
+  ~CTrap();
+
   __int64 GetAttackDP() override;
   float GetAttackRange() override;
   __int64 GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart) override;

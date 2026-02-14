@@ -8,6 +8,38 @@
 
 #include <cstdio>
 #include <cstring>
+#include <new>
+
+CLevel::CLevel()
+{
+  mBsp = new (std::nothrow) CBsp();
+  mSkyBox = new (std::nothrow) CSkyBox();
+  mIsLoadedBsp = 0;
+  mMapName[0] = 0;
+  mLightTexMemSize = 0;
+  mMapTexMemSize = 0;
+  mSkyTexMemSize = 0;
+  mEntityTexMemSize = 0;
+}
+
+CLevel::~CLevel()
+{
+  if (mSkyBox)
+  {
+    delete mSkyBox;
+    mSkyBox = nullptr;
+  }
+  if (mBsp)
+  {
+    delete mBsp;
+    mBsp = nullptr;
+  }
+}
+
+__int64 CLevel::IsLoadedBsp()
+{
+  return mIsLoadedBsp;
+}
 
 float CLevel::GetFirstYpos(float *fCenterPos, float *fMin, float *fMax)
 {

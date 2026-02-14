@@ -5,6 +5,11 @@
 /* 1427 */
 class __cppobj CAniCamera
 {
+public:
+  CAniCamera();
+  ~CAniCamera();
+
+private:
   _ANI_CAMERA *AniCamera;
   _ANI_OBJECT *mDummy;
   unsigned int mDummyNum;

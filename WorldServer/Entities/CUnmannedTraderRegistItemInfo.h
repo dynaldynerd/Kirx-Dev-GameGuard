@@ -10,6 +10,7 @@ class __cppobj CUnmannedTraderRegistItemInfo
 {
 public:
   CUnmannedTraderRegistItemInfo();
+  ~CUnmannedTraderRegistItemInfo();
   void Clear();
   bool Set(
     unsigned __int16 wInx,

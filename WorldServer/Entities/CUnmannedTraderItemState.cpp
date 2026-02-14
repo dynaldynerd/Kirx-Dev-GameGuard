@@ -47,6 +47,11 @@ CUnmannedTraderItemState::CUnmannedTraderItemState()
   Clear();
 }
 
+CUnmannedTraderItemState::~CUnmannedTraderItemState()
+{
+  Clear();
+}
+
 void CUnmannedTraderItemState::Clear()
 {
   this->m_eState = STATE::NONE;

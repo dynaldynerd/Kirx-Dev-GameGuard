@@ -19,6 +19,34 @@
 
 #include <mmsystem.h>
 
+CPotionMgr::PotionInnerData::PotionInnerData()
+{
+  Init();
+}
+
+CPotionMgr::PotionInnerData::~PotionInnerData()
+{
+// this is not a stub
+}
+
+void CPotionMgr::PotionInnerData::Init()
+{
+  memset_0(this, 0, sizeof(PotionInnerData));
+  for (int index = 0; index <= 28; ++index)
+  {
+    m_bPotionDelayIndexList[index] = true;
+  }
+  m_bPotionDelayIndexList[33] = true;
+  m_bPotionDelayIndexList[34] = true;
+  m_bPotionDelayIndexList[35] = true;
+  m_bPotionDelayIndexList[36] = true;
+  m_bPotionDelayIndexList[37] = true;
+}
+
+CPotionMgr::CPotionMgr() = default;
+
+CPotionMgr::~CPotionMgr() = default;
+
 CPotionMgr g_PotionMgr;
 
 bool CPotionMgr::DatafileInit()

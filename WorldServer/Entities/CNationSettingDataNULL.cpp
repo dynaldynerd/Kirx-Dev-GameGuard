@@ -4,6 +4,8 @@
 
 #include "CashShop_str_fld.h"
 
+CNationSettingDataNULL CNationSettingDataNULL::ms_NULL{};
+
 CBilling *CNationSettingDataNULL::CreateBilling()
 {
   return nullptr;

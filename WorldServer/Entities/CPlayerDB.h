@@ -10,6 +10,9 @@ struct _AVATOR_DATA;
 class __cppobj CPlayerDB
 {
 public:
+  CPlayerDB();
+  ~CPlayerDB();
+
   int GetRaceCode();
   int GetRaceSexCode();
   int GetMapCode();

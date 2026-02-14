@@ -7,6 +7,8 @@
 class __cppobj CNationSettingDataRU : public CNationSettingData
 {
 public:
+  CNationSettingDataRU();
+
   int Init() override;
   CashDbWorker *CreateWorker() override;
   CBilling *CreateBilling() override;

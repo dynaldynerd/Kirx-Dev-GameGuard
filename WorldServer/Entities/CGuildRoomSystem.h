@@ -12,6 +12,9 @@ struct tagTIMESTAMP_STRUCT;
 class __cppobj CGuildRoomSystem
 {
 public:
+  CGuildRoomSystem();
+  ~CGuildRoomSystem();
+
   static CGuildRoomSystem *GetInstance();
   bool Init();
   char Load_db();

@@ -17,10 +17,19 @@ struct _map_rate
 /* 3009 */
 class __cppobj CMapExtend
 {
+public:
+  CMapExtend();
+  explicit CMapExtend(CSurface **pSF);
+  ~CMapExtend();
+
+  void Init(CSurface **pSF);
+
+  bool m_bExtendMode;
+
+private:
   tagPOINT m_ptStartMap;
   tagPOINT m_ptEndMap;
   tagPOINT m_ptCenter;
-  bool m_bExtendMode;
   tagRECT m_rcExtend;
   tagPOINT m_ptStartScreen;
   tagPOINT m_ptEndScreen;

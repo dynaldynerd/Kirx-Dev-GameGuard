@@ -14,6 +14,9 @@ struct _skill_fld;
 class __cppobj CPotionMgr
 {
 public:
+  CPotionMgr();
+  ~CPotionMgr();
+
   bool DatafileInit();
   bool SetPotionDataName();
   unsigned __int8 UsePotion(
@@ -53,6 +56,10 @@ public:
 
   struct __cppobj PotionInnerData
   {
+    PotionInnerData();
+    ~PotionInnerData();
+    void Init();
+
     bool m_bPotionDelayIndexList[38];
   };
 

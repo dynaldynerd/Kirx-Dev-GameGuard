@@ -4,6 +4,7 @@
 
 CHolyScheduleData::CHolyScheduleData()
 {
+  m_pSchedule = nullptr;
   Init();
 }
 

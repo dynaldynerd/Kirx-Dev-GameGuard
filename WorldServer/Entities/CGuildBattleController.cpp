@@ -18,6 +18,11 @@ CGuildBattleController *CGuildBattleController::Instance()
   return &s_instance;
 }
 
+CGuildBattleController::CGuildBattleController()
+{
+  // this is not a stub
+}
+
 void CGuildBattleController::Loop()
 {
   GUILD_BATTLE::CGuildBattleScheduleManager *scheduleManager = GUILD_BATTLE::CGuildBattleScheduleManager::Instance();

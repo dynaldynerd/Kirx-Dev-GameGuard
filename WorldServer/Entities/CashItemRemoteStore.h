@@ -139,6 +139,7 @@ public:
   };
 
   CashItemRemoteStore();
+  ~CashItemRemoteStore();
   static CashItemRemoteStore *Instance();
   bool Initialize();
   void Loop_TatalCashEvent();

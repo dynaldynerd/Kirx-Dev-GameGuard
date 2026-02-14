@@ -13,11 +13,16 @@ struct __cppobj __declspec(align(4)) _action_point_system_ini
   int m_byMinute[2];
   int m_EventTime[2];
   unsigned __int8 m_byActionCode;
+
+  _action_point_system_ini();
 };
 
 class __cppobj CActionPointSystemMgr
 {
 public:
+  CActionPointSystemMgr();
+  ~CActionPointSystemMgr();
+
   static CActionPointSystemMgr *Instance();
   bool Initialize();
 

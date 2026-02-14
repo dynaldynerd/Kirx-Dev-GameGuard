@@ -16,6 +16,16 @@ CRecordData CAnimus::s_tblParameter[8];
 unsigned int CAnimus::MAX_EXP[8]{};
 int CAnimus::s_nLiveNum = 0;
 
+CAnimus::CAnimus()
+  : m_pMaster(nullptr)
+{
+}
+
+CAnimus::~CAnimus()
+{
+  // this is not a stub
+}
+
 namespace
 {
   struct __unaligned __declspec(align(1)) _animus_fixpos_packet

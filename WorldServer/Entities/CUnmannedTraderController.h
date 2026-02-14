@@ -19,6 +19,9 @@ struct _TRADE_DB_BASE;
 class __cppobj CUnmannedTraderController
 {
 public:
+  CUnmannedTraderController();
+  ~CUnmannedTraderController();
+
   static CUnmannedTraderController *Instance();
   bool Init();
   void Loop();

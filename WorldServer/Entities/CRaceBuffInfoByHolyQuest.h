@@ -10,6 +10,7 @@ class __cppobj CRaceBuffInfoByHolyQuest
 public:
 
   CRaceBuffInfoByHolyQuest(_skill_fld *data, unsigned __int8 lv);
+  ~CRaceBuffInfoByHolyQuest();
   static CRaceBuffInfoByHolyQuest *Create(unsigned int uiNTh, char *szItemName);
   static bool LoadINISubProcLoadCode(
     unsigned int uiTh,

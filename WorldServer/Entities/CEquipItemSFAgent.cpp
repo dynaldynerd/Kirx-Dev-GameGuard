@@ -7,6 +7,17 @@
 #include "base_fld.h"
 #include "CPlayer.h"
 
+CEquipItemSFAgent::CEquipItemSFAgent()
+{
+  m_pMaster = nullptr;
+  AllEndContSF();
+}
+
+CEquipItemSFAgent::~CEquipItemSFAgent()
+{
+  // this is not a stub
+}
+
 _sf_continous *CEquipItemSFAgent::GetEquipSFCont(unsigned int nEquipTblIndex)
 {
   if (nEquipTblIndex >= 8)

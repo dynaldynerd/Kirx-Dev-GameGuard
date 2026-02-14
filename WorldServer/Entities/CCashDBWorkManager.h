@@ -10,6 +10,7 @@ class __cppobj CCashDBWorkManager : public CTSingleton<CCashDBWorkManager>
 {
 public:
   CCashDBWorkManager();
+  ~CCashDBWorkManager();
 
   bool Initialize();
   void Start();

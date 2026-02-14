@@ -10,6 +10,7 @@ class __cppobj COreAmountMgr
 public:
   static COreAmountMgr *Instance();
   COreAmountMgr();
+  ~COreAmountMgr();
   void Release();
   bool LoadINI();
   bool IsINIFileChanged();

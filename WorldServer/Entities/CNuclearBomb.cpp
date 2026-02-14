@@ -9,8 +9,27 @@
 #include "nuclear_result_code_zocl.h"
 
 #include <mmsystem.h>
+#include <cstring>
 
 unsigned int CNuclearBomb::s_dwSerialCnt = 0;
+
+_be_damaged_player::_be_damaged_player()
+{
+  memset_0(this, 0, sizeof(_be_damaged_player));
+}
+
+_be_damaged_char::_be_damaged_char()
+{
+  memset_0(this, 0, sizeof(_be_damaged_char));
+}
+
+CNuclearBomb::CNuclearBomb()
+{
+  m_pMaster = nullptr;
+  s_dwSerialCnt = 0;
+}
+
+CNuclearBomb::~CNuclearBomb() = default;
 
 __int64 CNuclearBomb::GetGenAttackProb(CCharacter * /*pDst*/, int /*nPart*/, bool /*bBackAttack*/)
 {

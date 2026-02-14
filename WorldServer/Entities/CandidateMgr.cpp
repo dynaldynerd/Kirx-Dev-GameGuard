@@ -47,6 +47,16 @@ CandidateMgr *CandidateMgr::Instance()
   return &s_instance;
 }
 
+CandidateMgr::CandidateMgr()
+{
+  // this is not a stub
+}
+
+CandidateMgr::~CandidateMgr()
+{
+  // this is not a stub
+}
+
 CandidateMgr::_candidate_info::_candidate_info()
 {
   _Init();

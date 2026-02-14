@@ -9,6 +9,11 @@ CUnmannedTraderGroupDivisionVersionInfo::CUnmannedTraderGroupDivisionVersionInfo
 {
 }
 
+CUnmannedTraderGroupDivisionVersionInfo::~CUnmannedTraderGroupDivisionVersionInfo()
+{
+  m_vecuiVersion.clear();
+}
+
 bool CUnmannedTraderGroupDivisionVersionInfo::IsEmpty()
 {
   return this->m_iType < 0 || this->m_vecuiVersion.empty();

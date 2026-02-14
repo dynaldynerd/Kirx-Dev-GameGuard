@@ -27,6 +27,7 @@ public:
   };
 
   CUnmannedTraderUserInfo();
+  ~CUnmannedTraderUserInfo();
 
   bool Init(unsigned short wInx);
   bool Load(

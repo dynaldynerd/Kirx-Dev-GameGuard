@@ -44,6 +44,7 @@ struct __cppobj _event_respawn
     int nRespawnNum;
     _mon MonInfo[640];
 
+    _state();
     void init();
   };
 
@@ -59,11 +60,15 @@ struct __cppobj _event_respawn
   char szScriptName[64];
   bool bActive;
   _state State;
+
+  _event_respawn();
 };
 
 class __cppobj CMonsterEventRespawn
 {
 public:
+  CMonsterEventRespawn();
+
   bool SetEventRespawn();
   void CheckRespawnEvent();
   bool StartRespawnEvent(char *pszEventCode, char *pwszErrCode);

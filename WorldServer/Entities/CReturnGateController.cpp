@@ -5,6 +5,57 @@
 #include "CPlayer.h"
 #include "GlobalObjects.h"
 
+CReturnGateController::CReturnGateController()
+{
+  m_pkTimer = nullptr;
+  m_pkEmptyInxList = nullptr;
+  m_pkUseInxList = nullptr;
+  m_uiGateTotCnt = 0;
+  m_ppkGatePool = nullptr;
+}
+
+CReturnGateController::~CReturnGateController()
+{
+  CleanUp();
+}
+
+void CReturnGateController::CleanUp()
+{
+  if (m_pkTimer)
+  {
+    delete m_pkTimer;
+    m_pkTimer = nullptr;
+  }
+
+  if (m_pkEmptyInxList)
+  {
+    delete m_pkEmptyInxList;
+    m_pkEmptyInxList = nullptr;
+  }
+
+  if (m_pkUseInxList)
+  {
+    delete m_pkUseInxList;
+    m_pkUseInxList = nullptr;
+  }
+
+  if (m_ppkGatePool)
+  {
+    for (unsigned int index = 0; index < m_uiGateTotCnt; ++index)
+    {
+      if (m_ppkGatePool[index])
+      {
+        delete m_ppkGatePool[index];
+        m_ppkGatePool[index] = nullptr;
+      }
+    }
+    delete[] m_ppkGatePool;
+    m_ppkGatePool = nullptr;
+  }
+
+  m_uiGateTotCnt = 0;
+}
+
 CReturnGateController *CReturnGateController::Instance()
 {
   static CReturnGateController s_instance;

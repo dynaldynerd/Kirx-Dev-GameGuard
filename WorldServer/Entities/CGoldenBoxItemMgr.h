@@ -38,6 +38,8 @@ struct _golden_box_item_ini
   char m_szStarterBoxCode[2][64];
   unsigned __int8 m_byLoopCnt;
   _golden_box_item_list m_golden_box_item_list[2][100];
+
+  _golden_box_item_ini();
 };
 
 struct __cppobj __declspec(align(8)) _golden_box_item_event
@@ -46,6 +48,9 @@ struct __cppobj __declspec(align(8)) _golden_box_item_event
   CNetTimer m_event_timer;
   CLogFile m_event_log;
   _golden_box_item_ini m_ini;
+
+  _golden_box_item_event();
+  ~_golden_box_item_event();
 };
 
 struct _golden_box_item
@@ -65,6 +70,8 @@ struct _golden_box_item
   unsigned __int16 m_wBoxMax[2];
   unsigned __int8 m_bygolden_item_num[2];
   _golden_box_item_info m_golden_box_item_info[2][100];
+
+  _golden_box_item();
 };
 
 struct _db_golden_box_item
@@ -81,6 +88,8 @@ struct _db_golden_box_item
   unsigned __int16 wBoxMax[2];
   unsigned __int8 bygolden_item_num[2];
   _db_golden_box_item_List List[2][100];
+
+  _db_golden_box_item();
 };
 
 class CPlayer;
@@ -96,6 +105,9 @@ public:
   };
 
   static CGoldenBoxItemMgr *Instance();
+
+  CGoldenBoxItemMgr();
+  ~CGoldenBoxItemMgr();
 
   bool Initialize();
   void Loop_Event();

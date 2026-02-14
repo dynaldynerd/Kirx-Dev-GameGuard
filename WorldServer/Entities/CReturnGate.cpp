@@ -10,6 +10,20 @@
 
 #include <cstring>
 
+CReturnGate::CReturnGate(_object_id *pID)
+{
+  m_eState = CUnmannedTraderSchedule::STATE::EMPTY;
+  m_pkOwner = nullptr;
+  m_dwOwnerSerial = 0;
+  m_pDestMap = nullptr;
+  m_fBindPos[0] = 0.0f;
+  m_fBindPos[1] = 0.0f;
+  m_fBindPos[2] = 0.0f;
+  CGameObject::Init(pID);
+}
+
+CReturnGate::~CReturnGate() = default;
+
 void CReturnGate::Clear()
 {
   m_pkOwner = nullptr;

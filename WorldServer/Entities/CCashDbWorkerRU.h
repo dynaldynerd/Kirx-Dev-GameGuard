@@ -10,7 +10,7 @@ class __cppobj CCashDbWorkerRU : public CashDbWorker
 {
 public:
   CCashDbWorkerRU();
-  ~CCashDbWorkerRU() override = default;
+  ~CCashDbWorkerRU() override;
 
   void Release() override;
 

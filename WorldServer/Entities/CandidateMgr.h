@@ -9,6 +9,9 @@ struct _PVP_RANK_DATA;
 class __cppobj CandidateMgr
 {
 public:
+  CandidateMgr();
+  ~CandidateMgr();
+
   struct __cppobj _candidate_info
   {
     enum Status : int

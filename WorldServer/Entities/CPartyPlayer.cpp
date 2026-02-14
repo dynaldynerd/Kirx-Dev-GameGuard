@@ -5,6 +5,11 @@
 #include "GlobalObjects.h"
 #include <cstdlib>
 
+CPartyPlayer::CPartyPlayer()
+  : m_bLogin(false)
+{
+}
+
 void CPartyPlayer::Init(unsigned int index)
 {
   m_bLogin = false;
