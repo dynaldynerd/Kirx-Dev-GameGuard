@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct _pt_trans_votepaper_zocl
 {
 #pragma pack(push, 1)
@@ -20,7 +21,9 @@ struct _pt_trans_votepaper_zocl
   unsigned __int8 byCnt;
   __body body[8];
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _pt_notify_vote_score_zocl
 {
   struct __body
@@ -39,6 +42,7 @@ struct _pt_notify_vote_score_zocl
   unsigned __int8 byCnt;
   __body body[8];
 };
+#pragma pack(pop)
 
 struct _pt_notify_final_decision
 {
@@ -47,6 +51,7 @@ struct _pt_notify_final_decision
   char wszAvatorName[5][17];
 };
 
+#pragma pack(push, 1)
 struct _pt_appoint_inform_request_zocl
 {
 #pragma pack(push, 1)
@@ -61,7 +66,9 @@ struct _pt_appoint_inform_request_zocl
 
   __body body[4];
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct __cppobj _pt_query_appoint_zocl
 {
   unsigned __int8 byClassType;
@@ -71,6 +78,7 @@ struct __cppobj _pt_query_appoint_zocl
   _pt_query_appoint_zocl();
   __int64 size();
 };
+#pragma pack(pop)
 
 inline _pt_query_appoint_zocl::_pt_query_appoint_zocl()
 {

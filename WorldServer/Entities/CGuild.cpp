@@ -3,6 +3,7 @@
 #include "CGuild.h"
 
 #include <cstdlib>
+#include <new>
 
 #include "CGuildMasterEffect.h"
 #include "CMgrGuildHistory.h"
@@ -28,6 +29,105 @@ CGuildList CGuild::s_GuildList;
 CMgrGuildHistory CGuild::s_MgrHistory;
 
 static const char kUnknownGuildEmblemName[] = "<unknown>";
+
+CGuild::CGuild()
+  : m_nIndex(-1),
+    m_dwSerial(0),
+    m_wszName{},
+    m_aszName{},
+    m_byGrade(0),
+    m_dTotalDalant(0.0),
+    m_dTotalGold(0.0),
+    m_dwEmblemBack(0),
+    m_dwEmblemMark(0),
+    m_byRace(0),
+    m_wszGreetingMsg{},
+    m_MasterData(),
+    m_nMemberNum(0),
+    m_MemberData(nullptr),
+    m_pGuildCommittee{nullptr, nullptr, nullptr},
+    m_nApplierNum(0),
+    m_ApplierData(nullptr),
+    m_bNowProcessSgtMter(false),
+    m_dwSuggesterSerial(0),
+    m_SuggestedMatter(),
+    m_GuildBattleSugestMatter(),
+    m_bInGuildBattle(false),
+    m_bPossibleElectMaster(false),
+    m_dwGuildBattleTotWin(0),
+    m_dwGuildBattleTotDraw(0),
+    m_dwGuildBattleTotLose(0),
+    m_DownPacket_Member(nullptr),
+    m_DownPacket_Applier(nullptr),
+    m_QueryPacket_Info(nullptr),
+    m_MoneyIO_List(nullptr),
+    m_Buddy_List(nullptr),
+    m_nIOMoneyHistoryNum(0),
+    m_IOMoneyHistory{},
+    m_bDBWait(false),
+    m_bIOWait(false),
+    m_bRankWait(false),
+    m_byMoneyOutputKind(0),
+    m_nTempMemberNum(0),
+    m_dwLastLoopTime(0),
+    m_szHistoryFileName{}
+{
+  m_MemberData = new (std::nothrow) _guild_member_info[50];
+  m_ApplierData = new (std::nothrow) _guild_applier_info[32];
+
+  m_DownPacket_Member = new (std::nothrow) _guild_member_download_zocl;
+  m_DownPacket_Applier = new (std::nothrow) _guild_applier_download_zocl;
+  m_QueryPacket_Info = new (std::nothrow) _guild_query_info_result_zocl;
+  m_MoneyIO_List = new (std::nothrow) _guild_money_io_download_zocl;
+  m_Buddy_List = new (std::nothrow) _guild_member_buddy_download_zocl;
+
+  Release();
+}
+
+CGuild::~CGuild()
+{
+  if (m_MemberData)
+  {
+    delete[] m_MemberData;
+    m_MemberData = nullptr;
+  }
+
+  if (m_ApplierData)
+  {
+    delete[] m_ApplierData;
+    m_ApplierData = nullptr;
+  }
+
+  if (m_DownPacket_Member)
+  {
+    delete m_DownPacket_Member;
+    m_DownPacket_Member = nullptr;
+  }
+
+  if (m_DownPacket_Applier)
+  {
+    delete m_DownPacket_Applier;
+    m_DownPacket_Applier = nullptr;
+  }
+
+  if (m_QueryPacket_Info)
+  {
+    delete m_QueryPacket_Info;
+    m_QueryPacket_Info = nullptr;
+  }
+
+  if (m_MoneyIO_List)
+  {
+    delete m_MoneyIO_List;
+    m_MoneyIO_List = nullptr;
+  }
+
+  if (m_Buddy_List)
+  {
+    delete m_Buddy_List;
+    m_Buddy_List = nullptr;
+  }
+}
 
 namespace
 {
@@ -2706,7 +2806,7 @@ void CGuild::Release()
   m_wszGreetingMsg[0] = 0;
   m_dwSuggesterSerial = 0;
 
-  memset_0(&m_SuggestedMatter, 0, sizeof(m_SuggestedMatter));
+  m_SuggestedMatter.Clear();
   m_GuildBattleSugestMatter.Clear();
   m_bInGuildBattle = false;
 

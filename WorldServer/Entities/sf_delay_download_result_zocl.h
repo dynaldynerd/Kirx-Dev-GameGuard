@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __cppobj _sf_delay_download_result_zocl
 {
   struct __cppobj __unaligned __declspec(align(1)) _eff_list
@@ -27,6 +28,7 @@ struct __cppobj _sf_delay_download_result_zocl
 
   _sf_delay_download_result_zocl();
 };
+#pragma pack(pop)
 
 inline _sf_delay_download_result_zocl::_eff_list::_eff_list()
 {

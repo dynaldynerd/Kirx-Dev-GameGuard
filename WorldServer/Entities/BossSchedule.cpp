@@ -166,8 +166,13 @@ void BossSchedule::Save_LastRespawnSystemTime(ATL::CTime *systime)
 }
 
 BossSchedule_Map::BossSchedule_Map()
+  : m_nIndex(0),
+    m_strMap{},
+    m_INIFile(),
+    m_nCount(0),
+    m_ScheduleList(nullptr),
+    m_pSystem(nullptr)
 {
-  memset_0(this, 0, sizeof(BossSchedule_Map));
 }
 
 BossSchedule_Map::~BossSchedule_Map()

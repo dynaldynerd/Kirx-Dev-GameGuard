@@ -4,6 +4,7 @@
 
 struct _guild_honor_set_request_clzo;
 
+#pragma pack(push, 1)
 struct _guild_honor_list_result_zocl
 {
   struct __list
@@ -23,6 +24,7 @@ struct _guild_honor_list_result_zocl
   _guild_honor_list_result_zocl();
   int size() const;
 };
+#pragma pack(pop)
 
 class __cppobj CHonorGuild
 {

@@ -14,6 +14,7 @@
 
 namespace
 {
+#pragma pack(push, 1)
 struct _pt_propose_appoint_zocl
 {
   unsigned __int8 byClassType;
@@ -21,6 +22,7 @@ struct _pt_propose_appoint_zocl
   _pt_propose_appoint_zocl() : byClassType(0) {}
   unsigned __int16 size() const { return sizeof(*this); }
 };
+#pragma pack(pop)
 }
 
 ClassOrderProcessor::ClassOrderProcessor()

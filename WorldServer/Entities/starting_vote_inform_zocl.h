@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __unaligned __declspec(align(1)) _starting_vote_inform_zocl
 {
   int nVoteSerial;
@@ -13,3 +14,4 @@ struct __unaligned __declspec(align(1)) _starting_vote_inform_zocl
   _starting_vote_inform_zocl();
   __int64 size();
 };
+#pragma pack(pop)

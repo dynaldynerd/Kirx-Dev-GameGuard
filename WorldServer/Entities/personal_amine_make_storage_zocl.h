@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __cppobj __unaligned __declspec(align(1)) _personal_amine_make_storage_zocl
 {
   unsigned int dwAvatorSerial;
@@ -10,6 +11,7 @@ struct __cppobj __unaligned __declspec(align(1)) _personal_amine_make_storage_zo
   _personal_amine_make_storage_zocl();
   __int64 size() const;
 };
+#pragma pack(pop)
 
 inline _personal_amine_make_storage_zocl::_personal_amine_make_storage_zocl()
 {

@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __unaligned __declspec(align(2)) _post_recv_delivery_zocl
 {
   unsigned __int8 byIndex;
@@ -14,6 +15,7 @@ struct __unaligned __declspec(align(2)) _post_recv_delivery_zocl
 
   unsigned __int16 size() const;
 };
+#pragma pack(pop)
 
 inline unsigned __int16 _post_recv_delivery_zocl::size() const
 {

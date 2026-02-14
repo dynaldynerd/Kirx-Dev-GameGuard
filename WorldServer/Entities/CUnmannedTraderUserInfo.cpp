@@ -84,6 +84,7 @@ struct __declspec(align(4)) _qry_case_unmandtrader_log_in_proc_update_complete_c
 };
 static_assert(sizeof(_qry_case_unmandtrader_log_in_proc_update_complete_create) == 332);
 
+#pragma pack(push, 1)
 struct __unaligned __declspec(align(1)) _unmannedtrader_sell_wait_item_inform_zocl
 {
   struct __unaligned __declspec(align(2)) __list
@@ -109,6 +110,7 @@ struct __unaligned __declspec(align(1)) _unmannedtrader_sell_wait_item_inform_zo
     return 116 - 10LL * (10 - clamped);
   }
 };
+#pragma pack(pop)
 } // namespace
 
 CUnmannedTraderUserInfo::CUnmannedTraderUserInfo()

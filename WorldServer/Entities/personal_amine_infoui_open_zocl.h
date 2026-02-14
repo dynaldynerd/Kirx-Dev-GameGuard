@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __cppobj _personal_amine_infoui_open_zocl
 {
   unsigned int dwObjSerial;
@@ -10,6 +11,7 @@ struct __cppobj _personal_amine_infoui_open_zocl
   _personal_amine_infoui_open_zocl();
   __int64 size() const;
 };
+#pragma pack(pop)
 
 inline _personal_amine_infoui_open_zocl::_personal_amine_infoui_open_zocl()
 {

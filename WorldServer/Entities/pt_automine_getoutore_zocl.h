@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __cppobj __unaligned __declspec(align(1)) _pt_automine_getoutore_zocl
 {
   unsigned __int8 byRetCode;
@@ -10,6 +11,7 @@ struct __cppobj __unaligned __declspec(align(1)) _pt_automine_getoutore_zocl
   _pt_automine_getoutore_zocl();
   __int64 size() const;
 };
+#pragma pack(pop)
 
 inline _pt_automine_getoutore_zocl::_pt_automine_getoutore_zocl()
 {

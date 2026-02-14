@@ -3,6 +3,7 @@
 #include "IdaCompat.h"
 #include "InvenKey.h"
 
+#pragma pack(push, 1)
 struct __cppobj __unaligned __declspec(align(2)) _pt_automine_state_zocl
 {
   unsigned __int8 bySelectOre;
@@ -13,6 +14,7 @@ struct __cppobj __unaligned __declspec(align(2)) _pt_automine_state_zocl
   _pt_automine_state_zocl();
   __int64 size() const;
 };
+#pragma pack(pop)
 
 inline _pt_automine_state_zocl::_pt_automine_state_zocl()
 {

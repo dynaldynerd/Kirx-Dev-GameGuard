@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __unaligned __declspec(align(1)) _darkhole_giveup_out_result_zocl
 {
   unsigned __int8 byRetCode;
@@ -10,6 +11,7 @@ struct __unaligned __declspec(align(1)) _darkhole_giveup_out_result_zocl
 
   unsigned __int16 size() const;
 };
+#pragma pack(pop)
 
 inline unsigned __int16 _darkhole_giveup_out_result_zocl::size() const
 {

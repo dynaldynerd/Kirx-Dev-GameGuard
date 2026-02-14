@@ -13,6 +13,9 @@ public:
   static CGuildList s_GuildList;
   static CMgrGuildHistory s_MgrHistory;
 
+  CGuild();
+  virtual ~CGuild();
+
   class MakeBuddyPacket
   {
   public:
@@ -28,7 +31,6 @@ public:
     };
   };
 
-  virtual ~CGuild() = default;
   void Init(unsigned int index);
   bool IsFill();
   void ReleaseTemp();

@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct _unmannedtrader_re_regist_result_zocl
 {
   struct __list
@@ -21,6 +22,7 @@ struct _unmannedtrader_re_regist_result_zocl
 
   __int64 size();
 };
+#pragma pack(pop)
 
 inline __int64 _unmannedtrader_re_regist_result_zocl::size()
 {

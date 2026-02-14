@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __cppobj _nuclear_result_code_zocl
 {
   unsigned __int8 byRetCode;
@@ -16,3 +17,4 @@ struct __cppobj _nuclear_result_code_zocl
     return 1;
   }
 };
+#pragma pack(pop)

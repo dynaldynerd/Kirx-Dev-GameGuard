@@ -5,6 +5,7 @@
 struct _PVP_ORDER_VIEW_DB_BASE;
 class CPlayer;
 
+#pragma pack(push, 1)
 struct __cppobj _pvp_order_view_inform_zocl
 {
   int nKillCnt;
@@ -15,6 +16,7 @@ struct __cppobj _pvp_order_view_inform_zocl
   _pvp_order_view_inform_zocl();
   int size() const;
 };
+#pragma pack(pop)
 
 /* 1794 */
 class CPvpOrderView

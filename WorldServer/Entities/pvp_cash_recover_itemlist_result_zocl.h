@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __cppobj __unaligned __declspec(align(1)) _pvp_cash_recover_itemlist_result_zocl
 {
   unsigned __int8 byItemNum;
@@ -21,3 +22,4 @@ struct __cppobj __unaligned __declspec(align(1)) _pvp_cash_recover_itemlist_resu
     return static_cast<unsigned __int16>(1 + (4 * byItemNum));
   }
 };
+#pragma pack(pop)

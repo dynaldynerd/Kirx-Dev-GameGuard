@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __cppobj __unaligned __declspec(align(1)) _nuclear_position_result_zocl
 {
   unsigned int dwMasterSerial;
@@ -17,3 +18,4 @@ struct __cppobj __unaligned __declspec(align(1)) _nuclear_position_result_zocl
     byUseClass = 0;
   }
 };
+#pragma pack(pop)

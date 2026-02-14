@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __cppobj __unaligned __declspec(align(2)) _personal_automine_alter_dur_zocl
 {
   unsigned int dwObjSerial;
@@ -10,6 +11,7 @@ struct __cppobj __unaligned __declspec(align(2)) _personal_automine_alter_dur_zo
   _personal_automine_alter_dur_zocl();
   unsigned __int16 size() const;
 };
+#pragma pack(pop)
 
 inline _personal_automine_alter_dur_zocl::_personal_automine_alter_dur_zocl()
 {

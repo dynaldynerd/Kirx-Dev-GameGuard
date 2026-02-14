@@ -82,14 +82,14 @@ void CCryptParam::SetAESDecryptor()
 
 void CCryptParam::LoadKey(CryptoPP::ByteQueue *kQueuePub, const char *szKeyPath)
 {
-  CryptoPP::ByteQueue queue(0x400u);
-  CryptoPP::StreamTransformationFilter filter(
+  CryptoPP::ByteQueue *queue = new CryptoPP::ByteQueue(0x400u);
+  CryptoPP::StreamTransformationFilter *attachment = new CryptoPP::StreamTransformationFilter(
     m_AESDecryptor,
-    &queue,
+    queue,
     CryptoPP::StreamTransformationFilter::DEFAULT_PADDING);
-  CryptoPP::FileSource file(szKeyPath, true, &filter, true);
+  CryptoPP::FileSource file(szKeyPath, true, attachment, true);
 
-  m_PublicKey.BERDecode(queue);
+  m_PublicKey.BERDecode(*queue);
   m_PublicKey.BEREncode(*kQueuePub);
   if (!m_PublicKey.Validate(*m_prng, 3))
   {

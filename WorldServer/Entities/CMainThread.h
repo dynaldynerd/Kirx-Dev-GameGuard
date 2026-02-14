@@ -2094,6 +2094,7 @@ struct __declspec(align(8)) _io_money_data
 #include "CGuild.h"
 
 /* 1719 */
+#pragma pack(push, 8)
 struct __cppobj __declspec(align(8)) _guild_member_info
 {
   unsigned int dwSerial;
@@ -2110,6 +2111,9 @@ struct __cppobj __declspec(align(8)) _guild_member_info
   void init();
   bool IsFill();
 };
+#pragma pack(pop)
+static_assert(sizeof(_guild_member_info) == 0x30, "_guild_member_info size must match IDA (0x30)");
+static_assert(alignof(_guild_member_info) == 8, "_guild_member_info alignment must match IDA (8)");
 
 /* 1690 */
 
@@ -2558,6 +2562,8 @@ struct __cppobj __declspec(align(8)) _guild_applier_info
   void init();
   bool IsFill();
 };
+static_assert(sizeof(_guild_applier_info) == 0x10, "_guild_applier_info size must match IDA (0x10)");
+static_assert(alignof(_guild_applier_info) == 8, "_guild_applier_info alignment must match IDA (8)");
 
 /* 1724 */
 struct __cppobj __unaligned __declspec(align(1)) _guild_member_download_zocl

@@ -6,6 +6,7 @@
 
 class CPlayer;
 
+#pragma pack(push, 1)
 struct __unaligned __declspec(align(1)) _nuclear_bomb_current_state_zocl
 {
   struct __unaligned __declspec(align(2)) __nuclear
@@ -20,6 +21,7 @@ struct __unaligned __declspec(align(1)) _nuclear_bomb_current_state_zocl
 
   int size() const;
 };
+#pragma pack(pop)
 
 class __cppobj __declspec(align(8)) CNuclearBombMgr
 {

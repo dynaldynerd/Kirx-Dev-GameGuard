@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct _guildroom_out_result_zocl
 {
   unsigned __int8 byRetCode;
@@ -11,3 +12,4 @@ struct _guildroom_out_result_zocl
 
   __int64 size();
 };
+#pragma pack(pop)

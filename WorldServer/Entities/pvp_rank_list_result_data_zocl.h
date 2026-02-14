@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __cppobj __unaligned __declspec(align(1)) _pvp_rank_list_result_data_zocl
 {
   unsigned __int8 byRace;
@@ -13,3 +14,4 @@ struct __cppobj __unaligned __declspec(align(1)) _pvp_rank_list_result_data_zocl
   _pvp_rank_list_result_data_zocl();
   __int64 size();
 };
+#pragma pack(pop)

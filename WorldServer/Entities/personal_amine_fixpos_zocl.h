@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __cppobj __unaligned __declspec(align(1)) _personal_amine_fixpos_zocl
 {
   unsigned int dwObjSerial;
@@ -15,6 +16,7 @@ struct __cppobj __unaligned __declspec(align(1)) _personal_amine_fixpos_zocl
   _personal_amine_fixpos_zocl();
   unsigned __int16 size() const;
 };
+#pragma pack(pop)
 
 inline _personal_amine_fixpos_zocl::_personal_amine_fixpos_zocl()
 {

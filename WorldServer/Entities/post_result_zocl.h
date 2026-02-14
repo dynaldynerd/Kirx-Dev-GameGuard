@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __cppobj __unaligned __declspec(align(1)) _post_result_zocl
 {
   unsigned __int8 byErrCode;
@@ -10,6 +11,7 @@ struct __cppobj __unaligned __declspec(align(1)) _post_result_zocl
   _post_result_zocl();
   __int64 size() const;
 };
+#pragma pack(pop)
 
 inline _post_result_zocl::_post_result_zocl()
   : byErrCode(0),

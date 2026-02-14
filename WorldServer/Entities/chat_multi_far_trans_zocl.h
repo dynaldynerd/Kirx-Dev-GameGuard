@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct _chat_multi_far_trans_zocl
 {
   unsigned __int16 wSize;
@@ -10,6 +11,7 @@ struct _chat_multi_far_trans_zocl
   _chat_multi_far_trans_zocl();
   unsigned __int16 size();
 };
+#pragma pack(pop)
 
 inline _chat_multi_far_trans_zocl::_chat_multi_far_trans_zocl()
 {

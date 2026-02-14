@@ -138,12 +138,14 @@ struct _qry_case_unmandtrader_lazyclean_flags
 };
 static_assert(sizeof(_qry_case_unmandtrader_lazyclean_flags) == 4);
 
+#pragma pack(push, 1)
 struct _manage_client_limit_run_request_acwr
 {
   unsigned __int16 wIndex;
   unsigned __int8 byZeroPad[4];
   unsigned __int8 byCode;
 };
+#pragma pack(pop)
 
 struct qry_case_golden_box_item
 {

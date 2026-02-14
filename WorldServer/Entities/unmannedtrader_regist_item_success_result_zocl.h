@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __unaligned __declspec(align(1)) _unmannedtrader_regist_item_success_result_zocl
 {
   unsigned __int16 wItemSerial;
@@ -15,6 +16,7 @@ struct __unaligned __declspec(align(1)) _unmannedtrader_regist_item_success_resu
 
   __int64 size() const;
 };
+#pragma pack(pop)
 
 inline __int64 _unmannedtrader_regist_item_success_result_zocl::size() const
 {

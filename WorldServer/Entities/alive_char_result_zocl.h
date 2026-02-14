@@ -3,6 +3,7 @@
 #include "IdaCompat.h"
 #include "CMainThread.h"
 
+#pragma pack(push, 1)
 struct __cppobj __unaligned __declspec(align(2)) _alive_char_result_zocl
 {
   unsigned __int8 byRetCode;
@@ -11,6 +12,7 @@ struct __cppobj __unaligned __declspec(align(2)) _alive_char_result_zocl
 
   _alive_char_result_zocl();
 };
+#pragma pack(pop)
 
 inline _alive_char_result_zocl::_alive_char_result_zocl()
 {

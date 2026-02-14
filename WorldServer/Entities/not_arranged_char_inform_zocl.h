@@ -4,6 +4,7 @@
 
 #include "DqsDbStructs.h"
 
+#pragma pack(push, 1)
 struct __cppobj _not_arranged_char_inform_zocl
 {
   unsigned __int8 byCharNum;
@@ -12,6 +13,7 @@ struct __cppobj _not_arranged_char_inform_zocl
   _not_arranged_char_inform_zocl();
   __int64 size();
 };
+#pragma pack(pop)
 
 inline _not_arranged_char_inform_zocl::_not_arranged_char_inform_zocl()
   : byCharNum(0)

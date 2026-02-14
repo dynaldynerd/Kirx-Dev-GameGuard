@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __unaligned __declspec(align(1)) _darkhole_create_zocl
 {
   unsigned __int16 wQuestIndex;
@@ -15,6 +16,7 @@ struct __unaligned __declspec(align(1)) _darkhole_create_zocl
   _darkhole_create_zocl();
   unsigned __int16 size() const;
 };
+#pragma pack(pop)
 
 inline _darkhole_create_zocl::_darkhole_create_zocl()
 {

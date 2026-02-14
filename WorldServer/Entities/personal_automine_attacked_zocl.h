@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __cppobj _personal_automine_attacked_zocl
 {
   unsigned __int16 wItemSerial;
@@ -9,6 +10,7 @@ struct __cppobj _personal_automine_attacked_zocl
   _personal_automine_attacked_zocl();
   unsigned __int16 size() const;
 };
+#pragma pack(pop)
 
 inline _personal_automine_attacked_zocl::_personal_automine_attacked_zocl()
 {

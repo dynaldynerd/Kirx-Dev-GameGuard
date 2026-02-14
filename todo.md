@@ -33,3 +33,13 @@ none
 
 ### Missing dtor only (0)
 none
+
+## Packet/Field Struct Pack(1) Audit
+
+- Scope tokens: `_acwr`, `_wrac`, `_zocl`, `_clzo`, `_fld`.
+- Source list snapshot: `_reports/pack1_struct_defs_current.csv`.
+- Total matching struct definitions: `288`.
+- Remaining without `#pragma pack(push, 1)`: `0`.
+
+### Pending
+none

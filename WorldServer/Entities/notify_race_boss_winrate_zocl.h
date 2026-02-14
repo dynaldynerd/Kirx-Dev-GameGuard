@@ -3,6 +3,7 @@
 #include "IdaCompat.h"
 
 #pragma pack(push, 2)
+#pragma pack(push, 1)
 struct __unaligned __declspec(align(2)) _notify_race_boss_winrate_zocl
 {
   unsigned __int8 byTotalCnt;
@@ -15,4 +16,5 @@ struct __unaligned __declspec(align(2)) _notify_race_boss_winrate_zocl
     return 10;
   }
 };
+#pragma pack(pop)
 #pragma pack(pop)

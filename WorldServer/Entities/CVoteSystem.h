@@ -7,6 +7,7 @@
 class __cppobj CVoteSystem
 {
 public:
+#pragma pack(push, 1)
   struct __unaligned __declspec(align(1)) _started_vote_inform_zocl
   {
     int nVoteSerial;
@@ -21,6 +22,7 @@ public:
     _started_vote_inform_zocl();
     __int64 size();
   };
+#pragma pack(pop)
 
   CVoteSystem();
   ~CVoteSystem();

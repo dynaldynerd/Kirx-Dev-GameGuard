@@ -4,6 +4,7 @@
 
 #include "CMainThread.h"
 
+#pragma pack(push, 1)
 struct __unaligned __declspec(align(2)) _select_avator_report_wrac
 {
   _GLBID gidGlobal;
@@ -13,6 +14,7 @@ struct __unaligned __declspec(align(2)) _select_avator_report_wrac
 
   __int64 size() const;
 };
+#pragma pack(pop)
 
 inline __int64 _select_avator_report_wrac::size() const
 {

@@ -77,6 +77,7 @@ public:
   CWeeklyGuildRankOwnerInfo m_kOwnerInfo[3][2];
   unsigned int m_dwMaxCnt;
   CWeeklyGuildRankRecord **m_ppkInfo;
+#pragma pack(push, 1)
   struct __unaligned __declspec(align(1)) _weekly_guild_rank_result_zocl
   {
     struct _list
@@ -95,6 +96,7 @@ public:
 
     __int64 size();
   };
+#pragma pack(pop)
 
   _weekly_guild_rank_result_zocl *m_pkSendList;
 };

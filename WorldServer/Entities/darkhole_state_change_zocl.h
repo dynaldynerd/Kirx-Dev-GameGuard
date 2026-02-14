@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __unaligned __declspec(align(1)) _darkhole_state_change_zocl
 {
   unsigned __int16 wIndex;
@@ -11,6 +12,7 @@ struct __unaligned __declspec(align(1)) _darkhole_state_change_zocl
   _darkhole_state_change_zocl();
   unsigned __int16 size() const;
 };
+#pragma pack(pop)
 
 inline _darkhole_state_change_zocl::_darkhole_state_change_zocl()
 {

@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct _pt_inform_tax_rate_zocl
 {
   unsigned __int8 byCurrTax;
@@ -10,6 +11,7 @@ struct _pt_inform_tax_rate_zocl
   _pt_inform_tax_rate_zocl();
   __int64 size() const;
 };
+#pragma pack(pop)
 
 inline _pt_inform_tax_rate_zocl::_pt_inform_tax_rate_zocl()
 {

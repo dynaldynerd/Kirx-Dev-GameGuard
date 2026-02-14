@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __unaligned __declspec(align(1)) _darkhole_new_mission_inform_zocl
 {
   struct __unaligned __declspec(align(1)) __job
@@ -31,6 +32,7 @@ struct __unaligned __declspec(align(1)) _darkhole_new_mission_inform_zocl
 
   unsigned __int16 size();
 };
+#pragma pack(pop)
 
 inline unsigned __int16 _darkhole_new_mission_inform_zocl::size()
 {

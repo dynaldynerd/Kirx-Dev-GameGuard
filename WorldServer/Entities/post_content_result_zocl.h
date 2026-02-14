@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __unaligned __declspec(align(1)) _post_content_result_zocl
 {
   struct __unaligned __declspec(align(1)) _post_item
@@ -21,6 +22,7 @@ struct __unaligned __declspec(align(1)) _post_content_result_zocl
   _post_content_result_zocl();
   unsigned __int16 size() const;
 };
+#pragma pack(pop)
 
 inline _post_content_result_zocl::_post_content_result_zocl()
 {

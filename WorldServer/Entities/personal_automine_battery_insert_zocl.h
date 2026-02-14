@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __cppobj __unaligned __declspec(align(2)) _personal_automine_battery_insert_zocl
 {
   unsigned int dwObjSerial;
@@ -11,6 +12,7 @@ struct __cppobj __unaligned __declspec(align(2)) _personal_automine_battery_inse
   _personal_automine_battery_insert_zocl();
   __int64 size() const;
 };
+#pragma pack(pop)
 
 inline _personal_automine_battery_insert_zocl::_personal_automine_battery_insert_zocl()
 {

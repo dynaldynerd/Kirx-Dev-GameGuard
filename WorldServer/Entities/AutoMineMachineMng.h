@@ -457,12 +457,14 @@ void TInventory<T>::swap(TInvenSlot<T> *pSrc, TInvenSlot<T> *pDst)
   }
 }
 
+#pragma pack(push, 1)
 struct _pt_automine_charge_money_db_update_fail_zocl
 {
   int nCharge;
 
   __int64 size();
 };
+#pragma pack(pop)
 
 class AutoMineMachine
 {

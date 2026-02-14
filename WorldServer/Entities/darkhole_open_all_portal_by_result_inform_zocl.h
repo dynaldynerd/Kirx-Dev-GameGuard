@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __unaligned __declspec(align(1)) _darkhole_open_all_portal_by_result_inform_zocl
 {
   unsigned __int8 byCnt;
@@ -15,6 +16,7 @@ struct __unaligned __declspec(align(1)) _darkhole_open_all_portal_by_result_info
 
   unsigned __int16 size() const;
 };
+#pragma pack(pop)
 
 inline unsigned __int16 _darkhole_open_all_portal_by_result_inform_zocl::size() const
 {

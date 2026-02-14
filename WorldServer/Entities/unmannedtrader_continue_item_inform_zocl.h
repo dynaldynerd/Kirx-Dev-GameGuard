@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __unaligned __declspec(align(2)) _unmannedtrader_continue_item_inform_zocl
 {
   struct __list
@@ -17,6 +18,7 @@ struct __unaligned __declspec(align(2)) _unmannedtrader_continue_item_inform_zoc
 
   __int64 size() const;
 };
+#pragma pack(pop)
 
 inline __int64 _unmannedtrader_continue_item_inform_zocl::size() const
 {
