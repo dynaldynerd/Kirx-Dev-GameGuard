@@ -1598,6 +1598,180 @@ void CUnmannedTraderUserInfo::CompleteCreate(CLogFile *pkLogger)
   this->m_eState = LOG_IN_STATE::UTUI_LOGIN;
 }
 
+void CUnmannedTraderUserInfo::ProcSellWaitItem(
+  _qry_case_unmandtrader_log_in_proc_update_complete *pkResult,
+  unsigned __int8 byGroupType,
+  CLogFile *pkLogger)
+{
+  (void)byGroupType;
+
+  auto *result = reinterpret_cast<_qry_case_unmandtrader_log_in_proc_update_complete_create *>(pkResult);
+  _unmannedtrader_sell_wait_item_inform_zocl inform{};
+  std::memset(&inform, 0, sizeof(inform));
+
+  unsigned __int8 deleteStorageSlot[10]{};
+  unsigned __int8 byProcResult = 0;
+  CPlayer *owner = FindOwner();
+  if (!owner)
+  {
+    return;
+  }
+
+  for (int index = 0; index < 20; ++index)
+  {
+    CUnmannedTraderRegistItemInfo &loadItem = this->m_vecLoadItemInfo[index];
+    if (!loadItem.IsSellWait())
+    {
+      continue;
+    }
+
+    unsigned __int8 *storageIndex = &deleteStorageSlot[inform.byNum];
+    byProcResult = loadItem.SellWaitItem(this->m_wInx, pkLogger, loadItem.GetResultTime(), storageIndex);
+    if (byProcResult == 37 || byProcResult == 94 || byProcResult == 34)
+    {
+      result->List[result->wNum].byProcUpdate = 37;
+      result->List[result->wNum].dwBuyer = loadItem.GetBuyerSerial();
+      result->List[result->wNum].dwRegistSerial = loadItem.GetRegistSerial();
+      result->List[result->wNum++].byUpdateState = 8;
+      loadItem.Clear();
+      loadItem.SetState(8u);
+      continue;
+    }
+
+    if (byProcResult)
+    {
+      loadItem.ClearToWaitState();
+      continue;
+    }
+
+    inform.List[inform.byNum].wItemSerial = loadItem.GetItemSerial();
+    inform.List[inform.byNum].dwSellDalant = loadItem.GetPrice();
+    inform.List[inform.byNum].dwTax = loadItem.GetTax();
+    inform.List[inform.byNum].dwSellDalant -= inform.List[inform.byNum].dwTax;
+    inform.dwTotalSellDalant += inform.List[inform.byNum].dwSellDalant;
+    inform.dwTotalTaxDalant += inform.List[inform.byNum++].dwTax;
+
+    result->List[result->wNum].byProcUpdate = 90;
+    result->List[result->wNum].dwBuyer = loadItem.GetBuyerSerial();
+    result->List[result->wNum].dwRegistSerial = loadItem.GetRegistSerial();
+    result->List[result->wNum++].byUpdateState = 3;
+
+    loadItem.Clear();
+    loadItem.SetState(3u);
+  }
+
+  inform.dwCurInvenDalant = owner->m_Param.GetDalant();
+  unsigned __int8 type[2] = {30, 26};
+  const unsigned __int16 length = static_cast<unsigned __int16>(inform.size());
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_wInx, type, reinterpret_cast<char *>(&inform), length);
+
+  for (unsigned __int8 index = 0; index < inform.byNum; ++index)
+  {
+    owner->Emb_DelStorage(0, deleteStorageSlot[index], false, true, "CUnmannedTraderUserInfo::ProcSellWaitItem()");
+  }
+}
+
+void CUnmannedTraderUserInfo::NotifyCloseItem(
+  _qry_case_unmandtrader_log_in_proc_update_complete *pkResult,
+  CLogFile *pkLogger)
+{
+  auto *result = reinterpret_cast<_qry_case_unmandtrader_log_in_proc_update_complete_create *>(pkResult);
+  CPlayer *owner = FindOwner();
+  if (owner && owner->m_bOper)
+  {
+    _STORAGE_LIST::_db_con *regItem = nullptr;
+    _unmannedtrader_continue_item_inform_zocl inform{};
+    std::memset(&inform, 0, sizeof(inform));
+    inform.byTaxRate = 1;
+
+    for (int index = 0; index < 20; ++index)
+    {
+      CUnmannedTraderRegistItemInfo &loadItem = this->m_vecLoadItemInfo[index];
+      if (!loadItem.IsWaitNoitfyClose())
+      {
+        continue;
+      }
+
+      regItem = owner->m_Param.m_dbInven.GetPtrFromSerial(loadItem.GetItemSerial());
+      if (regItem)
+      {
+        CPlayer::s_MgrItemHistory.time_out_cancel_auto_trade(
+          owner->m_ObjID.m_wIndex,
+          loadItem.GetRegistSerial(),
+          regItem,
+          owner->m_szItemHistoryFileName);
+
+        inform.List[inform.byNum].dwPrice = loadItem.GetPrice();
+        inform.List[inform.byNum].wItemSerial = loadItem.GetItemSerial();
+        inform.List[inform.byNum].dwRegistSerial = loadItem.GetRegistSerial();
+        ++inform.byNum;
+
+        loadItem.Clear();
+        loadItem.SetState(0xBu);
+      }
+      else
+      {
+        result->List[result->wNum].byProcUpdate = 82;
+        result->List[result->wNum].dwBuyer = loadItem.GetBuyerSerial();
+        result->List[result->wNum].dwRegistSerial = loadItem.GetRegistSerial();
+        result->List[result->wNum++].byUpdateState = 7;
+
+        loadItem.Clear();
+        loadItem.SetState(7u);
+      }
+    }
+
+    unsigned __int8 type[2] = {30, 38};
+    if (inform.byNum)
+    {
+      const unsigned __int16 length = static_cast<unsigned __int16>(inform.size());
+      g_Network.m_pProcess[0]->LoadSendMsg(this->m_wInx, type, reinterpret_cast<char *>(&inform), length);
+    }
+  }
+  else
+  {
+    const int ownerOper = owner ? owner->m_bOper : -1;
+    if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderUserInfo::NotifyCloseItem()\r\n\t\t( 0 == pkOwner || !pkOwner->m_bOper(%d) )\r\n",
+        ownerOper);
+    }
+  }
+}
+
+char CUnmannedTraderUserInfo::CheckIsUpdatedTaxRate(unsigned __int8 byTax, CLogFile *pkLogger)
+{
+  (void)pkLogger;
+
+  if (this->m_wInx >= MAX_PLAYER)
+  {
+    return 1;
+  }
+
+  CPlayer *owner = &g_Player[this->m_wInx];
+  if (owner->m_dwObjSerial != this->m_dwUserSerial)
+  {
+    return 1;
+  }
+
+  const int raceCode = owner->m_Param.GetRaceCode();
+  const unsigned __int8 currentTaxRate =
+    static_cast<unsigned __int8>(CUnmannedTraderTaxRateManager::Instance()->GetTaxRate(raceCode) * 100.0f);
+
+  if (currentTaxRate == byTax)
+  {
+    return 0;
+  }
+
+  char msg[32]{};
+  msg[0] = static_cast<char>(currentTaxRate);
+
+  unsigned __int8 type[2] = {30, 36};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_wInx, type, msg, 1u);
+  return 1;
+}
+
 void CUnmannedTraderUserInfo::CompleteRegist(unsigned __int8 byRet, char *pLoadData, CLogFile *pkLogger)
 {
   char *query = pLoadData;

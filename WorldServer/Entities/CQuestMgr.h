@@ -48,6 +48,10 @@ public:
   char DeleteQuestItem(char *pszItemCode, unsigned __int16 wCount);
   bool CanGiveupQuest(unsigned __int8 byQuestDBSlot);
   char CheckFailCondition(unsigned __int8 byQuestDBSlot, int nFailCond, char *pszCode);
+  void SendMsgToMaster_ReturnItemAfterQuest(unsigned __int16 wItemSerial, unsigned __int8 byNum, char byQuestDBSlot);
+  void SendMsgToMaster_NoCompleteQuestFromNPC(char byQuestDBSlot);
+  void SendMsgToMaster_NoHaveGiveItem(char byQuestDBSlot);
+  void SendMsgToMaster_NoHaveReturnItem(char byQuestDBSlot);
   void DeleteQuestData(unsigned __int8 bySlot);
   unsigned __int8 InsertNpcQuestHistory(char *pszQuestCode, char byLevel, long double dRepeatTime);
   _quest_fail_result *CheckLimLv(int nNewLv);

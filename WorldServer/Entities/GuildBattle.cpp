@@ -31,6 +31,7 @@
 #include "StorageList.h"
 #include "WorldServerUtil.h"
 #include "base_fld.h"
+#include "guild_battle_get_gravity_stone_result_zocl.h"
 #include "qry_case_updatereservedschedule.h"
 #include "qry_case_updateclearguildbattleDayInfo.h"
 #include "qry_case_addpvppoint.h"
@@ -41,6 +42,7 @@
 #include "worlddb_guild_battle_schedule_list.h"
 #include "worlddb_guild_battle_info.h"
 #include "worlddb_guild_battle_reserved_schedule_info.h"
+#include "guild_battle_goal_result_zocl.h"
 
 __int64 _qry_case_in_guildbattlecost::size()
 {
@@ -1006,6 +1008,186 @@ sprintf(buffer, "Map%d", uiMapInx);
     return 110;
   }
 
+  unsigned __int8 CNormalGuildBattleField::TakeBall(int iPortalInx, CPlayer *pkPlayer)
+  {
+    if (!m_bInit || !pkPlayer || !m_pkBall || !m_pkRegenPos)
+    {
+      return 110;
+    }
+    if (pkPlayer->IsRidingUnit())
+    {
+      return static_cast<unsigned __int8>(-117);
+    }
+    if (pkPlayer->GetRecallAnimus())
+    {
+      return static_cast<unsigned __int8>(-85);
+    }
+
+    int regenIndex = -1;
+    for (unsigned int index = 0; index < m_uiRegenPosCnt; ++index)
+    {
+      if (m_pkRegenPos[index].GetPortalInx() == iPortalInx)
+      {
+        regenIndex = static_cast<int>(index);
+        break;
+      }
+    }
+    if (regenIndex < 0)
+    {
+      return static_cast<unsigned __int8>(-119);
+    }
+
+    if (!m_pkBall->m_bLive)
+    {
+      if (CheatRegenStone(static_cast<unsigned int>(regenIndex)) < 0)
+      {
+        return static_cast<unsigned __int8>(-119);
+      }
+    }
+
+    if (m_pkBall->m_pkOwner && m_pkBall->m_pkOwner != pkPlayer)
+    {
+      m_pkBall->m_pkOwner->ClearGravityStone();
+    }
+    m_pkBall->m_pkOwner = pkPlayer;
+    m_pkBall->m_dwTakeLimitTime = GetLoopTime();
+    pkPlayer->m_bTakeGravityStone = true;
+    return 0;
+  }
+
+  int CNormalGuildBattleField::CheatRegenStone(unsigned int uiPos)
+  {
+    if (!m_bInit || !m_pkMap || !m_pkBall || !m_pkRegenPos || uiPos >= m_uiRegenPosCnt)
+    {
+      return -1;
+    }
+
+    CGravityStoneRegener *regen = &m_pkRegenPos[uiPos];
+    if (!regen->m_pkRegenPos)
+    {
+      return -1;
+    }
+
+    _object_create_setdata createData{};
+    createData.m_nLayerIndex = 0;
+    createData.m_pMap = m_pkMap;
+    createData.m_pRecordSet = nullptr;
+    createData.m_fStartPos[0] = regen->m_pkRegenPos->m_fCenterPos[0];
+    createData.m_fStartPos[1] = regen->m_pkRegenPos->m_fCenterPos[1];
+    createData.m_fStartPos[2] = regen->m_pkRegenPos->m_fCenterPos[2];
+
+    m_pkBall->Clear();
+    if (!m_pkBall->Regen(&createData))
+    {
+      return -1;
+    }
+
+    return regen->GetPortalInx();
+  }
+
+  int CNormalGuildBattleField::CheatRegenStone(CPlayer *pkPlayer)
+  {
+    if (!m_bInit || !pkPlayer || !m_pkBall)
+    {
+      return -1;
+    }
+
+    float startPos[3]{};
+    if (!pkPlayer->m_pCurMap
+        || !pkPlayer->m_pCurMap->GetRandPosVirtualDumExcludeStdRange(pkPlayer->m_fCurPos, 20, 10, startPos))
+    {
+      startPos[0] = pkPlayer->m_fCurPos[0];
+      startPos[1] = pkPlayer->m_fCurPos[1];
+      startPos[2] = pkPlayer->m_fCurPos[2];
+    }
+
+    _object_create_setdata createData{};
+    createData.m_nLayerIndex = 0;
+    createData.m_pMap = m_pkMap;
+    createData.m_pRecordSet = nullptr;
+    memcpy_0(createData.m_fStartPos, startPos, sizeof(createData.m_fStartPos));
+
+    m_pkBall->Destroy();
+    if (m_pkBall->Regen(&createData))
+    {
+      return 0;
+    }
+    return -3;
+  }
+
+  unsigned __int8 CNormalGuildBattleField::CheatTakeStone(int iPortalInx, CPlayer *pkPlayer)
+  {
+    return TakeBall(iPortalInx, pkPlayer);
+  }
+
+  unsigned __int8 CNormalGuildBattleField::CheatGetStone(CPlayer *pkPlayer)
+  {
+    if (!m_bInit || !pkPlayer || !m_pkBall)
+    {
+      return 0;
+    }
+
+    if (!m_pkBall->m_bLive)
+    {
+      if (CheatRegenStone(0u) < 0)
+      {
+        return 1;
+      }
+    }
+
+    if (m_pkBall->m_pkOwner && m_pkBall->m_pkOwner != pkPlayer)
+    {
+      m_pkBall->m_pkOwner->ClearGravityStone();
+    }
+    m_pkBall->m_pkOwner = pkPlayer;
+    m_pkBall->m_dwTakeLimitTime = GetLoopTime();
+    pkPlayer->m_bTakeGravityStone = true;
+    return 0;
+  }
+
+  void CNormalGuildBattleField::GetPortalIndexInfo(
+    int *iRedPortalInx,
+    int *iBluePortalInx,
+    int *piRegenPortalInx)
+  {
+    if (m_ui1PGoalPosCnt && m_pk1PGoalZone && iRedPortalInx)
+    {
+      *iRedPortalInx = m_pk1PGoalZone->GetPortalInx();
+    }
+    if (m_ui2PGoalPosCnt && m_pk2PGoalZone && iBluePortalInx)
+    {
+      *iBluePortalInx = m_pk2PGoalZone->GetPortalInx();
+    }
+
+    if (piRegenPortalInx && m_uiRegenPosCnt >= 3 && m_pkRegenPos)
+    {
+      piRegenPortalInx[0] = m_pkRegenPos[0].GetPortalInx();
+      piRegenPortalInx[1] = m_pkRegenPos[1].GetPortalInx();
+      piRegenPortalInx[2] = m_pkRegenPos[2].GetPortalInx();
+    }
+  }
+
+  unsigned __int8 CNormalGuildBattleField::CheatDropStone(CPlayer *pkPlayer)
+  {
+    if (!m_bInit)
+    {
+      return 1;
+    }
+
+    m_pkBall->Destroy();
+    const unsigned __int8 dropResult = m_pkBall->Drop(pkPlayer);
+    if (dropResult)
+    {
+      return dropResult;
+    }
+
+    char msg[4]{};
+    *reinterpret_cast<unsigned int *>(msg) = pkPlayer->m_dwObjSerial;
+    unsigned __int8 type[2] = {27, 81};
+    g_Network.m_pProcess[0]->LoadSendMsg(pkPlayer->m_ObjID.m_wIndex, type, msg, 4u);
+    return 0;
+  }
+
   unsigned int CNormalGuildBattleField::GetMapCode()
   {
     if (m_pkMap)
@@ -1139,6 +1321,11 @@ sprintf(buffer, "Map%d", uiMapInx);
       strcpy_0(m_szOldBindMapCode, bindMapCode);
       strcpy_0(m_szOldBindDummy, bindDummy);
     }
+  }
+
+  void CNormalGuildBattleGuildMember::SetReStartFlag()
+  {
+    m_bRestart = true;
   }
 
   void CNormalGuildBattleGuildMember::SetBattleState(bool bFlag, unsigned __int8 byColorInx)
@@ -1455,6 +1642,74 @@ sprintf(buffer, "Map%d", uiMapInx);
     }
   }
 
+  void CNormalGuildBattleGuild::NotifyLeftMinuteBeforeStart(char byLeftMin)
+  {
+    if (!m_pkGuild)
+    {
+      return;
+    }
+
+    char msg[32]{};
+    msg[0] = byLeftMin;
+    unsigned __int8 type[2] = {27, 65};
+    for (int index = 0; index < 50; ++index)
+    {
+      if (m_kMember[index].IsExist())
+      {
+        g_Network.m_pProcess[0]->LoadSendMsg(m_kMember[index].GetIndex(), type, msg, 1u);
+      }
+    }
+  }
+
+  void CNormalGuildBattleGuild::SendRegenBall(int iPortalInx)
+  {
+    if (!m_pkGuild)
+    {
+      return;
+    }
+
+    char msg[32]{};
+    *reinterpret_cast<int *>(msg) = iPortalInx;
+
+    unsigned __int8 type[2] = {27, 69};
+    for (int index = 0; index < 50; ++index)
+    {
+      if (m_kMember[index].IsExist())
+      {
+        g_Network.m_pProcess[0]->LoadSendMsg(m_kMember[index].GetIndex(), type, msg, 4u);
+      }
+    }
+  }
+
+  void CNormalGuildBattleGuild::SendGetGravityStone(
+    CNormalGuildBattleGuild *pkTakeGuild,
+    CPlayer *pkPlayer,
+    int iTakePortalInx)
+  {
+    if (!m_pkGuild || !pkPlayer || !pkTakeGuild)
+    {
+      return;
+    }
+
+    _guild_battle_get_gravity_stone_result_zocl msg{};
+    msg.byRet = 0;
+    strcpy_0(msg.wszGuildName, pkTakeGuild->GetGuildName());
+    strcpy_0(msg.wszCharName, pkPlayer->m_Param.GetCharNameW());
+    msg.iTakePortalInx = iTakePortalInx;
+    msg.byColor = pkTakeGuild->GetColorInx();
+
+    unsigned __int8 type[2] = {27, 72};
+    const unsigned __int16 length = static_cast<unsigned __int16>(msg.size());
+
+    for (int index = 0; index < 50; ++index)
+    {
+      if (m_kMember[index].IsExist())
+      {
+        g_Network.m_pProcess[0]->LoadSendMsg(m_kMember[index].GetIndex(), type, reinterpret_cast<char *>(&msg), length);
+      }
+    }
+  }
+
   void CNormalGuildBattleGuild::SendDeleteNotifyPositionMember(int iMemberInx)
   {
     CPlayer *player = m_kMember[iMemberInx].GetPlayer();
@@ -1467,6 +1722,53 @@ sprintf(buffer, "Map%d", uiMapInx);
     *reinterpret_cast<unsigned int *>(msg) = player->m_dwObjSerial;
     unsigned __int8 byType[2] = {27, 83};
     SendMsg(byType, msg, 4u, iMemberInx);
+  }
+
+  void CNormalGuildBattleGuild::MoveMap(unsigned int uiID, CNormalGuildBattleField *pkField)
+  {
+    if (!m_pkGuild || !pkField)
+    {
+      return;
+    }
+
+    m_pkGuild->m_bInGuildBattle = true;
+
+    unsigned __int8 type[2]{};
+    type[0] = 27;
+    type[1] = 66;
+
+    char msg[1]{static_cast<char>(-1)};
+    for (int index = 0; index < 50; ++index)
+    {
+      if (!m_kMember[index].IsExist())
+      {
+        continue;
+      }
+
+      if (m_kMember[index].IsEnableStart())
+      {
+        m_kMember[index].StockOldInfo();
+        m_kMember[index].SetBattleState(true, m_byColorInx);
+        CPlayer *player = m_kMember[index].GetPlayer();
+        pkField->Start(m_byColorInx, player);
+      }
+      else
+      {
+        g_Network.m_pProcess[0]->LoadSendMsg(m_kMember[index].GetIndex(), type, msg, 1u);
+      }
+    }
+  }
+
+  char CNormalGuildBattleGuild::SetReStartFlag(unsigned int dwSerial)
+  {
+    const int member = static_cast<int>(GetMember(dwSerial));
+    if (member < 0)
+    {
+      return 0;
+    }
+
+    m_kMember[member].SetReStartFlag();
+    return 1;
   }
 
   char CNormalGuildBattleGuild::MoveMember(
@@ -1818,6 +2120,469 @@ const int member = static_cast<int>(GetMember(dwSerial));
     if (m_bInit && m_pkStateList)
     {
       m_pkStateList->SetReady();
+    }
+  }
+
+  unsigned __int8 CNormalGuildBattle::Start(
+    CPlayer *pkPlayer,
+    unsigned int dwGuildSerial,
+    unsigned int dwCharacSerial)
+  {
+#pragma pack(push, 1)
+    struct _guild_battle_start_result
+    {
+      char byColor;
+      unsigned int dwLeftRedScore;
+      unsigned int dwRightBlueScore;
+      unsigned int dwLeftRedGoalCnt;
+      unsigned int dwRightBlueGoalCnt;
+      unsigned __int8 byLeftHour;
+      unsigned __int8 byLeftMin;
+      unsigned __int8 byLeftSec;
+      int iRedPortalInx;
+      int iBluePortalInx;
+      int iRegenPortalInx[3];
+    };
+#pragma pack(pop)
+
+    _guild_battle_start_result msg{};
+    msg.iRedPortalInx = -1;
+    msg.iBluePortalInx = -1;
+    msg.iRegenPortalInx[0] = -1;
+    msg.iRegenPortalInx[1] = -1;
+    msg.iRegenPortalInx[2] = -1;
+
+    if (dwGuildSerial == m_k1P.GetGuildSerial())
+    {
+      if (!m_k1P.SetReStartFlag(dwCharacSerial))
+      {
+        return static_cast<unsigned __int8>(-111);
+      }
+      msg.byColor = static_cast<char>(m_k1P.GetColorInx());
+    }
+    else
+    {
+      if (dwGuildSerial != m_k2P.GetGuildSerial())
+      {
+        return static_cast<unsigned __int8>(-115);
+      }
+      if (!m_k2P.SetReStartFlag(dwCharacSerial))
+      {
+        return static_cast<unsigned __int8>(-111);
+      }
+      msg.byColor = static_cast<char>(m_k2P.GetColorInx());
+    }
+
+    if (m_pkRed)
+    {
+      msg.dwLeftRedGoalCnt = m_pkRed->m_dwGoalCnt;
+      msg.dwLeftRedScore = m_pkRed->m_dwScore;
+    }
+    if (m_pkBlue)
+    {
+      msg.dwRightBlueGoalCnt = m_pkBlue->m_dwGoalCnt;
+      msg.dwRightBlueScore = m_pkBlue->m_dwScore;
+    }
+
+    int regenPortalInx[5]{-1, -1, -1, -1, -1};
+    if (m_pkField)
+    {
+      m_pkField->GetPortalIndexInfo(&msg.iRedPortalInx, &msg.iBluePortalInx, regenPortalInx);
+      msg.iRegenPortalInx[0] = regenPortalInx[0];
+      msg.iRegenPortalInx[1] = regenPortalInx[1];
+      msg.iRegenPortalInx[2] = regenPortalInx[2];
+    }
+
+    CGuildBattleSchedule *schedule = CGuildBattleSchedulePool::Instance()->GetRef(m_dwID);
+    if (!schedule)
+    {
+      const int mapCode = m_pkField ? static_cast<int>(m_pkField->GetMapCode()) : -1;
+      CGuildBattleLogger::Instance()->Log(
+        "CNormalGuildBattle::Start( %u, %u ) : CGuildBattleSchedulePool::Instance()->GetRef(%u) NULL!",
+        dwGuildSerial,
+        dwCharacSerial,
+        mapCode);
+      return 110;
+    }
+
+    schedule->GetLeftTime(&msg.byLeftHour, &msg.byLeftMin, &msg.byLeftSec);
+    __trace("(%u)CNormalGuildBattle::Start : byColor(%u)\n", dwCharacSerial, static_cast<unsigned __int8>(msg.byColor));
+
+    unsigned __int8 type[2]{};
+    type[0] = 27;
+    type[1] = 68;
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      pkPlayer->m_ObjID.m_wIndex,
+      type,
+      reinterpret_cast<char *>(&msg),
+      0x28u);
+
+    char szStartLogFormat[] = "CNormalGuildBattle::Start( %u, %u ) : (%d) %s Guild : (%d) %s race(%d) Start!";
+    m_kLogger.Log(
+      szStartLogFormat,
+      dwGuildSerial,
+      dwCharacSerial,
+      pkPlayer->m_Param.m_pGuild->m_dwSerial,
+      pkPlayer->m_Param.m_pGuild->m_wszName,
+      dwCharacSerial,
+      pkPlayer->m_Param.GetCharNameW(),
+      pkPlayer->m_Param.GetRaceCode());
+    return 0;
+  }
+
+  unsigned __int8 CNormalGuildBattle::ReStart(
+    CPlayer *pkPlayer,
+    unsigned int dwGuildSerial,
+    unsigned int dwCharacSerial)
+  {
+#pragma pack(push, 1)
+    struct _guild_battle_restart_result
+    {
+      char byColor;
+      unsigned int dwLeftRedScore;
+      unsigned int dwRightBlueScore;
+      unsigned int dwLeftRedGoalCnt;
+      unsigned int dwRightBlueGoalCnt;
+      unsigned __int8 byLeftHour;
+      unsigned __int8 byLeftMin;
+      unsigned __int8 byLeftSec;
+      int iRedPortalInx;
+      int iBluePortalInx;
+      int iRegenPortalInx[3];
+    };
+#pragma pack(pop)
+
+    _guild_battle_restart_result msg{};
+    msg.iRedPortalInx = -1;
+    msg.iBluePortalInx = -1;
+    msg.iRegenPortalInx[0] = -1;
+    msg.iRegenPortalInx[1] = -1;
+    msg.iRegenPortalInx[2] = -1;
+
+    if (dwGuildSerial == m_k1P.GetGuildSerial())
+    {
+      if (!m_k1P.IsMember(dwCharacSerial))
+      {
+        return static_cast<unsigned __int8>(-111);
+      }
+      msg.byColor = static_cast<char>(m_k1P.GetColorInx());
+    }
+    else
+    {
+      if (dwGuildSerial != m_k2P.GetGuildSerial())
+      {
+        return static_cast<unsigned __int8>(-115);
+      }
+      if (!m_k2P.IsMember(dwCharacSerial))
+      {
+        return static_cast<unsigned __int8>(-111);
+      }
+      msg.byColor = static_cast<char>(m_k2P.GetColorInx());
+    }
+
+    if (m_pkRed)
+    {
+      msg.dwLeftRedGoalCnt = m_pkRed->m_dwGoalCnt;
+      msg.dwLeftRedScore = m_pkRed->m_dwScore;
+    }
+    if (m_pkBlue)
+    {
+      msg.dwRightBlueGoalCnt = m_pkBlue->m_dwGoalCnt;
+      msg.dwRightBlueScore = m_pkBlue->m_dwScore;
+    }
+
+    int regenPortalInx[5]{-1, -1, -1, -1, -1};
+    if (m_pkField)
+    {
+      m_pkField->GetPortalIndexInfo(&msg.iRedPortalInx, &msg.iBluePortalInx, regenPortalInx);
+      msg.iRegenPortalInx[0] = regenPortalInx[0];
+      msg.iRegenPortalInx[1] = regenPortalInx[1];
+      msg.iRegenPortalInx[2] = regenPortalInx[2];
+    }
+
+    CGuildBattleSchedule *schedule = CGuildBattleSchedulePool::Instance()->GetRef(m_dwID);
+    if (!schedule)
+    {
+      const int mapCode = m_pkField ? static_cast<int>(m_pkField->GetMapCode()) : -1;
+      CGuildBattleLogger::Instance()->Log(
+        "CNormalGuildBattle::Start( %u, %u ) : CGuildBattleSchedulePool::Instance()->GetRef(%u) NULL!",
+        dwGuildSerial,
+        dwCharacSerial,
+        mapCode);
+      return 110;
+    }
+
+    schedule->GetLeftTime(&msg.byLeftHour, &msg.byLeftMin, &msg.byLeftSec);
+    __trace("(%u)CNormalGuildBattle::Start : byColor(%u)\n", dwCharacSerial, static_cast<unsigned __int8>(msg.byColor));
+
+    unsigned __int8 type[2]{};
+    type[0] = 27;
+    type[1] = 84;
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      pkPlayer->m_ObjID.m_wIndex,
+      type,
+      reinterpret_cast<char *>(&msg),
+      0x28u);
+
+    char szReStartLogFormat[] = "CNormalGuildBattle::Start( %u, %u ) : (%d) %s Guild : (%d) %s race(%d) Start!";
+    m_kLogger.Log(
+      szReStartLogFormat,
+      dwGuildSerial,
+      dwCharacSerial,
+      pkPlayer->m_Param.m_pGuild->m_dwSerial,
+      pkPlayer->m_Param.m_pGuild->m_wszName,
+      dwCharacSerial,
+      pkPlayer->m_Param.GetCharNameW(),
+      pkPlayer->m_Param.GetRaceSexCode());
+    return 0;
+  }
+
+  void CNormalGuildBattle::NotifyBeforeStart()
+  {
+#pragma pack(push, 1)
+    struct _guild_battle_before_start_notify
+    {
+      char byLeftMin;
+      char wszRedName[17];
+      char wszBlueName[17];
+    };
+#pragma pack(pop)
+
+    _guild_battle_before_start_notify msg{};
+    msg.byLeftMin = static_cast<char>(ATL::CTimeSpan(0, 0, 5, 0).GetMinutes());
+
+    const char *redGuildName = m_pkRed ? m_pkRed->GetGuildName() : nullptr;
+    const char *blueGuildName = m_pkBlue ? m_pkBlue->GetGuildName() : nullptr;
+    strcpy_0(msg.wszRedName, redGuildName ? redGuildName : "None");
+    strcpy_0(msg.wszBlueName, blueGuildName ? blueGuildName : "None");
+
+    unsigned __int8 type[2]{};
+    type[0] = 27;
+    type[1] = 88;
+
+    const unsigned __int8 firstRace = m_k1P.GetGuildRace();
+    const unsigned __int8 secondRace = m_k2P.GetGuildRace();
+    for (int index = 0; index < MAX_PLAYER; ++index)
+    {
+      CPlayer *player = &g_Player[index];
+      if (!player->m_bLive)
+      {
+        continue;
+      }
+
+      const int raceCode = player->m_Param.GetRaceCode();
+      if (raceCode == firstRace || raceCode == secondRace)
+      {
+        g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0x23u);
+      }
+    }
+  }
+
+  void CNormalGuildBattle::NotifyBattleResult(char byResult)
+  {
+#pragma pack(push, 1)
+    struct _guild_battle_result_notify
+    {
+      char byResult;
+      char wszRedName[17];
+      char wszBlueName[17];
+    };
+#pragma pack(pop)
+
+    _guild_battle_result_notify msg{};
+    msg.byResult = byResult;
+    strcpy_0(msg.wszRedName, m_pkRed ? m_pkRed->GetGuildName() : "None");
+    strcpy_0(msg.wszBlueName, m_pkBlue ? m_pkBlue->GetGuildName() : "None");
+
+    unsigned __int8 type[2]{};
+    type[0] = 27;
+    type[1] = 89;
+
+    const unsigned __int8 firstRace = m_k1P.GetGuildRace();
+    const unsigned __int8 secondRace = m_k2P.GetGuildRace();
+    for (int index = 0; index < MAX_PLAYER; ++index)
+    {
+      CPlayer *player = &g_Player[index];
+      if (!player->m_bLive || player->m_bInGuildBattle)
+      {
+        continue;
+      }
+
+      const int raceCode = player->m_Param.GetRaceCode();
+      if (raceCode == firstRace || raceCode == secondRace)
+      {
+        g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0x23u);
+      }
+    }
+  }
+
+  void CNormalGuildBattle::SendWebBattleStartInfo()
+  {
+    char msg[3]{};
+    msg[0] = static_cast<char>(m_dwID % 23);
+    msg[1] = static_cast<char>(m_k1P.GetGuildRace());
+    msg[2] = 2;
+
+    unsigned __int8 type[2]{};
+    type[0] = 51;
+    type[1] = 17;
+    if (g_Main.m_bConnectedWebAgentServer)
+    {
+      g_Network.m_pProcess[2]->LoadSendMsg(g_Main.m_byWebAgentServerNetInx, type, msg, 3u);
+    }
+  }
+
+  void CNormalGuildBattle::SendWebBattleEndInfo()
+  {
+    char msg[3]{};
+    msg[0] = static_cast<char>(m_dwID % 23);
+    msg[1] = static_cast<char>(m_k1P.GetGuildRace());
+    msg[2] = 3;
+
+    unsigned __int8 type[2]{};
+    type[0] = 51;
+    type[1] = 17;
+    if (g_Main.m_bConnectedWebAgentServer)
+    {
+      g_Network.m_pProcess[2]->LoadSendMsg(g_Main.m_byWebAgentServerNetInx, type, msg, 3u);
+    }
+  }
+
+  void CNormalGuildBattle::SendGoalMsg(bool b1P, char *wszGuildName, CPlayer *pkPlayer)
+  {
+    unsigned __int8 type[2]{};
+    type[0] = 27;
+    type[1] = 74;
+
+    _guild_battle_goal_result_zocl msg{};
+    msg.byRet = 0;
+    strcpy_0(msg.wszGuildName, wszGuildName);
+    msg.dwObjSerial = pkPlayer->m_dwObjSerial;
+    strcpy_0(msg.wszCharName, pkPlayer->m_Param.GetCharNameW());
+
+    if (m_pkRed)
+    {
+      msg.dwLeftRedGoalCnt = m_pkRed->m_dwGoalCnt;
+      msg.dwLeftRedScore = m_pkRed->m_dwScore;
+    }
+    if (m_pkBlue)
+    {
+      msg.dwRightBlueGoalCnt = m_pkBlue->m_dwGoalCnt;
+      msg.dwRightBlueScore = m_pkBlue->m_dwScore;
+    }
+
+    CGuildBattleSchedule *schedule = CGuildBattleSchedulePool::Instance()->GetRef(m_dwID);
+    if (!schedule)
+    {
+      CGuildBattleLogger::Instance()->Log(
+        "CNormalGuildBattle::SendKillInform() : CGuildBattleSchedulePool::Instance()->GetRef(%u) NULL!",
+        m_dwID);
+      return;
+    }
+
+    schedule->GetLeftTime(&msg.byLeftHour, &msg.byLeftMin, &msg.byLeftSec);
+
+    const int raceCode = pkPlayer->m_Param.GetRaceCode();
+    for (int index = 0; index < MAX_PLAYER; ++index)
+    {
+      CPlayer *player = &g_Player[index];
+      if (!player->m_bLive || player->m_bBlockGuildBattleMsg)
+      {
+        continue;
+      }
+      if (player->m_Param.GetRaceCode() == raceCode)
+      {
+        g_Network.m_pProcess[0]->LoadSendMsg(
+          player->m_ObjID.m_wIndex,
+          type,
+          reinterpret_cast<char *>(&msg),
+          msg.size());
+      }
+    }
+
+    if (!b1P || m_k1P.GetGuildRace() == m_k2P.GetGuildRace())
+    {
+      if (m_k1P.GetGuildRace() != m_k2P.GetGuildRace())
+      {
+        m_k1P.SendMsg(type, reinterpret_cast<char *>(&msg), msg.size());
+      }
+    }
+    else
+    {
+      m_k2P.SendMsg(type, reinterpret_cast<char *>(&msg), msg.size());
+    }
+  }
+
+  void CNormalGuildBattle::GuildBattleResultLogNotifyWeb(const _qry_case_guild_battel_result_log *sheet)
+  {
+#pragma pack(push, 1)
+    struct _guild_battle_result_log_notify_web
+    {
+      char szStartTime[17];
+      char szEndTime[17];
+      unsigned int dwRedSerial;
+      char wszRedName[17];
+      unsigned int dwBlueSerial;
+      char wszBlueName[17];
+      unsigned int dwRedScore;
+      unsigned int dwBlueScore;
+      unsigned int dwRedMaxJoinCnt;
+      unsigned int dwBlueMaxJoinCnt;
+      unsigned int dwRedGoalCnt;
+      unsigned int dwBlueGoalCnt;
+      unsigned int dwRedKillCntSum;
+      unsigned int dwBlueKillCntSum;
+      unsigned __int8 byBattleResult;
+      unsigned int dwMaxGoalCharacSerial;
+      char wszMaxGoalCharacName[17];
+      unsigned int dwMaxKillCharacSerial;
+      char wszMaxKillCharacName[17];
+      unsigned __int8 byJoinLimit;
+      unsigned int dwGuildBattleCostGold;
+      char szBattleMapCode[12];
+    };
+#pragma pack(pop)
+    static_assert(sizeof(_guild_battle_result_log_notify_web) == 0xA8, "guild battle web notify size mismatch");
+
+    if (!sheet)
+    {
+      return;
+    }
+
+    _guild_battle_result_log_notify_web msg{};
+    strcpy_s(msg.szStartTime, sizeof(msg.szStartTime), sheet->szStartTime);
+    strcpy_s(msg.szEndTime, sizeof(msg.szEndTime), sheet->szEndTime);
+    msg.dwRedSerial = sheet->dwRedSerial;
+    strcpy_s(msg.wszRedName, sizeof(msg.wszRedName), sheet->wszRedName);
+    msg.dwBlueSerial = sheet->dwBlueSerial;
+    strcpy_s(msg.wszBlueName, sizeof(msg.wszBlueName), sheet->wszBlueName);
+    msg.dwRedScore = sheet->dwRedScore;
+    msg.dwBlueScore = sheet->dwBlueScore;
+    msg.dwRedMaxJoinCnt = sheet->dwRedMaxJoinCnt;
+    msg.dwBlueMaxJoinCnt = sheet->dwBlueMaxJoinCnt;
+    msg.dwRedGoalCnt = sheet->dwRedGoalCnt;
+    msg.dwBlueGoalCnt = sheet->dwBlueGoalCnt;
+    msg.dwRedKillCntSum = sheet->dwRedKillCntSum;
+    msg.dwBlueKillCntSum = sheet->dwBlueKillCntSum;
+    msg.byBattleResult = sheet->byBattleResult;
+    msg.dwMaxGoalCharacSerial = sheet->dwMaxGoalCharacSerial;
+    strcpy_s(msg.wszMaxGoalCharacName, sizeof(msg.wszMaxGoalCharacName), sheet->wszMaxGoalCharacName);
+    msg.dwMaxKillCharacSerial = sheet->dwMaxKillCharacSerial;
+    strcpy_s(msg.wszMaxKillCharacName, sizeof(msg.wszMaxKillCharacName), sheet->wszMaxKillCharacName);
+    msg.byJoinLimit = sheet->byJoinLimit;
+    msg.dwGuildBattleCostGold = sheet->dwGuildBattleCostGold;
+    strcpy_s(msg.szBattleMapCode, sizeof(msg.szBattleMapCode), sheet->szBattleMapCode);
+
+    unsigned __int8 type[2]{};
+    type[0] = 51;
+    type[1] = 18;
+    if (g_Main.m_bConnectedWebAgentServer)
+    {
+      g_Network.m_pProcess[2]->LoadSendMsg(
+        g_Main.m_byWebAgentServerNetInx,
+        type,
+        reinterpret_cast<char *>(&msg),
+        0xA8u);
     }
   }
 
@@ -2442,6 +3207,36 @@ const int member = static_cast<int>(GetMember(dwSerial));
   void CNormalGuildBattleManager::SetNextEvent()
   {
     m_bDone = false;
+  }
+
+  void CNormalGuildBattleManager::Join(unsigned int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial)
+  {
+    int ret = -1;
+    if (dwGuildSerial == static_cast<unsigned int>(-1))
+    {
+      ret = 141;
+    }
+    else
+    {
+      CNormalGuildBattle *battle = GetBattleByGuildSerial(dwGuildSerial);
+      if (!battle)
+      {
+        ret = 142;
+      }
+      else
+      {
+        JoinGuild(static_cast<int>(n), dwGuildSerial, dwCharacSerial);
+      }
+    }
+
+    if (ret >= 0)
+    {
+      unsigned __int8 type[2]{};
+      type[0] = 27;
+      type[1] = 57;
+      char msg[1]{static_cast<char>(ret)};
+      g_Network.m_pProcess[0]->LoadSendMsg(n, type, msg, 1u);
+    }
   }
 
   void CNormalGuildBattleManager::JoinGuild(int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial)
@@ -5614,6 +6409,15 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
   void CPossibleBattleGuildListManager::SendFirst(int n, unsigned __int8 byRace)
   {
     SendInfo(n, byRace, 0, 0);
+  }
+
+  void CPossibleBattleGuildListManager::SendErrorResult(unsigned int n, char byRet)
+  {
+    char msg[32]{};
+    msg[0] = byRet;
+
+    unsigned __int8 type[2] = {27, 48};
+    g_Network.m_pProcess[0]->LoadSendMsg(n, type, msg, 1u);
   }
 
   unsigned __int8 CPossibleBattleGuildListManager::SendInfo(

@@ -84,3 +84,10 @@ void CPvpCashPoint::SendMsg_RecoverResult(unsigned int n, char byRet, int nRecvr
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), 5u);
 }
 
+void CPvpCashPoint::SendMsg_PvpCashInform(unsigned int n, unsigned __int8 byError)
+{
+  char msg = static_cast<char>(byError);
+  unsigned __int8 pbyType[2]{59, 5};
+  g_Network.m_pProcess[0]->LoadSendMsg(n, pbyType, &msg, 1u);
+}
+

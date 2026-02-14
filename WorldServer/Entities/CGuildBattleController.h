@@ -91,6 +91,9 @@ public:
   void CheckTakeGravityStone(int iPortalInx, CPlayer *pkPlayer);
   void CheckGetGravityStone(unsigned __int16 wIndex, unsigned int dwObjSerial, CPlayer *pkPlayer);
   void CheckGoal(CPlayer *pkPlayer, int iPortalInx);
+  int CheatRegenStone(CPlayer *pkPlayer, int iRengenPos);
+  char CheatTakeStone(int iPortalInx, CPlayer *pkPlayer);
+  char CheatGetStone(CPlayer *pkPlayer);
   void SendPossibleBattleGuildListFirst(int n, unsigned __int8 byRace);
 
   virtual ~CGuildBattleController() = default;

@@ -46,6 +46,45 @@ _guild_battle_suggest_matter::_guild_battle_suggest_matter()
   Clear();
 }
 
+_suggested_matter::_suggested_matter()
+{
+  Clear();
+}
+
+void _suggested_matter::Clear()
+{
+  byMatterType = static_cast<unsigned __int8>(-1);
+  dwMatterDst = 0;
+  wszMatterDst[0] = 0;
+  dwMatterObj1 = 0;
+  dwMatterObj2 = 0;
+  dwMatterObj3 = 0;
+  byVoteState[0] = 0;
+  byVoteState[1] = 0;
+  wszComment[0] = 0;
+  dwMatterVoteSynKey = 0;
+  dwStartTime = 0;
+  nTotal_VotableMemNum = 0;
+
+  for (int index = 0; index < 50; ++index)
+  {
+    VotableMem[index] = nullptr;
+  }
+}
+
+bool _suggested_matter::IsVotable(unsigned int dwSerial)
+{
+  for (int index = 0; index < nTotal_VotableMemNum; ++index)
+  {
+    if (VotableMem[index]->dwSerial == dwSerial)
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 void _guild_battle_suggest_matter::Clear()
 {
   eState = WAIT_BATTLE_REQUEST;

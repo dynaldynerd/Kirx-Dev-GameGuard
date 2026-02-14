@@ -5856,6 +5856,63 @@ void CPlayer::RecvHSKQuest(
   SendMsg_RecvHSKQuest();
 }
 
+void CPlayer::HSKQuestEnd_Att(unsigned __int8 byDestroyStoneRaceCode, CPlayer *pDestroyer)
+{
+  (void)byDestroyStoneRaceCode;
+
+  bool isMentalPass = false;
+  _Quest_fld *questFld = reinterpret_cast<_Quest_fld *>(g_HolySys.m_tblQuest.GetRecord(m_Param.GetRaceCode()));
+  if (questFld)
+  {
+    if (pDestroyer == this || pDestroyer->m_Param.GetRaceCode() == m_Param.GetRaceCode())
+    {
+      isMentalPass = true;
+    }
+  }
+
+  if (isMentalPass)
+  {
+    const unsigned __int8 numOfTime = g_HolySys.GetNumOfTime();
+    const unsigned __int8 startHour = g_HolySys.GetStartHour();
+    const unsigned __int8 startDay = g_HolySys.GetStartDay();
+    const unsigned __int8 startMonth = g_HolySys.GetStartMonth();
+    const unsigned __int16 startYear = g_HolySys.GetStartYear();
+    if (!m_MinigTicket.AuthLastMentalTicket(startYear, startMonth, startDay, startHour, numOfTime))
+    {
+      isMentalPass = g_HolySys.IsMentalPass();
+    }
+  }
+
+  if (isMentalPass)
+  {
+    const unsigned __int8 numOfTime = g_HolySys.GetNumOfTime();
+    const unsigned __int8 startHour = g_HolySys.GetStartHour();
+    const unsigned __int8 startDay = g_HolySys.GetStartDay();
+    const unsigned __int8 startMonth = g_HolySys.GetStartMonth();
+    const unsigned __int16 startYear = g_HolySys.GetStartYear();
+
+    UpdateLastCriTicket(startYear, startMonth, startDay, startHour, numOfTime);
+    _Reward_Quest(questFld, 0xFFu);
+    SendMsg_HSKQuestSucc(0, 1);
+    if (questFld->m_nConsContribution > 0)
+    {
+      SendMsg_RaceBattlePenelty(questFld->m_nConsContribution, 0);
+    }
+  }
+  else
+  {
+    if (pDestroyer->m_Param.GetRaceCode() == m_Param.GetRaceCode())
+    {
+      const int alterPoint = g_HolySys.m_nRaceBattlePoint[0][1];
+      AlterPvPPoint(static_cast<double>(alterPoint), holy_dec, 0xFFFFFFFFu);
+      SendMsg_RaceBattlePenelty(alterPoint, 0);
+    }
+    SendMsg_HSKQuestSucc(0, 0);
+  }
+
+  m_byHSKQuestCode = 100;
+}
+
 void CPlayer::SendMsg_RecvHSKQuest()
 {
 #pragma pack(push, 1)
@@ -8276,6 +8333,12 @@ void CPlayer::AlterPvpPointLeak(long double dAlter)
 {
   m_Param.m_dPvpPointLeak += dAlter;
   m_pUserDB->Update_PvpPointLeak(m_Param.m_dPvpPointLeak);
+}
+
+void CPlayer::SetPvpPointLeak(long double dValue)
+{
+  m_Param.m_dPvpPointLeak = dValue;
+  m_pUserDB->Update_PvpPointLeak(dValue);
 }
 
 void CPlayer::SendMsg_ResurrectInform()

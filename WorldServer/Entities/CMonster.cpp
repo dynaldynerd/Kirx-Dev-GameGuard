@@ -1545,6 +1545,26 @@ void CMonster::SendMsg_Destroy(unsigned __int8 byDestroyCode)
   CircleReport(type, reinterpret_cast<char *>(msg), 7, 0);
 }
 
+void CMonster::SendMsg_Change_MonsterState()
+{
+  char payload[6]{};
+  *reinterpret_cast<unsigned int *>(payload) = m_dwObjSerial;
+  *reinterpret_cast<unsigned __int16 *>(payload + 4) = static_cast<unsigned __int16>(GetMonStateInfo());
+
+  unsigned __int8 type[2] = {11, static_cast<unsigned __int8>(-105)};
+  CircleReport(type, payload, 6, false);
+}
+
+void CMonster::SendMsg_Change_MonsterRotate()
+{
+  char payload[5]{};
+  *reinterpret_cast<unsigned int *>(payload) = m_dwObjSerial;
+  payload[4] = static_cast<char>(GetYAngleByte());
+
+  unsigned __int8 type[2] = {11, static_cast<unsigned __int8>(-104)};
+  CircleReport(type, payload, 5, false);
+}
+
 void CMonster::SendMsg_FixPosition(int n)
 {
 #pragma pack(push, 1)

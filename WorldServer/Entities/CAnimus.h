@@ -3,6 +3,8 @@
 #include "IdaCompat.h"
 #include "CMainThread.h"
 
+class CAttack;
+
 /* 1779 */
 class __cppobj CAnimus : public CCharacter
 {
@@ -31,6 +33,11 @@ public:
   void OutOfSec() override;
   void SendMsg_FixPosition(int n) override;
   void SendMsg_RealMovePoint(int n) override;
+  void SendMsg_Create();
+  void SendMsg_Move();
+  void SendMsg_Attack_Gen(CAttack *pAT);
+  void SendMsg_LevelUp();
+  void SendMsg_AnimusActHealInform(unsigned int dwDstSerial, __int16 nAddHP);
   __int64 SetDamage(int nDam, CCharacter *pDst, int nDstLv, bool bCrt);
 
   unsigned __int8 m_byClassCode;

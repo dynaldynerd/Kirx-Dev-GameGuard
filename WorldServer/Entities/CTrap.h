@@ -4,6 +4,7 @@
 #include "CCharacter.h"
 
 class CPlayer;
+class CAttack;
 
 /* 1746 */
 class __cppobj CTrap : public CCharacter
@@ -33,6 +34,11 @@ public:
   void OutOfSec() override;
   void RecvKillMessage(CCharacter *pDier) override;
   void SendMsg_FixPosition(int n) override;
+  void SendMsg_Destroy(unsigned __int8 byDesType);
+  void SendMsg_Create();
+  void SendMsg_Attack(CAttack *pAt);
+  void SendMsg_TrapCompleteInform();
+  void SendMsg_AlterTranspar(bool bTranspar);
 
   int m_nHP;
   CPlayer *m_pMaster;

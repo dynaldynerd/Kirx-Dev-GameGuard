@@ -87,6 +87,8 @@ public:
   unsigned __int8 GetStartMin();
   unsigned __int8 GetKeeperDestroyRace();
   unsigned int GetDestroyerGuildSerial();
+  void SetHolyMasterRace(int nMaster);
+  void SetDestroyStoneRace(int nRace);
   char IsItemLootAuthority(CPlayer *pOne, unsigned __int8 byCreateCode);
   void ReleaseLastAttBuff();
   void CreateHolyStone();
@@ -99,6 +101,7 @@ public:
   void SetKeeperDestroyRace(unsigned __int8 byRace);
   void UnAllRegisterPerAutoMine();
   void SendIsArriveDestroyer(char byArrive);
+  void SendMsg_to_webagent_about_last_attacker_for_keeper(CPlayer *pPlayer, int bByAnimus);
   void SendMsg_HolyStoneSystemState(int nPlayerIndex);
   void SendMsg_WaitStone(unsigned int n);
   void SendMsg_NoticeNextQuest(unsigned int n, unsigned __int8 byStoneMapMoveInfo);
@@ -110,7 +113,15 @@ public:
   void SendMsg_EnterKeeper(unsigned int n);
   void SendMsg_WaitKeeper(unsigned int n, char byWaitType);
   void SendMsg_HolyKeeperStateChaos();
+  void SendMsg_HolyKeeperAttackAbleState(bool bAttackAble);
+  void SendMsg_CreateHolyMaster(CPlayer *pkDestroyer, int nControlSec);
   void SendSMS_MineTimeExtend(int nControlSec);
+  void SendSMS_CompleteQuest(
+    char byDestroyedRace,
+    char *pwszMasterName,
+    int nControlSec,
+    char *szMasterClass,
+    unsigned __int8 byMasterLv);
   void GiveHSKQuest();
   void SendHolyStoneHPToRaceBoss();
   void SendHolyStoneHP(CPlayer *pkPlayer);
@@ -121,6 +132,10 @@ public:
   _QUEST_CASH *FindStoragedQuestCash(unsigned int dwAvatorSerial);
   _QUEST_CASH_OTHER *PopStoredQuestCash_Other(unsigned int dwAvatorSerial);
   bool IsMentalPass();
+  void WriteLogPer10Min_Combat();
+  void SetEffectToDestroyerGuildMember();
+  void RecoverPvpCash();
+  char CheckHolyMaster(CPlayer *pAtter, unsigned __int8 byDestroyStoneRaceCode);
   void PushStoreQuestCash(
     unsigned int dwAvatorSerial,
     unsigned __int8 byQuestType,
@@ -130,6 +145,7 @@ public:
     unsigned __int8 byCristalBattleDBInfo,
     unsigned __int8 byHSKTime);
   void PushQuestCash_Other(unsigned int dwAvatorSerial, unsigned __int8 byStoneMapMoveInfo);
+  void PeneltyLoseRace(unsigned __int8 byDestroyedRace);
   void PeneltyFailRace(unsigned __int8 byFailRace);
   void On_HS_SCENE_BATTLE_TIME();
   void On_HS_SCENE_BATTLE_END_WAIT_TIME();

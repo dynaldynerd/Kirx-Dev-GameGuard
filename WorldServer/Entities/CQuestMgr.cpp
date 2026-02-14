@@ -51,6 +51,51 @@ void CQuestMgr::CheckFailLoop(int nFailCond, char *pszCode)
   }
 }
 
+void CQuestMgr::SendMsgToMaster_ReturnItemAfterQuest(
+  unsigned __int16 wItemSerial,
+  unsigned __int8 byNum,
+  char byQuestDBSlot)
+{
+#pragma pack(push, 1)
+  struct ReturnItemAfterQuestMessage
+  {
+    char byQuestDBSlot;
+    unsigned __int16 wItemSerial;
+    unsigned __int8 byNum;
+  };
+#pragma pack(pop)
+
+  ReturnItemAfterQuestMessage msg{};
+  msg.byQuestDBSlot = byQuestDBSlot;
+  msg.wItemSerial = wItemSerial;
+  msg.byNum = byNum;
+
+  unsigned __int8 pbyType[2]{24, 46};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    m_pMaster->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
+}
+
+void CQuestMgr::SendMsgToMaster_NoCompleteQuestFromNPC(char byQuestDBSlot)
+{
+  unsigned __int8 pbyType[2]{24, 44};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_pMaster->m_ObjID.m_wIndex, pbyType, &byQuestDBSlot, 1u);
+}
+
+void CQuestMgr::SendMsgToMaster_NoHaveGiveItem(char byQuestDBSlot)
+{
+  unsigned __int8 pbyType[2]{24, 47};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_pMaster->m_ObjID.m_wIndex, pbyType, &byQuestDBSlot, 1u);
+}
+
+void CQuestMgr::SendMsgToMaster_NoHaveReturnItem(char byQuestDBSlot)
+{
+  unsigned __int8 pbyType[2]{24, 48};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_pMaster->m_ObjID.m_wIndex, pbyType, &byQuestDBSlot, 1u);
+}
+
 void _quest_check_result::init()
 {
   m_byCheckNum = 0;

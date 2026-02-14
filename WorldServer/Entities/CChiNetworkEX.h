@@ -17,6 +17,7 @@ public:
     unsigned int dwSID,
     char *szMsg,
     unsigned __int16 nLen);
+  void Inform_For_Exit_By_ApexBlock(unsigned int dwAccountSerial);
   void Send_Trans(CPlayer *pOne, int dwRet);
   void Send_ClienInform(CPlayer *pOne, unsigned __int16 wSize, char *pBuf);
 

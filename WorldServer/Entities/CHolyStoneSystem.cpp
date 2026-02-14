@@ -15,9 +15,14 @@
 #include "COreAmountMgr.h"
 #include "CMoveMapLimitManager.h"
 #include "CGoldenBoxItemMgr.h"
+#include "CGuild.h"
 #include "CPvpUserAndGuildRankingSystem.h"
 #include "CRaceBossWinRate.h"
 #include "CRaceBuffManager.h"
+#include "class_fld.h"
+#include "create_holy_master_zocl.h"
+#include "holy_quest_report_wrac.h"
+#include "holy_keeper_attackable_inform_zocl.h"
 #include "CNetworkEX.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
@@ -33,6 +38,8 @@ const _trand_tbl sTransTBL[6] = {
   {5, 5, 6},
   {6, 6, 0},
 };
+
+const char *kRaceCodeName[3] = {"Bellato", "Cora", "Accretia"};
 
 const _trand_tbl *_GetTransTBL(int nState)
 {
@@ -619,6 +626,16 @@ unsigned int CHolyStoneSystem::GetDestroyerGuildSerial()
   return m_SaveData.m_dwDestroyerGuildSerial;
 }
 
+void CHolyStoneSystem::SetHolyMasterRace(int nMaster)
+{
+  m_SaveData.m_nHolyMasterRace = nMaster;
+}
+
+void CHolyStoneSystem::SetDestroyStoneRace(int nRace)
+{
+  m_SaveData.m_nDestroyStoneRace = nRace;
+}
+
 void CHolyStoneSystem::ReleaseLastAttBuff()
 {
   const unsigned int destroyerGuildSerial = GetDestroyerGuildSerial();
@@ -887,6 +904,181 @@ void CHolyStoneSystem::SendIsArriveDestroyer(char byArrive)
       g_Network.m_pProcess[0]->LoadSendMsg( index, type, reinterpret_cast<char *>(&msg), 0x17u);
     }
   }
+}
+
+void CHolyStoneSystem::SendMsg_to_webagent_about_last_attacker_for_keeper(CPlayer *pPlayer, int bByAnimus)
+{
+  char msg[0x1E]{};
+  *reinterpret_cast<unsigned int *>(msg) = g_Main.m_byWorldCode;
+  msg[4] = static_cast<char>(GetNumOfTime());
+  *reinterpret_cast<unsigned __int16 *>(msg + 5) = GetStartYear();
+  msg[7] = static_cast<char>(GetStartMonth());
+  msg[8] = static_cast<char>(GetStartDay());
+
+  if (pPlayer)
+  {
+    strcpy_0(msg + 9, pPlayer->m_Param.GetCharNameW());
+    *reinterpret_cast<int *>(msg + 26) = bByAnimus;
+
+    unsigned __int8 type[2]{};
+    type[0] = 51;
+    type[1] = 19;
+    if (g_Main.m_bConnectedWebAgentServer)
+    {
+      g_Network.m_pProcess[2]->LoadSendMsg(
+        g_Main.m_byWebAgentServerNetInx,
+        type,
+        reinterpret_cast<char *>(msg),
+        0x1Eu);
+    }
+
+    return;
+  }
+
+  m_logQuestDestroy.Write(
+    ">> Laster Attacker for Keeper[%04d%02d%02d][Cnt:%d] - pPlayer Error",
+    GetStartYear(),
+    GetStartMonth(),
+    GetStartDay(),
+    GetNumOfTime());
+}
+
+void CHolyStoneSystem::SendMsg_CreateHolyMaster(CPlayer *pkDestroyer, int nControlSec)
+{
+  _create_holy_master_zocl msg{};
+  msg.byHolyStoneRaceCode = static_cast<unsigned __int8>(pkDestroyer->m_Param.GetRaceCode());
+  msg.byPlayerRaceCode = static_cast<unsigned __int8>(m_SaveData.m_nHolyMasterRace);
+
+  const char *masterName = pkDestroyer->m_Param.GetCharNameW();
+  msg.byNameLen = static_cast<unsigned __int8>(strlen_0(masterName) + 1);
+  strcpy_0(msg.wszName, masterName);
+
+  msg.nControlSec = nControlSec;
+  msg.dwObjSerial = m_SaveData.m_dwDestroyerSerial;
+
+  unsigned __int8 type[2]{};
+  type[0] = 25;
+  type[1] = 11;
+
+  for (unsigned int index = 0; index < MAX_PLAYER; ++index)
+  {
+    if (g_Player[index].m_bLive)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        static_cast<unsigned __int16>(index),
+        type,
+        reinterpret_cast<char *>(&msg),
+        msg.size());
+    }
+  }
+}
+
+void CHolyStoneSystem::SendMsg_HolyKeeperAttackAbleState(bool bAttackAble)
+{
+  _holy_keeper_attackable_inform_zocl msg{};
+  msg.dwKeeperSerial = g_Keeper->m_dwObjSerial;
+  msg.byMasterRace = static_cast<unsigned __int8>(GetHolyMasterRace());
+  msg.bAttackAbleState = bAttackAble;
+
+  unsigned __int8 type[2]{};
+  type[0] = 25;
+  type[1] = 22;
+
+  for (unsigned int index = 0; index < MAX_PLAYER; ++index)
+  {
+    if (g_Player[index].m_bLive)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        static_cast<unsigned __int16>(index),
+        type,
+        reinterpret_cast<char *>(&msg),
+        msg.size());
+    }
+  }
+}
+
+void CHolyStoneSystem::SendSMS_CompleteQuest(
+  char byDestroyedRace,
+  char *pwszMasterName,
+  int nControlSec,
+  char *szMasterClass,
+  unsigned __int8 byMasterLv)
+{
+  if (!g_Main.m_bWorldOpen || !g_Main.m_bWorldService)
+  {
+    return;
+  }
+
+  char msg[0xD5]{};
+  *reinterpret_cast<unsigned int *>(msg) = g_Main.m_byWorldCode;
+  strcpy_0(msg + 4, g_Main.m_szWorldName);
+
+  msg[88] = static_cast<char>(GetHolyMasterRace());
+  msg[89] = byDestroyedRace;
+  strcpy_0(msg + 90, pwszMasterName);
+  msg[110] = static_cast<char>(byMasterLv);
+
+  memcpy_0(msg + 111, szMasterClass, 4u);
+  msg[115] = 0;
+
+  const int holyMasterRace = GetHolyMasterRace();
+  if (holyMasterRace >= 0 && holyMasterRace < 3)
+  {
+    const _PVP_RANK_DATA *rankData =
+      CPvpUserAndGuildRankingSystem::Instance()->GetCurrentPvpRankData(static_cast<unsigned __int8>(holyMasterRace), 0);
+    if (rankData)
+    {
+      for (int j = 0; j < 5; ++j)
+      {
+        strcpy_0(msg + 116 + 17 * j, rankData[j + 1].wszName);
+      }
+    }
+  }
+
+  for (unsigned __int8 race = 0; race < 3; ++race)
+  {
+    const _PVP_RANK_DATA *rankData = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentPvpRankData(race, 0);
+    if (rankData && rankData->wszName[0])
+    {
+      strcpy_0(msg + 37 + 17 * race, rankData->wszName);
+      msg[53 + 17 * race] = 0;
+    }
+    else
+    {
+      msg[37 + 17 * race] = 0;
+    }
+  }
+
+  const int currentHour = GetCurrentHour();
+  int targetHour = (nControlSec / 60 / 60 + currentHour) % 24;
+
+  const int currentMin = GetCurrentMin();
+  const int targetMin = (nControlSec / 60 + currentMin) % 60;
+  if (targetMin < currentMin)
+  {
+    targetHour = (targetHour + 1) % 24;
+  }
+
+  msg[107] = static_cast<char>(targetHour);
+  msg[108] = static_cast<char>(targetMin);
+  msg[109] = static_cast<char>(GetNumOfTime());
+
+  msg[201] = static_cast<char>(GetStartHour());
+  msg[202] = static_cast<char>(GetStartMin());
+  *reinterpret_cast<unsigned __int16 *>(msg + 203) = GetStartYear();
+  msg[205] = static_cast<char>(GetStartMonth());
+  msg[206] = static_cast<char>(GetStartDay());
+
+  unsigned __int8 type[2]{};
+  type[0] = 51;
+  type[1] = 3;
+
+  if (g_Main.m_bConnectedWebAgentServer)
+  {
+    g_Network.m_pProcess[2]->LoadSendMsg(g_Main.m_byWebAgentServerNetInx, type, msg, 0xD5u);
+  }
+
+  m_logQuestDestroy.Write(">> Complete Quest! Next(%d:%d)", targetHour, targetMin);
 }
 
 void CHolyStoneSystem::SendMsg_HolyStoneSystemState(int nPlayerIndex)
@@ -1348,6 +1540,329 @@ void CHolyStoneSystem::SendNotifyHolyStoneDestroyedToRaceBoss()
         g_Network.m_pProcess[0]->LoadSendMsg( player->m_ObjID.m_wIndex, type, msg, 1u);
       }
     }
+  }
+}
+
+void CHolyStoneSystem::WriteLogPer10Min_Combat()
+{
+  char timeBuffer[152]{};
+  _strtime(timeBuffer);
+  m_logPer10Min.Write("TIME : %s", timeBuffer);
+
+  int classCountByRace[3][4]{};
+  int guildMemberCount[MAX_GUILD]{};
+
+  CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
+  for (int index = 0; index < MAX_PLAYER; ++index)
+  {
+    CPlayer *player = &g_Player[index];
+    if (!player->m_bLive || player->m_bCorpse || player->GetLevel() < 25 || player->m_pCurMap != g_Stone[0].m_pCurMap)
+    {
+      continue;
+    }
+
+    const int race = player->m_Param.GetRaceCode();
+    if (race < 0 || race >= 3)
+    {
+      continue;
+    }
+
+    _class_fld *classData = player->m_Param.GetPtrCurClass();
+    if (classData && classData->m_nClass >= 0 && classData->m_nClass < 4)
+    {
+      ++classCountByRace[race][classData->m_nClass];
+    }
+
+    if (player->m_Param.m_pGuild && player->m_Param.m_pGuild->m_nIndex < MAX_GUILD)
+    {
+      ++guildMemberCount[player->m_Param.m_pGuild->m_nIndex];
+    }
+
+    const unsigned int currentRaceBossSerial = ranking->GetCurrentRaceBossSerial(static_cast<unsigned __int8>(race), 0);
+    if (player->m_dwObjSerial == currentRaceBossSerial)
+    {
+      m_logPer10Min.Write("R.boss(%s): %s", kRaceCodeName[race], player->m_Param.GetCharNameA());
+      continue;
+    }
+
+    if (ranking->IsRaceViceBoss(static_cast<unsigned __int8>(race), player->m_dwObjSerial))
+    {
+      m_logPer10Min.Write("vice-R.boss(%s): %s", kRaceCodeName[race], player->m_Param.GetCharNameA());
+    }
+  }
+
+  for (int race = 0; race < 3; ++race)
+  {
+    const int total =
+      classCountByRace[race][0] + classCountByRace[race][1] + classCountByRace[race][2] + classCountByRace[race][3];
+    m_logPer10Min.Write(
+      "%s >> Total: %d Wr: %d Rr: %d Sp: %d Sc: %d",
+      kRaceCodeName[race],
+      total,
+      classCountByRace[race][0],
+      classCountByRace[race][1],
+      classCountByRace[race][2],
+      classCountByRace[race][3]);
+  }
+
+  if (g_Guild)
+  {
+    for (int guildIndex = 0; guildIndex < MAX_GUILD; ++guildIndex)
+    {
+      if (g_Guild[guildIndex].IsFill() && guildMemberCount[guildIndex] > 0)
+      {
+        m_logPer10Min.Write(
+          "%s (%s) : %d / %d",
+          g_Guild[guildIndex].m_aszName,
+          kRaceCodeName[g_Guild[guildIndex].m_byRace],
+          guildMemberCount[guildIndex],
+          g_Guild[guildIndex].m_nMemberNum);
+      }
+    }
+  }
+
+  m_logPer10Min.Write("============================================");
+  m_logPer10Min.Write("============================================");
+}
+
+void CHolyStoneSystem::SetEffectToDestroyerGuildMember()
+{
+  if (!m_pkDestroyer || !m_pkDestroyer->m_Param.m_pGuild)
+  {
+    return;
+  }
+
+  for (int index = 0; index < 50; ++index)
+  {
+    _guild_member_info *member = &m_pkDestroyer->m_Param.m_pGuild->m_MemberData[index];
+    if (member->IsFill() && member->pPlayer && member->pPlayer->m_bOper && member->pPlayer != m_pkDestroyer)
+    {
+      member->pPlayer->SetLastAttBuff(true);
+    }
+  }
+}
+
+void CHolyStoneSystem::RecoverPvpCash()
+{
+  for (int index = 0; index < MAX_PLAYER; ++index)
+  {
+    CPlayer *player = &g_Player[index];
+    if (!player->m_bLive || !player->m_bOper || player->m_byHSKQuestCode == 100)
+    {
+      continue;
+    }
+
+    if (!player->m_MinigTicket.AuthLastMentalTicket(
+          g_HolySys.GetStartYear(),
+          g_HolySys.GetStartMonth(),
+          g_HolySys.GetStartDay(),
+          g_HolySys.GetStartHour(),
+          g_HolySys.GetNumOfTime()))
+    {
+      continue;
+    }
+
+    if (!player->m_kPvpCashPoint.m_bRaceWarRecvr)
+    {
+      const double playerPenalty = g_Main.m_pTimeLimitMgr->GetPlayerPenalty(player->m_id.wIndex);
+      long double alterCash = static_cast<long double>(5 * player->GetLevel());
+      if (alterCash > 0.0)
+      {
+        alterCash *= playerPenalty;
+      }
+
+      player->AlterPvPCashBag(alterCash, pm_reward);
+      player->m_kPvpCashPoint.m_bRaceWarRecvr = true;
+      player->m_kPvpOrderView.Update_RaceWarRecvr(true);
+    }
+  }
+}
+
+char CHolyStoneSystem::CheckHolyMaster(CPlayer *pAtter, unsigned __int8 byDestroyStoneRaceCode)
+{
+  if (GetSceneCode() != 1)
+  {
+    return 0;
+  }
+
+  CHolyScheduleData::__HolyScheduleNode *scheduleNode = m_ScheculeData.GetIndex(GetNumOfTime());
+  if (!scheduleNode)
+  {
+    return 0;
+  }
+
+  if (GetHolyMasterRace() != -1)
+  {
+    return 0;
+  }
+
+  WriteLogPer10Min_Combat();
+
+  const int attackerRace = pAtter->m_Param.GetRaceCode();
+  SetHolyMasterRace(attackerRace);
+  SetDestroyStoneRace(byDestroyStoneRaceCode);
+  CRaceBuffManager::Instance()->RequestHolyQuestRaceBuff(2);
+  CheckKeeperPlusTime();
+
+  const int scene3Term = scheduleNode->m_nSceneTime[3];
+  float hpRate = 0.0f;
+  if (m_SaveData.m_nStartStoneHP)
+  {
+    CHolyStone *holyStone = &g_Stone[GetHolyMasterRace()];
+    hpRate = static_cast<float>(holyStone->GetHP()) / static_cast<float>(m_SaveData.m_nStartStoneHP);
+  }
+  if (hpRate >= 1.0f)
+  {
+    hpRate = 1.0f;
+  }
+
+  m_SaveData.m_dwTerm[1] = static_cast<unsigned int>(static_cast<float>(scene3Term) * hpRate);
+  SetScene(GetNumOfTime(), 2, 0, 5);
+
+  m_logQuest.Write(
+    "Create Master >> race:%d, name:%s, stone:%d",
+    attackerRace,
+    pAtter->m_Param.GetCharNameA(),
+    static_cast<int>(byDestroyStoneRaceCode));
+  m_logQuest.Write(
+    ">> Change Schedule : %d -> HS_SCENE_BATTLE_END_WAIT_TIME, PlusSecTime:%d, controlSecTime:%d",
+    GetSceneCode(),
+    static_cast<int>(m_SaveData.m_dwTerm[0] / 1000),
+    static_cast<int>(m_SaveData.m_dwTerm[1] / 1000));
+  m_logPer10Min.Write(
+    "WIN : %s (%s), Destroy(%s)",
+    pAtter->m_Param.GetCharNameA(),
+    kRaceCodeName[attackerRace],
+    kRaceCodeName[byDestroyStoneRaceCode]);
+
+  const unsigned __int8 failRaceCode =
+    static_cast<unsigned __int8>(3 - (byDestroyStoneRaceCode + attackerRace));
+  PeneltyLoseRace(byDestroyStoneRaceCode);
+  PeneltyFailRace(failRaceCode);
+
+  m_pkDestroyer = pAtter;
+  m_SaveData.m_dwDestroyerSerial = pAtter->m_dwObjSerial;
+  m_SaveData.m_eDestroyerState = 2;
+  SendNotifyHolyStoneDestroyedToRaceBoss();
+
+  for (int index = 0; index < MAX_PLAYER; ++index)
+  {
+    CPlayer *player = &g_Player[index];
+    if (!player->m_bOper || !player->m_bLive)
+    {
+      continue;
+    }
+
+    if (GetHolyMasterRace() == player->m_Param.GetRaceCode() && player->m_byHSKQuestCode != 100)
+    {
+      const long double pvpLeak = player->m_Param.m_dPvpPointLeak;
+      if (pvpLeak < 0.0)
+      {
+        player->AlterPvPPoint(-static_cast<double>(pvpLeak), holy_award, 0xFFFFFFFFu);
+      }
+    }
+    player->SetPvpPointLeak(0.0);
+  }
+
+  for (int index = 0; index < MAX_PLAYER; ++index)
+  {
+    CPlayer *player = &g_Player[index];
+    if (player->m_bLive && (player->m_byHSKQuestCode != 100 || player == pAtter))
+    {
+      player->HSKQuestEnd_Att(byDestroyStoneRaceCode, pAtter);
+    }
+  }
+
+  const int controlSec =
+    static_cast<int>((m_SaveData.m_dwTerm[1] + m_SaveData.m_dwTerm[0] + scheduleNode->m_nSceneTime[0]) / 1000);
+  SendMsg_CreateHolyMaster(pAtter, controlSec);
+
+  if (m_pkDestroyer->m_Param.m_pGuild)
+  {
+    m_SaveData.m_dwDestroyerGuildSerial = m_pkDestroyer->m_Param.m_pGuild->m_dwSerial;
+  }
+  else
+  {
+    m_SaveData.m_dwDestroyerGuildSerial = static_cast<unsigned int>(-1);
+  }
+
+  SetEffectToDestroyerGuildMember();
+  SendSMS_CompleteQuest(
+    byDestroyStoneRaceCode,
+    pAtter->m_Param.GetCharNameW(),
+    controlSec,
+    pAtter->m_Param.m_pClassData->m_strCode,
+    static_cast<unsigned __int8>(pAtter->GetLevel()));
+  SendMsg_EndBattle(byDestroyStoneRaceCode);
+  DestroyHolyStone();
+  SendMsg_ExitStone();
+  RecoverPvpCash();
+
+  CRaceBossWinRate::Instance()->UpdateWinCnt(pAtter->m_Param.GetRaceCode());
+
+  char qryData[24]{};
+  qryData[0] = static_cast<char>(m_SaveData.m_byNumOfTime);
+  *reinterpret_cast<unsigned int *>(qryData + 4) = GetKorLocalTime();
+  qryData[8] = static_cast<char>(pAtter->m_Param.GetRaceCode());
+  qryData[9] = static_cast<char>(byDestroyStoneRaceCode);
+  *reinterpret_cast<unsigned int *>(qryData + 12) =
+    CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(0, 0);
+  *reinterpret_cast<unsigned int *>(qryData + 16) =
+    CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(1, 0);
+  *reinterpret_cast<unsigned int *>(qryData + 20) =
+    CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(2, 0);
+  g_Main.PushDQSData(0xFFFFFFFFu, nullptr, 0x89u, qryData, 24);
+
+  if (g_Main.IsReleaseServiceMode())
+  {
+    _holy_quest_report_wrac report{};
+    report.byRaceCode = static_cast<unsigned __int8>(pAtter->m_Param.GetRaceCode());
+    strcpy_0(report.wszCharName, pAtter->m_Param.GetCharNameW());
+    report.byDestroyedRaceCode = byDestroyStoneRaceCode;
+
+    unsigned __int8 type[2]{};
+    memcpy_0(type, "2e", 2u);
+    g_Network.m_pProcess[1]->LoadSendMsg(
+      0,
+      type,
+      reinterpret_cast<char *>(&report),
+      report.size());
+  }
+
+  return 1;
+}
+
+void CHolyStoneSystem::PeneltyLoseRace(unsigned __int8 byDestroyedRace)
+{
+  for (int index = 0; index < MAX_PLAYER; ++index)
+  {
+    CPlayer *player = &g_Player[index];
+    if (!player->m_bLive || !player->m_bOper || player->m_byHSKQuestCode == 100)
+    {
+      continue;
+    }
+
+    if (player->m_Param.GetRaceCode() != byDestroyedRace)
+    {
+      continue;
+    }
+
+    const bool hasMentalTicket = player->m_MinigTicket.AuthLastMentalTicket(
+      g_HolySys.GetStartYear(),
+      g_HolySys.GetStartMonth(),
+      g_HolySys.GetStartDay(),
+      g_HolySys.GetStartHour(),
+      g_HolySys.GetNumOfTime());
+
+    int alterPoint = hasMentalTicket ? m_nRaceBattlePoint[2][0] : m_nRaceBattlePoint[2][1];
+    const double currentPoint = player->m_Param.GetPvPPoint();
+    if (static_cast<double>(std::abs(alterPoint)) > currentPoint)
+    {
+      alterPoint = static_cast<int>(-0.0 - player->m_Param.GetPvPPoint());
+    }
+
+    player->AlterPvPPoint(static_cast<double>(alterPoint), holy_dec, 0xFFFFFFFF);
+    player->SendMsg_RaceBattlePenelty(alterPoint, 0);
   }
 }
 

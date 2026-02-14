@@ -4787,6 +4787,16 @@ void CMainThread::SerivceSelfStart()
   }
 }
 
+void CMainThread::SerivceSelfStop()
+{
+  if (g_Main.m_bWorldOpen && g_Main.m_bWorldService)
+  {
+    m_bWorldService = false;
+    unsigned __int8 pbyType[2]{1, 4};
+    g_Network.m_pProcess[1]->LoadSendMsg(0, pbyType, nullptr, 0);
+  }
+}
+
 void CMainThread::SerivceForceSet(bool bService)
 {
   m_bWorldService = bService;

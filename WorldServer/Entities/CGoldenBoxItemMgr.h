@@ -125,6 +125,7 @@ public:
   void BoxItemOpenEffectType(char *szUseItem, char *szNewItem, unsigned __int8 *pbyType, bool *bCircle);
   void WriteGetGoldBarLog(CPlayer *pOne, _STORAGE_LIST::_db_con *pItem);
   void WriteEventCouponLog(CPlayer *pOne, _STORAGE_LIST::_db_con *pItem);
+  void SendMsg_RaceChat(CPlayer *pOne, char *pwszChatData);
   unsigned __int8 IsBuyRaceBossGoldBox(CPlayer *pOne);
   unsigned __int16 Get_StarterBox_Count();
   char *GetStarterBoxCode(unsigned __int16 wIndex);

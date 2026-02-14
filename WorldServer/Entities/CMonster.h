@@ -151,6 +151,8 @@ public:
   void SendMsg_Move();
   void SendMsg_Create();
   void SendMsg_Destroy(unsigned __int8 byDestroyCode);
+  void SendMsg_Change_MonsterState();
+  void SendMsg_Change_MonsterRotate();
   void SendMsg_FixPosition(int n) override;
   void SendMsg_RealMovePoint(int n) override;
   void DisableStdItemLoot();

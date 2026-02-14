@@ -141,6 +141,34 @@ void CPvpOrderView::Notify_OrderView(unsigned __int16 wIndex)
   g_Network.m_pProcess[0]->LoadSendMsg(wIndex, type, reinterpret_cast<char *>(&msg), len);
 }
 
+void CPvpOrderView::Notify_Point(unsigned __int16 wIndex, long double dChangePoint, unsigned int dwTarSerial)
+{
+#pragma pack(push, 1)
+  struct PvpOrderViewPointInform
+  {
+    unsigned int dwSerial;
+    long double dPvpPoint;
+  };
+#pragma pack(pop)
+
+  PvpOrderViewPointInform msg{};
+  msg.dwSerial = dwTarSerial;
+  msg.dPvpPoint = dChangePoint;
+
+  unsigned __int8 pbyType[2]{13, 126};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
+}
+
+void CPvpOrderView::Notify_PvPEnd(unsigned __int16 wIndex)
+{
+  unsigned __int8 pbyType[2]{13, 125};
+  g_Network.m_pProcess[0]->LoadSendMsg(wIndex, pbyType, nullptr, 0);
+}
+
 void CPvpOrderView::Notify_PvpTempCash(unsigned __int16 wIndex)
 {
   char szMsg[8]{};

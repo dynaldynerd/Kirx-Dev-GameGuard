@@ -778,6 +778,32 @@ unsigned __int8 pbyType[36]{};
   CircleReport(pbyType, szMsg, 11, true);
 }
 
+void CCharacter::SendMsg_LastEffectChangeInform()
+{
+  char payload[7]{};
+  payload[0] = static_cast<char>(m_ObjID.m_byID);
+  *reinterpret_cast<unsigned int *>(payload + 1) = m_dwObjSerial;
+  *reinterpret_cast<unsigned __int16 *>(payload + 5) = m_wLastContEffect;
+
+  unsigned __int8 type[2] = {17, 17};
+  CircleReport(type, payload, 7, true);
+}
+
+void CCharacter::SendMsg_RobedHP(const CCharacter *pkPerform, unsigned __int16 wRobedHP)
+{
+  char payload[16]{};
+  payload[0] = static_cast<char>(m_ObjID.m_byID);
+  *reinterpret_cast<unsigned __int16 *>(payload + 1) = m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned int *>(payload + 3) = m_dwObjSerial;
+  payload[7] = static_cast<char>(pkPerform->m_ObjID.m_byID);
+  *reinterpret_cast<unsigned __int16 *>(payload + 8) = pkPerform->m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned int *>(payload + 10) = pkPerform->m_dwObjSerial;
+  *reinterpret_cast<unsigned __int16 *>(payload + 14) = wRobedHP;
+
+  unsigned __int8 type[2] = {17, 31};
+  CircleReport(type, payload, 16, false);
+}
+
 int _CheckCumulativeSF(
   unsigned __int8 byEffectCode,
   int dwEffectIndex,

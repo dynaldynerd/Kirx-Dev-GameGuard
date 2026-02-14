@@ -309,6 +309,30 @@ void CUserDB::ForceCloseCommand(unsigned __int8 byKickType, unsigned int dwPushI
   g_Network.Close(0, m_idWorld.wIndex, bSlow, buffer);
 }
 
+void CUserDB::Inform_For_Exit_By_FireguardBlock()
+{
+#pragma pack(push, 1)
+  struct FireguardBlockRequest
+  {
+    char szAccountID[13];
+    unsigned int dwAccountSerial;
+    unsigned int dwIP;
+  };
+#pragma pack(pop)
+
+  FireguardBlockRequest request{};
+  strcpy_s(request.szAccountID, sizeof(request.szAccountID), m_szAccountID);
+  request.dwAccountSerial = m_dwAccountSerial;
+  request.dwIP = m_dwIP;
+
+  unsigned __int8 pbyType[2]{1, 22};
+  g_Network.m_pProcess[1]->LoadSendMsg(
+    0,
+    pbyType,
+    reinterpret_cast<char *>(&request),
+    static_cast<unsigned __int16>(sizeof(request)));
+}
+
 void CUserDB::ClearBillingData()
 {
   memset_0(&m_BillingInfo, 0, sizeof(m_BillingInfo));

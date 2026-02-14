@@ -77,3 +77,18 @@ bool __fastcall DE_Potion_CharReName(
   CCharacter *pTargetChar,
   float fEffectValue,
   unsigned __int8 *byRet);
+bool __fastcall DE_Potion_Class_Refine(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 *byRet);
+bool __fastcall DE_Potion_Race_Debuff_Clear_One(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 *byRet);
+bool __fastcall DE_Potion_Race_Debuff_Clear_Two(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 *byRet);

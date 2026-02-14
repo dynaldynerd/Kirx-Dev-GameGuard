@@ -7,6 +7,7 @@
 #include "CAsyncLogger.h"
 #include "CPlayer.h"
 #include "CUserDB.h"
+#include "GlobalObjects.h"
 #include "apex_id.h"
 #include "apex_send_trans.h"
 
@@ -38,6 +39,30 @@ __int64 CChiNetworkEX::Send(
   }
 
   return LoadSendMsg(0, 0, pbyType, dwSID, szMsg, static_cast<unsigned __int16>(sendLength));
+}
+
+void CChiNetworkEX::Inform_For_Exit_By_ApexBlock(unsigned int dwAccountSerial)
+{
+#pragma pack(push, 1)
+  struct ApexBlockRequest
+  {
+    char szAccountID[13];
+    unsigned int dwAccountSerial;
+    unsigned int dwIP;
+  };
+#pragma pack(pop)
+
+  ApexBlockRequest request{};
+  strcpy_s(request.szAccountID, sizeof(request.szAccountID), "Apex");
+  request.dwAccountSerial = dwAccountSerial;
+  request.dwIP = 0;
+
+  unsigned __int8 pbyType[2]{1, 28};
+  g_Network.m_pProcess[1]->LoadSendMsg(
+    0,
+    pbyType,
+    reinterpret_cast<char *>(&request),
+    static_cast<unsigned __int16>(sizeof(request)));
 }
 
 void CChiNetworkEX::Send_Trans(CPlayer *pOne, int dwRet)

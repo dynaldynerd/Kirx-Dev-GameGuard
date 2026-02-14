@@ -14,6 +14,7 @@
 #include "GlobalObjects.h"
 #include "InvenKey.h"
 #include "WorldServerUtil.h"
+#include "announ_message_receipt_udp.h"
 
 _goldbox_index::_goldbox_index()
 {
@@ -1025,4 +1026,38 @@ void CGoldenBoxItemMgr::WriteEventCouponLog(CPlayer *pOne, _STORAGE_LIST::_db_co
     userDB->m_dwAccountSerial,
     itemCode,
     itemKorName);
+}
+
+void CGoldenBoxItemMgr::SendMsg_RaceChat(CPlayer *pOne, char *pwszChatData)
+{
+  _announ_message_receipt_udp msg{};
+  msg.byMessageType = 4;
+  msg.bySenderRace = static_cast<unsigned __int8>(pOne->m_Param.GetRaceCode());
+  msg.dwSenderSerial = pOne->m_dwObjSerial;
+  strcpy_0(msg.wszSenderName, pOne->m_Param.GetCharNameW());
+  msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszChatData));
+  memcpy_0(msg.wszChatData, pwszChatData, msg.bySize);
+  msg.wszChatData[msg.bySize] = 0;
+  msg.byPvpGrade = static_cast<unsigned __int8>(-1);
+
+  unsigned __int8 type[2]{};
+  type[0] = 2;
+  type[1] = 11;
+  const int length = msg.size();
+
+  for (int index = 0; index < MAX_PLAYER; ++index)
+  {
+    CPlayer *receiver = &g_Player[index];
+    if (!receiver->m_bLive)
+    {
+      continue;
+    }
+
+    const bool isAllowedUserDgr = receiver->m_byUserDgr >= 2u;
+    const bool isSameRace = receiver->m_Param.GetRaceCode() == pOne->m_Param.GetRaceCode();
+    if (isAllowedUserDgr || isSameRace)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(receiver->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), length);
+    }
+  }
 }

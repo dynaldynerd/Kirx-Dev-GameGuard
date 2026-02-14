@@ -6,6 +6,7 @@
 #include "CPvpUserAndGuildRankingSystem.h"
 #include "GlobalObjects.h"
 #include "nuclear_find_rader_result_zocl.h"
+#include "nuclear_result_code_zocl.h"
 
 #include <mmsystem.h>
 
@@ -203,6 +204,106 @@ void CNuclearBomb::SendMsg_NuclearFind(unsigned int n, unsigned __int8 race)
 
   unsigned __int8 type[2]{60, 4};
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&result), 2u);
+}
+
+void CNuclearBomb::SendMsg_InformDropPos()
+{
+  char payload[0x0E]{};
+  for (unsigned int clientIndex = 0; clientIndex < MAX_PLAYER; ++clientIndex)
+  {
+    CPlayer *targetPlayer = &g_Player[clientIndex];
+    if (targetPlayer->m_bOper && !targetPlayer->m_bCorpse &&
+        strcmp_0(targetPlayer->m_pCurMap->m_pMapSet->m_strCode, "resources") == 0)
+    {
+      payload[0] = static_cast<char>(m_pMaster->m_Param.GetRaceCode());
+      payload[1] = static_cast<char>(GetMasterClass());
+      *reinterpret_cast<float *>(payload + 2) = m_fCurPos[0];
+      *reinterpret_cast<float *>(payload + 6) = m_fCurPos[1];
+      *reinterpret_cast<float *>(payload + 10) = m_fCurPos[2];
+
+      unsigned __int8 type[2]{60, 7};
+      g_Network.m_pProcess[0]->LoadSendMsg(clientIndex, type, payload, 0x0Eu);
+    }
+  }
+}
+
+void CNuclearBomb::SendMsg_AddEffect()
+{
+  for (int index = 0; index < m_nEffObjNum; ++index)
+  {
+    if (m_EffList[index].m_pChar &&
+        strcmp_0(m_EffList[index].m_pChar->m_pCurMap->m_pMapSet->m_strCode, "resources") == 0)
+    {
+      char payload[2]{};
+      payload[0] = static_cast<char>(m_pMaster->m_Param.GetRaceCode());
+      payload[1] = static_cast<char>(GetMasterClass());
+
+      unsigned __int8 type[2]{60, 6};
+      g_Network.m_pProcess[0]->LoadSendMsg(m_EffList[index].m_pChar->m_ObjID.m_wIndex, type, payload, 2u);
+    }
+  }
+
+  SendMsg_InformAttack();
+}
+
+void CNuclearBomb::SendMsg_InformAttack()
+{
+  const unsigned __int8 raceCode = m_pMaster->m_Param.GetRaceCode();
+  for (unsigned int clientIndex = 0; clientIndex < MAX_PLAYER; ++clientIndex)
+  {
+    CPlayer *targetPlayer = &g_Player[clientIndex];
+    if (targetPlayer->m_bOper && !targetPlayer->m_bCorpse && targetPlayer->m_bLive &&
+        strcmp_0(targetPlayer->m_pCurMap->m_pMapSet->m_strCode, "resources") == 0)
+    {
+      char payload[2]{};
+      payload[0] = static_cast<char>(raceCode);
+      payload[1] = static_cast<char>(GetMasterClass());
+
+      unsigned __int8 type[2]{60, 8};
+      g_Network.m_pProcess[0]->LoadSendMsg(clientIndex, type, payload, 2u);
+    }
+  }
+}
+
+void CNuclearBomb::SendMsg_MasterDie()
+{
+  const unsigned __int8 raceCode = m_pMaster->m_Param.GetRaceCode();
+  for (unsigned int clientIndex = 0; clientIndex < MAX_PLAYER; ++clientIndex)
+  {
+    CPlayer *targetPlayer = &g_Player[clientIndex];
+    if (targetPlayer->m_bOper && !targetPlayer->m_bCorpse && targetPlayer->m_bLive &&
+        strcmp_0(targetPlayer->m_pCurMap->m_pMapSet->m_strCode, "resources") == 0 &&
+        m_byBombState != 0 && m_byBombState < 5u)
+    {
+      char payload[2]{};
+      payload[0] = static_cast<char>(raceCode);
+      payload[1] = static_cast<char>(GetMasterClass());
+
+      unsigned __int8 type[2]{60, 9};
+      g_Network.m_pProcess[0]->LoadSendMsg(clientIndex, type, payload, 2u);
+    }
+  }
+}
+
+void CNuclearBomb::SendMsg_Result(unsigned int n, unsigned __int8 byCode)
+{
+  _nuclear_result_code_zocl result{};
+  result.byRetCode = byCode;
+
+  unsigned __int8 type[2]{60, 0};
+  g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&result), result.size());
+}
+
+void CNuclearBomb::SendMsg_DropMissile()
+{
+  char payload[5]{};
+  payload[0] = static_cast<char>(m_pMaster->m_Param.GetRaceCode());
+  payload[1] = 26;
+  *reinterpret_cast<unsigned __int16 *>(payload + 2) = m_wItemIndex;
+  payload[4] = static_cast<char>(GetMasterClass());
+
+  unsigned __int8 type[2]{60, 5};
+  CircleReport(type, payload, 5, false);
 }
 
 __int64 CNuclearBomb::GetNewSerial()

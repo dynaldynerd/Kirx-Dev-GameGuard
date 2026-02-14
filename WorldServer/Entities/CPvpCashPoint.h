@@ -15,6 +15,7 @@ public:
   void SendMsg_TalikList(unsigned int n);
   int GetTalikRecvrPoint(unsigned __int8 byTblCode, unsigned int dwIndex);
   void SendMsg_RecoverResult(unsigned int n, char byRet, int nRecvrPoint);
+  void SendMsg_PvpCashInform(unsigned int n, unsigned __int8 byError);
 
   CIndexList m_KillerList;
   unsigned __int8 m_byContPvpHave;

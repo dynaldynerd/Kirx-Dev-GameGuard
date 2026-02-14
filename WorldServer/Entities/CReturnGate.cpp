@@ -77,6 +77,19 @@ void CReturnGate::Close()
   Destroy();
 }
 
+void CReturnGate::SendMsg_Create()
+{
+  char payload[33]{};
+  *reinterpret_cast<unsigned __int16 *>(payload) = m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned int *>(payload + 2) = m_dwObjSerial;
+  *reinterpret_cast<unsigned int *>(payload + 6) = m_dwOwnerSerial;
+  strcpy_0(payload + 10, m_pkOwner->m_Param.GetCharNameW());
+  FloatToShort(m_fCurPos, reinterpret_cast<short *>(payload + 27), 3);
+
+  unsigned __int8 type[2] = {8, 7};
+  CircleReport(type, payload, 33, false);
+}
+
 void CReturnGate::SendMsg_FixPosition(int n)
 {
   char msg[33]{};

@@ -99,6 +99,8 @@ public:
   __int64 GetAttackDamPoint(int nAttPnt, int nAttPart, int nTolType, CCharacter *pDst, bool bBackAttack);
   __int64 GetAttackRandomPart();
   void SendMsg_AttackActEffect(unsigned __int8 byActEffect, CCharacter *pDamer);
+  void SendMsg_LastEffectChangeInform();
+  void SendMsg_RobedHP(const CCharacter *pkPerform, unsigned __int16 wRobedHP);
   bool GetStealth(bool bInvisible);
   bool GetInvisible();
   char RemoveAllContinousEffect();

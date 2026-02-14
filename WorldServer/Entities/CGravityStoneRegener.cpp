@@ -99,3 +99,13 @@ void CGravityStoneRegener::SendMsg_FixPosition(int n)
     msg,
     static_cast<unsigned __int16>(sizeof(msg)));
 }
+
+void CGravityStoneRegener::SendMsgAlterState()
+{
+  char payload[5]{};
+  *reinterpret_cast<int *>(payload) = m_iPortalInx;
+  payload[4] = (m_eState == GSR_REGEN) ? 1 : 0;
+
+  unsigned __int8 type[2] = {4, static_cast<unsigned __int8>(-83)};
+  CircleReport(type, payload, 5, false);
+}

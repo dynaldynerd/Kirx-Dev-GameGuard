@@ -1156,3 +1156,119 @@ bool __fastcall DE_Potion_CharReName(
   g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x92u, reinterpret_cast<char *>(&query), sizeof(query));
   return true;
 }
+
+bool __fastcall DE_Potion_Class_Refine(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 *byRet)
+{
+  if (!pTargetChar)
+  {
+    return false;
+  }
+  if (pActChar->m_ObjID.m_byID || pTargetChar->m_ObjID.m_byID)
+  {
+    return false;
+  }
+  if (pActChar != pTargetChar)
+  {
+    return false;
+  }
+
+  CPlayer *targetPlayer = static_cast<CPlayer *>(pTargetChar);
+  char byResult = targetPlayer->pc_InitClass();
+  unsigned __int8 pbyType[2]{11, 25};
+  g_Network.m_pProcess[0]->LoadSendMsg(targetPlayer->m_ObjID.m_wIndex, pbyType, &byResult, 1u);
+  if (!byResult)
+  {
+    return true;
+  }
+
+  *byRet = 18;
+  return false;
+}
+
+bool __fastcall DE_Potion_Race_Debuff_Clear_One(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  if (!pActChar)
+  {
+    return false;
+  }
+  if (pActChar->m_ObjID.m_byID)
+  {
+    return false;
+  }
+  if (pActChar != pTargetChar)
+  {
+    return false;
+  }
+
+  CPlayer *player = static_cast<CPlayer *>(pActChar);
+  if (player->IsUseReleaseRaceBuffPotion())
+  {
+    return false;
+  }
+
+  const unsigned int uiContinueCnt = static_cast<unsigned int>(static_cast<int>(fEffectValue));
+  CRaceBuffManager *raceBuffManager = CRaceBuffManager::Instance();
+  const int nResult = raceBuffManager->m_kBuffByHolyQuest.CancelPlayerRaceBuff(
+    player,
+    CRaceBuffInfoByHolyQuestfGroup::RESULT_FAIL,
+    uiContinueCnt);
+  if (nResult <= 0)
+  {
+    char szMsg[4]{};
+    *reinterpret_cast<int *>(szMsg) = nResult;
+    unsigned __int8 pbyType[2]{17, 37};
+    g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, pbyType, szMsg, 4u);
+  }
+  player->SetUseReleaseRaceBuffPotion();
+  return true;
+}
+
+bool __fastcall DE_Potion_Race_Debuff_Clear_Two(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  if (!pActChar)
+  {
+    return false;
+  }
+  if (pActChar->m_ObjID.m_byID)
+  {
+    return false;
+  }
+  if (pActChar != pTargetChar)
+  {
+    return false;
+  }
+
+  CPlayer *player = static_cast<CPlayer *>(pActChar);
+  if (player->IsUseReleaseRaceBuffPotion())
+  {
+    return false;
+  }
+
+  const unsigned int uiContinueCnt = static_cast<unsigned int>(static_cast<int>(fEffectValue));
+  CRaceBuffManager *raceBuffManager = CRaceBuffManager::Instance();
+  const int nResult = raceBuffManager->m_kBuffByHolyQuest.CancelPlayerRaceBuff(
+    player,
+    CRaceBuffInfoByHolyQuestfGroup::RESULT_LOSE,
+    uiContinueCnt);
+  if (nResult <= 0)
+  {
+    char szMsg[4]{};
+    *reinterpret_cast<int *>(szMsg) = nResult;
+    unsigned __int8 pbyType[2]{17, 37};
+    g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, pbyType, szMsg, 4u);
+  }
+  player->SetUseReleaseRaceBuffPotion();
+  return true;
+}

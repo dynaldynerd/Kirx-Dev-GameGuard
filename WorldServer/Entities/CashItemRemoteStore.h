@@ -6,6 +6,7 @@
 #include "CMyTimer.h"
 #include "CNetProcess.h"
 #include "CRecordData.h"
+#include "request_csi_buy_clzo.h"
 
 #include <functional>
 #ifndef _SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS
@@ -15,6 +16,9 @@
 
 struct _CashShop_fld;
 struct _db_cash_limited_sale;
+struct _param_cashitem_dblog;
+struct _result_csi_buy_zocl;
+class CPlayer;
 
 struct _cash_discount_ini_
 {
@@ -151,6 +155,7 @@ public:
   void Set_FROMDB_LimitedSale_Event(_db_cash_limited_sale *Sheet);
   char LimitedSale_check_count(unsigned __int8 byTableCode, unsigned int dwIndex);
   unsigned __int16 BuyLimSale(unsigned __int8 byTableCode, unsigned int dwIndex);
+  char GoodsListBuyByGold(unsigned __int16 wSock, char *pPacket);
   bool IsBuyCashItemByGold() const;
 
   CLogFile _kLoggers[2];
@@ -185,6 +190,17 @@ private:
   void check_loaded_cde_status();
   unsigned __int8 get_cde_status();
   void set_cde_status(unsigned __int8 byStatus);
+  char is_cde_time();
+  char IsEventTime(unsigned __int8 byEventType);
+  unsigned __int8 GetSetDiscout(unsigned __int8 bySetKind);
+  unsigned __int8 GetLimDiscout();
+  void _buybygold_complete(
+    CPlayer *pOne,
+    _result_csi_buy_zocl *Send,
+    _request_csi_buy_clzo *pRecv,
+    _request_csi_buy_clzo::__item *pSrc,
+    _param_cashitem_dblog *pSheet,
+    bool bCouponUse);
   bool SetNextDiscountEventTime();
   void Load_Cash_Event();
   unsigned __int8 Get_CashEvent_Status(unsigned __int8 byEventType);

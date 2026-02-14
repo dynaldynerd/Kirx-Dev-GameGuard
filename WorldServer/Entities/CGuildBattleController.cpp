@@ -4,9 +4,11 @@
 #include "CPlayer.h"
 #include "CUserDB.h"
 #include "CPvpUserAndGuildRankingSystem.h"
+#include "CMapData.h"
 #include "GuildBattle.h"
 #include "WorldServerUtil.h"
 #include "GlobalObjects.h"
+#include "guild_battle_get_gravity_stone_result_zocl.h"
 
 #include <cstdlib>
 
@@ -636,7 +638,7 @@ void CGuildBattleController::Join(CPlayer *pkPlayer)
   const unsigned int charSerial = pkPlayer->m_pUserDB->m_dwSerial;
 
   GUILD_BATTLE::CNormalGuildBattleManager *manager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
-  manager->JoinGuild(n, guildSerial, charSerial);
+  manager->Join(static_cast<unsigned int>(n), guildSerial, charSerial);
 }
 
 void CGuildBattleController::SendReservedScheduleList(
@@ -716,6 +718,113 @@ void CGuildBattleController::CheckGoal(CPlayer *pkPlayer, int iPortalInx)
 
   GUILD_BATTLE::CNormalGuildBattleManager *manager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
   manager->CheckGoal(n, guildSerial, charSerial, iPortalInx);
+}
+
+int CGuildBattleController::CheatRegenStone(CPlayer *pkPlayer, int iRengenPos)
+{
+  GUILD_BATTLE::CNormalGuildBattleField *field = nullptr;
+  if (pkPlayer->m_pCurMap)
+  {
+    CMapData *curMap = pkPlayer->m_pCurMap;
+    const int raceCode = pkPlayer->m_Param.GetRaceCode();
+    GUILD_BATTLE::CNormalGuildBattleFieldList *fieldList = GUILD_BATTLE::CNormalGuildBattleFieldList::Instance();
+    field = fieldList->GetField(static_cast<unsigned __int8>(raceCode), curMap->m_nMapCode);
+  }
+
+  if (!field)
+  {
+    return -1;
+  }
+
+  if (iRengenPos < 0)
+  {
+    return field->CheatRegenStone(pkPlayer);
+  }
+
+  const int portalInx = field->CheatRegenStone(static_cast<unsigned int>(iRengenPos));
+  if (portalInx < 0)
+  {
+    return -1;
+  }
+
+  char msg[4]{};
+  *reinterpret_cast<int *>(msg) = portalInx;
+
+  unsigned __int8 type[2]{};
+  type[0] = 27;
+  type[1] = 69;
+  g_Network.m_pProcess[0]->LoadSendMsg(pkPlayer->m_ObjID.m_wIndex, type, msg, 4u);
+  return portalInx;
+}
+
+char CGuildBattleController::CheatTakeStone(int iPortalInx, CPlayer *pkPlayer)
+{
+  GUILD_BATTLE::CNormalGuildBattleField *field = nullptr;
+  if (pkPlayer->m_pCurMap)
+  {
+    CMapData *curMap = pkPlayer->m_pCurMap;
+    const int raceCode = pkPlayer->m_Param.GetRaceCode();
+    GUILD_BATTLE::CNormalGuildBattleFieldList *fieldList = GUILD_BATTLE::CNormalGuildBattleFieldList::Instance();
+    field = fieldList->GetField(static_cast<unsigned __int8>(raceCode), curMap->m_nMapCode);
+  }
+
+  if (!field)
+  {
+    return 0;
+  }
+
+  _guild_battle_get_gravity_stone_result_zocl msg{};
+  msg.byRet = field->CheatTakeStone(iPortalInx, pkPlayer);
+  if (!msg.byRet)
+  {
+    strcpy_0(msg.wszCharName, pkPlayer->m_Param.GetCharNameW());
+    strcpy_0(msg.wszGuildName, "Cheat");
+  }
+
+  unsigned __int8 type[2]{};
+  type[0] = 27;
+  type[1] = 72;
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    pkPlayer->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
+  return 1;
+}
+
+char CGuildBattleController::CheatGetStone(CPlayer *pkPlayer)
+{
+  GUILD_BATTLE::CNormalGuildBattleField *field = nullptr;
+  if (pkPlayer->m_pCurMap)
+  {
+    CMapData *curMap = pkPlayer->m_pCurMap;
+    const int raceCode = pkPlayer->m_Param.GetRaceCode();
+    GUILD_BATTLE::CNormalGuildBattleFieldList *fieldList = GUILD_BATTLE::CNormalGuildBattleFieldList::Instance();
+    field = fieldList->GetField(static_cast<unsigned __int8>(raceCode), curMap->m_nMapCode);
+  }
+
+  if (!field)
+  {
+    return 0;
+  }
+
+  _guild_battle_get_gravity_stone_result_zocl msg{};
+  msg.byRet = field->CheatGetStone(pkPlayer);
+  if (!msg.byRet)
+  {
+    strcpy_0(msg.wszCharName, pkPlayer->m_Param.GetCharNameW());
+    strcpy_0(msg.wszGuildName, "Cheat");
+  }
+
+  unsigned __int8 type[2]{};
+  type[0] = 27;
+  type[1] = 72;
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    pkPlayer->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
+  return 1;
 }
 
 void CGuildBattleController::SendPossibleBattleGuildListFirst(int n, unsigned __int8 byRace)

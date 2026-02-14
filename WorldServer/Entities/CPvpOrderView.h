@@ -28,6 +28,8 @@ public:
   void Update_PvpTempCash(unsigned __int16 wIndex, double dTempPvpCash);
   void UpdatePvPPoint(long double dUpPoint, long double dNewPoint);
   void Notify_OrderView(unsigned __int16 wIndex);
+  void Notify_Point(unsigned __int16 wIndex, long double dChangePoint, unsigned int dwTarSerial);
+  void Notify_PvPEnd(unsigned __int16 wIndex);
   void Notify_PvpTempCash(unsigned __int16 wIndex);
   void Update_RaceWarRecvr(bool bUse);
   void ResetPvPOrderView();

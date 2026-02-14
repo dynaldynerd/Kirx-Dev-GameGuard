@@ -48,6 +48,7 @@ public:
   bool Create(_stone_create_setdata *pData);
   static unsigned int GetNewStoneSerial();
   void SendMsg_Create();
+  void SendMsg_Destroy(unsigned __int8 byDestroyCode, unsigned int dwDestroySerial);
   void SetOper(bool bOper, float fHPRate);
   void SendMsg_StoneAlterOper();
   unsigned int CalcCurHPRate();

@@ -1753,6 +1753,7 @@ public:
     unsigned __int16 wKillPoint,
     unsigned __int16 wDieCount,
     unsigned __int8 byHSKTime);
+  void HSKQuestEnd_Att(unsigned __int8 byDestroyStoneRaceCode, CPlayer *pDestroyer);
   void SendMsg_RecvHSKQuest();
   void AlterPvPPoint(double dAlter, int AlterType, unsigned int dwDstSerial);
   void SetGrade(unsigned __int8 byGrade);
@@ -2112,6 +2113,82 @@ public:
     CashChangeStateFlag ServerData,
     CashChangeStateFlag ClinetData);
   void SendMsg_OtherShapeError(CPlayer *pDst, unsigned __int8 byErrCode);
+  void SendMsg_DamageResult(_STORAGE_LIST::_db_con *pItem);
+  void SendMsg_MaxHFSP();
+  void SendMsg_ItemStorageRefresh(unsigned __int8 byStorageCode);
+  void SendMsg_UsPotionResultOther(char byRetcode, unsigned __int16 wPotionIndex, CPlayer *pUsePlayer, bool bCircle);
+  void SendMsg_UnitReturnResult(char byRetCode, unsigned int dwPayDalant);
+  void SendMsg_UnitBulletReplaceResult(char byRetCode);
+  void SendMsg_UnitDestroy(char bySlotIndex);
+  void SendMsg_AnimusHPInform();
+  void SendMsg_AnimusFPInform();
+  void SendMsg_AnimusExpInform();
+  void SendMsg_AnimusModeInform(char byMode);
+  void SendMsg_AnimusRecallWaitTimeFree(char bFree);
+  void SendMsg_MineCompleteResult(
+    char byErrCode,
+    unsigned __int8 byNewOreIndex,
+    unsigned __int16 dwOreSerial,
+    unsigned __int8 byOreDur,
+    unsigned __int16 dwBatteryLeftDurPoint);
+  void SendData_PartyMemberHP();
+  void SendData_PartyMemberFP();
+  void SendData_PartyMemberSP();
+  void SendData_PartyMemberMaxHFSP();
+  void SendData_PartyMemberEffect(unsigned __int8 byAlterCode, unsigned __int16 wEffectCode, unsigned __int8 byLv);
+  void SendMsg_AlterHPInform();
+  void SendMsg_HSKQuestSucc(char byQuestCode, char bSucc);
+  void SendMsg_InsertQuestItemInform(_STORAGE_LIST::_db_con *pItem);
+  void SendMsg_AddEffect(
+    unsigned __int16 wEffectCode,
+    unsigned __int8 byLv,
+    unsigned __int16 wDurSec,
+    unsigned int dwPlayerSerial,
+    char *wszPlayerName);
+  void SendMsg_DelEffect(unsigned __int8 byEffectCode, unsigned __int16 wEffectIndex, unsigned __int8 byLv);
+  void SendMsg_DTradeAskInform(CPlayer *pAsker);
+  void SendMsg_DTradeAnswerResult(char byErrCode);
+  void SendMsg_DTradeStartInform(CPlayer *pAsker, CPlayer *pAnswer, unsigned int *pdwKey);
+  void SendMsg_DTradeLockResult(char byErrCode);
+  void SendMsg_DTradeLockInform();
+  void SendMsg_DTradeAddResult(char byErrCode);
+  void SendMsg_DTradeAddInform(char bySlotIndex, _STORAGE_LIST::_db_con *pItem, unsigned __int8 byAmount);
+  void SendMsg_DTradeDelResult(char byErrCode);
+  void SendMsg_DTradeDelInform(char bySlotIndex);
+  void SendMsg_DTradeBetResult(char byErrCode);
+  void SendMsg_DTradeBetInform(char byUnitCode, unsigned int dwAmount);
+  void SendMsg_DTradeUnitInfoInform(char byTradeSlotIndex, _UNIT_DB_BASE::_LIST *pUnitData);
+  void SendMsg_DTradeUnitAddInform(unsigned __int16 wUnitKeySerial, _UNIT_DB_BASE::_LIST *pUnitData);
+  void SendMsg_StartShopping();
+  void SendMsg_TargetObjectHPInform();
+  void SendMsg_RefeshGroupTargetPosition(char byGroupType);
+  void SendMsg_CastVoteResult(char byRetCode);
+  void SendMsg_ExtTrunkExtendResult(char byRetCode, unsigned __int8 bySlotNum, unsigned __int8 byLackSlotNum);
+  void SendMsg_RemainTimeInform(__int16 iType, int lRemainTime, _SYSTEMTIME *pstEndDate);
+  void SendMsg_BillingTypeChangeInform(
+    __int16 iType,
+    int lRemainTime,
+    _SYSTEMTIME *pstEndDate,
+    unsigned __int8 byReason);
+  void SendTargetMonsterSFContInfo();
+  void SendTargetPlayerDamageContInfo();
+  void SendMsg_TeleportError(char byErrorCode, unsigned int dwMapIndex);
+  void SendMsg_RevivalOfJade(unsigned __int16 wSuccRate);
+  void SendMsg_UseJadeResult(unsigned __int8 byErrCode, unsigned __int16 wItemSerial);
+  void SendMsg_BuddyNameReNewal(unsigned int dwSerial, char *wszName);
+  void SendMsg_NotifyEffectForGetItem(
+    char byBoxType,
+    unsigned int dwCharSerial,
+    char *szCharName,
+    _STORAGE_LIST::_db_con *pItem,
+    bool bCircle);
+  void SendMsg_ApexInform(unsigned __int16 dwRecvSize, char *pMsg);
+  void SendMsg_MaxPvpPointInform(int nMax);
+  void SendMsg_NewMovePotionResult();
+  void SendMsg_UnitRideChange(bool bTake, CParkingUnit *pUnit);
+  void SendMsg_Die();
+  void SendMsg_BreakdownEquipItem(unsigned __int8 byPartIndex, unsigned __int16 wSerial);
+  void SendMsg_Notify_Gravity_Stone_Owner_Die();
   char _pre_check_normal_attack(
     CCharacter *pDst,
     unsigned __int16 wBulletSerial,

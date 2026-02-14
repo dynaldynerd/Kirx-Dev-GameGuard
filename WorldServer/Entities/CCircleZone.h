@@ -21,6 +21,8 @@ public:
   CCircleZone();
   bool Init(unsigned int uiMapInx, int iPlayerInx, int iNth, unsigned __int16 wInx, CMapData *pkMap);
   int GetPortalInx() const;
+  void SendMsgCreate();
+  void SendMsgGoal();
   void SendMsg_FixPosition(int n) override;
 
   GCZ_STATE m_eState;

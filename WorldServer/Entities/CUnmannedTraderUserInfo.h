@@ -14,6 +14,7 @@ struct _a_trade_reg_item_request_clzo;
 struct _unmannedtrader_buy_item_request_clzo;
 struct _unmannedtrader_re_regist_request_clzo;
 struct _unmannedtrader_search_list_request_clzo;
+struct _qry_case_unmandtrader_log_in_proc_update_complete;
 
 class __cppobj CUnmannedTraderUserInfo
 {
@@ -105,6 +106,14 @@ public:
     CPlayer **pkOwner);
   bool CompleteUpdateState(unsigned int dwRegistSerial, unsigned __int8 byState, bool bReCountRegist);
   void CompleteCreate(CLogFile *pkLogger);
+  void ProcSellWaitItem(
+    _qry_case_unmandtrader_log_in_proc_update_complete *pkResult,
+    unsigned __int8 byGroupType,
+    CLogFile *pkLogger);
+  void NotifyCloseItem(
+    _qry_case_unmandtrader_log_in_proc_update_complete *pkResult,
+    CLogFile *pkLogger);
+  char CheckIsUpdatedTaxRate(unsigned __int8 byTax, CLogFile *pkLogger);
   void CompleteRegist(unsigned __int8 byRet, char *pLoadData, CLogFile *pkLogger);
   bool CompleteRegistItem(
     unsigned int dwRegistSerial,

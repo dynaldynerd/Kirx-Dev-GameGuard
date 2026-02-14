@@ -187,6 +187,7 @@ public:
   char Update_Param(_EXIT_ALTER_PARAM *pCon);
   char Update_CopyAll(_AVATOR_DATA *pSrc);
   void ForceCloseCommand(unsigned __int8 byKickType, unsigned int dwPushIP, bool bSlow, const char *pszCause);
+  void Inform_For_Exit_By_FireguardBlock();
   void ClearBillingData();
   void SetBillingData(_BILLING_INFO *pBillingInfo);
   void SetBillingData(char *szCMSCode, __int16 iType, int lRemainTime, _SYSTEMTIME *pstEndDate);

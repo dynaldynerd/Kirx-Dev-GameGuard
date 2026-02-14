@@ -973,6 +973,7 @@ public:
   bool CashDBInit(char *szIP, char *szDBName, char *szAccount, char *szPassword, unsigned int dwPort);
   char _GameDataBaseInit();
   void SerivceSelfStart();
+  void SerivceSelfStop();
   void SerivceForceSet(bool bService);
   unsigned int CreateDataResetToken(_SYSTEMTIME *tm);
   void PushResetServerToken();
@@ -2035,6 +2036,10 @@ struct __cppobj _guild_master_info
 /* 1722 */
 struct __cppobj _suggested_matter
 {
+  _suggested_matter();
+  void Clear();
+  bool IsVotable(unsigned int dwSerial);
+
   unsigned __int8 byMatterType;
   unsigned int dwMatterDst;
   char wszMatterDst[64];

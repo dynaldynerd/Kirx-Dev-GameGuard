@@ -2,9 +2,11 @@
 
 #include "CAnimus.h"
 #include "animus_fld.h"
+#include "CAttack.h"
 #include "CGameObject.h"
 #include "CNetProcess.h"
 #include "GlobalObjects.h"
+#include "attack_gen_result_zocl.h"
 
 #include <cstdio>
 #include <cstring>
@@ -151,6 +153,87 @@ void CAnimus::SendMsg_Destroy()
   pbyType[0] = 3;
   pbyType[1] = 26;
   CircleReport(pbyType, szMsg, 7, false);
+}
+
+void CAnimus::SendMsg_Create()
+{
+  char payload[19]{};
+  *reinterpret_cast<unsigned __int16 *>(payload) = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
+  *reinterpret_cast<unsigned __int16 *>(payload + 2) = m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned int *>(payload + 4) = m_dwObjSerial;
+  FloatToShort(m_fCurPos, reinterpret_cast<short *>(payload + 8), 3);
+  payload[14] = static_cast<char>(m_pRecord ? m_pRecord->m_nLevel : 1);
+  *reinterpret_cast<unsigned int *>(payload + 15) = m_pMaster->m_dwObjSerial;
+
+  unsigned __int8 type[2]{3, 18};
+  CircleReport(type, payload, 19, false);
+}
+
+void CAnimus::SendMsg_Move()
+{
+  char payload[18]{};
+  *reinterpret_cast<unsigned int *>(payload) = m_dwObjSerial;
+  FloatToShort(m_fCurPos, reinterpret_cast<short *>(payload + 4), 3);
+  *reinterpret_cast<short *>(payload + 10) = static_cast<short>(m_fTarPos[0]);
+  *reinterpret_cast<short *>(payload + 12) = static_cast<short>(m_fTarPos[2]);
+  *reinterpret_cast<float *>(payload + 14) = m_fMoveSpeed;
+
+  unsigned __int8 type[2]{4, 7};
+  CircleReport(type, payload, 18, false);
+}
+
+void CAnimus::SendMsg_Attack_Gen(CAttack *pAT)
+{
+  struct AttackAccessor
+  {
+    _attack_param *m_pp;
+    CCharacter *m_pAttChar;
+    bool m_bIsCrtAtt;
+    bool m_bActiveSucc;
+    int m_nDamagedObjNum;
+    _be_damaged_char m_DamList[30];
+    bool m_bFailure;
+  };
+
+  const AttackAccessor *attack = reinterpret_cast<const AttackAccessor *>(pAT);
+  _attack_gen_result_zocl result{};
+  result.byAtterID = m_ObjID.m_byID;
+  result.dwAtterSerial = m_dwObjSerial;
+  result.byAttackPart = static_cast<unsigned __int8>(attack->m_pp->nPart);
+  result.bCritical = attack->m_bIsCrtAtt;
+  result.wBulletIndex = static_cast<unsigned __int16>(-1);
+  result.byListNum = static_cast<unsigned __int8>(attack->m_nDamagedObjNum);
+  for (int index = 0; index < attack->m_nDamagedObjNum; ++index)
+  {
+    result.DamList[index].byDstID = attack->m_DamList[index].m_pChar->m_ObjID.m_byID;
+    result.DamList[index].dwDstSerial = attack->m_DamList[index].m_pChar->m_dwObjSerial;
+    result.DamList[index].wDamage = static_cast<unsigned __int16>(attack->m_DamList[index].m_nDamage);
+  }
+
+  unsigned __int8 type[2]{5, 7};
+  CircleReport(type, reinterpret_cast<char *>(&result), static_cast<unsigned __int16>(result.size()), false);
+}
+
+void CAnimus::SendMsg_LevelUp()
+{
+  char payload[7]{};
+  *reinterpret_cast<unsigned __int16 *>(payload) = m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned int *>(payload + 2) = m_dwObjSerial;
+  payload[6] = static_cast<char>(m_pRecord ? m_pRecord->m_nLevel : 1);
+
+  unsigned __int8 type[2]{22, 12};
+  CircleReport(type, payload, 7, false);
+}
+
+void CAnimus::SendMsg_AnimusActHealInform(unsigned int dwDstSerial, __int16 nAddHP)
+{
+  char payload[10]{};
+  *reinterpret_cast<unsigned int *>(payload) = m_dwObjSerial;
+  *reinterpret_cast<unsigned int *>(payload + 4) = dwDstSerial;
+  *reinterpret_cast<__int16 *>(payload + 8) = nAddHP;
+
+  unsigned __int8 type[2]{22, 14};
+  CircleReport(type, payload, 10, false);
 }
 
 void CAnimus::MasterAttack_MasterInform(CCharacter *pDst)

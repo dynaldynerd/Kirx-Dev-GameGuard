@@ -70,6 +70,10 @@ public:
     unsigned int dwMatterObj2,
     unsigned int dwMatterObj3);
   void SendMsg_VoteProcessInform_Start();
+  void SendMsg_VoteProcessInform_Continue(_guild_member_info *pMem);
+  void SendMsg_VoteState();
+  void SendMsg_VoteCancelInform();
+  void SendMsg_VoteStop(unsigned int dwMatterVoteSynKey);
   void SendMsg_VoteComplete(bool bPass);
   void InitVote();
   void MakeDownMemberPacket();
@@ -100,6 +104,9 @@ public:
     unsigned int in_guild_new_masterSerial,
     unsigned __int8 in_guild_new_masterPrevGrade);
   void SendMsg_ApplyGuildBattleResultInform(char byRet, char *wszDestGuildName);
+  void SendMsg_ChangeTaxRate(unsigned __int8 byTax);
+  void SendMsg_QueryPacket_Info(unsigned int n);
+  void SendMsg_GuildOutputMoneyFail(unsigned int dwIOerSerial);
   void SendMsg_GuildBattleRefused(char *pwszName);
   void SendMsg_GuildBattleSuggestResult(unsigned __int8 byRet, char *wszDestGuildName);
   void AddScheduleComplete(unsigned __int8 byRet, CGuild *pSrcGuild);

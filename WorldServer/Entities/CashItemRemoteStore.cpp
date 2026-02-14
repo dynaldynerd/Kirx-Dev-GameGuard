@@ -15,6 +15,8 @@
 #include "WorldServerUtil.h"
 #include "param_cash.h"
 #include "qry_case_cash_limsale.h"
+#include "result_csi_buy_zocl.h"
+#include "result_csi_goods_list_zocl.h"
 
 #include <cstdio>
 #include <cstring>
@@ -82,6 +84,57 @@ void CashItemRemoteStore::Loop_TatalCashEvent()
     Load_Cash_Event();
     Load_Conditional_Event();
   }
+}
+
+char CashItemRemoteStore::GoodsListBuyByGold(unsigned __int16 wSock, char *pPacket)
+{
+  (void)pPacket;
+
+  if (wSock >= MAX_PLAYER)
+  {
+    return 0;
+  }
+
+  CPlayer *player = &g_Player[wSock];
+  if (!player->m_bLive || !player->m_bOper)
+  {
+    return 1;
+  }
+
+  _result_csi_goods_list_zocl msg{};
+  msg.nCashAmount = player->m_Param.GetGold();
+  msg.bAdjustDiscountRate = is_cde_time() != 0;
+  msg.bOneNOne = IsEventTime(1u) != 0;
+  msg.bSetDiscount = IsEventTime(0) != 0;
+
+  for (int index = 0; index < 4; ++index)
+  {
+    if (IsEventTime(0))
+    {
+      msg.bySetDiscount[index] = GetSetDiscout(static_cast<unsigned __int8>(index));
+    }
+    else
+    {
+      msg.bySetDiscount[index] = 0;
+    }
+  }
+
+  msg.bLimSale = IsEventTime(2u) != 0;
+  if (msg.bLimSale)
+  {
+    msg.byLimDiscount = GetLimDiscout();
+  }
+  else
+  {
+    msg.byLimDiscount = 0;
+  }
+
+  unsigned __int8 type[2]{};
+  type[0] = 57;
+  type[1] = 2;
+
+  g_Network.m_pProcess[0]->LoadSendMsg(wSock, type, reinterpret_cast<char *>(&msg), msg.size());
+  return 1;
 }
 
 unsigned __int8 CashItemRemoteStore::Get_CashEvent_Status(unsigned __int8 byEventType)
@@ -1159,6 +1212,72 @@ void CashItemRemoteStore::set_cde_status(unsigned __int8 byStatus)
   m_cde.m_cde_status = byStatus;
 }
 
+char CashItemRemoteStore::is_cde_time()
+{
+  if (!m_con_event.m_bConEvent && !m_cde.m_ini.m_bUseCashDiscount)
+  {
+    return 0;
+  }
+
+  __time32_t now[4]{};
+  _time32(now);
+
+  if (m_con_event.m_bConEvent)
+  {
+    if (m_con_event.m_ini.m_byEventKind == 2
+        && now[0] > m_con_event.m_eventtime.m_EventTime[0]
+        && now[0] < m_con_event.m_eventtime.m_EventTime[1])
+    {
+      return 1;
+    }
+  }
+  else if (now[0] > m_cde.m_ini.m_cdeTime[0] && now[0] < m_cde.m_ini.m_cdeTime[1])
+  {
+    return 1;
+  }
+
+  return 0;
+}
+
+char CashItemRemoteStore::IsEventTime(unsigned __int8 byEventType)
+{
+  if (!m_con_event.m_bConEvent && !m_cash_event[byEventType].m_ini.m_bUseCashEvent)
+  {
+    return 0;
+  }
+
+  __time32_t now[4]{};
+  _time32(now);
+
+  if (m_con_event.m_bConEvent)
+  {
+    if (m_con_event.m_ini.m_byEventKind == byEventType
+        && now[0] > m_con_event.m_eventtime.m_EventTime[0]
+        && now[0] < m_con_event.m_eventtime.m_EventTime[1])
+    {
+      return 1;
+    }
+  }
+  else if (
+    now[0] > m_cash_event[byEventType].m_ini.m_EventTime[0]
+    && now[0] < m_cash_event[byEventType].m_ini.m_EventTime[1])
+  {
+    return 1;
+  }
+
+  return 0;
+}
+
+unsigned __int8 CashItemRemoteStore::GetSetDiscout(unsigned __int8 bySetKind)
+{
+  return m_cash_event[0].m_ini.m_byDiscout[bySetKind];
+}
+
+unsigned __int8 CashItemRemoteStore::GetLimDiscout()
+{
+  return m_cash_event[2].m_ini.m_byLimDiscout;
+}
+
 bool CashItemRemoteStore::SetNextDiscountEventTime()
 {
   if (!m_cde.m_ini.m_bRepeat)
@@ -2095,6 +2214,42 @@ bool CashItemRemoteStore::LoadBuyCashMode()
   }
 
   return true;
+}
+
+void CashItemRemoteStore::_buybygold_complete(
+  CPlayer *pOne,
+  _result_csi_buy_zocl *Send,
+  _request_csi_buy_clzo *pRecv,
+  _request_csi_buy_clzo::__item *pSrc,
+  _param_cashitem_dblog *pSheet,
+  bool bCouponUse)
+{
+  Send->nCashAmount = pOne->m_Param.GetGold();
+
+  unsigned __int8 type[2]{};
+  type[0] = 57;
+  type[1] = 4;
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    pOne->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(Send),
+    Send->size());
+
+  const unsigned __int64 taskSize = static_cast<unsigned __int64>(pSheet->size());
+  CCashDBWorkManager *cashWorkManager = CTSingleton<CCashDBWorkManager>::Instance();
+  cashWorkManager->PushTask(3, reinterpret_cast<unsigned __int8 *>(pSheet), taskSize);
+
+  if (pSheet->in_bLimited_Sale && pSrc->byEventType == 5)
+  {
+    Set_LimitedSale_count(pSrc->byTblCode, pSrc->wItemIdx);
+    Set_DB_LimitedSale_Event();
+    LimitedSale_check_count(pSrc->byTblCode, pSrc->wItemIdx);
+  }
+
+  if (bCouponUse)
+  {
+    pOne->DeleteCouponItem(pRecv->CouponItem, pRecv->byCouponNum);
+  }
 }
 
 bool CashItemRemoteStore::IsBuyCashItemByGold() const

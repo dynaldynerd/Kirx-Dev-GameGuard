@@ -44,6 +44,12 @@ public:
   void SetControlSerial(unsigned __int16 wControlSerial);
   unsigned __int8 GetMasterClass();
   void SendMsg_NuclearFind(unsigned int n, unsigned __int8 race);
+  void SendMsg_InformDropPos();
+  void SendMsg_AddEffect();
+  void SendMsg_InformAttack();
+  void SendMsg_MasterDie();
+  void SendMsg_Result(unsigned int n, unsigned __int8 byCode);
+  void SendMsg_DropMissile();
 
   static __int64 GetNewSerial();
 

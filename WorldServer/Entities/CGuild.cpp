@@ -131,78 +131,6 @@ namespace
     pGuild->m_Buddy_List->wDataSize = static_cast<unsigned __int16>(dataSize);
   }
 
-  void SendMsg_VoteStop(CGuild *pGuild, unsigned int dwMatterVoteSynKey)
-  {
-    char szMsg[4]{};
-    *reinterpret_cast<unsigned int *>(szMsg) = dwMatterVoteSynKey;
-
-    unsigned __int8 pbyType[2] = {27, 28};
-    for (int j = 0; j < 50; ++j)
-    {
-      _guild_member_info *member = &pGuild->m_MemberData[j];
-      if (member->IsFill() && member->pPlayer)
-      {
-        g_Network.m_pProcess[0]->LoadSendMsg(member->pPlayer->m_ObjID.m_wIndex, pbyType, szMsg, 4u);
-      }
-    }
-  }
-
-  void SendMsg_VoteProcessInform_Continue(CGuild *pGuild, _guild_member_info *pMem)
-  {
-    if (!pGuild->m_bNowProcessSgtMter
-      || !pMem->pPlayer
-      || (pGuild->m_SuggestedMatter.byMatterType == 5 && pMem->byClassInGuild != 2))
-    {
-      return;
-    }
-
-    int loginSeniorNum = 0;
-    for (int j = 0; j < pGuild->m_SuggestedMatter.nTotal_VotableMemNum; ++j)
-    {
-      if (pGuild->m_SuggestedMatter.VotableMem[j]->pPlayer)
-      {
-        ++loginSeniorNum;
-      }
-    }
-
-    _guild_vote_process_inform_zocl msg{};
-    msg.bStart = false;
-    msg.byMatterType = pGuild->m_SuggestedMatter.byMatterType;
-    msg.dwMatterDst = pGuild->m_SuggestedMatter.dwMatterDst;
-    msg.dwMatterObj1 = pGuild->m_SuggestedMatter.dwMatterObj1;
-    msg.dwMatterObj2 = pGuild->m_SuggestedMatter.dwMatterObj2;
-    msg.dwMatterObj3 = pGuild->m_SuggestedMatter.dwMatterObj3;
-    msg.dwMatterVoteSynKey = pGuild->m_SuggestedMatter.dwMatterVoteSynKey;
-    msg.dwSuggesterSerial = pGuild->m_dwSuggesterSerial;
-    msg.byTotalSeniorNum = static_cast<unsigned __int8>(pGuild->m_SuggestedMatter.nTotal_VotableMemNum);
-    msg.byLoginSeniorNum = static_cast<unsigned __int8>(loginSeniorNum);
-    msg.bActed = pMem->bVote;
-    msg.byApprPoint = pGuild->m_SuggestedMatter.byVoteState[0];
-    msg.byOppoPoint = pGuild->m_SuggestedMatter.byVoteState[1];
-    msg.byCommentLen = static_cast<unsigned __int8>(strlen_0(pGuild->m_SuggestedMatter.wszComment));
-    strcpy_0(msg.wszComment, pGuild->m_SuggestedMatter.wszComment);
-
-    if (msg.byMatterType == 4)
-    {
-      strcpy_0(msg.wszDestGuildName, pGuild->m_GuildBattleSugestMatter.pkDest->m_wszName);
-      msg.byDestGuildGrade = pGuild->m_GuildBattleSugestMatter.pkDest->m_byGrade;
-      msg.byDestGuildRace = pGuild->m_GuildBattleSugestMatter.pkDest->m_byRace;
-    }
-    else if (msg.byMatterType == 5)
-    {
-      strcpy_0(msg.wszDestGuildName, pGuild->m_GuildBattleSugestMatter.pkSrc->m_wszName);
-      msg.byDestGuildGrade = pGuild->m_GuildBattleSugestMatter.pkSrc->m_byGrade;
-      msg.byDestGuildRace = pGuild->m_GuildBattleSugestMatter.pkSrc->m_byRace;
-    }
-
-    unsigned __int8 pbyType[2] = {27, 24};
-    const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
-    g_Network.m_pProcess[0]->LoadSendMsg(
-      pMem->pPlayer->m_ObjID.m_wIndex,
-      pbyType,
-      reinterpret_cast<char *>(&msg.bStart),
-      nLen);
-  }
 }
 
 _guild_master_info::_guild_master_info()
@@ -433,6 +361,204 @@ void CGuild::Loop(bool bChangeDay)
   InitVote();
 }
 
+void CGuild::SendMsg_ChangeTaxRate(unsigned __int8 byTax)
+{
+#pragma pack(push, 1)
+  struct GuildTaxRateChangeMessage
+  {
+    unsigned int dwGuildSerial;
+    unsigned __int8 byTax;
+  };
+#pragma pack(pop)
+
+  GuildTaxRateChangeMessage msg{};
+  msg.dwGuildSerial = m_dwSerial;
+  msg.byTax = byTax;
+
+  unsigned __int8 pbyType[2]{27, 100};
+  for (int j = 0; j < 50; ++j)
+  {
+    _guild_member_info *member = &m_MemberData[j];
+    if (member->IsFill() && member->pPlayer)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        member->pPlayer->m_ObjID.m_wIndex,
+        pbyType,
+        reinterpret_cast<char *>(&msg),
+        static_cast<unsigned __int16>(sizeof(msg)));
+    }
+  }
+}
+
+void CGuild::SendMsg_QueryPacket_Info(unsigned int n)
+{
+  unsigned __int8 pbyType[2]{27, 34};
+  g_Network.m_pProcess[0]->LoadSendMsg(n, pbyType, reinterpret_cast<char *>(m_QueryPacket_Info), 0x2Bu);
+}
+
+void CGuild::SendMsg_VoteProcessInform_Continue(_guild_member_info *pMem)
+{
+  if (!m_bNowProcessSgtMter
+    || !pMem->pPlayer
+    || (m_SuggestedMatter.byMatterType == 5 && pMem->byClassInGuild != 2))
+  {
+    return;
+  }
+
+  int loginSeniorNum = 0;
+  for (int j = 0; j < m_SuggestedMatter.nTotal_VotableMemNum; ++j)
+  {
+    if (m_SuggestedMatter.VotableMem[j]->pPlayer)
+    {
+      ++loginSeniorNum;
+    }
+  }
+
+  _guild_vote_process_inform_zocl msg{};
+  msg.bStart = false;
+  msg.byMatterType = m_SuggestedMatter.byMatterType;
+  msg.dwMatterDst = m_SuggestedMatter.dwMatterDst;
+  msg.dwMatterObj1 = m_SuggestedMatter.dwMatterObj1;
+  msg.dwMatterObj2 = m_SuggestedMatter.dwMatterObj2;
+  msg.dwMatterObj3 = m_SuggestedMatter.dwMatterObj3;
+  msg.dwMatterVoteSynKey = m_SuggestedMatter.dwMatterVoteSynKey;
+  msg.dwSuggesterSerial = m_dwSuggesterSerial;
+  msg.byTotalSeniorNum = static_cast<unsigned __int8>(m_SuggestedMatter.nTotal_VotableMemNum);
+  msg.byLoginSeniorNum = static_cast<unsigned __int8>(loginSeniorNum);
+  msg.bActed = pMem->bVote;
+  msg.byApprPoint = m_SuggestedMatter.byVoteState[0];
+  msg.byOppoPoint = m_SuggestedMatter.byVoteState[1];
+  msg.byCommentLen = static_cast<unsigned __int8>(strlen_0(m_SuggestedMatter.wszComment));
+  strcpy_0(msg.wszComment, m_SuggestedMatter.wszComment);
+
+  if (msg.byMatterType == 4)
+  {
+    strcpy_0(msg.wszDestGuildName, m_GuildBattleSugestMatter.pkDest->m_wszName);
+    msg.byDestGuildGrade = m_GuildBattleSugestMatter.pkDest->m_byGrade;
+    msg.byDestGuildRace = m_GuildBattleSugestMatter.pkDest->m_byRace;
+  }
+  else if (msg.byMatterType == 5)
+  {
+    strcpy_0(msg.wszDestGuildName, m_GuildBattleSugestMatter.pkSrc->m_wszName);
+    msg.byDestGuildGrade = m_GuildBattleSugestMatter.pkSrc->m_byGrade;
+    msg.byDestGuildRace = m_GuildBattleSugestMatter.pkSrc->m_byRace;
+  }
+
+  unsigned __int8 pbyType[2]{27, 24};
+  const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    pMem->pPlayer->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg.bStart),
+    nLen);
+}
+
+void CGuild::SendMsg_VoteState()
+{
+  if (!m_bNowProcessSgtMter)
+  {
+    return;
+  }
+
+  int loginSeniorNum = 0;
+  for (int j = 0; j < m_SuggestedMatter.nTotal_VotableMemNum; ++j)
+  {
+    if (m_SuggestedMatter.VotableMem[j]->pPlayer)
+    {
+      ++loginSeniorNum;
+    }
+  }
+
+#pragma pack(push, 1)
+  struct GuildVoteStateMessage
+  {
+    unsigned int dwMatterVoteSynKey;
+    unsigned __int8 byApprovePoint;
+    unsigned __int8 byOpposePoint;
+    char byLoginSeniorNum;
+    char byTotalVotableNum;
+  };
+#pragma pack(pop)
+
+  GuildVoteStateMessage msg{};
+  msg.dwMatterVoteSynKey = m_SuggestedMatter.dwMatterVoteSynKey;
+  msg.byApprovePoint = m_SuggestedMatter.byVoteState[0];
+  msg.byOpposePoint = m_SuggestedMatter.byVoteState[1];
+  msg.byLoginSeniorNum = static_cast<char>(loginSeniorNum);
+  msg.byTotalVotableNum = static_cast<char>(m_SuggestedMatter.nTotal_VotableMemNum);
+
+  unsigned __int8 pbyType[2]{27, 27};
+  for (int j = 0; j < 50; ++j)
+  {
+    _guild_member_info *member = &m_MemberData[j];
+    if (member->IsFill() && member->pPlayer)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        member->pPlayer->m_ObjID.m_wIndex,
+        pbyType,
+        reinterpret_cast<char *>(&msg),
+        static_cast<unsigned __int16>(sizeof(msg)));
+    }
+  }
+}
+
+void CGuild::SendMsg_VoteCancelInform()
+{
+  unsigned int matterVoteSynKey = m_SuggestedMatter.dwMatterVoteSynKey;
+  unsigned __int8 pbyType[2]{27, 23};
+  for (int j = 0; j < 50; ++j)
+  {
+    _guild_member_info *member = &m_MemberData[j];
+    if (!member->IsFill()
+      || !member->pPlayer
+      || member->dwSerial == m_dwSuggesterSerial
+      || !m_SuggestedMatter.IsVotable(member->dwSerial))
+    {
+      continue;
+    }
+
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      member->pPlayer->m_ObjID.m_wIndex,
+      pbyType,
+      reinterpret_cast<char *>(&matterVoteSynKey),
+      4u);
+  }
+}
+
+void CGuild::SendMsg_VoteStop(unsigned int dwMatterVoteSynKey)
+{
+  unsigned __int8 pbyType[2]{27, 28};
+  for (int j = 0; j < 50; ++j)
+  {
+    _guild_member_info *member = &m_MemberData[j];
+    if (member->IsFill() && member->pPlayer)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        member->pPlayer->m_ObjID.m_wIndex,
+        pbyType,
+        reinterpret_cast<char *>(&dwMatterVoteSynKey),
+        4u);
+    }
+  }
+}
+
+void CGuild::SendMsg_GuildOutputMoneyFail(unsigned int dwIOerSerial)
+{
+  unsigned __int8 pbyType[2]{27, 38};
+  for (int j = 0; j < 50; ++j)
+  {
+    _guild_member_info *member = &m_MemberData[j];
+    if (member->IsFill() && member->pPlayer)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        member->pPlayer->m_ObjID.m_wIndex,
+        pbyType,
+        reinterpret_cast<char *>(&dwIOerSerial),
+        4u);
+    }
+  }
+}
+
 void CGuild::PushDQSGuildMasterLastConnn()
 {
   _qry_case_select_guild_master_lastconn query{};
@@ -491,7 +617,7 @@ void CGuild::SendMsg_DownPacket(unsigned __int8 bDowntype, _guild_member_info *p
 
   if (m_bNowProcessSgtMter)
   {
-    SendMsg_VoteProcessInform_Continue(this, pMem);
+    SendMsg_VoteProcessInform_Continue(pMem);
   }
 
   unsigned __int8 moneyType[2] = {27, 41};
@@ -1008,13 +1134,13 @@ char CGuild::PopMember(unsigned int dwMemberSerial)
     if (m_dwSuggesterSerial == dwMemberSerial)
     {
       InitVote();
-      SendMsg_VoteStop(this, m_SuggestedMatter.dwMatterVoteSynKey);
+      SendMsg_VoteStop(m_SuggestedMatter.dwMatterVoteSynKey);
     }
 
     if (m_SuggestedMatter.byMatterType == 6 && dwMemberSerial == m_SuggestedMatter.dwMatterDst)
     {
       InitVote();
-      SendMsg_VoteStop(this, dwMemberSerial);
+      SendMsg_VoteStop(dwMemberSerial);
     }
   }
 

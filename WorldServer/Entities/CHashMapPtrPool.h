@@ -58,7 +58,7 @@ public:
   {
     for (const auto &pair : m_mapData)
     {
-      if (pair.second == value)
+      if (pair.second && value && (*pair.second == *value))
       {
         *outKey = pair.first;
         return true;

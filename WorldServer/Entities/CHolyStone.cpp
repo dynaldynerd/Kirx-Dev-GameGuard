@@ -278,6 +278,17 @@ void CHolyStone::SendMsg_Create()
   CircleReport(pbyType, reinterpret_cast<char *>(&msg), 15, false);
 }
 
+void CHolyStone::SendMsg_Destroy(unsigned __int8 byDestroyCode, unsigned int dwDestroySerial)
+{
+  char payload[9]{};
+  *reinterpret_cast<unsigned int *>(payload) = m_dwObjSerial;
+  payload[4] = static_cast<char>(byDestroyCode);
+  *reinterpret_cast<unsigned int *>(payload + 5) = dwDestroySerial;
+
+  unsigned __int8 type[2] = {3, static_cast<unsigned __int8>(-47)};
+  CircleReport(type, payload, 9, false);
+}
+
 void CHolyStone::SetOper(bool bOper, float fHPRate)
 {
   if (m_bOper != bOper)

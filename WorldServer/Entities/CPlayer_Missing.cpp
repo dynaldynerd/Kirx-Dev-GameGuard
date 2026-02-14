@@ -7,6 +7,7 @@
 #include "CMapData.h"
 #include "CBsp.h"
 #include "CObjectList.h"
+#include "CMonster.h"
 #include "pnt_rect.h"
 #include "CMainThread.h"
 #include "CItemStore.h"
@@ -1106,6 +1107,958 @@ int GetResDummyDelayForMining(const _res_dummy &resDummy, int sectorIndex, bool 
 }
 
 
+
+unsigned __int16 GetTargetMonsterContInfoSize(_target_monster_contsf_allinform_zocl *info)
+{
+  if (info->byContCount > 8u)
+  {
+    info->byContCount = 0;
+  }
+  return static_cast<unsigned __int16>(21 - 2 * (8 - info->byContCount));
+}
+
+bool IsSameTargetMonsterContInfo(
+  const _target_monster_contsf_allinform_zocl &left,
+  const _target_monster_contsf_allinform_zocl &right)
+{
+  if (left.dwSerial != right.dwSerial)
+  {
+    return false;
+  }
+
+  for (int index = 0; index < 8; ++index)
+  {
+    if (left.m_MonContSf[index].wSfcode != right.m_MonContSf[index].wSfcode)
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+unsigned __int16 GetTargetPlayerDamageContInfoSize(_target_player_damage_contsf_allinform_zocl *info)
+{
+  if (info->byContCount > 8u)
+  {
+    info->byContCount = 0;
+  }
+  return static_cast<unsigned __int16>(29 - 3 * (8 - info->byContCount));
+}
+
+bool IsSameTargetPlayerDamageContInfo(
+  const _target_player_damage_contsf_allinform_zocl &left,
+  const _target_player_damage_contsf_allinform_zocl &right)
+{
+  if (left.dwSerial != right.dwSerial)
+  {
+    return false;
+  }
+
+  for (int index = 0; index < 8; ++index)
+  {
+    if (left.m_PlayerContSf[index].wSfcode != right.m_PlayerContSf[index].wSfcode ||
+        left.m_PlayerContSf[index].byContCount != right.m_PlayerContSf[index].byContCount)
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+void CPlayer::SendMsg_DamageResult(_STORAGE_LIST::_db_con *pItem)
+{
+  char payload[5]{};
+  payload[0] = static_cast<char>(this->m_nLastBeatenPart);
+  *reinterpret_cast<unsigned __int16 *>(payload + 1) = pItem->m_wSerial;
+  *reinterpret_cast<__int16 *>(payload + 3) = static_cast<__int16>(pItem->m_dwDur);
+
+  unsigned __int8 type[2] = {5, 20};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 5u);
+}
+
+void CPlayer::SendMsg_MaxHFSP()
+{
+  char payload[6]{};
+  *reinterpret_cast<unsigned __int16 *>(payload) = static_cast<unsigned __int16>(this->GetMaxHP());
+  *reinterpret_cast<__int16 *>(payload + 2) = static_cast<__int16>(this->GetMaxFP());
+  *reinterpret_cast<__int16 *>(payload + 4) = static_cast<__int16>(this->GetMaxSP());
+
+  unsigned __int8 type[2] = {11, 3};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 6u);
+}
+
+void CPlayer::SendMsg_ItemStorageRefresh(unsigned __int8 byStorageCode)
+{
+  _STORAGE_LIST *storage = this->m_Param.m_pStoragePtr[byStorageCode];
+  char payload[0xCA]{};
+
+  payload[0] = static_cast<char>(byStorageCode);
+  const unsigned __int8 itemCount = static_cast<unsigned __int8>(storage->GetNumUseCon());
+  payload[1] = static_cast<char>(itemCount);
+
+  unsigned __int16 *serialList = reinterpret_cast<unsigned __int16 *>(payload + 2);
+  int outIndex = 0;
+  for (int slotIndex = 0; slotIndex < itemCount; ++slotIndex)
+  {
+    _STORAGE_LIST::_db_con *entry = &storage->m_pStorageList[slotIndex];
+    if (entry->m_bLoad)
+    {
+      serialList[outIndex++] = entry->m_wSerial;
+    }
+  }
+
+  unsigned __int8 type[2] = {3, 24};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0xCAu);
+}
+
+void CPlayer::SendMsg_UsPotionResultOther(
+  char byRetcode,
+  unsigned __int16 wPotionIndex,
+  CPlayer *pUsePlayer,
+  bool bCircle)
+{
+  char payload[0x17]{};
+  payload[0] = byRetcode;
+  payload[1] = static_cast<char>(pUsePlayer->m_ObjID.m_byID);
+  *reinterpret_cast<unsigned __int16 *>(payload + 2) = pUsePlayer->m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned int *>(payload + 4) = pUsePlayer->m_dwObjSerial;
+  payload[8] = static_cast<char>(this->m_ObjID.m_byID);
+  *reinterpret_cast<unsigned __int16 *>(payload + 9) = this->m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned int *>(payload + 11) = this->m_dwObjSerial;
+  *reinterpret_cast<unsigned __int16 *>(payload + 15) = wPotionIndex;
+  *reinterpret_cast<__int16 *>(payload + 17) = static_cast<__int16>(this->m_Param.GetHP());
+  *reinterpret_cast<__int16 *>(payload + 19) = static_cast<__int16>(this->m_Param.GetFP());
+  *reinterpret_cast<__int16 *>(payload + 21) = static_cast<__int16>(this->m_Param.GetSP());
+
+  unsigned __int8 type[2] = {7, 108};
+  if (bCircle)
+  {
+    this->CircleReport(type, payload, 23, true);
+  }
+  else
+  {
+    g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x17u);
+  }
+}
+
+void CPlayer::SendMsg_UnitReturnResult(char byRetCode, unsigned int dwPayDalant)
+{
+  char payload[9]{};
+  payload[0] = byRetCode;
+  *reinterpret_cast<unsigned int *>(payload + 1) = dwPayDalant;
+  *reinterpret_cast<unsigned int *>(payload + 5) = this->m_Param.GetDalant();
+
+  unsigned __int8 type[2] = {23, 16};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 9u);
+}
+
+void CPlayer::SendMsg_UnitBulletReplaceResult(char byRetCode)
+{
+  char payload[1]{};
+  payload[0] = byRetCode;
+
+  unsigned __int8 type[2] = {23, 24};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+}
+
+void CPlayer::SendMsg_UnitDestroy(char bySlotIndex)
+{
+  char payload[1]{};
+  payload[0] = bySlotIndex;
+
+  unsigned __int8 type[2] = {23, 26};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+}
+
+void CPlayer::SendMsg_AnimusHPInform()
+{
+  if (!this->m_pRecalledAnimusChar || !this->m_pRecalledAnimusItem)
+  {
+    return;
+  }
+
+  char payload[4]{};
+  *reinterpret_cast<unsigned __int16 *>(payload) = this->m_pRecalledAnimusItem->m_wSerial;
+  *reinterpret_cast<__int16 *>(payload + 2) = static_cast<__int16>(this->m_pRecalledAnimusChar->m_nHP);
+
+  unsigned __int8 type[2] = {22, 9};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 4u);
+}
+
+void CPlayer::SendMsg_AnimusFPInform()
+{
+  if (!this->m_pRecalledAnimusChar || !this->m_pRecalledAnimusItem)
+  {
+    return;
+  }
+
+  char payload[4]{};
+  *reinterpret_cast<unsigned __int16 *>(payload) = this->m_pRecalledAnimusItem->m_wSerial;
+  *reinterpret_cast<__int16 *>(payload + 2) = static_cast<__int16>(this->m_pRecalledAnimusChar->m_nFP);
+
+  unsigned __int8 type[2] = {22, 10};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 4u);
+}
+
+void CPlayer::SendMsg_AnimusExpInform()
+{
+  if (!this->m_pRecalledAnimusChar || !this->m_pRecalledAnimusItem)
+  {
+    return;
+  }
+
+  char payload[10]{};
+  *reinterpret_cast<unsigned __int16 *>(payload) = this->m_pRecalledAnimusItem->m_wSerial;
+  *reinterpret_cast<unsigned __int64 *>(payload + 2) = this->m_pRecalledAnimusChar->m_dwExp;
+
+  unsigned __int8 type[2] = {22, 11};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0xAu);
+}
+
+void CPlayer::SendMsg_AnimusModeInform(char byMode)
+{
+  char payload[1]{};
+  payload[0] = byMode;
+
+  unsigned __int8 type[2] = {22, 6};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+}
+
+void CPlayer::SendMsg_AnimusRecallWaitTimeFree(char bFree)
+{
+  char payload[1]{};
+  payload[0] = bFree;
+
+  unsigned __int8 type[2] = {22, 13};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+}
+
+void CPlayer::SendMsg_MineCompleteResult(
+  char byErrCode,
+  unsigned __int8 byNewOreIndex,
+  unsigned __int16 dwOreSerial,
+  unsigned __int8 byOreDur,
+  unsigned __int16 dwBatteryLeftDurPoint)
+{
+  char payload[9]{};
+  payload[0] = byErrCode;
+  *reinterpret_cast<__int16 *>(payload + 1) = static_cast<__int16>(this->m_Param.m_dbEquip.m_pStorageList[6].m_dwDur);
+  *reinterpret_cast<unsigned __int16 *>(payload + 3) = dwBatteryLeftDurPoint;
+  payload[5] = static_cast<char>(byNewOreIndex);
+  *reinterpret_cast<unsigned __int16 *>(payload + 6) = dwOreSerial;
+  payload[8] = static_cast<char>(byOreDur);
+
+  unsigned __int8 type[2] = {14, 6};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 9u);
+}
+
+void CPlayer::SendData_PartyMemberHP()
+{
+  if (!this->m_pPartyMgr)
+  {
+    return;
+  }
+
+  CPartyPlayer **partyMembers = this->m_pPartyMgr->GetPtrPartyMember();
+  if (!partyMembers)
+  {
+    return;
+  }
+
+  char payload[6]{};
+  *reinterpret_cast<unsigned int *>(payload) = this->m_dwObjSerial;
+  *reinterpret_cast<unsigned __int16 *>(payload + 4) = this->m_wPointRate_PartySend[0];
+
+  const int memberCount = static_cast<int>(this->m_pPartyMgr->GetPopPartyMember());
+  unsigned __int8 type[2] = {16, 20};
+  for (int index = 0; index < memberCount; ++index)
+  {
+    if (partyMembers[index] != this->m_pPartyMgr)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(partyMembers[index]->m_wZoneIndex, type, payload, 6u);
+    }
+  }
+}
+
+void CPlayer::SendData_PartyMemberFP()
+{
+  if (!this->m_pPartyMgr)
+  {
+    return;
+  }
+
+  CPartyPlayer **partyMembers = this->m_pPartyMgr->GetPtrPartyMember();
+  if (!partyMembers)
+  {
+    return;
+  }
+
+  char payload[6]{};
+  *reinterpret_cast<unsigned int *>(payload) = this->m_dwObjSerial;
+  *reinterpret_cast<unsigned __int16 *>(payload + 4) = this->m_wPointRate_PartySend[1];
+
+  const int memberCount = static_cast<int>(this->m_pPartyMgr->GetPopPartyMember());
+  unsigned __int8 type[2] = {16, 21};
+  for (int index = 0; index < memberCount; ++index)
+  {
+    if (partyMembers[index] != this->m_pPartyMgr)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(partyMembers[index]->m_wZoneIndex, type, payload, 6u);
+    }
+  }
+}
+
+void CPlayer::SendData_PartyMemberSP()
+{
+  if (!this->m_pPartyMgr)
+  {
+    return;
+  }
+
+  CPartyPlayer **partyMembers = this->m_pPartyMgr->GetPtrPartyMember();
+  if (!partyMembers)
+  {
+    return;
+  }
+
+  char payload[6]{};
+  *reinterpret_cast<unsigned int *>(payload) = this->m_dwObjSerial;
+  *reinterpret_cast<unsigned __int16 *>(payload + 4) = this->m_wPointRate_PartySend[2];
+
+  const int memberCount = static_cast<int>(this->m_pPartyMgr->GetPopPartyMember());
+  unsigned __int8 type[2] = {16, 22};
+  for (int index = 0; index < memberCount; ++index)
+  {
+    if (partyMembers[index] != this->m_pPartyMgr)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(partyMembers[index]->m_wZoneIndex, type, payload, 6u);
+    }
+  }
+}
+
+void CPlayer::SendData_PartyMemberMaxHFSP()
+{
+  if (!this->m_pPartyMgr)
+  {
+    return;
+  }
+
+  CPartyPlayer **partyMembers = this->m_pPartyMgr->GetPtrPartyMember();
+  if (!partyMembers)
+  {
+    return;
+  }
+
+  char payload[10]{};
+  *reinterpret_cast<unsigned int *>(payload) = this->m_dwObjSerial;
+  *reinterpret_cast<unsigned __int16 *>(payload + 4) = static_cast<unsigned __int16>(this->GetMaxHP());
+  *reinterpret_cast<__int16 *>(payload + 6) = static_cast<__int16>(this->GetMaxFP());
+  *reinterpret_cast<__int16 *>(payload + 8) = static_cast<__int16>(this->GetMaxSP());
+
+  const int memberCount = static_cast<int>(this->m_pPartyMgr->GetPopPartyMember());
+  unsigned __int8 type[2] = {16, 25};
+  for (int index = 0; index < memberCount; ++index)
+  {
+    if (partyMembers[index] != this->m_pPartyMgr)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(partyMembers[index]->m_wZoneIndex, type, payload, 0xAu);
+    }
+  }
+}
+
+void CPlayer::SendData_PartyMemberEffect(unsigned __int8 byAlterCode, unsigned __int16 wEffectCode, unsigned __int8 byLv)
+{
+  if (!this->m_pPartyMgr)
+  {
+    return;
+  }
+
+  CPartyPlayer **partyMembers = this->m_pPartyMgr->GetPtrPartyMember();
+  if (!partyMembers)
+  {
+    return;
+  }
+
+  char payload[8]{};
+  *reinterpret_cast<unsigned int *>(payload) = this->m_dwObjSerial;
+  payload[4] = static_cast<char>(byAlterCode);
+  *reinterpret_cast<unsigned __int16 *>(payload + 5) = wEffectCode;
+  payload[7] = static_cast<char>(byLv);
+
+  const int memberCount = static_cast<int>(this->m_pPartyMgr->GetPopPartyMember());
+  unsigned __int8 type[2] = {16, 26};
+  for (int index = 0; index < memberCount; ++index)
+  {
+    if (partyMembers[index] != this->m_pPartyMgr)
+    {
+      g_Network.m_pProcess[0]->LoadSendMsg(partyMembers[index]->m_wZoneIndex, type, payload, 8u);
+    }
+  }
+}
+
+void CPlayer::SendMsg_AlterHPInform()
+{
+  char payload[2]{};
+  *reinterpret_cast<unsigned __int16 *>(payload) = static_cast<unsigned __int16>(this->GetHP());
+
+  unsigned __int8 type[2] = {11, 14};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 2u);
+}
+
+void CPlayer::SendMsg_HSKQuestSucc(char byQuestCode, char bSucc)
+{
+  char payload[2]{};
+  payload[0] = byQuestCode;
+  payload[1] = bSucc;
+
+  unsigned __int8 type[2] = {25, 13};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 2u);
+}
+
+void CPlayer::SendMsg_InsertQuestItemInform(_STORAGE_LIST::_db_con *pItem)
+{
+  char payload[0x0B]{};
+  payload[0] = static_cast<char>(pItem->m_byTableCode);
+  *reinterpret_cast<unsigned __int16 *>(payload + 1) = pItem->m_wItemIndex;
+  *reinterpret_cast<unsigned int *>(payload + 3) = static_cast<unsigned int>(pItem->m_dwDur);
+  *reinterpret_cast<unsigned int *>(payload + 7) = pItem->m_dwLv;
+
+  unsigned __int8 type[2] = {24, 15};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x0Bu);
+}
+
+void CPlayer::SendMsg_AddEffect(
+  unsigned __int16 wEffectCode,
+  unsigned __int8 byLv,
+  unsigned __int16 wDurSec,
+  unsigned int dwPlayerSerial,
+  char *wszPlayerName)
+{
+  char payload[0x1A]{};
+  payload[0] = static_cast<char>(byLv);
+  *reinterpret_cast<unsigned __int16 *>(payload + 1) = wEffectCode;
+  *reinterpret_cast<unsigned __int16 *>(payload + 3) = wDurSec;
+  *reinterpret_cast<unsigned int *>(payload + 5) = dwPlayerSerial;
+  if (dwPlayerSerial != 0)
+  {
+    strcpy_s(payload + 9, 0x11u, wszPlayerName);
+  }
+
+  unsigned __int8 type[2] = {17, 10};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x1Au);
+  this->SendData_PartyMemberEffect(0, wEffectCode, byLv);
+}
+
+void CPlayer::SendMsg_DelEffect(unsigned __int8 byEffectCode, unsigned __int16 wEffectIndex, unsigned __int8 byLv)
+{
+  const unsigned __int16 effectBit =
+    static_cast<unsigned __int16>(this->CalcEffectBit(byEffectCode, wEffectIndex));
+
+  char payload[6]{};
+  *reinterpret_cast<unsigned __int16 *>(payload) = effectBit;
+  *reinterpret_cast<unsigned int *>(payload + 2) = this->m_dwObjSerial;
+
+  unsigned __int8 type[2] = {17, 11};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 6u);
+  this->SendData_PartyMemberEffect(1, effectBit, byLv);
+}
+
+void CPlayer::SendMsg_DTradeAskInform(CPlayer *pAsker)
+{
+  char payload[6]{};
+  *reinterpret_cast<unsigned __int16 *>(payload) = pAsker->m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned int *>(payload + 2) = pAsker->m_dwObjSerial;
+
+  unsigned __int8 type[2] = {18, 3};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 6u);
+}
+
+void CPlayer::SendMsg_DTradeAnswerResult(char byErrCode)
+{
+  char payload[1]{};
+  payload[0] = byErrCode;
+
+  unsigned __int8 type[2] = {18, 5};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+}
+
+void CPlayer::SendMsg_DTradeStartInform(CPlayer *pAsker, CPlayer *pAnswer, unsigned int *pdwKey)
+{
+  char payload[0x1E]{};
+  *reinterpret_cast<unsigned __int16 *>(payload) = pAsker->m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned int *>(payload + 2) = pAsker->m_dwObjSerial;
+  payload[6] = static_cast<char>(pAsker->m_pmTrd.byEmptyInvenNum);
+  *reinterpret_cast<unsigned __int16 *>(payload + 7) = pAnswer->m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned int *>(payload + 9) = pAnswer->m_dwObjSerial;
+  payload[13] = static_cast<char>(pAnswer->m_pmTrd.byEmptyInvenNum);
+  if (pdwKey)
+  {
+    memcpy_0(payload + 14, pdwKey, 0x10uLL);
+  }
+
+  unsigned __int8 type[2] = {18, 6};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x1Eu);
+}
+
+void CPlayer::SendMsg_DTradeLockResult(char byErrCode)
+{
+  char payload[1]{};
+  payload[0] = byErrCode;
+
+  unsigned __int8 type[2] = {18, 11};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+}
+
+void CPlayer::SendMsg_DTradeLockInform()
+{
+  char payload[1]{};
+
+  unsigned __int8 type[2] = {18, 12};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+}
+
+void CPlayer::SendMsg_DTradeAddResult(char byErrCode)
+{
+  char payload[1]{};
+  payload[0] = byErrCode;
+
+  unsigned __int8 type[2] = {18, 14};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+}
+
+void CPlayer::SendMsg_DTradeAddInform(char bySlotIndex, _STORAGE_LIST::_db_con *pItem, unsigned __int8 byAmount)
+{
+  char payload[0x17]{};
+  payload[0] = bySlotIndex;
+  payload[1] = static_cast<char>(pItem->m_byTableCode);
+  *reinterpret_cast<unsigned __int16 *>(payload + 2) = pItem->m_wItemIndex;
+  *reinterpret_cast<unsigned __int64 *>(payload + 4) = pItem->m_dwDur;
+  *reinterpret_cast<unsigned int *>(payload + 12) = pItem->m_dwLv;
+  payload[16] = static_cast<char>(byAmount);
+  payload[17] = static_cast<char>(this->m_pmTrd.byEmptyInvenNum);
+  payload[18] = static_cast<char>(pItem->m_byCsMethod);
+  *reinterpret_cast<unsigned int *>(payload + 19) = pItem->m_dwT;
+
+  unsigned __int8 type[2] = {18, 15};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x17u);
+}
+
+void CPlayer::SendMsg_DTradeDelResult(char byErrCode)
+{
+  char payload[1]{};
+  payload[0] = byErrCode;
+
+  unsigned __int8 type[2] = {18, 17};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+}
+
+void CPlayer::SendMsg_DTradeDelInform(char bySlotIndex)
+{
+  char payload[2]{};
+  payload[0] = bySlotIndex;
+  payload[1] = static_cast<char>(this->m_pmTrd.byEmptyInvenNum);
+
+  unsigned __int8 type[2] = {18, 18};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 2u);
+}
+
+void CPlayer::SendMsg_DTradeBetResult(char byErrCode)
+{
+  char payload[1]{};
+  payload[0] = byErrCode;
+
+  unsigned __int8 type[2] = {18, 20};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+}
+
+void CPlayer::SendMsg_DTradeBetInform(char byUnitCode, unsigned int dwAmount)
+{
+  char payload[5]{};
+  payload[0] = byUnitCode;
+  *reinterpret_cast<unsigned int *>(payload + 1) = dwAmount;
+
+  unsigned __int8 type[2] = {18, 21};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 5u);
+}
+
+void CPlayer::SendMsg_DTradeUnitInfoInform(char byTradeSlotIndex, _UNIT_DB_BASE::_LIST *pUnitData)
+{
+  char payload[0x38]{};
+  payload[0] = byTradeSlotIndex;
+  payload[1] = static_cast<char>(pUnitData->byFrame);
+  *reinterpret_cast<unsigned int *>(payload + 2) = pUnitData->dwGauge;
+  memcpy_0(payload + 6, pUnitData->byPart, sizeof(pUnitData->byPart));
+  memcpy_0(payload + 12, pUnitData->dwBullet, sizeof(pUnitData->dwBullet));
+  memcpy_0(payload + 20, pUnitData->dwSpare, sizeof(pUnitData->dwSpare));
+  *reinterpret_cast<int *>(payload + 52) = pUnitData->nPullingFee;
+
+  unsigned __int8 type[2] = {18, 27};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x38u);
+}
+
+void CPlayer::SendMsg_DTradeUnitAddInform(unsigned __int16 wUnitKeySerial, _UNIT_DB_BASE::_LIST *pUnitData)
+{
+  char payload[0x3A]{};
+  *reinterpret_cast<unsigned __int16 *>(payload) = wUnitKeySerial;
+  payload[2] = static_cast<char>(pUnitData->bySlotIndex);
+  payload[3] = static_cast<char>(pUnitData->byFrame);
+  *reinterpret_cast<unsigned int *>(payload + 4) = pUnitData->dwGauge;
+  memcpy_0(payload + 8, pUnitData->byPart, sizeof(pUnitData->byPart));
+  memcpy_0(payload + 14, pUnitData->dwBullet, sizeof(pUnitData->dwBullet));
+  memcpy_0(payload + 22, pUnitData->dwSpare, sizeof(pUnitData->dwSpare));
+  *reinterpret_cast<int *>(payload + 54) = pUnitData->nPullingFee;
+
+  unsigned __int8 type[2] = {18, 28};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x3Au);
+}
+
+void CPlayer::SendMsg_StartShopping()
+{
+  char payload[1]{};
+
+  unsigned __int8 type[2] = {12, 16};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+}
+
+void CPlayer::SendMsg_TargetObjectHPInform()
+{
+  char payload[8]{};
+  payload[0] = static_cast<char>(this->m_TargetObject.byKind);
+  payload[1] = static_cast<char>(this->m_TargetObject.byID);
+  *reinterpret_cast<unsigned int *>(payload + 2) = this->m_TargetObject.dwSerial;
+  *reinterpret_cast<unsigned __int16 *>(payload + 6) = this->m_TargetObject.wHPRate;
+
+  unsigned __int8 type[2] = {13, 29};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 8u);
+}
+
+void CPlayer::SendMsg_RefeshGroupTargetPosition(char byGroupType)
+{
+  char payload[0x13]{};
+  payload[0] = byGroupType;
+
+  const unsigned __int8 groupIndex = static_cast<unsigned __int8>(byGroupType);
+  CGameObject *groupObject = this->m_GroupTargetObject[groupIndex].pObject;
+  payload[1] = static_cast<char>(groupObject->m_pCurMap->m_pMapSet->m_dwIndex);
+  payload[2] = static_cast<char>(this->m_GroupTargetObject[groupIndex].byID);
+  *reinterpret_cast<unsigned int *>(payload + 3) = this->m_GroupTargetObject[groupIndex].dwSerial;
+  memcpy_0(payload + 7, groupObject->m_fCurPos, 0xCuLL);
+
+  unsigned __int8 type[2] = {13, 110};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x13u);
+}
+
+void CPlayer::SendMsg_CastVoteResult(char byRetCode)
+{
+  char payload[0x0B]{};
+  payload[0] = byRetCode;
+
+  if (byRetCode == 0)
+  {
+    *reinterpret_cast<int *>(payload + 1) = this->m_nVoteSerial;
+    const int raceCode = this->m_Param.GetRaceCode();
+    for (int index = 0; index < 3; ++index)
+    {
+      *reinterpret_cast<unsigned __int16 *>(payload + 5 + (2 * index)) =
+        static_cast<unsigned __int16>(g_VoteSys[raceCode].m_dwPoint[index]);
+    }
+  }
+
+  unsigned __int8 type[2] = {26, 6};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x0Bu);
+}
+
+void CPlayer::SendMsg_ExtTrunkExtendResult(char byRetCode, unsigned __int8 bySlotNum, unsigned __int8 byLackSlotNum)
+{
+  char payload[3]{};
+  payload[0] = byRetCode;
+  payload[1] = static_cast<char>(bySlotNum / 20);
+  payload[2] = static_cast<char>(byLackSlotNum / 20);
+
+  unsigned __int8 type[2] = {34, 26};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 3u);
+}
+
+void CPlayer::SendMsg_RemainTimeInform(__int16 iType, int lRemainTime, _SYSTEMTIME *pstEndDate)
+{
+  char payload[0x16]{};
+  *reinterpret_cast<__int16 *>(payload) = iType;
+  *reinterpret_cast<int *>(payload + 2) = lRemainTime;
+  if (pstEndDate)
+  {
+    memcpy_0(payload + 6, pstEndDate, 0x10uLL);
+  }
+
+  unsigned __int8 type[2] = {29, 1};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x16u);
+}
+
+void CPlayer::SendMsg_BillingTypeChangeInform(
+  __int16 iType,
+  int lRemainTime,
+  _SYSTEMTIME *pstEndDate,
+  unsigned __int8 byReason)
+{
+  char payload[0x19]{};
+  *reinterpret_cast<__int16 *>(payload) = this->m_pUserDB->m_BillingInfo.iType;
+  *reinterpret_cast<__int16 *>(payload + 2) = iType;
+  *reinterpret_cast<int *>(payload + 4) = lRemainTime;
+  if (pstEndDate)
+  {
+    memcpy_0(payload + 8, pstEndDate, 0x10uLL);
+  }
+  payload[24] = static_cast<char>(byReason);
+
+  unsigned __int8 type[2] = {29, 3};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x19u);
+}
+
+void CPlayer::SendTargetMonsterSFContInfo()
+{
+  CGameObject *targetObject = this->GetTargetObj();
+  if (!targetObject || targetObject->m_ObjID.m_byKind != 0 || targetObject->m_ObjID.m_byID != 1)
+  {
+    return;
+  }
+
+  CMonster *targetMonster = reinterpret_cast<CMonster *>(targetObject);
+  _target_monster_contsf_allinform_zocl currentInfo{};
+  currentInfo.Init();
+  currentInfo.dwSerial = targetMonster->m_dwObjSerial;
+
+  unsigned __int8 contCount = 0;
+  for (int groupIndex = 0; groupIndex < 2; ++groupIndex)
+  {
+    for (int effectIndex = 0; effectIndex < targetMonster->GetMaxDMGSFContCount(); ++effectIndex)
+    {
+      _sf_continous *cont = &targetMonster->m_SFCont[groupIndex][effectIndex];
+      if (!cont->m_bExist)
+      {
+        continue;
+      }
+
+      if (contCount < targetMonster->GetMaxDMGSFContCount())
+      {
+        currentInfo.m_MonContSf[contCount].wSfcode =
+          static_cast<unsigned __int16>(this->CalcEffectBit(cont->m_byEffectCode, cont->m_wEffectIndex));
+        ++contCount;
+        currentInfo.byContCount = contCount;
+      }
+    }
+  }
+
+  if (IsSameTargetMonsterContInfo(currentInfo, this->m_TargetObject.m_PrevTargetMonsterContInfo))
+  {
+    return;
+  }
+
+  unsigned __int8 type[2] = {13, 100};
+  const unsigned __int16 length = GetTargetMonsterContInfoSize(&currentInfo);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&currentInfo),
+    length);
+
+  memcpy_0(
+    &this->m_TargetObject.m_PrevTargetMonsterContInfo,
+    &currentInfo,
+    sizeof(this->m_TargetObject.m_PrevTargetMonsterContInfo));
+}
+
+void CPlayer::SendTargetPlayerDamageContInfo()
+{
+  CGameObject *targetObject = this->GetTargetObj();
+  if (!targetObject || targetObject->m_ObjID.m_byKind != 0 || targetObject->m_ObjID.m_byID != 0)
+  {
+    return;
+  }
+
+  _target_player_damage_contsf_allinform_zocl currentInfo{};
+  currentInfo.Init();
+  currentInfo.dwSerial = targetObject->m_dwObjSerial;
+
+  unsigned __int8 contCount = 0;
+  for (int index = 0; index < 8; ++index)
+  {
+    char *contData = reinterpret_cast<char *>(&targetObject[1].m_fAbsPos[12 * index + 2]);
+    if (!contData[0])
+    {
+      continue;
+    }
+
+    currentInfo.m_PlayerContSf[contCount].wSfcode = static_cast<unsigned __int16>(this->CalcEffectBit(
+      static_cast<unsigned __int8>(contData[1]),
+      *reinterpret_cast<unsigned __int16 *>(contData + 2)));
+    currentInfo.m_PlayerContSf[contCount].byContCount = static_cast<unsigned __int8>(contData[20]);
+    ++contCount;
+    currentInfo.byContCount = contCount;
+  }
+
+  if (IsSameTargetPlayerDamageContInfo(currentInfo, this->m_TargetObject.m_PrevTargetPlayerDamageContInfo))
+  {
+    return;
+  }
+
+  unsigned __int8 type[2] = {13, 112};
+  const unsigned __int16 length = GetTargetPlayerDamageContInfoSize(&currentInfo);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&currentInfo),
+    length);
+
+  memcpy_0(
+    &this->m_TargetObject.m_PrevTargetPlayerDamageContInfo,
+    &currentInfo,
+    sizeof(this->m_TargetObject.m_PrevTargetPlayerDamageContInfo));
+}
+
+void CPlayer::SendMsg_TeleportError(char byErrorCode, unsigned int dwMapIndex)
+{
+  char payload[5]{};
+  payload[0] = byErrorCode;
+  *reinterpret_cast<unsigned int *>(payload + 1) = dwMapIndex;
+
+  unsigned __int8 type[2] = {17, 43};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 5u);
+}
+
+void CPlayer::SendMsg_RevivalOfJade(unsigned __int16 wSuccRate)
+{
+  (void)wSuccRate;
+  char payload[1]{};
+
+  unsigned __int8 type[2] = {3, 58};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+}
+
+void CPlayer::SendMsg_UseJadeResult(unsigned __int8 byErrCode, unsigned __int16 wItemSerial)
+{
+  char payload[6]{};
+  *reinterpret_cast<unsigned int *>(payload) = byErrCode;
+  *reinterpret_cast<unsigned __int16 *>(payload + 4) = wItemSerial;
+
+  unsigned __int8 type[2] = {7, 65};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 6u);
+}
+
+void CPlayer::SendMsg_BuddyNameReNewal(unsigned int dwSerial, char *wszName)
+{
+  char payload[0x15]{};
+  *reinterpret_cast<unsigned int *>(payload) = dwSerial;
+  strcpy_s(payload + 4, 0x11u, wszName);
+
+  unsigned __int8 type[2] = {31, 17};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x15u);
+}
+
+void CPlayer::SendMsg_NotifyEffectForGetItem(
+  char byBoxType,
+  unsigned int dwCharSerial,
+  char *szCharName,
+  _STORAGE_LIST::_db_con *pItem,
+  bool bCircle)
+{
+  char payload[0x1A]{};
+  payload[0] = byBoxType;
+  payload[1] = static_cast<char>(pItem->m_byTableCode);
+  *reinterpret_cast<unsigned __int16 *>(payload + 2) = pItem->m_wItemIndex;
+  payload[4] = static_cast<char>(pItem->m_dwDur);
+  *reinterpret_cast<unsigned int *>(payload + 5) = dwCharSerial;
+  strcpy_0(payload + 9, szCharName);
+
+  unsigned __int8 type[2] = {13, static_cast<unsigned __int8>(-106)};
+  if (bCircle)
+  {
+    this->CircleReport(type, payload, 26, true);
+  }
+  else
+  {
+    for (unsigned int index = 0; index < MAX_PLAYER; ++index)
+    {
+      CPlayer *targetPlayer = &g_Player[index];
+      if (targetPlayer && targetPlayer->m_bLive)
+      {
+        g_Network.m_pProcess[0]->LoadSendMsg(targetPlayer->m_ObjID.m_wIndex, type, payload, 0x1Au);
+      }
+    }
+  }
+}
+
+void CPlayer::SendMsg_ApexInform(unsigned __int16 dwRecvSize, char *pMsg)
+{
+  unsigned __int8 type[2] = {99, 3};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, pMsg, dwRecvSize);
+}
+
+void CPlayer::SendMsg_MaxPvpPointInform(int nMax)
+{
+  char payload[4]{};
+  *reinterpret_cast<int *>(payload) = nMax;
+
+  unsigned __int8 type[2] = {59, 15};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 4u);
+}
+
+void CPlayer::SendMsg_NewMovePotionResult()
+{
+  char payload[1]{};
+  payload[0] = 1;
+
+  unsigned __int8 type[2] = {17, 45};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+}
+
+void CPlayer::SendMsg_UnitRideChange(bool bTake, CParkingUnit *pUnit)
+{
+  char payload[0x13]{};
+  *reinterpret_cast<unsigned __int16 *>(payload) = this->m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned int *>(payload + 2) = this->m_dwObjSerial;
+  *reinterpret_cast<unsigned __int16 *>(payload + 6) = this->GetVisualVer();
+  payload[8] = bTake ? 1 : 0;
+  *reinterpret_cast<unsigned int *>(payload + 9) = pUnit->m_dwObjSerial;
+
+  short shortPos[3]{};
+  FloatToShort(this->m_fCurPos, shortPos, 3);
+  memcpy_0(payload + 13, shortPos, sizeof(shortPos));
+
+  unsigned __int8 type[2] = {3, 35};
+  this->CircleReport(type, payload, 19, false);
+}
+
+void CPlayer::SendMsg_Die()
+{
+  char payload[6]{};
+  *reinterpret_cast<unsigned __int16 *>(payload) = this->m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned int *>(payload + 2) = this->m_dwObjSerial;
+
+  unsigned __int8 type[2] = {3, 23};
+  this->CircleReport(type, payload, 6, true);
+}
+
+void CPlayer::SendMsg_BreakdownEquipItem(unsigned __int8 byPartIndex, unsigned __int16 wSerial)
+{
+  char payload[0x0B]{};
+  *reinterpret_cast<unsigned __int16 *>(payload) = this->m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned int *>(payload + 2) = this->m_dwObjSerial;
+  *reinterpret_cast<unsigned __int16 *>(payload + 6) = this->GetVisualVer();
+  payload[8] = static_cast<char>(byPartIndex);
+  *reinterpret_cast<unsigned __int16 *>(payload + 9) = wSerial;
+
+  unsigned __int8 type[2] = {5, 19};
+  this->CircleReport(type, payload, 11, true);
+}
+
+void CPlayer::SendMsg_Notify_Gravity_Stone_Owner_Die()
+{
+  char payload[5]{};
+  payload[0] = static_cast<char>(this->m_ObjID.m_byID);
+  *reinterpret_cast<unsigned int *>(payload + 1) = this->m_dwObjSerial;
+
+  unsigned __int8 type[2] = {27, 86};
+  this->CircleReport(type, payload, 5, true);
+}
 
 void CPlayer::SendMsg_GuildJoinApplyResult(char byRetCode, CGuild *pApplyGuild)
 {
@@ -16400,3 +17353,4 @@ if (m_bCorpse || m_bMapLoading || CGameObject::GetCurSecNum() == static_cast<uns
   SetBattleMode(false);
   return static_cast<unsigned int>(m_Param.GetHP());
 }
+

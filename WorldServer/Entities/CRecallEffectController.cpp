@@ -12,37 +12,6 @@
 
 namespace
 {
-void SendDecideRecallErrorResultToDest(
-  CRecallEffectController *controller,
-  char byErrorCode,
-  CPlayer *destination,
-  int callerMapCode)
-{
-if (!destination)
-  {
-    return;
-  }
-
-#pragma pack(push, 1)
-  struct DecideRecallErrorPacket
-  {
-    char byErrorCode;
-    int nCallerMapCode;
-  };
-#pragma pack(pop)
-
-  DecideRecallErrorPacket packet{};
-  packet.byErrorCode = byErrorCode;
-  packet.nCallerMapCode = callerMapCode;
-
-  unsigned __int8 type[2] = {17, 35};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    destination->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
-}
-
 unsigned __int8 GetResistedRecall(
   CRecallEffectController *controller,
   unsigned __int16 requestID,
@@ -217,6 +186,63 @@ void CRecallEffectController::SendRecallReqeustResult(char byRet, CPlayer *pkObj
     static_cast<unsigned __int16>(sizeof(msg)));
 }
 
+void CRecallEffectController::SendRecallReqeustToDest(
+  unsigned __int16 wRequestID,
+  CPlayer *pkPerformer,
+  CPlayer *pkDest)
+{
+  if (!pkPerformer || !pkDest)
+  {
+    return;
+  }
+
+#pragma pack(push, 1)
+  struct RecallRequestMessage
+  {
+    unsigned __int16 wRequestID;
+    char wszPerformerName[17];
+  };
+#pragma pack(pop)
+
+  RecallRequestMessage msg{};
+  msg.wRequestID = wRequestID;
+  strcpy_0(msg.wszPerformerName, pkPerformer->m_Param.GetCharNameW());
+
+  unsigned __int8 pbyType[2]{17, 33};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    pkDest->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
+}
+
+void CRecallEffectController::SendDecideRecallErrorResultToDest(char byErr, CPlayer *pkDest, int nCallerMapCode)
+{
+  if (!pkDest)
+  {
+    return;
+  }
+
+#pragma pack(push, 1)
+  struct DecideRecallErrorMessage
+  {
+    char byErr;
+    int nCallerMapCode;
+  };
+#pragma pack(pop)
+
+  DecideRecallErrorMessage msg{};
+  msg.byErr = byErr;
+  msg.nCallerMapCode = nCallerMapCode;
+
+  unsigned __int8 pbyType[2]{17, 35};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    pkDest->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
+}
+
 void CRecallEffectController::DecideRecall(unsigned __int16 dwRequestID, unsigned __int8 byAgree, CPlayer *pkObj)
 {
   if (!pkObj || !pkObj->m_bOper)
@@ -226,7 +252,7 @@ void CRecallEffectController::DecideRecall(unsigned __int16 dwRequestID, unsigne
 
   if (byAgree && byAgree != 1)
   {
-    SendDecideRecallErrorResultToDest(this, 6u, pkObj, -1);
+    SendDecideRecallErrorResultToDest(6u, pkObj, -1);
     return;
   }
 
@@ -234,14 +260,14 @@ void CRecallEffectController::DecideRecall(unsigned __int16 dwRequestID, unsigne
   unsigned __int8 resistedRecall = GetResistedRecall(this, dwRequestID, &request);
   if (resistedRecall)
   {
-    SendDecideRecallErrorResultToDest(this, static_cast<char>(resistedRecall), pkObj, -1);
+    SendDecideRecallErrorResultToDest(static_cast<char>(resistedRecall), pkObj, -1);
     return;
   }
 
   CPlayer *owner = request ? request->m_pkOwner : nullptr;
   if (!owner)
   {
-    SendDecideRecallErrorResultToDest(this, 3, pkObj, -1);
+    SendDecideRecallErrorResultToDest(3, pkObj, -1);
     CloseRecallRequest(this, request, true);
     return;
   }
@@ -255,19 +281,19 @@ void CRecallEffectController::DecideRecall(unsigned __int16 dwRequestID, unsigne
 
   if (pkObj->IsSiegeMode())
   {
-    SendDecideRecallErrorResultToDest(this, 0x1Au, pkObj, -1);
+    SendDecideRecallErrorResultToDest(0x1Au, pkObj, -1);
     return;
   }
 
   if (g_HolySys.GetDestroyerState() == 2 && g_HolySys.GetDestroyerSerial() == pkObj->m_dwObjSerial)
   {
-    SendDecideRecallErrorResultToDest(this, 0x14u, pkObj, -1);
+    SendDecideRecallErrorResultToDest(0x14u, pkObj, -1);
     return;
   }
 
   if (owner->GetCurSecNum() == -1 || owner->m_bMapLoading)
   {
-    SendDecideRecallErrorResultToDest(this, 0x15u, pkObj, -1);
+    SendDecideRecallErrorResultToDest(0x15u, pkObj, -1);
     return;
   }
 
@@ -275,7 +301,7 @@ void CRecallEffectController::DecideRecall(unsigned __int16 dwRequestID, unsigne
   {
     if (pkObj->m_pCurMap != owner->m_pCurMap)
     {
-      SendDecideRecallErrorResultToDest(this, 0xCu, pkObj, owner->m_pCurMap->m_nMapCode);
+      SendDecideRecallErrorResultToDest(0xCu, pkObj, owner->m_pCurMap->m_nMapCode);
       SendRecallReqeustResult(0xDu, owner);
       CloseRecallRequest(this, request, true);
       return;
@@ -285,7 +311,7 @@ void CRecallEffectController::DecideRecall(unsigned __int16 dwRequestID, unsigne
   {
     if (!request->m_bBattleModeUse && pkObj->Is_Battle_Mode())
     {
-      SendDecideRecallErrorResultToDest(this, 0x12u, pkObj, -1);
+      SendDecideRecallErrorResultToDest(0x12u, pkObj, -1);
       return;
     }
 
@@ -294,7 +320,7 @@ void CRecallEffectController::DecideRecall(unsigned __int16 dwRequestID, unsigne
     const int playerLevel = static_cast<int>(pkObj->GetLevel());
     if (playerLevel < minLevel || (maxLevel != -1 && playerLevel > maxLevel))
     {
-      SendDecideRecallErrorResultToDest(this, 0x13u, pkObj, -1);
+      SendDecideRecallErrorResultToDest(0x13u, pkObj, -1);
       return;
     }
 
@@ -304,18 +330,18 @@ void CRecallEffectController::DecideRecall(unsigned __int16 dwRequestID, unsigne
       {
         if (pkObj->m_pDHChannel != owner->m_pDHChannel)
         {
-          SendDecideRecallErrorResultToDest(this, 0x16u, pkObj, -1);
+          SendDecideRecallErrorResultToDest(0x16u, pkObj, -1);
           return;
         }
       }
       else if (!pkObj->m_pDHChannel && owner->m_pDHChannel)
       {
-        SendDecideRecallErrorResultToDest(this, 0x16u, pkObj, -1);
+        SendDecideRecallErrorResultToDest(0x16u, pkObj, -1);
         return;
       }
       else if (pkObj->m_pDHChannel && !owner->m_pDHChannel)
       {
-        SendDecideRecallErrorResultToDest(this, 0x17u, pkObj, -1);
+        SendDecideRecallErrorResultToDest(0x17u, pkObj, -1);
         return;
       }
     }
@@ -324,13 +350,13 @@ void CRecallEffectController::DecideRecall(unsigned __int16 dwRequestID, unsigne
     {
       if (pkObj->m_bInGuildBattle && !owner->m_bInGuildBattle)
       {
-        SendDecideRecallErrorResultToDest(this, 0x19u, pkObj, -1);
+        SendDecideRecallErrorResultToDest(0x19u, pkObj, -1);
         return;
       }
 
       if (!pkObj->m_bInGuildBattle && owner->m_bInGuildBattle)
       {
-        SendDecideRecallErrorResultToDest(this, 9u, pkObj, -1);
+        SendDecideRecallErrorResultToDest(9u, pkObj, -1);
         return;
       }
 
@@ -340,13 +366,13 @@ void CRecallEffectController::DecideRecall(unsigned __int16 dwRequestID, unsigne
         const CMapData *ownerMap = GetGuildBattleMap(owner->m_Param.GetGuildSerial());
         if (destMap != ownerMap)
         {
-          SendDecideRecallErrorResultToDest(this, 0x19u, pkObj, -1);
+          SendDecideRecallErrorResultToDest(0x19u, pkObj, -1);
           return;
         }
 
         if (pkObj->m_bTakeGravityStone)
         {
-          SendDecideRecallErrorResultToDest(this, 0xAu, pkObj, -1);
+          SendDecideRecallErrorResultToDest(0xAu, pkObj, -1);
           return;
         }
       }
@@ -356,7 +382,7 @@ void CRecallEffectController::DecideRecall(unsigned __int16 dwRequestID, unsigne
   resistedRecall = RecallRequestTarget(request, pkObj, request->m_bStone);
   if (resistedRecall)
   {
-    SendDecideRecallErrorResultToDest(this, static_cast<char>(resistedRecall), pkObj, -1);
+    SendDecideRecallErrorResultToDest(static_cast<char>(resistedRecall), pkObj, -1);
   }
   CloseRecallRequest(this, request, true);
 }

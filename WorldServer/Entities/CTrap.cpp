@@ -2,6 +2,7 @@
 
 #include "CTrap.h"
 
+#include "CAttack.h"
 #include "CNetProcess.h"
 #include "CPlayer.h"
 #include "CPlayerDB.h"
@@ -283,6 +284,76 @@ void CTrap::SendMsg_FixPosition(int n)
 
   unsigned __int8 type[2] = {4, 168};
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+}
+
+void CTrap::SendMsg_Destroy(unsigned __int8 byDesType)
+{
+  char payload[5]{};
+  *reinterpret_cast<unsigned int *>(payload) = m_dwObjSerial;
+  payload[4] = static_cast<char>(byDesType);
+
+  unsigned __int8 type[2] = {3, static_cast<unsigned __int8>(-48)};
+  CircleReport(type, payload, 5, false);
+
+  if (m_pMaster && m_pMaster->m_dwObjSerial == m_dwMasterSerial)
+  {
+    g_Network.m_pProcess[0]->LoadSendMsg(m_pMaster->m_ObjID.m_wIndex, type, payload, 5u);
+  }
+}
+
+void CTrap::SendMsg_Create()
+{
+  char payload[19]{};
+  *reinterpret_cast<unsigned __int16 *>(payload) = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
+  *reinterpret_cast<unsigned __int16 *>(payload + 2) = m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned int *>(payload + 4) = m_dwObjSerial;
+  FloatToShort(m_fCurPos, reinterpret_cast<short *>(payload + 8), 3);
+  *reinterpret_cast<unsigned int *>(payload + 14) = m_dwMasterSerial;
+  payload[18] = static_cast<char>(m_byRaceCode);
+
+  unsigned __int8 type[2] = {3, static_cast<unsigned __int8>(-43)};
+  CircleReport(type, payload, 19, false);
+}
+
+void CTrap::SendMsg_Attack(CAttack *pAt)
+{
+  const unsigned __int8 listCount = pAt->m_nDamagedObjNum > 32 ? 0 : static_cast<unsigned __int8>(pAt->m_nDamagedObjNum);
+  char payload[326]{};
+  *reinterpret_cast<unsigned int *>(payload) = m_dwObjSerial;
+  payload[4] = pAt->m_bIsCrtAtt ? 1 : 0;
+  payload[5] = static_cast<char>(listCount);
+
+  for (unsigned __int8 index = 0; index < listCount; ++index)
+  {
+    const int offset = 6 + index * 10;
+    payload[offset] = static_cast<char>(pAt->m_DamList[index].m_pChar->m_ObjID.m_byID);
+    *reinterpret_cast<unsigned int *>(payload + offset + 1) = pAt->m_DamList[index].m_pChar->m_dwObjSerial;
+    *reinterpret_cast<unsigned __int16 *>(payload + offset + 5) =
+      static_cast<unsigned __int16>(pAt->m_DamList[index].m_nDamage);
+  }
+
+  const unsigned __int16 payloadLength = static_cast<unsigned __int16>(326 - 10 * (32 - listCount));
+  unsigned __int8 type[2] = {5, static_cast<unsigned __int8>(-104)};
+  CircleReport(type, payload, payloadLength, false);
+}
+
+void CTrap::SendMsg_TrapCompleteInform()
+{
+  char payload[4]{};
+  *reinterpret_cast<unsigned int *>(payload) = m_dwObjSerial;
+
+  unsigned __int8 type[2] = {17, static_cast<unsigned __int8>(-25)};
+  CircleReport(type, payload, 4, false);
+}
+
+void CTrap::SendMsg_AlterTranspar(bool bTranspar)
+{
+  char payload[5]{};
+  *reinterpret_cast<unsigned int *>(payload) = m_dwObjSerial;
+  payload[4] = bTranspar ? 1 : 0;
+
+  unsigned __int8 type[2] = {4, 35};
+  CircleReport(type, payload, 5, false);
 }
 
 __int64 CTrap::SetDamage(int nDam, CCharacter *pDst, int nDstLv)
