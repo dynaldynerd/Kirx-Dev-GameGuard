@@ -58,13 +58,13 @@ bool CObjectList::DeleteItem(_object_list_point *pItem)
     {
       node->m_pNext->m_pPrev = node->m_pPrev;
       node->m_pPrev->m_pNext = node->m_pNext;
-      node->m_pItem = nullptr;
       node->m_pNext = nullptr;
       node->m_pPrev = nullptr;
       --m_nSize;
       return true;
     }
   }
+  MyMessageBox("CObjectList", "DeleteItem error");
   return false;
 }
 
