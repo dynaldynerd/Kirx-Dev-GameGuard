@@ -7,6 +7,7 @@
 #include "CNetProcess.h"
 #include "CPlayer.h"
 #include "GlobalObjects.h"
+#include "CParkingUnitLocalStructs.h"
 
 int CParkingUnit::s_nLiveNum = 0;
 
@@ -37,14 +38,6 @@ bool CParkingUnit::Destroy(unsigned __int8 byDestoryType)
 
 void CParkingUnit::SendMsg_Destroy(unsigned __int8 byDestoryType)
 {
-#pragma pack(push, 1)
-  struct DestroyMsg
-  {
-    unsigned __int16 wIndex;
-    unsigned int dwSerial;
-    unsigned __int8 byDestroyType;
-  };
-#pragma pack(pop)
 
   DestroyMsg msg{};
   msg.wIndex = m_ObjID.m_wIndex;

@@ -28,6 +28,7 @@ public:
   void Init();
   void ResetAggro();
   CCharacter *GetTopAggroCharacter();
+  void Process();
   void OnlyOnceInit(CMonster *pMonster);
   void SetAggro(
     CCharacter *pCharacter,
@@ -40,6 +41,7 @@ public:
   void SendChangeAggroData();
 
 private:
+  void _ShortRank();
   CAggroNode *_SearchAggroNode(CCharacter *pCharacter);
   CAggroNode *_GetBlinkNode();
 };

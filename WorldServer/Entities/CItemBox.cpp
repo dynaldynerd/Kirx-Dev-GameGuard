@@ -12,6 +12,7 @@
 #include "CPvpUserAndGuildRankingSystem.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
+#include "CItemBoxLocalStructs.h"
 
 int CItemBox::s_nLiveNum = 0;
 unsigned int CItemBox::s_dwSerialCounter = 0;
@@ -306,22 +307,7 @@ bool CItemBox::Destroy()
 
 void CItemBox::SendMsg_Create()
 {
-#pragma pack(push, 1)
-  struct CreateMsg
-  {
-    unsigned __int8 byTableCode;
-    unsigned __int16 wItemIndex;
-    unsigned __int8 byDur;
-    unsigned __int16 wIndex;
-    unsigned int dwOwnerSerial;
-    unsigned __int8 byThrowerID;
-    unsigned __int16 wThrowerIndex;
-    unsigned int dwThrowerSerial;
-    unsigned __int8 byStateCode;
-    unsigned __int16 posShort[3];
-    unsigned __int8 byThrowerRaceCode;
-  } msg{};
-#pragma pack(pop)
+  CreateMsg msg{};
 
   msg.byTableCode = m_Item.m_byTableCode;
   msg.wItemIndex = m_pRecordSet->m_dwIndex;
@@ -363,14 +349,7 @@ void CItemBox::SendMsg_StateChange()
     return;
   }
 
-#pragma pack(push, 1)
-  struct StateMsg
-  {
-    unsigned __int16 wIndex;
-    unsigned int dwOwnerSerial;
-    unsigned __int8 byStateCode;
-  } msg{};
-#pragma pack(pop)
+  StateMsg msg{};
 
   msg.byStateCode = static_cast<unsigned __int8>(m_nStateCode);
   msg.wIndex = m_ObjID.m_wIndex;
@@ -387,19 +366,7 @@ void CItemBox::SendMsg_FixPosition(unsigned int n)
     return;
   }
 
-#pragma pack(push, 1)
-  struct FixMsg
-  {
-    unsigned __int8 byTableCode;
-    unsigned __int16 wItemIndex;
-    unsigned __int8 byDur;
-    unsigned __int16 wIndex;
-    unsigned int dwOwnerSerial;
-    unsigned __int16 posShort[3];
-    unsigned __int8 byStateCode;
-    unsigned __int8 byThrowerRaceCode;
-  } msg{};
-#pragma pack(pop)
+  FixMsg msg{};
 
   msg.byTableCode = m_Item.m_byTableCode;
   msg.wItemIndex = m_pRecordSet->m_dwIndex;

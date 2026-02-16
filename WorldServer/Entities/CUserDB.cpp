@@ -41,6 +41,7 @@
 #include "exit_alter_param.h"
 #include "RFEvent_ClassRefine.h"
 #include "CNetIndexList.h"
+#include "CUserDBLocalStructs.h"
 
 int CUserDB::s_nLoginNum = 0;
 CLogFile CUserDB::s_logAvatorDB;
@@ -311,14 +312,6 @@ void CUserDB::ForceCloseCommand(unsigned __int8 byKickType, unsigned int dwPushI
 
 void CUserDB::Inform_For_Exit_By_FireguardBlock()
 {
-#pragma pack(push, 1)
-  struct FireguardBlockRequest
-  {
-    char szAccountID[13];
-    unsigned int dwAccountSerial;
-    unsigned int dwIP;
-  };
-#pragma pack(pop)
 
   FireguardBlockRequest request{};
   strcpy_s(request.szAccountID, sizeof(request.szAccountID), m_szAccountID);
@@ -382,12 +375,6 @@ void CUserDB::SetBillingNoLogout(bool bNoLogout)
 
 void CUserDB::SendMsg_BillingInfo()
 {
-  struct _billing_msg
-  {
-    __int16 iType;
-    int lRemainTime;
-    _SYSTEMTIME stEndDate;
-  };
 
   _billing_msg msg{};
   msg.iType = m_BillingInfo.iType;
@@ -1452,6 +1439,31 @@ bool _TRUNK_DB_BASE::_LIST::Release()
   dwT = static_cast<unsigned int>(-1);
   byCsMethod = 0;
   return true;
+}
+
+_PERSONALAMINE_INVEN_DB_BASE::_LIST::_LIST()
+{
+  Init();
+}
+
+void _PERSONALAMINE_INVEN_DB_BASE::_LIST::Init()
+{
+  Key.SetRelease();
+  dwDur = 0;
+}
+
+_PERSONALAMINE_INVEN_DB_BASE::_PERSONALAMINE_INVEN_DB_BASE()
+{
+  Init();
+}
+
+void _PERSONALAMINE_INVEN_DB_BASE::Init()
+{
+  bUsable = false;
+  for (int j = 0; j < 40; ++j)
+  {
+    m_List[j].Init();
+  }
 }
 
 bool _PERSONALAMINE_INVEN_DB_BASE::_LIST::Set(const _STORAGE_LIST::_db_con *pItem)

@@ -9,6 +9,7 @@
 #include "GlobalObjects.h"
 #include "limitedsale_event_inform_zocl.h"
 #include "WorldServerUtil.h"
+#include "ICsSendInterfaceLocalStructs.h"
 
 #pragma pack(push, 1)
 struct _cash_discount_event_inform_zocl_local
@@ -29,19 +30,7 @@ struct _cash_discount_event_inform_zocl_local
 
 struct _cash_event_inform_zocl_local
 {
-  struct _limited_sale_item
-  {
-    unsigned __int8 byTableCode;
-    unsigned int dwIndex;
-    unsigned __int16 wNum;
-  };
 
-  struct _limited_sale_info
-  {
-    unsigned __int8 byCount;
-    unsigned __int8 byDiscount;
-    _limited_sale_item item[20];
-  };
 
   unsigned __int8 byEventType;
   unsigned __int8 byEventStatus;

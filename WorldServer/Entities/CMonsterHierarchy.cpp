@@ -73,6 +73,49 @@ CMonster *CMonsterHierarchy::GetChild(int nKind, unsigned int nIndex)
   return m_pChildMon[nKind][nIndex];
 }
 
+__int64 CMonsterHierarchy::SearchChildMon(CMonster *pMon)
+{
+  if (pMon)
+  {
+    for (unsigned int kind = 0; kind < 3; ++kind)
+    {
+      for (unsigned int index = 0; index < 0xA; ++index)
+      {
+        if (m_pChildMon[kind][index] == pMon)
+        {
+          return 1;
+        }
+      }
+    }
+  }
+
+  return 0;
+}
+
+__int64 CMonsterHierarchy::PushChildMon(unsigned int nKind, CMonster *pMon)
+{
+  if (SearchChildMon(pMon))
+  {
+    return 1;
+  }
+
+  if (nKind <= 2)
+  {
+    for (unsigned int index = 0; index < 0xA; ++index)
+    {
+      if (!m_pChildMon[nKind][index])
+      {
+        m_pChildMon[nKind][index] = pMon;
+        ++m_dwMonCount[nKind];
+        ++m_dwTotalCount;
+        return 1;
+      }
+    }
+  }
+
+  return 0;
+}
+
 __int64 CMonsterHierarchy::PopChildMon(CMonster *pMon)
 {
   if (pMon)
@@ -95,10 +138,84 @@ __int64 CMonsterHierarchy::PopChildMon(CMonster *pMon)
   return 0;
 }
 
+void CMonsterHierarchy::PopChildMonAll()
+{
+  for (unsigned int kind = 0; kind < 3; ++kind)
+  {
+    for (unsigned int index = 0; index < 0xA; ++index)
+    {
+      if (m_pChildMon[kind][index])
+      {
+        m_pChildMon[kind][index]->m_MonHierarcy.SetParent(nullptr);
+        m_pChildMon[kind][index] = nullptr;
+        --m_dwMonCount[kind];
+        --m_dwTotalCount;
+      }
+    }
+  }
+}
+
 __int64 CMonsterHierarchy::SetParent(CMonster *pMon)
 {
   m_pParentMon = pMon;
   return 1;
+}
+
+void CMonsterHierarchy::OnChildRegenLoop()
+{
+  if (!m_pThisMon || !m_pThisMon->m_pMonRec)
+  {
+    return;
+  }
+
+  _monster_fld *monsterRecord = m_pThisMon->m_pMonRec;
+  if (!ChildKindCount())
+  {
+    return;
+  }
+
+  if (m_pParentMon || GetLoopTime() - m_dwChildRecallTime <= monsterRecord->m_nGuardRecallTimeMS)
+  {
+    return;
+  }
+
+  m_dwChildRecallTime = GetLoopTime();
+  const int kindCount = m_byChildMonSetNum >= 3u ? 3 : m_byChildMonSetNum;
+  for (int kind = 0; kind < kindCount; ++kind)
+  {
+    if (monsterRecord->m_Child[kind].nChildMonNum <= 0)
+    {
+      break;
+    }
+
+    const unsigned int missingCount = monsterRecord->m_Child[kind].nChildMonNum - m_dwMonCount[kind];
+    for (unsigned int index = 0; index < missingCount; ++index)
+    {
+      float newPos[3]{};
+      if (m_pThisMon->m_pCurMap->GetRandPosVirtualDumExcludeStdRange(m_pThisMon->m_fCurPos, 100, 0, newPos))
+      {
+        CMonster *spawned = CreateRepMonster(
+          m_pThisMon->m_pCurMap,
+          m_pThisMon->m_wMapLayerIndex,
+          newPos,
+          &m_pThisMon->m_pRecordSet[kind + 26].m_strCode[28],
+          m_pThisMon,
+          m_pThisMon->m_bRobExp,
+          false,
+          false,
+          false,
+          false);
+
+        if (spawned)
+        {
+          if (!PushChildMon(static_cast<unsigned int>(kind), spawned))
+          {
+            spawned->m_MonHierarcy.SetParent(nullptr);
+          }
+        }
+      }
+    }
+  }
 }
 
 void CMonsterHierarchy::OnChildMonsterCreate(_monster_create_setdata *pData)

@@ -1,0 +1,81 @@
+OK	WorldServer/Entities/CAnimus.cpp:31	_animus_fixpos_packet	30	39
+OK	WorldServer/Entities/CAnimus.cpp:42	_animus_realmove_packet	41	51
+OK	WorldServer/Entities/CAnimus.cpp:197	AttackAccessor	196	205
+OK	WorldServer/Entities/CChiNetworkEX.cpp:47	ApexBlockRequest	46	51
+OK	WorldServer/Entities/CGameObject.cpp:2125	BreakStopMsg	2124	2129
+OK	WorldServer/Entities/CGuardTower.cpp:468	GuardTowerAttackMsg	467	475
+OK	WorldServer/Entities/CGuardTower.cpp:494	GuardTowerCompleteMsg	493	497
+OK	WorldServer/Entities/CGuardTower.cpp:517	GuardTowerFixPositionMsg	516	524
+OK	WorldServer/Entities/CGuardTower.cpp:662	GuardTowerDestroyMsg	661	667
+OK	WorldServer/Entities/CGuardTower.cpp:684	GuardTowerCreateMsg	683	690
+OK	WorldServer/Entities/CGuild.cpp:134	GuildRankSortEntry	133	138
+OK	WorldServer/Entities/CGuild.cpp:187	GuildBuddyData	186	191
+OK	WorldServer/Entities/CGuild.cpp:467	GuildTaxRateChangeMessage	466	470
+OK	WorldServer/Entities/CGuild.cpp:573	GuildVoteStateMessage	572	579
+SKIP_ROW	WorldServer/Entities/CGuild.cpp:899	struct
+OK	WorldServer/Entities/CGuild.cpp:1129	GuildJoinAcceptMsg	1128	1135
+OK	WorldServer/Entities/CGuild.cpp:1173	GuildLeaveMsg	1172	1177
+OK	WorldServer/Entities/CGuild.cpp:1305	AddJoinApplierMsg	1304	1310
+OK	WorldServer/Entities/CGuild.cpp:1341	DelJoinApplierMsg	1340	1344
+OK	WorldServer/Entities/CGuild.cpp:1518	GuildInfoUpdateMsg	1517	1526
+OK	WorldServer/Entities/CGuild.cpp:1956	ApplyGuildBattleResultMsg	1955	1959
+OK	WorldServer/Entities/CGuild.cpp:2410	GuildIOMoneyMsg	2409	2419
+OK	WorldServer/Entities/CGuild.cpp:2711	CommitteeResultMsg	2710	2714
+OK	WorldServer/Entities/CGuildList.cpp:63	GuildListResultMessage	62	78
+OK	WorldServer/Entities/CHolyKeeper.cpp:364	CreateMsg	363	584
+OK	WorldServer/Entities/CHolyKeeper.cpp:384	DestroyMsg	383	584
+OK	WorldServer/Entities/CHolyKeeper.cpp:400	MoveMsg	399	584
+OK	WorldServer/Entities/CHolyKeeper.cpp:579	KeeperFixPosMsg	578	584
+OK	WorldServer/Entities/CHolyKeeper.cpp:601	KeeperRealMoveMsg	600	606
+OK	WorldServer/Entities/CHolyKeeper.cpp:906	KeeperDamageEntry	905	910
+OK	WorldServer/Entities/CHolyKeeper.cpp:913	AttackKeeperInform	912	918
+OK	WorldServer/Entities/CHolyStone.cpp:170	StoneFixPosMsg	169	179
+SKIP_ROW	WorldServer/Entities/CHolyStone.cpp:268	struct
+SKIP_ROW	WorldServer/Entities/CHolyStone.cpp:318	struct
+SKIP_ROW	WorldServer/Entities/CHolyStoneSystem.cpp:271	struct
+SKIP_ROW	WorldServer/Entities/CHolyStoneSystem.cpp:880	struct
+SKIP_ROW	WorldServer/Entities/CHolyStoneSystem.cpp:1145	struct
+SKIP_ROW	WorldServer/Entities/CHolyStoneSystem.cpp:1214	struct
+SKIP_ROW	WorldServer/Entities/CHolyStoneSystem.cpp:1319	struct
+SKIP_ROW	WorldServer/Entities/CHolyStoneSystem.cpp:1388	struct
+SKIP_ROW	WorldServer/Entities/CHolyStoneSystem.cpp:1464	struct
+NO_END	WorldServer/Entities/CItemBox.cpp:310	CreateMsg
+NO_END	WorldServer/Entities/CItemBox.cpp:367	StateMsg
+NO_END	WorldServer/Entities/CItemBox.cpp:391	FixMsg
+OK	WorldServer/Entities/CMainThread.cpp:3572	_log_sheet_usernum	3571	3581
+OK	WorldServer/Entities/CMainThread.cpp:4500	_limit_run_result	4499	4503
+OK	WorldServer/Entities/CMerchant.cpp:78	MerchantFixPosMsg	77	84
+OK	WorldServer/Entities/CMerchant.cpp:108	MerchantRealMoveMsg	107	116
+OK	WorldServer/Entities/CMerchant.cpp:194	MerchantDestroyMsg	193	197
+OK	WorldServer/Entities/CMerchant.cpp:211	MerchantMoveMsg	210	216
+OK	WorldServer/Entities/CMerchant.cpp:242	TicketNumMsg	241	249
+OK	WorldServer/Entities/CMerchant.cpp:245	Entry	244	249
+OK	WorldServer/Entities/CMonster.cpp:1621	MonsterFixPosMsg	1620	1629
+OK	WorldServer/Entities/CMonster.cpp:1649	MonsterRealMoveMsg	1648	1656
+OK	WorldServer/Entities/CParkingUnit.cpp:41	DestroyMsg	40	45
+OK	WorldServer/Entities/CPvpCashPoint.cpp:72	RecoverResultMsg	71	75
+OK	WorldServer/Entities/CPvpOrderView.cpp:147	PvpOrderViewPointInform	146	150
+OK	WorldServer/Entities/CQuestMgr.cpp:87	ReturnItemAfterQuestMessage	86	91
+OK	WorldServer/Entities/CRaceBossMsgController.cpp:959	FromWebAck	958	964
+SKIP_ROW	WorldServer/Entities/CRaceBuffInfoByHolyQuest.cpp:176	struct
+SKIP_ROW	WorldServer/Entities/CRaceBuffInfoByHolyQuest.cpp:206	struct
+OK	WorldServer/Entities/CRecallEffectController.cpp:217	RecallRequestResultMsg	216	220
+OK	WorldServer/Entities/CRecallEffectController.cpp:247	RecallRequestMessage	246	250
+OK	WorldServer/Entities/CRecallEffectController.cpp:274	DecideRecallErrorMessage	273	277
+SKIP_ROW	WorldServer/Entities/CTransportShip.cpp:401	struct
+OK	WorldServer/Entities/CTrap.cpp:265	TrapFixPosMsg	264	274
+OK	WorldServer/Entities/CUnmannedTraderUserInfo.cpp:52	__list	51	57
+OK	WorldServer/Entities/CUnmannedTraderUserInfo.cpp:69	__list	68	75
+OK	WorldServer/Entities/CUnmannedTraderUserInfo.cpp:90	__list	89	94
+OK	WorldServer/Entities/CUserDB.cpp:315	FireguardBlockRequest	314	319
+OK	WorldServer/Entities/CUserDB.cpp:385	_billing_msg	384	389
+OK	WorldServer/Entities/EconomySystemFunctions.cpp:420	EconomyDataToWeb	419	427
+OK	WorldServer/Entities/FireGuard.cpp:11	FireGuardFns	10	26
+OK	WorldServer/Entities/GuildBattle.cpp:2132	_guild_battle_start_result	2131	2144
+OK	WorldServer/Entities/GuildBattle.cpp:2239	_guild_battle_restart_result	2238	2251
+OK	WorldServer/Entities/GuildBattle.cpp:2343	_guild_battle_before_start_notify	2342	2347
+OK	WorldServer/Entities/GuildBattle.cpp:2384	_guild_battle_result_notify	2383	2388
+OK	WorldServer/Entities/GuildBattle.cpp:2519	_guild_battle_result_log_notify_web	2518	2542
+OK	WorldServer/Entities/ICsSendInterface.cpp:32	_limited_sale_item	31	36
+OK	WorldServer/Entities/ICsSendInterface.cpp:39	_limited_sale_info	38	43
+SKIP_ROW	WorldServer/Entities/UIDGenerator.cpp:71	struct tm tmValue{};

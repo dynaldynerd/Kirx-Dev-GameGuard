@@ -12,6 +12,7 @@
 #include "GlobalObjects.h"
 #include "pnt_rect.h"
 #include "StoreList_fld.h"
+#include "CMerchantLocalStructs.h"
 
 CMerchant::CMerchant()
 {
@@ -74,16 +75,6 @@ void CMerchant::OutOfSec()
 
 void CMerchant::SendMsg_FixPosition(int n)
 {
-#pragma pack(push, 1)
-  struct MerchantFixPosMsg
-  {
-    unsigned __int16 wRecordIndex;
-    unsigned __int16 wIndex;
-    unsigned int dwObjSerial;
-    __int16 pos[3];
-    unsigned __int16 wLastContEffect;
-  };
-#pragma pack(pop)
 
   MerchantFixPosMsg msg{};
   msg.wRecordIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
@@ -104,18 +95,6 @@ void CMerchant::SendMsg_RealFixPosition(bool /*bCircle*/)
 
 void CMerchant::SendMsg_RealMovePoint(int n)
 {
-#pragma pack(push, 1)
-  struct MerchantRealMoveMsg
-  {
-    unsigned __int16 wRecordIndex;
-    unsigned __int16 wIndex;
-    unsigned int dwObjSerial;
-    __int16 pos[3];
-    __int16 nTarX;
-    __int16 nTarZ;
-    unsigned __int16 wLastContEffect;
-  };
-#pragma pack(pop)
 
   MerchantRealMoveMsg msg{};
   msg.wRecordIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
@@ -190,13 +169,6 @@ void CMerchant::SendMsg_Create()
 
 void CMerchant::SendMsg_Destroy()
 {
-#pragma pack(push, 1)
-  struct MerchantDestroyMsg
-  {
-    unsigned __int16 wIndex;
-    unsigned int dwObjSerial;
-  };
-#pragma pack(pop)
 
   MerchantDestroyMsg msg{};
   msg.wIndex = m_ObjID.m_wIndex;
@@ -207,15 +179,6 @@ void CMerchant::SendMsg_Destroy()
 
 void CMerchant::SendMsg_Move()
 {
-#pragma pack(push, 1)
-  struct MerchantMoveMsg
-  {
-    unsigned int dwObjSerial;
-    __int16 pos[3];
-    __int16 nTarX;
-    __int16 nTarZ;
-  };
-#pragma pack(pop)
 
   MerchantMoveMsg msg{};
   msg.dwObjSerial = m_dwObjSerial;
@@ -237,18 +200,6 @@ void CMerchant::SendMsg_TransShipTicketNumInform(unsigned int n)
   }
 
   CTransportShip *transportShip = &g_TransportShip[GetObjRace()];
-
-#pragma pack(push, 1)
-  struct TicketNumMsg
-  {
-    unsigned int dwObjSerial;
-    struct Entry
-    {
-      unsigned __int8 byTicketType;
-      unsigned __int16 wTicketNum;
-    } entry[2];
-  };
-#pragma pack(pop)
 
   TicketNumMsg msg{};
   msg.dwObjSerial = m_dwObjSerial;

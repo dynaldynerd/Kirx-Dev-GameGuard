@@ -12,6 +12,7 @@
 
 #include <cmath>
 #include <mmsystem.h>
+#include "CGuardTowerLocalStructs.h"
 
 int CGuardTower::s_nLiveNum = 0;
 unsigned int CGuardTower::s_dwSerialCnt = 0;
@@ -464,17 +465,6 @@ void CGuardTower::Loop()
 
 void CGuardTower::SendMsg_Attack(CAttack *pAt)
 {
-#pragma pack(push, 1)
-  struct GuardTowerAttackMsg
-  {
-    unsigned int dwTowerSerial;
-    unsigned __int8 byPart;
-    unsigned __int8 byCritical;
-    unsigned __int8 byTargetId;
-    unsigned int dwTargetSerial;
-    __int16 nDamage;
-  };
-#pragma pack(pop)
 
   GuardTowerAttackMsg msg{};
   msg.dwTowerSerial = m_dwObjSerial;
@@ -490,13 +480,6 @@ void CGuardTower::SendMsg_Attack(CAttack *pAt)
 
 void CGuardTower::SendMsg_TowerCompleteInform()
 {
-#pragma pack(push, 1)
-  struct GuardTowerCompleteMsg
-  {
-    unsigned int dwTowerSerial;
-    unsigned int dwMasterSerial;
-  };
-#pragma pack(pop)
 
   GuardTowerCompleteMsg msg{};
   msg.dwTowerSerial = m_dwObjSerial;
@@ -513,17 +496,6 @@ void CGuardTower::OutOfSec()
 
 void CGuardTower::SendMsg_FixPosition(int n)
 {
-#pragma pack(push, 1)
-  struct GuardTowerFixPositionMsg
-  {
-    unsigned __int16 wRecordIndex;
-    unsigned __int16 wIndex;
-    unsigned int dwObjSerial;
-    __int16 pos[3];
-    __int16 nBuildSec;
-    unsigned int dwMasterSerial;
-  };
-#pragma pack(pop)
 
   GuardTowerFixPositionMsg msg{};
   msg.wRecordIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
@@ -658,15 +630,6 @@ void CGuardTower::OnLoop_Static()
 
 void CGuardTower::SendMsg_Destroy(unsigned __int8 byDesType)
 {
-#pragma pack(push, 1)
-  struct GuardTowerDestroyMsg
-  {
-    unsigned __int16 wIndex;
-    unsigned int dwObjSerial;
-    unsigned __int8 byDesType;
-    unsigned int dwMasterSerial;
-  };
-#pragma pack(pop)
 
   GuardTowerDestroyMsg msg{};
   msg.wIndex = m_ObjID.m_wIndex;
@@ -680,16 +643,6 @@ void CGuardTower::SendMsg_Destroy(unsigned __int8 byDesType)
 
 void CGuardTower::SendMsg_Create()
 {
-#pragma pack(push, 1)
-  struct GuardTowerCreateMsg
-  {
-    unsigned __int16 wIndex;
-    unsigned __int16 wRecordIndex;
-    unsigned int dwObjSerial;
-    short pos[3];
-    unsigned int dwMasterSerial;
-  };
-#pragma pack(pop)
 
   GuardTowerCreateMsg msg{};
   msg.wIndex = m_ObjID.m_wIndex;

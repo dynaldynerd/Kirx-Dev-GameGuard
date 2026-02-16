@@ -141,6 +141,7 @@ bool _TRADE_DB_BASE::_LIST::IsEmpty()
 #include "trans_gm_msg_inform_zocl.h"
 
 #include <mmsystem.h>
+#include "CMainThreadLocalStructs.h"
 
 namespace
 {
@@ -3569,17 +3570,6 @@ void CMainThread::ForceCloseUserInTiming()
 
 void CMainThread::CheckConnNumLog()
 {
-  struct _log_sheet_usernum
-  {
-    int nAveragePerHour;
-    int nMaxPerHour;
-    int nCount;
-
-    int size() const
-    {
-      return sizeof(*this);
-    }
-  };
 
   _USER_NUM_SHEET *sheet = m_MgrConnNum.Check(CUserDB::s_nLoginNum);
   if (sheet)
@@ -4497,11 +4487,6 @@ void CMainThread::ManageClientLimitRunRequest(char *pBuf)
   pQryData[6] = pBuf[6];
   if (!PushDQSData(0xFFFFFFFF, nullptr, 0xA1u, pQryData, 7))
   {
-    struct _limit_run_result
-    {
-      char byRet;
-      unsigned __int8 data[7];
-    };
 
     _limit_run_result result{};
     result.byRet = 24;

@@ -118,6 +118,13 @@ public:
   char IsBeDamagedAble(CCharacter *pAtter) override;
   char IsRecvableContEffect() override;
   bool IsRewardExp() override;
+  void UpdateSFCont();
+  char CheckRespawnProcess();
+  void CheckMonsterRotate();
+  void CheckAutoRecoverHP();
+  char CheckDelayDestroy();
+  void AutoRecover();
+  float GetBonusInAreaAggro();
   __int64 GetMyDMGSFContCount();
   __int64 GetMaxDMGSFContCount();
   unsigned __int8 InsertSFContEffect(

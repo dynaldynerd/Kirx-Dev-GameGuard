@@ -16,6 +16,7 @@
 #include "WorldServerUtil.h"
 #include "raceboss_msg_confirm_zowb.h"
 #include "racebosssms_fromweb_send_error_result_zowb.h"
+#include "CRaceBossMsgControllerLocalStructs.h"
 
 CRaceBossMsgController *CRaceBossMsgController::Instance()
 {
@@ -955,15 +956,6 @@ void CRaceBossMsgController::SendRequestWeb(unsigned __int8 ucRace, RACE_BOSS_MS
 
   if (pkMsg->IsSendFromWeb())
   {
-#pragma pack(push, 1)
-    struct FromWebAck
-    {
-      unsigned int webSendDbId;
-      unsigned int msgIndex;
-      int worldCode;
-      unsigned __int8 raceCode;
-    };
-#pragma pack(pop)
 
     FromWebAck payload{};
     payload.webSendDbId = pkMsg->GetWebDBID();

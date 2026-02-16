@@ -9,6 +9,7 @@
 #include "CPotionMgr.h"
 #include "map_fld.h"
 #include "GlobalObjects.h"
+#include "CRecallEffectControllerLocalStructs.h"
 
 CRecallEffectController::CRecallEffectController()
 {
@@ -213,13 +214,6 @@ void CRecallEffectController::SendRecallReqeustResult(char byRet, CPlayer *pkObj
     return;
   }
 
-  #pragma pack(push, 1)
-  struct RecallRequestResultMsg
-  {
-    char byRetCode;
-    char wszDstName[17];
-  };
-  #pragma pack(pop)
 
   RecallRequestResultMsg msg{};
   msg.byRetCode = byRet;
@@ -243,13 +237,6 @@ void CRecallEffectController::SendRecallReqeustToDest(
     return;
   }
 
-#pragma pack(push, 1)
-  struct RecallRequestMessage
-  {
-    unsigned __int16 wRequestID;
-    char wszPerformerName[17];
-  };
-#pragma pack(pop)
 
   RecallRequestMessage msg{};
   msg.wRequestID = wRequestID;
@@ -270,13 +257,6 @@ void CRecallEffectController::SendDecideRecallErrorResultToDest(char byErr, CPla
     return;
   }
 
-#pragma pack(push, 1)
-  struct DecideRecallErrorMessage
-  {
-    char byErr;
-    int nCallerMapCode;
-  };
-#pragma pack(pop)
 
   DecideRecallErrorMessage msg{};
   msg.byErr = byErr;

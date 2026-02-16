@@ -124,6 +124,13 @@ AutominePersonal *AutominePersonalMgr::get_machine(unsigned int nIdx)
 
 char AutominePersonalMgr::db_load_inven(unsigned int dwSerial, _PERSONALAMINE_INVEN_DB_BASE *pCon)
 {
+  if (!pCon)
+  {
+    return 0;
+  }
+
+  pCon->Init();
+
   _personal_amine_inven inven{};
   if (g_Main.m_pWorldDB->select_amine_personal(dwSerial, &inven))
   {

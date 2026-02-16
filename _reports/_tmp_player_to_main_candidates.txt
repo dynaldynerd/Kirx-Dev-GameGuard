@@ -1,0 +1,301 @@
+
+[_combine_item_result_msg] tokens=combine,item
+  _combine_item_result_zocl
+
+[_golden_box_notify_msg] tokens=golden,box,notify
+  qry_case_select_golden_box_item
+  _db_golden_box_item
+  _notify_effect_for_get_gold_box_item_zocl
+  _notify_gold_box_event_status_zocl
+
+[CPlayer_pc_BuddyDownloadRequest_msg] tokens=buddy,download
+  _guild_member_buddy_download_zocl
+
+[CPlayer_SendData_PartyMemberPos_msg] tokens=party,member,pos
+  _party_member_info_upd
+  _guild_battle_notify_committee_member_position_zocl
+  _guild_member_pos_inform_zocl
+  _party_member_hp_upd
+  _party_member_fp_upd
+  _party_member_sp_upd
+  _party_member_lv_upd
+  _party_member_pos_upd
+
+[CPlayer_SendMsg_AdjustAmountInform_msg] tokens=adjust,amount
+  _adjust_amount_inform_zocl
+
+[CPlayer_SendMsg_AlterItemDurInform_msg] tokens=alter,item,dur
+  _trunk_alter_item_slot_request_clzo
+  _alter_item_dur_zocl
+
+[CPlayer_SendMsg_AlterMoneyInform_msg] tokens=alter,money
+  _alter_money_inform_zocl
+
+[CPlayer_SendMsg_AlterPvPRank_msg] tokens=alter,pv,prank
+  _alter_pvp_cash_zocl
+
+[CPlayer_SendMsg_AlterTowerHP_msg] tokens=alter,tower,hp
+  _alter_unit_hp_inform_zocl
+
+[CPlayer_SendMsg_AnimusReturnResult_msg] tokens=animus,return
+  _animus_return_result_zocl
+
+[CPlayer_SendMsg_BackTowerResult_msg] tokens=back,tower
+  _back_tower_result_zocl
+
+[CPlayer_SendMsg_BuddyAddAnswerResult_msg] tokens=buddy,add,answer
+  _buddy_add_request_clzo
+  _buddy_add_answer_clzo
+  _buddy_add_ask_zocl
+  _buddy_add_result_zocl
+
+[CPlayer_SendMsg_BuddyAddAsk_msg] tokens=buddy,add,ask
+  _buddy_add_request_clzo
+  _buddy_add_answer_clzo
+  _buddy_add_ask_zocl
+  _buddy_add_result_zocl
+
+[CPlayer_SendMsg_BuddyAddFail_msg] tokens=buddy,add,fail
+  _buddy_add_request_clzo
+  _buddy_add_answer_clzo
+  _buddy_add_ask_zocl
+  _buddy_add_result_zocl
+
+[CPlayer_SendMsg_BuddyPosInform_msg] tokens=buddy,pos
+  _buddy_pos_inform_zocl
+
+[CPlayer_SendMsg_ClassSkillResult_msg] tokens=class,skill
+  _class_skill_recall_teleport_request_clzo
+  _class_skill_result_other_zocl
+
+[CPlayer_SendMsg_ClassSkillResult_msg_2] tokens=class,skill
+  _class_skill_recall_teleport_request_clzo
+  _class_skill_result_other_zocl
+
+[CPlayer_SendMsg_CreateTowerResult_msg] tokens=create,tower
+  _tower_create_zocl
+
+[CPlayer_SendMsg_CreateTrapResult_msg] tokens=create,trap
+  _trap_create_zocl
+
+[CPlayer_SendMsg_DarkHoleRewardMessage_msg] tokens=dark,hole,reward,message
+  _darkhole_answer_reenter_request_clzo
+  _darkhole_enter_request_clzo
+  _darkhole_reward_message_inform_zocl
+
+[CPlayer_SendMsg_DeleteStorageInform_msg] tokens=delete,storage
+  _delete_storage_inform_zocl
+
+[CPlayer_SendMsg_Destroy_msg] tokens=destroy
+  _parkingunit_destroy_zocl
+  _destroy_gravity_stone_zocl
+  _monster_destroy_zocl
+  _trap_destroy_zocl
+  _npc_destroy_zocl
+  _stone_destroy_zocl
+  _keeper_destroy_zocl
+  _tower_destroy_zocl
+
+[CPlayer_SendMsg_EconomyRateInform_msg] tokens=economy,rate
+  _economy_rate_inform_zocl
+
+[CPlayer_SendMsg_ExchangeMoneyResult_msg] tokens=exchange,money
+  _exchange_money_result_zocl
+
+[CPlayer_SendMsg_FixPosition_msg] tokens=fix,position
+  _return_gate_fix_position_zocl
+  _gravity_stone_fix_position_zocl
+  _gravity_stone_regener_fix_position_zocl
+  _circle_zone_fix_position_zocl
+
+[CPlayer_SendMsg_ForceResult_msg] tokens=force
+  _force_fld
+  _FORCEKEY
+  _attack_force_request_clzo
+  _force_recall_teleport_request_clzo
+  _unit_force_return_inform_zocl
+  _force_result_one_zocl
+
+[CPlayer_SendMsg_ForceResult_msg_2] tokens=force
+  _force_fld
+  _FORCEKEY
+  _attack_force_request_clzo
+  _force_recall_teleport_request_clzo
+  _unit_force_return_inform_zocl
+  _force_result_one_zocl
+
+[CPlayer_SendMsg_GestureInform_msg] tokens=gesture
+  _gesture_inform_zocl
+
+[CPlayer_SendMsg_GuildMasterEffect_msg] tokens=guild,master,effect
+  _qry_case_update_guildmaster
+
+[CPlayer_SendMsg_InsertItemInform_msg] tokens=insert,item
+  _insert_item_inform_zocl
+  _insert_quest_item_inform_zocl
+
+[CPlayer_SendMsg_LendItemTimeExpired_msg] tokens=lend,item,time,expired
+  _lend_item_time_expired_zocl
+
+[CPlayer_SendMsg_NewViewOther_msg] tokens=new,view
+  _other_new_view_zocl
+
+[CPlayer_SendMsg_NpcQuestListResult_msg] tokens=npc,quest,list
+  _npc_quest_list_result_zocl
+  _possible_battle_guild_list_request_clzo
+  _guild_battle_rank_list_request_clzo
+
+[CPlayer_SendMsg_OtherShapePartEx_CashChange_msg] tokens=shape,part,ex,cash,change
+  _other_shape_change_zocl
+  _other_shape_cash_rename_zocl
+  _exchange_money_result_zocl
+
+[CPlayer_SendMsg_PartyJoinApplicationQuestion_msg] tokens=party,join,application,question
+  _party_join_joiner_result_zocl
+
+[CPlayer_SendMsg_PartyJoinInvitationQuestion_msg] tokens=party,join,invitation,question
+  _party_join_joiner_result_zocl
+
+[CPlayer_SendMsg_PartyJoinJoinerResult_msg] tokens=party,join,joiner
+  _party_join_joiner_result_zocl
+
+[CPlayer_SendMsg_PartyJoinJoinerResult_msg_2] tokens=party,join,joiner
+  _party_join_joiner_result_zocl
+
+[CPlayer_SendMsg_PartyJoinMemberResult_msg] tokens=party,join,member
+  _party_join_joiner_result_zocl
+  _party_member_info_upd
+  _party_member_hp_upd
+  _party_member_fp_upd
+  _party_member_sp_upd
+  _party_member_lv_upd
+  _party_member_pos_upd
+  _party_member_max_hfsp_upd
+
+[CPlayer_SendMsg_PartyLeaveCompulsionResult_msg] tokens=party,leave,compulsion
+  _party_leave_self_result_zocl
+
+[CPlayer_SendMsg_PartyLeaveSelfResult_msg] tokens=party,leave,self
+  _party_leave_self_result_zocl
+
+[CPlayer_SendMsg_PotionDelayTime_msg] tokens=potion,delay,time
+  _POTION_NEXT_USE_TIME_DB_BASE
+
+[CPlayer_SendMsg_RaceBattlePenelty_msg] tokens=race,battle,penelty
+  _notify_race_battle_penelty_zocl
+
+[CPlayer_SendMsg_RealMovePoint_msg] tokens=real,move,point
+  _monster_real_move_zocl
+  _keeper_real_move_zocl
+  _animus_real_move_zocl
+  _player_real_move_zocl
+
+[CPlayer_SendMsg_ReleaseSiegeModeResult_msg] tokens=release,siege,mode
+  _transform_siege_mode_other_inform_zocl
+  _release_siege_mode_other_inform_zocl
+
+[CPlayer_SendMsg_Resurrect_msg] tokens=resurrect
+  _player_resurrect_zocl
+
+[CPlayer_SendMsg_Revival_msg] tokens=revival
+  _player_revival_zocl
+
+[CPlayer_SendMsg_RewardAddItem_msg] tokens=reward,add,item
+  __add_loot_item
+  _reward_add_item_zocl
+
+[CPlayer_SendMsg_SelectWaitedQuest_msg] tokens=select,waited,quest
+  _select_class_request_clzo
+  _select_waited_quest_command_zocl
+
+[CPlayer_SendMsg_SetGroupMapPoint_msg] tokens=set,group,map,point
+  _set_group_map_point_request_clzo
+
+[CPlayer_SendMsg_SetGroupTargetObjectResult_msg] tokens=set,group,target,object
+  _set_group_map_point_request_clzo
+  _target_object_hp_inform_clzo
+  _set_target_object_result_zocl
+  _refresh_group_target_position_zocl
+
+[CPlayer_SendMsg_SkillResult_msg] tokens=skill
+  _skill_fld
+  _throw_skill_result_one_zocl
+  _attack_skill_request_clzo
+  _skill_request_clzo
+  _skill_recall_teleport_request_clzo
+  _class_skill_recall_teleport_request_clzo
+  _class_skill_result_other_zocl
+
+[CPlayer_SendMsg_SkillResult_msg_2] tokens=skill
+  _skill_fld
+  _throw_skill_result_one_zocl
+  _attack_skill_request_clzo
+  _skill_request_clzo
+  _skill_recall_teleport_request_clzo
+  _class_skill_recall_teleport_request_clzo
+  _class_skill_result_other_zocl
+
+[CPlayer_SendMsg_StateInform_msg] tokens=state
+  UsStateTBL
+  _trans_ship_state_inform_zocl
+  _itembox_state_change_zocl
+  _monster_change_state_zocl
+  _state_inform_zocl
+
+[CPlayer_SendMsg_StatInform_msg] tokens=stat
+  UsStateTBL
+  _notify_gold_box_event_status_zocl
+  _trans_ship_state_inform_zocl
+  _itembox_state_change_zocl
+  _monster_change_state_zocl
+  _state_inform_zocl
+  _stat_inform_zocl
+
+[CPlayer_SendMsg_TowerContinue_msg] tokens=tower,continue
+  _continue_tower_inform
+
+[CPlayer_SendMsg_TransformSiegeModeResult_msg] tokens=transform,siege,mode
+  _transform_siege_mode_other_inform_zocl
+  _release_siege_mode_other_inform_zocl
+
+[CPlayer_SendMsg_UnitAlterFeeInform_msg] tokens=unit,alter,fee
+  _unit_alter_fee_inform_zocl
+  _alter_unit_hp_inform_zocl
+  _alter_unit_bullet_inform_zocl
+
+[CPlayer_SendMsg_UnitBulletFillResult_msg] tokens=unit,bullet,fill
+  _unit_pack_fill_result_zocl
+  _unit_bullet_fill_request_clzo
+  _unit_bullet_fill_result_zocl
+  _alter_unit_bullet_inform_zocl
+
+[CPlayer_SendMsg_UnitDeliveryResult_msg] tokens=unit,delivery
+  _unit_delivery_request_clzo
+  _unit_delivery_result_zocl
+
+[CPlayer_SendMsg_UnitForceReturnInform_msg] tokens=unit,force,return
+  _unit_return_result_zocl
+  _unit_force_return_inform_zocl
+
+[CPlayer_SendMsg_UnitFrameBuyResult_msg] tokens=unit,frame,buy
+  _unit_frame_buy_request_clzo
+  _unit_frame_repair_request_clzo
+  _unit_frame_buy_result_zocl
+  _unit_frame_repair_result_zocl
+
+[CPlayer_SendMsg_UnitFrameRepairResult_msg] tokens=unit,frame,repair
+  _unit_frame_buy_request_clzo
+  _unit_frame_repair_request_clzo
+  _unit_frame_buy_result_zocl
+  _unit_frame_repair_result_zocl
+
+[CPlayer_SendMsg_UnitPackFillResult_msg] tokens=unit,pack,fill
+  _unit_pack_fill_result_zocl
+  _unit_bullet_fill_request_clzo
+  _unit_bullet_fill_result_zocl
+
+[CPlayer_SendMsg_UnitPartTuningResult_msg] tokens=unit,part,tuning
+  _unit_part_tuning_request_clzo
+
+[CPlayer_SendMsg_UnitSellResult_msg] tokens=unit,sell
+  _unit_sell_request_clzo

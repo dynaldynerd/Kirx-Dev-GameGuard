@@ -106,6 +106,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <vector>
+#include "CPlayerMissingLocalPacketStructs.h"
 
 namespace
 {
@@ -2158,19 +2159,11 @@ void CPlayer::SendMsg_GuildPushMoneyResult(char byRetCode)
 
 void CPlayer::SendMsg_CreateTowerResult(char byErrCode, unsigned int dwTowerObjSerial)
 {
-#pragma pack(push, 1)
-  struct CreateTowerResultPacket
-  {
-    char byErrCode;
-    unsigned int dwTowerObjSerial;
-    unsigned __int16 wFP;
-  };
-#pragma pack(pop)
 
-  CreateTowerResultPacket packet{};
+  _make_tower_result_zocl packet{};
   packet.byErrCode = byErrCode;
   packet.dwTowerObjSerial = dwTowerObjSerial;
-  packet.wFP = static_cast<unsigned __int16>(this->GetFP());
+  packet.wLeftFP = static_cast<unsigned __int16>(this->GetFP());
 
   unsigned __int8 type[2] = {17, 19};
   g_Network.m_pProcess[0]->LoadSendMsg(
@@ -2182,16 +2175,8 @@ void CPlayer::SendMsg_CreateTowerResult(char byErrCode, unsigned int dwTowerObjS
 
 void CPlayer::SendMsg_BackTowerResult(char byErrCode, unsigned __int16 wItemSerial, unsigned __int16 wLeftHP)
 {
-#pragma pack(push, 1)
-  struct BackTowerResultPacket
-  {
-    char byErrCode;
-    unsigned __int16 wItemSerial;
-    unsigned __int16 wLeftHP;
-  };
-#pragma pack(pop)
 
-  BackTowerResultPacket packet{};
+  _back_tower_result_zocl packet{};
   packet.byErrCode = byErrCode;
   packet.wItemSerial = wItemSerial;
   packet.wLeftHP = wLeftHP;
@@ -2206,19 +2191,11 @@ void CPlayer::SendMsg_BackTowerResult(char byErrCode, unsigned __int16 wItemSeri
 
 void CPlayer::SendMsg_CreateTrapResult(char byErrCode, unsigned int dwTrapObjSerial)
 {
-#pragma pack(push, 1)
-  struct CreateTrapResultPacket
-  {
-    char byErrCode;
-    unsigned int dwTrapObjSerial;
-    unsigned __int16 wFP;
-  };
-#pragma pack(pop)
 
-  CreateTrapResultPacket packet{};
+  _make_trap_result_zocl packet{};
   packet.byErrCode = byErrCode;
   packet.dwTrapObjSerial = dwTrapObjSerial;
-  packet.wFP = static_cast<unsigned __int16>(this->GetFP());
+  packet.wLeftFP = static_cast<unsigned __int16>(this->GetFP());
 
   unsigned __int8 type[2] = {17, 28};
   g_Network.m_pProcess[0]->LoadSendMsg(
@@ -2249,17 +2226,8 @@ void CPlayer::SendMsg_DTradeOKInform()
 
 void CPlayer::SendMsg_DTradeAccomplishInform(bool bSucc, unsigned __int16 wStartSerial)
 {
-#pragma pack(push, 1)
-  struct DTradeAccomplishInformPacket
-  {
-    unsigned int dwDalant;
-    unsigned int dwGold;
-    unsigned __int16 wStartSerial;
-    bool bSucc;
-  };
-#pragma pack(pop)
 
-  DTradeAccomplishInformPacket packet{};
+  _d_trade_accomplish_inform_zocl packet{};
   packet.dwDalant = this->m_Param.GetDalant();
   packet.dwGold = this->m_Param.GetGold();
   packet.wStartSerial = wStartSerial;
@@ -2275,31 +2243,17 @@ void CPlayer::SendMsg_DTradeAccomplishInform(bool bSucc, unsigned __int16 wStart
 
 void CPlayer::SendMsg_UnitFrameBuyResult(char byRetCode, char byFrameCode, char byUnitSlotIndex, unsigned __int16 wKeyIndex, unsigned __int16 wKeySerial, unsigned int *pdwConsumMoney)
 {
-#pragma pack(push, 1)
-  struct UnitFrameBuyResultPacket
-  {
-    char byRetCode;
-    char byFrameCode;
-    char byUnitSlotIndex;
-    unsigned __int16 wKeyIndex;
-    unsigned __int16 wKeySerial;
-    unsigned int dwLeftDalant;
-    unsigned int dwLeftGold;
-    unsigned int dwConsumDalant;
-    unsigned int dwConsumGold;
-  };
-#pragma pack(pop)
 
-  UnitFrameBuyResultPacket packet{};
+  _unit_frame_buy_result_zocl packet{};
   packet.byRetCode = byRetCode;
   packet.byFrameCode = byFrameCode;
-  packet.byUnitSlotIndex = byUnitSlotIndex;
-  packet.wKeyIndex = wKeyIndex;
+  packet.byAddUnitSlot = byUnitSlotIndex;
+  packet.byKeyIndex = static_cast<unsigned __int8>(wKeyIndex);
   packet.wKeySerial = wKeySerial;
-  packet.dwLeftDalant = this->m_Param.GetDalant();
-  packet.dwLeftGold = this->m_Param.GetGold();
-  packet.dwConsumDalant = pdwConsumMoney[0];
-  packet.dwConsumGold = pdwConsumMoney[1];
+  packet.dwLeftMoney[0] = this->m_Param.GetDalant();
+  packet.dwLeftMoney[1] = this->m_Param.GetGold();
+  packet.dwConsumMoney[0] = pdwConsumMoney[0];
+  packet.dwConsumMoney[1] = pdwConsumMoney[1];
 
   unsigned __int8 type[2] = {23, 2};
   g_Network.m_pProcess[0]->LoadSendMsg(
@@ -2311,28 +2265,15 @@ void CPlayer::SendMsg_UnitFrameBuyResult(char byRetCode, char byFrameCode, char 
 
 void CPlayer::SendMsg_UnitSellResult(char byRetCode, char bySlotIndex, unsigned __int16 wKeySerial, int nAddMoney, unsigned int dwTotalNonpay, unsigned int dwSumDalant, unsigned int dwSumGold)
 {
-#pragma pack(push, 1)
-  struct UnitSellResultPacket
-  {
-    char byRetCode;
-    char bySlotIndex;
-    unsigned __int16 wKeySerial;
-    unsigned int dwTotalNonpay;
-    int nAddMoney;
-    int nReserved;
-    unsigned int dwSumDalant;
-    unsigned int dwSumGold;
-  };
-#pragma pack(pop)
 
-  UnitSellResultPacket packet{};
+  _unit_sell_result_zocl packet{};
   packet.byRetCode = byRetCode;
   packet.bySlotIndex = bySlotIndex;
   packet.wKeySerial = wKeySerial;
-  packet.dwTotalNonpay = dwTotalNonpay;
-  packet.nAddMoney = nAddMoney;
-  packet.dwSumDalant = dwSumDalant;
-  packet.dwSumGold = dwSumGold;
+  packet.dwNonPayDalant = dwTotalNonpay;
+  packet.nAddMoney[0] = nAddMoney;
+  packet.dwLeftMoney[0] = dwSumDalant;
+  packet.dwLeftMoney[1] = dwSumGold;
 
   unsigned __int8 type[2] = {23, 4};
   g_Network.m_pProcess[0]->LoadSendMsg(
@@ -2344,29 +2285,16 @@ void CPlayer::SendMsg_UnitSellResult(char byRetCode, char bySlotIndex, unsigned 
 
 void CPlayer::SendMsg_UnitPartTuningResult(char byRetCode, char bySlotIndex, int *pnCost)
 {
-#pragma pack(push, 1)
-  struct UnitPartTuningResultPacket
-  {
-    char byRetCode;
-    char bySlotIndex;
-    unsigned __int8 byPart[6];
-    unsigned int dwBullet[2];
-    int nCostDalant;
-    int nCostGold;
-    unsigned int dwLeftDalant;
-    unsigned int dwLeftGold;
-  };
-#pragma pack(pop)
 
-  UnitPartTuningResultPacket packet{};
+  _unit_part_tuning_result_zocl packet{};
   packet.byRetCode = byRetCode;
   packet.bySlotIndex = bySlotIndex;
   std::memcpy(packet.byPart, this->m_Param.m_UnitDB.m_List[static_cast<unsigned __int8>(bySlotIndex)].byPart, sizeof(packet.byPart));
   std::memcpy(packet.dwBullet, this->m_Param.m_UnitDB.m_List[static_cast<unsigned __int8>(bySlotIndex)].dwBullet, sizeof(packet.dwBullet));
-  packet.nCostDalant = pnCost[0];
-  packet.nCostGold = pnCost[1];
-  packet.dwLeftDalant = this->m_Param.GetDalant();
-  packet.dwLeftGold = this->m_Param.GetGold();
+  packet.nCost[0] = pnCost[0];
+  packet.nCost[1] = pnCost[1];
+  packet.dwLeftMoney[0] = this->m_Param.GetDalant();
+  packet.dwLeftMoney[1] = this->m_Param.GetGold();
 
   unsigned __int8 type[2] = {23, 6};
   g_Network.m_pProcess[0]->LoadSendMsg(
@@ -2378,18 +2306,8 @@ void CPlayer::SendMsg_UnitPartTuningResult(char byRetCode, char bySlotIndex, int
 
 void CPlayer::SendMsg_UnitFrameRepairResult(char byRetCode, char bySlotIndex, unsigned int dwNewGauge, unsigned int dwConsumDalant)
 {
-#pragma pack(push, 1)
-  struct UnitFrameRepairResultPacket
-  {
-    char byRetCode;
-    char bySlotIndex;
-    unsigned int dwNewGauge;
-    unsigned int dwConsumDalant;
-    unsigned int dwLeftDalant;
-  };
-#pragma pack(pop)
 
-  UnitFrameRepairResultPacket packet{};
+  _unit_frame_repair_result_zocl packet{};
   packet.byRetCode = byRetCode;
   packet.bySlotIndex = bySlotIndex;
   packet.dwNewGauge = dwNewGauge;
@@ -2406,28 +2324,16 @@ void CPlayer::SendMsg_UnitFrameRepairResult(char byRetCode, char bySlotIndex, un
 
 void CPlayer::SendMsg_UnitBulletFillResult(char byRetCode, char bySlotIndex, unsigned __int16 *pwBulletIndex, unsigned int *pdwConsumMoney)
 {
-#pragma pack(push, 1)
-  struct UnitBulletFillResultPacket
-  {
-    char byRetCode;
-    char bySlotIndex;
-    unsigned __int16 wBulletIndex[2];
-    int nCostDalant;
-    unsigned int nCostGold;
-    unsigned int dwLeftDalant;
-    unsigned int dwLeftGold;
-  };
-#pragma pack(pop)
 
-  UnitBulletFillResultPacket packet{};
+  _unit_bullet_fill_result_zocl packet{};
   packet.byRetCode = byRetCode;
   packet.bySlotIndex = bySlotIndex;
   packet.wBulletIndex[0] = pwBulletIndex[0];
   packet.wBulletIndex[1] = pwBulletIndex[1];
-  packet.nCostDalant = static_cast<int>(pdwConsumMoney[0]);
-  packet.nCostGold = pdwConsumMoney[1];
-  packet.dwLeftDalant = this->m_Param.GetDalant();
-  packet.dwLeftGold = this->m_Param.GetGold();
+  packet.dwComsumMoney[0] = static_cast<int>(pdwConsumMoney[0]);
+  packet.dwComsumMoney[1] = pdwConsumMoney[1];
+  packet.dwLeftMoney[0] = this->m_Param.GetDalant();
+  packet.dwLeftMoney[1] = this->m_Param.GetGold();
 
   unsigned __int8 type[2] = {23, 10};
   g_Network.m_pProcess[0]->LoadSendMsg(
@@ -2439,19 +2345,8 @@ void CPlayer::SendMsg_UnitBulletFillResult(char byRetCode, char bySlotIndex, uns
 
 void CPlayer::SendMsg_UnitPackFillResult(unsigned __int8 byRetCode, unsigned __int8 bySlotIndex, unsigned __int8 byFillNum, _unit_pack_fill_request_clzo::__list *pList, unsigned int *pdwConsumMoney)
 {
-#pragma pack(push, 1)
-  struct UnitPackFillResultPacket
-  {
-    unsigned __int8 byRetCode;
-    unsigned __int8 bySlotIndex;
-    unsigned __int8 byFillNum;
-    _unit_pack_fill_request_clzo::__list List[8];
-    unsigned int dwComsumMoney[2];
-    unsigned int dwLeftMoney[2];
-  };
-#pragma pack(pop)
 
-  UnitPackFillResultPacket packet{};
+  _unit_pack_fill_result_zocl packet{};
   packet.byRetCode = byRetCode;
   packet.bySlotIndex = bySlotIndex;
   packet.byFillNum = byFillNum;
@@ -2474,18 +2369,8 @@ void CPlayer::SendMsg_UnitPackFillResult(unsigned __int8 byRetCode, unsigned __i
 
 void CPlayer::SendMsg_UnitDeliveryResult(char byRetCode, char bySlotIndex, unsigned int dwParkingUnitSerial, unsigned int dwPayDalant)
 {
-#pragma pack(push, 1)
-  struct UnitDeliveryResultPacket
-  {
-    char byRetCode;
-    char bySlotIndex;
-    unsigned int dwParkingUnitSerial;
-    unsigned int dwPayDalant;
-    unsigned int dwLeftDalant;
-  };
-#pragma pack(pop)
 
-  UnitDeliveryResultPacket packet{};
+  _unit_delivery_result_zocl packet{};
   packet.byRetCode = byRetCode;
   packet.bySlotIndex = bySlotIndex;
   packet.dwParkingUnitSerial = dwParkingUnitSerial;
@@ -2514,15 +2399,8 @@ void CPlayer::SendMsg_UnitLeaveResult(char byRetCode)
 
 void CPlayer::SendMsg_NpcQuestListResult(_NPCQuestIndexTempData *pQuestIndexData)
 {
-#pragma pack(push, 1)
-  struct NpcQuestListResultPacket
-  {
-    unsigned __int8 byQuestNum;
-    unsigned int QuestIndexList[30];
-  };
-#pragma pack(pop)
 
-  NpcQuestListResultPacket packet{};
+  _npc_quest_list_result_zocl packet{};
   packet.byQuestNum = static_cast<unsigned __int8>(pQuestIndexData->nQuestNum);
   const int questCount = std::min<int>(pQuestIndexData->nQuestNum, 30);
   for (int index = 0; index < questCount; ++index)
@@ -2552,26 +2430,9 @@ void CPlayer::SendMsg_OfferSuggestResult(char byRetCode)
 
 void CPlayer::SendMsg_SkillResult(unsigned __int8 byErrCode, const _CHRID *targetId, unsigned __int8 bySkillIndex, unsigned __int8 nSFLv)
 {
-#pragma pack(push, 1)
-  struct SkillResultSelf
-  {
-    unsigned __int8 byErrCode;
-    unsigned __int8 byUnused;
-  };
 
-  struct SkillResultOther
-  {
-    unsigned __int8 byErrCode;
-    _CHRID idDster;
-    unsigned __int8 byPerformerId;
-    unsigned __int16 wPerformerIndex;
-    unsigned int dwPerformerSerial;
-    unsigned __int8 bySkillIndex;
-    unsigned __int8 bySkillLv;
-  };
-#pragma pack(pop)
 
-  SkillResultSelf toSelf{};
+  _skill_result_one_zocl toSelf{};
   toSelf.byErrCode = byErrCode;
   unsigned __int8 selfType[2] = {17, 5};
   g_Network.m_pProcess[0]->LoadSendMsg(
@@ -2586,15 +2447,15 @@ void CPlayer::SendMsg_SkillResult(unsigned __int8 byErrCode, const _CHRID *targe
     return;
   }
 
-  SkillResultOther toOther{};
-  toOther.byErrCode = byErrCode;
+  _skill_result_other_zocl toOther{};
+  toOther.byRetCode = byErrCode;
   if (targetId)
   {
     toOther.idDster = *targetId;
   }
-  toOther.byPerformerId = this->m_ObjID.m_byID;
-  toOther.wPerformerIndex = this->m_ObjID.m_wIndex;
-  toOther.dwPerformerSerial = this->m_dwObjSerial;
+  toOther.idPerformer.byID = this->m_ObjID.m_byID;
+  toOther.idPerformer.wIndex = this->m_ObjID.m_wIndex;
+  toOther.idPerformer.dwSerial = this->m_dwObjSerial;
   toOther.bySkillIndex = bySkillIndex;
   toOther.bySkillLv = nSFLv;
 
@@ -2604,25 +2465,9 @@ void CPlayer::SendMsg_SkillResult(unsigned __int8 byErrCode, const _CHRID *targe
 
 void CPlayer::SendMsg_ClassSkillResult(unsigned __int8 byErrCode, const _CHRID *targetId, unsigned __int16 wSkillIndex)
 {
-#pragma pack(push, 1)
-  struct ClassSkillResultSelf
-  {
-    unsigned __int8 byErrCode;
-    unsigned __int8 byUnused;
-  };
 
-  struct ClassSkillResultOther
-  {
-    unsigned __int8 byErrCode;
-    _CHRID idDster;
-    unsigned __int8 byPerformerId;
-    unsigned __int16 wPerformerIndex;
-    unsigned int dwPerformerSerial;
-    unsigned __int16 wSkillIndex;
-  };
-#pragma pack(pop)
 
-  ClassSkillResultSelf toSelf{};
+  _class_skill_result_one_zocl toSelf{};
   toSelf.byErrCode = byErrCode;
   unsigned __int8 selfType[2] = {17, 8};
   g_Network.m_pProcess[0]->LoadSendMsg(
@@ -2637,15 +2482,15 @@ void CPlayer::SendMsg_ClassSkillResult(unsigned __int8 byErrCode, const _CHRID *
     return;
   }
 
-  ClassSkillResultOther toOther{};
-  toOther.byErrCode = byErrCode;
+  _class_skill_result_other_zocl toOther{};
+  toOther.byRetCode = byErrCode;
   if (targetId)
   {
     toOther.idDster = *targetId;
   }
-  toOther.byPerformerId = this->m_ObjID.m_byID;
-  toOther.wPerformerIndex = this->m_ObjID.m_wIndex;
-  toOther.dwPerformerSerial = this->m_dwObjSerial;
+  toOther.idPerformer.byID = this->m_ObjID.m_byID;
+  toOther.idPerformer.wIndex = this->m_ObjID.m_wIndex;
+  toOther.idPerformer.dwSerial = this->m_dwObjSerial;
   toOther.wSkillIndex = wSkillIndex;
 
   unsigned __int8 otherType[2] = {17, 9};
@@ -2654,30 +2499,13 @@ void CPlayer::SendMsg_ClassSkillResult(unsigned __int8 byErrCode, const _CHRID *
 
 void CPlayer::SendMsg_ForceResult(unsigned __int8 byErrCode, const _CHRID *targetId, _STORAGE_LIST::_db_con *pForceItem, unsigned __int8 nSFLv)
 {
-#pragma pack(push, 1)
-  struct ForceResultSelf
-  {
-    unsigned __int8 byErrCode;
-    unsigned int dwDur;
-  };
 
-  struct ForceResultOther
-  {
-    unsigned __int8 byErrCode;
-    _CHRID idDster;
-    unsigned __int8 byPerformerId;
-    unsigned __int16 wPerformerIndex;
-    unsigned int dwPerformerSerial;
-    unsigned __int8 byForceIndex;
-    unsigned __int8 byForceLv;
-  };
-#pragma pack(pop)
 
-  ForceResultSelf toSelf{};
+  _force_result_one_zocl toSelf{};
   toSelf.byErrCode = byErrCode;
   if (pForceItem)
   {
-    toSelf.dwDur = pForceItem->m_dwDur;
+    toSelf.dwItemCum = pForceItem->m_dwDur;
   }
 
   unsigned __int8 selfType[2] = {17, 2};
@@ -2693,15 +2521,15 @@ void CPlayer::SendMsg_ForceResult(unsigned __int8 byErrCode, const _CHRID *targe
     return;
   }
 
-  ForceResultOther toOther{};
-  toOther.byErrCode = byErrCode;
+  _force_result_other_zocl toOther{};
+  toOther.byRetCode = byErrCode;
   if (targetId)
   {
     toOther.idDster = *targetId;
   }
-  toOther.byPerformerId = this->m_ObjID.m_byID;
-  toOther.wPerformerIndex = this->m_ObjID.m_wIndex;
-  toOther.dwPerformerSerial = this->m_dwObjSerial;
+  toOther.idPerformer.byID = this->m_ObjID.m_byID;
+  toOther.idPerformer.wIndex = this->m_ObjID.m_wIndex;
+  toOther.idPerformer.dwSerial = this->m_dwObjSerial;
   if (pForceItem && CPlayer::s_pnLinkForceItemToEffect)
   {
     toOther.byForceIndex = static_cast<unsigned __int8>(CPlayer::s_pnLinkForceItemToEffect[pForceItem->m_wItemIndex]);
@@ -5070,20 +4898,12 @@ void CPlayer::SendData_PartyMemberPos()
     return;
   }
 
-#pragma pack(push, 1)
-  struct
-  {
-    unsigned int serial;
-    unsigned __int8 mapCode;
-    unsigned __int16 posX;
-    unsigned __int16 posZ;
-  } msg{};
-#pragma pack(pop)
+_party_member_pos_upd msg{};
 
-  msg.serial = this->m_dwObjSerial;
-  msg.mapCode = static_cast<unsigned __int8>(this->m_Param.GetMapCode());
-  msg.posX = static_cast<unsigned __int16>(this->m_fCurPos[0]);
-  msg.posZ = static_cast<unsigned __int16>(this->m_fCurPos[2]);
+  msg.dwMemSerial = this->m_dwObjSerial;
+  msg.byMapCode = static_cast<unsigned __int8>(this->m_Param.GetMapCode());
+  msg.zPos[0] = static_cast<unsigned __int16>(this->m_fCurPos[0]);
+  msg.zPos[1] = static_cast<unsigned __int16>(this->m_fCurPos[2]);
 
   const int memberCount = this->m_pPartyMgr->GetPopPartyMember();
   unsigned __int8 type[2] = {16, 24};
@@ -5116,29 +4936,19 @@ void CPlayer::SendMsg_EconomyHistoryInform()
 
 void CPlayer::SendMsg_EconomyRateInform(char bStart)
 {
-#pragma pack(push, 1)
-  struct
-  {
-    char start;
-    float rate;
-    float tex;
-    unsigned __int16 mgrValue;
-    unsigned __int16 guide[3];
-    float oreRate;
-  } msg{};
-#pragma pack(pop)
+_economy_rate_inform_zocl msg{};
 
-  msg.start = bStart;
-  msg.rate = static_cast<float>(eGetRate(this->m_Param.GetRaceCode()));
-  msg.tex = eGetTex(this->m_Param.GetRaceCode());
-  msg.mgrValue = static_cast<unsigned __int16>(eGetMgrValue());
-  msg.oreRate = eGetOreRate(this->m_Param.GetRaceCode());
+  msg.bStart = bStart;
+  msg.fPayExgRate = static_cast<float>(eGetRate(this->m_Param.GetRaceCode()));
+  msg.fTexRate = eGetTex(this->m_Param.GetRaceCode());
+  msg.wMgrValue = static_cast<unsigned __int16>(eGetMgrValue());
+  msg.fOreSellRate = eGetOreRate(this->m_Param.GetRaceCode());
 
   if (!bStart)
   {
     for (int race = 0; race < 3; ++race)
     {
-      msg.guide[race] = eGetGuide(race);
+      msg.wEconomyGuide[race] = eGetGuide(race);
     }
   }
 
@@ -5178,17 +4988,13 @@ void CPlayer::SendMsg_SFDelayRequest()
 
 void CPlayer::SendMsg_PotionDelayTime(unsigned int *pdwPotionNextUseTime, unsigned int dwCurTime)
 {
-  struct
-  {
-    unsigned int count;
-    unsigned int times[38];
-  } msg{};
+  _potion_delay_time_information_zocl msg{};
 
-  msg.count = 38;
+  msg.nMaxNum = 38;
   for (int index = 0; index < 38; ++index)
   {
     const int remain = static_cast<int>(pdwPotionNextUseTime[index] - dwCurTime);
-    msg.times[index] = (remain <= 0) ? 0u : static_cast<unsigned int>(remain);
+    msg.dwPotionDelayTime[index] = (remain <= 0) ? 0u : static_cast<unsigned int>(remain);
   }
 
   unsigned __int8 type[2] = {3, 60};
@@ -5299,20 +5105,12 @@ void CPlayer::SendMsg_MadeTrapNumInform(char byNum)
 
 void CPlayer::SendMsg_TowerContinue(unsigned __int16 wItemSerial, CGuardTower *pTwr)
 {
-#pragma pack(push, 1)
-  struct
-  {
-    unsigned __int16 itemSerial;
-    unsigned __int16 towerRecordIndex;
-    unsigned __int16 towerIndex;
-    unsigned int towerSerial;
-  } msg{};
-#pragma pack(pop)
+_continue_tower_inform msg{};
 
-  msg.itemSerial = wItemSerial;
-  msg.towerRecordIndex = static_cast<unsigned __int16>(pTwr->m_pRecordSet->m_dwIndex);
-  msg.towerIndex = pTwr->m_ObjID.m_wIndex;
-  msg.towerSerial = pTwr->m_dwObjSerial;
+  msg.wItemSerial = wItemSerial;
+  msg.wTwrRecIndex = static_cast<unsigned __int16>(pTwr->m_pRecordSet->m_dwIndex);
+  msg.wTwrIndex = pTwr->m_ObjID.m_wIndex;
+  msg.dwTwrSerial = pTwr->m_dwObjSerial;
 
   unsigned __int8 type[2] = {17, 30};
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0xAu);
@@ -5463,16 +5261,10 @@ void CPlayer::SendMsg_AlterRegionInform(__int16 nRegionIndex)
 
 void CPlayer::SendMsg_GestureInform(unsigned __int8 byGestureType)
 {
-#pragma pack(push, 1)
-  struct
-  {
-    unsigned int serial;
-    unsigned __int8 gesture;
-  } msg{};
-#pragma pack(pop)
+_gesture_inform_zocl msg{};
 
-  msg.serial = this->m_dwObjSerial;
-  msg.gesture = byGestureType;
+  msg.dwActorSerial = this->m_dwObjSerial;
+  msg.byGestureType = byGestureType;
 
   unsigned __int8 type[2] = {13, 23};
   CircleReport(type, reinterpret_cast<char *>(&msg), 5, true);
@@ -5483,18 +5275,11 @@ void CPlayer::SendMsg_BuddyPosInform(
   unsigned __int8 byMapIndex,
   unsigned __int8 byPosCode)
 {
-#pragma pack(push, 1)
-  struct
-  {
-    unsigned int serial;
-    unsigned __int8 mapIndex;
-    unsigned __int8 posCode;
-  } msg{};
-#pragma pack(pop)
+_buddy_pos_inform_zocl msg{};
 
-  msg.serial = dwDstSerial;
-  msg.mapIndex = byMapIndex;
-  msg.posCode = byPosCode;
+  msg.dwSerial = dwDstSerial;
+  msg.byMapIndex = byMapIndex;
+  msg.byPositionCode = byPosCode;
 
   unsigned __int8 type[2] = {31, 5};
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 6u);
@@ -6130,23 +5915,14 @@ void CPlayer::SendMsg_DarkHoleRewardMessage(
   unsigned int dwMemberIndex,
   int isRewarded)
 {
-#pragma pack(push, 1)
-  struct DarkHoleRewardMessage
-  {
-    int isRewarded;
-    unsigned int memberSerial;
-    unsigned __int8 itemTableCode;
-    unsigned __int16 itemIndex;
-  };
-#pragma pack(pop)
 
-  DarkHoleRewardMessage msg{};
-  msg.isRewarded = isRewarded;
-  msg.memberSerial = dwMemberIndex;
+  _darkhole_reward_message_inform_zocl msg{};
+  msg.bIsRewarded = isRewarded;
+  msg.dwPartyMemberIndex = dwMemberIndex;
   if (pItem)
   {
-    msg.itemTableCode = pItem->m_byTableCode;
-    msg.itemIndex = pItem->m_wItemIndex;
+    msg.byTableCode = pItem->m_byTableCode;
+    msg.wItemIndex = pItem->m_wItemIndex;
   }
 
   unsigned __int8 type[2]{35, static_cast<unsigned __int8>(-44)};
@@ -6949,17 +6725,10 @@ void CPlayer::SendMsg_Circle_DelEffect(
   unsigned __int8 byLv,
   bool bToOne)
 {
-#pragma pack(push, 1)
-  struct CircleDelEffectMsg
-  {
-    unsigned __int16 wEffectBit;
-    unsigned int dwObjSerial;
-  };
-  #pragma pack(pop)
 
-  CircleDelEffectMsg msg{};
-  msg.wEffectBit = static_cast<unsigned __int16>(this->CalcEffectBit(byEffectCode, wEffectIndex));
-  msg.dwObjSerial = this->m_dwObjSerial;
+  _effect_remove_inform_zocl msg{};
+  msg.wEffectCode = static_cast<unsigned __int16>(this->CalcEffectBit(byEffectCode, wEffectIndex));
+  msg.dwPlayerSerial = this->m_dwObjSerial;
 
   unsigned __int8 type[2]{17, 11};
   this->CircleReport(type, reinterpret_cast<char *>(&msg), sizeof(msg), bToOne);
@@ -10973,25 +10742,6 @@ void CPlayer::pc_GuildQueryInfoRequest(unsigned int dwGuildSerial)
 
 void CPlayer::pc_GuildListRequest(unsigned __int8 byPage)
 {
-  #pragma pack(push, 1)
-  struct GuildListResult
-  {
-    unsigned __int8 byPage;
-    unsigned __int8 byMaxPage;
-    unsigned __int8 byListCnt;
-    __guild_list_page::__list GuildList[4];
-
-    unsigned __int16 Size() const
-    {
-      unsigned __int8 count = byListCnt;
-      if (count > 4u)
-      {
-        count = 0;
-      }
-      return static_cast<unsigned __int16>(143 - 35 * (4 - count));
-    }
-  };
-  #pragma pack(pop)
 
   const unsigned int charSerial = this->m_Param.GetCharSerial();
   const int raceCode = this->m_Param.GetRaceCode();
@@ -11021,17 +10771,22 @@ void CPlayer::pc_GuildListRequest(unsigned __int8 byPage)
     resolvedPage = guildList.m_byMaxPage[raceCode];
   }
 
-  GuildListResult result{};
-  result.byMaxPage = static_cast<unsigned __int8>(guildList.m_byMaxPage[raceCode] + 1);
-  result.byPage = resolvedPage;
-  result.byListCnt = guildList.m_pGuildList[raceCode][resolvedPage].byListCnt;
+  _guild_list_result_zocl result{};
+  result.byMaxPage = static_cast<char>(guildList.m_byMaxPage[raceCode] + 1);
+  result.byPage = static_cast<char>(resolvedPage);
+  result.byListCnt = static_cast<char>(guildList.m_pGuildList[raceCode][resolvedPage].byListCnt);
   std::memcpy(
     result.GuildList,
     guildList.m_pGuildList[raceCode][resolvedPage].GuildList,
     sizeof(result.GuildList));
 
   unsigned __int8 type[2] = {27, 116};
-  const unsigned __int16 len = result.Size();
+  unsigned __int8 listCount = static_cast<unsigned __int8>(result.byListCnt);
+  if (listCount > 4u)
+  {
+    listCount = 0;
+  }
+  const unsigned __int16 len = static_cast<unsigned __int16>(143 - 35 * (4 - listCount));
   g_Network.m_pProcess[0]->LoadSendMsg(
     this->m_ObjID.m_wIndex,
     type,
@@ -11257,36 +11012,24 @@ void CPlayer::pc_DTradeAnswerRequest(_CLID *pidAsker)
     static_cast<unsigned __int8>(asker->m_Param.m_dbInven.GetNumEmptyCon()),
     keyB);
 
-#pragma pack(push, 1)
-  struct DTradeStartInform
-  {
-    unsigned __int16 askerIndex;
-    unsigned int askerSerial;
-    unsigned __int8 askerEmptyInven;
-    unsigned __int16 answerIndex;
-    unsigned int answerSerial;
-    unsigned __int8 answerEmptyInven;
-    unsigned int code[4];
-  };
-#pragma pack(pop)
 
-  DTradeStartInform startToThis{};
-  startToThis.askerIndex = asker->m_ObjID.m_wIndex;
-  startToThis.askerSerial = asker->m_dwObjSerial;
-  startToThis.askerEmptyInven = asker->m_pmTrd.byEmptyInvenNum;
-  startToThis.answerIndex = this->m_ObjID.m_wIndex;
-  startToThis.answerSerial = this->m_dwObjSerial;
-  startToThis.answerEmptyInven = this->m_pmTrd.byEmptyInvenNum;
-  memcpy_0(startToThis.code, codeA, sizeof(startToThis.code));
+  _d_trade_start_inform_zocl startToThis{};
+  startToThis.idAsker.wIndex = asker->m_ObjID.m_wIndex;
+  startToThis.idAsker.dwSerial = asker->m_dwObjSerial;
+  startToThis.byAskerEmptyNum = asker->m_pmTrd.byEmptyInvenNum;
+  startToThis.idAnswer.wIndex = this->m_ObjID.m_wIndex;
+  startToThis.idAnswer.dwSerial = this->m_dwObjSerial;
+  startToThis.byAnswerEmptyNum = this->m_pmTrd.byEmptyInvenNum;
+  memcpy_0(startToThis.dwKey, codeA, sizeof(startToThis.dwKey));
 
-  DTradeStartInform startToAsker{};
-  startToAsker.askerIndex = asker->m_ObjID.m_wIndex;
-  startToAsker.askerSerial = asker->m_dwObjSerial;
-  startToAsker.askerEmptyInven = asker->m_pmTrd.byEmptyInvenNum;
-  startToAsker.answerIndex = this->m_ObjID.m_wIndex;
-  startToAsker.answerSerial = this->m_dwObjSerial;
-  startToAsker.answerEmptyInven = this->m_pmTrd.byEmptyInvenNum;
-  memcpy_0(startToAsker.code, codeB, sizeof(startToAsker.code));
+  _d_trade_start_inform_zocl startToAsker{};
+  startToAsker.idAsker.wIndex = asker->m_ObjID.m_wIndex;
+  startToAsker.idAsker.dwSerial = asker->m_dwObjSerial;
+  startToAsker.byAskerEmptyNum = asker->m_pmTrd.byEmptyInvenNum;
+  startToAsker.idAnswer.wIndex = this->m_ObjID.m_wIndex;
+  startToAsker.idAnswer.dwSerial = this->m_dwObjSerial;
+  startToAsker.byAnswerEmptyNum = this->m_pmTrd.byEmptyInvenNum;
+  memcpy_0(startToAsker.dwKey, codeB, sizeof(startToAsker.dwKey));
 
   unsigned __int8 startType[2] = {18, 6};
   g_Network.m_pProcess[0]->LoadSendMsg(
@@ -17142,33 +16885,21 @@ void CPlayer::OutOfSec()
 
 void CPlayer::SendMsg_FixPosition(int n)
 {
-#pragma pack(push, 1)
-  struct PlayerFixPosMsg
-  {
-    unsigned __int16 wIndex;
-    unsigned int dwObjSerial;
-    unsigned __int16 wVisualVer;
-    unsigned __int8 byRaceSexCode;
-    __int16 posAndCont[4];
-    unsigned __int64 qwStateFlag;
-    unsigned __int8 byGuildBattleColorInx;
-  };
-#pragma pack(pop)
 
   if (m_bObserver && !g_Player[n].m_byUserDgr)
   {
     return;
   }
 
-  PlayerFixPosMsg msg{};
+  _player_fixpositon_zocl msg{};
   msg.wIndex = m_ObjID.m_wIndex;
-  msg.dwObjSerial = m_dwObjSerial;
-  msg.wVisualVer = static_cast<unsigned __int16>(GetVisualVer());
-  msg.byRaceSexCode = m_Param.GetRaceSexCode();
-  FloatToShort(m_fCurPos, msg.posAndCont, 3);
-  msg.posAndCont[3] = static_cast<__int16>(m_wLastContEffect);
-  msg.qwStateFlag = GetStateFlag();
-  msg.byGuildBattleColorInx = m_byGuildBattleColorInx;
+  msg.dwSerial = m_dwObjSerial;
+  msg.wEquipVer = static_cast<unsigned __int16>(GetVisualVer());
+  msg.byRaceCode = m_Param.GetRaceSexCode();
+  FloatToShort(m_fCurPos, msg.zCur, 3);
+  msg.wLastEffectCode = static_cast<unsigned __int16>(m_wLastContEffect);
+  msg.dwStateFlag = GetStateFlag();
+  msg.byColor = m_byGuildBattleColorInx;
 
   unsigned __int8 type[2] = {4, 9};
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
@@ -17176,39 +16907,25 @@ void CPlayer::SendMsg_FixPosition(int n)
 
 void CPlayer::SendMsg_RealMovePoint(int n)
 {
-#pragma pack(push, 1)
-  struct PlayerRealMoveMsg
-  {
-    unsigned __int16 wIndex;
-    unsigned int dwObjSerial;
-    unsigned __int16 wVisualVer;
-    unsigned __int8 byRaceSexCode;
-    __int16 posTarAndCont[6];
-    unsigned __int64 qwStateFlag;
-    __int16 sAddSpeed;
-    unsigned __int8 byMoveDirect;
-    unsigned __int8 byGuildBattleColorInx;
-  };
-#pragma pack(pop)
 
   if (m_bObserver && !g_Player[n].m_byUserDgr)
   {
     return;
   }
 
-  PlayerRealMoveMsg msg{};
+  _player_real_move_zocl msg{};
   msg.wIndex = m_ObjID.m_wIndex;
-  msg.dwObjSerial = m_dwObjSerial;
-  msg.wVisualVer = static_cast<unsigned __int16>(GetVisualVer());
-  msg.byRaceSexCode = m_Param.GetRaceSexCode();
-  FloatToShort(m_fCurPos, msg.posTarAndCont, 3);
-  msg.posTarAndCont[3] = static_cast<__int16>(static_cast<int>(m_fTarPos[0]));
-  msg.posTarAndCont[4] = static_cast<__int16>(static_cast<int>(m_fTarPos[2]));
-  msg.posTarAndCont[5] = static_cast<__int16>(m_wLastContEffect);
-  msg.qwStateFlag = GetStateFlag();
-  msg.sAddSpeed = static_cast<__int16>(static_cast<int>(GetAddSpeed()));
-  msg.byMoveDirect = m_byMoveDirect;
-  msg.byGuildBattleColorInx = m_byGuildBattleColorInx;
+  msg.dwSerial = m_dwObjSerial;
+  msg.dwEquipVer = static_cast<unsigned __int16>(GetVisualVer());
+  msg.byRaceCode = m_Param.GetRaceSexCode();
+  FloatToShort(m_fCurPos, msg.zCur, 3);
+  msg.zTar[0] = static_cast<__int16>(static_cast<int>(m_fTarPos[0]));
+  msg.zTar[1] = static_cast<__int16>(static_cast<int>(m_fTarPos[2]));
+  msg.wLastEffectCode = static_cast<unsigned __int16>(m_wLastContEffect);
+  msg.dwStateFlag = GetStateFlag();
+  msg.nAddSpeed = static_cast<__int16>(static_cast<int>(GetAddSpeed()));
+  msg.byDirect = m_byMoveDirect;
+  msg.byColor = m_byGuildBattleColorInx;
 
   unsigned __int8 type[2] = {4, 21};
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
@@ -17353,4 +17070,9 @@ if (m_bCorpse || m_bMapLoading || CGameObject::GetCurSecNum() == static_cast<uns
   SetBattleMode(false);
   return static_cast<unsigned int>(m_Param.GetHP());
 }
+
+
+
+
+
 

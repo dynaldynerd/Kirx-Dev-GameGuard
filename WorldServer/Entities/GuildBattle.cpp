@@ -43,6 +43,7 @@
 #include "worlddb_guild_battle_info.h"
 #include "worlddb_guild_battle_reserved_schedule_info.h"
 #include "guild_battle_goal_result_zocl.h"
+#include "GuildBattleLocalStructs.h"
 
 __int64 _qry_case_in_guildbattlecost::size()
 {
@@ -2128,22 +2129,6 @@ const int member = static_cast<int>(GetMember(dwSerial));
     unsigned int dwGuildSerial,
     unsigned int dwCharacSerial)
   {
-#pragma pack(push, 1)
-    struct _guild_battle_start_result
-    {
-      char byColor;
-      unsigned int dwLeftRedScore;
-      unsigned int dwRightBlueScore;
-      unsigned int dwLeftRedGoalCnt;
-      unsigned int dwRightBlueGoalCnt;
-      unsigned __int8 byLeftHour;
-      unsigned __int8 byLeftMin;
-      unsigned __int8 byLeftSec;
-      int iRedPortalInx;
-      int iBluePortalInx;
-      int iRegenPortalInx[3];
-    };
-#pragma pack(pop)
 
     _guild_battle_start_result msg{};
     msg.iRedPortalInx = -1;
@@ -2235,22 +2220,6 @@ const int member = static_cast<int>(GetMember(dwSerial));
     unsigned int dwGuildSerial,
     unsigned int dwCharacSerial)
   {
-#pragma pack(push, 1)
-    struct _guild_battle_restart_result
-    {
-      char byColor;
-      unsigned int dwLeftRedScore;
-      unsigned int dwRightBlueScore;
-      unsigned int dwLeftRedGoalCnt;
-      unsigned int dwRightBlueGoalCnt;
-      unsigned __int8 byLeftHour;
-      unsigned __int8 byLeftMin;
-      unsigned __int8 byLeftSec;
-      int iRedPortalInx;
-      int iBluePortalInx;
-      int iRegenPortalInx[3];
-    };
-#pragma pack(pop)
 
     _guild_battle_restart_result msg{};
     msg.iRedPortalInx = -1;
@@ -2339,14 +2308,6 @@ const int member = static_cast<int>(GetMember(dwSerial));
 
   void CNormalGuildBattle::NotifyBeforeStart()
   {
-#pragma pack(push, 1)
-    struct _guild_battle_before_start_notify
-    {
-      char byLeftMin;
-      char wszRedName[17];
-      char wszBlueName[17];
-    };
-#pragma pack(pop)
 
     _guild_battle_before_start_notify msg{};
     msg.byLeftMin = static_cast<char>(ATL::CTimeSpan(0, 0, 5, 0).GetMinutes());
@@ -2380,14 +2341,6 @@ const int member = static_cast<int>(GetMember(dwSerial));
 
   void CNormalGuildBattle::NotifyBattleResult(char byResult)
   {
-#pragma pack(push, 1)
-    struct _guild_battle_result_notify
-    {
-      char byResult;
-      char wszRedName[17];
-      char wszBlueName[17];
-    };
-#pragma pack(pop)
 
     _guild_battle_result_notify msg{};
     msg.byResult = byResult;
@@ -2515,33 +2468,6 @@ const int member = static_cast<int>(GetMember(dwSerial));
 
   void CNormalGuildBattle::GuildBattleResultLogNotifyWeb(const _qry_case_guild_battel_result_log *sheet)
   {
-#pragma pack(push, 1)
-    struct _guild_battle_result_log_notify_web
-    {
-      char szStartTime[17];
-      char szEndTime[17];
-      unsigned int dwRedSerial;
-      char wszRedName[17];
-      unsigned int dwBlueSerial;
-      char wszBlueName[17];
-      unsigned int dwRedScore;
-      unsigned int dwBlueScore;
-      unsigned int dwRedMaxJoinCnt;
-      unsigned int dwBlueMaxJoinCnt;
-      unsigned int dwRedGoalCnt;
-      unsigned int dwBlueGoalCnt;
-      unsigned int dwRedKillCntSum;
-      unsigned int dwBlueKillCntSum;
-      unsigned __int8 byBattleResult;
-      unsigned int dwMaxGoalCharacSerial;
-      char wszMaxGoalCharacName[17];
-      unsigned int dwMaxKillCharacSerial;
-      char wszMaxKillCharacName[17];
-      unsigned __int8 byJoinLimit;
-      unsigned int dwGuildBattleCostGold;
-      char szBattleMapCode[12];
-    };
-#pragma pack(pop)
     static_assert(sizeof(_guild_battle_result_log_notify_web) == 0xA8, "guild battle web notify size mismatch");
 
     if (!sheet)

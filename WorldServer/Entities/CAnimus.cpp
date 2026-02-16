@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <cstring>
 #include <mmsystem.h>
+#include "CAnimusLocalStructs.h"
 
 CRecordData CAnimus::s_tblParameter[8];
 unsigned int CAnimus::MAX_EXP[8]{};
@@ -28,28 +29,7 @@ CAnimus::~CAnimus()
 
 namespace
 {
-  struct __unaligned __declspec(align(1)) _animus_fixpos_packet
-  {
-    unsigned __int16 wRecordIndex;
-    unsigned __int16 wObjIndex;
-    unsigned int dwObjSerial;
-    short pos[3];
-    char byLevel;
-    unsigned __int16 wContEffect;
-    unsigned int dwMasterSerial;
-  };
 
-  struct __unaligned __declspec(align(1)) _animus_realmove_packet
-  {
-    unsigned __int16 wRecordIndex;
-    unsigned __int16 wObjIndex;
-    unsigned int dwObjSerial;
-    short posAndTarget[5];
-    char byLevel;
-    unsigned __int16 wContEffect;
-    unsigned int dwMasterSerial;
-    float fMoveSpeed;
-  };
 
   static char s_animusObjectName[256]{};
 }
@@ -194,16 +174,6 @@ void CAnimus::SendMsg_Move()
 
 void CAnimus::SendMsg_Attack_Gen(CAttack *pAT)
 {
-  struct AttackAccessor
-  {
-    _attack_param *m_pp;
-    CCharacter *m_pAttChar;
-    bool m_bIsCrtAtt;
-    bool m_bActiveSucc;
-    int m_nDamagedObjNum;
-    _be_damaged_char m_DamList[30];
-    bool m_bFailure;
-  };
 
   const AttackAccessor *attack = reinterpret_cast<const AttackAccessor *>(pAT);
   _attack_gen_result_zocl result{};

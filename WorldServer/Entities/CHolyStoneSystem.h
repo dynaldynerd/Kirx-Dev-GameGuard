@@ -76,6 +76,7 @@ public:
   unsigned int GetDestroyerSerial();
   int GetHolyMasterRace();
   int GetSceneCode();
+  int GetControlLeftTime();
   bool IsControlScene();
   bool IsMinigeTicketCheck();
   int GetDestroyStoneRace();

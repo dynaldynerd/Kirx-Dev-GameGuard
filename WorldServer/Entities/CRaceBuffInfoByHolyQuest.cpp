@@ -172,18 +172,11 @@ bool CRaceBuffInfoByHolyQuest::ApplyEffect(CPlayer *pkDest, bool bAdd)
 
 void CRaceBuffInfoByHolyQuest::NotifySetBuff(CPlayer *pkDest)
 {
-#pragma pack(push, 1)
-  struct
-  {
-    unsigned __int8 byLv;
-    unsigned __int16 wIndex;
-    unsigned int dwObjSerial;
-  } msg{};
-#pragma pack(pop)
+  _notify_set_race_buff_by_holy_quest_zocl msg{};
 
   msg.byLv = m_byLv;
-  msg.wIndex = static_cast<unsigned __int16>(m_pData->m_dwIndex);
-  msg.dwObjSerial = pkDest->m_dwObjSerial;
+  msg.wEffectIndex = static_cast<unsigned __int16>(m_pData->m_dwIndex);
+  msg.dwDestSerial = pkDest->m_dwObjSerial;
 
   unsigned __int8 type[2]{};
   type[0] = 17;
@@ -202,20 +195,14 @@ void CRaceBuffInfoByHolyQuest::NotifyReleaseBuff(unsigned __int16 wUserInx)
 
 void CRaceBuffInfoByHolyQuest::NotifyLogInSetBuff(unsigned __int16 wUserInx)
 {
-#pragma pack(push, 1)
-  struct
-  {
-    unsigned __int8 byLv;
-    unsigned __int16 wIndex;
-    unsigned __int16 wZero;
-  } msg{};
-#pragma pack(pop)
+  _effect_start_inform_zocl msg{};
 
   msg.byLv = m_byLv;
-  msg.wIndex = static_cast<unsigned __int16>(m_pData->m_dwIndex);
+  msg.wEffectCode = static_cast<unsigned __int16>(m_pData->m_dwIndex);
+  msg.wDurSec = 0;
 
   unsigned __int8 type[2]{};
   type[0] = 17;
   type[1] = 25;
-  g_Network.m_pProcess[0]->LoadSendMsg(wUserInx, type, reinterpret_cast<char *>(&msg), 5u);
+  g_Network.m_pProcess[0]->LoadSendMsg(wUserInx, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }

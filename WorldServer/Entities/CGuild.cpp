@@ -24,6 +24,7 @@
 #include "guild_alter_member_state_inform_zocl.h"
 #include "guild_vote_process_inform_zocl.h"
 #include "WorldServerUtil.h"
+#include "CGuildLocalStructs.h"
 
 CGuildList CGuild::s_GuildList;
 CMgrGuildHistory CGuild::s_MgrHistory;
@@ -131,12 +132,6 @@ CGuild::~CGuild()
 
 namespace
 {
-  struct GuildRankSortEntry
-  {
-    unsigned __int8 byGrade;
-    unsigned int dwPvpPoint;
-    int nIndex;
-  };
 
   int CompareGradeAndPvpPoint(const void *arg1, const void *arg2)
   {
@@ -184,12 +179,6 @@ namespace
   {
     pGuild->m_Buddy_List->wDataSize = 0;
 
-    struct GuildBuddyData
-    {
-      unsigned int dwSerial;
-      unsigned __int16 wMapCode;
-      unsigned __int8 byRegionIndex;
-    };
 
     GuildBuddyData buddyData[50]{};
     unsigned __int8 memberCount = 0;
@@ -463,13 +452,6 @@ void CGuild::Loop(bool bChangeDay)
 
 void CGuild::SendMsg_ChangeTaxRate(unsigned __int8 byTax)
 {
-#pragma pack(push, 1)
-  struct GuildTaxRateChangeMessage
-  {
-    unsigned int dwGuildSerial;
-    unsigned __int8 byTax;
-  };
-#pragma pack(pop)
 
   GuildTaxRateChangeMessage msg{};
   msg.dwGuildSerial = m_dwSerial;
@@ -569,16 +551,6 @@ void CGuild::SendMsg_VoteState()
     }
   }
 
-#pragma pack(push, 1)
-  struct GuildVoteStateMessage
-  {
-    unsigned int dwMatterVoteSynKey;
-    unsigned __int8 byApprovePoint;
-    unsigned __int8 byOpposePoint;
-    char byLoginSeniorNum;
-    char byTotalVotableNum;
-  };
-#pragma pack(pop)
 
   GuildVoteStateMessage msg{};
   msg.dwMatterVoteSynKey = m_SuggestedMatter.dwMatterVoteSynKey;
@@ -895,20 +867,12 @@ void CGuild::SendMsg_VoteProcessInform_Start()
 
 void CGuild::SendMsg_VoteComplete(bool bPass)
 {
-  #pragma pack(push, 1)
-  struct
-  {
-    unsigned int dwVoteKey;
-    unsigned __int8 byVoteState0;
-    unsigned __int8 byVoteState1;
-    bool bPass;
-  } msg{};
-  #pragma pack(pop)
+  _guild_vote_complete_zocl msg{};
 
-  msg.dwVoteKey = m_SuggestedMatter.dwMatterVoteSynKey;
-  msg.byVoteState0 = m_SuggestedMatter.byVoteState[0];
-  msg.byVoteState1 = m_SuggestedMatter.byVoteState[1];
-  msg.bPass = bPass;
+  msg.dwMatterVoteSynKey = m_SuggestedMatter.dwMatterVoteSynKey;
+  msg.byApprPoint = m_SuggestedMatter.byVoteState[0];
+  msg.byOppoPoint = m_SuggestedMatter.byVoteState[1];
+  msg.bPassed = bPass;
 
   unsigned __int8 pbyType[2] = {27, 29};
   for (int j = 0; j < 50; ++j)
@@ -1125,16 +1089,6 @@ _guild_member_info *CGuild::PushMember(_guild_member_info *pSheet)
 
 void CGuild::SendMsg_GuildJoinAcceptInform(_guild_member_info *p, unsigned int dwAcceptSerial)
 {
-  #pragma pack(push, 1)
-  struct GuildJoinAcceptMsg
-  {
-    unsigned int dwAcceptSerial;
-    unsigned int dwSerial;
-    char wszNameAndClassAndLv[19];
-    unsigned int dwPvpPoint;
-    unsigned __int8 byRank;
-  };
-  #pragma pack(pop)
 
   GuildJoinAcceptMsg msg{};
   msg.dwAcceptSerial = dwAcceptSerial;
@@ -1169,14 +1123,6 @@ void CGuild::SendMsg_GuildJoinAcceptInform(_guild_member_info *p, unsigned int d
 
 void CGuild::SendMsg_LeaveMember(unsigned int dwMemberSerial, char bSelf, char bPunish)
 {
-  #pragma pack(push, 1)
-  struct GuildLeaveMsg
-  {
-    char bSelf;
-    char bPunish;
-    unsigned int dwMemberSerial;
-  };
-  #pragma pack(pop)
 
   GuildLeaveMsg msg{};
   msg.bSelf = bSelf;
@@ -1301,15 +1247,6 @@ void CGuild::UpdateEmblem(unsigned int dwEmblemBack, unsigned int dwEmblemMark)
 
 void CGuild::SendMsg_AddJoinApplier(_guild_applier_info *p)
 {
-  #pragma pack(push, 1)
-  struct AddJoinApplierMsg
-  {
-    unsigned int dwSerial;
-    char wszName[18];
-    int nPvpPoint;
-    unsigned int dwApplyTime;
-  };
-  #pragma pack(pop)
 
   AddJoinApplierMsg msg{};
   msg.dwSerial = p->pPlayer->m_dwObjSerial;
@@ -1337,13 +1274,6 @@ void CGuild::SendMsg_AddJoinApplier(_guild_applier_info *p)
 
 void CGuild::SendMsg_DelJoinApplier(_guild_applier_info *p, unsigned __int8 byDelCode)
 {
-  #pragma pack(push, 1)
-  struct DelJoinApplierMsg
-  {
-    unsigned int dwSerial;
-    unsigned __int8 byDelCode;
-  };
-  #pragma pack(pop)
 
   DelJoinApplierMsg msg{};
   msg.dwSerial = p->pPlayer->m_dwObjSerial;
@@ -1514,18 +1444,6 @@ void CGuild::MakeQueryInfoPacket()
 
 void CGuild::SendMsg_GuildInfoUpdateInform()
 {
-  #pragma pack(push, 1)
-  struct GuildInfoUpdateMsg
-  {
-    unsigned int dwSerial;
-    unsigned __int8 byGrade;
-    unsigned int dwEmblemBack;
-    unsigned int dwEmblemMark;
-    unsigned int dwTotWin;
-    unsigned int dwTotDraw;
-    unsigned int dwTotLose;
-  };
-  #pragma pack(pop)
 
   GuildInfoUpdateMsg msg{};
   msg.dwSerial = m_dwSerial;
@@ -1952,13 +1870,6 @@ unsigned __int8 CGuild::ManageAcceptORRefuseGuildBattle(bool bAccept)
 
 void CGuild::SendMsg_ApplyGuildBattleResultInform(char byRet, char *wszDestGuildName)
 {
-  #pragma pack(push, 1)
-  struct ApplyGuildBattleResultMsg
-  {
-    char byRet;
-    char wszDestGuildName[17];
-  };
-  #pragma pack(pop)
 
   ApplyGuildBattleResultMsg msg{};
   msg.byRet = byRet;
@@ -2406,19 +2317,6 @@ void CGuild::SendMsg_IOMoney(
   bool bInPut,
   unsigned __int8 *pbyDate)
 {
-  #pragma pack(push, 1)
-  struct GuildIOMoneyMsg
-  {
-    unsigned int dwIOerSerial;
-    unsigned __int8 byMoneyOutputKind;
-    bool bInPut;
-    long double dIODalant;
-    long double dIOGold;
-    long double dTotalDalant;
-    long double dTotalGold;
-    unsigned __int8 byDate[4];
-  };
-  #pragma pack(pop)
 
   GuildIOMoneyMsg msg{};
   msg.dwIOerSerial = dwIOerSerial;
@@ -2708,11 +2606,6 @@ char *CGuild::GetGuildMasterName()
 
 void CGuild::SendMsg_ManageGuildCommitteeResult(char bAppoint, char *pwszCommitteeName)
 {
-  struct CommitteeResultMsg
-  {
-    char byAppoint;
-    char wszCommitteeName[17];
-  };
 
   CommitteeResultMsg msg{};
   msg.byAppoint = bAppoint;

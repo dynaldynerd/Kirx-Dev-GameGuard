@@ -10,6 +10,7 @@
 
 #include <cmath>
 #include <ctime>
+#include "EconomySystemFunctionsLocalStructs.h"
 
 namespace
 {
@@ -417,15 +418,6 @@ void eUpdateEconomySystem(bool *pbChangeDay)
 
 void SendMsg_EconomyDataToWeb()
 {
-  struct EconomyDataToWeb
-  {
-    float rate[3];
-    float tex[3];
-    unsigned __int16 guide[3];
-    __int16 year;
-    char month;
-    char day;
-  };
 
   EconomyDataToWeb packet{};
   for (int race = 0; race < 3; ++race)

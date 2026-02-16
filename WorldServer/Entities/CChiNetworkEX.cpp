@@ -10,6 +10,7 @@
 #include "GlobalObjects.h"
 #include "apex_id.h"
 #include "apex_send_trans.h"
+#include "CChiNetworkEXLocalStructs.h"
 
 CChiNetworkEX *CChiNetworkEX::ms_pInstance = nullptr;
 
@@ -43,14 +44,6 @@ __int64 CChiNetworkEX::Send(
 
 void CChiNetworkEX::Inform_For_Exit_By_ApexBlock(unsigned int dwAccountSerial)
 {
-#pragma pack(push, 1)
-  struct ApexBlockRequest
-  {
-    char szAccountID[13];
-    unsigned int dwAccountSerial;
-    unsigned int dwIP;
-  };
-#pragma pack(pop)
 
   ApexBlockRequest request{};
   strcpy_s(request.szAccountID, sizeof(request.szAccountID), "Apex");

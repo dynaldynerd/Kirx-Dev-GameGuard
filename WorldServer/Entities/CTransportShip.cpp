@@ -398,14 +398,11 @@ void CTransportShip::SendMsg_TicketCheck(unsigned int n, char bPass, unsigned __
   unsigned __int8 type[2]{};
   type[0] = 33;
   type[1] = 3;
-  struct
-  {
-    char pass;
-    unsigned __int16 ticketSerial;
-  } message{};
-  message.pass = bPass;
-  message.ticketSerial = wTicketSerial;
-  g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&message), 3);
+
+  _trans_ship_ticket_pass_inform_zocl message{};
+  message.bPass = bPass != 0;
+  message.wTicketSerial = wTicketSerial;
+  g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&message), sizeof(message));
 }
 
 void CTransportShip::SendMsg_TransportShipState(int n)

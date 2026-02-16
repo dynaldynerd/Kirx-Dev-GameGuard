@@ -1669,11 +1669,16 @@ struct __cppobj __unaligned __declspec(align(1)) _PERSONALAMINE_INVEN_DB_BASE
     _INVENKEY Key;
     unsigned int dwDur;
 
+    _LIST();
+    void Init();
     bool Set(const _STORAGE_LIST::_db_con *pItem);
     bool Release();
   };
 
   _LIST m_List[40];
+
+  _PERSONALAMINE_INVEN_DB_BASE();
+  void Init();
 };
 
 /* 1586 */
@@ -5032,6 +5037,13 @@ struct _notice_is_arrive_master
   char byRaceCode;
   char wszCharName[17];
   unsigned int dwObjSerial;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _holy_stone_hp_inform_zocl
+{
+  unsigned __int16 wHPRate[3];
 };
 #pragma pack(pop)
 

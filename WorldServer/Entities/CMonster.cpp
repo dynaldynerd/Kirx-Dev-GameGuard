@@ -434,6 +434,11 @@ unsigned int CMonster::GetAggroResetTime()
   return 0;
 }
 
+float CMonster::GetBonusInAreaAggro()
+{
+  return 80.0f;
+}
+
 void CMonster::UpdateLookAtPos()
 {
   if (m_fCurPos[0] != m_fOldPos[0] || m_fCurPos[2] != m_fOldPos[2])
@@ -881,6 +886,184 @@ bool CMonster::IsRewardExp()
   return m_bRewardExp;
 }
 
+void CMonster::UpdateSFCont()
+{
+  if (!m_tmrSFCont.CountingTimer())
+  {
+    return;
+  }
+
+  const unsigned int now = _sf_continous::GetSFContCurTime();
+  for (int contCode = 0; contCode < 2; ++contCode)
+  {
+    for (int slot = 0; slot < 8; ++slot)
+    {
+      _sf_continous *cont = &m_SFCont[contCode][slot];
+      if (!cont->m_bExist)
+      {
+        continue;
+      }
+
+      const unsigned int elapsed = now - cont->m_dwStartSec;
+      if (elapsed < cont->m_wDurSec)
+      {
+        // Base CGameObject handler is a no-op in IDA; monster path does not need per-tick notify.
+      }
+      else
+      {
+        RemoveSFContEffect(static_cast<unsigned __int8>(contCode), static_cast<unsigned __int16>(slot), false, false);
+      }
+    }
+  }
+
+  if (!m_bLastContEffectUpdate)
+  {
+    return;
+  }
+
+  unsigned int latestEffSerial = 0;
+  _sf_continous *latestCont = nullptr;
+  for (int contCode = 0; contCode < 2; ++contCode)
+  {
+    for (int slot = 0; slot < 8; ++slot)
+    {
+      _sf_continous *cont = &m_SFCont[contCode][slot];
+      if (cont->m_bExist && latestEffSerial <= cont->m_dwEffSerial)
+      {
+        latestEffSerial = cont->m_dwEffSerial;
+        latestCont = cont;
+      }
+    }
+  }
+
+  const unsigned __int16 oldLastContEffect = m_wLastContEffect;
+  if (latestCont)
+  {
+    m_wLastContEffect = static_cast<unsigned __int16>(CalcEffectBit(latestCont->m_byEffectCode, latestCont->m_wEffectIndex));
+  }
+  else
+  {
+    m_wLastContEffect = static_cast<unsigned __int16>(-1);
+  }
+
+  if (oldLastContEffect != m_wLastContEffect)
+  {
+    SendMsg_LastEffectChangeInform();
+  }
+  m_bLastContEffectUpdate = false;
+}
+
+char CMonster::CheckRespawnProcess()
+{
+  const unsigned int loopTime = GetLoopTime();
+  if (m_pActiveRec
+      && !m_bDungeon
+      && m_pMonRec->m_bMonsterCondition != 1
+      && !m_MonHierarcy.GetParent()
+      && !m_MonHierarcy.ChildKindCount())
+  {
+    const unsigned int lifeElapsed = loopTime - m_LifeCicle;
+    if (lifeElapsed > m_LifeMax)
+    {
+      if (GetSqrt(m_fCurPos, m_fCreatePos) >= 100.0f || std::fabs(m_fCurPos[1] - m_fCreatePos[1]) >= 50.0f)
+      {
+        _monster_create_setdata data;
+        memcpy_0(data.m_fStartPos, m_fCreatePos, sizeof(data.m_fStartPos));
+        data.m_nLayerIndex = m_wMapLayerIndex;
+        data.m_pMap = m_pCurMap;
+        data.m_pRecordSet = m_pRecordSet;
+        data.pActiveRec = m_pActiveRec;
+        data.bDungeon = m_bDungeon;
+        data.pDumPosition = m_pDumPosition;
+        data.pParent = m_MonHierarcy.GetParent();
+        data.bRobExp = m_bRobExp;
+
+        Destroy(1u, nullptr);
+        Create(&data);
+        return 1;
+      }
+
+      m_LifeCicle = loopTime;
+    }
+  }
+
+  return 0;
+}
+
+void CMonster::CheckMonsterRotate()
+{
+  if (m_bRotateMonster
+      && m_fCreatePos[0] == m_fCurPos[0]
+      && m_fCreatePos[2] == m_fCurPos[2]
+      && (m_fStartLookAtPos[0] != m_fLookAtPos[0] || m_fStartLookAtPos[2] != m_fLookAtPos[2]))
+  {
+    UpdateLookAtPos(m_fStartLookAtPos);
+    memcpy_0(m_fLookAtPos, m_fStartLookAtPos, sizeof(m_fLookAtPos));
+    SendMsg_Change_MonsterRotate();
+  }
+}
+
+void CMonster::CheckAutoRecoverHP()
+{
+  if (m_pMonRec->m_fHPRecDelay > 0.0f && m_pMonRec->m_fHPRecUnit > 0.0f && m_pMonRec->m_bMonsterCondition == 1)
+  {
+    const int hp = static_cast<int>(GetHP());
+    const int maxHP = static_cast<int>(GetMaxHP());
+    if (hp < maxHP
+        && static_cast<float>(static_cast<int>(GetLoopTime() - m_dwLastRecoverTime))
+             >= m_pMonRec->m_fHPRecDelay * 1000.0f)
+    {
+      m_dwLastRecoverTime = GetLoopTime();
+      const float nextHP = static_cast<float>(GetHP()) + m_pMonRec->m_fHPRecUnit;
+      SetHP(static_cast<int>(nextHP), false);
+    }
+  }
+
+  AutoRecover();
+}
+
+char CMonster::CheckDelayDestroy()
+{
+  if (m_dwDestroyNextTime == static_cast<unsigned int>(-1) || GetLoopTime() <= m_dwDestroyNextTime)
+  {
+    return 0;
+  }
+
+  Destroy(1u, nullptr);
+  m_dwDestroyNextTime = static_cast<unsigned int>(-1);
+  return 1;
+}
+
+void CMonster::AutoRecover()
+{
+  const int hp = static_cast<int>(GetHP());
+  int delta = 0;
+
+  if (m_EP.GetEff_Plus(32) != 0.0f)
+  {
+    delta = static_cast<int>(static_cast<float>(delta) + m_EP.GetEff_Plus(32));
+  }
+
+  if (!delta)
+  {
+    return;
+  }
+
+  if (delta < 0)
+  {
+    const int hpLimit = static_cast<int>(GetMaxHP()) / 10;
+    if (delta + hp <= hpLimit)
+    {
+      delta = 0;
+    }
+  }
+
+  if (delta)
+  {
+    SetHP(delta + hp, false);
+  }
+}
+
 CCharacter *CMonster::GetAttackTarget()
 {
   return m_pTargetChar;
@@ -899,32 +1082,71 @@ void CMonster::SetAttackTarget(CCharacter *p)
 void CMonster::Loop()
 {
   if (!m_bLive)
-    return;
-
-  if (m_EP.GetEff_State(20) || m_EP.GetEff_State(28))
-    return;
-
-  if (!m_bStun && m_bMove)
   {
-    if (m_EP.GetEff_State(6))
-    {
-      const float moveSpeed = GetMoveSpeed();
-      Move(moveSpeed);
-      MoveBreak(moveSpeed);
-      Stop();
-      SendMsg_BreakStop();
-    }
-    else
-    {
-      Move(GetMoveSpeed());
-      UpdateLookAtPos();
-    }
+    return;
   }
 
-  if (!m_bStun)
-    m_AI.OnProcess(GetLoopTime());
+  UpdateSFCont();
+  if (m_bLive && !CheckRespawnProcess() && m_bLive)
+  {
+    if (CheckMonsterStateData())
+    {
+      SendMsg_Change_MonsterState();
+    }
 
-  CheckEmotionPresentation();
+    if (!m_EP.GetEff_State(20) && !m_EP.GetEff_State(28))
+    {
+      if (!m_bStun)
+      {
+        if (m_bMove)
+        {
+          if (m_EP.GetEff_State(6))
+          {
+            const float moveSpeed = GetMoveSpeed();
+            Move(moveSpeed);
+            MoveBreak(GetMoveSpeed());
+            Stop();
+            SendMsg_BreakStop();
+          }
+          else
+          {
+            Move(GetMoveSpeed());
+            UpdateLookAtPos();
+          }
+        }
+        else
+        {
+          CheckMonsterRotate();
+        }
+      }
+
+      if (m_bLive)
+      {
+        m_AggroMgr.Process();
+        m_SFContDamageTolerance.Update();
+        if (m_bLive)
+        {
+          if (!m_bStun)
+          {
+            m_AI.OnProcess(GetLoopTime());
+          }
+          CheckEmotionPresentation();
+          if (m_bLive)
+          {
+            CheckAutoRecoverHP();
+            if (m_bLive)
+            {
+              m_MonHierarcy.OnChildRegenLoop();
+              if (m_bLive)
+              {
+                CheckDelayDestroy();
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 void CMonster::OutOfSec()
@@ -1617,27 +1839,15 @@ void CMonster::SendMsg_Change_MonsterRotate()
 
 void CMonster::SendMsg_FixPosition(int n)
 {
-#pragma pack(push, 1)
-  struct MonsterFixPosMsg
-  {
-    unsigned __int16 wRecordIndex;
-    unsigned __int16 wIndex;
-    unsigned int dwObjSerial;
-    __int16 pos[3];
-    unsigned __int16 wContEffect;
-    unsigned __int8 byYAngle;
-    unsigned __int16 wMonState;
-  };
-#pragma pack(pop)
 
-  MonsterFixPosMsg msg{};
-  msg.wRecordIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
+  _monster_fixpositon_zocl msg{};
+  msg.wRecIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
   msg.wIndex = m_ObjID.m_wIndex;
-  msg.dwObjSerial = m_dwObjSerial;
-  FloatToShort(m_fCurPos, msg.pos, 3);
-  msg.wContEffect = m_wLastContEffect;
-  msg.byYAngle = GetYAngleByte();
-  msg.wMonState = static_cast<unsigned __int16>(GetMonStateInfo());
+  msg.dwSerial = m_dwObjSerial;
+  msg.wLastEffectCode = m_wLastContEffect;
+  FloatToShort(m_fCurPos, msg.zCur, 3);
+  msg.bYAngle = GetYAngleByte();
+  msg.wStateInfo = static_cast<unsigned __int16>(GetMonStateInfo());
 
   unsigned __int8 type[2] = {4, 11};
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
@@ -1645,27 +1855,16 @@ void CMonster::SendMsg_FixPosition(int n)
 
 void CMonster::SendMsg_RealMovePoint(int n)
 {
-#pragma pack(push, 1)
-  struct MonsterRealMoveMsg
-  {
-    unsigned __int16 wRecordIndex;
-    unsigned __int16 wIndex;
-    unsigned int dwObjSerial;
-    __int16 posAndTarget[5];
-    unsigned __int16 wContEffect;
-    unsigned __int16 wMonState;
-  };
-#pragma pack(pop)
 
-  MonsterRealMoveMsg msg{};
-  msg.wRecordIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
+  _monster_real_move_zocl msg{};
+  msg.wRecIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
   msg.wIndex = m_ObjID.m_wIndex;
-  msg.dwObjSerial = m_dwObjSerial;
-  FloatToShort(m_fCurPos, msg.posAndTarget, 3);
-  msg.posAndTarget[3] = static_cast<__int16>(static_cast<int>(m_fTarPos[0]));
-  msg.posAndTarget[4] = static_cast<__int16>(static_cast<int>(m_fTarPos[2]));
-  msg.wContEffect = m_wLastContEffect;
-  msg.wMonState = static_cast<unsigned __int16>(GetMonStateInfo());
+  msg.dwSerial = m_dwObjSerial;
+  msg.wLastEffectCode = m_wLastContEffect;
+  FloatToShort(m_fCurPos, msg.zCur, 3);
+  msg.zTar[0] = static_cast<__int16>(static_cast<int>(m_fTarPos[0]));
+  msg.zTar[1] = static_cast<__int16>(static_cast<int>(m_fTarPos[2]));
+  msg.wStateInfo = static_cast<unsigned __int16>(GetMonStateInfo());
 
   unsigned __int8 type[2] = {4, 22};
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));

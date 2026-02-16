@@ -10,6 +10,7 @@
 
 #include <cstdlib>
 #include <ctime>
+#include "CGameObjectLocalStructs.h"
 
 bool _100_per_random_table::s_bRecordSet = false;
 unsigned __int16 _100_per_random_table::s_wRecord[10][100] = {};
@@ -2121,14 +2122,6 @@ void CGameObject::_ResetCirclePlayer()
 
 void CGameObject::SendMsg_BreakStop()
 {
-#pragma pack(push, 1)
-  struct BreakStopMsg
-  {
-    unsigned __int8 byID;
-    unsigned int dwObjSerial;
-    __int16 pos[3];
-  };
-#pragma pack(pop)
 
   BreakStopMsg msg{};
   msg.byID = m_ObjID.m_byID;

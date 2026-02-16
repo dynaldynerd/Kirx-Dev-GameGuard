@@ -360,58 +360,35 @@ void CHolyKeeper::SetStateChaos()
 
 void CHolyKeeper::SendMsg_Create()
 {
-#pragma pack(push, 1)
-  struct CreateMsg
-  {
-    unsigned __int16 wRecordIndex;
-    unsigned __int16 wIndex;
-    unsigned int dwObjSerial;
-    unsigned __int16 posShort[3];
-  } msg{};
-#pragma pack(pop)
+  _keeper_create_zocl msg{};
 
   msg.wIndex = m_ObjID.m_wIndex;
-  msg.wRecordIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
-  msg.dwObjSerial = m_dwObjSerial;
-  FloatToShort(m_fCurPos, reinterpret_cast<short *>(msg.posShort), 3);
+  msg.wRecIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
+  msg.dwSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, msg.zPos, 3);
   unsigned __int8 pbyType[2] = {3, static_cast<unsigned __int8>(-44)};
   CircleReport(pbyType, reinterpret_cast<char *>(&msg), 14, 0);
 }
 
 void CHolyKeeper::SendMsg_Destroy(unsigned __int8 byDesType)
 {
-#pragma pack(push, 1)
-  struct DestroyMsg
-  {
-    unsigned int dwObjSerial;
-    unsigned __int8 byDesType;
-  } msg{};
-#pragma pack(pop)
+  _keeper_destroy_zocl msg{};
 
-  msg.dwObjSerial = m_dwObjSerial;
-  msg.byDesType = byDesType;
+  msg.dwSerial = m_dwObjSerial;
+  msg.byDestroyCode = byDesType;
   unsigned __int8 pbyType[2] = {3, static_cast<unsigned __int8>(-46)};
   CircleReport(pbyType, reinterpret_cast<char *>(&msg), 5, 0);
 }
 
 void CHolyKeeper::SendMsg_Move()
 {
-#pragma pack(push, 1)
-  struct MoveMsg
-  {
-    unsigned int dwObjSerial;
-    unsigned __int16 posShort[3];
-    unsigned __int16 tarX;
-    unsigned __int16 tarZ;
-    unsigned __int8 byExit;
-  } msg{};
-#pragma pack(pop)
+  _keeper_move_zocl msg{};
 
-  msg.dwObjSerial = m_dwObjSerial;
-  FloatToShort(m_fCurPos, reinterpret_cast<short *>(msg.posShort), 3);
-  msg.tarX = static_cast<unsigned __int16>(m_fTarPos[0]);
-  msg.tarZ = static_cast<unsigned __int16>(m_fTarPos[2]);
-  msg.byExit = static_cast<unsigned __int8>(m_bExit);
+  msg.dwSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, msg.zCur, 3);
+  msg.zTar[0] = static_cast<__int16>(static_cast<int>(m_fTarPos[0]));
+  msg.zTar[1] = static_cast<__int16>(static_cast<int>(m_fTarPos[2]));
+  msg.byMoveType = static_cast<char>(m_bExit);
   unsigned __int8 pbyType[2] = {4, static_cast<unsigned __int8>(-79)};
   CircleReport(pbyType, reinterpret_cast<char *>(&msg), 15, 0);
 }
@@ -575,21 +552,12 @@ void CHolyKeeper::OutOfSec()
 
 void CHolyKeeper::SendMsg_FixPosition(int n)
 {
-#pragma pack(push, 1)
-  struct KeeperFixPosMsg
-  {
-    unsigned __int16 wRecordIndex;
-    unsigned __int16 wIndex;
-    unsigned int dwObjSerial;
-    __int16 pos[3];
-  };
-#pragma pack(pop)
 
-  KeeperFixPosMsg msg{};
-  msg.wRecordIndex = static_cast<unsigned __int16>(m_pRec->m_dwIndex);
+  _keeper_fixpositon_zocl msg{};
+  msg.wRecIndex = static_cast<unsigned __int16>(m_pRec->m_dwIndex);
   msg.wIndex = m_ObjID.m_wIndex;
-  msg.dwObjSerial = m_dwObjSerial;
-  FloatToShort(m_fCurPos, msg.pos, 3);
+  msg.dwSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, msg.zCur, 3);
 
   unsigned __int8 type[2] = {4, 167};
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
@@ -597,23 +565,14 @@ void CHolyKeeper::SendMsg_FixPosition(int n)
 
 void CHolyKeeper::SendMsg_RealMovePoint(int n)
 {
-#pragma pack(push, 1)
-  struct KeeperRealMoveMsg
-  {
-    unsigned __int16 wRecordIndex;
-    unsigned __int16 wIndex;
-    unsigned int dwObjSerial;
-    __int16 posAndTarget[5];
-  };
-#pragma pack(pop)
 
-  KeeperRealMoveMsg msg{};
-  msg.wRecordIndex = static_cast<unsigned __int16>(m_pRec->m_dwIndex);
+  _keeper_real_move_zocl msg{};
+  msg.wRecIndex = static_cast<unsigned __int16>(m_pRec->m_dwIndex);
   msg.wIndex = m_ObjID.m_wIndex;
-  msg.dwObjSerial = m_dwObjSerial;
-  FloatToShort(m_fCurPos, msg.posAndTarget, 3);
-  msg.posAndTarget[3] = static_cast<__int16>(static_cast<int>(m_fTarPos[0]));
-  msg.posAndTarget[4] = static_cast<__int16>(static_cast<int>(m_fTarPos[2]));
+  msg.dwSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, msg.zCur, 3);
+  msg.zTar[0] = static_cast<__int16>(static_cast<int>(m_fTarPos[0]));
+  msg.zTar[1] = static_cast<__int16>(static_cast<int>(m_fTarPos[2]));
 
   unsigned __int8 type[2] = {4, 125};
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
@@ -902,26 +861,11 @@ float *CHolyKeeper::GetAttackPivot()
 
 void CHolyKeeper::SendMsg_Attack()
 {
-#pragma pack(push, 1)
-  struct KeeperDamageEntry
-  {
-    unsigned __int8 byDstID;
-    unsigned int dwDstSerial;
-    unsigned __int16 wDamage;
-  };
 
-  struct AttackKeeperInform
-  {
-    unsigned int dwAtterSerial;
-    unsigned __int8 bCritical;
-    unsigned __int8 byListNum;
-    KeeperDamageEntry DamList[30];
-  };
-#pragma pack(pop)
 
-  AttackKeeperInform msg{};
+  _attack_keeper_inform_zocl msg{};
   msg.dwAtterSerial = m_dwObjSerial;
-  msg.bCritical = static_cast<unsigned __int8>(m_at->m_bIsCrtAtt);
+  msg.bCritical = m_at->m_bIsCrtAtt;
   msg.byListNum = static_cast<unsigned __int8>(m_at->m_nDamagedObjNum);
   for (int i = 0; i < m_at->m_nDamagedObjNum; ++i)
   {
@@ -930,6 +874,11 @@ void CHolyKeeper::SendMsg_Attack()
     msg.DamList[i].wDamage = static_cast<unsigned __int16>(m_at->m_DamList[i].m_nDamage);
   }
 
+  if (msg.byListNum > 32)
+  {
+    msg.byListNum = 0;
+  }
+  const int packetSize = 326 - 10 * (32 - msg.byListNum);
   const unsigned __int8 type[2] = {5, 151};
-  CircleReport(const_cast<unsigned __int8 *>(type), reinterpret_cast<char *>(&msg), sizeof(msg), false);
+  CircleReport(const_cast<unsigned __int8 *>(type), reinterpret_cast<char *>(&msg), packetSize, false);
 }

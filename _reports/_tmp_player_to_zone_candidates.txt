@@ -1,0 +1,620 @@
+
+[_combine_item_result_msg] tokens=combine,item
+  _combine_ex_item_accept_request_clzo [2]
+  _combine_ex_item_accept_request_clzo::_Select_ItemList_buff [2]
+  _combine_ex_item_accept_result_zocl [2]
+  _combine_ex_item_request_clzo [2]
+  _combine_ex_item_request_clzo::_list [2]
+  _combine_ex_item_result_zocl [2]
+  _combine_ex_item_result_zocl::__item [2]
+  _combine_ex_item_result_zocl::_Result_ItemList_Buff [2]
+  _combine_item_request_clzo [2]
+  _combine_item_result_zocl [2]
+  _combine_item_result_zocl::__item [2]
+  _combine_lend_item_result_zocl [2]
+
+[_golden_box_notify_msg] tokens=golden,box,notify
+  _db_golden_box_item [2]
+  _db_golden_box_item::_db_golden_box_item_List [2]
+  _golden_box_item [2]
+  _golden_box_item_event [2]
+  _golden_box_item_ini [2]
+  _golden_box_item_ini::_golden_box_item_list [2]
+  _golden_box_item::_golden_box_item_info [2]
+  _notify_effect_for_get_gold_box_item_zocl [2]
+  _notify_gold_box_event_status_zocl [2]
+  _notify_golden_dig_event_status_zocl [2]
+  _worlddb_golden_box_item [2]
+  _worlddb_golden_box_item::_golden_box_item_info [2]
+
+[_hsk_act_cum] tokens=hsk,act,cum
+  _add_holyquest_actcum_inform_zocl [2]
+
+[CPlayer_pc_BuddyDownloadRequest_msg] tokens=buddy,download
+  _buddy_download_request_clzo [2]
+  _buddy_download_result_zocl [2]
+  _guild_member_buddy_download_zocl [2]
+
+[CPlayer_SendData_PartyMemberPos_msg] tokens=party,member,pos
+  _party_member_pos_upd [3]
+  _guild_battle_notify_committee_member_position_zocl [2]
+  _guild_battle_notify_position_member_delete_zocl [2]
+  _guild_member_pos_inform_zocl [2]
+  _party_join_member_result_zocl [2]
+  _party_member_effect_upd [2]
+  _party_member_fp_upd [2]
+  _party_member_hp_upd [2]
+  _party_member_info_upd [2]
+  _party_member_info_upd::_EFFECT [2]
+  _party_member_lv_upd [2]
+  _party_member_max_hfsp_upd [2]
+
+[CPlayer_SendMsg_AdjustAmountInform_msg] tokens=adjust,amount
+  _adjust_amount_inform_zocl [2]
+
+[CPlayer_SendMsg_AlterEquipSPInform_msg] tokens=alter,equip,spinform
+  _alter_equip_sp_inform_zocl [2]
+
+[CPlayer_SendMsg_AlterItemDurInform_msg] tokens=alter,item,dur
+  _alter_item_dur_zocl [3]
+  _alter_item_slot_request_clzo [2]
+  _alter_item_slot_request_clzo::__list [2]
+  _personal_automine_alter_dur_zocl [2]
+  _trunk_alter_item_slot_request_clzo [2]
+
+[CPlayer_SendMsg_AlterMaxDP_msg] tokens=alter,max,dp
+  _max_dp_zocl [2]
+
+[CPlayer_SendMsg_AlterMoneyInform_msg] tokens=alter,money
+  _alter_money_inform_zocl [2]
+
+[CPlayer_SendMsg_AlterPvPRank_msg] tokens=alter,pv,prank
+  _alter_pvp_cash_zocl [2]
+  _alter_pvp_point_zocl [2]
+  _alter_pvp_temp_cash_zocl [2]
+
+[CPlayer_SendMsg_AlterTowerHP_msg] tokens=alter,tower,hp
+  _alter_tower_hp_zocl [3]
+  _alter_hp_inform_zocl [2]
+  _alter_unit_hp_inform_zocl [2]
+
+[CPlayer_SendMsg_AnimusReturnResult_msg] tokens=animus,return
+  _ANIMUS_RETURN_DELAY [2]
+  _animus_return_request_clzo [2]
+  _animus_return_result_zocl [2]
+
+[CPlayer_SendMsg_AwayPartyInvitationQuestion_msg] tokens=away,party,invitation,question
+  _away_party_join_invitation_question_zocl [4]
+  _away_party_invitation_request_clzo [3]
+  _away_party_invitation_result_zocl [3]
+  _away_party_join_invitation_answer_clzo [3]
+  _party_join_invitation_question_zocl [3]
+  _party_join_application_question_zocl [2]
+  _party_join_invitation_answer_clzo [2]
+  _party_join_invitation_clzo [2]
+
+[CPlayer_SendMsg_BackTowerResult_msg] tokens=back,tower
+  _back_tower_request_clzo [2]
+  _back_tower_result_zocl [2]
+
+[CPlayer_SendMsg_BuddyAddAnswerResult_msg] tokens=buddy,add,answer
+  _buddy_add_answer_clzo [3]
+  _buddy_add_ask_zocl [2]
+  _buddy_add_fail_zocl [2]
+  _buddy_add_request_clzo [2]
+  _buddy_add_result_zocl [2]
+
+[CPlayer_SendMsg_BuddyAddAsk_msg] tokens=buddy,add,ask
+  _buddy_add_ask_zocl [3]
+  _buddy_add_answer_clzo [2]
+  _buddy_add_fail_zocl [2]
+  _buddy_add_request_clzo [2]
+  _buddy_add_result_zocl [2]
+  CComCtlWrapper::ImageList_AddMasked_Type [2]
+
+[CPlayer_SendMsg_BuddyAddFail_msg] tokens=buddy,add,fail
+  _buddy_add_fail_zocl [3]
+  _buddy_add_answer_clzo [2]
+  _buddy_add_ask_zocl [2]
+  _buddy_add_request_clzo [2]
+  _buddy_add_result_zocl [2]
+
+[CPlayer_SendMsg_BuddyPosInform_msg] tokens=buddy,pos
+  _buddy_pos_inform_zocl [2]
+
+[CPlayer_SendMsg_ClassSkillResult_msg] tokens=class,skill
+  _class_skill_recall_teleport_request_clzo [2]
+  _class_skill_request_clzo [2]
+  _class_skill_result_one_zocl [2]
+  _class_skill_result_other_zocl [2]
+
+[CPlayer_SendMsg_ClassSkillResult_msg_2] tokens=class,skill
+  _class_skill_recall_teleport_request_clzo [2]
+  _class_skill_request_clzo [2]
+  _class_skill_result_one_zocl [2]
+  _class_skill_result_other_zocl [2]
+
+[CPlayer_SendMsg_CreateTowerResult_msg] tokens=create,tower
+  _tower_create_setdata [2]
+  _tower_create_zocl [2]
+
+[CPlayer_SendMsg_CreateTrapResult_msg] tokens=create,trap
+  _trap_create_setdata [2]
+  _trap_create_zocl [2]
+
+[CPlayer_SendMsg_DarkHoleRewardMessage_msg] tokens=dark,hole,reward,message
+  _darkhole_reward_message_inform_zocl [4]
+  _darkhole_answer_reenter_request_clzo [2]
+  _darkhole_answer_reenter_result_zocl [2]
+  _darkhole_ask_reenter_inform_zocl [2]
+  _darkhole_channel_close_inform_zocl [2]
+  _darkhole_clear_out_request_clzo [2]
+  _darkhole_clear_out_result_zocl [2]
+  _darkhole_create_setdata [2]
+  _darkhole_create_zocl [2]
+  _darkhole_destroy_zocl [2]
+  _darkhole_enter_request_clzo [2]
+  _darkhole_enter_result_zocl [2]
+
+[CPlayer_SendMsg_DeleteStorageInform_msg] tokens=delete,storage
+  _delete_storage_inform_zocl [2]
+
+[CPlayer_SendMsg_Destroy_msg] tokens=destroy
+  _animus_destroy_zocl [1]
+  _darkhole_destroy_zocl [1]
+  _destroy_gravity_stone_zocl [1]
+  _guild_battle_notify_destroy_ball_zocl [1]
+  _itembox_destroy_zocl [1]
+  _keeper_destroy_zocl [1]
+  _monster_destroy_zocl [1]
+  _notify_holy_stone_destroyed_zocl [1]
+  _npc_destroy_zocl [1]
+  _parkingunit_destroy_zocl [1]
+  _player_destroy_zocl [1]
+  _stone_destroy_zocl [1]
+
+[CPlayer_SendMsg_EconomyRateInform_msg] tokens=economy,rate
+  _economy_rate_inform_zocl [2]
+  _ECONOMY_SYSTEM::_CUR_RATE [2]
+
+[CPlayer_SendMsg_EquipPartChange_msg] tokens=equip,part,change
+  _equip_part_request_clzo [2]
+  _equip_part_result_zocl [2]
+
+[CPlayer_SendMsg_ExchangeMoneyResult_msg] tokens=exchange,money
+  _exchange_money_result_zocl [2]
+
+[CPlayer_SendMsg_FixPosition_msg] tokens=fix,position
+  _circle_zone_fix_position_zocl [2]
+  _gravity_stone_fix_position_zocl [2]
+  _gravity_stone_regener_fix_position_zocl [2]
+  _return_gate_fix_position_zocl [2]
+
+[CPlayer_SendMsg_ForceResult_msg] tokens=force
+  _attack_force_request_clzo [1]
+  _attack_force_result_zocl [1]
+  _BILLING_FORCE_CLOSE_DELAY [1]
+  _FORCE_CLOSE [1]
+  _force_close_command_acwr [1]
+  _FORCE_CLOSE::__FD_NODE [1]
+  _FORCE_DB_BASE [1]
+  _FORCE_DB_BASE::_LIST [1]
+  _force_db_load [1]
+  _force_download_result_zocl [1]
+  _force_download_result_zocl::_list [1]
+  _force_fld [1]
+
+[CPlayer_SendMsg_ForceResult_msg_2] tokens=force
+  _attack_force_request_clzo [1]
+  _attack_force_result_zocl [1]
+  _BILLING_FORCE_CLOSE_DELAY [1]
+  _FORCE_CLOSE [1]
+  _force_close_command_acwr [1]
+  _FORCE_CLOSE::__FD_NODE [1]
+  _FORCE_DB_BASE [1]
+  _FORCE_DB_BASE::_LIST [1]
+  _force_db_load [1]
+  _force_download_result_zocl [1]
+  _force_download_result_zocl::_list [1]
+  _force_fld [1]
+
+[CPlayer_SendMsg_GestureInform_msg] tokens=gesture
+  _gesture_inform_zocl [1]
+  _gesture_request_clzo [1]
+
+[CPlayer_SendMsg_GuildMasterEffect_msg] tokens=guild,master,effect
+  CGuildMasterEffect [3]
+  _guild_master_advantage_info [2]
+  _guild_master_election_possible_zocl [2]
+  _guild_master_info [2]
+  _guild_master_info_zocl [2]
+  _qry_case_select_guild_master_lastconn [2]
+  _qry_case_update_guildmaster [2]
+
+[CPlayer_SendMsg_InsertItemInform_msg] tokens=insert,item
+  _insert_item_inform_zocl [2]
+  _insert_quest_item_inform_zocl [2]
+  _qry_case_insertitem [2]
+  CComCtlWrapper::DSA_InsertItem_Type [2]
+  IInsertItem [2]
+
+[CPlayer_SendMsg_LendItemTimeExpired_msg] tokens=lend,item,time,expired
+  _lend_item_time_expired_zocl [4]
+  _add_lend_item_result_zocl [2]
+  _combine_lend_item_result_zocl [2]
+  _combine_lend_item_result_zocl::_lend_item [2]
+  _exchange_lend_item_result_zocl [2]
+  _qry_case_unmandtrader_time_out_cancelitem [2]
+  LendItemMng [2]
+  LendItemSheet [2]
+  LendItemSheet::Cell [2]
+  TimeItem [2]
+
+[CPlayer_SendMsg_NewViewOther_msg] tokens=new,view
+  _other_new_view_zocl [2]
+
+[CPlayer_SendMsg_NpcQuestListResult_msg] tokens=npc,quest,list
+  _npc_quest_list_request_clzo [3]
+  _npc_quest_list_result_zocl [3]
+  _worlddb_npc_quest_complete_history::__list [3]
+  _worlddb_start_npc_quest_complete_history::__list [3]
+  _alter_item_slot_request_clzo::__list [2]
+  _alter_link_slot_request_clzo::__list [2]
+  _buy_store_request_clzo::_list [2]
+  _combine_ex_item_accept_request_clzo::_Select_ItemList_buff [2]
+  _combine_ex_item_request_clzo::_list [2]
+  _guild_battle_rank_list_request_clzo [2]
+  _guild_honor_set_request_clzo::__list [2]
+  _guild_list_request_clzo [2]
+
+[CPlayer_SendMsg_OtherShapePartEx_CashChange_msg] tokens=shape,part,ex,cash,change
+  _exchange_dalant_for_gold_request_clzo [2]
+  _exchange_gold_for_dalant_request_clzo [2]
+  _exchange_gold_for_pvp_request_clzo [2]
+  _exchange_item_request_clzo [2]
+  _exchange_item_result_zocl [2]
+  _exchange_lend_item_result_zocl [2]
+  _exchange_money_result_zocl [2]
+  _ItemExchange_fld [2]
+  _ItemExchange_fld::_output [2]
+  _other_shape_cash_rename_zocl [2]
+  _other_shape_change_zocl [2]
+  _other_shape_change_zocl::_model [2]
+
+[CPlayer_SendMsg_PartyJoinApplicationQuestion_msg] tokens=party,join,application,question
+  _party_join_application_question_zocl [4]
+  _away_party_join_invitation_question_zocl [3]
+  _party_join_application_answer_clzo [3]
+  _party_join_application_clzo [3]
+  _party_join_invitation_question_zocl [3]
+  _away_party_join_invitation_answer_clzo [2]
+  _party_disjoint_request_clzo [2]
+  _party_disjoint_result_zocl [2]
+  _party_join_fail_level_inform_zocl [2]
+  _party_join_invitation_answer_clzo [2]
+  _party_join_invitation_clzo [2]
+  _party_join_joiner_result_zocl [2]
+
+[CPlayer_SendMsg_PartyJoinInvitationQuestion_msg] tokens=party,join,invitation,question
+  _away_party_join_invitation_question_zocl [4]
+  _party_join_invitation_question_zocl [4]
+  _away_party_join_invitation_answer_clzo [3]
+  _party_join_application_question_zocl [3]
+  _party_join_invitation_answer_clzo [3]
+  _party_join_invitation_clzo [3]
+  _away_party_invitation_request_clzo [2]
+  _away_party_invitation_result_zocl [2]
+  _party_disjoint_request_clzo [2]
+  _party_disjoint_result_zocl [2]
+  _party_join_application_answer_clzo [2]
+  _party_join_application_clzo [2]
+
+[CPlayer_SendMsg_PartyJoinJoinerResult_msg] tokens=party,join,joiner
+  _party_join_joiner_result_zocl [3]
+  _party_join_joiner_result_zocl::_list [3]
+  _away_party_join_invitation_answer_clzo [2]
+  _away_party_join_invitation_question_zocl [2]
+  _party_disjoint_request_clzo [2]
+  _party_disjoint_result_zocl [2]
+  _party_join_application_answer_clzo [2]
+  _party_join_application_clzo [2]
+  _party_join_application_question_zocl [2]
+  _party_join_fail_level_inform_zocl [2]
+  _party_join_invitation_answer_clzo [2]
+  _party_join_invitation_clzo [2]
+
+[CPlayer_SendMsg_PartyJoinJoinerResult_msg_2] tokens=party,join,joiner
+  _party_join_joiner_result_zocl [3]
+  _party_join_joiner_result_zocl::_list [3]
+  _away_party_join_invitation_answer_clzo [2]
+  _away_party_join_invitation_question_zocl [2]
+  _party_disjoint_request_clzo [2]
+  _party_disjoint_result_zocl [2]
+  _party_join_application_answer_clzo [2]
+  _party_join_application_clzo [2]
+  _party_join_application_question_zocl [2]
+  _party_join_fail_level_inform_zocl [2]
+  _party_join_invitation_answer_clzo [2]
+  _party_join_invitation_clzo [2]
+
+[CPlayer_SendMsg_PartyJoinMemberResult_msg] tokens=party,join,member
+  _party_join_member_result_zocl [3]
+  _away_party_join_invitation_answer_clzo [2]
+  _away_party_join_invitation_question_zocl [2]
+  _party_disjoint_request_clzo [2]
+  _party_disjoint_result_zocl [2]
+  _party_join_application_answer_clzo [2]
+  _party_join_application_clzo [2]
+  _party_join_application_question_zocl [2]
+  _party_join_fail_level_inform_zocl [2]
+  _party_join_invitation_answer_clzo [2]
+  _party_join_invitation_clzo [2]
+  _party_join_invitation_question_zocl [2]
+
+[CPlayer_SendMsg_PartyLeaveCompulsionResult_msg] tokens=party,leave,compulsion
+  _party_leave_compulsion_request_clzo [3]
+  _party_leave_compulsion_result_zocl [3]
+  _party_leave_self_request_clzo [2]
+  _party_leave_self_result_zocl [2]
+
+[CPlayer_SendMsg_PartyLeaveSelfResult_msg] tokens=party,leave,self
+  _party_leave_self_request_clzo [3]
+  _party_leave_self_result_zocl [3]
+  _guild_self_leave_request_clzo [2]
+  _guild_self_leave_result_zocl [2]
+  _party_leave_compulsion_request_clzo [2]
+  _party_leave_compulsion_result_zocl [2]
+  _qry_case_selfleave [2]
+
+[CPlayer_SendMsg_PotionDelayTime_msg] tokens=potion,delay,time
+  _potion_delay_time_information_zocl [3]
+  _POTION_NEXT_USE_TIME_DB_BASE [2]
+  _remain_potion_buf_use_time_inform_zocl [2]
+  _worlddb_potion_delay_info [2]
+
+[CPlayer_SendMsg_RaceBattlePenelty_msg] tokens=race,battle,penelty
+  _notify_race_battle_penelty_zocl [3]
+  _race_battle_log_info [2]
+
+[CPlayer_SendMsg_RealMovePoint_msg] tokens=real,move,point
+  _animus_real_move_zocl [2]
+  _keeper_real_move_zocl [2]
+  _monster_real_move_zocl [2]
+  _npc_real_move_zocl [2]
+  _player_real_move_zocl [2]
+  CRealMoveRequestDelayChecker [2]
+  tagMOUSEMOVEPOINT [2]
+
+[CPlayer_SendMsg_ReleaseSiegeModeResult_msg] tokens=release,siege,mode
+  _release_siege_mode_other_inform_zocl [3]
+  _release_siege_mode_request_clzo [3]
+  _release_siege_mode_result_zocl [3]
+  _transform_siege_mode_other_inform_zocl [2]
+  _transform_siege_mode_request_clzo [2]
+  _transform_siege_mode_result_zocl [2]
+
+[CPlayer_SendMsg_Resurrect_msg] tokens=resurrect
+  _player_resurrect_inform_zocl [1]
+  _player_resurrect_zocl [1]
+
+[CPlayer_SendMsg_Revival_msg] tokens=revival
+  _inform_revival_jade_effect_zocl [1]
+  _player_revival_request_clzo [1]
+  _player_revival_zocl [1]
+  _request_revival_jade_effect_clzo [1]
+
+[CPlayer_SendMsg_RewardAddItem_msg] tokens=reward,add,item
+  _reward_add_item_zocl [3]
+  __add_loot_item [2]
+  _add_lend_item_result_zocl [2]
+  _event_respawn::_reward_item [2]
+  _itembox_take_add_result_zocl [2]
+  _quest_reward_item [2]
+  GUILD_BATTLE::CGuildBattleRewardItem [2]
+  GUILD_BATTLE::CGuildBattleRewardItemManager [2]
+
+[CPlayer_SendMsg_SelectWaitedQuest_msg] tokens=select,waited,quest
+  _select_waited_quest_command_zocl [3]
+  _select_waited_quest_report_clzo [3]
+  _combine_ex_item_accept_request_clzo::_Select_ItemList_buff [2]
+  _quest_select_reward_inform_zocl [2]
+  _quest_select_reward_repart_clzo [2]
+  _select_class_request_clzo [2]
+  _select_nuclear_pos_request_clzo [2]
+
+[CPlayer_SendMsg_SetGroupMapPoint_msg] tokens=set,group,map,point
+  _set_group_map_point_request_clzo [4]
+  _set_group_map_point_result_zocl [4]
+  _set_group_target_object_request_clzo [2]
+  _set_group_target_object_result_zocl [2]
+  CNationSettingFactoryGroup [2]
+  GUILD_BATTLE::CGuildBattleReservedScheduleMapGroup [2]
+  GUILD_BATTLE::CReservedGuildScheduleMapGroup [2]
+  tagEMRSETMAPPERFLAGS [2]
+
+[CPlayer_SendMsg_SetGroupTargetObjectResult_msg] tokens=set,group,target,object
+  _set_group_target_object_request_clzo [4]
+  _set_group_target_object_result_zocl [4]
+  _release_group_target_object_request_clzo [3]
+  _release_group_target_object_request_zocl [3]
+  _set_target_object_request_clzo [3]
+  _set_target_object_result_zocl [3]
+  _group_target_inform_zocl [2]
+  _JOBOBJECT_JOBSET_INFORMATION [2]
+  _object_create_setdata [2]
+  _refresh_group_target_position_zocl [2]
+  _release_target_object_request_clzo [2]
+  _set_group_map_point_request_clzo [2]
+
+[CPlayer_SendMsg_SkillResult_msg] tokens=skill
+  _attack_skill_request_clzo [1]
+  _attack_skill_result_zocl [1]
+  _class_skill_recall_teleport_request_clzo [1]
+  _class_skill_request_clzo [1]
+  _class_skill_result_one_zocl [1]
+  _class_skill_result_other_zocl [1]
+  _skill_fld [1]
+  _SKILL_IDX_PER_MASTERY [1]
+  _skill_lv_up_data [1]
+  _skill_recall_teleport_request_clzo [1]
+  _skill_request_clzo [1]
+  _skill_result_one_zocl [1]
+
+[CPlayer_SendMsg_SkillResult_msg_2] tokens=skill
+  _attack_skill_request_clzo [1]
+  _attack_skill_result_zocl [1]
+  _class_skill_recall_teleport_request_clzo [1]
+  _class_skill_request_clzo [1]
+  _class_skill_result_one_zocl [1]
+  _class_skill_result_other_zocl [1]
+  _skill_fld [1]
+  _SKILL_IDX_PER_MASTERY [1]
+  _skill_lv_up_data [1]
+  _skill_recall_teleport_request_clzo [1]
+  _skill_request_clzo [1]
+  _skill_result_one_zocl [1]
+
+[CPlayer_SendMsg_StartContSF_msg] tokens=start,cont,sf
+  _sf_continous [2]
+  _SFCONT_DB_BASE [2]
+  _SFCONT_DB_BASE::_LIST [2]
+  _target_monster_contsf_allinform_zocl [2]
+  _target_monster_contsf_allinform_zocl::_moncontsf [2]
+  _target_player_damage_contsf_allinform_zocl [2]
+  _target_player_damage_contsf_allinform_zocl::_playercontsf [2]
+  MonsterSFContDamageToleracne [2]
+
+[CPlayer_SendMsg_StateInform_msg] tokens=state
+  _AFX_DB_STATE [1]
+  _AFX_DEBUG_STATE [1]
+  _AFX_EDIT_STATE [1]
+  _AFX_OLE_STATE [1]
+  _AFX_RICHEDIT_STATE [1]
+  _AFX_SOCK_STATE [1]
+  _AFX_THREAD_STATE [1]
+  _AFX_WIN_STATE [1]
+  _CrtMemState [1]
+  _darkhole_state_change_zocl [1]
+  _EFF_STATE [1]
+  _event_respawn::_state [1]
+
+[CPlayer_SendMsg_StatInform_msg] tokens=stat
+  _ADAPTER_STATUS [1]
+  _AFX_DB_STATE [1]
+  _AFX_DEBUG_STATE [1]
+  _AFX_EDIT_STATE [1]
+  _AFX_OLE_STATE [1]
+  _AFX_RICHEDIT_STATE [1]
+  _AFX_SOCK_STATE [1]
+  _AFX_THREAD_STATE [1]
+  _AFX_WIN_STATE [1]
+  _COMSTAT [1]
+  _connection_status_request_ctzo [1]
+  _connection_status_result_zoct [1]
+
+[CPlayer_SendMsg_TowerContinue_msg] tokens=tower,continue
+  _continue_tower_inform [2]
+
+[CPlayer_SendMsg_TransformSiegeModeResult_msg] tokens=transform,siege,mode
+  _transform_siege_mode_other_inform_zocl [3]
+  _transform_siege_mode_request_clzo [3]
+  _transform_siege_mode_result_zocl [3]
+  _release_siege_mode_other_inform_zocl [2]
+  _release_siege_mode_request_clzo [2]
+  _release_siege_mode_result_zocl [2]
+
+[CPlayer_SendMsg_UnitAlterFeeInform_msg] tokens=unit,alter,fee
+  _unit_alter_fee_inform_zocl [3]
+  _alter_unit_bullet_inform_zocl [2]
+  _alter_unit_hp_inform_zocl [2]
+
+[CPlayer_SendMsg_UnitBulletFillResult_msg] tokens=unit,bullet,fill
+  _unit_bullet_fill_request_clzo [3]
+  _unit_bullet_fill_result_zocl [3]
+  _alter_unit_bullet_inform_zocl [2]
+  _unit_bullet_param [2]
+  _unit_bullet_replace_request_clzo [2]
+  _unit_bullet_replace_result_zocl [2]
+  _unit_pack_fill_request_clzo [2]
+  _unit_pack_fill_request_clzo::__list [2]
+  _unit_pack_fill_result_zocl [2]
+  _UnitBullet_fld [2]
+
+[CPlayer_SendMsg_UnitDeliveryResult_msg] tokens=unit,delivery
+  _unit_delivery_request_clzo [2]
+  _unit_delivery_result_zocl [2]
+
+[CPlayer_SendMsg_UnitForceReturnInform_msg] tokens=unit,force,return
+  _unit_force_return_inform_zocl [3]
+  _unit_return_request_clzo [2]
+  _unit_return_result_zocl [2]
+
+[CPlayer_SendMsg_UnitFrameBuyResult_msg] tokens=unit,frame,buy
+  _unit_frame_buy_request_clzo [3]
+  _unit_frame_buy_result_zocl [3]
+  _unit_frame_repair_request_clzo [2]
+  _unit_frame_repair_result_zocl [2]
+  _UnitFrame_fld [2]
+
+[CPlayer_SendMsg_UnitFrameRepairResult_msg] tokens=unit,frame,repair
+  _unit_frame_repair_request_clzo [3]
+  _unit_frame_repair_result_zocl [3]
+  _unit_frame_buy_request_clzo [2]
+  _unit_frame_buy_result_zocl [2]
+  _UnitFrame_fld [2]
+
+[CPlayer_SendMsg_UnitPackFillResult_msg] tokens=unit,pack,fill
+  _unit_pack_fill_request_clzo [3]
+  _unit_pack_fill_request_clzo::__list [3]
+  _unit_pack_fill_result_zocl [3]
+  _unit_bullet_fill_request_clzo [2]
+  _unit_bullet_fill_result_zocl [2]
+
+[CPlayer_SendMsg_UnitPartTuningResult_msg] tokens=unit,part,tuning
+  _unit_part_tuning_request_clzo [3]
+  _unit_part_tuning_result_zocl [3]
+  _UnitPart_fld [2]
+
+[CPlayer_SendMsg_UnitSellResult_msg] tokens=unit,sell
+  _unit_sell_request_clzo [2]
+  _unit_sell_result_zocl [2]
+
+[GuildListResult] tokens=guild,list
+  __guild_list_page [2]
+  __guild_list_page::__list [2]
+  _guild_alter_member_grade_inform_zocl::__list [2]
+  _guild_alter_member_state_inform_zocl::__list [2]
+  _guild_battle_rank_list_request_clzo [2]
+  _guild_battle_rank_list_result_no_data_zocl [2]
+  _guild_battle_rank_list_result_zocl [2]
+  _guild_battle_rank_list_result_zocl::__list [2]
+  _guild_battle_reserved_schedule_result_zocl::__list [2]
+  _guild_honor_list_requst_clzo [2]
+  _guild_honor_list_result_zocl [2]
+  _guild_honor_list_result_zocl::__list [2]
+
+[PartyMemberEffect] tokens=party,member,effect
+  _party_member_effect_upd [3]
+  _party_member_info_upd::_EFFECT [3]
+  _party_join_member_result_zocl [2]
+  _party_member_fp_upd [2]
+  _party_member_hp_upd [2]
+  _party_member_info_upd [2]
+  _party_member_lv_upd [2]
+  _party_member_max_hfsp_upd [2]
+  _party_member_pos_upd [2]
+  _party_member_sp_upd [2]
+
+[PartyMemberInfoUpd] tokens=party,member,info,upd
+  _party_member_info_upd [4]
+  _party_member_info_upd::_EFFECT [4]
+  _party_member_effect_upd [3]
+  _party_member_fp_upd [3]
+  _party_member_hp_upd [3]
+  _party_member_lv_upd [3]
+  _party_member_max_hfsp_upd [3]
+  _party_member_pos_upd [3]
+  _party_member_sp_upd [3]
+  _darkhole_member_info_inform_zocl [2]
+  _darkhole_member_info_inform_zocl::__list [2]
+  _darkhole_new_member_inform_zocl [2]

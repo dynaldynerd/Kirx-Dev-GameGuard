@@ -150,6 +150,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <mmsystem.h>
+#include "CPlayerLocalPacketStructs.h"
 
 _skill_fld *CPlayer::ms_pXmas_Snow_Effect = nullptr;
 _skill_fld *CPlayer::ms_pXmas_Snow_Bullet_Effect = nullptr;
@@ -2532,38 +2533,29 @@ void CPlayer::SendMsg_GotoRecallResult(
   float *pfStartPos,
   unsigned __int8 byMapInType)
 {
-  struct
-  {
-    char errCode;
-    char mapCode;
-    float startPos[3];
-    unsigned __int8 mapInType;
-  } msg{};
-
-  msg.errCode = byErrCode;
-  msg.mapCode = byMapCode;
-  memcpy_0(msg.startPos, pfStartPos, sizeof(msg.startPos));
-  msg.mapInType = byMapInType;
+  unsigned __int8 msg[15]{};
+  msg[0] = static_cast<unsigned __int8>(byErrCode);
+  msg[1] = static_cast<unsigned __int8>(byMapCode);
+  memcpy_0(msg + 2, pfStartPos, 12);
+  msg[14] = byMapInType;
 
   unsigned __int8 type[2]{};
   type[0] = 4;
   type[1] = 29;
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 15);
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(msg), 15);
 }
 
 void CPlayer::SendMsg_GotoBasePortalResult(char byErrCode)
 {
-  char msg[2]{};
-  short pos[3]{};
-
-  msg[0] = byErrCode;
-  msg[1] = static_cast<char>(m_pCurMap->m_pMapSet->m_dwIndex);
-  FloatToShort(m_fCurPos, pos, 3);
+  unsigned __int8 msg[8]{};
+  msg[0] = static_cast<unsigned __int8>(byErrCode);
+  msg[1] = static_cast<unsigned __int8>(m_pCurMap->m_pMapSet->m_dwIndex);
+  FloatToShort(m_fCurPos, reinterpret_cast<short *>(msg + 2), 3);
 
   unsigned __int8 type[2]{};
   type[0] = 4;
   type[1] = 27;
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, 8u);
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(msg), 8u);
 }
 
 void CPlayer::SendMsg_MovePortal(
@@ -3637,21 +3629,15 @@ void CPlayer::pc_RegistBind(CItemStore *pStore)
 
 void CPlayer::SendMsg_MapOut(unsigned __int8 byMapOutCode, unsigned __int8 byNextMapCode)
 {
-  struct
-  {
-    unsigned __int8 mapOutCode;
-    unsigned int objSerial;
-    unsigned __int8 nextMapCode;
-  } msg{};
-
-  msg.mapOutCode = byMapOutCode;
-  msg.objSerial = m_dwObjSerial;
-  msg.nextMapCode = byNextMapCode;
+  unsigned __int8 msg[6]{};
+  msg[0] = byMapOutCode;
+  *reinterpret_cast<unsigned int *>(msg + 1) = m_dwObjSerial;
+  msg[5] = byNextMapCode;
 
   unsigned __int8 type[2]{};
   type[0] = 3;
   type[1] = 39;
-  CircleReport(type, reinterpret_cast<char *>(&msg), 6, false);
+  CircleReport(type, reinterpret_cast<char *>(msg), 6, false);
 }
 
 bool CPlayer::IsHaveMentalTicket()
@@ -3709,15 +3695,9 @@ void CPlayer::SetUseReleaseRaceBuffPotion()
 
 void CPlayer::SendMsg_MapEnvInform(char byMapCode, unsigned int dwMapEnvCode)
 {
-  struct
-  {
-    char mapCode;
-    unsigned int mapEnvCode;
-    int mapTime;
-  } msg{};
-
-  msg.mapCode = byMapCode;
-  msg.mapEnvCode = dwMapEnvCode;
+  unsigned __int8 msg[9]{};
+  msg[0] = static_cast<unsigned __int8>(byMapCode);
+  *reinterpret_cast<unsigned int *>(msg + 1) = dwMapEnvCode;
 
   std::time_t now{};
   std::time(&now);
@@ -3729,12 +3709,12 @@ void CPlayer::SendMsg_MapEnvInform(char byMapCode, unsigned int dwMapEnvCode)
   localTime.tm_hour = g_WorldSch.m_nCurHour;
   localTime.tm_min = g_WorldSch.m_nCurMin;
   localTime.tm_sec = g_WorldSch.m_nCurMilSec / 1000;
-  msg.mapTime = static_cast<int>(std::mktime(&localTime));
+  *reinterpret_cast<int *>(msg + 5) = static_cast<int>(std::mktime(&localTime));
 
   unsigned __int8 type[2]{};
   type[0] = 8;
   type[1] = 5;
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 9);
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(msg), 9);
 }
 
 void CPlayer::SendMsg_MineCancle()
@@ -3761,14 +3741,10 @@ void CPlayer::SendMsg_HonorGuildMark(char byRank)
 
 void CPlayer::SendMsg_DeleteStorageInform(char byStorageCode, unsigned __int16 wSerial)
 {
-  struct
-  {
-    char storageCode;
-    unsigned __int16 serial;
-  } msg{};
+  _delete_storage_inform_zocl msg{};
 
-  msg.storageCode = byStorageCode;
-  msg.serial = wSerial;
+  msg.byStorageCode = byStorageCode;
+  msg.wSerial = wSerial;
 
   unsigned __int8 type[2]{};
   type[0] = 7;
@@ -4469,37 +4445,26 @@ void CPlayer::SetShapeAllBuffer()
 
 void CPlayer::SendMsg_EquipPartChange(unsigned __int8 byPart)
 {
-#pragma pack(push, 1)
-  struct EquipPartChangeMsg
-  {
-    unsigned __int16 wIndex;
-    unsigned int dwSerial;
-    unsigned __int16 wEquipVer;
-    unsigned __int8 byPart;
-    unsigned __int16 wPartIndex;
-    unsigned __int8 byLv;
-  };
-#pragma pack(pop)
 
-  EquipPartChangeMsg msg{};
+  _other_shape_change_zocl msg{};
   msg.wIndex = m_ObjID.m_wIndex;
   msg.dwSerial = m_dwObjSerial;
   msg.wEquipVer = GetVisualVer();
-  msg.byPart = byPart;
+  msg.byPartIndex = byPart;
 
   if (m_Param.m_dbEquip.m_pStorageList[byPart].m_bLoad)
   {
-    msg.wPartIndex = m_Param.m_dbEquip.m_pStorageList[byPart].m_wItemIndex;
-    msg.byLv = GetItemUpgedLv(m_Param.m_dbEquip.m_pStorageList[byPart].m_dwLv);
+    msg.ModelPerPart.wPartIndex = m_Param.m_dbEquip.m_pStorageList[byPart].m_wItemIndex;
+    msg.ModelPerPart.byLv = GetItemUpgedLv(m_Param.m_dbEquip.m_pStorageList[byPart].m_dwLv);
   }
   else if (byPart >= 5u)
   {
-    msg.wPartIndex = static_cast<unsigned __int16>(-1);
+    msg.ModelPerPart.wPartIndex = static_cast<unsigned __int16>(-1);
   }
   else
   {
-    msg.wPartIndex = m_Param.m_dbChar.m_byDftPart[byPart];
-    msg.byLv = 0;
+    msg.ModelPerPart.wPartIndex = m_Param.m_dbChar.m_byDftPart[byPart];
+    msg.ModelPerPart.byLv = 0;
   }
 
   unsigned __int8 type[2] = {3, 34};
@@ -4895,17 +4860,9 @@ void CPlayer::SendMsg_AnimusReturnResult(
   unsigned __int16 wAnimusItemSerial,
   unsigned __int8 byReturnType)
 {
-#pragma pack(push, 1)
-  struct AnimusReturnMsg
-  {
-    char byRetCode;
-    unsigned __int16 wAnimusItemSerial;
-    unsigned __int8 byReturnType;
-  };
-#pragma pack(pop)
 
-  AnimusReturnMsg msg{};
-  msg.byRetCode = byRetCode;
+  _animus_return_result_zocl msg{};
+  msg.byResultCode = byRetCode;
   msg.wAnimusItemSerial = wAnimusItemSerial;
   msg.byReturnType = byReturnType;
 
@@ -4929,16 +4886,8 @@ char CPlayer::mgr_tracing(int bOper)
 
 void CPlayer::SendMsg_AlterItemDurInform(char byStorageCode, unsigned __int16 wItemSerial, unsigned __int64 dwDur)
 {
-#pragma pack(push, 1)
-  struct AlterItemDurMsg
-  {
-    char byStorageCode;
-    unsigned __int16 wItemSerial;
-    unsigned __int64 dwDur;
-  };
-#pragma pack(pop)
 
-  AlterItemDurMsg msg{};
+  _alter_item_dur_zocl msg{};
   msg.byStorageCode = byStorageCode;
   msg.wItemSerial = wItemSerial;
   msg.dwDur = dwDur;
@@ -4949,15 +4898,8 @@ void CPlayer::SendMsg_AlterItemDurInform(char byStorageCode, unsigned __int16 wI
 
 void CPlayer::SendMsg_AlterTowerHP(unsigned __int16 wItemSerial, unsigned __int16 wLeftHP)
 {
-#pragma pack(push, 1)
-  struct AlterTowerHpMsg
-  {
-    unsigned __int16 wItemSerial;
-    unsigned __int16 wLeftHP;
-  };
-#pragma pack(pop)
 
-  AlterTowerHpMsg msg{};
+  _alter_tower_hp_zocl msg{};
   msg.wItemSerial = wItemSerial;
   msg.wLeftHP = wLeftHP;
 
@@ -5027,19 +4969,11 @@ void CPlayer::_TowerAllReturn(unsigned __int8 byDestroyType, bool bForceReturn)
 
 void CPlayer::SendMsg_Destroy()
 {
-#pragma pack(push, 1)
-  struct DestroyMsg
-  {
-    unsigned __int16 wIndex;
-    unsigned int dwSerial;
-    unsigned __int8 byDesType;
-  };
-#pragma pack(pop)
 
-  DestroyMsg msg{};
+  _player_destroy_zocl msg{};
   msg.wIndex = m_ObjID.m_wIndex;
   msg.dwSerial = m_dwObjSerial;
-  msg.byDesType = 0;
+  msg.byState = 0;
 
   unsigned __int8 type[2] = {3, 22};
   CircleReport(type, reinterpret_cast<char *>(&msg), 7, false);
@@ -5047,31 +4981,17 @@ void CPlayer::SendMsg_Destroy()
 
 void CPlayer::SendMsg_NewViewOther(unsigned __int8 byViewType)
 {
-#pragma pack(push, 1)
-  struct NewViewOtherMsg
-  {
-    unsigned __int16 wIndex;
-    unsigned int dwSerial;
-    unsigned __int16 wVisualVer;
-    short pos[3];
-    unsigned __int8 byRaceSexCode;
-    unsigned __int8 byViewType;
-    unsigned __int64 dwStateFlag;
-    unsigned __int16 wLastContEffect;
-    unsigned __int8 byGuildBattleColorInx;
-  };
-#pragma pack(pop)
 
-  NewViewOtherMsg msg{};
+  _other_new_view_zocl msg{};
   msg.wIndex = m_ObjID.m_wIndex;
   msg.dwSerial = m_dwObjSerial;
-  msg.wVisualVer = GetVisualVer();
-  FloatToShort(m_fCurPos, msg.pos, 3);
-  msg.byRaceSexCode = static_cast<unsigned __int8>(m_Param.GetRaceSexCode());
+  msg.wEquipVer = GetVisualVer();
+  FloatToShort(m_fCurPos, msg.zPos, 3);
+  msg.byRaceCode = static_cast<unsigned __int8>(m_Param.GetRaceSexCode());
   msg.byViewType = byViewType;
   msg.dwStateFlag = GetStateFlag();
-  msg.wLastContEffect = m_wLastContEffect;
-  msg.byGuildBattleColorInx = m_byGuildBattleColorInx;
+  msg.wLastEffectCode = m_wLastContEffect;
+  msg.byColor = m_byGuildBattleColorInx;
 
   unsigned __int8 type[2] = {3, 36};
   CircleReport(type, reinterpret_cast<char *>(&msg), 27, false);
@@ -5397,13 +5317,9 @@ void CPlayer::SenseState()
 
 void CPlayer::SendMsg_StateInform(unsigned __int64 dwStateFlag)
 {
-  struct
-  {
-    unsigned int dwObjSerial;
-    unsigned __int64 dwState;
-  } msg{};
+  _state_inform_zocl msg{};
 
-  msg.dwObjSerial = m_dwObjSerial;
+  msg.dwSerial = m_dwObjSerial;
   msg.dwState = dwStateFlag;
 
   unsigned __int8 type[2] = {4, 25};
@@ -5683,26 +5599,13 @@ char CPlayer::pc_GiveItem(_STORAGE_LIST::_db_con *kItem, char *szReason, bool bD
 
 void CPlayer::SendMsg_RewardAddItem(_STORAGE_LIST::_db_con *pItem, unsigned __int8 byReason)
 {
-#pragma pack(push, 1)
-  struct RewardAddItemMsg
-  {
-    unsigned __int8 byTableCode;
-    unsigned __int16 wItemIndex;
-    unsigned __int64 dwDur;
-    unsigned int dwLv;
-    unsigned __int16 wSerial;
-    unsigned __int8 byReason;
-    unsigned __int8 byCsMethod;
-    unsigned int dwT;
-  };
-#pragma pack(pop)
 
-  RewardAddItemMsg msg{};
+  _reward_add_item_zocl msg{};
   msg.byTableCode = pItem->m_byTableCode;
   msg.wItemIndex = pItem->m_wItemIndex;
   msg.dwDur = pItem->m_dwDur;
   msg.dwLv = pItem->m_dwLv;
-  msg.wSerial = pItem->m_wSerial;
+  msg.wItemSerial = pItem->m_wSerial;
   msg.byReason = byReason;
   msg.byCsMethod = pItem->m_byCsMethod;
   msg.dwT = pItem->m_dwT;
@@ -5920,17 +5823,8 @@ void CPlayer::HSKQuestEnd_Att(unsigned __int8 byDestroyStoneRaceCode, CPlayer *p
 
 void CPlayer::SendMsg_RecvHSKQuest()
 {
-#pragma pack(push, 1)
-  struct RecvHSKQuestMsg
-  {
-    char byHSKQuestCode;
-    int nPvpPoint;
-    unsigned __int16 wKillPoint;
-    bool bMentalTicket;
-  };
-#pragma pack(pop)
 
-  RecvHSKQuestMsg msg{};
+  _recv_hsk_quest_inform_zocl msg{};
   msg.byHSKQuestCode = m_byHSKQuestCode;
   msg.nPvpPoint = m_nHSKPvpPoint;
   msg.wKillPoint = m_wKillPoint;
@@ -5941,7 +5835,7 @@ void CPlayer::SendMsg_RecvHSKQuest()
   const unsigned __int8 byStartMonth = g_HolySys.GetStartMonth();
   const unsigned __int16 byStartYear = g_HolySys.GetStartYear();
 
-  msg.bMentalTicket =
+  msg.byHolyMentalCount =
     m_MinigTicket.AuthLastMentalTicket(byStartYear, byStartMonth, byStartDay, byCurrentHour, byNumOfTime)
     != 0;
 
@@ -6017,16 +5911,9 @@ void CPlayer::SendMsg_AlterPvPPoint()
 
 void CPlayer::SendMsg_RaceBattlePenelty(int nAlterPoint, char byAlterType)
 {
-#pragma pack(push, 1)
-  struct RaceBattlePenaltyMsg
-  {
-    char byAlterType;
-    int nAlterPoint;
-  };
-#pragma pack(pop)
 
-  RaceBattlePenaltyMsg msg{};
-  msg.byAlterType = byAlterType;
+  _notify_race_battle_penelty_zocl msg{};
+  msg.byLoseType = byAlterType;
   msg.nAlterPoint = nAlterPoint;
   unsigned __int8 type[2] = {25, 28};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 5);
@@ -6135,15 +6022,8 @@ void CPlayer::SendMsg_OreTransferCount()
 
 void CPlayer::SendMsg_LendItemTimeExpired(char byStorageCode, unsigned __int16 wSerial)
 {
-#pragma pack(push, 1)
-  struct LendItemTimeExpiredMsg
-  {
-    char byStorageCode;
-    unsigned __int16 wSerial;
-  };
-#pragma pack(pop)
 
-  LendItemTimeExpiredMsg msg{};
+  _lend_item_time_expired_zocl msg{};
   msg.byStorageCode = byStorageCode;
   msg.wSerial = wSerial;
   unsigned __int8 type[2] = {7, 71};
@@ -7209,12 +7089,9 @@ void CPlayer::CalcEquipSpeed()
 
 void CPlayer::SendMsg_AlterEquipSPInform()
 {
-  struct
-  {
-    float equipSpeed;
-  } msg{};
+  _alter_equip_sp_inform_zocl msg{};
 
-  msg.equipSpeed = m_fEquipSpeed;
+  msg.fEquipUseSP = m_fEquipSpeed;
 
   unsigned __int8 type[2] = {11, 13};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 4u);
@@ -7303,12 +7180,9 @@ char CPlayer::SetDP(int nDP, bool bOver)
 
 void CPlayer::SendMsg_SetDPInform()
 {
-  struct
-  {
-    unsigned __int16 dp;
-  } msg{};
+  _set_dp_inform_zocl msg{};
 
-  msg.dp = static_cast<unsigned __int16>(m_Param.GetDP());
+  msg.wDP = static_cast<unsigned __int16>(m_Param.GetDP());
 
   unsigned __int8 type[2] = {17, 114};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 2u);
@@ -7316,12 +7190,9 @@ void CPlayer::SendMsg_SetDPInform()
 
 void CPlayer::SendMsg_AlterMaxDP()
 {
-  struct
-  {
-    unsigned __int16 maxDp;
-  } msg{};
+  _max_dp_zocl msg{};
 
-  msg.maxDp = static_cast<unsigned __int16>(GetMaxDP());
+  msg.wMaxDP = static_cast<unsigned __int16>(GetMaxDP());
 
   unsigned __int8 type[2] = {11, static_cast<unsigned __int8>(-123)};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 2u);
@@ -7376,21 +7247,12 @@ void CPlayer::SendMsg_TransformSiegeModeResult(char byRetCode)
     return;
   }
 
-#pragma pack(push, 1)
-  struct SiegeTransformMsg
-  {
-    unsigned int objSerial;
-    unsigned __int16 equipItemIndex;
-    unsigned __int8 siegeItemIndex;
-    unsigned __int16 visualVer;
-  };
-#pragma pack(pop)
 
-  SiegeTransformMsg circleMsg{};
-  circleMsg.objSerial = m_dwObjSerial;
-  circleMsg.equipItemIndex = m_Param.m_dbEquip.m_pStorageList[6].m_wItemIndex;
-  circleMsg.siegeItemIndex = static_cast<unsigned __int8>(m_pSiegeItem->m_wItemIndex);
-  circleMsg.visualVer = GetVisualVer();
+  _transform_siege_mode_other_inform_zocl circleMsg{};
+  circleMsg.dwAvatorSerial = m_dwObjSerial;
+  circleMsg.wWeaponItemIndex = m_Param.m_dbEquip.m_pStorageList[6].m_wItemIndex;
+  circleMsg.bySiegeItemIndex = static_cast<unsigned __int8>(m_pSiegeItem->m_wItemIndex);
+  circleMsg.wVisualVer = GetVisualVer();
 
   unsigned __int8 circleType[2] = {28, 3};
   CGameObject::CircleReport(circleType, reinterpret_cast<char *>(&circleMsg), sizeof(circleMsg), 0);
@@ -7409,17 +7271,10 @@ void CPlayer::SendMsg_ReleaseSiegeModeResult(char byRetCode)
     return;
   }
 
-#pragma pack(push, 1)
-  struct SiegeReleaseMsg
-  {
-    unsigned int objSerial;
-    unsigned __int16 visualVer;
-  };
-#pragma pack(pop)
 
-  SiegeReleaseMsg circleMsg{};
-  circleMsg.objSerial = m_dwObjSerial;
-  circleMsg.visualVer = GetVisualVer();
+  _release_siege_mode_other_inform_zocl circleMsg{};
+  circleMsg.dwAvatorSerial = m_dwObjSerial;
+  circleMsg.wVisualVer = GetVisualVer();
 
   unsigned __int8 circleType[2] = {28, 6};
   CGameObject::CircleReport(circleType, reinterpret_cast<char *>(&circleMsg), sizeof(circleMsg), 0);
@@ -8128,18 +7983,10 @@ int CPlayer::Emb_UpdateStat(unsigned int dwStatIndex, unsigned int dwNewData, un
 
 void CPlayer::SendMsg_StatInform(unsigned __int8 byStatIndex, unsigned int dwNewStat, unsigned __int8 byReason)
 {
-#pragma pack(push, 1)
-  struct StatMsg
-  {
-    unsigned __int8 byIndex;
-    unsigned int dwValue;
-    unsigned __int8 byReason;
-  };
-#pragma pack(pop)
 
-  StatMsg msg{};
-  msg.byIndex = byStatIndex;
-  msg.dwValue = dwNewStat;
+  _stat_inform_zocl msg{};
+  msg.byStatIndex = byStatIndex;
+  msg.dwNewStat = dwNewStat;
   msg.byReason = byReason;
 
   unsigned __int8 type[2] = {3, 43};
@@ -8355,24 +8202,13 @@ void CPlayer::SendMsg_ResurrectInform()
 
 void CPlayer::SendMsg_Resurrect(char byRet, bool bQuickPotion)
 {
-#pragma pack(push, 1)
-  struct ResurrectMsg
-  {
-    char byRet;
-    char byLevel;
-    unsigned __int16 wFP;
-    unsigned __int16 wHP;
-    unsigned __int16 wSP;
-    bool bQuickPotion;
-  };
-#pragma pack(pop)
 
-  ResurrectMsg msg{};
+  _player_resurrect_zocl msg{};
   msg.byRet = byRet;
   msg.byLevel = static_cast<char>(m_Param.GetLevel());
-  msg.wFP = static_cast<unsigned __int16>(m_Param.GetFP());
-  msg.wHP = static_cast<unsigned __int16>(m_Param.GetHP());
-  msg.wSP = static_cast<unsigned __int16>(m_Param.GetSP());
+  msg.wCurFP = static_cast<unsigned __int16>(m_Param.GetFP());
+  msg.wCurHP = static_cast<unsigned __int16>(m_Param.GetHP());
+  msg.wCurST = static_cast<unsigned __int16>(m_Param.GetSP());
   msg.bQuickPotion = bQuickPotion;
 
   unsigned __int8 type[2] = {3, 40};
@@ -8467,19 +8303,11 @@ void CPlayer::pc_NuclearAfterEffect()
 
 void CPlayer::SendMsg_StartContSF(_sf_continous *pCont)
 {
-#pragma pack(push, 1)
-  struct StartContMsg
-  {
-    unsigned __int8 lv;
-    unsigned __int16 effectBit;
-    unsigned __int16 durSec;
-  };
-#pragma pack(pop)
 
-  StartContMsg msg{};
-  msg.lv = pCont->m_byLv;
-  msg.effectBit = CalcEffectBit(pCont->m_byEffectCode, pCont->m_wEffectIndex);
-  msg.durSec = pCont->m_wDurSec;
+  _effect_start_inform_zocl msg{};
+  msg.byLv = pCont->m_byLv;
+  msg.wEffectCode = CalcEffectBit(pCont->m_byEffectCode, pCont->m_wEffectIndex);
+  msg.wDurSec = pCont->m_wDurSec;
 
   unsigned __int8 type[2] = {17, 25};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
@@ -8487,15 +8315,8 @@ void CPlayer::SendMsg_StartContSF(_sf_continous *pCont)
 
 void CPlayer::SendMsg_UnitAlterFeeInform(char bySlotIndex, unsigned int dwPullingFee)
 {
-#pragma pack(push, 1)
-  struct UnitAlterFeeMsg
-  {
-    char bySlotIndex;
-    unsigned int dwPullingFee;
-  };
-#pragma pack(pop)
 
-  UnitAlterFeeMsg msg{};
+  _unit_alter_fee_inform_zocl msg{};
   msg.bySlotIndex = bySlotIndex;
   msg.dwPullingFee = dwPullingFee;
 
@@ -8532,15 +8353,8 @@ bool CPlayer::_LockUnitKey(unsigned __int8 bySlotIndex, bool bLock)
 
 void CPlayer::SendMsg_UnitForceReturnInform(char bySlotIndex, unsigned int dwDebt)
 {
-#pragma pack(push, 1)
-  struct UnitForceReturnMsg
-  {
-    char bySlotIndex;
-    unsigned int dwDebt;
-  };
-#pragma pack(pop)
 
-  UnitForceReturnMsg msg{};
+  _unit_force_return_inform_zocl msg{};
   msg.bySlotIndex = bySlotIndex;
   msg.dwDebt = dwDebt;
 
@@ -8766,14 +8580,8 @@ m_nMaxPoint[0] = _CalcMaxHP();
 
 void CPlayer::SendMsg_BuddyLogoffInform(unsigned int dwObjSerial)
 {
-#pragma pack(push, 1)
-  struct BuddyLogoffInformMsg
-  {
-    unsigned int dwSerial;
-  };
-#pragma pack(pop)
 
-  BuddyLogoffInformMsg msg{};
+  _buddy_off_reged_player_inform_zocl msg{};
   msg.dwSerial = dwObjSerial;
 
   unsigned __int8 type[2] = {31, 2};
@@ -8782,19 +8590,11 @@ void CPlayer::SendMsg_BuddyLogoffInform(unsigned int dwObjSerial)
 
 void CPlayer::SendMsg_BuddyLoginInform(unsigned int dwObjSerial, unsigned __int8 byMapIndex, unsigned __int8 byPosCode)
 {
-#pragma pack(push, 1)
-  struct BuddyLoginInformMsg
-  {
-    unsigned int dwSerial;
-    unsigned __int8 byMapIndex;
-    unsigned __int8 byPosCode;
-  };
-#pragma pack(pop)
 
-  BuddyLoginInformMsg msg{};
+  _buddy_in_reged_player_inform_zocl msg{};
   msg.dwSerial = dwObjSerial;
   msg.byMapIndex = byMapIndex;
-  msg.byPosCode = byPosCode;
+  msg.byPositionCode = byPosCode;
 
   unsigned __int8 type[2] = {31, 1};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 6u);
@@ -8802,15 +8602,8 @@ void CPlayer::SendMsg_BuddyLoginInform(unsigned int dwObjSerial, unsigned __int8
 
 void CPlayer::SendMsg_BuddyAddFail(char byRetCode, char *pwszDstName)
 {
-#pragma pack(push, 1)
-  struct BuddyAddFailMsg
-  {
-    char byRetCode;
-    char wszDstName[17];
-  };
-#pragma pack(pop)
 
-  BuddyAddFailMsg msg{};
+  _buddy_add_fail_zocl msg{};
   msg.byRetCode = byRetCode;
   strcpy_0(msg.wszDstName, pwszDstName);
 
@@ -8823,16 +8616,8 @@ void CPlayer::SendMsg_BuddyAddAsk(
   unsigned int dwAskerSerial,
   char *pwszAskerName)
 {
-#pragma pack(push, 1)
-  struct BuddyAddAskMsg
-  {
-    unsigned __int16 wAskerIndex;
-    unsigned int dwAskerSerial;
-    char wszAskerName[17];
-  };
-#pragma pack(pop)
 
-  BuddyAddAskMsg msg{};
+  _buddy_add_ask_zocl msg{};
   msg.wAskerIndex = wAskerIndex;
   msg.dwAskerSerial = dwAskerSerial;
   strcpy_0(msg.wszAskerName, pwszAskerName);
@@ -8849,19 +8634,8 @@ void CPlayer::SendMsg_BuddyAddAnswerResult(
   unsigned int dwSerial,
   char *pwszCharName)
 {
-#pragma pack(push, 1)
-  struct BuddyAddAnswerResultMsg
-  {
-    unsigned __int8 byRetCode;
-    bool bAccept;
-    unsigned int dwAskerSerial;
-    unsigned __int16 wAdderIndex;
-    unsigned int dwAdderSerial;
-    char wszAdderName[17];
-  };
-#pragma pack(pop)
 
-  BuddyAddAnswerResultMsg msg{};
+  _buddy_add_result_zocl msg{};
   msg.byRetCode = static_cast<unsigned __int8>(byRetCode);
   msg.bAccept = bAccept != 0;
   msg.dwAskerSerial = dwAskerSerial;
@@ -8879,17 +8653,10 @@ void CPlayer::SendMsg_BuddyAddAnswerResult(
 
 void CPlayer::SendMsg_PartyLeaveSelfResult(CPartyPlayer *pLeaver, bool bWorldExit)
 {
-#pragma pack(push, 1)
-  struct PartyLeaveSelfResultMsg
-  {
-    unsigned int dwSerial;
-    bool bWorldExit;
-  };
-#pragma pack(pop)
 
-  PartyLeaveSelfResultMsg msg{};
+  _party_leave_self_result_zocl msg{};
   msg.bWorldExit = bWorldExit;
-  msg.dwSerial = pLeaver ? pLeaver->m_id.dwSerial : static_cast<unsigned int>(-1);
+  msg.dwExiterSerial = pLeaver ? pLeaver->m_id.dwSerial : static_cast<unsigned int>(-1);
 
   unsigned __int8 type[2] = {16, 10};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 5u);
@@ -8913,17 +8680,10 @@ void CPlayer::SendMsg_PartySuccessResult(CPartyPlayer *pSuccessor)
 
 void CPlayer::SendMsg_PartyJoinInvitationQuestion(unsigned __int16 wJoinerIndex)
 {
-#pragma pack(push, 1)
-  struct PartyJoinInvitationQuestionMsg
-  {
-    unsigned __int16 wIndex;
-    unsigned int dwSerial;
-  };
-#pragma pack(pop)
 
-  PartyJoinInvitationQuestionMsg msg{};
-  msg.wIndex = m_ObjID.m_wIndex;
-  msg.dwSerial = m_dwObjSerial;
+  _party_join_invitation_question_zocl msg{};
+  msg.idBoss.wIndex = m_ObjID.m_wIndex;
+  msg.idBoss.dwSerial = m_dwObjSerial;
 
   unsigned __int8 type[2] = {16, 2};
   g_Network.m_pProcess[0]->LoadSendMsg(wJoinerIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
@@ -8931,17 +8691,10 @@ void CPlayer::SendMsg_PartyJoinInvitationQuestion(unsigned __int16 wJoinerIndex)
 
 void CPlayer::SendMsg_PartyJoinApplicationQuestion(CPlayer *pJoiner)
 {
-#pragma pack(push, 1)
-  struct PartyJoinApplicationQuestionMsg
-  {
-    unsigned __int16 wIndex;
-    unsigned int dwSerial;
-  };
-#pragma pack(pop)
 
-  PartyJoinApplicationQuestionMsg msg{};
-  msg.wIndex = pJoiner->m_ObjID.m_wIndex;
-  msg.dwSerial = pJoiner->m_dwObjSerial;
+  _party_join_application_question_zocl msg{};
+  msg.idApplicant.wIndex = pJoiner->m_ObjID.m_wIndex;
+  msg.idApplicant.dwSerial = pJoiner->m_dwObjSerial;
 
   unsigned __int8 type[2] = {16, 5};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
@@ -8949,21 +8702,7 @@ void CPlayer::SendMsg_PartyJoinApplicationQuestion(CPlayer *pJoiner)
 
 void CPlayer::SendMsg_PartyJoinJoinerResult()
 {
-#pragma pack(push, 1)
-  struct PartyJoinJoinerResultEntry
-  {
-    unsigned __int16 wIndex;
-    unsigned int dwSerial;
-    char wszAvatorName[17];
-  };
 
-  struct PartyJoinJoinerResultMsg
-  {
-    unsigned __int8 byLootShareMode;
-    unsigned __int8 byListNum;
-    PartyJoinJoinerResultEntry list[8];
-  };
-#pragma pack(pop)
 
   CPartyPlayer **partyMembers = m_pPartyMgr->GetPtrPartyMember();
   if (!partyMembers)
@@ -8971,21 +8710,21 @@ void CPlayer::SendMsg_PartyJoinJoinerResult()
     return;
   }
 
-  PartyJoinJoinerResultMsg msg{};
+  _party_join_joiner_result_zocl msg{};
   msg.byLootShareMode = m_pPartyMgr->m_pPartyBoss->m_byLootShareSystem;
   msg.byListNum = static_cast<unsigned __int8>(m_pPartyMgr->GetPopPartyMember() - 1);
   for (int index = 0; index < msg.byListNum && partyMembers[index]; ++index)
   {
     if (partyMembers[index] != m_pPartyMgr)
     {
-      msg.list[index].wIndex = partyMembers[index]->m_id.wIndex;
-      msg.list[index].dwSerial = partyMembers[index]->m_id.dwSerial;
-      strcpy_0(msg.list[index].wszAvatorName, partyMembers[index]->m_wszName);
+      msg.List[index].wIndex = partyMembers[index]->m_id.wIndex;
+      msg.List[index].dwSerial = partyMembers[index]->m_id.dwSerial;
+      strcpy_0(msg.List[index].wszAvatorName, partyMembers[index]->m_wszName);
     }
   }
 
   unsigned __int16 msgLength = static_cast<unsigned __int16>(
-    2 + msg.byListNum * sizeof(PartyJoinJoinerResultEntry));
+    2 + msg.byListNum * sizeof(_party_join_joiner_result_zocl::_list));
   unsigned __int8 type[2] = {16, 7};
   g_Network.m_pProcess[0]->LoadSendMsg(
     m_ObjID.m_wIndex,
@@ -8996,17 +8735,8 @@ void CPlayer::SendMsg_PartyJoinJoinerResult()
 
 void CPlayer::SendMsg_PartyJoinMemberResult(CPartyPlayer *pJoiner, char byLootShareMode)
 {
-#pragma pack(push, 1)
-  struct PartyJoinMemberResultMsg
-  {
-    unsigned int dwJoinerSerial;
-    char wszJoinerName[17];
-    unsigned __int8 byLootShareMode;
-    unsigned __int16 wIndex;
-  };
-#pragma pack(pop)
 
-  PartyJoinMemberResultMsg msg{};
+  _party_join_member_result_zocl msg{};
   msg.dwJoinerSerial = pJoiner->m_id.dwSerial;
   strcpy_0(msg.wszJoinerName, pJoiner->m_wszName);
   msg.byLootShareMode = static_cast<unsigned __int8>(byLootShareMode);
@@ -9032,19 +8762,11 @@ void CPlayer::SendMsg_AwayPartyRequestResult(char byRetCode)
 
 void CPlayer::SendMsg_AwayPartyInvitationQuestion(unsigned __int16 wJoinerIndex)
 {
-#pragma pack(push, 1)
-  struct AwayPartyInvitationQuestionMsg
-  {
-    unsigned __int16 wIndex;
-    unsigned int dwSerial;
-    char wszName[17];
-  };
-#pragma pack(pop)
 
-  AwayPartyInvitationQuestionMsg msg{};
-  msg.wIndex = m_ObjID.m_wIndex;
-  msg.dwSerial = m_dwObjSerial;
-  strcpy_0(msg.wszName, m_Param.GetCharNameA());
+  _away_party_join_invitation_question_zocl msg{};
+  msg.idBoss.wIndex = m_ObjID.m_wIndex;
+  msg.idBoss.dwSerial = m_dwObjSerial;
+  strcpy_0(msg.wszCharName, m_Param.GetCharNameA());
 
   unsigned __int8 type[2] = {16, 33};
   g_Network.m_pProcess[0]->LoadSendMsg(wJoinerIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
@@ -9052,14 +8774,8 @@ void CPlayer::SendMsg_AwayPartyInvitationQuestion(unsigned __int16 wJoinerIndex)
 
 void CPlayer::SendMsg_PartyLeaveCompulsionResult(CPartyPlayer *pLeaver)
 {
-#pragma pack(push, 1)
-  struct PartyLeaveCompulsionResultMsg
-  {
-    unsigned int dwExiterSerial;
-  };
-#pragma pack(pop)
 
-  PartyLeaveCompulsionResultMsg msg{};
+  _party_leave_compulsion_result_zocl msg{};
   msg.dwExiterSerial = pLeaver ? pLeaver->m_id.dwSerial : static_cast<unsigned int>(-1);
 
   unsigned __int8 type[2] = {16, 12};
@@ -9089,28 +8805,9 @@ void CPlayer::SendMsg_PartyAlterLootShareResult(char byLootShareMode)
 
 void CPlayer::SendData_PartyMemberInfo(unsigned __int16 wDstIndex)
 {
-#pragma pack(push, 1)
-  struct PartyMemberEffect
-  {
-    unsigned __int16 wEffectCode;
-    unsigned __int8 byEffectLv;
-  };
 
-  struct PartyMemberInfoUpd
-  {
-    unsigned int dwMemSerial;
-    unsigned __int16 wHPRate;
-    unsigned __int16 wFPRate;
-    unsigned __int16 wSPRate;
-    unsigned __int8 byLv;
-    unsigned __int8 byMapCode;
-    __int16 zPos[2];
-    unsigned __int8 byContEffectNum;
-    PartyMemberEffect effect[16];
-  };
-#pragma pack(pop)
 
-  PartyMemberInfoUpd msg{};
+  _party_member_info_upd msg{};
   msg.dwMemSerial = m_dwObjSerial;
   msg.wHPRate = static_cast<unsigned __int16>(CalcCurHPRate());
   msg.wFPRate = static_cast<unsigned __int16>(CalcCurFPRate());
@@ -9128,8 +8825,8 @@ void CPlayer::SendData_PartyMemberInfo(unsigned __int16 wDstIndex)
       _sf_continous *cont = &m_SFCont[row][col];
       if (cont->m_bExist)
       {
-        msg.effect[effectCount].wEffectCode = CalcEffectBit(cont->m_byEffectCode, cont->m_wEffectIndex);
-        msg.effect[effectCount].byEffectLv = cont->m_byLv;
+        msg.Effect[effectCount].wEffectCode = CalcEffectBit(cont->m_byEffectCode, cont->m_wEffectIndex);
+        msg.Effect[effectCount].byEffectLv = cont->m_byLv;
         ++effectCount;
       }
     }
@@ -9137,35 +8834,16 @@ void CPlayer::SendData_PartyMemberInfo(unsigned __int16 wDstIndex)
 
   msg.byContEffectNum = effectCount;
 
-  const unsigned __int16 msgLength = static_cast<unsigned __int16>(17 + effectCount * sizeof(PartyMemberEffect));
+  const unsigned __int16 msgLength = static_cast<unsigned __int16>(17 + effectCount * sizeof(_party_member_info_upd::_EFFECT));
   unsigned __int8 type[2] = {16, 19};
   g_Network.m_pProcess[0]->LoadSendMsg(wDstIndex, type, reinterpret_cast<char *>(&msg), msgLength);
 }
 
 void CPlayer::SendData_PartyMemberInfoToMembers()
 {
-#pragma pack(push, 1)
-  struct PartyMemberEffect
-  {
-    unsigned __int16 wEffectCode;
-    unsigned __int8 byEffectLv;
-  };
 
-  struct PartyMemberInfoUpd
-  {
-    unsigned int dwMemSerial;
-    unsigned __int16 wHPRate;
-    unsigned __int16 wFPRate;
-    unsigned __int16 wSPRate;
-    unsigned __int8 byLv;
-    unsigned __int8 byMapCode;
-    __int16 zPos[2];
-    unsigned __int8 byContEffectNum;
-    PartyMemberEffect effect[16];
-  };
-#pragma pack(pop)
 
-  PartyMemberInfoUpd msg{};
+  _party_member_info_upd msg{};
   msg.dwMemSerial = m_dwObjSerial;
   msg.wHPRate = static_cast<unsigned __int16>(CalcCurHPRate());
   msg.wFPRate = static_cast<unsigned __int16>(CalcCurFPRate());
@@ -9183,8 +8861,8 @@ void CPlayer::SendData_PartyMemberInfoToMembers()
       _sf_continous *cont = &m_SFCont[row][col];
       if (cont->m_bExist)
       {
-        msg.effect[effectCount].wEffectCode = CalcEffectBit(cont->m_byEffectCode, cont->m_wEffectIndex);
-        msg.effect[effectCount].byEffectLv = cont->m_byLv;
+        msg.Effect[effectCount].wEffectCode = CalcEffectBit(cont->m_byEffectCode, cont->m_wEffectIndex);
+        msg.Effect[effectCount].byEffectLv = cont->m_byLv;
         ++effectCount;
       }
     }
@@ -9199,7 +8877,7 @@ void CPlayer::SendData_PartyMemberInfoToMembers()
   }
 
   const int popPartyMember = static_cast<int>(m_pPartyMgr->GetPopPartyMember());
-  const unsigned __int16 msgLength = static_cast<unsigned __int16>(17 + effectCount * sizeof(PartyMemberEffect));
+  const unsigned __int16 msgLength = static_cast<unsigned __int16>(17 + effectCount * sizeof(_party_member_info_upd::_EFFECT));
   unsigned __int8 type[2] = {16, 19};
   for (int index = 0; index < popPartyMember; ++index)
   {
@@ -9254,25 +8932,14 @@ void CPlayer::SendMsg_GuildMasterEffect(
   unsigned __int8 byEffAddAttack,
   unsigned __int8 byEffAddDefence)
 {
-#pragma pack(push, 1)
-  struct GuildMasterEffectMsg
-  {
-    char byState;
-    char byGrade;
-    char byEffSubAttack;
-    unsigned __int8 byEffSubDefence;
-    unsigned __int8 byEffAddAttack;
-    unsigned __int8 byEffAddDefence;
-  };
-#pragma pack(pop)
 
-  GuildMasterEffectMsg msg{};
+  _guild_master_info_zocl msg{};
   msg.byState = byState;
   msg.byGrade = byGrade;
-  msg.byEffSubAttack = byEffSubAttack;
-  msg.byEffSubDefence = byEffSubDefence;
-  msg.byEffAddAttack = byEffAddAttack;
-  msg.byEffAddDefence = byEffAddDefence;
+  msg.byEffectValue[0] = byEffSubAttack;
+  msg.byEffectValue[1] = byEffSubDefence;
+  msg.byEffectValue[2] = byEffAddAttack;
+  msg.byEffectValue[3] = byEffAddDefence;
 
   unsigned __int8 type[2] = {27, 120};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 6u);
@@ -9798,15 +9465,8 @@ void CPlayer::pc_AwayPartyJoinInvitationAnswer(_CLID *pidBoss, unsigned __int8 b
 
 void CPlayer::pc_BuddyDownloadRequest()
 {
-#pragma pack(push, 1)
-  struct BuddyDownloadResultMsg
-  {
-    unsigned __int16 wDataSize;
-    char sData[10000];
-  };
-#pragma pack(pop)
 
-  BuddyDownloadResultMsg msg{};
+  _buddy_download_result_zocl msg{};
   int dataSize = 0;
   void *cursor = msg.sData;
 
@@ -10369,27 +10029,18 @@ void CPlayer::SendMsg_TLStatusPenalty(char byErrCode)
 
 void CPlayer::SendMsg_TLStatusInfo(unsigned int /*dwFatigue*/, unsigned __int8 /*wStatus*/)
 {
-  #pragma pack(push, 1)
-  struct TLStatusInfoMsg
-  {
-    unsigned int dwFatigue;
-    unsigned __int16 byTLStatus;
-    unsigned int dwRemainTime;
-    unsigned int dwPlayValue;
-  };
-  #pragma pack(pop)
 
-  TLStatusInfoMsg msg{};
+  _notify_player_time_limit_Info_zocl msg{};
   msg.dwFatigue = this->m_pUserDB->m_AvatorData.dbTimeLimitInfo.dwFatigue;
-  msg.byTLStatus = this->m_pUserDB->m_AvatorData.dbTimeLimitInfo.byTLStatus;
+  msg.wStatus = this->m_pUserDB->m_AvatorData.dbTimeLimitInfo.byTLStatus;
 
   const unsigned int playDegree = g_Main.m_pTimeLimitMgr->GetPlayFDegree();
-  msg.dwPlayValue = (playDegree / 1000) * msg.dwFatigue;
+  msg.dwAccumPlayTime = (playDegree / 1000) * msg.dwFatigue;
 
   const unsigned __int16 endPlayTime = g_Main.m_pTimeLimitMgr->GetEndPlayTime();
-  if (msg.dwPlayValue < 60u * endPlayTime)
+  if (msg.dwAccumPlayTime < 60u * endPlayTime)
   {
-    msg.dwRemainTime = 60u * endPlayTime - msg.dwPlayValue;
+    msg.dwRemainTime = 60u * endPlayTime - msg.dwAccumPlayTime;
   }
   else
   {
@@ -10515,16 +10166,10 @@ void CPlayer::SendMsg_AlterGradeInform()
 
 void CPlayer::SendMsg_AlterPvPRank(unsigned __int16 wPvpRate, unsigned int dwPvpRank)
 {
-  #pragma pack(push, 1)
-  struct
-  {
-    unsigned __int16 wPvpRate;
-    unsigned int dwPvpRank;
-  } msg{};
-  #pragma pack(pop)
+  _alter_ranking_inform_zocl msg{};
 
-  msg.wPvpRate = wPvpRate;
-  msg.dwPvpRank = dwPvpRank;
+  msg.wRankRate = wPvpRate;
+  msg.dwRank = dwPvpRank;
 
   unsigned __int8 pbyType[2] = {17, 18};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), 6u);
@@ -10551,6 +10196,7 @@ void CPlayer::SendData_ChatTrans(
   _chat_message_receipt_udp msg{};
   msg.byMessageType = byChatType;
   msg.dwSenderSerial = dwSenderSerial;
+  memset_0(msg.wszSenderName, 0, sizeof(msg.wszSenderName));
   if (pwszSender)
   {
     strcpy_s(msg.wszSenderName, 0x11u, pwszSender);
@@ -12663,29 +12309,16 @@ char szMsg[32];
 
 void CPlayer::SendMsg_Revival(char byRet, bool bEquialZone)
 {
-  #pragma pack(push, 1)
-  struct RevivalMsg
-  {
-    char byRet;
-    __int16 wMap;
-    __int16 wPos[3];
-    char byLevel;
-    __int16 wHP;
-    __int16 wFP;
-    __int16 wSP;
-    bool bNotEqualZone;
-  };
-  #pragma pack(pop)
 
-  RevivalMsg msg{};
+  _player_revival_zocl msg{};
   msg.byRet = byRet;
   msg.byLevel = this->m_Param.GetLevel();
-  msg.wFP = this->m_Param.GetFP();
-  msg.wHP = this->m_Param.GetHP();
-  msg.wSP = this->m_Param.GetSP();
-  msg.wMap = g_MapOper.GetMap(this->m_pCurMap);
-  FloatToShort(this->m_fCurPos, msg.wPos, 3);
-  msg.bNotEqualZone = !bEquialZone;
+  msg.wCurFP = this->m_Param.GetFP();
+  msg.wCurHP = this->m_Param.GetHP();
+  msg.wCurST = this->m_Param.GetSP();
+  msg.wStartMapIndex = g_MapOper.GetMap(this->m_pCurMap);
+  FloatToShort(this->m_fCurPos, msg.zPos, 3);
+  msg.byZoneCode = static_cast<unsigned __int8>(!bEquialZone);
 
   unsigned __int8 pbyType[2] = {3, 38};
   g_Network.m_pProcess[0]->LoadSendMsg(
@@ -12697,16 +12330,9 @@ void CPlayer::SendMsg_Revival(char byRet, bool bEquialZone)
 
 void CPlayer::SendMsg_OtherShapeError(CPlayer *pDst, unsigned __int8 byErrCode)
 {
-  #pragma pack(push, 1)
-  struct OtherShapeErrorMsg
-  {
-    unsigned __int16 wIndex;
-    unsigned __int8 byErrCode;
-  };
-  #pragma pack(pop)
 
-  OtherShapeErrorMsg msg{};
-  msg.wIndex = this->m_ObjID.m_wIndex;
+  _other_shape_failure_zocl msg{};
+  msg.wOtherIndex = this->m_ObjID.m_wIndex;
   msg.byErrCode = byErrCode;
 
   unsigned __int8 pbyType[2] = {3, 33};
@@ -12767,16 +12393,8 @@ void CPlayer::SendMsg_OtherShapePartEx_CashChange(
   if ((!this->m_bObserver || pDst->m_byUserDgr)
       && (ServerData.m_byStateFlag & 7) != (ClinetData.m_byStateFlag & 7))
   {
-    #pragma pack(push, 1)
-    struct OtherShapeCashChangeMsg
-    {
-      unsigned __int16 wIndex;
-      unsigned int dwSerial;
-      char wszName[17];
-    };
-    #pragma pack(pop)
 
-    OtherShapeCashChangeMsg msg{};
+    _other_shape_cash_rename_zocl msg{};
     msg.wIndex = this->m_ObjID.m_wIndex;
     msg.dwSerial = this->m_dwObjSerial;
     const char *charName = this->m_Param.GetCharNameW();
@@ -13286,19 +12904,8 @@ void CPlayer::SendMsg_AMPInvenDownloadResult()
 
 void CPlayer::SendMsg_SetGroupTargetObjectResult(char byRetCode, char byGroupType)
 {
-  #pragma pack(push, 1)
-  struct SetGroupTargetObjectResultMsg
-  {
-    char byRetCode;
-    char byGroupType;
-    char byMapCode;
-    char byID;
-    unsigned int dwSerial;
-    float fPos[3];
-  };
-  #pragma pack(pop)
 
-  SetGroupTargetObjectResultMsg msg{};
+  _set_group_target_object_result_zocl msg{};
   msg.byRetCode = byRetCode;
 
   const unsigned __int8 groupType = static_cast<unsigned __int8>(byGroupType);
@@ -13326,23 +12933,13 @@ void CPlayer::SendMsg_SetGroupMapPoint(
   float *pzTar,
   unsigned __int8 byRemain)
 {
-  #pragma pack(push, 1)
-  struct SetGroupMapPointMsg
-  {
-    char byRetCode;
-    char byGroupType;
-    char byMapCode;
-    char byRemain;
-    float fPos[2];
-  };
-  #pragma pack(pop)
 
-  SetGroupMapPointMsg msg{};
+  _set_group_map_point_result_zocl msg{};
   msg.byRetCode = byRetCode;
   msg.byGroupType = byGroupType;
   msg.byMapCode = byMapCode;
   msg.byRemain = static_cast<char>(byRemain);
-  memcpy_0(msg.fPos, pzTar, sizeof(msg.fPos));
+  memcpy_0(msg.zPos, pzTar, sizeof(msg.zPos));
 
   unsigned __int8 pbyType[2] = {13, 114};
   g_Network.m_pProcess[0]->LoadSendMsg(
@@ -15068,14 +14665,17 @@ void CPlayer::Emb_CompleteQuest(
   }
 
   _QUEST_DB_BASE::_LIST *slot = &m_Param.m_QuestDB.m_List[byQuestDBSlot];
-  if (slot->byQuestType == 0xFF)
+  _QUEST_DB_BASE::_LIST originalSlot{};
+  memcpy_0(&originalSlot, slot, sizeof(originalSlot));
+
+  if (originalSlot.byQuestType == 0xFF)
   {
     return;
   }
 
   for (int j = 0; j < 3; ++j)
   {
-    if (slot->wNum[j] != 0xFFFF)
+    if (originalSlot.wNum[j] != 0xFFFF)
     {
       return;
     }
@@ -15096,11 +14696,11 @@ void CPlayer::Emb_CompleteQuest(
     nullptr);
   m_Param.InitAlterMastery();
 
-  auto *quest = reinterpret_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(slot->wIndex));
+  auto *quest = reinterpret_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(originalSlot.wIndex));
   _Quest_fld *linkedQuest = _Reward_Quest(quest, byRewardItemIndex);
   SendMsg_QuestComplete(static_cast<char>(byQuestDBSlot));
 
-  if (slot->byQuestType == 1)
+  if (originalSlot.byQuestType == 1)
   {
     const unsigned __int8 inserted = m_QuestMgr.InsertNpcQuestHistory(
       quest->m_strCode,
@@ -15172,7 +14772,7 @@ void CPlayer::Emb_CompleteQuest(
   if (linkedQuest)
   {
     _QUEST_DB_BASE::_LIST *nextSlot = &m_Param.m_QuestDB.m_List[byQuestDBSlot];
-    nextSlot->byQuestType = slot->byQuestType;
+    nextSlot->byQuestType = originalSlot.byQuestType;
     nextSlot->wIndex = static_cast<unsigned __int16>(linkedQuest->m_dwIndex);
     nextSlot->dwPassSec = 0;
     for (int k = 0; k < 3; ++k)
@@ -15216,19 +14816,11 @@ void CPlayer::SendMsg_ChatFarFailure(char bBlock)
 
 void CPlayer::SendMsg_AdjustAmountInform(char byStorageCode, unsigned __int16 wSerial, unsigned int dwDur)
 {
-  #pragma pack(push, 1)
-  struct AdjustAmountInformMsg
-  {
-    char byStorageCode;
-    unsigned __int16 wSerial;
-    unsigned int dwDur;
-  };
-  #pragma pack(pop)
 
-  AdjustAmountInformMsg msg{};
+  _adjust_amount_inform_zocl msg{};
   msg.byStorageCode = byStorageCode;
   msg.wSerial = wSerial;
-  msg.dwDur = dwDur;
+  msg.dwNewDur = dwDur;
 
   unsigned __int8 pbyType[2] = {20, 3};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), 7u);
@@ -16205,19 +15797,11 @@ void CPlayer::pc_ChatRaceBossCryRequest(char *pwszChatData)
 
 void CPlayer::SendMsg_ExchangeMoneyResult(char byErrCode)
 {
-  #pragma pack(push, 1)
-  struct ExchangeMoneyResultMsg
-  {
-    char byErrCode;
-    unsigned int dwGold;
-    unsigned int dwDalant;
-  };
-  #pragma pack(pop)
 
-  ExchangeMoneyResultMsg msg{};
+  _exchange_money_result_zocl msg{};
   msg.byErrCode = byErrCode;
-  msg.dwDalant = m_Param.GetDalant();
-  msg.dwGold = m_Param.GetGold();
+  msg.dwLeftDalant = m_Param.GetDalant();
+  msg.dwLeftGold = m_Param.GetGold();
 
   unsigned __int8 pbyType[2] = {12, 13};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), 9u);
@@ -16775,22 +16359,12 @@ void CPlayer::Emb_EquipLink()
 
 void CPlayer::SendMsg_InsertItemInform(char byStorageCode, _STORAGE_LIST::_db_con *pItem)
 {
-  #pragma pack(push, 1)
-  struct
-  {
-    char byStorageCode;
-    unsigned __int8 byTableCode;
-    unsigned __int16 wItemIndex;
-    unsigned int dwDur;
-    unsigned __int16 wSerial;
-    unsigned int dwLv;
-  } msg{};
-  #pragma pack(pop)
+  _insert_item_inform_zocl msg{};
 
   msg.byStorageCode = byStorageCode;
   msg.byTableCode = pItem->m_byTableCode;
   msg.wItemIndex = pItem->m_wItemIndex;
-  msg.dwDur = pItem->m_dwDur;
+  msg.dwDurPoint = pItem->m_dwDur;
   msg.wSerial = pItem->m_wSerial;
   msg.dwLv = pItem->m_dwLv;
 
@@ -21666,26 +21240,16 @@ void CPlayer::SendMsg_AddBagResult(char byErrCode)
 
 void CPlayer::SendMsg_CombineItemResult(char byErrCode, unsigned int dwFee, _STORAGE_LIST::_db_con *pNewItem)
 {
-  struct _combine_item_result_msg
-  {
-    char byErrCode;
-    char pad0[3];
-    unsigned int dwFee;
-    unsigned int dwLeftDalant;
-    unsigned __int8 byTableCode;
-    unsigned __int8 pad1;
-    unsigned __int16 wItemIndex;
-    unsigned int dwDur;
-    unsigned __int16 wSerial;
-  } msg{};
+  _combine_item_result_zocl msg{};
 
   msg.byErrCode = byErrCode;
   msg.dwFee = dwFee;
   msg.dwLeftDalant = m_Param.GetDalant();
-  msg.byTableCode = pNewItem->m_byTableCode;
-  msg.wItemIndex = pNewItem->m_wItemIndex;
-  msg.dwDur = pNewItem->m_dwDur;
-  msg.wSerial = pNewItem->m_wSerial;
+  msg.NewItem.byTableCode = pNewItem->m_byTableCode;
+  msg.NewItem.wItemIndex = pNewItem->m_wItemIndex;
+  msg.NewItem.dwDurPoint = pNewItem->m_dwDur;
+  msg.NewItem.wSerial = pNewItem->m_wSerial;
+  msg.NewItem.dwLv = pNewItem->m_dwLv;
 
   unsigned __int8 type[2]{7, 29};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0x16u);
@@ -21909,22 +21473,14 @@ void CPlayer::SendMsg_Notify_Get_Golden_Box(
   _STORAGE_LIST::_db_con *pItem,
   bool bCircle)
 {
-  struct _golden_box_notify_msg
-  {
-    unsigned __int8 byBoxType;
-    unsigned __int8 byTableCode;
-    unsigned __int16 wItemIndex;
-    unsigned __int8 byDur;
-    unsigned int dwCharSerial;
-    char szCharName[17];
-  } msg{};
+  _notify_effect_for_get_gold_box_item_zocl msg{};
 
   msg.byBoxType = static_cast<unsigned __int8>(byBoxType);
   msg.byTableCode = pItem->m_byTableCode;
   msg.wItemIndex = pItem->m_wItemIndex;
-  msg.byDur = static_cast<unsigned __int8>(pItem->m_dwDur);
+  msg.byBoxDur = static_cast<unsigned __int8>(pItem->m_dwDur);
   msg.dwCharSerial = dwCharSerial;
-  strcpy_0(msg.szCharName, szCharName);
+  strcpy_0(msg.szCharacterName, szCharName);
 
   unsigned __int8 type[2]{13, static_cast<unsigned __int8>(0x95)};
   if (bCircle)
@@ -21950,23 +21506,15 @@ void CPlayer::SendMsg_Notify_Get_Golden_Box(
 
 void CPlayer::SendMsg_Notify_Me_Get_Golden_Box(char byBoxType, _STORAGE_LIST::_db_con *pItem)
 {
-  struct _golden_box_notify_msg
-  {
-    unsigned __int8 byBoxType;
-    unsigned __int8 byTableCode;
-    unsigned __int16 wItemIndex;
-    unsigned __int8 byDur;
-    unsigned int dwCharSerial;
-    char szCharName[17];
-  } msg{};
+  _notify_effect_for_get_gold_box_item_zocl msg{};
 
   msg.byBoxType = static_cast<unsigned __int8>(byBoxType);
   msg.byTableCode = pItem->m_byTableCode;
   msg.wItemIndex = pItem->m_wItemIndex;
-  msg.byDur = static_cast<unsigned __int8>(pItem->m_dwDur);
+  msg.byBoxDur = static_cast<unsigned __int8>(pItem->m_dwDur);
   msg.dwCharSerial = m_Param.GetCharSerial();
   const char *charName = m_Param.GetCharNameA();
-  strcpy_0(msg.szCharName, charName);
+  strcpy_0(msg.szCharacterName, charName);
 
   unsigned __int8 type[2]{13, static_cast<unsigned __int8>(0x95)};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0x1Au);
@@ -25358,17 +24906,9 @@ void CPlayer::SendMsg_MakeItemCheatSendButtonEnable(char bEnableSendButton)
 
 void CPlayer::SendMsg_AlterMoneyInform(char byReasonCode)
 {
-#pragma pack(push, 1)
-  struct AlterMoneyMsg
-  {
-    char byReasonCode;
-    unsigned int dwGold;
-    unsigned int dwDalant;
-  };
-#pragma pack(pop)
 
-  AlterMoneyMsg msg{};
-  msg.byReasonCode = byReasonCode;
+  _alter_money_inform_zocl msg{};
+  msg.byReason = byReasonCode;
   msg.dwGold = m_Param.GetGold();
   msg.dwDalant = m_Param.GetDalant();
 
@@ -25400,15 +24940,9 @@ void CPlayer::RecallRandomPositionInRange(
 
 void CPlayer::SendMsg_HSKQuestActCum()
 {
-  struct _hsk_act_cum
-  {
-    int nHSKPvpPoint;
-    unsigned __int16 wKillPoint;
-    bool bAuthTicket;
-  };
 
-  _hsk_act_cum msg{};
-  msg.nHSKPvpPoint = m_nHSKPvpPoint;
+  _add_holyquest_actcum_inform_zocl msg{};
+  msg.nPvpPoint = m_nHSKPvpPoint;
   msg.wKillPoint = m_wKillPoint;
 
   const unsigned __int8 byNumOfTime = g_HolySys.GetNumOfTime();
@@ -25416,7 +24950,7 @@ void CPlayer::SendMsg_HSKQuestActCum()
   const unsigned __int8 startDay = g_HolySys.GetStartDay();
   const unsigned __int8 startMonth = g_HolySys.GetStartMonth();
   const unsigned __int16 startYear = g_HolySys.GetStartYear();
-  msg.bAuthTicket =
+  msg.byHolyMentalCount =
     m_MinigTicket.AuthLastMentalTicket(startYear, startMonth, startDay, byCurrentHour, byNumOfTime) != 0;
 
   unsigned __int8 type[2] = {25, 12};
@@ -25752,14 +25286,7 @@ void CPlayer::SendMsg_SelectWaitedQuest(
   unsigned int dwEventIndex,
   unsigned __int8 byEventNodeIndex)
 {
-  #pragma pack(push, 1)
-  struct
-  {
-    char byEventType;
-    unsigned int dwEventIndex;
-    unsigned __int8 byEventNodeIndex;
-  } msg{};
-  #pragma pack(pop)
+  _select_waited_quest_command_zocl msg{};
 
   msg.byEventType = byEventType;
   msg.dwEventIndex = dwEventIndex;
@@ -25897,6 +25424,11 @@ void CPlayer::SendMsg_GuildForceLeaveBoradori()
   pbyType[1] = 121;
   g_Network.m_pProcess[0]->LoadSendMsg( m_ObjID.m_wIndex, pbyType, szMsg, 1u);
 }
+
+
+
+
+
 
 
 

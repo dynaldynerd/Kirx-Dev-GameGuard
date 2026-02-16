@@ -12,11 +12,13 @@
 #include "CHolyStoneSystem.h"
 #include "CHonorGuild.h"
 #include "CLogTypeDBTaskManager.h"
+#include "DqsOnRunPayloads.h"
 #include "CUnmannedTraderEnvironmentValue.h"
 #include "CUnmannedTraderGroupItemInfoTable.h"
 #include "CUnmannedTraderItemState.h"
 #include "CUnmannedTraderSortType.h"
 #include "CUnmannedTraderTaxRateManager.h"
+#include "CUnmannedTraderUserInfoLocalStructs.h"
 #include "GlobalObjects.h"
 #include "InvenKey.h"
 #include "WorldServerUtil.h"
@@ -44,74 +46,6 @@
 #include <ctime>
 
 CUnmannedTraderUserInfo CUnmannedTraderUserInfo::ms_kNull;
-
-namespace
-{
-struct _qry_case_unmandtrader_cheat_updateregisttime
-{
-  struct __list
-  {
-    unsigned __int8 byProcRet;
-    unsigned __int8 byState;
-    unsigned __int16 wReserved;
-    unsigned int dwRegistSerial;
-  };
-
-  unsigned __int8 byType;
-  unsigned __int8 byNum;
-  unsigned __int16 wInx;
-  unsigned int dwOwnerSerial;
-  __list List[10];
-};
-
-struct __declspec(align(4)) _qry_case_unmandtrader_log_in_proc_update_complete_create
-{
-  struct __declspec(align(4)) __list
-  {
-    unsigned __int8 byProcRet;
-    unsigned __int8 byProcUpdate;
-    unsigned int dwBuyer;
-    unsigned int dwRegistSerial;
-    unsigned __int8 byUpdateState;
-  };
-
-  unsigned __int16 wInx;
-  unsigned int dwSeller;
-  bool bAllSuccess;
-  unsigned __int8 byType;
-  unsigned __int16 wNum;
-  __list List[20];
-};
-static_assert(sizeof(_qry_case_unmandtrader_log_in_proc_update_complete_create) == 332);
-
-#pragma pack(push, 1)
-struct __unaligned __declspec(align(1)) _unmannedtrader_sell_wait_item_inform_zocl
-{
-  struct __unaligned __declspec(align(2)) __list
-  {
-    unsigned __int16 wItemSerial;
-    unsigned int dwSellDalant;
-    unsigned int dwTax;
-  };
-
-  unsigned __int8 byNum;
-  unsigned int dwTotalSellDalant;
-  unsigned int dwTotalTaxDalant;
-  unsigned int dwCurInvenDalant;
-  __list List[10];
-
-  __int64 size() const
-  {
-    unsigned __int8 clamped = byNum;
-    if (clamped > 10)
-    {
-      clamped = 0;
-    }
-    return 116 - 10LL * (10 - clamped);
-  }
-};
-#pragma pack(pop)
-} // namespace
 
 CUnmannedTraderUserInfo::CUnmannedTraderUserInfo()
   : m_eState(LOG_IN_STATE::UTUI_NONE),

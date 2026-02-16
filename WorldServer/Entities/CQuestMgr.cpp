@@ -15,6 +15,7 @@
 
 #include <cstring>
 #include <mmsystem.h>
+#include "CQuestMgrLocalStructs.h"
 
 CRecordData *CQuestMgr::s_tblQuest = nullptr;
 CRecordData *CQuestMgr::s_tblQuestHappenEvent = nullptr;
@@ -83,14 +84,6 @@ void CQuestMgr::SendMsgToMaster_ReturnItemAfterQuest(
   unsigned __int8 byNum,
   char byQuestDBSlot)
 {
-#pragma pack(push, 1)
-  struct ReturnItemAfterQuestMessage
-  {
-    char byQuestDBSlot;
-    unsigned __int16 wItemSerial;
-    unsigned __int8 byNum;
-  };
-#pragma pack(pop)
 
   ReturnItemAfterQuestMessage msg{};
   msg.byQuestDBSlot = byQuestDBSlot;

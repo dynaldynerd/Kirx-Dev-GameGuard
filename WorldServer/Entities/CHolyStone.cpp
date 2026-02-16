@@ -166,29 +166,17 @@ void CHolyStone::OutOfSec()
 
 void CHolyStone::SendMsg_FixPosition(int n)
 {
-#pragma pack(push, 1)
-  struct StoneFixPosMsg
-  {
-    unsigned __int16 wRecordIndex;
-    unsigned __int16 wIndex;
-    unsigned int dwObjSerial;
-    __int16 pos[3];
-    unsigned __int8 byMasterRaceCode;
-    unsigned __int8 byOper;
-    unsigned __int8 byAlive;
-    int nControlLeftTime;
-  };
-#pragma pack(pop)
 
-  StoneFixPosMsg msg{};
-  msg.wRecordIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
+  _stone_fixpositon_zocl msg{};
+  msg.wRecIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
   msg.wIndex = m_ObjID.m_wIndex;
-  msg.dwObjSerial = m_dwObjSerial;
-  FloatToShort(m_fCurPos, msg.pos, 3);
-  msg.byMasterRaceCode = m_byMasterRaceCode;
-  msg.byOper = static_cast<unsigned __int8>(m_bOper);
-  msg.byAlive = static_cast<unsigned __int8>(m_nHP > 0);
-  msg.nControlLeftTime = -1;
+  msg.dwSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, msg.zCur, 3);
+  msg.byMasterRace = m_byMasterRaceCode;
+  msg.bOper = m_bOper;
+  msg.bChip = m_nHP > 0;
+  msg.nControlLeftSec = -1;
+  msg.nControlLeftSec = g_HolySys.GetControlLeftTime();
 
   unsigned __int8 type[2] = {4, 166};
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
@@ -265,20 +253,13 @@ unsigned int CHolyStone::GetNewStoneSerial()
 
 void CHolyStone::SendMsg_Create()
 {
-  struct
-  {
-    unsigned __int16 recordIndex;
-    unsigned __int16 objIndex;
-    unsigned int objSerial;
-    __int16 pos[3];
-    unsigned __int8 masterRace;
-  } msg{};
+  _stone_create_zocl msg{};
 
-  msg.recordIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
-  msg.objIndex = m_ObjID.m_wIndex;
-  msg.objSerial = m_dwObjSerial;
-  FloatToShort(m_fCurPos, msg.pos, 3);
-  msg.masterRace = m_byMasterRaceCode;
+  msg.wRecIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
+  msg.wIndex = m_ObjID.m_wIndex;
+  msg.dwSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, msg.zPos, 3);
+  msg.byMasterRace = m_byMasterRaceCode;
 
   unsigned __int8 pbyType[28]{};
   pbyType[0] = 3;
@@ -315,16 +296,11 @@ void CHolyStone::SetOper(bool bOper, float fHPRate)
 
 void CHolyStone::SendMsg_StoneAlterOper()
 {
-  struct
-  {
-    unsigned int objSerial;
-    unsigned __int8 isOper;
-    unsigned __int16 hpRate;
-  } msg{};
+  _holystone_alter_oper_circle_inform_zocl msg{};
 
-  msg.objSerial = m_dwObjSerial;
-  msg.isOper = m_bOper ? 1 : 0;
-  msg.hpRate = static_cast<unsigned __int16>(CalcCurHPRate());
+  msg.dwSerial = m_dwObjSerial;
+  msg.bOper = m_bOper;
+  msg.wCurHPRate = static_cast<unsigned __int16>(CalcCurHPRate());
 
   unsigned __int8 pbyType[36]{};
   pbyType[0] = 25;

@@ -267,19 +267,11 @@ void CHolyStoneSystem::SendSMS_MineTimeExtend(int nControlSec)
     targetHour = (targetHour + 1) % 24;
   }
 
-#pragma pack(push, 1)
-  struct
-  {
-    unsigned int dwWorldCode;
-    char byHour;
-    char byMin;
-    unsigned __int8 byNumOfTime;
-  } msg{};
-#pragma pack(pop)
+  _holy_minetime_extend_inform_zowb msg{};
 
-  msg.dwWorldCode = g_Main.m_byWorldCode;
-  msg.byHour = static_cast<char>(targetHour);
-  msg.byMin = static_cast<char>(targetMin);
+  msg.nWorldCode = g_Main.m_byWorldCode;
+  msg.byChaosHour = static_cast<char>(targetHour);
+  msg.byChaosMin = static_cast<char>(targetMin);
   msg.byNumOfTime = GetNumOfTime();
 
   unsigned __int8 type[2]{51, 2};
@@ -566,6 +558,22 @@ int CHolyStoneSystem::GetHolyMasterRace()
 int CHolyStoneSystem::GetSceneCode()
 {
   return m_SaveData.m_nSceneCode;
+}
+
+int CHolyStoneSystem::GetControlLeftTime()
+{
+  if (GetHolyMasterRace() != -1)
+  {
+    return 0;
+  }
+
+  const int sceneCode = GetSceneCode();
+  if ((sceneCode == 2 || sceneCode == 3 || sceneCode == 4) && m_dwCheckTime[5] > GetLoopTime())
+  {
+    return static_cast<int>(m_dwCheckTime[5] - GetLoopTime());
+  }
+
+  return 0;
 }
 
 bool CHolyStoneSystem::IsMinigeTicketCheck()
@@ -876,22 +884,14 @@ void CHolyStoneSystem::SendIsArriveDestroyer(char byArrive)
     return;
   }
 
-#pragma pack(push, 1)
-  struct
-  {
-    char arrive;
-    char race;
-    char name[17];
-    unsigned int destroyerSerial;
-  } msg{};
-#pragma pack(pop)
+  _notice_is_arrive_master msg{};
 
-  msg.arrive = byArrive;
-  msg.race = static_cast<char>(m_pkDestroyer->m_Param.GetRaceCode());
+  msg.byArrive = byArrive;
+  msg.byRaceCode = static_cast<char>(m_pkDestroyer->m_Param.GetRaceCode());
   const char *charName = m_pkDestroyer->m_Param.GetCharNameW();
-  memcpy_0(msg.name, charName, 0x10u);
-  msg.name[16] = 0;
-  msg.destroyerSerial = m_SaveData.m_dwDestroyerSerial;
+  memcpy_0(msg.wszCharName, charName, 0x10u);
+  msg.wszCharName[16] = 0;
+  msg.dwObjSerial = m_SaveData.m_dwDestroyerSerial;
 
   unsigned __int8 type[2]{};
   type[0] = 25;
@@ -1141,16 +1141,10 @@ void CHolyStoneSystem::SendMsg_NoticeNextQuest(unsigned int n, unsigned __int8 b
   const unsigned int remainMs = m_dwNextStartTime - now;
   const unsigned short remainSec = static_cast<unsigned short>(remainMs / 1000);
 
-#pragma pack(push, 1)
-  struct
-  {
-    unsigned short remainSec;
-    unsigned __int8 moveInfo;
-  } msg{};
-#pragma pack(pop)
+  _notice_next_quest_inform_zocl msg{};
 
-  msg.remainSec = remainSec;
-  msg.moveInfo = byStoneMapMoveInfo;
+  msg.wLeftSec = remainSec;
+  msg.byStoneMapMoveInfo = byStoneMapMoveInfo;
 
   unsigned __int8 type[2]{};
   type[0] = 25;
@@ -1210,22 +1204,13 @@ void CHolyStoneSystem::SendMsg_EnterStone(unsigned int n)
   const unsigned int loopTime = GetLoopTime();
   const unsigned int delta = m_dwCheckTime[1] - scheduleNode->m_nSceneTime[0];
 
-#pragma pack(push, 1)
-  struct
-  {
-    unsigned __int8 isAll;
-    short totalSec;
-    short remainSec1;
-    short remainSec2;
-    short passSec;
-  } msg{};
-#pragma pack(pop)
+  _stone_enter_inform_zocl msg{};
 
-  msg.isAll = (n == static_cast<unsigned int>(-1));
-  msg.totalSec = static_cast<short>((m_dwCheckTime[1] - m_dwCheckTime[0]) / 1000);
-  msg.remainSec1 = static_cast<short>((delta - loopTime) / 1000);
-  msg.remainSec2 = static_cast<short>((m_dwCheckTime[1] - loopTime) / 1000);
-  msg.passSec = static_cast<short>((timeGetTime() - m_dwCheckTime[0]) / 1000);
+  msg.bNow = (n == static_cast<unsigned int>(-1));
+  msg.wTotalSecTime = static_cast<unsigned __int16>((m_dwCheckTime[1] - m_dwCheckTime[0]) / 1000);
+  msg.zHurrySecTime = static_cast<__int16>((delta - loopTime) / 1000);
+  msg.zExitSecTime = static_cast<__int16>((m_dwCheckTime[1] - loopTime) / 1000);
+  msg.wElapseTime = static_cast<unsigned __int16>((timeGetTime() - m_dwCheckTime[0]) / 1000);
 
   unsigned __int8 type[2]{};
   type[0] = 25;
@@ -1315,26 +1300,15 @@ void CHolyStoneSystem::SendMsg_EnterKeeper(unsigned int n)
   const unsigned int loopTime = GetLoopTime();
   const unsigned int delta = m_dwCheckTime[6] - scheduleNode->m_nSceneTime[0];
 
-#pragma pack(push, 1)
-  struct
-  {
-    unsigned __int8 isAll;
-    short totalSec;
-    short remainSec1;
-    short remainSec2;
-    char masterRace;
-    unsigned __int8 isChaos;
-    unsigned __int8 isAttackable;
-  } msg{};
-#pragma pack(pop)
+  _keeper_enter_inform_zocl msg{};
 
-  msg.isAll = (n == static_cast<unsigned int>(-1));
-  msg.totalSec = static_cast<short>((m_dwCheckTime[6] - m_dwCheckTime[2]) / 1000);
-  msg.remainSec1 = static_cast<short>((delta - loopTime) / 1000);
-  msg.remainSec2 = static_cast<short>((m_dwCheckTime[6] - loopTime) / 1000);
-  msg.masterRace = static_cast<char>(GetHolyMasterRace());
-  msg.isChaos = (GetSceneCode() == 6);
-  msg.isAttackable = (GetSceneCode() == 3);
+  msg.bNow = (n == static_cast<unsigned int>(-1));
+  msg.wTotalSecTime = static_cast<unsigned __int16>((m_dwCheckTime[6] - m_dwCheckTime[2]) / 1000);
+  msg.zHurrySecTime = static_cast<__int16>((delta - loopTime) / 1000);
+  msg.zExitSecTime = static_cast<__int16>((m_dwCheckTime[6] - loopTime) / 1000);
+  msg.byMasterRace = static_cast<char>(GetHolyMasterRace());
+  msg.bChaos = (GetSceneCode() == 6);
+  msg.byAttackAbleType = static_cast<char>(GetSceneCode() == 3);
 
   unsigned __int8 type[2]{};
   type[0] = 25;
@@ -1384,16 +1358,10 @@ void CHolyStoneSystem::SendMsg_WaitKeeper(unsigned int n, char byWaitType)
 
 void CHolyStoneSystem::SendMsg_HolyKeeperStateChaos()
 {
-#pragma pack(push, 1)
-  struct
-  {
-    unsigned int keeperSerial;
-    unsigned __int8 masterRace;
-  } msg{};
-#pragma pack(pop)
+  _holy_keeper_change_chaos_inform msg{};
 
-  msg.keeperSerial = g_Keeper->m_dwObjSerial;
-  msg.masterRace = static_cast<unsigned __int8>(GetHolyMasterRace());
+  msg.dwKeeperSerial = g_Keeper->m_dwObjSerial;
+  msg.byMasterRace = static_cast<char>(GetHolyMasterRace());
 
   unsigned __int8 type[2]{};
   type[0] = 25;
@@ -1460,17 +1428,12 @@ void CHolyStoneSystem::GiveHSKQuest()
 
 void CHolyStoneSystem::SendHolyStoneHPToRaceBoss()
 {
-#pragma pack(push, 1)
-  struct
-  {
-    unsigned __int16 hpRate[3];
-  } msg{};
-#pragma pack(pop)
+  _holy_stone_hp_inform_zocl msg{};
 
   memset_0(&msg, 0, sizeof(msg));
   for (int j = 0; j < 3; ++j)
   {
-    msg.hpRate[j] = static_cast<unsigned __int16>(g_Stone[j].CalcCurHPRate());
+    msg.wHPRate[j] = static_cast<unsigned __int16>(g_Stone[j].CalcCurHPRate());
   }
 
   unsigned __int8 type[2]{};
