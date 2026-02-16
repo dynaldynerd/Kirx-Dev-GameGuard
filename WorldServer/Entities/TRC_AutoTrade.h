@@ -6,6 +6,7 @@
 #include "CMyTimer.h"
 #include "ControllerTaxRate.h"
 
+#pragma pack(push, 1)
 class __cppobj _suggested_matter_change_taxrate
 {
 public:
@@ -18,6 +19,7 @@ public:
   unsigned int dwNext;
   unsigned int dwSuggestedTime;
 };
+#pragma pack(pop)
 
 class __cppobj TRC_AutoTrade
 {

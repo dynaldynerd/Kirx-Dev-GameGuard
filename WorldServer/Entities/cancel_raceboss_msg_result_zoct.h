@@ -2,7 +2,8 @@
 
 #include "IdaCompat.h"
 
-struct __unaligned __declspec(align(2)) _cancel_raceboss_msg_result_zoct
+#pragma pack(push, 1)
+struct __unaligned _cancel_raceboss_msg_result_zoct
 {
   unsigned __int8 byRet;
   unsigned __int8 byRaceCode;
@@ -10,6 +11,7 @@ struct __unaligned __declspec(align(2)) _cancel_raceboss_msg_result_zoct
 
   unsigned __int16 size() const;
 };
+#pragma pack(pop)
 
 inline unsigned __int16 _cancel_raceboss_msg_result_zoct::size() const
 {

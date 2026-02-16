@@ -2,7 +2,8 @@
 
 #include "IdaCompat.h"
 
-struct __unaligned __declspec(align(2)) _announ_message_receipt_udp
+#pragma pack(push, 1)
+struct __unaligned _announ_message_receipt_udp
 {
   unsigned __int8 byMessageType;
   unsigned __int8 bySenderRace;
@@ -16,6 +17,7 @@ struct __unaligned __declspec(align(2)) _announ_message_receipt_udp
   _announ_message_receipt_udp();
   unsigned __int16 size() const;
 };
+#pragma pack(pop)
 
 inline _announ_message_receipt_udp::_announ_message_receipt_udp()
 {

@@ -208,6 +208,7 @@ public:
   void CompleteRankUpdateAndSelectGarde(unsigned __int8 byRet, char *szData);
 };
 
+#pragma pack(push, 1)
 struct __unaligned _PVP_RANK_DATA
 {
   unsigned __int8 byRank;
@@ -220,6 +221,7 @@ struct __unaligned _PVP_RANK_DATA
   unsigned int dwGuildSerial;
   long double dPvpPoint;
 };
+#pragma pack(pop)
 
 struct __declspec(align(2)) _PVP_RANK_PACKED_DATA
 {

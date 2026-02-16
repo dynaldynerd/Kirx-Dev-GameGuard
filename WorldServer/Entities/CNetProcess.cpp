@@ -929,6 +929,35 @@ int CNetProcess::LoadSendMsg(
   Src[1] = *reinterpret_cast<unsigned __int16 *>(pbyType);
   Src[0] = static_cast<unsigned __int16>(nLen + 4);
 
+  if (m_Type.m_bSendLogFile && m_nIndex == 0)
+  {
+    char payloadHead[32]{};
+    if (szMsg && nLen)
+    {
+      constexpr char kHex[] = "0123456789ABCDEF";
+      const unsigned int previewCount = (nLen < 8u) ? nLen : 8u;
+      for (unsigned int i = 0; i < previewCount; ++i)
+      {
+        const unsigned char value = static_cast<unsigned char>(szMsg[i]);
+        payloadHead[i * 3] = kHex[value >> 4];
+        payloadHead[i * 3 + 1] = kHex[value & 0xF];
+        payloadHead[i * 3 + 2] = (i + 1 < previewCount) ? ' ' : '\0';
+      }
+    }
+    else
+    {
+      strcpy_s(payloadHead, sizeof(payloadHead), "-");
+    }
+
+    m_LogFile[0].Write(
+      "TX idx(%u) type(%u,%u) len(%u) head(%s)",
+      dwClientIndex,
+      static_cast<unsigned int>(pbyType[0]),
+      static_cast<unsigned int>(pbyType[1]),
+      static_cast<unsigned int>(nLen),
+      payloadHead);
+  }
+
   if (m_nIndex || !m_bUseFG)
   {
     const unsigned int remain = sendBuffer->m_nEtrSize + sendBuffer->m_nMaxSize - sendBuffer->m_dwPushPnt;

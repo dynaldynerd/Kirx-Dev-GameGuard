@@ -25,6 +25,33 @@ namespace
   _quest_fail_result s_QuestFTRet{};
 }
 
+CQuestMgr::CQuestMgr()
+  : m_pMaster(nullptr),
+    m_pQuestData(nullptr),
+    m_pTempHappenEvent(new _happen_event_cont[3])
+{
+  CQuestMgr::s_tblQuestHappenEvent = nullptr;
+  CQuestMgr::s_tblQuest = nullptr;
+}
+
+CQuestMgr::~CQuestMgr()
+{
+  if (CQuestMgr::s_tblQuestHappenEvent)
+  {
+    delete[] CQuestMgr::s_tblQuestHappenEvent;
+    CQuestMgr::s_tblQuestHappenEvent = nullptr;
+  }
+
+  if (CQuestMgr::s_tblQuest)
+  {
+    delete CQuestMgr::s_tblQuest;
+    CQuestMgr::s_tblQuest = nullptr;
+  }
+
+  delete[] m_pTempHappenEvent;
+  m_pTempHappenEvent = nullptr;
+}
+
 void CQuestMgr::InitMgr(CPlayer *pMaster, _QUEST_DB_BASE *pQuestData)
 {
   m_pMaster = pMaster;

@@ -1,0 +1,825 @@
+name	required_pack	status	file	line	kind	current_pack	is_forward	decl
+ATL::_stdcallthunk	1	no_match_in_entities						
+CEntity	1	forward_decl_only	WorldServer/Entities/CBsp.h	169	class		1	class CEntity;
+CEntity	1	missing_pack_scope	WorldServer/Entities/CEntity.h	26	class		0	class __cppobj __unaligned __declspec(align(4)) CEntity
+CEntity	1	forward_decl_only	WorldServer/Entities/CMainThread.h	59	class	1	1	class CEntity;
+CEntity	1	forward_decl_only	WorldServer/Entities/CPlayer.h	79	class	1	1	class CEntity;
+DLGITEMTEMPLATE	1	no_match_in_entities						
+DLGTEMPLATEEX	1	no_match_in_entities						
+E1133113A46BC24BB251F24AE4F08A1B	1	no_match_in_entities						
+IMAGE_AUX_SYMBOL_TOKEN_DEF	1	no_match_in_entities						
+NMPGSCROLL	1	no_match_in_entities						
+PROPPRG	1	no_match_in_entities						
+SHCOLUMNINFO	1	no_match_in_entities						
+_ANIMUS_DB_BASE::_LIST	1	no_match_in_entities						
+_ANI_OBJECT	1	forward_decl_only	WorldServer/Entities/CBsp.h	164	struct		1	struct _ANI_OBJECT;
+_ANI_OBJECT	1	forward_decl_only	WorldServer/Entities/CMainThread.h	51	struct	1	1	struct _ANI_OBJECT;
+_ANI_OBJECT	1	ok	WorldServer/Entities/CMainThread.h	2368	struct	1	0	struct __unaligned __declspec(align(1)) _ANI_OBJECT
+_ANI_OBJECT	1	forward_decl_only	WorldServer/Entities/CPlayer.h	71	struct	1	1	struct _ANI_OBJECT;
+_ANI_OBJECT	1	forward_decl_only	WorldServer/Entities/WorldServerUtil.h	17	struct		1	struct _ANI_OBJECT;
+_AVATOR_DATA	1	forward_decl_only	WorldServer/Entities/CCheckSumCharacAccountTrunkData.h	6	struct		1	struct _AVATOR_DATA;
+_AVATOR_DATA	1	forward_decl_only	WorldServer/Entities/CCheckSumCharacTrunkConverter.h	8	struct		1	struct _AVATOR_DATA;
+_AVATOR_DATA	1	ok	WorldServer/Entities/CMainThread.h	1778	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _AVATOR_DATA
+_AVATOR_DATA	1	forward_decl_only	WorldServer/Entities/CMgrAccountLobbyHistory.h	12	struct		1	struct _AVATOR_DATA;
+_AVATOR_DATA	1	forward_decl_only	WorldServer/Entities/CMgrAvatorItemHistory.h	14	struct		1	struct _AVATOR_DATA;
+_AVATOR_DATA	1	forward_decl_only	WorldServer/Entities/CPcBangFavor.h	7	struct		1	struct _AVATOR_DATA;
+_AVATOR_DATA	1	forward_decl_only	WorldServer/Entities/CPlayerDB.h	8	struct		1	struct _AVATOR_DATA;
+_AVATOR_DATA	1	forward_decl_only	WorldServer/Entities/CSetItemEffect.h	6	struct		1	struct _AVATOR_DATA;
+_AVATOR_DATA	1	forward_decl_only	WorldServer/Entities/DqsDbStructs.h	7	struct		1	struct _AVATOR_DATA;
+_AVATOR_DB_BASE	1	no_match_in_entities						
+_BSP_C_FACE	1	ok	WorldServer/Entities/CBsp.h	112	struct	1	0	struct _BSP_C_FACE
+_BSP_C_FACE	1	forward_decl_only	WorldServer/Entities/CMainThread.h	46	struct	1	1	struct _BSP_C_FACE;
+_BSP_C_FACE	1	forward_decl_only	WorldServer/Entities/CPlayer.h	66	struct	1	1	struct _BSP_C_FACE;
+_BSP_LEAF	1	ok	WorldServer/Entities/CBsp.h	98	struct	1	0	struct _BSP_LEAF
+_BSP_LEAF	1	forward_decl_only	WorldServer/Entities/CMainThread.h	71	struct	1	1	struct _BSP_LEAF;
+_BSP_LEAF	1	forward_decl_only	WorldServer/Entities/CPlayer.h	91	struct	1	1	struct _BSP_LEAF;
+_BSP_MAT_GROUP	1	pack_mismatch	WorldServer/Entities/CBsp.h	143	struct	2	0	struct _BSP_MAT_GROUP
+_BSP_MAT_GROUP	1	forward_decl_only	WorldServer/Entities/CMainThread.h	47	struct	1	1	struct _BSP_MAT_GROUP;
+_BSP_MAT_GROUP	1	forward_decl_only	WorldServer/Entities/CPlayer.h	67	struct	1	1	struct _BSP_MAT_GROUP;
+_BSP_READ_FACE	1	pack_mismatch	WorldServer/Entities/CBsp.h	79	struct	2	0	struct _BSP_READ_FACE
+_BSP_READ_M_GROUP	1	pack_mismatch	WorldServer/Entities/CBsp.h	62	struct	2	0	struct _BSP_READ_M_GROUP
+_BUDDY_DB_BASE::_LIST	1	no_match_in_entities						
+_CHINA_MSG_HEADER	1	no_match_in_entities						
+_CHRID	1	forward_decl_only	WorldServer/Entities/CNetworkEX.h	9	struct		1	struct _CHRID;
+_CHRID	1	ok	WorldServer/Entities/CPlayer.h	428	struct	1	0	struct __unaligned __declspec(align(1)) _CHRID
+_CLID	1	forward_decl_only	WorldServer/Entities/CNetworkEX.h	7	struct		1	struct _CLID;
+_CLID	1	ok	WorldServer/Entities/CPlayer.h	416	struct	1	0	struct __unaligned __declspec(align(2)) _CLID
+_CUTTING_DB_BASE	1	forward_decl_only	WorldServer/Entities/CMainThread.h	32	struct	1	1	struct _CUTTING_DB_BASE;
+_CUTTING_DB_BASE	1	ok	WorldServer/Entities/CMainThread.h	1467	struct	1	0	struct __cppobj __unaligned __declspec(align(2)) _CUTTING_DB_BASE
+_DB_LOAD_AUTOMINE_MACHINE	1	forward_decl_only	WorldServer/Entities/AutoMineMachineMng.h	11	struct		1	struct _DB_LOAD_AUTOMINE_MACHINE;
+_DB_LOAD_AUTOMINE_MACHINE	1	forward_decl_only	WorldServer/Entities/CRFWorldDatabase.h	58	struct		1	struct _DB_LOAD_AUTOMINE_MACHINE;
+_DB_LOAD_AUTOMINE_MACHINE	1	missing_pack_scope	WorldServer/Entities/DB_LOAD_AUTOMINE_MACHINE.h	13	struct		0	struct __declspec(align(1)) _DB_LOAD_AUTOMINE_MACHINE
+_DELPOST_DB_BASE	1	ok	WorldServer/Entities/CMainThread.h	1623	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _DELPOST_DB_BASE
+_ENTITY_M_GROUP	1	forward_decl_only	WorldServer/Entities/CMainThread.h	58	struct	1	1	struct _ENTITY_M_GROUP;
+_ENTITY_M_GROUP	1	ok	WorldServer/Entities/CMainThread.h	3099	struct	1	0	struct __unaligned __declspec(align(4)) _ENTITY_M_GROUP
+_ENTITY_M_GROUP	1	forward_decl_only	WorldServer/Entities/CPlayer.h	78	struct	1	1	struct _ENTITY_M_GROUP;
+_EQUIP_DB_BASE::_EMBELLISH_LIST	1	no_match_in_entities						
+_FORCE_DB_BASE::_LIST	1	no_match_in_entities						
+_IMAGE_LINENUMBER	1	no_match_in_entities						
+_IMAGE_RELOCATION	1	no_match_in_entities						
+_IMAGE_SYMBOL	1	no_match_in_entities						
+_INVEN_DB_BASE::_LIST	1	no_match_in_entities						
+_ITEMCOMBINE_DB_BASE	1	ok	WorldServer/Entities/CPlayer.h	360	struct	1	0	struct __cppobj _ITEMCOMBINE_DB_BASE
+_ITEMCOMBINE_DB_BASE	1	forward_decl_only	WorldServer/Entities/CUserDB.h	12	struct		1	struct _ITEMCOMBINE_DB_BASE;
+_LEAF_ENTITIES_LIST_INFO	1	forward_decl_only	WorldServer/Entities/CMainThread.h	65	struct	1	1	struct _LEAF_ENTITIES_LIST_INFO;
+_LEAF_ENTITIES_LIST_INFO	1	ok	WorldServer/Entities/CMainThread.h	3000	struct	1	0	struct __unaligned __declspec(align(2)) _LEAF_ENTITIES_LIST_INFO
+_LEAF_ENTITIES_LIST_INFO	1	forward_decl_only	WorldServer/Entities/CPlayer.h	85	struct	1	1	struct _LEAF_ENTITIES_LIST_INFO;
+_LINK_DB_BASE	1	forward_decl_only	WorldServer/Entities/CMainThread.h	23	struct	1	1	struct _LINK_DB_BASE;
+_LINK_DB_BASE	1	ok	WorldServer/Entities/CMainThread.h	1320	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _LINK_DB_BASE
+_LTD	1	no_match_in_entities						
+_LTD_ARRAY_ITEM	1	no_match_in_entities						
+_LTD_EXPEND	1	no_match_in_entities						
+_LTD_ITEMINFO	1	no_match_in_entities						
+_LTD_ITEMINFO::_iteminfo	1	no_match_in_entities						
+_LTD_PARAM	1	no_match_in_entities						
+_MAP_ENTITIES_LIST	1	forward_decl_only	WorldServer/Entities/CBsp.h	165	struct		1	struct _MAP_ENTITIES_LIST;
+_MAP_ENTITIES_LIST	1	forward_decl_only	WorldServer/Entities/CMainThread.h	66	struct	1	1	struct _MAP_ENTITIES_LIST;
+_MAP_ENTITIES_LIST	1	ok	WorldServer/Entities/CMainThread.h	3007	struct	1	0	struct __unaligned __declspec(align(2)) _MAP_ENTITIES_LIST
+_MAP_ENTITIES_LIST	1	forward_decl_only	WorldServer/Entities/CPlayer.h	86	struct	1	1	struct _MAP_ENTITIES_LIST;
+_MASTERY_PARAM	1	forward_decl_only	WorldServer/Entities/CMgrAvatorLvHistory.h	10	struct		1	struct _MASTERY_PARAM;
+_MASTERY_PARAM	1	ok	WorldServer/Entities/CPlayer.h	546	struct	1	0	struct __cppobj __declspec(align(8)) _MASTERY_PARAM
+_MINIDUMP_MODULE	1	no_match_in_entities						
+_MINIDUMP_MODULE_CALLBACK	1	no_match_in_entities						
+_MINIDUMP_THREAD_CALLBACK	1	no_match_in_entities						
+_MINIDUMP_THREAD_EX_CALLBACK	1	no_match_in_entities						
+_MONEY_SUPPLY_DATA	1	missing_pack_scope	WorldServer/Entities/CMoneySupplyMgr.h	5	struct		0	struct __unaligned __declspec(align(4)) _MONEY_SUPPLY_DATA
+_NOT_ARRANGED_AVATOR_DB	1	forward_decl_only	WorldServer/Entities/CMainThread.h	16	struct	1	1	struct _NOT_ARRANGED_AVATOR_DB;
+_NOT_ARRANGED_AVATOR_DB	1	missing_pack_scope	WorldServer/Entities/DqsDbStructs.h	334	struct		0	struct __cppobj __unaligned __declspec(align(1)) _NOT_ARRANGED_AVATOR_DB
+_ONE_LAYER	1	ok	WorldServer/Entities/CMainThread.h	3063	struct	1	0	struct __unaligned __declspec(align(2)) _ONE_LAYER
+_PCBANG_PLAY_TIME	1	forward_decl_only	WorldServer/Entities/CMainThread.h	13	struct	1	1	struct _PCBANG_PLAY_TIME;
+_PCBANG_PLAY_TIME	1	ok	WorldServer/Entities/CMainThread.h	1742	struct	1	0	struct __unaligned __declspec(align(1)) _PCBANG_PLAY_TIME
+_PCBANG_PLAY_TIME	1	forward_decl_only	WorldServer/Entities/CPlayer.h	31	struct	1	1	struct _PCBANG_PLAY_TIME;
+_PERSONALAMINE_INVEN_DB_BASE	1	forward_decl_only	WorldServer/Entities/AutominePersonalMgr.h	10	struct		1	struct _PERSONALAMINE_INVEN_DB_BASE;
+_PERSONALAMINE_INVEN_DB_BASE	1	ok	WorldServer/Entities/CMainThread.h	1662	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _PERSONALAMINE_INVEN_DB_BASE
+_POSTSTORAGE_DB_BASE::__list	1	no_match_in_entities						
+_PVPPOINT_LIMIT_DB_BASE	1	forward_decl_only	WorldServer/Entities/CMainThread.h	104	struct	1	1	struct _PVPPOINT_LIMIT_DB_BASE;
+_PVPPOINT_LIMIT_DB_BASE	1	ok	WorldServer/Entities/CMainThread.h	1678	struct	1	0	struct __cppobj __unaligned __declspec(align(2)) _PVPPOINT_LIMIT_DB_BASE
+_PVPPOINT_LIMIT_DB_BASE	1	forward_decl_only	WorldServer/Entities/CPlayer.h	127	struct	1	1	struct _PVPPOINT_LIMIT_DB_BASE;
+_PVPPOINT_LIMIT_DB_BASE	1	forward_decl_only	WorldServer/Entities/CPvpPointLimiter.h	5	struct		1	struct _PVPPOINT_LIMIT_DB_BASE;
+_PVP_ORDER_VIEW_DB_BASE	1	forward_decl_only	WorldServer/Entities/CMainThread.h	105	struct	1	1	struct _PVP_ORDER_VIEW_DB_BASE;
+_PVP_ORDER_VIEW_DB_BASE	1	ok	WorldServer/Entities/CMainThread.h	1689	struct	1	0	struct __unaligned __declspec(align(1)) _PVP_ORDER_VIEW_DB_BASE
+_PVP_ORDER_VIEW_DB_BASE	1	forward_decl_only	WorldServer/Entities/CPlayer.h	128	struct	1	1	struct _PVP_ORDER_VIEW_DB_BASE;
+_PVP_ORDER_VIEW_DB_BASE	1	forward_decl_only	WorldServer/Entities/CPvpCashPoint.h	5	struct		1	struct _PVP_ORDER_VIEW_DB_BASE;
+_PVP_ORDER_VIEW_DB_BASE	1	forward_decl_only	WorldServer/Entities/CPvpOrderView.h	5	struct		1	struct _PVP_ORDER_VIEW_DB_BASE;
+_PVP_RANK_DATA	1	forward_decl_only	WorldServer/Entities/CandidateMgr.h	7	struct		1	struct _PVP_RANK_DATA;
+_PVP_RANK_DATA	1	forward_decl_only	WorldServer/Entities/CRFWorldDatabase.h	44	struct		1	struct _PVP_RANK_DATA;
+_PVP_RANK_DATA	1	forward_decl_only	WorldServer/Entities/CUserRankingProcess.h	10	struct		1	struct __unaligned _PVP_RANK_DATA;
+_PVP_RANK_DATA	1	missing_pack_scope	WorldServer/Entities/CUserRankingProcess.h	211	struct		0	struct __unaligned _PVP_RANK_DATA
+_QUEST_DB_BASE::_LIST	1	no_match_in_entities						
+_QUEST_DB_BASE::_NPC_QUEST_HISTORY	1	no_match_in_entities						
+_QUEST_DB_BASE::_START_NPC_QUEST_HISTORY	1	no_match_in_entities						
+_Quest_fld	1	no_match_in_entities						
+_R3MATERIAL	1	forward_decl_only	WorldServer/Entities/CMainThread.h	52	struct	1	1	struct _R3MATERIAL;
+_R3MATERIAL	1	ok	WorldServer/Entities/CMainThread.h	3087	struct	1	0	struct __unaligned __declspec(align(2)) _R3MATERIAL
+_R3MATERIAL	1	forward_decl_only	WorldServer/Entities/CPlayer.h	72	struct	1	1	struct _R3MATERIAL;
+_R3MATERIAL	1	forward_decl_only	WorldServer/Entities/CSkyBox.h	5	struct		1	struct _R3MATERIAL;
+_R3MATERIAL	1	forward_decl_only	WorldServer/Entities/R3EngineGlobals.h	7	struct		1	struct _R3MATERIAL;
+_R3MATERIAL	1	forward_decl_only	WorldServer/Entities/WorldServerUtil.h	16	struct		1	struct _R3MATERIAL;
+_READ_MAP_ENTITIES_LIST	1	pack_mismatch	WorldServer/Entities/BspReadEntities.h	7	struct	2	0	struct __unaligned __declspec(align(2)) _READ_MAP_ENTITIES_LIST
+_READ_MAP_ENTITIES_LIST	1	forward_decl_only	WorldServer/Entities/CBsp.h	166	struct		1	struct _READ_MAP_ENTITIES_LIST;
+_REGED	1	forward_decl_only	WorldServer/Entities/CMainThread.h	14	struct	1	1	struct _REGED;
+_REGED	1	ok	WorldServer/Entities/CMainThread.h	1264	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _AVATOR_DB_BASE : _REGED
+_REGED	1	forward_decl_only	WorldServer/Entities/CMgrAccountLobbyHistory.h	10	struct		1	struct _REGED;
+_REGED_AVATOR_DB	1	forward_decl_only	WorldServer/Entities/CMainThread.h	15	struct	1	1	struct _REGED_AVATOR_DB;
+_REGED_AVATOR_DB	1	ok	WorldServer/Entities/CMainThread.h	1230	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _REGED_AVATOR_DB
+_REGED_AVATOR_DB	1	ok	WorldServer/Entities/CMainThread.h	1249	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _REGED : _REGED_AVATOR_DB
+_REGED_AVATOR_DB	1	forward_decl_only	WorldServer/Entities/CMgrAccountLobbyHistory.h	11	struct		1	struct _REGED_AVATOR_DB;
+_RETURNPOST_DB_BASE	1	ok	WorldServer/Entities/CMainThread.h	1612	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _RETURNPOST_DB_BASE
+_RTC_ALLOCA_NODE	1	no_match_in_entities						
+_SHChangeDWORDAsIDList	1	no_match_in_entities						
+_SHChangeNotifyEntry	1	no_match_in_entities						
+_SHChangeUpdateImageIDList	1	no_match_in_entities						
+_SHITEMID	1	no_match_in_entities						
+_STORAGE_LIST	1	ok	WorldServer/Entities/CPlayer.h	202	struct	1	0	struct __cppobj _bag_db_load : _STORAGE_LIST
+_STORAGE_LIST	1	ok	WorldServer/Entities/CPlayer.h	208	struct	1	0	struct __cppobj _equip_db_load : _STORAGE_LIST
+_STORAGE_LIST	1	ok	WorldServer/Entities/CPlayer.h	214	struct	1	0	struct __cppobj __unaligned __declspec(align(2)) _embellish_db_load : _STORAGE_LIST
+_STORAGE_LIST	1	ok	WorldServer/Entities/CPlayer.h	220	struct	1	0	struct __cppobj _force_db_load : _STORAGE_LIST
+_STORAGE_LIST	1	ok	WorldServer/Entities/CPlayer.h	226	struct	1	0	struct __cppobj _animus_db_load : _STORAGE_LIST
+_STORAGE_LIST	1	ok	WorldServer/Entities/CPlayer.h	232	struct	1	0	struct __cppobj _trunk_db_load : _STORAGE_LIST
+_STORAGE_LIST	1	ok	WorldServer/Entities/CPlayer.h	239	struct	1	0	struct __cppobj _Exttrunk_db_load : _STORAGE_LIST
+_STORAGE_LIST	1	ok	WorldServer/Entities/CPlayer.h	397	struct	1	0	struct __cppobj _personal_amine_inven_db_load : _STORAGE_LIST
+_STORAGE_LIST	1	missing_pack_scope	WorldServer/Entities/StorageList.h	6	struct		0	struct __cppobj __unaligned __declspec(align(4)) _STORAGE_LIST
+_STORAGE_LIST::_db_con	1	no_match_in_entities						
+_STORAGE_LIST::_storage_con	1	no_match_in_entities						
+_STORAGE_POS_INDIV	1	forward_decl_only	WorldServer/Entities/CNetworkEX.h	8	struct		1	struct _STORAGE_POS_INDIV;
+_STORAGE_POS_INDIV	1	forward_decl_only	WorldServer/Entities/CPostSystemManager.h	11	struct		1	struct _STORAGE_POS_INDIV;
+_SUPPLEMENT_DB_BASE	1	forward_decl_only	WorldServer/Entities/CMainThread.h	20	struct	1	1	struct _SUPPLEMENT_DB_BASE;
+_SUPPLEMENT_DB_BASE	1	ok	WorldServer/Entities/CMainThread.h	1726	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _SUPPLEMENT_DB_BASE
+_TIMELIMITINFO_DB_BASE	1	forward_decl_only	WorldServer/Entities/CMainThread.h	21	struct	1	1	struct _TIMELIMITINFO_DB_BASE;
+_TIMELIMITINFO_DB_BASE	1	ok	WorldServer/Entities/CMainThread.h	1769	struct	1	0	struct __unaligned __declspec(align(1)) _TIMELIMITINFO_DB_BASE
+_TOOL_COL_LEAF	1	pack_mismatch	WorldServer/Entities/CBsp.h	134	struct	2	0	struct _TOOL_COL_LEAF
+_TOOL_COL_LEAF	1	forward_decl_only	WorldServer/Entities/CMainThread.h	73	struct	1	1	struct _TOOL_COL_LEAF;
+_TOOL_COL_LEAF	1	forward_decl_only	WorldServer/Entities/CPlayer.h	93	struct	1	1	struct _TOOL_COL_LEAF;
+_TRADE_DB_BASE::_LIST	1	no_match_in_entities						
+_TRUNK_DB_BASE	1	forward_decl_only	WorldServer/Entities/CMainThread.h	25	struct	1	1	struct _TRUNK_DB_BASE;
+_TRUNK_DB_BASE	1	ok	WorldServer/Entities/CMainThread.h	1528	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _TRUNK_DB_BASE
+_TRUNK_DB_BASE::_LIST	1	no_match_in_entities						
+_UNIT_DB_BASE::_LIST	1	no_match_in_entities						
+_WAIT_ENTER_ACCOUNT	1	ok	WorldServer/Entities/CMainThread.h	191	struct	1	0	struct __cppobj _WAIT_ENTER_ACCOUNT
+_a_trade_adjust_price_request_clzo	1	ok	WorldServer/Entities/a_trade_adjust_price_request_clzo.h	6	struct	1	0	struct _a_trade_adjust_price_request_clzo
+_a_trade_adjust_price_request_clzo	1	forward_decl_only	WorldServer/Entities/CUnmannedTraderController.h	10	struct		1	struct _a_trade_adjust_price_request_clzo;
+_a_trade_adjust_price_request_clzo	1	forward_decl_only	WorldServer/Entities/CUnmannedTraderUserInfo.h	11	struct		1	struct _a_trade_adjust_price_request_clzo;
+_a_trade_adjust_price_request_clzo	1	forward_decl_only	WorldServer/Entities/CUnmannedTraderUserInfoTable.h	14	struct		1	struct _a_trade_adjust_price_request_clzo;
+_a_trade_adjust_price_result_zocl	1	ok	WorldServer/Entities/a_trade_adjust_price_result_zocl.h	6	struct	1	0	struct _a_trade_adjust_price_result_zocl
+_a_trade_clear_item_request_clzo	1	ok	WorldServer/Entities/a_trade_clear_item_request_clzo.h	6	struct	1	0	struct _a_trade_clear_item_request_clzo
+_a_trade_clear_item_request_clzo	1	forward_decl_only	WorldServer/Entities/CUnmannedTraderController.h	11	struct		1	struct _a_trade_clear_item_request_clzo;
+_a_trade_clear_item_request_clzo	1	forward_decl_only	WorldServer/Entities/CUnmannedTraderUserInfo.h	12	struct		1	struct _a_trade_clear_item_request_clzo;
+_a_trade_clear_item_request_clzo	1	forward_decl_only	WorldServer/Entities/CUnmannedTraderUserInfoTable.h	15	struct		1	struct _a_trade_clear_item_request_clzo;
+_a_trade_clear_item_result_zocl	1	ok	WorldServer/Entities/a_trade_clear_item_result_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _a_trade_clear_item_result_zocl
+_a_trade_reg_item_request_clzo	1	ok	WorldServer/Entities/a_trade_reg_item_request_clzo.h	6	struct	1	0	struct _a_trade_reg_item_request_clzo
+_a_trade_reg_item_request_clzo	1	forward_decl_only	WorldServer/Entities/CUnmannedTraderController.h	12	struct		1	struct _a_trade_reg_item_request_clzo;
+_a_trade_reg_item_request_clzo	1	forward_decl_only	WorldServer/Entities/CUnmannedTraderUserInfo.h	13	struct		1	struct _a_trade_reg_item_request_clzo;
+_a_trade_reg_item_request_clzo	1	forward_decl_only	WorldServer/Entities/CUnmannedTraderUserInfoTable.h	16	struct		1	struct _a_trade_reg_item_request_clzo;
+_a_trade_sell_inform_zocl	1	no_match_in_entities						
+_add_holyquest_actcum_inform_zocl	1	no_match_in_entities						
+_add_lend_item_result_zocl	1	ok	WorldServer/Entities/add_lend_item_result_zocl.h	6	struct	1	0	struct _add_lend_item_result_zocl
+_adjust_amount_inform_zocl	1	no_match_in_entities						
+_alive_char_request_clzo	1	no_match_in_entities						
+_alive_char_result_zocl	1	ok	WorldServer/Entities/alive_char_result_zocl.h	7	struct	1	0	struct __cppobj __unaligned __declspec(align(2)) _alive_char_result_zocl
+_alter_action_point_zocl	1	ok	WorldServer/Entities/alter_action_point_zocl.h	6	struct	1	0	struct _alter_action_point_zocl
+_alter_cont_effect_time_zocl	1	ok	WorldServer/Entities/alter_cont_effect_time_zocl.h	6	struct	1	0	struct _alter_cont_effect_time_zocl
+_alter_item_dur_zocl	1	no_match_in_entities						
+_alter_item_slot_request_clzo::__list	1	no_match_in_entities						
+_alter_money_inform_zocl	1	no_match_in_entities						
+_alter_pvp_cash_zocl	1	no_match_in_entities						
+_alter_ranking_inform_zocl	1	no_match_in_entities						
+_alter_unit_bullet_inform_zocl	1	no_match_in_entities						
+_alter_unit_hp_inform_zocl	1	no_match_in_entities						
+_animus_act_heal_inform_zocl	1	no_match_in_entities						
+_animus_create_zocl	1	no_match_in_entities						
+_animus_destroy_zocl	1	no_match_in_entities						
+_animus_download_result_zocl::_list	1	no_match_in_entities						
+_animus_exp_inform_zocl	1	no_match_in_entities						
+_animus_fixpositon_zocl	1	no_match_in_entities						
+_animus_lvup_inform_zocl	1	no_match_in_entities						
+_animus_move_zocl	1	no_match_in_entities						
+_animus_real_move_zocl	1	no_match_in_entities						
+_animus_recall_result_zocl	1	no_match_in_entities						
+_animus_return_result_zocl	1	no_match_in_entities						
+_animus_target_request_clzo	1	no_match_in_entities						
+_announ_message_receipt_udp	1	missing_pack_scope	WorldServer/Entities/announ_message_receipt_udp.h	5	struct		0	struct __unaligned __declspec(align(2)) _announ_message_receipt_udp
+_apex_block_request_wrac	1	no_match_in_entities						
+_apex_send_ip	1	no_match_in_entities						
+_atrade_taxrate_result_zocl	1	ok	WorldServer/Entities/atrade_taxrate_result_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(2)) _atrade_taxrate_result_zocl
+_attack_force_request_clzo	1	no_match_in_entities						
+_attack_force_result_zocl	1	ok	WorldServer/Entities/attack_force_result_zocl.h	7	struct	1	0	struct _attack_force_result_zocl
+_attack_gen_request_clzo	1	no_match_in_entities						
+_attack_gen_result_zocl	1	ok	WorldServer/Entities/attack_gen_result_zocl.h	6	struct	1	0	struct _attack_gen_result_zocl
+_attack_gen_result_zocl::_dam_list	1	no_match_in_entities						
+_attack_keeper_inform_zocl	1	no_match_in_entities						
+_attack_selfdestruction_result_zocl	1	ok	WorldServer/Entities/attack_selfdestruction_result_zocl.h	7	struct	1	0	struct _attack_selfdestruction_result_zocl
+_attack_siege_request_clzo	1	no_match_in_entities						
+_attack_siege_result_zocl	1	ok	WorldServer/Entities/attack_siege_result_zocl.h	7	struct	1	0	struct _attack_siege_result_zocl
+_attack_skill_request_clzo	1	no_match_in_entities						
+_attack_skill_result_zocl	1	ok	WorldServer/Entities/attack_skill_result_zocl.h	7	struct	1	0	struct _attack_skill_result_zocl
+_attack_test_request_clzo	1	no_match_in_entities						
+_attack_test_result_zocl	1	no_match_in_entities						
+_attack_tower_inform_zocl	1	no_match_in_entities						
+_attack_trap_inform_zocl	1	no_match_in_entities						
+_attack_unit_request_clzo	1	no_match_in_entities						
+_attack_unit_result_zocl	1	ok	WorldServer/Entities/attack_unit_result_zocl.h	7	struct	1	0	struct _attack_unit_result_zocl
+_back_tower_result_zocl	1	no_match_in_entities						
+_back_trap_request_clzo	1	no_match_in_entities						
+_base_download_result_zocl	1	ok	WorldServer/Entities/base_download_result_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(2)) _base_download_result_zocl
+_base_download_result_zocl::_list_embellish	1	no_match_in_entities						
+_base_download_result_zocl::_list_equip	1	no_match_in_entities						
+_billing_alive_request_zobi	1	no_match_in_entities						
+_billing_expire_inform_zocl	1	no_match_in_entities						
+_billing_login_request_zobi	1	no_match_in_entities						
+_boss_sms_cancel_result_zocl	1	no_match_in_entities						
+_break_stop_result_zocl	1	no_match_in_entities						
+_breakdown_equip_item_zocl	1	no_match_in_entities						
+_buddy_add_answer_clzo	1	no_match_in_entities						
+_buddy_add_ask_zocl	1	no_match_in_entities						
+_buddy_add_request_clzo	1	no_match_in_entities						
+_buddy_add_result_zocl	1	no_match_in_entities						
+_buddy_del_result_clzo	1	no_match_in_entities						
+_buddy_in_reged_player_inform_zocl	1	no_match_in_entities						
+_buddy_pos_inform_zocl	1	no_match_in_entities						
+_buddy_renewal_zocl	1	no_match_in_entities						
+_buy_store_failure_zocl	1	ok	WorldServer/Entities/buy_store_failure_zocl.h	6	struct	1	0	struct _buy_store_failure_zocl
+_buy_store_request_clzo	1	ok	WorldServer/Entities/buy_store_request_clzo.h	6	struct	1	0	struct _buy_store_request_clzo
+_buy_store_request_clzo::_list	1	no_match_in_entities						
+_buy_store_success_zocl	1	ok	WorldServer/Entities/buy_store_success_zocl.h	6	struct	1	0	struct _buy_store_success_zocl
+_buy_store_success_zocl::_list	1	no_match_in_entities						
+_cancel_raceboss_msg_request_ctzo	1	no_match_in_entities						
+_cancel_raceboss_msg_request_zowb	1	no_match_in_entities						
+_cancel_raceboss_msg_result_zoct	1	missing_pack_scope	WorldServer/Entities/cancel_raceboss_msg_result_zoct.h	5	struct		0	struct __unaligned __declspec(align(2)) _cancel_raceboss_msg_result_zoct
+_cash_discount_event_inform_zocl	1	no_match_in_entities						
+_cash_event_inform_zocl::__lim_sale::__Item	1	no_match_in_entities						
+_cast_vote_request_clzo	1	no_match_in_entities						
+_cast_vote_result_zocl	1	no_match_in_entities						
+_change_billing_type_inform_zocl	1	no_match_in_entities						
+_change_class_other_zocl	1	no_match_in_entities						
+_change_type_request_bizo	1	no_match_in_entities						
+_character_db_load	1	ok	WorldServer/Entities/CPlayer.h	175	struct	1	0	struct __cppobj __unaligned __declspec(align(2)) _character_db_load
+_character_disconnect_request_acwr	1	no_match_in_entities						
+_character_disconnect_result_wrac	1	ok	WorldServer/Entities/character_disconnect_result_wrac.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _character_disconnect_result_wrac
+_chat_guild_request_clzo	1	no_match_in_entities						
+_chat_message_receipt_udp	1	missing_pack_scope	WorldServer/Entities/chat_message_receipt_udp.h	5	struct		0	struct __unaligned __declspec(align(2)) _chat_message_receipt_udp
+_chat_steal_message_gm_zocl	1	ok	WorldServer/Entities/chat_steal_message_gm_zocl.h	6	struct	1	0	struct __cppobj __unaligned __declspec(align(2)) _chat_steal_message_gm_zocl
+_check_is_block_ip_result_acwr	1	no_match_in_entities						
+_circle_zone_fix_position_zocl	1	no_match_in_entities						
+_class_skill_recall_teleport_request_clzo	1	no_match_in_entities						
+_class_skill_result_other_zocl	1	no_match_in_entities						
+_combine_ex_item_accept_request_clzo	1	ok	WorldServer/Entities/combine_ex_item_accept_request_clzo.h	7	struct	1	0	struct __cppobj __unaligned __declspec(align(2)) _combine_ex_item_accept_request_clzo
+_combine_ex_item_accept_request_clzo	1	forward_decl_only	WorldServer/Entities/CPlayer.h	44	struct	1	1	struct _combine_ex_item_accept_request_clzo;
+_combine_ex_item_request_clzo	1	ok	WorldServer/Entities/combine_ex_item_request_clzo.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _combine_ex_item_request_clzo
+_combine_ex_item_request_clzo::_list	1	no_match_in_entities						
+_combine_ex_item_result_zocl	1	ok	WorldServer/Entities/combine_ex_item_result_zocl.h	7	struct	1	0	struct __cppobj _combine_ex_item_result_zocl
+_combine_ex_item_result_zocl	1	forward_decl_only	WorldServer/Entities/CPlayer.h	45	struct	1	1	struct _combine_ex_item_result_zocl;
+_combine_ex_item_result_zocl::_Result_ItemList_Buff	1	no_match_in_entities						
+_combine_item_request_clzo	1	ok	WorldServer/Entities/combine_item_request_clzo.h	7	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _combine_item_request_clzo
+_combine_item_result_zocl	1	no_match_in_entities						
+_combine_item_result_zocl::__item	1	no_match_in_entities						
+_combine_lend_item_result_zocl	1	ok	WorldServer/Entities/exchange_lend_item_result_zocl.h	6	struct	1	0	struct _combine_lend_item_result_zocl
+_combine_lend_item_result_zocl::_lend_item	1	no_match_in_entities						
+_complete_vote_inform_zocl	1	no_match_in_entities						
+_confirm_sms_infom_zoct	1	no_match_in_entities						
+_continue_tower_inform	1	no_match_in_entities						
+_count_succ_inform_zocl	1	no_match_in_entities						
+_create_circle_zone_stone_zocl	1	no_match_in_entities						
+_create_gravity_stone_zocl	1	no_match_in_entities						
+_cum_download_result_zocl	1	ok	WorldServer/Entities/cum_download_result_zocl.h	7	struct	1	0	struct __unaligned __declspec(align(2)) _cum_download_result_zocl
+_current_billing_type_inform_zocl	1	no_match_in_entities						
+_cutting_complete_result_zocl	1	no_match_in_entities						
+_d_trade_accomplish_inform_zocl	1	no_match_in_entities						
+_d_trade_add_inform_zocl	1	no_match_in_entities						
+_d_trade_add_request_clzo	1	no_match_in_entities						
+_d_trade_bet_inform_zocl	1	no_match_in_entities						
+_d_trade_bet_request_clzo	1	no_match_in_entities						
+_d_trade_start_inform_zocl	1	no_match_in_entities						
+_d_trade_unit_add_inform_zocl	1	no_match_in_entities						
+_d_trade_unit_info_inform_zocl	1	no_match_in_entities						
+_darkhole_answer_reenter_request_clzo	1	no_match_in_entities						
+_darkhole_ask_reenter_inform_zocl	1	ok	WorldServer/Entities/darkhole_ask_reenter_inform_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(2)) _darkhole_ask_reenter_inform_zocl
+_darkhole_clear_out_result_zocl	1	ok	WorldServer/Entities/darkhole_clear_out_result_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _darkhole_clear_out_result_zocl
+_darkhole_destroy_zocl	1	ok	WorldServer/Entities/darkhole_destroy_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(2)) _darkhole_destroy_zocl
+_darkhole_enter_request_clzo	1	no_match_in_entities						
+_darkhole_enter_result_zocl	1	ok	WorldServer/Entities/darkhole_enter_result_zocl.h	6	struct	1	0	struct _darkhole_enter_result_zocl
+_darkhole_giveup_out_result_zocl	1	ok	WorldServer/Entities/darkhole_giveup_out_result_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _darkhole_giveup_out_result_zocl
+_darkhole_job_count_inform_zocl	1	ok	WorldServer/Entities/darkhole_job_count_inform_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _darkhole_job_count_inform_zocl
+_darkhole_member_info_inform_zocl	1	ok	WorldServer/Entities/darkhole_member_info_inform_zocl.h	6	struct	1	0	struct __cppobj __unaligned __declspec(align(2)) _darkhole_member_info_inform_zocl
+_darkhole_member_info_inform_zocl::__list	1	no_match_in_entities						
+_darkhole_mission_info_inform_zocl	1	ok	WorldServer/Entities/darkhole_mission_info_inform_zocl.h	6	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _darkhole_mission_info_inform_zocl
+_darkhole_mission_info_inform_zocl::__job	1	no_match_in_entities						
+_darkhole_new_member_inform_zocl	1	ok	WorldServer/Entities/darkhole_new_member_inform_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(2)) _darkhole_new_member_inform_zocl
+_darkhole_new_mission_inform_zocl	1	ok	WorldServer/Entities/darkhole_new_mission_inform_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _darkhole_new_mission_inform_zocl
+_darkhole_open_result_zocl	1	ok	WorldServer/Entities/darkhole_open_result_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _darkhole_open_result_zocl
+_darkhole_outof_member_inform_zocl	1	ok	WorldServer/Entities/darkhole_outof_member_inform_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _darkhole_outof_member_inform_zocl
+_darkhole_quest_info_inform_zocl	1	ok	WorldServer/Entities/darkhole_quest_info_inform_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _darkhole_quest_info_inform_zocl
+_darkhole_real_add_time_inform_zocl	1	ok	WorldServer/Entities/darkhole_real_add_time_inform_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _darkhole_real_add_time_inform_zocl
+_darkhole_reward_message_inform_zocl	1	no_match_in_entities						
+_darkhole_state_change_zocl	1	ok	WorldServer/Entities/darkhole_state_change_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _darkhole_state_change_zocl
+_decide_recall_error_result_zocl	1	no_match_in_entities						
+_decide_recall_request_clzo	1	no_match_in_entities						
+_delete_storage_inform_zocl	1	no_match_in_entities						
+_destroy_gravity_stone_zocl	1	no_match_in_entities						
+_economy_data_inform_zowb	1	no_match_in_entities						
+_economy_rate_inform_zocl	1	no_match_in_entities						
+_editstream	1	no_match_in_entities						
+_effect_add_inform_zocl	1	no_match_in_entities						
+_effect_remove_inform_zocl	1	no_match_in_entities						
+_effect_start_inform_zocl	1	no_match_in_entities						
+_encorrecttext	4	no_match_in_entities						
+_enlink	1	no_match_in_entities						
+_enoleopfailed	1	no_match_in_entities						
+_enprotected	1	no_match_in_entities						
+_enter_world_request_wrac	1	ok	WorldServer/Entities/enter_world_request_wrac.h	7	struct	1	0	struct __unaligned __declspec(align(2)) _enter_world_request_wrac
+_enter_world_request_zone	1	ok	WorldServer/Entities/enter_world_request_zone.h	6	struct	1	0	struct __unaligned __declspec(align(2)) _enter_world_request_zone
+_exchange_money_result_zocl	1	no_match_in_entities						
+_extraBytes_101	1	no_match_in_entities						
+_extraBytes_102	1	no_match_in_entities						
+_extraBytes_123	1	no_match_in_entities						
+_extraBytes_13	1	no_match_in_entities						
+_extraBytes_14	1	no_match_in_entities						
+_extraBytes_143	1	no_match_in_entities						
+_extraBytes_147	1	no_match_in_entities						
+_extraBytes_148	1	no_match_in_entities						
+_extraBytes_15	1	no_match_in_entities						
+_extraBytes_150	1	no_match_in_entities						
+_extraBytes_16	1	no_match_in_entities						
+_extraBytes_17	1	no_match_in_entities						
+_extraBytes_177	1	no_match_in_entities						
+_extraBytes_18	1	no_match_in_entities						
+_extraBytes_185	1	no_match_in_entities						
+_extraBytes_19	1	no_match_in_entities						
+_extraBytes_20	1	no_match_in_entities						
+_extraBytes_21	1	no_match_in_entities						
+_extraBytes_22	1	no_match_in_entities						
+_extraBytes_23	1	no_match_in_entities						
+_extraBytes_24	1	no_match_in_entities						
+_extraBytes_25	1	no_match_in_entities						
+_extraBytes_26	1	no_match_in_entities						
+_extraBytes_27	1	no_match_in_entities						
+_extraBytes_28	1	no_match_in_entities						
+_extraBytes_29	1	no_match_in_entities						
+_extraBytes_30	1	no_match_in_entities						
+_extraBytes_31	1	no_match_in_entities						
+_extraBytes_32	1	no_match_in_entities						
+_extraBytes_34	1	no_match_in_entities						
+_extraBytes_35	1	no_match_in_entities						
+_extraBytes_353	1	no_match_in_entities						
+_extraBytes_36	1	no_match_in_entities						
+_extraBytes_363	1	no_match_in_entities						
+_extraBytes_386	1	no_match_in_entities						
+_extraBytes_39	1	no_match_in_entities						
+_extraBytes_41	1	no_match_in_entities						
+_extraBytes_42	1	no_match_in_entities						
+_extraBytes_428	1	no_match_in_entities						
+_extraBytes_434	1	no_match_in_entities						
+_extraBytes_44	1	no_match_in_entities						
+_extraBytes_45	1	no_match_in_entities						
+_extraBytes_46	1	no_match_in_entities						
+_extraBytes_47	1	no_match_in_entities						
+_extraBytes_49	1	no_match_in_entities						
+_extraBytes_50	1	no_match_in_entities						
+_extraBytes_51	1	no_match_in_entities						
+_extraBytes_519	1	no_match_in_entities						
+_extraBytes_53	1	no_match_in_entities						
+_extraBytes_538	1	no_match_in_entities						
+_extraBytes_55	1	no_match_in_entities						
+_extraBytes_57	1	no_match_in_entities						
+_extraBytes_58	1	no_match_in_entities						
+_extraBytes_61	1	no_match_in_entities						
+_extraBytes_62	1	no_match_in_entities						
+_extraBytes_63	1	no_match_in_entities						
+_extraBytes_66	1	no_match_in_entities						
+_extraBytes_75	1	no_match_in_entities						
+_extraBytes_81	1	no_match_in_entities						
+_extraBytes_87	1	no_match_in_entities						
+_extraBytes_89	1	no_match_in_entities						
+_extraBytes_92	1	no_match_in_entities						
+_extraBytes_95	1	no_match_in_entities						
+_fcitem_inform_zocl	1	no_match_in_entities						
+_fireguard_block_request_wrac	1	no_match_in_entities						
+_fireguard_divide_block_request_wrac	1	no_match_in_entities						
+_force_download_result_zocl::_list	1	no_match_in_entities						
+_force_recall_teleport_request_clzo	1	no_match_in_entities						
+_force_result_one_zocl	1	no_match_in_entities						
+_gesture_inform_zocl	1	no_match_in_entities						
+_gettextex	1	no_match_in_entities						
+_gm_msg_gmcall_list_response_zocl	1	ok	WorldServer/Entities/gm_msg_gmcall_list_response_zocl.h	6	struct	1	0	struct _gm_msg_gmcall_list_response_zocl
+_gm_msg_gmcall_list_response_zocl::_call_node	1	no_match_in_entities						
+_goto_avator_result_zocl	1	no_match_in_entities						
+_gravity_stone_fix_position_zocl	1	no_match_in_entities						
+_gravity_stone_regener_fix_position_zocl	1	no_match_in_entities						
+_gravity_stone_regener_inform_zocl	1	no_match_in_entities						
+_guild_add_join_applier_inform_zocl	1	no_match_in_entities						
+_guild_alter_member_grade_inform_zocl::__list	1	no_match_in_entities						
+_guild_alter_member_state_inform_zocl::__list	1	no_match_in_entities						
+_guild_atrade_tax_zocl	1	no_match_in_entities						
+_guild_battle_complete_msg_zowb	1	no_match_in_entities						
+_guild_battle_current_battle_info_result_zocl	1	forward_decl_only	WorldServer/Entities/GuildBattle.h	21	struct		1	struct _guild_battle_current_battle_info_result_zocl;
+_guild_battle_current_battle_info_result_zocl	1	ok	WorldServer/Entities/GuildBattleTypes.h	151	struct	1	0	struct _guild_battle_current_battle_info_result_zocl
+_guild_battle_fin_pvppoint_result_zocl	1	no_match_in_entities						
+_guild_battle_get_gravity_stone_request_clzo	1	no_match_in_entities						
+_guild_battle_get_gravity_stone_result_zocl	1	ok	WorldServer/Entities/guild_battle_get_gravity_stone_result_zocl.h	6	struct	1	0	struct _guild_battle_get_gravity_stone_result_zocl
+_guild_battle_goal_result_zocl	1	ok	WorldServer/Entities/guild_battle_goal_result_zocl.h	6	struct	1	0	struct _guild_battle_goal_result_zocl
+_guild_battle_notify_ball_position_zocl	1	no_match_in_entities						
+_guild_battle_notify_committee_member_position_zocl	1	no_match_in_entities						
+_guild_battle_notify_gravity_stone_owner_die_zocl	1	no_match_in_entities						
+_guild_battle_pvp_inform_zocl	1	no_match_in_entities						
+_guild_battle_rank_list_request_clzo	1	no_match_in_entities						
+_guild_battle_rank_list_result_no_data_zocl	1	no_match_in_entities						
+_guild_battle_rank_list_result_zocl	1	forward_decl_only	WorldServer/Entities/GuildBattle.h	19	struct		1	struct _guild_battle_rank_list_result_zocl;
+_guild_battle_rank_list_result_zocl	1	ok	WorldServer/Entities/GuildBattleTypes.h	107	struct	1	0	struct _guild_battle_rank_list_result_zocl
+_guild_battle_rank_list_result_zocl::__list	1	no_match_in_entities						
+_guild_battle_reserve_msg_zowb	1	no_match_in_entities						
+_guild_battle_reserved_schedule_request_clzo	1	no_match_in_entities						
+_guild_battle_reserved_schedule_result_zocl	1	forward_decl_only	WorldServer/Entities/GuildBattle.h	20	struct		1	struct _guild_battle_reserved_schedule_result_zocl;
+_guild_battle_reserved_schedule_result_zocl	1	ok	WorldServer/Entities/GuildBattleTypes.h	122	struct	1	0	struct _guild_battle_reserved_schedule_result_zocl
+_guild_battle_restart_zocl	1	no_match_in_entities						
+_guild_battle_start_zocl	1	no_match_in_entities						
+_guild_del_join_applier_inform_zocl	1	no_match_in_entities						
+_guild_honor_list_result_zocl::__list	1	no_match_in_entities						
+_guild_honorguild_mark_zocl	1	no_match_in_entities						
+_guild_info_update_inform_zocl	1	no_match_in_entities						
+_guild_io_money_inform_zocl	1	no_match_in_entities						
+_guild_join_accept_fail_zocl	1	no_match_in_entities						
+_guild_join_accept_inform_zocl	1	no_match_in_entities						
+_guild_join_accept_request_clzo	1	no_match_in_entities						
+_guild_join_apply_result_zocl	1	no_match_in_entities						
+_guild_join_other_inform_zocl	1	no_match_in_entities						
+_guild_leave_inform_zocl	1	no_match_in_entities						
+_guild_manage_request_clzo	1	ok	WorldServer/Entities/guild_manage_request_clzo.h	6	struct	1	0	struct _guild_manage_request_clzo
+_guild_member_download_zocl	1	forward_decl_only	WorldServer/Entities/CMainThread.h	135	struct	1	1	struct _guild_member_download_zocl;
+_guild_member_download_zocl	1	ok	WorldServer/Entities/CMainThread.h	2569	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _guild_member_download_zocl
+_guild_member_download_zocl	1	forward_decl_only	WorldServer/Entities/CPlayer.h	160	struct	1	1	struct _guild_member_download_zocl;
+_guild_member_login_inform_zocl	1	no_match_in_entities						
+_guild_member_pos_inform_zocl	1	no_match_in_entities						
+_guild_offer_suggest_request_clzo	1	no_match_in_entities						
+_guild_push_money_result_zocl	1	no_match_in_entities						
+_guild_query_info_result_zocl	1	forward_decl_only	WorldServer/Entities/CMainThread.h	137	struct	1	1	struct _guild_query_info_result_zocl;
+_guild_query_info_result_zocl	1	ok	WorldServer/Entities/CMainThread.h	2597	struct	1	0	struct __unaligned __declspec(align(1)) _guild_query_info_result_zocl
+_guild_query_info_result_zocl	1	forward_decl_only	WorldServer/Entities/CPlayer.h	162	struct	1	1	struct _guild_query_info_result_zocl;
+_guild_vote_complete_zocl	1	no_match_in_entities						
+_guild_vote_process_inform_zocl	1	ok	WorldServer/Entities/guild_vote_process_inform_zocl.h	6	struct	1	0	struct __cppobj _guild_vote_process_inform_zocl
+_guild_vote_request_clzo	1	no_match_in_entities						
+_guild_vote_result_zocl	1	no_match_in_entities						
+_guildroom_enter_result_zocl	1	no_match_in_entities						
+_guildroom_rent_request_clzo	1	forward_decl_only	WorldServer/Entities/CPlayer.h	50	struct	1	1	struct _guildroom_rent_request_clzo;
+_guildroom_rent_request_clzo	1	ok	WorldServer/Entities/guildroom_rent_request_clzo.h	6	struct	1	0	struct _guildroom_rent_request_clzo
+_holy_complete_quest_inform_zowb	1	no_match_in_entities						
+_holy_keeper_attackable_inform_zocl	1	ok	WorldServer/Entities/holy_keeper_attackable_inform_zocl.h	6	struct	1	0	struct _holy_keeper_attackable_inform_zocl
+_holy_keeper_change_chaos_inform	1	no_match_in_entities						
+_holy_minetime_extend_inform_zowb	1	no_match_in_entities						
+_holystone_alter_oper_circle_inform_zocl	1	no_match_in_entities						
+_insert_item_inform_zocl	1	no_match_in_entities						
+_insert_quest_failure_zocl	1	no_match_in_entities						
+_insert_quest_item_inform_zocl	1	no_match_in_entities						
+_insert_trc_info	1	ok	WorldServer/Entities/insert_trc_info.h	6	struct	1	0	struct _insert_trc_info
+_inven_download_result_zocl::_list	1	no_match_in_entities						
+_item_fanfare_zocl	1	ok	WorldServer/Entities/item_fanfare_zocl.h	6	struct	1	0	struct _item_fanfare_zocl
+_itembox_create_zocl	1	no_match_in_entities						
+_itembox_fixpositon_zocl	1	no_match_in_entities						
+_itembox_state_change_zocl	1	no_match_in_entities						
+_itembox_take_add_result_zocl	1	ok	WorldServer/Entities/itembox_take_add_result_zocl.h	6	struct	1	0	struct _itembox_take_add_result_zocl
+_itembox_take_new_result_zocl	1	ok	WorldServer/Entities/itembox_take_new_result_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _itembox_take_new_result_zocl
+_keeper_create_zocl	1	no_match_in_entities						
+_keeper_destroy_zocl	1	no_match_in_entities						
+_keeper_enter_inform_zocl	1	no_match_in_entities						
+_keeper_fixpositon_zocl	1	no_match_in_entities						
+_keeper_move_zocl	1	no_match_in_entities						
+_keeper_real_move_zocl	1	no_match_in_entities						
+_last_attacker_for_the_keeper_inform_zowb	1	no_match_in_entities						
+_last_effect_change_inform_zocl	1	no_match_in_entities						
+_lend_item_time_expired_zocl	1	no_match_in_entities						
+_level_up_zocl	1	no_match_in_entities						
+_limit_item_num_info_zocl	1	ok	WorldServer/Entities/limit_item_num_info_zocl.h	6	struct	1	0	struct _limit_item_num_info_zocl
+_limit_item_num_info_zocl::_limit_item_info	1	no_match_in_entities						
+_limitedsale_event_inform_zocl	1	ok	WorldServer/Entities/limitedsale_event_inform_zocl.h	6	struct	1	0	struct _limitedsale_event_inform_zocl
+_linkboard_download_result_zocl	1	no_match_in_entities						
+_make_item_request_clzo	1	ok	WorldServer/Entities/make_item_request_clzo.h	7	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _make_item_request_clzo
+_make_tower_request_clzo	1	ok	WorldServer/Entities/make_tower_request_clzo.h	6	struct	1	0	struct _make_tower_request_clzo
+_make_tower_result_zocl	1	no_match_in_entities						
+_make_trap_result_zocl	1	no_match_in_entities						
+_map_env_code_inform_zocl	1	no_match_in_entities						
+_mine_complete_result_zocl	1	no_match_in_entities						
+_money_supply_gatering_inform_zowb	1	no_match_in_entities						
+_monster_change_rotate_zocl	1	no_match_in_entities						
+_monster_change_state_zocl	1	no_match_in_entities						
+_monster_create_zocl	1	no_match_in_entities						
+_monster_destroy_zocl	1	no_match_in_entities						
+_monster_fixpositon_zocl	1	no_match_in_entities						
+_monster_move_zocl	1	no_match_in_entities						
+_monster_present_emotion_zocl	1	no_match_in_entities						
+_monster_real_move_zocl	1	no_match_in_entities						
+_monster_sp_group	1	forward_decl_only	WorldServer/Entities/CMainThread.h	40	struct	1	1	struct _monster_sp_group;
+_move_error_result_zocl	1	no_match_in_entities						
+_move_potal_request_clzo	1	no_match_in_entities						
+_move_potal_result_zocl	1	no_match_in_entities						
+_move_request_clzo	1	no_match_in_entities						
+_moveout_user_result_zone	1	missing_pack_scope	WorldServer/Entities/moveout_user_result_zone.h	5	struct		0	struct __unaligned __declspec(align(1)) _moveout_user_result_zone
+_msgfilter	1	no_match_in_entities						
+_notice_is_arrive_master	1	no_match_in_entities						
+_notice_next_quest_inform_zocl	1	no_match_in_entities						
+_notify_effect_for_get_gold_box_item_zocl	1	no_match_in_entities						
+_notify_gold_box_event_status_zocl	1	no_match_in_entities						
+_notify_local_time_result_zocl	1	ok	WorldServer/Entities/notify_local_time_result_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _notify_local_time_result_zocl
+_notify_player_time_limit_Info_zocl	1	no_match_in_entities						
+_notify_race_battle_penelty_zocl	1	no_match_in_entities						
+_notify_race_boss_winrate_zocl	1	ok	WorldServer/Entities/notify_race_boss_winrate_zocl.h	7	struct	1	0	struct __unaligned __declspec(align(2)) _notify_race_boss_winrate_zocl
+_notify_recall_request_zocl	1	no_match_in_entities						
+_notify_set_race_buff_by_holy_quest_zocl	1	no_match_in_entities						
+_notify_unmanned_trader_weekly_daily_income_zocl	1	no_match_in_entities						
+_notify_update_player_time_limit_Info_zocl	1	no_match_in_entities						
+_npc_create_zocl	1	no_match_in_entities						
+_npc_destroy_zocl	1	no_match_in_entities						
+_npc_move_zocl	1	no_match_in_entities						
+_npc_quest_list_result_zocl	1	no_match_in_entities						
+_nuclear_bomb_current_state_zocl::__nuclear	1	no_match_in_entities						
+_nuclear_bomb_drop_result_zocl	1	no_match_in_entities						
+_nuclear_bomb_position_inform_zocl	1	no_match_in_entities						
+_nuclear_position_result_zocl	1	ok	WorldServer/Entities/nuclear_position_result_zocl.h	6	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _nuclear_position_result_zocl
+_object_server_pos_result_zocl	1	no_match_in_entities						
+_objectpositions	1	no_match_in_entities						
+_open_control_inform_acwr	1	no_match_in_entities						
+_open_return_gate_inform_zocl	1	no_match_in_entities						
+_open_world_request_wrac	1	ok	WorldServer/Entities/wrac_packets.h	7	struct	1	0	struct _open_world_request_wrac
+_ore_cutting_request_clzo	1	no_match_in_entities						
+_ore_cutting_result_zocl	1	no_match_in_entities						
+_ore_cutting_result_zocl::_list	1	no_match_in_entities						
+_ore_into_bag_request_clzo	1	no_match_in_entities						
+_ore_into_bag_result_zocl	1	no_match_in_entities						
+_other_map_out_zocl	1	no_match_in_entities						
+_other_new_view_zocl	1	no_match_in_entities						
+_other_shape_all_zocl	1	ok	WorldServer/Entities/CPlayer.h	1006	struct	1	0	struct __cppobj _other_shape_all_zocl
+_other_shape_all_zocl::_model	1	no_match_in_entities						
+_other_shape_cash_rename_zocl	1	no_match_in_entities						
+_other_shape_change_zocl	1	no_match_in_entities						
+_other_shape_change_zocl::_model	1	no_match_in_entities						
+_other_shape_failure_zocl	1	no_match_in_entities						
+_other_shape_part_zocl	1	ok	WorldServer/Entities/CPlayer.h	1036	struct	1	0	struct __cppobj __unaligned __declspec(align(2)) _other_shape_part_zocl
+_other_shape_part_zocl::_model	1	no_match_in_entities						
+_other_unit_ride_change_zocl	1	no_match_in_entities						
+_parkingunit_change_owner_zocl	1	no_match_in_entities						
+_parkingunit_create_zocl	1	no_match_in_entities						
+_parkingunit_destroy_zocl	1	no_match_in_entities						
+_parkingunit_fixpositon_zocl	1	no_match_in_entities						
+_party_join_joiner_result_zocl::_list	1	no_match_in_entities						
+_party_leave_self_result_zocl	1	no_match_in_entities						
+_party_member_effect_upd	1	no_match_in_entities						
+_party_member_fp_upd	1	no_match_in_entities						
+_party_member_hp_upd	1	no_match_in_entities						
+_party_member_info_upd	1	no_match_in_entities						
+_party_member_info_upd::_EFFECT	1	no_match_in_entities						
+_party_member_lv_upd	1	no_match_in_entities						
+_party_member_max_hfsp_upd	1	no_match_in_entities						
+_party_member_pos_upd	1	no_match_in_entities						
+_party_member_sp_upd	1	no_match_in_entities						
+_pc_room_reward_info_clzo	1	no_match_in_entities						
+_personal_amine_fixpos_zocl	1	ok	WorldServer/Entities/personal_amine_fixpos_zocl.h	6	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _personal_amine_fixpos_zocl
+_personal_amine_mineore_zocl	1	ok	WorldServer/Entities/CMainThread.h	1854	struct	1	0	struct __cppobj __unaligned __declspec(align(2)) _personal_amine_mineore_zocl
+_personal_amine_mineore_zocl::__changed	1	no_match_in_entities						
+_personal_automine_alter_dur_zocl	1	ok	WorldServer/Entities/personal_automine_alter_dur_zocl.h	6	struct	1	0	struct __cppobj __unaligned __declspec(align(2)) _personal_automine_alter_dur_zocl
+_personal_automine_battery_extract_clzo	1	no_match_in_entities						
+_personal_automine_battery_extract_zocl	1	ok	WorldServer/Entities/personal_automine_battery_extract_zocl.h	6	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _personal_automine_battery_extract_zocl
+_personal_automine_battery_insert_clzo	1	no_match_in_entities						
+_personal_automine_battery_insert_zocl	1	ok	WorldServer/Entities/personal_automine_battery_insert_zocl.h	6	struct	1	0	struct __cppobj __unaligned __declspec(align(2)) _personal_automine_battery_insert_zocl
+_personal_automine_current_state_zocl	1	ok	WorldServer/Entities/CMainThread.h	1903	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _personal_automine_current_state_zocl
+_personal_automine_delbattery_zocl	1	ok	WorldServer/Entities/personal_automine_delbattery_zocl.h	6	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _personal_automine_delbattery_zocl
+_personal_automine_download_zocl::__list	1	no_match_in_entities						
+_personal_automine_install_clzo	1	no_match_in_entities						
+_personal_automine_install_zocl	1	ok	WorldServer/Entities/personal_automine_install_zocl.h	6	struct	1	0	struct _personal_automine_install_zocl
+_personal_automine_popore_clzo	1	no_match_in_entities						
+_personal_automine_popore_zocl	1	ok	WorldServer/Entities/personal_automine_popore_zocl.h	6	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _personal_automine_popore_zocl
+_personal_automine_selore_clzo	1	no_match_in_entities						
+_personal_automine_selore_zocl	1	ok	WorldServer/Entities/personal_automine_selore_zocl.h	6	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _personal_automine_selore_zocl
+_personal_automine_stop_zocl	1	ok	WorldServer/Entities/personal_automine_stop_zocl.h	6	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _personal_automine_stop_zocl
+_personal_automine_uninstall_circle_zocl	1	ok	WorldServer/Entities/CMainThread.h	1893	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _personal_automine_uninstall_circle_zocl
+_personal_automine_uninstall_clzo	1	no_match_in_entities						
+_personal_automine_uninstall_zocl	1	ok	WorldServer/Entities/CMainThread.h	1873	struct	1	0	struct __unaligned __declspec(align(2)) _personal_automine_uninstall_zocl
+_personal_automine_uninstall_zocl::__battery	1	no_match_in_entities						
+_player_destroy_zocl	1	no_match_in_entities						
+_player_die_zocl	1	no_match_in_entities						
+_player_fixpositon_zocl	1	no_match_in_entities						
+_player_macro_result_zocl	1	ok	WorldServer/Entities/player_macro_result_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(2)) _player_macro_result_zocl
+_player_macro_update_request_clzo	1	no_match_in_entities						
+_player_move_zocl	1	no_match_in_entities						
+_player_real_move_zocl	1	no_match_in_entities						
+_player_resurrect_zocl	1	no_match_in_entities						
+_player_revival_zocl	1	no_match_in_entities						
+_player_stop_zocl	1	no_match_in_entities						
+_possible_battle_guild_list_request_clzo	1	no_match_in_entities						
+_possible_battle_guild_list_result_zocl	1	forward_decl_only	WorldServer/Entities/GuildBattle.h	18	struct		1	struct _possible_battle_guild_list_result_zocl;
+_possible_battle_guild_list_result_zocl	1	ok	WorldServer/Entities/GuildBattleTypes.h	70	struct	1	0	struct _possible_battle_guild_list_result_zocl
+_possible_battle_guild_list_result_zocl::__list	1	no_match_in_entities						
+_post_content_result_zocl	1	ok	WorldServer/Entities/post_content_result_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _post_content_result_zocl
+_post_content_result_zocl::_post_item	1	no_match_in_entities						
+_post_delete_reply_zocl	1	no_match_in_entities						
+_post_recv_delivery_zocl	1	ok	WorldServer/Entities/post_recv_delivery_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(2)) _post_recv_delivery_zocl
+_post_request_clzo	1	no_match_in_entities						
+_post_result_zocl	1	ok	WorldServer/Entities/post_result_zocl.h	6	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _post_result_zocl
+_post_return_confirm_result_zocl	1	no_match_in_entities						
+_post_return_zocl	1	ok	WorldServer/Entities/post_return_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _post_return_zocl
+_post_return_zocl::_post_item	1	no_match_in_entities						
+_potionsocket_division_request_clzo	1	no_match_in_entities						
+_potionsocket_division_result_zocl	1	no_match_in_entities						
+_potionsocket_separation_request_clzo	1	no_match_in_entities						
+_potionsocket_separation_result_zocl	1	no_match_in_entities						
+_progress_vote_inform_zocl	1	no_match_in_entities						
+_propose_vote_request_clzo	1	no_match_in_entities						
+_pt_appoint_inform_request_zocl::__body	1	no_match_in_entities						
+_pt_automine_getoutore_clzo	1	no_match_in_entities						
+_pt_automine_getoutore_zocl	1	ok	WorldServer/Entities/pt_automine_getoutore_zocl.h	6	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _pt_automine_getoutore_zocl
+_pt_automine_merge_clzo	1	no_match_in_entities						
+_pt_automine_state_zocl	1	ok	WorldServer/Entities/pt_automine_state_zocl.h	7	struct	1	0	struct __cppobj __unaligned __declspec(align(2)) _pt_automine_state_zocl
+_pt_inform_commission_income_zocl	1	ok	WorldServer/Entities/pt_inform_commission_income_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _pt_inform_commission_income_zocl
+_pt_inform_punishment_zocl	1	ok	WorldServer/Entities/pt_inform_punishment_zocl.h	6	struct	1	0	struct _pt_inform_punishment_zocl
+_pt_request_punishment_clzo	1	no_match_in_entities						
+_pt_result_appoint_zocl	1	ok	WorldServer/Entities/pt_result_appoint_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _pt_result_appoint_zocl
+_pt_result_fcandidacy_list_zocl::__candi_info	1	no_match_in_entities						
+_pt_trans_votepaper_zocl::__body	1	no_match_in_entities						
+_punctuation	1	no_match_in_entities						
+_pvp_cash_point_recorver_request_clzo	1	no_match_in_entities						
+_pvp_cash_point_recover_result_zocl	1	no_match_in_entities						
+_pvp_cash_recover_itemlist_result_zocl	1	ok	WorldServer/Entities/pvp_cash_recover_itemlist_result_zocl.h	6	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _pvp_cash_recover_itemlist_result_zocl
+_pvp_order_view_point_inform_zocl	1	no_match_in_entities						
+_pvp_rank_list_result_data_zocl	1	ok	WorldServer/Entities/pvp_rank_list_result_data_zocl.h	6	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _pvp_rank_list_result_data_zocl
+_qry_case_amine_battery_discharge	1	forward_decl_only	WorldServer/Entities/AutoMineMachineMng.h	17	struct		1	struct _qry_case_amine_battery_discharge;
+_qry_case_amine_battery_discharge	1	missing_pack_scope	WorldServer/Entities/qry_case_amine_battery_discharge.h	5	struct		0	struct __cppobj __unaligned __declspec(align(1)) _qry_case_amine_battery_discharge
+_qry_case_amine_batterycharge	1	forward_decl_only	WorldServer/Entities/AutoMineMachineMng.h	13	struct		1	struct _qry_case_amine_batterycharge;
+_qry_case_amine_batterycharge	1	missing_pack_scope	WorldServer/Entities/qry_case_amine_batterycharge.h	7	struct		0	struct __cppobj __unaligned __declspec(align(2)) _qry_case_amine_batterycharge
+_qry_case_amine_mineore	1	forward_decl_only	WorldServer/Entities/AutoMineMachineMng.h	14	struct		1	struct _qry_case_amine_mineore;
+_qry_case_amine_mineore	1	missing_pack_scope	WorldServer/Entities/qry_case_amine_mineore.h	5	struct		0	struct __cppobj __unaligned __declspec(align(1)) _qry_case_amine_mineore
+_qry_case_amine_moveore	1	forward_decl_only	WorldServer/Entities/AutoMineMachineMng.h	18	struct		1	struct _qry_case_amine_moveore;
+_qry_case_amine_moveore	1	missing_pack_scope	WorldServer/Entities/qry_case_amine_moveore.h	5	struct		0	struct __cppobj __unaligned __declspec(align(1)) _qry_case_amine_moveore
+_qry_case_amine_newowner	1	forward_decl_only	WorldServer/Entities/AutoMineMachineMng.h	12	struct		1	struct _qry_case_amine_newowner;
+_qry_case_amine_newowner	1	missing_pack_scope	WorldServer/Entities/qry_case_amine_newowner.h	5	struct		0	struct __cppobj __unaligned __declspec(align(1)) _qry_case_amine_newowner
+_qry_case_amine_selore	1	forward_decl_only	WorldServer/Entities/AutoMineMachineMng.h	16	struct		1	struct _qry_case_amine_selore;
+_qry_case_amine_selore	1	missing_pack_scope	WorldServer/Entities/qry_case_amine_selore.h	5	struct		0	struct __cppobj _qry_case_amine_selore
+_qry_case_amine_workstate	1	forward_decl_only	WorldServer/Entities/AutoMineMachineMng.h	15	struct		1	struct _qry_case_amine_workstate;
+_qry_case_amine_workstate	1	missing_pack_scope	WorldServer/Entities/qry_case_amine_workstate.h	5	struct		0	struct __cppobj _qry_case_amine_workstate
+_quest_return_item_after_quest_zocl	1	no_match_in_entities						
+_raceboss_msg_confirm_zowb	1	missing_pack_scope	WorldServer/Entities/raceboss_msg_confirm_zowb.h	5	struct		0	struct __unaligned __declspec(align(1)) _raceboss_msg_confirm_zowb
+_racebosssms_fromweb_send_error_result_zowb	1	missing_pack_scope	WorldServer/Entities/racebosssms_fromweb_send_error_result_zowb.h	5	struct		0	struct __unaligned __declspec(align(1)) _racebosssms_fromweb_send_error_result_zowb
+_radar_char_list_result_zocl::_char_info	1	no_match_in_entities						
+_recv_hsk_quest_inform_zocl	1	no_match_in_entities						
+_refresh_group_target_position_zocl	1	no_match_in_entities						
+_reged_char_result_zone	1	missing_pack_scope	WorldServer/Entities/reged_char_result_zone.h	7	struct		0	struct __cppobj __unaligned __declspec(align(1)) _reged_char_result_zone
+_release_siege_mode_other_inform_zocl	1	no_match_in_entities						
+_remaintime_inform_zocl	1	no_match_in_entities						
+_remaintime_pcbang_request_bizo	1	no_match_in_entities						
+_remaintime_personal_request_bizo	1	no_match_in_entities						
+_repastespecial	1	no_match_in_entities						
+_request_csi_buy_clzo::__item	1	no_match_in_entities						
+_res_division_request_clzo	1	no_match_in_entities						
+_res_division_result_zocl	1	no_match_in_entities						
+_res_separation_request_clzo	1	no_match_in_entities						
+_res_separation_result_zocl	1	no_match_in_entities						
+_result_csi_buy_zocl	1	forward_decl_only	WorldServer/Entities/CashItemRemoteStore.h	20	struct		1	struct _result_csi_buy_zocl;
+_result_csi_buy_zocl	1	ok	WorldServer/Entities/result_csi_buy_zocl.h	6	struct	1	0	struct _result_csi_buy_zocl
+_result_csi_buy_zocl::__item	1	no_match_in_entities						
+_result_csi_goods_list_zocl	1	ok	WorldServer/Entities/result_csi_goods_list_zocl.h	6	struct	1	0	struct _result_csi_goods_list_zocl
+_return_gate_fix_position_zocl	1	no_match_in_entities						
+_reward_add_item_zocl	1	no_match_in_entities						
+_s__CatchableType	1	no_match_in_entities						
+_s__CatchableTypeArray	1	no_match_in_entities						
+_s__RTTIBaseClassDescriptor2	1	no_match_in_entities						
+_s__RTTICompleteObjectLocator	1	no_match_in_entities						
+_s__RTTICompleteObjectLocator2	1	no_match_in_entities						
+_s__ThrowInfo	1	no_match_in_entities						
+_sel_char_result_zone	1	missing_pack_scope	WorldServer/Entities/sel_char_result_zone.h	5	struct		0	struct __unaligned __declspec(align(2)) _sel_char_result_zone
+_selchange	4	no_match_in_entities						
+_select_avator_report_wrac	1	ok	WorldServer/Entities/select_avator_report_wrac.h	8	struct	1	0	struct __unaligned __declspec(align(2)) _select_avator_report_wrac
+_select_class_request_clzo	1	no_match_in_entities						
+_select_waited_quest_command_zocl	1	no_match_in_entities						
+_sell_store_request_clzo	1	ok	WorldServer/Entities/sell_store_request_clzo.h	6	struct	1	0	struct _sell_store_request_clzo
+_sell_store_request_clzo::_list	1	no_match_in_entities						
+_sell_store_result_zocl	1	ok	WorldServer/Entities/sell_store_result_zocl.h	6	struct	1	0	struct _sell_store_result_zocl
+_send_fromweb_raceboss_msg_request_zowb	1	no_match_in_entities						
+_send_raceboss_msg_request_zowb	1	no_match_in_entities						
+_server_notify_inform_zone	1	missing_pack_scope	WorldServer/Entities/server_notify_inform_zone.h	5	struct		0	struct __unaligned __declspec(align(2)) _server_notify_inform_zone
+_set_group_map_point_request_clzo	1	no_match_in_entities						
+_set_item_check_request_clzo	1	no_match_in_entities						
+_set_item_check_result_zocl	1	no_match_in_entities						
+_set_target_object_result_zocl	1	no_match_in_entities						
+_sf_delay_download_result_zocl::_eff_list	1	no_match_in_entities						
+_sf_delay_download_result_zocl::_mas_list	1	no_match_in_entities						
+_shield_equip_dur_dec_zocl	1	no_match_in_entities						
+_skill_recall_teleport_request_clzo	1	no_match_in_entities						
+_skill_request_clzo	1	no_match_in_entities						
+_start_world_request_wrac	1	ok	WorldServer/Entities/start_world_request_wrac.h	6	struct	1	0	struct __unaligned __declspec(align(2)) _start_world_request_wrac
+_started_vote_inform_zocl	1	no_match_in_entities						
+_starting_vote_inform_zocl	1	ok	WorldServer/Entities/starting_vote_inform_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _starting_vote_inform_zocl
+_stat_inform_zocl	1	no_match_in_entities						
+_state_inform_zocl	1	no_match_in_entities						
+_stone_create_zocl	1	no_match_in_entities						
+_stone_destroy_zocl	1	no_match_in_entities						
+_stone_enter_inform_zocl	1	no_match_in_entities						
+_stone_fixpositon_zocl	1	no_match_in_entities						
+_store_list_result_zocl	1	ok	WorldServer/Entities/store_list_result_zocl.h	6	struct	1	0	struct _store_list_result_zocl
+_suggested_matter_change_taxrate	1	missing_pack_scope	WorldServer/Entities/TRC_AutoTrade.h	9	class		0	class __cppobj _suggested_matter_change_taxrate
+_take_loot_item_inform_zocl	1	no_match_in_entities						
+_talik_crystal_exchange_clzo::_list	1	no_match_in_entities						
+_target_monster_aggro_inform_zocl	1	ok	WorldServer/Entities/target_monster_aggro_inform_zocl.h	6	struct	1	0	struct _target_monster_aggro_inform_zocl
+_target_monster_aggro_inform_zocl::_aggro_node	1	no_match_in_entities						
+_target_monster_contsf_allinform_zocl	1	ok	WorldServer/Entities/CPlayer.h	902	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _target_monster_contsf_allinform_zocl
+_target_object_hp_inform_clzo	1	no_match_in_entities						
+_target_player_damage_contsf_allinform_zocl	1	ok	WorldServer/Entities/CPlayer.h	918	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _target_player_damage_contsf_allinform_zocl
+_target_player_damage_contsf_allinform_zocl::_playercontsf	1	no_match_in_entities						
+_teleport_error_result_zocl	1	no_match_in_entities						
+_throw_skill_result_one_zocl::__effected_list	1	no_match_in_entities						
+_throw_unit_result_other_zocl	1	no_match_in_entities						
+_total_guild_rank_request_clzo	1	no_match_in_entities						
+_total_guild_rank_result_zocl	1	forward_decl_only	WorldServer/Entities/CTotalGuildRankInfo.h	6	struct		1	struct _total_guild_rank_result_zocl;
+_total_guild_rank_result_zocl	1	ok	WorldServer/Entities/CTotalGuildRankInfo.h	24	struct	1	0	struct __cppobj _total_guild_rank_result_zocl
+_tower_create_zocl	1	no_match_in_entities						
+_tower_destroy_zocl	1	no_match_in_entities						
+_trans_account_inform_acwr	1	no_match_in_entities						
+_trans_account_report_wrac	1	ok	WorldServer/Entities/trans_account_report_wrac.h	7	struct	1	0	struct __unaligned __declspec(align(1)) _trans_account_report_wrac
+_trans_gm_msg_inform_zocl	1	ok	WorldServer/Entities/trans_gm_msg_inform_zocl.h	6	struct	1	0	struct __cppobj __unaligned __declspec(align(1)) _trans_gm_msg_inform_zocl
+_trans_ship_state_inform_zocl	1	no_match_in_entities						
+_trans_ship_ticket_inform_zocl	1	no_match_in_entities						
+_trans_ship_ticket_inform_zocl::__list	1	no_match_in_entities						
+_trans_ship_ticket_pass_inform_zocl	1	no_match_in_entities						
+_transform_siege_mode_other_inform_zocl	1	no_match_in_entities						
+_trap_alter_transpar_inform_zocl	1	no_match_in_entities						
+_trap_create_zocl	1	no_match_in_entities						
+_trap_destroy_zocl	1	no_match_in_entities						
+_trap_fixpositon_zocl	1	no_match_in_entities						
+_trunk_alter_item_slot_request_clzo	1	no_match_in_entities						
+_trunk_download_result_zocl	1	ok	WorldServer/Entities/trunk_download_result_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _trunk_download_result_zocl
+_trunk_download_result_zocl::_list	1	no_match_in_entities						
+_trunk_est_result_zocl	1	ok	WorldServer/Entities/trunk_est_result_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _trunk_est_result_zocl
+_trunk_extend_result_zocl	1	ok	WorldServer/Entities/trunk_extend_result_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(2)) _trunk_extend_result_zocl
+_trunk_io_money_request_clzo	1	no_match_in_entities						
+_trunk_io_money_result_zocl	1	ok	WorldServer/Entities/trunk_io_money_result_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _trunk_io_money_result_zocl
+_trunk_io_move_request_clzo	1	no_match_in_entities						
+_trunk_io_result_zocl	1	ok	WorldServer/Entities/trunk_io_result_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(2)) _trunk_io_result_zocl
+_trunk_potionsocket_division_request_clzo	1	no_match_in_entities						
+_trunk_potionsocket_division_result_zocl	1	ok	WorldServer/Entities/trunk_potionsocket_division_result_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _trunk_potionsocket_division_result_zocl
+_trunk_res_division_request_clzo	1	no_match_in_entities						
+_trunk_res_division_result_zocl	1	ok	WorldServer/Entities/trunk_res_division_result_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _trunk_res_division_result_zocl
+_uilock_init_request_wrac	1	no_match_in_entities						
+_uilock_init_result_acwr	1	no_match_in_entities						
+_uilock_update_request_wrac	1	no_match_in_entities						
+_uilock_update_result_acwr	1	no_match_in_entities						
+_uilock_user_refresh_info_request_wrac	1	ok	WorldServer/Entities/wrac_packets.h	22	struct	1	0	struct _uilock_user_refresh_info_request_wrac
+_uilock_user_refresh_info_result_acwr	1	no_match_in_entities						
+_unit_alter_fee_inform_zocl	1	no_match_in_entities						
+_unit_booster_charge_inform_zocl	1	no_match_in_entities						
+_unit_bullet_fill_request_clzo	1	no_match_in_entities						
+_unit_bullet_fill_result_zocl	1	no_match_in_entities						
+_unit_delivery_request_clzo	1	no_match_in_entities						
+_unit_delivery_result_zocl	1	no_match_in_entities						
+_unit_force_return_inform_zocl	1	no_match_in_entities						
+_unit_frame_buy_request_clzo	1	no_match_in_entities						
+_unit_frame_buy_result_zocl	1	no_match_in_entities						
+_unit_frame_repair_request_clzo	1	no_match_in_entities						
+_unit_frame_repair_result_zocl	1	no_match_in_entities						
+_unit_pack_fill_request_clzo	1	ok	WorldServer/Entities/unit_pack_fill_request_clzo.h	6	struct	1	0	struct _unit_pack_fill_request_clzo
+_unit_pack_fill_request_clzo::__list	1	no_match_in_entities						
+_unit_pack_fill_result_zocl	1	no_match_in_entities						
+_unit_part_tuning_request_clzo	1	no_match_in_entities						
+_unit_return_result_zocl	1	no_match_in_entities						
+_unit_sell_request_clzo	1	no_match_in_entities						
+_unmannedtrader_Regist_item_inform_zocl::__list	1	no_match_in_entities						
+_unmannedtrader_Sell_Wait_item_inform_zocl	1	no_match_in_entities						
+_unmannedtrader_Sell_Wait_item_inform_zocl::__list	1	no_match_in_entities						
+_unmannedtrader_buy_item_request_clzo	1	forward_decl_only	WorldServer/Entities/CUnmannedTraderController.h	14	struct		1	struct _unmannedtrader_buy_item_request_clzo;
+_unmannedtrader_buy_item_request_clzo	1	forward_decl_only	WorldServer/Entities/CUnmannedTraderUserInfo.h	14	struct		1	struct _unmannedtrader_buy_item_request_clzo;
+_unmannedtrader_buy_item_request_clzo	1	forward_decl_only	WorldServer/Entities/CUnmannedTraderUserInfoTable.h	17	struct		1	struct _unmannedtrader_buy_item_request_clzo;
+_unmannedtrader_buy_item_request_clzo	1	ok	WorldServer/Entities/unmannedtrader_buy_item_request_clzo.h	6	struct	1	0	struct _unmannedtrader_buy_item_request_clzo
+_unmannedtrader_buy_item_result_zocl	1	ok	WorldServer/Entities/unmannedtrader_buy_item_result_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(2)) _unmannedtrader_buy_item_result_zocl
+_unmannedtrader_buy_item_result_zocl::__list	1	no_match_in_entities						
+_unmannedtrader_close_item_inform_zocl	1	ok	WorldServer/Entities/unmannedtrader_close_item_inform_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _unmannedtrader_close_item_inform_zocl
+_unmannedtrader_continue_item_inform_zocl::__list	1	no_match_in_entities						
+_unmannedtrader_re_regist_request_clzo::__list	1	no_match_in_entities						
+_unmannedtrader_re_regist_result_zocl	1	ok	WorldServer/Entities/unmannedtrader_re_regist_result_zocl.h	6	struct	1	0	struct _unmannedtrader_re_regist_result_zocl
+_unmannedtrader_regist_item_error_result_zocl	1	no_match_in_entities						
+_unmannedtrader_regist_item_success_result_zocl	1	ok	WorldServer/Entities/unmannedtrader_regist_item_success_result_zocl.h	6	struct	1	0	struct __unaligned __declspec(align(1)) _unmannedtrader_regist_item_success_result_zocl
+_unmannedtrader_search_list_request_clzo	1	forward_decl_only	WorldServer/Entities/CUnmannedTraderController.h	16	struct		1	struct _unmannedtrader_search_list_request_clzo;
+_unmannedtrader_search_list_request_clzo	1	forward_decl_only	WorldServer/Entities/CUnmannedTraderUserInfo.h	16	struct		1	struct _unmannedtrader_search_list_request_clzo;
+_unmannedtrader_search_list_request_clzo	1	forward_decl_only	WorldServer/Entities/CUnmannedTraderUserInfoTable.h	19	struct		1	struct _unmannedtrader_search_list_request_clzo;
+_unmannedtrader_search_list_request_clzo	1	ok	WorldServer/Entities/unmannedtrader_search_list_request_clzo.h	6	struct	1	0	struct _unmannedtrader_search_list_request_clzo
+_unmannedtrader_search_list_result_zocl	1	no_match_in_entities						
+_unmannedtrader_search_list_result_zocl::__list	1	no_match_in_entities						
+_use_active_jade_result_zocl	1	no_match_in_entities						
+_use_fire_cracker_item_inform_zocl	1	no_match_in_entities						
+_use_fire_cracker_item_result_zocl	1	no_match_in_entities						
+_use_potion_result_other_zocl	1	no_match_in_entities						
+_use_potion_result_zocl	1	no_match_in_entities						
+_use_radar_result_zocl	1	no_match_in_entities						
+_use_soccer_ball_item_inform_zocl	1	no_match_in_entities						
+_use_soccer_ball_item_result_zocl	1	no_match_in_entities						
+_user_block_request_wrac	1	no_match_in_entities						
+_user_block_result_acwr	1	no_match_in_entities						
+_user_num_report_wrac	1	no_match_in_entities						
+_weekly_guild_rank_request_clzo	1	no_match_in_entities						
+_weekly_guild_rank_result_no_data_zocl	1	no_match_in_entities						
+_weekly_guild_rank_result_zocl::_list	1	no_match_in_entities						
+_world_msg_inform_acwr	1	no_match_in_entities						
+_world_user_num_zowb	1	no_match_in_entities						
+_worlddb_sf_delay_info::_eff_list	1	no_match_in_entities						
+_worlddb_sf_delay_info::_mas_list	1	no_match_in_entities						
+tagBITMAPFILEHEADER	1	no_match_in_entities						
+tagDELEGATEITEMID	1	no_match_in_entities						
+tagHyphenateInfo	1	no_match_in_entities						
+tagLVKEYDOWN	1	no_match_in_entities						
+tagMETAHEADER	1	no_match_in_entities						
+tagTCKEYDOWN	1	no_match_in_entities						
+tagTVKEYDOWN	1	no_match_in_entities						
+threadingAttribute	1	no_match_in_entities						
+waveformat_tag	1	no_match_in_entities						

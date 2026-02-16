@@ -2,7 +2,8 @@
 
 #include "IdaCompat.h"
 
-struct __unaligned __declspec(align(1)) _raceboss_msg_confirm_zowb
+#pragma pack(push, 1)
+struct __unaligned _raceboss_msg_confirm_zowb
 {
   int nCountIndex;
   int nWorldCode;
@@ -12,6 +13,7 @@ struct __unaligned __declspec(align(1)) _raceboss_msg_confirm_zowb
 
   unsigned __int16 size() const;
 };
+#pragma pack(pop)
 
 inline unsigned __int16 _raceboss_msg_confirm_zowb::size() const
 {

@@ -202,30 +202,40 @@ struct __cppobj __unaligned __declspec(align(2)) _character_db_load
 struct __cppobj _bag_db_load : _STORAGE_LIST
 {
   _STORAGE_LIST::_db_con m_List[100];
+
+  _bag_db_load();
 };
 
 /* 1697 */
 struct __cppobj _equip_db_load : _STORAGE_LIST
 {
   _STORAGE_LIST::_db_con m_List[8];
+
+  _equip_db_load();
 };
 
 /* 1698 */
 struct __cppobj __unaligned __declspec(align(2)) _embellish_db_load : _STORAGE_LIST
 {
   _STORAGE_LIST::_db_con m_List[7];
+
+  _embellish_db_load();
 };
 
 /* 1699 */
 struct __cppobj _force_db_load : _STORAGE_LIST
 {
   _STORAGE_LIST::_db_con m_List[88];
+
+  _force_db_load();
 };
 
 /* 1700 */
 struct __cppobj _animus_db_load : _STORAGE_LIST
 {
   _STORAGE_LIST::_db_con m_List[4];
+
+  _animus_db_load();
 };
 
 /* 1701 */
@@ -233,6 +243,8 @@ struct __cppobj _trunk_db_load : _STORAGE_LIST
 {
   unsigned __int8 m_byItemSlotRace[100];
   _STORAGE_LIST::_db_con m_List[100];
+
+  _trunk_db_load();
 };
 
 /* 1702 */
@@ -240,6 +252,8 @@ struct __cppobj _Exttrunk_db_load : _STORAGE_LIST
 {
   unsigned __int8 m_byItemSlotRace[40];
   _STORAGE_LIST::_db_con m_ExtList[40];
+
+  _Exttrunk_db_load();
 };
 
 /* 1564 */
@@ -397,6 +411,8 @@ struct __cppobj _ITEMCOMBINE_DB_BASE
 struct __cppobj _personal_amine_inven_db_load : _STORAGE_LIST
 {
   _STORAGE_LIST::_db_con m_List[40];
+
+  _personal_amine_inven_db_load();
 };
 
 /* 1716 */
@@ -702,6 +718,7 @@ struct __cppobj __declspec(align(8)) _happen_event_cont
   int m_nIndexInType;
   int m_nRaceCode;
 
+  _happen_event_cont();
   void init();
   bool isset() const;
   void set(_happen_event_node *pPoint, QUEST_HAPPEN QtHpType, int nIndexInType, int nRaceCode);

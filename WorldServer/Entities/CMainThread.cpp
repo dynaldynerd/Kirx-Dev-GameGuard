@@ -3129,6 +3129,9 @@ bool CMainThread::NetworkInit()
   params[0].m_wSocketMaxNum = MAX_PLAYER;
   params[0].m_bRealSockCheck = 1;
   params[0].m_bSystemLogFile = 1;
+#ifdef _DEBUG
+  params[0].m_bSendLogFile = 1;
+#endif
   if (m_bReleaseServiceMode)
   {
     params[0].m_byRecvThreadNum = 8;

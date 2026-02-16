@@ -106,6 +106,19 @@ struct _guild_battle_rank_list_result_zocl_list
 #pragma pack(push, 1)
 struct _guild_battle_rank_list_result_zocl
 {
+  #pragma pack(push, 1)
+  struct __list
+  {
+    int nRank;
+    char byGrade;
+    char wszName[17];
+    unsigned int dwWin;
+    unsigned int dwLose;
+    unsigned int dwDraw;
+    unsigned int dwScore;
+  };
+  #pragma pack(pop)
+
   unsigned int dwCurVer;
   unsigned __int8 byRace;
   unsigned __int8 byCurPage;

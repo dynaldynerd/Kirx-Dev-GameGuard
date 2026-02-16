@@ -58,7 +58,7 @@ struct _EXT_BSP_FILE_HEADER
 };
 
 // Read mat-group entries are packed to 2-byte alignment (size 0x2A).
-#pragma pack(push, 2)
+#pragma pack(push, 1)
 struct _BSP_READ_M_GROUP
 {
   unsigned short attr;
@@ -75,7 +75,7 @@ struct _BSP_READ_M_GROUP
 #pragma pack(pop)
 
 // Read face entries are packed to 2-byte alignment (size 0x06).
-#pragma pack(push, 2)
+#pragma pack(push, 1)
 struct _BSP_READ_FACE
 {
   unsigned short v_num;
@@ -130,7 +130,7 @@ struct _TOOL_COL_LINE
 };
 
 // Tool collision leaf entries are packed to 2-byte alignment (size 0x06).
-#pragma pack(push, 2)
+#pragma pack(push, 1)
 struct _TOOL_COL_LEAF
 {
   unsigned int start_id;
@@ -139,7 +139,7 @@ struct _TOOL_COL_LEAF
 #pragma pack(pop)
 
 // Mat-group entries are packed to 2-byte alignment (size 0x56).
-#pragma pack(push, 2)
+#pragma pack(push, 1)
 struct _BSP_MAT_GROUP
 {
   unsigned short Type;

@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 1)
 struct __cppobj _qry_case_amine_workstate
 {
   unsigned __int8 bySubQryCase;
@@ -13,6 +14,7 @@ struct __cppobj _qry_case_amine_workstate
   _qry_case_amine_workstate();
   __int64 size() const;
 };
+#pragma pack(pop)
 
 inline _qry_case_amine_workstate::_qry_case_amine_workstate()
   : bySubQryCase(3)

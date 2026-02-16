@@ -10,7 +10,8 @@ struct _AUTOMINE_SLOT
   int nOverlapNum;
 };
 
-struct __declspec(align(1)) _DB_LOAD_AUTOMINE_MACHINE
+#pragma pack(push, 1)
+struct _DB_LOAD_AUTOMINE_MACHINE
 {
   unsigned __int8 byCollisionType;
   unsigned __int8 byRace;
@@ -25,3 +26,4 @@ struct __declspec(align(1)) _DB_LOAD_AUTOMINE_MACHINE
   _DB_LOAD_AUTOMINE_MACHINE();
   __int64 size();
 };
+#pragma pack(pop)

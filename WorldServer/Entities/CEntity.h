@@ -23,7 +23,8 @@ struct _READ_ANI_OBJECT
 #pragma pack(pop)
 
 /* 1395 */
-class __cppobj __unaligned __declspec(align(4)) CEntity
+#pragma pack(push, 1)
+class __cppobj __unaligned CEntity
 {
 public:
   int mIsUseMemory;
@@ -60,4 +61,5 @@ public:
   void RestoreTexMem();
   void PrepareAnimation();
 };
+#pragma pack(pop)
 

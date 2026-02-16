@@ -2,7 +2,8 @@
 
 #include "IdaCompat.h"
 
-struct __cppobj __unaligned __declspec(align(1)) _qry_case_amine_battery_discharge
+#pragma pack(push, 1)
+struct __cppobj __unaligned _qry_case_amine_battery_discharge
 {
   unsigned __int8 bySubQryCase;
   unsigned __int8 byRace;
@@ -13,6 +14,7 @@ struct __cppobj __unaligned __declspec(align(1)) _qry_case_amine_battery_dischar
   _qry_case_amine_battery_discharge();
   __int64 size() const;
 };
+#pragma pack(pop)
 
 inline _qry_case_amine_battery_discharge::_qry_case_amine_battery_discharge()
   : bySubQryCase(5)

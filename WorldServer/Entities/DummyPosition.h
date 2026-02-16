@@ -31,15 +31,21 @@ struct __cppobj __declspec(align(4)) _dummy_position
   void SetActiveMonNum(__int16 nAlter);
 };
 
+#pragma pack(pop)
+
 struct _base_fld;
 
+#pragma pack(push, 8)
 struct __cppobj _store_dummy
 {
   int m_nStoreType;
   _base_fld *m_pStoreRec;
   _dummy_position *m_pDumPos;
 };
-
 #pragma pack(pop)
+
+static_assert(sizeof(_dummy_position) == 0x9C, "_dummy_position size must match IDA (0x9C)");
+static_assert(alignof(_dummy_position) == 4, "_dummy_position alignment must match IDA (4)");
+static_assert(sizeof(_store_dummy) == 0x18, "_store_dummy size must match IDA (0x18)");
 
 #endif // _DUMMY_POSITION_H_

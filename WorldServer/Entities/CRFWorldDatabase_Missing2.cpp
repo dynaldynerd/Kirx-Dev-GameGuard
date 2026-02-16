@@ -3833,165 +3833,127 @@ unsigned __int8 CRFWorldDatabase::Select_Limit_Run_Record()
 unsigned __int8 CRFWorldDatabase::Select_MacroData(unsigned int dwSerial,
         _AIOC_A_MACRODATA *pMacro)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-718h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+38h] [rbp-6E0h] BYREF
-  SQLRETURN v8; // [rsp+44h] [rbp-6D4h]
-  char Buffer[260]; // [rsp+60h] [rbp-6B8h] BYREF
-  int j; // [rsp+164h] [rbp-5B4h]
-  int k; // [rsp+168h] [rbp-5B0h]
-  int TargetValue; // [rsp+178h] [rbp-5A0h] BYREF
-  unsigned char v13[4]; // [rsp+17Ch] [rbp-59Ch] BYREF
-  unsigned char v14[4]; // [rsp+180h] [rbp-598h] BYREF
-  int v15; // [rsp+184h] [rbp-594h] BYREF
-  unsigned char v16[4]; // [rsp+188h] [rbp-590h] BYREF
-  unsigned char v17[28]; // [rsp+18Ch] [rbp-58Ch] BYREF
-  int v18; // [rsp+1A8h] [rbp-570h] BYREF
-  unsigned char v19[4]; // [rsp+1ACh] [rbp-56Ch] BYREF
-  unsigned char v20[4]; // [rsp+1B0h] [rbp-568h] BYREF
-  unsigned char v21[4]; // [rsp+1B4h] [rbp-564h] BYREF
-  unsigned char v22[4]; // [rsp+1B8h] [rbp-560h] BYREF
-  unsigned char v23[4]; // [rsp+1BCh] [rbp-55Ch] BYREF
-  unsigned char v24[4]; // [rsp+1C0h] [rbp-558h] BYREF
-  unsigned char v25[4]; // [rsp+1C4h] [rbp-554h] BYREF
-  unsigned char v26[4]; // [rsp+1C8h] [rbp-550h] BYREF
-  unsigned char v27[36]; // [rsp+1CCh] [rbp-54Ch] BYREF
-  char Source[256]; // [rsp+1F0h] [rbp-528h] BYREF
-  unsigned char v29[256]; // [rsp+2F0h] [rbp-428h] BYREF
-  unsigned char v30[256]; // [rsp+3F0h] [rbp-328h] BYREF
-  unsigned char v31[256]; // [rsp+4F0h] [rbp-228h] BYREF
-  unsigned char v32[272]; // [rsp+5F0h] [rbp-128h] BYREF
+  SQLLEN indicator = 0;
+  SQLRETURN sqlRet = SQL_ERROR;
+  char query[260]{};
 
-  j = 0;
-  k = 0;
   sprintf(
-    Buffer,
+    query,
     "Select hp, fp, sp, action0, action1, action2, action3, action4, action5, action6, action7, action8, action9, chat0, "
     "chat1, chat2, chat3, chat4, hpvalue, fpvalue, spvalue from tbl_macro where serial=%d order by belt asc",
     dwSerial);
-  if ( this->m_bSaveDBLog )
-    this->Log(Buffer);
-  if ( this->m_hStmtSelect || this->ReConnectDataBase() )
+
+  if (this->m_bSaveDBLog)
   {
-    v8 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v8 || v8 == 1 )
-    {
-      for ( j = 0; ; ++j )
-      {
-        memset_0(&TargetValue, 0, 0x18uLL);
-        memset_0(&v18, 0, 0x28uLL);
-        memset_0(Source, 0, 0x500uLL);
-        v8 = SQLFetch(this->m_hStmtSelect);
-        if ( v8 )
-        {
-          if ( v8 != 1 )
-            break;
-        }
-        v8 = SQLGetData(this->m_hStmtSelect, 1u, 4, &TargetValue, 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 2u, 4, v13, 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 3u, 4, v14, 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 4u, 4, &v18, 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 5u, 4, v19, 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 6u, 4, v20, 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 7u, 4, v21, 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 8u, 4, v22, 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 9u, 4, v23, 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 0xAu, 4, v24, 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 0xBu, 4, v25, 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 0xCu, 4, v26, 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 0xDu, 4, v27, 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 0xEu, 1, Source, 255LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 0xFu, 1, v29, 255LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 0x10u, 1, v30, 255LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 0x11u, 1, v31, 255LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 0x12u, 1, v32, 255LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 0x13u, 4, &v15, 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 0x14u, 4, v16, 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 0x15u, 4, v17, 0LL, &StrLen_or_IndPtr);
-        if ( j < 1 )
-        {
-          unsigned int potionData[3]{};
-          unsigned int potionValue[3]{};
-          potionData[0] = static_cast<unsigned int>(TargetValue);
-          potionData[1] = *reinterpret_cast<unsigned int *>(v13);
-          potionData[2] = *reinterpret_cast<unsigned int *>(v14);
+    this->Log(query);
+  }
 
-          potionValue[0] = static_cast<unsigned int>(v15);
-          potionValue[1] = *reinterpret_cast<unsigned int *>(v16);
-          potionValue[2] = *reinterpret_cast<unsigned int *>(v17);
+  if (!this->m_hStmtSelect && !this->ReConnectDataBase())
+  {
+    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+    return 1;
+  }
 
-          for ( k = 0; k < 3; ++k )
-          {
-            pMacro->mcr_Potion[j].Potion[k] = potionData[k];
-            pMacro->mcr_Potion[j].PotionValue[k] = potionValue[k];
-          }
-        }
-        if ( j < 3 )
-        {
-          unsigned int actions[10]{};
-          actions[0] = static_cast<unsigned int>(v18);
-          actions[1] = *reinterpret_cast<unsigned int *>(v19);
-          actions[2] = *reinterpret_cast<unsigned int *>(v20);
-          actions[3] = *reinterpret_cast<unsigned int *>(v21);
-          actions[4] = *reinterpret_cast<unsigned int *>(v22);
-          actions[5] = *reinterpret_cast<unsigned int *>(v23);
-          actions[6] = *reinterpret_cast<unsigned int *>(v24);
-          actions[7] = *reinterpret_cast<unsigned int *>(v25);
-          actions[8] = *reinterpret_cast<unsigned int *>(v26);
-          actions[9] = *reinterpret_cast<unsigned int *>(v27);
-
-          for ( k = 0; k < 10; ++k )
-            pMacro->mcr_Action[j].Action[k] = actions[k];
-        }
-        if ( j < 2 )
-        {
-          for ( k = 0; k < 5; ++k )
-            strcpy_0(pMacro->mcr_Chat[j].Chat[(__int64)k], &Source[256 * (__int64)k]);
-        }
-      }
-      if ( j )
-      {
-        if ( v8 == 1 || j == 3 && v8 == 100 )
-        {
-          if ( this->m_hStmtSelect )
-            SQLCloseCursor(this->m_hStmtSelect);
-          if ( this->m_bSaveDBLog )
-            this->FmtLog("%s Success", Buffer);
-          return 0;
-        }
-        else
-        {
-          this->ErrorMsgLog(v8, Buffer, "SQLGetData", this->m_hStmtSelect);
-          this->ErrorAction(v8, this->m_hStmtSelect);
-          if ( this->m_hStmtSelect )
-            SQLCloseCursor(this->m_hStmtSelect);
-          return 1;
-        }
-      }
-      else
-      {
-        if ( this->m_hStmtSelect )
-          SQLCloseCursor(this->m_hStmtSelect);
-        return 2;
-      }
-    }
-    else if ( v8 == 100 )
+  sqlRet = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+  if (sqlRet && sqlRet != SQL_SUCCESS_WITH_INFO)
+  {
+    if (sqlRet == SQL_NO_DATA)
     {
       return 2;
     }
-    else
-    {
-      this->ErrorMsgLog(v8, Buffer, "_SQLExecDirect", this->m_hStmtSelect);
-      this->ErrorAction(v8, this->m_hStmtSelect);
-      return 1;
-    }
-  }
-  else
-  {
-    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
+
+    this->ErrorMsgLog(sqlRet, query, "_SQLExecDirect", this->m_hStmtSelect);
+    this->ErrorAction(sqlRet, this->m_hStmtSelect);
     return 1;
   }
+
+  int fetchedRowCount = 0;
+  for (;; ++fetchedRowCount)
+  {
+    unsigned int potionKinds[3]{};
+    unsigned int actionSlots[10]{};
+    char chatColumns[5][256]{};
+    unsigned int potionValues[3]{};
+
+    sqlRet = SQLFetch(this->m_hStmtSelect);
+    if (sqlRet && sqlRet != SQL_SUCCESS_WITH_INFO)
+    {
+      break;
+    }
+
+    sqlRet = SQLGetData(this->m_hStmtSelect, 1u, 4, &potionKinds[0], 0, &indicator);
+    sqlRet = SQLGetData(this->m_hStmtSelect, 2u, 4, &potionKinds[1], 0, &indicator);
+    sqlRet = SQLGetData(this->m_hStmtSelect, 3u, 4, &potionKinds[2], 0, &indicator);
+
+    for (unsigned int actionIndex = 0; actionIndex < 10; ++actionIndex)
+    {
+      sqlRet = SQLGetData(this->m_hStmtSelect, 4u + actionIndex, 4, &actionSlots[actionIndex], 0, &indicator);
+    }
+
+    for (unsigned int chatIndex = 0; chatIndex < 5; ++chatIndex)
+    {
+      sqlRet = SQLGetData(this->m_hStmtSelect, 14u + chatIndex, 1, chatColumns[chatIndex], 255, &indicator);
+    }
+
+    sqlRet = SQLGetData(this->m_hStmtSelect, 19u, 4, &potionValues[0], 0, &indicator);
+    sqlRet = SQLGetData(this->m_hStmtSelect, 20u, 4, &potionValues[1], 0, &indicator);
+    sqlRet = SQLGetData(this->m_hStmtSelect, 21u, 4, &potionValues[2], 0, &indicator);
+
+    if (fetchedRowCount < 1)
+    {
+      for (unsigned int potionIndex = 0; potionIndex < 3; ++potionIndex)
+      {
+        pMacro->mcr_Potion[fetchedRowCount].Potion[potionIndex] = potionKinds[potionIndex];
+        pMacro->mcr_Potion[fetchedRowCount].PotionValue[potionIndex] = potionValues[potionIndex];
+      }
+    }
+
+    if (fetchedRowCount < 3)
+    {
+      for (unsigned int actionIndex = 0; actionIndex < 10; ++actionIndex)
+      {
+        pMacro->mcr_Action[fetchedRowCount].Action[actionIndex] = actionSlots[actionIndex];
+      }
+    }
+
+    if (fetchedRowCount < 2)
+    {
+      for (unsigned int chatIndex = 0; chatIndex < 5; ++chatIndex)
+      {
+        strcpy_0(pMacro->mcr_Chat[fetchedRowCount].Chat[chatIndex], chatColumns[chatIndex]);
+      }
+    }
+  }
+
+  if (!fetchedRowCount)
+  {
+    if (this->m_hStmtSelect)
+    {
+      SQLCloseCursor(this->m_hStmtSelect);
+    }
+    return 2;
+  }
+
+  if (sqlRet == SQL_SUCCESS_WITH_INFO || (fetchedRowCount == 3 && sqlRet == SQL_NO_DATA))
+  {
+    if (this->m_hStmtSelect)
+    {
+      SQLCloseCursor(this->m_hStmtSelect);
+    }
+    if (this->m_bSaveDBLog)
+    {
+      this->FmtLog("%s Success", query);
+    }
+    return 0;
+  }
+
+  this->ErrorMsgLog(sqlRet, query, "SQLGetData", this->m_hStmtSelect);
+  this->ErrorAction(sqlRet, this->m_hStmtSelect);
+  if (this->m_hStmtSelect)
+  {
+    SQLCloseCursor(this->m_hStmtSelect);
+  }
+  return 1;
 }
 
 unsigned __int8 CRFWorldDatabase::Select_PatriarchComm(unsigned int dwSerial,

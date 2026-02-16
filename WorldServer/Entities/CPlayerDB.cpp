@@ -16,6 +16,46 @@
 #include <cstdlib>
 #include <ctime>
 
+_bag_db_load::_bag_db_load()
+{
+  SetMemory(m_List, 0, 100, 0);
+}
+
+_equip_db_load::_equip_db_load()
+{
+  SetMemory(m_List, 1, 8, 0);
+}
+
+_embellish_db_load::_embellish_db_load()
+{
+  SetMemory(m_List, 2, 7, 0);
+}
+
+_force_db_load::_force_db_load()
+{
+  SetMemory(m_List, 3, 88, 0);
+}
+
+_animus_db_load::_animus_db_load()
+{
+  SetMemory(m_List, 4, 4, 0);
+}
+
+_trunk_db_load::_trunk_db_load()
+{
+  SetMemory(m_List, 5, 100, 0);
+}
+
+_personal_amine_inven_db_load::_personal_amine_inven_db_load()
+{
+  SetMemory(m_List, 6, 40, 0);
+}
+
+_Exttrunk_db_load::_Exttrunk_db_load()
+{
+  SetMemory(m_ExtList, 7, 40, 0);
+}
+
 CPlayerDB::CPlayerDB()
 {
   m_wSerialCount = 0;

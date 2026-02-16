@@ -3,7 +3,8 @@
 #include "IdaCompat.h"
 
 /* 1535 */
-struct __cppobj __unaligned __declspec(align(4)) _STORAGE_LIST
+#pragma pack(push, 1)
+struct __cppobj __unaligned _STORAGE_LIST
 {
   struct __cppobj __unaligned __declspec(align(1)) _storage_con
   {
@@ -53,6 +54,8 @@ struct __cppobj __unaligned __declspec(align(4)) _STORAGE_LIST
   int m_nListCode;
   _db_con *m_pStorageList;
 
+  _STORAGE_LIST();
+  void SetMemory(_db_con *pList, int nListName, int nListNum, int nUsedNum);
   char EmptyCon(int n);
   void SetAllEmpty();
   void SetLock(int n, bool bLock);
@@ -70,5 +73,6 @@ struct __cppobj __unaligned __declspec(align(4)) _STORAGE_LIST
   char GradeDown(int n, unsigned int dwUptInfo);
   char SetGrade(int n, unsigned __int8 byLv, unsigned int dwUptInfo);
 };
+#pragma pack(pop)
 
 _STORAGE_LIST::_db_con *MakeLoot(unsigned __int8 byTableCode, unsigned __int16 wItemIndex);

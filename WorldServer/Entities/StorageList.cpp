@@ -13,6 +13,26 @@
 static unsigned int s_makeLootInitFlag = 0;
 static _STORAGE_LIST::_db_con s_makeLootItem{};
 
+_STORAGE_LIST::_STORAGE_LIST()
+{
+  m_nListNum = 0;
+  m_pStorageList = nullptr;
+}
+
+void _STORAGE_LIST::SetMemory(_db_con *pList, int nListName, int nListNum, int nUsedNum)
+{
+  m_pStorageList = pList;
+  m_nListCode = nListName;
+  m_nListNum = nListNum;
+  m_nUsedNum = (nUsedNum != 0) ? nUsedNum : nListNum;
+
+  for (int index = 0; index < m_nListNum; ++index)
+  {
+    m_pStorageList[index].m_pInList = this;
+    m_pStorageList[index].m_byStorageIndex = static_cast<unsigned __int8>(index);
+  }
+}
+
 void _STORAGE_LIST::_storage_con::Init()
 {
   memset_0(this, 0, sizeof(_STORAGE_LIST::_storage_con));

@@ -4,7 +4,8 @@
 
 #include "CMainThread.h"
 
-struct __cppobj __unaligned __declspec(align(1)) _reged_char_result_zone
+#pragma pack(push, 1)
+struct __cppobj __unaligned _reged_char_result_zone
 {
   unsigned __int8 byRetCode;
   unsigned __int8 byCharNum;
@@ -14,6 +15,7 @@ struct __cppobj __unaligned __declspec(align(1)) _reged_char_result_zone
   _reged_char_result_zone();
   __int64 size();
 };
+#pragma pack(pop)
 
 inline _reged_char_result_zone::_reged_char_result_zone()
   : byCharNum(0)

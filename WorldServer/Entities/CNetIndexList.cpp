@@ -106,9 +106,11 @@ bool CNetIndexList::PushNode_Back(unsigned int index)
     return false;
   }
 
+  this->m_csList.Lock();
   _index_node *node = PopFront(this->m_BufHead, this->m_BufTail);
   if (node == nullptr)
   {
+    this->m_csList.Unlock();
     return false;
   }
 
@@ -116,6 +118,7 @@ bool CNetIndexList::PushNode_Back(unsigned int index)
   InsertBefore(&this->m_Tail, node);
   --this->m_dwBufCount;
   ++this->m_dwCount;
+  this->m_csList.Unlock();
   return true;
 }
 
@@ -126,9 +129,11 @@ bool CNetIndexList::PushNode_Front(unsigned int index)
     return false;
   }
 
+  this->m_csList.Lock();
   _index_node *node = PopFront(this->m_BufHead, this->m_BufTail);
   if (node == nullptr)
   {
+    this->m_csList.Unlock();
     return false;
   }
 
@@ -139,6 +144,7 @@ bool CNetIndexList::PushNode_Front(unsigned int index)
   this->m_Head.m_pNext = node;
   --this->m_dwBufCount;
   ++this->m_dwCount;
+  this->m_csList.Unlock();
   return true;
 }
 
@@ -149,9 +155,11 @@ bool CNetIndexList::PopNode_Front(unsigned int *outIndex)
     return false;
   }
 
+  this->m_csList.Lock();
   _index_node *node = PopFront(this->m_Head, this->m_Tail);
   if (node == nullptr)
   {
+    this->m_csList.Unlock();
     return false;
   }
 
@@ -159,6 +167,7 @@ bool CNetIndexList::PopNode_Front(unsigned int *outIndex)
   InsertBefore(&this->m_BufTail, node);
   --this->m_dwCount;
   ++this->m_dwBufCount;
+  this->m_csList.Unlock();
   return true;
 }
 
@@ -276,15 +285,18 @@ bool CNetIndexList::IsInList(unsigned int index)
     return false;
   }
 
+  this->m_csList.Lock();
   _index_node *node = this->m_Head.m_pNext;
   while (node != &this->m_Tail)
   {
     if (node->m_dwIndex == index)
     {
+      this->m_csList.Unlock();
       return true;
     }
     node = node->m_pNext;
   }
+  this->m_csList.Unlock();
   return false;
 }
 

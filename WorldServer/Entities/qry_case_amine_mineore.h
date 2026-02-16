@@ -2,7 +2,8 @@
 
 #include "IdaCompat.h"
 
-struct __cppobj __unaligned __declspec(align(1)) _qry_case_amine_mineore
+#pragma pack(push, 1)
+struct __cppobj __unaligned _qry_case_amine_mineore
 {
   unsigned __int8 bySubQryCase;
   unsigned __int8 byCollisionType;
@@ -16,6 +17,7 @@ struct __cppobj __unaligned __declspec(align(1)) _qry_case_amine_mineore
   _qry_case_amine_mineore();
   __int64 size() const;
 };
+#pragma pack(pop)
 
 inline _qry_case_amine_mineore::_qry_case_amine_mineore()
   : bySubQryCase(2)

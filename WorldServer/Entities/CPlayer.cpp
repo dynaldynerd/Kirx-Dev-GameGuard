@@ -1030,6 +1030,11 @@ void _QUEST_DB_BASE::Init()
   }
 }
 
+_happen_event_cont::_happen_event_cont()
+{
+  init();
+}
+
 void _happen_event_cont::init()
 {
   memset_0(this, 0, sizeof(_happen_event_cont));

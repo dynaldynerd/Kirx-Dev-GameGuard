@@ -2,7 +2,8 @@
 
 #include "IdaCompat.h"
 
-struct __unaligned __declspec(align(2)) _chat_message_receipt_udp
+#pragma pack(push, 1)
+struct __unaligned _chat_message_receipt_udp
 {
   unsigned __int8 byMessageType;
   unsigned int dwSenderSerial;
@@ -16,6 +17,7 @@ struct __unaligned __declspec(align(2)) _chat_message_receipt_udp
   _chat_message_receipt_udp();
   unsigned __int16 size() const;
 };
+#pragma pack(pop)
 
 inline _chat_message_receipt_udp::_chat_message_receipt_udp()
 {

@@ -13,6 +13,8 @@ struct _NPCQuestIndexTempData;
 class __cppobj __declspec(align(8)) CQuestMgr
 {
 public:
+  CQuestMgr();
+  ~CQuestMgr();
   static bool LoadQuestData();
   static bool CheckRewardMasteryData(int iInx, int iNth, _quest_reward_mastery *pData);
   static bool CalcStartNPCQuestCnt(unsigned int *pdwCnt);

@@ -2,7 +2,8 @@
 
 #include "IdaCompat.h"
 
-struct __unaligned __declspec(align(2)) _sel_char_result_zone
+#pragma pack(push, 1)
+struct __unaligned _sel_char_result_zone
 {
   unsigned __int8 byRetCode;
   unsigned __int8 bySlotIndex;
@@ -12,6 +13,7 @@ struct __unaligned __declspec(align(2)) _sel_char_result_zone
 
   __int64 size() const;
 };
+#pragma pack(pop)
 
 inline __int64 _sel_char_result_zone::size() const
 {

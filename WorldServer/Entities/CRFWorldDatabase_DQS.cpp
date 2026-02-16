@@ -473,7 +473,7 @@ char CRFWorldDatabase::Select_Equal_Name(char *pwszCharacterName)
 char CRFWorldDatabase::Select_Equal_DeleteName_NoArranged(char *pwszCharacterName)
 {
   char buffer[260]{};
-  sprintf(buffer, "{ CALL pSelect_Equal_DeleteName_NoArranged('%s') }", pwszCharacterName);
+  sprintf(buffer, "select deletename from tbl_base where deletename = '%s' and dck = 1 and arrange = 0 ", pwszCharacterName);
   if (m_bSaveDBLog)
   {
     Log(buffer);

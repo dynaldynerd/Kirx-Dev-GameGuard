@@ -4,7 +4,8 @@
 
 #include <ctime>
 
-struct __cppobj __unaligned __declspec(align(2)) _qry_case_amine_batterycharge
+#pragma pack(push, 1)
+struct __cppobj __unaligned _qry_case_amine_batterycharge
 {
   unsigned __int8 bySubQryCase;
   unsigned __int8 byCollisionType;
@@ -23,6 +24,7 @@ struct __cppobj __unaligned __declspec(align(2)) _qry_case_amine_batterycharge
   _qry_case_amine_batterycharge();
   __int64 size() const;
 };
+#pragma pack(pop)
 
 inline _qry_case_amine_batterycharge::_qry_case_amine_batterycharge()
   : bySubQryCase(1)

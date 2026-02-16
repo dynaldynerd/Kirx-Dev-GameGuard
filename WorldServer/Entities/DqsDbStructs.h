@@ -331,7 +331,8 @@ struct __declspec(align(4)) _personal_amine_inven
 };
 
 /* 1174 */
-struct __cppobj __unaligned __declspec(align(1)) _NOT_ARRANGED_AVATOR_DB
+#pragma pack(push, 1)
+struct __cppobj __unaligned _NOT_ARRANGED_AVATOR_DB
 {
   unsigned int dwSerial;
   unsigned __int8 byLv;
@@ -345,6 +346,7 @@ struct __cppobj __unaligned __declspec(align(1)) _NOT_ARRANGED_AVATOR_DB
   _NOT_ARRANGED_AVATOR_DB();
   void Init();
 };
+#pragma pack(pop)
 
 struct __cppobj _worlddb_arrange_char_info
 {

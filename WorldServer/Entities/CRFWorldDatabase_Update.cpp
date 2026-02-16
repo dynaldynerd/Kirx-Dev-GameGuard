@@ -5,6 +5,7 @@
 
 #include <sql.h>
 #include <sqlext.h>
+#include <vector>
 
 char CRFWorldDatabase::Update_CharacterData(unsigned int dwSerial, _worlddb_update_char_query *pUpdateQuery)
 {
@@ -685,6 +686,10 @@ bool CRFWorldDatabase::Update_PostStorageSendToRecver(
   bool bGetNumber,
   unsigned __int64 lnUID)
 {
+  const char *updatePostStorageQuery =
+    "update tbl_PostStorage set postinx=%d,owner=%d,dck=0,poststate=%d,sendname='%s',recvname='%s',title='%s',content='%s'"
+    ",k=%d,d=%I64d,u=%d,gold=%d,err=%d,uid=%I64d,sindex=%d where serial=%d";
+
   unsigned __int8 targetValue[44]{};
   char buffer[1056]{};
   memset(buffer, 0, 1024);
@@ -759,13 +764,8 @@ bool CRFWorldDatabase::Update_PostStorageSendToRecver(
     }
   }
 
-  char strQuery[1040]{};
-  memset(strQuery, 0, 1024);
-  sprintf_s(
-    strQuery,
-    0x400u,
-    "update tbl_PostStorage set postinx=%d,owner=%d,dck=0,poststate=%d,sendname='%s',recvname='%s',title='%s',content='%s'"
-    ",k=%d,d=%I64d,u=%d,gold=%d,err=%d,uid=%I64d,sindex=%d where serial=%d",
+  const int queryLen = _scprintf(
+    updatePostStorageQuery,
     *pbyNumber,
     dwOwner,
     byPostState,
@@ -781,7 +781,40 @@ bool CRFWorldDatabase::Update_PostStorageSendToRecver(
     lnUID,
     wStorageIndex,
     dwPostSerial);
-  return ExecUpdateQuery( strQuery, true);
+
+  if (queryLen < 0)
+  {
+    ErrLog("Update_PostStorageSendToRecver : _scprintf failed");
+    return false;
+  }
+
+  std::vector<char> strQuery(static_cast<size_t>(queryLen) + 1);
+  const int writeLen = sprintf_s(
+    strQuery.data(),
+    strQuery.size(),
+    updatePostStorageQuery,
+    *pbyNumber,
+    dwOwner,
+    byPostState,
+    wszSendName,
+    wszRecvName,
+    wszTitle,
+    wszContent,
+    nK,
+    dwD,
+    dwU,
+    dwGold,
+    byErr,
+    lnUID,
+    wStorageIndex,
+    dwPostSerial);
+  if (writeLen < 0)
+  {
+    ErrLog("Update_PostStorageSendToRecver : sprintf_s failed");
+    return false;
+  }
+
+  return ExecUpdateQuery(strQuery.data(), true);
 }
 
 bool CRFWorldDatabase::Insert_Start_NpcQuest_History(
