@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cwchar>
+#include <vector>
 
 CLogFile::CLogFile()
   : m_dwLogCount(0),
@@ -69,12 +70,27 @@ void CLogFile::WriteFromArg(const char *format, va_list arg)
     return;
   }
 
-  char buffer[0x2800]{};
-  char line[11296]{};
   char date[0x80]{};
   char time[0x80]{};
 
-  vsprintf_s(buffer, sizeof(buffer), format, arg);
+  va_list countArg;
+  va_copy(countArg, arg);
+  const int messageLen = _vscprintf(format, countArg);
+  va_end(countArg);
+  if (messageLen < 0)
+  {
+    return;
+  }
+
+  std::vector<char> buffer(static_cast<size_t>(messageLen) + 1);
+  va_list writeArg;
+  va_copy(writeArg, arg);
+  if (vsprintf_s(buffer.data(), buffer.size(), format, writeArg) < 0)
+  {
+    va_end(writeArg);
+    return;
+  }
+  va_end(writeArg);
 
   if (m_bDate)
   {
@@ -87,26 +103,74 @@ void CLogFile::WriteFromArg(const char *format, va_list arg)
     time[0] = 0;
   }
 
+  unsigned int count = 0;
+  const char *lineFormat = nullptr;
   if (m_bAddCount)
   {
+    count = m_dwLogCount++;
     if (m_bDate)
     {
-      const unsigned int count = m_dwLogCount++;
-      wsprintfA(line, "%d %s %s : %s\r\n", count, date, time, buffer);
+      lineFormat = "%d %s %s : %s\r\n";
     }
     else
     {
-      const unsigned int count = m_dwLogCount++;
-      wsprintfA(line, "%d : %s\r\n", count, buffer);
+      lineFormat = "%d : %s\r\n";
     }
   }
   else if (m_bDate)
   {
-    wsprintfA(line, "%s %s %s\r\n", date, time, buffer);
+    lineFormat = "%s %s %s\r\n";
   }
   else
   {
-    wsprintfA(line, "%s\r\n", buffer);
+    lineFormat = "%s\r\n";
+  }
+
+  int lineLen = 0;
+  if (m_bAddCount)
+  {
+    if (m_bDate)
+    {
+      lineLen = _scprintf(lineFormat, count, date, time, buffer.data());
+    }
+    else
+    {
+      lineLen = _scprintf(lineFormat, count, buffer.data());
+    }
+  }
+  else if (m_bDate)
+  {
+    lineLen = _scprintf(lineFormat, date, time, buffer.data());
+  }
+  else
+  {
+    lineLen = _scprintf(lineFormat, buffer.data());
+  }
+
+  if (lineLen < 0)
+  {
+    return;
+  }
+
+  std::vector<char> line(static_cast<size_t>(lineLen) + 1);
+  if (m_bAddCount)
+  {
+    if (m_bDate)
+    {
+      sprintf_s(line.data(), line.size(), lineFormat, count, date, time, buffer.data());
+    }
+    else
+    {
+      sprintf_s(line.data(), line.size(), lineFormat, count, buffer.data());
+    }
+  }
+  else if (m_bDate)
+  {
+    sprintf_s(line.data(), line.size(), lineFormat, date, time, buffer.data());
+  }
+  else
+  {
+    sprintf_s(line.data(), line.size(), lineFormat, buffer.data());
   }
 
   HANDLE hFile = CreateFileA(m_szFileName, GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -114,8 +178,8 @@ void CLogFile::WriteFromArg(const char *format, va_list arg)
   {
     SetFilePointer(hFile, 0, nullptr, FILE_END);
     DWORD written = 0;
-    const DWORD len = strlen_0(line);
-    WriteFile(hFile, line, len, &written, nullptr);
+    const DWORD len = static_cast<DWORD>(strlen_0(line.data()));
+    WriteFile(hFile, line.data(), len, &written, nullptr);
     CloseHandle(hFile);
   }
 }
@@ -127,12 +191,27 @@ void CLogFile::WriteFromArg(const wchar_t *format, va_list arg)
     return;
   }
 
-  wchar_t buffer[10256]{};
-  wchar_t line[11280]{};
   wchar_t date[144]{};
   wchar_t time[140]{};
 
-  vswprintf_s(buffer, 0x2800u, format, arg);
+  va_list countArg;
+  va_copy(countArg, arg);
+  const int messageLen = _vscwprintf(format, countArg);
+  va_end(countArg);
+  if (messageLen < 0)
+  {
+    return;
+  }
+
+  std::vector<wchar_t> buffer(static_cast<size_t>(messageLen) + 1);
+  va_list writeArg;
+  va_copy(writeArg, arg);
+  if (vswprintf_s(buffer.data(), buffer.size(), format, writeArg) < 0)
+  {
+    va_end(writeArg);
+    return;
+  }
+  va_end(writeArg);
 
   if (m_bDate)
   {
@@ -145,26 +224,74 @@ void CLogFile::WriteFromArg(const wchar_t *format, va_list arg)
     time[0] = 0;
   }
 
+  unsigned int count = 0;
+  const wchar_t *lineFormat = nullptr;
   if (m_bAddCount)
   {
+    count = m_dwLogCount++;
     if (m_bDate)
     {
-      const unsigned int count = m_dwLogCount++;
-      swprintf_s(line, 0x2C00u, L"%d %s %s : %s\r\n", count, date, time, buffer);
+      lineFormat = L"%d %s %s : %s\r\n";
     }
     else
     {
-      const unsigned int count = m_dwLogCount++;
-      swprintf_s(line, 0x2C00u, L"%d : %s\r\n", count, buffer);
+      lineFormat = L"%d : %s\r\n";
     }
   }
   else if (m_bDate)
   {
-    swprintf_s(line, 0x2C00u, L"%s %s %s\r\n", date, time, buffer);
+    lineFormat = L"%s %s %s\r\n";
   }
   else
   {
-    swprintf_s(line, 0x2C00u, L"%s\r\n", buffer);
+    lineFormat = L"%s\r\n";
+  }
+
+  int lineLen = 0;
+  if (m_bAddCount)
+  {
+    if (m_bDate)
+    {
+      lineLen = _scwprintf(lineFormat, count, date, time, buffer.data());
+    }
+    else
+    {
+      lineLen = _scwprintf(lineFormat, count, buffer.data());
+    }
+  }
+  else if (m_bDate)
+  {
+    lineLen = _scwprintf(lineFormat, date, time, buffer.data());
+  }
+  else
+  {
+    lineLen = _scwprintf(lineFormat, buffer.data());
+  }
+
+  if (lineLen < 0)
+  {
+    return;
+  }
+
+  std::vector<wchar_t> line(static_cast<size_t>(lineLen) + 1);
+  if (m_bAddCount)
+  {
+    if (m_bDate)
+    {
+      swprintf_s(line.data(), line.size(), lineFormat, count, date, time, buffer.data());
+    }
+    else
+    {
+      swprintf_s(line.data(), line.size(), lineFormat, count, buffer.data());
+    }
+  }
+  else if (m_bDate)
+  {
+    swprintf_s(line.data(), line.size(), lineFormat, date, time, buffer.data());
+  }
+  else
+  {
+    swprintf_s(line.data(), line.size(), lineFormat, buffer.data());
   }
 
   FILE *stream = nullptr;
@@ -177,8 +304,8 @@ void CLogFile::WriteFromArg(const wchar_t *format, va_list arg)
       fwrite(&bom, sizeof(bom), 1, stream);
     }
 
-    const size_t len = wcslen(line);
-    fwrite(line, 2 * len, 1, stream);
+    const size_t len = wcslen(line.data());
+    fwrite(line.data(), 2 * len, 1, stream);
     fclose(stream);
   }
 }
