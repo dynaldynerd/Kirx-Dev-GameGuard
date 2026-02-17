@@ -398,6 +398,9 @@ struct __declspec(align(4)) _server_rate_ini_data
 /* 1813 */
 struct __cppobj _server_rate_realtime_load
 {
+  _server_rate_realtime_load();
+  void Init(unsigned int dwReadTerm);
+
   CMyTimer m_tmDataFileCheckTime;
   _FILETIME m_ftWrite;
   _server_rate_ini_data m_IniData;

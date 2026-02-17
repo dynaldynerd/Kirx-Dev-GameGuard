@@ -4533,6 +4533,22 @@ bool __fastcall ct_ReqChangeHonorGuild(CPlayer *pOne)
   return 1;
 }
 
+bool ct_debug(CPlayer* pOne)
+{
+    if (pOne->m_TargetObject.pObject != NULL)
+    {
+        if (!pOne)
+            return 0;
+        sprintf(
+            wszRespon,
+            "serial: %d",
+            pOne->m_TargetObject.pObject->m_dwObjSerial);
+        
+        pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, 0LL);
+
+    }
+}
+
 bool __fastcall ct_goto_char(CPlayer *pOne)
 {
   __int64 *v1; // rdi

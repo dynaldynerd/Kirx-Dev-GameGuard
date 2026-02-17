@@ -1,10 +1,12 @@
 #pragma once
 
+#pragma pack(push, 1)
 struct Entry
 {
   unsigned __int8 byTicketType;
   unsigned __int16 wTicketNum;
 };
+#pragma pack(pop)
 
 #pragma pack(push, 1)
 struct TicketNumMsg
@@ -13,6 +15,9 @@ struct TicketNumMsg
   Entry entry[2];
 };
 #pragma pack(pop)
+
+static_assert(sizeof(Entry) == 3, "Entry must be 3 bytes (IDA layout).");
+static_assert(sizeof(TicketNumMsg) == 10, "TicketNumMsg must be 10 bytes (IDA layout).");
 
 #pragma pack(push, 1)
 struct MerchantMoveMsg

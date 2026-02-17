@@ -411,10 +411,17 @@ void CTransportShip::SendMsg_TransportShipState(int n)
   type[0] = 33;
   type[1] = 1;
 
-  unsigned __int8 message[3]{};
+  unsigned __int8 message[7]{};
   message[0] = static_cast<unsigned __int8>(m_bAnchor);
   message[1] = static_cast<unsigned __int8>(m_bHurry);
   message[2] = m_byDirect;
+
+  DWORD passSec = 0;
+  if (n != -1)
+  {
+    passSec = timeGetTime() - m_dwEventCreateTime;
+  }
+  memcpy_0(&message[3], &passSec, sizeof(passSec));
 
   if (n == -1)
   {
@@ -423,14 +430,17 @@ void CTransportShip::SendMsg_TransportShipState(int n)
       CPlayer *player = &g_Player[index];
       if (player->m_bLive && static_cast<unsigned int>(player->m_Param.GetRaceCode()) == m_byRaceCode_Layer)
       {
-        g_Network.m_pProcess[0]->LoadSendMsg(index, type, reinterpret_cast<char *>(message), 7);
+        g_Network.m_pProcess[0]->LoadSendMsg(index, type, reinterpret_cast<char *>(message), sizeof(message));
       }
     }
   }
   else
   {
-    const DWORD elapsed = timeGetTime() - m_dwEventCreateTime;
-g_Network.m_pProcess[0]->LoadSendMsg(static_cast<unsigned int>(n), type, reinterpret_cast<char *>(message), 7);
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      static_cast<unsigned int>(n),
+      type,
+      reinterpret_cast<char *>(message),
+      sizeof(message));
   }
 }
 

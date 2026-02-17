@@ -29,6 +29,7 @@
 #include "CGuildRoomSystem.h"
 #include "CHonorGuild.h"
 #include "CHolyStoneSystem.h"
+#include "CPotionMgr.h"
 #include "guild_honor_set_request_clzo.h"
 #include "CMgrGuildHistory.h"
 #include "CMgrAvatorItemHistory.h"
@@ -124,6 +125,14 @@ int ClampToleranceValue(int value)
     return 100;
   }
   return value;
+}
+
+bool IsXmasSnowEffect(const _sf_continous *sfCont)
+{
+  return sfCont
+      && CPlayer::ms_pXmas_Snow_Effect
+      && sfCont->m_byEffectCode == 3
+      && sfCont->m_wEffectIndex == CPlayer::ms_pXmas_Snow_Effect->m_dwIndex;
 }
 
 #pragma pack(push, 1)
@@ -1526,6 +1535,84 @@ void CPlayer::SendMsg_InsertQuestItemInform(_STORAGE_LIST::_db_con *pItem)
 
   unsigned __int8 type[2] = {24, 15};
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x0Bu);
+}
+
+void CPlayer::SFContInsertMessage(
+  unsigned __int8 byContCode,
+  unsigned __int8 byListIndex,
+  bool bAuraSkill,
+  CPlayer *pPlayerAct)
+{
+  _sf_continous *sfCont = bAuraSkill ? &m_SFContAura[byContCode][byListIndex] : &m_SFCont[byContCode][byListIndex];
+
+  EquipItemSFAgent.StartContSF(sfCont);
+  if (IsXmasSnowEffect(sfCont))
+  {
+    m_bSnowMan = true;
+  }
+
+  if (pPlayerAct)
+  {
+    const char *playerName = pPlayerAct->m_Param.GetCharNameW();
+    const unsigned int playerSerial = pPlayerAct->m_Param.GetCharSerial();
+    const unsigned __int16 effectBit = static_cast<unsigned __int16>(CalcEffectBit(sfCont->m_byEffectCode, sfCont->m_wEffectIndex));
+    SendMsg_AddEffect(effectBit, sfCont->m_byLv, sfCont->m_wDurSec, playerSerial, const_cast<char *>(playerName));
+  }
+  else
+  {
+    const unsigned __int16 effectBit = static_cast<unsigned __int16>(CalcEffectBit(sfCont->m_byEffectCode, sfCont->m_wEffectIndex));
+    SendMsg_AddEffect(effectBit, sfCont->m_byLv, sfCont->m_wDurSec, 0u, nullptr);
+  }
+
+  if (m_pUserDB && !bAuraSkill)
+  {
+    m_pUserDB->Update_SFContInsert(
+      byContCode,
+      byListIndex,
+      sfCont->m_byEffectCode,
+      sfCont->m_wEffectIndex,
+      static_cast<unsigned __int8>(sfCont->m_byLv - 1),
+      sfCont->m_wDurSec);
+  }
+}
+
+void CPlayer::SFContDelMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, bool bSend, bool bAura)
+{
+  if (!m_bOper)
+  {
+    return;
+  }
+
+  if (bSend)
+  {
+    _sf_continous *sfCont = bAura ? &m_SFContAura[byContCode][byListIndex] : &m_SFCont[byContCode][byListIndex];
+
+    SendMsg_DelEffect(sfCont->m_byEffectCode, sfCont->m_wEffectIndex, sfCont->m_byLv);
+    EquipItemSFAgent.EndContSF(sfCont);
+    if (IsXmasSnowEffect(sfCont))
+    {
+      m_bSnowMan = false;
+    }
+
+    _base_fld *afterEffect = g_Main.m_tblEffectData[3].GetRecord("17");
+    if (afterEffect && sfCont->m_byEffectCode == 3 && sfCont->m_wEffectIndex == afterEffect->m_dwIndex)
+    {
+      m_bAfterEffect = false;
+    }
+  }
+
+  if (m_pUserDB && !bAura)
+  {
+    m_pUserDB->Update_SFContDelete(byContCode, byListIndex);
+  }
+}
+
+void CPlayer::SFContUpdateTimeMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, int nLeftTime)
+{
+  if (m_pUserDB && nLeftTime > 0)
+  {
+    m_pUserDB->Update_SFContUpdate(byContCode, byListIndex, static_cast<unsigned __int16>(nLeftTime));
+  }
 }
 
 void CPlayer::SendMsg_AddEffect(
@@ -14419,198 +14506,379 @@ void ApplyGaugeConsumeAndSendRecover(CPlayer *player, const unsigned __int16 *pw
 }
 } // namespace
 
+unsigned __int8 CPlayer::skill_process_for_item(int nSkillIndex, _CHRID *pidDst, int *pnLv)
+{
+  (void)nSkillIndex;
+  (void)pidDst;
+  (void)pnLv;
+  // this is not a stub
+  return 0;
+}
+
+void CPlayer::skill_process_for_aura(int nSkillIndex)
+{
+  _skill_fld *sourceSkill = reinterpret_cast<_skill_fld *>(g_Main.m_tblEffectData[0].GetRecord(nSkillIndex));
+  if (!sourceSkill || sourceSkill->m_nClass != 4)
+  {
+    return;
+  }
+
+  _skill_fld *auraSkill =
+    reinterpret_cast<_skill_fld *>(g_Main.m_tblEffectData[0].GetRecord(sourceSkill->m_strRangeEffCode));
+  if (!auraSkill)
+  {
+    return;
+  }
+
+  const bool beneficial = auraSkill->m_nContEffectType == 1;
+  CCharacter *targets[31]{};
+  const int affectedCount = static_cast<int>(_GetAreaEffectMember(
+    this,
+    beneficial,
+    sourceSkill->m_nBonusDistance,
+    m_fCurPos,
+    auraSkill->m_strActableDst,
+    targets));
+
+  unsigned __int8 errorCode[32]{};
+  bool upMastery = false;
+  for (int index = 0; index < affectedCount; ++index)
+  {
+    CCharacter *target = targets[index];
+    if (!target || target->m_ObjID.m_byKind || target->m_ObjID.m_byID)
+    {
+      continue;
+    }
+
+    CPlayer *targetPlayer = static_cast<CPlayer *>(target);
+    const unsigned int targetSerial = targetPlayer->m_Param.GetCharSerial();
+    const int raceCode = targetPlayer->m_Param.GetRaceCode();
+    const unsigned __int8 bossType =
+      CPvpUserAndGuildRankingSystem::Instance()->GetBossType(static_cast<unsigned __int8>(raceCode), targetSerial);
+    if (bossType != 4 && bossType != 8)
+    {
+      AssistSkill(target, 0, auraSkill, 7, errorCode, &upMastery);
+    }
+  }
+}
+
+unsigned __int8 CPlayer::skill_process(
+  int nEffectCode,
+  int nSkillIndex,
+  _CHRID *pidDst,
+  unsigned __int16 *pConsumeSerial,
+  int *pnLv)
+{
+  _skill_fld *skillField = reinterpret_cast<_skill_fld *>(g_Main.m_tblEffectData[nEffectCode].GetRecord(nSkillIndex));
+  unsigned __int16 gaugeCost[3]{};
+  int skillLevel = 1;
+  CCharacter *target = nullptr;
+  int classGrade[4]{};
+  classGrade[0] = -1;
+
+  if (nEffectCode)
+  {
+    if (nEffectCode == 2 && !m_Param.IsActableClassSkill(skillField->m_strCode, classGrade))
+    {
+      return 15;
+    }
+  }
+  else
+  {
+    if (skillField->m_nMastIndex > 8u)
+    {
+      return 8;
+    }
+    if (!_pre_check_skill_enable(skillField))
+    {
+      return 21;
+    }
+    if (!_pre_check_skill_gradelimit(skillField))
+    {
+      return 34;
+    }
+    if (skillField->m_nClass == 4 && (IsChaosMode() || IsPunished(1u, false)))
+    {
+      return 35;
+    }
+  }
+
+  if ((nEffectCode == 0 || nEffectCode == 2) && m_bInGuildBattle && m_bTakeGravityStone)
+  {
+    return 27;
+  }
+
+  unsigned __int8 masteryIndex = static_cast<unsigned __int8>(-1);
+  if (nEffectCode)
+  {
+    if (nEffectCode == 2)
+    {
+      masteryIndex = static_cast<unsigned __int8>(classGrade[0]);
+    }
+  }
+  else
+  {
+    if (skillField->m_nMastIndex < 8u)
+    {
+      masteryIndex = static_cast<unsigned __int8>(skillField->m_nMastIndex);
+    }
+    if (skillField->m_nClass == 2)
+    {
+      masteryIndex = static_cast<unsigned __int8>(-1);
+    }
+  }
+
+  if (!m_bSFDelayNotCheck
+      && !_ATTACK_DELAY_CHECKER::IsDelay(
+        &m_AttDelayChker,
+        static_cast<unsigned __int8>(nEffectCode),
+        static_cast<unsigned __int16>(skillField->m_dwIndex),
+        masteryIndex))
+  {
+    return 9;
+  }
+
+  if (skillField->m_nTempEffectType >= 150)
+  {
+    return 21;
+  }
+  if (skillField->m_nContEffectType == 1 && m_EP.GetEff_State(2))
+  {
+    return 7;
+  }
+  if (IsRidingUnit())
+  {
+    return 14;
+  }
+  if (static_cast<unsigned int>(m_Param.GetRaceCode()) == 2 && IsActingSiegeMode())
+  {
+    return 21;
+  }
+  if (m_dwSelfDestructionTime)
+  {
+    return 26;
+  }
+
+  target = reinterpret_cast<CCharacter *>(g_Main.GetObjectA(0, pidDst->byID, pidDst->wIndex));
+  if (!target)
+  {
+    return 2;
+  }
+  if (!IsEffectableDst(skillField->m_strActableDst, target))
+  {
+    return 5;
+  }
+  if (!target->m_bLive)
+  {
+    return 2;
+  }
+  if (skillField->m_nTempEffectType == -1 && skillField->m_nContEffectType == -1)
+  {
+    return 8;
+  }
+  if (skillField->m_nContEffectType != -1 && !target->IsRecvableContEffect())
+  {
+    return 13;
+  }
+  if (target->m_EP.GetEff_State(20))
+  {
+    if (skillField->m_nTempEffectType == -1 || !IsUsableTempEffectAtStoneState(skillField->m_nTempEffectType))
+    {
+      return 24;
+    }
+  }
+  if (target->m_EP.GetEff_State(28))
+  {
+    return 24;
+  }
+  if (m_EP.GetEff_State(21))
+  {
+    return 25;
+  }
+  if (!skillField->m_nContEffectType && !IsAttackableInTown() && !target->IsAttackableInTown())
+  {
+    if (IsInTown() || target->IsInTown())
+    {
+      return 18;
+    }
+    if (m_Param.m_pGuild
+        && CGuildRoomSystem::GetInstance()->IsGuildRoomMemberIn(
+          m_Param.m_pGuild->m_dwSerial,
+          m_ObjID.m_wIndex,
+          m_pUserDB->m_dwSerial))
+    {
+      return 18;
+    }
+  }
+
+  if (!nEffectCode)
+  {
+    if (skillField->m_nClass == 2)
+    {
+      const unsigned __int8 equipSkillError = EquipItemSFAgent.IsEnableSkill(skillField);
+      if (equipSkillError)
+      {
+        return equipSkillError;
+      }
+    }
+    else
+    {
+      if (!IsSFUsableSFMastery(3u, skillField->m_nMastIndex))
+      {
+        return 3;
+      }
+      if (!IsSFActableByClass(0, skillField))
+      {
+        return 16;
+      }
+    }
+  }
+
+  if (m_byMoveType == 2)
+  {
+    return 28;
+  }
+  if (!IsSFUseableRace(static_cast<unsigned __int8>(nEffectCode), static_cast<unsigned __int16>(skillField->m_dwIndex)))
+  {
+    return 4;
+  }
+  if (!IsSFUsableGauge(
+        static_cast<unsigned __int8>(nEffectCode),
+        static_cast<unsigned __int16>(skillField->m_dwIndex),
+        gaugeCost))
+  {
+    return 6;
+  }
+
+  _STORAGE_LIST::_db_con *consumeItems[3]{};
+  int consumeCount[3]{};
+  bool overlap[3]{};
+  if (!GetUseConsumeItem(skillField->m_ConsumeItemList, pConsumeSerial, consumeItems, consumeCount, overlap))
+  {
+    return 32;
+  }
+
+  if (!nEffectCode)
+  {
+    const float totalSkillLevel = static_cast<float>(m_pmMst.GetSkillLv(static_cast<unsigned __int8>(nSkillIndex)))
+      + m_EP.GetEff_Plus(19);
+    skillLevel = static_cast<int>(totalSkillLevel);
+    if (skillLevel > 7)
+    {
+      skillLevel = 7;
+    }
+  }
+  if (pnLv)
+  {
+    *pnLv = skillLevel;
+  }
+
+  unsigned __int8 errorCode = 0;
+  bool upMastery = false;
+  const bool assistSuccess = AssistSkill(target, nEffectCode, skillField, skillLevel, &errorCode, &upMastery) != 0;
+  if (assistSuccess)
+  {
+    if (upMastery && !IsInTown())
+    {
+      bool inGuildRoom = false;
+      if (m_Param.m_pGuild)
+      {
+        inGuildRoom = CGuildRoomSystem::GetInstance()->IsGuildRoomMemberIn(
+          m_Param.m_pGuild->m_dwSerial,
+          m_ObjID.m_wIndex,
+          m_pUserDB->m_dwSerial);
+      }
+
+      if (!inGuildRoom
+          && skillField->m_nClass != 2
+          && skillField->m_nClass != 4
+          && !nEffectCode
+          && skillField->m_nMastIndex < 8u)
+      {
+        unsigned int alterValue = 1;
+        if (skillField->m_nClass == 1)
+        {
+          alterValue = 2;
+        }
+
+        if (GetObjRace() != target->GetObjRace() || !IsChaosMode() || skillField->m_nContEffectType)
+        {
+          if (GetObjRace() != target->GetObjRace() || target->m_ObjID.m_byID)
+          {
+            Emb_AlterStat(
+              3u,
+              static_cast<unsigned __int8>(skillField->m_dwIndex),
+              static_cast<int>(alterValue),
+              0,
+              "CPlayer::skill_process()---0",
+              true);
+          }
+          else
+          {
+            CPlayer *targetPlayer = static_cast<CPlayer *>(target);
+            if (!targetPlayer->IsPunished(1u, false))
+            {
+              Emb_AlterStat(
+                3u,
+                static_cast<unsigned __int8>(skillField->m_dwIndex),
+                static_cast<int>(alterValue),
+                0,
+                "CPlayer::skill_process()---0",
+                true);
+            }
+          }
+        }
+      }
+    }
+
+    if (skillField->m_nClass == 4)
+    {
+      m_tmrAuraSkill.BeginTimer(0x1388u);
+      skill_process_for_aura(static_cast<int>(skillField->m_dwIndex));
+    }
+
+    for (int paramCode = 0; paramCode < 3; ++paramCode)
+    {
+      if (!gaugeCost[paramCode])
+      {
+        continue;
+      }
+
+      const int currentGauge = GetGauge(paramCode);
+      const int nextGauge = (currentGauge - gaugeCost[paramCode] > 0) ? (currentGauge - gaugeCost[paramCode]) : 0;
+      SetGauge(paramCode, nextGauge, true);
+    }
+
+    SendMsg_Recover();
+    DeleteUseConsumeItem(consumeItems, consumeCount, overlap);
+    const float addDelay = m_EP.GetEff_Plus(12);
+    _ATTACK_DELAY_CHECKER::SetDelay(&m_AttDelayChker, static_cast<unsigned int>(skillField->m_fActDelay + addDelay));
+  }
+
+  return errorCode;
+}
+
 void CPlayer::pc_SkillRequest(unsigned __int8 bySkillIndex, _CHRID *pidDst, unsigned __int16 *pConsumeSerial)
 {
-  unsigned __int8 byErrCode = 0;
-  unsigned __int8 sfLevel = 1;
-  bool hadStealth = GetStealth(true);
-
-  _skill_fld *skillFld = reinterpret_cast<_skill_fld *>(g_Main.m_tblEffectData[0].GetRecord(bySkillIndex));
-  CCharacter *target = GetLiveTargetInSameMap(this, pidDst);
-  unsigned __int16 delPoint[3]{};
-  _STORAGE_LIST::_db_con *consumeItems[3]{};
-  int consumeCounts[3]{};
-  bool consumeOverlap[3]{};
-
-  if (!skillFld)
-  {
-    byErrCode = 1;
-  }
-  else if (!target)
-  {
-    byErrCode = 2;
-  }
-  else if (skillFld->m_nTempEffectType >= 150)
-  {
-    byErrCode = 21;
-  }
-  else if (skillFld->m_nTempEffectType == -1 && skillFld->m_nContEffectType == -1)
-  {
-    byErrCode = 8;
-  }
-  else if (!IsEffectableDst(skillFld->m_strActableDst, target))
-  {
-    byErrCode = 5;
-  }
-  else if (skillFld->m_nContEffectType != -1 && !target->IsRecvableContEffect())
-  {
-    byErrCode = 13;
-  }
-  else if (skillFld->m_nContEffectType == 0 && !IsAttackableInTown() && !target->IsAttackableInTown())
-  {
-    const bool inGuildRoom = m_Param.m_pGuild
-      && CGuildRoomSystem::GetInstance()->IsGuildRoomMemberIn(
-        m_Param.m_pGuild->m_dwSerial,
-        m_ObjID.m_wIndex,
-        m_pUserDB->m_dwSerial);
-    if (IsInTown() || target->IsInTown() || inGuildRoom)
-    {
-      byErrCode = 18;
-    }
-  }
-
-  if (!byErrCode && !m_bSFDelayNotCheck
-      && !_ATTACK_DELAY_CHECKER::IsDelay(&m_AttDelayChker, 0u, skillFld->m_dwIndex, skillFld->m_nMastIndex))
-  {
-    byErrCode = 9;
-  }
-  if (!byErrCode && !IsSFUsableGauge(0u, static_cast<unsigned __int16>(skillFld->m_dwIndex), delPoint))
-  {
-    byErrCode = 6;
-  }
-  if (!byErrCode && !IsSFUsableSFMastery(3u, skillFld->m_nMastIndex))
-  {
-    byErrCode = 3;
-  }
-  if (!byErrCode && !IsSFActableByClass(0u, reinterpret_cast<_base_fld *>(skillFld)))
-  {
-    byErrCode = 16;
-  }
-  if (!byErrCode && !GetUseConsumeItem(skillFld->m_ConsumeItemList, pConsumeSerial, consumeItems, consumeCounts, consumeOverlap))
-  {
-    byErrCode = 32;
-  }
-
-  if (!byErrCode)
-  {
-    sfLevel = m_pmMst.GetSkillLv(static_cast<unsigned __int8>(skillFld->m_dwIndex));
-    if (sfLevel == 0)
-    {
-      sfLevel = 1;
-    }
-
-    bool upMastery = false;
-    unsigned __int8 assistErr = 0;
-    const bool success = AssistSkill(target, 0u, skillFld, sfLevel, &assistErr, &upMastery) != 0;
-    byErrCode = assistErr;
-
-    if (success)
-    {
-      ApplyGaugeConsumeAndSendRecover(this, delPoint);
-      DeleteUseConsumeItem(consumeItems, consumeCounts, consumeOverlap);
-      const float addDelay = m_EP.GetEff_Plus(12);
-      _ATTACK_DELAY_CHECKER::SetDelay(
-        &m_AttDelayChker,
-        static_cast<unsigned int>(skillFld->m_fActDelay + addDelay));
-    }
-  }
-
-  if ((byErrCode == 0 || byErrCode == 100) && hadStealth)
+  int skillLevel = 1;
+  const bool wasStealth = GetStealth(true);
+  const unsigned __int8 errCode = skill_process(0, bySkillIndex, pidDst, pConsumeSerial, &skillLevel);
+  if ((!errCode || errCode == 100) && wasStealth)
   {
     BreakStealth();
   }
-  this->SendMsg_SkillResult(byErrCode, pidDst, bySkillIndex, sfLevel);
+  SendMsg_SkillResult(errCode, pidDst, bySkillIndex, skillLevel);
 }
 
 void CPlayer::pc_ClassSkillRequest(unsigned __int16 wSkillIndex, _CHRID *pidDst, unsigned __int16 *pConsumeSerial)
 {
-  unsigned __int8 byErrCode = 0;
-  bool hadStealth = GetStealth(true);
-
-  _skill_fld *skillFld = reinterpret_cast<_skill_fld *>(g_Main.m_tblEffectData[2].GetRecord(wSkillIndex));
-  CCharacter *target = GetLiveTargetInSameMap(this, pidDst);
-  unsigned __int16 delPoint[3]{};
-  _STORAGE_LIST::_db_con *consumeItems[3]{};
-  int consumeCounts[3]{};
-  bool consumeOverlap[3]{};
-
-  if (!skillFld)
-  {
-    byErrCode = 1;
-  }
-  else if (!target)
-  {
-    byErrCode = 2;
-  }
-  else if (skillFld->m_nTempEffectType >= 150)
-  {
-    byErrCode = 21;
-  }
-  else if (skillFld->m_nTempEffectType == -1 && skillFld->m_nContEffectType == -1)
-  {
-    byErrCode = 8;
-  }
-  else if (!IsEffectableDst(skillFld->m_strActableDst, target))
-  {
-    byErrCode = 5;
-  }
-  else if (skillFld->m_nContEffectType != -1 && !target->IsRecvableContEffect())
-  {
-    byErrCode = 13;
-  }
-  else if (skillFld->m_nContEffectType == 0 && !IsAttackableInTown() && !target->IsAttackableInTown())
-  {
-    const bool inGuildRoom = m_Param.m_pGuild
-      && CGuildRoomSystem::GetInstance()->IsGuildRoomMemberIn(
-        m_Param.m_pGuild->m_dwSerial,
-        m_ObjID.m_wIndex,
-        m_pUserDB->m_dwSerial);
-    if (IsInTown() || target->IsInTown() || inGuildRoom)
-    {
-      byErrCode = 18;
-    }
-  }
-
-  if (!byErrCode && !m_bSFDelayNotCheck
-      && !_ATTACK_DELAY_CHECKER::IsDelay(&m_AttDelayChker, 2u, skillFld->m_dwIndex, skillFld->m_nMastIndex))
-  {
-    byErrCode = 9;
-  }
-  if (!byErrCode && !IsSFUsableGauge(2u, static_cast<unsigned __int16>(skillFld->m_dwIndex), delPoint))
-  {
-    byErrCode = 6;
-  }
-  if (!byErrCode && !IsSFActableByClass(2u, reinterpret_cast<_base_fld *>(skillFld)))
-  {
-    byErrCode = 16;
-  }
-  if (!byErrCode && !GetUseConsumeItem(skillFld->m_ConsumeItemList, pConsumeSerial, consumeItems, consumeCounts, consumeOverlap))
-  {
-    byErrCode = 32;
-  }
-
-  if (!byErrCode)
-  {
-    bool upMastery = false;
-    unsigned __int8 assistErr = 0;
-    const bool success = AssistSkill(target, 2u, skillFld, 1, &assistErr, &upMastery) != 0;
-    byErrCode = assistErr;
-    if (success)
-    {
-      ApplyGaugeConsumeAndSendRecover(this, delPoint);
-      DeleteUseConsumeItem(consumeItems, consumeCounts, consumeOverlap);
-      const float addDelay = m_EP.GetEff_Plus(12);
-      _ATTACK_DELAY_CHECKER::SetDelay(
-        &m_AttDelayChker,
-        static_cast<unsigned int>(skillFld->m_fActDelay + addDelay));
-    }
-  }
-
-  if ((byErrCode == 0 || byErrCode == 100) && hadStealth)
+  const bool wasStealth = GetStealth(true);
+  const unsigned __int8 errCode = skill_process(2, wSkillIndex, pidDst, pConsumeSerial, nullptr);
+  if ((!errCode || errCode == 100) && wasStealth)
   {
     BreakStealth();
   }
-  this->SendMsg_ClassSkillResult(byErrCode, pidDst, wSkillIndex);
+  SendMsg_ClassSkillResult(errCode, pidDst, wSkillIndex);
 }
 
 void CPlayer::pc_ForceRequest(unsigned __int16 wForceSerial, _CHRID *pidDst, unsigned __int16 *pConsumeSerial)
@@ -16760,6 +17028,91 @@ void CPlayer::Loop()
     }
   }
 
+  LendItemSheet *lendSheet = LendItemMng::Instance()->GetSheet(m_ObjID.m_wIndex);
+  if (lendSheet)
+  {
+    const int lendCheckResult = static_cast<int>(lendSheet->CheckTime());
+    if (lendCheckResult)
+    {
+      g_Main.m_logSystemError.Write(
+        "Lend item error : %s >> CheckTime(%d)",
+        m_Param.GetCharNameW(),
+        lendCheckResult);
+    }
+  }
+
+  g_PotionMgr.UpdatePotionContEffect(this);
+
+  if (m_bUpCheckEquipEffect)
+  {
+    for (int effectIndex = 0; effectIndex < 15; ++effectIndex)
+    {
+      if (m_byEffectEquipCode[effectIndex] != 2)
+      {
+        continue;
+      }
+
+      _STORAGE_LIST::_db_con *item = nullptr;
+      if (effectIndex >= 8)
+      {
+        item = &m_Param.m_dbEmbellish.m_pStorageList[effectIndex - 8];
+      }
+      else
+      {
+        item = &m_Param.m_dbEquip.m_pStorageList[effectIndex];
+      }
+
+      if (!item->m_bLoad || !IsEffectableEquip(item))
+      {
+        continue;
+      }
+
+      SetEquipEffect(item, true);
+      m_byEffectEquipCode[effectIndex] = 1;
+      if (item->m_byTableCode == 6 && !IsRidingUnit())
+      {
+        m_pmWpn.FixWeapon(item);
+      }
+    }
+
+    m_bUpCheckEquipEffect = false;
+  }
+
+  if (m_bDownCheckEquipEffect)
+  {
+    for (int effectIndex = 0; effectIndex < 15; ++effectIndex)
+    {
+      if (m_byEffectEquipCode[effectIndex] != 1)
+      {
+        continue;
+      }
+
+      _STORAGE_LIST::_db_con *item = nullptr;
+      if (effectIndex >= 8)
+      {
+        item = &m_Param.m_dbEmbellish.m_pStorageList[effectIndex - 8];
+      }
+      else
+      {
+        item = &m_Param.m_dbEquip.m_pStorageList[effectIndex];
+      }
+
+      if (!item->m_bLoad || IsEffectableEquip(item))
+      {
+        continue;
+      }
+
+      SetEquipEffect(item, false);
+      m_byEffectEquipCode[effectIndex] = 2;
+      if (item->m_byTableCode == 6 && !IsRidingUnit())
+      {
+        m_pmWpn.FixWeapon(nullptr);
+      }
+    }
+
+    m_bDownCheckEquipEffect = false;
+  }
+
   if (m_byNextRecallReturn != 0xFF)
   {
     _AnimusReturn(m_byNextRecallReturn);
@@ -16881,6 +17234,68 @@ void CPlayer::OutOfSec()
   }
 
   m_bOutOfMap = true;
+}
+
+void CPlayer::RecvKillMessage(CCharacter *pDier)
+{
+  if (!pDier)
+  {
+    return;
+  }
+
+  if (pDier->m_ObjID.m_byID)
+  {
+    if (pDier->m_ObjID.m_byID != 1)
+    {
+      return;
+    }
+
+    CMonster *deadMonster = static_cast<CMonster *>(pDier);
+    m_QuestMgr.CheckFailLoop(3, deadMonster->m_pRecordSet->m_strCode);
+
+    if (m_pUserDB && CActionPointSystemMgr::Instance()->GetEventStatus(1u) == 2)
+    {
+      const int killerLevel = static_cast<int>(m_Param.GetLevel());
+      const int deadLevel = static_cast<int>(deadMonster->GetLevel());
+      if (std::abs(killerLevel - deadLevel) < 10)
+      {
+        const unsigned int currentPoint = m_pUserDB->GetActPoint(1u);
+        unsigned int addPoint = 0;
+        if (deadMonster->m_pMonRec && deadMonster->m_pMonRec->m_nKillPoint > 0)
+        {
+          addPoint = static_cast<unsigned int>(deadMonster->m_pMonRec->m_nKillPoint);
+        }
+        const unsigned int nextPoint = currentPoint + addPoint;
+        m_pUserDB->Update_User_Action_Point(1u, nextPoint);
+        SendMsg_Alter_Action_Point(1u, nextPoint);
+      }
+    }
+
+    bool handledByDarkHole = false;
+    if (m_pDHChannel && deadMonster->m_pMonRec)
+    {
+      handledByDarkHole =
+        m_pDHChannel->CheckEvent(dh_event_hunt, 255, static_cast<int>(deadMonster->m_pMonRec->m_dwIndex), 1, deadMonster)
+        != 0;
+    }
+
+    if (!handledByDarkHole)
+    {
+      Emb_CheckActForQuest(3, deadMonster->m_pRecordSet->m_strCode, 1u, false);
+      if (m_pPartyMgr->IsPartyMode())
+      {
+        Emb_CheckActForQuestParty(3, deadMonster->m_pRecordSet->m_strCode, 1u);
+      }
+    }
+    return;
+  }
+
+  CPlayer *deadPlayer = static_cast<CPlayer *>(pDier);
+  char *raceCode = cvt_string(deadPlayer->m_Param.GetRaceCode());
+  if (!Emb_CreateQuestEvent(quest_happen_type_pk, raceCode))
+  {
+    Emb_CheckActForQuest(2, raceCode, 1u, false);
+  }
 }
 
 void CPlayer::SendMsg_FixPosition(int n)

@@ -43,6 +43,8 @@ struct _qry_case_all_store_limit_item
   void DataInit();
 };
 
+struct _StoreList_fld;
+
 /* 5781 */
 class __cppobj CItemStoreManager
 {
@@ -85,6 +87,8 @@ public:
 
   CMapItemStoreList *GetMapItemStoreListByNum(int nMapNum);
   CItemStore *GetMapItemStoreFromList(int nMapNum, int nStoreNum);
+  bool IsStorePointerValid(const CItemStore *store) const;
+  bool IsStoreRecordPointerValid(const _StoreList_fld *record) const;
 
   CLogFile *m_pkLogger;
   CMyTimer m_tmrCheckTime;

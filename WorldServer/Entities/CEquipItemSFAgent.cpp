@@ -151,6 +151,38 @@ char CEquipItemSFAgent::GetRequireSFSlot(_requireSlot *pSlot, _skill_fld *pSkill
   return 1;
 }
 
+unsigned __int8 CEquipItemSFAgent::IsEnableSkill(_skill_fld *pSkill)
+{
+  if (!pSkill)
+  {
+    return 0;
+  }
+
+  if (pSkill->m_strFixWeapon[12] == '1')
+  {
+    return IsEnableSkill(7, pSkill);
+  }
+
+  return 0;
+}
+
+unsigned __int8 CEquipItemSFAgent::IsEnableSkill(int nEquipTblIndex, _skill_fld *pSkill)
+{
+  (void)pSkill;
+
+  if (!GetEquip(static_cast<unsigned int>(nEquipTblIndex)))
+  {
+    return 22;
+  }
+
+  if (nEquipTblIndex == 7 && m_pMaster && m_pMaster->m_byModeType)
+  {
+    return 13;
+  }
+
+  return 0;
+}
+
 void CEquipItemSFAgent::SetSFCont(unsigned int nEquipTblIndex, _sf_continous *pSF)
 {
   if (nEquipTblIndex >= 8)

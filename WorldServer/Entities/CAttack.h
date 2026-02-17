@@ -91,13 +91,13 @@ extern float fR_1;
 extern float fRLf_1;
 extern float fRMf_1;
 
-extern int s_nLimitDist[8];
-extern int s_nLimitRadius[8];
+extern int s_nLimitDist[4];
+extern int s_nLimitRadius[4];
 extern int s_nLimitAngle[2][8];
-extern int s_nLimitRadius_0[16];
+extern int s_nLimitRadius_0[4];
 extern int s_nLimitAngle_0;
 extern int s_nLimitAngle_1;
 
-extern int s_Mon_nLimitDist[8];
-extern int s_Mon_nLimitRadius[8];
+extern int s_Mon_nLimitDist[4];
+extern int s_Mon_nLimitRadius[4];
 extern int s_Mon_nLimitAngle[2][8];

@@ -16199,6 +16199,20 @@ char CPlayer::IsSFUsableGauge(unsigned __int8 byEffectCode, unsigned __int16 wEf
   return 1;
 }
 
+char CPlayer::IsSFUseableRace(unsigned __int8 byEffectCode, unsigned __int16 wEffectIndex)
+{
+  const unsigned __int8 raceSexCode = m_Param.GetRaceSexCode();
+
+  if (byEffectCode == 0 || byEffectCode == 2 || byEffectCode == 3)
+  {
+    _base_fld *record = g_Main.m_tblEffectData[byEffectCode].GetRecord(wEffectIndex);
+    return record[5].m_strCode[raceSexCode + 4] == '1';
+  }
+
+  _base_fld *record = g_Main.m_tblEffectData[byEffectCode].GetRecord(wEffectIndex);
+  return record[5].m_strCode[raceSexCode + 4] == '1';
+}
+
 char CPlayer::IsSFUsableSFMastery(unsigned __int8 byMasteryCode, int nMasteryIndex)
 {
   if (nMasteryIndex < 0)
@@ -16498,12 +16512,12 @@ char CPlayer::_pre_check_normal_attack(
       bool hasActive = false;
       for (int j = 0; j < 4; ++j)
       {
-        void *effect = m_Param.m_ppHistoryEffect[j];
-        if (!effect)
+        _class_fld *historyClass = *m_Param.m_ppHistoryEffect[j];
+        if (!historyClass)
         {
           break;
         }
-        if (*reinterpret_cast<int *>(reinterpret_cast<char *>(effect) + 1444))
+        if (*reinterpret_cast<int *>(reinterpret_cast<char *>(historyClass) + 1444))
         {
           hasActive = true;
           break;
@@ -17337,12 +17351,12 @@ char CPlayer::_pre_check_siege_attack(
       bool hasActive = false;
       for (int j = 0; j < 4; ++j)
       {
-        void *effect = m_Param.m_ppHistoryEffect[j];
-        if (!effect)
+        _class_fld *historyClass = *m_Param.m_ppHistoryEffect[j];
+        if (!historyClass)
         {
           break;
         }
-        if (*reinterpret_cast<int *>(reinterpret_cast<char *>(effect) + 1444))
+        if (*reinterpret_cast<int *>(reinterpret_cast<char *>(historyClass) + 1444))
         {
           hasActive = true;
           break;

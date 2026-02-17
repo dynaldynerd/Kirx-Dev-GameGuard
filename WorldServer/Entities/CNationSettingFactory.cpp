@@ -74,7 +74,9 @@ bool CNationSettingFactory::RegistCheatTableUnion(CNationSettingData *pkData)
   if (!RegistCheat(pkData, "repo", ct_report_position, 28, 7))
     return false;
   if (!RegistCheat(pkData, "xyz", ct_report_position, 28, 7))
-    return false;
+      return false;
+  if (!RegistCheat(pkData, "debug", ct_debug, 28, 7))
+      return false;
   if (!RegistCheat(pkData, "alex", ct_alter_exp, 28, 7))
     return false;
   if (!RegistCheat(pkData, "altexp", ct_alter_exp, 28, 7))

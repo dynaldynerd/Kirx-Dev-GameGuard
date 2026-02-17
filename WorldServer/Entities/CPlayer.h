@@ -2166,6 +2166,13 @@ public:
     unsigned int dwPlayerSerial,
     char *wszPlayerName);
   void SendMsg_DelEffect(unsigned __int8 byEffectCode, unsigned __int16 wEffectIndex, unsigned __int8 byLv);
+  void SFContInsertMessage(
+    unsigned __int8 byContCode,
+    unsigned __int8 byListIndex,
+    bool bAuraSkill,
+    CPlayer *pPlayerAct);
+  void SFContDelMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, bool bSend, bool bAura) override;
+  void SFContUpdateTimeMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, int nLeftTime) override;
   void SendMsg_DTradeAskInform(CPlayer *pAsker);
   void SendMsg_DTradeAnswerResult(char byErrCode);
   void SendMsg_DTradeStartInform(CPlayer *pAsker, CPlayer *pAnswer, unsigned int *pdwKey);
@@ -2267,12 +2274,21 @@ public:
   bool _pre_check_in_guild_battle_race(CPlayer *pDst, bool bEqueal);
   _STORAGE_LIST::_db_con *IsBulletValidity(unsigned __int16 wBulletSerial);
   _STORAGE_LIST::_db_con *IsEffBulletValidity(unsigned __int16 wEffBulletSerial);
+  char IsSFUseableRace(unsigned __int8 byEffectCode, unsigned __int16 wEffectIndex);
   char IsSFUsableGauge(unsigned __int8 byEffectCode, unsigned __int16 wEffectIndex, unsigned __int16 *pwDelPoint);
   char IsSFUsableSFMastery(unsigned __int8 byMasteryCode, int nMasteryIndex);
   char IsSFActableByClass(unsigned __int8 byEffectCode, _base_fld *pSFFld);
   unsigned __int8 _GetPartyMemberInCircle(CPlayer **out_ppMember, int nMax, bool bOne);
   bool _pre_check_skill_enable(_skill_fld *pSkillFld);
   char _pre_check_skill_gradelimit(_skill_fld *pSkillFld);
+  unsigned __int8 skill_process(
+    int nEffectCode,
+    int nSkillIndex,
+    _CHRID *pidDst,
+    unsigned __int16 *pConsumeSerial,
+    int *pnLv);
+  void skill_process_for_aura(int nSkillIndex);
+  unsigned __int8 skill_process_for_item(int nSkillIndex, _CHRID *pidDst, int *pnLv);
   void make_gen_attack_param(
     CCharacter *pDst,
     unsigned __int8 byPart,
@@ -2441,6 +2457,7 @@ public:
   bool Is_Battle_Mode() override;
   void Loop() override;
   void OutOfSec() override;
+  void RecvKillMessage(CCharacter *pDier) override;
   void SendMsg_FixPosition(int n) override;
   void SendMsg_RealMovePoint(int n) override;
   void SendMsg_SetHPInform() override;

@@ -123,6 +123,11 @@ void CGameObject::SFContInsertMessage(unsigned __int8 /*byContCode*/, unsigned _
   // this is not a stub
 }
 
+void CGameObject::SFContUpdateTimeMessage(unsigned __int8 /*byContCode*/, unsigned __int8 /*byListIndex*/, int /*nLeftTime*/)
+{
+  // this is not a stub
+}
+
 bool CGameObject::IsAttackableInTown()
 {
   // this is not a stub

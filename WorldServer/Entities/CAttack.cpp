@@ -25,26 +25,32 @@
 CRecordData *CAttack::s_pSkillData = nullptr;
 _attack_param CAttack::s_DefParam = {};
 
-float fR = 0.0f;
-float fRLf = 0.0f;
-float fRMf = 0.0f;
-float fR_0 = 0.0f;
-float fRLf_0 = 0.0f;
-float fRMf_0 = 0.0f;
-float fR_1 = 0.0f;
-float fRLf_1 = 0.0f;
-float fRMf_1 = 0.0f;
+float fR = 0.847f;
+float fRLf = 0.86472f;
+float fRMf = 0.28824f;
+float fR_0 = 0.847f;
+float fRLf_0 = 0.86472f;
+float fRMf_0 = 0.28824f;
+float fR_1 = 0.847f;
+float fRLf_1 = 0.86472f;
+float fRMf_1 = 0.28824f;
 
-int s_nLimitDist[8] = {};
-int s_nLimitRadius[8] = {};
-int s_nLimitAngle[2][8] = {};
-int s_nLimitRadius_0[16] = {};
-int s_nLimitAngle_0 = 0;
-int s_nLimitAngle_1 = 0;
+int s_nLimitDist[4] = {42, 56, 70, 84};
+int s_nLimitRadius[4] = {42, 56, 70, 84};
+int s_nLimitAngle[2][8] = {
+  {180, 180, 180, 180, 180, 180, 180, 180},
+  {180, 180, 180, 180, 180, 180, 180, 180},
+};
+int s_nLimitRadius_0[4] = {42, 56, 70, 84};
+int s_nLimitAngle_0 = 180;
+int s_nLimitAngle_1 = 180;
 
-int s_Mon_nLimitDist[8] = {};
-int s_Mon_nLimitRadius[8] = {};
-int s_Mon_nLimitAngle[2][8] = {};
+int s_Mon_nLimitDist[4] = {42, 56, 70, 84};
+int s_Mon_nLimitRadius[4] = {42, 56, 70, 84};
+int s_Mon_nLimitAngle[2][8] = {
+  {180, 180, 180, 180, 180, 180, 180, 180},
+  {180, 180, 180, 180, 180, 180, 180, 180},
+};
 
 _attack_param::_attack_param()
 {

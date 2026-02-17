@@ -184,6 +184,7 @@ public:
     unsigned __int16 wSubIndex,
     unsigned __int16 wRandIndex,
     unsigned int nSendTargetIndex);
+  void ClearEmotionPresentation();
   void CheckEmotionPresentation();
   void CheckLootItem(CPlayer *pOwner);
   char AddEventItem(_event_loot_item *pItem);

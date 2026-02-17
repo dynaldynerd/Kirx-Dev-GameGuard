@@ -25,6 +25,7 @@ extern bool __fastcall ct_change_mastery(CPlayer *pOne);
 extern bool __fastcall ct_all_item_muzi(CPlayer *pOne);
 extern bool __fastcall ct_report_cri_hp(CPlayer *pOne);
 extern bool __fastcall ct_report_position(CPlayer *pOne);
+extern bool ct_debug(CPlayer* pOne);
 extern bool __fastcall ct_alter_exp(CPlayer *pOne);
 extern bool __fastcall ct_all_map(CPlayer *pOne);
 extern bool __fastcall ct_jump_to_pos(CPlayer *pOne);

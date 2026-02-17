@@ -298,6 +298,7 @@ if (!pHFS)
   }
 
   Us_HFSM *hfs = pHFS;
+  CMonsterAI *ai = static_cast<CMonsterAI *>(hfs);
   CMonster *mon = static_cast<CMonster *>(pHFS->GetObjectA());
   if (!mon || !mon->m_bLive)
   {
@@ -309,18 +310,13 @@ if (!pHFS)
   pHFS->SendMsg(7u, 0x21u, nullptr);
   pHFS->SendMsg(6u, 0x1Du, nullptr);
 
-  Us_FSM_Node *parentNode = hfs[1].m_ArNode[0].m_pParent;
-  if (parentNode)
+  CMonster *assistMon = ai->m_pAsistMonster;
+  if (assistMon && assistMon->m_bLive)
   {
-    const unsigned char lowByte = *reinterpret_cast<unsigned char *>(&parentNode[1].m_pParent);
-    if (lowByte)
+    CCharacter *target = assistMon->GetAttackTarget();
+    if (target)
     {
-      CMonster *parentMon = reinterpret_cast<CMonster *>(parentNode);
-      CCharacter *target = parentMon->GetAttackTarget();
-      if (target)
-      {
-        hfs->SendMsg(1u, 0x1Cu, target);
-      }
+      hfs->SendMsg(1u, 0x1Cu, target);
     }
   }
 
@@ -524,8 +520,8 @@ if (!pHFS)
     return;
   }
 
-  unsigned char *objBytes = static_cast<unsigned char *>(pHFS->GetObjectA());
-  if (objBytes && objBytes[24])
+  CMonster *mon = static_cast<CMonster *>(pHFS->GetObjectA());
+  if (mon && mon->m_bLive)
   {
     pHFS->SendMsg(6u, 0x26u, nullptr);
   }
@@ -569,6 +565,7 @@ if (!pHFS)
   }
 
   Us_HFSM *hfs = pHFS;
+  CMonsterAI *ai = static_cast<CMonsterAI *>(hfs);
   CMonster *mon = static_cast<CMonster *>(pHFS->GetObjectA());
   if (!mon || !mon->m_bLive)
   {
@@ -613,15 +610,13 @@ if (!pHFS)
     }
     else
     {
-      if (DfAIMgr::SearchCharacterPath(static_cast<CMonsterAI *>(hfs), mon, target))
+      if (DfAIMgr::SearchCharacterPath(ai, mon, target))
       {
-        unsigned int *hiword = reinterpret_cast<unsigned int *>(&hfs[1].m_ArNode[9].m_pParent);
-        hiword[1] = 0;
+        ai->m_nCurPathFindFailCount = 0;
       }
       else
       {
-        unsigned int *hiword = reinterpret_cast<unsigned int *>(&hfs[1].m_ArNode[9].m_pParent);
-        ++hiword[1];
+        ++ai->m_nCurPathFindFailCount;
       }
       hfs->SetLoopTime( 6, 0x1F4u);
     }
@@ -744,31 +739,33 @@ if (!pHFS)
     return;
   }
 
-  int *objectData = static_cast<int *>(pHFS->GetObjectA());
-  if (!objectData)
+  CMonster *mon = static_cast<CMonster *>(pHFS->GetObjectA());
+  if (!mon || !mon->m_bLive)
   {
     return;
   }
 
-  if (!reinterpret_cast<unsigned char *>(objectData)[24])
+  const float hp = static_cast<float>(mon->GetHP());
+  const float maxHp = static_cast<float>(static_cast<int>(mon->m_pMonRec->m_fMaxHP));
+  if (maxHp <= 0.0f)
   {
     return;
   }
 
-  const float hp = static_cast<float>(objectData[486]);
-  const std::uintptr_t recordPtr = static_cast<std::uintptr_t>(reinterpret_cast<unsigned long long *>(objectData)[1]);
-  const float maxHp = static_cast<float>(static_cast<int>(*reinterpret_cast<float *>(recordPtr + 1708)));
   const float hpPercent = (hp / maxHp) * 100.0f;
+  const float threshold1 = *reinterpret_cast<float *>(&mon->m_pRecordSet[29].m_strCode[52]);
+  const float threshold2 = *reinterpret_cast<float *>(&mon->m_pRecordSet[29].m_strCode[56]);
+  const float threshold3 = *reinterpret_cast<float *>(&mon->m_pRecordSet[29].m_strCode[60]);
   if (hp == maxHp)
   {
     pHFS->SendMsg(4u, 0x27u, nullptr);
     pHFS->SetLoopTime( 4, 0x2710u);
   }
-  else if (hpPercent <= *reinterpret_cast<float *>(recordPtr + 2024))
+  else if (hpPercent <= threshold1)
   {
-    if (hpPercent <= *reinterpret_cast<float *>(recordPtr + 2028))
+    if (hpPercent <= threshold2)
     {
-      if (hpPercent <= *reinterpret_cast<float *>(recordPtr + 2032))
+      if (hpPercent <= threshold3)
       {
         pHFS->SendMsg(4u, 0x2Bu, nullptr);
         pHFS->SetLoopTime( 4, 0x7D0u);
@@ -824,6 +821,7 @@ if (!pHFS)
   }
 
   Us_HFSM *hfs = pHFS;
+  CMonsterAI *ai = static_cast<CMonsterAI *>(hfs);
   CMonster *mon = static_cast<CMonster *>(pHFS->GetObjectA());
   if (!mon || !mon->m_bLive)
   {
@@ -841,8 +839,8 @@ if (!pHFS)
   {
     case 0x16u:
     {
-      hfs[1].m_ArNode[0].m_pParent = static_cast<Us_FSM_Node *>(lpParam);
-      CMonster *parentMon = reinterpret_cast<CMonster *>(hfs[1].m_ArNode[0].m_pParent);
+      ai->m_pAsistMonster = static_cast<CMonster *>(lpParam);
+      CMonster *parentMon = ai->m_pAsistMonster;
       CCharacter *target = parentMon->GetAttackTarget();
       if (target)
       {
@@ -853,11 +851,11 @@ if (!pHFS)
       break;
     }
     case 0x17u:
-      hfs[1].m_ArNode[0].m_pParent = nullptr;
+      ai->m_pAsistMonster = nullptr;
       pHFS->SetLoopTime( 5, 0x7530u);
       break;
     case 0x18u:
-      hfs[1].m_ArNode[0].m_pParent = nullptr;
+      ai->m_pAsistMonster = nullptr;
       pHFS->SetLoopTime( 5, 0x1B58u);
       break;
   }
@@ -870,8 +868,8 @@ if (!pHFS)
     return;
   }
 
-  unsigned char *objBytes = static_cast<unsigned char *>(pHFS->GetObjectA());
-  if (objBytes && objBytes[24])
+  CMonster *mon = static_cast<CMonster *>(pHFS->GetObjectA());
+  if (mon && mon->m_bLive)
   {
     pHFS->SendMsg(5u, 0x2Eu, nullptr);
   }

@@ -3,6 +3,7 @@
 #include "IdaCompat.h"
 
 class CPlayer;
+class CMapData;
 
 /* 1637 */
 class __cppobj CLootingMgr
@@ -18,6 +19,7 @@ public:
 
     _list();
     void Init();
+    double GetScore(bool bBonus);
   };
 
   bool m_bFirst;
@@ -26,5 +28,7 @@ public:
 
   CLootingMgr();
   void Init(unsigned __int8 nUserNode);
+  void PushDamage(CPlayer *pAtter, unsigned __int16 wDamage);
+  CPlayer *GetLooter(CMapData *pMap, float *pPos, CPlayer *pSkipObject);
 };
 

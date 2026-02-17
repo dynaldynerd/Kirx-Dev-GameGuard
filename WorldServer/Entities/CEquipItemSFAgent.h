@@ -33,6 +33,8 @@ public:
   char GetRequireSFSlot(_requireSlot *pSlot, _skill_fld *pSkillFld);
   void SetSFCont(unsigned int nEquipTblIndex, _sf_continous *pSF);
   void StartContSF(_sf_continous *pSF_Cont);
+  unsigned __int8 IsEnableSkill(_skill_fld *pSkill);
+  unsigned __int8 IsEnableSkill(int nEquipTblIndex, _skill_fld *pSkill);
   _STORAGE_LIST::_db_con *GetEquip(unsigned int nEquipTblIndex);
   _sf_continous *GetEquipSFCont(unsigned int nEquipTblIndex);
   bool IsUseBooster();

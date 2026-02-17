@@ -227,9 +227,9 @@ public:
   char SetCurPos(float *pPos);
   void SetCurSecNum(unsigned int dwNewSecNum);
   char UpdateSecList();
-  void SFContDelMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, bool bSend, bool bAura = false);
-  void SFContInsertMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, bool bAura);
-  void SFContUpdateTimeMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, int nLeftTime);
+  virtual void SFContDelMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, bool bSend, bool bAura = false);
+  virtual void SFContInsertMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, bool bAura);
+  virtual void SFContUpdateTimeMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, int nLeftTime);
   virtual char SetHP(int nHP, bool bOver);
   void SetMaxVersion();
   void _ResetCirclePlayer();

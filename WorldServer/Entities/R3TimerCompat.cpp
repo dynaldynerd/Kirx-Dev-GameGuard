@@ -20,7 +20,8 @@ int s_loopCount = 0;
 unsigned int s_oldTime = 0;
 unsigned int s_loopHop = 0;
 float s_timerRate = 1.0f;
-float s_minLoopSeconds = 0.001f;
+// IDA: clamp baseline matches CTimer::mMinFPS constructor default (1.0f).
+float s_minLoopSeconds = 1.0f;
 
 float s_blinkAccum30 = 0.0f;
 float s_blinkAccum15 = 0.0f;

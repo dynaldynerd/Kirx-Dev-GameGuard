@@ -390,6 +390,8 @@ int Us_HFSM::SetMyData(UsStateTBL *pStateTBL, void *pObject)
     return 0;
   }
 
+  unsigned int maxUsedNodeIndex = 0;
+  bool hasUsedNode = false;
   m_pObject = pObject;
   for (int j = 0; ; ++j)
   {
@@ -404,15 +406,18 @@ int Us_HFSM::SetMyData(UsStateTBL *pStateTBL, void *pObject)
       m_ArNode[j].m_dwLoopTime = pStateTBL->m_pNodeInfo[j].m_dwLoopTime;
       if (pStateTBL->m_pNodeInfo[j].m_ParentData >= 0)
       {
-        if (pStateTBL->m_pNodeInfo[j].m_ParentData < pStateTBL->GetHSFMSize())
+        const int parentIndex = pStateTBL->m_pNodeInfo[j].m_ParentData;
+        if (parentIndex < pStateTBL->GetHSFMSize())
         {
-          m_ArNode[j].m_pParent = &m_ArNode[j];
+          m_ArNode[j].m_pParent = &m_ArNode[parentIndex];
         }
       }
-      ++m_dwUsedCount;
+      maxUsedNodeIndex = static_cast<unsigned int>(j);
+      hasUsedNode = true;
     }
   }
 
+  m_dwUsedCount = hasUsedNode ? (maxUsedNodeIndex + 1) : 0;
   m_spShareStateTBLPtr = pStateTBL;
   m_bSet = 1;
   return 1;

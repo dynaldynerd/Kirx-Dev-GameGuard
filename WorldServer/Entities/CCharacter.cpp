@@ -747,7 +747,7 @@ __int64 CCharacter::GetAttackDamPoint(int nAttPnt, int nAttPart, int nTolType, C
                          : ((defFacing * defFc) * defGap - defFc) / facingRate;
   const float valueB = valueA - (defFc * avgGap);
   const float valueC = (valueB == 0.0f) ? 0.0f : (valueA - defFc) / valueB;
-  float tolRate = 0.5f;
+  float tolRate = 1.2f;
   if (nTolType == -1)
   {
     tolRate = 1.0f;
@@ -797,16 +797,15 @@ __int64 CCharacter::GetAttackRandomPart()
 
 void CCharacter::SendMsg_AttackActEffect(unsigned __int8 byActEffect, CCharacter *pDamer)
 {
-  char szMsg[2]{};
-  szMsg[0] = static_cast<char>(byActEffect);
-  szMsg[1] = static_cast<char>(m_ObjID.m_byID);
-  const unsigned int objSerial = m_dwObjSerial;
-  const unsigned __int8 damerId = pDamer->m_ObjID.m_byID;
-  const unsigned int damerSerial = pDamer->m_dwObjSerial;
-unsigned __int8 pbyType[36]{};
-  pbyType[0] = 5;
-  pbyType[1] = 24;
-  CircleReport(pbyType, szMsg, 11, true);
+  char payload[11]{};
+  payload[0] = static_cast<char>(byActEffect);
+  payload[1] = static_cast<char>(m_ObjID.m_byID);
+  *reinterpret_cast<unsigned int *>(payload + 2) = m_dwObjSerial;
+  payload[6] = static_cast<char>(pDamer->m_ObjID.m_byID);
+  *reinterpret_cast<unsigned int *>(payload + 7) = pDamer->m_dwObjSerial;
+
+  unsigned __int8 type[2] = {5, 24};
+  CircleReport(type, payload, 11, true);
 }
 
 void CCharacter::SendMsg_LastEffectChangeInform()
@@ -1873,7 +1872,14 @@ unsigned __int8 CCharacter::InsertSFContEffect(
     _set_sf_cont(targetCont, byEffectCode, *record, 1u, startSec, contEffectSec, 0);
     if (!pActChar || pActChar->m_ObjID.m_byID)
     {
-      SFContInsertMessage(byContCode, listIndex, isAura);
+      if (!m_ObjID.m_byID)
+      {
+        static_cast<CPlayer *>(this)->SFContInsertMessage(byContCode, listIndex, isAura, nullptr);
+      }
+      else
+      {
+        SFContInsertMessage(byContCode, listIndex, isAura);
+      }
       m_bLastContEffectUpdate = true;
       return 0;
     }
@@ -1883,13 +1889,27 @@ unsigned __int8 CCharacter::InsertSFContEffect(
     _set_sf_cont(targetCont, byEffectCode, static_cast<unsigned __int16>(dwEffectIndex), byLv, startSec, contEffectSec, cumulCount);
     if (!pActChar || pActChar->m_ObjID.m_byID)
     {
-      SFContInsertMessage(byContCode, listIndex, isAura);
+      if (!m_ObjID.m_byID)
+      {
+        static_cast<CPlayer *>(this)->SFContInsertMessage(byContCode, listIndex, isAura, nullptr);
+      }
+      else
+      {
+        SFContInsertMessage(byContCode, listIndex, isAura);
+      }
       m_bLastContEffectUpdate = true;
       return 0;
     }
   }
 
-  SFContInsertMessage(byContCode, listIndex, isAura);
+  if (!m_ObjID.m_byID)
+  {
+    static_cast<CPlayer *>(this)->SFContInsertMessage(byContCode, listIndex, isAura, pActChar);
+  }
+  else
+  {
+    SFContInsertMessage(byContCode, listIndex, isAura);
+  }
   m_bLastContEffectUpdate = true;
   return 0;
 }

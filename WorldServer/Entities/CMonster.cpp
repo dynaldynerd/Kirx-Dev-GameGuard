@@ -7,6 +7,7 @@
 #include "DummyPosition.h"
 #include "CRFMonsterAIMgr.h"
 #include "CPlayer.h"
+#include "CAnimus.h"
 #include "CLogFile.h"
 #include "CMonsterSkill.h"
 #include "CMonsterAttack.h"
@@ -325,20 +326,52 @@ void CMonster::_InitSDM_LootTBL()
   {
     return;
   }
-  const int recordNum = static_cast<int>(g_Main.GetMonsterRecordNum());
-  if (recordNum <= 0)
+
+  const int monsterRecordCount = static_cast<int>(g_Main.GetMonsterRecordNum());
+  if (monsterRecordCount <= 0)
   {
     return;
   }
-  s_idxMonsterLoot = new _monster_loot_index[recordNum];
+
+  s_idxMonsterLoot = new _monster_loot_index[monsterRecordCount];
   if (s_idxMonsterLoot == nullptr)
   {
     return;
   }
-  for (int n = 0; n < recordNum; ++n)
+
+  for (int monsterIndex = 0; monsterIndex < monsterRecordCount; ++monsterIndex)
   {
-    s_idxMonsterLoot[n].nStartRecIndex = -1;
-    s_idxMonsterLoot[n].nEndRecIndex = -1;
+    _base_fld *monsterRecord = g_Main.m_tblMonster.GetRecord(monsterIndex);
+    if (monsterRecord == nullptr)
+    {
+      s_idxMonsterLoot[monsterIndex].nStartRecIndex = -1;
+      s_idxMonsterLoot[monsterIndex].nEndRecIndex = -1;
+      continue;
+    }
+
+    _base_fld *lootRecord = g_Main.m_tblItemLoot.m_tblLoot.GetRecord(monsterRecord->m_strCode);
+    if (lootRecord == nullptr)
+    {
+      s_idxMonsterLoot[monsterIndex].nStartRecIndex = -1;
+      s_idxMonsterLoot[monsterIndex].nEndRecIndex = -1;
+      continue;
+    }
+
+    int currentLootIndex = static_cast<int>(lootRecord->m_dwIndex);
+    s_idxMonsterLoot[monsterIndex].nStartRecIndex = currentLootIndex;
+    s_idxMonsterLoot[monsterIndex].nEndRecIndex = currentLootIndex;
+
+    while (true)
+    {
+      ++currentLootIndex;
+      _base_fld *nextLootRecord = g_Main.m_tblItemLoot.m_tblLoot.GetRecord(currentLootIndex);
+      if (nextLootRecord == nullptr || strncmp(nextLootRecord->m_strCode, monsterRecord->m_strCode, 5u) != 0)
+      {
+        break;
+      }
+
+      s_idxMonsterLoot[monsterIndex].nEndRecIndex = currentLootIndex;
+    }
   }
 }
 
@@ -1776,16 +1809,16 @@ void CMonster::SendMsg_Move()
 {
   if (m_bMove && m_bOper)
   {
-    unsigned __int8 msg[14];
-    *reinterpret_cast<unsigned int *>(msg) = m_dwObjSerial;
-    __int16 *pos = reinterpret_cast<__int16 *>(msg + 4);
-    FloatToShort(m_fCurPos, pos, 3);
-    pos[3] = static_cast<__int16>(static_cast<int>(m_fTarPos[0]));
-    pos[4] = static_cast<__int16>(static_cast<int>(m_fTarPos[2]));
-    unsigned __int8 type[2];
+    _monster_move_zocl moveMsg{};
+    moveMsg.dwSerial = m_dwObjSerial;
+    FloatToShort(m_fCurPos, moveMsg.zCur, 3);
+    moveMsg.zTar[0] = static_cast<__int16>(static_cast<int>(m_fTarPos[0]));
+    moveMsg.zTar[1] = static_cast<__int16>(static_cast<int>(m_fTarPos[2]));
+
+    unsigned __int8 type[2]{};
     type[0] = 4;
     type[1] = 5;
-    CircleReport(type, reinterpret_cast<char *>(msg), 14, 0);
+    CircleReport(type, reinterpret_cast<char *>(&moveMsg), static_cast<unsigned __int16>(sizeof(moveMsg)), 0);
   }
 }
 
@@ -2003,6 +2036,11 @@ void CMonster::SendMsg_Emotion_Presentation(
       reinterpret_cast<char *>(msg),
       9u);
   }
+}
+
+void CMonster::ClearEmotionPresentation()
+{
+  m_EmotionPresentationCheck.ReSet();
 }
 
 void CMonster::CheckEmotionPresentation()
@@ -2834,8 +2872,43 @@ __int64 CMonster::SetDamage(
   unsigned int dwAttackSerial,
   bool bJadeReturn)
 {
-if (pDst != nullptr)
+  (void)nDstLv;
+  (void)bJadeReturn;
+
+  if (pDst != nullptr)
+  {
     AttackObject(nDam, static_cast<CGameObject *>(pDst));
+    if (nDam >= 0)
+    {
+      if (!pDst->m_ObjID.m_byID)
+      {
+        m_LootMgr.PushDamage(static_cast<CPlayer *>(pDst), static_cast<unsigned __int16>(nDam));
+        m_AggroMgr.SetAggro(pDst, nDam, nAttackType, dwAttackSerial, 0, 0);
+      }
+      else if (pDst->m_ObjID.m_byID == 3)
+      {
+        CAnimus *animus = static_cast<CAnimus *>(pDst);
+        if (animus->m_pMaster)
+        {
+          m_LootMgr.PushDamage(animus->m_pMaster, static_cast<unsigned __int16>(nDam));
+          m_AggroMgr.SetAggro(pDst, nDam, nAttackType, dwAttackSerial, 0, 0);
+        }
+      }
+      else if (pDst->m_ObjID.m_byID == 4)
+      {
+        CGuardTower *tower = static_cast<CGuardTower *>(pDst);
+        if (tower->m_pMasterTwr)
+        {
+          m_LootMgr.PushDamage(tower->m_pMasterTwr, static_cast<unsigned __int16>(nDam));
+          m_AggroMgr.SetAggro(pDst, nDam, nAttackType, dwAttackSerial, 0, 0);
+        }
+        else
+        {
+          m_LootMgr.PushDamage(&sPlayerDum, static_cast<unsigned __int16>(nDam));
+        }
+      }
+    }
+  }
 
   if (nDam >= 1)
   {
@@ -2846,7 +2919,14 @@ if (pDst != nullptr)
 
   if (m_nHP == 0)
   {
-    Destroy(0, nullptr);
+    ClearEmotionPresentation();
+    CheckEventEmotionPresentation(8u, nullptr);
+    CPlayer *looter = m_LootMgr.GetLooter(m_pCurMap, m_fCurPos, &sPlayerDum);
+    Destroy(0, looter);
+    if (pDst)
+    {
+      pDst->RecvKillMessage(this);
+    }
   }
 
   if (bCrt && !m_pMonRec->m_bMonsterCondition)

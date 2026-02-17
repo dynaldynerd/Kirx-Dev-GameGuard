@@ -118,14 +118,14 @@ bool CMapData::OpenMap(char *pszMapCode, _map_fld *pMapSet, bool bUse)
 
 bool CMapData::ConvertLocalToWorldDummy(CDummyPosTable *pPosTable, bool bCheckCenter)
 {
+  (void)bCheckCenter;
   int RecordNum = pPosTable->GetRecordNum();
   for (int i = 0; i < RecordNum; ++i)
   {
     _dummy_position *pPos = (_dummy_position*)pPosTable->GetRecord(i);
     if (!this->ConvertLocal(pPos))
       return false;
-    if (bCheckCenter)
-      this->CheckCenterPosDummy(pPos);
+    this->CheckCenterPosDummy(pPos);
   }
   return true;
 }
@@ -159,49 +159,83 @@ bool CMapData::_LoadBspSec(char *pszMapCode)
 
 bool CMapData::ConvertLocal(_dummy_position *pPos)
 {
-    float v11[3], v12[3], v13[3], v14[3], v15[3];
-    for(int i=0; i<3; ++i) {
-        v11[i] = (float)pPos->m_zLocalMin[i];
-        v12[i] = (float)pPos->m_zLocalMax[i];
-    }
+  float v11[3]{};
+  float v12[3]{};
+  float v13[3]{};
+  float v14[3]{};
+  float v15[3]{};
 
-    if (!this->m_Dummy.GetWorldFromLocal(pPos->m_fMin, pPos->m_wLineIndex, v11)) return false;
-    if (!this->m_Dummy.GetWorldFromLocal(pPos->m_fMax, pPos->m_wLineIndex, v12)) return false;
+  v11[0] = static_cast<float>(pPos->m_zLocalMin[0]);
+  v11[1] = static_cast<float>(pPos->m_zLocalMin[1]);
+  v11[2] = static_cast<float>(pPos->m_zLocalMin[2]);
+  v12[0] = static_cast<float>(pPos->m_zLocalMax[0]);
+  v12[1] = static_cast<float>(pPos->m_zLocalMax[1]);
+  v12[2] = static_cast<float>(pPos->m_zLocalMax[2]);
+  if (!this->m_Dummy.GetWorldFromLocal(pPos->m_fMin, pPos->m_wLineIndex, v11))
+  {
+    MyMessageBox("CMapData Error", "ConvertLocal map:%s, dummy:%s", this->m_pMapSet->m_strCode, pPos->m_szCode);
+    return false;
+  }
+  if (!this->m_Dummy.GetWorldFromLocal(pPos->m_fMax, pPos->m_wLineIndex, v12))
+  {
+    MyMessageBox("CMapData Error", "ConvertLocal map:%s, dummy:%s", this->m_pMapSet->m_strCode, pPos->m_szCode);
+    return false;
+  }
 
-    v13[0] = (float)pPos->m_zLocalMax[0];
-    v13[1] = (float)pPos->m_zLocalMin[1];
-    v13[2] = (float)pPos->m_zLocalMin[2];
+  v13[0] = static_cast<float>(pPos->m_zLocalMax[0]);
+  v13[1] = static_cast<float>(pPos->m_zLocalMin[1]);
+  v13[2] = static_cast<float>(pPos->m_zLocalMin[2]);
+  v14[0] = static_cast<float>(pPos->m_zLocalMin[0]);
+  v14[1] = static_cast<float>(pPos->m_zLocalMax[1]);
+  v14[2] = static_cast<float>(pPos->m_zLocalMax[2]);
+  if (!this->m_Dummy.GetWorldFromLocal(pPos->m_fRT, pPos->m_wLineIndex, v13))
+  {
+    MyMessageBox("CMapData Error", "ConvertLocal map:%s, dummy:%s", this->m_pMapSet->m_strCode, pPos->m_szCode);
+    return false;
+  }
+  if (!this->m_Dummy.GetWorldFromLocal(pPos->m_fLB, pPos->m_wLineIndex, v14))
+  {
+    MyMessageBox("CMapData Error", "ConvertLocal map:%s, dummy:%s", this->m_pMapSet->m_strCode, pPos->m_szCode);
+    return false;
+  }
 
-    v14[0] = (float)pPos->m_zLocalMin[0];
-    v14[1] = (float)pPos->m_zLocalMax[1];
-    v14[2] = (float)pPos->m_zLocalMax[2];
-
-    if (!this->m_Dummy.GetWorldFromLocal(pPos->m_fRT, pPos->m_wLineIndex, v13)) return false;
-    if (!this->m_Dummy.GetWorldFromLocal(pPos->m_fLB, pPos->m_wLineIndex, v14)) return false;
-
-    v15[0] = (float)((pPos->m_zLocalMax[0] - pPos->m_zLocalMin[0]) / 2 + pPos->m_zLocalMin[0]);
-    v15[1] = (float)((pPos->m_zLocalMax[1] - pPos->m_zLocalMin[1]) / 2 + pPos->m_zLocalMin[1]);
-    v15[2] = (float)pPos->m_zLocalMin[2];
-
-    if (!this->m_Dummy.GetWorldFromLocal(pPos->m_fDirection, pPos->m_wLineIndex, v15)) return false;
-
-    return true;
+  v15[0] = static_cast<float>((pPos->m_zLocalMax[0] - pPos->m_zLocalMin[0]) / 2 + pPos->m_zLocalMin[0]);
+  v15[1] = static_cast<float>((pPos->m_zLocalMax[1] - pPos->m_zLocalMin[1]) / 2 + pPos->m_zLocalMin[1]);
+  v15[2] = static_cast<float>(pPos->m_zLocalMin[2]);
+  if (!this->m_Dummy.GetWorldFromLocal(pPos->m_fDirection, pPos->m_wLineIndex, v15))
+  {
+    MyMessageBox("CMapData Error", "ConvertLocal map:%s, dummy:%s", this->m_pMapSet->m_strCode, pPos->m_szCode);
+    return false;
+  }
+  return true;
 }
 
 bool CMapData::CheckCenterPosDummy(_dummy_position *pPos)
 {
-    float v7[3];
-    for (int j = 0; j < 3; ++j)
-        v7[j] = (float)((pPos->m_zLocalMin[j] + pPos->m_zLocalMax[j]) / 2);
+  float v7[3]{};
+  for (int j = 0; j < 3; ++j)
+  {
+    v7[j] = static_cast<float>((pPos->m_zLocalMin[j] + pPos->m_zLocalMax[j]) / 2);
+  }
 
-    if (this->m_Dummy.GetWorldFromLocal(pPos->m_fCenterPos, pPos->m_wLineIndex, v7))
-    {
-        pPos->m_fCenterPos[1] = this->m_Level.GetFirstYpos(pPos->m_fCenterPos, pPos->m_fMin, pPos->m_fMax);
-        pPos->m_bPosAble = (pPos->m_fCenterPos[1] != -65535.0f);
-        pPos->m_fDirection[1] = pPos->m_fCenterPos[1];
-        return true;
-    }
+  if (!this->m_Dummy.GetWorldFromLocal(pPos->m_fCenterPos, pPos->m_wLineIndex, v7))
+  {
+    MyMessageBox("CMapData Error", "CheckCenterPosDummy map:%s, dummy:%s", this->m_pMapSet->m_strCode, pPos->m_szCode);
     return false;
+  }
+
+  pPos->m_fCenterPos[1] = this->m_Level.GetFirstYpos(pPos->m_fCenterPos, pPos->m_fMin, pPos->m_fMax);
+  pPos->m_bPosAble = 1;
+  if (pPos->m_fCenterPos[1] == -65535.0f)
+  {
+    g_Main.m_logLoadingError.Write(
+      "CheckPosDummy: Map(%s), Dum(%s)",
+      this->m_pMapSet->m_strCode,
+      pPos->m_szCode);
+    pPos->m_bPosAble = 0;
+  }
+  pPos->m_fDirection[1] = pPos->m_fCenterPos[1];
+  return true;
 }
 
 bool CMapData::LoadDummy(char *pszDummyCode, _dummy_position *pPos)

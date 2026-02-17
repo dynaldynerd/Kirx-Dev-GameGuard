@@ -257,6 +257,17 @@ void _WAIT_ENTER_ACCOUNT::SetUILock(
   m_byUILockFindPassFailCount = byUILockFindPassFailCount;
 }
 
+_server_rate_realtime_load::_server_rate_realtime_load()
+{
+  Init(0x2710u);
+}
+
+void _server_rate_realtime_load::Init(unsigned int dwReadTerm)
+{
+  memset_0(this, 0, sizeof(_server_rate_realtime_load));
+  m_tmDataFileCheckTime.BeginTimer(dwReadTerm);
+}
+
 CMainThread::CMainThread() = default;
 
 bool CMainThread::IsTestServer() const
@@ -3124,7 +3135,7 @@ bool CMainThread::ObjectInit()
 
 bool CMainThread::NetworkInit()
 {
-  _NET_TYPE_PARAM params[4]{};
+  _NET_TYPE_PARAM params[4];
 
   params[0].m_bServer = 1;
   params[0].m_wSocketMaxNum = MAX_PLAYER;
