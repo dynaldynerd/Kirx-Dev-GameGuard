@@ -975,14 +975,32 @@ CAnimus *CreateAnimusObject(CPlayer *player, _STORAGE_LIST::_db_con *animusItem)
   slot->m_dwObjSerial = GenerateTransientObjSerial();
   slot->m_pMaster = player;
   slot->m_dwMasterSerial = player->m_dwObjSerial;
-  slot->m_byClassCode = static_cast<unsigned __int8>(animusItem->m_wItemIndex);
+  slot->m_byClassCode = static_cast<unsigned __int8>(slot->m_pRecordSet->m_dwIndex);
   slot->m_nHP = LOWORD(animusItem->m_dwLv);
   slot->m_nFP = HIWORD(animusItem->m_dwLv);
   slot->m_dwExp = animusItem->m_dwDur;
+  slot->m_byRoleCode = static_cast<unsigned __int8>(slot->m_pRecordSet[3].m_strCode[56]);
   slot->m_nMaxAttackPnt = player->m_nAnimusAttackPnt;
   slot->m_pRecord = animusFld;
   slot->m_nMaxHP = animusFld->m_nMaxHP;
   slot->m_nMaxFP = animusFld->m_nMaxFP;
+  strcpy_0(slot->m_wszMasterName, player->m_Param.GetCharNameW());
+  W2M(slot->m_wszMasterName, slot->m_aszMasterName, 0x11u);
+  slot->m_pBeforeTownCheckMap = nullptr;
+  slot->m_dwStunTime = 0;
+  slot->m_dwBeAttackedTargetTime = 0;
+  slot->m_pNextTarget = nullptr;
+  slot->m_pTarget = (slot->m_byRoleCode == 3) ? player : nullptr;
+  slot->SendMsg_Create();
+  if (slot->m_pRecord->m_nUseFP > 0)
+  {
+    slot->m_tmNextEatMasterFP = timeGetTime() + 1000;
+  }
+  else
+  {
+    slot->m_tmNextEatMasterFP = static_cast<unsigned int>(-1);
+  }
+  ++CAnimus::s_nLiveNum;
   return slot;
 }
 

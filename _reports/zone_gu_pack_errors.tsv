@@ -1,5 +1,0 @@
-timestamp	target	action	error
-2026-02-16 11:24:04	_PVP_RANK_DATA	patch_existing	patch_existing target not found in d:\Private Project\RF Online\WorldServer\Entities\CUserRankingProcess.h: _PVP_RANK_DATA
-2026-02-16 11:24:55	_NOT_ARRANGED_AVATOR_DB	patch_existing	patch_existing target not found in d:\Private Project\RF Online\WorldServer\Entities\DqsDbStructs.h: _NOT_ARRANGED_AVATOR_DB
-2026-02-16 11:26:35	_party_join_joiner_result_zocl::_list	create_missing	Outer definition not found for _party_join_joiner_result_zocl
-2026-02-16 11:28:23	_started_vote_inform_zocl	already_ok	already_ok target definition not found: _started_vote_inform_zocl

@@ -1,2 +1,0 @@
-void CItemStoreManager::Log(char *,...)
-void CUnmannedTraderController::Log(char *,...)

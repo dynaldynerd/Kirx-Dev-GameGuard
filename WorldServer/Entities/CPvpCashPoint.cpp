@@ -6,7 +6,6 @@
 #include "CPvpCashMng.h"
 #include "GlobalObjects.h"
 #include "pvp_cash_recover_itemlist_result_zocl.h"
-#include "CPvpCashPointLocalStructs.h"
 
 CPvpCashPoint::CPvpCashPoint()
 {
@@ -70,8 +69,8 @@ int CPvpCashPoint::GetTalikRecvrPoint(unsigned __int8 byTblCode, unsigned int dw
 void CPvpCashPoint::SendMsg_RecoverResult(unsigned int n, char byRet, int nRecvrPoint)
 {
 
-  RecoverResultMsg msg{};
-  msg.byRet = byRet;
+  _pvp_cash_point_recover_result_zocl msg{};
+  msg.byRetCode = byRet;
   msg.nRecvrPoint = nRecvrPoint;
 
   unsigned __int8 type[2]{12, 22};

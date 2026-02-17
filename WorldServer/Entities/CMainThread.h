@@ -5196,6 +5196,17 @@ struct _guild_vote_complete_zocl
 #pragma pack(pop)
 
 #pragma pack(push, 1)
+struct _guild_vote_state_zocl
+{
+  unsigned int dwMatterVoteSynKey;
+  unsigned __int8 byApprPoint;
+  unsigned __int8 byOppoPoint;
+  unsigned __int8 byLoginSeniorNum;
+  unsigned __int8 byTotalSeniorNum;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
 struct _guild_add_join_applier_inform_zocl
 {
   unsigned int dwApplierSerial;
@@ -5260,6 +5271,22 @@ struct _guild_member_pos_inform_zocl
 #pragma pack(pop)
 
 #pragma pack(push, 1)
+struct _guild_battle_apply_build_battle_result_zocl
+{
+  unsigned __int8 byRet;
+  char wszDestGuildName[17];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _guild_manage_committee_inform_zocl
+{
+  bool bAppoint;
+  char wszName[17];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
 struct _open_return_gate_inform_zocl
 {
   unsigned __int16 wGateInx;
@@ -5275,6 +5302,14 @@ struct _notify_recall_request_zocl
 {
   unsigned __int16 wRequestID;
   char wszPerformerName[17];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _recall_request_result_zocl
+{
+  unsigned __int8 byRet;
+  char wszDestName[17];
 };
 #pragma pack(pop)
 
@@ -6240,6 +6275,29 @@ struct _npc_move_zocl
 #pragma pack(pop)
 
 #pragma pack(push, 1)
+struct _npc_fixpositon_zocl
+{
+  unsigned __int16 wRecIndex;
+  unsigned __int16 wIndex;
+  unsigned int dwSerial;
+  unsigned __int16 wLastEffectCode;
+  __int16 zCur[3];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _npc_real_move_zocl
+{
+  unsigned __int16 wRecIndex;
+  unsigned __int16 wIndex;
+  unsigned int dwSerial;
+  unsigned __int16 wLastEffectCode;
+  __int16 zCur[3];
+  __int16 zTar[2];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
 struct _stone_create_zocl
 {
   unsigned __int16 wRecIndex;
@@ -6348,6 +6406,26 @@ struct _tower_destroy_zocl
   unsigned __int16 wIndex;
   unsigned int dwSerial;
   char byDestroyCode;
+  unsigned int dwMasterSerial;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _tower_fixpositon_zocl
+{
+  unsigned __int16 wRecIndex;
+  unsigned __int16 wIndex;
+  unsigned int dwSerial;
+  __int16 zCur[3];
+  unsigned __int16 wCompLeftSec;
+  unsigned int dwMasterSerial;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _tower_complete_inform_zocl
+{
+  unsigned int dwTowerObjSerial;
   unsigned int dwMasterSerial;
 };
 #pragma pack(pop)

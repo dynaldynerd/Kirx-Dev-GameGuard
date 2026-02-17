@@ -9,7 +9,6 @@
 #include "CPotionMgr.h"
 #include "map_fld.h"
 #include "GlobalObjects.h"
-#include "CRecallEffectControllerLocalStructs.h"
 
 CRecallEffectController::CRecallEffectController()
 {
@@ -215,9 +214,9 @@ void CRecallEffectController::SendRecallReqeustResult(char byRet, CPlayer *pkObj
   }
 
 
-  RecallRequestResultMsg msg{};
-  msg.byRetCode = byRet;
-  strcpy_0(msg.wszDstName, pkObj->m_Param.GetCharNameW());
+  _recall_request_result_zocl msg{};
+  msg.byRet = static_cast<unsigned __int8>(byRet);
+  strcpy_0(msg.wszDestName, pkObj->m_Param.GetCharNameW());
 
   unsigned __int8 type[2] = {17, 32};
   g_Network.m_pProcess[0]->LoadSendMsg(
@@ -238,7 +237,7 @@ void CRecallEffectController::SendRecallReqeustToDest(
   }
 
 
-  RecallRequestMessage msg{};
+  _notify_recall_request_zocl msg{};
   msg.wRequestID = wRequestID;
   strcpy_0(msg.wszPerformerName, pkPerformer->m_Param.GetCharNameW());
 
@@ -258,9 +257,9 @@ void CRecallEffectController::SendDecideRecallErrorResultToDest(char byErr, CPla
   }
 
 
-  DecideRecallErrorMessage msg{};
+  _decide_recall_error_result_zocl msg{};
   msg.byErr = byErr;
-  msg.nCallerMapCode = nCallerMapCode;
+  msg.nMapCode = nCallerMapCode;
 
   unsigned __int8 pbyType[2]{17, 35};
   g_Network.m_pProcess[0]->LoadSendMsg(

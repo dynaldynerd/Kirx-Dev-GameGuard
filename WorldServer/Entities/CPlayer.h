@@ -12,6 +12,7 @@
 #include "CMgrAvatorLvHistory.h"
 #include "CRecordData.h"
 #include "SKILL_IDX_PER_MASTERY.h"
+#include "ANIMUS_RETURN_DELAY.h"
 #include "BILLING_FORCE_CLOSE_DELAY.h"
 #include "talik_crystal_exchange_clzo.h"
 #include "buy_store_request_clzo.h"
@@ -1108,7 +1109,7 @@ public:
   static CMgrAvatorItemHistory s_MgrItemHistory;
   static CMgrAvatorLvHistory s_MgrLvHistory;
   static int s_nLiveNum;
-  static _DELAY_PROCESS s_AnimusReturnDelay;
+  static _ANIMUS_RETURN_DELAY s_AnimusReturnDelay;
   static int *s_pnLinkForceItemToEffect;
   static _SKILL_IDX_PER_MASTERY s_SkillIndexPerMastery[8];
   static int s_nAddMstFc[100];

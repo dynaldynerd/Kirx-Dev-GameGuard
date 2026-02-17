@@ -453,8 +453,8 @@ void CGuild::Loop(bool bChangeDay)
 void CGuild::SendMsg_ChangeTaxRate(unsigned __int8 byTax)
 {
 
-  GuildTaxRateChangeMessage msg{};
-  msg.dwGuildSerial = m_dwSerial;
+  _guild_atrade_tax_zocl msg{};
+  msg.dwGSerial = m_dwSerial;
   msg.byTax = byTax;
 
   unsigned __int8 pbyType[2]{27, 100};
@@ -552,12 +552,12 @@ void CGuild::SendMsg_VoteState()
   }
 
 
-  GuildVoteStateMessage msg{};
+  _guild_vote_state_zocl msg{};
   msg.dwMatterVoteSynKey = m_SuggestedMatter.dwMatterVoteSynKey;
-  msg.byApprovePoint = m_SuggestedMatter.byVoteState[0];
-  msg.byOpposePoint = m_SuggestedMatter.byVoteState[1];
-  msg.byLoginSeniorNum = static_cast<char>(loginSeniorNum);
-  msg.byTotalVotableNum = static_cast<char>(m_SuggestedMatter.nTotal_VotableMemNum);
+  msg.byApprPoint = m_SuggestedMatter.byVoteState[0];
+  msg.byOppoPoint = m_SuggestedMatter.byVoteState[1];
+  msg.byLoginSeniorNum = static_cast<unsigned __int8>(loginSeniorNum);
+  msg.byTotalSeniorNum = static_cast<unsigned __int8>(m_SuggestedMatter.nTotal_VotableMemNum);
 
   unsigned __int8 pbyType[2]{27, 27};
   for (int j = 0; j < 50; ++j)
@@ -1090,14 +1090,14 @@ _guild_member_info *CGuild::PushMember(_guild_member_info *pSheet)
 void CGuild::SendMsg_GuildJoinAcceptInform(_guild_member_info *p, unsigned int dwAcceptSerial)
 {
 
-  GuildJoinAcceptMsg msg{};
-  msg.dwAcceptSerial = dwAcceptSerial;
-  msg.dwSerial = p->dwSerial;
-  strcpy_0(msg.wszNameAndClassAndLv, p->wszName);
-  msg.wszNameAndClassAndLv[17] = static_cast<char>(p->byClassInGuild);
-  msg.wszNameAndClassAndLv[18] = static_cast<char>(p->byLv);
+  _guild_join_accept_inform_zocl msg{};
+  msg.dwAccepterSerial = dwAcceptSerial;
+  msg.dwApplierSerial = p->dwSerial;
+  strcpy_0(msg.wszName, p->wszName);
+  msg.byClassInGuild = static_cast<char>(p->byClassInGuild);
+  msg.byLv = static_cast<char>(p->byLv);
   msg.dwPvpPoint = p->dwPvpPoint;
-  msg.byRank = p->byRank;
+  msg.byGuildRank = static_cast<char>(p->byRank);
 
   unsigned __int8 pbyType[2] = {27, 15};
 
@@ -1124,9 +1124,9 @@ void CGuild::SendMsg_GuildJoinAcceptInform(_guild_member_info *p, unsigned int d
 void CGuild::SendMsg_LeaveMember(unsigned int dwMemberSerial, char bSelf, char bPunish)
 {
 
-  GuildLeaveMsg msg{};
+  _guild_leave_inform_zocl msg{};
   msg.bSelf = bSelf;
-  msg.bPunish = bPunish;
+  msg.bPunised = bPunish;
   msg.dwMemberSerial = dwMemberSerial;
 
   unsigned __int8 pbyType[2] = {27, 18};
@@ -1248,12 +1248,12 @@ void CGuild::UpdateEmblem(unsigned int dwEmblemBack, unsigned int dwEmblemMark)
 void CGuild::SendMsg_AddJoinApplier(_guild_applier_info *p)
 {
 
-  AddJoinApplierMsg msg{};
-  msg.dwSerial = p->pPlayer->m_dwObjSerial;
+  _guild_add_join_applier_inform_zocl msg{};
+  msg.dwApplierSerial = p->pPlayer->m_dwObjSerial;
   const char *charName = p->pPlayer->m_Param.GetCharNameW();
   strcpy_0(msg.wszName, charName);
-  msg.wszName[17] = static_cast<char>(p->pPlayer->GetLevel());
-  msg.nPvpPoint = static_cast<int>(p->pPlayer->m_Param.GetPvPPoint());
+  msg.byLv = static_cast<char>(p->pPlayer->GetLevel());
+  msg.dwPvpPoint = static_cast<unsigned int>(p->pPlayer->m_Param.GetPvPPoint());
   msg.dwApplyTime = p->dwApplyTime;
 
   unsigned __int8 pbyType[2] = {27, 8};
@@ -1275,8 +1275,8 @@ void CGuild::SendMsg_AddJoinApplier(_guild_applier_info *p)
 void CGuild::SendMsg_DelJoinApplier(_guild_applier_info *p, unsigned __int8 byDelCode)
 {
 
-  DelJoinApplierMsg msg{};
-  msg.dwSerial = p->pPlayer->m_dwObjSerial;
+  _guild_del_join_applier_inform_zocl msg{};
+  msg.dwApplierSerial = p->pPlayer->m_dwObjSerial;
   msg.byDelCode = byDelCode;
 
   unsigned __int8 pbyType[2] = {27, 9};
@@ -1445,8 +1445,8 @@ void CGuild::MakeQueryInfoPacket()
 void CGuild::SendMsg_GuildInfoUpdateInform()
 {
 
-  GuildInfoUpdateMsg msg{};
-  msg.dwSerial = m_dwSerial;
+  _guild_info_update_inform_zocl msg{};
+  msg.dwGuildSerial = m_dwSerial;
   msg.byGrade = m_byGrade;
   msg.dwEmblemBack = m_dwEmblemBack;
   msg.dwEmblemMark = m_dwEmblemMark;
@@ -1871,7 +1871,7 @@ unsigned __int8 CGuild::ManageAcceptORRefuseGuildBattle(bool bAccept)
 void CGuild::SendMsg_ApplyGuildBattleResultInform(char byRet, char *wszDestGuildName)
 {
 
-  ApplyGuildBattleResultMsg msg{};
+  _guild_battle_apply_build_battle_result_zocl msg{};
   msg.byRet = byRet;
   strcpy_0(msg.wszDestGuildName, wszDestGuildName);
 
@@ -2318,9 +2318,9 @@ void CGuild::SendMsg_IOMoney(
   unsigned __int8 *pbyDate)
 {
 
-  GuildIOMoneyMsg msg{};
+  _guild_io_money_inform_zocl msg{};
   msg.dwIOerSerial = dwIOerSerial;
-  msg.byMoneyOutputKind = m_byMoneyOutputKind;
+  msg.byKind = m_byMoneyOutputKind;
   msg.bInPut = bInPut;
   msg.dIODalant = dIODalant;
   msg.dIOGold = dIOGold;
@@ -2607,9 +2607,9 @@ char *CGuild::GetGuildMasterName()
 void CGuild::SendMsg_ManageGuildCommitteeResult(char bAppoint, char *pwszCommitteeName)
 {
 
-  CommitteeResultMsg msg{};
-  msg.byAppoint = bAppoint;
-  strcpy_0(msg.wszCommitteeName, pwszCommitteeName);
+  _guild_manage_committee_inform_zocl msg{};
+  msg.bAppoint = (bAppoint != 0);
+  strcpy_0(msg.wszName, pwszCommitteeName);
 
   unsigned __int8 pbyType[16]{};
   pbyType[0] = 27;

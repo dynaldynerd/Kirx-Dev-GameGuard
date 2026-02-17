@@ -10,7 +10,6 @@
 
 #include <cstdlib>
 #include <ctime>
-#include "CGameObjectLocalStructs.h"
 
 bool _100_per_random_table::s_bRecordSet = false;
 unsigned __int16 _100_per_random_table::s_wRecord[10][100] = {};
@@ -2128,10 +2127,10 @@ void CGameObject::_ResetCirclePlayer()
 void CGameObject::SendMsg_BreakStop()
 {
 
-  BreakStopMsg msg{};
-  msg.byID = m_ObjID.m_byID;
+  _break_stop_result_zocl msg{};
+  msg.byObjID = m_ObjID.m_byID;
   msg.dwObjSerial = m_dwObjSerial;
-  FloatToShort(m_fCurPos, msg.pos, 3);
+  FloatToShort(m_fCurPos, msg.zCur, 3);
 
   unsigned __int8 type[2] = {4, 30};
   CircleReport(type, reinterpret_cast<char *>(&msg), 11, false);

@@ -7,7 +7,6 @@
 #include "CNetProcess.h"
 #include "CPlayer.h"
 #include "GlobalObjects.h"
-#include "CParkingUnitLocalStructs.h"
 
 int CParkingUnit::s_nLiveNum = 0;
 
@@ -39,10 +38,10 @@ bool CParkingUnit::Destroy(unsigned __int8 byDestoryType)
 void CParkingUnit::SendMsg_Destroy(unsigned __int8 byDestoryType)
 {
 
-  DestroyMsg msg{};
-  msg.wIndex = m_ObjID.m_wIndex;
-  msg.dwSerial = m_dwObjSerial;
-  msg.byDestroyType = byDestoryType;
+  _parkingunit_destroy_zocl msg{};
+  msg.wObjIndex = m_ObjID.m_wIndex;
+  msg.dwObjSerial = m_dwObjSerial;
+  msg.byDestroyCode = byDestoryType;
 
   unsigned __int8 type[2] = {3, 29};
   CircleReport(type, reinterpret_cast<char *>(&msg), 7, false);

@@ -12,7 +12,6 @@
 
 #include <cmath>
 #include <mmsystem.h>
-#include "CGuardTowerLocalStructs.h"
 
 int CGuardTower::s_nLiveNum = 0;
 unsigned int CGuardTower::s_dwSerialCnt = 0;
@@ -466,13 +465,13 @@ void CGuardTower::Loop()
 void CGuardTower::SendMsg_Attack(CAttack *pAt)
 {
 
-  GuardTowerAttackMsg msg{};
-  msg.dwTowerSerial = m_dwObjSerial;
-  msg.byPart = static_cast<unsigned __int8>(pAt->m_pp->nPart);
-  msg.byCritical = static_cast<unsigned __int8>(pAt->m_bIsCrtAtt);
-  msg.byTargetId = pAt->m_DamList[0].m_pChar->m_ObjID.m_byID;
-  msg.dwTargetSerial = pAt->m_DamList[0].m_pChar->m_dwObjSerial;
-  msg.nDamage = static_cast<__int16>(pAt->m_DamList[0].m_nDamage);
+  _attack_tower_inform_zocl msg{};
+  msg.dwAtterSerial = m_dwObjSerial;
+  msg.byAttackPart = static_cast<char>(pAt->m_pp->nPart);
+  msg.bCritical = pAt->m_bIsCrtAtt;
+  msg.byDstID = pAt->m_DamList[0].m_pChar->m_ObjID.m_byID;
+  msg.dwDstSerial = pAt->m_DamList[0].m_pChar->m_dwObjSerial;
+  msg.wDamage = static_cast<unsigned __int16>(pAt->m_DamList[0].m_nDamage);
 
   unsigned __int8 type[2] = {5, 15};
   CircleReport(type, reinterpret_cast<char *>(&msg), sizeof(msg), false);
@@ -481,8 +480,8 @@ void CGuardTower::SendMsg_Attack(CAttack *pAt)
 void CGuardTower::SendMsg_TowerCompleteInform()
 {
 
-  GuardTowerCompleteMsg msg{};
-  msg.dwTowerSerial = m_dwObjSerial;
+  _tower_complete_inform_zocl msg{};
+  msg.dwTowerObjSerial = m_dwObjSerial;
   msg.dwMasterSerial = m_dwMasterSerial;
 
   unsigned __int8 type[2] = {17, 23};
@@ -497,19 +496,19 @@ void CGuardTower::OutOfSec()
 void CGuardTower::SendMsg_FixPosition(int n)
 {
 
-  GuardTowerFixPositionMsg msg{};
-  msg.wRecordIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
+  _tower_fixpositon_zocl msg{};
+  msg.wRecIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
   msg.wIndex = m_ObjID.m_wIndex;
-  msg.dwObjSerial = m_dwObjSerial;
-  FloatToShort(m_fCurPos, msg.pos, 3);
+  msg.dwSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, msg.zCur, 3);
   if (m_bComplete)
   {
-    msg.nBuildSec = 0;
+    msg.wCompLeftSec = 0;
   }
   else
   {
     const DWORD elapsedMs = timeGetTime() - m_dwStartMakeTime;
-    msg.nBuildSec = static_cast<__int16>(elapsedMs / 1000);
+    msg.wCompLeftSec = static_cast<unsigned __int16>(elapsedMs / 1000);
   }
   msg.dwMasterSerial = m_dwMasterSerial;
 
@@ -631,10 +630,10 @@ void CGuardTower::OnLoop_Static()
 void CGuardTower::SendMsg_Destroy(unsigned __int8 byDesType)
 {
 
-  GuardTowerDestroyMsg msg{};
+  _tower_destroy_zocl msg{};
   msg.wIndex = m_ObjID.m_wIndex;
-  msg.dwObjSerial = m_dwObjSerial;
-  msg.byDesType = byDesType;
+  msg.dwSerial = m_dwObjSerial;
+  msg.byDestroyCode = byDesType;
   msg.dwMasterSerial = m_dwMasterSerial;
 
   unsigned __int8 type[2] = {3, 27};
@@ -644,11 +643,11 @@ void CGuardTower::SendMsg_Destroy(unsigned __int8 byDesType)
 void CGuardTower::SendMsg_Create()
 {
 
-  GuardTowerCreateMsg msg{};
+  _tower_create_zocl msg{};
   msg.wIndex = m_ObjID.m_wIndex;
-  msg.wRecordIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
-  msg.dwObjSerial = m_dwObjSerial;
-  FloatToShort(m_fCurPos, msg.pos, 3);
+  msg.wRecIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
+  msg.dwSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, msg.zPos, 3);
   msg.dwMasterSerial = m_dwMasterSerial;
 
   unsigned __int8 type[2] = {3, 19};

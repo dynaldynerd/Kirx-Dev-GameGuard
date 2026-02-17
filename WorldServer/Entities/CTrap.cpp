@@ -12,7 +12,6 @@
 #include <cstring>
 #include <cstdio>
 #include <mmsystem.h>
-#include "CTrapLocalStructs.h"
 
 namespace
 {
@@ -263,19 +262,19 @@ void CTrap::RecvKillMessage(CCharacter *pDier)
 void CTrap::SendMsg_FixPosition(int n)
 {
 
-  TrapFixPosMsg msg{};
-  msg.wRecordIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
+  _trap_fixpositon_zocl msg{};
+  msg.wRecIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
   msg.wIndex = m_ObjID.m_wIndex;
-  msg.dwObjSerial = m_dwObjSerial;
-  FloatToShort(m_fCurPos, msg.pos, 3);
+  msg.dwSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, msg.zCur, 3);
   msg.dwMasterSerial = m_dwMasterSerial;
-  msg.byNotBreakTranspar = static_cast<unsigned __int8>(!m_bBreakTransparBuffer);
+  msg.bTranspar = !m_bBreakTransparBuffer;
   msg.byRaceCode = m_byRaceCode;
 
   if (m_bComplete)
-    msg.nBuildSec = 0;
+    msg.wCompLeftSec = 0;
   else
-    msg.nBuildSec = static_cast<__int16>((timeGetTime() - m_dwStartMakeTime) / 1000);
+    msg.wCompLeftSec = static_cast<unsigned __int16>((timeGetTime() - m_dwStartMakeTime) / 1000);
 
   unsigned __int8 type[2] = {4, 168};
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));

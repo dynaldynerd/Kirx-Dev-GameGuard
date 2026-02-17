@@ -30,3 +30,17 @@ WorldServer/WorldServer/**
 WorldServer/x64/**
 RF Online Old Sourcecode/
 _reports/
+# Local analysis / report artifacts (root-level)
+_send_packet_caller_cleanup_report.txt
+_sendmsg_one_by_one_check.txt
+_sendmsg_one_by_one_full.csv
+_virtual_all_functions.txt
+_virtual_missing_report.txt
+cgameobject_symbols.txt
+loadsendmsg caller.txt
+sig_mismatch_*.txt
+temp_static_strings.txt
+temp_upgrade_arrays.txt
+tmp_batch2_ida.txt
+build_after_ticket_fix.log
+_msbuild_sln_x64_diag.log

@@ -148,8 +148,8 @@ void CAnimus::SendMsg_Destroy()
 void CAnimus::SendMsg_Create()
 {
   char payload[19]{};
-  *reinterpret_cast<unsigned __int16 *>(payload) = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
-  *reinterpret_cast<unsigned __int16 *>(payload + 2) = m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned __int16 *>(payload) = m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned __int16 *>(payload + 2) = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
   *reinterpret_cast<unsigned int *>(payload + 4) = m_dwObjSerial;
   FloatToShort(m_fCurPos, reinterpret_cast<short *>(payload + 8), 3);
   payload[14] = static_cast<char>(m_pRecord ? m_pRecord->m_nLevel : 1);

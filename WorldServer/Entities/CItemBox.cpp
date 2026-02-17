@@ -12,7 +12,6 @@
 #include "CPvpUserAndGuildRankingSystem.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
-#include "CItemBoxLocalStructs.h"
 
 int CItemBox::s_nLiveNum = 0;
 unsigned int CItemBox::s_dwSerialCounter = 0;
@@ -307,19 +306,19 @@ bool CItemBox::Destroy()
 
 void CItemBox::SendMsg_Create()
 {
-  CreateMsg msg{};
+  _itembox_create_zocl msg{};
 
-  msg.byTableCode = m_Item.m_byTableCode;
-  msg.wItemIndex = m_pRecordSet->m_dwIndex;
-  msg.byDur = static_cast<unsigned __int8>(m_Item.m_dwDur);
-  msg.wIndex = m_ObjID.m_wIndex;
-  msg.byStateCode = static_cast<unsigned __int8>(m_nStateCode);
-  msg.dwOwnerSerial = m_dwOwnerSerial;
-  msg.byThrowerID = m_byThrowerID;
-  msg.wThrowerIndex = m_wThrowerIndex;
-  msg.dwThrowerSerial = m_dwThrowerSerial;
-  msg.byThrowerRaceCode = m_byThrowerRaceCode;
-  FloatToShort(m_fCurPos, reinterpret_cast<short *>(msg.posShort), 3);
+  msg.byItemTableCode = m_Item.m_byTableCode;
+  msg.wItemRecIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
+  msg.byAmount = static_cast<unsigned __int8>(m_Item.m_dwDur);
+  msg.wBoxIndex = m_ObjID.m_wIndex;
+  msg.byState = static_cast<char>(m_nStateCode);
+  msg.dwOwerSerial = m_dwOwnerSerial;
+  msg.idDumber.byID = m_byThrowerID;
+  msg.idDumber.wIndex = m_wThrowerIndex;
+  msg.idDumber.dwSerial = m_dwThrowerSerial;
+  msg.byThrowerRace = m_byThrowerRaceCode;
+  FloatToShort(m_fCurPos, msg.zPos, 3);
 
   unsigned __int8 pbyType[2] = {3, 20};
   if (m_bHide)
@@ -349,11 +348,11 @@ void CItemBox::SendMsg_StateChange()
     return;
   }
 
-  StateMsg msg{};
+  _itembox_state_change_zocl msg{};
 
-  msg.byStateCode = static_cast<unsigned __int8>(m_nStateCode);
-  msg.wIndex = m_ObjID.m_wIndex;
-  msg.dwOwnerSerial = m_dwOwnerSerial;
+  msg.byState = static_cast<char>(m_nStateCode);
+  msg.wItemBoxIndex = m_ObjID.m_wIndex;
+  msg.dwOwerSerial = m_dwOwnerSerial;
 
   unsigned __int8 pbyType[2] = {7, 1};
   CircleReport(pbyType, reinterpret_cast<char *>(&msg), 7, 0);
@@ -366,16 +365,16 @@ void CItemBox::SendMsg_FixPosition(unsigned int n)
     return;
   }
 
-  FixMsg msg{};
+  _itembox_fixpositon_zocl msg{};
 
-  msg.byTableCode = m_Item.m_byTableCode;
-  msg.wItemIndex = m_pRecordSet->m_dwIndex;
-  msg.byDur = static_cast<unsigned __int8>(m_Item.m_dwDur);
-  msg.byStateCode = static_cast<unsigned __int8>(m_nStateCode);
-  msg.wIndex = m_ObjID.m_wIndex;
-  msg.dwOwnerSerial = m_dwOwnerSerial;
-  msg.byThrowerRaceCode = m_byThrowerRaceCode;
-  FloatToShort(m_fCurPos, reinterpret_cast<short *>(msg.posShort), 3);
+  msg.byItemTableCode = m_Item.m_byTableCode;
+  msg.wItemRecIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
+  msg.byAmount = static_cast<unsigned __int8>(m_Item.m_dwDur);
+  msg.byState = static_cast<char>(m_nStateCode);
+  msg.wItemBoxIndex = m_ObjID.m_wIndex;
+  msg.dwOwerSerial = m_dwOwnerSerial;
+  msg.byThrowerRace = m_byThrowerRaceCode;
+  FloatToShort(m_fCurPos, msg.zPos, 3);
 
   unsigned __int8 pbyType[2] = {4, 15};
   g_Network.m_pProcess[0]->LoadSendMsg(n, pbyType, reinterpret_cast<char *>(&msg), 0x12u);

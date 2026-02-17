@@ -1,6 +1,0 @@
-WorldServer\Entities\CDummyPosTable.h	8	extern const char *C_HEROES_DUMMY_NAME[3];
-WorldServer\Entities\CUserDB.h	261	extern const char wszNonMakeName_0[3][17];
-WorldServer\Entities\CUserDB.h	262	extern const char wszNonMakeName_1[3][17];
-WorldServer\Entities\CUserDB.h	263	extern const char wszNonMakeName[3][17];
-WorldServer\Entities\CUserDB.h	264	extern const char wszGMCmp[];
-WorldServer\Entities\WorldServerUtil.h	304	extern const char *dayofweek[7];

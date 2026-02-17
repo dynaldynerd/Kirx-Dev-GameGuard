@@ -15,7 +15,6 @@
 
 #include <cstring>
 #include <mmsystem.h>
-#include "CQuestMgrLocalStructs.h"
 
 CRecordData *CQuestMgr::s_tblQuest = nullptr;
 CRecordData *CQuestMgr::s_tblQuestHappenEvent = nullptr;
@@ -85,9 +84,9 @@ void CQuestMgr::SendMsgToMaster_ReturnItemAfterQuest(
   char byQuestDBSlot)
 {
 
-  ReturnItemAfterQuestMessage msg{};
+  _quest_return_item_after_quest_zocl msg{};
   msg.byQuestDBSlot = byQuestDBSlot;
-  msg.wItemSerial = wItemSerial;
+  msg.wSerial = wItemSerial;
   msg.byNum = byNum;
 
   unsigned __int8 pbyType[2]{24, 46};

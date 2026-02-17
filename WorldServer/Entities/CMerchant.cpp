@@ -12,7 +12,6 @@
 #include "GlobalObjects.h"
 #include "pnt_rect.h"
 #include "StoreList_fld.h"
-#include "CMerchantLocalStructs.h"
 
 CMerchant::CMerchant()
 {
@@ -76,12 +75,12 @@ void CMerchant::OutOfSec()
 void CMerchant::SendMsg_FixPosition(int n)
 {
 
-  MerchantFixPosMsg msg{};
-  msg.wRecordIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
+  _npc_fixpositon_zocl msg{};
+  msg.wRecIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
   msg.wIndex = m_ObjID.m_wIndex;
-  msg.dwObjSerial = m_dwObjSerial;
-  FloatToShort(m_fCurPos, msg.pos, 3);
-  msg.wLastContEffect = m_wLastContEffect;
+  msg.dwSerial = m_dwObjSerial;
+  msg.wLastEffectCode = m_wLastContEffect;
+  FloatToShort(m_fCurPos, msg.zCur, 3);
 
   unsigned __int8 packetType[2] = {4, 12};
   g_Network.m_pProcess[0]->LoadSendMsg(static_cast<unsigned int>(n), packetType, reinterpret_cast<char *>(&msg), sizeof(msg));
@@ -96,14 +95,14 @@ void CMerchant::SendMsg_RealFixPosition(bool /*bCircle*/)
 void CMerchant::SendMsg_RealMovePoint(int n)
 {
 
-  MerchantRealMoveMsg msg{};
-  msg.wRecordIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
+  _npc_real_move_zocl msg{};
+  msg.wRecIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
   msg.wIndex = m_ObjID.m_wIndex;
-  msg.dwObjSerial = m_dwObjSerial;
-  FloatToShort(m_fCurPos, msg.pos, 3);
-  msg.nTarX = static_cast<__int16>(m_fTarPos[0]);
-  msg.nTarZ = static_cast<__int16>(m_fTarPos[2]);
-  msg.wLastContEffect = m_wLastContEffect;
+  msg.dwSerial = m_dwObjSerial;
+  msg.wLastEffectCode = m_wLastContEffect;
+  FloatToShort(m_fCurPos, msg.zCur, 3);
+  msg.zTar[0] = static_cast<__int16>(m_fTarPos[0]);
+  msg.zTar[1] = static_cast<__int16>(m_fTarPos[2]);
 
   unsigned __int8 packetType[2] = {4, 23};
   g_Network.m_pProcess[0]->LoadSendMsg(static_cast<unsigned int>(n), packetType, reinterpret_cast<char *>(&msg), sizeof(msg));
@@ -170,9 +169,9 @@ void CMerchant::SendMsg_Create()
 void CMerchant::SendMsg_Destroy()
 {
 
-  MerchantDestroyMsg msg{};
+  _npc_destroy_zocl msg{};
   msg.wIndex = m_ObjID.m_wIndex;
-  msg.dwObjSerial = m_dwObjSerial;
+  msg.dwSerial = m_dwObjSerial;
   unsigned __int8 packetType[2] = {3, 25};
   CircleReport(packetType, reinterpret_cast<char *>(&msg), sizeof(msg), false);
 }
@@ -180,11 +179,11 @@ void CMerchant::SendMsg_Destroy()
 void CMerchant::SendMsg_Move()
 {
 
-  MerchantMoveMsg msg{};
-  msg.dwObjSerial = m_dwObjSerial;
-  FloatToShort(m_fCurPos, msg.pos, 3);
-  msg.nTarX = static_cast<__int16>(m_fTarPos[0]);
-  msg.nTarZ = static_cast<__int16>(m_fTarPos[2]);
+  _npc_move_zocl msg{};
+  msg.dwSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, msg.zCur, 3);
+  msg.zTar[0] = static_cast<__int16>(m_fTarPos[0]);
+  msg.zTar[1] = static_cast<__int16>(m_fTarPos[2]);
   unsigned __int8 packetType[2] = {4, 6};
   CircleReport(packetType, reinterpret_cast<char *>(&msg), sizeof(msg), false);
 }
@@ -201,14 +200,15 @@ void CMerchant::SendMsg_TransShipTicketNumInform(unsigned int n)
 
   CTransportShip *transportShip = &g_TransportShip[GetObjRace()];
 
-  TicketNumMsg msg{};
-  msg.dwObjSerial = m_dwObjSerial;
+  _trans_ship_ticket_inform_zocl msg{};
+  msg.dwNpcSerial = m_dwObjSerial;
 
   bool changed = false;
   for (int ticketIndex = 0; ticketIndex < 2; ++ticketIndex)
   {
-    msg.entry[ticketIndex].byTicketType = static_cast<unsigned __int8>(ticketIndex);
-    msg.entry[ticketIndex].wTicketNum = static_cast<unsigned __int16>(transportShip->m_MgrTicket[ticketIndex].nCurTicketNum);
+    msg.TicketList[ticketIndex].byDirectCode = static_cast<char>(ticketIndex);
+    msg.TicketList[ticketIndex].wLeftTicketNum =
+      static_cast<unsigned __int16>(transportShip->m_MgrTicket[ticketIndex].nCurTicketNum);
 
     if (n == static_cast<unsigned int>(-1))
     {

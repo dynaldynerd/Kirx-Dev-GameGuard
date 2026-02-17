@@ -6,7 +6,7 @@
 
 #include "CNetworkEX.h"
 #include "GlobalObjects.h"
-#include "CGuildListLocalStructs.h"
+#include "CPlayerMissingLocalPacketStructs.h"
 
 __guild_list_page::__guild_list_page()
 {
@@ -69,18 +69,24 @@ void CGuildList::SendList(unsigned __int16 wIndex, unsigned __int8 byRace, unsig
       usePage = m_byMaxPage[byRace];
     }
 
-    GuildListResultMessage msg{};
-    msg.byMaxPage = static_cast<unsigned __int8>(m_byMaxPage[byRace] + 1);
+    _guild_list_result_zocl msg{};
     msg.byPage = usePage;
+    msg.byMaxPage = static_cast<unsigned __int8>(m_byMaxPage[byRace] + 1);
     msg.byListCnt = m_pGuildList[byRace][usePage].byListCnt;
     memcpy_0(msg.GuildList, m_pGuildList[byRace][usePage].GuildList, sizeof(msg.GuildList));
 
     unsigned __int8 pbyType[2]{27, 116};
+    unsigned __int8 listCount = static_cast<unsigned __int8>(msg.byListCnt);
+    if (listCount > 4u)
+    {
+      listCount = 0;
+    }
+    const unsigned __int16 nLen = static_cast<unsigned __int16>(143 - 35 * (4 - listCount));
     g_Network.m_pProcess[0]->LoadSendMsg(
       wIndex,
       pbyType,
       reinterpret_cast<char *>(&msg),
-      msg.size());
+      nLen);
   }
 }
 

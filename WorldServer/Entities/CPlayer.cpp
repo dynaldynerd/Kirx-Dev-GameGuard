@@ -157,7 +157,7 @@ _skill_fld *CPlayer::ms_pXmas_Snow_Bullet_Effect = nullptr;
 CMgrAvatorItemHistory CPlayer::s_MgrItemHistory{};
 CMgrAvatorLvHistory CPlayer::s_MgrLvHistory{};
 int CPlayer::s_nLiveNum = 0;
-_DELAY_PROCESS CPlayer::s_AnimusReturnDelay{};
+_ANIMUS_RETURN_DELAY CPlayer::s_AnimusReturnDelay{};
 int *CPlayer::s_pnLinkForceItemToEffect = nullptr;
 _SKILL_IDX_PER_MASTERY CPlayer::s_SkillIndexPerMastery[8]{};
 int CPlayer::s_nAddMstFc[100]{};
@@ -11600,8 +11600,9 @@ void CPlayer::pc_BuyItemStore(
                 resultCode = 16;
                 break;
               }
-              _base_fld *record = g_Main.m_tblItemData[28].GetRecord(offers[j].Item.m_wItemIndex);
-              if (ship->GetLeftTicketIncludeReserNum(&record[4].m_strCode[8], 1) <= 0)
+              _TicketItem_fld *record =
+                reinterpret_cast<_TicketItem_fld *>(g_Main.m_tblItemData[28].GetRecord(offers[j].Item.m_wItemIndex));
+              if (ship->GetLeftTicketIncludeReserNum(record->m_strMapCode, 1) <= 0)
               {
                 resultCode = 16;
                 break;
