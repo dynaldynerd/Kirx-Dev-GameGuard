@@ -917,41 +917,38 @@ CParkingUnit *CreateParkingUnitObject(CPlayer *player, unsigned __int8 bySlotInd
     return nullptr;
   }
 
-  _object_create_setdata createData{};
+  _parkingunit_create_setdata createData{};
+  createData.byFrame = unitData->byFrame;
+  std::memcpy(createData.byPartCode, unitData->byPart, sizeof(createData.byPartCode));
+  createData.m_pRecordSet = g_Main.m_tblUnitFrame.GetRecord(unitData->byFrame);
+  createData.pOwner = player;
+  createData.byCreateType = 0;
   createData.m_pMap = player->m_pCurMap;
   createData.m_nLayerIndex = player->m_wMapLayerIndex;
-  createData.m_pRecordSet = g_Main.m_tblUnitFrame.GetRecord(unitData->byFrame);
-  if (!createData.m_pRecordSet)
-  {
-    return nullptr;
-  }
   std::memcpy(createData.m_fStartPos, position, sizeof(createData.m_fStartPos));
-  if (!slot->Create(&createData))
+  createData.byTransDistCode = 0;
+  createData.wHPRate = 10000;
+  if (!createData.m_pRecordSet || !slot->Create(&createData))
   {
     return nullptr;
   }
-
-  slot->m_dwObjSerial = GenerateTransientObjSerial();
-  slot->m_pOwner = player;
-  slot->m_dwOwnerSerial = player->m_dwObjSerial;
-  slot->m_byFrame = unitData->byFrame;
-  std::memcpy(slot->m_byPartCode, unitData->byPart, sizeof(slot->m_byPartCode));
-  slot->m_byCreateType = 0;
-  slot->m_byTransDistCode = 0;
-  slot->m_dwParkingStartTime = GetLoopTime();
-  slot->m_wHPRate = 10000;
   return slot;
 }
 
 CAnimus *CreateAnimusObject(CPlayer *player, _STORAGE_LIST::_db_con *animusItem)
 {
+  if (!player || !animusItem)
+  {
+    return nullptr;
+  }
+
   CAnimus *slot = FindEmptyAnimusSlot();
   if (!slot)
   {
     return nullptr;
   }
 
-  _character_create_setdata createData{};
+  _animus_create_setdata createData{};
   createData.m_pMap = player->m_pCurMap;
   createData.m_nLayerIndex = player->m_wMapLayerIndex;
   createData.m_pRecordSet = g_Main.m_tblAnimus.GetRecord(animusItem->m_wItemIndex);
@@ -960,47 +957,16 @@ CAnimus *CreateAnimusObject(CPlayer *player, _STORAGE_LIST::_db_con *animusItem)
     return nullptr;
   }
   std::memcpy(createData.m_fStartPos, player->m_fCurPos, sizeof(createData.m_fStartPos));
+  createData.nHP = LOWORD(animusItem->m_dwLv);
+  createData.nFP = HIWORD(animusItem->m_dwLv);
+  createData.dwExp = animusItem->m_dwDur;
+  createData.pMaster = player;
+  createData.nMaxAttackPnt = player->m_nAnimusAttackPnt;
+
   if (!slot->Create(&createData))
   {
     return nullptr;
   }
-
-  _animus_fld *animusFld = GetAnimusFldFromExp(animusItem->m_wItemIndex, animusItem->m_dwDur);
-  if (!animusFld)
-  {
-    slot->Destroy();
-    return nullptr;
-  }
-
-  slot->m_dwObjSerial = GenerateTransientObjSerial();
-  slot->m_pMaster = player;
-  slot->m_dwMasterSerial = player->m_dwObjSerial;
-  slot->m_byClassCode = static_cast<unsigned __int8>(slot->m_pRecordSet->m_dwIndex);
-  slot->m_nHP = LOWORD(animusItem->m_dwLv);
-  slot->m_nFP = HIWORD(animusItem->m_dwLv);
-  slot->m_dwExp = animusItem->m_dwDur;
-  slot->m_byRoleCode = static_cast<unsigned __int8>(slot->m_pRecordSet[3].m_strCode[56]);
-  slot->m_nMaxAttackPnt = player->m_nAnimusAttackPnt;
-  slot->m_pRecord = animusFld;
-  slot->m_nMaxHP = animusFld->m_nMaxHP;
-  slot->m_nMaxFP = animusFld->m_nMaxFP;
-  strcpy_0(slot->m_wszMasterName, player->m_Param.GetCharNameW());
-  W2M(slot->m_wszMasterName, slot->m_aszMasterName, 0x11u);
-  slot->m_pBeforeTownCheckMap = nullptr;
-  slot->m_dwStunTime = 0;
-  slot->m_dwBeAttackedTargetTime = 0;
-  slot->m_pNextTarget = nullptr;
-  slot->m_pTarget = (slot->m_byRoleCode == 3) ? player : nullptr;
-  slot->SendMsg_Create();
-  if (slot->m_pRecord->m_nUseFP > 0)
-  {
-    slot->m_tmNextEatMasterFP = timeGetTime() + 1000;
-  }
-  else
-  {
-    slot->m_tmNextEatMasterFP = static_cast<unsigned int>(-1);
-  }
-  ++CAnimus::s_nLiveNum;
   return slot;
 }
 
@@ -1298,6 +1264,155 @@ void CPlayer::SendMsg_UnitDestroy(char bySlotIndex)
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
 }
 
+void CPlayer::CheckAlterMaxPoint()
+{
+  bool bAlter = false;
+
+  const int maxHP = static_cast<int>(GetMaxHP());
+  if (m_nOldPoint[0] != maxHP)
+  {
+    bAlter = true;
+    m_nOldPoint[0] = maxHP;
+  }
+
+  const int maxFP = GetMaxFP();
+  if (m_nOldPoint[1] != maxFP)
+  {
+    bAlter = true;
+    m_nOldPoint[1] = maxFP;
+  }
+
+  const int maxSP = GetMaxSP();
+  if (m_nOldPoint[2] != maxSP)
+  {
+    bAlter = true;
+    m_nOldPoint[2] = maxSP;
+  }
+
+  if (bAlter)
+  {
+    SendMsg_MaxHFSP();
+    SendMsg_Recover();
+  }
+
+  const int maxDP = GetMaxDP();
+  if (m_nOldMaxDP != maxDP)
+  {
+    if (GetDP() > maxDP)
+    {
+      SetDP(maxDP, false);
+      SendMsg_SetDPInform();
+    }
+
+    SendMsg_AlterMaxDP();
+    m_nOldMaxDP = GetMaxDP();
+  }
+}
+
+void CPlayer::_UnitDestroy(unsigned __int8 byUnitSlot)
+{
+  if (byUnitSlot >= 4u)
+  {
+    return;
+  }
+
+  _UNIT_DB_BASE::_LIST *unitData = &m_Param.m_UnitDB.m_List[byUnitSlot];
+  if (unitData->byFrame == static_cast<unsigned __int8>(-1))
+  {
+    return;
+  }
+
+  _base_fld *record = g_Main.m_tblUnitFrame.GetRecord(unitData->byFrame);
+  if (record
+      && (!*reinterpret_cast<int *>(&record[1].m_strCode[60]) || *reinterpret_cast<int *>(&record[1].m_strCode[56])))
+  {
+    unitData->Init(0xFFu);
+    DeleteUnitKey(this, byUnitSlot);
+    if (m_pUserDB)
+    {
+      m_pUserDB->Update_UnitDelete(byUnitSlot);
+    }
+  }
+  else
+  {
+    unitData->dwGauge = 0;
+    if (m_pUserDB)
+    {
+      m_pUserDB->Update_UnitData(byUnitSlot, unitData);
+    }
+    if (m_pUsingUnit)
+    {
+      _LockUnitKey(m_pUsingUnit->bySlotIndex, false);
+    }
+  }
+
+  if (m_pUsingUnit == unitData)
+  {
+    m_pUsingUnit = nullptr;
+    m_pParkingUnit = nullptr;
+  }
+
+  SendMsg_UnitDestroy(static_cast<char>(byUnitSlot));
+}
+
+void CPlayer::Emb_RidindUnit(bool bRiding, CParkingUnit *pCreateUnit)
+{
+  CashChangeStateFlag changeFlag(0);
+  UpdateVisualVer(changeFlag);
+
+  if (bRiding)
+  {
+    SendMsg_UnitRideChange(true, m_pParkingUnit);
+    m_pParkingUnit->Destroy(1u);
+    m_pParkingUnit = nullptr;
+    m_EP.SetLock(true);
+    m_pmWpn.FixUnit(m_pUsingUnit);
+    m_nUnitDefFc = 0;
+
+    for (int j = 0; j < 6; ++j)
+    {
+      if (m_pUsingUnit->byPart[j] != static_cast<unsigned __int8>(-1))
+      {
+        _base_fld *record = g_Main.m_tblUnitPart[j].GetRecord(m_pUsingUnit->byPart[j]);
+        if (record)
+        {
+          m_nUnitDefFc += *reinterpret_cast<int *>(&record[5].m_strCode[8]);
+        }
+      }
+    }
+  }
+  else
+  {
+    if (pCreateUnit)
+    {
+      m_pParkingUnit = pCreateUnit;
+      SendMsg_UnitRideChange(false, pCreateUnit);
+    }
+    else
+    {
+      _UnitDestroy(m_pUsingUnit->bySlotIndex);
+    }
+
+    m_dwUnitViewOverTime = static_cast<unsigned int>(-1);
+    m_EP.SetLock(false);
+
+    _STORAGE_LIST::_db_con *weapon = m_Param.m_dbEquip.m_pStorageList + 6;
+    if (weapon->m_bLoad)
+    {
+      m_pmWpn.FixWeapon(weapon);
+    }
+    else
+    {
+      m_pmWpn.FixWeapon(nullptr);
+    }
+  }
+
+  CalcDefTol();
+  SetHaveEffect(0);
+  SetShapeAllBuffer();
+  CheckAlterMaxPoint();
+}
+
 void CPlayer::SendMsg_AnimusHPInform()
 {
   if (!this->m_pRecalledAnimusChar || !this->m_pRecalledAnimusItem)
@@ -1350,6 +1465,22 @@ void CPlayer::SendMsg_AnimusModeInform(char byMode)
 
   unsigned __int8 type[2] = {22, 6};
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+}
+
+void CPlayer::Return_AnimusAsk(unsigned __int8 byReturnType)
+{
+  if (m_pRecalledAnimusItem && m_pRecalledAnimusChar)
+  {
+    m_byNextRecallReturn = byReturnType;
+  }
+}
+
+void CPlayer::AlterMode_Animus(unsigned __int8 byMode)
+{
+  if (m_pRecalledAnimusItem)
+  {
+    SendMsg_AnimusModeInform(static_cast<char>(byMode));
+  }
 }
 
 void CPlayer::SendMsg_AnimusRecallWaitTimeFree(char bFree)
@@ -10783,14 +10914,15 @@ void CPlayer::pc_GuildHonorListRequest(unsigned __int8 byUI)
 
 void CPlayer::pc_AnimusCommandRequest(unsigned __int8 byCommandCode)
 {
+  unsigned __int8 result = 0;
   if (!this->m_pRecalledAnimusItem || !this->m_pRecalledAnimusChar)
   {
-    return;
+    result = 7;
   }
 
-  if (this->m_pRecalledAnimusChar->m_dwAIMode != byCommandCode)
+  if (!result)
   {
-    this->m_pRecalledAnimusChar->m_dwAIMode = byCommandCode;
+    this->m_pRecalledAnimusChar->ChangeMode_MasterCommand(byCommandCode);
   }
 }
 
@@ -10799,28 +10931,31 @@ void CPlayer::pc_AnimusTargetRequest(
   unsigned __int16 wObjectIndex,
   unsigned int dwObjectSerial)
 {
-unsigned __int8 result = 0;
+  unsigned __int8 result = 0;
   CCharacter *target = reinterpret_cast<CCharacter *>(g_Main.GetObjectA(0, byObjectID, wObjectIndex));
-  if (!this->m_pRecalledAnimusItem || !this->m_pRecalledAnimusChar)
+  if (this->m_pRecalledAnimusItem && this->m_pRecalledAnimusChar)
+  {
+    if (target->m_bLive && !target->m_bCorpse)
+    {
+      if (GetSqrt(this->m_pRecalledAnimusChar->m_fCurPos, target->m_fCurPos) > 400.0f)
+      {
+        result = 8;
+      }
+    }
+    else
+    {
+      result = 8;
+    }
+  }
+  else
   {
     result = 7;
   }
-  else if (!target || !target->m_bLive || target->m_bCorpse)
+
+  if (!result && !this->m_pRecalledAnimusChar->ChangeTarget_MasterCommand(target))
   {
     result = 8;
   }
-  else if (GetSqrt(this->m_pRecalledAnimusChar->m_fCurPos, target->m_fCurPos) > 400.0f)
-  {
-    result = 8;
-  }
-
-  if (!result)
-  {
-    this->m_pRecalledAnimusChar->m_pTarget = target;
-    this->m_pRecalledAnimusChar->m_pNextTarget = target;
-    this->m_pRecalledAnimusChar->MasterAttack_MasterInform(target);
-  }
-
   this->SendMsg_AnimusTargetResult(static_cast<char>(result));
 }
 
@@ -12074,7 +12209,7 @@ void CPlayer::pc_UnitFrameBuyRequest(unsigned __int8 byFrameCode, int bUseNPCLin
     slotData->byFrame = byFrameCode;
     std::memcpy(slotData->byPart, defaultParts, sizeof(slotData->byPart));
     slotData->dwGauge = static_cast<unsigned int>(frameRecord->m_nUnit_HP);
-    m_pUserDB->Update_UnitData(emptyUnitSlot, slotData);
+    m_pUserDB->Update_UnitInsert(emptyUnitSlot, slotData);
 
     keySerial = m_Param.GetNewItemSerial();
     keyIndex = static_cast<unsigned __int16>(unitKeyRecord->m_dwIndex);
@@ -12216,7 +12351,7 @@ void CPlayer::pc_UnitSellRequest(unsigned __int8 bySlotIndex, int bUseNPCLinkInt
     dalantDelta = static_cast<int>(static_cast<double>(dalantDelta) * playerPenalty);
 
     AlterDalant(static_cast<double>(dalantDelta));
-    m_pUserDB->Update_UnitData(bySlotIndex, unitData);
+    m_pUserDB->Update_UnitDelete(bySlotIndex);
 
     if (!m_byUserDgr)
     {
@@ -12243,7 +12378,7 @@ void CPlayer::pc_UnitPartTuningRequest(
   unsigned __int8 resultCode = 0;
   _UNIT_DB_BASE::_LIST *unitData = &m_Param.m_UnitDB.m_List[bySlotIndex];
   const unsigned __int8 frameCode = unitData->byFrame;
-  int consumeMoney[7] = {};
+  unsigned int consumeMoney[7] = {};
 
   const unsigned int buyTaxRate = eGetTexRate(0) + 10000u;
   const unsigned int sellTaxRate = 10000u - eGetTexRate(0);
@@ -12388,7 +12523,7 @@ void CPlayer::pc_UnitPartTuningRequest(
       {
         for (int moneyCode = 0; moneyCode < 7; ++moneyCode)
         {
-          if (consumeMoney[moneyCode] > static_cast<int>(GetMoney(static_cast<unsigned __int8>(moneyCode))))
+          if (consumeMoney[moneyCode] > GetMoney(static_cast<unsigned __int8>(moneyCode)))
           {
             resultCode = 7;
             break;
@@ -12433,8 +12568,8 @@ void CPlayer::pc_UnitPartTuningRequest(
       }
     }
 
-    SubDalant(static_cast<unsigned int>(consumeMoney[0]));
-    SubGold(static_cast<unsigned int>(consumeMoney[1]));
+    SubDalant(consumeMoney[0]);
+    SubGold(consumeMoney[1]);
     m_pUserDB->Update_UnitData(bySlotIndex, unitData);
 
     if (!m_byUserDgr)
@@ -12448,17 +12583,20 @@ void CPlayer::pc_UnitPartTuningRequest(
     {
       if (consumeMoney[1] > 0)
       {
-        const unsigned int amount = 2000u * static_cast<unsigned int>(consumeMoney[1]);
+        const unsigned int amount = 2000u * consumeMoney[1];
         CMoneySupplyMgr::Instance()->UpdateBuyUnitData(level, amount);
       }
       if (consumeMoney[0] > 0)
       {
-        CMoneySupplyMgr::Instance()->UpdateBuyUnitData(level, static_cast<unsigned int>(consumeMoney[0]));
+        CMoneySupplyMgr::Instance()->UpdateBuyUnitData(level, consumeMoney[0]);
       }
     }
   }
 
-  this->SendMsg_UnitPartTuningResult(static_cast<char>(resultCode), static_cast<char>(bySlotIndex), consumeMoney);
+  this->SendMsg_UnitPartTuningResult(
+    static_cast<char>(resultCode),
+    static_cast<char>(bySlotIndex),
+    reinterpret_cast<int *>(consumeMoney));
 }
 
 void CPlayer::pc_UnitFrameRepairRequest(unsigned __int8 bySlotIndex, int bUseNPCLinkIntem)
@@ -12960,11 +13098,24 @@ void CPlayer::pc_UnitDeliveryRequest(
   unsigned int parkingSerial = static_cast<unsigned int>(-1);
   if (!resultCode)
   {
-    _object_create_setdata createData{};
+    _parkingunit_create_setdata createData{};
+    createData.byFrame = unitData->byFrame;
+    std::memcpy(createData.byPartCode, unitData->byPart, sizeof(createData.byPartCode));
+    createData.m_pRecordSet = g_Main.m_tblUnitFrame.GetRecord(unitData->byFrame);
+    createData.pOwner = this;
+    createData.byCreateType = 0;
     createData.m_pMap = m_pCurMap;
     createData.m_nLayerIndex = m_wMapLayerIndex;
-    createData.m_pRecordSet = g_Main.m_tblUnitFrame.GetRecord(unitData->byFrame);
     std::memcpy(createData.m_fStartPos, pfNewPos, sizeof(createData.m_fStartPos));
+    createData.byTransDistCode = transDistCode;
+
+    unsigned int maxGauge = 10000u;
+    _base_fld *frameRecord = g_Main.m_tblUnitFrame.GetRecord(unitData->byFrame);
+    if (frameRecord && *reinterpret_cast<int *>(&frameRecord[1].m_strCode[0]) > 0)
+    {
+      maxGauge = static_cast<unsigned int>(*reinterpret_cast<int *>(&frameRecord[1].m_strCode[0]));
+    }
+    createData.wHPRate = static_cast<unsigned __int16>(10000u * unitData->dwGauge / maxGauge);
 
     if (!createData.m_pRecordSet || !parkingUnit->Create(&createData))
     {
@@ -12972,24 +13123,6 @@ void CPlayer::pc_UnitDeliveryRequest(
     }
     else
     {
-      parkingUnit->m_dwObjSerial = GenerateTransientObjSerial();
-      parkingUnit->m_pOwner = this;
-      parkingUnit->m_dwOwnerSerial = m_dwObjSerial;
-      parkingUnit->m_byFrame = unitData->byFrame;
-      std::memcpy(parkingUnit->m_byPartCode, unitData->byPart, sizeof(parkingUnit->m_byPartCode));
-      parkingUnit->m_byCreateType = 0;
-      parkingUnit->m_byTransDistCode = transDistCode;
-      parkingUnit->m_dwParkingStartTime = GetLoopTime();
-
-      unsigned int maxGauge = 10000u;
-      _UnitFrame_fld *frameRecord =
-        reinterpret_cast<_UnitFrame_fld *>(g_Main.m_tblUnitFrame.GetRecord(unitData->byFrame));
-      if (frameRecord && frameRecord->m_nUnit_HP > 0)
-      {
-        maxGauge = static_cast<unsigned int>(frameRecord->m_nUnit_HP);
-      }
-      parkingUnit->m_wHPRate = static_cast<unsigned __int16>(10000u * unitData->dwGauge / maxGauge);
-
       parkingSerial = parkingUnit->m_dwObjSerial;
       _LockUnitKey(bySlotIndex, true);
 
@@ -16185,14 +16318,7 @@ void CPlayer::pc_UnitTakeRequest()
     m_pCurMap->GetRandPosInRange(m_pParkingUnit->m_fCurPos, 10, newPos);
     std::memcpy(m_fOldPos, m_fCurPos, sizeof(m_fOldPos));
     std::memcpy(m_fCurPos, newPos, sizeof(m_fCurPos));
-
-    m_pParkingUnit->Destroy(1);
-    m_pParkingUnit = nullptr;
-    m_dwUnitViewOverTime = static_cast<unsigned int>(-1);
-    CalcDefTol();
-    SetHaveEffect(0);
-    SetShapeAllBuffer();
-
+    Emb_RidindUnit(true, nullptr);
     SendMsg_AlterUnitHPInform(static_cast<char>(m_pUsingUnit->bySlotIndex), m_pUsingUnit->dwGauge);
   }
 
@@ -16218,7 +16344,7 @@ void CPlayer::pc_UnitLeaveRequest(float *pfNewPos)
   }
   else
   {
-    parkingUnit = CreateParkingUnitObject(this, m_pUsingUnit->bySlotIndex, m_fCurPos);
+    parkingUnit = FindEmptyParkingUnitSlot();
     if (!parkingUnit)
     {
       byRetCode = 19;
@@ -16227,12 +16353,33 @@ void CPlayer::pc_UnitLeaveRequest(float *pfNewPos)
 
   if (!byRetCode && parkingUnit)
   {
-    parkingUnit->m_byCreateType = 1;
-    m_pParkingUnit = parkingUnit;
-    m_dwUnitViewOverTime = static_cast<unsigned int>(-1);
-    CalcDefTol();
-    SetHaveEffect(0);
-    SetShapeAllBuffer();
+    _parkingunit_create_setdata createData{};
+    createData.byFrame = m_pUsingUnit->byFrame;
+    std::memcpy(createData.byPartCode, m_pUsingUnit->byPart, sizeof(createData.byPartCode));
+    createData.m_pRecordSet = g_Main.m_tblUnitFrame.GetRecord(m_pUsingUnit->byFrame);
+    createData.pOwner = this;
+    createData.byCreateType = 1;
+    createData.m_pMap = m_pCurMap;
+    createData.m_nLayerIndex = m_wMapLayerIndex;
+    std::memcpy(createData.m_fStartPos, m_fCurPos, sizeof(createData.m_fStartPos));
+    createData.byTransDistCode = 0;
+
+    unsigned int maxGauge = 10000u;
+    _base_fld *frameRecord = g_Main.m_tblUnitFrame.GetRecord(m_pUsingUnit->byFrame);
+    if (frameRecord && *reinterpret_cast<int *>(&frameRecord[1].m_strCode[0]) > 0)
+    {
+      maxGauge = static_cast<unsigned int>(*reinterpret_cast<int *>(&frameRecord[1].m_strCode[0]));
+    }
+    createData.wHPRate = static_cast<unsigned __int16>(10000u * m_pUsingUnit->dwGauge / maxGauge);
+
+    if (!createData.m_pRecordSet || !parkingUnit->Create(&createData))
+    {
+      byRetCode = 19;
+    }
+    else
+    {
+      Emb_RidindUnit(false, parkingUnit);
+    }
   }
 
   this->SendMsg_UnitLeaveResult(static_cast<char>(byRetCode));
@@ -17216,6 +17363,8 @@ void CPlayer::Loop()
     m_dwLastCheckRegionTime = currentTime;
   }
 
+  CheckAlterMaxPoint();
+
   if (m_tmrSiegeTime.CountingTimer())
   {
     m_bIsSiegeActing = false;
@@ -17446,7 +17595,7 @@ if (m_bCorpse || m_bMapLoading || CGameObject::GetCurSecNum() == static_cast<uns
     {
       SetHP(0, false);
       SendMsg_SetHPInform();
-      ForcePullUnit(false);
+      Emb_RidindUnit(false, nullptr);
     }
   }
   else

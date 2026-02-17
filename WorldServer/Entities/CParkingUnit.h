@@ -2,13 +2,26 @@
 
 #include "IdaCompat.h"
 #include "CGameObject.h"
+#include "ObjectCreateSetData.h"
 
 class CPlayer;
+
+/* 2753 */
+struct __cppobj __declspec(align(8)) _parkingunit_create_setdata : _object_create_setdata
+{
+  CPlayer *pOwner;
+  unsigned __int8 byCreateType;
+  unsigned __int8 byFrame;
+  unsigned __int8 byPartCode[6];
+  unsigned __int8 byTransDistCode;
+  unsigned __int16 wHPRate;
+};
 
 /* 1773 */
 class __cppobj __declspec(align(8)) CParkingUnit : public CGameObject
 {
 public:
+  static unsigned int s_dwSerialCounter;
   static int s_nLiveNum;
 
   CPlayer *m_pOwner;
@@ -22,6 +35,7 @@ public:
   unsigned int m_dwLastDestroyTime;
 
   void Init(_object_id *pID);
+  char Create(_parkingunit_create_setdata *pParam);
   bool Destroy(unsigned __int8 byDestoryType);
   void SendMsg_Create();
   void SendMsg_Destroy(unsigned __int8 byDestoryType);

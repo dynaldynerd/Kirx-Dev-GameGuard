@@ -129,6 +129,8 @@ public:
   char Update_TrunkSlotNum(unsigned __int8 bySlotNum);
   char Update_ExtTrunkSlotNum(unsigned __int8 byExtSlotNum);
   bool Update_Stat(unsigned __int8 byStatIndex, unsigned int dwNewCum, bool bUpdate);
+  bool Update_UnitInsert(unsigned __int8 bySlotIndex, _UNIT_DB_BASE::_LIST *pData);
+  bool Update_UnitDelete(unsigned __int8 bySlotIndex);
   bool Update_UnitData(unsigned __int8 bySlotIndex, _UNIT_DB_BASE::_LIST *pData);
   char Update_QuestInsert(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pSlotData);
   char Update_QuestDelete(unsigned __int8 bySlotIndex);

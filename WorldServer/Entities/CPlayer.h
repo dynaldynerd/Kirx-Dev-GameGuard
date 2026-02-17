@@ -487,6 +487,7 @@ struct __declspec(align(8)) _WEAPON_PARAM
   static void SetStaticMember(CRecordData *itemTable);
   void Init();
   void FixWeapon(_STORAGE_LIST::_db_con *pWeapon);
+  void FixUnit(_UNIT_DB_BASE::_LIST *pUnit);
   unsigned int GetWeaponTolType(_STORAGE_LIST::_db_con *pItem);
   unsigned int GetAttackDelay(int nLv, int nAddDelay);
   unsigned int GetAttackToolType();
@@ -1525,6 +1526,8 @@ public:
   void pc_AnimusReturnRequest();
   void pc_AnimusCommandRequest(unsigned __int8 byCommandCode);
   void pc_AnimusTargetRequest(unsigned __int8 byObjectID, unsigned __int16 wObjectIndex, unsigned int dwObjectSerial);
+  void Return_AnimusAsk(unsigned __int8 byReturnType);
+  void AlterMode_Animus(unsigned __int8 byMode);
   void pc_UnitFrameBuyRequest(unsigned __int8 byFrameCode, int bUseNPCLinkIntem);
   void pc_UnitSellRequest(unsigned __int8 bySlotIndex, int bUseNPCLinkIntem);
   void pc_UnitPartTuningRequest(unsigned __int8 bySlotIndex, unsigned __int8 byTuningNum, _tuning_data *pTuningData, int bUseNPCLinkIntem);
@@ -1729,6 +1732,7 @@ public:
   char SetHP(int nHP, bool bOver);
   char SF_HFSInc_Once(CPlayer *pDstObj);
   char SetDP(int nDP, bool bOver);
+  void CheckAlterMaxPoint();
   void SendMsg_SetDPInform();
   void SendMsg_AlterMaxDP();
   void SendMsg_TransformSiegeModeResult(char byRetCode);
@@ -1880,6 +1884,8 @@ public:
   void pc_PartyLeaveSelfReqeuest();
   void SendMsg_PartyLeaveSelfResult(CPartyPlayer *pLeaver, bool bWorldExit);
   void SendMsg_PartySuccessResult(CPartyPlayer *pSuccessor);
+  void _UnitDestroy(unsigned __int8 byUnitSlot);
+  void Emb_RidindUnit(bool bRiding, CParkingUnit *pCreateUnit);
   void ForcePullUnit(bool bLogout);
   void _UpdateUnitDebt(unsigned __int8 bySlotIndex, unsigned int dwPull);
   bool _LockUnitKey(unsigned __int8 bySlotIndex, bool bLock);

@@ -8,6 +8,7 @@ struct _mon_active;
 class CMapData;
 class CItemStore;
 class CMonster;
+class CPlayer;
 
 struct __cppobj _object_create_setdata
 {
@@ -74,5 +75,23 @@ struct __cppobj _keeper_create_setdata : _character_create_setdata
     pPosCreate = nullptr;
     pPosActive = nullptr;
     pPosCenter = nullptr;
+  }
+};
+
+struct __cppobj __declspec(align(8)) _animus_create_setdata : _character_create_setdata
+{
+  int nHP;
+  int nFP;
+  unsigned __int64 dwExp;
+  CPlayer *pMaster;
+  int nMaxAttackPnt;
+
+  _animus_create_setdata()
+    : nHP(0),
+      nFP(0),
+      dwExp(0),
+      pMaster(nullptr),
+      nMaxAttackPnt(0)
+  {
   }
 };

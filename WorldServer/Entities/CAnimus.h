@@ -4,6 +4,7 @@
 #include "CMainThread.h"
 
 class CAttack;
+struct _animus_create_setdata;
 
 /* 1779 */
 class __cppobj CAnimus : public CCharacter
@@ -31,6 +32,7 @@ public:
   __int64 GetWeaponClass() override;
   float GetWidth() override;
   __int64 GetWindTol() override;
+  bool IsInTown();
   bool IsBeAttackedAble(bool bFirst) override;
   void Loop() override;
   void OutOfSec() override;
@@ -42,6 +44,18 @@ public:
   void SendMsg_LevelUp();
   void SendMsg_AnimusActHealInform(unsigned int dwDstSerial, __int16 nAddHP);
   __int64 SetDamage(int nDam, CCharacter *pDst, int nDstLv, bool bCrt);
+  void AIInit();
+  void CheckPosInTown();
+  void ChangeMode(unsigned int mode);
+  void ChangeMode_MasterCommand(unsigned int nMode);
+  char ChangeTarget_MasterCommand(CCharacter *pTarget);
+  void Return_MasterRequest(unsigned __int8 byReturnType);
+  void TransPoToMaster();
+  void GetTarget();
+  char GetMoveTarget(CCharacter *target, float fMoveSpeed, unsigned __int8 byMoveMode);
+  void LifeTimeCheck();
+  void Process();
+  void _ProcComsumeMaterFP();
 
   unsigned __int8 m_byClassCode;
   int m_nHP;
@@ -74,10 +88,13 @@ public:
 
   static bool SetStaticMember();
   void Init(_object_id *pID);
+  char Create(_animus_create_setdata *pData);
   bool Destroy();
   void SendMsg_Destroy();
   void MasterAttack_MasterInform(CCharacter *pDst);
+  static unsigned int GetNewMonSerial();
 
+  static unsigned int s_dwSerialCnt;
   static CRecordData s_tblParameter[8];
   static unsigned int MAX_EXP[8];
   static int s_nLiveNum;

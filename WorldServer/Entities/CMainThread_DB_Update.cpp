@@ -6,6 +6,7 @@
 #include <cstring>
 #include <ctime>
 #include <mmsystem.h>
+#include <vector>
 
 #include "CCheckSumCharacAccountTrunkData.h"
 #include "CPotionMgr.h"
@@ -19,27 +20,53 @@ char CMainThread::db_Update_Avator(
   _AVATOR_DATA *pOldData,
   bool bCheckLowHigh)
 {
-  char pszBaseQuery[2048]{};
-  char pszGeneralQuery[2048]{};
-  char pszSupplementQuery[2048]{};
-  char pszInvenQuery[2048]{};
-  char pszUnitQuery[2048]{};
-  char pszUIQuery[2048]{};
-  char pszQuestQuery[2048]{};
-  char pszNPCQuestQuery[4096]{};
-  char wszBuddyQuery[2048]{};
-  char pszItemCombineExQuery[2048]{};
-  char wszTrunkQuery[2048]{};
-  char wszExtTrunkQuery[2048]{};
-  char pszTimeLimitInfoQuery[2048]{};
-  char pszAMPInven[10240]{};
-  char pszPvpPointLimitQuery[2048]{};
-  char pszCryMsgQuery[2048]{};
-  char pszPvpOrderViewQurey[2048]{};
-  char pszPrimiumPlayTimeQuery[2048]{};
-  char pszPotionDelayQuery[2048]{};
-  char pszOreCuttingQuery[2048]{};
-  char pszPcBangFavorQuery[2048]{};
+  static constexpr size_t kQuerySize = 0x10000;
+  static constexpr size_t kNpcQuestQuerySize = 0x20000;
+  static constexpr size_t kAmpInvenQuerySize = 0x10000;
+
+  std::vector<char> queryBase(kQuerySize, 0);
+  std::vector<char> queryGeneral(kQuerySize, 0);
+  std::vector<char> querySupplement(kQuerySize, 0);
+  std::vector<char> queryInven(kQuerySize, 0);
+  std::vector<char> queryUnit(kQuerySize, 0);
+  std::vector<char> queryUI(kQuerySize, 0);
+  std::vector<char> queryQuest(kQuerySize, 0);
+  std::vector<char> queryNPCQuest(kNpcQuestQuerySize, 0);
+  std::vector<char> queryBuddy(kQuerySize, 0);
+  std::vector<char> queryItemCombineEx(kQuerySize, 0);
+  std::vector<char> queryTrunk(kQuerySize, 0);
+  std::vector<char> queryExtTrunk(kQuerySize, 0);
+  std::vector<char> queryTimeLimitInfo(kQuerySize, 0);
+  std::vector<char> queryAMPInven(kAmpInvenQuerySize, 0);
+  std::vector<char> queryPvpPointLimit(kQuerySize, 0);
+  std::vector<char> queryCryMsg(kQuerySize, 0);
+  std::vector<char> queryPvpOrderView(kQuerySize, 0);
+  std::vector<char> queryPrimiumPlayTime(kQuerySize, 0);
+  std::vector<char> queryPotionDelay(kQuerySize, 0);
+  std::vector<char> queryOreCutting(kQuerySize, 0);
+  std::vector<char> queryPcBangFavor(kQuerySize, 0);
+
+  char *pszBaseQuery = queryBase.data();
+  char *pszGeneralQuery = queryGeneral.data();
+  char *pszSupplementQuery = querySupplement.data();
+  char *pszInvenQuery = queryInven.data();
+  char *pszUnitQuery = queryUnit.data();
+  char *pszUIQuery = queryUI.data();
+  char *pszQuestQuery = queryQuest.data();
+  char *pszNPCQuestQuery = queryNPCQuest.data();
+  char *wszBuddyQuery = queryBuddy.data();
+  char *pszItemCombineExQuery = queryItemCombineEx.data();
+  char *wszTrunkQuery = queryTrunk.data();
+  char *wszExtTrunkQuery = queryExtTrunk.data();
+  char *pszTimeLimitInfoQuery = queryTimeLimitInfo.data();
+  char *pszAMPInven = queryAMPInven.data();
+  char *pszPvpPointLimitQuery = queryPvpPointLimit.data();
+  char *pszCryMsgQuery = queryCryMsg.data();
+  char *pszPvpOrderViewQurey = queryPvpOrderView.data();
+  char *pszPrimiumPlayTimeQuery = queryPrimiumPlayTime.data();
+  char *pszPotionDelayQuery = queryPotionDelay.data();
+  char *pszOreCuttingQuery = queryOreCutting.data();
+  char *pszPcBangFavorQuery = queryPcBangFavor.data();
 
   char szError[2080]{};
 
@@ -55,7 +82,12 @@ char CMainThread::db_Update_Avator(
     return 24;
   }
 
-  if (!_db_Update_Supplement(dwSerial, pNewData, pOldData, pszSupplementQuery, 2048))
+  if (!_db_Update_Supplement(
+        dwSerial,
+        pNewData,
+        pOldData,
+        pszSupplementQuery,
+        static_cast<int>(querySupplement.size())))
   {
     m_logSystemError.Write( "_db_Update_Supplement(sr:%d) => _db_Update_Supplement..failed ..", dwSerial);
     return 24;
@@ -135,7 +167,7 @@ char CMainThread::db_Update_Avator(
         pNewData,
         pOldData,
         pszTimeLimitInfoQuery,
-        2048))
+        static_cast<int>(queryTimeLimitInfo.size())))
   {
     m_logSystemError.Write(
       "_db_Update_TimeLimitInfo(sr:%d) => _db_Update_TimeLimitInfo..failed ..",
@@ -267,19 +299,34 @@ char CMainThread::db_Update_Avator(
     return 24;
   }
 
-  if (!_db_Update_PotionDelay(dwSerial, pNewData, pOldData, pszPotionDelayQuery, 2048))
+  if (!_db_Update_PotionDelay(
+        dwSerial,
+        pNewData,
+        pOldData,
+        pszPotionDelayQuery,
+        static_cast<int>(queryPotionDelay.size())))
   {
     m_logSystemError.Write( "_db_Update_PotionDelay(sr:%d) => _db_Update_PotionDelay..failed ..", dwSerial);
     return 24;
   }
 
-  if (!_db_Update_OreCutting(dwSerial, pNewData, pOldData, pszOreCuttingQuery, 2048))
+  if (!_db_Update_OreCutting(
+        dwSerial,
+        pNewData,
+        pOldData,
+        pszOreCuttingQuery,
+        static_cast<int>(queryOreCutting.size())))
   {
     m_logSystemError.Write( "_db_Update_OreCutting(sr:%d) => _db_Update_OreCutting..failed ..", dwSerial);
     return 24;
   }
 
-  if (!_db_Update_PcBangFavor(dwSerial, pNewData, pOldData, pszPcBangFavorQuery, 2048))
+  if (!_db_Update_PcBangFavor(
+        dwSerial,
+        pNewData,
+        pOldData,
+        pszPcBangFavorQuery,
+        static_cast<int>(queryPcBangFavor.size())))
   {
     m_logSystemError.Write( "_db_Update_PcBangFavor(sr:%d) => _db_Update_PcBangFavor..failed ..", dwSerial);
     return 24;

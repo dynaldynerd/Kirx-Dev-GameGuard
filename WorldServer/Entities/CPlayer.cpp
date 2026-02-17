@@ -1623,6 +1623,15 @@ void _WEAPON_PARAM::FixWeapon(_STORAGE_LIST::_db_con *pWeapon)
   pFixUnit = nullptr;
 }
 
+void _WEAPON_PARAM::FixUnit(_UNIT_DB_BASE::_LIST *pUnit)
+{
+  Init();
+  byWpClass = 0;
+  byWpType = 0;
+  pFixWp = nullptr;
+  pFixUnit = pUnit;
+}
+
 unsigned int _WEAPON_PARAM::GetWeaponTolType(_STORAGE_LIST::_db_con *pItem)
 {
   if (!pItem)

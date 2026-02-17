@@ -9,6 +9,7 @@ class CPlayer;
 class CGuardTower;
 class CHolyKeeper;
 class CTrap;
+class CAnimus;
 struct _attack_param;
 class CRecordData;
 
@@ -32,6 +33,7 @@ class __cppobj __declspec(align(8)) CAttack
   friend class CGuardTower;
   friend class CHolyKeeper;
   friend class CTrap;
+  friend class CAnimus;
 protected:
   _attack_param *m_pp;
   CCharacter *m_pAttChar;

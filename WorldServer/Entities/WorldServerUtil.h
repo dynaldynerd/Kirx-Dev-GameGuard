@@ -166,6 +166,8 @@ float GetSqrt(float *fPos, float *fTar);
 float GetDist(float *const a1, float *const a2);
 float Get3DSqrt(float *Pos, float *Tar);
 float GetYAngle(float *Pos, float *Tar);
+int GetQLen(float *fPos, float *fTar);
+float GetAngle(float *mon, float *plr);
 void Normalize(float *v);
 void ShortToFloat(__int16 *pShort, float *pFloat, int size);
 void FloatToShort(float *pFloat, short *pShort, int size);

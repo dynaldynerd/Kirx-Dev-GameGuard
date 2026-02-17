@@ -245,7 +245,7 @@ unsigned __int8 CMainThread::_db_Load_General(
       pCon->dbAnimus.m_List[k].Key.LoadDBKey(pCharacterData.byAK[k]);
       pCon->dbAnimus.m_List[k].dwExp = pCharacterData.dwAD[k];
       pCon->dbAnimus.m_List[k].dwParam = pCharacterData.dwAP[k];
-      pCon->dbAnimus.m_List[k].lnUID = pCharacterData.lnUID_E[k];
+      pCon->dbAnimus.m_List[k].lnUID = pCharacterData.lnUID_A[k];
     }
   }
   for ( k = 0; k < 2; ++k )

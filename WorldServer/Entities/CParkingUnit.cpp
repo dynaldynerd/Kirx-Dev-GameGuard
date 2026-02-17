@@ -9,6 +9,7 @@
 #include "GlobalObjects.h"
 
 int CParkingUnit::s_nLiveNum = 0;
+unsigned int CParkingUnit::s_dwSerialCounter = 0;
 
 void CParkingUnit::Init(_object_id *pID)
 {
@@ -22,6 +23,27 @@ void CParkingUnit::Init(_object_id *pID)
   m_byCreateType = static_cast<unsigned __int8>(-1);
   m_byTransDistCode = static_cast<unsigned __int8>(-1);
   m_wHPRate = 0;
+}
+
+char CParkingUnit::Create(_parkingunit_create_setdata *pParam)
+{
+  if (!CGameObject::Create(pParam))
+  {
+    return 0;
+  }
+
+  m_dwObjSerial = s_dwSerialCounter++;
+  m_pOwner = pParam->pOwner;
+  m_dwOwnerSerial = pParam->pOwner->m_dwObjSerial;
+  m_byFrame = pParam->byFrame;
+  memcpy_0(m_byPartCode, pParam->byPartCode, sizeof(m_byPartCode));
+  m_byCreateType = pParam->byCreateType;
+  m_byTransDistCode = pParam->byTransDistCode;
+  m_dwParkingStartTime = timeGetTime();
+  m_wHPRate = pParam->wHPRate;
+  ++s_nLiveNum;
+  SendMsg_Create();
+  return 1;
 }
 
 bool CParkingUnit::Destroy(unsigned __int8 byDestoryType)

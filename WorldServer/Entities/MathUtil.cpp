@@ -55,6 +55,36 @@ float GetYAngle(float *Pos, float *Tar)
     return static_cast<float>(angle * 65535.0 / 6.283185307 + 32768.0);
 }
 
+int GetQLen(float *fPos, float *fTar)
+{
+    const int dx = std::abs(static_cast<int>(fPos[0]) - static_cast<int>(fTar[0]));
+    const int dz = std::abs(static_cast<int>(fPos[2]) - static_cast<int>(fTar[2]));
+    if (dx <= dz)
+    {
+        return dz;
+    }
+    return dx;
+}
+
+float GetAngle(float *mon, float *plr)
+{
+    float dx = mon[0] - plr[0];
+    float dz = mon[2] - plr[2];
+    const float len = sqrtf_0((dx * dx) + (dz * dz));
+    if (len > 0.0f)
+    {
+        dx = dx / len;
+        dz = dz / len;
+    }
+
+    float angle = acos_0(dx);
+    if (!(dz > 0.0f))
+    {
+        angle = -angle;
+    }
+    return angle;
+}
+
 void Normalize(float *v)
 {
 

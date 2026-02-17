@@ -896,6 +896,56 @@ bool CUserDB::Update_SFContUpdate(unsigned __int8 byContCode, unsigned __int8 by
   return false;
 }
 
+bool CUserDB::Update_UnitInsert(unsigned __int8 bySlotIndex, _UNIT_DB_BASE::_LIST *pData)
+{
+  if (bySlotIndex < 4)
+  {
+    if (m_AvatorData.dbUnit.m_List[bySlotIndex].byFrame == 0xFF)
+    {
+      memcpy_0(&m_AvatorData.dbUnit.m_List[bySlotIndex], pData, sizeof(m_AvatorData.dbUnit.m_List[bySlotIndex]));
+      m_bDataUpdate = true;
+      return true;
+    }
+
+    g_Main.m_logSystemError.Write(
+      "%s : Update_UnitInsert(EXIST) : slot : %d",
+      m_aszAvatorName,
+      bySlotIndex);
+    return false;
+  }
+
+  g_Main.m_logSystemError.Write(
+    "%s : Update_UnitInsert(SlotIndex OVER) : slot : %d",
+    m_aszAvatorName,
+    bySlotIndex);
+  return false;
+}
+
+bool CUserDB::Update_UnitDelete(unsigned __int8 bySlotIndex)
+{
+  if (bySlotIndex < 4)
+  {
+    if (m_AvatorData.dbUnit.m_List[bySlotIndex].byFrame == 0xFF)
+    {
+      g_Main.m_logSystemError.Write(
+        "%s : Update_UnitDelete(EXIST) : slot : %d",
+        m_aszAvatorName,
+        bySlotIndex);
+      return false;
+    }
+
+    m_AvatorData.dbUnit.m_List[bySlotIndex].DelUnit();
+    m_bDataUpdate = true;
+    return true;
+  }
+
+  g_Main.m_logSystemError.Write(
+    "%s : Update_UnitDelete(SlotIndex OVER) : slot : %d",
+    m_aszAvatorName,
+    bySlotIndex);
+  return false;
+}
+
 bool CUserDB::Update_UnitData(unsigned __int8 bySlotIndex, _UNIT_DB_BASE::_LIST *pData)
 {
   if (bySlotIndex < 4)
