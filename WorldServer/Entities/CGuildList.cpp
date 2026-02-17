@@ -6,7 +6,6 @@
 
 #include "CNetworkEX.h"
 #include "GlobalObjects.h"
-#include "CPlayerMissingLocalPacketStructs.h"
 
 __guild_list_page::__guild_list_page()
 {

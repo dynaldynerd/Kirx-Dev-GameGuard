@@ -150,7 +150,6 @@
 #include <cstdlib>
 #include <cmath>
 #include <mmsystem.h>
-#include "CPlayerLocalPacketStructs.h"
 
 _skill_fld *CPlayer::ms_pXmas_Snow_Effect = nullptr;
 _skill_fld *CPlayer::ms_pXmas_Snow_Bullet_Effect = nullptr;

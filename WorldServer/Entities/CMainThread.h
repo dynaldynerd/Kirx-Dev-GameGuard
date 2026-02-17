@@ -3749,6 +3749,7 @@ struct _unit_pack_fill_result_zocl
 };
 #pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _throw_skill_result_one_zocl
 {
   #pragma pack(push, 1)
@@ -3767,6 +3768,18 @@ struct _throw_skill_result_one_zocl
   char byEffectedNum;
   _throw_skill_result_one_zocl::__effected_list list[30];
 };
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _throw_unit_result_one_zocl
+{
+  char byErrCode;
+  char byAttackSerial;
+  _CHRID idDster;
+  char byEffectedNum;
+  _throw_skill_result_one_zocl::__effected_list list[30];
+};
+#pragma pack(pop)
 
 #pragma pack(push, 1)
 struct _npc_quest_list_result_zocl
@@ -7479,6 +7492,250 @@ struct _guild_push_money_result_zocl
   char byRetCode;
   unsigned int dwLeftDalant;
   unsigned int dwLeftGold;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _group_target_inform_zocl
+{
+  char byGroupType;
+  char wszTargetName[65];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _guildroom_rent_result_zocl
+{
+  char byRetCode;
+  char bySubRetCode;
+  char byRoomType;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _alter_tower_hp_zocl
+{
+  unsigned __int16 wItemSerial;
+  unsigned __int16 wLeftHP;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _alter_equip_sp_inform_zocl
+{
+  float fEquipUseSP;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _set_dp_inform_zocl
+{
+  unsigned __int16 wDP;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _max_dp_zocl
+{
+  unsigned __int16 wMaxDP;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _buddy_off_reged_player_inform_zocl
+{
+  unsigned int dwSerial;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _buddy_add_fail_zocl
+{
+  char byRetCode;
+  char wszDstName[17];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _party_join_invitation_question_zocl
+{
+  _CLID idBoss;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _party_join_application_question_zocl
+{
+  _CLID idApplicant;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _party_join_member_result_zocl
+{
+  unsigned int dwJoinerSerial;
+  char wszJoinerName[17];
+  char byLootShareMode;
+  unsigned __int16 wIndex;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _party_leave_compulsion_result_zocl
+{
+  unsigned int dwExiterSerial;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _away_party_join_invitation_question_zocl
+{
+  _CLID idBoss;
+  char wszCharName[17];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _guild_master_info_zocl
+{
+  char byState;
+  char byGrade;
+  char byEffectValue[4];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _set_group_target_object_result_zocl
+{
+  char byRetCode;
+  char byGroupType;
+  char byMapCode;
+  char byID;
+  unsigned int dwSerial;
+  float fPos[3];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _set_group_map_point_result_zocl
+{
+  char byRetCode;
+  char byGroupType;
+  char byMapCode;
+  char byRemain;
+  float zPos[2];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _buddy_download_result_zocl
+{
+  unsigned __int16 wDataSize;
+  char sData[10000];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _unit_sell_result_zocl
+{
+  char byRetCode;
+  char bySlotIndex;
+  unsigned __int16 wKeySerial;
+  unsigned int dwNonPayDalant;
+  int nAddMoney[7];
+  unsigned int dwLeftMoney[7];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _unit_part_tuning_result_zocl
+{
+  char byRetCode;
+  char bySlotIndex;
+  char byPart[6];
+  unsigned int dwBullet[2];
+  int nCost[7];
+  unsigned int dwLeftMoney[7];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _skill_result_one_zocl
+{
+  char byErrCode;
+  char byAttackSerial;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _skill_result_other_zocl
+{
+  char byRetCode;
+  _CHRID idPerformer;
+  _CHRID idDster;
+  char bySkillIndex;
+  char bySkillLv;
+  char byAttackSerial;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _class_skill_result_one_zocl
+{
+  char byErrCode;
+  char byAttackSerial;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _force_result_other_zocl
+{
+  char byRetCode;
+  char byForceIndex;
+  char byForceLv;
+  _CHRID idPerformer;
+  _CHRID idDster;
+  char byAttackSerial;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _potion_delay_time_information_zocl
+{
+  int nMaxNum;
+  unsigned int dwPotionDelayTime[38];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _guild_list_result_zocl
+{
+  #pragma pack(push, 1)
+  struct __list
+  {
+    char byGrade;
+    char wszGuildName[17];
+    char wszMasterName[17];
+  };
+  #pragma pack(pop)
+
+  char byPage;
+  char byMaxPage;
+  char byListCnt;
+  _guild_list_result_zocl::__list GuildList[4];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _throw_skill_result_other_zocl
+{
+  char byRetCode;
+  _CHRID idPerformer;
+  char bySkillIndex;
+  char byAttackSerial;
+  _CHRID idDster;
+  char byEffectedNum;
+  _throw_skill_result_one_zocl::__effected_list list[30];
 };
 #pragma pack(pop)
 
