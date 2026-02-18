@@ -108,6 +108,16 @@
 #include <cmath>
 #include <vector>
 
+namespace
+{
+bool IsAsciiAlpha(char ch);
+bool IsAsciiDigit(char ch);
+bool IsAsciiAlnum(char ch);
+bool IsAlphaString(const char *text);
+bool IsDigitString(const char *text);
+bool IsAlnumMixedString(const char *text);
+}
+
 void CPlayer::SendMsg_DamageResult(_STORAGE_LIST::_db_con *pItem)
 {
   char payload[5]{};
@@ -609,4 +619,434 @@ SEND_FORCE_CHANGE_RESULT:
   }
   this->SendMsg_ForceInvenChange(resultCode);
 }
+
+void CPlayer::SendMsg_UILock_Init_Result(char resultCode)
+{
+  char payload[2] = {};
+  payload[0] = resultCode;
+  unsigned __int8 type[2] = {13, 0x80};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 2u);
+}
+
+void CPlayer::SendMsg_UILock_Login_Result(char resultCode, char failCount)
+{
+  char payload[2] = {};
+  payload[0] = resultCode;
+  payload[1] = failCount;
+  unsigned __int8 type[2] = {13, 0x82};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 2u);
+}
+
+void CPlayer::SendMsg_UILock_Update_Result(char resultCode)
+{
+  unsigned __int8 type[2] = {13, 0x84};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &resultCode, 1u);
+}
+
+void CPlayer::SendMsg_UILock_FindPW_Result(char resultCode, const char *password, char failCount)
+{
+  char payload[15] = {};
+  payload[0] = resultCode;
+  payload[1] = failCount;
+  if (password)
+  {
+    strcpy_s(&payload[2], 13uLL, password);
+  }
+
+  unsigned __int8 type[2] = {13, 0x87};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 15u);
+}
+
+void CPlayer::SendMsg_UILock_Init_Request_ToAccount(
+  unsigned int accountSerial,
+  unsigned __int16 userIndex,
+  const char *password,
+  unsigned __int8 hintIndex,
+  const char *hintAnswer)
+{
+  char payload[0x25] = {};
+  *reinterpret_cast<unsigned __int16 *>(&payload[0]) = userIndex;
+  *reinterpret_cast<unsigned int *>(&payload[2]) = accountSerial;
+  strcpy_s(&payload[6], 13uLL, password);
+  payload[19] = static_cast<char>(hintIndex);
+  strcpy_s(&payload[20], 17uLL, hintAnswer);
+
+  unsigned __int8 type[2] = {1, 15};
+  g_Network.m_pProcess[1]->LoadSendMsg(0, type, payload, 0x25u);
+}
+
+void CPlayer::SendMsg_UILock_Update_Request_ToAccount(
+  unsigned int accountSerial,
+  unsigned __int16 userIndex,
+  const char *password,
+  unsigned __int8 hintIndex,
+  const char *hintAnswer)
+{
+  char payload[0x25] = {};
+  *reinterpret_cast<unsigned __int16 *>(&payload[0]) = userIndex;
+  *reinterpret_cast<unsigned int *>(&payload[2]) = accountSerial;
+  strcpy_s(&payload[6], 13uLL, password);
+  payload[19] = static_cast<char>(hintIndex);
+  strcpy_s(&payload[20], 17uLL, hintAnswer);
+
+  unsigned __int8 type[2] = {1, 17};
+  g_Network.m_pProcess[1]->LoadSendMsg(0, type, payload, 0x25u);
+}
+
+void CPlayer::pc_RequestUILockInit(
+  CUserDB *pUserDB,
+  char *szUILockPW,
+  char *szUILockPW_Confirm,
+  unsigned __int8 byUILock_HintIndex,
+  char *uszUILock_HintAnswer)
+{
+  if (!pUserDB || pUserDB->m_byUserDgr)
+  {
+    return;
+  }
+
+  unsigned __int8 resultCode = 0;
+  if (szUILockPW
+      && szUILockPW_Confirm
+      && uszUILock_HintAnswer
+      && strlen_0(szUILockPW)
+      && strlen_0(szUILockPW_Confirm)
+      && strlen_0(uszUILock_HintAnswer))
+  {
+    if (strlen_0(szUILockPW) <= 12
+        && strlen_0(szUILockPW_Confirm) <= 12
+        && strlen_0(uszUILock_HintAnswer) <= 16)
+    {
+      if (!strcmp_0(szUILockPW, szUILockPW_Confirm))
+      {
+        if (!strcmp_0(szUILockPW, pUserDB->m_szAccount_PW))
+        {
+          resultCode = 2;
+        }
+        else if (m_Param.GetTrunkSlotNum()
+                 && !strcmp_0(szUILockPW, m_Param.m_wszTrunkPasswd))
+        {
+          resultCode = 2;
+        }
+        else if (IsAlphaString(szUILockPW) || IsDigitString(szUILockPW))
+        {
+          resultCode = 5;
+        }
+        else if (IsAlnumMixedString(szUILockPW))
+        {
+          if (!IsSQLValidString(uszUILock_HintAnswer))
+          {
+            g_Main.m_logSystemError.Write(
+              "CPlayer::pc_CharacterRenameCheck() : Account %u(%s) !::IsSQLValidString( uszUILock_HintAnswer(%s) ) Invalid!",
+              pUserDB->m_dwAccountSerial,
+              pUserDB->m_szAccountID,
+              uszUILock_HintAnswer);
+            resultCode = 6;
+          }
+          else if (pUserDB->m_byUILock)
+          {
+            resultCode = 11;
+          }
+        }
+        else
+        {
+          resultCode = 5;
+        }
+      }
+      else
+      {
+        resultCode = 1;
+      }
+    }
+    else
+    {
+      resultCode = 6;
+    }
+  }
+  else
+  {
+    resultCode = 6;
+  }
+
+  if (resultCode)
+  {
+    this->SendMsg_UILock_Init_Result(static_cast<char>(resultCode));
+    return;
+  }
+
+  this->SendMsg_UILock_Init_Request_ToAccount(pUserDB->m_dwAccountSerial, pUserDB->m_idWorld.wIndex, szUILockPW, byUILock_HintIndex, uszUILock_HintAnswer);
+}
+
+void CPlayer::pc_RequestUILockCertify(CUserDB *pUserDB, char *uszUILockPW)
+{
+  if (!pUserDB || pUserDB->m_byUserDgr)
+  {
+    return;
+  }
+
+  unsigned __int8 resultCode = 0;
+  if (uszUILockPW && strlen_0(uszUILockPW))
+  {
+    if (pUserDB->m_byUILock)
+    {
+      if (pUserDB->m_byUILock == 2)
+      {
+        resultCode = 2;
+      }
+      else if (strcmp_0(pUserDB->m_szUILock_PW, uszUILockPW))
+      {
+        ++pUserDB->m_byUILock_FailCnt;
+        resultCode = pUserDB->m_byUILock_FailCnt < 5 ? 1 : 4;
+      }
+    }
+    else
+    {
+      resultCode = 3;
+    }
+  }
+  else
+  {
+    resultCode = 5;
+  }
+
+  if (resultCode)
+  {
+    if (resultCode == 4)
+    {
+      this->SendMsg_UILock_Login_Result(static_cast<char>(resultCode), static_cast<char>(pUserDB->m_byUILock_FailCnt));
+      pUserDB->ForceCloseCommand(8u, 0, true, "UILOCK Certify Fail");
+    }
+    else
+    {
+      this->SendMsg_UILock_Login_Result(static_cast<char>(resultCode), static_cast<char>(pUserDB->m_byUILock_FailCnt));
+    }
+    return;
+  }
+
+  pUserDB->m_byUILock = 2;
+  pUserDB->m_byUILock_FailCnt = 0;
+  pUserDB->m_byUILockFindPassFailCount = 0;
+  this->SendMsg_UILock_Login_Result(0, 0);
+}
+
+void CPlayer::pc_RequestUILockUpdate(
+  char *uszUILockPWOld,
+  char *uszUILockPW,
+  char *uszUILockPW_Confirm,
+  unsigned __int8 byUILock_HintIndex,
+  char *uszUILock_HintAnswer)
+{
+  if (!m_pUserDB || m_pUserDB->m_byUserDgr)
+  {
+    return;
+  }
+
+  unsigned __int8 resultCode = 0;
+  if (uszUILockPW
+      && uszUILockPW_Confirm
+      && uszUILock_HintAnswer
+      && strlen_0(uszUILockPW)
+      && strlen_0(uszUILockPW_Confirm)
+      && strlen_0(uszUILock_HintAnswer))
+  {
+    if (strlen_0(uszUILockPW) <= 12
+        && strlen_0(uszUILockPW_Confirm) <= 12
+        && strlen_0(uszUILock_HintAnswer) <= 16)
+    {
+      if (m_pUserDB->m_byUILock == 2)
+      {
+        if (!strcmp_0(uszUILockPWOld, m_pUserDB->m_szUILock_PW))
+        {
+          if (!strcmp_0(uszUILockPW, m_pUserDB->m_szUILock_PW))
+          {
+            resultCode = 8;
+          }
+          else if (!strcmp_0(uszUILockPW, uszUILockPW_Confirm))
+          {
+            if (!strcmp_0(uszUILockPW, m_pUserDB->m_szAccount_PW))
+            {
+              resultCode = 2;
+            }
+            else if (m_Param.GetTrunkSlotNum()
+                     && !strcmp_0(uszUILockPW, m_Param.m_wszTrunkPasswd))
+            {
+              resultCode = 2;
+            }
+            else if (IsAlphaString(uszUILockPW) || IsDigitString(uszUILockPW))
+            {
+              resultCode = 5;
+            }
+            else if (IsAlnumMixedString(uszUILockPW))
+            {
+              if (!IsSQLValidString(uszUILock_HintAnswer))
+              {
+                g_Main.m_logSystemError.Write(
+                  "CPlayer::pc_RequestUILockUpdate() : Account : %u(%s) Character : %u !::IsSQLValidString( uszUILock_HintAnswer(%s) ) Invalid!",
+                  m_pUserDB->m_dwAccountSerial,
+                  m_pUserDB->m_szAccountID,
+                  m_dwObjSerial,
+                  uszUILock_HintAnswer);
+                resultCode = 6;
+              }
+            }
+            else
+            {
+              resultCode = 5;
+            }
+          }
+          else
+          {
+            resultCode = 1;
+          }
+        }
+        else
+        {
+          resultCode = 9;
+        }
+      }
+      else
+      {
+        resultCode = 13;
+      }
+    }
+    else
+    {
+      resultCode = 6;
+    }
+  }
+  else
+  {
+    resultCode = 6;
+  }
+
+  if (resultCode)
+  {
+    this->SendMsg_UILock_Update_Result(static_cast<char>(resultCode));
+    return;
+  }
+
+  this->SendMsg_UILock_Update_Request_ToAccount(m_pUserDB->m_dwAccountSerial, m_pUserDB->m_idWorld.wIndex, uszUILockPW, byUILock_HintIndex, uszUILock_HintAnswer);
+}
+
+void CPlayer::pc_RequestUILockFindPW(CUserDB *pUserDB, char *uszHintAnswer)
+{
+  if (!pUserDB || pUserDB->m_byUserDgr)
+  {
+    return;
+  }
+
+  unsigned __int8 resultCode = 0;
+  if (uszHintAnswer && strlen_0(uszHintAnswer))
+  {
+    if (pUserDB->m_byUILock)
+    {
+      if (pUserDB->m_byUILock == 2)
+      {
+        resultCode = 3;
+      }
+      else if (strcmp_0(pUserDB->m_uszUILock_HintAnswer, uszHintAnswer))
+      {
+        ++pUserDB->m_byUILockFindPassFailCount;
+        resultCode = pUserDB->m_byUILockFindPassFailCount < 5 ? 1 : 5;
+      }
+    }
+    else
+    {
+      resultCode = 2;
+    }
+  }
+  else
+  {
+    resultCode = 4;
+  }
+
+  if (resultCode)
+  {
+    this->SendMsg_UILock_FindPW_Result(static_cast<char>(resultCode), nullptr, static_cast<char>(pUserDB->m_byUILockFindPassFailCount));
+    if (resultCode == 5)
+    {
+      pUserDB->ForceCloseCommand(9u, 0, true, "UILOCK Find Password Fail");
+    }
+    return;
+  }
+
+  pUserDB->m_byUILockFindPassFailCount = 0;
+  this->SendMsg_UILock_FindPW_Result(0, pUserDB->m_szUILock_PW, 0);
+}
+
+
+namespace
+{
+
+bool IsAsciiAlpha(char ch)
+{
+  return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
+}
+
+bool IsAsciiDigit(char ch)
+{
+  return ch >= '0' && ch <= '9';
+}
+
+bool IsAsciiAlnum(char ch)
+{
+  return IsAsciiAlpha(ch) || IsAsciiDigit(ch);
+}
+
+bool IsAlphaString(const char *text)
+{
+  if (!text || !text[0])
+  {
+    return false;
+  }
+
+  for (const char *cursor = text; *cursor; ++cursor)
+  {
+    if (!IsAsciiAlpha(*cursor))
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool IsDigitString(const char *text)
+{
+  if (!text || !text[0])
+  {
+    return false;
+  }
+
+  for (const char *cursor = text; *cursor; ++cursor)
+  {
+    if (!IsAsciiDigit(*cursor))
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool IsAlnumMixedString(const char *text)
+{
+  if (!text || !text[0])
+  {
+    return false;
+  }
+
+  bool hasAlpha = false;
+  bool hasDigit = false;
+  for (const char *cursor = text; *cursor; ++cursor)
+  {
+    if (!IsAsciiAlnum(*cursor))
+    {
+      return false;
+    }
+    hasAlpha = hasAlpha || IsAsciiAlpha(*cursor);
+    hasDigit = hasDigit || IsAsciiDigit(*cursor);
+  }
+  return hasAlpha && hasDigit;
+}
+
+} // namespace
 
