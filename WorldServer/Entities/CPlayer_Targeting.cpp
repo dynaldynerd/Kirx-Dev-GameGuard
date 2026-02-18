@@ -1302,3 +1302,90 @@ void CPlayer::SendMsg_AlterRegionInform(__int16 nRegionIndex)
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, szMsg, 2u);
 }
 
+void CPlayer::CheckPosInTown()
+{
+  if (this->m_pBeforeTownCheckMap != this->m_pCurMap
+      || std::abs(this->m_fCurPos[0] - this->m_fBeforeTownCheckPos[0]) > 50.0f
+      || std::abs(this->m_fCurPos[2] - this->m_fBeforeTownCheckPos[1]) > 50.0f)
+  {
+    const unsigned __int8 raceCode = this->m_Param.GetRaceCode();
+    const unsigned __int8 raceTown = this->m_pCurMap->GetRaceTown(this->m_fCurPos, raceCode);
+    if (this->m_byPosRaceTown != raceTown || !this->m_pBeforeTownCheckMap)
+    {
+      this->m_byPosRaceTown = raceTown;
+      SendMsg_AlterTownOrField();
+    }
+    this->m_pBeforeTownCheckMap = this->m_pCurMap;
+    this->m_fBeforeTownCheckPos[0] = this->m_fCurPos[0];
+    this->m_fBeforeTownCheckPos[1] = this->m_fCurPos[2];
+  }
+}
+
+void CPlayer::CheckPos_Region()
+{
+  _bsp_info *bspInfo = this->m_pCurMap->GetBspInfo();
+  const float localX = this->m_fCurPos[0] - static_cast<float>(bspInfo->m_nMapMinSize[0]);
+  const float localZ = static_cast<float>(bspInfo->m_nMapMaxSize[2]) - this->m_fCurPos[2];
+
+  DWORD startTime = 0;
+  if (!g_Main.IsReleaseServiceMode())
+  {
+    startTime = timeGetTime();
+  }
+
+  _map_fld *mapSet = this->m_pCurMap->m_pMapSet;
+  const unsigned __int16 regionIndex = static_cast<unsigned __int16>(GetRegionIndex(
+    mapSet->m_dwIndex,
+    static_cast<int>(localX),
+    static_cast<int>(localZ),
+    bspInfo->m_nMapSize[0],
+    bspInfo->m_nMapSize[2]));
+
+  if (!g_Main.IsReleaseServiceMode())
+  {
+    const DWORD endTime = timeGetTime();
+    const DWORD delta = endTime - startTime;
+    if (endTime != startTime)
+    {
+      __trace("Calc Region time : %d", delta);
+    }
+  }
+
+  if (regionIndex != this->m_wRegionIndex || this->m_wRegionMapIndex != mapSet->m_dwIndex)
+  {
+    this->m_wRegionIndex = regionIndex;
+    this->m_wRegionMapIndex = mapSet->m_dwIndex;
+    SendMsg_AlterRegionInform(this->m_wRegionIndex);
+
+    for (int index = 0; index < 50; ++index)
+    {
+      _BUDDY_LIST::__list *buddy = &this->m_pmBuddy.m_List[index];
+      if (buddy->fill() && buddy->pPtr && buddy->pPtr->m_EP.GetEff_Have(50) <= 0.0f)
+      {
+        buddy->pPtr->SendMsg_BuddyPosInform(
+          this->m_dwObjSerial,
+          static_cast<unsigned __int8>(this->m_pCurMap->m_pMapSet->m_dwIndex),
+          static_cast<unsigned __int8>(this->m_wRegionIndex));
+      }
+    }
+
+    if (this->m_Param.m_pGuild && this->m_EP.GetEff_Have(50) <= 0.0f)
+    {
+      this->m_Param.m_pGuild->SendMsg_GuildMemberPosInform(
+        this->m_dwObjSerial,
+        this->m_wRegionMapIndex,
+        this->m_wRegionIndex);
+    }
+  }
+
+  this->m_dwLastCheckRegionTime = GetLoopTime();
+}
+
+void CPlayer::AlterSec()
+{
+  if (m_pPartyMgr && m_pPartyMgr->IsPartyMode())
+  {
+    SendData_PartyMemberPos();
+  }
+}
+
