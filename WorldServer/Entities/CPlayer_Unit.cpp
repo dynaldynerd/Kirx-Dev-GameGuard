@@ -473,6 +473,125 @@ void CPlayer::SendMsg_AlterUnitHPInform(char bySlotIndex, unsigned int dwGauge)
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, &szMsg, 5u);
 }
 
+float CPlayer::GetAddSpeed()
+{
+  const float effectSpeed = this->m_EP.GetEff_Plus(20) * 100.0f;
+  const float baseSpeed = static_cast<float>(static_cast<__int16>(static_cast<int>(effectSpeed)));
+
+  if (this->m_byMoveType == 2 && this->EquipItemSFAgent.IsUseBooster())
+  {
+    const float boosterSpeed = this->EquipItemSFAgent.GetBoosterAddSpeed() * 100.0f;
+    return static_cast<float>(static_cast<__int16>(static_cast<int>(boosterSpeed)));
+  }
+
+  return baseSpeed;
+}
+
+void CPlayer::BreakCloakBooster()
+{
+  this->EquipItemSFAgent.ReleaseSFCont(7);
+}
+
+void CPlayer::CheckUnitCutTime()
+{
+  if (!this->m_pUserDB)
+  {
+    return;
+  }
+
+  const unsigned int now = GetKorLocalTime();
+  for (int index = 0; index < 4; ++index)
+  {
+    _UNIT_DB_BASE::_LIST *unit = &this->m_Param.m_UnitDB.m_List[index];
+    if (unit->byFrame != 255 && unit->dwCutTime && now - unit->dwCutTime < 5)
+    {
+      unit->nPullingFee = 0;
+      SendMsg_UnitAlterFeeInform(index, 0);
+      this->m_pUserDB->Update_UnitData(index, unit);
+
+      float newPos[3]{this->m_fCurPos[0], this->m_fCurPos[1], this->m_fCurPos[2]};
+      this->m_pCurMap->GetRandPosInRange(this->m_fCurPos, 20, newPos);
+      pc_UnitDeliveryRequest(index, nullptr, 0, newPos, 0);
+      break;
+    }
+  }
+
+  for (int index = 0; index < 4; ++index)
+  {
+    _UNIT_DB_BASE::_LIST *unit = &this->m_Param.m_UnitDB.m_List[index];
+    if (unit->byFrame != 255 && unit->dwCutTime)
+    {
+      unit->dwCutTime = 0;
+      this->m_pUserDB->Update_UnitData(index, unit);
+    }
+  }
+}
+
+void CPlayer::SendMsg_AlterBooster()
+{
+  char payload[3]{};
+  payload[0] = static_cast<char>(m_pUsingUnit->bySlotIndex);
+  *reinterpret_cast<unsigned __int16 *>(&payload[1]) = m_pUsingUnit->wBooster;
+
+  unsigned __int8 type[2]{23, 25};
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, payload, sizeof(payload));
+}
+
+void CPlayer::AutoCharge_Booster()
+{
+  if (!m_pUsingUnit)
+  {
+    return;
+  }
+
+  _base_fld *unitPartRecord = g_Main.m_tblUnitPart[5].GetRecord(m_pUsingUnit->byPart[5]);
+  if (!unitPartRecord)
+  {
+    return;
+  }
+
+  const int maxBooster = *reinterpret_cast<int *>(&unitPartRecord[5].m_strCode[56]);
+  if (!maxBooster)
+  {
+    return;
+  }
+
+  const int currentBooster = m_pUsingUnit->wBooster;
+  int delta = 0;
+  if (m_bMove && !m_pParkingUnit)
+  {
+    if (m_byMoveType == 1)
+    {
+      delta = -2;
+    }
+  }
+  else
+  {
+    delta = 2;
+  }
+
+  if (!delta)
+  {
+    return;
+  }
+
+  int nextBooster = currentBooster + delta;
+  if (nextBooster < 0)
+  {
+    nextBooster = 0;
+  }
+  else if (nextBooster > maxBooster)
+  {
+    nextBooster = maxBooster;
+  }
+
+  m_pUsingUnit->wBooster = static_cast<unsigned __int16>(nextBooster);
+  if (currentBooster != nextBooster)
+  {
+    SendMsg_AlterBooster();
+  }
+}
+
 void CPlayer::pc_ReleaseSiegeModeRequest()
 {
   unsigned __int8 byRetCode = 0;
