@@ -1290,3 +1290,756 @@ void CPlayer::pc_ThrowUnitRequest(_CHRID *pidDst, unsigned __int16 *pConsumeSeri
   this->SendMsg_ThrowUnitResult(byErrCode, pidDst, wBulletIndex);
 }
 
+
+namespace
+{
+
+unsigned int GenerateTransientObjSerial()
+{
+  static unsigned int s_serialCounter = 1;
+  return ++s_serialCounter;
+}
+
+CTrap *FindEmptyTrapSlot()
+{
+  for (int index = 0; index < MAX_TRAP; ++index)
+  {
+    if (!g_Trap[index].m_bLive)
+    {
+      return &g_Trap[index];
+    }
+  }
+  return nullptr;
+}
+
+CTrap *CreateTrapObject(CPlayer *player, unsigned __int16 trapItemIndex, float *position)
+{
+  CTrap *slot = FindEmptyTrapSlot();
+  if (!slot)
+  {
+    return nullptr;
+  }
+
+  _character_create_setdata createData{};
+  createData.m_pMap = player->m_pCurMap;
+  createData.m_nLayerIndex = player->m_wMapLayerIndex;
+  createData.m_pRecordSet = g_Main.m_tblItemData[26].GetRecord(trapItemIndex);
+  if (!createData.m_pRecordSet)
+  {
+    return nullptr;
+  }
+  std::memcpy(createData.m_fStartPos, position, sizeof(createData.m_fStartPos));
+  if (!slot->Create(&createData))
+  {
+    return nullptr;
+  }
+
+  slot->m_dwObjSerial = GenerateTransientObjSerial();
+  slot->m_pMaster = player;
+  slot->m_dwMasterSerial = player->m_dwObjSerial;
+  slot->m_byRaceCode = static_cast<unsigned __int8>(player->m_Param.GetRaceCode());
+  slot->m_dwStartMakeTime = GetLoopTime();
+  slot->m_nTrapMaxAttackPnt = player->m_nTrapMaxAttackPnt;
+
+  _TrapItem_fld *trapInfo = reinterpret_cast<_TrapItem_fld *>(createData.m_pRecordSet);
+  slot->m_nHP = static_cast<int>(trapInfo->m_fMaxHP);
+  return slot;
+}
+
+CGuardTower *CreateGuardTower(
+  CMapData *pMap,
+  unsigned __int16 wLayer,
+  float *fPos,
+  _STORAGE_LIST::_db_con *pItem,
+  CPlayer *pMaster,
+  unsigned __int8 byRaceCode,
+  bool bQuick)
+{
+  CGuardTower *tower = nullptr;
+  for (int index = 0; index < MAX_TOWER; ++index)
+  {
+    if (!g_Tower[index].m_bLive)
+    {
+      tower = &g_Tower[index];
+      break;
+    }
+  }
+
+  if (!tower)
+  {
+    return nullptr;
+  }
+
+  _tower_create_setdata data{};
+  data.m_pMap = pMap;
+  data.m_nLayerIndex = wLayer;
+  data.m_pRecordSet = g_Main.m_tblItemData[25].GetRecord(pItem->m_wItemIndex);
+  if (!data.m_pRecordSet)
+  {
+    return nullptr;
+  }
+
+  std::memcpy(data.m_fStartPos, fPos, sizeof(data.m_fStartPos));
+  data.pMaster = pMaster;
+  data.byRaceCode = byRaceCode;
+  data.pItem = pItem;
+  data.bQuick = bQuick;
+
+  return tower->Create(&data) ? tower : nullptr;
+}
+
+char IsOtherTowerNear(CGameObject *pEster, float *pfEstPos, CGuardTower *pEstObj)
+{
+  if (!pEster || !pEster->m_pCurMap)
+  {
+    return 0;
+  }
+
+  _pnt_rect rect{};
+  const int curSecNum = static_cast<int>(pEster->GetCurSecNum());
+  pEster->m_pCurMap->GetRectInRadius(&rect, 3, curSecNum);
+
+  for (int y = rect.nStarty; y <= rect.nEndy; ++y)
+  {
+    for (int x = rect.nStartx; x <= rect.nEndx; ++x)
+    {
+      _sec_info *secInfo = pEster->m_pCurMap->GetSecInfo();
+      const unsigned int secIndex = secInfo->m_nSecNumW * y + x;
+      CObjectList *sectorList = pEster->m_pCurMap->GetSectorListObj(pEster->m_wMapLayerIndex, secIndex);
+      if (!sectorList)
+      {
+        continue;
+      }
+
+      _object_list_point *node = sectorList->m_Head.m_pNext;
+      while (node != &sectorList->m_Tail)
+      {
+        CGuardTower *tower = static_cast<CGuardTower *>(node->m_pItem);
+        node = node->m_pNext;
+
+        if (!tower->m_ObjID.m_byKind
+            && tower->m_ObjID.m_byID == 4
+            && pEstObj != tower
+            && std::abs(tower->m_fCurPos[1] - pfEstPos[1]) <= 100.0f)
+        {
+          const int nearRange = *reinterpret_cast<int *>(&tower->m_pRecordSet[5].m_strCode[24]);
+          const double dist = GetSqrt(tower->m_fCurPos, pfEstPos);
+          if (static_cast<double>(nearRange) > dist)
+          {
+            return 1;
+          }
+        }
+      }
+    }
+  }
+
+  return 0;
+}
+
+char IsOtherInvalidObjNear(CGameObject *pEster, float *pfEstPos, CTrap *pEstObj, _TrapItem_fld *pEstTrapItemInfo)
+{
+  if (!pEster || !pfEstPos)
+  {
+    return 0;
+  }
+
+  const float checkRange = pEstTrapItemInfo ? pEstTrapItemInfo->m_fReactionDst : 50.0f;
+  for (int index = 0; index < MAX_TRAP; ++index)
+  {
+    CTrap *trap = &g_Trap[index];
+    if (!trap->m_bLive || trap == pEstObj)
+    {
+      continue;
+    }
+    if (std::fabs(trap->m_fCurPos[1] - pfEstPos[1]) > 100.0f)
+    {
+      continue;
+    }
+    if (GetSqrt(trap->m_fCurPos, pfEstPos) < checkRange)
+    {
+      return 10;
+    }
+  }
+
+  if (IsOtherTowerNear(pEster, pfEstPos, nullptr))
+  {
+    return 10;
+  }
+
+  return 0;
+}
+
+} // namespace
+
+void CPlayer::SendMsg_CreateTowerResult(char byErrCode, unsigned int dwTowerObjSerial)
+{
+
+  _make_tower_result_zocl packet{};
+  packet.byErrCode = byErrCode;
+  packet.dwTowerObjSerial = dwTowerObjSerial;
+  packet.wLeftFP = static_cast<unsigned __int16>(this->GetFP());
+
+  unsigned __int8 type[2] = {17, 19};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_BackTowerResult(char byErrCode, unsigned __int16 wItemSerial, unsigned __int16 wLeftHP)
+{
+
+  _back_tower_result_zocl packet{};
+  packet.byErrCode = byErrCode;
+  packet.wItemSerial = wItemSerial;
+  packet.wLeftHP = wLeftHP;
+
+  unsigned __int8 type[2] = {17, 21};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_CreateTrapResult(char byErrCode, unsigned int dwTrapObjSerial)
+{
+
+  _make_trap_result_zocl packet{};
+  packet.byErrCode = byErrCode;
+  packet.dwTrapObjSerial = dwTrapObjSerial;
+  packet.wLeftFP = static_cast<unsigned __int16>(this->GetFP());
+
+  unsigned __int8 type[2] = {17, 28};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_BackTrapResult(char byErrCode)
+{
+  unsigned __int8 type[2] = {17, 39};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &byErrCode, 1u);
+}
+
+void CPlayer::SendMsg_MadeTrapNumInform(char byNum)
+{
+  unsigned __int8 type[2] = {17, 29};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &byNum, 1u);
+}
+
+void CPlayer::SendMsg_TowerContinue(unsigned __int16 wItemSerial, CGuardTower *pTwr)
+{
+_continue_tower_inform msg{};
+
+  msg.wItemSerial = wItemSerial;
+  msg.wTwrRecIndex = static_cast<unsigned __int16>(pTwr->m_pRecordSet->m_dwIndex);
+  msg.wTwrIndex = pTwr->m_ObjID.m_wIndex;
+  msg.dwTwrSerial = pTwr->m_dwObjSerial;
+
+  unsigned __int8 type[2] = {17, 30};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0xAu);
+}
+
+void CPlayer::pc_MakeTowerRequest(
+  unsigned __int16 wSkillIndex,
+  unsigned __int16 wTowerItemSerial,
+  unsigned __int8 byMaterialNum,
+  _make_tower_request_clzo::__material *pMaterial,
+  float *pfPos,
+  unsigned __int16 *pConsumeSerial)
+{
+  unsigned __int8 byErrCode = 0;
+  unsigned int dwTowerObjSerial = static_cast<unsigned int>(-1);
+  _skill_fld *classSkill = reinterpret_cast<_skill_fld *>(g_Main.m_tblEffectData[2].GetRecord(wSkillIndex));
+  _GuardTowerItem_fld *towerItemInfo = nullptr;
+  _STORAGE_LIST::_db_con *towerItem = nullptr;
+  _STORAGE_LIST::_db_con *materialItems[30]{};
+  unsigned __int8 materialTotals[3]{};
+  int classGrade[2] = {-1, -1};
+  _STORAGE_LIST::_db_con *consumeItems[3]{};
+  int consumeCounts[3]{};
+  bool consumeOverlap[3]{};
+  int needFp = 0;
+
+  if (m_byPosRaceTown != 0xFF)
+  {
+    byErrCode = 16;
+  }
+  else if (!classSkill)
+  {
+    byErrCode = 13;
+  }
+  else if (m_byMoveType == 2)
+  {
+    byErrCode = 13;
+  }
+  else if (m_pmTwr.m_nCount >= 6)
+  {
+    byErrCode = 11;
+  }
+  else if (!m_Param.IsActableClassSkill(classSkill->m_strCode, classGrade))
+  {
+    byErrCode = 13;
+  }
+  else if (!m_bSFDelayNotCheck
+           && !_ATTACK_DELAY_CHECKER::IsDelay(&m_AttDelayChker, 2u, classSkill->m_dwIndex, classGrade[0]))
+  {
+    byErrCode = 18;
+  }
+  else if (!GetUseConsumeItem(classSkill->m_ConsumeItemList, pConsumeSerial, consumeItems, consumeCounts, consumeOverlap))
+  {
+    byErrCode = 20;
+  }
+  else if (GetSqrt(m_fCurPos, pfPos) > 40.0)
+  {
+    byErrCode = 9;
+  }
+  else if (IsOtherTowerNear(this, pfPos, nullptr))
+  {
+    byErrCode = 15;
+  }
+  else if (classSkill->m_nTempEffectType == -1)
+  {
+    byErrCode = 12;
+  }
+
+  if (!byErrCode)
+  {
+    needFp = static_cast<int>(static_cast<float>(classSkill->m_nNeedFP) * m_EP.GetEff_Rate(7));
+    if (needFp > GetFP())
+    {
+      byErrCode = 14;
+    }
+  }
+
+  if (!byErrCode)
+  {
+    towerItem = m_Param.m_dbInven.GetPtrFromSerial(wTowerItemSerial);
+    if (!towerItem)
+    {
+      byErrCode = 2;
+    }
+    else if (towerItem->m_byTableCode != 25)
+    {
+      byErrCode = 3;
+    }
+    else if (towerItem->m_bLock)
+    {
+      byErrCode = 17;
+    }
+    else
+    {
+      towerItemInfo = reinterpret_cast<_GuardTowerItem_fld *>(g_Main.m_tblItemData[25].GetRecord(towerItem->m_wItemIndex));
+      if (!towerItemInfo)
+      {
+        byErrCode = 12;
+      }
+    }
+  }
+
+  if (!byErrCode)
+  {
+    for (int index = 0; index < byMaterialNum; ++index)
+    {
+      const unsigned __int16 serial = pMaterial[index].wItemSerial;
+      const unsigned __int8 slot = pMaterial[index].byMaterSlotIndex;
+      const unsigned __int8 amount = pMaterial[index].byAmount;
+      if (slot >= 3)
+      {
+        byErrCode = 4;
+        break;
+      }
+
+      for (int prev = 0; prev < index; ++prev)
+      {
+        if (serial == pMaterial[prev].wItemSerial)
+        {
+          byErrCode = 4;
+          break;
+        }
+      }
+      if (byErrCode)
+      {
+        break;
+      }
+
+      _STORAGE_LIST::_db_con *material = m_Param.m_dbInven.GetPtrFromSerial(serial);
+      materialItems[index] = material;
+      if (!material)
+      {
+        byErrCode = 5;
+        break;
+      }
+
+      _base_fld *materialRecord = g_Main.m_tblItemData[material->m_byTableCode].GetRecord(material->m_wItemIndex);
+      if (!materialRecord || strncmp(materialRecord->m_strCode, towerItemInfo->m_Material[slot].strMaterialCode, 7))
+      {
+        byErrCode = 6;
+        break;
+      }
+      if (static_cast<unsigned __int64>(amount) > material->m_dwDur)
+      {
+        byErrCode = 7;
+        break;
+      }
+      materialTotals[slot] = static_cast<unsigned __int8>(materialTotals[slot] + amount);
+    }
+
+    if (!byErrCode)
+    {
+      for (int slot = 0; slot < 3; ++slot)
+      {
+        if (materialTotals[slot] != towerItemInfo->m_Material[slot].nMaterialNum)
+        {
+          byErrCode = 8;
+          break;
+        }
+      }
+    }
+  }
+
+  if (!byErrCode)
+  {
+    const int currentFp = GetFP();
+    const int remainFp = (currentFp > needFp) ? (currentFp - needFp) : 0;
+    SetFP(remainFp, true);
+
+    CGuardTower *tower = CreateGuardTower(
+      m_pCurMap,
+      m_wMapLayerIndex,
+      pfPos,
+      towerItem,
+      this,
+      static_cast<unsigned __int8>(m_Param.GetRaceCode()),
+      false);
+    if (!tower)
+    {
+      byErrCode = 1;
+    }
+    else
+    {
+      for (int index = 0; index < byMaterialNum; ++index)
+      {
+        Emb_AlterDurPoint(0u, materialItems[index]->m_byStorageIndex, -pMaterial[index].byAmount, false, false);
+      }
+      towerItem->lock(true);
+      m_pmTwr.PushList(towerItem, tower);
+      ++m_pmTwr.m_nCount;
+      dwTowerObjSerial = tower->m_dwObjSerial;
+      DeleteUseConsumeItem(consumeItems, consumeCounts, consumeOverlap);
+      const float addDelay = m_EP.GetEff_Plus(12);
+      _ATTACK_DELAY_CHECKER::SetDelay(
+        &m_AttDelayChker,
+        static_cast<unsigned int>(classSkill->m_fActDelay + addDelay));
+    }
+  }
+
+  this->SendMsg_CreateTowerResult(static_cast<char>(byErrCode), dwTowerObjSerial);
+}
+
+void CPlayer::pc_BackTowerRequest(unsigned int dwTowerObjSerial)
+{
+  unsigned __int8 byErrCode = 0;
+  _STORAGE_LIST::_db_con *towerItem = nullptr;
+  CGuardTower *tower = nullptr;
+  int towerSlot = -1;
+
+  for (int index = 0; index < 6; ++index)
+  {
+    if (m_pmTwr.m_List[index].m_pTowerItem
+        && m_pmTwr.m_List[index].m_pTowerObj
+        && m_pmTwr.m_List[index].m_pTowerObj->m_dwObjSerial == dwTowerObjSerial)
+    {
+      towerSlot = index;
+      tower = m_pmTwr.m_List[index].m_pTowerObj;
+      towerItem = m_Param.m_dbInven.GetPtrFromSerial(m_pmTwr.m_List[index].m_pTowerItem->m_wSerial);
+      break;
+    }
+  }
+
+  if (!towerItem)
+  {
+    byErrCode = 2;
+  }
+  else if (towerItem->m_byTableCode != 25)
+  {
+    byErrCode = 3;
+  }
+
+  unsigned __int16 wItemSerial = static_cast<unsigned __int16>(-1);
+  unsigned __int16 wLeftHp = 0;
+  if (!byErrCode)
+  {
+    wItemSerial = towerItem->m_wSerial;
+    if (tower)
+    {
+      const int nAlter = tower->m_nHP - static_cast<int>(towerItem->m_dwDur);
+      Emb_AlterDurPoint(0u, towerItem->m_byStorageIndex, nAlter, false, false);
+      int hp = tower->m_nHP;
+      if (hp < 0)
+      {
+        hp = 0;
+      }
+      else if (hp > 0xFFFF)
+      {
+        hp = 0xFFFF;
+      }
+      wLeftHp = static_cast<unsigned __int16>(hp);
+      tower->Destroy(2u, false);
+    }
+    towerItem->lock(false);
+    if (towerSlot >= 0)
+    {
+      m_pmTwr.m_List[towerSlot].init();
+      --m_pmTwr.m_nCount;
+    }
+  }
+
+  this->SendMsg_BackTowerResult(static_cast<char>(byErrCode), wItemSerial, wLeftHp);
+}
+
+void CPlayer::pc_MakeTrapRequest(
+  unsigned __int16 wSkillIndex,
+  unsigned __int16 wTrapItemSerial,
+  float *pfPos,
+  unsigned __int16 *pConsumeSerial)
+{
+  unsigned __int8 byErrCode = 0;
+  unsigned int dwTrapObjSerial = static_cast<unsigned int>(-1);
+  _skill_fld *classSkill = reinterpret_cast<_skill_fld *>(g_Main.m_tblEffectData[2].GetRecord(wSkillIndex));
+  _TrapItem_fld *trapItemInfo = nullptr;
+  _STORAGE_LIST::_db_con *trapItem = nullptr;
+  _STORAGE_LIST::_db_con *consumeItems[3]{};
+  int consumeCounts[3]{};
+  bool consumeOverlap[3]{};
+  int classGrade[2] = {-1, -1};
+  int needFp = 0;
+
+  if (m_byPosRaceTown != 0xFF)
+  {
+    byErrCode = 16;
+  }
+  else if (!classSkill)
+  {
+    byErrCode = 13;
+  }
+  else if (m_byMoveType == 2)
+  {
+    byErrCode = 13;
+  }
+  else if (m_pmTrp.m_nCount >= m_Param.m_nMakeTrapMaxNum)
+  {
+    byErrCode = 11;
+  }
+  else if (!m_Param.IsActableClassSkill(classSkill->m_strCode, classGrade))
+  {
+    byErrCode = 13;
+  }
+  else if (!m_bSFDelayNotCheck
+           && !_ATTACK_DELAY_CHECKER::IsDelay(&m_AttDelayChker, 2u, classSkill->m_dwIndex, classGrade[0]))
+  {
+    byErrCode = 18;
+  }
+  else if (!GetUseConsumeItem(classSkill->m_ConsumeItemList, pConsumeSerial, consumeItems, consumeCounts, consumeOverlap))
+  {
+    byErrCode = 20;
+  }
+  else if (GetSqrt(m_fCurPos, pfPos) > 40.0)
+  {
+    byErrCode = 9;
+  }
+  else
+  {
+    trapItem = m_Param.m_dbInven.GetPtrFromSerial(wTrapItemSerial);
+    if (!trapItem)
+    {
+      byErrCode = 2;
+    }
+    else if (trapItem->m_byTableCode != 26)
+    {
+      byErrCode = 3;
+    }
+    else
+    {
+      trapItemInfo = reinterpret_cast<_TrapItem_fld *>(g_Main.m_tblItemData[26].GetRecord(trapItem->m_wItemIndex));
+      if (!trapItemInfo)
+      {
+        byErrCode = 2;
+      }
+      else
+      {
+        byErrCode = static_cast<unsigned __int8>(IsOtherInvalidObjNear(this, pfPos, nullptr, trapItemInfo));
+      }
+    }
+  }
+
+  if (!byErrCode && classSkill->m_nTempEffectType == -1)
+  {
+    byErrCode = 12;
+  }
+  if (!byErrCode)
+  {
+    needFp = static_cast<int>(static_cast<float>(classSkill->m_nNeedFP) * m_EP.GetEff_Rate(7));
+    if (needFp > GetFP())
+    {
+      byErrCode = 14;
+    }
+    else if (trapItemInfo->m_nLevelLim >= 40
+             && (!m_Param.m_pClassHistory[0]
+                 || m_Param.m_pClassHistory[0]->m_nClass != 1
+                 || !m_Param.m_pClassHistory[1]
+                 || m_Param.m_pClassHistory[1]->m_nClass != 1))
+    {
+      byErrCode = 19;
+    }
+  }
+
+  if (!byErrCode)
+  {
+    const int currentFp = GetFP();
+    const int remainFp = (currentFp > needFp) ? (currentFp - needFp) : 0;
+    SetFP(remainFp, true);
+
+    CTrap *trap = CreateTrapObject(this, trapItem->m_wItemIndex, pfPos);
+    if (!trap)
+    {
+      byErrCode = 1;
+    }
+    else
+    {
+      if (IsOverLapItem(26))
+      {
+        Emb_AlterDurPoint(0u, trapItem->m_byStorageIndex, -1, true, true);
+      }
+      else if (!Emb_DelStorage(0u, trapItem->m_byStorageIndex, false, true, "CPlayer::pc_MakeTrapRequest()"))
+      {
+        this->SendMsg_CreateTrapResult(12, dwTrapObjSerial);
+        return;
+      }
+
+      CPlayer::s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex, trapItem, m_szItemHistoryFileName);
+      m_pmTrp.PushItem(trap, trap->m_dwObjSerial);
+      SendMsg_MadeTrapNumInform(static_cast<char>(m_pmTrp.m_nCount));
+      dwTrapObjSerial = trap->m_dwObjSerial;
+      DeleteUseConsumeItem(consumeItems, consumeCounts, consumeOverlap);
+      const float addDelay = m_EP.GetEff_Plus(12);
+      _ATTACK_DELAY_CHECKER::SetDelay(
+        &m_AttDelayChker,
+        static_cast<unsigned int>(classSkill->m_fActDelay + addDelay));
+    }
+  }
+
+  this->SendMsg_CreateTrapResult(static_cast<char>(byErrCode), dwTrapObjSerial);
+}
+
+void CPlayer::pc_BackTrapRequest(unsigned int dwTrapObjSerial, unsigned __int16 wAddSerial)
+{
+  unsigned __int8 byErrCode = 2;
+  CTrap *trap = nullptr;
+  int trapSlot = -1;
+
+  if (m_pmTrp.m_nCount > 0)
+  {
+    for (int index = 0; index < 20; ++index)
+    {
+      if (!m_pmTrp.m_Item[index].isLoad() || m_pmTrp.m_Item[index].dwSerial != dwTrapObjSerial)
+      {
+        continue;
+      }
+
+      trapSlot = index;
+      trap = m_pmTrp.m_Item[index].pItem;
+      if (!trap)
+      {
+        byErrCode = 2;
+      }
+      else if (trap->m_dwMasterSerial != m_dwObjSerial)
+      {
+        byErrCode = 21;
+      }
+      else if (GetSqrt(m_fCurPos, trap->m_fCurPos) > 150.0)
+      {
+        byErrCode = 22;
+      }
+      else
+      {
+        byErrCode = 0;
+      }
+      break;
+    }
+
+    if (byErrCode == 2)
+    {
+      g_Main.m_logSystemError.Write(
+        "CPlayer::pc_BackTrapRequest() : Can't find trap (Player:%s Count:%d)",
+        m_Param.GetCharNameA(),
+        m_pmTrp.m_nCount);
+    }
+  }
+  else
+  {
+    if (m_pmTrp.m_nCount < 0)
+    {
+      g_Main.m_logSystemError.Write(
+        "CPlayer::pc_BackTrapRequest() : m_pmTrp.m_nCount ZERO and less ( %d )",
+        m_pmTrp.m_nCount);
+    }
+    byErrCode = 2;
+  }
+
+  if (!byErrCode && trap)
+  {
+    const unsigned __int16 trapIndex = static_cast<unsigned __int16>(trap->m_pRecordSet->m_dwIndex);
+    bool added = false;
+
+    if (IsOverLapItem(26) && wAddSerial != 0xFFFF)
+    {
+      _STORAGE_LIST::_db_con *addTarget = m_Param.m_dbInven.GetPtrFromSerial(wAddSerial);
+      if (addTarget && addTarget->m_byTableCode == 26 && addTarget->m_wItemIndex == trapIndex)
+      {
+        const unsigned __int64 dur = Emb_AlterDurPoint(0u, addTarget->m_byStorageIndex, 1, true, true);
+        SendMsg_AdjustAmountInform(0u, addTarget->m_wSerial, static_cast<unsigned int>(dur));
+        added = true;
+      }
+    }
+
+    if (!added)
+    {
+      _STORAGE_LIST::_storage_con item{};
+      item.m_bLoad = true;
+      item.m_byTableCode = 26;
+      item.m_wItemIndex = trapIndex;
+      item.m_dwDur = 1;
+      item.m_dwLv = 0;
+      item.m_wSerial = m_Param.GetNewItemSerial();
+      _STORAGE_LIST::_db_con *newItem = Emb_AddStorage(0u, &item, true, true);
+      if (!newItem)
+      {
+        byErrCode = 2;
+      }
+      else
+      {
+        SendMsg_RewardAddItem(newItem, 0);
+        added = true;
+      }
+    }
+
+    if (!byErrCode && added)
+    {
+      trap->Destroy();
+      if (trapSlot >= 0)
+      {
+        m_pmTrp.m_Item[trapSlot].init();
+        --m_pmTrp.m_nCount;
+      }
+      SendMsg_MadeTrapNumInform(static_cast<char>(m_pmTrp.m_nCount));
+    }
+  }
+
+  this->SendMsg_BackTrapResult(static_cast<char>(byErrCode));
+}
+
