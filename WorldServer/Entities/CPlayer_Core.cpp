@@ -1284,108 +1284,11 @@ void CPlayer::CheckPos_Region()
   this->m_dwLastCheckRegionTime = GetLoopTime();
 }
 
-void CPlayer::SendMsg_GM_Greeting(char *wszGMName, char *wszMsg)
-{
-  if (!this->m_pUserDB || this->m_pUserDB->m_bChatLock)
-  {
-    return;
-  }
-
-  _announ_message_receipt_udp msg{};
-  msg.byMessageType = 15;
-  msg.bySenderRace = this->m_Param.GetRaceCode();
-  msg.dwSenderSerial = this->m_dwObjSerial;
-  strcpy_s(msg.wszSenderName, sizeof(msg.wszSenderName), wszGMName);
-  msg.bySize = static_cast<unsigned __int8>(strlen_0(wszMsg));
-  memcpy_0(msg.wszChatData, wszMsg, msg.bySize);
-  msg.wszChatData[msg.bySize] = 0;
-
-  unsigned __int8 type[2] = {2, 11};
-  const unsigned __int16 len = msg.size();
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
-}
-
-void CPlayer::SendMsg_RACE_Greeting(char *wszBossName, char *wszMsg)
-{
-  if (!this->m_pUserDB || this->m_pUserDB->m_bChatLock)
-  {
-    return;
-  }
-
-  _announ_message_receipt_udp msg{};
-  msg.byMessageType = 16;
-  msg.bySenderRace = this->m_Param.GetRaceCode();
-  msg.dwSenderSerial = this->m_dwObjSerial;
-  strcpy_s(msg.wszSenderName, sizeof(msg.wszSenderName), wszBossName);
-  msg.bySize = static_cast<unsigned __int8>(strlen_0(wszMsg));
-  memcpy_0(msg.wszChatData, wszMsg, msg.bySize);
-  msg.wszChatData[msg.bySize] = 0;
-
-  unsigned __int8 type[2] = {2, 11};
-  const unsigned __int16 len = msg.size();
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
-}
-
-void CPlayer::SendMsg_GUILD_Greeting(char *wszName, char *wszMsg)
-{
-  if (!this->m_pUserDB || this->m_pUserDB->m_bChatLock)
-  {
-    return;
-  }
-
-  _announ_message_receipt_udp msg{};
-  msg.byMessageType = 17;
-  msg.bySenderRace = this->m_Param.GetRaceCode();
-  msg.dwSenderSerial = this->m_dwObjSerial;
-  strcpy_s(msg.wszSenderName, sizeof(msg.wszSenderName), wszName);
-  msg.bySize = static_cast<unsigned __int8>(strlen_0(wszMsg));
-  memcpy_0(msg.wszChatData, wszMsg, msg.bySize);
-  msg.wszChatData[msg.bySize] = 0;
-
-  unsigned __int8 type[2] = {2, 11};
-  const unsigned __int16 len = msg.size();
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
-}
-
-void CPlayer::SendMsg_Notify_ExceptFromRaceRanking(int bExcepted)
-{
-  unsigned __int8 type[2] = {59, 3};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&bExcepted), 4u);
-}
-
-
-
-
-
-
 void CPlayer::SendMsg_JadeEffectErr(char byErrorCode)
 {
   unsigned __int8 type[2] = {59, 4};
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &byErrorCode, 1u);
 }
-
-void CPlayer::SendMsg_AlterTownOrField()
-{
-  char szMsg[32]{};
-  unsigned __int8 pbyType[36]{};
-
-  szMsg[0] = this->m_byPosRaceTown;
-  pbyType[0] = 4;
-  pbyType[1] = 34;
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, szMsg, 1u);
-}
-
-void CPlayer::SendMsg_AlterRegionInform(__int16 nRegionIndex)
-{
-  char szMsg[32]{};
-  unsigned __int8 pbyType[36]{};
-
-  *reinterpret_cast<__int16 *>(szMsg) = nRegionIndex;
-  pbyType[0] = 8;
-  pbyType[1] = 6;
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, szMsg, 2u);
-}
-
 
 unsigned int CPlayer::_check_mastery_cum_lim(unsigned __int8 byMasteryClass, unsigned __int8 byIndex)
 {
