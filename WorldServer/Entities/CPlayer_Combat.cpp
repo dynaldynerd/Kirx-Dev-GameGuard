@@ -2469,3 +2469,84 @@ void CPlayer::SendMsg_Circle_DelEffect(
   this->CircleReport(type, reinterpret_cast<char *>(&msg), sizeof(msg), bToOne);
 }
 
+void CPlayer::SendMsg_Die()
+{
+  char payload[6]{};
+  *reinterpret_cast<unsigned __int16 *>(payload) = this->m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned int *>(payload + 2) = this->m_dwObjSerial;
+
+  unsigned __int8 type[2] = {3, 23};
+  this->CircleReport(type, payload, 6, true);
+}
+
+void CPlayer::SendMsg_BreakdownEquipItem(unsigned __int8 byPartIndex, unsigned __int16 wSerial)
+{
+  char payload[0x0B]{};
+  *reinterpret_cast<unsigned __int16 *>(payload) = this->m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned int *>(payload + 2) = this->m_dwObjSerial;
+  *reinterpret_cast<unsigned __int16 *>(payload + 6) = this->GetVisualVer();
+  payload[8] = static_cast<char>(byPartIndex);
+  *reinterpret_cast<unsigned __int16 *>(payload + 9) = wSerial;
+
+  unsigned __int8 type[2] = {5, 19};
+  this->CircleReport(type, payload, 11, true);
+}
+
+void CPlayer::SendMsg_Notify_Gravity_Stone_Owner_Die()
+{
+  char payload[5]{};
+  payload[0] = static_cast<char>(this->m_ObjID.m_byID);
+  *reinterpret_cast<unsigned int *>(payload + 1) = this->m_dwObjSerial;
+
+  unsigned __int8 type[2] = {27, 86};
+  this->CircleReport(type, payload, 5, true);
+}
+
+void CPlayer::SendMsg_FixPosition(int n)
+{
+
+  if (m_bObserver && !g_Player[n].m_byUserDgr)
+  {
+    return;
+  }
+
+  _player_fixpositon_zocl msg{};
+  msg.wIndex = m_ObjID.m_wIndex;
+  msg.dwSerial = m_dwObjSerial;
+  msg.wEquipVer = static_cast<unsigned __int16>(GetVisualVer());
+  msg.byRaceCode = m_Param.GetRaceSexCode();
+  FloatToShort(m_fCurPos, msg.zCur, 3);
+  msg.wLastEffectCode = static_cast<unsigned __int16>(m_wLastContEffect);
+  msg.dwStateFlag = GetStateFlag();
+  msg.byColor = m_byGuildBattleColorInx;
+
+  unsigned __int8 type[2] = {4, 9};
+  g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+}
+
+void CPlayer::SendMsg_RealMovePoint(int n)
+{
+
+  if (m_bObserver && !g_Player[n].m_byUserDgr)
+  {
+    return;
+  }
+
+  _player_real_move_zocl msg{};
+  msg.wIndex = m_ObjID.m_wIndex;
+  msg.dwSerial = m_dwObjSerial;
+  msg.dwEquipVer = static_cast<unsigned __int16>(GetVisualVer());
+  msg.byRaceCode = m_Param.GetRaceSexCode();
+  FloatToShort(m_fCurPos, msg.zCur, 3);
+  msg.zTar[0] = static_cast<__int16>(static_cast<int>(m_fTarPos[0]));
+  msg.zTar[1] = static_cast<__int16>(static_cast<int>(m_fTarPos[2]));
+  msg.wLastEffectCode = static_cast<unsigned __int16>(m_wLastContEffect);
+  msg.dwStateFlag = GetStateFlag();
+  msg.nAddSpeed = static_cast<__int16>(static_cast<int>(GetAddSpeed()));
+  msg.byDirect = m_byMoveDirect;
+  msg.byColor = m_byGuildBattleColorInx;
+
+  unsigned __int8 type[2] = {4, 21};
+  g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+}
+
