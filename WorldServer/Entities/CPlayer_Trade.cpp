@@ -108,6 +108,156 @@
 #include <cmath>
 #include <vector>
 
+void CPlayer::SendMsg_StartShopping()
+{
+  char payload[1]{};
+
+  unsigned __int8 type[2] = {12, 16};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+}
+
+void CPlayer::SendMsg_RemainTimeInform(__int16 iType, int lRemainTime, _SYSTEMTIME *pstEndDate)
+{
+  char payload[0x16]{};
+  *reinterpret_cast<__int16 *>(payload) = iType;
+  *reinterpret_cast<int *>(payload + 2) = lRemainTime;
+  if (pstEndDate)
+  {
+    memcpy_0(payload + 6, pstEndDate, 0x10uLL);
+  }
+
+  unsigned __int8 type[2] = {29, 1};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x16u);
+}
+
+void CPlayer::SendMsg_BillingTypeChangeInform(
+  __int16 iType,
+  int lRemainTime,
+  _SYSTEMTIME *pstEndDate,
+  unsigned __int8 byReason)
+{
+  char payload[0x19]{};
+  *reinterpret_cast<__int16 *>(payload) = this->m_pUserDB->m_BillingInfo.iType;
+  *reinterpret_cast<__int16 *>(payload + 2) = iType;
+  *reinterpret_cast<int *>(payload + 4) = lRemainTime;
+  if (pstEndDate)
+  {
+    memcpy_0(payload + 8, pstEndDate, 0x10uLL);
+  }
+  payload[24] = static_cast<char>(byReason);
+
+  unsigned __int8 type[2] = {29, 3};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x19u);
+}
+
+void CPlayer::SendMsg_EconomyHistoryInform()
+{
+  char msg[0x48]{};
+  _economy_history_data *history = eGetGuideHistory();
+
+  for (int race = 0; race < 3; ++race)
+  {
+    for (int index = 0; index < 12; ++index)
+    {
+      *reinterpret_cast<unsigned __int16 *>(&msg[24 * race + 2 * index]) = history[index].wEconomyGuide[race];
+    }
+  }
+
+  unsigned __int8 type[2] = {12, 14};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, msg, 0x48u);
+}
+
+void CPlayer::SendMsg_EconomyRateInform(char bStart)
+{
+_economy_rate_inform_zocl msg{};
+
+  msg.bStart = bStart;
+  msg.fPayExgRate = static_cast<float>(eGetRate(this->m_Param.GetRaceCode()));
+  msg.fTexRate = eGetTex(this->m_Param.GetRaceCode());
+  msg.wMgrValue = static_cast<unsigned __int16>(eGetMgrValue());
+  msg.fOreSellRate = eGetOreRate(this->m_Param.GetRaceCode());
+
+  if (!bStart)
+  {
+    for (int race = 0; race < 3; ++race)
+    {
+      msg.wEconomyGuide[race] = eGetGuide(race);
+    }
+  }
+
+  unsigned __int8 type[2] = {12, 15};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0x15u);
+}
+
+void CPlayer::UpdateLastCriTicket(
+  unsigned __int16 byCurrentYear,
+  unsigned __int8 byCurrentMonth,
+  unsigned __int8 byCurrentDay,
+  unsigned __int8 byCurrentHour,
+  unsigned __int8 byNumOfTime)
+{
+  this->m_MinigTicket.SetLastCriTicket(byCurrentYear, byCurrentMonth, byCurrentDay, byCurrentHour, byNumOfTime);
+  if (this->m_pUserDB)
+  {
+    const unsigned int lastTicket = this->m_MinigTicket.GetLastCriTicket();
+    this->m_pUserDB->Update_TakeLastCriTicket(lastTicket);
+  }
+}
+
+void CPlayer::pc_TransShipRenewTicketRequest(unsigned __int16 wTicketItemSerial)
+{
+  unsigned __int8 byErrCode = 0;
+  CTransportShip *ship = &g_TransportShip[this->m_Param.GetRaceCode()];
+  _STORAGE_LIST::_db_con *pTicketItem = this->m_Param.m_dbInven.GetPtrFromSerial(wTicketItemSerial);
+
+  if (this->m_pCurMap != ship->m_pLinkShipMap
+      || !ship->IsMemberBeforeLogoff(this->m_Param.GetCharSerial())
+      || !ship->m_bAnchor)
+  {
+    byErrCode = 1;
+  }
+  else
+  {
+    const int level = static_cast<int>(this->GetLevel());
+    const int minLevel = ship->GetRideLimLevel();
+    const int maxLevel = ship->GetRideUpLimLevel();
+
+    if (level < minLevel || (maxLevel != -1 && level > maxLevel))
+    {
+      byErrCode = 14;
+    }
+    else if (!pTicketItem || pTicketItem->m_byTableCode != 28)
+    {
+      byErrCode = 1;
+    }
+    else
+    {
+      _TicketItem_fld *pTicketRecord =
+        reinterpret_cast<_TicketItem_fld *>(g_Main.m_tblItemData[28].GetRecord(pTicketItem->m_wItemIndex));
+      if (!pTicketRecord || !ship->GetCurRideShipThisTicket(pTicketRecord))
+      {
+        byErrCode = 1;
+      }
+    }
+  }
+
+  if (!byErrCode)
+  {
+    byErrCode = static_cast<unsigned __int8>(!ship->RenewOldMember(this));
+  }
+
+  this->SendMsg_TransShipRenewTicketResult(static_cast<char>(byErrCode));
+}
+
+void CPlayer::SendMsg_TransShipRenewTicketResult(char byErrCode)
+{
+  _trans_ship_renew_ticket_result_zocl msg{};
+  msg.byErrCode = static_cast<unsigned __int8>(byErrCode);
+
+  unsigned __int8 pbyType[2] = {33, 6};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), 1u);
+}
+
 void CPlayer::SendMsg_DTradeAskInform(CPlayer *pAsker)
 {
   char payload[6]{};
