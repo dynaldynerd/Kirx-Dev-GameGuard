@@ -126,13 +126,6 @@ int ClampToleranceValue(int value)
   return value;
 }
 
-bool IsXmasSnowEffect(const _sf_continous *sfCont)
-{
-  return sfCont
-      && CPlayer::ms_pXmas_Snow_Effect
-      && sfCont->m_byEffectCode == 3
-      && sfCont->m_wEffectIndex == CPlayer::ms_pXmas_Snow_Effect->m_dwIndex;
-}
 
 
 
@@ -633,62 +626,6 @@ bool IsAlnumMixedString(const char *text)
 
 
 
-unsigned __int16 GetTargetMonsterContInfoSize(_target_monster_contsf_allinform_zocl *info)
-{
-  if (info->byContCount > 8u)
-  {
-    info->byContCount = 0;
-  }
-  return static_cast<unsigned __int16>(21 - 2 * (8 - info->byContCount));
-}
-
-bool IsSameTargetMonsterContInfo(
-  const _target_monster_contsf_allinform_zocl &left,
-  const _target_monster_contsf_allinform_zocl &right)
-{
-  if (left.dwSerial != right.dwSerial)
-  {
-    return false;
-  }
-
-  for (int index = 0; index < 8; ++index)
-  {
-    if (left.m_MonContSf[index].wSfcode != right.m_MonContSf[index].wSfcode)
-    {
-      return false;
-    }
-  }
-  return true;
-}
-
-unsigned __int16 GetTargetPlayerDamageContInfoSize(_target_player_damage_contsf_allinform_zocl *info)
-{
-  if (info->byContCount > 8u)
-  {
-    info->byContCount = 0;
-  }
-  return static_cast<unsigned __int16>(29 - 3 * (8 - info->byContCount));
-}
-
-bool IsSameTargetPlayerDamageContInfo(
-  const _target_player_damage_contsf_allinform_zocl &left,
-  const _target_player_damage_contsf_allinform_zocl &right)
-{
-  if (left.dwSerial != right.dwSerial)
-  {
-    return false;
-  }
-
-  for (int index = 0; index < 8; ++index)
-  {
-    if (left.m_PlayerContSf[index].wSfcode != right.m_PlayerContSf[index].wSfcode ||
-        left.m_PlayerContSf[index].byContCount != right.m_PlayerContSf[index].byContCount)
-    {
-      return false;
-    }
-  }
-  return true;
-}
 
 
 
@@ -721,119 +658,13 @@ bool IsSameTargetPlayerDamageContInfo(
 
 
 
-void CPlayer::SFContInsertMessage(
-  unsigned __int8 byContCode,
-  unsigned __int8 byListIndex,
-  bool bAuraSkill,
-  CPlayer *pPlayerAct)
-{
-  _sf_continous *sfCont = bAuraSkill ? &m_SFContAura[byContCode][byListIndex] : &m_SFCont[byContCode][byListIndex];
 
-  EquipItemSFAgent.StartContSF(sfCont);
-  if (IsXmasSnowEffect(sfCont))
-  {
-    m_bSnowMan = true;
-  }
 
-  if (pPlayerAct)
-  {
-    const char *playerName = pPlayerAct->m_Param.GetCharNameW();
-    const unsigned int playerSerial = pPlayerAct->m_Param.GetCharSerial();
-    const unsigned __int16 effectBit = static_cast<unsigned __int16>(CalcEffectBit(sfCont->m_byEffectCode, sfCont->m_wEffectIndex));
-    SendMsg_AddEffect(effectBit, sfCont->m_byLv, sfCont->m_wDurSec, playerSerial, const_cast<char *>(playerName));
-  }
-  else
-  {
-    const unsigned __int16 effectBit = static_cast<unsigned __int16>(CalcEffectBit(sfCont->m_byEffectCode, sfCont->m_wEffectIndex));
-    SendMsg_AddEffect(effectBit, sfCont->m_byLv, sfCont->m_wDurSec, 0u, nullptr);
-  }
 
-  if (m_pUserDB && !bAuraSkill)
-  {
-    m_pUserDB->Update_SFContInsert(
-      byContCode,
-      byListIndex,
-      sfCont->m_byEffectCode,
-      sfCont->m_wEffectIndex,
-      static_cast<unsigned __int8>(sfCont->m_byLv - 1),
-      sfCont->m_wDurSec);
-  }
-}
 
-void CPlayer::SFContDelMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, bool bSend, bool bAura)
-{
-  if (!m_bOper)
-  {
-    return;
-  }
 
-  if (bSend)
-  {
-    _sf_continous *sfCont = bAura ? &m_SFContAura[byContCode][byListIndex] : &m_SFCont[byContCode][byListIndex];
 
-    SendMsg_DelEffect(sfCont->m_byEffectCode, sfCont->m_wEffectIndex, sfCont->m_byLv);
-    EquipItemSFAgent.EndContSF(sfCont);
-    if (IsXmasSnowEffect(sfCont))
-    {
-      m_bSnowMan = false;
-    }
 
-    _base_fld *afterEffect = g_Main.m_tblEffectData[3].GetRecord("17");
-    if (afterEffect && sfCont->m_byEffectCode == 3 && sfCont->m_wEffectIndex == afterEffect->m_dwIndex)
-    {
-      m_bAfterEffect = false;
-    }
-  }
-
-  if (m_pUserDB && !bAura)
-  {
-    m_pUserDB->Update_SFContDelete(byContCode, byListIndex);
-  }
-}
-
-void CPlayer::SFContUpdateTimeMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, int nLeftTime)
-{
-  if (m_pUserDB && nLeftTime > 0)
-  {
-    m_pUserDB->Update_SFContUpdate(byContCode, byListIndex, static_cast<unsigned __int16>(nLeftTime));
-  }
-}
-
-void CPlayer::SendMsg_AddEffect(
-  unsigned __int16 wEffectCode,
-  unsigned __int8 byLv,
-  unsigned __int16 wDurSec,
-  unsigned int dwPlayerSerial,
-  char *wszPlayerName)
-{
-  char payload[0x1A]{};
-  payload[0] = static_cast<char>(byLv);
-  *reinterpret_cast<unsigned __int16 *>(payload + 1) = wEffectCode;
-  *reinterpret_cast<unsigned __int16 *>(payload + 3) = wDurSec;
-  *reinterpret_cast<unsigned int *>(payload + 5) = dwPlayerSerial;
-  if (dwPlayerSerial != 0)
-  {
-    strcpy_s(payload + 9, 0x11u, wszPlayerName);
-  }
-
-  unsigned __int8 type[2] = {17, 10};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x1Au);
-  this->SendData_PartyMemberEffect(0, wEffectCode, byLv);
-}
-
-void CPlayer::SendMsg_DelEffect(unsigned __int8 byEffectCode, unsigned __int16 wEffectIndex, unsigned __int8 byLv)
-{
-  const unsigned __int16 effectBit =
-    static_cast<unsigned __int16>(this->CalcEffectBit(byEffectCode, wEffectIndex));
-
-  char payload[6]{};
-  *reinterpret_cast<unsigned __int16 *>(payload) = effectBit;
-  *reinterpret_cast<unsigned int *>(payload + 2) = this->m_dwObjSerial;
-
-  unsigned __int8 type[2] = {17, 11};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 6u);
-  this->SendData_PartyMemberEffect(1, effectBit, byLv);
-}
 
 void CPlayer::SendMsg_StartShopping()
 {
@@ -878,106 +709,7 @@ void CPlayer::SendMsg_BillingTypeChangeInform(
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x19u);
 }
 
-void CPlayer::SendTargetMonsterSFContInfo()
-{
-  CGameObject *targetObject = this->GetTargetObj();
-  if (!targetObject || targetObject->m_ObjID.m_byKind != 0 || targetObject->m_ObjID.m_byID != 1)
-  {
-    return;
-  }
 
-  CMonster *targetMonster = reinterpret_cast<CMonster *>(targetObject);
-  _target_monster_contsf_allinform_zocl currentInfo{};
-  currentInfo.Init();
-  currentInfo.dwSerial = targetMonster->m_dwObjSerial;
-
-  unsigned __int8 contCount = 0;
-  for (int groupIndex = 0; groupIndex < 2; ++groupIndex)
-  {
-    for (int effectIndex = 0; effectIndex < targetMonster->GetMaxDMGSFContCount(); ++effectIndex)
-    {
-      _sf_continous *cont = &targetMonster->m_SFCont[groupIndex][effectIndex];
-      if (!cont->m_bExist)
-      {
-        continue;
-      }
-
-      if (contCount < targetMonster->GetMaxDMGSFContCount())
-      {
-        currentInfo.m_MonContSf[contCount].wSfcode =
-          static_cast<unsigned __int16>(this->CalcEffectBit(cont->m_byEffectCode, cont->m_wEffectIndex));
-        ++contCount;
-        currentInfo.byContCount = contCount;
-      }
-    }
-  }
-
-  if (IsSameTargetMonsterContInfo(currentInfo, this->m_TargetObject.m_PrevTargetMonsterContInfo))
-  {
-    return;
-  }
-
-  unsigned __int8 type[2] = {13, 100};
-  const unsigned __int16 length = GetTargetMonsterContInfoSize(&currentInfo);
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    this->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&currentInfo),
-    length);
-
-  memcpy_0(
-    &this->m_TargetObject.m_PrevTargetMonsterContInfo,
-    &currentInfo,
-    sizeof(this->m_TargetObject.m_PrevTargetMonsterContInfo));
-}
-
-void CPlayer::SendTargetPlayerDamageContInfo()
-{
-  CGameObject *targetObject = this->GetTargetObj();
-  if (!targetObject || targetObject->m_ObjID.m_byKind != 0 || targetObject->m_ObjID.m_byID != 0)
-  {
-    return;
-  }
-
-  _target_player_damage_contsf_allinform_zocl currentInfo{};
-  currentInfo.Init();
-  currentInfo.dwSerial = targetObject->m_dwObjSerial;
-
-  unsigned __int8 contCount = 0;
-  for (int index = 0; index < 8; ++index)
-  {
-    char *contData = reinterpret_cast<char *>(&targetObject[1].m_fAbsPos[12 * index + 2]);
-    if (!contData[0])
-    {
-      continue;
-    }
-
-    currentInfo.m_PlayerContSf[contCount].wSfcode = static_cast<unsigned __int16>(this->CalcEffectBit(
-      static_cast<unsigned __int8>(contData[1]),
-      *reinterpret_cast<unsigned __int16 *>(contData + 2)));
-    currentInfo.m_PlayerContSf[contCount].byContCount = static_cast<unsigned __int8>(contData[20]);
-    ++contCount;
-    currentInfo.byContCount = contCount;
-  }
-
-  if (IsSameTargetPlayerDamageContInfo(currentInfo, this->m_TargetObject.m_PrevTargetPlayerDamageContInfo))
-  {
-    return;
-  }
-
-  unsigned __int8 type[2] = {13, 112};
-  const unsigned __int16 length = GetTargetPlayerDamageContInfoSize(&currentInfo);
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    this->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&currentInfo),
-    length);
-
-  memcpy_0(
-    &this->m_TargetObject.m_PrevTargetPlayerDamageContInfo,
-    &currentInfo,
-    sizeof(this->m_TargetObject.m_PrevTargetPlayerDamageContInfo));
-}
 
 void CPlayer::SendMsg_TeleportError(char byErrorCode, unsigned int dwMapIndex)
 {
@@ -1767,50 +1499,7 @@ _economy_rate_inform_zocl msg{};
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0x15u);
 }
 
-void CPlayer::SendMsg_SFDelayRequest()
-{
-  const DWORD now = timeGetTime();
-  _sf_delay_download_result_zocl msg{};
 
-  int effCount = 0;
-  int masCount = 0;
-  for (int index = 0; index < 10; ++index)
-  {
-    if (this->m_AttDelayChker.EFF[index].byEffectCode != 255)
-    {
-      msg.EFF[effCount].byEffectCode = this->m_AttDelayChker.EFF[index].byEffectCode;
-      msg.EFF[effCount].wEffectIndex = this->m_AttDelayChker.EFF[index].wEffectIndex;
-      msg.EFF[effCount].dwRemainTime = this->m_AttDelayChker.EFF[index].dwNextTime - now;
-      ++effCount;
-    }
-
-    if (this->m_AttDelayChker.MAS[index].byEffectCode != 255)
-    {
-      msg.MAS[masCount].byEffectCode = this->m_AttDelayChker.MAS[index].byEffectCode;
-      msg.MAS[masCount].byMastery = this->m_AttDelayChker.MAS[index].byMastery;
-      msg.MAS[masCount].dwRemainTime = this->m_AttDelayChker.MAS[index].dwNextTime - now;
-      ++masCount;
-    }
-  }
-
-  unsigned __int8 type[2] = {3, 56};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0x82u);
-}
-
-void CPlayer::SendMsg_PotionDelayTime(unsigned int *pdwPotionNextUseTime, unsigned int dwCurTime)
-{
-  _potion_delay_time_information_zocl msg{};
-
-  msg.nMaxNum = 38;
-  for (int index = 0; index < 38; ++index)
-  {
-    const int remain = static_cast<int>(pdwPotionNextUseTime[index] - dwCurTime);
-    msg.dwPotionDelayTime[index] = (remain <= 0) ? 0u : static_cast<unsigned int>(remain);
-  }
-
-  unsigned __int8 type[2] = {3, 60};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0x9Cu);
-}
 
 
 
@@ -1938,85 +1627,6 @@ void CPlayer::UpdateLastCriTicket(
   }
 }
 
-void CPlayer::_set_db_sf_effect(_SFCONT_DB_BASE *pDBBase)
-{
-  if (!this->m_pUserDB)
-  {
-    return;
-  }
-
-  const unsigned int curTime = _sf_continous::GetSFContCurTime();
-  for (int group = 0; group < 2; ++group)
-  {
-    for (int index = 0; index < 8; ++index)
-    {
-      _SFCONT_DB_BASE::_LIST *dbEntry = &pDBBase->m_List[group][index];
-      if (!dbEntry->IsFilled())
-      {
-        continue;
-      }
-
-      _sf_continous *cont = &this->m_SFCont[group][index];
-      const unsigned __int8 effectCode = static_cast<unsigned __int8>(dbEntry->GetEffectCode());
-      const unsigned __int16 effectIndex = static_cast<unsigned __int16>(dbEntry->GetEffectIndex());
-      const unsigned __int8 effectLevel = static_cast<unsigned __int8>(dbEntry->GetLv() + 1);
-      unsigned int startSec = curTime;
-      unsigned __int16 durSec = static_cast<unsigned __int16>(dbEntry->GetLeftTime());
-      const unsigned __int8 order = static_cast<unsigned __int8>(dbEntry->GetOrder());
-
-      if (curTime > order)
-      {
-        startSec = curTime - order;
-        durSec = static_cast<unsigned __int16>(durSec + order);
-      }
-
-      bool invalid = false;
-      if (effectCode < 4u)
-      {
-        if (g_Main.m_tblEffectData[effectCode].GetRecord(effectIndex))
-        {
-          if (effectLevel > 7u)
-          {
-            invalid = true;
-          }
-        }
-        else
-        {
-          invalid = true;
-        }
-      }
-      else
-      {
-        invalid = true;
-      }
-
-      if (invalid)
-      {
-        this->m_pUserDB->Update_SFContDelete(group, index);
-        const char *charName = this->m_Param.GetCharNameA();
-        g_Main.m_logSystemError.Write(
-          "%s: error stored effect, code: %d, idx: %d: lv: %d",
-          charName,
-          effectCode,
-          effectIndex,
-          effectLevel);
-        continue;
-      }
-
-      this->_set_sf_cont(cont, effectCode, effectIndex, effectLevel, startSec, durSec, 0);
-      this->EquipItemSFAgent.StartContSF(cont);
-
-      _base_fld *record = g_Main.m_tblEffectData[3].GetRecord("17");
-      if (record && cont->m_byEffectCode == 3 && cont->m_wEffectIndex == record->m_dwIndex)
-      {
-        this->m_bAfterEffect = 1;
-      }
-
-      SendMsg_StartContSF(cont);
-      this->m_bLastContEffectUpdate = 1;
-    }
-  }
-}
 
 unsigned int CPlayer::_check_mastery_cum_lim(unsigned __int8 byMasteryClass, unsigned __int8 byIndex)
 {
@@ -2279,20 +1889,6 @@ void wa_EnterWorld(_WA_AVATOR_CODE *pData, unsigned __int16 wZoneIndex)
 }
 
 
-void CPlayer::SendMsg_Circle_DelEffect(
-  unsigned __int8 byEffectCode,
-  unsigned __int16 wEffectIndex,
-  unsigned __int8 byLv,
-  bool bToOne)
-{
-
-  _effect_remove_inform_zocl msg{};
-  msg.wEffectCode = static_cast<unsigned __int16>(this->CalcEffectBit(byEffectCode, wEffectIndex));
-  msg.dwPlayerSerial = this->m_dwObjSerial;
-
-  unsigned __int8 type[2]{17, 11};
-  this->CircleReport(type, reinterpret_cast<char *>(&msg), sizeof(msg), bToOne);
-}
 
 
 
@@ -4162,6 +3758,7 @@ void CPlayer::SendMsg_RealMovePoint(int n)
   unsigned __int8 type[2] = {4, 21};
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
+
 
 
 
