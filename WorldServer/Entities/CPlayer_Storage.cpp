@@ -108,3 +108,505 @@
 #include <cmath>
 #include <vector>
 
+void CPlayer::SendMsg_DamageResult(_STORAGE_LIST::_db_con *pItem)
+{
+  char payload[5]{};
+  payload[0] = static_cast<char>(this->m_nLastBeatenPart);
+  *reinterpret_cast<unsigned __int16 *>(payload + 1) = pItem->m_wSerial;
+  *reinterpret_cast<__int16 *>(payload + 3) = static_cast<__int16>(pItem->m_dwDur);
+
+  unsigned __int8 type[2] = {5, 20};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 5u);
+}
+
+void CPlayer::SendMsg_ItemStorageRefresh(unsigned __int8 byStorageCode)
+{
+  _STORAGE_LIST *storage = this->m_Param.m_pStoragePtr[byStorageCode];
+  char payload[0xCA]{};
+
+  payload[0] = static_cast<char>(byStorageCode);
+  const unsigned __int8 itemCount = static_cast<unsigned __int8>(storage->GetNumUseCon());
+  payload[1] = static_cast<char>(itemCount);
+
+  unsigned __int16 *serialList = reinterpret_cast<unsigned __int16 *>(payload + 2);
+  int outIndex = 0;
+  for (int slotIndex = 0; slotIndex < itemCount; ++slotIndex)
+  {
+    _STORAGE_LIST::_db_con *entry = &storage->m_pStorageList[slotIndex];
+    if (entry->m_bLoad)
+    {
+      serialList[outIndex++] = entry->m_wSerial;
+    }
+  }
+
+  unsigned __int8 type[2] = {3, 24};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0xCAu);
+}
+
+void CPlayer::SendMsg_UsPotionResultOther(
+  char byRetcode,
+  unsigned __int16 wPotionIndex,
+  CPlayer *pUsePlayer,
+  bool bCircle)
+{
+  char payload[0x17]{};
+  payload[0] = byRetcode;
+  payload[1] = static_cast<char>(pUsePlayer->m_ObjID.m_byID);
+  *reinterpret_cast<unsigned __int16 *>(payload + 2) = pUsePlayer->m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned int *>(payload + 4) = pUsePlayer->m_dwObjSerial;
+  payload[8] = static_cast<char>(this->m_ObjID.m_byID);
+  *reinterpret_cast<unsigned __int16 *>(payload + 9) = this->m_ObjID.m_wIndex;
+  *reinterpret_cast<unsigned int *>(payload + 11) = this->m_dwObjSerial;
+  *reinterpret_cast<unsigned __int16 *>(payload + 15) = wPotionIndex;
+  *reinterpret_cast<__int16 *>(payload + 17) = static_cast<__int16>(this->m_Param.GetHP());
+  *reinterpret_cast<__int16 *>(payload + 19) = static_cast<__int16>(this->m_Param.GetFP());
+  *reinterpret_cast<__int16 *>(payload + 21) = static_cast<__int16>(this->m_Param.GetSP());
+
+  unsigned __int8 type[2] = {7, 108};
+  if (bCircle)
+  {
+    this->CircleReport(type, payload, 23, true);
+  }
+  else
+  {
+    g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x17u);
+  }
+}
+
+void CPlayer::SendMsg_ResSeparation(char byErrCode, _STORAGE_LIST::_db_con *pStartOre, _STORAGE_LIST::_db_con *pNewOre)
+{
+  unsigned __int8 pbyType[2] = {13, 7};
+  char msg[7]{};
+  msg[0] = byErrCode;
+  if (!byErrCode && pStartOre && pNewOre)
+  {
+    std::memcpy(&msg[1], &pStartOre->m_wSerial, sizeof(pStartOre->m_wSerial));
+    msg[3] = static_cast<char>(pStartOre->m_dwDur);
+    std::memcpy(&msg[4], &pNewOre->m_wSerial, sizeof(pNewOre->m_wSerial));
+    msg[6] = static_cast<char>(pNewOre->m_dwDur);
+  }
+
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, msg, 7u);
+}
+
+void CPlayer::SendMsg_PotionSeparation(
+  unsigned __int16 wParentSerial,
+  unsigned __int8 byParentAmount,
+  unsigned __int16 wChildSerial,
+  unsigned __int8 byChildAmount,
+  char nRet)
+{
+  unsigned __int8 pbyType[2] = {13, 13};
+  char msg[7]{};
+  msg[0] = nRet;
+  std::memcpy(&msg[1], &wParentSerial, sizeof(wParentSerial));
+  msg[3] = static_cast<char>(byParentAmount);
+  std::memcpy(&msg[4], &wChildSerial, sizeof(wChildSerial));
+  msg[6] = static_cast<char>(byChildAmount);
+
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, msg, 7u);
+}
+
+void CPlayer::SendMsg_ResDivision(char byErrCode, _STORAGE_LIST::_db_con *pStartOre, _STORAGE_LIST::_db_con *pTargetOre)
+{
+  unsigned __int8 pbyType[2] = {13, 9};
+  char msg[7]{};
+  msg[0] = byErrCode;
+  if (!byErrCode && pStartOre && pTargetOre)
+  {
+    std::memcpy(&msg[1], &pStartOre->m_wSerial, sizeof(pStartOre->m_wSerial));
+    msg[3] = pStartOre->m_bLoad ? static_cast<char>(pStartOre->m_dwDur) : 0;
+    std::memcpy(&msg[4], &pTargetOre->m_wSerial, sizeof(pTargetOre->m_wSerial));
+    msg[6] = static_cast<char>(pTargetOre->m_dwDur);
+  }
+
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, msg, 7u);
+}
+
+void CPlayer::SendMsg_PotionDivision(
+  unsigned __int16 wSerial,
+  unsigned __int8 byParentAmount,
+  unsigned __int16 wChildSerial,
+  unsigned __int8 byChildAmount,
+  char nRet)
+{
+  unsigned __int8 pbyType[2] = {13, 15};
+  char msg[7]{};
+  msg[0] = nRet;
+  std::memcpy(&msg[1], &wSerial, sizeof(wSerial));
+  msg[3] = static_cast<char>(byParentAmount);
+  std::memcpy(&msg[4], &wChildSerial, sizeof(wChildSerial));
+  msg[6] = static_cast<char>(byChildAmount);
+
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, msg, 7u);
+}
+
+void CPlayer::SendMsg_ForceInvenChange(char byErrCode)
+{
+  unsigned __int8 pbyType[2] = {13, 3};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, &byErrCode, 1u);
+}
+
+void CPlayer::pc_ResSeparation(unsigned __int16 wStartSerial, unsigned __int8 byMoveAmount)
+{
+SendMsg_ResSeparation(1u, nullptr, nullptr);
+}
+
+void CPlayer::pc_PotionSeparation(unsigned __int16 wSerial, unsigned __int8 byAmount)
+{
+  SendMsg_PotionSeparation(wSerial, 0, 0xFFu, byAmount, static_cast<char>(-1));
+}
+
+void CPlayer::pc_ResDivision(unsigned __int16 wStartSerial, unsigned __int16 wTarSerial, unsigned __int8 byMoveAmount)
+{
+  unsigned __int8 resultCode = 0;
+  _STORAGE_LIST::_db_con *startOre = this->m_Param.m_dbInven.GetPtrFromSerial(wStartSerial);
+  _STORAGE_LIST::_db_con *targetOre = nullptr;
+
+  if (startOre)
+  {
+    if (startOre->m_bLock)
+    {
+      resultCode = 11;
+    }
+    else
+    {
+      targetOre = this->m_Param.m_dbInven.GetPtrFromSerial(wTarSerial);
+      if (targetOre)
+      {
+        if (targetOre->m_bLock)
+        {
+          resultCode = 11;
+        }
+        else if (IsOverLapItem(startOre->m_byTableCode) && IsOverLapItem(targetOre->m_byTableCode))
+        {
+          if (startOre->m_byCsMethod && targetOre->m_byCsMethod && startOre->m_dwT != targetOre->m_dwT)
+          {
+            resultCode = 23;
+          }
+          else if (startOre->m_byTableCode == targetOre->m_byTableCode)
+          {
+            if (startOre->m_wItemIndex == targetOre->m_wItemIndex)
+            {
+              if (startOre->m_dwDur >= byMoveAmount)
+              {
+                if (targetOre->m_dwDur + byMoveAmount > 0x63)
+                {
+                  resultCode = 9;
+                }
+              }
+              else
+              {
+                resultCode = 8;
+              }
+            }
+            else
+            {
+              resultCode = 6;
+            }
+          }
+          else
+          {
+            resultCode = 6;
+          }
+        }
+        else
+        {
+          resultCode = 3;
+        }
+      }
+      else
+      {
+        resultCode = 5;
+      }
+    }
+  }
+  else
+  {
+    resultCode = 5;
+  }
+
+  if (!resultCode)
+  {
+    Emb_AlterDurPoint(0, startOre->m_byStorageIndex, -byMoveAmount, false, false);
+    Emb_AlterDurPoint(0, targetOre->m_byStorageIndex, byMoveAmount, false, false);
+  }
+  SendMsg_ResDivision(resultCode, startOre, targetOre);
+}
+
+void CPlayer::pc_PotionDivision(unsigned __int16 wSerial, unsigned __int16 wTarSerial, unsigned __int8 byAmount)
+{
+  char resultCode = 0;
+  _STORAGE_LIST::_db_con *sourcePotion = this->m_Param.m_pStoragePtr[0]->GetPtrFromSerial(wSerial);
+  _STORAGE_LIST::_db_con *targetPotion = nullptr;
+  unsigned __int8 sourceRet = 0;
+  unsigned __int8 targetRet = 0;
+
+  if (sourcePotion)
+  {
+    if (sourcePotion->m_bLock)
+    {
+      resultCode = -11;
+    }
+    else
+    {
+      targetPotion = this->m_Param.m_pStoragePtr[0]->GetPtrFromSerial(wTarSerial);
+      if (targetPotion)
+      {
+        if (targetPotion->m_bLock)
+        {
+          resultCode = -11;
+        }
+        else if (sourcePotion->m_byTableCode == 13 && targetPotion->m_byTableCode == 13)
+        {
+          if (sourcePotion->m_wItemIndex == targetPotion->m_wItemIndex)
+          {
+            if (sourcePotion->m_dwDur >= byAmount)
+            {
+              if (targetPotion->m_dwDur + byAmount > 0x63)
+              {
+                resultCode = -4;
+              }
+            }
+            else
+            {
+              resultCode = -4;
+            }
+          }
+          else
+          {
+            resultCode = -6;
+          }
+        }
+        else
+        {
+          resultCode = -3;
+        }
+      }
+      else
+      {
+        resultCode = -5;
+      }
+    }
+  }
+  else
+  {
+    resultCode = -5;
+  }
+
+  if (!resultCode)
+  {
+    sourceRet = static_cast<unsigned __int8>(Emb_AlterDurPoint(0, sourcePotion->m_byStorageIndex, -byAmount, false, false));
+    targetRet = static_cast<unsigned __int8>(Emb_AlterDurPoint(0, targetPotion->m_byStorageIndex, byAmount, false, false));
+  }
+  SendMsg_PotionDivision(wSerial, sourceRet, wTarSerial, targetRet, resultCode);
+}
+
+void CPlayer::pc_AlterItemSlotRequest(unsigned __int8 byNum, _alter_item_slot_request_clzo::__list *pList)
+{
+  if (!this->m_pUserDB)
+  {
+    return;
+  }
+
+  for (int index = 0; index < byNum; ++index)
+  {
+    _STORAGE_LIST::_db_con *item = this->m_Param.m_pStoragePtr[pList[index].byStorageIndex]->GetPtrFromSerial(
+      pList[index].dwItemSerial);
+    if (item)
+    {
+      item->m_byClientIndex = pList[index].byClientSlotIndex;
+      this->m_pUserDB->Update_ItemSlot(
+        pList[index].byStorageIndex,
+        item->m_byStorageIndex,
+        pList[index].byClientSlotIndex);
+    }
+  }
+}
+
+void CPlayer::pc_AlterLinkBoardSlotRequest(
+  unsigned __int8 byNum,
+  _alter_link_slot_request_clzo::__list *pList,
+  unsigned __int8 byLBLock)
+{
+  if (!this->m_pUserDB)
+  {
+    return;
+  }
+
+  for (int index = 0; index < byNum; ++index)
+  {
+    _alter_link_slot_request_clzo::__list &entry = pList[index];
+    unsigned __int8 linkCode = entry.byLinkCode;
+    unsigned __int16 linkIndex = entry.wIndex;
+
+    if (linkCode == 4)
+    {
+      unsigned __int8 storageCode = 0;
+      _STORAGE_LIST::_db_con *item = this->m_Param.GetPtrItemStorage(entry.wIndex, &storageCode);
+      if (item)
+      {
+        linkIndex = static_cast<unsigned __int16>(item->m_byStorageIndex | (storageCode << 8));
+        this->m_Param.PushLink(entry.bySlotIndex, item->m_wSerial, false);
+      }
+      else
+      {
+        linkCode = 0xFF;
+        linkIndex = 0xFFFF;
+      }
+    }
+    else if (linkCode == 0xFF)
+    {
+      this->m_Param.PopLink(entry.bySlotIndex);
+    }
+
+    this->m_pUserDB->Update_LinkBoardSlot(entry.bySlotIndex, linkCode, linkIndex);
+  }
+  this->m_pUserDB->Update_LinkBoardLock(byLBLock);
+}
+
+void CPlayer::pc_ForceInvenChange(_STORAGE_POS_INDIV *pItem, unsigned __int16 wReplaceSerial)
+{
+  unsigned __int8 resultCode = 0;
+  _STORAGE_LIST::_db_con *sourceItem = nullptr;
+  _STORAGE_LIST::_db_con *replaceItem = nullptr;
+
+  _STORAGE_LIST *sourceStorage = this->m_Param.m_pStoragePtr[pItem->byStorageCode];
+  _STORAGE_LIST *targetStorage = nullptr;
+  if (!pItem->byStorageCode)
+  {
+    targetStorage = this->m_Param.m_pStoragePtr[3];
+  }
+  else if (pItem->byStorageCode == 3)
+  {
+    targetStorage = this->m_Param.m_pStoragePtr[0];
+  }
+  else
+  {
+    return;
+  }
+
+  sourceItem = sourceStorage->GetPtrFromSerial(pItem->wItemSerial);
+  if (sourceItem)
+  {
+    if (sourceItem->m_byTableCode == 15)
+    {
+      if (sourceItem->m_bLock)
+      {
+        resultCode = 11;
+      }
+      else if (this->m_pCurMap->m_pMapSet->m_nMapType == 1)
+      {
+        resultCode = 12;
+      }
+      else
+      {
+        if (wReplaceSerial != 0xFFFF)
+        {
+          replaceItem = targetStorage->GetPtrFromSerial(wReplaceSerial);
+          if (!replaceItem || replaceItem->m_byTableCode != 15)
+          {
+            resultCode = 2;
+            goto SEND_FORCE_CHANGE_RESULT;
+          }
+          if (replaceItem->m_bLock)
+          {
+            resultCode = 11;
+            goto SEND_FORCE_CHANGE_RESULT;
+          }
+          if (CPlayer::s_pnLinkForceItemToEffect[sourceItem->m_wItemIndex]
+              != CPlayer::s_pnLinkForceItemToEffect[replaceItem->m_wItemIndex])
+          {
+            resultCode = 3;
+            goto SEND_FORCE_CHANGE_RESULT;
+          }
+        }
+        if (wReplaceSerial == 0xFFFF && targetStorage->GetIndexEmptyCon() == 255)
+        {
+          resultCode = 5;
+        }
+        else if (wReplaceSerial == 0xFFFF && !pItem->byStorageCode)
+        {
+          for (int index = 0; index < targetStorage->m_nUsedNum; ++index)
+          {
+            _STORAGE_LIST::_db_con *item = &targetStorage->m_pStorageList[index];
+            if (item->m_bLoad
+                && CPlayer::s_pnLinkForceItemToEffect[item->m_wItemIndex]
+                     == CPlayer::s_pnLinkForceItemToEffect[sourceItem->m_wItemIndex])
+            {
+              resultCode = 4;
+              break;
+            }
+          }
+        }
+      }
+    }
+    else
+    {
+      resultCode = 1;
+    }
+  }
+  else
+  {
+    resultCode = 1;
+  }
+
+SEND_FORCE_CHANGE_RESULT:
+  if (!resultCode)
+  {
+    _STORAGE_LIST::_db_con sourceBackup;
+    std::memcpy(&sourceBackup, sourceItem, sizeof(sourceBackup));
+    if (!this->Emb_DelStorage(
+          sourceStorage->m_nListCode,
+          sourceItem->m_byStorageIndex,
+          false,
+          false,
+          "CPlayer::pc_ForceInvenChange() -- 0"))
+    {
+      this->SendMsg_ForceInvenChange(0xFFu);
+      return;
+    }
+
+    if (replaceItem)
+    {
+      _STORAGE_LIST::_db_con replaceBackup;
+      std::memcpy(&replaceBackup, replaceItem, sizeof(replaceBackup));
+      if (!this->Emb_AddStorage(sourceStorage->m_nListCode, &replaceBackup, true, false))
+      {
+        this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
+        this->SendMsg_ForceInvenChange(0xFFu);
+        return;
+      }
+      if (!this->Emb_DelStorage(
+            targetStorage->m_nListCode,
+            replaceItem->m_byStorageIndex,
+            false,
+            false,
+            "CPlayer::pc_ForceInvenChange() -- 1"))
+      {
+        this->Emb_DelStorage(sourceStorage->m_nListCode, replaceItem->m_byStorageIndex, false, false, nullptr);
+        this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
+        this->SendMsg_ForceInvenChange(0xFFu);
+        return;
+      }
+
+      _STORAGE_LIST::_db_con replaceForRestore;
+      std::memcpy(&replaceForRestore, replaceItem, sizeof(replaceForRestore));
+      this->Emb_AddStorage(targetStorage->m_nListCode, &replaceForRestore, true, false);
+      this->Emb_DelStorage(sourceStorage->m_nListCode, replaceItem->m_byStorageIndex, false, false, nullptr);
+      this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
+      this->SendMsg_ForceInvenChange(0xFFu);
+      return;
+    }
+
+    if (!this->Emb_AddStorage(targetStorage->m_nListCode, &sourceBackup, true, false))
+    {
+      this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
+      this->SendMsg_ForceInvenChange(0xFFu);
+      return;
+    }
+    this->Emb_EquipLink();
+  }
+  this->SendMsg_ForceInvenChange(resultCode);
+}
+
