@@ -108,3 +108,310 @@
 #include <cmath>
 #include <vector>
 
+void CPlayer::SendMsg_HSKQuestSucc(char byQuestCode, char bSucc)
+{
+  char payload[2]{};
+  payload[0] = byQuestCode;
+  payload[1] = bSucc;
+
+  unsigned __int8 type[2] = {25, 13};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 2u);
+}
+
+void CPlayer::SendMsg_InsertQuestItemInform(_STORAGE_LIST::_db_con *pItem)
+{
+  char payload[0x0B]{};
+  payload[0] = static_cast<char>(pItem->m_byTableCode);
+  *reinterpret_cast<unsigned __int16 *>(payload + 1) = pItem->m_wItemIndex;
+  *reinterpret_cast<unsigned int *>(payload + 3) = static_cast<unsigned int>(pItem->m_dwDur);
+  *reinterpret_cast<unsigned int *>(payload + 7) = pItem->m_dwLv;
+
+  unsigned __int8 type[2] = {24, 15};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x0Bu);
+}
+
+void CPlayer::SendMsg_NpcQuestListResult(_NPCQuestIndexTempData *pQuestIndexData)
+{
+
+  _npc_quest_list_result_zocl packet{};
+  packet.byQuestNum = static_cast<unsigned __int8>(pQuestIndexData->nQuestNum);
+  const int questCount = std::min<int>(pQuestIndexData->nQuestNum, 30);
+  for (int index = 0; index < questCount; ++index)
+  {
+    packet.QuestIndexList[index] = pQuestIndexData->IndexData[index].dwQuestIndex;
+  }
+
+  unsigned __int8 type[2] = {24, 21};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_ResultNpcQuest(char bSucc)
+{
+  unsigned __int8 type[2] = {24, 18};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &bSucc, 1u);
+}
+
+void CPlayer::SendMsg_InsertQuestFailure(char byEventType, unsigned int dwEventIndex, unsigned __int8 byEventNodeIndex)
+{
+  char szMsg; // [rsp+34h] [rbp-44h] BYREF
+  unsigned int dwIndex; // [rsp+35h] [rbp-43h]
+  unsigned __int8 byNode; // [rsp+39h] [rbp-3Fh]
+  unsigned __int8 pbyType[36]{}; // [rsp+54h] [rbp-24h] BYREF
+
+  szMsg = byEventType;
+  dwIndex = dwEventIndex;
+  byNode = byEventNodeIndex;
+  pbyType[0] = 24;
+  pbyType[1] = 4;
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, &szMsg, 6u);
+}
+
+void CPlayer::pc_SelectQuestAfterHappenEvent(unsigned __int8 bySelectIndex)
+{
+  if (!this->m_QuestMgr.m_LastHappenEvent.isset())
+  {
+    return;
+  }
+
+  _happen_event_cont happenEvent = this->m_QuestMgr.m_LastHappenEvent;
+  if (!this->Emb_StartQuest(bySelectIndex, &happenEvent))
+  {
+    this->SendMsg_InsertQuestFailure(
+      happenEvent.m_QtHpType,
+      static_cast<unsigned int>(happenEvent.m_nIndexInType),
+      static_cast<unsigned __int8>(happenEvent.m_nRaceCode));
+  }
+}
+
+void CPlayer::pc_BriefPass(unsigned __int8 byQuestSlotIndex)
+{
+  _QUEST_DB_BASE::_LIST *quest = &this->m_Param.m_QuestDB.m_List[byQuestSlotIndex];
+  if (quest->byQuestType == 0xFF)
+  {
+    return;
+  }
+
+  _base_fld *record = CQuestMgr::s_tblQuest->GetRecord(quest->wIndex);
+  if (record)
+  {
+    this->Emb_CheckActForQuest(15, record->m_strCode, 1u, false);
+  }
+}
+
+void CPlayer::pc_RequestDialogWithNPC(CItemStore *pStore)
+{
+  if (GetSqrt(this->m_fCurPos, pStore->GetStorePos()) > 60.0f)
+  {
+    return;
+  }
+
+  const int npcRace = pStore->m_byNpcRaceCode;
+  const int raceCode = this->m_Param.GetRaceCode();
+  if (npcRace != raceCode && npcRace != 0xFF)
+  {
+    return;
+  }
+
+  char *npcCode = pStore->GetNpcCode();
+  if (!npcCode)
+  {
+    return;
+  }
+
+  this->Emb_CheckActForQuest(14, npcCode, 1u, false);
+  this->Emb_CheckActForQuest(1, npcCode, 1u, false);
+}
+
+void CPlayer::pc_RequestWatchingWithNPC(CItemStore *pStore)
+{
+  if (GetSqrt(this->m_fCurPos, pStore->GetStorePos()) > 60.0f)
+  {
+    return;
+  }
+
+  const int npcRace = pStore->m_byNpcRaceCode;
+  const int raceCode = this->m_Param.GetRaceCode();
+  if (npcRace != raceCode && npcRace != 0xFF)
+  {
+    return;
+  }
+
+  char *npcCode = pStore->GetNpcCode();
+  if (npcCode)
+  {
+    this->Emb_CheckActForQuest(17, npcCode, 1u, false);
+  }
+}
+
+void CPlayer::pc_SelectQuestReward(
+  unsigned __int8 byQuestDBSlot,
+  unsigned __int8 bySelectItemSlotIndex,
+  unsigned __int8 bySelectLinkQuestIndex)
+{
+  _QUEST_DB_BASE::_LIST *questSlot = &m_Param.m_QuestDB.m_List[byQuestDBSlot];
+  if (questSlot->byQuestType == 0xFF)
+  {
+    return;
+  }
+
+  for (int index = 0; index < 3; ++index)
+  {
+    if (questSlot->wNum[index] != 0xFFFF)
+    {
+      return;
+    }
+  }
+
+  _base_fld *questRecord = CQuestMgr::s_tblQuest->GetRecord(questSlot->wIndex);
+  if (!questRecord)
+  {
+    return;
+  }
+
+  const int hasSelectReward = *reinterpret_cast<int *>(&questRecord[13].m_strCode[60]);
+  if (bySelectItemSlotIndex == 0xFF)
+  {
+    if (hasSelectReward)
+    {
+      return;
+    }
+  }
+  else if (!hasSelectReward)
+  {
+    return;
+  }
+
+  if (bySelectItemSlotIndex != 0xFF)
+  {
+    const char *rewardCode = reinterpret_cast<const char *>(&questRecord[14]) + 72 * bySelectItemSlotIndex;
+    if (!strncmp(rewardCode, "-1", 2u))
+    {
+      return;
+    }
+  }
+
+  if (bySelectLinkQuestIndex != 0xFF)
+  {
+    const char *linkCode = &questRecord[22].m_strCode[64 * static_cast<unsigned __int64>(bySelectItemSlotIndex) + 44];
+    if (!strncmp(linkCode, "-1", 2u))
+    {
+      return;
+    }
+  }
+
+  Emb_CompleteQuest(byQuestDBSlot, bySelectItemSlotIndex, bySelectLinkQuestIndex);
+}
+
+void CPlayer::pc_RequestQuestListFromNPC(CItemStore *pStore)
+{
+  if (!pStore)
+  {
+    return;
+  }
+
+  float *storePos = pStore->GetStorePos();
+  if (GetSqrt(m_fCurPos, storePos) > 80.0)
+  {
+    return;
+  }
+
+  const int npcRaceCode = pStore->m_byNpcRaceCode;
+  const int raceCode = m_Param.GetRaceCode();
+  if (npcRaceCode != raceCode && npcRaceCode != 255)
+  {
+    return;
+  }
+
+  char *eventCode = pStore->GetNpcCode();
+  if (!eventCode)
+  {
+    return;
+  }
+
+  std::memset(&m_NPCQuestIndexTempData, 0, sizeof(m_NPCQuestIndexTempData));
+  m_QuestMgr.CheckNPCQuestList(
+    eventCode,
+    static_cast<unsigned __int8>(m_Param.GetRaceCode()),
+    &m_NPCQuestIndexTempData);
+  this->SendMsg_NpcQuestListResult(&m_NPCQuestIndexTempData);
+}
+
+void CPlayer::pc_RequestQuestFromNPC(CItemStore *pStore, unsigned int dwNPCQuestIndex)
+{
+  if (!pStore)
+  {
+    return;
+  }
+
+  float *storePos = pStore->GetStorePos();
+  if (GetSqrt(m_fCurPos, storePos) > 80.0)
+  {
+    return;
+  }
+
+  const int npcRaceCode = pStore->m_byNpcRaceCode;
+  const int raceCode = m_Param.GetRaceCode();
+  if (npcRaceCode != raceCode && npcRaceCode != 255)
+  {
+    return;
+  }
+
+  char *eventCode = pStore->GetNpcCode();
+  if (!eventCode)
+  {
+    return;
+  }
+
+  const bool created = Emb_CreateNPCQuest(eventCode, dwNPCQuestIndex);
+  this->SendMsg_ResultNpcQuest(created ? 1 : 0);
+}
+
+bool CPlayer::Emb_CreateNPCQuest(char *pszEventCode, unsigned int dwNPCQuestIndex)
+{
+  unsigned int happenIndex = 0;
+  bool found = false;
+  for (int index = 0; index < 30; ++index)
+  {
+    if (m_NPCQuestIndexTempData.IndexData[index].dwQuestIndex == dwNPCQuestIndex)
+    {
+      happenIndex = m_NPCQuestIndexTempData.IndexData[index].dwQuestHappenIndex;
+      found = true;
+      break;
+    }
+  }
+  if (!found)
+  {
+    return false;
+  }
+
+  _happen_event_cont *happenEvent = m_QuestMgr.CheckNPCQuestStartable(
+    pszEventCode,
+    static_cast<unsigned __int8>(m_Param.GetRaceCode()),
+    static_cast<int>(dwNPCQuestIndex),
+    happenIndex);
+  if (!happenEvent)
+  {
+    return false;
+  }
+
+  if (Emb_StartQuest(0xFFu, happenEvent))
+  {
+    return true;
+  }
+
+  for (int index = 0; index < 3; ++index)
+  {
+    if (!m_QuestMgr.m_pTempHappenEvent[index].isset())
+    {
+      std::memcpy(&m_QuestMgr.m_pTempHappenEvent[index], happenEvent, sizeof(_happen_event_cont));
+      break;
+    }
+  }
+
+  return false;
+}
+
