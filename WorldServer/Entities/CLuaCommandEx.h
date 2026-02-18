@@ -1,9 +1,10 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "CLuaCommand.h"
 
 /* 1677 */
-class __cppobj __declspec(align(8)) CLuaCommandEx : public CLuaCommand
+class  __declspec(align(8)) CLuaCommandEx : public CLuaCommand
 {
 public:
   ~CLuaCommandEx() override;

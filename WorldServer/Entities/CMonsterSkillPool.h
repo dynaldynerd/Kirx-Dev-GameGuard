@@ -6,7 +6,7 @@
 class CMonster;
 
 /* 1648 */
-class __cppobj CMonsterSkillPool
+class  CMonsterSkillPool
 {
   CMonster *m_pMyMon;
   int m_nSize;

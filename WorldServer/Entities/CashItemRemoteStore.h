@@ -36,7 +36,7 @@ struct _cash_discount_ini_
   int m_cdeTime[3];
 };
 
-struct __cppobj __declspec(align(8)) _cash_discount_
+struct  __declspec(align(8)) _cash_discount_
 {
   unsigned __int8 m_cde_status;
   CNetTimer m_cde_timer;
@@ -71,7 +71,7 @@ struct _cash_event_ini
   _cash_limited_sale m_Limited_sale[20];
 };
 
-struct __cppobj _cash_event
+struct  _cash_event
 {
   unsigned __int8 m_event_status;
   CNetTimer m_event_timer;
@@ -102,7 +102,7 @@ struct _cash_event_time
   int m_EventTime[2];
 };
 
-struct __cppobj __declspec(align(8)) _con_event_
+struct  __declspec(align(8)) _con_event_
 {
   unsigned __int8 m_conevent_status;
   _FILETIME m_conevent_ini_file_time;
@@ -126,7 +126,7 @@ struct _cash_lim_sale
   LimEventItemInfo m_EventItemInfo[20];
 };
 
-class __cppobj CashItemRemoteStore
+class  CashItemRemoteStore
 {
 public:
   struct _remain_num_of_good

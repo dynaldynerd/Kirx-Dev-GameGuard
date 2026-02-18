@@ -4,7 +4,7 @@
 
 class CMyTimer;
 
-class __cppobj CUnmannedTraderLazyCleaner
+class  CUnmannedTraderLazyCleaner
 {
 public:
   CUnmannedTraderLazyCleaner();

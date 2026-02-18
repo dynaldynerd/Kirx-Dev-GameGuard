@@ -5,7 +5,7 @@
 class CMonster;
 
 /* 1671 */
-class __cppobj __declspec(align(8)) CPathMgr
+class  __declspec(align(8)) CPathMgr
 {
 public:
   float m_PosPool[16][3];

@@ -6,7 +6,7 @@ struct _PVPPOINT_LIMIT_DB_BASE;
 class CPlayer;
 
 /* 1793 */
-class __cppobj CPvpPointLimiter
+class  CPvpPointLimiter
 {
 public:
   CPvpPointLimiter();

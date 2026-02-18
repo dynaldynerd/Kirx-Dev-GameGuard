@@ -1,9 +1,10 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "CMainThread.h"
 
 /* 1398 */
-class __cppobj CParticle
+class  CParticle
 {
 public:
   char mEntityName[128];

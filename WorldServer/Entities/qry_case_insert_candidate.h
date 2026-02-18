@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __cppobj _qry_case_insert_candidate
+struct  _qry_case_insert_candidate
 {
   _qry_case_insert_candidate() = default;
   _qry_case_insert_candidate(

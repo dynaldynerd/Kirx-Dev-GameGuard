@@ -3,6 +3,14 @@
 #include "IdaCompat.h"
 #include "GlobalObjectDefs.h"
 #include "CPlayer.h"
+#include "message.h"
+#include "USER_NUM_SHEET.h"
+#include "notify_race_leader_s_owner_u_taxrate.h"
+#include "TournamentWinner.h"
+#include "detected_char_list.h"
+#include "attack_param.h"
+#include "D3DXMATRIX.h"
+#include "EntityTypes.h"
 #include "attack_gen_result_zocl.h"
 
 #pragma pack(push, 1)
@@ -159,7 +167,7 @@ struct TimeLimitMgr;
 struct _mob_message;
 
 /* 1258 */
-struct __cppobj _SRAND
+struct  _SRAND
 {
 };
 
@@ -171,7 +179,7 @@ struct _GLBID
 };
 
 /* 1260 */
-struct __cppobj __declspec(align(2)) _BILLING_INFO
+struct  __declspec(align(2)) _BILLING_INFO
 {
   _BILLING_INFO();
 
@@ -190,7 +198,7 @@ struct __cppobj __declspec(align(2)) _BILLING_INFO
 };
 
 /* 1261 */
-struct __cppobj _WAIT_ENTER_ACCOUNT
+struct  _WAIT_ENTER_ACCOUNT
 {
   _WAIT_ENTER_ACCOUNT();
   void Release();
@@ -220,7 +228,7 @@ struct __cppobj _WAIT_ENTER_ACCOUNT
   char m_szAccountID[13];
   unsigned __int8 m_byUserDgr;
   unsigned __int8 m_bySubDgr;
-  __unaligned __declspec(align(1)) _GLBID m_gidGlobal;
+   _GLBID m_gidGlobal;
   unsigned int m_dwKey[4];
   unsigned int m_dwLoadTime;
   bool m_bChatLock;
@@ -241,23 +249,6 @@ struct __cppobj _WAIT_ENTER_ACCOUNT
 /* 1262 */
 #include "CFrameRate.h"
 
-/* 1265 */
-struct __cppobj _message
-{
-  _message();
-  ~_message();
-  void SetMsg(unsigned int message, unsigned int key1, unsigned int key2, unsigned int key3);
-  unsigned int GetMessageA() const;
-  unsigned int GetKey1() const;
-
-  unsigned int dwMessage;
-  unsigned int dwKey1;
-  unsigned int dwKey2;
-  unsigned int dwKey3;
-  _message *pNext;
-  _message *pPrev;
-};
-
 /* 1267 */
 #include "CMyCriticalSection.h"
 
@@ -267,19 +258,11 @@ struct __cppobj _message
 /* 1269 */
 #include "CMsgProcess.h"
 
-/* 1272 */
-struct _USER_NUM_SHEET
-{
-  int nAveragePerHour;
-  int nMaxPerHour;
-  int nCount;
-};
-
 /* 1273 */
 #include "CConnNumPHMgr.h"
 
 /* 1277 */
-struct __cppobj __declspec(align(4)) _DB_QRY_SYN_DATA
+struct  __declspec(align(4)) _DB_QRY_SYN_DATA
 {
   bool m_bUse;
   bool m_bLoad;
@@ -315,27 +298,8 @@ struct __cppobj __declspec(align(4)) _DB_QRY_SYN_DATA
 /* 1132 */
 #include "CLogFile.h"
 
-/* 1806 */
-struct _notify_race_leader_s_owner_u_taxrate
-{
-  char wszRaceLeaderName[9][17];
-  char wszSettlement1OwnerGuildName[17];
-  char wszSettlement1OwnerGuildMasterName[17];
-  char wszSettlement2OwnerGuildName[17];
-  char wszSettlement2OwnerGuildMasterName[17];
-  unsigned __int8 byTaxRate;
-};
-
 /* 1807 */
 #include "CNotifyNotifyRaceLeaderSownerUTaxrate.h"
-
-/* 1248 */
-struct __cppobj __declspec(align(4)) TournamentWinner
-{
-  unsigned int dwSerial;
-  char wszCharName[17];
-  unsigned __int8 byGrade;
-};
 
 /* 1808 */
 #include "CBattleTournamentInfo.h"
@@ -349,7 +313,7 @@ struct _event_info
 };
 
 /* 1811 */
-struct __cppobj GuildCreateEventInfo
+struct  GuildCreateEventInfo
 {
   void Init();
   void Loop();
@@ -396,7 +360,7 @@ struct __declspec(align(4)) _server_rate_ini_data
 };
 
 /* 1813 */
-struct __cppobj _server_rate_realtime_load
+struct  _server_rate_realtime_load
 {
   _server_rate_realtime_load();
   void Init(unsigned int dwReadTerm);
@@ -407,7 +371,7 @@ struct __cppobj _server_rate_realtime_load
 };
 
 /* 1305 */
-class __cppobj __declspec(align(8)) CMainThread
+class  __declspec(align(8)) CMainThread
 {
 public:
   _SRAND m_Rand;
@@ -1057,7 +1021,7 @@ extern CMainThread g_Main;
 #include "monster_fld.h"
 
 /* 1303 */
-struct __cppobj __unaligned __declspec(align(2)) _monster_sp_group : _base_fld
+struct   __declspec(align(2)) _monster_sp_group : _base_fld
 {
   union MonsterSP_Fld
   {
@@ -1079,7 +1043,7 @@ struct event_date_range
 };
 
 /* 1307 */
-struct __cppobj __declspec(align(4)) RFEventBase
+struct  __declspec(align(4)) RFEventBase
 {
   unsigned int _nOldLoopTime;
   event_date_range _kDateRange;
@@ -1108,7 +1072,7 @@ struct __declspec(align(8)) Player_TL_Status
 };
 
 /* 1815 */
-struct __cppobj TimeLimitMgr
+struct  TimeLimitMgr
 {
   static TimeLimitMgr *Instance();
   void LoadTLINIFile();
@@ -1179,12 +1143,6 @@ struct __declspec(align(2)) _mob_message
 
 /* 1311 */
 
-/* 1320 */
-struct __cppobj D3DXMATRIX
-{
-  float m[4][4];
-};
-
 /* 1427 */
 #include "CAniCamera.h"
 
@@ -1232,7 +1190,7 @@ struct _EQUIPKEY
 };
 
 /* 1539 */
-struct __cppobj __unaligned __declspec(align(1)) _REGED_AVATOR_DB
+struct   _REGED_AVATOR_DB
 {
   char m_wszAvatorName[17];
   unsigned int m_dwRecordNum;
@@ -1251,7 +1209,7 @@ struct __cppobj __unaligned __declspec(align(1)) _REGED_AVATOR_DB
 };
 
 /* 1540 */
-struct __cppobj __unaligned __declspec(align(1)) _REGED : _REGED_AVATOR_DB
+struct   _REGED : _REGED_AVATOR_DB
 {
   unsigned int m_dwFixEquipLv[8];
   unsigned int m_dwItemETSerial[8];
@@ -1266,7 +1224,7 @@ struct __cppobj __unaligned __declspec(align(1)) _REGED : _REGED_AVATOR_DB
 };
 
 /* 1541 */
-struct __cppobj __unaligned __declspec(align(1)) _AVATOR_DB_BASE : _REGED
+struct   _AVATOR_DB_BASE : _REGED
 {
   unsigned int m_dwHP;
   unsigned int m_dwFP;
@@ -1322,8 +1280,9 @@ struct _LINKKEY
 };
 
 /* 1544 */
-struct __cppobj __unaligned __declspec(align(1)) _LINK_DB_BASE
+struct   _LINK_DB_BASE
 {
+  #pragma pack(push, 1)
   struct _LIST
   {
     _LINKKEY Key;
@@ -1331,6 +1290,7 @@ struct __cppobj __unaligned __declspec(align(1)) _LINK_DB_BASE
     _LIST();
     void Init();
   };
+  #pragma pack(pop)
 
   _LIST m_LinkList[50];
   unsigned __int8 m_byLinkBoardLock;
@@ -1359,8 +1319,9 @@ struct _EMBELLKEY
 };
 
 /* 1547 */
-struct __cppobj _EQUIP_DB_BASE
+struct  _EQUIP_DB_BASE
 {
+  #pragma pack(push, 1)
   struct _EMBELLISH_LIST
   {
     _EMBELLKEY Key;
@@ -1374,6 +1335,7 @@ struct __cppobj _EQUIP_DB_BASE
     bool Set(const _STORAGE_LIST::_db_con *pItem);
     bool Release();
   };
+  #pragma pack(pop)
 
   _EMBELLISH_LIST m_EmbellishList[7];
 };
@@ -1393,8 +1355,9 @@ struct _FORCEKEY
 };
 
 /* 1550 */
-struct __cppobj _FORCE_DB_BASE
+struct  _FORCE_DB_BASE
 {
+  #pragma pack(push, 1)
   struct _LIST
   {
     _FORCEKEY Key;
@@ -1407,6 +1370,7 @@ struct __cppobj _FORCE_DB_BASE
     bool Set(const _STORAGE_LIST::_db_con *pItem);
     bool Release();
   };
+  #pragma pack(pop)
 
   _LIST m_List[88];
 };
@@ -1423,8 +1387,9 @@ struct _ANIMUSKEY
 };
 
 /* 1553 */
-struct __cppobj _ANIMUS_DB_BASE
+struct  _ANIMUS_DB_BASE
 {
+  #pragma pack(push, 1)
   struct _LIST
   {
     _ANIMUSKEY Key;
@@ -1436,16 +1401,23 @@ struct __cppobj _ANIMUS_DB_BASE
     unsigned int dwT;
     unsigned int dwLendRegdTime;
 
+    _LIST();
+    void Init();
     bool Set(const _STORAGE_LIST::_db_con *pItem);
     bool Release();
   };
+  #pragma pack(pop)
 
   _LIST m_List[4];
+
+  _ANIMUS_DB_BASE();
+  void Init();
 };
 
 /* 1556 */
-struct __cppobj _INVEN_DB_BASE
+struct  _INVEN_DB_BASE
 {
+  #pragma pack(push, 1)
   struct _LIST
   {
     _INVENKEY Key;
@@ -1462,6 +1434,7 @@ struct __cppobj _INVEN_DB_BASE
     bool Set(const _STORAGE_LIST::_db_con *pItem);
     bool Release();
   };
+  #pragma pack(pop)
 
   _LIST m_List[100];
 
@@ -1469,10 +1442,11 @@ struct __cppobj _INVEN_DB_BASE
 };
 
 /* 1558 */
-struct __cppobj __unaligned __declspec(align(2)) _CUTTING_DB_BASE
+struct   __declspec(align(2)) _CUTTING_DB_BASE
 {
   bool m_bOldDataLoad;
   unsigned __int8 m_byLeftNum;
+  #pragma pack(push, 1)
   struct _LIST
   {
     _INVENKEY Key;
@@ -1480,6 +1454,7 @@ struct __cppobj __unaligned __declspec(align(2)) _CUTTING_DB_BASE
 
     void Init();
   };
+  #pragma pack(pop)
 
   _LIST m_List[20];
 
@@ -1488,8 +1463,9 @@ struct __cppobj __unaligned __declspec(align(2)) _CUTTING_DB_BASE
 };
 
 /* 1568 */
-struct __cppobj _TRADE_DB_BASE
+struct  _TRADE_DB_BASE
 {
+  #pragma pack(push, 1)
   struct _LIST
   {
     unsigned __int8 byState;
@@ -1506,13 +1482,15 @@ struct __cppobj _TRADE_DB_BASE
 
     bool IsEmpty();
   };
+  #pragma pack(pop)
 
   _LIST m_List[20];
 };
 
 /* 1570 */
-struct __cppobj _BUDDY_DB_BASE
+struct  _BUDDY_DB_BASE
 {
+  #pragma pack(push, 1)
   struct _LIST
   {
     unsigned int dwSerial;
@@ -1522,6 +1500,7 @@ struct __cppobj _BUDDY_DB_BASE
     void Init();
     bool IsFilled();
   };
+  #pragma pack(pop)
 
   _LIST m_List[50];
 
@@ -1530,8 +1509,9 @@ struct __cppobj _BUDDY_DB_BASE
 };
 
 /* 1572 */
-struct __cppobj __unaligned __declspec(align(1)) _TRUNK_DB_BASE
+struct   _TRUNK_DB_BASE
 {
+  #pragma pack(push, 1)
   struct _LIST
   {
     _INVENKEY Key;
@@ -1547,6 +1527,7 @@ struct __cppobj __unaligned __declspec(align(1)) _TRUNK_DB_BASE
     bool Set(const _STORAGE_LIST::_db_con *pItem, unsigned __int8 byRaceCode);
     bool Release();
   };
+  #pragma pack(pop)
 
   char wszPasswd[13];
   long double dDalant;
@@ -1562,21 +1543,27 @@ struct __cppobj __unaligned __declspec(align(1)) _TRUNK_DB_BASE
 /* 1190 */
 struct _AIOC_A_MACRODATA
 {
+  #pragma pack(push, 1)
   struct MACRO_POTIONDATA
   {
     unsigned int Potion[3];
     unsigned int PotionValue[3];
   };
+  #pragma pack(pop)
 
+  #pragma pack(push, 1)
   struct MACRO_ACTIONDATA
   {
     unsigned int Action[10];
   };
+  #pragma pack(pop)
 
+  #pragma pack(push, 1)
   struct MACRO_CHATDATA
   {
     char Chat[5][256];
   };
+  #pragma pack(pop)
 
   MACRO_POTIONDATA mcr_Potion[1];
   MACRO_ACTIONDATA mcr_Action[3];
@@ -1584,8 +1571,9 @@ struct _AIOC_A_MACRODATA
 };
 
 /* 1577 */
-struct __cppobj _POSTSTORAGE_DB_BASE
+struct  _POSTSTORAGE_DB_BASE
 {
+  #pragma pack(push, 1)
   struct __list
   {
     unsigned int dwPSSerial;
@@ -1605,6 +1593,7 @@ struct __cppobj _POSTSTORAGE_DB_BASE
     char wszContent[201];
     unsigned __int64 lnUID;
   };
+  #pragma pack(pop)
 
   __list m_PostList[50];
   bool m_bUpdate;
@@ -1614,7 +1603,7 @@ struct __cppobj _POSTSTORAGE_DB_BASE
 };
 
 /* 1578 */
-struct __cppobj __unaligned __declspec(align(1)) _RETURNPOST_DB_BASE
+struct   _RETURNPOST_DB_BASE
 {
   bool m_bUpdate;
   int m_nMax;
@@ -1625,13 +1614,15 @@ struct __cppobj __unaligned __declspec(align(1)) _RETURNPOST_DB_BASE
 };
 
 /* 1580 */
-struct __cppobj __unaligned __declspec(align(1)) _DELPOST_DB_BASE
+struct   _DELPOST_DB_BASE
 {
+  #pragma pack(push, 1)
   struct __list
   {
     unsigned int dwDelSerial;
     int nStorageIndex;
   };
+  #pragma pack(pop)
 
   bool m_bUpdate;
   int m_nMax;
@@ -1642,7 +1633,7 @@ struct __cppobj __unaligned __declspec(align(1)) _DELPOST_DB_BASE
 };
 
 /* 1581 */
-struct __cppobj _POSTDATA_DB_BASE
+struct  _POSTDATA_DB_BASE
 {
   _POSTSTORAGE_DB_BASE dbPost;
   _RETURNPOST_DB_BASE dbRetPost;
@@ -1653,20 +1644,23 @@ struct __cppobj _POSTDATA_DB_BASE
 };
 
 /* 1583 */
-struct __cppobj _CRYMSG_DB_BASE
+struct  _CRYMSG_DB_BASE
 {
+  #pragma pack(push, 1)
   struct _LIST
   {
     char wszCryMsg[65];
   };
+  #pragma pack(pop)
 
   _LIST m_List[10];
 };
 
 /* 1585 */
-struct __cppobj __unaligned __declspec(align(1)) _PERSONALAMINE_INVEN_DB_BASE
+struct   _PERSONALAMINE_INVEN_DB_BASE
 {
   bool bUsable;
+  #pragma pack(push, 1)
   struct _LIST
   {
     _INVENKEY Key;
@@ -1677,6 +1671,7 @@ struct __cppobj __unaligned __declspec(align(1)) _PERSONALAMINE_INVEN_DB_BASE
     bool Set(const _STORAGE_LIST::_db_con *pItem);
     bool Release();
   };
+  #pragma pack(pop)
 
   _LIST m_List[40];
 
@@ -1685,7 +1680,7 @@ struct __cppobj __unaligned __declspec(align(1)) _PERSONALAMINE_INVEN_DB_BASE
 };
 
 /* 1586 */
-struct __cppobj __unaligned __declspec(align(2)) _PVPPOINT_LIMIT_DB_BASE
+struct   __declspec(align(2)) _PVPPOINT_LIMIT_DB_BASE
 {
   __int64 tUpdatedate;
   bool bUseUp;
@@ -1696,7 +1691,7 @@ struct __cppobj __unaligned __declspec(align(2)) _PVPPOINT_LIMIT_DB_BASE
 };
 
 /* 1587 */
-struct __unaligned __declspec(align(1)) _PVP_ORDER_VIEW_DB_BASE
+struct  _PVP_ORDER_VIEW_DB_BASE
 {
   __int64 tUpdatedate;
   int nDeath;
@@ -1712,28 +1707,32 @@ struct __unaligned __declspec(align(1)) _PVP_ORDER_VIEW_DB_BASE
 };
 
 /* 1237 */
-struct __cppobj _worlddb_sf_delay_info
+struct  _worlddb_sf_delay_info
 {
+  #pragma pack(push, 1)
   struct _eff_list
   {
     unsigned __int8 byEffectCode;
     unsigned __int16 wEffectIndex;
     unsigned int dwNextTime;
   };
+  #pragma pack(pop)
 
+  #pragma pack(push, 1)
   struct _mas_list
   {
     unsigned __int8 byEffectCode;
     unsigned __int8 byMastery;
     unsigned int dwNextTime;
   };
+  #pragma pack(pop)
 
   _eff_list EFF[10];
   _mas_list MAS[10];
 };
 
 /* 1588 */
-struct __cppobj __unaligned __declspec(align(1)) _SUPPLEMENT_DB_BASE
+struct   _SUPPLEMENT_DB_BASE
 {
   long double dPvpPointLeak;
   bool bLastAttBuff;
@@ -1749,7 +1748,7 @@ struct __cppobj __unaligned __declspec(align(1)) _SUPPLEMENT_DB_BASE
 };
 
 /* 1244 */
-struct __unaligned __declspec(align(1)) _PCBANG_PLAY_TIME
+struct  _PCBANG_PLAY_TIME
 {
   unsigned int dwAccSerial;
   unsigned int dwLastConnTime;
@@ -1760,7 +1759,7 @@ struct __unaligned __declspec(align(1)) _PCBANG_PLAY_TIME
 };
 
 /* 1589 */
-struct __cppobj _POTION_NEXT_USE_TIME_DB_BASE
+struct  _POTION_NEXT_USE_TIME_DB_BASE
 {
   unsigned int dwPotionNextUseTime[38];
 };
@@ -1776,7 +1775,7 @@ struct _PCBANG_FAVOR_ITEM_DB_BASE
 };
 
 /* 1591 */
-struct __unaligned __declspec(align(1)) _TIMELIMITINFO_DB_BASE
+struct  _TIMELIMITINFO_DB_BASE
 {
   unsigned int dwAccSerial;
   unsigned int dwFatigue;
@@ -1785,7 +1784,7 @@ struct __unaligned __declspec(align(1)) _TIMELIMITINFO_DB_BASE
 };
 
 /* 1592 */
-struct __cppobj __unaligned __declspec(align(1)) _AVATOR_DATA
+struct   _AVATOR_DATA
 {
   _AVATOR_DB_BASE dbAvator;
   _LINK_DB_BASE dbLink;
@@ -1826,7 +1825,7 @@ struct __cppobj __unaligned __declspec(align(1)) _AVATOR_DATA
 };
 
 /* 1593 */
-struct __cppobj _SYNC_STATE
+struct  _SYNC_STATE
 {
   bool bEnter;
   bool bReged;
@@ -1836,19 +1835,6 @@ struct __cppobj _SYNC_STATE
   char chk_enter();
   char chk_reged();
   char chk_select();
-};
-
-/* 1595 */
-struct __cppobj _detected_char_list
-{
-  struct _char_info
-  {
-    unsigned __int8 m_byCharType;
-    float m_fPos[2];
-  };
-
-  int nSize;
-  _char_info CharInfoList[50];
 };
 
 /* 1596 */
@@ -1861,14 +1847,17 @@ struct __cppobj _detected_char_list
 /* 1561 */
 
 /* 1707 */
-struct __cppobj __unaligned __declspec(align(2)) _personal_amine_mineore_zocl
+#pragma pack(push, 1)
+struct _personal_amine_mineore_zocl
 {
+  #pragma pack(push, 1)
   struct __changed
   {
     unsigned __int16 wItemIndex;
-    __unaligned __declspec(align(1)) unsigned int dwDur;
+    unsigned int dwDur;
     unsigned __int16 wItemSerial;
   };
+  #pragma pack(pop)
 
   unsigned int dwObjSerial;
   unsigned __int8 m_byUseBattery;
@@ -1878,29 +1867,35 @@ struct __cppobj __unaligned __declspec(align(2)) _personal_amine_mineore_zocl
 
   void clear();
 };
+#pragma pack(pop)
 
 /* 5884 */
-struct __unaligned __declspec(align(2)) _personal_automine_uninstall_zocl
+#pragma pack(push, 1)
+struct _personal_automine_uninstall_zocl
 {
-  struct __unaligned __declspec(align(2)) __battery
+  #pragma pack(push, 1)
+  struct __battery
   {
     unsigned int dwDur;
     unsigned __int16 wSerial;
   };
+  #pragma pack(pop)
 
   unsigned int dwObjSerial;
   unsigned __int8 byActType;
-  __unaligned __declspec(align(1)) unsigned int dwOwnerSerial;
-  __unaligned __declspec(align(1)) unsigned __int16 wItemSerial;
+  unsigned int dwOwnerSerial;
+  unsigned __int16 wItemSerial;
   unsigned __int8 byCnt;
   __battery battery[2];
 
   _personal_automine_uninstall_zocl();
   unsigned int size() const;
 };
+#pragma pack(pop)
 
 /* 5886 */
-struct __cppobj __unaligned __declspec(align(1)) _personal_automine_uninstall_circle_zocl
+#pragma pack(push, 1)
+struct _personal_automine_uninstall_circle_zocl
 {
   unsigned int dwObjSerial;
   unsigned __int8 byActType;
@@ -1908,9 +1903,11 @@ struct __cppobj __unaligned __declspec(align(1)) _personal_automine_uninstall_ci
   _personal_automine_uninstall_circle_zocl();
   unsigned int size() const;
 };
+#pragma pack(pop)
 
 /* 5896 */
-struct __cppobj __unaligned __declspec(align(1)) _personal_automine_current_state_zocl
+#pragma pack(push, 1)
+struct _personal_automine_current_state_zocl
 {
   unsigned __int16 wItemSerial;
   unsigned __int8 byFilledSlotCnt;
@@ -1919,16 +1916,19 @@ struct __cppobj __unaligned __declspec(align(1)) _personal_automine_current_stat
   _personal_automine_current_state_zocl();
   unsigned int size() const;
 };
+#pragma pack(pop)
 
 /* 1709 */
-struct __cppobj _qry_case_update_mineore
+struct  _qry_case_update_mineore
 {
+  #pragma pack(push, 1)
   struct __changed
   {
     unsigned __int8 bySlot;
     unsigned int dwK;
     unsigned __int8 byNum;
   };
+  #pragma pack(pop)
 
   unsigned __int8 bySubQry;
   unsigned int dwMachineIndex;
@@ -1938,7 +1938,7 @@ struct __cppobj _qry_case_update_mineore
 };
 
 /* 1710 */
-class __cppobj AutominePersonal : public CCharacter
+class  AutominePersonal : public CCharacter
 {
 public:
   AutominePersonal();
@@ -2023,7 +2023,7 @@ public:
   unsigned __int8 m_byUseBattery;
   AP_BatterySlot *m_pBatterySlot;
   bool m_bChanged;
-  __unaligned __declspec(align(1)) _personal_amine_mineore_zocl m_changed_packet;
+  _personal_amine_mineore_zocl m_changed_packet;
   unsigned int m_dwMineCount[15];
   _qry_case_update_mineore m_update_mineore_old;
   _qry_case_update_mineore m_update_mineore_new;
@@ -2032,7 +2032,7 @@ public:
 };
 
 /* 1720 */
-struct __cppobj _guild_master_info
+struct  _guild_master_info
 {
   _guild_master_info();
   void init();
@@ -2044,7 +2044,7 @@ struct __cppobj _guild_master_info
 };
 
 /* 1722 */
-struct __cppobj _suggested_matter
+struct  _suggested_matter
 {
   _suggested_matter();
   void Clear();
@@ -2065,7 +2065,7 @@ struct __cppobj _suggested_matter
 };
 
 /* 1723 */
-struct __cppobj __declspec(align(8)) _guild_battle_suggest_matter
+struct  __declspec(align(8)) _guild_battle_suggest_matter
 {
   enum STATE : __int32
   {
@@ -2105,7 +2105,7 @@ struct __declspec(align(8)) _io_money_data
 
 /* 1719 */
 #pragma pack(push, 8)
-struct __cppobj __declspec(align(8)) _guild_member_info
+struct  __declspec(align(8)) _guild_member_info
 {
   unsigned int dwSerial;
   char wszName[17];
@@ -2136,8 +2136,9 @@ static_assert(alignof(_guild_member_info) == 8, "_guild_member_info alignment mu
 #include "CTrap.h"
 
 /* 1686 */
-struct __cppobj _dh_mission_mgr
+struct  _dh_mission_mgr
 {
+  #pragma pack(push, 1)
   struct _count
   {
     int nCount;
@@ -2145,7 +2146,9 @@ struct __cppobj _dh_mission_mgr
 
     void Init();
   };
+  #pragma pack(pop)
 
+  #pragma pack(push, 1)
   struct _if_change
   {
     _dh_mission_setup *pMissionPtr;
@@ -2155,14 +2158,18 @@ struct __cppobj _dh_mission_mgr
     void Init();
     bool IsFill();
   };
+  #pragma pack(pop)
 
+  #pragma pack(push, 1)
   struct _respawn_monster_act
   {
+    #pragma pack(push, 1)
     struct _monster_data
     {
       CMonster *pMon;
       unsigned int dwSerial;
     };
+    #pragma pack(pop)
 
     __respawn_monster *pData;
     int nCum;
@@ -2172,6 +2179,7 @@ struct __cppobj _dh_mission_mgr
 
     void set(__respawn_monster *data);
   };
+  #pragma pack(pop)
 
   _dh_mission_setup *pCurMssionPtr;
   _count Count[8];
@@ -2194,8 +2202,9 @@ struct __cppobj _dh_mission_mgr
 };
 
 /* 1688 */
-struct __cppobj __declspec(align(8)) _dh_player_mgr
+struct  __declspec(align(8)) _dh_player_mgr
 {
+  #pragma pack(push, 1)
   struct _pos
   {
     CMapData *pMap;
@@ -2204,6 +2213,7 @@ struct __cppobj __declspec(align(8)) _dh_player_mgr
 
     void init();
   };
+  #pragma pack(pop)
 
   CPlayer *pOne;
   unsigned int dwSerial;
@@ -2218,7 +2228,7 @@ struct __cppobj __declspec(align(8)) _dh_player_mgr
 /* 1598 */
 
 /* 1435
-struct __cppobj __declspec(align(4)) _dummy_position
+struct  __declspec(align(4)) _dummy_position
 {
   char m_szCode[64];
   unsigned __int16 m_wLineIndex;
@@ -2241,40 +2251,8 @@ struct __cppobj __declspec(align(4)) _dummy_position
 /* 1776 */
 #include "CAITimer.h"
 
-/* 1777 */
-struct __cppobj __declspec(align(8)) _attack_param
-{
-  CCharacter *pDst;
-  int nPart;
-  int nTol;
-  int nClass;
-  int nMinAF;
-  int nMaxAF;
-  int nMinSel;
-  int nMaxSel;
-  int nExtentRange;
-  int nShotNum;
-  int nAddAttPnt;
-  int nWpType;
-  unsigned __int8 byEffectCode;
-  _base_fld *pFld;
-  float fArea[3];
-  int nLevel;
-  int nMastery;
-  bool bPassCount;
-  int nAttactType;
-  bool bMatchless;
-  int nMaxAttackPnt;
-  bool bBackAttack;
-  int nMinAFPlus;
-  int nMaxAFPlus;
-  int nEffShotNum;
-
-  _attack_param();
-};
-
 /* 1778 */
-struct __cppobj SKILL
+struct  SKILL
 {
   int m_Type;
   int m_Element;
@@ -2294,6 +2272,16 @@ struct __cppobj SKILL
   unsigned int m_BefTime;
 
   SKILL();
+  void Init(
+    int type,
+    int dmg,
+    int minprob,
+    int maxprob,
+    unsigned int len,
+    unsigned int castdelay,
+    unsigned int delay,
+    int el);
+  __int64 GetDmg(float fDamRate);
 };
 
 /* 1779 */
@@ -2334,28 +2322,6 @@ union $1D4D54E2B5971D5BE0EAD557ED232A85
 #include "CBsp.h"
 #include "CAlpha.h"
 
-/* 1327 */
-struct _E_ENTRY
-{
-  unsigned int offset;
-  unsigned int size;
-};
-
-/* 1328 */
-struct _ENTITY_FILE_HEADER
-{
-  _E_ENTRY CompHeader;
-  _E_ENTRY Vertex;
-  _E_ENTRY VColor;
-  _E_ENTRY UV;
-  _E_ENTRY Face;
-  _E_ENTRY FaceId;
-  _E_ENTRY VertexId;
-  _E_ENTRY MatGroup;
-  _E_ENTRY Object;
-  _E_ENTRY Track;
-};
-
 /* 1395 */
 #include "CEntity.h"
 
@@ -2372,30 +2338,6 @@ struct _ANI_CAMERA
   unsigned int ext_num;
   _ANI_CAMERA_EXT *ext;
   _ANI_OBJECT *obj;
-};
-
-/* 1326 */
-struct __unaligned __declspec(align(1)) _ANI_OBJECT
-{
-  char ObjectName[64];
-  char ParentName[64];
-  unsigned __int16 flag;
-  unsigned __int16 parent;
-  int frames;
-  int Pos_cnt;
-  int Rot_cnt;
-  int Scale_cnt;
-  float scale[3];
-  float scale_quat[4];
-  float pos[3];
-  float quat[4];
-  _SCALE_TRACK *Scale;
-  _POS_TRACK *Pos;
-  _ROT_TRACK *Rot;
-  unsigned __int8 AniFrameCache;
-  float s_matrix[4][4];
-  float now_frame;
-  float f_matrix[4][4];
 };
 
 /* 1413 */
@@ -2419,7 +2361,7 @@ struct _EXT_DUMMY
 };
 
 /* 1437 */
-struct __cppobj _mon_active
+struct  _mon_active
 {
   _mon_active_fld *m_pActRec;
   _mon_block *m_pBlk;
@@ -2440,7 +2382,7 @@ struct __cppobj _mon_active
 };
 
 /* 1515 */
-struct __cppobj _LAYER_SET
+struct  _LAYER_SET
 {
   int m_nSecNum;
   CObjectList *m_pListSectorObj;
@@ -2459,7 +2401,7 @@ struct __cppobj _LAYER_SET
 };
 
 /* 1514 */
-struct __cppobj _MULTI_BLOCK
+struct  _MULTI_BLOCK
 {
   int m_nBlockNum;
   CRecordData *m_ptbMonBlock;
@@ -2482,14 +2424,14 @@ struct _mon_block
 
 
 /* 1517 */
-struct __cppobj _portal_dummy
+struct  _portal_dummy
 {
   _portal_fld *m_pPortalRec;
   _dummy_position *m_pDumPos;
 };
 
 /* 1518
-struct __cppobj _store_dummy
+struct  _store_dummy
 {
   int m_nStoreType;
   _base_fld *m_pStoreRec;
@@ -2498,19 +2440,19 @@ struct __cppobj _store_dummy
 */
 
 /* 1519 */
-struct __cppobj _start_dummy
+struct  _start_dummy
 {
   _dummy_position *m_pDumPos;
 };
 
 /* 1520 */
-struct __cppobj _bind_dummy
+struct  _bind_dummy
 {
   _dummy_position *m_pDumPos;
 };
 
 /* 1521 */
-struct __cppobj __declspec(align(4)) _res_dummy
+struct  __declspec(align(4)) _res_dummy
 {
   _dummy_position *m_pDumPos;
   float m_fMinLocal[3][3];
@@ -2526,13 +2468,13 @@ struct __cppobj __declspec(align(4)) _res_dummy
 };
 
 /* 1522 */
-struct __cppobj _quest_dummy
+struct  _quest_dummy
 {
   _dummy_position *m_pDumPos;
 };
 
 /* 1523 */
-struct __cppobj _safe_dummy
+struct  _safe_dummy
 {
   _dummy_position *m_pDumPos;
 };
@@ -2544,7 +2486,7 @@ struct __cppobj _safe_dummy
 /* 1600 */
 
 /* 1705 */
-struct __cppobj __unaligned __declspec(align(1)) AP_BatterySlot
+struct   AP_BatterySlot
 {
   AP_BatterySlot();
   ~AP_BatterySlot();
@@ -2563,7 +2505,7 @@ struct __cppobj __unaligned __declspec(align(1)) AP_BatterySlot
 /* 1718 */
 
 /* 1721 */
-struct __cppobj __declspec(align(8)) _guild_applier_info
+struct  __declspec(align(8)) _guild_applier_info
 {
   CPlayer *pPlayer;
   unsigned int dwApplyTime;
@@ -2576,7 +2518,8 @@ static_assert(sizeof(_guild_applier_info) == 0x10, "_guild_applier_info size mus
 static_assert(alignof(_guild_applier_info) == 8, "_guild_applier_info alignment must match IDA (8)");
 
 /* 1724 */
-struct __cppobj __unaligned __declspec(align(1)) _guild_member_download_zocl
+#pragma pack(push, 1)
+struct _guild_member_download_zocl
 {
   unsigned __int8 byDownType;
   unsigned int dwGuildSerial;
@@ -2595,16 +2538,20 @@ struct __cppobj __unaligned __declspec(align(1)) _guild_member_download_zocl
   unsigned __int16 wDataSize;
   char sData[10000];
 };
+#pragma pack(pop)
 
 /* 1725 */
-struct __cppobj _guild_applier_download_zocl
+#pragma pack(push, 1)
+struct  _guild_applier_download_zocl
 {
   unsigned __int16 wDataSize;
   char sData[10000];
 };
+#pragma pack(pop)
 
 /* 1726 */
-struct __unaligned __declspec(align(1)) _guild_query_info_result_zocl
+#pragma pack(push, 1)
+struct _guild_query_info_result_zocl
 {
   unsigned int dwGuildSerial;
   char wszGuildName[17];
@@ -2616,25 +2563,30 @@ struct __unaligned __declspec(align(1)) _guild_query_info_result_zocl
   unsigned int dwTotLose;
   unsigned __int8 byCurTax;
 };
+#pragma pack(pop)
 
 /* 1727 */
-struct __cppobj _guild_money_io_download_zocl
+#pragma pack(push, 1)
+struct  _guild_money_io_download_zocl
 {
   unsigned __int16 wDataSize;
   char sData[10000];
 };
+#pragma pack(pop)
 
 /* 1728 */
-struct __cppobj _guild_member_buddy_download_zocl
+#pragma pack(push, 1)
+struct  _guild_member_buddy_download_zocl
 {
   unsigned __int16 wDataSize;
   char sData[900];
 };
+#pragma pack(pop)
 
 /* 1599 */
 
 /* 1631 */
-struct __cppobj _dh_reward_sub_setup
+struct  _dh_reward_sub_setup
 {
   _dh_reward_sub_setup();
   virtual ~_dh_reward_sub_setup();
@@ -2648,7 +2600,7 @@ struct __cppobj _dh_reward_sub_setup
 };
 
 /* 1630 */
-struct __cppobj __dp_mission_potal
+struct  __dp_mission_potal
 {
   __dp_mission_potal();
   ~__dp_mission_potal();
@@ -2661,7 +2613,7 @@ struct __cppobj __dp_mission_potal
 };
 
 /* 1601 */
-struct __cppobj _dh_quest_setup
+struct  _dh_quest_setup
 {
   _dh_quest_setup();
   virtual ~_dh_quest_setup();
@@ -2690,7 +2642,7 @@ struct __cppobj _dh_quest_setup
 };
 
 /* 1603 */
-struct __cppobj __declspec(align(8)) _dh_mission_setup
+struct  __declspec(align(8)) _dh_mission_setup
 {
   _dh_mission_setup();
   virtual ~_dh_mission_setup();
@@ -2733,26 +2685,32 @@ enum __bitmask OBJ_DEF_TYPE : __int32
 };
 
 /* 1613 */
-struct __cppobj __declspec(align(8)) _react_obj
+struct  __declspec(align(8)) _react_obj
 {
   _react_obj();
   void copy(_react_obj *pObj);
 
+  #pragma pack(push, 1)
   struct ITEM
   {
     unsigned __int8 byItemTableCode;
     _base_fld *pItemFld;
   };
+  #pragma pack(pop)
 
+  #pragma pack(push, 1)
   struct MONSTER
   {
     _monster_fld *pMonsterFld;
   };
+  #pragma pack(pop)
 
+  #pragma pack(push, 1)
   struct MON_GRP
   {
     __monster_group *pMonGrp;
   };
+  #pragma pack(pop)
 
   union OBJ
   {
@@ -2775,20 +2733,24 @@ enum __bitmask AREA_DEF_TYPE : __int32
 };
 
 /* 1618 */
-struct __cppobj _react_area
+struct  _react_area
 {
   _react_area();
   void copy(_react_area *pObj);
 
+  #pragma pack(push, 1)
   struct DUMMY
   {
     _dummy_position *pPos;
   };
+  #pragma pack(pop)
 
+  #pragma pack(push, 1)
   struct BLOCK
   {
     __dummy_block *pBlk;
   };
+  #pragma pack(pop)
 
   union OBJ
   {
@@ -2801,7 +2763,7 @@ struct __cppobj _react_area
 };
 
 /* 1624 */
-struct __cppobj __respawn_monster
+struct  __respawn_monster
 {
   __respawn_monster();
 
@@ -2814,7 +2776,7 @@ struct __cppobj __respawn_monster
 };
 
 /* 1642 */
-struct __cppobj __declspec(align(8)) MonsterSFContDamageToleracne
+struct  __declspec(align(8)) MonsterSFContDamageToleracne
 {
   CMonster *m_pMonster;
   float m_fToleranceProb;
@@ -2841,7 +2803,7 @@ union $B1473DED9FF3433080ADDC1400B1BAA4
 };
 
 /* 1643 */
-struct __cppobj EmotionPresentationChecker
+struct  EmotionPresentationChecker
 {
   bool m_bIsSet;
   unsigned __int8 m_byType;
@@ -2871,7 +2833,7 @@ union $61453E1D3C89B67BD8C0921FE198A987
 };
 
 /* 1646 */
-struct __cppobj MonsterStateData
+struct  MonsterStateData
 {
   $61453E1D3C89B67BD8C0921FE198A987 ___u0;
 
@@ -2892,7 +2854,7 @@ struct _event_loot_item
 };
 
 /* 1668 */
-struct __cppobj Us_FSM_Node
+struct  Us_FSM_Node
 {
   Us_FSM_Node();
   ~Us_FSM_Node();
@@ -2931,7 +2893,7 @@ struct UsPoint<UsStateTBL>
 };
 
 /* 1660 */
-struct __cppobj Us_HFSM
+struct  Us_HFSM
 {
 public:
   int m_bSet;
@@ -2958,7 +2920,7 @@ public:
 };
 
 /* 1670 */
-struct __cppobj SF_Timer
+struct  SF_Timer
 {
   unsigned int m_dwLastCheckTime;
   unsigned int m_dwGapCheckTime;
@@ -3007,14 +2969,14 @@ struct _ENTITY_LIST
 };
 
 /* 1404 */
-struct __unaligned __declspec(align(2)) _LEAF_ENTITIES_LIST_INFO
+struct  __declspec(align(2)) _LEAF_ENTITIES_LIST_INFO
 {
   unsigned int start_id;
   unsigned __int16 entities_num;
 };
 
 /* 1405 */
-struct __unaligned __declspec(align(2)) _MAP_ENTITIES_LIST
+struct  __declspec(align(2)) _MAP_ENTITIES_LIST
 {
   unsigned __int16 ID;
   float Scale;
@@ -3070,7 +3032,7 @@ struct _LEAF_SOUND_ENTITIES_LIST_INFO
 
 
 /* 1329 */
-struct __unaligned __declspec(align(2)) _ONE_LAYER
+struct  __declspec(align(2)) _ONE_LAYER
 {
   __int16 m_iTileAniTexNum;
   int m_iSurface;
@@ -3094,7 +3056,7 @@ struct __unaligned __declspec(align(2)) _ONE_LAYER
 };
 
 /* 1330 */
-struct __unaligned __declspec(align(2)) _R3MATERIAL
+struct  __declspec(align(2)) _R3MATERIAL
 {
   int m_iMatNum;
   char m_name[128];
@@ -3106,7 +3068,7 @@ struct __unaligned __declspec(align(2)) _R3MATERIAL
 };
 
 /* 1394 */
-struct __unaligned __declspec(align(4)) _ENTITY_M_GROUP
+struct  __declspec(align(4)) _ENTITY_M_GROUP
 {
   unsigned __int16 Type;
   unsigned __int16 TriNum;
@@ -3153,7 +3115,7 @@ struct _ROT_TRACK
 };
 
 /* 1452 */
-struct __cppobj BossSchedule
+struct  BossSchedule
 {
   char m_strSection[64];
   char m_strMonCode[64];
@@ -3182,7 +3144,7 @@ struct __cppobj BossSchedule
 /* 1632 */
 
 /* 1615 */
-struct __cppobj __dummy_block
+struct  __dummy_block
 {
   __dummy_block();
 
@@ -3192,7 +3154,7 @@ struct __cppobj __dummy_block
 };
 
 /* 1610 */
-struct __cppobj __monster_group
+struct  __monster_group
 {
   __monster_group();
 
@@ -3204,7 +3166,7 @@ struct __cppobj __monster_group
 /* 1604 */
 
 /* 1619 */
-struct __cppobj __add_monster
+struct  __add_monster
 {
   __add_monster();
 
@@ -3213,7 +3175,7 @@ struct __cppobj __add_monster
 };
 
 /* 1620 */
-struct __cppobj __add_loot_item
+struct  __add_loot_item
 {
   __add_loot_item();
 
@@ -3224,7 +3186,7 @@ struct __cppobj __add_loot_item
 };
 
 /* 1621 */
-struct __cppobj __change_monster
+struct  __change_monster
 {
   __change_monster();
   ~__change_monster();
@@ -3237,7 +3199,7 @@ struct __cppobj __change_monster
 };
 
 /* 1622 */
-struct __cppobj __inner_check
+struct  __inner_check
 {
   __inner_check();
   ~__inner_check();
@@ -3250,7 +3212,7 @@ struct __cppobj __inner_check
 };
 
 /* 1623 */
-struct __cppobj __respond_check
+struct  __respond_check
 {
   __respond_check();
   ~__respond_check();
@@ -3263,7 +3225,7 @@ struct __cppobj __respond_check
 };
 
 /* 1625 */
-struct __cppobj __add_time
+struct  __add_time
 {
   __add_time();
 
@@ -3280,7 +3242,7 @@ enum EM_DH_EVENT : __int32
 };
 
 /* 1628 */
-struct __cppobj _job_sub_setup
+struct  _job_sub_setup
 {
   _job_sub_setup();
 
@@ -3290,7 +3252,7 @@ struct __cppobj _job_sub_setup
 };
 
 /* 1626 */
-struct __cppobj __declspec(align(8)) _dh_job_setup
+struct  __declspec(align(8)) _dh_job_setup
 {
   _dh_job_setup();
   virtual ~_dh_job_setup();
@@ -3308,7 +3270,7 @@ struct __cppobj __declspec(align(8)) _dh_job_setup
 /* 1667 */
 
 /* 1661 */
-struct __cppobj __declspec(align(8)) UsRefObject
+struct  __declspec(align(8)) UsRefObject
 {
   UsRefObject();
   virtual ~UsRefObject();
@@ -3321,8 +3283,9 @@ struct __cppobj __declspec(align(8)) UsRefObject
 };
 
 /* 1665 */
-struct __cppobj UsStateTBL : UsRefObject
+struct  UsStateTBL : UsRefObject
 {
+  #pragma pack(push, 1)
   struct _TBLData
   {
     unsigned __int8 byKey;
@@ -3331,7 +3294,9 @@ struct __cppobj UsStateTBL : UsRefObject
     _TBLData();
     void Init();
   };
+  #pragma pack(pop)
 
+  #pragma pack(push, 1)
   struct _HFSM_Node_Info
   {
     int m_ParentData;
@@ -3342,6 +3307,7 @@ struct __cppobj UsStateTBL : UsRefObject
     _HFSM_Node_Info();
     void Init();
   };
+  #pragma pack(pop)
 
   unsigned int m_IdentityKey;
   _TBLData **m_ppTBL;
@@ -3435,7 +3401,7 @@ struct _MERGE_FILE
 #include "CIniFile.h"
 
 /* 1473 */
-struct __cppobj BossSchedule_Map
+struct  BossSchedule_Map
 {
   int m_nIndex;
   char m_strMap[64];
@@ -3454,7 +3420,7 @@ struct __cppobj BossSchedule_Map
 /* 1627 */
 
 /* 1629 */
-struct __cppobj _react_sub_setup
+struct  _react_sub_setup
 {
   _react_sub_setup();
 
@@ -3469,7 +3435,7 @@ struct __cppobj _react_sub_setup
 /* 1439 */
 
 /* 1448 */
-struct __cppobj INI_Section
+struct  INI_Section
 {
   char m_strSection[64];
   std::vector<INI_Key *> m_KeyList;
@@ -3480,7 +3446,7 @@ struct __cppobj INI_Section
 };
 
 /* 1449 */
-struct __cppobj __declspec(align(8)) INI_Key
+struct  __declspec(align(8)) INI_Key
 {
   INI_Section *m_pParentSection;
   char m_strKey[65];
@@ -3499,7 +3465,7 @@ struct __cppobj __declspec(align(8)) INI_Key
 #include "CMapOperation.h"
 
 /* 1474 */
-struct __cppobj BossSchedule_TBL
+struct  BossSchedule_TBL
 {
   int m_nCount;
   BossSchedule_Map **m_MapScheduleList;
@@ -3511,7 +3477,7 @@ struct __cppobj BossSchedule_TBL
 /* 1477 */
 
 /* 1476 */
-struct __cppobj ScheduleMSG
+struct  ScheduleMSG
 {
   char m_strSection[64];
   unsigned __int8 m_byKey;
@@ -3549,6 +3515,7 @@ struct _extraBytes_45
 
 struct _cash_event_inform_zocl
 {
+  #pragma pack(push, 1)
   struct __lim_sale
   {
     #pragma pack(push, 1)
@@ -3564,6 +3531,7 @@ struct _cash_event_inform_zocl
     char byDiscount;
     __Item item[20];
   };
+  #pragma pack(pop)
 
   char byEventType;
   char byEventStatus;
@@ -3819,12 +3787,14 @@ struct _guild_atrade_tax_zocl
 #pragma pack(push, 1)
 struct _money_supply_gatering_inform_zowb
 {
+  #pragma pack(push, 1)
   struct _money_supply
   {
     int nLv[4];
     int nRace[3];
     int nClass[60];
   };
+  #pragma pack(pop)
 
   __int64 dwAmount[9];
   _money_supply ms_data[4];

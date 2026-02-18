@@ -4,7 +4,7 @@
 #include "ElectProcessor.h"
 #include "ElectPacketTypes.h"
 
-class __cppobj __declspec(align(4)) ClassOrderProcessor : public ElectProcessor
+class  __declspec(align(4)) ClassOrderProcessor : public ElectProcessor
 {
 public:
   ClassOrderProcessor();

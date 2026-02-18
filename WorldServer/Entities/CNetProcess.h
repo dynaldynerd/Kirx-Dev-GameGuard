@@ -45,7 +45,7 @@ struct _total_count
   _total_count();
 };
 
-class __cppobj __declspec(align(4)) CNetTimer
+class  __declspec(align(4)) CNetTimer
 {
 public:
   CNetTimer();
@@ -122,7 +122,7 @@ struct _thread_parameter
   void EndThread();
 };
 
-class __cppobj CNetFrameRate
+class  CNetFrameRate
 {
 public:
   unsigned int m_dwFrames;
@@ -172,7 +172,7 @@ struct _KEY_CHECK_NODE
   unsigned int dwWaitStartTime;
 };
 
-struct __cppobj _socket
+struct  _socket
 {
   unsigned __int64 m_Socket;
   int m_nIndex;
@@ -209,7 +209,7 @@ struct __cppobj _socket
 
 class CNetWorking;
 
-class __cppobj __declspec(align(8)) CNetSocket
+class  __declspec(align(8)) CNetSocket
 {
 public:
   CNetSocket();
@@ -250,7 +250,7 @@ public:
   CNetTimer m_tmrListCheckerIPCheck;
 };
 
-class __cppobj __declspec(align(8)) CNetProcess
+class  __declspec(align(8)) CNetProcess
 {
 public:
   CNetProcess();

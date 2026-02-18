@@ -5,7 +5,7 @@
 class CLogFile;
 class TiXmlElement;
 
-class __cppobj CUnmannedTraderSortType
+class  CUnmannedTraderSortType
 {
 public:
   CUnmannedTraderSortType(unsigned int dwID);

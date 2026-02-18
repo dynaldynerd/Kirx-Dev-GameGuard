@@ -7,7 +7,7 @@
 
 class CUnmannedTraderSubClassInfo;
 
-class __cppobj CUnmannedTraderClassInfoTableType : public CUnmannedTraderClassInfo
+class  CUnmannedTraderClassInfoTableType : public CUnmannedTraderClassInfo
 {
 public:
   CUnmannedTraderClassInfoTableType(unsigned int dwID);

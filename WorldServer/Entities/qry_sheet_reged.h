@@ -5,7 +5,7 @@
 #include "DqsDbStructs.h"
 
 #pragma pack(push, 1)
-struct __cppobj _qry_sheet_reged
+struct  _qry_sheet_reged
 {
   unsigned int dwAccountSerial;
   _REGED RegedData[3];

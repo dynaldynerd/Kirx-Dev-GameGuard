@@ -4,7 +4,7 @@
 
 class CRFWorldDatabase;
 
-class __cppobj CCheckSumGuildData
+class  CCheckSumGuildData
 {
 public:
   CCheckSumGuildData(unsigned int dwSerial);

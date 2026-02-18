@@ -16,7 +16,7 @@ typedef struct _FILETIME
 } FILETIME;
 #endif
 
-struct __cppobj __declspec(align(8)) _event_set
+struct  __declspec(align(8)) _event_set
 {
   struct _monster_set
   {
@@ -53,7 +53,7 @@ struct __cppobj __declspec(align(8)) _event_set
   bool m_bOper;
 };
 
-struct __cppobj _event_set_looting
+struct  _event_set_looting
 {
   struct __declspec(align(2)) _event_item
   {
@@ -72,7 +72,7 @@ struct __cppobj _event_set_looting
   int nItemCount;
 };
 
-class __cppobj __declspec(align(8)) CMonsterEventSet
+class  __declspec(align(8)) CMonsterEventSet
 {
 public:
   bool IsINIFileChanged(const char *pszFileName, _FILETIME ftCurr);

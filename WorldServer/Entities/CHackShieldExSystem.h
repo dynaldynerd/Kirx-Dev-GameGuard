@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-class __cppobj CHackShieldExSystem
+class  CHackShieldExSystem
 {
 public:
   virtual ~CHackShieldExSystem() = default;

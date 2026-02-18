@@ -9,7 +9,7 @@ struct _skill_fld;
 struct _force_fld;
 
 /* 1647 */
-class __cppobj __declspec(align(8)) CMonsterSkill
+class  __declspec(align(8)) CMonsterSkill
 {
 public:
   bool m_bExit;

@@ -6,7 +6,7 @@
 struct _AVATOR_DATA;
 
 /* 1762 */
-class __cppobj __declspec(align(4)) CSetItemEffect
+class  __declspec(align(4)) CSetItemEffect
 {
   struct __declspec(align(4)) set_effect_info
   {

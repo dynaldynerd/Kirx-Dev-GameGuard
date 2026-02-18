@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "IdaCompat.h"
 
@@ -10,7 +10,7 @@ RTC_error_fnW __cdecl RTC_SetErrorFuncW(RTC_error_fnW func);
 extern LONG g_rtcRunning;
 extern RTC_error_fnW g_rtcErrorFunc;
 
-class __cppobj CRtc
+class  CRtc
 {
 public:
   CRtc();

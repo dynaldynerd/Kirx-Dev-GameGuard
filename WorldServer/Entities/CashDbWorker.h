@@ -9,7 +9,7 @@ class CRFCashItemDatabase;
 class Task;
 class CPlayer;
 
-class __cppobj CashDbWorker : public Worker
+class  CashDbWorker : public Worker
 {
 public:
   CashDbWorker();

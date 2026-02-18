@@ -7,9 +7,9 @@
 
 struct _base_fld;
 
-struct __cppobj __declspec(align(8)) _DropItemGroupInfo
+struct  __declspec(align(8)) _DropItemGroupInfo
 {
-  struct __cppobj __declspec(align(8)) _drop_create_info
+  struct  __declspec(align(8)) _drop_create_info
   {
     unsigned __int8 byTableCode;
     _base_fld *pFld;
@@ -26,7 +26,7 @@ struct __cppobj __declspec(align(8)) _DropItemGroupInfo
 };
 
 /* 5913 */
-class __cppobj CItemDropMgr
+class  CItemDropMgr
 {
   _DropItemGroupInfo m_Pool[333];
   CNetIndexList m_listEmpty;

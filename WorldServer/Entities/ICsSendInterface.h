@@ -10,7 +10,7 @@ struct _cash_discount_ini_;
 struct _cash_event_ini;
 struct _cash_lim_sale;
 
-class __cppobj ICsSendInterface
+class  ICsSendInterface
 {
 public:
   static void SendMsg_GoodsList(unsigned __int16 wSock, const _param_cash_select *psheet);

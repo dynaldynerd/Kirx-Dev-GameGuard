@@ -5,7 +5,7 @@
 
 #include <vector>
 
-class __cppobj CUnmannedTraderClassInfoFactory
+class  CUnmannedTraderClassInfoFactory
 {
 public:
   CUnmannedTraderClassInfoFactory();

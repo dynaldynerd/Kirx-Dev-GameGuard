@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "WorldServerUtil.h"
+
 #include "CPathFinder.h"
 #include "R3EngineGlobals.h"
 

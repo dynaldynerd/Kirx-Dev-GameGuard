@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __cppobj _qry_case_request_refund
+struct  _qry_case_request_refund
 {
   unsigned __int8 byRace;
   unsigned __int16 wIndex;

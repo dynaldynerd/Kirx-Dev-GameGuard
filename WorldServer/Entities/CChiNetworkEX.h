@@ -6,7 +6,7 @@
 
 class CPlayer;
 
-class __cppobj CChiNetworkEX : public CNetwork
+class  CChiNetworkEX : public CNetwork
 {
 public:
   CChiNetworkEX();

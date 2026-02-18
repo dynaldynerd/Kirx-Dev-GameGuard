@@ -7,7 +7,7 @@
 
 struct _SYN_DATA;
 
-class __cppobj CProcessThread
+class  CProcessThread
 {
 public:
   struct _THREAD_CONFIG
@@ -20,7 +20,7 @@ public:
     int nSleepCount;
   };
 
-  struct __unaligned __declspec(align(4)) _SYN_HEADER
+  struct  __declspec(align(4)) _SYN_HEADER
   {
     unsigned int m_dwQryIndex;
     unsigned int m_dwQrySerial;
@@ -28,7 +28,7 @@ public:
     unsigned __int8 m_byQryCase;
   };
 
-  struct __unaligned _SYN_DATA : _SYN_HEADER
+  struct  _SYN_DATA : _SYN_HEADER
   {
     bool m_bUse;
     bool m_bProcess;

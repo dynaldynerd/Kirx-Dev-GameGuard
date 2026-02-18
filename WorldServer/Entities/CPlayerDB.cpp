@@ -1,8 +1,8 @@
 #include "pch.h"
 
+#include "CPlayer.h"
 #include "CPlayerDB.h"
 #include "AutominePersonalMgr.h"
-#include "CPlayer.h"
 #include "CRecordData.h"
 #include "CGuild.h"
 #include "CLogFile.h"

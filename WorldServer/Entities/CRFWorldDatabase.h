@@ -5,6 +5,7 @@
 #include "unmannedtrader_page_info.h"
 
 struct _AIOC_A_MACRODATA;
+struct _PCBANG_PLAY_TIME;
 struct _patriarch_comm_list;
 struct _post_storage_list;
 struct _return_post_list;
@@ -59,7 +60,7 @@ struct _DB_LOAD_AUTOMINE_MACHINE;
 class CPostData;
 
 /* 1133 */
-class __cppobj CRFWorldDatabase : public CRFNewDatabase
+class  CRFWorldDatabase : public CRFNewDatabase
 {
 public:
   CRFWorldDatabase();

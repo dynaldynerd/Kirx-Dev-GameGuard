@@ -4,7 +4,7 @@
 
 #include "CashDbWorker.h"
 
-class __cppobj CCashDbWorkerNULL : public CashDbWorker
+class  CCashDbWorkerNULL : public CashDbWorker
 {
 public:
   CCashDbWorkerNULL();

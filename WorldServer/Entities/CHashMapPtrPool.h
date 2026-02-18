@@ -9,7 +9,7 @@
 #include <utility>
 
 template <typename TKey, typename TValue>
-class __cppobj CHashMapPtrPool
+class  CHashMapPtrPool
 {
 public:
   CHashMapPtrPool()

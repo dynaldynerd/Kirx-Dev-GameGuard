@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 #ifndef _MFC_VER
-class __cppobj CNotSupportedException
+class  CNotSupportedException
 {
 public:
   virtual ~CNotSupportedException() = default;

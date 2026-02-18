@@ -1,13 +1,14 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "detected_char_list.h"
 
 class CPlayer;
 class CMapData;
 struct _RadarItem_fld;
 
 /* 1596 */
-class __cppobj __declspec(align(8)) CRadarItemMgr
+class  __declspec(align(8)) CRadarItemMgr
 {
 public:
   bool m_bUse;

@@ -6,7 +6,7 @@
 
 class CPlayer;
 
-struct __cppobj _nuclear_create_setdata : _character_create_setdata
+struct  _nuclear_create_setdata : _character_create_setdata
 {
   CPlayer *pMaster;
   int nMasterSirial;

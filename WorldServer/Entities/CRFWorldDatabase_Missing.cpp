@@ -1,5 +1,6 @@
 #include "pch.h"
 
+#include "CMainThread.h"
 #include "CRFWorldDatabase.h"
 #include "CPotionMgr.h"
 #include "PatriarchElectProcessor.h"

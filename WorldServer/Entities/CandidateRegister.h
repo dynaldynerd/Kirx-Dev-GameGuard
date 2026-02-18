@@ -3,12 +3,13 @@
 #include "IdaCompat.h"
 #include "ElectProcessor.h"
 
-class __cppobj CandidateRegister : public ElectProcessor
+class  CandidateRegister : public ElectProcessor
 {
 public:
 #pragma pack(push, 1)
-  struct __cppobj _pt_result_fcandidacy_list_zocl
+  struct  _pt_result_fcandidacy_list_zocl
   {
+    #pragma pack(push, 1)
     struct __candi_info
     {
       unsigned __int8 byGrade;
@@ -17,6 +18,7 @@ public:
       char wszAvatorName[17];
       char wszGuildName[17];
     };
+    #pragma pack(pop)
 
     _pt_result_fcandidacy_list_zocl();
     unsigned __int16 size() const;

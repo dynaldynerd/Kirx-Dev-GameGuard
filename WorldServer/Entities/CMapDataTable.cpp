@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "CMapDataTable.h"
+
 #include <cstdio>
 #include <cstring>
 #include "map_fld.h"

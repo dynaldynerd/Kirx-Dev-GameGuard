@@ -13,7 +13,7 @@ struct _StoreList_fld;
 class CMapData;
 
 /* 3033 */
-class __cppobj __declspec(align(8)) CItemStore
+class  __declspec(align(8)) CItemStore
 {
 public:
   CItemStore();

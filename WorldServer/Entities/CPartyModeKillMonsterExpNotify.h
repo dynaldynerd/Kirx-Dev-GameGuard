@@ -4,10 +4,10 @@
 
 class CPlayer;
 
-class __cppobj CPartyModeKillMonsterExpNotify
+class  CPartyModeKillMonsterExpNotify
 {
 public:
-  struct __cppobj __declspec(align(8)) CExpInfo
+  struct  __declspec(align(8)) CExpInfo
   {
     float m_fExp;
     CPlayer *m_pkMember;

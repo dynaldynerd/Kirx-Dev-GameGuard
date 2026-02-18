@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "CMainThread.h"
 #include "CAlpha.h"
 #include "CVertexBuffer.h"
 #include "CIndexBuffer.h"
@@ -171,7 +172,7 @@ class CParticle;
 class CExtDummy;
 
 /* 1423 */
-class __cppobj CBsp
+class  CBsp
 {
 public:
   CBsp();
@@ -305,4 +306,3 @@ public:
   int GetPath(float *const a2, float *const a3);
   int GetFinalPath(float *a2, float *const a3, float (*const a4)[3]);
 };
-

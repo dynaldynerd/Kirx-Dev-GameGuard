@@ -4,7 +4,7 @@
 
 #include "CGuildList_vtbl.h"
 
-struct __cppobj __guild_list_page
+struct  __guild_list_page
 {
   struct __list
   {
@@ -19,7 +19,7 @@ struct __cppobj __guild_list_page
   __guild_list_page();
 };
 
-class __cppobj CGuildList
+class  CGuildList
 {
 public:
   CGuildList();

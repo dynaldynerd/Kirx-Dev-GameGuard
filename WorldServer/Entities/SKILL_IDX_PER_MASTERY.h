@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __cppobj _SKILL_IDX_PER_MASTERY
+struct  _SKILL_IDX_PER_MASTERY
 {
   int m_nSkillIndexNum;
   int m_nSkillIndex[48];

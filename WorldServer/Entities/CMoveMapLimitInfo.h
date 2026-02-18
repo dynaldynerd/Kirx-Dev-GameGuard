@@ -6,7 +6,7 @@ class CMerchant;
 class CMoveMapLimitRightInfo;
 class CPlayer;
 
-class __cppobj CMoveMapLimitInfo
+class  CMoveMapLimitInfo
 {
 public:
   enum OBJ_TYPE : int

@@ -5,7 +5,7 @@
 
 class CPlayer;
 
-class __cppobj CReturnGateCreateParam : public _object_create_setdata
+class  CReturnGateCreateParam : public _object_create_setdata
 {
 public:
   CReturnGateCreateParam(CPlayer *pkOwner);

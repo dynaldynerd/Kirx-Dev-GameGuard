@@ -42,7 +42,7 @@ struct _golden_box_item_ini
   _golden_box_item_ini();
 };
 
-struct __cppobj __declspec(align(8)) _golden_box_item_event
+struct  __declspec(align(8)) _golden_box_item_event
 {
   unsigned __int8 m_event_status;
   CNetTimer m_event_timer;
@@ -94,7 +94,7 @@ struct _db_golden_box_item
 
 class CPlayer;
 
-class __cppobj CGoldenBoxItemMgr
+class  CGoldenBoxItemMgr
 {
 public:
   struct _BoxItemOpen_output

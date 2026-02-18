@@ -5,7 +5,7 @@
 #include <Windows.h>
 
 /* 5395 */
-class __cppobj COreAmountMgr
+class  COreAmountMgr
 {
 public:
   static COreAmountMgr *Instance();

@@ -10,6 +10,7 @@
 #include "CHolyStoneSystem.h"
 #include "CNetProcess.h"
 #include "CObjectList.h"
+#include "CPlayer.h"
 #include "CPlayerDB.h"
 #include "CEventLootTable.h"
 #include "CItemLootTable.h"

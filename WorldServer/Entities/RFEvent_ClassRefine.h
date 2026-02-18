@@ -31,7 +31,7 @@ typedef struct _FILETIME
 } FILETIME;
 #endif
 
-class __cppobj RFEvent_ClassRefine : public RFEventBase
+class  RFEvent_ClassRefine : public RFEventBase
 {
 public:
   bool Initialzie();

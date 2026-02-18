@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 #include <vector>
 
-class __cppobj CUnmannedTraderGroupDivisionVersionInfo
+class  CUnmannedTraderGroupDivisionVersionInfo
 {
 public:
   CUnmannedTraderGroupDivisionVersionInfo(int iType, unsigned int uiMaxCnt);

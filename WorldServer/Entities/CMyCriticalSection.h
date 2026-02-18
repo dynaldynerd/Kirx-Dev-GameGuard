@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1267 */
-class __cppobj CMyCriticalSection
+class  CMyCriticalSection
 {
 public:
   CMyCriticalSection();

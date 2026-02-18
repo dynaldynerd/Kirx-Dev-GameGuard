@@ -5,7 +5,7 @@
 class CLuaCommandEx;
 
 /* 1680 */
-class __cppobj CLuaSignalReActor
+class  CLuaSignalReActor
 {
   struct _Action
   {

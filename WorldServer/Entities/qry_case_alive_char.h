@@ -4,7 +4,7 @@
 #include "CMainThread.h"
 
 #pragma pack(push, 1)
-struct __cppobj __declspec(align(2)) _qry_case_alive_char
+struct  __declspec(align(2)) _qry_case_alive_char
 {
   unsigned __int8 in_byCase;
   unsigned int in_dwSerial;

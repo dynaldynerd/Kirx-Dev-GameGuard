@@ -22,20 +22,20 @@ struct /*VFT*/ IDA_IUnknown_vtbl
 };
 
 /* 1332 */
-struct __cppobj IDA_IUnknown
+struct  IDA_IUnknown
 {
   IDA_IUnknown_vtbl *__vftable /*VFT*/;
 };
 
 /* 1357 */
-struct __cppobj IDirect3DResource8 : IDA_IUnknown
+struct  IDirect3DResource8 : IDA_IUnknown
 {
 };
 
 struct IDirect3DDevice8;
 
 /* 1367 */
-struct __cppobj IDirect3DVertexBuffer8 : IDirect3DResource8
+struct  IDirect3DVertexBuffer8 : IDirect3DResource8
 {
   HRESULT (__fastcall *Lock)(IDirect3DVertexBuffer8 *self, unsigned int offset, unsigned int size, unsigned char **data, unsigned int flags);
   HRESULT (__fastcall *Unlock)(IDirect3DVertexBuffer8 *self);
@@ -45,7 +45,7 @@ struct __cppobj IDirect3DVertexBuffer8 : IDirect3DResource8
 };
 
 /* 1368 */
-struct __cppobj IDirect3DIndexBuffer8 : IDirect3DResource8
+struct  IDirect3DIndexBuffer8 : IDirect3DResource8
 {
   HRESULT (__fastcall *Lock)(IDirect3DIndexBuffer8 *self, unsigned int offset, unsigned int size, unsigned char **data, unsigned int flags);
   HRESULT (__fastcall *Unlock)(IDirect3DIndexBuffer8 *self);
@@ -54,14 +54,14 @@ struct __cppobj IDirect3DIndexBuffer8 : IDirect3DResource8
   unsigned int m_Size;
 };
 
-struct __cppobj IDirect3DTexture8 : IDirect3DResource8
+struct  IDirect3DTexture8 : IDirect3DResource8
 {
   unsigned char *m_Data;
   unsigned int m_Size;
 };
 
 /* Minimal device interface used by decompiled code */
-struct __cppobj IDirect3DDevice8
+struct  IDirect3DDevice8
 {
   HRESULT (__fastcall *CreateVertexBuffer)(
     IDirect3DDevice8 *self,

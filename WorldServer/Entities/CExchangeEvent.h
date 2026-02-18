@@ -12,7 +12,7 @@ struct EventItemInfo
 
 class CPlayer;
 
-class __cppobj CExchangeEvent : public RFEventBase
+class  CExchangeEvent : public RFEventBase
 {
 public:
   CExchangeEvent();

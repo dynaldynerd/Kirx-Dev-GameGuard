@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 #include "CUnmannedTraderSubClassInfo.h"
 
-class __cppobj CUnmannedTraderSubClassInfoLevel : public CUnmannedTraderSubClassInfo
+class  CUnmannedTraderSubClassInfoLevel : public CUnmannedTraderSubClassInfo
 {
 public:
   CUnmannedTraderSubClassInfoLevel(unsigned int dwID);

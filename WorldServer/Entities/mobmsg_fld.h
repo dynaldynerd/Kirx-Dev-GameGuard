@@ -4,7 +4,7 @@
 #include "base_fld.h"
 
 #pragma pack(push, 1)
-struct __cppobj _mobmsg_fld : _base_fld
+struct  _mobmsg_fld : _base_fld
 {
   int m_nUsingNum;
   char m_strMobMessage[110][2560];

@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 #pragma pack(push, 1)
-struct __unaligned __declspec(align(1)) _character_disconnect_result_wrac
+struct  _character_disconnect_result_wrac
 {
   unsigned __int16 wClientIndex;
   unsigned __int8 byResult;

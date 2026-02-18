@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 #pragma pack(push, 1)
-struct __cppobj __unaligned _qry_case_amine_mineore
+struct   _qry_case_amine_mineore
 {
   unsigned __int8 bySubQryCase;
   unsigned __int8 byCollisionType;

@@ -2,6 +2,7 @@
 
 #include "CCheckSumCharacTrunkConverter.h"
 
+#include "CMainThread.h"
 #include "CCheckSumTypes.h"
 #include "CCheckSumCharacAccountTrunkData.h"
 

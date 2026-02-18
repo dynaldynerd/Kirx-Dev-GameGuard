@@ -4,15 +4,20 @@
 #include "ObjectCreateSetData.h"
 #include "animus_fld.h"
 #include "CAttack.h"
+#include "CMonster.h"
+#include "CPartyPlayer.h"
 #include "CGameObject.h"
 #include "CNetProcess.h"
 #include "GlobalObjects.h"
+#include "PCBANG_PRIMIUM_FAVOR.h"
 #include "WorldServerUtil.h"
 #include "attack_gen_result_zocl.h"
+#include "CMapData.h"
 
 #include <cstdio>
 #include <cstring>
 #include <cmath>
+#include <cstdlib>
 #include <mmsystem.h>
 
 unsigned int CAnimus::s_dwSerialCnt = 0;
@@ -167,11 +172,6 @@ unsigned int CAnimus::GetNewMonSerial()
 void CAnimus::AIInit()
 {
   m_pRecord = GetAnimusFldFromExp(m_byClassCode, m_dwExp);
-  if (!m_pRecord)
-  {
-    return;
-  }
-
   m_nMaxHP = m_pRecord->m_nMaxHP;
   m_nMaxFP = m_pRecord->m_nMaxFP;
   m_dwAIMode = 1;
@@ -182,6 +182,15 @@ void CAnimus::AIInit()
   m_AITimer[0].Init(0x64u);
   m_AITimer[2].Init(0xEA60u);
   m_AITimer[2].Set(0);
+  m_Skill[0].Init(
+    0,
+    static_cast<int>(static_cast<float>(m_pRecord->m_nAttFcStd) * m_Mightiness),
+    m_pRecord->m_nMinAFSelProb,
+    m_pRecord->m_nMaxAFSelProb,
+    static_cast<unsigned int>(m_pRecord->m_nAttExt),
+    static_cast<unsigned int>(m_pRecord->m_nAttMoTime1),
+    static_cast<unsigned int>(m_pRecord->m_nAttSpd),
+    -1);
 }
 
 void CAnimus::CheckPosInTown()
@@ -210,10 +219,7 @@ void CAnimus::ChangeMode(unsigned int mode)
   if (m_dwAIMode != mode)
   {
     m_dwAIMode = mode;
-    if (m_pMaster)
-    {
-      m_pMaster->AlterMode_Animus(static_cast<unsigned __int8>(m_dwAIMode));
-    }
+    AlterMode_MasterReport(static_cast<unsigned __int8>(m_dwAIMode));
   }
 }
 
@@ -309,6 +315,38 @@ void CAnimus::Return_MasterRequest(unsigned __int8 byReturnType)
   if (m_pMaster)
   {
     m_pMaster->Return_AnimusAsk(byReturnType);
+  }
+}
+
+void CAnimus::AlterMode_MasterReport(unsigned __int8 byMode)
+{
+  if (m_pMaster)
+  {
+    m_pMaster->AlterMode_Animus(byMode);
+  }
+}
+
+void CAnimus::AlterHP_MasterReport()
+{
+  if (m_pMaster)
+  {
+    m_pMaster->AlterHP_Animus(static_cast<__int16>(m_nHP));
+  }
+}
+
+void CAnimus::AlterFP_MasterReport()
+{
+  if (m_pMaster)
+  {
+    m_pMaster->AlterFP_Animus(static_cast<__int16>(m_nFP));
+  }
+}
+
+void CAnimus::AlterExp_MasterReport(__int64 nAlterExp)
+{
+  if (m_pMaster)
+  {
+    m_pMaster->AlterExp_Animus(nAlterExp);
   }
 }
 
@@ -458,6 +496,474 @@ char CAnimus::GetMoveTarget(CCharacter *target, float fMoveSpeed, unsigned __int
   return 0;
 }
 
+__int64 CAnimus::GetAttackPart()
+{
+  const int randomValue = rand() % 100;
+  if (randomValue <= 20)
+  {
+    return 4;
+  }
+  if (randomValue <= 43)
+  {
+    return 0;
+  }
+  if (randomValue <= 65)
+  {
+    return 1;
+  }
+  if (randomValue <= 83)
+  {
+    return 2;
+  }
+  if (randomValue > 100)
+  {
+    return static_cast<unsigned int>(-1);
+  }
+  return 3;
+}
+
+CCharacter *CAnimus::SearchNearEnemy()
+{
+  for (int j = 0; j < 5; ++j)
+  {
+    if (m_AroundSlot[j])
+    {
+      return m_AroundSlot[j];
+    }
+  }
+  return nullptr;
+}
+
+CCharacter *CAnimus::SearchNearPlayerAttack()
+{
+  const float angle = GetAngle(m_fCurPos, m_pMaster->m_fCurPos);
+  int side = static_cast<int>((angle / (2.0 * 3.1415926535) * 5.0) + 0.5) - 1;
+  int left = side;
+  int right = side;
+  for (int j = 0; j < 5; ++j)
+  {
+    if (left >= 5)
+    {
+      left = 0;
+    }
+    if (right < 0)
+    {
+      right = 4;
+    }
+    if (m_pMaster->m_AroundSlot[left])
+    {
+      return m_pMaster->m_AroundSlot[left];
+    }
+    if (m_pMaster->m_AroundSlot[right])
+    {
+      return m_pMaster->m_AroundSlot[right];
+    }
+    ++left;
+    --right;
+  }
+  return nullptr;
+}
+
+void CAnimus::make_gen_attack_param(CCharacter *pDst, unsigned __int8 byPart, _attack_param *pAP, int nSkillIndex)
+{
+  pAP->pDst = pDst;
+  if (!pDst || pDst->m_ObjID.m_byID || static_cast<unsigned __int8>(pDst[25].m_SFCont[0][5].m_wszPlayerName[16]) == 255)
+  {
+    pAP->nPart = byPart;
+  }
+  else
+  {
+    pAP->nPart = static_cast<unsigned __int8>(pDst[25].m_SFCont[0][5].m_wszPlayerName[16]);
+  }
+  pAP->nClass = m_byRoleCode != 1;
+  pAP->nTol = m_Skill[nSkillIndex].m_Element;
+  pAP->nMinAF = m_Skill[nSkillIndex].m_MinDmg;
+  pAP->nMaxAF = m_Skill[nSkillIndex].m_MaxDmg;
+  if (m_byRoleCode == 4)
+  {
+    pAP->nMaxAF = static_cast<int>(static_cast<float>(pAP->nMaxAF) * m_pMaster->m_EP.GetEff_Rate(22));
+  }
+  pAP->nMinSel = m_Skill[nSkillIndex].m_MinProb;
+  pAP->nMaxSel = m_Skill[nSkillIndex].m_MaxProb;
+  if (m_byRoleCode == 2)
+  {
+    pAP->nMaxSel = static_cast<int>(static_cast<float>(pAP->nMaxSel) - m_pMaster->m_EP.GetEff_Plus(39));
+    pAP->nAttactType = 6;
+    pAP->nExtentRange = 15;
+    if (pDst)
+    {
+      std::memcpy(pAP->fArea, pDst->m_fCurPos, sizeof(pAP->fArea));
+    }
+  }
+  pAP->nMaxAttackPnt = m_nMaxAttackPnt;
+}
+
+void CAnimus::CalcAttExp(CAttack *pAT)
+{
+  const int animusLevel = static_cast<int>(GetLevel());
+  if (!m_pMaster)
+  {
+    return;
+  }
+  if (!(animusLevel - 1 < 50 || m_pMaster->GetLevel() >= animusLevel - 1))
+  {
+    return;
+  }
+
+  for (int j = 0; j < pAT->m_nDamagedObjNum; ++j)
+  {
+    CMonster *monster = static_cast<CMonster *>(pAT->m_DamList[j].m_pChar);
+    const int damage = pAT->m_DamList[j].m_nDamage;
+    if (monster->m_ObjID.m_byID != 1 || damage <= 1 || IsInTown())
+    {
+      continue;
+    }
+
+    const int targetLevel = static_cast<int>(monster->GetLevel());
+    if (std::abs(animusLevel - targetLevel) > 10)
+    {
+      continue;
+    }
+
+    _base_fld *monsterRecord = monster->m_pRecordSet;
+    const int monsterCurrentHP = static_cast<int>(monster->GetHP());
+    int remainHP = monsterCurrentHP - damage;
+    int appliedDamage = damage;
+    if (remainHP < 0)
+    {
+      remainHP = 0;
+      appliedDamage = monsterCurrentHP;
+    }
+
+    const float baseExp = *reinterpret_cast<float *>(&monsterRecord[4].m_strCode[16]);
+    const float maxHP = *reinterpret_cast<float *>(&monsterRecord[25].m_strCode[4]);
+    const float damageExp = (baseExp * 0.69999999f) * (static_cast<float>(appliedDamage) / maxHP);
+    const int damageExpAdd = static_cast<int>((damageExp / 500.0f) + static_cast<float>(targetLevel));
+    AlterExp(damageExpAdd);
+
+    if (remainHP != 0)
+    {
+      continue;
+    }
+
+    float killExp = 0.0f;
+    if (monster->GetEmotionState() == 4)
+    {
+      killExp = baseExp * 0.5f;
+    }
+    else
+    {
+      killExp = baseExp * 0.30000001f;
+    }
+
+    if (m_pMaster->m_pPartyMgr && m_pMaster->m_pPartyMgr->IsPartyMode())
+    {
+      CPlayer *partyMembers[16]{};
+      const unsigned __int8 partyMemberCount = m_pMaster->_GetPartyMemberInCircle(partyMembers, 8, true);
+      if (partyMemberCount)
+      {
+        killExp *= CPlayer::s_fExpDivUnderParty_Kill[partyMemberCount - 1];
+      }
+
+      float levelWeightSum = 0.0f;
+      float levelWeights[16]{};
+      for (int k = 0; k < partyMemberCount; ++k)
+      {
+        const int partyLevel = static_cast<int>(partyMembers[k]->GetLevel());
+        levelWeights[k] = std::pow(static_cast<float>(partyLevel), 3.0f);
+        levelWeightSum += levelWeights[k];
+      }
+
+      for (int k = 0; k < partyMemberCount; ++k)
+      {
+        const float shareExp = (killExp * levelWeights[k]) / levelWeightSum;
+        if (partyMembers[k] == m_pMaster)
+        {
+          const int selfAddExp = static_cast<int>((shareExp / 500.0f) + static_cast<float>(targetLevel));
+          AlterExp(selfAddExp);
+        }
+
+        if (partyMembers[k]->IsRidingUnit())
+        {
+          const int riderAddExp = static_cast<int>((shareExp / 180.0f) + static_cast<float>(targetLevel));
+          partyMembers[k]->Emb_AlterStat(6u, 0, riderAddExp, 0, nullptr, true);
+        }
+        else
+        {
+          partyMembers[k]->AlterExp(shareExp, false, false, false);
+        }
+      }
+    }
+    else
+    {
+      const int killAddExp = static_cast<int>((killExp / 500.0f) + static_cast<float>(targetLevel));
+      AlterExp(killAddExp);
+    }
+  }
+}
+
+char CAnimus::IsValidTarget()
+{
+  if (!m_pTarget)
+  {
+    return 0;
+  }
+  if (!m_pTarget->m_bLive || m_pTarget->m_bCorpse)
+  {
+    return 0;
+  }
+  if (!m_pTarget->IsBeAttackedAble(true))
+  {
+    return 0;
+  }
+  if (m_byRoleCode == 1 || m_byRoleCode == 2 || m_byRoleCode == 4)
+  {
+    if (m_pTarget->m_bObserver)
+    {
+      return 0;
+    }
+    if (m_pTarget->GetStealth(true))
+    {
+      return 0;
+    }
+    if (IsInTown() && !m_pTarget->IsAttackableInTown())
+    {
+      return 0;
+    }
+    if (!m_pTarget->IsAttackableInTown() && m_pTarget->IsInTown())
+    {
+      return 0;
+    }
+  }
+  else if (m_pTarget == m_pMaster)
+  {
+    return 1;
+  }
+  return 1;
+}
+
+char CAnimus::Attack(int skill)
+{
+  if (!m_pTarget)
+  {
+    return 0;
+  }
+  if (!IsValidTarget())
+  {
+    m_pTarget = nullptr;
+    return 0;
+  }
+
+  float canGoResult[7]{};
+  if (!(unsigned int)m_pCurMap->m_Level.mBsp->CanYouGoThere(
+        m_pTarget->m_fCurPos,
+        m_fCurPos,
+        reinterpret_cast<float (*)[3]>(canGoResult)))
+  {
+    m_pTarget = nullptr;
+    return 0;
+  }
+
+  if (!m_Skill[skill].m_Type)
+  {
+    const int attackPart = static_cast<int>(GetAttackPart());
+    _attack_param attackParam;
+    make_gen_attack_param(m_pTarget, static_cast<unsigned __int8>(attackPart), &attackParam, skill);
+
+    CAttack attack(this);
+    attack.AttackGen(&attackParam, false, false);
+    SendMsg_Attack_Gen(&attack);
+    if (!attack.m_bFailure && m_byRoleCode != 1)
+    {
+      CalcAttExp(&attack);
+    }
+
+    for (int j = 0; j < attack.m_nDamagedObjNum; ++j)
+    {
+      attack.m_DamList[j].m_pChar->SetDamage(
+        attack.m_DamList[j].m_nDamage,
+        this,
+        static_cast<int>(GetLevel()),
+        attack.m_bIsCrtAtt,
+        -1,
+        0,
+        true);
+    }
+  }
+  return 1;
+}
+
+char CAnimus::Heal(unsigned int skill)
+{
+  CPlayer *healedPlayer = m_pMaster;
+  if (m_pTarget)
+  {
+    if (m_pTarget->m_ObjID.m_byID)
+    {
+      m_pTarget = m_pMaster;
+      return 0;
+    }
+
+    CPlayer *targetPlayer = static_cast<CPlayer *>(m_pTarget);
+    if (BYTE2(targetPlayer[1].m_fCurPos[2]) && m_pMaster->m_bInGuildBattle)
+    {
+      if (LOBYTE(targetPlayer[1].m_fAbsPos[0]) != m_pMaster->m_byGuildBattleColorInx)
+      {
+        m_pTarget = m_pMaster;
+        return 0;
+      }
+      if (LOBYTE(targetPlayer[1].m_fCurPos[2]))
+      {
+        m_pTarget = m_pMaster;
+        return 0;
+      }
+      healedPlayer = targetPlayer;
+    }
+    else
+    {
+      if (BYTE2(targetPlayer[1].m_fCurPos[2]) || m_pMaster->m_bInGuildBattle)
+      {
+        m_pTarget = m_pMaster;
+        return 0;
+      }
+      if (static_cast<int>(GetObjRace()) == static_cast<int>(targetPlayer->GetObjRace()))
+      {
+        healedPlayer = targetPlayer;
+      }
+    }
+  }
+
+  m_pTarget = m_pMaster;
+  const int currentHP = static_cast<int>(healedPlayer->GetHP());
+  if (currentHP <= 0)
+  {
+    return 0;
+  }
+
+  const float hpRate = static_cast<float>(currentHP) / static_cast<float>(static_cast<int>(healedPlayer->GetMaxHP()));
+  if (hpRate >= 1.0f)
+  {
+    return 0;
+  }
+
+  const float effectRate = m_pMaster->m_EP.GetEff_Rate(31);
+  const int addHP = static_cast<int>(m_Skill[skill].GetDmg(effectRate));
+  if (addHP <= 0)
+  {
+    return 0;
+  }
+
+  SendMsg_AnimusActHealInform(healedPlayer->m_Param.GetCharSerial(), static_cast<__int16>(addHP));
+  healedPlayer->SetHP(currentHP + addHP, false);
+  healedPlayer->SendMsg_AlterHPInform();
+
+  if (!IsInTown())
+  {
+    const int selfLevel = static_cast<int>(GetLevel());
+    if (m_pMaster)
+    {
+      if (selfLevel - 1 < 50 || m_pMaster->GetLevel() >= selfLevel - 1)
+      {
+        const int addExp = 2 * addHP;
+        if (addExp > 0)
+        {
+          AlterExp(addExp);
+        }
+      }
+    }
+  }
+
+  const int hpCost = addHP / 10;
+  if (hpCost > 0)
+  {
+    m_nHP -= hpCost;
+    if (m_nHP > 0)
+    {
+      AlterHP_MasterReport();
+    }
+    else
+    {
+      m_nHP = 0;
+      Return_MasterRequest(1u);
+    }
+  }
+
+  return 1;
+}
+
+void CAnimus::Action()
+{
+  if (!m_AITimer[0].Check() || !m_pTarget)
+  {
+    return;
+  }
+  if (!IsValidTarget())
+  {
+    m_pTarget = nullptr;
+    return;
+  }
+
+  const unsigned int now = timeGetTime();
+  const unsigned int targetDistance = static_cast<unsigned int>(Get3DSqrt(m_fCurPos, m_pTarget->m_fCurPos));
+  int extraRange = 0;
+  if (!m_bMove)
+  {
+    extraRange = 25;
+  }
+
+  unsigned int skill = 0;
+  for (; skill < 2; ++skill)
+  {
+    if (!m_Skill[skill].m_bLoad)
+    {
+      continue;
+    }
+    if (!m_Skill[skill].m_Active)
+    {
+      const int elapsed = static_cast<int>(now - m_Skill[skill].m_BefTime);
+      if (elapsed > static_cast<int>(m_Skill[skill].m_Delay) || elapsed < 0)
+      {
+        m_Skill[skill].m_Active = 1;
+      }
+    }
+    if (m_Skill[skill].m_Active && targetDistance <= static_cast<unsigned int>(extraRange + static_cast<int>(m_Skill[skill].m_Len)))
+    {
+      break;
+    }
+  }
+
+  if (skill >= 2)
+  {
+    return;
+  }
+
+  m_Skill[skill].m_Active = 0;
+  m_Skill[skill].m_BefTime = now;
+
+  bool success = true;
+  if (m_byRoleCode)
+  {
+    if (m_byRoleCode <= 2u || m_byRoleCode == 4)
+    {
+      success = Attack(static_cast<int>(skill));
+    }
+    else if (m_byRoleCode == 3)
+    {
+      success = Heal(skill);
+    }
+  }
+
+  if (success)
+  {
+    m_AITimer[0].Set(m_Skill[skill].m_CastDelay);
+    m_AITimer[1].Set(m_Skill[skill].m_CastDelay);
+    if (m_bMove)
+    {
+      Stop();
+    }
+  }
+}
+
 void CAnimus::LifeTimeCheck()
 {
   const double targetDist = Get3DSqrt(m_fCurPos, m_fTarPos);
@@ -480,7 +986,11 @@ void CAnimus::Process()
     return;
   }
 
-  const float moveSpeed = static_cast<float>(m_pRecord->m_nMovSpd);
+  float moveSpeed = static_cast<float>(m_pRecord->m_nMovSpd);
+  if (m_byRoleCode == 3)
+  {
+    moveSpeed = m_pMaster->GetMoveSpeed();
+  }
 
   if (m_dwAIMode)
   {
@@ -511,11 +1021,12 @@ void CAnimus::Process()
 
     if (m_pTarget)
     {
+      Action();
       GetMoveTarget(m_pTarget, moveSpeed, 0);
     }
     else
     {
-      GetMoveTarget(m_pMaster, moveSpeed, 0);
+      GetMoveTarget(m_pMaster, m_pMaster->GetMoveSpeed(), 0);
     }
   }
 
@@ -649,6 +1160,19 @@ void CAnimus::MasterAttack_MasterInform(CCharacter *pDst)
   }
 }
 
+void CAnimus::MasterBeAttacked_MasterInform(CCharacter *pDst)
+{
+  if (!m_pTarget)
+  {
+    m_pTarget = pDst;
+  }
+}
+
+__int64 CAnimus::AttackableHeight()
+{
+  return 50LL;
+}
+
 __int64 CAnimus::GetAttackDP()
 {
   return static_cast<unsigned int>(m_pRecord->m_nAttack_DP);
@@ -716,6 +1240,138 @@ __int64 CAnimus::GetHP()
 __int64 CAnimus::GetLevel()
 {
   return static_cast<unsigned int>(m_pRecord->m_nLevel);
+}
+
+int CAnimus::GetMaxLevel()
+{
+  return static_cast<int>(m_pMaster->m_Param.GetMaxLevel());
+}
+
+void CAnimus::AlterExp(__int64 nAddExp)
+{
+  if (m_pMaster && m_pMaster->m_bOper)
+  {
+    const int level = static_cast<int>(GetLevel());
+    if (level < GetMaxLevel())
+    {
+      double playerPenalty = DOUBLE_1_0;
+      if (m_pMaster && m_pMaster->m_bOper)
+      {
+        playerPenalty = g_Main.m_pTimeLimitMgr->GetPlayerPenalty(m_pMaster->m_id.wIndex);
+      }
+
+      const __int64 originalAddExp = nAddExp;
+      int alteredExp = 0;
+      if (m_pMaster && m_pMaster->IsApplyPcbangPrimium())
+      {
+        alteredExp = static_cast<int>(static_cast<float>(static_cast<int>(nAddExp))
+                                      + static_cast<float>(
+                                          static_cast<int>(originalAddExp) * (PCBANG_PRIMIUM_FAVOR::ANIMUS_EXP - 1.0f)));
+      }
+      else
+      {
+        alteredExp = static_cast<int>(static_cast<float>(static_cast<int>(nAddExp))
+                                      + static_cast<float>(static_cast<int>(originalAddExp) * (ANIMUS_EXP_RATE - 1.0f)));
+      }
+
+      const double scaledExp = static_cast<double>(alteredExp) * playerPenalty;
+      unsigned __int64 addExp = static_cast<unsigned int>(static_cast<int>(scaledExp));
+      if (static_cast<int>(scaledExp) && m_pRecord->m_nForLvUpExp - m_dwExp < addExp)
+      {
+        if (m_pRecord->m_nForLvUpExp - m_dwExp <= 0x7FFFFFFFFFFFFFFFLL)
+        {
+          addExp = m_pRecord->m_nForLvUpExp - m_dwExp;
+        }
+        else
+        {
+          addExp = 0x7FFFFFFFFFFFFFFFLL;
+          g_Main.m_logSystemError.Write(
+            "CAnimus::AlterExp(__int64 nAddExp(%I64d) ) : m_pRecord->m_nForLvUpExp - m_dwExp(%I64u) Invalid!",
+            0x7FFFFFFFFFFFFFFFLL,
+            m_pRecord->m_nForLvUpExp - m_dwExp);
+        }
+
+        if ((0xFFFFFFFFFFFFFFFFULL - m_dwExp) < addExp)
+        {
+          const unsigned __int64 oldAddExp = addExp;
+          if ((0xFFFFFFFFFFFFFFFFULL - m_dwExp) <= 0x7FFFFFFFFFFFFFFFLL)
+          {
+            addExp = 0xFFFFFFFFFFFFFFFFULL - m_dwExp;
+            g_Main.m_logSystemError.Write(
+              "CAnimus::AlterExp( __int64 nAddExp ) : _UI64_MAX < m_dwExp(%I64u), nOldExp(%I64u) : nAddExp(%I64d) Invalid!",
+              m_dwExp,
+              oldAddExp,
+              addExp);
+          }
+          else
+          {
+            addExp = 0x7FFFFFFFFFFFFFFFLL;
+            g_Main.m_logSystemError.Write(
+              "CAnimus::AlterExp( __int64 nAddExp ) : ( _UI64_MAX < m_dwExp + nAddExp ) && ( _I64_MAX < _UI64_MAX - m_dwExp )\r\nnOldExp(%I64u) : nAddExp(%I64d) Invalid!",
+              oldAddExp,
+              0x7FFFFFFFFFFFFFFFLL);
+          }
+        }
+      }
+
+      if (addExp)
+      {
+        const unsigned __int64 newExp = addExp + m_dwExp;
+        _animus_fld *newAnimusField = GetAnimusFldFromExp(m_byClassCode, newExp);
+        if (newAnimusField == m_pRecord)
+        {
+          m_dwExp = newExp;
+          AlterExp_MasterReport(static_cast<__int64>(addExp));
+        }
+        else if (m_pMaster)
+        {
+          if ((m_pMaster->GetLevel() >= 50 || newAnimusField->m_nLevel > 50)
+              && (m_pMaster->GetLevel() < 50 || newAnimusField->m_nLevel > m_pMaster->GetLevel() + 1))
+          {
+            m_dwExp = newExp - 1;
+            AlterExp_MasterReport(static_cast<__int64>(addExp - 1));
+          }
+          else
+          {
+            m_dwExp = newExp;
+            AlterExp_MasterReport(static_cast<__int64>(addExp));
+            m_pRecord = newAnimusField;
+            SendMsg_LevelUp();
+            m_nMaxHP = m_pRecord->m_nMaxHP;
+            m_nMaxFP = m_pRecord->m_nMaxFP;
+          }
+        }
+      }
+    }
+  }
+}
+
+void CAnimus::CalcDefExp(CCharacter *pAttackObj, int nDamage)
+{
+  if (pAttackObj)
+  {
+    if (pAttackObj->m_ObjID.m_byID == 1 && nDamage > 1 && !IsInTown())
+    {
+      const int selfLevel = static_cast<int>(GetLevel());
+      const int attackLevel = static_cast<int>(pAttackObj->GetLevel());
+      if (std::abs(selfLevel - attackLevel) <= 10)
+      {
+        if (m_pMaster)
+        {
+          const int checkLevel = static_cast<int>(GetLevel());
+          if (((m_pMaster->GetLevel() < 50) && checkLevel <= 50)
+              || ((m_pMaster->GetLevel() >= 50) && checkLevel <= m_pMaster->GetLevel() + 1))
+          {
+            const int addExp = 4 * nDamage;
+            if (addExp)
+            {
+              AlterExp(addExp);
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 __int64 CAnimus::GetMaxHP()
@@ -811,7 +1467,7 @@ void CAnimus::Loop()
     CheckPosInTown();
   }
 
-  if (m_pRecord && m_pRecord->m_nUseFP > 0 && m_tmNextEatMasterFP <= GetLoopTime())
+  if (m_pRecord->m_nUseFP > 0 && m_tmNextEatMasterFP <= GetLoopTime())
   {
     _ProcComsumeMaterFP();
   }
@@ -863,13 +1519,31 @@ void CAnimus::SendMsg_RealMovePoint(int n)
     static_cast<unsigned __int16>(sizeof(packet)));
 }
 
-__int64 CAnimus::SetDamage(int nDam, CCharacter *pDst, int nDstLv, bool bCrt)
+__int64 CAnimus::SetDamage(
+  int nDam,
+  CCharacter *pDst,
+  int nDstLv,
+  bool bCrt,
+  int nAttackType,
+  unsigned int dwAttackSerial,
+  bool bJadeReturn)
 {
-if (nDam > 1)
+  (void)nAttackType;
+  (void)dwAttackSerial;
+  (void)bJadeReturn;
+  (void)nDstLv;
+
+  if (m_byRoleCode == 1)
+  {
+    CalcDefExp(pDst, nDam);
+  }
+
+  if (nDam > 1)
   {
     m_nHP -= nDam;
     if (m_nHP <= 0)
       m_nHP = 0;
+    AlterHP_MasterReport();
 
     if (bCrt)
     {
@@ -884,8 +1558,29 @@ if (nDam > 1)
 
   if (m_nHP == 0)
   {
-    Destroy();
+    AlterExp(static_cast<unsigned int>(static_cast<int>(-0.0f - m_pRecord->m_fPenalty)));
+    Return_MasterRequest(1u);
   }
 
   return static_cast<unsigned int>(m_nHP);
+}
+
+void CAnimus::RecvKillMessage(CCharacter *pDier)
+{
+  if (m_pMaster)
+  {
+    m_pMaster->RecvKillMessage(pDier);
+  }
+}
+
+bool CAnimus::RobbedHP(CCharacter *pDst, int nDecHP)
+{
+  if (nDecHP >= m_nHP)
+  {
+    return false;
+  }
+
+  SetDamage(nDecHP, pDst, static_cast<int>(pDst->GetLevel()), false, -1, 0, true);
+  SendMsg_RobedHP(pDst, static_cast<unsigned __int16>(nDecHP));
+  return true;
 }

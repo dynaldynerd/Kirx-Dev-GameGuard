@@ -4,7 +4,7 @@
 
 #include "CNationSettingFactory.h"
 
-class __cppobj CNationSettingFactoryKR : public CNationSettingFactory
+class  CNationSettingFactoryKR : public CNationSettingFactory
 {
 public:
   CNationSettingFactoryKR();

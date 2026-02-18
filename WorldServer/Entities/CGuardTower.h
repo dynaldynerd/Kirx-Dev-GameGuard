@@ -7,7 +7,7 @@
 
 class CAttack;
 
-struct __cppobj __declspec(align(4)) _tower_create_setdata : _character_create_setdata
+struct  __declspec(align(4)) _tower_create_setdata : _character_create_setdata
 {
   int nHP;
   CPlayer *pMaster;
@@ -28,7 +28,7 @@ struct __cppobj __declspec(align(4)) _tower_create_setdata : _character_create_s
 };
 
 /* 1742 */
-class __cppobj __declspec(align(8)) CGuardTower : public CCharacter
+class  __declspec(align(8)) CGuardTower : public CCharacter
 {
 public:
   __int64 AttackableHeight();

@@ -29,7 +29,7 @@ enum Cmd : int
   _eNon = 0x13,
 };
 
-class __cppobj ElectProcessor
+class  ElectProcessor
 {
 public:
   enum ProcessorType : int

@@ -5,7 +5,7 @@
 
 #pragma pack(push, 1)
 
-struct __cppobj _TrapItem_fld : _base_fld
+struct  _TrapItem_fld : _base_fld
 {
   int m_bExist;
   int m_nType;

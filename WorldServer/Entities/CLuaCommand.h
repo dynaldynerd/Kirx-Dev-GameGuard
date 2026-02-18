@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1675 */
-class __cppobj __declspec(align(8)) CLuaCommand
+class  __declspec(align(8)) CLuaCommand
 {
 public:
   unsigned __int8 m_byCommand;

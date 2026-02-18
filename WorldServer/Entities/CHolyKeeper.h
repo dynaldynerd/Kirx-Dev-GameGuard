@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "attack_param.h"
 
 #include "CCharacter.h"
 #include "ObjectCreateSetData.h"
@@ -10,7 +11,7 @@ class CPlayer;
 struct _monster_fld;
 struct _dummy_position;
 
-class __cppobj CHolyKeeper : public CCharacter
+class  CHolyKeeper : public CCharacter
 {
 public:
   CHolyKeeper();

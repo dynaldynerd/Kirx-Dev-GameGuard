@@ -5,7 +5,7 @@
 #include "CGuildRanking.h"
 #include "CUserRankingProcess.h"
 
-class __cppobj CPvpUserAndGuildRankingSystem
+class  CPvpUserAndGuildRankingSystem
 {
 public:
   CPvpUserAndGuildRankingSystem();

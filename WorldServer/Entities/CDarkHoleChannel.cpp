@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "WorldServerUtil.h"
+
 #include "CDarkHoleChannel.h"
 
 #include "CGameObject.h"

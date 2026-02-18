@@ -4,7 +4,7 @@
 
 #include <Windows.h>
 
-class __cppobj CDisplay
+class  CDisplay
 {
 public:
   CDisplay();

@@ -8,7 +8,7 @@
 
 struct _unmannedtrader_reserved_schedule_info;
 
-class __cppobj CUnmannedTraderScheduler
+class  CUnmannedTraderScheduler
 {
 public:
   static CUnmannedTraderScheduler *Instance();

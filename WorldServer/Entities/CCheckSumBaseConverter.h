@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-class __cppobj CCheckSumBaseConverter
+class  CCheckSumBaseConverter
 {
 public:
   unsigned int ProcCode(unsigned __int8 byIndex, unsigned int dwSerial, unsigned int dwValue);

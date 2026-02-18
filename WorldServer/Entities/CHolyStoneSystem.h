@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "CMainThread.h"
 
 #include "CCharacter.h"
 #include "CLogFile.h"
@@ -13,7 +14,7 @@ class CPlayer;
 struct _monster_fld;
 struct _portal_dummy;
 
-struct __cppobj __holy_keeper_data
+struct  __holy_keeper_data
 {
   CMapData *pCreateMap;
   _dummy_position CreateDummy;
@@ -22,7 +23,7 @@ struct __cppobj __holy_keeper_data
   _monster_fld *pRec;
 };
 
-struct __cppobj __declspec(align(8)) __holy_stone_data
+struct  __declspec(align(8)) __holy_stone_data
 {
   CMapData *pCreateMap;
   _dummy_position CreateDummy;
@@ -30,7 +31,7 @@ struct __cppobj __declspec(align(8)) __holy_stone_data
   int nRace;
 };
 
-struct __cppobj __declspec(align(4)) _QUEST_CASH
+struct  __declspec(align(4)) _QUEST_CASH
 {
   unsigned int dwAvatorSerial;
   unsigned __int8 byQuestType;
@@ -47,7 +48,7 @@ struct __cppobj __declspec(align(4)) _QUEST_CASH
   }
 };
 
-struct __cppobj __declspec(align(4)) _QUEST_CASH_OTHER
+struct  __declspec(align(4)) _QUEST_CASH_OTHER
 {
   unsigned int dwAvatorSerial;
   unsigned __int8 byStoneMapMoveInfo;
@@ -59,7 +60,7 @@ struct __cppobj __declspec(align(4)) _QUEST_CASH_OTHER
   }
 };
 
-class __cppobj __declspec(align(8)) CHolyStoneSystem
+class  __declspec(align(8)) CHolyStoneSystem
 {
 public:
   bool InitHolySystem();

@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "GlobalObjects.h"
+
 #include "CAsyncLogger.h"
 
 #include "CAsyncLogBufferList.h"

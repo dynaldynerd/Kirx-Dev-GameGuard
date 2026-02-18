@@ -9,7 +9,7 @@
 
 class CPlayer;
 
-class __cppobj CTransportShip
+class  CTransportShip
 {
 public:
   CTransportShip();
@@ -47,7 +47,7 @@ public:
   bool IsMemberBeforeLogoff(unsigned int dwPlayerSerial);
   void GetStartPosInShip(float *pfPos);
 
-  struct __cppobj __declspec(align(8)) __mgr_member
+  struct  __declspec(align(8)) __mgr_member
   {
     __mgr_member();
 
@@ -58,7 +58,7 @@ public:
     bool is_fill() const;
   };
 
-  struct __cppobj __mgr_ticket
+  struct  __mgr_ticket
   {
     __mgr_ticket();
 

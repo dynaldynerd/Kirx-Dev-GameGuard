@@ -9,7 +9,7 @@
 class CLuaCommand;
 struct lua_State;
 
-class __cppobj CLuaScriptMgr
+class  CLuaScriptMgr
 {
 public:
   static CLuaScriptMgr *Instance();

@@ -23,7 +23,7 @@ struct _happen_event_node
   char m_strLinkQuest[5][64];
 };
 
-struct __cppobj _QuestHappenEvent_fld : _base_fld
+struct  _QuestHappenEvent_fld : _base_fld
 {
   int m_nEevntNo;
   _happen_event_node m_Node[3];

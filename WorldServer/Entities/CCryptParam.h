@@ -12,7 +12,7 @@ namespace CryptoPP
   class ByteQueue;
 }
 
-class __cppobj CCryptParam
+class  CCryptParam
 {
 public:
   explicit CCryptParam(CryptoPP::AutoSeededRandomPool *prng);

@@ -1,9 +1,10 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "notify_race_leader_s_owner_u_taxrate.h"
 
 /* 1807 */
-class __cppobj CNotifyNotifyRaceLeaderSownerUTaxrate
+class  CNotifyNotifyRaceLeaderSownerUTaxrate
 {
 public:
   CNotifyNotifyRaceLeaderSownerUTaxrate();

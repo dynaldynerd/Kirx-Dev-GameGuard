@@ -4,7 +4,7 @@
 
 class CLuaScript;
 
-class __cppobj CLuaEventNode
+class  CLuaEventNode
 {
 public:
   class _State

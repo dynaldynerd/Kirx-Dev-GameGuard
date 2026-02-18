@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __cppobj WheatyExceptionReport
+struct  WheatyExceptionReport
 {
   void SetLogName(const char *logName);
   void SetDescription(const char *description);

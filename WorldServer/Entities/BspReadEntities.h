@@ -4,7 +4,7 @@
 
 // Read-only entity list entries used by EBP files.
 #pragma pack(push, 1)
-struct __unaligned _READ_MAP_ENTITIES_LIST
+struct  _READ_MAP_ENTITIES_LIST
 {
   unsigned __int16 ID;
   float Scale;

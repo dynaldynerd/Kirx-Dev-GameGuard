@@ -14,7 +14,7 @@ struct ScheduleMSG;
 struct _mon_active;
 struct _mon_block;
 
-class __cppobj CBossMonsterScheduleSystem
+class  CBossMonsterScheduleSystem
   : public US::CWinThread<US::ThreadParamInterface<CBossMonsterScheduleSystem, US::AbstractThreadPool>>
 {
 public:

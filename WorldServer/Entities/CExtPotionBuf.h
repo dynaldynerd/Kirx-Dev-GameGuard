@@ -5,7 +5,7 @@
 class CPlayer;
 
 /* 1784 */
-class __cppobj CExtPotionBuf
+class  CExtPotionBuf
 {
 public:
   CExtPotionBuf();

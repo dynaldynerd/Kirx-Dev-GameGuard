@@ -4,7 +4,7 @@
 #include "CMainThread.h"
 
 #pragma pack(push, 1)
-struct __unaligned __declspec(align(1)) _trans_account_report_wrac
+struct  _trans_account_report_wrac
 {
   _GLBID gidGlobal;
   unsigned __int8 byRetCode;

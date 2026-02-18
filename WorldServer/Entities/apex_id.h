@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __cppobj _apex_id
+struct  _apex_id
 {
   explicit _apex_id(unsigned __int8 byId);
   _apex_id *operator&();

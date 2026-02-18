@@ -1,9 +1,12 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "CRecordData.h"
+
+class CEventLootTable;
 
 /* 1284 */
-class __cppobj __declspec(align(8)) CItemLootTable
+class  __declspec(align(8)) CItemLootTable
 {
 public:
   struct _linker_code

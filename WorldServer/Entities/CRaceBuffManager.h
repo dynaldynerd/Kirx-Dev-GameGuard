@@ -4,7 +4,7 @@
 
 #include "CRaceBuffByHolyQuestProcedure.h"
 
-class __cppobj CRaceBuffManager
+class  CRaceBuffManager
 {
 public:
   CRaceBuffManager();

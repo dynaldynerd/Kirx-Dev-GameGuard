@@ -15,7 +15,7 @@ struct _map_rate
 };
 
 /* 3009 */
-class __cppobj CMapExtend
+class  CMapExtend
 {
 public:
   CMapExtend();

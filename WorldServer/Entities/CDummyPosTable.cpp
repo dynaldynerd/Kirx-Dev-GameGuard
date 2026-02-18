@@ -1,6 +1,8 @@
 #include "pch.h"
+#include "CMainThread.h"
 #include "CDummyPosTable.h"
 #include "CGameObject.h"
+#include "WorldServerUtil.h"
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>

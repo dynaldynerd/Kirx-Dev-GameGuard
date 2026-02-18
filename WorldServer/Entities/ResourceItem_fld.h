@@ -11,7 +11,7 @@ struct EffectData
   float fEffUnitMax;
 };
 
-struct __cppobj _ResourceItem_fld : _base_fld
+struct  _ResourceItem_fld : _base_fld
 {
   int m_bExist;
   char m_strModel[64];

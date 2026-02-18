@@ -5,6 +5,7 @@
 #include "CUnmannedTraderClassInfoFactory.h"
 #include "CUnmannedTraderSortType.h"
 #include "CUnmannedTraderSubClassFactory.h"
+#include "CLogFile.h"
 #include "tinyxml.h"
 
 CUnmannedTraderDivisionInfo::CUnmannedTraderDivisionInfo(unsigned int dwID, char *szName)

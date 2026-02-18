@@ -1,9 +1,10 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "USER_NUM_SHEET.h"
 
 /* 1273 */
-class __cppobj CConnNumPHMgr
+class  CConnNumPHMgr
 {
 public:
   struct __cnt_per_h

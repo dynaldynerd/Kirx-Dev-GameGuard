@@ -1,11 +1,12 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "ContPotionData.h"
 
 class CPlayer;
 
 /* 1783 */
-class __cppobj CPotionParam
+class  CPotionParam
 {
 public:
   CPotionParam();

@@ -5,7 +5,7 @@
 struct _base_fld;
 struct _class_fld;
 
-class __cppobj CPvpCashMng
+class  CPvpCashMng
 {
 public:
   CPvpCashMng();
@@ -18,7 +18,7 @@ public:
     int nRecvrPoint;
   };
 
-  struct __cppobj _talik_recvr_list
+  struct  _talik_recvr_list
   {
     _talik_recvr_list();
 
@@ -35,7 +35,7 @@ public:
     unsigned __int8 byClassVal;
   };
 
-  struct __cppobj _max_point
+  struct  _max_point
   {
     _max_point();
     static void init(_max_point *self);

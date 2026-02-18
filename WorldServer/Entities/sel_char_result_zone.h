@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 #pragma pack(push, 1)
-struct __unaligned _sel_char_result_zone
+struct  _sel_char_result_zone
 {
   unsigned __int8 byRetCode;
   unsigned __int8 bySlotIndex;

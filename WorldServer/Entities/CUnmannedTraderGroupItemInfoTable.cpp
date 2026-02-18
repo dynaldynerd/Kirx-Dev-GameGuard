@@ -1,5 +1,9 @@
 #include "pch.h"
 
+#include "base_fld.h"
+
+#include "GlobalObjects.h"
+
 #include "CUnmannedTraderGroupItemInfoTable.h"
 #include "CUnmannedTraderEnvironmentValue.h"
 #include "CRecordData.h"

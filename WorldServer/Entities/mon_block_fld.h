@@ -4,7 +4,7 @@
 #include "base_fld.h"
 
 #pragma pack(push, 1)
-struct __cppobj _mon_block_fld : _base_fld
+struct  _mon_block_fld : _base_fld
 {
   struct _dummy_info
   {

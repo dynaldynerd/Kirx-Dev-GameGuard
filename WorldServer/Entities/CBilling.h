@@ -5,7 +5,7 @@
 struct _SYSTEMTIME;
 class CUserDB;
 
-class __cppobj CBilling
+class  CBilling
 {
 public:
   CBilling();

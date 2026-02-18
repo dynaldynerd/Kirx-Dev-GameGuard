@@ -435,7 +435,8 @@ void CMainThread::OnDQSRun()
           &loadQuery->dwCheckSum);
         queryEntry->m_byResult = Avator;
         if (queryEntry->m_byResult
-          || (CUserDB::ReRangeClientIndex(&loadQuery->LoadData), CUserDB::CheckDQSLoadCharacterData(&loadQuery->LoadData)))
+          || (CUserDB::ReRangeClientIndex(&loadQuery->LoadData),
+              CUserDB::CheckDQSLoadCharacterData(&loadQuery->LoadData)))
         {
           if (_db_load_event_classrefine(
                 loadQuery->dwAvatorSerial,
@@ -2164,27 +2165,26 @@ void CMainThread::Select_Avator_Complete(_DB_QRY_SYN_DATA *pData)
   CUserDB *user = &g_UserDB[pData->m_idWorld.wIndex];
   if (user->m_bActive && user->m_idWorld.dwSerial == pData->m_idWorld.dwSerial)
   {
-    char *data = pData->m_sData;
-    unsigned __int8 extTrunkOldSlot = static_cast<unsigned __int8>(data[37505]);
+    _qry_sheet_load *loadQuery = reinterpret_cast<_qry_sheet_load *>(pData->m_sData);
     user->Select_Char_Complete(
       pData->m_byResult,
-      reinterpret_cast<_AVATOR_DATA *>(data + 4),
-      reinterpret_cast<bool *>(data + 37219),
-      *reinterpret_cast<unsigned int *>(data + 37320),
-      *reinterpret_cast<unsigned int *>(data + 37324),
-      *reinterpret_cast<unsigned int *>(data + 37328),
-      reinterpret_cast<bool *>(data + 37332),
-      static_cast<unsigned __int8>(data[37432]),
-      *reinterpret_cast<long double *>(data + 37440),
-      *reinterpret_cast<long double *>(data + 37448),
-      static_cast<unsigned __int8>(data[37456]),
-      reinterpret_cast<bool *>(data + 37465),
-      extTrunkOldSlot);
+      &loadQuery->LoadData,
+      loadQuery->bAddItem,
+      loadQuery->dwAddDalant,
+      loadQuery->dwAddGold,
+      loadQuery->dwCheckSum,
+      loadQuery->bTrunkAddItem,
+      loadQuery->byTrunkOldSlot,
+      loadQuery->dTrunkOldDalant,
+      loadQuery->dTrunkOldGold,
+      loadQuery->bCreateTrunkFree,
+      loadQuery->bExtTrunkAddItem,
+      loadQuery->byExtTrunkOldSlot);
     _db_complete_event_classrefine(
       pData->m_idWorld.wIndex,
       pData->m_idWorld.dwSerial,
-      static_cast<unsigned __int8>(data[37464]),
-      *reinterpret_cast<unsigned int *>(data + 37460));
+      loadQuery->byRefinedCnt,
+      loadQuery->dwRefineDate);
   }
 }
 void CMainThread::Logout_Account_Complete(_DB_QRY_SYN_DATA *pData)

@@ -6,7 +6,7 @@
 
 class CLogFile;
 
-class __cppobj CAsyncLogBufferList
+class  CAsyncLogBufferList
 {
 public:
   CAsyncLogBufferList();

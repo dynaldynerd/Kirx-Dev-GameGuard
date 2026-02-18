@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 #include "CNetCriticalSection.h"
 
-class __cppobj UIDGenerator
+class  UIDGenerator
 {
 public:
   static unsigned __int64 getuid(unsigned __int8 n);

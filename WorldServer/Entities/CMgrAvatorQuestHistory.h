@@ -6,7 +6,7 @@
 #include "CFrameRate.h"
 #include "CNetIndexList.h"
 
-class __cppobj CMgrAvatorQuestHistory
+class  CMgrAvatorQuestHistory
 {
 public:
   CMgrAvatorQuestHistory();

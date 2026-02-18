@@ -7,7 +7,7 @@
 
 class CGuild;
 
-class __cppobj __declspec(align(8)) CMgrGuildHistory
+class  __declspec(align(8)) CMgrGuildHistory
 {
 public:
   CMgrGuildHistory();

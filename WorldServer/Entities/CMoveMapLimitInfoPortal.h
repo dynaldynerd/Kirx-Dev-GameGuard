@@ -9,7 +9,7 @@
 struct _dummy_position;
 class CMyTimer;
 
-class __cppobj __declspec(align(8)) CMoveMapLimitInfoPortal : public CMoveMapLimitInfo
+class  __declspec(align(8)) CMoveMapLimitInfoPortal : public CMoveMapLimitInfo
 {
 public:
   enum FORCE_MOVE_HQ_STATE : int

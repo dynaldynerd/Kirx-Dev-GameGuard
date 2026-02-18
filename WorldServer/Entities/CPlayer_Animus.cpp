@@ -7,6 +7,7 @@
 #include "CMapData.h"
 #include "CBsp.h"
 #include "CObjectList.h"
+#include "CCharacter.h"
 #include "CMonster.h"
 #include "pnt_rect.h"
 #include "CMainThread.h"
@@ -101,6 +102,7 @@
 #include "WorldServerUtil.h"
 #include "NetCheckPackets.h"
 #include "GlobalObjectDefs.h"
+#include "ObjectCreateSetData.h"
 
 #include <ctime>
 #include <mmsystem.h>
@@ -111,53 +113,81 @@
 namespace
 {
 constexpr int kAnimusRecallConsumeFP = 60;
+}
 
-CAnimus *FindEmptyAnimusSlot()
+_animus_create_setdata::_animus_create_setdata()
 {
-  for (int index = 0; index < MAX_ANIMUS; ++index)
+  pMaster = nullptr;
+  nMaxAttackPnt = 0;
+}
+
+CAnimus *FindEmptyAnimus(CAnimus *pObjArray, int nMax)
+{
+  for (int index = 0; index < nMax; ++index)
   {
-    if (!g_Animus[index].m_bLive)
+    if (!pObjArray[index].m_bLive)
     {
-      return &g_Animus[index];
+      return &pObjArray[index];
     }
   }
   return nullptr;
 }
 
-CAnimus *CreateAnimusObject(CPlayer *player, _STORAGE_LIST::_db_con *animusItem)
+char __fastcall CreateAnimus(
+  CMapData *pMap,
+  unsigned __int16 wLayer,
+  float *fPos,
+  unsigned __int8 byClass,
+  int nHP,
+  int nFP,
+  unsigned int dwExp,
+  CPlayer *pMaster)
 {
-  if (!player || !animusItem)
-  {
-    return nullptr;
-  }
-
-  CAnimus *slot = FindEmptyAnimusSlot();
-  if (!slot)
-  {
-    return nullptr;
-  }
-
-  _animus_create_setdata createData{};
-  createData.m_pMap = player->m_pCurMap;
-  createData.m_nLayerIndex = player->m_wMapLayerIndex;
-  createData.m_pRecordSet = g_Main.m_tblAnimus.GetRecord(animusItem->m_wItemIndex);
+  _animus_create_setdata createData;
+  createData.m_pMap = pMap;
+  createData.m_nLayerIndex = wLayer;
+  createData.m_pRecordSet = g_Main.m_tblAnimus.GetRecord(byClass);
   if (!createData.m_pRecordSet)
   {
-    return nullptr;
+    return 0;
   }
-  std::memcpy(createData.m_fStartPos, player->m_fCurPos, sizeof(createData.m_fStartPos));
-  createData.nHP = LOWORD(animusItem->m_dwLv);
-  createData.nFP = HIWORD(animusItem->m_dwLv);
-  createData.dwExp = animusItem->m_dwDur;
-  createData.pMaster = player;
-  createData.nMaxAttackPnt = player->m_nAnimusAttackPnt;
-
+  std::memcpy(createData.m_fStartPos, fPos, sizeof(createData.m_fStartPos));
+  createData.nHP = nHP;
+  createData.nFP = nFP;
+  createData.dwExp = dwExp;
+  createData.pMaster = pMaster;
+  CAnimus *slot = FindEmptyAnimus(g_Animus, MAX_ANIMUS);
+  if (!slot)
+  {
+    return 0;
+  }
   if (!slot->Create(&createData))
   {
-    return nullptr;
+    return 0;
   }
-  return slot;
+  return 1;
 }
+
+bool __fastcall DE_MakeZeroAnimusRecallTimeOnce(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 *byRet)
+{
+  (void)byRet;
+  CPlayer *actPlayer = static_cast<CPlayer *>(pActChar);
+  return actPlayer->SF_MakeZeroAnimusRecallTimeOnce(pTargetChar, fEffectValue);
+}
+
+bool __fastcall DE_RecoverAllReturnStateAnimusHPFull(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 *byRet)
+{
+  (void)byRet;
+  CPlayer *actPlayer = static_cast<CPlayer *>(pActChar);
+  return actPlayer->SF_RecoverAllReturnStateAnimusHPFull(pTargetChar, fEffectValue);
 }
 
 void CPlayer::SendMsg_AnimusHPInform()
@@ -219,6 +249,134 @@ void CPlayer::Return_AnimusAsk(unsigned __int8 byReturnType)
   if (m_pRecalledAnimusItem && m_pRecalledAnimusChar)
   {
     m_byNextRecallReturn = byReturnType;
+  }
+}
+
+bool CPlayer::IsRecallAnimus()
+{
+  return m_pRecalledAnimusItem != nullptr || m_pRecalledAnimusChar != nullptr;
+}
+
+bool CPlayer::SF_MakeZeroAnimusRecallTimeOnce(CCharacter *pDstObj, float fEffectValue)
+{
+  (void)fEffectValue;
+  if (pDstObj->m_ObjID.m_byID)
+  {
+    return false;
+  }
+
+  m_bFreeRecallWaitTime = true;
+  return true;
+}
+
+bool CPlayer::SF_RecoverAllReturnStateAnimusHPFull(CCharacter *pDstObj, float fEffectValue)
+{
+  (void)fEffectValue;
+  if (pDstObj->m_ObjID.m_byID)
+  {
+    return false;
+  }
+
+  CPlayer *targetPlayer = static_cast<CPlayer *>(pDstObj);
+  if (!targetPlayer->m_pUserDB)
+  {
+    return false;
+  }
+
+  if (targetPlayer->m_Param.GetRaceCode() != 1)
+  {
+    return false;
+  }
+
+  int changedCount = 0;
+  for (int index = 0; index < 4; ++index)
+  {
+    _STORAGE_LIST::_db_con *animusItem = &targetPlayer->m_Param.m_dbAnimus.m_pStorageList[index];
+    if (animusItem->m_bLoad && this->m_pRecalledAnimusItem != animusItem)
+    {
+      const unsigned int maxParam = GetMaxParamFromExp(animusItem->m_wItemIndex, animusItem->m_dwDur);
+      if (maxParam != animusItem->m_dwLv)
+      {
+        animusItem->m_dwLv = maxParam;
+        targetPlayer->m_pUserDB->Update_ItemUpgrade(4u, animusItem->m_byStorageIndex, maxParam, false);
+        ++changedCount;
+      }
+    }
+  }
+
+  return changedCount > 0;
+}
+
+void CPlayer::AlterHP_Animus(__int16 nNewHP)
+{
+  if (m_pRecalledAnimusItem)
+  {
+    unsigned int *packedLevel = &m_pRecalledAnimusItem->m_dwLv;
+    *reinterpret_cast<unsigned __int16 *>(packedLevel) = static_cast<unsigned __int16>(nNewHP);
+    SendMsg_AnimusHPInform();
+    if (m_pUserDB)
+    {
+      _STORAGE_LIST::_db_con *recalledItem = m_pRecalledAnimusItem;
+      m_pUserDB->Update_ItemUpgrade(4u, recalledItem->m_byStorageIndex, recalledItem->m_dwLv, false);
+    }
+  }
+}
+
+void CPlayer::AlterFP_Animus(__int16 nNewFP)
+{
+  if (m_pRecalledAnimusItem)
+  {
+    unsigned int *packedLevel = &m_pRecalledAnimusItem->m_dwLv;
+    *(reinterpret_cast<unsigned __int16 *>(packedLevel) + 1) = static_cast<unsigned __int16>(nNewFP);
+    SendMsg_AnimusFPInform();
+    if (m_pUserDB)
+    {
+      _STORAGE_LIST::_db_con *recalledItem = m_pRecalledAnimusItem;
+      m_pUserDB->Update_ItemUpgrade(4u, recalledItem->m_byStorageIndex, recalledItem->m_dwLv, false);
+    }
+  }
+}
+
+void CPlayer::AlterExp_Animus(__int64 nAlterExp)
+{
+  if (!m_pRecalledAnimusItem)
+  {
+    return;
+  }
+
+  if (nAlterExp <= 0)
+  {
+    const unsigned __int64 oldExp = m_pRecalledAnimusItem->m_dwDur;
+    if (m_pRecalledAnimusItem->m_dwDur < static_cast<unsigned __int64>(-nAlterExp))
+    {
+      m_pRecalledAnimusItem->m_dwDur = 0;
+      g_Main.m_logSystemError.Write(
+        "CPlayer::AlterExp_Animus( __int64 nAlterExp ) : m_pRecalledAnimusItem->m_dwDur(%I64u) < -nAlterExp(%I64d) Invalid!",
+        m_pRecalledAnimusItem->m_dwDur,
+        -nAlterExp);
+    }
+    else
+    {
+      m_pRecalledAnimusItem->m_dwDur += nAlterExp;
+    }
+
+    s_MgrLvHistory.down_animus_exp(
+      oldExp,
+      m_pRecalledAnimusItem->m_dwDur,
+      nAlterExp,
+      m_szLvHistoryFileName);
+  }
+  else
+  {
+    m_pRecalledAnimusItem->m_dwDur += nAlterExp;
+    Emb_AlterStat(6u, 0, static_cast<int>(nAlterExp), 0, "CPlayer::AlterExp_Animus()---0", true);
+  }
+
+  SendMsg_AnimusExpInform();
+  if (m_pUserDB)
+  {
+    _STORAGE_LIST::_db_con *recalledItem = m_pRecalledAnimusItem;
+    m_pUserDB->Update_ItemDur(4u, recalledItem->m_byStorageIndex, recalledItem->m_dwDur, false);
   }
 }
 
@@ -658,9 +816,13 @@ void CPlayer::pc_AnimusRecallRequest(
               }
             }
 
-            if (!resultCode && !FindEmptyAnimusSlot())
+            if (!resultCode)
             {
-              resultCode = 5;
+              newAnimus = FindEmptyAnimus(g_Animus, MAX_ANIMUS);
+              if (!newAnimus)
+              {
+                resultCode = 5;
+              }
             }
           }
         }
@@ -680,18 +842,21 @@ void CPlayer::pc_AnimusRecallRequest(
       static_cast<unsigned int>(adjustedHP)
       | (static_cast<unsigned int>(adjustedFP) << 16);
 
-    newAnimus = CreateAnimusObject(this, animusItem);
-    if (newAnimus)
-    {
-      this->m_pRecalledAnimusItem = animusItem;
-      this->m_pRecalledAnimusChar = newAnimus;
-      this->m_wTimeFreeRecallSerial = static_cast<unsigned __int16>(-1);
-      animusItem->lock(true);
-    }
-    else
-    {
-      resultCode = 5;
-    }
+    _animus_create_setdata createData;
+    createData.m_pMap = this->m_pCurMap;
+    createData.m_nLayerIndex = this->m_wMapLayerIndex;
+    createData.m_pRecordSet = g_Main.m_tblAnimus.GetRecord(animusItem->m_wItemIndex);
+    std::memcpy(createData.m_fStartPos, this->m_fCurPos, sizeof(createData.m_fStartPos));
+    createData.nHP = adjustedHP;
+    createData.nFP = adjustedFP;
+    createData.dwExp = animusItem->m_dwDur;
+    createData.pMaster = this;
+    createData.nMaxAttackPnt = this->m_nAnimusAttackPnt;
+    newAnimus->Create(&createData);
+    this->m_pRecalledAnimusItem = animusItem;
+    this->m_pRecalledAnimusChar = newAnimus;
+    this->m_wTimeFreeRecallSerial = static_cast<unsigned __int16>(-1);
+    animusItem->lock(true);
   }
 
   const unsigned __int16 leftFP = static_cast<unsigned __int16>(this->GetFP());

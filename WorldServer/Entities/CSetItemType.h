@@ -5,7 +5,7 @@
 
 class CRecordData;
 
-struct __cppobj si_effect
+struct  si_effect
 {
   unsigned __int8 byTargetItemCount;
   unsigned __int8 byTargetEffectCount;
@@ -16,7 +16,7 @@ struct __cppobj si_effect
   unsigned __int8 GetCountOfEffect() const;
 };
 
-struct __cppobj si_interpret
+struct  si_interpret
 {
   struct effect_data
   {
@@ -38,7 +38,7 @@ struct __cppobj si_interpret
   float GetEffectValue(unsigned int idx) const;
 };
 
-class __cppobj CSetItemType
+class  CSetItemType
 {
 public:
   CSetItemType();

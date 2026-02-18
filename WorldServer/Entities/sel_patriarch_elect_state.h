@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __cppobj _sel_patriarch_elect_state
+struct  _sel_patriarch_elect_state
 {
   char szWorldName[33];
   unsigned int dwSerial;

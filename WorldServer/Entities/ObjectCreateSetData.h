@@ -10,7 +10,7 @@ class CItemStore;
 class CMonster;
 class CPlayer;
 
-struct __cppobj _object_create_setdata
+struct  _object_create_setdata
 {
   _base_fld *m_pRecordSet;
   CMapData *m_pMap;
@@ -26,11 +26,11 @@ struct __cppobj _object_create_setdata
   }
 };
 
-struct __cppobj _character_create_setdata : _object_create_setdata
+struct  _character_create_setdata : _object_create_setdata
 {
 };
 
-struct __cppobj _monster_create_setdata : _character_create_setdata
+struct  _monster_create_setdata : _character_create_setdata
 {
   _mon_active *pActiveRec;
   _dummy_position *pDumPosition;
@@ -50,7 +50,7 @@ struct __cppobj _monster_create_setdata : _character_create_setdata
   }
 };
 
-struct __cppobj __declspec(align(8)) _npc_create_setdata : _character_create_setdata
+struct  __declspec(align(8)) _npc_create_setdata : _character_create_setdata
 {
   CItemStore *m_pLinkItemStore;
   unsigned __int8 m_byRaceCode;
@@ -62,7 +62,7 @@ struct __cppobj __declspec(align(8)) _npc_create_setdata : _character_create_set
   }
 };
 
-struct __cppobj _keeper_create_setdata : _character_create_setdata
+struct  _keeper_create_setdata : _character_create_setdata
 {
   int nMasterRace;
   _dummy_position *pPosCreate;
@@ -78,7 +78,7 @@ struct __cppobj _keeper_create_setdata : _character_create_setdata
   }
 };
 
-struct __cppobj __declspec(align(8)) _animus_create_setdata : _character_create_setdata
+struct  __declspec(align(8)) _animus_create_setdata : _character_create_setdata
 {
   int nHP;
   int nFP;
@@ -86,12 +86,5 @@ struct __cppobj __declspec(align(8)) _animus_create_setdata : _character_create_
   CPlayer *pMaster;
   int nMaxAttackPnt;
 
-  _animus_create_setdata()
-    : nHP(0),
-      nFP(0),
-      dwExp(0),
-      pMaster(nullptr),
-      nMaxAttackPnt(0)
-  {
-  }
+  _animus_create_setdata();
 };

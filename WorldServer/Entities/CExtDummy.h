@@ -5,7 +5,7 @@
 struct _EXT_DUMMY;
 
 /* 1415 */
-class __cppobj CExtDummy
+class  CExtDummy
 {
 public:
   unsigned int mMaxNum;

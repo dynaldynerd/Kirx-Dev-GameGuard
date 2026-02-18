@@ -11,7 +11,7 @@ struct _worlddb_guild_info;
 struct _guild_member_info;
 struct _io_money_data;
 
-class __cppobj __declspec(align(8)) CGuildRanking
+class  __declspec(align(8)) CGuildRanking
 {
 public:
   bool Init();

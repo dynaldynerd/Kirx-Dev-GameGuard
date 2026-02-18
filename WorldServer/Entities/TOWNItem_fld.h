@@ -5,7 +5,7 @@
 
 #pragma pack(push, 1)
 
-struct __cppobj _TOWNItem_fld : _base_fld
+struct  _TOWNItem_fld : _base_fld
 {
   int m_bExist;
   char m_strModel[64];

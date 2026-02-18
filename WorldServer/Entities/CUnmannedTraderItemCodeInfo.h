@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-class __cppobj CUnmannedTraderItemCodeInfo
+class  CUnmannedTraderItemCodeInfo
 {
 public:
   CUnmannedTraderItemCodeInfo(const char *szCode, unsigned int dwStartIndex, unsigned int dwEndIndex);

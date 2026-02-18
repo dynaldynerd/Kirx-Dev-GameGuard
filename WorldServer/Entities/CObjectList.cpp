@@ -1,4 +1,6 @@
 #include "pch.h"
+
+#include "WorldServerUtil.h"
 #include "CObjectList.h"
 #include "CGameObject.h"
 

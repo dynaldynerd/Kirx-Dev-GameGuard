@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "base_fld.h"
+
 #include "COreCuttingTable.h"
 
 COreCuttingTable::COreCuttingTable()

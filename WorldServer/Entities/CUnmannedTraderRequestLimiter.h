@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-class __cppobj CUnmannedTraderRequestLimiter
+class  CUnmannedTraderRequestLimiter
 {
 public:
   enum class REQUEST_TYPE : int

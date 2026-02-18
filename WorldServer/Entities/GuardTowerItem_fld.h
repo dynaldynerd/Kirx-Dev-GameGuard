@@ -5,7 +5,7 @@
 
 #pragma pack(push, 1)
 
-struct __cppobj _GuardTowerItem_fld : _base_fld
+struct  _GuardTowerItem_fld : _base_fld
 {
   struct __material
   {

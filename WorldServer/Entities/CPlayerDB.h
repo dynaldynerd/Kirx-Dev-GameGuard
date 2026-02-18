@@ -7,7 +7,7 @@ class CPlayer;
 struct _class_fld;
 struct _AVATOR_DATA;
 
-class __cppobj CPlayerDB
+class  CPlayerDB
 {
 public:
   CPlayerDB();
@@ -75,14 +75,14 @@ public:
   void PopLink(int nLinkIndex);
 
   unsigned __int8 m_byPvPGrade;
-  __unaligned __declspec(align(1)) _character_db_load m_dbChar;
-  __unaligned __declspec(align(1)) _bag_db_load m_dbInven;
-  __unaligned __declspec(align(1)) _equip_db_load m_dbEquip;
-  __unaligned __declspec(align(1)) _embellish_db_load m_dbEmbellish;
-  __unaligned __declspec(align(1)) _force_db_load m_dbForce;
-  __unaligned __declspec(align(1)) _animus_db_load m_dbAnimus;
-  __unaligned __declspec(align(1)) _trunk_db_load m_dbTrunk;
-  __unaligned __declspec(align(1)) _Exttrunk_db_load m_dbExtTrunk;
+   _character_db_load m_dbChar;
+   _bag_db_load m_dbInven;
+   _equip_db_load m_dbEquip;
+   _embellish_db_load m_dbEmbellish;
+   _force_db_load m_dbForce;
+   _animus_db_load m_dbAnimus;
+   _trunk_db_load m_dbTrunk;
+   _Exttrunk_db_load m_dbExtTrunk;
   _STORAGE_LIST *m_pStoragePtr[8];
   _UNIT_DB_BASE m_UnitDB;
   _QUEST_DB_BASE m_QuestDB;

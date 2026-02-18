@@ -95,7 +95,7 @@ namespace RACE_BOSS_MSG
 
 class CPlayer;
 
-class __cppobj CRaceBossMsgController
+class  CRaceBossMsgController
 {
 public:
   CRaceBossMsgController();

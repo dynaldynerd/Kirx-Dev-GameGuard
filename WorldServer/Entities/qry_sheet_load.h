@@ -3,8 +3,8 @@
 #include "IdaCompat.h"
 #include "CMainThread.h"
 
-#pragma pack(push, 1)
-struct __cppobj _qry_sheet_load
+#pragma pack(push, 8)
+struct  __declspec(align(8)) _qry_sheet_load
 {
   unsigned int dwAvatorSerial;
   _AVATOR_DATA LoadData;
@@ -27,6 +27,10 @@ struct __cppobj _qry_sheet_load
   __int64 size() const;
 };
 #pragma pack(pop)
+
+static_assert(sizeof(_qry_sheet_load) == 37512, "_qry_sheet_load size mismatch");
+static_assert(offsetof(_qry_sheet_load, bAddItem) == 37220, "_qry_sheet_load::bAddItem offset mismatch");
+static_assert(sizeof(_AVATOR_DATA) == 37216, "_AVATOR_DATA size mismatch");
 
 inline _qry_sheet_load::_qry_sheet_load()
 {

@@ -6,7 +6,7 @@
 
 class CCheckSumGuildData;
 
-class __cppobj CCheckSumGuildConverter : public CCheckSumBaseConverter
+class  CCheckSumGuildConverter : public CCheckSumBaseConverter
 {
 public:
   void Convert(long double dDalant, long double dGold, CCheckSumGuildData *pkCheckSum);

@@ -1,9 +1,17 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "D3D8Compat.h"
+#include "D3DXMATRIX.h"
+#include "CAniCamera.h"
+#include "CTimer.h"
+#include "CExtDummy.h"
+
+class CBsp;
+class CSkyBox;
 
 /* 1315 */
-class __cppobj __declspec(align(8)) CLevel
+class  __declspec(align(8)) CLevel
 {
 public:
   CLevel();

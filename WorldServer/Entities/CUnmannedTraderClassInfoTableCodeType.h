@@ -6,7 +6,7 @@
 
 #include <vector>
 
-class __cppobj CUnmannedTraderClassInfoTableCodeType : public CUnmannedTraderClassInfoTableType
+class  CUnmannedTraderClassInfoTableCodeType : public CUnmannedTraderClassInfoTableType
 {
 public:
   CUnmannedTraderClassInfoTableCodeType(unsigned int dwID);

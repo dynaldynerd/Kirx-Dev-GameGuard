@@ -3,14 +3,16 @@
 #include "IdaCompat.h"
 #include "Quest_fld.h"
 #include "QuestHappenEvent_fld.h"
+#include "QuestHappenTypes.h"
 #include "quest_check_result.h"
 #include "quest_fail_result.h"
 
 class CRecordData;
 class CPlayer;
 struct _NPCQuestIndexTempData;
+struct _QUEST_DB_BASE;
 /* 1755 */
-class __cppobj __declspec(align(8)) CQuestMgr
+class  __declspec(align(8)) CQuestMgr
 {
 public:
   CQuestMgr();

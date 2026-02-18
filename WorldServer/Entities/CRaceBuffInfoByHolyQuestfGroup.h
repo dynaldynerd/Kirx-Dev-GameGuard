@@ -7,7 +7,7 @@
 
 class CPlayer;
 
-class __cppobj CRaceBuffInfoByHolyQuestfGroup
+class  CRaceBuffInfoByHolyQuestfGroup
 {
 public:
   enum RESULT_TYPE : int

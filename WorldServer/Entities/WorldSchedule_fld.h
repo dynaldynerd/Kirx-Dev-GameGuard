@@ -4,7 +4,7 @@
 #include "base_fld.h"
 
 #pragma pack(push, 1)
-struct __cppobj _WorldSchedule_fld : _base_fld
+struct  _WorldSchedule_fld : _base_fld
 {
   int m_nHour;
   int m_nMin;

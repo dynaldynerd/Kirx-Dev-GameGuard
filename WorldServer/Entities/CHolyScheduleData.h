@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-class __cppobj CHolyScheduleData
+class  CHolyScheduleData
 {
 public:
   struct __HolyScheduleNode

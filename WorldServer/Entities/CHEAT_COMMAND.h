@@ -4,7 +4,7 @@
 
 class CPlayer;
 
-class __cppobj CHEAT_COMMAND
+class  CHEAT_COMMAND
 {
 public:
   bool operator()(const CHEAT_COMMAND *lhs, const CHEAT_COMMAND *rhs);

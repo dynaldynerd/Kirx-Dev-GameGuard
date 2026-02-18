@@ -8,12 +8,12 @@ class CGameObject;
 struct _ENTER_DUNGEON_NEW_POS;
 
 /* 1598 */
-class __cppobj __declspec(align(8)) CDarkHoleChannel
+class  __declspec(align(8)) CDarkHoleChannel
 {
 public:
   static unsigned int s_dwChannelSerialCounter;
 
-  struct __cppobj __enter_member
+  struct  __enter_member
   {
     bool bActive;
     bool bDisnormalClose;

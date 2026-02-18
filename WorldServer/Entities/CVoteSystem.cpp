@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "WorldServerUtil.h"
+
 #include "CVoteSystem.h"
 
 #include "CMainThread.h"

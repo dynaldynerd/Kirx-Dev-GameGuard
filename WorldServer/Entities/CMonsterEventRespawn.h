@@ -7,7 +7,7 @@ struct _monster_fld;
 class CMapData;
 class CMonster;
 
-struct __cppobj _event_respawn
+struct  _event_respawn
 {
   struct __declspec(align(8)) _mon
   {
@@ -31,7 +31,7 @@ struct __cppobj _event_respawn
     int nProb;
   };
 
-  struct __cppobj _state
+  struct  _state
   {
     struct _mon
     {
@@ -64,7 +64,7 @@ struct __cppobj _event_respawn
   _event_respawn();
 };
 
-class __cppobj CMonsterEventRespawn
+class  CMonsterEventRespawn
 {
 public:
   CMonsterEventRespawn();

@@ -5,7 +5,7 @@
 
 class CPlayer;
 
-struct __cppobj _darkhole_create_setdata : _object_create_setdata
+struct  _darkhole_create_setdata : _object_create_setdata
 {
   CPlayer *pOpener;
 

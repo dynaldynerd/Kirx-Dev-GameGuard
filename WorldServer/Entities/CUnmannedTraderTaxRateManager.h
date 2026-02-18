@@ -7,7 +7,7 @@
 
 class CGuild;
 
-class __cppobj CUnmannedTraderTaxRateManager
+class  CUnmannedTraderTaxRateManager
 {
 public:
   static CUnmannedTraderTaxRateManager *Instance();

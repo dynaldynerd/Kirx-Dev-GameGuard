@@ -7,7 +7,7 @@
 class CCheckSumCharacAccountTrunkData;
 struct _AVATOR_DATA;
 
-class __cppobj CCheckSumCharacTrunkConverter : public CCheckSumBaseConverter
+class  CCheckSumCharacTrunkConverter : public CCheckSumBaseConverter
 {
 public:
   void Convert(_AVATOR_DATA *pAvator, CCheckSumCharacAccountTrunkData *pkCheckSum);

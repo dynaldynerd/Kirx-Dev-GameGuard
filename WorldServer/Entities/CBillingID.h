@@ -2,7 +2,7 @@
 
 #include "CBilling.h"
 
-class __cppobj CBillingID : public CBilling
+class  CBillingID : public CBilling
 {
 };
 

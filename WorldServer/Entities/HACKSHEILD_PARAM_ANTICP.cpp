@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "WorldServerUtil.h"
+
 #include "HACKSHEILD_PARAM_ANTICP.h"
 
 #include <cstring>

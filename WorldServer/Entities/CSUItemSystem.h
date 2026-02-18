@@ -4,7 +4,7 @@
 #include "CRecordData.h"
 #include "CSetItemType.h"
 
-class __cppobj CSUItemSystem
+class  CSUItemSystem
 {
 public:
   CSUItemSystem();

@@ -4,7 +4,7 @@
 
 #include "CNationSettingData.h"
 
-class __cppobj CNationSettingDataTH : public CNationSettingData
+class  CNationSettingDataTH : public CNationSettingData
 {
 public:
   int GetCashItemPrice(_CashShop_str_fld *pFld) override;

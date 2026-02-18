@@ -2,6 +2,7 @@
 
 #include "CMoveMapLimitEnviromentValues.h"
 
+#include "CMapData.h"
 #include "CMapOperation.h"
 
 #include <cstring>

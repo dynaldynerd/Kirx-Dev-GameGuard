@@ -5,7 +5,7 @@
 #include "SkillCommon.h"
 
 #pragma pack(push, 1)
-struct __cppobj _skill_fld : _base_fld
+struct  _skill_fld : _base_fld
 {
   int m_nClass;
   int m_nIconIDX;

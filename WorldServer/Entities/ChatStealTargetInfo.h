@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __cppobj __declspec(align(4)) _ChatStealTargetInfo
+struct  __declspec(align(4)) _ChatStealTargetInfo
 {
   unsigned __int8 m_byStealType;
   unsigned int m_dwTargetSerial;

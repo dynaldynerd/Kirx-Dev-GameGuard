@@ -1,17 +1,19 @@
 #pragma once
 
 // IDA-specific annotations used in decompiled headers.
-#ifndef __cppobj
-#define __cppobj
-#endif
+//#ifndef 
+//#define 
+//#endif
 
-#ifndef __unaligned
-#define __unaligned
-#endif
+//#if !defined(_MSC_VER)
+//#ifndef 
+//#define 
+//#endif
+//#endif
 
-#ifndef __bitmask
-#define __bitmask
-#endif
+//#ifndef __bitmask
+//#define __bitmask
+//#endif
 
 #include <cstddef>
 #include <cstring>

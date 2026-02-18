@@ -11,7 +11,7 @@ class CFrameWnd : public CWnd
 {
 };
 
-class __cppobj CMiniFrameWnd : public CFrameWnd
+class  CMiniFrameWnd : public CFrameWnd
 {
 };
 #endif

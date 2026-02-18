@@ -10,7 +10,7 @@ struct _guild_master_advantage_info
   float defence_value;
 };
 
-class __cppobj CGuildMasterEffect
+class  CGuildMasterEffect
 {
 public:
   static CGuildMasterEffect *GetInstance();

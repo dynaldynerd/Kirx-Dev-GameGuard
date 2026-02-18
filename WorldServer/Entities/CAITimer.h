@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1776 */
-class __cppobj CAITimer
+class  CAITimer
 {
 public:
   CAITimer();

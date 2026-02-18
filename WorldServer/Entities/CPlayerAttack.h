@@ -6,7 +6,7 @@
 class CPlayer;
 struct _attack_param;
 
-class __cppobj CPlayerAttack : public CAttack
+class  CPlayerAttack : public CAttack
 {
 public:
   CPlayer *m_pAttPlayer;

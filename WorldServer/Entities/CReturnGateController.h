@@ -7,7 +7,7 @@
 class CReturnGate;
 class CPlayer;
 
-class __cppobj CReturnGateController
+class  CReturnGateController
 {
 public:
   CReturnGateController();

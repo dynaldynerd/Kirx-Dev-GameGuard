@@ -5,7 +5,7 @@
 
 #pragma pack(push, 1)
 
-struct __cppobj _SiegeKitItem_fld : _base_fld
+struct  _SiegeKitItem_fld : _base_fld
 {
   int m_bExist;
   char m_strModel[64];

@@ -1,5 +1,6 @@
 #include "pch.h"
 
+#include "CMainThread.h"
 #include "CRFWorldDatabase.h"
 #include "CMainThread.h"
 #include "CPotionMgr.h"

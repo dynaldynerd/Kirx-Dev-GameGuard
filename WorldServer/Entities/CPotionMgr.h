@@ -10,8 +10,9 @@ class CMapData;
 class CPlayer;
 struct _CheckPotion_fld;
 struct _skill_fld;
+struct _ContPotionData;
 
-class __cppobj CPotionMgr
+class  CPotionMgr
 {
 public:
   CPotionMgr();
@@ -54,7 +55,7 @@ public:
   void Complete_RenameChar_DB_Update(unsigned __int8 byRet, char *p);
   void PushRenamePotionDBLog(char *pInfo);
 
-  struct __cppobj PotionInnerData
+  struct  PotionInnerData
   {
     PotionInnerData();
     ~PotionInnerData();
@@ -63,7 +64,7 @@ public:
     bool m_bPotionDelayIndexList[38];
   };
 
-  struct __declspec(align(8)) __cppobj _ParamData
+  struct __declspec(align(8))  _ParamData
   {
     float fValue;
     _PotionItem_fld *pPotionFld;

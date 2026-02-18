@@ -4,7 +4,7 @@
 #include "CUnmannedTraderGroupDivisionVersionInfo.h"
 #include <vector>
 
-class __cppobj CUnmannedTraderGroupVersionInfo
+class  CUnmannedTraderGroupVersionInfo
 {
 public:
   CUnmannedTraderGroupVersionInfo();

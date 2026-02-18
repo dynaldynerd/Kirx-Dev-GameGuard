@@ -13,7 +13,7 @@ struct _coll_point
   float m_fScrExt[2];
 };
 
-class __cppobj CCollLineDraw
+class  CCollLineDraw
 {
 public:
   CCollLineDraw();

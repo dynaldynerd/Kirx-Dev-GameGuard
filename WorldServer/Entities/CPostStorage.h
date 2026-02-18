@@ -4,7 +4,7 @@
 #include "CPostData.h"
 
 /* 1703 */
-class __cppobj __declspec(align(4)) CPostStorage
+class  __declspec(align(4)) CPostStorage
 {
 public:
   CPostStorage();

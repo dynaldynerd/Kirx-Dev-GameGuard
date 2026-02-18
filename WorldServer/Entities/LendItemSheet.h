@@ -6,7 +6,7 @@
 
 class CPlayer;
 
-class __cppobj LendItemSheet
+class  LendItemSheet
 {
 public:
   struct Cell

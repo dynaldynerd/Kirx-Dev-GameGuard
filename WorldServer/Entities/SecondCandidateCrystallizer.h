@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 #include "ElectProcessor.h"
 
-class __cppobj SecondCandidateCrystallizer : public ElectProcessor
+class  SecondCandidateCrystallizer : public ElectProcessor
 {
 public:
   SecondCandidateCrystallizer();

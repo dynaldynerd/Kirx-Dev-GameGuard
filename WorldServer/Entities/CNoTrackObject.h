@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 #ifndef _MFC_VER
-class __cppobj CNoTrackObject
+class  CNoTrackObject
 {
 public:
   virtual ~CNoTrackObject() = default;

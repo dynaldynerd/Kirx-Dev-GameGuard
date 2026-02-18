@@ -7,7 +7,7 @@
 class CPlayer;
 class CDarkHole;
 
-class __cppobj CDarkHoleDungeonQuest : public CDarkHoleDungeonQuestSetup
+class  CDarkHoleDungeonQuest : public CDarkHoleDungeonQuestSetup
 {
 public:
   CDarkHoleDungeonQuest();

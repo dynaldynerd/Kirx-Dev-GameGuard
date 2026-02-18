@@ -9,7 +9,7 @@ class CMapData;
 class CGameObject;
 struct _NEAR_DATA;
 
-struct __cppobj __declspec(align(8)) _NEAR_DATA
+struct  __declspec(align(8)) _NEAR_DATA
 {
   float fLen;
   CCharacter *pChar;
@@ -19,7 +19,7 @@ struct __cppobj __declspec(align(8)) _NEAR_DATA
   void Init();
 };
 
-class __cppobj CMonsterHelper
+class  CMonsterHelper
 {
 public:
   static bool CheckPreAttackRangeTargetAbleCharacter(CMonster *pMon, CGameObject *pTarget);

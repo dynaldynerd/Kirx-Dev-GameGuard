@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 #pragma pack(push, 1)
-struct __unaligned _moveout_user_result_zone
+struct  _moveout_user_result_zone
 {
   unsigned __int8 byRetCode;
   unsigned int dwIP;

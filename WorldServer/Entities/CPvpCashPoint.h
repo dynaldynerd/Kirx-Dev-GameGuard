@@ -1,11 +1,12 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "CIndexList.h"
 
 struct _PVP_ORDER_VIEW_DB_BASE;
 
 /* 1795 */
-class __cppobj __declspec(align(8)) CPvpCashPoint
+class  __declspec(align(8)) CPvpCashPoint
 {
 public:
   CPvpCashPoint();

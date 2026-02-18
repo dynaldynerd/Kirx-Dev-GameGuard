@@ -46,7 +46,7 @@ struct _qry_case_all_store_limit_item
 struct _StoreList_fld;
 
 /* 5781 */
-class __cppobj CItemStoreManager
+class  CItemStoreManager
 {
 public:
   CItemStoreManager();

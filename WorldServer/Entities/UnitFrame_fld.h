@@ -4,7 +4,7 @@
 #include "base_fld.h"
 
 #pragma pack(push, 1)
-struct __cppobj _UnitFrame_fld : _base_fld
+struct  _UnitFrame_fld : _base_fld
 {
   int m_nFRAType;
   int m_nUnit_HP;

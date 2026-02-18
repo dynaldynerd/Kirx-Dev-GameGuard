@@ -5,7 +5,7 @@
 
 #pragma pack(push, 1)
 
-struct __cppobj _ItemCombine_exp_fld : _base_fld
+struct  _ItemCombine_exp_fld : _base_fld
 {
   struct _material
   {

@@ -4,7 +4,7 @@
 
 #include "CNationSettingData.h"
 
-class __cppobj CNationSettingDataRU : public CNationSettingData
+class  CNationSettingDataRU : public CNationSettingData
 {
 public:
   CNationSettingDataRU();

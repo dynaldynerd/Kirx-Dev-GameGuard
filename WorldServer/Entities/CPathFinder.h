@@ -15,7 +15,7 @@ struct _PATH_NODE
 };
 
 /* 1417 */
-class __cppobj CPathFinder
+class  CPathFinder
 {
 public:
   int mMaxDepth;

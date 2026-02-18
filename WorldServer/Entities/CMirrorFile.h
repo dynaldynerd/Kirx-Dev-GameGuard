@@ -11,7 +11,7 @@ class CFile : public CObject
 {
 };
 
-class __cppobj CMirrorFile : public CFile
+class  CMirrorFile : public CFile
 {
 };
 #endif

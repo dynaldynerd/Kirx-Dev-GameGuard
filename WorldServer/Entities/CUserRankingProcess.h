@@ -7,11 +7,11 @@
 
 #include <vector>
 
-struct __unaligned _PVP_RANK_DATA;
+struct  _PVP_RANK_DATA;
 struct __declspec(align(2)) _PVP_RANK_PACKED_DATA;
 struct _PVP_RANK_REFRESH_USER;
 
-class __cppobj CPvpUserRankingInfo
+class  CPvpUserRankingInfo
 {
 public:
   CPvpUserRankingInfo();
@@ -66,7 +66,7 @@ public:
   std::vector<unsigned long *> m_dwCurrentRaceBossSerial;
 };
 
-class __cppobj CPvpUserRankingTargetUserList
+class  CPvpUserRankingTargetUserList
 {
 public:
   CPvpUserRankingTargetUserList();
@@ -84,7 +84,7 @@ public:
   std::vector<_PVP_RANK_REFRESH_USER *> m_PvpRankRefreshUser;
 };
 
-class __cppobj __declspec(align(8)) CUserRankingProcess
+class  __declspec(align(8)) CUserRankingProcess
 {
 public:
   enum PROC_STATE : int
@@ -209,7 +209,7 @@ public:
 };
 
 #pragma pack(push, 1)
-struct __unaligned _PVP_RANK_DATA
+struct  _PVP_RANK_DATA
 {
   unsigned __int8 byRank;
   unsigned __int8 byLv;

@@ -4,7 +4,7 @@
 
 class CMapData;
 
-struct __cppobj __declspec(align(8)) __TEMP_WAIT_TOWER
+struct  __declspec(align(8)) __TEMP_WAIT_TOWER
 {
   unsigned int dwMasterSerial;
   unsigned __int8 byItemIndex;

@@ -1,17 +1,6 @@
 #pragma once
-
 #include "IdaCompat.h"
-
 #pragma pack(push, 1)
-struct _trunk_change_passwd_result_zocl
-{
-  unsigned __int8 byRetCode;
-
-  _trunk_change_passwd_result_zocl();
-};
+struct _trunk_change_passwd_result_zocl{ unsigned __int8 byRetCode; _trunk_change_passwd_result_zocl();};
 #pragma pack(pop)
-
-inline _trunk_change_passwd_result_zocl::_trunk_change_passwd_result_zocl()
-{
-  memset_0(this, 0, sizeof(*this));
-}
+inline _trunk_change_passwd_result_zocl::_trunk_change_passwd_result_zocl(){ memset_0(this, 0, sizeof(*this));}

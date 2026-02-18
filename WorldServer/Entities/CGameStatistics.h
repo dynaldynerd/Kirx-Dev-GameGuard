@@ -2,10 +2,10 @@
 
 #include "IdaCompat.h"
 
-class __cppobj CGameStatistics
+class  CGameStatistics
 {
 public:
-  struct __cppobj _map
+  struct  _map
   {
     const char *pMapName;
     unsigned int dwMaxHourPerMap_Hour;
@@ -13,7 +13,7 @@ public:
     _map();
   };
 
-  struct __cppobj _DAY
+  struct  _DAY
   {
     _map MaxHourPerMap_Hour[100];
     unsigned int dwEderEnter_Evt;

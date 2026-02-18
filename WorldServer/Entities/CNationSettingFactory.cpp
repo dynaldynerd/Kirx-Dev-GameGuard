@@ -1,5 +1,9 @@
 #include "pch.h"
 
+#include "GlobalObjects.h"
+
+#include "WorldServerUtil.h"
+
 #include "CNationSettingFactory.h"
 #include "CheatCommands.h"
 #include "CNationSettingData.h"

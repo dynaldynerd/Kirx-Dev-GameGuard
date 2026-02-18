@@ -11,7 +11,7 @@
 
 class CMapData;
 
-class __cppobj CMapDisplay : public CDisplay
+class  CMapDisplay : public CDisplay
 {
 public:
   CMapDisplay();

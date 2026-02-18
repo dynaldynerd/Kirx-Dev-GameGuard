@@ -26,12 +26,14 @@ struct _pt_trans_votepaper_zocl
 #pragma pack(push, 1)
 struct _pt_notify_vote_score_zocl
 {
+  #pragma pack(push, 1)
   struct __body
   {
     unsigned __int8 byRank;
     char wszAvatorName[17];
     unsigned __int8 byScoreRate;
   };
+  #pragma pack(pop)
 
   _pt_notify_vote_score_zocl();
   __int64 size() const;
@@ -69,7 +71,7 @@ struct _pt_appoint_inform_request_zocl
 #pragma pack(pop)
 
 #pragma pack(push, 1)
-struct __cppobj _pt_query_appoint_zocl
+struct  _pt_query_appoint_zocl
 {
   unsigned __int8 byClassType;
   unsigned __int8 byRet;

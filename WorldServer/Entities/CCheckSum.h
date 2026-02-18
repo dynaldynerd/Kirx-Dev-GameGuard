@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1280 */
-class __cppobj CCheckSum
+class  CCheckSum
 {
 public:
   CCheckSum();

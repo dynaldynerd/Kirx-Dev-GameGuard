@@ -5,7 +5,7 @@
 class CLogFile;
 class TiXmlElement;
 
-class __cppobj CUnmannedTraderSubClassInfo
+class  CUnmannedTraderSubClassInfo
 {
 public:
   virtual ~CUnmannedTraderSubClassInfo();

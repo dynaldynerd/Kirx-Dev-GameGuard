@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "WorldServerUtil.h"
+
 #include "CMainThread.h"
 #include "CItemBox.h"
 #include "CNetProcess.h"

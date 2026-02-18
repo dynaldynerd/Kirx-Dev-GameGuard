@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 template <typename T>
-class __cppobj CTSingleton
+class  CTSingleton
 {
 public:
   static T *Instance()

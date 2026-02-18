@@ -5,7 +5,7 @@
 class CCharacter;
 
 /* 1638 */
-class __cppobj CAggroNode
+class  CAggroNode
 {
   friend class CMonsterAggroMgr;
   friend class CPlayer;

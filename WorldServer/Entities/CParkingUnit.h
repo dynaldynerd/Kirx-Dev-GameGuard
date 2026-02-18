@@ -7,7 +7,7 @@
 class CPlayer;
 
 /* 2753 */
-struct __cppobj __declspec(align(8)) _parkingunit_create_setdata : _object_create_setdata
+struct  __declspec(align(8)) _parkingunit_create_setdata : _object_create_setdata
 {
   CPlayer *pOwner;
   unsigned __int8 byCreateType;
@@ -18,7 +18,7 @@ struct __cppobj __declspec(align(8)) _parkingunit_create_setdata : _object_creat
 };
 
 /* 1773 */
-class __cppobj __declspec(align(8)) CParkingUnit : public CGameObject
+class  __declspec(align(8)) CParkingUnit : public CGameObject
 {
 public:
   static unsigned int s_dwSerialCounter;

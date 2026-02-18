@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-class __cppobj cStaticMember_Player
+class  cStaticMember_Player
 {
   int _nMaxLv;
   long double *_pLimExp;

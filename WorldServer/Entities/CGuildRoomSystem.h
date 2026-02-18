@@ -9,7 +9,7 @@
 class CMapData;
 struct tagTIMESTAMP_STRUCT;
 
-class __cppobj CGuildRoomSystem
+class  CGuildRoomSystem
 {
 public:
   CGuildRoomSystem();

@@ -15,7 +15,7 @@ struct _mastery_lim_data
   int m_nBnsForceMastery[24];
 };
 
-struct __cppobj _class_fld : _base_fld
+struct  _class_fld : _base_fld
 {
   struct _bns_item
   {

@@ -7,7 +7,7 @@
 class CMonster;
 
 /* 3483 */
-class __cppobj CMonsterAttack : public CAttack
+class  CMonsterAttack : public CAttack
 {
 public:
   CMonster *m_pAttMonster;

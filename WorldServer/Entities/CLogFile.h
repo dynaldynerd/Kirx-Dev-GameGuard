@@ -6,7 +6,7 @@
 #include "CNetCriticalSection.h"
 
 /* 1132 */
-class __cppobj __declspec(align(8)) CLogFile
+class  __declspec(align(8)) CLogFile
 {
 public:
   CLogFile();

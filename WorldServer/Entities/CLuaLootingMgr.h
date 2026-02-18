@@ -8,7 +8,7 @@
 class CMapData;
 struct _base_fld;
 
-class __cppobj CLuaLooting_Novus_Item
+class  CLuaLooting_Novus_Item
 {
 public:
   class _State
@@ -34,7 +34,7 @@ public:
   unsigned int m_dwLootCount;
 };
 
-class __cppobj CLuaLootingMgr
+class  CLuaLootingMgr
 {
 public:
   static CLuaLootingMgr *Instance();

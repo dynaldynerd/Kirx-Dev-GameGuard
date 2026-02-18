@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 #pragma pack(push, 1)
-struct __unaligned _cancel_raceboss_msg_result_zoct
+struct  _cancel_raceboss_msg_result_zoct
 {
   unsigned __int8 byRet;
   unsigned __int8 byRaceCode;

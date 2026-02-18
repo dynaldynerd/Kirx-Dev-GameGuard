@@ -16,7 +16,7 @@ struct _unmannedtrader_re_regist_request_clzo;
 struct _unmannedtrader_search_list_request_clzo;
 struct _TRADE_DB_BASE;
 
-class __cppobj CUnmannedTraderController
+class  CUnmannedTraderController
 {
 public:
   CUnmannedTraderController();

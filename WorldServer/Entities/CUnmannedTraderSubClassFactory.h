@@ -5,7 +5,7 @@
 
 class CUnmannedTraderSubClassInfo;
 
-class __cppobj CUnmannedTraderSubClassFactory
+class  CUnmannedTraderSubClassFactory
 {
 public:
   CUnmannedTraderSubClassFactory();

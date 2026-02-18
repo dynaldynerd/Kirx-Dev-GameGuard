@@ -4,7 +4,7 @@
 
 struct _mon_block;
 
-struct __cppobj MonsterSetInfoData
+struct  MonsterSetInfoData
 {
   MonsterSetInfoData();
 

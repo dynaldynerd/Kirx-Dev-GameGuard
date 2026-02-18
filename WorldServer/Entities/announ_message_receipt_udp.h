@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 #pragma pack(push, 1)
-struct __unaligned _announ_message_receipt_udp
+struct  _announ_message_receipt_udp
 {
   unsigned __int8 byMessageType;
   unsigned __int8 bySenderRace;

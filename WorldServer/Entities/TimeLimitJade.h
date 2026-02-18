@@ -6,7 +6,7 @@
 
 class CPlayer;
 
-class __cppobj TimeLimitJade
+class  TimeLimitJade
 {
 public:
   struct WaitCell

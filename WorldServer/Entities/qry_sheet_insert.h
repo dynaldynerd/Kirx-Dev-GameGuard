@@ -4,7 +4,7 @@
 #include "CMainThread.h"
 
 #pragma pack(push, 1)
-struct __cppobj _qry_sheet_insert
+struct  _qry_sheet_insert
 {
   unsigned int dwAccountSerial;
   char szAccountID[13];

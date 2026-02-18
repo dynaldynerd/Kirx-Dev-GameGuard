@@ -8,7 +8,7 @@ struct _sf_continous;
 struct _skill_fld;
 
 /* 1763 */
-class __cppobj CEquipItemSFAgent
+class  CEquipItemSFAgent
 {
 public:
   CEquipItemSFAgent();

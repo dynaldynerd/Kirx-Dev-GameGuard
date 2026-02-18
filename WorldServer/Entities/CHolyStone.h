@@ -9,7 +9,7 @@ struct _monster_fld;
 struct _dummy_position;
 class CMapData;
 
-struct __cppobj __declspec(align(8)) _stone_create_setdata : _character_create_setdata
+struct  __declspec(align(8)) _stone_create_setdata : _character_create_setdata
 {
   _dummy_position *pDumPosition;
   unsigned char byMasterRace;
@@ -21,7 +21,7 @@ struct __cppobj __declspec(align(8)) _stone_create_setdata : _character_create_s
   }
 };
 
-class __cppobj CHolyStone : public CCharacter
+class  CHolyStone : public CCharacter
 {
 public:
   CHolyStone();

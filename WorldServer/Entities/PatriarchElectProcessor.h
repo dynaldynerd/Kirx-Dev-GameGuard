@@ -6,7 +6,7 @@
 
 struct _DB_QRY_SYN_DATA;
 
-class __cppobj PatriarchElectProcessor
+class  PatriarchElectProcessor
 {
 public:
   static PatriarchElectProcessor *Instance();

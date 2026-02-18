@@ -7,14 +7,14 @@
 
 class CPlayer;
 
-struct __cppobj __declspec(align(8)) GMRequestData
+struct  __declspec(align(8)) GMRequestData
 {
   unsigned int m_dwPlayerSerial;
   unsigned int m_dwCallTimer;
   char m_wszUserName[17];
 };
 
-class __cppobj GMCallMgr
+class  GMCallMgr
 {
 public:
   char SendResponseGMCall(CPlayer *pOne, int bCallState);

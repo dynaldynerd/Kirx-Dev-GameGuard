@@ -5,7 +5,7 @@
 class CLuaCommand;
 struct lua_State;
 
-class __cppobj __declspec(align(8)) CLuaScript
+class  __declspec(align(8)) CLuaScript
 {
 public:
   CLuaScript();

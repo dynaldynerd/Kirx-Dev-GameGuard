@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __cppobj _qry_case_insert_orelog
+struct  _qry_case_insert_orelog
 {
   unsigned __int8 byType;
   char szLogDate[16];

@@ -2,8 +2,11 @@
 
 #include "IdaCompat.h"
 
+struct _ANI_CAMERA;
+struct _ANI_OBJECT;
+
 /* 1427 */
-class __cppobj CAniCamera
+class  CAniCamera
 {
 public:
   CAniCamera();

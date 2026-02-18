@@ -4,7 +4,7 @@
 
 #include <Windows.h>
 
-class __cppobj CSurface
+class  CSurface
 {
 public:
   CSurface();

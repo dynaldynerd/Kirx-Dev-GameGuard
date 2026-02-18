@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-class __cppobj CAsyncLogBuffer
+class  CAsyncLogBuffer
 {
 public:
   enum ALB_STATE

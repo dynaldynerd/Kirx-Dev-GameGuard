@@ -36,7 +36,7 @@ struct _quest_fail_condition
   char m_strFailCode[64];
 };
 
-struct __cppobj _Quest_fld : _base_fld
+struct  _Quest_fld : _base_fld
 {
   int m_nLimLv;
   int m_nQuestType;

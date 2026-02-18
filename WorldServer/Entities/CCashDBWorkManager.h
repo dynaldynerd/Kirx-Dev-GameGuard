@@ -6,7 +6,7 @@
 
 class CashDbWorker;
 
-class __cppobj CCashDBWorkManager : public CTSingleton<CCashDBWorkManager>
+class  CCashDBWorkManager : public CTSingleton<CCashDBWorkManager>
 {
 public:
   CCashDBWorkManager();

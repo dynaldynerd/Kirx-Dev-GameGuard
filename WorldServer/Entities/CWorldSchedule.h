@@ -6,7 +6,7 @@
 
 struct _WorldSchedule_fld;
 
-class __cppobj CWorldSchedule
+class  CWorldSchedule
 {
 public:
   CWorldSchedule();

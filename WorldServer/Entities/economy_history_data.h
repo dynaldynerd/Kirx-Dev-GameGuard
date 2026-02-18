@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __cppobj _economy_history_data
+struct  _economy_history_data
 {
   long double dTradeGold[3];
   long double dTradeDalant[3];

@@ -8,9 +8,9 @@
 
 class CPlayer;
 
-struct __cppobj _talk_crystal_matrial_combine_node
+struct  _talk_crystal_matrial_combine_node
 {
-  struct __cppobj _matrialinfo
+  struct  _matrialinfo
   {
     _STORAGE_LIST::_db_con *m_pMatrial;
     unsigned __int8 m_byConsume;
@@ -43,7 +43,7 @@ struct __cppobj _talk_crystal_matrial_combine_node
   int GetRequiredSlotCount();
 };
 
-class __cppobj CTalkCrystalCombineManager
+class  CTalkCrystalCombineManager
 {
 public:
   static CTalkCrystalCombineManager *Instance();

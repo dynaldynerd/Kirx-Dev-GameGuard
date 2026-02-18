@@ -3,8 +3,9 @@
 #include "IdaCompat.h"
 
 class CItemStore;
+class CMapData;
 
-class __cppobj CMapItemStoreList
+class  CMapItemStoreList
 {
 public:
   CMapItemStoreList();

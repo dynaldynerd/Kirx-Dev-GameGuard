@@ -8,6 +8,7 @@
 #include "CBsp.h"
 #include "CObjectList.h"
 #include "CMonster.h"
+#include "CAnimus.h"
 #include "pnt_rect.h"
 #include "CMainThread.h"
 #include "CItemStore.h"
@@ -871,7 +872,7 @@ void CPlayer::Loop()
 
   const unsigned int currentTime = timeGetTime();
 
-  if (CCharacter::GetStealth(true) && m_pRecalledAnimusChar != nullptr)
+  if (CCharacter::GetStealth(true) && IsRecallAnimus())
   {
     if (!g_Main.IsReleaseServiceMode() || m_byUserDgr)
     {
@@ -1201,6 +1202,11 @@ if (m_bCorpse || m_bMapLoading || CGameObject::GetCurSecNum() == static_cast<uns
   if (bCrt)
   {
     SetStun(true);
+  }
+
+  if (pDst && m_pRecalledAnimusChar && !pDst->GetStealth(true))
+  {
+    m_pRecalledAnimusChar->MasterBeAttacked_MasterInform(pDst);
   }
 
   m_nLastBeatenPart = 0;

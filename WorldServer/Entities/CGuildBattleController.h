@@ -5,7 +5,7 @@
 class CGuild;
 class CPlayer;
 
-class __cppobj CGuildBattleController
+class  CGuildBattleController
 {
 public:
   CGuildBattleController();

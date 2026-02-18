@@ -1,5 +1,6 @@
 #include "pch.h"
 
+#include "CMainThread.h"
 #include "CExtDummy.h"
 
 #include <cstdio>

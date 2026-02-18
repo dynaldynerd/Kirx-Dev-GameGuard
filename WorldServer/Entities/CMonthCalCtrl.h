@@ -7,7 +7,7 @@ class CWnd
 {
 };
 
-class __cppobj CMonthCalCtrl : public CWnd
+class  CMonthCalCtrl : public CWnd
 {
 };
 #endif

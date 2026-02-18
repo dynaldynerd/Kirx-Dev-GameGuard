@@ -6,7 +6,7 @@
 
 class CPlayer;
 
-class __cppobj __declspec(align(8)) CChatStealSystem
+class  __declspec(align(8)) CChatStealSystem
 {
 public:
   CChatStealSystem();

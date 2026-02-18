@@ -1,9 +1,10 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "CMsgData.h"
 
 /* 1269 */
-class __cppobj CMsgProcess : public CMsgData
+class  CMsgProcess : public CMsgData
 {
 public:
   CMsgProcess();

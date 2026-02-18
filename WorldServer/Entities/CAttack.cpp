@@ -76,6 +76,80 @@ SKILL::SKILL()
   m_BefTime = 0;
 }
 
+void SKILL::Init(
+  int type,
+  int dmg,
+  int minprob,
+  int maxprob,
+  unsigned int len,
+  unsigned int castdelay,
+  unsigned int delay,
+  int el)
+{
+  (void)type;
+  m_bLoad = 1;
+  m_Type = 0;
+  m_Element = el;
+  m_StdDmg = dmg;
+  m_IsCritical = 0;
+
+  const int minStdDmg = static_cast<int>(static_cast<float>(m_StdDmg) * 0.89999998f);
+  if (m_StdDmg - minStdDmg <= 0)
+  {
+    m_MinDmg = 0;
+  }
+  else
+  {
+    m_MinDmg = rand() % (m_StdDmg - minStdDmg) + minStdDmg;
+  }
+  m_MaxDmg = 2 * m_StdDmg - m_MinDmg;
+
+  const float damageRatio = static_cast<float>(m_MaxDmg + 125) / static_cast<float>(m_MaxDmg + 50);
+  m_CritDmg = static_cast<int>(static_cast<float>(m_MaxDmg) * damageRatio + 0.5f);
+  m_MinProb = minprob;
+  m_MaxProb = maxprob;
+  m_Len = len;
+  m_CastDelay = castdelay;
+  m_Delay = delay;
+  m_Active = 1;
+  m_BefTime = 0;
+}
+
+__int64 SKILL::GetDmg(float fDamRate)
+{
+  int stdDmg = static_cast<int>(static_cast<float>(m_StdDmg) * fDamRate);
+  const int minStdDmg = static_cast<int>(static_cast<float>(stdDmg) * 0.89999998f);
+
+  int minDmg = 0;
+  if (stdDmg - minStdDmg > 0)
+  {
+    minDmg = rand() % (stdDmg - minStdDmg) + minStdDmg;
+  }
+
+  const int maxDmg = 2 * stdDmg - minDmg;
+  const float damageRatio = static_cast<float>(maxDmg + 125) / static_cast<float>(maxDmg + 50);
+  const int criticalDmg = static_cast<int>(static_cast<float>(maxDmg) * damageRatio + 0.5f);
+
+  m_IsCritical = 0;
+  if (stdDmg == minDmg || maxDmg == stdDmg)
+  {
+    return 0;
+  }
+
+  const float roll = static_cast<float>(rand() % 100);
+  if (static_cast<float>(m_MinProb) >= roll)
+  {
+    return static_cast<unsigned int>(static_cast<int>(static_cast<float>(minDmg) + static_cast<float>(rand() % (stdDmg - minDmg))));
+  }
+  if (static_cast<float>(m_MinProb + m_MaxProb) >= roll)
+  {
+    return static_cast<unsigned int>(static_cast<int>(static_cast<float>(stdDmg) + static_cast<float>(rand() % (maxDmg - stdDmg))));
+  }
+
+  m_IsCritical = 1;
+  return static_cast<unsigned int>(criticalDmg);
+}
+
 CAttack::CAttack(CCharacter *pThis)
   : m_pp(&s_DefParam),
     m_pAttChar(pThis),
@@ -223,27 +297,27 @@ void CAttack::AttackGen(_attack_param *pParam, bool bMustMiss, bool bUseEffBulle
 
   if (m_pAttChar->m_ObjID.m_byID == 3)
   {
-    auto *tower = reinterpret_cast<CGuardTower *>(m_pAttChar);
-    if (tower && tower->m_pMasterTwr)
+    auto *animus = reinterpret_cast<CAnimus *>(m_pAttChar);
+    if (animus && animus->m_pMaster)
     {
-      const float attackFc0 = GetAttackFC(tower->m_pMasterTwr, 2u, true, false);
-      const float effRate0 = tower->m_pMasterTwr->m_EP.GetEff_Rate(57);
+      const float attackFc0 = GetAttackFC(animus->m_pMaster, 2u, true, false);
+      const float effRate0 = animus->m_pMaster->m_EP.GetEff_Rate(57);
       const float add0 = attackFc0 * (effRate0 - 1.0f);
 
-      const float attackFc1 = GetAttackFC(tower->m_pMasterTwr, 0, true, false);
-      const float effRate1 = tower->m_pMasterTwr->m_EP.GetEff_Rate(58);
+      const float attackFc1 = GetAttackFC(animus->m_pMaster, 0, true, false);
+      const float effRate1 = animus->m_pMaster->m_EP.GetEff_Rate(58);
       const float add1 = attackFc1 * (effRate1 - 1.0f);
 
-      const float attackFc2 = GetAttackFC(tower->m_pMasterTwr, 0, false, false);
-      const float effRate2 = tower->m_pMasterTwr->m_EP.GetEff_Rate(59);
+      const float attackFc2 = GetAttackFC(animus->m_pMaster, 0, false, false);
+      const float effRate2 = animus->m_pMaster->m_EP.GetEff_Rate(59);
       const float add2 = attackFc2 * (effRate2 - 1.0f);
 
-      const float attackFc3 = GetAttackFC(tower->m_pMasterTwr, 1u, true, false);
-      const float effRate3 = tower->m_pMasterTwr->m_EP.GetEff_Rate(60);
+      const float attackFc3 = GetAttackFC(animus->m_pMaster, 1u, true, false);
+      const float effRate3 = animus->m_pMaster->m_EP.GetEff_Rate(60);
       const float add3 = attackFc3 * (effRate3 - 1.0f);
 
-      const float attackFc4 = GetAttackFC(tower->m_pMasterTwr, 1u, false, false);
-      const float effRate4 = tower->m_pMasterTwr->m_EP.GetEff_Rate(61);
+      const float attackFc4 = GetAttackFC(animus->m_pMaster, 1u, false, false);
+      const float effRate4 = animus->m_pMaster->m_EP.GetEff_Rate(61);
       const float add4 = attackFc4 * (effRate4 - 1.0f);
 
       normalAttack = (((normalAttack + add0) + add1) + add2) + add3 + add4;

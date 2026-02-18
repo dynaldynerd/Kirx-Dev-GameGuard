@@ -6,7 +6,7 @@ struct _pvppoint_guild_rank_info;
 struct _weeklyguildrank_owner_info;
 class CGuild;
 
-class __cppobj __declspec(align(8)) CWeeklyGuildRankOwnerInfo
+class  __declspec(align(8)) CWeeklyGuildRankOwnerInfo
 {
 public:
   CWeeklyGuildRankOwnerInfo();
@@ -23,7 +23,7 @@ public:
   unsigned int m_dwSumLv;
 };
 
-class __cppobj CWeeklyGuildRankRecord
+class  CWeeklyGuildRankRecord
 {
 public:
   CWeeklyGuildRankRecord();
@@ -39,7 +39,7 @@ public:
   long double m_dGuildBattlePvpPoint;
 };
 
-class __cppobj CWeeklyGuildRankInfo
+class  CWeeklyGuildRankInfo
 {
 public:
   CWeeklyGuildRankInfo();
@@ -78,8 +78,9 @@ public:
   unsigned int m_dwMaxCnt;
   CWeeklyGuildRankRecord **m_ppkInfo;
 #pragma pack(push, 1)
-  struct __unaligned __declspec(align(1)) _weekly_guild_rank_result_zocl
+  struct  _weekly_guild_rank_result_zocl
   {
+    #pragma pack(push, 1)
     struct _list
     {
       unsigned __int8 byRank;
@@ -87,6 +88,7 @@ public:
       unsigned __int8 byGrade;
       unsigned int dwPvpPoint;
     };
+    #pragma pack(pop)
 
     unsigned int dwVer;
     unsigned __int8 byRace;

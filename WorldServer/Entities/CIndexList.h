@@ -4,7 +4,7 @@
 #include "CSyncCS.h"
 
 /* 1689 */
-class __cppobj __declspec(align(8)) CIndexList
+class  __declspec(align(8)) CIndexList
 {
 public:
   struct _index_node

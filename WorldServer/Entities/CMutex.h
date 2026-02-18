@@ -7,7 +7,7 @@ class CSyncObject
 {
 };
 
-class __cppobj CMutex : public CSyncObject
+class  CMutex : public CSyncObject
 {
 };
 #endif

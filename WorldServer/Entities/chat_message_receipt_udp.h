@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 #pragma pack(push, 1)
-struct __unaligned _chat_message_receipt_udp
+struct  _chat_message_receipt_udp
 {
   unsigned __int8 byMessageType;
   unsigned int dwSenderSerial;

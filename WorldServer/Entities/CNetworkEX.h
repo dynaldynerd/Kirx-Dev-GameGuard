@@ -8,7 +8,7 @@ struct _CLID;
 struct _STORAGE_POS_INDIV;
 struct _CHRID;
 
-class __cppobj __declspec(align(8)) CNetWorking
+class  __declspec(align(8)) CNetWorking
 {
 public:
   CNetWorking();
@@ -45,7 +45,7 @@ public:
   char m_szLogPath[128];
 };
 
-class __cppobj __declspec(align(8)) CNetworkEX : public CNetWorking
+class  __declspec(align(8)) CNetworkEX : public CNetWorking
 {
 public:
   unsigned int dwMonsterPosMiss;

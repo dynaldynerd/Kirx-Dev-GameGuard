@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "WorldServerUtil.h"
+
 #include "CUserDB.h"
 #include "CPlayer.h"
 #include "CLogFile.h"

@@ -6,7 +6,7 @@
 
 class CRusiaBillingMgr;
 
-class __cppobj CCashDbWorkerRU : public CashDbWorker
+class  CCashDbWorkerRU : public CashDbWorker
 {
 public:
   CCashDbWorkerRU();

@@ -5,7 +5,7 @@
 class CRFWorldDatabase;
 struct _AVATOR_DATA;
 
-class __cppobj CCheckSumCharacAccountTrunkData
+class  CCheckSumCharacAccountTrunkData
 {
 public:
   CCheckSumCharacAccountTrunkData(unsigned int dwSerial, unsigned int dwAccountSerial, unsigned __int8 byRace);

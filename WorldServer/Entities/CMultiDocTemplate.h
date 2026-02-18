@@ -15,7 +15,7 @@ class CDocTemplate : public CCmdTarget
 {
 };
 
-class __cppobj CMultiDocTemplate : public CDocTemplate
+class  CMultiDocTemplate : public CDocTemplate
 {
 };
 #endif

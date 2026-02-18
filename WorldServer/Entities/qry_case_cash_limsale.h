@@ -15,7 +15,7 @@ struct _db_cash_limited_sale
   _db_cash_limited_info List[20];
 };
 
-struct __cppobj qry_case_cash_limsale
+struct  qry_case_cash_limsale
 {
   _db_cash_limited_sale NewSale;
   _db_cash_limited_sale OldSale;

@@ -4,7 +4,7 @@
 
 class TaskPool;
 
-class __cppobj Worker
+class  Worker
 {
 public:
   Worker(const char *pWorkerName, int nMaxTskNum, int nMaxTskBufSize);

@@ -4,7 +4,7 @@
 #include "CMainThread.h"
 
 #pragma pack(push, 1)
-struct __unaligned __declspec(align(2)) _enter_world_request_wrac
+struct  __declspec(align(2)) _enter_world_request_wrac
 {
   _GLBID gidGlobal;
   _CLID idLocal;

@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __cppobj AggroCaculateData
+struct  AggroCaculateData
 {
   struct SpecialSkillValue
   {

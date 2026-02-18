@@ -4,7 +4,7 @@
 #include "CNetIndexList.h"
 #include "Task.h"
 
-class __cppobj TaskPool
+class  TaskPool
 {
 public:
   TaskPool();

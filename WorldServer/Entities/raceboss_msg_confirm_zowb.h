@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 #pragma pack(push, 1)
-struct __unaligned _raceboss_msg_confirm_zowb
+struct  _raceboss_msg_confirm_zowb
 {
   int nCountIndex;
   int nWorldCode;

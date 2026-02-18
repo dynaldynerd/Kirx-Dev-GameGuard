@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-class __cppobj CCashDbWorkerKR
+class  CCashDbWorkerKR
 {
 };
 

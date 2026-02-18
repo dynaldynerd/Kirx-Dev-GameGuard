@@ -5,7 +5,7 @@
 
 class CPlayer;
 
-class __cppobj CRaceBuffInfoByHolyQuest
+class  CRaceBuffInfoByHolyQuest
 {
 public:
 

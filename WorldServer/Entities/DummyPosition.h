@@ -7,7 +7,7 @@
 
 #pragma pack(push, 1)
 
-struct __cppobj __declspec(align(4)) _dummy_position
+struct  __declspec(align(4)) _dummy_position
 {
   _dummy_position()
   {
@@ -36,7 +36,7 @@ struct __cppobj __declspec(align(4)) _dummy_position
 struct _base_fld;
 
 #pragma pack(push, 8)
-struct __cppobj _store_dummy
+struct  _store_dummy
 {
   int m_nStoreType;
   _base_fld *m_pStoreRec;

@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1421 */
-class __cppobj CAlpha
+class  CAlpha
 {
   unsigned int mAlphaFaceCnt;
   unsigned int *mAlphaFace;

@@ -1,11 +1,12 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "CRecordData.h"
 
 struct _ItemUpgrade_fld;
 
 /* 1294 */
-class __cppobj CItemUpgradeTable
+class  CItemUpgradeTable
 {
 public:
   CItemUpgradeTable();

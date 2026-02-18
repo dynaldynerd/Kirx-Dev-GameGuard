@@ -7,7 +7,7 @@
 
 class CPlayer;
 
-struct __cppobj _be_damaged_player
+struct  _be_damaged_player
 {
   CCharacter *m_pChar;
   unsigned int m_dwDamCharSerial;
@@ -18,7 +18,7 @@ struct __cppobj _be_damaged_player
 
 #ifndef BE_DAMAGED_CHAR_DEFINED
 #define BE_DAMAGED_CHAR_DEFINED
-struct __cppobj __declspec(align(8)) _be_damaged_char
+struct  __declspec(align(8)) _be_damaged_char
 {
   CCharacter *m_pChar;
   int m_nDamage;
@@ -29,7 +29,7 @@ struct __cppobj __declspec(align(8)) _be_damaged_char
 };
 #endif
 
-class __cppobj CNuclearBomb : public CCharacter
+class  CNuclearBomb : public CCharacter
 {
 public:
   CNuclearBomb();

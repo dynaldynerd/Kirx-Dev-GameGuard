@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 #include "CMainThread.h"
 
-struct __cppobj _qry_case_contsave
+struct  _qry_case_contsave
 {
   unsigned int dwAvatorSerial;
   _AVATOR_DATA NewData;

@@ -69,6 +69,7 @@ struct __declspec(align(8)) _qry_case_addguildbattleschedule
 #pragma pack(push, 1)
 struct _possible_battle_guild_list_result_zocl
 {
+  #pragma pack(push, 1)
   struct __list
   {
     char wszName[17];
@@ -76,6 +77,7 @@ struct _possible_battle_guild_list_result_zocl
     unsigned __int8 byRace;
     unsigned int dwGuildSerial;
   };
+  #pragma pack(pop)
 
   unsigned __int8 byPage;
   unsigned __int8 byMaxPage;
@@ -134,6 +136,7 @@ struct _guild_battle_rank_list_result_zocl
 #pragma pack(push, 1)
 struct _guild_battle_reserved_schedule_result_zocl
 {
+  #pragma pack(push, 1)
   struct __list
   {
     char wsz1PName[17];
@@ -145,6 +148,7 @@ struct _guild_battle_reserved_schedule_result_zocl
     unsigned __int8 byEndHour;
     unsigned __int8 byEndMin;
   };
+  #pragma pack(pop)
 
   unsigned int dwVer;
   unsigned __int8 byToDay;

@@ -9,7 +9,7 @@
 class CPartyPlayer;
 struct _MASTERY_PARAM;
 
-class __cppobj CMgrAvatorLvHistory
+class  CMgrAvatorLvHistory
 {
 public:
   CMgrAvatorLvHistory();
@@ -21,17 +21,17 @@ public:
     int nLen;
   };
 
-  struct __cppobj __LOG_DATA_2K : public __LOG_DATA
+  struct  __LOG_DATA_2K : public __LOG_DATA
   {
     char sData[2000];
   };
 
-  struct __cppobj __LOG_DATA_1K : public __LOG_DATA
+  struct  __LOG_DATA_1K : public __LOG_DATA
   {
     char sData[1000];
   };
 
-  struct __cppobj __LOG_DATA_200 : public __LOG_DATA
+  struct  __LOG_DATA_200 : public __LOG_DATA
   {
     char sData[200];
   };
@@ -73,6 +73,11 @@ public:
     char *pszFileName,
     unsigned __int8 byLogType,
     char *pszTitle);
+  void down_animus_exp(
+    unsigned __int64 dw64OldExp,
+    unsigned __int64 dw64NewExp,
+    __int64 i64Alter,
+    char *pszFileName);
   void upgrade_lv(int n, unsigned int dwLv, int nGrade, int *pnMaxPoint, char *pszFileName);
   void downgrade_lv(int n, unsigned int dwLv, int nGrade, int *pnMaxPoint, char *pszFileName);
   void WriteFile(char *pszFileName, char *pszLog);

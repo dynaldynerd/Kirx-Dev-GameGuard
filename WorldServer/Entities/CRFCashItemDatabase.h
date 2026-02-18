@@ -3,7 +3,7 @@
 #include "CRFNewDatabase.h"
 #include "param_cash.h"
 
-class __cppobj CRFCashItemDatabase : public CRFNewDatabase
+class  CRFCashItemDatabase : public CRFNewDatabase
 {
 public:
   CRFCashItemDatabase();

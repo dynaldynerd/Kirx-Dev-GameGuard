@@ -14,7 +14,7 @@ struct _NameTxt_fld;
 struct _CashShop_str_fld;
 struct _MSG_HEADER;
 
-class __cppobj CNationSettingManager : public CTSingleton<CNationSettingManager>
+class  CNationSettingManager : public CTSingleton<CNationSettingManager>
 {
 public:
   CNationSettingManager();

@@ -4,7 +4,7 @@
 #include "base_fld.h"
 
 #pragma pack(push, 1)
-struct __cppobj _CashShop_str_fld : _base_fld
+struct  _CashShop_str_fld : _base_fld
 {
   int m_nkor_Price;
   int m_nbra_Price;

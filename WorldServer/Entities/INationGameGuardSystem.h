@@ -4,7 +4,7 @@
 
 struct _MSG_HEADER;
 
-class __cppobj INationGameGuardSystem
+class  INationGameGuardSystem
 {
 public:
   virtual ~INationGameGuardSystem() = default;

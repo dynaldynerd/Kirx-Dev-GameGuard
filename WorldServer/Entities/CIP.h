@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-class __cppobj CIP
+class  CIP
 {
 public:
   virtual ~CIP() = default;

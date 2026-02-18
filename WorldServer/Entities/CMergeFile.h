@@ -2,6 +2,8 @@
 
 #include "IdaCompat.h"
 
+struct _MERGE_FILE;
+
 /* 1401 */
 class CMergeFile
 {

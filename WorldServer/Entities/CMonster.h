@@ -19,7 +19,7 @@ struct _force_fld;
 struct _event_set;
 
 /* 1635 */
-class __cppobj CMonster : public CCharacter
+class  CMonster : public CCharacter
 {
 public:
   CMonster();

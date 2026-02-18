@@ -5,7 +5,7 @@
 struct _map_fld;
 
 /* 1464 */
-class __cppobj __declspec(align(8)) CMapDataTable
+class  __declspec(align(8)) CMapDataTable
 {
 public:
   bool ReadScript(const char *szFileName);

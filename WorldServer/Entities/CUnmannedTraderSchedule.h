@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-class __cppobj CUnmannedTraderSchedule
+class  CUnmannedTraderSchedule
 {
 public:
   enum class STATE : int

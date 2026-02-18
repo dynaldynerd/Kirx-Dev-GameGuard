@@ -6,7 +6,7 @@
 
 struct MiningTicket;
 
-class __cppobj __declspec(align(8)) CMoveMapLimitRightPortal : public CMoveMapLimitRight
+class  __declspec(align(8)) CMoveMapLimitRightPortal : public CMoveMapLimitRight
 {
 public:
   CMoveMapLimitRightPortal(int iType);

@@ -12,7 +12,7 @@ namespace CryptoPP
   class AutoSeededRandomPool;
 }
 
-class __cppobj CCryptor : public CTSingleton<CCryptor>
+class  CCryptor : public CTSingleton<CCryptor>
 {
 public:
   CCryptor();

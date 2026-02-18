@@ -9,7 +9,7 @@ class CRFWorldDatabase;
 class CGuild;
 class CPlayer;
 
-class __cppobj CWeeklyGuildRankManager
+class  CWeeklyGuildRankManager
 {
 public:
   CWeeklyGuildRankManager();

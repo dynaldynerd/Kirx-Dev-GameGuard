@@ -5,7 +5,7 @@
 #include "CUnmannedTraderGroupIDInfo.h"
 #include "CUnmannedTraderGroupVersionInfo.h"
 
-class __cppobj CUnmannedTraderGroupItemInfoTable
+class  CUnmannedTraderGroupItemInfoTable
 {
 public:
   static CUnmannedTraderGroupItemInfoTable *Instance();

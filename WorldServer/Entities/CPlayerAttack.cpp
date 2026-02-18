@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "WorldServerUtil.h"
+
 #include "CPlayerAttack.h"
 #include "CHolyStoneSystem.h"
 #include "CLogFile.h"

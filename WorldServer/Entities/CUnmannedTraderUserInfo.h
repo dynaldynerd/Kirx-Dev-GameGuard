@@ -16,7 +16,7 @@ struct _unmannedtrader_re_regist_request_clzo;
 struct _unmannedtrader_search_list_request_clzo;
 struct _qry_case_unmandtrader_log_in_proc_update_complete;
 
-class __cppobj CUnmannedTraderUserInfo
+class  CUnmannedTraderUserInfo
 {
 public:
   enum class LOG_IN_STATE : int

@@ -7,7 +7,7 @@
 class CPlayer;
 class CMapData;
 
-class __cppobj CReturnGate : public CGameObject
+class  CReturnGate : public CGameObject
 {
 public:
   CReturnGate(_object_id *pID);

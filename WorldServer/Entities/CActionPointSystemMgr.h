@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __cppobj __declspec(align(4)) _action_point_system_ini
+struct  __declspec(align(4)) _action_point_system_ini
 {
   bool m_bUse_event;
   bool m_bReset;
@@ -17,7 +17,7 @@ struct __cppobj __declspec(align(4)) _action_point_system_ini
   _action_point_system_ini();
 };
 
-class __cppobj CActionPointSystemMgr
+class  CActionPointSystemMgr
 {
 public:
   CActionPointSystemMgr();

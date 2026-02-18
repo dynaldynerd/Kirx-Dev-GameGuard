@@ -1,5 +1,9 @@
 #include "pch.h"
 
+#include "base_fld.h"
+
+#include "GlobalObjects.h"
+
 #include "CPvpCashMng.h"
 
 #include "CRecordData.h"

@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __cppobj __declspec(align(4)) _update_candidate_wincount_packing
+struct  __declspec(align(4)) _update_candidate_wincount_packing
 {
   unsigned __int8 byRace;
   unsigned int dwWinCnt;

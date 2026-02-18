@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "WorldServerUtil.h"
+
 #include "CMonsterHierarchy.h"
 #include "CMonster.h"
 #include "ObjectCreateSetData.h"

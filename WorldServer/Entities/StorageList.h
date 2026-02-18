@@ -4,9 +4,9 @@
 
 /* 1535 */
 #pragma pack(push, 1)
-struct __cppobj __unaligned _STORAGE_LIST
+struct   _STORAGE_LIST
 {
-  struct __cppobj __unaligned __declspec(align(1)) _storage_con
+  struct   _storage_con
   {
     unsigned __int8 m_bLoad;
     unsigned __int8 m_byTableCode;
@@ -33,7 +33,7 @@ struct __cppobj __unaligned _STORAGE_LIST
     }
   };
 
-  struct __cppobj __unaligned __declspec(align(2)) _db_con : _storage_con
+  struct   __declspec(align(2)) _db_con : _storage_con
   {
     _STORAGE_LIST *m_pInList;
     unsigned __int8 m_byStorageIndex;

@@ -7,6 +7,7 @@ struct _guild_honor_set_request_clzo;
 #pragma pack(push, 1)
 struct _guild_honor_list_result_zocl
 {
+  #pragma pack(push, 1)
   struct __list
   {
     unsigned int dwGuildSerial;
@@ -16,6 +17,7 @@ struct _guild_honor_list_result_zocl
     char wszMasterName[17];
     unsigned __int8 byTaxRate;
   };
+  #pragma pack(pop)
 
   unsigned __int8 byListNum;
   unsigned __int8 byUI;
@@ -26,7 +28,7 @@ struct _guild_honor_list_result_zocl
 };
 #pragma pack(pop)
 
-class __cppobj CHonorGuild
+class  CHonorGuild
 {
 public:
   CHonorGuild();

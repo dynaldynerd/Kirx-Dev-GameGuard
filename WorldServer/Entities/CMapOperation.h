@@ -13,7 +13,7 @@ class CMapData;
 class CGameObject;
 
 /* 1462 */
-class __cppobj CMapOperation
+class  CMapOperation
 {
 public:
   CMapOperation();

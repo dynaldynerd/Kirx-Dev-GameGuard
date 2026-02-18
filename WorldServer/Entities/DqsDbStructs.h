@@ -157,7 +157,7 @@ struct _worlddb_quest_array
   __quest_list questList[30];
 };
 
-struct __cppobj _worlddb_npc_quest_complete_history
+struct  _worlddb_npc_quest_complete_history
 {
   struct __list
   {
@@ -296,7 +296,7 @@ struct __declspec(align(8)) _pvporderview_info
   bool bRaceWarRecvr;
 };
 
-struct __cppobj _worlddb_potion_delay_info
+struct  _worlddb_potion_delay_info
 {
   unsigned int dwPotionDelay[38];
 
@@ -332,7 +332,7 @@ struct __declspec(align(4)) _personal_amine_inven
 
 /* 1174 */
 #pragma pack(push, 1)
-struct __cppobj __unaligned _NOT_ARRANGED_AVATOR_DB
+struct   _NOT_ARRANGED_AVATOR_DB
 {
   unsigned int dwSerial;
   unsigned __int8 byLv;
@@ -348,7 +348,7 @@ struct __cppobj __unaligned _NOT_ARRANGED_AVATOR_DB
 };
 #pragma pack(pop)
 
-struct __cppobj _worlddb_arrange_char_info
+struct  _worlddb_arrange_char_info
 {
   unsigned __int8 byCount;
   _NOT_ARRANGED_AVATOR_DB ArrangeChar[50];
@@ -443,7 +443,7 @@ struct _patriarch_comm_list
   __list List[7];
 };
 
-struct __cppobj _rege_char_data
+struct  _rege_char_data
 {
   struct _reged_list
   {
@@ -757,7 +757,7 @@ inline __int64 _qry_case_update_user_guild_data::size() const
   return 16;
 }
 
-struct __cppobj _qry_case_select_guild_master_lastconn
+struct  _qry_case_select_guild_master_lastconn
 {
   unsigned int dwSerial;
   unsigned int dwGuildIndex;
@@ -766,7 +766,7 @@ struct __cppobj _qry_case_select_guild_master_lastconn
   unsigned int dwLastConnTime;
 };
 
-struct __cppobj __declspec(align(4)) _qry_case_character_rename
+struct  __declspec(align(4)) _qry_case_character_rename
 {
   unsigned int dwCharSerial;
   unsigned int dwAlreadySerial;
@@ -775,7 +775,7 @@ struct __cppobj __declspec(align(4)) _qry_case_character_rename
   char wszOldName[17];
 };
 
-struct __cppobj __declspec(align(4)) _qry_case_insert_patriarch_comm
+struct  __declspec(align(4)) _qry_case_insert_patriarch_comm
 {
   unsigned int dwSerial;
   unsigned int dwDalant;
@@ -785,7 +785,7 @@ struct __cppobj __declspec(align(4)) _qry_case_insert_patriarch_comm
   __int64 size();
 };
 
-struct __cppobj __declspec(align(4)) _qry_case_select_patriarch_comm
+struct  __declspec(align(4)) _qry_case_select_patriarch_comm
 {
   unsigned int dwSerial;
   unsigned __int8 byDBRet;
@@ -893,7 +893,7 @@ struct _return_post_list
   __list List[10];
 };
 
-struct __cppobj _qry_case_post_storage_list_get
+struct  _qry_case_post_storage_list_get
 {
   struct __list
   {
@@ -921,7 +921,7 @@ struct __cppobj _qry_case_post_storage_list_get
   __int64 size();
 };
 
-struct __cppobj _qry_case_post_return_list_get
+struct  _qry_case_post_return_list_get
 {
   struct __list
   {
@@ -950,7 +950,7 @@ struct __cppobj _qry_case_post_return_list_get
   __int64 size();
 };
 
-struct __cppobj __declspec(align(4)) _qry_case_post_content_get
+struct  __declspec(align(4)) _qry_case_post_content_get
 {
   unsigned int dwSerial;
   unsigned __int8 byProcRet;
@@ -962,7 +962,7 @@ struct __cppobj __declspec(align(4)) _qry_case_post_content_get
   __int64 size();
 };
 
-struct __cppobj _qry_case_update_data_for_post_send
+struct  _qry_case_update_data_for_post_send
 {
   unsigned int dwSerial;
   unsigned int dwGlod;
@@ -973,7 +973,7 @@ struct __cppobj _qry_case_update_data_for_post_send
   __int64 size();
 };
 
-struct __cppobj _qry_case_update_data_for_trade
+struct  _qry_case_update_data_for_trade
 {
   struct list
   {

@@ -4,7 +4,7 @@
 #include "CMainThread.h"
 
 /* 1673 */
-class __cppobj CMonsterAI : public Us_HFSM
+class  CMonsterAI : public Us_HFSM
 {
 public:
   SF_Timer m_SFCheckTime[4];

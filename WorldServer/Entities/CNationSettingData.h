@@ -13,7 +13,7 @@ class CashDbWorker;
 struct _NameTxt_fld;
 struct _CashShop_str_fld;
 
-class __cppobj CNationSettingData
+class  CNationSettingData
 {
 public:
   enum CASH_DB_PROC_FLAG : int

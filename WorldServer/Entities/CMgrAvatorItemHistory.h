@@ -15,7 +15,7 @@ struct _AVATOR_DATA;
 struct _buy_offer;
 struct _sell_offer;
 
-class __cppobj CMgrAvatorItemHistory
+class  CMgrAvatorItemHistory
 {
 public:
   struct __LOG_DATA
@@ -24,17 +24,17 @@ public:
     int nLen;
   };
 
-  struct __cppobj __LOG_DATA_10K : public __LOG_DATA
+  struct  __LOG_DATA_10K : public __LOG_DATA
   {
     char sData[10000];
   };
 
-  struct __cppobj __LOG_DATA_1K : public __LOG_DATA
+  struct  __LOG_DATA_1K : public __LOG_DATA
   {
     char sData[1000];
   };
 
-  struct __cppobj __LOG_DATA_200 : public __LOG_DATA
+  struct  __LOG_DATA_200 : public __LOG_DATA
   {
     char sData[200];
   };

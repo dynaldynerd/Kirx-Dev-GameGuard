@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "WorldServerUtil.h"
+
 #include "CPotionMgr.h"
 
 #include "CNationSettingManager.h"

@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "GlobalObjects.h"
+
 #include "CPvpUserAndGuildRankingSystem.h"
 
 #include "KorLocalTime.h"

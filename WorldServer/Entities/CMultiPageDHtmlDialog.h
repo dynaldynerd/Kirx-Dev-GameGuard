@@ -11,7 +11,7 @@ class CDialog : public CWnd
 {
 };
 
-class __cppobj CMultiPageDHtmlDialog : public CDialog
+class  CMultiPageDHtmlDialog : public CDialog
 {
 };
 #endif

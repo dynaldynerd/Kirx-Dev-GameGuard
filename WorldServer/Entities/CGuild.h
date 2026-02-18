@@ -1,13 +1,14 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "CMainThread.h"
 #include "CGuildList.h"
 
 struct _guild_member_refresh_data;
 class CMgrGuildHistory;
 
 /* 1717 */
-class __cppobj __declspec(align(8)) CGuild
+class  __declspec(align(8)) CGuild
 {
 public:
   static CGuildList s_GuildList;

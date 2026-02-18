@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __cppobj _INVENKEY
+struct  _INVENKEY
 {
   unsigned __int8 bySlotIndex;
   unsigned __int8 byTableCode;

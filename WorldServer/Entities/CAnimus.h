@@ -7,12 +7,13 @@ class CAttack;
 struct _animus_create_setdata;
 
 /* 1779 */
-class __cppobj CAnimus : public CCharacter
+class  CAnimus : public CCharacter
 {
 public:
   CAnimus();
   ~CAnimus();
 
+  __int64 AttackableHeight();
   __int64 GetAttackDP() override;
   float GetAttackRange() override;
   __int64 GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart) override;
@@ -23,6 +24,7 @@ public:
   __int64 GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack) override;
   __int64 GetHP() override;
   __int64 GetLevel() override;
+  int GetMaxLevel();
   __int64 GetMaxHP() override;
   char *GetObjName() override;
   __int64 GetObjRace() override;
@@ -43,7 +45,20 @@ public:
   void SendMsg_Attack_Gen(CAttack *pAT);
   void SendMsg_LevelUp();
   void SendMsg_AnimusActHealInform(unsigned int dwDstSerial, __int16 nAddHP);
-  __int64 SetDamage(int nDam, CCharacter *pDst, int nDstLv, bool bCrt);
+  void AlterMode_MasterReport(unsigned __int8 byMode);
+  void AlterHP_MasterReport();
+  void AlterFP_MasterReport();
+  void AlterExp_MasterReport(__int64 nAlterExp);
+  void RecvKillMessage(CCharacter *pDier) override;
+  bool RobbedHP(CCharacter *pDst, int nDecHP);
+  __int64 SetDamage(
+    int nDam,
+    CCharacter *pDst,
+    int nDstLv,
+    bool bCrt,
+    int nAttackType,
+    unsigned int dwAttackSerial,
+    bool bJadeReturn) override;
   void AIInit();
   void CheckPosInTown();
   void ChangeMode(unsigned int mode);
@@ -53,6 +68,17 @@ public:
   void TransPoToMaster();
   void GetTarget();
   char GetMoveTarget(CCharacter *target, float fMoveSpeed, unsigned __int8 byMoveMode);
+  void Action();
+  char Attack(int skill);
+  char Heal(unsigned int skill);
+  char IsValidTarget();
+  CCharacter *SearchNearEnemy();
+  CCharacter *SearchNearPlayerAttack();
+  __int64 GetAttackPart();
+  void CalcAttExp(CAttack *pAT);
+  void make_gen_attack_param(CCharacter *pDst, unsigned __int8 byPart, _attack_param *pAP, int nSkillIndex);
+  void AlterExp(__int64 nAddExp);
+  void CalcDefExp(CCharacter *pAttackObj, int nDamage);
   void LifeTimeCheck();
   void Process();
   void _ProcComsumeMaterFP();
@@ -92,6 +118,7 @@ public:
   bool Destroy();
   void SendMsg_Destroy();
   void MasterAttack_MasterInform(CCharacter *pDst);
+  void MasterBeAttacked_MasterInform(CCharacter *pDst);
   static unsigned int GetNewMonSerial();
 
   static unsigned int s_dwSerialCnt;

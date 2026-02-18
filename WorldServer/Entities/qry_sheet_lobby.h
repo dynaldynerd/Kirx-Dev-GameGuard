@@ -4,7 +4,7 @@
 #include "CMainThread.h"
 
 #pragma pack(push, 1)
-struct __cppobj _qry_sheet_lobby
+struct  _qry_sheet_lobby
 {
   unsigned int dwAvatorSerial;
   _AVATOR_DATA NewData;

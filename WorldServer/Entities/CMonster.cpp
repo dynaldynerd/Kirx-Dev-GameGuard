@@ -854,8 +854,8 @@ int CMonster::IsValidPlayer()
   {
     if (m_pTargetChar->m_ObjID.m_byID == 3)
     {
-      CCharacter *target = m_pTargetChar;
-      if (target && *reinterpret_cast<unsigned char *>(*reinterpret_cast<unsigned long long *>(&target[1].m_bLive) + 1922ULL))
+      CAnimus *targetAnimus = static_cast<CAnimus *>(m_pTargetChar);
+      if (targetAnimus != nullptr && targetAnimus->m_pMaster != nullptr && targetAnimus->m_pMaster->m_bInGuildBattle)
       {
         return 0;
       }
@@ -905,8 +905,8 @@ char CMonster::IsBeDamagedAble(CCharacter *pAtter)
     return m_pMonRec->m_nRaceCode == -1
         || (m_pMonRec->m_nRaceCode != 3 && pAtter->GetObjRace() != m_pMonRec->m_nRaceCode);
   }
-  return !*reinterpret_cast<unsigned long long *>(&pAtter[1].m_bLive)
-      || !*reinterpret_cast<unsigned char *>(*reinterpret_cast<unsigned long long *>(&pAtter[1].m_bLive) + 1922ULL);
+  CAnimus *attackerAnimus = static_cast<CAnimus *>(pAtter);
+  return attackerAnimus->m_pMaster == nullptr || !attackerAnimus->m_pMaster->m_bInGuildBattle;
 }
 
 char CMonster::IsRecvableContEffect()

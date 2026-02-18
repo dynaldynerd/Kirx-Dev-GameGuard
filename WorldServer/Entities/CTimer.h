@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1428 */
-class __cppobj CTimer
+class  CTimer
 {
   float mLoopTime;
   float mTime;

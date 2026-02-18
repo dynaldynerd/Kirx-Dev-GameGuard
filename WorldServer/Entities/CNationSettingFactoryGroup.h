@@ -7,7 +7,7 @@
 
 class CNationSettingData;
 
-class __cppobj CNationSettingFactoryGroup
+class  CNationSettingFactoryGroup
 {
 public:
   CNationSettingFactoryGroup();

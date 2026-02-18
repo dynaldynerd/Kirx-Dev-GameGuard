@@ -9,7 +9,7 @@ struct _darkhole_create_setdata;
 struct _ENTER_DUNGEON_NEW_POS;
 
 /* 1600 */
-class __cppobj __declspec(align(4)) CDarkHole : public CGameObject
+class  __declspec(align(4)) CDarkHole : public CGameObject
 {
 public:
   static int s_nLiveNum;

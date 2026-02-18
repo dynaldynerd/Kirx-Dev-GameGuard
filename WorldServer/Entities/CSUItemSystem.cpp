@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "WorldServerUtil.h"
+
 #include "CSUItemSystem.h"
 
 CSUItemSystem *CSUItemSystem::Instance()

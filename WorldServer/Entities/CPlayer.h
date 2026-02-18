@@ -173,7 +173,7 @@ class CAnimus;
 /* 1312 */
 
 /* 1695 */
-struct __cppobj __unaligned __declspec(align(2)) _character_db_load
+struct   __declspec(align(2)) _character_db_load
 {
   char m_wszCharID[17];
   unsigned int m_dwSerial;
@@ -200,7 +200,7 @@ struct __cppobj __unaligned __declspec(align(2)) _character_db_load
 };
 
 /* 1696 */
-struct __cppobj _bag_db_load : _STORAGE_LIST
+struct  _bag_db_load : _STORAGE_LIST
 {
   _STORAGE_LIST::_db_con m_List[100];
 
@@ -208,7 +208,7 @@ struct __cppobj _bag_db_load : _STORAGE_LIST
 };
 
 /* 1697 */
-struct __cppobj _equip_db_load : _STORAGE_LIST
+struct  _equip_db_load : _STORAGE_LIST
 {
   _STORAGE_LIST::_db_con m_List[8];
 
@@ -216,7 +216,7 @@ struct __cppobj _equip_db_load : _STORAGE_LIST
 };
 
 /* 1698 */
-struct __cppobj __unaligned __declspec(align(2)) _embellish_db_load : _STORAGE_LIST
+struct   __declspec(align(2)) _embellish_db_load : _STORAGE_LIST
 {
   _STORAGE_LIST::_db_con m_List[7];
 
@@ -224,7 +224,7 @@ struct __cppobj __unaligned __declspec(align(2)) _embellish_db_load : _STORAGE_L
 };
 
 /* 1699 */
-struct __cppobj _force_db_load : _STORAGE_LIST
+struct  _force_db_load : _STORAGE_LIST
 {
   _STORAGE_LIST::_db_con m_List[88];
 
@@ -232,7 +232,7 @@ struct __cppobj _force_db_load : _STORAGE_LIST
 };
 
 /* 1700 */
-struct __cppobj _animus_db_load : _STORAGE_LIST
+struct  _animus_db_load : _STORAGE_LIST
 {
   _STORAGE_LIST::_db_con m_List[4];
 
@@ -240,7 +240,7 @@ struct __cppobj _animus_db_load : _STORAGE_LIST
 };
 
 /* 1701 */
-struct __cppobj _trunk_db_load : _STORAGE_LIST
+struct  _trunk_db_load : _STORAGE_LIST
 {
   unsigned __int8 m_byItemSlotRace[100];
   _STORAGE_LIST::_db_con m_List[100];
@@ -249,7 +249,7 @@ struct __cppobj _trunk_db_load : _STORAGE_LIST
 };
 
 /* 1702 */
-struct __cppobj _Exttrunk_db_load : _STORAGE_LIST
+struct  _Exttrunk_db_load : _STORAGE_LIST
 {
   unsigned __int8 m_byItemSlotRace[40];
   _STORAGE_LIST::_db_con m_ExtList[40];
@@ -258,9 +258,9 @@ struct __cppobj _Exttrunk_db_load : _STORAGE_LIST
 };
 
 /* 1564 */
-struct __cppobj _UNIT_DB_BASE
+struct  _UNIT_DB_BASE
 {
-  struct __cppobj __unaligned __declspec(align(2)) _LIST
+  struct   __declspec(align(2)) _LIST
   {
     unsigned __int8 bySlotIndex;
     unsigned __int8 byFrame;
@@ -284,9 +284,9 @@ struct __cppobj _UNIT_DB_BASE
 };
 
 /* 1562 */
-struct __cppobj _QUEST_DB_BASE
+struct  _QUEST_DB_BASE
 {
-  struct __cppobj __unaligned __declspec(align(1)) _LIST
+  struct   _LIST
   {
     unsigned __int8 byQuestType;
     unsigned __int16 wIndex;
@@ -297,7 +297,7 @@ struct __cppobj _QUEST_DB_BASE
     void Init();
   };
 
-  struct __cppobj __unaligned __declspec(align(1)) _NPC_QUEST_HISTORY
+  struct   _NPC_QUEST_HISTORY
   {
     char szQuestCode[8];
     int nEventNo;
@@ -308,7 +308,7 @@ struct __cppobj _QUEST_DB_BASE
     void Init();
   };
 
-  struct __cppobj __unaligned __declspec(align(1)) _START_NPC_QUEST_HISTORY
+  struct   _START_NPC_QUEST_HISTORY
   {
     char szQuestCode[64];
     unsigned __int8 byLevel;
@@ -329,7 +329,7 @@ struct __cppobj _QUEST_DB_BASE
 };
 
 /* 1566 */
-struct __cppobj _SFCONT_DB_BASE
+struct  _SFCONT_DB_BASE
 {
   struct _LIST
   {
@@ -372,7 +372,7 @@ struct _COMBINEKEY
 };
 
 /* 1575 */
-struct __cppobj _ITEMCOMBINE_DB_BASE
+struct  _ITEMCOMBINE_DB_BASE
 {
   struct _LIST
   {
@@ -387,8 +387,8 @@ struct __cppobj _ITEMCOMBINE_DB_BASE
   bool m_bIsResult;
   unsigned __int8 m_byItemListNum;
   unsigned __int8 m_byDlgType;
-  __unaligned __declspec(align(1)) unsigned int m_dwDalant;
-  __unaligned __declspec(align(1)) unsigned int m_dwCheckKey;
+   unsigned int m_dwDalant;
+   unsigned int m_dwCheckKey;
   unsigned __int8 m_bySelectItemCount;
   _LIST m_List[24];
   unsigned int m_dwResultEffectType;
@@ -409,7 +409,7 @@ struct __cppobj _ITEMCOMBINE_DB_BASE
 #include "CPostReturnStorage.h"
 
 /* 1712 */
-struct __cppobj _personal_amine_inven_db_load : _STORAGE_LIST
+struct  _personal_amine_inven_db_load : _STORAGE_LIST
 {
   _STORAGE_LIST::_db_con m_List[40];
 
@@ -417,7 +417,7 @@ struct __cppobj _personal_amine_inven_db_load : _STORAGE_LIST
 };
 
 /* 1716 */
-struct __cppobj _quick_link
+struct  _quick_link
 {
   unsigned __int8 byLinkIndex;
   unsigned __int16 wSerial;
@@ -430,19 +430,19 @@ struct __cppobj _quick_link
 #include "CPlayerDB.h"
 
 /* 1276 */
-struct __unaligned __declspec(align(2)) _CLID
+struct  __declspec(align(2)) _CLID
 {
   unsigned __int16 wIndex;
   unsigned int dwSerial;
 };
 
-struct __unaligned __declspec(align(1)) _WA_AVATOR_CODE
+struct  _WA_AVATOR_CODE
 {
   _CLID m_id;
   char m_wszName[17];
 };
 
-struct __unaligned __declspec(align(1)) _CHRID
+struct  _CHRID
 {
   unsigned __int8 byID;
   unsigned __int16 wIndex;
@@ -503,7 +503,7 @@ struct __declspec(align(4)) _DTRADE_ITEM
 };
 
 /* 1738 */
-struct __cppobj _DTRADE_PARAM
+struct  _DTRADE_PARAM
 {
   bool bDTradeMode;
   bool bDTradeLock;
@@ -521,7 +521,7 @@ struct __cppobj _DTRADE_PARAM
 };
 
 /* 1554 */
-struct __cppobj _STAT_DB_BASE
+struct  _STAT_DB_BASE
 {
   unsigned int m_dwDamWpCnt[2];
   unsigned int m_dwDefenceCnt;
@@ -538,7 +538,7 @@ struct __cppobj _STAT_DB_BASE
 };
 
 /* 1739 */
-struct __cppobj _mastery_up_data
+struct  _mastery_up_data
 {
   bool bUpdate;
   unsigned __int8 byCode;
@@ -561,10 +561,10 @@ struct __declspec(align(2)) _skill_lv_up_data
 };
 
 /* 1741 */
-struct __cppobj __declspec(align(8)) _MASTERY_PARAM
+struct  __declspec(align(8)) _MASTERY_PARAM
 {
   unsigned __int8 m_byRaceCode;
-  __unaligned __declspec(align(1)) _STAT_DB_BASE m_BaseCum;
+   _STAT_DB_BASE m_BaseCum;
   unsigned int m_dwSkillMasteryCum[8];
   unsigned int m_dwForceLvCum[4];
   unsigned __int8 m_mtyWp[2];
@@ -619,9 +619,9 @@ struct _TOWER_PARAM
 };
 
 /* 1749 */
-struct __cppobj __declspec(align(8)) _TRAP_PARAM
+struct  __declspec(align(8)) _TRAP_PARAM
 {
-  struct __cppobj __declspec(align(8)) _param
+  struct  __declspec(align(8)) _param
   {
     CTrap *pItem;
     unsigned int dwSerial;
@@ -644,7 +644,7 @@ struct __cppobj __declspec(align(8)) _TRAP_PARAM
 #include "CNetIndexList.h"
 
 /* 1751 */
-struct __cppobj _BUDDY_LIST
+struct  _BUDDY_LIST
 {
   struct __list
   {
@@ -676,20 +676,7 @@ struct __cppobj _BUDDY_LIST
   bool IsPushLastApply(unsigned int dwDstSerial);
 };
 
-/* 67 */
-enum QUEST_HAPPEN : __int32
-{
-  quest_happen_type_dummy = 0x0,
-  quest_happen_type_npc = 0x1,
-  quest_happen_type_pk = 0x2,
-  quest_happen_type_lv = 0x3,
-  quest_happen_type_class = 0x4,
-  quest_happen_type_grade = 0x5,
-  quest_happen_type_item = 0x6,
-  quest_happen_type_mastery = 0x7,
-  quest_happen_type_maxlevel = 0x8,
-  QUEST_HAPPEN_TYPE_NUM = 0x9,
-};
+#include "QuestHappenTypes.h"
 
 enum PVP_POINT_ALTER_TYPE : int
 {
@@ -712,25 +699,11 @@ enum PVP_CASH_IO_CODE : int
   pm_quest = 2,
 };
 
-/* 1754 */
-struct __cppobj __declspec(align(8)) _happen_event_cont
-{
-  _happen_event_node *m_pEvent;
-  QUEST_HAPPEN m_QtHpType;
-  int m_nIndexInType;
-  int m_nRaceCode;
-
-  _happen_event_cont();
-  void init();
-  bool isset() const;
-  void set(_happen_event_node *pPoint, QUEST_HAPPEN QtHpType, int nIndexInType, int nRaceCode);
-};
-
 /* 1755 */
 #include "CQuestMgr.h"
 
 /* 1756 */
-struct __cppobj ItemCombineMgr
+struct  ItemCombineMgr
 {
   static bool LoadData();
   static bool CheckLoadData();
@@ -780,7 +753,7 @@ union $96C5C4A8485BFF889935F41DA1669980
 };
 
 /* 1760 */
-struct __cppobj MiningTicket
+struct  MiningTicket
 {
   struct _AuthKeyTicket
   {
@@ -837,7 +810,7 @@ struct __cppobj MiningTicket
 #include "CEquipItemSFAgent.h"
 
 /* 1765 */
-struct __cppobj _CRYMSG_LIST
+struct  _CRYMSG_LIST
 {
   struct _LIST
   {
@@ -855,7 +828,7 @@ struct __cppobj _CRYMSG_LIST
 #include "StoragePos.h"
 
 /* 1768 */
-struct __cppobj _RENAME_POTION_USE_INFO
+struct  _RENAME_POTION_USE_INFO
 {
   _STORAGE_POS_INDIV ItemInfo;
   char wszChangeName[17];
@@ -872,7 +845,7 @@ struct $621D0DDFB6A4DE55506A65C7CCDC95CE
 
 
 /* 1772 */
-struct __cppobj _NPCQuestIndexTempData
+struct  _NPCQuestIndexTempData
 {
   struct _IndexData
   {
@@ -895,21 +868,7 @@ struct __declspec(align(8)) _MEM_PAST_WHISPER
 };
 
 /* 1782 */
-struct __cppobj _ContPotionData
-{
-  unsigned int m_dwPotionEffectIndex;
-  unsigned int m_dwStartSec;
-  unsigned __int16 m_wDurCapSec;
-  unsigned int m_dwID;
-  static unsigned int ms_dwCount;
-
-  _ContPotionData();
-
-  void Init();
-  void Set(unsigned int dwPotionIndex, unsigned int dwStartTime, unsigned __int16 wDurCapSec);
-  bool IsLive();
-  unsigned int GetEffectIndex();
-};
+#include "ContPotionData.h"
 
 /* 1783 */
 #include "CPotionParam.h"
@@ -918,12 +877,15 @@ struct __cppobj _ContPotionData
 #include "CExtPotionBuf.h"
 
 /* 1786 */
-struct __cppobj __unaligned __declspec(align(1)) _target_monster_contsf_allinform_zocl
+#pragma pack(push, 1)
+struct   _target_monster_contsf_allinform_zocl
 {
+  #pragma pack(push, 1)
   struct _moncontsf
   {
     unsigned __int16 wSfcode;
   };
+  #pragma pack(pop)
 
   unsigned int dwSerial;
   unsigned __int8 byContCount;
@@ -932,15 +894,19 @@ struct __cppobj __unaligned __declspec(align(1)) _target_monster_contsf_allinfor
   _target_monster_contsf_allinform_zocl();
   void Init();
 };
+#pragma pack(pop)
 
 /* 1788 */
-struct __cppobj __unaligned __declspec(align(1)) _target_player_damage_contsf_allinform_zocl
+#pragma pack(push, 1)
+struct   _target_player_damage_contsf_allinform_zocl
 {
+  #pragma pack(push, 1)
   struct _playercontsf
   {
     unsigned __int16 wSfcode;
     unsigned __int8 byContCount;
   };
+  #pragma pack(pop)
 
   unsigned int dwSerial;
   unsigned __int8 byContCount;
@@ -949,11 +915,12 @@ struct __cppobj __unaligned __declspec(align(1)) _target_player_damage_contsf_al
   _target_player_damage_contsf_allinform_zocl();
   void Init();
 };
+#pragma pack(pop)
 
 
 
 /* 1792 */
-struct __cppobj __declspec(align(4)) _ATTACK_DELAY_CHECKER
+struct  __declspec(align(4)) _ATTACK_DELAY_CHECKER
 {
   struct _eff_list
   {
@@ -1014,7 +981,7 @@ struct __cppobj __declspec(align(4)) _ATTACK_DELAY_CHECKER
 #include "CCouponMgr.h"
 
 /* 1798 */
-struct __cppobj _NameChangeBuddyInfo
+struct  _NameChangeBuddyInfo
 {
   bool bNameChange;
   int nSendNum;
@@ -1022,16 +989,19 @@ struct __cppobj _NameChangeBuddyInfo
 };
 
 /* 1800 */
-struct __cppobj _other_shape_all_zocl
+#pragma pack(push, 1)
+struct  _other_shape_all_zocl
 {
-  struct __unaligned __declspec(align(1)) _model
+  #pragma pack(push, 1)
+  struct  _model
   {
     unsigned __int16 wPartIndex;
     unsigned __int8 byLv;
   };
+  #pragma pack(pop)
 
   unsigned __int16 wIndex;
-  __unaligned __declspec(align(1)) unsigned int dwSerial;
+   unsigned int dwSerial;
   unsigned __int16 wEquipVer;
   unsigned __int8 byCashChangeStateFlag;
   unsigned __int8 byRecIndex;
@@ -1039,7 +1009,7 @@ struct __cppobj _other_shape_all_zocl
   unsigned __int8 byHairIndex;
   _model ModelPerPart[8];
   unsigned __int8 byUserGrade;
-  __unaligned __declspec(align(1)) unsigned int dwGuildSerial;
+   unsigned int dwGuildSerial;
   char wszName[17];
   unsigned __int8 byColor;
   unsigned __int8 byHonorGuildRank;
@@ -1050,15 +1020,19 @@ struct __cppobj _other_shape_all_zocl
   _other_shape_all_zocl();
   unsigned __int64 size();
 };
+#pragma pack(pop)
 
 /* 1802 */
-struct __cppobj __unaligned __declspec(align(2)) _other_shape_part_zocl
+#pragma pack(push, 1)
+struct   _other_shape_part_zocl
 {
-  struct __unaligned __declspec(align(1)) _model
+  #pragma pack(push, 1)
+  struct  _model
   {
     unsigned __int16 wPartIndex;
     unsigned __int8 byLv;
   };
+  #pragma pack(pop)
 
   unsigned __int16 wIndex;
   unsigned int dwSerial;
@@ -1073,9 +1047,10 @@ struct __cppobj __unaligned __declspec(align(2)) _other_shape_part_zocl
   _other_shape_part_zocl();
   unsigned __int64 size();
 };
+#pragma pack(pop)
 
 /* 1310 */
-class __cppobj __declspec(align(8)) CPlayer : public CCharacter
+class  __declspec(align(8)) CPlayer : public CCharacter
 {
 public:
   union CashChangeStateFlag
@@ -1527,6 +1502,9 @@ public:
   void pc_AnimusCommandRequest(unsigned __int8 byCommandCode);
   void pc_AnimusTargetRequest(unsigned __int8 byObjectID, unsigned __int16 wObjectIndex, unsigned int dwObjectSerial);
   void Return_AnimusAsk(unsigned __int8 byReturnType);
+  void AlterHP_Animus(__int16 nNewHP);
+  void AlterFP_Animus(__int16 nNewFP);
+  void AlterExp_Animus(__int64 nAlterExp);
   void AlterMode_Animus(unsigned __int8 byMode);
   void pc_UnitFrameBuyRequest(unsigned __int8 byFrameCode, int bUseNPCLinkIntem);
   void pc_UnitSellRequest(unsigned __int8 bySlotIndex, int bUseNPCLinkIntem);
@@ -1641,6 +1619,7 @@ public:
   void SetMstPt(int nMstCode, float fVal, bool bAdd, unsigned int nWpType);
   void CalcDefTol();
   bool IsRidingUnit();
+  float GetMoveSpeed();
   void CalcEquipSpeed();
   float GetAddSpeed();
   void BreakCloakBooster();
@@ -1673,6 +1652,9 @@ public:
   void _AnimusReturn(unsigned __int8 byReturnType);
   void SendMsg_AnimusReturnResult(char byRetCode, unsigned __int16 wAnimusItemSerial, unsigned __int8 byReturnType);
   CAnimus *GetRecallAnimus();
+  bool IsRecallAnimus();
+  bool SF_MakeZeroAnimusRecallTimeOnce(CCharacter *pDstObj, float fEffectValue);
+  bool SF_RecoverAllReturnStateAnimusHPFull(CCharacter *pDstObj, float fEffectValue);
   bool IsHaveMentalTicket();
   bool IsMiningByMinigTicket();
   void UpdateLastMetalTicket(
@@ -2772,6 +2754,26 @@ void wa_ExitWorld(_CLID *pidWorld);
 CPlayer *GetPtrPlayerFromSerial(CPlayer *pData, int nNum, unsigned int dwSerial);
 CPlayer *GetPtrPlayerFromAccount(CPlayer *pData, int nNum, char *szAccount);
 CPlayer *GetPtrPlayerFromAccountSerial(CPlayer *pData, int nNum, unsigned int dwSerial);
+CAnimus *FindEmptyAnimus(CAnimus *pObjArray, int nMax);
+char __fastcall CreateAnimus(
+  CMapData *pMap,
+  unsigned __int16 wLayer,
+  float *fPos,
+  unsigned __int8 byClass,
+  int nHP,
+  int nFP,
+  unsigned int dwExp,
+  CPlayer *pMaster);
+bool __fastcall DE_MakeZeroAnimusRecallTimeOnce(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 *byRet);
+bool __fastcall DE_RecoverAllReturnStateAnimusHPFull(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 *byRet);
 
 #pragma pack(pop)
 

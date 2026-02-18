@@ -4,7 +4,7 @@
 
 class CMyTimer;
 
-class __cppobj CUnmannedTraderTradeInfo
+class  CUnmannedTraderTradeInfo
 {
 public:
   CUnmannedTraderTradeInfo();

@@ -7,7 +7,7 @@
 class CRecallRequest;
 class CPlayer;
 
-class __cppobj CRecallEffectController
+class  CRecallEffectController
 {
 public:
   CRecallEffectController();

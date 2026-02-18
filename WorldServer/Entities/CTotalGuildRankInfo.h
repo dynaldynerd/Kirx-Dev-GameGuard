@@ -5,7 +5,7 @@
 
 struct _total_guild_rank_result_zocl;
 
-class __cppobj CTotalGuildRankRecord
+class  CTotalGuildRankRecord
 {
 public:
   CTotalGuildRankRecord() = default;
@@ -21,8 +21,9 @@ public:
 };
 
 #pragma pack(push, 1)
-struct __cppobj _total_guild_rank_result_zocl
+struct  _total_guild_rank_result_zocl
 {
+  #pragma pack(push, 1)
   struct _list
   {
     unsigned __int8 byRank;
@@ -30,6 +31,7 @@ struct __cppobj _total_guild_rank_result_zocl
     unsigned __int8 byGrade;
     char wszMasterName[17];
   };
+  #pragma pack(pop)
 
   unsigned int dwVer;
   unsigned __int8 byRace;
@@ -43,7 +45,7 @@ struct __cppobj _total_guild_rank_result_zocl
 
 static_assert(sizeof(_total_guild_rank_result_zocl) == 403, "_total_guild_rank_result_zocl size mismatch");
 
-class __cppobj CTotalGuildRankInfo
+class  CTotalGuildRankInfo
 {
 public:
   CTotalGuildRankInfo();

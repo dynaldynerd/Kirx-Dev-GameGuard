@@ -5,7 +5,7 @@
 #include "CHashMapPtrPool.h"
 #include "CNationCodeStr.h"
 
-class __cppobj CNationCodeStrTable
+class  CNationCodeStrTable
 {
 public:
   CNationCodeStrTable() = default;

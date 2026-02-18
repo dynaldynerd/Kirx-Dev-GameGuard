@@ -5,7 +5,7 @@
 
 #pragma pack(push, 1)
 
-struct __cppobj _EventItem_fld : _base_fld
+struct  _EventItem_fld : _base_fld
 {
   int m_nIconIDX;
   char m_strName[64];

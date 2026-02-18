@@ -4,7 +4,7 @@
 
 #include "CNationSettingData.h"
 
-class __cppobj CNationSettingDataCN : public CNationSettingData
+class  CNationSettingDataCN : public CNationSettingData
 {
 public:
   CBilling *CreateBilling() override;

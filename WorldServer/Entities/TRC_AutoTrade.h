@@ -7,7 +7,7 @@
 #include "ControllerTaxRate.h"
 
 #pragma pack(push, 1)
-class __cppobj _suggested_matter_change_taxrate
+class  _suggested_matter_change_taxrate
 {
 public:
   _suggested_matter_change_taxrate();
@@ -21,7 +21,7 @@ public:
 };
 #pragma pack(pop)
 
-class __cppobj TRC_AutoTrade
+class  TRC_AutoTrade
 {
 public:
   TRC_AutoTrade();

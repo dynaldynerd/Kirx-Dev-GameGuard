@@ -7,7 +7,7 @@ class CCharacter;
 class CMonster;
 
 /* 1639 */
-class __cppobj CMonsterAggroMgr
+class  CMonsterAggroMgr
 {
   friend class CPlayer;
   CCharacter *m_pTopAggroCharacter;

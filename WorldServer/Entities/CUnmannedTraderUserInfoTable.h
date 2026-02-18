@@ -18,7 +18,7 @@ struct _unmannedtrader_buy_item_request_clzo;
 struct _unmannedtrader_re_regist_request_clzo;
 struct _unmannedtrader_search_list_request_clzo;
 
-class __cppobj CUnmannedTraderUserInfoTable
+class  CUnmannedTraderUserInfoTable
 {
 public:
   static CUnmannedTraderUserInfoTable *Instance();

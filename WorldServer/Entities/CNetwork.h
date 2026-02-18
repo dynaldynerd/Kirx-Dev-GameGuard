@@ -7,7 +7,7 @@ struct _MSG_HEADER;
 struct _socket;
 struct _NET_TYPE_PARAM;
 
-class __cppobj CNetwork
+class  CNetwork
 {
 public:
   CNetwork();

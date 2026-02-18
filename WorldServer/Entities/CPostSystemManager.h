@@ -10,7 +10,7 @@
 class CPlayer;
 struct _STORAGE_POS_INDIV;
 
-class __cppobj CPostSystemManager
+class  CPostSystemManager
 {
 public:
   CPostSystemManager();

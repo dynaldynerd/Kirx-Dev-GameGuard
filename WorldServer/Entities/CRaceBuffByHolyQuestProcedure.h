@@ -8,7 +8,7 @@
 
 class CPlayer;
 
-class __cppobj CRaceBuffByHolyQuestProcedure
+class  CRaceBuffByHolyQuestProcedure
 {
 public:
   using REQUEST_TYPE = CUnmannedTraderRequestLimiter::REQUEST_TYPE;

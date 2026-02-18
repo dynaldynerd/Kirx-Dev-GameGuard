@@ -2,7 +2,7 @@
 
 #include "CRFNewDatabase.h"
 
-class __cppobj CRFDBItemLog : public CRFNewDatabase
+class  CRFDBItemLog : public CRFNewDatabase
 {
 public:
   explicit CRFDBItemLog(unsigned int dwLocalDate = 0);

@@ -4,7 +4,7 @@
 #include "base_fld.h"
 
 #pragma pack(push, 1)
-struct __cppobj _ItemMakeData_fld : _base_fld
+struct  _ItemMakeData_fld : _base_fld
 {
   struct _material_list
   {

@@ -9,7 +9,7 @@ class CMapData;
 class CPlayer;
 struct _PERSONALAMINE_INVEN_DB_BASE;
 
-class __cppobj AutominePersonalMgr
+class  AutominePersonalMgr
 {
 public:
   static AutominePersonalMgr *instance();

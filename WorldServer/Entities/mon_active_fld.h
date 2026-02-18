@@ -4,7 +4,7 @@
 #include "base_fld.h"
 
 #pragma pack(push, 1)
-struct __cppobj _mon_active_fld : _base_fld
+struct  _mon_active_fld : _base_fld
 {
   unsigned int m_dwRegenTime;
   unsigned int m_dwRegenLimNum;

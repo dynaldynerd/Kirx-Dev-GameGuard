@@ -46,7 +46,7 @@ struct __declspec(align(4)) _qry_case_joinacguild_local
   int in_MemberNum;
 };
 
-struct __unaligned __declspec(align(1)) _qry_case_insertguild_local
+struct  _qry_case_insertguild_local
 {
   unsigned int in_guildindex;
   char in_w_guildName[17];

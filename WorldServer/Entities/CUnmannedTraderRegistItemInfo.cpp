@@ -2,6 +2,7 @@
 
 #include "CUnmannedTraderRegistItemInfo.h"
 #include "CLogFile.h"
+#include "CPlayer.h"
 #include "CPlayerDB.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"

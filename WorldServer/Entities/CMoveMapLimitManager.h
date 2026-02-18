@@ -7,7 +7,7 @@
 
 class CPlayer;
 
-class __cppobj CMoveMapLimitManager
+class  CMoveMapLimitManager
 {
 public:
   CMoveMapLimitManager();

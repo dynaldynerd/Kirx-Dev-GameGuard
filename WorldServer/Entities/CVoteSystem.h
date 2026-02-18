@@ -4,11 +4,11 @@
 #include "CNetIndexList.h"
 #include "starting_vote_inform_zocl.h"
 
-class __cppobj CVoteSystem
+class  CVoteSystem
 {
 public:
 #pragma pack(push, 1)
-  struct __unaligned __declspec(align(1)) _started_vote_inform_zocl
+  struct  _started_vote_inform_zocl
   {
     int nVoteSerial;
     unsigned __int8 byLimGrade;

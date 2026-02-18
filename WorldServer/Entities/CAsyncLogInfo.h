@@ -7,7 +7,7 @@
 class CLogFile;
 class CMyTimer;
 
-class __cppobj CAsyncLogInfo
+class  CAsyncLogInfo
 {
 public:
   CAsyncLogInfo();

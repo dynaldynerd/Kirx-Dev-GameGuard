@@ -1,10 +1,15 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "CMainThread.h"
 
 #include "DummyPosition.h"
 #include "CExtDummy.h"
 #include "CLevel.h"
+#include "CDummyPosTable.h"
+#include "CRecordData.h"
+#include "CMyTimer.h"
+#include "map_fld.h"
 #include "mon_block_fld.h"
 #include "mon_active_fld.h"
 
@@ -13,7 +18,7 @@ class CGameObject;
 struct _pnt_rect;
 
 /* 1313 */
-class __cppobj __declspec(align(8)) CMapData
+class  __declspec(align(8)) CMapData
 {
 public:
   CMapData();

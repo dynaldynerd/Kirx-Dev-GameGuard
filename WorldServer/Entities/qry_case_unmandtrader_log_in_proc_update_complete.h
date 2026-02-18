@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __declspec(align(1)) _qry_case_unmandtrader_log_in_proc_update_complete
+struct  _qry_case_unmandtrader_log_in_proc_update_complete
 {
   struct __list
   {

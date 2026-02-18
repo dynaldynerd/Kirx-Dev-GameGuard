@@ -1,9 +1,10 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "CRecordData.h"
 
 /* 1290 */
-class __cppobj COreCuttingTable
+class  COreCuttingTable
 {
 public:
   struct _ore_cut_list

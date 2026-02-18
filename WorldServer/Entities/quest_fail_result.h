@@ -4,7 +4,7 @@
 
 struct _quest_fail_result
 {
-  struct __declspec(align(1)) _node
+  struct  _node
   {
     unsigned __int8 byQuestDBSlot;
   };

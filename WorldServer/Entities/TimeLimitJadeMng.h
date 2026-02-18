@@ -4,7 +4,7 @@
 #include "CLogFile.h"
 #include "TimeLimitJade.h"
 
-class __cppobj TimeLimitJadeMng
+class  TimeLimitJadeMng
 {
 public:
   static TimeLimitJadeMng *Instance();

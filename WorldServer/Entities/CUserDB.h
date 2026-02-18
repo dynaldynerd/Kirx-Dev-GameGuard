@@ -12,7 +12,7 @@ struct _EXIT_ALTER_PARAM;
 struct _ITEMCOMBINE_DB_BASE;
 
 /* 1536 */
-class __cppobj __declspec(align(8)) CUserDB
+class  __declspec(align(8)) CUserDB
 {
 public:
   static int s_nLoginNum;

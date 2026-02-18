@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-class __cppobj __declspec(align(8)) CMyTimer
+class  __declspec(align(8)) CMyTimer
 {
 public:
   CMyTimer();

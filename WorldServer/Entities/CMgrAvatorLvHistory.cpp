@@ -645,6 +645,23 @@ void CMgrAvatorLvHistory::update_mastery(
   WriteFile(pszFileName, sData_0);
 }
 
+void CMgrAvatorLvHistory::down_animus_exp(
+  unsigned __int64 dw64OldExp,
+  unsigned __int64 dw64NewExp,
+  __int64 i64Alter,
+  char *pszFileName)
+{
+  sprintf(
+    sData_0,
+    "ANIMUS EXP DOWN %I64u -> %I64u : Alter(%I64d) [%s %s]\r\n\r\n",
+    dw64OldExp,
+    dw64NewExp,
+    i64Alter,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pszFileName, sData_0);
+}
+
 void CMgrAvatorLvHistory::upgrade_lv(int /*n*/, unsigned int dwLv, int nGrade, int *pnMaxPoint, char *pszFileName)
 {
   sprintf(

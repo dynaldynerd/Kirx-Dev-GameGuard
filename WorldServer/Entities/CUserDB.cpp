@@ -41,7 +41,6 @@
 #include "exit_alter_param.h"
 #include "RFEvent_ClassRefine.h"
 #include "CNetIndexList.h"
-#include "CUserDBLocalStructs.h"
 
 int CUserDB::s_nLoginNum = 0;
 CLogFile CUserDB::s_logAvatorDB;
@@ -313,7 +312,7 @@ void CUserDB::ForceCloseCommand(unsigned __int8 byKickType, unsigned int dwPushI
 void CUserDB::Inform_For_Exit_By_FireguardBlock()
 {
 
-  FireguardBlockRequest request{};
+  _fireguard_block_request_wrac request{};
   strcpy_s(request.szAccountID, sizeof(request.szAccountID), m_szAccountID);
   request.dwAccountSerial = m_dwAccountSerial;
   request.dwIP = m_dwIP;
@@ -376,9 +375,9 @@ void CUserDB::SetBillingNoLogout(bool bNoLogout)
 void CUserDB::SendMsg_BillingInfo()
 {
 
-  _billing_msg msg{};
+  _current_billing_type_inform_zocl msg{};
   msg.iType = m_BillingInfo.iType;
-  msg.lRemainTime = m_BillingInfo.lRemainTime;
+  msg.lRemainMin = m_BillingInfo.lRemainTime;
   memcpy_0(&msg.stEndDate, &m_BillingInfo.stEndDate, sizeof(msg.stEndDate));
 
   unsigned __int8 pbyType[2]{29, 2};
@@ -1159,6 +1158,36 @@ void _ANIMUSKEY::LoadDBKey(unsigned __int8 key)
 unsigned __int8 _ANIMUSKEY::CovDBKey()
 {
   return byItemIndex;
+}
+
+_ANIMUS_DB_BASE::_LIST::_LIST()
+{
+  Init();
+}
+
+void _ANIMUS_DB_BASE::_LIST::Init()
+{
+  Key.SetRelease();
+  dwExp = 0;
+  dwParam = 0;
+  dwItemETSerial = 0;
+  lnUID = 0xFFFFFFFFULL;
+  byCsMethod = 0;
+  dwT = static_cast<unsigned int>(-1);
+  dwLendRegdTime = 0;
+}
+
+_ANIMUS_DB_BASE::_ANIMUS_DB_BASE()
+{
+  Init();
+}
+
+void _ANIMUS_DB_BASE::Init()
+{
+  for (int j = 0; j < 4; ++j)
+  {
+    m_List[j].Init();
+  }
 }
 
 void CUserDB::SetDBPostData(
@@ -2163,6 +2192,7 @@ bool CUserDB::Select_Char_Request(unsigned __int8 bySlotIndex)
   qry.dwAvatorSerial = m_RegedList[bySlotIndex].m_dwRecordNum;
   qry.dwCheckSum = 0;
   memcpy_0(&qry.LoadData, &m_RegedList[bySlotIndex], 0x10DuLL);
+
   const int size = static_cast<int>(qry.size());
   if (g_Main.PushDQSData(m_dwAccountSerial, &m_idWorld, 3u, reinterpret_cast<char *>(&qry), size))
   {

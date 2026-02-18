@@ -8,7 +8,7 @@
 
 class CPlayer;
 
-class __cppobj CMoveMapLimitRightInfoList
+class  CMoveMapLimitRightInfoList
 {
 public:
   CMoveMapLimitRightInfoList();

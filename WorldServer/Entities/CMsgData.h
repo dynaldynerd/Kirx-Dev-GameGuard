@@ -2,9 +2,10 @@
 
 #include "IdaCompat.h"
 #include "CMyCriticalSection.h"
+#include "message.h"
 
 /* 1264 */
-class __cppobj CMsgData
+class  CMsgData
 {
 public:
   CMsgData();

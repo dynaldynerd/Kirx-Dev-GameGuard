@@ -1,13 +1,15 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "CEntity.h"
 
 struct _R3MATERIAL;
+struct _ENTITY_M_GROUP;
 
 int GetMaterialNameNum(struct _R3MATERIAL *a1);
 
 /* 1424 */
-class __cppobj CSkyBox
+class  CSkyBox
 {
   int mIsSkyLoad;
   CEntity mEntity;

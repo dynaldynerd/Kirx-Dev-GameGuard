@@ -5,7 +5,7 @@
 #include "CMainThread.h"
 
 #pragma pack(push, 1)
-struct __unaligned __declspec(align(2)) _select_avator_report_wrac
+struct  __declspec(align(2)) _select_avator_report_wrac
 {
   _GLBID gidGlobal;
   char wszCharName[17];

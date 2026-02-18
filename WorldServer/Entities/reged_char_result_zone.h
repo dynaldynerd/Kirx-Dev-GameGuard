@@ -5,7 +5,7 @@
 #include "CMainThread.h"
 
 #pragma pack(push, 1)
-struct __cppobj __unaligned _reged_char_result_zone
+struct   _reged_char_result_zone
 {
   unsigned __int8 byRetCode;
   unsigned __int8 byCharNum;

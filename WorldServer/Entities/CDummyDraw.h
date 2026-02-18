@@ -4,7 +4,7 @@
 
 class CMapData;
 
-class __cppobj CDummyDraw
+class  CDummyDraw
 {
 public:
   CDummyDraw();

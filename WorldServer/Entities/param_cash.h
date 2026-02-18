@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 #include "StoragePos.h"
 
-struct __cppobj __declspec(align(4)) _param_cash
+struct  __declspec(align(4)) _param_cash
 {
   unsigned int in_dwAccountSerial;
   unsigned int in_dwAvatorSerial;
@@ -17,7 +17,7 @@ struct __cppobj __declspec(align(4)) _param_cash
   ~_param_cash();
 };
 
-struct __cppobj __declspec(align(2)) _param_cash_select : _param_cash
+struct  __declspec(align(2)) _param_cash_select : _param_cash
 {
   char in_szAcc[13];
   unsigned int out_dwCashAmount;
@@ -30,9 +30,9 @@ struct __cppobj __declspec(align(2)) _param_cash_select : _param_cash
   __int64 size();
 };
 
-struct __cppobj _param_cash_update : _param_cash
+struct  _param_cash_update : _param_cash
 {
-  struct __cppobj __item
+  struct  __item
   {
     unsigned __int8 byRet;
     char in_strItemCode[8];
@@ -74,7 +74,7 @@ struct __cppobj _param_cash_update : _param_cash
   __int64 size();
 };
 
-struct __cppobj _param_cash_rollback : _param_cash
+struct  _param_cash_rollback : _param_cash
 {
   struct __declspec(align(8)) __list
   {
@@ -102,7 +102,7 @@ struct __cppobj _param_cash_rollback : _param_cash
   __int64 size();
 };
 
-struct __cppobj _param_cashitem_dblog : _param_cash
+struct  _param_cashitem_dblog : _param_cash
 {
   struct __list
   {

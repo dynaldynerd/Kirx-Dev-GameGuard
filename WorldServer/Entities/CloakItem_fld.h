@@ -7,7 +7,7 @@
 
 #include "DfnEquipItem_fld.h"
 
-struct __cppobj _CloakItem_fld : _DfnEquipItem_fld
+struct  _CloakItem_fld : _DfnEquipItem_fld
 {
   float m_fBoosterSpeed;
 };

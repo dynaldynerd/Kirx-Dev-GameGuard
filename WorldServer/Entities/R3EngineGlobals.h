@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 #include "D3D8Compat.h"
 
-struct CMergeFileManager;
+class CMergeFileManager;
 struct _R3MATERIAL;
 struct _LIGHTMAP;
 struct R3Texture;

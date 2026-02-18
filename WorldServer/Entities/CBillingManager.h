@@ -5,7 +5,7 @@
 
 class CUserDB;
 
-class __cppobj CBillingManager : public CTSingleton<CBillingManager>
+class  CBillingManager : public CTSingleton<CBillingManager>
 {
 public:
   CBillingManager();

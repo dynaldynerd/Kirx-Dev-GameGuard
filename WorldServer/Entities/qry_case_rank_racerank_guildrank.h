@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __cppobj _qry_case_rank_racerank_guildrank
+struct  _qry_case_rank_racerank_guildrank
 {
   char szDate[9];
   char scProcRet;

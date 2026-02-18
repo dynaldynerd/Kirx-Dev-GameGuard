@@ -1,9 +1,10 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "TournamentWinner.h"
 
 /* 1808 */
-class __cppobj CBattleTournamentInfo
+class  CBattleTournamentInfo
 {
 public:
   CBattleTournamentInfo();

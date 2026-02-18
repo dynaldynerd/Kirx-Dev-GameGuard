@@ -4,7 +4,7 @@
 #include "base_fld.h"
 
 #pragma pack(push, 1)
-struct __cppobj _CheckPotion_fld : _base_fld
+struct  _CheckPotion_fld : _base_fld
 {
   struct _CheckEffectCode
   {

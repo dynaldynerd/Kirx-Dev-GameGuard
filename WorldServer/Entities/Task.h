@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 #include "MyTimer.h"
 
-class __cppobj Task
+class  Task
 {
 public:
   Task();

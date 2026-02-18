@@ -6,7 +6,7 @@
 
 class CPlayer;
 
-class __cppobj CTotalGuildRankManager
+class  CTotalGuildRankManager
 {
 public:
   CTotalGuildRankManager();

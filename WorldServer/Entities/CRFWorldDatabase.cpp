@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "GlobalObjects.h"
+
 #include "CRFWorldDatabase.h"
 #include "CHonorGuild.h"
 #include "WorldServerUtil.h"

@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 #pragma pack(push, 1)
-struct __unaligned _MONEY_SUPPLY_DATA
+struct  _MONEY_SUPPLY_DATA
 {
   struct _money_supply
   {
@@ -24,7 +24,7 @@ struct __unaligned _MONEY_SUPPLY_DATA
 };
 #pragma pack(pop)
 
-class __cppobj CMoneySupplyMgr
+class  CMoneySupplyMgr
 {
 public:
   static CMoneySupplyMgr *Instance();

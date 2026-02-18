@@ -4,7 +4,7 @@
 #include "InvenKey.h"
 
 /* 1215 */
-class __cppobj __declspec(align(8)) CPostData
+class  __declspec(align(8)) CPostData
 {
 public:
   CPostData();

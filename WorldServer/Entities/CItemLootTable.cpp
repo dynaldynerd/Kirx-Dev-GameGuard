@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "base_fld.h"
+
 #include "CItemLootTable.h"
 
 #include <mmsystem.h>

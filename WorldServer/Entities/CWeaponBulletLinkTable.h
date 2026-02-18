@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 #include "CRecordData.h"
 
-class __cppobj CWeaponBulletLinkTable
+class  CWeaponBulletLinkTable
 {
 public:
   CRecordData m_tblBullet;

@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-class __cppobj CMoveMapLimitEnviromentValues
+class  CMoveMapLimitEnviromentValues
 {
 public:
   static bool Init();

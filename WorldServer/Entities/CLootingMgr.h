@@ -6,7 +6,7 @@ class CPlayer;
 class CMapData;
 
 /* 1637 */
-class __cppobj CLootingMgr
+class  CLootingMgr
 {
 public:
   struct _list

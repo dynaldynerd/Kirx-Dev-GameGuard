@@ -7,7 +7,7 @@
 #include <sqltypes.h>
 
 /* 1126 */
-class __cppobj __declspec(align(8)) CRFNewDatabase
+class  __declspec(align(8)) CRFNewDatabase
 {
 public:
   CRFNewDatabase();

@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1262 */
-class __cppobj __declspec(align(8)) CFrameRate
+class  __declspec(align(8)) CFrameRate
 {
 public:
   CFrameRate();

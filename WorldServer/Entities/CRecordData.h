@@ -6,7 +6,7 @@
 struct _base_fld;
 
 /* 1281 */
-class __cppobj CRecordData
+class  CRecordData
 {
 public:
   CRecordData();

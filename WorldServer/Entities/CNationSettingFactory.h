@@ -5,7 +5,7 @@
 class CNationSettingData;
 class CPlayer;
 
-class __cppobj __declspec(align(8)) CNationSettingFactory
+class  __declspec(align(8)) CNationSettingFactory
 {
 public:
   CNationSettingFactory(int iType);

@@ -18,7 +18,7 @@ enum LOG_TYPE_DB_TASK_TYPE : int
   lt_qry_case_max = 3,
 };
 
-class __cppobj CLogTypeDBTask
+class  CLogTypeDBTask
 {
 public:
   CLogTypeDBTask();
@@ -47,7 +47,7 @@ public:
   char *m_pcData;
 };
 
-class __cppobj CLogTypeDBTaskPool
+class  CLogTypeDBTaskPool
 {
 public:
   CLogTypeDBTaskPool();
@@ -70,7 +70,7 @@ public:
   std::vector<CLogTypeDBTask *> m_vecDat;
 };
 
-class __cppobj CLogTypeDBTaskManager
+class  CLogTypeDBTaskManager
 {
 public:
   enum INIT_STATE : int

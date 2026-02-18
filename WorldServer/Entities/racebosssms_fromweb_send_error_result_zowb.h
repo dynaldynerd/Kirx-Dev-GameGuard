@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 #pragma pack(push, 1)
-struct __unaligned _racebosssms_fromweb_send_error_result_zowb
+struct  _racebosssms_fromweb_send_error_result_zowb
 {
   unsigned __int8 byErrCode;
   unsigned int dwWebSendDBID;

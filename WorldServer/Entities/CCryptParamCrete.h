@@ -9,7 +9,7 @@
 
 #include "CCryptParam.h"
 
-class __cppobj CCryptParamCrete : public CCryptParam
+class  CCryptParamCrete : public CCryptParam
 {
 public:
   explicit CCryptParamCrete(CryptoPP::AutoSeededRandomPool *prng);

@@ -5,7 +5,7 @@
 #include "CLogFile.h"
 #include "LendItemSheet.h"
 
-class __cppobj LendItemMng
+class  LendItemMng
 {
 public:
   LendItemMng();

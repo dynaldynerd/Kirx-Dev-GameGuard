@@ -6,7 +6,7 @@
 
 #include <windows.h>
 
-class __cppobj __declspec(align(8)) CRusiaBillingMgr
+class  __declspec(align(8)) CRusiaBillingMgr
 {
 public:
   CRusiaBillingMgr();

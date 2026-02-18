@@ -4,7 +4,7 @@
 #include "InvenKey.h"
 #include <cstddef>
 
-struct __cppobj _good_storage_info
+struct  _good_storage_info
 {
   unsigned __int8 byItemTableCode;
   unsigned __int16 wItemIndex;
@@ -23,7 +23,7 @@ struct __cppobj _good_storage_info
   _good_storage_info();
 };
 
-struct __cppobj _limit_item_info
+struct  _limit_item_info
 {
   bool bLoad;
   unsigned int dwStorageIndex;

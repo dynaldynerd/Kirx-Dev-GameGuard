@@ -6,7 +6,7 @@ class CHolyStoneSystem;
 class CHolyScheduleData;
 class CHolyStoneSaveData;
 
-class __cppobj CHolyStoneSystemDataMgr
+class  CHolyStoneSystemDataMgr
 {
 public:
   static bool LoadIni(CHolyStoneSystem *clsHolyStoneSystem);

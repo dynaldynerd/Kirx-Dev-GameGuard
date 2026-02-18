@@ -1019,7 +1019,7 @@ sprintf(buffer, "Map%d", uiMapInx);
     {
       return static_cast<unsigned __int8>(-117);
     }
-    if (pkPlayer->GetRecallAnimus())
+    if (pkPlayer->IsRecallAnimus())
     {
       return static_cast<unsigned __int8>(-85);
     }

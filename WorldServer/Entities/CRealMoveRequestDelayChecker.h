@@ -1,11 +1,12 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "CIndexList.h"
 
 class CPlayer;
 
 /* 1735 */
-class __cppobj __declspec(align(8)) CRealMoveRequestDelayChecker
+class  __declspec(align(8)) CRealMoveRequestDelayChecker
 {
 public:
   CIndexList m_kNodeInxOrderList;

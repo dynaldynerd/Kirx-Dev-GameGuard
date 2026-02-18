@@ -1,6 +1,12 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "EntityTypes.h"
+#include "CVertexBuffer.h"
+#include "CIndexBuffer.h"
+
+struct _R3MATERIAL;
+struct _ENTITY_M_GROUP;
 
 // Read-only animation object data (packed).
 #pragma pack(push, 1)
@@ -24,7 +30,7 @@ struct _READ_ANI_OBJECT
 
 /* 1395 */
 #pragma pack(push, 1)
-class __cppobj __unaligned CEntity
+class   CEntity
 {
 public:
   int mIsUseMemory;
@@ -62,4 +68,3 @@ public:
   void PrepareAnimation();
 };
 #pragma pack(pop)
-

@@ -11,7 +11,7 @@
 #include <hash_map>
 #include <utility>
 
-class __cppobj TimeItem
+class  TimeItem
 {
 public:
   static TimeItem *Instance();

@@ -5,7 +5,7 @@
 
 #include "CLuaEventNode.h"
 
-class __cppobj CLuaEventMgr
+class  CLuaEventMgr
 {
 public:
   static CLuaEventMgr *Instance();

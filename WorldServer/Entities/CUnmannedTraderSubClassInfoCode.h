@@ -5,7 +5,7 @@
 #include "CUnmannedTraderSubClassInfo.h"
 #include <vector>
 
-class __cppobj CUnmannedTraderSubClassInfoCode : public CUnmannedTraderSubClassInfo
+class  CUnmannedTraderSubClassInfoCode : public CUnmannedTraderSubClassInfo
 {
 public:
   CUnmannedTraderSubClassInfoCode(unsigned int dwID);

@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 #include "CMainThread.h"
 
-class __cppobj CRFMonsterAIMgr
+class  CRFMonsterAIMgr
 {
 public:
   CRFMonsterAIMgr();

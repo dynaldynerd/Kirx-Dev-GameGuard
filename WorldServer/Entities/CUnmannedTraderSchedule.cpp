@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "WorldServerUtil.h"
+
 #include "CUnmannedTraderSchedule.h"
 #include "CUnmannedTraderItemState.h"
 #include "CUnmannedTraderUserInfoTable.h"

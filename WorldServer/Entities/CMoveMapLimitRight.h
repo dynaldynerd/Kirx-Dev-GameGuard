@@ -4,7 +4,7 @@
 
 class CPlayer;
 
-class __cppobj __declspec(align(8)) CMoveMapLimitRight
+class  __declspec(align(8)) CMoveMapLimitRight
 {
 public:
   CMoveMapLimitRight(int iType);

@@ -10,7 +10,7 @@ struct sell_info
   int m_nMaxCount;
 };
 
-struct __cppobj _StoreList_fld : _base_fld
+struct  _StoreList_fld : _base_fld
 {
   char m_strBinding_DummyName[64];
   char m_strStore_NPCcode[64];

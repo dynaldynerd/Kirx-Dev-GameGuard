@@ -8,7 +8,7 @@ struct _dh_mission_setup;
 struct _dh_job_setup;
 
 /* 6045 */
-struct __cppobj __error_info
+struct  __error_info
 {
   __error_info();
   void init();
@@ -25,7 +25,7 @@ struct __cppobj __error_info
 };
 
 /* 6043 */
-class __cppobj __declspec(align(8)) CDarkHoleDungeonQuestSetup
+class  __declspec(align(8)) CDarkHoleDungeonQuestSetup
 {
 public:
   CDarkHoleDungeonQuestSetup();

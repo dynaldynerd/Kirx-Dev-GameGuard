@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 #include "CNetIndexList.h"
 
-class __cppobj __declspec(align(8)) _DELAY_PROCESS
+class  __declspec(align(8)) _DELAY_PROCESS
 {
 public:
   _DELAY_PROCESS();

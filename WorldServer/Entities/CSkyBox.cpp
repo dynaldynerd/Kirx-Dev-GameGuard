@@ -1,6 +1,9 @@
 #include "pch.h"
 
+#include "WorldServerUtil.h"
+
 #include "CSkyBox.h"
+#include "CMainThread.h"
 
 #include <cstdlib>
 #include <cstring>

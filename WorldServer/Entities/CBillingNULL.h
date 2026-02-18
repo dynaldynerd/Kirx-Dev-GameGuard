@@ -2,7 +2,7 @@
 
 #include "CBilling.h"
 
-class __cppobj CBillingNULL : public CBilling
+class  CBillingNULL : public CBilling
 {
 public:
   static CBillingNULL ms_NULL;

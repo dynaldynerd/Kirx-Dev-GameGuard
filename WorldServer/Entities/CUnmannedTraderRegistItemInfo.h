@@ -6,7 +6,7 @@
 class CLogFile;
 struct _TRADE_DB_BASE;
 
-class __cppobj CUnmannedTraderRegistItemInfo
+class  CUnmannedTraderRegistItemInfo
 {
 public:
   CUnmannedTraderRegistItemInfo();

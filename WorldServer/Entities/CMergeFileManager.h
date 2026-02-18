@@ -5,7 +5,7 @@
 struct CMergeFile;
 
 /* 1402 */
-class __cppobj CMergeFileManager
+class  CMergeFileManager
 {
   char mPath[256];
   unsigned int mPathNameLeng;

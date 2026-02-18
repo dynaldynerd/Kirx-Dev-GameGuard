@@ -8,7 +8,7 @@ class TiXmlElement;
 class CUnmannedTraderClassInfo;
 class CUnmannedTraderSortType;
 
-class __cppobj CUnmannedTraderDivisionInfo
+class  CUnmannedTraderDivisionInfo
 {
 public:
   CUnmannedTraderDivisionInfo(unsigned int dwID, char *szName);

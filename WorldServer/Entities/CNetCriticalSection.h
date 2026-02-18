@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1131 */
-class __cppobj CNetCriticalSection
+class  CNetCriticalSection
 {
 public:
   CNetCriticalSection();

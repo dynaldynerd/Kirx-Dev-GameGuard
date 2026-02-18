@@ -7,7 +7,7 @@
 class CUnmannedTraderDivisionInfo;
 class CUnmannedTraderSortType;
 
-class __cppobj CUnmannedTraderGroupIDInfo
+class  CUnmannedTraderGroupIDInfo
 {
 public:
   CUnmannedTraderGroupIDInfo();

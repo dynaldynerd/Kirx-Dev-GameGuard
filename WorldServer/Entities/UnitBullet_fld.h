@@ -4,7 +4,7 @@
 #include "base_fld.h"
 
 #pragma pack(push, 1)
-struct __cppobj _UnitBullet_fld : _base_fld
+struct  _UnitBullet_fld : _base_fld
 {
   char m_strModle[64];
   int m_nIconIDX;

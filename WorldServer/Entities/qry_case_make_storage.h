@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __cppobj _qry_case_make_storage
+struct  _qry_case_make_storage
 {
   unsigned __int8 bySubQry;
   int nSockIdx;

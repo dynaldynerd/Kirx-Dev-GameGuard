@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 #pragma pack(push, 1)
-struct __unaligned __declspec(align(2)) _start_world_request_wrac
+struct  __declspec(align(2)) _start_world_request_wrac
 {
   unsigned int dwGateIP;
   unsigned __int16 wGatePort;

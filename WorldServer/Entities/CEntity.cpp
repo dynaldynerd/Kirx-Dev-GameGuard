@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "CEntity.h"
+#include "CMainThread.h"
 
 #include <algorithm>
 #include <cstring>

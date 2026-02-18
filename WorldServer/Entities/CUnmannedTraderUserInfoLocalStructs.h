@@ -1,14 +1,16 @@
 #pragma once
 
 #pragma pack(push, 1)
-struct __unaligned __declspec(align(1)) _unmannedtrader_sell_wait_item_inform_zocl
+struct  _unmannedtrader_sell_wait_item_inform_zocl
 {
-  struct __unaligned __declspec(align(2)) __list
+  #pragma pack(push, 1)
+  struct  __list
   {
     unsigned __int16 wItemSerial;
     unsigned int dwSellDalant;
     unsigned int dwTax;
   };
+  #pragma pack(pop)
 
   unsigned __int8 byNum;
   unsigned int dwTotalSellDalant;
@@ -27,4 +29,3 @@ struct __unaligned __declspec(align(1)) _unmannedtrader_sell_wait_item_inform_zo
   }
 };
 #pragma pack(pop)
-

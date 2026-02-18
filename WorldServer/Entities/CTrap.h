@@ -7,7 +7,7 @@ class CPlayer;
 class CAttack;
 
 /* 1746 */
-class __cppobj CTrap : public CCharacter
+class  CTrap : public CCharacter
 {
 public:
   CTrap();

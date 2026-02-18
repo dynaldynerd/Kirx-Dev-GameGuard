@@ -18,7 +18,7 @@
 class CAsyncLogInfo;
 class CAsyncLogBufferList;
 
-class __cppobj CAsyncLogger
+class  CAsyncLogger
 {
 public:
   CAsyncLogger();

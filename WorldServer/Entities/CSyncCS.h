@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1692 */
-class __cppobj CSyncCS
+class  CSyncCS
 {
 public:
   CSyncCS();

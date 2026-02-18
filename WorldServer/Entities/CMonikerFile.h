@@ -15,7 +15,7 @@ class COleStreamFile : public CFile
 {
 };
 
-class __cppobj CMonikerFile : public COleStreamFile
+class  CMonikerFile : public COleStreamFile
 {
 };
 #endif

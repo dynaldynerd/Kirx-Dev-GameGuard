@@ -1,4 +1,6 @@
 #include "pch.h"
+
+#include "WorldServerUtil.h"
 #include "CHolyStone.h"
 
 #include "CHolyStoneSystem.h"

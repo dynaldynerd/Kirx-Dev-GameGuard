@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __cppobj LuaParam3
+struct  LuaParam3
 {
   int m_1;
   int m_2;

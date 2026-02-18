@@ -4,7 +4,7 @@
 #include "ElectProcessor.h"
 #include "ElectPacketTypes.h"
 
-class __cppobj __declspec(align(2)) Voter : public ElectProcessor
+class  __declspec(align(2)) Voter : public ElectProcessor
 {
 public:
   Voter();

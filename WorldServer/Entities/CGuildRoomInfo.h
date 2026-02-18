@@ -24,7 +24,7 @@ struct __declspec(align(4)) RoomInfo
   unsigned __int8 byMaxRoomCount;
 };
 
-class __cppobj CGuildRoomInfo
+class  CGuildRoomInfo
 {
 public:
   CGuildRoomInfo();

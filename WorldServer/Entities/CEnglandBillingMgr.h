@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-class __cppobj CEnglandBillingMgr
+class  CEnglandBillingMgr
 {
 public:
   virtual ~CEnglandBillingMgr() = default;

@@ -6,7 +6,7 @@
 class CPlayer;
 struct _AVATOR_DATA;
 
-class __cppobj CPcBangFavor
+class  CPcBangFavor
 {
 public:
   CPcBangFavor();

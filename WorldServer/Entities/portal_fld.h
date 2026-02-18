@@ -5,7 +5,7 @@
 #include "SkillCommon.h"
 
 #pragma pack(push, 1)
-struct __cppobj _portal_fld : _base_fld
+struct  _portal_fld : _base_fld
 {
   char m_strLinkMapCode[64];
   char m_strLinkPortalCode[64];

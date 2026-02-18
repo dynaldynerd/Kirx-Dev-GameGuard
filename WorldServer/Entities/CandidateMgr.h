@@ -6,13 +6,13 @@
 class CPlayer;
 struct _PVP_RANK_DATA;
 
-class __cppobj CandidateMgr
+class  CandidateMgr
 {
 public:
   CandidateMgr();
   ~CandidateMgr();
 
-  struct __cppobj _candidate_info
+  struct  _candidate_info
   {
     enum Status : int
     {

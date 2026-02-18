@@ -5,7 +5,7 @@
 #include <ctime>
 
 #pragma pack(push, 1)
-struct __cppobj __unaligned _qry_case_amine_batterycharge
+struct   _qry_case_amine_batterycharge
 {
   unsigned __int8 bySubQryCase;
   unsigned __int8 byCollisionType;

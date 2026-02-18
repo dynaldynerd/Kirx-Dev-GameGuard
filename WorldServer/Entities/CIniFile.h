@@ -8,7 +8,7 @@ struct INI_Section;
 struct INI_Key;
 
 /* 1438 */
-class __cppobj CIniFile
+class  CIniFile
 {
 public:
   CIniFile();

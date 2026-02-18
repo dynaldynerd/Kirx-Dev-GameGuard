@@ -4,13 +4,13 @@
 #include "CPlayer.h"
 
 /* 1597 */
-class __cppobj CPartyPlayer
+class  CPartyPlayer
 {
 public:
   CPartyPlayer();
 
   bool m_bLogin;
-  __unaligned __declspec(align(1)) _CLID m_id;
+   _CLID m_id;
   char m_wszName[17];
   unsigned __int16 m_wZoneIndex;
   CPartyPlayer *m_pPartyBoss;

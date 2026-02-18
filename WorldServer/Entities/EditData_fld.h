@@ -10,7 +10,7 @@ struct _edit_data_node
   int m_nEditItemcount;
 };
 
-struct __cppobj _EditData_fld : _base_fld
+struct  _EditData_fld : _base_fld
 {
   _edit_data_node m_Node[30];
 };

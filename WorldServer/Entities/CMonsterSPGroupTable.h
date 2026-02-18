@@ -2,8 +2,11 @@
 
 #include "IdaCompat.h"
 
+class CRecordData;
+struct _monster_sp_group;
+
 /* 1304 */
-class __cppobj CMonsterSPGroupTable
+class  CMonsterSPGroupTable
 {
 public:
   CMonsterSPGroupTable();

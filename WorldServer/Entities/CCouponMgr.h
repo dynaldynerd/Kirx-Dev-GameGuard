@@ -1,9 +1,14 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "CouponInfo.h"
+#include "CMyTimer.h"
+#include "StorageList.h"
+
+struct _PCBANG_PLAY_TIME;
 
 /* 1797 */
-class __cppobj CCouponMgr
+class  CCouponMgr
 {
 public:
   CCouponMgr();

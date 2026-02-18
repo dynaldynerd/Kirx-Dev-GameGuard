@@ -5,7 +5,7 @@
 
 class CPlayer;
 
-class __cppobj __declspec(align(8)) CRecallRequest
+class  __declspec(align(8)) CRecallRequest
 {
 public:
   bool IsClose();

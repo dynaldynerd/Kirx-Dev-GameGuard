@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __cppobj _qry_case_select_timelimit_info
+struct  _qry_case_select_timelimit_info
 {
   unsigned __int16 wIndex;
   unsigned int dwAccountSerial;

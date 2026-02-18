@@ -7,7 +7,7 @@
 
 #include "SkillCommon.h"
 
-struct __cppobj _RadarItem_fld : _base_fld
+struct  _RadarItem_fld : _base_fld
 {
   int m_bExist;
   char m_strModel[64];

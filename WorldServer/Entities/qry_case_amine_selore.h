@@ -3,12 +3,12 @@
 #include "IdaCompat.h"
 
 #pragma pack(push, 1)
-struct __cppobj _qry_case_amine_selore
+struct  _qry_case_amine_selore
 {
   unsigned __int8 bySubQryCase;
   unsigned __int8 byCollisionType;
   unsigned __int8 byRace;
-  __unaligned __declspec(align(1)) unsigned int dwGuildSerial;
+   unsigned int dwGuildSerial;
   unsigned __int8 byOreIdx;
 
   _qry_case_amine_selore();

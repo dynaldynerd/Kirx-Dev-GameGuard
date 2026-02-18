@@ -7,7 +7,7 @@ class CWnd
 {
 };
 
-class __cppobj CComboBox : public CWnd
+class  CComboBox : public CWnd
 {
 };
 #endif

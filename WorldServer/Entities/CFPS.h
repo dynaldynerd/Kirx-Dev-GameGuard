@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-class __cppobj CFPS
+class  CFPS
 {
 public:
   CFPS();

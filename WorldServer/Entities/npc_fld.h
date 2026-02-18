@@ -4,7 +4,7 @@
 #include "base_fld.h"
 
 #pragma pack(push, 1)
-struct __cppobj _npc_fld : _base_fld
+struct  _npc_fld : _base_fld
 {
   char m_strName[64];
   int m_nRace;
