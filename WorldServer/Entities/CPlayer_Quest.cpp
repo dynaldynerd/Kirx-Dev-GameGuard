@@ -415,3 +415,10 @@ bool CPlayer::Emb_CreateNPCQuest(char *pszEventCode, unsigned int dwNPCQuestInde
   return false;
 }
 
+void CPlayer::LimLvNpcQuestDelete(unsigned __int8 byQuestDBSlot)
+{
+  SendMsg_QuestFailure(6u, byQuestDBSlot);
+  this->m_QuestMgr.DeleteQuestData(byQuestDBSlot);
+  this->m_pUserDB->Update_QuestDelete(byQuestDBSlot);
+}
+

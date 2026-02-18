@@ -656,15 +656,6 @@ void CPlayer::SendMsg_ApexInform(unsigned __int16 dwRecvSize, char *pMsg)
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, pMsg, dwRecvSize);
 }
 
-void CPlayer::SendMsg_MaxPvpPointInform(int nMax)
-{
-  char payload[4]{};
-  *reinterpret_cast<int *>(payload) = nMax;
-
-  unsigned __int8 type[2] = {59, 15};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 4u);
-}
-
 void CPlayer::SendMsg_NewMovePotionResult()
 {
   char payload[1]{};
@@ -933,33 +924,6 @@ char CPlayer::Load(CUserDB *pUser, bool bFirstStart)
 
 
 
-void CPlayer::LimLvNpcQuestDelete(unsigned __int8 byQuestDBSlot)
-{
-  SendMsg_QuestFailure(6u, byQuestDBSlot);
-  this->m_QuestMgr.DeleteQuestData(byQuestDBSlot);
-  this->m_pUserDB->Update_QuestDelete(byQuestDBSlot);
-}
-
-void CPlayer::IncCriEffPvPCashBag(double dAlter)
-{
-  if (dAlter > 0.0 && this->m_byHSKQuestCode != 100)
-  {
-    CHolyStone *stone = &g_Stone[static_cast<int>(this->m_Param.GetRaceCode())];
-    if (stone->m_bOper && stone->m_pCurMap == this->m_pCurMap)
-    {
-      this->m_nHSKPvpPoint = static_cast<int>(static_cast<double>(this->m_nHSKPvpPoint) + dAlter);
-      SendMsg_HSKQuestActCum();
-      this->m_pUserDB->m_AvatorData.m_iPvpPoint = this->m_nHSKPvpPoint;
-    }
-  }
-}
-
-
-
-
-
-
-
 CPvpPointLimiter *CPlayer::GetPvpPointLimiter(CPvpPointLimiter *result)
 {
   *result = m_kPvpPointLimiter;
@@ -973,19 +937,6 @@ CPvpOrderView *CPlayer::GetPvpOrderView()
 
 
 
-void CPlayer::SendMsg_FcitemInform(unsigned __int16 wItemSerial, unsigned int dwNewStat)
-{
-  char szMsg[2]; // [rsp+34h] [rbp-44h] BYREF
-  unsigned int v7; // [rsp+36h] [rbp-42h]
-  unsigned __int8 pbyType[36]; // [rsp+54h] [rbp-24h] BYREF
-
-  *(_WORD *)szMsg = wItemSerial;
-  v7 = dwNewStat;
-  pbyType[0] = 3;
-  pbyType[1] = 44;
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, szMsg, 6u);
-}
-
 #if 0 // duplicate implementation exists in CPlayer.cpp
 
 #endif
@@ -997,31 +948,6 @@ void CPlayer::SendMsg_FcitemInform(unsigned __int16 wItemSerial, unsigned int dw
 
 
 
-
-void CPlayer::AlterPvPCashBag(long double dAlter, int IOCode)
-{
-  double PvpCash; // [rsp+20h] [rbp-18h]
-  long double dAltera; // [rsp+28h] [rbp-10h]
-
-  PvpCash = this->m_kPvpOrderView.GetPvpCash();
-  dAltera = PvpCash + dAlter;
-  if ( PvpCash + dAlter > 999999.0 )
-    dAltera = 999999.0;
-  if ( dAltera < -999999.0 )
-    dAltera = -999999.0;
-  if ( this->GetLevel() > 39 && this->m_Param.m_pClassData->m_nGrade >= 1 )
-  {
-    this->m_kPvpOrderView.SetPvpCash(dAltera);
-    if ( dAltera > PvpCash && dAlter > 0.0 )
-      this->IncCriEffPvPCashBag(dAlter);
-    const long double currentCash = this->m_kPvpOrderView.GetPvpCash();
-    if ( PvpCash != currentCash )
-    {
-      this->m_kPvpOrderView.UpdatePvpCash(dAltera);
-      this->SendMsg_AlterPvPCash(IOCode);
-    }
-  }
-}
 
 #if 0 // duplicate implementation exists in CPlayer.cpp
 
