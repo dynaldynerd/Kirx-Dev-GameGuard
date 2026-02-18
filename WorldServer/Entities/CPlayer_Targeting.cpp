@@ -866,3 +866,348 @@ void CPlayer::pc_BuddyDelRequest(unsigned int dwSerial)
   this->SendMsg_BuddyDelResult(static_cast<char>(retCode), dwSerial);
 }
 
+void CPlayer::SendMsg_CastVoteResult(char byRetCode)
+{
+  char payload[0x0B]{};
+  payload[0] = byRetCode;
+
+  if (byRetCode == 0)
+  {
+    *reinterpret_cast<int *>(payload + 1) = this->m_nVoteSerial;
+    const int raceCode = this->m_Param.GetRaceCode();
+    for (int index = 0; index < 3; ++index)
+    {
+      *reinterpret_cast<unsigned __int16 *>(payload + 5 + (2 * index)) =
+        static_cast<unsigned __int16>(g_VoteSys[raceCode].m_dwPoint[index]);
+    }
+  }
+
+  unsigned __int8 type[2] = {26, 6};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x0Bu);
+}
+
+void CPlayer::SendMsg_MoveToOwnStoneMapInform(unsigned __int8 byStoneMapMoveInfo)
+{
+  _move_to_own_stonemap_inform_zocl msg{};
+  msg.byStoneMapMoveInfo = byStoneMapMoveInfo;
+
+  unsigned __int8 type[2] = {25, 26};
+  const unsigned __int16 len = msg.size();
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
+}
+
+void CPlayer::SendMsg_MoveToOwnStoneMapResult(unsigned __int8 byRetCode, unsigned __int8 byMapIndex, float *pos)
+{
+  _move_to_own_stonemap_result_zocl msg{};
+  msg.byRetCode = byRetCode;
+  msg.byMapIndex = byMapIndex;
+  FloatToShort(pos, msg.sNewPos, 3);
+
+  unsigned __int8 type[2] = {25, 25};
+  const unsigned __int16 len = msg.size();
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
+}
+
+void CPlayer::pc_MoveToOwnStoneMapRequest()
+{
+  float pos[3] = {0.0f, 0.0f, 0.0f};
+  CMapData *intoMap = nullptr;
+  _portal_dummy *portalDummy = nullptr;
+
+  if (this->m_byStoneMapMoveInfo == 1)
+  {
+    if (this->GetCurSecNum() == static_cast<unsigned int>(-1) || this->m_bMapLoading)
+    {
+      this->SendMsg_MoveToOwnStoneMapResult(2u, 0, pos);
+    }
+    else if (this->IsRidingUnit())
+    {
+      this->SendMsg_MoveToOwnStoneMapResult(3u, 0, pos);
+    }
+    else if (this->m_byStandType == 1)
+    {
+      this->SendMsg_MoveToOwnStoneMapResult(4u, 0, pos);
+    }
+    else if (this->m_pmTrd.bDTradeMode)
+    {
+      this->SendMsg_MoveToOwnStoneMapResult(5u, 0, pos);
+    }
+    else if (this->IsSiegeMode())
+    {
+      this->SendMsg_MoveToOwnStoneMapResult(6u, 0, pos);
+    }
+    else if (this->m_bCorpse)
+    {
+      this->SendMsg_MoveToOwnStoneMapResult(7u, 0, pos);
+    }
+    else if (this->m_pCurMap == g_TransportShip[this->m_Param.GetRaceCode()].m_pLinkShipMap)
+    {
+      this->SendMsg_MoveToOwnStoneMapResult(8u, 0, pos);
+    }
+    else if (this->m_bInGuildBattle)
+    {
+      this->SendMsg_MoveToOwnStoneMapResult(11u, 0, pos);
+    }
+    else if (this->m_pCurMap->m_pMapSet->m_nMapType || this->m_EP.GetEff_State(20) || this->m_EP.GetEff_State(28))
+    {
+      this->SendMsg_MoveToOwnStoneMapResult(12u, 0, pos);
+    }
+    else
+    {
+      intoMap = g_HolySys.m_HolyKeeperData.pCreateMap;
+      portalDummy = g_HolySys.m_pPortalDummy[this->m_Param.GetRaceCode()];
+      if (portalDummy && intoMap)
+      {
+        if (intoMap->GetRandPosInDummy(portalDummy->m_pDumPos, pos, true))
+        {
+          this->OutOfMap(intoMap, 0, 3u, pos);
+          this->m_byStoneMapMoveInfo = 2;
+          this->SendMsg_MoveToOwnStoneMapResult(
+            50u,
+            static_cast<unsigned __int8>(intoMap->m_pMapSet->m_dwIndex),
+            pos);
+        }
+        else
+        {
+          this->SendMsg_MoveToOwnStoneMapResult(10u, 0, pos);
+        }
+      }
+      else
+      {
+        this->SendMsg_MoveToOwnStoneMapResult(9u, 0, pos);
+      }
+    }
+  }
+  else
+  {
+    this->SendMsg_MoveToOwnStoneMapResult(1u, 0, pos);
+  }
+}
+
+void CPlayer::SendMsg_GestureInform(unsigned __int8 byGestureType)
+{
+_gesture_inform_zocl msg{};
+
+  msg.dwActorSerial = this->m_dwObjSerial;
+  msg.byGestureType = byGestureType;
+
+  unsigned __int8 type[2] = {13, 23};
+  CircleReport(type, reinterpret_cast<char *>(&msg), 5, true);
+}
+
+void CPlayer::SendMsg_ResultChangeTaxRate(unsigned __int8 byRetCode, unsigned __int8 byNextTax)
+{
+  _pt_result_change_tax_rate_zocl message{};
+  message.byRet = byRetCode;
+  message.byNextTax = byNextTax;
+
+  unsigned __int8 type[2]{13, 121};
+  const unsigned __int16 len = static_cast<unsigned __int16>(message.size());
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&message),
+    len);
+}
+
+void CPlayer::SendMsg_RaceBossCryMsg()
+{
+  char messages[650]{};
+
+  for (int index = 0; index < 10; ++index)
+  {
+    strcpy_0(&messages[65 * index], this->m_pmCryMsg.m_List[index].wszCryMsg);
+  }
+
+  unsigned __int8 type[2]{13, 105};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    messages,
+    static_cast<unsigned __int16>(sizeof(messages)));
+}
+
+void CPlayer::pc_NotifyRaceBossCryMsg()
+{
+  if (this->m_pUserDB)
+  {
+    this->SendMsg_RaceBossCryMsg();
+  }
+}
+
+void CPlayer::pc_SetRaceBossCryMsg(unsigned __int8 bySlot, char *pwszCryMsg)
+{
+  if (this->m_pUserDB && IsSQLValidString(pwszCryMsg))
+  {
+    CNationSettingManager *nationSetting = CTSingleton<CNationSettingManager>::Instance();
+    if (nationSetting->IsNormalString(pwszCryMsg))
+    {
+      strcpy_0(this->m_pmCryMsg.m_List[bySlot].wszCryMsg, pwszCryMsg);
+      this->m_pUserDB->Update_BossCryMsg(bySlot, pwszCryMsg);
+    }
+  }
+}
+
+void CPlayer::pc_AlterWindowInfoRequest(
+  unsigned int *pdwSkill,
+  unsigned int *pdwForce,
+  unsigned int *pdwChar,
+  unsigned int *pdwAnimus,
+  unsigned int dwInven,
+  unsigned int *pdwInvenBag)
+{
+  if (this->m_pUserDB)
+  {
+    this->m_pUserDB->Update_WindowInfo(pdwSkill, pdwForce, pdwChar, pdwAnimus, dwInven, pdwInvenBag);
+  }
+}
+
+void CPlayer::pc_MacroUpdate(char *pBuf)
+{
+  this->m_pUserDB->Update_Macro(pBuf);
+}
+
+void CPlayer::pc_RequestTaxRate()
+{
+  const unsigned __int8 raceCode = static_cast<unsigned __int8>(this->m_Param.GetRaceCode());
+  CPvpUserAndGuildRankingSystem *rankingSystem = CPvpUserAndGuildRankingSystem::Instance();
+  if (rankingSystem->GetCurrentRaceBossSerial(raceCode, 5u) == this->m_dwObjSerial)
+  {
+    CUnmannedTraderTaxRateManager *taxRateManager = CUnmannedTraderTaxRateManager::Instance();
+    taxRateManager->SendTaxRatePatriarch(this->m_ObjID.m_wIndex, raceCode);
+  }
+}
+
+void CPlayer::pc_RequestChangeTaxRate(unsigned __int8 byTaxRate)
+{
+  unsigned __int8 errorCode = 0;
+  const unsigned __int8 raceCode = static_cast<unsigned __int8>(this->m_Param.GetRaceCode());
+  CPvpUserAndGuildRankingSystem *rankingSystem = CPvpUserAndGuildRankingSystem::Instance();
+
+  if (rankingSystem->GetCurrentRaceBossSerial(raceCode, 5u) == this->m_dwObjSerial)
+  {
+    if (byTaxRate >= 5u && byTaxRate <= 0x14u)
+    {
+      CUnmannedTraderTaxRateManager *taxRateManager = CUnmannedTraderTaxRateManager::Instance();
+      const unsigned int suggestedTime = taxRateManager->GetSuggestedTime(raceCode);
+      const unsigned int now = GetKorLocalTime();
+      if (now - suggestedTime < 0x3Cu)
+      {
+        errorCode = 2;
+      }
+    }
+    else
+    {
+      errorCode = 3;
+    }
+  }
+  else
+  {
+    errorCode = 1;
+  }
+
+  if (errorCode)
+  {
+    this->SendMsg_ResultChangeTaxRate(errorCode, 0xFFu);
+  }
+  else
+  {
+    CUnmannedTraderTaxRateManager *taxRateManager = CUnmannedTraderTaxRateManager::Instance();
+    taxRateManager->SetSuggested(
+      raceCode,
+      0,
+      this->m_Param.GetCharSerial(),
+      this->m_Param.GetCharNameW(),
+      byTaxRate);
+    this->SendMsg_ResultChangeTaxRate(errorCode, byTaxRate);
+  }
+}
+
+void CPlayer::pc_ChangeModeType(unsigned __int8 nModeType, unsigned __int8 nStandType)
+{
+  this->m_byModeType = nModeType;
+  this->m_byStandType = nStandType;
+  this->SenseState();
+}
+
+void CPlayer::pc_GestureRequest(unsigned __int8 byGestureType)
+{
+  this->SendMsg_GestureInform(byGestureType);
+}
+
+void CPlayer::pc_ProposeVoteRequest(unsigned __int8 byLimGrade, char *pwszCont)
+{
+  unsigned __int8 result = 0;
+  int raceCode = 0;
+  if (!g_Main.IsReleaseServiceMode()
+    || ((raceCode = this->m_Param.GetRaceCode()),
+        CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(
+          static_cast<unsigned __int8>(raceCode),
+          0)
+          == this->m_dwObjSerial))
+  {
+    if (g_VoteSys[raceCode].m_bActive)
+    {
+      result = 2;
+    }
+  }
+  else
+  {
+    result = 1;
+  }
+
+  if (!result)
+  {
+    raceCode = this->m_Param.GetRaceCode();
+    if (!g_VoteSys[raceCode].StartVote(pwszCont, byLimGrade, static_cast<unsigned __int8>(raceCode)))
+    {
+      result = 7;
+    }
+  }
+
+  this->SendMsg_ProposeVoteResult(static_cast<char>(result));
+}
+
+void CPlayer::pc_CastVoteRequest(int nVoteSerial, unsigned __int8 byCode)
+{
+  unsigned __int8 result = 0;
+  const int raceCode = this->m_Param.GetRaceCode();
+  if (raceCode < 0 || raceCode >= 3 || !g_VoteSys[raceCode].m_bActive)
+  {
+    result = 3;
+  }
+  else if (g_VoteSys[raceCode].m_nSerial != nVoteSerial)
+  {
+    result = 4;
+  }
+  else if (this->m_nVoteSerial == nVoteSerial)
+  {
+    result = 5;
+  }
+  else if (this->m_Param.m_byPvPGrade < g_VoteSys[raceCode].m_byLimGrade)
+  {
+    result = 6;
+  }
+
+  if (!result)
+  {
+    this->m_nVoteSerial = nVoteSerial;
+    g_VoteSys[raceCode].ActVote(this->m_dwObjSerial, byCode);
+  }
+
+  char msg[11] = {};
+  msg[0] = static_cast<char>(result);
+  if (!result)
+  {
+    memcpy_0(msg + 1, &this->m_nVoteSerial, sizeof(this->m_nVoteSerial));
+    for (int pointIndex = 0; pointIndex < 3; ++pointIndex)
+    {
+      const unsigned __int16 point = static_cast<unsigned __int16>(g_VoteSys[raceCode].m_dwPoint[pointIndex]);
+      memcpy_0(msg + 5 + pointIndex * sizeof(point), &point, sizeof(point));
+    }
+  }
+
+  unsigned __int8 type[2] = {26, 6};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, msg, 11u);
+}
+
