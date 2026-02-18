@@ -1389,3 +1389,19 @@ void CPlayer::AlterSec()
   }
 }
 
+void CPlayer::SendMsg_TeleportError(char byErrorCode, unsigned int dwMapIndex)
+{
+  char payload[5]{};
+  payload[0] = byErrorCode;
+  *reinterpret_cast<unsigned int *>(payload + 1) = dwMapIndex;
+
+  unsigned __int8 type[2] = {17, 43};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 5u);
+}
+
+void CPlayer::SendMsg_ApexInform(unsigned __int16 dwRecvSize, char *pMsg)
+{
+  unsigned __int8 type[2] = {99, 3};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, pMsg, dwRecvSize);
+}
+

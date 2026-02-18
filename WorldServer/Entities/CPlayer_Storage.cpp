@@ -257,6 +257,73 @@ void CPlayer::SendMsg_ForceInvenChange(char byErrCode)
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, &byErrCode, 1u);
 }
 
+void CPlayer::SendMsg_RevivalOfJade(unsigned __int16 wSuccRate)
+{
+  (void)wSuccRate;
+  char payload[1]{};
+
+  unsigned __int8 type[2] = {3, 58};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+}
+
+void CPlayer::SendMsg_UseJadeResult(unsigned __int8 byErrCode, unsigned __int16 wItemSerial)
+{
+  char payload[6]{};
+  *reinterpret_cast<unsigned int *>(payload) = byErrCode;
+  *reinterpret_cast<unsigned __int16 *>(payload + 4) = wItemSerial;
+
+  unsigned __int8 type[2] = {7, 65};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 6u);
+}
+
+void CPlayer::SendMsg_NotifyEffectForGetItem(
+  char byBoxType,
+  unsigned int dwCharSerial,
+  char *szCharName,
+  _STORAGE_LIST::_db_con *pItem,
+  bool bCircle)
+{
+  char payload[0x1A]{};
+  payload[0] = byBoxType;
+  payload[1] = static_cast<char>(pItem->m_byTableCode);
+  *reinterpret_cast<unsigned __int16 *>(payload + 2) = pItem->m_wItemIndex;
+  payload[4] = static_cast<char>(pItem->m_dwDur);
+  *reinterpret_cast<unsigned int *>(payload + 5) = dwCharSerial;
+  strcpy_0(payload + 9, szCharName);
+
+  unsigned __int8 type[2] = {13, static_cast<unsigned __int8>(-106)};
+  if (bCircle)
+  {
+    this->CircleReport(type, payload, 26, true);
+  }
+  else
+  {
+    for (unsigned int index = 0; index < MAX_PLAYER; ++index)
+    {
+      CPlayer *targetPlayer = &g_Player[index];
+      if (targetPlayer && targetPlayer->m_bLive)
+      {
+        g_Network.m_pProcess[0]->LoadSendMsg(targetPlayer->m_ObjID.m_wIndex, type, payload, 0x1Au);
+      }
+    }
+  }
+}
+
+void CPlayer::SendMsg_NewMovePotionResult()
+{
+  char payload[1]{};
+  payload[0] = 1;
+
+  unsigned __int8 type[2] = {17, 45};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+}
+
+void CPlayer::SendMsg_JadeEffectErr(char byErrorCode)
+{
+  unsigned __int8 type[2] = {59, 4};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &byErrorCode, 1u);
+}
+
 void CPlayer::pc_ResSeparation(unsigned __int16 wStartSerial, unsigned __int8 byMoveAmount)
 {
 SendMsg_ResSeparation(1u, nullptr, nullptr);
