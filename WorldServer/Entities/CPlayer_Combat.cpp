@@ -3151,3 +3151,14 @@ void CPlayer::AlterPvPCashBag(long double dAlter, int IOCode)
   }
 }
 
+CPvpPointLimiter *CPlayer::GetPvpPointLimiter(CPvpPointLimiter *result)
+{
+  *result = m_kPvpPointLimiter;
+  return result;
+}
+
+CPvpOrderView *CPlayer::GetPvpOrderView()
+{
+  return &m_kPvpOrderView;
+}
+

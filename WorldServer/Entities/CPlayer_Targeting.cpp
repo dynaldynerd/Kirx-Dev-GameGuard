@@ -1405,3 +1405,12 @@ void CPlayer::SendMsg_ApexInform(unsigned __int16 dwRecvSize, char *pMsg)
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, pMsg, dwRecvSize);
 }
 
+void wa_EnterWorld(_WA_AVATOR_CODE *pData, unsigned __int16 wZoneIndex)
+{
+  CPartyPlayer *partyPlayer = &g_PartyPlayer[static_cast<unsigned int>(pData->m_id.wIndex)];
+  if (!partyPlayer->m_bLogin)
+  {
+    partyPlayer->EnterWorld(pData, wZoneIndex);
+  }
+}
+
