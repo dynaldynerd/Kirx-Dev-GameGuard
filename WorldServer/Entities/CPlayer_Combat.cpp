@@ -111,6 +111,20 @@
 
 namespace
 {
+char s_playerObjectName[256]{};
+
+int ClampToleranceValue(int value)
+{
+  if (value < -100)
+  {
+    return -100;
+  }
+  if (value > 100)
+  {
+    return 100;
+  }
+  return value;
+}
 
 bool IsSameTargetAsPerformer(const CPlayer *player, const _CHRID *targetId)
 {
@@ -2548,5 +2562,531 @@ void CPlayer::SendMsg_RealMovePoint(int n)
 
   unsigned __int8 type[2] = {4, 21};
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+}
+
+__int64 CPlayer::GetAvoidRate()
+{
+  if (m_fTalik_AvoidPoint <= 0.0f)
+  {
+    return static_cast<unsigned int>(static_cast<int>(m_EP.GetEff_Plus(3)));
+  }
+
+  const int maxDp = GetMaxDP();
+  float dpRate = 0.0f;
+  if (maxDp > 0)
+  {
+    dpRate = (2.0f * static_cast<float>(GetDP()) / static_cast<float>(maxDp)) - 0.4f;
+    if (dpRate < 0.0f)
+    {
+      dpRate = 0.0f;
+    }
+    else if (dpRate > 1.0f)
+    {
+      dpRate = 1.0f;
+    }
+  }
+
+  const int talikPenalty = static_cast<int>(m_fTalik_AvoidPoint * (1.0f - dpRate));
+  const float avoidValue = m_EP.GetEff_Plus(3) - static_cast<float>(talikPenalty);
+  return static_cast<unsigned int>(static_cast<int>(avoidValue));
+}
+
+__int64 CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
+{
+  m_nLastBeatenPart = nAttactPart;
+
+  float defenseValue = 0.0f;
+  if (IsRidingUnit())
+  {
+    defenseValue = static_cast<float>(m_nUnitDefFc) * m_fUnitPv_DefFc;
+  }
+  else
+  {
+    bool ignoreShieldByEffect = false;
+    if (pAttChar && pAttChar->m_ObjID.m_byID == 0)
+    {
+      ignoreShieldByEffect = pAttChar->m_EP.GetEff_State(11);
+      if (!ignoreShieldByEffect)
+      {
+        float ignoreProb = pAttChar->m_EP.GetEff_Plus(28);
+        if (ignoreProb > 0.0f)
+        {
+          ignoreProb += pAttChar->m_EP.GetEff_Plus(41);
+          if ((rand() % 100) <= static_cast<int>(ignoreProb))
+          {
+            ignoreShieldByEffect = true;
+          }
+        }
+      }
+      if (ignoreShieldByEffect)
+      {
+        pAttChar->SendMsg_AttackActEffect(1u, this);
+      }
+    }
+
+    _STORAGE_LIST::_db_con *shieldItem = &m_Param.m_dbEquip.m_pStorageList[5];
+    bool shieldEnabled = false;
+    if (shieldItem->m_bLoad)
+    {
+      shieldEnabled = GetEffectEquipCode(1u, 5u) == 1;
+      if (shieldEnabled)
+      {
+        _STORAGE_LIST::_db_con *weaponItem = &m_Param.m_dbEquip.m_pStorageList[6];
+        if (weaponItem->m_bLoad)
+        {
+          _base_fld *weaponRecord = g_Main.m_tblItemData[6].GetRecord(weaponItem->m_wItemIndex);
+          if (weaponRecord && *reinterpret_cast<int *>(&weaponRecord[4].m_strCode[12]) == 100)
+          {
+            shieldEnabled = false;
+          }
+        }
+      }
+    }
+
+    if (pAttChar && shieldEnabled && !ignoreShieldByEffect)
+    {
+      const int masteryValue = m_pmMst.GetMasteryPerMast(2u, 0u);
+      int blockChance = static_cast<int>((static_cast<float>(masteryValue) / 99.0f) * 20.0f + 5.0f);
+      blockChance += static_cast<int>(m_EP.GetEff_Plus(29));
+      if (blockChance > 100)
+      {
+        blockChance = 100;
+      }
+      if ((rand() % 100) < blockChance)
+      {
+        m_nLastBeatenPart = 5;
+        if (pnConvertPart)
+        {
+          *pnConvertPart = m_nLastBeatenPart;
+        }
+        return 0xFFFFFFFEu;
+      }
+    }
+
+    if (m_nLastBeatenPart < 0 || m_nLastBeatenPart >= 5)
+    {
+      m_nLastBeatenPart = rand() % 5;
+    }
+
+    const int partIndex = m_nLastBeatenPart;
+    int partCode = m_Param.m_dbChar.m_byDftPart[partIndex];
+    _STORAGE_LIST::_db_con *partItem = &m_Param.m_dbEquip.m_pStorageList[partIndex];
+    if (partItem->m_bLoad && GetEffectEquipCode(1u, static_cast<unsigned __int8>(partIndex)) == 1)
+    {
+      partCode = partItem->m_wItemIndex;
+    }
+
+    _base_fld *partRecord = g_Main.m_tblItemData[partIndex].GetRecord(partCode);
+    if (partRecord)
+    {
+      defenseValue = *reinterpret_cast<float *>(&partRecord[5].m_strCode[44]);
+    }
+
+    if (shieldEnabled && m_nLastBeatenPart == 5)
+    {
+      _base_fld *shieldRecord = g_Main.m_tblItemData[5].GetRecord(shieldItem->m_wItemIndex);
+      if (shieldRecord)
+      {
+        defenseValue = *reinterpret_cast<float *>(&shieldRecord[5].m_strCode[44]);
+      }
+    }
+
+    if (pnConvertPart)
+    {
+      *pnConvertPart = m_nLastBeatenPart;
+    }
+
+    defenseValue *= m_EP.GetEff_Rate(33);
+    if (IsSiegeMode())
+    {
+      defenseValue *= m_EP.GetEff_Rate(24);
+    }
+  }
+
+  if (!m_bInGuildBattle)
+  {
+    const unsigned int charSerial = m_Param.GetCharSerial();
+    const int raceCode = m_Param.GetRaceCode();
+    const unsigned __int8 bossType =
+      CPvpUserAndGuildRankingSystem::Instance()->GetBossType(raceCode, charSerial);
+    switch (bossType)
+    {
+    case 0:
+      defenseValue *= 1.3f;
+      break;
+    case 1:
+    case 5:
+      defenseValue *= 1.5f;
+      break;
+    case 3:
+    case 7:
+      defenseValue *= 1.2f;
+      break;
+    default:
+      break;
+    }
+  }
+
+  if (g_HolySys.GetDestroyerSerial() == m_dwObjSerial || IsLastAttBuff())
+  {
+    defenseValue *= 1.3f;
+  }
+
+  if (!IsRidingUnit())
+  {
+    const int maxDp = GetMaxDP();
+    float dpRate = 0.0f;
+    if (maxDp > 0)
+    {
+      dpRate = (2.0f * static_cast<float>(GetDP()) / static_cast<float>(maxDp)) - 0.4f;
+      if (dpRate < 0.0f)
+      {
+        dpRate = 0.0f;
+      }
+      else if (dpRate > 1.0f)
+      {
+        dpRate = 1.0f;
+      }
+    }
+
+    if (m_fTalik_DefencePoint > 0.0f)
+    {
+      const float talikPenalty = m_fTalik_DefencePoint * (1.0f - dpRate);
+      defenseValue *= (m_EP.GetEff_Rate(6) - talikPenalty);
+    }
+    else
+    {
+      defenseValue *= m_EP.GetEff_Rate(6);
+    }
+  }
+
+  return static_cast<unsigned int>(static_cast<int>(defenseValue));
+}
+
+float CPlayer::GetDefFacing(int nPart)
+{
+  if (IsRidingUnit())
+  {
+    if (m_pUsingUnit)
+    {
+      _base_fld *record = g_Main.m_tblUnitFrame.GetRecord(m_pUsingUnit->byFrame);
+      if (record)
+      {
+        return *reinterpret_cast<float *>(&record[1].m_strCode[8]);
+      }
+    }
+    return FLOAT_0_5;
+  }
+
+  if (nPart >= 8)
+  {
+    return FLOAT_0_5;
+  }
+
+  int partCode = m_Param.m_dbChar.m_byDftPart[nPart];
+  _STORAGE_LIST::_db_con *equipPart = &m_Param.m_dbEquip.m_pStorageList[nPart];
+  if (equipPart->m_bLoad && GetEffectEquipCode(1u, static_cast<unsigned __int8>(nPart)) == 1)
+  {
+    partCode = equipPart->m_wItemIndex;
+  }
+
+  _base_fld *record = g_Main.m_tblItemData[nPart].GetRecord(partCode);
+  if (!record)
+  {
+    return FLOAT_0_5;
+  }
+  return *reinterpret_cast<float *>(&record[5].m_strCode[60]);
+}
+
+float CPlayer::GetDefGap(int nPart)
+{
+  if (IsRidingUnit())
+  {
+    if (m_pUsingUnit)
+    {
+      _base_fld *record = g_Main.m_tblUnitFrame.GetRecord(m_pUsingUnit->byFrame);
+      if (record)
+      {
+        return *reinterpret_cast<float *>(&record[1].m_strCode[4]);
+      }
+    }
+    return FLOAT_0_5;
+  }
+
+  if (nPart >= 8)
+  {
+    return FLOAT_0_5;
+  }
+
+  int partCode = m_Param.m_dbChar.m_byDftPart[nPart];
+  _STORAGE_LIST::_db_con *equipPart = &m_Param.m_dbEquip.m_pStorageList[nPart];
+  if (equipPart->m_bLoad && GetEffectEquipCode(1u, static_cast<unsigned __int8>(nPart)) == 1)
+  {
+    partCode = equipPart->m_wItemIndex;
+  }
+
+  _base_fld *record = g_Main.m_tblItemData[nPart].GetRecord(partCode);
+  if (!record)
+  {
+    return FLOAT_0_5;
+  }
+  return *reinterpret_cast<float *>(&record[5].m_strCode[56]);
+}
+
+__int64 CPlayer::GetDefSkill(bool bBackAttackDamage)
+{
+if (!IsRidingUnit())
+  {
+    return m_pmMst.GetMasteryPerMast(1u, 0u);
+  }
+
+  int totalDefSkill = 0;
+  _base_fld *leftPart = g_Main.m_tblUnitPart[0].GetRecord(m_pUsingUnit->byPart[0]);
+  if (leftPart)
+  {
+    totalDefSkill += *reinterpret_cast<int *>(&leftPart[5].m_strCode[12]);
+  }
+
+  _base_fld *rightPart = g_Main.m_tblUnitPart[1].GetRecord(m_pUsingUnit->byPart[1]);
+  if (rightPart)
+  {
+    totalDefSkill += *reinterpret_cast<int *>(&rightPart[5].m_strCode[12]);
+  }
+
+  return static_cast<unsigned int>(totalDefSkill);
+}
+
+__int64 CPlayer::GetFireTol()
+{
+  const float total = static_cast<float>(m_nTolValue[0]) + m_EP.GetEff_Plus(15);
+  int value = static_cast<int>(total * m_EP.GetEff_Rate(25));
+  value = ClampToleranceValue(value);
+  if (m_EP.GetEff_State(19) && value > 0)
+  {
+    value = -value;
+  }
+  return static_cast<unsigned int>(value);
+}
+
+char *CPlayer::GetObjName()
+{
+  std::snprintf(
+    s_playerObjectName,
+    sizeof(s_playerObjectName),
+    "[PLAYER][%d] >> %s (pos: %s {%d, %d, %d})",
+    static_cast<int>(GetObjRace()),
+    m_Param.GetCharNameA(),
+    m_pCurMap ? m_pCurMap->m_pMapSet->m_strCode : "<null-map>",
+    static_cast<int>(m_fCurPos[0]),
+    static_cast<int>(m_fCurPos[1]),
+    static_cast<int>(m_fCurPos[2]));
+  return s_playerObjectName;
+}
+
+__int64 CPlayer::GetObjRace()
+{
+  return static_cast<unsigned int>(m_Param.GetRaceCode());
+}
+
+__int64 CPlayer::GetSoilTol()
+{
+  const float total = static_cast<float>(m_nTolValue[2]) + m_EP.GetEff_Plus(17);
+  int value = static_cast<int>(total * m_EP.GetEff_Rate(27));
+  value = ClampToleranceValue(value);
+  if (m_EP.GetEff_State(19) && value > 0)
+  {
+    value = -value;
+  }
+  return static_cast<unsigned int>(value);
+}
+
+__int64 CPlayer::GetWaterTol()
+{
+  const float total = static_cast<float>(m_nTolValue[1]) + m_EP.GetEff_Plus(16);
+  int value = static_cast<int>(total * m_EP.GetEff_Rate(26));
+  value = ClampToleranceValue(value);
+  if (m_EP.GetEff_State(19) && value > 0)
+  {
+    value = -value;
+  }
+  return static_cast<unsigned int>(value);
+}
+
+float CPlayer::GetWeaponAdjust()
+{
+  if (IsRidingUnit())
+  {
+    return FLOAT_1_0;
+  }
+
+  _STORAGE_LIST::_db_con *weaponItem = &m_Param.m_dbEquip.m_pStorageList[6];
+  if (!weaponItem->m_bLoad || GetEffectEquipCode(1u, 6u) != 1)
+  {
+    return 0.0f;
+  }
+
+  _base_fld *weaponRecord = g_Main.m_tblItemData[6].GetRecord(weaponItem->m_wItemIndex);
+  if (!weaponRecord)
+  {
+    return 0.0f;
+  }
+  if (*reinterpret_cast<int *>(&weaponRecord[6].m_strCode[8]) == 10)
+  {
+    return 0.0f;
+  }
+
+  return *reinterpret_cast<float *>(&weaponRecord[9].m_strCode[40]);
+}
+
+__int64 CPlayer::GetWeaponClass()
+{
+  return m_pmWpn.byWpClass;
+}
+
+float CPlayer::GetWidth()
+{
+  return *reinterpret_cast<float *>(&m_pRecordSet[2].m_strCode[12]);
+}
+
+__int64 CPlayer::GetWindTol()
+{
+  const float total = static_cast<float>(m_nTolValue[3]) + m_EP.GetEff_Plus(18);
+  int value = static_cast<int>(total * m_EP.GetEff_Rate(28));
+  value = ClampToleranceValue(value);
+  if (m_EP.GetEff_State(19) && value > 0)
+  {
+    value = -value;
+  }
+  return static_cast<unsigned int>(value);
+}
+
+char CPlayer::IsBeDamagedAble(CCharacter *pAtter)
+{
+  if (!pAtter)
+  {
+    return 0;
+  }
+
+  if (pAtter->m_ObjID.m_byID != 0)
+  {
+    return 1;
+  }
+
+  CPlayer *attacker = static_cast<CPlayer *>(pAtter);
+  if (!attacker->m_bInGuildBattle && m_bInGuildBattle)
+  {
+    return 0;
+  }
+  if (attacker->m_bInGuildBattle && !m_bInGuildBattle)
+  {
+    return 0;
+  }
+  if (!attacker->m_bInGuildBattle && !m_bInGuildBattle)
+  {
+    return 1;
+  }
+
+  return attacker->m_byGuildBattleColorInx != m_byGuildBattleColorInx;
+}
+
+char CPlayer::IsRecvableContEffect()
+{
+  if (IsRidingUnit())
+  {
+    return 0;
+  }
+  if (m_EP.GetEff_State(20))
+  {
+    return 0;
+  }
+  return m_EP.GetEff_State(28) ? 0 : 1;
+}
+
+bool CPlayer::Is_Battle_Mode()
+{
+  return m_byBattleMode != 0;
+}
+
+void CPlayer::OutOfSec()
+{
+  if (m_pUserDB)
+  {
+    char buffer[144]{};
+    std::snprintf(
+      buffer,
+      sizeof(buffer),
+      "CLOSE>> OutOfSec() ID: %s, NM: %s",
+      m_pUserDB->m_szAccountID,
+      m_Param.GetCharNameA());
+    g_Network.Close(0, m_ObjID.m_wIndex, false, buffer);
+  }
+  else
+  {
+    g_Network.Close(0, m_ObjID.m_wIndex, false, nullptr);
+  }
+
+  m_bOutOfMap = true;
+}
+
+void CPlayer::RecvKillMessage(CCharacter *pDier)
+{
+  if (!pDier)
+  {
+    return;
+  }
+
+  if (pDier->m_ObjID.m_byID)
+  {
+    if (pDier->m_ObjID.m_byID != 1)
+    {
+      return;
+    }
+
+    CMonster *deadMonster = static_cast<CMonster *>(pDier);
+    m_QuestMgr.CheckFailLoop(3, deadMonster->m_pRecordSet->m_strCode);
+
+    if (m_pUserDB && CActionPointSystemMgr::Instance()->GetEventStatus(1u) == 2)
+    {
+      const int killerLevel = static_cast<int>(m_Param.GetLevel());
+      const int deadLevel = static_cast<int>(deadMonster->GetLevel());
+      if (std::abs(killerLevel - deadLevel) < 10)
+      {
+        const unsigned int currentPoint = m_pUserDB->GetActPoint(1u);
+        unsigned int addPoint = 0;
+        if (deadMonster->m_pMonRec && deadMonster->m_pMonRec->m_nKillPoint > 0)
+        {
+          addPoint = static_cast<unsigned int>(deadMonster->m_pMonRec->m_nKillPoint);
+        }
+        const unsigned int nextPoint = currentPoint + addPoint;
+        m_pUserDB->Update_User_Action_Point(1u, nextPoint);
+        SendMsg_Alter_Action_Point(1u, nextPoint);
+      }
+    }
+
+    bool handledByDarkHole = false;
+    if (m_pDHChannel && deadMonster->m_pMonRec)
+    {
+      handledByDarkHole =
+        m_pDHChannel->CheckEvent(dh_event_hunt, 255, static_cast<int>(deadMonster->m_pMonRec->m_dwIndex), 1, deadMonster)
+        != 0;
+    }
+
+    if (!handledByDarkHole)
+    {
+      Emb_CheckActForQuest(3, deadMonster->m_pRecordSet->m_strCode, 1u, false);
+      if (m_pPartyMgr->IsPartyMode())
+      {
+        Emb_CheckActForQuestParty(3, deadMonster->m_pRecordSet->m_strCode, 1u);
+      }
+    }
+    return;
+  }
+
+  CPlayer *deadPlayer = static_cast<CPlayer *>(pDier);
+  char *raceCode = cvt_string(deadPlayer->m_Param.GetRaceCode());
+  if (!Emb_CreateQuestEvent(quest_happen_type_pk, raceCode))
+  {
+    Emb_CheckActForQuest(2, raceCode, 1u, false);
+  }
 }
 
