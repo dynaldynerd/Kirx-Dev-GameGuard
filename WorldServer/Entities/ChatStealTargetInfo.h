@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct  __declspec(align(4)) _ChatStealTargetInfo
+struct  _ChatStealTargetInfo
 {
   unsigned __int8 m_byStealType;
   unsigned int m_dwTargetSerial;
@@ -15,3 +15,4 @@ inline _ChatStealTargetInfo::_ChatStealTargetInfo()
   : m_byStealType(0), m_dwTargetSerial(static_cast<unsigned int>(-1)), m_byRaceBoss(static_cast<unsigned __int8>(-1))
 {
 }
+

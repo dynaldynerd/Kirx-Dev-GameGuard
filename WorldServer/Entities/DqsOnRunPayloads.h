@@ -6,7 +6,7 @@
 struct _qry_case_post_list_regi;
 struct _qry_case_post_serial_check;
 
-struct __declspec(align(2)) _qry_case_alive_char_payload
+struct _qry_case_alive_char_payload
 {
   unsigned __int8 in_byCase;
   unsigned __int8 byPadding[3];
@@ -24,7 +24,7 @@ struct _log_sheet_usernum
   int nCount;
 };
 
-struct __declspec(align(8)) _log_sheet_economy
+struct _log_sheet_economy
 {
   unsigned int dwDate;
   unsigned int dwAlignPad;
@@ -35,7 +35,7 @@ struct __declspec(align(8)) _log_sheet_economy
   long double dCutOre[6][3];
 };
 
-struct __declspec(align(4)) _qry_case_joinacguild_local
+struct _qry_case_joinacguild_local
 {
   unsigned int in_guildindex;
   unsigned int in_guildserial;
@@ -64,7 +64,7 @@ struct  _qry_case_insertguild_local
   unsigned int tmp_Esterserial;
 };
 
-struct __declspec(align(8)) _qry_case_inputgmoney_local
+struct _qry_case_inputgmoney_local
 {
   unsigned int in_pusherserial;
   char in_w_pushername[17];
@@ -78,7 +78,7 @@ struct __declspec(align(8)) _qry_case_inputgmoney_local
   unsigned __int8 byProcRet;
 };
 
-struct __declspec(align(4)) _qry_case_unmandtrader_time_out_cancelitem
+struct _qry_case_unmandtrader_time_out_cancelitem
 {
   unsigned __int8 byType;
   unsigned __int8 byPadding0[3];
@@ -95,9 +95,9 @@ struct __declspec(align(4)) _qry_case_unmandtrader_time_out_cancelitem
 };
 static_assert(sizeof(_qry_case_unmandtrader_time_out_cancelitem) == 80);
 
-struct __declspec(align(4)) _qry_case_unmandtrader_log_in_proc_update_complete_create
+struct _qry_case_unmandtrader_log_in_proc_update_complete_create
 {
-  struct __declspec(align(4)) __list
+  struct __list
   {
     unsigned __int8 byProcRet;
     unsigned __int8 byProcUpdate;
@@ -153,3 +153,4 @@ struct qry_case_golden_box_item
   _db_golden_box_item NewData;
   _db_golden_box_item OldData;
 };
+

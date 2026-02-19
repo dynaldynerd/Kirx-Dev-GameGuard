@@ -6,7 +6,7 @@
 
 struct MiningTicket;
 
-class  __declspec(align(8)) CMoveMapLimitRightPortal : public CMoveMapLimitRight
+class  CMoveMapLimitRightPortal : public CMoveMapLimitRight
 {
 public:
   CMoveMapLimitRightPortal(int iType);
@@ -21,3 +21,4 @@ public:
   MiningTicket *m_pkRight;
   bool m_bNotifyForceMoveStartPosition;
 };
+

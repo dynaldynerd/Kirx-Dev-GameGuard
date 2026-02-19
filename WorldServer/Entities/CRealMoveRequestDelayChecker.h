@@ -6,7 +6,7 @@
 class CPlayer;
 
 /* 1735 */
-class  __declspec(align(8)) CRealMoveRequestDelayChecker
+class  CRealMoveRequestDelayChecker
 {
 public:
   CIndexList m_kNodeInxOrderList;
@@ -25,4 +25,5 @@ public:
   bool CheckDelay(unsigned int dwCurTime, unsigned int dwIndex);
   void IncNodeIndex();
 };
+
 

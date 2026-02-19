@@ -9,7 +9,7 @@ struct _monster_fld;
 struct _dummy_position;
 class CMapData;
 
-struct  __declspec(align(8)) _stone_create_setdata : _character_create_setdata
+struct  _stone_create_setdata : _character_create_setdata
 {
   _dummy_position *pDumPosition;
   unsigned char byMasterRace;
@@ -92,3 +92,4 @@ public:
 
   bool Init(_object_id *pID);
 };
+

@@ -6,7 +6,7 @@
 
 struct _AVATOR_DATA;
 
-struct __declspec(align(8)) _worlddb_character_base_info
+struct _worlddb_character_base_info
 {
   char wszName[17];
   unsigned int dwSerial;
@@ -32,7 +32,7 @@ struct _worlddb_character_base_info_array
   _worlddb_character_base_info CharacterInfo[200];
 };
 
-struct __declspec(align(4)) _worlddb_character_general_info
+struct _worlddb_character_general_info
 {
   unsigned int dwHP;
   unsigned int dwFP;
@@ -77,7 +77,7 @@ struct __declspec(align(4)) _worlddb_character_general_info
   unsigned __int8 byMaxLevel;
 };
 
-struct __declspec(align(8)) _worlddb_character_supplement_info
+struct _worlddb_character_supplement_info
 {
   long double dPvpPointLeak;
   bool bLastAttBuff;
@@ -130,7 +130,7 @@ struct _worlddb_unit_info_array
   __worlddb_unit_info UnitInfo[4];
 };
 
-struct __declspec(align(4)) _worlddb_userinterface_info
+struct _worlddb_userinterface_info
 {
   unsigned __int16 wLinkBoard[50];
   unsigned int dwDamageCForce[8];
@@ -238,7 +238,7 @@ struct _worlddb_trade_info
   };
 
   unsigned int dwCnt;
-  __declspec(align(8)) __trade_key list[20];
+  __trade_key list[20];
 };
 
 struct _worlddb_itemcombineex_info
@@ -281,7 +281,7 @@ struct _worlddb_crymsg_info
   __crymsg_data CryMsgData[10];
 };
 
-struct __declspec(align(8)) _pvporderview_info
+struct _pvporderview_info
 {
   __int64 tUpdatedate;
   int nDeath;
@@ -319,7 +319,7 @@ struct _worlddb_pcbang_favor_item
   unsigned __int64 lnUID[50];
 };
 
-struct __declspec(align(4)) _personal_amine_inven
+struct _personal_amine_inven
 {
   struct __list
   {
@@ -394,7 +394,7 @@ struct _worlddb_economy_history_info_array
   _worlddb_economy_history_info EconomyData[12];
 };
 
-struct __declspec(align(8)) _worlddb_guild_info
+struct _worlddb_guild_info
 {
   struct __guild_info
   {
@@ -495,7 +495,7 @@ struct _race_battle_log_info
   unsigned int dwBossSerilal2;
 };
 
-struct __declspec(align(4)) _qry_case_sendwebracebosssms
+struct _qry_case_sendwebracebosssms
 {
   unsigned int dwWebSendDBID;
   char wszMsg[255];
@@ -545,7 +545,7 @@ struct _qry_case_guild_greetingmsg
   char in_guildgreetingmsg[256];
 };
 
-struct __declspec(align(4)) _qry_case_update_honor_guild
+struct _qry_case_update_honor_guild
 {
   unsigned __int8 byRace;
 
@@ -557,21 +557,21 @@ inline __int64 _qry_case_update_honor_guild::size() const
   return sizeof(*this);
 }
 
-struct __declspec(align(4)) _qry_case_guildroom_insert
+struct _qry_case_guildroom_insert
 {
   unsigned int dwGuildSerial;
   unsigned __int8 byRoomType;
   unsigned __int8 byRace;
 };
 
-struct __declspec(align(4)) _qry_case_guildroom_update
+struct _qry_case_guildroom_update
 {
   unsigned int dwGuildSerial;
   unsigned __int8 byRoomType;
   unsigned __int8 byRace;
 };
 
-struct __declspec(align(4)) _qry_case_forceleave
+struct _qry_case_forceleave
 {
   unsigned int in_leaverserial;
   unsigned int in_guildIndex;
@@ -584,7 +584,7 @@ struct __declspec(align(4)) _qry_case_forceleave
   __int64 size() const;
 };
 
-struct __declspec(align(8)) _qry_case_outputgmoney
+struct _qry_case_outputgmoney
 {
   unsigned int in_poperserial;
   char in_w_popername[17];
@@ -600,7 +600,7 @@ struct __declspec(align(8)) _qry_case_outputgmoney
   __int64 size() const;
 };
 
-struct __declspec(align(8)) _qry_case_buyemblem
+struct _qry_case_buyemblem
 {
   unsigned int in_guildserial;
   unsigned int in_emblemback;
@@ -617,7 +617,7 @@ struct __declspec(align(8)) _qry_case_buyemblem
   __int64 size() const;
 };
 
-struct __declspec(align(4)) _qry_case_update_guildmaster
+struct _qry_case_update_guildmaster
 {
   unsigned int in_guildserial;
   unsigned int tmp_guildindex;
@@ -676,7 +676,7 @@ struct _qry_case_raceboss_accumulation_winrate
   __int64 size() const;
 };
 
-struct __declspec(align(4)) _qry_case_update_vote_available
+struct _qry_case_update_vote_available
 {
   unsigned __int8 byVoteEnable;
   unsigned int dwAccountSerial;
@@ -686,7 +686,7 @@ struct __declspec(align(4)) _qry_case_update_vote_available
   __int64 size() const;
 };
 
-struct __declspec(align(4)) _qry_case_cheat_player_vote_info
+struct _qry_case_cheat_player_vote_info
 {
   unsigned int dwAccountSerial;
   unsigned int dwCharSerial;
@@ -695,7 +695,7 @@ struct __declspec(align(4)) _qry_case_cheat_player_vote_info
   __int64 size() const;
 };
 
-struct __declspec(align(8)) _qry_case_update_player_vote_info
+struct _qry_case_update_player_vote_info
 {
   unsigned int dwAccumPlayTime;
   unsigned __int8 byIsVoted;
@@ -709,14 +709,14 @@ struct __declspec(align(8)) _qry_case_update_player_vote_info
   __int64 size() const;
 };
 
-struct __declspec(align(4)) _qry_case_update_server_reset_token
+struct _qry_case_update_server_reset_token
 {
   unsigned int dwServerToken;
   unsigned int dwESerial;
   unsigned __int16 wProcType;
 };
 
-struct __declspec(align(4)) _qry_case_select_charserial
+struct _qry_case_select_charserial
 {
   unsigned __int8 byRace;
   unsigned __int8 byType;
@@ -727,7 +727,7 @@ struct __declspec(align(4)) _qry_case_select_charserial
   __int64 size() const;
 };
 
-struct __declspec(align(4)) _qry_case_update_user_guild_data
+struct _qry_case_update_user_guild_data
 {
   unsigned int dwAvatorSerial;
   unsigned int dwGuildIndex;
@@ -766,7 +766,7 @@ struct  _qry_case_select_guild_master_lastconn
   unsigned int dwLastConnTime;
 };
 
-struct  __declspec(align(4)) _qry_case_character_rename
+struct  _qry_case_character_rename
 {
   unsigned int dwCharSerial;
   unsigned int dwAlreadySerial;
@@ -775,7 +775,7 @@ struct  __declspec(align(4)) _qry_case_character_rename
   char wszOldName[17];
 };
 
-struct  __declspec(align(4)) _qry_case_insert_patriarch_comm
+struct  _qry_case_insert_patriarch_comm
 {
   unsigned int dwSerial;
   unsigned int dwDalant;
@@ -785,7 +785,7 @@ struct  __declspec(align(4)) _qry_case_insert_patriarch_comm
   __int64 size();
 };
 
-struct  __declspec(align(4)) _qry_case_select_patriarch_comm
+struct  _qry_case_select_patriarch_comm
 {
   unsigned int dwSerial;
   unsigned __int8 byDBRet;
@@ -818,7 +818,7 @@ inline __int64 _qry_case_update_player_vote_info::size() const
   return 48;
 }
 
-struct __declspec(align(4)) _qry_case_insert_timelimit_info
+struct _qry_case_insert_timelimit_info
 {
   unsigned __int16 wIndex;
   unsigned int dwAccSerial;
@@ -829,7 +829,7 @@ struct __declspec(align(4)) _qry_case_insert_timelimit_info
   __int64 size() const;
 };
 
-struct __declspec(align(4)) _qry_case_update_punishment
+struct _qry_case_update_punishment
 {
   unsigned __int8 byType;
   unsigned int dwValue;
@@ -850,7 +850,7 @@ inline __int64 _qry_case_update_punishment::size()
   return 36;
 }
 
-struct __declspec(align(4)) _post_storage_list
+struct _post_storage_list
 {
   struct __list
   {
@@ -868,7 +868,7 @@ struct __declspec(align(4)) _post_storage_list
   };
 
   unsigned int dwCount;
-  __declspec(align(8)) __list List[50];
+  __list List[50];
 };
 
 struct _return_post_list
@@ -915,7 +915,7 @@ struct  _qry_case_post_storage_list_get
   unsigned int dwMasterSerial;
   unsigned __int8 byProcRet;
   unsigned int dwCount;
-  __declspec(align(8)) __list List[50];
+  __list List[50];
 
   _qry_case_post_storage_list_get();
   __int64 size();
@@ -950,7 +950,7 @@ struct  _qry_case_post_return_list_get
   __int64 size();
 };
 
-struct  __declspec(align(4)) _qry_case_post_content_get
+struct  _qry_case_post_content_get
 {
   unsigned int dwSerial;
   unsigned __int8 byProcRet;
@@ -1082,3 +1082,4 @@ inline _rege_char_data::_rege_char_data()
 {
   memset_0(this, 0, sizeof(*this));
 }
+

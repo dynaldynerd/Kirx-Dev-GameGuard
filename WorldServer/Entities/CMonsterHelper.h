@@ -9,7 +9,7 @@ class CMapData;
 class CGameObject;
 struct _NEAR_DATA;
 
-struct  __declspec(align(8)) _NEAR_DATA
+struct  _NEAR_DATA
 {
   float fLen;
   CCharacter *pChar;
@@ -35,3 +35,4 @@ public:
   static bool SearchTargetMovePos_StopTarget(CMonster *pMon, CCharacter *pTargetCharacter, float (*tarPos)[3]);
   static void TransPort(CMonster *mon, float *tarPos);
 };
+

@@ -9,7 +9,7 @@ struct _skill_fld;
 struct _force_fld;
 
 /* 1647 */
-class  __declspec(align(8)) CMonsterSkill
+class  CMonsterSkill
 {
 public:
   bool m_bExit;
@@ -95,4 +95,5 @@ public:
 };
 
 int _Check_SF_UseType(_base_fld *pFld, int nEffectType);
+
 

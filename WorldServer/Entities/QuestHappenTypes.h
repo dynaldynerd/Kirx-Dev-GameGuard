@@ -17,7 +17,7 @@ enum QUEST_HAPPEN : __int32
   QUEST_HAPPEN_TYPE_NUM = 0x9,
 };
 
-struct __declspec(align(8)) _happen_event_cont
+struct _happen_event_cont
 {
   _happen_event_node *m_pEvent;
   QUEST_HAPPEN m_QtHpType;
@@ -29,3 +29,4 @@ struct __declspec(align(8)) _happen_event_cont
   bool isset() const;
   void set(_happen_event_node *pPoint, QUEST_HAPPEN QtHpType, int nIndexInType, int nRaceCode);
 };
+

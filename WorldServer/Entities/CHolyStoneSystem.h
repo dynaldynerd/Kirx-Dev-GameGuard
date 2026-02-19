@@ -23,7 +23,7 @@ struct  __holy_keeper_data
   _monster_fld *pRec;
 };
 
-struct  __declspec(align(8)) __holy_stone_data
+struct  __holy_stone_data
 {
   CMapData *pCreateMap;
   _dummy_position CreateDummy;
@@ -31,7 +31,7 @@ struct  __declspec(align(8)) __holy_stone_data
   int nRace;
 };
 
-struct  __declspec(align(4)) _QUEST_CASH
+struct  _QUEST_CASH
 {
   unsigned int dwAvatorSerial;
   unsigned __int8 byQuestType;
@@ -48,7 +48,7 @@ struct  __declspec(align(4)) _QUEST_CASH
   }
 };
 
-struct  __declspec(align(4)) _QUEST_CASH_OTHER
+struct  _QUEST_CASH_OTHER
 {
   unsigned int dwAvatorSerial;
   unsigned __int8 byStoneMapMoveInfo;
@@ -60,7 +60,7 @@ struct  __declspec(align(4)) _QUEST_CASH_OTHER
   }
 };
 
-class  __declspec(align(8)) CHolyStoneSystem
+class  CHolyStoneSystem
 {
 public:
   bool InitHolySystem();
@@ -183,3 +183,4 @@ public:
   bool m_pMentalPass;
   bool bFreeMining;
 };
+

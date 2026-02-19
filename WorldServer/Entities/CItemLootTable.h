@@ -6,7 +6,7 @@
 class CEventLootTable;
 
 /* 1284 */
-class  __declspec(align(8)) CItemLootTable
+class  CItemLootTable
 {
 public:
   struct _linker_code
@@ -28,4 +28,5 @@ public:
   _linker_code **m_ppLinkCode;
   int m_nLootNum;
 };
+
 

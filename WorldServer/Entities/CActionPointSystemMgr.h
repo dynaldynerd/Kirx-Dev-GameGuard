@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct  __declspec(align(4)) _action_point_system_ini
+struct  _action_point_system_ini
 {
   bool m_bUse_event;
   bool m_bReset;
@@ -38,4 +38,5 @@ public:
   _action_point_system_ini m_st_ini_list[3];
   unsigned __int8 m_bActive[3];
 };
+
 

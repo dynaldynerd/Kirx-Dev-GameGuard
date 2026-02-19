@@ -4,7 +4,7 @@
 #include "ElectProcessor.h"
 #include "ElectPacketTypes.h"
 
-class  __declspec(align(2)) Voter : public ElectProcessor
+class  Voter : public ElectProcessor
 {
 public:
   Voter();
@@ -24,3 +24,4 @@ private:
   void _SendVoteScoreAll(unsigned __int8 raceCode);
   bool IsRegistedVotePaper(unsigned __int8 raceCode, char *candidateName);
 };
+

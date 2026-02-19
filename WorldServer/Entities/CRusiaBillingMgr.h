@@ -6,7 +6,7 @@
 
 #include <windows.h>
 
-class  __declspec(align(8)) CRusiaBillingMgr
+class  CRusiaBillingMgr
 {
 public:
   CRusiaBillingMgr();
@@ -39,3 +39,4 @@ public:
 };
 
 static_assert(sizeof(CRusiaBillingMgr) == 0x1F0, "CRusiaBillingMgr size mismatch");
+

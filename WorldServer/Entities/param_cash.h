@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 #include "StoragePos.h"
 
-struct  __declspec(align(4)) _param_cash
+struct  _param_cash
 {
   unsigned int in_dwAccountSerial;
   unsigned int in_dwAvatorSerial;
@@ -17,7 +17,7 @@ struct  __declspec(align(4)) _param_cash
   ~_param_cash();
 };
 
-struct  __declspec(align(2)) _param_cash_select : _param_cash
+struct  _param_cash_select : _param_cash
 {
   char in_szAcc[13];
   unsigned int out_dwCashAmount;
@@ -76,7 +76,7 @@ struct  _param_cash_update : _param_cash
 
 struct  _param_cash_rollback : _param_cash
 {
-  struct __declspec(align(8)) __list
+  struct __list
   {
     unsigned __int64 in_lnUID;
     char in_strItemCode[8];
@@ -131,3 +131,4 @@ struct _param_cash_total_selling
 
   __int64 size();
 };
+

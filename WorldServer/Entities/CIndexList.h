@@ -4,7 +4,7 @@
 #include "CSyncCS.h"
 
 /* 1689 */
-class  __declspec(align(8)) CIndexList
+class  CIndexList
 {
 public:
   struct _index_node
@@ -39,4 +39,5 @@ public:
   void ResetList();
   virtual ~CIndexList() = default;
 };
+
 

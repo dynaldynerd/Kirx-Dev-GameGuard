@@ -4,7 +4,7 @@
 #include "CNetCriticalSection.h"
 
 /* 1279 */
-class  __declspec(align(8)) CNetIndexList
+class  CNetIndexList
 {
 public:
   struct _index_node
@@ -41,4 +41,5 @@ public:
   unsigned int m_dwBufCount;
   unsigned int m_dwMaxBufNum;
 };
+
 

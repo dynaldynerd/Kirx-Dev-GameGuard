@@ -45,7 +45,7 @@ struct _total_count
   _total_count();
 };
 
-class  __declspec(align(4)) CNetTimer
+class  CNetTimer
 {
 public:
   CNetTimer();
@@ -209,7 +209,7 @@ struct  _socket
 
 class CNetWorking;
 
-class  __declspec(align(8)) CNetSocket
+class  CNetSocket
 {
 public:
   CNetSocket();
@@ -250,7 +250,7 @@ public:
   CNetTimer m_tmrListCheckerIPCheck;
 };
 
-class  __declspec(align(8)) CNetProcess
+class  CNetProcess
 {
 public:
   CNetProcess();
@@ -337,3 +337,4 @@ public:
   char *m_sTempRecvBuffer;
   unsigned int m_dwCurTime;
 };
+

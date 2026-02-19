@@ -7,7 +7,7 @@
 
 class CGuild;
 
-class  __declspec(align(8)) CMgrGuildHistory
+class  CMgrGuildHistory
 {
 public:
   CMgrGuildHistory();
@@ -57,3 +57,4 @@ public:
   CNetIndexList m_listLogDataEmpty;
   bool m_bIOThread;
 };
+

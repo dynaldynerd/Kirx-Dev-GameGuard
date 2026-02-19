@@ -7,7 +7,7 @@
 
 class CAttack;
 
-struct  __declspec(align(4)) _tower_create_setdata : _character_create_setdata
+struct  _tower_create_setdata : _character_create_setdata
 {
   int nHP;
   CPlayer *pMaster;
@@ -28,7 +28,7 @@ struct  __declspec(align(4)) _tower_create_setdata : _character_create_setdata
 };
 
 /* 1742 */
-class  __declspec(align(8)) CGuardTower : public CCharacter
+class  CGuardTower : public CCharacter
 {
 public:
   __int64 AttackableHeight();
@@ -106,4 +106,5 @@ CGuardTower *CreateSystemTower(
   int nTowerIndex,
   unsigned __int8 byRaceCode,
   int nIniIndex);
+
 

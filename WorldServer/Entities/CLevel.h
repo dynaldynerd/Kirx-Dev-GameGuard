@@ -11,7 +11,7 @@ class CBsp;
 class CSkyBox;
 
 /* 1315 */
-class  __declspec(align(8)) CLevel
+class  CLevel
 {
 public:
   CLevel();
@@ -44,4 +44,5 @@ public:
   unsigned int GetPathFromDepth(float *const a2, float *const a3, int a4, float (*const a5)[3], unsigned int *a6);
 public:
 };
+
 

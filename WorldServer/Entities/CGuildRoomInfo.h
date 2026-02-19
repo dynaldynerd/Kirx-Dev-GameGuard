@@ -16,7 +16,7 @@ struct RoomCharInfo
   unsigned int dwCharSerial;
 };
 
-struct __declspec(align(4)) RoomInfo
+struct RoomInfo
 {
   unsigned int dwCost;
   unsigned int dwTime;
@@ -73,3 +73,4 @@ public:
   static _dummy_position *sm_neutral_hq_dummy[3];
   static RoomInfo sm_RoomInfo[2];
 };
+

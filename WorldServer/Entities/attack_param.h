@@ -6,7 +6,7 @@ class CCharacter;
 struct _base_fld;
 
 #pragma pack(push, 1)
-struct __declspec(align(8)) _attack_param
+struct _attack_param
 {
   CCharacter *pDst;
   int nPart;
@@ -37,3 +37,4 @@ struct __declspec(align(8)) _attack_param
   _attack_param();
 };
 #pragma pack(pop)
+

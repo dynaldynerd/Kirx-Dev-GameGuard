@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 #include "CNetIndexList.h"
 
-class  __declspec(align(8)) _DELAY_PROCESS
+class  _DELAY_PROCESS
 {
 public:
   _DELAY_PROCESS();
@@ -22,3 +22,4 @@ public:
   CNetIndexList m_list;
   int m_dwTerm;
 };
+

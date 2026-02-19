@@ -8,7 +8,7 @@ class CGameObject;
 extern const char *C_HEROES_DUMMY_NAME[3];
 
 /* 1524 */
-class  __declspec(align(8)) CDummyPosTable
+class  CDummyPosTable
 {
   _dummy_position *m_pDumPos;
   int m_nDumPosDataNum;
@@ -25,3 +25,4 @@ public:
   void *GetRecord(const char *szLabel);
   virtual ~CDummyPosTable();
 };
+

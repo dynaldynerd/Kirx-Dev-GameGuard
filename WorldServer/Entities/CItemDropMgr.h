@@ -7,9 +7,9 @@
 
 struct _base_fld;
 
-struct  __declspec(align(8)) _DropItemGroupInfo
+struct  _DropItemGroupInfo
 {
-  struct  __declspec(align(8)) _drop_create_info
+  struct  _drop_create_info
   {
     unsigned __int8 byTableCode;
     _base_fld *pFld;
@@ -34,3 +34,4 @@ class  CItemDropMgr
   unsigned int m_dwTotalDropCount;
   CLogFile *m_pLogFile;
 };
+

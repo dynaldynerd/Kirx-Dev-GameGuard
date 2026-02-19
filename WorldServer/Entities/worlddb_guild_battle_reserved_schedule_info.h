@@ -4,7 +4,7 @@
 
 struct _worlddb_guild_battle_reserved_schedule_info
 {
-  struct __declspec(align(4)) __list
+  struct __list
   {
     unsigned int dw1PGuildSerial;
     char wsz1PName[17];
@@ -21,3 +21,4 @@ struct _worlddb_guild_battle_reserved_schedule_info
   unsigned __int16 wCount;
   __list list[46];
 };
+

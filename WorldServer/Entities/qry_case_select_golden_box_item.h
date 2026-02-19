@@ -4,7 +4,7 @@
 
 struct qry_case_select_golden_box_item
 {
-  struct __declspec(align(4)) _db_golden_box_item_List
+  struct _db_golden_box_item_List
   {
     int ncode;
     unsigned __int16 wcount;
@@ -17,3 +17,4 @@ struct qry_case_select_golden_box_item
   unsigned __int8 bygolden_item_num[2];
   _db_golden_box_item_List List[2][100];
 };
+

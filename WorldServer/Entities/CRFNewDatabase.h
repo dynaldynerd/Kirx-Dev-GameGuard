@@ -7,7 +7,7 @@
 #include <sqltypes.h>
 
 /* 1126 */
-class  __declspec(align(8)) CRFNewDatabase
+class  CRFNewDatabase
 {
 public:
   CRFNewDatabase();
@@ -77,4 +77,5 @@ public:
   bool m_bReconnectFailExit;
   char m_szLogUpperPath[128];
 };
+
 

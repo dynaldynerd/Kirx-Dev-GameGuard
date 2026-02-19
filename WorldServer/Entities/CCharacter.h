@@ -12,7 +12,7 @@ struct _force_fld;
 class CCharacter;
 class CPlayer;
 
-struct __declspec(align(4)) _sf_continous
+struct _sf_continous
 {
   bool m_bExist;
   unsigned __int8 m_byEffectCode;
@@ -29,7 +29,7 @@ struct __declspec(align(4)) _sf_continous
   static unsigned int GetSFContCurTime();
 };
 
-struct __declspec(align(8)) _effect_parameter
+struct _effect_parameter
 {
   struct __param_data;
 
@@ -189,3 +189,4 @@ int _CheckCumulativeSF(
   int *nCumulMax,
   unsigned int *nEffectCount,
   char **pstrLinkCode);
+

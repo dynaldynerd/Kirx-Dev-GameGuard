@@ -6,7 +6,7 @@
 
 class CPlayer;
 
-class  __declspec(align(8)) CChatStealSystem
+class  CChatStealSystem
 {
 public:
   CChatStealSystem();
@@ -32,4 +32,5 @@ public:
   CPlayer *m_pGM;
   _ChatStealTargetInfo m_TargetInfo;
 };
+
 

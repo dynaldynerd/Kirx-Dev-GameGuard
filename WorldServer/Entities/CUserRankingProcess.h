@@ -8,7 +8,7 @@
 #include <vector>
 
 struct  _PVP_RANK_DATA;
-struct __declspec(align(2)) _PVP_RANK_PACKED_DATA;
+struct _PVP_RANK_PACKED_DATA;
 struct _PVP_RANK_REFRESH_USER;
 
 class  CPvpUserRankingInfo
@@ -84,7 +84,7 @@ public:
   std::vector<_PVP_RANK_REFRESH_USER *> m_PvpRankRefreshUser;
 };
 
-class  __declspec(align(8)) CUserRankingProcess
+class  CUserRankingProcess
 {
 public:
   enum PROC_STATE : int
@@ -223,7 +223,7 @@ struct  _PVP_RANK_DATA
 };
 #pragma pack(pop)
 
-struct __declspec(align(2)) _PVP_RANK_PACKED_DATA
+struct _PVP_RANK_PACKED_DATA
 {
   unsigned __int16 wDataLen;
   char szPackedData[381];
@@ -241,3 +241,4 @@ struct _PVP_RANK_REFRESH_USER
   bool IsFilled();
   void SetData(unsigned int dwSerialP, unsigned __int8 byLvP, unsigned __int8 byRaceP);
 };
+

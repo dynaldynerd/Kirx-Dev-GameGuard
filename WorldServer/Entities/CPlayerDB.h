@@ -88,7 +88,7 @@ public:
   _QUEST_DB_BASE m_QuestDB;
   _SFCONT_DB_BASE m_SFContDB;
   _ITEMCOMBINE_DB_BASE m_ItemCombineDB;
-  __declspec(align(8)) CPostStorage m_PostStorage;
+  CPostStorage m_PostStorage;
   CPostReturnStorage m_ReturnPostStorage;
   bool m_bPersonalAmineInven;
   AutominePersonal *m_pAPM;
@@ -120,4 +120,5 @@ public:
   CPlayer *m_pThis;
   char m_aszName[17];
 };
+
 

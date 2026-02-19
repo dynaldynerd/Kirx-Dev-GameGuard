@@ -2,9 +2,9 @@
 
 #include "IdaCompat.h"
 
-struct __declspec(align(4)) _worlddb_guild_member_info
+struct _worlddb_guild_member_info
 {
-  struct __declspec(align(4)) __guild_member_info
+  struct __guild_member_info
   {
     unsigned int dwSerial;
     char wszName[17];
@@ -17,3 +17,4 @@ struct __declspec(align(4)) _worlddb_guild_member_info
   unsigned __int16 wMemberCount;
   __guild_member_info MemberData[50];
 };
+

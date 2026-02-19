@@ -8,7 +8,7 @@ struct _guild_member_refresh_data;
 class CMgrGuildHistory;
 
 /* 1717 */
-class  __declspec(align(8)) CGuild
+class  CGuild
 {
 public:
   static CGuildList s_GuildList;
@@ -206,4 +206,5 @@ public:
 
 CGuild *GetGuildDataFromSerial(CGuild *pData, int nNum, unsigned int dwSerial);
 CGuild *GetGuildPtrFromName(CGuild *pData, int nNum, char *pwszGuildName);
+
 

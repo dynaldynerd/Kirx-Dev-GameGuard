@@ -5,7 +5,7 @@
 class CNetProcess;
 class CNetWorking;
 
-struct __declspec(align(8)) _CCRFG_SEND_BUFFER
+struct _CCRFG_SEND_BUFFER
 {
   CNetProcess *pTargetProc;
   CNetWorking *pNetwork;
@@ -27,3 +27,4 @@ struct _CCRFG_CALLBACK
 extern _CCRFG_SEND_BUFFER g_FGSendData;
 extern _CCRFG_RECV_BUFFER g_FGRecvData;
 extern _CCRFG_CALLBACK g_pfnCallBack;
+

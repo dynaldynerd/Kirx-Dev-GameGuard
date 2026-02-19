@@ -5,7 +5,7 @@
 
 class CPlayer;
 
-class  __declspec(align(8)) CRecallRequest
+class  CRecallRequest
 {
 public:
   bool IsClose();
@@ -22,3 +22,4 @@ public:
   bool m_bStone;
   bool m_bBattleModeUse;
 };
+

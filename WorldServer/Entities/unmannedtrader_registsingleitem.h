@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1207 */
-struct __declspec(align(8)) _unmannedtrader_registsingleitem
+struct _unmannedtrader_registsingleitem
 {
   unsigned __int8 byType;
   unsigned __int8 bySellTurm;
@@ -23,3 +23,4 @@ struct __declspec(align(8)) _unmannedtrader_registsingleitem
   unsigned __int64 lnUID;
   unsigned int dwTax;
 };
+

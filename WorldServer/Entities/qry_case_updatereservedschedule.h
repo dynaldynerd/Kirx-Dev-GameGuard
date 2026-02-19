@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __declspec(align(4)) _qry_case_updatereservedschedule
+struct _qry_case_updatereservedschedule
 {
   unsigned int dwMapID;
   unsigned int dwSLID;
@@ -15,3 +15,4 @@ inline __int64 _qry_case_updatereservedschedule::size() const
 {
   return 12;
 }
+

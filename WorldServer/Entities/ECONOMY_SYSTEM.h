@@ -2,9 +2,9 @@
 
 #include "IdaCompat.h"
 
-struct __declspec(align(8)) _ECONOMY_SYSTEM
+struct _ECONOMY_SYSTEM
 {
-  struct __declspec(align(8)) _CUR_RATE
+  struct _CUR_RATE
   {
     float fPayExgRate;
     float fTexRate;
@@ -36,3 +36,4 @@ struct __declspec(align(8)) _ECONOMY_SYSTEM
   void Init();
   void CurTradeMoneyInit();
 };
+

@@ -4,7 +4,7 @@
 #include "CPostData.h"
 
 /* 1704 */
-class  __declspec(align(8)) CPostReturnStorage
+class  CPostReturnStorage
 {
 public:
   CPostReturnStorage();
@@ -30,4 +30,5 @@ public:
   CPostData m_PostData[10];
   int m_nSize;
 };
+
 

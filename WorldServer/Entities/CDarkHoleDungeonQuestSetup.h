@@ -25,7 +25,7 @@ struct  __error_info
 };
 
 /* 6043 */
-class  __declspec(align(8)) CDarkHoleDungeonQuestSetup
+class  CDarkHoleDungeonQuestSetup
 {
 public:
   CDarkHoleDungeonQuestSetup();
@@ -53,4 +53,5 @@ public:
   _dh_job_setup *m_pCurLoadJob;
   __error_info m_ErrorInfo;
 };
+
 

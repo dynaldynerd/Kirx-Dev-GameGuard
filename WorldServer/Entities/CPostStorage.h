@@ -4,7 +4,7 @@
 #include "CPostData.h"
 
 /* 1703 */
-class  __declspec(align(4)) CPostStorage
+class  CPostStorage
 {
 public:
   CPostStorage();
@@ -57,4 +57,5 @@ public:
   int m_nSize;
   bool m_bUpdate;
 };
+
 

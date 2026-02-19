@@ -11,7 +11,7 @@ public:
   CPvpCashMng();
   ~CPvpCashMng();
 
-  struct __declspec(align(8)) _talik_recvr
+  struct _talik_recvr
   {
     unsigned __int8 byTableCode;
     _base_fld *m_pFld;
@@ -26,7 +26,7 @@ public:
     _talik_recvr TalikInfo[14];
   };
 
-  struct __declspec(align(8)) _class_value
+  struct _class_value
   {
     _class_value();
     static void init(_class_value *self);
@@ -60,3 +60,4 @@ private:
   bool Parsing(const char *szTitle, const char *szItem, char **szBuff, int nInx, unsigned __int8 byParseType);
   bool SetItem(char *szItemCode, int nInx);
 };
+

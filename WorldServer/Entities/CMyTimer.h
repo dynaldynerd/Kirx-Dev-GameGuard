@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-class  __declspec(align(8)) CMyTimer
+class  CMyTimer
 {
 public:
   CMyTimer();
@@ -19,3 +19,4 @@ public:
   unsigned int m_dwTickOld;
   bool m_bOper;
 };
+

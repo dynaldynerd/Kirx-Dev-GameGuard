@@ -42,7 +42,7 @@ struct _golden_box_item_ini
   _golden_box_item_ini();
 };
 
-struct  __declspec(align(8)) _golden_box_item_event
+struct  _golden_box_item_event
 {
   unsigned __int8 m_event_status;
   CNetTimer m_event_timer;
@@ -163,4 +163,5 @@ public:
   int m_nDBSerial;
   _BoxItemOpen_output *m_pBoxItemOpen;
 };
+
 

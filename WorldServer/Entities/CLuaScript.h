@@ -5,7 +5,7 @@
 class CLuaCommand;
 struct lua_State;
 
-class  __declspec(align(8)) CLuaScript
+class  CLuaScript
 {
 public:
   CLuaScript();
@@ -31,3 +31,4 @@ public:
   lua_State *m_MyState;
   char m_strName[260];
 };
+

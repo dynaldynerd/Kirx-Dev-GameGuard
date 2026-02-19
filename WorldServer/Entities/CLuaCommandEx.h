@@ -4,7 +4,7 @@
 #include "CLuaCommand.h"
 
 /* 1677 */
-class  __declspec(align(8)) CLuaCommandEx : public CLuaCommand
+class  CLuaCommandEx : public CLuaCommand
 {
 public:
   ~CLuaCommandEx() override;
@@ -25,4 +25,5 @@ public:
 
   char m_strScriptName[260];
 };
+
 

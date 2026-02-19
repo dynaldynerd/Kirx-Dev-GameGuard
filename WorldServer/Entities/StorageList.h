@@ -6,6 +6,7 @@
 #pragma pack(push, 1)
 struct   _STORAGE_LIST
 {
+  #pragma pack(push, 1)
   struct   _storage_con
   {
     unsigned __int8 m_bLoad;
@@ -32,8 +33,10 @@ struct   _STORAGE_LIST
       m_dwLv = 0xFFFFFFF;
     }
   };
+  #pragma pack(pop)
 
-  struct   __declspec(align(2)) _db_con : _storage_con
+  #pragma pack(push, 1)
+  struct   _db_con : _storage_con
   {
     _STORAGE_LIST *m_pInList;
     unsigned __int8 m_byStorageIndex;
@@ -48,6 +51,7 @@ struct   _STORAGE_LIST
       m_byStorageIndex = static_cast<unsigned __int8>(-1);
     }
   };
+  #pragma pack(pop)
 
   int m_nListNum;
   int m_nUsedNum;
@@ -76,3 +80,4 @@ struct   _STORAGE_LIST
 #pragma pack(pop)
 
 _STORAGE_LIST::_db_con *MakeLoot(unsigned __int8 byTableCode, unsigned __int16 wItemIndex);
+

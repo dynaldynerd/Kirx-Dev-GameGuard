@@ -6,7 +6,7 @@
 struct _PVP_ORDER_VIEW_DB_BASE;
 
 /* 1795 */
-class  __declspec(align(8)) CPvpCashPoint
+class  CPvpCashPoint
 {
 public:
   CPvpCashPoint();
@@ -23,4 +23,5 @@ public:
   unsigned __int8 m_byContPvpLose;
   bool m_bRaceWarRecvr;
 };
+
 

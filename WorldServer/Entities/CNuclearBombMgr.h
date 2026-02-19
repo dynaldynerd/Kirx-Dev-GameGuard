@@ -25,7 +25,7 @@ struct  _nuclear_bomb_current_state_zocl
 };
 #pragma pack(pop)
 
-class  __declspec(align(8)) CNuclearBombMgr
+class  CNuclearBombMgr
 {
 public:
   static CNuclearBombMgr *Instance();
@@ -53,3 +53,4 @@ public:
   unsigned int m_dwAttInformTime;
   unsigned int m_dwAttStartTime;
 };
+

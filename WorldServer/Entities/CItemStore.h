@@ -13,7 +13,7 @@ struct _StoreList_fld;
 class CMapData;
 
 /* 3033 */
-class  __declspec(align(8)) CItemStore
+class  CItemStore
 {
 public:
   CItemStore();
@@ -97,3 +97,4 @@ static_assert(offsetof(CItemStore, m_dwLastTradeDalant) == 0x5C, "CItemStore.m_d
 static_assert(offsetof(CItemStore, m_dwLastTradeGold) == 0x60, "CItemStore.m_dwLastTradeGold offset mismatch");
 static_assert(offsetof(CItemStore, m_dwLastTradePoint) == 0x64, "CItemStore.m_dwLastTradePoint offset mismatch");
 static_assert(offsetof(CItemStore, m_dwLastTradeActPoint) == 0x68, "CItemStore.m_dwLastTradeActPoint offset mismatch");
+

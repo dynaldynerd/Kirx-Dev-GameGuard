@@ -4,7 +4,7 @@
 
 class CMapData;
 
-struct  __declspec(align(8)) __TEMP_WAIT_TOWER
+struct  __TEMP_WAIT_TOWER
 {
   unsigned int dwMasterSerial;
   unsigned __int8 byItemIndex;
@@ -20,3 +20,4 @@ inline __TEMP_WAIT_TOWER::__TEMP_WAIT_TOWER()
   : dwMasterSerial(static_cast<unsigned int>(-1))
 {
 }
+

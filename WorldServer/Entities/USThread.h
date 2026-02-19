@@ -36,7 +36,7 @@ namespace US
   };
 
   template <typename TOwner, typename TThreadPool>
-  class alignas(8) ThreadParamInterface
+  class ThreadParamInterface
   {
   public:
     ThreadParamInterface();
@@ -49,7 +49,7 @@ namespace US
   };
 
   template <typename TParam>
-  class alignas(8) CWinThread : public AbstractThread
+  class CWinThread : public AbstractThread
   {
   public:
     CWinThread();

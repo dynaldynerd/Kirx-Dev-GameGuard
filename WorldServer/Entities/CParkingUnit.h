@@ -7,7 +7,7 @@
 class CPlayer;
 
 /* 2753 */
-struct  __declspec(align(8)) _parkingunit_create_setdata : _object_create_setdata
+struct  _parkingunit_create_setdata : _object_create_setdata
 {
   CPlayer *pOwner;
   unsigned __int8 byCreateType;
@@ -18,7 +18,7 @@ struct  __declspec(align(8)) _parkingunit_create_setdata : _object_create_setdat
 };
 
 /* 1773 */
-class  __declspec(align(8)) CParkingUnit : public CGameObject
+class  CParkingUnit : public CGameObject
 {
 public:
   static unsigned int s_dwSerialCounter;
@@ -43,4 +43,5 @@ public:
   void Loop() override;
   void SendMsg_FixPosition(int n) override;
 };
+
 

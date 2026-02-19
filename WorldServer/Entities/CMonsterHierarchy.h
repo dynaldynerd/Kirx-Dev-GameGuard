@@ -6,7 +6,7 @@ class CMonster;
 struct _monster_create_setdata;
 
 /* 1640 */
-class  __declspec(align(8)) CMonsterHierarchy
+class  CMonsterHierarchy
 {
   unsigned int m_dwTotalCount;
   CMonster *m_pThisMon;
@@ -34,4 +34,5 @@ public:
   void OnChildMonsterCreate(_monster_create_setdata *pData);
   void OnChildMonsterDestroy();
 };
+
 

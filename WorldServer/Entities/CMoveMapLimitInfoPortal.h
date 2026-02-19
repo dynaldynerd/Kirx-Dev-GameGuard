@@ -9,7 +9,7 @@
 struct _dummy_position;
 class CMyTimer;
 
-class  __declspec(align(8)) CMoveMapLimitInfoPortal : public CMoveMapLimitInfo
+class  CMoveMapLimitInfoPortal : public CMoveMapLimitInfo
 {
 public:
   enum FORCE_MOVE_HQ_STATE : int
@@ -62,3 +62,4 @@ public:
   CMyTimer *m_pkNotifyForceMoveHQTimer;
   unsigned int m_uiProcNotifyInx;
 };
+

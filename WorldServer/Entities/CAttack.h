@@ -16,7 +16,7 @@ class CRecordData;
 #ifndef BE_DAMAGED_CHAR_DEFINED
 #define BE_DAMAGED_CHAR_DEFINED
 /* 2358 */
-struct  __declspec(align(8)) _be_damaged_char
+struct  _be_damaged_char
 {
   CCharacter *m_pChar;
   int m_nDamage;
@@ -26,7 +26,7 @@ struct  __declspec(align(8)) _be_damaged_char
 #endif
 
 /* 2359 */
-class  __declspec(align(8)) CAttack
+class  CAttack
 {
   friend class CMonster;
   friend class CPlayer;
@@ -103,3 +103,4 @@ extern int s_nLimitAngle_1;
 extern int s_Mon_nLimitDist[4];
 extern int s_Mon_nLimitRadius[4];
 extern int s_Mon_nLimitAngle[2][8];
+

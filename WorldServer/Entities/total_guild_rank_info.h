@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __declspec(align(8)) _total_guild_rank_info_list
+struct _total_guild_rank_info_list
 {
   unsigned __int16 wRank;
   unsigned int dwSerial;
@@ -20,3 +20,4 @@ struct _total_guild_rank_info
   unsigned __int16 wCount;
   _total_guild_rank_info_list list[500];
 };
+

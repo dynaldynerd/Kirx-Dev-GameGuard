@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __declspec(align(4)) _log_change_class_after_init_class
+struct _log_change_class_after_init_class
 {
   unsigned int dwCharacSerial;
   unsigned __int8 byType;
@@ -22,3 +22,4 @@ struct __declspec(align(4)) _log_change_class_after_init_class
     return 32;
   }
 };
+

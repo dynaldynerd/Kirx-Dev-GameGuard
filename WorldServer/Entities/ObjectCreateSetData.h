@@ -50,7 +50,7 @@ struct  _monster_create_setdata : _character_create_setdata
   }
 };
 
-struct  __declspec(align(8)) _npc_create_setdata : _character_create_setdata
+struct  _npc_create_setdata : _character_create_setdata
 {
   CItemStore *m_pLinkItemStore;
   unsigned __int8 m_byRaceCode;
@@ -78,7 +78,7 @@ struct  _keeper_create_setdata : _character_create_setdata
   }
 };
 
-struct  __declspec(align(8)) _animus_create_setdata : _character_create_setdata
+struct  _animus_create_setdata : _character_create_setdata
 {
   int nHP;
   int nFP;
@@ -88,3 +88,4 @@ struct  __declspec(align(8)) _animus_create_setdata : _character_create_setdata
 
   _animus_create_setdata();
 };
+

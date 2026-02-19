@@ -4,7 +4,7 @@
 #include "CMainThread.h"
 
 #pragma pack(push, 1)
-struct  __declspec(align(2)) _enter_world_request_wrac
+struct  _enter_world_request_wrac
 {
   _GLBID gidGlobal;
   _CLID idLocal;
@@ -18,3 +18,4 @@ inline __int64 _enter_world_request_wrac::size() const
 {
   return 18LL;
 }
+

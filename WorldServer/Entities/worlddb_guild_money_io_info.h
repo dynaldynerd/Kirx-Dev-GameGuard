@@ -2,9 +2,9 @@
 
 #include "IdaCompat.h"
 
-struct __declspec(align(8)) _worlddb_guild_money_io_info
+struct _worlddb_guild_money_io_info
 {
-  struct __declspec(align(8)) __io_money_data
+  struct __io_money_data
   {
     char wszIOerName[17];
     unsigned int dwIOerSerial;
@@ -18,3 +18,4 @@ struct __declspec(align(8)) _worlddb_guild_money_io_info
   unsigned __int16 wRecordCount;
   __io_money_data IOData[100];
 };
+

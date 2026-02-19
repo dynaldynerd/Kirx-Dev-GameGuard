@@ -10,7 +10,7 @@ struct _event_config_classrefine
   unsigned int nEndDate;
 };
 
-struct __declspec(align(4)) _event_participant_classrefine
+struct _event_participant_classrefine
 {
   unsigned __int16 nSock;
   unsigned int nAvatorSerial;
@@ -55,3 +55,4 @@ public:
   CMyTimer m_tmDataFileCheckTime;
   _FILETIME m_ftWrite;
 };
+

@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1262 */
-class  __declspec(align(8)) CFrameRate
+class  CFrameRate
 {
 public:
   CFrameRate();
@@ -18,4 +18,5 @@ public:
   float GetSpeedPerFrame();
   unsigned int GetFPS();
 };
+
 

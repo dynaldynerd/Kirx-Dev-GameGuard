@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 1675 */
-class  __declspec(align(8)) CLuaCommand
+class  CLuaCommand
 {
 public:
   unsigned __int8 m_byCommand;
@@ -14,4 +14,5 @@ public:
   char *GetBuffer();
   void SetCmd(unsigned __int8 byType, const char *strName);
 };
+
 

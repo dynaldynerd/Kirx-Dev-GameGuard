@@ -5,7 +5,7 @@
 class CMonster;
 
 /* 1671 */
-class  __declspec(align(8)) CPathMgr
+class  CPathMgr
 {
 public:
   float m_PosPool[16][3];
@@ -22,4 +22,5 @@ public:
 
   static CPathMgr ms_BackupPath;
 };
+
 

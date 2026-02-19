@@ -4,7 +4,7 @@
 #include "CMainThread.h"
 
 #pragma pack(push, 1)
-struct  __declspec(align(2)) _qry_case_alive_char
+struct  _qry_case_alive_char
 {
   unsigned __int8 in_byCase;
   unsigned int in_dwSerial;
@@ -25,3 +25,4 @@ inline __int64 _qry_case_alive_char::size() const
 {
   return 296LL;
 }
+

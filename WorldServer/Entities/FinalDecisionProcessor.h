@@ -4,7 +4,7 @@
 #include "ElectProcessor.h"
 #include "ElectPacketTypes.h"
 
-class  __declspec(align(2)) FinalDecisionProcessor : public ElectProcessor
+class  FinalDecisionProcessor : public ElectProcessor
 {
 public:
   FinalDecisionProcessor();
@@ -18,3 +18,4 @@ private:
   void _SetWinner();
   void _ReqNetFinalDecision(CPlayer *player);
 };
+

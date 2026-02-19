@@ -8,7 +8,7 @@ class CMapData;
 struct _RadarItem_fld;
 
 /* 1596 */
-class  __declspec(align(8)) CRadarItemMgr
+class  CRadarItemMgr
 {
 public:
   bool m_bUse;
@@ -39,4 +39,5 @@ public:
   unsigned int CalcDelay();
   unsigned int GetDelayTime();
 };
+
 

@@ -110,7 +110,7 @@
 
 namespace
 {
-struct __declspec(align(4)) _qry_case_joinacguild_local
+struct _qry_case_joinacguild_local
 {
   unsigned int in_guildindex;
   unsigned int in_guildserial;
@@ -158,7 +158,7 @@ struct   _qry_case_insertguild_local
   }
 };
 
-struct __declspec(align(8)) _qry_case_inputgmoney_local
+struct _qry_case_inputgmoney_local
 {
   unsigned int in_pusherserial;
   char in_w_pushername[17];
@@ -2037,3 +2037,4 @@ void CPlayer::pc_GuildOfferSuggestRequest(
 
   this->SendMsg_OfferSuggestResult(static_cast<char>(byRetCode));
 }
+

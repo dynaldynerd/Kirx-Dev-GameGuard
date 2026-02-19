@@ -5,7 +5,7 @@
 struct _map_fld;
 
 /* 1464 */
-class  __declspec(align(8)) CMapDataTable
+class  CMapDataTable
 {
 public:
   bool ReadScript(const char *szFileName);
@@ -16,4 +16,5 @@ public:
   unsigned int m_dwRecordNum;
   virtual ~CMapDataTable() = default;
 };
+
 

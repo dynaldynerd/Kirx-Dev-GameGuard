@@ -12,7 +12,7 @@ struct _EXIT_ALTER_PARAM;
 struct _ITEMCOMBINE_DB_BASE;
 
 /* 1536 */
-class  __declspec(align(8)) CUserDB
+class  CUserDB
 {
 public:
   static int s_nLoginNum;
@@ -53,7 +53,7 @@ public:
   unsigned int m_dwTermContSaveTime;
   unsigned int m_dwLastContSaveTime;
   bool m_bNoneUpdateData;
-  __declspec(align(4)) _BILLING_INFO m_BillingInfo;
+  _BILLING_INFO m_BillingInfo;
   bool m_bBillingNoLogout;
   int m_nTrans;
   CRadarItemMgr m_RadarItemMgr;
@@ -265,4 +265,5 @@ extern const char wszNonMakeName_1[3][17];
 extern const char wszNonMakeName[3][17];
 extern const char wszGMCmp[];
 extern size_t nGMCmpLen;
+
 

@@ -16,7 +16,7 @@ typedef struct _FILETIME
 } FILETIME;
 #endif
 
-struct  __declspec(align(8)) _event_set
+struct  _event_set
 {
   struct _monster_set
   {
@@ -55,7 +55,7 @@ struct  __declspec(align(8)) _event_set
 
 struct  _event_set_looting
 {
-  struct __declspec(align(2)) _event_item
+  struct _event_item
   {
     char strCode[64];
     unsigned __int16 wDropCount;
@@ -72,7 +72,7 @@ struct  _event_set_looting
   int nItemCount;
 };
 
-class  __declspec(align(8)) CMonsterEventSet
+class  CMonsterEventSet
 {
 public:
   bool IsINIFileChanged(const char *pszFileName, _FILETIME ftCurr);
@@ -93,3 +93,4 @@ public:
 };
 
 extern CMonsterEventSet g_MonsterEventSet;
+

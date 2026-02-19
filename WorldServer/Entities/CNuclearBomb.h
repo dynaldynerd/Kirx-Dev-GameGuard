@@ -18,7 +18,7 @@ struct  _be_damaged_player
 
 #ifndef BE_DAMAGED_CHAR_DEFINED
 #define BE_DAMAGED_CHAR_DEFINED
-struct  __declspec(align(8)) _be_damaged_char
+struct  _be_damaged_char
 {
   CCharacter *m_pChar;
   int m_nDamage;
@@ -81,3 +81,4 @@ public:
   int m_nStartDmLoop;
   CPlayer *m_pMaster;
 };
+

@@ -18,7 +18,7 @@ class CGameObject;
 struct _pnt_rect;
 
 /* 1313 */
-class  __declspec(align(8)) CMapData
+class  CMapData
 {
 public:
   CMapData();
@@ -109,3 +109,4 @@ public:
   CMyTimer m_tmrMineGradeReSet;
   int m_nMonTotalCount;
 };
+

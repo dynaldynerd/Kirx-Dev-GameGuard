@@ -9,6 +9,7 @@ class CRFCashItemDatabase;
 class Task;
 class CPlayer;
 
+#pragma pack(push, 8)
 class  CashDbWorker : public Worker
 {
 public:
@@ -51,3 +52,4 @@ public:
   CLogFile _kLogger[2];
   CRFCashItemDatabase *_pkDb;
 };
+#pragma pack(pop)

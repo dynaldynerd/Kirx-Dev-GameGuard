@@ -7,7 +7,7 @@
 
 class CPlayer;
 
-struct  __declspec(align(8)) GMRequestData
+struct  GMRequestData
 {
   unsigned int m_dwPlayerSerial;
   unsigned int m_dwCallTimer;
@@ -25,4 +25,5 @@ public:
   CNetIndexList m_listGMRequestDataEmpty;
   CNetIndexList m_listGMRequestDataTask;
 };
+
 

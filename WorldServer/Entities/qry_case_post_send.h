@@ -5,9 +5,9 @@
 
 #include <cstring>
 
-struct __declspec(align(8)) _qry_case_post_send
+struct _qry_case_post_send
 {
-  struct __declspec(align(8)) __list
+  struct __list
   {
     unsigned __int8 byErr;
     unsigned int dwIndex;
@@ -94,3 +94,4 @@ inline char _qry_case_post_send::pushdata(
   ++dwCount;
   return 1;
 }
+

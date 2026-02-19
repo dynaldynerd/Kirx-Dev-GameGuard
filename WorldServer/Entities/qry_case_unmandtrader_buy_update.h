@@ -37,7 +37,7 @@ struct _qry_case_unmandtrader_buy_update_wait
 
 struct _qry_case_unmandtrader_buy_update_complete
 {
-  struct __declspec(align(4)) __list
+  struct __list
   {
     unsigned __int8 byProcRet;
     unsigned __int8 byProcUpdate;
@@ -57,7 +57,7 @@ struct _qry_case_unmandtrader_buy_update_complete
 
 struct _qry_case_unmandtrader_buy_update_rollback
 {
-  struct __declspec(align(4)) __list
+  struct __list
   {
     unsigned __int8 byProcRet;
     unsigned int dwRegistSerial;
@@ -71,3 +71,4 @@ struct _qry_case_unmandtrader_buy_update_rollback
   unsigned __int8 byNum;
   __list List[10];
 };
+

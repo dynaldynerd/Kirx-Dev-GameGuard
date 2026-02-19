@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 
 /* 6041 */
-class  __declspec(align(8)) strFILE
+class  strFILE
 {
 public:
   strFILE();
@@ -20,3 +20,4 @@ public:
   char *m_pReadStr;
   unsigned int m_dwLoadSize;
 };
+

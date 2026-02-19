@@ -4,7 +4,7 @@
 #include "ElectProcessor.h"
 #include "ElectPacketTypes.h"
 
-class  __declspec(align(4)) ClassOrderProcessor : public ElectProcessor
+class  ClassOrderProcessor : public ElectProcessor
 {
 public:
   ClassOrderProcessor();
@@ -29,3 +29,4 @@ public:
   unsigned __int8 _byPtType[2];
   _pt_appoint_inform_request_zocl _kSend[3];
 };
+

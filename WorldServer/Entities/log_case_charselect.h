@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __declspec(align(2)) _log_case_charselect
+struct _log_case_charselect
 {
   char szID[13];
   unsigned int dwIDSerial;
@@ -20,3 +20,4 @@ struct __declspec(align(2)) _log_case_charselect
     return 52;
   }
 };
+

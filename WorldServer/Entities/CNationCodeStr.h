@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-class  __declspec(align(2)) CNationCodeStr
+class  CNationCodeStr
 {
 public:
   CNationCodeStr() = default;
@@ -16,3 +16,4 @@ public:
 };
 
 bool operator==(const CNationCodeStr &lhs, const CNationCodeStr &rhs);
+

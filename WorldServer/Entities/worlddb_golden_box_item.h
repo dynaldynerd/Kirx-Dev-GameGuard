@@ -4,7 +4,7 @@
 
 struct _worlddb_golden_box_item
 {
-  struct __declspec(align(4)) _golden_box_item_info
+  struct _golden_box_item_info
   {
     int nGoldencode;
     unsigned __int16 wGoldencount;
@@ -18,3 +18,4 @@ struct _worlddb_golden_box_item
   unsigned __int8 bygolden_item_num[2];
   _golden_box_item_info List[2][100];
 };
+

@@ -7,7 +7,7 @@ class CPlayer;
 class  CPartyModeKillMonsterExpNotify
 {
 public:
-  struct  __declspec(align(8)) CExpInfo
+  struct  CExpInfo
   {
     float m_fExp;
     CPlayer *m_pkMember;
@@ -28,3 +28,4 @@ public:
   void Notify();
   void SetKillMonsterFlag();
 };
+

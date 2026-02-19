@@ -4,7 +4,7 @@
 
 struct _quest_check_result
 {
-  struct __declspec(align(2)) _node
+  struct _node
   {
     unsigned __int8 byQuestDBSlot;
     unsigned __int8 byActIndex;
@@ -17,3 +17,4 @@ struct _quest_check_result
 
   void init();
 };
+

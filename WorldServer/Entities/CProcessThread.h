@@ -20,7 +20,7 @@ public:
     int nSleepCount;
   };
 
-  struct  __declspec(align(4)) _SYN_HEADER
+  struct  _SYN_HEADER
   {
     unsigned int m_dwQryIndex;
     unsigned int m_dwQrySerial;
@@ -54,3 +54,4 @@ public:
   CFrameRate m_FrameRate;
   _THREAD_CONFIG m_Config;
 };
+

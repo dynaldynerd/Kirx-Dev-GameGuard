@@ -5,7 +5,7 @@
 #include "CPlayer.h"
 #include "ObjectCreateSetData.h"
 
-struct  __declspec(align(2)) _itembox_create_setdata : _object_create_setdata
+struct  _itembox_create_setdata : _object_create_setdata
 {
   CPlayer *pOwner;
   CCharacter *pThrower;
@@ -31,7 +31,7 @@ struct  __declspec(align(2)) _itembox_create_setdata : _object_create_setdata
 };
 
 /* 3058 */
-class  __declspec(align(8)) CItemBox : public CGameObject
+class  CItemBox : public CGameObject
 {
 public:
   static int s_nLiveNum;
@@ -101,3 +101,4 @@ CItemBox *CreateItemBox(
   CPlayer *pAttacker,
   int bHolyScanner,
   unsigned __int8 byEventItemLootAuth);
+

@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct __declspec(align(4)) _qry_case_updateclearguildbattleDayInfo
+struct _qry_case_updateclearguildbattleDayInfo
 {
   unsigned int dwStartSLID;
   unsigned int dwEndSLID;
@@ -16,3 +16,4 @@ inline __int64 _qry_case_updateclearguildbattleDayInfo::size() const
 {
   return 16;
 }
+

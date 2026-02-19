@@ -3,7 +3,7 @@
 #include "IdaCompat.h"
 #include "WorldServerUtil.h"
 
-struct  __declspec(align(8)) _qry_case_in_atrade_tax
+struct  _qry_case_in_atrade_tax
 {
   unsigned __int8 byRace;
   unsigned int dwGuildSerial;
@@ -29,3 +29,4 @@ inline __int64 _qry_case_in_atrade_tax::size() const
 {
   return 40;
 }
+

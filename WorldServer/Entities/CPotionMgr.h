@@ -64,7 +64,7 @@ public:
     bool m_bPotionDelayIndexList[38];
   };
 
-  struct __declspec(align(8))  _ParamData
+  struct _ParamData
   {
     float fValue;
     _PotionItem_fld *pPotionFld;
@@ -100,3 +100,4 @@ bool __fastcall DE_Potion_Race_Debuff_Clear_Two(
   CCharacter *pTargetChar,
   float fEffectValue,
   unsigned __int8 *byRet);
+

@@ -173,7 +173,8 @@ class CAnimus;
 /* 1312 */
 
 /* 1695 */
-struct   __declspec(align(2)) _character_db_load
+#pragma pack(push, 1)
+struct   _character_db_load
 {
   char m_wszCharID[17];
   unsigned int m_dwSerial;
@@ -198,6 +199,7 @@ struct   __declspec(align(2)) _character_db_load
   unsigned __int8 m_byUseBagNum;
   unsigned __int8 m_byMaxLevel;
 };
+#pragma pack(pop)
 
 /* 1696 */
 struct  _bag_db_load : _STORAGE_LIST
@@ -216,7 +218,7 @@ struct  _equip_db_load : _STORAGE_LIST
 };
 
 /* 1698 */
-struct   __declspec(align(2)) _embellish_db_load : _STORAGE_LIST
+struct   _embellish_db_load : _STORAGE_LIST
 {
   _STORAGE_LIST::_db_con m_List[7];
 
@@ -260,7 +262,8 @@ struct  _Exttrunk_db_load : _STORAGE_LIST
 /* 1564 */
 struct  _UNIT_DB_BASE
 {
-  struct   __declspec(align(2)) _LIST
+  #pragma pack(push, 1)
+  struct   _LIST
   {
     unsigned __int8 bySlotIndex;
     unsigned __int8 byFrame;
@@ -276,6 +279,7 @@ struct  _UNIT_DB_BASE
     void Init(unsigned __int8 byIndex);
     void DelUnit();
   };
+  #pragma pack(pop)
 
   _LIST m_List[4];
 
@@ -430,7 +434,7 @@ struct  _quick_link
 #include "CPlayerDB.h"
 
 /* 1276 */
-struct  __declspec(align(2)) _CLID
+struct  _CLID
 {
   unsigned __int16 wIndex;
   unsigned int dwSerial;
@@ -460,7 +464,7 @@ struct  _CHRID
 #include "CRealMoveRequestDelayChecker.h"
 
 /* 1736 */
-struct __declspec(align(8)) _WEAPON_PARAM
+struct _WEAPON_PARAM
 {
   _STORAGE_LIST::_db_con *pFixWp;
   _UNIT_DB_BASE::_LIST *pFixUnit;
@@ -494,7 +498,7 @@ struct __declspec(align(8)) _WEAPON_PARAM
 };
 
 /* 1737 */
-struct __declspec(align(4)) _DTRADE_ITEM
+struct _DTRADE_ITEM
 {
   bool bLoad;
   unsigned __int8 byStorageCode;
@@ -550,7 +554,7 @@ struct  _mastery_up_data
 };
 
 /* 1740 */
-struct __declspec(align(2)) _skill_lv_up_data
+struct _skill_lv_up_data
 {
   bool bUpdate;
   unsigned __int16 wIndex;
@@ -561,7 +565,7 @@ struct __declspec(align(2)) _skill_lv_up_data
 };
 
 /* 1741 */
-struct  __declspec(align(8)) _MASTERY_PARAM
+struct  _MASTERY_PARAM
 {
   unsigned __int8 m_byRaceCode;
    _STAT_DB_BASE m_BaseCum;
@@ -619,9 +623,9 @@ struct _TOWER_PARAM
 };
 
 /* 1749 */
-struct  __declspec(align(8)) _TRAP_PARAM
+struct  _TRAP_PARAM
 {
-  struct  __declspec(align(8)) _param
+  struct  _param
   {
     CTrap *pItem;
     unsigned int dwSerial;
@@ -858,7 +862,7 @@ struct  _NPCQuestIndexTempData
 };
 
 /* 1781 */
-struct __declspec(align(8)) _MEM_PAST_WHISPER
+struct _MEM_PAST_WHISPER
 {
   bool bMemory;
   char wszName[17];
@@ -920,7 +924,7 @@ struct   _target_player_damage_contsf_allinform_zocl
 
 
 /* 1792 */
-struct  __declspec(align(4)) _ATTACK_DELAY_CHECKER
+struct  _ATTACK_DELAY_CHECKER
 {
   struct _eff_list
   {
@@ -1050,7 +1054,7 @@ struct   _other_shape_part_zocl
 #pragma pack(pop)
 
 /* 1310 */
-class  __declspec(align(8)) CPlayer : public CCharacter
+class  CPlayer : public CCharacter
 {
 public:
   union CashChangeStateFlag
@@ -1062,7 +1066,7 @@ public:
   };
 
 private:
-  struct __declspec(align(8)) __target
+  struct __target
   {
     CGameObject *pObject;
     unsigned __int8 byKind;
@@ -2776,4 +2780,5 @@ bool __fastcall DE_RecoverAllReturnStateAnimusHPFull(
   unsigned __int8 *byRet);
 
 #pragma pack(pop)
+
 

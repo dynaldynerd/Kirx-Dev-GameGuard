@@ -12,7 +12,7 @@ class CPlayer;
 struct _NPCQuestIndexTempData;
 struct _QUEST_DB_BASE;
 /* 1755 */
-class  __declspec(align(8)) CQuestMgr
+class  CQuestMgr
 {
 public:
   CQuestMgr();
@@ -70,4 +70,5 @@ public:
   _happen_event_cont *m_pTempHappenEvent;
   unsigned int m_dwOldTimeoutChecktime;
 };
+
 

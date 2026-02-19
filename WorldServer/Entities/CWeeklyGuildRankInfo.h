@@ -6,7 +6,7 @@ struct _pvppoint_guild_rank_info;
 struct _weeklyguildrank_owner_info;
 class CGuild;
 
-class  __declspec(align(8)) CWeeklyGuildRankOwnerInfo
+class  CWeeklyGuildRankOwnerInfo
 {
 public:
   CWeeklyGuildRankOwnerInfo();
@@ -104,3 +104,4 @@ public:
 };
 
 extern int SETTLEMENT_AREA_MANAGE_OWNER_LIMIT_GRADE;
+

@@ -6,7 +6,7 @@
 #include "CNetCriticalSection.h"
 
 /* 1132 */
-class  __declspec(align(8)) CLogFile
+class CLogFile
 {
 public:
   CLogFile();
@@ -27,4 +27,5 @@ public:
   bool m_bTrace;
   bool m_bInit;
 };
+
 

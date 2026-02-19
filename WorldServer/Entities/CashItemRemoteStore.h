@@ -36,7 +36,7 @@ struct _cash_discount_ini_
   int m_cdeTime[3];
 };
 
-struct  __declspec(align(8)) _cash_discount_
+struct  _cash_discount_
 {
   unsigned __int8 m_cde_status;
   CNetTimer m_cde_timer;
@@ -81,7 +81,7 @@ struct  _cash_event
   _cash_event_ini m_ini;
 };
 
-struct __declspec(align(4)) _con_event_ini
+struct _con_event_ini
 {
   int m_bUseConEvent;
   unsigned int m_dwCashMin;
@@ -102,7 +102,7 @@ struct _cash_event_time
   int m_EventTime[2];
 };
 
-struct  __declspec(align(8)) _con_event_
+struct  _con_event_
 {
   unsigned __int8 m_conevent_status;
   _FILETIME m_conevent_ini_file_time;
@@ -222,3 +222,4 @@ private:
 };
 
 void Get_CashEvent_Name(unsigned __int8 byEventType, char *szEventName);
+

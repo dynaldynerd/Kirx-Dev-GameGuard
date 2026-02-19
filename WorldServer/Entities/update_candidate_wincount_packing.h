@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct  __declspec(align(4)) _update_candidate_wincount_packing
+struct  _update_candidate_wincount_packing
 {
   unsigned __int8 byRace;
   unsigned int dwWinCnt;
@@ -15,3 +15,4 @@ inline _update_candidate_wincount_packing::_update_candidate_wincount_packing()
 {
   memset_0(this, 0, sizeof(*this));
 }
+

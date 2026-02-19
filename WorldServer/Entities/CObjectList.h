@@ -15,7 +15,7 @@ struct _object_list_point
   _object_list_point *m_pPrev;
 };
 
-class __declspec(align(8)) CObjectList
+class CObjectList
 {
 public:
   CObjectList();
@@ -31,3 +31,4 @@ public:
   _object_list_point m_Tail;
   int m_nSize;
 };
+

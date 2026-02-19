@@ -4,7 +4,7 @@
 #include "InvenKey.h"
 
 /* 1215 */
-class  __declspec(align(8)) CPostData
+class  CPostData
 {
 public:
   CPostData();
@@ -67,4 +67,5 @@ public:
   bool m_bContentLoad;
   bool m_bUpdateIndex;
 };
+
 

@@ -47,7 +47,7 @@ public:
   bool IsMemberBeforeLogoff(unsigned int dwPlayerSerial);
   void GetStartPosInShip(float *pfPos);
 
-  struct  __declspec(align(8)) __mgr_member
+  struct  __mgr_member
   {
     __mgr_member();
 
@@ -84,3 +84,4 @@ public:
   CNetIndexList m_listLogoffMember;
   __mgr_ticket m_MgrTicket[2];
 };
+

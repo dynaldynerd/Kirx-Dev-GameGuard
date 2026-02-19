@@ -8,7 +8,7 @@ class CGameObject;
 struct _ENTER_DUNGEON_NEW_POS;
 
 /* 1598 */
-class  __declspec(align(8)) CDarkHoleChannel
+class  CDarkHoleChannel
 {
 public:
   static unsigned int s_dwChannelSerialCounter;
@@ -110,4 +110,5 @@ public:
 
   virtual ~CDarkHoleChannel() = default;
 };
+
 

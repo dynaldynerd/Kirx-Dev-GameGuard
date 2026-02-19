@@ -4,7 +4,7 @@
 
 struct _worlddb_guild_battle_schedule_list
 {
-  struct __declspec(align(8)) __list
+  struct __list
   {
     unsigned int dwID;
     unsigned int dwSLID;
@@ -17,3 +17,4 @@ struct _worlddb_guild_battle_schedule_list
   unsigned __int16 wCount;
   __list list[23];
 };
+

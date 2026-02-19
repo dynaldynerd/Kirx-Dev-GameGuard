@@ -6,9 +6,9 @@
 struct _AVATOR_DATA;
 
 /* 1762 */
-class  __declspec(align(4)) CSetItemEffect
+class  CSetItemEffect
 {
-  struct __declspec(align(4)) set_effect_info
+  struct set_effect_info
   {
     bool m_bCheckSetEffect;
     unsigned int m_dwSetItem;
@@ -43,4 +43,5 @@ public:
   unsigned __int8 GetResetItemNum();
   __int64 GetResetIdx();
 };
+
 

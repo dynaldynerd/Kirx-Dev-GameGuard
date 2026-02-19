@@ -8,7 +8,7 @@ struct _CLID;
 struct _STORAGE_POS_INDIV;
 struct _CHRID;
 
-class  __declspec(align(8)) CNetWorking
+class  CNetWorking
 {
 public:
   CNetWorking();
@@ -45,7 +45,7 @@ public:
   char m_szLogPath[128];
 };
 
-class  __declspec(align(8)) CNetworkEX : public CNetWorking
+class  CNetworkEX : public CNetWorking
 {
 public:
   unsigned int dwMonsterPosMiss;
@@ -385,3 +385,4 @@ public:
 extern CNetworkEX g_Network;
 
 void DeCrypt_Move(char *pStr, int nSize, unsigned __int8 byPlus, unsigned __int16 wCryptKey);
+

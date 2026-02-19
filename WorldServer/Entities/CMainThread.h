@@ -178,7 +178,7 @@ struct _GLBID
 };
 
 /* 1260 */
-struct  __declspec(align(2)) _BILLING_INFO
+struct  _BILLING_INFO
 {
   _BILLING_INFO();
 
@@ -263,7 +263,7 @@ struct  _WAIT_ENTER_ACCOUNT
 #include "CConnNumPHMgr.h"
 
 /* 1277 */
-struct  __declspec(align(4)) _DB_QRY_SYN_DATA
+struct  _DB_QRY_SYN_DATA
 {
   bool m_bUse;
   bool m_bLoad;
@@ -335,7 +335,7 @@ struct  GuildCreateEventInfo
 };
 
 /* 1812 */
-struct __declspec(align(4)) _server_rate_ini_data
+struct _server_rate_ini_data
 {
   float ItemRootRate;
   float MineSpeedRate;
@@ -372,7 +372,7 @@ struct  _server_rate_realtime_load
 };
 
 /* 1305 */
-class  __declspec(align(8)) CMainThread
+class  CMainThread
 {
 public:
   _SRAND m_Rand;
@@ -1023,7 +1023,7 @@ extern CMainThread g_Main;
 
 /* 1303 */
 #pragma pack(push, 1)
-struct   __declspec(align(2)) _monster_sp_group : _base_fld
+struct   _monster_sp_group : _base_fld
 {
   union MonsterSP_Fld
   {
@@ -1046,7 +1046,7 @@ struct event_date_range
 };
 
 /* 1307 */
-struct  __declspec(align(4)) RFEventBase
+struct  RFEventBase
 {
   unsigned int _nOldLoopTime;
   event_date_range _kDateRange;
@@ -1059,7 +1059,7 @@ struct  __declspec(align(4)) RFEventBase
 };
 
 /* 1814 */
-struct __declspec(align(8)) Player_TL_Status
+struct Player_TL_Status
 {
   bool m_bUse;
   bool m_bAgeLimit;
@@ -1128,7 +1128,7 @@ struct  TimeLimitMgr
 };
 
 /* 1816 */
-struct __declspec(align(2)) _mob_message
+struct _mob_message
 {
   unsigned __int16 wIndex;
   unsigned __int8 byUsingNum;
@@ -1462,7 +1462,7 @@ struct  _INVEN_DB_BASE
 
 /* 1558 */
 #pragma pack(push, 1)
-struct   __declspec(align(2)) _CUTTING_DB_BASE
+struct _CUTTING_DB_BASE
 {
   bool m_bOldDataLoad;
   unsigned __int8 m_byLeftNum;
@@ -1712,7 +1712,7 @@ struct   _PERSONALAMINE_INVEN_DB_BASE
 
 /* 1586 */
 #pragma pack(push, 1)
-struct   __declspec(align(2)) _PVPPOINT_LIMIT_DB_BASE
+struct _PVPPOINT_LIMIT_DB_BASE
 {
   __int64 tUpdatedate;
   bool bUseUp;
@@ -2109,7 +2109,7 @@ struct  _suggested_matter
 };
 
 /* 1723 */
-struct  __declspec(align(8)) _guild_battle_suggest_matter
+struct  _guild_battle_suggest_matter
 {
   enum STATE : __int32
   {
@@ -2133,7 +2133,7 @@ struct  __declspec(align(8)) _guild_battle_suggest_matter
 };
 
 /* 1729 */
-struct __declspec(align(8)) _io_money_data
+struct _io_money_data
 {
   char wszIOerName[17];
   unsigned int dwIOerSerial;
@@ -2149,7 +2149,7 @@ struct __declspec(align(8)) _io_money_data
 
 /* 1719 */
 #pragma pack(push, 8)
-struct  __declspec(align(8)) _guild_member_info
+struct  _guild_member_info
 {
   unsigned int dwSerial;
   char wszName[17];
@@ -2246,7 +2246,7 @@ struct  _dh_mission_mgr
 };
 
 /* 1688 */
-struct  __declspec(align(8)) _dh_player_mgr
+struct  _dh_player_mgr
 {
   #pragma pack(push, 1)
   struct _pos
@@ -2272,7 +2272,7 @@ struct  __declspec(align(8)) _dh_player_mgr
 /* 1598 */
 
 /* 1435
-struct  __declspec(align(4)) _dummy_position
+struct  _dummy_position
 {
   char m_szCode[64];
   unsigned __int16 m_wLineIndex;
@@ -2496,7 +2496,7 @@ struct  _bind_dummy
 };
 
 /* 1521 */
-struct  __declspec(align(4)) _res_dummy
+struct  _res_dummy
 {
   _dummy_position *m_pDumPos;
   float m_fMinLocal[3][3];
@@ -2549,7 +2549,8 @@ struct   AP_BatterySlot
 /* 1718 */
 
 /* 1721 */
-struct  __declspec(align(8)) _guild_applier_info
+#pragma pack(push, 8)
+struct  _guild_applier_info
 {
   CPlayer *pPlayer;
   unsigned int dwApplyTime;
@@ -2558,6 +2559,7 @@ struct  __declspec(align(8)) _guild_applier_info
   void init();
   bool IsFill();
 };
+#pragma pack(pop)
 static_assert(sizeof(_guild_applier_info) == 0x10, "_guild_applier_info size must match IDA (0x10)");
 static_assert(alignof(_guild_applier_info) == 8, "_guild_applier_info alignment must match IDA (8)");
 
@@ -2680,7 +2682,7 @@ struct  _dh_quest_setup
 };
 
 /* 1603 */
-struct  __declspec(align(8)) _dh_mission_setup
+struct  _dh_mission_setup
 {
   _dh_mission_setup();
   virtual ~_dh_mission_setup();
@@ -2723,7 +2725,7 @@ enum __bitmask OBJ_DEF_TYPE : __int32
 };
 
 /* 1613 */
-struct  __declspec(align(8)) _react_obj
+struct  _react_obj
 {
   _react_obj();
   void copy(_react_obj *pObj);
@@ -2814,7 +2816,7 @@ struct  __respawn_monster
 };
 
 /* 1642 */
-struct  __declspec(align(8)) MonsterSFContDamageToleracne
+struct  MonsterSFContDamageToleracne
 {
   CMonster *m_pMonster;
   float m_fToleranceProb;
@@ -3008,7 +3010,7 @@ struct _ENTITY_LIST
 
 /* 1404 */
 #pragma pack(push, 1)
-struct  __declspec(align(2)) _LEAF_ENTITIES_LIST_INFO
+struct  _LEAF_ENTITIES_LIST_INFO
 {
   unsigned int start_id;
   unsigned __int16 entities_num;
@@ -3017,7 +3019,7 @@ struct  __declspec(align(2)) _LEAF_ENTITIES_LIST_INFO
 
 /* 1405 */
 #pragma pack(push, 1)
-struct  __declspec(align(2)) _MAP_ENTITIES_LIST
+struct  _MAP_ENTITIES_LIST
 {
   unsigned __int16 ID;
   float Scale;
@@ -3075,7 +3077,7 @@ struct _LEAF_SOUND_ENTITIES_LIST_INFO
 
 /* 1329 */
 #pragma pack(push, 1)
-struct  __declspec(align(2)) _ONE_LAYER
+struct  _ONE_LAYER
 {
   __int16 m_iTileAniTexNum;
   int m_iSurface;
@@ -3101,7 +3103,7 @@ struct  __declspec(align(2)) _ONE_LAYER
 
 /* 1330 */
 #pragma pack(push, 1)
-struct  __declspec(align(2)) _R3MATERIAL
+struct  _R3MATERIAL
 {
   int m_iMatNum;
   char m_name[128];
@@ -3115,7 +3117,7 @@ struct  __declspec(align(2)) _R3MATERIAL
 
 /* 1394 */
 #pragma pack(push, 1)
-struct  __declspec(align(4)) _ENTITY_M_GROUP
+struct  _ENTITY_M_GROUP
 {
   unsigned __int16 Type;
   unsigned __int16 TriNum;
@@ -3300,7 +3302,7 @@ struct  _job_sub_setup
 };
 
 /* 1626 */
-struct  __declspec(align(8)) _dh_job_setup
+struct  _dh_job_setup
 {
   _dh_job_setup();
   virtual ~_dh_job_setup();
@@ -3318,7 +3320,7 @@ struct  __declspec(align(8)) _dh_job_setup
 /* 1667 */
 
 /* 1661 */
-struct  __declspec(align(8)) UsRefObject
+struct  UsRefObject
 {
   UsRefObject();
   virtual ~UsRefObject();
@@ -3494,7 +3496,7 @@ struct  INI_Section
 };
 
 /* 1449 */
-struct  __declspec(align(8)) INI_Key
+struct  INI_Key
 {
   INI_Section *m_pParentSection;
   char m_strKey[65];
@@ -7898,3 +7900,4 @@ struct _lend_item_time_expired_zocl
 #pragma pack(pop)
 
 #pragma pack(pop)
+

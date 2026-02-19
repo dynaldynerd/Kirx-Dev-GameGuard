@@ -9,7 +9,7 @@ class CMonster;
 
 struct  _event_respawn
 {
-  struct __declspec(align(8)) _mon
+  struct _mon
   {
     _base_fld *pMonsterFld;
     unsigned __int16 wNum;
@@ -23,7 +23,7 @@ struct  _event_respawn
     bool bItemLoot;
   };
 
-  struct __declspec(align(8)) _reward_item
+  struct _reward_item
   {
     unsigned __int8 byItemTableCode;
     _base_fld *pItemFld;
@@ -81,3 +81,4 @@ public:
 };
 
 extern CMonsterEventRespawn g_MonsterEventRespawn;
+

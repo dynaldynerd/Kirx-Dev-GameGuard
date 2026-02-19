@@ -5,9 +5,9 @@
 
 #include "IdaCompat.h"
 
-#pragma pack(push, 1)
+#pragma pack(push, 4)
 
-struct  __declspec(align(4)) _dummy_position
+struct  _dummy_position
 {
   _dummy_position()
   {
@@ -49,3 +49,4 @@ static_assert(alignof(_dummy_position) == 4, "_dummy_position alignment must mat
 static_assert(sizeof(_store_dummy) == 0x18, "_store_dummy size must match IDA (0x18)");
 
 #endif // _DUMMY_POSITION_H_
+

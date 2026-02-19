@@ -11,7 +11,7 @@ struct _worlddb_guild_info;
 struct _guild_member_info;
 struct _io_money_data;
 
-class  __declspec(align(8)) CGuildRanking
+class  CGuildRanking
 {
 public:
   bool Init();
@@ -69,3 +69,4 @@ public:
   std::vector<_guild_member_refresh_data *> m_vecGuildMemberRefresh;
   int m_nRankInGuildJobOffset;
 };
+
