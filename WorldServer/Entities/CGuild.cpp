@@ -152,74 +152,73 @@ namespace
     return lhs.byGrade >= rhs.byGrade ? -1 : 1;
   }
 
-  void SortRankInGuild(CGuild *pGuild)
+}
+
+void CGuild::SortRankInGuild()
+{
+  GuildRankSortEntry entries[50]{};
+
+  for (int j = 0; j < m_nMemberNum; ++j)
   {
-    GuildRankSortEntry entries[50]{};
-
-    for (int j = 0; j < pGuild->m_nMemberNum; ++j)
+    _guild_member_info *member = &m_MemberData[j];
+    if (member->IsFill())
     {
-      _guild_member_info *member = &pGuild->m_MemberData[j];
-      if (member->IsFill())
-      {
-        entries[j].byGrade = member->byGrade;
-        entries[j].dwPvpPoint = member->dwPvpPoint;
-        entries[j].nIndex = j;
-      }
-    }
-
-    qsort(entries, pGuild->m_nMemberNum, sizeof(GuildRankSortEntry), CompareGradeAndPvpPoint);
-
-    for (int j = 0; j < pGuild->m_nMemberNum; ++j)
-    {
-      pGuild->m_MemberData[entries[j].nIndex].byRank = static_cast<unsigned __int8>(j);
+      entries[j].byGrade = member->byGrade;
+      entries[j].dwPvpPoint = member->dwPvpPoint;
+      entries[j].nIndex = j;
     }
   }
 
-  void BuildBuddyPacket(CGuild *pGuild)
+  qsort(entries, m_nMemberNum, sizeof(GuildRankSortEntry), CompareGradeAndPvpPoint);
+
+  for (int j = 0; j < m_nMemberNum; ++j)
   {
-    pGuild->m_Buddy_List->wDataSize = 0;
+    m_MemberData[entries[j].nIndex].byRank = static_cast<unsigned __int8>(j);
+  }
+}
 
+void CGuild::MakeBuddyPacket()
+{
+  m_Buddy_List->wDataSize = 0;
 
-    GuildBuddyData buddyData[50]{};
-    unsigned __int8 memberCount = 0;
+  GuildBuddyData_msg_zocl buddyData[50]{};
+  unsigned __int8 memberCount = 0;
 
-    for (int j = 0; j < 50; ++j)
+  for (int j = 0; j < 50; ++j)
+  {
+    _guild_member_info *member = &m_MemberData[j];
+    if (member->IsFill() && member->pPlayer)
     {
-      _guild_member_info *member = &pGuild->m_MemberData[j];
-      if (member->IsFill() && member->pPlayer)
-      {
-        buddyData[memberCount].dwSerial = member->dwSerial;
-        buddyData[memberCount].wMapCode = member->pPlayer->m_wRegionMapIndex;
-        buddyData[memberCount].byRegionIndex = static_cast<unsigned __int8>(member->pPlayer->m_wRegionIndex);
-        ++memberCount;
-      }
+      buddyData[memberCount].dwSerial = member->dwSerial;
+      buddyData[memberCount].wMapCode = member->pPlayer->m_wRegionMapIndex;
+      buddyData[memberCount].byRegionIndex = static_cast<unsigned __int8>(member->pPlayer->m_wRegionIndex);
+      ++memberCount;
     }
+  }
 
-    int dataSize = 0;
-    void *sData = pGuild->m_Buddy_List->sData;
+  int dataSize = 0;
+  void *sData = m_Buddy_List->sData;
 
-    memcpy_0(sData, &memberCount, 1u);
+  memcpy_0(sData, &memberCount, 1u);
+  sData = static_cast<char *>(sData) + 1;
+  ++dataSize;
+
+  for (int j = 0; j < memberCount; ++j)
+  {
+    memcpy_0(sData, &buddyData[j].dwSerial, 4u);
+    sData = static_cast<char *>(sData) + 4;
+    dataSize += 4;
+
+    memcpy_0(sData, &buddyData[j].wMapCode, 2u);
+    sData = static_cast<char *>(sData) + 2;
+    dataSize += 2;
+
+    memcpy_0(sData, &buddyData[j].byRegionIndex, 1u);
     sData = static_cast<char *>(sData) + 1;
     ++dataSize;
-
-    for (int j = 0; j < memberCount; ++j)
-    {
-      memcpy_0(sData, &buddyData[j].dwSerial, 4u);
-      sData = static_cast<char *>(sData) + 4;
-      dataSize += 4;
-
-      memcpy_0(sData, &buddyData[j].wMapCode, 2u);
-      sData = static_cast<char *>(sData) + 2;
-      dataSize += 2;
-
-      memcpy_0(sData, &buddyData[j].byRegionIndex, 1u);
-      sData = static_cast<char *>(sData) + 1;
-      ++dataSize;
-    }
-
-    pGuild->m_Buddy_List->wDataSize = static_cast<unsigned __int16>(dataSize);
   }
 
+  m_Buddy_List->wDataSize = static_cast<unsigned __int16>(dataSize);
 }
 
 _guild_master_info::_guild_master_info()
@@ -283,14 +282,14 @@ void CGuild::EstGuild(
   m_byRace = byRace;
   m_MasterData.init();
 
-  SortRankInGuild(this);
+  SortRankInGuild();
   m_bPossibleElectMaster = true;
 
   MakeDownMemberPacket();
   MakeDownApplierPacket();
   MakeQueryInfoPacket();
   MakeMoneyIOPacket();
-  BuildBuddyPacket(this);
+  MakeBuddyPacket();
 
   m_dwLastLoopTime = GetLoopTime();
 
@@ -701,7 +700,7 @@ void CGuild::SendMsg_DownPacket(unsigned __int8 bDowntype, _guild_member_info *p
     reinterpret_cast<char *>(m_MoneyIO_List),
     moneyLen);
 
-  BuildBuddyPacket(this);
+  MakeBuddyPacket();
 
   unsigned __int8 buddyType[2] = {27, 43};
   const unsigned __int16 buddyLen =

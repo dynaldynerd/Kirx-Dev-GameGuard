@@ -4629,6 +4629,24 @@ struct _guild_battle_pvp_inform_zocl
 #pragma pack(pop)
 
 #pragma pack(push, 1)
+struct _guild_battle_notify_before_start_zocl
+{
+  unsigned __int8 byLeftMinutes;
+  char wszGuildNameRed[17];
+  char wszGuildNameBlue[17];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _guild_battle_notify_battle_result_zocl
+{
+  unsigned __int8 byResult;
+  char wszGuildNameRed[17];
+  char wszGuildNameBlue[17];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
 struct _guild_battle_complete_msg_zowb
 {
   char szStartTime[17];

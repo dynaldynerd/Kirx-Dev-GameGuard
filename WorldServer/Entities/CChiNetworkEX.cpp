@@ -10,7 +10,7 @@
 #include "GlobalObjects.h"
 #include "apex_id.h"
 #include "apex_send_trans.h"
-#include "CChiNetworkEXLocalStructs.h"
+#include "wrac_packets.h"
 
 CChiNetworkEX *CChiNetworkEX::ms_pInstance = nullptr;
 
@@ -44,8 +44,7 @@ __int64 CChiNetworkEX::Send(
 
 void CChiNetworkEX::Inform_For_Exit_By_ApexBlock(unsigned int dwAccountSerial)
 {
-
-  ApexBlockRequest request{};
+  _apex_block_request_wrac request{};
   strcpy_s(request.szAccountID, sizeof(request.szAccountID), "Apex");
   request.dwAccountSerial = dwAccountSerial;
   request.dwIP = 0;

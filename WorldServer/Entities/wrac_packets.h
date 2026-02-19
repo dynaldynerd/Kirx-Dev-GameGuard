@@ -45,6 +45,15 @@ struct _apex_block_request_wrac
 #pragma pack(pop)
 
 #pragma pack(push, 1)
+struct _manage_client_limit_run_result_wrac
+{
+  unsigned __int8 byRet;
+  _CLID idLocal;
+  unsigned __int8 byLoginServerIndex;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
 struct _uilock_update_result_acwr
 {
   char byRet;

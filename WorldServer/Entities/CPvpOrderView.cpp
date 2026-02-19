@@ -3,12 +3,12 @@
 #include "CPvpOrderView.h"
 
 #include "CNetworkEX.h"
+#include "CMainThread.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
 #include <cstring>
 #include <ctime>
-#include "CPvpOrderViewLocalStructs.h"
 
 _pvp_order_view_inform_zocl::_pvp_order_view_inform_zocl()
 {
@@ -145,7 +145,7 @@ void CPvpOrderView::Notify_OrderView(unsigned __int16 wIndex)
 void CPvpOrderView::Notify_Point(unsigned __int16 wIndex, long double dChangePoint, unsigned int dwTarSerial)
 {
 
-  PvpOrderViewPointInform msg{};
+  _pvp_order_view_point_inform_zocl msg{};
   msg.dwSerial = dwTarSerial;
   msg.dPvpPoint = dChangePoint;
 

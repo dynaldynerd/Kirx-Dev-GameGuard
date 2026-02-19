@@ -43,7 +43,6 @@
 #include "worlddb_guild_battle_info.h"
 #include "worlddb_guild_battle_reserved_schedule_info.h"
 #include "guild_battle_goal_result_zocl.h"
-#include "GuildBattleLocalStructs.h"
 
 __int64 _qry_case_in_guildbattlecost::size()
 {
@@ -2130,7 +2129,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
     unsigned int dwCharacSerial)
   {
 
-    _guild_battle_start_result msg{};
+    _guild_battle_start_zocl msg{};
     msg.iRedPortalInx = -1;
     msg.iBluePortalInx = -1;
     msg.iRegenPortalInx[0] = -1;
@@ -2143,7 +2142,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
       {
         return static_cast<unsigned __int8>(-111);
       }
-      msg.byColor = static_cast<char>(m_k1P.GetColorInx());
+      msg.byColorInx = static_cast<unsigned __int8>(m_k1P.GetColorInx());
     }
     else
     {
@@ -2155,7 +2154,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
       {
         return static_cast<unsigned __int8>(-111);
       }
-      msg.byColor = static_cast<char>(m_k2P.GetColorInx());
+      msg.byColorInx = static_cast<unsigned __int8>(m_k2P.GetColorInx());
     }
 
     if (m_pkRed)
@@ -2190,8 +2189,11 @@ const int member = static_cast<int>(GetMember(dwSerial));
       return 110;
     }
 
-    schedule->GetLeftTime(&msg.byLeftHour, &msg.byLeftMin, &msg.byLeftSec);
-    __trace("(%u)CNormalGuildBattle::Start : byColor(%u)\n", dwCharacSerial, static_cast<unsigned __int8>(msg.byColor));
+    schedule->GetLeftTime(
+      reinterpret_cast<unsigned __int8 *>(&msg.byLeftHour),
+      reinterpret_cast<unsigned __int8 *>(&msg.byLeftMin),
+      reinterpret_cast<unsigned __int8 *>(&msg.byLeftSec));
+    __trace("(%u)CNormalGuildBattle::Start : byColor(%u)\n", dwCharacSerial, msg.byColorInx);
 
     unsigned __int8 type[2]{};
     type[0] = 27;
@@ -2221,7 +2223,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
     unsigned int dwCharacSerial)
   {
 
-    _guild_battle_restart_result msg{};
+    _guild_battle_restart_zocl msg{};
     msg.iRedPortalInx = -1;
     msg.iBluePortalInx = -1;
     msg.iRegenPortalInx[0] = -1;
@@ -2234,7 +2236,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
       {
         return static_cast<unsigned __int8>(-111);
       }
-      msg.byColor = static_cast<char>(m_k1P.GetColorInx());
+      msg.byColorInx = static_cast<unsigned __int8>(m_k1P.GetColorInx());
     }
     else
     {
@@ -2246,7 +2248,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
       {
         return static_cast<unsigned __int8>(-111);
       }
-      msg.byColor = static_cast<char>(m_k2P.GetColorInx());
+      msg.byColorInx = static_cast<unsigned __int8>(m_k2P.GetColorInx());
     }
 
     if (m_pkRed)
@@ -2281,8 +2283,11 @@ const int member = static_cast<int>(GetMember(dwSerial));
       return 110;
     }
 
-    schedule->GetLeftTime(&msg.byLeftHour, &msg.byLeftMin, &msg.byLeftSec);
-    __trace("(%u)CNormalGuildBattle::Start : byColor(%u)\n", dwCharacSerial, static_cast<unsigned __int8>(msg.byColor));
+    schedule->GetLeftTime(
+      reinterpret_cast<unsigned __int8 *>(&msg.byLeftHour),
+      reinterpret_cast<unsigned __int8 *>(&msg.byLeftMin),
+      reinterpret_cast<unsigned __int8 *>(&msg.byLeftSec));
+    __trace("(%u)CNormalGuildBattle::Start : byColor(%u)\n", dwCharacSerial, msg.byColorInx);
 
     unsigned __int8 type[2]{};
     type[0] = 27;
@@ -2309,13 +2314,13 @@ const int member = static_cast<int>(GetMember(dwSerial));
   void CNormalGuildBattle::NotifyBeforeStart()
   {
 
-    _guild_battle_before_start_notify msg{};
-    msg.byLeftMin = static_cast<char>(ATL::CTimeSpan(0, 0, 5, 0).GetMinutes());
+    _guild_battle_notify_before_start_zocl msg{};
+    msg.byLeftMinutes = static_cast<unsigned __int8>(ATL::CTimeSpan(0, 0, 5, 0).GetMinutes());
 
     const char *redGuildName = m_pkRed ? m_pkRed->GetGuildName() : nullptr;
     const char *blueGuildName = m_pkBlue ? m_pkBlue->GetGuildName() : nullptr;
-    strcpy_0(msg.wszRedName, redGuildName ? redGuildName : "None");
-    strcpy_0(msg.wszBlueName, blueGuildName ? blueGuildName : "None");
+    strcpy_0(msg.wszGuildNameRed, redGuildName ? redGuildName : "None");
+    strcpy_0(msg.wszGuildNameBlue, blueGuildName ? blueGuildName : "None");
 
     unsigned __int8 type[2]{};
     type[0] = 27;
@@ -2342,10 +2347,10 @@ const int member = static_cast<int>(GetMember(dwSerial));
   void CNormalGuildBattle::NotifyBattleResult(char byResult)
   {
 
-    _guild_battle_result_notify msg{};
+    _guild_battle_notify_battle_result_zocl msg{};
     msg.byResult = byResult;
-    strcpy_0(msg.wszRedName, m_pkRed ? m_pkRed->GetGuildName() : "None");
-    strcpy_0(msg.wszBlueName, m_pkBlue ? m_pkBlue->GetGuildName() : "None");
+    strcpy_0(msg.wszGuildNameRed, m_pkRed ? m_pkRed->GetGuildName() : "None");
+    strcpy_0(msg.wszGuildNameBlue, m_pkBlue ? m_pkBlue->GetGuildName() : "None");
 
     unsigned __int8 type[2]{};
     type[0] = 27;
@@ -2468,14 +2473,14 @@ const int member = static_cast<int>(GetMember(dwSerial));
 
   void CNormalGuildBattle::GuildBattleResultLogNotifyWeb(const _qry_case_guild_battel_result_log *sheet)
   {
-    static_assert(sizeof(_guild_battle_result_log_notify_web) == 0xA8, "guild battle web notify size mismatch");
+    static_assert(sizeof(_guild_battle_complete_msg_zowb) == 0xA8, "guild battle web notify size mismatch");
 
     if (!sheet)
     {
       return;
     }
 
-    _guild_battle_result_log_notify_web msg{};
+    _guild_battle_complete_msg_zowb msg{};
     strcpy_s(msg.szStartTime, sizeof(msg.szStartTime), sheet->szStartTime);
     strcpy_s(msg.szEndTime, sizeof(msg.szEndTime), sheet->szEndTime);
     msg.dwRedSerial = sheet->dwRedSerial;
@@ -2496,7 +2501,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
     msg.dwMaxKillCharacSerial = sheet->dwMaxKillCharacSerial;
     strcpy_s(msg.wszMaxKillCharacName, sizeof(msg.wszMaxKillCharacName), sheet->wszMaxKillCharacName);
     msg.byJoinLimit = sheet->byJoinLimit;
-    msg.dwGuildBattleCostGold = sheet->dwGuildBattleCostGold;
+    msg.dwGuildBattleCost = sheet->dwGuildBattleCostGold;
     strcpy_s(msg.szBattleMapCode, sizeof(msg.szBattleMapCode), sheet->szBattleMapCode);
 
     unsigned __int8 type[2]{};

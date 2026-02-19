@@ -4499,12 +4499,16 @@ void CMainThread::ManageClientLimitRunRequest(char *pBuf)
   if (!PushDQSData(0xFFFFFFFF, nullptr, 0xA1u, pQryData, 7))
   {
 
-    _limit_run_result result{};
+    _manage_client_limit_run_result_wrac result{};
     result.byRet = 24;
-    memcpy_0(result.data, pBuf, 6uLL);
-    result.data[6] = static_cast<unsigned __int8>(pBuf[6]);
+    memcpy_0(&result.idLocal, pBuf, sizeof(result.idLocal));
+    result.byLoginServerIndex = static_cast<unsigned __int8>(pBuf[6]);
     unsigned __int8 pbyType[2]{1, 26};
-    g_Network.m_pProcess[1]->LoadSendMsg(0, pbyType, reinterpret_cast<char *>(&result), 8u);
+    g_Network.m_pProcess[1]->LoadSendMsg(
+      0,
+      pbyType,
+      reinterpret_cast<char *>(&result),
+      static_cast<unsigned __int16>(sizeof(result)));
   }
 
   OutputDebugLog("ManageClientLimitRunRequest End");

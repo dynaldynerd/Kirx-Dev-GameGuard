@@ -18,7 +18,7 @@
 #include "CUnmannedTraderItemState.h"
 #include "CUnmannedTraderSortType.h"
 #include "CUnmannedTraderTaxRateManager.h"
-#include "CUnmannedTraderUserInfoLocalStructs.h"
+#include "CMainThread.h"
 #include "GlobalObjects.h"
 #include "InvenKey.h"
 #include "WorldServerUtil.h"
@@ -46,6 +46,22 @@
 #include <ctime>
 
 CUnmannedTraderUserInfo CUnmannedTraderUserInfo::ms_kNull;
+
+namespace
+{
+unsigned __int16 GetSellWaitInformSize(const _unmannedtrader_Sell_Wait_item_inform_zocl &msg)
+{
+  unsigned __int8 clamped = msg.byNum;
+  if (clamped > 10)
+  {
+    clamped = 0;
+  }
+
+  return static_cast<unsigned __int16>(
+    sizeof(msg)
+    - sizeof(msg.List[0]) * (10 - clamped));
+}
+}
 
 CUnmannedTraderUserInfo::CUnmannedTraderUserInfo()
   : m_eState(LOG_IN_STATE::UTUI_NONE),
@@ -1402,7 +1418,7 @@ void CUnmannedTraderUserInfo::CompleteCreate(CLogFile *pkLogger)
 
   NotifyRegistItem();
 
-  _unmannedtrader_sell_wait_item_inform_zocl sellWaitInform{};
+  _unmannedtrader_Sell_Wait_item_inform_zocl sellWaitInform{};
   std::memset(&sellWaitInform, 0, sizeof(sellWaitInform));
   unsigned __int8 deleteStorageSlot[10]{};
   for (int index = 0; index < 20; ++index)
@@ -1436,7 +1452,7 @@ void CUnmannedTraderUserInfo::CompleteCreate(CLogFile *pkLogger)
 
     if (sellWaitInform.byNum < 10)
     {
-      _unmannedtrader_sell_wait_item_inform_zocl::__list &entry = sellWaitInform.List[sellWaitInform.byNum];
+      _unmannedtrader_Sell_Wait_item_inform_zocl::__list &entry = sellWaitInform.List[sellWaitInform.byNum];
       entry.wItemSerial = loadItem.GetItemSerial();
       entry.dwSellDalant = loadItem.GetPrice();
       entry.dwTax = loadItem.GetTax();
@@ -1464,7 +1480,7 @@ void CUnmannedTraderUserInfo::CompleteCreate(CLogFile *pkLogger)
   sellWaitInform.dwCurInvenDalant = owner->m_Param.GetDalant();
   {
     unsigned __int8 type[2] = {30, 26};
-    const unsigned __int16 length = static_cast<unsigned __int16>(sellWaitInform.size());
+    const unsigned __int16 length = GetSellWaitInformSize(sellWaitInform);
     g_Network.m_pProcess[0]->LoadSendMsg(this->m_wInx, type, reinterpret_cast<char *>(&sellWaitInform), length);
   }
   for (unsigned __int8 index = 0; index < sellWaitInform.byNum; ++index)
@@ -1549,7 +1565,7 @@ void CUnmannedTraderUserInfo::ProcSellWaitItem(
   (void)byGroupType;
 
   auto *result = reinterpret_cast<_qry_case_unmandtrader_log_in_proc_update_complete_create *>(pkResult);
-  _unmannedtrader_sell_wait_item_inform_zocl inform{};
+  _unmannedtrader_Sell_Wait_item_inform_zocl inform{};
   std::memset(&inform, 0, sizeof(inform));
 
   unsigned __int8 deleteStorageSlot[10]{};
@@ -1605,7 +1621,7 @@ void CUnmannedTraderUserInfo::ProcSellWaitItem(
 
   inform.dwCurInvenDalant = owner->m_Param.GetDalant();
   unsigned __int8 type[2] = {30, 26};
-  const unsigned __int16 length = static_cast<unsigned __int16>(inform.size());
+  const unsigned __int16 length = GetSellWaitInformSize(inform);
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_wInx, type, reinterpret_cast<char *>(&inform), length);
 
   for (unsigned __int8 index = 0; index < inform.byNum; ++index)

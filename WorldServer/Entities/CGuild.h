@@ -17,21 +17,6 @@ public:
   CGuild();
   virtual ~CGuild();
 
-  class MakeBuddyPacket
-  {
-  public:
-    class __l2
-    {
-    public:
-      struct __declspec(align(2)) __guild_buddy_list
-      {
-        unsigned int dwSerial;
-        unsigned __int16 wMapCode;
-        unsigned __int8 byRegionIndex;
-      };
-    };
-  };
-
   void Init(unsigned int index);
   bool IsFill();
   void ReleaseTemp();
@@ -158,6 +143,8 @@ public:
     long double dLeftDalant,
     long double dLeftGold,
     unsigned __int8 *pbyDate);
+  void SortRankInGuild();
+  void MakeBuddyPacket();
   void MakeMoneyIOPacket();
   void SendMsg_IOMoney(
     unsigned int dwIOerSerial,

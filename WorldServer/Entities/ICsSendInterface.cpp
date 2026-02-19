@@ -5,48 +5,13 @@
 #include <cstring>
 
 #include "CashItemRemoteStore.h"
+#include "CMainThread.h"
 #include "CNetProcess.h"
 #include "GlobalObjects.h"
 #include "limitedsale_event_inform_zocl.h"
 #include "WorldServerUtil.h"
-#include "ICsSendInterfaceLocalStructs.h"
 
 #pragma pack(push, 1)
-struct _cash_discount_event_inform_zocl_local
-{
-  unsigned __int8 byEventType;
-  unsigned __int16 wCsDiscount;
-  unsigned __int16 wYear[2];
-  unsigned __int8 byMonth[2];
-  unsigned __int8 byDay[2];
-  unsigned __int8 byHour[2];
-  unsigned __int8 byMinute[2];
-
-  unsigned __int16 size() const
-  {
-    return static_cast<unsigned __int16>(sizeof(*this));
-  }
-};
-
-struct _cash_event_inform_zocl_local
-{
-
-
-  unsigned __int8 byEventType;
-  unsigned __int8 byEventStatus;
-  unsigned __int16 wYear[2];
-  unsigned __int8 byMonth[2];
-  unsigned __int8 byDay[2];
-  unsigned __int8 byHour[2];
-  unsigned __int8 byMinute[2];
-  _limited_sale_info LimitedSale;
-
-  unsigned __int16 size() const
-  {
-    return static_cast<unsigned __int16>(sizeof(*this));
-  }
-};
-
 struct _conditional_event_inform_zocl_local
 {
   unsigned __int8 byEventType;
@@ -98,7 +63,7 @@ void ICsSendInterface::SendMsg_CashDiscountEventInform(
   unsigned __int8 byEventType,
   _cash_discount_ini_ *pIni)
 {
-  _cash_discount_event_inform_zocl_local msg{};
+  _cash_discount_event_inform_zocl msg{};
   if (byEventType < 8u)
   {
     msg.byEventType = (pIni && pIni->m_bCoEvent) ? 2 : byEventType;
@@ -126,7 +91,11 @@ void ICsSendInterface::SendMsg_CashDiscountEventInform(
   }
 
   unsigned __int8 pbyType[2]{57, 7};
-  g_Network.m_pProcess[0]->LoadSendMsg(wSock, pbyType, reinterpret_cast<char *>(&msg), msg.size());
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    wSock,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void ICsSendInterface::SendMsg_CashEventInform(
@@ -136,7 +105,7 @@ void ICsSendInterface::SendMsg_CashEventInform(
   _cash_event_ini *pIni,
   _cash_lim_sale *pLim)
 {
-  _cash_event_inform_zocl_local msg{};
+  _cash_event_inform_zocl msg{};
   msg.byEventType = (byEventType < 3u) ? byEventType : 6;
   if (byStatus < 8u)
   {
@@ -191,7 +160,11 @@ void ICsSendInterface::SendMsg_CashEventInform(
   }
 
   unsigned __int8 pbyType[2]{57, 8};
-  g_Network.m_pProcess[0]->LoadSendMsg(wSock, pbyType, reinterpret_cast<char *>(&msg), msg.size());
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    wSock,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void ICsSendInterface::SendMsg_ConditionalEventInform(

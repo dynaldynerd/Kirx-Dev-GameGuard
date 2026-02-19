@@ -10,7 +10,6 @@
 
 #include <cmath>
 #include <ctime>
-#include "EconomySystemFunctionsLocalStructs.h"
 
 namespace
 {
@@ -418,18 +417,17 @@ void eUpdateEconomySystem(bool *pbChangeDay)
 
 void SendMsg_EconomyDataToWeb()
 {
-
-  EconomyDataToWeb packet{};
+  _economy_data_inform_zowb packet{};
   for (int race = 0; race < 3; ++race)
   {
-    packet.rate[race] = static_cast<float>(eGetRate(race));
-    packet.tex[race] = eGetTex(race);
-    packet.guide[race] = eGetGuide(race);
+    packet.fPayExgRate[race] = static_cast<float>(eGetRate(race));
+    packet.fTexRate[race] = eGetTex(race);
+    packet.wEconomyGuide[race] = eGetGuide(race);
   }
 
-  packet.year = GetCurrentYear();
-  packet.month = static_cast<char>(GetCurrentMonth());
-  packet.day = static_cast<char>(GetCurrentDay());
+  packet.wYear = static_cast<unsigned __int16>(GetCurrentYear());
+  packet.byMonth = static_cast<unsigned __int8>(GetCurrentMonth());
+  packet.byDay = static_cast<unsigned __int8>(GetCurrentDay());
 
   unsigned __int8 messageType[2]{51, 5};
   if (g_Main.m_bConnectedWebAgentServer)
@@ -438,7 +436,7 @@ void SendMsg_EconomyDataToWeb()
       g_Main.m_byWebAgentServerNetInx,
       messageType,
       reinterpret_cast<char *>(&packet),
-      0x22u);
+      static_cast<unsigned __int16>(sizeof(packet)));
   }
 }
 

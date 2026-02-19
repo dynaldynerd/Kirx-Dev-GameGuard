@@ -10,13 +10,13 @@
 #include <mmsystem.h>
 
 #include "CNetworkEX.h"
+#include "CMainThread.h"
 #include "CPvpUserAndGuildRankingSystem.h"
 #include "CPlayer.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 #include "raceboss_msg_confirm_zowb.h"
 #include "racebosssms_fromweb_send_error_result_zowb.h"
-#include "CRaceBossMsgControllerLocalStructs.h"
 
 CRaceBossMsgController *CRaceBossMsgController::Instance()
 {
@@ -957,11 +957,11 @@ void CRaceBossMsgController::SendRequestWeb(unsigned __int8 ucRace, RACE_BOSS_MS
   if (pkMsg->IsSendFromWeb())
   {
 
-    FromWebAck payload{};
-    payload.webSendDbId = pkMsg->GetWebDBID();
-    payload.msgIndex = pkMsg->GetID();
-    payload.worldCode = static_cast<int>(g_Main.m_byWorldCode);
-    payload.raceCode = ucRace;
+    _send_fromweb_raceboss_msg_request_zowb payload{};
+    payload.dwWebSendDBID = pkMsg->GetWebDBID();
+    payload.nCountIndex = pkMsg->GetID();
+    payload.nWorldCode = static_cast<int>(g_Main.m_byWorldCode);
+    payload.byRaceCode = ucRace;
 
     unsigned __int8 type[2]{51, 14};
     if (g_Main.m_bConnectedWebAgentServer)
