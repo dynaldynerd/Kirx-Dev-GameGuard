@@ -97,7 +97,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>RFACC.lib;ws2_32.lib;odbc32.lib;odbccp32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>RFACC.lib;ws2_32.lib;odbc32.lib;odbccp32.lib;legacy_stdio_definitions.lib;ddraw.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)ThirdParty\\RFACC;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -116,7 +116,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>RFACC.lib;ws2_32.lib;odbc32.lib;odbccp32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>RFACC.lib;ws2_32.lib;odbc32.lib;odbccp32.lib;legacy_stdio_definitions.lib;ddraw.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)ThirdParty\\RFACC;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -134,7 +134,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>RFACC.lib;ws2_32.lib;odbc32.lib;odbccp32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>RFACC.lib;ws2_32.lib;odbc32.lib;odbccp32.lib;legacy_stdio_definitions.lib;ddraw.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)ThirdParty\\RFACC;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
@@ -156,7 +156,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>RFACC.lib;ws2_32.lib;odbc32.lib;odbccp32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>RFACC.lib;ws2_32.lib;odbc32.lib;odbccp32.lib;legacy_stdio_definitions.lib;ddraw.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)ThirdParty\\RFACC;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
@@ -297,6 +297,7 @@
     <ClInclude Include="Entities\CDarkHoleDungeonQuest.h" />
     <ClInclude Include="Entities\CDarkHoleDungeonQuestSetup.h" />
     <ClInclude Include="Entities\CDisplay.h" />
+    <ClInclude Include="Entities\CDisplayView.h" />
     <ClInclude Include="Entities\CDummyDraw.h" />
     <ClInclude Include="Entities\CDummyPosTable.h" />
     <ClInclude Include="Entities\CEnglandBillingMgr.h" />
@@ -352,6 +353,7 @@
     <ClInclude Include="Entities\CIndexBuffer.h" />
     <ClInclude Include="Entities\CIndexList.h" />
     <ClInclude Include="Entities\CInfoSheet.h" />
+    <ClInclude Include="Entities\CInfoSheetTabs.h" />
     <ClInclude Include="Entities\CIniFile.h" />
     <ClInclude Include="Entities\CIP.h" />
     <ClInclude Include="Entities\CItemBox.h" />
@@ -384,6 +386,7 @@
     <ClInclude Include="Entities\CMapExtend.h" />
     <ClInclude Include="Entities\CMapItemStoreList.h" />
     <ClInclude Include="Entities\CMapOperation.h" />
+    <ClInclude Include="Entities\CMapView.h" />
     <ClInclude Include="Entities\CMerchant.h" />
     <ClInclude Include="Entities\CMerchantLocalStructs.h" />
     <ClInclude Include="Entities\CMergeFile.h" />
@@ -469,6 +472,7 @@
     <ClInclude Include="Entities\CNuclearBomb.h" />
     <ClInclude Include="Entities\CNuclearBombMgr.h" />
     <ClInclude Include="Entities\CObjectList.h" />
+    <ClInclude Include="Entities\CObjectSearchDlg.h" />
     <ClInclude Include="Entities\combine_ex_item_accept_request_clzo.h" />
     <ClInclude Include="Entities\combine_ex_item_accept_result_zocl.h" />
     <ClInclude Include="Entities\combine_ex_item_request_clzo.h" />
@@ -1050,6 +1054,7 @@
     <ClCompile Include="Entities\CDarkHoleDungeonQuest.cpp" />
     <ClCompile Include="Entities\CDarkHoleDungeonQuestSetup.cpp" />
     <ClCompile Include="Entities\CDisplay.cpp" />
+    <ClCompile Include="Entities\CDisplayView.cpp" />
     <ClCompile Include="Entities\CDummyDraw.cpp" />
     <ClCompile Include="Entities\CDummyPosTable.cpp" />
     <ClCompile Include="Entities\CEnglandBillingMgr.cpp" />
@@ -1092,6 +1097,7 @@
     <ClCompile Include="Entities\CIndexBuffer.cpp" />
     <ClCompile Include="Entities\CIndexList.cpp" />
     <ClCompile Include="Entities\CInfoSheet.cpp" />
+    <ClCompile Include="Entities\CInfoSheetTabs.cpp" />
     <ClCompile Include="Entities\CIniFile.cpp" />
     <ClCompile Include="Entities\CIP.cpp" />
     <ClCompile Include="Entities\CItemBox.cpp" />
@@ -1126,6 +1132,7 @@
     <ClCompile Include="Entities\CMapExtend.cpp" />
     <ClCompile Include="Entities\CMapItemStoreList.cpp" />
     <ClCompile Include="Entities\CMapOperation.cpp" />
+    <ClCompile Include="Entities\CMapView.cpp" />
     <ClCompile Include="Entities\CMerchant.cpp" />
     <ClCompile Include="Entities\CMergeFile.cpp" />
     <ClCompile Include="Entities\CMergeFileManager.cpp" />
@@ -1210,6 +1217,7 @@
     <ClCompile Include="Entities\CNuclearBomb.cpp" />
     <ClCompile Include="Entities\CNuclearBombMgr.cpp" />
     <ClCompile Include="Entities\CObjectList.cpp" />
+    <ClCompile Include="Entities\CObjectSearchDlg.cpp" />
     <ClCompile Include="Entities\combine_ex_item_result_zocl.cpp" />
     <ClCompile Include="Entities\ControllerTaxRate.cpp" />
     <ClCompile Include="Entities\COreAmountMgr.cpp" />

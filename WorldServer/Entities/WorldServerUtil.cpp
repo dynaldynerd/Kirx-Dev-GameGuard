@@ -59,7 +59,7 @@ static void LoadR3X(char *a1);
 static _LIGHTMAP **LoadR3TLightMap(struct R3Texture *a1, D3DFORMAT a2);
 static void RestoreSystemTexture();
 static IDirect3DTexture8 *GetD3DTextureFromBuffer(unsigned __int8 *a1, unsigned int a2);
-static int GetMipMapSkipSize(_DDSURFACEDESC2 *a1, unsigned int a2, unsigned int a3, unsigned int a4);
+static int GetMipMapSkipSize(IDA_DDSURFACEDESC2 *a1, unsigned int a2, unsigned int a3, unsigned int a4);
 static void MakeMipMap(unsigned short a1, unsigned short a2, unsigned short *a3, unsigned short *a4);
 static void MakeMipMap(unsigned short a1, unsigned short a2, unsigned short *a3, unsigned char *a4);
 
@@ -5114,7 +5114,7 @@ struct IDirect3DTexture8 *R3LoadDDSFromFP(FILE *fp, size_t size, unsigned int mi
 
   if (buf[8])
   {
-    skip = static_cast<unsigned int>(GetMipMapSkipSize(reinterpret_cast<_DDSURFACEDESC2 *>(buf + 2), mipmap, maxX, maxY));
+    skip = static_cast<unsigned int>(GetMipMapSkipSize(reinterpret_cast<IDA_DDSURFACEDESC2 *>(buf + 2), mipmap, maxX, maxY));
     if (skip)
       fseek(fp, skip, SEEK_CUR);
   }
@@ -6313,7 +6313,7 @@ static IDirect3DTexture8 *GetD3DTextureFromBuffer(unsigned __int8 *a1, unsigned 
   return reinterpret_cast<IDirect3DTexture8 *>(outTex);
 }
 
-static int GetMipMapSkipSize(_DDSURFACEDESC2 *a1, unsigned int a2, unsigned int a3, unsigned int a4)
+static int GetMipMapSkipSize(IDA_DDSURFACEDESC2 *a1, unsigned int a2, unsigned int a3, unsigned int a4)
 {
   unsigned int v4 = 0;
   if (a3 < 0x100 || a4 < 0x100)

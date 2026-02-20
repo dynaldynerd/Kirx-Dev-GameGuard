@@ -1,8 +1,11 @@
 #include "pch.h"
 #include "WorldServer.h"
 #include "MainFrm.h"
+#include "Entities/CGameServerDoc.h"
+#include "Entities/GlobalObjects.h"
 #include "Entities/R3EngineState.h"
 #include "resource.h"
+#include <commctrl.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -19,6 +22,11 @@ CWorldServerApp::CWorldServerApp() noexcept
 
 BOOL CWorldServerApp::InitInstance()
 {
+    INITCOMMONCONTROLSEX initCtrls{};
+    initCtrls.dwSize = sizeof(initCtrls);
+    initCtrls.dwICC = ICC_WIN95_CLASSES | ICC_BAR_CLASSES | ICC_TAB_CLASSES | ICC_TREEVIEW_CLASSES;
+    InitCommonControlsEx(&initCtrls);
+
     CWinApp::InitInstance();
 
     WSADATA wsaData{};
@@ -35,10 +43,13 @@ BOOL CWorldServerApp::InitInstance()
         return FALSE;
     }
 
+    g_pDoc = new CGameServerDoc();
+
     auto* pFrame = new CMainFrame();
     if (!pFrame->LoadFrame(IDR_MAINFRAME))
     {
-        delete pFrame;
+        delete g_pDoc;
+        g_pDoc = nullptr;
         m_iocp.Stop();
         WSACleanup();
         return FALSE;
@@ -53,6 +64,8 @@ BOOL CWorldServerApp::InitInstance()
 
 int CWorldServerApp::ExitInstance()
 {
+    delete g_pDoc;
+    g_pDoc = nullptr;
     m_iocp.Stop();
     WSACleanup();
     return CWinApp::ExitInstance();

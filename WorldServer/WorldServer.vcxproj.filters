@@ -672,6 +672,12 @@
     <ClInclude Include="Entities\CDisplay.h">
       <Filter>Header Files\EngineR3</Filter>
     </ClInclude>
+    <ClInclude Include="Entities\CDisplayView.h">
+      <Filter>Header Files\Infrastructure</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\CMapView.h">
+      <Filter>Header Files\Infrastructure</Filter>
+    </ClInclude>
     <ClInclude Include="Entities\CDummyDraw.h">
       <Filter>Header Files\EngineR3</Filter>
     </ClInclude>
@@ -835,6 +841,9 @@
       <Filter>Header Files\EngineR3</Filter>
     </ClInclude>
     <ClInclude Include="Entities\CInfoSheet.h">
+      <Filter>Header Files\Infrastructure</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\CInfoSheetTabs.h">
       <Filter>Header Files\Infrastructure</Filter>
     </ClInclude>
     <ClInclude Include="Entities\CIniFile.h">
@@ -1186,6 +1195,9 @@
       <Filter>Header Files\Nation</Filter>
     </ClInclude>
     <ClInclude Include="Entities\CObjectList.h">
+      <Filter>Header Files\Infrastructure</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\CObjectSearchDlg.h">
       <Filter>Header Files\Infrastructure</Filter>
     </ClInclude>
     <ClInclude Include="Entities\combine_ex_item_accept_request_clzo.h">
@@ -2924,6 +2936,12 @@
     <ClCompile Include="Entities\CDisplay.cpp">
       <Filter>Source Files\EngineR3</Filter>
     </ClCompile>
+    <ClCompile Include="Entities\CDisplayView.cpp">
+      <Filter>Source Files\Infrastructure</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\CMapView.cpp">
+      <Filter>Source Files\Infrastructure</Filter>
+    </ClCompile>
     <ClCompile Include="Entities\CDummyDraw.cpp">
       <Filter>Source Files\EngineR3</Filter>
     </ClCompile>
@@ -3048,6 +3066,9 @@
       <Filter>Source Files\EngineR3</Filter>
     </ClCompile>
     <ClCompile Include="Entities\CInfoSheet.cpp">
+      <Filter>Source Files\Infrastructure</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\CInfoSheetTabs.cpp">
       <Filter>Source Files\Infrastructure</Filter>
     </ClCompile>
     <ClCompile Include="Entities\CIniFile.cpp">
@@ -3402,6 +3423,9 @@
       <Filter>Source Files\Nation</Filter>
     </ClCompile>
     <ClCompile Include="Entities\CObjectList.cpp">
+      <Filter>Source Files\Infrastructure</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\CObjectSearchDlg.cpp">
       <Filter>Source Files\Infrastructure</Filter>
     </ClCompile>
     <ClCompile Include="Entities\combine_ex_item_result_zocl.cpp">

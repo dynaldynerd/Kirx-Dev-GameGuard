@@ -1656,6 +1656,26 @@ void CGameObject::_ResetCirclePlayer()
 }
 */
 
+void CGameObject::CalcScrExtendPoint(CRect *prcWnd, CRect *prcExtend)
+{
+  const float localX = m_fAbsPos[0] - static_cast<float>(prcExtend->left);
+  const float localY = m_fAbsPos[2] - static_cast<float>(prcExtend->top);
+
+  m_nScreenPos[0] = static_cast<int>(
+    (localX * static_cast<float>(prcWnd->right))
+    / static_cast<float>(prcExtend->right - prcExtend->left));
+  m_nScreenPos[1] = static_cast<int>(
+    (localY * static_cast<float>(prcWnd->bottom))
+    / static_cast<float>(prcExtend->bottom - prcExtend->top));
+}
+
+void CGameObject::CalcScrNormalPoint(CRect *prcWnd)
+{
+  _bsp_info *bspInfo = m_pCurMap->GetBspInfo();
+  m_nScreenPos[0] = prcWnd->right * static_cast<int>(m_fAbsPos[0]) / bspInfo->m_nMapSize[0];
+  m_nScreenPos[1] = prcWnd->bottom * static_cast<int>(m_fAbsPos[2]) / bspInfo->m_nMapSize[2];
+}
+
 __int64 CGameObject::GetCurSecNum()
 {
   return m_dwCurSec;

@@ -499,7 +499,18 @@ public:
   CMainThread();
   bool Init();
   void AccountServerLogin();
+  void gm_DisplaymodeChange();
+  void gm_MapChange(CMapData *pMap);
   void gm_ServerClose();
+  void gm_ObjectSelect();
+  void gm_UpdateServer();
+  void gm_UpdateObject();
+  void gm_UpdateMap();
+  void gm_DisplayAll();
+  void gm_PreCloseAnn();
+  void gm_UserExit();
+  void gm_DungeonLoad();
+  void gm_MainThreadControl();
   bool gm_MonsterInit(CMonster *pExt);
   bool IsTestServer() const;
   bool IsReleaseServiceMode() const;
@@ -973,7 +984,6 @@ private:
   bool DataFileInit();
   bool SetGlobalDataName();
   bool check_loaded_data();
-  void gm_MainThreadControl();
   bool ObjectInit();
   bool NetworkInit();
   void MakeSystemTower();

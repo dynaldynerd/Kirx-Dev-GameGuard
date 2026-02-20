@@ -128,6 +128,7 @@ bool _TRADE_DB_BASE::_LIST::IsEmpty()
 #include "economy_history_data.h"
 #include "CItemStoreManager.h"
 #include "cStaticMember_Player.h"
+#include "UIMessageIds.h"
 #include "GlobalObjects.h"
 #include "CGameServerDoc.h"
 
@@ -324,6 +325,150 @@ void CMainThread::gm_ServerClose()
     m_tmForceUserExit.BeginTimer(0x32u);
     m_nForceExitSocketIndexOffset = 0;
   }
+}
+
+void CMainThread::gm_DisplaymodeChange()
+{
+  if (g_MapDisplay.m_bDisplayMode)
+  {
+    if (g_MapDisplay.OffDisplay())
+    {
+      g_pDoc->m_DisplayView.ShowWindow(SW_HIDE);
+      g_pDoc->m_DisplayView.ShowWindow(SW_SHOW);
+    }
+    else
+    {
+      MyMessageBox("Display Error", "OffDisplay() Failure");
+    }
+    return;
+  }
+
+  CMapData *map = nullptr;
+  unsigned __int16 layerIndex = 0;
+  if (g_MapDisplay.m_pOldActMap)
+  {
+    map = g_MapDisplay.m_pOldActMap;
+    layerIndex = g_MapDisplay.m_wOldLayerIndex;
+  }
+  else if (CGameObject::s_pSelectObject)
+  {
+    map = CGameObject::s_pSelectObject->m_pCurMap;
+    layerIndex = CGameObject::s_pSelectObject->m_wMapLayerIndex;
+  }
+  else
+  {
+    map = g_MapOper.GetMap(0);
+    layerIndex = 0;
+  }
+
+  if (!g_MapDisplay.OnDisplay(map, layerIndex))
+  {
+    MyMessageBox("Display Error", "OnDisplay() Failure");
+  }
+}
+
+void CMainThread::gm_MapChange(CMapData *pMap)
+{
+  g_MapDisplay.m_MapExtend.m_bExtendMode = false;
+  g_pDoc->m_DisplayView.SetExtendMode(0);
+  g_MapDisplay.ChangeMap(pMap);
+}
+
+void CMainThread::gm_ObjectSelect()
+{
+  CGameObject *selected = g_MapDisplay.SelectObject(&g_pDoc->m_DisplayView.m_ptLBtn);
+  if (selected)
+  {
+    CGameObject::s_pSelectObject = selected;
+    if (g_pDoc->m_InfoSheet.GetActiveIndex() == 3)
+    {
+      m_GameMsg.PackingMsg(0x3EEu, 0, 0, 0);
+    }
+  }
+}
+
+void CMainThread::gm_UpdateServer()
+{
+  if (g_pFrame)
+  {
+    g_pFrame->PostMessage(WM_WS_UPDATE_SERVER, 0, 0);
+  }
+}
+
+void CMainThread::gm_UpdateObject()
+{
+  if (g_pFrame)
+  {
+    g_pFrame->PostMessage(WM_WS_UPDATE_OBJECT, 0, 0);
+  }
+}
+
+void CMainThread::gm_UpdateMap()
+{
+  if (g_pFrame)
+  {
+    g_pFrame->PostMessage(WM_WS_UPDATE_MAP, 0, 0);
+  }
+}
+
+void CMainThread::gm_DisplayAll()
+{
+  gm_DisplaymodeChange();
+  if (g_MapDisplay.m_bDisplayMode)
+  {
+    CRect rcOut;
+    g_pDoc->m_DisplayView.GetDrawableRect(&rcOut);
+    g_MapDisplay.InitDummy(&rcOut);
+    g_MapDisplay.InitCollLine(&rcOut);
+  }
+}
+
+void CMainThread::gm_PreCloseAnn()
+{
+  char buffer[132]{};
+  sprintf_s(buffer, "%s server close warning.", m_szWorldName);
+
+  for (int index = 0; index < MAX_PLAYER; ++index)
+  {
+    if (g_Player[index].m_bLive)
+    {
+      g_Player[index].SendData_ChatTrans(0, 0xFFFFFFFFu, 0xFFu, 0, buffer, 0xFFu, nullptr);
+    }
+  }
+}
+
+void CMainThread::gm_UserExit()
+{
+  CGameObject *selectedObject = CGameObject::s_pSelectObject;
+  if (!selectedObject || selectedObject->m_ObjID.m_byKind != 0)
+  {
+    return;
+  }
+
+  if (selectedObject->m_ObjID.m_byID == 1)
+  {
+    reinterpret_cast<CMonster *>(selectedObject)->Destroy(1u, nullptr);
+  }
+  else if (selectedObject->m_ObjID.m_byID == 0 && selectedObject->m_bLive)
+  {
+    g_UserDB[selectedObject->m_ObjID.m_wIndex].ForceCloseCommand(0, 0, false, "Kick From Button");
+  }
+}
+
+void CMainThread::gm_DungeonLoad()
+{
+  CDarkHoleDungeonQuest *darkHoleQuest = new CDarkHoleDungeonQuest();
+  if (!darkHoleQuest)
+  {
+    return;
+  }
+
+  if (darkHoleQuest->LoadDarkHoleQuest())
+  {
+    MyMessageBox("Dungeon Load", "Success");
+  }
+
+  delete darkHoleQuest;
 }
 
 bool CMainThread::gm_MonsterInit(CMonster *pExt)

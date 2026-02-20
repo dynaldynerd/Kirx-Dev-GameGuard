@@ -1,9 +1,10 @@
 #pragma once
 
 #include "IdaCompat.h"
-#include <Windows.h>
+#include <afxwin.h>
 
 struct _map_rate;
+class CMapData;
 class CSurface;
 
 /* 2898 */
@@ -12,6 +13,8 @@ struct _map_rate
   float fSide[2];
   int nStandard;
   int nPartner;
+
+  void Setting(int x, int y);
 };
 
 /* 3009 */
@@ -23,18 +26,26 @@ public:
   ~CMapExtend();
 
   void Init(CSurface **pSF);
+  void DrawRect();
+  void StartScreenPoint(CPoint *pt, CMapData *pMap, CRect *rcWnd);
+  void MoveScreenPoint(CPoint *pt);
+  bool EndScreenPoint(CSize *szMap);
+  void ConvertToMap(CSize *szMap);
+  CSize *GetExtendSize();
+  void ScrollMapLeft(int nInterval);
+  void ScrollMapRight(int nMapX, int nInterval);
+  void ScrollMapUp(int nInterval);
+  void ScrollMapDown(int nMapY, int nInterval);
 
   bool m_bExtendMode;
-
-private:
-  tagPOINT m_ptStartMap;
-  tagPOINT m_ptEndMap;
-  tagPOINT m_ptCenter;
-  tagRECT m_rcExtend;
-  tagPOINT m_ptStartScreen;
-  tagPOINT m_ptEndScreen;
-  tagPOINT m_ptMoveScreen;
-  tagSIZE m_sizeExtend;
+  CPoint m_ptStartMap;
+  CPoint m_ptEndMap;
+  CPoint m_ptCenter;
+  CRect m_rcExtend;
+  CPoint m_ptStartScreen;
+  CPoint m_ptEndScreen;
+  CPoint m_ptMoveScreen;
+  CSize m_sizeExtend;
   HPEN__ *m_hPen;
   CSurface **m_pSF;
   _map_rate m_Rate;

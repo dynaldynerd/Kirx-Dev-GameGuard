@@ -155,6 +155,8 @@ public:
   void _ResetCirclePlayer();
   */
   void CalcAbsPos();
+  void CalcScrExtendPoint(CRect *prcWnd, CRect *prcExtend);
+  void CalcScrNormalPoint(CRect *prcWnd);
   __int64 CalcSecIndex();
   __int64 GetUseSectorRange();
   char Create(_object_create_setdata *pData);

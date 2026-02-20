@@ -88,7 +88,7 @@ typedef unsigned int D3DFORMAT;
 #endif
 
 /* Minimal DDS header for mipmap calculations */
-struct _DDSURFACEDESC2
+struct IDA_DDSURFACEDESC2
 {
   unsigned int dwSize;
   unsigned int dwFlags;

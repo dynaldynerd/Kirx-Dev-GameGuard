@@ -10,6 +10,8 @@
 #include "CSurface.h"
 
 class CMapData;
+class CGameObject;
+class CMonster;
 
 class  CMapDisplay : public CDisplay
 {
@@ -17,7 +19,24 @@ public:
   CMapDisplay();
   ~CMapDisplay() override;
 
+  char OnDisplay(CMapData *pMap, unsigned __int16 wLayerIndex);
+  char ChangeMap(CMapData *pMap);
+  char ChangeLayer(unsigned __int16 wLayerIndex);
   void DrawDisplay();
+  void DrawMap();
+  void DrawCollisionLine();
+  void DrawDummy();
+  void DrawObject();
+  __int64 _DrawObject(CGameObject *pObj, CSurface *pSF);
+  __int64 DrawSelectMonsterLookAtPos(CMonster *pMon);
+  void DrawTextA();
+  void InitDummy(CRect *prcWnd);
+  void InitCollLine(CRect *prcWnd);
+  CGameObject *SelectObject(CPoint *pt);
+
+  int InitSurface(CMapData *pMap);
+  int CreateObjSurface();
+
   char OffDisplay();
   HRESULT ReleaseDisplay();
 

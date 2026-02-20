@@ -11,26 +11,30 @@ public:
     virtual ~CMainFrame();
 
     virtual BOOL PreCreateWindow(CREATESTRUCT& cs) override;
+    virtual LRESULT WindowProc(UINT message, WPARAM wParam, LPARAM lParam) override;
 
 protected:
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
     afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg void OnTabSelChange(NMHDR *pNMHDR, LRESULT *pResult);
+    afx_msg void OnTimer(UINT_PTR nIDEvent);
+    afx_msg void OnDestroy();
+    afx_msg void OnPaint();
+    afx_msg void OnButtonDisplayAll();
+    afx_msg void OnButtonMonster();
+    afx_msg void OnButtonAction();
+    afx_msg void OnButtonServerClose();
+    afx_msg void OnButtonDungeonLoad();
+    afx_msg LRESULT OnUiUpdateMap(WPARAM wParam, LPARAM lParam);
+    afx_msg LRESULT OnUiUpdateServer(WPARAM wParam, LPARAM lParam);
+    afx_msg LRESULT OnUiUpdateObject(WPARAM wParam, LPARAM lParam);
 
     DECLARE_MESSAGE_MAP()
 
 private:
     void LayoutControls(int cx, int cy);
-    void ShowTabPage(int tabIndex);
+    void MakeModeName(CStringA &mode) const;
+    void UpdateStatusBar();
 
     CDialog m_mainView;
-    CDialog m_mainPanel;
-    CDialog m_userView;
-    CDialog m_serverView;
-    CDialog m_objectView;
-    CDialog m_mapView;
-    CDialog m_logView;
-
-    CTabCtrl m_tab;
     CStatusBar m_statusBar;
 };

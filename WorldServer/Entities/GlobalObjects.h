@@ -84,6 +84,7 @@ extern _CCRFG_CALLBACK g_pfnCallBack;
 extern unsigned __int8 g_cbHashVerify[32];
 extern unsigned __int8 g_key[16];
 extern unsigned __int8 g_iv[16];
+extern float g_fPoint[2];
 
 extern int g_tmpEffectedNum;
 extern _tmp_effected_list g_tmpEffectedList[30];

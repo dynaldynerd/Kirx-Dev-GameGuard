@@ -46,8 +46,7 @@ CNetworkEX g_Network{};
 CMapDisplay g_MapDisplay{};
 int gAsci[256]{};
 CWnd *g_pFrame = nullptr;
-CGameServerDoc g_GameServerDoc{};
-CGameServerDoc *g_pDoc = &g_GameServerDoc;
+CGameServerDoc *g_pDoc = nullptr;
 CLogFile g_FgLogFile{};
 _CCRFG_SEND_BUFFER g_FGSendData{};
 _CCRFG_RECV_BUFFER g_FGRecvData{};
@@ -59,6 +58,7 @@ unsigned __int8 g_key[16] = {
   0x49, 0x79, 0xC2, 0x04, 0x32, 0xC2, 0x3D, 0xD4, 0x3D, 0x86, 0xF2, 0x7E, 0x33, 0xDE, 0x43, 0x9D};
 unsigned __int8 g_iv[16] = {
   0x08, 0x90, 0xCC, 0x90, 0x2D, 0x69, 0x45, 0x04, 0x10, 0x6C, 0xE4, 0xF9, 0xAA, 0x96, 0xD3, 0x79};
+float g_fPoint[2]{};
 
 int g_tmpEffectedNum = 0;
 _tmp_effected_list g_tmpEffectedList[30]{};
