@@ -120,8 +120,8 @@ bool CMerchant::Init(_object_id *pID)
   return true;
 }
 
-int CMerchant::s_nLiveNum = 0;
-unsigned int CMerchant::s_dwSerialCnt = 0;
+int CMerchant::s_nLiveNum = -1;
+unsigned int CMerchant::s_dwSerialCnt = 0xFFFFFFFFu;
 
 bool CMerchant::Create(_npc_create_setdata *pData)
 {

@@ -5,7 +5,7 @@
 #include "CMainThread.h"
 #include "CLogFile.h"
 
-const char *CRaceBuffInfoByHolyQuestfGroup::TYPE_NAME[4] = {"Win", "Fail", "Lose", "Chaos"};
+const char *CRaceBuffInfoByHolyQuestfGroup::TYPE_NAME[4] = {"WinGetScaner", "WinEmptyScaner", "Fail", "Lose"};
 
 CRaceBuffInfoByHolyQuestfGroup::CRaceBuffInfoByHolyQuestfGroup(unsigned int nth)
   : m_uiNTh(nth)

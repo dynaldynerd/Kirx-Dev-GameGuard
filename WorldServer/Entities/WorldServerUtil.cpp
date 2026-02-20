@@ -43,8 +43,11 @@ namespace
 const char *dayofweek[7] = {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
 static char szDefItemName[] = "noname";
 static float sR[4] = {200.0f, 200.0f, 200.0f, 200.0f};
-static int s_nSkillLvPerMastery[8] = {};
-static int s_nForceLvPerMastery[24] = {};
+static int s_nSkillLvPerMastery[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+static int s_nForceLvPerMastery[24] = {
+  -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1};
 static char sBuffer[64] = {};
 
 static __int64 D3DXCreateTextureFromFileInMemory_0(IDirect3DDevice8 *device, const void *data, unsigned int size, void *outTex);
@@ -900,7 +903,7 @@ void __trace(const char *fmt, ...)
   OutputDebugStringA(buffer);
 }
 
-static unsigned __int64 dw64Cnt = 0;
+static unsigned __int64 dw64Cnt = 0xFFFFFFFFFFFFFFFFULL;
 
 void OutputDebugLog(const char *szFormat, ...)
 {

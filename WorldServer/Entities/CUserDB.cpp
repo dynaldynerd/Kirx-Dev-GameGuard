@@ -42,7 +42,7 @@
 #include "RFEvent_ClassRefine.h"
 #include "CNetIndexList.h"
 
-int CUserDB::s_nLoginNum = 0;
+int CUserDB::s_nLoginNum = -1;
 CLogFile CUserDB::s_logAvatorDB;
 CMgrAccountLobbyHistory CUserDB::s_MgrLobbyHistory{};
 _MOVE_LOBBY_DELAY CUserDB::s_MoveLobbyDelay{};
@@ -50,7 +50,7 @@ _MOVE_LOBBY_DELAY CUserDB::s_MoveLobbyDelay{};
 const char wszNonMakeName_0[3][17] = {"GM", "ADMIN", "OPERATOR"};
 const char wszNonMakeName_1[3][17] = {"GM", "ADMIN", "OPERATOR"};
 const char wszNonMakeName[3][17] = {"GM", "ADMIN", "OPERATOR"};
-const char wszGMCmp[] = "GM";
+const char wszGMCmp[] = "[GameMaster]";
 size_t nGMCmpLen = strlen_0(wszGMCmp);
 
 CUserDB *SearchAvatorWithName(CUserDB *pList, int nMax, char *pwszName)

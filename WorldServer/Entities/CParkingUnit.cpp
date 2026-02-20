@@ -10,7 +10,7 @@
 #include "CPlayer.h"
 #include "GlobalObjects.h"
 
-int CParkingUnit::s_nLiveNum = 0;
+int CParkingUnit::s_nLiveNum = -1;
 unsigned int CParkingUnit::s_dwSerialCounter = 0;
 
 void CParkingUnit::Init(_object_id *pID)

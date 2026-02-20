@@ -6,21 +6,21 @@
 
 namespace
 {
-  wchar_t s_utState0[] = L"STATE_0";
-  wchar_t s_utState1[] = L"STATE_1";
-  wchar_t s_utState2[] = L"STATE_2";
-  wchar_t s_utState3[] = L"STATE_3";
-  wchar_t s_utState4[] = L"STATE_4";
-  wchar_t s_utState5[] = L"STATE_5";
-  wchar_t s_utState6[] = L"STATE_6";
-  wchar_t s_utState7[] = L"STATE_7";
-  wchar_t s_utState8[] = L"STATE_8";
-  wchar_t s_utState9[] = L"STATE_9";
-  wchar_t s_utState10[] = L"STATE_10";
-  wchar_t s_utState11[] = L"STATE_11";
-  wchar_t s_utState12[] = L"STATE_12";
-  wchar_t s_utState13[] = L"STATE_13";
-  wchar_t s_utState14[] = L"STATE_14";
+  wchar_t s_utState0[] = L"Wait";
+  wchar_t s_utState1[] = L"RegistAtWaitRecord";
+  wchar_t s_utState2[] = L"RegistAtNewRecord";
+  wchar_t s_utState3[] = L"Sell Complete";
+  wchar_t s_utState4[] = L"Sell Complete And Wait";
+  wchar_t s_utState5[] = L"Cancel Regist";
+  wchar_t s_utState6[] = L"Close For Pass Time Wait Notify";
+  wchar_t s_utState7[] = L"Cancel Regist For Server Internal Error";
+  wchar_t s_utState8[] = L"Cancel Sell Fail For Server Internal Error";
+  wchar_t s_utState9[] = L"Close Fail For Server Internal error";
+  wchar_t s_utState10[] = L"Sell Complete Update Wait";
+  wchar_t s_utState11[] = L"Close For PassTime";
+  wchar_t s_utState12[] = L"Regist Fail For Server Internal Error";
+  wchar_t s_utState13[] = L"Close For Pass Time Wait Reregistration";
+  wchar_t s_utState14[] = L"NULL";
 }
 
 wchar_t *CUnmannedTraderItemState::ms_wszStateName[15] = {

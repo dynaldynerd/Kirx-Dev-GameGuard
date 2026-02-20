@@ -30,13 +30,13 @@
 
 #include <mmsystem.h>
 
-static SYSTEMTIME s_tmLocal{};
+static SYSTEMTIME s_tmLocal = {0xFFFFu, 0xFFFFu, 0xFFFFu, 0xFFFFu, 0xFFFFu, 0xFFFFu, 0xFFFFu, 0xFFFFu};
 static const char *s_szOreKind_160[5] = {
-  "ioblu03",
-  "iored03",
-  "ioyel03",
-  "iogre03",
-  "iobla03",
+  "ioblu04",
+  "iored04",
+  "ioyel04",
+  "iogre04",
+  "iobla04",
 };
 
 AutoMineMachineMng *AutoMineMachineMng::m_pInstance = nullptr;

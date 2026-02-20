@@ -150,7 +150,7 @@ unsigned int g_dwMaxDeadMonNum = 0;
 constexpr const char kCandidateMgrInitFailFmt[] = "CandidateMgr::Instance()->Initialize(%d) Fail!";
 }
 
-unsigned int TimeLimitMgr::m_dwCnt = 0;
+unsigned int TimeLimitMgr::m_dwCnt = 0xFFFFFFFFu;
 
 _BILLING_INFO::_BILLING_INFO()
 {

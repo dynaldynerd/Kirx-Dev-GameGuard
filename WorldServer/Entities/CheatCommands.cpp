@@ -254,9 +254,9 @@ static constexpr float FLOAT_100_0 = 100.0f;
 
 static const _eq_suk_list EqSukList[4] = {
   {"weapon", 0, 0},
-  {"defense", 1, 0},
-  {"shield", 2, 0},
-  {"skill", 3, 0},
+  {"defense", 0, 1},
+  {"shield", 1, 0},
+  {"skill", 2, 0},
 };
 
 static GUILD_BATTLE::CNormalGuildBattleField *GetBattleFieldFromPlayer(
