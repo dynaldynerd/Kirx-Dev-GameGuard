@@ -27,8 +27,8 @@ char s_keeperObjectName[256]{};
 float s_attackPivot[3]{};
 }
 
-int CHolyKeeper::s_nLiveNum = -1;
-unsigned int CHolyKeeper::s_dwSerialCnt = 0xFFFFFFFFu;
+int CHolyKeeper::s_nLiveNum;
+unsigned int CHolyKeeper::s_dwSerialCnt;
 
 CHolyKeeper::CHolyKeeper()
   : m_nHP(0),

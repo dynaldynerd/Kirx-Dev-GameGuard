@@ -340,8 +340,8 @@ bool CRecordData::MakeHashTable(int keyIndex, int keyLength, char *errCode)
 
 unsigned int CRecordData::MakeHash(const char *p, int len)
 {
-  static unsigned char s_hashTable[256] = {};
-  static bool s_hashTableLoaded = false;
+  static unsigned char s_hashTable[256];
+  static bool s_hashTableLoaded;
 
   if (!s_hashTableLoaded)
   {

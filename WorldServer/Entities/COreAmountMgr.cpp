@@ -11,7 +11,7 @@
 #include "WorldServerUtil.h"
 #include "qry_case_insert_orelog.h"
 
-COreAmountMgr *COreAmountMgr::m_pInstance = nullptr;
+COreAmountMgr *COreAmountMgr::m_pInstance;
 
 COreAmountMgr *COreAmountMgr::Instance()
 {

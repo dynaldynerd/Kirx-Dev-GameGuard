@@ -26,7 +26,7 @@ unsigned int SearchPlayerByName(char *szCharName)
 }
 } // namespace
 
-CChatStealSystem *CChatStealSystem::ms_pInstance = nullptr;
+CChatStealSystem *CChatStealSystem::ms_pInstance;
 
 CChatStealSystem::CChatStealSystem() : m_pGM(nullptr), m_TargetInfo() {}
 

@@ -16,7 +16,7 @@ CDummyPosTable::CDummyPosTable()
     this->m_nDumPosDataNum = 0;
 }
 
-_dummy_position *CDummyPosTable::ms_pHeroes_Dummy[3] = {nullptr, nullptr, nullptr};
+_dummy_position *CDummyPosTable::ms_pHeroes_Dummy[3];
 const char *C_HEROES_DUMMY_NAME[3] = {"sd030f1", "sd040f1", "sd050f1"};
 
 CDummyPosTable::~CDummyPosTable()

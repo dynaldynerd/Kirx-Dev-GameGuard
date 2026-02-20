@@ -7,7 +7,7 @@
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
-CTalkCrystalCombineManager *CTalkCrystalCombineManager::ms_pInstance = nullptr;
+CTalkCrystalCombineManager *CTalkCrystalCombineManager::ms_pInstance;
 
 _talk_crystal_matrial_combine_node::_matrialinfo::_matrialinfo()
 {

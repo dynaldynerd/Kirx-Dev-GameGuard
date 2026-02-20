@@ -18,8 +18,8 @@
 #include <cstring>
 #include <ctime>
 
-CUnmannedTraderUserInfoTable *CUnmannedTraderUserInfoTable::ms_Instance = nullptr;
-unsigned int CUnmannedTraderUserInfoTable::m_uiBuyRollBackCallCountSum = 0xFFFFFFFFu;
+CUnmannedTraderUserInfoTable *CUnmannedTraderUserInfoTable::ms_Instance;
+unsigned int CUnmannedTraderUserInfoTable::m_uiBuyRollBackCallCountSum;
 
 CUnmannedTraderUserInfoTable::CUnmannedTraderUserInfoTable()
   : m_pkLogger(nullptr), m_pkServiceLogger(nullptr), m_veckInfo()

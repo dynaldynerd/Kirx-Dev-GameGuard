@@ -17,8 +17,8 @@ namespace
 char s_stoneObjectName[256]{};
 }
 
-int CHolyStone::s_nLiveNum = -1;
-unsigned int CHolyStone::s_dwSerialCnt = 0xFFFFFFFFu;
+int CHolyStone::s_nLiveNum;
+unsigned int CHolyStone::s_dwSerialCnt;
 
 CHolyStone::CHolyStone()
 {

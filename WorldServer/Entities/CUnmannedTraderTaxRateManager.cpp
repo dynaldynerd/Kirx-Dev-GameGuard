@@ -6,7 +6,7 @@
 #include "CGuild.h"
 #include "GlobalObjects.h"
 
-CUnmannedTraderTaxRateManager *CUnmannedTraderTaxRateManager::ms_Instance = nullptr;
+CUnmannedTraderTaxRateManager *CUnmannedTraderTaxRateManager::ms_Instance;
 
 CUnmannedTraderTaxRateManager::CUnmannedTraderTaxRateManager()
   : m_pkTimer(nullptr), m_vecTRC()

@@ -32,7 +32,7 @@ extern "C"
   unsigned int __stdcall RFACC_Cancel(unsigned __int64 lnUID);
 }
 
-CRusiaBillingMgr *CRusiaBillingMgr::m_pRusiaBill = nullptr;
+CRusiaBillingMgr *CRusiaBillingMgr::m_pRusiaBill;
 
 CRusiaBillingMgr::CRusiaBillingMgr()
   = default;

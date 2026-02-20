@@ -16,8 +16,8 @@
 #include <cstring>
 #include <mmsystem.h>
 
-CRecordData *CQuestMgr::s_tblQuest = nullptr;
-CRecordData *CQuestMgr::s_tblQuestHappenEvent = nullptr;
+CRecordData *CQuestMgr::s_tblQuest;
+CRecordData *CQuestMgr::s_tblQuestHappenEvent;
 
 namespace
 {

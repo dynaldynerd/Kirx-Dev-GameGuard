@@ -14,8 +14,8 @@ namespace
   static const char kDHMissionSectionStart[] = "##";
   static const char kDHJobSectionStart[] = "#";
   static const char kDHConditionStart[] = "*";
-  static char szEOF[] = "[END_OF_FILE]";
-  static unsigned int nEOFLen = 0;
+  static const char *szEOF = "[END_OF_FILE]";
+  static unsigned int nEOFLen;
   static unsigned int _S1_1 = 0;
 }
 

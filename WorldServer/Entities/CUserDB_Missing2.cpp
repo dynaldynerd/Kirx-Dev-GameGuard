@@ -19,16 +19,16 @@
 static const char aAe[] = "FirstSettingData (%s) Item[%d] Invalid Table Code (%s)";
 static const char aAe_0[] = "FirstSettingData (%s) Item[%d] Unit Item Not Allowed (%s)";
 static const char aAe_1[] = "FirstSettingData (%s) Item[%d] Record Not Found (%s)";
-static const char aDDatavalidchec_21[] = "%d > DataValidCheckRevise EMBELL.. INDEX (%d : %d) (DEL)";
-static const char aDDatavalidchec_22[] = "%d > DataValidCheckRevise EMBELL.. COUNT OVER (%d : %d)";
-static const char aDDatavalidchec_23[] = "%d > DataValidCheckRevise EMBELL.. COUNT OVER (%d : %d)";
-static const char aDDatavalidchec_24[] = "%d > DataValidCheckRevise FORCE.. INDEX (%d) (DEL)";
-static const char aDDatavalidchec_25[] = "%d > DataValidCheckRevise ANIMUS.. INDEX (%d) (DEL)";
-static const char aDDDatavalidche[] = "%d > DataValidCheckRevise UNIT.. SLOT (%d) (DEL)";
-static const char aDDDatavalidche_0[] = "%d > DataValidCheckRevise QUEST.. TYPE (%d : %d) (DEL)";
-static const char aDDDatavalidche_1[] = "%d > DataValidCheckRevise QUEST.. INDEX (%d : %d) (DEL)";
-static const char aDDatavalidchec_26[] = "DataValidCheckRevise SFDelay.. EFFECT (%d : %d) (DEL)";
-static const char aDDatavalidchec_27[] = "DataValidCheckRevise SFDelay.. MASTERY (%d : %d) (DEL)";
+static const char aDDatavalidchec_21[] = "%d > DataValidCheckRevise Àå";
+static const char aDDatavalidchec_22[] = "%d > DataValidCheckRevise ";
+static const char aDDatavalidchec_23[] = "%d > DataValidCheckRevise Àå";
+static const char aDDatavalidchec_24[] = "%d > DataValidCheckRevise Æ";
+static const char aDDatavalidchec_25[] = "%d > DataValidCheckRevise ";
+static const char aDDDatavalidche[] = "%d > %d DataValidCheckRevise À";
+static const char aDDDatavalidche_0[] = "%d > %d DataValidCheckRevise Äù";
+static const char aDDDatavalidche_1[] = "%d > %d DataValidCheckRevise Äù";
+static const char aDDatavalidchec_26[] = "%d > DataValidCheckRevise ÀÌÆåÆ® ÀÎµ";
+static const char aDDatavalidchec_27[] = "%d > DataValidCheckRevise ";
 
 void CUserDB::WriteLog_Level(unsigned __int8 byLv)
 {

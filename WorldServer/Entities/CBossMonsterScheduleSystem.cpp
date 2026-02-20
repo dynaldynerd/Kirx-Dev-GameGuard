@@ -14,7 +14,7 @@
 #include <string>
 #include <vector>
 
-CBossMonsterScheduleSystem *CBossMonsterScheduleSystem::m_pInstance = nullptr;
+CBossMonsterScheduleSystem *CBossMonsterScheduleSystem::m_pInstance;
 
 CBossMonsterScheduleSystem *CBossMonsterScheduleSystem::Instance()
 {

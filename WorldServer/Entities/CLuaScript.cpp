@@ -8,7 +8,7 @@
 
 #include <cstdio>
 
-CLuaScript::_State CLuaScript::_State::ms_cEmpty{};
+CLuaScript::_State CLuaScript::_State::ms_cEmpty;
 
 CLuaScript::_State::_State() : m_bExist(false), m_bAttached(false) {}
 

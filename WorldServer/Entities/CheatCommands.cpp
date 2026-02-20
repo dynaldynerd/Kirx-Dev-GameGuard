@@ -213,14 +213,14 @@ static const char aA_47[] = "<unknown>";
 static const char aA_48[] = "<unknown>";
 static const char aA_49[] = "<unknown>";
 static const char aA_50[] = "<unknown>";
-static const char aCheatHelpSynta_0[] = "<unknown>";
-static const char aCheatHelpSynta_1[] = "<unknown>";
-static const char aCheatHelpSynta_2[] = "<unknown>";
-static const char aCheatHelpSynta_3[] = "<unknown>";
+static const char aCheatHelpSynta_0[] = "Cheat Help : Syntax = timeset ";
+static const char aCheatHelpSynta_1[] = "Cheat Help : Syntax = tlinfoset ÇÇ";
+static const char aCheatHelpSynta_2[] = "Cheat Help : Syntax = %actpset ÇàÀ";
+static const char aCheatHelpSynta_3[] = "Cheat Help : Syntax = %eventset ";
 static const char aOne_3[] = "<unknown>";
-static const char aCoacE[] = "<unknown>";
-static const char aCoacCodeDBoxAc[] = "<unknown>";
-static const char aCoacE_0[] = "<unknown>";
+static const char aCoacE[] = "ÇöÀç È";
+static const char aCoacCodeDBoxAc[] = "ÇöÀç [Code_%d Box] ÀÇ ÀÜ";
+static const char aCoacE_0[] = "ÇöÀç È";
 static const char aE_2[] = "<unknown>";
 static const char aAi_8[] = "<unknown>";
 static const char aAo_6[] = "<unknown>";
@@ -254,9 +254,9 @@ static constexpr float FLOAT_100_0 = 100.0f;
 
 static const _eq_suk_list EqSukList[4] = {
   {"weapon", 0, 0},
-  {"defense", 0, 1},
-  {"shield", 1, 0},
-  {"skill", 2, 0},
+  {"defense", 1, 0},
+  {"shield", 2, 0},
+  {"skill", 3, 0},
 };
 
 static GUILD_BATTLE::CNormalGuildBattleField *GetBattleFieldFromPlayer(

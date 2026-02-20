@@ -13,10 +13,10 @@
 #include <cmath>
 #include <mmsystem.h>
 
-int CGuardTower::s_nLiveNum = 0;
-unsigned int CGuardTower::s_dwSerialCnt = 0;
-unsigned int CGuardTower::s_dwOldTick_CheckTemp = 0;
-__TEMP_WAIT_TOWER CGuardTower::s_Temp[MAX_PLAYER]{};
+int CGuardTower::s_nLiveNum;
+unsigned int CGuardTower::s_dwSerialCnt;
+unsigned int CGuardTower::s_dwOldTick_CheckTemp;
+__TEMP_WAIT_TOWER CGuardTower::s_Temp[MAX_PLAYER];
 
 __int64 CGuardTower::AttackableHeight()
 {

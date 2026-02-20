@@ -150,7 +150,7 @@ unsigned int g_dwMaxDeadMonNum = 0;
 constexpr const char kCandidateMgrInitFailFmt[] = "CandidateMgr::Instance()->Initialize(%d) Fail!";
 }
 
-unsigned int TimeLimitMgr::m_dwCnt = 0xFFFFFFFFu;
+unsigned int TimeLimitMgr::m_dwCnt;
 
 _BILLING_INFO::_BILLING_INFO()
 {
@@ -514,7 +514,7 @@ bool CMainThread::Push_ChargeItem(
   return PushDQSData(0xFFFFFFFF, nullptr, 0xEu, reinterpret_cast<char *>(&qry), size) != nullptr;
 }
 
-char CMainThread::ms_szClientVerCheck[33]{};
+char CMainThread::ms_szClientVerCheck[33];
 
 void GuildCreateEventInfo::Init()
 {

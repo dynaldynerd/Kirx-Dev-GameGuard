@@ -23,7 +23,7 @@
 
 CMyTimer::~CMyTimer() = default;
 
-int _effect_parameter::m_nInitCount = 0;
+int _effect_parameter::m_nInitCount;
 
 _sf_continous::_sf_continous()
 {

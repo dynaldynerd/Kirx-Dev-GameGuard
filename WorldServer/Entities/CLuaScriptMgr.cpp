@@ -30,7 +30,7 @@ const char kLuaScriptLogDir[] = "..\\ZoneServerLog\\LuaScriptLog";
 const char kLuaMasterStateFile[] = ".\\LuaScript\\MasterState.lua";
 } // namespace
 
-CLuaScriptMgr *CLuaScriptMgr::ms_Instance = nullptr;
+CLuaScriptMgr *CLuaScriptMgr::ms_Instance;
 
 CLuaEventMgr *_GetLuaEventMgr()
 {

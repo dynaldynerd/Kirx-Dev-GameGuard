@@ -6,7 +6,7 @@
 #include "CLevel.h"
 #include "CMonster.h"
 
-CPathMgr CPathMgr::ms_BackupPath{};
+CPathMgr CPathMgr::ms_BackupPath;
 
 CPathMgr::CPathMgr()
 {

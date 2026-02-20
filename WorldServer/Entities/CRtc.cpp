@@ -9,7 +9,7 @@
 
 #include <atomic>
 
-CRtc *CRtc::ms_Instance = nullptr;
+CRtc *CRtc::ms_Instance;
 LONG g_rtcRunning = 0;
 RTC_error_fnW g_rtcErrorFunc = nullptr;
 

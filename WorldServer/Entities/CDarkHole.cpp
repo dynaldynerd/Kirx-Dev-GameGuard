@@ -19,8 +19,8 @@
 #include "darkhole_fixpositon_zocl.h"
 #include "darkhole_state_change_zocl.h"
 
-int CDarkHole::s_nLiveNum = 0;
-unsigned int CDarkHole::s_dwSerialCounter = 0;
+int CDarkHole::s_nLiveNum;
+unsigned int CDarkHole::s_dwSerialCounter;
 
 void CDarkHole::Init(_object_id *pID)
 {

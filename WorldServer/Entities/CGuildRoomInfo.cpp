@@ -12,9 +12,9 @@
 #include "DqsDbStructs.h"
 #include "GlobalObjects.h"
 
-CMapData *CGuildRoomInfo::sm_neutal_map[3] = {};
-_dummy_position *CGuildRoomInfo::sm_neutral_hq_dummy[3] = {};
-RoomInfo CGuildRoomInfo::sm_RoomInfo[2] = {};
+CMapData *CGuildRoomInfo::sm_neutal_map[3];
+_dummy_position *CGuildRoomInfo::sm_neutral_hq_dummy[3];
+RoomInfo CGuildRoomInfo::sm_RoomInfo[2];
 
 CGuildRoomInfo::CGuildRoomInfo()
 {

@@ -13,7 +13,7 @@
 #include <string.h>
 #include <utility>
 
-bool CAsyncLogger::m_bProcThread = false;
+bool CAsyncLogger::m_bProcThread;
 
 CAsyncLogger::CAsyncLogger()
   : m_pSystemLogInfo(nullptr),

@@ -35,8 +35,8 @@ namespace
   const char kLimitedSaleDefault[] = "";
 }
 
-CashItemRemoteStore *CashItemRemoteStore::_pkInstance = nullptr;
-CashItemRemoteStore::CashMap *CashItemRemoteStore::_phmapTbl = nullptr;
+CashItemRemoteStore *CashItemRemoteStore::_pkInstance;
+CashItemRemoteStore::CashMap *CashItemRemoteStore::_phmapTbl;
 
 CashItemRemoteStore::CashItemRemoteStore()
 {

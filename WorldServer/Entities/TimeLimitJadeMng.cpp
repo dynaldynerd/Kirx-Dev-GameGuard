@@ -7,7 +7,7 @@
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
-TimeLimitJadeMng *TimeLimitJadeMng::_pkInstance = nullptr;
+TimeLimitJadeMng *TimeLimitJadeMng::_pkInstance;
 
 TimeLimitJadeMng::TimeLimitJadeMng()
   : _ppkTimeLimitJade(nullptr)

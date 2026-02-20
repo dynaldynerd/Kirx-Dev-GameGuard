@@ -2,7 +2,7 @@
 
 #include "CRFMonsterAIMgr.h"
 
-CRFMonsterAIMgr *CRFMonsterAIMgr::ms_Instance = nullptr;
+CRFMonsterAIMgr *CRFMonsterAIMgr::ms_Instance;
 
 CRFMonsterAIMgr::CRFMonsterAIMgr()
 {

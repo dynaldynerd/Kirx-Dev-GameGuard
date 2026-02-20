@@ -35,4 +35,4 @@
 20. before rebasing, always create a backup branch first (and push it to remote before continuing).
 21. when fixing merge conflicts, do the simplest merge: list all conflicted functions/headers and only add missing function/struct/class/global variable/static variable from both sides. Example: if one side has A, B, E and the other has B, C, D then merge into A, B, C, D, E with no duplicate B.
 22. for `Record.md` conflicts, combine both sides and then remove duplicate entries.
-23. for any static/global default value (including timer delays, counters, const strings, and class static members), always check `ida_static_data.csv` first and use the IDA value when available; do not keep guessed zero/default values if a static reference exists in the CSV.
+23. for any static/global default value (including timer delays, counters, const strings, and class static members), always check `ida_static_data.tsv` first and use the IDA value when available; do not keep guessed zero/default values if a static reference exists in the CSV.

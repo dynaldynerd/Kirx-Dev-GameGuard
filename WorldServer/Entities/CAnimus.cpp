@@ -22,8 +22,8 @@
 
 unsigned int CAnimus::s_dwSerialCnt = 0;
 CRecordData CAnimus::s_tblParameter[8];
-unsigned int CAnimus::MAX_EXP[8]{};
-int CAnimus::s_nLiveNum = 0;
+unsigned int CAnimus::MAX_EXP[8];
+int CAnimus::s_nLiveNum;
 
 CAnimus::CAnimus()
   : m_pMaster(nullptr)

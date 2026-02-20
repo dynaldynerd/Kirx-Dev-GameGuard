@@ -9,7 +9,7 @@
 #include "WorldServerUtil.h"
 #include "base_fld.h"
 
-cStaticMember_Player *cStaticMember_Player::_pInstance = nullptr;
+cStaticMember_Player *cStaticMember_Player::_pInstance;
 
 cStaticMember_Player::cStaticMember_Player()
 {

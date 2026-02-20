@@ -42,8 +42,8 @@
 
 char loot_item(CPlayer *pOwner, char *pszItemCode, int nNum, char *pszUpTalCode, int nUpNum);
 
-static float fPos[3] = {13.0f, -108.0f, 37.0f};
-static float fTarPos[3] = {-249.0f, -1737.0f, -242.0f};
+static float fPos[3];
+static float fTarPos[3];
 
 char CPlayer::dev_after_effect()
 {

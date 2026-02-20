@@ -95,17 +95,17 @@ __int64 _guild_battle_reserved_schedule_result_zocl::size()
 
 namespace GUILD_BATTLE
 {
-  static CGuildBattleState GUILD_BATTLE_STATE_NULL_11{};
+  static CGuildBattleState GUILD_BATTLE_STATE_NULL_11;
   static CGuildBattleStateList STATE_LIST_NULL_10(2147483646, CGuildBattleStateList::GBS_ONCE, 1u);
   static CNormalGuildBattleStateList NORMAL_GUILD_BATTLE_STATE_NULL_11;
   unsigned __int8 LIMIT_SRC_GRADE = 0;
   unsigned __int8 LIMIT_DEST_GRADE = 0;
-  CGuildBattleRewardItem CGuildBattleRewardItem::ms_kNullObj{};
-  CGuildBattleRewardItemManager *CGuildBattleRewardItemManager::ms_Instance = nullptr;
-  CGuildBattleRankManager *CGuildBattleRankManager::ms_Instance = nullptr;
-  CGuildBattleScheduler *CGuildBattleScheduler::ms_Instance = nullptr;
-  CGuildBattleReservedScheduleListManager *CGuildBattleReservedScheduleListManager::ms_Instance = nullptr;
-  CCurrentGuildBattleInfoManager *CCurrentGuildBattleInfoManager::ms_Instance = nullptr;
+  CGuildBattleRewardItem CGuildBattleRewardItem::ms_kNullObj;
+  CGuildBattleRewardItemManager *CGuildBattleRewardItemManager::ms_Instance;
+  CGuildBattleRankManager *CGuildBattleRankManager::ms_Instance;
+  CGuildBattleScheduler *CGuildBattleScheduler::ms_Instance;
+  CGuildBattleReservedScheduleListManager *CGuildBattleReservedScheduleListManager::ms_Instance;
+  CCurrentGuildBattleInfoManager *CCurrentGuildBattleInfoManager::ms_Instance;
 
   int CGuildBattle::GetObjType()
   {
@@ -467,7 +467,7 @@ namespace GUILD_BATTLE
     INBATTLE.SetBattleTime(kTime);
   }
 
-  CNormalGuildBattleStateListPool *CNormalGuildBattleStateListPool::ms_Instance = nullptr;
+  CNormalGuildBattleStateListPool *CNormalGuildBattleStateListPool::ms_Instance;
 
   CNormalGuildBattleStateListPool *CNormalGuildBattleStateListPool::Instance()
   {
@@ -527,7 +527,7 @@ namespace GUILD_BATTLE
     return nullptr;
   }
 
-  CNormalGuildBattleFieldList *CNormalGuildBattleFieldList::ms_Instance = nullptr;
+  CNormalGuildBattleFieldList *CNormalGuildBattleFieldList::ms_Instance;
 
   CNormalGuildBattleFieldList *CNormalGuildBattleFieldList::Instance()
   {
@@ -2844,7 +2844,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
     return m_byGuildBattleNumber;
   }
 
-  CNormalGuildBattleManager *CNormalGuildBattleManager::ms_Instance = nullptr;
+  CNormalGuildBattleManager *CNormalGuildBattleManager::ms_Instance;
 
   CNormalGuildBattleManager *CNormalGuildBattleManager::Instance()
   {
@@ -3709,7 +3709,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
     m_pkStateList = &STATE_LIST_NULL_10;
   }
 
-  CGuildBattleSchedulePool *CGuildBattleSchedulePool::ms_Instance = nullptr;
+  CGuildBattleSchedulePool *CGuildBattleSchedulePool::ms_Instance;
 
   CGuildBattleSchedulePool *CGuildBattleSchedulePool::Instance()
   {
@@ -4130,7 +4130,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
     return 1;
   }
 
-  _worlddb_guild_battle_schedule_list *CGuildBattleReservedScheduleMapGroup::ms_pkDBScheduleInfo = nullptr;
+  _worlddb_guild_battle_schedule_list *CGuildBattleReservedScheduleMapGroup::ms_pkDBScheduleInfo;
 
   CGuildBattleReservedScheduleMapGroup::CGuildBattleReservedScheduleMapGroup()
     : m_bDone(false), m_uiDayInx(0), m_uiMapCnt(0), m_ppkReservedSchedule(nullptr)
@@ -4694,7 +4694,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
       && m_pkTomorrowSchedule->CleanUpDanglingReservedSchedule() != 0;
   }
 
-  CGuildBattleLogger *CGuildBattleLogger::ms_Instance = nullptr;
+  CGuildBattleLogger *CGuildBattleLogger::ms_Instance;
 
   CGuildBattleLogger *CGuildBattleLogger::Instance()
   {
@@ -6151,7 +6151,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
     }
   }
 
-  CPossibleBattleGuildListManager *CPossibleBattleGuildListManager::ms_Instance = nullptr;
+  CPossibleBattleGuildListManager *CPossibleBattleGuildListManager::ms_Instance;
 
   CPossibleBattleGuildListManager *CPossibleBattleGuildListManager::Instance()
   {

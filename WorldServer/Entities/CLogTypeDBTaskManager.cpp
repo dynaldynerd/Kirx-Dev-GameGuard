@@ -15,7 +15,7 @@
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
-CLogTypeDBTaskManager *CLogTypeDBTaskManager::ms_Instance = nullptr;
+CLogTypeDBTaskManager *CLogTypeDBTaskManager::ms_Instance;
 
 CLogTypeDBTask::CLogTypeDBTask()
   : m_dwInx(255),

@@ -42,13 +42,10 @@ namespace
 
 const char *dayofweek[7] = {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
 static char szDefItemName[] = "noname";
-static float sR[4] = {200.0f, 200.0f, 200.0f, 200.0f};
-static int s_nSkillLvPerMastery[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
-static int s_nForceLvPerMastery[24] = {
-  -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1};
-static char sBuffer[64] = {};
+static float sR[4];
+static int s_nSkillLvPerMastery[8];
+static int s_nForceLvPerMastery[24];
+static char sBuffer[64];
 
 static __int64 D3DXCreateTextureFromFileInMemory_0(IDirect3DDevice8 *device, const void *data, unsigned int size, void *outTex);
 static __int64 sub_1404FFFB0(__int64 a1);
@@ -903,7 +900,7 @@ void __trace(const char *fmt, ...)
   OutputDebugStringA(buffer);
 }
 
-static unsigned __int64 dw64Cnt = 0xFFFFFFFFFFFFFFFFULL;
+static unsigned __int64 dw64Cnt;
 
 void OutputDebugLog(const char *szFormat, ...)
 {
@@ -1122,9 +1119,9 @@ void GetSubDayStr(int nSubDay, char *szOutDay)
 
 char *DisplayItemUpgInfo(int nTableCode, int dwLvBit)
 {
-  static char g_szLv[32] = "00000000";
-  static char g_szUPT[32] = "f";
-  static char szBufUpt[32]{};
+  static char g_szLv[32];
+  static char g_szUPT[32];
+  static char szBufUpt[32];
 
   if (!dwLvBit)
   {

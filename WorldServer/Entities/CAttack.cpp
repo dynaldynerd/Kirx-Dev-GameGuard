@@ -22,8 +22,8 @@
 #include <cstdlib>
 #include <cstring>
 
-CRecordData *CAttack::s_pSkillData = nullptr;
-_attack_param CAttack::s_DefParam = {};
+CRecordData *CAttack::s_pSkillData;
+_attack_param CAttack::s_DefParam;
 
 float fR = 0.847f;
 float fRLf = 0.86472f;

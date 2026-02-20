@@ -18,8 +18,8 @@ CMonsterEventRespawn g_MonsterEventRespawn;
 
 namespace
 {
-  static bool s_iniExtLenInit = false;
-  static size_t s_iniExtLen = 0;
+  static bool s_iniExtLenInit;
+  static size_t s_iniExtLen;
   const char *pos_key[3] = {"x", "y", "z"};
 }
 

@@ -11,8 +11,8 @@
 #include <cstdlib>
 #include <new>
 
-CLuaLooting_Novus_Item::_State CLuaLooting_Novus_Item::_State::ms_cEmpty{};
-CLuaLootingMgr *CLuaLootingMgr::ms_Instance = nullptr;
+CLuaLooting_Novus_Item::_State CLuaLooting_Novus_Item::_State::ms_cEmpty;
+CLuaLootingMgr *CLuaLootingMgr::ms_Instance;
 
 CLuaLooting_Novus_Item::_State::_State() : m_bExist(false) {}
 

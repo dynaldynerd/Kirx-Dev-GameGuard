@@ -9,7 +9,7 @@
 #include "CRecordData.h"
 #include <cstdarg>
 
-CUnmannedTraderGroupItemInfoTable *CUnmannedTraderGroupItemInfoTable::ms_Instance = nullptr;
+CUnmannedTraderGroupItemInfoTable *CUnmannedTraderGroupItemInfoTable::ms_Instance;
 
 CUnmannedTraderGroupItemInfoTable::CUnmannedTraderGroupItemInfoTable()
   : m_pkLogger(nullptr), m_kVerInfo(), m_kGroupIDInfo()

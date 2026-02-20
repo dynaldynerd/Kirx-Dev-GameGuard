@@ -9,7 +9,7 @@
 #include "GlobalObjects.h"
 #include "TimeItem.h"
 
-LendItemMng *LendItemMng::_pkInstance = nullptr;
+LendItemMng *LendItemMng::_pkInstance;
 
 LendItemMng::LendItemMng()
   : _ppkLendItem(nullptr)

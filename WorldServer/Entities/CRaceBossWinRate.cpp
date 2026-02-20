@@ -11,7 +11,7 @@
 #include "DqsDbStructs.h"
 #include "WorldServerUtil.h"
 
-CRaceBossWinRate *CRaceBossWinRate::m_Inst = nullptr;
+CRaceBossWinRate *CRaceBossWinRate::m_Inst;
 
 CRaceBossWinRate::CRaceBossWinRate()
 {

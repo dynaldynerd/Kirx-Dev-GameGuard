@@ -2,5 +2,5 @@
 
 #include "CBillingNULL.h"
 
-CBillingNULL CBillingNULL::ms_NULL{};
+CBillingNULL CBillingNULL::ms_NULL;
 

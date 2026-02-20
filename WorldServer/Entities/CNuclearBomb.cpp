@@ -11,7 +11,7 @@
 #include <mmsystem.h>
 #include <cstring>
 
-unsigned int CNuclearBomb::s_dwSerialCnt = 0xFFFFFFFFu;
+unsigned int CNuclearBomb::s_dwSerialCnt;
 
 _be_damaged_player::_be_damaged_player()
 {

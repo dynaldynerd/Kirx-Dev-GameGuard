@@ -30,7 +30,7 @@
 
 #include <mmsystem.h>
 
-static SYSTEMTIME s_tmLocal = {0xFFFFu, 0xFFFFu, 0xFFFFu, 0xFFFFu, 0xFFFFu, 0xFFFFu, 0xFFFFu, 0xFFFFu};
+static SYSTEMTIME s_tmLocal;
 static const char *s_szOreKind_160[5] = {
   "ioblu04",
   "iored04",
@@ -39,7 +39,7 @@ static const char *s_szOreKind_160[5] = {
   "iobla04",
 };
 
-AutoMineMachineMng *AutoMineMachineMng::m_pInstance = nullptr;
+AutoMineMachineMng *AutoMineMachineMng::m_pInstance;
 
 __int64 _pt_automine_charge_money_db_update_fail_zocl::size()
 {

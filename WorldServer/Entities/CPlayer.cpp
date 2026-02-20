@@ -151,17 +151,17 @@
 #include <cmath>
 #include <mmsystem.h>
 
-_skill_fld *CPlayer::ms_pXmas_Snow_Effect = nullptr;
-_skill_fld *CPlayer::ms_pXmas_Snow_Bullet_Effect = nullptr;
-CMgrAvatorItemHistory CPlayer::s_MgrItemHistory{};
-CMgrAvatorLvHistory CPlayer::s_MgrLvHistory{};
-int CPlayer::s_nLiveNum = -1;
-_ANIMUS_RETURN_DELAY CPlayer::s_AnimusReturnDelay{};
-int *CPlayer::s_pnLinkForceItemToEffect = nullptr;
-_SKILL_IDX_PER_MASTERY CPlayer::s_SkillIndexPerMastery[8]{};
-int CPlayer::s_nAddMstFc[100]{};
-int CPlayer::s_nStdDefPoint = 6;
-int CPlayer::s_nRevDefPoint = 10;
+_skill_fld *CPlayer::ms_pXmas_Snow_Effect;
+_skill_fld *CPlayer::ms_pXmas_Snow_Bullet_Effect;
+CMgrAvatorItemHistory CPlayer::s_MgrItemHistory;
+CMgrAvatorLvHistory CPlayer::s_MgrLvHistory;
+int CPlayer::s_nLiveNum;
+_ANIMUS_RETURN_DELAY CPlayer::s_AnimusReturnDelay;
+int *CPlayer::s_pnLinkForceItemToEffect;
+_SKILL_IDX_PER_MASTERY CPlayer::s_SkillIndexPerMastery[8];
+int CPlayer::s_nAddMstFc[100];
+int CPlayer::s_nStdDefPoint;
+int CPlayer::s_nRevDefPoint;
 CRecordData CPlayer::s_tblLimMastery[3][4];
 CRecordData CPlayer::s_tblLimMasteryContinue[3][4];
 
@@ -317,15 +317,15 @@ int FixTalikItemIndex(unsigned __int8 byTalikEffectNum)
 }
 CRecordData CPlayer::s_tblLimMasteryCum[3][4];
 CRecordData CPlayer::s_tblLimMasteryCumContinue[3][4];
-_BILLING_FORCE_CLOSE_DELAY CPlayer::s_BillingForceCloseDelay{};
-int CPlayer::s_nRaceNum[3] = {-1, -1, -1};
-float CPlayer::s_fExpDivUnderParty_Kill[8] = {1.0f, 1.1f, 1.5f, 2.0f, 2.5f, 3.0f, 3.5f, 4.5f};
-unsigned int CPlayer::s_dwTotalCloseCount = 0xFFFFFFFFu;
-unsigned int CPlayer::s_dwAbnormalCloseCount = 0xFFFFFFFFu;
-CRecordData *_WEAPON_PARAM::s_pWeaponData = nullptr;
-CRecordData *_MASTERY_PARAM::s_pSkillData = nullptr;
-CRecordData *_MASTERY_PARAM::s_pForceData = nullptr;
-int _ATTACK_DELAY_CHECKER::s_nSpareTime = 100;
+_BILLING_FORCE_CLOSE_DELAY CPlayer::s_BillingForceCloseDelay;
+int CPlayer::s_nRaceNum[3];
+float CPlayer::s_fExpDivUnderParty_Kill[8];
+unsigned int CPlayer::s_dwTotalCloseCount;
+unsigned int CPlayer::s_dwAbnormalCloseCount;
+CRecordData *_WEAPON_PARAM::s_pWeaponData;
+CRecordData *_MASTERY_PARAM::s_pSkillData;
+CRecordData *_MASTERY_PARAM::s_pForceData;
+int _ATTACK_DELAY_CHECKER::s_nSpareTime;
 CRecordData ItemCombineMgr::ms_tbl_ItemCombine;
 CRecordData ItemCombineMgr::ms_tbl_ItemCombine_Link_Stuff;
 CRecordData ItemCombineMgr::ms_tbl_ItemCombine_Link_Result;

@@ -9,7 +9,7 @@
 #include <cstdio>
 #include <cstring>
 
-TimeItem::TimeItemMap *TimeItem::_phmapTbl = nullptr;
+TimeItem::TimeItemMap *TimeItem::_phmapTbl;
 
 TimeItem *TimeItem::Instance()
 {

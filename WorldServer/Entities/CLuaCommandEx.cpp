@@ -2,7 +2,7 @@
 
 #include "CLuaCommandEx.h"
 
-CLuaCommandEx::_State CLuaCommandEx::_State::ms_cEmpty{};
+CLuaCommandEx::_State CLuaCommandEx::_State::ms_cEmpty;
 
 CLuaCommandEx::~CLuaCommandEx() = default;
 

@@ -12,7 +12,7 @@
 #include "apex_send_trans.h"
 #include "wrac_packets.h"
 
-CChiNetworkEX *CChiNetworkEX::ms_pInstance = nullptr;
+CChiNetworkEX *CChiNetworkEX::ms_pInstance;
 
 CChiNetworkEX::CChiNetworkEX() : CNetwork(), m_ip{}, m_port(0), m_kCheckApexLineTimer()
 {

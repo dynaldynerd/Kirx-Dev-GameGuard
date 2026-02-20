@@ -42,10 +42,10 @@
 #include "RFEvent_ClassRefine.h"
 #include "CNetIndexList.h"
 
-int CUserDB::s_nLoginNum = -1;
+int CUserDB::s_nLoginNum;
 CLogFile CUserDB::s_logAvatorDB;
-CMgrAccountLobbyHistory CUserDB::s_MgrLobbyHistory{};
-_MOVE_LOBBY_DELAY CUserDB::s_MoveLobbyDelay{};
+CMgrAccountLobbyHistory CUserDB::s_MgrLobbyHistory;
+_MOVE_LOBBY_DELAY CUserDB::s_MoveLobbyDelay;
 
 const char wszNonMakeName_0[3][17] = {"GM", "ADMIN", "OPERATOR"};
 const char wszNonMakeName_1[3][17] = {"GM", "ADMIN", "OPERATOR"};

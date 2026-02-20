@@ -8,7 +8,7 @@
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
-CMoneySupplyMgr *CMoneySupplyMgr::pInstance = nullptr;
+CMoneySupplyMgr *CMoneySupplyMgr::pInstance;
 
 namespace
 {

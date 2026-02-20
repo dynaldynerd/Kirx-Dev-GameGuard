@@ -37,12 +37,12 @@
 #include <ctime>
 #include <mmsystem.h>
 
-CMonster:: _monster_loot_index *CMonster::s_idxMonsterLoot = nullptr;
-unsigned int CMonster::s_dwSerialCnt = 0xFFFFFFFFu;
-int CMonster::s_nAllocNum = -1;
-int CMonster::s_nLiveNum = -1;
-CLogFile CMonster::s_logTrace_Boss_BirthAndDeath{};
-CLogFile CMonster::s_logTrace_Boss_Looting{};
+CMonster:: _monster_loot_index *CMonster::s_idxMonsterLoot;
+unsigned int CMonster::s_dwSerialCnt;
+int CMonster::s_nAllocNum;
+int CMonster::s_nLiveNum;
+CLogFile CMonster::s_logTrace_Boss_BirthAndDeath;
+CLogFile CMonster::s_logTrace_Boss_Looting;
 namespace
 {
 char s_monsterObjectName[256]{};

@@ -8,7 +8,7 @@
 
 #include <new>
 
-CLuaEventMgr *CLuaEventMgr::ms_Instance = nullptr;
+CLuaEventMgr *CLuaEventMgr::ms_Instance;
 
 CLuaEventMgr::CLuaEventMgr()
 {

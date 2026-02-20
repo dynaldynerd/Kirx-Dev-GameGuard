@@ -11,12 +11,12 @@
 #include <cstdlib>
 #include <ctime>
 
-bool _100_per_random_table::s_bRecordSet = false;
-unsigned __int16 _100_per_random_table::s_wRecord[10][100] = {};
+bool _100_per_random_table::s_bRecordSet;
+unsigned __int16 _100_per_random_table::s_wRecord[10][100];
 
-CGameObject *CGameObject::s_pSelectObject = nullptr;
-CGameObject *CGameObject::s_pTotalObject[MAX_TOTAL_CGAMEOBJECT] = {};
-int CGameObject::s_nTotalObjectNum = 0;
+CGameObject *CGameObject::s_pSelectObject;
+CGameObject *CGameObject::s_pTotalObject[MAX_TOTAL_CGAMEOBJECT];
+int CGameObject::s_nTotalObjectNum;
 
 _object_id::_object_id()
 {

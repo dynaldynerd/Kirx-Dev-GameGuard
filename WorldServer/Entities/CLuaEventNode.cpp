@@ -5,7 +5,7 @@
 #include "CLuaScript.h"
 #include "WorldServerUtil.h"
 
-CLuaEventNode::_State CLuaEventNode::_State::ms_cEmpty{};
+CLuaEventNode::_State CLuaEventNode::_State::ms_cEmpty;
 
 CLuaEventNode::_State::_State() : m_bExist(false), m_bAttached(false) {}
 

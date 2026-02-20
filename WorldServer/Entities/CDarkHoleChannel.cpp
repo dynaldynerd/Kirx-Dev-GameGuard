@@ -40,7 +40,7 @@
 
 #include <mmsystem.h>
 
-unsigned int CDarkHoleChannel::s_dwChannelSerialCounter = 0;
+unsigned int CDarkHoleChannel::s_dwChannelSerialCounter;
 
 void _dh_player_mgr::_pos::init()
 {

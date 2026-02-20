@@ -8,7 +8,7 @@
 
 #include <cstdarg>
 
-CUnmannedTraderScheduler *CUnmannedTraderScheduler::ms_Instance = nullptr;
+CUnmannedTraderScheduler *CUnmannedTraderScheduler::ms_Instance;
 
 CUnmannedTraderScheduler::CUnmannedTraderScheduler()
   : m_iOldDay(0),

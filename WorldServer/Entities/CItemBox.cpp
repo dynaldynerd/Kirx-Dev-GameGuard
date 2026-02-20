@@ -13,8 +13,8 @@
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
-int CItemBox::s_nLiveNum = -1;
-unsigned int CItemBox::s_dwSerialCounter = 0xFFFFFFFFu;
+int CItemBox::s_nLiveNum;
+unsigned int CItemBox::s_dwSerialCounter;
 
 CItemBox::CItemBox()
   : m_dwOwnerSerial(static_cast<unsigned int>(-1)),
