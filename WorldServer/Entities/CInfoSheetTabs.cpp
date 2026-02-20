@@ -397,12 +397,12 @@ CTCPTab::CTCPTab()
     m_edMainThreadControlSleepIgnore(0),
     m_edMainThreadControlSleepTerm(0),
     m_edMainThreadControlSleepValue(0),
-    m_edChkLoopTime(_T("X")),
-    m_edChkPercent(_T("X")),
-    m_edNetLoopTime(_T("X")),
-    m_edNetPercent(_T("X")),
-    m_edObjLoopTime(_T("X")),
-    m_edObjPercent(_T("X")),
+    m_edChkLoopTime(_T("")),
+    m_edChkPercent(_T("")),
+    m_edNetLoopTime(_T("")),
+    m_edNetPercent(_T("")),
+    m_edObjLoopTime(_T("")),
+    m_edObjPercent(_T("")),
     m_edSaveFail(0)
 {
 }

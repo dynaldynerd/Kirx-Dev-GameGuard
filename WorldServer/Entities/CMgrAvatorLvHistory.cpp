@@ -124,6 +124,14 @@ void CMgrAvatorLvHistory::OnLoop()
   }
 }
 
+unsigned int CMgrAvatorLvHistory::GetTotalWaitSize()
+{
+  const unsigned int wait2K = m_listLogData_2K.size();
+  const unsigned int wait1K = m_listLogData_1K.size();
+  const unsigned int wait200 = m_listLogData_200.size();
+  return wait2K + wait1K + wait200;
+}
+
 void CMgrAvatorLvHistory::WriteFile(char *pszFileName, char *pszLog)
 {
   const int logLen = static_cast<int>(strlen_0(pszLog));

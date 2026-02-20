@@ -47,6 +47,14 @@ void CMgrAvatorItemHistory::OnLoop()
   }
 }
 
+unsigned int CMgrAvatorItemHistory::GetTotalWaitSize()
+{
+  const unsigned int wait10K = m_listLogData_10K.size();
+  const unsigned int wait1K = m_listLogData_1K.size();
+  const unsigned int wait200 = m_listLogData_200.size();
+  return wait10K + wait1K + wait200;
+}
+
 void CMgrAvatorItemHistory::lenditem_del_from_inven(
   unsigned __int8 byTblCode,
   unsigned __int16 wItemIndex,

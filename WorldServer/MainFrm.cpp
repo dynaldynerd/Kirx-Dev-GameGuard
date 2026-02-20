@@ -244,8 +244,18 @@ void CMainFrame::UpdateStatusBar()
     pane.Format(_T("D: %u - %u"), g_Main.m_DBFrameRate.GetFPS(), g_Main.m_listDQSData.size());
     m_statusBar.SetPaneText(2, pane, TRUE);
 
-    m_statusBar.SetPaneText(3, _T("I: X - X"), TRUE);
-    m_statusBar.SetPaneText(4, _T("L: X - X"), TRUE);
+    pane.Format(
+      _T("I: %u - %u"),
+      CPlayer::s_MgrItemHistory.m_FrameRate.GetFPS(),
+      CPlayer::s_MgrItemHistory.GetTotalWaitSize());
+    m_statusBar.SetPaneText(3, pane, TRUE);
+
+    pane.Format(
+      _T("L: %u - %u"),
+      CPlayer::s_MgrLvHistory.m_FrameRate.GetFPS(),
+      CPlayer::s_MgrLvHistory.GetTotalWaitSize());
+    m_statusBar.SetPaneText(4, pane, TRUE);
+
     m_statusBar.SetPaneText(5, _T("Q: X - X"), TRUE);
 
     pane.Format(_T("%u/%u"), CPlayer::s_dwAbnormalCloseCount, CPlayer::s_dwTotalCloseCount);
