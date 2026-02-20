@@ -13,7 +13,11 @@
 #define IDD_LOADING 140
 #define IDD_LICENSE 150
 
+#ifndef ID_APP_ABOUT
 #define ID_APP_ABOUT 57664
+#endif
+#ifndef ID_APP_EXIT
 #define ID_APP_EXIT 57665
+#endif
 
 #define IDC_LOG_LIST 1
