@@ -9,13 +9,21 @@ class CStatusBar;
 
 class CGameServerDoc : public CDocument
 {
+  DECLARE_DYNCREATE(CGameServerDoc)
+
 public:
   CGameServerDoc();
-  virtual ~CGameServerDoc() = default;
+  ~CGameServerDoc() override = default;
+
+  BOOL OnNewDocument() override;
+  void Serialize(CArchive &ar) override;
 
   void CreateDisplayView(CWnd *pWnd);
   void CreateSheetView(CWnd *pWnd);
 
+  DECLARE_MESSAGE_MAP()
+
+public:
   CDisplayView m_DisplayView;
   CInfoSheet m_InfoSheet;
   CStatusBar *m_pStatusBar;

@@ -2,9 +2,11 @@
 #include "WorldServer.h"
 #include "MainFrm.h"
 #include "Entities/CGameServerDoc.h"
+#include "Entities/CGameServerView.h"
 #include "Entities/GlobalObjects.h"
 #include "Entities/R3EngineState.h"
 #include "resource.h"
+#include <afxdisp.h>
 #include <commctrl.h>
 
 #ifdef _DEBUG
@@ -28,6 +30,9 @@ BOOL CWorldServerApp::InitInstance()
     InitCommonControlsEx(&initCtrls);
 
     CWinApp::InitInstance();
+    AfxEnableControlContainer();
+    SetRegistryKey(_T("Local AppWizard-Generated Applications"));
+    LoadStdProfileSettings(4);
 
     WSADATA wsaData{};
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
@@ -43,28 +48,50 @@ BOOL CWorldServerApp::InitInstance()
         return FALSE;
     }
 
-    g_pDoc = new CGameServerDoc();
-
-    auto* pFrame = new CMainFrame();
-    if (!pFrame->LoadFrame(IDR_MAINFRAME))
+    auto* docTemplate = new CSingleDocTemplate(
+        IDR_MAINFRAME,
+        RUNTIME_CLASS(CGameServerDoc),
+        RUNTIME_CLASS(CMainFrame),
+        RUNTIME_CLASS(CGameServerView));
+    if (docTemplate == nullptr)
     {
-        delete g_pDoc;
-        g_pDoc = nullptr;
+        m_iocp.Stop();
+        WSACleanup();
+        return FALSE;
+    }
+    AddDocTemplate(docTemplate);
+
+    CCommandLineInfo parsedCommandLine;
+    ParseCommandLine(parsedCommandLine);
+
+    g_Main.m_bServiceKeyPass = true;
+
+    bool commandProcessed = false;
+    if (parsedCommandLine.m_nShellCommand == CCommandLineInfo::FileNew
+        || parsedCommandLine.m_nShellCommand == CCommandLineInfo::FileNothing)
+    {
+        commandProcessed = (docTemplate->OpenDocumentFile(nullptr) != nullptr);
+    }
+    else
+    {
+        commandProcessed = ProcessShellCommand(parsedCommandLine) != FALSE;
+    }
+
+    if (!commandProcessed)
+    {
         m_iocp.Stop();
         WSACleanup();
         return FALSE;
     }
 
-    m_pMainWnd = pFrame;
-    pFrame->ShowWindow(SW_SHOW);
-    pFrame->UpdateWindow();
+    m_pMainWnd->ShowWindow(SW_SHOW);
+    m_pMainWnd->UpdateWindow();
 
     return TRUE;
 }
 
 int CWorldServerApp::ExitInstance()
 {
-    delete g_pDoc;
     g_pDoc = nullptr;
     m_iocp.Stop();
     WSACleanup();

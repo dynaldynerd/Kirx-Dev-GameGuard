@@ -11,9 +11,15 @@
 #include "CMapData.h"
 #include "CMapDisplay.h"
 #include "CMapOperation.h"
+#include "CItemBox.h"
 #include "CMonster.h"
 #include "CObjectSearchDlg.h"
 #include "CPlayer.h"
+#include "CGravityStoneRegener.h"
+#include "CCircleZone.h"
+#include "CGravityStone.h"
+#include "CReturnGate.h"
+#include "DummyPosition.h"
 #include "CUserDB.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
@@ -81,6 +87,36 @@ const TCHAR *GetObjectKindName(const CGameObject *object)
   }
 
   return _T("Object");
+}
+
+const char *GetMapName(const CGameObject *object)
+{
+  if (!object || !object->m_pCurMap)
+  {
+    return "";
+  }
+
+  _bsp_info *bspInfo = object->m_pCurMap->GetBspInfo();
+  return bspInfo ? bspInfo->m_szBspName : "";
+}
+
+const TCHAR *GetGravityStoneRegenerStateName(CGravityStoneRegener::GSR_STATE state)
+{
+  switch (state)
+  {
+    case CGravityStoneRegener::GSR_INIT:
+      return _T("INIT");
+    case CGravityStoneRegener::GSR_CREATE:
+      return _T("CREATE");
+    case CGravityStoneRegener::GSR_REGEN:
+      return _T("REGEN");
+    case CGravityStoneRegener::GSR_TAKE:
+      return _T("TAKE");
+    case CGravityStoneRegener::GSR_DESTROY:
+      return _T("DESTROY");
+    default:
+      return _T("NONE");
+  }
 }
 } // namespace
 
@@ -493,11 +529,320 @@ void CObjectTab::UpdateTab()
   CGameObject *selected = CGameObject::s_pSelectObject;
   if (!selected)
   {
-    m_trObject.InsertItem(_T("No selected object"), TVI_ROOT, TVI_LAST);
+    m_trObject.InsertItem(_T("Nothing Selected Object"), TVI_ROOT, TVI_LAST);
     return;
   }
 
   CString line;
+
+  if (selected->m_ObjID.m_byKind == 0 && selected->m_ObjID.m_byID == 1)
+  {
+    CMonster *monster = static_cast<CMonster *>(selected);
+
+    line.Format(_T("Mon-Monster - %S"), selected->m_pRecordSet ? selected->m_pRecordSet[1].m_strCode : "");
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Code : %S"), selected->m_pRecordSet ? selected->m_pRecordSet->m_strCode : "");
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Index : %d"), selected->m_ObjID.m_wIndex);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Serial : %d"), selected->m_dwObjSerial);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Live : %d"), selected->m_bLive ? 1 : 0);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("RecIndex : %d"), selected->m_pRecordSet ? selected->m_pRecordSet->m_dwIndex : 0);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    if (monster->m_pDumPosition != nullptr)
+    {
+      line.Format(_T("StartDummy : %S"), monster->m_pDumPosition->m_szCode);
+      m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+    }
+
+    line.Format(_T("Move : %d"), selected->m_bMove ? 1 : 0);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(
+      _T("TarPos : [%d], [%d], [%d]"),
+      static_cast<int>(selected->m_fOldPos[0]),
+      static_cast<int>(selected->m_fOldPos[1]),
+      static_cast<int>(selected->m_fOldPos[2]));
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("m_nMoveType : %d"), static_cast<int>(monster->GetMoveType()));
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(
+      _T("CurPos : [%d], [%d], [%d]"),
+      static_cast<int>(selected->m_fCurPos[0]),
+      static_cast<int>(selected->m_fCurPos[1]),
+      static_cast<int>(selected->m_fCurPos[2]));
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(
+      _T("AbsPos : [%d], [%d], [%d]"),
+      static_cast<int>(selected->m_fAbsPos[0]),
+      static_cast<int>(selected->m_fAbsPos[1]),
+      static_cast<int>(selected->m_fAbsPos[2]));
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("ScrPos : [%d], [%d]"), selected->m_nScreenPos[0], selected->m_nScreenPos[1]);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("CurMap : %S"), GetMapName(selected));
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("CurSector : %d"), selected->GetCurSecNum());
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    HTREEITEM parameterRoot = m_trObject.InsertItem(_T("Parameter"), TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("m_nHP : %d"), monster->m_nHP);
+    m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
+
+    line.Format(_T("m_nLevel : %d"), static_cast<int>(monster->GetLevel()));
+    m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
+
+    line.Format(_T("DefSkill : %d"), static_cast<int>(selected->GetDefSkill(false)));
+    m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
+
+    line.Format(_T("Head Def : %d"), static_cast<int>(selected->GetDefFC(4, nullptr, nullptr)));
+    m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
+
+    line.Format(_T("U Body Def : %d"), static_cast<int>(selected->GetDefFC(0, nullptr, nullptr)));
+    m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
+
+    line.Format(_T("L Body Def : %d"), static_cast<int>(selected->GetDefFC(1, nullptr, nullptr)));
+    m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
+
+    line.Format(_T("Hand Def : %d"), static_cast<int>(selected->GetDefFC(2, nullptr, nullptr)));
+    m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
+
+    line.Format(_T("Foot Def : %d"), static_cast<int>(selected->GetDefFC(3, nullptr, nullptr)));
+    m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
+
+    m_trObject.Expand(parameterRoot, TVE_EXPAND);
+    return;
+  }
+
+  if (selected->m_ObjID.m_byKind == 0 && selected->m_ObjID.m_byID == 0)
+  {
+    CPlayer *player = static_cast<CPlayer *>(selected);
+
+    line.Format(_T("Char-Player - %S"), player->m_Param.GetCharNameA());
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Index : %d"), selected->m_ObjID.m_wIndex);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Serial : %d"), selected->m_dwObjSerial);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Live : %d"), selected->m_bLive ? 1 : 0);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("RecIndex : %d"), selected->m_pRecordSet ? selected->m_pRecordSet->m_dwIndex : 0);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Move : %d"), selected->m_bMove ? 1 : 0);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(
+      _T("TarPos : [%d], [%d], [%d]"),
+      static_cast<int>(selected->m_fOldPos[0]),
+      static_cast<int>(selected->m_fOldPos[1]),
+      static_cast<int>(selected->m_fOldPos[2]));
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("m_nMoveType : %d"), player->m_byMoveType);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(
+      _T("CurPos : [%d], [%d], [%d]"),
+      static_cast<int>(selected->m_fCurPos[0]),
+      static_cast<int>(selected->m_fCurPos[1]),
+      static_cast<int>(selected->m_fCurPos[2]));
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("CurSector : %d"), selected->GetCurSecNum());
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Dalant : %u"), player->m_Param.GetDalant());
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Gold : %u"), player->m_Param.GetGold());
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("CurMap : %S"), GetMapName(selected));
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    HTREEITEM parameterRoot = m_trObject.InsertItem(_T("Parameter"), TVI_ROOT, TVI_LAST);
+    line.Format(_T("m_nSP : %u"), player->m_Param.GetSP());
+    m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
+    line.Format(_T("m_nHP : %u"), player->m_Param.GetHP());
+    m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
+    line.Format(_T("m_nFP : %u"), player->m_Param.GetFP());
+    m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
+    line.Format(_T("m_dExp : %.0f"), static_cast<double>(player->m_Param.GetExp()));
+    m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
+    line.Format(_T("m_nLevel : %u"), player->m_Param.GetLevel());
+    m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
+    m_trObject.Expand(parameterRoot, TVE_EXPAND);
+    return;
+  }
+
+  if (selected->m_ObjID.m_byKind == 1 && selected->m_ObjID.m_byID == 0)
+  {
+    CItemBox *itemBox = static_cast<CItemBox *>(selected);
+    line.Format(_T("Item-Box - %S"), selected->m_pRecordSet ? selected->m_pRecordSet[1].m_strCode : "");
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Index : %d"), itemBox->m_ObjID.m_wIndex);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(
+      _T("Item Name : %S(%S)"),
+      selected->m_pRecordSet ? selected->m_pRecordSet->m_strCode : "",
+      selected->m_pRecordSet ? selected->m_pRecordSet[2].m_strCode : "");
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("State : %d"), itemBox->m_nStateCode);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Dur or Amount : %u"), itemBox->m_Item.m_dwDur);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Owner : %u"), itemBox->m_dwOwnerSerial);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(
+      _T("CurPos : [%d], [%d], [%d]"),
+      static_cast<int>(itemBox->m_fCurPos[0]),
+      static_cast<int>(itemBox->m_fCurPos[1]),
+      static_cast<int>(itemBox->m_fCurPos[2]));
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+    return;
+  }
+
+  if (selected->m_ObjID.m_byKind == 0 && selected->m_ObjID.m_byID == 8)
+  {
+    CGravityStoneRegener *regener = static_cast<CGravityStoneRegener *>(selected);
+    m_trObject.InsertItem(_T("Item-Gravity Stone Regener"), TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Index : %d"), regener->m_ObjID.m_wIndex);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Portal Index : %d"), regener->GetPortalInx());
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("State : %s"), GetGravityStoneRegenerStateName(regener->m_eState));
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(
+      _T("CurPos : [%d], [%d], [%d]"),
+      static_cast<int>(regener->m_fCurPos[0]),
+      static_cast<int>(regener->m_fCurPos[1]),
+      static_cast<int>(regener->m_fCurPos[2]));
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+    return;
+  }
+
+  if (selected->m_ObjID.m_byKind == 0 && selected->m_ObjID.m_byID == 9)
+  {
+    CCircleZone *zone = static_cast<CCircleZone *>(selected);
+    m_trObject.InsertItem(_T("Item-Circle Zone"), TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Index : %d"), zone->m_ObjID.m_wIndex);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Portal Index : %d"), zone->GetPortalInx());
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Color : %d"), zone->m_byColor);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(
+      _T("CurPos : [%d], [%d], [%d]"),
+      static_cast<int>(zone->m_fCurPos[0]),
+      static_cast<int>(zone->m_fCurPos[1]),
+      static_cast<int>(zone->m_fCurPos[2]));
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+    return;
+  }
+
+  if (selected->m_ObjID.m_byKind == 1 && selected->m_ObjID.m_byID == 4)
+  {
+    CGravityStone *stone = static_cast<CGravityStone *>(selected);
+    m_trObject.InsertItem(_T("Item-CGravity Stone"), TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Index : %d"), stone->m_ObjID.m_wIndex);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    if (stone->m_pkOwner != nullptr)
+    {
+      line.Format(_T("Owner : %S"), stone->m_pkOwner->m_Param.GetCharNameA());
+    }
+    else
+    {
+      line = _T("Owner : NULL");
+    }
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(
+      _T("CurPos : [%d], [%d], [%d]"),
+      static_cast<int>(stone->m_fCurPos[0]),
+      static_cast<int>(stone->m_fCurPos[1]),
+      static_cast<int>(stone->m_fCurPos[2]));
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+    return;
+  }
+
+  if (selected->m_ObjID.m_byKind == 1 && selected->m_ObjID.m_byID == 3)
+  {
+    CReturnGate *gate = static_cast<CReturnGate *>(selected);
+    m_trObject.InsertItem(_T("Item-Return Gate"), TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Index : %d"), gate->m_ObjID.m_wIndex);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    if (gate->m_pkOwner != nullptr)
+    {
+      line.Format(_T("Owner : %S"), gate->m_pkOwner->m_Param.GetCharNameA());
+    }
+    else
+    {
+      line = _T("Owner : NULL");
+    }
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(
+      _T("CurPos : [%d], [%d], [%d]"),
+      static_cast<int>(gate->m_fCurPos[0]),
+      static_cast<int>(gate->m_fCurPos[1]),
+      static_cast<int>(gate->m_fCurPos[2]));
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+    return;
+  }
+
+  if (selected->m_ObjID.m_byKind == 0 && selected->m_ObjID.m_byID == 6 && g_Keeper != nullptr)
+  {
+    line.Format(_T("Live : %d"), g_Keeper->m_bLive ? 1 : 0);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+    line.Format(
+      _T("Pos : %d, %d, %d"),
+      static_cast<int>(g_Keeper->m_fCurPos[0]),
+      static_cast<int>(g_Keeper->m_fCurPos[1]),
+      static_cast<int>(g_Keeper->m_fCurPos[2]));
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+    line.Format(_T("Master : %d"), g_Keeper->m_nMasterRace);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+    return;
+  }
+
   line.Format(
     _T("%s [%u:%u:%u]"),
     GetObjectKindName(selected),
@@ -506,7 +851,11 @@ void CObjectTab::UpdateTab()
     selected->m_ObjID.m_wIndex);
   HTREEITEM root = m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
 
-  line.Format(_T("Live: %d  Move: %d  Corpse: %d"), selected->m_bLive ? 1 : 0, selected->m_bMove ? 1 : 0, selected->m_bCorpse ? 1 : 0);
+  line.Format(
+    _T("Live: %d  Move: %d  Corpse: %d"),
+    selected->m_bLive ? 1 : 0,
+    selected->m_bMove ? 1 : 0,
+    selected->m_bCorpse ? 1 : 0);
   m_trObject.InsertItem(line, root, TVI_LAST);
 
   line.Format(_T("CurPos: %.2f, %.2f, %.2f"), selected->m_fCurPos[0], selected->m_fCurPos[1], selected->m_fCurPos[2]);
@@ -517,25 +866,6 @@ void CObjectTab::UpdateTab()
 
   line.Format(_T("CurSector: %d"), selected->GetCurSecNum());
   m_trObject.InsertItem(line, root, TVI_LAST);
-
-  if (selected->m_pCurMap && selected->m_pCurMap->m_pMapSet)
-  {
-    line.Format(_T("Map: %S"), selected->m_pCurMap->m_pMapSet->m_strCode);
-    m_trObject.InsertItem(line, root, TVI_LAST);
-  }
-
-  line.Format(_T("Layer: %u"), selected->m_wMapLayerIndex);
-  m_trObject.InsertItem(line, root, TVI_LAST);
-
-  if (selected->m_ObjID.m_byKind == 0 && selected->m_ObjID.m_byID == 0)
-  {
-    CPlayer *player = reinterpret_cast<CPlayer *>(selected);
-    line.Format(_T("CharName: %S"), player->m_Param.GetCharNameA());
-    m_trObject.InsertItem(line, root, TVI_LAST);
-    line.Format(_T("Level: %d"), player->m_Param.GetLevel());
-    m_trObject.InsertItem(line, root, TVI_LAST);
-  }
-
   m_trObject.Expand(root, TVE_EXPAND);
 }
 

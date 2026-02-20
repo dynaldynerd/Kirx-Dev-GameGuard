@@ -4,7 +4,7 @@
 class CMainFrame : public CFrameWnd
 {
 protected:
-    DECLARE_DYNAMIC(CMainFrame)
+    DECLARE_DYNCREATE(CMainFrame)
 
 public:
     CMainFrame() noexcept;
@@ -19,22 +19,15 @@ protected:
     afx_msg void OnTimer(UINT_PTR nIDEvent);
     afx_msg void OnDestroy();
     afx_msg void OnPaint();
-    afx_msg void OnButtonDisplayAll();
-    afx_msg void OnButtonMonster();
-    afx_msg void OnButtonAction();
-    afx_msg void OnButtonServerClose();
-    afx_msg void OnButtonDungeonLoad();
-    afx_msg LRESULT OnUiUpdateMap(WPARAM wParam, LPARAM lParam);
-    afx_msg LRESULT OnUiUpdateServer(WPARAM wParam, LPARAM lParam);
-    afx_msg LRESULT OnUiUpdateObject(WPARAM wParam, LPARAM lParam);
 
     DECLARE_MESSAGE_MAP()
 
 private:
-    void LayoutControls(int cx, int cy);
+    void RefreshWindowTitle();
+    void BuildAsciiTitleToken(const char *source, char *destination, size_t destinationSize) const;
     void MakeModeName(CStringA &mode) const;
     void UpdateStatusBar();
 
-    CDialog m_mainView;
+    bool m_bExitConfirm;
     CStatusBar m_statusBar;
 };

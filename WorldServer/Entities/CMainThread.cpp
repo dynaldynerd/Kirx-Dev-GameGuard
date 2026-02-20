@@ -128,9 +128,9 @@ bool _TRADE_DB_BASE::_LIST::IsEmpty()
 #include "economy_history_data.h"
 #include "CItemStoreManager.h"
 #include "cStaticMember_Player.h"
-#include "UIMessageIds.h"
 #include "GlobalObjects.h"
 #include "CGameServerDoc.h"
+#include "CGameServerView.h"
 
 #include "LendItemMng.h"
 #include "TimeLimitJadeMng.h"
@@ -389,37 +389,36 @@ void CMainThread::gm_ObjectSelect()
 
 void CMainThread::gm_UpdateServer()
 {
-  if (g_pFrame)
+  if (g_pDoc != nullptr)
   {
-    g_pFrame->PostMessage(WM_WS_UPDATE_SERVER, 0, 0);
+    g_pDoc->m_InfoSheet.m_tabServer.UpdateServerTab();
   }
 }
 
 void CMainThread::gm_UpdateObject()
 {
-  if (g_pFrame)
+  if (g_pDoc != nullptr)
   {
-    g_pFrame->PostMessage(WM_WS_UPDATE_OBJECT, 0, 0);
+    g_pDoc->m_InfoSheet.m_tabObject.UpdateTab();
   }
 }
 
 void CMainThread::gm_UpdateMap()
 {
-  if (g_pFrame)
+  if (g_pDoc != nullptr)
   {
-    g_pFrame->PostMessage(WM_WS_UPDATE_MAP, 0, 0);
+    g_pDoc->m_InfoSheet.m_tabMap.UpdateTab();
   }
 }
 
 void CMainThread::gm_DisplayAll()
 {
   gm_DisplaymodeChange();
-  if (g_MapDisplay.m_bDisplayMode)
+  if (g_MapDisplay.m_bDisplayMode && g_pDoc != nullptr && g_pDoc->m_pwndMainView != nullptr)
   {
-    CRect rcOut;
-    g_pDoc->m_DisplayView.GetDrawableRect(&rcOut);
-    g_MapDisplay.InitDummy(&rcOut);
-    g_MapDisplay.InitCollLine(&rcOut);
+    auto *mainView = static_cast<CGameServerView *>(g_pDoc->m_pwndMainView);
+    mainView->OnButtonDummy();
+    mainView->OnButtonCollline();
   }
 }
 

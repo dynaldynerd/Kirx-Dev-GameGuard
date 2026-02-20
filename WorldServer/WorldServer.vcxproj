@@ -313,6 +313,7 @@
     <ClInclude Include="Entities\CGameObject.h" />
     <ClInclude Include="Entities\CGameObjectLocalStructs.h" />
     <ClInclude Include="Entities\CGameServerDoc.h" />
+    <ClInclude Include="Entities\CGameServerView.h" />
     <ClInclude Include="Entities\CGameStatistics.h" />
     <ClInclude Include="Entities\CGoldenBoxItemMgr.h" />
     <ClInclude Include="Entities\CGravityStone.h" />
@@ -472,6 +473,7 @@
     <ClInclude Include="Entities\CNuclearBomb.h" />
     <ClInclude Include="Entities\CNuclearBombMgr.h" />
     <ClInclude Include="Entities\CObjectList.h" />
+    <ClInclude Include="Entities\COpenDlg.h" />
     <ClInclude Include="Entities\CObjectSearchDlg.h" />
     <ClInclude Include="Entities\combine_ex_item_accept_request_clzo.h" />
     <ClInclude Include="Entities\combine_ex_item_accept_result_zocl.h" />
@@ -711,6 +713,7 @@
     <ClInclude Include="Entities\KorLocalTime.h" />
     <ClInclude Include="Entities\LendItemMng.h" />
     <ClInclude Include="Entities\LendItemSheet.h" />
+    <ClInclude Include="Entities\LicensePopupDlg.h" />
     <ClInclude Include="Entities\limit_amount_info.h" />
     <ClInclude Include="Entities\limit_item_num_info_zocl.h" />
     <ClInclude Include="Entities\limitedsale_event_inform_zocl.h" />
@@ -1069,6 +1072,7 @@
     <ClCompile Include="Entities\CFrameRate.cpp" />
     <ClCompile Include="Entities\CGameObject.cpp" />
     <ClCompile Include="Entities\CGameServerDoc.cpp" />
+    <ClCompile Include="Entities\CGameServerView.cpp" />
     <ClCompile Include="Entities\CGameStatistics.cpp" />
     <ClCompile Include="Entities\CGoldenBoxItemMgr.cpp" />
     <ClCompile Include="Entities\CGravityStone.cpp" />
@@ -1217,6 +1221,7 @@
     <ClCompile Include="Entities\CNuclearBomb.cpp" />
     <ClCompile Include="Entities\CNuclearBombMgr.cpp" />
     <ClCompile Include="Entities\CObjectList.cpp" />
+    <ClCompile Include="Entities\COpenDlg.cpp" />
     <ClCompile Include="Entities\CObjectSearchDlg.cpp" />
     <ClCompile Include="Entities\combine_ex_item_result_zocl.cpp" />
     <ClCompile Include="Entities\ControllerTaxRate.cpp" />
@@ -1382,6 +1387,7 @@
     <ClCompile Include="Entities\KorLocalTime.cpp" />
     <ClCompile Include="Entities\LendItemMng.cpp" />
     <ClCompile Include="Entities\LendItemSheet.cpp" />
+    <ClCompile Include="Entities\LicensePopupDlg.cpp" />
     <ClCompile Include="Entities\limitedsale_event_inform_zocl.cpp" />
     <ClCompile Include="Entities\log_sheet_lv.cpp" />
     <ClCompile Include="Entities\LuaShim.cpp" />
@@ -1585,7 +1591,6 @@
     <None Include="TEXT151_1.txt" />
     <None Include="240134_1.bin" />
     <None Include="241128_1.bin" />
-    <None Include="ZoneServerUD_x64.res" />
   </ItemGroup>
 
   <ItemGroup>

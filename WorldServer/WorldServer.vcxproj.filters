@@ -723,6 +723,9 @@
     <ClInclude Include="Entities\CGameServerDoc.h">
       <Filter>Header Files\Infrastructure</Filter>
     </ClInclude>
+    <ClInclude Include="Entities\CGameServerView.h">
+      <Filter>Header Files\Infrastructure</Filter>
+    </ClInclude>
     <ClInclude Include="Entities\CGameStatistics.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
@@ -1195,6 +1198,9 @@
       <Filter>Header Files\Nation</Filter>
     </ClInclude>
     <ClInclude Include="Entities\CObjectList.h">
+      <Filter>Header Files\Infrastructure</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\COpenDlg.h">
       <Filter>Header Files\Infrastructure</Filter>
     </ClInclude>
     <ClInclude Include="Entities\CObjectSearchDlg.h">
@@ -1913,6 +1919,9 @@
     </ClInclude>
     <ClInclude Include="Entities\LendItemSheet.h">
       <Filter>Header Files\Item</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\LicensePopupDlg.h">
+      <Filter>Header Files\Infrastructure</Filter>
     </ClInclude>
     <ClInclude Include="Entities\limit_amount_info.h">
       <Filter>Header Files\Item</Filter>
@@ -2984,6 +2993,9 @@
     <ClCompile Include="Entities\CGameServerDoc.cpp">
       <Filter>Source Files\Infrastructure</Filter>
     </ClCompile>
+    <ClCompile Include="Entities\CGameServerView.cpp">
+      <Filter>Source Files\Infrastructure</Filter>
+    </ClCompile>
     <ClCompile Include="Entities\CGameStatistics.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
@@ -3423,6 +3435,9 @@
       <Filter>Source Files\Nation</Filter>
     </ClCompile>
     <ClCompile Include="Entities\CObjectList.cpp">
+      <Filter>Source Files\Infrastructure</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\COpenDlg.cpp">
       <Filter>Source Files\Infrastructure</Filter>
     </ClCompile>
     <ClCompile Include="Entities\CObjectSearchDlg.cpp">
@@ -3920,6 +3935,9 @@
     <ClCompile Include="Entities\LendItemSheet.cpp">
       <Filter>Source Files\Item</Filter>
     </ClCompile>
+    <ClCompile Include="Entities\LicensePopupDlg.cpp">
+      <Filter>Source Files\Infrastructure</Filter>
+    </ClCompile>
     <ClCompile Include="Entities\limitedsale_event_inform_zocl.cpp">
       <Filter>Source Files\CashBilling</Filter>
     </ClCompile>
@@ -4230,9 +4248,6 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="TEXT151_1.txt">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="ZoneServerUD_x64.res">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
