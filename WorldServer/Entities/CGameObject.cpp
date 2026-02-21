@@ -127,6 +127,207 @@ void CGameObject::SFContUpdateTimeMessage(unsigned __int8 /*byContCode*/, unsign
   // this is not a stub
 }
 
+bool CGameObject::SF_AllContDamageForceRemove_Once(CCharacter * /*pDstObj*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_AllContHelpForceRemove_Once(CCharacter * /*pDstObj*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_AllContHelpSkillRemove_Once(CCharacter * /*pDstObj*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_AttHPtoDstFP_Once(CCharacter * /*pDstObj*/, float /*fEffectValue*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_ContDamageTimeInc_Once(CCharacter * /*pDstObj*/, float /*fEffectValue*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_ContHelpTimeInc_Once(CCharacter * /*pDstObj*/, float /*fEffectValue*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_ConvertMonsterTarget(CCharacter * /*pDstObj*/, float /*fEffectValue*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_ConvertTargetDest(CCharacter * /*pDstObj*/, float /*fEffectValue*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_DamageAndStun(CCharacter * /*pDstObj*/, float /*fEffectValue*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_FPDec(CCharacter * /*pDstObj*/, float /*fEffectValue*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_HPInc_Once(CCharacter * /*pDstObj*/, float /*fEffectValue*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_IncHPCircleParty(CCharacter * /*pDstObj*/, float /*fEffectValue*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_IncreaseDP(CCharacter * /*pDstObj*/, float /*fEffectValue*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_LateContDamageRemove_Once(CCharacter * /*pDstObj*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_LateContHelpForceRemove_Once(CCharacter * /*pDstObj*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_LateContHelpSkillRemove_Once(CCharacter * /*pDstObj*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_MakePortalReturnBindPositionPartyMember(
+  CCharacter * /*pDstObj*/,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_MakeZeroAnimusRecallTimeOnce(CCharacter * /*pDstObj*/, float /*fEffectValue*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_OthersContHelpSFRemove_Once(float /*fEffectValue*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_OverHealing_Once(CCharacter * /*pDstObj*/, float /*fEffectValue*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_RecoverAllReturnStateAnimusHPFull(CCharacter * /*pDstObj*/, float /*fEffectValue*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_ReleaseMonsterTarget(CCharacter * /*pDstObj*/, float /*fEffectValue*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_RemoveAllContHelp_Once(CCharacter * /*pDstObj*/, float /*fEffectValue*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_Resurrect_Once(CCharacter * /*pDstObj*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_ReturnBindPosition(CCharacter * /*pDstObj*/, float /*fEffectValue*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_SPDec(CCharacter * /*pDstObj*/, float /*fEffectValue*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_STInc_Once(CCharacter * /*pDstObj*/, float /*fEffectValue*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_SelfDestruction(CCharacter * /*pDstObj*/, float /*fEffectValue*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_SkillContHelpTimeInc_Once(CCharacter * /*pDstObj*/, float /*fEffectValue*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_Stun(CCharacter * /*pDstObj*/, float /*fEffectValue*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_TeleportToDestination(CCharacter * /*pDstObj*/, bool /*bStone*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_TransDestHP(CCharacter * /*pDstObj*/, float /*fEffectValue*/, unsigned __int8 * /*byRet*/)
+{
+  // this is not a stub
+  return false;
+}
+
+bool CGameObject::SF_TransMonsterHP(CCharacter * /*pDstObj*/, float /*fEffectValue*/)
+{
+  // this is not a stub
+  return false;
+}
+
 bool CGameObject::IsAttackableInTown()
 {
   // this is not a stub

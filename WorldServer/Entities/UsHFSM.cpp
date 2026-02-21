@@ -2,7 +2,7 @@
 
 #include "CMainThread.h"
 
-unsigned int UsRefObject::ms_uiObjects = 0;
+unsigned int UsRefObject::ms_uiObjects;
 
 UsRefObject::UsRefObject()
 {

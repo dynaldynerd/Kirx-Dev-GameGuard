@@ -11,7 +11,7 @@
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
-unsigned int CGravityStone::ms_dwSerialCnt;
+unsigned int CGravityStone::ms_dwSerialCnt = 1;
 
 CGravityStone::CGravityStone(unsigned __int16 wInx) : m_dwTakeLimitTime(0), m_pkOwner(nullptr)
 {

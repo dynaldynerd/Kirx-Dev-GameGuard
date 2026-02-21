@@ -42,7 +42,7 @@ namespace
 
 const char *dayofweek[7] = {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
 static char szDefItemName[] = "noname";
-static float sR[4];
+static float sR[4] = {200.0f, 200.0f, 200.0f, 200.0f};
 static int s_nSkillLvPerMastery[8];
 static int s_nForceLvPerMastery[24];
 static char sBuffer[64];
@@ -1119,8 +1119,8 @@ void GetSubDayStr(int nSubDay, char *szOutDay)
 
 char *DisplayItemUpgInfo(int nTableCode, int dwLvBit)
 {
-  static char g_szLv[32];
-  static char g_szUPT[32];
+  static char g_szLv[32] = "00000000";
+  static char g_szUPT[32] = "f";
   static char szBufUpt[32];
 
   if (!dwLvBit)

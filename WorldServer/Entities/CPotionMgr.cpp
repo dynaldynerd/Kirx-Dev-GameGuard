@@ -3,16 +3,19 @@
 #include "WorldServerUtil.h"
 
 #include "CPotionMgr.h"
+#include "TempEffectFunctions.h"
 
 #include "CNationSettingManager.h"
 #include "CRFWorldDatabase.h"
 #include "CLogTypeDBTaskManager.h"
 #include "CGuildRoomSystem.h"
 #include "CHolyStoneSystem.h"
+#include "CRecallEffectController.h"
 #include "CMapData.h"
 #include "CPlayer.h"
 #include "CPlayerDB.h"
 #include "CRaceBuffManager.h"
+#include "cStaticMember_Player.h"
 #include "CheckPotion_fld.h"
 #include "DqsDbStructs.h"
 #include "GlobalObjects.h"
@@ -1301,4 +1304,774 @@ bool __fastcall DE_Potion_Race_Debuff_Clear_Two(
   }
   player->SetUseReleaseRaceBuffPotion();
   return true;
+}
+
+bool __fastcall DE_AttHPtoDstFP(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_AttHPtoDstFP_Once(pTargetChar, fEffectValue);
+}
+
+bool __fastcall DE_ContDamageTimeInc(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_ContDamageTimeInc_Once(pTargetChar, fEffectValue);
+}
+
+bool __fastcall DE_Recovery(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_Resurrect_Once(pTargetChar);
+}
+
+bool __fastcall DE_HPInc(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_HPInc_Once(pTargetChar, fEffectValue);
+}
+
+bool __fastcall DE_STInc(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_STInc_Once(pTargetChar, fEffectValue);
+}
+
+bool __fastcall DE_ContHelpTimeInc(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_ContHelpTimeInc_Once(pTargetChar, fEffectValue);
+}
+
+bool __fastcall DE_OverHealing(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_OverHealing_Once(pTargetChar, fEffectValue);
+}
+
+bool __fastcall DE_LateContHelpSkillRemove(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_LateContHelpSkillRemove_Once(pTargetChar);
+}
+
+bool __fastcall DE_LateContHelpForceRemove(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_LateContHelpForceRemove_Once(pTargetChar);
+}
+
+bool __fastcall DE_LateContDamageRemove(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_LateContDamageRemove_Once(pTargetChar);
+}
+
+bool __fastcall DE_AllContHelpSkillRemove(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_AllContHelpSkillRemove_Once(pTargetChar);
+}
+
+bool __fastcall DE_AllContHelpForceRemove(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_AllContHelpForceRemove_Once(pTargetChar);
+}
+
+bool __fastcall DE_AllContDamageForceRemove(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_AllContDamageForceRemove_Once(pTargetChar);
+}
+
+bool __fastcall DE_OthersContHelpSFRemove(
+  CCharacter *pActChar,
+  CCharacter * /*pTargetChar*/,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_OthersContHelpSFRemove_Once(fEffectValue);
+}
+
+bool __fastcall DE_SkillContHelpTimeInc(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_SkillContHelpTimeInc_Once(pTargetChar, fEffectValue);
+}
+
+bool __fastcall DE_ConvertMonsterTarget(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_ConvertMonsterTarget(pTargetChar, fEffectValue);
+}
+
+bool __fastcall DE_TransMonsterHP(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_TransMonsterHP(pTargetChar, fEffectValue);
+}
+
+bool __fastcall DE_ViewWeakPoint(
+  CCharacter * /*pActChar*/,
+  CCharacter * /*pTargetChar*/,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  // this is not a stub
+  return true;
+}
+
+bool __fastcall DE_ReleaseMonsterTarget(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_ReleaseMonsterTarget(pTargetChar, fEffectValue);
+}
+
+bool __fastcall DE_MakeGuardTower(
+  CCharacter * /*pActChar*/,
+  CCharacter * /*pTargetChar*/,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  // this is not a stub
+  return true;
+}
+
+bool __fastcall DE_LayTrap(
+  CCharacter * /*pActChar*/,
+  CCharacter * /*pTargetChar*/,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  // this is not a stub
+  return true;
+}
+
+bool __fastcall DE_DetectTrap(
+  CCharacter * /*pActChar*/,
+  CCharacter * /*pTargetChar*/,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  // this is not a stub
+  return true;
+}
+
+bool __fastcall DE_IncHPCircleParty(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_IncHPCircleParty(pTargetChar, fEffectValue);
+}
+
+bool __fastcall DE_Stun(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_Stun(pTargetChar, fEffectValue);
+}
+
+bool __fastcall DE_SPDec(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_SPDec(pTargetChar, fEffectValue);
+}
+
+bool __fastcall DE_FPDec(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_FPDec(pTargetChar, fEffectValue);
+}
+
+bool __fastcall DE_DamStun(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_DamageAndStun(pTargetChar, fEffectValue);
+}
+
+bool __fastcall DE_TransDestHP(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 *byRet)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_TransDestHP(pTargetChar, fEffectValue, byRet);
+}
+
+bool __fastcall DE_RemoveAllContHelp(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_RemoveAllContHelp_Once(pTargetChar, fEffectValue);
+}
+
+bool __fastcall DE_MakePortalReturnBindPositionPartyMember(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 *byRet)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_MakePortalReturnBindPositionPartyMember(pTargetChar, fEffectValue, byRet);
+}
+
+bool __fastcall DE_ReturnBindPosition(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_ReturnBindPosition(pTargetChar, fEffectValue);
+}
+
+bool __fastcall DE_IncreaseDP(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_IncreaseDP(pTargetChar, fEffectValue);
+}
+
+bool __fastcall DE_ConvertTargetDest(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_ConvertTargetDest(pTargetChar, fEffectValue);
+}
+
+bool __fastcall DE_SelfDestruction(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_SelfDestruction(pTargetChar, fEffectValue);
+}
+
+bool __fastcall DE_RecallPartyMember(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  CPlayer *actPlayer = static_cast<CPlayer *>(pActChar);
+  if (actPlayer->m_ObjID.m_byID)
+  {
+    return false;
+  }
+
+  CRecallEffectController *controller = CRecallEffectController::Instance();
+  return controller->RequestRecall(actPlayer, static_cast<CPlayer *>(pTargetChar), true, false, false);
+}
+
+bool __fastcall DE_Potion_HP_In_Value(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  if (!pTargetChar)
+  {
+    return false;
+  }
+  if (pActChar->m_ObjID.m_byID)
+  {
+    return false;
+  }
+
+  const float hp = static_cast<float>(pTargetChar->GetHP());
+  const float effRate = pTargetChar->m_EP.GetEff_Rate(18);
+  const int nHP = static_cast<int>(hp + fEffectValue * effRate);
+  return pTargetChar->SetHP(nHP, false) != 0;
+}
+
+bool __fastcall DE_Potion_FP_In_Value(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  if (!pTargetChar)
+  {
+    return false;
+  }
+  if (pActChar->m_ObjID.m_byID || pTargetChar->m_ObjID.m_byID)
+  {
+    return false;
+  }
+
+  CPlayer *targetPlayer = static_cast<CPlayer *>(pTargetChar);
+  const float fp = static_cast<float>(targetPlayer->GetFP());
+  const float effRate = targetPlayer->m_EP.GetEff_Rate(19);
+  const int nFP = static_cast<int>(fp + fEffectValue * effRate);
+  return targetPlayer->SetFP(nFP, false);
+}
+
+bool __fastcall DE_Potion_SP_In_Value(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  if (!pTargetChar)
+  {
+    return false;
+  }
+  if (pActChar->m_ObjID.m_byID || pTargetChar->m_ObjID.m_byID)
+  {
+    return false;
+  }
+
+  CPlayer *targetPlayer = static_cast<CPlayer *>(pTargetChar);
+  const float sp = static_cast<float>(targetPlayer->GetSP());
+  const float effRate = targetPlayer->m_EP.GetEff_Rate(20);
+  const int nSP = static_cast<int>(sp + fEffectValue * effRate);
+  return targetPlayer->SetSP(nSP, false);
+}
+
+bool __fastcall DE_Potion_DecHalfSFContDam(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  if (!pTargetChar)
+  {
+    return false;
+  }
+  if (pActChar->m_ObjID.m_byID || pTargetChar->m_ObjID.m_byID)
+  {
+    return false;
+  }
+
+  CPlayer *targetPlayer = static_cast<CPlayer *>(pTargetChar);
+  return targetPlayer->DecHalfSFContDam(0.0f);
+}
+
+bool __fastcall DE_Potion_AllContHelpSkillRemove_Once(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  return pTargetChar && static_cast<CGameObject *>(pActChar)->SF_AllContHelpSkillRemove_Once(pTargetChar);
+}
+
+bool __fastcall DE_Potion_RemoveAllContinousEffect(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  if (!pTargetChar)
+  {
+    return false;
+  }
+  if (pActChar->m_ObjID.m_byID || pTargetChar->m_ObjID.m_byID)
+  {
+    return false;
+  }
+
+  return pTargetChar->RemoveAllContinousEffect() != 0;
+}
+
+bool __fastcall DE_Potion_Chaos_Inc_Time(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  if (!pTargetChar)
+  {
+    return false;
+  }
+  if (pActChar->m_ObjID.m_byID || pTargetChar->m_ObjID.m_byID)
+  {
+    return false;
+  }
+
+  CPlayer *targetPlayer = static_cast<CPlayer *>(pTargetChar);
+  targetPlayer->m_nChaosMode = 1;
+  targetPlayer->m_dwChaosModeEndTime = static_cast<unsigned int>(
+    static_cast<float>(static_cast<int>(GetLoopTime())) + fEffectValue * 1000.0f);
+  targetPlayer->m_dwChaosModeTime10Per = static_cast<unsigned int>(fEffectValue * 100.0f);
+  return true;
+}
+
+bool __fastcall DE_Potion_Chaos_Dec_Time(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  if (!pTargetChar)
+  {
+    return false;
+  }
+  if (pActChar->m_ObjID.m_byID || pTargetChar->m_ObjID.m_byID)
+  {
+    return false;
+  }
+
+  CPlayer *targetPlayer = static_cast<CPlayer *>(pTargetChar);
+  targetPlayer->m_nChaosMode = 0;
+  targetPlayer->m_dwChaosModeEndTime = 0;
+  return true;
+}
+
+bool __fastcall DE_Potion_RemoveAfterEffect(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  if (!pTargetChar)
+  {
+    return false;
+  }
+  if (pActChar->m_ObjID.m_byID || pTargetChar->m_ObjID.m_byID)
+  {
+    return false;
+  }
+
+  unsigned __int8 *afterEffectMark = reinterpret_cast<unsigned __int8 *>(&pTargetChar->m_SFContAura[0][5].m_wDurSec) + 1;
+  if (*afterEffectMark == 0)
+  {
+    return false;
+  }
+
+  for (int index = 0; index < 8; ++index)
+  {
+    _sf_continous *contEffect = &pTargetChar->m_SFCont[0][index];
+    _base_fld *effect17 = g_Main.m_tblEffectData[3].GetRecord("17");
+    if (effect17 && contEffect->m_byEffectCode == 3 && contEffect->m_wEffectIndex == effect17->m_dwIndex)
+    {
+      pTargetChar->RemoveSFContEffect(0, static_cast<unsigned __int16>(index), false, false);
+      *afterEffectMark = 0;
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool __fastcall DE_RecallCommonPlayer(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  CPlayer *actPlayer = static_cast<CPlayer *>(pActChar);
+  if (actPlayer->m_ObjID.m_byID)
+  {
+    return false;
+  }
+
+  CRecallEffectController *controller = CRecallEffectController::Instance();
+  return controller->RequestRecall(actPlayer, static_cast<CPlayer *>(pTargetChar), false, false, false);
+}
+
+bool __fastcall DE_TeleportCommonPlayer(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_TeleportToDestination(pTargetChar, false);
+}
+
+bool __fastcall DE_Potion_Exp_Increase_Percentage(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  if (!pActChar)
+  {
+    return false;
+  }
+  if (pActChar->m_ObjID.m_byID)
+  {
+    return false;
+  }
+  if (pActChar != pTargetChar)
+  {
+    return false;
+  }
+
+  CPlayer *player = static_cast<CPlayer *>(pActChar);
+  const int level = player->m_Param.GetLevel();
+  const long double limitExp = cStaticMember_Player::Instance()->GetLimitExp(level);
+  player->AlterExp_Potion(limitExp * static_cast<long double>(fEffectValue / 100.0f));
+  return true;
+}
+
+bool __fastcall DE_Potion_Exp_Increase_Absolute(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  if (!pActChar)
+  {
+    return false;
+  }
+  if (pActChar->m_ObjID.m_byID)
+  {
+    return false;
+  }
+  if (pActChar != pTargetChar)
+  {
+    return false;
+  }
+
+  CPlayer *player = static_cast<CPlayer *>(pActChar);
+  player->AlterExp_Potion(static_cast<long double>(fEffectValue));
+  return true;
+}
+
+bool __fastcall DE_Potion_Revival_Die_Position(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  if (!pActChar)
+  {
+    return false;
+  }
+  if (pActChar->m_ObjID.m_byID)
+  {
+    return false;
+  }
+  if (pActChar != pTargetChar)
+  {
+    return false;
+  }
+
+  CPlayer *player = static_cast<CPlayer *>(pActChar);
+  return player->pc_Resurrect(false);
+}
+
+bool __fastcall DE_Potion_Buf_Extend(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  if (!pActChar)
+  {
+    return false;
+  }
+  if (pActChar->m_ObjID.m_byID)
+  {
+    return false;
+  }
+  if (pActChar != pTargetChar)
+  {
+    return false;
+  }
+
+  CPlayer *player = static_cast<CPlayer *>(pActChar);
+  player->Potion_Buf_Extend();
+  return true;
+}
+
+bool __fastcall DE_Potion_Trunk_Extend(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  if (!pActChar)
+  {
+    return false;
+  }
+  if (pActChar->m_ObjID.m_byID)
+  {
+    return false;
+  }
+  if (pActChar != pTargetChar)
+  {
+    return false;
+  }
+
+  CPlayer *player = static_cast<CPlayer *>(pActChar);
+  player->pc_PotionUseTrunkExtend();
+  return true;
+}
+
+bool __fastcall DE_Potion_Gold_Point(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float fEffectValue,
+  unsigned __int8 * /*byRet*/)
+{
+  if (!pActChar)
+  {
+    return false;
+  }
+  if (pActChar->m_ObjID.m_byID)
+  {
+    return false;
+  }
+  if (pActChar != pTargetChar)
+  {
+    return false;
+  }
+
+  CPlayer *player = static_cast<CPlayer *>(pActChar);
+  return player->Update_GoldPoint(static_cast<unsigned int>(fEffectValue));
+}
+
+bool __fastcall DE_Recall_After_Stone(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  CPlayer *actPlayer = static_cast<CPlayer *>(pActChar);
+  if (actPlayer->m_ObjID.m_byID)
+  {
+    return false;
+  }
+
+  CRecallEffectController *controller = CRecallEffectController::Instance();
+  return controller->RequestRecall(actPlayer, static_cast<CPlayer *>(pTargetChar), false, true, false);
+}
+
+bool __fastcall DE_Teleport_After_Stone(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  return static_cast<CGameObject *>(pActChar)->SF_TeleportToDestination(pTargetChar, true);
+}
+
+bool __fastcall DE_Quick_Revival_Die_Position(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  if (!pActChar)
+  {
+    return false;
+  }
+  if (pActChar->m_ObjID.m_byID)
+  {
+    return false;
+  }
+  if (pActChar != pTargetChar)
+  {
+    return false;
+  }
+
+  CPlayer *player = static_cast<CPlayer *>(pActChar);
+  return player->pc_Resurrect(true);
+}
+
+bool __fastcall DE_Potion_HFP_Full_Recover(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  CPlayer *actPlayer = static_cast<CPlayer *>(pActChar);
+  return actPlayer->SF_HFSInc_Once(static_cast<CPlayer *>(pTargetChar)) != 0;
+}
+
+bool __fastcall DE_Potion_Cont_Damage_Remove(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  CPlayer *actPlayer = static_cast<CPlayer *>(pActChar);
+  return actPlayer->SF_AllContDamageRemove_Once(pTargetChar);
+}
+
+bool __fastcall DE_BattleMode_RecallCommonPlayer(
+  CCharacter *pActChar,
+  CCharacter *pTargetChar,
+  float /*fEffectValue*/,
+  unsigned __int8 * /*byRet*/)
+{
+  CPlayer *actPlayer = static_cast<CPlayer *>(pActChar);
+  if (actPlayer->m_ObjID.m_byID)
+  {
+    return false;
+  }
+
+  CRecallEffectController *controller = CRecallEffectController::Instance();
+  return controller->RequestRecall(actPlayer, static_cast<CPlayer *>(pTargetChar), false, false, true);
 }

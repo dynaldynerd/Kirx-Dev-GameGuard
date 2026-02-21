@@ -176,22 +176,32 @@ void CAttack::AttackGen(_attack_param *pParam, bool bMustMiss, bool bUseEffBulle
   m_bIsCrtAtt = false;
   m_pp = pParam;
   bool canHit = true;
+  const bool isAnimusAttacker = m_pAttChar && m_pAttChar->m_ObjID.m_byID == 3;
+  int hitRoll = -1;
+  int attackProb = -1;
+  bool avoidState14 = false;
+  float avoidRate27 = 0.0f;
+  float avoidRoll = -1.0f;
+  bool avoidedByRate = false;
   m_nDamagedObjNum = 0;
   m_pAttChar->BreakStealth();
 
   if (m_pp->pDst)
   {
     bool isAvoided = false;
-    if (m_pp->pDst->m_EP.GetEff_State(14))
+    avoidState14 = m_pp->pDst->m_EP.GetEff_State(14);
+    if (avoidState14)
     {
       isAvoided = true;
     }
     else if (m_pp->pDst->m_EP.GetEff_Plus(27) > 0.0f)
     {
-      const float roll = static_cast<float>(rand() % 100);
-      if (m_pp->pDst->m_EP.GetEff_Plus(27) > roll)
+      avoidRate27 = m_pp->pDst->m_EP.GetEff_Plus(27);
+      avoidRoll = static_cast<float>(rand() % 100);
+      if (avoidRate27 > avoidRoll)
       {
         isAvoided = true;
+        avoidedByRate = true;
       }
     }
 
@@ -237,9 +247,9 @@ void CAttack::AttackGen(_attack_param *pParam, bool bMustMiss, bool bUseEffBulle
     }
     else
     {
-      const int roll = rand() % 100;
-      const int attackProb = m_pAttChar->GetGenAttackProb(m_pp->pDst, m_pp->nPart, m_pp->bBackAttack);
-      if (roll >= attackProb)
+      hitRoll = rand() % 100;
+      attackProb = m_pAttChar->GetGenAttackProb(m_pp->pDst, m_pp->nPart, m_pp->bBackAttack);
+      if (hitRoll >= attackProb)
       {
         canHit = false;
       }
@@ -255,6 +265,23 @@ void CAttack::AttackGen(_attack_param *pParam, bool bMustMiss, bool bUseEffBulle
       m_DamList[0].m_pChar = m_pp->pDst;
       m_DamList[0].m_nDamage = 0;
       m_nDamagedObjNum = 1;
+      if (isAnimusAttacker)
+      {
+        auto *animus = reinterpret_cast<CAnimus *>(m_pAttChar);
+        AnimusDebugLog(
+          "AnimusAttack: miss animusSerial=%u classCode=%u role=%u targetSerial=%u hitRoll=%d attackProb=%d avoidState14=%d avoidRate27=%.2f avoidRoll=%.2f avoidedByRate=%d mustMiss=%d",
+          animus ? animus->m_dwObjSerial : 0u,
+          animus ? animus->m_byClassCode : 0u,
+          animus ? animus->m_byRoleCode : 0u,
+          m_pp->pDst ? m_pp->pDst->m_dwObjSerial : 0u,
+          hitRoll,
+          attackProb,
+          avoidState14 ? 1 : 0,
+          avoidRate27,
+          avoidRoll,
+          avoidedByRate ? 1 : 0,
+          bMustMiss ? 1 : 0);
+      }
       return;
     }
   }
@@ -386,6 +413,25 @@ void CAttack::AttackGen(_attack_param *pParam, bool bMustMiss, bool bUseEffBulle
     m_DamList[0].m_pChar = m_pp->pDst;
     m_DamList[0].m_nDamage = 0;
     m_nDamagedObjNum = 1;
+  }
+
+  if (isAnimusAttacker)
+  {
+    auto *animus = reinterpret_cast<CAnimus *>(m_pAttChar);
+    const CCharacter *target = (m_nDamagedObjNum > 0) ? m_DamList[0].m_pChar : m_pp->pDst;
+    const int damage = (m_nDamagedObjNum > 0) ? m_DamList[0].m_nDamage : 0;
+    AnimusDebugLog(
+      "AnimusAttack: hit animusSerial=%u classCode=%u role=%u targetSerial=%u attackType=%d hitRoll=%d attackProb=%d damage=%d useEffBullet=%d crit=%d",
+      animus ? animus->m_dwObjSerial : 0u,
+      animus ? animus->m_byClassCode : 0u,
+      animus ? animus->m_byRoleCode : 0u,
+      target ? target->m_dwObjSerial : 0u,
+      attackType,
+      hitRoll,
+      attackProb,
+      damage,
+      bUseEffBullet ? 1 : 0,
+      m_bIsCrtAtt ? 1 : 0);
   }
 
   CalcAvgDamage();

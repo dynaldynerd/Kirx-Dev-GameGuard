@@ -1575,6 +1575,7 @@ public:
   void SendMsg_AlterExpInform();
   void SendMsg_NotifyGetExpInfo(long double dOldExp, long double dAlterExp, long double dCurExp);
   void AlterExp(double dAlterExp, bool bReward, bool bUseExpRecoverItem, bool bUseExpAdditionItem);
+  void AlterExp_Potion(long double dAlterExp);
   void AlterMaxLevel(unsigned __int8 byMaxLevel);
   void SetLevel(unsigned __int8 byNewLevel);
   void SetLevelD(unsigned __int8 byDownLevel);
@@ -1717,6 +1718,7 @@ public:
   bool SetSP(int nSP, bool bOver);
   char SetHP(int nHP, bool bOver);
   char SF_HFSInc_Once(CPlayer *pDstObj);
+  bool SF_AllContDamageRemove_Once(CCharacter *pDstObj);
   char SetDP(int nDP, bool bOver);
   void CheckAlterMaxPoint();
   void SendMsg_SetDPInform();
@@ -2083,9 +2085,12 @@ public:
   void PushDQSUpdatePlyerVoteInfo();
   void PushDQSUpdateVoteAvilable();
   void SendMsg_Alter_Action_Point(unsigned __int8 byActCode, unsigned int dwActPoint);
+  char Update_GoldPoint(unsigned int dwPoint);
   unsigned int GetInitClassCost();
   unsigned __int8 pc_InitClassRequest();
   unsigned __int8 pc_InitClass();
+  void Potion_Buf_Extend();
+  void pc_PotionUseTrunkExtend();
   void CalcAddPointByClass();
   void RewardChangeClassMastery(_class_fld *pClassFld);
   void RewardChangeClassRewardItem(_class_fld *pClassFld, unsigned __int8 bySelectRewardItem);

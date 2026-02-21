@@ -601,12 +601,36 @@ void CAnimus::make_gen_attack_param(CCharacter *pDst, unsigned __int8 byPart, _a
 void CAnimus::CalcAttExp(CAttack *pAT)
 {
   const int animusLevel = static_cast<int>(GetLevel());
+  const bool isInanna = m_byRoleCode == 3;
+  if (isInanna)
+  {
+    AnimusDebugLog(
+      "InannaExp: CalcAttExp start animusSerial=%u role=%u level=%d masterLevel=%d damageCount=%d inTown=%d",
+      m_dwObjSerial,
+      m_byRoleCode,
+      animusLevel,
+      m_pMaster ? static_cast<int>(m_pMaster->GetLevel()) : -1,
+      pAT ? pAT->m_nDamagedObjNum : -1,
+      IsInTown() ? 1 : 0);
+  }
+
   if (!m_pMaster)
   {
+    if (isInanna)
+    {
+      AnimusDebugLog("InannaExp: CalcAttExp early return (master null)");
+    }
     return;
   }
   if (!(animusLevel - 1 < 50 || m_pMaster->GetLevel() >= animusLevel - 1))
   {
+    if (isInanna)
+    {
+      AnimusDebugLog(
+        "InannaExp: CalcAttExp early return (level gate) animusLevel=%d masterLevel=%d",
+        animusLevel,
+        static_cast<int>(m_pMaster->GetLevel()));
+    }
     return;
   }
 
@@ -639,6 +663,17 @@ void CAnimus::CalcAttExp(CAttack *pAT)
     const float maxHP = *reinterpret_cast<float *>(&monsterRecord[25].m_strCode[4]);
     const float damageExp = (baseExp * 0.69999999f) * (static_cast<float>(appliedDamage) / maxHP);
     const int damageExpAdd = static_cast<int>((damageExp / 500.0f) + static_cast<float>(targetLevel));
+    if (isInanna)
+    {
+      AnimusDebugLog(
+        "InannaExp: CalcAttExp damageGain targetSerial=%u targetLevel=%d damage=%d appliedDamage=%d addExp=%d remainHP=%d",
+        monster->m_dwObjSerial,
+        targetLevel,
+        damage,
+        appliedDamage,
+        damageExpAdd,
+        remainHP);
+    }
     AlterExp(damageExpAdd);
 
     if (remainHP != 0)
@@ -680,6 +715,15 @@ void CAnimus::CalcAttExp(CAttack *pAT)
         if (partyMembers[k] == m_pMaster)
         {
           const int selfAddExp = static_cast<int>((shareExp / 500.0f) + static_cast<float>(targetLevel));
+          if (isInanna)
+          {
+            AnimusDebugLog(
+              "InannaExp: CalcAttExp killShare selfAddExp=%d targetLevel=%d shareExp=%f partyCount=%u",
+              selfAddExp,
+              targetLevel,
+              shareExp,
+              partyMemberCount);
+          }
           AlterExp(selfAddExp);
         }
 
@@ -697,6 +741,14 @@ void CAnimus::CalcAttExp(CAttack *pAT)
     else
     {
       const int killAddExp = static_cast<int>((killExp / 500.0f) + static_cast<float>(targetLevel));
+      if (isInanna)
+      {
+        AnimusDebugLog(
+          "InannaExp: CalcAttExp killSolo addExp=%d targetLevel=%d killExp=%f",
+          killAddExp,
+          targetLevel,
+          killExp);
+      }
       AlterExp(killAddExp);
     }
   }
@@ -795,6 +847,7 @@ char CAnimus::Attack(int skill)
 
 char CAnimus::Heal(unsigned int skill)
 {
+  const bool isInanna = m_byRoleCode == 3;
   CPlayer *healedPlayer = m_pMaster;
   if (m_pTarget)
   {
@@ -809,11 +862,19 @@ char CAnimus::Heal(unsigned int skill)
     {
       if (LOBYTE(targetPlayer[1].m_fAbsPos[0]) != m_pMaster->m_byGuildBattleColorInx)
       {
+        if (isInanna)
+        {
+          AnimusDebugLog("InannaExp: Heal blocked (guild battle color mismatch)");
+        }
         m_pTarget = m_pMaster;
         return 0;
       }
       if (LOBYTE(targetPlayer[1].m_fCurPos[2]))
       {
+        if (isInanna)
+        {
+          AnimusDebugLog("InannaExp: Heal blocked (target state invalid in guild battle)");
+        }
         m_pTarget = m_pMaster;
         return 0;
       }
@@ -823,6 +884,10 @@ char CAnimus::Heal(unsigned int skill)
     {
       if (BYTE2(targetPlayer[1].m_fCurPos[2]) || m_pMaster->m_bInGuildBattle)
       {
+        if (isInanna)
+        {
+          AnimusDebugLog("InannaExp: Heal blocked (guild battle or target state)");
+        }
         m_pTarget = m_pMaster;
         return 0;
       }
@@ -837,12 +902,20 @@ char CAnimus::Heal(unsigned int skill)
   const int currentHP = static_cast<int>(healedPlayer->GetHP());
   if (currentHP <= 0)
   {
+    if (isInanna)
+    {
+      AnimusDebugLog("InannaExp: Heal early return (target HP <= 0)");
+    }
     return 0;
   }
 
   const float hpRate = static_cast<float>(currentHP) / static_cast<float>(static_cast<int>(healedPlayer->GetMaxHP()));
   if (hpRate >= 1.0f)
   {
+    if (isInanna)
+    {
+      AnimusDebugLog("InannaExp: Heal early return (target already full HP)");
+    }
     return 0;
   }
 
@@ -850,6 +923,10 @@ char CAnimus::Heal(unsigned int skill)
   const int addHP = static_cast<int>(m_Skill[skill].GetDmg(effectRate));
   if (addHP <= 0)
   {
+    if (isInanna)
+    {
+      AnimusDebugLog("InannaExp: Heal early return (addHP <= 0)");
+    }
     return 0;
   }
 
@@ -867,8 +944,24 @@ char CAnimus::Heal(unsigned int skill)
         const int addExp = 2 * addHP;
         if (addExp > 0)
         {
+          if (isInanna)
+          {
+            AnimusDebugLog(
+              "InannaExp: Heal gain addHP=%d addExp=%d animusLevel=%d masterLevel=%d",
+              addHP,
+              addExp,
+              selfLevel,
+              static_cast<int>(m_pMaster->GetLevel()));
+          }
           AlterExp(addExp);
         }
+      }
+      else if (isInanna)
+      {
+        AnimusDebugLog(
+          "InannaExp: Heal no exp (level gate) animusLevel=%d masterLevel=%d",
+          selfLevel,
+          static_cast<int>(m_pMaster->GetLevel()));
       }
     }
   }
@@ -1249,6 +1342,18 @@ int CAnimus::GetMaxLevel()
 
 void CAnimus::AlterExp(__int64 nAddExp)
 {
+  const bool isInanna = m_byRoleCode == 3;
+  const unsigned __int64 beforeExp = m_dwExp;
+  if (isInanna)
+  {
+    AnimusDebugLog(
+      "InannaExp: AlterExp start addExp=%lld beforeExp=%llu level=%d masterSerial=%u",
+      nAddExp,
+      beforeExp,
+      static_cast<int>(GetLevel()),
+      m_pMaster ? m_pMaster->m_dwObjSerial : 0u);
+  }
+
   if (m_pMaster && m_pMaster->m_bOper)
   {
     const int level = static_cast<int>(GetLevel());
@@ -1343,6 +1448,15 @@ void CAnimus::AlterExp(__int64 nAddExp)
         }
       }
     }
+  }
+
+  if (isInanna)
+  {
+    AnimusDebugLog(
+      "InannaExp: AlterExp end beforeExp=%llu afterExp=%llu delta=%lld",
+      beforeExp,
+      m_dwExp,
+      static_cast<__int64>(m_dwExp - beforeExp));
   }
 }
 

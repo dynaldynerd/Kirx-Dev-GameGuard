@@ -5,6 +5,9 @@
 #include "CCRFG_SEND_BUFFER.h"
 #include "CMapDisplay.h"
 #include "CGameServerDoc.h"
+#include "TempEffectFunctions.h"
+
+#include <cstdarg>
 
 CUserDB g_UserDB[MAX_PLAYER]{};
 CPartyPlayer g_PartyPlayer[MAX_PLAYER]{};
@@ -62,7 +65,109 @@ float g_fPoint[2]{};
 
 int g_tmpEffectedNum = 0;
 _tmp_effected_list g_tmpEffectedList[30]{};
-bool (__fastcall *g_TempEffectFunc[150])(CCharacter *, CCharacter *, float, unsigned __int8 *) = {};
+bool (__fastcall *g_TempEffectFunc[150])(CCharacter *, CCharacter *, float, unsigned __int8 *) = {
+  // 0..57
+  DE_AttHPtoDstFP,
+  DE_ContDamageTimeInc,
+  DE_Recovery,
+  DE_HPInc,
+  DE_STInc,
+  DE_ContHelpTimeInc,
+  DE_OverHealing,
+  DE_LateContHelpSkillRemove,
+  DE_LateContHelpForceRemove,
+  DE_LateContDamageRemove,
+  DE_AllContHelpSkillRemove,
+  DE_AllContHelpForceRemove,
+  DE_AllContDamageForceRemove,
+  DE_OthersContHelpSFRemove,
+  DE_SkillContHelpTimeInc,
+  DE_ConvertMonsterTarget,
+  DE_TransMonsterHP,
+  DE_ViewWeakPoint,
+  DE_ReleaseMonsterTarget,
+  DE_MakeGuardTower,
+  DE_LayTrap,
+  DE_DetectTrap,
+  DE_IncHPCircleParty,
+  DE_Stun,
+  DE_SPDec,
+  DE_FPDec,
+  DE_DamStun,
+  DE_TransDestHP,
+  DE_RemoveAllContHelp,
+  DE_MakePortalReturnBindPositionPartyMember,
+  DE_ReturnBindPosition,
+  DE_IncreaseDP,
+  DE_ConvertTargetDest,
+  DE_RecoverAllReturnStateAnimusHPFull,
+  DE_MakeZeroAnimusRecallTimeOnce,
+  DE_SelfDestruction,
+  DE_RecallPartyMember,
+  DE_Potion_HP_In_Value,
+  DE_Potion_FP_In_Value,
+  DE_Potion_SP_In_Value,
+  DE_Potion_DecHalfSFContDam,
+  DE_Potion_AllContHelpSkillRemove_Once,
+  DE_Potion_RemoveAllContinousEffect,
+  DE_Potion_Chaos_Inc_Time,
+  DE_Potion_Chaos_Dec_Time,
+  DE_Potion_Class_Refine,
+  DE_Potion_RemoveAfterEffect,
+  DE_Potion_CharReName,
+  DE_RecallCommonPlayer,
+  DE_TeleportCommonPlayer,
+  DE_Potion_Exp_Increase_Percentage,
+  DE_Potion_Exp_Increase_Absolute,
+  DE_Potion_Revival_Die_Position,
+  DE_Potion_Buf_Extend,
+  DE_Potion_Trunk_Extend,
+  DE_Potion_Race_Debuff_Clear_One,
+  DE_Potion_Race_Debuff_Clear_Two,
+  DE_Potion_Gold_Point,
+  // 58..69
+  nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+  nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+  // 70..75
+  DE_Recall_After_Stone,
+  DE_Teleport_After_Stone,
+  DE_Quick_Revival_Die_Position,
+  DE_Potion_HFP_Full_Recover,
+  DE_Potion_Cont_Damage_Remove,
+  DE_BattleMode_RecallCommonPlayer,
+};
+
+namespace
+{
+CLogFile g_animusDebugLog{};
+bool g_animusDebugLogInitialized = false;
+
+void EnsureAnimusDebugLog()
+{
+  if (g_animusDebugLogInitialized)
+  {
+    return;
+  }
+
+  CreateDirectoryA(".\\ZoneServerLog", nullptr);
+  g_animusDebugLog.SetWriteLogFile(".\\ZoneServerLog\\AnimusDebug.log", 1, false, true, true);
+  g_animusDebugLogInitialized = true;
+}
+} // namespace
+
+void AnimusDebugLog(const char *format, ...)
+{
+  if (!format)
+  {
+    return;
+  }
+
+  EnsureAnimusDebugLog();
+  va_list argList{};
+  va_start(argList, format);
+  g_animusDebugLog.WriteFromArg(format, argList);
+  va_end(argList);
+}
 
 float ITEM_ROOT_RATE = 0.0f;
 float MINE_SPEED_RATE = 0.0f;

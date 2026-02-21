@@ -89,6 +89,7 @@
 #include "CPcBangFavor.h"
 #include "PCBANG_PRIMIUM_FAVOR.h"
 #include "CPotionMgr.h"
+#include "CActionPointSystemMgr.h"
 #include "CSUItemSystem.h"
 #include "CSetItemType.h"
 #include "CTalkCrystalCombineManager.h"
@@ -319,13 +320,13 @@ CRecordData CPlayer::s_tblLimMasteryCum[3][4];
 CRecordData CPlayer::s_tblLimMasteryCumContinue[3][4];
 _BILLING_FORCE_CLOSE_DELAY CPlayer::s_BillingForceCloseDelay;
 int CPlayer::s_nRaceNum[3];
-float CPlayer::s_fExpDivUnderParty_Kill[8];
+float CPlayer::s_fExpDivUnderParty_Kill[8] = {1.0f, 1.1f, 1.5f, 2.0f, 2.5f, 3.0f, 3.5f, 4.5f};
 unsigned int CPlayer::s_dwTotalCloseCount;
 unsigned int CPlayer::s_dwAbnormalCloseCount;
 CRecordData *_WEAPON_PARAM::s_pWeaponData;
 CRecordData *_MASTERY_PARAM::s_pSkillData;
 CRecordData *_MASTERY_PARAM::s_pForceData;
-int _ATTACK_DELAY_CHECKER::s_nSpareTime;
+int _ATTACK_DELAY_CHECKER::s_nSpareTime = 100;
 CRecordData ItemCombineMgr::ms_tbl_ItemCombine;
 CRecordData ItemCombineMgr::ms_tbl_ItemCombine_Link_Stuff;
 CRecordData ItemCombineMgr::ms_tbl_ItemCombine_Link_Result;
@@ -5988,6 +5989,36 @@ char CPlayer::SF_HFSInc_Once(CPlayer *pDstObj)
   return 1;
 }
 
+bool CPlayer::SF_AllContDamageRemove_Once(CCharacter *pDstObj)
+{
+  int removedCount = 0;
+  for (int index = 0; index < 8; ++index)
+  {
+    _sf_continous *contEffect = &pDstObj->m_SFCont[0][index];
+    if (!contEffect->m_bExist)
+    {
+      continue;
+    }
+
+    _base_fld *effect17 = g_Main.m_tblEffectData[3].GetRecord("17");
+    const bool afterEffectGuard = static_cast<unsigned __int8>(pDstObj->m_SFContAura[0][5].m_wDurSec >> 8) != 0;
+    const bool keepEffect =
+      effect17
+      && afterEffectGuard
+      && contEffect->m_byEffectCode == 3
+      && contEffect->m_wEffectIndex == effect17->m_dwIndex;
+    if (keepEffect)
+    {
+      continue;
+    }
+
+    pDstObj->RemoveSFContEffect(0, static_cast<unsigned __int16>(index), false, false);
+    ++removedCount;
+  }
+
+  return removedCount > 0;
+}
+
 void CPlayer::RecvHSKQuest(
   unsigned __int8 byHSKQuestCode,
   unsigned __int8 byCristalBattleDBInfo,
@@ -9526,6 +9557,25 @@ void CPlayer::SendMsg_Alter_Action_Point(unsigned __int8 byActCode, unsigned int
     pbyType,
     reinterpret_cast<char *>(&msg),
     msg.size());
+}
+
+char CPlayer::Update_GoldPoint(unsigned int dwPoint)
+{
+  CActionPointSystemMgr *actionPointMgr = CActionPointSystemMgr::Instance();
+  if (actionPointMgr->GetEventStatus(2u) != 2)
+  {
+    return 0;
+  }
+
+  const unsigned int totalPoint = dwPoint + m_pUserDB->GetActPoint(2u);
+  m_pUserDB->Update_User_Action_Point(2u, totalPoint);
+  SendMsg_Alter_Action_Point(2u, totalPoint);
+  return 1;
+}
+
+void CPlayer::Potion_Buf_Extend()
+{
+  m_PotionBufUse.UseBuffPotion(this);
 }
 
 unsigned int CPlayer::GetInitClassCost()

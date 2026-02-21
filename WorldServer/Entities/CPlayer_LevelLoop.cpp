@@ -485,6 +485,71 @@ void CPlayer::AlterExp(
   }
 }
 
+void CPlayer::AlterExp_Potion(long double dAlterExp)
+{
+  if (!((this->m_byUserDgr && this->m_byUserDgr != 1) || this->m_Param.GetMaxLevel() != this->m_Param.GetLevel()))
+  {
+    return;
+  }
+
+  if (this->m_Param.GetMaxLevel() == this->m_Param.GetLevel())
+  {
+    return;
+  }
+
+  const float playerPenalty = g_Main.m_pTimeLimitMgr->GetPlayerPenalty(this->m_id.wIndex);
+  const long double finalAlterExp = dAlterExp * static_cast<long double>(playerPenalty);
+  if (finalAlterExp <= 0.0)
+  {
+    return;
+  }
+
+  const long double oldExp = this->m_Param.GetExp();
+  const long double curExp = oldExp + finalAlterExp;
+  SendMsg_NotifyGetExpInfo(oldExp, finalAlterExp, curExp);
+
+  const int lv = this->m_Param.GetLevel();
+  const long double limitExp = cStaticMember_Player::Instance()->GetLimitExp(lv);
+  if (curExp < limitExp)
+  {
+    this->m_Param.SetExp(curExp);
+    const long double exp = this->m_Param.GetExp();
+    const int curLevel = this->m_Param.GetLevel();
+    const long double nextLimitExp = cStaticMember_Player::Instance()->GetLimitExp(curLevel);
+    this->m_dwExpRate = static_cast<int>(exp / nextLimitExp * 1000000.0);
+    SendMsg_AlterExpInform();
+  }
+  else
+  {
+    const unsigned __int8 oldLevel = static_cast<unsigned __int8>(GetLevel());
+    const unsigned __int8 nextLevel = static_cast<unsigned __int8>(oldLevel + 1);
+    SetLevel(nextLevel);
+
+    if (this->m_Param.GetMaxLevel() > this->m_Param.GetLevel())
+    {
+      const long double oldLimitExp = cStaticMember_Player::Instance()->GetLimitExp(oldLevel);
+      this->m_Param.SetExp(curExp - oldLimitExp);
+      const long double exp = this->m_Param.GetExp();
+      const long double nextLimitExp = cStaticMember_Player::Instance()->GetLimitExp(nextLevel);
+      this->m_dwExpRate = static_cast<int>(exp / nextLimitExp * 1000000.0);
+    }
+    else
+    {
+      this->m_Param.SetExp(0.0);
+      this->m_dwExpRate = 0;
+    }
+
+    SendMsg_AlterExpInform();
+    this->m_bDownCheckEquipEffect = 1;
+    SendMsg_EquipItemLevelLimit(nextLevel);
+  }
+
+  if (this->m_pUserDB)
+  {
+    this->m_pUserDB->Update_Exp(this->m_Param.GetExp());
+  }
+}
+
 void CPlayer::SetLevel(unsigned __int8 byNewLevel)
 {
   if ((this->m_byUserDgr && this->m_byUserDgr != 1) || byNewLevel <= this->m_Param.GetMaxLevel())

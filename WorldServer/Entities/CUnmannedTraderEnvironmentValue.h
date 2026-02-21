@@ -11,7 +11,7 @@ public:
   static unsigned int Unmanned_Trader_Check_Schedule_Delay;
   static unsigned int Unmanned_Trader_Change_Taxrate_Check_Changed_Day_Delay;
   static unsigned int UNMANNEDTRADETRADER_LAZYCLEANER_LOOP_DELAY;
-  static unsigned int UNMANNEDTRADETRADER_LAZYCLEANER_UPDATE_MAX_RETRY_CNT;
+  static unsigned __int16 UNMANNEDTRADETRADER_LAZYCLEANER_UPDATE_MAX_RETRY_CNT;
   static unsigned int Unmanned_Trader_Max_Row_Count_Search;
   static unsigned int Unmanned_Trader_Nomal_Max_Regist_Item_Cnt;
   static unsigned __int8 Unmanned_Trader_Default_Sell_Turm;

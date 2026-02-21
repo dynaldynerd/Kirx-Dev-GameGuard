@@ -420,6 +420,44 @@ void CPlayer::pc_TrunkExtendRequest()
     dwSub);
 }
 
+void CPlayer::pc_PotionUseTrunkExtend()
+{
+  unsigned __int8 byRetCode = 0;
+  unsigned __int8 byLackSlotNum = 0;
+
+  if (m_Param.GetTrunkSlotNum())
+  {
+    if (m_Param.GetExtTrunkSlotNum() < 0x28u)
+    {
+      byLackSlotNum = static_cast<unsigned __int8>(100 - m_Param.GetTrunkSlotNum());
+    }
+    else
+    {
+      byRetCode = 4;
+    }
+  }
+  else
+  {
+    byRetCode = 2;
+  }
+
+  if (!byRetCode)
+  {
+    m_Param.m_byTrunkSlotNum = static_cast<unsigned __int8>(m_Param.m_byTrunkSlotNum + byLackSlotNum);
+    m_Param.m_byExtTrunkSlotNum = static_cast<unsigned __int8>(m_Param.m_byExtTrunkSlotNum + 20);
+    m_Param.m_dbTrunk.SetUseListNum(m_Param.m_byTrunkSlotNum);
+    m_Param.m_dbExtTrunk.SetUseListNum(m_Param.m_byExtTrunkSlotNum);
+
+    const unsigned __int8 trunkSlotNum = m_Param.GetTrunkSlotNum();
+    m_pUserDB->Update_TrunkSlotNum(trunkSlotNum);
+    const unsigned __int8 extTrunkSlotNum = m_Param.GetExtTrunkSlotNum();
+    m_pUserDB->Update_ExtTrunkSlotNum(extTrunkSlotNum);
+  }
+
+  const unsigned __int8 extTrunkSlotNum = m_Param.GetExtTrunkSlotNum();
+  SendMsg_ExtTrunkExtendResult(static_cast<char>(byRetCode), extTrunkSlotNum, byLackSlotNum);
+}
+
 void CPlayer::pc_TrunkAlterItemSlotRequest(
   unsigned int dwItemSerial,
   unsigned __int8 byClientSlotIndex,

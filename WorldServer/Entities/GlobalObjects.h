@@ -89,6 +89,7 @@ extern float g_fPoint[2];
 extern int g_tmpEffectedNum;
 extern _tmp_effected_list g_tmpEffectedList[30];
 extern bool (__fastcall *g_TempEffectFunc[150])(CCharacter *pActChar, CCharacter *pTargetChar, float fEffectValue, unsigned __int8 *byRet);
+void AnimusDebugLog(const char *format, ...);
 
 extern float ITEM_ROOT_RATE;
 extern float MINE_SPEED_RATE;

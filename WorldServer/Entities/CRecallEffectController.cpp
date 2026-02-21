@@ -55,100 +55,12 @@ void CRecallEffectController::CleanUp()
     operator delete[](m_ppkReqeust);
     m_ppkReqeust = nullptr;
   }
+
+  m_uiInfoTotCnt = 0;
 }
 
 namespace
 {
-unsigned __int8 GetResistedRecall(
-  CRecallEffectController *controller,
-  unsigned __int16 requestID,
-  CRecallRequest **outRequest)
-{
-  if (!controller || !outRequest)
-  {
-    return 3;
-  }
-
-  *outRequest = nullptr;
-  for (unsigned int index = 0; index < controller->m_uiInfoTotCnt; ++index)
-  {
-    CRecallRequest *request = controller->m_ppkReqeust ? controller->m_ppkReqeust[index] : nullptr;
-    if (!request || request->m_usID != requestID)
-    {
-      continue;
-    }
-
-    if (request->m_eState == CUnmannedTraderSchedule::STATE::REG_WAIT)
-    {
-      *outRequest = request;
-      return 0;
-    }
-
-    if (request->m_eState == CUnmannedTraderSchedule::STATE::WAIT_CANCEL)
-    {
-      return 5;
-    }
-
-    return 3;
-  }
-
-  return 3;
-}
-
-void CloseRecallRequest(CRecallEffectController *controller, CRecallRequest *request, bool done)
-{
-  if (!controller || !request || !controller->m_pkUseInxList || !controller->m_pkEmptyInxList)
-  {
-    return;
-  }
-
-  const unsigned __int16 requestID = request->m_usID;
-  if (!controller->m_pkUseInxList->FindNode(requestID))
-  {
-    return;
-  }
-
-  if (!controller->m_pkEmptyInxList->IsInList(requestID))
-  {
-    controller->m_pkEmptyInxList->PushNode_Front(requestID);
-    request->m_eState = done ? CUnmannedTraderSchedule::STATE::CANCEL_SUCC_COMPLETE
-                             : CUnmannedTraderSchedule::STATE::WAIT_CANCEL;
-    request->m_dwCloseTime = 0;
-  }
-}
-
-unsigned __int8 RecallRequestTarget(CRecallRequest *request, CPlayer *dest, bool stoneRecall)
-{
-  if (!request || !dest)
-  {
-    return 3;
-  }
-
-  if (dest->m_bInGuildBattle)
-  {
-    return 10;
-  }
-
-  CPlayer *owner = request->m_pkOwner;
-  if (!owner || !owner->m_pCurMap)
-  {
-    return 7;
-  }
-
-  float newPos[3] = {};
-  owner->m_pCurMap->GetRandPosInRange(owner->m_fCurPos, 30, newPos);
-  dest->OutOfMap(owner->m_pCurMap, owner->m_wMapLayerIndex, 3u, newPos);
-  dest->SendMsg_MovePortal(static_cast<char>(owner->m_pCurMap->m_pMapSet->m_dwIndex), newPos, 2u);
-
-  if (stoneRecall)
-  {
-    g_PotionMgr.InsertMovePotionStoneEffect(dest);
-    dest->SenseState();
-  }
-
-  return 0;
-}
-
 GUILD_BATTLE::CNormalGuildBattle *GetBattleByGuildSerial(unsigned int guildSerial)
 {
   GUILD_BATTLE::CNormalGuildBattleManager *manager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
@@ -174,7 +86,43 @@ CRecallEffectController *CRecallEffectController::Instance()
 
 bool CRecallEffectController::Init(unsigned int infoCount)
 {
+  CleanUp();
+
+  if (infoCount == 0)
+  {
+    return false;
+  }
+
+  m_pkTimer = new CMyTimer();
+  m_pkEmptyInxList = new CNetIndexList();
+  m_pkUseInxList = new CNetIndexList();
+  m_ppkReqeust = new CRecallRequest *[infoCount];
+
+  if (!m_pkTimer || !m_pkEmptyInxList || !m_pkUseInxList || !m_ppkReqeust)
+  {
+    return false;
+  }
+
+  memset_0(m_ppkReqeust, 0, sizeof(CRecallRequest *) * infoCount);
+  for (unsigned int index = 0; index < infoCount; ++index)
+  {
+    m_ppkReqeust[index] = new CRecallRequest(static_cast<unsigned __int16>(index));
+    if (!m_ppkReqeust[index])
+    {
+      return false;
+    }
+  }
+
+  m_pkEmptyInxList->SetList(infoCount);
+  m_pkUseInxList->SetList(infoCount);
+
+  for (unsigned int index = 0; index < infoCount; ++index)
+  {
+    m_pkEmptyInxList->PushNode_Back(index);
+  }
+
   m_uiInfoTotCnt = infoCount;
+  m_pkTimer->BeginTimer(0x7530u);
   return true;
 }
 
@@ -201,9 +149,122 @@ void CRecallEffectController::UpdateClose()
     {
       CPlayer *owner = request->GetOwner();
       SendRecallReqeustResult(5u, owner);
-      CloseRecallRequest(this, request, false);
+      Close(request, false);
     }
   }
+}
+
+CRecallRequest *CRecallEffectController::GetEmpty()
+{
+  if (!m_pkEmptyInxList)
+  {
+    return nullptr;
+  }
+
+  unsigned int outIndex = 0;
+  if (!m_pkEmptyInxList->PopNode_Front(&outIndex))
+  {
+    return nullptr;
+  }
+
+  CRecallRequest *request = m_ppkReqeust[outIndex];
+  request->Clear();
+  return request;
+}
+
+void CRecallEffectController::Close(CRecallRequest *pkRequest, bool bDone)
+{
+  if (!pkRequest || !m_pkUseInxList || !m_pkEmptyInxList)
+  {
+    return;
+  }
+
+  const unsigned __int16 requestID = pkRequest->GetID();
+  if (m_pkUseInxList->FindNode(requestID))
+  {
+    if (!m_pkEmptyInxList->IsInList(requestID))
+    {
+      m_pkEmptyInxList->PushNode_Front(requestID);
+      pkRequest->Close(bDone);
+    }
+  }
+}
+
+unsigned __int8 CRecallEffectController::GetResistedRecall(unsigned __int16 wID, CRecallRequest **pkRequest)
+{
+  *pkRequest = nullptr;
+
+  for (unsigned int index = 0; index < m_uiInfoTotCnt; ++index)
+  {
+    CRecallRequest *request = m_ppkReqeust[index];
+    if (request->GetID() == wID)
+    {
+      if (request->IsWait())
+      {
+        *pkRequest = request;
+        return 0;
+      }
+
+      if (request->IsTimeOut())
+      {
+        return 5;
+      }
+
+      return 3;
+    }
+  }
+
+  return 3;
+}
+
+unsigned __int8 CRecallEffectController::ProcessRequestRecall(
+  CPlayer *pkPerformer,
+  CPlayer *pkDest,
+  CRecallRequest **pkRequest,
+  bool bRecallParty,
+  bool bStone,
+  bool bBattleModeUse)
+{
+  *pkRequest = GetEmpty();
+  if (!*pkRequest)
+  {
+    return 1;
+  }
+
+  const unsigned __int8 registRet = (*pkRequest)->Regist(pkPerformer, pkDest, bRecallParty, bStone, bBattleModeUse);
+  if (registRet)
+  {
+    return registRet;
+  }
+
+  const unsigned __int16 requestID = (*pkRequest)->GetID();
+  if (m_pkUseInxList->PushNode_Back(requestID))
+  {
+    return 0;
+  }
+
+  Close(*pkRequest, false);
+  return 2;
+}
+
+bool CRecallEffectController::RequestRecall(
+  CPlayer *pkPerformer,
+  CPlayer *pkDest,
+  bool bRecallParty,
+  bool bStone,
+  bool bBattleModeUse)
+{
+  CRecallRequest *request = nullptr;
+  const unsigned __int8 processRet =
+    ProcessRequestRecall(pkPerformer, pkDest, &request, bRecallParty, bStone, bBattleModeUse);
+  if (processRet)
+  {
+    SendRecallReqeustResult(static_cast<char>(processRet), pkPerformer);
+    return false;
+  }
+
+  SendRecallReqeustToDest(request->GetID(), pkPerformer, pkDest);
+  return true;
 }
 
 void CRecallEffectController::SendRecallReqeustResult(char byRet, CPlayer *pkObj)
@@ -283,7 +344,7 @@ void CRecallEffectController::DecideRecall(unsigned __int16 dwRequestID, unsigne
   }
 
   CRecallRequest *request = nullptr;
-  unsigned __int8 resistedRecall = GetResistedRecall(this, dwRequestID, &request);
+  unsigned __int8 resistedRecall = GetResistedRecall(dwRequestID, &request);
   if (resistedRecall)
   {
     SendDecideRecallErrorResultToDest(static_cast<char>(resistedRecall), pkObj, -1);
@@ -294,14 +355,14 @@ void CRecallEffectController::DecideRecall(unsigned __int16 dwRequestID, unsigne
   if (!owner)
   {
     SendDecideRecallErrorResultToDest(3, pkObj, -1);
-    CloseRecallRequest(this, request, true);
+    Close(request, true);
     return;
   }
 
   if (byAgree == 1)
   {
     SendRecallReqeustResult(4u, owner);
-    CloseRecallRequest(this, request, true);
+    Close(request, true);
     return;
   }
 
@@ -329,7 +390,7 @@ void CRecallEffectController::DecideRecall(unsigned __int16 dwRequestID, unsigne
     {
       SendDecideRecallErrorResultToDest(0xCu, pkObj, owner->m_pCurMap->m_nMapCode);
       SendRecallReqeustResult(0xDu, owner);
-      CloseRecallRequest(this, request, true);
+      Close(request, true);
       return;
     }
   }
@@ -405,10 +466,10 @@ void CRecallEffectController::DecideRecall(unsigned __int16 dwRequestID, unsigne
     }
   }
 
-  resistedRecall = RecallRequestTarget(request, pkObj, request->m_bStone);
+  resistedRecall = request->Recall(pkObj, request->IsRecallAfterStoneState());
   if (resistedRecall)
   {
     SendDecideRecallErrorResultToDest(static_cast<char>(resistedRecall), pkObj, -1);
   }
-  CloseRecallRequest(this, request, true);
+  Close(request, true);
 }

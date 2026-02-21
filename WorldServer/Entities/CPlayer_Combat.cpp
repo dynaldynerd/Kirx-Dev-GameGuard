@@ -742,8 +742,33 @@ void CPlayer::pc_SkillRequest(unsigned __int8 bySkillIndex, _CHRID *pidDst, unsi
 
 void CPlayer::pc_ClassSkillRequest(unsigned __int16 wSkillIndex, _CHRID *pidDst, unsigned __int16 *pConsumeSerial)
 {
+  _skill_fld *classSkill = reinterpret_cast<_skill_fld *>(g_Main.m_tblEffectData[2].GetRecord(wSkillIndex));
   const bool wasStealth = GetStealth(true);
   const unsigned __int8 errCode = skill_process(2, wSkillIndex, pidDst, pConsumeSerial, nullptr);
+  if (classSkill)
+  {
+    AnimusDebugLog(
+      "ClassSkillCast: acc=%u char=%s objSerial=%u skillIndex=%u skillCode=%s tempType=%d contType=%d err=%u",
+      m_pUserDB ? m_pUserDB->m_dwSerial : 0u,
+      m_Param.GetCharNameA(),
+      m_dwObjSerial,
+      wSkillIndex,
+      classSkill->m_strCode,
+      classSkill->m_nTempEffectType,
+      classSkill->m_nContEffectType,
+      errCode);
+  }
+  else
+  {
+    AnimusDebugLog(
+      "ClassSkillCast: acc=%u char=%s objSerial=%u skillIndex=%u record=null err=%u",
+      m_pUserDB ? m_pUserDB->m_dwSerial : 0u,
+      m_Param.GetCharNameA(),
+      m_dwObjSerial,
+      wSkillIndex,
+      errCode);
+  }
+
   if ((!errCode || errCode == 100) && wasStealth)
   {
     BreakStealth();

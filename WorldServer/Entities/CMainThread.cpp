@@ -1967,7 +1967,6 @@ bool CMainThread::DataFileInit()
       return false;
     }
   }
-
   if (!g_PotionMgr.DatafileInit())
   {
     return false;

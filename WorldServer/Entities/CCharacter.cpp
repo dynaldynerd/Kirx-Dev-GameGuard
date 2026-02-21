@@ -1337,6 +1337,18 @@ char CCharacter::AssistSkill(
   {
     const float tempValue = pSkillFld->m_fTempValue[nSkillLv - 1];
     auto tempFunc = g_TempEffectFunc[pSkillFld->m_nTempEffectType];
+    if (!tempFunc)
+    {
+      AnimusDebugLog(
+        "TempEffectNull: AssistSkill actID=%u actSerial=%u effectCode=%d skillIndex=%u tempType=%d contType=%d targetCount=%d",
+        m_ObjID.m_byID,
+        m_dwObjSerial,
+        nEffectCode,
+        pSkillFld->m_dwIndex,
+        pSkillFld->m_nTempEffectType,
+        pSkillFld->m_nContEffectType,
+        g_tmpEffectedNum);
+    }
     unsigned __int8 tempRet = 0;
     for (int j = 0; j < g_tmpEffectedNum; ++j)
     {
@@ -1478,6 +1490,17 @@ char CCharacter::AssistForce(
   {
     const float tempValue = pForceFld->m_fTempValue[nForceLv - 1];
     auto tempFunc = g_TempEffectFunc[pForceFld->m_nTempEffectType];
+    if (!tempFunc)
+    {
+      AnimusDebugLog(
+        "TempEffectNull: AssistForce actID=%u actSerial=%u forceIndex=%u tempType=%d contType=%d targetCount=%d",
+        m_ObjID.m_byID,
+        m_dwObjSerial,
+        pForceFld->m_dwIndex,
+        pForceFld->m_nTempEffectType,
+        pForceFld->m_nContEffectType,
+        g_tmpEffectedNum);
+    }
     unsigned __int8 tempRet = 0;
     for (int j = 0; j < g_tmpEffectedNum; ++j)
     {
@@ -1595,6 +1618,19 @@ bool CCharacter::AssistSkillToOne(CCharacter *pDst, int nEffectCode, _skill_fld 
   {
     const float tempValue = pSkillFld->m_fTempValue[nSkillLv - 1];
     auto tempFunc = g_TempEffectFunc[pSkillFld->m_nTempEffectType];
+    if (!tempFunc)
+    {
+      AnimusDebugLog(
+        "TempEffectNull: AssistSkillToOne actID=%u actSerial=%u effectCode=%d skillIndex=%u tempType=%d contType=%d dstID=%u dstSerial=%u",
+        m_ObjID.m_byID,
+        m_dwObjSerial,
+        nEffectCode,
+        pSkillFld->m_dwIndex,
+        pSkillFld->m_nTempEffectType,
+        pSkillFld->m_nContEffectType,
+        pDst ? pDst->m_ObjID.m_byID : 0u,
+        pDst ? pDst->m_dwObjSerial : 0u);
+    }
     if (retCode)
     {
       return false;
@@ -1675,6 +1711,18 @@ bool CCharacter::AssistForceToOne(CCharacter *pDst, _force_fld *pForceFld, int n
   {
     const float tempValue = pForceFld->m_fTempValue[nForceLv - 1];
     auto tempFunc = g_TempEffectFunc[pForceFld->m_nTempEffectType];
+    if (!tempFunc)
+    {
+      AnimusDebugLog(
+        "TempEffectNull: AssistForceToOne actID=%u actSerial=%u forceIndex=%u tempType=%d contType=%d dstID=%u dstSerial=%u",
+        m_ObjID.m_byID,
+        m_dwObjSerial,
+        pForceFld->m_dwIndex,
+        pForceFld->m_nTempEffectType,
+        pForceFld->m_nContEffectType,
+        pDst ? pDst->m_ObjID.m_byID : 0u,
+        pDst ? pDst->m_dwObjSerial : 0u);
+    }
     if (retCode)
     {
       return false;
