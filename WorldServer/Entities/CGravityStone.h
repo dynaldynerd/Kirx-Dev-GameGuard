@@ -14,6 +14,8 @@ public:
   static unsigned int ms_dwSerialCnt;
 
   bool IsValidOwner(CPlayer *pkPlayer);
+  bool IsInTown();
+  char CheckTakeTimeLimit();
   char Regen(_object_create_setdata *pParam);
   unsigned __int8 Drop(CPlayer *pkPlayer);
   void SendMsg_Create();

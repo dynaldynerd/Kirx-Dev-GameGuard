@@ -49,7 +49,11 @@ public:
   void SetNuclearIndex(unsigned __int16 wItemIndex);
   unsigned __int16 GetControlSerial();
   void SetControlSerial(unsigned __int16 wControlSerial);
+  __int64 GetMasterRace();
   unsigned __int8 GetMasterClass();
+  void GetShowEffectList();
+  void NuclearDamege();
+  void WarningToAll(unsigned __int8 byRaceCode);
   void SendMsg_NuclearFind(unsigned int n, unsigned __int8 race);
   void SendMsg_InformDropPos();
   void SendMsg_AddEffect();

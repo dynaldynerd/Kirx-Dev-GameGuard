@@ -23,6 +23,7 @@ public:
   static CRecordData *s_tblQuest;
   static CRecordData *s_tblQuestHappenEvent;
   void InitMgr(CPlayer *pMaster, _QUEST_DB_BASE *pQuestData);
+  void Loop();
   void CheckFailLoop(int nFailCond, char *pszCode);
 
   _quest_check_result *CheckReqAct(int nActCode, char *pszReqCode, unsigned __int16 wActCount, bool bPartyState);

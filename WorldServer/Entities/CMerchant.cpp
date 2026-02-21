@@ -66,6 +66,7 @@ __int64 CMerchant::GetWindTol()
 
 void CMerchant::Loop()
 {
+  UpdateSFCont();
   SendMsg_TransShipTicketNumInform(static_cast<unsigned int>(-1));
 }
 

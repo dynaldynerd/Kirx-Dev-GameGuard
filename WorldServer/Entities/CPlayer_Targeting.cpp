@@ -134,6 +134,34 @@ bool IsTargetingObject(CGameObject *target)
 
   return target->m_ObjID.m_byKind == 1 && target->m_ObjID.m_byID == 2;
 }
+
+bool IsCircleObjectCompat(CGameObject *viewer, int range, CGameObject *target)
+{
+  _sec_info *secInfo = viewer->m_pCurMap->GetSecInfo();
+  _pnt_rect rect{};
+  viewer->m_pCurMap->GetRectInRadius(&rect, range, viewer->m_dwCurSec);
+
+  for (int y = rect.nStarty; y <= rect.nEndy; ++y)
+  {
+    for (int x = rect.nStartx; x <= rect.nEndx; ++x)
+    {
+      const unsigned int secIndex = secInfo->m_nSecNumW * y + x;
+      CObjectList *sectorList = viewer->m_pCurMap->GetSectorListObj(viewer->m_wMapLayerIndex, secIndex);
+      if (sectorList)
+      {
+        for (_object_list_point *node = sectorList->m_Head.m_pNext; node != &sectorList->m_Tail; node = node->m_pNext)
+        {
+          if (target == node->m_pItem)
+          {
+            return true;
+          }
+        }
+      }
+    }
+  }
+
+  return false;
+}
 }
 
 void CPlayer::SendData_PartyMemberHP()
@@ -1587,6 +1615,207 @@ void wa_ExitWorld(_CLID *pidWorld)
         notifyPlayer->SendMsg_PartySuccessResult(newBoss);
       }
     }
+  }
+}
+
+void CPlayer::_check_party_target_object()
+{
+  CGameObject *targetObject = nullptr;
+  if (m_pPartyMgr->IsPartyMode() && m_pPartyMgr->IsPartyBoss())
+  {
+    targetObject = m_GroupTargetObject[0].pObject;
+    if (targetObject)
+    {
+      if (targetObject->m_bLive
+          && m_GroupTargetObject[0].byKind == targetObject->m_ObjID.m_byKind
+          && m_GroupTargetObject[0].byID == targetObject->m_ObjID.m_byID
+          && m_GroupTargetObject[0].dwSerial == targetObject->m_dwObjSerial)
+      {
+        pc_RefreshGroupTargetPosition(0, targetObject);
+      }
+      else
+      {
+        pc_ReleaseGroupTargetObjectRequest(0);
+      }
+    }
+  }
+}
+
+void CPlayer::_check_guild_target_object()
+{
+  CGameObject *targetObject = nullptr;
+  if (m_Param.m_pGuild)
+  {
+    const unsigned int guildMasterSerial = m_Param.m_pGuild->GetGuildMasterSerial();
+    if (guildMasterSerial == m_Param.GetCharSerial())
+    {
+      targetObject = m_GroupTargetObject[1].pObject;
+      if (targetObject)
+      {
+        if (targetObject->m_bLive
+            && m_GroupTargetObject[1].byKind == targetObject->m_ObjID.m_byKind
+            && m_GroupTargetObject[1].byID == targetObject->m_ObjID.m_byID
+            && m_GroupTargetObject[1].dwSerial == targetObject->m_dwObjSerial)
+        {
+          pc_RefreshGroupTargetPosition(1u, targetObject);
+        }
+        else
+        {
+          pc_ReleaseGroupTargetObjectRequest(1u);
+        }
+      }
+    }
+  }
+}
+
+void CPlayer::_check_race_target_object()
+{
+  CGameObject *targetObject = nullptr;
+  const unsigned __int8 raceCode = static_cast<unsigned __int8>(m_Param.GetRaceCode());
+  const unsigned int currentRaceBossSerial =
+    CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(raceCode, 0);
+
+  if (currentRaceBossSerial == m_Param.GetCharSerial())
+  {
+    targetObject = m_GroupTargetObject[2].pObject;
+    if (targetObject)
+    {
+      if (targetObject->m_bLive
+          && m_GroupTargetObject[2].byKind == targetObject->m_ObjID.m_byKind
+          && m_GroupTargetObject[2].byID == targetObject->m_ObjID.m_byID
+          && m_GroupTargetObject[2].dwSerial == targetObject->m_dwObjSerial)
+      {
+        pc_RefreshGroupTargetPosition(2u, targetObject);
+      }
+      else
+      {
+        pc_ReleaseGroupTargetObjectRequest(2u);
+      }
+    }
+  }
+}
+
+void CPlayer::pc_RefreshGroupTargetPosition(unsigned __int8 byGroupType, CGameObject *pObject)
+{
+  if (!pObject)
+  {
+    return;
+  }
+
+  if (byGroupType == 0)
+  {
+    CPartyPlayer **partyMembers = m_pPartyMgr->GetPtrPartyMember();
+    if (!partyMembers)
+    {
+      return;
+    }
+
+    for (int j = 0; j < 8; ++j)
+    {
+      if (partyMembers[j])
+      {
+        CPlayer *player = &g_Player[partyMembers[j]->m_id.wIndex];
+        if (player->m_bOper)
+        {
+          CGameObject *groupTarget = player->m_GroupTargetObject[0].pObject;
+          if (groupTarget
+              && player->m_pCurMap == groupTarget->m_pCurMap
+              && player->m_wMapLayerIndex == groupTarget->m_wMapLayerIndex)
+          {
+            const int range = static_cast<int>(player->GetUseSectorRange());
+            if (!IsCircleObjectCompat(player, range, groupTarget))
+            {
+              player->SendMsg_RefeshGroupTargetPosition(0);
+            }
+          }
+        }
+      }
+    }
+
+    return;
+  }
+
+  if (byGroupType == 1)
+  {
+    for (int j = 0; j < 50; ++j)
+    {
+      _guild_member_info *member = &m_Param.m_pGuild->m_MemberData[j];
+      if (member->IsFill())
+      {
+        CPlayer *player = member->pPlayer;
+        if (player && player->m_bOper)
+        {
+          CGameObject *groupTarget = player->m_GroupTargetObject[byGroupType].pObject;
+          if (groupTarget
+              && player->m_pCurMap == groupTarget->m_pCurMap
+              && player->m_wMapLayerIndex == groupTarget->m_wMapLayerIndex)
+          {
+            const int range = static_cast<int>(player->GetUseSectorRange());
+            if (!IsCircleObjectCompat(player, range, groupTarget))
+            {
+              player->SendMsg_RefeshGroupTargetPosition(byGroupType);
+            }
+          }
+        }
+      }
+    }
+
+    return;
+  }
+
+  if (byGroupType == 2)
+  {
+    for (int j = 0; j < MAX_PLAYER; ++j)
+    {
+      CPlayer *player = &g_Player[j];
+      if (player->m_bOper)
+      {
+        if (player->m_Param.GetRaceCode() == m_Param.GetRaceCode())
+        {
+          CGameObject *groupTarget = player->m_GroupTargetObject[byGroupType].pObject;
+          if (groupTarget
+              && player->m_pCurMap == groupTarget->m_pCurMap
+              && player->m_wMapLayerIndex == groupTarget->m_wMapLayerIndex)
+          {
+            const int range = static_cast<int>(player->GetUseSectorRange());
+            if (!IsCircleObjectCompat(player, range, groupTarget))
+            {
+              player->SendMsg_RefeshGroupTargetPosition(byGroupType);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+void CPlayer::_check_target_object()
+{
+  if (!this->m_TargetObject.pObject)
+  {
+    return;
+  }
+
+  CGameObject *targetObject = this->m_TargetObject.pObject;
+  if (targetObject->m_bLive
+      && this->m_TargetObject.byKind == targetObject->m_ObjID.m_byKind
+      && this->m_TargetObject.byID == targetObject->m_ObjID.m_byID
+      && this->m_TargetObject.dwSerial == targetObject->m_dwObjSerial
+      && this->m_TargetObject.pObject->m_pCurMap == this->m_pCurMap)
+  {
+    const int hpRate = static_cast<int>(targetObject->CalcCurHPRate());
+    if (std::abs(hpRate - static_cast<int>(this->m_TargetObject.wHPRate)) > 100)
+    {
+      this->m_TargetObject.wHPRate = static_cast<unsigned __int16>(hpRate);
+      this->SendMsg_TargetObjectHPInform();
+    }
+
+    this->SendTargetMonsterSFContInfo();
+    this->SendTargetPlayerDamageContInfo();
+  }
+  else
+  {
+    this->m_TargetObject.init();
   }
 }
 

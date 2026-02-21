@@ -15,6 +15,7 @@ public:
   ~CCouponMgr();
 
   void Init(unsigned __int16 wIdx);
+  void Loop(unsigned __int16 wIdx);
   void ReceivePrimiumCoupon(unsigned __int16 wIdx);
   char SetCheetContTime(unsigned __int16 wIdx, int nMin);
   void LoadData(unsigned int dwAccSerial, _PCBANG_PLAY_TIME *pkInfo);

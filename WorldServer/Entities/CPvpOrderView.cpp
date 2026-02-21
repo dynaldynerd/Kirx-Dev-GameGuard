@@ -9,6 +9,7 @@
 
 #include <cstring>
 #include <ctime>
+#include <mmsystem.h>
 
 _pvp_order_view_inform_zocl::_pvp_order_view_inform_zocl()
 {
@@ -18,6 +19,27 @@ _pvp_order_view_inform_zocl::_pvp_order_view_inform_zocl()
 int _pvp_order_view_inform_zocl::size() const
 {
   return 24;
+}
+
+void CPvpOrderView::Loop(unsigned __int16 wIndex)
+{
+  const unsigned int now = timeGetTime();
+  const int attackEndDelayMs = 180000;
+  const int damagedEndDelayMs = 180000;
+
+  if (m_dwLastAttackTime + attackEndDelayMs <= now && m_bAttack)
+  {
+    Notify_PvPEnd(wIndex);
+    m_dwLastAttackTime = 0;
+    m_bAttack = false;
+  }
+
+  if (m_dwLastDamagedTime + damagedEndDelayMs <= now && m_bDamaged)
+  {
+    Notify_PvPEnd(wIndex);
+    m_dwLastDamagedTime = 0;
+    m_bDamaged = false;
+  }
 }
 
 long double CPvpOrderView::GetPvpCash()

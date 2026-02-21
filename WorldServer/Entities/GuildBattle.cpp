@@ -43,6 +43,7 @@
 #include "worlddb_guild_battle_info.h"
 #include "worlddb_guild_battle_reserved_schedule_info.h"
 #include "guild_battle_goal_result_zocl.h"
+#include "ObjectCreateSetData.h"
 
 __int64 _qry_case_in_guildbattlecost::size()
 {
@@ -131,6 +132,17 @@ namespace GUILD_BATTLE
   {
     *result = ATL::CTimeSpan(0LL);
     return result;
+  }
+
+  void CGuildBattleState::Log(char *szMsg)
+  {
+    char dateBuffer[128]{};
+    char timeBuffer[128]{};
+    char outputBuffer[320]{};
+    _strdate_s(dateBuffer, sizeof(dateBuffer));
+    _strtime_s(timeBuffer, sizeof(timeBuffer));
+    sprintf_s(outputBuffer, "%s %s : %s\n", dateBuffer, timeBuffer, szMsg);
+    OutputDebugStringA(outputBuffer);
   }
 
   CGuildBattleStateList::CGuildBattleStateList(int iStateMax, GBS_LOOP_TYPE iLoopType, unsigned int uiLoopCnt)
@@ -360,6 +372,58 @@ namespace GUILD_BATTLE
 
   CNormalGuildBattleState::CNormalGuildBattleState() = default;
 
+  int CNormalGuildBattleState::Loop(CGuildBattle * /*pkBattle*/)
+  {
+    // this is not a stub
+    return 0;
+  }
+
+  void CNormalGuildBattleState::Log(CNormalGuildBattle *pkBattle, char *szFormat, ...)
+  {
+    char buffer[3096]{};
+    va_list args;
+    va_start(args, szFormat);
+    int written = vsnprintf(buffer, sizeof(buffer), szFormat, args);
+    va_end(args);
+
+    if (written < 0)
+    {
+      written = 0;
+      buffer[0] = '\0';
+    }
+    if (written >= static_cast<int>(sizeof(buffer)))
+    {
+      written = static_cast<int>(sizeof(buffer)) - 1;
+    }
+
+    CNormalGuildBattleGuild *blueGuild = pkBattle->GetBlue();
+    char *blueName = blueGuild->GetGuildName();
+    const unsigned int blueSerial = blueGuild->GetGuildSerial();
+
+    CNormalGuildBattleGuild *redGuild = pkBattle->GetRed();
+    char *redName = redGuild->GetGuildName();
+    const unsigned int redSerial = redGuild->GetGuildSerial();
+
+    CNormalGuildBattleField *field = pkBattle->GetField();
+    const unsigned int mapId = field->GetMapID();
+    const unsigned int battleId = pkBattle->GetID();
+
+    sprintf_s(
+      &buffer[written],
+      sizeof(buffer) - static_cast<size_t>(written),
+      " ( ID:%u Map:%u Red:%u(%s) Blue:%u(%s) )",
+      battleId,
+      mapId,
+      redSerial,
+      redName,
+      blueSerial,
+      blueName);
+
+    CGuildBattleState::Log(buffer);
+    CNormalGuildBattleLogger *logger = pkBattle->GetLogger();
+    logger->Log(buffer);
+  }
+
   CNormalGuildBattleStateNotify::CNormalGuildBattleStateNotify() = default;
 
   CNormalGuildBattleStateReady::CNormalGuildBattleStateReady() = default;
@@ -368,6 +432,58 @@ namespace GUILD_BATTLE
 
   CNormalGuildBattleStateRound::CNormalGuildBattleStateRound() = default;
 
+  int CNormalGuildBattleStateRound::Loop(CGuildBattle * /*pkBattle*/)
+  {
+    // this is not a stub
+    return 0;
+  }
+
+  void CNormalGuildBattleStateRound::Log(CNormalGuildBattle *pkBattle, char *szFormat, ...)
+  {
+    char buffer[3096]{};
+    va_list args;
+    va_start(args, szFormat);
+    int written = vsnprintf(buffer, sizeof(buffer), szFormat, args);
+    va_end(args);
+
+    if (written < 0)
+    {
+      written = 0;
+      buffer[0] = '\0';
+    }
+    if (written >= static_cast<int>(sizeof(buffer)))
+    {
+      written = static_cast<int>(sizeof(buffer)) - 1;
+    }
+
+    CNormalGuildBattleGuild *blueGuild = pkBattle->GetBlue();
+    char *blueName = blueGuild->GetGuildName();
+    const unsigned int blueSerial = blueGuild->GetGuildSerial();
+
+    CNormalGuildBattleGuild *redGuild = pkBattle->GetRed();
+    char *redName = redGuild->GetGuildName();
+    const unsigned int redSerial = redGuild->GetGuildSerial();
+
+    CNormalGuildBattleField *field = pkBattle->GetField();
+    const unsigned int mapId = field->GetMapID();
+    const unsigned int battleId = pkBattle->GetID();
+
+    sprintf_s(
+      &buffer[written],
+      sizeof(buffer) - static_cast<size_t>(written),
+      " ( ID:%u Map:%u Red:%u(%s) Blue:%u(%s) )",
+      battleId,
+      mapId,
+      redSerial,
+      redName,
+      blueSerial,
+      blueName);
+
+    CGuildBattleState::Log(buffer);
+    CNormalGuildBattleLogger *logger = pkBattle->GetLogger();
+    logger->Log(buffer);
+  }
+
   CNormalGuildBattleStateRoundStart::CNormalGuildBattleStateRoundStart() : m_pkTimer(nullptr)
   {
     m_pkTimer = new (std::nothrow) CMyTimer();
@@ -375,6 +491,23 @@ namespace GUILD_BATTLE
     {
       m_pkTimer = nullptr;
     }
+  }
+
+  int CNormalGuildBattleStateRoundStart::Loop(CGuildBattle *pkBattle)
+  {
+    CNormalGuildBattle *normalBattle = static_cast<CNormalGuildBattle *>(pkBattle);
+    if (m_pkTimer)
+    {
+      if (m_pkTimer->CountingTimer())
+      {
+        return 2;
+      }
+      return 0;
+    }
+
+    normalBattle->GetLogger()->Log(
+      const_cast<char *>("CNormalGuildBattleStateRoundStart::Enter( CNormalGuildBattle * pkBattle ) :  0 == m_pkTimer !"));
+    return 2;
   }
 
   CNormalGuildBattleStateRoundProcess::CNormalGuildBattleStateRoundProcess() : m_pkTimer(nullptr)
@@ -386,6 +519,45 @@ namespace GUILD_BATTLE
     }
   }
 
+  int CNormalGuildBattleStateRoundProcess::Loop(CGuildBattle *pkBattle)
+  {
+    CNormalGuildBattle *normalBattle = static_cast<CNormalGuildBattle *>(pkBattle);
+    if (!m_pkTimer)
+    {
+      normalBattle->GetLogger()->Log(
+        const_cast<char *>(
+          "CNormalGuildBattleStateRoundProcess::Loop( CNormalGuildBattle * pkBattle ) :  0 == m_pkTimer !"));
+      return 0;
+    }
+
+    if (!m_pkTimer->CountingTimer())
+    {
+      return 0;
+    }
+
+    CNormalGuildBattleField *field = normalBattle->GetField();
+    if (field->CheckIsInTown())
+    {
+      normalBattle->SetGotoRegenStart();
+      normalBattle->GetLogger()->Log(
+        const_cast<char *>(
+          "CNormalGuildBattleStateRoundProcess::Loop( CNormalGuildBattle * pkBattle ) : Stone Owner Into The Town! -> GotoRegenStart"));
+      return 3;
+    }
+
+    if (field->CheckBallTakeLimitTime())
+    {
+      normalBattle->NotifyPassGravityStoneLimitTime();
+      normalBattle->SetGotoRegenStart();
+      normalBattle->GetLogger()->Log(
+        const_cast<char *>(
+          "CNormalGuildBattleStateRoundProcess::Loop( CNormalGuildBattle * pkBattle ) : Stone Have Time Limit! -> GotoRegenStart"));
+      return 3;
+    }
+
+    return 0;
+  }
+
   CNormalGuildBattleStateRoundReturnStartPos::CNormalGuildBattleStateRoundReturnStartPos() : m_pkTimer(nullptr)
   {
     m_pkTimer = new (std::nothrow) CMyTimer();
@@ -393,6 +565,31 @@ namespace GUILD_BATTLE
     {
       m_pkTimer = nullptr;
     }
+  }
+
+  int CNormalGuildBattleStateRoundReturnStartPos::Loop(CGuildBattle *pkBattle)
+  {
+    CNormalGuildBattle *normalBattle = static_cast<CNormalGuildBattle *>(pkBattle);
+    if (!m_pkTimer)
+    {
+      normalBattle->GetLogger()->Log(
+        const_cast<char *>(
+          "CNormalGuildBattleStateRoundReturnStartPos::Loop( CNormalGuildBattle * pkBattle ) :  0 == m_pkTimer !"));
+      return 0;
+    }
+
+    if (!m_pkTimer->CountingTimer())
+    {
+      return 0;
+    }
+
+    CNormalGuildBattleGuild *redGuild = normalBattle->GetRed();
+    CNormalGuildBattleGuild *blueGuild = normalBattle->GetBlue();
+    CNormalGuildBattleField *field = normalBattle->GetField();
+    redGuild->ReturnStartPosAll(field);
+    blueGuild->ReturnStartPosAll(field);
+    Log(normalBattle, const_cast<char *>("Loop : Return Start Pos"));
+    return 2;
   }
 
   CNormalGuildBattleStateRoundList::CNormalGuildBattleStateRoundList()
@@ -414,6 +611,12 @@ namespace GUILD_BATTLE
   {
   }
 
+  int CNormalGuildBattleStateInBattle::Loop(CGuildBattle *pkBattle)
+  {
+    m_kRountStateList.Process(pkBattle);
+    return 0;
+  }
+
   void CNormalGuildBattleStateInBattle::SetBattleTime(ATL::CTimeSpan kTime)
   {
     m_kInBattleTime = kTime;
@@ -422,6 +625,11 @@ namespace GUILD_BATTLE
   bool CNormalGuildBattleStateInBattle::IsInBattleRegenState()
   {
     return m_kRountStateList.IsInBattleRegenState();
+  }
+
+  bool CNormalGuildBattleStateInBattle::SetGotoRegenState()
+  {
+    return IsInBattleRegenState() && m_kRountStateList.GotoState(0);
   }
 
   CNormalGuildBattleStateDivide::CNormalGuildBattleStateDivide() = default;
@@ -460,6 +668,11 @@ namespace GUILD_BATTLE
   bool CNormalGuildBattleStateList::IsInBattleRegenState()
   {
     return IsInBattle() && INBATTLE.IsInBattleRegenState();
+  }
+
+  bool CNormalGuildBattleStateList::SetGotoRegenState()
+  {
+    return IsInBattle() && INBATTLE.SetGotoRegenState();
   }
 
   void CNormalGuildBattleStateList::SetBattleTime(ATL::CTimeSpan kTime)
@@ -963,6 +1176,105 @@ sprintf(buffer, "Map%d", uiMapInx);
     return true;
   }
 
+  char CNormalGuildBattleField::CreateFieldObject()
+  {
+    if (!m_bInit)
+    {
+      return 0;
+    }
+
+    for (unsigned int index = 0; index < m_ui1PGoalPosCnt; ++index)
+    {
+      _character_create_setdata createData{};
+      createData.m_nLayerIndex = 0;
+      createData.m_pMap = m_pkMap;
+      memcpy_0(createData.m_fStartPos, m_pk1PGoalZone[index].m_pkGoalPos->m_fCenterPos, sizeof(createData.m_fStartPos));
+      createData.m_pRecordSet = nullptr;
+      if (!m_pk1PGoalZone[index].Create(&createData))
+      {
+        const int mapCode = static_cast<int>(GetMapCode());
+        CGuildBattleLogger::Instance()->Log(
+          "CNormalGuildBattleField::CreateFieldObject()m_pk1PGoalZone[%u].Create( %d, 0 ) Fail!",
+          index,
+          mapCode);
+        return 0;
+      }
+      m_pk1PGoalZone[index].m_byColor = 0;
+    }
+
+    for (unsigned int index = 0; index < m_ui2PGoalPosCnt; ++index)
+    {
+      _character_create_setdata createData{};
+      createData.m_nLayerIndex = 0;
+      createData.m_pMap = m_pkMap;
+      memcpy_0(createData.m_fStartPos, m_pk2PGoalZone[index].m_pkGoalPos->m_fCenterPos, sizeof(createData.m_fStartPos));
+      createData.m_pRecordSet = nullptr;
+      if (!m_pk2PGoalZone[index].Create(&createData))
+      {
+        const int mapCode = static_cast<int>(GetMapCode());
+        CGuildBattleLogger::Instance()->Log(
+          "CNormalGuildBattleField::CreateFieldObject()m_pk2PGoalZone[%u].Create( %d, 1 ) Fail!",
+          index,
+          mapCode);
+        return 0;
+      }
+      m_pk2PGoalZone[index].m_byColor = 1;
+    }
+
+    for (unsigned int index = 0; index < m_uiRegenPosCnt; ++index)
+    {
+      _character_create_setdata createData{};
+      createData.m_nLayerIndex = 0;
+      createData.m_pMap = m_pkMap;
+      memcpy_0(createData.m_fStartPos, m_pkRegenPos[index].m_pkRegenPos->m_fCenterPos, sizeof(createData.m_fStartPos));
+      createData.m_pRecordSet = nullptr;
+      if (!m_pkRegenPos[index].Create(&createData))
+      {
+        const int mapCode = static_cast<int>(GetMapCode());
+        CGuildBattleLogger::Instance()->Log(
+          "CNormalGuildBattleField::CreateFieldObject()m_pkRegenPos[%u].Create( %d ) Fail!",
+          index,
+          mapCode);
+        return 0;
+      }
+      m_pkRegenPos[index].m_eState = CGravityStoneRegener::GSR_CREATE;
+    }
+
+    return 1;
+  }
+
+  char CNormalGuildBattleField::ClearBall()
+  {
+    if (!m_bInit)
+    {
+      return 0;
+    }
+
+    m_pkBall->Clear();
+    return 1;
+  }
+
+  char CNormalGuildBattleField::CheckIsInTown()
+  {
+    if (!m_bInit)
+    {
+      return 0;
+    }
+
+    if (!m_pkBall->IsInTown())
+    {
+      return 0;
+    }
+
+    ClearBall();
+    return 1;
+  }
+
+  bool CNormalGuildBattleField::CheckBallTakeLimitTime()
+  {
+    return m_bInit && m_pkBall->CheckTakeTimeLimit();
+  }
+
   bool CNormalGuildBattleField::Start(unsigned __int8 byStartPos, CPlayer *pkPlayer)
   {
     return MoveStartPos(byStartPos, 6u, pkPlayer)
@@ -1357,6 +1669,12 @@ sprintf(buffer, "Map%d", uiMapInx);
     player->SetBindMapData(m_pOldBindMapData);
     player->SetBindDummy(m_pOldBindDummyData);
     player->m_pUserDB->Update_Bind(m_szOldBindMapCode, m_szOldBindDummy, true);
+  }
+
+  void CNormalGuildBattleGuildMember::ReturnStartPos()
+  {
+    m_pkMember->pPlayer->Stop();
+    m_pkMember->pPlayer->RemoveAllContinousEffectGroup(0);
   }
 
   void CNormalGuildBattleGuildMember::NetClose()
@@ -1859,6 +2177,29 @@ const int member = static_cast<int>(GetMember(dwSerial));
     {
       --m_dwCurJoinMember;
     }
+  }
+
+  char CNormalGuildBattleGuild::ReturnStartPosAll(CNormalGuildBattleField *pkField)
+  {
+    if (!m_pkGuild)
+    {
+      return 0;
+    }
+
+    for (int memberIndex = 0; memberIndex < 50; ++memberIndex)
+    {
+      if (m_kMember[memberIndex].IsExist())
+      {
+        m_kMember[memberIndex].ReturnStartPos();
+        CPlayer *player = m_kMember[memberIndex].GetPlayer();
+        if (!pkField->MoveStartPos(m_byColorInx, 8u, player))
+        {
+          return 0;
+        }
+      }
+    }
+
+    return 1;
   }
 
   void CNormalGuildBattleGuild::ReturnBindPosAll()
@@ -2827,6 +3168,40 @@ const int member = static_cast<int>(GetMember(dwSerial));
   unsigned int CNormalGuildBattle::GetID()
   {
     return m_dwID;
+  }
+
+  CNormalGuildBattleGuild *CNormalGuildBattle::GetRed()
+  {
+    return m_pkRed;
+  }
+
+  CNormalGuildBattleGuild *CNormalGuildBattle::GetBlue()
+  {
+    return m_pkBlue;
+  }
+
+  CNormalGuildBattleField *CNormalGuildBattle::GetField()
+  {
+    return m_pkField;
+  }
+
+  CNormalGuildBattleLogger *CNormalGuildBattle::GetLogger()
+  {
+    return &m_kLogger;
+  }
+
+  bool CNormalGuildBattle::SetGotoRegenStart()
+  {
+    return m_pkStateList->SetGotoRegenState();
+  }
+
+  void CNormalGuildBattle::NotifyPassGravityStoneLimitTime()
+  {
+    char message[32]{};
+    message[0] = static_cast<char>(0xFF);
+    unsigned __int8 type[2]{27, 85};
+    m_k1P.SendMsg(type, message, 1u);
+    m_k2P.SendMsg(type, message, 1u);
   }
 
   CNormalGuildBattleGuild *CNormalGuildBattle::Get1P()

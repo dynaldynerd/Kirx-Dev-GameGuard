@@ -6,6 +6,16 @@ Only unresolved static strings/arrays/data from IDA go here. Remove entries once
 - "cursor:%u hour:%u min:%u msec:%u time:%s" (CWorldSchedule::CheckSch)
 - "code:%s event:%u info1:%u info2:%u" (CWorldSchedule::CheckSch)
 
+## Loop parity literals (2026-02-21)
+- "%s %s : %s\n" (`GUILD_BATTLE::CGuildBattleState::Log`)
+- " ( ID:%u Map:%u Red:%u(%s) Blue:%u(%s) )" (`GUILD_BATTLE::CNormalGuildBattleState::Log`, `GUILD_BATTLE::CNormalGuildBattleStateRound::Log`)
+- "CNormalGuildBattleStateRoundStart::Enter( CNormalGuildBattle * pkBattle ) :  0 == m_pkTimer !" (`GUILD_BATTLE::CNormalGuildBattleStateRoundStart::Loop`)
+- "CNormalGuildBattleStateRoundProcess::Loop( CNormalGuildBattle * pkBattle ) :  0 == m_pkTimer !" (`GUILD_BATTLE::CNormalGuildBattleStateRoundProcess::Loop`)
+- "CNormalGuildBattleStateRoundProcess::Loop( CNormalGuildBattle * pkBattle ) : Stone Owner Into The Town! -> GotoRegenStart" (`GUILD_BATTLE::CNormalGuildBattleStateRoundProcess::Loop`)
+- "CNormalGuildBattleStateRoundProcess::Loop( CNormalGuildBattle * pkBattle ) : Stone Have Time Limit! -> GotoRegenStart" (`GUILD_BATTLE::CNormalGuildBattleStateRoundProcess::Loop`)
+- "CNormalGuildBattleStateRoundReturnStartPos::Loop( CNormalGuildBattle * pkBattle ) :  0 == m_pkTimer !" (`GUILD_BATTLE::CNormalGuildBattleStateRoundReturnStartPos::Loop`)
+- "Loop : Return Start Pos" (`GUILD_BATTLE::CNormalGuildBattleStateRoundReturnStartPos::Loop`)
+
 ## UnmannedTrader request literals (2026-02-13)
 - "CUnmannedTraderUserInfoTable::Regist(...)" (CUnmannedTraderUserInfoTable::Regist)
 - "CUnmannedTraderUserInfoTable::ModifyPrice(...)" (CUnmannedTraderUserInfoTable::ModifyPrice)
@@ -1212,3 +1222,12 @@ Only unresolved static strings/arrays/data from IDA go here. Remove entries once
 - Static format string `"Schedule_%d"` (`CHolyStoneSystemDataMgr::LoadSceduleData`)
 - Static strings `"TIME0"`, `"TIME1"`, `"TIME2"`, `"TIME3"`, `"TIME4"`, `"TIME5"`, `"TIME6"` (`CHolyStoneSystemDataMgr::LoadSceduleData`, `c_TempPair`)
 - Static string `".\\Initialize\\NewHolySystem.ini"` (`CHolyStoneSystemDataMgr::LoadSceduleData`, INI path)
+
+## Newly logged (holy-stone-loop alignment 2026-02-21)
+- Static format string `"Cristal Event Item >> %s, %d"` (`CHolyStone::DropItem`)
+
+## Newly logged (CPlayer loop parity alignment 2026-02-21)
+- Static format string `"Lend item error : %s >> CheckTime(%d)"` (`CPlayer::Loop`)
+- Static string `"Item Serial Count Over"` (`CPlayer::Loop`)
+- Static format string `"id: %s >> %s ( %d ), Move Count : %d, map(%s)"` (`CPlayer::Loop`)
+- Static string `"CPlayer::pc_MineComplete() - Emb_AddStorage() Fail"` (`CPlayer::pc_MineComplete`)

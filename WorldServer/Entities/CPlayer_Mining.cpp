@@ -43,6 +43,7 @@
 #include "CItemUpgradeTable.h"
 #include "CMoneySupplyMgr.h"
 #include "COreAmountMgr.h"
+#include "CGoldenBoxItemMgr.h"
 #include "COreCuttingTable.h"
 #include "CDarkHole.h"
 #include "CDarkHoleChannel.h"
@@ -205,6 +206,175 @@ void CPlayer::pc_MineCancle()
     this->m_dwMineNextTime = static_cast<unsigned int>(-1);
     this->SendMsg_MineCancle();
   }
+}
+
+void CPlayer::pc_MineComplete()
+{
+  unsigned __int8 resultCode = 0;
+  unsigned __int8 targetSlot = 0xFF;
+  _STORAGE_LIST::_db_con *batteryItem = nullptr;
+
+  if (!COreAmountMgr::Instance()->IsOreRemain())
+  {
+    resultCode = 27;
+  }
+  else
+  {
+    batteryItem = m_Param.m_dbInven.GetPtrFromSerial(m_wBatterySerialTmp);
+    if (!batteryItem)
+    {
+      resultCode = 8;
+    }
+    else if (batteryItem->m_bLock)
+    {
+      resultCode = 12;
+    }
+    else
+    {
+      bool isGoldenBoxItem = false;
+      unsigned __int8 selectedGoldenBoxIndex = 0;
+      unsigned __int8 targetOreIndex = 0;
+
+      if (CGoldenBoxItemMgr::Instance()->Get_Event_Status() == 2)
+      {
+        for (unsigned int loopIndex = 0; ; ++loopIndex)
+        {
+          const unsigned __int8 loopCount = CGoldenBoxItemMgr::Instance()->GetLoopCount();
+          if (loopIndex >= static_cast<unsigned int>(loopCount))
+          {
+            break;
+          }
+
+          const unsigned __int16 oreIndex = CGoldenBoxItemMgr::Instance()->GetGoldBoxItemIndex(
+            static_cast<unsigned __int16>(loopIndex));
+          _base_fld *oreRecord = g_Main.m_tblItemData[17].GetRecord(oreIndex);
+          if (oreRecord)
+          {
+            const unsigned int rate = *reinterpret_cast<unsigned int *>(&oreRecord[3].m_strCode[4]);
+            if (rate)
+            {
+              const int randomValue = rand();
+              const int randomHigh = randomValue << 16;
+              const unsigned int lottery = static_cast<unsigned int>((rand() + randomHigh) % 0x1770 + 1);
+              if (rate <= lottery
+                  && CGoldenBoxItemMgr::Instance()->Get_Box_Count(static_cast<unsigned __int8>(loopIndex)))
+              {
+                targetOreIndex = static_cast<unsigned __int8>(
+                  CGoldenBoxItemMgr::Instance()->GetGoldBoxItemIndex(static_cast<unsigned __int16>(loopIndex)));
+                isGoldenBoxItem = true;
+                selectedGoldenBoxIndex = static_cast<unsigned __int8>(loopIndex);
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      if (!isGoldenBoxItem)
+      {
+        targetOreIndex = static_cast<unsigned __int8>(m_bySelectOreIndex + rand() % 3);
+      }
+
+      const int targetRecordIndex = targetOreIndex;
+      const int recordCount = g_Main.m_tblItemData[17].GetRecordNum();
+      if (targetRecordIndex >= recordCount)
+      {
+        resultCode = 9;
+      }
+      else
+      {
+        for (int slotIndex = 0; slotIndex < m_Param.GetUseSlot(); ++slotIndex)
+        {
+          _STORAGE_LIST::_db_con *item = &m_Param.m_dbInven.m_pStorageList[slotIndex];
+          if (item->m_bLoad
+              && item->m_byTableCode == 17
+              && item->m_wItemIndex == targetOreIndex
+              && item->m_dwDur < 0x63
+              && !item->m_bLock)
+          {
+            targetSlot = static_cast<unsigned __int8>(slotIndex);
+            break;
+          }
+        }
+
+        if (targetSlot == 0xFF && m_Param.m_dbInven.GetIndexEmptyCon() == 0xFF)
+        {
+          resultCode = 10;
+        }
+        else if (m_zMinePos[0] != static_cast<__int16>(static_cast<int>(m_fCurPos[0]))
+                 || m_zMinePos[1] != static_cast<__int16>(static_cast<int>(m_fCurPos[2])))
+        {
+          resultCode = 13;
+        }
+      }
+
+      if (!resultCode)
+      {
+        unsigned __int8 oreDur = 0;
+        _STORAGE_LIST::_db_con minedItem{};
+        unsigned __int16 oreSerial = 0;
+
+        if (targetSlot == 0xFF)
+        {
+          _STORAGE_LIST::_db_con newItem{};
+          newItem.m_byTableCode = 17;
+          newItem.m_dwDur = 1;
+          newItem.m_wItemIndex = targetOreIndex;
+          newItem.m_dwLv = 0xFFFFFFF;
+          newItem.m_wSerial = m_Param.GetNewItemSerial();
+
+          if (!Emb_AddStorage(0, &newItem, false, true))
+          {
+            s_MgrItemHistory.add_storage_fail(
+              m_ObjID.m_wIndex,
+              &newItem,
+              "CPlayer::pc_MineComplete() - Emb_AddStorage() Fail",
+              m_szItemHistoryFileName);
+          }
+
+          memcpy_0(&minedItem, &newItem, sizeof(minedItem));
+          minedItem.m_dwDur = 1;
+          oreSerial = newItem.m_wSerial;
+          oreDur = 1;
+        }
+        else
+        {
+          _STORAGE_LIST::_db_con *inventoryItem = &m_Param.m_dbInven.m_pStorageList[targetSlot];
+          oreDur = static_cast<unsigned __int8>(Emb_AlterDurPoint(0, inventoryItem->m_byStorageIndex, 1, false, false));
+          oreSerial = inventoryItem->m_wSerial;
+          memset_0(&minedItem, 0, sizeof(minedItem));
+          memcpy_0(&minedItem, inventoryItem, sizeof(minedItem));
+        }
+
+        const unsigned __int16 batteryLeftDur = static_cast<unsigned __int16>(
+          Emb_AlterDurPoint(0, batteryItem->m_byStorageIndex, -static_cast<int>(m_byDelaySec), false, false));
+        _base_fld *oreRecord = g_Main.m_tblItemData[17].GetRecord(targetOreIndex);
+        Emb_CheckActForQuest(12, oreRecord->m_strCode, 1u, false);
+        SendMsg_MineCompleteResult(resultCode, targetOreIndex, oreSerial, oreDur, batteryLeftDur);
+
+        if (isGoldenBoxItem && !resultCode)
+        {
+          if (CGoldenBoxItemMgr::Instance()->Get_Event_Status() == 2)
+          {
+            CGoldenBoxItemMgr::Instance()->Set_Box_Count(selectedGoldenBoxIndex);
+            minedItem.m_dwDur = 1;
+            SendMsg_Notify_Get_Golden_Box(4u, m_Param.GetCharSerial(), m_Param.GetCharNameA(), &minedItem, false);
+          }
+        }
+
+        eAddMineOre(m_Param.GetRaceCode(), oreRecord[3].m_strCode[0], 1);
+        COreAmountMgr::Instance()->DecreaseOre(1u);
+      }
+    }
+  }
+
+  if (resultCode)
+  {
+    SendMsg_MineCompleteResult(resultCode, 0xFFu, 0xFFFFu, 0xFFu, 0xFFFFu);
+  }
+
+  m_dwMineNextTime = static_cast<unsigned int>(-1);
+  m_bMineMode = false;
 }
 
 void CPlayer::SendMsg_CuttingCompleteResult(unsigned __int8 byRet)

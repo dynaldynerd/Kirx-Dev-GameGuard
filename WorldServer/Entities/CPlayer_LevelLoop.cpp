@@ -47,6 +47,13 @@
 #include "COreCuttingTable.h"
 #include "CDarkHole.h"
 #include "CDarkHoleChannel.h"
+#include "CParkingUnit.h"
+#include "CBillingManager.h"
+#include "PatriarchElectProcessor.h"
+#include "TimeLimitJadeMng.h"
+#include "TimeLimitJade.h"
+#include "AutominePersonalMgr.h"
+#include "GuildBattle.h"
 #include "CDarkHoleDungeonQuest.h"
 #include "CDarkHoleDungeonQuestSetup.h"
 #include "TicketItem_fld.h"
@@ -928,6 +935,262 @@ void CPlayer::AutoRecover()
   }
 }
 
+unsigned int CPlayer::SumMinuteOne(_SYSTEMTIME *tm)
+{
+  int dayCount = 0;
+  int totalDays = 0;
+
+  for (int monthIndex = 0; monthIndex < tm->wMonth - 1; ++monthIndex)
+  {
+    if (tm->wMonth == 2)
+    {
+      if ((((tm->wYear & 3) != 0) && (tm->wYear % 100)) || (tm->wYear % 400))
+      {
+        dayCount = 29;
+      }
+      else
+      {
+        dayCount = 28;
+      }
+    }
+    else if (tm->wMonth == 4 || tm->wMonth == 6 || tm->wMonth == 9 || tm->wMonth == 11)
+    {
+      dayCount = 30;
+    }
+    else
+    {
+      dayCount = 31;
+    }
+
+    totalDays += dayCount;
+  }
+
+  totalDays += tm->wDay;
+  totalDays *= 1440;
+  return static_cast<unsigned int>(60 * tm->wHour + totalDays + tm->wMinute);
+}
+
+unsigned int CPlayer::SumMinuteBetween(_SYSTEMTIME *tmLast, _SYSTEMTIME *tmLocal)
+{
+  const unsigned __int16 yearDiff = tmLocal->wYear - tmLast->wYear;
+  unsigned __int16 betweenYearCount = 0;
+  if (yearDiff)
+  {
+    betweenYearCount = static_cast<unsigned __int16>(yearDiff - 1);
+  }
+
+  unsigned int totalMinutes = 0;
+  if (betweenYearCount <= 1u)
+  {
+    const unsigned int localSum = SumMinuteOne(tmLocal);
+    const unsigned int lastSum = SumMinuteOne(tmLast);
+    return localSum - lastSum;
+  }
+
+  _SYSTEMTIME yearMarks[126]{};
+  memcpy_0(&yearMarks[0], tmLast, sizeof(_SYSTEMTIME));
+  memcpy_0(&yearMarks[yearDiff], tmLocal, sizeof(_SYSTEMTIME));
+
+  if (betweenYearCount)
+  {
+    _SYSTEMTIME yearEnd{};
+    yearEnd.wMonth = 12;
+    yearEnd.wDay = 31;
+    yearEnd.wHour = 23;
+    yearEnd.wMinute = 59;
+
+    for (int j = 0; j < betweenYearCount; ++j)
+    {
+      yearEnd.wYear = static_cast<unsigned __int16>(tmLast->wYear + j + 1);
+      memcpy_0(&yearMarks[j + 1], &yearEnd, sizeof(_SYSTEMTIME));
+    }
+  }
+
+  _SYSTEMTIME firstYearEnd{};
+  firstYearEnd.wYear = tmLast->wYear;
+  firstYearEnd.wMonth = 12;
+  firstYearEnd.wDay = 31;
+  firstYearEnd.wHour = 23;
+  firstYearEnd.wMinute = 59;
+
+  totalMinutes = SumMinuteOne(&firstYearEnd) - SumMinuteOne(tmLast);
+  totalMinutes += SumMinuteOne(tmLocal);
+
+  for (int k = 1; k < betweenYearCount; ++k)
+  {
+    totalMinutes += SumMinuteOne(&yearMarks[k]);
+  }
+
+  return totalMinutes;
+}
+
+void CPlayer::_CheckForcePullUnit()
+{
+  if (m_pParkingUnit)
+  {
+    const unsigned int currentTime = timeGetTime();
+    const unsigned int elapsedTime = currentTime - m_dwLastTimeCheckUnitViewOver;
+    if (elapsedTime > 0x7D0)
+    {
+      m_dwLastTimeCheckUnitViewOver = currentTime;
+      if (m_pCurMap == m_pParkingUnit->m_pCurMap
+          && GetSqrt(m_fCurPos, m_pParkingUnit->m_fCurPos) < 540.0f
+          && std::fabs(m_fCurPos[1] - m_pParkingUnit->m_fCurPos[1]) < 100.0f)
+      {
+        m_dwUnitViewOverTime = static_cast<unsigned int>(-1);
+      }
+      else if (m_dwUnitViewOverTime == static_cast<unsigned int>(-1))
+      {
+        m_dwUnitViewOverTime = currentTime;
+      }
+      else if (currentTime - m_dwUnitViewOverTime > 0xEA60)
+      {
+        ForcePullUnit(false);
+      }
+    }
+  }
+}
+
+void CPlayer::UpdatedMasteryWriteHistory()
+{
+  const unsigned int loopTime = GetLoopTime();
+  const unsigned int elapsed = loopTime - m_dwUMWHLastTime;
+  if (elapsed > 0xDBBA0)
+  {
+    m_dwUMWHLastTime = loopTime;
+    s_MgrLvHistory.update_mastery(
+      m_ObjID.m_wIndex,
+      m_byUserDgr,
+      m_Param.GetLevel(),
+      m_Param.GetExp(),
+      m_dwExpRate,
+      m_Param.m_byPvPGrade,
+      m_nMaxPoint,
+      &m_pmMst,
+      m_Param.m_dwAlterMastery,
+      m_szLvHistoryFileName,
+      0,
+      nullptr);
+    m_Param.InitAlterMastery();
+  }
+}
+
+void CPlayer::_check_hp_send_party()
+{
+  if (m_pPartyMgr->IsPartyMode())
+  {
+    const int hpRate = static_cast<int>(CalcCurHPRate());
+    if (std::abs(hpRate - static_cast<int>(m_wPointRate_PartySend[0])) > 500)
+    {
+      m_wPointRate_PartySend[0] = hpRate;
+      SendData_PartyMemberHP();
+    }
+
+    const int fpRate = static_cast<int>(CalcCurFPRate());
+    if (std::abs(fpRate - static_cast<int>(m_wPointRate_PartySend[1])) > 500)
+    {
+      m_wPointRate_PartySend[1] = fpRate;
+      SendData_PartyMemberFP();
+    }
+
+    const int spRate = static_cast<int>(CalcCurSPRate());
+    if (std::abs(spRate - static_cast<int>(m_wPointRate_PartySend[2])) > 500)
+    {
+      m_wPointRate_PartySend[2] = spRate;
+      SendData_PartyMemberSP();
+    }
+  }
+}
+
+void CPlayer::UpdateChaosModeState(unsigned int dwCurTime)
+{
+  if (m_nChaosMode)
+  {
+    if (dwCurTime <= m_dwChaosModeEndTime)
+    {
+      if (m_nChaosMode == 1 && m_dwChaosModeEndTime - dwCurTime < m_dwChaosModeTime10Per)
+      {
+        m_nChaosMode = 2;
+      }
+      else if (m_nChaosMode == 2 && m_dwChaosModeEndTime - dwCurTime >= m_dwChaosModeTime10Per)
+      {
+        m_nChaosMode = 1;
+      }
+    }
+    else
+    {
+      m_nChaosMode = 0;
+    }
+  }
+}
+
+void CPlayer::CheckBattleMode()
+{
+  if (m_byBattleMode)
+  {
+    DWORD delay = 0;
+    if (m_byBattleMode == 1)
+    {
+      delay = 15000;
+    }
+    else
+    {
+      delay = 10000;
+    }
+
+    if (timeGetTime() - m_dwBattleTime >= delay)
+    {
+      m_byBattleMode = 0;
+      m_dwBattleTime = 0;
+    }
+  }
+}
+
+void CPlayer::CheckNameChange()
+{
+  if (m_NameChangeBuddyInfo.bNameChange)
+  {
+    int checkedCount = 0;
+    while (m_NameChangeBuddyInfo.nSendNum < MAX_PLAYER && checkedCount < 100)
+    {
+      ++checkedCount;
+
+      CPlayer *target = &g_Player[m_NameChangeBuddyInfo.nSendNum];
+      if (target->m_bLive && this != target)
+      {
+        const int targetRaceCode = target->m_Param.GetRaceCode();
+        if (targetRaceCode == m_Param.GetRaceCode())
+        {
+          for (int j = 0; j < 50; ++j)
+          {
+            _BUDDY_LIST::__list *buddy = &target->m_pmBuddy.m_List[j];
+            if (buddy->fill())
+            {
+              if (m_Param.GetCharSerial() == buddy->dwSerial)
+              {
+                char *newName = m_Param.GetCharNameW();
+                if (strcmp_0(buddy->wszName, newName))
+                {
+                  strcpy_0(buddy->wszName, newName);
+                  target->SendMsg_BuddyNameReNewal(buddy->dwSerial, buddy->wszName);
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      ++m_NameChangeBuddyInfo.nSendNum;
+    }
+
+    if (m_NameChangeBuddyInfo.nSendNum >= MAX_PLAYER)
+    {
+      m_NameChangeBuddyInfo.Init();
+    }
+  }
+}
+
 void CPlayer::Loop()
 {
   if (!m_bOper)
@@ -935,63 +1198,66 @@ void CPlayer::Loop()
     return;
   }
 
-  const unsigned int currentTime = timeGetTime();
-
   if (CCharacter::GetStealth(true) && IsRecallAnimus())
   {
-    if (!g_Main.IsReleaseServiceMode() || m_byUserDgr)
+    if (g_Main.IsReleaseServiceMode())
+    {
+      if (!m_byUserDgr)
+      {
+        _AnimusReturn(2u);
+      }
+    }
+    else
     {
       _AnimusReturn(2u);
     }
   }
 
+  const unsigned int currentTime = timeGetTime();
   LendItemSheet *lendSheet = LendItemMng::Instance()->GetSheet(m_ObjID.m_wIndex);
+  int lendCheckResult = 0;
   if (lendSheet)
   {
-    const int lendCheckResult = static_cast<int>(lendSheet->CheckTime());
-    if (lendCheckResult)
-    {
-      g_Main.m_logSystemError.Write(
-        "Lend item error : %s >> CheckTime(%d)",
-        m_Param.GetCharNameW(),
-        lendCheckResult);
-    }
+    lendCheckResult = static_cast<int>(lendSheet->CheckTime());
+  }
+  if (lendCheckResult)
+  {
+    g_Main.m_logSystemError.Write(
+      "Lend item error : %s >> CheckTime(%d)",
+      m_Param.GetCharNameW(),
+      lendCheckResult);
   }
 
+  CCharacter::UpdateSFCont();
   g_PotionMgr.UpdatePotionContEffect(this);
 
   if (m_bUpCheckEquipEffect)
   {
     for (int effectIndex = 0; effectIndex < 15; ++effectIndex)
     {
-      if (m_byEffectEquipCode[effectIndex] != 2)
+      if (m_byEffectEquipCode[effectIndex] == 2)
       {
-        continue;
-      }
+        _STORAGE_LIST::_db_con *item = nullptr;
+        if (effectIndex >= 8)
+        {
+          item = &m_Param.m_dbEmbellish.m_pStorageList[effectIndex - 8];
+        }
+        else
+        {
+          item = &m_Param.m_dbEquip.m_pStorageList[effectIndex];
+        }
 
-      _STORAGE_LIST::_db_con *item = nullptr;
-      if (effectIndex >= 8)
-      {
-        item = &m_Param.m_dbEmbellish.m_pStorageList[effectIndex - 8];
-      }
-      else
-      {
-        item = &m_Param.m_dbEquip.m_pStorageList[effectIndex];
-      }
-
-      if (!item->m_bLoad || !IsEffectableEquip(item))
-      {
-        continue;
-      }
-
-      SetEquipEffect(item, true);
-      m_byEffectEquipCode[effectIndex] = 1;
-      if (item->m_byTableCode == 6 && !IsRidingUnit())
-      {
-        m_pmWpn.FixWeapon(item);
+        if (item->m_bLoad && IsEffectableEquip(item))
+        {
+          SetEquipEffect(item, true);
+          m_byEffectEquipCode[effectIndex] = 1;
+          if (item->m_byTableCode == 6 && !IsRidingUnit())
+          {
+            m_pmWpn.FixWeapon(item);
+          }
+        }
       }
     }
-
     m_bUpCheckEquipEffect = false;
   }
 
@@ -999,34 +1265,29 @@ void CPlayer::Loop()
   {
     for (int effectIndex = 0; effectIndex < 15; ++effectIndex)
     {
-      if (m_byEffectEquipCode[effectIndex] != 1)
+      if (m_byEffectEquipCode[effectIndex] == 1)
       {
-        continue;
-      }
+        _STORAGE_LIST::_db_con *item = nullptr;
+        if (effectIndex >= 8)
+        {
+          item = &m_Param.m_dbEmbellish.m_pStorageList[effectIndex - 8];
+        }
+        else
+        {
+          item = &m_Param.m_dbEquip.m_pStorageList[effectIndex];
+        }
 
-      _STORAGE_LIST::_db_con *item = nullptr;
-      if (effectIndex >= 8)
-      {
-        item = &m_Param.m_dbEmbellish.m_pStorageList[effectIndex - 8];
-      }
-      else
-      {
-        item = &m_Param.m_dbEquip.m_pStorageList[effectIndex];
-      }
-
-      if (!item->m_bLoad || IsEffectableEquip(item))
-      {
-        continue;
-      }
-
-      SetEquipEffect(item, false);
-      m_byEffectEquipCode[effectIndex] = 2;
-      if (item->m_byTableCode == 6 && !IsRidingUnit())
-      {
-        m_pmWpn.FixWeapon(nullptr);
+        if (item->m_bLoad && !IsEffectableEquip(item))
+        {
+          SetEquipEffect(item, false);
+          m_byEffectEquipCode[effectIndex] = 2;
+          if (item->m_byTableCode == 6 && !IsRidingUnit())
+          {
+            m_pmWpn.FixWeapon(nullptr);
+          }
+        }
       }
     }
-
     m_bDownCheckEquipEffect = false;
   }
 
@@ -1045,35 +1306,36 @@ void CPlayer::Loop()
 
   if (m_tmrIntervalSec.CountingTimer())
   {
-    if (m_pCurMap && m_pUserDB && m_pCurMap->m_pMapSet && !m_pCurMap->m_pMapSet->m_nMapType)
+    _CheckForcePullUnit();
+    if (m_pCurMap && m_pUserDB && !m_pCurMap->m_pMapSet->m_nMapType)
     {
       m_pUserDB->Update_Map(static_cast<unsigned __int8>(m_pCurMap->m_pMapSet->m_dwIndex), m_fCurPos);
     }
-
     CheckPosInTown();
-    AutoRecover();
-    AutoRecover_Animus();
-    AutoCharge_Booster();
+    UpdatedMasteryWriteHistory();
+    m_QuestMgr.Loop();
 
     unsigned __int16 currentTol[4]{};
     currentTol[0] = static_cast<unsigned __int16>(GetFireTol());
     currentTol[1] = static_cast<unsigned __int16>(GetWaterTol());
     currentTol[2] = static_cast<unsigned __int16>(GetSoilTol());
     currentTol[3] = static_cast<unsigned __int16>(GetWindTol());
-    if (memcmp_0(m_zLastTol, currentTol, sizeof(currentTol)) != 0)
+    if (memcmp_0(m_zLastTol, currentTol, sizeof(currentTol)))
     {
       memcpy_0(m_zLastTol, currentTol, sizeof(currentTol));
       SendMsg_AlterTol();
     }
 
     m_byDefMatCount = 0;
+    _check_hp_send_party();
   }
 
+  UpdateChaosModeState(currentTime);
   SenseState();
 
   if (m_dwNextTimeDungeonDie && m_dwNextTimeDungeonDie < currentTime)
   {
-    if (m_bCorpse && m_pCurMap && m_pCurMap->m_pMapSet->m_nMapType == 1)
+    if (m_bCorpse && m_pCurMap->m_pMapSet->m_nMapType == 1)
     {
       pc_Revival(true);
     }
@@ -1082,40 +1344,92 @@ void CPlayer::Loop()
 
   if (m_bMineMode && GetLoopTime() > m_dwMineNextTime)
   {
-    pc_MineCancle();
+    pc_MineComplete();
   }
 
-  if (m_bMove && GetLoopTime() > m_dwLastSetPointTime && (GetLoopTime() - m_dwLastSetPointTime) > 3000)
+  _check_target_object();
+
+  if (m_bMove
+      && GetLoopTime() > m_dwLastSetPointTime
+      && GetLoopTime() - m_dwLastSetPointTime > 0xBB8)
   {
-    const bool outOfStopRange = IsOutExtraStopPos(m_fCurPos);
-    SendMsg_Stop(outOfStopRange);
+    const bool isOutExtraStopPos = IsOutExtraStopPos(m_fCurPos);
+    SendMsg_Stop(isOutExtraStopPos);
     CCharacter::Stop();
   }
 
-  if ((currentTime - m_dwLastCheckRegionTime) > 0x1388)
+  if (m_tmrBilling.CountingTimer() && !m_pUserDB->m_byUserDgr)
+  {
+    const bool hasBillingType = m_pUserDB->m_BillingInfo.iType != 0;
+    if (hasBillingType)
+    {
+      CBillingManager::Instance()->Alive(m_pUserDB);
+    }
+    if (!hasBillingType)
+    {
+      m_pUserDB->SetBillingNoLogout(true);
+      const unsigned __int16 closeDelay = CNationSettingManager::Instance()->GetBillingForceCloseDelay();
+      SendMsg_BillingExipreInform(0, closeDelay);
+      ReservationForceClose();
+    }
+  }
+
+  if (m_Param.GetCurItemSerial() > 0xEA60u)
+  {
+    s_MgrItemHistory.item_serial_full(m_ObjID.m_wIndex, m_szItemHistoryFileName);
+    m_pUserDB->ForceCloseCommand(7u, 0xFFFFFFFFu, true, "Item Serial Count Over");
+  }
+
+  if (m_tmrGroupTargeting.CountingTimer())
+  {
+    _check_party_target_object();
+    _check_guild_target_object();
+    _check_race_target_object();
+  }
+
+  if (m_byPatriarchAppointPropose != 0xFF
+      && currentTime - m_dwPatriarchAppointTime >= 0x493E0)
+  {
+    char appointData[20]{};
+    appointData[0] = 1;
+    PatriarchElectProcessor::Instance()->Doit(_eRespAppoint, this, appointData);
+  }
+
+  if (currentTime - m_dwLastCheckRegionTime > 0x1388)
   {
     if (CGameObject::GetCurSecNum() != static_cast<unsigned int>(-1))
     {
       CheckPos_Region();
     }
-
     if (m_nCheckMovePacket > 17)
     {
       m_bCheckMovePacket = true;
       g_Main.m_logMove.Write(
         "id: %s >> %s ( %d ), Move Count : %d, map(%s)",
-        m_pUserDB ? m_pUserDB->m_szAccountID : "<null-id>",
+        m_pUserDB->m_szAccountID,
         m_Param.GetCharNameA(),
         m_dwObjSerial,
         m_nCheckMovePacket,
-        (m_pCurMap && m_pCurMap->m_pMapSet) ? m_pCurMap->m_pMapSet->m_strCode : "<null-map>");
+        m_pCurMap->m_pMapSet->m_strCode);
     }
-
     m_nCheckMovePacket = 0;
-    m_dwLastCheckRegionTime = currentTime;
   }
 
   CheckAlterMaxPoint();
+  m_kPvpOrderView.Loop(m_ObjID.m_wIndex);
+  CheckBattleMode();
+
+  if (IsApplyPcbangPrimium())
+  {
+    m_kPcBangCoupon.Loop(m_ObjID.m_wIndex);
+  }
+
+  TimeLimitJade *timeLimitJade = TimeLimitJadeMng::Instance()->GetSheet(m_ObjID.m_wIndex);
+  if (timeLimitJade && m_tmrEffectEndTime.CountingTimer())
+  {
+    timeLimitJade->CheckStartTime();
+    timeLimitJade->CheckEndTime();
+  }
 
   if (m_tmrSiegeTime.CountingTimer())
   {
@@ -1131,6 +1445,141 @@ void CPlayer::Loop()
   if (m_Param.m_bTrunkOpen && !IsBeNearStore(this, 10))
   {
     m_Param.m_bTrunkOpen = false;
+  }
+
+  CheckNameChange();
+
+  if (m_tmrAccumPlayingTime.CountingTimer())
+  {
+    _SYSTEMTIME localTime{};
+    GetLocalTime(&localTime);
+    const unsigned int accPlayTime = SumMinuteBetween(&m_tmCalcTime, &localTime);
+    memcpy_s(&m_tmCalcTime, sizeof(m_tmCalcTime), &localTime, sizeof(localTime));
+    m_pUserDB->Update_UserPlayTime(accPlayTime);
+  }
+
+  if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(m_id.wIndex) == 99)
+  {
+    if (m_pDHChannel)
+    {
+      unsigned __int8 raceSerial = 0xFF;
+      const int raceCode = m_Param.GetRaceCode();
+      if (raceCode == 0)
+      {
+        raceSerial = 0;
+      }
+      else if (raceCode == 1)
+      {
+        raceSerial = 1;
+      }
+      else if (raceCode == 2)
+      {
+        raceSerial = 3;
+      }
+
+      CMapItemStoreList *storeList = CItemStoreManager::Instance()->GetMapItemStoreListBySerial(raceSerial);
+      if (storeList)
+      {
+        for (int index = 0; index < storeList->m_nItemStoreNum; ++index)
+        {
+          static_cast<void>(&storeList->m_ItemStore[index]);
+        }
+
+        if (m_bCorpse)
+        {
+          pc_Revival(true);
+        }
+        else
+        {
+          CMapData *intoMap = nullptr;
+          float outPos[3]{};
+          if (m_bLive)
+          {
+            intoMap = g_MapOper.GetPosStartMap(static_cast<unsigned __int8>(m_Param.GetRaceCode()), false, outPos);
+            if (intoMap)
+            {
+              pc_Resurrect(false);
+              ForcePullUnit(false);
+              OutOfMap(intoMap, 0, 3u, outPos);
+              SendMsg_GotoBasePortalResult(0);
+            }
+          }
+        }
+      }
+      SendMsg_TLStatusPenalty(7u);
+    }
+
+    if (m_pPartyMgr->IsPartyMode())
+    {
+      SendMsg_PartyLeaveSelfResult(nullptr, false);
+      wa_PartySelfLeave(&m_id);
+      SendMsg_TLStatusPenalty(2u);
+    }
+
+    if (m_bInGuildBattle)
+    {
+      const unsigned int guildSerial = m_Param.GetGuildSerial();
+      GUILD_BATTLE::CNormalGuildBattle *battle =
+        GUILD_BATTLE::CNormalGuildBattleManager::Instance()->GetBattleByGuildSerial(guildSerial);
+
+      if (battle && battle->IsReadyOrCountState())
+      {
+        GUILD_BATTLE::CNormalGuildBattleManager::Instance()->LeaveGuild(this);
+        SendMsg_TLStatusPenalty(6u);
+      }
+      if (battle && battle->IsInBattle())
+      {
+        GUILD_BATTLE::CNormalGuildBattleManager::Instance()->LeaveGuild(this);
+        SendMsg_TLStatusPenalty(6u);
+      }
+    }
+
+    if (m_bMineMode)
+    {
+      m_bMineMode = false;
+      m_dwMineNextTime = static_cast<unsigned int>(-1);
+      SendMsg_MineCancle();
+      SendMsg_TLStatusPenalty(5u);
+    }
+
+    const int playerIndex = m_id.wIndex;
+    if (AutominePersonalMgr::instance()->Is_MineRun(playerIndex))
+    {
+      AutominePersonalMgr::instance()->uninstall(m_id.wIndex);
+      AutominePersonalMgr::instance()->extract_battery(m_id.wIndex);
+      SendMsg_TLStatusPenalty(5u);
+    }
+  }
+
+  for (int actionIndex = 0; actionIndex < 3; ++actionIndex)
+  {
+    CActionPointSystemMgr *actionPointMgr = CActionPointSystemMgr::Instance();
+    if (actionPointMgr->IsSystemEnable(static_cast<unsigned __int8>(actionIndex)))
+    {
+      actionPointMgr = CActionPointSystemMgr::Instance();
+      if (actionPointMgr->IsPointReset(static_cast<unsigned __int8>(actionIndex)))
+      {
+        if (m_pUserDB->GetActPoint(static_cast<unsigned __int8>(actionIndex)))
+        {
+          actionPointMgr = CActionPointSystemMgr::Instance();
+          if (actionPointMgr->GetEventStatus(static_cast<unsigned __int8>(actionIndex)) == 3
+              || (actionPointMgr = CActionPointSystemMgr::Instance(),
+                  !actionPointMgr->GetEventStatus(static_cast<unsigned __int8>(actionIndex))))
+          {
+            m_pUserDB->Update_User_Action_Point(static_cast<unsigned __int8>(actionIndex), 0);
+            SendMsg_Alter_Action_Point(static_cast<unsigned __int8>(actionIndex), 0);
+          }
+        }
+      }
+    }
+  }
+
+  if (m_tmrPremiumPVPInform.CountingTimer() && IsApplyPcbangPrimium())
+  {
+    const bool isPremium = IsApplyPcbangPrimium();
+    const unsigned __int8 level = static_cast<unsigned __int8>(m_Param.GetLevel());
+    const int maxTempPoint = m_kPvpCashPoint.GetMaxTempPoint(level, isPremium);
+    SendMsg_MaxPvpPointInform(maxTempPoint);
   }
 }
 

@@ -75,6 +75,7 @@ namespace GUILD_BATTLE
     virtual int Loop(CGuildBattle *pkBattle);
     virtual int Fin(CGuildBattle *pkBattle);
     virtual ATL::CTimeSpan *GetTerm(ATL::CTimeSpan *result);
+    void Log(char *szMsg);
   };
 
   class CGuildBattleStateList
@@ -126,6 +127,8 @@ namespace GUILD_BATTLE
   {
   public:
     CNormalGuildBattleState();
+    int Loop(CGuildBattle *pkBattle) override;
+    void Log(CNormalGuildBattle *pkBattle, char *szFormat, ...);
   };
 
   class CNormalGuildBattleStateNotify : public CNormalGuildBattleState
@@ -150,12 +153,15 @@ namespace GUILD_BATTLE
   {
   public:
     CNormalGuildBattleStateRound();
+    int Loop(CGuildBattle *pkBattle) override;
+    void Log(CNormalGuildBattle *pkBattle, char *szFormat, ...);
   };
 
   class CNormalGuildBattleStateRoundStart : public CNormalGuildBattleStateRound
   {
   public:
     CNormalGuildBattleStateRoundStart();
+    int Loop(CGuildBattle *pkBattle) override;
 
     CMyTimer *m_pkTimer;
   };
@@ -164,6 +170,7 @@ namespace GUILD_BATTLE
   {
   public:
     CNormalGuildBattleStateRoundProcess();
+    int Loop(CGuildBattle *pkBattle) override;
 
     CMyTimer *m_pkTimer;
   };
@@ -172,6 +179,7 @@ namespace GUILD_BATTLE
   {
   public:
     CNormalGuildBattleStateRoundReturnStartPos();
+    int Loop(CGuildBattle *pkBattle) override;
 
     CMyTimer *m_pkTimer;
   };
@@ -192,8 +200,10 @@ namespace GUILD_BATTLE
   {
   public:
     CNormalGuildBattleStateInBattle();
+    int Loop(CGuildBattle *pkBattle) override;
     void SetBattleTime(ATL::CTimeSpan kTime);
     bool IsInBattleRegenState();
+    bool SetGotoRegenState();
 
     ATL::CTimeSpan m_kInBattleTime;
     CNormalGuildBattleStateRoundList m_kRountStateList;
@@ -225,6 +235,7 @@ namespace GUILD_BATTLE
     bool IsReadyOrCountState();
     bool IsInBattle();
     bool IsInBattleRegenState();
+    bool SetGotoRegenState();
     void SetBattleTime(ATL::CTimeSpan kTime);
 
     CNormalGuildBattleStateNotify NOTIFY;
@@ -254,6 +265,10 @@ namespace GUILD_BATTLE
   {
   public:
     bool Init(unsigned int uiMapInx);
+    char CreateFieldObject();
+    char ClearBall();
+    char CheckIsInTown();
+    bool CheckBallTakeLimitTime();
     bool Start(unsigned __int8 byStartPos, CPlayer *pkPlayer);
     char MoveStartPos(unsigned __int8 byStartPos, unsigned __int8 byMapOutType, CPlayer *pkPlayer);
     unsigned __int8 DropBall(CPlayer *pkPlayer);
@@ -328,6 +343,7 @@ namespace GUILD_BATTLE
     void Send(unsigned __int8 *byType, char *pSend, unsigned __int16 uiSize);
     void CleanUpBattle();
     void NetClose();
+    void ReturnStartPos();
     void ReturnBindPos();
     void PushDQSPvpPoint(int dwPvpPoint);
 
@@ -381,6 +397,7 @@ namespace GUILD_BATTLE
     char NetClose(bool bInGuildBattle, unsigned int dwSerial, CNormalGuildBattleLogger *kLogger);
     bool IsMember(unsigned int dwSerial);
     void LeaveGuild(unsigned int dwSerial, bool bInGuildBattle, CNormalGuildBattleLogger *kLogger);
+    char ReturnStartPosAll(CNormalGuildBattleField *pkField);
     void ReturnBindPosAll();
     char *GetANSIGuildName();
 
@@ -444,6 +461,12 @@ namespace GUILD_BATTLE
       CNormalGuildBattleGuildMember *pkTopGoalMember,
       CNormalGuildBattleGuildMember *pkTopKillMember);
     unsigned int GetID();
+    CNormalGuildBattleGuild *GetRed();
+    CNormalGuildBattleGuild *GetBlue();
+    CNormalGuildBattleField *GetField();
+    CNormalGuildBattleLogger *GetLogger();
+    bool SetGotoRegenStart();
+    void NotifyPassGravityStoneLimitTime();
     CNormalGuildBattleGuild *Get1P();
     CNormalGuildBattleGuild *Get2P();
     unsigned __int8 GetGuildBattleNumber();

@@ -426,6 +426,81 @@ void CCharacter::RemoveSFContEffect(
   m_bLastContEffectUpdate = true;
 }
 
+void CCharacter::UpdateSFCont()
+{
+  if (!m_tmrSFCont.CountingTimer())
+  {
+    return;
+  }
+
+  const unsigned int sfContCurTime = _sf_continous::GetSFContCurTime();
+  for (int contCode = 0; contCode < 2; ++contCode)
+  {
+    for (int slot = 0; slot < 8; ++slot)
+    {
+      _sf_continous *cont = &m_SFCont[contCode][slot];
+      if (!cont->m_bExist)
+      {
+        continue;
+      }
+
+      const unsigned int elapsed = sfContCurTime - cont->m_dwStartSec;
+      if (elapsed < cont->m_wDurSec)
+      {
+        const int leftTime = static_cast<int>(cont->m_wDurSec - elapsed);
+        SFContUpdateTimeMessage(
+          static_cast<unsigned __int8>(contCode),
+          static_cast<unsigned __int8>(slot),
+          leftTime);
+      }
+      else
+      {
+        RemoveSFContEffect(static_cast<unsigned __int8>(contCode), static_cast<unsigned __int16>(slot), false, false);
+      }
+    }
+  }
+
+  if (m_bLastContEffectUpdate)
+  {
+    unsigned int lastEffSerial = 0;
+    _sf_continous *lastCont = nullptr;
+    for (int contCode = 0; contCode < 2; ++contCode)
+    {
+      for (int slot = 0; slot < 8; ++slot)
+      {
+        _sf_continous *cont = &m_SFCont[contCode][slot];
+        if (cont->m_bExist && lastEffSerial <= cont->m_dwEffSerial)
+        {
+          lastEffSerial = cont->m_dwEffSerial;
+          lastCont = cont;
+        }
+      }
+    }
+
+    const unsigned __int16 oldLastContEffect = m_wLastContEffect;
+    if (lastCont)
+    {
+      m_wLastContEffect =
+        static_cast<unsigned __int16>(CalcEffectBit(lastCont->m_byEffectCode, lastCont->m_wEffectIndex));
+    }
+    else
+    {
+      m_wLastContEffect = static_cast<unsigned __int16>(-1);
+    }
+
+    if (oldLastContEffect != m_wLastContEffect)
+    {
+      SendMsg_LastEffectChangeInform();
+    }
+    m_bLastContEffectUpdate = false;
+  }
+
+  if (!m_ObjID.m_byID)
+  {
+    static_cast<CPlayer *>(this)->UpdateAuraSFCont();
+  }
+}
+
 void CCharacter::AlterContDurSec(
   unsigned __int8 byContCode,
   unsigned __int16 wListIndex,

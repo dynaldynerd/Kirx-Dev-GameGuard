@@ -4,9 +4,13 @@
 
 #include "CNetProcess.h"
 #include "CPvpUserAndGuildRankingSystem.h"
+#include "CMapData.h"
+#include "CObjectList.h"
 #include "GlobalObjects.h"
+#include "WorldServerUtil.h"
 #include "nuclear_find_rader_result_zocl.h"
 #include "nuclear_result_code_zocl.h"
+#include "pnt_rect.h"
 
 #include <mmsystem.h>
 #include <cstring>
@@ -39,64 +43,67 @@ __int64 CNuclearBomb::GetGenAttackProb(CCharacter * /*pDst*/, int /*nPart*/, boo
 void CNuclearBomb::Loop()
 {
   const DWORD currentTime = timeGetTime();
-
-  if (m_pMaster != nullptr && (m_pMaster->m_bCorpse || !m_pMaster->m_bLive))
+  if (m_pMaster->m_bCorpse || !m_pMaster->m_bLive)
   {
     if (m_bIsLive)
     {
+      SendMsg_MasterDie();
       m_bIsLive = false;
     }
 
     if (m_bUse && m_byBombState <= 4u)
     {
       m_byBombState = 6;
-      m_bUse = false;
-      CCharacter::Destroy();
+      Destroy();
     }
   }
-
-  const DWORD triggerTime = m_dwStartTime + m_dwDurTime;
-  if (m_byBombState == 0)
+  if (m_byBombState != 0)
   {
-    if (currentTime >= triggerTime - m_dwWarnTime)
+    switch (m_byBombState)
     {
-      m_byBombState = 1;
+      case 1:
+        if (currentTime >= m_dwDurTime + m_dwStartTime - m_dwAttInformTime)
+        {
+          SendMsg_InformDropPos();
+          ++m_byBombState;
+        }
+        break;
+      case 2:
+        if (currentTime >= m_dwDurTime + m_dwStartTime - m_dwAttStartTime)
+        {
+          if (strcmp_0(m_pCurMap->m_pMapSet->m_strCode, "resources") == 0)
+          {
+            SendMsg_DropMissile();
+          }
+          ++m_byBombState;
+        }
+        break;
+      case 3:
+        if (currentTime >= m_dwDurTime + m_dwStartTime)
+        {
+          GetShowEffectList();
+          SendMsg_AddEffect();
+          NuclearDamege();
+          ++m_byBombState;
+        }
+        break;
+      default:
+        if (m_byBombState == 5 && currentTime >= m_dwDelayTime + m_dwStartTime)
+        {
+          m_byBombState = 6;
+          if (m_bLive)
+          {
+            Destroy();
+          }
+        }
+        break;
     }
-    return;
   }
-
-  switch (m_byBombState)
+  else if (currentTime >= m_dwDurTime + m_dwStartTime - m_dwWarnTime)
   {
-  case 1:
-    if (currentTime >= triggerTime - m_dwAttInformTime)
-    {
-      ++m_byBombState;
-    }
-    break;
-  case 2:
-    if (currentTime >= triggerTime - m_dwAttStartTime)
-    {
-      ++m_byBombState;
-    }
-    break;
-  case 3:
-    if (currentTime >= triggerTime)
-    {
-      ++m_byBombState;
-    }
-    break;
-  case 5:
-    if (currentTime >= m_dwStartTime + m_dwDelayTime)
-    {
-      m_byBombState = 6;
-      if (m_bLive)
-      {
-        CCharacter::Destroy();
-      }
-    }
-    break;
-  default:
-    break;
+    const unsigned __int8 raceCode = static_cast<unsigned __int8>(m_pMaster->m_Param.GetRaceCode());
+    WarningToAll(raceCode);
+    ++m_byBombState;
   }
 }
 
@@ -117,7 +124,7 @@ bool CNuclearBomb::Create(_nuclear_create_setdata *pData)
   if (CCharacter::Create(pData))
   {
     m_pMaster = pData->pMaster;
-    m_dwStartTime = GetTickCount();
+    m_dwStartTime = timeGetTime();
     m_dwDurTime = 1000 * *reinterpret_cast<unsigned int *>(&m_pRecordSet[5].m_strCode[4]);
     m_dwDelayTime = 1000 * *reinterpret_cast<unsigned int *>(&m_pRecordSet[5].m_strCode[12]);
     m_dwObjSerial = static_cast<unsigned int>(GetNewSerial());
@@ -194,6 +201,11 @@ void CNuclearBomb::SetControlSerial(unsigned __int16 wControlSerial)
   m_wControlSerial = wControlSerial;
 }
 
+__int64 CNuclearBomb::GetMasterRace()
+{
+  return static_cast<unsigned int>(m_pMaster->m_Param.GetRaceCode());
+}
+
 unsigned __int8 CNuclearBomb::GetMasterClass()
 {
   const unsigned __int8 raceCode = m_pMaster->m_Param.GetRaceCode();
@@ -213,6 +225,108 @@ unsigned __int8 CNuclearBomb::GetMasterClass()
     return 2;
   }
   return 3;
+}
+
+void CNuclearBomb::GetShowEffectList()
+{
+  const int rangeWithBias = static_cast<int>(*reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[20]) + 100.0f);
+  const int radius = rangeWithBias / 100;
+
+  _pnt_rect rect{};
+  m_pCurMap->GetRectInRadius(&rect, radius, static_cast<unsigned int>(GetCurSecNum()));
+
+  for (int y = rect.nStarty; y <= rect.nEndy; ++y)
+  {
+    for (int x = rect.nStartx; x <= rect.nEndx; ++x)
+    {
+      const unsigned int secIndex = static_cast<unsigned int>(m_pCurMap->GetSecInfo()->m_nSecNumW * y + x);
+      CObjectList *sectorPlayers = m_pCurMap->GetSectorListPlayer(m_wMapLayerIndex, secIndex);
+      if (!sectorPlayers)
+      {
+        continue;
+      }
+
+      for (_object_list_point *node = sectorPlayers->m_Head.m_pNext; node != &sectorPlayers->m_Tail; node = node->m_pNext)
+      {
+        CCharacter *candidate = static_cast<CCharacter *>(node->m_pItem);
+        if (candidate->IsAttackableInTown() || !candidate->IsInTown())
+        {
+          if (candidate->IsBeAttackedAble(true))
+          {
+            const float maxDistance = static_cast<float>(rangeWithBias) + candidate->GetWidth() / 2.0f;
+            if (GetSqrt(candidate->m_fCurPos, m_fCurPos) <= maxDistance
+              && candidate->m_ObjID.m_byID == 0
+              && m_nEffObjNum < 400)
+            {
+              m_EffList[m_nEffObjNum++].m_pChar = candidate;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+void CNuclearBomb::NuclearDamege()
+{
+  const int damageRange = static_cast<int>(*reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[20]));
+  const int radius = damageRange / 100;
+
+  _pnt_rect rect{};
+  m_pCurMap->GetRectInRadius(&rect, radius, static_cast<unsigned int>(GetCurSecNum()));
+
+  for (int y = rect.nStarty; y <= rect.nEndy; ++y)
+  {
+    for (int x = rect.nStartx; x <= rect.nEndx; ++x)
+    {
+      const unsigned int secIndex = static_cast<unsigned int>(m_pCurMap->GetSecInfo()->m_nSecNumW * y + x);
+      CObjectList *sectorPlayers = m_pCurMap->GetSectorListPlayer(m_wMapLayerIndex, secIndex);
+      if (!sectorPlayers)
+      {
+        continue;
+      }
+
+      for (_object_list_point *node = sectorPlayers->m_Head.m_pNext; node != &sectorPlayers->m_Tail; node = node->m_pNext)
+      {
+        CCharacter *candidate = static_cast<CCharacter *>(node->m_pItem);
+        if (!candidate->m_bCorpse && candidate->m_bLive)
+        {
+          const int candidateRace = static_cast<int>(candidate->GetObjRace());
+          if (candidateRace != static_cast<int>(GetMasterRace())
+            && (candidate->IsAttackableInTown() || !candidate->IsInTown()))
+          {
+            if (candidate->IsBeAttackedAble(true))
+            {
+              const float maxDistance = static_cast<float>(damageRange) + candidate->GetWidth() / 2.0f;
+              if (GetSqrt(candidate->m_fCurPos, m_fCurPos) <= maxDistance
+                && candidate->m_ObjID.m_byID == 0
+                && m_nDamagedObjNum < 300)
+              {
+                m_DamList[m_nDamagedObjNum].m_pChar = candidate;
+                m_DamList[m_nDamagedObjNum].m_nDamage = *reinterpret_cast<int *>(&m_pRecordSet[5].m_strCode[48]);
+                m_DamList[m_nDamagedObjNum++].m_dwDamCharSerial = candidate->m_dwObjSerial;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+void CNuclearBomb::WarningToAll(unsigned __int8 byRaceCode)
+{
+  for (unsigned int clientIndex = 0; clientIndex < MAX_PLAYER; ++clientIndex)
+  {
+    CPlayer *player = &g_Player[clientIndex];
+    if (player->m_bOper && strcmp_0(player->m_pCurMap->m_pMapSet->m_strCode, "resources") == 0)
+    {
+      if (static_cast<int>(byRaceCode) != player->m_Param.GetRaceCode())
+      {
+        SendMsg_NuclearFind(clientIndex, byRaceCode);
+      }
+    }
+  }
 }
 
 void CNuclearBomb::SendMsg_NuclearFind(unsigned int n, unsigned __int8 race)

@@ -45,6 +45,8 @@ public:
   bool IsBeAttackedAble(bool bFirst) override;
   char IsBeDamagedAble(CCharacter *pAtter) override;
   void Loop() override;
+  void AutoRecover();
+  void DropItem();
   void OutOfSec() override;
   void SendMsg_FixPosition(int n) override;
 
@@ -54,7 +56,7 @@ public:
   void SendMsg_Destroy(unsigned __int8 byDestroyCode, unsigned int dwDestroySerial);
   void SetOper(bool bOper, float fHPRate);
   void SendMsg_StoneAlterOper();
-  unsigned int CalcCurHPRate();
+  __int64 CalcCurHPRate();
   char IsChangedHP(unsigned __int16 wAlterRate);
   __int64 GetHP();
   char SetHP(int nHP, bool bOver = false);

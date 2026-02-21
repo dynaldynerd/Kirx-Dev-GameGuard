@@ -22,6 +22,7 @@ struct  _pvp_order_view_inform_zocl
 class CPvpOrderView
 {
 public:
+  void Loop(unsigned __int16 wIndex);
   long double GetPvpCash();
   long double GetPvpTempCash();
   void SetPvpCash(long double dAlter);

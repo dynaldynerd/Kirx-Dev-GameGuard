@@ -55,6 +55,7 @@ public:
   char IsTalikItem(const char *strCode);
   int GetTalikRecvrPoint(unsigned __int8 byTblCode, unsigned int dwIndex);
   int GetTalikRecvrPoint(int i);
+  int GetMaxTempPoint(unsigned __int8 nLv, bool bPremium);
 
 private:
   bool Parsing(const char *szTitle, const char *szItem, char **szBuff, int nInx, unsigned __int8 byParseType);

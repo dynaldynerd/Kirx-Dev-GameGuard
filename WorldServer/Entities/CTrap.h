@@ -26,6 +26,7 @@ public:
   __int64 GetMaxHP() override;
   char *GetObjName() override;
   __int64 GetObjRace() override;
+  __int64 AttackableHeight();
   __int64 GetSoilTol() override;
   __int64 GetWaterTol() override;
   float GetWeaponAdjust() override;
@@ -37,6 +38,11 @@ public:
   void OutOfSec() override;
   void RecvKillMessage(CCharacter *pDier) override;
   void SendMsg_FixPosition(int n) override;
+  using CCharacter::Destroy;
+  bool Destroy(unsigned __int8 byDesType);
+  void Attack(CCharacter *pTarget);
+  CCharacter *SearchNearEnemy();
+  void CheckTranspar();
   void SendMsg_Destroy(unsigned __int8 byDesType);
   void SendMsg_Create();
   void SendMsg_Attack(CAttack *pAt);

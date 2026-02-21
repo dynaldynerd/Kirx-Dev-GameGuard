@@ -77,6 +77,7 @@ public:
   char Update_AddBuddy(unsigned __int8 bySlotIndex, unsigned int dwAdderSerial, char *pwszAdderName);
   char Update_DelBuddy(unsigned __int8 bySlotIndex);
   char Update_UserGetScaner(unsigned __int16 wScanerCnt, unsigned __int16 wBattleTime);
+  char Update_UserPlayTime(unsigned int dwAccPlayTime);
   char Update_LinkBoardSlot(unsigned __int8 bySlot, unsigned __int8 byLinkCode, unsigned __int16 wIndex);
   char Update_LinkBoardLock(unsigned __int8 byLBLock);
   char Update_WindowInfo(

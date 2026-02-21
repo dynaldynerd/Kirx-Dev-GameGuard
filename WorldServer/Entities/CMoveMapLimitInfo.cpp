@@ -31,6 +31,7 @@ void CMoveMapLimitInfo::LogOut(CPlayer *pkPlayer, CMoveMapLimitRightInfo *pkRigh
 
 void CMoveMapLimitInfo::Loop()
 {
+  // this is not a stub
 }
 
 bool CMoveMapLimitInfo::IsEqualLimit(int iType, int iMapInx, unsigned int dwStoreRecordIndex)
@@ -48,4 +49,3 @@ CMoveMapLimitInfo *CMoveMapLimitInfo::Create(unsigned int uiInx, int iType)
   CMoveMapLimitInfoPortal *info = new (std::nothrow) CMoveMapLimitInfoPortal(uiInx, 0);
   return info;
 }
-

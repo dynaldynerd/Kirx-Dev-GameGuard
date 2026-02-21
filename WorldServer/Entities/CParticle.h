@@ -58,6 +58,10 @@ public:
 
   CParticle();
   ~CParticle();
+  __int64 Loop();
+  __int64 RealLoop();
+  __int64 SpecialLoop();
+  __int64 SpecialLoop2();
   __int64 LoadParticleSPT(char *a2, int a3);
   void InitParticle();
   void SetParticleState(int a2);

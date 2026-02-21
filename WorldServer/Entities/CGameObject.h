@@ -183,6 +183,8 @@ public:
     (void)pDier;
   }
   __int64 CalcCirclePlayerNum(int nRange);
+  char IsCircleObject(int nRange, CGameObject *pObject);
+  virtual __int64 CalcCurHPRate();
   __int64 RerangeSecIndex(unsigned int dwOld, unsigned int dwNew);
   void ResetSector(unsigned int dwOldSec, unsigned int dwNewSec);
   bool IsInTown();

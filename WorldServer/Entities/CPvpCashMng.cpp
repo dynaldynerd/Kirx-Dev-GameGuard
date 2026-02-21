@@ -173,6 +173,29 @@ int CPvpCashMng::GetTalikRecvrPoint(int i)
   return m_TalikList.TalikInfo[i].nRecvrPoint;
 }
 
+int CPvpCashMng::GetMaxTempPoint(unsigned __int8 nLv, bool bPremium)
+{
+  int index = 0;
+  for (; index < 30; ++index)
+  {
+    if (m_LimitPoint[index].nLv && m_LimitPoint[index].nLv == nLv)
+    {
+      break;
+    }
+  }
+
+  if (index >= 30)
+  {
+    return 0;
+  }
+
+  if (bPremium)
+  {
+    return m_LimitPoint[index].nPremiumMaxPoint;
+  }
+  return m_LimitPoint[index].nMaxPoint;
+}
+
 bool CPvpCashMng::Parsing(
   const char *szTitle,
   const char *szItem,

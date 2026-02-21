@@ -66,6 +66,12 @@ int CPvpCashPoint::GetTalikRecvrPoint(unsigned __int8 byTblCode, unsigned int dw
   return pvpCash->GetTalikRecvrPoint(byTblCode, dwIndex);
 }
 
+int CPvpCashPoint::GetMaxTempPoint(unsigned __int8 nLv, bool bPremium)
+{
+  CPvpCashMng *pvpCash = CPvpCashMng::Instance();
+  return pvpCash->GetMaxTempPoint(nLv, bPremium);
+}
+
 void CPvpCashPoint::SendMsg_RecoverResult(unsigned int n, char byRet, int nRecvrPoint)
 {
 

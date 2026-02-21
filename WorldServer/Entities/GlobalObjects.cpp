@@ -169,14 +169,14 @@ void AnimusDebugLog(const char *format, ...)
   va_end(argList);
 }
 
-float ITEM_ROOT_RATE = 0.0f;
-float MINE_SPEED_RATE = 0.0f;
-float FORCE_LIVER_ACCUM_RATE = 0.0f;
-float MASTERY_GET_RATE = 0.0f;
-float ANIMUS_EXP_RATE = 0.0f;
-float PLAYER_EXP_RATE = 0.0f;
-float PLAYER_LOST_EXP = 0.0f;
-float TSVR_ADD_DARKHOLE_REWARD_RATE = 0.0f;
+float ITEM_ROOT_RATE = 1.0f;
+float MINE_SPEED_RATE = 1.0f;
+float FORCE_LIVER_ACCUM_RATE = 1.0f;
+float MASTERY_GET_RATE = 1.0f;
+float ANIMUS_EXP_RATE = 1.0f;
+float PLAYER_EXP_RATE = 1.0f;
+float PLAYER_LOST_EXP = 1.0f;
+float TSVR_ADD_DARKHOLE_REWARD_RATE = 1.0f;
 unsigned __int8 Major_Bind_HQ = 0;
 unsigned __int8 Major_Sette_Mine_Elan_Map = 0;
 unsigned __int8 Major_Scroll_Item = 0;

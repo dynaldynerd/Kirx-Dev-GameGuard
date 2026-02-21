@@ -53,8 +53,9 @@
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <OutDir>$(ProjectDir)x64\$(Configuration)\</OutDir>
+    <OutDir>D:\RFServer\Server\Zone Server\RF_Bin\</OutDir>
     <IntDir>$(ProjectDir)x64\$(Configuration)\obj\</IntDir>
+    <LocalDebuggerWorkingDirectory>D:\RFServer\Server\Zone Server\RF_Bin\</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -63,8 +64,9 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <OutDir>$(ProjectDir)x64\$(Configuration)\</OutDir>
+    <OutDir>D:\RFServer\Server\Zone Server\RF_Bin\</OutDir>
     <IntDir>$(ProjectDir)x64\$(Configuration)\obj\</IntDir>
+    <LocalDebuggerWorkingDirectory>D:\RFServer\Server\Zone Server\RF_Bin\</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />

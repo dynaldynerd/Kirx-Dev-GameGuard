@@ -5,14 +5,20 @@
 #include "CTrap.h"
 
 #include "CAttack.h"
+#include "CBsp.h"
+#include "CMapData.h"
 #include "CNetProcess.h"
+#include "CObjectList.h"
 #include "CPlayer.h"
 #include "CPlayerDB.h"
 #include "GlobalObjects.h"
+#include "pnt_rect.h"
 #include "qry_case_addpvppoint.h"
 
 #include <cstring>
 #include <cstdio>
+#include <cmath>
+#include <cstdlib>
 #include <mmsystem.h>
 
 namespace
@@ -112,6 +118,11 @@ __int64 CTrap::GetObjRace()
   return m_byRaceCode;
 }
 
+__int64 CTrap::AttackableHeight()
+{
+  return 50;
+}
+
 __int64 CTrap::GetSoilTol()
 {
   return *reinterpret_cast<unsigned int *>(&m_pRecordSet[7].m_strCode[20]);
@@ -185,8 +196,18 @@ void CTrap::Loop()
   {
     const unsigned int elapsed = now - m_dwStartMakeTime;
     const unsigned int trapLifetime = 60000u * (*reinterpret_cast<unsigned int *>(&m_pRecordSet[5].m_strCode[12]));
-    if (elapsed > trapLifetime)
-      OutOfSec();
+    if (elapsed <= trapLifetime)
+    {
+      if (SearchNearEnemy())
+      {
+        Attack(this);
+        Destroy(0);
+      }
+    }
+    else
+    {
+      Destroy(3u);
+    }
   }
   else
   {
@@ -198,17 +219,147 @@ void CTrap::Loop()
     if (elapsed > buildMs)
     {
       m_bComplete = true;
+      SendMsg_TrapCompleteInform();
       if (m_pMaster != nullptr)
         m_pMaster->Emb_CheckActForQuest(16, m_pRecordSet->m_strCode, 1u, false);
     }
   }
+
+  CheckTranspar();
 }
 
 void CTrap::OutOfSec()
 {
+  Destroy(1u);
+}
+
+bool CTrap::Destroy(unsigned __int8 byDesType)
+{
   m_dwLastDestroyTime = timeGetTime();
+  if (m_pMaster && m_pMaster->m_dwObjSerial == m_dwMasterSerial)
+  {
+    m_pMaster->_TrapDestroy(this, byDesType);
+  }
+  SendMsg_Destroy(byDesType);
+  m_pMaster = nullptr;
   m_dwObjSerial = static_cast<unsigned int>(-1);
-  CCharacter::Destroy();
+  m_dwMasterSerial = static_cast<unsigned int>(-1);
+  return CCharacter::Destroy();
+}
+
+void CTrap::Attack(CCharacter *pTarget)
+{
+  CAttack attack(this);
+  _attack_param attackParam{};
+  attackParam.pDst = pTarget;
+  std::memcpy(attackParam.fArea, pTarget->m_fCurPos, sizeof(attackParam.fArea));
+  if (pTarget)
+  {
+    attackParam.nPart = static_cast<int>(pTarget->GetAttackRandomPart());
+  }
+  else
+  {
+    attackParam.nPart = static_cast<int>(GetAttackRandomPart());
+  }
+  attackParam.nTol = *reinterpret_cast<int *>(&m_pRecordSet[7].m_strCode[8]);
+  attackParam.nClass = 1;
+  attackParam.nMinAF = *reinterpret_cast<int *>(&m_pRecordSet[5].m_strCode[44]);
+  attackParam.nMaxAF = *reinterpret_cast<int *>(&m_pRecordSet[5].m_strCode[48]);
+  attackParam.nMinSel = *reinterpret_cast<int *>(&m_pRecordSet[5].m_strCode[52]);
+  attackParam.nMaxSel = *reinterpret_cast<int *>(&m_pRecordSet[5].m_strCode[56]);
+  attackParam.nAttactType = 6;
+  attackParam.nExtentRange = static_cast<int>(*reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[32]));
+  attackParam.nMaxAttackPnt = m_nTrapMaxAttackPnt;
+
+  attack.AttackGen(&attackParam, false, false);
+  if (attack.m_nDamagedObjNum > 0)
+  {
+    SendMsg_Attack(&attack);
+  }
+
+  for (int index = 0; index < attack.m_nDamagedObjNum; ++index)
+  {
+    CCharacter *damagedCharacter = attack.m_DamList[index].m_pChar;
+    damagedCharacter->SetDamage(
+      attack.m_DamList[index].m_nDamage,
+      this,
+      static_cast<int>(GetLevel()),
+      attack.m_bIsCrtAtt,
+      -1,
+      0,
+      true);
+  }
+}
+
+CCharacter *CTrap::SearchNearEnemy()
+{
+  const int attackRange = static_cast<int>(*reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[20]));
+  CCharacter *candidates[10]{};
+  int candidateCount = 0;
+
+  _pnt_rect rect{};
+  m_pCurMap->GetRectInRadius(&rect, 1, static_cast<unsigned int>(GetCurSecNum()));
+  for (int y = rect.nStarty; y <= rect.nEndy; ++y)
+  {
+    for (int x = rect.nStartx; x <= rect.nEndx; ++x)
+    {
+      const unsigned int secIndex = static_cast<unsigned int>(m_pCurMap->GetSecInfo()->m_nSecNumW * y + x);
+      CObjectList *sectorPlayers = m_pCurMap->GetSectorListPlayer(m_wMapLayerIndex, secIndex);
+      if (!sectorPlayers)
+      {
+        continue;
+      }
+
+      for (_object_list_point *node = sectorPlayers->m_Head.m_pNext; node != &sectorPlayers->m_Tail; node = node->m_pNext)
+      {
+        CCharacter *candidate = static_cast<CCharacter *>(node->m_pItem);
+        if (!candidate->m_bCorpse)
+        {
+          const int candidateRace = static_cast<int>(candidate->GetObjRace());
+          if (candidateRace != static_cast<int>(GetObjRace())
+            && (candidate->IsAttackableInTown() || !candidate->IsInTown())
+            && !candidate->GetStealth(true))
+          {
+            if (candidate->IsBeAttackedAble(true) && std::fabs(candidate->m_fCurPos[1] - m_fCurPos[1]) <= 100.0f)
+            {
+              const float maxDistance = static_cast<float>(attackRange) + candidate->GetWidth() / 2.0f;
+              if (GetSqrt(candidate->m_fCurPos, m_fCurPos) <= maxDistance
+                && candidate->m_ObjID.m_byID == 0
+                && candidateCount < 10)
+              {
+                candidates[candidateCount++] = candidate;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (candidateCount > 0)
+  {
+    const int randomStart = rand() % candidateCount;
+    float tempPath[3]{};
+    for (int offset = 0; offset < candidateCount; ++offset)
+    {
+      const int candidateIndex = (offset + randomStart) % candidateCount;
+      if (m_pCurMap->m_Level.mBsp->CanYouGoThere(m_fCurPos, candidates[candidateIndex]->m_fCurPos, &tempPath))
+      {
+        return candidates[candidateIndex];
+      }
+    }
+  }
+
+  return nullptr;
+}
+
+void CTrap::CheckTranspar()
+{
+  if (m_bBreakTransparBuffer != m_bBreakTranspar)
+  {
+    m_bBreakTransparBuffer = m_bBreakTranspar;
+    SendMsg_AlterTranspar(!m_bBreakTransparBuffer);
+  }
 }
 
 void CTrap::RecvKillMessage(CCharacter *pDier)
@@ -354,20 +505,26 @@ void CTrap::SendMsg_AlterTranspar(bool bTranspar)
 
 __int64 CTrap::SetDamage(int nDam, CCharacter *pDst, int nDstLv)
 {
-if (nDam > 1)
+  if (nDam > 1)
   {
-    m_nHP -= nDam;
-    if (m_nHP < 0)
+    if (m_nHP - nDam <= 0)
+    {
       m_nHP = 0;
+    }
+    else
+    {
+      m_nHP -= nDam;
+    }
   }
 
-  if (m_nHP > 0)
+  if (m_nHP)
   {
     SetBreakTranspar(true);
   }
   else
   {
-    OutOfSec();
+    Attack(this);
+    Destroy(1u);
   }
 
   return static_cast<unsigned int>(m_nHP);

@@ -221,6 +221,7 @@ public:
     const CUnmannedTraderRegistItemInfo *pkInfo,
     unsigned __int8 byMaxCnt,
     char *pszFileName);
+  void item_serial_full(int n, char *pszFileName);
   void reg_auto_trade(
     int n,
     unsigned int dwRegistSerial,

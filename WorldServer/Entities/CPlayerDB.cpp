@@ -324,6 +324,11 @@ _STORAGE_LIST::_db_con *CPlayerDB::GetItem(unsigned __int8 byInvenIndex)
   return nullptr;
 }
 
+unsigned __int16 CPlayerDB::GetCurItemSerial()
+{
+  return m_wSerialCount;
+}
+
 unsigned __int16 CPlayerDB::GetNewItemSerial()
 {
   return this->m_wSerialCount++;

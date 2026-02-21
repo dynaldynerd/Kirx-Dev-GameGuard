@@ -432,6 +432,71 @@ void CPlayer::skill_process_for_aura(int nSkillIndex)
   }
 }
 
+void CPlayer::UpdateAuraSFCont()
+{
+  const unsigned int sfContCurTime = _sf_continous::GetSFContCurTime();
+  for (int contCode = 0; contCode < 2; ++contCode)
+  {
+    for (int slot = 0; slot < 8; ++slot)
+    {
+      _sf_continous *cont = &m_SFContAura[contCode][slot];
+      if (cont->m_bExist)
+      {
+        const unsigned int elapsed = sfContCurTime - cont->m_dwStartSec;
+        if (elapsed >= cont->m_wDurSec)
+        {
+          RemoveSFContEffect(static_cast<unsigned __int8>(contCode), static_cast<unsigned __int16>(slot), false, true);
+        }
+      }
+    }
+  }
+
+  if (m_tmrAuraSkill.CountingTimer())
+  {
+    int hasAura = 0;
+    for (int contCode = 0; contCode < 2; ++contCode)
+    {
+      for (int slot = 0; slot < 8; ++slot)
+      {
+        _sf_continous *cont = &m_SFContAura[contCode][slot];
+        if (!cont->m_bExist)
+        {
+          continue;
+        }
+
+        _skill_fld *skillField = reinterpret_cast<_skill_fld *>(g_Main.m_tblEffectData[0].GetRecord(cont->m_wEffectIndex));
+        if (!skillField || skillField->m_nClass != 4)
+        {
+          continue;
+        }
+
+        if (IsChaosMode() || IsPunished(1u, false))
+        {
+          RemoveSFContEffect(static_cast<unsigned __int8>(contCode), static_cast<unsigned __int16>(slot), false, false);
+        }
+        else
+        {
+          const int maxFp = GetMaxFP();
+          if (maxFp >= skillField->m_nNeedFP && _pre_check_skill_gradelimit(skillField))
+          {
+            hasAura = 1;
+            skill_process_for_aura(static_cast<int>(cont->m_wEffectIndex));
+          }
+          else
+          {
+            RemoveSFContEffect(static_cast<unsigned __int8>(contCode), static_cast<unsigned __int16>(slot), false, true);
+          }
+        }
+      }
+    }
+
+    if (!hasAura)
+    {
+      m_tmrAuraSkill.StopTimer();
+    }
+  }
+}
+
 unsigned __int8 CPlayer::skill_process(
   int nEffectCode,
   int nSkillIndex,

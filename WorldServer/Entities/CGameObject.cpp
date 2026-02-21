@@ -2411,6 +2411,13 @@ __int64 CGameObject::GetUseSectorRange()
   return static_cast<unsigned int>(this->m_pCurMap->m_pMapSet->m_nRadius);
 }
 
+__int64 CGameObject::CalcCurHPRate()
+{
+  const float currentHp = static_cast<float>(GetHP());
+  const int maxHp = static_cast<int>(GetMaxHP());
+  return static_cast<unsigned int>(static_cast<int>((currentHp / static_cast<float>(maxHp)) * 10000.0f));
+}
+
 bool CGameObject::IsInTown()
 {
   // this is not a stub

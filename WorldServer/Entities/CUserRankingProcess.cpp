@@ -450,22 +450,10 @@ void CUserRankingProcess::Loop()
       }
       m_eState = PS_INVALID;
     }
-    return;
   }
-
-  if (m_eState < 0 || static_cast<size_t>(m_eState) >= m_vecProc.size())
+  else
   {
-    if (m_pkLogger)
-    {
-      m_pkLogger->Write("CUserRankingProcess::Loop() : m_eState(%d) Invalid Proc Index!", m_eState);
-    }
-    m_eState = PS_INVALID;
-    return;
-  }
-
-  const auto proc = m_vecProc[static_cast<size_t>(m_eState)];
-  if (proc)
-  {
+    const auto proc = m_vecProc[static_cast<size_t>(m_eState)];
     (this->*proc)();
   }
 }

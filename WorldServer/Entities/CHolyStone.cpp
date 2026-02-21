@@ -4,13 +4,20 @@
 #include "CHolyStone.h"
 
 #include "CHolyStoneSystem.h"
+#include "CEventLootTable.h"
+#include "CItemBox.h"
+#include "CItemLootTable.h"
+#include "CMapData.h"
+#include "CMonster.h"
 #include "CNetProcess.h"
 #include "CGuardTower.h"
 #include "CPlayer.h"
 #include "CPlayerDB.h"
 #include "GlobalObjects.h"
+#include "TimeItem.h"
 
 #include <cstdio>
+#include <ctime>
 
 namespace
 {
@@ -146,17 +153,140 @@ char CHolyStone::IsBeDamagedAble(CCharacter *pAtter)
 
 void CHolyStone::Loop()
 {
-  if (m_pRec->m_fHPRecDelay > 0.0f)
+  AutoRecover();
+  if (m_tmrDropTime.CountingTimer())
+    DropItem();
+}
+
+void CHolyStone::AutoRecover()
+{
+  if (m_pRec->m_fHPRecDelay > 0.0f && m_pRec->m_fHPRecUnit > 0.0f)
   {
-    const unsigned int now = GetLoopTime();
-    const unsigned int recoverDelay = static_cast<unsigned int>(m_pRec->m_fHPRecDelay * 1000.0f);
-    if (now - m_dwLastRecoverTime >= recoverDelay)
+    const int currentHp = static_cast<int>(GetHP());
+    const int maxHp = static_cast<int>(GetMaxHP());
+    if (currentHp < maxHp
+        && static_cast<float>(static_cast<int>(GetLoopTime() - m_dwLastRecoverTime))
+             >= m_pRec->m_fHPRecDelay * 1000.0f)
     {
-      m_dwLastRecoverTime = now;
-      const int recoverHp = static_cast<int>(m_pRec->m_fHPRecUnit);
-      SetHP(m_nHP + recoverHp, true);
+      m_dwLastRecoverTime = GetLoopTime();
+      const int hpBeforeRecover = static_cast<int>(GetHP());
+      SetHP(static_cast<int>(static_cast<float>(hpBeforeRecover) + m_pRec->m_fHPRecUnit), false);
     }
   }
+}
+
+void CHolyStone::DropItem()
+{
+  int dropCount = 0;
+  if (m_nCurrLootIndex == -1)
+  {
+    m_tmrDropTime.StopTimer();
+    return;
+  }
+
+  while (m_nCurrLootIndex <= m_nEndLootIndex)
+  {
+    _base_fld *record = g_Main.m_tblItemLoot.m_tblLoot.GetRecord(m_nCurrLootIndex);
+    if (record && *reinterpret_cast<int *>(&record[1].m_strCode[8]) > 0)
+    {
+      unsigned __int16 range = 400;
+      unsigned __int16 dropNum = *reinterpret_cast<unsigned __int16 *>(&record[1].m_strCode[4]);
+      dropNum = static_cast<unsigned __int16>(dropNum * m_wMagnifications);
+      if (m_wRange > 100u)
+      {
+        range = m_wRange;
+      }
+      dropNum = static_cast<unsigned __int16>(dropNum + m_wAddCountWithPlayer);
+
+      while (m_nCurrDropIndex < dropNum)
+      {
+        bool found = false;
+        const int randHi = rand();
+        const unsigned int rand32 = static_cast<unsigned int>(rand()) + (static_cast<unsigned int>(randHi) << 16);
+        unsigned int probLimit = 0;
+        if (m_pRecordSet)
+        {
+          probLimit = record[1].m_dwIndex;
+          if (rand32 < probLimit)
+          {
+            CItemLootTable::_linker_code *linker = nullptr;
+            int linkIndex = 0;
+            for (int j = 0; j < 10; ++j)
+            {
+              linkIndex = rand() % *reinterpret_cast<int *>(&record[1].m_strCode[8]);
+              linker = &g_Main.m_tblItemLoot.m_ppLinkCode[record->m_dwIndex][linkIndex];
+              if (linker->bExist)
+              {
+                found = true;
+                break;
+              }
+            }
+
+            if (found)
+            {
+              float stdPos[3] = {0.0f, 0.0f, 0.0f};
+              CMapData *map = m_pCurMap;
+              if (map->GetRandPosVirtualDumExcludeStdRange(m_fCurPos, range, 100, stdPos))
+              {
+                unsigned int itemDurPoint = 0;
+                if (IsOverLapItem(linker->byTableCode))
+                {
+                  itemDurPoint = 1;
+                }
+                else
+                {
+                  itemDurPoint = GetItemDurPoint(linker->byTableCode, linker->wItemIndex);
+                }
+
+                const unsigned __int8 defSocketNum = GetDefItemUpgSocketNum(linker->byTableCode, linker->wItemIndex);
+                unsigned __int8 useSockets = 0;
+                if (defSocketNum)
+                {
+                  useSockets = static_cast<unsigned __int8>(rand() % defSocketNum + 1);
+                }
+                const unsigned int socketBits = GetBitAfterSetLimSocket(useSockets);
+
+                _STORAGE_LIST::_db_con item{};
+                item.m_byTableCode = linker->byTableCode;
+                item.m_wItemIndex = linker->wItemIndex;
+                item.m_dwDur = itemDurPoint;
+                item.m_dwLv = socketBits;
+                const _TimeItem_fld *timeRec = TimeItem::FindTimeRec(linker->byTableCode, linker->wItemIndex);
+                if (timeRec && timeRec->m_nCheckType)
+                {
+                  __time32_t timeNow;
+                  _time32(&timeNow);
+                  item.m_byCsMethod = static_cast<unsigned __int8>(timeRec->m_nCheckType);
+                  item.m_dwT = static_cast<unsigned int>(timeRec->m_nUseTime + timeNow);
+                  item.m_dwLendRegdTime = static_cast<unsigned int>(timeNow);
+                }
+
+                if (CreateItemBox(&item, 4u, map, m_wMapLayerIndex, stdPos, false, nullptr, 0, 3u))
+                {
+                  ++dropCount;
+                  g_Main.m_logEvent.Write(
+                    "Cristal Event Item >> %s, %d",
+                    &record[1].m_strCode[8 * linkIndex + 12],
+                    static_cast<unsigned int>(item.m_dwDur));
+                }
+
+                if (dropCount >= m_wDropCntOnce)
+                {
+                  return;
+                }
+              }
+            }
+          }
+        }
+        ++m_nCurrDropIndex;
+      }
+      m_nCurrDropIndex = 0;
+    }
+    ++m_nCurrLootIndex;
+  }
+
+  m_nCurrLootIndex = -1;
+  m_tmrDropTime.StopTimer();
 }
 
 void CHolyStone::OutOfSec()
@@ -310,7 +440,7 @@ void CHolyStone::SendMsg_StoneAlterOper()
   CircleReport(pbyType, reinterpret_cast<char *>(&msg), 7, false);
 }
 
-unsigned int CHolyStone::CalcCurHPRate()
+__int64 CHolyStone::CalcCurHPRate()
 {
   return static_cast<unsigned int>(static_cast<int>((static_cast<float>(m_nHP) / static_cast<float>(m_nMaxHP)) * 10000.0f));
 }

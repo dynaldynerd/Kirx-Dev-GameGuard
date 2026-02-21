@@ -2656,4 +2656,10 @@ void CMgrAvatorItemHistory::auto_trade_buy(
   WriteFile(pszFileName, sData);
 }
 
+void CMgrAvatorItemHistory::item_serial_full(int n, char *pszFileName)
+{
+  sprintf(sData, "\r\nITEM SERIAL FULL [%s %s]\r\n", m_szCurDate, m_szCurTime);
+  WriteFile(pszFileName, sData);
+}
+
 

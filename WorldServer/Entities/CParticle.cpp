@@ -132,6 +132,294 @@ CParticle::~CParticle()
     Dfree(mElement);
 }
 
+__int64 CParticle::Loop()
+{
+  const float loopTime = R3GetLoopTime();
+  const bool useSpecialLoop = (mFlag & (1u << 18)) != 0;
+
+  mTotalTime += loopTime;
+  if (!useSpecialLoop)
+  {
+    return RealLoop();
+  }
+
+  const __int64 specialLoopResult = SpecialLoop();
+  if (specialLoopResult == -1)
+  {
+    return RealLoop();
+  }
+
+  return specialLoopResult;
+}
+
+__int64 CParticle::RealLoop()
+{
+  unsigned int liveCount = 0;
+  const float loopTime = R3GetLoopTime();
+  float frameTime = loopTime;
+  if (mTimeSpeed * loopTime > 1.0f)
+  {
+    frameTime = loopTime / mTimeSpeed;
+  }
+
+  mParticleTimer += frameTime;
+  if (mState != 0)
+  {
+    mNextCreatorTime -= frameTime;
+  }
+
+  for (int elementIndex = 0; elementIndex < mNum; ++elementIndex)
+  {
+    _PARTICLE_ELEMENT &element = mElement[elementIndex];
+    if (element.mIsLive)
+    {
+      ++liveCount;
+      element.mTime += frameTime;
+      if (element.mTime <= mLiveTime / mTimeSpeed)
+      {
+        GetPartcleStep(elementIndex, frameTime);
+      }
+      else
+      {
+        element.mIsLive = 0;
+        --liveCount;
+        while (element.mTime > mLiveTime / mTimeSpeed)
+        {
+          element.mTime -= mLiveTime / mTimeSpeed;
+        }
+      }
+    }
+
+    const unsigned int flag = mFlag;
+    if ((flag & 0x800) != 0)
+    {
+      continue;
+    }
+
+    if ((flag & 0x2000) != 0 && mParticleTimer > mEmitTime)
+    {
+      if (elementIndex == mNum - 1)
+      {
+        mFlag = flag | 0x800;
+      }
+      continue;
+    }
+
+    const float epsilon = mOnePerTimeEpsilonTemp;
+    const float nextCreatorTime = mNextCreatorTime;
+    if (epsilon + nextCreatorTime < 0.0f && !element.mIsLive)
+    {
+      ++liveCount;
+      if (nextCreatorTime + frameTime < 0.0f)
+      {
+        const int left = static_cast<int>(nextCreatorTime * 65536.0f);
+        const int right = static_cast<int>(frameTime * 65536.0f);
+        mNextCreatorTime = static_cast<float>(left % right) * 0.000015258789f;
+      }
+
+      InitElement(elementIndex, -0.0f - (epsilon + mNextCreatorTime));
+      element.mIsLive = 1;
+      mNextCreatorTime = ((1.0f - mStartTimeRange) * mOnePerTime) + mNextCreatorTime;
+
+      const DWORD tickCount = GetTickCount();
+      const float noise = Noise1(static_cast<int>(tickCount));
+      const unsigned int updatedFlag = mFlag;
+      mOnePerTimeEpsilonTemp = ((noise - 0.5f) * mOnePerTimeEpsilon) * (1.0f - mStartTimeRange);
+      if ((updatedFlag & 1) != 0 && elementIndex == mNum - 1)
+      {
+        mFlag = updatedFlag | 0x800;
+      }
+    }
+  }
+
+  return liveCount;
+}
+
+__int64 CParticle::SpecialLoop()
+{
+  switch (mSpecialID)
+  {
+    case 1:
+      return -1;
+    case 2:
+      return SpecialLoop2();
+    case 3:
+      return -1;
+    case 4:
+    {
+      const float dx = mSpecialARGV[0][0] - mSpecialARGV[1][0];
+      const float dy = mSpecialARGV[0][1] - mSpecialARGV[1][1];
+      const float dz = mSpecialARGV[0][2] - mSpecialARGV[1][2];
+      mStartPos[1][1] = sqrtf_0(dx * dx + dy * dy + dz * dz) + mStartPos[0][1];
+      return -1;
+    }
+    default:
+      break;
+  }
+
+  if (mSpecialID != 5)
+  {
+    return 0;
+  }
+
+  const float oldGravityX = mGravity[0];
+  const float oldGravityY = mGravity[1];
+  const float oldGravityZ = mGravity[2];
+  const float oldStartPower00 = mStartPower[0][0];
+  const float oldStartPower01 = mStartPower[0][1];
+  const float oldStartPower02 = mStartPower[0][2];
+  const float oldStartPower10 = mStartPower[1][0];
+  const float oldStartPower11 = mStartPower[1][1];
+  const float oldStartPower12 = mStartPower[1][2];
+
+  const float dx = mSpecialARGV[0][0] - mSpecialARGV[1][0];
+  const float dy = mSpecialARGV[0][1] - mSpecialARGV[1][1];
+  const float dz = mSpecialARGV[0][2] - mSpecialARGV[1][2];
+  const float distanceScale = sqrtf_0(dx * dx + dy * dy + dz * dz) / 10.0f;
+
+  mGravity[0] = oldGravityX * distanceScale;
+  mGravity[1] = oldGravityY * distanceScale;
+  mGravity[2] = oldGravityZ * distanceScale;
+  mStartPower[0][0] = oldStartPower00 * distanceScale;
+  mStartPower[0][1] = oldStartPower01 * distanceScale;
+  mStartPower[0][2] = oldStartPower02 * distanceScale;
+  mStartPower[1][0] = oldStartPower10 * distanceScale;
+  mStartPower[1][1] = oldStartPower11 * distanceScale;
+  mStartPower[1][2] = oldStartPower12 * distanceScale;
+
+  const __int64 result = RealLoop();
+
+  mGravity[0] = oldGravityX;
+  mGravity[1] = oldGravityY;
+  mGravity[2] = oldGravityZ;
+  mStartPower[0][0] = oldStartPower00;
+  mStartPower[0][1] = oldStartPower01;
+  mStartPower[0][2] = oldStartPower02;
+  mStartPower[1][0] = oldStartPower10;
+  mStartPower[1][1] = oldStartPower11;
+  mStartPower[1][2] = oldStartPower12;
+  return result;
+}
+
+__int64 CParticle::SpecialLoop2()
+{
+  unsigned int liveCount = 0;
+  const float loopTime = R3GetLoopTime();
+  float frameTime = loopTime;
+  if (mTimeSpeed * loopTime > 1.0f)
+  {
+    frameTime = loopTime / mTimeSpeed;
+  }
+
+  mParticleTimer += frameTime;
+  if (mState != 0)
+  {
+    mNextCreatorTime -= frameTime;
+  }
+
+  for (int elementIndex = 0; elementIndex < mNum; ++elementIndex)
+  {
+    _PARTICLE_ELEMENT &element = mElement[elementIndex];
+    if (element.mIsLive)
+    {
+      ++liveCount;
+      element.mTime += frameTime;
+      if (element.mTime <= mLiveTime / mTimeSpeed)
+      {
+        GetPartcleStep(elementIndex, frameTime);
+      }
+      else
+      {
+        element.mIsLive = 0;
+        --liveCount;
+        while (element.mTime > mLiveTime / mTimeSpeed)
+        {
+          element.mTime -= mLiveTime / mTimeSpeed;
+        }
+      }
+    }
+
+    const unsigned int flag = mFlag;
+    if ((flag & 0x800) != 0)
+    {
+      continue;
+    }
+
+    if ((flag & 0x2000) != 0 && mParticleTimer > mEmitTime)
+    {
+      if (elementIndex == mNum - 1)
+      {
+        mFlag = flag | 0x800;
+      }
+      continue;
+    }
+
+    const float epsilon = mOnePerTimeEpsilonTemp;
+    const float nextCreatorTime = mNextCreatorTime;
+    if (epsilon + nextCreatorTime < 0.0f && !element.mIsLive)
+    {
+      ++liveCount;
+      if (nextCreatorTime + frameTime < 0.0f)
+      {
+        const int left = static_cast<int>(nextCreatorTime * 65536.0f);
+        const int right = static_cast<int>(frameTime * 65536.0f);
+        mNextCreatorTime = static_cast<float>(left % right) * 0.000015258789f;
+      }
+
+      InitElement(elementIndex, -0.0f - (epsilon + mNextCreatorTime));
+
+      int nearestLiveIndex = 0;
+      float minLiveTime = 100000.0f;
+      for (int candidateIndex = 0; candidateIndex < mNum; ++candidateIndex)
+      {
+        if (candidateIndex == elementIndex)
+        {
+          continue;
+        }
+
+        _PARTICLE_ELEMENT &candidate = mElement[candidateIndex];
+        if (candidate.mIsLive && minLiveTime > candidate.mTime)
+        {
+          minLiveTime = candidate.mTime;
+          nearestLiveIndex = candidateIndex;
+        }
+      }
+
+      if (minLiveTime != 100000.0f)
+      {
+        _PARTICLE_ELEMENT &nearest = mElement[nearestLiveIndex];
+        const float dx = nearest.mPos[0] - element.mPos[0];
+        const float dy = nearest.mPos[1] - element.mPos[1];
+        const float dz = nearest.mPos[2] - element.mPos[2];
+        if (dx != 0.0f || dy != 0.0f || dz != 0.0f)
+        {
+          const float length = sqrtf_0(dx * dx + dy * dy + dz * dz);
+          const float base = mNextCreatorTime + mOnePerTimeEpsilonTemp;
+          const float offset =
+            ((-0.0f - (base * length)) / (((1.0f - mStartTimeRange) * mOnePerTime) - base));
+          element.mPos[0] += (dx / length) * offset;
+          element.mPos[1] += (dy / length) * offset;
+          element.mPos[2] += (dz / length) * offset;
+        }
+      }
+
+      element.mIsLive = 1;
+      mNextCreatorTime = ((1.0f - mStartTimeRange) * mOnePerTime) + mNextCreatorTime;
+
+      const DWORD tickCount = GetTickCount();
+      const float noise = Noise1(static_cast<int>(tickCount));
+      const unsigned int updatedFlag = mFlag;
+      mOnePerTimeEpsilonTemp = ((noise - 0.5f) * mOnePerTimeEpsilon) * (1.0f - mStartTimeRange);
+      if ((updatedFlag & 1) != 0 && elementIndex == mNum - 1)
+      {
+        mFlag = updatedFlag | 0x800;
+      }
+    }
+  }
+
+  return liveCount;
+}
+
 __int64 CParticle::LoadParticleSPT(char *a2, int a3)
 {
   FILE *v5 = fopenMFM(a2, "rt");

@@ -919,6 +919,20 @@ char _TRAP_PARAM::PushItem(CTrap *pTrap, unsigned int dwTrapSerial)
   return 0;
 }
 
+char _TRAP_PARAM::PopItem(unsigned int dwTrapSerial)
+{
+  for (int index = 0; index < 20; ++index)
+  {
+    if (m_Item[index].isLoad() && m_Item[index].dwSerial == dwTrapSerial)
+    {
+      m_Item[index].init();
+      --m_nCount;
+      return 1;
+    }
+  }
+  return 0;
+}
+
 void _CRYMSG_LIST::_LIST::Init()
 {
   wszCryMsg[0] = 0;
@@ -5170,6 +5184,14 @@ void CPlayer::_TowerDestroy(CGuardTower *pTowerObj)
     SendMsg_AlterTowerHP(pItem->m_wSerial, 0);
     Emb_DelStorage(0, pItem->m_byStorageIndex, false, true, "CPlayer::_TowerDestroy()");
     s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex, pItem, m_szItemHistoryFileName);
+  }
+}
+
+void CPlayer::_TrapDestroy(CTrap *pTrap, unsigned __int8 /*byDestroyCode*/)
+{
+  if (m_pmTrp.PopItem(pTrap->m_dwObjSerial))
+  {
+    SendMsg_MadeTrapNumInform(m_pmTrp.m_nCount);
   }
 }
 

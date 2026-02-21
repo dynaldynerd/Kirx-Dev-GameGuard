@@ -2905,6 +2905,13 @@ char CUserDB::Update_UserGetScaner(unsigned __int16 wScanerCnt, unsigned __int16
   return 1;
 }
 
+char CUserDB::Update_UserPlayTime(unsigned int dwAccPlayTime)
+{
+  m_AvatorData.dbSupplement.dwAccumPlayTime += dwAccPlayTime;
+  m_bDataUpdate = true;
+  return 1;
+}
+
 char CUserDB::Update_RaceVoteInfoInit()
 {
   m_AvatorData.dbSupplement.VoteEnable = 1;

@@ -51,6 +51,52 @@ void CCouponMgr::Init(unsigned __int16 wIdx)
   m_bTimeReset = false;
 }
 
+void CCouponMgr::Loop(unsigned __int16 wIdx)
+{
+  CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
+  if (manager->GetNationCode() != 410)
+  {
+    return;
+  }
+
+  char timeBuffer[48]{};
+  char hourMinute[28]{};
+  _strtime(timeBuffer);
+  hourMinute[0] = timeBuffer[0];
+  hourMinute[1] = timeBuffer[1];
+  hourMinute[2] = timeBuffer[3];
+  hourMinute[3] = timeBuffer[4];
+  hourMinute[4] = '\0';
+
+  const int hhmm = std::atoi(hourMinute);
+  if (!hhmm && !m_bTimeReset)
+  {
+    m_dwContTime = 0;
+    m_byRemainTime = 0;
+    m_byReceiveCoupon = 0;
+    SendMsg_InPcBangTime(wIdx);
+    SendMsg_CouponEnsure(wIdx, 0);
+    SendMsg_RemainCouponInform(wIdx, 5u);
+    m_tmrCouponEnableTime.TermTimeRun();
+    m_tmrCheckConnMin.TermTimeRun();
+    m_bTimeReset = true;
+  }
+
+  if (m_tmrCouponEnableTime.CountingTimer() && m_byRemainTime <= 5u - m_byReceiveCoupon && m_dwContTime <= 300u)
+  {
+    ++m_byRemainTime;
+    const unsigned __int8 ensureTime =
+      (m_byRemainTime + m_byReceiveCoupon <= 5u) ? m_byRemainTime : static_cast<unsigned __int8>(5u - m_byReceiveCoupon);
+    SendMsg_CouponEnsure(wIdx, ensureTime);
+    m_pkInfo->dwContPlayTime = m_dwContTime;
+  }
+
+  if (m_tmrCheckConnMin.CountingTimer() && m_dwContTime <= 300u)
+  {
+    ++m_dwContTime;
+  }
+}
+
 void CCouponMgr::ReceivePrimiumCoupon(unsigned __int16 wIdx)
 {
   CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();

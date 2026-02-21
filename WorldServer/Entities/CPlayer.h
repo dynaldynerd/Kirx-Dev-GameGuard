@@ -639,6 +639,7 @@ struct  _TRAP_PARAM
 
   void Init();
   char PushItem(CTrap *pTrap, unsigned int dwTrapSerial);
+  char PopItem(unsigned int dwTrapSerial);
 };
 
 /* 1131 */
@@ -1398,6 +1399,7 @@ public:
   void pc_SetTargetObjectRequest(CGameObject *pTar, unsigned int dwSerial, bool bForce);
   void pc_ReleaseTargetObjectRequest();
   void pc_SetGroupTargetObjectRequest(CGameObject *pTar, unsigned int dwSerial, unsigned __int8 byGroupType);
+  void pc_RefreshGroupTargetPosition(unsigned __int8 byGroupType, CGameObject *pObject);
   void pc_ReleaseGroupTargetObjectRequest(unsigned __int8 byGroupType);
   void pc_SetGroupMapPointRequest(unsigned __int8 byGroupType, float *pzTar);
   void pc_PartyReqBlock(bool bBlock);
@@ -1465,6 +1467,7 @@ public:
   void pc_RequestUILockFindPW(CUserDB *pUserDB, char *uszHintAnswer);
   void pc_MineStart(unsigned __int8 byMineIndex, unsigned __int8 byOreIndex, unsigned __int16 wBatterySerial);
   void pc_MineCancle();
+  void pc_MineComplete();
   void pc_OreCutting(unsigned __int16 wOreSerial, unsigned __int8 byProcessNum);
   void pc_OreIntoBag(unsigned __int16 wResIndex, unsigned __int16 wSerial, unsigned __int8 byAddAmount);
   void pc_CuttingComplete(unsigned __int8 byNpcRace);
@@ -1653,6 +1656,7 @@ public:
   void _TowerAllReturn(unsigned __int8 byDestroyType, bool bForceReturn);
   __int16 _TowerReturn(_STORAGE_LIST::_db_con *pTowerItem);
   void _TowerDestroy(CGuardTower *pTowerObj);
+  void _TrapDestroy(CTrap *pTrap, unsigned __int8 byDestroyCode);
   void ExitUpdateDataToWorld();
   void _AnimusReturn(unsigned __int8 byReturnType);
   void SendMsg_AnimusReturnResult(char byRetCode, unsigned __int16 wAnimusItemSerial, unsigned __int8 byReturnType);
@@ -1678,6 +1682,8 @@ public:
   bool IsUseReleaseRaceBuffPotion();
   void SetUseReleaseRaceBuffPotion();
   char IsOverOneDay();
+  unsigned int SumMinuteOne(_SYSTEMTIME *tm);
+  unsigned int SumMinuteBetween(_SYSTEMTIME *tmLast, _SYSTEMTIME *tmLocal);
   char mgr_tracing(int bOper);
   void SendMsg_AlterTol();
   void SendMsg_AlterTowerHP(unsigned __int16 wItemSerial, unsigned __int16 wLeftHP);
@@ -2063,6 +2069,7 @@ public:
   void SendMsg_VoteResult(unsigned int dwMatterVoteSynKey, unsigned __int8 byRetCode);
   void CheckGroupTargeting();
   void CheckGroupMapPoint();
+  void _check_target_object();
   void SendMsg_StartNewPos(char byMapInMode);
   void SendMsg_BaseDownloadResult();
   void SendMsg_InvenDownloadResult();
@@ -2286,6 +2293,7 @@ public:
     unsigned __int16 *pConsumeSerial,
     int *pnLv);
   void skill_process_for_aura(int nSkillIndex);
+  void UpdateAuraSFCont();
   unsigned __int8 skill_process_for_item(int nSkillIndex, _CHRID *pidDst, int *pnLv);
   void make_gen_attack_param(
     CCharacter *pDst,
@@ -2413,6 +2421,15 @@ public:
   static void OnLoop_Static();
   void UpdatePvpPointLimiter(__int64 tCurTime);
   void UpdatePvpOrderView(__int64 tCurTime);
+  void _CheckForcePullUnit();
+  void UpdatedMasteryWriteHistory();
+  void _check_hp_send_party();
+  void UpdateChaosModeState(unsigned int dwCurTime);
+  void CheckBattleMode();
+  void CheckNameChange();
+  void _check_party_target_object();
+  void _check_guild_target_object();
+  void _check_race_target_object();
   void AutoRecover();
   void AutoRecover_Animus();
   void AutoCharge_Booster();

@@ -65,6 +65,43 @@ void CQuestMgr::InitMgr(CPlayer *pMaster, _QUEST_DB_BASE *pQuestData)
   }
 }
 
+void CQuestMgr::Loop()
+{
+  const unsigned int now = timeGetTime();
+  if (now - m_dwOldTimeoutChecktime < 10000u)
+  {
+    return;
+  }
+
+  m_dwOldTimeoutChecktime = now;
+  for (int slotIndex = 0; slotIndex < 30; ++slotIndex)
+  {
+    _QUEST_DB_BASE::_LIST *slot = &m_pMaster->m_Param.m_QuestDB.m_List[slotIndex];
+    if (slot->byQuestType == 0xFF || slot->wIndex == 0xFFFF)
+    {
+      continue;
+    }
+
+    if (CQuestMgr::s_tblQuest->GetRecord(slot->wIndex))
+    {
+      if (slot->dwPassSec != static_cast<unsigned int>(-1))
+      {
+        slot->dwPassSec += 10;
+        CheckFailCondition(static_cast<unsigned __int8>(slotIndex), 0, nullptr);
+        if (slot->byQuestType != 0xFF)
+        {
+          m_pMaster->m_pUserDB->Update_QuestUpdate(static_cast<unsigned __int8>(slotIndex), slot, false);
+        }
+      }
+    }
+    else
+    {
+      DeleteQuestData(static_cast<unsigned __int8>(slotIndex));
+      m_pMaster->m_pUserDB->Update_QuestDelete(static_cast<unsigned __int8>(slotIndex));
+    }
+  }
+}
+
 void CQuestMgr::CheckFailLoop(int nFailCond, char *pszCode)
 {
   if (!m_pMaster)

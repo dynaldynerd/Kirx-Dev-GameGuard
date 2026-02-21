@@ -28,6 +28,27 @@ bool CGravityStone::IsValidOwner(CPlayer *pkPlayer)
   return m_pkOwner && m_pkOwner == pkPlayer && m_pkOwner->m_pUserDB->m_dwSerial == pkPlayer->m_pUserDB->m_dwSerial;
 }
 
+bool CGravityStone::IsInTown()
+{
+  return m_pkOwner && m_pkOwner->IsInTown();
+}
+
+char CGravityStone::CheckTakeTimeLimit()
+{
+  if (!m_pkOwner || !m_dwTakeLimitTime)
+  {
+    return 0;
+  }
+
+  if (m_dwTakeLimitTime > GetLoopTime())
+  {
+    return 0;
+  }
+
+  Clear();
+  return 1;
+}
+
 char CGravityStone::Regen(_object_create_setdata *pParam)
 {
   if (!Create(pParam))
