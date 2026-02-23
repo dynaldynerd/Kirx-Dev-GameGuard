@@ -48,6 +48,7 @@
 #include "CDarkHoleChannel.h"
 #include "CDarkHoleDungeonQuest.h"
 #include "CDarkHoleDungeonQuestSetup.h"
+#include "BattleDungeonItem_fld.h"
 #include "TicketItem_fld.h"
 #include "darkhole_create_setdata.h"
 #include "ENTER_DUNGEON_NEW_POS.h"
@@ -421,7 +422,7 @@ void CPlayer::pc_DarkHoleOpenRequest(unsigned __int16 dwItemSerial)
 {
   unsigned __int8 errCode = 0;
   _STORAGE_LIST::_db_con *item = nullptr;
-  _base_fld *record = nullptr;
+  _BattleDungeonItem_fld *record = nullptr;
   CDarkHole *hole = nullptr;
   _dh_quest_setup *questSetup = nullptr;
 
@@ -455,7 +456,7 @@ void CPlayer::pc_DarkHoleOpenRequest(unsigned __int16 dwItemSerial)
         }
         else if (item->m_byTableCode == 23)
         {
-          record = g_Main.m_tblItemData[23].GetRecord(item->m_wItemIndex);
+          record = reinterpret_cast<_BattleDungeonItem_fld *>(g_Main.m_tblItemData[23].GetRecord(item->m_wItemIndex));
           if (record)
           {
             questSetup = g_DarkHoleQuest.GetQuestSetupPtr(item->m_wItemIndex);
@@ -511,7 +512,7 @@ void CPlayer::pc_DarkHoleOpenRequest(unsigned __int16 dwItemSerial)
   if (!errCode)
   {
     _darkhole_create_setdata param;
-    param.m_pRecordSet = record;
+    param.m_pRecordSet = reinterpret_cast<_base_fld *>(record);
     param.m_pMap = m_pCurMap;
     param.m_nLayerIndex = m_wMapLayerIndex;
     m_pCurMap->GetRandPosInRange(m_fCurPos, 10, param.m_fStartPos);
@@ -523,7 +524,7 @@ void CPlayer::pc_DarkHoleOpenRequest(unsigned __int16 dwItemSerial)
         m_ObjID.m_wIndex,
         item,
         m_szItemHistoryFileName);
-      const char *holeCode = record[2].m_strCode;
+      const char *holeCode = record->m_strName;
       const char *charName = m_Param.GetCharNameA();
       g_Main.m_logDungeon.Write("OPEN: %s, DARKHOLE:%s", charName, holeCode);
       holeSerial = hole->m_dwObjSerial;
@@ -622,7 +623,8 @@ void CPlayer::pc_DarkHoleEnterRequest(unsigned __int16 wHoleIndex, unsigned int 
     hole->EnterPlayer(this, oldMap, oldLayer, oldPos, false);
     if (hole->m_pRecordSet)
     {
-      const char *holeCode = hole->m_pRecordSet[2].m_strCode;
+      const _BattleDungeonItem_fld *holeRecord = static_cast<const _BattleDungeonItem_fld *>(hole->m_pRecordSet);
+      const char *holeCode = holeRecord->m_strName;
       const char *openerName = hole->m_aszOpenerName;
       const char *charName = m_Param.GetCharNameA();
       g_Main.m_logDungeon.Write(

@@ -1,6 +1,7 @@
 #include "pch.h"
 
-#include "base_fld.h"
+#include "ItemExist_fld.h"
+#include "ItemLooting_fld.h"
 
 #include "CItemLootTable.h"
 
@@ -42,40 +43,36 @@ bool CItemLootTable::Indexing(CRecordData *itemTables, char *errCode)
 
   for (int lootIndex = 0; lootIndex < m_nLootNum; ++lootIndex)
   {
-    _base_fld *lootRecord = m_tblLoot.GetRecord(lootIndex);
+    _ItemLooting_fld *lootRecord = static_cast<_ItemLooting_fld *>(m_tblLoot.GetRecord(lootIndex));
     m_ppLinkCode[lootIndex] = nullptr;
-    if (!lootRecord)
-    {
-      continue;
-    }
-
-    int *entryCountPtr = reinterpret_cast<int *>(&lootRecord[1].m_strCode[8]);
-    if (*entryCountPtr <= 0)
+    if (lootRecord->m_nLootListCount <= 0)
     {
       continue;
     }
 
     int validEntryCount = 0;
-    for (int entryIndex = 0; entryIndex < *entryCountPtr; ++entryIndex)
+    for (int entryIndex = 0; entryIndex < lootRecord->m_nLootListCount; ++entryIndex)
     {
-      char *itemCode = &lootRecord[1].m_strCode[entryIndex * 8 + 12];
+      char *itemCode = lootRecord->m_itmLootCodeKey[entryIndex];
       if (!strcmp_0(itemCode, "0"))
       {
         break;
       }
       ++validEntryCount;
     }
-    *entryCountPtr = validEntryCount;
+    lootRecord->m_nLootListCount = validEntryCount;
 
-    if (validEntryCount <= 0)
+    if (lootRecord->m_nLootListCount <= 0)
     {
       continue;
     }
 
-    m_ppLinkCode[lootIndex] = new _linker_code[validEntryCount]();
-    for (int entryIndex = 0; entryIndex < validEntryCount; ++entryIndex)
+    m_ppLinkCode[lootIndex] = new _linker_code[lootRecord->m_nLootListCount];
+    memset_0(m_ppLinkCode[lootIndex], 0, sizeof(_linker_code) * lootRecord->m_nLootListCount);
+
+    for (int entryIndex = 0; entryIndex < lootRecord->m_nLootListCount; ++entryIndex)
     {
-      char *itemCode = &lootRecord[1].m_strCode[entryIndex * 8 + 12];
+      char *itemCode = lootRecord->m_itmLootCodeKey[entryIndex];
       const int itemTableCode = GetItemTableCode(itemCode);
       if (itemTableCode == -1)
       {
@@ -98,7 +95,8 @@ bool CItemLootTable::Indexing(CRecordData *itemTables, char *errCode)
 
       m_ppLinkCode[lootIndex][entryIndex].byTableCode = static_cast<unsigned __int8>(itemTableCode);
       m_ppLinkCode[lootIndex][entryIndex].wItemIndex = static_cast<unsigned __int16>(itemRecord->m_dwIndex);
-      m_ppLinkCode[lootIndex][entryIndex].bExist = static_cast<int>(static_cast<signed char>(itemRecord[1].m_dwIndex));
+      _ItemExist_fld *itemExistRecord = reinterpret_cast<_ItemExist_fld *>(itemRecord);
+      m_ppLinkCode[lootIndex][entryIndex].bExist = static_cast<signed char>(itemExistRecord->m_bExist);
     }
   }
 

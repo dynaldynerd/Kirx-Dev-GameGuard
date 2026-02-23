@@ -9,6 +9,8 @@
 #include "CRecordData.h"
 #include "DummyPosition.h"
 #include "GlobalObjects.h"
+#include "ItemExist_fld.h"
+#include "npc_fld.h"
 #include "StoreList_fld.h"
 #include "TimeItem.h"
 #include "WorldServerUtil.h"
@@ -82,8 +84,8 @@ bool CItemStore::Init(int nIndex, CMapData *pExistMap, _store_dummy *pDum, _Stor
             break;
           }
           m_pStorageItem[j].byItemTableCode = static_cast<unsigned __int8>(nTableCode);
-          _base_fld *Record =
-            g_Main.m_tblItemData[nTableCode].GetRecord(m_pRec->m_sellLimitList[j].m_strItemCode);
+          _ItemExist_fld *Record = static_cast<_ItemExist_fld *>(
+            g_Main.m_tblItemData[nTableCode].GetRecord(m_pRec->m_sellLimitList[j].m_strItemCode));
           if (!Record)
           {
             MyMessageBox(
@@ -135,7 +137,7 @@ bool CItemStore::Init(int nIndex, CMapData *pExistMap, _store_dummy *pDum, _Stor
               Record->m_dwIndex);
             break;
           }
-          m_pStorageItem[j].bExist = static_cast<signed char>(Record[1].m_dwIndex);
+          m_pStorageItem[j].bExist = static_cast<signed char>(Record->m_bExist);
           unsigned int ItemDurPoint = GetItemDurPoint(nTableCode, Record->m_dwIndex);
           m_pStorageItem[j].dwDurPoint = ItemDurPoint;
           m_pStorageItem[j].byType = 1;
@@ -161,7 +163,8 @@ bool CItemStore::Init(int nIndex, CMapData *pExistMap, _store_dummy *pDum, _Stor
             break;
           }
           m_pStorageItem[j].byItemTableCode = static_cast<unsigned __int8>(nTableCode);
-          _base_fld *v25 = g_Main.m_tblItemData[nTableCode].GetRecord(m_pRec->m_strItemlist[j]);
+          _ItemExist_fld *v25 = static_cast<_ItemExist_fld *>(
+            g_Main.m_tblItemData[nTableCode].GetRecord(m_pRec->m_strItemlist[j]));
           if (!v25)
           {
             MyMessageBox(
@@ -205,7 +208,7 @@ bool CItemStore::Init(int nIndex, CMapData *pExistMap, _store_dummy *pDum, _Stor
               v25->m_dwIndex);
             break;
           }
-          m_pStorageItem[j].bExist = static_cast<signed char>(v25[1].m_dwIndex);
+          m_pStorageItem[j].bExist = static_cast<signed char>(v25->m_bExist);
           unsigned int v19 = GetItemDurPoint(nTableCode, v25->m_dwIndex);
           m_pStorageItem[j].dwDurPoint = v19;
           ++m_nStorageItemNum;
@@ -241,10 +244,10 @@ _base_fld *CItemStore::GetNpcRecord()
 
 bool CItemStore::GetNpcRaceCode(unsigned __int8 *pbyRaceCode)
 {
-  _base_fld *Record = g_Main.m_tblNPC.GetRecord(m_pRec->m_strStore_NPCcode);
-  if (!Record)
+  _npc_fld *record = reinterpret_cast<_npc_fld *>(g_Main.m_tblNPC.GetRecord(m_pRec->m_strStore_NPCcode));
+  if (!record)
     return false;
-  *pbyRaceCode = static_cast<unsigned __int8>(Record[1].m_strCode[60]);
+  *pbyRaceCode = static_cast<unsigned __int8>(record->m_nRace);
   return true;
 }
 

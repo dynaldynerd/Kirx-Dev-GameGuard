@@ -49,6 +49,7 @@
 #include "CDarkHoleChannel.h"
 #include "CDarkHoleDungeonQuest.h"
 #include "CDarkHoleDungeonQuestSetup.h"
+#include "OreItem_fld.h"
 #include "TicketItem_fld.h"
 #include "darkhole_create_setdata.h"
 #include "ENTER_DUNGEON_NEW_POS.h"
@@ -247,10 +248,10 @@ void CPlayer::pc_MineComplete()
 
           const unsigned __int16 oreIndex = CGoldenBoxItemMgr::Instance()->GetGoldBoxItemIndex(
             static_cast<unsigned __int16>(loopIndex));
-          _base_fld *oreRecord = g_Main.m_tblItemData[17].GetRecord(oreIndex);
+          _OreItem_fld *oreRecord = reinterpret_cast<_OreItem_fld *>(g_Main.m_tblItemData[17].GetRecord(oreIndex));
           if (oreRecord)
           {
-            const unsigned int rate = *reinterpret_cast<unsigned int *>(&oreRecord[3].m_strCode[4]);
+            const unsigned int rate = oreRecord->m_dwOreProbability;
             if (rate)
             {
               const int randomValue = rand();
@@ -348,7 +349,7 @@ void CPlayer::pc_MineComplete()
 
         const unsigned __int16 batteryLeftDur = static_cast<unsigned __int16>(
           Emb_AlterDurPoint(0, batteryItem->m_byStorageIndex, -static_cast<int>(m_byDelaySec), false, false));
-        _base_fld *oreRecord = g_Main.m_tblItemData[17].GetRecord(targetOreIndex);
+        _OreItem_fld *oreRecord = reinterpret_cast<_OreItem_fld *>(g_Main.m_tblItemData[17].GetRecord(targetOreIndex));
         Emb_CheckActForQuest(12, oreRecord->m_strCode, 1u, false);
         SendMsg_MineCompleteResult(resultCode, targetOreIndex, oreSerial, oreDur, batteryLeftDur);
 
@@ -362,7 +363,7 @@ void CPlayer::pc_MineComplete()
           }
         }
 
-        eAddMineOre(m_Param.GetRaceCode(), oreRecord[3].m_strCode[0], 1);
+        eAddMineOre(m_Param.GetRaceCode(), static_cast<unsigned __int8>(oreRecord->m_nOre_Level), 1);
         COreAmountMgr::Instance()->DecreaseOre(1u);
       }
     }

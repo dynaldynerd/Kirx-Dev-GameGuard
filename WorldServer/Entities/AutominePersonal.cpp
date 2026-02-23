@@ -20,6 +20,8 @@
 #include "personal_automine_attacked_zocl.h"
 #include "personal_automine_delbattery_zocl.h"
 #include "personal_automine_stop_zocl.h"
+#include "OreItem_fld.h"
+#include "UNmannedminer_fld.h"
 
 #include <cstdlib>
 #include <cstdio>
@@ -253,19 +255,19 @@ bool AutominePersonal::regist_to_map(
   m_dwDelay *= static_cast<unsigned int>(penaltyScale);
 
   _object_create_setdata createData{};
-  _base_fld *itemRecord =
-    reinterpret_cast<_base_fld *>(g_Main.m_tblItemData[pInstallItem->m_byTableCode].GetRecord(pInstallItem->m_wItemIndex));
+  _UNmannedminer_fld *itemRecord = reinterpret_cast<_UNmannedminer_fld *>(
+    g_Main.m_tblItemData[pInstallItem->m_byTableCode].GetRecord(pInstallItem->m_wItemIndex));
   if (itemRecord == nullptr)
   {
     return false;
   }
 
-  if (pOwner->m_Param.GetLevel() < *reinterpret_cast<int *>(&itemRecord[4].m_strCode[52]))
+  if (pOwner->m_Param.GetLevel() < itemRecord->m_nLevelLim)
   {
     return false;
   }
 
-  createData.m_pRecordSet = itemRecord;
+  createData.m_pRecordSet = reinterpret_cast<_base_fld *>(itemRecord);
   createData.m_pMap = pOwner->m_pCurMap;
   createData.m_nLayerIndex = pOwner->m_wMapLayerIndex;
   pOwner->m_pCurMap->GetRandPosInRange(pOwner->m_fCurPos, 10, createData.m_fStartPos);
@@ -283,7 +285,7 @@ bool AutominePersonal::regist_to_map(
   m_pOwner = pOwner;
   m_dwNextMineTime = static_cast<unsigned int>(-1);
   m_dwChangeSendTime = timeGetTime() + m_dwDelay + 3000;
-  m_nMaxHP = *reinterpret_cast<int *>(&itemRecord[5].m_strCode[44]);
+  m_nMaxHP = itemRecord->m_nMaxHP;
   m_wItemSerial = pInstallItem->m_wSerial;
   m_byFilledSlotCnt = static_cast<unsigned __int8>(m_pOwner->m_Param.m_dbPersonalAmineInven.GetNumUseCon());
 
@@ -709,13 +711,13 @@ if (m_pItem == nullptr)
     return 1;
   }
 
-  _base_fld *record = g_Main.m_tblItemData[33].GetRecord(m_pItem->m_wItemIndex);
+  _UNmannedminer_fld *record = reinterpret_cast<_UNmannedminer_fld *>(g_Main.m_tblItemData[33].GetRecord(m_pItem->m_wItemIndex));
   if (record == nullptr)
   {
     return 1;
   }
 
-  return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[16]);
+  return static_cast<unsigned int>(record->m_nDefFc);
 }
 
 float AutominePersonal::GetDefFacing(int nPart)
@@ -725,13 +727,13 @@ if (m_pItem == nullptr)
     return 0.5f;
   }
 
-  _base_fld *record = g_Main.m_tblItemData[33].GetRecord(m_pItem->m_wItemIndex);
+  _UNmannedminer_fld *record = reinterpret_cast<_UNmannedminer_fld *>(g_Main.m_tblItemData[33].GetRecord(m_pItem->m_wItemIndex));
   if (record == nullptr)
   {
     return 0.5f;
   }
 
-  return *reinterpret_cast<float *>(&record[5].m_strCode[24]);
+  return record->m_fDefFacing;
 }
 
 float AutominePersonal::GetDefGap(int nPart)
@@ -741,13 +743,13 @@ if (m_pItem == nullptr)
     return 0.5f;
   }
 
-  _base_fld *record = g_Main.m_tblItemData[33].GetRecord(m_pItem->m_wItemIndex);
+  _UNmannedminer_fld *record = reinterpret_cast<_UNmannedminer_fld *>(g_Main.m_tblItemData[33].GetRecord(m_pItem->m_wItemIndex));
   if (record == nullptr)
   {
     return 0.5f;
   }
 
-  return *reinterpret_cast<float *>(&record[5].m_strCode[20]);
+  return record->m_fDefGap;
 }
 
 __int64 AutominePersonal::GetHP()
@@ -1105,13 +1107,13 @@ bool AutominePersonal::do_automine(unsigned int dwTime)
     for (unsigned int index = 0; index < goldBoxMgr->GetLoopCount(); ++index)
     {
       const unsigned __int16 goldItemIndex = goldBoxMgr->GetGoldBoxItemIndex(static_cast<unsigned __int16>(index));
-      _base_fld *goldRecord = g_Main.m_tblItemData[17].GetRecord(goldItemIndex);
+      _OreItem_fld *goldRecord = reinterpret_cast<_OreItem_fld *>(g_Main.m_tblItemData[17].GetRecord(goldItemIndex));
       if (goldRecord == nullptr)
       {
         continue;
       }
 
-      const int triggerRate = *reinterpret_cast<int *>(&goldRecord[3].m_strCode[4]);
+      const int triggerRate = static_cast<int>(goldRecord->m_dwOreProbability);
       if (triggerRate == 0)
       {
         continue;
@@ -1140,7 +1142,7 @@ bool AutominePersonal::do_automine(unsigned int dwTime)
     return false;
   }
 
-  _base_fld *oreRecord = g_Main.m_tblItemData[17].GetRecord(oreItemIndex);
+  _OreItem_fld *oreRecord = reinterpret_cast<_OreItem_fld *>(g_Main.m_tblItemData[17].GetRecord(oreItemIndex));
   for (int slot = 0; slot < 40; ++slot)
   {
     _STORAGE_LIST::_db_con *inventoryItem = &m_pOwner->m_Param.m_dbPersonalAmineInven.m_List[slot];
@@ -1161,7 +1163,7 @@ bool AutominePersonal::do_automine(unsigned int dwTime)
       inventoryItem->m_byStorageIndex,
       inventoryItem->m_wItemIndex,
       newDur);
-    eAddMineOre(m_pOwner->m_Param.GetRaceCode(), oreRecord[3].m_strCode[0], 1);
+    eAddMineOre(m_pOwner->m_Param.GetRaceCode(), static_cast<unsigned __int8>(oreRecord->m_nOre_Level), 1);
     COreAmountMgr::Instance()->DecreaseOre(1u);
 
     minedOre = true;
@@ -1187,7 +1189,7 @@ bool AutominePersonal::do_automine(unsigned int dwTime)
     ++m_byFilledSlotCnt;
     send_current_state();
     make_minepacket(newOre.m_wItemIndex, newOre.m_wSerial, newOre.m_byStorageIndex, newOre.m_wItemIndex, 1u);
-    eAddMineOre(m_pOwner->m_Param.GetRaceCode(), oreRecord[3].m_strCode[0], 1);
+    eAddMineOre(m_pOwner->m_Param.GetRaceCode(), static_cast<unsigned __int8>(oreRecord->m_nOre_Level), 1);
     COreAmountMgr::Instance()->DecreaseOre(1u);
 
     minedOre = true;

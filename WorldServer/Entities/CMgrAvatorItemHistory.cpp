@@ -13,6 +13,7 @@
 #include "CPostStorage.h"
 #include "CRecordData.h"
 #include "CUnmannedTraderRegistItemInfo.h"
+#include "CouponItem_fld.h"
 #include "buy_offer.h"
 #include "sell_offer.h"
 #include "GlobalObjects.h"
@@ -1524,12 +1525,13 @@ void CMgrAvatorItemHistory::coupon_use_buy_item(
   char *ApplyItem,
   char *pszFileName)
 {
-  _base_fld *record = g_Main.m_tblItemData[pCouponItem->m_byTableCode].GetRecord(pCouponItem->m_wItemIndex);
+  _CouponItem_fld *record = reinterpret_cast<_CouponItem_fld *>(
+    g_Main.m_tblItemData[pCouponItem->m_byTableCode].GetRecord(pCouponItem->m_wItemIndex));
   sprintf_s(
     sData,
     "Use CouponItem at %s(%d down): %s_[%I64u] [%s %s]\r\n",
     ApplyItem,
-    *reinterpret_cast<int *>(&record[4].m_strCode[8]),
+    record->m_nPoint,
     record->m_strCode,
     pCouponItem->m_lnUID,
     m_szCurDate,

@@ -34,6 +34,7 @@
 #include "EQUIP_MASTERY_LIM.h"
 #include "CAnimus.h"
 #include "animus_fld.h"
+#include "WeaponItem_fld.h"
 
 namespace
 {
@@ -1558,11 +1559,11 @@ _animus_fld *GetAnimusFldFromExp(int nAnimusClass, unsigned __int64 dwExp)
   CRecordData *table = &CAnimus::s_tblParameter[nAnimusClass];
   for (int n = 0; n < 65; ++n)
   {
-    _base_fld *record = table->GetRecord(n);
+    _animus_fld *record = reinterpret_cast<_animus_fld *>(table->GetRecord(n));
     if (!record)
       return nullptr;
-    if (*reinterpret_cast<unsigned __int64 *>(record[1].m_strCode) > dwExp)
-      return reinterpret_cast<_animus_fld *>(record);
+    if (record->m_nForLvUpExp > dwExp)
+      return record;
   }
   const int recordNum = static_cast<int>(table->GetRecordNum());
   return reinterpret_cast<_animus_fld *>(table->GetRecord(recordNum - 1));
@@ -1782,13 +1783,13 @@ _EQUIP_MASTERY_LIM *GetItemEquipMastery(int nTableCode, int nItemIndex, int *pnL
 
 unsigned __int8 GetWeaponClass(int nItemIndex)
 {
-  _base_fld *record = s_ptblItemData[6].GetRecord(nItemIndex);
+  _WeaponItem_fld *record = reinterpret_cast<_WeaponItem_fld *>(s_ptblItemData[6].GetRecord(nItemIndex));
   if (!record)
   {
     return 0;
   }
 
-  const int weaponType = *reinterpret_cast<int *>(&record[6].m_strCode[8]);
+  const int weaponType = record->m_nType;
   switch (weaponType)
   {
     case 0:

@@ -15,6 +15,7 @@
 #include "CMonsterEventRespawn.h"
 #include "CMonsterEventSet.h"
 #include "CItemLootTable.h"
+#include "ItemLooting_fld.h"
 #include "CItemBox.h"
 #include "CPartyPlayer.h"
 #include "CPlayerDB.h"
@@ -29,6 +30,7 @@
 #include "CMapData.h"
 #include "CGuardTower.h"
 #include "CTrap.h"
+#include "monster_fld.h"
 
 #include <cstring>
 #include <cmath>
@@ -451,18 +453,18 @@ __int64 CMonster::GetMob_SubRace()
 
 unsigned int CMonster::GetAggroShortTime()
 {
-  if (m_pRecordSet)
+  if (m_pMonRec)
   {
-    return static_cast<unsigned int>(1000 * *reinterpret_cast<int *>(&m_pRecordSet[3].m_strCode[48]));
+    return static_cast<unsigned int>(1000 * m_pMonRec->m_nAPTime);
   }
   return 0;
 }
 
 unsigned int CMonster::GetAggroResetTime()
 {
-  if (m_pRecordSet)
+  if (m_pMonRec)
   {
-    return static_cast<unsigned int>(1000 * *reinterpret_cast<int *>(&m_pRecordSet[3].m_strCode[52]));
+    return static_cast<unsigned int>(1000 * m_pMonRec->m_nAPReset);
   }
   return 0;
 }
@@ -1389,7 +1391,7 @@ bool CMonster::CheckEventEmotionPresentation(unsigned __int8 byCheckType, CChara
 
 __int64 CMonster::GetOffensiveType()
 {
-  return *reinterpret_cast<unsigned int *>(&m_pRecordSet[29].m_strCode[36]);
+  return static_cast<unsigned int>(m_pMonRec->m_nOffensiveType);
 }
 
 __int64 CMonster::GetHelpMeCase()
@@ -1399,12 +1401,12 @@ __int64 CMonster::GetHelpMeCase()
 
 bool CMonster::IsPreAttackAbleMon()
 {
-  return *reinterpret_cast<float *>(&m_pRecordSet[29].m_strCode[28]) > 5.0f;
+  return m_pMonRec->m_fEmoType > 5.0f;
 }
 
 float CMonster::GeEmotionImpStdTime()
 {
-  return *reinterpret_cast<float *>(&m_pRecordSet[29].m_strCode[44]);
+  return m_pMonRec->m_fEmoImpStdTime;
 }
 
 float CMonster::GetSkillDelayTime(CMonsterSkill *pSkill)
@@ -2264,7 +2266,7 @@ __int64 CMonster::GetMyDMGSFContCount()
 
 __int64 CMonster::GetMaxDMGSFContCount()
 {
-  int maxCount = *reinterpret_cast<int *>(m_pRecordSet[25].m_strCode);
+  int maxCount = m_pMonRec->m_nInjuryLimit;
   if (maxCount > 8)
   {
     maxCount = 8;
@@ -2563,14 +2565,14 @@ char CMonster::_LootItem_Std(CPlayer *pOwner)
     return 0;
   }
 
-  const _monster_loot_index idx = CMonster::s_idxMonsterLoot[m_pRecordSet->m_dwIndex];
-  if (idx.nStartRecIndex == -1)
+  const _monster_loot_index lootIndex = CMonster::s_idxMonsterLoot[m_pRecordSet->m_dwIndex];
+  if (lootIndex.nStartRecIndex == -1)
   {
     return 0;
   }
 
   const bool isLootFree = pOwner->m_bLootFree;
-  const double playerPenalty = g_Main.m_pTimeLimitMgr->GetPlayerPenalty( pOwner->m_id.wIndex);
+  const double playerPenalty = g_Main.m_pTimeLimitMgr->GetPlayerPenalty(pOwner->m_id.wIndex);
 
   bool noAuthor = false;
   CPlayer *lootOwner = pOwner;
@@ -2587,10 +2589,11 @@ char CMonster::_LootItem_Std(CPlayer *pOwner)
   }
 
   char looted = 0;
-  for (int n = idx.nStartRecIndex; n <= idx.nEndRecIndex; ++n)
+  for (int n = lootIndex.nStartRecIndex; n <= lootIndex.nEndRecIndex; ++n)
   {
-    _base_fld *record = g_Main.m_tblItemLoot.m_tblLoot.GetRecord( n);
-    if (!record)
+    _ItemLooting_fld *lootRecord =
+      reinterpret_cast<_ItemLooting_fld *>(g_Main.m_tblItemLoot.m_tblLoot.GetRecord(n));
+    if (!lootRecord)
     {
       continue;
     }
@@ -2636,18 +2639,15 @@ char CMonster::_LootItem_Std(CPlayer *pOwner)
       }
     }
 
-    int dropCount = 0;
-    int rounding = 0;
-    dropCount = static_cast<int>((static_cast<float>(*reinterpret_cast<int *>(&record[1].m_strCode[4])) * dropRate) * playerPenalty);
-    rounding = static_cast<int>(
-                 (static_cast<float>(*reinterpret_cast<int *>(&record[1].m_strCode[4])) * dropRate) * playerPenalty * 10.0f)
-               % 10;
+    int operationCount = static_cast<int>((static_cast<float>(lootRecord->m_nOperationCount) * dropRate) * playerPenalty);
+    const int rounding =
+      static_cast<int>((static_cast<float>(lootRecord->m_nOperationCount) * dropRate) * playerPenalty * 10.0f) % 10;
     if (rounding >= 5)
     {
-      ++dropCount;
+      ++operationCount;
     }
 
-    for (int j = 0; j < dropCount; ++j)
+    for (int j = 0; j < operationCount; ++j)
     {
       unsigned int randValue = 0;
       if (!isLootFree)
@@ -2657,10 +2657,10 @@ char CMonster::_LootItem_Std(CPlayer *pOwner)
         randValue = static_cast<unsigned int>(low + (high << 16));
       }
 
-      _base_fld *monsterRecord = nullptr;
+      _monster_fld *monsterRecord = nullptr;
       if (m_pRecordSet)
       {
-        monsterRecord = m_pRecordSet;
+        monsterRecord = reinterpret_cast<_monster_fld *>(m_pRecordSet);
         int diffLevel = 11;
         if (pOwner)
         {
@@ -2687,28 +2687,28 @@ char CMonster::_LootItem_Std(CPlayer *pOwner)
           }
         }
 
-        unsigned int dropIndex = record[1].m_dwIndex;
-        if (*reinterpret_cast<int *>(&monsterRecord[4].m_strCode[8]) != -1 && *reinterpret_cast<int *>(&monsterRecord[4].m_strCode[8]))
+        unsigned int lootRate = static_cast<unsigned int>(lootRecord->m_nLootRate);
+        if (monsterRecord->m_nUpLooting != -1 && monsterRecord->m_nUpLooting != 0)
         {
-          diffLevel -= *reinterpret_cast<int *>(&monsterRecord[4].m_strCode[8]);
-          unsigned int dropRateMul = g_MonsterSetInfoData.GetMonsterDropRate(diffLevel);
-          if (!dropRateMul)
+          diffLevel -= monsterRecord->m_nUpLooting;
+          unsigned int monsterDropRate = g_MonsterSetInfoData.GetMonsterDropRate(diffLevel);
+          if (!monsterDropRate)
           {
-            dropRateMul = 1;
+            monsterDropRate = 1;
           }
-          dropIndex = dropRateMul * (dropIndex / 0x64);
+          lootRate = monsterDropRate * (lootRate / 0x64);
         }
 
-        if (isLootFree || randValue < dropIndex)
+        if (isLootFree || randValue < lootRate)
         {
           bool found = false;
           CItemLootTable::_linker_code *link = nullptr;
           for (int k = 0; k < 10; ++k)
           {
-            if (*reinterpret_cast<int *>(&record[1].m_strCode[8]) > 0)
+            if (lootRecord->m_nLootListCount > 0)
             {
-              const int pick = rand() % *reinterpret_cast<int *>(&record[1].m_strCode[8]);
-              link = &g_Main.m_tblItemLoot.m_ppLinkCode[record->m_dwIndex][pick];
+              const int pick = rand() % lootRecord->m_nLootListCount;
+              link = &g_Main.m_tblItemLoot.m_ppLinkCode[lootRecord->m_dwIndex][pick];
               if (link->bExist)
               {
                 found = true;
@@ -3271,7 +3271,8 @@ CMonster *CreateRespawnMonster(
   data.bDungeon = bDungeon;
   if (bApplyRopExpField)
   {
-    data.bRobExp = *reinterpret_cast<unsigned int *>(&data.m_pRecordSet[4].m_strCode[4]) != 0;
+    const _monster_fld *monRec = static_cast<const _monster_fld *>(data.m_pRecordSet);
+    data.bRobExp = monRec->m_bExpDown != 0;
   }
   else
   {

@@ -138,10 +138,10 @@ BossSchedule_Map *CBossMonsterScheduleSystem::MakeMap(int nIndex, CMapData *pMap
       if (monAct->m_nLimRegenNum > 0)
       {
         _mon_active_fld *actRec = monAct->m_pActRec;
-        _base_fld *record = g_Main.m_tblMonster.GetRecord(actRec->m_strCode);
+        _monster_fld *record = static_cast<_monster_fld *>(g_Main.m_tblMonster.GetRecord(actRec->m_strCode));
         if (record)
         {
-          if (record[4].m_dwIndex)
+          if (record->m_bMonsterCondition)
           {
             ++scheduleCount;
           }
@@ -187,10 +187,10 @@ BossSchedule_Map *CBossMonsterScheduleSystem::MakeMap(int nIndex, CMapData *pMap
       if (monAct->m_nLimRegenNum > 0)
       {
         _mon_active_fld *actRec = monAct->m_pActRec;
-        _base_fld *record = g_Main.m_tblMonster.GetRecord(actRec->m_strCode);
+        _monster_fld *record = static_cast<_monster_fld *>(g_Main.m_tblMonster.GetRecord(actRec->m_strCode));
         if (record)
         {
-          if (record[4].m_dwIndex)
+          if (record->m_bMonsterCondition)
           {
             BossSchedule *schedule = MakeSchedule(mapSchedule, monAct, block, nActIndex, nBlockIndex);
             mapSchedule->m_ScheduleList[scheduleIndex++] = schedule;

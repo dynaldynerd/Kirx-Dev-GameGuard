@@ -13,6 +13,7 @@
 #include "CRecordData.h"
 #include "GlobalObjects.h"
 #include "InvenKey.h"
+#include "OreItem_fld.h"
 #include "WorldServerUtil.h"
 #include "announ_message_receipt_udp.h"
 
@@ -616,8 +617,8 @@ bool CGoldenBoxItemMgr::SetGoldBoxItemIndex()
     const int recordNum = g_Main.m_tblItemData[17].GetRecordNum();
     if (n >= recordNum)
       break;
-    _base_fld *record = g_Main.m_tblItemData[17].GetRecord(n);
-    if (!*reinterpret_cast<const int *>(&record[3].m_strCode[4]))
+    _OreItem_fld *record = reinterpret_cast<_OreItem_fld *>(g_Main.m_tblItemData[17].GetRecord(n));
+    if (!record->m_dwOreProbability)
       ++zeroCount;
   }
 
@@ -633,10 +634,10 @@ bool CGoldenBoxItemMgr::SetGoldBoxItemIndex()
     if (recordIndex >= recordNum)
       break;
 
-    _base_fld *record = g_Main.m_tblItemData[17].GetRecord(recordIndex);
+    _OreItem_fld *record = reinterpret_cast<_OreItem_fld *>(g_Main.m_tblItemData[17].GetRecord(recordIndex));
     if (record)
     {
-      if (*reinterpret_cast<const int *>(&record[3].m_strCode[4]))
+      if (record->m_dwOreProbability)
       {
         strcpy_0(m_pItemIndex[itemIndex].szItemCode, record->m_strCode);
         m_pItemIndex[itemIndex++].wItemIndex = record->m_dwIndex;

@@ -76,6 +76,10 @@
 #include "TimeItem.h"
 #include "ResourceItem_fld.h"
 #include "BulletItem_fld.h"
+#include "DfnEquipItem_fld.h"
+#include "ForceItem_fld.h"
+#include "force_fld.h"
+#include "skill_fld.h"
 #include "WeaponItem_fld.h"
 #include "UnitFrame_fld.h"
 #include "UnitPart_fld.h"
@@ -1417,16 +1421,16 @@ void CPlayer::SetStaticMember()
     {
       break;
     }
-    _base_fld *record = g_Main.m_tblItemData[15].GetRecord(n);
+    _ForceItem_fld *record = reinterpret_cast<_ForceItem_fld *>(g_Main.m_tblItemData[15].GetRecord(n));
     if (!record)
     {
       g_Main.m_logSystemError.Write("CPlayer::SetStaticMember() : %d force..NULL", n);
       break;
     }
-    _base_fld *effectRecord = g_Main.m_tblEffectData[1].GetRecord(&record[4].m_strCode[28]);
+    _base_fld *effectRecord = g_Main.m_tblEffectData[1].GetRecord(record->m_strForce_Codekey);
     if (!effectRecord)
     {
-      g_Main.m_logSystemError.Write("CPlayer::SetStaticMember() : %s force..NULL", &record[4].m_strCode[28]);
+      g_Main.m_logSystemError.Write("CPlayer::SetStaticMember() : %s force..NULL", record->m_strForce_Codekey);
       break;
     }
     s_pnLinkForceItemToEffect[n] = effectRecord->m_dwIndex;
@@ -1439,9 +1443,9 @@ void CPlayer::SetStaticMember()
     {
       break;
     }
-    _base_fld *record = g_Main.m_tblEffectData[0].GetRecord(n);
-    const unsigned int masteryIndex = *reinterpret_cast<unsigned int *>(&record[1].m_strCode[4]);
-    if (record[1].m_dwIndex <= 1 && masteryIndex < 8u && record[1].m_dwIndex != 2)
+    _skill_fld *record = reinterpret_cast<_skill_fld *>(g_Main.m_tblEffectData[0].GetRecord(n));
+    const unsigned int masteryIndex = static_cast<unsigned int>(record->m_nMastIndex);
+    if (record->m_nClass <= 1 && masteryIndex < 8u && record->m_nClass != 2)
     {
       _SKILL_IDX_PER_MASTERY *skillInfo = &CPlayer::s_SkillIndexPerMastery[masteryIndex];
       skillInfo->m_nSkillIndex[skillInfo->m_nSkillIndexNum++] = n;
@@ -1980,25 +1984,25 @@ char _MASTERY_PARAM::Init(_STAT_DB_BASE *pStatBase, unsigned __int8 byRaceCode)
   memset_0(m_dwSkillMasteryCum, 0, sizeof(m_dwSkillMasteryCum));
   for (int nMasteryIndex = 0; nMasteryIndex < 48; ++nMasteryIndex)
   {
-    _base_fld *record = s_pSkillData->GetRecord(nMasteryIndex);
+    _skill_fld *record = reinterpret_cast<_skill_fld *>(s_pSkillData->GetRecord(nMasteryIndex));
     if (!record)
     {
       return 0;
     }
-    if (*reinterpret_cast<int *>(&record[4].m_strCode[60]) > 3)
+    if (record->m_nLv > 3)
     {
       return 0;
     }
-    if (*reinterpret_cast<int *>(&record[4].m_strCode[60]) >= 0)
+    if (record->m_nLv >= 0)
     {
       const unsigned __int8 sfLevel = GetSFLevel(
-        *reinterpret_cast<int *>(&record[4].m_strCode[60]),
+        record->m_nLv,
         m_BaseCum.m_dwSkillCum[nMasteryIndex]);
       m_lvSkill[nMasteryIndex] = sfLevel;
     }
-    if (*reinterpret_cast<unsigned int *>(&record[1].m_strCode[4]) < 8u)
+    if (record->m_nMastIndex < 8)
     {
-      m_dwSkillMasteryCum[*reinterpret_cast<int *>(&record[1].m_strCode[4])] +=
+      m_dwSkillMasteryCum[record->m_nMastIndex] +=
         m_BaseCum.m_dwSkillCum[nMasteryIndex];
     }
   }
@@ -2194,16 +2198,16 @@ bool _MASTERY_PARAM::AlterCumPerMast(
     {
       m_BaseCum.m_dwSkillCum[byIndex] += dwAlterCum;
       *pdwAfterCum = m_BaseCum.m_dwSkillCum[byIndex];
-      _base_fld *record = s_pSkillData->GetRecord(byIndex);
+      _skill_fld *record = reinterpret_cast<_skill_fld *>(s_pSkillData->GetRecord(byIndex));
       const unsigned __int8 sfLevel = static_cast<unsigned __int8>(
-        GetSFLevel(*reinterpret_cast<int *>(&record[4].m_strCode[60]), m_BaseCum.m_dwSkillCum[byIndex]));
+        GetSFLevel(record->m_nLv, m_BaseCum.m_dwSkillCum[byIndex]));
       if (sfLevel > m_lvSkill[byIndex])
       {
         m_lvSkill[byIndex] = sfLevel;
         m_SkillUpData.set(byIndex, sfLevel);
         updated = true;
       }
-      const int skillClass = *reinterpret_cast<int *>(&record[1].m_strCode[4]);
+      const int skillClass = record->m_nMastIndex;
       if (m_mtySkill[skillClass] < 0x63u)
       {
         m_dwSkillMasteryCum[skillClass] += dwAlterCum;
@@ -2212,7 +2216,7 @@ bool _MASTERY_PARAM::AlterCumPerMast(
         if (m_mtySkill[skillClass] < mastery)
         {
           m_mtySkill[skillClass] = static_cast<unsigned __int8>(mastery);
-          m_MastUpData.set(3u, static_cast<unsigned __int8>(record[1].m_strCode[4]),
+          m_MastUpData.set(3u, static_cast<unsigned __int8>(record->m_nMastIndex),
                            static_cast<unsigned __int8>(mastery));
           updated = true;
         }
@@ -2357,21 +2361,21 @@ void _MASTERY_PARAM::UpdateCumPerMast(unsigned __int8 byClass, unsigned __int8 b
     case 3:
     {
       m_BaseCum.m_dwSkillCum[byIndex] = dwNewCum;
-      _base_fld *record = s_pSkillData->GetRecord(byIndex);
+      _skill_fld *record = reinterpret_cast<_skill_fld *>(s_pSkillData->GetRecord(byIndex));
       const unsigned __int8 skillLevel =
-        static_cast<unsigned __int8>(GetSFLevel(*reinterpret_cast<int *>(&record[4].m_strCode[60]),
+        static_cast<unsigned __int8>(GetSFLevel(record->m_nLv,
                                                 m_BaseCum.m_dwSkillCum[byIndex]));
       m_lvSkill[byIndex] = skillLevel;
       m_SkillUpData.set(byIndex, skillLevel);
 
-      const int skillClass = *reinterpret_cast<int *>(&record[1].m_strCode[4]);
+      const int skillClass = record->m_nMastIndex;
       if (m_mtySkill[skillClass] <= 0x63u)
       {
         m_dwSkillMasteryCum[skillClass] += dwNewCum;
         const unsigned __int8 mastery =
           static_cast<unsigned __int8>(CalcMastery(3, skillClass, m_dwSkillMasteryCum[skillClass], m_byRaceCode));
         m_mtySkill[skillClass] = mastery;
-        m_MastUpData.set(3u, static_cast<unsigned __int8>(record[1].m_strCode[4]), mastery);
+        m_MastUpData.set(3u, static_cast<unsigned __int8>(record->m_nMastIndex), mastery);
       }
       break;
     }
@@ -20264,10 +20268,11 @@ __int64 CPlayer::GetDamageLevel(int nAttackPart)
     return 1;
   }
 
-  _base_fld *record = g_Main.m_tblItemData[nAttackPart].GetRecord(equip->m_wItemIndex);
+  _DfnEquipItem_fld *record = reinterpret_cast<_DfnEquipItem_fld *>(
+    g_Main.m_tblItemData[nAttackPart].GetRecord(equip->m_wItemIndex));
   if (record)
   {
-    return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[8]);
+    return static_cast<unsigned int>(record->m_nLevelLim);
   }
 
   return 1;
@@ -20280,20 +20285,21 @@ __int64 CPlayer::GetDamageDP(int nAttackPart)
     return 0;
   }
 
-  _base_fld *record = nullptr;
+  _DfnEquipItem_fld *record = nullptr;
   _STORAGE_LIST::_db_con *equip = &m_Param.m_dbEquip.m_pStorageList[nAttackPart];
   if (equip->m_bLoad)
   {
-    record = g_Main.m_tblItemData[nAttackPart].GetRecord(equip->m_wItemIndex);
+    record = reinterpret_cast<_DfnEquipItem_fld *>(g_Main.m_tblItemData[nAttackPart].GetRecord(equip->m_wItemIndex));
   }
   else if (nAttackPart < 5)
   {
-    record = g_Main.m_tblItemData[nAttackPart].GetRecord(m_Param.m_dbChar.m_byDftPart[nAttackPart]);
+    record = reinterpret_cast<_DfnEquipItem_fld *>(
+      g_Main.m_tblItemData[nAttackPart].GetRecord(m_Param.m_dbChar.m_byDftPart[nAttackPart]));
   }
 
   if (record)
   {
-    return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[48]);
+    return static_cast<unsigned int>(record->m_nDefence_DP);
   }
 
   return 0;

@@ -16,6 +16,8 @@
 #include "CRecordData.h"
 #include "GlobalObjects.h"
 #include "base_fld.h"
+#include "force_fld.h"
+#include "skill_fld.h"
 #include "WorldServerUtil.h"
 #include "CBsp.h"
 #include "CMapOperation.h"
@@ -938,17 +940,31 @@ int _CheckCumulativeSF(
   unsigned int *nEffectCount,
   char **pstrLinkCode)
 {
-  if (byEffectCode == 0 || byEffectCode == 1 || (byEffectCode > 1 && byEffectCode <= 3))
+  if (byEffectCode == 1)
   {
-    _base_fld *record = g_Main.m_tblEffectData[byEffectCode].GetRecord(dwEffectIndex);
+    _force_fld *record = static_cast<_force_fld *>(g_Main.m_tblEffectData[byEffectCode].GetRecord(dwEffectIndex));
     if (!record)
     {
       return 0;
     }
-    *nEffectCount = record[10].m_dwIndex;
-    *nCumulMax = *reinterpret_cast<int *>(&record[9].m_strCode[60]);
-    *pstrLinkCode = record[10].m_strCode;
-    return *reinterpret_cast<unsigned int *>(&record[9].m_strCode[56]);
+    *nEffectCount = static_cast<unsigned int>(record->m_nNewEffCount);
+    *nCumulMax = record->m_nCumulCounter;
+    *pstrLinkCode = record->m_strEffectCode;
+    return static_cast<unsigned int>(record->m_bCumulType);
+  }
+
+  if (!byEffectCode || (byEffectCode > 1 && byEffectCode <= 3))
+  {
+    _skill_fld *record = static_cast<_skill_fld *>(g_Main.m_tblEffectData[byEffectCode].GetRecord(dwEffectIndex));
+    if (!record)
+    {
+      return 0;
+    }
+
+    *nEffectCount = static_cast<unsigned int>(record->m_nNewEffCount);
+    *nCumulMax = record->m_nCumulCounter;
+    *pstrLinkCode = record->m_strEffectCode;
+    return static_cast<unsigned int>(record->m_bCumulType);
   }
 
   return 0;
@@ -2022,15 +2038,15 @@ void CCharacter::_set_sf_cont(
   pCont->m_dwEffSerial = m_dwEffSerialCounter++;
   pCont->m_nCumulCounter = nCumulCount;
 
-  _base_fld *record = g_Main.m_tblEffectData[byEffectCode].GetRecord(wEffectIndex);
+  _force_fld *record = static_cast<_force_fld *>(g_Main.m_tblEffectData[byEffectCode].GetRecord(wEffectIndex));
   char *effectList = nullptr;
   if (byEffectCode == 1)
   {
-    effectList = &record[12].m_strCode[56];
+    effectList = reinterpret_cast<char *>(record->m_ContParamList);
   }
   else
   {
-    effectList = &record[13].m_strCode[48];
+    effectList = reinterpret_cast<char *>(&record->m_ContParamList[1].m_fContValue[4]);
   }
 
   if (effectList)

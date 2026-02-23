@@ -663,9 +663,8 @@ char CDarkHoleChannel::CheckEvent(
     {
       if (eventType == dh_event_hunt)
       {
-        _base_fld *record = g_Main.m_tblMonster.GetRecord(nContentIndex);
-        if (*reinterpret_cast<float *>(&record[25].m_strCode[60]) == 0.0f
-            && *reinterpret_cast<float *>(&record[26].m_dwIndex) == 0.0f)
+        _monster_fld *record = static_cast<_monster_fld *>(g_Main.m_tblMonster.GetRecord(nContentIndex));
+        if (record->m_fMovSpd == 0.0f && record->m_fWarMovSpd == 0.0f)
         {
           continue;
         }
@@ -702,9 +701,8 @@ char CDarkHoleChannel::CheckEvent(
       }
       else if (check->ReactArea.AreaDefType == at_block)
       {
-        _dummy_position *block = check->ReactArea.obj.dummy.pPos;
-        pPos = *reinterpret_cast<_dummy_position **>(
-          &block->m_szCode[8 * (rand() % *reinterpret_cast<int *>(&block->m_szCode[8])) + 16]);
+        __dummy_block *block = check->ReactArea.obj.block.pBlk;
+        pPos = block->pSubDummy[rand() % block->nSubDummyNum];
       }
 
       float *pStdPos = nullptr;
@@ -749,16 +747,15 @@ char CDarkHoleChannel::CheckEvent(
             break;
           case react_kind_mgrp:
           {
-            _monster_fld *monsterFld = check->ReactObj.obj.monster.pMonsterFld;
-            const int count = *reinterpret_cast<int *>(&monsterFld->m_strCode[4]);
+            __monster_group *monsterGroup = check->ReactObj.obj.mon_grp.pMonGrp;
+            const int count = monsterGroup->nSubMonsterNum;
             const int pick = rand() % count;
-            const __int64 entry =
-              *reinterpret_cast<__int64 *>(&monsterFld->m_strCode[8 * pick + 12]);
+            _monster_fld *monsterFld = monsterGroup->pSubMonster[pick];
             CreateRepMonster(
               m_pQuestSetup->pUseMap,
               m_wLayerIndex,
               newPos,
-              reinterpret_cast<char *>(entry + 4),
+              monsterFld->m_strCode,
               nullptr,
               false,
               true,
@@ -806,11 +803,11 @@ char CDarkHoleChannel::CheckEvent(
     }
     else if (addTime->EventObj.ObjDefType == react_kind_mgrp)
     {
-      _monster_fld *monsterFld = addTime->EventObj.obj.monster.pMonsterFld;
+      __monster_group *monsterGroup = addTime->EventObj.obj.mon_grp.pMonGrp;
       bool found = false;
-      for (int j = 0; j < *reinterpret_cast<int *>(&monsterFld->m_strCode[4]); ++j)
+      for (int j = 0; j < monsterGroup->nSubMonsterNum; ++j)
       {
-        if (**reinterpret_cast<int **>(&monsterFld->m_strCode[8 * j + 12]) ==
+        if (monsterGroup->pSubMonster[j]->m_dwIndex ==
               static_cast<unsigned __int16>(nContentIndex))
         {
           found = true;

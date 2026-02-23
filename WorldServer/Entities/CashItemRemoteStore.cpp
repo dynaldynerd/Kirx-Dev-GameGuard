@@ -1673,7 +1673,7 @@ bool CashItemRemoteStore::__CheckGoods(CRecordData *krecPrice)
     return false;
   }
 
-  _base_fld *record = nullptr;
+  _CashShop_fld *record = nullptr;
   for (int n = 0; ; ++n)
   {
     const int recordCount = _kRecGoods.GetRecordNum();
@@ -1682,7 +1682,7 @@ bool CashItemRemoteStore::__CheckGoods(CRecordData *krecPrice)
       return true;
     }
 
-    record = _kRecGoods.GetRecord(n);
+    record = reinterpret_cast<_CashShop_fld *>(_kRecGoods.GetRecord(n));
     if (!record)
     {
       if (g_Main.IsExcuteService())
@@ -1701,27 +1701,27 @@ bool CashItemRemoteStore::__CheckGoods(CRecordData *krecPrice)
       return false;
     }
 
-    const int itemTableCode = GetItemTableCode(reinterpret_cast<char *>(&record[1]));
+    const int itemTableCode = GetItemTableCode(record->m_strCsItemCode);
     if (itemTableCode == -1)
     {
       if (g_Main.IsExcuteService())
       {
         _kLoggers[0].Write(
           "CashShop Data Load Error : Invalid Table Code, CashShop Item Code(%s)",
-          reinterpret_cast<const char *>(&record[1]));
+          record->m_strCsItemCode);
       }
       else
       {
         MyMessageBox(
           "CashITemRemoteStore",
           "CashShop Data Load Error : Invalid Table Code, CashShop Item Code(%s)",
-          reinterpret_cast<const char *>(&record[1]));
+          record->m_strCsItemCode);
       }
       return false;
     }
 
     _base_fld *itemRecord = g_Main.m_tblItemData[itemTableCode].GetRecord(
-      reinterpret_cast<const char *>(&record[1]),
+      record->m_strCsItemCode,
       7);
     if (!itemRecord)
     {
@@ -1729,14 +1729,14 @@ bool CashItemRemoteStore::__CheckGoods(CRecordData *krecPrice)
       {
         _kLoggers[0].Write(
           "CashShop Data Load Error : Null Pointer Exception (pRec), Not Exist Item! Cash Shop ItemCode(%s)",
-          reinterpret_cast<const char *>(&record[1]));
+          record->m_strCsItemCode);
       }
       else
       {
         MyMessageBox(
           "CashITemRemoteStore",
           "CashShop Data Load Error : Null Pointer Exception (pRec), Not Exist Item! Cash Shop ItemCode(%s)",
-          reinterpret_cast<const char *>(&record[1]));
+          record->m_strCsItemCode);
       }
       return false;
     }
@@ -1755,13 +1755,13 @@ bool CashItemRemoteStore::__CheckGoods(CRecordData *krecPrice)
         "CashItemRemoteStore::__CheckGoods",
         "CashShop_str.dat : Code(%s) Item(%s) Price Not Exist!",
         record->m_strCode,
-        reinterpret_cast<const char *>(&record[1]));
+        record->m_strCsItemCode);
       return false;
     }
 
     CNationSettingManager *nationSetting = CTSingleton<CNationSettingManager>::Instance();
     const int price = nationSetting->GetCashItemPrice(priceRecord);
-    *reinterpret_cast<int *>(&record[1].m_strCode[60]) = price;
+    record->m_nCsPrice = price;
 
     int checkType = 0;
     int useTime = 0;
@@ -1776,21 +1776,21 @@ bool CashItemRemoteStore::__CheckGoods(CRecordData *krecPrice)
       "[%s(%s)], price:%d, method:%d, lentime:%d, discount:%d, event1: %d, event2: %d",
       itemKorName,
       itemRecord->m_strCode,
-      *reinterpret_cast<int *>(&record[1].m_strCode[60]),
+      record->m_nCsPrice,
       checkType,
       useTime,
-      record[3].m_dwIndex,
-      *reinterpret_cast<int *>(record[3].m_strCode),
-      *reinterpret_cast<int *>(&record[3].m_strCode[4]));
+      record->m_nCsDiscount,
+      record->m_nCsEvent[0],
+      record->m_nCsEvent[1]);
   }
 
   if (g_Main.IsExcuteService())
   {
-    _kLoggers[0].Write("Is not cash item : %s", reinterpret_cast<const char *>(&record[1]));
+    _kLoggers[0].Write("Is not cash item : %s", record->m_strCsItemCode);
   }
   else
   {
-    MyMessageBox("CashITemRemoteStore", "Is not cash item : %s", reinterpret_cast<const char *>(&record[1]));
+    MyMessageBox("CashITemRemoteStore", "Is not cash item : %s", record->m_strCsItemCode);
   }
   return false;
 }

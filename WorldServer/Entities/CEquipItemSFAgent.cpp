@@ -6,6 +6,7 @@
 #include "GlobalObjects.h"
 #include "base_fld.h"
 #include "CPlayer.h"
+#include "CloakItem_fld.h"
 
 CEquipItemSFAgent::CEquipItemSFAgent()
 {
@@ -73,13 +74,13 @@ float CEquipItemSFAgent::GetBoosterAddSpeed()
     return 0.0f;
   }
 
-  _base_fld *itemRecord = g_Main.m_tblItemData[7].GetRecord(equip->m_wItemIndex);
+  _CloakItem_fld *itemRecord = reinterpret_cast<_CloakItem_fld *>(g_Main.m_tblItemData[7].GetRecord(equip->m_wItemIndex));
   if (!itemRecord)
   {
     return 0.0f;
   }
 
-  return *reinterpret_cast<float *>(&itemRecord[7].m_strCode[60]);
+  return itemRecord->m_fBoosterSpeed;
 }
 
 void CEquipItemSFAgent::AllEndContSF()

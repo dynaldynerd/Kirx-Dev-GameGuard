@@ -5,6 +5,7 @@
 #include "CPlayer.h"
 #include "CRecordData.h"
 #include "GlobalObjects.h"
+#include "force_fld.h"
 #include "tinyxml.h"
 
 CUnmannedTraderSubClassInfoForceLiverGrade::CUnmannedTraderSubClassInfoForceLiverGrade(unsigned int dwID)
@@ -59,14 +60,14 @@ bool CUnmannedTraderSubClassInfoForceLiverGrade::GetGroupID(
     return false;
   }
 
-  _base_fld *record =
-    g_Main.m_tblEffectData[1].GetRecord(*(CPlayer::s_pnLinkForceItemToEffect + wItemTableIndex));
+  _force_fld *record = reinterpret_cast<_force_fld *>(
+    g_Main.m_tblEffectData[1].GetRecord(*(CPlayer::s_pnLinkForceItemToEffect + wItemTableIndex)));
   if (!record)
   {
     return false;
   }
 
-  if (this->m_byGrade != record[4].m_strCode[60])
+  if (this->m_byGrade != static_cast<unsigned char>(record->m_nLv))
   {
     return false;
   }

@@ -57,8 +57,7 @@ bool CItemUpgradeTable::Indexing(CRecordData *resTable, char *errCode)
   for (int index = 0; index < m_nResNum; ++index)
   {
     _base_fld *upgradeRecord = m_tblItemUpgrade.GetRecord(index);
-    unsigned __int16 *resourceRecord =
-      reinterpret_cast<unsigned __int16 *>(resTable->GetRecord(upgradeRecord->m_strCode));
+    _base_fld *resourceRecord = resTable->GetRecord(upgradeRecord->m_strCode);
     if (!resourceRecord)
     {
       if (errCode)
@@ -68,7 +67,7 @@ bool CItemUpgradeTable::Indexing(CRecordData *resTable, char *errCode)
       return false;
     }
 
-    m_pwResIndex[index] = *resourceRecord;
+    m_pwResIndex[index] = static_cast<unsigned __int16>(resourceRecord->m_dwIndex);
   }
 
   return true;
