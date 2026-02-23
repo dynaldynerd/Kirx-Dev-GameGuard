@@ -271,7 +271,7 @@ void CPlayer::Emb_RidindUnit(bool bRiding, CParkingUnit *pCreateUnit)
     m_EP.SetLock(false);
 
     _STORAGE_LIST::_db_con *weapon = m_Param.m_dbEquip.m_pStorageList + 6;
-    if (weapon->m_bLoad)
+    if (weapon->m_bLoad && weapon->m_byTableCode == 6)
     {
       m_pmWpn.FixWeapon(weapon);
     }

@@ -76,6 +76,7 @@
 #include "TimeItem.h"
 #include "ResourceItem_fld.h"
 #include "BulletItem_fld.h"
+#include "WeaponItem_fld.h"
 #include "UnitFrame_fld.h"
 #include "UnitPart_fld.h"
 #include "UnitBullet_fld.h"
@@ -1833,43 +1834,40 @@ void _WEAPON_PARAM::FixWeapon(_STORAGE_LIST::_db_con *pWeapon)
     Init();
     return;
   }
-  if (pWeapon->m_byTableCode != 6)
+  if (pWeapon->m_byTableCode == 6)
   {
-    return;
-  }
+    _WeaponItem_fld *record = nullptr;
+    if (s_pWeaponData)
+    {
+      record = reinterpret_cast<_WeaponItem_fld *>(s_pWeaponData->GetRecord(pWeapon->m_wItemIndex));
+    }
 
-  _base_fld *record = s_pWeaponData ? s_pWeaponData->GetRecord(pWeapon->m_wItemIndex) : nullptr;
-  if (!record)
-  {
-    Init();
-    return;
-  }
+    if (!record || record->m_nType == 10)
+    {
+      Init();
+      return;
+    }
 
-  if (*reinterpret_cast<int *>(&record[6].m_strCode[8]) == 10)
-  {
-    Init();
-    return;
+    byAttTolType = static_cast<unsigned __int8>(GetWeaponTolType(pWeapon));
+    byWpClass = static_cast<unsigned __int8>(GetWeaponClass(pWeapon->m_wItemIndex));
+    nGaMaxAF = static_cast<int>(record->m_fGAMaxAF);
+    nGaMinAF = static_cast<int>(record->m_fGAMinAF);
+    nMaMaxAF = static_cast<int>(record->m_fMAMaxAF);
+    nMaMinAF = static_cast<int>(record->m_fMAMinAF);
+    byGaMinSel = static_cast<unsigned __int8>(record->m_nGAMinSelProb);
+    byGaMaxSel = static_cast<unsigned __int8>(record->m_nGAMaxSelProb);
+    byMaMinSel = static_cast<unsigned __int8>(record->m_nMAMinSelProb);
+    byMaMaxSel = static_cast<unsigned __int8>(record->m_nMAMaxSelProb);
+    byWpType = static_cast<unsigned __int8>(record->m_nType);
+    wGaAttRange = static_cast<unsigned __int16>(static_cast<int>(record->m_fGADst + 40.0f));
+    nActiveType = record->m_nActiveType;
+    nActiveEffLvl = record->m_nActiveEffLvl;
+    nActiveProb = static_cast<int>(record->m_fActiveProba * 100.0f);
+    strncpy(strActiveCode_key, record->m_strActiveCode_key, 0x40u);
+    strncpy(strEffBulletType, record->m_strEffBulletType, 0x40u);
+    pFixWp = pWeapon;
+    pFixUnit = nullptr;
   }
-
-  byAttTolType = static_cast<unsigned __int8>(GetWeaponTolType(pWeapon));
-  byWpClass = GetWeaponClass(pWeapon->m_wItemIndex);
-  nGaMaxAF = static_cast<int>(*reinterpret_cast<float *>(record[10].m_strCode));
-  nGaMinAF = static_cast<int>(*reinterpret_cast<float *>(&record[9].m_strCode[60]));
-  nMaMaxAF = static_cast<int>(*reinterpret_cast<float *>(&record[10].m_strCode[24]));
-  nMaMinAF = static_cast<int>(*reinterpret_cast<float *>(&record[10].m_strCode[16]));
-  byGaMinSel = record[9].m_strCode[56];
-  byGaMaxSel = record[10].m_dwIndex;
-  byMaMinSel = record[10].m_strCode[12];
-  byMaMaxSel = record[10].m_strCode[20];
-  byWpType = record[6].m_strCode[8];
-  wGaAttRange = static_cast<unsigned __int16>(static_cast<int>(*reinterpret_cast<float *>(&record[9].m_strCode[48]) + 40.0f));
-  nActiveType = *reinterpret_cast<int *>(&record[3].m_strCode[4]);
-  nActiveEffLvl = *reinterpret_cast<int *>(&record[4].m_strCode[4]);
-  nActiveProb = static_cast<int>(*reinterpret_cast<float *>(&record[4].m_strCode[8]) * 100.0f);
-  strncpy(strActiveCode_key, &record[3].m_strCode[8], 0x40u);
-  strncpy(strEffBulletType, &record[5].m_strCode[12], 0x40u);
-  pFixWp = pWeapon;
-  pFixUnit = nullptr;
 }
 
 void _WEAPON_PARAM::FixUnit(_UNIT_DB_BASE::_LIST *pUnit)
@@ -1910,12 +1908,16 @@ unsigned int _WEAPON_PARAM::GetWeaponTolType(_STORAGE_LIST::_db_con *pItem)
     }
   }
 
-  _base_fld *record = s_pWeaponData ? s_pWeaponData->GetRecord(pItem->m_wItemIndex) : nullptr;
+  _WeaponItem_fld *record = nullptr;
+  if (s_pWeaponData)
+  {
+    record = reinterpret_cast<_WeaponItem_fld *>(s_pWeaponData->GetRecord(pItem->m_wItemIndex));
+  }
   if (!record)
   {
     return 0;
   }
-  return *reinterpret_cast<unsigned int *>(&record[9].m_strCode[20]);
+  return static_cast<unsigned int>(record->m_nProperty);
 }
 
 unsigned int _WEAPON_PARAM::GetAttackDelay(int nLv, int nAddDelay)
@@ -6527,30 +6529,31 @@ bool DTradeEqualPerson(CPlayer *lp_pOne, CPlayer **lpp_pDst)
 
 unsigned __int8 CPlayer::GetEffectEquipCode(unsigned __int8 byStorageCode, unsigned __int8 bySlotIndex)
 {
-  unsigned __int8 *code = nullptr;
-  if (byStorageCode == 1)
+  if (byStorageCode == 1 && bySlotIndex < 8u)
   {
-    code = &m_byEffectEquipCode[bySlotIndex];
+    return m_byEffectEquipCode[bySlotIndex];
   }
-  else
+
+  if (byStorageCode == 2 && bySlotIndex < 7u)
   {
-    code = reinterpret_cast<unsigned __int8 *>(&m_pRecordSet) + bySlotIndex + 49386;
+    return m_byEffectEquipCode[bySlotIndex + 8];
   }
-  return *code;
+
+  return 0;
 }
 
 void CPlayer::SetEffectEquipCode(unsigned __int8 byStorageCode, unsigned __int8 bySlotIndex, unsigned __int8 byCode)
 {
-  unsigned __int8 *code = nullptr;
-  if (byStorageCode == 1)
+  if (byStorageCode == 1 && bySlotIndex < 8u)
   {
-    code = &m_byEffectEquipCode[bySlotIndex];
+    m_byEffectEquipCode[bySlotIndex] = byCode;
+    return;
   }
-  else
+
+  if (byStorageCode == 2 && bySlotIndex < 7u)
   {
-    code = reinterpret_cast<unsigned __int8 *>(&m_pRecordSet) + bySlotIndex + 49386;
+    m_byEffectEquipCode[bySlotIndex + 8] = byCode;
   }
-  *code = byCode;
 }
 
 void CPlayer::SetEquipEffect(_STORAGE_LIST::_db_con *pItem, bool bEquip)
@@ -12744,6 +12747,20 @@ char CPlayer::Create()
   CalcDefTol();
   PastWhisperInit();
   SetHaveEffect(1);
+
+  if (!IsRidingUnit())
+  {
+    _STORAGE_LIST::_db_con *weapon = &this->m_Param.m_dbEquip.m_pStorageList[6];
+    if (weapon->m_bLoad && weapon->m_byTableCode == 6)
+    {
+      m_pmWpn.FixWeapon(weapon);
+    }
+    else
+    {
+      m_pmWpn.FixWeapon(nullptr);
+    }
+  }
+
   this->m_QuestMgr.InitMgr(this, &this->m_Param.m_QuestDB);
   this->m_ItemCombineMgr.InitMgr(this);
 
@@ -16325,6 +16342,15 @@ char CPlayer::_pre_check_force_attack(
       && !_ATTACK_DELAY_CHECKER::IsDelay(&m_AttDelayChker, 1u, forceField->m_dwIndex, masteryIndex))
   {
     return static_cast<char>(-5);
+  }
+
+  if (!IsRidingUnit() && m_pmWpn.byWpType == 0)
+  {
+    _STORAGE_LIST::_db_con *weapon = &m_Param.m_dbEquip.m_pStorageList[6];
+    if (weapon->m_bLoad && weapon->m_byTableCode == 6)
+    {
+      m_pmWpn.FixWeapon(weapon);
+    }
   }
 
   if (m_pmWpn.byWpType == 11 || m_pmWpn.byWpType == 10)
