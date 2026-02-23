@@ -8,6 +8,20 @@
 #include <cstdio>
 #include <cstring>
 
+CRaceBuffHolyQuestResultInfo::CRaceBuffHolyQuestResultInfo()
+  : m_bSetBuff(false),
+    m_byCurWinRace(static_cast<unsigned __int8>(-1)),
+    m_byCurFailRace(static_cast<unsigned __int8>(-1)),
+    m_byCurLoseRace(static_cast<unsigned __int8>(-1)),
+    m_byOldWinRace(static_cast<unsigned __int8>(-1)),
+    m_byOldFailRace(static_cast<unsigned __int8>(-1)),
+    m_byOldLoseRace(static_cast<unsigned __int8>(-1)),
+    m_uiContinueWinCnt(0),
+    m_uiContinueFailCnt(0),
+    m_uiContinueLoseCnt(0)
+{
+}
+
 bool CRaceBuffHolyQuestResultInfo::Load()
 {
   LoadINI();

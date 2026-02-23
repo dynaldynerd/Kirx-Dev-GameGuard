@@ -56,6 +56,8 @@ During the implementation of `CMapOperation::Init` and its sub-flows, the follow
 | `CPlayer.cpp` | `CPlayer::SetStaticMember` | `g_Main.m_tblItemData[15]` | `_base_fld *` | Uses `&Record[4].m_strCode[28]` as key into `m_tblEffectData[1]`; likely non-base layout. |
 | `CPlayer.cpp` | `CPlayer::SetStaticMember` | `g_Main.m_tblEffectData` | `_base_fld *` | Reads `*reinterpret_cast<unsigned int *>(&Record[1].m_strCode[4])` as mastery index; verify field mapping. |
 | `CashItemRemoteStore.cpp` | `CashItemRemoteStore::__CheckGoods` | `CashItemRemoteStore::_kRecGoods` | `_base_fld *` | Uses `reinterpret_cast<char *>(&Record[1])` as item code; writes price to `Record[1].m_strCode[60]`; logs `Record[3].m_dwIndex` and `Record[3].m_strCode[0/4]`. |
+| `CashItemRemoteStore.cpp` | `CheckCouponType / UseDiscountCoupon / IsUsableCoupon / _buybygold_buy_single_item_calc_price_coupon` | `g_Main.m_tblItemData[couponItem->m_byTableCode]` | `_base_fld *` | Uses `Record[4].m_strCode[0/4/8]` as coupon class/type/value fields via raw offsets; verify coupon-table mapping. |
+| `CMgrAvatorItemHistory.cpp` | `CMgrAvatorItemHistory::coupon_use_buy_item` | `g_Main.m_tblItemData[pCouponItem->m_byTableCode]` | `_base_fld *` | Uses `Record[4].m_strCode[8]` as coupon-down value when writing coupon-use log. |
 | `WorldServerUtil.cpp` | `IsCashItem` | `s_ptblItemData[byTblCode]` | `_base_fld *` | Uses `Record[6].m_strCode[48]`, `Record[9].m_strCode[12/36]`, `Record[5].m_strCode[48/44/60/56]`, `Record[8].m_strCode[8]`, `Record[7].m_strCode[44/32/8]`, `Record[6].m_strCode[0]`. |
 > [!NOTE]
 > Rule 9: `CRecordData::GetRecord` usually returns `_base_fld`. Re-casters should be careful with structure packing and offsets.
@@ -80,3 +82,5 @@ During the implementation of `CMapOperation::Init` and its sub-flows, the follow
 | `CItemUpgradeTable.cpp` | `CItemUpgradeTable::Indexing` | `m_tblItemUpgrade`, `resTable` | `_base_fld *` | Uses `Record->m_strCode` as resource-code key and casts resource record to `unsigned __int16 *` for index extraction. |
 | `COreCuttingTable.cpp` | `COreCuttingTable::Indexing` | `m_tblOreCutting`, `oreTable`, `resTable` | `_base_fld *` | Uses `Record[1].m_strCode[60]` for ore cutting rate and `reinterpret_cast<const char*>(&Record[1])` as resource-code key. |
 | `CPlayer_Mining.cpp` | `CPlayer::pc_MineComplete` | `g_Main.m_tblItemData[17]` | `_base_fld *` | Uses `Record[3].m_strCode[4]` (gold-box lottery rate) and `Record[3].m_strCode[0]` (`eAddMineOre` type); verify exact ore field mapping. |
+| `CPlayer.cpp` | `CPlayer::GetDamageLevel` | `g_Main.m_tblItemData[nAttackPart]` | `_base_fld *` | Uses `Record[4].m_strCode[8]` for damage-level stat on equipped armor part; verify exact item-field mapping. |
+| `CPlayer.cpp` | `CPlayer::GetDamageDP` | `g_Main.m_tblItemData[nAttackPart]` | `_base_fld *` | Uses `Record[5].m_strCode[48]` for damage-DP on equipped/default armor part; verify exact item-field mapping. |

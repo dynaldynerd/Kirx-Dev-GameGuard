@@ -1519,6 +1519,24 @@ void CMgrAvatorItemHistory::read_cashamount(
   WriteFile(pFileName, sData);
 }
 
+void CMgrAvatorItemHistory::coupon_use_buy_item(
+  _STORAGE_LIST::_db_con *pCouponItem,
+  char *ApplyItem,
+  char *pszFileName)
+{
+  _base_fld *record = g_Main.m_tblItemData[pCouponItem->m_byTableCode].GetRecord(pCouponItem->m_wItemIndex);
+  sprintf_s(
+    sData,
+    "Use CouponItem at %s(%d down): %s_[%I64u] [%s %s]\r\n",
+    ApplyItem,
+    *reinterpret_cast<int *>(&record[4].m_strCode[8]),
+    record->m_strCode,
+    pCouponItem->m_lnUID,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pszFileName, sData);
+}
+
 void CMgrAvatorItemHistory::buy_to_inven_cashitem(
   unsigned __int8 byTbl,
   unsigned __int16 wIndex,

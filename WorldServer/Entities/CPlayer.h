@@ -1096,6 +1096,7 @@ public:
   static int s_nAddMstFc[100];
   static int s_nStdDefPoint;
   static int s_nRevDefPoint;
+  static int s_nMonDefPoint;
   static CRecordData s_tblLimMastery[3][4];
   static CRecordData s_tblLimMasteryContinue[3][4];
   static CRecordData s_tblLimMasteryCum[3][4];
@@ -1792,6 +1793,7 @@ public:
   bool pc_Resurrect(bool bQuickPotion);
   void SendMsg_ResurrectInform();
   void SendMsg_Resurrect(char byRet, bool bQuickPotion);
+  _sf_continous *GetAfterEffect();
   void pc_NuclearAfterEffect();
     void SendMsg_RewardAddItem(_STORAGE_LIST::_db_con *pItem, unsigned __int8 byReason);
     void SendMsg_StartContSF(_sf_continous *pCont);
@@ -1944,6 +1946,7 @@ public:
     unsigned __int8 bySetEffectNum,
     bool bSetEffect);
   void pc_NewPosStart();
+  char Corpse(CCharacter *pAtter);
   void pc_Revival(bool bUseableJade);
   void pc_ExitWorldRequest();
   void pc_LinkBoardRequest();
@@ -2448,6 +2451,8 @@ public:
   void SetBattleMode(bool bAttack);
   void AlterSec() override;
   __int64 AttackableHeight();
+  __int64 GetDamageLevel(int nAttackPart);
+  __int64 GetDamageDP(int nAttackPart);
   __int64 GetAttackDP();
   __int64 GetAttackLevel();
   float GetAttackRange();

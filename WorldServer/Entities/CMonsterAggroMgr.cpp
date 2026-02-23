@@ -56,6 +56,26 @@ CCharacter *CMonsterAggroMgr::GetTopAggroCharacter()
   return nullptr;
 }
 
+CCharacter *CMonsterAggroMgr::GetTopDamageCharacter()
+{
+  if (m_pTopDamageCharacter && m_pTopDamageCharacter->m_bLive && !m_pTopDamageCharacter->m_bCorpse)
+  {
+    return m_pTopDamageCharacter;
+  }
+  m_pTopDamageCharacter = nullptr;
+  return nullptr;
+}
+
+CCharacter *CMonsterAggroMgr::GetKingPowerDamageCharacter()
+{
+  if (m_pKingPowerDamageCharacter && m_pKingPowerDamageCharacter->m_bLive && !m_pKingPowerDamageCharacter->m_bCorpse)
+  {
+    return m_pKingPowerDamageCharacter;
+  }
+  m_pKingPowerDamageCharacter = nullptr;
+  return nullptr;
+}
+
 void CMonsterAggroMgr::Process()
 {
   const unsigned int loopTime = GetLoopTime();
@@ -86,6 +106,17 @@ void CMonsterAggroMgr::OnlyOnceInit(CMonster *pMonster)
   m_pMonster = pMonster;
   m_dwAllResetTimer = 30000;
   m_dwShortRankTimer = 5000;
+}
+
+void CMonsterAggroMgr::SetTopAggroCharacter(CCharacter *pCharacter)
+{
+  m_pTopAggroCharacter = pCharacter;
+}
+
+void CMonsterAggroMgr::ShortRankDelay(unsigned int dwDelayTime)
+{
+  const unsigned int loopTime = GetLoopTime();
+  m_dwShortRankLastTime = dwDelayTime + loopTime;
 }
 
 CAggroNode *CMonsterAggroMgr::_SearchAggroNode(CCharacter *pCharacter)

@@ -85,6 +85,7 @@ public:
   CCharacter *m_pMasterSetTarget;
   unsigned int m_dwLastDestroyTime;
 
+  bool Create(_tower_create_setdata *pData);
   void Init(_object_id *pID);
   bool Destroy(unsigned __int8 byDesType, bool bSystemBack);
   void SendMsg_Destroy(unsigned __int8 byDesType);

@@ -919,6 +919,161 @@ bool CMonster::IsRewardExp()
   return m_bRewardExp;
 }
 
+bool CMonster::SF_AllContHelpSkillRemove_Once(CCharacter *pDstObj)
+{
+  const float roll = static_cast<float>(rand() % 100);
+  if (pDstObj->m_EP.GetEff_Plus(38) > roll)
+  {
+    return false;
+  }
+
+  int removedCount = 0;
+  for (int j = 0; j < 8; ++j)
+  {
+    _sf_continous *cont = &pDstObj->m_SFCont[1][j];
+    if (cont->m_bExist && !cont->m_byEffectCode)
+    {
+      pDstObj->RemoveSFContEffect(1u, static_cast<unsigned __int16>(j), false, false);
+      ++removedCount;
+    }
+  }
+  return removedCount > 0;
+}
+
+bool CMonster::SF_AllContHelpForceRemove_Once(CCharacter *pDstObj)
+{
+  const float roll = static_cast<float>(rand() % 100);
+  if (pDstObj->m_EP.GetEff_Plus(38) > roll)
+  {
+    return false;
+  }
+
+  int removedCount = 0;
+  for (int j = 0; j < 8; ++j)
+  {
+    _sf_continous *cont = &pDstObj->m_SFCont[1][j];
+    if (cont->m_bExist && cont->m_byEffectCode == 1)
+    {
+      pDstObj->RemoveSFContEffect(1u, static_cast<unsigned __int16>(j), false, false);
+      ++removedCount;
+    }
+  }
+  return removedCount > 0;
+}
+
+bool CMonster::SF_HPInc_Once(CCharacter *pDstObj, float fEffectValue)
+{
+  bool effectable = false;
+  if ((!pDstObj->m_ObjID.m_byID || pDstObj->m_ObjID.m_byID == 1) && !pDstObj->m_bCorpse)
+  {
+    effectable = true;
+  }
+  if (!effectable)
+  {
+    return false;
+  }
+
+  const int curHp = static_cast<int>(pDstObj->GetHP());
+  const int maxHp = static_cast<int>(pDstObj->GetMaxHP());
+  const float effectRate = pDstObj->m_EP.GetEff_Rate(18);
+  const int addHp = static_cast<int>(static_cast<float>(maxHp) * (fEffectValue * effectRate));
+  pDstObj->SetHP(addHp + curHp, false);
+
+  if ((static_cast<float>(curHp) / static_cast<float>(maxHp)) > 0.80000001f)
+  {
+    return false;
+  }
+  pDstObj->SendMsg_SetHPInform();
+  return true;
+}
+
+bool CMonster::SF_LateContDamageRemove_Once(CCharacter *pDstObj)
+{
+  int latestIndex = -1;
+  _sf_continous *latestCont = nullptr;
+  for (int j = 0; j < 8; ++j)
+  {
+    _sf_continous *cont = &pDstObj->m_SFCont[0][j];
+    if (cont->m_bExist)
+    {
+      if (latestIndex == -1 || cont->m_dwStartSec > latestCont->m_dwStartSec)
+      {
+        latestIndex = j;
+        latestCont = cont;
+      }
+    }
+  }
+
+  if (latestIndex == -1)
+  {
+    return false;
+  }
+  pDstObj->RemoveSFContEffect(0u, static_cast<unsigned __int16>(latestIndex), false, false);
+  return true;
+}
+
+bool CMonster::SF_LateContHelpSkillRemove_Once(CCharacter *pDstObj)
+{
+  const float roll = static_cast<float>(rand() % 100);
+  if (pDstObj->m_EP.GetEff_Plus(38) > roll)
+  {
+    return false;
+  }
+
+  int latestIndex = -1;
+  _sf_continous *latestCont = nullptr;
+  for (int j = 0; j < 8; ++j)
+  {
+    _sf_continous *cont = &pDstObj->m_SFCont[1][j];
+    if (cont->m_bExist && !cont->m_byEffectCode)
+    {
+      if (latestIndex == -1 || cont->m_dwStartSec > latestCont->m_dwStartSec)
+      {
+        latestIndex = j;
+        latestCont = cont;
+      }
+    }
+  }
+
+  if (latestIndex == -1)
+  {
+    return false;
+  }
+  pDstObj->RemoveSFContEffect(1u, static_cast<unsigned __int16>(latestIndex), false, false);
+  return true;
+}
+
+bool CMonster::SF_LateContHelpForceRemove_Once(CCharacter *pDstObj)
+{
+  const float roll = static_cast<float>(rand() % 100);
+  if (pDstObj->m_EP.GetEff_Plus(38) > roll)
+  {
+    return false;
+  }
+
+  int latestIndex = -1;
+  _sf_continous *latestCont = nullptr;
+  for (int j = 0; j < 8; ++j)
+  {
+    _sf_continous *cont = &pDstObj->m_SFCont[1][j];
+    if (cont->m_bExist && cont->m_byEffectCode == 1)
+    {
+      if (latestIndex == -1 || cont->m_dwStartSec > latestCont->m_dwStartSec)
+      {
+        latestIndex = j;
+        latestCont = cont;
+      }
+    }
+  }
+
+  if (latestIndex == -1)
+  {
+    return false;
+  }
+  pDstObj->RemoveSFContEffect(1u, static_cast<unsigned __int16>(latestIndex), false, false);
+  return true;
+}
+
 void CMonster::UpdateSFCont()
 {
   if (!m_tmrSFCont.CountingTimer())
@@ -2742,8 +2897,10 @@ unsigned __int8 CMonster::InsertSFContEffect(
   unsigned int dwEffectIndex,
   unsigned __int16 wDurSec,
   unsigned __int8 byLv,
-  bool *pbUpMty)
+  bool *pbUpMty,
+  CPlayer *pActChar)
 {
+  (void)pActChar;
   *pbUpMty = true;
 
   const int myCount = static_cast<int>(GetMyDMGSFContCount());

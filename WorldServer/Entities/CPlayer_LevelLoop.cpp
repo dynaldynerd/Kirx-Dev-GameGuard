@@ -1599,7 +1599,11 @@ __int64 CPlayer::SetDamage(
   unsigned int dwAttackSerial,
   bool bJadeReturn)
 {
-if (m_bCorpse || m_bMapLoading || CGameObject::GetCurSecNum() == static_cast<unsigned int>(-1))
+  (void)bCrt;
+  (void)nAttackType;
+  (void)dwAttackSerial;
+
+  if (m_bCorpse || m_bMapLoading || CGameObject::GetCurSecNum() == static_cast<unsigned int>(-1))
   {
     return static_cast<unsigned int>(m_Param.GetHP());
   }
@@ -1607,10 +1611,13 @@ if (m_bCorpse || m_bMapLoading || CGameObject::GetCurSecNum() == static_cast<uns
   if (pDst && m_EP.GetEff_Have(54) > 0.0f && bJadeReturn && pDst->m_ObjID.m_byID == 0)
   {
     const int returnDamage = static_cast<int>(static_cast<float>(nDam) * m_EP.GetEff_Have(54));
-    if (returnDamage > 0)
-    {
-      pDst->SetDamage(returnDamage, this, static_cast<int>(GetLevel()), false, -1, 0, false);
-    }
+    pDst->SetDamage(returnDamage, this, static_cast<int>(GetLevel()), true, -1, 0, false);
+  }
+
+  if (pDst && m_EP.GetEff_Have(42) > 0.0f && bJadeReturn && pDst->m_ObjID.m_byID == 0)
+  {
+    pDst->SetDamage(nDam, this, static_cast<int>(GetLevel()), true, -1, 0, false);
+    return static_cast<unsigned int>(m_Param.GetHP());
   }
 
   CCharacter::BreakStealth();
@@ -1619,6 +1626,86 @@ if (m_bCorpse || m_bMapLoading || CGameObject::GetCurSecNum() == static_cast<uns
   if (m_EP.GetEff_State(14))
   {
     CCharacter::RemoveSFContHelpByEffect(2, 14);
+  }
+
+  if (pDst && !IsRidingUnit() && nDam > 0)
+  {
+    const int attackerLevel = static_cast<int>(pDst->GetAttackLevel());
+    const int damageLevel = static_cast<int>(GetDamageLevel(m_nLastBeatenPart));
+    int defenseRate = static_cast<int>((static_cast<float>(attackerLevel - damageLevel + 23) / 33.0f) + 1.0f);
+    if (defenseRate <= 0)
+    {
+      defenseRate = 0;
+    }
+
+    const int attackerDP = static_cast<int>(pDst->GetAttackDP());
+    const int damageDP = static_cast<int>(GetDamageDP(m_nLastBeatenPart));
+    const float baseDefPoint = pDst->m_ObjID.m_byID ? static_cast<float>(s_nMonDefPoint) : static_cast<float>(s_nStdDefPoint);
+    float dpDamScale = baseDefPoint + (static_cast<float>(damageDP * attackerDP) / 2.0f);
+    if (!pDst->m_ObjID.m_byID)
+    {
+      dpDamScale *= 1.25f;
+
+      CPlayer *dstPlayer = static_cast<CPlayer *>(pDst);
+      if (!dstPlayer->IsChaosMode())
+      {
+        const unsigned int now = timeGetTime();
+        m_kPvpOrderView.m_dwLastDamagedTime = now;
+        m_kPvpOrderView.m_bDamaged = true;
+        m_kPvpOrderView.Notify_OrderView(m_ObjID.m_wIndex);
+        dstPlayer->m_kPvpOrderView.m_dwLastAttackTime = now;
+        dstPlayer->m_kPvpOrderView.m_bAttack = true;
+        dstPlayer->m_kPvpOrderView.Notify_OrderView(dstPlayer->m_ObjID.m_wIndex);
+      }
+    }
+
+    const int dpDamage = static_cast<int>(dpDamScale * static_cast<float>(defenseRate));
+    if (dpDamage > 0)
+    {
+      const int oldDP = GetDP();
+      SetDP(oldDP - dpDamage, false);
+      if (oldDP != GetDP())
+      {
+        SendMsg_SetDPInform();
+      }
+    }
+  }
+
+  if (pDst && !IsRidingUnit() && nDam <= 0)
+  {
+    const int attackerLevel = static_cast<int>(pDst->GetAttackLevel());
+    const int damageLevel = static_cast<int>(GetDamageLevel(m_nLastBeatenPart));
+    int defenseRate = static_cast<int>((static_cast<float>(attackerLevel - damageLevel + 23) / 33.0f) + 1.0f);
+    if (defenseRate <= 0)
+    {
+      defenseRate = 0;
+    }
+
+    const int attackerDP = static_cast<int>(pDst->GetAttackDP());
+    const int damageDP = static_cast<int>(GetDamageDP(m_nLastBeatenPart));
+    int dpDamage = 0;
+    if (pDst->m_ObjID.m_byID)
+    {
+      const float dpScale =
+        static_cast<float>(s_nMonDefPoint) + (static_cast<float>(damageDP * attackerDP) / 2.0f);
+      dpDamage = static_cast<int>((dpScale * static_cast<float>(defenseRate)) / 3.0f);
+    }
+    else
+    {
+      const float dpScale =
+        static_cast<float>(s_nStdDefPoint) + (static_cast<float>(damageDP * attackerDP) / 2.0f);
+      dpDamage = static_cast<int>((dpScale * static_cast<float>(defenseRate) * 1.25f) / 3.0f);
+    }
+
+    if (dpDamage > 0)
+    {
+      const int oldDP = GetDP();
+      SetDP(oldDP - dpDamage, false);
+      if (oldDP != GetDP())
+      {
+        SendMsg_SetDPInform();
+      }
+    }
   }
 
   if (nDam <= 0)
@@ -1630,11 +1717,21 @@ if (m_bCorpse || m_bMapLoading || CGameObject::GetCurSecNum() == static_cast<uns
     }
     else if (nDam == -2 && m_nLastBeatenPart == 5 && pDst && !IsInTown() && IsPassMasteryLimitLvDiff(nDstLv))
     {
-      if (m_byDefMatCount < 2)
+      if (m_byDefMatCount++ < 2)
       {
-        ++m_byDefMatCount;
         const unsigned int masteryCum = GetMasteryCumAfterAttack(nDstLv);
-        Emb_AlterStat(2u, 0u, static_cast<int>(masteryCum), 0, "CPlayer::SetDamage() shield-defense", true);
+        if (pDst->m_ObjID.m_byID || GetObjRace() != pDst->GetObjRace())
+        {
+          Emb_AlterStat(2u, 0u, static_cast<int>(masteryCum), 0, "CPlayer::SetDamage()---3", true);
+        }
+        else
+        {
+          CPlayer *dstPlayer = static_cast<CPlayer *>(pDst);
+          if (!dstPlayer->IsChaosMode() && !IsPunished(1u, false))
+          {
+            Emb_AlterStat(2u, 0u, static_cast<int>(masteryCum), 0, "CPlayer::SetDamage()---2", true);
+          }
+        }
       }
     }
 
@@ -1643,7 +1740,7 @@ if (m_bCorpse || m_bMapLoading || CGameObject::GetCurSecNum() == static_cast<uns
     return static_cast<unsigned int>(m_Param.GetHP());
   }
 
-  if (IsRidingUnit() && m_pUsingUnit)
+  if (IsRidingUnit())
   {
     if (!m_bNeverDie)
     {
@@ -1678,7 +1775,6 @@ if (m_bCorpse || m_bMapLoading || CGameObject::GetCurSecNum() == static_cast<uns
       {
         const int overflow = fpDamage - currentFp;
         SetHP(m_Param.GetHP() - (overflow / 2), false);
-        SendMsg_SetHPInform();
         fpDamage = m_Param.GetFP();
       }
 
@@ -1694,14 +1790,97 @@ if (m_bCorpse || m_bMapLoading || CGameObject::GetCurSecNum() == static_cast<uns
     if (pDst && !IsInTown() && IsPassMasteryLimitLvDiff(nDstLv) && GetHP() > 0)
     {
       const float hpRateDamage = static_cast<float>(nDam) / static_cast<float>(GetMaxHP());
-      if (hpRateDamage >= 0.02f && m_byDefMatCount < 2)
+      if (hpRateDamage >= 0.02f && m_byDefMatCount++ < 2)
       {
-        ++m_byDefMatCount;
         const unsigned int masteryCum = GetMasteryCumAfterAttack(nDstLv);
         const int addValue = m_nAddDfnMstByClass * static_cast<int>(masteryCum);
-        if (m_nLastBeatenPart != 5 && addValue > 0)
+        if (m_nLastBeatenPart != 5)
         {
-          Emb_AlterStat(1u, 0u, addValue, 0, "CPlayer::SetDamage() defense", true);
+          if (pDst->m_ObjID.m_byID || GetObjRace() != pDst->GetObjRace())
+          {
+            Emb_AlterStat(1u, 0u, addValue, 0, "CPlayer::SetDamage()---1", true);
+          }
+          else
+          {
+            CPlayer *dstPlayer = static_cast<CPlayer *>(pDst);
+            if (!dstPlayer->IsChaosMode() && !IsPunished(1u, false))
+            {
+              Emb_AlterStat(1u, 0u, addValue, 0, "CPlayer::SetDamage()---0", true);
+            }
+          }
+
+          if (m_pPartyMgr && m_pPartyMgr->IsPartyMode())
+          {
+            if (_STAT_DB_BASE::IsRangePerMastery(1u, 0u))
+            {
+              CPlayer *members[8]{};
+              const unsigned __int8 memberCount = _GetPartyMemberInCircle(members, 8, true);
+              for (int idx = 0; idx < memberCount; ++idx)
+              {
+                CPlayer *member = members[idx];
+                if (!member || member == this || member->m_bCorpse)
+                {
+                  continue;
+                }
+
+                const int levelScaled = (static_cast<int>(GetLevel()) / 10 + 1) * addValue;
+                float share = static_cast<float>(levelScaled) * 0.1f;
+                if (share <= 0.0f)
+                {
+                  continue;
+                }
+
+                const unsigned int limitCum = member->_check_mastery_cum_lim(1u, 0u);
+                const unsigned int curCum = member->m_pmMst.GetCumPerMast(1u, 0u);
+                const int remainCum = static_cast<int>(limitCum) - static_cast<int>(curCum);
+                if (remainCum <= 0)
+                {
+                  continue;
+                }
+
+                if (share > static_cast<float>(remainCum))
+                {
+                  share = static_cast<float>(remainCum);
+                }
+
+                share += 0.5f;
+                if (share < 1.0f)
+                {
+                  continue;
+                }
+
+                const unsigned int alterCum = static_cast<unsigned int>(share);
+                const int statIndex = _STAT_DB_BASE::GetStatIndex(1u, 0u);
+                if (member->m_pmMst.m_BaseCum.m_dwDamWpCnt[statIndex] > 0xEE6B2800)
+                {
+                  continue;
+                }
+
+                unsigned int afterCum = 0;
+                const bool updated =
+                  member->m_pmMst.AlterCumPerMast(1u, 0u, alterCum, &afterCum);
+                if (member->m_pmMst.m_bUpdateEquipMast)
+                {
+                  member->m_bUpCheckEquipEffect = true;
+                }
+                member->SendMsg_StatInform(static_cast<unsigned __int8>(statIndex), afterCum, 0);
+                if (member->m_pmMst.m_MastUpData.bUpdate)
+                {
+                  member->ReCalcMaxHFSP(true, false);
+                }
+                if (member->m_pUserDB)
+                {
+                  member->m_pUserDB->Update_Stat(static_cast<unsigned __int8>(statIndex), afterCum, updated);
+                }
+                member->m_Param.m_dwAlterMastery[statIndex] += alterCum;
+              }
+            }
+            else
+            {
+              const char *charName = m_Param.GetCharNameA();
+              g_Main.m_logSystemError.Write("%s: PartyPlayer Div Defence Error", charName);
+            }
+          }
         }
       }
     }
@@ -1709,13 +1888,11 @@ if (m_bCorpse || m_bMapLoading || CGameObject::GetCurSecNum() == static_cast<uns
 
   if (GetHP() == 0)
   {
-    m_bCorpse = true;
-    m_bMove = false;
-  }
-
-  if (bCrt)
-  {
-    SetStun(true);
+    if (pDst)
+    {
+      pDst->RecvKillMessage(this);
+    }
+    Corpse(pDst);
   }
 
   if (pDst && m_pRecalledAnimusChar && !pDst->GetStealth(true))

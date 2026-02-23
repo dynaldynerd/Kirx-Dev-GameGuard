@@ -161,8 +161,9 @@ _ANIMUS_RETURN_DELAY CPlayer::s_AnimusReturnDelay;
 int *CPlayer::s_pnLinkForceItemToEffect;
 _SKILL_IDX_PER_MASTERY CPlayer::s_SkillIndexPerMastery[8];
 int CPlayer::s_nAddMstFc[100];
-int CPlayer::s_nStdDefPoint;
-int CPlayer::s_nRevDefPoint;
+int CPlayer::s_nStdDefPoint = 6;
+int CPlayer::s_nRevDefPoint = 10;
+int CPlayer::s_nMonDefPoint = 12;
 CRecordData CPlayer::s_tblLimMastery[3][4];
 CRecordData CPlayer::s_tblLimMasteryContinue[3][4];
 
@@ -8563,6 +8564,90 @@ void CPlayer::SendMsg_Resurrect(char byRet, bool bQuickPotion)
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
+_sf_continous *CPlayer::GetAfterEffect()
+{
+  if (!m_pUserDB)
+  {
+    return nullptr;
+  }
+
+  _SFCONT_DB_BASE *dbSfcont = &m_pUserDB->m_AvatorData.dbSfcont;
+  _base_fld *record = g_Main.m_tblEffectData[3].GetRecord("17");
+  if (!dbSfcont || !record)
+  {
+    return nullptr;
+  }
+
+  const unsigned int curTime = _sf_continous::GetSFContCurTime();
+  for (int row = 0; row < 2; ++row)
+  {
+    for (int col = 0; col < 8; ++col)
+    {
+      _SFCONT_DB_BASE::_LIST *dbEntry = &dbSfcont->m_List[row][col];
+      if (!dbEntry->IsFilled())
+      {
+        continue;
+      }
+
+      const unsigned __int8 effectCode = static_cast<unsigned __int8>(dbEntry->GetEffectCode());
+      if (effectCode != 3 && effectCode != record->m_dwIndex)
+      {
+        continue;
+      }
+
+      _sf_continous *cont = &m_SFCont[row][col];
+      cont->m_byEffectCode = effectCode;
+      cont->m_wEffectIndex = static_cast<unsigned __int16>(dbEntry->GetEffectIndex());
+      cont->m_byLv = static_cast<unsigned __int8>(dbEntry->GetLv() + 1);
+      cont->m_dwStartSec = curTime;
+      cont->m_wDurSec = static_cast<unsigned __int16>(dbEntry->GetLeftTime());
+
+      const unsigned __int8 order = static_cast<unsigned __int8>(dbEntry->GetOrder());
+      if (curTime > order)
+      {
+        cont->m_dwStartSec = curTime - order;
+        cont->m_wDurSec = static_cast<unsigned __int16>(cont->m_wDurSec + order);
+      }
+
+      bool invalid = false;
+      if (cont->m_byEffectCode < 4u)
+      {
+        if (g_Main.m_tblEffectData[cont->m_byEffectCode].GetRecord(cont->m_wEffectIndex))
+        {
+          if (cont->m_byLv > 7u)
+          {
+            invalid = true;
+          }
+        }
+        else
+        {
+          invalid = true;
+        }
+      }
+      else
+      {
+        invalid = true;
+      }
+
+      if (!invalid)
+      {
+        return cont;
+      }
+
+      m_pUserDB->Update_SFContDelete(static_cast<unsigned __int8>(row), static_cast<unsigned __int8>(col));
+      const char *charName = m_Param.GetCharNameA();
+      g_Main.m_logSystemError.Write(
+        "%s: error stored effect, code: %d, idx: %d: lv: %d",
+        charName,
+        cont->m_byEffectCode,
+        cont->m_wEffectIndex,
+        cont->m_byLv);
+    }
+  }
+
+  return nullptr;
+}
+
 void CPlayer::pc_NuclearAfterEffect()
 {
   if (!m_pUserDB)
@@ -12220,6 +12305,198 @@ void CPlayer::CheckGroupMapPoint()
       groupPlayer = nullptr;
     }
   }
+}
+
+char CPlayer::Corpse(CCharacter *pAtter)
+{
+  Stop();
+  DTradeInit();
+  _sf_continous *afterEffect = GetAfterEffect();
+  CCharacter::SFContInit();
+  if (afterEffect && m_bAfterEffect)
+  {
+    bool upMastery = true;
+    if (!InsertSFContEffect(
+          0,
+          3,
+          afterEffect->m_wEffectIndex,
+          afterEffect->m_wDurSec,
+          1,
+          &upMastery,
+          reinterpret_cast<CPlayer *>(pAtter)))
+    {
+      if (afterEffect->m_wDurSec)
+      {
+        m_bAfterEffect = true;
+      }
+    }
+  }
+
+  if (m_bMineMode)
+  {
+    m_bMineMode = false;
+    m_dwMineNextTime = static_cast<unsigned int>(-1);
+    SendMsg_MineCancle();
+  }
+
+  if (m_pSiegeItem)
+  {
+    SetSiege(nullptr);
+  }
+
+  SetBreakTranspar(false);
+  SendMsg_Die();
+
+  unsigned __int16 jadeRevivalRate = static_cast<unsigned __int16>(m_EP.GetEff_Have(51) * 100.0f);
+  if (jadeRevivalRate > 100)
+  {
+    jadeRevivalRate = 100;
+  }
+  if (jadeRevivalRate && static_cast<unsigned int>(rand() % 100) <= jadeRevivalRate)
+  {
+    SendMsg_RevivalOfJade(jadeRevivalRate);
+  }
+
+  CPlayer *killerOwner = nullptr;
+  if (pAtter)
+  {
+    switch (pAtter->m_ObjID.m_byID)
+    {
+      case 0:
+        killerOwner = static_cast<CPlayer *>(pAtter);
+        break;
+      case 3:
+      {
+        CAnimus *animus = static_cast<CAnimus *>(pAtter);
+        killerOwner = animus->m_pMaster;
+        break;
+      }
+      case 4:
+      {
+        CGuardTower *tower = static_cast<CGuardTower *>(pAtter);
+        killerOwner = tower->m_pMasterTwr;
+        break;
+      }
+      case 7:
+        break;
+      case 12:
+      {
+        CTrap *trap = static_cast<CTrap *>(pAtter);
+        killerOwner = trap->m_pMaster;
+        _base_fld *effectRecord = g_Main.m_tblEffectData[3].GetRecord("17");
+        if (effectRecord)
+        {
+          bool upMastery = false;
+          const unsigned __int8 contCode = static_cast<unsigned __int8>(effectRecord[13].m_strCode[32]);
+          const unsigned __int16 durSec = *reinterpret_cast<unsigned __int16 *>(&effectRecord[16].m_strCode[24]);
+          InsertSFContEffect(
+            contCode,
+            3,
+            effectRecord->m_dwIndex,
+            durSec,
+            1,
+            &upMastery,
+            reinterpret_cast<CPlayer *>(pAtter));
+          m_bAfterEffect = true;
+        }
+        break;
+      }
+      default:
+        break;
+    }
+
+    if (!IsInTown() && !m_pCurMap->m_pMapSet->m_nMapType && m_Param.GetExp() > 0.0 && pAtter->m_ObjID.m_byID == 1)
+    {
+      CMonster *attackerMon = static_cast<CMonster *>(pAtter);
+      if (attackerMon->m_bRobExp)
+      {
+        const int level = static_cast<int>(m_Param.GetLevel());
+        if (level > 7 && level <= m_Param.GetMaxLevel() && (rand() % 2))
+        {
+          const int levelDiff = std::abs(level - static_cast<int>(pAtter->GetLevel()));
+          float lossRate = static_cast<float>(levelDiff + (rand() % 5) + 1);
+          if (lossRate > 20.0f)
+          {
+            lossRate = 20.0f;
+          }
+          lossRate *= 0.01f;
+
+          const double oldExp = static_cast<double>(m_Param.GetExp());
+          const double randomRate = static_cast<double>(rand() % 100) / 100.0;
+          double lossExp = oldExp * static_cast<double>(lossRate) * randomRate;
+          if (lossExp < 0.0)
+          {
+            lossExp = 0.0;
+          }
+          if (lossExp > oldExp)
+          {
+            lossExp = oldExp;
+          }
+          if (lossExp > 1.0)
+          {
+            AlterExp(-lossExp, false, false, false);
+          }
+        }
+      }
+    }
+
+    if (killerOwner && !killerOwner->IsChaosMode())
+    {
+      const unsigned int now = timeGetTime();
+      ++killerOwner->m_kPvpOrderView.m_nKillCnt;
+      killerOwner->m_kPvpOrderView.m_dwLastAttackTime = now;
+      killerOwner->m_kPvpOrderView.m_bAttack = true;
+      killerOwner->m_kPvpOrderView.Notify_OrderView(killerOwner->m_ObjID.m_wIndex);
+
+      ++m_kPvpOrderView.m_nDeahtCnt;
+      m_kPvpOrderView.m_dwLastDamagedTime = now;
+      m_kPvpOrderView.m_bDamaged = true;
+      m_kPvpOrderView.Notify_OrderView(m_ObjID.m_wIndex);
+    }
+  }
+
+  if (m_bInGuildBattle && m_bTakeGravityStone)
+  {
+    SendMsg_Notify_Gravity_Stone_Owner_Die();
+    ClearGravityStone();
+  }
+
+  if (m_pRecalledAnimusChar && !s_AnimusReturnDelay.Push(m_ObjID.m_wIndex, m_dwObjSerial))
+  {
+    _AnimusReturn(2u);
+  }
+
+  if (killerOwner && killerOwner->IsRidingUnit())
+  {
+    killerOwner->m_EP.SetLock(true);
+    killerOwner->CalcDefTol();
+    killerOwner->SetHaveEffect(false);
+  }
+
+  m_bCorpse = true;
+  m_byModeType = 0;
+  m_byMoveType = 1;
+  m_byStandType = 0;
+  m_dwSelfDestructionTime = 0;
+  m_fSelfDestructionDamage = 0.0f;
+
+  if (m_pCurMap->m_pMapSet->m_nMapType == 1)
+  {
+    m_dwNextTimeDungeonDie = GetLoopTime() + 5000;
+  }
+
+  if (m_byHSKTime <= 2 && !m_byCristalBattleDBInfo && m_pUserDB)
+  {
+    CHolyStone *holyStone = &g_Stone[m_Param.GetRaceCode()];
+    if (holyStone->m_bOper && holyStone->m_pCurMap == m_pCurMap)
+    {
+      m_pUserDB->m_AvatorData.m_wDiePoint = ++m_wDiePoint;
+    }
+  }
+
+  m_QuestMgr.CheckFailLoop(2, nullptr);
+  SenseState();
+  return 1;
 }
 
 void CPlayer::pc_Revival(bool bUseableJade)
@@ -19946,6 +20223,54 @@ __int64 CPlayer::AttackableHeight()
     return 350;
   }
   return 50;
+}
+
+__int64 CPlayer::GetDamageLevel(int nAttackPart)
+{
+  if (IsRidingUnit() || nAttackPart > 5)
+  {
+    return 1;
+  }
+
+  _STORAGE_LIST::_db_con *equip = &m_Param.m_dbEquip.m_pStorageList[nAttackPart];
+  if (!equip->m_bLoad)
+  {
+    return 1;
+  }
+
+  _base_fld *record = g_Main.m_tblItemData[nAttackPart].GetRecord(equip->m_wItemIndex);
+  if (record)
+  {
+    return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[8]);
+  }
+
+  return 1;
+}
+
+__int64 CPlayer::GetDamageDP(int nAttackPart)
+{
+  if (IsRidingUnit() || nAttackPart > 5)
+  {
+    return 0;
+  }
+
+  _base_fld *record = nullptr;
+  _STORAGE_LIST::_db_con *equip = &m_Param.m_dbEquip.m_pStorageList[nAttackPart];
+  if (equip->m_bLoad)
+  {
+    record = g_Main.m_tblItemData[nAttackPart].GetRecord(equip->m_wItemIndex);
+  }
+  else if (nAttackPart < 5)
+  {
+    record = g_Main.m_tblItemData[nAttackPart].GetRecord(m_Param.m_dbChar.m_byDftPart[nAttackPart]);
+  }
+
+  if (record)
+  {
+    return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[48]);
+  }
+
+  return 0;
 }
 
 __int64 CPlayer::GetAttackDP()

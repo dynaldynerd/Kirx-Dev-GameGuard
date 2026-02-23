@@ -9,8 +9,8 @@ CMonsterAI::CMonsterAI()
 {
   for (int i = 0; i < 4; ++i)
   {
-    m_SFCheckTime[i].m_dwLastCheckTime = 0;
-    m_SFCheckTime[i].m_dwGapCheckTime = 0;
+    m_SFCheckTime[i].m_dwLastCheckTime = static_cast<unsigned int>(-1);
+    m_SFCheckTime[i].m_dwGapCheckTime = static_cast<unsigned int>(-1);
   }
   m_pAsistMonster = nullptr;
   m_nCurPathFindFailCount = 0;

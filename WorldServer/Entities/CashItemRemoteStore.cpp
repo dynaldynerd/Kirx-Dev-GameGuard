@@ -5,6 +5,7 @@
 
 #include "CashShop_fld.h"
 #include "CashShop_str_fld.h"
+#include "CAsyncLogger.h"
 #include "CCashDBWorkManager.h"
 #include "CMainThread.h"
 #include "CNationSettingManager.h"
@@ -12,6 +13,7 @@
 #include "GlobalObjects.h"
 #include "ICsSendInterface.h"
 #include "TimeItem.h"
+#include "UIDGenerator.h"
 #include "WorldServerUtil.h"
 #include "param_cash.h"
 #include "qry_case_cash_limsale.h"
@@ -86,6 +88,1059 @@ void CashItemRemoteStore::Loop_TatalCashEvent()
     Load_Cash_Event();
     Load_Conditional_Event();
   }
+}
+
+bool CashItemRemoteStore::GoodsList(unsigned __int16 wSock, char *pPacket)
+{
+  if (_bIsBuyCashItemByGold)
+  {
+    return GoodsListBuyByGold(wSock, pPacket) != 0;
+  }
+  return GoodsListBuyByCash(wSock, pPacket) != 0;
+}
+
+bool CashItemRemoteStore::Buy(unsigned __int16 wSock, char *pPacket)
+{
+  if (_bIsBuyCashItemByGold)
+  {
+    return BuyByGold(wSock, reinterpret_cast<_request_csi_buy_clzo *>(pPacket)) != 0;
+  }
+  return BuyByCash(wSock, pPacket) != 0;
+}
+
+char CashItemRemoteStore::GoodsListBuyByCash(unsigned __int16 wSock, char *pPacket)
+{
+  (void)pPacket;
+
+  if (wSock >= MAX_PLAYER)
+  {
+    return 0;
+  }
+
+  CPlayer *player = &g_Player[wSock];
+  if (!player->m_bLive)
+  {
+    return 1;
+  }
+  if (!player->m_bOper)
+  {
+    return 1;
+  }
+
+  _param_cash_select query(player->m_pUserDB->m_dwAccountSerial, player->m_Param.GetCharSerial(), wSock);
+  sprintf_s(query.in_szAcc, sizeof(query.in_szAcc), "%s", player->m_pUserDB->m_szAccountID);
+
+  query.in_bAdjustDiscount = is_cde_time() != 0;
+  query.in_bOneN_One = IsEventTime(1u) != 0;
+  query.in_bSetDiscount = IsEventTime(0) != 0;
+  for (int index = 0; index < 4; ++index)
+  {
+    if (query.in_bSetDiscount)
+    {
+      query.in_bySetDiscount[index] = GetSetDiscout(static_cast<unsigned __int8>(index));
+    }
+    else
+    {
+      query.in_bySetDiscount[index] = 0;
+    }
+  }
+
+  query.in_bLimited_Sale = IsEventTime(2u) != 0;
+  if (query.in_bLimited_Sale)
+  {
+    query.in_byLimDiscount = GetLimDiscout();
+  }
+  else
+  {
+    query.in_byLimDiscount = 0;
+  }
+
+  const unsigned __int64 querySize = static_cast<unsigned __int64>(query.size());
+  CCashDBWorkManager *cashWorkManager = CTSingleton<CCashDBWorkManager>::Instance();
+  cashWorkManager->PushTask(0, reinterpret_cast<unsigned __int8 *>(&query), querySize);
+  return 1;
+}
+
+char CashItemRemoteStore::BuyByCash(unsigned __int16 wSock, char *pPacket)
+{
+  CPlayer *player = &g_Player[wSock];
+  if (!player->m_bOper || !player->m_bLive)
+  {
+    return 1;
+  }
+
+  if (player->m_Param.m_dbInven.GetIndexEmptyCon() == 255)
+  {
+    ICsSendInterface::SendMsg_Error(wSock, 16);
+    return 1;
+  }
+
+  _request_csi_buy_clzo *request = reinterpret_cast<_request_csi_buy_clzo *>(pPacket);
+  if (request->nNum > player->m_Param.m_dbInven.GetNumEmptyCon())
+  {
+    ICsSendInterface::SendMsg_Error(wSock, 16);
+    return 1;
+  }
+
+  if (request->nNum > 20u)
+  {
+    ICsSendInterface::SendMsg_Error(wSock, 4);
+    _kLoggers[0].Write("CashItemRemoteStore::Buy() Buy Item Number Error, Num(%d)", request->nNum);
+    return 1;
+  }
+
+  if (request->byCouponNum >= 3u)
+  {
+    ICsSendInterface::SendMsg_Error(wSock, 19);
+    return 1;
+  }
+
+  for (int j = 0; j < request->byCouponNum; ++j)
+  {
+    if (request->CouponItem[j].byStorageCode >= 8u)
+    {
+      ICsSendInterface::SendMsg_Error(wSock, 19);
+      return 1;
+    }
+  }
+
+  int onePlusOneCount = 0;
+  for (int k = 0; k < request->nNum; ++k)
+  {
+    if (request->item[k].byEventType == 3)
+    {
+      ++onePlusOneCount;
+    }
+  }
+
+  const int totalRequiredSlots = onePlusOneCount + request->nNum;
+  if (totalRequiredSlots > player->m_Param.m_dbInven.GetNumEmptyCon())
+  {
+    ICsSendInterface::SendMsg_Error(wSock, 16);
+    return 1;
+  }
+
+  _param_cash_update buyList(player->m_pUserDB->m_dwAccountSerial, player->m_Param.GetCharSerial(), wSock);
+  const bool adjustDiscount = is_cde_time() != 0;
+  const bool oneNOneEvent = IsEventTime(1u) != 0;
+  const bool setDiscountEvent = IsEventTime(0) != 0;
+  const bool limitedSaleEvent = IsEventTime(2u) != 0;
+  buyList.in_bAdjustDiscount = adjustDiscount;
+  buyList.in_bOneN_One = oneNOneEvent;
+  buyList.in_bSetDiscount = setDiscountEvent;
+  buyList.in_bLimited_Sale = limitedSaleEvent;
+
+  for (int m = 0; m < request->nNum; ++m)
+  {
+    _request_csi_buy_clzo::__item *srcItem = &request->item[m];
+    _param_cash_update::__item *dstItem = &buyList.in_item[static_cast<unsigned __int64>(m)];
+
+    _CashShop_fld *goodsRecord = reinterpret_cast<_CashShop_fld *>(_kRecGoods.GetRecord(srcItem->wStoreIdx));
+    const _TimeItem_fld *timeRec = TimeItem::FindTimeRec(srcItem->byTblCode, srcItem->wItemIdx);
+    if (!timeRec && srcItem->byTblCode >= 0x25u)
+    {
+      _kLoggers[0].Write(
+        "CashItemRemoteStore::Buy() Can not find _TimeItem_fld Data, TableCode(%d), ItemIndex(%d), StoreIndex(%d)",
+        srcItem->byTblCode,
+        srcItem->wItemIdx,
+        srcItem->wStoreIdx);
+    }
+
+    if (srcItem->byTblCode >= 0x25u)
+    {
+      ICsSendInterface::SendMsg_Error(wSock, 11);
+      return 1;
+    }
+
+    const unsigned __int8 raceSexCode = static_cast<unsigned __int8>(player->m_Param.GetRaceSexCode());
+    dstItem->byRet = static_cast<unsigned __int8>(_check_buyitem(raceSexCode, srcItem, goodsRecord));
+    if (dstItem->byRet)
+    {
+      ICsSendInterface::SendMsg_Error(wSock, dstItem->byRet);
+      return 1;
+    }
+
+    if (srcItem->byEventType == 1 && !adjustDiscount)
+    {
+      ICsSendInterface::SendMsg_Error(wSock, 18);
+      return 1;
+    }
+    if (srcItem->byEventType == 2 && !setDiscountEvent)
+    {
+      ICsSendInterface::SendMsg_Error(wSock, 18);
+      return 1;
+    }
+    if (srcItem->byEventType == 3 && !oneNOneEvent)
+    {
+      ICsSendInterface::SendMsg_Error(wSock, 18);
+      return 1;
+    }
+    if (srcItem->byEventType == 5 && !limitedSaleEvent)
+    {
+      ICsSendInterface::SendMsg_Error(wSock, 22);
+      return 1;
+    }
+
+    const unsigned __int8 emptySlots = static_cast<unsigned __int8>(player->m_Param.m_dbInven.GetNumEmptyCon());
+    if (srcItem->byEventType == 2)
+    {
+      if (emptySlots < 3u)
+      {
+        ICsSendInterface::SendMsg_Error(wSock, 16);
+        return 1;
+      }
+    }
+    else if (srcItem->byEventType == 3 && emptySlots < 2u)
+    {
+      ICsSendInterface::SendMsg_Error(wSock, 16);
+      return 1;
+    }
+
+    dstItem->in_byTblCode = srcItem->byTblCode;
+    dstItem->in_wItemIdx = srcItem->wItemIdx;
+    dstItem->in_byOverlapNum = srcItem->byOverlapNum;
+    dstItem->in_nPrice = srcItem->nPrice;
+    dstItem->in_nEventType = srcItem->byEventType;
+    if (adjustDiscount && srcItem->byEventType == 1)
+    {
+      if (srcItem->byDiscount == 0xFF)
+      {
+        dstItem->in_nDiscount = m_cde.m_ini.m_wCsDiscount;
+      }
+      else
+      {
+        dstItem->in_nDiscount = srcItem->byDiscount;
+      }
+    }
+    else
+    {
+      dstItem->in_nDiscount = 0;
+    }
+
+    dstItem->in_lnUID = UIDGenerator::getuid(g_Main.m_byWorldCode);
+    if (timeRec)
+    {
+      dstItem->in_nLendType = static_cast<unsigned __int8>(timeRec->m_nCheckType);
+      dstItem->in_dwLendTime = timeRec->m_nUseTime;
+    }
+
+    strcpy_s(dstItem->in_strItemCode, sizeof(dstItem->in_strItemCode), goodsRecord->m_strCsItemCode);
+    if (setDiscountEvent && request->bySetKind && request->bySetKind <= 4u)
+    {
+      dstItem->in_nDiscount = GetSetDiscout(request->bySetKind - 1);
+    }
+    if (limitedSaleEvent && srcItem->byEventType == 5)
+    {
+      dstItem->in_nDiscount = GetLimDiscout();
+    }
+    ++buyList.in_nNum10;
+  }
+
+  if (request->byCouponNum)
+  {
+    if (adjustDiscount || oneNOneEvent)
+    {
+      ICsSendInterface::SendMsg_Error(wSock, 20);
+      return 1;
+    }
+
+    if (CheckCouponType(request->CouponItem, player, request->byCouponNum) <= 0)
+    {
+      ICsSendInterface::SendMsg_Error(wSock, 19);
+      return 1;
+    }
+
+    for (int index = 0; index < request->byCouponNum; ++index)
+    {
+      if (!UseDiscountCoupon(&buyList, request->CouponItem[index], player))
+      {
+        ICsSendInterface::SendMsg_Error(wSock, 19);
+        return 1;
+      }
+      buyList.in_CouponItem[index] = request->CouponItem[index];
+    }
+  }
+
+  buyList.in_nCouponCnt = request->byCouponNum;
+  strcpy_s(buyList.in_szAcc, sizeof(buyList.in_szAcc), player->m_pUserDB->m_szAccountID);
+  strcpy_s(buyList.in_szSvrName, sizeof(buyList.in_szSvrName), g_Main.m_szWorldName);
+  strcpy_s(buyList.in_szAvatorName, sizeof(buyList.in_szAvatorName), player->m_Param.GetCharNameW());
+  buyList.in_nCashAmount = player->GetCashAmount();
+  buyList.in_dwIP = player->m_pUserDB->m_dwIP;
+
+  const unsigned __int64 querySize = static_cast<unsigned __int64>(buyList.size());
+  CCashDBWorkManager *cashWorkManager = CTSingleton<CCashDBWorkManager>::Instance();
+  cashWorkManager->PushTask(1, reinterpret_cast<unsigned __int8 *>(&buyList), querySize);
+  return 1;
+}
+
+char CashItemRemoteStore::BuyByGold(unsigned __int16 wSock, _request_csi_buy_clzo *pPacket)
+{
+  CPlayer *player = &g_Player[wSock];
+  if (!player->m_bOper || !player->m_bLive)
+  {
+    return 1;
+  }
+
+  _request_csi_buy_clzo *request = pPacket;
+  _param_cashitem_dblog dblogSheet(player->m_Param.GetCharSerial());
+  _buybygold_set_cashitem_dblog_sheet(player, &dblogSheet);
+
+  const __int64 errorCode = _buybygold_check_valid(player, request, &dblogSheet);
+  if (errorCode)
+  {
+    ICsSendInterface::SendMsg_Error(wSock, static_cast<int>(errorCode));
+    return 1;
+  }
+
+  _result_csi_buy_zocl sendResult{};
+  memset_0(&sendResult, 0, sizeof(sendResult));
+
+  _request_csi_buy_clzo::__item *lastSrcItem = nullptr;
+  bool couponUsed = false;
+  for (int index = 0; index < request->nNum; ++index)
+  {
+    lastSrcItem = &request->item[index];
+    const __int64 singleBuyError =
+      _buybygold_buy_single_item(player, request, lastSrcItem, &dblogSheet, &couponUsed, &sendResult);
+    if (singleBuyError)
+    {
+      ICsSendInterface::SendMsg_Error(wSock, static_cast<int>(singleBuyError));
+      return 1;
+    }
+  }
+
+  _buybygold_complete(player, &sendResult, request, lastSrcItem, &dblogSheet, couponUsed);
+  return 1;
+}
+
+__int64 CashItemRemoteStore::CheckCouponType(_STORAGE_POS_INDIV *pCoupon, CPlayer *pOne, unsigned __int8 byCouponNum)
+{
+  char couponGroup[3]{static_cast<char>(0xFF), static_cast<char>(0xFF), static_cast<char>(0xFF)};
+  char couponType[3]{static_cast<char>(0xFF), static_cast<char>(0xFF), static_cast<char>(0xFF)};
+  int validCount = 0;
+
+  for (int index = 0; index < byCouponNum; ++index)
+  {
+    _STORAGE_LIST *storage = pOne->m_Param.m_pStoragePtr[pCoupon[index].byStorageCode];
+    if (!storage)
+    {
+      continue;
+    }
+
+    _STORAGE_LIST::_db_con *couponItem = storage->GetPtrFromSerial(pCoupon[index].wItemSerial);
+    if (!couponItem)
+    {
+      continue;
+    }
+
+    _base_fld *record = g_Main.m_tblItemData[couponItem->m_byTableCode].GetRecord(couponItem->m_wItemIndex);
+    if (!record)
+    {
+      continue;
+    }
+
+    couponGroup[index] = record[4].m_strCode[0];
+    couponType[index] = record[4].m_strCode[4];
+    ++validCount;
+  }
+
+  if (validCount < 2)
+  {
+    return validCount;
+  }
+
+  if ((couponGroup[0] == couponGroup[1] && static_cast<unsigned __int8>(couponGroup[1]) == static_cast<unsigned __int8>(couponGroup[2]))
+      || (static_cast<unsigned __int8>(couponGroup[0]) == static_cast<unsigned __int8>(couponGroup[2])
+          && static_cast<unsigned __int8>(couponGroup[2]) == 0xFF))
+  {
+    return 0;
+  }
+
+  if ((couponType[0] == couponType[1] || static_cast<unsigned __int8>(couponType[1]) == static_cast<unsigned __int8>(couponType[2]))
+      && (couponType[0] == couponType[1] || couponType[2] != static_cast<char>(0xFF)))
+  {
+    return validCount;
+  }
+  return 0;
+}
+
+char CashItemRemoteStore::UseDiscountCoupon(_param_cash_update *pBuyList, _STORAGE_POS_INDIV pCoupon, CPlayer *pOne)
+{
+  _STORAGE_LIST *storage = pOne->m_Param.m_pStoragePtr[pCoupon.byStorageCode];
+  if (!storage)
+  {
+    return 0;
+  }
+
+  _STORAGE_LIST::_db_con *couponItem = storage->GetPtrFromSerial(pCoupon.wItemSerial);
+  if (!couponItem)
+  {
+    return 0;
+  }
+
+  _base_fld *record = g_Main.m_tblItemData[couponItem->m_byTableCode].GetRecord(couponItem->m_wItemIndex);
+  if (!record)
+  {
+    return 0;
+  }
+
+  int totalPrice = 0;
+  for (int index = 0; index < pBuyList->in_nNum10; ++index)
+  {
+    totalPrice += pBuyList->in_item[static_cast<unsigned __int64>(index)].in_byOverlapNum
+      * pBuyList->in_item[static_cast<unsigned __int64>(index)].in_nPrice;
+  }
+
+  const int applyValue = *reinterpret_cast<int *>(&record[4].m_strCode[8]);
+  const int applyType = *reinterpret_cast<int *>(&record[4].m_strCode[4]);
+  const int tenScaledValue = 10 * applyValue;
+
+  if (applyType)
+  {
+    for (int index = 0; index < pBuyList->in_nNum10; ++index)
+    {
+      pBuyList->in_item[static_cast<unsigned __int64>(index)].in_nDiscount += static_cast<unsigned __int16>(applyValue);
+      pBuyList->in_item[static_cast<unsigned __int64>(index)].in_nEventType = 4;
+    }
+    return 1;
+  }
+
+  if (tenScaledValue >= totalPrice)
+  {
+    return 0;
+  }
+
+  for (int index = 0; index < pBuyList->in_nNum10; ++index)
+  {
+    const int itemPrice = pBuyList->in_item[static_cast<unsigned __int64>(index)].in_byOverlapNum
+      * pBuyList->in_item[static_cast<unsigned __int64>(index)].in_nPrice;
+    if (itemPrice > tenScaledValue
+        && !pBuyList->in_item[static_cast<unsigned __int64>(index)].in_bIsApplyCoupon)
+    {
+      pBuyList->in_item[static_cast<unsigned __int64>(index)].in_nDiscount = static_cast<unsigned __int16>(applyValue);
+      pBuyList->in_item[static_cast<unsigned __int64>(index)].in_bIsApplyCoupon = true;
+      pBuyList->in_item[static_cast<unsigned __int64>(index)].in_nEventType = 4;
+      CPlayer::s_MgrItemHistory.coupon_use_buy_item(
+        couponItem,
+        pBuyList->in_item[static_cast<unsigned __int64>(index)].in_strItemCode,
+        pOne->m_szItemHistoryFileName);
+      return 1;
+    }
+  }
+  return 0;
+}
+
+char CashItemRemoteStore::IsUsableCoupon(
+  _request_csi_buy_clzo *pBuyList,
+  _STORAGE_POS_INDIV pCoupon,
+  CPlayer *pOne,
+  bool *bCheck)
+{
+  _STORAGE_LIST *storage = pOne->m_Param.m_pStoragePtr[pCoupon.byStorageCode];
+  if (!storage)
+  {
+    return 0;
+  }
+
+  _STORAGE_LIST::_db_con *couponItem = storage->GetPtrFromSerial(pCoupon.wItemSerial);
+  if (!couponItem)
+  {
+    return 0;
+  }
+
+  _base_fld *record = g_Main.m_tblItemData[couponItem->m_byTableCode].GetRecord(couponItem->m_wItemIndex);
+  if (!record)
+  {
+    return 0;
+  }
+
+  int totalPrice = 0;
+  for (int index = 0; index < pBuyList->nNum; ++index)
+  {
+    totalPrice += pBuyList->item[index].byOverlapNum * pBuyList->item[index].nPrice;
+  }
+
+  const int applyValue = *reinterpret_cast<int *>(&record[4].m_strCode[8]);
+  const int applyType = *reinterpret_cast<int *>(&record[4].m_strCode[4]);
+  const int tenScaledValue = 10 * applyValue;
+  if (applyType)
+  {
+    return 1;
+  }
+  if (tenScaledValue >= totalPrice)
+  {
+    return 0;
+  }
+
+  for (int index = 0; index < pBuyList->nNum; ++index)
+  {
+    const int itemPrice = pBuyList->item[index].byOverlapNum * pBuyList->item[index].nPrice;
+    if (itemPrice > tenScaledValue && !bCheck[index])
+    {
+      bCheck[index] = true;
+      return 1;
+    }
+  }
+  return 0;
+}
+
+__int64 CashItemRemoteStore::_check_buyitem(
+  unsigned __int8 byRaceSex,
+  const _request_csi_buy_clzo::__item *pCsItem,
+  const _CashShop_fld *pFld)
+{
+  if (!pCsItem || !pFld || pCsItem->byTblCode >= 0x25u)
+  {
+    return 4;
+  }
+
+  char *itemEquipCivil = GetItemEquipCivil(pCsItem->byTblCode, pCsItem->wItemIdx);
+  if (itemEquipCivil[byRaceSex] != '1')
+  {
+    return 12;
+  }
+
+  _base_fld *itemRecord = g_Main.m_tblItemData[pCsItem->byTblCode].GetRecord(pCsItem->wItemIdx);
+  if (!itemRecord || !pFld)
+  {
+    return 11;
+  }
+  if (!pFld->m_bView)
+  {
+    return 11;
+  }
+  if (strncmp(pFld->m_strCsItemCode, itemRecord->m_strCode, 7u))
+  {
+    return 11;
+  }
+  if (pCsItem->byOverlapNum > 0x63u)
+  {
+    return 6;
+  }
+  if (pCsItem->byOverlapNum > 1u && !IsOverLapItem(pCsItem->byTblCode))
+  {
+    return 6;
+  }
+  if (pFld->m_nCsPrice != pCsItem->nPrice)
+  {
+    return 5;
+  }
+  if (pCsItem->byEventType == 5)
+  {
+    if (pCsItem->byDiscount != GetLimDiscout())
+    {
+      return 7;
+    }
+  }
+  else if (static_cast<unsigned __int8>(pFld->m_nCsDiscount) != pCsItem->byDiscount)
+  {
+    return 7;
+  }
+
+  for (int index = 0; index < 8; ++index)
+  {
+    if (pFld->m_nCsEvent[index] != pCsItem->nEvent[index])
+    {
+      return 18;
+    }
+  }
+
+  if (pCsItem->byEventType != 5 || BuyLimSale(pCsItem->byTblCode, pCsItem->wItemIdx))
+  {
+    return 0;
+  }
+  return 21;
+}
+
+void CashItemRemoteStore::_buybygold_set_cashitem_dblog_sheet(CPlayer *pOne, _param_cashitem_dblog *pSheet)
+{
+  pSheet->byLv = static_cast<unsigned __int8>(pOne->m_Param.GetLevel());
+  pSheet->in_bAdjustDiscount = is_cde_time() != 0;
+  pSheet->in_bOneN_One = IsEventTime(1u) != 0;
+  pSheet->in_bSetDiscount = IsEventTime(0) != 0;
+  pSheet->in_bLimited_Sale = IsEventTime(2u) != 0;
+}
+
+__int64 CashItemRemoteStore::_buybygold_check_valid(
+  CPlayer *pOne,
+  _request_csi_buy_clzo *pRecv,
+  _param_cashitem_dblog *pSheet)
+{
+  if (pOne->m_Param.m_dbInven.GetIndexEmptyCon() == 255)
+  {
+    return 16;
+  }
+
+  pOne->m_Param.m_dbInven.GetNumEmptyCon();
+  int onePlusOneCount = 0;
+  for (int index = 0; index < pRecv->nNum; ++index)
+  {
+    if (pRecv->item[index].byEventType == 3)
+    {
+      ++onePlusOneCount;
+    }
+  }
+
+  const int totalRequiredSlots = pRecv->nNum + onePlusOneCount;
+  if (totalRequiredSlots > pOne->m_Param.m_dbInven.GetNumEmptyCon())
+  {
+    return 16;
+  }
+
+  const __int64 couponError = _buybygold_check_coupon(pOne, pRecv, pSheet);
+  if (couponError)
+  {
+    return couponError;
+  }
+  return 0;
+}
+
+__int64 CashItemRemoteStore::_buybygold_check_coupon(
+  CPlayer *pOne,
+  _request_csi_buy_clzo *pRecv,
+  _param_cashitem_dblog *pSheet)
+{
+  if (pRecv->byCouponNum)
+  {
+    if (pSheet->in_bAdjustDiscount || pSheet->in_bOneN_One)
+    {
+      return 20;
+    }
+
+    if (CheckCouponType(pRecv->CouponItem, pOne, pRecv->byCouponNum) <= 0)
+    {
+      return 19;
+    }
+
+    bool couponCheck[20]{};
+    for (int index = 0; index < pRecv->byCouponNum; ++index)
+    {
+      if (!IsUsableCoupon(pRecv, pRecv->CouponItem[index], pOne, couponCheck))
+      {
+        return 19;
+      }
+      pSheet->in_CouponItem[index] = pRecv->CouponItem[index];
+    }
+  }
+  return 0;
+}
+
+__int64 CashItemRemoteStore::_buybygold_buy_single_item(
+  CPlayer *pOne,
+  _request_csi_buy_clzo *pRecv,
+  _request_csi_buy_clzo::__item *pSrc,
+  _param_cashitem_dblog *pSheet,
+  bool *bCouponUse,
+  _result_csi_buy_zocl *Send)
+{
+  _CashShop_fld *cashField = nullptr;
+  __int64 errorCode = _buybygold_buy_single_item_check_item(pOne, pSrc, pSheet, &cashField);
+  if (errorCode)
+  {
+    return errorCode;
+  }
+
+  unsigned int pushedPrice = 0;
+  unsigned int discountRate = 0;
+  bool couponUseCheck[3]{};
+  errorCode = _buybygold_buy_single_item_proc_price(
+    pOne,
+    pRecv,
+    pSrc,
+    pSheet,
+    cashField,
+    couponUseCheck,
+    Send,
+    &pushedPrice,
+    &discountRate);
+  if (errorCode)
+  {
+    return errorCode;
+  }
+
+  _STORAGE_LIST::_db_con giveItem;
+  errorCode = _buybygold_buy_single_item_give_item(pOne, pSrc, &giveItem);
+  if (errorCode)
+  {
+    pOne->AddGold(static_cast<int>(pushedPrice), true);
+    return errorCode;
+  }
+
+  errorCode = _buybygold_buy_single_item_additional_process(pOne, pSrc, pSheet, Send);
+  if (errorCode)
+  {
+    return errorCode;
+  }
+
+  _buybygold_buy_single_item_proc_complete(
+    pOne,
+    pSrc,
+    pSheet,
+    cashField,
+    &giveItem,
+    Send,
+    pushedPrice,
+    discountRate,
+    couponUseCheck,
+    bCouponUse);
+  return 0;
+}
+
+__int64 CashItemRemoteStore::_buybygold_buy_single_item_check_item(
+  CPlayer *pOne,
+  _request_csi_buy_clzo::__item *pSrc,
+  _param_cashitem_dblog *pSheet,
+  _CashShop_fld **pCsFld)
+{
+  if (pSrc->byEventType == 1 && !pSheet->in_bAdjustDiscount)
+  {
+    return 18;
+  }
+  if (pSrc->byEventType == 2 && !pSheet->in_bSetDiscount)
+  {
+    return 18;
+  }
+  if (pSrc->byEventType == 3 && !pSheet->in_bOneN_One)
+  {
+    return 18;
+  }
+  if (pSrc->byEventType == 5 && !pSheet->in_bLimited_Sale)
+  {
+    return 22;
+  }
+
+  *pCsFld = reinterpret_cast<_CashShop_fld *>(_kRecGoods.GetRecord(pSrc->wStoreIdx));
+  if (!*pCsFld)
+  {
+    return 11;
+  }
+
+  if (pSheet->in_bLimited_Sale && pSrc->byEventType == 5)
+  {
+    const int discountPrice = pSrc->byDiscount * pSrc->nPrice / 100;
+    const unsigned int needGold = static_cast<unsigned int>(pSrc->nPrice - discountPrice);
+    if (pOne->m_Param.GetGold() < needGold)
+    {
+      return 5;
+    }
+  }
+  else if (pOne->m_Param.GetGold() < static_cast<unsigned int>((*pCsFld)->m_nCsPrice))
+  {
+    return 5;
+  }
+
+  const unsigned __int8 raceSexCode = static_cast<unsigned __int8>(pOne->m_Param.GetRaceSexCode());
+  const __int64 itemError = _check_buyitem(raceSexCode, pSrc, *pCsFld);
+  if (itemError)
+  {
+    return itemError;
+  }
+  return 0;
+}
+
+__int64 CashItemRemoteStore::_buybygold_buy_single_item_calc_price(
+  CPlayer *pOne,
+  _request_csi_buy_clzo *pRecv,
+  _request_csi_buy_clzo::__item *pSrc,
+  _param_cashitem_dblog *pSheet,
+  _CashShop_fld *pCsFld,
+  bool *bCouponUseCheck,
+  _result_csi_buy_zocl *Send,
+  unsigned int *dwDiscount)
+{
+  (void)Send;
+
+  const unsigned int basePrice = pSrc->byOverlapNum * pCsFld->m_nCsPrice;
+  if (pRecv->byCouponNum)
+  {
+    return _buybygold_buy_single_item_calc_price_coupon(
+      pOne,
+      pRecv,
+      pSrc->byOverlapNum,
+      pCsFld->m_nCsPrice,
+      bCouponUseCheck,
+      dwDiscount);
+  }
+  if (pSheet->in_bAdjustDiscount && pSrc->byEventType == 1)
+  {
+    return _buybygold_buy_single_item_calc_price_discount(pCsFld, pSrc->byOverlapNum);
+  }
+  if (pSheet->in_bSetDiscount && pRecv->bySetKind && pRecv->bySetKind <= 4u)
+  {
+    return _buybygold_buy_single_item_calc_price_one_n_one(pRecv->bySetKind, pCsFld->m_nCsPrice, pSrc->byOverlapNum);
+  }
+  if ((!pSheet->in_bOneN_One || pSrc->byEventType != 3) && pSheet->in_bLimited_Sale && pSrc->byEventType == 5)
+  {
+    return _buybygold_buy_single_item_calc_price_limitsale(pCsFld->m_nCsPrice, pSrc->byOverlapNum);
+  }
+  return basePrice;
+}
+
+__int64 CashItemRemoteStore::_buybygold_buy_single_item_calc_price_discount(
+  _CashShop_fld *pCsFld,
+  unsigned __int8 byOverlapNum)
+{
+  unsigned __int16 discountRate = 0;
+  if (pCsFld->m_nCsDiscount == -1)
+  {
+    discountRate = m_cde.m_ini.m_wCsDiscount;
+  }
+
+  const int discountPrice =
+    10 * static_cast<int>((static_cast<double>((static_cast<unsigned int>(discountRate) * pCsFld->m_nCsPrice) / 100) * 0.1) + 0.5);
+  return byOverlapNum * static_cast<unsigned int>(pCsFld->m_nCsPrice - discountPrice);
+}
+
+__int64 CashItemRemoteStore::_buybygold_buy_single_item_calc_price_one_n_one(
+  unsigned __int8 bySetKind,
+  int nCsPrice,
+  unsigned __int8 byOverlapNum)
+{
+  const unsigned __int8 setDiscount = GetSetDiscout(bySetKind - 1);
+  const int discountPrice =
+    10 * static_cast<int>((static_cast<double>((static_cast<unsigned int>(setDiscount) * nCsPrice) / 100) * 0.1) + 0.5);
+  return byOverlapNum * static_cast<unsigned int>(nCsPrice - discountPrice);
+}
+
+__int64 CashItemRemoteStore::_buybygold_buy_single_item_calc_price_limitsale(int nCsPrice, unsigned __int8 byOverlapNum)
+{
+  const int discountPrice = 10 * static_cast<int>((static_cast<double>((GetLimDiscout() * nCsPrice) / 100) * 0.1) + 0.5);
+  return byOverlapNum * static_cast<unsigned int>(nCsPrice - discountPrice);
+}
+
+__int64 CashItemRemoteStore::_buybygold_buy_single_item_calc_price_coupon(
+  CPlayer *pOne,
+  _request_csi_buy_clzo *pRecv,
+  unsigned __int8 byOverlapNum,
+  int nCsPrice,
+  bool *bCouponUseCheck,
+  unsigned int *dwDiscount)
+{
+  unsigned int basePrice = byOverlapNum * nCsPrice;
+  int totalDiscountPrice = 0;
+  for (int index = 0; index < pRecv->byCouponNum; ++index)
+  {
+    _STORAGE_LIST *storage = pOne->m_Param.m_pStoragePtr[pRecv->CouponItem[index].byStorageCode];
+    if (!storage)
+    {
+      continue;
+    }
+
+    _STORAGE_LIST::_db_con *couponItem = storage->GetPtrFromSerial(pRecv->CouponItem[index].wItemSerial);
+    if (!couponItem)
+    {
+      continue;
+    }
+
+    _base_fld *record = g_Main.m_tblItemData[couponItem->m_byTableCode].GetRecord(couponItem->m_wItemIndex);
+    if (!record)
+    {
+      continue;
+    }
+
+    const int applyValue = *reinterpret_cast<int *>(&record[4].m_strCode[8]);
+    const int applyType = *reinterpret_cast<int *>(&record[4].m_strCode[4]);
+    const unsigned int tenScaledValue = 10 * applyValue;
+    if (applyType)
+    {
+      const unsigned int rawDiscount = static_cast<unsigned int>(applyValue) * static_cast<unsigned int>(nCsPrice) / 100;
+      const int roundedDiscount = 10 * static_cast<int>((static_cast<double>(rawDiscount) * 0.1) + 0.5);
+      totalDiscountPrice += roundedDiscount;
+      *dwDiscount += applyValue;
+      bCouponUseCheck[index] = true;
+    }
+    else if (tenScaledValue < basePrice && !bCouponUseCheck[index])
+    {
+      basePrice -= applyValue;
+      *dwDiscount += applyValue;
+      bCouponUseCheck[index] = true;
+    }
+  }
+
+  if (totalDiscountPrice)
+  {
+    return byOverlapNum * static_cast<unsigned int>(nCsPrice - totalDiscountPrice);
+  }
+  return basePrice;
+}
+
+__int64 CashItemRemoteStore::_buybygold_buy_single_item_proc_price(
+  CPlayer *pOne,
+  _request_csi_buy_clzo *pRecv,
+  _request_csi_buy_clzo::__item *pSrc,
+  _param_cashitem_dblog *pSheet,
+  _CashShop_fld *pCsFld,
+  bool *bCouponUseCheck,
+  _result_csi_buy_zocl *Send,
+  unsigned int *dwPrice,
+  unsigned int *dwDiscountRate)
+{
+  *dwPrice =
+    static_cast<unsigned int>(_buybygold_buy_single_item_calc_price(
+      pOne,
+      pRecv,
+      pSrc,
+      pSheet,
+      pCsFld,
+      bCouponUseCheck,
+      Send,
+      dwDiscountRate));
+  if (pOne->m_Param.GetGold() < *dwPrice)
+  {
+    return 13;
+  }
+
+  pOne->SubGold(*dwPrice);
+  return 0;
+}
+
+void CashItemRemoteStore::_buybygold_buy_single_item_setsenddata(
+  _STORAGE_LIST::_db_con *GiveItem,
+  _result_csi_buy_zocl *Send)
+{
+  Send->item[Send->nNum].byTblCode = GiveItem->m_byTableCode;
+  Send->item[Send->nNum].wItemIdx = GiveItem->m_wItemIndex;
+  Send->item[Send->nNum].dwDur = static_cast<unsigned int>(GiveItem->m_dwDur);
+  Send->item[Send->nNum].dwUp = GiveItem->m_dwLv;
+  Send->item[Send->nNum].dwItemSerial = GiveItem->m_wSerial;
+  Send->item[Send->nNum].byCsMethod = GiveItem->m_byCsMethod;
+  Send->item[Send->nNum++].dwT = GiveItem->m_dwT;
+}
+
+void CashItemRemoteStore::_buybygold_buy_single_item_setbuydblog(
+  _param_cashitem_dblog *pSheet,
+  _STORAGE_LIST::_db_con *GiveItem,
+  unsigned int dwPrice,
+  unsigned int dwDiscountRate)
+{
+  pSheet->data[pSheet->nBuyNum].byRet = 0;
+  pSheet->data[pSheet->nBuyNum].byTblCode = GiveItem->m_byTableCode;
+  pSheet->data[pSheet->nBuyNum].wItemIndex = GiveItem->m_wItemIndex;
+  pSheet->data[pSheet->nBuyNum].byOverlapNum = static_cast<unsigned __int8>(GiveItem->m_dwDur);
+  pSheet->data[pSheet->nBuyNum].dwCost = dwPrice;
+  pSheet->data[pSheet->nBuyNum++].iCashDiscount = static_cast<int>(dwDiscountRate);
+}
+
+__int64 CashItemRemoteStore::_buybygold_buy_single_item_give_item(
+  CPlayer *pOne,
+  _request_csi_buy_clzo::__item *pSrc,
+  _STORAGE_LIST::_db_con *GiveItem)
+{
+  GiveItem->m_byTableCode = pSrc->byTblCode;
+  GiveItem->m_wItemIndex = pSrc->wItemIdx;
+  if (IsOverLapItem(GiveItem->m_byTableCode))
+  {
+    GiveItem->m_dwDur = pSrc->byOverlapNum;
+  }
+  else
+  {
+    GiveItem->m_dwDur = GetItemDurPoint(pSrc->byTblCode, pSrc->wItemIdx);
+  }
+
+  GiveItem->m_dwLv = GetDefItemUpgSocketNum(pSrc->byTblCode, pSrc->wItemIdx);
+  GiveItem->m_dwLv = GetBitAfterSetLimSocket(static_cast<unsigned __int8>(GiveItem->m_dwLv));
+  GiveItem->m_wSerial = pOne->m_Param.GetNewItemSerial();
+
+  const _TimeItem_fld *timeRec = TimeItem::FindTimeRec(pSrc->byTblCode, pSrc->wItemIdx);
+  if (timeRec && timeRec->m_nCheckType)
+  {
+    GiveItem->m_byCsMethod = static_cast<unsigned __int8>(timeRec->m_nCheckType);
+    __time32_t currentTime[5]{};
+    _time32(currentTime);
+    GiveItem->m_dwT = static_cast<unsigned int>(timeRec->m_nUseTime + currentTime[0]);
+    GiveItem->m_dwLendRegdTime = static_cast<unsigned int>(currentTime[0]);
+  }
+
+  if (pOne->Emb_AddStorage(0, GiveItem, false, true))
+  {
+    return 0;
+  }
+  return 15;
+}
+
+void CashItemRemoteStore::_buybygold_buy_single_item_proc_complete(
+  CPlayer *pOne,
+  _request_csi_buy_clzo::__item *pSrc,
+  _param_cashitem_dblog *pSheet,
+  _CashShop_fld *pCsFld,
+  _STORAGE_LIST::_db_con *GiveItem,
+  _result_csi_buy_zocl *Send,
+  unsigned int dwPrice,
+  unsigned int dwDiscountRate,
+  bool *bCouponUseCheck,
+  bool *bCouponUse)
+{
+  _buybygold_buy_single_item_setsenddata(GiveItem, Send);
+
+  CPlayer::s_MgrItemHistory.buy_to_inven_cashitem(
+    GiveItem->m_byTableCode,
+    GiveItem->m_wItemIndex,
+    pCsFld->m_nCsPrice,
+    pCsFld->m_nCsDiscount,
+    pSrc->byOverlapNum,
+    pCsFld->m_nCsPrice,
+    static_cast<int>(pOne->m_Param.GetGold()),
+    pOne->m_szItemHistoryFileName,
+    GiveItem->m_lnUID,
+    pSrc->byEventType);
+  _buybygold_buy_single_item_setbuydblog(pSheet, GiveItem, dwPrice, dwDiscountRate);
+
+  for (int index = 0; index < 3; ++index)
+  {
+    if (bCouponUseCheck[index])
+    {
+      *bCouponUse = true;
+      return;
+    }
+  }
+}
+
+__int64 CashItemRemoteStore::_buybygold_buy_single_item_additional_process(
+  CPlayer *pOne,
+  _request_csi_buy_clzo::__item *pSrc,
+  _param_cashitem_dblog *pSheet,
+  _result_csi_buy_zocl *Send)
+{
+  if (pSheet->in_bOneN_One && pSrc->byEventType == 3)
+  {
+    _STORAGE_LIST::_db_con extraItem;
+    extraItem.m_byTableCode = pSrc->byTblCode;
+    extraItem.m_wItemIndex = pSrc->wItemIdx;
+    if (IsOverLapItem(extraItem.m_byTableCode))
+    {
+      extraItem.m_dwDur = pSrc->byOverlapNum;
+    }
+    else
+    {
+      extraItem.m_dwDur = GetItemDurPoint(pSrc->byTblCode, pSrc->wItemIdx);
+    }
+    extraItem.m_dwLv = GetDefItemUpgSocketNum(pSrc->byTblCode, pSrc->wItemIdx);
+    extraItem.m_wSerial = pOne->m_Param.GetNewItemSerial();
+
+    if (!pOne->Emb_AddStorage(0, &extraItem, false, true))
+    {
+      return 15;
+    }
+
+    _buybygold_buy_single_item_setsenddata(&extraItem, Send);
+    _base_fld *record = g_Main.m_tblItemData[extraItem.m_byTableCode].GetRecord(extraItem.m_wItemIndex);
+    if (record)
+    {
+      CAsyncLogger *logger = CAsyncLogger::Instance();
+      logger->FormatLog(
+        5,
+        "[Name: %s AccountID: %d] [Insert 1+1 Event CASTITEM] : %s(%s) [UID: %I64u] [Num:%d Event: %d]",
+        pOne->m_Param.GetCharNameA(),
+        pOne->m_pUserDB->m_dwAccountSerial,
+        record->m_strCode,
+        GetItemKorName(extraItem.m_byTableCode, extraItem.m_wItemIndex),
+        extraItem.m_lnUID,
+        pSrc->byOverlapNum,
+        pSrc->byEventType);
+    }
+  }
+  return 0;
 }
 
 char CashItemRemoteStore::GoodsListBuyByGold(unsigned __int16 wSock, char *pPacket)

@@ -16,6 +16,11 @@ Only unresolved static strings/arrays/data from IDA go here. Remove entries once
 - "CNormalGuildBattleStateRoundReturnStartPos::Loop( CNormalGuildBattle * pkBattle ) :  0 == m_pkTimer !" (`GUILD_BATTLE::CNormalGuildBattleStateRoundReturnStartPos::Loop`)
 - "Loop : Return Start Pos" (`GUILD_BATTLE::CNormalGuildBattleStateRoundReturnStartPos::Loop`)
 
+## CPlayer damage constants (2026-02-21)
+- `CPlayer::s_nStdDefPoint = 6` (from `ida_static_data.tsv`, symbol `s_nStdDefPoint`)
+- `CPlayer::s_nRevDefPoint = 10` (from `ida_static_data.tsv`, symbol `s_nRevDefPoint`)
+- `CPlayer::s_nMonDefPoint = 12` (from `ida_static_data.tsv`, symbol `s_nMonDefPoint`)
+
 ## UnmannedTrader request literals (2026-02-13)
 - "CUnmannedTraderUserInfoTable::Regist(...)" (CUnmannedTraderUserInfoTable::Regist)
 - "CUnmannedTraderUserInfoTable::ModifyPrice(...)" (CUnmannedTraderUserInfoTable::ModifyPrice)
@@ -1231,3 +1236,9 @@ Only unresolved static strings/arrays/data from IDA go here. Remove entries once
 - Static string `"Item Serial Count Over"` (`CPlayer::Loop`)
 - Static format string `"id: %s >> %s ( %d ), Move Count : %d, map(%s)"` (`CPlayer::Loop`)
 - Static string `"CPlayer::pc_MineComplete() - Emb_AddStorage() Fail"` (`CPlayer::pc_MineComplete`)
+
+## Newly logged (cash store clientlineanalysis/cash buy path 2026-02-22)
+- Static string `"CashItemRemoteStore::Buy() Buy Item Number Error, Num(%d)"` (`CashItemRemoteStore::BuyByCash`)
+- Static string `"CashItemRemoteStore::Buy() Can not find _TimeItem_fld Data, TableCode(%d), ItemIndex(%d), StoreIndex(%d)"` (`CashItemRemoteStore::BuyByCash`)
+- Static format string `"[Name: %s AccountID: %d] [Insert 1+1 Event CASTITEM] : %s(%s) [UID: %I64u] [Num:%d Event: %d]"` (`CashItemRemoteStore::_buybygold_buy_single_item_additional_process`)
+- Static format string `"Use CouponItem at %s(%d down): %s_[%I64u] [%s %s]\r\n"` (`CMgrAvatorItemHistory::coupon_use_buy_item`)

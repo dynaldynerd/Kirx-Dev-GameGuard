@@ -347,6 +347,28 @@ bool CCharacter::GetInvisible()
   return m_EP.GetEff_State(26);
 }
 
+void CCharacter::SFContInit()
+{
+  for (int contCode = 0; contCode < 2; ++contCode)
+  {
+    for (int slot = 0; slot < 8; ++slot)
+    {
+      if (m_SFCont[contCode][slot].m_bExist)
+      {
+        RemoveSFContEffect(static_cast<unsigned __int8>(contCode), static_cast<unsigned __int16>(slot), true, false);
+      }
+      if (m_SFContAura[contCode][slot].m_bExist)
+      {
+        RemoveSFContEffect(static_cast<unsigned __int8>(contCode), static_cast<unsigned __int16>(slot), true, true);
+      }
+    }
+  }
+
+  m_bLastContEffectUpdate = false;
+  m_wLastContEffect = static_cast<unsigned __int16>(-1);
+  SendMsg_LastEffectChangeInform();
+}
+
 char CCharacter::RemoveAllContinousEffect()
 {
   char removed = 0;
@@ -1412,25 +1434,13 @@ char CCharacter::AssistSkill(
   {
     const float tempValue = pSkillFld->m_fTempValue[nSkillLv - 1];
     auto tempFunc = g_TempEffectFunc[pSkillFld->m_nTempEffectType];
-    if (!tempFunc)
-    {
-      AnimusDebugLog(
-        "TempEffectNull: AssistSkill actID=%u actSerial=%u effectCode=%d skillIndex=%u tempType=%d contType=%d targetCount=%d",
-        m_ObjID.m_byID,
-        m_dwObjSerial,
-        nEffectCode,
-        pSkillFld->m_dwIndex,
-        pSkillFld->m_nTempEffectType,
-        pSkillFld->m_nContEffectType,
-        g_tmpEffectedNum);
-    }
     unsigned __int8 tempRet = 0;
     for (int j = 0; j < g_tmpEffectedNum; ++j)
     {
       if (!retCodes[j])
       {
         tempRet = 0;
-        if (tempFunc && tempFunc(this, targets[j], tempValue, &tempRet))
+        if (tempFunc(this, targets[j], tempValue, &tempRet))
         {
           upFlags[j] = 1;
         }
@@ -1565,24 +1575,12 @@ char CCharacter::AssistForce(
   {
     const float tempValue = pForceFld->m_fTempValue[nForceLv - 1];
     auto tempFunc = g_TempEffectFunc[pForceFld->m_nTempEffectType];
-    if (!tempFunc)
-    {
-      AnimusDebugLog(
-        "TempEffectNull: AssistForce actID=%u actSerial=%u forceIndex=%u tempType=%d contType=%d targetCount=%d",
-        m_ObjID.m_byID,
-        m_dwObjSerial,
-        pForceFld->m_dwIndex,
-        pForceFld->m_nTempEffectType,
-        pForceFld->m_nContEffectType,
-        g_tmpEffectedNum);
-    }
     unsigned __int8 tempRet = 0;
     for (int j = 0; j < g_tmpEffectedNum; ++j)
     {
       if (!retCodes[j])
       {
-        tempRet = 0;
-        if (tempFunc && tempFunc(this, targets[j], tempValue, &tempRet))
+        if (tempFunc(this, targets[j], tempValue, &tempRet))
         {
           upFlags[j] = 1;
         }
@@ -1693,28 +1691,12 @@ bool CCharacter::AssistSkillToOne(CCharacter *pDst, int nEffectCode, _skill_fld 
   {
     const float tempValue = pSkillFld->m_fTempValue[nSkillLv - 1];
     auto tempFunc = g_TempEffectFunc[pSkillFld->m_nTempEffectType];
-    if (!tempFunc)
-    {
-      AnimusDebugLog(
-        "TempEffectNull: AssistSkillToOne actID=%u actSerial=%u effectCode=%d skillIndex=%u tempType=%d contType=%d dstID=%u dstSerial=%u",
-        m_ObjID.m_byID,
-        m_dwObjSerial,
-        nEffectCode,
-        pSkillFld->m_dwIndex,
-        pSkillFld->m_nTempEffectType,
-        pSkillFld->m_nContEffectType,
-        pDst ? pDst->m_ObjID.m_byID : 0u,
-        pDst ? pDst->m_dwObjSerial : 0u);
-    }
     if (retCode)
     {
       return false;
     }
 
-    if (tempFunc)
-    {
-      tempFunc(this, pDst, tempValue, &retCode);
-    }
+    tempFunc(this, pDst, tempValue, &retCode);
 
     if (!retCode && !m_ObjID.m_byID)
     {
@@ -1786,27 +1768,12 @@ bool CCharacter::AssistForceToOne(CCharacter *pDst, _force_fld *pForceFld, int n
   {
     const float tempValue = pForceFld->m_fTempValue[nForceLv - 1];
     auto tempFunc = g_TempEffectFunc[pForceFld->m_nTempEffectType];
-    if (!tempFunc)
-    {
-      AnimusDebugLog(
-        "TempEffectNull: AssistForceToOne actID=%u actSerial=%u forceIndex=%u tempType=%d contType=%d dstID=%u dstSerial=%u",
-        m_ObjID.m_byID,
-        m_dwObjSerial,
-        pForceFld->m_dwIndex,
-        pForceFld->m_nTempEffectType,
-        pForceFld->m_nContEffectType,
-        pDst ? pDst->m_ObjID.m_byID : 0u,
-        pDst ? pDst->m_dwObjSerial : 0u);
-    }
     if (retCode)
     {
       return false;
     }
 
-    if (tempFunc)
-    {
-      tempFunc(this, pDst, tempValue, &retCode);
-    }
+    tempFunc(this, pDst, tempValue, &retCode);
 
     if (!retCode && !m_ObjID.m_byID)
     {

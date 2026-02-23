@@ -30,6 +30,23 @@ DfAIMgr::DfAIMgr()
 
 EMOTYPE EmotionType[5] = {};
 
+namespace
+{
+bool IsAnimusTarget(const CCharacter *character)
+{
+  return character && character->m_ObjID.m_byID == 3;
+}
+
+const char *GetMonsterCodeSafe(const CMonster *monster)
+{
+  if (!monster || !monster->m_pMonRec)
+  {
+    return "<null>";
+  }
+  return monster->m_pMonRec->m_strCode;
+}
+} // namespace
+
 __int64(__fastcall *DfAIMgr::ms_CheckMotiveFunction[4])(
   CMonsterSkill *pSkill,
   int nMotiveValue,
@@ -205,14 +222,37 @@ void DfAIMgr::OnDfExternCallFun(Us_HFSM *pHFS, unsigned int dwEvent, void *lpPar
         Us_FSM_Node *node = pHFS->GetNode( 5u);
         if (node->GetState() == 23)
         {
-          unsigned char *paramBytes = static_cast<unsigned char *>(lpParam);
-          if (!paramBytes[16] && paramBytes[17] == 1)
+          CCharacter *sourceCharacter = static_cast<CCharacter *>(lpParam);
+          if (!sourceCharacter->m_ObjID.m_byKind && sourceCharacter->m_ObjID.m_byID == 1)
           {
             const int prob = *reinterpret_cast<int *>(&mon->m_pRecordSet[26].m_strCode[20]);
             const int roll = rand() % 100;
+            CMonster *sourceMonster = static_cast<CMonster *>(sourceCharacter);
+            const CCharacter *sourceTarget = sourceMonster->GetAttackTarget();
+            const bool sourceTargetIsAnimus = IsAnimusTarget(sourceTarget);
+            if (sourceTargetIsAnimus)
+            {
+              AnimusDebugLog(
+                "AssistEvt1: recvMon=%s(%u) srcMon=%s(%u) state=23 prob=%d roll=%d",
+                GetMonsterCodeSafe(mon),
+                mon->m_dwObjSerial,
+                GetMonsterCodeSafe(sourceMonster),
+                sourceMonster->m_dwObjSerial,
+                prob,
+                roll);
+            }
             if (prob > roll)
             {
               pHFS->SendMsg(5u, 0x2Du, lpParam);
+              if (sourceTargetIsAnimus)
+              {
+                AnimusDebugLog(
+                  "AssistEvt1: recvMon=%s(%u) accepted assist request from srcMon=%s(%u)",
+                  GetMonsterCodeSafe(mon),
+                  mon->m_dwObjSerial,
+                  GetMonsterCodeSafe(sourceMonster),
+                  sourceMonster->m_dwObjSerial);
+              }
             }
           }
         }
@@ -226,7 +266,22 @@ void DfAIMgr::OnDfExternCallFun(Us_HFSM *pHFS, unsigned int dwEvent, void *lpPar
     return;
   }
 
-  if (mon->IsBeDamagedAble(static_cast<CCharacter *>(lpParam)))
+  CCharacter *attacker = static_cast<CCharacter *>(lpParam);
+  const bool attackerIsAnimus = IsAnimusTarget(attacker);
+  const bool beDamagedAble = mon->IsBeDamagedAble(attacker);
+  if (attackerIsAnimus)
+  {
+    AnimusDebugLog(
+      "ExternEvt0: mon=%s(%u) attackerAnimus=%u nDam=%d beDamagedAble=%d hasTarget=%d",
+      GetMonsterCodeSafe(mon),
+      mon->m_dwObjSerial,
+      attacker->m_dwObjSerial,
+      nParam,
+      beDamagedAble ? 1 : 0,
+      mon->GetAttackTarget() ? 1 : 0);
+  }
+
+  if (beDamagedAble)
   {
     pHFS->SendMsg(5u, 0x2Eu, nullptr);
     if (mon->GetAttackTarget())
@@ -251,6 +306,16 @@ void DfAIMgr::OnDfExternCallFun(Us_HFSM *pHFS, unsigned int dwEvent, void *lpPar
     }
     CMonsterHelper::HierarcyHelpCast(mon);
     hfs->SendMsg(2u, 0x1Eu, nullptr);
+    if (attackerIsAnimus)
+    {
+      CCharacter *newTarget = mon->GetAttackTarget();
+      AnimusDebugLog(
+        "ExternEvt0: mon=%s(%u) postHandle targetID=%u targetSerial=%u",
+        GetMonsterCodeSafe(mon),
+        mon->m_dwObjSerial,
+        newTarget ? static_cast<unsigned int>(newTarget->m_ObjID.m_byID) : static_cast<unsigned int>(-1),
+        newTarget ? newTarget->m_dwObjSerial : static_cast<unsigned int>(-1));
+    }
   }
 }
 
@@ -367,17 +432,38 @@ if (!pHFS)
 
   if (mon->GetAttackTarget())
   {
+    const CCharacter *target = mon->GetAttackTarget();
+    const bool targetIsAnimus = IsAnimusTarget(target);
     Us_FSM_Node *node = pHFS->GetNode( 5u);
     if (node->GetState() == 23)
     {
       CMonsterHelper::HierarcyHelpCast(mon);
       const int prob = *reinterpret_cast<int *>(&mon->m_pRecordSet[26].m_strCode[16]);
       const int roll = rand() % 100;
+      if (targetIsAnimus)
+      {
+        AnimusDebugLog(
+          "SearchStart: mon=%s(%u) targetAnimus=%u prob=%d roll=%d",
+          GetMonsterCodeSafe(mon),
+          mon->m_dwObjSerial,
+          target->m_dwObjSerial,
+          prob,
+          roll);
+      }
       if (prob > roll)
       {
         const unsigned int maxCount = *reinterpret_cast<unsigned int *>(&mon->m_pRecordSet[3].m_strCode[8]);
         static _NEAR_DATA nearMon[20];
         const unsigned int found = CMonsterHelper::SearchNearMonster(mon, nearMon, 0x14u, 0);
+        if (targetIsAnimus)
+        {
+          AnimusDebugLog(
+            "SearchStart: mon=%s(%u) nearFound=%u maxCount=%u",
+            GetMonsterCodeSafe(mon),
+            mon->m_dwObjSerial,
+            found,
+            maxCount);
+        }
         for (unsigned int j = 0; ; ++j)
         {
           const unsigned int count = found >= maxCount ? maxCount : found;
@@ -391,8 +477,17 @@ if (!pHFS)
             _object_id *objId = &nearMon[j].pChar->m_ObjID;
             if (!objId->m_byKind && objId->m_byID == 1)
             {
-              CCharacter *nearChar = nearMon[j].pChar;
-              reinterpret_cast<Us_HFSM *>(&nearChar[3].m_AroundSlot[2])->SendExternMsg(1u, mon, 0);
+              CMonster *nearMonster = static_cast<CMonster *>(nearMon[j].pChar);
+              nearMonster->m_AI.SendExternMsg(1u, mon, 0);
+              if (targetIsAnimus)
+              {
+                AnimusDebugLog(
+                  "SearchStart: mon=%s(%u) sent assist extern to nearMon=%s(%u)",
+                  GetMonsterCodeSafe(mon),
+                  mon->m_dwObjSerial,
+                  GetMonsterCodeSafe(nearMonster),
+                  nearMonster->m_dwObjSerial);
+              }
               mon->CheckEventEmotionPresentation( 2u, nullptr);
             }
           }
@@ -842,6 +937,16 @@ if (!pHFS)
       ai->m_pAsistMonster = static_cast<CMonster *>(lpParam);
       CMonster *parentMon = ai->m_pAsistMonster;
       CCharacter *target = parentMon->GetAttackTarget();
+      if (IsAnimusTarget(target))
+      {
+        AnimusDebugLog(
+          "AssistChange: mon=%s(%u) adoptAssistMon=%s(%u) targetAnimus=%u",
+          GetMonsterCodeSafe(mon),
+          mon->m_dwObjSerial,
+          GetMonsterCodeSafe(parentMon),
+          parentMon->m_dwObjSerial,
+          target->m_dwObjSerial);
+      }
       if (target)
       {
         pHFS->SendMsg(1u, 0x1Cu, target);
@@ -977,6 +1082,9 @@ __int64 DfAIMgr::CheckSPF(CMonsterAI *pAI, CMonster *pMon)
     return 0LL;
   }
 
+  const CCharacter *curTarget = pMon->GetAttackTarget();
+  const bool targetIsAnimus = IsAnimusTarget(curTarget);
+
   for (int index = 0; index < 16; ++index)
   {
     const int probRoll = rand() % 10000;
@@ -996,6 +1104,18 @@ __int64 DfAIMgr::CheckSPF(CMonsterAI *pAI, CMonster *pMon)
                 && skill->GetSPActionProbability() < probRoll)
             {
               const unsigned int now = GetLoopTime();
+              if (targetIsAnimus)
+              {
+                AnimusDebugLog(
+                  "CheckSPF: mon=%s(%u) idx=%d type=%lld useType=%lld skippedByProb skillProb=%lld roll=%d",
+                  GetMonsterCodeSafe(pMon),
+                  pMon->m_dwObjSerial,
+                  index,
+                  skill->GetType(),
+                  skill->GetUseType(),
+                  skill->GetSPActionProbability(),
+                  probRoll);
+              }
               skill->Use(now, false);
             }
             else
@@ -1024,7 +1144,29 @@ __int64 DfAIMgr::CheckSPF(CMonsterAI *pAI, CMonster *pMon)
                     {
                       if (DfAIMgr::UseSkill_Target(pMon, target, skill))
                       {
+                        if (targetIsAnimus)
+                        {
+                          AnimusDebugLog(
+                            "CheckSPF: mon=%s(%u) idx=%d type=%lld useType=%lld castSuccess target=%u",
+                            GetMonsterCodeSafe(pMon),
+                            pMon->m_dwObjSerial,
+                            index,
+                            skill->GetType(),
+                            skill->GetUseType(),
+                            target->m_dwObjSerial);
+                        }
                         return 1LL;
+                      }
+                      if (targetIsAnimus)
+                      {
+                        AnimusDebugLog(
+                          "CheckSPF: mon=%s(%u) idx=%d type=%lld useType=%lld castFailed target=%u",
+                          GetMonsterCodeSafe(pMon),
+                          pMon->m_dwObjSerial,
+                          index,
+                          skill->GetType(),
+                          skill->GetUseType(),
+                          target->m_dwObjSerial);
                       }
                     }
                   }

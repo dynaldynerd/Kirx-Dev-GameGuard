@@ -3,6 +3,8 @@
 #include "CMainThread.h"
 #include "CMonsterSPGroupTable.h"
 
+#include <cstring>
+
 CMonsterSPGroupTable::CMonsterSPGroupTable()
   : m_dwRecordNum(0),
     m_pRecordData(nullptr)
@@ -35,6 +37,7 @@ bool CMonsterSPGroupTable::Create(
     _monster_sp_group* groups = new (std::nothrow) _monster_sp_group[recordCount];
     if (!groups)
         return false;
+    std::memset(groups, 0, sizeof(_monster_sp_group) * recordCount);
     m_pRecordData = groups;
     for (int n = 0; n < m_dwRecordNum; ++n)
     {

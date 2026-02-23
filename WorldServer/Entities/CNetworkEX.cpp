@@ -1864,13 +1864,14 @@ bool CNetworkEX::ClientLineAnalysis(unsigned int n, _MSG_HEADER *pMsgHeader, cha
     case 56:
     {
       const unsigned __int8 subType = pMsgHeader->m_byType[1];
+      CashItemRemoteStore *cashStore = CashItemRemoteStore::Instance();
       if (subType == 1)
       {
-        result = false;
+        result = cashStore->GoodsList(static_cast<unsigned __int16>(n), pMsg);
       }
       else if (subType == 3)
       {
-        result = false;
+        result = cashStore->Buy(static_cast<unsigned __int16>(n), pMsg);
       }
       else
       {
@@ -9135,8 +9136,6 @@ char CNetworkEX::BuddyDelRequest(int n, char *pBuf)
   }
   return 1;
 }
-
-
 
 
 

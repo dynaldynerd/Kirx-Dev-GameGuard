@@ -5,7 +5,7 @@
 class  CRaceBuffHolyQuestResultInfo
 {
 public:
-  CRaceBuffHolyQuestResultInfo() = default;
+  CRaceBuffHolyQuestResultInfo();
   ~CRaceBuffHolyQuestResultInfo() = default;
 
   bool Load();

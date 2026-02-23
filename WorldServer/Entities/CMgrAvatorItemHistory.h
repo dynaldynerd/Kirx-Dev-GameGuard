@@ -356,6 +356,7 @@ public:
     char *pszFileName);
   void close(int n, char *pCloseCode, char *pszFileName);
   void read_cashamount(unsigned int dwAC, unsigned int dwAV, int nCash, char *pFileName);
+  void coupon_use_buy_item(_STORAGE_LIST::_db_con *pCouponItem, char *ApplyItem, char *pszFileName);
   void buy_to_inven_cashitem(
     unsigned __int8 byTbl,
     unsigned __int16 wIndex,

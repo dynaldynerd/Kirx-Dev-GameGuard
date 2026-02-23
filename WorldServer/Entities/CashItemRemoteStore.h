@@ -6,6 +6,7 @@
 #include "CMyTimer.h"
 #include "CNetProcess.h"
 #include "CRecordData.h"
+#include "StorageList.h"
 #include "request_csi_buy_clzo.h"
 
 #include <functional>
@@ -17,6 +18,7 @@
 struct _CashShop_fld;
 struct _db_cash_limited_sale;
 struct _param_cashitem_dblog;
+struct _param_cash_update;
 struct _result_csi_buy_zocl;
 class CPlayer;
 
@@ -143,6 +145,9 @@ public:
   static CashItemRemoteStore *Instance();
   bool Initialize();
   void Loop_TatalCashEvent();
+  bool GoodsList(unsigned __int16 wSock, char *pPacket);
+  bool Buy(unsigned __int16 wSock, char *pPacket);
+  char GoodsListBuyByCash(unsigned __int16 wSock, char *pPacket);
   void Loop_Cash_Event();
   void Check_CashEvent_Status(unsigned __int8 byEventType);
   void Loop_ContEvent();
@@ -157,6 +162,15 @@ public:
   char LimitedSale_check_count(unsigned __int8 byTableCode, unsigned int dwIndex);
   unsigned __int16 BuyLimSale(unsigned __int8 byTableCode, unsigned int dwIndex);
   char GoodsListBuyByGold(unsigned __int16 wSock, char *pPacket);
+  char BuyByCash(unsigned __int16 wSock, char *pPacket);
+  char BuyByGold(unsigned __int16 wSock, _request_csi_buy_clzo *pPacket);
+  __int64 CheckCouponType(_STORAGE_POS_INDIV *pCoupon, CPlayer *pOne, unsigned __int8 byCouponNum);
+  char UseDiscountCoupon(_param_cash_update *pBuyList, _STORAGE_POS_INDIV pCoupon, CPlayer *pOne);
+  char IsUsableCoupon(
+    _request_csi_buy_clzo *pBuyList,
+    _STORAGE_POS_INDIV pCoupon,
+    CPlayer *pOne,
+    bool *bCheck);
   bool IsBuyCashItemByGold() const;
 
   CLogFile _kLoggers[2];
@@ -195,6 +209,83 @@ private:
   char IsEventTime(unsigned __int8 byEventType);
   unsigned __int8 GetSetDiscout(unsigned __int8 bySetKind);
   unsigned __int8 GetLimDiscout();
+  __int64 _check_buyitem(
+    unsigned __int8 byRaceSex,
+    const _request_csi_buy_clzo::__item *pCsItem,
+    const _CashShop_fld *pFld);
+  void _buybygold_set_cashitem_dblog_sheet(CPlayer *pOne, _param_cashitem_dblog *pSheet);
+  __int64 _buybygold_check_valid(CPlayer *pOne, _request_csi_buy_clzo *pRecv, _param_cashitem_dblog *pSheet);
+  __int64 _buybygold_check_coupon(CPlayer *pOne, _request_csi_buy_clzo *pRecv, _param_cashitem_dblog *pSheet);
+  __int64 _buybygold_buy_single_item(
+    CPlayer *pOne,
+    _request_csi_buy_clzo *pRecv,
+    _request_csi_buy_clzo::__item *pSrc,
+    _param_cashitem_dblog *pSheet,
+    bool *bCouponUse,
+    _result_csi_buy_zocl *Send);
+  __int64 _buybygold_buy_single_item_check_item(
+    CPlayer *pOne,
+    _request_csi_buy_clzo::__item *pSrc,
+    _param_cashitem_dblog *pSheet,
+    _CashShop_fld **pCsFld);
+  __int64 _buybygold_buy_single_item_calc_price(
+    CPlayer *pOne,
+    _request_csi_buy_clzo *pRecv,
+    _request_csi_buy_clzo::__item *pSrc,
+    _param_cashitem_dblog *pSheet,
+    _CashShop_fld *pCsFld,
+    bool *bCouponUseCheck,
+    _result_csi_buy_zocl *Send,
+    unsigned int *dwDiscount);
+  __int64 _buybygold_buy_single_item_calc_price_discount(_CashShop_fld *pCsFld, unsigned __int8 byOverlapNum);
+  __int64 _buybygold_buy_single_item_calc_price_one_n_one(
+    unsigned __int8 bySetKind,
+    int nCsPrice,
+    unsigned __int8 byOverlapNum);
+  __int64 _buybygold_buy_single_item_calc_price_limitsale(int nCsPrice, unsigned __int8 byOverlapNum);
+  __int64 _buybygold_buy_single_item_calc_price_coupon(
+    CPlayer *pOne,
+    _request_csi_buy_clzo *pRecv,
+    unsigned __int8 byOverlapNum,
+    int nCsPrice,
+    bool *bCouponUseCheck,
+    unsigned int *dwDiscount);
+  __int64 _buybygold_buy_single_item_proc_price(
+    CPlayer *pOne,
+    _request_csi_buy_clzo *pRecv,
+    _request_csi_buy_clzo::__item *pSrc,
+    _param_cashitem_dblog *pSheet,
+    _CashShop_fld *pCsFld,
+    bool *bCouponUseCheck,
+    _result_csi_buy_zocl *Send,
+    unsigned int *dwPrice,
+    unsigned int *dwDiscountRate);
+  void _buybygold_buy_single_item_setsenddata(_STORAGE_LIST::_db_con *GiveItem, _result_csi_buy_zocl *Send);
+  void _buybygold_buy_single_item_setbuydblog(
+    _param_cashitem_dblog *pSheet,
+    _STORAGE_LIST::_db_con *GiveItem,
+    unsigned int dwPrice,
+    unsigned int dwDiscountRate);
+  __int64 _buybygold_buy_single_item_give_item(
+    CPlayer *pOne,
+    _request_csi_buy_clzo::__item *pSrc,
+    _STORAGE_LIST::_db_con *GiveItem);
+  void _buybygold_buy_single_item_proc_complete(
+    CPlayer *pOne,
+    _request_csi_buy_clzo::__item *pSrc,
+    _param_cashitem_dblog *pSheet,
+    _CashShop_fld *pCsFld,
+    _STORAGE_LIST::_db_con *GiveItem,
+    _result_csi_buy_zocl *Send,
+    unsigned int dwPrice,
+    unsigned int dwDiscountRate,
+    bool *bCouponUseCheck,
+    bool *bCouponUse);
+  __int64 _buybygold_buy_single_item_additional_process(
+    CPlayer *pOne,
+    _request_csi_buy_clzo::__item *pSrc,
+    _param_cashitem_dblog *pSheet,
+    _result_csi_buy_zocl *Send);
   void _buybygold_complete(
     CPlayer *pOne,
     _result_csi_buy_zocl *Send,

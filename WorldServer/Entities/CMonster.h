@@ -118,6 +118,12 @@ public:
   char IsBeDamagedAble(CCharacter *pAtter) override;
   char IsRecvableContEffect() override;
   bool IsRewardExp() override;
+  bool SF_AllContHelpForceRemove_Once(CCharacter *pDstObj) override;
+  bool SF_AllContHelpSkillRemove_Once(CCharacter *pDstObj) override;
+  bool SF_HPInc_Once(CCharacter *pDstObj, float fEffectValue) override;
+  bool SF_LateContDamageRemove_Once(CCharacter *pDstObj) override;
+  bool SF_LateContHelpForceRemove_Once(CCharacter *pDstObj) override;
+  bool SF_LateContHelpSkillRemove_Once(CCharacter *pDstObj) override;
   void UpdateSFCont();
   char CheckRespawnProcess();
   void CheckMonsterRotate();
@@ -133,7 +139,8 @@ public:
     unsigned int dwEffectIndex,
     unsigned __int16 wDurSec,
     unsigned __int8 byLv,
-    bool *pbUpMty);
+    bool *pbUpMty,
+    CPlayer *pActChar) override;
   CCharacter *GetAttackTarget();
   void SetAttackTarget(CCharacter *p);
   bool IsMovable();

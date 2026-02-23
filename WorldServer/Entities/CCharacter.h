@@ -110,6 +110,7 @@ public:
   void SendMsg_RobedHP(const CCharacter *pkPerform, unsigned __int16 wRobedHP);
   bool GetStealth(bool bInvisible);
   bool GetInvisible();
+  void SFContInit();
   char RemoveAllContinousEffect();
   bool RemoveAllContinousEffectGroup(unsigned int uiEffectCodeType);
   void RemoveSFContEffect(unsigned __int8 byContCode, unsigned __int16 wListIndex, bool bInit, bool bAura);

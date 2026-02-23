@@ -28,8 +28,12 @@ public:
   void Init();
   void ResetAggro();
   CCharacter *GetTopAggroCharacter();
+  CCharacter *GetTopDamageCharacter();
+  CCharacter *GetKingPowerDamageCharacter();
   void Process();
   void OnlyOnceInit(CMonster *pMonster);
+  void SetTopAggroCharacter(CCharacter *pCharacter);
+  void ShortRankDelay(unsigned int dwDelayTime);
   void SetAggro(
     CCharacter *pCharacter,
     int nDam,

@@ -169,33 +169,33 @@ bool CGuardTower::IsBeAttackedAble(bool /*bFirst*/)
 
 char CGuardTower::IsBeDamagedAble(CCharacter *pAtter)
 {
-  if (pAtter->m_ObjID.m_byID != 0 && pAtter->m_ObjID.m_byID != 3)
+  const unsigned __int8 attackerId = pAtter->m_ObjID.m_byID;
+  if (attackerId && attackerId != 3)
   {
     return 0;
   }
 
-  CCharacter *attackSource = nullptr;
-  if (pAtter->m_ObjID.m_byID == 0)
+  CCharacter *validatedAttacker = nullptr;
+  if (!attackerId)
   {
-    attackSource = pAtter;
+    validatedAttacker = pAtter;
   }
-  else
+  else if (attackerId == 3)
   {
-    CGuardTower *attackerTower = static_cast<CGuardTower *>(pAtter);
-    attackSource = attackerTower->m_pMasterTwr;
+    validatedAttacker = *reinterpret_cast<CCharacter **>(&pAtter[1].m_bLive);
   }
 
-  if (!attackSource)
+  if (!validatedAttacker)
   {
     return 0;
   }
 
-  float resultPath[8]{};
+  float canMovePath[8]{};
   return static_cast<unsigned int>(
-           attackSource->m_pCurMap->m_Level.mBsp->CanYouGoThere(
-             attackSource->m_fCurPos,
+           pAtter->m_pCurMap->m_Level.mBsp->CanYouGoThere(
+             pAtter->m_fCurPos,
              m_fCurPos,
-             reinterpret_cast<float (*)[3]>(resultPath)))
+             reinterpret_cast<float (*)[3]>(canMovePath)))
     != 0;
 }
 
@@ -561,6 +561,45 @@ __int64 CGuardTower::SetDamage(
   }
 
   return static_cast<unsigned int>(m_nHP);
+}
+
+bool CGuardTower::Create(_tower_create_setdata *pData)
+{
+  if (!CCharacter::Create(pData))
+  {
+    return false;
+  }
+
+  m_byRaceCode = pData->byRaceCode;
+  if (pData->pMaster)
+  {
+    m_pMasterTwr = pData->pMaster;
+    m_dwMasterSerial = pData->pMaster->m_dwObjSerial;
+    m_pItem = pData->pItem;
+    m_wItemSerial = pData->pItem->m_wSerial;
+    m_nHP = static_cast<int>(pData->pItem->m_dwDur);
+    m_bSystemStruct = false;
+  }
+  else
+  {
+    m_pMasterTwr = nullptr;
+    m_dwMasterSerial = static_cast<unsigned int>(-1);
+    m_pItem = nullptr;
+    m_wItemSerial = static_cast<unsigned __int16>(-1);
+    m_nHP = *reinterpret_cast<int *>(&m_pRecordSet[6].m_strCode[40]);
+    m_bSystemStruct = true;
+    m_nIniIndex = pData->nIniIndex;
+  }
+
+  m_dwObjSerial = static_cast<unsigned int>(GetNewSerial());
+  m_dwStartMakeTime = timeGetTime();
+  m_bComplete = false;
+  m_bQuick = pData->bQuick;
+  m_pTarget = nullptr;
+  m_pMasterSetTarget = nullptr;
+  SendMsg_Create();
+  ++CGuardTower::s_nLiveNum;
+  return true;
 }
 
 void CGuardTower::Init(_object_id *pID)
