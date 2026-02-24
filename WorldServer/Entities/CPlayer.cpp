@@ -76,9 +76,16 @@
 #include "TimeLimitJadeMng.h"
 #include "TimeItem.h"
 #include "ResourceItem_fld.h"
+#include "GuardTowerItem_fld.h"
 #include "BulletItem_fld.h"
 #include "DfnEquipItem_fld.h"
 #include "ForceItem_fld.h"
+#include "TOWNItem_fld.h"
+#include "TrapItem_fld.h"
+#include "BoxItem_fld.h"
+#include "OreItem_fld.h"
+#include "RecoveryItem_fld.h"
+#include "NPCLink_fld.h"
 #include "force_fld.h"
 #include "skill_fld.h"
 #include "WeaponItem_fld.h"
@@ -86,6 +93,9 @@
 #include "RingItem_fld.h"
 #include "AmuletItem_fld.h"
 #include "SiegeKitItem_fld.h"
+#include "ItemMakeData_fld.h"
+#include "ItemCombineData_fld.h"
+#include "ItemExchangeData_fld.h"
 #include "UnitFrame_fld.h"
 #include "UnitPart_fld.h"
 #include "UnitBullet_fld.h"
@@ -148,6 +158,7 @@
 #include "player_macro_result_zocl.h"
 #include "Init_action_point_zocl.h"
 #include "RadarItem_fld.h"
+#include "player_fld.h"
 #include "w_name.h"
 #include "CChatStealSystem.h"
 #include "CObjectList.h"
@@ -230,12 +241,12 @@ char IsAddAbleTalikToItem(
   {
     case 6u:
     {
-      _base_fld *itemRecord = itemTable->GetRecord(wItemIndex);
+      _WeaponItem_fld *itemRecord = reinterpret_cast<_WeaponItem_fld *>(itemTable->GetRecord(wItemIndex));
       if (!itemRecord)
       {
         return 0;
       }
-      const int classCode = *reinterpret_cast<int *>(&itemRecord[6].m_strCode[8]);
+      const int classCode = itemRecord->m_nType;
       if (classCode == 6 || classCode == 8 || classCode == 7 || classCode == 5)
       {
         tableGroup = 7;
@@ -259,19 +270,19 @@ char IsAddAbleTalikToItem(
 
   if (byItemTableCode == 7)
   {
-    float *record = reinterpret_cast<float *>(itemTable->GetRecord(wItemIndex));
+    _CloakItem_fld *record = reinterpret_cast<_CloakItem_fld *>(itemTable->GetRecord(wItemIndex));
     if (!record)
     {
       return 0;
     }
 
-    if (record[93] <= 0.0f)
+    if (record->m_nProperty <= 0)
     {
-      if (record[94] <= 0.0f)
+      if (record->m_fFireTol <= 0.0f)
       {
-        if (record[95] <= 0.0f)
+        if (record->m_fWaterTol <= 0.0f)
         {
-          if (record[96] <= 0.0f)
+          if (record->m_fSoilTol <= 0.0f)
           {
             if (wTalikIndex != 3)
             {
@@ -361,8 +372,35 @@ namespace
     "guildbattle",
   };
 
-  char check_sf_class(int nClassCode, unsigned __int8 byEffectCode, _base_fld *pSFFld)
+  int get_sf_record_class(unsigned __int8 byEffectCode, const _base_fld *sfRecord)
   {
+    if (byEffectCode == 1)
+    {
+      const _force_fld *forceRecord = static_cast<const _force_fld *>(sfRecord);
+      return forceRecord ? forceRecord->m_nClass : 0;
+    }
+
+    const _skill_fld *skillRecord = static_cast<const _skill_fld *>(sfRecord);
+    return skillRecord ? skillRecord->m_nClass : 0;
+  }
+
+  int get_sf_need_special_type(unsigned __int8 byEffectCode, const _base_fld *sfRecord)
+  {
+    if (byEffectCode == 1)
+    {
+      const _force_fld *forceRecord = static_cast<const _force_fld *>(sfRecord);
+      return forceRecord ? forceRecord->m_nNeedSpecialType : 0;
+    }
+
+    const _skill_fld *skillRecord = static_cast<const _skill_fld *>(sfRecord);
+    return skillRecord ? skillRecord->m_nNeedSpecialType : 0;
+  }
+
+  char check_sf_class(int nClassCode, unsigned __int8 byEffectCode, const _base_fld *pSFFld)
+  {
+    const int sfClassCode = get_sf_record_class(byEffectCode, pSFFld);
+    const int needSpecialType = get_sf_need_special_type(byEffectCode, pSFFld);
+
     if (nClassCode != 0)
     {
       switch (nClassCode)
@@ -370,18 +408,18 @@ namespace
         case 1:
           if (byEffectCode)
           {
-            if (byEffectCode == 1 && *reinterpret_cast<int *>(&pSFFld[4].m_strCode[60]) > 0)
+            if (byEffectCode == 1 && needSpecialType > 0)
             {
               return 0;
             }
           }
-          else if (!pSFFld[1].m_dwIndex && *reinterpret_cast<int *>(&pSFFld[4].m_strCode[60]) > 0)
+          else if (!sfClassCode && needSpecialType > 0)
           {
             return 0;
           }
           break;
         case 2:
-          if (!byEffectCode && *reinterpret_cast<int *>(&pSFFld[4].m_strCode[60]) > 0)
+          if (!byEffectCode && needSpecialType > 0)
           {
             return 0;
           }
@@ -389,12 +427,12 @@ namespace
         case 3:
           if (byEffectCode)
           {
-            if (byEffectCode == 1 && *reinterpret_cast<int *>(&pSFFld[4].m_strCode[60]) > 0)
+            if (byEffectCode == 1 && needSpecialType > 0)
             {
               return 0;
             }
           }
-          else if (*reinterpret_cast<int *>(&pSFFld[4].m_strCode[60]) > 1)
+          else if (needSpecialType > 1)
           {
             return 0;
           }
@@ -405,12 +443,12 @@ namespace
     }
     else if (byEffectCode)
     {
-      if (byEffectCode == 1 && *reinterpret_cast<int *>(&pSFFld[4].m_strCode[60]) > 0)
+      if (byEffectCode == 1 && needSpecialType > 0)
       {
         return 0;
       }
     }
-    else if (pSFFld[1].m_dwIndex == 1 && *reinterpret_cast<int *>(&pSFFld[4].m_strCode[60]) > 0)
+    else if (sfClassCode == 1 && needSpecialType > 0)
     {
       return 0;
     }
@@ -495,7 +533,8 @@ char IsOtherTowerNear(CGameObject *pEster, float *pfEstPos, CGuardTower *pEstObj
             && pEstObj != tower
             && std::abs(tower->m_fCurPos[1] - pfEstPos[1]) <= 100.0f)
         {
-          const int nearRange = *reinterpret_cast<int *>(&tower->m_pRecordSet[5].m_strCode[24]);
+          const _GuardTowerItem_fld *towerRecord = static_cast<const _GuardTowerItem_fld *>(tower->m_pRecordSet);
+          const int nearRange = towerRecord ? towerRecord->m_nGADst : 0;
           const double dist = GetSqrt(tower->m_fCurPos, pfEstPos);
           if (static_cast<double>(nearRange) > dist)
           {
@@ -3361,7 +3400,9 @@ void CPlayer::pc_GotoBasePortalRequest(unsigned __int16 wItemSerial)
           }
           else
           {
-            record = g_Main.m_tblItemData[22].GetRecord(item->m_wItemIndex);
+            _TOWNItem_fld *townRecord =
+              reinterpret_cast<_TOWNItem_fld *>(g_Main.m_tblItemData[22].GetRecord(item->m_wItemIndex));
+            record = reinterpret_cast<_base_fld *>(townRecord);
             if (record)
             {
               if (m_pCurMap->m_pMapSet->m_nMapType == 2)
@@ -3369,37 +3410,37 @@ void CPlayer::pc_GotoBasePortalRequest(unsigned __int16 wItemSerial)
                 resultCode = 11;
               }
               else if (m_pCurMap->m_pMapSet->m_nMapClass
-                       && !*reinterpret_cast<int *>(&record[7].m_strCode[44])
+                       && !townRecord->m_bUseableNormalAcc
                        && (strcmp_0(m_pCurMap->m_pMapSet->m_strCode, "Elan")
                            || (!strcmp_0(m_pCurMap->m_pMapSet->m_strCode, "Platform01")
                                || !strcmp_0(m_pCurMap->m_pMapSet->m_strCode, "Medicallab"))
                              && m_EP.GetEff_Have(55) == 0.0)
-                       && strcmp_0(record[4].m_strCode, m_pCurMap->m_pMapSet->m_strCode))
+                       && strcmp_0(townRecord->m_strMapCode, m_pCurMap->m_pMapSet->m_strCode))
               {
                 resultCode = 11;
               }
               else
               {
                 const int level = static_cast<int>(GetLevel());
-                if (level >= *reinterpret_cast<int *>(&record[6].m_strCode[20]))
+                if (level >= townRecord->m_nLV)
                 {
-                  if (*reinterpret_cast<int *>(&record[6].m_strCode[24]) == -1
-                    || static_cast<int>(GetLevel()) <= *reinterpret_cast<int *>(&record[6].m_strCode[24]))
+                  if (townRecord->m_nUpLevelLim == -1
+                    || static_cast<int>(GetLevel()) <= townRecord->m_nUpLevelLim)
                   {
-                    intoMap = g_MapOper.GetMap(record[4].m_strCode);
+                    intoMap = g_MapOper.GetMap(townRecord->m_strMapCode);
                     if (intoMap)
                     {
-                      _dummy_position *pos = intoMap->GetDummyPostion(reinterpret_cast<char *>(&record[5]));
+                      _dummy_position *pos = intoMap->GetDummyPostion(townRecord->m_strDummyName);
                       if (pos)
                       {
                         if (intoMap->GetRandPosInDummy(pos, newPos, 1))
                         {
                           if (Major_Scroll_Item && record)
                           {
-                            if (!strcmp_0(record[4].m_strCode, "Elan")
-                              || !strcmp_0(record[4].m_strCode, "NeutralA")
-                              || !strcmp_0(record[4].m_strCode, "NeutralB")
-                              || !strcmp_0(record[4].m_strCode, "NeutralC"))
+                            if (!strcmp_0(townRecord->m_strMapCode, "Elan")
+                              || !strcmp_0(townRecord->m_strMapCode, "NeutralA")
+                              || !strcmp_0(townRecord->m_strMapCode, "NeutralB")
+                              || !strcmp_0(townRecord->m_strMapCode, "NeutralC"))
                             {
                               resultCode = 0;
                             }
@@ -5305,27 +5346,36 @@ float CPlayer::GetMoveSpeed()
   float moveSpeed = 0.0f;
   if (IsRidingUnit())
   {
-    _base_fld *frameRecord = g_Main.m_tblUnitFrame.GetRecord(m_pUsingUnit->byFrame);
-    moveSpeed = *reinterpret_cast<float *>(&frameRecord[1].m_strCode[12]);
+    _UnitFrame_fld *frameRecord = reinterpret_cast<_UnitFrame_fld *>(g_Main.m_tblUnitFrame.GetRecord(m_pUsingUnit->byFrame));
+    if (frameRecord)
+    {
+      moveSpeed = frameRecord->m_fMoveRate_Seed;
+    }
 
     for (int j = 0; j < 6; ++j)
     {
-      _base_fld *partRecord = g_Main.m_tblUnitPart[j].GetRecord(m_pUsingUnit->byPart[j]);
+      _UnitPart_fld *partRecord = reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[j].GetRecord(m_pUsingUnit->byPart[j]));
       if (partRecord)
       {
-        moveSpeed = *reinterpret_cast<float *>(&partRecord[4].m_strCode[52]);
+        moveSpeed = partRecord->m_fMoveSpdRev;
       }
     }
 
     if (m_byMoveType == 1)
     {
-      _base_fld *boosterRecord = g_Main.m_tblUnitPart[5].GetRecord(m_pUsingUnit->byPart[5]);
+      _UnitPart_fld *boosterRecord = reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[5].GetRecord(m_pUsingUnit->byPart[5]));
       if (boosterRecord)
       {
-        return moveSpeed + *reinterpret_cast<float *>(&boosterRecord[5].m_strCode[60]);
+        return moveSpeed + boosterRecord->m_fBstSpd;
       }
     }
     return moveSpeed;
+  }
+
+  const _player_fld *playerRecord = static_cast<const _player_fld *>(m_pRecordSet);
+  if (!playerRecord)
+  {
+    return 0.0f;
   }
 
   if (m_byMoveType == 1)
@@ -5334,7 +5384,7 @@ float CPlayer::GetMoveSpeed()
     {
       return 3.0f;
     }
-    return *reinterpret_cast<float *>(&m_pRecordSet[2].m_strCode[4]) + m_EP.GetEff_Plus(20);
+    return playerRecord->m_fMoveRunRate + m_EP.GetEff_Plus(20);
   }
 
   if (m_byMoveType == 2)
@@ -5343,12 +5393,12 @@ float CPlayer::GetMoveSpeed()
     {
       return 3.0f;
     }
-    return *reinterpret_cast<float *>(&m_pRecordSet[2].m_strCode[4]) + EquipItemSFAgent.GetBoosterAddSpeed();
+    return playerRecord->m_fMoveRunRate + EquipItemSFAgent.GetBoosterAddSpeed();
   }
 
   if (m_byMoveType == 0)
   {
-    return *reinterpret_cast<float *>(m_pRecordSet[2].m_strCode);
+    return playerRecord->m_fMoveWalkRate;
   }
   return 0.0f;
 }
@@ -6704,8 +6754,13 @@ bool CPlayer::_check_equip_part(_STORAGE_LIST::_db_con *pFixingItem)
   }
   if (pFixingItem->m_byTableCode == 6)
   {
-    _base_fld *record = g_Main.m_tblItemData[6].GetRecord(pFixingItem->m_wItemIndex);
-    const int equipCode = *reinterpret_cast<int *>(&record[4].m_strCode[12]);
+    _WeaponItem_fld *record =
+      reinterpret_cast<_WeaponItem_fld *>(g_Main.m_tblItemData[6].GetRecord(pFixingItem->m_wItemIndex));
+    if (!record)
+    {
+      return false;
+    }
+    const int equipCode = record->m_nType;
     if (equipCode == 100 && m_Param.m_dbEquip.m_pStorageList[5].m_bLoad)
     {
       return false;
@@ -6718,7 +6773,7 @@ bool CPlayer::_check_equip_part(_STORAGE_LIST::_db_con *pFixingItem)
       {
         break;
       }
-      if (record[7].m_strCode[historyClass->m_nClass + 12] == '1')
+      if (record->m_strClassLim[historyClass->m_nClass] == '1')
       {
         hasClassMatch = true;
         break;
@@ -6734,8 +6789,9 @@ bool CPlayer::_check_equip_part(_STORAGE_LIST::_db_con *pFixingItem)
     _STORAGE_LIST::_db_con *shieldItem = m_Param.m_dbEquip.m_pStorageList + 6;
     if (shieldItem->m_bLoad)
     {
-      _base_fld *record = g_Main.m_tblItemData[6].GetRecord(shieldItem->m_wItemIndex);
-      if (*reinterpret_cast<int *>(&record[4].m_strCode[12]) == 100)
+      _WeaponItem_fld *record =
+        reinterpret_cast<_WeaponItem_fld *>(g_Main.m_tblItemData[6].GetRecord(shieldItem->m_wItemIndex));
+      if (record && record->m_nType == 100)
       {
         return false;
       }
@@ -10692,8 +10748,9 @@ void CPlayer::pc_BuyItemStore(
           {
             if (offers[j].Item.m_byTableCode == 26)
             {
-              _base_fld *record = g_Main.m_tblItemData[26].GetRecord(offers[j].Item.m_wItemIndex);
-              if (record && *reinterpret_cast<unsigned int *>(record[1].m_strCode) == 1)
+              _TrapItem_fld *record =
+                reinterpret_cast<_TrapItem_fld *>(g_Main.m_tblItemData[26].GetRecord(offers[j].Item.m_wItemIndex));
+              if (record && record->m_nType == 1)
               {
                 const int raceCode = m_Param.GetRaceCode();
                 CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
@@ -10727,9 +10784,9 @@ void CPlayer::pc_BuyItemStore(
 
             if (offers[j].Item.m_byTableCode == 31)
             {
-              _base_fld *record = g_Main.m_tblItemData[31].GetRecord(offers[j].Item.m_wItemIndex);
-              if (*reinterpret_cast<unsigned int *>(&record[4].m_strCode[4]) == 11
-                  && !strcmp_0(record->m_strCode, "bxgol01"))
+              _BoxItem_fld *record =
+                reinterpret_cast<_BoxItem_fld *>(g_Main.m_tblItemData[31].GetRecord(offers[j].Item.m_wItemIndex));
+              if (record && record->m_nClassGradeLim == 11 && !strcmp_0(record->m_strCode, "bxgol01"))
               {
                 if (offers[j].byGoodAmount > 1u)
                 {
@@ -12389,12 +12446,12 @@ char CPlayer::Corpse(CCharacter *pAtter)
       {
         CTrap *trap = static_cast<CTrap *>(pAtter);
         killerOwner = trap->m_pMaster;
-        _base_fld *effectRecord = g_Main.m_tblEffectData[3].GetRecord("17");
+        _skill_fld *effectRecord = reinterpret_cast<_skill_fld *>(g_Main.m_tblEffectData[3].GetRecord("17"));
         if (effectRecord)
         {
           bool upMastery = false;
-          const unsigned __int8 contCode = static_cast<unsigned __int8>(effectRecord[13].m_strCode[32]);
-          const unsigned __int16 durSec = *reinterpret_cast<unsigned __int16 *>(&effectRecord[16].m_strCode[24]);
+          const unsigned __int8 contCode = static_cast<unsigned __int8>(effectRecord->m_nContEffectType);
+          const unsigned __int16 durSec = static_cast<unsigned __int16>(effectRecord->m_nContEffectSec[0]);
           InsertSFContEffect(
             contCode,
             3,
@@ -13031,9 +13088,8 @@ void CPlayer::CreateComplete()
 
       if (isAllEmpty)
       {
-        _base_fld *record = CQuestMgr::s_tblQuest->GetRecord(quest->wIndex);
-        if (*reinterpret_cast<unsigned int *>(&record[13].m_strCode[60])
-            || *reinterpret_cast<unsigned int *>(&record[1].m_strCode[24]))
+        _Quest_fld *record = reinterpret_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(quest->wIndex));
+        if (record && (record->m_bSelectQuestMenual || record->m_bSelectConsITMenual))
         {
           SendMsg_SelectQuestReward(j);
         }
@@ -13090,11 +13146,12 @@ void CPlayer::CreateComplete()
         _STORAGE_LIST::_db_con *item = &this->m_Param.m_dbInven.m_pStorageList[itemIndex];
         if (item->m_bLoad && item->m_byTableCode == 25 && !item->m_bLock)
         {
-          _base_fld *record = g_Main.m_tblItemData[25].GetRecord(item->m_wItemIndex);
+          _GuardTowerItem_fld *record =
+            reinterpret_cast<_GuardTowerItem_fld *>(g_Main.m_tblItemData[25].GetRecord(item->m_wItemIndex));
           if (record)
           {
             const int raceSexCode = this->m_Param.GetRaceSexCode();
-            if (record[3].m_strCode[raceSexCode + 52] == 49)
+            if (record->m_strCivil[raceSexCode] == '1')
             {
               const bool quick = entry->bComplete;
               const unsigned __int8 raceCode = this->m_Param.GetRaceCode();
@@ -15279,28 +15336,28 @@ __int64 GetItemEquipGrade(int nTableCode, int nItemIndex)
     case 4:
     case 5:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[16]) : 1;
+      _DfnEquipItem_fld *record = reinterpret_cast<_DfnEquipItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nClassGradeLim) : 1;
     }
     case 6:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[8].m_strCode[16]) : 1;
+      _WeaponItem_fld *record = reinterpret_cast<_WeaponItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nClassGradeLim) : 1;
     }
     case 7:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[16]) : 1;
+      _CloakItem_fld *record = reinterpret_cast<_CloakItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nClassGradeLim) : 1;
     }
     case 8:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[12]) : 1;
+      _RingItem_fld *record = reinterpret_cast<_RingItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nClassGradeLim) : 1;
     }
     case 9:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[12]) : 1;
+      _AmuletItem_fld *record = reinterpret_cast<_AmuletItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nClassGradeLim) : 1;
     }
     default:
       return 1;
@@ -15320,28 +15377,28 @@ __int64 GetItemEquipGrade(int nTableCode, const char *szRecordCode)
     case 4:
     case 5:
     {
-      _base_fld *record = table->GetRecord(szRecordCode);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[16]) : 1;
+      _DfnEquipItem_fld *record = reinterpret_cast<_DfnEquipItem_fld *>(table->GetRecord(szRecordCode));
+      return record ? static_cast<unsigned int>(record->m_nClassGradeLim) : 1;
     }
     case 6:
     {
-      _base_fld *record = table->GetRecord(szRecordCode);
-      return record ? *reinterpret_cast<unsigned int *>(&record[8].m_strCode[16]) : 1;
+      _WeaponItem_fld *record = reinterpret_cast<_WeaponItem_fld *>(table->GetRecord(szRecordCode));
+      return record ? static_cast<unsigned int>(record->m_nClassGradeLim) : 1;
     }
     case 7:
     {
-      _base_fld *record = table->GetRecord(szRecordCode);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[16]) : 1;
+      _CloakItem_fld *record = reinterpret_cast<_CloakItem_fld *>(table->GetRecord(szRecordCode));
+      return record ? static_cast<unsigned int>(record->m_nClassGradeLim) : 1;
     }
     case 8:
     {
-      _base_fld *record = table->GetRecord(szRecordCode);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[12]) : 1;
+      _RingItem_fld *record = reinterpret_cast<_RingItem_fld *>(table->GetRecord(szRecordCode));
+      return record ? static_cast<unsigned int>(record->m_nClassGradeLim) : 1;
     }
     case 9:
     {
-      _base_fld *record = table->GetRecord(szRecordCode);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[12]) : 1;
+      _AmuletItem_fld *record = reinterpret_cast<_AmuletItem_fld *>(table->GetRecord(szRecordCode));
+      return record ? static_cast<unsigned int>(record->m_nClassGradeLim) : 1;
     }
     default:
       return 1;
@@ -15379,28 +15436,28 @@ _STORAGE_LIST::_db_con *CPlayer::IsBulletValidity(unsigned __int16 wBulletSerial
     return nullptr;
   }
 
-  _base_fld *weaponRecord = g_Main.m_tblItemData[6].GetRecord(weapon->m_wItemIndex);
+  _WeaponItem_fld *weaponRecord = reinterpret_cast<_WeaponItem_fld *>(g_Main.m_tblItemData[6].GetRecord(weapon->m_wItemIndex));
   if (!weaponRecord)
   {
     return nullptr;
   }
 
-  if (!std::strncmp(&weaponRecord[4].m_strCode[16], "-1", 2u))
+  if (!std::strncmp(weaponRecord->m_strBulletType, "-1", 2u))
   {
     return item;
   }
 
-  _base_fld *bulletRecord = g_Main.m_tblItemData[10].GetRecord(item->m_wItemIndex);
+  _BulletItem_fld *bulletRecord = reinterpret_cast<_BulletItem_fld *>(g_Main.m_tblItemData[10].GetRecord(item->m_wItemIndex));
   if (!bulletRecord)
   {
     return nullptr;
   }
 
-  const size_t bulletLenRaw = strlen_0(bulletRecord[4].m_strCode);
+  const size_t bulletLenRaw = strlen_0(bulletRecord->m_strBulletType);
   const int bulletLen = static_cast<int>(bulletLenRaw >= 0x40 ? 64 : bulletLenRaw);
   for (int j = 0; j < bulletLen; ++j)
   {
-    if (strchr(&weaponRecord[4].m_strCode[16], bulletRecord[4].m_strCode[j]))
+    if (strchr(weaponRecord->m_strBulletType, bulletRecord->m_strBulletType[j]))
     {
       return item;
     }
@@ -15440,28 +15497,28 @@ _STORAGE_LIST::_db_con *CPlayer::IsEffBulletValidity(unsigned __int16 wEffBullet
     return nullptr;
   }
 
-  _base_fld *weaponRecord = g_Main.m_tblItemData[6].GetRecord(weapon->m_wItemIndex);
-  _base_fld *bulletRecord = g_Main.m_tblItemData[10].GetRecord(item->m_wItemIndex);
+  _WeaponItem_fld *weaponRecord = reinterpret_cast<_WeaponItem_fld *>(g_Main.m_tblItemData[6].GetRecord(weapon->m_wItemIndex));
+  _BulletItem_fld *bulletRecord = reinterpret_cast<_BulletItem_fld *>(g_Main.m_tblItemData[10].GetRecord(item->m_wItemIndex));
   if (!weaponRecord || !bulletRecord)
   {
     return nullptr;
   }
 
-  if (!std::strncmp(&weaponRecord[5].m_strCode[12], "-1", 2u))
+  if (!std::strncmp(weaponRecord->m_strEffBulletType, "-1", 2u))
   {
     return nullptr;
   }
 
-  if (!std::strncmp(&weaponRecord[5].m_strCode[12], "D", 1u))
+  if (!std::strncmp(weaponRecord->m_strEffBulletType, "D", 1u))
   {
-    return std::strncmp(reinterpret_cast<const char *>(&bulletRecord[5]), "-1", 2u) ? item : nullptr;
+    return std::strncmp(bulletRecord->m_strEffBulletType, "-1", 2u) ? item : nullptr;
   }
 
-  const size_t bulletLenRaw = strlen_0(bulletRecord[4].m_strCode);
+  const size_t bulletLenRaw = strlen_0(bulletRecord->m_strEffBulletType);
   const int bulletLen = static_cast<int>(bulletLenRaw >= 0x40 ? 64 : bulletLenRaw);
   for (int j = 0; j < bulletLen; ++j)
   {
-    if (strchr(&weaponRecord[4].m_strCode[16], bulletRecord[4].m_strCode[j]))
+    if (strchr(weaponRecord->m_strEffBulletType, bulletRecord->m_strEffBulletType[j]))
     {
       return item;
     }
@@ -15478,19 +15535,27 @@ char CPlayer::IsSFUsableGauge(unsigned __int8 byEffectCode, unsigned __int16 wEf
 
   if (byEffectCode == 1)
   {
-    _base_fld *record = g_Main.m_tblEffectData[byEffectCode].GetRecord(wEffectIndex);
-    hpCost = *reinterpret_cast<int *>(&record[9].m_strCode[4]);
-    const float fpBase = static_cast<float>(*reinterpret_cast<int *>(&record[9].m_strCode[8]));
+    _force_fld *record = reinterpret_cast<_force_fld *>(g_Main.m_tblEffectData[byEffectCode].GetRecord(wEffectIndex));
+    if (!record)
+    {
+      return 0;
+    }
+    hpCost = record->m_nNeedHP;
+    const float fpBase = static_cast<float>(record->m_nNeedFP);
     fpCost = static_cast<int>(fpBase * m_EP.GetEff_Rate(7));
-    spCost = *reinterpret_cast<int *>(&record[9].m_strCode[12]);
+    spCost = record->m_nNeedSP;
   }
   else
   {
-    _base_fld *record = g_Main.m_tblEffectData[byEffectCode].GetRecord(wEffectIndex);
-    hpCost = *reinterpret_cast<int *>(&record[9].m_strCode[4]);
-    const float fpBase = static_cast<float>(*reinterpret_cast<int *>(&record[9].m_strCode[8]));
+    _skill_fld *record = reinterpret_cast<_skill_fld *>(g_Main.m_tblEffectData[byEffectCode].GetRecord(wEffectIndex));
+    if (!record)
+    {
+      return 0;
+    }
+    hpCost = record->m_nNeedHP;
+    const float fpBase = static_cast<float>(record->m_nNeedFP);
     fpCost = static_cast<int>(fpBase * m_EP.GetEff_Rate(7));
-    spCost = *reinterpret_cast<int *>(&record[9].m_strCode[12]);
+    spCost = record->m_nNeedSP;
   }
 
   if (hpCost < 0)
@@ -15527,12 +15592,12 @@ char CPlayer::IsSFUseableRace(unsigned __int8 byEffectCode, unsigned __int16 wEf
 
   if (byEffectCode == 0 || byEffectCode == 2 || byEffectCode == 3)
   {
-    _base_fld *record = g_Main.m_tblEffectData[byEffectCode].GetRecord(wEffectIndex);
-    return record[5].m_strCode[raceSexCode + 4] == '1';
+    _skill_fld *record = reinterpret_cast<_skill_fld *>(g_Main.m_tblEffectData[byEffectCode].GetRecord(wEffectIndex));
+    return record && record->m_strUsableRace[raceSexCode] == '1';
   }
 
-  _base_fld *record = g_Main.m_tblEffectData[byEffectCode].GetRecord(wEffectIndex);
-  return record[5].m_strCode[raceSexCode + 4] == '1';
+  _force_fld *record = reinterpret_cast<_force_fld *>(g_Main.m_tblEffectData[byEffectCode].GetRecord(wEffectIndex));
+  return record && record->m_strUsableRace[raceSexCode] == '1';
 }
 
 char CPlayer::IsSFUsableSFMastery(unsigned __int8 byMasteryCode, int nMasteryIndex)
@@ -15600,7 +15665,7 @@ char CPlayer::IsSFActableByClass(unsigned __int8 byEffectCode, _base_fld *pSFFld
     }
   }
   else if (m_Param.m_pClassData->m_nClass == 3 && !byEffectCode
-           && *reinterpret_cast<int *>(&pSFFld[4].m_strCode[60]) > 0)
+           && get_sf_need_special_type(byEffectCode, pSFFld) > 0)
   {
     return 0;
   }
@@ -16205,8 +16270,12 @@ char CPlayer::_pre_check_skill_attack(
 
     if (IsSiegeMode())
     {
-      _base_fld *siegeRecord = g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex);
-      attackRange = attackRange + *reinterpret_cast<float *>(&siegeRecord[5].m_strCode[16]);
+      _SiegeKitItem_fld *siegeRecord =
+        reinterpret_cast<_SiegeKitItem_fld *>(g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex));
+      if (siegeRecord)
+      {
+        attackRange = attackRange + siegeRecord->m_fMaxDst;
+      }
     }
 
     float dist = GetSqrt(pDst->m_fCurPos, m_fCurPos);
@@ -16221,8 +16290,9 @@ char CPlayer::_pre_check_skill_attack(
 
     if (IsSiegeMode())
     {
-      _base_fld *siegeRecord = g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex);
-      if (*reinterpret_cast<float *>(&siegeRecord[5].m_strCode[12]) > dist)
+      _SiegeKitItem_fld *siegeRecord =
+        reinterpret_cast<_SiegeKitItem_fld *>(g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex));
+      if (siegeRecord && siegeRecord->m_fMinDst > dist)
       {
         return static_cast<char>(-3);
       }
@@ -16250,8 +16320,12 @@ char CPlayer::_pre_check_skill_attack(
 
     if (IsSiegeMode())
     {
-      _base_fld *siegeRecord = g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex);
-      attackRange = attackRange + *reinterpret_cast<float *>(&siegeRecord[5].m_strCode[16]);
+      _SiegeKitItem_fld *siegeRecord =
+        reinterpret_cast<_SiegeKitItem_fld *>(g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex));
+      if (siegeRecord)
+      {
+        attackRange = attackRange + siegeRecord->m_fMaxDst;
+      }
     }
 
     const float dist = GetSqrt(pfAttackPos, m_fCurPos);
@@ -16262,8 +16336,9 @@ char CPlayer::_pre_check_skill_attack(
 
     if (IsSiegeMode())
     {
-      _base_fld *siegeRecord = g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex);
-      if (*reinterpret_cast<float *>(&siegeRecord[5].m_strCode[12]) > dist)
+      _SiegeKitItem_fld *siegeRecord =
+        reinterpret_cast<_SiegeKitItem_fld *>(g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex));
+      if (siegeRecord && siegeRecord->m_fMinDst > dist)
       {
         return static_cast<char>(-3);
       }
@@ -16669,8 +16744,9 @@ char CPlayer::_pre_check_siege_attack(
     return static_cast<char>(-35);
   }
 
-  _base_fld *siegeRecord = g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex);
-  if (*reinterpret_cast<int *>(&siegeRecord[3].m_strCode[4]) != m_pmWpn.byWpType)
+  _SiegeKitItem_fld *siegeRecord =
+    reinterpret_cast<_SiegeKitItem_fld *>(g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex));
+  if (!siegeRecord || siegeRecord->m_nUsableTyoe != m_pmWpn.byWpType)
   {
     return static_cast<char>(-33);
   }
@@ -16770,7 +16846,7 @@ char CPlayer::_pre_check_siege_attack(
       const float baseRange = static_cast<float>(m_pmWpn.wGaAttRange);
       const float width = pDst->GetWidth();
       const float rangeWithWidth = baseRange + (width / 2.0f);
-      attackRange = rangeWithWidth + *reinterpret_cast<float *>(&siegeRecord[5].m_strCode[16]);
+      attackRange = rangeWithWidth + siegeRecord->m_fMaxDst;
     }
     else
     {
@@ -16778,7 +16854,7 @@ char CPlayer::_pre_check_siege_attack(
       const float width = pDst->GetWidth();
       const float rangeWithWidth = baseRange + (width / 2.0f);
       const float effPlus = m_EP.GetEff_Plus(m_pmWpn.byWpClass + 4);
-      attackRange = (rangeWithWidth + *reinterpret_cast<float *>(&siegeRecord[5].m_strCode[16])) + effPlus;
+      attackRange = (rangeWithWidth + siegeRecord->m_fMaxDst) + effPlus;
     }
 
     float dist = GetSqrt(pDst->m_fCurPos, m_fCurPos);
@@ -16791,7 +16867,7 @@ char CPlayer::_pre_check_siege_attack(
       }
     }
 
-    if (*reinterpret_cast<float *>(&siegeRecord[5].m_strCode[12]) > dist)
+    if (siegeRecord->m_fMinDst > dist)
     {
       return static_cast<char>(-3);
     }
@@ -16821,13 +16897,13 @@ char CPlayer::_pre_check_siege_attack(
     float attackRange = 0.0f;
     if (m_pmWpn.byWpType == 7)
     {
-      const float baseRange = static_cast<float>(m_pmWpn.wGaAttRange) + *reinterpret_cast<float *>(&siegeRecord[5].m_strCode[16]);
+      const float baseRange = static_cast<float>(m_pmWpn.wGaAttRange) + siegeRecord->m_fMaxDst;
       const float effPlus = m_EP.GetEff_Plus(36);
       attackRange = baseRange + effPlus;
     }
     else
     {
-      const float baseRange = static_cast<float>(m_pmWpn.wGaAttRange) + *reinterpret_cast<float *>(&siegeRecord[5].m_strCode[16]);
+      const float baseRange = static_cast<float>(m_pmWpn.wGaAttRange) + siegeRecord->m_fMaxDst;
       const float effPlus = m_EP.GetEff_Plus(m_pmWpn.byWpClass + 4);
       attackRange = baseRange + effPlus;
     }
@@ -16838,7 +16914,7 @@ char CPlayer::_pre_check_siege_attack(
       return static_cast<char>(-3);
     }
 
-    if (*reinterpret_cast<float *>(&siegeRecord[5].m_strCode[12]) > dist)
+    if (siegeRecord->m_fMinDst > dist)
     {
       return static_cast<char>(-3);
     }
@@ -17419,8 +17495,8 @@ void CPlayer::make_skill_attack_param(
 
   if (pBulletItem)
   {
-    _base_fld *bulletRecord = g_Main.m_tblItemData[10].GetRecord(pBulletItem->m_wItemIndex);
-    pAP->nTol = *reinterpret_cast<int *>(&bulletRecord[6].m_strCode[40]);
+    _BulletItem_fld *bulletRecord = reinterpret_cast<_BulletItem_fld *>(g_Main.m_tblItemData[10].GetRecord(pBulletItem->m_wItemIndex));
+    pAP->nTol = bulletRecord ? bulletRecord->m_nProperty : m_pmWpn.byAttTolType;
   }
   else
   {
@@ -17502,25 +17578,29 @@ void CPlayer::make_skill_attack_param(
 
   if (IsSiegeMode())
   {
-    _base_fld *siegeRecord = g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex);
-    const float effRate = m_EP.GetEff_Rate(23);
-    pAP->nMinAF = static_cast<int>(static_cast<float>(pAP->nMinAF)
-                                   * (*reinterpret_cast<float *>(&siegeRecord[5].m_strCode[24]) * effRate));
-    if (strncmp(m_pmWpn.strEffBulletType, "-1", 2u) && pEffBulletItem)
+    _SiegeKitItem_fld *siegeRecord =
+      reinterpret_cast<_SiegeKitItem_fld *>(g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex));
+    if (siegeRecord)
     {
-      const float rate = m_EP.GetEff_Rate(23);
-      pAP->nMinAFPlus = static_cast<int>(static_cast<float>(pAP->nMinAFPlus)
-                                         * (*reinterpret_cast<float *>(&siegeRecord[5].m_strCode[24]) * rate));
-    }
+      const float effRate = m_EP.GetEff_Rate(23);
+      pAP->nMinAF = static_cast<int>(static_cast<float>(pAP->nMinAF)
+                                     * (siegeRecord->m_fGAAF * effRate));
+      if (strncmp(m_pmWpn.strEffBulletType, "-1", 2u) && pEffBulletItem)
+      {
+        const float rate = m_EP.GetEff_Rate(23);
+        pAP->nMinAFPlus = static_cast<int>(static_cast<float>(pAP->nMinAFPlus)
+                                           * (siegeRecord->m_fGAAF * rate));
+      }
 
-    const float maxRate = m_EP.GetEff_Rate(23);
-    pAP->nMaxAF = static_cast<int>(static_cast<float>(pAP->nMaxAF)
-                                   * (*reinterpret_cast<float *>(&siegeRecord[5].m_strCode[24]) * maxRate));
-    if (strncmp(m_pmWpn.strEffBulletType, "-1", 2u) && pEffBulletItem)
-    {
-      const float rate = m_EP.GetEff_Rate(23);
-      pAP->nMaxAFPlus = static_cast<int>(static_cast<float>(pAP->nMaxAFPlus)
-                                         * (*reinterpret_cast<float *>(&siegeRecord[5].m_strCode[24]) * rate));
+      const float maxRate = m_EP.GetEff_Rate(23);
+      pAP->nMaxAF = static_cast<int>(static_cast<float>(pAP->nMaxAF)
+                                     * (siegeRecord->m_fGAAF * maxRate));
+      if (strncmp(m_pmWpn.strEffBulletType, "-1", 2u) && pEffBulletItem)
+      {
+        const float rate = m_EP.GetEff_Rate(23);
+        pAP->nMaxAFPlus = static_cast<int>(static_cast<float>(pAP->nMaxAFPlus)
+                                           * (siegeRecord->m_fGAAF * rate));
+      }
     }
   }
 
@@ -17710,7 +17790,9 @@ void CPlayer::make_siege_attack_param(
     masteryBonus = m_pmMst.GetMasteryPerMast(0, m_pmWpn.byWpClass);
   }
 
-  _base_fld *siegeRecord = g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex);
+  _SiegeKitItem_fld *siegeRecord =
+    reinterpret_cast<_SiegeKitItem_fld *>(g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex));
+  const float siegeMul = siegeRecord ? siegeRecord->m_fGAAF : 1.0f;
 
   if (strncmp(m_pmWpn.strEffBulletType, "-1", 2u) && pEffBulletFld)
   {
@@ -17718,7 +17800,7 @@ void CPlayer::make_siege_attack_param(
     const float minRate = m_EP.GetEff_Rate(32);
     const float minValue =
       ((minAf * minRate) * fAddBulletFc) * fAddEffBtFc + static_cast<float>(CPlayer::s_nAddMstFc[masteryBonus]);
-    const float minMul = minValue * (*reinterpret_cast<float *>(&siegeRecord[5].m_strCode[24]));
+    const float minMul = minValue * siegeMul;
     const float minEffRate = m_EP.GetEff_Rate(23);
     pAP->nMinAFPlus = static_cast<int>(minMul * minEffRate);
 
@@ -17726,7 +17808,7 @@ void CPlayer::make_siege_attack_param(
     const float maxRate = m_EP.GetEff_Rate(32);
     const float maxValue =
       ((maxAf * maxRate) * fAddBulletFc) * fAddEffBtFc + static_cast<float>(CPlayer::s_nAddMstFc[masteryBonus]);
-    const float maxMul = maxValue * (*reinterpret_cast<float *>(&siegeRecord[5].m_strCode[24]));
+    const float maxMul = maxValue * siegeMul;
     const float maxEffRate = m_EP.GetEff_Rate(23);
     pAP->nMaxAFPlus = static_cast<int>(maxMul * maxEffRate);
     pAP->nEffShotNum = 1;
@@ -17735,14 +17817,14 @@ void CPlayer::make_siege_attack_param(
   const float minAf = static_cast<float>(m_pmWpn.nGaMinAF);
   const float minRate = m_EP.GetEff_Rate(32);
   const float minValue = (minAf * minRate) * fAddBulletFc + static_cast<float>(CPlayer::s_nAddMstFc[masteryBonus]);
-  const float minMul = minValue * (*reinterpret_cast<float *>(&siegeRecord[5].m_strCode[24]));
+  const float minMul = minValue * siegeMul;
   const float minEffRate = m_EP.GetEff_Rate(23);
   pAP->nMinAF = static_cast<int>(minMul * minEffRate);
 
   const float maxAf = static_cast<float>(m_pmWpn.nGaMaxAF);
   const float maxRate = m_EP.GetEff_Rate(32);
   const float maxValue = (maxAf * maxRate) * fAddBulletFc + static_cast<float>(CPlayer::s_nAddMstFc[masteryBonus]);
-  const float maxMul = maxValue * (*reinterpret_cast<float *>(&siegeRecord[5].m_strCode[24]));
+  const float maxMul = maxValue * siegeMul;
   const float maxEffRate = m_EP.GetEff_Rate(23);
   pAP->nMaxAF = static_cast<int>(maxMul * maxEffRate);
 
@@ -17781,8 +17863,8 @@ void CPlayer::make_wpactive_skill_attack_param(
 
   if (pBulletItem)
   {
-    _base_fld *bulletRecord = g_Main.m_tblItemData[10].GetRecord(pBulletItem->m_wItemIndex);
-    pAP->nTol = *reinterpret_cast<int *>(&bulletRecord[6].m_strCode[40]);
+    _BulletItem_fld *bulletRecord = reinterpret_cast<_BulletItem_fld *>(g_Main.m_tblItemData[10].GetRecord(pBulletItem->m_wItemIndex));
+    pAP->nTol = bulletRecord ? bulletRecord->m_nProperty : m_pmWpn.byAttTolType;
   }
   else
   {
@@ -19406,7 +19488,7 @@ void CPlayer::pc_PlayAttack_Test(
     {
       if (byEffectCode == 1)
       {
-        _base_fld *record = g_Main.m_tblEffectData[1].GetRecord(byEffectIndex);
+        _skill_fld *record = reinterpret_cast<_skill_fld *>(g_Main.m_tblEffectData[1].GetRecord(byEffectIndex));
         _STORAGE_LIST::_db_con *forceItem = nullptr;
         for (int j = 0; j < 88; ++j)
         {
@@ -19419,17 +19501,17 @@ void CPlayer::pc_PlayAttack_Test(
         }
         if (forceItem && record)
         {
-          sfLevel = static_cast<unsigned __int8>(
-            GetSFLevel(*reinterpret_cast<int *>(&record[4].m_strCode[60]), forceItem->m_dwDur));
+          sfLevel =
+            static_cast<unsigned __int8>(GetSFLevel(record->m_nLv, static_cast<unsigned int>(forceItem->m_dwDur)));
         }
       }
     }
     else
     {
-      unsigned __int8 *record = reinterpret_cast<unsigned __int8 *>(g_Main.m_tblEffectData[1].GetRecord(byEffectIndex));
+      _skill_fld *record = reinterpret_cast<_skill_fld *>(g_Main.m_tblEffectData[1].GetRecord(byEffectIndex));
       if (record)
       {
-        sfLevel = m_pmMst.GetSkillLv(*record);
+        sfLevel = m_pmMst.GetSkillLv(static_cast<unsigned __int8>(record->m_dwIndex));
       }
     }
 
@@ -19445,20 +19527,20 @@ void CPlayer::pc_PlayAttack_Test(
   if (unitBullet[1] && unitBullet[1] != 0xFFFF)
   {
     bulletIndex = *unitBullet;
-    _base_fld *unitRecord = nullptr;
+    _UnitPart_fld *unitRecord = nullptr;
     if (byWeaponPart)
     {
-      unitRecord = g_Main.m_tblUnitPart[4].GetRecord(m_pUsingUnit->byPart[4]);
+      unitRecord = reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[4].GetRecord(m_pUsingUnit->byPart[4]));
     }
     else
     {
-      unitRecord = g_Main.m_tblUnitPart[3].GetRecord(m_pUsingUnit->byPart[3]);
+      unitRecord = reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[3].GetRecord(m_pUsingUnit->byPart[3]));
     }
     if (unitRecord)
     {
-      if (unitBullet[1] >= *reinterpret_cast<int *>(unitRecord[4].m_strCode))
+      if (unitBullet[1] >= unitRecord->m_nDurUnit)
       {
-        unitBullet[1] -= *reinterpret_cast<unsigned __int16 *>(unitRecord[4].m_strCode);
+        unitBullet[1] = static_cast<unsigned __int16>(unitBullet[1] - unitRecord->m_nDurUnit);
       }
       else
       {
@@ -19732,7 +19814,11 @@ void CPlayer::CalcExp(CCharacter *pDst, int nDam, CPartyModeKillMonsterExpNotify
     const int dstLevel = static_cast<int>(pMon->GetLevel());
     if (IsPassExpLimitLvDiff(dstLevel, &bGetAttackExp))
     {
-      _base_fld *record = pMon->m_pRecordSet;
+      _monster_fld *record = pMon->m_pMonRec;
+      if (!record)
+      {
+        return;
+      }
       int remainHp = static_cast<int>(pMon->GetHP()) - nDam;
       if (pMon->IsBossMonster())
       {
@@ -19746,9 +19832,7 @@ void CPlayer::CalcExp(CCharacter *pDst, int nDam, CPartyModeKillMonsterExpNotify
           remainHp = 0;
           dam = static_cast<int>(pMon->GetHP());
         }
-        const float baseExp =
-          (*(float *)&record[4].m_strCode[16] * 0.69999999f)
-          * (static_cast<float>(dam) / *reinterpret_cast<float *>(&record[25].m_strCode[4]));
+        const float baseExp = (record->m_fLevel * 0.69999999f) * (static_cast<float>(dam) / record->m_fMaxHP);
         if (IsRidingUnit())
         {
           const float expUnit = baseExp / 180.0f;
@@ -19767,11 +19851,11 @@ void CPlayer::CalcExp(CCharacter *pDst, int nDam, CPartyModeKillMonsterExpNotify
         const int emoState = pMon->GetEmotionState();
         if (emoState == 4)
         {
-          killExp = *reinterpret_cast<float *>(&record[4].m_strCode[16]) * 0.5f;
+          killExp = record->m_fLevel * 0.5f;
         }
         else
         {
-          killExp = *reinterpret_cast<float *>(&record[4].m_strCode[16]) * 0.30000001f;
+          killExp = record->m_fLevel * 0.30000001f;
         }
 
         if (m_pPartyMgr->IsPartyMode())
@@ -20169,29 +20253,44 @@ __int64 CPlayer::CalcEquipAttackDelay()
     _STORAGE_LIST::_db_con *equip = &m_Param.m_dbEquip.m_pStorageList[j];
     if (equip->m_bLoad)
     {
-      _base_fld *record = g_Main.m_tblItemData[j].GetRecord(equip->m_wItemIndex);
-      totalDelay += *reinterpret_cast<unsigned int *>(&record[5].m_strCode[20]);
+      _DfnEquipItem_fld *record =
+        reinterpret_cast<_DfnEquipItem_fld *>(g_Main.m_tblItemData[j].GetRecord(equip->m_wItemIndex));
+      if (record)
+      {
+        totalDelay += static_cast<unsigned int>(record->m_nGASpd);
+      }
     }
   }
 
   _STORAGE_LIST::_db_con *equip6 = m_Param.m_dbEquip.m_pStorageList + 6;
   if (equip6->m_bLoad)
   {
-    _base_fld *record = g_Main.m_tblItemData[6].GetRecord(equip6->m_wItemIndex);
-    totalDelay += *reinterpret_cast<unsigned int *>(&record[9].m_strCode[52]);
+    _WeaponItem_fld *record = reinterpret_cast<_WeaponItem_fld *>(g_Main.m_tblItemData[6].GetRecord(equip6->m_wItemIndex));
+    if (record)
+    {
+      totalDelay += static_cast<unsigned int>(record->m_nGASpd);
+    }
   }
 
   _STORAGE_LIST::_db_con *equip5 = m_Param.m_dbEquip.m_pStorageList + 5;
   if (equip5->m_bLoad)
   {
-    _base_fld *record = g_Main.m_tblItemData[5].GetRecord(equip5->m_wItemIndex);
-    totalDelay += *reinterpret_cast<unsigned int *>(&record[5].m_strCode[20]);
+    _DfnEquipItem_fld *record =
+      reinterpret_cast<_DfnEquipItem_fld *>(g_Main.m_tblItemData[5].GetRecord(equip5->m_wItemIndex));
+    if (record)
+    {
+      totalDelay += static_cast<unsigned int>(record->m_nGASpd);
+    }
   }
 
   if (IsSiegeMode())
   {
-    _base_fld *record = g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex);
-    totalDelay += *reinterpret_cast<unsigned int *>(&record[5].m_strCode[20]);
+    _SiegeKitItem_fld *record =
+      reinterpret_cast<_SiegeKitItem_fld *>(g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex));
+    if (record)
+    {
+      totalDelay += static_cast<unsigned int>(record->m_nGACorSpd);
+    }
   }
 
   return totalDelay;
@@ -20307,10 +20406,10 @@ __int64 CPlayer::GetAttackDP()
 {
   if (IsRidingUnit())
   {
-    _base_fld *record = g_Main.m_tblUnitPart[3].GetRecord(m_pUsingUnit->byPart[3]);
+    _UnitPart_fld *record = reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[3].GetRecord(m_pUsingUnit->byPart[3]));
     if (record)
     {
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[40]);
+      return static_cast<unsigned int>(record->m_nAttack_DP);
     }
   }
   else
@@ -20318,10 +20417,10 @@ __int64 CPlayer::GetAttackDP()
     _STORAGE_LIST::_db_con *equip = m_Param.m_dbEquip.m_pStorageList + 6;
     if (equip->m_bLoad)
     {
-      _base_fld *record = g_Main.m_tblItemData[6].GetRecord(equip->m_wItemIndex);
+      _WeaponItem_fld *record = reinterpret_cast<_WeaponItem_fld *>(g_Main.m_tblItemData[6].GetRecord(equip->m_wItemIndex));
       if (record)
       {
-        return *reinterpret_cast<unsigned int *>(&record[9].m_strCode[44]);
+        return static_cast<unsigned int>(record->m_nAttack_DP);
       }
     }
   }
@@ -20332,10 +20431,10 @@ __int64 CPlayer::GetAttackLevel()
 {
   if (IsRidingUnit())
   {
-    _base_fld *record = g_Main.m_tblUnitPart[3].GetRecord(m_pUsingUnit->byPart[3]);
+    _UnitPart_fld *record = reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[3].GetRecord(m_pUsingUnit->byPart[3]));
     if (record)
     {
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[12]);
+      return static_cast<unsigned int>(record->m_nLevelLim);
     }
   }
   else
@@ -20343,10 +20442,10 @@ __int64 CPlayer::GetAttackLevel()
     _STORAGE_LIST::_db_con *equip = m_Param.m_dbEquip.m_pStorageList + 6;
     if (equip->m_bLoad)
     {
-      _base_fld *record = g_Main.m_tblItemData[6].GetRecord(equip->m_wItemIndex);
+      _WeaponItem_fld *record = reinterpret_cast<_WeaponItem_fld *>(g_Main.m_tblItemData[6].GetRecord(equip->m_wItemIndex));
       if (record)
       {
-        return *reinterpret_cast<unsigned int *>(&record[8].m_strCode[8]);
+        return static_cast<unsigned int>(record->m_nLevelLim);
       }
     }
   }
@@ -20373,15 +20472,16 @@ __int64 CPlayer::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
   float baseValue = FLOAT_1_0;
   if (IsRidingUnit())
   {
-    _base_fld *record = g_Main.m_tblUnitPart[m_byUsingWeaponPart].GetRecord(m_pUsingUnit->byPart[m_byUsingWeaponPart]);
+    _UnitPart_fld *record = reinterpret_cast<_UnitPart_fld *>(
+      g_Main.m_tblUnitPart[m_byUsingWeaponPart].GetRecord(m_pUsingUnit->byPart[m_byUsingWeaponPart]));
     if (record)
     {
-      baseValue = static_cast<float>(static_cast<int>(record[5].m_dwIndex));
+      baseValue = static_cast<float>(record->m_nAttMastery);
     }
-    _base_fld *baseRecord = g_Main.m_tblUnitPart[0].GetRecord(m_pUsingUnit->byPart[0]);
+    _UnitPart_fld *baseRecord = reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[0].GetRecord(m_pUsingUnit->byPart[0]));
     if (baseRecord)
     {
-      baseValue = baseValue + static_cast<float>(static_cast<int>(baseRecord[5].m_dwIndex));
+      baseValue = baseValue + static_cast<float>(baseRecord->m_nAttMastery);
     }
   }
   else
@@ -21463,8 +21563,9 @@ void CPlayer::pc_UsePotionItem(CPlayer *pTargetPlayer, _STORAGE_POS_INDIV *pItem
           useItem,
           m_szItemHistoryFileName);
       }
-      _base_fld *effectRecord = g_PotionMgr.m_tblPotionEffectData.GetRecord(potionFld->m_strEffCode);
-      if (effectRecord && (effectRecord[13].m_dwIndex == 50 || effectRecord[13].m_dwIndex == 51))
+      _skill_fld *effectRecord =
+        reinterpret_cast<_skill_fld *>(g_PotionMgr.m_tblPotionEffectData.GetRecord(potionFld->m_strEffCode));
+      if (effectRecord && (effectRecord->m_nTempEffectType == 50 || effectRecord->m_nTempEffectType == 51))
       {
         CPlayer::s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex,
           useItem,
@@ -21884,7 +21985,7 @@ void CPlayer::pc_MakeItem(
 
   unsigned __int8 errCode = 0;
   _STORAGE_LIST::_db_con *makeToolItem = nullptr;
-  _base_fld *manualRecord = g_Main.m_tblItemMakeData.GetRecord(wManualIndex);
+  _ItemMakeData_fld *manualRecord = reinterpret_cast<_ItemMakeData_fld *>(g_Main.m_tblItemMakeData.GetRecord(wManualIndex));
   int tableCode = 0;
   _base_fld *makeItemRecord = nullptr;
   bool useRandomResult = false;
@@ -21905,7 +22006,7 @@ void CPlayer::pc_MakeItem(
   tableCode = GetItemTableCode(manualRecord->m_strCode);
 
   raceSexCode = m_Param.GetRaceSexCode();
-  if (manualRecord[1].m_strCode[raceSexCode] != '1')
+  if (manualRecord->m_strCivil[raceSexCode] != '1')
   {
     errCode = 11;
     goto RESULT;
@@ -21929,7 +22030,7 @@ void CPlayer::pc_MakeItem(
   }
 
   masteryValue = m_pmMst.GetMasteryPerMast(5u, masteryType);
-  if (static_cast<int>(manualRecord[1].m_dwIndex) > masteryValue)
+  if (manualRecord->m_nMakeMastery > masteryValue)
   {
     errCode = 13;
     goto RESULT;
@@ -22022,18 +22123,18 @@ void CPlayer::pc_MakeItem(
     unsigned int acc = 0;
     for (int entryIndex = 0; entryIndex < 30; ++entryIndex)
     {
-      char *entry = &manualRecord[2].m_strCode[12 * entryIndex + 56];
-      if (std::strncmp(entry, "-1", 2) == 0)
+      _ItemMakeData_fld::_output_list *entry = &manualRecord->m_listOutput[entryIndex];
+      if (std::strncmp(entry->m_itmPdOutput, "-1", 2) == 0)
       {
         break;
       }
-      acc += reinterpret_cast<unsigned int *>(entry)[2];
+      acc += entry->m_dwPdProp;
       if (roll < acc)
       {
-        const unsigned __int8 entryTableCode = GetItemTableCode(entry);
+        const unsigned __int8 entryTableCode = GetItemTableCode(entry->m_itmPdOutput);
         if (entryTableCode != 0xFF)
         {
-          makeItemRecord = g_Main.m_tblItemData[entryTableCode].GetRecordByHash(entry, 2, 5);
+          makeItemRecord = g_Main.m_tblItemData[entryTableCode].GetRecordByHash(entry->m_itmPdOutput, 2, 5);
         }
         break;
       }
@@ -22051,7 +22152,7 @@ void CPlayer::pc_MakeItem(
 
   if (makeItemRecord)
   {
-    memcpy_0(requiredMaterial, &manualRecord[2], 0x3Cu);
+    memcpy_0(requiredMaterial, manualRecord->m_listMaterial, 0x3Cu);
     if (!m_bCheat_makeitem_no_use_matrial)
     {
       for (int j = 0; j < byMaterialNum; ++j)
@@ -22797,7 +22898,8 @@ void CPlayer::pc_CombineItem(
   unsigned __int8 materialCounts[117]{};
   unsigned __int8 defSocketNum = 0;
   unsigned __int8 socketCount = 0;
-  _base_fld *manualRecord = g_Main.m_tblItemCombineData.GetRecord(wManualIndex);
+  _ItemCombineData_fld *manualRecord =
+    reinterpret_cast<_ItemCombineData_fld *>(g_Main.m_tblItemCombineData.GetRecord(wManualIndex));
   unsigned __int8 itemTableCode = static_cast<unsigned __int8>(-1);
   _base_fld *combineRecord = nullptr;
   _STORAGE_LIST::_db_con *overlapItem = nullptr;
@@ -22805,10 +22907,10 @@ void CPlayer::pc_CombineItem(
   if (manualRecord)
   {
     const int raceSexCode = m_Param.GetRaceSexCode();
-    if (manualRecord[1].m_strCode[raceSexCode + 4] == '1')
+    if (manualRecord->m_strCivil[raceSexCode + 4] == '1')
     {
       const unsigned int dalant = m_Param.GetDalant();
-      if (*reinterpret_cast<unsigned int *>(manualRecord[1].m_strCode) <= dalant)
+      if (manualRecord->m_dwFee <= dalant)
       {
         if (m_Param.m_dbInven.GetIndexEmptyCon() == 0xFF)
         {
@@ -22840,7 +22942,7 @@ void CPlayer::pc_CombineItem(
               }
 
               memset_0(requiredMaterial, 0, sizeof(requiredMaterial));
-              memcpy_0(requiredMaterial, &manualRecord[2].m_strCode[8], 0x3Cu);
+              memcpy_0(requiredMaterial, manualRecord->m_Material, 0x3Cu);
               for (int j = 0; j < byMaterialNum; ++j)
               {
                 materialItems[j] = m_Param.m_dbInven.GetPtrFromSerial(pipMaterials[j].wItemSerial);
@@ -22901,17 +23003,16 @@ void CPlayer::pc_CombineItem(
                 }
               }
 
-              if (*reinterpret_cast<unsigned int *>(&manualRecord[2].m_strCode[4]) != 0xFFFFFFFF
-                  && *reinterpret_cast<unsigned int *>(manualRecord[2].m_strCode) == 6)
+              if (manualRecord->m_dwNeedActPoint != 0xFFFFFFFFu && manualRecord->m_nEventType == 6)
               {
                 CGoldenBoxItemMgr *goldenBox = CGoldenBoxItemMgr::Instance();
                 if (goldenBox->Get_Event_Status() == 2)
                 {
                   unsigned int actPoint = m_pUserDB->GetActPoint(2u);
-                  if (actPoint >= *reinterpret_cast<unsigned int *>(&manualRecord[2].m_strCode[4]))
+                  if (actPoint >= manualRecord->m_dwNeedActPoint)
                   {
                     unsigned int curActPoint = m_pUserDB->GetActPoint(2u);
-                    m_pUserDB->SetActPoint(2u, curActPoint - *reinterpret_cast<unsigned int *>(&manualRecord[2].m_strCode[4]));
+                    m_pUserDB->SetActPoint(2u, curActPoint - manualRecord->m_dwNeedActPoint);
                     unsigned int leftActPoint = m_pUserDB->GetActPoint(2u);
                     SendMsg_Alter_Action_Point(2u, leftActPoint);
                   }
@@ -22998,8 +23099,7 @@ RESULT_COMBINE:
   if (Emb_AddStorage(0, &newItem, 0, 1))
   {
     SendMsg_FanfareItem(1u, &newItem, nullptr);
-    if (*reinterpret_cast<unsigned int *>(&manualRecord[2].m_strCode[4]) != 0xFFFFFFFF
-        && *reinterpret_cast<unsigned int *>(manualRecord[2].m_strCode) == 6)
+    if (manualRecord->m_dwNeedActPoint != 0xFFFFFFFFu && manualRecord->m_nEventType == 6)
     {
       CGoldenBoxItemMgr *goldenBox = CGoldenBoxItemMgr::Instance();
       if (goldenBox->Get_Event_Status() == 2)
@@ -23033,17 +23133,15 @@ RESULT_COMBINE:
     &newItem,
     "CPlayer::pc_CombineItem - Emb_AddStorage() Fail",
     m_szItemHistoryFileName);
-  if (*reinterpret_cast<unsigned int *>(manualRecord[2].m_strCode) == 6)
+  if (manualRecord->m_nEventType == 6)
   {
     CGoldenBoxItemMgr *goldenBox = CGoldenBoxItemMgr::Instance();
     if (goldenBox->Get_Event_Status() == 2)
     {
       unsigned int actPoint = m_pUserDB->GetActPoint(2u);
-      m_pUserDB->SetActPoint(2u, *reinterpret_cast<unsigned int *>(&manualRecord[2].m_strCode[4]) + actPoint);
+      m_pUserDB->SetActPoint(2u, manualRecord->m_dwNeedActPoint + actPoint);
       unsigned int leftActPoint = m_pUserDB->GetActPoint(2u);
-      SendMsg_Alter_Action_Point(
-        2u,
-        *reinterpret_cast<unsigned int *>(&manualRecord[2].m_strCode[4]) + leftActPoint);
+      SendMsg_Alter_Action_Point(2u, manualRecord->m_dwNeedActPoint + leftActPoint);
     }
   }
   return;
@@ -23053,7 +23151,7 @@ APPLY_COMBINE_COST:
   {
     Emb_AlterDurPoint(0, materialItems[j]->m_byStorageIndex, -pipMaterials[j].byNum, false, false);
   }
-  feeDalant = *reinterpret_cast<unsigned int *>(manualRecord[1].m_strCode);
+  feeDalant = manualRecord->m_dwFee;
   if (feeDalant)
   {
     SubDalant(feeDalant);
@@ -23094,7 +23192,7 @@ void CPlayer::pc_ExchangeItem(unsigned __int16 wManualIndex, unsigned __int16 wI
 {
   unsigned __int8 errCode = 0;
   _STORAGE_LIST::_db_con *useItem = nullptr;
-  _base_fld *exchangeRecord = nullptr;
+  _ItemExchangeData_fld *exchangeRecord = nullptr;
   _base_fld *useItemRecord = nullptr;
   _base_fld *outItemRecord = nullptr;
   unsigned __int8 useTableCode = 0;
@@ -23103,7 +23201,7 @@ void CPlayer::pc_ExchangeItem(unsigned __int16 wManualIndex, unsigned __int16 wI
   int newTableCode = -1;
   unsigned __int8 newDur = 0;
 
-  exchangeRecord = g_Main.m_tblItemExchangeData.GetRecord(wManualIndex);
+  exchangeRecord = reinterpret_cast<_ItemExchangeData_fld *>(g_Main.m_tblItemExchangeData.GetRecord(wManualIndex));
   useItem = m_Param.m_dbInven.GetPtrFromSerial(wItemSerial);
   if (!useItem)
   {
@@ -23135,7 +23233,7 @@ void CPlayer::pc_ExchangeItem(unsigned __int16 wManualIndex, unsigned __int16 wI
 
   if (useItem->m_byTableCode == 17)
   {
-    _base_fld *goldRecord = g_Main.m_tblItemData[17].GetRecord(useItem->m_wItemIndex);
+    _OreItem_fld *goldRecord = reinterpret_cast<_OreItem_fld *>(g_Main.m_tblItemData[17].GetRecord(useItem->m_wItemIndex));
     if (!goldRecord)
     {
       errCode = 12;
@@ -23147,7 +23245,7 @@ void CPlayer::pc_ExchangeItem(unsigned __int16 wManualIndex, unsigned __int16 wI
       goto RESULT_EXCHANGE;
     }
 
-    if (*reinterpret_cast<unsigned int *>(&goldRecord[3].m_strCode[4]))
+    if (goldRecord->m_dwOreProbability)
     {
       CGoldenBoxItemMgr *goldenBox = CGoldenBoxItemMgr::Instance();
       if (goldenBox->Get_Event_Status() != 2)
@@ -23217,23 +23315,23 @@ void CPlayer::pc_ExchangeItem(unsigned __int16 wManualIndex, unsigned __int16 wI
       errCode = 12;
       goto RESULT_EXCHANGE;
     }
-    _base_fld *itemRecord =
-      g_Main.m_tblItemData[useItem->m_byTableCode].GetRecord(useItem->m_wItemIndex);
+    _BoxItem_fld *itemRecord =
+      reinterpret_cast<_BoxItem_fld *>(g_Main.m_tblItemData[useItem->m_byTableCode].GetRecord(useItem->m_wItemIndex));
     if (!itemRecord)
     {
       errCode = 12;
       goto RESULT_EXCHANGE;
     }
     const int level = m_Param.GetLevel();
-    if (level < *reinterpret_cast<unsigned int *>(itemRecord[4].m_strCode))
+    if (level < itemRecord->m_nLevelLim)
     {
       errCode = 21;
       goto RESULT_EXCHANGE;
     }
-    if (*reinterpret_cast<unsigned int *>(&itemRecord[4].m_strCode[8]) != 0xFFFFFFFF)
+    if (itemRecord->m_nUpLevelLim != 0xFFFFFFFF)
     {
       const int curLevel = m_Param.GetLevel();
-      if (curLevel > *reinterpret_cast<unsigned int *>(&itemRecord[4].m_strCode[8]))
+      if (curLevel > itemRecord->m_nUpLevelLim)
       {
         errCode = 21;
         goto RESULT_EXCHANGE;
@@ -23249,12 +23347,13 @@ void CPlayer::pc_ExchangeItem(unsigned __int16 wManualIndex, unsigned __int16 wI
     unsigned int acc = 0;
     for (int k = 0; k < 61; ++k)
     {
-      char *entry = reinterpret_cast<char *>(&exchangeRecord[1]) + 16 * k;
+      _ItemExchangeData_fld::_output *output = &exchangeRecord->m_listOutput[k];
+      const char *entry = output->m_strOutCode;
       if (strlen_0(entry) < 2 || !std::strncmp(entry, "-", 1u) || !std::strncmp(entry, "-1", 2u))
       {
         break;
       }
-      acc += reinterpret_cast<unsigned int *>(entry)[3];
+      acc += output->m_dwProb;
       if (roll < acc)
       {
         const int entryTableCode = GetItemTableCode(entry);
@@ -23267,20 +23366,21 @@ void CPlayer::pc_ExchangeItem(unsigned __int16 wManualIndex, unsigned __int16 wI
           entry,
           2,
           5);
-        newDur = static_cast<unsigned __int8>(entry[8]);
+        newDur = output->m_byDur;
         if (outItemRecord)
         {
           char *itemEquipCivil = GetItemEquipCivil(static_cast<unsigned __int8>(newTableCode), outItemRecord->m_dwIndex);
           const int raceSex = m_Param.GetRaceSexCode();
           if (itemEquipCivil[raceSex] != '1')
           {
-            entry = reinterpret_cast<char *>(&exchangeRecord[1]);
+            const _ItemExchangeData_fld::_output *fallback = &exchangeRecord->m_listOutput[0];
+            entry = fallback->m_strOutCode;
             newTableCode = GetItemTableCode(entry);
             outItemRecord = g_Main.m_tblItemData[static_cast<unsigned __int8>(newTableCode)].GetRecordByHash(
               entry,
               2,
               5);
-            newDur = static_cast<unsigned __int8>(entry[8]);
+            newDur = fallback->m_byDur;
           }
           break;
         }
@@ -23523,7 +23623,7 @@ char CPlayer::pc_UseRecoverLossExpItem(unsigned __int16 wItemSerial)
     return -8;
   }
 
-  _base_fld *record = g_Main.m_tblItemData[30].GetRecord(item->m_wItemIndex);
+  _RecoveryItem_fld *record = reinterpret_cast<_RecoveryItem_fld *>(g_Main.m_tblItemData[30].GetRecord(item->m_wItemIndex));
   if (!record)
   {
     return -8;
@@ -23534,23 +23634,21 @@ char CPlayer::pc_UseRecoverLossExpItem(unsigned __int16 wItemSerial)
   }
 
   const int level = m_Param.GetLevel();
-  if (level < *reinterpret_cast<int *>(record[4].m_strCode))
+  if (level < record->m_nLevelLim)
   {
     return -9;
   }
-  if (*reinterpret_cast<int *>(&record[4].m_strCode[4]) != -1
-      && m_Param.GetLevel() > *reinterpret_cast<int *>(&record[4].m_strCode[4]))
+  if (record->m_nUpLevelLim != -1 && m_Param.GetLevel() > record->m_nUpLevelLim)
   {
     return -9;
   }
 
-  int range = *reinterpret_cast<int *>(&record[4].m_strCode[40])
-    - *reinterpret_cast<int *>(&record[4].m_strCode[36]) + 1;
+  int range = record->m_nMaxRecoveryPro - record->m_nMinRecoveryPro + 1;
   if (range < 1)
   {
     range = 1;
   }
-  const int prob = *reinterpret_cast<int *>(&record[4].m_strCode[36]) + rand() % range;
+  const int prob = record->m_nMinRecoveryPro + rand() % range;
 
   long double alterExp = m_Param.GetLossExp() * (double)prob / 100.0;
   if (alterExp < 0.0)
@@ -23951,17 +24049,17 @@ unsigned __int8 CPlayer::pc_NPCLinkCheckItemRequest_Use(_STORAGE_POS_INDIV *pSto
   {
     _STORAGE_LIST *storage = m_Param.m_pStoragePtr[pStorage->byStorageCode];
     _STORAGE_LIST::_db_con *useItem = storage->GetPtrFromSerial(pStorage->wItemSerial);
-    _base_fld *record = g_Main.m_tblItemData[35].GetRecord(useItem->m_wItemIndex);
+    _NPCLink_fld *record = reinterpret_cast<_NPCLink_fld *>(g_Main.m_tblItemData[35].GetRecord(useItem->m_wItemIndex));
     if (record)
     {
-      if (!*reinterpret_cast<int *>(&record[5].m_strCode[56]))
+      if (!record->m_nStoragePart)
       {
         const int oldDur = static_cast<int>(useItem->m_dwDur);
         const unsigned int left = Emb_AlterDurPoint(storage->m_nListCode, useItem->m_byStorageIndex, -1, false, false);
         pStorage->byNum = static_cast<unsigned __int8>(left);
         if (oldDur - 1 == static_cast<int>(left))
         {
-          if (*reinterpret_cast<int *>(&record[7].m_strCode[8]) == 1)
+          if (record->m_bIsCash == 1)
           {
             CPlayer::s_MgrItemHistory.cash_item_use(m_ObjID.m_wIndex,
               useItem,
@@ -24079,8 +24177,9 @@ char CPlayer::pc_CharacterRenameCash(bool bChange, _STORAGE_POS_INDIV *pItem, co
       _PotionItem_fld *potionFld = (_PotionItem_fld *)g_Main.m_tblItemData[13].GetRecord(item->m_wItemIndex);
       if (potionFld)
       {
-        _base_fld *effectRecord = g_PotionMgr.m_tblPotionEffectData.GetRecord(potionFld->m_strEffCode);
-        if (effectRecord && !errCode && effectRecord[13].m_dwIndex == 47)
+        _skill_fld *effectRecord =
+          reinterpret_cast<_skill_fld *>(g_PotionMgr.m_tblPotionEffectData.GetRecord(potionFld->m_strEffCode));
+        if (effectRecord && !errCode && effectRecord->m_nTempEffectType == 47)
         {
           item->lock(true);
           errCode = static_cast<unsigned __int8>(g_PotionMgr.UsePotion(this, this, potionFld, currTime));

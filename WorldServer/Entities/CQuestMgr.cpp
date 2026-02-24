@@ -901,13 +901,12 @@ _happen_event_cont *CQuestMgr::CheckQuestHappenEvent(
   char *pszEventCode,
   unsigned __int8 byRaceCode)
 {
-  _base_fld *record = CQuestMgr::s_tblQuestHappenEvent
-    ? CQuestMgr::s_tblQuestHappenEvent[HappenType].GetRecord(pszEventCode)
+  _QuestHappenEvent_fld *record = CQuestMgr::s_tblQuestHappenEvent
+    ? static_cast<_QuestHappenEvent_fld *>(CQuestMgr::s_tblQuestHappenEvent[HappenType].GetRecord(pszEventCode))
     : nullptr;
   while (record)
   {
-    auto *eventNode =
-      reinterpret_cast<_happen_event_node *>(&record[1].m_strCode[704 * static_cast<int>(byRaceCode)]);
+    auto *eventNode = &record->m_Node[byRaceCode];
     if (!eventNode->m_bUse)
     {
       break;
@@ -942,30 +941,31 @@ _happen_event_cont *CQuestMgr::CheckQuestHappenEvent(
 
       if (eventNode->m_nQuestType == 1)
       {
-        _base_fld *questRecord =
-          CQuestMgr::s_tblQuest ? CQuestMgr::s_tblQuest->GetRecord(eventNode->m_strLinkQuest[0]) : nullptr;
+        _Quest_fld *questRecord = CQuestMgr::s_tblQuest
+          ? static_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(eventNode->m_strLinkQuest[0]))
+          : nullptr;
         if (!questRecord)
         {
           return nullptr;
         }
-        if (questRecord[1].m_dwIndex != -1)
+        if (questRecord->m_nLimLv != -1)
         {
           const int level = static_cast<int>(this->m_pMaster->m_Param.GetLevel());
-          if (static_cast<int>(questRecord[1].m_dwIndex) < level)
+          if (questRecord->m_nLimLv < level)
           {
             return nullptr;
           }
         }
-        if (!IsCompleteNpcQuest(questRecord->m_strCode, *reinterpret_cast<int *>(&questRecord[1].m_strCode[4]))
+        if (!IsCompleteNpcQuest(questRecord->m_strCode, questRecord->m_bQuestRepeat)
             && !IsProcNpcQuest(questRecord->m_strCode))
         {
-          if (*reinterpret_cast<int *>(&questRecord[1].m_strCode[4]) == 1)
+          if (questRecord->m_bQuestRepeat == 1)
           {
-            if (!IsProcLinkNpcQuest(questRecord->m_strCode, *reinterpret_cast<int *>(&questRecord[27].m_strCode[24])))
+            if (!IsProcLinkNpcQuest(questRecord->m_strCode, questRecord->m_nLinkQuestGroupID))
             {
               return nullptr;
             }
-            if (!IsPossibleRepeatNpcQuest(questRecord->m_strCode, *reinterpret_cast<int *>(&questRecord[27].m_strCode[24])))
+            if (!IsPossibleRepeatNpcQuest(questRecord->m_strCode, questRecord->m_nLinkQuestGroupID))
             {
               return nullptr;
             }
@@ -974,7 +974,8 @@ _happen_event_cont *CQuestMgr::CheckQuestHappenEvent(
         else
         {
           record = CQuestMgr::s_tblQuestHappenEvent
-            ? CQuestMgr::s_tblQuestHappenEvent[HappenType].GetRecord(record->m_dwIndex + 1)
+            ? static_cast<_QuestHappenEvent_fld *>(
+                CQuestMgr::s_tblQuestHappenEvent[HappenType].GetRecord(record->m_dwIndex + 1))
             : nullptr;
           if (record && strcmp_0(record->m_strCode, pszEventCode))
           {
@@ -989,7 +990,7 @@ _happen_event_cont *CQuestMgr::CheckQuestHappenEvent(
     }
 
     record = CQuestMgr::s_tblQuestHappenEvent
-      ? CQuestMgr::s_tblQuestHappenEvent[HappenType].GetRecord(record->m_dwIndex + 1)
+      ? static_cast<_QuestHappenEvent_fld *>(CQuestMgr::s_tblQuestHappenEvent[HappenType].GetRecord(record->m_dwIndex + 1))
       : nullptr;
     if (record && strcmp_0(record->m_strCode, pszEventCode))
     {
@@ -1010,7 +1011,7 @@ void CQuestMgr::CheckNPCQuestList(
     return;
   }
 
-  _base_fld *record = CQuestMgr::s_tblQuestHappenEvent[1].GetRecord(pszEventCode);
+  _QuestHappenEvent_fld *record = static_cast<_QuestHappenEvent_fld *>(CQuestMgr::s_tblQuestHappenEvent[1].GetRecord(pszEventCode));
   if (!record)
   {
     return;
@@ -1019,14 +1020,13 @@ void CQuestMgr::CheckNPCQuestList(
   int happenIndex = static_cast<int>(record->m_dwIndex);
   for (int slot = 0; slot < 30; ++slot)
   {
-    record = CQuestMgr::s_tblQuestHappenEvent[1].GetRecord(happenIndex);
+    record = static_cast<_QuestHappenEvent_fld *>(CQuestMgr::s_tblQuestHappenEvent[1].GetRecord(happenIndex));
     if (!record || std::strcmp(record->m_strCode, pszEventCode) != 0)
     {
       return;
     }
 
-    auto *eventNode =
-      reinterpret_cast<_happen_event_node *>(&record[1].m_strCode[704 * static_cast<int>(byRaceCode)]);
+    auto *eventNode = &record->m_Node[byRaceCode];
     if (!eventNode->m_bUse)
     {
       ++happenIndex;
@@ -1053,29 +1053,29 @@ void CQuestMgr::CheckNPCQuestList(
       continue;
     }
 
-    _base_fld *questRecord = CQuestMgr::s_tblQuest->GetRecord(eventNode->m_strLinkQuest[0]);
+    _Quest_fld *questRecord = static_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(eventNode->m_strLinkQuest[0]));
     if (!questRecord)
     {
       ++happenIndex;
       continue;
     }
 
-    if (questRecord[1].m_dwIndex != static_cast<unsigned int>(-1))
+    if (questRecord->m_nLimLv != -1)
     {
       const int level = static_cast<int>(m_pMaster->m_Param.GetLevel());
-      if (static_cast<int>(questRecord[1].m_dwIndex) < level)
+      if (questRecord->m_nLimLv < level)
       {
         ++happenIndex;
         continue;
       }
     }
 
-    const int repeatType = *reinterpret_cast<int *>(&questRecord[1].m_strCode[4]);
+    const int repeatType = questRecord->m_bQuestRepeat;
     if (!IsCompleteNpcQuest(questRecord->m_strCode, repeatType) && !IsProcNpcQuest(questRecord->m_strCode))
     {
       if (repeatType == 1)
       {
-        const int linkGroup = *reinterpret_cast<int *>(&questRecord[27].m_strCode[24]);
+        const int linkGroup = questRecord->m_nLinkQuestGroupID;
         if (!IsProcLinkNpcQuest(questRecord->m_strCode, linkGroup))
         {
           ++happenIndex;
@@ -1109,26 +1109,26 @@ _happen_event_cont *CQuestMgr::CheckNPCQuestStartable(
     return nullptr;
   }
 
-  _base_fld *eventRecord = CQuestMgr::s_tblQuestHappenEvent[1].GetRecord(dwHappenIndex);
+  _QuestHappenEvent_fld *eventRecord =
+    static_cast<_QuestHappenEvent_fld *>(CQuestMgr::s_tblQuestHappenEvent[1].GetRecord(dwHappenIndex));
   if (!eventRecord || std::strcmp(pszEventCode, eventRecord->m_strCode) != 0)
   {
     return nullptr;
   }
 
-  _base_fld *questRecord = CQuestMgr::s_tblQuest->GetRecord(dwQuestIndex);
+  _Quest_fld *questRecord = static_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(dwQuestIndex));
   if (!questRecord)
   {
     return nullptr;
   }
 
-  auto *eventNode =
-    reinterpret_cast<_happen_event_node *>(&eventRecord[1].m_strCode[704 * static_cast<int>(byRaceCode)]);
+  auto *eventNode = &eventRecord->m_Node[byRaceCode];
   if (!eventNode->m_bUse)
   {
     return nullptr;
   }
 
-  _base_fld *linkedQuest = CQuestMgr::s_tblQuest->GetRecord(eventNode->m_strLinkQuest[0]);
+  _Quest_fld *linkedQuest = static_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(eventNode->m_strLinkQuest[0]));
   if (!linkedQuest || linkedQuest != questRecord)
   {
     return nullptr;
@@ -1166,14 +1166,16 @@ _quest_fail_result *CQuestMgr::CheckLimLv(int nNewLv)
     _QUEST_DB_BASE::_LIST *slot = &this->m_pQuestData->m_List[j];
     if (slot->wIndex != 0xFFFF)
     {
-      _base_fld *record = CQuestMgr::s_tblQuest ? CQuestMgr::s_tblQuest->GetRecord(slot->wIndex) : nullptr;
-      if (record)
-      {
-        if (record[1].m_dwIndex != static_cast<unsigned int>(-1)
-            && static_cast<int>(record[1].m_dwIndex) < nNewLv)
+        _Quest_fld *record = CQuestMgr::s_tblQuest
+          ? static_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(slot->wIndex))
+          : nullptr;
+        if (record)
         {
-          s_QuestFTRet.m_List[count++].byQuestDBSlot = static_cast<unsigned __int8>(j);
-        }
+          if (record->m_nLimLv != -1
+            && record->m_nLimLv < nNewLv)
+          {
+            s_QuestFTRet.m_List[count++].byQuestDBSlot = static_cast<unsigned __int8>(j);
+          }
       }
     }
   }
@@ -1195,10 +1197,12 @@ for (int j = 0; j < 30; ++j)
     _QUEST_DB_BASE::_LIST *slot = &this->m_pQuestData->m_List[j];
     if (slot->byQuestType == 1)
     {
-      _base_fld *record = CQuestMgr::s_tblQuest ? CQuestMgr::s_tblQuest->GetRecord(slot->wIndex) : nullptr;
+      _Quest_fld *record = CQuestMgr::s_tblQuest
+        ? static_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(slot->wIndex))
+        : nullptr;
       if (record)
       {
-        if (*reinterpret_cast<int *>(&record[27].m_strCode[24]) == nLinkQuestGroupID)
+        if (record->m_nLinkQuestGroupID == nLinkQuestGroupID)
         {
           return 0;
         }
@@ -1217,9 +1221,9 @@ int repeatCount = 0;
     _QUEST_DB_BASE::_NPC_QUEST_HISTORY &history = this->m_pQuestData->m_History[j];
     if (history.byLevel != 255)
     {
-      _base_fld *record =
-        CQuestMgr::s_tblQuest ? CQuestMgr::s_tblQuest->GetRecord(history.szQuestCode) : nullptr;
-      if (record && *reinterpret_cast<int *>(&record[27].m_strCode[24]) == nLinkQuestGroupID)
+      _Quest_fld *record =
+        CQuestMgr::s_tblQuest ? static_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(history.szQuestCode)) : nullptr;
+      if (record && record->m_nLinkQuestGroupID == nLinkQuestGroupID)
       {
         const unsigned int now = GetConnectTime_AddBySec(0);
         if (history.dwEventEndTime >= now)

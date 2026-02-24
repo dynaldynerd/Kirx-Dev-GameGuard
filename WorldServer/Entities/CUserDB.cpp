@@ -9,6 +9,7 @@
 #include "CMapOperation.h"
 #include "CNationSettingManager.h"
 #include "CRecordData.h"
+#include "class_fld.h"
 #include "FireGuard.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
@@ -2032,16 +2033,16 @@ bool CUserDB::Insert_Char_Request(
 
   if (IsSQLValidString(pwszCharName))
   {
-    _base_fld *record = g_Main.m_tblClass.GetRecord(pszClassCode);
+    _class_fld *record = static_cast<_class_fld *>(g_Main.m_tblClass.GetRecord(pszClassCode));
     if (!record)
     {
       return false;
     }
-    if (*reinterpret_cast<unsigned int *>(&record[1].m_strCode[8]))
+    if (record->m_nGrade)
     {
       return false;
     }
-    if (record[1].m_dwIndex == static_cast<int>(byRaceSexCode) >> 1)
+    if (record->m_nRaceCode == static_cast<int>(byRaceSexCode) >> 1)
     {
       s_MgrLobbyHistory.add_char_request(m_szLobbyHistoryFileName);
       _qry_sheet_insert qry;

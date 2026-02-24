@@ -44,11 +44,17 @@
 #include "CMoneySupplyMgr.h"
 #include "COreAmountMgr.h"
 #include "COreCuttingTable.h"
+#include "DfnEquipItem_fld.h"
 #include "CDarkHole.h"
 #include "CDarkHoleChannel.h"
 #include "CDarkHoleDungeonQuest.h"
 #include "CDarkHoleDungeonQuestSetup.h"
+#include "GuardTowerItem_fld.h"
 #include "TicketItem_fld.h"
+#include "UnitFrame_fld.h"
+#include "UnitPart_fld.h"
+#include "WeaponItem_fld.h"
+#include "player_fld.h"
 #include "darkhole_create_setdata.h"
 #include "ENTER_DUNGEON_NEW_POS.h"
 #include "QuestHappenEvent_fld.h"
@@ -1526,7 +1532,8 @@ char IsOtherTowerNear(CGameObject *pEster, float *pfEstPos, CGuardTower *pEstObj
             && pEstObj != tower
             && std::abs(tower->m_fCurPos[1] - pfEstPos[1]) <= 100.0f)
         {
-          const int nearRange = *reinterpret_cast<int *>(&tower->m_pRecordSet[5].m_strCode[24]);
+          const _GuardTowerItem_fld *towerRecord = static_cast<const _GuardTowerItem_fld *>(tower->m_pRecordSet);
+          const int nearRange = towerRecord->m_nGADst;
           const double dist = GetSqrt(tower->m_fCurPos, pfEstPos);
           if (static_cast<double>(nearRange) > dist)
           {
@@ -2724,8 +2731,9 @@ __int64 CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertP
         _STORAGE_LIST::_db_con *weaponItem = &m_Param.m_dbEquip.m_pStorageList[6];
         if (weaponItem->m_bLoad)
         {
-          _base_fld *weaponRecord = g_Main.m_tblItemData[6].GetRecord(weaponItem->m_wItemIndex);
-          if (weaponRecord && *reinterpret_cast<int *>(&weaponRecord[4].m_strCode[12]) == 100)
+          _WeaponItem_fld *weaponRecord =
+            static_cast<_WeaponItem_fld *>(g_Main.m_tblItemData[6].GetRecord(weaponItem->m_wItemIndex));
+          if (weaponRecord && weaponRecord->m_nFixPart == 100)
           {
             shieldEnabled = false;
           }
@@ -2766,18 +2774,20 @@ __int64 CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertP
       partCode = partItem->m_wItemIndex;
     }
 
-    _base_fld *partRecord = g_Main.m_tblItemData[partIndex].GetRecord(partCode);
+    _DfnEquipItem_fld *partRecord =
+      static_cast<_DfnEquipItem_fld *>(g_Main.m_tblItemData[partIndex].GetRecord(partCode));
     if (partRecord)
     {
-      defenseValue = *reinterpret_cast<float *>(&partRecord[5].m_strCode[44]);
+      defenseValue = partRecord->m_fDefFc;
     }
 
     if (shieldEnabled && m_nLastBeatenPart == 5)
     {
-      _base_fld *shieldRecord = g_Main.m_tblItemData[5].GetRecord(shieldItem->m_wItemIndex);
+      _DfnEquipItem_fld *shieldRecord =
+        static_cast<_DfnEquipItem_fld *>(g_Main.m_tblItemData[5].GetRecord(shieldItem->m_wItemIndex));
       if (shieldRecord)
       {
-        defenseValue = *reinterpret_cast<float *>(&shieldRecord[5].m_strCode[44]);
+        defenseValue = shieldRecord->m_fDefFc;
       }
     }
 
@@ -2859,10 +2869,10 @@ float CPlayer::GetDefFacing(int nPart)
   {
     if (m_pUsingUnit)
     {
-      _base_fld *record = g_Main.m_tblUnitFrame.GetRecord(m_pUsingUnit->byFrame);
+      _UnitFrame_fld *record = static_cast<_UnitFrame_fld *>(g_Main.m_tblUnitFrame.GetRecord(m_pUsingUnit->byFrame));
       if (record)
       {
-        return *reinterpret_cast<float *>(&record[1].m_strCode[8]);
+        return record->m_fDefFacing;
       }
     }
     return FLOAT_0_5;
@@ -2880,12 +2890,12 @@ float CPlayer::GetDefFacing(int nPart)
     partCode = equipPart->m_wItemIndex;
   }
 
-  _base_fld *record = g_Main.m_tblItemData[nPart].GetRecord(partCode);
+  _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(g_Main.m_tblItemData[nPart].GetRecord(partCode));
   if (!record)
   {
     return FLOAT_0_5;
   }
-  return *reinterpret_cast<float *>(&record[5].m_strCode[60]);
+  return record->m_fDefFacing;
 }
 
 float CPlayer::GetDefGap(int nPart)
@@ -2894,10 +2904,10 @@ float CPlayer::GetDefGap(int nPart)
   {
     if (m_pUsingUnit)
     {
-      _base_fld *record = g_Main.m_tblUnitFrame.GetRecord(m_pUsingUnit->byFrame);
+      _UnitFrame_fld *record = static_cast<_UnitFrame_fld *>(g_Main.m_tblUnitFrame.GetRecord(m_pUsingUnit->byFrame));
       if (record)
       {
-        return *reinterpret_cast<float *>(&record[1].m_strCode[4]);
+        return record->m_fDefGap;
       }
     }
     return FLOAT_0_5;
@@ -2915,12 +2925,12 @@ float CPlayer::GetDefGap(int nPart)
     partCode = equipPart->m_wItemIndex;
   }
 
-  _base_fld *record = g_Main.m_tblItemData[nPart].GetRecord(partCode);
+  _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(g_Main.m_tblItemData[nPart].GetRecord(partCode));
   if (!record)
   {
     return FLOAT_0_5;
   }
-  return *reinterpret_cast<float *>(&record[5].m_strCode[56]);
+  return record->m_fDefGap;
 }
 
 __int64 CPlayer::GetDefSkill(bool bBackAttackDamage)
@@ -2931,16 +2941,16 @@ if (!IsRidingUnit())
   }
 
   int totalDefSkill = 0;
-  _base_fld *leftPart = g_Main.m_tblUnitPart[0].GetRecord(m_pUsingUnit->byPart[0]);
+  _UnitPart_fld *leftPart = static_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[0].GetRecord(m_pUsingUnit->byPart[0]));
   if (leftPart)
   {
-    totalDefSkill += *reinterpret_cast<int *>(&leftPart[5].m_strCode[12]);
+    totalDefSkill += leftPart->m_nDefMastery;
   }
 
-  _base_fld *rightPart = g_Main.m_tblUnitPart[1].GetRecord(m_pUsingUnit->byPart[1]);
+  _UnitPart_fld *rightPart = static_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[1].GetRecord(m_pUsingUnit->byPart[1]));
   if (rightPart)
   {
-    totalDefSkill += *reinterpret_cast<int *>(&rightPart[5].m_strCode[12]);
+    totalDefSkill += rightPart->m_nDefMastery;
   }
 
   return static_cast<unsigned int>(totalDefSkill);
@@ -3015,17 +3025,17 @@ float CPlayer::GetWeaponAdjust()
     return 0.0f;
   }
 
-  _base_fld *weaponRecord = g_Main.m_tblItemData[6].GetRecord(weaponItem->m_wItemIndex);
+  _WeaponItem_fld *weaponRecord = static_cast<_WeaponItem_fld *>(g_Main.m_tblItemData[6].GetRecord(weaponItem->m_wItemIndex));
   if (!weaponRecord)
   {
     return 0.0f;
   }
-  if (*reinterpret_cast<int *>(&weaponRecord[6].m_strCode[8]) == 10)
+  if (weaponRecord->m_nType == 10)
   {
     return 0.0f;
   }
 
-  return *reinterpret_cast<float *>(&weaponRecord[9].m_strCode[40]);
+  return weaponRecord->m_fAttGap;
 }
 
 __int64 CPlayer::GetWeaponClass()
@@ -3035,7 +3045,7 @@ __int64 CPlayer::GetWeaponClass()
 
 float CPlayer::GetWidth()
 {
-  return *reinterpret_cast<float *>(&m_pRecordSet[2].m_strCode[12]);
+  return static_cast<_player_fld *>(m_pRecordSet)->m_fWidth;
 }
 
 __int64 CPlayer::GetWindTol()

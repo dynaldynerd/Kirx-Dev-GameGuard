@@ -410,32 +410,44 @@ void CCharacter::RemoveSFContEffect(
   if (!cont->m_bExist)
     return;
 
-  auto *record = reinterpret_cast<_base_fld *>(
-    g_Main.m_tblEffectData[cont->m_byEffectCode].GetRecord(cont->m_wEffectIndex));
-  char *effectParamBase = nullptr;
+  _cont_param_list *effectParamList = nullptr;
   if (cont->m_byEffectCode == 1)
-    effectParamBase = &record[12].m_strCode[56];
+  {
+    _force_fld *record = static_cast<_force_fld *>(
+      g_Main.m_tblEffectData[cont->m_byEffectCode].GetRecord(cont->m_wEffectIndex));
+    if (record)
+    {
+      effectParamList = record->m_ContParamList;
+    }
+  }
   else
-    effectParamBase = &record[13].m_strCode[48];
+  {
+    _skill_fld *record = static_cast<_skill_fld *>(
+      g_Main.m_tblEffectData[cont->m_byEffectCode].GetRecord(cont->m_wEffectIndex));
+    if (record)
+    {
+      effectParamList = record->m_ContParamList;
+    }
+  }
 
-  if (effectParamBase)
+  if (effectParamList)
   {
     for (int j = 0; j < 5; ++j)
     {
-      char *paramEntry = &effectParamBase[36 * j];
-      int effectType = *reinterpret_cast<int *>(paramEntry);
+      _cont_param_list *paramEntry = &effectParamList[j];
+      int effectType = paramEntry->m_nContParamCode;
       if (effectType == -1)
         break;
 
-      const int paramIndex = *reinterpret_cast<int *>(paramEntry + 4);
+      const int paramIndex = paramEntry->m_nContParamIndex;
       if (effectType == 0)
       {
-        const float value = *reinterpret_cast<float *>(paramEntry + 4 * cont->m_byLv + 4);
+        const float value = paramEntry->m_fContValue[cont->m_byLv];
         m_EP.SetEff_Rate(static_cast<unsigned int>(paramIndex), value, false);
       }
       else if (effectType == 1)
       {
-        const float value = *reinterpret_cast<float *>(paramEntry + 4 * cont->m_byLv + 4);
+        const float value = paramEntry->m_fContValue[cont->m_byLv];
         m_EP.SetEff_Plus(static_cast<unsigned int>(paramIndex), value, false);
       }
       else if (effectType == 2)
@@ -547,23 +559,35 @@ void CCharacter::RemoveSFContHelpByEffect(int nContParamCode, int nContParamInde
     if (!cont->m_bExist)
       continue;
 
-    auto *record = reinterpret_cast<_base_fld *>(
-      g_Main.m_tblEffectData[cont->m_byEffectCode].GetRecord(cont->m_wEffectIndex));
-    char *effectParamBase = nullptr;
+    _cont_param_list *effectParamList = nullptr;
     if (cont->m_byEffectCode == 1)
-      effectParamBase = &record[12].m_strCode[56];
+    {
+      _force_fld *record = static_cast<_force_fld *>(
+        g_Main.m_tblEffectData[cont->m_byEffectCode].GetRecord(cont->m_wEffectIndex));
+      if (record)
+      {
+        effectParamList = record->m_ContParamList;
+      }
+    }
     else
-      effectParamBase = &record[13].m_strCode[48];
+    {
+      _skill_fld *record = static_cast<_skill_fld *>(
+        g_Main.m_tblEffectData[cont->m_byEffectCode].GetRecord(cont->m_wEffectIndex));
+      if (record)
+      {
+        effectParamList = record->m_ContParamList;
+      }
+    }
 
-    if (!effectParamBase)
+    if (!effectParamList)
       continue;
 
     for (int k = 0; k < 5; ++k)
     {
-      int *paramEntry = reinterpret_cast<int *>(effectParamBase + 36 * k);
-      if (*paramEntry == -1)
+      _cont_param_list *paramEntry = &effectParamList[k];
+      if (paramEntry->m_nContParamCode == -1)
         break;
-      if (paramEntry[0] == nContParamCode && paramEntry[1] == nContParamIndex)
+      if (paramEntry->m_nContParamCode == nContParamCode && paramEntry->m_nContParamIndex == nContParamIndex)
       {
         RemoveSFContEffect(1, static_cast<unsigned __int16>(j), false, false);
         break;
@@ -1831,7 +1855,7 @@ unsigned __int8 CCharacter::InsertSFContEffect(
   unsigned int effectCount = static_cast<unsigned int>(-1);
   int cumulMax = 1;
   char *linkCode = nullptr;
-  _base_fld *effectRecord = nullptr;
+  _skill_fld *effectRecord = nullptr;
   bool isAura = false;
 
   if (!byContCode)
@@ -1848,8 +1872,8 @@ unsigned __int8 CCharacter::InsertSFContEffect(
 
   if (!byEffectCode)
   {
-    effectRecord = g_Main.m_tblEffectData[0].GetRecord(dwEffectIndex);
-    if (effectRecord && effectRecord[1].m_dwIndex == 4)
+    effectRecord = static_cast<_skill_fld *>(g_Main.m_tblEffectData[0].GetRecord(dwEffectIndex));
+    if (effectRecord && effectRecord->m_nClass == 4)
     {
       isAura = true;
     }
@@ -1873,8 +1897,8 @@ unsigned __int8 CCharacter::InsertSFContEffect(
         return static_cast<unsigned __int8>(-13);
       }
       if (isAura
-          && effectRecord[1].m_dwIndex == 4
-          && !std::strncmp(effectRecord[12].m_strCode, "-1", 2))
+          && effectRecord->m_nClass == 4
+          && !std::strncmp(effectRecord->m_strRangeEffCode, "-1", 2))
       {
         cont->m_dwStartSec = startSec;
         return 0;
@@ -1962,22 +1986,28 @@ unsigned __int8 CCharacter::InsertSFContEffect(
 
   if (static_cast<int>(effectCount) == cumulCount)
   {
-    unsigned __int16 *record = reinterpret_cast<unsigned __int16 *>(
-      g_Main.m_tblEffectData[byEffectCode].GetRecord(linkCode));
-    if (!record)
-    {
-      m_bLastContEffectUpdate = true;
-      return 0;
-    }
     if (byEffectCode == 1)
     {
-      contEffectSec = record[528];
+      _force_fld *record = static_cast<_force_fld *>(g_Main.m_tblEffectData[byEffectCode].GetRecord(linkCode));
+      if (!record)
+      {
+        m_bLastContEffectUpdate = true;
+        return 0;
+      }
+      contEffectSec = static_cast<unsigned __int16>(record->m_nContEffectSec[0]);
+      _set_sf_cont(targetCont, byEffectCode, static_cast<unsigned __int16>(record->m_dwIndex), 1u, startSec, contEffectSec, 0);
     }
     else
     {
-      contEffectSec = record[558];
+      _skill_fld *record = static_cast<_skill_fld *>(g_Main.m_tblEffectData[byEffectCode].GetRecord(linkCode));
+      if (!record)
+      {
+        m_bLastContEffectUpdate = true;
+        return 0;
+      }
+      contEffectSec = static_cast<unsigned __int16>(record->m_nContEffectSec[0]);
+      _set_sf_cont(targetCont, byEffectCode, static_cast<unsigned __int16>(record->m_dwIndex), 1u, startSec, contEffectSec, 0);
     }
-    _set_sf_cont(targetCont, byEffectCode, *record, 1u, startSec, contEffectSec, 0);
     if (!pActChar || pActChar->m_ObjID.m_byID)
     {
       if (!m_ObjID.m_byID)

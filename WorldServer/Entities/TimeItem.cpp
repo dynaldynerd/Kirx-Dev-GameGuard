@@ -111,17 +111,17 @@ bool TimeItem::CheckGoods()
       break;
     }
 
-    _base_fld *record = _kRecTimeItem.GetRecord(n);
-    unsigned __int8 itemTableCode = static_cast<unsigned __int8>(GetItemTableCode(reinterpret_cast<char *>(&record[1])));
-    _base_fld *itemRecord = g_Main.m_tblItemData[itemTableCode].GetRecord(reinterpret_cast<char *>(&record[1]), 7);
+    _TimeItem_fld *record = static_cast<_TimeItem_fld *>(_kRecTimeItem.GetRecord(n));
+    unsigned __int8 itemTableCode = static_cast<unsigned __int8>(GetItemTableCode(record->m_strLendItemCode));
+    _base_fld *itemRecord = g_Main.m_tblItemData[itemTableCode].GetRecord(record->m_strLendItemCode, 7);
     if (!itemRecord)
     {
-      MyMessageBox("TimeItem", "Wrong Code : %s", reinterpret_cast<char *>(&record[1]));
+      MyMessageBox("TimeItem", "Wrong Code : %s", record->m_strLendItemCode);
       return false;
     }
     if (!IsTimeItem(itemTableCode, static_cast<int>(itemRecord->m_dwIndex)))
     {
-      MyMessageBox("TimeItem", "Is not Lend item : %s", reinterpret_cast<char *>(&record[1]));
+      MyMessageBox("TimeItem", "Is not Lend item : %s", record->m_strLendItemCode);
       return false;
     }
     const char *itemKorName = GetItemKorName(itemTableCode, static_cast<int>(itemRecord->m_dwIndex));
@@ -129,8 +129,8 @@ bool TimeItem::CheckGoods()
       "[%s(%s)], method:%d, lentime:%d",
       itemKorName,
       itemRecord->m_strCode,
-      *reinterpret_cast<int *>(&record[1].m_strCode[60]),
-      record[2].m_dwIndex);
+      record->m_nCheckType,
+      record->m_nUseTime);
   }
 
   return true;

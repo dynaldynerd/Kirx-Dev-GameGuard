@@ -382,16 +382,16 @@ int _Check_SF_UseType(_base_fld *pFld, int nEffectType)
   {
     if (nEffectType == 1)
     {
-      const _base_fld *record = pFld;
-      if (record[11].m_dwIndex)
+      const _force_fld *record = static_cast<const _force_fld *>(pFld);
+      if (record->m_bAttackable)
       {
         return 0;
       }
 
-      const int conditionValue = *reinterpret_cast<const int *>(&record[12].m_strCode[48]);
+      const int conditionValue = record->m_nContEffectType;
       if (conditionValue == -1)
       {
-        if (*reinterpret_cast<const int *>(&record[12].m_strCode[12]) == -1)
+        if (record->m_nTempEffectType == -1)
         {
           return -1;
         }
@@ -415,16 +415,16 @@ int _Check_SF_UseType(_base_fld *pFld, int nEffectType)
     return -1;
   }
 
-  const _base_fld *record = pFld;
-  if (record[11].m_dwIndex == 1)
+  const _skill_fld *record = static_cast<const _skill_fld *>(pFld);
+  if (record->m_nAttackable == 1)
   {
     return 0;
   }
 
-  const int conditionValue = *reinterpret_cast<const int *>(&record[13].m_strCode[32]);
+  const int conditionValue = record->m_nContEffectType;
   if (conditionValue == -1)
   {
-    if (record[13].m_dwIndex == static_cast<unsigned int>(-1))
+    if (record->m_nTempEffectType == -1)
     {
       return -1;
     }

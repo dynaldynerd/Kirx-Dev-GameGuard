@@ -4,6 +4,8 @@
 #include "CCharacter.h"
 #include "GlobalObjects.h"
 #include "CRecordData.h"
+#include "skill_fld.h"
+#include "force_fld.h"
 
 CAggroNode::CAggroNode()
 {
@@ -116,19 +118,19 @@ void CAggroNode::SetAggro(
         break;
       }
 
-      _base_fld *record = g_Main.m_tblEffectData[0].GetRecord(static_cast<int>(dwAttackSerial));
+      _skill_fld *record = static_cast<_skill_fld *>(g_Main.m_tblEffectData[0].GetRecord(static_cast<int>(dwAttackSerial)));
       if (!record)
       {
         break;
       }
 
-      if (*reinterpret_cast<int *>(&record[13].m_strCode[32]))
+      if (record->m_nContEffectType)
       {
-        if (*reinterpret_cast<int *>(&record[13].m_strCode[32]) != 1 || !bOtherPlayerSupport)
+        if (record->m_nContEffectType != 1 || !bOtherPlayerSupport)
         {
-          if (record[1].m_dwIndex)
+          if (record->m_nClass)
           {
-            if (record[1].m_dwIndex == 1)
+            if (record->m_nClass == 1)
             {
               defaultValue = g_AggroCaculateData.GetDefault(2u);
             }
@@ -160,15 +162,15 @@ void CAggroNode::SetAggro(
         break;
       }
 
-      _base_fld *record = g_Main.m_tblEffectData[1].GetRecord(static_cast<int>(dwAttackSerial));
+      _force_fld *record = static_cast<_force_fld *>(g_Main.m_tblEffectData[1].GetRecord(static_cast<int>(dwAttackSerial)));
       if (!record)
       {
         break;
       }
 
-      if (*reinterpret_cast<int *>(&record[12].m_strCode[48]))
+      if (record->m_nContEffectType)
       {
-        if (*reinterpret_cast<int *>(&record[12].m_strCode[48]) != 1 || !bOtherPlayerSupport)
+        if (record->m_nContEffectType != 1 || !bOtherPlayerSupport)
         {
           defaultValue = g_AggroCaculateData.GetDefault(1u);
           break;
@@ -190,16 +192,16 @@ void CAggroNode::SetAggro(
         break;
       }
 
-      _base_fld *record = g_Main.m_tblEffectData[2].GetRecord(static_cast<int>(dwAttackSerial));
+      _skill_fld *record = static_cast<_skill_fld *>(g_Main.m_tblEffectData[2].GetRecord(static_cast<int>(dwAttackSerial)));
       if (record)
       {
-        if (!*reinterpret_cast<int *>(&record[13].m_strCode[32]))
+        if (!record->m_nContEffectType)
         {
           defaultValue = g_AggroCaculateData.GetDefault(5u);
           break;
         }
 
-        if (*reinterpret_cast<int *>(&record[13].m_strCode[32]) != 1 || !bOtherPlayerSupport)
+        if (record->m_nContEffectType != 1 || !bOtherPlayerSupport)
         {
           defaultValue = g_AggroCaculateData.GetDefault(4u);
           break;

@@ -271,8 +271,8 @@ void CWorldSchedule::PassOneStep()
   {
     next = 0;
   }
-  _base_fld *record = this->m_tblSch.GetRecord(next);
-  this->m_nCurHour = record[1].m_dwIndex;
-  this->m_nCurMin = *reinterpret_cast<int *>(record[1].m_strCode);
+  _WorldSchedule_fld *record = static_cast<_WorldSchedule_fld *>(this->m_tblSch.GetRecord(next));
+  this->m_nCurHour = record->m_nHour;
+  this->m_nCurMin = record->m_nMin;
   this->m_nCurMilSec = 0;
 }

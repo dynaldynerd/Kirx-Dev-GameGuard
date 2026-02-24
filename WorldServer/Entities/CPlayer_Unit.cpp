@@ -87,10 +87,12 @@
 #include "guildroom_enter_request_clzo.h"
 #include "guildroom_out_request_clzo.h"
 #include "GuardTowerItem_fld.h"
+#include "SiegeKitItem_fld.h"
 #include "UnitKeyItem_fld.h"
 #include "TrapItem_fld.h"
 #include "UnitFrame_fld.h"
 #include "UnitPart_fld.h"
+#include "WeaponItem_fld.h"
 #include "UnitBullet_fld.h"
 #include "BulletItem_fld.h"
 #include "ItemCombine_exp_fld.h"
@@ -145,10 +147,10 @@ _UnitKeyItem_fld *GetUnitKeyMatchFrame(unsigned __int8 byFrameCode)
   const int recordNum = g_Main.m_tblItemData[19].GetRecordNum();
   for (int index = 0; index < recordNum; ++index)
   {
-    _base_fld *record = g_Main.m_tblItemData[19].GetRecord(index);
-    if (record && *reinterpret_cast<int *>(&record[3].m_strCode[60]) == byFrameCode)
+    _UnitKeyItem_fld *record = static_cast<_UnitKeyItem_fld *>(g_Main.m_tblItemData[19].GetRecord(index));
+    if (record && record->m_nFRAType == byFrameCode)
     {
-      return reinterpret_cast<_UnitKeyItem_fld *>(record);
+      return record;
     }
   }
   return nullptr;
@@ -196,9 +198,9 @@ void CPlayer::_UnitDestroy(unsigned __int8 byUnitSlot)
     return;
   }
 
-  _base_fld *record = g_Main.m_tblUnitFrame.GetRecord(unitData->byFrame);
+  _UnitFrame_fld *record = static_cast<_UnitFrame_fld *>(g_Main.m_tblUnitFrame.GetRecord(unitData->byFrame));
   if (record
-      && (!*reinterpret_cast<int *>(&record[1].m_strCode[60]) || *reinterpret_cast<int *>(&record[1].m_strCode[56])))
+      && (!record->m_bRepair || record->m_bDestroy))
   {
     unitData->Init(0xFFu);
     DeleteUnitKey(this, byUnitSlot);
@@ -247,10 +249,10 @@ void CPlayer::Emb_RidindUnit(bool bRiding, CParkingUnit *pCreateUnit)
     {
       if (m_pUsingUnit->byPart[j] != static_cast<unsigned __int8>(-1))
       {
-        _base_fld *record = g_Main.m_tblUnitPart[j].GetRecord(m_pUsingUnit->byPart[j]);
+        _UnitPart_fld *record = static_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[j].GetRecord(m_pUsingUnit->byPart[j]));
         if (record)
         {
-          m_nUnitDefFc += *reinterpret_cast<int *>(&record[5].m_strCode[8]);
+          m_nUnitDefFc += record->m_nDefFc;
         }
       }
     }
@@ -544,13 +546,13 @@ void CPlayer::AutoCharge_Booster()
     return;
   }
 
-  _base_fld *unitPartRecord = g_Main.m_tblUnitPart[5].GetRecord(m_pUsingUnit->byPart[5]);
+  _UnitPart_fld *unitPartRecord = static_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[5].GetRecord(m_pUsingUnit->byPart[5]));
   if (!unitPartRecord)
   {
     return;
   }
 
-  const int maxBooster = *reinterpret_cast<int *>(&unitPartRecord[5].m_strCode[56]);
+  const int maxBooster = unitPartRecord->m_nBstCha;
   if (!maxBooster)
   {
     return;
@@ -623,7 +625,8 @@ void CPlayer::pc_TransformSiegeModeRequest(unsigned __int16 wItemSerial)
   }
   else
   {
-    _base_fld *pSiegeRecord = g_Main.m_tblItemData[27].GetRecord(pInvenItem->m_wItemIndex);
+    _SiegeKitItem_fld *pSiegeRecord =
+      static_cast<_SiegeKitItem_fld *>(g_Main.m_tblItemData[27].GetRecord(pInvenItem->m_wItemIndex));
     if (!pSiegeRecord)
     {
       byRetCode = 1;
@@ -642,15 +645,15 @@ void CPlayer::pc_TransformSiegeModeRequest(unsigned __int16 wItemSerial)
     }
     else
     {
-      _base_fld *pWeaponRecord = g_Main.m_tblItemData[6].GetRecord(pWeapon->m_wItemIndex);
+      _WeaponItem_fld *pWeaponRecord =
+        static_cast<_WeaponItem_fld *>(g_Main.m_tblItemData[6].GetRecord(pWeapon->m_wItemIndex));
       if (!pWeaponRecord)
       {
         byRetCode = 6;
       }
       else if (
-        this->m_pmWpn.byWpType != *reinterpret_cast<int *>(&pSiegeRecord[3].m_strCode[4])
-        || *reinterpret_cast<int *>(&pWeaponRecord[6].m_strCode[12])
-             != *reinterpret_cast<int *>(&pSiegeRecord[3].m_strCode[8]))
+        this->m_pmWpn.byWpType != pSiegeRecord->m_nUsableTyoe
+        || pWeaponRecord->m_nSubType != pSiegeRecord->m_nSubType)
       {
         byRetCode = 6;
       }
@@ -1819,10 +1822,10 @@ void CPlayer::pc_UnitDeliveryRequest(
     createData.byTransDistCode = transDistCode;
 
     unsigned int maxGauge = 10000u;
-    _base_fld *frameRecord = g_Main.m_tblUnitFrame.GetRecord(unitData->byFrame);
-    if (frameRecord && *reinterpret_cast<int *>(&frameRecord[1].m_strCode[0]) > 0)
+    _UnitFrame_fld *frameRecord = static_cast<_UnitFrame_fld *>(g_Main.m_tblUnitFrame.GetRecord(unitData->byFrame));
+    if (frameRecord && frameRecord->m_nUnit_HP > 0)
     {
-      maxGauge = static_cast<unsigned int>(*reinterpret_cast<int *>(&frameRecord[1].m_strCode[0]));
+      maxGauge = static_cast<unsigned int>(frameRecord->m_nUnit_HP);
     }
     createData.wHPRate = static_cast<unsigned __int16>(10000u * unitData->dwGauge / maxGauge);
 
@@ -1980,10 +1983,10 @@ void CPlayer::pc_UnitLeaveRequest(float *pfNewPos)
     createData.byTransDistCode = 0;
 
     unsigned int maxGauge = 10000u;
-    _base_fld *frameRecord = g_Main.m_tblUnitFrame.GetRecord(m_pUsingUnit->byFrame);
-    if (frameRecord && *reinterpret_cast<int *>(&frameRecord[1].m_strCode[0]) > 0)
+    _UnitFrame_fld *frameRecord = static_cast<_UnitFrame_fld *>(g_Main.m_tblUnitFrame.GetRecord(m_pUsingUnit->byFrame));
+    if (frameRecord && frameRecord->m_nUnit_HP > 0)
     {
-      maxGauge = static_cast<unsigned int>(*reinterpret_cast<int *>(&frameRecord[1].m_strCode[0]));
+      maxGauge = static_cast<unsigned int>(frameRecord->m_nUnit_HP);
     }
     createData.wHPRate = static_cast<unsigned __int16>(10000u * m_pUsingUnit->dwGauge / maxGauge);
 

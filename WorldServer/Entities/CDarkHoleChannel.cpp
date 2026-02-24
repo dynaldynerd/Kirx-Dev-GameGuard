@@ -145,15 +145,21 @@ void CDarkHoleChannel::AddMonster()
       }
       else if (addMonster->ReactObj.ObjDefType == react_kind_mgrp)
       {
-        _monster_fld *monsterFld = addMonster->ReactObj.obj.monster.pMonsterFld;
-        const int count = *reinterpret_cast<int *>(&monsterFld->m_strCode[4]);
-        const __int64 entry =
-          *reinterpret_cast<__int64 *>(&monsterFld->m_strCode[8 * (rand() % count) + 12]);
+        __monster_group *monsterGroup = addMonster->ReactObj.obj.mon_grp.pMonGrp;
+        if (!monsterGroup || monsterGroup->nSubMonsterNum <= 0)
+        {
+          continue;
+        }
+        _monster_fld *monsterFld = monsterGroup->pSubMonster[rand() % monsterGroup->nSubMonsterNum];
+        if (!monsterFld)
+        {
+          continue;
+        }
         CreateRepMonster(
           m_pQuestSetup->pUseMap,
           m_wLayerIndex,
           newPos,
-          reinterpret_cast<char *>(entry + 4),
+          monsterFld->m_strCode,
           nullptr,
           false,
           true,
@@ -283,11 +289,15 @@ void CDarkHoleChannel::ShareItemToMonster()
       }
       else if (loot->ReactObj.ObjDefType == react_kind_mgrp)
       {
-        _monster_fld *monsterGroup = loot->ReactObj.obj.monster.pMonsterFld;
+        __monster_group *monsterGroup = loot->ReactObj.obj.mon_grp.pMonGrp;
         bool found = false;
-        for (int n = 0; n < *reinterpret_cast<int *>(&monsterGroup->m_strCode[4]); ++n)
+        if (!monsterGroup)
         {
-          if (*reinterpret_cast<_monster_fld **>(&monsterGroup->m_strCode[8 * n + 12]) == monster->m_pMonRec)
+          continue;
+        }
+        for (int n = 0; n < monsterGroup->nSubMonsterNum; ++n)
+        {
+          if (monsterGroup->pSubMonster[n] == monster->m_pMonRec)
           {
             found = true;
             break;
@@ -1634,14 +1644,21 @@ void CDarkHoleChannel::CheckInnerEventDummy()
           break;
         case react_kind_mgrp:
         {
-          _monster_fld *monsterFld = innerCheck->ReactObj.obj.monster.pMonsterFld;
-          const __int64 picked = *reinterpret_cast<__int64 *>(
-            &monsterFld->m_strCode[8 * (rand() % *reinterpret_cast<int *>(&monsterFld->m_strCode[4])) + 12]);
+          __monster_group *monsterGroup = innerCheck->ReactObj.obj.mon_grp.pMonGrp;
+          if (!monsterGroup || monsterGroup->nSubMonsterNum <= 0)
+          {
+            break;
+          }
+          _monster_fld *monsterFld = monsterGroup->pSubMonster[rand() % monsterGroup->nSubMonsterNum];
+          if (!monsterFld)
+          {
+            break;
+          }
           CreateRepMonster(
             m_pQuestSetup->pUseMap,
             m_wLayerIndex,
             spawnPos,
-            reinterpret_cast<char *>(picked + 4),
+            monsterFld->m_strCode,
             nullptr,
             false,
             true,
@@ -1739,14 +1756,21 @@ void CDarkHoleChannel::CheckRespawnMonster()
       }
       else if (respawnData->ReactObj.ObjDefType == react_kind_mgrp)
       {
-        _monster_fld *monsterFld = respawnData->ReactObj.obj.monster.pMonsterFld;
-        const __int64 picked = *reinterpret_cast<__int64 *>(
-          &monsterFld->m_strCode[8 * (rand() % *reinterpret_cast<int *>(&monsterFld->m_strCode[4])) + 12]);
+        __monster_group *monsterGroup = respawnData->ReactObj.obj.mon_grp.pMonGrp;
+        if (!monsterGroup || monsterGroup->nSubMonsterNum <= 0)
+        {
+          continue;
+        }
+        _monster_fld *monsterFld = monsterGroup->pSubMonster[rand() % monsterGroup->nSubMonsterNum];
+        if (!monsterFld)
+        {
+          continue;
+        }
         liveSlot->pMon = CreateRepMonster(
           m_pQuestSetup->pUseMap,
           m_wLayerIndex,
           spawnPos,
-          reinterpret_cast<char *>(picked + 4),
+          monsterFld->m_strCode,
           nullptr,
           false,
           true,

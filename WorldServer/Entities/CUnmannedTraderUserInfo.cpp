@@ -9,6 +9,7 @@
 #include "CMoneySupplyMgr.h"
 #include "CRecordData.h"
 #include "class_fld.h"
+#include "force_fld.h"
 #include "CHolyStoneSystem.h"
 #include "CHonorGuild.h"
 #include "CLogTypeDBTaskManager.h"
@@ -451,8 +452,9 @@ unsigned __int8 CUnmannedTraderUserInfo::RegistItem(
 
   if (registTarget->m_byTableCode == 15)
   {
-    _base_fld *effectRecord = g_Main.m_tblEffectData[1].GetRecord(CPlayer::s_pnLinkForceItemToEffect[registTarget->m_wItemIndex]);
-    queryData[60] = effectRecord ? effectRecord[4].m_strCode[60] : 0;
+    _force_fld *effectRecord = static_cast<_force_fld *>(
+      g_Main.m_tblEffectData[1].GetRecord(CPlayer::s_pnLinkForceItemToEffect[registTarget->m_wItemIndex]));
+    queryData[60] = effectRecord ? static_cast<char>(effectRecord->m_nLv) : 0;
   }
   else
   {

@@ -35,8 +35,16 @@
 #include "WorldServerUtil.h"
 #include "GlobalObjects.h"
 #include "ITEM_EFFECT.h"
+#include "BatteryItem_fld.h"
+#include "EditData_fld.h"
+#include "GuardTowerItem_fld.h"
 #include "ItemUpgrade_fld.h"
+#include "Quest_fld.h"
 #include "TimeItem.h"
+#include "UnitFrame_fld.h"
+#include "WeaponItem_fld.h"
+#include "force_fld.h"
+#include "skill_fld.h"
 
 #include <mmsystem.h>
 
@@ -47,7 +55,7 @@ static float fTarPos[3];
 
 char CPlayer::dev_after_effect()
 {
-  _base_fld *record = g_Main.m_tblEffectData[3].GetRecord( "17");
+  _skill_fld *record = static_cast<_skill_fld *>(g_Main.m_tblEffectData[3].GetRecord("17"));
   if (!record)
   {
     return 0;
@@ -55,10 +63,10 @@ char CPlayer::dev_after_effect()
 
   int unusedFlag = 1;
   unsigned int curTime = _sf_continous::GetSFContCurTime();
-  unsigned __int16 durSec = *reinterpret_cast<unsigned __int16 *>(&record[16].m_strCode[24]);
+  unsigned __int16 durSec = static_cast<unsigned __int16>(record->m_nContEffectSec[0]);
   bool upMty = false;
   if (!this->InsertSFContEffect(
-        static_cast<unsigned __int8>(record[13].m_strCode[32]),
+        static_cast<unsigned __int8>(record->m_nContEffectType),
         3,
         record->m_dwIndex,
         durSec,
@@ -636,19 +644,19 @@ char CPlayer::dev_loot_fullitem(unsigned __int8 byLv)
     __int64 i; // rcx
     __int64 v5; // [rsp+0h] [rbp-88h] BYREF
     char Buffer[32]; // [rsp+38h] [rbp-50h] BYREF
-    _base_fld *Record; // [rsp+58h] [rbp-30h]
+    _EditData_fld *Record; // [rsp+58h] [rbp-30h]
     int j; // [rsp+60h] [rbp-28h]
   memset(Buffer, 0, 9);
     sprintf(Buffer, "%s_%d", this->m_Param.m_pClassData->m_strCode, byLv);
-    Record = g_Main.m_tblEditData.GetRecord( Buffer);
+    Record = static_cast<_EditData_fld *>(g_Main.m_tblEditData.GetRecord(Buffer));
     if ( !Record )
       return 0;
     for ( j = 0; j < 30; ++j )
     {
-      if ( *reinterpret_cast<int *>(&Record[j + 1].m_strCode[60]) > 0 )
+      if (Record->m_Node[j].m_nEditItemcount > 0)
         this->dev_loot_item(
-          reinterpret_cast<char *>(&Record[j + 1]),
-          *reinterpret_cast<unsigned int *>(&Record[j + 1].m_strCode[60]),
+          Record->m_Node[j].m_strEditItemCode,
+          Record->m_Node[j].m_nEditItemcount,
           0LL,
           0);
     }
@@ -740,18 +748,18 @@ char CPlayer::dev_loot_mine()
     int v6; // eax
     __int64 v8; // [rsp+0h] [rbp-68h] BYREF
     int n; // [rsp+30h] [rbp-38h]
-    _base_fld *Record; // [rsp+38h] [rbp-30h]
+    _WeaponItem_fld *Record; // [rsp+38h] [rbp-30h]
     char *ItemEquipCivil; // [rsp+40h] [rbp-28h]
-    _base_fld *v12; // [rsp+48h] [rbp-20h]
+    _BatteryItem_fld *v12; // [rsp+48h] [rbp-20h]
     char *v13; // [rsp+50h] [rbp-18h]
   for ( n = 0; ; ++n )
     {
       RecordNum = g_Main.m_tblItemData[6].GetRecordNum();
       if ( n >= RecordNum )
         break;
-      Record = g_Main.m_tblItemData[6].GetRecord( n);
-      if ( Record[1].m_dwIndex
-           && *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[8]) == 10 )
+      Record = static_cast<_WeaponItem_fld *>(g_Main.m_tblItemData[6].GetRecord(n));
+      if (Record && Record->m_bExist
+           && Record->m_nType == 10)
       {
         ItemEquipCivil = GetItemEquipCivil(6, n);
         RaceSexCode = this->m_Param.GetRaceSexCode();
@@ -764,8 +772,8 @@ char CPlayer::dev_loot_mine()
       v5 = g_Main.m_tblItemData[16].GetRecordNum();
       if ( n >= v5 )
         break;
-      v12 = g_Main.m_tblItemData[16].GetRecord( n);
-      if ( v12[1].m_dwIndex )
+      v12 = static_cast<_BatteryItem_fld *>(g_Main.m_tblItemData[16].GetRecord(n));
+      if (v12 && v12->m_bExist)
       {
         v13 = GetItemEquipCivil(16, n);
         if ( v13 )
@@ -781,45 +789,42 @@ char CPlayer::dev_loot_mine()
 
 char CPlayer::dev_loot_tower()
 {
-
-    __int64 *v1; // rdi
-    __int64 i; // rcx
-    __int64 v4; // [rsp+0h] [rbp-B8h] BYREF
-    int RecordNum; // [rsp+50h] [rbp-68h]
-    int n; // [rsp+54h] [rbp-64h]
-    _base_fld *Record; // [rsp+58h] [rbp-60h]
-    _STORAGE_LIST::_db_con pItem; // [rsp+68h] [rbp-50h] BYREF
-    int j; // [rsp+A4h] [rbp-14h]
-  RecordNum = g_Main.m_tblItemData[25].GetRecordNum();
-    for ( n = 0; n < RecordNum; ++n )
+  const int recordNum = g_Main.m_tblItemData[25].GetRecordNum();
+  for (int n = 0; n < recordNum; ++n)
+  {
+    _GuardTowerItem_fld *record = static_cast<_GuardTowerItem_fld *>(g_Main.m_tblItemData[25].GetRecord(n));
+    if (!record || !IsExistItem(25, n) || !IsGroundableItem(25, n))
     {
-      Record = g_Main.m_tblItemData[25].GetRecord( n);
-      if ( IsExistItem(25, n) && IsGroundableItem(25, n) )
-      {
-        pItem.Init();
-        pItem.m_byTableCode = 25;
-        pItem.m_wItemIndex = n;
-        pItem.m_dwDur = GetItemDurPoint(25, n);
-        pItem.m_dwLv = 0xFFFFFFF;
-        if ( !CreateItemBox(
-                &pItem,
-                this,
-                0xFFFFFFFF,
-                0,
-                0LL,
-                2u,
-                this->m_pCurMap,
-                this->m_wMapLayerIndex,
-                this->m_fCurPos,
-                1) )
-          return 1;
-        for ( j = 0;
-              j < 3 && loot_item(this, &Record[j + 7].m_strCode[4], 1, 0LL, 0);
-              ++j )
-          ;
-      }
+      continue;
     }
-    return 1;
+
+    _STORAGE_LIST::_db_con item{};
+    item.Init();
+    item.m_byTableCode = 25;
+    item.m_wItemIndex = static_cast<unsigned __int16>(n);
+    item.m_dwDur = GetItemDurPoint(25, n);
+    item.m_dwLv = 0x0FFFFFFF;
+    if (!CreateItemBox(
+          &item,
+          this,
+          0xFFFFFFFF,
+          0,
+          nullptr,
+          2u,
+          this->m_pCurMap,
+          this->m_wMapLayerIndex,
+          this->m_fCurPos,
+          1))
+    {
+      return 1;
+    }
+
+    for (int j = 0; j < 3 && loot_item(this, record->m_Material[j].strMaterialCode, 1, nullptr, 0); ++j)
+    {
+    }
+  }
+
+  return 1;
 }
 
 char CPlayer::dev_lv(int nLv)
@@ -936,7 +941,7 @@ char CPlayer::dev_quest_complete()
     int j; // [rsp+20h] [rbp-28h]
     _QUEST_DB_BASE::_LIST *pSlotData; // [rsp+28h] [rbp-20h]
     int k; // [rsp+30h] [rbp-18h]
-    _base_fld *Record; // [rsp+38h] [rbp-10h]
+    _Quest_fld *Record; // [rsp+38h] [rbp-10h]
   if ( !this->m_pUserDB )
       return 0;
     for ( j = 0; ; ++j )
@@ -951,9 +956,9 @@ char CPlayer::dev_quest_complete()
       pSlotData->wNum[k] = -1;
     pSlotData->dwPassSec = -1;
     this->m_pUserDB->Update_QuestUpdate( j, pSlotData, 1);
-    Record = CQuestMgr::s_tblQuest->GetRecord( pSlotData->wIndex);
-    if ( *reinterpret_cast<unsigned int *>(&Record[13].m_strCode[60])
-         || *reinterpret_cast<unsigned int *>(&Record[1].m_strCode[24]) )
+    Record = static_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(pSlotData->wIndex));
+    if (Record->m_bSelectConsITMenual
+         || Record->m_bSelectQuestMenual)
       this->SendMsg_SelectQuestReward( j);
     else
       this->Emb_CompleteQuest( j, 0xFFu, 0xFFu);
@@ -971,7 +976,7 @@ char CPlayer::dev_quest_complete_other(char *pwszCharName)
     int j; // [rsp+30h] [rbp-28h]
     _QUEST_DB_BASE::_LIST *pSlotData; // [rsp+38h] [rbp-20h]
     int k; // [rsp+40h] [rbp-18h]
-    _base_fld *Record; // [rsp+48h] [rbp-10h]
+    _Quest_fld *Record; // [rsp+48h] [rbp-10h]
   v6 = SearchAvatorWithName(g_UserDB, MAX_PLAYER, pwszCharName);
     if ( !v6 )
       return 0;
@@ -990,9 +995,9 @@ char CPlayer::dev_quest_complete_other(char *pwszCharName)
       pSlotData->wNum[k] = -1;
     pSlotData->dwPassSec = -1;
     v6->Update_QuestUpdate( j, pSlotData, 1);
-    Record = CQuestMgr::s_tblQuest->GetRecord( pSlotData->wIndex);
-    if ( *reinterpret_cast<unsigned int *>(&Record[13].m_strCode[60])
-         || *reinterpret_cast<unsigned int *>(&Record[1].m_strCode[24]) )
+    Record = static_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(pSlotData->wIndex));
+    if (Record->m_bSelectConsITMenual
+         || Record->m_bSelectQuestMenual)
       v7->SendMsg_SelectQuestReward( j);
     else
       v7->Emb_CompleteQuest( j, 0xFFu, 0xFFu);
@@ -1110,13 +1115,13 @@ char CPlayer::dev_set_hp(float prob)
     }
 
     const unsigned __int8 byFrame = this->m_pUsingUnit->byFrame;
-    _base_fld *record = g_Main.m_tblUnitFrame.GetRecord(byFrame);
+    _UnitFrame_fld *record = static_cast<_UnitFrame_fld *>(g_Main.m_tblUnitFrame.GetRecord(byFrame));
     if (!record)
     {
       return 0;
     }
 
-    const int maxGauge = *reinterpret_cast<int *>(record[1].m_strCode);
+    const int maxGauge = record->m_nUnit_HP;
     int newGauge = static_cast<int>(static_cast<float>(maxGauge) * prob);
     if (newGauge == 0)
     {
@@ -1230,9 +1235,9 @@ char CPlayer::dev_up_all(int nCum)
     __int64 v5; // [rsp+0h] [rbp-98h] BYREF
     unsigned int dwStatIndex; // [rsp+20h] [rbp-78h]
     _DWORD v7[12]; // [rsp+38h] [rbp-60h] BYREF
-    _base_fld *Record; // [rsp+68h] [rbp-30h]
+    _skill_fld *Record; // [rsp+68h] [rbp-30h]
     int n; // [rsp+70h] [rbp-28h]
-    _base_fld *v10; // [rsp+78h] [rbp-20h]
+    _skill_fld *v10; // [rsp+78h] [rbp-20h]
     unsigned int dwNewCum; // [rsp+80h] [rbp-18h]
     float fVal; // [rsp+84h] [rbp-14h]
   if ( nCum < 0 )
@@ -1253,24 +1258,24 @@ char CPlayer::dev_up_all(int nCum)
     Record = 0LL;
     for ( n = 0; n < 48; ++n )
     {
-      Record = _MASTERY_PARAM::s_pSkillData->GetRecord( n);
-      if ( Record && *reinterpret_cast<unsigned int *>(&Record[1].m_strCode[4]) < 8u )
+      Record = static_cast<_skill_fld *>(_MASTERY_PARAM::s_pSkillData->GetRecord(n));
+      if (Record && static_cast<unsigned int>(Record->m_nMastIndex) < 8u)
       {
         if ( strncmp(Record->m_strCode, "FF", 2uLL) )
-          ++v7[*reinterpret_cast<int *>(&Record[1].m_strCode[4])];
+          ++v7[Record->m_nMastIndex];
       }
     }
     for ( n = 0; n < 8; ++n )
       this->m_pmMst.m_dwSkillMasteryCum[n] = 0;
     for ( dwStatIndex = 0; (int)dwStatIndex < 48; ++dwStatIndex )
     {
-      v10 = _MASTERY_PARAM::s_pSkillData->GetRecord( dwStatIndex);
+      v10 = static_cast<_skill_fld *>(_MASTERY_PARAM::s_pSkillData->GetRecord(dwStatIndex));
       if ( v10 && strncmp(v10->m_strCode, "FF", 2uLL) )
       {
         dwNewCum = nCum;
-        if ( (int)v7[*reinterpret_cast<int *>(&v10[1].m_strCode[4])] > 0 )
+        if (v10->m_nMastIndex >= 0 && v10->m_nMastIndex < 8 && (int)v7[v10->m_nMastIndex] > 0)
         {
-          fVal = (float)(int)dwNewCum / (float)(int)v7[*reinterpret_cast<int *>(&v10[1].m_strCode[4])];
+          fVal = (float)(int)dwNewCum / (float)(int)v7[v10->m_nMastIndex];
           dwNewCum = CalcRoundUp(fVal);
         }
         this->Emb_UpdateStat( dwStatIndex + 4, dwNewCum, 0);
@@ -1316,9 +1321,9 @@ char CPlayer::dev_up_all_pt(int nLv)
     unsigned int dwNewData; // [rsp+20h] [rbp-88h]
     unsigned int dwStatIndex; // [rsp+24h] [rbp-84h]
     _DWORD v18[12]; // [rsp+38h] [rbp-70h] BYREF
-    _base_fld *Record; // [rsp+68h] [rbp-40h]
+    _skill_fld *Record; // [rsp+68h] [rbp-40h]
     int n; // [rsp+70h] [rbp-38h]
-    _base_fld *v21; // [rsp+78h] [rbp-30h]
+    _skill_fld *v21; // [rsp+78h] [rbp-30h]
     unsigned int dwNewCum; // [rsp+80h] [rbp-28h]
     float fVal; // [rsp+84h] [rbp-24h]
     float v24; // [rsp+88h] [rbp-20h]
@@ -1353,24 +1358,24 @@ char CPlayer::dev_up_all_pt(int nLv)
     Record = 0LL;
     for ( n = 0; n < 48; ++n )
     {
-      Record = _MASTERY_PARAM::s_pSkillData->GetRecord( n);
-      if ( Record && *reinterpret_cast<unsigned int *>(&Record[1].m_strCode[4]) < 8u )
+      Record = static_cast<_skill_fld *>(_MASTERY_PARAM::s_pSkillData->GetRecord(n));
+      if (Record && static_cast<unsigned int>(Record->m_nMastIndex) < 8u)
       {
         if ( strncmp(Record->m_strCode, "FF", 2uLL) )
-          ++v18[*reinterpret_cast<int *>(&Record[1].m_strCode[4])];
+          ++v18[Record->m_nMastIndex];
       }
     }
     for ( n = 0; n < 8; ++n )
       this->m_pmMst.m_dwSkillMasteryCum[n] = 0;
     for ( dwStatIndex = 0; (int)dwStatIndex < 48; ++dwStatIndex )
     {
-      v21 = _MASTERY_PARAM::s_pSkillData->GetRecord( dwStatIndex);
+      v21 = static_cast<_skill_fld *>(_MASTERY_PARAM::s_pSkillData->GetRecord(dwStatIndex));
       if ( v21 && strncmp(v21->m_strCode, "FF", 2uLL) )
       {
         dwNewCum = dwNewData;
-        if ( (int)v18[*reinterpret_cast<int *>(&v21[1].m_strCode[4])] > 0 )
+        if (v21->m_nMastIndex >= 0 && v21->m_nMastIndex < 8 && (int)v18[v21->m_nMastIndex] > 0)
         {
-          fVal = (float)(int)dwNewCum / (float)(int)v18[*reinterpret_cast<int *>(&v21[1].m_strCode[4])];
+          fVal = (float)(int)dwNewCum / (float)(int)v18[v21->m_nMastIndex];
           dwNewCum = CalcRoundUp(fVal);
         }
         this->Emb_UpdateStat( dwStatIndex + 4, dwNewCum, 0);
@@ -2393,7 +2398,7 @@ char CPlayer::mgr_make_system_tower(char *pszTowerCode)
     __int64 i; // rcx
     __int64 v5; // [rsp+0h] [rbp-3D8h] BYREF
     char wszTran[136]; // [rsp+40h] [rbp-398h] BYREF
-    _base_fld *Record; // [rsp+C8h] [rbp-310h]
+    _GuardTowerItem_fld *Record; // [rsp+C8h] [rbp-310h]
     int v8; // [rsp+D0h] [rbp-308h]
     int j; // [rsp+D4h] [rbp-304h]
     LPCSTR lpAppName[9]; // [rsp+E8h] [rbp-2F0h]
@@ -2403,7 +2408,7 @@ char CPlayer::mgr_make_system_tower(char *pszTowerCode)
     char KeyName[160]; // [rsp+290h] [rbp-148h] BYREF
     char String[144]; // [rsp+330h] [rbp-A8h] BYREF
   M2W(pszTowerCode, wszTran, 0x80u);
-    Record = g_Main.m_tblItemData[25].GetRecord( pszTowerCode);
+    Record = static_cast<_GuardTowerItem_fld *>(g_Main.m_tblItemData[25].GetRecord(pszTowerCode));
     if ( !Record )
       return 0;
     if ( this->m_pCurMap->m_pMapSet->m_nMapType )
@@ -2411,7 +2416,7 @@ char CPlayer::mgr_make_system_tower(char *pszTowerCode)
     v8 = -1;
     for ( j = 0; j < 3; ++j )
     {
-      if ( Record[3].m_strCode[2 * j + 52] == 49 )
+      if (Record->m_strCivil[2 * j] == 49)
       {
         v8 = j;
         break;

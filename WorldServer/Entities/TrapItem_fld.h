@@ -25,6 +25,7 @@ struct  _TrapItem_fld : _base_fld
   float m_fAttGap;
   int m_nAttack_DP;
   float m_fGADst;
+  int m_bSetTarget;
   int m_nAttSklUnit;
   int m_nGAMinAF;
   int m_nGAMaxAF;
@@ -36,7 +37,6 @@ struct  _TrapItem_fld : _base_fld
   float m_fDefGap;
   float m_fDefFacing;
   char m_strEffcode[64];
-  int m_bSetTarget;
   int m_nProperty;
   int m_nFireTol;
   int m_nWaterTol;

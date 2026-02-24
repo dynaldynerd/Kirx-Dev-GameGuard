@@ -4,6 +4,7 @@
 
 #include "CPlayer.h"
 #include "CRecordData.h"
+#include "ResourceItem_fld.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
@@ -183,25 +184,25 @@ unsigned __int8 CTalkCrystalCombineManager::CheckMixItem(
     return 12;
   }
 
-  _base_fld *record = g_Main.m_tblItemData[18].GetRecord(pItem->m_wItemIndex);
+  _ResourceItem_fld *record = static_cast<_ResourceItem_fld *>(g_Main.m_tblItemData[18].GetRecord(pItem->m_wItemIndex));
   if (!record)
   {
     return 4;
   }
 
-  if (*reinterpret_cast<int *>(&record[4].m_strCode[4]) < 0)
+  if (record->m_nMixNum < 0)
   {
     return 16;
   }
 
-  *pMixIndex = *reinterpret_cast<int *>(&record[4].m_strCode[4]);
-  const int itemTableCode = GetItemTableCode(&record[4].m_strCode[12]);
+  *pMixIndex = record->m_nMixNum;
+  const int itemTableCode = GetItemTableCode(record->m_strLastItem);
   if (itemTableCode == -1)
   {
     return 8;
   }
 
-  _base_fld *recordByHash = g_Main.m_tblItemData[itemTableCode].GetRecordByHash(&record[4].m_strCode[12], 2, 5);
+  _base_fld *recordByHash = g_Main.m_tblItemData[itemTableCode].GetRecordByHash(record->m_strLastItem, 2, 5);
   if (!recordByHash)
   {
     return 8;
@@ -209,7 +210,7 @@ unsigned __int8 CTalkCrystalCombineManager::CheckMixItem(
 
   *pbyTableCode = static_cast<unsigned __int8>(itemTableCode);
   *pwItemIndex = static_cast<unsigned __int16>(recordByHash->m_dwIndex);
-  *pnNeedItemCount = static_cast<int>(*reinterpret_cast<float *>(&record[4].m_strCode[8]));
+  *pnNeedItemCount = static_cast<int>(record->m_fNeedNum);
   if (*pnNeedItemCount >= 0)
   {
     return 0;

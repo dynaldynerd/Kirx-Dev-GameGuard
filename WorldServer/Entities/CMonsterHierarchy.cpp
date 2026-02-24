@@ -201,7 +201,7 @@ void CMonsterHierarchy::OnChildRegenLoop()
           m_pThisMon->m_pCurMap,
           m_pThisMon->m_wMapLayerIndex,
           newPos,
-          &m_pThisMon->m_pRecordSet[kind + 26].m_strCode[28],
+          monsterRecord->m_Child[kind].strChildMon,
           m_pThisMon,
           m_pThisMon->m_bRobExp,
           false,
@@ -225,21 +225,21 @@ void CMonsterHierarchy::OnChildMonsterCreate(_monster_create_setdata *pData)
 {
 
   Init();
-  _base_fld *recordSet = pData->m_pRecordSet;
+  _monster_fld *recordSet = reinterpret_cast<_monster_fld *>(pData->m_pRecordSet);
   m_pParentMon = pData->pParent;
-  if (!m_pParentMon)
+  if (recordSet && !m_pParentMon)
   {
-    for (int j = 0; j < 3 && *reinterpret_cast<int *>(&recordSet[j + 27].m_strCode[24]) > 0; ++j)
+    for (int j = 0; j < 3 && recordSet->m_Child[j].nChildMonNum > 0; ++j)
     {
-      _base_fld *record = g_Main.m_tblMonster.GetRecord(&recordSet[j + 26].m_strCode[28]);
+      _base_fld *record = g_Main.m_tblMonster.GetRecord(recordSet->m_Child[j].strChildMon);
       if (!record)
       {
-        *reinterpret_cast<int *>(&recordSet[j + 27].m_strCode[24]) = 0;
+        recordSet->m_Child[j].nChildMonNum = 0;
         return;
       }
       if (reinterpret_cast<_monster_fld *>(record)->m_bExpDown == 1)
       {
-        *reinterpret_cast<int *>(&recordSet[j + 27].m_strCode[24]) = 0;
+        recordSet->m_Child[j].nChildMonNum = 0;
         return;
       }
       ++m_byChildMonSetNum;

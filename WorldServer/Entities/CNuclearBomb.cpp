@@ -8,6 +8,7 @@
 #include "CObjectList.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
+#include "TrapItem_fld.h"
 #include "nuclear_find_rader_result_zocl.h"
 #include "nuclear_result_code_zocl.h"
 #include "pnt_rect.h"
@@ -123,10 +124,11 @@ bool CNuclearBomb::Create(_nuclear_create_setdata *pData)
 {
   if (CCharacter::Create(pData))
   {
+    _TrapItem_fld *record = static_cast<_TrapItem_fld *>(m_pRecordSet);
     m_pMaster = pData->pMaster;
     m_dwStartTime = timeGetTime();
-    m_dwDurTime = 1000 * *reinterpret_cast<unsigned int *>(&m_pRecordSet[5].m_strCode[4]);
-    m_dwDelayTime = 1000 * *reinterpret_cast<unsigned int *>(&m_pRecordSet[5].m_strCode[12]);
+    m_dwDurTime = 1000 * static_cast<unsigned int>(record->m_nExpertLim);
+    m_dwDelayTime = 1000 * static_cast<unsigned int>(record->m_bDisjointable);
     m_dwObjSerial = static_cast<unsigned int>(GetNewSerial());
     m_bUse = true;
     m_bIsLive = true;
@@ -229,7 +231,8 @@ unsigned __int8 CNuclearBomb::GetMasterClass()
 
 void CNuclearBomb::GetShowEffectList()
 {
-  const int rangeWithBias = static_cast<int>(*reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[20]) + 100.0f);
+  _TrapItem_fld *record = static_cast<_TrapItem_fld *>(m_pRecordSet);
+  const int rangeWithBias = static_cast<int>(static_cast<float>(record->m_nIconIDX) + 100.0f);
   const int radius = rangeWithBias / 100;
 
   _pnt_rect rect{};
@@ -269,7 +272,8 @@ void CNuclearBomb::GetShowEffectList()
 
 void CNuclearBomb::NuclearDamege()
 {
-  const int damageRange = static_cast<int>(*reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[20]));
+  _TrapItem_fld *record = static_cast<_TrapItem_fld *>(m_pRecordSet);
+  const int damageRange = record->m_nIconIDX;
   const int radius = damageRange / 100;
 
   _pnt_rect rect{};
@@ -303,8 +307,7 @@ void CNuclearBomb::NuclearDamege()
                 && m_nDamagedObjNum < 300)
               {
                 m_DamList[m_nDamagedObjNum].m_pChar = candidate;
-                m_DamList[m_nDamagedObjNum].m_nDamage =
-                  *reinterpret_cast<int *>(&m_pRecordSet[5].m_strCode[48]);
+                m_DamList[m_nDamagedObjNum].m_nDamage = record->m_nGAMaxAF;
                 m_DamList[m_nDamagedObjNum++].m_dwDamCharSerial = candidate->m_dwObjSerial;
               }
             }

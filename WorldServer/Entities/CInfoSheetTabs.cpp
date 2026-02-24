@@ -23,6 +23,7 @@
 #include "CUserDB.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
+#include "monster_fld.h"
 #include "resource.h"
 
 namespace
@@ -538,8 +539,9 @@ void CObjectTab::UpdateTab()
   if (selected->m_ObjID.m_byKind == 0 && selected->m_ObjID.m_byID == 1)
   {
     CMonster *monster = static_cast<CMonster *>(selected);
+    const _monster_fld *monsterRecord = static_cast<const _monster_fld *>(monster->m_pRecordSet);
 
-    line.Format(_T("Mon-Monster - %S"), selected->m_pRecordSet ? selected->m_pRecordSet[1].m_strCode : "");
+    line.Format(_T("Mon-Monster - %S"), monsterRecord ? monsterRecord->m_strName : "");
     m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
 
     line.Format(_T("Code : %S"), selected->m_pRecordSet ? selected->m_pRecordSet->m_strCode : "");
@@ -698,7 +700,9 @@ void CObjectTab::UpdateTab()
   if (selected->m_ObjID.m_byKind == 1 && selected->m_ObjID.m_byID == 0)
   {
     CItemBox *itemBox = static_cast<CItemBox *>(selected);
-    line.Format(_T("Item-Box - %S"), selected->m_pRecordSet ? selected->m_pRecordSet[1].m_strCode : "");
+    line.Format(
+      _T("Item-Box - %S"),
+      GetItemKorName(itemBox->m_Item.m_byTableCode, itemBox->m_Item.m_wItemIndex));
     m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
 
     line.Format(_T("Index : %d"), itemBox->m_ObjID.m_wIndex);
@@ -707,7 +711,7 @@ void CObjectTab::UpdateTab()
     line.Format(
       _T("Item Name : %S(%S)"),
       selected->m_pRecordSet ? selected->m_pRecordSet->m_strCode : "",
-      selected->m_pRecordSet ? selected->m_pRecordSet[2].m_strCode : "");
+      GetItemKorName(itemBox->m_Item.m_byTableCode, itemBox->m_Item.m_wItemIndex));
     m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
 
     line.Format(_T("State : %d"), itemBox->m_nStateCode);

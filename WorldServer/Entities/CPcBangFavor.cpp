@@ -7,6 +7,7 @@
 #include "CPlayer.h"
 #include "CUserDB.h"
 #include "GlobalObjects.h"
+#include "PcRoom_fld.h"
 #include "WorldServerUtil.h"
 
 CPcBangFavor::CPcBangFavor()
@@ -87,7 +88,7 @@ int CPcBangFavor::ClassCodePasing(_AVATOR_DATA *pData, CPlayer *pOne)
   }
 
   _strlwr(codeBuffer);
-  _base_fld *pcRoomRecord = m_tblPcRoomData.GetRecord(codeBuffer);
+  _PcRoom_fld *pcRoomRecord = static_cast<_PcRoom_fld *>(m_tblPcRoomData.GetRecord(codeBuffer));
   if (!pcRoomRecord)
   {
     return -1;
@@ -119,7 +120,7 @@ bool CPcBangFavor::PcBangGiveItem(
   }
 
   pOne->m_dwPcBangGiveItemListIndex = static_cast<unsigned int>(-1);
-  _base_fld *record = m_tblPcRoomData.GetRecord(dwRecIndex);
+  _PcRoom_fld *record = static_cast<_PcRoom_fld *>(m_tblPcRoomData.GetRecord(dwRecIndex));
   if (!record)
   {
     return false;
@@ -130,7 +131,7 @@ bool CPcBangFavor::PcBangGiveItem(
 
   for (int j = 0; j < 5; ++j)
   {
-    const int itemCount = *reinterpret_cast<int *>(&record[3].m_strCode[84 * j + 8]);
+    const int itemCount = record->m_SelectSupply[j].m_nSelectNumber;
     if (itemCount < 0)
     {
       continue;
@@ -142,7 +143,7 @@ bool CPcBangFavor::PcBangGiveItem(
       continue;
     }
 
-    const char *itemCode = reinterpret_cast<char *>(&record[2]) + 84 * j + 8 * selectedItemIndex;
+    const char *itemCode = record->m_SelectSupply[j].m_itmSelect[selectedItemIndex];
     const int tableCode = GetItemTableCode(itemCode);
     if (tableCode == -1)
     {
@@ -171,13 +172,13 @@ bool CPcBangFavor::PcBangGiveItem(
 
   for (int j = 0; j < 10; ++j)
   {
-    const int itemCount = *reinterpret_cast<int *>(&record[8].m_strCode[12 * j + 16]);
+    const int itemCount = record->m_FixSupply[j].m_nFixNumber;
     if (itemCount < 0)
     {
       continue;
     }
 
-    const char *itemCode = &record[8].m_strCode[12 * j + 8];
+    const char *itemCode = record->m_FixSupply[j].m_itmFix;
     const int tableCode = GetItemTableCode(itemCode);
     if (tableCode == -1)
     {
