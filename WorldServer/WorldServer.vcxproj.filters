@@ -3146,10 +3146,10 @@
     <ClCompile Include="Entities\CLuaSignalReActor.cpp">
       <Filter>Source Files\Lua</Filter>
     </ClCompile>
-    <ClCompile Include="Entities\CMainThread_DB_Load_Missing.cpp">
+    <ClCompile Include="Entities\CMainThread_DB_Load_PlayerData.cpp">
       <Filter>Source Files\Infrastructure</Filter>
     </ClCompile>
-    <ClCompile Include="Entities\CMainThread_DB_Load_Missing2.cpp">
+    <ClCompile Include="Entities\CMainThread_DB_Load_System.cpp">
       <Filter>Source Files\Infrastructure</Filter>
     </ClCompile>
     <ClCompile Include="Entities\CMainThread_DB_Load.cpp">
@@ -3641,10 +3641,10 @@
     <ClCompile Include="Entities\CRFWorldDatabase_Load.cpp">
       <Filter>Source Files\Database</Filter>
     </ClCompile>
-    <ClCompile Include="Entities\CRFWorldDatabase_Missing.cpp">
+    <ClCompile Include="Entities\CRFWorldDatabase_Ranking.cpp">
       <Filter>Source Files\Database</Filter>
     </ClCompile>
-    <ClCompile Include="Entities\CRFWorldDatabase_Missing2.cpp">
+    <ClCompile Include="Entities\CRFWorldDatabase_Service.cpp">
       <Filter>Source Files\Database</Filter>
     </ClCompile>
     <ClCompile Include="Entities\CRFWorldDatabase_Update.cpp">
@@ -3788,10 +3788,19 @@
     <ClCompile Include="Entities\CUnmannedTraderUserInfoTable.cpp">
       <Filter>Source Files\UnmannedTrader</Filter>
     </ClCompile>
-    <ClCompile Include="Entities\CUserDB_Missing2.cpp">
+    <ClCompile Include="Entities\CUserDB.cpp">
       <Filter>Source Files\Database</Filter>
     </ClCompile>
-    <ClCompile Include="Entities\CUserDB.cpp">
+    <ClCompile Include="Entities\CUserDB_InitValidate.cpp">
+      <Filter>Source Files\Database</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\CUserDB_Item.cpp">
+      <Filter>Source Files\Database</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\CUserDB_Level.cpp">
+      <Filter>Source Files\Database</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\CUserDB_Save.cpp">
       <Filter>Source Files\Database</Filter>
     </ClCompile>
     <ClCompile Include="Entities\CUserRankingProcess.cpp">

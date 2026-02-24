@@ -1125,8 +1125,8 @@
     <ClCompile Include="Entities\CLuaScript.cpp" />
     <ClCompile Include="Entities\CLuaScriptMgr.cpp" />
     <ClCompile Include="Entities\CLuaSignalReActor.cpp" />
-    <ClCompile Include="Entities\CMainThread_DB_Load_Missing.cpp" />
-    <ClCompile Include="Entities\CMainThread_DB_Load_Missing2.cpp" />
+    <ClCompile Include="Entities\CMainThread_DB_Load_PlayerData.cpp" />
+    <ClCompile Include="Entities\CMainThread_DB_Load_System.cpp" />
     <ClCompile Include="Entities\CMainThread_DB_Load.cpp" />
     <ClCompile Include="Entities\CMainThread_DB_Update.cpp" />
     <ClCompile Include="Entities\CMainThread_DB.cpp" />
@@ -1291,8 +1291,8 @@
     <ClCompile Include="Entities\CRFNewDatabase.cpp" />
     <ClCompile Include="Entities\CRFWorldDatabase_DQS.cpp" />
     <ClCompile Include="Entities\CRFWorldDatabase_Load.cpp" />
-    <ClCompile Include="Entities\CRFWorldDatabase_Missing.cpp" />
-    <ClCompile Include="Entities\CRFWorldDatabase_Missing2.cpp" />
+    <ClCompile Include="Entities\CRFWorldDatabase_Ranking.cpp" />
+    <ClCompile Include="Entities\CRFWorldDatabase_Service.cpp" />
     <ClCompile Include="Entities\CRFWorldDatabase_Update.cpp" />
     <ClCompile Include="Entities\CRFWorldDatabase.cpp" />
     <ClCompile Include="Entities\CRtc.cpp" />
@@ -1340,8 +1340,11 @@
     <ClCompile Include="Entities\CUnmannedTraderTradeInfo.cpp" />
     <ClCompile Include="Entities\CUnmannedTraderUserInfo.cpp" />
     <ClCompile Include="Entities\CUnmannedTraderUserInfoTable.cpp" />
-    <ClCompile Include="Entities\CUserDB_Missing2.cpp" />
     <ClCompile Include="Entities\CUserDB.cpp" />
+    <ClCompile Include="Entities\CUserDB_InitValidate.cpp" />
+    <ClCompile Include="Entities\CUserDB_Item.cpp" />
+    <ClCompile Include="Entities\CUserDB_Level.cpp" />
+    <ClCompile Include="Entities\CUserDB_Save.cpp" />
     <ClCompile Include="Entities\CUserRankingProcess.cpp" />
     <ClCompile Include="Entities\CVertexBuffer.cpp" />
     <ClCompile Include="Entities\CVoteSystem.cpp" />
