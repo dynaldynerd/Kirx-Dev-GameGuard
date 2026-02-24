@@ -14,6 +14,7 @@
 #include "GlobalObjects.h"
 #include "pnt_rect.h"
 #include "StoreList_fld.h"
+#include "npc_fld.h"
 
 CMerchant::CMerchant()
 {
@@ -25,7 +26,8 @@ CMerchant::~CMerchant()
 
 __int64 CMerchant::GetFireTol()
 {
-  return static_cast<unsigned int>(static_cast<int>(*reinterpret_cast<float *>(&m_pRecordSet[2].m_strCode[40])));
+  const _npc_fld *recordSet = reinterpret_cast<const _npc_fld *>(m_pRecordSet);
+  return static_cast<unsigned int>(static_cast<int>(recordSet->m_fFireTol));
 }
 
 char *CMerchant::GetObjName()
@@ -36,7 +38,7 @@ char *CMerchant::GetObjName()
     sizeof(objectName),
     "[NPC][%d] >> %s (pos: %s {%d, %d, %d})",
     static_cast<int>(GetObjRace()),
-    reinterpret_cast<const char *>(&m_pRecordSet[1]),
+    reinterpret_cast<const _npc_fld *>(m_pRecordSet)->m_strName,
     m_pCurMap->m_pMapSet->m_strCode,
     static_cast<int>(m_fCurPos[0]),
     static_cast<int>(m_fCurPos[1]),
@@ -51,17 +53,20 @@ __int64 CMerchant::GetObjRace()
 
 __int64 CMerchant::GetSoilTol()
 {
-  return static_cast<unsigned int>(static_cast<int>(*reinterpret_cast<float *>(&m_pRecordSet[2].m_strCode[48])));
+  const _npc_fld *recordSet = reinterpret_cast<const _npc_fld *>(m_pRecordSet);
+  return static_cast<unsigned int>(static_cast<int>(recordSet->m_fSoilTol));
 }
 
 __int64 CMerchant::GetWaterTol()
 {
-  return static_cast<unsigned int>(static_cast<int>(*reinterpret_cast<float *>(&m_pRecordSet[2].m_strCode[44])));
+  const _npc_fld *recordSet = reinterpret_cast<const _npc_fld *>(m_pRecordSet);
+  return static_cast<unsigned int>(static_cast<int>(recordSet->m_fWaterTol));
 }
 
 __int64 CMerchant::GetWindTol()
 {
-  return static_cast<unsigned int>(static_cast<int>(*reinterpret_cast<float *>(&m_pRecordSet[2].m_strCode[52])));
+  const _npc_fld *recordSet = reinterpret_cast<const _npc_fld *>(m_pRecordSet);
+  return static_cast<unsigned int>(static_cast<int>(recordSet->m_fWindTol));
 }
 
 void CMerchant::Loop()

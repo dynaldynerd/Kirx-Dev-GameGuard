@@ -1872,7 +1872,9 @@ unsigned __int8 CCharacter::InsertSFContEffect(
       {
         return static_cast<unsigned __int8>(-13);
       }
-      if (isAura && effectRecord[1].m_dwIndex == 4 && !std::strncmp(effectRecord[12].m_strCode, "-1", 2))
+      if (isAura
+          && effectRecord[1].m_dwIndex == 4
+          && !std::strncmp(effectRecord[12].m_strCode, "-1", 2))
       {
         cont->m_dwStartSec = startSec;
         return 0;

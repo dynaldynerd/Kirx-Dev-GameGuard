@@ -40,7 +40,7 @@ void _NEAR_DATA::Init()
 bool CMonsterHelper::CheckPreAttackRangeTargetAbleCharacter(CMonster *pMon, CGameObject *pTarget)
 {
   const float dist = Get3DSqrt(pMon->m_fCurPos, pTarget->m_fCurPos);
-  const float baseRate = (90.0f - dist) * 0.001f + *reinterpret_cast<float *>(&pMon->m_pRecordSet[29].m_strCode[32]);
+  const float baseRate = (90.0f - dist) * 0.001f + pMon->m_pMonRec->m_fOffensiveRate;
   float successRate = baseRate;
   if (static_cast<double>(pMon->m_pMonRec->m_nPreAttRange) > dist)
   {
@@ -229,7 +229,7 @@ unsigned int CMonsterHelper::SearchNearMonster(
   }
 
   CCharacter *targetChar = pMon->m_pTargetChar;
-  const float limitLen = *reinterpret_cast<float *>(&pMon->m_pRecordSet[25].m_strCode[52]);
+  const float limitLen = pMon->m_pMonRec->m_fMRefExt;
   const int curSecNum = static_cast<int>(pMon->GetCurSecNum());
   _pnt_rect rect{};
   pMon->m_pCurMap->GetRectInRadius(&rect, 4, curSecNum);

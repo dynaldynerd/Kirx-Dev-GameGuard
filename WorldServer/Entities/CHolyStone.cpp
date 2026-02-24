@@ -14,6 +14,7 @@
 #include "CPlayer.h"
 #include "CPlayerDB.h"
 #include "GlobalObjects.h"
+#include "ItemLooting_fld.h"
 #include "TimeItem.h"
 
 #include <cstdio>
@@ -186,11 +187,11 @@ void CHolyStone::DropItem()
 
   while (m_nCurrLootIndex <= m_nEndLootIndex)
   {
-    _base_fld *record = g_Main.m_tblItemLoot.m_tblLoot.GetRecord(m_nCurrLootIndex);
-    if (record && *reinterpret_cast<int *>(&record[1].m_strCode[8]) > 0)
+    _ItemLooting_fld *record = reinterpret_cast<_ItemLooting_fld *>(g_Main.m_tblItemLoot.m_tblLoot.GetRecord(m_nCurrLootIndex));
+    if (record && record->m_nLootListCount > 0)
     {
       unsigned __int16 range = 400;
-      unsigned __int16 dropNum = *reinterpret_cast<unsigned __int16 *>(&record[1].m_strCode[4]);
+      unsigned __int16 dropNum = static_cast<unsigned __int16>(record->m_nOperationCount);
       dropNum = static_cast<unsigned __int16>(dropNum * m_wMagnifications);
       if (m_wRange > 100u)
       {
@@ -206,14 +207,14 @@ void CHolyStone::DropItem()
         unsigned int probLimit = 0;
         if (m_pRecordSet)
         {
-          probLimit = record[1].m_dwIndex;
+          probLimit = static_cast<unsigned int>(record->m_nLootRate);
           if (rand32 < probLimit)
           {
             CItemLootTable::_linker_code *linker = nullptr;
             int linkIndex = 0;
             for (int j = 0; j < 10; ++j)
             {
-              linkIndex = rand() % *reinterpret_cast<int *>(&record[1].m_strCode[8]);
+              linkIndex = rand() % record->m_nLootListCount;
               linker = &g_Main.m_tblItemLoot.m_ppLinkCode[record->m_dwIndex][linkIndex];
               if (linker->bExist)
               {
@@ -266,7 +267,7 @@ void CHolyStone::DropItem()
                   ++dropCount;
                   g_Main.m_logEvent.Write(
                     "Cristal Event Item >> %s, %d",
-                    &record[1].m_strCode[8 * linkIndex + 12],
+                    record->m_itmLootCodeKey[linkIndex],
                     static_cast<unsigned int>(item.m_dwDur));
                 }
 

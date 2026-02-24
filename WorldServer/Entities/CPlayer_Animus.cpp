@@ -53,6 +53,7 @@
 #include "darkhole_create_setdata.h"
 #include "ENTER_DUNGEON_NEW_POS.h"
 #include "QuestHappenEvent_fld.h"
+#include "AnimusItem_fld.h"
 #include "announ_message_receipt_udp.h"
 #include "equip_up_item_lv_limit_zocl.h"
 #include "sf_delay_download_result_zocl.h"
@@ -509,7 +510,7 @@ void CPlayer::pc_AnimusInvenChange(_STORAGE_POS_INDIV *pItem, unsigned __int16 w
           }
 
           bool canDuplicate = false;
-          if (*reinterpret_cast<int *>(&record[3].m_strCode[60]) == 1)
+          if (reinterpret_cast<_AnimusItem_fld *>(record)->m_nAnimusType == 1)
           {
             if (this->m_Param.m_pClassHistory[0] && this->m_Param.m_pClassHistory[0]->m_nClass == 3)
             {
@@ -707,7 +708,7 @@ void CPlayer::pc_AnimusRecallRequest(
         {
           canRecallAnimus = true;
         }
-        else if (*reinterpret_cast<int *>(&animusItemRecord[3].m_strCode[60]) == 1)
+        else if (reinterpret_cast<_AnimusItem_fld *>(animusItemRecord)->m_nAnimusType == 1)
         {
           if (this->m_Param.m_pClassHistory[0]
               && this->m_Param.m_pClassHistory[0]->m_nClass == 3

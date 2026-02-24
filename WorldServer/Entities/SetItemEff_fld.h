@@ -4,7 +4,8 @@
 #include "base_fld.h"
 
 #pragma pack(push, 1)
-struct  _SetItemEff_fld : _base_fld
+
+struct _SetItemEff_fld : _base_fld
 {
   char m_strCivil[64];
   char m_strset_head[64];
@@ -37,4 +38,5 @@ struct  _SetItemEff_fld : _base_fld
   int m_nEff8Code;
   float m_fEff8Unit;
 };
+
 #pragma pack(pop)

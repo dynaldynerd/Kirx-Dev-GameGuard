@@ -413,13 +413,13 @@ _quest_check_result *CQuestMgr::CheckReqAct(
       continue;
     }
 
-    _base_fld *record = CQuestMgr::s_tblQuest->GetRecord(slot->wIndex);
+    _Quest_fld *record = reinterpret_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(slot->wIndex));
     if (!record)
     {
       continue;
     }
 
-    if (bPartyState && *reinterpret_cast<int *>(record[1].m_strCode) != 1)
+    if (bPartyState && record->m_nQuestType != 1)
     {
       continue;
     }
@@ -431,86 +431,88 @@ _quest_check_result *CQuestMgr::CheckReqAct(
         continue;
       }
 
-      char *actBase = &record[4 * actIndex + 1].m_strCode[32];
-      if (*reinterpret_cast<int *>(actBase) == -1)
+      _action_node *action = &record->m_ActionNode[actIndex];
+      if (action->m_nActType == -1)
       {
         break;
       }
 
-      if (*reinterpret_cast<int *>(actBase) != nActCode)
+      if (action->m_nActType != nActCode)
       {
         continue;
       }
 
       if (nActCode == 6)
       {
-        const int reqVal = std::atoi(pszReqCode);
-        const int actVal = std::atoi(actBase + 4);
-        if (reqVal < actVal)
+        const int reqValue = std::atoi(pszReqCode);
+        const int actionValue = std::atoi(action->m_strActSub);
+        if (reqValue < actionValue)
         {
           continue;
         }
       }
       else if (nActCode == 14)
       {
-        if (std::strncmp(actBase + 4, pszReqCode, 5) != 0
-          || !__CheckCond_Have(*reinterpret_cast<int *>(actBase + 196), actBase + 68))
+        if (std::strncmp(action->m_strActSub, pszReqCode, 5) != 0
+          || !__CheckCond_Have(action->m_nReqAct, action->m_strActSub2))
         {
           continue;
         }
-        wActCount = *reinterpret_cast<unsigned __int16 *>(actBase + 196);
+
+        wActCount = static_cast<unsigned __int16>(action->m_nReqAct);
       }
-      else if (strcmp_0(actBase + 4, pszReqCode) != 0)
+      else if (strcmp_0(action->m_strActSub, pszReqCode))
       {
         continue;
       }
 
-      if (std::strncmp(actBase + 132, "-1", 2) == 0
-        || g_MapOper.IsInRegion(actBase + 132, m_pMaster))
+      if (!std::strncmp(action->m_strActArea, "-1", 2) || g_MapOper.IsInRegion(action->m_strActArea, m_pMaster))
       {
-        bool allowAct = true;
-        const int reqCond = *reinterpret_cast<int *>(actBase + 268);
-        if (reqCond > 0)
+        bool allowByOrder = true;
+        if (action->m_nOrder > 0)
         {
-          allowAct = true;
+          allowByOrder = true;
           for (int m = 0; m < 3; ++m)
           {
-            if (*reinterpret_cast<int *>(&record[4 * m + 5].m_strCode[28]) < reqCond
-              && slot->wNum[m] != 0xFFFF)
+            if (record->m_ActionNode[m].m_nOrder < action->m_nOrder && slot->wNum[m] != 0xFFFF)
             {
-              allowAct = false;
+              allowByOrder = false;
               break;
             }
           }
         }
 
-        if (allowAct && (rand() % 100) < *reinterpret_cast<int *>(actBase + 200))
+        if (allowByOrder && (rand() % 100) < action->m_nSetCntPro_100)
         {
           _quest_check_result::_node *node = &s_QuestCKRet.m_List[checkCount];
           node->byQuestDBSlot = static_cast<unsigned __int8>(slotIndex);
           node->byActIndex = static_cast<unsigned __int8>(actIndex);
           node->wCount = static_cast<unsigned __int16>(slot->wNum[actIndex] + 1);
           node->bORComplete = false;
-          if (wActCount + slot->wNum[actIndex] >= *reinterpret_cast<int *>(actBase + 196))
+
+          if (wActCount + slot->wNum[actIndex] >= action->m_nReqAct)
           {
             node->wCount = 0xFFFF;
-            if (nActCode == 14
-              && !DeleteQuestItem(actBase + 68, *reinterpret_cast<unsigned __int16 *>(actBase + 196)))
+
+            if (nActCode == 14 && !DeleteQuestItem(action->m_strActSub2, static_cast<unsigned __int16>(action->m_nReqAct)))
             {
               const char *charName = m_pMaster->m_Param.GetCharNameA();
               g_Main.m_logSystemError.Write(
                 "CQuestMgr::CheckReqAct : DeleteQuestItem(%s, %d) : %s",
-                actBase + 68,
-                *reinterpret_cast<int *>(actBase + 196),
+                action->m_strActSub2,
+                action->m_nReqAct,
                 charName);
             }
-            if (*reinterpret_cast<int *>(&record[1].m_strCode[28]))
+
+            if (record->m_bCompQuestType)
             {
               node->bORComplete = true;
             }
           }
+
           ++checkCount;
         }
+
         break;
       }
     }
@@ -537,30 +539,30 @@ char CQuestMgr::CheckFailCondition(unsigned __int8 byQuestDBSlot, int nFailCond,
   _QUEST_DB_BASE::_LIST backup{};
   memcpy_0(&backup, slot, sizeof(backup));
 
-  if (*reinterpret_cast<unsigned __int16 *>(reinterpret_cast<char *>(slot) + 1) == 0xFFFF)
+  if (slot->wIndex == 0xFFFF)
   {
     return failed;
   }
 
-  _base_fld *record = CQuestMgr::s_tblQuest->GetRecord(slot->wIndex);
+  _Quest_fld *record = reinterpret_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(slot->wIndex));
   if (!record)
   {
     return failed;
   }
 
-  if (*reinterpret_cast<int *>(reinterpret_cast<char *>(slot) + 9) == -1)
+  if (slot->dwPassSec == static_cast<unsigned int>(-1))
   {
     return failed;
   }
 
-  if (!*reinterpret_cast<int *>(&record[27].m_strCode[28]))
+  if (!record->m_bFailCheck)
   {
     return failed;
   }
 
   for (int j = 0; j < 3; ++j)
   {
-    if (*reinterpret_cast<int *>(&record[j + 27].m_strCode[32]) != nFailCond)
+    if (record->m_QuestFailCond[j].m_nFailCondition != nFailCond)
     {
       continue;
     }
@@ -569,85 +571,84 @@ char CQuestMgr::CheckFailCondition(unsigned __int8 byQuestDBSlot, int nFailCond,
     {
       if (nFailCond == 1)
       {
-        const int limitMin = std::atoi(&record[j + 27].m_strCode[36]);
-        if (*reinterpret_cast<int *>(reinterpret_cast<char *>(slot) + 9) < (60 * limitMin))
+        const int limitMin = std::atoi(record->m_QuestFailCond[j].m_strFailCode);
+        if (slot->dwPassSec < static_cast<unsigned int>(60 * limitMin))
         {
           failed = 1;
         }
       }
-      else if (!pszCode || !strcmp_0(pszCode, &record[j + 27].m_strCode[36]))
+      else if (!pszCode || !strcmp_0(pszCode, record->m_QuestFailCond[j].m_strFailCode))
       {
         failed = 1;
       }
     }
     else
     {
-      const int limitMin = std::atoi(&record[j + 27].m_strCode[36]);
-      if (*reinterpret_cast<int *>(reinterpret_cast<char *>(slot) + 9) > (60 * limitMin))
+      const int limitMin = std::atoi(record->m_QuestFailCond[j].m_strFailCode);
+      if (slot->dwPassSec > static_cast<unsigned int>(60 * limitMin))
       {
         failed = 1;
       }
     }
 
-    if (failed)
+    if (!failed)
     {
-      m_pMaster->SendMsg_QuestFailure(static_cast<char>(nFailCond), static_cast<char>(byQuestDBSlot));
-      DeleteQuestData(byQuestDBSlot);
-      m_pMaster->m_pUserDB->Update_QuestDelete(byQuestDBSlot);
+      continue;
+    }
 
-      if (!*reinterpret_cast<int *>(&record[31].m_strCode[28]))
+    m_pMaster->SendMsg_QuestFailure(static_cast<char>(nFailCond), static_cast<char>(byQuestDBSlot));
+    DeleteQuestData(byQuestDBSlot);
+    m_pMaster->m_pUserDB->Update_QuestDelete(byQuestDBSlot);
+
+    if (!record->m_nLinkDummyCond && strcmp_0(record->m_strLinkDummyCode, "-1"))
+    {
+      _dummy_position *dummy = m_pMaster->m_pCurMap->GetDummyPostion(record->m_strLinkDummyCode);
+      if (dummy)
       {
-        if (strcmp_0(&record[31].m_strCode[32], "-1") != 0)
+        float newPos[3]{};
+        if (m_pMaster->m_pCurMap->GetRandPosInDummy(dummy, newPos, 1))
         {
-          _dummy_position *pos = m_pMaster->m_pCurMap->GetDummyPostion(&record[31].m_strCode[32]);
-          if (pos)
-          {
-            float newPos[3]{};
-            if (m_pMaster->m_pCurMap->GetRandPosInDummy(pos, newPos, 1))
-            {
-              m_pMaster->OutOfMap(m_pMaster->m_pCurMap, m_pMaster->m_wMapLayerIndex, 3, newPos);
-              const unsigned __int8 mapCode = m_pMaster->m_Param.GetMapCode();
-              m_pMaster->SendMsg_GotoRecallResult(0, mapCode, newPos, 4);
-            }
-          }
+          m_pMaster->OutOfMap(m_pMaster->m_pCurMap, m_pMaster->m_wMapLayerIndex, 3u, newPos);
+          const unsigned __int8 mapCode = m_pMaster->m_Param.GetMapCode();
+          m_pMaster->SendMsg_GotoRecallResult(0, mapCode, newPos, 4u);
         }
       }
+    }
 
-      if (!strcmp_0(&record[32].m_strCode[28], "-1"))
-      {
-        return failed;
-      }
+    if (!strcmp_0(record->m_strFailLinkQuest, "-1"))
+    {
+      return failed;
+    }
 
-      _base_fld *nextRecord = CQuestMgr::s_tblQuest->GetRecord(&record[32].m_strCode[28]);
-      if (!nextRecord)
-      {
-        return failed;
-      }
+    _Quest_fld *nextRecord = reinterpret_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(record->m_strFailLinkQuest));
+    if (!nextRecord)
+    {
+      return failed;
+    }
 
-      if (backup.byQuestType != 1
-        || (!IsCompleteNpcQuest(nextRecord->m_strCode, *reinterpret_cast<int *>(&nextRecord[1].m_strCode[4]))
-          && !IsProcNpcQuest(nextRecord->m_strCode)))
+    if (backup.byQuestType != 1
+      || (!IsCompleteNpcQuest(nextRecord->m_strCode, nextRecord->m_bQuestRepeat)
+        && !IsProcNpcQuest(nextRecord->m_strCode)))
+    {
+      slot->byQuestType = backup.byQuestType;
+      slot->wIndex = static_cast<unsigned __int16>(nextRecord->m_dwIndex);
+      slot->dwPassSec = 0;
+      for (int k = 0; k < 3; ++k)
       {
-        slot->byQuestType = backup.byQuestType;
-        slot->wIndex = static_cast<unsigned __int16>(nextRecord->m_dwIndex);
-        slot->dwPassSec = 0;
-        for (int k = 0; k < 3; ++k)
+        slot->wNum[k] = 0xFFFF;
+        if (nextRecord->m_ActionNode[k].m_nActType != -1)
+        {
+          slot->wNum[k] = 0;
+        }
+        if (nextRecord->m_ActionNode[k].m_nReqAct == -1)
         {
           slot->wNum[k] = 0xFFFF;
-          if (*reinterpret_cast<int *>(&nextRecord[4 * k + 1].m_strCode[32]) != -1)
-          {
-            slot->wNum[k] = 0;
-          }
-          if (*reinterpret_cast<int *>(&nextRecord[4 * k + 4].m_strCode[24]) == -1)
-          {
-            slot->wNum[k] = 0xFFFF;
-          }
         }
-
-        m_pMaster->m_pUserDB->Update_QuestInsert(byQuestDBSlot, slot);
-        m_pMaster->SendMsg_InsertNextQuest(byQuestDBSlot, slot);
-        return failed;
       }
+
+      m_pMaster->m_pUserDB->Update_QuestInsert(byQuestDBSlot, slot);
+      m_pMaster->SendMsg_InsertNextQuest(byQuestDBSlot, slot);
+      return failed;
     }
   }
 

@@ -21,8 +21,8 @@
 6. Any type name starting with `C` should be declared as a `class`, not `struct`.
 7. all g_* variable are meant to be a global variable and must be put on `GlobalObjects.h` and `GlobalObjects.cpp`
 8. all new stub function must be added to `todo.md`. (this rule now obsolet, please follow rule #14)
-9. all `CRecordData::GetRecord` usually only return _base_fld hence the decompiled code might produce weird code such as Record[2].m_strCode[10], in that case you must write a note on `Record.md` so I could review and correct the implementation
-10. for any static string/array/data that appear in the decompiled code please write it in a log file before proceeding, if it is just used on log you could guess it, don't worry if it is wrong. 
+9. all `CRecordData::GetRecord` usually only return _base_fld hence try to cast it to *_fld type, if the _fld didn't exist find it on the worldserveridapro/structs, if you are unsure what the struct, ask me
+10. for any static string/array/data that appear in the decompiled code please refer to `ida_static_data.tsv`, write static array for log directly on the function that use it, don't use global/static variable. 
 11. you are not allowed to implement a function as Class:Function() any function that had "this" as first parameter mean it's a member function and shouldn't be made into a static function, unless you are sure it is a static function make sure to implement it as a member function this->Function()
 12. avoid shortened function implementation/half baked implementation as it would be dangerous when previewing the code where I thought everything is implemented turned out it was only half baked and wondered later what was wrong, the logic/implementation must exactly match the decompiled code without any shortened logic and must adhere to the all previous rules
 13. added `RF Online Old Sourcecode` an older (ten years or more older) version of the sourcecode, it might be useful for reference, but it's not the same as the decompiled code, so use it with caution and use it only when you're sure it's correct, this source mostly useful for map/path related function (R3Engine) but mostly useless for anything else
@@ -34,6 +34,5 @@
 19. for any nation-related implementation, only implement RU; other nation variants should be left unimplemented unless explicitly requested
 20. before rebasing, always create a backup branch first (and push it to remote before continuing).
 21. when fixing merge conflicts, do the simplest merge: list all conflicted functions/headers and only add missing function/struct/class/global variable/static variable from both sides. Example: if one side has A, B, E and the other has B, C, D then merge into A, B, C, D, E with no duplicate B.
-22. for `Record.md` conflicts, combine both sides and then remove duplicate entries.
-23. for any static/global default value (including timer delays, counters, const strings, and class static members), always check `ida_static_data.tsv` first and use the IDA value when available; do not keep guessed zero/default values if a static reference exists in the CSV.
-24. pointer to function could be found on "function list.txt"
+22. for any static/global default value (including timer delays, counters, const strings, and class static members), always check `ida_static_data.tsv` first and use the IDA value when available; do not keep guessed zero/default values if a static reference exists in the CSV.
+23. pointer to function could be found on "function list.txt" if you ever find ida_static_data refer to a function pointer address

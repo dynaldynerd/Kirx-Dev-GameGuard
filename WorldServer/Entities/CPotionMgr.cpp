@@ -482,39 +482,39 @@ unsigned int CPotionMgr::PreCheckPotion(
       }
 
       const int effectIndex = static_cast<int>(contData->GetEffectIndex());
-      _base_fld *effectRecord = m_tblPotionEffectData.GetRecord(effectIndex);
-      _base_fld *itemRecord = g_Main.m_tblItemData[13].GetRecord(effectIndex);
+      _skill_fld *effectRecord = reinterpret_cast<_skill_fld *>(m_tblPotionEffectData.GetRecord(effectIndex));
+      _PotionItem_fld *itemRecord = reinterpret_cast<_PotionItem_fld *>(g_Main.m_tblItemData[13].GetRecord(effectIndex));
 
       const bool matchEffLim1 =
         effectRecord
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[36]) == pFld->m_nEffLimType
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[36]) != -1
+        && effectRecord->m_nEffLimType == pFld->m_nEffLimType
+        && effectRecord->m_nEffLimType != -1
         && pFld->m_nEffLimType != -1;
       const bool matchEffLim2 =
         effectRecord
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[36]) != pFld->m_nEffLimType
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[36]) == pFld->m_nEffLimType2
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[36]) != -1
+        && effectRecord->m_nEffLimType != pFld->m_nEffLimType
+        && effectRecord->m_nEffLimType == pFld->m_nEffLimType2
+        && effectRecord->m_nEffLimType != -1
         && pFld->m_nEffLimType2 != -1;
       const bool matchEffLim3 =
         effectRecord
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[36]) != pFld->m_nEffLimType
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[36]) != pFld->m_nEffLimType2
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[40]) == pFld->m_nEffLimType
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[40]) != -1
+        && effectRecord->m_nEffLimType != pFld->m_nEffLimType
+        && effectRecord->m_nEffLimType != pFld->m_nEffLimType2
+        && effectRecord->m_nEffLimType2 == pFld->m_nEffLimType
+        && effectRecord->m_nEffLimType2 != -1
         && pFld->m_nEffLimType != -1;
       const bool matchEffLim4 =
         effectRecord
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[36]) != pFld->m_nEffLimType
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[36]) != pFld->m_nEffLimType2
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[40]) != pFld->m_nEffLimType
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[40]) == pFld->m_nEffLimType2
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[40]) != -1
+        && effectRecord->m_nEffLimType != pFld->m_nEffLimType
+        && effectRecord->m_nEffLimType != pFld->m_nEffLimType2
+        && effectRecord->m_nEffLimType2 != pFld->m_nEffLimType
+        && effectRecord->m_nEffLimType2 == pFld->m_nEffLimType2
+        && effectRecord->m_nEffLimType2 != -1
         && pFld->m_nEffLimType2 != -1;
 
       if ((matchEffLim1 || matchEffLim2 || matchEffLim3 || matchEffLim4)
           && itemRecord
-          && pfB->m_nPotionCheck < static_cast<int>(itemRecord[5].m_dwIndex))
+          && pfB->m_nPotionCheck < itemRecord->m_nPotionCheck)
       {
         return 31;
       }
@@ -692,39 +692,39 @@ unsigned int CPotionMgr::ApplyPotion(
     for (int k = 0; k < 2; ++k)
     {
       const int effectIndex = static_cast<int>(pUsePlayer->m_PotionParam.m_ContCommonPotionData[k].GetEffectIndex());
-      _base_fld *itemRecord = g_Main.m_tblItemData[13].GetRecord(effectIndex);
-      _base_fld *effectRecord = m_tblPotionEffectData.GetRecord(effectIndex);
+      _PotionItem_fld *itemRecord = reinterpret_cast<_PotionItem_fld *>(g_Main.m_tblItemData[13].GetRecord(effectIndex));
+      _skill_fld *effectRecord = reinterpret_cast<_skill_fld *>(m_tblPotionEffectData.GetRecord(effectIndex));
 
       const bool matchEffLim1 =
         effectRecord
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[36]) == pEffecFld->m_nEffLimType
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[36]) != -1
+        && effectRecord->m_nEffLimType == pEffecFld->m_nEffLimType
+        && effectRecord->m_nEffLimType != -1
         && pEffecFld->m_nEffLimType != -1;
       const bool matchEffLim2 =
         effectRecord
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[36]) != pEffecFld->m_nEffLimType
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[36]) == pEffecFld->m_nEffLimType2
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[36]) != -1
+        && effectRecord->m_nEffLimType != pEffecFld->m_nEffLimType
+        && effectRecord->m_nEffLimType == pEffecFld->m_nEffLimType2
+        && effectRecord->m_nEffLimType != -1
         && pEffecFld->m_nEffLimType2 != -1;
       const bool matchEffLim3 =
         effectRecord
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[36]) != pEffecFld->m_nEffLimType
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[36]) != pEffecFld->m_nEffLimType2
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[40]) == pEffecFld->m_nEffLimType
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[40]) != -1
+        && effectRecord->m_nEffLimType != pEffecFld->m_nEffLimType
+        && effectRecord->m_nEffLimType != pEffecFld->m_nEffLimType2
+        && effectRecord->m_nEffLimType2 == pEffecFld->m_nEffLimType
+        && effectRecord->m_nEffLimType2 != -1
         && pEffecFld->m_nEffLimType != -1;
       const bool matchEffLim4 =
         effectRecord
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[36]) != pEffecFld->m_nEffLimType
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[36]) != pEffecFld->m_nEffLimType2
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[40]) != pEffecFld->m_nEffLimType
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[40]) == pEffecFld->m_nEffLimType2
-        && *reinterpret_cast<int *>(&effectRecord[13].m_strCode[40]) != -1
+        && effectRecord->m_nEffLimType != pEffecFld->m_nEffLimType
+        && effectRecord->m_nEffLimType != pEffecFld->m_nEffLimType2
+        && effectRecord->m_nEffLimType2 != pEffecFld->m_nEffLimType
+        && effectRecord->m_nEffLimType2 == pEffecFld->m_nEffLimType2
+        && effectRecord->m_nEffLimType2 != -1
         && pEffecFld->m_nEffLimType2 != -1;
 
       if ((matchEffLim1 || matchEffLim2 || matchEffLim3 || matchEffLim4)
           && itemRecord
-          && static_cast<int>(itemRecord[5].m_dwIndex) <= pfB->m_nPotionCheck)
+          && itemRecord->m_nPotionCheck <= pfB->m_nPotionCheck)
       {
         hasMatchBuff = true;
         matchIndex = k;
@@ -796,24 +796,24 @@ unsigned int CPotionMgr::RemovePotionContEffect(CPlayer *pApplyPlayer, _ContPoti
     return static_cast<unsigned int>(-1);
   }
 
-  _base_fld *effectRecord = m_tblPotionEffectData.GetRecord(contPotionData->m_dwPotionEffectIndex);
+  _skill_fld *effectRecord = reinterpret_cast<_skill_fld *>(m_tblPotionEffectData.GetRecord(contPotionData->m_dwPotionEffectIndex));
   if (!effectRecord)
   {
     return static_cast<unsigned int>(-1);
   }
 
-  char *contParam = &effectRecord[13].m_strCode[48];
+  _cont_param_list *contParam = effectRecord->m_ContParamList;
   for (int j = 0; j < 5; ++j)
   {
-    char *node = &contParam[36 * j];
-    if (*reinterpret_cast<int *>(node) == -1)
+    _cont_param_list *node = &contParam[j];
+    if (node->m_nContParamCode == -1)
     {
       break;
     }
 
-    const int contParamCode = *reinterpret_cast<int *>(node);
-    const int contParamIndex = *(reinterpret_cast<int *>(node) + 1);
-    const float contValue = *(reinterpret_cast<float *>(node) + 2);
+    const int contParamCode = node->m_nContParamCode;
+    const int contParamIndex = node->m_nContParamIndex;
+    const float contValue = node->m_fContValue[0];
     if (contParamCode == 0)
     {
       pApplyPlayer->m_EP.SetEff_Rate(contParamIndex, contValue, false);
@@ -1087,7 +1087,7 @@ void CPotionMgr::Complete_RenameChar_DB_Update(unsigned __int8 byRet, char *p)
         return;
       }
 
-      _base_fld *record = g_Main.m_tblItemData[13].GetRecord(useItem->m_wItemIndex);
+      _PotionItem_fld *record = reinterpret_cast<_PotionItem_fld *>(g_Main.m_tblItemData[13].GetRecord(useItem->m_wItemIndex));
       if (!record)
       {
         const char *charName = player->m_Param.GetCharNameA();
@@ -1101,7 +1101,7 @@ void CPotionMgr::Complete_RenameChar_DB_Update(unsigned __int8 byRet, char *p)
         player->Emb_AlterDurPoint(0, useItem->m_byStorageIndex, -1, 0, 0);
       player->SendMsg_AdjustAmountInform(0, useItem->m_wSerial, adjustResult);
 
-      if (record && *reinterpret_cast<unsigned int *>(&record[9].m_strCode[36]) == 1)
+      if (record && record->m_bIsCash == 1)
       {
         CPlayer::s_MgrItemHistory.cash_item_use(
           player->m_ObjID.m_wIndex,
@@ -1111,9 +1111,9 @@ void CPotionMgr::Complete_RenameChar_DB_Update(unsigned __int8 byRet, char *p)
 
       if (record)
       {
-        const unsigned int actDelay = static_cast<unsigned int>(*reinterpret_cast<float *>(record[6].m_strCode));
+        const unsigned int actDelay = static_cast<unsigned int>(record->m_fActDelay);
         const DWORD now = timeGetTime();
-        player->SetPotionActDelay(record[6].m_strCode[4], now / 1000, actDelay);
+        player->SetPotionActDelay(record->m_nDelayType, now / 1000, actDelay);
       }
 
       strcpy_0(player->m_Param.m_dbChar.m_wszCharID, p + 12);

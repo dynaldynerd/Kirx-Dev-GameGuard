@@ -1062,7 +1062,7 @@ void CPlayer::pc_UnitPartTuningRequest(
     return;
   }
 
-  static constexpr int kBulletSlotPerPart[6] = {-1, -1, -1, 0, 1, -1};
+  static constexpr int gnBulletPerPart[6] = {-1, -1, -1, 0, 1, -1};
 
   unsigned __int8 resultCode = 0;
   _UNIT_DB_BASE::_LIST *unitData = &m_Param.m_UnitDB.m_List[bySlotIndex];
@@ -1071,6 +1071,8 @@ void CPlayer::pc_UnitPartTuningRequest(
 
   const unsigned int buyTaxRate = eGetTexRate(0) + 10000u;
   const unsigned int sellTaxRate = 10000u - eGetTexRate(0);
+  (void)(eGetTex(0) + 1.0f);
+  (void)(1.0f - eGetTex(0));
 
   if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(m_id.wIndex) == 99)
   {
@@ -1171,16 +1173,12 @@ void CPlayer::pc_UnitPartTuningRequest(
           break;
         }
 
-        if (newPartRecord->m_nMoney < 0 || newPartRecord->m_nMoney >= 7)
-        {
-          resultCode = 8;
-          break;
-        }
-
         const unsigned long long partCostRaw =
           static_cast<unsigned long long>(newPartRecord->m_nStdPrice)
           * static_cast<unsigned long long>(buyTaxRate);
-        consumeMoney[newPartRecord->m_nMoney] += static_cast<int>(partCostRaw / 10000u);
+        const int currentCost = static_cast<int>(consumeMoney[newPartRecord->m_nMoney]);
+        consumeMoney[newPartRecord->m_nMoney] =
+          static_cast<unsigned int>(currentCost + static_cast<int>(partCostRaw / 10000u));
 
         if (partCode == 5)
         {
@@ -1193,15 +1191,13 @@ void CPlayer::pc_UnitPartTuningRequest(
                   g_Main.m_tblUnitBullet.GetRecord(static_cast<unsigned __int16>(unitData->dwSpare[spareSlot])));
               if (spareBullet)
               {
-                const int spareMoneyCode = spareBullet->m_nMoney;
-                if (spareMoneyCode >= 0 && spareMoneyCode < 7)
-                {
-                  const unsigned long long spareRefundRaw =
-                    static_cast<unsigned long long>(sellTaxRate)
-                    * static_cast<unsigned long long>(spareBullet->m_nStdPrice / 2)
-                    + 5000u;
-                  consumeMoney[spareMoneyCode] -= static_cast<int>(spareRefundRaw / 10000u);
-                }
+                const unsigned long long spareRefundRaw =
+                  static_cast<unsigned long long>(sellTaxRate)
+                  * static_cast<unsigned long long>(spareBullet->m_nStdPrice / 2)
+                  + 5000u;
+                const int currentCost = static_cast<int>(consumeMoney[spareBullet->m_nMoney]);
+                consumeMoney[spareBullet->m_nMoney] =
+                  static_cast<unsigned int>(currentCost - static_cast<int>(spareRefundRaw / 10000u));
               }
             }
           }
@@ -1237,18 +1233,19 @@ void CPlayer::pc_UnitPartTuningRequest(
 
       if (partCode == 3 || partCode == 4)
       {
-        const int bulletSlot = kBulletSlotPerPart[partCode];
+        const int bulletSlot = gnBulletPerPart[partCode];
         if (bulletSlot != -1)
         {
           unsigned int &bulletData = unitData->dwBullet[bulletSlot];
           if (HIWORD(bulletData) && HIWORD(bulletData) != 0xFFFF)
           {
-            _base_fld *bulletRecord = g_Main.m_tblUnitBullet.GetRecord(static_cast<unsigned __int16>(bulletData));
-            _base_fld *partRecord = g_Main.m_tblUnitPart[partCode].GetRecord(partIndex);
+            _UnitBullet_fld *bulletRecord =
+              reinterpret_cast<_UnitBullet_fld *>(g_Main.m_tblUnitBullet.GetRecord(static_cast<unsigned __int16>(bulletData)));
+            _UnitPart_fld *partRecord =
+              reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[partCode].GetRecord(partIndex));
             if (bulletRecord
                 && partRecord
-                && *reinterpret_cast<int *>(&bulletRecord[2].m_strCode[60])
-                     != *reinterpret_cast<int *>(&partRecord[3].m_strCode[60]))
+                && bulletRecord->m_nWPType != partRecord->m_nWPType)
             {
               bulletData = 0xFFFFFFFFu;
             }
@@ -1260,6 +1257,14 @@ void CPlayer::pc_UnitPartTuningRequest(
     SubDalant(consumeMoney[0]);
     SubGold(consumeMoney[1]);
     m_pUserDB->Update_UnitData(bySlotIndex, unitData);
+    CPlayer::s_MgrItemHistory.tuning_unit(
+      m_ObjID.m_wIndex,
+      bySlotIndex,
+      unitData,
+      reinterpret_cast<int *>(consumeMoney),
+      m_Param.GetDalant(),
+      m_Param.GetGold(),
+      m_szItemHistoryFileName);
 
     if (!m_byUserDgr)
     {
@@ -1270,12 +1275,12 @@ void CPlayer::pc_UnitPartTuningRequest(
     const int level = m_Param.GetLevel();
     if (level == 30 || level == 40 || level == 50 || level == 60)
     {
-      if (consumeMoney[1] > 0)
+      if (static_cast<int>(consumeMoney[1]) > 0)
       {
         const unsigned int amount = 2000u * consumeMoney[1];
         CMoneySupplyMgr::Instance()->UpdateBuyUnitData(level, amount);
       }
-      if (consumeMoney[0] > 0)
+      if (static_cast<int>(consumeMoney[0]) > 0)
       {
         CMoneySupplyMgr::Instance()->UpdateBuyUnitData(level, consumeMoney[0]);
       }
@@ -1432,8 +1437,9 @@ void CPlayer::pc_UnitBulletFillRequest(
     reinterpret_cast<_UnitBullet_fld *>(g_Main.m_tblUnitBullet.GetRecord(pwBulletIndex[1])),
   };
 
-  unsigned int consumeMoney[11] = {};
+  unsigned int consumeMoney[7] = {};
   const unsigned int taxRate = eGetTexRate(0) + 10000u;
+  (void)(eGetTex(0) + 1.0f);
 
   if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(m_id.wIndex) == 99)
   {
@@ -1466,14 +1472,15 @@ void CPlayer::pc_UnitBulletFillRequest(
       }
 
       const unsigned __int8 partCode = kWeaponPartPerBullet[bulletSlot];
-      _base_fld *partRecord = g_Main.m_tblUnitPart[partCode].GetRecord(unitData->byPart[partCode]);
+      _UnitPart_fld *partRecord =
+        reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[partCode].GetRecord(unitData->byPart[partCode]));
       if (!partRecord)
       {
         resultCode = 26;
         break;
       }
 
-      if (*reinterpret_cast<int *>(&partRecord[3].m_strCode[60]) != bulletRecord->m_nWPType)
+      if (partRecord->m_nWPType != bulletRecord->m_nWPType)
       {
         resultCode = 26;
         break;
@@ -1525,6 +1532,19 @@ void CPlayer::pc_UnitBulletFillRequest(
     SubDalant(consumeMoney[0]);
     SubGold(consumeMoney[1]);
     m_pUserDB->Update_UnitData(bySlotIndex, unitData);
+    if (consumeMoney[0] || consumeMoney[1])
+    {
+      const unsigned int newDalant = m_Param.GetDalant();
+      const unsigned int newGold = m_Param.GetGold();
+      CPlayer::s_MgrItemHistory.pay_money(
+        m_ObjID.m_wIndex,
+        "Unit_Bullet_Charge",
+        consumeMoney[0],
+        consumeMoney[1],
+        newDalant,
+        newGold,
+        m_szItemHistoryFileName);
+    }
 
     if (!m_byUserDgr)
     {
@@ -1569,7 +1589,7 @@ void CPlayer::pc_UnitPackFillRequest(
     reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[5].GetRecord(unitData->byPart[5]));
 
   _UnitBullet_fld *bulletPerSpare[8] = {};
-  unsigned int consumeMoney[11] = {};
+  unsigned int consumeMoney[7] = {};
   const unsigned int taxRate = eGetTexRate(0) + 10000u;
 
   if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(m_id.wIndex) == 99)

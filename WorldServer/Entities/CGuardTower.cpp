@@ -9,6 +9,7 @@
 #include "GlobalObjects.h"
 #include "CPlayerDB.h"
 #include "pnt_rect.h"
+#include "GuardTowerItem_fld.h"
 
 #include <cmath>
 #include <mmsystem.h>
@@ -25,42 +26,50 @@ __int64 CGuardTower::AttackableHeight()
 
 __int64 CGuardTower::GetAttackDP()
 {
-  return *reinterpret_cast<unsigned int *>(&m_pRecordSet[5].m_strCode[20]);
+  const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
+  return static_cast<unsigned int>(recordSet->m_nAttack_DP);
 }
 
 float CGuardTower::GetAttackRange()
 {
-  return static_cast<float>(*reinterpret_cast<int *>(&m_pRecordSet[5].m_strCode[24]));
+  const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
+  return static_cast<float>(recordSet->m_nGADst);
 }
 
 __int64 CGuardTower::GetDefFC(int /*nAttactPart*/, CCharacter * /*pAttChar*/, int * /*pnConvertPart*/)
 {
-  return *reinterpret_cast<unsigned int *>(&m_pRecordSet[5].m_strCode[56]);
+  const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
+  return static_cast<unsigned int>(recordSet->m_nDefFc);
 }
 
 float CGuardTower::GetDefFacing(int /*nPart*/)
 {
-  return *reinterpret_cast<float *>(&m_pRecordSet[6].m_dwIndex);
+  const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
+  return recordSet->m_fDefFacing;
 }
 
 float CGuardTower::GetDefGap(int /*nPart*/)
 {
-  return *reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[60]);
+  const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
+  return recordSet->m_fDefGap;
 }
 
 __int64 CGuardTower::GetDefSkill(bool /*bBackAttackDamage*/)
 {
-  return *reinterpret_cast<unsigned int *>(&m_pRecordSet[5].m_strCode[52]);
+  const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
+  return static_cast<unsigned int>(recordSet->m_nDefSklUnit);
 }
 
 __int64 CGuardTower::GetFireTol()
 {
-  return *reinterpret_cast<unsigned int *>(&m_pRecordSet[6].m_strCode[4]);
+  const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
+  return static_cast<unsigned int>(recordSet->m_nFireTol);
 }
 
 __int64 CGuardTower::GetGenAttackProb(CCharacter *pDst, int /*nPart*/, bool bBackAttack)
 {
-  const double attackProb = static_cast<double>(*reinterpret_cast<int *>(&m_pRecordSet[5].m_strCode[32]));
+  const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
+  const double attackProb = static_cast<double>(recordSet->m_nAttSklUnit);
   const float levelTerm = static_cast<float>(pDst->GetLevel()) * 10.0f;
   const int defSkill = static_cast<int>(pDst->GetDefSkill(bBackAttack));
 
@@ -85,12 +94,14 @@ __int64 CGuardTower::GetHP()
 
 __int64 CGuardTower::GetLevel()
 {
-  return *reinterpret_cast<unsigned int *>(&m_pRecordSet[5].m_strCode[4]);
+  const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
+  return static_cast<unsigned int>(recordSet->m_nLevel);
 }
 
 __int64 CGuardTower::GetMaxHP()
 {
-  return *reinterpret_cast<unsigned int *>(&m_pRecordSet[6].m_strCode[40]);
+  const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
+  return static_cast<unsigned int>(recordSet->m_nMaxHP);
 }
 
 char *CGuardTower::GetObjName()
@@ -104,7 +115,7 @@ char *CGuardTower::GetObjName()
       sizeof(objectName),
       "[TOWER][%d] >> %s (pos: %s {%d, %d, %d}) (master: %s)",
       static_cast<int>(GetObjRace()),
-      &m_pRecordSet[2].m_strCode[56],
+      reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet)->m_strName,
       m_pCurMap->m_pMapSet->m_strCode,
       static_cast<int>(m_fCurPos[0]),
       static_cast<int>(m_fCurPos[1]),
@@ -118,7 +129,7 @@ char *CGuardTower::GetObjName()
       sizeof(objectName),
       "[SYSTEM TOWER][%d] >> %s (pos: %s {%d, %d, %d})",
       static_cast<int>(GetObjRace()),
-      &m_pRecordSet[2].m_strCode[56],
+      reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet)->m_strName,
       m_pCurMap->m_pMapSet->m_strCode,
       static_cast<int>(m_fCurPos[0]),
       static_cast<int>(m_fCurPos[1]),
@@ -134,17 +145,20 @@ __int64 CGuardTower::GetObjRace()
 
 __int64 CGuardTower::GetSoilTol()
 {
-  return *reinterpret_cast<unsigned int *>(&m_pRecordSet[6].m_strCode[12]);
+  const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
+  return static_cast<unsigned int>(recordSet->m_nSoilTol);
 }
 
 __int64 CGuardTower::GetWaterTol()
 {
-  return *reinterpret_cast<unsigned int *>(&m_pRecordSet[6].m_strCode[8]);
+  const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
+  return static_cast<unsigned int>(recordSet->m_nWaterTol);
 }
 
 float CGuardTower::GetWeaponAdjust()
 {
-  return *reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[16]);
+  const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
+  return recordSet->m_fAttGap;
 }
 
 __int64 CGuardTower::GetWeaponClass()
@@ -154,12 +168,14 @@ __int64 CGuardTower::GetWeaponClass()
 
 float CGuardTower::GetWidth()
 {
-  return static_cast<float>(*reinterpret_cast<int *>(&m_pRecordSet[5].m_strCode[12]));
+  const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
+  return static_cast<float>(recordSet->m_nWidth);
 }
 
 __int64 CGuardTower::GetWindTol()
 {
-  return *reinterpret_cast<unsigned int *>(&m_pRecordSet[6].m_strCode[16]);
+  const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
+  return static_cast<unsigned int>(recordSet->m_nWindTol);
 }
 
 bool CGuardTower::IsBeAttackedAble(bool /*bFirst*/)
@@ -211,7 +227,8 @@ bool CGuardTower::IsValidTarget()
     return false;
 
   const float targetDistance = GetSqrt(m_fCurPos, m_pTarget->m_fCurPos);
-  const float attackRange = static_cast<float>(*reinterpret_cast<int *>(&m_pRecordSet[5].m_strCode[24]));
+  const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
+  const float attackRange = static_cast<float>(recordSet->m_nGADst);
   if (targetDistance > attackRange + m_pTarget->GetWidth() / 2.0f)
     return false;
 
@@ -246,7 +263,8 @@ CCharacter *CGuardTower::SearchNearEnemy()
   if (m_pMasterSetTarget != nullptr)
     return m_pMasterSetTarget;
 
-  const int maxRange = *reinterpret_cast<int *>(&m_pRecordSet[5].m_strCode[24]);
+  const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
+  const int maxRange = recordSet->m_nGADst;
 
   CCharacter *priorityTargets[10]{};
   CCharacter *normalTargets[10]{};
@@ -374,12 +392,13 @@ void CGuardTower::Attack(CCharacter *pTarget)
   _attack_param attackParam{};
   attackParam.pDst = pTarget;
   attackParam.nPart = (pTarget != nullptr) ? pTarget->GetAttackRandomPart() : GetAttackRandomPart();
-  attackParam.nTol = *reinterpret_cast<int *>(m_pRecordSet[6].m_strCode);
+  const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
+  attackParam.nTol = recordSet->m_nProperty;
   attackParam.nClass = 1;
-  attackParam.nMinAF = *reinterpret_cast<int *>(&m_pRecordSet[5].m_strCode[36]);
-  attackParam.nMaxAF = *reinterpret_cast<int *>(&m_pRecordSet[5].m_strCode[40]);
-  attackParam.nMinSel = *reinterpret_cast<int *>(&m_pRecordSet[5].m_strCode[44]);
-  attackParam.nMaxSel = *reinterpret_cast<int *>(&m_pRecordSet[5].m_strCode[48]);
+  attackParam.nMinAF = recordSet->m_nGAMinAF;
+  attackParam.nMaxAF = recordSet->m_nGAMaxAF;
+  attackParam.nMinSel = recordSet->m_nGAMinSelProb;
+  attackParam.nMaxSel = recordSet->m_nGAMaxSelProb;
 
   attack.AttackGen(&attackParam, false, false);
 
@@ -436,7 +455,8 @@ void CGuardTower::Loop()
     {
       Attack(m_pTarget);
 
-      const unsigned int attackDelay = *reinterpret_cast<unsigned int *>(&m_pRecordSet[5].m_strCode[28]);
+      const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
+      const unsigned int attackDelay = static_cast<unsigned int>(recordSet->m_nGASpd);
       const unsigned int nextTick = attackDelay + loopTime;
       if (nextTick < loopTime)
         m_dwNextGenAttackTime = attackDelay;
@@ -447,7 +467,8 @@ void CGuardTower::Loop()
   else
   {
     const unsigned int elapsed = loopTime - m_dwStartMakeTime;
-    unsigned int buildMs = 1000u * (*reinterpret_cast<unsigned int *>(&m_pRecordSet[4].m_strCode[60]));
+    const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
+    unsigned int buildMs = 1000u * static_cast<unsigned int>(recordSet->m_nExpTime);
     if (m_bQuick)
       buildMs = 5000;
 
@@ -538,7 +559,8 @@ __int64 CGuardTower::SetDamage(
       m_pMasterTwr->SendMsg_AlterTowerHP(m_wItemSerial, m_nHP);
     }
 
-    if (GetSqrt(m_fCurPos, pDst->m_fCurPos) > static_cast<float>(*reinterpret_cast<int *>(&m_pRecordSet[5].m_strCode[24])))
+    const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
+    if (GetSqrt(m_fCurPos, pDst->m_fCurPos) > static_cast<float>(recordSet->m_nGADst))
     {
       if (m_pTarget)
       {
@@ -586,7 +608,7 @@ bool CGuardTower::Create(_tower_create_setdata *pData)
     m_dwMasterSerial = static_cast<unsigned int>(-1);
     m_pItem = nullptr;
     m_wItemSerial = static_cast<unsigned __int16>(-1);
-    m_nHP = *reinterpret_cast<int *>(&m_pRecordSet[6].m_strCode[40]);
+    m_nHP = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet)->m_nMaxHP;
     m_bSystemStruct = true;
     m_nIniIndex = pData->nIniIndex;
   }
@@ -639,7 +661,7 @@ bool CGuardTower::Destroy(unsigned __int8 byDesType, bool bSystemBack)
     return CCharacter::Destroy();
   }
 
-  m_nHP = *reinterpret_cast<int *>(&m_pRecordSet[6].m_strCode[40]);
+  m_nHP = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet)->m_nMaxHP;
   m_dwStartMakeTime = timeGetTime();
   m_bComplete = false;
   m_pTarget = nullptr;
@@ -705,7 +727,8 @@ void CGuardTower::NotifyOwnerAttackInform(CCharacter *pDst)
     return;
   }
 
-  const int attackRange = *reinterpret_cast<int *>(&m_pRecordSet[5].m_strCode[24]);
+  const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
+  const int attackRange = recordSet->m_nGADst;
   const float searchRadius = static_cast<float>(attackRange) + pDst->GetWidth() / 2.0f;
   if (GetSqrt(m_fCurPos, pDst->m_fCurPos) <= searchRadius)
   {

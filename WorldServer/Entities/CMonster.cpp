@@ -394,12 +394,12 @@ bool CMonster::IsRoateMonster()
 
 float CMonster::GetVisualField()
 {
-  return *reinterpret_cast<float *>(&m_pRecordSet[25].m_strCode[44]);
+  return m_pMonRec->m_fViewExt;
 }
 
 float CMonster::GetVisualAngle()
 {
-  return static_cast<float>(*reinterpret_cast<int *>(&m_pRecordSet[25].m_strCode[32]));
+  return static_cast<float>(m_pMonRec->m_nViewAngle);
 }
 
 bool CMonster::IsViewArea(CCharacter *pTarget)
@@ -443,12 +443,12 @@ bool CMonster::GetViewAngleCap(int nCapKind, int *nOutValue)
 
 __int64 CMonster::GetMob_AsistType()
 {
-  return *reinterpret_cast<unsigned int *>(&m_pRecordSet[26].m_strCode[24]);
+  return static_cast<unsigned int>(m_pMonRec->m_nAsitType);
 }
 
 __int64 CMonster::GetMob_SubRace()
 {
-  return m_pRecordSet[3].m_dwIndex;
+  return static_cast<unsigned int>(m_pMonRec->m_nMobRace);
 }
 
 unsigned int CMonster::GetAggroShortTime()
@@ -518,7 +518,7 @@ unsigned int CMonster::GetNewMonSerial()
 
 __int64 CMonster::GetMonsterGrade()
 {
-  return *reinterpret_cast<unsigned int *>(&m_pRecordSet[2].m_strCode[56]);
+  return static_cast<unsigned int>(m_pMonRec->m_nMobGrade);
 }
 
 unsigned __int8 CMonster::GetMoveType()
@@ -623,7 +623,7 @@ __int64 CMonster::GetAttackPart()
 
 __int64 CMonster::GetAttackDP()
 {
-  return *reinterpret_cast<unsigned int *>(&m_pRecordSet[4].m_strCode[24]);
+  return static_cast<unsigned int>(m_pMonRec->m_nAttack_DP);
 }
 
 float CMonster::GetAttackRange()
@@ -656,17 +656,17 @@ if (m_pMonRec == nullptr)
 
 float CMonster::GetDefFacing(int nPart)
 {
-return *reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[8]);
+  return m_pMonRec->m_fDefFacing;
 }
 
 float CMonster::GetDefGap(int nPart)
 {
-return *reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[4]);
+  return m_pMonRec->m_fDefGap;
 }
 
 __int64 CMonster::GetDefSkill(bool bBackAttackDamage)
 {
-  float defSkill = *reinterpret_cast<float *>(&m_pRecordSet[4].m_strCode[56]);
+  float defSkill = m_pMonRec->m_fDefSklUnit;
   if (bBackAttackDamage)
   {
     int cap = -1;
@@ -685,7 +685,7 @@ __int64 CMonster::GetDefSkill(bool bBackAttackDamage)
 
 __int64 CMonster::GetFireTol()
 {
-  float value = *reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[20]) + m_EP.GetEff_Plus(15);
+  float value = m_pMonRec->m_fFireTol + m_EP.GetEff_Plus(15);
   int finalValue = static_cast<int>(value * m_EP.GetEff_Rate(25));
   if (finalValue < -200)
     finalValue = -200;
@@ -703,7 +703,7 @@ __int64 CMonster::GetHP()
 
 __int64 CMonster::GetLevel()
 {
-  return static_cast<unsigned int>(static_cast<int>(*reinterpret_cast<float *>(&m_pRecordSet[3].m_strCode[60])));
+  return static_cast<unsigned int>(static_cast<int>(m_pMonRec->m_fLevel));
 }
 
 __int64 CMonster::GetMaxHP()
@@ -732,7 +732,7 @@ __int64 CMonster::GetObjRace()
 
 __int64 CMonster::GetSoilTol()
 {
-  float value = *reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[28]) + m_EP.GetEff_Plus(17);
+  float value = m_pMonRec->m_fSoilTol + m_EP.GetEff_Plus(17);
   int finalValue = static_cast<int>(value * m_EP.GetEff_Rate(27));
   if (finalValue < -200)
     finalValue = -200;
@@ -745,7 +745,7 @@ __int64 CMonster::GetSoilTol()
 
 __int64 CMonster::GetWaterTol()
 {
-  float value = *reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[24]) + m_EP.GetEff_Plus(16);
+  float value = m_pMonRec->m_fWaterTol + m_EP.GetEff_Plus(16);
   int finalValue = static_cast<int>(value * m_EP.GetEff_Rate(26));
   if (finalValue < -200)
     finalValue = -200;
@@ -758,7 +758,7 @@ __int64 CMonster::GetWaterTol()
 
 float CMonster::GetWeaponAdjust()
 {
-  return *reinterpret_cast<float *>(&m_pRecordSet[4].m_strCode[32]);
+  return m_pMonRec->m_fWeakPart;
 }
 
 __int64 CMonster::GetWeaponClass()
@@ -773,7 +773,7 @@ float CMonster::GetWidth()
 
 __int64 CMonster::GetWindTol()
 {
-  float value = *reinterpret_cast<float *>(&m_pRecordSet[5].m_strCode[32]) + m_EP.GetEff_Plus(18);
+  float value = m_pMonRec->m_fWindTol + m_EP.GetEff_Plus(18);
   int finalValue = static_cast<int>(value * m_EP.GetEff_Rate(28));
   if (finalValue < -200)
     finalValue = -200;
@@ -786,7 +786,7 @@ __int64 CMonster::GetWindTol()
 
 __int64 CMonster::GetCritical_Exception_Rate()
 {
-  return *reinterpret_cast<unsigned int *>(m_pRecordSet[4].m_strCode);
+  return static_cast<unsigned int>(m_pMonRec->m_nCriticalTol);
 }
 
 __int64 CMonster::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)

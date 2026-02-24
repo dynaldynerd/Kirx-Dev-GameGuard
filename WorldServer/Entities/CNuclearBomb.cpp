@@ -303,7 +303,8 @@ void CNuclearBomb::NuclearDamege()
                 && m_nDamagedObjNum < 300)
               {
                 m_DamList[m_nDamagedObjNum].m_pChar = candidate;
-                m_DamList[m_nDamagedObjNum].m_nDamage = *reinterpret_cast<int *>(&m_pRecordSet[5].m_strCode[48]);
+                m_DamList[m_nDamagedObjNum].m_nDamage =
+                  *reinterpret_cast<int *>(&m_pRecordSet[5].m_strCode[48]);
                 m_DamList[m_nDamagedObjNum++].m_dwDamCharSerial = candidate->m_dwObjSerial;
               }
             }

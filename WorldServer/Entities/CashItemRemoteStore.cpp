@@ -5,6 +5,7 @@
 
 #include "CashShop_fld.h"
 #include "CashShop_str_fld.h"
+#include "CouponItem_fld.h"
 #include "CAsyncLogger.h"
 #include "CCashDBWorkManager.h"
 #include "CMainThread.h"
@@ -416,10 +417,16 @@ char CashItemRemoteStore::BuyByGold(unsigned __int16 wSock, _request_csi_buy_clz
 
 __int64 CashItemRemoteStore::CheckCouponType(_STORAGE_POS_INDIV *pCoupon, CPlayer *pOne, unsigned __int8 byCouponNum)
 {
-  char couponGroup[3]{static_cast<char>(0xFF), static_cast<char>(0xFF), static_cast<char>(0xFF)};
-  char couponType[3]{static_cast<char>(0xFF), static_cast<char>(0xFF), static_cast<char>(0xFF)};
-  int validCount = 0;
+  char couponItemPart[32]{};
+  char discountType[16]{};
+  couponItemPart[0] = static_cast<char>(0xFF);
+  couponItemPart[1] = static_cast<char>(0xFF);
+  couponItemPart[2] = static_cast<char>(0xFF);
+  discountType[0] = static_cast<char>(0xFF);
+  discountType[1] = static_cast<char>(0xFF);
+  discountType[2] = static_cast<char>(0xFF);
 
+  int validCount = 0;
   for (int index = 0; index < byCouponNum; ++index)
   {
     _STORAGE_LIST *storage = pOne->m_Param.m_pStoragePtr[pCoupon[index].byStorageCode];
@@ -434,14 +441,15 @@ __int64 CashItemRemoteStore::CheckCouponType(_STORAGE_POS_INDIV *pCoupon, CPlaye
       continue;
     }
 
-    _base_fld *record = g_Main.m_tblItemData[couponItem->m_byTableCode].GetRecord(couponItem->m_wItemIndex);
+    _CouponItem_fld *record = static_cast<_CouponItem_fld *>(
+      g_Main.m_tblItemData[couponItem->m_byTableCode].GetRecord(couponItem->m_wItemIndex));
     if (!record)
     {
       continue;
     }
 
-    couponGroup[index] = record[4].m_strCode[0];
-    couponType[index] = record[4].m_strCode[4];
+    couponItemPart[index] = static_cast<char>(record->m_nCouponItemPart);
+    discountType[index] = static_cast<char>(record->m_nDiscount);
     ++validCount;
   }
 
@@ -450,15 +458,14 @@ __int64 CashItemRemoteStore::CheckCouponType(_STORAGE_POS_INDIV *pCoupon, CPlaye
     return validCount;
   }
 
-  if ((couponGroup[0] == couponGroup[1] && static_cast<unsigned __int8>(couponGroup[1]) == static_cast<unsigned __int8>(couponGroup[2]))
-      || (static_cast<unsigned __int8>(couponGroup[0]) == static_cast<unsigned __int8>(couponGroup[2])
-          && static_cast<unsigned __int8>(couponGroup[2]) == 0xFF))
+  if ((couponItemPart[0] == couponItemPart[1] && couponItemPart[1] == couponItemPart[2])
+      || (couponItemPart[0] == couponItemPart[2] && static_cast<unsigned __int8>(couponItemPart[2]) == 0xFF))
   {
     return 0;
   }
 
-  if ((couponType[0] == couponType[1] || static_cast<unsigned __int8>(couponType[1]) == static_cast<unsigned __int8>(couponType[2]))
-      && (couponType[0] == couponType[1] || couponType[2] != static_cast<char>(0xFF)))
+  if ((discountType[0] == discountType[1] || discountType[1] == discountType[2])
+      && (discountType[0] == discountType[1] || static_cast<unsigned __int8>(discountType[2]) != 0xFF))
   {
     return validCount;
   }
@@ -479,7 +486,8 @@ char CashItemRemoteStore::UseDiscountCoupon(_param_cash_update *pBuyList, _STORA
     return 0;
   }
 
-  _base_fld *record = g_Main.m_tblItemData[couponItem->m_byTableCode].GetRecord(couponItem->m_wItemIndex);
+  _CouponItem_fld *record = static_cast<_CouponItem_fld *>(
+    g_Main.m_tblItemData[couponItem->m_byTableCode].GetRecord(couponItem->m_wItemIndex));
   if (!record)
   {
     return 0;
@@ -492,8 +500,8 @@ char CashItemRemoteStore::UseDiscountCoupon(_param_cash_update *pBuyList, _STORA
       * pBuyList->in_item[static_cast<unsigned __int64>(index)].in_nPrice;
   }
 
-  const int applyValue = *reinterpret_cast<int *>(&record[4].m_strCode[8]);
-  const int applyType = *reinterpret_cast<int *>(&record[4].m_strCode[4]);
+  const int applyValue = record->m_nPoint;
+  const int applyType = record->m_nDiscount;
   const int tenScaledValue = 10 * applyValue;
 
   if (applyType)
@@ -549,7 +557,8 @@ char CashItemRemoteStore::IsUsableCoupon(
     return 0;
   }
 
-  _base_fld *record = g_Main.m_tblItemData[couponItem->m_byTableCode].GetRecord(couponItem->m_wItemIndex);
+  _CouponItem_fld *record = static_cast<_CouponItem_fld *>(
+    g_Main.m_tblItemData[couponItem->m_byTableCode].GetRecord(couponItem->m_wItemIndex));
   if (!record)
   {
     return 0;
@@ -561,8 +570,8 @@ char CashItemRemoteStore::IsUsableCoupon(
     totalPrice += pBuyList->item[index].byOverlapNum * pBuyList->item[index].nPrice;
   }
 
-  const int applyValue = *reinterpret_cast<int *>(&record[4].m_strCode[8]);
-  const int applyType = *reinterpret_cast<int *>(&record[4].m_strCode[4]);
+  const int applyValue = record->m_nPoint;
+  const int applyType = record->m_nDiscount;
   const int tenScaledValue = 10 * applyValue;
   if (applyType)
   {
@@ -933,20 +942,21 @@ __int64 CashItemRemoteStore::_buybygold_buy_single_item_calc_price_coupon(
       continue;
     }
 
-    _base_fld *record = g_Main.m_tblItemData[couponItem->m_byTableCode].GetRecord(couponItem->m_wItemIndex);
+    _CouponItem_fld *record = static_cast<_CouponItem_fld *>(
+      g_Main.m_tblItemData[couponItem->m_byTableCode].GetRecord(couponItem->m_wItemIndex));
     if (!record)
     {
       continue;
     }
 
-    const int applyValue = *reinterpret_cast<int *>(&record[4].m_strCode[8]);
-    const int applyType = *reinterpret_cast<int *>(&record[4].m_strCode[4]);
+    const int applyValue = record->m_nPoint;
+    const int applyType = record->m_nDiscount;
     const unsigned int tenScaledValue = 10 * applyValue;
     if (applyType)
     {
-      const unsigned int rawDiscount = static_cast<unsigned int>(applyValue) * static_cast<unsigned int>(nCsPrice) / 100;
-      const int roundedDiscount = 10 * static_cast<int>((static_cast<double>(rawDiscount) * 0.1) + 0.5);
-      totalDiscountPrice += roundedDiscount;
+      int rawDiscount = applyValue * nCsPrice / 100u;
+      rawDiscount = 10 * static_cast<int>((static_cast<double>(rawDiscount) * 0.1) + 0.5);
+      totalDiscountPrice += rawDiscount;
       *dwDiscount += applyValue;
       bCouponUseCheck[index] = true;
     }

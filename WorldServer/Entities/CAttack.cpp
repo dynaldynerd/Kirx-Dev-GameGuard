@@ -14,6 +14,9 @@
 #include "CObjectList.h"
 #include "CPlayer.h"
 #include "CPvpUserAndGuildRankingSystem.h"
+#include "WeaponItem_fld.h"
+#include "force_fld.h"
+#include "skill_fld.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 #include "pnt_rect.h"
@@ -442,7 +445,7 @@ void CAttack::AttackForce(_attack_param *pParam, bool bUseEffBullet)
   m_nDamagedObjNum = 0;
   m_bIsCrtAtt = false;
   m_pp = pParam;
-  _base_fld *forceField = m_pp->pFld;
+  _force_fld *forceField = reinterpret_cast<_force_fld *>(m_pp->pFld);
   bool canHit = true;
   m_pAttChar->BreakStealth();
 
@@ -526,7 +529,7 @@ void CAttack::AttackForce(_attack_param *pParam, bool bUseEffBullet)
     }
   }
 
-  const int attackType = *reinterpret_cast<int *>(&forceField[11].m_strCode[4]);
+  const int attackType = forceField->m_nProperty;
   if (attackType >= 0 && attackType <= 2)
   {
     if (m_pp->pDst)
@@ -555,7 +558,7 @@ void CAttack::AttackForce(_attack_param *pParam, bool bUseEffBullet)
   }
   else if (attackType == 5)
   {
-    const int index = *reinterpret_cast<int *>(&forceField[4].m_strCode[60]);
+    const int index = forceField->m_nLv;
     FlashDamageProc(
       s_nLimitDist[index],
       static_cast<int>(normalAttack),
@@ -565,7 +568,7 @@ void CAttack::AttackForce(_attack_param *pParam, bool bUseEffBullet)
   }
   else if (attackType == 4 || attackType == 6)
   {
-    const int index = *reinterpret_cast<int *>(&forceField[4].m_strCode[60]);
+    const int index = forceField->m_nLv;
     AreaDamageProc(
       s_nLimitRadius[index],
       static_cast<int>(normalAttack),
@@ -589,8 +592,9 @@ float CAttack::GetAttackFC(CPlayer *pPlayer, unsigned __int8 bySkill, bool bNear
     return 0.0f;
   }
 
-  _base_fld *record = g_Main.m_tblItemData[6].GetRecord(weaponItem->m_wItemIndex);
-  if (!record)
+  _WeaponItem_fld *weaponRecord = reinterpret_cast<_WeaponItem_fld *>(
+    g_Main.m_tblItemData[6].GetRecord(weaponItem->m_wItemIndex));
+  if (!weaponRecord)
   {
     return 0.0f;
   }
@@ -604,7 +608,7 @@ float CAttack::GetAttackFC(CPlayer *pPlayer, unsigned __int8 bySkill, bool bNear
     {
       if (bUnit)
       {
-        value = (*reinterpret_cast<float *>(record[10].m_strCode) * pPlayer->m_EP.GetEff_Rate(32))
+        value = (weaponRecord->m_fGAMinAF * pPlayer->m_EP.GetEff_Rate(32))
           + static_cast<float>(mastery);
       }
       else
@@ -624,7 +628,7 @@ float CAttack::GetAttackFC(CPlayer *pPlayer, unsigned __int8 bySkill, bool bNear
     }
     if (bUnit)
     {
-      return (*reinterpret_cast<float *>(&record[10].m_strCode[24]) * pPlayer->m_EP.GetEff_Rate(32))
+      return (weaponRecord->m_fMAMinAF * pPlayer->m_EP.GetEff_Rate(32))
         + static_cast<float>(pPlayer->m_pmMst.m_mtyStaff);
     }
     return (static_cast<float>(pPlayer->m_pmWpn.nMaMaxAF) * pPlayer->m_EP.GetEff_Rate(32))
@@ -633,7 +637,7 @@ float CAttack::GetAttackFC(CPlayer *pPlayer, unsigned __int8 bySkill, bool bNear
 
   if (bUnit)
   {
-    value = (*reinterpret_cast<float *>(record[10].m_strCode) * pPlayer->m_EP.GetEff_Rate(32))
+    value = (weaponRecord->m_fGAMinAF * pPlayer->m_EP.GetEff_Rate(32))
       + static_cast<float>(CPlayer::s_nAddMstFc[mastery]);
   }
   else
@@ -659,8 +663,8 @@ __int64 CAttack::GetMeleeSkillIndex(int nMeleeTechCode)
   const int recordCount = static_cast<int>(s_pSkillData->GetRecordNum());
   for (int index = 0; index < recordCount; ++index)
   {
-    _base_fld *record = s_pSkillData->GetRecord(index);
-    if (!record[1].m_dwIndex && *reinterpret_cast<int *>(&record[16].m_strCode[52]) == nMeleeTechCode)
+    _skill_fld *record = reinterpret_cast<_skill_fld *>(s_pSkillData->GetRecord(index));
+    if (record && !record->m_nClass && record->m_nContEffectSec[0] == nMeleeTechCode)
     {
       return index;
     }
@@ -769,9 +773,9 @@ __int64 CAttack::_CalcGenAttPnt(bool bUseEffBullet)
 
 __int64 CAttack::_CalcForceAttPnt(bool bUseEffBullet)
 {
-  _base_fld *skillField = m_pp->pFld;
+  _force_fld *skillField = reinterpret_cast<_force_fld *>(m_pp->pFld);
   const float levelFactor = static_cast<float>(m_pp->nLevel) + ((7.0f - static_cast<float>(m_pp->nLevel)) * 0.5f);
-  const float skillConst = *reinterpret_cast<float *>(&skillField[11].m_strCode[8]);
+  const float skillConst = skillField->m_fAttFormulaConstant;
 
   unsigned int minAttack = 0;
   int maxAttack = 0;

@@ -645,8 +645,12 @@ char CPlayer::dev_loot_fullitem(unsigned __int8 byLv)
       return 0;
     for ( j = 0; j < 30; ++j )
     {
-      if ( *(int *)&Record[j + 1].m_strCode[60] > 0 )
-        this->dev_loot_item( (char *)&Record[j + 1], *(_DWORD *)&Record[j + 1].m_strCode[60], 0LL, 0);
+      if ( *reinterpret_cast<int *>(&Record[j + 1].m_strCode[60]) > 0 )
+        this->dev_loot_item(
+          reinterpret_cast<char *>(&Record[j + 1]),
+          *reinterpret_cast<unsigned int *>(&Record[j + 1].m_strCode[60]),
+          0LL,
+          0);
     }
     return 1;
 }
@@ -746,7 +750,8 @@ char CPlayer::dev_loot_mine()
       if ( n >= RecordNum )
         break;
       Record = g_Main.m_tblItemData[6].GetRecord( n);
-      if ( Record[1].m_dwIndex && *(_DWORD *)&Record[6].m_strCode[8] == 10 )
+      if ( Record[1].m_dwIndex
+           && *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[8]) == 10 )
       {
         ItemEquipCivil = GetItemEquipCivil(6, n);
         RaceSexCode = this->m_Param.GetRaceSexCode();
@@ -808,7 +813,9 @@ char CPlayer::dev_loot_tower()
                 this->m_fCurPos,
                 1) )
           return 1;
-        for ( j = 0; j < 3 && loot_item(this, &Record[j + 7].m_strCode[4], 1, 0LL, 0); ++j )
+        for ( j = 0;
+              j < 3 && loot_item(this, &Record[j + 7].m_strCode[4], 1, 0LL, 0);
+              ++j )
           ;
       }
     }
@@ -945,7 +952,8 @@ char CPlayer::dev_quest_complete()
     pSlotData->dwPassSec = -1;
     this->m_pUserDB->Update_QuestUpdate( j, pSlotData, 1);
     Record = CQuestMgr::s_tblQuest->GetRecord( pSlotData->wIndex);
-    if ( *(_DWORD *)&Record[13].m_strCode[60] || *(_DWORD *)&Record[1].m_strCode[24] )
+    if ( *reinterpret_cast<unsigned int *>(&Record[13].m_strCode[60])
+         || *reinterpret_cast<unsigned int *>(&Record[1].m_strCode[24]) )
       this->SendMsg_SelectQuestReward( j);
     else
       this->Emb_CompleteQuest( j, 0xFFu, 0xFFu);
@@ -983,7 +991,8 @@ char CPlayer::dev_quest_complete_other(char *pwszCharName)
     pSlotData->dwPassSec = -1;
     v6->Update_QuestUpdate( j, pSlotData, 1);
     Record = CQuestMgr::s_tblQuest->GetRecord( pSlotData->wIndex);
-    if ( *(_DWORD *)&Record[13].m_strCode[60] || *(_DWORD *)&Record[1].m_strCode[24] )
+    if ( *reinterpret_cast<unsigned int *>(&Record[13].m_strCode[60])
+         || *reinterpret_cast<unsigned int *>(&Record[1].m_strCode[24]) )
       v7->SendMsg_SelectQuestReward( j);
     else
       v7->Emb_CompleteQuest( j, 0xFFu, 0xFFu);
@@ -1245,10 +1254,10 @@ char CPlayer::dev_up_all(int nCum)
     for ( n = 0; n < 48; ++n )
     {
       Record = _MASTERY_PARAM::s_pSkillData->GetRecord( n);
-      if ( Record && *(_DWORD *)&Record[1].m_strCode[4] < 8u )
+      if ( Record && *reinterpret_cast<unsigned int *>(&Record[1].m_strCode[4]) < 8u )
       {
         if ( strncmp(Record->m_strCode, "FF", 2uLL) )
-          ++v7[*(int *)&Record[1].m_strCode[4]];
+          ++v7[*reinterpret_cast<int *>(&Record[1].m_strCode[4])];
       }
     }
     for ( n = 0; n < 8; ++n )
@@ -1259,9 +1268,9 @@ char CPlayer::dev_up_all(int nCum)
       if ( v10 && strncmp(v10->m_strCode, "FF", 2uLL) )
       {
         dwNewCum = nCum;
-        if ( (int)v7[*(int *)&v10[1].m_strCode[4]] > 0 )
+        if ( (int)v7[*reinterpret_cast<int *>(&v10[1].m_strCode[4])] > 0 )
         {
-          fVal = (float)(int)dwNewCum / (float)(int)v7[*(int *)&v10[1].m_strCode[4]];
+          fVal = (float)(int)dwNewCum / (float)(int)v7[*reinterpret_cast<int *>(&v10[1].m_strCode[4])];
           dwNewCum = CalcRoundUp(fVal);
         }
         this->Emb_UpdateStat( dwStatIndex + 4, dwNewCum, 0);
@@ -1345,10 +1354,10 @@ char CPlayer::dev_up_all_pt(int nLv)
     for ( n = 0; n < 48; ++n )
     {
       Record = _MASTERY_PARAM::s_pSkillData->GetRecord( n);
-      if ( Record && *(_DWORD *)&Record[1].m_strCode[4] < 8u )
+      if ( Record && *reinterpret_cast<unsigned int *>(&Record[1].m_strCode[4]) < 8u )
       {
         if ( strncmp(Record->m_strCode, "FF", 2uLL) )
-          ++v18[*(int *)&Record[1].m_strCode[4]];
+          ++v18[*reinterpret_cast<int *>(&Record[1].m_strCode[4])];
       }
     }
     for ( n = 0; n < 8; ++n )
@@ -1359,9 +1368,9 @@ char CPlayer::dev_up_all_pt(int nLv)
       if ( v21 && strncmp(v21->m_strCode, "FF", 2uLL) )
       {
         dwNewCum = dwNewData;
-        if ( (int)v18[*(int *)&v21[1].m_strCode[4]] > 0 )
+        if ( (int)v18[*reinterpret_cast<int *>(&v21[1].m_strCode[4])] > 0 )
         {
-          fVal = (float)(int)dwNewCum / (float)(int)v18[*(int *)&v21[1].m_strCode[4]];
+          fVal = (float)(int)dwNewCum / (float)(int)v18[*reinterpret_cast<int *>(&v21[1].m_strCode[4])];
           dwNewCum = CalcRoundUp(fVal);
         }
         this->Emb_UpdateStat( dwStatIndex + 4, dwNewCum, 0);

@@ -7,6 +7,7 @@
 #include "ObjectCreateSetData.h"
 #include "GlobalObjects.h"
 #include "CRecordData.h"
+#include "monster_fld.h"
 
 void CMonsterHierarchy::Init()
 {
@@ -236,7 +237,7 @@ void CMonsterHierarchy::OnChildMonsterCreate(_monster_create_setdata *pData)
         *reinterpret_cast<int *>(&recordSet[j + 27].m_strCode[24]) = 0;
         return;
       }
-      if (record[4].m_dwIndex == 1)
+      if (reinterpret_cast<_monster_fld *>(record)->m_bExpDown == 1)
       {
         *reinterpret_cast<int *>(&recordSet[j + 27].m_strCode[24]) = 0;
         return;

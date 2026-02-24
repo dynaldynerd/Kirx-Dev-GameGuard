@@ -12,6 +12,7 @@
 #include "TimeItem.h"
 #include "UIDGenerator.h"
 #include "WorldServerUtil.h"
+#include "grade_fld.h"
 
 #include <cstdlib>
 #include <ctime>
@@ -355,25 +356,26 @@ char CPlayerDB::CalcCharGrade(unsigned __int8 byLv, unsigned __int16 wRankRate)
     rankRate = 0;
   }
 
-  const float rate = static_cast<float>(static_cast<float>(rankRate) / 100.0f) / 100.0f;
+  const float rankingRate = (static_cast<float>(rankRate) / 100.0f) / 100.0f;
 
-  char buffer[48]{};
-  _itoa(byLv, buffer, 10);
+  char levelCode[48]{};
+  _itoa(byLv, levelCode, 10);
 
-  _base_fld *record = g_Main.m_tblGrade.GetRecord(buffer);
+  _grade_fld *record = reinterpret_cast<_grade_fld *>(g_Main.m_tblGrade.GetRecord(levelCode));
   while (record)
   {
-    if (*reinterpret_cast<float *>(&record[1].m_dwIndex) >= rate)
+    if (record->m_fRanking >= rankingRate)
     {
-      return record[1].m_strCode[0];
+      return static_cast<char>(record->m_nGrade);
     }
 
-    record = g_Main.m_tblGrade.GetRecord(record->m_dwIndex + 1);
+    record = reinterpret_cast<_grade_fld *>(g_Main.m_tblGrade.GetRecord(record->m_dwIndex + 1));
     if (!record)
     {
       return 0;
     }
-    if (strcmp_0(record->m_strCode, buffer))
+
+    if (strcmp_0(record->m_strCode, levelCode))
     {
       return 0;
     }

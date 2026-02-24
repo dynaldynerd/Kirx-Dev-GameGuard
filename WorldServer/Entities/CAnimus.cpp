@@ -2,6 +2,7 @@
 
 #include "CAnimus.h"
 #include "ObjectCreateSetData.h"
+#include "AnimusItem_fld.h"
 #include "animus_fld.h"
 #include "CAttack.h"
 #include "CMonster.h"
@@ -140,7 +141,7 @@ char CAnimus::Create(_animus_create_setdata *pData)
   m_dwExp = pData->dwExp;
   m_pMaster = pData->pMaster;
   m_dwObjSerial = GetNewMonSerial();
-  m_byRoleCode = static_cast<unsigned __int8>(m_pRecordSet[3].m_strCode[56]);
+  m_byRoleCode = static_cast<unsigned __int8>(reinterpret_cast<_AnimusItem_fld *>(m_pRecordSet)->m_nAnimusType);
   m_nMaxAttackPnt = pData->nMaxAttackPnt;
   m_dwMasterSerial = pData->pMaster->m_dwObjSerial;
   strcpy_0(m_wszMasterName, pData->pMaster->m_Param.GetCharNameW());
@@ -649,7 +650,7 @@ void CAnimus::CalcAttExp(CAttack *pAT)
       continue;
     }
 
-    _base_fld *monsterRecord = monster->m_pRecordSet;
+    _monster_fld *monsterRecord = reinterpret_cast<_monster_fld *>(monster->m_pRecordSet);
     const int monsterCurrentHP = static_cast<int>(monster->GetHP());
     int remainHP = monsterCurrentHP - damage;
     int appliedDamage = damage;
@@ -659,8 +660,8 @@ void CAnimus::CalcAttExp(CAttack *pAT)
       appliedDamage = monsterCurrentHP;
     }
 
-    const float baseExp = *reinterpret_cast<float *>(&monsterRecord[4].m_strCode[16]);
-    const float maxHP = *reinterpret_cast<float *>(&monsterRecord[25].m_strCode[4]);
+    const float baseExp = monsterRecord->m_fExt;
+    const float maxHP = monsterRecord->m_fMaxHP;
     const float damageExp = (baseExp * 0.69999999f) * (static_cast<float>(appliedDamage) / maxHP);
     const int damageExpAdd = static_cast<int>((damageExp / 500.0f) + static_cast<float>(targetLevel));
     if (isInanna)

@@ -21,6 +21,11 @@ Only unresolved static strings/arrays/data from IDA go here. Remove entries once
 - `CPlayer::s_nRevDefPoint = 10` (from `ida_static_data.tsv`, symbol `s_nRevDefPoint`)
 - `CPlayer::s_nMonDefPoint = 12` (from `ida_static_data.tsv`, symbol `s_nMonDefPoint`)
 
+## Unit money-log literals (2026-02-24)
+- "PAY: %s pay(D:%u G:%u) $D:%u $G:%u\r\n" (`CMgrAvatorItemHistory::pay_money`)
+- "Unit_Bullet_Charge" (`CPlayer::pc_UnitBulletFillRequest`)
+- "UNIT TUNING: %d>fr:%d %d/%d/%d/%d/%d/%d pay(D:%u G:%u) $D:%u $G:%u [%s %s]\r\n" (`CMgrAvatorItemHistory::tuning_unit`)
+
 ## UnmannedTrader request literals (2026-02-13)
 - "CUnmannedTraderUserInfoTable::Regist(...)" (CUnmannedTraderUserInfoTable::Regist)
 - "CUnmannedTraderUserInfoTable::ModifyPrice(...)" (CUnmannedTraderUserInfoTable::ModifyPrice)
@@ -1242,3 +1247,20 @@ Only unresolved static strings/arrays/data from IDA go here. Remove entries once
 - Static string `"CashItemRemoteStore::Buy() Can not find _TimeItem_fld Data, TableCode(%d), ItemIndex(%d), StoreIndex(%d)"` (`CashItemRemoteStore::BuyByCash`)
 - Static format string `"[Name: %s AccountID: %d] [Insert 1+1 Event CASTITEM] : %s(%s) [UID: %I64u] [Num:%d Event: %d]"` (`CashItemRemoteStore::_buybygold_buy_single_item_additional_process`)
 - Static format string `"Use CouponItem at %s(%d down): %s_[%I64u] [%s %s]\r\n"` (`CMgrAvatorItemHistory::coupon_use_buy_item`)
+
+## Newly logged (exp-limit loader alignment 2026-02-24)
+- Static format string `"cStaticMember_Player::loadLimitExpData() : wrong _nMaxLv[%d]"` (`cStaticMember_Player::loadLimitExpData`)
+- Static format string `"cStaticMember_Player::loadLimitExpData() : failed allocate _pLimExp[%d]"` (`cStaticMember_Player::loadLimitExpData`)
+- Static format string `"CPlayer::SetStaticMember() : %d Exp Data..NULL"` (`cStaticMember_Player::loadLimitExpData`)
+- Static string `"Exp Data Load Error"` (`cStaticMember_Player::loadLimitExpData`)
+
+## Newly logged (DfAIMgr condition-state alignment 2026-02-24)
+- HFSM condition event codes `0x27`, `0x28`, `0x29`, `0x2A`, `0x2B` (`DfAIMgr::Condition_OnLoop`)
+- HFSM loop times `10000 ms` and `2000 ms` (`DfAIMgr::Condition_OnLoop`)
+
+## Newly logged (DfAIMgr search-start alignment 2026-02-24)
+- Static scratch near-monster array count `20` (`DfAIMgr::Mon_SearchStart_OnLoop`, `SearchNearMonster(..., 0x14u, ...)`)
+- One-time constructor guard pattern for near-mon buffer (IDA `_S1` init flag) (`DfAIMgr::Mon_SearchStart_OnLoop`)
+
+## Newly logged (WorldServerUtil GetDefItemUpgSocketNum alignment 2026-02-24)
+- Static format string `"tbl:%d, idx:%d => slot: %d\n"` (`WorldServerUtil.cpp::GetDefItemUpgSocketNum`, `OutputDebugStringA`)

@@ -34,6 +34,7 @@
 #include "insert_next_quest_inform_zocl.h"
 #include "npclink_check_item_result_zocl.h"
 #include "radar_char_list_result_zocl.h"
+#include "Quest_fld.h"
 #include "CRecordData.h"
 #include "CAnimus.h"
 #include "CMonster.h"
@@ -81,11 +82,17 @@
 #include "force_fld.h"
 #include "skill_fld.h"
 #include "WeaponItem_fld.h"
+#include "CloakItem_fld.h"
+#include "RingItem_fld.h"
+#include "AmuletItem_fld.h"
+#include "SiegeKitItem_fld.h"
 #include "UnitFrame_fld.h"
 #include "UnitPart_fld.h"
 #include "UnitBullet_fld.h"
 #include "PotionItem_fld.h"
+#include "CouponItem_fld.h"
 #include "StoreList_fld.h"
+#include "MasteryLimit_fld.h"
 #include "portal_fld.h"
 #include "UIDGenerator.h"
 #include "ItemDataLoader.h"
@@ -6387,96 +6394,95 @@ void CPlayer::SendMsg_LendItemTimeExpired(char byStorageCode, unsigned __int16 w
 
 void CPlayer::SetHaveEffectUseTime(_STORAGE_LIST::_db_con *pItem, bool bAdd)
 {
-  if (pItem->m_byTableCode != 18)
+  if (pItem->m_byTableCode == 18)
   {
-    return;
-  }
-
-  _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
-  if (!record)
-  {
-    return;
-  }
-
-  if (bAdd)
-  {
-    for (int j = 0; j < static_cast<int>(record[6].m_dwIndex); ++j)
+    _ResourceItem_fld *record = reinterpret_cast<_ResourceItem_fld *>(
+      g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex));
+    if (record)
     {
-      const int effIndex = *reinterpret_cast<int *>(&record[6].m_strCode[12 * j]);
-      if (effIndex <= 0x52)
+      if (bAdd)
       {
-        const signed __int64 dur = static_cast<signed __int64>(pItem->m_dwDur);
-        float durValue = static_cast<float>(static_cast<int>(dur));
-        if (dur < 0)
+        for (int j = 0; j < record->m_nEffectDataNum; ++j)
         {
-          durValue += 1.8446744e19f;
+          const int effCode = record->m_EffectData[j].nEffCode;
+          if (static_cast<unsigned int>(effCode) <= 82u)
+          {
+            const signed __int64 dur = static_cast<signed __int64>(pItem->m_dwDur);
+            float durValue = static_cast<float>(static_cast<int>(dur));
+            if (dur < 0)
+            {
+              durValue += 1.8446744e19f;
+            }
+
+            m_EP.m_pDataParam->m_fEff_Have[effCode] += record->m_EffectData[j].fEffUnit * durValue;
+            if (m_EP.m_pDataParam->m_fEff_Have[effCode] > record->m_EffectData[j].fEffUnitMax)
+            {
+              m_EP.m_pDataParam->m_fEff_Have[effCode] = record->m_EffectData[j].fEffUnitMax;
+              if (((effCode >= 71 && effCode <= 75)
+                   || (effCode >= 5 && effCode <= 9)
+                   || effCode == 0
+                   || effCode == 2))
+              {
+                m_EP.m_pDataParam->m_fEff_Have[effCode] = m_EP.m_pDataParam->m_fEff_Have[effCode] + FLOAT_1_0;
+              }
+            }
+          }
         }
 
-        m_EP.m_pDataParam->m_fEff_Have[effIndex] +=
-          (*reinterpret_cast<float *>(&record[6].m_strCode[12 * j + 4]) * durValue);
-
-        const float maxValue = *reinterpret_cast<float *>(&record[6].m_strCode[12 * j + 8]);
-        if (m_EP.m_pDataParam->m_fEff_Have[effIndex] > maxValue)
+        s_MgrItemHistory.time_jade_effect_log(record->m_strCode, pItem, true, m_szItemHistoryFileName);
+      }
+      else
+      {
+        for (int k = 0; k < record->m_nEffectDataNum; ++k)
         {
-          m_EP.m_pDataParam->m_fEff_Have[effIndex] = maxValue;
-          if ((effIndex >= 71 && effIndex <= 75)
-              || (effIndex >= 5 && effIndex <= 9)
-              || effIndex == 0
-              || effIndex == 2)
+          const int effCode = record->m_EffectData[k].nEffCode;
+          if (effCode > -1)
           {
-            m_EP.m_pDataParam->m_fEff_Have[effIndex] =
-              m_EP.m_pDataParam->m_fEff_Have[effIndex] + FLOAT_1_0;
+            if (effCode < 83)
+            {
+              const signed __int64 durForCmp = static_cast<signed __int64>(pItem->m_dwDur);
+              float durValueForCmp = static_cast<float>(static_cast<int>(durForCmp));
+              if (durForCmp < 0)
+              {
+                durValueForCmp += 1.8446744e19f;
+              }
+
+              if (record->m_EffectData[k].fEffUnitMax <= (record->m_EffectData[k].fEffUnit * durValueForCmp))
+              {
+                const signed __int64 durForSub = static_cast<signed __int64>(pItem->m_dwDur);
+                float durValueForSub = static_cast<float>(static_cast<int>(durForSub));
+                if (durForSub < 0)
+                {
+                  durValueForSub += 1.8446744e19f;
+                }
+
+                m_EP.m_pDataParam->m_fEff_Have[effCode] -= record->m_EffectData[k].fEffUnit * durValueForSub;
+              }
+              else
+              {
+                m_EP.m_pDataParam->m_fEff_Have[effCode] -= record->m_EffectData[k].fEffUnitMax;
+              }
+
+              if ((effCode < 71 || effCode > 75)
+                  && (effCode < 5 || effCode > 9)
+                  && effCode != 0
+                  && effCode != 2)
+              {
+                if (m_EP.m_pDataParam->m_fEff_Have[effCode] < 0.0f)
+                {
+                  m_EP.m_pDataParam->m_fEff_Have[effCode] = 0.0f;
+                }
+              }
+              else if (m_EP.m_pDataParam->m_fEff_Have[effCode] < FLOAT_1_0)
+              {
+                m_EP.m_pDataParam->m_fEff_Have[effCode] = FLOAT_1_0;
+              }
+            }
+
+            s_MgrItemHistory.time_jade_effect_log(record->m_strCode, pItem, false, m_szItemHistoryFileName);
           }
         }
       }
-    }
-    s_MgrItemHistory.time_jade_effect_log(record->m_strCode, pItem, true, m_szItemHistoryFileName);
-    return;
-  }
-
-  for (int k = 0; k < static_cast<int>(record[6].m_dwIndex); ++k)
-  {
-    const int effIndex = *reinterpret_cast<int *>(&record[6].m_strCode[12 * k]);
-    if (effIndex > -1)
-    {
-      if (effIndex < 83)
-      {
-        const signed __int64 dur = static_cast<signed __int64>(pItem->m_dwDur);
-        float durValue = static_cast<float>(static_cast<int>(dur));
-        if (dur < 0)
-        {
-          durValue += 1.8446744e19f;
-        }
-
-        const float mulValue = *reinterpret_cast<float *>(&record[6].m_strCode[12 * k + 4]) * durValue;
-        const float maxValue = *reinterpret_cast<float *>(&record[6].m_strCode[12 * k + 8]);
-
-        if (maxValue <= mulValue)
-        {
-          m_EP.m_pDataParam->m_fEff_Have[effIndex] -= mulValue;
-        }
-        else
-        {
-          m_EP.m_pDataParam->m_fEff_Have[effIndex] -= maxValue;
-        }
-
-        if ((effIndex < 71 || effIndex > 75)
-            && (effIndex < 5 || effIndex > 9)
-            && effIndex != 0
-            && effIndex != 2)
-        {
-          if (m_EP.m_pDataParam->m_fEff_Have[effIndex] < 0.0f)
-          {
-            m_EP.m_pDataParam->m_fEff_Have[effIndex] = 0.0f;
-          }
-        }
-        else if (m_EP.m_pDataParam->m_fEff_Have[effIndex] < FLOAT_1_0)
-        {
-          m_EP.m_pDataParam->m_fEff_Have[effIndex] = FLOAT_1_0;
-        }
-      }
-
-      s_MgrItemHistory.time_jade_effect_log(record->m_strCode, pItem, false, m_szItemHistoryFileName);
     }
   }
 }
@@ -6755,16 +6761,16 @@ bool CPlayer::_check_embel_part(_STORAGE_LIST::_db_con *pFixingItem)
 
 __int64 CPlayer::_check_mastery_lim(unsigned __int8 byMasteryClass, unsigned __int8 byIndex)
 {
-  _base_fld *curRecord = nullptr;
-  _base_fld *baseRecord = nullptr;
+  _MasteryLimit_fld *curRecord = nullptr;
+  _MasteryLimit_fld *baseRecord = nullptr;
 
   if (m_Param.GetPtrCurClass()->m_nClass < 4 && m_Param.GetPtrBaseClass()->m_nClass < 4)
   {
     if (m_Param.GetRaceCode() < 3)
     {
       const int maxLevel = static_cast<int>(m_Param.GetMaxLevel());
-      const int curLevel = static_cast<int>(GetLevel());
-      if (curLevel <= maxLevel && GetLevel() > 0)
+      const int level = static_cast<int>(GetLevel());
+      if (level <= maxLevel && level > 0)
       {
         if (m_Param.m_pClassHistory[0])
         {
@@ -6772,101 +6778,97 @@ __int64 CPlayer::_check_mastery_lim(unsigned __int8 byMasteryClass, unsigned __i
           _class_fld *baseClass = m_Param.GetPtrBaseClass();
           if (curClass->m_nClass == baseClass->m_nClass)
           {
-            const int recordIndex = static_cast<int>(GetLevel()) - 1;
+            const int recordIndex = level - 1;
             CRecordData *table = s_tblLimMasteryContinue[m_Param.GetRaceCode()];
-            curRecord = table[curClass->m_nClass].GetRecord(recordIndex);
+            curRecord = reinterpret_cast<_MasteryLimit_fld *>(table[curClass->m_nClass].GetRecord(recordIndex));
           }
           else
           {
-            const int recordIndex = static_cast<int>(GetLevel()) - 1;
+            const int recordIndex = level - 1;
             CRecordData *table = s_tblLimMastery[m_Param.GetRaceCode()];
-            curRecord = table[curClass->m_nClass].GetRecord(recordIndex);
-            baseRecord = table[baseClass->m_nClass].GetRecord(recordIndex);
+            curRecord = reinterpret_cast<_MasteryLimit_fld *>(table[curClass->m_nClass].GetRecord(recordIndex));
+            baseRecord = reinterpret_cast<_MasteryLimit_fld *>(table[baseClass->m_nClass].GetRecord(recordIndex));
           }
         }
         else
         {
-          const int recordIndex = static_cast<int>(GetLevel()) - 1;
+          const int recordIndex = level - 1;
           CRecordData *table = s_tblLimMastery[m_Param.GetRaceCode()];
           _class_fld *curClass = m_Param.GetPtrCurClass();
-          curRecord = table[curClass->m_nClass].GetRecord(recordIndex);
+          curRecord = reinterpret_cast<_MasteryLimit_fld *>(table[curClass->m_nClass].GetRecord(recordIndex));
         }
 
         if (curRecord)
         {
-          unsigned int curLim = 0;
-          unsigned int baseLim = 0;
+          int curLim = 0;
+          int baseLim = 0;
           switch (byMasteryClass)
           {
             case 0:
-              curLim = *reinterpret_cast<unsigned int *>(&curRecord[1].m_strCode[4 * byIndex]);
+              curLim = curRecord->m_MasteryLim.m_nBnsMMastery[byIndex];
               if (baseRecord)
               {
-                baseLim = *reinterpret_cast<unsigned int *>(&baseRecord[1].m_strCode[4 * byIndex]);
+                baseLim = baseRecord->m_MasteryLim.m_nBnsMMastery[byIndex];
               }
               break;
             case 1:
-              curLim = *reinterpret_cast<unsigned int *>(&curRecord[1].m_strCode[12]);
+              curLim = curRecord->m_MasteryLim.m_nBnsDefMastery;
               if (baseRecord)
               {
-                baseLim = *reinterpret_cast<unsigned int *>(&baseRecord[1].m_strCode[12]);
+                baseLim = baseRecord->m_MasteryLim.m_nBnsDefMastery;
               }
               break;
             case 2:
-              curLim = *reinterpret_cast<unsigned int *>(&curRecord[1].m_strCode[16]);
+              curLim = curRecord->m_MasteryLim.m_nBnsPryMastery;
               if (baseRecord)
               {
-                baseLim = *reinterpret_cast<unsigned int *>(&baseRecord[1].m_strCode[16]);
+                baseLim = baseRecord->m_MasteryLim.m_nBnsPryMastery;
               }
               break;
             case 3:
-              curLim = *reinterpret_cast<unsigned int *>(&curRecord[1].m_strCode[4 * byIndex + 32]);
+              curLim = curRecord->m_MasteryLim.m_nBnsSkillMastery[byIndex];
               if (baseRecord)
               {
-                baseLim = *reinterpret_cast<unsigned int *>(&baseRecord[1].m_strCode[4 * byIndex + 32]);
+                baseLim = baseRecord->m_MasteryLim.m_nBnsSkillMastery[byIndex];
               }
               break;
             case 4:
-              curLim = reinterpret_cast<unsigned int *>(&curRecord[2].m_dwIndex)[byIndex];
+              curLim = curRecord->m_MasteryLim.m_nBnsForceMastery[byIndex];
               if (baseRecord)
               {
-                baseLim = reinterpret_cast<unsigned int *>(&baseRecord[2].m_dwIndex)[byIndex];
+                baseLim = baseRecord->m_MasteryLim.m_nBnsForceMastery[byIndex];
               }
               break;
             case 5:
-              curLim = *reinterpret_cast<unsigned int *>(&curRecord[1].m_strCode[4 * byIndex + 20]);
+              curLim = curRecord->m_MasteryLim.m_nBnsMakeMastery[byIndex];
               if (baseRecord)
               {
-                baseLim = *reinterpret_cast<unsigned int *>(&baseRecord[1].m_strCode[4 * byIndex + 20]);
+                baseLim = baseRecord->m_MasteryLim.m_nBnsMakeMastery[byIndex];
               }
               break;
             case 6:
-              curLim = *reinterpret_cast<unsigned int *>(&curRecord[1].m_strCode[8]);
+              curLim = curRecord->m_MasteryLim.m_nBnsSMastery;
               if (baseRecord)
               {
-                baseLim = *reinterpret_cast<unsigned int *>(&baseRecord[1].m_strCode[8]);
+                baseLim = baseRecord->m_MasteryLim.m_nBnsSMastery;
               }
               break;
             default:
               break;
           }
 
-          if (static_cast<int>(curLim) <= static_cast<int>(baseLim))
+          if (curLim <= baseLim)
           {
-            return baseLim;
+            return static_cast<unsigned int>(baseLim);
           }
-          return curLim;
+          return static_cast<unsigned int>(curLim);
         }
 
         g_Main.m_logSystemError.Write("_check_mastery_lim.. pCurFld : NULL");
         return 0;
       }
 
-      const int level = static_cast<int>(GetLevel());
-      g_Main.m_logSystemError.Write(
-        "_check_mastery_lim.. level : %d, max level : %d",
-        level,
-        maxLevel);
+      g_Main.m_logSystemError.Write("_check_mastery_lim.. level : %d, max level : %d", level, maxLevel);
       return 0;
     }
 
@@ -6907,50 +6909,48 @@ _ITEM_EFFECT *CPlayer::_GetItemEffect(_STORAGE_LIST::_db_con *pItem)
     {
       case 0:
       {
-        auto *record = reinterpret_cast<_ITEM_EFFECT *>(
+        _DfnEquipItem_fld *record = reinterpret_cast<_DfnEquipItem_fld *>(
           g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex));
-        return record ? record + 51 : nullptr;
+        return record ? reinterpret_cast<_ITEM_EFFECT *>(&record->m_nEff1Code) : nullptr;
       }
       case 1:
       {
-        auto *record = reinterpret_cast<_ITEM_EFFECT *>(
+        _WeaponItem_fld *record = reinterpret_cast<_WeaponItem_fld *>(
           g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex));
-        return record ? record + 89 : nullptr;
+        return record ? reinterpret_cast<_ITEM_EFFECT *>(&record->m_nEff1Code) : nullptr;
       }
       case 2:
       {
-        auto *record = reinterpret_cast<_ITEM_EFFECT *>(
+        _CloakItem_fld *record = reinterpret_cast<_CloakItem_fld *>(
           g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex));
-        return record ? record + 51 : nullptr;
+        return record ? reinterpret_cast<_ITEM_EFFECT *>(&record->m_nEff1Code) : nullptr;
       }
       case 3:
       {
-        auto *record = reinterpret_cast<_ITEM_EFFECT *>(
+        _RingItem_fld *record = reinterpret_cast<_RingItem_fld *>(
           g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex));
-        return record ? record + 43 : nullptr;
+        return record ? reinterpret_cast<_ITEM_EFFECT *>(&record->m_nEff1Code) : nullptr;
       }
       case 4:
       {
-        auto *record = reinterpret_cast<_ITEM_EFFECT *>(
+        _AmuletItem_fld *record = reinterpret_cast<_AmuletItem_fld *>(
           g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex));
-        return record ? record + 43 : nullptr;
+        return record ? reinterpret_cast<_ITEM_EFFECT *>(&record->m_nEff1Code) : nullptr;
       }
       case 22:
       {
-        _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
-        return record ? reinterpret_cast<_ITEM_EFFECT *>(&record[5].m_strCode[28]) : nullptr;
+        _SiegeKitItem_fld *record = reinterpret_cast<_SiegeKitItem_fld *>(
+          g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex));
+        return record ? reinterpret_cast<_ITEM_EFFECT *>(&record->m_nEff1Code) : nullptr;
       }
       default:
         return nullptr;
     }
   }
 
-  _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
-  if (record)
-  {
-    return reinterpret_cast<_ITEM_EFFECT *>(&record[6]);
-  }
-  return nullptr;
+  _DfnEquipItem_fld *record = reinterpret_cast<_DfnEquipItem_fld *>(
+    g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex));
+  return record ? reinterpret_cast<_ITEM_EFFECT *>(&record->m_nEff1Code) : nullptr;
 }
 
 void CPlayer::apply_normal_item_std_effect(int nEffCode, float fVal, bool bEquip)
@@ -7290,6 +7290,14 @@ void CPlayer::CalcDefTol()
 {
   memset_0(m_nTolValue, 0, sizeof(m_nTolValue));
 
+  auto addFloatTol = [this](float fireTol, float waterTol, float soilTol, float windTol)
+  {
+    m_nTolValue[0] = static_cast<int>(static_cast<float>(m_nTolValue[0]) + fireTol);
+    m_nTolValue[1] = static_cast<int>(static_cast<float>(m_nTolValue[1]) + waterTol);
+    m_nTolValue[2] = static_cast<int>(static_cast<float>(m_nTolValue[2]) + soilTol);
+    m_nTolValue[3] = static_cast<int>(static_cast<float>(m_nTolValue[3]) + windTol);
+  };
+
   if (!IsRidingUnit())
   {
     for (int partIndex = 0; partIndex < 5; ++partIndex)
@@ -7297,15 +7305,11 @@ void CPlayer::CalcDefTol()
       _STORAGE_LIST::_db_con *equipItem = &m_Param.m_dbEquip.m_pStorageList[partIndex];
       if (equipItem->m_bLoad)
       {
-        _base_fld *record = g_Main.m_tblItemData[partIndex].GetRecord(equipItem->m_wItemIndex);
+        _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(
+          g_Main.m_tblItemData[partIndex].GetRecord(equipItem->m_wItemIndex));
         if (record)
         {
-          char *tolPtr = &record[5].m_strCode[28];
-          for (int tolIndex = 0; tolIndex < 4; ++tolIndex)
-          {
-            const float tolValue = *reinterpret_cast<float *>(&tolPtr[4 * tolIndex]);
-            m_nTolValue[tolIndex] = static_cast<int>(static_cast<float>(m_nTolValue[tolIndex]) + tolValue);
-          }
+          addFloatTol(record->m_fFireTol, record->m_fWaterTol, record->m_fSoilTol, record->m_fWindTol);
         }
       }
     }
@@ -7313,30 +7317,22 @@ void CPlayer::CalcDefTol()
     _STORAGE_LIST::_db_con *cloakItem = &m_Param.m_dbEquip.m_pStorageList[7];
     if (cloakItem->m_bLoad)
     {
-      _base_fld *record = g_Main.m_tblItemData[7].GetRecord(cloakItem->m_wItemIndex);
+      _CloakItem_fld *record = static_cast<_CloakItem_fld *>(
+        g_Main.m_tblItemData[7].GetRecord(cloakItem->m_wItemIndex));
       if (record)
       {
-        char *tolPtr = &record[5].m_strCode[28];
-        for (int tolIndex = 0; tolIndex < 4; ++tolIndex)
-        {
-          const float tolValue = *reinterpret_cast<float *>(&tolPtr[4 * tolIndex]);
-          m_nTolValue[tolIndex] = static_cast<int>(static_cast<float>(m_nTolValue[tolIndex]) + tolValue);
-        }
+        addFloatTol(record->m_fFireTol, record->m_fWaterTol, record->m_fSoilTol, record->m_fWindTol);
       }
     }
 
     _STORAGE_LIST::_db_con *shieldItem = &m_Param.m_dbEquip.m_pStorageList[5];
     if (shieldItem->m_bLoad)
     {
-      _base_fld *record = g_Main.m_tblItemData[5].GetRecord(shieldItem->m_wItemIndex);
+      _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(
+        g_Main.m_tblItemData[5].GetRecord(shieldItem->m_wItemIndex));
       if (record)
       {
-        char *tolPtr = &record[5].m_strCode[28];
-        for (int tolIndex = 0; tolIndex < 4; ++tolIndex)
-        {
-          const float tolValue = *reinterpret_cast<float *>(&tolPtr[4 * tolIndex]);
-          m_nTolValue[tolIndex] = static_cast<int>(static_cast<float>(m_nTolValue[tolIndex]) + tolValue);
-        }
+        addFloatTol(record->m_fFireTol, record->m_fWaterTol, record->m_fSoilTol, record->m_fWindTol);
       }
     }
 
@@ -7348,34 +7344,29 @@ void CPlayer::CalcDefTol()
         continue;
       }
 
-      char *tolPtr = nullptr;
       if (embelItem->m_byTableCode == 8)
       {
-        _base_fld *record = g_Main.m_tblItemData[8].GetRecord(embelItem->m_wItemIndex);
+        _RingItem_fld *record = static_cast<_RingItem_fld *>(
+          g_Main.m_tblItemData[8].GetRecord(embelItem->m_wItemIndex));
         if (!record)
         {
           continue;
         }
-        tolPtr = &record[4].m_strCode[52];
+        addFloatTol(record->m_fFireTol, record->m_fWaterTol, record->m_fSoilTol, record->m_fWindTol);
       }
       else if (embelItem->m_byTableCode == 9)
       {
-        _base_fld *record = g_Main.m_tblItemData[9].GetRecord(embelItem->m_wItemIndex);
+        _AmuletItem_fld *record = static_cast<_AmuletItem_fld *>(
+          g_Main.m_tblItemData[9].GetRecord(embelItem->m_wItemIndex));
         if (!record)
         {
           continue;
         }
-        tolPtr = &record[4].m_strCode[52];
+        addFloatTol(record->m_fFireTol, record->m_fWaterTol, record->m_fSoilTol, record->m_fWindTol);
       }
       else
       {
         continue;
-      }
-
-      for (int tolIndex = 0; tolIndex < 4; ++tolIndex)
-      {
-        const float tolValue = *reinterpret_cast<float *>(&tolPtr[4 * tolIndex]);
-        m_nTolValue[tolIndex] = static_cast<int>(static_cast<float>(m_nTolValue[tolIndex]) + tolValue);
       }
     }
 
@@ -7384,23 +7375,23 @@ void CPlayer::CalcDefTol()
 
   for (int partIndex = 0; partIndex < 6; ++partIndex)
   {
-    _base_fld *record = g_Main.m_tblUnitPart[partIndex].GetRecord(m_pUsingUnit->byPart[partIndex]);
+    _UnitPart_fld *record = static_cast<_UnitPart_fld *>(
+      g_Main.m_tblUnitPart[partIndex].GetRecord(m_pUsingUnit->byPart[partIndex]));
     if (!record)
     {
       continue;
     }
 
-    char *tolPtr = &record[5].m_strCode[20];
-    for (int tolIndex = 0; tolIndex < 4; ++tolIndex)
-    {
-      m_nTolValue[tolIndex] += *reinterpret_cast<int *>(&tolPtr[4 * tolIndex]);
-    }
+    m_nTolValue[0] += record->m_nFireTol;
+    m_nTolValue[1] += record->m_nWaterTol;
+    m_nTolValue[2] += record->m_nSoilTol;
+    m_nTolValue[3] += record->m_nWindTol;
   }
 }
 
 void CPlayer::CalcEquipSpeed()
 {
-  const float prevEquipSpeed = m_fEquipSpeed;
+  const float oldEquipSpeed = m_fEquipSpeed;
   m_fEquipSpeed = FLOAT_1_0;
 
   for (int partIndex = 0; partIndex < 5; ++partIndex)
@@ -7410,34 +7401,37 @@ void CPlayer::CalcEquipSpeed()
     {
       continue;
     }
-    _base_fld *record = g_Main.m_tblItemData[partIndex].GetRecord(equipItem->m_wItemIndex);
+    _DfnEquipItem_fld *record = reinterpret_cast<_DfnEquipItem_fld *>(
+      g_Main.m_tblItemData[partIndex].GetRecord(equipItem->m_wItemIndex));
     if (record)
     {
-      m_fEquipSpeed *= *reinterpret_cast<float *>(&record[5].m_strCode[4]);
+      m_fEquipSpeed *= record->m_fEquipSpeed;
     }
   }
 
   _STORAGE_LIST::_db_con *weaponItem = &m_Param.m_dbEquip.m_pStorageList[6];
   if (weaponItem->m_bLoad)
   {
-    _base_fld *record = g_Main.m_tblItemData[6].GetRecord(weaponItem->m_wItemIndex);
+    _WeaponItem_fld *record = reinterpret_cast<_WeaponItem_fld *>(
+      g_Main.m_tblItemData[6].GetRecord(weaponItem->m_wItemIndex));
     if (record)
     {
-      m_fEquipSpeed *= *reinterpret_cast<float *>(&record[9].m_strCode[4]);
+      m_fEquipSpeed *= record->m_fEquipSpeed;
     }
   }
 
   _STORAGE_LIST::_db_con *shieldItem = &m_Param.m_dbEquip.m_pStorageList[5];
   if (shieldItem->m_bLoad)
   {
-    _base_fld *record = g_Main.m_tblItemData[5].GetRecord(shieldItem->m_wItemIndex);
+    _DfnEquipItem_fld *record = reinterpret_cast<_DfnEquipItem_fld *>(
+      g_Main.m_tblItemData[5].GetRecord(shieldItem->m_wItemIndex));
     if (record)
     {
-      m_fEquipSpeed *= *reinterpret_cast<float *>(&record[5].m_strCode[4]);
+      m_fEquipSpeed *= record->m_fEquipSpeed;
     }
   }
 
-  if (m_fEquipSpeed != prevEquipSpeed)
+  if (m_fEquipSpeed != oldEquipSpeed)
   {
     SendMsg_AlterEquipSPInform();
   }
@@ -7453,36 +7447,38 @@ void CPlayer::SendMsg_AlterEquipSPInform()
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 4u);
 }
 
-void CPlayer::CalcEquipMaxDP(int bSendMsg)
+void CPlayer::CalcEquipMaxDP(bool bInit)
 {
-  int maxDp = 1;
+  int calcMaxDp = 1;
   for (int partIndex = 0; partIndex < 5; ++partIndex)
   {
     _STORAGE_LIST::_db_con *equipItem = &m_Param.m_dbEquip.m_pStorageList[partIndex];
-    _base_fld *record = nullptr;
+    _DfnEquipItem_fld *record = nullptr;
     if (equipItem->m_bLoad)
     {
-      record = g_Main.m_tblItemData[partIndex].GetRecord(equipItem->m_wItemIndex);
+      record = reinterpret_cast<_DfnEquipItem_fld *>(
+        g_Main.m_tblItemData[partIndex].GetRecord(equipItem->m_wItemIndex));
     }
     else
     {
-      record = g_Main.m_tblItemData[partIndex].GetRecord(m_Param.m_dbChar.m_byDftPart[partIndex]);
+      record = reinterpret_cast<_DfnEquipItem_fld *>(
+        g_Main.m_tblItemData[partIndex].GetRecord(m_Param.m_dbChar.m_byDftPart[partIndex]));
     }
     if (record)
     {
-      maxDp += *reinterpret_cast<int *>(&record[5].m_strCode[52]);
+      calcMaxDp += record->m_nMaxDP;
     }
   }
 
-  if (m_nMaxDP != maxDp)
+  if (m_nMaxDP != calcMaxDp)
   {
-    m_nMaxDP = maxDp;
+    m_nMaxDP = calcMaxDp;
     if (GetDP() > m_nMaxDP)
     {
       SetDP(m_nMaxDP, false);
       SendMsg_SetDPInform();
     }
-    if (!bSendMsg)
+    if (!bInit)
     {
       SendMsg_AlterMaxDP();
     }
@@ -7672,8 +7668,9 @@ void CPlayer::SetHaveEffect(char bLogin)
     _STORAGE_LIST::_db_con *item = &m_Param.m_dbInven.m_pStorageList[slotIndex];
     if (item->m_bLoad && item->m_byTableCode == 18)
     {
-      _base_fld *record = g_Main.m_tblItemData[item->m_byTableCode].GetRecord(item->m_wItemIndex);
-      if (record && *reinterpret_cast<int *>(&record[5].m_strCode[44]) != -1)
+      _ResourceItem_fld *record = reinterpret_cast<_ResourceItem_fld *>(
+        g_Main.m_tblItemData[item->m_byTableCode].GetRecord(item->m_wItemIndex));
+      if (record && record->m_nStartTime != -1)
       {
         TimeLimitJadeMng::Instance()->DeleteList(m_ObjID.m_wIndex, item);
       }
@@ -7696,7 +7693,8 @@ void CPlayer::SetHaveEffect(char bLogin)
       continue;
     }
 
-    _base_fld *record = g_Main.m_tblItemData[item->m_byTableCode].GetRecord(item->m_wItemIndex);
+    _ResourceItem_fld *record = reinterpret_cast<_ResourceItem_fld *>(
+      g_Main.m_tblItemData[item->m_byTableCode].GetRecord(item->m_wItemIndex));
     if (!record)
     {
       continue;
@@ -7705,19 +7703,19 @@ void CPlayer::SetHaveEffect(char bLogin)
     const int cashType = GetUsePcCashType(item->m_byTableCode, item->m_wItemIndex);
     if (IsUsableAccountType(cashType))
     {
-      if (*reinterpret_cast<int *>(&record[5].m_strCode[44]) == -1 || IsRidingUnit())
+      if (record->m_nStartTime == -1 || IsRidingUnit())
       {
-        if (*reinterpret_cast<int *>(&record[5].m_strCode[52]) != 1)
+        if (record->m_nEffType1 != 1)
         {
-          for (int effIndex = 0; effIndex < static_cast<int>(record[6].m_dwIndex); ++effIndex)
+          for (int effIndex = 0; effIndex < record->m_nEffectDataNum; ++effIndex)
           {
-            const int effectCode = *reinterpret_cast<int *>(&record[6].m_strCode[12 * effIndex]);
+            const int effectCode = record->m_EffectData[effIndex].nEffCode;
             if (effectCode > -1
                 && (effectCode < 59 || effectCode > 65)
                 && (!IsRidingUnit() || effectCode >= 29 || effectCode <= 32)
                 && effectCode < 83
                 && m_EP.m_pDataParam->m_fEff_Have[effectCode]
-                  < *reinterpret_cast<float *>(&record[6].m_strCode[12 * effIndex + 8]))
+                  < record->m_EffectData[effIndex].fEffUnitMax)
             {
               const signed __int64 dur = static_cast<signed __int64>(item->m_dwDur);
               float durValue = static_cast<float>(static_cast<int>(dur));
@@ -7727,9 +7725,9 @@ void CPlayer::SetHaveEffect(char bLogin)
               }
 
               m_EP.m_pDataParam->m_fEff_Have[effectCode] +=
-                *reinterpret_cast<float *>(&record[6].m_strCode[12 * effIndex + 4]) * durValue;
+                record->m_EffectData[effIndex].fEffUnit * durValue;
 
-              const float maxValue = *reinterpret_cast<float *>(&record[6].m_strCode[12 * effIndex + 8]);
+              const float maxValue = record->m_EffectData[effIndex].fEffUnitMax;
               if (m_EP.m_pDataParam->m_fEff_Have[effectCode] > maxValue)
               {
                 m_EP.m_pDataParam->m_fEff_Have[effectCode] = maxValue;
@@ -8931,10 +8929,11 @@ void CPlayer::DeleteCouponItem(_STORAGE_POS_INDIV *CouponItem, int n)
     _STORAGE_LIST::_db_con *pItem = storage->GetPtrFromSerial(CouponItem[j].wItemSerial);
     if (pItem)
     {
-      _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
+      _CouponItem_fld *record = reinterpret_cast<_CouponItem_fld *>(
+        g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex));
       if (record)
       {
-        if (!*reinterpret_cast<unsigned int *>(&record[4].m_strCode[48]))
+        if (!record->m_nStoragePart)
         {
           Emb_DelStorage(0, pItem->m_byStorageIndex, 0, 1, "CPlayer::DeleteCouponItem");
           s_MgrItemHistory.consume_del_item(
@@ -13610,9 +13609,8 @@ char CPlayer::Emb_CheckActForQuest(int nActCode, char *pszReqCode, unsigned __in
 
       if (isAllComplete)
       {
-        _base_fld *record = CQuestMgr::s_tblQuest->GetRecord(slot->wIndex);
-        if (*reinterpret_cast<unsigned int *>(&record[13].m_strCode[60])
-            || *reinterpret_cast<unsigned int *>(&record[1].m_strCode[24]))
+        _Quest_fld *record = reinterpret_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(slot->wIndex));
+        if (record->m_bSelectConsITMenual || record->m_bSelectQuestMenual)
         {
           SendMsg_SelectQuestReward(static_cast<char>(node->byQuestDBSlot));
         }

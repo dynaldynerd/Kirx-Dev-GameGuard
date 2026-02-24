@@ -200,7 +200,6 @@ if (!pHFSM)
 
 void DfAIMgr::OnDfExternCallFun(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam, int nParam)
 {
-
   if (!pHFS)
   {
     return;
@@ -213,108 +212,61 @@ void DfAIMgr::OnDfExternCallFun(Us_HFSM *pHFS, unsigned int dwEvent, void *lpPar
     return;
   }
 
-  if (dwEvent)
+  if (!dwEvent)
   {
-    if (dwEvent == 1 && lpParam)
+    if (!lpParam)
     {
-      if (!mon->GetAttackTarget())
+      return;
+    }
+
+    CCharacter *damager = static_cast<CCharacter *>(lpParam);
+    void *nextTarget = damager;
+    if (mon->IsBeDamagedAble(damager))
+    {
+      pHFS->SendMsg(5u, 0x2Eu, nullptr);
+      if (mon->GetAttackTarget())
       {
-        Us_FSM_Node *node = pHFS->GetNode( 5u);
-        if (node->GetState() == 23)
+        nextTarget = mon->m_AggroMgr.GetTopAggroCharacter();
+        CCharacter *curTarget = mon->GetAttackTarget();
+        if (!nextTarget || curTarget == nextTarget)
         {
-          CCharacter *sourceCharacter = static_cast<CCharacter *>(lpParam);
-          if (!sourceCharacter->m_ObjID.m_byKind && sourceCharacter->m_ObjID.m_byID == 1)
+          if (DfAIMgr::CheckEmotionBad(mon, static_cast<CMonsterAI *>(hfs), nParam))
           {
-            const int prob = *reinterpret_cast<int *>(&mon->m_pRecordSet[26].m_strCode[20]);
-            const int roll = rand() % 100;
-            CMonster *sourceMonster = static_cast<CMonster *>(sourceCharacter);
-            const CCharacter *sourceTarget = sourceMonster->GetAttackTarget();
-            const bool sourceTargetIsAnimus = IsAnimusTarget(sourceTarget);
-            if (sourceTargetIsAnimus)
-            {
-              AnimusDebugLog(
-                "AssistEvt1: recvMon=%s(%u) srcMon=%s(%u) state=23 prob=%d roll=%d",
-                GetMonsterCodeSafe(mon),
-                mon->m_dwObjSerial,
-                GetMonsterCodeSafe(sourceMonster),
-                sourceMonster->m_dwObjSerial,
-                prob,
-                roll);
-            }
-            if (prob > roll)
-            {
-              pHFS->SendMsg(5u, 0x2Du, lpParam);
-              if (sourceTargetIsAnimus)
-              {
-                AnimusDebugLog(
-                  "AssistEvt1: recvMon=%s(%u) accepted assist request from srcMon=%s(%u)",
-                  GetMonsterCodeSafe(mon),
-                  mon->m_dwObjSerial,
-                  GetMonsterCodeSafe(sourceMonster),
-                  sourceMonster->m_dwObjSerial);
-              }
-            }
+            hfs->SendMsg(3u, 0x23u, nullptr);
           }
         }
-      }
-    }
-    return;
-  }
-
-  if (!lpParam)
-  {
-    return;
-  }
-
-  CCharacter *attacker = static_cast<CCharacter *>(lpParam);
-  const bool attackerIsAnimus = IsAnimusTarget(attacker);
-  const bool beDamagedAble = mon->IsBeDamagedAble(attacker);
-  if (attackerIsAnimus)
-  {
-    AnimusDebugLog(
-      "ExternEvt0: mon=%s(%u) attackerAnimus=%u nDam=%d beDamagedAble=%d hasTarget=%d",
-      GetMonsterCodeSafe(mon),
-      mon->m_dwObjSerial,
-      attacker->m_dwObjSerial,
-      nParam,
-      beDamagedAble ? 1 : 0,
-      mon->GetAttackTarget() ? 1 : 0);
-  }
-
-  if (beDamagedAble)
-  {
-    pHFS->SendMsg(5u, 0x2Eu, nullptr);
-    if (mon->GetAttackTarget())
-    {
-      CCharacter *topAggro = mon->m_AggroMgr.GetTopAggroCharacter();
-      if (!topAggro || mon->GetAttackTarget() == topAggro)
-      {
-        if (DfAIMgr::CheckEmotionBad(mon, static_cast<CMonsterAI *>(hfs), nParam))
+        else
         {
-          hfs->SendMsg(3u, 0x23u, nullptr);
+          pHFS->SendMsg(1u, 0x1Cu, nextTarget);
         }
       }
       else
       {
-        pHFS->SendMsg(1u, 0x1Cu, topAggro);
+        pHFS->SendMsg(1u, 0x1Cu, nextTarget);
+        mon->CheckEventEmotionPresentation(9u, nullptr);
       }
+      CMonsterHelper::HierarcyHelpCast(mon);
+      hfs->SendMsg(2u, 0x1Eu, nullptr);
     }
-    else
+    return;
+  }
+
+  if (dwEvent == 1 && lpParam && !mon->GetAttackTarget())
+  {
+    Us_FSM_Node *node = pHFS->GetNode(5u);
+    if (node->GetState() == 23)
     {
-      pHFS->SendMsg(1u, 0x1Cu, lpParam);
-      mon->CheckEventEmotionPresentation( 9u, nullptr);
-    }
-    CMonsterHelper::HierarcyHelpCast(mon);
-    hfs->SendMsg(2u, 0x1Eu, nullptr);
-    if (attackerIsAnimus)
-    {
-      CCharacter *newTarget = mon->GetAttackTarget();
-      AnimusDebugLog(
-        "ExternEvt0: mon=%s(%u) postHandle targetID=%u targetSerial=%u",
-        GetMonsterCodeSafe(mon),
-        mon->m_dwObjSerial,
-        newTarget ? static_cast<unsigned int>(newTarget->m_ObjID.m_byID) : static_cast<unsigned int>(-1),
-        newTarget ? newTarget->m_dwObjSerial : static_cast<unsigned int>(-1));
+      CCharacter *sourceCharacter = static_cast<CCharacter *>(lpParam);
+      if (!sourceCharacter->m_ObjID.m_byKind && sourceCharacter->m_ObjID.m_byID == 1)
+      {
+        const _monster_fld *const monRecord = static_cast<_monster_fld *>(mon->m_pRecordSet);
+        const int assistAptRate = monRecord->m_nAsitAptRate;
+        const int roll = rand() % 100;
+        if (assistAptRate > roll)
+        {
+          pHFS->SendMsg(5u, 0x2Du, lpParam);
+        }
+      }
     }
   }
 }
@@ -432,45 +384,21 @@ if (!pHFS)
 
   if (mon->GetAttackTarget())
   {
-    const CCharacter *target = mon->GetAttackTarget();
-    const bool targetIsAnimus = IsAnimusTarget(target);
     Us_FSM_Node *node = pHFS->GetNode( 5u);
     if (node->GetState() == 23)
     {
       CMonsterHelper::HierarcyHelpCast(mon);
-      const int prob = *reinterpret_cast<int *>(&mon->m_pRecordSet[26].m_strCode[16]);
+      const _monster_fld *recordSet = reinterpret_cast<_monster_fld *>(mon->m_pRecordSet);
+      const int assistReqRate = recordSet->m_nAsitReqRate;
       const int roll = rand() % 100;
-      if (targetIsAnimus)
+      if (assistReqRate > roll)
       {
-        AnimusDebugLog(
-          "SearchStart: mon=%s(%u) targetAnimus=%u prob=%d roll=%d",
-          GetMonsterCodeSafe(mon),
-          mon->m_dwObjSerial,
-          target->m_dwObjSerial,
-          prob,
-          roll);
-      }
-      if (prob > roll)
-      {
-        const unsigned int maxCount = *reinterpret_cast<unsigned int *>(&mon->m_pRecordSet[3].m_strCode[8]);
+        const unsigned int maxCount = static_cast<unsigned int>(recordSet->m_nPincerCnt);
         static _NEAR_DATA nearMon[20];
         const unsigned int found = CMonsterHelper::SearchNearMonster(mon, nearMon, 0x14u, 0);
-        if (targetIsAnimus)
+        const unsigned int count = found >= maxCount ? maxCount : found;
+        for (unsigned int j = 0; j < count; ++j)
         {
-          AnimusDebugLog(
-            "SearchStart: mon=%s(%u) nearFound=%u maxCount=%u",
-            GetMonsterCodeSafe(mon),
-            mon->m_dwObjSerial,
-            found,
-            maxCount);
-        }
-        for (unsigned int j = 0; ; ++j)
-        {
-          const unsigned int count = found >= maxCount ? maxCount : found;
-          if (j >= count)
-          {
-            break;
-          }
           if (nearMon[j].pChar && nearMon[j].pChar != mon)
           {
             pHFS->SendMsg(2u, 0x20u, nearMon[j].pChar);
@@ -479,20 +407,10 @@ if (!pHFS)
             {
               CMonster *nearMonster = static_cast<CMonster *>(nearMon[j].pChar);
               nearMonster->m_AI.SendExternMsg(1u, mon, 0);
-              if (targetIsAnimus)
-              {
-                AnimusDebugLog(
-                  "SearchStart: mon=%s(%u) sent assist extern to nearMon=%s(%u)",
-                  GetMonsterCodeSafe(mon),
-                  mon->m_dwObjSerial,
-                  GetMonsterCodeSafe(nearMonster),
-                  nearMonster->m_dwObjSerial);
-              }
               mon->CheckEventEmotionPresentation( 2u, nullptr);
             }
           }
         }
-        const unsigned int count = found >= maxCount ? maxCount : found;
         if (count)
         {
           hfs->SendMsg(2u, 0x1Fu, nullptr);
@@ -580,8 +498,8 @@ if (!pHFS)
   {
     case 7u:
     {
-      _base_fld *recordSet = mon->m_pRecordSet;
-      const float baseTime = *reinterpret_cast<float *>(&recordSet[26].m_strCode[12]);
+      const _monster_fld *recordSet = reinterpret_cast<_monster_fld *>(mon->m_pRecordSet);
+      const float baseTime = recordSet->m_fWaitTime;
       const float randTime = static_cast<float>(50 * (rand() % 20));
       pHFS->SetLoopTime( 6, static_cast<int>(baseTime + randTime + 3000.0f));
       mon->m_AggroMgr.Init();
@@ -590,7 +508,8 @@ if (!pHFS)
     }
     case 8u:
     {
-      const float baseTime = *reinterpret_cast<float *>(&mon->m_pRecordSet[26].m_strCode[12]) + 500.0f;
+      const _monster_fld *recordSet = reinterpret_cast<_monster_fld *>(mon->m_pRecordSet);
+      const float baseTime = recordSet->m_fWaitTime + 500.0f;
       const float randTime = static_cast<float>(50 * (rand() % 40));
       pHFS->SetLoopTime( 6, static_cast<int>(baseTime + randTime));
       mon->m_AggroMgr.Init();
@@ -700,7 +619,7 @@ if (!pHFS)
             && DfAIMgr::CheckGen(static_cast<CMonsterAI *>(hfs), mon)))
     {
       pHFS->SendMsg(7u, 0x21u, nullptr);
-      const float loopTime = *reinterpret_cast<float *>(&mon->m_pRecordSet[25].m_strCode[20]) + 500.0f;
+      const float loopTime = reinterpret_cast<_monster_fld *>(mon->m_pRecordSet)->m_fAttMoTime1 + 500.0f;
       hfs->SetLoopTime( 6, static_cast<int>(loopTime));
     }
     else
@@ -840,27 +759,20 @@ if (!pHFS)
     return;
   }
 
-  const float hp = static_cast<float>(mon->GetHP());
-  const float maxHp = static_cast<float>(static_cast<int>(mon->m_pMonRec->m_fMaxHP));
-  if (maxHp <= 0.0f)
-  {
-    return;
-  }
-
+  const _monster_fld *recordSet = reinterpret_cast<_monster_fld *>(mon->m_pRecordSet);
+  const float hp = static_cast<float>(mon->m_nHP);
+  const float maxHp = static_cast<float>(static_cast<int>(recordSet->m_fMaxHP));
   const float hpPercent = (hp / maxHp) * 100.0f;
-  const float threshold1 = *reinterpret_cast<float *>(&mon->m_pRecordSet[29].m_strCode[52]);
-  const float threshold2 = *reinterpret_cast<float *>(&mon->m_pRecordSet[29].m_strCode[56]);
-  const float threshold3 = *reinterpret_cast<float *>(&mon->m_pRecordSet[29].m_strCode[60]);
   if (hp == maxHp)
   {
     pHFS->SendMsg(4u, 0x27u, nullptr);
     pHFS->SetLoopTime( 4, 0x2710u);
   }
-  else if (hpPercent <= threshold1)
+  else if (hpPercent <= recordSet->m_fGoodToOrdHPPer)
   {
-    if (hpPercent <= threshold2)
+    if (hpPercent <= recordSet->m_fOrdToBadHPPer)
     {
-      if (hpPercent <= threshold3)
+      if (hpPercent <= recordSet->m_fBadToWorseHPPer)
       {
         pHFS->SendMsg(4u, 0x2Bu, nullptr);
         pHFS->SetLoopTime( 4, 0x7D0u);
@@ -999,7 +911,7 @@ if (!pMon || !pAI)
   signed int normalValue = 100;
   Us_FSM_Node *node = pAI->GetNode( 3u);
   const unsigned int state = node->GetState();
-  const int emoIndex = static_cast<int>(*reinterpret_cast<float *>(&pMon->m_pRecordSet[29].m_strCode[28])) - 1;
+  const int emoIndex = static_cast<int>(reinterpret_cast<_monster_fld *>(pMon->m_pRecordSet)->m_fEmoType) - 1;
   switch (state)
   {
     case 0xBu:

@@ -1634,7 +1634,7 @@ public:
   void BreakCloakBooster();
   void SendMsg_AlterSPInform();
   void SendMsg_AlterEquipSPInform();
-  void CalcEquipMaxDP(int bSendMsg);
+  void CalcEquipMaxDP(bool bInit);
   bool IsSiegeMode();
   bool IsActingSiegeMode();
   bool IsChaosMode();

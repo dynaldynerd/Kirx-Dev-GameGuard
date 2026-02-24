@@ -109,6 +109,8 @@
 #include "WorldServerUtil.h"
 #include "NetCheckPackets.h"
 #include "GlobalObjectDefs.h"
+#include "MasteryLimit_fld.h"
+#include "skill_fld.h"
 
 #include <ctime>
 #include <mmsystem.h>
@@ -1976,8 +1978,8 @@ char CPlayer::IsOverOneDay()
 
 unsigned int CPlayer::_check_mastery_cum_lim(unsigned __int8 byMasteryClass, unsigned __int8 byIndex)
 {
-  _base_fld *curRecord = nullptr;
-  _base_fld *baseRecord = nullptr;
+  _MasteryLimit_fld *curRecord = nullptr;
+  _MasteryLimit_fld *baseRecord = nullptr;
 
   _class_fld *curClass = this->m_Param.GetPtrCurClass();
   _class_fld *baseClass = this->m_Param.GetPtrBaseClass();
@@ -2010,17 +2012,22 @@ unsigned int CPlayer::_check_mastery_cum_lim(unsigned __int8 byMasteryClass, uns
   {
     if (curClass->m_nClass == baseClass->m_nClass)
     {
-      curRecord = CPlayer::s_tblLimMasteryCumContinue[raceCode][curClass->m_nClass].GetRecord(recordIndex);
+      curRecord = reinterpret_cast<_MasteryLimit_fld *>(
+        CPlayer::s_tblLimMasteryCumContinue[raceCode][curClass->m_nClass].GetRecord(recordIndex));
     }
     else
     {
-      curRecord = CPlayer::s_tblLimMasteryCum[raceCode][curClass->m_nClass].GetRecord(recordIndex);
-      baseRecord = CPlayer::s_tblLimMasteryCum[raceCode][baseClass->m_nClass].GetRecord(recordIndex);
+      curRecord = reinterpret_cast<_MasteryLimit_fld *>(
+        CPlayer::s_tblLimMasteryCum[raceCode][curClass->m_nClass].GetRecord(recordIndex));
+      baseRecord = reinterpret_cast<_MasteryLimit_fld *>(
+        CPlayer::s_tblLimMasteryCum[raceCode][baseClass->m_nClass].GetRecord(recordIndex));
     }
   }
   else
   {
-    curRecord = CPlayer::s_tblLimMasteryCum[raceCode][curClass->m_nClass].GetRecord(recordIndex);
+    curRecord =
+      reinterpret_cast<_MasteryLimit_fld *>(CPlayer::s_tblLimMasteryCum[raceCode][curClass->m_nClass].GetRecord(
+        recordIndex));
   }
 
   if (!curRecord)
@@ -2034,52 +2041,52 @@ unsigned int CPlayer::_check_mastery_cum_lim(unsigned __int8 byMasteryClass, uns
   switch (byMasteryClass)
   {
     case 0:
-      curLimit = *reinterpret_cast<unsigned int *>(&curRecord[1].m_strCode[4 * byIndex]);
+      curLimit = static_cast<unsigned int>(curRecord->m_MasteryLim.m_nBnsMMastery[byIndex]);
       if (baseRecord)
       {
-        baseLimit = *reinterpret_cast<unsigned int *>(&baseRecord[1].m_strCode[4 * byIndex]);
+        baseLimit = static_cast<unsigned int>(baseRecord->m_MasteryLim.m_nBnsMMastery[byIndex]);
       }
       break;
     case 1:
-      curLimit = *reinterpret_cast<unsigned int *>(&curRecord[1].m_strCode[12]);
+      curLimit = static_cast<unsigned int>(curRecord->m_MasteryLim.m_nBnsDefMastery);
       if (baseRecord)
       {
-        baseLimit = *reinterpret_cast<unsigned int *>(&baseRecord[1].m_strCode[12]);
+        baseLimit = static_cast<unsigned int>(baseRecord->m_MasteryLim.m_nBnsDefMastery);
       }
       break;
     case 2:
-      curLimit = *reinterpret_cast<unsigned int *>(&curRecord[1].m_strCode[16]);
+      curLimit = static_cast<unsigned int>(curRecord->m_MasteryLim.m_nBnsPryMastery);
       if (baseRecord)
       {
-        baseLimit = *reinterpret_cast<unsigned int *>(&baseRecord[1].m_strCode[16]);
+        baseLimit = static_cast<unsigned int>(baseRecord->m_MasteryLim.m_nBnsPryMastery);
       }
       break;
     case 3:
-      curLimit = *reinterpret_cast<unsigned int *>(&curRecord[1].m_strCode[4 * byIndex + 32]);
+      curLimit = static_cast<unsigned int>(curRecord->m_MasteryLim.m_nBnsSkillMastery[byIndex]);
       if (baseRecord)
       {
-        baseLimit = *reinterpret_cast<unsigned int *>(&baseRecord[1].m_strCode[4 * byIndex + 32]);
+        baseLimit = static_cast<unsigned int>(baseRecord->m_MasteryLim.m_nBnsSkillMastery[byIndex]);
       }
       break;
     case 4:
-      curLimit = *(reinterpret_cast<unsigned int *>(&curRecord[2].m_dwIndex) + byIndex);
+      curLimit = static_cast<unsigned int>(curRecord->m_MasteryLim.m_nBnsForceMastery[byIndex]);
       if (baseRecord)
       {
-        baseLimit = *(reinterpret_cast<unsigned int *>(&baseRecord[2].m_dwIndex) + byIndex);
+        baseLimit = static_cast<unsigned int>(baseRecord->m_MasteryLim.m_nBnsForceMastery[byIndex]);
       }
       break;
     case 5:
-      curLimit = *reinterpret_cast<unsigned int *>(&curRecord[1].m_strCode[4 * byIndex + 20]);
+      curLimit = static_cast<unsigned int>(curRecord->m_MasteryLim.m_nBnsMakeMastery[byIndex]);
       if (baseRecord)
       {
-        baseLimit = *reinterpret_cast<unsigned int *>(&baseRecord[1].m_strCode[4 * byIndex + 20]);
+        baseLimit = static_cast<unsigned int>(baseRecord->m_MasteryLim.m_nBnsMakeMastery[byIndex]);
       }
       break;
     case 6:
-      curLimit = *reinterpret_cast<unsigned int *>(&curRecord[1].m_strCode[8]);
+      curLimit = static_cast<unsigned int>(curRecord->m_MasteryLim.m_nBnsSMastery);
       if (baseRecord)
       {
-        baseLimit = *reinterpret_cast<unsigned int *>(&baseRecord[1].m_strCode[8]);
+        baseLimit = static_cast<unsigned int>(baseRecord->m_MasteryLim.m_nBnsSMastery);
       }
       break;
     default:
@@ -2175,10 +2182,10 @@ if (!dwAlter || (!byReason && this->m_bInGuildBattle))
   unsigned __int8 checkIndex = byIndex;
   if (byMasteryClass == 3)
   {
-    _base_fld *record = _MASTERY_PARAM::s_pSkillData->GetRecord(byIndex);
+    _skill_fld *record = reinterpret_cast<_skill_fld *>(_MASTERY_PARAM::s_pSkillData->GetRecord(byIndex));
     if (record)
     {
-      const unsigned __int8 skillIndex = static_cast<unsigned __int8>(record[1].m_strCode[4]);
+      const unsigned __int8 skillIndex = static_cast<unsigned __int8>(record->m_nMastIndex);
       if (skillIndex >= 8u)
       {
         return;
@@ -2188,8 +2195,12 @@ if (!dwAlter || (!byReason && this->m_bInGuildBattle))
   }
 
   const unsigned int limit = _check_mastery_cum_lim(byMasteryClass, checkIndex);
-    const int current = static_cast<int>(this->m_pmMst.GetCumPerMast(byMasteryClass, checkIndex));
-  unsigned int remain = (limit > static_cast<unsigned int>(current)) ? (limit - current) : 0u;
+  const int current = static_cast<int>(this->m_pmMst.GetCumPerMast(byMasteryClass, checkIndex));
+  unsigned int remain = limit - current;
+  if (static_cast<int>(limit - current) < 0)
+  {
+    remain = 0;
+  }
   if (alterCapped > remain)
   {
     alterCapped = remain;

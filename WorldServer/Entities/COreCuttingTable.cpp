@@ -1,8 +1,7 @@
 #include "pch.h"
 
-#include "base_fld.h"
-
 #include "COreCuttingTable.h"
+#include "OreCutting_fld.h"
 
 COreCuttingTable::COreCuttingTable()
   : m_tblOreCutting(), m_nOreNum(0), pOreList(nullptr)
@@ -67,26 +66,26 @@ bool COreCuttingTable::Indexing(CRecordData *oreTable, CRecordData *resTable, ch
     const int cuttingRecordCount = m_tblOreCutting.GetRecordNum();
     for (int cuttingIndex = 0; cuttingIndex < cuttingRecordCount; ++cuttingIndex)
     {
-      _base_fld *cuttingRecord = m_tblOreCutting.GetRecord(cuttingIndex);
+      _OreCutting_fld *cuttingRecord =
+        reinterpret_cast<_OreCutting_fld *>(m_tblOreCutting.GetRecord(cuttingIndex));
       if (strcmp_0(cuttingRecord->m_strCode, oreRecord->m_strCode) != 0)
       {
         continue;
       }
 
-      unsigned __int16 *resourceIndex =
-        reinterpret_cast<unsigned __int16 *>(resTable->GetRecord(reinterpret_cast<const char *>(&cuttingRecord[1])));
-      if (!resourceIndex)
+      _base_fld *resourceRecord = resTable->GetRecord(cuttingRecord->m_strResource_Item);
+      if (!resourceRecord)
       {
         if (errCode)
         {
-          std::sprintf(errCode, "COreCuttingTable.. %s no search index", reinterpret_cast<char *>(&cuttingRecord[1]));
+          std::sprintf(errCode, "COreCuttingTable.. %s no search index", cuttingRecord->m_strResource_Item);
         }
         return false;
       }
 
       _ore_cut_list &oreList = pOreList[oreIndex];
-      oreList.ResList[resultCount].wResIndex = *resourceIndex;
-      oreList.ResList[resultCount].dwRate = *reinterpret_cast<unsigned int *>(&cuttingRecord[1].m_strCode[60]);
+      oreList.ResList[resultCount].wResIndex = static_cast<unsigned __int16>(resourceRecord->m_dwIndex);
+      oreList.ResList[resultCount].dwRate = static_cast<unsigned int>(cuttingRecord->m_nCutting_probability);
       cumulativeRate += oreList.ResList[resultCount].dwRate;
       oreList.ResList[resultCount].dwCumRate = cumulativeRate;
       ++resultCount;

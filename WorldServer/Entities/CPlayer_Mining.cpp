@@ -50,7 +50,9 @@
 #include "CDarkHoleDungeonQuest.h"
 #include "CDarkHoleDungeonQuestSetup.h"
 #include "OreItem_fld.h"
+#include "ResourceItem_fld.h"
 #include "TicketItem_fld.h"
+#include "WeaponItem_fld.h"
 #include "darkhole_create_setdata.h"
 #include "ENTER_DUNGEON_NEW_POS.h"
 #include "QuestHappenEvent_fld.h"
@@ -399,8 +401,8 @@ unsigned __int64 addGold = 0;
   {
     if (this->m_Param.m_wCuttingResBuffer[resourceIndex])
     {
-      _base_fld *record = g_Main.m_tblItemData[18].GetRecord(resourceIndex);
-      const int unitPrice = *reinterpret_cast<int *>(&record[5].m_strCode[12]);
+      _ResourceItem_fld *record = reinterpret_cast<_ResourceItem_fld *>(g_Main.m_tblItemData[18].GetRecord(resourceIndex));
+      const int unitPrice = record ? record->m_nAncStdPrice : 0;
       addGold += static_cast<unsigned __int64>(this->m_Param.m_wCuttingResBuffer[resourceIndex]) * unitPrice;
       hasResource = true;
     }
@@ -446,7 +448,7 @@ void CPlayer::pc_MineStart(
   unsigned __int16 wBatterySerial)
 {
   unsigned __int8 resultCode = 0;
-  _base_fld *oreRecord = g_Main.m_tblItemData[17].GetRecord(byOreIndex);
+  _OreItem_fld *oreRecord = reinterpret_cast<_OreItem_fld *>(g_Main.m_tblItemData[17].GetRecord(byOreIndex));
   _res_dummy *resDummy = nullptr;
   int resDummySector = -1;
   _STORAGE_LIST::_db_con *toolItem = nullptr;
@@ -464,7 +466,7 @@ void CPlayer::pc_MineStart(
   {
     resultCode = 7;
   }
-  else if (!oreRecord || *reinterpret_cast<unsigned int *>(&oreRecord[3].m_strCode[0]) > 2u)
+  else if (!oreRecord || oreRecord->m_nOre_List > 2u)
   {
     resultCode = 9;
   }
@@ -499,8 +501,9 @@ void CPlayer::pc_MineStart(
         }
         else
         {
-          _base_fld *toolRecord = g_Main.m_tblItemData[6].GetRecord(toolItem->m_wItemIndex);
-          if (!toolRecord || *reinterpret_cast<int *>(&toolRecord[6].m_strCode[8]) != 10)
+          _WeaponItem_fld *toolRecord = reinterpret_cast<_WeaponItem_fld *>(
+            g_Main.m_tblItemData[6].GetRecord(toolItem->m_wItemIndex));
+          if (!toolRecord || toolRecord->m_nType != 10)
           {
             resultCode = 5;
           }
@@ -587,7 +590,7 @@ void CPlayer::pc_OreCutting(unsigned __int16 wOreSerial, unsigned __int8 byProce
 {
   unsigned __int8 resultCode = 0;
   _STORAGE_LIST::_db_con *oreItem = nullptr;
-  _base_fld *oreRecord = nullptr;
+  _OreItem_fld *oreRecord = nullptr;
   unsigned int leftOreCount = 0;
   unsigned int consumedDalant = 0;
 
@@ -626,7 +629,7 @@ void CPlayer::pc_OreCutting(unsigned __int16 wOreSerial, unsigned __int8 byProce
     }
     else
     {
-      oreRecord = g_Main.m_tblItemData[17].GetRecord(oreItem->m_wItemIndex);
+      oreRecord = reinterpret_cast<_OreItem_fld *>(g_Main.m_tblItemData[17].GetRecord(oreItem->m_wItemIndex));
       if (!oreRecord)
       {
         resultCode = 1;
@@ -637,7 +640,7 @@ void CPlayer::pc_OreCutting(unsigned __int16 wOreSerial, unsigned __int8 byProce
       }
       else
       {
-        const int baseDalant = *reinterpret_cast<int *>(&oreRecord[4].m_strCode[4]);
+        const int baseDalant = oreRecord->m_nProcessPrice;
         const float managerScale = static_cast<float>(eGetMgrValue());
         const float unitDalant = static_cast<float>(baseDalant)
                                + static_cast<float>(baseDalant) / 1000.0f * managerScale;
@@ -655,8 +658,8 @@ void CPlayer::pc_OreCutting(unsigned __int16 wOreSerial, unsigned __int8 byProce
 
   if (!resultCode)
   {
-    const int minCutCount = static_cast<int>(oreRecord[4].m_dwIndex);
-    const int maxCutCount = *reinterpret_cast<int *>(&oreRecord[4].m_strCode[0]);
+    const int minCutCount = oreRecord->m_nmin_C_random;
+    const int maxCutCount = oreRecord->m_nmax_C_random;
     for (int processIndex = 0; processIndex < byProcessNum; ++processIndex)
     {
       int cutCount = minCutCount;
@@ -705,7 +708,7 @@ void CPlayer::pc_OreCutting(unsigned __int16 wOreSerial, unsigned __int8 byProce
     if (m_pUserDB && CActionPointSystemMgr::Instance()->GetEventStatus(0) == 2)
     {
       const unsigned int currentPoint = m_pUserDB->GetActPoint(0);
-      const unsigned int pointPerCut = *reinterpret_cast<unsigned int *>(&oreRecord[3].m_strCode[36]);
+      const unsigned int pointPerCut = static_cast<unsigned int>(oreRecord->m_nProcessPoint);
       const unsigned int nextPoint = currentPoint + byProcessNum * pointPerCut;
       m_pUserDB->Update_User_Action_Point(0, nextPoint);
       SendMsg_Alter_Action_Point(0, nextPoint);

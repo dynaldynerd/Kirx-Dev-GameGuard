@@ -31,10 +31,43 @@
 #include "R3EngineGlobals.h"
 #include "CMergeFileManager.h"
 #include "base_fld.h"
+#include "DfnEquipItem_fld.h"
+#include "CloakItem_fld.h"
+#include "BagItem_fld.h"
+#include "MakeToolItem_fld.h"
+#include "BulletItem_fld.h"
+#include "PotionItem_fld.h"
+#include "ResourceItem_fld.h"
+#include "TOWNItem_fld.h"
+#include "BoxItem_fld.h"
+#include "ForceItem_fld.h"
+#include "OreItem_fld.h"
+#include "UnitKeyItem_fld.h"
+#include "BootyItem_fld.h"
+#include "MapItem_fld.h"
+#include "BattleDungeonItem_fld.h"
+#include "AnimusItem_fld.h"
+#include "FaceItem_fld.h"
+#include "RecoveryItem_fld.h"
+#include "TicketItem_fld.h"
+#include "FIRECRACKER_fld.h"
+#include "EventItem_fld.h"
+#include "RadarItem_fld.h"
+#include "NPCLink_fld.h"
+#include "CouponItem_fld.h"
+#include "BatteryItem_fld.h"
+#include "GuardTowerItem_fld.h"
+#include "TrapItem_fld.h"
+#include "SiegeKitItem_fld.h"
+#include "UNmannedminer_fld.h"
+#include "RingItem_fld.h"
+#include "AmuletItem_fld.h"
 #include "EQUIP_MASTERY_LIM.h"
 #include "CAnimus.h"
 #include "animus_fld.h"
 #include "WeaponItem_fld.h"
+#include "skill_fld.h"
+#include "force_fld.h"
 
 namespace
 {
@@ -281,257 +314,154 @@ char *GetItemEquipCivil(int nTableCode, int nItemIndex)
     case 3:
     case 4:
     case 5:
-    case 7:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[12];
+      _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 6:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[6].m_strCode[16];
+      _WeaponItem_fld *record = static_cast<_WeaponItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
+    }
+    case 7:
+    {
+      _CloakItem_fld *record = static_cast<_CloakItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 8:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[8];
+      _RingItem_fld *record = static_cast<_RingItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 9:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[8];
+      _AmuletItem_fld *record = static_cast<_AmuletItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 10:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[4];
+      _BulletItem_fld *record = static_cast<_BulletItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 11:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[4];
+      _MakeToolItem_fld *record = static_cast<_MakeToolItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 12:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[4];
+      _BagItem_fld *record = static_cast<_BagItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 13:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[4];
+      _PotionItem_fld *record = static_cast<_PotionItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 14:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return record[3].m_strCode;
+      _FaceItem_fld *record = static_cast<_FaceItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 15:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[4];
+      _ForceItem_fld *record = static_cast<_ForceItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 16:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[4];
+      _BatteryItem_fld *record = static_cast<_BatteryItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 18:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[8];
+      _ResourceItem_fld *record = static_cast<_ResourceItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 19:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return reinterpret_cast<char *>(&record[3]);
+      _UnitKeyItem_fld *record = static_cast<_UnitKeyItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 20:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[4];
+      _BootyItem_fld *record = static_cast<_BootyItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 21:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[4];
+      _MapItem_fld *record = static_cast<_MapItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 22:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[4];
+      _TOWNItem_fld *record = static_cast<_TOWNItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 23:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[4];
+      _BattleDungeonItem_fld *record = static_cast<_BattleDungeonItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 24:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return reinterpret_cast<char *>(&record[2]);
+      _AnimusItem_fld *record = static_cast<_AnimusItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 25:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[52];
+      _GuardTowerItem_fld *record = static_cast<_GuardTowerItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 26:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[60];
+      _TrapItem_fld *record = static_cast<_TrapItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 27:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[12];
+      _SiegeKitItem_fld *record = static_cast<_SiegeKitItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 28:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[4];
+      _TicketItem_fld *record = static_cast<_TicketItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 30:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[4];
+      _RecoveryItem_fld *record = static_cast<_RecoveryItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 31:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[4];
+      _BoxItem_fld *record = static_cast<_BoxItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 32:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[4];
+      _FIRECRACKER_fld *record = static_cast<_FIRECRACKER_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 33:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[56];
+      _UNmannedminer_fld *record = static_cast<_UNmannedminer_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
+    }
+    case 34:
+    {
+      _RadarItem_fld *record = static_cast<_RadarItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 35:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[4];
+      _NPCLink_fld *record = static_cast<_NPCLink_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     case 36:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return szDefCivilCode;
-      }
-      return &record[3].m_strCode[4];
+      _CouponItem_fld *record = static_cast<_CouponItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strCivil : szDefCivilCode;
     }
     default:
       return szDefCivilCode;
@@ -577,266 +507,154 @@ int IsSellItem(int nTableCode, int nItemIndex)
     case 3:
     case 4:
     case 5:
-    case 7:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[6].m_strCode[32]);
+      _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 6:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return record[11].m_dwIndex;
+      _WeaponItem_fld *record = static_cast<_WeaponItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
+    }
+    case 7:
+    {
+      _CloakItem_fld *record = static_cast<_CloakItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 8:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[32]);
+      _RingItem_fld *record = static_cast<_RingItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 9:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[32]);
+      _AmuletItem_fld *record = static_cast<_AmuletItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 10:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[7].m_strCode[60]);
+      _BulletItem_fld *record = static_cast<_BulletItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 11:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[56]);
+      _MakeToolItem_fld *record = static_cast<_MakeToolItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 12:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[28]);
+      _BagItem_fld *record = static_cast<_BagItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 13:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[8].m_strCode[16]);
+      _PotionItem_fld *record = static_cast<_PotionItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 15:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[24]);
+      _ForceItem_fld *record = static_cast<_ForceItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 16:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[32]);
+      _BatteryItem_fld *record = static_cast<_BatteryItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 17:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[3].m_strCode[44]);
+      _OreItem_fld *record = static_cast<_OreItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 18:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[6].m_strCode[60]);
+      _ResourceItem_fld *record = static_cast<_ResourceItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 19:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return record[4].m_dwIndex;
+      _UnitKeyItem_fld *record = static_cast<_UnitKeyItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 20:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[28]);
+      _BootyItem_fld *record = static_cast<_BootyItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 21:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[24]);
+      _MapItem_fld *record = static_cast<_MapItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 22:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[6].m_strCode[28]);
+      _TOWNItem_fld *record = static_cast<_TOWNItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 23:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[7].m_strCode[56]);
+      _BattleDungeonItem_fld *record = static_cast<_BattleDungeonItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 24:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[32]);
+      _AnimusItem_fld *record = static_cast<_AnimusItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 25:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[10].m_strCode[4]);
+      _GuardTowerItem_fld *record = static_cast<_GuardTowerItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 26:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[8].m_strCode[12]);
+      _TrapItem_fld *record = static_cast<_TrapItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 27:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return record[6].m_dwIndex;
+      _SiegeKitItem_fld *record = static_cast<_SiegeKitItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 28:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[6].m_strCode[28]);
+      _TicketItem_fld *record = static_cast<_TicketItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 30:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[44]);
+      _RecoveryItem_fld *record = static_cast<_RecoveryItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 31:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[40]);
+      _BoxItem_fld *record = static_cast<_BoxItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 32:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[48]);
+      _FIRECRACKER_fld *record = static_cast<_FIRECRACKER_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 33:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[6].m_strCode[8]);
+      _UNmannedminer_fld *record = static_cast<_UNmannedminer_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 34:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[6].m_strCode[20]);
+      _RadarItem_fld *record = static_cast<_RadarItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 35:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[60]);
+      _NPCLink_fld *record = static_cast<_NPCLink_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     case 36:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
-      if (!record)
-      {
-        return 0;
-      }
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[52]);
+      _CouponItem_fld *record = static_cast<_CouponItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bSell) : 0;
     }
     default:
       return 0;
@@ -1500,34 +1318,32 @@ unsigned __int8 GetTalikFromSocket(unsigned int dwLvBit, unsigned __int8 bySocke
 
 unsigned __int8 GetDefItemUpgSocketNum(int nTableCode, int nItemIndex)
 {
-  if (nTableCode < 0)
-  {
-    return 0;
-  }
-
   CRecordData *table = &s_ptblItemData[nTableCode];
   unsigned __int8 socketNum = 0;
-  if (nTableCode <= 5 || nTableCode == 7)
+  if (nTableCode >= 0)
   {
-    _base_fld *record = table->GetRecord(nItemIndex);
-    if (record)
+    if (nTableCode <= 5 || nTableCode == 7)
     {
-      socketNum = record[6].m_strCode[52];
+      _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(table->GetRecord(nItemIndex));
+      if (record)
+      {
+        socketNum = static_cast<unsigned __int8>(record->m_nUpgrade);
+      }
     }
-  }
-  else if (nTableCode == 6)
-  {
-    _base_fld *record = table->GetRecord(nItemIndex);
-    if (record)
+    else if (nTableCode == 6)
     {
-      socketNum = record[11].m_strCode[16];
+      _WeaponItem_fld *record = static_cast<_WeaponItem_fld *>(table->GetRecord(nItemIndex));
+      if (record)
+      {
+        socketNum = static_cast<unsigned __int8>(record->m_nUpgrade);
+      }
     }
   }
 
   if (socketNum > 7)
   {
-    char buffer[144]{};
-    sprintf_s(buffer, "tbl:%d, idx:%d => slot: %d\n", nTableCode, nItemIndex, socketNum);
+    char buffer[144];
+    sprintf(buffer, "tbl:%d, idx:%d => slot: %d\n", nTableCode, nItemIndex, socketNum);
     OutputDebugStringA(buffer);
     return 0;
   }
@@ -1592,18 +1408,18 @@ unsigned __int8 GetItemGrade(int nTableCode, int nItemIndex)
   {
     if (nTableCode <= 5 || nTableCode == 7)
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
+      _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(table->GetRecord(nItemIndex));
       if (record)
       {
-        return record[3].m_strCode[0];
+        return static_cast<unsigned __int8>(record->m_nItemGrade);
       }
     }
     else if (nTableCode == 6)
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
+      _WeaponItem_fld *record = static_cast<_WeaponItem_fld *>(table->GetRecord(nItemIndex));
       if (record)
       {
-        return record[3].m_strCode[0];
+        return static_cast<unsigned __int8>(record->m_nItemGrade);
       }
     }
   }
@@ -1623,59 +1439,59 @@ int GetItemEquipLevel(int nTableCode, int nItemIndex)
     case 5:
     case 7:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
+      _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(table->GetRecord(nItemIndex));
       if (!record)
         return 1;
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[8]);
+      return record->m_nLevelLim;
     }
     case 6:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
+      _WeaponItem_fld *record = static_cast<_WeaponItem_fld *>(table->GetRecord(nItemIndex));
       if (!record)
         return 1;
-      return *reinterpret_cast<unsigned int *>(&record[8].m_strCode[8]);
+      return record->m_nLevelLim;
     }
     case 8:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
+      _RingItem_fld *record = static_cast<_RingItem_fld *>(table->GetRecord(nItemIndex));
       if (!record)
         return 1;
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[4]);
+      return record->m_nLevelLim;
     }
     case 9:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
+      _AmuletItem_fld *record = static_cast<_AmuletItem_fld *>(table->GetRecord(nItemIndex));
       if (!record)
         return 1;
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[4]);
+      return record->m_nLevelLim;
     }
     case 25:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
+      _GuardTowerItem_fld *record = static_cast<_GuardTowerItem_fld *>(table->GetRecord(nItemIndex));
       if (!record)
         return 1;
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[48]);
+      return record->m_nLevelLim;
     }
     case 26:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
+      _TrapItem_fld *record = static_cast<_TrapItem_fld *>(table->GetRecord(nItemIndex));
       if (!record)
         return 1;
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[60]);
+      return record->m_nLevelLim;
     }
     case 27:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
+      _SiegeKitItem_fld *record = static_cast<_SiegeKitItem_fld *>(table->GetRecord(nItemIndex));
       if (!record)
         return 1;
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[8]);
+      return record->m_nLevelLim;
     }
     case 33:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
+      _UNmannedminer_fld *record = static_cast<_UNmannedminer_fld *>(table->GetRecord(nItemIndex));
       if (!record)
         return 1;
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[52]);
+      return record->m_nLevelLim;
     }
     default:
       return 1;
@@ -1695,59 +1511,59 @@ int GetItemEquipUpLevel(int nTableCode, int nItemIndex)
     case 5:
     case 7:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
+      _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(table->GetRecord(nItemIndex));
       if (!record)
         return 1;
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[12]);
+      return record->m_nUpLevelLim;
     }
     case 6:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
+      _WeaponItem_fld *record = static_cast<_WeaponItem_fld *>(table->GetRecord(nItemIndex));
       if (!record)
         return 1;
-      return *reinterpret_cast<unsigned int *>(&record[8].m_strCode[12]);
+      return record->m_nUpLevelLim;
     }
     case 8:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
+      _RingItem_fld *record = static_cast<_RingItem_fld *>(table->GetRecord(nItemIndex));
       if (!record)
         return 1;
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[8]);
+      return record->m_nUpLevelLim;
     }
     case 9:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
+      _AmuletItem_fld *record = static_cast<_AmuletItem_fld *>(table->GetRecord(nItemIndex));
       if (!record)
         return 1;
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[8]);
+      return record->m_nUpLevelLim;
     }
     case 25:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
+      _GuardTowerItem_fld *record = static_cast<_GuardTowerItem_fld *>(table->GetRecord(nItemIndex));
       if (!record)
         return 1;
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[52]);
+      return record->m_nUpLevelLim;
     }
     case 26:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
+      _TrapItem_fld *record = static_cast<_TrapItem_fld *>(table->GetRecord(nItemIndex));
       if (!record)
         return 1;
-      return static_cast<int>(record[5].m_dwIndex);
+      return record->m_nUpLevelLim;
     }
     case 27:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
+      _SiegeKitItem_fld *record = static_cast<_SiegeKitItem_fld *>(table->GetRecord(nItemIndex));
       if (!record)
         return 1;
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[12]);
+      return record->m_nUpLevelLim;
     }
     case 33:
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
+      _UNmannedminer_fld *record = static_cast<_UNmannedminer_fld *>(table->GetRecord(nItemIndex));
       if (!record)
         return 1;
-      return *reinterpret_cast<unsigned int *>(&record[4].m_strCode[56]);
+      return record->m_nUpLevelLim;
     }
     default:
       return 1;
@@ -1761,20 +1577,20 @@ _EQUIP_MASTERY_LIM *GetItemEquipMastery(int nTableCode, int nItemIndex, int *pnL
   {
     if (nTableCode <= 5 || nTableCode == 7)
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
+      _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(table->GetRecord(nItemIndex));
       if (record)
       {
         *pnLimNum = 2;
-        return reinterpret_cast<_EQUIP_MASTERY_LIM *>(&record[4].m_strCode[20]);
+        return reinterpret_cast<_EQUIP_MASTERY_LIM *>(&record->m_nExpertID1);
       }
     }
     else if (nTableCode == 6)
     {
-      _base_fld *record = table->GetRecord(nItemIndex);
+      _WeaponItem_fld *record = static_cast<_WeaponItem_fld *>(table->GetRecord(nItemIndex));
       if (record)
       {
         *pnLimNum = 2;
-        return reinterpret_cast<_EQUIP_MASTERY_LIM *>(&record[8].m_strCode[20]);
+        return reinterpret_cast<_EQUIP_MASTERY_LIM *>(&record->m_nExpertID1);
       }
     }
   }
@@ -1949,40 +1765,38 @@ void InitMasteryFormula(CRecordData *pSkillData, CRecordData *pForceData)
 {
   memset_0(s_nSkillLvPerMastery, -1, sizeof(s_nSkillLvPerMastery));
   memset_0(s_nForceLvPerMastery, -1, sizeof(s_nForceLvPerMastery));
-  for (int n = 0; ; ++n)
+  for (int n = 0;; ++n)
   {
     const int recordNum = pSkillData->GetRecordNum();
     if (n >= recordNum)
     {
       break;
     }
-    _base_fld *record = pSkillData->GetRecord(n);
-    if (*reinterpret_cast<unsigned int *>(&record[1].m_strCode[4]) < 8u)
+    _skill_fld *record = static_cast<_skill_fld *>(pSkillData->GetRecord(n));
+    if (record && static_cast<unsigned int>(record->m_nMastIndex) < 8u)
     {
-      s_nSkillLvPerMastery[*reinterpret_cast<int *>(&record[1].m_strCode[4])] =
-        *reinterpret_cast<int *>(&record[4].m_strCode[60]);
+      s_nSkillLvPerMastery[record->m_nMastIndex] = record->m_nLv;
     }
   }
-  for (int n = 0; ; ++n)
+  for (int n = 0;; ++n)
   {
     const int recordNum = pForceData->GetRecordNum();
     if (n >= recordNum)
     {
       break;
     }
-    _base_fld *record = pForceData->GetRecord(n);
-    if (*reinterpret_cast<unsigned int *>(&record[1].m_strCode[4]) < 0x18u)
+    _force_fld *record = static_cast<_force_fld *>(pForceData->GetRecord(n));
+    if (record && static_cast<unsigned int>(record->m_nMastIndex) < 0x18u)
     {
-      s_nForceLvPerMastery[*reinterpret_cast<int *>(&record[1].m_strCode[4])] =
-        *reinterpret_cast<int *>(&record[4].m_strCode[60]);
+      s_nForceLvPerMastery[record->m_nMastIndex] = record->m_nLv;
     }
   }
 }
 
 int GetItemStdPrice(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind)
 {
-CRecordData *table = &s_ptblItemData[nTableCode];
-  _base_fld *Record = nullptr;
+  (void)nRace;
+  CRecordData *table = &s_ptblItemData[nTableCode];
 
   switch (nTableCode)
   {
@@ -1993,175 +1807,231 @@ CRecordData *table = &s_ptblItemData[nTableCode];
     case 4:
     case 5:
     case 7:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[36];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[40]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 6:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _WeaponItem_fld *record = static_cast<_WeaponItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[8].m_strCode[36];
-      return *reinterpret_cast<unsigned int *>(&Record[8].m_strCode[40]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 8:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _RingItem_fld *record = static_cast<_RingItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[16];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 9:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _AmuletItem_fld *record = static_cast<_AmuletItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[16];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 10:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BulletItem_fld *record = static_cast<_BulletItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[6].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[4]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 11:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _MakeToolItem_fld *record = static_cast<_MakeToolItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[8];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[12]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 12:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BagItem_fld *record = static_cast<_BagItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[4]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 13:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _PotionItem_fld *record = static_cast<_PotionItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[6].m_strCode[44];
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[48]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 15:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _ForceItem_fld *record = static_cast<_ForceItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[4]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 16:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BatteryItem_fld *record = static_cast<_BatteryItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[4]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 17:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _OreItem_fld *record = static_cast<_OreItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[3].m_strCode[12];
-      return *reinterpret_cast<unsigned int *>(&Record[3].m_strCode[16]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 18:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _ResourceItem_fld *record = static_cast<_ResourceItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[5].m_strCode[8];
-      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[12]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nAncStdPrice;
+    }
     case 19:
       return 0;
     case 20:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BootyItem_fld *record = static_cast<_BootyItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[4]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 21:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _MapItem_fld *record = static_cast<_MapItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = static_cast<unsigned __int8>(Record[5].m_dwIndex);
-      return *reinterpret_cast<unsigned int *>(Record[5].m_strCode);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 22:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _TOWNItem_fld *record = static_cast<_TOWNItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[5].m_strCode[60];
-      return static_cast<unsigned int>(Record[6].m_dwIndex);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 23:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BattleDungeonItem_fld *record = static_cast<_BattleDungeonItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = static_cast<unsigned __int8>(Record[6].m_dwIndex);
-      return *reinterpret_cast<unsigned int *>(Record[6].m_strCode);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 24:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _AnimusItem_fld *record = static_cast<_AnimusItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[4];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[8]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 25:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _GuardTowerItem_fld *record = static_cast<_GuardTowerItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[6].m_strCode[44];
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[48]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 26:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _TrapItem_fld *record = static_cast<_TrapItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[7].m_strCode[48];
-      return *reinterpret_cast<unsigned int *>(&Record[7].m_strCode[52]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 27:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _SiegeKitItem_fld *record = static_cast<_SiegeKitItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[32];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[36]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 28:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _TicketItem_fld *record = static_cast<_TicketItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[6].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[4]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 30:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _RecoveryItem_fld *record = static_cast<_RecoveryItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[8];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[12]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_bMoney);
+      return record->m_nStdPrice;
+    }
     case 31:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BoxItem_fld *record = static_cast<_BoxItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[12];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[16]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 32:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _FIRECRACKER_fld *record = static_cast<_FIRECRACKER_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[8];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[12]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 33:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _UNmannedminer_fld *record = static_cast<_UNmannedminer_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[5].m_strCode[48];
-      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[52]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 34:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _RadarItem_fld *record = static_cast<_RadarItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[48];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[52]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 35:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _NPCLink_fld *record = static_cast<_NPCLink_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[5].m_strCode[36];
-      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[40]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     case 36:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _CouponItem_fld *record = static_cast<_CouponItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[12];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPrice;
+    }
     default:
       return 0;
   }
@@ -2169,8 +2039,7 @@ CRecordData *table = &s_ptblItemData[nTableCode];
 
 int GetItemStoragePrice(int nTableCode, int nItemIndex, int nRace)
 {
-CRecordData *table = &s_ptblItemData[nTableCode];
-  _base_fld *record = nullptr;
+  CRecordData *table = &s_ptblItemData[nTableCode];
 
   switch (nTableCode)
   {
@@ -2180,91 +2049,149 @@ CRecordData *table = &s_ptblItemData[nTableCode];
     case 3:
     case 4:
     case 5:
-    case 7:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[60]) : 0;
+    {
+      _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 6:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[8].m_strCode[60]) : 0;
+    {
+      _WeaponItem_fld *record = static_cast<_WeaponItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
+    case 7:
+    {
+      _CloakItem_fld *record = static_cast<_CloakItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 8:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[40]) : 0;
+    {
+      _RingItem_fld *record = static_cast<_RingItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 9:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[40]) : 0;
+    {
+      _AmuletItem_fld *record = static_cast<_AmuletItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 10:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[24]) : 0;
+    {
+      _BulletItem_fld *record = static_cast<_BulletItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 11:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[32]) : 0;
+    {
+      _MakeToolItem_fld *record = static_cast<_MakeToolItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 12:
       return 0;
     case 13:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[7].m_strCode[0]) : 0;
+    {
+      _PotionItem_fld *record = static_cast<_PotionItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 15:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[24]) : 0;
+    {
+      _ForceItem_fld *record = static_cast<_ForceItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 16:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[24]) : 0;
+    {
+      _BatteryItem_fld *record = static_cast<_BatteryItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 17:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[3].m_strCode[40]) : 0;
+    {
+      _OreItem_fld *record = static_cast<_OreItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 18:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[5].m_strCode[40]) : 0;
+    {
+      _ResourceItem_fld *record = static_cast<_ResourceItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 19:
       return 0;
     case 20:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[24]) : 0;
+    {
+      _BootyItem_fld *record = static_cast<_BootyItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 21:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[5].m_strCode[20]) : 0;
+    {
+      _MapItem_fld *record = static_cast<_MapItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 22:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[16]) : 0;
+    {
+      _TOWNItem_fld *record = static_cast<_TOWNItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 23:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[20]) : 0;
+    {
+      _BattleDungeonItem_fld *record = static_cast<_BattleDungeonItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 24:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[28]) : 0;
+    {
+      _AnimusItem_fld *record = static_cast<_AnimusItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 25:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[7].m_strCode[0]) : 0;
+    {
+      _GuardTowerItem_fld *record = static_cast<_GuardTowerItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 26:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[8].m_strCode[4]) : 0;
+    {
+      _TrapItem_fld *record = static_cast<_TrapItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 27:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[56]) : 0;
+    {
+      _SiegeKitItem_fld *record = static_cast<_SiegeKitItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 28:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[24]) : 0;
+    {
+      _TicketItem_fld *record = static_cast<_TicketItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 30:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[32]) : 0;
+    {
+      _RecoveryItem_fld *record = static_cast<_RecoveryItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 31:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[36]) : 0;
+    {
+      _BoxItem_fld *record = static_cast<_BoxItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 32:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[32]) : 0;
+    {
+      _FIRECRACKER_fld *record = static_cast<_FIRECRACKER_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 33:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[4]) : 0;
+    {
+      _UNmannedminer_fld *record = static_cast<_UNmannedminer_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 34:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[5].m_strCode[4]) : 0;
+    {
+      _RadarItem_fld *record = static_cast<_RadarItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 35:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[5].m_strCode[44]) : 0;
+    {
+      _NPCLink_fld *record = static_cast<_NPCLink_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     case 36:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[36]) : 0;
+    {
+      _CouponItem_fld *record = static_cast<_CouponItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_nStoragePrice) : 0;
+    }
     default:
       return 0;
   }
@@ -2273,7 +2200,6 @@ CRecordData *table = &s_ptblItemData[nTableCode];
 bool IsTrunkIOAble(int nTableCode, int nItemIndex)
 {
   CRecordData *table = &s_ptblItemData[nTableCode];
-  _base_fld *record = nullptr;
 
   switch (nTableCode)
   {
@@ -2283,91 +2209,149 @@ bool IsTrunkIOAble(int nTableCode, int nItemIndex)
     case 3:
     case 4:
     case 5:
-    case 7:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[6].m_strCode[44]) != 0;
+    {
+      _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 6:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[11].m_strCode[8]) != 0;
+    {
+      _WeaponItem_fld *record = static_cast<_WeaponItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
+    case 7:
+    {
+      _CloakItem_fld *record = static_cast<_CloakItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 8:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[5].m_strCode[44]) != 0;
+    {
+      _RingItem_fld *record = static_cast<_RingItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 9:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[5].m_strCode[44]) != 0;
+    {
+      _AmuletItem_fld *record = static_cast<_AmuletItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 10:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[8].m_strCode[4]) != 0;
+    {
+      _BulletItem_fld *record = static_cast<_BulletItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 11:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[5].m_strCode[0]) != 0;
+    {
+      _MakeToolItem_fld *record = static_cast<_MakeToolItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 12:
       return false;
     case 13:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[8].m_strCode[28]) != 0;
+    {
+      _PotionItem_fld *record = static_cast<_PotionItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 15:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[5].m_strCode[36]) != 0;
+    {
+      _ForceItem_fld *record = static_cast<_ForceItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 16:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[4].m_strCode[44]) != 0;
+    {
+      _BatteryItem_fld *record = static_cast<_BatteryItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 17:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[3].m_strCode[56]) != 0;
+    {
+      _OreItem_fld *record = static_cast<_OreItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 18:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[7].m_strCode[4]) != 0;
+    {
+      _ResourceItem_fld *record = static_cast<_ResourceItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 19:
       return false;
     case 20:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[4].m_strCode[40]) != 0;
+    {
+      _BootyItem_fld *record = static_cast<_BootyItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 21:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[5].m_strCode[36]) != 0;
+    {
+      _MapItem_fld *record = static_cast<_MapItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 22:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[6].m_strCode[40]) != 0;
+    {
+      _TOWNItem_fld *record = static_cast<_TOWNItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 23:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[8].m_strCode[0]) != 0;
+    {
+      _BattleDungeonItem_fld *record = static_cast<_BattleDungeonItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 24:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[4].m_strCode[44]) != 0;
+    {
+      _AnimusItem_fld *record = static_cast<_AnimusItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 25:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[10].m_strCode[16]) != 0;
+    {
+      _GuardTowerItem_fld *record = static_cast<_GuardTowerItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 26:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[8].m_strCode[24]) != 0;
+    {
+      _TrapItem_fld *record = static_cast<_TrapItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 27:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[6].m_strCode[8]) != 0;
+    {
+      _SiegeKitItem_fld *record = static_cast<_SiegeKitItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 28:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[6].m_strCode[40]) != 0;
+    {
+      _TicketItem_fld *record = static_cast<_TicketItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 30:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[4].m_strCode[56]) != 0;
+    {
+      _RecoveryItem_fld *record = static_cast<_RecoveryItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 31:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[4].m_strCode[52]) != 0;
+    {
+      _BoxItem_fld *record = static_cast<_BoxItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 32:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[4].m_strCode[60]) != 0;
+    {
+      _FIRECRACKER_fld *record = static_cast<_FIRECRACKER_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 33:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[6].m_strCode[20]) != 0;
+    {
+      _UNmannedminer_fld *record = static_cast<_UNmannedminer_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 34:
-      record = table->GetRecord(nItemIndex);
-      return record && record[1].m_dwIndex != 0;
+    {
+      _RadarItem_fld *record = static_cast<_RadarItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 35:
-      record = table->GetRecord(nItemIndex);
-      return record && *reinterpret_cast<unsigned int *>(&record[6].m_strCode[4]) != 0;
+    {
+      _NPCLink_fld *record = static_cast<_NPCLink_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     case 36:
-      record = table->GetRecord(nItemIndex);
-      return record && record[5].m_dwIndex != 0;
+    {
+      _CouponItem_fld *record = static_cast<_CouponItem_fld *>(table->GetRecord(nItemIndex));
+      return record && record->m_bStoragePossible != 0;
+    }
     default:
       return false;
   }
@@ -2376,7 +2360,6 @@ bool IsTrunkIOAble(int nTableCode, int nItemIndex)
 int GetItemStdPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind)
 {
   CRecordData *table = &s_ptblItemData[nTableCode];
-  _base_fld *Record = nullptr;
 
   switch (nTableCode)
   {
@@ -2387,179 +2370,233 @@ int GetItemStdPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *
     case 4:
     case 5:
     case 7:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[36];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[44]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 6:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _WeaponItem_fld *record = static_cast<_WeaponItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[8].m_strCode[36];
-      return *reinterpret_cast<unsigned int *>(&Record[8].m_strCode[44]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 8:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _RingItem_fld *record = static_cast<_RingItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[16];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[24]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 9:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _AmuletItem_fld *record = static_cast<_AmuletItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[16];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[24]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 10:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BulletItem_fld *record = static_cast<_BulletItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[6].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[8]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 11:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _MakeToolItem_fld *record = static_cast<_MakeToolItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[8];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[16]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 12:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BagItem_fld *record = static_cast<_BagItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[8]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 13:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _PotionItem_fld *record = static_cast<_PotionItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[6].m_strCode[44];
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[52]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 15:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _ForceItem_fld *record = static_cast<_ForceItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[8]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 16:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BatteryItem_fld *record = static_cast<_BatteryItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[8]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 17:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _OreItem_fld *record = static_cast<_OreItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[3].m_strCode[12];
-      return *reinterpret_cast<unsigned int *>(&Record[3].m_strCode[20]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 18:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _ResourceItem_fld *record = static_cast<_ResourceItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[5].m_strCode[8];
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
       switch (nRace)
       {
         case 0:
-          return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[12]);
+          return record->m_nAncStdPrice;
         case 1:
-          return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[16]);
+          return record->m_nExStdPrice;
         case 2:
-          return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[20]);
+          return record->m_nMecaStdPrice;
         default:
-          return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[24]);
+          return record->m_nStdPoint;
       }
+    }
     case 19:
       return 0;
     case 20:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BootyItem_fld *record = static_cast<_BootyItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[8]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 21:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _MapItem_fld *record = static_cast<_MapItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = static_cast<unsigned __int8>(Record[5].m_dwIndex);
-      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[4]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 22:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _TOWNItem_fld *record = static_cast<_TOWNItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[5].m_strCode[60];
-      return *reinterpret_cast<unsigned int *>(Record[6].m_strCode);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 23:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BattleDungeonItem_fld *record = static_cast<_BattleDungeonItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = static_cast<unsigned __int8>(Record[6].m_dwIndex);
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[4]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 24:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _AnimusItem_fld *record = static_cast<_AnimusItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[4];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[12]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 25:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _GuardTowerItem_fld *record = static_cast<_GuardTowerItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[6].m_strCode[44];
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[52]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 26:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _TrapItem_fld *record = static_cast<_TrapItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[7].m_strCode[48];
-      return *reinterpret_cast<unsigned int *>(&Record[7].m_strCode[56]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 27:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _SiegeKitItem_fld *record = static_cast<_SiegeKitItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[32];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[40]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 28:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _TicketItem_fld *record = static_cast<_TicketItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[6].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[8]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 30:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _RecoveryItem_fld *record = static_cast<_RecoveryItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[8];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[16]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_bMoney);
+      return record->m_nStdPoint;
+    }
     case 31:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BoxItem_fld *record = static_cast<_BoxItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[12];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 32:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _FIRECRACKER_fld *record = static_cast<_FIRECRACKER_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[8];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[16]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 33:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _UNmannedminer_fld *record = static_cast<_UNmannedminer_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[5].m_strCode[48];
-      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[56]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 34:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _RadarItem_fld *record = static_cast<_RadarItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[48];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[56]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     case 36:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _CouponItem_fld *record = static_cast<_CouponItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[12];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nStdPoint;
+    }
     default:
       return 0;
   }
@@ -2567,8 +2604,8 @@ int GetItemStdPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *
 
 int GetItemProcPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind)
 {
-CRecordData *table = &s_ptblItemData[nTableCode];
-  _base_fld *Record = nullptr;
+  (void)nRace;
+  CRecordData *table = &s_ptblItemData[nTableCode];
 
   switch (nTableCode)
   {
@@ -2579,156 +2616,264 @@ CRecordData *table = &s_ptblItemData[nTableCode];
     case 4:
     case 5:
     case 7:
-      Record = table->GetRecord(nItemIndex);
-      if (Record)
-        *pbyMoneyKind = Record[4].m_strCode[36];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[56]);
+    {
+      _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(table->GetRecord(nItemIndex));
+      if (record)
+      {
+        *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      }
+      return record->m_nProcPoint;
+    }
     case 6:
-      Record = table->GetRecord(nItemIndex);
-      if (Record)
-        *pbyMoneyKind = Record[8].m_strCode[36];
-      return *reinterpret_cast<unsigned int *>(&Record[8].m_strCode[56]);
+    {
+      _WeaponItem_fld *record = static_cast<_WeaponItem_fld *>(table->GetRecord(nItemIndex));
+      if (record)
+      {
+        *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      }
+      return record->m_nProcPoint;
+    }
     case 8:
-      Record = table->GetRecord(nItemIndex);
-      if (Record)
-        *pbyMoneyKind = Record[4].m_strCode[16];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[36]);
+    {
+      _RingItem_fld *record = static_cast<_RingItem_fld *>(table->GetRecord(nItemIndex));
+      if (record)
+      {
+        *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      }
+      return record->m_nProcPoint;
+    }
     case 9:
-      Record = table->GetRecord(nItemIndex);
-      if (Record)
-        *pbyMoneyKind = Record[4].m_strCode[16];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[36]);
+    {
+      _AmuletItem_fld *record = static_cast<_AmuletItem_fld *>(table->GetRecord(nItemIndex));
+      if (record)
+      {
+        *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      }
+      return record->m_nProcPoint;
+    }
     case 10:
-      Record = table->GetRecord(nItemIndex);
-      if (Record)
-        *pbyMoneyKind = Record[6].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[20]);
+    {
+      _BulletItem_fld *record = static_cast<_BulletItem_fld *>(table->GetRecord(nItemIndex));
+      if (record)
+      {
+        *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      }
+      return record->m_nProcPoint;
+    }
     case 11:
-      Record = table->GetRecord(nItemIndex);
-      if (Record)
-        *pbyMoneyKind = Record[4].m_strCode[8];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[28]);
+    {
+      _MakeToolItem_fld *record = static_cast<_MakeToolItem_fld *>(table->GetRecord(nItemIndex));
+      if (record)
+      {
+        *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      }
+      return record->m_nProcPoint;
+    }
     case 12:
-      Record = table->GetRecord(nItemIndex);
-      if (Record)
-        *pbyMoneyKind = Record[4].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+    {
+      _BagItem_fld *record = static_cast<_BagItem_fld *>(table->GetRecord(nItemIndex));
+      if (record)
+      {
+        *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      }
+      return record->m_nProcPoint;
+    }
     case 13:
-      Record = table->GetRecord(nItemIndex);
-      if (Record)
-        *pbyMoneyKind = Record[6].m_strCode[44];
-      return static_cast<unsigned int>(Record[7].m_dwIndex);
+    {
+      _PotionItem_fld *record = static_cast<_PotionItem_fld *>(table->GetRecord(nItemIndex));
+      if (record)
+      {
+        *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      }
+      return record->m_nProcPoint;
+    }
     case 15:
-      Record = table->GetRecord(nItemIndex);
-      if (Record)
-        *pbyMoneyKind = Record[4].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+    {
+      _ForceItem_fld *record = static_cast<_ForceItem_fld *>(table->GetRecord(nItemIndex));
+      if (record)
+      {
+        *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      }
+      return record->m_nProcPoint;
+    }
     case 16:
-      Record = table->GetRecord(nItemIndex);
-      if (Record)
-        *pbyMoneyKind = Record[4].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+    {
+      _BatteryItem_fld *record = static_cast<_BatteryItem_fld *>(table->GetRecord(nItemIndex));
+      if (record)
+      {
+        *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      }
+      return record->m_nProcPoint;
+    }
     case 17:
-      Record = table->GetRecord(nItemIndex);
-      if (Record)
-        *pbyMoneyKind = Record[3].m_strCode[12];
-      return *reinterpret_cast<unsigned int *>(&Record[3].m_strCode[32]);
+    {
+      _OreItem_fld *record = static_cast<_OreItem_fld *>(table->GetRecord(nItemIndex));
+      if (record)
+      {
+        *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      }
+      return record->m_nProcPoint;
+    }
     case 18:
-      Record = table->GetRecord(nItemIndex);
-      if (Record)
-        *pbyMoneyKind = Record[5].m_strCode[8];
-      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[36]);
+    {
+      _ResourceItem_fld *record = static_cast<_ResourceItem_fld *>(table->GetRecord(nItemIndex));
+      if (record)
+      {
+        *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      }
+      return record->m_nProcPoint;
+    }
     case 19:
       return 0;
     case 20:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BootyItem_fld *record = static_cast<_BootyItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nProcPoint;
+    }
     case 21:
-      Record = table->GetRecord(nItemIndex);
-      if (Record)
-        *pbyMoneyKind = static_cast<unsigned __int8>(Record[5].m_dwIndex);
-      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[16]);
+    {
+      _MapItem_fld *record = static_cast<_MapItem_fld *>(table->GetRecord(nItemIndex));
+      if (record)
+      {
+        *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      }
+      return record->m_nProcPoint;
+    }
     case 22:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _TOWNItem_fld *record = static_cast<_TOWNItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[5].m_strCode[60];
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[12]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nProcPoint;
+    }
     case 23:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BattleDungeonItem_fld *record = static_cast<_BattleDungeonItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = static_cast<unsigned __int8>(Record[6].m_dwIndex);
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[16]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nProcPoint;
+    }
     case 24:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _AnimusItem_fld *record = static_cast<_AnimusItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[4];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[24]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nProcPoint;
+    }
     case 25:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _GuardTowerItem_fld *record = static_cast<_GuardTowerItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[6].m_strCode[44];
-      return static_cast<unsigned int>(Record[7].m_dwIndex);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nProcPoint;
+    }
     case 26:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _TrapItem_fld *record = static_cast<_TrapItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[7].m_strCode[48];
-      return *reinterpret_cast<unsigned int *>(Record[8].m_strCode);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nProcPoint;
+    }
     case 27:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _SiegeKitItem_fld *record = static_cast<_SiegeKitItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[32];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[52]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nProcPoint;
+    }
     case 28:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _TicketItem_fld *record = static_cast<_TicketItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[6].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[20]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nProcPoint;
+    }
     case 30:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _RecoveryItem_fld *record = static_cast<_RecoveryItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[8];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[28]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_bMoney);
+      return record->m_nProcPoint;
+    }
     case 31:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BoxItem_fld *record = static_cast<_BoxItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[12];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[32]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nProcPoint;
+    }
     case 32:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _FIRECRACKER_fld *record = static_cast<_FIRECRACKER_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[8];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[28]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nProcPoint;
+    }
     case 33:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _UNmannedminer_fld *record = static_cast<_UNmannedminer_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[5].m_strCode[48];
-      return *reinterpret_cast<unsigned int *>(Record[6].m_strCode);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nProcPoint;
+    }
     case 34:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _RadarItem_fld *record = static_cast<_RadarItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[48];
-      return *reinterpret_cast<unsigned int *>(Record[5].m_strCode);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nProcPoint;
+    }
     case 36:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _CouponItem_fld *record = static_cast<_CouponItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[12];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[32]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nProcPoint;
+    }
     default:
       return 0;
   }
@@ -2736,8 +2881,8 @@ CRecordData *table = &s_ptblItemData[nTableCode];
 
 int GetItemKillPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind)
 {
-CRecordData *table = &s_ptblItemData[nTableCode];
-  _base_fld *Record = nullptr;
+  (void)nRace;
+  CRecordData *table = &s_ptblItemData[nTableCode];
 
   switch (nTableCode)
   {
@@ -2748,166 +2893,274 @@ CRecordData *table = &s_ptblItemData[nTableCode];
     case 4:
     case 5:
     case 7:
-      Record = table->GetRecord(nItemIndex);
-      if (Record)
-        *pbyMoneyKind = Record[4].m_strCode[36];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[52]);
+    {
+      _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(table->GetRecord(nItemIndex));
+      if (record)
+      {
+        *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      }
+      return record->m_nKillPoint;
+    }
     case 6:
-      Record = table->GetRecord(nItemIndex);
-      if (Record)
-        *pbyMoneyKind = Record[8].m_strCode[36];
-      return *reinterpret_cast<unsigned int *>(&Record[8].m_strCode[52]);
+    {
+      _WeaponItem_fld *record = static_cast<_WeaponItem_fld *>(table->GetRecord(nItemIndex));
+      if (record)
+      {
+        *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      }
+      return record->m_nKillPoint;
+    }
     case 8:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _RingItem_fld *record = static_cast<_RingItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[16];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[32]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nKillPoint;
+    }
     case 9:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _AmuletItem_fld *record = static_cast<_AmuletItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[16];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[32]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nKillPoint;
+    }
     case 10:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BulletItem_fld *record = static_cast<_BulletItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[6].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[16]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nKillPoint;
+    }
     case 11:
-      Record = table->GetRecord(nItemIndex);
-      if (Record)
-        *pbyMoneyKind = Record[4].m_strCode[8];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[24]);
+    {
+      _MakeToolItem_fld *record = static_cast<_MakeToolItem_fld *>(table->GetRecord(nItemIndex));
+      if (record)
+      {
+        *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      }
+      return record->m_nKillPoint;
+    }
     case 12:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BagItem_fld *record = static_cast<_BagItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[16]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nKillPoint;
+    }
     case 13:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _PotionItem_fld *record = static_cast<_PotionItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[6].m_strCode[44];
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[60]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nKillPoint;
+    }
     case 15:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _ForceItem_fld *record = static_cast<_ForceItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[16]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nKillPoint;
+    }
     case 16:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BatteryItem_fld *record = static_cast<_BatteryItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[16]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nKillPoint;
+    }
     case 17:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _OreItem_fld *record = static_cast<_OreItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[3].m_strCode[12];
-      return *reinterpret_cast<unsigned int *>(&Record[3].m_strCode[28]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nKillPoint;
+    }
     case 18:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _ResourceItem_fld *record = static_cast<_ResourceItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[5].m_strCode[8];
-      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[32]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nKillPoint;
+    }
     case 19:
       return 0;
     case 20:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BootyItem_fld *record = static_cast<_BootyItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[16]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nKillPoint;
+    }
     case 21:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _MapItem_fld *record = static_cast<_MapItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = static_cast<unsigned __int8>(Record[5].m_dwIndex);
-      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[12]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nKillPoint;
+    }
     case 22:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _TOWNItem_fld *record = static_cast<_TOWNItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[5].m_strCode[60];
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[8]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nKillPoint;
+    }
     case 23:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BattleDungeonItem_fld *record = static_cast<_BattleDungeonItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = static_cast<unsigned __int8>(Record[6].m_dwIndex);
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[12]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nKillPoint;
+    }
     case 24:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _AnimusItem_fld *record = static_cast<_AnimusItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[4];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nKillPoint;
+    }
     case 25:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _GuardTowerItem_fld *record = static_cast<_GuardTowerItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[6].m_strCode[44];
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[60]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nKillPoint;
+    }
     case 26:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _TrapItem_fld *record = static_cast<_TrapItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[7].m_strCode[48];
-      return static_cast<unsigned int>(Record[8].m_dwIndex);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nKillPoint;
+    }
     case 27:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _SiegeKitItem_fld *record = static_cast<_SiegeKitItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[32];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[48]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nKillPoint;
+    }
     case 28:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _TicketItem_fld *record = static_cast<_TicketItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[6].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[16]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nKillPoint;
+    }
     case 30:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _RecoveryItem_fld *record = static_cast<_RecoveryItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[8];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[24]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_bMoney);
+      return record->m_nKillPoint;
+    }
     case 31:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BoxItem_fld *record = static_cast<_BoxItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[12];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[28]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nKillPoint;
+    }
     case 32:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _FIRECRACKER_fld *record = static_cast<_FIRECRACKER_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[8];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[24]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nKillPoint;
+    }
     case 33:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _UNmannedminer_fld *record = static_cast<_UNmannedminer_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[5].m_strCode[48];
-      return static_cast<unsigned int>(Record[6].m_dwIndex);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nKillPoint;
+    }
     case 34:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _RadarItem_fld *record = static_cast<_RadarItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[48];
-      return static_cast<unsigned int>(Record[5].m_dwIndex);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nKillPoint;
+    }
     case 36:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _CouponItem_fld *record = static_cast<_CouponItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[12];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[28]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nKillPoint;
+    }
     default:
       return 0;
   }
@@ -2915,8 +3168,8 @@ CRecordData *table = &s_ptblItemData[nTableCode];
 
 int GetItemGoldPoint(int nTableCode, int nItemIndex, int nRace, unsigned __int8 *pbyMoneyKind)
 {
-CRecordData *table = &s_ptblItemData[nTableCode];
-  _base_fld *Record = nullptr;
+  (void)nRace;
+  CRecordData *table = &s_ptblItemData[nTableCode];
 
   switch (nTableCode)
   {
@@ -2927,166 +3180,274 @@ CRecordData *table = &s_ptblItemData[nTableCode];
     case 4:
     case 5:
     case 7:
-      Record = table->GetRecord(nItemIndex);
-      if (Record)
-        *pbyMoneyKind = Record[4].m_strCode[36];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[48]);
+    {
+      _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(table->GetRecord(nItemIndex));
+      if (record)
+      {
+        *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      }
+      return record->m_nGoldPoint;
+    }
     case 6:
-      Record = table->GetRecord(nItemIndex);
-      if (Record)
-        *pbyMoneyKind = Record[8].m_strCode[36];
-      return *reinterpret_cast<unsigned int *>(&Record[8].m_strCode[48]);
+    {
+      _WeaponItem_fld *record = static_cast<_WeaponItem_fld *>(table->GetRecord(nItemIndex));
+      if (record)
+      {
+        *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      }
+      return record->m_nGoldPoint;
+    }
     case 8:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _RingItem_fld *record = static_cast<_RingItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[16];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[28]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nGoldPoint;
+    }
     case 9:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _AmuletItem_fld *record = static_cast<_AmuletItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[16];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[28]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nGoldPoint;
+    }
     case 10:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BulletItem_fld *record = static_cast<_BulletItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[6].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[12]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nGoldPoint;
+    }
     case 11:
-      Record = table->GetRecord(nItemIndex);
-      if (Record)
-        *pbyMoneyKind = Record[4].m_strCode[8];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+    {
+      _MakeToolItem_fld *record = static_cast<_MakeToolItem_fld *>(table->GetRecord(nItemIndex));
+      if (record)
+      {
+        *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      }
+      return record->m_nGoldPoint;
+    }
     case 12:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BagItem_fld *record = static_cast<_BagItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[12]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nGoldPoint;
+    }
     case 13:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _PotionItem_fld *record = static_cast<_PotionItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[6].m_strCode[44];
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[56]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nGoldPoint;
+    }
     case 15:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _ForceItem_fld *record = static_cast<_ForceItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[12]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nGoldPoint;
+    }
     case 16:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BatteryItem_fld *record = static_cast<_BatteryItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[12]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nGoldPoint;
+    }
     case 17:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _OreItem_fld *record = static_cast<_OreItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[3].m_strCode[12];
-      return *reinterpret_cast<unsigned int *>(&Record[3].m_strCode[24]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nGoldPoint;
+    }
     case 18:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _ResourceItem_fld *record = static_cast<_ResourceItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[5].m_strCode[8];
-      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[28]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nGoldPoint;
+    }
     case 19:
       return 0;
     case 20:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BootyItem_fld *record = static_cast<_BootyItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[12]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nGoldPoint;
+    }
     case 21:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _MapItem_fld *record = static_cast<_MapItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = static_cast<unsigned __int8>(Record[5].m_dwIndex);
-      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[8]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nGoldPoint;
+    }
     case 22:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _TOWNItem_fld *record = static_cast<_TOWNItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[5].m_strCode[60];
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[4]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nGoldPoint;
+    }
     case 23:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BattleDungeonItem_fld *record = static_cast<_BattleDungeonItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = static_cast<unsigned __int8>(Record[6].m_dwIndex);
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[8]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nGoldPoint;
+    }
     case 24:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _AnimusItem_fld *record = static_cast<_AnimusItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[4];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[16]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nGoldPoint;
+    }
     case 25:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _GuardTowerItem_fld *record = static_cast<_GuardTowerItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[6].m_strCode[44];
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[56]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nGoldPoint;
+    }
     case 26:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _TrapItem_fld *record = static_cast<_TrapItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[7].m_strCode[48];
-      return *reinterpret_cast<unsigned int *>(&Record[7].m_strCode[60]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nGoldPoint;
+    }
     case 27:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _SiegeKitItem_fld *record = static_cast<_SiegeKitItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[32];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[44]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nGoldPoint;
+    }
     case 28:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _TicketItem_fld *record = static_cast<_TicketItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[6].m_strCode[0];
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[12]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nGoldPoint;
+    }
     case 30:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _RecoveryItem_fld *record = static_cast<_RecoveryItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[8];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_bMoney);
+      return record->m_nGoldPoint;
+    }
     case 31:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _BoxItem_fld *record = static_cast<_BoxItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[12];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[24]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nGoldPoint;
+    }
     case 32:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _FIRECRACKER_fld *record = static_cast<_FIRECRACKER_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[8];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[20]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nGoldPoint;
+    }
     case 33:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _UNmannedminer_fld *record = static_cast<_UNmannedminer_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[5].m_strCode[48];
-      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[60]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nGoldPoint;
+    }
     case 34:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _RadarItem_fld *record = static_cast<_RadarItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[48];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[60]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nGoldPoint;
+    }
     case 36:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
+    {
+      _CouponItem_fld *record = static_cast<_CouponItem_fld *>(table->GetRecord(nItemIndex));
+      if (!record)
+      {
         return 0;
-      *pbyMoneyKind = Record[4].m_strCode[12];
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[24]);
+      }
+      *pbyMoneyKind = static_cast<unsigned __int8>(record->m_nMoney);
+      return record->m_nGoldPoint;
+    }
     default:
       return 0;
   }
@@ -3102,10 +3463,10 @@ int GetUsePcCashType(unsigned __int8 byTblCode, int nIndex)
 
   if (byTblCode == 10)
   {
-    _base_fld *record = table->GetRecord(nIndex);
+    _BulletItem_fld *record = static_cast<_BulletItem_fld *>(table->GetRecord(nIndex));
     if (record)
     {
-      return *reinterpret_cast<unsigned int *>(&record[9].m_strCode[16]);
+      return record->m_nUsePCCash;
     }
   }
   else
@@ -3114,37 +3475,37 @@ int GetUsePcCashType(unsigned __int8 byTblCode, int nIndex)
     {
       case 13:
       {
-        _base_fld *record = table->GetRecord(nIndex);
+        _PotionItem_fld *record = static_cast<_PotionItem_fld *>(table->GetRecord(nIndex));
         if (record)
         {
-          return *reinterpret_cast<unsigned int *>(&record[9].m_strCode[40]);
+          return record->m_nUsePCCash;
         }
         break;
       }
       case 18:
       {
-        _base_fld *record = table->GetRecord(nIndex);
+        _ResourceItem_fld *record = static_cast<_ResourceItem_fld *>(table->GetRecord(nIndex));
         if (record)
         {
-          return *reinterpret_cast<unsigned int *>(&record[8].m_strCode[12]);
+          return record->m_nUsePCCash;
         }
         break;
       }
       case 22:
       {
-        _base_fld *record = table->GetRecord(nIndex);
+        _TOWNItem_fld *record = static_cast<_TOWNItem_fld *>(table->GetRecord(nIndex));
         if (record)
         {
-          return *reinterpret_cast<unsigned int *>(&record[7].m_strCode[48]);
+          return record->m_nUsePCCash;
         }
         break;
       }
       case 31:
       {
-        _base_fld *record = table->GetRecord(nIndex);
+        _BoxItem_fld *record = static_cast<_BoxItem_fld *>(table->GetRecord(nIndex));
         if (record)
         {
-          return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[60]);
+          return record->m_nUsePCCash;
         }
         break;
       }
@@ -3171,94 +3532,94 @@ int IsCashItem(unsigned __int8 byTblCode, int dwIndex)
       return 0;
     case 8:
     {
-      _base_fld *record = table->GetRecord(dwIndex);
+      _RingItem_fld *record = static_cast<_RingItem_fld *>(table->GetRecord(dwIndex));
       if (!record)
         return 0;
-      return *reinterpret_cast<unsigned int *>(&record[6].m_strCode[48]);
+      return static_cast<unsigned int>(record->m_bIsCash);
     }
     case 9:
     {
-      _base_fld *record = table->GetRecord(dwIndex);
+      _AmuletItem_fld *record = static_cast<_AmuletItem_fld *>(table->GetRecord(dwIndex));
       if (!record)
         return 0;
-      return *reinterpret_cast<unsigned int *>(&record[6].m_strCode[48]);
+      return static_cast<unsigned int>(record->m_bIsCash);
     }
     case 10:
     {
-      _base_fld *record = table->GetRecord(dwIndex);
+      _BulletItem_fld *record = static_cast<_BulletItem_fld *>(table->GetRecord(dwIndex));
       if (!record)
         return 0;
-      return *reinterpret_cast<unsigned int *>(&record[9].m_strCode[12]);
+      return static_cast<unsigned int>(record->m_bIsCash);
     }
     case 13:
     {
-      _base_fld *record = table->GetRecord(dwIndex);
+      _PotionItem_fld *record = static_cast<_PotionItem_fld *>(table->GetRecord(dwIndex));
       if (!record)
         return 0;
-      return *reinterpret_cast<unsigned int *>(&record[9].m_strCode[36]);
+      return static_cast<unsigned int>(record->m_bIsCash);
     }
     case 16:
     {
-      _base_fld *record = table->GetRecord(dwIndex);
+      _BatteryItem_fld *record = static_cast<_BatteryItem_fld *>(table->GetRecord(dwIndex));
       if (!record)
         return 0;
-      return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[48]);
+      return static_cast<unsigned int>(record->m_bIsCash);
     }
     case 18:
     {
-      _base_fld *record = table->GetRecord(dwIndex);
+      _ResourceItem_fld *record = static_cast<_ResourceItem_fld *>(table->GetRecord(dwIndex));
       if (!record)
         return 0;
-      return *reinterpret_cast<unsigned int *>(&record[8].m_strCode[8]);
+      return static_cast<unsigned int>(record->m_bIsCash);
     }
     case 20:
     {
-      _base_fld *record = table->GetRecord(dwIndex);
+      _BootyItem_fld *record = static_cast<_BootyItem_fld *>(table->GetRecord(dwIndex));
       if (!record)
         return 0;
-      return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[44]);
+      return static_cast<unsigned int>(record->m_bIsCash);
     }
     case 22:
     {
-      _base_fld *record = table->GetRecord(dwIndex);
+      _TOWNItem_fld *record = static_cast<_TOWNItem_fld *>(table->GetRecord(dwIndex));
       if (!record)
         return 0;
-      return *reinterpret_cast<unsigned int *>(&record[7].m_strCode[44]);
+      return static_cast<unsigned int>(record->m_bIsCash);
     }
     case 30:
     {
-      _base_fld *record = table->GetRecord(dwIndex);
+      _RecoveryItem_fld *record = static_cast<_RecoveryItem_fld *>(table->GetRecord(dwIndex));
       if (!record)
         return 0;
-      return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[60]);
+      return static_cast<unsigned int>(record->m_bIsCash);
     }
     case 31:
     {
-      _base_fld *record = table->GetRecord(dwIndex);
+      _BoxItem_fld *record = static_cast<_BoxItem_fld *>(table->GetRecord(dwIndex));
       if (!record)
         return 0;
-      return *reinterpret_cast<unsigned int *>(&record[5].m_strCode[56]);
+      return static_cast<unsigned int>(record->m_bIsCash);
     }
     case 33:
     {
-      _base_fld *record = table->GetRecord(dwIndex);
+      _UNmannedminer_fld *record = static_cast<_UNmannedminer_fld *>(table->GetRecord(dwIndex));
       if (!record)
         return 0;
-      return *reinterpret_cast<unsigned int *>(&record[7].m_strCode[32]);
+      return static_cast<unsigned int>(record->m_bIsCash);
     }
     case 35:
     {
-      _base_fld *record = table->GetRecord(dwIndex);
+      _NPCLink_fld *record = static_cast<_NPCLink_fld *>(table->GetRecord(dwIndex));
       if (!record)
         return 0;
-      return *reinterpret_cast<unsigned int *>(&record[7].m_strCode[8]);
+      return static_cast<unsigned int>(record->m_bIsCash);
     }
     case 36:
     {
-      _base_fld *record = table->GetRecord(dwIndex);
+      _CouponItem_fld *record = static_cast<_CouponItem_fld *>(table->GetRecord(dwIndex));
       if (!record)
         return 0;
-      return *reinterpret_cast<unsigned int *>(record[6].m_strCode);
+      return static_cast<unsigned int>(record->m_bIsCash);
     }
     default:
       return 0;
@@ -3268,8 +3629,6 @@ int IsCashItem(unsigned __int8 byTblCode, int dwIndex)
 unsigned int GetItemDurPoint(int nTableCode, int nIndex)
 {
   CRecordData *table = &s_ptblItemData[nTableCode];
-  _base_fld *Record = nullptr;
-
   switch (nTableCode)
   {
     case 0:
@@ -3278,54 +3637,72 @@ unsigned int GetItemDurPoint(int nTableCode, int nIndex)
     case 3:
     case 4:
     case 5:
-      Record = table->GetRecord(nIndex);
-      if (!Record)
+    {
+      _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(table->GetRecord(nIndex));
+      if (!record)
         return 1;
-      return *reinterpret_cast<unsigned int *>(Record[5].m_strCode);
+      return static_cast<unsigned int>(record->m_nDurUnit);
+    }
     case 6:
-      Record = table->GetRecord(nIndex);
-      if (!Record)
+    {
+      _WeaponItem_fld *record = static_cast<_WeaponItem_fld *>(table->GetRecord(nIndex));
+      if (!record)
         return 1;
-      return *reinterpret_cast<unsigned int *>(Record[9].m_strCode);
+      return static_cast<unsigned int>(record->m_nDurUnit);
+    }
     case 10:
-      Record = table->GetRecord(nIndex);
-      if (!Record)
+    {
+      _BulletItem_fld *record = static_cast<_BulletItem_fld *>(table->GetRecord(nIndex));
+      if (!record)
         return 1;
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[28]);
+      return static_cast<unsigned int>(record->m_nDurUnit);
+    }
     case 11:
-      Record = table->GetRecord(nIndex);
-      if (!Record)
+    {
+      _MakeToolItem_fld *record = static_cast<_MakeToolItem_fld *>(table->GetRecord(nIndex));
+      if (!record)
         return 1;
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[40]);
+      return static_cast<unsigned int>(record->m_nDurUnit);
+    }
     case 15:
       return 0;
     case 16:
-      Record = table->GetRecord(nIndex);
-      if (!Record)
+    {
+      _BatteryItem_fld *record = static_cast<_BatteryItem_fld *>(table->GetRecord(nIndex));
+      if (!record)
         return 1;
-      return *reinterpret_cast<unsigned int *>(&Record[4].m_strCode[28]);
+      return static_cast<unsigned int>(record->m_nDurUnit);
+    }
     case 24:
       return 0;
     case 25:
-      Record = table->GetRecord(nIndex);
-      if (!Record)
+    {
+      _GuardTowerItem_fld *record = static_cast<_GuardTowerItem_fld *>(table->GetRecord(nIndex));
+      if (!record)
         return 1;
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[40]);
+      return static_cast<unsigned int>(record->m_nMaxHP);
+    }
     case 26:
-      Record = table->GetRecord(nIndex);
-      if (!Record)
+    {
+      _TrapItem_fld *record = static_cast<_TrapItem_fld *>(table->GetRecord(nIndex));
+      if (!record)
         return 1;
-      return static_cast<unsigned int>(static_cast<int>(*reinterpret_cast<float *>(&Record[5].m_strCode[60])));
+      return static_cast<unsigned int>(static_cast<int>(record->m_fMaxHP));
+    }
     case 27:
-      Record = table->GetRecord(nIndex);
-      if (!Record)
+    {
+      _SiegeKitItem_fld *record = static_cast<_SiegeKitItem_fld *>(table->GetRecord(nIndex));
+      if (!record)
         return 1;
-      return static_cast<unsigned int>(Record[5].m_dwIndex);
+      return static_cast<unsigned int>(record->m_nDurUnit);
+    }
     case 33:
-      Record = table->GetRecord(nIndex);
-      if (!Record)
+    {
+      _UNmannedminer_fld *record = static_cast<_UNmannedminer_fld *>(table->GetRecord(nIndex));
+      if (!record)
         return 1;
-      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[44]);
+      return static_cast<unsigned int>(record->m_nMaxHP);
+    }
     default:
       return 1;
   }
@@ -3334,7 +3711,6 @@ unsigned int GetItemDurPoint(int nTableCode, int nIndex)
 char *GetItemKorName(int nTableCode, int nItemIndex)
 {
   CRecordData *table = &s_ptblItemData[nTableCode];
-  _base_fld *Record = nullptr;
 
   switch (nTableCode)
   {
@@ -3344,161 +3720,165 @@ char *GetItemKorName(int nTableCode, int nItemIndex)
     case 3:
     case 4:
     case 5:
-    case 7:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 6:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _WeaponItem_fld *record = static_cast<_WeaponItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
+    case 7:
+    {
+      _CloakItem_fld *record = static_cast<_CloakItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 8:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _RingItem_fld *record = static_cast<_RingItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 9:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _AmuletItem_fld *record = static_cast<_AmuletItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 10:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _BulletItem_fld *record = static_cast<_BulletItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 11:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _MakeToolItem_fld *record = static_cast<_MakeToolItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 12:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _BagItem_fld *record = static_cast<_BagItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 13:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _PotionItem_fld *record = static_cast<_PotionItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 14:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return reinterpret_cast<char *>(&Record[2]);
+    {
+      _FaceItem_fld *record = static_cast<_FaceItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 15:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _ForceItem_fld *record = static_cast<_ForceItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 16:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _BatteryItem_fld *record = static_cast<_BatteryItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 17:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _OreItem_fld *record = static_cast<_OreItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 18:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _ResourceItem_fld *record = static_cast<_ResourceItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 19:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _UnitKeyItem_fld *record = static_cast<_UnitKeyItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 20:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _BootyItem_fld *record = static_cast<_BootyItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 21:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _MapItem_fld *record = static_cast<_MapItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 22:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _TOWNItem_fld *record = static_cast<_TOWNItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 23:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _BattleDungeonItem_fld *record = static_cast<_BattleDungeonItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 24:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return &Record[2].m_strCode[60];
+    {
+      _AnimusItem_fld *record = static_cast<_AnimusItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 25:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return &Record[2].m_strCode[56];
+    {
+      _GuardTowerItem_fld *record = static_cast<_GuardTowerItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 26:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return reinterpret_cast<char *>(&Record[3]);
+    {
+      _TrapItem_fld *record = static_cast<_TrapItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 27:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _SiegeKitItem_fld *record = static_cast<_SiegeKitItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 28:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _TicketItem_fld *record = static_cast<_TicketItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 29:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[1].m_strCode;
+    {
+      _EventItem_fld *record = static_cast<_EventItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 30:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _RecoveryItem_fld *record = static_cast<_RecoveryItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 31:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _BoxItem_fld *record = static_cast<_BoxItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 32:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _FIRECRACKER_fld *record = static_cast<_FIRECRACKER_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 33:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return &Record[2].m_strCode[60];
+    {
+      _UNmannedminer_fld *record = static_cast<_UNmannedminer_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 34:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _RadarItem_fld *record = static_cast<_RadarItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 35:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _NPCLink_fld *record = static_cast<_NPCLink_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     case 36:
-      Record = table->GetRecord(nItemIndex);
-      if (!Record)
-        return szDefItemName;
-      return Record[2].m_strCode;
+    {
+      _CouponItem_fld *record = static_cast<_CouponItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? record->m_strName : szDefItemName;
+    }
     default:
       return szDefItemName;
   }
@@ -3507,7 +3887,6 @@ char *GetItemKorName(int nTableCode, int nItemIndex)
 int IsTimeItem(unsigned __int8 byTblCode, int dwIndex)
 {
   CRecordData *table = &s_ptblItemData[byTblCode];
-  _base_fld *Record = nullptr;
 
   switch (byTblCode)
   {
@@ -3517,125 +3896,125 @@ int IsTimeItem(unsigned __int8 byTblCode, int dwIndex)
     case 3:
     case 4:
     case 5:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return *reinterpret_cast<unsigned int *>(&Record[7].m_strCode[56]);
+    {
+      _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     case 6:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return *reinterpret_cast<unsigned int *>(&Record[12].m_strCode[20]);
+    {
+      _WeaponItem_fld *record = static_cast<_WeaponItem_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     case 7:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return *reinterpret_cast<unsigned int *>(&Record[7].m_strCode[56]);
+    {
+      _CloakItem_fld *record = static_cast<_CloakItem_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     case 8:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[52]);
+    {
+      _RingItem_fld *record = static_cast<_RingItem_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     case 9:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[52]);
+    {
+      _AmuletItem_fld *record = static_cast<_AmuletItem_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     case 10:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return *reinterpret_cast<unsigned int *>(&Record[9].m_strCode[20]);
+    {
+      _BulletItem_fld *record = static_cast<_BulletItem_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     case 11:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[8]);
+    {
+      _MakeToolItem_fld *record = static_cast<_MakeToolItem_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     case 12:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[44]);
+    {
+      _BagItem_fld *record = static_cast<_BagItem_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     case 13:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return *reinterpret_cast<unsigned int *>(&Record[9].m_strCode[44]);
+    {
+      _PotionItem_fld *record = static_cast<_PotionItem_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     case 16:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[52]);
+    {
+      _BatteryItem_fld *record = static_cast<_BatteryItem_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     case 17:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[4]);
+    {
+      _OreItem_fld *record = static_cast<_OreItem_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     case 18:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return *reinterpret_cast<unsigned int *>(&Record[8].m_strCode[16]);
+    {
+      _ResourceItem_fld *record = static_cast<_ResourceItem_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     case 20:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return *reinterpret_cast<unsigned int *>(&Record[5].m_strCode[48]);
+    {
+      _BootyItem_fld *record = static_cast<_BootyItem_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     case 21:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[40]);
+    {
+      _MapItem_fld *record = static_cast<_MapItem_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     case 22:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return *reinterpret_cast<unsigned int *>(&Record[7].m_strCode[52]);
+    {
+      _TOWNItem_fld *record = static_cast<_TOWNItem_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     case 23:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return *reinterpret_cast<unsigned int *>(Record[10].m_strCode);
+    {
+      _BattleDungeonItem_fld *record = static_cast<_BattleDungeonItem_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     case 25:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return *reinterpret_cast<unsigned int *>(&Record[11].m_strCode[32]);
+    {
+      _GuardTowerItem_fld *record = static_cast<_GuardTowerItem_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     case 26:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return *reinterpret_cast<unsigned int *>(&Record[9].m_strCode[40]);
+    {
+      _TrapItem_fld *record = static_cast<_TrapItem_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     case 27:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return *reinterpret_cast<unsigned int *>(&Record[7].m_strCode[20]);
+    {
+      _SiegeKitItem_fld *record = static_cast<_SiegeKitItem_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     case 28:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return *reinterpret_cast<unsigned int *>(&Record[7].m_strCode[44]);
+    {
+      _TicketItem_fld *record = static_cast<_TicketItem_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     case 31:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return static_cast<int>(Record[6].m_dwIndex);
+    {
+      _BoxItem_fld *record = static_cast<_BoxItem_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     case 33:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return *reinterpret_cast<unsigned int *>(&Record[7].m_strCode[36]);
+    {
+      _UNmannedminer_fld *record = static_cast<_UNmannedminer_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     case 34:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return *reinterpret_cast<unsigned int *>(&Record[7].m_strCode[40]);
+    {
+      _RadarItem_fld *record = static_cast<_RadarItem_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     case 36:
-      Record = table->GetRecord(dwIndex);
-      if (!Record)
-        return 0;
-      return *reinterpret_cast<unsigned int *>(&Record[6].m_strCode[4]);
+    {
+      _CouponItem_fld *record = static_cast<_CouponItem_fld *>(table->GetRecord(dwIndex));
+      return record ? static_cast<unsigned int>(record->m_bIsTime) : 0;
+    }
     default:
       return 0;
   }
@@ -6481,7 +6860,6 @@ bool IsProtectItem(int nTableCode)
 unsigned int IsExistItem(int nTableCode, int nItemIndex)
 {
   CRecordData *table = &s_ptblItemData[nTableCode];
-  _base_fld *record = nullptr;
 
   switch (nTableCode)
   {
@@ -6491,34 +6869,140 @@ unsigned int IsExistItem(int nTableCode, int nItemIndex)
     case 3:
     case 4:
     case 5:
-    case 7:
+    {
+      _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 6:
+    {
+      _WeaponItem_fld *record = static_cast<_WeaponItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
+    case 7:
+    {
+      _CloakItem_fld *record = static_cast<_CloakItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 8:
+    {
+      _RingItem_fld *record = static_cast<_RingItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 9:
+    {
+      _AmuletItem_fld *record = static_cast<_AmuletItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 10:
+    {
+      _BulletItem_fld *record = static_cast<_BulletItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 11:
+    {
+      _MakeToolItem_fld *record = static_cast<_MakeToolItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 12:
+    {
+      _BagItem_fld *record = static_cast<_BagItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 13:
+    {
+      _PotionItem_fld *record = static_cast<_PotionItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 15:
+    {
+      _ForceItem_fld *record = static_cast<_ForceItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 16:
+    {
+      _BatteryItem_fld *record = static_cast<_BatteryItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 18:
+    {
+      _ResourceItem_fld *record = static_cast<_ResourceItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 19:
+    {
+      _UnitKeyItem_fld *record = static_cast<_UnitKeyItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 20:
+    {
+      _BootyItem_fld *record = static_cast<_BootyItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 21:
+    {
+      _MapItem_fld *record = static_cast<_MapItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 22:
+    {
+      _TOWNItem_fld *record = static_cast<_TOWNItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 23:
+    {
+      _BattleDungeonItem_fld *record = static_cast<_BattleDungeonItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 26:
+    {
+      _TrapItem_fld *record = static_cast<_TrapItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 27:
+    {
+      _SiegeKitItem_fld *record = static_cast<_SiegeKitItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 28:
+    {
+      _TicketItem_fld *record = static_cast<_TicketItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 30:
+    {
+      _RecoveryItem_fld *record = static_cast<_RecoveryItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 31:
+    {
+      _BoxItem_fld *record = static_cast<_BoxItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 32:
+    {
+      _FIRECRACKER_fld *record = static_cast<_FIRECRACKER_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 33:
+    {
+      _UNmannedminer_fld *record = static_cast<_UNmannedminer_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 34:
+    {
+      _RadarItem_fld *record = static_cast<_RadarItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 35:
+    {
+      _NPCLink_fld *record = static_cast<_NPCLink_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 36:
-      record = table->GetRecord(nItemIndex);
-      return record ? record[1].m_dwIndex : 0u;
+    {
+      _CouponItem_fld *record = static_cast<_CouponItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExist) : 0u;
+    }
     case 24:
     case 25:
     case 29:
@@ -6532,7 +7016,6 @@ unsigned int IsExistItem(int nTableCode, int nItemIndex)
 unsigned int IsGroundableItem(int nTableCode, int nItemIndex)
 {
   CRecordData *table = &s_ptblItemData[nTableCode];
-  _base_fld *record = nullptr;
 
   switch (nTableCode)
   {
@@ -6542,93 +7025,157 @@ unsigned int IsGroundableItem(int nTableCode, int nItemIndex)
     case 3:
     case 4:
     case 5:
-    case 7:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[40]) : 0u;
+    {
+      _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 6:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[11].m_strCode[4]) : 0u;
+    {
+      _WeaponItem_fld *record = static_cast<_WeaponItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
+    case 7:
+    {
+      _CloakItem_fld *record = static_cast<_CloakItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 8:
+    {
+      _RingItem_fld *record = static_cast<_RingItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 9:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[5].m_strCode[40]) : 0u;
+    {
+      _AmuletItem_fld *record = static_cast<_AmuletItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 10:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(record[8].m_strCode) : 0u;
+    {
+      _BulletItem_fld *record = static_cast<_BulletItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 11:
-      record = table->GetRecord(nItemIndex);
-      return record ? record[5].m_dwIndex : 0u;
+    {
+      _MakeToolItem_fld *record = static_cast<_MakeToolItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 12:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[36]) : 0u;
+    {
+      _BagItem_fld *record = static_cast<_BagItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 13:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[8].m_strCode[24]) : 0u;
+    {
+      _PotionItem_fld *record = static_cast<_PotionItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 15:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[5].m_strCode[32]) : 0u;
+    {
+      _ForceItem_fld *record = static_cast<_ForceItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 16:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[40]) : 0u;
+    {
+      _BatteryItem_fld *record = static_cast<_BatteryItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 17:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[3].m_strCode[52]) : 0u;
+    {
+      _OreItem_fld *record = static_cast<_OreItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 18:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(record[7].m_strCode) : 0u;
+    {
+      _ResourceItem_fld *record = static_cast<_ResourceItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 19:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[4]) : 0u;
+    {
+      _UnitKeyItem_fld *record = static_cast<_UnitKeyItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 20:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[36]) : 0u;
+    {
+      _BootyItem_fld *record = static_cast<_BootyItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 21:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[5].m_strCode[32]) : 0u;
+    {
+      _MapItem_fld *record = static_cast<_MapItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 22:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[36]) : 0u;
+    {
+      _TOWNItem_fld *record = static_cast<_TOWNItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 23:
-      record = table->GetRecord(nItemIndex);
-      return record ? record[8].m_dwIndex : 0u;
+    {
+      _BattleDungeonItem_fld *record = static_cast<_BattleDungeonItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 24:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[40]) : 0u;
+    {
+      _AnimusItem_fld *record = static_cast<_AnimusItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 25:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[10].m_strCode[12]) : 0u;
+    {
+      _GuardTowerItem_fld *record = static_cast<_GuardTowerItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 26:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[8].m_strCode[20]) : 0u;
+    {
+      _TrapItem_fld *record = static_cast<_TrapItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 27:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[4]) : 0u;
+    {
+      _SiegeKitItem_fld *record = static_cast<_SiegeKitItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 28:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[36]) : 0u;
+    {
+      _TicketItem_fld *record = static_cast<_TicketItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 29:
       return 0u;
     case 30:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[52]) : 0u;
+    {
+      _RecoveryItem_fld *record = static_cast<_RecoveryItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 31:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[48]) : 0u;
+    {
+      _BoxItem_fld *record = static_cast<_BoxItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 32:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[56]) : 0u;
+    {
+      _FIRECRACKER_fld *record = static_cast<_FIRECRACKER_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 33:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[16]) : 0u;
+    {
+      _UNmannedminer_fld *record = static_cast<_UNmannedminer_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 34:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[28]) : 0u;
+    {
+      _RadarItem_fld *record = static_cast<_RadarItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 35:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(record[6].m_strCode) : 0u;
+    {
+      _NPCLink_fld *record = static_cast<_NPCLink_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     case 36:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[60]) : 0u;
+    {
+      _CouponItem_fld *record = static_cast<_CouponItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bGround) : 0u;
+    }
     default:
       return 0u;
   }
@@ -6637,8 +7184,6 @@ unsigned int IsGroundableItem(int nTableCode, int nItemIndex)
 int IsExchangeItem(int nTableCode, int nItemIndex)
 {
   CRecordData *table = &s_ptblItemData[nTableCode];
-  _base_fld *record = nullptr;
-
   switch (nTableCode)
   {
     case 0:
@@ -6648,92 +7193,150 @@ int IsExchangeItem(int nTableCode, int nItemIndex)
     case 4:
     case 5:
     case 7:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[36]) : 0;
+    {
+      _DfnEquipItem_fld *record = static_cast<_DfnEquipItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 6:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(record[11].m_strCode) : 0;
+    {
+      _WeaponItem_fld *record = static_cast<_WeaponItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 8:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[5].m_strCode[36]) : 0;
+    {
+      _RingItem_fld *record = static_cast<_RingItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 9:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[5].m_strCode[36]) : 0;
+    {
+      _AmuletItem_fld *record = static_cast<_AmuletItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 10:
-      record = table->GetRecord(nItemIndex);
-      return record ? static_cast<int>(record[8].m_dwIndex) : 0;
+    {
+      _BulletItem_fld *record = static_cast<_BulletItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 11:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[60]) : 0;
+    {
+      _MakeToolItem_fld *record = static_cast<_MakeToolItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 12:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[32]) : 0;
+    {
+      _BagItem_fld *record = static_cast<_BagItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 13:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[8].m_strCode[20]) : 0;
+    {
+      _PotionItem_fld *record = static_cast<_PotionItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 15:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[5].m_strCode[28]) : 0;
+    {
+      _ForceItem_fld *record = static_cast<_ForceItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 16:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[36]) : 0;
+    {
+      _BatteryItem_fld *record = static_cast<_BatteryItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 17:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[3].m_strCode[48]) : 0;
+    {
+      _OreItem_fld *record = static_cast<_OreItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 18:
-      record = table->GetRecord(nItemIndex);
-      return record ? static_cast<int>(record[7].m_dwIndex) : 0;
+    {
+      _ResourceItem_fld *record = static_cast<_ResourceItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 19:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(record[4].m_strCode) : 0;
+    {
+      _UnitKeyItem_fld *record = static_cast<_UnitKeyItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 20:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[32]) : 0;
+    {
+      _BootyItem_fld *record = static_cast<_BootyItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 21:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[5].m_strCode[28]) : 0;
+    {
+      _MapItem_fld *record = static_cast<_MapItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 22:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[32]) : 0;
+    {
+      _TOWNItem_fld *record = static_cast<_TOWNItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 23:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[7].m_strCode[60]) : 0;
+    {
+      _BattleDungeonItem_fld *record = static_cast<_BattleDungeonItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 24:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[36]) : 0;
+    {
+      _AnimusItem_fld *record = static_cast<_AnimusItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 25:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[10].m_strCode[8]) : 0;
+    {
+      _GuardTowerItem_fld *record = static_cast<_GuardTowerItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 26:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[8].m_strCode[16]) : 0;
+    {
+      _TrapItem_fld *record = static_cast<_TrapItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 27:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(record[6].m_strCode) : 0;
+    {
+      _SiegeKitItem_fld *record = static_cast<_SiegeKitItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 28:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[32]) : 0;
+    {
+      _TicketItem_fld *record = static_cast<_TicketItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 30:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[48]) : 0;
+    {
+      _RecoveryItem_fld *record = static_cast<_RecoveryItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 31:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[44]) : 0;
+    {
+      _BoxItem_fld *record = static_cast<_BoxItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 32:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[52]) : 0;
+    {
+      _FIRECRACKER_fld *record = static_cast<_FIRECRACKER_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 33:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[12]) : 0;
+    {
+      _UNmannedminer_fld *record = static_cast<_UNmannedminer_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 34:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[6].m_strCode[24]) : 0;
+    {
+      _RadarItem_fld *record = static_cast<_RadarItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 35:
-      record = table->GetRecord(nItemIndex);
-      return record ? static_cast<int>(record[6].m_dwIndex) : 0;
+    {
+      _NPCLink_fld *record = static_cast<_NPCLink_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     case 36:
-      record = table->GetRecord(nItemIndex);
-      return record ? *reinterpret_cast<unsigned int *>(&record[4].m_strCode[56]) : 0;
+    {
+      _CouponItem_fld *record = static_cast<_CouponItem_fld *>(table->GetRecord(nItemIndex));
+      return record ? static_cast<unsigned int>(record->m_bExchange) : 0;
+    }
     default:
       return 0;
   }

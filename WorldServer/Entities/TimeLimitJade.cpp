@@ -7,6 +7,7 @@
 #include "CPlayer.h"
 #include "CRecordData.h"
 #include "GlobalObjects.h"
+#include "ResourceItem_fld.h"
 #include "WorldServerUtil.h"
 
 TimeLimitJade::WaitCell::WaitCell()
@@ -93,22 +94,19 @@ void TimeLimitJade::Release()
 
 bool TimeLimitJade::InsertWaitList(_STORAGE_LIST::_db_con *pkItem)
 {
-  _base_fld *record = g_Main.m_tblItemData[pkItem->m_byTableCode].GetRecord(pkItem->m_wItemIndex);
+  _ResourceItem_fld *record =
+    static_cast<_ResourceItem_fld *>(g_Main.m_tblItemData[pkItem->m_byTableCode].GetRecord(pkItem->m_wItemIndex));
   if (!record)
   {
     return false;
   }
 
-  const int startHour = *reinterpret_cast<int *>(&record[5].m_strCode[44]);
-  if (startHour < 0 && startHour > 23)
+  if (record->m_nStartTime < 0 && record->m_nStartTime > 23)
   {
     return false;
   }
 
-  const unsigned __int16 startTime = *reinterpret_cast<unsigned __int16 *>(&record[5].m_strCode[44]);
-  const unsigned int useTime = 60 * *reinterpret_cast<unsigned int *>(&record[5].m_strCode[48]);
-
-  WaitCell cell(pkItem, startTime, useTime);
+  WaitCell cell(pkItem, static_cast<unsigned __int16>(record->m_nStartTime), 60u * record->m_nEffContTime);
   return _heapWaitRow.push(cell);
 }
 

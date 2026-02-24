@@ -7,7 +7,7 @@
 
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
-#include "base_fld.h"
+#include "exp_fld.h"
 
 cStaticMember_Player *cStaticMember_Player::_pInstance;
 
@@ -85,13 +85,13 @@ bool cStaticMember_Player::loadLimitExpData()
 
   for (int index = 0; index < this->_nMaxLv; ++index)
   {
-    _base_fld *record = g_Main.m_tblExp.GetRecord(index);
+    _exp_fld *record = reinterpret_cast<_exp_fld *>(g_Main.m_tblExp.GetRecord(index));
     if (!record)
     {
       g_Main.m_logSystemError.Write("CPlayer::SetStaticMember() : %d Exp Data..NULL", index);
       ServerProgramExit("Exp Data Load Error", 0);
     }
-    const double expValue = atof(reinterpret_cast<const char *>(&record[1]));
+    const double expValue = atof(record->m_strBellato);
     this->_pLimExp[index] = expValue;
   }
 

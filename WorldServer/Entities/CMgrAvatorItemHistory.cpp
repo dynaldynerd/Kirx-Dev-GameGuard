@@ -1897,6 +1897,66 @@ void CMgrAvatorItemHistory::consume_del_item(int n, _STORAGE_LIST::_db_con *pIte
 WriteFile(pszFileName, logBuffer);
 }
 
+void CMgrAvatorItemHistory::pay_money(
+  int n,
+  const char *pszClause,
+  unsigned int dwPayDalant,
+  unsigned int dwPayGold,
+  unsigned int dwNewDalant,
+  unsigned int dwNewGold,
+  char *pszFileName)
+{
+  sprintf(
+    sData,
+    "PAY: %s pay(D:%u G:%u) $D:%u $G:%u\r\n",
+    pszClause,
+    dwPayDalant,
+    dwPayGold,
+    dwNewDalant,
+    dwNewGold);
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::tuning_unit(
+  int n,
+  unsigned __int8 bySlotIndex,
+  void *pData,
+  int *pnPayMoney,
+  unsigned int dwNewDalant,
+  unsigned int dwNewGold,
+  char *pszFileName)
+{
+#pragma pack(push, 1)
+  struct _unit_tuning_log_view
+  {
+    unsigned __int8 bySlotIndex;
+    unsigned __int8 byFrame;
+    unsigned int dwGauge;
+    unsigned __int8 byPart[6];
+  };
+#pragma pack(pop)
+  _unit_tuning_log_view *unitData = reinterpret_cast<_unit_tuning_log_view *>(pData);
+
+  sprintf(
+    sData,
+    "UNIT TUNING: %d>fr:%d %d/%d/%d/%d/%d/%d pay(D:%u G:%u) $D:%u $G:%u [%s %s]\r\n",
+    bySlotIndex,
+    unitData->byFrame,
+    unitData->byPart[0],
+    unitData->byPart[1],
+    unitData->byPart[2],
+    unitData->byPart[3],
+    unitData->byPart[4],
+    unitData->byPart[5],
+    pnPayMoney[0],
+    pnPayMoney[1],
+    dwNewDalant,
+    dwNewGold,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pszFileName, sData);
+}
+
 void CMgrAvatorItemHistory::reward_add_money(
   int n,
   const char *pszClause,

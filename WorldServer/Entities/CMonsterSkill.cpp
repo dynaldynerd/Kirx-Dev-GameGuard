@@ -424,7 +424,7 @@ int _Check_SF_UseType(_base_fld *pFld, int nEffectType)
   const int conditionValue = *reinterpret_cast<const int *>(&record[13].m_strCode[32]);
   if (conditionValue == -1)
   {
-    if (record[13].m_dwIndex == -1)
+    if (record[13].m_dwIndex == static_cast<unsigned int>(-1))
     {
       return -1;
     }
@@ -445,4 +445,3 @@ int _Check_SF_UseType(_base_fld *pFld, int nEffectType)
   }
   return 1;
 }
-

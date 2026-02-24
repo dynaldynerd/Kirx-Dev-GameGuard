@@ -51,6 +51,22 @@ public:
   void cheat_del_item(int n, _STORAGE_LIST::_db_con *pItem, unsigned __int8 byDelNum, char *pszFileName);
   void delete_npc_quest_item(int n, _STORAGE_LIST::_db_con *pItem, char *pszFileName);
   void consume_del_item(int n, _STORAGE_LIST::_db_con *pItem, const char *pszFileName);
+  void pay_money(
+    int n,
+    const char *pszClause,
+    unsigned int dwPayDalant,
+    unsigned int dwPayGold,
+    unsigned int dwNewDalant,
+    unsigned int dwNewGold,
+    char *pszFileName);
+  void tuning_unit(
+    int n,
+    unsigned __int8 bySlotIndex,
+    void *pData,
+    int *pnPayMoney,
+    unsigned int dwNewDalant,
+    unsigned int dwNewGold,
+    char *pszFileName);
   void reward_add_money(
     int n,
     const char *pszClause,

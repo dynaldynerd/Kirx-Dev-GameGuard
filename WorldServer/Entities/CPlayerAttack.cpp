@@ -7,6 +7,9 @@
 #include "CLogFile.h"
 #include "CPvpUserAndGuildRankingSystem.h"
 #include "CPlayer.h"
+#include "WeaponItem_fld.h"
+#include "force_fld.h"
+#include "skill_fld.h"
 #include "GlobalObjects.h"
 
 CPlayerAttack::CPlayerAttack(CPlayer *pThis)
@@ -17,11 +20,11 @@ CPlayerAttack::CPlayerAttack(CPlayer *pThis)
 
 __int64 CPlayerAttack::_CalcSkillAttPnt(bool bUseEffBullet)
 {
-  _base_fld *skillRecord = m_pp->pFld;
+  _skill_fld *skillRecord = reinterpret_cast<_skill_fld *>(m_pp->pFld);
   const float levelFactor =
     static_cast<float>(m_pp->nLevel) + (static_cast<float>(7.0f - static_cast<float>(m_pp->nLevel)) * 0.5f);
-  const float fConst = *reinterpret_cast<float *>(&skillRecord[11].m_strCode[56]);
-  const int lvConst = *reinterpret_cast<int *>(&skillRecord[11].m_strCode[4 * m_pp->nLevel + 24]);
+  const float fConst = skillRecord->m_fAttFormulaConstant;
+  const int lvConst = skillRecord->m_nAttConstant[m_pp->nLevel - 1];
 
   unsigned int minAttack = 0;
   int maxAttack = 5;
@@ -136,18 +139,22 @@ void CPlayerAttack::AttackSkill(_attack_param *pParam, bool bUseEffBullet)
   m_nDamagedObjNum = 0;
   m_bIsCrtAtt = false;
   m_pp = pParam;
-  _base_fld *skillRecord = m_pp->pFld;
+  _skill_fld *skillRecord = reinterpret_cast<_skill_fld *>(m_pp->pFld);
   bool canHit = true;
   m_pAttChar->BreakStealth();
 
   int attackType = 0;
   if (m_pp->byEffectCode)
   {
-    attackType = *reinterpret_cast<int *>(skillRecord[11].m_strCode);
+    attackType = skillRecord->m_nAttackable;
+  }
+  else if (m_pp->nLevel <= 1)
+  {
+    attackType = skillRecord->m_nAttackable;
   }
   else
   {
-    attackType = *reinterpret_cast<int *>(&skillRecord[11].m_strCode[4 * m_pp->nLevel - 4]);
+    attackType = skillRecord->m_nAttType[m_pp->nLevel - 2];
   }
 
   if (m_pp->pDst)
@@ -309,7 +316,7 @@ void CPlayerAttack::AttackSkill(_attack_param *pParam, bool bUseEffBullet)
     case 4:
     case 6:
       AreaDamageProc(
-        s_nLimitRadius[*reinterpret_cast<int *>(&skillRecord[4].m_strCode[60])],
+        s_nLimitRadius[skillRecord->m_nLv],
         normalAttack,
         m_pp->fArea,
         effAttack,
@@ -318,16 +325,16 @@ void CPlayerAttack::AttackSkill(_attack_param *pParam, bool bUseEffBullet)
       break;
     case 5:
     {
-      const int index = *reinterpret_cast<int *>(&skillRecord[4].m_strCode[60]);
+      const int index = skillRecord->m_nLv;
       FlashDamageProc(s_nLimitDist[index], normalAttack, s_nLimitAngle[0][index], effAttack, bUseEffBullet);
       CalcAvgDamage();
       break;
     }
     case 7:
       SectorDamageProc(
-        *reinterpret_cast<int *>(&skillRecord[4].m_strCode[60]),
+        skillRecord->m_nLv,
         normalAttack,
-        s_nLimitAngle[0][*reinterpret_cast<int *>(&skillRecord[4].m_strCode[60])],
+        s_nLimitAngle[0][skillRecord->m_nLv],
         m_pp->nShotNum,
         m_pp->nExtentRange,
         effAttack,
@@ -344,13 +351,13 @@ void CPlayerAttack::AttackUnit(_attack_param *pParam)
   m_nDamagedObjNum = 0;
   m_bIsCrtAtt = false;
   m_pp = pParam;
-  _base_fld *weaponField = m_pp->pFld;
+  _WeaponItem_fld *weaponField = reinterpret_cast<_WeaponItem_fld *>(m_pp->pFld);
   bool canHit = true;
   m_pAttChar->BreakStealth();
 
   if (m_pp->pDst)
   {
-    const int effectGroup = weaponField[4].m_dwIndex;
+    const int effectGroup = weaponField->m_nKindClt;
     if (effectGroup != 4)
     {
       bool isAvoided = false;
@@ -505,17 +512,21 @@ void CPlayerAttack::WPActiveAttackSkill(_attack_param *pParam)
   m_nDamagedObjNum = 0;
   m_bIsCrtAtt = false;
   m_pp = pParam;
-  _base_fld *skillRecord = m_pp->pFld;
+  _skill_fld *skillRecord = reinterpret_cast<_skill_fld *>(m_pp->pFld);
   m_pAttChar->BreakStealth();
 
   int attackType = 0;
   if (m_pp->byEffectCode)
   {
-    attackType = *reinterpret_cast<int *>(skillRecord[11].m_strCode);
+    attackType = skillRecord->m_nAttackable;
+  }
+  else if (m_pp->nLevel <= 1)
+  {
+    attackType = skillRecord->m_nAttackable;
   }
   else
   {
-    attackType = *reinterpret_cast<int *>(&skillRecord[11].m_strCode[4 * m_pp->nLevel - 4]);
+    attackType = skillRecord->m_nAttType[m_pp->nLevel - 2];
   }
 
   int normalAttack = m_pp->nAddAttPnt + static_cast<int>(_CalcSkillAttPnt(false));
@@ -571,7 +582,7 @@ void CPlayerAttack::WPActiveAttackSkill(_attack_param *pParam)
     case 4:
     case 6:
       AreaDamageProc(
-        s_nLimitRadius[*reinterpret_cast<int *>(&skillRecord[4].m_strCode[60])],
+        s_nLimitRadius[skillRecord->m_nLv],
         normalAttack,
         m_pp->fArea,
         0,
@@ -580,16 +591,16 @@ void CPlayerAttack::WPActiveAttackSkill(_attack_param *pParam)
       break;
     case 5:
     {
-      const int index = *reinterpret_cast<int *>(&skillRecord[4].m_strCode[60]);
+      const int index = skillRecord->m_nLv;
       FlashDamageProc(s_nLimitDist[index], normalAttack, s_nLimitAngle[0][index], 0, false);
       CalcAvgDamage();
       break;
     }
     case 7:
       SectorDamageProc(
-        *reinterpret_cast<int *>(&skillRecord[4].m_strCode[60]),
+        skillRecord->m_nLv,
         normalAttack,
-        s_nLimitAngle[0][*reinterpret_cast<int *>(&skillRecord[4].m_strCode[60])],
+        s_nLimitAngle[0][skillRecord->m_nLv],
         m_pp->nShotNum,
         m_pp->nExtentRange,
         0,
@@ -606,7 +617,7 @@ void CPlayerAttack::WPActiveAttackForce(_attack_param *pParam)
   m_nDamagedObjNum = 0;
   m_bIsCrtAtt = false;
   m_pp = pParam;
-  _base_fld *forceField = m_pp->pFld;
+  _force_fld *forceField = reinterpret_cast<_force_fld *>(m_pp->pFld);
 
   float normalAttack = static_cast<float>(m_pp->nAddAttPnt + _CalcForceAttPnt(false));
   normalAttack *= m_pAttChar->m_EP.GetEff_Rate(4);
@@ -630,7 +641,7 @@ void CPlayerAttack::WPActiveAttackForce(_attack_param *pParam)
     }
   }
 
-  const int attackType = *reinterpret_cast<int *>(&forceField[11].m_strCode[4]);
+  const int attackType = forceField->m_nProperty;
   if (attackType >= 0 && attackType <= 2)
   {
     if (m_pp->pDst)
@@ -649,7 +660,7 @@ void CPlayerAttack::WPActiveAttackForce(_attack_param *pParam)
 
   if (attackType == 5)
   {
-    const int index = *reinterpret_cast<int *>(&forceField[4].m_strCode[60]);
+    const int index = forceField->m_nLv;
     FlashDamageProc(s_nLimitDist[index], static_cast<int>(normalAttack), s_nLimitAngle[1][index], 0, false);
     CalcAvgDamage();
     return;
@@ -657,7 +668,7 @@ void CPlayerAttack::WPActiveAttackForce(_attack_param *pParam)
 
   if (attackType == 4 || attackType == 6)
   {
-    const int index = *reinterpret_cast<int *>(&forceField[4].m_strCode[60]);
+    const int index = forceField->m_nLv;
     AreaDamageProc(s_nLimitRadius[index], static_cast<int>(normalAttack), m_pp->fArea, 0, false);
     CalcAvgDamage();
   }

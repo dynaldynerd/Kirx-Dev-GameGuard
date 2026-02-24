@@ -3,6 +3,7 @@
 #include "WorldServerUtil.h"
 
 #include "CSUItemSystem.h"
+#include "SetItemEff_fld.h"
 
 CSUItemSystem *CSUItemSystem::Instance()
 {
@@ -111,67 +112,80 @@ CSetItemType *CSUItemSystem::GetCSetItemType()
 
 int CSUItemSystem::GetSetItemTableInfo(int dwSetItemEff, char *pStrCode, int nBufSize)
 {
-  _base_fld *record = m_SUOrigin[0].GetRecord(dwSetItemEff);
+  _SetItemEff_fld *record = reinterpret_cast<_SetItemEff_fld *>(m_SUOrigin[0].GetRecord(dwSetItemEff));
   if (!record)
   {
     return -1;
   }
 
-  if (!strcmp_0(&record[1].m_strCode[60], "-1"))
+  const char *code0 = record->m_strset_head;
+  const char *code1 = record->m_strset_upper;
+  const char *code2 = record->m_strset_lower;
+  const char *code3 = record->m_strset_shoes;
+  const char *code4 = record->m_strset_gauntlet;
+  const char *code5 = record->m_strset_weapon;
+  const char *code6 = record->m_strset_shield;
+  const char *code7 = record->m_strset_amulet1;
+  const char *code8 = record->m_strset_amulet2;
+  const char *code9 = record->m_strset_ring1;
+  const char *code10 = record->m_strset_ring2;
+  const char *code11 = record->m_strset_cloak;
+
+  if (!strcmp_0(code0, "-1"))
   {
-    if (!strcmp_0(&record[2].m_strCode[56], "-1"))
+    if (!strcmp_0(code1, "-1"))
     {
-      if (!strcmp_0(&record[3].m_strCode[52], "-1"))
+      if (!strcmp_0(code2, "-1"))
       {
-        if (!strcmp_0(&record[4].m_strCode[48], "-1"))
+        if (!strcmp_0(code3, "-1"))
         {
-          if (!strcmp_0(&record[5].m_strCode[44], "-1"))
+          if (!strcmp_0(code4, "-1"))
           {
-            if (!strcmp_0(&record[6].m_strCode[40], "-1"))
+            if (!strcmp_0(code5, "-1"))
             {
-              if (!strcmp_0(&record[7].m_strCode[36], "-1"))
+              if (!strcmp_0(code6, "-1"))
               {
-                if (!strcmp_0(&record[8].m_strCode[32], "-1") && !strcmp_0(&record[8].m_strCode[32], "-1"))
+                if (!strcmp_0(code7, "-1") && !strcmp_0(code8, "-1"))
                 {
-                  if (!strcmp_0(&record[10].m_strCode[24], "-1"))
+                  if (!strcmp_0(code9, "-1"))
                   {
-                    if (!strcmp_0(&record[11].m_strCode[20], "-1"))
+                    if (!strcmp_0(code10, "-1"))
                     {
-                      if (!strcmp_0(&record[12].m_strCode[16], "-1"))
+                      if (!strcmp_0(code11, "-1"))
                       {
                         return -1;
                       }
-                      strcpy_s(pStrCode, nBufSize, &record[12].m_strCode[16]);
+                      strcpy_s(pStrCode, nBufSize, code11);
                       return 7;
                     }
-                    strcpy_s(pStrCode, nBufSize, &record[11].m_strCode[20]);
+                    strcpy_s(pStrCode, nBufSize, code10);
                     return 8;
                   }
-                  strcpy_s(pStrCode, nBufSize, &record[10].m_strCode[24]);
+                  strcpy_s(pStrCode, nBufSize, code9);
                   return 8;
                 }
-                strcpy_s(pStrCode, nBufSize, &record[8].m_strCode[32]);
+                strcpy_s(pStrCode, nBufSize, code7);
                 return 9;
               }
-              strcpy_s(pStrCode, nBufSize, &record[7].m_strCode[36]);
+              strcpy_s(pStrCode, nBufSize, code6);
               return 5;
             }
-            strcpy_s(pStrCode, nBufSize, &record[6].m_strCode[40]);
+            strcpy_s(pStrCode, nBufSize, code5);
             return 6;
           }
-          strcpy_s(pStrCode, nBufSize, &record[5].m_strCode[44]);
+          strcpy_s(pStrCode, nBufSize, code4);
           return 2;
         }
-        strcpy_s(pStrCode, nBufSize, &record[4].m_strCode[48]);
+        strcpy_s(pStrCode, nBufSize, code3);
         return 3;
       }
-      strcpy_s(pStrCode, nBufSize, &record[3].m_strCode[52]);
+      strcpy_s(pStrCode, nBufSize, code2);
       return 1;
     }
-    strcpy_s(pStrCode, nBufSize, &record[2].m_strCode[56]);
+    strcpy_s(pStrCode, nBufSize, code1);
     return 0;
   }
 
-  strcpy_s(pStrCode, nBufSize, &record[1].m_strCode[60]);
+  strcpy_s(pStrCode, nBufSize, code0);
   return 4;
 }

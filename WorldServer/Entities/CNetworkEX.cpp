@@ -21,6 +21,7 @@
 #include "CNuclearBombMgr.h"
 #include "CPcBangFavor.h"
 #include "CPvpUserAndGuildRankingSystem.h"
+#include "TrapItem_fld.h"
 #include "CGuildBattleController.h"
 #include "CGuild.h"
 #include "CheatCommands.h"
@@ -7451,7 +7452,7 @@ char CNetworkEX::MakeTrapRequest(int n, char *pBuf)
     _base_fld *record = g_Main.m_tblItemData[26].GetRecord(itemCon->m_wItemIndex);
     if (record)
     {
-      if (*reinterpret_cast<unsigned int *>(record[1].m_strCode) == 1)
+      if (reinterpret_cast<_TrapItem_fld *>(record)->m_bExist == 1)
       {
         CNuclearBombMgr *mgr = CNuclearBombMgr::Instance();
         mgr->SendMsg_Result(n, 1u);
@@ -9136,7 +9137,4 @@ char CNetworkEX::BuddyDelRequest(int n, char *pBuf)
   }
   return 1;
 }
-
-
-
 

@@ -266,13 +266,13 @@ void CPlayer::pc_SelectQuestReward(
     }
   }
 
-  _base_fld *questRecord = CQuestMgr::s_tblQuest->GetRecord(questSlot->wIndex);
+  _Quest_fld *questRecord = reinterpret_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(questSlot->wIndex));
   if (!questRecord)
   {
     return;
   }
 
-  const int hasSelectReward = *reinterpret_cast<int *>(&questRecord[13].m_strCode[60]);
+  const int hasSelectReward = (questRecord->m_bSelectConsITMenual || questRecord->m_bSelectQuestMenual) ? 1 : 0;
   if (bySelectItemSlotIndex == 0xFF)
   {
     if (hasSelectReward)
@@ -296,7 +296,7 @@ void CPlayer::pc_SelectQuestReward(
 
   if (bySelectLinkQuestIndex != 0xFF)
   {
-    const char *linkCode = &questRecord[22].m_strCode[64 * static_cast<unsigned __int64>(bySelectItemSlotIndex) + 44];
+    const char *linkCode = questRecord->m_strLinkQuest[bySelectItemSlotIndex];
     if (!strncmp(linkCode, "-1", 2u))
     {
       return;

@@ -5,6 +5,8 @@
 #include "CCharacter.h"
 #include "CLogFile.h"
 #include "CMonster.h"
+#include "force_fld.h"
+#include "skill_fld.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
@@ -182,18 +184,22 @@ void CMonsterAttack::AttackMonsterSkill(_attack_param *pParam)
   m_nDamagedObjNum = 0;
   m_bIsCrtAtt = false;
   m_pp = pParam;
-  _base_fld *skillField = m_pp->pFld;
+  _skill_fld *skillField = reinterpret_cast<_skill_fld *>(m_pp->pFld);
   bool hitSuccess = true;
   m_pAttChar->BreakStealth();
 
   int skillType = 0;
   if (m_pp->byEffectCode)
   {
-    skillType = *reinterpret_cast<int *>(skillField[11].m_strCode);
+    skillType = skillField->m_nAttackable;
+  }
+  else if (m_pp->nLevel <= 1)
+  {
+    skillType = skillField->m_nAttackable;
   }
   else
   {
-    skillType = *reinterpret_cast<int *>(&skillField[11].m_strCode[4 * m_pp->nLevel - 4]);
+    skillType = skillField->m_nAttType[m_pp->nLevel - 2];
   }
 
   if (!m_pp->pDst)
@@ -302,7 +308,7 @@ APPLY_DAMAGE:
       case 4:
       case 6:
         AreaDamageProc(
-          s_Mon_nLimitRadius[*reinterpret_cast<int *>(&skillField[4].m_strCode[60])],
+          s_Mon_nLimitRadius[skillField->m_nLv],
           attackPower,
           m_pp->fArea,
           0,
@@ -310,15 +316,15 @@ APPLY_DAMAGE:
         break;
       case 5:
       {
-        const int index = *reinterpret_cast<int *>(&skillField[4].m_strCode[60]);
+        const int index = skillField->m_nLv;
         FlashDamageProc(s_Mon_nLimitDist[index], attackPower, s_Mon_nLimitAngle[0][index], 0, false);
         break;
       }
       case 7:
         SectorDamageProc(
-          *reinterpret_cast<int *>(&skillField[4].m_strCode[60]),
+          skillField->m_nLv,
           attackPower,
-          s_Mon_nLimitAngle[0][*reinterpret_cast<int *>(&skillField[4].m_strCode[60])],
+          s_Mon_nLimitAngle[0][skillField->m_nLv],
           m_pp->nShotNum,
           m_pp->nExtentRange,
           0,
@@ -337,7 +343,7 @@ void CMonsterAttack::AttackMonsterForce(_attack_param *pParam)
   m_nDamagedObjNum = 0;
   m_bIsCrtAtt = false;
   m_pp = pParam;
-  _base_fld *forceField = m_pp->pFld;
+  _force_fld *forceField = reinterpret_cast<_force_fld *>(m_pp->pFld);
   bool hitSuccess = true;
   m_pAttChar->BreakStealth();
 
@@ -375,7 +381,7 @@ void CMonsterAttack::AttackMonsterForce(_attack_param *pParam)
     const float attFc = m_pAttChar->m_EP.GetEff_Rate(4);
     attackPower *= ModifyMonsterAttFc(attFc);
 
-    const int skillType = *reinterpret_cast<int *>(&forceField[11].m_strCode[4]);
+    const int skillType = forceField->m_nProperty;
     if (skillType < 0)
     {
       return;
@@ -400,7 +406,7 @@ void CMonsterAttack::AttackMonsterForce(_attack_param *pParam)
 
     if (skillType == 5)
     {
-      const int index = *reinterpret_cast<int *>(&forceField[4].m_strCode[60]);
+      const int index = forceField->m_nLv;
       FlashDamageProc(s_Mon_nLimitDist[index], static_cast<int>(attackPower), s_Mon_nLimitAngle[1][index], 0, false);
       CalcAvgDamage();
       return;
@@ -411,7 +417,7 @@ void CMonsterAttack::AttackMonsterForce(_attack_param *pParam)
       return;
     }
 
-    const int index = *reinterpret_cast<int *>(&forceField[4].m_strCode[60]);
+    const int index = forceField->m_nLv;
     AreaDamageProc(s_Mon_nLimitRadius[index], static_cast<int>(attackPower), m_pp->fArea, 0, false);
     CalcAvgDamage();
     return;
@@ -427,10 +433,10 @@ void CMonsterAttack::AttackMonsterForce(_attack_param *pParam)
 
 __int64 CMonsterAttack::_CalcMonSkillAttPnt()
 {
-  _base_fld *skillField = m_pp->pFld;
+  _skill_fld *skillField = reinterpret_cast<_skill_fld *>(m_pp->pFld);
   const float levelFactor = static_cast<float>(m_pp->nLevel) + ((7.0f - static_cast<float>(m_pp->nLevel)) * 0.5f);
-  const float skillConst = *reinterpret_cast<float *>(&skillField[11].m_strCode[56]);
-  const int levelConst = *reinterpret_cast<int *>(&skillField[11].m_strCode[4 * m_pp->nLevel + 24]);
+  const float skillConst = skillField->m_fAttFormulaConstant;
+  const int levelConst = skillField->m_nAttConstant[m_pp->nLevel - 1];
 
   unsigned int minAttack = static_cast<unsigned int>(
     static_cast<int>((((levelConst / 788.0f)
