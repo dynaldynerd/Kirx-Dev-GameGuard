@@ -28,6 +28,6 @@ if (-not (Test-Path $exePath)) {
 
 Get-Process MapEditor -ErrorAction SilentlyContinue | Stop-Process -Force
 
-$argumentLine = "--bsp `"$BspPath`""
-Start-Process -FilePath $exePath -ArgumentList $argumentLine -WorkingDirectory $outputDir
+$argumentList = "--bsp `"$BspPath`""
+Start-Process -FilePath $exePath -ArgumentList $argumentList -WorkingDirectory $outputDir
 Write-Host "Started MapEditor with: $BspPath"

@@ -35,32 +35,29 @@ internal sealed class MapLaunchOptions
 
     if (args.Length == 1)
     {
-      string single = Path.GetFullPath(args[0]);
-      if (!File.Exists(single))
+      if (!TryResolveSinglePath(args[0], out bspPath, out ebpPath, out error))
       {
-        error = $"Input file does not exist: {single}";
-        return false;
-      }
-
-      string extension = Path.GetExtension(single);
-      if (extension.Equals(".bsp", StringComparison.OrdinalIgnoreCase))
-      {
-        bspPath = single;
-        ebpPath = Path.ChangeExtension(single, ".ebp");
-      }
-      else if (extension.Equals(".ebp", StringComparison.OrdinalIgnoreCase))
-      {
-        ebpPath = single;
-        bspPath = Path.ChangeExtension(single, ".bsp");
-      }
-      else
-      {
-        error = $"Unsupported extension '{extension}'. Expected .bsp or .ebp.";
         return false;
       }
     }
     else
     {
+      if (!args[0].StartsWith("--", StringComparison.Ordinal))
+      {
+        string combinedPath = string.Join(" ", args);
+        if (!TryResolveSinglePath(combinedPath, out bspPath, out ebpPath, out error))
+        {
+          return false;
+        }
+
+        options = new MapLaunchOptions
+        {
+          BspPath = bspPath!,
+          EbpPath = ebpPath!,
+        };
+        return true;
+      }
+
       Dictionary<string, string> pairs = ParseNamedArgs(args, out error);
       if (error != null)
       {
@@ -128,10 +125,60 @@ internal sealed class MapLaunchOptions
         return values;
       }
 
-      values[token] = args[i + 1];
-      ++i;
+      List<string> valueParts = [];
+      int cursor = i + 1;
+      while (cursor < args.Length && !args[cursor].StartsWith("--", StringComparison.Ordinal))
+      {
+        valueParts.Add(args[cursor]);
+        ++cursor;
+      }
+
+      if (valueParts.Count == 0)
+      {
+        error = $"Missing value for argument: {token}";
+        return values;
+      }
+
+      values[token] = string.Join(" ", valueParts);
+      i = cursor - 1;
     }
 
     return values;
+  }
+
+  private static bool TryResolveSinglePath(
+    string inputPath,
+    out string? bspPath,
+    out string? ebpPath,
+    out string? error)
+  {
+    bspPath = null;
+    ebpPath = null;
+    error = null;
+
+    string single = Path.GetFullPath(inputPath);
+    if (!File.Exists(single))
+    {
+      error = $"Input file does not exist: {single}";
+      return false;
+    }
+
+    string extension = Path.GetExtension(single);
+    if (extension.Equals(".bsp", StringComparison.OrdinalIgnoreCase))
+    {
+      bspPath = single;
+      ebpPath = Path.ChangeExtension(single, ".ebp");
+      return true;
+    }
+
+    if (extension.Equals(".ebp", StringComparison.OrdinalIgnoreCase))
+    {
+      ebpPath = single;
+      bspPath = Path.ChangeExtension(single, ".bsp");
+      return true;
+    }
+
+    error = $"Unsupported extension '{extension}'. Expected .bsp or .ebp.";
+    return false;
   }
 }

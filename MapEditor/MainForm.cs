@@ -7,6 +7,12 @@ internal sealed class MainForm : Form
 {
   private readonly MapViewerControl _viewer;
   private readonly ToolStripStatusLabel _statusLabel;
+  private readonly ToolStripDropDownButton _skySourceButton;
+  private readonly ToolStripMenuItem _skyMenuItem;
+  private readonly ToolStripMenuItem _sky2MenuItem;
+  private SkySourceMode _skySourceMode = SkySourceMode.Sky2;
+  private string? _loadedBspPath;
+  private string? _loadedEbpPath;
 
   public MainForm(string[] args)
   {
@@ -61,16 +67,35 @@ internal sealed class MainForm : Form
     speedStrip.Items.Add(speedHost);
     speedStrip.Items.Add(new ToolStripLabel("units/s"));
     speedStrip.Items.Add(new ToolStripSeparator());
-    ToolStripButton overlayButton = new("Overlay")
+    _skySourceButton = new ToolStripDropDownButton("Sky: sky2")
+    {
+      ToolTipText = "Switch loaded sky source between sky and sky2",
+    };
+    _skyMenuItem = new ToolStripMenuItem("Use sky");
+    _sky2MenuItem = new ToolStripMenuItem("Use sky2") { Checked = true };
+    _skyMenuItem.Click += (_, _) => SetSkySourceMode(SkySourceMode.Sky, reloadCurrentMap: true);
+    _sky2MenuItem.Click += (_, _) => SetSkySourceMode(SkySourceMode.Sky2, reloadCurrentMap: true);
+    _skySourceButton.DropDownItems.Add(_skyMenuItem);
+    _skySourceButton.DropDownItems.Add(_sky2MenuItem);
+    speedStrip.Items.Add(_skySourceButton);
+    speedStrip.Items.Add(new ToolStripSeparator());
+    ToolStripButton collisionButton = new("Collision")
     {
       CheckOnClick = true,
       Checked = true,
-      ToolTipText = "Show/hide white debug overlay lines",
+      ToolTipText = "Show/hide EBP collision walls",
     };
-    speedStrip.Items.Add(overlayButton);
+    ToolStripButton gridButton = new("Grid")
+    {
+      CheckOnClick = true,
+      Checked = true,
+      ToolTipText = "Show/hide white reference grid",
+    };
+    speedStrip.Items.Add(collisionButton);
+    speedStrip.Items.Add(gridButton);
 
     StatusStrip status = new();
-    _statusLabel = new ToolStripStatusLabel("Ready. Ctrl+O open map | Right mouse look | WASD move | Wheel zoom | Speed + Overlay on top bar | F1 controls");
+    _statusLabel = new ToolStripStatusLabel("Ready. Ctrl+O open map | Right mouse look | WASD move | Wheel zoom | Speed + Sky/Collision/Grid on top bar | F1 controls");
     status.Items.Add(_statusLabel);
 
     _viewer = new MapViewerControl
@@ -79,10 +104,16 @@ internal sealed class MainForm : Form
     };
     _viewer.MoveSpeed = (float)speedUpDown.Value;
     speedUpDown.ValueChanged += (_, _) => _viewer.MoveSpeed = (float)speedUpDown.Value;
-    _viewer.ShowOverlay = overlayButton.Checked;
-    overlayButton.CheckedChanged += (_, _) =>
+    _viewer.ShowCollisionOverlay = collisionButton.Checked;
+    collisionButton.CheckedChanged += (_, _) =>
     {
-      _viewer.ShowOverlay = overlayButton.Checked;
+      _viewer.ShowCollisionOverlay = collisionButton.Checked;
+      _viewer.Invalidate();
+    };
+    _viewer.ShowGrid = gridButton.Checked;
+    gridButton.CheckedChanged += (_, _) =>
+    {
+      _viewer.ShowGrid = gridButton.Checked;
       _viewer.Invalidate();
     };
 
@@ -90,6 +121,7 @@ internal sealed class MainForm : Form
     Controls.Add(status);
     Controls.Add(speedStrip);
     Controls.Add(menu);
+    SetSkySourceMode(_skySourceMode, reloadCurrentMap: false);
 
     if (args.Length > 0)
     {
@@ -142,13 +174,17 @@ internal sealed class MainForm : Form
   {
     try
     {
-      LoadedMap map = BspLoader.Load(bspPath, ebpPath);
+      LoadedMap map = BspLoader.Load(bspPath, ebpPath, _skySourceMode);
       _viewer.SetMap(map);
+      _loadedBspPath = bspPath;
+      _loadedEbpPath = ebpPath;
       Text = $"RF MapEditor (Viewer) - {map.Name}";
       _statusLabel.Text =
         $"Loaded {map.Name} | BSP TriVerts: {map.BspTriangleVertices.Length:N0} | EBP Vertices: {map.CollisionVertices.Length:N0} | EBP Lines: {map.CollisionLines.Length:N0}"
         + $" | RenderVerts: {map.BspRenderVertices.Length:N0}"
-        + $" | TextureBlobs: {map.SurfaceTextures.Length:N0}"
+        + $" | TextureBlobs: {map.SurfaceTextures.Length:N0} | LgtTex: {map.LightmapTextures.Length:N0}"
+        + $" | SkySource: {GetSkySourceName(_skySourceMode)} | SkyVerts: {map.SkyRenderVertices.Length:N0} | SkyTex: {map.SkySurfaceTextures.Length:N0}"
+        + $" | EntModels: {map.MapEntityModelCount:N0} | EntInst: {map.MapEntityInstanceCount:N0} | EntVerts: {map.EntityRenderVertices.Length:N0} | EntTex: {map.EntitySurfaceTextures.Length:N0}"
         + $" | Bounds: ({map.Bounds.Min.X:F0},{map.Bounds.Min.Y:F0},{map.Bounds.Min.Z:F0})..({map.Bounds.Max.X:F0},{map.Bounds.Max.Y:F0},{map.Bounds.Max.Z:F0})";
     }
     catch (Exception ex)
@@ -169,7 +205,9 @@ internal sealed class MainForm : Form
       - Space / Ctrl: move up/down
       - Shift: faster movement
       - Move speed: top bar numeric box
-      - Overlay button: show/hide white debug lines
+      - Sky dropdown: switch between sky and sky2 source
+      - Collision button: show/hide EBP collision walls
+      - Grid button: show/hide white reference grid
       - R: reset camera to map default
       - Esc: release mouse-look capture
       """;
@@ -212,5 +250,23 @@ internal sealed class MainForm : Form
     {
       error = $"Missing EBP file: {ebpPath}";
     }
+  }
+
+  private void SetSkySourceMode(SkySourceMode skySourceMode, bool reloadCurrentMap)
+  {
+    _skySourceMode = skySourceMode;
+    _skyMenuItem.Checked = skySourceMode == SkySourceMode.Sky;
+    _sky2MenuItem.Checked = skySourceMode == SkySourceMode.Sky2;
+    _skySourceButton.Text = $"Sky: {GetSkySourceName(skySourceMode)}";
+
+    if (reloadCurrentMap && _loadedBspPath != null && _loadedEbpPath != null)
+    {
+      LoadMap(_loadedBspPath, _loadedEbpPath);
+    }
+  }
+
+  private static string GetSkySourceName(SkySourceMode skySourceMode)
+  {
+    return skySourceMode == SkySourceMode.Sky2 ? "sky2" : "sky";
   }
 }
