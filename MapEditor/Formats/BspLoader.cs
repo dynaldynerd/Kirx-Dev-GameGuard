@@ -2,6 +2,7 @@ using System.Buffers.Binary;
 using System.Globalization;
 using System.Text;
 using NumericsMatrix4 = System.Numerics.Matrix4x4;
+using NumericsQuaternion = System.Numerics.Quaternion;
 using NumericsVector3 = System.Numerics.Vector3;
 using OpenTK.Mathematics;
 
@@ -38,6 +39,8 @@ public static class BspLoader
   private const uint ExtMatExistLensFlare = 0x00000010;
   private const uint ExtDummyFlagMusic = 0x00000001;
   private const uint ExtDummyFlagFog = 0x00000002;
+  private const uint DefaultParticleAlphaType = 3u;
+  private const uint ParticleAlphaFlagDisableDepthTest = 0x40000000u;
   private const int ExtMatLensFlareScaleCount = 16;
   private const int ExtMatNameBytes = 128;
   private const int DefaultR3tSurfaceIdBase = 1;
@@ -1686,6 +1689,7 @@ public static class BspLoader
 
     RpkArchiveManager rpkManager = GetOrCreateEntityArchiveManager(entityRoot, out _);
     Dictionary<int, EntityMeshData> modelsById = new();
+    HashSet<int> missingModelIds = new();
     int instanceCount = 0;
 
     for (int index = 0; index < mapEntities.Length; ++index)
@@ -1697,37 +1701,55 @@ public static class BspLoader
         continue;
       }
 
-      ExtEntityDefinition definition = entityDefinitions[entityId];
-      if (definition.IsParticle)
+      if (missingModelIds.Contains(entityId))
       {
         continue;
       }
 
+      ExtEntityDefinition definition = entityDefinitions[entityId];
       if (!modelsById.ContainsKey(entityId))
       {
-        string? modelPath = TryResolveEntityModelPath(entityRoot, definition.Name);
-        string? virtualPath = NormalizeArchiveAssetPath(definition.Name, ".r3e");
-        if (modelPath == null && virtualPath == null)
-        {
-          continue;
-        }
-
+        bool loaded = false;
         try
         {
-          EntityMeshData model;
-          if (modelPath != null)
+          EntityMeshData model = null!;
+          if (definition.IsParticle)
           {
-            model = LoadEntityMesh(modelPath, false);
+            loaded = TryLoadParticleEntityMesh(entityRoot, definition.Name, rpkManager, out model);
           }
           else
           {
-            model = LoadEntityMeshFromArchive(virtualPath!, rpkManager, false);
+            string? modelPath = TryResolveEntityModelPath(entityRoot, definition.Name);
+            string? virtualPath = NormalizeArchiveAssetPath(definition.Name, ".r3e");
+            if (modelPath != null)
+            {
+              model = LoadEntityMesh(modelPath, false);
+              loaded = true;
+            }
+            else if (virtualPath != null)
+            {
+              model = LoadEntityMeshFromArchive(virtualPath, rpkManager, false);
+              loaded = true;
+            }
+            else
+            {
+              loaded = false;
+            }
           }
 
-          modelsById[entityId] = model;
+          if (loaded)
+          {
+            modelsById[entityId] = model;
+          }
+          else
+          {
+            missingModelIds.Add(entityId);
+            continue;
+          }
         }
         catch
         {
+          missingModelIds.Add(entityId);
           continue;
         }
       }
@@ -1742,6 +1764,344 @@ public static class BspLoader
 
     RenderMeshData combined = BuildCombinedEntityMesh(modelsById, mapEntities);
     return new EntityRenderData(combined, modelsById.Count, instanceCount, particlePositions.ToArray());
+  }
+
+  private static bool TryLoadParticleEntityMesh(
+    string entityRoot,
+    string particleDefinitionPath,
+    RpkArchiveManager rpkManager,
+    out EntityMeshData model)
+  {
+    model = null!;
+    if (!TryReadParticleScriptText(entityRoot, particleDefinitionPath, rpkManager, out string scriptText)
+      || string.IsNullOrWhiteSpace(scriptText))
+    {
+      return false;
+    }
+
+    ParticleScriptData script = ParseParticleScript(scriptText);
+    string[] references = script.EntityFileReferences;
+    uint particleAlphaType = script.AlphaType;
+    if (script.DisableDepthTest)
+    {
+      particleAlphaType |= ParticleAlphaFlagDisableDepthTest;
+    }
+
+    List<EntityMeshData> loadedModels = new();
+    for (int i = 0; i < references.Length; ++i)
+    {
+      string reference = references[i];
+      string? modelPath = TryResolveEntityModelPath(entityRoot, reference);
+      string? archivePath = NormalizeArchiveAssetPath(reference, ".r3e");
+
+      try
+      {
+        if (modelPath != null)
+        {
+          EntityMeshData loadedModel = LoadEntityMesh(modelPath, false);
+          loadedModels.Add(ApplyParticleScriptOverrides(loadedModel, particleAlphaType));
+          continue;
+        }
+
+        if (archivePath != null)
+        {
+          EntityMeshData loadedModel = LoadEntityMeshFromArchive(archivePath, rpkManager, false);
+          loadedModels.Add(ApplyParticleScriptOverrides(loadedModel, particleAlphaType));
+          continue;
+        }
+      }
+      catch
+      {
+      }
+    }
+
+    if (loadedModels.Count == 0)
+    {
+      return false;
+    }
+
+    if (loadedModels.Count == 1)
+    {
+      model = loadedModels[0];
+      return true;
+    }
+
+    RenderMeshData merged = MergeEntityMeshes(loadedModels);
+    model = new EntityMeshData(
+      Path.GetFileNameWithoutExtension(particleDefinitionPath),
+      merged.Vertices,
+      merged.MaterialSpans,
+      merged.Materials,
+      merged.MaterialSurfaceIds,
+      merged.MaterialAlphaTypes,
+      merged.SurfaceTextures);
+    return true;
+  }
+
+  private static bool TryReadParticleScriptText(
+    string entityRoot,
+    string particleDefinitionPath,
+    RpkArchiveManager rpkManager,
+    out string scriptText)
+  {
+    scriptText = string.Empty;
+    string normalized = NormalizeSptAssetPathReference(particleDefinitionPath);
+    if (normalized.Length == 0)
+    {
+      return false;
+    }
+
+    string? filePath = TryResolveEntityModelPath(entityRoot, normalized);
+    if (filePath != null)
+    {
+      try
+      {
+        byte[] bytes = File.ReadAllBytes(filePath);
+        scriptText = DecodeParticleScriptText(bytes);
+        if (scriptText.Length > 0)
+        {
+          return true;
+        }
+      }
+      catch
+      {
+      }
+    }
+
+    string? archivePath = NormalizeArchiveAssetPath(normalized, ".spt");
+    if (archivePath != null && rpkManager.TryReadAsset(archivePath, out byte[] archiveBytes))
+    {
+      scriptText = DecodeParticleScriptText(archiveBytes);
+      return scriptText.Length > 0;
+    }
+
+    return false;
+  }
+
+  private static string DecodeParticleScriptText(byte[] bytes)
+  {
+    if (bytes.Length == 0)
+    {
+      return string.Empty;
+    }
+
+    string ascii = Encoding.ASCII.GetString(bytes);
+    if (ascii.IndexOf("entity_file", StringComparison.OrdinalIgnoreCase) >= 0)
+    {
+      return ascii;
+    }
+
+    try
+    {
+      Encoding euckr = Encoding.GetEncoding(949);
+      return euckr.GetString(bytes);
+    }
+    catch
+    {
+      return ascii;
+    }
+  }
+
+  private static ParticleScriptData ParseParticleScript(string scriptText)
+  {
+    HashSet<string> references = new(StringComparer.OrdinalIgnoreCase);
+    uint alphaType = DefaultParticleAlphaType;
+    bool disableDepthTest = false;
+
+    using StringReader reader = new(scriptText);
+    string? line;
+    while ((line = reader.ReadLine()) != null)
+    {
+      int commentStart = line.IndexOf("//", StringComparison.Ordinal);
+      if (commentStart >= 0)
+      {
+        line = line[..commentStart];
+      }
+
+      line = line.Trim();
+      if (line.Length == 0)
+      {
+        continue;
+      }
+
+      if (line.StartsWith("entity_file", StringComparison.OrdinalIgnoreCase))
+      {
+        string tail = line["entity_file".Length..].Trim();
+        if (tail.Length == 0)
+        {
+          continue;
+        }
+
+        string token = ReadSptPathToken(tail);
+        string normalized = NormalizeSptAssetPathReference(token);
+        if (normalized.Length > 0)
+        {
+          references.Add(normalized);
+        }
+
+        continue;
+      }
+
+      if (line.StartsWith("alpha_type", StringComparison.OrdinalIgnoreCase))
+      {
+        string tail = line["alpha_type".Length..].Trim();
+        string token = ReadSptPathToken(tail);
+        if (int.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsedAlphaType)
+          && parsedAlphaType >= 0)
+        {
+          alphaType = (uint)parsedAlphaType;
+        }
+
+        continue;
+      }
+
+      if (line.StartsWith("z_disable", StringComparison.OrdinalIgnoreCase))
+      {
+        string tail = line["z_disable".Length..].Trim();
+        if (tail.Length == 0)
+        {
+          disableDepthTest = true;
+          continue;
+        }
+
+        string token = ReadSptPathToken(tail);
+        if (int.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsedValue))
+        {
+          disableDepthTest = parsedValue != 0;
+        }
+        else
+        {
+          disableDepthTest = true;
+        }
+      }
+    }
+
+    return new ParticleScriptData(references.ToArray(), alphaType, disableDepthTest);
+  }
+
+  private static EntityMeshData ApplyParticleScriptOverrides(EntityMeshData model, uint alphaType)
+  {
+    MaterialDefinition[] materials = model.Materials;
+    if (materials.Length > 0)
+    {
+      MaterialDefinition[] overriddenMaterials = new MaterialDefinition[materials.Length];
+      for (int materialIndex = 0; materialIndex < materials.Length; ++materialIndex)
+      {
+        MaterialDefinition sourceMaterial = materials[materialIndex];
+        MaterialLayerDefinition[] sourceLayers = sourceMaterial.Layers;
+        if (sourceLayers.Length == 0)
+        {
+          overriddenMaterials[materialIndex] = sourceMaterial;
+          continue;
+        }
+
+        MaterialLayerDefinition[] overriddenLayers = new MaterialLayerDefinition[sourceLayers.Length];
+        for (int layerIndex = 0; layerIndex < sourceLayers.Length; ++layerIndex)
+        {
+          MaterialLayerDefinition sourceLayer = sourceLayers[layerIndex];
+          overriddenLayers[layerIndex] = sourceLayer with
+          {
+            AlphaType = alphaType,
+            Argb = 0xFFFFFFFFu,
+            LayerFlags = 0u,
+          };
+        }
+
+        overriddenMaterials[materialIndex] = sourceMaterial with { Layers = overriddenLayers };
+      }
+
+      materials = overriddenMaterials;
+    }
+
+    int alphaCount = model.MaterialAlphaTypes.Length;
+    if (alphaCount == 0)
+    {
+      alphaCount = model.MaterialSurfaceIds.Length;
+    }
+    if (alphaCount == 0)
+    {
+      alphaCount = model.Materials.Length;
+    }
+
+    uint[] materialAlphaTypes;
+    if (alphaCount > 0)
+    {
+      materialAlphaTypes = new uint[alphaCount];
+      for (int index = 0; index < materialAlphaTypes.Length; ++index)
+      {
+        materialAlphaTypes[index] = alphaType;
+      }
+    }
+    else
+    {
+      materialAlphaTypes = Array.Empty<uint>();
+    }
+
+    return new EntityMeshData(
+      model.Name,
+      model.Vertices,
+      model.MaterialSpans,
+      materials,
+      model.MaterialSurfaceIds,
+      materialAlphaTypes,
+      model.SurfaceTextures);
+  }
+
+  private static string ReadSptPathToken(string text)
+  {
+    text = text.Trim();
+    if (text.Length == 0)
+    {
+      return string.Empty;
+    }
+
+    if (text[0] == '"' || text[0] == '\'')
+    {
+      char quote = text[0];
+      int closingQuote = text.IndexOf(quote, 1);
+      string quoted = closingQuote > 0 ? text[1..closingQuote] : text[1..];
+      return quoted.Trim().TrimEnd(';', ',');
+    }
+
+    int splitIndex = text.IndexOfAny([' ', '\t', ';', ',']);
+    if (splitIndex >= 0)
+    {
+      return text[..splitIndex].Trim();
+    }
+
+    return text.Trim();
+  }
+
+  private static string NormalizeSptAssetPathReference(string path)
+  {
+    string normalized = path.Trim().Trim('"', '\'');
+    if (normalized.Length == 0)
+    {
+      return string.Empty;
+    }
+
+    normalized = normalized.Replace('/', '\\');
+    if (normalized.StartsWith(".\\", StringComparison.Ordinal))
+    {
+      normalized = normalized[2..];
+    }
+
+    const string mapEntityPrefix = "map\\entity\\";
+    if (normalized.StartsWith("\\" + mapEntityPrefix, StringComparison.OrdinalIgnoreCase))
+    {
+      normalized = normalized[(mapEntityPrefix.Length + 1)..];
+    }
+    else if (normalized.StartsWith(mapEntityPrefix, StringComparison.OrdinalIgnoreCase))
+    {
+      normalized = normalized[mapEntityPrefix.Length..];
+    }
+
+    if (!normalized.StartsWith("\\", StringComparison.Ordinal))
+    {
+      normalized = "\\" + normalized;
+    }
+
+    return normalized;
   }
 
   private static string[] ResolveSkyPaths(string bspPath, SkySourceMode skySourceMode)
@@ -2344,7 +2704,7 @@ public static class BspLoader
     }
 
     ReadEntityAniObject[] entityObjects = ReadEntityAniObjects(objectBytes);
-    NumericsMatrix4[] objectMatrices = BuildEntityObjectMatrices(entityObjects);
+    NumericsMatrix4[] objectMatrices = BuildEntityObjectMatrices(entityObjects, trackBytes);
 
     R3MaterialData materialData = R3MaterialData.Empty;
     try
@@ -2556,19 +2916,20 @@ public static class BspLoader
     return objects;
   }
 
-  private static NumericsMatrix4[] BuildEntityObjectMatrices(ReadEntityAniObject[] objects)
+  private static NumericsMatrix4[] BuildEntityObjectMatrices(ReadEntityAniObject[] objects, byte[] trackBytes)
   {
     if (objects.Length == 0)
     {
       return Array.Empty<NumericsMatrix4>();
     }
 
+    EntityObjectTracks[] objectTracks = BuildEntityObjectTracks(objects, trackBytes);
     NumericsMatrix4[] legacyWorldMatrices = new NumericsMatrix4[objects.Length];
     byte[] visitState = new byte[objects.Length];
 
     for (int index = 0; index < objects.Length; ++index)
     {
-      _ = ResolveLegacyObjectMatrix(index, objects, legacyWorldMatrices, visitState);
+      _ = ResolveLegacyObjectMatrix(index, objects, objectTracks, legacyWorldMatrices, visitState);
     }
 
     NumericsMatrix4[] convertedMatrices = new NumericsMatrix4[objects.Length];
@@ -2583,6 +2944,7 @@ public static class BspLoader
   private static NumericsMatrix4 ResolveLegacyObjectMatrix(
     int objectIndex,
     ReadEntityAniObject[] objects,
+    EntityObjectTracks[] objectTracks,
     NumericsMatrix4[] cache,
     byte[] visitState)
   {
@@ -2604,26 +2966,312 @@ public static class BspLoader
     int parentIndex = obj.Parent - 1;
     if (parentIndex >= 0 && parentIndex < objects.Length && parentIndex != objectIndex)
     {
-      parentMatrix = ResolveLegacyObjectMatrix(parentIndex, objects, cache, visitState);
+      parentMatrix = ResolveLegacyObjectMatrix(parentIndex, objects, objectTracks, cache, visitState);
     }
 
-    NumericsMatrix4 localMatrix = BuildEntityObjectLocalMatrix(obj);
+    NumericsMatrix4 localMatrix = BuildEntityObjectLocalMatrix(obj, objectTracks[objectIndex], 0.0f);
     NumericsMatrix4 worldMatrix = LegacyMatrixMultiply(parentMatrix, localMatrix);
     cache[objectIndex] = worldMatrix;
     visitState[objectIndex] = 2;
     return worldMatrix;
   }
 
-  private static NumericsMatrix4 BuildEntityObjectLocalMatrix(ReadEntityAniObject obj)
+  private static NumericsMatrix4 BuildEntityObjectLocalMatrix(ReadEntityAniObject obj, EntityObjectTracks tracks, float nowFrame)
   {
-    NumericsMatrix4 rotation = CreateLegacyQuaternionMatrix(obj.Quaternion);
-    NumericsMatrix4 scaleMatrix = BuildLegacyScaleMatrix(obj.Scale, obj.ScaleQuaternion);
+    if (tracks.PositionTracks.Length == 0 && tracks.RotationTracks.Length == 0 && tracks.ScaleTracks.Length == 0)
+    {
+      NumericsMatrix4 baseRotation = CreateLegacyQuaternionMatrix(obj.Quaternion);
+      NumericsMatrix4 baseScaleMatrix = BuildLegacyScaleMatrix(obj.Scale, obj.ScaleQuaternion);
+      NumericsMatrix4 baseLocal = LegacyMatrixMultiply(baseRotation, baseScaleMatrix);
+      baseLocal.M41 = obj.Position.X;
+      baseLocal.M42 = obj.Position.Y;
+      baseLocal.M43 = obj.Position.Z;
+      baseLocal.M44 = 1.0f;
+      return baseLocal;
+    }
+
+    Vector4 rotationQuat = obj.Quaternion;
+    Vector3 scale = obj.Scale;
+    Vector4 scaleQuaternion = obj.ScaleQuaternion;
+    Vector3 position = obj.Position;
+
+    if (tracks.RotationTracks.Length > 0)
+    {
+      rotationQuat = SampleRotationTrack(tracks.RotationTracks, nowFrame);
+    }
+
+    if (tracks.ScaleTracks.Length > 0)
+    {
+      SampleScaleTrack(tracks.ScaleTracks, nowFrame, out scale, out scaleQuaternion);
+    }
+
+    if (tracks.PositionTracks.Length > 0)
+    {
+      position = SamplePositionTrack(tracks.PositionTracks, nowFrame);
+    }
+
+    NumericsMatrix4 rotation = CreateLegacyQuaternionMatrix(rotationQuat);
+    NumericsMatrix4 scaleMatrix = BuildLegacyScaleMatrix(scale, scaleQuaternion);
     NumericsMatrix4 local = LegacyMatrixMultiply(rotation, scaleMatrix);
-    local.M41 = obj.Position.X;
-    local.M42 = obj.Position.Y;
-    local.M43 = obj.Position.Z;
+    local.M41 = position.X;
+    local.M42 = position.Y;
+    local.M43 = position.Z;
     local.M44 = 1.0f;
     return local;
+  }
+
+  private static EntityObjectTracks[] BuildEntityObjectTracks(ReadEntityAniObject[] objects, byte[] trackBytes)
+  {
+    if (objects.Length == 0)
+    {
+      return Array.Empty<EntityObjectTracks>();
+    }
+
+    EntityObjectTracks[] tracks = new EntityObjectTracks[objects.Length];
+    for (int index = 0; index < objects.Length; ++index)
+    {
+      ReadEntityAniObject obj = objects[index];
+      PositionTrack[] positionTracks = ReadPositionTracks(trackBytes, obj.PositionOffset, obj.PositionTrackCount);
+      RotationTrack[] rotationTracks = ReadRotationTracks(trackBytes, obj.RotationOffset, obj.RotationTrackCount);
+      ScaleTrack[] scaleTracks = ReadScaleTracks(trackBytes, obj.ScaleOffset, obj.ScaleTrackCount);
+      tracks[index] = new EntityObjectTracks(positionTracks, rotationTracks, scaleTracks);
+    }
+
+    return tracks;
+  }
+
+  private static PositionTrack[] ReadPositionTracks(byte[] trackBytes, uint offset, int count)
+  {
+    if (count <= 0 || offset >= trackBytes.Length)
+    {
+      return Array.Empty<PositionTrack>();
+    }
+
+    const int entrySize = 16;
+    long totalSize = (long)count * entrySize;
+    if (totalSize <= 0 || offset + totalSize > trackBytes.Length)
+    {
+      return Array.Empty<PositionTrack>();
+    }
+
+    PositionTrack[] tracks = new PositionTrack[count];
+    int cursor = (int)offset;
+    for (int index = 0; index < count; ++index)
+    {
+      float frame = BitConverter.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(trackBytes.AsSpan(cursor, 4)));
+      float x = BitConverter.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(trackBytes.AsSpan(cursor + 4, 4)));
+      float y = BitConverter.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(trackBytes.AsSpan(cursor + 8, 4)));
+      float z = BitConverter.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(trackBytes.AsSpan(cursor + 12, 4)));
+      tracks[index] = new PositionTrack(frame, new Vector3(x, y, z));
+      cursor += entrySize;
+    }
+
+    return tracks;
+  }
+
+  private static RotationTrack[] ReadRotationTracks(byte[] trackBytes, uint offset, int count)
+  {
+    if (count <= 0 || offset >= trackBytes.Length)
+    {
+      return Array.Empty<RotationTrack>();
+    }
+
+    const int entrySize = 20;
+    long totalSize = (long)count * entrySize;
+    if (totalSize <= 0 || offset + totalSize > trackBytes.Length)
+    {
+      return Array.Empty<RotationTrack>();
+    }
+
+    RotationTrack[] tracks = new RotationTrack[count];
+    int cursor = (int)offset;
+    for (int index = 0; index < count; ++index)
+    {
+      float frame = BitConverter.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(trackBytes.AsSpan(cursor, 4)));
+      float x = BitConverter.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(trackBytes.AsSpan(cursor + 4, 4)));
+      float y = BitConverter.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(trackBytes.AsSpan(cursor + 8, 4)));
+      float z = BitConverter.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(trackBytes.AsSpan(cursor + 12, 4)));
+      float w = BitConverter.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(trackBytes.AsSpan(cursor + 16, 4)));
+      tracks[index] = new RotationTrack(frame, new Vector4(x, y, z, w));
+      cursor += entrySize;
+    }
+
+    return tracks;
+  }
+
+  private static ScaleTrack[] ReadScaleTracks(byte[] trackBytes, uint offset, int count)
+  {
+    if (count <= 0 || offset >= trackBytes.Length)
+    {
+      return Array.Empty<ScaleTrack>();
+    }
+
+    const int entrySize = 32;
+    long totalSize = (long)count * entrySize;
+    if (totalSize <= 0 || offset + totalSize > trackBytes.Length)
+    {
+      return Array.Empty<ScaleTrack>();
+    }
+
+    ScaleTrack[] tracks = new ScaleTrack[count];
+    int cursor = (int)offset;
+    for (int index = 0; index < count; ++index)
+    {
+      float frame = BitConverter.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(trackBytes.AsSpan(cursor, 4)));
+      float sx = BitConverter.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(trackBytes.AsSpan(cursor + 4, 4)));
+      float sy = BitConverter.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(trackBytes.AsSpan(cursor + 8, 4)));
+      float sz = BitConverter.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(trackBytes.AsSpan(cursor + 12, 4)));
+      float qx = BitConverter.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(trackBytes.AsSpan(cursor + 16, 4)));
+      float qy = BitConverter.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(trackBytes.AsSpan(cursor + 20, 4)));
+      float qz = BitConverter.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(trackBytes.AsSpan(cursor + 24, 4)));
+      float qw = BitConverter.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(trackBytes.AsSpan(cursor + 28, 4)));
+      tracks[index] = new ScaleTrack(frame, new Vector3(sx, sy, sz), new Vector4(qx, qy, qz, qw));
+      cursor += entrySize;
+    }
+
+    return tracks;
+  }
+
+  private static Vector3 SamplePositionTrack(PositionTrack[] tracks, float nowFrame)
+  {
+    if (tracks.Length == 0)
+    {
+      return Vector3.Zero;
+    }
+
+    if (tracks.Length == 1)
+    {
+      return tracks[0].Position;
+    }
+
+    GetTrackFrameIndices(tracks.Length, index => tracks[index].Frame, nowFrame, out int root, out int next, out float alpha);
+    if (root == next)
+    {
+      return tracks[root].Position;
+    }
+
+    return Vector3.Lerp(tracks[root].Position, tracks[next].Position, alpha);
+  }
+
+  private static Vector4 SampleRotationTrack(RotationTrack[] tracks, float nowFrame)
+  {
+    if (tracks.Length == 0)
+    {
+      return Vector4.Zero;
+    }
+
+    if (tracks.Length == 1)
+    {
+      return tracks[0].Quaternion;
+    }
+
+    GetTrackFrameIndices(tracks.Length, index => tracks[index].Frame, nowFrame, out int root, out int next, out float alpha);
+    if (root == next)
+    {
+      return tracks[root].Quaternion;
+    }
+
+    Vector4 rootQ = tracks[root].Quaternion;
+    Vector4 nextQ = tracks[next].Quaternion;
+    NumericsQuaternion q0 = NumericsQuaternion.Normalize(new NumericsQuaternion(rootQ.X, rootQ.Y, rootQ.Z, rootQ.W));
+    NumericsQuaternion q1 = NumericsQuaternion.Normalize(new NumericsQuaternion(nextQ.X, nextQ.Y, nextQ.Z, nextQ.W));
+    NumericsQuaternion q = NumericsQuaternion.Normalize(NumericsQuaternion.Slerp(q0, q1, alpha));
+    if (!float.IsFinite(q.X) || !float.IsFinite(q.Y) || !float.IsFinite(q.Z) || !float.IsFinite(q.W))
+    {
+      return rootQ;
+    }
+
+    return new Vector4(q.X, q.Y, q.Z, q.W);
+  }
+
+  private static void SampleScaleTrack(ScaleTrack[] tracks, float nowFrame, out Vector3 scale, out Vector4 scaleQuaternion)
+  {
+    scale = Vector3.One;
+    scaleQuaternion = new Vector4(0.0f, 0.0f, 0.0f, 1.0f);
+    if (tracks.Length == 0)
+    {
+      return;
+    }
+
+    if (tracks.Length == 1)
+    {
+      scale = tracks[0].Scale;
+      scaleQuaternion = tracks[0].ScaleQuaternion;
+      return;
+    }
+
+    GetTrackFrameIndices(tracks.Length, index => tracks[index].Frame, nowFrame, out int root, out int next, out float alpha);
+    if (root == next)
+    {
+      scale = tracks[root].Scale;
+      scaleQuaternion = tracks[root].ScaleQuaternion;
+      return;
+    }
+
+    scale = Vector3.Lerp(tracks[root].Scale, tracks[next].Scale, alpha);
+
+    Vector4 rootQ = tracks[root].ScaleQuaternion;
+    Vector4 nextQ = tracks[next].ScaleQuaternion;
+    NumericsQuaternion q0 = NumericsQuaternion.Normalize(new NumericsQuaternion(rootQ.X, rootQ.Y, rootQ.Z, rootQ.W));
+    NumericsQuaternion q1 = NumericsQuaternion.Normalize(new NumericsQuaternion(nextQ.X, nextQ.Y, nextQ.Z, nextQ.W));
+    NumericsQuaternion q = NumericsQuaternion.Normalize(NumericsQuaternion.Slerp(q0, q1, alpha));
+    if (!float.IsFinite(q.X) || !float.IsFinite(q.Y) || !float.IsFinite(q.Z) || !float.IsFinite(q.W))
+    {
+      scaleQuaternion = rootQ;
+      return;
+    }
+
+    scaleQuaternion = new Vector4(q.X, q.Y, q.Z, q.W);
+  }
+
+  private static void GetTrackFrameIndices(
+    int keyCount,
+    Func<int, float> frameAccessor,
+    float nowFrame,
+    out int root,
+    out int next,
+    out float alpha)
+  {
+    root = -1;
+    next = -1;
+    alpha = 0.0f;
+
+    if (keyCount <= 0)
+    {
+      root = 0;
+      next = 0;
+      return;
+    }
+
+    for (int index = 0; index < keyCount - 1; ++index)
+    {
+      float rootFrame = frameAccessor(index);
+      float nextFrame = frameAccessor(index + 1);
+      if (rootFrame <= nowFrame && nextFrame > nowFrame)
+      {
+        root = index;
+        next = index + 1;
+        float denom = nextFrame - rootFrame;
+        if (MathF.Abs(denom) > 0.000001f)
+        {
+          alpha = (nowFrame - rootFrame) / denom;
+        }
+
+        if (!float.IsFinite(alpha))
+        {
+          alpha = 0.0f;
+        }
+        else
+        {
+          alpha = Math.Clamp(alpha, 0.0f, 1.0f);
+        }
+
+        return;
+      }
+    }
+
+    root = keyCount - 1;
+    next = keyCount - 1;
   }
 
   private static NumericsMatrix4 BuildLegacyScaleMatrix(Vector3 scale, Vector4 scaleQuaternion)
@@ -3143,6 +3791,8 @@ public static class BspLoader
 
   private readonly record struct ExtMapEntity(int EntityId, float Scale, Vector3 Position, float RotX, float RotY);
 
+  private readonly record struct ParticleScriptData(string[] EntityFileReferences, uint AlphaType, bool DisableDepthTest);
+
   private readonly record struct ReadEntityFace(ushort VertexCount, uint VertexStartId);
 
   private readonly record struct ReadEntityMatGroup(ushort FaceCount, uint FaceStartId, short MaterialId, ushort ObjectId);
@@ -3161,6 +3811,14 @@ public static class BspLoader
     uint PositionOffset,
     uint RotationOffset,
     uint ScaleOffset);
+
+  private readonly record struct PositionTrack(float Frame, Vector3 Position);
+  private readonly record struct RotationTrack(float Frame, Vector4 Quaternion);
+  private readonly record struct ScaleTrack(float Frame, Vector3 Scale, Vector4 ScaleQuaternion);
+  private readonly record struct EntityObjectTracks(
+    PositionTrack[] PositionTracks,
+    RotationTrack[] RotationTracks,
+    ScaleTrack[] ScaleTracks);
 
   private readonly record struct EntityCompHeader(ushort Type, Vector3 Position, float Scale, float UvMin, float UvMax);
 

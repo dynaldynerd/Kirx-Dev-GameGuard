@@ -37,6 +37,7 @@ internal sealed class MapViewerControl : UserControl
   private const int BlendShadow = 14;
   private const uint MaterialFlagLightMap = 0x00000001;
   private const uint MaterialAlphaFlagZWrite = 0x00002000;
+  private const uint MaterialAlphaFlagDisableDepthTest = 0x40000000;
   private const uint ExtDummyFlagFog = 0x00000002;
   private const uint MaterialLayerFlagEnvBump = 0x00008000;
   private const uint MaterialLayerFlagUvEnv = 0x00000001;
@@ -925,7 +926,7 @@ internal sealed class MapViewerControl : UserControl
               bumpTextureId,
               alphaType,
               0,
-              DecodeArgb(baseLayer.Argb),
+              ResolveLegacyLayerColor(material, 0),
               true,
               true,
               baseLayer,
@@ -955,7 +956,7 @@ internal sealed class MapViewerControl : UserControl
               0,
               alphaType,
               0,
-              DecodeArgb(layer.Argb),
+              ResolveLegacyLayerColor(material, layerIndex),
               true,
               true,
               layer,
@@ -1047,6 +1048,36 @@ internal sealed class MapViewerControl : UserControl
     float g = ((argb >> 8) & 0xFF) / 255.0f;
     float b = (argb & 0xFF) / 255.0f;
     return new Vector4(r, g, b, a);
+  }
+
+  private static Vector4 ResolveLegacyLayerColor(MaterialDefinition material, int layerIndex)
+  {
+    if (layerIndex < 0 || layerIndex >= material.Layers.Length)
+    {
+      return Vector4.One;
+    }
+
+    MaterialLayerDefinition layer = material.Layers[layerIndex];
+    Vector4 layerColor = DecodeArgb(layer.Argb);
+    bool baseLayerHasTintOrAlpha =
+      MathF.Abs(layerColor.X - 1.0f) > 0.001f
+      || MathF.Abs(layerColor.Y - 1.0f) > 0.001f
+      || MathF.Abs(layerColor.Z - 1.0f) > 0.001f
+      || MathF.Abs(layerColor.W - 1.0f) > 0.001f;
+
+    // Base layer is often neutral, but keep non-neutral ARGB so effect meshes
+    // (portal water/rings, etc.) do not disappear.
+    if (layerIndex == 0)
+    {
+      return baseLayerHasTintOrAlpha ? layerColor : Vector4.One;
+    }
+
+    MaterialLayerDefinition baseLayer = material.Layers[0];
+    bool shouldApplyArgb =
+      layer.Argb != baseLayer.Argb
+      || (layer.LayerFlags & MaterialLayerFlagAniAlphaFlicker) != 0;
+
+    return shouldApplyArgb ? layerColor : Vector4.One;
   }
 
   private int ResolveLayerTextureId(
@@ -1148,8 +1179,19 @@ internal sealed class MapViewerControl : UserControl
         int secondaryTextureId = _enableR3tTextures ? secondaryLayerState.TextureId : _checkerTexture;
         bool useEnvBump = _enableR3mMaterials && _enableR3tTextures && span.HasSecondaryLayerDefinition;
 
+        bool disableDepthTest = (span.AlphaType & MaterialAlphaFlagDisableDepthTest) != 0;
+        if (disableDepthTest)
+        {
+          GL.Disable(EnableCap.DepthTest);
+        }
+        else
+        {
+          GL.Enable(EnableCap.DepthTest);
+        }
+
         ApplyBlendState(span.AlphaType);
-        bool zWriteEnabled = (span.AlphaType & MaterialAlphaFlagZWrite) != 0 || (span.AlphaType & 0x0F) == BlendNone;
+        bool zWriteEnabled = !disableDepthTest
+          && ((span.AlphaType & MaterialAlphaFlagZWrite) != 0 || (span.AlphaType & 0x0F) == BlendNone);
         GL.DepthMask(zWriteEnabled);
         GL.Uniform1(_meshUniformUvChannel, span.UvChannel);
         GL.Uniform4(_meshUniformLayerColor, layerState.LayerColor);
@@ -1315,6 +1357,7 @@ internal sealed class MapViewerControl : UserControl
       }
 
       GL.ActiveTexture(TextureUnit.Texture0);
+      GL.Enable(EnableCap.DepthTest);
       GL.DepthMask(true);
       GL.Disable(EnableCap.Blend);
     }
@@ -2172,7 +2215,7 @@ internal sealed class MapViewerControl : UserControl
               bumpTextureId,
               alphaType,
               0,
-              DecodeArgb(baseLayer.Argb),
+              ResolveLegacyLayerColor(material, 0),
               true,
               true,
               baseLayer,
@@ -2201,7 +2244,7 @@ internal sealed class MapViewerControl : UserControl
                 0,
                 alphaType,
                 0,
-                DecodeArgb(layer.Argb),
+                ResolveLegacyLayerColor(material, layerIndex),
                 true,
                 true,
                 layer,
