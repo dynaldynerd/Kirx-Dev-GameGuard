@@ -12,6 +12,12 @@ public enum SkySourceMode
   Sky2 = 1,
 }
 
+public readonly record struct EntityArchiveCacheInfo(
+  string EntityRootPath,
+  int ArchiveCount,
+  int AssetCount,
+  bool WasCached);
+
 public static class BspLoader
 {
   private const int BspHeaderSize = 0x2AC;
@@ -23,9 +29,18 @@ public static class BspLoader
   private const uint ExpectedBspVersion = 39;
   private const uint ExpectedEbpVersion = 20;
   private const uint ExpectedR3eMagic = 113;
+  private const float ExpectedR3xVersion = 1.1f;
   private const uint MaterialFlagLightMap = 0x00000001;
+  private const uint ExtMatNoFogSky = 0x00000001;
+  private const uint ExtMatFogRange = 0x00000002;
+  private const uint ExtMatExistFirstFog = 0x00000004;
+  private const uint ExtMatExistLensFlare = 0x00000010;
+  private const int ExtMatLensFlareScaleCount = 16;
+  private const int ExtMatNameBytes = 128;
   private const int DefaultR3tSurfaceIdBase = 1;
   private const int LightmapR3tSurfaceIdBase = 0;
+  private static readonly object EntityArchiveCacheSync = new();
+  private static readonly Dictionary<string, RpkArchiveManager> EntityArchiveCache = new(StringComparer.OrdinalIgnoreCase);
   private static readonly uint[] R3tHeaderXorKey =
   [
     0x764D802E, 0xF0D1F82E, 0x81863FBD, 0x3F3F2C58,
@@ -37,6 +52,19 @@ public static class BspLoader
     0xF0C6F6E6, 0xB2E2DB79, 0xEB2E2E4B, 0xABCAD3D3,
     0x9CEDC7EA, 0x65D0D9C7, 0x35FAB448, 0x9B6A2E2E,
   ];
+
+  public static EntityArchiveCacheInfo PrewarmEntityArchives(string bspPath)
+  {
+    string resolvedBsp = Path.GetFullPath(bspPath);
+    string? entityRoot = TryResolveEntityRootPath(resolvedBsp);
+    if (entityRoot == null)
+    {
+      return new EntityArchiveCacheInfo(string.Empty, 0, 0, false);
+    }
+
+    RpkArchiveManager manager = GetOrCreateEntityArchiveManager(entityRoot, out bool wasCached);
+    return new EntityArchiveCacheInfo(entityRoot, manager.ArchiveCount, manager.AssetCount, wasCached);
+  }
 
   public static LoadedMap Load(string bspPath, string ebpPath, SkySourceMode skySourceMode = SkySourceMode.Sky2)
   {
@@ -56,6 +84,7 @@ public static class BspLoader
     MaterialData materialData = ReadMaterialData(resolvedBsp);
     BspData bsp = ReadBsp(resolvedBsp, materialData);
     ExtBspData ext = ReadExtBsp(resolvedEbp);
+    MapEnvironmentSettings environmentSettings = ReadMapEnvironmentSettings(resolvedBsp);
     R3TextureBlob[] lightmapTextures = ReadLightmapTextures(resolvedBsp);
     SkyData skyData = ReadSkyData(resolvedBsp, skySourceMode);
     EntityRenderData entityData = ReadEntityRenderData(resolvedBsp, ext.EntityDefinitions, ext.MapEntities);
@@ -68,6 +97,7 @@ public static class BspLoader
       Name = Path.GetFileNameWithoutExtension(resolvedBsp),
       BspPath = resolvedBsp,
       EbpPath = resolvedEbp,
+      Environment = environmentSettings,
       Bounds = bounds,
       BspTriangleVertices = bsp.TriangleVertices,
       BspRenderVertices = bsp.RenderVertices,
@@ -89,6 +119,7 @@ public static class BspLoader
       EntitySurfaceTextures = entityData.Mesh.SurfaceTextures,
       MapEntityModelCount = entityData.ModelCount,
       MapEntityInstanceCount = entityData.InstanceCount,
+      ParticleInstancePositions = entityData.ParticlePositions,
       CollisionVertices = ext.CollisionVertices,
       CollisionLines = ext.CollisionLines,
     };
@@ -334,6 +365,100 @@ public static class BspLoader
     }
 
     return Array.Empty<R3TextureBlob>();
+  }
+
+  private static MapEnvironmentSettings ReadMapEnvironmentSettings(string bspPath)
+  {
+    string? r3xPath = FindSiblingFileWithExtension(bspPath, ".r3x");
+    if (r3xPath == null)
+    {
+      return MapEnvironmentSettings.Default;
+    }
+
+    try
+    {
+      using FileStream stream = File.OpenRead(r3xPath);
+      using BinaryReader reader = new(stream);
+
+      if (stream.Length < 8)
+      {
+        return MapEnvironmentSettings.Default;
+      }
+
+      float version = reader.ReadSingle();
+      if (MathF.Abs(version - ExpectedR3xVersion) > 0.0001f)
+      {
+        return MapEnvironmentSettings.Default;
+      }
+
+      uint flags = reader.ReadUInt32();
+      float fogStart = reader.ReadSingle();
+      float fogEnd = reader.ReadSingle();
+      uint fogColorArgb = reader.ReadUInt32();
+
+      _ = reader.ReadSingle(); // FogStart2
+      _ = reader.ReadSingle(); // FogEnd2
+      _ = reader.ReadUInt32(); // FogColor2
+      _ = reader.ReadSingle(); // Fog2 BBMin.X
+      _ = reader.ReadSingle(); // Fog2 BBMin.Y
+      _ = reader.ReadSingle(); // Fog2 BBMin.Z
+      _ = reader.ReadSingle(); // Fog2 BBMax.X
+      _ = reader.ReadSingle(); // Fog2 BBMax.Y
+      _ = reader.ReadSingle(); // Fog2 BBMax.Z
+
+      for (int i = 0; i < ExtMatLensFlareScaleCount; ++i)
+      {
+        _ = reader.ReadSingle();
+      }
+
+      _ = ReadExactBytes(reader, ExtMatNameBytes, "R3X lens texture name");
+      float lensX = reader.ReadSingle();
+      float lensY = reader.ReadSingle();
+      float lensZ = reader.ReadSingle();
+      _ = ReadExactBytes(reader, ExtMatNameBytes, "R3X environment entity name");
+      _ = reader.ReadUInt32(); // EnvId
+
+      bool fogEnabled = (flags & ExtMatExistFirstFog) != 0;
+      if (fogEnabled)
+      {
+        if (!float.IsFinite(fogStart) || fogStart <= 0.0f)
+        {
+          fogStart = 5.0f;
+        }
+
+        if (!float.IsFinite(fogEnd) || fogEnd <= fogStart)
+        {
+          fogEnd = MathF.Max(5000.0f, fogStart + 1.0f);
+        }
+      }
+      else
+      {
+        fogStart = 5.0f;
+        fogEnd = 5000.0f;
+      }
+
+      return new MapEnvironmentSettings(
+        fogEnabled,
+        fogStart,
+        fogEnd,
+        DecodeRgbFromArgb(fogColorArgb),
+        (flags & ExtMatFogRange) != 0,
+        (flags & ExtMatNoFogSky) != 0,
+        (flags & ExtMatExistLensFlare) != 0,
+        new Vector3(lensX, lensY, lensZ));
+    }
+    catch
+    {
+      return MapEnvironmentSettings.Default;
+    }
+  }
+
+  private static Vector3 DecodeRgbFromArgb(uint argb)
+  {
+    float r = ((argb >> 16) & 0xFF) / 255.0f;
+    float g = ((argb >> 8) & 0xFF) / 255.0f;
+    float b = (argb & 0xFF) / 255.0f;
+    return new Vector3(r, g, b);
   }
 
   private static string? FindSiblingFileWithExtension(string path, string extension)
@@ -1216,13 +1341,29 @@ public static class BspLoader
       return EntityRenderData.Empty;
     }
 
+    List<Vector3> particlePositions = new();
+    for (int index = 0; index < mapEntities.Length; ++index)
+    {
+      ExtMapEntity instance = mapEntities[index];
+      int entityId = instance.EntityId;
+      if (entityId < 0 || entityId >= entityDefinitions.Length)
+      {
+        continue;
+      }
+
+      if (entityDefinitions[entityId].IsParticle && IsFinite(instance.Position))
+      {
+        particlePositions.Add(instance.Position);
+      }
+    }
+
     string? entityRoot = TryResolveEntityRootPath(bspPath);
     if (entityRoot == null)
     {
-      return EntityRenderData.Empty;
+      return new EntityRenderData(RenderMeshData.Empty, 0, 0, particlePositions.ToArray());
     }
 
-    RpkArchiveManager rpkManager = new(entityRoot);
+    RpkArchiveManager rpkManager = GetOrCreateEntityArchiveManager(entityRoot, out _);
     Dictionary<int, EntityMeshData> modelsById = new();
     int instanceCount = 0;
 
@@ -1275,11 +1416,11 @@ public static class BspLoader
 
     if (modelsById.Count == 0 || instanceCount == 0)
     {
-      return EntityRenderData.Empty;
+      return new EntityRenderData(RenderMeshData.Empty, 0, 0, particlePositions.ToArray());
     }
 
     RenderMeshData combined = BuildCombinedEntityMesh(modelsById, mapEntities);
-    return new EntityRenderData(combined, modelsById.Count, instanceCount);
+    return new EntityRenderData(combined, modelsById.Count, instanceCount, particlePositions.ToArray());
   }
 
   private static string[] ResolveSkyPaths(string bspPath, SkySourceMode skySourceMode)
@@ -1324,6 +1465,24 @@ public static class BspLoader
     }
 
     return Array.Empty<string>();
+  }
+
+  private static RpkArchiveManager GetOrCreateEntityArchiveManager(string entityRoot, out bool wasCached)
+  {
+    string cacheKey = Path.GetFullPath(entityRoot).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+    lock (EntityArchiveCacheSync)
+    {
+      if (EntityArchiveCache.TryGetValue(cacheKey, out RpkArchiveManager? cached))
+      {
+        wasCached = true;
+        return cached;
+      }
+
+      RpkArchiveManager created = new(cacheKey);
+      EntityArchiveCache[cacheKey] = created;
+      wasCached = false;
+      return created;
+    }
   }
 
   private static string? TryResolveEntityRootPath(string bspPath)
@@ -2768,18 +2927,20 @@ public static class BspLoader
 
   private sealed class EntityRenderData
   {
-    public static EntityRenderData Empty { get; } = new(RenderMeshData.Empty, 0, 0);
+    public static EntityRenderData Empty { get; } = new(RenderMeshData.Empty, 0, 0, Array.Empty<Vector3>());
 
-    public EntityRenderData(RenderMeshData mesh, int modelCount, int instanceCount)
+    public EntityRenderData(RenderMeshData mesh, int modelCount, int instanceCount, Vector3[] particlePositions)
     {
       Mesh = mesh;
       ModelCount = modelCount;
       InstanceCount = instanceCount;
+      ParticlePositions = particlePositions;
     }
 
     public RenderMeshData Mesh { get; }
     public int ModelCount { get; }
     public int InstanceCount { get; }
+    public Vector3[] ParticlePositions { get; }
   }
 
   private sealed class EntityMeshData
@@ -2811,6 +2972,8 @@ public static class BspLoader
   private sealed class RpkArchiveManager
   {
     private readonly List<RpkArchive> _archives;
+    public int ArchiveCount => _archives.Count;
+    public int AssetCount { get; private set; }
 
     public RpkArchiveManager(string directoryPath)
     {
@@ -2824,7 +2987,9 @@ public static class BspLoader
       {
         try
         {
-          _archives.Add(new RpkArchive(path));
+          RpkArchive archive = new(path);
+          _archives.Add(archive);
+          AssetCount += archive.FileNodeCount;
         }
         catch
         {
@@ -2863,6 +3028,7 @@ public static class BspLoader
     private readonly uint[] _offset;
     private readonly MergeNode[] _nodes;
     private readonly int _headerSize;
+    public int FileNodeCount { get; }
 
     public RpkArchive(string archivePath)
     {
@@ -2904,6 +3070,16 @@ public static class BspLoader
       }
 
       _headerSize = 8 + count * 72;
+      int fileNodeCount = 0;
+      for (int i = 0; i < _offset.Length; ++i)
+      {
+        if (_offset[i] != 0xFFFFFFFF)
+        {
+          ++fileNodeCount;
+        }
+      }
+
+      FileNodeCount = fileNodeCount;
     }
 
     public bool TryReadAsset(string virtualPath, out byte[] bytes)

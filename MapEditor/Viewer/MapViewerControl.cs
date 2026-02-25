@@ -39,6 +39,8 @@ internal sealed class MapViewerControl : UserControl
   private const uint MaterialLayerFlagEnvBump = 0x00008000;
   private const uint MaterialLayerFlagAniAlphaFlicker = 0x00000400;
   private const float SkyExposure = 1.18f;
+  private static readonly Vector3 DefaultClearColor = new(0.05f, 0.06f, 0.08f);
+  private const int MaxDynamicLights = 4;
 
   private readonly GLControlWinForms _glControl;
   private readonly System.Windows.Forms.Timer _renderTimer;
@@ -58,6 +60,10 @@ internal sealed class MapViewerControl : UserControl
   private float _sprintMultiplier = 1200f / 350f;
   private bool _showCollisionOverlay = true;
   private bool _showGrid = true;
+  private bool _enableDynamicLighting = true;
+  private bool _enableHeadlight = true;
+  private float _headlightRadius = 4500f;
+  private float _headlightIntensity = 0.85f;
 
   private bool _glReady;
   private bool _capturingLook;
@@ -73,6 +79,17 @@ internal sealed class MapViewerControl : UserControl
   private int _meshUniformUvChannel;
   private int _meshUniformLayerColor;
   private int _meshUniformUseVertexLighting;
+  private int _meshUniformAmbientStrength;
+  private int _meshUniformDirLightDirection;
+  private int _meshUniformDirLightColor;
+  private int _meshUniformPointLightCount;
+  private int[] _meshUniformPointLightPosRadius = Array.Empty<int>();
+  private int[] _meshUniformPointLightColorIntensity = Array.Empty<int>();
+  private int _meshUniformCameraPos;
+  private int _meshUniformFogEnabled;
+  private int _meshUniformFogColor;
+  private int _meshUniformFogStart;
+  private int _meshUniformFogEnd;
   private int _skyUniformMvp;
   private int _skyUniformTexture;
   private int _skyUniformExposure;
@@ -95,6 +112,13 @@ internal sealed class MapViewerControl : UserControl
   private int _wallVertexCount;
   private int _wallUniformMvp;
   private int _wallUniformColor;
+  private int _particleProgram;
+  private int _particleVao;
+  private int _particleVbo;
+  private int _particleVertexCount;
+  private int _particleUniformMvp;
+  private int _particleUniformColor;
+  private bool _showParticleMarkers = true;
 
   private int _clipDebugProgram;
   private int _checkerTexture;
@@ -141,6 +165,20 @@ internal sealed class MapViewerControl : UserControl
   {
     get => _showGrid;
     set => _showGrid = value;
+  }
+
+  [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+  public bool ShowParticleMarkers
+  {
+    get => _showParticleMarkers;
+    set => _showParticleMarkers = value;
+  }
+
+  [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+  public bool EnableDynamicLighting
+  {
+    get => _enableDynamicLighting;
+    set => _enableDynamicLighting = value;
   }
 
   public MapViewerControl()
@@ -212,7 +250,7 @@ internal sealed class MapViewerControl : UserControl
   private void OnGlLoad(object? sender, EventArgs e)
   {
     _glControl.MakeCurrent();
-    GL.ClearColor(0.05f, 0.06f, 0.08f, 1f);
+    GL.ClearColor(DefaultClearColor.X, DefaultClearColor.Y, DefaultClearColor.Z, 1f);
     GL.Enable(EnableCap.DepthTest);
     GL.Enable(EnableCap.CullFace);
     GL.CullFace(TriangleFace.Back);
@@ -223,6 +261,22 @@ internal sealed class MapViewerControl : UserControl
     _meshUniformUvChannel = GL.GetUniformLocation(_meshProgram, "uUvChannel");
     _meshUniformLayerColor = GL.GetUniformLocation(_meshProgram, "uLayerColor");
     _meshUniformUseVertexLighting = GL.GetUniformLocation(_meshProgram, "uUseVertexLighting");
+    _meshUniformAmbientStrength = GL.GetUniformLocation(_meshProgram, "uAmbientStrength");
+    _meshUniformDirLightDirection = GL.GetUniformLocation(_meshProgram, "uDirLightDirection");
+    _meshUniformDirLightColor = GL.GetUniformLocation(_meshProgram, "uDirLightColor");
+    _meshUniformPointLightCount = GL.GetUniformLocation(_meshProgram, "uPointLightCount");
+    _meshUniformCameraPos = GL.GetUniformLocation(_meshProgram, "uCameraPos");
+    _meshUniformFogEnabled = GL.GetUniformLocation(_meshProgram, "uFogEnabled");
+    _meshUniformFogColor = GL.GetUniformLocation(_meshProgram, "uFogColor");
+    _meshUniformFogStart = GL.GetUniformLocation(_meshProgram, "uFogStart");
+    _meshUniformFogEnd = GL.GetUniformLocation(_meshProgram, "uFogEnd");
+    _meshUniformPointLightPosRadius = new int[MaxDynamicLights];
+    _meshUniformPointLightColorIntensity = new int[MaxDynamicLights];
+    for (int i = 0; i < MaxDynamicLights; ++i)
+    {
+      _meshUniformPointLightPosRadius[i] = GL.GetUniformLocation(_meshProgram, $"uPointLightPosRadius[{i}]");
+      _meshUniformPointLightColorIntensity[i] = GL.GetUniformLocation(_meshProgram, $"uPointLightColorIntensity[{i}]");
+    }
     _skyProgram = CreateSkyShaderProgram();
     _skyUniformMvp = GL.GetUniformLocation(_skyProgram, "uMvp");
     _skyUniformTexture = GL.GetUniformLocation(_skyProgram, "uTexture0");
@@ -235,6 +289,9 @@ internal sealed class MapViewerControl : UserControl
     _wallProgram = CreateWallShaderProgram();
     _wallUniformMvp = GL.GetUniformLocation(_wallProgram, "uMvp");
     _wallUniformColor = GL.GetUniformLocation(_wallProgram, "uColor");
+    _particleProgram = CreateParticleShaderProgram();
+    _particleUniformMvp = GL.GetUniformLocation(_particleProgram, "uMvp");
+    _particleUniformColor = GL.GetUniformLocation(_particleProgram, "uColor");
 
     _clipDebugProgram = CreateClipDebugShaderProgram();
 
@@ -261,6 +318,13 @@ internal sealed class MapViewerControl : UserControl
     GL.BindBuffer(BufferTarget.ArrayBuffer, _wallVbo);
     GL.EnableVertexAttribArray(0);
     GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 12, 0);
+    _particleVao = GL.GenVertexArray();
+    _particleVbo = GL.GenBuffer();
+    GL.BindVertexArray(_particleVao);
+    GL.BindBuffer(BufferTarget.ArrayBuffer, _particleVbo);
+    GL.EnableVertexAttribArray(0);
+    GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 12, 0);
+    GL.Enable(EnableCap.ProgramPointSize);
 
     _glReady = true;
     UploadGeometry();
@@ -366,6 +430,8 @@ internal sealed class MapViewerControl : UserControl
 
   private void Render()
   {
+    Vector3 clearColor = GetMapClearColor();
+    GL.ClearColor(clearColor.X, clearColor.Y, clearColor.Z, 1.0f);
     GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
     float aspect = Math.Max(0.0001f, (float)_glControl.ClientSize.Width / Math.Max(1f, _glControl.ClientSize.Height));
@@ -411,6 +477,19 @@ internal sealed class MapViewerControl : UserControl
       DrawMesh(_entityVao, _entityVertexCount, _entityDrawSpans, ref mvp);
     }
 
+    if (_showParticleMarkers && _particleVertexCount > 0)
+    {
+      GL.Enable(EnableCap.DepthTest);
+      GL.Enable(EnableCap.Blend);
+      GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.One);
+      GL.UseProgram(_particleProgram);
+      GL.UniformMatrix4(_particleUniformMvp, true, ref mvp);
+      GL.Uniform4(_particleUniformColor, new Vector4(0.45f, 0.78f, 1.0f, 0.78f));
+      GL.BindVertexArray(_particleVao);
+      GL.DrawArrays(PrimitiveType.Points, 0, _particleVertexCount);
+      GL.Disable(EnableCap.Blend);
+    }
+
     if (_showCollisionOverlay && _wallVertexCount > 0)
     {
       GL.Enable(EnableCap.DepthTest);
@@ -442,6 +521,31 @@ internal sealed class MapViewerControl : UserControl
     GL.DrawArrays(PrimitiveType.Lines, 0, 4);
   }
 
+  private Vector3 GetMapClearColor()
+  {
+    if (_map == null)
+    {
+      return DefaultClearColor;
+    }
+
+    MapEnvironmentSettings env = _map.Environment;
+    if (!env.FogEnabled)
+    {
+      return DefaultClearColor;
+    }
+
+    Vector3 fog = env.FogColor;
+    if (!IsFinite(fog))
+    {
+      return DefaultClearColor;
+    }
+
+    return new Vector3(
+      Math.Clamp(fog.X, 0.0f, 1.0f),
+      Math.Clamp(fog.Y, 0.0f, 1.0f),
+      Math.Clamp(fog.Z, 0.0f, 1.0f));
+  }
+
   private void UploadGeometry()
   {
     if (_map == null)
@@ -449,6 +553,7 @@ internal sealed class MapViewerControl : UserControl
       _meshVertexCount = 0;
       _skyVertexCount = 0;
       _entityVertexCount = 0;
+      _particleVertexCount = 0;
       _wallVertexCount = 0;
       _lineVertexCount = 0;
       _meshDrawSpans = Array.Empty<DrawSpan>();
@@ -500,6 +605,15 @@ internal sealed class MapViewerControl : UserControl
     GL.BindVertexArray(_lineVao);
     GL.BindBuffer(BufferTarget.ArrayBuffer, _lineVbo);
     GL.BufferData(BufferTarget.ArrayBuffer, lineVertices.Length * 12, lineVertices, BufferUsageHint.DynamicDraw);
+
+    _particleVertexCount = _map.ParticleInstancePositions.Length;
+    GL.BindVertexArray(_particleVao);
+    GL.BindBuffer(BufferTarget.ArrayBuffer, _particleVbo);
+    GL.BufferData(
+      BufferTarget.ArrayBuffer,
+      _particleVertexCount * 12,
+      _map.ParticleInstancePositions,
+      BufferUsageHint.DynamicDraw);
   }
 
   private void UploadMapMesh(LoadedMap map)
@@ -728,6 +842,8 @@ internal sealed class MapViewerControl : UserControl
 
     GL.UseProgram(_meshProgram);
     GL.UniformMatrix4(_meshUniformMvp, true, ref mvp);
+    ApplyDynamicLightingUniforms();
+    ApplyMapEnvironmentUniforms();
     GL.BindVertexArray(vao);
     if (spans.Length > 0)
     {
@@ -779,6 +895,120 @@ internal sealed class MapViewerControl : UserControl
       ApplyBlendState(0);
       GL.BindTexture(TextureTarget.Texture2D, _checkerTexture);
       GL.DrawArrays(PrimitiveType.Triangles, 0, vertexCount);
+    }
+  }
+
+  private void ApplyDynamicLightingUniforms()
+  {
+    if (!_enableDynamicLighting)
+    {
+      GL.Uniform1(_meshUniformAmbientStrength, 1.0f);
+      GL.Uniform3(_meshUniformDirLightDirection, Vector3.UnitY);
+      GL.Uniform3(_meshUniformDirLightColor, Vector3.Zero);
+      GL.Uniform1(_meshUniformPointLightCount, 0);
+      return;
+    }
+
+    // Approximate old R3 dynamic-light feel: moderate ambient + strong directional
+    // light, plus a camera-follow point light for close-up inspection.
+    GL.Uniform1(_meshUniformAmbientStrength, 0.44f);
+    GL.Uniform3(_meshUniformDirLightDirection, Vector3.Normalize(new Vector3(-0.28f, -0.91f, -0.22f)));
+    GL.Uniform3(_meshUniformDirLightColor, new Vector3(0.78f, 0.84f, 0.92f));
+
+    Span<Vector4> posRadius = stackalloc Vector4[MaxDynamicLights];
+    Span<Vector4> colorIntensity = stackalloc Vector4[MaxDynamicLights];
+    int lightCount = 0;
+
+    if (_enableHeadlight)
+    {
+      Vector3 headlightPos = _camera.Position + _camera.Forward * 160.0f;
+      posRadius[lightCount] = new Vector4(headlightPos.X, headlightPos.Y, headlightPos.Z, _headlightRadius);
+      colorIntensity[lightCount] = new Vector4(0.95f, 0.94f, 0.90f, _headlightIntensity);
+      ++lightCount;
+    }
+
+    Vector3 mapCenter = _currentBounds.Center + new Vector3(0.0f, MathF.Max(350.0f, _currentBounds.Size.Y * 0.35f), 0.0f);
+    float maxAxis = MathF.Max(_currentBounds.Size.X, MathF.Max(_currentBounds.Size.Y, _currentBounds.Size.Z));
+    posRadius[lightCount] = new Vector4(mapCenter.X, mapCenter.Y, mapCenter.Z, MathF.Max(1200.0f, maxAxis * 0.85f));
+    colorIntensity[lightCount] = new Vector4(0.30f, 0.36f, 0.44f, 0.35f);
+    ++lightCount;
+
+    GL.Uniform1(_meshUniformPointLightCount, lightCount);
+    for (int i = 0; i < MaxDynamicLights; ++i)
+    {
+      Vector4 pr = i < lightCount ? posRadius[i] : Vector4.Zero;
+      Vector4 ci = i < lightCount ? colorIntensity[i] : Vector4.Zero;
+      if (_meshUniformPointLightPosRadius[i] >= 0)
+      {
+        GL.Uniform4(_meshUniformPointLightPosRadius[i], pr);
+      }
+
+      if (_meshUniformPointLightColorIntensity[i] >= 0)
+      {
+        GL.Uniform4(_meshUniformPointLightColorIntensity[i], ci);
+      }
+    }
+  }
+
+  private void ApplyMapEnvironmentUniforms()
+  {
+    if (_meshUniformCameraPos >= 0)
+    {
+      GL.Uniform3(_meshUniformCameraPos, _camera.Position);
+    }
+
+    if (_map == null)
+    {
+      if (_meshUniformFogEnabled >= 0)
+      {
+        GL.Uniform1(_meshUniformFogEnabled, 0);
+      }
+
+      if (_meshUniformFogColor >= 0)
+      {
+        GL.Uniform3(_meshUniformFogColor, DefaultClearColor);
+      }
+
+      if (_meshUniformFogStart >= 0)
+      {
+        GL.Uniform1(_meshUniformFogStart, 5.0f);
+      }
+
+      if (_meshUniformFogEnd >= 0)
+      {
+        GL.Uniform1(_meshUniformFogEnd, 5000.0f);
+      }
+
+      return;
+    }
+
+    MapEnvironmentSettings env = _map.Environment;
+    bool fogEnabled = env.FogEnabled && env.FogEnd > env.FogStart && env.FogStart >= 0.0f;
+    float fogStart = fogEnabled ? env.FogStart : 5.0f;
+    float fogEnd = fogEnabled ? env.FogEnd : 5000.0f;
+    Vector3 fogColor = env.FogEnabled ? env.FogColor : DefaultClearColor;
+    fogColor.X = Math.Clamp(fogColor.X, 0.0f, 1.0f);
+    fogColor.Y = Math.Clamp(fogColor.Y, 0.0f, 1.0f);
+    fogColor.Z = Math.Clamp(fogColor.Z, 0.0f, 1.0f);
+
+    if (_meshUniformFogEnabled >= 0)
+    {
+      GL.Uniform1(_meshUniformFogEnabled, fogEnabled ? 1 : 0);
+    }
+
+    if (_meshUniformFogColor >= 0)
+    {
+      GL.Uniform3(_meshUniformFogColor, fogColor);
+    }
+
+    if (_meshUniformFogStart >= 0)
+    {
+      GL.Uniform1(_meshUniformFogStart, fogStart);
+    }
+
+    if (_meshUniformFogEnd >= 0)
+    {
+      GL.Uniform1(_meshUniformFogEnd, fogEnd);
     }
   }
 
@@ -1648,6 +1878,7 @@ internal sealed class MapViewerControl : UserControl
       out vec2 vUv0;
       out vec2 vUv1;
       out vec3 vColor;
+      out vec3 vWorldPos;
 
       void main()
       {
@@ -1655,6 +1886,7 @@ internal sealed class MapViewerControl : UserControl
         vUv0 = aUv0;
         vUv1 = aUv1;
         vColor = aColor;
+        vWorldPos = aPosition;
       }
       """;
 
@@ -1664,20 +1896,70 @@ internal sealed class MapViewerControl : UserControl
       in vec2 vUv0;
       in vec2 vUv1;
       in vec3 vColor;
+      in vec3 vWorldPos;
       uniform sampler2D uTexture0;
       uniform int uUvChannel;
       uniform vec4 uLayerColor;
       uniform int uUseVertexLighting;
+      uniform float uAmbientStrength;
+      uniform vec3 uDirLightDirection;
+      uniform vec3 uDirLightColor;
+      uniform int uPointLightCount;
+      uniform vec4 uPointLightPosRadius[4];
+      uniform vec4 uPointLightColorIntensity[4];
+      uniform vec3 uCameraPos;
+      uniform int uFogEnabled;
+      uniform vec3 uFogColor;
+      uniform float uFogStart;
+      uniform float uFogEnd;
       out vec4 FragColor;
 
       void main()
       {
         vec2 uv = (uUvChannel == 1) ? vUv1 : vUv0;
         vec4 tex = texture(uTexture0, uv);
-        vec3 lit = (uUseVertexLighting != 0)
-          ? clamp(vColor + vec3(0.18), vec3(0.0), vec3(1.0))
-          : vec3(1.0);
+        vec3 lit = vec3(1.0);
+        if (uUseVertexLighting != 0)
+        {
+          vec3 baseLit = clamp(vColor + vec3(0.18), vec3(0.0), vec3(1.0));
+          vec3 dx = dFdx(vWorldPos);
+          vec3 dy = dFdy(vWorldPos);
+          vec3 n = normalize(cross(dx, dy));
+          if (!gl_FrontFacing)
+          {
+            n = -n;
+          }
+
+          float ndl = max(dot(n, -normalize(uDirLightDirection)), 0.0);
+          vec3 dynamicLight = vec3(uAmbientStrength) + (uDirLightColor * ndl);
+
+          for (int i = 0; i < uPointLightCount; ++i)
+          {
+            vec3 lightPos = uPointLightPosRadius[i].xyz;
+            float radius = max(uPointLightPosRadius[i].w, 0.001);
+            vec3 toLight = lightPos - vWorldPos;
+            float dist = length(toLight);
+            if (dist < radius)
+            {
+              vec3 l = normalize(toLight);
+              float ndlPoint = max(dot(n, l), 0.0);
+              float atten = 1.0 - (dist / radius);
+              vec3 lc = uPointLightColorIntensity[i].rgb;
+              float intensity = uPointLightColorIntensity[i].a;
+              dynamicLight += lc * (atten * ndlPoint * intensity);
+            }
+          }
+
+          lit = clamp(baseLit * dynamicLight, vec3(0.0), vec3(1.35));
+        }
+
         vec3 outColor = tex.rgb * uLayerColor.rgb * lit;
+        if (uFogEnabled != 0 && uFogEnd > uFogStart)
+        {
+          float dist = distance(vWorldPos, uCameraPos);
+          float fogFactor = clamp((dist - uFogStart) / (uFogEnd - uFogStart), 0.0, 1.0);
+          outColor = mix(outColor, uFogColor, fogFactor);
+        }
         float outAlpha = tex.a * uLayerColor.a;
         FragColor = vec4(outColor, outAlpha);
       }
@@ -1783,6 +2065,44 @@ internal sealed class MapViewerControl : UserControl
       """;
 
     return CreateShaderProgram(vertexShaderSource, fragmentShaderSource, "Wall");
+  }
+
+  private static int CreateParticleShaderProgram()
+  {
+    const string vertexShaderSource =
+      """
+      #version 330 core
+      layout (location = 0) in vec3 aPosition;
+      uniform mat4 uMvp;
+
+      void main()
+      {
+        gl_Position = vec4(aPosition, 1.0) * uMvp;
+        gl_PointSize = 6.0;
+      }
+      """;
+
+    const string fragmentShaderSource =
+      """
+      #version 330 core
+      uniform vec4 uColor;
+      out vec4 FragColor;
+
+      void main()
+      {
+        vec2 p = gl_PointCoord * 2.0 - 1.0;
+        float d2 = dot(p, p);
+        if (d2 > 1.0)
+        {
+          discard;
+        }
+
+        float edge = smoothstep(1.0, 0.55, d2);
+        FragColor = vec4(uColor.rgb, uColor.a * edge);
+      }
+      """;
+
+    return CreateShaderProgram(vertexShaderSource, fragmentShaderSource, "Particle");
   }
 
   private static int CreateClipDebugShaderProgram()
@@ -1991,6 +2311,10 @@ internal sealed class MapViewerControl : UserControl
         {
           GL.DeleteBuffer(_wallVbo);
         }
+        if (_particleVbo != 0)
+        {
+          GL.DeleteBuffer(_particleVbo);
+        }
         if (_meshVao != 0)
         {
           GL.DeleteVertexArray(_meshVao);
@@ -2011,6 +2335,10 @@ internal sealed class MapViewerControl : UserControl
         {
           GL.DeleteVertexArray(_wallVao);
         }
+        if (_particleVao != 0)
+        {
+          GL.DeleteVertexArray(_particleVao);
+        }
 
         if (_meshProgram != 0)
         {
@@ -2027,6 +2355,10 @@ internal sealed class MapViewerControl : UserControl
         if (_wallProgram != 0)
         {
           GL.DeleteProgram(_wallProgram);
+        }
+        if (_particleProgram != 0)
+        {
+          GL.DeleteProgram(_particleProgram);
         }
         if (_clipDebugProgram != 0)
         {

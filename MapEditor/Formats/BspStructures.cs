@@ -63,11 +63,34 @@ public readonly record struct R3TextureBlob(
   string Name,
   byte[] DdsBytes);
 
+public readonly record struct MapEnvironmentSettings(
+  bool FogEnabled,
+  float FogStart,
+  float FogEnd,
+  Vector3 FogColor,
+  bool FogRangeEnabled,
+  bool NoFogSky,
+  bool HasLensFlare,
+  Vector3 LensFlarePosition)
+{
+  public static MapEnvironmentSettings Default =>
+    new(
+      false,
+      5.0f,
+      5000.0f,
+      new Vector3(0.05f, 0.06f, 0.08f),
+      false,
+      false,
+      false,
+      Vector3.Zero);
+}
+
 public sealed class LoadedMap
 {
   public required string Name { get; init; }
   public required string BspPath { get; init; }
   public required string EbpPath { get; init; }
+  public required MapEnvironmentSettings Environment { get; init; }
   public required MapBounds Bounds { get; init; }
   public required Vector3[] BspTriangleVertices { get; init; }
   public required BspRenderVertex[] BspRenderVertices { get; init; }
@@ -89,6 +112,7 @@ public sealed class LoadedMap
   public required R3TextureBlob[] EntitySurfaceTextures { get; init; }
   public required int MapEntityModelCount { get; init; }
   public required int MapEntityInstanceCount { get; init; }
+  public required Vector3[] ParticleInstancePositions { get; init; }
   public required Vector3[] CollisionVertices { get; init; }
   public required CollisionLine[] CollisionLines { get; init; }
 }
