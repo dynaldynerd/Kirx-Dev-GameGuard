@@ -96,6 +96,42 @@ internal sealed class MainForm : Form
     _skySourceButton.DropDownItems.Add(_sky2MenuItem);
     speedStrip.Items.Add(_skySourceButton);
     speedStrip.Items.Add(new ToolStripSeparator());
+    ToolStripButton skyRenderButton = new("Sky")
+    {
+      CheckOnClick = true,
+      Checked = true,
+      ToolTipText = "Enable/disable sky rendering",
+    };
+    ToolStripButton r3tButton = new("R3T")
+    {
+      CheckOnClick = true,
+      Checked = true,
+      ToolTipText = "Enable/disable texture usage from R3T/Lgt.R3T",
+    };
+    ToolStripButton r3mButton = new("R3M")
+    {
+      CheckOnClick = true,
+      Checked = true,
+      ToolTipText = "Enable/disable material/layer behavior from R3M",
+    };
+    ToolStripButton r3eButton = new("R3E")
+    {
+      CheckOnClick = true,
+      Checked = true,
+      ToolTipText = "Enable/disable map entity rendering from R3E",
+    };
+    ToolStripButton r3xButton = new("R3X")
+    {
+      CheckOnClick = true,
+      Checked = true,
+      ToolTipText = "Enable/disable environment settings (fog/clear color) from R3X + EXT.spt",
+    };
+    speedStrip.Items.Add(skyRenderButton);
+    speedStrip.Items.Add(r3tButton);
+    speedStrip.Items.Add(r3mButton);
+    speedStrip.Items.Add(r3eButton);
+    speedStrip.Items.Add(r3xButton);
+    speedStrip.Items.Add(new ToolStripSeparator());
     ToolStripButton collisionButton = new("Collision")
     {
       CheckOnClick = true,
@@ -105,7 +141,7 @@ internal sealed class MainForm : Form
     ToolStripButton gridButton = new("Grid")
     {
       CheckOnClick = true,
-      Checked = true,
+      Checked = false,
       ToolTipText = "Show/hide white reference grid",
     };
     speedStrip.Items.Add(collisionButton);
@@ -135,6 +171,36 @@ internal sealed class MainForm : Form
     };
     _viewer.MoveSpeed = (float)speedUpDown.Value;
     speedUpDown.ValueChanged += (_, _) => _viewer.MoveSpeed = (float)speedUpDown.Value;
+    _viewer.ShowSky = skyRenderButton.Checked;
+    skyRenderButton.CheckedChanged += (_, _) =>
+    {
+      _viewer.ShowSky = skyRenderButton.Checked;
+      _viewer.Invalidate();
+    };
+    _viewer.EnableR3tTextures = r3tButton.Checked;
+    r3tButton.CheckedChanged += (_, _) =>
+    {
+      _viewer.EnableR3tTextures = r3tButton.Checked;
+      _viewer.Invalidate();
+    };
+    _viewer.EnableR3mMaterials = r3mButton.Checked;
+    r3mButton.CheckedChanged += (_, _) =>
+    {
+      _viewer.EnableR3mMaterials = r3mButton.Checked;
+      _viewer.Invalidate();
+    };
+    _viewer.ShowR3eEntities = r3eButton.Checked;
+    r3eButton.CheckedChanged += (_, _) =>
+    {
+      _viewer.ShowR3eEntities = r3eButton.Checked;
+      _viewer.Invalidate();
+    };
+    _viewer.EnableR3xEnvironment = r3xButton.Checked;
+    r3xButton.CheckedChanged += (_, _) =>
+    {
+      _viewer.EnableR3xEnvironment = r3xButton.Checked;
+      _viewer.Invalidate();
+    };
     _viewer.ShowCollisionOverlay = collisionButton.Checked;
     collisionButton.CheckedChanged += (_, _) =>
     {
@@ -267,6 +333,11 @@ internal sealed class MainForm : Form
       - Shift: faster movement
       - Move speed: top bar numeric box
       - Sky dropdown: switch between sky and sky2 source
+      - Sky button: show/hide sky render
+      - R3T button: toggle texture usage (map/light/sky/entity)
+      - R3M button: toggle material-layer behavior
+      - R3E button: toggle map entities/particles
+      - R3X button: toggle environment fog/clear color
       - Collision button: show/hide EBP collision walls
       - Grid button: show/hide white reference grid
       - DynLight button: toggle dynamic lighting

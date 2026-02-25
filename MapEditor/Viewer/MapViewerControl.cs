@@ -75,7 +75,12 @@ internal sealed class MapViewerControl : UserControl
   private float _moveSpeed = 350f;
   private float _sprintMultiplier = 1200f / 350f;
   private bool _showCollisionOverlay = true;
-  private bool _showGrid = true;
+  private bool _showGrid;
+  private bool _showSky = true;
+  private bool _showR3eEntities = true;
+  private bool _enableR3tTextures = true;
+  private bool _enableR3mMaterials = true;
+  private bool _enableR3xEnvironment = true;
   private bool _enableDynamicLighting = true;
   private bool _enableHeadlight = true;
   private float _headlightRadius = 4500f;
@@ -212,6 +217,50 @@ internal sealed class MapViewerControl : UserControl
   }
 
   [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+  public bool ShowSky
+  {
+    get => _showSky;
+    set => _showSky = value;
+  }
+
+  [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+  public bool ShowR3eEntities
+  {
+    get => _showR3eEntities;
+    set => _showR3eEntities = value;
+  }
+
+  [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+  public bool EnableR3tTextures
+  {
+    get => _enableR3tTextures;
+    set => _enableR3tTextures = value;
+  }
+
+  [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+  public bool EnableR3xEnvironment
+  {
+    get => _enableR3xEnvironment;
+    set => _enableR3xEnvironment = value;
+  }
+
+  [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+  public bool EnableR3mMaterials
+  {
+    get => _enableR3mMaterials;
+    set
+    {
+      if (_enableR3mMaterials == value)
+      {
+        return;
+      }
+
+      _enableR3mMaterials = value;
+      RebuildGeometryForMaterialMode();
+    }
+  }
+
+  [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
   public bool ShowParticleMarkers
   {
     get => _showParticleMarkers;
@@ -261,6 +310,17 @@ internal sealed class MapViewerControl : UserControl
       Enabled = true,
     };
     _renderTimer.Tick += OnRenderTick;
+  }
+
+  private void RebuildGeometryForMaterialMode()
+  {
+    if (_glReady && _map != null)
+    {
+      _glControl.MakeCurrent();
+      UploadGeometry();
+    }
+
+    _glControl.Invalidate();
   }
 
   public void SetMap(LoadedMap map)
@@ -565,7 +625,7 @@ internal sealed class MapViewerControl : UserControl
     Matrix4 view = _camera.GetViewMatrix();
     Matrix4 mvp = view * projection;
 
-    if (_skyVertexCount > 0)
+    if (_showSky && _skyVertexCount > 0)
     {
       Matrix4 skyView = view;
       skyView.M41 = 0f;
@@ -594,7 +654,7 @@ internal sealed class MapViewerControl : UserControl
       DrawMesh(_meshVao, _meshVertexCount, _meshDrawSpans, ref mvp, ref view, _mapSurfaceToTexture, null);
     }
 
-    if (_entityVertexCount > 0)
+    if (_showR3eEntities && _entityVertexCount > 0)
     {
       GL.Enable(EnableCap.DepthTest);
       GL.UseProgram(_meshProgram);
@@ -603,7 +663,7 @@ internal sealed class MapViewerControl : UserControl
       DrawMesh(_entityVao, _entityVertexCount, _entityDrawSpans, ref mvp, ref view, _entitySurfaceToTexture, _mapSurfaceToTexture);
     }
 
-    if (_showParticleMarkers && _particleVertexCount > 0)
+    if (_showR3eEntities && _showParticleMarkers && _particleVertexCount > 0)
     {
       GL.Enable(EnableCap.DepthTest);
       GL.Enable(EnableCap.Blend);
@@ -649,7 +709,7 @@ internal sealed class MapViewerControl : UserControl
 
   private Vector3 GetMapClearColor()
   {
-    if (_map == null)
+    if (_map == null || !_enableR3xEnvironment)
     {
       return DefaultClearColor;
     }
@@ -830,7 +890,9 @@ internal sealed class MapViewerControl : UserControl
         continue;
       }
 
-      bool hasMaterial = meshSpan.MaterialId >= 0 && meshSpan.MaterialId < map.Materials.Length;
+      bool hasMaterial = _enableR3mMaterials
+        && meshSpan.MaterialId >= 0
+        && meshSpan.MaterialId < map.Materials.Length;
       bool lightMapEnabled = false;
       bool envBumpSecondLayer = false;
       if (hasMaterial)
@@ -1064,6 +1126,12 @@ internal sealed class MapViewerControl : UserControl
       for (int i = 0; i < spans.Length; ++i)
       {
         DrawSpan span = spans[i];
+        int blendMode = (int)(span.AlphaType & 0x0F);
+        if (!_enableR3tTextures && (blendMode == BlendLightMap || blendMode == BlendInvLightMap))
+        {
+          continue;
+        }
+
         LayerAnimationState layerState = EvaluateLayerAnimation(span, animTime, surfaceToTexture, fallbackSurfaceToTexture);
         LayerAnimationState secondaryLayerState = span.HasSecondaryLayerDefinition
           ? EvaluateLayerAnimation(
@@ -1075,6 +1143,10 @@ internal sealed class MapViewerControl : UserControl
             surfaceToTexture,
             fallbackSurfaceToTexture)
           : new LayerAnimationState(_checkerTexture, Vector4.One, false, Matrix3.Identity, 0, 0.0f, 0.0f, 0, 0, 0.0f);
+
+        int primaryTextureId = _enableR3tTextures ? layerState.TextureId : _checkerTexture;
+        int secondaryTextureId = _enableR3tTextures ? secondaryLayerState.TextureId : _checkerTexture;
+        bool useEnvBump = _enableR3mMaterials && _enableR3tTextures && span.HasSecondaryLayerDefinition;
 
         ApplyBlendState(span.AlphaType);
         bool zWriteEnabled = (span.AlphaType & MaterialAlphaFlagZWrite) != 0 || (span.AlphaType & 0x0F) == BlendNone;
@@ -1124,10 +1196,10 @@ internal sealed class MapViewerControl : UserControl
 
         if (_meshUniformUseEnvBump >= 0)
         {
-          GL.Uniform1(_meshUniformUseEnvBump, span.HasSecondaryLayerDefinition ? 1 : 0);
+          GL.Uniform1(_meshUniformUseEnvBump, useEnvBump ? 1 : 0);
         }
 
-        if (span.HasSecondaryLayerDefinition)
+        if (useEnvBump)
         {
           if (_meshUniformSecondaryUseUvTransform >= 0)
           {
@@ -1181,7 +1253,7 @@ internal sealed class MapViewerControl : UserControl
           }
 
           GL.ActiveTexture(TextureUnit.Texture1);
-          GL.BindTexture(TextureTarget.Texture2D, secondaryLayerState.TextureId);
+          GL.BindTexture(TextureTarget.Texture2D, secondaryTextureId);
         }
         else
         {
@@ -1238,7 +1310,7 @@ internal sealed class MapViewerControl : UserControl
 
         GL.Uniform1(_meshUniformUseVertexLighting, span.UseVertexLighting ? 1 : 0);
         GL.ActiveTexture(TextureUnit.Texture0);
-        GL.BindTexture(TextureTarget.Texture2D, layerState.TextureId);
+        GL.BindTexture(TextureTarget.Texture2D, primaryTextureId);
         GL.DrawArrays(PrimitiveType.Triangles, span.StartVertex, span.VertexCount);
       }
 
@@ -1412,7 +1484,8 @@ internal sealed class MapViewerControl : UserControl
           GL.Uniform1(_skyUniformLavaSpeed, layerState.LavaSpeed);
         }
 
-        GL.BindTexture(TextureTarget.Texture2D, layerState.TextureId);
+        int textureId = _enableR3tTextures ? layerState.TextureId : _checkerTexture;
+        GL.BindTexture(TextureTarget.Texture2D, textureId);
         GL.DrawArrays(PrimitiveType.Triangles, span.StartVertex, span.VertexCount);
       }
     }
@@ -1491,7 +1564,7 @@ internal sealed class MapViewerControl : UserControl
     int metalMode = 0;
     float metalScale = 0.0f;
 
-    if (!hasLayerDefinition)
+    if (!hasLayerDefinition || !_enableR3mMaterials)
     {
       return new LayerAnimationState(textureId, layerColor, useUvTransform, uvTransform, layerFlags, lavaWave, lavaSpeed, uvGenMode, metalMode, metalScale);
     }
@@ -1821,7 +1894,7 @@ internal sealed class MapViewerControl : UserControl
       GL.Uniform3(_meshUniformCameraPos, _camera.Position);
     }
 
-    if (_map == null)
+    if (_map == null || !_enableR3xEnvironment)
     {
       if (_meshUniformFogEnabled >= 0)
       {
@@ -2068,7 +2141,9 @@ internal sealed class MapViewerControl : UserControl
         continue;
       }
 
-      bool hasMaterial = span.MaterialId >= 0 && span.MaterialId < materials.Length;
+      bool hasMaterial = _enableR3mMaterials
+        && span.MaterialId >= 0
+        && span.MaterialId < materials.Length;
       if (hasMaterial)
       {
         MaterialDefinition material = materials[span.MaterialId];
