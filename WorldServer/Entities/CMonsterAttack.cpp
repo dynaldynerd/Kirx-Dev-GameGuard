@@ -381,7 +381,7 @@ void CMonsterAttack::AttackMonsterForce(_attack_param *pParam)
     const float attFc = m_pAttChar->m_EP.GetEff_Rate(4);
     attackPower *= ModifyMonsterAttFc(attFc);
 
-    const int skillType = forceField->m_nProperty;
+    const int skillType = forceField->m_nEffectGroup;
     if (skillType < 0)
     {
       return;

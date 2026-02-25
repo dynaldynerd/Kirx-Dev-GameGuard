@@ -42,6 +42,7 @@ public:
   bool GetRandPosInDummy(_dummy_position *pDumPos, float *fOutPos, bool bRePos);
   __int64 GetResDummySector(int nDummyIndex, float *pCurPos);
   bool GetRandPosInRange(float *pStdPos, int nRange, float *pNewPos);
+  bool GetRandPosVirtualDum(float *pStdPos, int nRange, float *pNewPos);
   bool GetRandPosVirtualDumExcludeStdRange(float *pStdPos, int nRange, int iExcludeRange, float *pNewPos);
   bool LoadHolySystemDummy(char *pszDummyCode, _dummy_position *pPos);
   bool LoadDummy(char *pszDummyCode, _dummy_position *pPos);

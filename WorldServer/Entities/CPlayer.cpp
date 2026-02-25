@@ -16435,7 +16435,8 @@ char CPlayer::_pre_check_force_attack(
     return static_cast<char>(-9);
   }
 
-  if (forceField->m_nEffectGroup == 4 || forceField->m_nEffectGroup == 6)
+  const int attackType = forceField->m_nEffectGroup;
+  if (attackType == 4 || attackType == 6)
   {
     pDst = nullptr;
   }
@@ -16483,7 +16484,7 @@ char CPlayer::_pre_check_force_attack(
       return static_cast<char>(-6);
     }
   }
-  else if (forceField->m_nEffectGroup != 4 && forceField->m_nEffectGroup != 6)
+  else if (attackType != 4 && attackType != 6)
   {
     return static_cast<char>(-6);
   }
@@ -16533,7 +16534,7 @@ char CPlayer::_pre_check_force_attack(
     return static_cast<char>(-50);
   }
 
-  if (forceField->m_nEffectGroup == 6 && !m_pCurMap->IsMapIn(pfTarPos))
+  if (attackType == 6 && !m_pCurMap->IsMapIn(pfTarPos))
   {
     return static_cast<char>(-50);
   }
@@ -16555,10 +16556,10 @@ char CPlayer::_pre_check_force_attack(
       }
     }
   }
-  else if (forceField->m_nEffectGroup != 4)
+  else if (attackType != 4)
   {
     int range = forceField->m_nActDistance + 40;
-    if (forceField->m_nEffectGroup == 6 || forceField->m_nEffectGroup == 5 || forceField->m_nEffectGroup == 7)
+    if (attackType == 6 || attackType == 5 || attackType == 7)
     {
       const float effPlus = m_EP.GetEff_Plus(8);
       range = static_cast<int>(static_cast<float>(range) + effPlus);
@@ -18948,11 +18949,12 @@ void CPlayer::pc_PlayAttack_Force(
     return;
   }
 
-  if (pForceFld->m_nEffectGroup == 6 || pForceFld->m_nEffectGroup == 4)
+  const int attackType = pForceFld->m_nEffectGroup;
+  if (attackType == 6 || attackType == 4)
   {
     pTarget = nullptr;
   }
-  if (pForceFld->m_nEffectGroup == 4)
+  if (attackType == 4)
   {
     memcpy_0(tarPos, m_fCurPos, sizeof(float) * 3);
   }

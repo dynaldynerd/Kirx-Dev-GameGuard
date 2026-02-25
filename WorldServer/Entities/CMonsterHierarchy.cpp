@@ -195,7 +195,7 @@ void CMonsterHierarchy::OnChildRegenLoop()
     for (unsigned int index = 0; index < missingCount; ++index)
     {
       float newPos[3]{};
-      if (m_pThisMon->m_pCurMap->GetRandPosVirtualDumExcludeStdRange(m_pThisMon->m_fCurPos, 100, 0, newPos))
+      if (m_pThisMon->m_pCurMap->GetRandPosVirtualDum(m_pThisMon->m_fCurPos, 100, newPos))
       {
         CMonster *spawned = CreateRepMonster(
           m_pThisMon->m_pCurMap,
@@ -237,7 +237,7 @@ void CMonsterHierarchy::OnChildMonsterCreate(_monster_create_setdata *pData)
         recordSet->m_Child[j].nChildMonNum = 0;
         return;
       }
-      if (reinterpret_cast<_monster_fld *>(record)->m_bExpDown == 1)
+      if (reinterpret_cast<_monster_fld *>(record)->m_bMonsterCondition == 1)
       {
         recordSet->m_Child[j].nChildMonNum = 0;
         return;

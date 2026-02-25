@@ -529,7 +529,7 @@ void CAttack::AttackForce(_attack_param *pParam, bool bUseEffBullet)
     }
   }
 
-  const int attackType = forceField->m_nProperty;
+  const int attackType = forceField->m_nEffectGroup;
   if (attackType >= 0 && attackType <= 2)
   {
     if (m_pp->pDst)
