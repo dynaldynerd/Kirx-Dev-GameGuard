@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Globalization;
 using System.Text;
 using NumericsMatrix4 = System.Numerics.Matrix4x4;
 using NumericsVector3 = System.Numerics.Vector3;
@@ -35,6 +36,8 @@ public static class BspLoader
   private const uint ExtMatFogRange = 0x00000002;
   private const uint ExtMatExistFirstFog = 0x00000004;
   private const uint ExtMatExistLensFlare = 0x00000010;
+  private const uint ExtDummyFlagMusic = 0x00000001;
+  private const uint ExtDummyFlagFog = 0x00000002;
   private const int ExtMatLensFlareScaleCount = 16;
   private const int ExtMatNameBytes = 128;
   private const int DefaultR3tSurfaceIdBase = 1;
@@ -85,6 +88,7 @@ public static class BspLoader
     BspData bsp = ReadBsp(resolvedBsp, materialData);
     ExtBspData ext = ReadExtBsp(resolvedEbp);
     MapEnvironmentSettings environmentSettings = ReadMapEnvironmentSettings(resolvedBsp);
+    ExtDummyDefinition[] extDummies = ReadExtDummyDefinitions(resolvedBsp, environmentSettings);
     R3TextureBlob[] lightmapTextures = ReadLightmapTextures(resolvedBsp);
     SkyData skyData = ReadSkyData(resolvedBsp, skySourceMode);
     EntityRenderData entityData = ReadEntityRenderData(resolvedBsp, ext.EntityDefinitions, ext.MapEntities);
@@ -98,6 +102,7 @@ public static class BspLoader
       BspPath = resolvedBsp,
       EbpPath = resolvedEbp,
       Environment = environmentSettings,
+      ExtDummies = extDummies,
       Bounds = bounds,
       BspTriangleVertices = bsp.TriangleVertices,
       BspRenderVertices = bsp.RenderVertices,
@@ -109,11 +114,13 @@ public static class BspLoader
       LightmapTextures = lightmapTextures,
       SkyRenderVertices = skyData.Mesh.Vertices,
       SkyMaterialSpans = skyData.Mesh.MaterialSpans,
+      SkyMaterials = skyData.Mesh.Materials,
       SkyMaterialSurfaceIds = skyData.Mesh.MaterialSurfaceIds,
       SkyMaterialAlphaTypes = skyData.Mesh.MaterialAlphaTypes,
       SkySurfaceTextures = skyData.Mesh.SurfaceTextures,
       EntityRenderVertices = entityData.Mesh.Vertices,
       EntityMaterialSpans = entityData.Mesh.MaterialSpans,
+      EntityMaterials = entityData.Mesh.Materials,
       EntityMaterialSurfaceIds = entityData.Mesh.MaterialSurfaceIds,
       EntityMaterialAlphaTypes = entityData.Mesh.MaterialAlphaTypes,
       EntitySurfaceTextures = entityData.Mesh.SurfaceTextures,
@@ -493,6 +500,287 @@ public static class BspLoader
     return null;
   }
 
+  private static ExtDummyDefinition[] ReadExtDummyDefinitions(string bspPath, MapEnvironmentSettings environmentSettings)
+  {
+    string? extSptPath = FindExtSptPath(bspPath);
+    if (extSptPath == null)
+    {
+      return Array.Empty<ExtDummyDefinition>();
+    }
+
+    try
+    {
+      string script = File.ReadAllText(extSptPath);
+      return ParseExtDummyScript(script, environmentSettings);
+    }
+    catch
+    {
+      return Array.Empty<ExtDummyDefinition>();
+    }
+  }
+
+  private static string? FindExtSptPath(string bspPath)
+  {
+    string directory = Path.GetDirectoryName(bspPath) ?? string.Empty;
+    if (!Directory.Exists(directory))
+    {
+      return null;
+    }
+
+    string mapName = Path.GetFileNameWithoutExtension(bspPath);
+    string candidate = Path.Combine(directory, $"{mapName}EXT.spt");
+    string? resolved = FindPathCaseInsensitive(candidate);
+    if (resolved != null)
+    {
+      return resolved;
+    }
+
+    string expectedFileName = $"{mapName}EXT";
+    foreach (string file in Directory.EnumerateFiles(directory, "*.spt"))
+    {
+      if (string.Equals(Path.GetFileNameWithoutExtension(file), expectedFileName, StringComparison.OrdinalIgnoreCase))
+      {
+        return file;
+      }
+    }
+
+    return null;
+  }
+
+  private static ExtDummyDefinition[] ParseExtDummyScript(string script, MapEnvironmentSettings environmentSettings)
+  {
+    string[] tokens = script.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+    if (tokens.Length == 0)
+    {
+      return Array.Empty<ExtDummyDefinition>();
+    }
+
+    int tokenIndex = 0;
+    while (tokenIndex < tokens.Length
+      && !string.Equals(tokens[tokenIndex], "script_begin", StringComparison.OrdinalIgnoreCase))
+    {
+      ++tokenIndex;
+    }
+
+    if (tokenIndex >= tokens.Length)
+    {
+      return Array.Empty<ExtDummyDefinition>();
+    }
+
+    ++tokenIndex;
+    List<ExtDummyDefinition> dummies = new();
+    string? pendingToken = null;
+    bool scriptEnded = false;
+
+    while (!scriptEnded)
+    {
+      string token;
+      if (pendingToken != null)
+      {
+        token = pendingToken;
+        pendingToken = null;
+      }
+      else
+      {
+        if (tokenIndex >= tokens.Length)
+        {
+          break;
+        }
+
+        token = tokens[tokenIndex++];
+      }
+
+      if (string.Equals(token, "script_end", StringComparison.OrdinalIgnoreCase))
+      {
+        break;
+      }
+
+      if (token.Length == 0 || token[0] != '*')
+      {
+        continue;
+      }
+
+      string name = token.Length > 1 ? token[1..] : string.Empty;
+      if (!TryReadVector3Token(tokens, ref tokenIndex, out Vector3 localMin)
+        || !TryReadVector3Token(tokens, ref tokenIndex, out Vector3 localMax))
+      {
+        break;
+      }
+
+      float defaultFogStart = environmentSettings.FogStart > 0.0f ? environmentSettings.FogStart : 5.0f;
+      float defaultFogEnd = environmentSettings.FogEnd > defaultFogStart
+        ? environmentSettings.FogEnd
+        : MathF.Max(defaultFogStart + 1.0f, 5000.0f);
+
+      uint flags = 0;
+      uint id = 0;
+      uint arg0 = 0;
+      float arg1 = defaultFogStart;
+      float arg2 = defaultFogEnd;
+      NumericsMatrix4 transform = NumericsMatrix4.Identity;
+      NumericsMatrix4 inverseTransform = NumericsMatrix4.Identity;
+
+      while (tokenIndex < tokens.Length)
+      {
+        string command = tokens[tokenIndex++];
+        if (string.Equals(command, "script_end", StringComparison.OrdinalIgnoreCase))
+        {
+          scriptEnded = true;
+          break;
+        }
+
+        if (command.Length > 0 && command[0] == '*')
+        {
+          pendingToken = command;
+          break;
+        }
+
+        if (string.Equals(command, "-node_tm", StringComparison.OrdinalIgnoreCase))
+        {
+          if (TryReadMatrix4Token(tokens, ref tokenIndex, out NumericsMatrix4 parsed))
+          {
+            transform = parsed;
+            if (!NumericsMatrix4.Invert(transform, out inverseTransform))
+            {
+              inverseTransform = NumericsMatrix4.Identity;
+            }
+          }
+
+          continue;
+        }
+
+        if (string.Equals(command, "-id", StringComparison.OrdinalIgnoreCase))
+        {
+          if (TryReadIntToken(tokens, ref tokenIndex, out int parsedId) && parsedId >= 0)
+          {
+            id = (uint)parsedId;
+          }
+
+          continue;
+        }
+
+        if (string.Equals(command, "-music", StringComparison.OrdinalIgnoreCase))
+        {
+          flags |= ExtDummyFlagMusic;
+          continue;
+        }
+
+        if (string.Equals(command, "-fog_color", StringComparison.OrdinalIgnoreCase))
+        {
+          flags |= ExtDummyFlagFog;
+          int r = ReadIntTokenOrDefault(tokens, ref tokenIndex);
+          int g = ReadIntTokenOrDefault(tokens, ref tokenIndex);
+          int b = ReadIntTokenOrDefault(tokens, ref tokenIndex);
+          arg0 = 0xFF000000u
+            | ((uint)Math.Clamp(r, 0, 255) << 16)
+            | ((uint)Math.Clamp(g, 0, 255) << 8)
+            | (uint)Math.Clamp(b, 0, 255);
+          arg1 = defaultFogStart;
+          arg2 = defaultFogEnd;
+          continue;
+        }
+
+        if (string.Equals(command, "-fog_start", StringComparison.OrdinalIgnoreCase))
+        {
+          if (TryReadFloatToken(tokens, ref tokenIndex, out float parsedFogStart))
+          {
+            arg1 = parsedFogStart;
+          }
+
+          continue;
+        }
+
+        if (string.Equals(command, "-fog_end", StringComparison.OrdinalIgnoreCase))
+        {
+          if (TryReadFloatToken(tokens, ref tokenIndex, out float parsedFogEnd))
+          {
+            arg2 = parsedFogEnd;
+          }
+        }
+      }
+
+      dummies.Add(
+        new ExtDummyDefinition(
+          name,
+          flags,
+          localMin,
+          localMax,
+          id,
+          arg0,
+          arg1,
+          arg2,
+          transform,
+          inverseTransform));
+    }
+
+    return dummies.ToArray();
+  }
+
+  private static bool TryReadVector3Token(string[] tokens, ref int tokenIndex, out Vector3 value)
+  {
+    value = Vector3.Zero;
+    if (!TryReadFloatToken(tokens, ref tokenIndex, out float x)
+      || !TryReadFloatToken(tokens, ref tokenIndex, out float y)
+      || !TryReadFloatToken(tokens, ref tokenIndex, out float z))
+    {
+      return false;
+    }
+
+    value = new Vector3(x, y, z);
+    return true;
+  }
+
+  private static bool TryReadMatrix4Token(string[] tokens, ref int tokenIndex, out NumericsMatrix4 matrix)
+  {
+    matrix = NumericsMatrix4.Identity;
+    Span<float> values = stackalloc float[16];
+    for (int i = 0; i < values.Length; ++i)
+    {
+      if (!TryReadFloatToken(tokens, ref tokenIndex, out values[i]))
+      {
+        return false;
+      }
+    }
+
+    matrix = new NumericsMatrix4(
+      values[0], values[1], values[2], values[3],
+      values[4], values[5], values[6], values[7],
+      values[8], values[9], values[10], values[11],
+      values[12], values[13], values[14], values[15]);
+    return true;
+  }
+
+  private static bool TryReadFloatToken(string[] tokens, ref int tokenIndex, out float value)
+  {
+    value = 0.0f;
+    if (tokenIndex >= tokens.Length)
+    {
+      return false;
+    }
+
+    string token = tokens[tokenIndex++];
+    return float.TryParse(token, NumberStyles.Float, CultureInfo.InvariantCulture, out value)
+      || float.TryParse(token, NumberStyles.Float, CultureInfo.CurrentCulture, out value);
+  }
+
+  private static bool TryReadIntToken(string[] tokens, ref int tokenIndex, out int value)
+  {
+    value = 0;
+    if (tokenIndex >= tokens.Length)
+    {
+      return false;
+    }
+
+    string token = tokens[tokenIndex++];
+    return int.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out value)
+      || int.TryParse(token, NumberStyles.Integer, CultureInfo.CurrentCulture, out value);
+  }
+
+  private static int ReadIntTokenOrDefault(string[] tokens, ref int tokenIndex, int fallback = 0)
+  {
+    return TryReadIntToken(tokens, ref tokenIndex, out int value) ? value : fallback;
+  }
+
   private static R3MaterialData ReadR3mMaterials(string r3mPath)
   {
     return ReadR3mMaterials(File.ReadAllBytes(r3mPath));
@@ -549,13 +837,46 @@ public static class BspLoader
           throw new EndOfStreamException("Unexpected EOF while reading R3M layer block.");
         }
 
-        _ = reader.ReadInt16(); // m_iTileAniTexNum
+        short tileAniTextureCount = reader.ReadInt16(); // m_iTileAniTexNum
         int surfaceId = reader.ReadInt32(); // m_iSurface
         uint alphaType = reader.ReadUInt32(); // m_dwAlphaType
         uint argb = reader.ReadUInt32(); // m_ARGB
         uint layerFlag = reader.ReadUInt32(); // m_dwFlag
-        SkipSection(stream, 28u, "R3M layer tail");
-        layers.Add(new MaterialLayerDefinition(surfaceId, alphaType, argb, layerFlag));
+        short uvLavaWave = reader.ReadInt16(); // m_sUVLavaWave
+        short uvLavaSpeed = reader.ReadInt16(); // m_sUVLavaSpeed
+        short uvScrollU = reader.ReadInt16(); // m_sUVScrollU
+        short uvScrollV = reader.ReadInt16(); // m_sUVScrollV
+        short uvRotate = reader.ReadInt16(); // m_sUVRotate
+        short uvScaleStart = reader.ReadInt16(); // m_sUVScaleStart
+        short uvScaleEnd = reader.ReadInt16(); // m_sUVScaleEnd
+        short uvScaleSpeed = reader.ReadInt16(); // m_sUVScaleSpeed
+        short uvMetal = reader.ReadInt16(); // m_sUVMetal
+        short aniAlphaFlicker = reader.ReadInt16(); // m_sANIAlphaFlicker
+        ushort aniAlphaFlickerRange = reader.ReadUInt16(); // m_sANIAlphaFlickerAni
+        short aniTexFrame = reader.ReadInt16(); // m_sANITexFrame
+        short aniTexSpeed = reader.ReadInt16(); // m_sANITexSpeed
+        short gradientAlpha = reader.ReadInt16(); // m_sGradientAlpha
+        layers.Add(
+          new MaterialLayerDefinition(
+            tileAniTextureCount,
+            surfaceId,
+            alphaType,
+            argb,
+            layerFlag,
+            uvLavaWave,
+            uvLavaSpeed,
+            uvScrollU,
+            uvScrollV,
+            uvRotate,
+            uvScaleStart,
+            uvScaleEnd,
+            uvScaleSpeed,
+            uvMetal,
+            aniAlphaFlicker,
+            aniAlphaFlickerRange,
+            aniTexFrame,
+            aniTexSpeed,
+            gradientAlpha));
 
         if (layerIndex == 0)
         {
@@ -1607,6 +1928,7 @@ public static class BspLoader
   {
     List<BspRenderVertex> vertices = new();
     List<BspMaterialSpan> spans = new();
+    List<MaterialDefinition> materials = new();
     List<int> materialSurfaceIds = new();
     List<uint> materialAlphaTypes = new();
     List<R3TextureBlob> textures = new();
@@ -1629,6 +1951,12 @@ public static class BspLoader
       }
 
       int materialBase = materialSurfaceIds.Count;
+      MaterialDefinition[] remappedMaterials = RemapMaterialDefinitions(mesh.Materials, surfaceIdMap, null);
+      for (int i = 0; i < remappedMaterials.Length; ++i)
+      {
+        materials.Add(remappedMaterials[i]);
+      }
+
       for (int i = 0; i < mesh.MaterialSurfaceIds.Length; ++i)
       {
         int localSurfaceId = mesh.MaterialSurfaceIds[i];
@@ -1653,6 +1981,7 @@ public static class BspLoader
     return new RenderMeshData(
       vertices.ToArray(),
       spans.ToArray(),
+      materials.ToArray(),
       materialSurfaceIds.ToArray(),
       materialAlphaTypes.ToArray(),
       textures.ToArray());
@@ -1664,6 +1993,7 @@ public static class BspLoader
   {
     List<BspRenderVertex> vertices = new(Math.Max(8192, mapEntities.Length * 512));
     List<BspMaterialSpan> spans = new(Math.Max(128, mapEntities.Length * 4));
+    List<MaterialDefinition> materials = new();
     List<int> materialSurfaceIds = new();
     List<uint> materialAlphaTypes = new();
     List<R3TextureBlob> textures = new();
@@ -1684,6 +2014,12 @@ public static class BspLoader
       }
 
       int materialBase = materialSurfaceIds.Count;
+      MaterialDefinition[] remappedMaterials = RemapMaterialDefinitions(model.Materials, surfaceIdMap, true);
+      for (int i = 0; i < remappedMaterials.Length; ++i)
+      {
+        materials.Add(remappedMaterials[i]);
+      }
+
       for (int i = 0; i < model.MaterialSurfaceIds.Length; ++i)
       {
         int localSurfaceId = model.MaterialSurfaceIds[i];
@@ -1756,9 +2092,67 @@ public static class BspLoader
     return new RenderMeshData(
       vertices.ToArray(),
       spans.ToArray(),
+      materials.ToArray(),
       materialSurfaceIds.ToArray(),
       materialAlphaTypes.ToArray(),
       textures.ToArray());
+  }
+
+  private static MaterialDefinition[] RemapMaterialDefinitions(
+    MaterialDefinition[] sourceMaterials,
+    IReadOnlyDictionary<int, int> surfaceIdMap,
+    bool? preserveUnmappedPositiveSurfaceIds)
+  {
+    if (sourceMaterials.Length == 0)
+    {
+      return Array.Empty<MaterialDefinition>();
+    }
+
+    MaterialDefinition[] remapped = new MaterialDefinition[sourceMaterials.Length];
+    for (int materialIndex = 0; materialIndex < sourceMaterials.Length; ++materialIndex)
+    {
+      MaterialDefinition source = sourceMaterials[materialIndex];
+      MaterialLayerDefinition[] remappedLayers = new MaterialLayerDefinition[source.Layers.Length];
+
+      for (int layerIndex = 0; layerIndex < source.Layers.Length; ++layerIndex)
+      {
+        MaterialLayerDefinition layer = source.Layers[layerIndex];
+        int surfaceId = RemapSurfaceId(layer.SurfaceId, surfaceIdMap, preserveUnmappedPositiveSurfaceIds);
+        remappedLayers[layerIndex] = layer with { SurfaceId = surfaceId };
+      }
+
+      int detailSurface = RemapSurfaceId(source.DetailSurfaceId, surfaceIdMap, preserveUnmappedPositiveSurfaceIds);
+      remapped[materialIndex] = source with
+      {
+        DetailSurfaceId = detailSurface,
+        Layers = remappedLayers,
+      };
+    }
+
+    return remapped;
+  }
+
+  private static int RemapSurfaceId(
+    int surfaceId,
+    IReadOnlyDictionary<int, int> surfaceIdMap,
+    bool? preserveUnmappedPositiveSurfaceIds)
+  {
+    if (surfaceId <= 0)
+    {
+      return surfaceId;
+    }
+
+    if (surfaceIdMap.TryGetValue(surfaceId, out int remapped))
+    {
+      return remapped;
+    }
+
+    if (preserveUnmappedPositiveSurfaceIds.GetValueOrDefault())
+    {
+      return surfaceId;
+    }
+
+    return 0;
   }
 
   private static void AddOrMergeSpan(List<BspMaterialSpan> spans, BspMaterialSpan span)
@@ -2004,6 +2398,7 @@ public static class BspLoader
       assetName,
       mesh.Vertices,
       mesh.MaterialSpans,
+      materialData.Materials,
       materialData.SurfaceIds,
       materialData.LayerAlphaTypes,
       surfaceTextures);
@@ -2888,6 +3283,7 @@ public static class BspLoader
     public static RenderMeshData Empty { get; } = new(
       Array.Empty<BspRenderVertex>(),
       Array.Empty<BspMaterialSpan>(),
+      Array.Empty<MaterialDefinition>(),
       Array.Empty<int>(),
       Array.Empty<uint>(),
       Array.Empty<R3TextureBlob>());
@@ -2895,12 +3291,14 @@ public static class BspLoader
     public RenderMeshData(
       BspRenderVertex[] vertices,
       BspMaterialSpan[] materialSpans,
+      MaterialDefinition[] materials,
       int[] materialSurfaceIds,
       uint[] materialAlphaTypes,
       R3TextureBlob[] surfaceTextures)
     {
       Vertices = vertices;
       MaterialSpans = materialSpans;
+      Materials = materials;
       MaterialSurfaceIds = materialSurfaceIds;
       MaterialAlphaTypes = materialAlphaTypes;
       SurfaceTextures = surfaceTextures;
@@ -2908,6 +3306,7 @@ public static class BspLoader
 
     public BspRenderVertex[] Vertices { get; }
     public BspMaterialSpan[] MaterialSpans { get; }
+    public MaterialDefinition[] Materials { get; }
     public int[] MaterialSurfaceIds { get; }
     public uint[] MaterialAlphaTypes { get; }
     public R3TextureBlob[] SurfaceTextures { get; }
@@ -2949,6 +3348,7 @@ public static class BspLoader
       string name,
       BspRenderVertex[] vertices,
       BspMaterialSpan[] materialSpans,
+      MaterialDefinition[] materials,
       int[] materialSurfaceIds,
       uint[] materialAlphaTypes,
       R3TextureBlob[] surfaceTextures)
@@ -2956,6 +3356,7 @@ public static class BspLoader
       Name = name;
       Vertices = vertices;
       MaterialSpans = materialSpans;
+      Materials = materials;
       MaterialSurfaceIds = materialSurfaceIds;
       MaterialAlphaTypes = materialAlphaTypes;
       SurfaceTextures = surfaceTextures;
@@ -2964,6 +3365,7 @@ public static class BspLoader
     public string Name { get; }
     public BspRenderVertex[] Vertices { get; }
     public BspMaterialSpan[] MaterialSpans { get; }
+    public MaterialDefinition[] Materials { get; }
     public int[] MaterialSurfaceIds { get; }
     public uint[] MaterialAlphaTypes { get; }
     public R3TextureBlob[] SurfaceTextures { get; }

@@ -36,8 +36,21 @@ internal sealed class MapViewerControl : UserControl
   private const int BlendOnlyTransparency = 13;
   private const int BlendShadow = 14;
   private const uint MaterialFlagLightMap = 0x00000001;
+  private const uint MaterialAlphaFlagZWrite = 0x00002000;
+  private const uint ExtDummyFlagFog = 0x00000002;
   private const uint MaterialLayerFlagEnvBump = 0x00008000;
+  private const uint MaterialLayerFlagUvEnv = 0x00000001;
+  private const uint MaterialLayerFlagUvMetalFloor = 0x00000002;
+  private const uint MaterialLayerFlagUvMetalWall = 0x00000008;
+  private const uint MaterialLayerFlagUvMetal = MaterialLayerFlagUvMetalFloor | MaterialLayerFlagUvMetalWall;
+  private const uint MaterialLayerFlagUvLava = 0x00000004;
+  private const uint MaterialLayerFlagUvScrollU = 0x00000010;
+  private const uint MaterialLayerFlagUvScrollV = 0x00000020;
+  private const uint MaterialLayerFlagUvRotate = 0x00000040;
+  private const uint MaterialLayerFlagUvScale = 0x00000080;
   private const uint MaterialLayerFlagAniAlphaFlicker = 0x00000400;
+  private const uint MaterialLayerFlagAniTexture = 0x00000800;
+  private const uint MaterialLayerFlagAniTileTexture = 0x00001000;
   private const float SkyExposure = 1.18f;
   private static readonly Vector3 DefaultClearColor = new(0.05f, 0.06f, 0.08f);
   private const int MaxDynamicLights = 4;
@@ -45,12 +58,15 @@ internal sealed class MapViewerControl : UserControl
   private readonly GLControlWinForms _glControl;
   private readonly System.Windows.Forms.Timer _renderTimer;
   private readonly Stopwatch _frameClock;
+  private readonly Stopwatch _animationClock;
   private readonly HashSet<Keys> _keysDown = [];
   private readonly List<int> _mapTextures = [];
   private readonly List<int> _lightmapTextures = [];
   private readonly List<int> _skyTextures = [];
   private readonly List<int> _entityTextures = [];
   private readonly Dictionary<int, int> _mapSurfaceToTexture = [];
+  private readonly Dictionary<int, int> _skySurfaceToTexture = [];
+  private readonly Dictionary<int, int> _entitySurfaceToTexture = [];
   private readonly Dictionary<int, int> _lightMapIdToTexture = [];
 
   private FreeCamera _camera = new(new Vector3(0f, 100f, 250f));
@@ -76,8 +92,29 @@ internal sealed class MapViewerControl : UserControl
   private int _meshVertexCount;
   private int _meshUniformMvp;
   private int _meshUniformTexture;
+  private int _meshUniformTexture1;
+  private int _meshUniformUseEnvBump;
+  private int _meshUniformBumpMatrix;
   private int _meshUniformUvChannel;
   private int _meshUniformLayerColor;
+  private int _meshUniformUseUvTransform;
+  private int _meshUniformUvTransform;
+  private int _meshUniformAnimTime;
+  private int _meshUniformLayerFlags;
+  private int _meshUniformLavaWave;
+  private int _meshUniformLavaSpeed;
+  private int _meshUniformUvGenMode;
+  private int _meshUniformMetalMode;
+  private int _meshUniformMetalScale;
+  private int _meshUniformSecondaryUseUvTransform;
+  private int _meshUniformSecondaryUvTransform;
+  private int _meshUniformSecondaryLayerFlags;
+  private int _meshUniformSecondaryLavaWave;
+  private int _meshUniformSecondaryLavaSpeed;
+  private int _meshUniformSecondaryUvGenMode;
+  private int _meshUniformSecondaryMetalMode;
+  private int _meshUniformSecondaryMetalScale;
+  private int _meshUniformView;
   private int _meshUniformUseVertexLighting;
   private int _meshUniformAmbientStrength;
   private int _meshUniformDirLightDirection;
@@ -93,6 +130,13 @@ internal sealed class MapViewerControl : UserControl
   private int _skyUniformMvp;
   private int _skyUniformTexture;
   private int _skyUniformExposure;
+  private int _skyUniformLayerColor;
+  private int _skyUniformUseUvTransform;
+  private int _skyUniformUvTransform;
+  private int _skyUniformAnimTime;
+  private int _skyUniformLayerFlags;
+  private int _skyUniformLavaWave;
+  private int _skyUniformLavaSpeed;
   private int _skyVao;
   private int _skyVbo;
   private int _skyVertexCount;
@@ -210,6 +254,7 @@ internal sealed class MapViewerControl : UserControl
     Controls.Add(_glControl);
 
     _frameClock = Stopwatch.StartNew();
+    _animationClock = Stopwatch.StartNew();
     _renderTimer = new System.Windows.Forms.Timer
     {
       Interval = 16,
@@ -222,7 +267,7 @@ internal sealed class MapViewerControl : UserControl
   {
     _map = map;
     _currentBounds = map.Bounds;
-    _camera = CreateDefaultCamera(_currentBounds);
+    _camera = CreateDefaultCamera(map);
 
     if (_glReady)
     {
@@ -231,6 +276,27 @@ internal sealed class MapViewerControl : UserControl
     }
 
     _glControl.Invalidate();
+  }
+
+  private static FreeCamera CreateDefaultCamera(LoadedMap map)
+  {
+    MapBounds bounds = map.Bounds;
+    Vector3 center = bounds.Center;
+
+    float highestY = GetHighestFiniteY(map, bounds.Max.Y);
+    Vector3 size = bounds.Size;
+    float maxAxis = MathF.Max(size.X, MathF.Max(size.Y, size.Z));
+    if (maxAxis < 100f)
+    {
+      maxAxis = 100f;
+    }
+
+    float eyeHeightOffset = MathF.Max(50f, maxAxis * 0.06f);
+    float backwardOffset = MathF.Max(120f, maxAxis * 0.12f);
+
+    Vector3 focus = new(center.X, highestY, center.Z);
+    Vector3 start = new(center.X, highestY + eyeHeightOffset, center.Z + backwardOffset);
+    return FreeCamera.CreateLookingAt(start, focus);
   }
 
   private static FreeCamera CreateDefaultCamera(MapBounds bounds)
@@ -247,6 +313,38 @@ internal sealed class MapViewerControl : UserControl
     return FreeCamera.CreateLookingAt(start, center);
   }
 
+  private static float GetHighestFiniteY(LoadedMap map, float fallbackY)
+  {
+    float highestY = float.NegativeInfinity;
+    bool found = false;
+    for (int i = 0; i < map.BspRenderVertices.Length; ++i)
+    {
+      Vector3 position = map.BspRenderVertices[i].Position;
+      if (!IsFinite(position))
+      {
+        continue;
+      }
+
+      if (!found || position.Y > highestY)
+      {
+        highestY = position.Y;
+        found = true;
+      }
+    }
+
+    if (!found || !float.IsFinite(highestY))
+    {
+      highestY = fallbackY;
+    }
+
+    if (!float.IsFinite(highestY))
+    {
+      highestY = 0f;
+    }
+
+    return highestY;
+  }
+
   private void OnGlLoad(object? sender, EventArgs e)
   {
     _glControl.MakeCurrent();
@@ -258,8 +356,29 @@ internal sealed class MapViewerControl : UserControl
     _meshProgram = CreateMeshShaderProgram();
     _meshUniformMvp = GL.GetUniformLocation(_meshProgram, "uMvp");
     _meshUniformTexture = GL.GetUniformLocation(_meshProgram, "uTexture0");
+    _meshUniformTexture1 = GL.GetUniformLocation(_meshProgram, "uTexture1");
+    _meshUniformUseEnvBump = GL.GetUniformLocation(_meshProgram, "uUseEnvBump");
+    _meshUniformBumpMatrix = GL.GetUniformLocation(_meshProgram, "uBumpMatrix");
     _meshUniformUvChannel = GL.GetUniformLocation(_meshProgram, "uUvChannel");
     _meshUniformLayerColor = GL.GetUniformLocation(_meshProgram, "uLayerColor");
+    _meshUniformUseUvTransform = GL.GetUniformLocation(_meshProgram, "uUseUvTransform");
+    _meshUniformUvTransform = GL.GetUniformLocation(_meshProgram, "uUvTransform");
+    _meshUniformAnimTime = GL.GetUniformLocation(_meshProgram, "uAnimTime");
+    _meshUniformLayerFlags = GL.GetUniformLocation(_meshProgram, "uLayerFlags");
+    _meshUniformLavaWave = GL.GetUniformLocation(_meshProgram, "uLavaWave");
+    _meshUniformLavaSpeed = GL.GetUniformLocation(_meshProgram, "uLavaSpeed");
+    _meshUniformUvGenMode = GL.GetUniformLocation(_meshProgram, "uUvGenMode");
+    _meshUniformMetalMode = GL.GetUniformLocation(_meshProgram, "uMetalMode");
+    _meshUniformMetalScale = GL.GetUniformLocation(_meshProgram, "uMetalScale");
+    _meshUniformSecondaryUseUvTransform = GL.GetUniformLocation(_meshProgram, "uSecondaryUseUvTransform");
+    _meshUniformSecondaryUvTransform = GL.GetUniformLocation(_meshProgram, "uSecondaryUvTransform");
+    _meshUniformSecondaryLayerFlags = GL.GetUniformLocation(_meshProgram, "uSecondaryLayerFlags");
+    _meshUniformSecondaryLavaWave = GL.GetUniformLocation(_meshProgram, "uSecondaryLavaWave");
+    _meshUniformSecondaryLavaSpeed = GL.GetUniformLocation(_meshProgram, "uSecondaryLavaSpeed");
+    _meshUniformSecondaryUvGenMode = GL.GetUniformLocation(_meshProgram, "uSecondaryUvGenMode");
+    _meshUniformSecondaryMetalMode = GL.GetUniformLocation(_meshProgram, "uSecondaryMetalMode");
+    _meshUniformSecondaryMetalScale = GL.GetUniformLocation(_meshProgram, "uSecondaryMetalScale");
+    _meshUniformView = GL.GetUniformLocation(_meshProgram, "uView");
     _meshUniformUseVertexLighting = GL.GetUniformLocation(_meshProgram, "uUseVertexLighting");
     _meshUniformAmbientStrength = GL.GetUniformLocation(_meshProgram, "uAmbientStrength");
     _meshUniformDirLightDirection = GL.GetUniformLocation(_meshProgram, "uDirLightDirection");
@@ -281,6 +400,13 @@ internal sealed class MapViewerControl : UserControl
     _skyUniformMvp = GL.GetUniformLocation(_skyProgram, "uMvp");
     _skyUniformTexture = GL.GetUniformLocation(_skyProgram, "uTexture0");
     _skyUniformExposure = GL.GetUniformLocation(_skyProgram, "uExposure");
+    _skyUniformLayerColor = GL.GetUniformLocation(_skyProgram, "uLayerColor");
+    _skyUniformUseUvTransform = GL.GetUniformLocation(_skyProgram, "uUseUvTransform");
+    _skyUniformUvTransform = GL.GetUniformLocation(_skyProgram, "uUvTransform");
+    _skyUniformAnimTime = GL.GetUniformLocation(_skyProgram, "uAnimTime");
+    _skyUniformLayerFlags = GL.GetUniformLocation(_skyProgram, "uLayerFlags");
+    _skyUniformLavaWave = GL.GetUniformLocation(_skyProgram, "uLavaWave");
+    _skyUniformLavaSpeed = GL.GetUniformLocation(_skyProgram, "uLavaSpeed");
     _checkerTexture = CreateCheckerTexture();
 
     _lineProgram = CreateLineShaderProgram();
@@ -453,7 +579,7 @@ internal sealed class MapViewerControl : UserControl
       GL.Disable(EnableCap.DepthTest);
       GL.Disable(EnableCap.CullFace);
       GL.DepthMask(false);
-      DrawSkyMesh(_skyVao, _skyVertexCount, _skyDrawSpans, ref skyMvp);
+      DrawSkyMesh(_skyVao, _skyVertexCount, _skyDrawSpans, ref skyMvp, _skySurfaceToTexture, null);
       GL.Disable(EnableCap.Blend);
       GL.DepthMask(true);
       GL.Enable(EnableCap.CullFace);
@@ -465,7 +591,7 @@ internal sealed class MapViewerControl : UserControl
       GL.UseProgram(_meshProgram);
       GL.Uniform1(_meshUniformTexture, 0);
       GL.ActiveTexture(TextureUnit.Texture0);
-      DrawMesh(_meshVao, _meshVertexCount, _meshDrawSpans, ref mvp);
+      DrawMesh(_meshVao, _meshVertexCount, _meshDrawSpans, ref mvp, ref view, _mapSurfaceToTexture, null);
     }
 
     if (_entityVertexCount > 0)
@@ -474,7 +600,7 @@ internal sealed class MapViewerControl : UserControl
       GL.UseProgram(_meshProgram);
       GL.Uniform1(_meshUniformTexture, 0);
       GL.ActiveTexture(TextureUnit.Texture0);
-      DrawMesh(_entityVao, _entityVertexCount, _entityDrawSpans, ref mvp);
+      DrawMesh(_entityVao, _entityVertexCount, _entityDrawSpans, ref mvp, ref view, _entitySurfaceToTexture, _mapSurfaceToTexture);
     }
 
     if (_showParticleMarkers && _particleVertexCount > 0)
@@ -572,19 +698,23 @@ internal sealed class MapViewerControl : UserControl
       _skyVbo,
       _map.SkyRenderVertices,
       _map.SkyMaterialSpans,
+      _map.SkyMaterials,
       _map.SkyMaterialSurfaceIds,
       _map.SkyMaterialAlphaTypes,
       _map.SkySurfaceTextures,
       _skyTextures,
       ref _skyVertexCount,
       ref _skyDrawSpans,
-      ref _loadedSkyTextureCount);
+      ref _loadedSkyTextureCount,
+      null,
+      _skySurfaceToTexture);
 
     UploadMeshLayer(
       _entityVao,
       _entityVbo,
       _map.EntityRenderVertices,
       _map.EntityMaterialSpans,
+      _map.EntityMaterials,
       _map.EntityMaterialSurfaceIds,
       _map.EntityMaterialAlphaTypes,
       _map.EntitySurfaceTextures,
@@ -592,7 +722,8 @@ internal sealed class MapViewerControl : UserControl
       ref _entityVertexCount,
       ref _entityDrawSpans,
       ref _loadedEntityTextureCount,
-      _mapSurfaceToTexture);
+      _mapSurfaceToTexture,
+      _entitySurfaceToTexture);
 
     Vector3[] wallVertices = BuildCollisionWalls(_map);
     _wallVertexCount = wallVertices.Length;
@@ -711,20 +842,41 @@ internal sealed class MapViewerControl : UserControl
           envBumpSecondLayer = (material.Layers[1].LayerFlags & MaterialLayerFlagEnvBump) != 0;
         }
 
+        if (envBumpSecondLayer && material.Layers.Length > 1)
+        {
+          MaterialLayerDefinition baseLayer = material.Layers[0];
+          MaterialLayerDefinition bumpLayer = material.Layers[1];
+          int baseTextureId = ResolveLayerTextureId(baseLayer.SurfaceId, mapTextureMap, null);
+          int bumpTextureId = ResolveLayerTextureId(bumpLayer.SurfaceId, mapTextureMap, null);
+          uint alphaType = baseLayer.AlphaType;
+          if ((baseLayer.LayerFlags & MaterialLayerFlagAniAlphaFlicker) != 0 && alphaType == BlendNone)
+          {
+            alphaType = BlendOnlyTransparency;
+          }
+
+          AddOrMergeDrawSpan(
+            spans,
+            new DrawSpan(
+              meshSpan.StartVertex,
+              meshSpan.VertexCount,
+              baseTextureId,
+              bumpTextureId,
+              alphaType,
+              0,
+              DecodeArgb(baseLayer.Argb),
+              true,
+              true,
+              baseLayer,
+              true,
+              bumpLayer));
+        }
+        else
+        {
         int layerCount = material.Layers.Length;
         for (int layerIndex = 0; layerIndex < layerCount; ++layerIndex)
         {
-          if (layerIndex > 0 && envBumpSecondLayer)
-          {
-            break;
-          }
-
           MaterialLayerDefinition layer = material.Layers[layerIndex];
-          int textureId = _checkerTexture;
-          if (layer.SurfaceId > 0 && mapTextureMap.TryGetValue(layer.SurfaceId, out int mappedTexture))
-          {
-            textureId = mappedTexture;
-          }
+          int textureId = ResolveLayerTextureId(layer.SurfaceId, mapTextureMap, null);
 
           uint alphaType = layer.AlphaType;
           if ((layer.LayerFlags & MaterialLayerFlagAniAlphaFlicker) != 0 && alphaType == BlendNone)
@@ -738,10 +890,16 @@ internal sealed class MapViewerControl : UserControl
               meshSpan.StartVertex,
               meshSpan.VertexCount,
               textureId,
+              0,
               alphaType,
               0,
               DecodeArgb(layer.Argb),
-              true));
+              true,
+              true,
+              layer,
+              false,
+              default));
+        }
         }
       }
       else
@@ -768,10 +926,15 @@ internal sealed class MapViewerControl : UserControl
             meshSpan.StartVertex,
             meshSpan.VertexCount,
             textureId,
+            0,
             alphaType,
             0,
             Vector4.One,
-            true));
+            true,
+            false,
+            default,
+            false,
+            default));
       }
 
       if (!lightMapEnabled || meshSpan.LightMapId < 0)
@@ -796,15 +959,20 @@ internal sealed class MapViewerControl : UserControl
           meshSpan.StartVertex,
           meshSpan.VertexCount,
           lightMapTextureId,
+          0,
           BlendLightMap,
           1,
           Vector4.One,
-          false));
+          false,
+          false,
+          default,
+          false,
+          default));
     }
 
     if (spans.Count == 0 && _meshVertexCount > 0)
     {
-      spans.Add(new DrawSpan(0, _meshVertexCount, _checkerTexture, 0, 0, Vector4.One, true));
+      spans.Add(new DrawSpan(0, _meshVertexCount, _checkerTexture, 0, 0, 0, Vector4.One, true, false, default, false, default));
     }
 
     return spans.ToArray();
@@ -817,6 +985,24 @@ internal sealed class MapViewerControl : UserControl
     float g = ((argb >> 8) & 0xFF) / 255.0f;
     float b = (argb & 0xFF) / 255.0f;
     return new Vector4(r, g, b, a);
+  }
+
+  private int ResolveLayerTextureId(
+    int surfaceId,
+    IReadOnlyDictionary<int, int> textureMap,
+    IReadOnlyDictionary<int, int>? fallbackTextureMap)
+  {
+    if (surfaceId > 0 && textureMap.TryGetValue(surfaceId, out int textureId))
+    {
+      return textureId;
+    }
+
+    if (surfaceId > 0 && fallbackTextureMap != null && fallbackTextureMap.TryGetValue(surfaceId, out int fallbackTextureId))
+    {
+      return fallbackTextureId;
+    }
+
+    return _checkerTexture;
   }
 
   private void ConfigureMeshVao(int vao, int vbo)
@@ -833,69 +1019,747 @@ internal sealed class MapViewerControl : UserControl
     GL.VertexAttribPointer(3, 3, VertexAttribPointerType.Float, false, MeshByteStride, 28);
   }
 
-  private void DrawMesh(int vao, int vertexCount, DrawSpan[] spans, ref Matrix4 mvp)
+  private void DrawMesh(
+    int vao,
+    int vertexCount,
+    DrawSpan[] spans,
+    ref Matrix4 mvp,
+    ref Matrix4 view,
+    IReadOnlyDictionary<int, int>? surfaceToTexture,
+    IReadOnlyDictionary<int, int>? fallbackSurfaceToTexture)
   {
     if (vertexCount <= 0)
     {
       return;
     }
 
+    float animTime = (float)_animationClock.Elapsed.TotalSeconds;
     GL.UseProgram(_meshProgram);
     GL.UniformMatrix4(_meshUniformMvp, true, ref mvp);
+    if (_meshUniformView >= 0)
+    {
+      GL.UniformMatrix4(_meshUniformView, true, ref view);
+    }
+
+    if (_meshUniformTexture >= 0)
+    {
+      GL.Uniform1(_meshUniformTexture, 0);
+    }
+
+    if (_meshUniformTexture1 >= 0)
+    {
+      GL.Uniform1(_meshUniformTexture1, 1);
+    }
+
     ApplyDynamicLightingUniforms();
     ApplyMapEnvironmentUniforms();
+    if (_meshUniformAnimTime >= 0)
+    {
+      GL.Uniform1(_meshUniformAnimTime, animTime);
+    }
+
     GL.BindVertexArray(vao);
     if (spans.Length > 0)
     {
       for (int i = 0; i < spans.Length; ++i)
       {
         DrawSpan span = spans[i];
+        LayerAnimationState layerState = EvaluateLayerAnimation(span, animTime, surfaceToTexture, fallbackSurfaceToTexture);
+        LayerAnimationState secondaryLayerState = span.HasSecondaryLayerDefinition
+          ? EvaluateLayerAnimation(
+            span.SecondaryTextureId,
+            Vector4.One,
+            span.HasSecondaryLayerDefinition,
+            span.SecondaryLayer,
+            animTime,
+            surfaceToTexture,
+            fallbackSurfaceToTexture)
+          : new LayerAnimationState(_checkerTexture, Vector4.One, false, Matrix3.Identity, 0, 0.0f, 0.0f, 0, 0, 0.0f);
+
         ApplyBlendState(span.AlphaType);
+        bool zWriteEnabled = (span.AlphaType & MaterialAlphaFlagZWrite) != 0 || (span.AlphaType & 0x0F) == BlendNone;
+        GL.DepthMask(zWriteEnabled);
         GL.Uniform1(_meshUniformUvChannel, span.UvChannel);
-        GL.Uniform4(_meshUniformLayerColor, span.LayerColor);
+        GL.Uniform4(_meshUniformLayerColor, layerState.LayerColor);
+        if (_meshUniformUseUvTransform >= 0)
+        {
+          GL.Uniform1(_meshUniformUseUvTransform, layerState.UseUvTransform ? 1 : 0);
+        }
+
+        if (_meshUniformUvTransform >= 0)
+        {
+          Matrix3 uvTransform = layerState.UvTransform;
+          GL.UniformMatrix3(_meshUniformUvTransform, true, ref uvTransform);
+        }
+
+        if (_meshUniformLayerFlags >= 0)
+        {
+          GL.Uniform1(_meshUniformLayerFlags, (int)layerState.LayerFlags);
+        }
+
+        if (_meshUniformLavaWave >= 0)
+        {
+          GL.Uniform1(_meshUniformLavaWave, layerState.LavaWave);
+        }
+
+        if (_meshUniformLavaSpeed >= 0)
+        {
+          GL.Uniform1(_meshUniformLavaSpeed, layerState.LavaSpeed);
+        }
+
+        if (_meshUniformUvGenMode >= 0)
+        {
+          GL.Uniform1(_meshUniformUvGenMode, layerState.UvGenMode);
+        }
+
+        if (_meshUniformMetalMode >= 0)
+        {
+          GL.Uniform1(_meshUniformMetalMode, layerState.MetalMode);
+        }
+
+        if (_meshUniformMetalScale >= 0)
+        {
+          GL.Uniform1(_meshUniformMetalScale, layerState.MetalScale);
+        }
+
+        if (_meshUniformUseEnvBump >= 0)
+        {
+          GL.Uniform1(_meshUniformUseEnvBump, span.HasSecondaryLayerDefinition ? 1 : 0);
+        }
+
+        if (span.HasSecondaryLayerDefinition)
+        {
+          if (_meshUniformSecondaryUseUvTransform >= 0)
+          {
+            GL.Uniform1(_meshUniformSecondaryUseUvTransform, secondaryLayerState.UseUvTransform ? 1 : 0);
+          }
+
+          if (_meshUniformSecondaryUvTransform >= 0)
+          {
+            Matrix3 secondaryUvTransform = secondaryLayerState.UvTransform;
+            GL.UniformMatrix3(_meshUniformSecondaryUvTransform, true, ref secondaryUvTransform);
+          }
+
+          if (_meshUniformSecondaryLayerFlags >= 0)
+          {
+            GL.Uniform1(_meshUniformSecondaryLayerFlags, (int)secondaryLayerState.LayerFlags);
+          }
+
+          if (_meshUniformSecondaryLavaWave >= 0)
+          {
+            GL.Uniform1(_meshUniformSecondaryLavaWave, secondaryLayerState.LavaWave);
+          }
+
+          if (_meshUniformSecondaryLavaSpeed >= 0)
+          {
+            GL.Uniform1(_meshUniformSecondaryLavaSpeed, secondaryLayerState.LavaSpeed);
+          }
+
+          if (_meshUniformSecondaryUvGenMode >= 0)
+          {
+            GL.Uniform1(_meshUniformSecondaryUvGenMode, secondaryLayerState.UvGenMode);
+          }
+
+          if (_meshUniformSecondaryMetalMode >= 0)
+          {
+            GL.Uniform1(_meshUniformSecondaryMetalMode, secondaryLayerState.MetalMode);
+          }
+
+          if (_meshUniformSecondaryMetalScale >= 0)
+          {
+            GL.Uniform1(_meshUniformSecondaryMetalScale, secondaryLayerState.MetalScale);
+          }
+
+          if (_meshUniformBumpMatrix >= 0)
+          {
+            float theta = animTime * 3.0f;
+            const float bumpStrength = 0.01f;
+            float c = bumpStrength * MathF.Cos(theta);
+            float s = bumpStrength * MathF.Sin(theta);
+            Matrix2 bumpMatrix = new(c, -s, s, c);
+            GL.UniformMatrix2(_meshUniformBumpMatrix, true, ref bumpMatrix);
+          }
+
+          GL.ActiveTexture(TextureUnit.Texture1);
+          GL.BindTexture(TextureTarget.Texture2D, secondaryLayerState.TextureId);
+        }
+        else
+        {
+          if (_meshUniformSecondaryUseUvTransform >= 0)
+          {
+            GL.Uniform1(_meshUniformSecondaryUseUvTransform, 0);
+          }
+
+          if (_meshUniformSecondaryUvTransform >= 0)
+          {
+            Matrix3 identity = Matrix3.Identity;
+            GL.UniformMatrix3(_meshUniformSecondaryUvTransform, true, ref identity);
+          }
+
+          if (_meshUniformSecondaryLayerFlags >= 0)
+          {
+            GL.Uniform1(_meshUniformSecondaryLayerFlags, 0);
+          }
+
+          if (_meshUniformSecondaryLavaWave >= 0)
+          {
+            GL.Uniform1(_meshUniformSecondaryLavaWave, 0.0f);
+          }
+
+          if (_meshUniformSecondaryLavaSpeed >= 0)
+          {
+            GL.Uniform1(_meshUniformSecondaryLavaSpeed, 0.0f);
+          }
+
+          if (_meshUniformSecondaryUvGenMode >= 0)
+          {
+            GL.Uniform1(_meshUniformSecondaryUvGenMode, 0);
+          }
+
+          if (_meshUniformSecondaryMetalMode >= 0)
+          {
+            GL.Uniform1(_meshUniformSecondaryMetalMode, 0);
+          }
+
+          if (_meshUniformSecondaryMetalScale >= 0)
+          {
+            GL.Uniform1(_meshUniformSecondaryMetalScale, 0.0f);
+          }
+
+          if (_meshUniformBumpMatrix >= 0)
+          {
+            Matrix2 identityBump = Matrix2.Identity;
+            GL.UniformMatrix2(_meshUniformBumpMatrix, true, ref identityBump);
+          }
+
+          GL.ActiveTexture(TextureUnit.Texture1);
+          GL.BindTexture(TextureTarget.Texture2D, _checkerTexture);
+        }
+
         GL.Uniform1(_meshUniformUseVertexLighting, span.UseVertexLighting ? 1 : 0);
-        GL.BindTexture(TextureTarget.Texture2D, span.TextureId);
+        GL.ActiveTexture(TextureUnit.Texture0);
+        GL.BindTexture(TextureTarget.Texture2D, layerState.TextureId);
         GL.DrawArrays(PrimitiveType.Triangles, span.StartVertex, span.VertexCount);
       }
 
+      GL.ActiveTexture(TextureUnit.Texture0);
+      GL.DepthMask(true);
       GL.Disable(EnableCap.Blend);
     }
     else
     {
       GL.Uniform1(_meshUniformUvChannel, 0);
       GL.Uniform4(_meshUniformLayerColor, Vector4.One);
+      if (_meshUniformUseUvTransform >= 0)
+      {
+        GL.Uniform1(_meshUniformUseUvTransform, 0);
+      }
+
+      if (_meshUniformUvTransform >= 0)
+      {
+        Matrix3 identity = Matrix3.Identity;
+        GL.UniformMatrix3(_meshUniformUvTransform, true, ref identity);
+      }
+
+      if (_meshUniformLayerFlags >= 0)
+      {
+        GL.Uniform1(_meshUniformLayerFlags, 0);
+      }
+
+      if (_meshUniformLavaWave >= 0)
+      {
+        GL.Uniform1(_meshUniformLavaWave, 0.0f);
+      }
+
+      if (_meshUniformLavaSpeed >= 0)
+      {
+        GL.Uniform1(_meshUniformLavaSpeed, 0.0f);
+      }
+
+      if (_meshUniformUvGenMode >= 0)
+      {
+        GL.Uniform1(_meshUniformUvGenMode, 0);
+      }
+
+      if (_meshUniformMetalMode >= 0)
+      {
+        GL.Uniform1(_meshUniformMetalMode, 0);
+      }
+
+      if (_meshUniformMetalScale >= 0)
+      {
+        GL.Uniform1(_meshUniformMetalScale, 0.0f);
+      }
+
+      if (_meshUniformUseEnvBump >= 0)
+      {
+        GL.Uniform1(_meshUniformUseEnvBump, 0);
+      }
+
+      if (_meshUniformSecondaryUseUvTransform >= 0)
+      {
+        GL.Uniform1(_meshUniformSecondaryUseUvTransform, 0);
+      }
+
+      if (_meshUniformSecondaryUvTransform >= 0)
+      {
+        Matrix3 identity = Matrix3.Identity;
+        GL.UniformMatrix3(_meshUniformSecondaryUvTransform, true, ref identity);
+      }
+
+      if (_meshUniformSecondaryLayerFlags >= 0)
+      {
+        GL.Uniform1(_meshUniformSecondaryLayerFlags, 0);
+      }
+
+      if (_meshUniformSecondaryLavaWave >= 0)
+      {
+        GL.Uniform1(_meshUniformSecondaryLavaWave, 0.0f);
+      }
+
+      if (_meshUniformSecondaryLavaSpeed >= 0)
+      {
+        GL.Uniform1(_meshUniformSecondaryLavaSpeed, 0.0f);
+      }
+
+      if (_meshUniformSecondaryUvGenMode >= 0)
+      {
+        GL.Uniform1(_meshUniformSecondaryUvGenMode, 0);
+      }
+
+      if (_meshUniformSecondaryMetalMode >= 0)
+      {
+        GL.Uniform1(_meshUniformSecondaryMetalMode, 0);
+      }
+
+      if (_meshUniformSecondaryMetalScale >= 0)
+      {
+        GL.Uniform1(_meshUniformSecondaryMetalScale, 0.0f);
+      }
+
+      if (_meshUniformBumpMatrix >= 0)
+      {
+        Matrix2 identityBump = Matrix2.Identity;
+        GL.UniformMatrix2(_meshUniformBumpMatrix, true, ref identityBump);
+      }
+
       GL.Uniform1(_meshUniformUseVertexLighting, 1);
+      GL.ActiveTexture(TextureUnit.Texture1);
+      GL.BindTexture(TextureTarget.Texture2D, _checkerTexture);
+      GL.ActiveTexture(TextureUnit.Texture0);
       GL.BindTexture(TextureTarget.Texture2D, _checkerTexture);
       GL.DrawArrays(PrimitiveType.Triangles, 0, vertexCount);
     }
   }
 
-  private void DrawSkyMesh(int vao, int vertexCount, DrawSpan[] spans, ref Matrix4 mvp)
+  private void DrawSkyMesh(
+    int vao,
+    int vertexCount,
+    DrawSpan[] spans,
+    ref Matrix4 mvp,
+    IReadOnlyDictionary<int, int>? surfaceToTexture,
+    IReadOnlyDictionary<int, int>? fallbackSurfaceToTexture)
   {
     if (vertexCount <= 0)
     {
       return;
     }
 
+    float animTime = (float)_animationClock.Elapsed.TotalSeconds;
     GL.UseProgram(_skyProgram);
     GL.UniformMatrix4(_skyUniformMvp, true, ref mvp);
+    if (_skyUniformAnimTime >= 0)
+    {
+      GL.Uniform1(_skyUniformAnimTime, animTime);
+    }
+
     GL.BindVertexArray(vao);
     if (spans.Length > 0)
     {
       for (int i = 0; i < spans.Length; ++i)
       {
         DrawSpan span = spans[i];
+        LayerAnimationState layerState = EvaluateLayerAnimation(span, animTime, surfaceToTexture, fallbackSurfaceToTexture);
         ApplyBlendState(span.AlphaType);
-        GL.BindTexture(TextureTarget.Texture2D, span.TextureId);
+        if (_skyUniformLayerColor >= 0)
+        {
+          GL.Uniform4(_skyUniformLayerColor, layerState.LayerColor);
+        }
+
+        if (_skyUniformUseUvTransform >= 0)
+        {
+          GL.Uniform1(_skyUniformUseUvTransform, layerState.UseUvTransform ? 1 : 0);
+        }
+
+        if (_skyUniformUvTransform >= 0)
+        {
+          Matrix3 uvTransform = layerState.UvTransform;
+          GL.UniformMatrix3(_skyUniformUvTransform, true, ref uvTransform);
+        }
+
+        if (_skyUniformLayerFlags >= 0)
+        {
+          GL.Uniform1(_skyUniformLayerFlags, (int)layerState.LayerFlags);
+        }
+
+        if (_skyUniformLavaWave >= 0)
+        {
+          GL.Uniform1(_skyUniformLavaWave, layerState.LavaWave);
+        }
+
+        if (_skyUniformLavaSpeed >= 0)
+        {
+          GL.Uniform1(_skyUniformLavaSpeed, layerState.LavaSpeed);
+        }
+
+        GL.BindTexture(TextureTarget.Texture2D, layerState.TextureId);
         GL.DrawArrays(PrimitiveType.Triangles, span.StartVertex, span.VertexCount);
       }
     }
     else
     {
       ApplyBlendState(0);
+      if (_skyUniformLayerColor >= 0)
+      {
+        GL.Uniform4(_skyUniformLayerColor, Vector4.One);
+      }
+
+      if (_skyUniformUseUvTransform >= 0)
+      {
+        GL.Uniform1(_skyUniformUseUvTransform, 0);
+      }
+
+      if (_skyUniformUvTransform >= 0)
+      {
+        Matrix3 identity = Matrix3.Identity;
+        GL.UniformMatrix3(_skyUniformUvTransform, true, ref identity);
+      }
+
+      if (_skyUniformLayerFlags >= 0)
+      {
+        GL.Uniform1(_skyUniformLayerFlags, 0);
+      }
+
+      if (_skyUniformLavaWave >= 0)
+      {
+        GL.Uniform1(_skyUniformLavaWave, 0.0f);
+      }
+
+      if (_skyUniformLavaSpeed >= 0)
+      {
+        GL.Uniform1(_skyUniformLavaSpeed, 0.0f);
+      }
+
       GL.BindTexture(TextureTarget.Texture2D, _checkerTexture);
       GL.DrawArrays(PrimitiveType.Triangles, 0, vertexCount);
     }
+  }
+
+  private LayerAnimationState EvaluateLayerAnimation(
+    DrawSpan span,
+    float animTime,
+    IReadOnlyDictionary<int, int>? surfaceToTexture,
+    IReadOnlyDictionary<int, int>? fallbackSurfaceToTexture)
+  {
+    return EvaluateLayerAnimation(
+      span.TextureId,
+      span.LayerColor,
+      span.HasLayerDefinition,
+      span.Layer,
+      animTime,
+      surfaceToTexture,
+      fallbackSurfaceToTexture);
+  }
+
+  private LayerAnimationState EvaluateLayerAnimation(
+    int baseTextureId,
+    Vector4 baseLayerColor,
+    bool hasLayerDefinition,
+    MaterialLayerDefinition layer,
+    float animTime,
+    IReadOnlyDictionary<int, int>? surfaceToTexture,
+    IReadOnlyDictionary<int, int>? fallbackSurfaceToTexture)
+  {
+    int textureId = baseTextureId;
+    Vector4 layerColor = baseLayerColor;
+    Matrix3 uvTransform = Matrix3.Identity;
+    bool useUvTransform = false;
+    uint layerFlags = 0;
+    float lavaWave = 0.0f;
+    float lavaSpeed = 0.0f;
+    int uvGenMode = 0;
+    int metalMode = 0;
+    float metalScale = 0.0f;
+
+    if (!hasLayerDefinition)
+    {
+      return new LayerAnimationState(textureId, layerColor, useUvTransform, uvTransform, layerFlags, lavaWave, lavaSpeed, uvGenMode, metalMode, metalScale);
+    }
+
+    layerFlags = layer.LayerFlags;
+    textureId = ResolveAnimatedTextureId(textureId, layer, animTime, surfaceToTexture, fallbackSurfaceToTexture);
+    if ((layer.LayerFlags & MaterialLayerFlagAniAlphaFlicker) != 0)
+    {
+      layerColor.W *= ComputeAnimatedAlpha(layer, animTime);
+    }
+
+    if ((layer.LayerFlags & MaterialLayerFlagUvLava) != 0)
+    {
+      lavaWave = FixedShortToFloat(layer.UvLavaWave);
+      lavaSpeed = FixedShortToFloat((short)(layer.UvLavaSpeed * 3));
+    }
+
+    if ((layer.LayerFlags & MaterialLayerFlagUvMetal) != 0)
+    {
+      uvGenMode = 1;
+      metalScale = 0.003f * FixedShortToFloat(layer.UvMetal);
+      if (!float.IsFinite(metalScale) || MathF.Abs(metalScale) < 0.00001f)
+      {
+        metalScale = 0.003f;
+      }
+
+      if ((layer.LayerFlags & MaterialLayerFlagUvMetalFloor) != 0)
+      {
+        metalMode = 1;
+      }
+      else if ((layer.LayerFlags & MaterialLayerFlagUvMetalWall) != 0)
+      {
+        metalMode = 2;
+      }
+    }
+    else if ((layer.LayerFlags & MaterialLayerFlagUvEnv) != 0)
+    {
+      uvGenMode = 2;
+    }
+
+    if (TryBuildUvTransform(layer, animTime, out Matrix3 animatedTransform))
+    {
+      useUvTransform = true;
+      uvTransform = animatedTransform;
+    }
+
+    return new LayerAnimationState(textureId, layerColor, useUvTransform, uvTransform, layerFlags, lavaWave, lavaSpeed, uvGenMode, metalMode, metalScale);
+  }
+
+  private static int ResolveAnimatedTextureId(
+    int fallbackTextureId,
+    MaterialLayerDefinition layer,
+    float animTime,
+    IReadOnlyDictionary<int, int>? surfaceToTexture,
+    IReadOnlyDictionary<int, int>? fallbackSurfaceToTexture)
+  {
+    if ((layer.LayerFlags & MaterialLayerFlagAniTileTexture) == 0 || layer.TileAniTextureCount <= 0 || layer.SurfaceId <= 0)
+    {
+      return fallbackTextureId;
+    }
+
+    int frameCount = layer.TileAniTextureCount;
+    float speed = FixedShortToFloat(layer.AniTexSpeed);
+    if (!float.IsFinite(speed) || MathF.Abs(speed) <= 0.0001f)
+    {
+      speed = 1.0f;
+    }
+
+    int frame = (int)(animTime * speed);
+    if (frameCount > 0)
+    {
+      frame %= frameCount;
+      if (frame < 0)
+      {
+        frame += frameCount;
+      }
+    }
+
+    int targetSurfaceId = layer.SurfaceId + frame;
+    if (surfaceToTexture != null && surfaceToTexture.TryGetValue(targetSurfaceId, out int textureId))
+    {
+      return textureId;
+    }
+
+    if (fallbackSurfaceToTexture != null && fallbackSurfaceToTexture.TryGetValue(targetSurfaceId, out int mappedFallbackTexture))
+    {
+      return mappedFallbackTexture;
+    }
+
+    return fallbackTextureId;
+  }
+
+  private static float ComputeAnimatedAlpha(MaterialLayerDefinition layer, float animTime)
+  {
+    float speed = FixedShortToFloat(layer.AniAlphaFlicker);
+    ushort range = layer.AniAlphaFlickerRange;
+    int start = (range >> 8) & 0xFF;
+    int end = range & 0xFF;
+    if (start == 0 && end == 0)
+    {
+      start = 0;
+      end = 255;
+    }
+
+    int distance = Math.Abs(end - start);
+    if (distance == 0)
+    {
+      return Math.Clamp(start / 255.0f, 0.0f, 1.0f);
+    }
+
+    float alpha;
+    if (speed < 0.0f)
+    {
+      int pulse = (int)(animTime * -speed * 200.0f);
+      int animated = start + (pulse % distance);
+      alpha = animated / 255.0f;
+    }
+    else
+    {
+      float halfDistance = distance * 0.5f;
+      alpha = (MathF.Sin(animTime * speed) * halfDistance + halfDistance + start) / 255.0f;
+    }
+
+    return Math.Clamp(alpha, 0.0f, 1.0f);
+  }
+
+  private static bool TryBuildUvTransform(MaterialLayerDefinition layer, float animTime, out Matrix3 uvTransform)
+  {
+    uvTransform = Matrix3.Identity;
+    bool hasTransform = false;
+    uint flags = layer.LayerFlags;
+
+    if ((flags & MaterialLayerFlagAniTexture) != 0)
+    {
+      int frameNum = (int)FixedShortToFloat(layer.AniTexFrame);
+      if (frameNum > 0)
+      {
+        float speed = FixedShortToFloat(layer.AniTexSpeed);
+        int frame = (int)(speed * animTime);
+        frame %= frameNum;
+        if (frame < 0)
+        {
+          frame += frameNum;
+        }
+
+        int divU = GetAniTexDivU(frameNum);
+        int divV = GetAniTexDivV(frameNum);
+        float addU = (frame % divU) / (float)divU;
+        float addV = ((frame + divU) / (float)divU - 1.0f) / divV;
+
+        uvTransform = CreateUvScale(1.0f / divU, 1.0f / divV) * CreateUvTranslation(addU, addV);
+        return true;
+      }
+    }
+
+    if ((flags & MaterialLayerFlagUvRotate) != 0)
+    {
+      float angle = FixedShortToFloat(layer.UvRotate) * animTime;
+      uvTransform = uvTransform
+        * CreateUvTranslation(-0.5f, -0.5f)
+        * CreateUvRotation(angle)
+        * CreateUvTranslation(0.5f, 0.5f);
+      hasTransform = true;
+    }
+
+    if ((flags & MaterialLayerFlagUvScale) != 0)
+    {
+      float start = FixedShortToFloat(layer.UvScaleStart);
+      float end = FixedShortToFloat(layer.UvScaleEnd);
+      float speed = FixedShortToFloat(layer.UvScaleSpeed);
+      float scale = 1.0f;
+      if (MathF.Abs(speed) > 0.0001f)
+      {
+        float phase = (animTime * speed / 6.0f) * (2.0f * MathF.PI);
+        scale = (end - start) * ((MathF.Sin(phase) + 1.0f) * 0.5f) + start;
+      }
+      else
+      {
+        scale = start;
+      }
+
+      uvTransform = uvTransform
+        * CreateUvTranslation(-0.5f, -0.5f)
+        * CreateUvScale(scale, scale)
+        * CreateUvTranslation(0.5f, 0.5f);
+      hasTransform = true;
+    }
+
+    if ((flags & (MaterialLayerFlagUvScrollU | MaterialLayerFlagUvScrollV)) != 0)
+    {
+      float offsetU = FixedShortToFloat(layer.UvScrollU) * animTime / 4.0f;
+      float offsetV = FixedShortToFloat(layer.UvScrollV) * animTime / 4.0f;
+      uvTransform = uvTransform * CreateUvTranslation(offsetU, offsetV);
+      hasTransform = true;
+    }
+
+    return hasTransform;
+  }
+
+  private static int GetAniTexDivU(int frameNum)
+  {
+    if (frameNum <= 4)
+    {
+      return 2;
+    }
+
+    if (frameNum <= 16)
+    {
+      return 4;
+    }
+
+    if (frameNum <= 64)
+    {
+      return 8;
+    }
+
+    return 16;
+  }
+
+  private static int GetAniTexDivV(int frameNum)
+  {
+    if (frameNum <= 2)
+    {
+      return 1;
+    }
+
+    if (frameNum <= 8)
+    {
+      return 2;
+    }
+
+    if (frameNum <= 32)
+    {
+      return 4;
+    }
+
+    return 8;
+  }
+
+  private static float FixedShortToFloat(short value)
+  {
+    return value / 256.0f;
+  }
+
+  private static Matrix3 CreateUvTranslation(float tx, float ty)
+  {
+    return new Matrix3(
+      1.0f, 0.0f, 0.0f,
+      0.0f, 1.0f, 0.0f,
+      tx, ty, 1.0f);
+  }
+
+  private static Matrix3 CreateUvScale(float sx, float sy)
+  {
+    return new Matrix3(
+      sx, 0.0f, 0.0f,
+      0.0f, sy, 0.0f,
+      0.0f, 0.0f, 1.0f);
+  }
+
+  private static Matrix3 CreateUvRotation(float angleRadians)
+  {
+    float c = MathF.Cos(angleRadians);
+    float s = MathF.Sin(angleRadians);
+    return new Matrix3(
+      c, s, 0.0f,
+      -s, c, 0.0f,
+      0.0f, 0.0f, 1.0f);
   }
 
   private void ApplyDynamicLightingUniforms()
@@ -987,6 +1851,14 @@ internal sealed class MapViewerControl : UserControl
     float fogStart = fogEnabled ? env.FogStart : 5.0f;
     float fogEnd = fogEnabled ? env.FogEnd : 5000.0f;
     Vector3 fogColor = env.FogEnabled ? env.FogColor : DefaultClearColor;
+    if (TryGetExtDummyFogOverride(out Vector3 extFogColor, out float extFogStart, out float extFogEnd))
+    {
+      fogEnabled = extFogEnd > extFogStart && extFogStart >= 0.0f;
+      fogStart = fogEnabled ? extFogStart : 5.0f;
+      fogEnd = fogEnabled ? extFogEnd : 5000.0f;
+      fogColor = extFogColor;
+    }
+
     fogColor.X = Math.Clamp(fogColor.X, 0.0f, 1.0f);
     fogColor.Y = Math.Clamp(fogColor.Y, 0.0f, 1.0f);
     fogColor.Z = Math.Clamp(fogColor.Z, 0.0f, 1.0f);
@@ -1010,6 +1882,65 @@ internal sealed class MapViewerControl : UserControl
     {
       GL.Uniform1(_meshUniformFogEnd, fogEnd);
     }
+  }
+
+  private bool TryGetExtDummyFogOverride(out Vector3 fogColor, out float fogStart, out float fogEnd)
+  {
+    fogColor = DefaultClearColor;
+    fogStart = 5.0f;
+    fogEnd = 5000.0f;
+
+    if (_map == null || _map.ExtDummies.Length == 0)
+    {
+      return false;
+    }
+
+    System.Numerics.Vector3 cameraPosition = new(_camera.Position.X, _camera.Position.Y, _camera.Position.Z);
+    for (int i = 0; i < _map.ExtDummies.Length; ++i)
+    {
+      ExtDummyDefinition dummy = _map.ExtDummies[i];
+      if ((dummy.Flags & ExtDummyFlagFog) == 0)
+      {
+        continue;
+      }
+
+      System.Numerics.Vector3 localPosition = System.Numerics.Vector3.Transform(cameraPosition, dummy.InverseTransform);
+      if (!IsInsideExtDummyLocalBounds(localPosition, dummy.LocalMin, dummy.LocalMax))
+      {
+        continue;
+      }
+
+      uint argb = dummy.Arg0;
+      fogColor = new Vector3(
+        ((argb >> 16) & 0xFF) / 255.0f,
+        ((argb >> 8) & 0xFF) / 255.0f,
+        (argb & 0xFF) / 255.0f);
+
+      fogStart = float.IsFinite(dummy.Arg1) ? dummy.Arg1 : 5.0f;
+      fogEnd = float.IsFinite(dummy.Arg2) ? dummy.Arg2 : MathF.Max(fogStart + 1.0f, 5000.0f);
+      if (fogEnd <= fogStart)
+      {
+        fogEnd = fogStart + 1.0f;
+      }
+
+      return true;
+    }
+
+    return false;
+  }
+
+  private static bool IsInsideExtDummyLocalBounds(System.Numerics.Vector3 point, Vector3 localMin, Vector3 localMax)
+  {
+    float minX = MathF.Min(localMin.X, localMax.X);
+    float minY = MathF.Min(localMin.Y, localMax.Y);
+    float minZ = MathF.Min(localMin.Z, localMax.Z);
+    float maxX = MathF.Max(localMin.X, localMax.X);
+    float maxY = MathF.Max(localMin.Y, localMax.Y);
+    float maxZ = MathF.Max(localMin.Z, localMax.Z);
+
+    return point.X >= minX && point.X <= maxX
+      && point.Y >= minY && point.Y <= maxY
+      && point.Z >= minZ && point.Z <= maxZ;
   }
 
   private static void ApplyBlendState(uint alphaType)
@@ -1063,6 +1994,7 @@ internal sealed class MapViewerControl : UserControl
     int vbo,
     BspRenderVertex[] meshVertices,
     BspMaterialSpan[] materialSpans,
+    MaterialDefinition[] materials,
     int[] materialSurfaceIds,
     uint[] materialAlphaTypes,
     R3TextureBlob[] textureBlobs,
@@ -1136,41 +2068,116 @@ internal sealed class MapViewerControl : UserControl
         continue;
       }
 
-      int textureId = _checkerTexture;
-      uint alphaType = 0;
-      if (span.MaterialId >= 0 && span.MaterialId < materialSurfaceIds.Length)
+      bool hasMaterial = span.MaterialId >= 0 && span.MaterialId < materials.Length;
+      if (hasMaterial)
       {
-        int surfaceId = materialSurfaceIds[span.MaterialId];
-        if (surfaceToTexture.TryGetValue(surfaceId, out int mappedTexture))
-        {
-          textureId = mappedTexture;
-        }
-        else if (fallbackSurfaceToTexture != null && fallbackSurfaceToTexture.TryGetValue(surfaceId, out int fallbackTexture))
-        {
-          textureId = fallbackTexture;
-        }
+        MaterialDefinition material = materials[span.MaterialId];
+        bool envBumpSecondLayer = material.Layers.Length > 1
+          && (material.Layers[1].LayerFlags & MaterialLayerFlagEnvBump) != 0;
 
-        if (span.MaterialId < materialAlphaTypes.Length)
+        if (envBumpSecondLayer && material.Layers.Length > 1)
         {
-          alphaType = materialAlphaTypes[span.MaterialId];
+          MaterialLayerDefinition baseLayer = material.Layers[0];
+          MaterialLayerDefinition bumpLayer = material.Layers[1];
+          int baseTextureId = ResolveLayerTextureId(baseLayer.SurfaceId, surfaceToTexture, fallbackSurfaceToTexture);
+          int bumpTextureId = ResolveLayerTextureId(bumpLayer.SurfaceId, surfaceToTexture, fallbackSurfaceToTexture);
+
+          uint alphaType = baseLayer.AlphaType;
+          if ((baseLayer.LayerFlags & MaterialLayerFlagAniAlphaFlicker) != 0 && alphaType == BlendNone)
+          {
+            alphaType = BlendOnlyTransparency;
+          }
+
+          AddOrMergeDrawSpan(
+            spans,
+            new DrawSpan(
+              span.StartVertex,
+              span.VertexCount,
+              baseTextureId,
+              bumpTextureId,
+              alphaType,
+              0,
+              DecodeArgb(baseLayer.Argb),
+              true,
+              true,
+              baseLayer,
+              true,
+              bumpLayer));
+        }
+        else
+        {
+          for (int layerIndex = 0; layerIndex < material.Layers.Length; ++layerIndex)
+          {
+            MaterialLayerDefinition layer = material.Layers[layerIndex];
+            int textureId = ResolveLayerTextureId(layer.SurfaceId, surfaceToTexture, fallbackSurfaceToTexture);
+
+            uint alphaType = layer.AlphaType;
+            if ((layer.LayerFlags & MaterialLayerFlagAniAlphaFlicker) != 0 && alphaType == BlendNone)
+            {
+              alphaType = BlendOnlyTransparency;
+            }
+
+            AddOrMergeDrawSpan(
+              spans,
+              new DrawSpan(
+                span.StartVertex,
+                span.VertexCount,
+                textureId,
+                0,
+                alphaType,
+                0,
+                DecodeArgb(layer.Argb),
+                true,
+                true,
+                layer,
+                false,
+                default));
+          }
         }
       }
+      else
+      {
+        int textureId = _checkerTexture;
+        uint alphaType = 0;
+        if (span.MaterialId >= 0 && span.MaterialId < materialSurfaceIds.Length)
+        {
+          int surfaceId = materialSurfaceIds[span.MaterialId];
+          if (surfaceToTexture.TryGetValue(surfaceId, out int mappedTexture))
+          {
+            textureId = mappedTexture;
+          }
+          else if (fallbackSurfaceToTexture != null && fallbackSurfaceToTexture.TryGetValue(surfaceId, out int fallbackTexture))
+          {
+            textureId = fallbackTexture;
+          }
 
-      AddOrMergeDrawSpan(
-        spans,
-        new DrawSpan(
-          span.StartVertex,
-          span.VertexCount,
-          textureId,
-          alphaType,
-          0,
-          Vector4.One,
-          true));
+          if (span.MaterialId < materialAlphaTypes.Length)
+          {
+            alphaType = materialAlphaTypes[span.MaterialId];
+          }
+        }
+
+        AddOrMergeDrawSpan(
+          spans,
+          new DrawSpan(
+            span.StartVertex,
+            span.VertexCount,
+            textureId,
+            0,
+            alphaType,
+            0,
+            Vector4.One,
+            true,
+            false,
+            default,
+            false,
+            default));
+      }
     }
 
     if (spans.Count == 0 && vertexCount > 0)
     {
-      spans.Add(new DrawSpan(0, vertexCount, _checkerTexture, 0, 0, Vector4.One, true));
+      spans.Add(new DrawSpan(0, vertexCount, _checkerTexture, 0, 0, 0, Vector4.One, true, false, default, false, default));
     }
 
     drawSpans = spans.ToArray();
@@ -1186,9 +2193,14 @@ internal sealed class MapViewerControl : UserControl
 
     DrawSpan last = spans[spans.Count - 1];
     if (last.TextureId == value.TextureId
+      && last.SecondaryTextureId == value.SecondaryTextureId
       && last.AlphaType == value.AlphaType
       && last.UvChannel == value.UvChannel
       && last.LayerColor == value.LayerColor
+      && last.HasLayerDefinition == value.HasLayerDefinition
+      && last.Layer == value.Layer
+      && last.HasSecondaryLayerDefinition == value.HasSecondaryLayerDefinition
+      && last.SecondaryLayer == value.SecondaryLayer
       && last.UseVertexLighting == value.UseVertexLighting
       && last.StartVertex + last.VertexCount == value.StartVertex)
     {
@@ -1196,10 +2208,15 @@ internal sealed class MapViewerControl : UserControl
         last.StartVertex,
         last.VertexCount + value.VertexCount,
         last.TextureId,
+        last.SecondaryTextureId,
         last.AlphaType,
         last.UvChannel,
         last.LayerColor,
-        last.UseVertexLighting);
+        last.UseVertexLighting,
+        last.HasLayerDefinition,
+        last.Layer,
+        last.HasSecondaryLayerDefinition,
+        last.SecondaryLayer);
       return;
     }
 
@@ -1218,11 +2235,13 @@ internal sealed class MapViewerControl : UserControl
 
   private void ReleaseSkyTextures()
   {
+    _skySurfaceToTexture.Clear();
     ReleaseTextureList(_skyTextures, ref _loadedSkyTextureCount, ref _skyDrawSpans);
   }
 
   private void ReleaseEntityTextures()
   {
+    _entitySurfaceToTexture.Clear();
     ReleaseTextureList(_entityTextures, ref _loadedEntityTextureCount, ref _entityDrawSpans);
   }
 
@@ -1898,8 +2917,29 @@ internal sealed class MapViewerControl : UserControl
       in vec3 vColor;
       in vec3 vWorldPos;
       uniform sampler2D uTexture0;
+      uniform sampler2D uTexture1;
+      uniform int uUseEnvBump;
+      uniform mat2 uBumpMatrix;
+      uniform mat4 uView;
       uniform int uUvChannel;
       uniform vec4 uLayerColor;
+      uniform int uUseUvTransform;
+      uniform mat3 uUvTransform;
+      uniform float uAnimTime;
+      uniform int uLayerFlags;
+      uniform float uLavaWave;
+      uniform float uLavaSpeed;
+      uniform int uUvGenMode;
+      uniform int uMetalMode;
+      uniform float uMetalScale;
+      uniform int uSecondaryUseUvTransform;
+      uniform mat3 uSecondaryUvTransform;
+      uniform int uSecondaryLayerFlags;
+      uniform float uSecondaryLavaWave;
+      uniform float uSecondaryLavaSpeed;
+      uniform int uSecondaryUvGenMode;
+      uniform int uSecondaryMetalMode;
+      uniform float uSecondaryMetalScale;
       uniform int uUseVertexLighting;
       uniform float uAmbientStrength;
       uniform vec3 uDirLightDirection;
@@ -1914,23 +2954,109 @@ internal sealed class MapViewerControl : UserControl
       uniform float uFogEnd;
       out vec4 FragColor;
 
+      vec3 SafeNormalize(vec3 value, vec3 fallback)
+      {
+        float len = length(value);
+        if (len <= 0.00001)
+        {
+          return fallback;
+        }
+
+        return value / len;
+      }
+
+      vec2 BuildGeneratedUv(vec2 baseUv, vec3 viewPos, vec3 viewNormal, int uvGenMode, int metalMode, float metalScale)
+      {
+        vec2 uv = baseUv;
+        if (uvGenMode == 1)
+        {
+          float scale = abs(metalScale) > 0.00001 ? metalScale : 0.003;
+          if (metalMode == 1)
+          {
+            uv = vec2(viewPos.x, viewPos.z) * scale;
+          }
+          else if (metalMode == 2)
+          {
+            uv = vec2(viewPos.x, viewPos.y) * scale;
+          }
+          else
+          {
+            uv = vec2(viewPos.z, viewPos.y) * scale;
+          }
+        }
+        else if (uvGenMode == 2)
+        {
+          vec3 reflected = reflect(SafeNormalize(viewPos, vec3(0.0, 0.0, 1.0)), SafeNormalize(viewNormal, vec3(0.0, 1.0, 0.0)));
+          float m = max(0.0001, 2.0 * sqrt(max(0.0, reflected.x * reflected.x + reflected.y * reflected.y + (reflected.z + 1.0) * (reflected.z + 1.0))));
+          uv = vec2(reflected.x / m + 0.5, reflected.y / m + 0.5);
+        }
+
+        return uv;
+      }
+
+      vec2 ApplyLayerUvAnimation(vec2 uv, int layerFlags, float lavaWave, float lavaSpeed, int useUvTransform, mat3 uvTransform, float animTime)
+      {
+        if ((layerFlags & 0x00000004) != 0)
+        {
+          vec2 uvBase = uv;
+          uv.x = uvBase.x + sin(animTime * lavaSpeed + uvBase.y * 20.0) * lavaWave / 8.0;
+          uv.y = uvBase.y + cos(animTime * lavaSpeed + uvBase.x * 20.0) * lavaWave / 8.0;
+        }
+
+        if (useUvTransform != 0)
+        {
+          uv = (vec3(uv, 1.0) * uvTransform).xy;
+        }
+
+        return uv;
+      }
+
       void main()
       {
-        vec2 uv = (uUvChannel == 1) ? vUv1 : vUv0;
-        vec4 tex = texture(uTexture0, uv);
+        vec2 baseUv = (uUvChannel == 1) ? vUv1 : vUv0;
+        vec3 worldDx = dFdx(vWorldPos);
+        vec3 worldDy = dFdy(vWorldPos);
+        vec3 worldNormal = SafeNormalize(cross(worldDx, worldDy), vec3(0.0, 1.0, 0.0));
+
+        vec3 viewPos = (vec4(vWorldPos, 1.0) * uView).xyz;
+        vec3 viewDx = dFdx(viewPos);
+        vec3 viewDy = dFdy(viewPos);
+        vec3 viewNormal = SafeNormalize(cross(viewDx, viewDy), vec3(0.0, 1.0, 0.0));
+        if (!gl_FrontFacing)
+        {
+          worldNormal = -worldNormal;
+          viewNormal = -viewNormal;
+        }
+
+        vec2 uvPrimary = BuildGeneratedUv(baseUv, viewPos, viewNormal, uUvGenMode, uMetalMode, uMetalScale);
+        uvPrimary = ApplyLayerUvAnimation(uvPrimary, uLayerFlags, uLavaWave, uLavaSpeed, uUseUvTransform, uUvTransform, uAnimTime);
+
+        vec4 tex = texture(uTexture0, uvPrimary);
+        if (uUseEnvBump != 0)
+        {
+          vec2 uvSecondary = BuildGeneratedUv(baseUv, viewPos, viewNormal, uSecondaryUvGenMode, uSecondaryMetalMode, uSecondaryMetalScale);
+          uvSecondary = ApplyLayerUvAnimation(
+            uvSecondary,
+            uSecondaryLayerFlags,
+            uSecondaryLavaWave,
+            uSecondaryLavaSpeed,
+            uSecondaryUseUvTransform,
+            uSecondaryUvTransform,
+            uAnimTime);
+
+          vec4 bumpSample = texture(uTexture1, uvSecondary);
+          vec2 bumpVector = bumpSample.rg * 2.0 - 1.0;
+          vec2 bumpOffset = uBumpMatrix * bumpVector;
+          vec4 bumped = texture(uTexture0, uvPrimary + bumpOffset);
+          tex.rgb = mix(tex.rgb, bumped.rgb, 0.60);
+        }
+
         vec3 lit = vec3(1.0);
         if (uUseVertexLighting != 0)
         {
           vec3 baseLit = clamp(vColor + vec3(0.18), vec3(0.0), vec3(1.0));
-          vec3 dx = dFdx(vWorldPos);
-          vec3 dy = dFdy(vWorldPos);
-          vec3 n = normalize(cross(dx, dy));
-          if (!gl_FrontFacing)
-          {
-            n = -n;
-          }
 
-          float ndl = max(dot(n, -normalize(uDirLightDirection)), 0.0);
+          float ndl = max(dot(worldNormal, -normalize(uDirLightDirection)), 0.0);
           vec3 dynamicLight = vec3(uAmbientStrength) + (uDirLightColor * ndl);
 
           for (int i = 0; i < uPointLightCount; ++i)
@@ -1941,8 +3067,8 @@ internal sealed class MapViewerControl : UserControl
             float dist = length(toLight);
             if (dist < radius)
             {
-              vec3 l = normalize(toLight);
-              float ndlPoint = max(dot(n, l), 0.0);
+              vec3 l = SafeNormalize(toLight, vec3(0.0, 1.0, 0.0));
+              float ndlPoint = max(dot(worldNormal, l), 0.0);
               float atten = 1.0 - (dist / radius);
               vec3 lc = uPointLightColorIntensity[i].rgb;
               float intensity = uPointLightColorIntensity[i].a;
@@ -1996,13 +3122,32 @@ internal sealed class MapViewerControl : UserControl
       in vec3 vColor;
       uniform sampler2D uTexture0;
       uniform float uExposure;
+      uniform vec4 uLayerColor;
+      uniform int uUseUvTransform;
+      uniform mat3 uUvTransform;
+      uniform float uAnimTime;
+      uniform int uLayerFlags;
+      uniform float uLavaWave;
+      uniform float uLavaSpeed;
       out vec4 FragColor;
 
       void main()
       {
-        vec4 tex = texture(uTexture0, vUv);
-        vec3 color = tex.rgb * vColor * uExposure;
-        FragColor = vec4(clamp(color, vec3(0.0), vec3(1.0)), tex.a);
+        vec2 uv = vUv;
+        if ((uLayerFlags & 0x00000004) != 0)
+        {
+          vec2 uvBase = uv;
+          uv.x = uvBase.x + sin(uAnimTime * uLavaSpeed + uvBase.y * 20.0) * uLavaWave / 8.0;
+          uv.y = uvBase.y + cos(uAnimTime * uLavaSpeed + uvBase.x * 20.0) * uLavaWave / 8.0;
+        }
+        if (uUseUvTransform != 0)
+        {
+          uv = (vec3(uv, 1.0) * uUvTransform).xy;
+        }
+
+        vec4 tex = texture(uTexture0, uv);
+        vec3 color = tex.rgb * vColor * uLayerColor.rgb * uExposure;
+        FragColor = vec4(clamp(color, vec3(0.0), vec3(1.0)), tex.a * uLayerColor.a);
       }
       """;
 
@@ -2263,7 +3408,7 @@ internal sealed class MapViewerControl : UserControl
     }
     else if (e.KeyCode == Keys.R)
     {
-      _camera = CreateDefaultCamera(_currentBounds);
+      _camera = _map != null ? CreateDefaultCamera(_map) : CreateDefaultCamera(_currentBounds);
     }
   }
 
@@ -2370,12 +3515,29 @@ internal sealed class MapViewerControl : UserControl
     base.Dispose(disposing);
   }
 
+  private readonly record struct LayerAnimationState(
+    int TextureId,
+    Vector4 LayerColor,
+    bool UseUvTransform,
+    Matrix3 UvTransform,
+    uint LayerFlags,
+    float LavaWave,
+    float LavaSpeed,
+    int UvGenMode,
+    int MetalMode,
+    float MetalScale);
+
   private readonly record struct DrawSpan(
     int StartVertex,
     int VertexCount,
     int TextureId,
+    int SecondaryTextureId,
     uint AlphaType,
     int UvChannel,
     Vector4 LayerColor,
-    bool UseVertexLighting);
+    bool UseVertexLighting,
+    bool HasLayerDefinition,
+    MaterialLayerDefinition Layer,
+    bool HasSecondaryLayerDefinition,
+    MaterialLayerDefinition SecondaryLayer);
 }

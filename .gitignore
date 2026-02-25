@@ -16,12 +16,11 @@ x64/
 **/x64/
 /WorldServer/**/x64/
 LoginServerIdaPro/
+AccountServerIdaPro/
 appsettings.login.json
 appsettings.account.json
 Settings/appsettings.account.json
 558fba0/
-AccountServerIdaPro/
-LoginServerIdaPro/
 tools/
 WorldServerIdaPro/
 /WorldServer/x64/

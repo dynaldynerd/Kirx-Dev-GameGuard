@@ -1,4 +1,5 @@
 using OpenTK.Mathematics;
+using NumericsMatrix4 = System.Numerics.Matrix4x4;
 
 namespace MapEditor.Formats;
 
@@ -47,10 +48,25 @@ public readonly record struct BspMaterialSpan(
   int LightMapId = -1);
 
 public readonly record struct MaterialLayerDefinition(
+  short TileAniTextureCount,
   int SurfaceId,
   uint AlphaType,
   uint Argb,
-  uint LayerFlags);
+  uint LayerFlags,
+  short UvLavaWave,
+  short UvLavaSpeed,
+  short UvScrollU,
+  short UvScrollV,
+  short UvRotate,
+  short UvScaleStart,
+  short UvScaleEnd,
+  short UvScaleSpeed,
+  short UvMetal,
+  short AniAlphaFlicker,
+  ushort AniAlphaFlickerRange,
+  short AniTexFrame,
+  short AniTexSpeed,
+  short GradientAlpha);
 
 public readonly record struct MaterialDefinition(
   uint MaterialFlags,
@@ -85,12 +101,25 @@ public readonly record struct MapEnvironmentSettings(
       Vector3.Zero);
 }
 
+public readonly record struct ExtDummyDefinition(
+  string Name,
+  uint Flags,
+  Vector3 LocalMin,
+  Vector3 LocalMax,
+  uint Id,
+  uint Arg0,
+  float Arg1,
+  float Arg2,
+  NumericsMatrix4 Transform,
+  NumericsMatrix4 InverseTransform);
+
 public sealed class LoadedMap
 {
   public required string Name { get; init; }
   public required string BspPath { get; init; }
   public required string EbpPath { get; init; }
   public required MapEnvironmentSettings Environment { get; init; }
+  public required ExtDummyDefinition[] ExtDummies { get; init; }
   public required MapBounds Bounds { get; init; }
   public required Vector3[] BspTriangleVertices { get; init; }
   public required BspRenderVertex[] BspRenderVertices { get; init; }
@@ -102,11 +131,13 @@ public sealed class LoadedMap
   public required R3TextureBlob[] LightmapTextures { get; init; }
   public required BspRenderVertex[] SkyRenderVertices { get; init; }
   public required BspMaterialSpan[] SkyMaterialSpans { get; init; }
+  public required MaterialDefinition[] SkyMaterials { get; init; }
   public required int[] SkyMaterialSurfaceIds { get; init; }
   public required uint[] SkyMaterialAlphaTypes { get; init; }
   public required R3TextureBlob[] SkySurfaceTextures { get; init; }
   public required BspRenderVertex[] EntityRenderVertices { get; init; }
   public required BspMaterialSpan[] EntityMaterialSpans { get; init; }
+  public required MaterialDefinition[] EntityMaterials { get; init; }
   public required int[] EntityMaterialSurfaceIds { get; init; }
   public required uint[] EntityMaterialAlphaTypes { get; init; }
   public required R3TextureBlob[] EntitySurfaceTextures { get; init; }
