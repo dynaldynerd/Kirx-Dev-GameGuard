@@ -1430,14 +1430,14 @@ void CMgrAvatorItemHistory::patriarch_push_money(
 void CMgrAvatorItemHistory::raceboss_giveback(unsigned int dwSerial, unsigned int dwDalant, char *pszFileName)
 {
   const unsigned int korTime = GetKorLocalTime();
-  sprintf(sData, "[RACE BOSS]giveback: Avator Serial:%d\t$D:%u\tTime:%d\n", dwSerial, dwDalant, korTime);
+  sprintf(sData, "[RACE BOSS]giveback: Avator Serial:%d\t$D:%u\tTime:%u\n", dwSerial, dwDalant, korTime);
   WriteFile(pszFileName, sData);
 }
 
 void CMgrAvatorItemHistory::raceboss_candidate(int ncost, unsigned int dwSerial, char *pszFileName)
 {
   const unsigned int korTime = GetKorLocalTime();
-  sprintf(sData, "[RACE BOSS]candidate >> Avator Serial:%d\t$D:%d \t^Time:%d\n", dwSerial, ncost, korTime);
+  sprintf(sData, "[RACE BOSS]candidate >> Avator Serial:%d\t$D:%d \t^Time:%u\n", dwSerial, ncost, korTime);
   WriteFile(pszFileName, sData);
 }
 

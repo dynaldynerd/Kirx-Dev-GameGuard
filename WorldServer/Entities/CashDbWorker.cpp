@@ -634,12 +634,12 @@ bool CashDbWorker::_init_loggers()
 
   char buffer[256]{};
   unsigned int logTime = GetKorLocalTime();
-  sprintf_s(buffer, "..\\ZoneServerLog\\ServiceLog\\PartiallyPaid\\%d.his", logTime);
+  sprintf_s(buffer, "..\\ZoneServerLog\\ServiceLog\\PartiallyPaid\\%u.his", logTime);
   _kLogger[1].SetWriteLogFile(buffer, 1, 0, 1, 1);
 
   memset_0(buffer, 0, sizeof(buffer));
   logTime = GetKorLocalTime();
-  sprintf_s(buffer, "..\\ZoneServerLog\\SystemLog\\PartiallyPaid\\%d.sys", logTime);
+  sprintf_s(buffer, "..\\ZoneServerLog\\SystemLog\\PartiallyPaid\\%u.sys", logTime);
   _kLogger[0].SetWriteLogFile(buffer, 1, 0, 1, 1);
   return true;
 }

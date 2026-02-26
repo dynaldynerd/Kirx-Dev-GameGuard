@@ -38,7 +38,7 @@ bool TimeItem::Init()
 
   char buffer[256]{};
   const unsigned int now = GetKorLocalTime();
-  sprintf_s(buffer, sizeof(buffer), "%s\\TimeItem_%d.log", "..\\ZoneServerLog\\SystemLog", now);
+  sprintf_s(buffer, sizeof(buffer), "%s\\TimeItem_%u.log", "..\\ZoneServerLog\\SystemLog", now);
   _kLogger.SetWriteLogFile(buffer, 1, 0, 1, 1);
 
   return ReadGoods();

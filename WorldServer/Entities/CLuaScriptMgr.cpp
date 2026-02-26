@@ -113,12 +113,12 @@ bool CLuaScriptMgr::InitSDM()
 
   char dest[256]{};
   const unsigned int errorTime = GetKorLocalTime();
-  sprintf_s(dest, "..\\ZoneServerLog\\LuaScriptLog\\LuaScriptError%d.log", errorTime);
+  sprintf_s(dest, "..\\ZoneServerLog\\LuaScriptLog\\LuaScriptError%u.log", errorTime);
   m_LogScriptError.SetWriteLogFile(dest, 1, 1, 1, 1);
 
   memset_0(dest, 0, sizeof(dest));
   const unsigned int stateTime = GetKorLocalTime();
-  sprintf_s(dest, "..\\ZoneServerLog\\LuaScriptLog\\LuaScriptState%d.log", stateTime);
+  sprintf_s(dest, "..\\ZoneServerLog\\LuaScriptLog\\LuaScriptState%u.log", stateTime);
   m_LogScriptState.SetWriteLogFile(dest, 1, 1, 1, 1);
 
   m_MasterState = lua_my_open();

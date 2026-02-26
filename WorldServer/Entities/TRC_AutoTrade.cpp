@@ -79,11 +79,11 @@ bool TRC_AutoTrade::Initialzie()
 
   char buffer[144]{};
   const unsigned int korLocalTime = GetKorLocalTime();
-  sprintf(buffer, "..\\ZoneServerLog\\ServiceLog\\ATradeTax\\atrade_earn_%d_%d.log", this->m_byRace, korLocalTime);
+  sprintf(buffer, "..\\ZoneServerLog\\ServiceLog\\ATradeTax\\atrade_earn_%d_%u.log", this->m_byRace, korLocalTime);
   this->m_serviceLog.SetWriteLogFile(buffer, 1, 0, 1, 1);
 
   const unsigned int korLocalTime2 = GetKorLocalTime();
-  sprintf(buffer, "..\\ZoneServerLog\\SystemLog\\Concession\\system_TRC_%d_%d.log", this->m_byRace, korLocalTime2);
+  sprintf(buffer, "..\\ZoneServerLog\\SystemLog\\Concession\\system_TRC_%d_%u.log", this->m_byRace, korLocalTime2);
   this->m_sysLog.SetWriteLogFile(buffer, 1, 0, 1, 1);
 
   this->m_Controller.setLimitTaxRate(0.050000001f, 0.2f);

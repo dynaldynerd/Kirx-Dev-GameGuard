@@ -211,7 +211,7 @@ bool CUnmannedTraderController::InitLogger()
 
   const unsigned int korLocalTime = GetKorLocalTime();
   char path[128]{};
-  sprintf_s(path, "..\\ZoneServerLog\\Systemlog\\UnmannedTrader\\UnmannedTrader%d.log", korLocalTime);
+  sprintf_s(path, "..\\ZoneServerLog\\Systemlog\\UnmannedTrader\\UnmannedTrader%u.log", korLocalTime);
   this->m_pkLogger->SetWriteLogFile(path, 1, 0, 1, 1);
 
   CreateDirectoryA("..\\ServiceLog\\UnmannedTrader", nullptr);

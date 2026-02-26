@@ -295,14 +295,14 @@ void CMonster::_InitSDM()
   if (!s_logTrace_Boss_Looting.m_bInit)
   {
     const unsigned int localTime = GetKorLocalTime();
-    sprintf(buffer, "..\\ZoneServerLog\\ServiceLog\\MonsterLoot%d.log", localTime);
+    sprintf(buffer, "..\\ZoneServerLog\\ServiceLog\\MonsterLoot%u.log", localTime);
     s_logTrace_Boss_Looting.SetWriteLogFile(buffer, 1, 0, 0, 0);
   }
 
   if (!s_logTrace_Boss_BirthAndDeath.m_bInit)
   {
     const unsigned int localTime = GetKorLocalTime();
-    sprintf(buffer, "..\\ZoneServerLog\\ServiceLog\\MonsterBirth%d.log", localTime);
+    sprintf(buffer, "..\\ZoneServerLog\\ServiceLog\\MonsterBirth%u.log", localTime);
     s_logTrace_Boss_BirthAndDeath.SetWriteLogFile(buffer, 1, 0, 1, 1);
   }
 

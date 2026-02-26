@@ -11,7 +11,7 @@ public:
   CExtPotionBuf();
   ~CExtPotionBuf();
   void SetExtPotionBufUse(bool bUse);
-  void SetExtPotionEndTime(unsigned int dwEndTime);
+  void SetExtPotionEndTime(unsigned long long dwEndTime);
   void CalcRemainTime(unsigned __int16 wInx, bool bUse);
   bool IsExtPotionUse();
   void CheckPotionTime(CPlayer *pOne);
@@ -22,6 +22,6 @@ public:
 private:
   bool m_bExtPotionBufUse;
   bool m_bDayChange;
-  unsigned int m_dwEndPotionTime;
+  unsigned long long m_dwEndPotionTime;
 };
 

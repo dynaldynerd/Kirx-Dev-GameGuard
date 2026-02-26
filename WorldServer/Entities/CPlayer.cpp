@@ -13525,7 +13525,7 @@ void CPlayer::CreateComplete()
 
   if (this->m_pUserDB && !this->m_bFirstStart)
   {
-    const unsigned int limitTime = GetConnectTime_AddBySec(-2592000);
+    const unsigned long long limitTime = GetConnectTime_AddBySec(-2592000);
     if (this->m_pUserDB->m_AvatorData_bk.dbAvator.m_dwLastConnTime < limitTime)
     {
       SendMsg_Notify_ExceptFromRaceRanking(1);

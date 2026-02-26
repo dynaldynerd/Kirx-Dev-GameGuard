@@ -1,3 +1,4 @@
-﻿#pragma once
+#pragma once
 
-unsigned int GetKorLocalTime();
+unsigned long long GetKorLocalTime();
+

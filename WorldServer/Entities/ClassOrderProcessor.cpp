@@ -47,7 +47,7 @@ bool ClassOrderProcessor::Initialize()
   std::snprintf(
     logPath,
     sizeof(logPath),
-    "..\\ZoneServerLog\\SystemLog\\Patriarch\\ClassOrderProcessor_%d.log",
+    "..\\ZoneServerLog\\SystemLog\\Patriarch\\ClassOrderProcessor_%u.log",
     GetKorLocalTime());
   _kSysLog.SetWriteLogFile(logPath, true, false, true, true);
 

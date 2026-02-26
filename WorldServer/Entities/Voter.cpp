@@ -21,7 +21,7 @@ Voter::Voter()
 bool Voter::Initialize()
 {
   char logPath[256]{};
-  std::snprintf(logPath, sizeof(logPath), "..\\ZoneServerLog\\SystemLog\\Patriarch\\Voter_%d.log", GetKorLocalTime());
+  std::snprintf(logPath, sizeof(logPath), "..\\ZoneServerLog\\SystemLog\\Patriarch\\Voter_%llu.log", GetKorLocalTime());
   _kSysLog.SetWriteLogFile(logPath, true, false, true, true);
 
   PatriarchElectProcessor::Instance()->PushDQSCheckInvalidChar();
@@ -400,3 +400,4 @@ bool Voter::IsRegistedVotePaper(unsigned __int8 raceCode, char *candidateName)
   }
   return false;
 }
+

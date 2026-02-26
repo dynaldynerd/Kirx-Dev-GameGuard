@@ -202,7 +202,7 @@ void InitCheatCommand(CHEAT_COMMAND *pCmdList, unsigned __int8 *byCommandSizeLis
 
   const unsigned int korLocalTime = GetKorLocalTime();
   char buffer[144]{};
-  sprintf(buffer, "..\\ZoneServerLog\\ServiceLog\\Cheat%d.log", korLocalTime);
+  sprintf(buffer, "..\\ZoneServerLog\\ServiceLog\\Cheat%u.log", korLocalTime);
   s_logCheat.SetWriteLogFile(buffer, 1, 0, 1, 1);
 }
 

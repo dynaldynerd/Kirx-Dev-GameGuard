@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CRtc.h"
 #include "KorLocalTime.h"
@@ -76,7 +76,7 @@ int CRtc::RTC_Fn(int errType, const wchar_t *file, int line, const wchar_t *modu
         buffer);
 
     char filePath[256];
-    sprintf_s(filePath, "..\\ZoneServerLog\\SystemLog\\RTC_Reporter_%u.txt", GetKorLocalTime());
+    sprintf_s(filePath, "..\\ZoneServerLog\\SystemLog\\RTC_Reporter_%llu.txt", GetKorLocalTime());
 
     FILE *stream = nullptr;
     if ( fopen_s(&stream, filePath, "wt") != 0 || !stream )
@@ -91,3 +91,4 @@ int CRtc::RTC_Fn(int errType, const wchar_t *file, int line, const wchar_t *modu
     _InterlockedExchange(&g_rtcRunning, 0);
     return 1;
 }
+

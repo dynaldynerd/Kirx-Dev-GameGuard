@@ -2090,7 +2090,7 @@ char CRFWorldDatabase::Update_RaceRank_Step1( char *szDate)
   __int64 v5; // [rsp+0h] [rbp-478h] BYREF
   SQLRETURN v6; // [rsp+30h] [rbp-448h]
   char Buffer[1028]; // [rsp+50h] [rbp-428h] BYREF
-  unsigned int ConnectTime_AddBySec; // [rsp+454h] [rbp-24h]
+  unsigned long long ConnectTime_AddBySec; // [rsp+454h] [rbp-24h]
 
   v2 = &v5;
   this->FmtLog( "CRFWorldDatabase Update_RaceRank(szDate(%s)) Start!", szDate);
@@ -2111,7 +2111,7 @@ char CRFWorldDatabase::Update_RaceRank_Step1( char *szDate)
     "select IDENTITY(int, 1, 1) AS Rank, -1 as Rate, tbl_base.serial, 0 as Race,  tbl_base.name, tbl_base.lv, tbl_general"
     ".PvpPoint, tbl_general.GuildSerial into #tbl_PvpRankB from tbl_general, tbl_base where tbl_base.serial=tbl_general.s"
     "erial and tbl_base.dck=0 and tbl_base.AccountSerial < 200000000 and tbl_general.class0 <> -1 and tbl_base.race in (0"
-    ",1) and tbl_base.LastConnTime > %d order by tbl_general.PvpPoint desc",
+    ",1) and tbl_base.LastConnTime > %llu order by tbl_general.PvpPoint desc",
     ConnectTime_AddBySec);
   v6 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)Buffer, -3);
   if ( v6 && v6 != 1 )
@@ -2169,7 +2169,7 @@ char CRFWorldDatabase::Update_RaceRank_Step2( char *szDate)
   __int64 v5; // [rsp+0h] [rbp-478h] BYREF
   SQLRETURN v6; // [rsp+30h] [rbp-448h]
   char Buffer[1028]; // [rsp+50h] [rbp-428h] BYREF
-  unsigned int ConnectTime_AddBySec; // [rsp+454h] [rbp-24h]
+  unsigned long long ConnectTime_AddBySec; // [rsp+454h] [rbp-24h]
 
   v2 = &v5;
   memset(Buffer, 0, 1024);
@@ -2189,7 +2189,7 @@ char CRFWorldDatabase::Update_RaceRank_Step2( char *szDate)
     "select IDENTITY(int, 1, 1) AS Rank, -1 as Rate, tbl_base.serial, 1 as Race, tbl_base.name, tbl_base.lv, tbl_general."
     "PvpPoint, tbl_general.GuildSerial into #tbl_PvpRankC from tbl_general, tbl_base where tbl_base.serial=tbl_general.se"
     "rial and tbl_base.dck=0 and tbl_base.AccountSerial<200000000 and tbl_general.class0 <> -1 and tbl_base.race in (2,3)"
-    " and tbl_base.LastConnTime > %d order by tbl_general.PvpPoint desc",
+    " and tbl_base.LastConnTime > %llu order by tbl_general.PvpPoint desc",
     ConnectTime_AddBySec);
   v6 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)Buffer, -3);
   if ( v6 && v6 != 1 )
@@ -2251,7 +2251,7 @@ char CRFWorldDatabase::Update_RaceRank_Step3( char *szDate)
   __int64 v5; // [rsp+0h] [rbp-478h] BYREF
   SQLRETURN v6; // [rsp+30h] [rbp-448h]
   char Buffer[1028]; // [rsp+50h] [rbp-428h] BYREF
-  unsigned int ConnectTime_AddBySec; // [rsp+454h] [rbp-24h]
+  unsigned long long ConnectTime_AddBySec; // [rsp+454h] [rbp-24h]
 
   v2 = &v5;
   memset(Buffer, 0, 1024);
@@ -2271,7 +2271,7 @@ char CRFWorldDatabase::Update_RaceRank_Step3( char *szDate)
     "select IDENTITY(int, 1, 1) AS Rank, -1 as Rate, tbl_base.serial, 2 as Race,  tbl_base.name, tbl_base.lv, tbl_general"
     ".PvpPoint, tbl_general.GuildSerial into #tbl_PvpRankA from tbl_general, tbl_base where tbl_base.serial=tbl_general.s"
     "erial and tbl_base.dck=0 and tbl_base.AccountSerial<200000000 and tbl_general.class0 <> -1 and tbl_base.race in (4) "
-    "and tbl_base.LastConnTime > %d order by tbl_general.PvpPoint desc",
+    "and tbl_base.LastConnTime > %llu order by tbl_general.PvpPoint desc",
     ConnectTime_AddBySec);
   v6 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)Buffer, -3);
   if ( v6 && v6 != 1 )

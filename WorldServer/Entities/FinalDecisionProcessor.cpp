@@ -23,7 +23,7 @@ bool FinalDecisionProcessor::Initialize()
   std::snprintf(
     logPath,
     sizeof(logPath),
-    "..\\ZoneServerLog\\SystemLog\\Patriarch\\FinalDecisionProcessor_%d.log",
+    "..\\ZoneServerLog\\SystemLog\\Patriarch\\FinalDecisionProcessor_%llu.log",
     GetKorLocalTime());
   _kSysLog.SetWriteLogFile(logPath, true, false, true, true);
 
@@ -107,3 +107,4 @@ void FinalDecisionProcessor::_ReqNetFinalDecision(CPlayer *player)
     reinterpret_cast<char *>(payload),
     packetLength);
 }
+

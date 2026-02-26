@@ -697,7 +697,7 @@ void CRFNewDatabase::SetLogFile(const char *szUpperLogPath, const char *szOdbcNa
 
   char buffer[544]{};
   const unsigned int date = GetKorLocalTime();
-  sprintf(buffer, "%sDBLog\\DBProcess_%s_%d_U.log", m_szLogUpperPath, szOdbcName, date);
+  sprintf(buffer, "%sDBLog\\DBProcess_%s_%u_U.log", m_szLogUpperPath, szOdbcName, date);
   if (!m_ProcessLogW.m_bInit)
   {
     m_ProcessLogW.SetWriteLogFile(buffer, 1, 1, 1, 1);
@@ -705,7 +705,7 @@ void CRFNewDatabase::SetLogFile(const char *szUpperLogPath, const char *szOdbcNa
 
   memset_0(buffer, 0, sizeof(buffer));
   const unsigned int dateA = GetKorLocalTime();
-  sprintf(buffer, "%sDBLog\\DBProcess_%s_%d_A.log", m_szLogUpperPath, szOdbcName, dateA);
+  sprintf(buffer, "%sDBLog\\DBProcess_%s_%u_A.log", m_szLogUpperPath, szOdbcName, dateA);
   if (!m_ProcessLogA.m_bInit)
   {
     m_ProcessLogA.SetWriteLogFile(buffer, 1, 1, 1, 1);
@@ -713,7 +713,7 @@ void CRFNewDatabase::SetLogFile(const char *szUpperLogPath, const char *szOdbcNa
 
   memset_0(buffer, 0, sizeof(buffer));
   const unsigned int dateErrorW = GetKorLocalTime();
-  sprintf(buffer, "%sDBLog\\DBError_%s_%d_U.log", m_szLogUpperPath, szOdbcName, dateErrorW);
+  sprintf(buffer, "%sDBLog\\DBError_%s_%u_U.log", m_szLogUpperPath, szOdbcName, dateErrorW);
   if (!m_ErrorLogW.m_bInit)
   {
     m_ErrorLogW.SetWriteLogFile(buffer, 1, 1, 1, 1);
@@ -721,7 +721,7 @@ void CRFNewDatabase::SetLogFile(const char *szUpperLogPath, const char *szOdbcNa
 
   memset_0(buffer, 0, sizeof(buffer));
   const unsigned int dateErrorA = GetKorLocalTime();
-  sprintf(buffer, "%sDBLog\\DBError_%s_%d_A.log", m_szLogUpperPath, szOdbcName, dateErrorA);
+  sprintf(buffer, "%sDBLog\\DBError_%s_%u_A.log", m_szLogUpperPath, szOdbcName, dateErrorA);
   if (!m_ErrorLogA.m_bInit)
   {
     m_ErrorLogA.SetWriteLogFile(buffer, 1, 1, 1, 1);

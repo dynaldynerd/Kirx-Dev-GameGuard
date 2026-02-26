@@ -2651,9 +2651,9 @@ void CGuild::SendMsg_MasterElectPossible(char bPossible)
   }
 }
 
-void CGuild::CompleteSelectMasterLastConn(unsigned int dwLastConnTime)
+void CGuild::CompleteSelectMasterLastConn(unsigned long long dwLastConnTime)
 {
-  if (dwLastConnTime != static_cast<unsigned int>(-1))
+  if (dwLastConnTime != static_cast<unsigned long long>(-1))
   {
     m_bPossibleElectMaster = true;
     MakeDownMemberPacket();
