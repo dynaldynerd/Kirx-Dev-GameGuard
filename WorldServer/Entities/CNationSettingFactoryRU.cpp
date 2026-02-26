@@ -3,6 +3,7 @@
 #include "CNationSettingFactoryRU.h"
 
 #include "CNationSettingDataRU.h"
+#include "WorldServerUtil.h"
 
 #include <new>
 
@@ -33,8 +34,12 @@ CNationSettingData *CNationSettingFactoryRU::Create(
   strcpy_s(created->m_szNationCodeStr, sizeof(created->m_szNationCodeStr), szNationCodeStr);
   created->m_iANSICodePage = 1251;
   created->SetCashDBDSNSetFlag();
-  strcpy_s(created->m_szWorldDBID, sizeof(created->m_szWorldDBID), "rfrusworld");
-  strcpy_s(created->m_szWorldDBPW, sizeof(created->m_szWorldDBPW), "#rf%rusworld");
+  char worldDbId[64]{};
+  char worldDbPw[64]{};
+  ReadOptionAndWriteDefault(".\\Initialize\\Database.ini", "WorldDB", "ID", "rfrusworld", worldDbId, sizeof(worldDbId));
+  ReadOptionAndWriteDefault(".\\Initialize\\Database.ini", "WorldDB", "PWD", "#rf%rusworld", worldDbPw, sizeof(worldDbPw));
+  strcpy_s(created->m_szWorldDBID, sizeof(created->m_szWorldDBID), worldDbId);
+  strcpy_s(created->m_szWorldDBPW, sizeof(created->m_szWorldDBPW), worldDbPw);
 
   if (RegistCheatTable(created))
   {

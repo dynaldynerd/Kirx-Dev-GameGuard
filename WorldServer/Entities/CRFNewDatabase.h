@@ -17,7 +17,12 @@ public:
   bool AllocUpdateHandle();
   void CheckLogFileHour();
   bool CommitTransaction();
-  bool ConfigUserODBC(const char *szDSN, const char *szServer, const char *szDatabase, unsigned __int16 wPort);
+  bool ConfigUserODBC(
+    const char *szDSN,
+    const char *szServer,
+    const char *szDatabase,
+    unsigned __int16 wPort,
+    bool bTrustedConnection = false);
   void DiagRecALog(__int16 sqlRet, SQLSMALLINT HandleType, void *Handle);
   void DiagRecWLog(__int16 sqlRet, SQLSMALLINT HandleType, void *Handle);
   void EndDataBase();

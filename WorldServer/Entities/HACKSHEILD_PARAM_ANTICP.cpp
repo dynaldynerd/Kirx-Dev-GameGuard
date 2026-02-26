@@ -37,7 +37,6 @@ HMODULE _ResolveAntiCpModule()
     "AntiCpSvr.dll",
     "EhSvc.dll",
     "HackShield.dll",
-    "RFACC.dll",
   };
 
   for (const char *moduleName : kCandidateModules)

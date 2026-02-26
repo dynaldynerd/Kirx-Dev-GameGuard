@@ -108,6 +108,7 @@ void InitMasteryFormula(CRecordData *pSkillData, CRecordData *pForceData);
 int ParsingCommandA(char *pszSrc, int nMaxWordNum, char **ppszDst, int nMaxWordSize);
 int ParsingCommandW(char *pwszSrc, int nMaxWordNum, char **ppwszDst, int nMaxWordSize);
 bool IsSQLValidString(const char *wszStr);
+bool ReadOptionAndWriteDefault(const char *iniPath, const char *section, const char *key, const char *defaultValue, char *output, unsigned __int64 outputSize);
 char *cvt_string(int nVal);
 void WriteServerStartHistory(const char *format, ...);
 void clear_file(const char *directory, int keepCount);

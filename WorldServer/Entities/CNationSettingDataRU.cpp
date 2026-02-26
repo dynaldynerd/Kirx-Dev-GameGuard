@@ -10,6 +10,7 @@
 #include "GlobalObjects.h"
 #include "NameTxt_fld.h"
 
+#include <cstring>
 #include <new>
 
 CNationSettingDataRU::CNationSettingDataRU() = default;
@@ -58,7 +59,52 @@ CBilling *CNationSettingDataRU::CreateBilling()
 
 const char *CNationSettingDataRU::GetItemName(_NameTxt_fld *pFld)
 {
-  return pFld->m_NameTag[7];
+  int nameTagIndex = 7;
+  if (!_stricmp(m_szNationCodeStr, "KR"))
+  {
+    nameTagIndex = 0;
+  }
+  else if (!_stricmp(m_szNationCodeStr, "BR"))
+  {
+    nameTagIndex = 1;
+  }
+  else if (!_stricmp(m_szNationCodeStr, "CN"))
+  {
+    nameTagIndex = 2;
+  }
+  else if (!_stricmp(m_szNationCodeStr, "GB") || !_stricmp(m_szNationCodeStr, "US"))
+  {
+    nameTagIndex = 3;
+  }
+  else if (!_stricmp(m_szNationCodeStr, "ID"))
+  {
+    nameTagIndex = 4;
+  }
+  else if (!_stricmp(m_szNationCodeStr, "JP"))
+  {
+    nameTagIndex = 5;
+  }
+  else if (!_stricmp(m_szNationCodeStr, "PH"))
+  {
+    nameTagIndex = 6;
+  }
+  else if (!_stricmp(m_szNationCodeStr, "RU"))
+  {
+    nameTagIndex = 7;
+  }
+  else if (!_stricmp(m_szNationCodeStr, "TW"))
+  {
+    nameTagIndex = 8;
+  }
+  else if (!_stricmp(m_szNationCodeStr, "ES"))
+  {
+    nameTagIndex = 9;
+  }
+  else if (!_stricmp(m_szNationCodeStr, "TH"))
+  {
+    nameTagIndex = 10;
+  }
+  return pFld->m_NameTag[nameTagIndex];
 }
 
 void CNationSettingDataRU::SendCashDBDSNRequest()

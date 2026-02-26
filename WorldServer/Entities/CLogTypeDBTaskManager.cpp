@@ -455,11 +455,21 @@ bool CLogTypeDBTaskManager::InitDB(const char *szDBName, const char *szDBIP)
     return false;
   }
 
-  CNationSettingManager *settings = CNationSettingManager::Instance();
-  const char *passWord = settings ? settings->GetWorldDBPW() : nullptr;
-  const char *worldDBID = settings ? settings->GetWorldDBID() : nullptr;
+  char trustedConnectionValue[16]{};
+  ReadOptionAndWriteDefault(
+    ".\\Initialize\\Database.ini",
+    "WorldDB",
+    "trusted_connection",
+    "0",
+    trustedConnectionValue,
+    sizeof(trustedConnectionValue));
+  const bool bTrustedConnection = trustedConnectionValue[0] != '\0' && trustedConnectionValue[0] != '0';
 
-  if (m_pkWorldDB && passWord && worldDBID
+  CNationSettingManager *settings = CNationSettingManager::Instance();
+  const char *passWord = bTrustedConnection ? nullptr : (settings ? settings->GetWorldDBPW() : nullptr);
+  const char *worldDBID = bTrustedConnection ? nullptr : (settings ? settings->GetWorldDBID() : nullptr);
+
+  if (m_pkWorldDB
       && m_pkWorldDB->StartDataBase(g_Main.m_szWorldDBName, worldDBID, passWord))
   {
     g_Main.m_logLoadingError.Write("Log Type Start World DataBase Complete!!");

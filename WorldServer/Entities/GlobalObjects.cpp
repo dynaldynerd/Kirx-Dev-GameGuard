@@ -5,6 +5,7 @@
 #include "CCRFG_SEND_BUFFER.h"
 #include "CMapDisplay.h"
 #include "CGameServerDoc.h"
+#include "RFAcc.h"
 #include "TempEffectFunctions.h"
 
 #include <cstdarg>
@@ -45,6 +46,7 @@ int e_nTaxDft = 0;
 int e_nMgrDft = 0;
 CVoteSystem g_VoteSys[3]{};
 CMainThread g_Main{};
+CRFAcc g_RFAcc{};
 CNetworkEX g_Network{};
 CMapDisplay g_MapDisplay{};
 int gAsci[256]{};

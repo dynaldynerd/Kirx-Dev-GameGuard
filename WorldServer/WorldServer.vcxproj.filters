@@ -301,6 +301,12 @@
     <Filter Include="Header Files\Skill">
       <UniqueIdentifier>{2D5752FC-26A9-4D7E-BAF1-6DB9067826D2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\RFAcc">
+      <UniqueIdentifier>{21DA480B-D381-4122-A8CC-8810BD850887}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\RFAcc">
+      <UniqueIdentifier>{1F534D80-F95E-4F4D-89B3-350DED34EE6F}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entities\a_trade_adjust_price_request_clzo.h">
@@ -1403,6 +1409,9 @@
     </ClInclude>
     <ClInclude Include="Entities\CRusiaBillingMgr.h">
       <Filter>Header Files\CashBilling</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\RFAcc.h">
+      <Filter>Header Files\RFAcc</Filter>
     </ClInclude>
     <ClInclude Include="Entities\CSetItemEffect.h">
       <Filter>Header Files\Item</Filter>
@@ -3658,6 +3667,9 @@
     </ClCompile>
     <ClCompile Include="Entities\CRusiaBillingMgr.cpp">
       <Filter>Source Files\CashBilling</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\RFAcc.cpp">
+      <Filter>Source Files\RFAcc</Filter>
     </ClCompile>
     <ClCompile Include="Entities\CSetItemEffect.cpp">
       <Filter>Source Files\Item</Filter>

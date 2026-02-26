@@ -97,8 +97,8 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>RFACC.lib;ws2_32.lib;odbc32.lib;odbccp32.lib;legacy_stdio_definitions.lib;ddraw.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)ThirdParty\\RFACC;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ws2_32.lib;odbc32.lib;odbccp32.lib;legacy_stdio_definitions.lib;ddraw.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -116,8 +116,8 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>RFACC.lib;ws2_32.lib;odbc32.lib;odbccp32.lib;legacy_stdio_definitions.lib;ddraw.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)ThirdParty\\RFACC;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ws2_32.lib;odbc32.lib;odbccp32.lib;legacy_stdio_definitions.lib;ddraw.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -134,12 +134,9 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>RFACC.lib;ws2_32.lib;odbc32.lib;odbccp32.lib;legacy_stdio_definitions.lib;ddraw.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)ThirdParty\\RFACC;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ws2_32.lib;odbc32.lib;odbccp32.lib;legacy_stdio_definitions.lib;ddraw.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
-    <PostBuildEvent>
-      <Command>if exist "$(ProjectDir)..\RFACC.dll" copy /Y "$(ProjectDir)..\RFACC.dll" "$(OutDir)"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -156,12 +153,9 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>RFACC.lib;ws2_32.lib;odbc32.lib;odbccp32.lib;legacy_stdio_definitions.lib;ddraw.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)ThirdParty\\RFACC;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ws2_32.lib;odbc32.lib;odbccp32.lib;legacy_stdio_definitions.lib;ddraw.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
-    <PostBuildEvent>
-      <Command>if exist "$(ProjectDir)..\RFACC.dll" copy /Y "$(ProjectDir)..\RFACC.dll" "$(OutDir)"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
 
   <ItemGroup>
@@ -541,6 +535,7 @@
     <ClInclude Include="Entities\CRFWorldDatabase.h" />
     <ClInclude Include="Entities\CRtc.h" />
     <ClInclude Include="Entities\CRusiaBillingMgr.h" />
+    <ClInclude Include="Entities\RFAcc.h" />
     <ClInclude Include="Entities\CSetItemEffect.h" />
     <ClInclude Include="Entities\CSetItemType.h" />
     <ClInclude Include="Entities\CSkyBox.h" />
@@ -1295,6 +1290,7 @@
     <ClCompile Include="Entities\CRFWorldDatabase.cpp" />
     <ClCompile Include="Entities\CRtc.cpp" />
     <ClCompile Include="Entities\CRusiaBillingMgr.cpp" />
+    <ClCompile Include="Entities\RFAcc.cpp" />
     <ClCompile Include="Entities\CSetItemEffect.cpp" />
     <ClCompile Include="Entities\CSetItemType.cpp" />
     <ClCompile Include="Entities\CSkyBox.cpp" />

@@ -1841,8 +1841,8 @@ int CMainThread::LoadWorldInfoINI()
     return -4;
   }
 
-  const int type = table.GetCode(nationCode);
-  if (type == -1)
+  const int displayType = table.GetCode(nationCode);
+  if (displayType == -1)
   {
     MyMessageBox(
       "CMainThread::LoadWorldSystemINI()",
@@ -1851,8 +1851,18 @@ int CMainThread::LoadWorldInfoINI()
     return -5;
   }
 
-  const char *codeStr = table.GetStr(type);
-  strncpy_s(nationCode, sizeof(nationCode), codeStr, _TRUNCATE);
+  const char *displayCodeStr = table.GetStr(displayType);
+  strncpy_s(nationCode, sizeof(nationCode), displayCodeStr, _TRUNCATE);
+
+  const int type = table.GetCode("RU");
+  if (type == -1)
+  {
+    MyMessageBox(
+      "CMainThread::LoadWorldSystemINI()",
+      "CNationCodeStrTable missing RU code.");
+    return -5;
+  }
+
   const int initRet = CNationSettingManager::Instance()->Init(type, nationCode, m_bReleaseServiceMode);
   if (initRet != 0)
   {
@@ -4820,6 +4830,15 @@ char CMainThread::_GameDataBaseInit()
 bool CMainThread::DatabaseInit(char *pszDBName, char *pszDBIP)
 {
   m_logLoadingError.Write("DataBase Setting Start!! (%s : %s)", pszDBIP, pszDBName);
+  char trustedConnectionValue[16]{};
+  ReadOptionAndWriteDefault(
+    ".\\Initialize\\Database.ini",
+    "WorldDB",
+    "trusted_connection",
+    "0",
+    trustedConnectionValue,
+    sizeof(trustedConnectionValue));
+  const bool bTrustedConnection = trustedConnectionValue[0] != '\0' && trustedConnectionValue[0] != '0';
   strcpy_0(m_szWorldDBName, pszDBName);
   g_pFrame->SendMessage(0xCu, 0, 0);
 
@@ -4828,14 +4847,14 @@ bool CMainThread::DatabaseInit(char *pszDBName, char *pszDBIP)
     CRFWorldDatabase *worldDb = new CRFWorldDatabase();
     m_pWorldDB = worldDb;
     m_pWorldDB->SetLogFile("..\\ZoneServerLog\\", m_szWorldDBName);
-    if (!m_pWorldDB->ConfigUserODBC(pszDBName, pszDBIP, pszDBName, 0xEFF9u))
+    if (!m_pWorldDB->ConfigUserODBC(pszDBName, pszDBIP, pszDBName, 1433, bTrustedConnection))
     {
       MyMessageBox("DatabaseInit", "World DB ODBC Setting Faild!");
       return false;
     }
     m_logLoadingError.Write("World DB ODBC Config Complete!!");
-    char *passWord = CNationSettingManager::Instance()->GetWorldDBPW();
-    const char *worldDbId = CNationSettingManager::Instance()->GetWorldDBID();
+    char *passWord = bTrustedConnection ? nullptr : CNationSettingManager::Instance()->GetWorldDBPW();
+    const char *worldDbId = bTrustedConnection ? nullptr : CNationSettingManager::Instance()->GetWorldDBID();
     if (!m_pWorldDB->StartDataBase(m_szWorldDBName, worldDbId, passWord))
     {
       MyMessageBox("DatabaseInit", "Connect World DB Failed!");
