@@ -1,5 +1,6 @@
 using MapEditor.Formats;
 using MapEditor.Viewer;
+using System.Text.Json;
 
 namespace MapEditor;
 
@@ -11,13 +12,23 @@ internal sealed class MainForm : Form
   private readonly ToolStripDropDownButton _skySourceButton;
   private readonly ToolStripMenuItem _skyMenuItem;
   private readonly ToolStripMenuItem _sky2MenuItem;
+  private readonly ToolStripDropDownButton _pipelineButton;
+  private readonly ToolStripMenuItem _legacyPipelineMenuItem;
+  private readonly ToolStripMenuItem _parityPipelineMenuItem;
+  private readonly NumericUpDown _teleportXUpDown;
+  private readonly NumericUpDown _teleportYUpDown;
+  private readonly NumericUpDown _teleportZUpDown;
+  private readonly System.Windows.Forms.Timer _statusTimer;
   private readonly List<MapListEntry> _mapEntries = [];
   private readonly Dictionary<string, EntityArchiveCacheInfo> _entityArchiveCacheByRoot = new(StringComparer.OrdinalIgnoreCase);
+  private readonly Dictionary<string, SavedCameraPosition> _lastCameraByMapPath = new(StringComparer.OrdinalIgnoreCase);
   private SkySourceMode _skySourceMode = SkySourceMode.Sky2;
+  private RenderPipelineMode _renderPipelineMode = RenderPipelineMode.R3Parity;
   private bool _suppressMapSelectionChanged;
   private string? _mapRootPath;
   private string? _loadedBspPath;
   private string? _loadedEbpPath;
+  private string _statusBaseText = "Ready. Ctrl+O open map folder | Select map in top combobox | Right mouse look | WASD move | Wheel zoom | F1 controls";
 
   public MainForm(string[] args)
   {
@@ -72,6 +83,64 @@ internal sealed class MainForm : Form
     speedStrip.Items.Add(speedHost);
     speedStrip.Items.Add(new ToolStripLabel("units/s"));
     speedStrip.Items.Add(new ToolStripSeparator());
+    speedStrip.Items.Add(new ToolStripLabel("Cam X"));
+    _teleportXUpDown = new NumericUpDown
+    {
+      Minimum = -500000,
+      Maximum = 500000,
+      Increment = 10,
+      DecimalPlaces = 2,
+      Value = 0,
+      Width = 88,
+    };
+    ToolStripControlHost teleportXHost = new(_teleportXUpDown)
+    {
+      AutoSize = false,
+      Width = 88,
+    };
+    speedStrip.Items.Add(teleportXHost);
+    speedStrip.Items.Add(new ToolStripLabel("Y"));
+    _teleportYUpDown = new NumericUpDown
+    {
+      Minimum = -500000,
+      Maximum = 500000,
+      Increment = 10,
+      DecimalPlaces = 2,
+      Value = 0,
+      Width = 88,
+    };
+    ToolStripControlHost teleportYHost = new(_teleportYUpDown)
+    {
+      AutoSize = false,
+      Width = 88,
+    };
+    speedStrip.Items.Add(teleportYHost);
+    speedStrip.Items.Add(new ToolStripLabel("Z"));
+    _teleportZUpDown = new NumericUpDown
+    {
+      Minimum = -500000,
+      Maximum = 500000,
+      Increment = 10,
+      DecimalPlaces = 2,
+      Value = 0,
+      Width = 88,
+    };
+    ToolStripControlHost teleportZHost = new(_teleportZUpDown)
+    {
+      AutoSize = false,
+      Width = 88,
+    };
+    speedStrip.Items.Add(teleportZHost);
+    ToolStripButton goToCoordinateButton = new("Go")
+    {
+      ToolTipText = "Teleport camera to Cam XYZ values (display-space coordinates)",
+    };
+    goToCoordinateButton.Click += (_, _) => TeleportCameraToInputCoordinate();
+    speedStrip.Items.Add(goToCoordinateButton);
+    _teleportXUpDown.KeyDown += OnTeleportInputKeyDown;
+    _teleportYUpDown.KeyDown += OnTeleportInputKeyDown;
+    _teleportZUpDown.KeyDown += OnTeleportInputKeyDown;
+    speedStrip.Items.Add(new ToolStripSeparator());
     speedStrip.Items.Add(new ToolStripLabel("Map"));
     _mapComboBox = new ToolStripComboBox
     {
@@ -95,6 +164,24 @@ internal sealed class MainForm : Form
     _skySourceButton.DropDownItems.Add(_skyMenuItem);
     _skySourceButton.DropDownItems.Add(_sky2MenuItem);
     speedStrip.Items.Add(_skySourceButton);
+    _pipelineButton = new ToolStripDropDownButton("Pipe: R3Parity")
+    {
+      ToolTipText = "Switch renderer pipeline between LegacyCompat and R3Parity",
+    };
+    _legacyPipelineMenuItem = new ToolStripMenuItem("LegacyCompat");
+    _parityPipelineMenuItem = new ToolStripMenuItem("R3Parity") { Checked = true };
+    _legacyPipelineMenuItem.Click += (_, _) => SetRenderPipelineMode(RenderPipelineMode.LegacyCompat, invalidateViewer: true);
+    _parityPipelineMenuItem.Click += (_, _) => SetRenderPipelineMode(RenderPipelineMode.R3Parity, invalidateViewer: true);
+    _pipelineButton.DropDownItems.Add(_legacyPipelineMenuItem);
+    _pipelineButton.DropDownItems.Add(_parityPipelineMenuItem);
+    speedStrip.Items.Add(_pipelineButton);
+    ToolStripButton northSouthFlipButton = new("NSFlip")
+    {
+      CheckOnClick = true,
+      Checked = true,
+      ToolTipText = "Flip north/south axis (invert world Z) to match in-game orientation",
+    };
+    speedStrip.Items.Add(northSouthFlipButton);
     speedStrip.Items.Add(new ToolStripSeparator());
     ToolStripButton skyRenderButton = new("Sky")
     {
@@ -162,13 +249,15 @@ internal sealed class MainForm : Form
     speedStrip.Items.Add(particleMarkersButton);
 
     StatusStrip status = new();
-    _statusLabel = new ToolStripStatusLabel("Ready. Ctrl+O open map folder | Select map in top combobox | Right mouse look | WASD move | Wheel zoom | F1 controls");
+    _statusLabel = new ToolStripStatusLabel(_statusBaseText);
     status.Items.Add(_statusLabel);
 
     _viewer = new MapViewerControl
     {
       Dock = DockStyle.Fill,
     };
+    _viewer.RenderPipelineMode = _renderPipelineMode;
+    _viewer.FlipNorthSouth = northSouthFlipButton.Checked;
     _viewer.MoveSpeed = (float)speedUpDown.Value;
     speedUpDown.ValueChanged += (_, _) => _viewer.MoveSpeed = (float)speedUpDown.Value;
     _viewer.ShowSky = skyRenderButton.Checked;
@@ -225,12 +314,30 @@ internal sealed class MainForm : Form
       _viewer.ShowParticleMarkers = particleMarkersButton.Checked;
       _viewer.Invalidate();
     };
+    northSouthFlipButton.CheckedChanged += (_, _) =>
+    {
+      _viewer.FlipNorthSouth = northSouthFlipButton.Checked;
+      _viewer.Invalidate();
+      SyncTeleportInputsFromCamera();
+    };
+
+    SyncTeleportInputsFromCamera();
+
+    _statusTimer = new System.Windows.Forms.Timer
+    {
+      Interval = 400,
+      Enabled = true,
+    };
+    _statusTimer.Tick += (_, _) => RefreshRuntimeStatus();
 
     Controls.Add(_viewer);
     Controls.Add(status);
     Controls.Add(speedStrip);
     Controls.Add(menu);
     SetSkySourceMode(_skySourceMode, reloadCurrentMap: false);
+    SetRenderPipelineMode(_renderPipelineMode, invalidateViewer: false);
+    LoadCameraPositionsFromSettings();
+    FormClosing += OnMainFormClosing;
 
     if (args.Length > 0)
     {
@@ -290,19 +397,23 @@ internal sealed class MainForm : Form
 
   private void LoadMap(string bspPath, string ebpPath)
   {
+    SaveCurrentCameraPosition();
+
     try
     {
       EntityArchiveCacheInfo archiveCache = EnsureEntityArchiveCacheForBsp(bspPath);
       LoadedMap map = BspLoader.Load(bspPath, ebpPath, _skySourceMode);
       _viewer.SetMap(map);
-      _loadedBspPath = bspPath;
-      _loadedEbpPath = ebpPath;
-      SyncSelectedMapToLoadedPath(bspPath);
+      _loadedBspPath = NormalizeMapPath(bspPath);
+      _loadedEbpPath = Path.GetFullPath(ebpPath);
+      RestoreCameraPositionForMap(_loadedBspPath);
+      SyncTeleportInputsFromCamera();
+      SyncSelectedMapToLoadedPath(_loadedBspPath);
       Text = $"RF MapEditor (Viewer) - {map.Name}";
       string cacheTag = archiveCache.ArchiveCount > 0
         ? $"{(archiveCache.WasCached ? "RPKCache:Hit" : "RPKCache:Build")} {archiveCache.ArchiveCount:N0}rpk/{archiveCache.AssetCount:N0}assets"
         : "RPKCache:N/A";
-      _statusLabel.Text =
+      _statusBaseText =
         $"Loaded {map.Name} | BSP TriVerts: {map.BspTriangleVertices.Length:N0} | EBP Vertices: {map.CollisionVertices.Length:N0} | EBP Lines: {map.CollisionLines.Length:N0}"
         + $" | RenderVerts: {map.BspRenderVertices.Length:N0}"
         + $" | TextureBlobs: {map.SurfaceTextures.Length:N0} | LgtTex: {map.LightmapTextures.Length:N0}"
@@ -310,12 +421,15 @@ internal sealed class MainForm : Form
         + $" | SkySource: {GetSkySourceName(_skySourceMode)} | SkyVerts: {map.SkyRenderVertices.Length:N0} | SkyTex: {map.SkySurfaceTextures.Length:N0}"
         + $" | EntModels: {map.MapEntityModelCount:N0} | EntInst: {map.MapEntityInstanceCount:N0} | FxInst: {map.ParticleInstancePositions.Length:N0} | EntVerts: {map.EntityRenderVertices.Length:N0} | EntTex: {map.EntitySurfaceTextures.Length:N0}"
         + $" | {cacheTag}"
+        + $" | Pipe: {GetRenderPipelineModeName(_renderPipelineMode)}"
         + $" | Bounds: ({map.Bounds.Min.X:F0},{map.Bounds.Min.Y:F0},{map.Bounds.Min.Z:F0})..({map.Bounds.Max.X:F0},{map.Bounds.Max.Y:F0},{map.Bounds.Max.Z:F0})";
+      RefreshRuntimeStatus();
     }
     catch (Exception ex)
     {
       MessageBox.Show(this, ex.Message, "Load Map Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-      _statusLabel.Text = "Load failed.";
+      _statusBaseText = "Load failed.";
+      RefreshRuntimeStatus();
     }
   }
 
@@ -332,7 +446,9 @@ internal sealed class MainForm : Form
       - Space / Ctrl: move up/down
       - Shift: faster movement
       - Move speed: top bar numeric box
+      - Cam X/Y/Z + Go: teleport camera to exact Cam XYZ coordinate
       - Sky dropdown: switch between sky and sky2 source
+      - Pipe dropdown: switch renderer (`LegacyCompat` or `R3Parity`)
       - Sky button: show/hide sky render
       - R3T button: toggle texture usage (map/light/sky/entity)
       - R3M button: toggle material-layer behavior
@@ -344,9 +460,65 @@ internal sealed class MainForm : Form
       - FxMark button: toggle particle/effect map markers
       - R: reset camera to map default
       - Esc: release mouse-look capture
+      - Top-left HUD: camera coordinates (Cam XYZ / Src XYZ)
+      - Camera position is saved per map and restored on next load
       """;
 
     MessageBox.Show(this, message, "Controls", MessageBoxButtons.OK, MessageBoxIcon.Information);
+  }
+
+  private void OnTeleportInputKeyDown(object? sender, KeyEventArgs e)
+  {
+    if (e.KeyCode != Keys.Enter)
+    {
+      return;
+    }
+
+    e.Handled = true;
+    e.SuppressKeyPress = true;
+    TeleportCameraToInputCoordinate();
+  }
+
+  private void TeleportCameraToInputCoordinate()
+  {
+    float x = (float)_teleportXUpDown.Value;
+    float y = (float)_teleportYUpDown.Value;
+    float z = (float)_teleportZUpDown.Value;
+    if (!_viewer.TrySetCameraDisplayPosition(x, y, z))
+    {
+      return;
+    }
+
+    SaveCurrentCameraPosition();
+    _viewer.Focus();
+  }
+
+  private void SyncTeleportInputsFromCamera()
+  {
+    (float x, float y, float z) = _viewer.GetCameraDisplayPosition();
+    SetNumericUpDownValue(_teleportXUpDown, x);
+    SetNumericUpDownValue(_teleportYUpDown, y);
+    SetNumericUpDownValue(_teleportZUpDown, z);
+  }
+
+  private static void SetNumericUpDownValue(NumericUpDown input, float value)
+  {
+    if (!float.IsFinite(value))
+    {
+      return;
+    }
+
+    decimal bounded = (decimal)value;
+    if (bounded < input.Minimum)
+    {
+      bounded = input.Minimum;
+    }
+    else if (bounded > input.Maximum)
+    {
+      bounded = input.Maximum;
+    }
+
+    input.Value = bounded;
   }
 
   private void SetSkySourceMode(SkySourceMode skySourceMode, bool reloadCurrentMap)
@@ -362,9 +534,167 @@ internal sealed class MainForm : Form
     }
   }
 
+  private void SetRenderPipelineMode(RenderPipelineMode renderPipelineMode, bool invalidateViewer)
+  {
+    _renderPipelineMode = renderPipelineMode;
+    _legacyPipelineMenuItem.Checked = renderPipelineMode == RenderPipelineMode.LegacyCompat;
+    _parityPipelineMenuItem.Checked = renderPipelineMode == RenderPipelineMode.R3Parity;
+    _pipelineButton.Text = $"Pipe: {GetRenderPipelineModeName(renderPipelineMode)}";
+    _viewer.RenderPipelineMode = renderPipelineMode;
+
+    if (invalidateViewer)
+    {
+      _viewer.Invalidate();
+    }
+
+    if (_loadedBspPath == null)
+    {
+      _statusBaseText = $"Renderer: {GetRenderPipelineModeName(renderPipelineMode)}";
+      RefreshRuntimeStatus();
+      return;
+    }
+
+    string mapName = Path.GetFileNameWithoutExtension(_loadedBspPath);
+    _statusBaseText = $"Renderer: {GetRenderPipelineModeName(renderPipelineMode)} | Map: {mapName}";
+    RefreshRuntimeStatus();
+  }
+
   private static string GetSkySourceName(SkySourceMode skySourceMode)
   {
     return skySourceMode == SkySourceMode.Sky2 ? "sky2" : "sky";
+  }
+
+  private static string GetRenderPipelineModeName(RenderPipelineMode renderPipelineMode)
+  {
+    return renderPipelineMode switch
+    {
+      RenderPipelineMode.R3Parity => "R3Parity",
+      _ => "LegacyCompat",
+    };
+  }
+
+  private void RefreshRuntimeStatus()
+  {
+    if (_renderPipelineMode != RenderPipelineMode.R3Parity)
+    {
+      _statusLabel.Text = _statusBaseText;
+      return;
+    }
+
+    _statusLabel.Text =
+      _statusBaseText
+      + $" | ParityDC: {_viewer.ParityEntityDrawCalls:N0}"
+      + $" | ParityAnimObj: {_viewer.ParityAnimatedObjectUpdates:N0}"
+      + $" | ParitySkipLayer: {_viewer.ParitySkippedLayers:N0}";
+  }
+
+  private void OnMainFormClosing(object? sender, FormClosingEventArgs e)
+  {
+    SaveCurrentCameraPosition();
+    SaveCameraPositionsToSettings();
+  }
+
+  private void LoadCameraPositionsFromSettings()
+  {
+    _lastCameraByMapPath.Clear();
+
+    string json = Properties.Settings.Default.LastMapCameraByPathJson;
+    if (string.IsNullOrWhiteSpace(json))
+    {
+      return;
+    }
+
+    Dictionary<string, SavedCameraPosition>? parsed;
+    try
+    {
+      parsed = JsonSerializer.Deserialize<Dictionary<string, SavedCameraPosition>>(json);
+    }
+    catch
+    {
+      return;
+    }
+
+    if (parsed == null)
+    {
+      return;
+    }
+
+    foreach ((string mapPath, SavedCameraPosition position) in parsed)
+    {
+      string normalizedMapPath;
+      try
+      {
+        normalizedMapPath = NormalizeMapPath(mapPath);
+      }
+      catch
+      {
+        continue;
+      }
+
+      if (!IsFinite(position))
+      {
+        continue;
+      }
+
+      _lastCameraByMapPath[normalizedMapPath] = position;
+    }
+  }
+
+  private void SaveCurrentCameraPosition()
+  {
+    if (string.IsNullOrWhiteSpace(_loadedBspPath))
+    {
+      return;
+    }
+
+    (float x, float y, float z) = _viewer.GetCameraSourcePosition();
+    SavedCameraPosition position = new() { X = x, Y = y, Z = z };
+    if (!IsFinite(position))
+    {
+      return;
+    }
+
+    string mapPath = NormalizeMapPath(_loadedBspPath);
+    _lastCameraByMapPath[mapPath] = position;
+  }
+
+  private void RestoreCameraPositionForMap(string bspPath)
+  {
+    string mapPath = NormalizeMapPath(bspPath);
+    if (!_lastCameraByMapPath.TryGetValue(mapPath, out SavedCameraPosition? position))
+    {
+      return;
+    }
+
+    if (!IsFinite(position))
+    {
+      return;
+    }
+
+    _viewer.TrySetCameraSourcePosition(position.X, position.Y, position.Z);
+  }
+
+  private void SaveCameraPositionsToSettings()
+  {
+    try
+    {
+      Properties.Settings.Default.LastMapCameraByPathJson = JsonSerializer.Serialize(_lastCameraByMapPath);
+      Properties.Settings.Default.Save();
+    }
+    catch
+    {
+      // Keep map viewer usable even when user settings cannot be persisted.
+    }
+  }
+
+  private static string NormalizeMapPath(string path)
+  {
+    return Path.GetFullPath(path);
+  }
+
+  private static bool IsFinite(SavedCameraPosition position)
+  {
+    return float.IsFinite(position.X) && float.IsFinite(position.Y) && float.IsFinite(position.Z);
   }
 
   private EntityArchiveCacheInfo EnsureEntityArchiveCacheForBsp(string bspPath)
@@ -645,6 +975,13 @@ internal sealed class MainForm : Form
 
     ebpPath = candidateEbp;
     return true;
+  }
+
+  private sealed class SavedCameraPosition
+  {
+    public float X { get; init; }
+    public float Y { get; init; }
+    public float Z { get; init; }
   }
 
   private readonly record struct MapListEntry(string Name, string FolderPath, string BspPath, string EbpPath);

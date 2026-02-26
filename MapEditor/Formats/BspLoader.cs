@@ -127,6 +127,7 @@ public static class BspLoader
       EntityMaterialSurfaceIds = entityData.Mesh.MaterialSurfaceIds,
       EntityMaterialAlphaTypes = entityData.Mesh.MaterialAlphaTypes,
       EntitySurfaceTextures = entityData.Mesh.SurfaceTextures,
+      EntityScene = entityData.SceneData,
       MapEntityModelCount = entityData.ModelCount,
       MapEntityInstanceCount = entityData.InstanceCount,
       ParticleInstancePositions = entityData.ParticlePositions,
@@ -1684,7 +1685,7 @@ public static class BspLoader
     string? entityRoot = TryResolveEntityRootPath(bspPath);
     if (entityRoot == null)
     {
-      return new EntityRenderData(RenderMeshData.Empty, 0, 0, particlePositions.ToArray());
+      return new EntityRenderData(RenderMeshData.Empty, EntitySceneData.Empty, 0, 0, particlePositions.ToArray());
     }
 
     RpkArchiveManager rpkManager = GetOrCreateEntityArchiveManager(entityRoot, out _);
@@ -1759,11 +1760,12 @@ public static class BspLoader
 
     if (modelsById.Count == 0 || instanceCount == 0)
     {
-      return new EntityRenderData(RenderMeshData.Empty, 0, 0, particlePositions.ToArray());
+      return new EntityRenderData(RenderMeshData.Empty, EntitySceneData.Empty, 0, 0, particlePositions.ToArray());
     }
 
     RenderMeshData combined = BuildCombinedEntityMesh(modelsById, mapEntities);
-    return new EntityRenderData(combined, modelsById.Count, instanceCount, particlePositions.ToArray());
+    EntitySceneData sceneData = BuildEntitySceneData(modelsById, mapEntities);
+    return new EntityRenderData(combined, sceneData, modelsById.Count, instanceCount, particlePositions.ToArray());
   }
 
   private static bool TryLoadParticleEntityMesh(
@@ -1834,7 +1836,9 @@ public static class BspLoader
       merged.Materials,
       merged.MaterialSurfaceIds,
       merged.MaterialAlphaTypes,
-      merged.SurfaceTextures);
+      merged.SurfaceTextures,
+      Array.Empty<EntitySceneObject>(),
+      Array.Empty<EntitySceneMatGroup>());
     return true;
   }
 
@@ -2044,7 +2048,9 @@ public static class BspLoader
       materials,
       model.MaterialSurfaceIds,
       materialAlphaTypes,
-      model.SurfaceTextures);
+      model.SurfaceTextures,
+      model.SceneObjects,
+      model.SceneMatGroups);
   }
 
   private static string ReadSptPathToken(string text)
@@ -2360,9 +2366,12 @@ public static class BspLoader
     Dictionary<int, ModelRemapData> remapByEntityId = new();
     int nextSurfaceId = 1_000_000;
 
-    foreach (KeyValuePair<int, EntityMeshData> pair in modelsById)
+    List<int> modelIds = new(modelsById.Keys);
+    modelIds.Sort();
+    for (int modelIndex = 0; modelIndex < modelIds.Count; ++modelIndex)
     {
-      EntityMeshData model = pair.Value;
+      int modelId = modelIds[modelIndex];
+      EntityMeshData model = modelsById[modelId];
       Dictionary<int, int> surfaceIdMap = new();
 
       for (int i = 0; i < model.SurfaceTextures.Length; ++i)
@@ -2400,7 +2409,7 @@ public static class BspLoader
         materialAlphaTypes.Add(alphaType);
       }
 
-      remapByEntityId[pair.Key] = new ModelRemapData(model, materialBase);
+      remapByEntityId[modelId] = new ModelRemapData(model, materialBase);
     }
 
     for (int index = 0; index < mapEntities.Length; ++index)
@@ -2456,6 +2465,58 @@ public static class BspLoader
       materialSurfaceIds.ToArray(),
       materialAlphaTypes.ToArray(),
       textures.ToArray());
+  }
+
+  private static EntitySceneData BuildEntitySceneData(
+    IReadOnlyDictionary<int, EntityMeshData> modelsById,
+    ExtMapEntity[] mapEntities)
+  {
+    if (modelsById.Count == 0 || mapEntities.Length == 0)
+    {
+      return EntitySceneData.Empty;
+    }
+
+    List<EntitySceneModel> models = new(modelsById.Count);
+    List<int> modelIds = new(modelsById.Keys);
+    modelIds.Sort();
+    int materialBase = 0;
+    for (int modelIndex = 0; modelIndex < modelIds.Count; ++modelIndex)
+    {
+      int modelId = modelIds[modelIndex];
+      EntityMeshData model = modelsById[modelId];
+      models.Add(new EntitySceneModel
+      {
+        EntityId = modelId,
+        MaterialBase = materialBase,
+        Name = model.Name,
+        Objects = model.SceneObjects,
+        MatGroups = model.SceneMatGroups,
+      });
+      materialBase += model.MaterialSurfaceIds.Length;
+    }
+
+    List<EntitySceneInstance> instances = new(mapEntities.Length);
+    for (int index = 0; index < mapEntities.Length; ++index)
+    {
+      ExtMapEntity mapEntity = mapEntities[index];
+      if (!modelsById.ContainsKey(mapEntity.EntityId))
+      {
+        continue;
+      }
+
+      instances.Add(new EntitySceneInstance(
+        mapEntity.EntityId,
+        mapEntity.Scale,
+        mapEntity.Position,
+        mapEntity.RotX,
+        mapEntity.RotY));
+    }
+
+    return new EntitySceneData
+    {
+      Models = models.ToArray(),
+      Instances = instances.ToArray(),
+    };
   }
 
   private static MaterialDefinition[] RemapMaterialDefinitions(
@@ -2704,7 +2765,9 @@ public static class BspLoader
     }
 
     ReadEntityAniObject[] entityObjects = ReadEntityAniObjects(objectBytes);
-    NumericsMatrix4[] objectMatrices = BuildEntityObjectMatrices(entityObjects, trackBytes);
+    EntityObjectTracks[] objectTracks = BuildEntityObjectTracks(entityObjects, trackBytes);
+    NumericsMatrix4[] objectMatrices = BuildEntityObjectMatrices(entityObjects, objectTracks);
+    EntitySceneObject[] sceneObjects = BuildEntitySceneObjects(entityObjects, objectTracks);
 
     R3MaterialData materialData = R3MaterialData.Empty;
     try
@@ -2754,6 +2817,20 @@ public static class BspLoader
       comp.UvMin,
       comp.UvMax);
 
+    EntitySceneMatGroup[] sceneMatGroups = BuildEntitySceneMatGroups(
+      entityVertices,
+      colors,
+      uvRaw,
+      faces,
+      faceIds,
+      vertexIds,
+      matGroups,
+      matGroupDrawOrder,
+      materialData,
+      materialNameMap,
+      comp.UvMin,
+      comp.UvMax);
+
     return new EntityMeshData(
       assetName,
       mesh.Vertices,
@@ -2761,7 +2838,9 @@ public static class BspLoader
       materialData.Materials,
       materialData.SurfaceIds,
       materialData.LayerAlphaTypes,
-      surfaceTextures);
+      surfaceTextures,
+      sceneObjects,
+      sceneMatGroups);
   }
 
   private static EntityFileHeader ReadEntityFileHeader(BinaryReader reader)
@@ -2916,14 +2995,13 @@ public static class BspLoader
     return objects;
   }
 
-  private static NumericsMatrix4[] BuildEntityObjectMatrices(ReadEntityAniObject[] objects, byte[] trackBytes)
+  private static NumericsMatrix4[] BuildEntityObjectMatrices(ReadEntityAniObject[] objects, EntityObjectTracks[] objectTracks)
   {
-    if (objects.Length == 0)
+    if (objects.Length == 0 || objectTracks.Length == 0)
     {
       return Array.Empty<NumericsMatrix4>();
     }
 
-    EntityObjectTracks[] objectTracks = BuildEntityObjectTracks(objects, trackBytes);
     NumericsMatrix4[] legacyWorldMatrices = new NumericsMatrix4[objects.Length];
     byte[] visitState = new byte[objects.Length];
 
@@ -2939,6 +3017,57 @@ public static class BspLoader
     }
 
     return convertedMatrices;
+  }
+
+  private static EntitySceneObject[] BuildEntitySceneObjects(ReadEntityAniObject[] objects, EntityObjectTracks[] objectTracks)
+  {
+    if (objects.Length == 0)
+    {
+      return Array.Empty<EntitySceneObject>();
+    }
+
+    EntitySceneObject[] sceneObjects = new EntitySceneObject[objects.Length];
+    for (int index = 0; index < objects.Length; ++index)
+    {
+      ReadEntityAniObject obj = objects[index];
+      EntityObjectTracks tracks = index < objectTracks.Length
+        ? objectTracks[index]
+        : new EntityObjectTracks(Array.Empty<PositionTrack>(), Array.Empty<RotationTrack>(), Array.Empty<ScaleTrack>());
+
+      EntityScenePositionTrack[] positionTracks = new EntityScenePositionTrack[tracks.PositionTracks.Length];
+      for (int positionIndex = 0; positionIndex < positionTracks.Length; ++positionIndex)
+      {
+        PositionTrack source = tracks.PositionTracks[positionIndex];
+        positionTracks[positionIndex] = new EntityScenePositionTrack(source.Frame, source.Position);
+      }
+
+      EntitySceneRotationTrack[] rotationTracks = new EntitySceneRotationTrack[tracks.RotationTracks.Length];
+      for (int rotationIndex = 0; rotationIndex < rotationTracks.Length; ++rotationIndex)
+      {
+        RotationTrack source = tracks.RotationTracks[rotationIndex];
+        rotationTracks[rotationIndex] = new EntitySceneRotationTrack(source.Frame, source.Quaternion);
+      }
+
+      EntitySceneScaleTrack[] scaleTracks = new EntitySceneScaleTrack[tracks.ScaleTracks.Length];
+      for (int scaleIndex = 0; scaleIndex < scaleTracks.Length; ++scaleIndex)
+      {
+        ScaleTrack source = tracks.ScaleTracks[scaleIndex];
+        scaleTracks[scaleIndex] = new EntitySceneScaleTrack(source.Frame, source.Scale, source.ScaleQuaternion);
+      }
+
+      sceneObjects[index] = new EntitySceneObject(
+        obj.Parent,
+        obj.Frames,
+        obj.Scale,
+        obj.ScaleQuaternion,
+        obj.Position,
+        obj.Quaternion,
+        positionTracks,
+        rotationTracks,
+        scaleTracks);
+    }
+
+    return sceneObjects;
   }
 
   private static NumericsMatrix4 ResolveLegacyObjectMatrix(
@@ -3367,6 +3496,133 @@ public static class BspLoader
     }
 
     return new Vector3(transformed.X, transformed.Y, transformed.Z);
+  }
+
+  private static EntitySceneMatGroup[] BuildEntitySceneMatGroups(
+    Vector3[] vertices,
+    uint[] colors,
+    short[] uvRaw,
+    ReadEntityFace[] faces,
+    ushort[] faceIds,
+    ushort[] vertexIds,
+    ReadEntityMatGroup[] matGroups,
+    int[] matGroupDrawOrder,
+    R3MaterialData materialData,
+    IReadOnlyDictionary<int, int> materialNameMap,
+    float uvMin,
+    float uvMax)
+  {
+    List<EntitySceneMatGroup> sceneGroups = new(Math.Max(64, matGroups.Length));
+
+    for (int drawIndex = 0; drawIndex < matGroupDrawOrder.Length; ++drawIndex)
+    {
+      int groupIndex = matGroupDrawOrder[drawIndex];
+      if (groupIndex < 0 || groupIndex >= matGroups.Length)
+      {
+        continue;
+      }
+
+      ReadEntityMatGroup group = matGroups[groupIndex];
+      int resolvedMaterialId = ResolveEntityMaterialId(group.MaterialId, materialData.Names.Length, materialNameMap);
+      List<BspRenderVertex> localVertices = new(Math.Max(9, group.FaceCount * 3));
+
+      for (int faceInGroup = 0; faceInGroup < group.FaceCount; ++faceInGroup)
+      {
+        int faceIdIndex = (int)group.FaceStartId + faceInGroup;
+        if (faceIdIndex < 0 || faceIdIndex >= faceIds.Length)
+        {
+          continue;
+        }
+
+        int faceIndex = faceIds[faceIdIndex];
+        if (faceIndex < 0 || faceIndex >= faces.Length)
+        {
+          continue;
+        }
+
+        ReadEntityFace face = faces[faceIndex];
+        if (face.VertexCount < 3)
+        {
+          continue;
+        }
+
+        int[] localVertexIds = new int[face.VertexCount];
+        int[] localUvIds = new int[face.VertexCount];
+        bool validFace = true;
+
+        for (int vertexOffset = 0; vertexOffset < face.VertexCount; ++vertexOffset)
+        {
+          int sourceVertexId = (int)face.VertexStartId + vertexOffset;
+          if (sourceVertexId < 0 || sourceVertexId >= vertexIds.Length)
+          {
+            validFace = false;
+            break;
+          }
+
+          int modelVertexId = vertexIds[sourceVertexId];
+          if (modelVertexId < 0 || modelVertexId >= vertices.Length)
+          {
+            validFace = false;
+            break;
+          }
+
+          localVertexIds[vertexOffset] = modelVertexId;
+          localUvIds[vertexOffset] = sourceVertexId;
+        }
+
+        if (!validFace)
+        {
+          continue;
+        }
+
+        for (int tri = 2; tri < localVertexIds.Length; ++tri)
+        {
+          int rootVertexId = localVertexIds[0];
+          int midVertexId = localVertexIds[tri - 1];
+          int tipVertexId = localVertexIds[tri];
+
+          localVertices.Add(CreateEntityRenderVertex(
+            vertices[rootVertexId],
+            localUvIds[0],
+            rootVertexId,
+            uvRaw,
+            colors,
+            resolvedMaterialId,
+            materialData.MaterialFlags,
+            uvMin,
+            uvMax));
+          localVertices.Add(CreateEntityRenderVertex(
+            vertices[midVertexId],
+            localUvIds[tri - 1],
+            midVertexId,
+            uvRaw,
+            colors,
+            resolvedMaterialId,
+            materialData.MaterialFlags,
+            uvMin,
+            uvMax));
+          localVertices.Add(CreateEntityRenderVertex(
+            vertices[tipVertexId],
+            localUvIds[tri],
+            tipVertexId,
+            uvRaw,
+            colors,
+            resolvedMaterialId,
+            materialData.MaterialFlags,
+            uvMin,
+            uvMax));
+        }
+      }
+
+      if (localVertices.Count <= 0)
+      {
+        continue;
+      }
+
+      sceneGroups.Add(new EntitySceneMatGroup(resolvedMaterialId, group.ObjectId, localVertices.ToArray()));
+    }
+
+    return sceneGroups.ToArray();
   }
 
   private static MeshBuildResult BuildEntityTriangles(
@@ -3984,17 +4240,24 @@ public static class BspLoader
 
   private sealed class EntityRenderData
   {
-    public static EntityRenderData Empty { get; } = new(RenderMeshData.Empty, 0, 0, Array.Empty<Vector3>());
+    public static EntityRenderData Empty { get; } = new(RenderMeshData.Empty, EntitySceneData.Empty, 0, 0, Array.Empty<Vector3>());
 
-    public EntityRenderData(RenderMeshData mesh, int modelCount, int instanceCount, Vector3[] particlePositions)
+    public EntityRenderData(
+      RenderMeshData mesh,
+      EntitySceneData sceneData,
+      int modelCount,
+      int instanceCount,
+      Vector3[] particlePositions)
     {
       Mesh = mesh;
+      SceneData = sceneData;
       ModelCount = modelCount;
       InstanceCount = instanceCount;
       ParticlePositions = particlePositions;
     }
 
     public RenderMeshData Mesh { get; }
+    public EntitySceneData SceneData { get; }
     public int ModelCount { get; }
     public int InstanceCount { get; }
     public Vector3[] ParticlePositions { get; }
@@ -4009,7 +4272,9 @@ public static class BspLoader
       MaterialDefinition[] materials,
       int[] materialSurfaceIds,
       uint[] materialAlphaTypes,
-      R3TextureBlob[] surfaceTextures)
+      R3TextureBlob[] surfaceTextures,
+      EntitySceneObject[] sceneObjects,
+      EntitySceneMatGroup[] sceneMatGroups)
     {
       Name = name;
       Vertices = vertices;
@@ -4018,6 +4283,8 @@ public static class BspLoader
       MaterialSurfaceIds = materialSurfaceIds;
       MaterialAlphaTypes = materialAlphaTypes;
       SurfaceTextures = surfaceTextures;
+      SceneObjects = sceneObjects;
+      SceneMatGroups = sceneMatGroups;
     }
 
     public string Name { get; }
@@ -4027,6 +4294,8 @@ public static class BspLoader
     public int[] MaterialSurfaceIds { get; }
     public uint[] MaterialAlphaTypes { get; }
     public R3TextureBlob[] SurfaceTextures { get; }
+    public EntitySceneObject[] SceneObjects { get; }
+    public EntitySceneMatGroup[] SceneMatGroups { get; }
   }
 
   private sealed class RpkArchiveManager

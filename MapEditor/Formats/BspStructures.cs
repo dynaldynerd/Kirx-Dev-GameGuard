@@ -113,6 +113,56 @@ public readonly record struct ExtDummyDefinition(
   NumericsMatrix4 Transform,
   NumericsMatrix4 InverseTransform);
 
+public readonly record struct EntityScenePositionTrack(float Frame, Vector3 Position);
+
+public readonly record struct EntitySceneRotationTrack(float Frame, Vector4 Quaternion);
+
+public readonly record struct EntitySceneScaleTrack(float Frame, Vector3 Scale, Vector4 ScaleQuaternion);
+
+public readonly record struct EntitySceneObject(
+  ushort Parent,
+  int Frames,
+  Vector3 Scale,
+  Vector4 ScaleQuaternion,
+  Vector3 Position,
+  Vector4 Quaternion,
+  EntityScenePositionTrack[] PositionTracks,
+  EntitySceneRotationTrack[] RotationTracks,
+  EntitySceneScaleTrack[] ScaleTracks);
+
+public readonly record struct EntitySceneMatGroup(
+  int MaterialId,
+  ushort ObjectId,
+  BspRenderVertex[] LocalVertices);
+
+public readonly record struct EntitySceneInstance(
+  int EntityId,
+  float Scale,
+  Vector3 Position,
+  float RotX,
+  float RotY);
+
+public sealed class EntitySceneModel
+{
+  public required int EntityId { get; init; }
+  public required int MaterialBase { get; init; }
+  public required string Name { get; init; }
+  public required EntitySceneObject[] Objects { get; init; }
+  public required EntitySceneMatGroup[] MatGroups { get; init; }
+}
+
+public sealed class EntitySceneData
+{
+  public static EntitySceneData Empty { get; } = new()
+  {
+    Models = Array.Empty<EntitySceneModel>(),
+    Instances = Array.Empty<EntitySceneInstance>(),
+  };
+
+  public required EntitySceneModel[] Models { get; init; }
+  public required EntitySceneInstance[] Instances { get; init; }
+}
+
 public sealed class LoadedMap
 {
   public required string Name { get; init; }
@@ -141,6 +191,7 @@ public sealed class LoadedMap
   public required int[] EntityMaterialSurfaceIds { get; init; }
   public required uint[] EntityMaterialAlphaTypes { get; init; }
   public required R3TextureBlob[] EntitySurfaceTextures { get; init; }
+  public required EntitySceneData EntityScene { get; init; }
   public required int MapEntityModelCount { get; init; }
   public required int MapEntityInstanceCount { get; init; }
   public required Vector3[] ParticleInstancePositions { get; init; }

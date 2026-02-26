@@ -2,6 +2,9 @@ using System.Diagnostics;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using MapEditor.Formats;
+using NumericsMatrix4 = System.Numerics.Matrix4x4;
+using NumericsQuaternion = System.Numerics.Quaternion;
+using NumericsVector3 = System.Numerics.Vector3;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using GLControlSettings = OpenTK.GLControl.GLControlSettings;
@@ -12,6 +15,13 @@ namespace MapEditor.Viewer;
 
 internal sealed class MapViewerControl : UserControl
 {
+  private enum MeshPassFilter
+  {
+    All = 0,
+    OpaqueOnly = 1,
+    AlphaOnly = 2,
+  }
+
   private const int MeshFloatStride = 10;
   private const int MeshByteStride = MeshFloatStride * 4;
 
@@ -55,8 +65,11 @@ internal sealed class MapViewerControl : UserControl
   private const float SkyExposure = 1.18f;
   private static readonly Vector3 DefaultClearColor = new(0.05f, 0.06f, 0.08f);
   private const int MaxDynamicLights = 4;
+  private const int MaxGlobalAlphaSortSpans = 256;
+  private const int NearestEntityOverlayRefreshMs = 120;
 
   private readonly GLControlWinForms _glControl;
+  private readonly Label _cameraOverlayLabel;
   private readonly System.Windows.Forms.Timer _renderTimer;
   private readonly Stopwatch _frameClock;
   private readonly Stopwatch _animationClock;
@@ -69,6 +82,8 @@ internal sealed class MapViewerControl : UserControl
   private readonly Dictionary<int, int> _skySurfaceToTexture = [];
   private readonly Dictionary<int, int> _entitySurfaceToTexture = [];
   private readonly Dictionary<int, int> _lightMapIdToTexture = [];
+  private readonly Dictionary<int, EntitySceneModel> _entitySceneModelsById = [];
+  private readonly Dictionary<int, bool> _entitySceneModelHasAnimation = [];
 
   private FreeCamera _camera = new(new Vector3(0f, 100f, 250f));
   private MapBounds _currentBounds = new(new Vector3(-100f, -100f, -100f), new Vector3(100f, 100f, 100f));
@@ -83,9 +98,11 @@ internal sealed class MapViewerControl : UserControl
   private bool _enableR3mMaterials = true;
   private bool _enableR3xEnvironment = true;
   private bool _enableDynamicLighting = true;
+  private bool _flipNorthSouth = true;
   private bool _enableHeadlight = true;
   private float _headlightRadius = 4500f;
   private float _headlightIntensity = 0.85f;
+  private RenderPipelineMode _renderPipelineMode = RenderPipelineMode.LegacyCompat;
 
   private bool _glReady;
   private bool _capturingLook;
@@ -99,6 +116,8 @@ internal sealed class MapViewerControl : UserControl
   private int _meshUniformMvp;
   private int _meshUniformTexture;
   private int _meshUniformTexture1;
+  private int _meshUniformAlphaTestEnabled;
+  private int _meshUniformAlphaRef;
   private int _meshUniformUseEnvBump;
   private int _meshUniformBumpMatrix;
   private int _meshUniformUvChannel;
@@ -149,6 +168,12 @@ internal sealed class MapViewerControl : UserControl
   private int _entityVao;
   private int _entityVbo;
   private int _entityVertexCount;
+  private int _parityEntityVao;
+  private int _parityEntityVbo;
+  private int _parityEntityVertexCount;
+  private int _parityStaticEntityVao;
+  private int _parityStaticEntityVbo;
+  private int _parityStaticEntityVertexCount;
 
   private int _lineProgram;
   private int _lineVao;
@@ -178,6 +203,22 @@ internal sealed class MapViewerControl : UserControl
   private DrawSpan[] _meshDrawSpans = Array.Empty<DrawSpan>();
   private DrawSpan[] _skyDrawSpans = Array.Empty<DrawSpan>();
   private DrawSpan[] _entityDrawSpans = Array.Empty<DrawSpan>();
+  private DrawSpan[] _parityEntityDrawSpans = Array.Empty<DrawSpan>();
+  private DrawSpan[] _parityStaticEntityDrawSpans = Array.Empty<DrawSpan>();
+  private BspRenderVertex[] _mapDrawVertices = Array.Empty<BspRenderVertex>();
+  private BspRenderVertex[] _entityDrawVertices = Array.Empty<BspRenderVertex>();
+  private BspRenderVertex[] _parityEntityFrameVertices = Array.Empty<BspRenderVertex>();
+  private BspRenderVertex[] _parityStaticEntityVertices = Array.Empty<BspRenderVertex>();
+  private int _parityEntityLastFrameTick = int.MinValue;
+  private float[] _parityEntityUploadBuffer = Array.Empty<float>();
+  private int _parityEntityUploadBufferLength;
+  private int _parityEntityDrawCalls;
+  private int _parityAnimatedObjectUpdates;
+  private int _paritySkippedLayers;
+  private bool _hasAnimatedEntityInstances;
+  private string _lastCameraOverlayText = string.Empty;
+  private long _lastNearestEntityOverlayTickMs = long.MinValue;
+  private string _lastNearestEntityOverlayText = "Nearest Ent: n/a";
 
   [DllImport("user32.dll")]
   private static extern short GetAsyncKeyState(int vKey);
@@ -188,6 +229,56 @@ internal sealed class MapViewerControl : UserControl
   public int EntityVertexCount => _entityVertexCount;
   public int SkyTextureCount => _loadedSkyTextureCount;
   public int EntityTextureCount => _loadedEntityTextureCount;
+  public int ParityEntityDrawCalls => _parityEntityDrawCalls;
+  public int ParityAnimatedObjectUpdates => _parityAnimatedObjectUpdates;
+  public int ParitySkippedLayers => _paritySkippedLayers;
+
+  public (float X, float Y, float Z) GetCameraDisplayPosition()
+  {
+    return (_camera.Position.X, _camera.Position.Y, _camera.Position.Z);
+  }
+
+  public bool TrySetCameraDisplayPosition(float x, float y, float z)
+  {
+    if (_map == null)
+    {
+      return false;
+    }
+
+    if (!float.IsFinite(x) || !float.IsFinite(y) || !float.IsFinite(z))
+    {
+      return false;
+    }
+
+    _camera.Position = new Vector3(x, y, z);
+    UpdateCameraOverlay();
+    _glControl.Invalidate();
+    return true;
+  }
+
+  public (float X, float Y, float Z) GetCameraSourcePosition()
+  {
+    Vector3 sourcePosition = ConvertSourcePosition(_camera.Position);
+    return (sourcePosition.X, sourcePosition.Y, sourcePosition.Z);
+  }
+
+  public bool TrySetCameraSourcePosition(float x, float y, float z)
+  {
+    if (_map == null)
+    {
+      return false;
+    }
+
+    if (!float.IsFinite(x) || !float.IsFinite(y) || !float.IsFinite(z))
+    {
+      return false;
+    }
+
+    _camera.Position = ConvertWorldPosition(new Vector3(x, y, z));
+    UpdateCameraOverlay();
+    _glControl.Invalidate();
+    return true;
+  }
 
   [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
   public float MoveSpeed
@@ -275,6 +366,61 @@ internal sealed class MapViewerControl : UserControl
     set => _enableDynamicLighting = value;
   }
 
+  [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+  public bool FlipNorthSouth
+  {
+    get => _flipNorthSouth;
+    set
+    {
+      if (_flipNorthSouth == value)
+      {
+        return;
+      }
+
+      _flipNorthSouth = value;
+      if (_map != null)
+      {
+        _currentBounds = ConvertBoundsForDisplay(_map.Bounds);
+        _camera = CreateDefaultCamera(_map);
+      }
+
+      if (_glReady && _map != null)
+      {
+        if (TryMakeCurrent())
+        {
+          UploadGeometry();
+        }
+      }
+
+      UpdateCameraOverlay();
+      _glControl.Invalidate();
+    }
+  }
+
+  [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+  public RenderPipelineMode RenderPipelineMode
+  {
+    get => _renderPipelineMode;
+    set
+    {
+      if (_renderPipelineMode == value)
+      {
+        return;
+      }
+
+      _renderPipelineMode = value;
+      if (_glReady && _map != null)
+      {
+        if (TryMakeCurrent())
+        {
+          UploadGeometry();
+        }
+      }
+
+      _glControl.Invalidate();
+    }
+  }
+
   public MapViewerControl()
   {
     GLControlSettings glSettings = new()
@@ -302,6 +448,20 @@ internal sealed class MapViewerControl : UserControl
     _glControl.KeyUp += OnKeyUp;
     _glControl.MouseWheel += OnMouseWheel;
     Controls.Add(_glControl);
+    _cameraOverlayLabel = new Label
+    {
+      AutoSize = true,
+      BackColor = Color.FromArgb(170, 0, 0, 0),
+      ForeColor = Color.WhiteSmoke,
+      Font = new Font("Consolas", 9f, FontStyle.Regular, GraphicsUnit.Point),
+      Location = new Point(10, 10),
+      Padding = new Padding(6, 4, 6, 4),
+      TabStop = false,
+      Anchor = AnchorStyles.Top | AnchorStyles.Left,
+    };
+    Controls.Add(_cameraOverlayLabel);
+    _cameraOverlayLabel.BringToFront();
+    UpdateCameraOverlay();
 
     _frameClock = Stopwatch.StartNew();
     _animationClock = Stopwatch.StartNew();
@@ -317,8 +477,10 @@ internal sealed class MapViewerControl : UserControl
   {
     if (_glReady && _map != null)
     {
-      _glControl.MakeCurrent();
-      UploadGeometry();
+      if (TryMakeCurrent())
+      {
+        UploadGeometry();
+      }
     }
 
     _glControl.Invalidate();
@@ -327,21 +489,65 @@ internal sealed class MapViewerControl : UserControl
   public void SetMap(LoadedMap map)
   {
     _map = map;
-    _currentBounds = map.Bounds;
+    _currentBounds = ConvertBoundsForDisplay(map.Bounds);
     _camera = CreateDefaultCamera(map);
+    _lastNearestEntityOverlayTickMs = long.MinValue;
+    _lastNearestEntityOverlayText = "Nearest Ent: n/a";
+    BuildEntitySceneModelLookup(map);
 
     if (_glReady)
     {
-      _glControl.MakeCurrent();
-      UploadGeometry();
+      if (TryMakeCurrent())
+      {
+        UploadGeometry();
+      }
     }
 
+    UpdateCameraOverlay();
     _glControl.Invalidate();
   }
 
-  private static FreeCamera CreateDefaultCamera(LoadedMap map)
+  private void BuildEntitySceneModelLookup(LoadedMap map)
   {
-    MapBounds bounds = map.Bounds;
+    _entitySceneModelsById.Clear();
+    _entitySceneModelHasAnimation.Clear();
+    EntitySceneData scene = map.EntityScene;
+    for (int index = 0; index < scene.Models.Length; ++index)
+    {
+      EntitySceneModel model = scene.Models[index];
+      _entitySceneModelsById[model.EntityId] = model;
+      _entitySceneModelHasAnimation[model.EntityId] = ModelHasAnimation(model);
+    }
+
+    _hasAnimatedEntityInstances = false;
+    for (int index = 0; index < scene.Instances.Length; ++index)
+    {
+      int entityId = scene.Instances[index].EntityId;
+      if (_entitySceneModelHasAnimation.TryGetValue(entityId, out bool hasAnimation) && hasAnimation)
+      {
+        _hasAnimatedEntityInstances = true;
+        break;
+      }
+    }
+  }
+
+  private static bool ModelHasAnimation(EntitySceneModel model)
+  {
+    for (int objectIndex = 0; objectIndex < model.Objects.Length; ++objectIndex)
+    {
+      EntitySceneObject obj = model.Objects[objectIndex];
+      if (obj.PositionTracks.Length > 0 || obj.RotationTracks.Length > 0 || obj.ScaleTracks.Length > 0)
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private FreeCamera CreateDefaultCamera(LoadedMap map)
+  {
+    MapBounds bounds = ConvertBoundsForDisplay(map.Bounds);
     Vector3 center = bounds.Center;
 
     float highestY = GetHighestFiniteY(map, bounds.Max.Y);
@@ -358,6 +564,69 @@ internal sealed class MapViewerControl : UserControl
     Vector3 focus = new(center.X, highestY, center.Z);
     Vector3 start = new(center.X, highestY + eyeHeightOffset, center.Z + backwardOffset);
     return FreeCamera.CreateLookingAt(start, focus);
+  }
+
+  private MapBounds ConvertBoundsForDisplay(MapBounds bounds)
+  {
+    if (!_flipNorthSouth)
+    {
+      return bounds;
+    }
+
+    Vector3 a = ConvertWorldPosition(bounds.Min);
+    Vector3 b = ConvertWorldPosition(bounds.Max);
+    return new MapBounds(Vector3.ComponentMin(a, b), Vector3.ComponentMax(a, b));
+  }
+
+  private Vector3 ConvertWorldPosition(Vector3 position)
+  {
+    return _flipNorthSouth
+      ? new Vector3(position.X, position.Y, -position.Z)
+      : position;
+  }
+
+  private Vector3 ConvertSourcePosition(Vector3 displayPosition)
+  {
+    return _flipNorthSouth
+      ? new Vector3(displayPosition.X, displayPosition.Y, -displayPosition.Z)
+      : displayPosition;
+  }
+
+  private BspRenderVertex[] ConvertRenderVertices(BspRenderVertex[] source)
+  {
+    if (!_flipNorthSouth || source.Length == 0)
+    {
+      return source;
+    }
+
+    BspRenderVertex[] converted = new BspRenderVertex[source.Length];
+    for (int index = 0; index < source.Length; ++index)
+    {
+      BspRenderVertex vertex = source[index];
+      converted[index] = new BspRenderVertex(
+        ConvertWorldPosition(vertex.Position),
+        vertex.Uv,
+        vertex.LightUv,
+        vertex.Color);
+    }
+
+    return converted;
+  }
+
+  private Vector3[] ConvertDisplayPositions(Vector3[] source)
+  {
+    if (!_flipNorthSouth || source.Length == 0)
+    {
+      return source;
+    }
+
+    Vector3[] converted = new Vector3[source.Length];
+    for (int index = 0; index < source.Length; ++index)
+    {
+      converted[index] = ConvertWorldPosition(source[index]);
+    }
+
+    return converted;
   }
 
   private static FreeCamera CreateDefaultCamera(MapBounds bounds)
@@ -408,7 +677,11 @@ internal sealed class MapViewerControl : UserControl
 
   private void OnGlLoad(object? sender, EventArgs e)
   {
-    _glControl.MakeCurrent();
+    if (!TryMakeCurrent())
+    {
+      return;
+    }
+
     GL.ClearColor(DefaultClearColor.X, DefaultClearColor.Y, DefaultClearColor.Z, 1f);
     GL.Enable(EnableCap.DepthTest);
     GL.Enable(EnableCap.CullFace);
@@ -418,6 +691,8 @@ internal sealed class MapViewerControl : UserControl
     _meshUniformMvp = GL.GetUniformLocation(_meshProgram, "uMvp");
     _meshUniformTexture = GL.GetUniformLocation(_meshProgram, "uTexture0");
     _meshUniformTexture1 = GL.GetUniformLocation(_meshProgram, "uTexture1");
+    _meshUniformAlphaTestEnabled = GL.GetUniformLocation(_meshProgram, "uAlphaTestEnabled");
+    _meshUniformAlphaRef = GL.GetUniformLocation(_meshProgram, "uAlphaRef");
     _meshUniformUseEnvBump = GL.GetUniformLocation(_meshProgram, "uUseEnvBump");
     _meshUniformBumpMatrix = GL.GetUniformLocation(_meshProgram, "uBumpMatrix");
     _meshUniformUvChannel = GL.GetUniformLocation(_meshProgram, "uUvChannel");
@@ -491,6 +766,12 @@ internal sealed class MapViewerControl : UserControl
     _entityVao = GL.GenVertexArray();
     _entityVbo = GL.GenBuffer();
     ConfigureMeshVao(_entityVao, _entityVbo);
+    _parityStaticEntityVao = GL.GenVertexArray();
+    _parityStaticEntityVbo = GL.GenBuffer();
+    ConfigureMeshVao(_parityStaticEntityVao, _parityStaticEntityVbo);
+    _parityEntityVao = GL.GenVertexArray();
+    _parityEntityVbo = GL.GenBuffer();
+    ConfigureMeshVao(_parityEntityVao, _parityEntityVbo);
 
     _lineVao = GL.GenVertexArray();
     _lineVbo = GL.GenBuffer();
@@ -525,8 +806,30 @@ internal sealed class MapViewerControl : UserControl
       return;
     }
 
-    _glControl.MakeCurrent();
+    if (!TryMakeCurrent())
+    {
+      return;
+    }
+
     ResizeViewport();
+  }
+
+  private bool TryMakeCurrent()
+  {
+    if (_glControl.IsDisposed || !_glControl.IsHandleCreated)
+    {
+      return false;
+    }
+
+    try
+    {
+      _glControl.MakeCurrent();
+      return true;
+    }
+    catch
+    {
+      return false;
+    }
   }
 
   private void ResizeViewport()
@@ -543,7 +846,11 @@ internal sealed class MapViewerControl : UserControl
       return;
     }
 
-    _glControl.MakeCurrent();
+    if (!TryMakeCurrent())
+    {
+      return;
+    }
+
     Render();
     _glControl.SwapBuffers();
   }
@@ -558,7 +865,125 @@ internal sealed class MapViewerControl : UserControl
     float deltaSeconds = (float)_frameClock.Elapsed.TotalSeconds;
     _frameClock.Restart();
     UpdateCamera(deltaSeconds);
+    UpdateCameraOverlay();
     _glControl.Invalidate();
+  }
+
+  private void UpdateCameraOverlay()
+  {
+    Vector3 displayPosition = _camera.Position;
+    Vector3 sourcePosition = ConvertSourcePosition(displayPosition);
+    string positionLine = _flipNorthSouth
+      ? FormattableString.Invariant($"Cam XYZ: {displayPosition.X:F2}, {displayPosition.Y:F2}, {displayPosition.Z:F2}  |  Src XYZ: {sourcePosition.X:F2}, {sourcePosition.Y:F2}, {sourcePosition.Z:F2}")
+      : FormattableString.Invariant($"Cam XYZ: {sourcePosition.X:F2}, {sourcePosition.Y:F2}, {sourcePosition.Z:F2}");
+    string nearestEntityLine = GetNearestEntityOverlayText(sourcePosition);
+    string line = $"{positionLine}{Environment.NewLine}{nearestEntityLine}";
+
+    if (line == _lastCameraOverlayText)
+    {
+      return;
+    }
+
+    _lastCameraOverlayText = line;
+    _cameraOverlayLabel.Text = line;
+  }
+
+  private string GetNearestEntityOverlayText(Vector3 sourceCameraPosition)
+  {
+    if (_map == null)
+    {
+      return "Nearest Ent: n/a";
+    }
+
+    EntitySceneInstance[] instances = _map.EntityScene.Instances;
+    if (instances.Length == 0)
+    {
+      return "Nearest Ent: n/a";
+    }
+
+    long nowMs = Environment.TickCount64;
+    if (_lastNearestEntityOverlayTickMs != long.MinValue &&
+        nowMs - _lastNearestEntityOverlayTickMs < NearestEntityOverlayRefreshMs)
+    {
+      return _lastNearestEntityOverlayText;
+    }
+
+    float bestDistSq = float.MaxValue;
+    int bestIndex = -1;
+    for (int index = 0; index < instances.Length; ++index)
+    {
+      Vector3 delta = instances[index].Position - sourceCameraPosition;
+      float distSq = delta.LengthSquared;
+      if (distSq < bestDistSq)
+      {
+        bestDistSq = distSq;
+        bestIndex = index;
+      }
+    }
+
+    if (bestIndex < 0)
+    {
+      _lastNearestEntityOverlayText = "Nearest Ent: n/a";
+      _lastNearestEntityOverlayTickMs = nowMs;
+      return _lastNearestEntityOverlayText;
+    }
+
+    EntitySceneInstance nearest = instances[bestIndex];
+    string modelName = $"id{nearest.EntityId}";
+    bool hasAnimation = false;
+    uint alphaType = 0;
+    bool hasAlphaType = false;
+    if (_entitySceneModelsById.TryGetValue(nearest.EntityId, out EntitySceneModel? model))
+    {
+      modelName = model.Name;
+      if (_entitySceneModelHasAnimation.TryGetValue(nearest.EntityId, out bool cachedHasAnimation))
+      {
+        hasAnimation = cachedHasAnimation;
+      }
+
+      if (TryGetFirstEntityMaterialAlphaType(model, out uint resolvedAlphaType))
+      {
+        alphaType = resolvedAlphaType;
+        hasAlphaType = true;
+      }
+    }
+
+    float bestDist = MathF.Sqrt(bestDistSq);
+    string alphaText = hasAlphaType ? $"0x{alphaType:X8}" : "n/a";
+    _lastNearestEntityOverlayText = FormattableString.Invariant(
+      $"Nearest Ent: id={nearest.EntityId} {modelName} dist={bestDist:F2} alpha={alphaText} anim={(hasAnimation ? "Y" : "N")}");
+    _lastNearestEntityOverlayTickMs = nowMs;
+    return _lastNearestEntityOverlayText;
+  }
+
+  private bool TryGetFirstEntityMaterialAlphaType(EntitySceneModel model, out uint alphaType)
+  {
+    alphaType = 0;
+    if (_map == null)
+    {
+      return false;
+    }
+
+    for (int groupIndex = 0; groupIndex < model.MatGroups.Length; ++groupIndex)
+    {
+      EntitySceneMatGroup matGroup = model.MatGroups[groupIndex];
+      int materialId = matGroup.MaterialId;
+      if (materialId < 0)
+      {
+        continue;
+      }
+
+      materialId += model.MaterialBase;
+      if (materialId < 0 || materialId >= _map.EntityMaterialAlphaTypes.Length)
+      {
+        continue;
+      }
+
+      alphaType = _map.EntityMaterialAlphaTypes[materialId];
+      return true;
+    }
+
+    return false;
   }
 
   private void UpdateCamera(float deltaSeconds)
@@ -617,9 +1042,34 @@ internal sealed class MapViewerControl : UserControl
 
   private void Render()
   {
+    switch (_renderPipelineMode)
+    {
+      case RenderPipelineMode.R3Parity:
+        RenderR3Parity();
+        break;
+      case RenderPipelineMode.LegacyCompat:
+      default:
+        RenderLegacyCompat();
+        break;
+    }
+  }
+
+  private void RenderLegacyCompat()
+  {
+    RenderCore(useLegacyLayerPath: true);
+  }
+
+  private void RenderR3Parity()
+  {
+    RenderCore(useLegacyLayerPath: false);
+  }
+
+  private void RenderCore(bool useLegacyLayerPath)
+  {
     Vector3 clearColor = GetMapClearColor();
     GL.ClearColor(clearColor.X, clearColor.Y, clearColor.Z, 1.0f);
     GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+    GL.FrontFace(_flipNorthSouth ? FrontFaceDirection.Cw : FrontFaceDirection.Ccw);
 
     float aspect = Math.Max(0.0001f, (float)_glControl.ClientSize.Width / Math.Max(1f, _glControl.ClientSize.Height));
     Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(65f), aspect, 0.1f, 200000f);
@@ -646,22 +1096,233 @@ internal sealed class MapViewerControl : UserControl
       GL.Enable(EnableCap.CullFace);
     }
 
-    if (_meshVertexCount > 0)
+    bool useParityStages = !useLegacyLayerPath;
+    bool canRenderParityAnimatedEntities = useParityStages
+      && _showR3eEntities
+      && _map != null
+      && _hasAnimatedEntityInstances;
+    if (canRenderParityAnimatedEntities)
     {
-      GL.Enable(EnableCap.DepthTest);
-      GL.UseProgram(_meshProgram);
-      GL.Uniform1(_meshUniformTexture, 0);
-      GL.ActiveTexture(TextureUnit.Texture0);
-      DrawMesh(_meshVao, _meshVertexCount, _meshDrawSpans, ref mvp, ref view, _mapSurfaceToTexture, null);
+      PrepareParityEntityFrameMesh();
+    }
+    else
+    {
+      _parityEntityDrawCalls = 0;
+      _parityAnimatedObjectUpdates = 0;
+      _paritySkippedLayers = 0;
+      _parityEntityVertexCount = 0;
+      _parityEntityDrawSpans = Array.Empty<DrawSpan>();
+      _parityEntityFrameVertices = Array.Empty<BspRenderVertex>();
+      _parityEntityLastFrameTick = int.MinValue;
     }
 
-    if (_showR3eEntities && _entityVertexCount > 0)
+    bool hasLegacyEntityGeometry = _showR3eEntities && _entityVertexCount > 0;
+    bool hasParityStaticEntityGeometry = useParityStages && _showR3eEntities && _parityStaticEntityVertexCount > 0;
+    bool hasParityDynamicEntityGeometry = useParityStages && canRenderParityAnimatedEntities && _parityEntityVertexCount > 0;
+
+    GL.Enable(EnableCap.DepthTest);
+    GL.UseProgram(_meshProgram);
+    GL.Uniform1(_meshUniformTexture, 0);
+    GL.ActiveTexture(TextureUnit.Texture0);
+    if (!useParityStages)
     {
-      GL.Enable(EnableCap.DepthTest);
-      GL.UseProgram(_meshProgram);
-      GL.Uniform1(_meshUniformTexture, 0);
-      GL.ActiveTexture(TextureUnit.Texture0);
-      DrawMesh(_entityVao, _entityVertexCount, _entityDrawSpans, ref mvp, ref view, _entitySurfaceToTexture, _mapSurfaceToTexture);
+      if (_meshVertexCount > 0)
+      {
+        DrawMesh(
+          _meshVao,
+          _meshVertexCount,
+          _meshDrawSpans,
+          ref mvp,
+          ref view,
+          _mapSurfaceToTexture,
+          null,
+          useLegacyLayerPath: true,
+          sortVertices: _mapDrawVertices);
+      }
+
+      if (hasLegacyEntityGeometry)
+      {
+        DrawMesh(
+          _entityVao,
+          _entityVertexCount,
+          _entityDrawSpans,
+          ref mvp,
+          ref view,
+          _entitySurfaceToTexture,
+          _mapSurfaceToTexture,
+          useLegacyLayerPath: true,
+          sortVertices: _entityDrawVertices);
+      }
+    }
+    else
+    {
+      if (_meshVertexCount > 0)
+      {
+        DrawMesh(
+          _meshVao,
+          _meshVertexCount,
+          _meshDrawSpans,
+          ref mvp,
+          ref view,
+          _mapSurfaceToTexture,
+          null,
+          useLegacyLayerPath: false,
+          sortVertices: _mapDrawVertices,
+          passFilter: MeshPassFilter.OpaqueOnly);
+      }
+
+      int mapAlphaSpanCount = CountAlphaSpans(_meshDrawSpans);
+      int parityStaticEntityAlphaSpanCount = hasParityStaticEntityGeometry
+        ? CountAlphaSpans(_parityStaticEntityDrawSpans)
+        : 0;
+      int parityDynamicEntityAlphaSpanCount = hasParityDynamicEntityGeometry
+        ? CountAlphaSpans(_parityEntityDrawSpans)
+        : 0;
+      int totalAlphaSpanCount = mapAlphaSpanCount + parityStaticEntityAlphaSpanCount + parityDynamicEntityAlphaSpanCount;
+      bool useGlobalAlphaSort = totalAlphaSpanCount > 0 && totalAlphaSpanCount <= MaxGlobalAlphaSortSpans;
+
+      if (hasParityStaticEntityGeometry)
+      {
+        DrawMesh(
+          _parityStaticEntityVao,
+          _parityStaticEntityVertexCount,
+          _parityStaticEntityDrawSpans,
+          ref mvp,
+          ref view,
+          _entitySurfaceToTexture,
+          _mapSurfaceToTexture,
+          useLegacyLayerPath: false,
+          sortVertices: _parityStaticEntityVertices,
+          passFilter: MeshPassFilter.OpaqueOnly);
+      }
+
+      if (hasParityDynamicEntityGeometry)
+      {
+        DrawMesh(
+          _parityEntityVao,
+          _parityEntityVertexCount,
+          _parityEntityDrawSpans,
+          ref mvp,
+          ref view,
+          _entitySurfaceToTexture,
+          _mapSurfaceToTexture,
+          useLegacyLayerPath: false,
+          sortVertices: _parityEntityFrameVertices,
+          passFilter: MeshPassFilter.OpaqueOnly);
+      }
+
+      if (useGlobalAlphaSort)
+      {
+        List<TransparentDrawCommand> transparentCommands = new(totalAlphaSpanCount);
+        if (_meshVertexCount > 0 && mapAlphaSpanCount > 0)
+        {
+          CollectTransparentDrawCommands(
+            transparentCommands,
+            _meshVao,
+            _meshVertexCount,
+            _meshDrawSpans,
+            _mapDrawVertices,
+            _mapSurfaceToTexture,
+            null,
+            _camera.Position);
+        }
+
+        if (hasParityStaticEntityGeometry && parityStaticEntityAlphaSpanCount > 0)
+        {
+          CollectTransparentDrawCommands(
+            transparentCommands,
+            _parityStaticEntityVao,
+            _parityStaticEntityVertexCount,
+            _parityStaticEntityDrawSpans,
+            _parityStaticEntityVertices,
+            _entitySurfaceToTexture,
+            _mapSurfaceToTexture,
+            _camera.Position);
+        }
+
+        if (hasParityDynamicEntityGeometry && parityDynamicEntityAlphaSpanCount > 0)
+        {
+          CollectTransparentDrawCommands(
+            transparentCommands,
+            _parityEntityVao,
+            _parityEntityVertexCount,
+            _parityEntityDrawSpans,
+            _parityEntityFrameVertices,
+            _entitySurfaceToTexture,
+            _mapSurfaceToTexture,
+            _camera.Position);
+        }
+
+        if (transparentCommands.Count > 0)
+        {
+          transparentCommands.Sort(static (left, right) => right.DistanceSq.CompareTo(left.DistanceSq));
+          int[] forcedSpanOrder = new int[1];
+          for (int commandIndex = 0; commandIndex < transparentCommands.Count; ++commandIndex)
+          {
+            TransparentDrawCommand command = transparentCommands[commandIndex];
+            forcedSpanOrder[0] = command.SpanIndex;
+            DrawMesh(
+              command.Vao,
+              command.VertexCount,
+              command.Spans,
+              ref mvp,
+              ref view,
+              command.SurfaceToTexture,
+              command.FallbackSurfaceToTexture,
+              useLegacyLayerPath: false,
+              sortVertices: null,
+              passFilter: MeshPassFilter.AlphaOnly,
+              forcedSpanOrder: forcedSpanOrder);
+          }
+        }
+      }
+      else
+      {
+        if (_meshVertexCount > 0 && mapAlphaSpanCount > 0)
+        {
+          DrawMesh(
+            _meshVao,
+            _meshVertexCount,
+            _meshDrawSpans,
+            ref mvp,
+            ref view,
+            _mapSurfaceToTexture,
+            null,
+            useLegacyLayerPath: false,
+            sortVertices: _mapDrawVertices,
+            passFilter: MeshPassFilter.AlphaOnly);
+        }
+
+        if (hasParityStaticEntityGeometry && parityStaticEntityAlphaSpanCount > 0)
+        {
+          DrawMesh(
+            _parityStaticEntityVao,
+            _parityStaticEntityVertexCount,
+            _parityStaticEntityDrawSpans,
+            ref mvp,
+            ref view,
+            _entitySurfaceToTexture,
+            _mapSurfaceToTexture,
+            useLegacyLayerPath: false,
+            sortVertices: _parityStaticEntityVertices,
+            passFilter: MeshPassFilter.AlphaOnly);
+        }
+
+        if (hasParityDynamicEntityGeometry && parityDynamicEntityAlphaSpanCount > 0)
+        {
+          DrawMesh(
+            _parityEntityVao,
+            _parityEntityVertexCount,
+            _parityEntityDrawSpans,
+            ref mvp,
+            ref view,
+            _entitySurfaceToTexture,
+            _mapSurfaceToTexture,
+            useLegacyLayerPath: false,
+            sortVertices: _parityEntityFrameVertices,
+            passFilter: MeshPassFilter.AlphaOnly);
+        }
+      }
     }
 
     if (_showR3eEntities && _showParticleMarkers && _particleVertexCount > 0)
@@ -740,12 +1401,28 @@ internal sealed class MapViewerControl : UserControl
       _meshVertexCount = 0;
       _skyVertexCount = 0;
       _entityVertexCount = 0;
+      _parityStaticEntityVertexCount = 0;
+      _parityEntityVertexCount = 0;
       _particleVertexCount = 0;
       _wallVertexCount = 0;
       _lineVertexCount = 0;
       _meshDrawSpans = Array.Empty<DrawSpan>();
       _skyDrawSpans = Array.Empty<DrawSpan>();
       _entityDrawSpans = Array.Empty<DrawSpan>();
+      _parityStaticEntityDrawSpans = Array.Empty<DrawSpan>();
+      _parityEntityDrawSpans = Array.Empty<DrawSpan>();
+      _mapDrawVertices = Array.Empty<BspRenderVertex>();
+      _entityDrawVertices = Array.Empty<BspRenderVertex>();
+      _parityStaticEntityVertices = Array.Empty<BspRenderVertex>();
+      _parityEntityFrameVertices = Array.Empty<BspRenderVertex>();
+      _parityEntityDrawCalls = 0;
+      _parityAnimatedObjectUpdates = 0;
+      _paritySkippedLayers = 0;
+      _parityEntityLastFrameTick = int.MinValue;
+      _parityEntityUploadBufferLength = 0;
+      _entitySceneModelsById.Clear();
+      _entitySceneModelHasAnimation.Clear();
+      _hasAnimatedEntityInstances = false;
       ReleaseMapTextures();
       ReleaseSkyTextures();
       ReleaseEntityTextures();
@@ -753,11 +1430,23 @@ internal sealed class MapViewerControl : UserControl
     }
 
     UploadMapMesh(_map);
+    _parityStaticEntityVertexCount = 0;
+    _parityStaticEntityDrawSpans = Array.Empty<DrawSpan>();
+    _parityStaticEntityVertices = Array.Empty<BspRenderVertex>();
+    _parityEntityVertexCount = 0;
+    _parityEntityDrawSpans = Array.Empty<DrawSpan>();
+    _parityEntityFrameVertices = Array.Empty<BspRenderVertex>();
+    _parityEntityDrawCalls = 0;
+    _parityAnimatedObjectUpdates = 0;
+    _paritySkippedLayers = 0;
+    _parityEntityLastFrameTick = int.MinValue;
+    _parityEntityUploadBufferLength = 0;
 
+    BspRenderVertex[] skyRenderVertices = ConvertRenderVertices(_map.SkyRenderVertices);
     UploadMeshLayer(
       _skyVao,
       _skyVbo,
-      _map.SkyRenderVertices,
+      skyRenderVertices,
       _map.SkyMaterialSpans,
       _map.SkyMaterials,
       _map.SkyMaterialSurfaceIds,
@@ -767,13 +1456,15 @@ internal sealed class MapViewerControl : UserControl
       ref _skyVertexCount,
       ref _skyDrawSpans,
       ref _loadedSkyTextureCount,
+      false,
       null,
       _skySurfaceToTexture);
 
+    BspRenderVertex[] entityRenderVertices = ConvertRenderVertices(_map.EntityRenderVertices);
     UploadMeshLayer(
       _entityVao,
       _entityVbo,
-      _map.EntityRenderVertices,
+      entityRenderVertices,
       _map.EntityMaterialSpans,
       _map.EntityMaterials,
       _map.EntityMaterialSurfaceIds,
@@ -783,39 +1474,44 @@ internal sealed class MapViewerControl : UserControl
       ref _entityVertexCount,
       ref _entityDrawSpans,
       ref _loadedEntityTextureCount,
+      true,
       _mapSurfaceToTexture,
       _entitySurfaceToTexture);
+    _entityDrawVertices = entityRenderVertices;
+    BuildParityStaticEntityMesh();
 
-    Vector3[] wallVertices = BuildCollisionWalls(_map);
+    Vector3[] wallVertices = ConvertDisplayPositions(BuildCollisionWalls(_map));
     _wallVertexCount = wallVertices.Length;
     GL.BindVertexArray(_wallVao);
     GL.BindBuffer(BufferTarget.ArrayBuffer, _wallVbo);
     GL.BufferData(BufferTarget.ArrayBuffer, wallVertices.Length * 12, wallVertices, BufferUsageHint.DynamicDraw);
 
-    Vector3[] lineVertices = BuildOverlayLines(_map);
+    Vector3[] lineVertices = ConvertDisplayPositions(BuildOverlayLines(_map));
     _lineVertexCount = lineVertices.Length;
     GL.BindVertexArray(_lineVao);
     GL.BindBuffer(BufferTarget.ArrayBuffer, _lineVbo);
     GL.BufferData(BufferTarget.ArrayBuffer, lineVertices.Length * 12, lineVertices, BufferUsageHint.DynamicDraw);
 
-    _particleVertexCount = _map.ParticleInstancePositions.Length;
+    Vector3[] particlePositions = ConvertDisplayPositions(_map.ParticleInstancePositions);
+    _particleVertexCount = particlePositions.Length;
     GL.BindVertexArray(_particleVao);
     GL.BindBuffer(BufferTarget.ArrayBuffer, _particleVbo);
     GL.BufferData(
       BufferTarget.ArrayBuffer,
       _particleVertexCount * 12,
-      _map.ParticleInstancePositions,
+      particlePositions,
       BufferUsageHint.DynamicDraw);
   }
 
   private void UploadMapMesh(LoadedMap map)
   {
-    _meshVertexCount = map.BspRenderVertices.Length;
+    _mapDrawVertices = ConvertRenderVertices(map.BspRenderVertices);
+    _meshVertexCount = _mapDrawVertices.Length;
     float[] meshData = new float[_meshVertexCount * MeshFloatStride];
     for (int i = 0; i < _meshVertexCount; ++i)
     {
       int offset = i * MeshFloatStride;
-      BspRenderVertex v = map.BspRenderVertices[i];
+      BspRenderVertex v = _mapDrawVertices[i];
       meshData[offset] = v.Position.X;
       meshData[offset + 1] = v.Position.Y;
       meshData[offset + 2] = v.Position.Z;
@@ -905,41 +1601,21 @@ internal sealed class MapViewerControl : UserControl
           envBumpSecondLayer = (material.Layers[1].LayerFlags & MaterialLayerFlagEnvBump) != 0;
         }
 
-        if (envBumpSecondLayer && material.Layers.Length > 1)
-        {
-          MaterialLayerDefinition baseLayer = material.Layers[0];
-          MaterialLayerDefinition bumpLayer = material.Layers[1];
-          int baseTextureId = ResolveLayerTextureId(baseLayer.SurfaceId, mapTextureMap, null);
-          int bumpTextureId = ResolveLayerTextureId(bumpLayer.SurfaceId, mapTextureMap, null);
-          uint alphaType = baseLayer.AlphaType;
-          if ((baseLayer.LayerFlags & MaterialLayerFlagAniAlphaFlicker) != 0 && alphaType == BlendNone)
-          {
-            alphaType = BlendOnlyTransparency;
-          }
-
-          AddOrMergeDrawSpan(
-            spans,
-            new DrawSpan(
-              meshSpan.StartVertex,
-              meshSpan.VertexCount,
-              baseTextureId,
-              bumpTextureId,
-              alphaType,
-              0,
-              ResolveLegacyLayerColor(material, 0),
-              true,
-              true,
-              baseLayer,
-              true,
-              bumpLayer));
-        }
-        else
-        {
         int layerCount = material.Layers.Length;
         for (int layerIndex = 0; layerIndex < layerCount; ++layerIndex)
         {
+          if (layerIndex > 0 && envBumpSecondLayer)
+          {
+            break;
+          }
+
           MaterialLayerDefinition layer = material.Layers[layerIndex];
           int textureId = ResolveLayerTextureId(layer.SurfaceId, mapTextureMap, null);
+          bool hasSecondaryLayer = envBumpSecondLayer && layerIndex == 0;
+          MaterialLayerDefinition secondaryLayer = hasSecondaryLayer ? material.Layers[1] : default;
+          int secondaryTextureId = hasSecondaryLayer
+            ? ResolveLayerTextureId(secondaryLayer.SurfaceId, mapTextureMap, null)
+            : 0;
 
           uint alphaType = layer.AlphaType;
           if ((layer.LayerFlags & MaterialLayerFlagAniAlphaFlicker) != 0 && alphaType == BlendNone)
@@ -953,16 +1629,15 @@ internal sealed class MapViewerControl : UserControl
               meshSpan.StartVertex,
               meshSpan.VertexCount,
               textureId,
-              0,
+              secondaryTextureId,
               alphaType,
               0,
               ResolveLegacyLayerColor(material, layerIndex),
               true,
               true,
               layer,
-              false,
-              default));
-        }
+              hasSecondaryLayer,
+              secondaryLayer));
         }
       }
       else
@@ -1080,6 +1755,33 @@ internal sealed class MapViewerControl : UserControl
     return shouldApplyArgb ? layerColor : Vector4.One;
   }
 
+  private static Vector4 ResolveLegacyEntityLayerColor(MaterialDefinition material, int layerIndex)
+  {
+    if (layerIndex < 0 || layerIndex >= material.Layers.Length)
+    {
+      return Vector4.One;
+    }
+
+    MaterialLayerDefinition layer = material.Layers[layerIndex];
+    Vector4 layerColor = DecodeArgb(layer.Argb);
+    bool hasRgbTint =
+      MathF.Abs(layerColor.X - 1.0f) > 0.001f
+      || MathF.Abs(layerColor.Y - 1.0f) > 0.001f
+      || MathF.Abs(layerColor.Z - 1.0f) > 0.001f;
+
+    // Old R3 entity path does not generally apply per-layer ARGB alpha directly.
+    // Keep optional RGB tint, but default alpha to 1 unless explicitly animated.
+    float alpha = (layer.LayerFlags & MaterialLayerFlagAniAlphaFlicker) != 0
+      ? layerColor.W
+      : 1.0f;
+    if (hasRgbTint || MathF.Abs(alpha - 1.0f) > 0.001f)
+    {
+      return new Vector4(layerColor.X, layerColor.Y, layerColor.Z, alpha);
+    }
+
+    return Vector4.One;
+  }
+
   private int ResolveLayerTextureId(
     int surfaceId,
     IReadOnlyDictionary<int, int> textureMap,
@@ -1112,6 +1814,821 @@ internal sealed class MapViewerControl : UserControl
     GL.VertexAttribPointer(3, 3, VertexAttribPointerType.Float, false, MeshByteStride, 28);
   }
 
+  private void BuildParityStaticEntityMesh()
+  {
+    if (_map == null)
+    {
+      _parityStaticEntityVertexCount = 0;
+      _parityStaticEntityDrawSpans = Array.Empty<DrawSpan>();
+      _parityStaticEntityVertices = Array.Empty<BspRenderVertex>();
+      return;
+    }
+
+    BuildParityEntityGeometry(
+      nowFrame: 0.0f,
+      includeAnimatedModels: false,
+      includeStaticModels: true,
+      out BspRenderVertex[] vertices,
+      out DrawSpan[] spans,
+      out _,
+      out _);
+
+    _parityStaticEntityVertexCount = vertices.Length;
+    _parityStaticEntityDrawSpans = spans;
+    _parityStaticEntityVertices = vertices;
+    if (_parityStaticEntityVertexCount <= 0)
+    {
+      return;
+    }
+
+    float[] meshData = new float[_parityStaticEntityVertexCount * MeshFloatStride];
+    for (int i = 0; i < _parityStaticEntityVertexCount; ++i)
+    {
+      int offset = i * MeshFloatStride;
+      BspRenderVertex vertex = vertices[i];
+      meshData[offset] = vertex.Position.X;
+      meshData[offset + 1] = vertex.Position.Y;
+      meshData[offset + 2] = vertex.Position.Z;
+      meshData[offset + 3] = vertex.Uv.X;
+      meshData[offset + 4] = vertex.Uv.Y;
+      meshData[offset + 5] = vertex.LightUv.X;
+      meshData[offset + 6] = vertex.LightUv.Y;
+      meshData[offset + 7] = vertex.Color.X;
+      meshData[offset + 8] = vertex.Color.Y;
+      meshData[offset + 9] = vertex.Color.Z;
+    }
+
+    GL.BindVertexArray(_parityStaticEntityVao);
+    GL.BindBuffer(BufferTarget.ArrayBuffer, _parityStaticEntityVbo);
+    GL.BufferData(BufferTarget.ArrayBuffer, meshData.Length * 4, meshData, BufferUsageHint.StaticDraw);
+  }
+
+  private void PrepareParityEntityFrameMesh()
+  {
+    if (_map == null)
+    {
+      return;
+    }
+
+    int frameTick = (int)MathF.Floor((float)_animationClock.Elapsed.TotalSeconds * 30.0f);
+    if (frameTick == _parityEntityLastFrameTick && _parityEntityVertexCount > 0)
+    {
+      return;
+    }
+
+    BuildParityEntityFrame(
+      (float)_animationClock.Elapsed.TotalSeconds,
+      out BspRenderVertex[] vertices,
+      out DrawSpan[] spans);
+
+    _parityEntityLastFrameTick = frameTick;
+    _parityEntityVertexCount = vertices.Length;
+    _parityEntityDrawSpans = spans;
+    _parityEntityFrameVertices = vertices;
+    _parityEntityDrawCalls = spans.Length;
+    if (_parityEntityVertexCount <= 0)
+    {
+      return;
+    }
+
+    int floatCount = _parityEntityVertexCount * MeshFloatStride;
+    if (_parityEntityUploadBuffer.Length < floatCount)
+    {
+      _parityEntityUploadBuffer = new float[Math.Max(floatCount, _parityEntityUploadBuffer.Length * 2)];
+    }
+
+    float[] meshData = _parityEntityUploadBuffer;
+    for (int i = 0; i < _parityEntityVertexCount; ++i)
+    {
+      int offset = i * MeshFloatStride;
+      BspRenderVertex vertex = vertices[i];
+      meshData[offset] = vertex.Position.X;
+      meshData[offset + 1] = vertex.Position.Y;
+      meshData[offset + 2] = vertex.Position.Z;
+      meshData[offset + 3] = vertex.Uv.X;
+      meshData[offset + 4] = vertex.Uv.Y;
+      meshData[offset + 5] = vertex.LightUv.X;
+      meshData[offset + 6] = vertex.LightUv.Y;
+      meshData[offset + 7] = vertex.Color.X;
+      meshData[offset + 8] = vertex.Color.Y;
+      meshData[offset + 9] = vertex.Color.Z;
+    }
+
+    GL.BindVertexArray(_parityEntityVao);
+    GL.BindBuffer(BufferTarget.ArrayBuffer, _parityEntityVbo);
+    if (_parityEntityUploadBufferLength < floatCount)
+    {
+      _parityEntityUploadBufferLength = _parityEntityUploadBuffer.Length;
+      GL.BufferData(BufferTarget.ArrayBuffer, _parityEntityUploadBufferLength * 4, IntPtr.Zero, BufferUsageHint.DynamicDraw);
+    }
+
+    GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, floatCount * 4, meshData);
+  }
+
+  private void BuildParityEntityFrame(float animSeconds, out BspRenderVertex[] vertices, out DrawSpan[] spans)
+  {
+    BuildParityEntityGeometry(
+      nowFrame: animSeconds * 30.0f,
+      includeAnimatedModels: true,
+      includeStaticModels: false,
+      out vertices,
+      out spans,
+      out int animatedObjectUpdates,
+      out int skippedLayers);
+
+    _parityAnimatedObjectUpdates = animatedObjectUpdates;
+    _paritySkippedLayers = skippedLayers;
+  }
+
+  private void BuildParityEntityGeometry(
+    float nowFrame,
+    bool includeAnimatedModels,
+    bool includeStaticModels,
+    out BspRenderVertex[] vertices,
+    out DrawSpan[] spans,
+    out int animatedObjectUpdates,
+    out int skippedLayers)
+  {
+    animatedObjectUpdates = 0;
+    skippedLayers = 0;
+    if (_map == null)
+    {
+      vertices = Array.Empty<BspRenderVertex>();
+      spans = Array.Empty<DrawSpan>();
+      return;
+    }
+
+    EntitySceneData sceneData = _map.EntityScene;
+    if (sceneData.Models.Length == 0 || sceneData.Instances.Length == 0)
+    {
+      vertices = Array.Empty<BspRenderVertex>();
+      spans = Array.Empty<DrawSpan>();
+      return;
+    }
+
+    List<BspRenderVertex> frameVertices = new(Math.Max(8192, sceneData.Instances.Length * 128));
+    List<DrawSpan> frameSpans = new(Math.Max(512, sceneData.Instances.Length * 4));
+    Dictionary<int, NumericsMatrix4[]> modelObjectMatrices = new(Math.Max(16, sceneData.Models.Length));
+
+    for (int instanceIndex = 0; instanceIndex < sceneData.Instances.Length; ++instanceIndex)
+    {
+      EntitySceneInstance instance = sceneData.Instances[instanceIndex];
+      if (!_entitySceneModelsById.TryGetValue(instance.EntityId, out EntitySceneModel? model))
+      {
+        continue;
+      }
+
+      if (!_entitySceneModelHasAnimation.TryGetValue(instance.EntityId, out bool modelHasAnimation))
+      {
+        continue;
+      }
+
+      if ((modelHasAnimation && !includeAnimatedModels) || (!modelHasAnimation && !includeStaticModels))
+      {
+        continue;
+      }
+
+      if (model.MatGroups.Length == 0)
+      {
+        continue;
+      }
+
+      if (!modelObjectMatrices.TryGetValue(instance.EntityId, out NumericsMatrix4[]? objectMatrices))
+      {
+        objectMatrices = BuildSceneObjectMatrices(model.Objects, nowFrame);
+        modelObjectMatrices[instance.EntityId] = objectMatrices;
+        animatedObjectUpdates += objectMatrices.Length;
+      }
+
+      float instanceScale = float.IsFinite(instance.Scale) ? instance.Scale : 1.0f;
+      if (MathF.Abs(instanceScale) < 0.00001f)
+      {
+        instanceScale = 1.0f;
+      }
+
+      for (int groupIndex = 0; groupIndex < model.MatGroups.Length; ++groupIndex)
+      {
+        EntitySceneMatGroup matGroup = model.MatGroups[groupIndex];
+        BspRenderVertex[] localVertices = matGroup.LocalVertices;
+        if (localVertices.Length == 0)
+        {
+          continue;
+        }
+
+        bool hasObjectMatrix = TryGetSceneObjectMatrix(objectMatrices, matGroup.ObjectId, out NumericsMatrix4 objectMatrix);
+        int startVertex = frameVertices.Count;
+        for (int vertexIndex = 0; vertexIndex < localVertices.Length; ++vertexIndex)
+        {
+          BspRenderVertex localVertex = localVertices[vertexIndex];
+          Vector3 worldPosition = localVertex.Position;
+          if (hasObjectMatrix)
+          {
+            worldPosition = TransformEntityPosition(worldPosition, objectMatrix);
+          }
+
+          worldPosition = TransformEntityInstancePosition(
+            worldPosition,
+            instanceScale,
+            instance.RotX,
+            instance.RotY,
+            instance.Position);
+
+          frameVertices.Add(new BspRenderVertex(ConvertWorldPosition(worldPosition), localVertex.Uv, localVertex.LightUv, localVertex.Color));
+        }
+
+        int vertexCount = frameVertices.Count - startVertex;
+        if (vertexCount <= 0)
+        {
+          continue;
+        }
+
+        int materialId = matGroup.MaterialId >= 0
+          ? matGroup.MaterialId + model.MaterialBase
+          : matGroup.MaterialId;
+        AddParityMaterialSpans(frameSpans, materialId, startVertex, vertexCount, ref skippedLayers);
+      }
+    }
+
+    if (frameSpans.Count == 0 && frameVertices.Count > 0)
+    {
+      frameSpans.Add(new DrawSpan(0, frameVertices.Count, _checkerTexture, 0, 0, 0, Vector4.One, true, false, default, false, default));
+    }
+
+    vertices = frameVertices.ToArray();
+    spans = frameSpans.ToArray();
+  }
+
+  private void AddParityMaterialSpans(List<DrawSpan> spans, int materialId, int startVertex, int vertexCount, ref int skippedLayers)
+  {
+    if (_map == null || vertexCount <= 0)
+    {
+      return;
+    }
+
+    bool hasMaterial = _enableR3mMaterials
+      && materialId >= 0
+      && materialId < _map.EntityMaterials.Length;
+    if (hasMaterial)
+    {
+      MaterialDefinition material = _map.EntityMaterials[materialId];
+      bool envBumpSecondLayer = material.Layers.Length > 1
+        && (material.Layers[1].LayerFlags & MaterialLayerFlagEnvBump) != 0;
+      if (envBumpSecondLayer && material.Layers.Length > 1)
+      {
+        skippedLayers += material.Layers.Length - 1;
+      }
+
+      for (int layerIndex = 0; layerIndex < material.Layers.Length; ++layerIndex)
+      {
+        if (layerIndex > 0 && envBumpSecondLayer)
+        {
+          break;
+        }
+
+        MaterialLayerDefinition layer = material.Layers[layerIndex];
+        int textureId = ResolveLayerTextureId(layer.SurfaceId, _entitySurfaceToTexture, _mapSurfaceToTexture);
+        bool hasSecondaryLayer = envBumpSecondLayer && layerIndex == 0;
+        MaterialLayerDefinition secondaryLayer = hasSecondaryLayer ? material.Layers[1] : default;
+        int secondaryTextureId = hasSecondaryLayer
+          ? ResolveLayerTextureId(secondaryLayer.SurfaceId, _entitySurfaceToTexture, _mapSurfaceToTexture)
+          : 0;
+
+        uint alphaType = layer.AlphaType;
+        if ((layer.LayerFlags & MaterialLayerFlagAniAlphaFlicker) != 0 && alphaType == BlendNone)
+        {
+          alphaType = BlendOnlyTransparency;
+        }
+
+        AddOrMergeDrawSpan(
+          spans,
+          new DrawSpan(
+            startVertex,
+            vertexCount,
+              textureId,
+              secondaryTextureId,
+            alphaType,
+            0,
+            ResolveLegacyEntityLayerColor(material, layerIndex),
+            (int)(alphaType & 0x0F) == BlendNone,
+            true,
+            layer,
+            hasSecondaryLayer,
+            secondaryLayer));
+      }
+
+      return;
+    }
+
+    int texture = _checkerTexture;
+    uint fallbackAlphaType = 0;
+    if (materialId >= 0 && materialId < _map.EntityMaterialSurfaceIds.Length)
+    {
+      int surfaceId = _map.EntityMaterialSurfaceIds[materialId];
+      if (_entitySurfaceToTexture.TryGetValue(surfaceId, out int entityTexture))
+      {
+        texture = entityTexture;
+      }
+      else if (_mapSurfaceToTexture.TryGetValue(surfaceId, out int mapTexture))
+      {
+        texture = mapTexture;
+      }
+
+      if (materialId < _map.EntityMaterialAlphaTypes.Length)
+      {
+        fallbackAlphaType = _map.EntityMaterialAlphaTypes[materialId];
+      }
+    }
+
+    AddOrMergeDrawSpan(
+      spans,
+      new DrawSpan(
+        startVertex,
+        vertexCount,
+        texture,
+        0,
+        fallbackAlphaType,
+        0,
+        Vector4.One,
+        (int)(fallbackAlphaType & 0x0F) == BlendNone,
+        false,
+        default,
+        false,
+        default));
+  }
+
+  private static NumericsMatrix4[] BuildSceneObjectMatrices(EntitySceneObject[] objects, float nowFrame)
+  {
+    if (objects.Length == 0)
+    {
+      return Array.Empty<NumericsMatrix4>();
+    }
+
+    NumericsMatrix4[] legacyWorldMatrices = new NumericsMatrix4[objects.Length];
+    byte[] visitState = new byte[objects.Length];
+    for (int objectIndex = 0; objectIndex < objects.Length; ++objectIndex)
+    {
+      _ = ResolveSceneObjectMatrix(objectIndex, objects, nowFrame, legacyWorldMatrices, visitState);
+    }
+
+    NumericsMatrix4[] convertedMatrices = new NumericsMatrix4[objects.Length];
+    for (int index = 0; index < convertedMatrices.Length; ++index)
+    {
+      convertedMatrices[index] = ConvertFrom3dsMaxMatrix(legacyWorldMatrices[index]);
+    }
+
+    return convertedMatrices;
+  }
+
+  private static NumericsMatrix4 ResolveSceneObjectMatrix(
+    int objectIndex,
+    EntitySceneObject[] objects,
+    float nowFrame,
+    NumericsMatrix4[] cache,
+    byte[] visitState)
+  {
+    byte state = visitState[objectIndex];
+    if (state == 2)
+    {
+      return cache[objectIndex];
+    }
+
+    if (state == 1)
+    {
+      return NumericsMatrix4.Identity;
+    }
+
+    visitState[objectIndex] = 1;
+    EntitySceneObject obj = objects[objectIndex];
+    NumericsMatrix4 parentMatrix = NumericsMatrix4.Identity;
+    int parentIndex = obj.Parent - 1;
+    if (parentIndex >= 0 && parentIndex < objects.Length && parentIndex != objectIndex)
+    {
+      parentMatrix = ResolveSceneObjectMatrix(parentIndex, objects, nowFrame, cache, visitState);
+    }
+
+    float objectNowFrame = nowFrame;
+    if (obj.Frames > 0)
+    {
+      objectNowFrame %= obj.Frames;
+      if (objectNowFrame < 0.0f)
+      {
+        objectNowFrame += obj.Frames;
+      }
+    }
+
+    NumericsMatrix4 localMatrix = BuildSceneObjectLocalMatrix(obj, objectNowFrame);
+    NumericsMatrix4 worldMatrix = LegacyMatrixMultiply(parentMatrix, localMatrix);
+    cache[objectIndex] = worldMatrix;
+    visitState[objectIndex] = 2;
+    return worldMatrix;
+  }
+
+  private static NumericsMatrix4 BuildSceneObjectLocalMatrix(EntitySceneObject obj, float nowFrame)
+  {
+    bool hasTracks = obj.PositionTracks.Length > 0 || obj.RotationTracks.Length > 0 || obj.ScaleTracks.Length > 0;
+    if (!hasTracks)
+    {
+      NumericsMatrix4 baseRotation = CreateLegacyQuaternionMatrix(obj.Quaternion);
+      NumericsMatrix4 baseScaleMatrix = BuildLegacyScaleMatrix(obj.Scale, obj.ScaleQuaternion);
+      NumericsMatrix4 baseLocal = LegacyMatrixMultiply(baseRotation, baseScaleMatrix);
+      baseLocal.M41 = obj.Position.X;
+      baseLocal.M42 = obj.Position.Y;
+      baseLocal.M43 = obj.Position.Z;
+      baseLocal.M44 = 1.0f;
+      return baseLocal;
+    }
+
+    Vector4 rotationQuat = obj.Quaternion;
+    Vector3 scale = obj.Scale;
+    Vector4 scaleQuaternion = obj.ScaleQuaternion;
+    Vector3 position = obj.Position;
+
+    if (obj.RotationTracks.Length > 0)
+    {
+      rotationQuat = SampleRotationTrack(obj.RotationTracks, nowFrame);
+    }
+
+    if (obj.ScaleTracks.Length > 0)
+    {
+      SampleScaleTrack(obj.ScaleTracks, nowFrame, out scale, out scaleQuaternion);
+    }
+
+    if (obj.PositionTracks.Length > 0)
+    {
+      position = SamplePositionTrack(obj.PositionTracks, nowFrame);
+    }
+
+    NumericsMatrix4 rotation = CreateLegacyQuaternionMatrix(rotationQuat);
+    NumericsMatrix4 scaleMatrix = BuildLegacyScaleMatrix(scale, scaleQuaternion);
+    NumericsMatrix4 local = LegacyMatrixMultiply(rotation, scaleMatrix);
+    local.M41 = position.X;
+    local.M42 = position.Y;
+    local.M43 = position.Z;
+    local.M44 = 1.0f;
+    return local;
+  }
+
+  private static Vector3 SamplePositionTrack(EntityScenePositionTrack[] tracks, float nowFrame)
+  {
+    if (tracks.Length == 0)
+    {
+      return Vector3.Zero;
+    }
+
+    if (tracks.Length == 1)
+    {
+      return tracks[0].Position;
+    }
+
+    GetTrackFrameIndices(tracks.Length, index => tracks[index].Frame, nowFrame, out int root, out int next, out float alpha);
+    if (root == next)
+    {
+      return tracks[root].Position;
+    }
+
+    return Vector3.Lerp(tracks[root].Position, tracks[next].Position, alpha);
+  }
+
+  private static Vector4 SampleRotationTrack(EntitySceneRotationTrack[] tracks, float nowFrame)
+  {
+    if (tracks.Length == 0)
+    {
+      return Vector4.Zero;
+    }
+
+    if (tracks.Length == 1)
+    {
+      return tracks[0].Quaternion;
+    }
+
+    GetTrackFrameIndices(tracks.Length, index => tracks[index].Frame, nowFrame, out int root, out int next, out float alpha);
+    if (root == next)
+    {
+      return tracks[root].Quaternion;
+    }
+
+    Vector4 rootQ = tracks[root].Quaternion;
+    Vector4 nextQ = tracks[next].Quaternion;
+    NumericsQuaternion q0 = NumericsQuaternion.Normalize(new NumericsQuaternion(rootQ.X, rootQ.Y, rootQ.Z, rootQ.W));
+    NumericsQuaternion q1 = NumericsQuaternion.Normalize(new NumericsQuaternion(nextQ.X, nextQ.Y, nextQ.Z, nextQ.W));
+    NumericsQuaternion q = NumericsQuaternion.Normalize(NumericsQuaternion.Slerp(q0, q1, alpha));
+    if (!float.IsFinite(q.X) || !float.IsFinite(q.Y) || !float.IsFinite(q.Z) || !float.IsFinite(q.W))
+    {
+      return rootQ;
+    }
+
+    return new Vector4(q.X, q.Y, q.Z, q.W);
+  }
+
+  private static void SampleScaleTrack(EntitySceneScaleTrack[] tracks, float nowFrame, out Vector3 scale, out Vector4 scaleQuaternion)
+  {
+    scale = Vector3.One;
+    scaleQuaternion = new Vector4(0.0f, 0.0f, 0.0f, 1.0f);
+    if (tracks.Length == 0)
+    {
+      return;
+    }
+
+    if (tracks.Length == 1)
+    {
+      scale = tracks[0].Scale;
+      scaleQuaternion = tracks[0].ScaleQuaternion;
+      return;
+    }
+
+    GetTrackFrameIndices(tracks.Length, index => tracks[index].Frame, nowFrame, out int root, out int next, out float alpha);
+    if (root == next)
+    {
+      scale = tracks[root].Scale;
+      scaleQuaternion = tracks[root].ScaleQuaternion;
+      return;
+    }
+
+    scale = Vector3.Lerp(tracks[root].Scale, tracks[next].Scale, alpha);
+
+    Vector4 rootQ = tracks[root].ScaleQuaternion;
+    Vector4 nextQ = tracks[next].ScaleQuaternion;
+    NumericsQuaternion q0 = NumericsQuaternion.Normalize(new NumericsQuaternion(rootQ.X, rootQ.Y, rootQ.Z, rootQ.W));
+    NumericsQuaternion q1 = NumericsQuaternion.Normalize(new NumericsQuaternion(nextQ.X, nextQ.Y, nextQ.Z, nextQ.W));
+    NumericsQuaternion q = NumericsQuaternion.Normalize(NumericsQuaternion.Slerp(q0, q1, alpha));
+    if (!float.IsFinite(q.X) || !float.IsFinite(q.Y) || !float.IsFinite(q.Z) || !float.IsFinite(q.W))
+    {
+      scaleQuaternion = rootQ;
+      return;
+    }
+
+    scaleQuaternion = new Vector4(q.X, q.Y, q.Z, q.W);
+  }
+
+  private static void GetTrackFrameIndices(
+    int keyCount,
+    Func<int, float> frameAccessor,
+    float nowFrame,
+    out int root,
+    out int next,
+    out float alpha)
+  {
+    root = -1;
+    next = -1;
+    alpha = 0.0f;
+
+    if (keyCount <= 0)
+    {
+      root = 0;
+      next = 0;
+      return;
+    }
+
+    for (int index = 0; index < keyCount - 1; ++index)
+    {
+      float rootFrame = frameAccessor(index);
+      float nextFrame = frameAccessor(index + 1);
+      if (rootFrame <= nowFrame && nextFrame > nowFrame)
+      {
+        root = index;
+        next = index + 1;
+        float denom = nextFrame - rootFrame;
+        if (MathF.Abs(denom) > 0.000001f)
+        {
+          alpha = (nowFrame - rootFrame) / denom;
+        }
+
+        if (!float.IsFinite(alpha))
+        {
+          alpha = 0.0f;
+        }
+        else
+        {
+          alpha = Math.Clamp(alpha, 0.0f, 1.0f);
+        }
+
+        return;
+      }
+    }
+
+    root = keyCount - 1;
+    next = keyCount - 1;
+  }
+
+  private static NumericsMatrix4 BuildLegacyScaleMatrix(Vector3 scale, Vector4 scaleQuaternion)
+  {
+    NumericsMatrix4 scaleMatrix = NumericsMatrix4.Identity;
+    scaleMatrix.M11 = scale.X;
+    scaleMatrix.M22 = scale.Y;
+    scaleMatrix.M33 = scale.Z;
+
+    NumericsMatrix4 sqMatrix = CreateLegacyQuaternionMatrix(scaleQuaternion);
+    if (!NumericsMatrix4.Invert(sqMatrix, out NumericsMatrix4 invSqMatrix))
+    {
+      return scaleMatrix;
+    }
+
+    NumericsMatrix4 temp = LegacyMatrixMultiply(scaleMatrix, invSqMatrix);
+    return LegacyMatrixMultiply(sqMatrix, temp);
+  }
+
+  private static NumericsMatrix4 CreateLegacyQuaternionMatrix(Vector4 quaternion)
+  {
+    float x = quaternion.X;
+    float y = quaternion.Y;
+    float z = quaternion.Z;
+    float w = quaternion.W;
+
+    float xx = x * x;
+    float yy = y * y;
+    float zz = z * z;
+    float xy = x * y;
+    float xz = x * z;
+    float yz = y * z;
+    float wx = w * x;
+    float wy = w * y;
+    float wz = w * z;
+
+    return new NumericsMatrix4(
+      1.0f - 2.0f * (yy + zz),
+      2.0f * (xy - wz),
+      2.0f * (xz + wy),
+      0.0f,
+      2.0f * (xy + wz),
+      1.0f - 2.0f * (xx + zz),
+      2.0f * (yz - wx),
+      0.0f,
+      2.0f * (xz - wy),
+      2.0f * (yz + wx),
+      1.0f - 2.0f * (xx + yy),
+      0.0f,
+      0.0f,
+      0.0f,
+      0.0f,
+      1.0f);
+  }
+
+  private static NumericsMatrix4 LegacyMatrixMultiply(in NumericsMatrix4 a, in NumericsMatrix4 b)
+  {
+    return NumericsMatrix4.Multiply(b, a);
+  }
+
+  private static NumericsMatrix4 ConvertFrom3dsMaxMatrix(NumericsMatrix4 matrix)
+  {
+    (matrix.M12, matrix.M13) = (matrix.M13, matrix.M12);
+    (matrix.M22, matrix.M23) = (matrix.M23, matrix.M22);
+    (matrix.M32, matrix.M33) = (matrix.M33, matrix.M32);
+    (matrix.M42, matrix.M43) = (matrix.M43, matrix.M42);
+    return matrix;
+  }
+
+  private static bool TryGetSceneObjectMatrix(NumericsMatrix4[] objectMatrices, ushort objectId, out NumericsMatrix4 matrix)
+  {
+    if (objectId != 0)
+    {
+      int objectIndex = objectId - 1;
+      if (objectIndex >= 0 && objectIndex < objectMatrices.Length)
+      {
+        matrix = objectMatrices[objectIndex];
+        return true;
+      }
+    }
+
+    matrix = NumericsMatrix4.Identity;
+    return false;
+  }
+
+  private static Vector3 TransformEntityPosition(Vector3 position, in NumericsMatrix4 matrix)
+  {
+    NumericsVector3 transformed = NumericsVector3.Transform(new NumericsVector3(position.X, position.Y, position.Z), matrix);
+    if (!float.IsFinite(transformed.X) || !float.IsFinite(transformed.Y) || !float.IsFinite(transformed.Z))
+    {
+      return position;
+    }
+
+    return new Vector3(transformed.X, transformed.Y, transformed.Z);
+  }
+
+  private static Vector3 TransformEntityInstancePosition(Vector3 local, float scale, float rotXDeg, float rotYDeg, Vector3 translation)
+  {
+    float x = local.X * scale;
+    float y = local.Y * scale;
+    float z = local.Z * scale;
+
+    float rotY = MathHelper.DegreesToRadians(rotYDeg);
+    float cosY = MathF.Cos(rotY);
+    float sinY = MathF.Sin(rotY);
+    float xAfterY = x * cosY + z * sinY;
+    float zAfterY = -x * sinY + z * cosY;
+
+    float rotX = MathHelper.DegreesToRadians(rotXDeg);
+    float cosX = MathF.Cos(rotX);
+    float sinX = MathF.Sin(rotX);
+    float yAfterX = y * cosX - zAfterY * sinX;
+    float zAfterX = y * sinX + zAfterY * cosX;
+
+    return new Vector3(
+      xAfterY + translation.X,
+      yAfterX + translation.Y,
+      zAfterX + translation.Z);
+  }
+
+  private static int[] BuildSortedAlphaSpanIndices(DrawSpan[] spans, BspRenderVertex[] vertices, Vector3 cameraPosition)
+  {
+    List<(int SpanIndex, float DistanceSq)> alphaSpans = new(spans.Length);
+    for (int spanIndex = 0; spanIndex < spans.Length; ++spanIndex)
+    {
+      DrawSpan span = spans[spanIndex];
+      if (((int)(span.AlphaType & 0x0F)) == BlendNone)
+      {
+        continue;
+      }
+
+      float distanceSq = ComputeSpanDistanceSq(span, vertices, cameraPosition);
+      alphaSpans.Add((spanIndex, distanceSq));
+    }
+
+    alphaSpans.Sort(static (left, right) => right.DistanceSq.CompareTo(left.DistanceSq));
+    int[] sortedIndices = new int[alphaSpans.Count];
+    for (int index = 0; index < alphaSpans.Count; ++index)
+    {
+      sortedIndices[index] = alphaSpans[index].SpanIndex;
+    }
+
+    return sortedIndices;
+  }
+
+  private static float ComputeSpanDistanceSq(DrawSpan span, BspRenderVertex[] vertices, Vector3 cameraPosition)
+  {
+    if (span.VertexCount <= 0 || span.StartVertex < 0 || span.StartVertex >= vertices.Length)
+    {
+      return 0.0f;
+    }
+
+    int i0 = span.StartVertex;
+    int i1 = span.StartVertex + (span.VertexCount / 2);
+    int i2 = span.StartVertex + span.VertexCount - 1;
+    if (i1 >= vertices.Length)
+    {
+      i1 = vertices.Length - 1;
+    }
+
+    if (i2 >= vertices.Length)
+    {
+      i2 = vertices.Length - 1;
+    }
+
+    Vector3 center =
+      (vertices[i0].Position + vertices[i1].Position + vertices[i2].Position)
+      / 3.0f;
+    Vector3 delta = center - cameraPosition;
+    return delta.LengthSquared;
+  }
+
+  private static int CountAlphaSpans(DrawSpan[] spans)
+  {
+    int count = 0;
+    for (int spanIndex = 0; spanIndex < spans.Length; ++spanIndex)
+    {
+      if (((int)(spans[spanIndex].AlphaType & 0x0F)) != BlendNone)
+      {
+        ++count;
+      }
+    }
+
+    return count;
+  }
+
+  private static void CollectTransparentDrawCommands(
+    List<TransparentDrawCommand> output,
+    int vao,
+    int vertexCount,
+    DrawSpan[] spans,
+    BspRenderVertex[] vertices,
+    IReadOnlyDictionary<int, int>? surfaceToTexture,
+    IReadOnlyDictionary<int, int>? fallbackSurfaceToTexture,
+    Vector3 cameraPosition)
+  {
+    if (vertexCount <= 0 || spans.Length == 0 || vertices.Length == 0)
+    {
+      return;
+    }
+
+    for (int spanIndex = 0; spanIndex < spans.Length; ++spanIndex)
+    {
+      DrawSpan span = spans[spanIndex];
+      if (((int)(span.AlphaType & 0x0F)) == BlendNone)
+      {
+        continue;
+      }
+
+      float distanceSq = ComputeSpanDistanceSq(span, vertices, cameraPosition);
+      output.Add(new TransparentDrawCommand(
+        Vao: vao,
+        VertexCount: vertexCount,
+        Spans: spans,
+        SpanIndex: spanIndex,
+        DistanceSq: distanceSq,
+        SurfaceToTexture: surfaceToTexture,
+        FallbackSurfaceToTexture: fallbackSurfaceToTexture));
+    }
+  }
+
   private void DrawMesh(
     int vao,
     int vertexCount,
@@ -1119,7 +2636,11 @@ internal sealed class MapViewerControl : UserControl
     ref Matrix4 mvp,
     ref Matrix4 view,
     IReadOnlyDictionary<int, int>? surfaceToTexture,
-    IReadOnlyDictionary<int, int>? fallbackSurfaceToTexture)
+    IReadOnlyDictionary<int, int>? fallbackSurfaceToTexture,
+    bool useLegacyLayerPath = false,
+    BspRenderVertex[]? sortVertices = null,
+    MeshPassFilter passFilter = MeshPassFilter.All,
+    int[]? forcedSpanOrder = null)
   {
     if (vertexCount <= 0)
     {
@@ -1154,212 +2675,325 @@ internal sealed class MapViewerControl : UserControl
     GL.BindVertexArray(vao);
     if (spans.Length > 0)
     {
-      for (int i = 0; i < spans.Length; ++i)
+      int passStart = 0;
+      int passEnd = useLegacyLayerPath ? 0 : 1;
+      if (!useLegacyLayerPath)
       {
-        DrawSpan span = spans[i];
-        int blendMode = (int)(span.AlphaType & 0x0F);
-        if (!_enableR3tTextures && (blendMode == BlendLightMap || blendMode == BlendInvLightMap))
+        switch (passFilter)
         {
-          continue;
+          case MeshPassFilter.OpaqueOnly:
+            passStart = 0;
+            passEnd = 0;
+            break;
+          case MeshPassFilter.AlphaOnly:
+            passStart = 1;
+            passEnd = 1;
+            break;
+          case MeshPassFilter.All:
+          default:
+            passStart = 0;
+            passEnd = 1;
+            break;
+        }
+      }
+
+      for (int pass = passStart; pass <= passEnd; ++pass)
+      {
+        int[]? sortedAlphaIndices = null;
+        if (forcedSpanOrder == null && !useLegacyLayerPath && pass == 1 && sortVertices != null && sortVertices.Length > 0)
+        {
+          sortedAlphaIndices = BuildSortedAlphaSpanIndices(spans, sortVertices, _camera.Position);
         }
 
-        LayerAnimationState layerState = EvaluateLayerAnimation(span, animTime, surfaceToTexture, fallbackSurfaceToTexture);
-        LayerAnimationState secondaryLayerState = span.HasSecondaryLayerDefinition
-          ? EvaluateLayerAnimation(
-            span.SecondaryTextureId,
-            Vector4.One,
-            span.HasSecondaryLayerDefinition,
-            span.SecondaryLayer,
-            animTime,
-            surfaceToTexture,
-            fallbackSurfaceToTexture)
-          : new LayerAnimationState(_checkerTexture, Vector4.One, false, Matrix3.Identity, 0, 0.0f, 0.0f, 0, 0, 0.0f);
-
-        int primaryTextureId = _enableR3tTextures ? layerState.TextureId : _checkerTexture;
-        int secondaryTextureId = _enableR3tTextures ? secondaryLayerState.TextureId : _checkerTexture;
-        bool useEnvBump = _enableR3mMaterials && _enableR3tTextures && span.HasSecondaryLayerDefinition;
-
-        bool disableDepthTest = (span.AlphaType & MaterialAlphaFlagDisableDepthTest) != 0;
-        if (disableDepthTest)
+        int drawCount = forcedSpanOrder != null
+          ? forcedSpanOrder.Length
+          : (sortedAlphaIndices != null ? sortedAlphaIndices.Length : spans.Length);
+        for (int orderIndex = 0; orderIndex < drawCount; ++orderIndex)
         {
-          GL.Disable(EnableCap.DepthTest);
+          int spanIndex = forcedSpanOrder != null
+            ? forcedSpanOrder[orderIndex]
+            : (sortedAlphaIndices != null ? sortedAlphaIndices[orderIndex] : orderIndex);
+          if ((uint)spanIndex >= (uint)spans.Length)
+          {
+            continue;
+          }
+
+          DrawSpan span = spans[spanIndex];
+          int blendMode = (int)(span.AlphaType & 0x0F);
+          bool isAlphaSpan = blendMode != BlendNone;
+          if (!useLegacyLayerPath)
+          {
+            if (pass == 0 && isAlphaSpan)
+            {
+              continue;
+            }
+
+            if (pass == 1 && !isAlphaSpan)
+            {
+              continue;
+            }
+          }
+
+          if (!_enableR3tTextures && (blendMode == BlendLightMap || blendMode == BlendInvLightMap))
+          {
+            continue;
+          }
+
+          int primaryTextureId;
+          int secondaryTextureId = _checkerTexture;
+          bool useEnvBump = false;
+          Vector4 layerColor = span.LayerColor;
+          bool useUvTransform = false;
+          Matrix3 uvTransform = Matrix3.Identity;
+          uint layerFlags = 0;
+          float lavaWave = 0.0f;
+          float lavaSpeed = 0.0f;
+          int uvGenMode = 0;
+          int metalMode = 0;
+          float metalScale = 0.0f;
+          LayerAnimationState secondaryLayerState = new(_checkerTexture, Vector4.One, false, Matrix3.Identity, 0, 0.0f, 0.0f, 0, 0, 0.0f);
+
+          if (useLegacyLayerPath)
+          {
+            LayerAnimationState layerState = EvaluateLayerAnimation(span, animTime, surfaceToTexture, fallbackSurfaceToTexture);
+            primaryTextureId = _enableR3tTextures ? layerState.TextureId : _checkerTexture;
+            layerColor = layerState.LayerColor;
+            useUvTransform = layerState.UseUvTransform;
+            uvTransform = layerState.UvTransform;
+            layerFlags = layerState.LayerFlags;
+            lavaWave = layerState.LavaWave;
+            lavaSpeed = layerState.LavaSpeed;
+            uvGenMode = layerState.UvGenMode;
+            metalMode = layerState.MetalMode;
+            metalScale = layerState.MetalScale;
+            GL.Enable(EnableCap.DepthTest);
+            GL.DepthMask(true);
+          }
+          else
+          {
+            LayerAnimationState layerState = EvaluateLayerAnimation(span, animTime, surfaceToTexture, fallbackSurfaceToTexture);
+            secondaryLayerState = span.HasSecondaryLayerDefinition
+              ? EvaluateLayerAnimation(
+                span.SecondaryTextureId,
+                Vector4.One,
+                span.HasSecondaryLayerDefinition,
+                span.SecondaryLayer,
+                animTime,
+                surfaceToTexture,
+                fallbackSurfaceToTexture)
+              : secondaryLayerState;
+
+            primaryTextureId = _enableR3tTextures ? layerState.TextureId : _checkerTexture;
+            secondaryTextureId = _enableR3tTextures ? secondaryLayerState.TextureId : _checkerTexture;
+            useEnvBump = _enableR3mMaterials && _enableR3tTextures && span.HasSecondaryLayerDefinition;
+            layerColor = layerState.LayerColor;
+            useUvTransform = layerState.UseUvTransform;
+            uvTransform = layerState.UvTransform;
+            layerFlags = layerState.LayerFlags;
+            lavaWave = layerState.LavaWave;
+            lavaSpeed = layerState.LavaSpeed;
+            uvGenMode = layerState.UvGenMode;
+            metalMode = layerState.MetalMode;
+            metalScale = layerState.MetalScale;
+
+            bool disableDepthTest = (span.AlphaType & MaterialAlphaFlagDisableDepthTest) != 0;
+            if (disableDepthTest)
+            {
+              GL.Disable(EnableCap.DepthTest);
+            }
+            else
+            {
+              GL.Enable(EnableCap.DepthTest);
+            }
+
+            bool zWriteEnabled = !disableDepthTest
+              && ((span.AlphaType & MaterialAlphaFlagZWrite) != 0 || (span.AlphaType & 0x0F) == BlendNone);
+            GL.DepthMask(zWriteEnabled);
+          }
+
+          ApplyBlendState(span.AlphaType);
+          bool alphaTestEnabled = blendMode == BlendOppa;
+          if (_meshUniformAlphaTestEnabled >= 0)
+          {
+            GL.Uniform1(_meshUniformAlphaTestEnabled, alphaTestEnabled ? 1 : 0);
+          }
+
+          if (_meshUniformAlphaRef >= 0)
+          {
+            GL.Uniform1(_meshUniformAlphaRef, 8.0f / 255.0f);
+          }
+
+          GL.Uniform1(_meshUniformUvChannel, span.UvChannel);
+          GL.Uniform4(_meshUniformLayerColor, layerColor);
+          if (_meshUniformUseUvTransform >= 0)
+          {
+            GL.Uniform1(_meshUniformUseUvTransform, useUvTransform ? 1 : 0);
+          }
+
+          if (_meshUniformUvTransform >= 0)
+          {
+            GL.UniformMatrix3(_meshUniformUvTransform, true, ref uvTransform);
+          }
+
+          if (_meshUniformLayerFlags >= 0)
+          {
+            GL.Uniform1(_meshUniformLayerFlags, (int)layerFlags);
+          }
+
+          if (_meshUniformLavaWave >= 0)
+          {
+            GL.Uniform1(_meshUniformLavaWave, lavaWave);
+          }
+
+          if (_meshUniformLavaSpeed >= 0)
+          {
+            GL.Uniform1(_meshUniformLavaSpeed, lavaSpeed);
+          }
+
+          if (_meshUniformUvGenMode >= 0)
+          {
+            GL.Uniform1(_meshUniformUvGenMode, uvGenMode);
+          }
+
+          if (_meshUniformMetalMode >= 0)
+          {
+            GL.Uniform1(_meshUniformMetalMode, metalMode);
+          }
+
+          if (_meshUniformMetalScale >= 0)
+          {
+            GL.Uniform1(_meshUniformMetalScale, metalScale);
+          }
+
+          if (_meshUniformUseEnvBump >= 0)
+          {
+            GL.Uniform1(_meshUniformUseEnvBump, useEnvBump ? 1 : 0);
+          }
+
+          if (useEnvBump)
+          {
+            if (_meshUniformSecondaryUseUvTransform >= 0)
+            {
+              GL.Uniform1(_meshUniformSecondaryUseUvTransform, secondaryLayerState.UseUvTransform ? 1 : 0);
+            }
+
+            if (_meshUniformSecondaryUvTransform >= 0)
+            {
+              Matrix3 secondaryUvTransform = secondaryLayerState.UvTransform;
+              GL.UniformMatrix3(_meshUniformSecondaryUvTransform, true, ref secondaryUvTransform);
+            }
+
+            if (_meshUniformSecondaryLayerFlags >= 0)
+            {
+              GL.Uniform1(_meshUniformSecondaryLayerFlags, (int)secondaryLayerState.LayerFlags);
+            }
+
+            if (_meshUniformSecondaryLavaWave >= 0)
+            {
+              GL.Uniform1(_meshUniformSecondaryLavaWave, secondaryLayerState.LavaWave);
+            }
+
+            if (_meshUniformSecondaryLavaSpeed >= 0)
+            {
+              GL.Uniform1(_meshUniformSecondaryLavaSpeed, secondaryLayerState.LavaSpeed);
+            }
+
+            if (_meshUniformSecondaryUvGenMode >= 0)
+            {
+              GL.Uniform1(_meshUniformSecondaryUvGenMode, secondaryLayerState.UvGenMode);
+            }
+
+            if (_meshUniformSecondaryMetalMode >= 0)
+            {
+              GL.Uniform1(_meshUniformSecondaryMetalMode, secondaryLayerState.MetalMode);
+            }
+
+            if (_meshUniformSecondaryMetalScale >= 0)
+            {
+              GL.Uniform1(_meshUniformSecondaryMetalScale, secondaryLayerState.MetalScale);
+            }
+
+            if (_meshUniformBumpMatrix >= 0)
+            {
+              float theta = animTime * 3.0f;
+              const float bumpStrength = 0.01f;
+              float c = bumpStrength * MathF.Cos(theta);
+              float s = bumpStrength * MathF.Sin(theta);
+              Matrix2 bumpMatrix = new(c, -s, s, c);
+              GL.UniformMatrix2(_meshUniformBumpMatrix, true, ref bumpMatrix);
+            }
+
+            GL.ActiveTexture(TextureUnit.Texture1);
+            GL.BindTexture(TextureTarget.Texture2D, secondaryTextureId);
+          }
+          else
+          {
+            if (_meshUniformSecondaryUseUvTransform >= 0)
+            {
+              GL.Uniform1(_meshUniformSecondaryUseUvTransform, 0);
+            }
+
+            if (_meshUniformSecondaryUvTransform >= 0)
+            {
+              Matrix3 identity = Matrix3.Identity;
+              GL.UniformMatrix3(_meshUniformSecondaryUvTransform, true, ref identity);
+            }
+
+            if (_meshUniformSecondaryLayerFlags >= 0)
+            {
+              GL.Uniform1(_meshUniformSecondaryLayerFlags, 0);
+            }
+
+            if (_meshUniformSecondaryLavaWave >= 0)
+            {
+              GL.Uniform1(_meshUniformSecondaryLavaWave, 0.0f);
+            }
+
+            if (_meshUniformSecondaryLavaSpeed >= 0)
+            {
+              GL.Uniform1(_meshUniformSecondaryLavaSpeed, 0.0f);
+            }
+
+            if (_meshUniformSecondaryUvGenMode >= 0)
+            {
+              GL.Uniform1(_meshUniformSecondaryUvGenMode, 0);
+            }
+
+            if (_meshUniformSecondaryMetalMode >= 0)
+            {
+              GL.Uniform1(_meshUniformSecondaryMetalMode, 0);
+            }
+
+            if (_meshUniformSecondaryMetalScale >= 0)
+            {
+              GL.Uniform1(_meshUniformSecondaryMetalScale, 0.0f);
+            }
+
+            if (_meshUniformBumpMatrix >= 0)
+            {
+              Matrix2 identityBump = Matrix2.Identity;
+              GL.UniformMatrix2(_meshUniformBumpMatrix, true, ref identityBump);
+            }
+
+            GL.ActiveTexture(TextureUnit.Texture1);
+            GL.BindTexture(TextureTarget.Texture2D, _checkerTexture);
+          }
+
+          GL.Uniform1(_meshUniformUseVertexLighting, span.UseVertexLighting ? 1 : 0);
+          GL.ActiveTexture(TextureUnit.Texture0);
+          GL.BindTexture(TextureTarget.Texture2D, primaryTextureId);
+          GL.DrawArrays(PrimitiveType.Triangles, span.StartVertex, span.VertexCount);
         }
-        else
-        {
-          GL.Enable(EnableCap.DepthTest);
-        }
-
-        ApplyBlendState(span.AlphaType);
-        bool zWriteEnabled = !disableDepthTest
-          && ((span.AlphaType & MaterialAlphaFlagZWrite) != 0 || (span.AlphaType & 0x0F) == BlendNone);
-        GL.DepthMask(zWriteEnabled);
-        GL.Uniform1(_meshUniformUvChannel, span.UvChannel);
-        GL.Uniform4(_meshUniformLayerColor, layerState.LayerColor);
-        if (_meshUniformUseUvTransform >= 0)
-        {
-          GL.Uniform1(_meshUniformUseUvTransform, layerState.UseUvTransform ? 1 : 0);
-        }
-
-        if (_meshUniformUvTransform >= 0)
-        {
-          Matrix3 uvTransform = layerState.UvTransform;
-          GL.UniformMatrix3(_meshUniformUvTransform, true, ref uvTransform);
-        }
-
-        if (_meshUniformLayerFlags >= 0)
-        {
-          GL.Uniform1(_meshUniformLayerFlags, (int)layerState.LayerFlags);
-        }
-
-        if (_meshUniformLavaWave >= 0)
-        {
-          GL.Uniform1(_meshUniformLavaWave, layerState.LavaWave);
-        }
-
-        if (_meshUniformLavaSpeed >= 0)
-        {
-          GL.Uniform1(_meshUniformLavaSpeed, layerState.LavaSpeed);
-        }
-
-        if (_meshUniformUvGenMode >= 0)
-        {
-          GL.Uniform1(_meshUniformUvGenMode, layerState.UvGenMode);
-        }
-
-        if (_meshUniformMetalMode >= 0)
-        {
-          GL.Uniform1(_meshUniformMetalMode, layerState.MetalMode);
-        }
-
-        if (_meshUniformMetalScale >= 0)
-        {
-          GL.Uniform1(_meshUniformMetalScale, layerState.MetalScale);
-        }
-
-        if (_meshUniformUseEnvBump >= 0)
-        {
-          GL.Uniform1(_meshUniformUseEnvBump, useEnvBump ? 1 : 0);
-        }
-
-        if (useEnvBump)
-        {
-          if (_meshUniformSecondaryUseUvTransform >= 0)
-          {
-            GL.Uniform1(_meshUniformSecondaryUseUvTransform, secondaryLayerState.UseUvTransform ? 1 : 0);
-          }
-
-          if (_meshUniformSecondaryUvTransform >= 0)
-          {
-            Matrix3 secondaryUvTransform = secondaryLayerState.UvTransform;
-            GL.UniformMatrix3(_meshUniformSecondaryUvTransform, true, ref secondaryUvTransform);
-          }
-
-          if (_meshUniformSecondaryLayerFlags >= 0)
-          {
-            GL.Uniform1(_meshUniformSecondaryLayerFlags, (int)secondaryLayerState.LayerFlags);
-          }
-
-          if (_meshUniformSecondaryLavaWave >= 0)
-          {
-            GL.Uniform1(_meshUniformSecondaryLavaWave, secondaryLayerState.LavaWave);
-          }
-
-          if (_meshUniformSecondaryLavaSpeed >= 0)
-          {
-            GL.Uniform1(_meshUniformSecondaryLavaSpeed, secondaryLayerState.LavaSpeed);
-          }
-
-          if (_meshUniformSecondaryUvGenMode >= 0)
-          {
-            GL.Uniform1(_meshUniformSecondaryUvGenMode, secondaryLayerState.UvGenMode);
-          }
-
-          if (_meshUniformSecondaryMetalMode >= 0)
-          {
-            GL.Uniform1(_meshUniformSecondaryMetalMode, secondaryLayerState.MetalMode);
-          }
-
-          if (_meshUniformSecondaryMetalScale >= 0)
-          {
-            GL.Uniform1(_meshUniformSecondaryMetalScale, secondaryLayerState.MetalScale);
-          }
-
-          if (_meshUniformBumpMatrix >= 0)
-          {
-            float theta = animTime * 3.0f;
-            const float bumpStrength = 0.01f;
-            float c = bumpStrength * MathF.Cos(theta);
-            float s = bumpStrength * MathF.Sin(theta);
-            Matrix2 bumpMatrix = new(c, -s, s, c);
-            GL.UniformMatrix2(_meshUniformBumpMatrix, true, ref bumpMatrix);
-          }
-
-          GL.ActiveTexture(TextureUnit.Texture1);
-          GL.BindTexture(TextureTarget.Texture2D, secondaryTextureId);
-        }
-        else
-        {
-          if (_meshUniformSecondaryUseUvTransform >= 0)
-          {
-            GL.Uniform1(_meshUniformSecondaryUseUvTransform, 0);
-          }
-
-          if (_meshUniformSecondaryUvTransform >= 0)
-          {
-            Matrix3 identity = Matrix3.Identity;
-            GL.UniformMatrix3(_meshUniformSecondaryUvTransform, true, ref identity);
-          }
-
-          if (_meshUniformSecondaryLayerFlags >= 0)
-          {
-            GL.Uniform1(_meshUniformSecondaryLayerFlags, 0);
-          }
-
-          if (_meshUniformSecondaryLavaWave >= 0)
-          {
-            GL.Uniform1(_meshUniformSecondaryLavaWave, 0.0f);
-          }
-
-          if (_meshUniformSecondaryLavaSpeed >= 0)
-          {
-            GL.Uniform1(_meshUniformSecondaryLavaSpeed, 0.0f);
-          }
-
-          if (_meshUniformSecondaryUvGenMode >= 0)
-          {
-            GL.Uniform1(_meshUniformSecondaryUvGenMode, 0);
-          }
-
-          if (_meshUniformSecondaryMetalMode >= 0)
-          {
-            GL.Uniform1(_meshUniformSecondaryMetalMode, 0);
-          }
-
-          if (_meshUniformSecondaryMetalScale >= 0)
-          {
-            GL.Uniform1(_meshUniformSecondaryMetalScale, 0.0f);
-          }
-
-          if (_meshUniformBumpMatrix >= 0)
-          {
-            Matrix2 identityBump = Matrix2.Identity;
-            GL.UniformMatrix2(_meshUniformBumpMatrix, true, ref identityBump);
-          }
-
-          GL.ActiveTexture(TextureUnit.Texture1);
-          GL.BindTexture(TextureTarget.Texture2D, _checkerTexture);
-        }
-
-        GL.Uniform1(_meshUniformUseVertexLighting, span.UseVertexLighting ? 1 : 0);
-        GL.ActiveTexture(TextureUnit.Texture0);
-        GL.BindTexture(TextureTarget.Texture2D, primaryTextureId);
-        GL.DrawArrays(PrimitiveType.Triangles, span.StartVertex, span.VertexCount);
       }
 
       GL.ActiveTexture(TextureUnit.Texture0);
       GL.Enable(EnableCap.DepthTest);
       GL.DepthMask(true);
       GL.Disable(EnableCap.Blend);
+      if (_meshUniformAlphaTestEnabled >= 0)
+      {
+        GL.Uniform1(_meshUniformAlphaTestEnabled, 0);
+      }
     }
     else
     {
@@ -1409,6 +3043,16 @@ internal sealed class MapViewerControl : UserControl
       if (_meshUniformUseEnvBump >= 0)
       {
         GL.Uniform1(_meshUniformUseEnvBump, 0);
+      }
+
+      if (_meshUniformAlphaTestEnabled >= 0)
+      {
+        GL.Uniform1(_meshUniformAlphaTestEnabled, 0);
+      }
+
+      if (_meshUniformAlphaRef >= 0)
+      {
+        GL.Uniform1(_meshUniformAlphaRef, 8.0f / 255.0f);
       }
 
       if (_meshUniformSecondaryUseUvTransform >= 0)
@@ -2011,7 +3655,8 @@ internal sealed class MapViewerControl : UserControl
       return false;
     }
 
-    System.Numerics.Vector3 cameraPosition = new(_camera.Position.X, _camera.Position.Y, _camera.Position.Z);
+    Vector3 sourceCamera = ConvertSourcePosition(_camera.Position);
+    System.Numerics.Vector3 cameraPosition = new(sourceCamera.X, sourceCamera.Y, sourceCamera.Z);
     for (int i = 0; i < _map.ExtDummies.Length; ++i)
     {
       ExtDummyDefinition dummy = _map.ExtDummies[i];
@@ -2118,6 +3763,7 @@ internal sealed class MapViewerControl : UserControl
     ref int vertexCount,
     ref DrawSpan[] drawSpans,
     ref int loadedTextureCount,
+    bool useEntityLayerColorRule = false,
     IReadOnlyDictionary<int, int>? fallbackSurfaceToTexture = null,
     Dictionary<int, int>? exportSurfaceToTexture = null)
   {
@@ -2193,15 +3839,23 @@ internal sealed class MapViewerControl : UserControl
         bool envBumpSecondLayer = material.Layers.Length > 1
           && (material.Layers[1].LayerFlags & MaterialLayerFlagEnvBump) != 0;
 
-        if (envBumpSecondLayer && material.Layers.Length > 1)
+        for (int layerIndex = 0; layerIndex < material.Layers.Length; ++layerIndex)
         {
-          MaterialLayerDefinition baseLayer = material.Layers[0];
-          MaterialLayerDefinition bumpLayer = material.Layers[1];
-          int baseTextureId = ResolveLayerTextureId(baseLayer.SurfaceId, surfaceToTexture, fallbackSurfaceToTexture);
-          int bumpTextureId = ResolveLayerTextureId(bumpLayer.SurfaceId, surfaceToTexture, fallbackSurfaceToTexture);
+          if (layerIndex > 0 && envBumpSecondLayer)
+          {
+            break;
+          }
 
-          uint alphaType = baseLayer.AlphaType;
-          if ((baseLayer.LayerFlags & MaterialLayerFlagAniAlphaFlicker) != 0 && alphaType == BlendNone)
+          MaterialLayerDefinition layer = material.Layers[layerIndex];
+          int textureId = ResolveLayerTextureId(layer.SurfaceId, surfaceToTexture, fallbackSurfaceToTexture);
+          bool hasSecondaryLayer = envBumpSecondLayer && layerIndex == 0;
+          MaterialLayerDefinition secondaryLayer = hasSecondaryLayer ? material.Layers[1] : default;
+          int secondaryTextureId = hasSecondaryLayer
+            ? ResolveLayerTextureId(secondaryLayer.SurfaceId, surfaceToTexture, fallbackSurfaceToTexture)
+            : 0;
+
+          uint alphaType = layer.AlphaType;
+          if ((layer.LayerFlags & MaterialLayerFlagAniAlphaFlicker) != 0 && alphaType == BlendNone)
           {
             alphaType = BlendOnlyTransparency;
           }
@@ -2211,46 +3865,18 @@ internal sealed class MapViewerControl : UserControl
             new DrawSpan(
               span.StartVertex,
               span.VertexCount,
-              baseTextureId,
-              bumpTextureId,
+              textureId,
+              secondaryTextureId,
               alphaType,
               0,
-              ResolveLegacyLayerColor(material, 0),
+              useEntityLayerColorRule
+                ? ResolveLegacyEntityLayerColor(material, layerIndex)
+                : ResolveLegacyLayerColor(material, layerIndex),
+              !useEntityLayerColorRule || (int)(alphaType & 0x0F) == BlendNone,
               true,
-              true,
-              baseLayer,
-              true,
-              bumpLayer));
-        }
-        else
-        {
-          for (int layerIndex = 0; layerIndex < material.Layers.Length; ++layerIndex)
-          {
-            MaterialLayerDefinition layer = material.Layers[layerIndex];
-            int textureId = ResolveLayerTextureId(layer.SurfaceId, surfaceToTexture, fallbackSurfaceToTexture);
-
-            uint alphaType = layer.AlphaType;
-            if ((layer.LayerFlags & MaterialLayerFlagAniAlphaFlicker) != 0 && alphaType == BlendNone)
-            {
-              alphaType = BlendOnlyTransparency;
-            }
-
-            AddOrMergeDrawSpan(
-              spans,
-              new DrawSpan(
-                span.StartVertex,
-                span.VertexCount,
-                textureId,
-                0,
-                alphaType,
-                0,
-                ResolveLegacyLayerColor(material, layerIndex),
-                true,
-                true,
-                layer,
-                false,
-                default));
-          }
+              layer,
+              hasSecondaryLayer,
+              secondaryLayer));
         }
       }
       else
@@ -2285,7 +3911,7 @@ internal sealed class MapViewerControl : UserControl
             alphaType,
             0,
             Vector4.One,
-            true,
+            !useEntityLayerColorRule || (int)(alphaType & 0x0F) == BlendNone,
             false,
             default,
             false,
@@ -3036,6 +4662,8 @@ internal sealed class MapViewerControl : UserControl
       in vec3 vWorldPos;
       uniform sampler2D uTexture0;
       uniform sampler2D uTexture1;
+      uniform int uAlphaTestEnabled;
+      uniform float uAlphaRef;
       uniform int uUseEnvBump;
       uniform mat2 uBumpMatrix;
       uniform mat4 uView;
@@ -3205,6 +4833,11 @@ internal sealed class MapViewerControl : UserControl
           outColor = mix(outColor, uFogColor, fogFactor);
         }
         float outAlpha = tex.a * uLayerColor.a;
+        if (uAlphaTestEnabled != 0 && outAlpha < uAlphaRef)
+        {
+          discard;
+        }
+
         FragColor = vec4(outColor, outAlpha);
       }
       """;
@@ -3514,6 +5147,7 @@ internal sealed class MapViewerControl : UserControl
   {
     float amount = e.Delta > 0 ? 150f : -150f;
     _camera.Position += _camera.Forward * amount;
+    UpdateCameraOverlay();
   }
 
   private void OnKeyDown(object? sender, KeyEventArgs e)
@@ -3527,6 +5161,7 @@ internal sealed class MapViewerControl : UserControl
     else if (e.KeyCode == Keys.R)
     {
       _camera = _map != null ? CreateDefaultCamera(_map) : CreateDefaultCamera(_currentBounds);
+      UpdateCameraOverlay();
     }
   }
 
@@ -3544,7 +5179,12 @@ internal sealed class MapViewerControl : UserControl
 
       if (_glReady)
       {
-        _glControl.MakeCurrent();
+        if (!TryMakeCurrent())
+        {
+          base.Dispose(disposing);
+          return;
+        }
+
         ReleaseMapTextures();
         ReleaseSkyTextures();
         ReleaseEntityTextures();
@@ -3565,6 +5205,14 @@ internal sealed class MapViewerControl : UserControl
         if (_entityVbo != 0)
         {
           GL.DeleteBuffer(_entityVbo);
+        }
+        if (_parityStaticEntityVbo != 0)
+        {
+          GL.DeleteBuffer(_parityStaticEntityVbo);
+        }
+        if (_parityEntityVbo != 0)
+        {
+          GL.DeleteBuffer(_parityEntityVbo);
         }
         if (_lineVbo != 0)
         {
@@ -3589,6 +5237,14 @@ internal sealed class MapViewerControl : UserControl
         if (_entityVao != 0)
         {
           GL.DeleteVertexArray(_entityVao);
+        }
+        if (_parityStaticEntityVao != 0)
+        {
+          GL.DeleteVertexArray(_parityStaticEntityVao);
+        }
+        if (_parityEntityVao != 0)
+        {
+          GL.DeleteVertexArray(_parityEntityVao);
         }
         if (_lineVao != 0)
         {
@@ -3644,6 +5300,15 @@ internal sealed class MapViewerControl : UserControl
     int UvGenMode,
     int MetalMode,
     float MetalScale);
+
+  private readonly record struct TransparentDrawCommand(
+    int Vao,
+    int VertexCount,
+    DrawSpan[] Spans,
+    int SpanIndex,
+    float DistanceSq,
+    IReadOnlyDictionary<int, int>? SurfaceToTexture,
+    IReadOnlyDictionary<int, int>? FallbackSurfaceToTexture);
 
   private readonly record struct DrawSpan(
     int StartVertex,
