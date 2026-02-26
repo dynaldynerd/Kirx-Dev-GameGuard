@@ -2,8 +2,11 @@
 
 #include "CReturnGateController.h"
 #include "CReturnGate.h"
+#include "CReturnGateCreateParam.h"
 #include "CPlayer.h"
 #include "GlobalObjects.h"
+
+#include <cstring>
 
 CReturnGateController::CReturnGateController()
 {
@@ -64,7 +67,43 @@ CReturnGateController *CReturnGateController::Instance()
 
 bool CReturnGateController::Init(unsigned int gateCount)
 {
+  if (!gateCount)
+  {
+    g_Main.m_logReturnGate.Write("CReturnGateController::Init 0 == uiSize!");
+    return false;
+  }
+
   m_uiGateTotCnt = gateCount;
+  m_pkTimer = new CMyTimer();
+  m_pkEmptyInxList = new CNetIndexList();
+  m_pkUseInxList = new CNetIndexList();
+  m_ppkGatePool = new CReturnGate *[m_uiGateTotCnt];
+  if (!m_pkTimer || !m_pkEmptyInxList || !m_pkUseInxList || !m_ppkGatePool)
+  {
+    return false;
+  }
+
+  std::memset(m_ppkGatePool, 0, sizeof(CReturnGate *) * m_uiGateTotCnt);
+  _object_id objectId(1u, 3u, 0);
+  for (unsigned int index = 0; index < m_uiGateTotCnt; ++index)
+  {
+    objectId.m_wIndex = static_cast<unsigned __int16>(index);
+    m_ppkGatePool[index] = new CReturnGate(&objectId);
+    if (!m_ppkGatePool[index])
+    {
+      g_Main.m_logReturnGate.Write("CReturnGateController::Init NULL == new CReturnGate!");
+      return false;
+    }
+  }
+
+  m_pkEmptyInxList->SetList(m_uiGateTotCnt);
+  m_pkUseInxList->SetList(m_uiGateTotCnt);
+  for (unsigned int index = 0; index < m_uiGateTotCnt; ++index)
+  {
+    m_pkEmptyInxList->PushNode_Back(index);
+  }
+
+  m_pkTimer->BeginTimer(0x2710u);
   return true;
 }
 
@@ -97,6 +136,45 @@ void CReturnGateController::UpdateClose()
   }
 }
 
+CReturnGate *CReturnGateController::GetEmpty()
+{
+  if (!m_pkEmptyInxList)
+  {
+    return nullptr;
+  }
+
+  unsigned int outIndex = 0;
+  if (!m_pkEmptyInxList->PopNode_Front(&outIndex))
+  {
+    return nullptr;
+  }
+
+  m_ppkGatePool[outIndex]->Clear();
+  return m_ppkGatePool[outIndex];
+}
+
+bool CReturnGateController::IsExistOwner(CPlayer *pkObj)
+{
+  if (!m_pkUseInxList || m_pkUseInxList->size() <= 0)
+  {
+    return false;
+  }
+
+  m_pkUseInxList->m_csList.Lock();
+  for (CNetIndexList::_index_node *node = m_pkUseInxList->m_Head.m_pNext; node != &m_pkUseInxList->m_Tail;
+       node = node->m_pNext)
+  {
+    if (m_ppkGatePool[node->m_dwIndex]->GetOwner() == pkObj)
+    {
+      m_pkUseInxList->m_csList.Unlock();
+      return true;
+    }
+  }
+
+  m_pkUseInxList->m_csList.Unlock();
+  return false;
+}
+
 CReturnGate *CReturnGateController::GetGate(unsigned int uiInx)
 {
   if (m_uiGateTotCnt >= uiInx && m_ppkGatePool)
@@ -104,6 +182,51 @@ CReturnGate *CReturnGateController::GetGate(unsigned int uiInx)
     return m_ppkGatePool[uiInx];
   }
   return nullptr;
+}
+
+bool CReturnGateController::Open(CPlayer *pkOwner)
+{
+  if (!pkOwner)
+  {
+    g_Main.m_logReturnGate.Write("CReturnGateController::Open NULL == pkOwner");
+    return false;
+  }
+  if (pkOwner->m_bInGuildBattle)
+  {
+    return false;
+  }
+  if (IsExistOwner(pkOwner))
+  {
+    g_Main.m_logReturnGate.Write(
+      "CReturnGateController::Open ExistOwner! CharName:%s",
+      pkOwner->m_Param.GetCharNameA());
+    return false;
+  }
+
+  CReturnGate *emptyGate = GetEmpty();
+  if (!emptyGate)
+  {
+    const int emptyCount = static_cast<int>(m_pkEmptyInxList->size());
+    const int useCount = static_cast<int>(m_pkUseInxList->size());
+    g_Main.m_logReturnGate.Write(
+      "CReturnGateController::Open GetEmpty Failed! Use : %d Empty : %d",
+      useCount,
+      emptyCount);
+    return false;
+  }
+
+  CReturnGateCreateParam param(pkOwner);
+  if (!emptyGate->Open(&param))
+  {
+    return false;
+  }
+  if (m_pkUseInxList->PushNode_Back(emptyGate->GetIndex()))
+  {
+    return true;
+  }
+
+  g_Main.m_logReturnGate.Write("CReturnGateController::Open m_pkUseInxList->PushNode_Back Failed!");
+  return false;
 }
 
 void CReturnGateController::Close(CReturnGate *pkGate)

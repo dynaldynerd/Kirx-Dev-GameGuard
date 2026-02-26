@@ -1625,18 +1625,9 @@ void CHolyStoneSystem::RecoverPvpCash()
       continue;
     }
 
-    if (!player->m_kPvpCashPoint.m_bRaceWarRecvr)
+    if (!player->m_kPvpCashPoint.GetRaceWarRecvr())
     {
-      const double playerPenalty = g_Main.m_pTimeLimitMgr->GetPlayerPenalty(player->m_id.wIndex);
-      long double alterCash = static_cast<long double>(5 * player->GetLevel());
-      if (alterCash > 0.0)
-      {
-        alterCash *= playerPenalty;
-      }
-
-      player->AlterPvPCashBag(alterCash, pm_reward);
-      player->m_kPvpCashPoint.m_bRaceWarRecvr = true;
-      player->m_kPvpOrderView.Update_RaceWarRecvr(true);
+      player->RewardRaceWarPvpCash();
     }
   }
 }
@@ -1718,7 +1709,7 @@ char CHolyStoneSystem::CheckHolyMaster(CPlayer *pAtter, unsigned __int8 byDestro
 
     if (GetHolyMasterRace() == player->m_Param.GetRaceCode() && player->m_byHSKQuestCode != 100)
     {
-      const long double pvpLeak = player->m_Param.m_dPvpPointLeak;
+      const long double pvpLeak = player->GetPvpPointLeak();
       if (pvpLeak < 0.0)
       {
         player->AlterPvPPoint(-static_cast<double>(pvpLeak), holy_award, 0xFFFFFFFFu);

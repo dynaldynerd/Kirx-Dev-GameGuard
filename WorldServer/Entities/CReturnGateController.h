@@ -24,7 +24,10 @@ public:
   bool Init(unsigned int gateCount);
   void OnLoop();
   void UpdateClose();
+  CReturnGate *GetEmpty();
+  bool IsExistOwner(CPlayer *pkObj);
   CReturnGate *GetGate(unsigned int uiInx);
+  bool Open(CPlayer *pkOwner);
   void Close(CReturnGate *pkGate);
   int ProcessEnter(unsigned int uiGateInx, CPlayer *pkObj);
   void SendEnterResult(char iResult, CPlayer *pkObj);

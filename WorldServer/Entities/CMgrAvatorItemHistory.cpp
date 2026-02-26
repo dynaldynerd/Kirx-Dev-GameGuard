@@ -1897,6 +1897,20 @@ void CMgrAvatorItemHistory::consume_del_item(int n, _STORAGE_LIST::_db_con *pIte
 WriteFile(pszFileName, logBuffer);
 }
 
+void CMgrAvatorItemHistory::back_trap_item(int n, _STORAGE_LIST::_db_con *pItem, char *pszFileName)
+{
+  _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
+  sprintf(
+    sData,
+    "BACK TRAP ITEM : %s_%u_[%I64u] [%s %s]\r\n",
+    record->m_strCode,
+    pItem->m_dwDur,
+    pItem->m_lnUID,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pszFileName, sData);
+}
+
 void CMgrAvatorItemHistory::pay_money(
   int n,
   const char *pszClause,

@@ -110,15 +110,15 @@
 #include <cmath>
 #include <vector>
 
-unsigned __int16 DeleteUnitKey(CPlayer *player, unsigned __int8 bySlotIndex)
+unsigned __int16 CPlayer::_DeleteUnitKey(unsigned __int8 bySlotIndex)
 {
-  for (int index = 0; index < player->m_Param.m_dbInven.m_nUsedNum; ++index)
+  for (int index = 0; index < m_Param.m_dbInven.m_nUsedNum; ++index)
   {
-    _STORAGE_LIST::_db_con *item = &player->m_Param.m_dbInven.m_pStorageList[index];
+    _STORAGE_LIST::_db_con *item = &m_Param.m_dbInven.m_pStorageList[index];
     if (item->m_bLoad && item->m_dwLv == bySlotIndex)
     {
       const unsigned __int16 serial = item->m_wSerial;
-      if (player->Emb_DelStorage(0, static_cast<unsigned __int8>(index), false, true, "CPlayer::_DeleteUnitKey()"))
+      if (Emb_DelStorage(0, static_cast<unsigned __int8>(index), false, true, "CPlayer::_DeleteUnitKey()"))
       {
         return serial;
       }
@@ -128,12 +128,12 @@ unsigned __int16 DeleteUnitKey(CPlayer *player, unsigned __int8 bySlotIndex)
   return static_cast<unsigned __int16>(-1);
 }
 
-CParkingUnit *FindEmptyParkingUnitSlot()
+CParkingUnit *FindEmptyParkingUnit(CParkingUnit *parkingUnits, int maxCount)
 {
   const unsigned int now = timeGetTime();
-  for (int index = 0; index < MAX_PARKING_UNIT; ++index)
+  for (int index = 0; index < maxCount; ++index)
   {
-    CParkingUnit *slot = &g_ParkingUnit[index];
+    CParkingUnit *slot = &parkingUnits[index];
     if (!slot->m_bLive && now - slot->m_dwLastDestroyTime > 30000u)
     {
       return slot;
@@ -142,7 +142,7 @@ CParkingUnit *FindEmptyParkingUnitSlot()
   return nullptr;
 }
 
-_UnitKeyItem_fld *GetUnitKeyMatchFrame(unsigned __int8 byFrameCode)
+_UnitKeyItem_fld *gGetUnitKeyMatchFrame(unsigned __int8 byFrameCode)
 {
   const int recordNum = g_Main.m_tblItemData[19].GetRecordNum();
   for (int index = 0; index < recordNum; ++index)
@@ -203,7 +203,7 @@ void CPlayer::_UnitDestroy(unsigned __int8 byUnitSlot)
       && (!record->m_bRepair || record->m_bDestroy))
   {
     unitData->Init(0xFFu);
-    DeleteUnitKey(this, byUnitSlot);
+    _DeleteUnitKey(byUnitSlot);
     if (m_pUserDB)
     {
       m_pUserDB->Update_UnitDelete(byUnitSlot);
@@ -838,7 +838,7 @@ void CPlayer::pc_UnitFrameBuyRequest(unsigned __int8 byFrameCode, int bUseNPCLin
       }
       else
       {
-        unitKeyRecord = GetUnitKeyMatchFrame(byFrameCode);
+        unitKeyRecord = gGetUnitKeyMatchFrame(byFrameCode);
         if (!unitKeyRecord)
         {
           resultCode = 6;
@@ -1037,7 +1037,7 @@ void CPlayer::pc_UnitSellRequest(unsigned __int8 bySlotIndex, int bUseNPCLinkInt
   if (!resultCode)
   {
     unitData->byFrame = static_cast<unsigned __int8>(-1);
-    removedKeySerial = DeleteUnitKey(this, bySlotIndex);
+    removedKeySerial = _DeleteUnitKey(bySlotIndex);
 
     const double playerPenalty = g_Main.m_pTimeLimitMgr->GetPlayerPenalty(m_id.wIndex);
     dalantDelta = static_cast<int>(static_cast<double>(dalantDelta) * playerPenalty);
@@ -1797,7 +1797,7 @@ void CPlayer::pc_UnitDeliveryRequest(
         }
         else
         {
-          parkingUnit = FindEmptyParkingUnitSlot();
+          parkingUnit = FindEmptyParkingUnit(g_ParkingUnit, MAX_PARKING_UNIT);
           if (!parkingUnit)
           {
             resultCode = 19;
@@ -1962,7 +1962,7 @@ void CPlayer::pc_UnitLeaveRequest(float *pfNewPos)
   }
   else
   {
-    parkingUnit = FindEmptyParkingUnitSlot();
+    parkingUnit = FindEmptyParkingUnit(g_ParkingUnit, MAX_PARKING_UNIT);
     if (!parkingUnit)
     {
       byRetCode = 19;

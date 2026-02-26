@@ -201,6 +201,11 @@ void CPlayer::SendMsg_OreCuttingResult(unsigned __int8 resultCode, unsigned __in
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, payloadLength);
 }
 
+bool CPlayer::IsMineMode()
+{
+  return m_bMineMode;
+}
+
 void CPlayer::pc_MineCancle()
 {
   if (this->m_bMineMode)

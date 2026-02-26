@@ -1357,13 +1357,7 @@ sprintf(buffer, "Map%d", uiMapInx);
       }
     }
 
-    if (m_pkBall->m_pkOwner && m_pkBall->m_pkOwner != pkPlayer)
-    {
-      m_pkBall->m_pkOwner->ClearGravityStone();
-    }
-    m_pkBall->m_pkOwner = pkPlayer;
-    m_pkBall->m_dwTakeLimitTime = GetLoopTime();
-    pkPlayer->m_bTakeGravityStone = true;
+    m_pkBall->SetOwner(pkPlayer);
     return 0;
   }
 
@@ -1447,13 +1441,7 @@ sprintf(buffer, "Map%d", uiMapInx);
       }
     }
 
-    if (m_pkBall->m_pkOwner && m_pkBall->m_pkOwner != pkPlayer)
-    {
-      m_pkBall->m_pkOwner->ClearGravityStone();
-    }
-    m_pkBall->m_pkOwner = pkPlayer;
-    m_pkBall->m_dwTakeLimitTime = GetLoopTime();
-    pkPlayer->m_bTakeGravityStone = true;
+    m_pkBall->SetOwner(pkPlayer);
     return 0;
   }
 
@@ -1673,7 +1661,7 @@ sprintf(buffer, "Map%d", uiMapInx);
 
   void CNormalGuildBattleGuildMember::ReturnStartPos()
   {
-    m_pkMember->pPlayer->Stop();
+    m_pkMember->pPlayer->pc_Stop();
     m_pkMember->pPlayer->RemoveAllContinousEffectGroup(0);
   }
 

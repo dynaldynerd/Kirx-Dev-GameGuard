@@ -29,6 +29,8 @@ public:
   char SetPvpOrderView(long double dPvpPoint, _PVP_ORDER_VIEW_DB_BASE *pkInfo, CPlayer *pOne);
   void UpdatePvpCash(double dPvpCash);
   void Update_PvpTempCash(unsigned __int16 wIndex, double dTempPvpCash);
+  void Update_ContLoseCash(unsigned __int8 byCnt);
+  void Update_ContHaveCash(unsigned __int8 byCnt);
   void UpdatePvPPoint(long double dUpPoint, long double dNewPoint);
   void Notify_OrderView(unsigned __int16 wIndex);
   void Notify_Point(unsigned __int16 wIndex, long double dChangePoint, unsigned int dwTarSerial);

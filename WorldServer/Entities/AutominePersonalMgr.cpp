@@ -172,7 +172,7 @@ char AutominePersonalMgr::make_storagebox(int n, char *pmsg)
     return 1;
   }
 
-  if (player->m_bMineMode)
+  if (player->IsMineMode())
   {
     send_ecode(n, 3u);
     return 1;

@@ -344,14 +344,7 @@ static bool CheatAssignStoneToPlayer(GUILD_BATTLE::CNormalGuildBattleField *fiel
   {
     return false;
   }
-  if (field->m_pkBall->m_pkOwner && field->m_pkBall->m_pkOwner != player)
-  {
-    field->m_pkBall->m_pkOwner->ClearGravityStone();
-  }
-
-  field->m_pkBall->m_pkOwner = player;
-  field->m_pkBall->m_dwTakeLimitTime = GetLoopTime();
-  player->m_bTakeGravityStone = true;
+  field->m_pkBall->SetOwner(player);
   return true;
 }
 

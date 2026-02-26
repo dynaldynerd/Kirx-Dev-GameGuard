@@ -202,6 +202,8 @@ public:
   virtual __int64 GetObjRace();
   virtual bool IsBeAttackedAble(bool bFirst);
   virtual char IsBeDamagedAble(CCharacter *pAtter);
+  virtual bool RobbedHP(CCharacter *pDst, int nDecHP);
+  virtual bool FixTargetWhile(CCharacter *pkTarget, unsigned int dwMiliSecond);
   virtual __int64 GetAttackDP();
   virtual __int64 GetAttackLevel();
   virtual float GetAttackRange();

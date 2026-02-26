@@ -1033,6 +1033,15 @@ _sec_info *CMapData::GetSecInfo()
   return &this->m_SecInfo;
 }
 
+int CMapData::GetLevelLimit()
+{
+  if (this->m_pMapSet)
+  {
+    return this->m_pMapSet->m_nLevelLimit;
+  }
+  return -1;
+}
+
 unsigned __int8 CMapData::GetMapCode()
 {
   return static_cast<unsigned __int8>(this->m_pMapSet->m_dwIndex);

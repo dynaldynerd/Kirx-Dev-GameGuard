@@ -26,6 +26,7 @@ public:
 
   _bsp_info *GetBspInfo();
   _sec_info *GetSecInfo();
+  int GetLevelLimit();
   unsigned __int8 GetMapCode();
   unsigned __int8 GetRaceTown(float *fPos, unsigned __int8 byRaceCode);
   int GetSectorIndex(float *pPos);

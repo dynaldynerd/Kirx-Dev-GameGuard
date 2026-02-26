@@ -151,6 +151,32 @@ void CPvpOrderView::Update_PvpTempCash(unsigned __int16 wIndex, double dTempPvpC
   Notify_PvpTempCash(wIndex);
 }
 
+void CPvpOrderView::Update_ContLoseCash(unsigned __int8 byCnt)
+{
+  if (!m_pkInfo)
+  {
+    return;
+  }
+
+  __int64 now = 0;
+  time_20(&now);
+  m_pkInfo->tUpdatedate = now;
+  m_pkInfo->byContLoseCash = byCnt;
+}
+
+void CPvpOrderView::Update_ContHaveCash(unsigned __int8 byCnt)
+{
+  if (!m_pkInfo)
+  {
+    return;
+  }
+
+  __int64 now = 0;
+  time_20(&now);
+  m_pkInfo->tUpdatedate = now;
+  m_pkInfo->byContHaveCash = byCnt;
+}
+
 void CPvpOrderView::Notify_OrderView(unsigned __int16 wIndex)
 {
   _pvp_order_view_inform_zocl msg;

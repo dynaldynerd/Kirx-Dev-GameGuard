@@ -116,7 +116,9 @@ public:
   bool IsAttackableInTown() override;
   bool IsBeAttackedAble(bool bFirst) override;
   char IsBeDamagedAble(CCharacter *pAtter) override;
+  bool RobbedHP(CCharacter *pDst, int nDecHP) override;
   char IsRecvableContEffect() override;
+  bool FixTargetWhile(CCharacter *pkTarget, unsigned int dwMiliSecond) override;
   bool IsRewardExp() override;
   bool SF_AllContHelpForceRemove_Once(CCharacter *pDstObj) override;
   bool SF_AllContHelpSkillRemove_Once(CCharacter *pDstObj) override;
@@ -143,6 +145,7 @@ public:
     CPlayer *pActChar) override;
   CCharacter *GetAttackTarget();
   void SetAttackTarget(CCharacter *p);
+  bool ConvertTargetPlayer(CPlayer *pTar);
   bool IsMovable();
   CPlayer *SearchNearPlayer();
   __int64 AttackObject(int nDamage, CGameObject *pOri);

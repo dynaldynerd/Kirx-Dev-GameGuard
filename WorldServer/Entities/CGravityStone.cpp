@@ -91,6 +91,16 @@ unsigned __int8 CGravityStone::Drop(CPlayer *pkPlayer)
   return 0;
 }
 
+void CGravityStone::SetOwner(CPlayer *pkPlayer)
+{
+  if (pkPlayer)
+  {
+    m_dwTakeLimitTime = GetLoopTime() + 120000;
+    m_pkOwner = pkPlayer;
+    m_pkOwner->TakeGravityStone();
+  }
+}
+
 void CGravityStone::SendMsg_Create()
 {
   char msg[14]{};

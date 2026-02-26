@@ -18,6 +18,7 @@ public:
   char CheckTakeTimeLimit();
   char Regen(_object_create_setdata *pParam);
   unsigned __int8 Drop(CPlayer *pkPlayer);
+  void SetOwner(CPlayer *pkPlayer);
   void SendMsg_Create();
   void SendMsg_Destroy();
   void SendMsg_FixPosition(int n) override;
