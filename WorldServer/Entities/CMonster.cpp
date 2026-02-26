@@ -295,14 +295,14 @@ void CMonster::_InitSDM()
   if (!s_logTrace_Boss_Looting.m_bInit)
   {
     const unsigned int localTime = GetKorLocalTime();
-    sprintf(buffer, "..\\ZoneServerLog\\ServiceLog\\MonsterLoot%d.log", localTime);
+    sprintf(buffer, "..\\ZoneServerLog\\ServiceLog\\MonsterLoot%u.log", localTime);
     s_logTrace_Boss_Looting.SetWriteLogFile(buffer, 1, 0, 0, 0);
   }
 
   if (!s_logTrace_Boss_BirthAndDeath.m_bInit)
   {
     const unsigned int localTime = GetKorLocalTime();
-    sprintf(buffer, "..\\ZoneServerLog\\ServiceLog\\MonsterBirth%d.log", localTime);
+    sprintf(buffer, "..\\ZoneServerLog\\ServiceLog\\MonsterBirth%u.log", localTime);
     s_logTrace_Boss_BirthAndDeath.SetWriteLogFile(buffer, 1, 0, 1, 1);
   }
 
@@ -1267,6 +1267,45 @@ void CMonster::SetAttackTarget(CCharacter *p)
   }
   m_pTargetChar = p;
   SendMsg_Change_MonsterTarget(m_pTargetChar);
+}
+
+bool CMonster::ConvertTargetPlayer(CPlayer *pTar)
+{
+  m_pTargetChar = nullptr;
+  if (pTar)
+  {
+    m_AggroMgr.SetAggro(pTar, 0, -2, 0, 0, 0);
+    m_AggroMgr.SetTopAggroCharacter(pTar);
+    CheckEventEmotionPresentation(7u, pTar);
+    m_AI.SendExternMsg(0, pTar, 1);
+    SetAttackTarget(pTar);
+    m_AggroMgr.ShortRankDelay(0xBB8u);
+  }
+  return true;
+}
+
+bool CMonster::FixTargetWhile(CCharacter *pkTarget, unsigned int dwMiliSecond)
+{
+  (void)dwMiliSecond;
+
+  if (pkTarget)
+  {
+    if (m_bMove)
+    {
+      MoveBreak(GetMoveSpeed());
+      Stop();
+      SendMsg_BreakStop();
+    }
+
+    m_AggroMgr.SetAggro(pkTarget, 0, -2, 0, 0, 0);
+    m_AggroMgr.SetTopAggroCharacter(pkTarget);
+    CheckEventEmotionPresentation(7u, pkTarget);
+    m_AI.SendExternMsg(0, pkTarget, 1);
+    SetAttackTarget(pkTarget);
+    m_AggroMgr.ShortRankDelay(0x1388u);
+  }
+
+  return true;
 }
 
 void CMonster::Loop()
@@ -3091,6 +3130,18 @@ __int64 CMonster::SetDamage(
 
   m_AI.SendExternMsg(0, pDst, nDam);
   return static_cast<unsigned int>(m_nHP);
+}
+
+bool CMonster::RobbedHP(CCharacter *pDst, int nDecHP)
+{
+  if (nDecHP >= m_nHP)
+  {
+    return false;
+  }
+
+  SetDamage(nDecHP, pDst, static_cast<int>(pDst->GetLevel()), false, -1, 0, true);
+  SendMsg_RobedHP(pDst, static_cast<unsigned __int16>(nDecHP));
+  return true;
 }
 
 char CMonster::SetHP(int nHP, bool bOver)

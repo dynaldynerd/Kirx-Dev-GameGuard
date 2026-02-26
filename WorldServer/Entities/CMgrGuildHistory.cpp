@@ -48,7 +48,7 @@ CMgrGuildHistory::CMgrGuildHistory()
   CreateDirectoryA(m_szStdPath, nullptr);
 
   const unsigned int korLocalTime = GetKorLocalTime();
-  sprintf(m_szStdPath, "%s\\%d", m_szStdPath, korLocalTime);
+  sprintf(m_szStdPath, "%s\\%u", m_szStdPath, korLocalTime);
   CreateDirectoryA(m_szStdPath, nullptr);
 
   char dateBuffer[160]{};

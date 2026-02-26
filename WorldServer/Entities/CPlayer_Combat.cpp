@@ -11,6 +11,7 @@
 #include "pnt_rect.h"
 #include "CMainThread.h"
 #include "CItemStore.h"
+#include "CItemBox.h"
 #include "CNetworkEX.h"
 #include "StoreList_fld.h"
 #include "CActionPointSystemMgr.h"
@@ -45,6 +46,7 @@
 #include "COreAmountMgr.h"
 #include "COreCuttingTable.h"
 #include "DfnEquipItem_fld.h"
+#include "base_fld.h"
 #include "CDarkHole.h"
 #include "CDarkHoleChannel.h"
 #include "CDarkHoleDungeonQuest.h"
@@ -2047,43 +2049,141 @@ void CPlayer::pc_MakeTrapRequest(
   this->SendMsg_CreateTrapResult(static_cast<char>(byErrCode), dwTrapObjSerial);
 }
 
+void CPlayer::_TrapReturn(CTrap *pTrap, unsigned __int16 wAddSerial)
+{
+  if (!pTrap)
+  {
+    return;
+  }
+
+  const int tableCode = GetItemTableCode(pTrap->m_pRecordSet->m_strCode);
+  if (tableCode == -1)
+  {
+    return;
+  }
+
+  _base_fld *itemRecord = g_Main.m_tblItemData[tableCode].GetRecord(pTrap->m_pRecordSet->m_strCode);
+  if (!itemRecord)
+  {
+    return;
+  }
+
+  if (wAddSerial == 0xFFFF)
+  {
+    _STORAGE_LIST::_db_con item;
+    item.Init();
+    item.m_byTableCode = static_cast<unsigned __int8>(tableCode);
+    item.m_wItemIndex = static_cast<unsigned __int16>(itemRecord->m_dwIndex);
+    if (IsOverLapItem(tableCode))
+    {
+      item.m_dwDur = 1;
+    }
+    else
+    {
+      item.m_dwDur = GetItemDurPoint(tableCode, item.m_wItemIndex);
+    }
+
+    if (m_Param.m_dbInven.GetIndexEmptyCon() == 255)
+    {
+      CreateItemBox(
+        &item,
+        this,
+        0xFFFFFFFF,
+        false,
+        nullptr,
+        1u,
+        m_pCurMap,
+        m_wMapLayerIndex,
+        m_fCurPos,
+        false);
+      s_MgrItemHistory.back_trap_item(m_ObjID.m_wIndex, &item, m_szItemHistoryFileName);
+    }
+    else
+    {
+      item.m_wSerial = m_Param.GetNewItemSerial();
+      if (Emb_AddStorage(0, &item, false, true))
+      {
+        SendMsg_RewardAddItem(&item, 6u);
+        s_MgrItemHistory.back_trap_item(m_ObjID.m_wIndex, &item, m_szItemHistoryFileName);
+      }
+      else
+      {
+        s_MgrItemHistory.add_storage_fail(
+          m_ObjID.m_wIndex,
+          &item,
+          "_TrapDestroy - Emb_AddStorage() Fail",
+          m_szItemHistoryFileName);
+      }
+    }
+    return;
+  }
+
+  if (!IsOverLapItem(tableCode))
+  {
+    return;
+  }
+
+  _STORAGE_LIST::_db_con *targetItem = m_Param.m_dbInven.GetPtrFromSerial(wAddSerial);
+  if (!targetItem)
+  {
+    SendMsg_AdjustAmountInform(0, wAddSerial, 0);
+    return;
+  }
+
+  if (!targetItem->m_bLock
+      && targetItem->m_byTableCode == static_cast<unsigned __int8>(tableCode)
+      && targetItem->m_wItemIndex == static_cast<unsigned __int16>(itemRecord->m_dwIndex))
+  {
+    if (targetItem->m_dwDur + 1 <= 0x63)
+    {
+      const bool isProtectItem = IsProtectItem(tableCode) != 0;
+      (void)isProtectItem;
+      const unsigned int newDur = static_cast<unsigned int>(Emb_AlterDurPoint(0, targetItem->m_byStorageIndex, 1, true, false));
+      SendMsg_AdjustAmountInform(0, wAddSerial, newDur);
+    }
+    else
+    {
+      SendMsg_AdjustAmountInform(0, wAddSerial, static_cast<unsigned int>(targetItem->m_dwDur));
+    }
+  }
+}
+
 void CPlayer::pc_BackTrapRequest(unsigned int dwTrapObjSerial, unsigned __int16 wAddSerial)
 {
   unsigned __int8 byErrCode = 2;
   CTrap *trap = nullptr;
-  int trapSlot = -1;
 
   if (m_pmTrp.m_nCount > 0)
   {
     for (int index = 0; index < 20; ++index)
     {
-      if (!m_pmTrp.m_Item[index].isLoad() || m_pmTrp.m_Item[index].dwSerial != dwTrapObjSerial)
+      if (m_pmTrp.m_Item[index].isLoad() && m_pmTrp.m_Item[index].dwSerial == dwTrapObjSerial)
       {
-        continue;
-      }
+        trap = m_pmTrp.m_Item[index].pItem;
+        if (!trap)
+        {
+          byErrCode = 2;
+          break;
+        }
 
-      trapSlot = index;
-      trap = m_pmTrp.m_Item[index].pItem;
-      if (!trap)
-      {
-        byErrCode = 2;
-      }
-      else if (trap->m_dwMasterSerial != m_dwObjSerial)
-      {
-        byErrCode = 21;
-      }
-      else if (GetSqrt(m_fCurPos, trap->m_fCurPos) > 150.0)
-      {
-        byErrCode = 22;
-      }
-      else
-      {
+        if (trap->m_dwMasterSerial != m_dwObjSerial)
+        {
+          byErrCode = 21;
+          break;
+        }
+
+        if (GetSqrt(m_fCurPos, trap->m_fCurPos) > 150.0)
+        {
+          byErrCode = 22;
+          break;
+        }
+
         byErrCode = 0;
+        break;
       }
-      break;
     }
 
-    if (byErrCode == 2)
+    if (byErrCode)
     {
       g_Main.m_logSystemError.Write(
         "CPlayer::pc_BackTrapRequest() : Can't find trap (Player:%s Count:%d)",
@@ -2099,59 +2199,17 @@ void CPlayer::pc_BackTrapRequest(unsigned int dwTrapObjSerial, unsigned __int16 
         "CPlayer::pc_BackTrapRequest() : m_pmTrp.m_nCount ZERO and less ( %d )",
         m_pmTrp.m_nCount);
     }
+
     byErrCode = 2;
   }
 
-  if (!byErrCode && trap)
+  if (!byErrCode)
   {
-    const unsigned __int16 trapIndex = static_cast<unsigned __int16>(trap->m_pRecordSet->m_dwIndex);
-    bool added = false;
-
-    if (IsOverLapItem(26) && wAddSerial != 0xFFFF)
-    {
-      _STORAGE_LIST::_db_con *addTarget = m_Param.m_dbInven.GetPtrFromSerial(wAddSerial);
-      if (addTarget && addTarget->m_byTableCode == 26 && addTarget->m_wItemIndex == trapIndex)
-      {
-        const unsigned __int64 dur = Emb_AlterDurPoint(0u, addTarget->m_byStorageIndex, 1, true, true);
-        SendMsg_AdjustAmountInform(0u, addTarget->m_wSerial, static_cast<unsigned int>(dur));
-        added = true;
-      }
-    }
-
-    if (!added)
-    {
-      _STORAGE_LIST::_storage_con item{};
-      item.m_bLoad = true;
-      item.m_byTableCode = 26;
-      item.m_wItemIndex = trapIndex;
-      item.m_dwDur = 1;
-      item.m_dwLv = 0;
-      item.m_wSerial = m_Param.GetNewItemSerial();
-      _STORAGE_LIST::_db_con *newItem = Emb_AddStorage(0u, &item, true, true);
-      if (!newItem)
-      {
-        byErrCode = 2;
-      }
-      else
-      {
-        SendMsg_RewardAddItem(newItem, 0);
-        added = true;
-      }
-    }
-
-    if (!byErrCode && added)
-    {
-      trap->Destroy();
-      if (trapSlot >= 0)
-      {
-        m_pmTrp.m_Item[trapSlot].init();
-        --m_pmTrp.m_nCount;
-      }
-      SendMsg_MadeTrapNumInform(static_cast<char>(m_pmTrp.m_nCount));
-    }
+    _TrapReturn(trap, wAddSerial);
+    trap->Destroy(2u);
   }
 
-  this->SendMsg_BackTrapResult(static_cast<char>(byErrCode));
+  SendMsg_BackTrapResult(static_cast<char>(byErrCode));
 }
 
 
@@ -2661,6 +2719,22 @@ void CPlayer::SendMsg_RealMovePoint(int n)
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
+float CPlayer::CalcDPRate()
+{
+  const float dpRate = (2.0f * static_cast<float>(GetDP()) / static_cast<float>(GetMaxDP())) - 0.40000001f;
+  if (dpRate < 0.0f)
+  {
+    return 0.0f;
+  }
+
+  if (dpRate > 1.0f)
+  {
+    return 1.0f;
+  }
+
+  return dpRate;
+}
+
 __int64 CPlayer::GetAvoidRate()
 {
   if (m_fTalik_AvoidPoint <= 0.0f)
@@ -2668,24 +2742,8 @@ __int64 CPlayer::GetAvoidRate()
     return static_cast<unsigned int>(static_cast<int>(m_EP.GetEff_Plus(3)));
   }
 
-  const int maxDp = GetMaxDP();
-  float dpRate = 0.0f;
-  if (maxDp > 0)
-  {
-    dpRate = (2.0f * static_cast<float>(GetDP()) / static_cast<float>(maxDp)) - 0.4f;
-    if (dpRate < 0.0f)
-    {
-      dpRate = 0.0f;
-    }
-    else if (dpRate > 1.0f)
-    {
-      dpRate = 1.0f;
-    }
-  }
-
-  const int talikPenalty = static_cast<int>(m_fTalik_AvoidPoint * (1.0f - dpRate));
-  const float avoidValue = m_EP.GetEff_Plus(3) - static_cast<float>(talikPenalty);
-  return static_cast<unsigned int>(static_cast<int>(avoidValue));
+  const int talikPenalty = static_cast<int>(m_fTalik_AvoidPoint * (1.0f - CalcDPRate()));
+  return static_cast<unsigned int>(static_cast<int>(m_EP.GetEff_Plus(3) - static_cast<float>(talikPenalty)));
 }
 
 __int64 CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
@@ -2699,95 +2757,121 @@ __int64 CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertP
   }
   else
   {
-    bool ignoreShieldByEffect = false;
+    bool shieldIgnore = false;
     if (pAttChar && pAttChar->m_ObjID.m_byID == 0)
     {
-      ignoreShieldByEffect = pAttChar->m_EP.GetEff_State(11);
-      if (!ignoreShieldByEffect)
+      shieldIgnore = pAttChar->m_EP.GetEff_State(11);
+      if (!shieldIgnore)
       {
-        float ignoreProb = pAttChar->m_EP.GetEff_Plus(28);
-        if (ignoreProb > 0.0f)
+        CCharacter *playerAttacker = nullptr;
+        if (pAttChar->m_ObjID.m_byID == 0)
         {
-          ignoreProb += pAttChar->m_EP.GetEff_Plus(41);
-          if ((rand() % 100) <= static_cast<int>(ignoreProb))
+          playerAttacker = pAttChar;
+        }
+
+        if (pAttChar->m_EP.GetEff_Plus(28) > 0.0f || playerAttacker)
+        {
+          float ignoreChance = pAttChar->m_EP.GetEff_Plus(28);
+          if (playerAttacker)
           {
-            ignoreShieldByEffect = true;
+            ignoreChance += pAttChar->m_EP.GetEff_Plus(41);
+          }
+
+          if ((rand() % 100) <= static_cast<int>(ignoreChance))
+          {
+            shieldIgnore = true;
           }
         }
       }
-      if (ignoreShieldByEffect)
-      {
-        pAttChar->SendMsg_AttackActEffect(1u, this);
-      }
+    }
+
+    if (shieldIgnore)
+    {
+      pAttChar->SendMsg_AttackActEffect(1u, this);
     }
 
     _STORAGE_LIST::_db_con *shieldItem = &m_Param.m_dbEquip.m_pStorageList[5];
-    bool shieldEnabled = false;
+    bool hasShield = false;
     if (shieldItem->m_bLoad)
     {
-      shieldEnabled = GetEffectEquipCode(1u, 5u) == 1;
-      if (shieldEnabled)
+      hasShield = GetEffectEquipCode(1u, 5u) == 1;
+    }
+
+    if (hasShield)
+    {
+      _STORAGE_LIST::_db_con *weaponItem = &m_Param.m_dbEquip.m_pStorageList[6];
+      if (weaponItem->m_bLoad)
       {
-        _STORAGE_LIST::_db_con *weaponItem = &m_Param.m_dbEquip.m_pStorageList[6];
-        if (weaponItem->m_bLoad)
+        _WeaponItem_fld *weaponRecord = static_cast<_WeaponItem_fld *>(g_Main.m_tblItemData[6].GetRecord(weaponItem->m_wItemIndex));
+        if (weaponRecord->m_nFixPart == 100)
         {
-          _WeaponItem_fld *weaponRecord =
-            static_cast<_WeaponItem_fld *>(g_Main.m_tblItemData[6].GetRecord(weaponItem->m_wItemIndex));
-          if (weaponRecord && weaponRecord->m_nFixPart == 100)
-          {
-            shieldEnabled = false;
-          }
+          hasShield = false;
         }
       }
     }
 
-    if (pAttChar && shieldEnabled && !ignoreShieldByEffect)
+    if (pAttChar && hasShield && !shieldIgnore)
     {
-      const int masteryValue = m_pmMst.GetMasteryPerMast(2u, 0u);
-      int blockChance = static_cast<int>((static_cast<float>(masteryValue) / 99.0f) * 20.0f + 5.0f);
-      blockChance += static_cast<int>(m_EP.GetEff_Plus(29));
+      const int shieldMastery = m_pmMst.GetMasteryPerMast(2u, 0);
+      int blockChance = static_cast<int>((static_cast<float>(shieldMastery) / 99.0f) * 20.0f + 5.0f);
+      blockChance = static_cast<int>(static_cast<float>(blockChance) + m_EP.GetEff_Plus(29));
       if (blockChance > 100)
       {
         blockChance = 100;
       }
+
       if ((rand() % 100) < blockChance)
       {
         m_nLastBeatenPart = 5;
-        if (pnConvertPart)
-        {
-          *pnConvertPart = m_nLastBeatenPart;
-        }
         return 0xFFFFFFFEu;
       }
     }
 
-    if (m_nLastBeatenPart < 0 || m_nLastBeatenPart >= 5)
+    if (hasShield)
     {
-      m_nLastBeatenPart = rand() % 5;
-    }
-
-    const int partIndex = m_nLastBeatenPart;
-    int partCode = m_Param.m_dbChar.m_byDftPart[partIndex];
-    _STORAGE_LIST::_db_con *partItem = &m_Param.m_dbEquip.m_pStorageList[partIndex];
-    if (partItem->m_bLoad && GetEffectEquipCode(1u, static_cast<unsigned __int8>(partIndex)) == 1)
-    {
-      partCode = partItem->m_wItemIndex;
-    }
-
-    _DfnEquipItem_fld *partRecord =
-      static_cast<_DfnEquipItem_fld *>(g_Main.m_tblItemData[partIndex].GetRecord(partCode));
-    if (partRecord)
-    {
-      defenseValue = partRecord->m_fDefFc;
-    }
-
-    if (shieldEnabled && m_nLastBeatenPart == 5)
-    {
-      _DfnEquipItem_fld *shieldRecord =
-        static_cast<_DfnEquipItem_fld *>(g_Main.m_tblItemData[5].GetRecord(shieldItem->m_wItemIndex));
-      if (shieldRecord)
+      float partDefense[5]{};
+      for (int partIndex = 0; partIndex < 5; ++partIndex)
       {
-        defenseValue = shieldRecord->m_fDefFc;
+        _STORAGE_LIST::_db_con *equipItem = &m_Param.m_dbEquip.m_pStorageList[partIndex];
+        _DfnEquipItem_fld *partRecord = nullptr;
+        if (equipItem->m_bLoad && GetEffectEquipCode(1u, static_cast<unsigned __int8>(partIndex)) == 1)
+        {
+          partRecord = static_cast<_DfnEquipItem_fld *>(g_Main.m_tblItemData[partIndex].GetRecord(equipItem->m_wItemIndex));
+        }
+        else
+        {
+          partRecord = static_cast<_DfnEquipItem_fld *>(
+            g_Main.m_tblItemData[partIndex].GetRecord(m_Param.m_dbChar.m_byDftPart[partIndex]));
+        }
+
+        if (partRecord)
+        {
+          partDefense[partIndex] = partRecord->m_fDefFc;
+        }
+      }
+
+      _DfnEquipItem_fld *shieldRecord = static_cast<_DfnEquipItem_fld *>(g_Main.m_tblItemData[5].GetRecord(shieldItem->m_wItemIndex));
+      for (int index = 0; index < 5; ++index)
+      {
+        defenseValue += partDefense[index] * s_fPartGravity[index];
+      }
+      defenseValue += shieldRecord->m_fDefFc;
+      defenseValue *= m_EP.GetEff_Rate(17);
+    }
+    else
+    {
+      _STORAGE_LIST::_db_con *equipItem = &m_Param.m_dbEquip.m_pStorageList[m_nLastBeatenPart];
+      if (equipItem->m_bLoad && GetEffectEquipCode(1u, static_cast<unsigned __int8>(m_nLastBeatenPart)) == 1)
+      {
+        _DfnEquipItem_fld *equipRecord =
+          static_cast<_DfnEquipItem_fld *>(g_Main.m_tblItemData[m_nLastBeatenPart].GetRecord(equipItem->m_wItemIndex));
+        defenseValue = equipRecord->m_fDefFc;
+      }
+      else
+      {
+        _DfnEquipItem_fld *defaultRecord = static_cast<_DfnEquipItem_fld *>(
+          g_Main.m_tblItemData[m_nLastBeatenPart].GetRecord(m_Param.m_dbChar.m_byDftPart[m_nLastBeatenPart]));
+        defenseValue = defaultRecord->m_fDefFc;
       }
     }
 
@@ -2807,23 +2891,18 @@ __int64 CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertP
   {
     const unsigned int charSerial = m_Param.GetCharSerial();
     const int raceCode = m_Param.GetRaceCode();
-    const unsigned __int8 bossType =
-      CPvpUserAndGuildRankingSystem::Instance()->GetBossType(raceCode, charSerial);
-    switch (bossType)
+    const unsigned __int8 bossType = CPvpUserAndGuildRankingSystem::Instance()->GetBossType(raceCode, charSerial);
+    if (!bossType)
     {
-    case 0:
       defenseValue *= 1.3f;
-      break;
-    case 1:
-    case 5:
+    }
+    else if (bossType == 1 || bossType == 5)
+    {
       defenseValue *= 1.5f;
-      break;
-    case 3:
-    case 7:
+    }
+    else if (bossType == 3 || bossType == 7)
+    {
       defenseValue *= 1.2f;
-      break;
-    default:
-      break;
     }
   }
 
@@ -2834,24 +2913,9 @@ __int64 CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertP
 
   if (!IsRidingUnit())
   {
-    const int maxDp = GetMaxDP();
-    float dpRate = 0.0f;
-    if (maxDp > 0)
-    {
-      dpRate = (2.0f * static_cast<float>(GetDP()) / static_cast<float>(maxDp)) - 0.4f;
-      if (dpRate < 0.0f)
-      {
-        dpRate = 0.0f;
-      }
-      else if (dpRate > 1.0f)
-      {
-        dpRate = 1.0f;
-      }
-    }
-
     if (m_fTalik_DefencePoint > 0.0f)
     {
-      const float talikPenalty = m_fTalik_DefencePoint * (1.0f - dpRate);
+      const float talikPenalty = m_fTalik_DefencePoint * (1.0f - CalcDPRate());
       defenseValue *= (m_EP.GetEff_Rate(6) - talikPenalty);
     }
     else
@@ -3188,6 +3252,267 @@ void CPlayer::RecvKillMessage(CCharacter *pDier)
   {
     Emb_CheckActForQuest(2, raceCode, 1u, false);
   }
+
+  CalcPvP(deadPlayer, 0);
+  CalPvpTempCash(deadPlayer, 0);
+  IncCriEffKillPoint();
+}
+
+void CPlayer::CalcPvP(CPlayer *pDier, unsigned __int8 byKillerObjID)
+{
+  (void)byKillerObjID;
+
+  if (IsChaosMode() && GetObjRace() == pDier->GetObjRace())
+  {
+    return;
+  }
+
+  if (pDier->IsPunished(1u, false) && GetObjRace() == pDier->GetObjRace())
+  {
+    return;
+  }
+
+  long double pvpPoint = 1.0;
+  if (pDier->m_Param.GetPvPPoint() <= 0.0 || m_byUserDgr != pDier->m_byUserDgr)
+  {
+    if (!pDier->m_bInGuildBattle)
+    {
+      pvpPoint = pvpPoint * 50.0 / 100.0;
+      if (pvpPoint < 1.0)
+      {
+        pvpPoint = 1.0;
+      }
+
+      CPlayer *partyMembers[8]{};
+      unsigned __int8 memberCount = 0;
+      if (m_pPartyMgr->IsPartyMode()
+          && pvpPoint != 1.0
+          && (memberCount = _GetPartyMemberInCircle(partyMembers, 8, false), static_cast<double>(memberCount) <= pvpPoint)
+          && memberCount)
+      {
+        IncPvPPoint(pvpPoint * 0.699999988079071, kill_s_inc, pDier->m_dwObjSerial);
+
+        int totalLevel = 0;
+        for (int index = 0; index < memberCount; ++index)
+        {
+          totalLevel += static_cast<int>(partyMembers[index]->GetLevel());
+        }
+
+        for (int index = 0; index < memberCount; ++index)
+        {
+          const float levelRate = static_cast<float>(partyMembers[index]->GetLevel()) / static_cast<float>(totalLevel);
+          const long double alterPoint = pvpPoint * 0.300000011920929 * levelRate;
+          if (alterPoint >= 1.0)
+          {
+            partyMembers[index]->IncPvPPoint(alterPoint, kill_p_inc, pDier->m_dwObjSerial);
+          }
+        }
+      }
+      else
+      {
+        IncPvPPoint(pvpPoint, kill_s_inc, pDier->m_dwObjSerial);
+      }
+    }
+    return;
+  }
+
+  const double dstPoint = pDier->m_Param.GetPvPPoint() + 10000.0;
+  const double srcPoint = m_Param.GetPvPPoint() + 10000.0;
+  pvpPoint = dstPoint / srcPoint * 500.0 + 0.5;
+  if (pvpPoint < 1.0)
+  {
+    pvpPoint = 1.0;
+  }
+  if (pvpPoint > 100000000.0)
+  {
+    pvpPoint = 100000000.0;
+  }
+
+  __int16 *dstBillingType = &pDier->m_pUserDB->m_BillingInfo.iType;
+  __int16 *srcBillingType = &m_pUserDB->m_BillingInfo.iType;
+  CNationSettingManager *nationSetting = CTSingleton<CNationSettingManager>::Instance();
+  if (nationSetting->IsPersonalFreeFixedAmountBillingType(srcBillingType, dstBillingType))
+  {
+    return;
+  }
+
+  if (pvpPoint > pDier->m_Param.GetPvPPoint())
+  {
+    pvpPoint = pDier->m_Param.GetPvPPoint();
+  }
+
+  CHolyStone *holyStone = &g_Stone[static_cast<int>(m_Param.GetRaceCode())];
+  if (holyStone->m_pCurMap == m_pCurMap && g_HolySys.GetSceneCode() == 1)
+  {
+    pvpPoint *= 3.0;
+  }
+
+  if (!pDier->m_bInGuildBattle && !pDier->m_kPvpPointLimiter.TakePvpPoint(&pvpPoint, pDier, this))
+  {
+    return;
+  }
+
+  if (!pDier->m_bInGuildBattle)
+  {
+    pDier->AlterPvPPoint(-static_cast<double>(pvpPoint), die_dec, m_dwObjSerial);
+  }
+
+  if (!pDier->m_bInGuildBattle)
+  {
+    pvpPoint = pvpPoint * 50.0 / 100.0;
+    if (pvpPoint < 1.0)
+    {
+      pvpPoint = 1.0;
+    }
+
+    CPlayer *partyMembers[8]{};
+    unsigned __int8 memberCount = 0;
+    if (m_pPartyMgr->IsPartyMode()
+        && pvpPoint != 1.0
+        && (memberCount = _GetPartyMemberInCircle(partyMembers, 8, false), static_cast<double>(memberCount) <= pvpPoint)
+        && memberCount)
+    {
+      IncPvPPoint(pvpPoint * 0.699999988079071, kill_s_inc, pDier->m_dwObjSerial);
+
+      int totalLevel = 0;
+      for (int index = 0; index < memberCount; ++index)
+      {
+        totalLevel += static_cast<int>(partyMembers[index]->GetLevel());
+      }
+
+      for (int index = 0; index < memberCount; ++index)
+      {
+        const float levelRate = static_cast<float>(partyMembers[index]->GetLevel()) / static_cast<float>(totalLevel);
+        const long double alterPoint = pvpPoint * 0.300000011920929 * levelRate;
+        if (alterPoint >= 1.0)
+        {
+          partyMembers[index]->IncPvPPoint(alterPoint, kill_p_inc, pDier->m_dwObjSerial);
+        }
+      }
+    }
+    else
+    {
+      IncPvPPoint(pvpPoint, kill_s_inc, pDier->m_dwObjSerial);
+    }
+  }
+}
+
+long double CPlayer::CalPvpCashPoint(int nDstLv, int nSrcLv, char *pSrcClass)
+{
+  return m_kPvpCashPoint.CalPvpCashPoint(nDstLv, nSrcLv, pSrcClass, 1u);
+}
+
+void CPlayer::CalPvpTempCash(CPlayer *pDier, unsigned __int8 byKillerObjID)
+{
+  (void)byKillerObjID;
+
+  if (IsChaosMode() && GetObjRace() == pDier->GetObjRace())
+  {
+    return;
+  }
+  if (pDier->IsChaosMode() && GetObjRace() == pDier->GetObjRace())
+  {
+    return;
+  }
+  if (pDier->IsPunished(1u, false) && GetObjRace() == pDier->GetObjRace())
+  {
+    return;
+  }
+  if (IsPunished(1u, false) && GetObjRace() == pDier->GetObjRace())
+  {
+    return;
+  }
+  if (pDier->m_bInGuildBattle || m_bInGuildBattle)
+  {
+    return;
+  }
+
+  bool haveCashChanged = false;
+  bool loseCashChanged = false;
+  double cashPoint = 0.0;
+  long double tempCashDelta = 0.0;
+  int tempPointLimit = 0;
+  const long double oldTempPoint = pDier->m_kPvpOrderView.GetPvpTempCash();
+
+  char *srcClass = m_Param.m_pClassData->m_strCode;
+  const int srcLevel = static_cast<int>(GetLevel());
+  const int dstLevel = static_cast<int>(pDier->GetLevel());
+  cashPoint = m_kPvpCashPoint.CalPvpCashPoint(dstLevel, srcLevel, srcClass, 1u);
+
+  if (!pDier->m_kPvpCashPoint.CheckPvpLoseCondition(this, pDier))
+  {
+    cashPoint = 0.0;
+  }
+
+  if (cashPoint != 0.0)
+  {
+    tempPointLimit = pDier->m_kPvpCashPoint.GetMinTempPoint(static_cast<unsigned __int8>(pDier->m_Param.GetLevel()));
+    if (static_cast<double>(tempPointLimit) <= pDier->m_kPvpOrderView.GetPvpTempCash() - cashPoint)
+    {
+      tempCashDelta = -cashPoint;
+    }
+    else
+    {
+      tempCashDelta = static_cast<double>(tempPointLimit) - pDier->m_kPvpOrderView.GetPvpTempCash();
+    }
+
+    pDier->m_kPvpOrderView.Update_PvpTempCash(pDier->m_ObjID.m_wIndex, static_cast<double>(tempCashDelta));
+    const int contLose = pDier->m_kPvpCashPoint.GetContPvpLose();
+    pDier->m_kPvpCashPoint.SetContPvpLose(static_cast<unsigned __int8>(contLose + 1));
+    pDier->m_kPvpOrderView.Update_ContLoseCash(static_cast<unsigned __int8>(pDier->m_kPvpCashPoint.GetContPvpLose()));
+    loseCashChanged = true;
+  }
+
+  pDier->m_kPvpCashPoint.SetContPvpHave(0);
+  pDier->m_kPvpOrderView.Update_ContHaveCash(0);
+  if (!m_kPvpCashPoint.CheckPvpHaveCondition(this, pDier, static_cast<double>(oldTempPoint)))
+  {
+    cashPoint = 0.0;
+  }
+
+  const double pvpCash = static_cast<double>(pDier->m_kPvpOrderView.GetPvpCash());
+  tempPointLimit = pDier->m_kPvpCashPoint.GetMinTempPoint(static_cast<unsigned __int8>(pDier->m_Param.GetLevel()));
+  if (static_cast<double>(10 * tempPointLimit) > pvpCash)
+  {
+    cashPoint = 0.0;
+  }
+
+  if (cashPoint != 0.0)
+  {
+    const bool premium = IsApplyPcbangPrimium();
+    tempPointLimit = m_kPvpCashPoint.GetMaxTempPoint(static_cast<unsigned __int8>(m_Param.GetLevel()), premium);
+    if (IsApplyPcbangPrimium())
+    {
+      cashPoint *= PCBANG_PRIMIUM_FAVOR::PVP_RATE;
+    }
+
+    if (cashPoint + m_kPvpOrderView.GetPvpTempCash() <= static_cast<double>(tempPointLimit))
+    {
+      tempCashDelta = cashPoint;
+    }
+    else
+    {
+      tempCashDelta = static_cast<double>(tempPointLimit) - m_kPvpOrderView.GetPvpTempCash();
+    }
+
+    m_kPvpOrderView.Update_PvpTempCash(m_ObjID.m_wIndex, static_cast<double>(tempCashDelta));
+    const int contHave = m_kPvpCashPoint.GetContPvpHave();
+    m_kPvpCashPoint.SetContPvpHave(static_cast<unsigned __int8>(contHave + 1));
+    m_kPvpOrderView.Update_ContHaveCash(static_cast<unsigned __int8>(m_kPvpCashPoint.GetContPvpHave()));
+    haveCashChanged = true;
+  }
+
+  m_kPvpCashPoint.SetContPvpLose(0);
+  m_kPvpOrderView.Update_ContLoseCash(0);
+
+  if (haveCashChanged || loseCashChanged)
+  {
+    const unsigned int killerSerial = m_Param.GetCharSerial();
+    if (pDier->m_kPvpCashPoint.SetKillerList(killerSerial))
+    {
+      pDier->m_kPvpCashPoint.UpdateKillerList(&pDier->m_pUserDB->m_AvatorData.dbPvpOrderView);
+    }
+  }
 }
 
 void CPlayer::SendMsg_MaxPvpPointInform(int nMax)
@@ -3197,6 +3522,20 @@ void CPlayer::SendMsg_MaxPvpPointInform(int nMax)
 
   unsigned __int8 type[2] = {59, 15};
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 4u);
+}
+
+void CPlayer::IncCriEffKillPoint()
+{
+  if (m_byHSKQuestCode != 100)
+  {
+    CHolyStone *holyStone = &g_Stone[static_cast<int>(m_Param.GetRaceCode())];
+    if (holyStone->m_bOper && holyStone->m_pCurMap == m_pCurMap)
+    {
+      ++m_wKillPoint;
+      SendMsg_HSKQuestActCum();
+      m_pUserDB->m_AvatorData.m_wKillPoint = m_wKillPoint;
+    }
+  }
 }
 
 void CPlayer::IncCriEffPvPCashBag(double dAlter)

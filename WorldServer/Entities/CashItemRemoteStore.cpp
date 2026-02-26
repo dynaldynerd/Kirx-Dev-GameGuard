@@ -1544,24 +1544,24 @@ const char *logDir = "..\\ZoneServerLog\\SystemLog\\PartiallyPaid";
   char buffer[260];
   std::memset(buffer, 0, 256);
   unsigned int logTime = GetKorLocalTime();
-  sprintf_s(buffer, 0x100u, "%s\\Shop_%d.sys", logDir, logTime);
+  sprintf_s(buffer, 0x100u, "%s\\Shop_%u.sys", logDir, logTime);
   _kLoggers[0].SetWriteLogFile(buffer, 1, 0, 1, 1);
 
   memset_0(buffer, 0, 0x100u);
   logTime = GetKorLocalTime();
-  sprintf_s(buffer, 0x100u, "%s\\Shop_%d.prc", logDir, logTime);
+  sprintf_s(buffer, 0x100u, "%s\\Shop_%u.prc", logDir, logTime);
   _kLoggers[1].SetWriteLogFile(buffer, 1, 0, 1, 1);
 
   memset_0(buffer, 0, 0x100u);
   logTime = GetKorLocalTime();
-  sprintf_s(buffer, 0x100u, "%s\\DiscountRate_%d.log", logDir, logTime);
+  sprintf_s(buffer, 0x100u, "%s\\DiscountRate_%u.log", logDir, logTime);
   m_cde.m_cde_log.SetWriteLogFile(buffer, 1, 0, 1, 1);
 
   for (int j = 0; j < 3; ++j)
   {
     memset_0(buffer, 0, 0x100u);
     logTime = GetKorLocalTime();
-    sprintf_s(buffer, 0x100u, "%s\\CashEvent_%dType_%d.log", logDir, j, logTime);
+    sprintf_s(buffer, 0x100u, "%s\\CashEvent_%dType_%u.log", logDir, j, logTime);
     m_cash_event[j].m_event_log.SetWriteLogFile(buffer, 1, 0, 1, 1);
     m_cash_event[j].m_event_log.Write("Event State");
     m_cash_event[j].m_event_log.Write(kEventTypeDisable);
@@ -1575,7 +1575,7 @@ const char *logDir = "..\\ZoneServerLog\\SystemLog\\PartiallyPaid";
 
   memset_0(buffer, 0, 0x100u);
   logTime = GetKorLocalTime();
-  sprintf_s(buffer, 0x100u, "%s\\ConditionalEvent_%d.log", logDir, logTime);
+  sprintf_s(buffer, 0x100u, "%s\\ConditionalEvent_%u.log", logDir, logTime);
   m_con_event.m_conevent_log.SetWriteLogFile(buffer, 1, 0, 1, 1);
 
   return true;

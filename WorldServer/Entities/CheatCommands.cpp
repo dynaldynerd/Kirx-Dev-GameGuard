@@ -202,7 +202,7 @@ void InitCheatCommand(CHEAT_COMMAND *pCmdList, unsigned __int8 *byCommandSizeLis
 
   const unsigned int korLocalTime = GetKorLocalTime();
   char buffer[144]{};
-  sprintf(buffer, "..\\ZoneServerLog\\ServiceLog\\Cheat%d.log", korLocalTime);
+  sprintf(buffer, "..\\ZoneServerLog\\ServiceLog\\Cheat%u.log", korLocalTime);
   s_logCheat.SetWriteLogFile(buffer, 1, 0, 1, 1);
 }
 
@@ -344,14 +344,7 @@ static bool CheatAssignStoneToPlayer(GUILD_BATTLE::CNormalGuildBattleField *fiel
   {
     return false;
   }
-  if (field->m_pkBall->m_pkOwner && field->m_pkBall->m_pkOwner != player)
-  {
-    field->m_pkBall->m_pkOwner->ClearGravityStone();
-  }
-
-  field->m_pkBall->m_pkOwner = player;
-  field->m_pkBall->m_dwTakeLimitTime = GetLoopTime();
-  player->m_bTakeGravityStone = true;
+  field->m_pkBall->SetOwner(player);
   return true;
 }
 

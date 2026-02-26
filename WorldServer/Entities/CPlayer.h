@@ -48,6 +48,7 @@ struct _combine_ex_item_accept_result_zocl;
 struct _ItemCombine_exp_fld;
 struct _guildroom_enter_request_clzo;
 struct _guildroom_out_request_clzo;
+struct _guildroom_resttime_request_clzo;
 struct _guildroom_rent_request_clzo;
 struct _guild_honor_set_request_clzo;
 struct _attack_param;
@@ -702,6 +703,7 @@ enum PVP_CASH_IO_CODE : int
   pm_kill = 0,
   pm_reward = 1,
   pm_quest = 2,
+  pm_scaner = 3,
 };
 
 /* 1755 */
@@ -1094,6 +1096,7 @@ public:
   static int *s_pnLinkForceItemToEffect;
   static _SKILL_IDX_PER_MASTERY s_SkillIndexPerMastery[8];
   static int s_nAddMstFc[100];
+  static float s_fPartGravity[5];
   static int s_nStdDefPoint;
   static int s_nRevDefPoint;
   static int s_nMonDefPoint;
@@ -1388,6 +1391,7 @@ public:
     float *pfPos,
     unsigned __int16 *pConsumeSerial);
   void pc_BackTrapRequest(unsigned int dwTrapObjSerial, unsigned __int16 wAddSerial);
+  void _TrapReturn(CTrap *pTrap, unsigned __int16 wAddSerial);
   void pc_ChangeModeType(unsigned __int8 nModeType, unsigned __int8 nStandType);
   void pc_GestureRequest(unsigned __int8 byGestureType);
   void pc_AlterWindowInfoRequest(
@@ -1542,7 +1546,9 @@ public:
   void pc_CastVoteRequest(int nVoteSerial, unsigned __int8 byCode);
   void pc_MoveNext(unsigned __int8 byMoveType, float *pfCur, float *pfTar, unsigned __int8 byDirect);
   void pc_RealMovPos(float *pfCur);
+  bool SetTarPos(float *fTarPos, bool bColl);
   void pc_MoveStop(float *pfCur);
+  void pc_Stop();
   void pc_MoveModeChangeRequest(unsigned __int8 byMoveType);
   void pc_GotoBasePortalRequest(unsigned __int16 wItemSerial);
   void pc_GotoAvatorRequest(const char *pwszAvatorName);
@@ -1587,6 +1593,7 @@ public:
   void SendMsg_Level(char nLevel);
   void SendData_PartyMemberLv();
   void LimLvNpcQuestDelete(unsigned __int8 byQuestDBSlot);
+  void IncCriEffKillPoint();
   void IncCriEffPvPCashBag(double dAlter);
   void SendMsg_EquipItemLevelLimit(int nCurPlayerLv);
   void SendMsg_GuildEstablishFail(char byRetCode);
@@ -1665,8 +1672,10 @@ public:
   bool IsRecallAnimus();
   bool SF_MakeZeroAnimusRecallTimeOnce(CCharacter *pDstObj, float fEffectValue);
   bool SF_RecoverAllReturnStateAnimusHPFull(CCharacter *pDstObj, float fEffectValue);
+  bool SF_Resurrect_Once(CCharacter *pDstObj) override;
   bool IsHaveMentalTicket();
   bool IsMiningByMinigTicket();
+  bool IsMineMode();
   void UpdateLastMetalTicket(
     unsigned __int16 byCurrentYear,
     unsigned __int8 byCurrentMonth,
@@ -1712,6 +1721,7 @@ public:
   void SetBindMapData(CMapData *pMapData);
   void SetBindDummy(_dummy_position *pDummy);
   bool SetBindPosition(CMapData *pMap, _dummy_position *pDummy);
+  void TakeGravityStone();
   void ClearGravityStone();
   void pc_SetInGuildBattle(bool bInGuildBattle, unsigned __int8 byColorInx);
   char pc_GiveItem(_STORAGE_LIST::_db_con *kItem, char *szReason, bool bDrop);
@@ -1723,9 +1733,43 @@ public:
   int GetMaxDP();
   bool SetFP(int nFP, bool bOver);
   bool SetSP(int nSP, bool bOver);
+  bool RobbedHP(CCharacter *pDst, int nDecHP) override;
   char SetHP(int nHP, bool bOver);
   char SF_HFSInc_Once(CPlayer *pDstObj);
+  bool SF_AllContDamageForceRemove_Once(CCharacter *pDstObj) override;
   bool SF_AllContDamageRemove_Once(CCharacter *pDstObj);
+  bool SF_AllContHelpForceRemove_Once(CCharacter *pDstObj) override;
+  bool SF_AllContHelpSkillRemove_Once(CCharacter *pDstObj) override;
+  bool SF_AttHPtoDstFP_Once(CCharacter *pDstObj, float fEffectValue) override;
+  bool SF_ContDamageTimeInc_Once(CCharacter *pDstObj, float fEffectValue) override;
+  bool SF_ContHelpTimeInc_Once(CCharacter *pDstObj, float fEffectValue) override;
+  bool SF_ConvertMonsterTarget(CCharacter *pDstObj, float fEffectValue) override;
+  bool SF_ConvertTargetDest(CCharacter *pDstObj, float fEffectValue) override;
+  bool SF_DamageAndStun(CCharacter *pDstObj, float fEffectValue) override;
+  bool SF_FPDec(CCharacter *pDstObj, float fEffectValue) override;
+  bool SF_ReturnBindPosition(CCharacter *pDstObj, float fEffectValue) override;
+  bool SF_SelfDestruction(CCharacter *pDstObj, float fEffectValue) override;
+  bool SF_SkillContHelpTimeInc_Once(CCharacter *pDstObj, float fEffectValue) override;
+  bool SF_SPDec(CCharacter *pDstObj, float fEffectValue) override;
+  bool SF_STInc_Once(CCharacter *pDstObj, float fEffectValue) override;
+  bool SF_Stun(CCharacter *pDstObj, float fEffectValue) override;
+  bool SF_TeleportToDestination(CCharacter *pDstObj, bool bStone) override;
+  bool SF_TransDestHP(CCharacter *pDstObj, float fEffectValue, unsigned __int8 *byRet) override;
+  bool SF_TransMonsterHP(CCharacter *pDstObj, float fEffectValue) override;
+  bool SF_MakePortalReturnBindPositionPartyMember(
+    CCharacter *pDstObj,
+    float fEffectValue,
+    unsigned __int8 *byRet) override;
+  bool SF_OthersContHelpSFRemove_Once(float fEffectValue) override;
+  bool SF_OverHealing_Once(CCharacter *pDstObj, float fEffectValue) override;
+  bool SF_ReleaseMonsterTarget(CCharacter *pDstObj, float fEffectValue) override;
+  bool SF_RemoveAllContHelp_Once(CCharacter *pDstObj, float fEffectValue) override;
+  bool SF_HPInc_Once(CCharacter *pDstObj, float fEffectValue) override;
+  bool SF_IncHPCircleParty(CCharacter *pDstObj, float fEffectValue) override;
+  bool SF_IncreaseDP(CCharacter *pDstObj, float fEffectValue) override;
+  bool SF_LateContDamageRemove_Once(CCharacter *pDstObj) override;
+  bool SF_LateContHelpForceRemove_Once(CCharacter *pDstObj) override;
+  bool SF_LateContHelpSkillRemove_Once(CCharacter *pDstObj) override;
   char SetDP(int nDP, bool bOver);
   void CheckAlterMaxPoint();
   void SendMsg_SetDPInform();
@@ -1776,6 +1820,11 @@ public:
   void HSKQuestEnd_Att(unsigned __int8 byDestroyStoneRaceCode, CPlayer *pDestroyer);
   void SendMsg_RecvHSKQuest();
   void AlterPvPPoint(double dAlter, int AlterType, unsigned int dwDstSerial);
+  void RewardRaceWarPvpCash();
+  void IncPvPPoint(long double dAlter, int AlterType, unsigned int dwDstSerial);
+  void CalcPvP(CPlayer *pDier, unsigned __int8 byKillerObjID);
+  long double CalPvpCashPoint(int nDstLv, int nSrcLv, char *pSrcClass);
+  void CalPvpTempCash(CPlayer *pDier, unsigned __int8 byKillerObjID);
   void SetGrade(unsigned __int8 byGrade);
   void SetRankRate(unsigned __int16 wRankRate, unsigned int dwRank);
   void SendMsg_AlterGradeInform();
@@ -1788,8 +1837,10 @@ public:
   void SendMsg_RaceBattlePenelty(int nAlterPoint, char byAlterType);
   void SetCntEnable(bool bSet);
   void ExtractStringToTime(unsigned int dwTemp, _SYSTEMTIME *tm);
+  long double GetPvpPointLeak();
   void AlterPvpPointLeak(long double dAlter);
   void SetPvpPointLeak(long double dValue);
+  void Resurrect();
   bool pc_Resurrect(bool bQuickPotion);
   void SendMsg_ResurrectInform();
   void SendMsg_Resurrect(char byRet, bool bQuickPotion);
@@ -1859,6 +1910,7 @@ public:
   void pc_GuildRoomRentRequest(_guildroom_rent_request_clzo *pProtocol);
   void pc_GuildRoomEnterRequest(_guildroom_enter_request_clzo *pProtocol);
   void pc_GuildRoomOutRequest(_guildroom_out_request_clzo *pProtocol);
+  void pc_GuildRoomRestTimeRequest(_guildroom_resttime_request_clzo *pProtocol);
   void pc_GuildHonorListRequest(unsigned __int8 byUI);
   void pc_GuildSetHonorRequest(_guild_honor_set_request_clzo *pData);
   void pc_GuildListRequest(unsigned __int8 byPage);
@@ -1884,6 +1936,7 @@ public:
   void Emb_RidindUnit(bool bRiding, CParkingUnit *pCreateUnit);
   void ForcePullUnit(bool bLogout);
   void _UpdateUnitDebt(unsigned __int8 bySlotIndex, unsigned int dwPull);
+  unsigned __int16 _DeleteUnitKey(unsigned __int8 bySlotIndex);
   bool _LockUnitKey(unsigned __int8 bySlotIndex, bool bLock);
   void SendMsg_UnitForceReturnInform(char bySlotIndex, unsigned int dwDebt);
   void SendMsg_UnitAlterFeeInform(char bySlotIndex, unsigned int dwPullingFee);
@@ -1999,6 +2052,7 @@ public:
     unsigned __int8 byRetCode,
     unsigned __int8 bySubRetCode,
     unsigned __int8 byRoomType);
+  void SendMsg_GuildRoomRestTimeResult();
   void SendMsg_GuildSetHonorResult(char byRetCode);
   void SendMsg_MineStartResult(unsigned __int8 resultCode);
   void SendMsg_NpcQuestListResult(_NPCQuestIndexTempData *pQuestIndexData);
@@ -2197,6 +2251,7 @@ public:
   void SendMsg_StartShopping();
   void SendMsg_TargetObjectHPInform();
   void SendMsg_RefeshGroupTargetPosition(char byGroupType);
+  void SetVote(int nSerial);
   void SendMsg_CastVoteResult(char byRetCode);
   void SendMsg_ExtTrunkExtendResult(char byRetCode, unsigned __int8 bySlotNum, unsigned __int8 byLackSlotNum);
   void SendMsg_RemainTimeInform(__int16 iType, int lRemainTime, _SYSTEMTIME *pstEndDate);
@@ -2456,6 +2511,7 @@ public:
   __int64 GetAttackDP();
   __int64 GetAttackLevel();
   float GetAttackRange();
+  float CalcDPRate();
   __int64 GetAvoidRate() override;
   __int64 GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart) override;
   float GetDefFacing(int nPart) override;
@@ -2474,6 +2530,7 @@ public:
   bool IsBeAttackedAble(bool bFirst);
   char IsBeDamagedAble(CCharacter *pAtter) override;
   char IsRecvableContEffect() override;
+  bool FixTargetWhile(CCharacter *pkTarget, unsigned int dwMiliSecond) override;
   bool Is_Battle_Mode() override;
   void Loop() override;
   void OutOfSec() override;

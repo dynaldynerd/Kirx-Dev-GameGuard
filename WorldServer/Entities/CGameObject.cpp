@@ -340,6 +340,12 @@ char *CGameObject::GetObjName()
   return nullptr;
 }
 
+bool CGameObject::RobbedHP(CCharacter * /*pDst*/, int /*nDecHP*/)
+{
+  // this is not a stub
+  return false;
+}
+
 /*
 CGameObject *CGameObject::s_pSelectObject = nullptr;
 CGameObject *CGameObject::s_pTotalObject[42642] = {};
@@ -2172,6 +2178,13 @@ void CGameObject::SendMsg_RealFixPosition(bool bCircle)
   {
     g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, payload, sizeof(payload));
   }
+}
+
+bool CGameObject::FixTargetWhile(CCharacter *pkTarget, unsigned int dwMiliSecond)
+{
+  (void)pkTarget;
+  (void)dwMiliSecond;
+  return false;
 }
 
 __int64 CGameObject::GetAttackDP()

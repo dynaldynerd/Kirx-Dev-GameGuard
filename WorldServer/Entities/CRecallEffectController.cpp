@@ -402,7 +402,7 @@ void CRecallEffectController::DecideRecall(unsigned __int16 dwRequestID, unsigne
       return;
     }
 
-    const int minLevel = owner->m_pCurMap->m_pMapSet->m_nLevelLimit;
+    const int minLevel = owner->m_pCurMap->GetLevelLimit();
     const int maxLevel = owner->m_pCurMap->m_pMapSet->m_nUpLevelLim;
     const int playerLevel = static_cast<int>(pkObj->GetLevel());
     if (playerLevel < minLevel || (maxLevel != -1 && playerLevel > maxLevel))

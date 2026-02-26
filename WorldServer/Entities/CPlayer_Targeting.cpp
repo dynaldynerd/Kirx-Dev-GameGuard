@@ -1971,6 +1971,14 @@ void CPlayer::pc_TradeBlock(bool bBlock)
   }
 }
 
+bool CPlayer::FixTargetWhile(CCharacter *pkTarget, unsigned int dwMiliSecond)
+{
+  (void)dwMiliSecond;
+
+  pc_SetTargetObjectRequest(pkTarget, pkTarget->m_dwObjSerial, true);
+  return true;
+}
+
 void CPlayer::pc_SetTargetObjectRequest(CGameObject *pTar, unsigned int dwSerial, bool bForce)
 {
   unsigned __int8 result = 0;
@@ -2737,47 +2745,45 @@ void CPlayer::pc_ProposeVoteRequest(unsigned __int8 byLimGrade, char *pwszCont)
   this->SendMsg_ProposeVoteResult(static_cast<char>(result));
 }
 
+void CPlayer::SetVote(int nSerial)
+{
+  this->m_nVoteSerial = nSerial;
+}
+
 void CPlayer::pc_CastVoteRequest(int nVoteSerial, unsigned __int8 byCode)
 {
   unsigned __int8 result = 0;
   const int raceCode = this->m_Param.GetRaceCode();
-  if (raceCode < 0 || raceCode >= 3 || !g_VoteSys[raceCode].m_bActive)
+  if (g_VoteSys[raceCode].m_bActive)
+  {
+    if (g_VoteSys[raceCode].m_nSerial == nVoteSerial)
+    {
+      if (this->m_nVoteSerial == nVoteSerial)
+      {
+        result = 5;
+      }
+      else if (this->m_Param.m_byPvPGrade < g_VoteSys[raceCode].m_byLimGrade)
+      {
+        result = 6;
+      }
+    }
+    else
+    {
+      result = 4;
+    }
+  }
+  else
   {
     result = 3;
   }
-  else if (g_VoteSys[raceCode].m_nSerial != nVoteSerial)
-  {
-    result = 4;
-  }
-  else if (this->m_nVoteSerial == nVoteSerial)
-  {
-    result = 5;
-  }
-  else if (this->m_Param.m_byPvPGrade < g_VoteSys[raceCode].m_byLimGrade)
-  {
-    result = 6;
-  }
 
   if (!result)
   {
-    this->m_nVoteSerial = nVoteSerial;
+    this->SetVote(nVoteSerial);
     g_VoteSys[raceCode].ActVote(this->m_dwObjSerial, byCode);
   }
 
-  char msg[11] = {};
-  msg[0] = static_cast<char>(result);
-  if (!result)
-  {
-    memcpy_0(msg + 1, &this->m_nVoteSerial, sizeof(this->m_nVoteSerial));
-    for (int pointIndex = 0; pointIndex < 3; ++pointIndex)
-    {
-      const unsigned __int16 point = static_cast<unsigned __int16>(g_VoteSys[raceCode].m_dwPoint[pointIndex]);
-      memcpy_0(msg + 5 + pointIndex * sizeof(point), &point, sizeof(point));
-    }
-  }
-
-  unsigned __int8 type[2] = {26, 6};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, msg, 11u);
+  this->SendMsg_CastVoteResult(static_cast<char>(result));
 }
 
 void CPlayer::SendMsg_GM_Greeting(char *wszGMName, char *wszMsg)

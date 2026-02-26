@@ -18,7 +18,7 @@ bool SecondCandidateCrystallizer::Initialize()
   std::snprintf(
     logPath,
     sizeof(logPath),
-    "..\\ZoneServerLog\\SystemLog\\Patriarch\\SecondCandidateCrystallizer_%d.log",
+    "..\\ZoneServerLog\\SystemLog\\Patriarch\\SecondCandidateCrystallizer_%llu.log",
     GetKorLocalTime());
   _kSysLog.SetWriteLogFile(logPath, true, false, true, true);
 
@@ -38,3 +38,4 @@ if (cmd == _eReg2ndCandidate)
 
   return 255;
 }
+

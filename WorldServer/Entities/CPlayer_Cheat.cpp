@@ -1690,7 +1690,7 @@ char CPlayer::dev_view_method(char *pwszDstName)
   const char *charNameA = target->m_Param.GetCharNameA();
 
   char buffer[152]{};
-  sprintf(buffer, "..\\ZoneServerLog\\CharLog\\%s_Method_%d_%d.log", charNameA, korTime, currentSec);
+  sprintf(buffer, "..\\ZoneServerLog\\CharLog\\%s_Method_%u_%d.log", charNameA, korTime, currentSec);
   log.SetWriteLogFile(buffer, 1, 0, 0, 0);
   log.Write(">> PARAM ###########");
 

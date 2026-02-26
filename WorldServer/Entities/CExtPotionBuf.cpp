@@ -23,7 +23,7 @@ void CExtPotionBuf::SetExtPotionBufUse(bool bUse)
   m_bExtPotionBufUse = bUse;
 }
 
-void CExtPotionBuf::SetExtPotionEndTime(unsigned int dwEndTime)
+void CExtPotionBuf::SetExtPotionEndTime(unsigned long long dwEndTime)
 {
   m_dwEndPotionTime = dwEndTime;
 }
@@ -34,10 +34,10 @@ void CExtPotionBuf::CalcRemainTime(unsigned __int16 wInx, bool bUse)
   int nEndHour = 0;
   int nEndMin = 0;
 
-  const unsigned int year = m_dwEndPotionTime / 1000000;
-  const unsigned int month = (m_dwEndPotionTime % 1000000) / 10000;
-  const unsigned int day = (m_dwEndPotionTime % 10000) / 100;
-  const unsigned int minute = m_dwEndPotionTime % 100;
+  const unsigned long long year = m_dwEndPotionTime / 1000000;
+  const unsigned long long month = (m_dwEndPotionTime % 1000000) / 10000;
+  const unsigned long long day = (m_dwEndPotionTime % 10000) / 100;
+  const unsigned long long minute = m_dwEndPotionTime % 100;
 
   if (year <= GetKorLocalTime() / 1000000)
   {
@@ -156,7 +156,7 @@ void CExtPotionBuf::UseBuffPotion(CPlayer *pOne)
 {
   m_bExtPotionBufUse = true;
   m_dwEndPotionTime = GetConnectTime_AddBySec(2592000);
-  pOne->m_pUserDB->m_AvatorData.dbSupplement.dwBufPotionEndTime = m_dwEndPotionTime;
+  pOne->m_pUserDB->m_AvatorData.dbSupplement.dwBufPotionEndTime = static_cast<unsigned int>(m_dwEndPotionTime);
   SendMsg_RemainBufUseTime(1, pOne->m_ObjID.m_wIndex, 30, 0, 0);
 }
 

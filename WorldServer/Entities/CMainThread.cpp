@@ -4257,7 +4257,7 @@ void __cdecl CMainThread::DQSThread(void *param)
 
   char logPath[128]{};
   const unsigned int now = GetKorLocalTime();
-  sprintf_s(logPath, "..\\ZoneServerLog\\Systemlog\\DQSError%d.log", now);
+  sprintf_s(logPath, "..\\ZoneServerLog\\Systemlog\\DQSError%u.log", now);
   self->m_logDQS.SetWriteLogFile(logPath, 1, 0, 1, 1);
 
   int throttle = 0;

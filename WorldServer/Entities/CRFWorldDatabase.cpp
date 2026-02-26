@@ -2489,11 +2489,11 @@ __int64 CRFWorldDatabase::Select_GetCharSerialByNameRace(
 
 unsigned __int8 CRFWorldDatabase::Select_GuildMasterLastConn(
   unsigned int dwSerial,
-  unsigned int dwLimitConnTime,
-  unsigned int *pdwLastConnTime)
+  unsigned long long dwLimitConnTime,
+  unsigned long long *pdwLastConnTime)
 {
   char buffer[260]{};
-  sprintf(buffer, "{ CALL pSelect_GuildMasterLastConn( %d, %d ) }", dwSerial, dwLimitConnTime);
+  sprintf(buffer, "{ CALL pSelect_GuildMasterLastConn( %u, %llu ) }", dwSerial, dwLimitConnTime);
 
   if (m_bSaveDBLog)
   {
@@ -2509,7 +2509,7 @@ unsigned __int8 CRFWorldDatabase::Select_GuildMasterLastConn(
       if (!ret || ret == SQL_SUCCESS_WITH_INFO)
       {
         SQLLEN indicator = 0;
-        ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_ULONG, pdwLastConnTime, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_UBIGINT, pdwLastConnTime, 0, &indicator);
         if (!ret || ret == SQL_SUCCESS_WITH_INFO)
         {
           if (m_hStmtSelect)

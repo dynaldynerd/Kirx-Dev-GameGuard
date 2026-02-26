@@ -880,7 +880,8 @@ unsigned __int8 CQuestMgr::InsertNpcQuestHistory(char *pszQuestCode, char byLeve
     {
       strcpy_0(entry, pszQuestCode);
       entry[12] = byLevel;
-      *reinterpret_cast<unsigned int *>(entry + 13) = GetConnectTime_AddBySec(static_cast<int>(dRepeatTime));
+      *reinterpret_cast<unsigned int *>(entry + 13) =
+        static_cast<unsigned int>(GetConnectTime_AddBySec(static_cast<int>(dRepeatTime)));
       return static_cast<unsigned __int8>(j);
     }
     if (static_cast<unsigned __int8>(entry[12]) < minLevel)
@@ -893,7 +894,8 @@ unsigned __int8 CQuestMgr::InsertNpcQuestHistory(char *pszQuestCode, char byLeve
   char *entry = m_pQuestData->m_History[bestIndex].szQuestCode;
   strcpy_0(entry, pszQuestCode);
   entry[12] = byLevel;
-  *reinterpret_cast<unsigned int *>(entry + 13) = GetConnectTime_AddBySec(static_cast<int>(dRepeatTime));
+  *reinterpret_cast<unsigned int *>(entry + 13) =
+    static_cast<unsigned int>(GetConnectTime_AddBySec(static_cast<int>(dRepeatTime)));
   return static_cast<unsigned __int8>(bestIndex);
 }
 _happen_event_cont *CQuestMgr::CheckQuestHappenEvent(
@@ -1225,7 +1227,7 @@ int repeatCount = 0;
         CQuestMgr::s_tblQuest ? static_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(history.szQuestCode)) : nullptr;
       if (record && record->m_nLinkQuestGroupID == nLinkQuestGroupID)
       {
-        const unsigned int now = GetConnectTime_AddBySec(0);
+        const unsigned long long now = GetConnectTime_AddBySec(0);
         if (history.dwEventEndTime >= now)
         {
           ++repeatCount;

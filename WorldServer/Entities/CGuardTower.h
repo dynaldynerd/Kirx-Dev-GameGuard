@@ -53,6 +53,7 @@ public:
   __int64 GetWindTol() override;
   bool IsBeAttackedAble(bool bFirst) override;
   char IsBeDamagedAble(CCharacter *pAtter) override;
+  bool RobbedHP(CCharacter *pDst, int nDecHP) override;
   void Loop() override;
   void OutOfSec() override;
   void SendMsg_FixPosition(int n) override;

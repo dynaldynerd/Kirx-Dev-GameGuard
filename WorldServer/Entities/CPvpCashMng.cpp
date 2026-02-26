@@ -173,6 +173,19 @@ int CPvpCashMng::GetTalikRecvrPoint(int i)
   return m_TalikList.TalikInfo[i].nRecvrPoint;
 }
 
+int CPvpCashMng::GetMyClassVal(char *pClass)
+{
+  for (int index = 0; index < 50; ++index)
+  {
+    if (m_ClassValList[index].m_pFld && !strcmp_0(m_ClassValList[index].m_pFld->m_strCode, pClass))
+    {
+      return m_ClassValList[index].byClassVal;
+    }
+  }
+
+  return 0;
+}
+
 int CPvpCashMng::GetMaxTempPoint(unsigned __int8 nLv, bool bPremium)
 {
   int index = 0;
@@ -194,6 +207,19 @@ int CPvpCashMng::GetMaxTempPoint(unsigned __int8 nLv, bool bPremium)
     return m_LimitPoint[index].nPremiumMaxPoint;
   }
   return m_LimitPoint[index].nMaxPoint;
+}
+
+int CPvpCashMng::GetMinTempPoint(unsigned __int8 nLv)
+{
+  for (int index = 0; index < 30; ++index)
+  {
+    if (m_LimitPoint[index].nLv && m_LimitPoint[index].nLv == nLv)
+    {
+      return m_LimitPoint[index].nMinPoint;
+    }
+  }
+
+  return 0;
 }
 
 bool CPvpCashMng::Parsing(

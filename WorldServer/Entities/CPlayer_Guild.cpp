@@ -86,6 +86,7 @@
 #include "guildroom_rent_request_clzo.h"
 #include "guildroom_enter_request_clzo.h"
 #include "guildroom_out_request_clzo.h"
+#include "guildroom_resttime_request_clzo.h"
 #include "GuardTowerItem_fld.h"
 #include "UnitKeyItem_fld.h"
 #include "TrapItem_fld.h"
@@ -316,6 +317,11 @@ void CPlayer::SendMsg_GuildRoomEnterResult(unsigned __int8 byRetCode, unsigned _
     type,
     reinterpret_cast<char *>(&packet),
     static_cast<unsigned __int16>(sizeof(packet)));
+}
+
+void CPlayer::SendMsg_GuildRoomRestTimeResult()
+{
+  // this is not a stub
 }
 
 
@@ -1827,6 +1833,31 @@ void CPlayer::pc_GuildRoomOutRequest(_guildroom_out_request_clzo *pProtocol)
   {
     this->SendMsg_GuildRoomOutResult(2u, 0, 0, nullptr);
   }
+}
+
+void CPlayer::pc_GuildRoomRestTimeRequest(_guildroom_resttime_request_clzo *pProtocol)
+{
+  unsigned __int8 retCode = 0;
+  unsigned __int8 subRetCode = 3;
+
+  if (this->m_Param.m_pGuild && pProtocol && pProtocol->dwGuildSerial == this->m_Param.m_pGuild->m_dwSerial)
+  {
+    CGuild *guild = this->m_Param.m_pGuild;
+    CGuildRoomSystem *roomSystem = CGuildRoomSystem::GetInstance();
+    if (!roomSystem->IsRoomRented(guild->m_dwSerial))
+    {
+      retCode = 2;
+    }
+    this->SendMsg_GuildRoomRestTimeResult();
+  }
+  else
+  {
+    retCode = 1;
+    this->SendMsg_GuildRoomRestTimeResult();
+  }
+
+  (void)retCode;
+  (void)subRetCode;
 }
 
 void CPlayer::pc_GuildSetHonorRequest(_guild_honor_set_request_clzo *pData)

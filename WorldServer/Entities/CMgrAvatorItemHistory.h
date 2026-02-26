@@ -51,6 +51,7 @@ public:
   void cheat_del_item(int n, _STORAGE_LIST::_db_con *pItem, unsigned __int8 byDelNum, char *pszFileName);
   void delete_npc_quest_item(int n, _STORAGE_LIST::_db_con *pItem, char *pszFileName);
   void consume_del_item(int n, _STORAGE_LIST::_db_con *pItem, const char *pszFileName);
+  void back_trap_item(int n, _STORAGE_LIST::_db_con *pItem, char *pszFileName);
   void pay_money(
     int n,
     const char *pszClause,

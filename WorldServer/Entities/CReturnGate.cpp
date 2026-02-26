@@ -5,10 +5,13 @@
 #include "CNetProcess.h"
 #include "CPartyPlayer.h"
 #include "CPlayer.h"
+#include "CReturnGateCreateParam.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
 #include <cstring>
+
+unsigned int CReturnGate::ms_dwSerialCnt = 1;
 
 CReturnGate::CReturnGate(_object_id *pID)
 {
@@ -36,6 +39,11 @@ unsigned __int16 CReturnGate::GetIndex()
   return m_ObjID.m_wIndex;
 }
 
+CPlayer *CReturnGate::GetOwner()
+{
+  return m_pkOwner;
+}
+
 bool CReturnGate::IsOpen()
 {
   return m_eState == CUnmannedTraderSchedule::STATE::REG_WAIT;
@@ -58,6 +66,36 @@ bool CReturnGate::IsValidOwner()
 bool CReturnGate::IsValidPosition(float *pfCurPos)
 {
   return GetSqrt(m_fCurPos, pfCurPos) <= 100.0;
+}
+
+bool CReturnGate::Open(CReturnGateCreateParam *pParam)
+{
+  if (!pParam || !pParam->m_pkOwner)
+  {
+    g_Main.m_logReturnGate.Write("CReturnGate::Open 0 == pParam->GetOwner()");
+    return false;
+  }
+
+  m_pkOwner = pParam->m_pkOwner;
+  m_dwOwnerSerial = m_pkOwner->m_dwObjSerial;
+  m_pDestMap = m_pkOwner->GetBindMap(m_fBindPos, true);
+  if (!m_pDestMap)
+  {
+    g_Main.m_logReturnGate.Write("CReturnGate::Open 0 == m_pkOwner->GetBindMap");
+    return false;
+  }
+
+  if (!Create(pParam))
+  {
+    g_Main.m_logReturnGate.Write("CReturnGate::Open CGameObject::Create() Failed!");
+    return false;
+  }
+
+  m_dwObjSerial = ms_dwSerialCnt++;
+  m_dwCloseTime = GetLoopTime() + 50000;
+  m_eState = CUnmannedTraderSchedule::STATE::REG_WAIT;
+  SendMsg_Create();
+  return true;
 }
 
 int CReturnGate::Enter(CPlayer *pkObj)

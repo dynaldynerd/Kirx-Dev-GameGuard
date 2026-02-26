@@ -641,7 +641,7 @@ void CPlayerAttack::WPActiveAttackForce(_attack_param *pParam)
     }
   }
 
-  const int attackType = forceField->m_nProperty;
+  const int attackType = forceField->m_nEffectGroup;
   if (attackType >= 0 && attackType <= 2)
   {
     if (m_pp->pDst)

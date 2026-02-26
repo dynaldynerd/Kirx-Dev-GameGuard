@@ -401,6 +401,36 @@ bool CMapData::GetRandPosInRange(float *pStdPos, int nRange, float *pNewPos)
   return false;
 }
 
+bool CMapData::GetRandPosVirtualDum(float *pStdPos, int nRange, float *pNewPos)
+{
+  float minPos[3]{};
+  float maxPos[3]{};
+  minPos[0] = pStdPos[0] - static_cast<float>(nRange / 2);
+  minPos[1] = pStdPos[1] - 100.0f;
+  minPos[2] = pStdPos[2] - static_cast<float>(nRange / 2);
+  maxPos[0] = pStdPos[0] + static_cast<float>(nRange / 2);
+  maxPos[1] = pStdPos[1] + 100.0f;
+  maxPos[2] = pStdPos[2] + static_cast<float>(nRange / 2);
+
+  int failCount = 0;
+  while (true)
+  {
+    const float xMin = pStdPos[0] - static_cast<float>(nRange / 2);
+    pNewPos[0] = xMin + static_cast<float>(rand() % nRange);
+    const float zMin = pStdPos[2] - static_cast<float>(nRange / 2);
+    pNewPos[2] = zMin + static_cast<float>(rand() % nRange);
+    pNewPos[1] = pStdPos[1];
+    if (this->m_Level.mBsp->GetFirstYpos(pNewPos, minPos, maxPos) != 0.0f)
+    {
+      return true;
+    }
+    if (failCount++ > 50)
+    {
+      return false;
+    }
+  }
+}
+
 bool CMapData::GetRandPosVirtualDumExcludeStdRange(float *pStdPos, int nRange, int iExcludeRange, float *pNewPos)
 {
   float minPos[3]{};
@@ -1001,6 +1031,15 @@ _bsp_info *CMapData::GetBspInfo()
 _sec_info *CMapData::GetSecInfo()
 {
   return &this->m_SecInfo;
+}
+
+int CMapData::GetLevelLimit()
+{
+  if (this->m_pMapSet)
+  {
+    return this->m_pMapSet->m_nLevelLimit;
+  }
+  return -1;
 }
 
 unsigned __int8 CMapData::GetMapCode()

@@ -121,18 +121,18 @@ CPlayer *GetPtrPlayerFromName(CPlayer *pData, int nNum, char *pwszName)
   return nullptr;
 }
 
-unsigned int GetConnectTime_AddBySec(int iSec)
+unsigned long long GetConnectTime_AddBySec(int iSec)
 {
-  __time32_t timeValue{};
-  _time32(&timeValue);
-  timeValue += iSec;
+  __time64_t timeValue{};
+  _time64(&timeValue);
+  timeValue += static_cast<__time64_t>(iSec);
 
   tm local{};
-  _localtime32_s(&local, &timeValue);
+  _localtime64_s(&local, &timeValue);
 
   char buffer[44]{};
   sprintf(buffer, "%01d%02d%02d%02d%02d", local.tm_year - 100, local.tm_mon + 1, local.tm_mday, local.tm_hour, local.tm_min);
-  return static_cast<unsigned int>(atol(buffer));
+  return std::strtoull(buffer, nullptr, 10);
 }
 
 char *cvt_string(int nVal)

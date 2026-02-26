@@ -141,7 +141,7 @@ char CAnimus::Create(_animus_create_setdata *pData)
   m_dwExp = pData->dwExp;
   m_pMaster = pData->pMaster;
   m_dwObjSerial = GetNewMonSerial();
-  m_byRoleCode = static_cast<unsigned __int8>(reinterpret_cast<_AnimusItem_fld *>(m_pRecordSet)->m_nAnimusType);
+  m_byRoleCode = static_cast<unsigned __int8>(reinterpret_cast<_AnimusItem_fld *>(m_pRecordSet)->m_nAnimusClass);
   m_nMaxAttackPnt = pData->nMaxAttackPnt;
   m_dwMasterSerial = pData->pMaster->m_dwObjSerial;
   strcpy_0(m_wszMasterName, pData->pMaster->m_Param.GetCharNameW());

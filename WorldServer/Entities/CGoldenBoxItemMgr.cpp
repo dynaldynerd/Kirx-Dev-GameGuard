@@ -185,7 +185,7 @@ bool CGoldenBoxItemMgr::_init_loggers()
   char filePath[256];
   memset(filePath, 0, sizeof(filePath));
   const unsigned int now = GetKorLocalTime();
-  sprintf_s(filePath, sizeof(filePath), "..\\ZoneServerLog\\SystemLog\\GoldenAgeEvent\\%d.his", now);
+  sprintf_s(filePath, sizeof(filePath), "..\\ZoneServerLog\\SystemLog\\GoldenAgeEvent\\%u.his", now);
   _kLogger.SetWriteLogFile(filePath, 1, 0, 1, 1);
   return true;
 }

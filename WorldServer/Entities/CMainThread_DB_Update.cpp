@@ -663,7 +663,7 @@ char CMainThread::_db_Update_Base(
   strcat_0(buffer, source);
 
   unsigned int localTime = GetKorLocalTime();
-  sprintf(source, "LastConnTime=%d WHERE Serial=%d", localTime, dwSerial);
+  sprintf(source, "LastConnTime=%u WHERE Serial=%d", localTime, dwSerial);
   strcat_0(buffer, source);
 
   return 1;
@@ -2052,7 +2052,7 @@ unsigned __int8 CMainThread::_db_Update_TimeLimitInfo(
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
   unsigned int localTime = GetKorLocalTime();
-  sprintf_s(buffer, 0x80u, "LastLogoutTime=%d,", localTime);
+  sprintf_s(buffer, 0x80u, "LastLogoutTime=%u,", localTime);
   strcat_s(pSzQuery, nBufferSize, buffer);
 
   size_t queryLength = strlen_0(pSzQuery);

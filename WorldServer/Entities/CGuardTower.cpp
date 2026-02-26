@@ -585,6 +585,18 @@ __int64 CGuardTower::SetDamage(
   return static_cast<unsigned int>(m_nHP);
 }
 
+bool CGuardTower::RobbedHP(CCharacter *pDst, int nDecHP)
+{
+  if (nDecHP >= m_nHP)
+  {
+    return false;
+  }
+
+  SetDamage(nDecHP, pDst, static_cast<int>(pDst->GetLevel()), false, -1, 0, true);
+  SendMsg_RobedHP(pDst, static_cast<unsigned __int16>(nDecHP));
+  return true;
+}
+
 bool CGuardTower::Create(_tower_create_setdata *pData)
 {
   if (!CCharacter::Create(pData))

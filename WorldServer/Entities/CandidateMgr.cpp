@@ -88,11 +88,11 @@ bool CandidateMgr::Initialize(int maxCount)
   char filePath[256]{};
 
   const unsigned int sysTime = GetKorLocalTime();
-  sprintf_s(filePath, sizeof(filePath), "..\\ZoneServerLog\\SystemLog\\Patriarch\\CandidateMgr_%d.log", sysTime);
+  sprintf_s(filePath, sizeof(filePath), "..\\ZoneServerLog\\SystemLog\\Patriarch\\CandidateMgr_%u.log", sysTime);
   m_kSysLog.SetWriteLogFile(filePath, true, false, true, true);
 
   const unsigned int voteTime = GetKorLocalTime();
-  sprintf_s(filePath, sizeof(filePath), "..\\ZoneServerLog\\ServiceLog\\Patriarch\\VoteResult_%d.log", voteTime);
+  sprintf_s(filePath, sizeof(filePath), "..\\ZoneServerLog\\ServiceLog\\Patriarch\\VoteResult_%u.log", voteTime);
   m_kVoteResultLog.SetWriteLogFile(filePath, true, false, true, true);
 
   m_nMaxNum = maxCount;

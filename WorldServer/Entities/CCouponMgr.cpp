@@ -328,7 +328,7 @@ void CCouponMgr::LoadData(unsigned int dwAccSerial, _PCBANG_PLAY_TIME *pkInfo)
 
   const unsigned int lastConnDate = pkInfo->dwLastConnTime / 0x2710;
   const int today = std::atoi(dateString);
-  const unsigned int connectTimeLimit = GetConnectTime_AddBySec(-1800);
+  const unsigned long long connectTimeLimit = GetConnectTime_AddBySec(-1800);
 
   if (lastConnDate == static_cast<unsigned int>(today) && lastConnDate)
   {

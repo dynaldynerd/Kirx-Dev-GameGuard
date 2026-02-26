@@ -167,7 +167,7 @@ unsigned __int8 CRecallRequest::Regist(
   }
   else
   {
-    const int levelLimit = pkObj->m_pCurMap->m_pMapSet->m_nLevelLimit;
+    const int levelLimit = pkObj->m_pCurMap->GetLevelLimit();
     if (static_cast<int>(pkDest->GetLevel()) < levelLimit)
     {
       return 19;

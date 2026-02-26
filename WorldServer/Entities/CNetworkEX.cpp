@@ -166,11 +166,11 @@ bool CNetWorking::SetNetSystem(
   CreateDirectoryA(this->m_szLogPath, nullptr);
 
   const unsigned int korLocalTime = GetKorLocalTime();
-  wsprintfA(szFileName, "%s\\%s_Sys%d.log", this->m_szLogPath, this->m_szSystemName, korLocalTime);
+  wsprintfA(szFileName, "%s\\%s_Sys%u.log", this->m_szLogPath, this->m_szSystemName, korLocalTime);
   this->m_LogFile.SetWriteLogFile(szFileName, 1, 1, 1, 1);
 
   const unsigned int fgLogTime = GetKorLocalTime();
-  wsprintfA(szFileName, "%s\\%s_CcrFgSys%d.log", this->m_szLogPath, this->m_szSystemName, fgLogTime);
+  wsprintfA(szFileName, "%s\\%s_CcrFgSys%u.log", this->m_szLogPath, this->m_szSystemName, fgLogTime);
   g_FgLogFile.SetWriteLogFile(szFileName, 1, 1, 1, 1);
 
   std::memset(returnedString, 0, 16);

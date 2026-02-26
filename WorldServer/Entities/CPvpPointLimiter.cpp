@@ -36,7 +36,94 @@ char CPvpPointLimiter::Set(long double dOriginalPvpPoint, _PVPPOINT_LIMIT_DB_BAS
     return 0;
   }
 
-  Update(updateTime, dOriginalPvpPoint, 0.0, 0);
+  Update(updateTime, dOriginalPvpPoint, 0.0);
+  return 1;
+}
+
+char CPvpPointLimiter::TakePvpPoint(long double *dPvpPoint, CPlayer *pkSelf, CPlayer *pkDest)
+{
+  if (!m_pkInfo)
+  {
+    return 0;
+  }
+
+  if (m_pkInfo->dLimitPoint < 0.0)
+  {
+    m_pkInfo->dLimitPoint = 0.0;
+  }
+
+  if (m_pkInfo->dUsePoint < 0.0)
+  {
+    m_pkInfo->dUsePoint = 0.0;
+  }
+
+  if (m_pkInfo->bUseUp || m_pkInfo->dUsePoint >= m_pkInfo->dLimitPoint)
+  {
+    m_pkInfo->dUsePoint = m_pkInfo->dLimitPoint;
+    *dPvpPoint = 0.0;
+    m_pkInfo->bUseUp = true;
+
+    if (!g_Main.IsReleaseServiceMode() && pkDest)
+    {
+      char buffer[1024]{};
+      sprintf_s(
+        buffer,
+        sizeof(buffer),
+        "Dest %s Limit : %.10f Use : %.10f Dest Limit Done!",
+        pkSelf->m_Param.GetCharNameA(),
+        static_cast<double>(m_pkInfo->dLimitPoint),
+        static_cast<double>(m_pkInfo->dUsePoint));
+      pkDest->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, buffer, 0xFFu, nullptr);
+    }
+
+    return 0;
+  }
+
+  const double leftLimit = static_cast<double>(m_pkInfo->dLimitPoint - m_pkInfo->dUsePoint);
+  if (*dPvpPoint > leftLimit)
+  {
+    *dPvpPoint = leftLimit;
+  }
+
+  m_pkInfo->dUsePoint += *dPvpPoint;
+  if (m_pkInfo->dUsePoint >= m_pkInfo->dLimitPoint)
+  {
+    m_pkInfo->dUsePoint = m_pkInfo->dLimitPoint;
+    m_pkInfo->bUseUp = true;
+  }
+
+  if (!g_Main.IsReleaseServiceMode() && pkSelf)
+  {
+    const char *limitState = m_pkInfo->bUseUp ? "Done" : "Left";
+    char buffer[1024]{};
+    sprintf_s(
+      buffer,
+      sizeof(buffer),
+      "Limit : %.10f Use : %.10f, Limit %s, %s %.10f Take",
+      static_cast<double>(m_pkInfo->dLimitPoint),
+      static_cast<double>(m_pkInfo->dUsePoint),
+      limitState,
+      pkDest->m_Param.GetCharNameA(),
+      static_cast<double>(*dPvpPoint));
+    pkSelf->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, buffer, 0xFFu, nullptr);
+  }
+
+  if (!g_Main.IsReleaseServiceMode() && pkDest)
+  {
+    const char *limitState = m_pkInfo->bUseUp ? "Done" : "Left";
+    char buffer[1024]{};
+    sprintf_s(
+      buffer,
+      sizeof(buffer),
+      "Src %s Limit : %.10f Use : %.10f, Limit %s, %.10f Take",
+      pkSelf->m_Param.GetCharNameA(),
+      static_cast<double>(m_pkInfo->dLimitPoint),
+      static_cast<double>(m_pkInfo->dUsePoint),
+      limitState,
+      static_cast<double>(*dPvpPoint));
+    pkDest->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, buffer, 0xFFu, nullptr);
+  }
+
   return 1;
 }
 
@@ -44,7 +131,7 @@ void CPvpPointLimiter::CheatUpdate(long double dOriginalPvpPoint)
 {
   __int64 now = 0;
   time_20(&now);
-  Update(now, dOriginalPvpPoint, 0.0, 0);
+  Update(now, dOriginalPvpPoint, 0.0);
 }
 
 void CPvpPointLimiter::Clear(__int64 tUpdateTime, long double dOriginalPvpPoint, CPlayer *pkSelf)
@@ -75,7 +162,7 @@ void CPvpPointLimiter::Clear(__int64 tUpdateTime, long double dOriginalPvpPoint,
   }
 }
 
-void CPvpPointLimiter::Update(__int64 tUpdateTime, long double dOriginalPvpPoint, double dUsePoint, int /*unused*/)
+void CPvpPointLimiter::Update(__int64 tUpdateTime, long double dOriginalPvpPoint, double dUsePoint)
 {
   if (!m_pkInfo)
   {

@@ -66,6 +66,7 @@
 #include "CGoldenBoxItemMgr.h"
 #include "CRaceBuffManager.h"
 #include "CRaceBossWinRate.h"
+#include "CReturnGateController.h"
 #include "CashItemRemoteStore.h"
 #include "ICsSendInterface.h"
 #include "CLogFile.h"
@@ -121,6 +122,7 @@
 #include "CPostSystemManager.h"
 #include "CBillingManager.h"
 #include "CGuildRoomSystem.h"
+#include "GuildBattle.h"
 #include "CCouponMgr.h"
 #include "EQUIP_MASTERY_LIM.h"
 #include "CDarkHoleChannel.h"
@@ -184,6 +186,7 @@ _ANIMUS_RETURN_DELAY CPlayer::s_AnimusReturnDelay;
 int *CPlayer::s_pnLinkForceItemToEffect;
 _SKILL_IDX_PER_MASTERY CPlayer::s_SkillIndexPerMastery[8];
 int CPlayer::s_nAddMstFc[100];
+float CPlayer::s_fPartGravity[5] = {0.2f, 0.23f, 0.22f, 0.18f, 0.17f};
 int CPlayer::s_nStdDefPoint = 6;
 int CPlayer::s_nRevDefPoint = 10;
 int CPlayer::s_nMonDefPoint = 12;
@@ -605,7 +608,10 @@ bool ItemCombineMgr::CheckLoadData()
   return true;
 }
 
-CPlayer::CPlayer() = default;
+CPlayer::CPlayer()
+{
+  m_pParkingUnit = nullptr;
+}
 
 _ATTACK_DELAY_CHECKER::_eff_list::_eff_list()
 {
@@ -1839,7 +1845,14 @@ char CPlayer::Load(CUserDB *pUser, bool bFirstStart)
   return 0;
 }
 
-CPlayer::~CPlayer() = default;
+CPlayer::~CPlayer()
+{
+  if (s_pnLinkForceItemToEffect)
+  {
+    operator delete[](s_pnLinkForceItemToEffect);
+    s_pnLinkForceItemToEffect = nullptr;
+  }
+}
 
 void CPlayer::PastWhisperInit()
 {
@@ -3329,6 +3342,15 @@ void CPlayer::pc_MoveStop(float *pfCur)
     const bool outExtra = IsOutExtraStopPos(m_fCurPos);
     SendMsg_Stop(outExtra);
     Stop();
+  }
+}
+
+void CPlayer::pc_Stop()
+{
+  if (!m_bCorpse && m_bMove)
+  {
+    Stop();
+    SendMsg_BreakStop();
   }
 }
 
@@ -5859,6 +5881,15 @@ bool CPlayer::SetBindPosition(CMapData *pMap, _dummy_position *pDummy)
   return m_pUserDB->Update_Bind(pMap->m_pMapSet->m_strCode, pDummy->m_szCode, true);
 }
 
+void CPlayer::TakeGravityStone()
+{
+  m_EP.SetEff_Plus(3, -30.0, true);
+  ApplyEquipItemEffect(12, false);
+  SF_RemoveAllContHelp_Once(this, 0.0f);
+  m_bTakeGravityStone = true;
+  BreakCloakBooster();
+}
+
 void CPlayer::ClearGravityStone()
 {
   m_bTakeGravityStone = false;
@@ -6030,6 +6061,23 @@ char CPlayer::SetHP(int nHP, bool bOver)
   return 1;
 }
 
+bool CPlayer::SetTarPos(float *fTarPos, bool /*bColl*/)
+{
+  return CCharacter::SetTarPos(fTarPos, false);
+}
+
+bool CPlayer::RobbedHP(CCharacter *pDst, int nDecHP)
+{
+  if (nDecHP >= static_cast<int>(GetHP()))
+  {
+    return false;
+  }
+
+  SetDamage(nDecHP, pDst, static_cast<int>(pDst->GetLevel()), false, -1, 0, true);
+  SendMsg_RobedHP(pDst, static_cast<unsigned __int16>(nDecHP));
+  return true;
+}
+
 char CPlayer::SF_HFSInc_Once(CPlayer *pDstObj)
 {
   bool bValidDst = false;
@@ -6075,6 +6123,202 @@ char CPlayer::SF_HFSInc_Once(CPlayer *pDstObj)
   return 1;
 }
 
+bool CPlayer::SF_Resurrect_Once(CCharacter *pDstObj)
+{
+  bool canResurrect = false;
+  if (!pDstObj->m_ObjID.m_byID)
+  {
+    canResurrect = pDstObj->GetHP() == 0;
+  }
+  if (!canResurrect)
+  {
+    return false;
+  }
+
+  static_cast<CPlayer *>(pDstObj)->Resurrect();
+  return true;
+}
+
+bool CPlayer::SF_MakePortalReturnBindPositionPartyMember(
+  CCharacter *pDstObj,
+  float /*fEffectValue*/,
+  unsigned __int8 *byRet)
+{
+  if (pDstObj->m_ObjID.m_byID)
+  {
+    return false;
+  }
+
+  CReturnGateController *returnGateController = CReturnGateController::Instance();
+  if (returnGateController->Open(static_cast<CPlayer *>(pDstObj)))
+  {
+    return true;
+  }
+
+  *byRet = static_cast<unsigned __int8>(-1);
+  return false;
+}
+
+bool CPlayer::SF_OthersContHelpSFRemove_Once(float fEffectValue)
+{
+  int removedCount = 0;
+
+  _pnt_rect rect{};
+  m_pCurMap->GetRectInRadius(&rect, 2, static_cast<int>(GetCurSecNum()));
+  for (int y = rect.nStarty; y < rect.nEndy; ++y)
+  {
+    for (int x = rect.nStartx; x < rect.nEndx; ++x)
+    {
+      _sec_info *secInfo = m_pCurMap->GetSecInfo();
+      const unsigned int secIndex = secInfo->m_nSecNumW * y + x;
+      CObjectList *sectorList = m_pCurMap->GetSectorListObj(m_wMapLayerIndex, secIndex);
+      if (!sectorList)
+      {
+        continue;
+      }
+
+      _object_list_point *next = sectorList->m_Head.m_pNext;
+      while (next != &sectorList->m_Tail)
+      {
+        CCharacter *target = static_cast<CCharacter *>(next->m_pItem);
+        next = next->m_pNext;
+        if (target == this || target->m_ObjID.m_byKind || target->m_ObjID.m_byID)
+        {
+          continue;
+        }
+
+        const int distance = static_cast<int>(GetSqrt(m_fCurPos, target->m_fCurPos));
+        if (static_cast<float>(distance) > fEffectValue)
+        {
+          continue;
+        }
+
+        for (int slot = 0; slot < 8; ++slot)
+        {
+          if (target->m_SFCont[1][slot].m_bExist)
+          {
+            target->RemoveSFContEffect(1u, static_cast<unsigned __int16>(slot), false, false);
+            ++removedCount;
+          }
+        }
+        target->BreakStealth();
+      }
+    }
+  }
+
+  return removedCount > 0;
+}
+
+bool CPlayer::SF_OverHealing_Once(CCharacter *pDstObj, float fEffectValue)
+{
+  bool canApply = false;
+  if (!pDstObj->m_ObjID.m_byID)
+  {
+    canApply = !pDstObj->m_bCorpse;
+  }
+  if (!canApply)
+  {
+    return false;
+  }
+
+  const int currentHp = static_cast<int>(pDstObj->GetHP());
+  const int maxHp = static_cast<int>(pDstObj->GetMaxHP());
+  const float overHealingAmount = static_cast<float>(maxHp) * fEffectValue;
+  const float effectRate = pDstObj->m_EP.GetEff_Rate(18);
+  const int addHp = static_cast<int>(overHealingAmount * effectRate);
+  pDstObj->SetHP(addHp + currentHp, true);
+
+  if (currentHp == pDstObj->GetHP())
+  {
+    return false;
+  }
+
+  pDstObj->SendMsg_SetHPInform();
+  return true;
+}
+
+bool CPlayer::SF_ReleaseMonsterTarget(CCharacter *pDstObj, float /*fEffectValue*/)
+{
+  int releasedCount = 0;
+
+  _pnt_rect rect{};
+  pDstObj->m_pCurMap->GetRectInRadius(&rect, 1, static_cast<int>(GetCurSecNum()));
+  for (int y = rect.nStarty; y < rect.nEndy; ++y)
+  {
+    for (int x = rect.nStartx; x < rect.nEndx; ++x)
+    {
+      _sec_info *secInfo = m_pCurMap->GetSecInfo();
+      const unsigned int secIndex = secInfo->m_nSecNumW * y + x;
+      CObjectList *sectorList = m_pCurMap->GetSectorListObj(m_wMapLayerIndex, secIndex);
+      if (!sectorList)
+      {
+        continue;
+      }
+
+      _object_list_point *next = sectorList->m_Head.m_pNext;
+      while (next != &sectorList->m_Tail)
+      {
+        CMonster *monster = static_cast<CMonster *>(next->m_pItem);
+        next = next->m_pNext;
+        if (monster == reinterpret_cast<CMonster *>(this) || monster->m_ObjID.m_byKind || monster->m_ObjID.m_byID != 1)
+        {
+          continue;
+        }
+
+        const int distance = static_cast<int>(GetSqrt(m_fCurPos, monster->m_fCurPos));
+        if (distance <= 200 && monster->ConvertTargetPlayer(nullptr))
+        {
+          ++releasedCount;
+        }
+      }
+    }
+  }
+
+  return releasedCount > 0;
+}
+
+bool CPlayer::SF_RemoveAllContHelp_Once(CCharacter *pDstObj, float /*fEffectValue*/)
+{
+  int removedCount = 0;
+  for (int contCode = 0; contCode < 2; ++contCode)
+  {
+    for (int slot = 0; slot < 8; ++slot)
+    {
+      _sf_continous *contEffect = &pDstObj->m_SFCont[contCode][slot];
+      if (!contEffect->m_bExist)
+      {
+        continue;
+      }
+
+      _base_fld *effect17 = g_Main.m_tblEffectData[3].GetRecord("17");
+      if (effect17)
+      {
+        if (pDstObj->m_ObjID.m_byID)
+        {
+          return false;
+        }
+
+        const bool hasAuraGuard = static_cast<unsigned __int8>(pDstObj->m_SFContAura[0][5].m_wDurSec >> 8) != 0;
+        const bool isProtectedEffect = hasAuraGuard && contEffect->m_byEffectCode == 3
+                                    && contEffect->m_wEffectIndex == effect17->m_dwIndex;
+        if (isProtectedEffect)
+        {
+          continue;
+        }
+      }
+
+      pDstObj->RemoveSFContEffect(
+        static_cast<unsigned __int8>(contCode),
+        static_cast<unsigned __int16>(slot),
+        false,
+        false);
+      ++removedCount;
+    }
+  }
+
+  return removedCount > 0;
+}
+
 bool CPlayer::SF_AllContDamageRemove_Once(CCharacter *pDstObj)
 {
   int removedCount = 0;
@@ -6103,6 +6347,909 @@ bool CPlayer::SF_AllContDamageRemove_Once(CCharacter *pDstObj)
   }
 
   return removedCount > 0;
+}
+
+bool CPlayer::SF_AllContDamageForceRemove_Once(CCharacter *pDstObj)
+{
+  int removedCount = 0;
+  for (int index = 0; index < 8; ++index)
+  {
+    _sf_continous *contEffect = &pDstObj->m_SFCont[0][index];
+    if (!contEffect->m_bExist || contEffect->m_byEffectCode != 1)
+    {
+      continue;
+    }
+
+    _base_fld *effect17 = g_Main.m_tblEffectData[3].GetRecord("17");
+    const bool afterEffectGuard = static_cast<unsigned __int8>(pDstObj->m_SFContAura[0][5].m_wDurSec >> 8) != 0;
+    const bool keepEffect =
+      effect17
+      && afterEffectGuard
+      && contEffect->m_byEffectCode == 3
+      && contEffect->m_wEffectIndex == effect17->m_dwIndex;
+    if (keepEffect)
+    {
+      continue;
+    }
+
+    pDstObj->RemoveSFContEffect(0, static_cast<unsigned __int16>(index), false, false);
+    ++removedCount;
+  }
+
+  return removedCount > 0;
+}
+
+bool CPlayer::SF_AllContHelpForceRemove_Once(CCharacter *pDstObj)
+{
+  const float roll = static_cast<float>(rand() % 100);
+  if (pDstObj->m_EP.GetEff_Plus(38) > roll)
+  {
+    return false;
+  }
+
+  int removedCount = 0;
+  for (int index = 0; index < 8; ++index)
+  {
+    _sf_continous *contEffect = &pDstObj->m_SFCont[1][index];
+    if (contEffect->m_bExist && contEffect->m_byEffectCode == 1)
+    {
+      pDstObj->RemoveSFContEffect(1u, static_cast<unsigned __int16>(index), false, false);
+      ++removedCount;
+    }
+  }
+
+  return removedCount > 0;
+}
+
+bool CPlayer::SF_AllContHelpSkillRemove_Once(CCharacter *pDstObj)
+{
+  const float roll = static_cast<float>(rand() % 100);
+  if (pDstObj->m_EP.GetEff_Plus(38) > roll)
+  {
+    return false;
+  }
+
+  int removedCount = 0;
+  for (int index = 0; index < 8; ++index)
+  {
+    _sf_continous *contEffect = &pDstObj->m_SFCont[1][index];
+    if (contEffect->m_bExist && !contEffect->m_byEffectCode)
+    {
+      pDstObj->RemoveSFContEffect(1u, static_cast<unsigned __int16>(index), false, false);
+      ++removedCount;
+    }
+  }
+
+  return removedCount > 0;
+}
+
+bool CPlayer::SF_AttHPtoDstFP_Once(CCharacter *pDstObj, float fEffectValue)
+{
+  if (!GetHP() || pDstObj->m_ObjID.m_byID)
+  {
+    return false;
+  }
+
+  CPlayer *dstPlayer = static_cast<CPlayer *>(pDstObj);
+  const int curFp = dstPlayer->GetFP();
+  const int maxFp = dstPlayer->GetMaxFP();
+  const float effectRate = pDstObj->m_EP.GetEff_Rate(19);
+  const int addFp = static_cast<int>(static_cast<float>(maxFp) * (fEffectValue * effectRate));
+  dstPlayer->SetFP(curFp + addFp, false);
+
+  if ((static_cast<float>(curFp) / static_cast<float>(maxFp)) > 0.80000001f)
+  {
+    return false;
+  }
+
+  dstPlayer->SendMsg_SetFPInform();
+  return true;
+}
+
+bool CPlayer::SF_ContDamageTimeInc_Once(CCharacter *pDstObj, float fEffectValue)
+{
+  int thresholdExceededCount = 0;
+  int updatedCount = 0;
+  const unsigned int currentTime = _sf_continous::GetSFContCurTime();
+
+  for (int index = 0; index < 8; ++index)
+  {
+    _sf_continous *contEffect = &pDstObj->m_SFCont[0][index];
+    if (!contEffect->m_bExist)
+    {
+      continue;
+    }
+
+    _base_fld *record = g_Main.m_tblEffectData[contEffect->m_byEffectCode].GetRecord(contEffect->m_wEffectIndex);
+    int baseDuration = 0;
+    if (contEffect->m_byEffectCode && contEffect->m_byEffectCode != 2)
+    {
+      if (contEffect->m_byEffectCode == 1)
+      {
+        baseDuration = reinterpret_cast<_force_fld *>(record)->m_nContEffectSec[contEffect->m_byLv];
+      }
+    }
+    else
+    {
+      baseDuration = reinterpret_cast<_skill_fld *>(record)->m_nContEffectSec[contEffect->m_byLv];
+    }
+
+    const unsigned int remainingTime = contEffect->m_wDurSec - (currentTime - contEffect->m_dwStartSec);
+    if (baseDuration > static_cast<int>(remainingTime))
+    {
+      ++thresholdExceededCount;
+    }
+
+    unsigned __int16 newDuration = static_cast<unsigned __int16>(
+      static_cast<int>(static_cast<float>(static_cast<int>(remainingTime)) + static_cast<float>(baseDuration) * fEffectValue));
+    if (newDuration > static_cast<unsigned int>(2 * baseDuration))
+    {
+      newDuration = static_cast<unsigned __int16>(2 * baseDuration);
+    }
+
+    pDstObj->AlterContDurSec(0, static_cast<unsigned __int16>(index), currentTime, newDuration);
+    ++updatedCount;
+  }
+
+  if (updatedCount > 0 && !pDstObj->m_ObjID.m_byID)
+  {
+    static_cast<CPlayer *>(pDstObj)->SendMsg_AlterContEffectTime(0);
+  }
+  return thresholdExceededCount > 0;
+}
+
+bool CPlayer::SF_ContHelpTimeInc_Once(CCharacter *pDstObj, float fEffectValue)
+{
+  int thresholdExceededCount = 0;
+  int updatedCount = 0;
+  const unsigned int currentTime = _sf_continous::GetSFContCurTime();
+
+  for (int index = 0; index < 8; ++index)
+  {
+    _sf_continous *contEffect = &pDstObj->m_SFCont[1][index];
+    if (!contEffect->m_bExist || contEffect->m_byEffectCode != 1)
+    {
+      continue;
+    }
+
+    _base_fld *record = g_Main.m_tblEffectData[contEffect->m_byEffectCode].GetRecord(contEffect->m_wEffectIndex);
+    int baseDuration = 0;
+    if (contEffect->m_byEffectCode && contEffect->m_byEffectCode != 2)
+    {
+      if (contEffect->m_byEffectCode == 1)
+      {
+        baseDuration = reinterpret_cast<_force_fld *>(record)->m_nContEffectSec[contEffect->m_byLv];
+      }
+    }
+    else
+    {
+      baseDuration = reinterpret_cast<_skill_fld *>(record)->m_nContEffectSec[contEffect->m_byLv];
+    }
+
+    const unsigned int remainingTime = contEffect->m_wDurSec - (currentTime - contEffect->m_dwStartSec);
+    if (baseDuration >= static_cast<int>(remainingTime))
+    {
+      ++thresholdExceededCount;
+    }
+
+    unsigned __int16 newDuration = static_cast<unsigned __int16>(
+      static_cast<int>(static_cast<float>(static_cast<int>(remainingTime)) + static_cast<float>(baseDuration) * fEffectValue));
+    if (newDuration > static_cast<unsigned int>(2 * baseDuration))
+    {
+      newDuration = static_cast<unsigned __int16>(2 * baseDuration);
+    }
+
+    pDstObj->AlterContDurSec(1u, static_cast<unsigned __int16>(index), currentTime, newDuration);
+    ++updatedCount;
+  }
+
+  if (updatedCount > 0 && !pDstObj->m_ObjID.m_byID)
+  {
+    static_cast<CPlayer *>(pDstObj)->SendMsg_AlterContEffectTime(1u);
+  }
+  return thresholdExceededCount > 0;
+}
+
+bool CPlayer::SF_ConvertMonsterTarget(CCharacter *pDstObj, float /*fEffectValue*/)
+{
+  int convertedCount = 0;
+  if (!pDstObj || !pDstObj->m_pCurMap)
+  {
+    return false;
+  }
+
+  _pnt_rect rect{};
+  pDstObj->m_pCurMap->GetRectInRadius(&rect, 1, static_cast<int>(GetCurSecNum()));
+  for (int y = rect.nStarty; y < rect.nEndy; ++y)
+  {
+    for (int x = rect.nStartx; x < rect.nEndx; ++x)
+    {
+      _sec_info *secInfo = this->m_pCurMap->GetSecInfo();
+      const unsigned int secIndex = secInfo->m_nSecNumW * y + x;
+      CObjectList *sectorList = this->m_pCurMap->GetSectorListObj(this->m_wMapLayerIndex, secIndex);
+      if (!sectorList)
+      {
+        continue;
+      }
+
+      _object_list_point *next = sectorList->m_Head.m_pNext;
+      while (next != &sectorList->m_Tail)
+      {
+        CMonster *monster = static_cast<CMonster *>(next->m_pItem);
+        next = next->m_pNext;
+        if (!monster->m_ObjID.m_byKind && monster->m_ObjID.m_byID == 1)
+        {
+          const int distance = static_cast<int>(GetSqrt(this->m_fCurPos, monster->m_fCurPos));
+          if (distance <= 200 && monster->ConvertTargetPlayer(this))
+          {
+            ++convertedCount;
+          }
+        }
+      }
+    }
+  }
+
+  return convertedCount > 0;
+}
+
+bool CPlayer::SF_ConvertTargetDest(CCharacter *pDstObj, float fEffectValue)
+{
+  return pDstObj->FixTargetWhile(this, static_cast<unsigned int>(static_cast<int>(fEffectValue)));
+}
+
+bool CPlayer::SF_DamageAndStun(CCharacter *pDstObj, float /*fEffectValue*/)
+{
+  pDstObj->SetDamage(0, this, static_cast<int>(GetLevel()), true, -1, 0, true);
+  return true;
+}
+
+bool CPlayer::SF_FPDec(CCharacter *pDstObj, float fEffectValue)
+{
+  if (pDstObj->m_ObjID.m_byID)
+  {
+    return false;
+  }
+
+  CPlayer *dstPlayer = static_cast<CPlayer *>(pDstObj);
+  const int fp = dstPlayer->GetFP();
+  if (fp < 1)
+  {
+    return true;
+  }
+
+  int newFp = static_cast<int>(static_cast<float>(fp) * fEffectValue);
+  if (newFp <= 1)
+  {
+    newFp = 1;
+  }
+  dstPlayer->SetFP(newFp, false);
+  dstPlayer->SendMsg_Recover();
+  return true;
+}
+
+bool CPlayer::SF_ReturnBindPosition(CCharacter *pDstObj, float /*fEffectValue*/)
+{
+  if (pDstObj->m_ObjID.m_byID)
+  {
+    return false;
+  }
+
+  CPlayer *dstPlayer = static_cast<CPlayer *>(pDstObj);
+  float bindPos[3]{};
+  CMapData *intoMap = dstPlayer->GetBindMap(bindPos, true);
+  if (!intoMap)
+  {
+    return false;
+  }
+
+  dstPlayer->OutOfMap(intoMap, 0, 3u, bindPos);
+  dstPlayer->SendMsg_MovePortal(static_cast<char>(intoMap->m_pMapSet->m_dwIndex), bindPos, 2u);
+  return true;
+}
+
+bool CPlayer::SF_SelfDestruction(CCharacter * /*pDstObj*/, float fEffectValue)
+{
+  if (GetStealth(true))
+  {
+    return false;
+  }
+
+  m_dwSelfDestructionTime = GetLoopTime() + 5000;
+  m_fSelfDestructionDamage = fEffectValue;
+  return true;
+}
+
+bool CPlayer::SF_SkillContHelpTimeInc_Once(CCharacter *pDstObj, float fEffectValue)
+{
+  int thresholdExceededCount = 0;
+  int updatedCount = 0;
+  const unsigned int currentTime = _sf_continous::GetSFContCurTime();
+
+  for (int index = 0; index < 8; ++index)
+  {
+    _sf_continous *contEffect = &pDstObj->m_SFCont[1][index];
+    if (!contEffect->m_bExist || contEffect->m_byEffectCode)
+    {
+      continue;
+    }
+
+    _base_fld *record = g_Main.m_tblEffectData[contEffect->m_byEffectCode].GetRecord(contEffect->m_wEffectIndex);
+    int baseDuration = 0;
+    if (contEffect->m_byEffectCode)
+    {
+      if (contEffect->m_byEffectCode == 1)
+      {
+        baseDuration = reinterpret_cast<_force_fld *>(record)->m_nContEffectSec[contEffect->m_byLv];
+      }
+    }
+    else
+    {
+      baseDuration = reinterpret_cast<_skill_fld *>(record)->m_nContEffectSec[contEffect->m_byLv];
+    }
+
+    int remainingDuration = static_cast<int>(contEffect->m_wDurSec) - static_cast<int>(currentTime - contEffect->m_dwStartSec);
+    if (remainingDuration <= 0)
+    {
+      continue;
+    }
+
+    if (baseDuration >= remainingDuration)
+    {
+      ++thresholdExceededCount;
+    }
+
+    unsigned __int16 newDuration = static_cast<unsigned __int16>(
+      static_cast<int>(static_cast<float>(remainingDuration) + static_cast<float>(baseDuration) * fEffectValue));
+    if (newDuration > static_cast<unsigned int>(2 * baseDuration))
+    {
+      newDuration = static_cast<unsigned __int16>(2 * baseDuration);
+    }
+
+    pDstObj->AlterContDurSec(1u, static_cast<unsigned __int16>(index), currentTime, newDuration);
+    ++updatedCount;
+  }
+
+  if (updatedCount > 0 && !pDstObj->m_ObjID.m_byID)
+  {
+    static_cast<CPlayer *>(pDstObj)->SendMsg_AlterContEffectTime(1u);
+  }
+
+  return thresholdExceededCount > 0;
+}
+
+bool CPlayer::SF_SPDec(CCharacter *pDstObj, float fEffectValue)
+{
+  if (pDstObj->m_ObjID.m_byID)
+  {
+    return false;
+  }
+
+  CPlayer *dstPlayer = static_cast<CPlayer *>(pDstObj);
+  const int sp = dstPlayer->GetSP();
+  if (sp < 1)
+  {
+    return true;
+  }
+
+  int newSp = static_cast<int>(static_cast<float>(sp) * fEffectValue);
+  if (newSp <= 1)
+  {
+    newSp = 1;
+  }
+
+  dstPlayer->SetSP(newSp, false);
+  dstPlayer->SendMsg_Recover();
+  return true;
+}
+
+bool CPlayer::SF_STInc_Once(CCharacter *pDstObj, float fEffectValue)
+{
+  if (pDstObj->m_ObjID.m_byID)
+  {
+    return false;
+  }
+
+  CPlayer *dstPlayer = static_cast<CPlayer *>(pDstObj);
+  const int currentSp = dstPlayer->GetSP();
+  const int maxSp = dstPlayer->GetMaxSP();
+  const float effectRate = dstPlayer->m_EP.GetEff_Rate(20);
+  const int addSp = static_cast<int>(static_cast<float>(maxSp) * (fEffectValue * effectRate));
+  dstPlayer->SetSP(addSp + currentSp, false);
+
+  if (dstPlayer->GetSP() - currentSp < 20)
+  {
+    return false;
+  }
+
+  dstPlayer->SendMsg_SetSPInform();
+  return true;
+}
+
+bool CPlayer::SF_Stun(CCharacter *pDstObj, float /*fEffectValue*/)
+{
+  if (!pDstObj->m_ObjID.m_byID)
+  {
+    CPlayer *dstPlayer = static_cast<CPlayer *>(pDstObj);
+    if (dstPlayer->m_bInGuildBattle && dstPlayer->m_bTakeGravityStone)
+    {
+      return false;
+    }
+  }
+
+  pDstObj->SetStun(true);
+  return true;
+}
+
+bool CPlayer::SF_TeleportToDestination(CCharacter *pDstObj, bool bStone)
+{
+  unsigned __int8 errorCode = 0;
+  if (pDstObj->m_ObjID.m_byID)
+  {
+    return false;
+  }
+
+  CPlayer *dstPlayer = static_cast<CPlayer *>(pDstObj);
+  if (m_bInGuildBattle || dstPlayer->m_bInGuildBattle)
+  {
+    if (m_bInGuildBattle && !dstPlayer->m_bInGuildBattle)
+    {
+      errorCode = 10;
+      goto RESULT;
+    }
+
+    if (!m_bInGuildBattle && dstPlayer->m_bInGuildBattle)
+    {
+      errorCode = 9;
+      goto RESULT;
+    }
+
+    if (m_bInGuildBattle && dstPlayer->m_bInGuildBattle)
+    {
+      const unsigned int srcGuildSerial = m_Param.GetGuildSerial();
+      GUILD_BATTLE::CNormalGuildBattleManager *battleManager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
+      GUILD_BATTLE::CNormalGuildBattle *srcBattle = battleManager->GetBattleByGuildSerial(srcGuildSerial);
+      CMapData *srcBattleMap = srcBattle->m_pkField->m_pkMap;
+
+      const unsigned int dstGuildSerial = dstPlayer->m_Param.GetGuildSerial();
+      GUILD_BATTLE::CNormalGuildBattle *dstBattle = battleManager->GetBattleByGuildSerial(dstGuildSerial);
+      CMapData *dstBattleMap = dstBattle->m_pkField->m_pkMap;
+      if (srcBattleMap != dstBattleMap)
+      {
+        errorCode = 9;
+        goto RESULT;
+      }
+
+      if (m_bTakeGravityStone)
+      {
+        errorCode = 5;
+        goto RESULT;
+      }
+    }
+  }
+
+  if (pDstObj->GetCurSecNum() == static_cast<__int64>(-1) || pDstObj->m_bMapLoading)
+  {
+    errorCode = 7;
+    goto RESULT;
+  }
+
+  if (dstPlayer->m_pDHChannel || m_pDHChannel)
+  {
+    if (m_pDHChannel && dstPlayer->m_pDHChannel)
+    {
+      if (dstPlayer->m_pDHChannel != m_pDHChannel)
+      {
+        errorCode = 6;
+        goto RESULT;
+      }
+    }
+    else if (m_pDHChannel && !dstPlayer->m_pDHChannel)
+    {
+      errorCode = 8;
+      goto RESULT;
+    }
+    else if (!m_pDHChannel && dstPlayer->m_pDHChannel)
+    {
+      errorCode = 6;
+      goto RESULT;
+    }
+  }
+
+  {
+    const int levelLimit = dstPlayer->m_pCurMap->GetLevelLimit();
+    if (static_cast<int>(GetLevel()) < levelLimit)
+    {
+      errorCode = 2;
+      goto RESULT;
+    }
+
+    const int upLevelLimit = dstPlayer->m_pCurMap->m_pMapSet->m_nUpLevelLim;
+    if (upLevelLimit != -1 && static_cast<int>(GetLevel()) > upLevelLimit)
+    {
+      errorCode = 2;
+      goto RESULT;
+    }
+
+    if (g_HolySys.GetDestroyerState() == 2 && g_HolySys.GetDestroyerSerial() == m_dwObjSerial)
+    {
+      errorCode = 4;
+      goto RESULT;
+    }
+
+    if (dstPlayer->m_Param.m_pGuild)
+    {
+      const int raceCode = dstPlayer->m_Param.GetRaceCode();
+      for (int roomType = 0; roomType < 2; ++roomType)
+      {
+        CGuildRoomSystem *guildRoomSystem = CGuildRoomSystem::GetInstance();
+        CMapData *guildRoomMap =
+          guildRoomSystem->GetMapData(static_cast<unsigned __int8>(raceCode), static_cast<unsigned __int8>(roomType));
+        if (guildRoomMap == dstPlayer->m_pCurMap)
+        {
+          if (!m_Param.m_pGuild || m_Param.GetGuildSerial() != dstPlayer->m_Param.GetGuildSerial())
+          {
+            errorCode = 11;
+          }
+          goto RESULT;
+        }
+      }
+    }
+  }
+
+RESULT:
+  if (errorCode)
+  {
+    SendMsg_TeleportError(static_cast<char>(errorCode), dstPlayer->m_pCurMap->m_pMapSet->m_dwIndex);
+    return false;
+  }
+
+  CMapData *intoMap = dstPlayer->m_pCurMap;
+  float newPos[3]{};
+  intoMap->GetRandPosInRange(dstPlayer->m_fCurPos, 30, newPos);
+  OutOfMap(intoMap, dstPlayer->m_wMapLayerIndex, 3u, newPos);
+  SendMsg_MovePortal(static_cast<char>(intoMap->m_pMapSet->m_dwIndex), newPos, 2u);
+
+  if (bStone)
+  {
+    g_PotionMgr.InsertMovePotionStoneEffect(this);
+    SenseState();
+    SendMsg_NewMovePotionResult();
+  }
+
+  return true;
+}
+
+bool CPlayer::SF_TransDestHP(CCharacter *pDstObj, float fEffectValue, unsigned __int8 *byRet)
+{
+  if (pDstObj == this || pDstObj->m_ObjID.m_byKind)
+  {
+    return false;
+  }
+
+  const unsigned __int8 targetId = pDstObj->m_ObjID.m_byID;
+  if (targetId)
+  {
+    if (targetId == 1)
+    {
+      const unsigned int monsterState = *reinterpret_cast<unsigned int *>(
+        reinterpret_cast<char *>(&reinterpret_cast<CPlayer *>(pDstObj)->m_pSoccerItem[5].m_dwETSerialNumber) + 2);
+      if (monsterState == 1)
+      {
+        return false;
+      }
+    }
+    else if (targetId <= 2 || targetId > 4)
+    {
+      return false;
+    }
+  }
+  else
+  {
+    CPlayer *dstPlayer = static_cast<CPlayer *>(pDstObj);
+    if (dstPlayer->IsInTown())
+    {
+      *byRet = 18;
+      return false;
+    }
+
+    if (m_Param.GetRaceCode() == dstPlayer->m_Param.GetRaceCode())
+    {
+      return false;
+    }
+  }
+
+  const int dstHp = static_cast<int>(pDstObj->GetHP());
+  const int dstMaxHp = static_cast<int>(pDstObj->GetMaxHP());
+  const int minRemainHp = dstMaxHp / 10;
+  int absorbHp = 0;
+  if (dstHp > minRemainHp)
+  {
+    absorbHp = dstHp - minRemainHp;
+    if (static_cast<float>(absorbHp) > fEffectValue)
+    {
+      absorbHp = static_cast<int>(fEffectValue);
+    }
+  }
+
+  const int newHp = static_cast<int>(GetHP()) + absorbHp;
+  SetHP(newHp, false);
+  SendMsg_SetHPInform();
+  pDstObj->RobbedHP(this, absorbHp);
+  return true;
+}
+
+bool CPlayer::SF_TransMonsterHP(CCharacter * /*pDstObj*/, float fEffectValue)
+{
+  const int currentHp = static_cast<int>(GetHP());
+  const int maxHp = static_cast<int>(GetMaxHP());
+  if (currentHp >= maxHp)
+  {
+    return false;
+  }
+
+  int drainedCount = 0;
+  _pnt_rect rect{};
+  m_pCurMap->GetRectInRadius(&rect, 1, static_cast<int>(GetCurSecNum()));
+  for (int y = rect.nStarty; y < rect.nEndy; ++y)
+  {
+    for (int x = rect.nStartx; x < rect.nEndx; ++x)
+    {
+      _sec_info *secInfo = m_pCurMap->GetSecInfo();
+      const unsigned int secIndex = secInfo->m_nSecNumW * y + x;
+      CObjectList *sectorList = m_pCurMap->GetSectorListObj(m_wMapLayerIndex, secIndex);
+      if (!sectorList)
+      {
+        continue;
+      }
+
+      _object_list_point *next = sectorList->m_Head.m_pNext;
+      while (next != &sectorList->m_Tail)
+      {
+        CCharacter *target = static_cast<CCharacter *>(next->m_pItem);
+        next = next->m_pNext;
+        if (target == this || target->m_ObjID.m_byKind || target->m_ObjID.m_byID != 1)
+        {
+          continue;
+        }
+
+        const unsigned int monsterState = *reinterpret_cast<unsigned int *>(
+          reinterpret_cast<char *>(&reinterpret_cast<CPlayer *>(target)->m_pSoccerItem[5].m_dwETSerialNumber) + 2);
+        if (monsterState == 1)
+        {
+          continue;
+        }
+
+        const int distance = static_cast<int>(GetSqrt(m_fCurPos, target->m_fCurPos));
+        if (distance > 200)
+        {
+          continue;
+        }
+
+        const int targetHp = static_cast<int>(target->GetHP());
+        const int targetMaxHp = static_cast<int>(target->GetMaxHP());
+        if ((static_cast<float>(targetHp) / static_cast<float>(targetMaxHp)) <= 0.30000001f)
+        {
+          continue;
+        }
+
+        const int drainedHp = static_cast<int>(static_cast<float>(targetHp) * fEffectValue);
+        if (drainedHp <= 0)
+        {
+          continue;
+        }
+
+        const int selfCurHp = static_cast<int>(GetHP());
+        const int selfMaxHp = static_cast<int>(GetMaxHP());
+        if (selfCurHp >= selfMaxHp)
+        {
+          return drainedCount > 0;
+        }
+
+        SetHP(selfCurHp + drainedHp, false);
+        SendMsg_SetHPInform();
+        target->RobbedHP(this, drainedHp);
+        ++drainedCount;
+      }
+    }
+  }
+
+  return drainedCount > 0;
+}
+
+bool CPlayer::SF_HPInc_Once(CCharacter *pDstObj, float fEffectValue)
+{
+  bool canApply = false;
+  if (!pDstObj->m_ObjID.m_byID)
+  {
+    canApply = !pDstObj->m_bCorpse;
+  }
+  if (!canApply)
+  {
+    return false;
+  }
+
+  const int currentHp = static_cast<int>(pDstObj->GetHP());
+  const int maxHp = static_cast<int>(pDstObj->GetMaxHP());
+  const float effectRate = pDstObj->m_EP.GetEff_Rate(18);
+  const float scaledEffectValue = fEffectValue * effectRate;
+  const int addHp = static_cast<int>(static_cast<float>(maxHp) * scaledEffectValue);
+  pDstObj->SetHP(addHp + currentHp, false);
+
+  if ((static_cast<float>(currentHp) / static_cast<float>(maxHp)) > 0.80000001f)
+  {
+    return false;
+  }
+
+  pDstObj->SendMsg_SetHPInform();
+  return true;
+}
+
+bool CPlayer::SF_IncHPCircleParty(CCharacter * /*pDstObj*/, float fEffectValue)
+{
+  if (!m_pPartyMgr->IsPartyMode())
+  {
+    return false;
+  }
+
+  int alteredCount = 0;
+  CPlayer *partyMembers[8]{};
+  const unsigned __int8 memberCount = _GetPartyMemberInCircle(partyMembers, 8, true);
+  for (int memberIndex = 0; memberIndex < memberCount; ++memberIndex)
+  {
+    CPlayer *member = partyMembers[memberIndex];
+    if (member->m_bCorpse)
+    {
+      continue;
+    }
+    if (member->m_bInGuildBattle && member->m_bTakeGravityStone)
+    {
+      continue;
+    }
+    if (m_bInGuildBattle
+        && (!member->m_bInGuildBattle || m_byGuildBattleColorInx != member->m_byGuildBattleColorInx))
+    {
+      continue;
+    }
+
+    const int currentHp = member->GetHP();
+    const int addHp = static_cast<int>(fEffectValue * static_cast<float>(member->GetMaxHP()));
+    member->SetHP(addHp + currentHp, false);
+    if (currentHp != member->GetHP())
+    {
+      ++alteredCount;
+      member->SendMsg_SetHPInform();
+    }
+  }
+
+  return alteredCount > 0;
+}
+
+bool CPlayer::SF_IncreaseDP(CCharacter *pDstObj, float fEffectValue)
+{
+  if (pDstObj->m_ObjID.m_byID)
+  {
+    return false;
+  }
+
+  CPlayer *dstPlayer = static_cast<CPlayer *>(pDstObj);
+  int newDp = static_cast<int>(static_cast<float>(dstPlayer->GetMaxDP()) * fEffectValue);
+  newDp += dstPlayer->GetDP();
+  dstPlayer->SetDP(newDp, false);
+  SendMsg_Recover();
+  return true;
+}
+
+bool CPlayer::SF_LateContDamageRemove_Once(CCharacter *pDstObj)
+{
+  int latestIndex = -1;
+  _sf_continous *latestCont = nullptr;
+  for (int index = 0; index < 8; ++index)
+  {
+    _sf_continous *contEffect = &pDstObj->m_SFCont[0][index];
+    if (!contEffect->m_bExist)
+    {
+      continue;
+    }
+
+    _base_fld *effect17 = g_Main.m_tblEffectData[3].GetRecord("17");
+    const bool hasAuraGuard = static_cast<unsigned __int8>(pDstObj->m_SFContAura[0][5].m_wDurSec >> 8) != 0;
+    const bool isProtectedEffect = effect17 && hasAuraGuard && contEffect->m_byEffectCode == 3
+                                && contEffect->m_wEffectIndex == effect17->m_dwIndex;
+    if (isProtectedEffect)
+    {
+      continue;
+    }
+
+    if (latestIndex == -1 || contEffect->m_dwStartSec > latestCont->m_dwStartSec)
+    {
+      latestIndex = index;
+      latestCont = contEffect;
+    }
+  }
+
+  if (latestIndex == -1)
+  {
+    return false;
+  }
+
+  if (ms_pXmas_Snow_Bullet_Effect && ms_pXmas_Snow_Bullet_Effect->m_dwIndex == latestCont->m_wEffectIndex
+      && latestCont->m_byEffectCode == 3)
+  {
+    return false;
+  }
+
+  pDstObj->RemoveSFContEffect(0, static_cast<unsigned __int16>(latestIndex), false, false);
+  return true;
+}
+
+bool CPlayer::SF_LateContHelpForceRemove_Once(CCharacter *pDstObj)
+{
+  const float randomValue = static_cast<float>(rand() % 100);
+  const float resistValue = pDstObj->m_EP.GetEff_Plus(38);
+  if (resistValue > randomValue)
+  {
+    return false;
+  }
+
+  int latestIndex = -1;
+  _sf_continous *latestCont = nullptr;
+  for (int index = 0; index < 8; ++index)
+  {
+    _sf_continous *contEffect = &pDstObj->m_SFCont[1][index];
+    if (!contEffect->m_bExist || contEffect->m_byEffectCode != 1)
+    {
+      continue;
+    }
+
+    if (latestIndex == -1 || contEffect->m_dwStartSec > latestCont->m_dwStartSec)
+    {
+      latestIndex = index;
+      latestCont = contEffect;
+    }
+  }
+
+  if (latestIndex == -1)
+  {
+    return false;
+  }
+
+  pDstObj->RemoveSFContEffect(1u, static_cast<unsigned __int16>(latestIndex), false, false);
+  return true;
+}
+
+bool CPlayer::SF_LateContHelpSkillRemove_Once(CCharacter *pDstObj)
+{
+  const float randomValue = static_cast<float>(rand() % 100);
+  const float resistValue = pDstObj->m_EP.GetEff_Plus(38);
+  if (resistValue > randomValue)
+  {
+    return false;
+  }
+
+  int latestIndex = -1;
+  _sf_continous *latestCont = nullptr;
+  for (int index = 0; index < 8; ++index)
+  {
+    _sf_continous *contEffect = &pDstObj->m_SFCont[1][index];
+    if (!contEffect->m_bExist || contEffect->m_byEffectCode)
+    {
+      continue;
+    }
+
+    if (latestIndex == -1 || contEffect->m_dwStartSec > latestCont->m_dwStartSec)
+    {
+      latestIndex = index;
+      latestCont = contEffect;
+    }
+  }
+
+  if (latestIndex == -1)
+  {
+    return false;
+  }
+
+  pDstObj->RemoveSFContEffect(1u, static_cast<unsigned __int16>(latestIndex), false, false);
+  return true;
 }
 
 void CPlayer::RecvHSKQuest(
@@ -6314,6 +7461,28 @@ void CPlayer::AlterPvPPoint(double dAlter, int AlterType, unsigned int dwDstSeri
   }
 }
 
+void CPlayer::RewardRaceWarPvpCash()
+{
+  const double playerPenalty = g_Main.m_pTimeLimitMgr->GetPlayerPenalty(m_id.wIndex);
+  long double dAlter = static_cast<long double>(5 * GetLevel());
+  if (dAlter > 0.0)
+  {
+    dAlter *= playerPenalty;
+  }
+
+  AlterPvPCashBag(dAlter, pm_scaner);
+  m_kPvpCashPoint.SetRaceWarRecvr(true);
+  m_kPvpOrderView.Update_RaceWarRecvr(true);
+}
+
+void CPlayer::IncPvPPoint(long double dAlter, int AlterType, unsigned int dwDstSerial)
+{
+  if (dAlter >= 1.0)
+  {
+    AlterPvPPoint(static_cast<double>(dAlter), AlterType, dwDstSerial);
+  }
+}
+
 void CPlayer::SendMsg_AlterPvPPoint()
 {
   double msgPoint = m_Param.GetPvPPoint();
@@ -6334,6 +7503,40 @@ void CPlayer::SendMsg_RaceBattlePenelty(int nAlterPoint, char byAlterType)
 void CPlayer::SetCntEnable(bool bSet)
 {
   m_bCntEnable = bSet;
+}
+
+void CPlayer::Resurrect()
+{
+  unsigned __int8 result = 0;
+  if (m_bCorpse)
+  {
+    if (m_pCurMap->m_pMapSet->m_nMapType == 1)
+    {
+      result = 2;
+    }
+  }
+  else
+  {
+    result = 1;
+  }
+
+  if (!result)
+  {
+    m_bCorpse = false;
+    m_byModeType = 0;
+    m_byMoveType = 1;
+
+    SetHP(static_cast<int>(GetMaxHP()), false);
+    SetFP(GetMaxFP(), false);
+    SetSP(GetMaxSP(), false);
+    SendMsg_ResurrectInform();
+  }
+
+  SendMsg_Resurrect(static_cast<char>(result), false);
+  if (m_bAfterEffect)
+  {
+    pc_NuclearAfterEffect();
+  }
 }
 
 bool CPlayer::pc_Resurrect(bool bQuickPotion)
@@ -8589,6 +9792,11 @@ void CPlayer::ExtractStringToTime(unsigned int dwTemp, _SYSTEMTIME *tm)
     tm->wMinute = 0;
     tm->wSecond = 0;
   }
+}
+
+long double CPlayer::GetPvpPointLeak()
+{
+  return m_Param.m_dPvpPointLeak;
 }
 
 void CPlayer::AlterPvpPointLeak(long double dAlter)
@@ -13525,7 +14733,7 @@ void CPlayer::CreateComplete()
 
   if (this->m_pUserDB && !this->m_bFirstStart)
   {
-    const unsigned int limitTime = GetConnectTime_AddBySec(-2592000);
+    const unsigned long long limitTime = GetConnectTime_AddBySec(-2592000);
     if (this->m_pUserDB->m_AvatorData_bk.dbAvator.m_dwLastConnTime < limitTime)
     {
       SendMsg_Notify_ExceptFromRaceRanking(1);
@@ -16435,7 +17643,8 @@ char CPlayer::_pre_check_force_attack(
     return static_cast<char>(-9);
   }
 
-  if (forceField->m_nEffectGroup == 4 || forceField->m_nEffectGroup == 6)
+  const int attackType = forceField->m_nEffectGroup;
+  if (attackType == 4 || attackType == 6)
   {
     pDst = nullptr;
   }
@@ -16483,7 +17692,7 @@ char CPlayer::_pre_check_force_attack(
       return static_cast<char>(-6);
     }
   }
-  else if (forceField->m_nEffectGroup != 4 && forceField->m_nEffectGroup != 6)
+  else if (attackType != 4 && attackType != 6)
   {
     return static_cast<char>(-6);
   }
@@ -16533,7 +17742,7 @@ char CPlayer::_pre_check_force_attack(
     return static_cast<char>(-50);
   }
 
-  if (forceField->m_nEffectGroup == 6 && !m_pCurMap->IsMapIn(pfTarPos))
+  if (attackType == 6 && !m_pCurMap->IsMapIn(pfTarPos))
   {
     return static_cast<char>(-50);
   }
@@ -16555,10 +17764,10 @@ char CPlayer::_pre_check_force_attack(
       }
     }
   }
-  else if (forceField->m_nEffectGroup != 4)
+  else if (attackType != 4)
   {
     int range = forceField->m_nActDistance + 40;
-    if (forceField->m_nEffectGroup == 6 || forceField->m_nEffectGroup == 5 || forceField->m_nEffectGroup == 7)
+    if (attackType == 6 || attackType == 5 || attackType == 7)
     {
       const float effPlus = m_EP.GetEff_Plus(8);
       range = static_cast<int>(static_cast<float>(range) + effPlus);
@@ -18948,11 +20157,12 @@ void CPlayer::pc_PlayAttack_Force(
     return;
   }
 
-  if (pForceFld->m_nEffectGroup == 6 || pForceFld->m_nEffectGroup == 4)
+  const int attackType = pForceFld->m_nEffectGroup;
+  if (attackType == 6 || attackType == 4)
   {
     pTarget = nullptr;
   }
-  if (pForceFld->m_nEffectGroup == 4)
+  if (attackType == 4)
   {
     memcpy_0(tarPos, m_fCurPos, sizeof(float) * 3);
   }

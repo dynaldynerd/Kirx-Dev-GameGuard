@@ -1430,14 +1430,14 @@ void CMgrAvatorItemHistory::patriarch_push_money(
 void CMgrAvatorItemHistory::raceboss_giveback(unsigned int dwSerial, unsigned int dwDalant, char *pszFileName)
 {
   const unsigned int korTime = GetKorLocalTime();
-  sprintf(sData, "[RACE BOSS]giveback: Avator Serial:%d\t$D:%u\tTime:%d\n", dwSerial, dwDalant, korTime);
+  sprintf(sData, "[RACE BOSS]giveback: Avator Serial:%d\t$D:%u\tTime:%u\n", dwSerial, dwDalant, korTime);
   WriteFile(pszFileName, sData);
 }
 
 void CMgrAvatorItemHistory::raceboss_candidate(int ncost, unsigned int dwSerial, char *pszFileName)
 {
   const unsigned int korTime = GetKorLocalTime();
-  sprintf(sData, "[RACE BOSS]candidate >> Avator Serial:%d\t$D:%d \t^Time:%d\n", dwSerial, ncost, korTime);
+  sprintf(sData, "[RACE BOSS]candidate >> Avator Serial:%d\t$D:%d \t^Time:%u\n", dwSerial, ncost, korTime);
   WriteFile(pszFileName, sData);
 }
 
@@ -1895,6 +1895,20 @@ void CMgrAvatorItemHistory::consume_del_item(int n, _STORAGE_LIST::_db_con *pIte
     m_szCurDate,
     m_szCurTime);
 WriteFile(pszFileName, logBuffer);
+}
+
+void CMgrAvatorItemHistory::back_trap_item(int n, _STORAGE_LIST::_db_con *pItem, char *pszFileName)
+{
+  _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
+  sprintf(
+    sData,
+    "BACK TRAP ITEM : %s_%u_[%I64u] [%s %s]\r\n",
+    record->m_strCode,
+    pItem->m_dwDur,
+    pItem->m_lnUID,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pszFileName, sData);
 }
 
 void CMgrAvatorItemHistory::pay_money(

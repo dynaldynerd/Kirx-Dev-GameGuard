@@ -21,7 +21,7 @@ bool FinalDecisionApplyer::Initialize()
   std::snprintf(
     logPath,
     sizeof(logPath),
-    "..\\ZoneServerLog\\SystemLog\\Patriarch\\CandidateRegister_%d.log",
+    "..\\ZoneServerLog\\SystemLog\\Patriarch\\CandidateRegister_%llu.log",
     GetKorLocalTime());
   _kSysLog.SetWriteLogFile(logPath, true, false, true, true);
 
@@ -106,3 +106,4 @@ void FinalDecisionApplyer::_FinalDecisionApply()
   const int querySize = static_cast<int>(query.size());
   g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x8Eu, reinterpret_cast<char *>(&query), querySize);
 }
+

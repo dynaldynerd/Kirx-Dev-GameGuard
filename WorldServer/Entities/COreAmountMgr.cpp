@@ -37,7 +37,7 @@ COreAmountMgr::COreAmountMgr()
 
   const unsigned int korLocalTime = GetKorLocalTime();
   char logPath[128]{};
-  sprintf_s(logPath, "..\\ZoneServerLog\\ServiceLog\\OreAmount_%d.log", korLocalTime);
+  sprintf_s(logPath, "..\\ZoneServerLog\\ServiceLog\\OreAmount_%u.log", korLocalTime);
   m_logOreAmount.SetWriteLogFile(logPath, 1, 0, 1, 1);
 
   m_byOreTransferCount = 0;

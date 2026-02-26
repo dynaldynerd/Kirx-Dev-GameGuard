@@ -1357,13 +1357,7 @@ sprintf(buffer, "Map%d", uiMapInx);
       }
     }
 
-    if (m_pkBall->m_pkOwner && m_pkBall->m_pkOwner != pkPlayer)
-    {
-      m_pkBall->m_pkOwner->ClearGravityStone();
-    }
-    m_pkBall->m_pkOwner = pkPlayer;
-    m_pkBall->m_dwTakeLimitTime = GetLoopTime();
-    pkPlayer->m_bTakeGravityStone = true;
+    m_pkBall->SetOwner(pkPlayer);
     return 0;
   }
 
@@ -1447,13 +1441,7 @@ sprintf(buffer, "Map%d", uiMapInx);
       }
     }
 
-    if (m_pkBall->m_pkOwner && m_pkBall->m_pkOwner != pkPlayer)
-    {
-      m_pkBall->m_pkOwner->ClearGravityStone();
-    }
-    m_pkBall->m_pkOwner = pkPlayer;
-    m_pkBall->m_dwTakeLimitTime = GetLoopTime();
-    pkPlayer->m_bTakeGravityStone = true;
+    m_pkBall->SetOwner(pkPlayer);
     return 0;
   }
 
@@ -1539,11 +1527,11 @@ sprintf(buffer, "Map%d", uiMapInx);
     char buffer[144]{};
     if (szLogName)
     {
-      sprintf(buffer, "..\\ZoneServerLog\\Systemlog\\GuildBattle\\GuildBattle%s%d.log", szLogName, korLocalTime);
+      sprintf(buffer, "..\\ZoneServerLog\\Systemlog\\GuildBattle\\GuildBattle%s%u.log", szLogName, korLocalTime);
     }
     else
     {
-      sprintf(buffer, "..\\ZoneServerLog\\Systemlog\\GuildBattle\\GuildBattle%d.log", korLocalTime);
+      sprintf(buffer, "..\\ZoneServerLog\\Systemlog\\GuildBattle\\GuildBattle%u.log", korLocalTime);
     }
     m_pkLogger->SetWriteLogFile(buffer, 1, 0, 1, 1);
   }
@@ -1673,7 +1661,7 @@ sprintf(buffer, "Map%d", uiMapInx);
 
   void CNormalGuildBattleGuildMember::ReturnStartPos()
   {
-    m_pkMember->pPlayer->Stop();
+    m_pkMember->pPlayer->pc_Stop();
     m_pkMember->pPlayer->RemoveAllContinousEffectGroup(0);
   }
 
@@ -5117,7 +5105,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
     }
     else
     {
-      sprintf_s(buffer, "..\\ZoneServerLog\\Systemlog\\GuildBattle\\GuildBattle%d.log", korLocalTime);
+      sprintf_s(buffer, "..\\ZoneServerLog\\Systemlog\\GuildBattle\\GuildBattle%u.log", korLocalTime);
     }
     m_pkLogger->SetWriteLogFile(buffer, 1, 0, 1, 1);
   }

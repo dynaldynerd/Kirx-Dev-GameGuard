@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-unsigned int GetKorLocalTime()
+unsigned long long GetKorLocalTime()
 {
     char dateBuf[64];
     char timeBuf[64];
@@ -26,5 +26,5 @@ unsigned int GetKorLocalTime()
     buffer[9] = timeBuf[4];
     buffer[10] = '\0';
 
-    return static_cast<unsigned int>(atoi(buffer));
+    return std::strtoull(buffer, nullptr, 10);
 }

@@ -51,13 +51,13 @@ int GetNextDay();
 bool GetDateStrAfterDay(char *szDate, int iBuffSize, unsigned __int16 wDayAfter);
 bool IsDayChanged(int *iOldDay);
 bool GetDateTimeStr(char *szTime);
-unsigned int GetKorLocalTime();
+unsigned long long GetKorLocalTime();
 int GetCurrentHour();
 int GetCurrentMin();
 int GetCurrentSec();
 int GetCurwDay();
 void GetNowDateTime(char *szDateTime);
-unsigned int GetConnectTime_AddBySec(int iSec);
+unsigned long long GetConnectTime_AddBySec(int iSec);
 bool GetLastWriteFileTime(const char *szFileName, _FILETIME *ftWrite);
 unsigned __int8 GetItemKindCode(int nTableCode);
 void GetSubDayStr(int nSubDay, char *szOutDay);
@@ -305,3 +305,4 @@ void IM_ReleaseAllWaves();
 
 extern CWnd *g_pFrame;
 extern const char *dayofweek[7];
+

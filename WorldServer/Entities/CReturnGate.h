@@ -6,10 +6,13 @@
 
 class CPlayer;
 class CMapData;
+class CReturnGateCreateParam;
 
 class  CReturnGate : public CGameObject
 {
 public:
+  static unsigned int ms_dwSerialCnt;
+
   CReturnGate(_object_id *pID);
   ~CReturnGate();
 
@@ -22,10 +25,12 @@ public:
 
   void Clear();
   unsigned __int16 GetIndex();
+  CPlayer *GetOwner();
   bool IsOpen();
   bool IsClose();
   bool IsValidOwner();
   bool IsValidPosition(float *pfCurPos);
+  bool Open(CReturnGateCreateParam *pParam);
   int Enter(CPlayer *pkObj);
   void Close();
   void SendMsg_Create();

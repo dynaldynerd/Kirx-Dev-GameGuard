@@ -50,7 +50,7 @@ bool PatriarchElectProcessor::Initialize()
 
   memset(buffer, 0, 256);
   const unsigned int now = GetKorLocalTime();
-  sprintf_s(buffer, 0x100u, "..\\ZoneServerLog\\SystemLog\\Patriarch\\PatriarchElect_%d.log", now);
+  sprintf_s(buffer, 0x100u, "..\\ZoneServerLog\\SystemLog\\Patriarch\\PatriarchElect_%u.log", now);
   _kSysLog.SetWriteLogFile(buffer, 1, 0, 1, 1);
 
   CreateDirectoryA("..\\ZoneServerLog\\ServiceLog\\Patriarch", nullptr);
