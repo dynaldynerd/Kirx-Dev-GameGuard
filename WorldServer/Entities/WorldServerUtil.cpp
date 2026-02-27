@@ -4134,6 +4134,25 @@ bool IsSQLValidString(const char *wszStr)
   return strstr(wszStr, "xp_") == nullptr;
 }
 
+bool ReadOptionAndWriteDefault(const char *iniPath, const char *section, const char *key, const char *defaultValue, char *output, unsigned __int64 outputSize)
+{
+  if (!iniPath || !section || !key || !defaultValue || !output || outputSize == 0)
+  {
+    return false;
+  }
+
+  output[0] = '\0';
+  GetPrivateProfileStringA(section, key, "", output, static_cast<DWORD>(outputSize), iniPath);
+  if (output[0] != '\0')
+  {
+    return true;
+  }
+
+  strcpy_s(output, outputSize, defaultValue);
+  WritePrivateProfileStringA(section, key, defaultValue, iniPath);
+  return true;
+}
+
 void WriteServerStartHistory(const char *format, ...)
 {
   char buffer[512]{};

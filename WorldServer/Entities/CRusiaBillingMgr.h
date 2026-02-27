@@ -16,7 +16,7 @@ public:
   void Release();
   __int64 Init();
   __int64 Free();
-  bool ConfigUserODBC(char *szDSN, char *szServer, char *szDatabase, unsigned __int16 wPort);
+  bool ConfigUserODBC(char *szDSN, char *szServer, char *szDatabase, unsigned __int16 wPort, bool bTrustedConnection);
   bool LoadINIFile();
   void ArrangeString(char *szDest, char *szSorc, char cToken);
   char *dhExtractSubString(char *szSub, char *szFull, char cToken);

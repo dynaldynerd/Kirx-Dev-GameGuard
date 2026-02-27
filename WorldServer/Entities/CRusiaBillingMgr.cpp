@@ -10,27 +10,11 @@
 #include <windows.h>
 
 #include "GlobalObjects.h"
+#include "RFAcc.h"
 
 #ifdef SQLConfigDataSource
 #undef SQLConfigDataSource
 #endif
-
-extern "C"
-{
-  unsigned int __stdcall RFACC_Init();
-  unsigned int __stdcall RFACC_Free();
-  unsigned int __stdcall RFACC_CheckBalance(const char *szUserID);
-  unsigned int __stdcall RFACC_ChargeBalance(
-    const char *szUserID,
-    const char *szCharName,
-    const char *szItemCode,
-    unsigned int dwOverlapNum,
-    const char *szServer,
-    unsigned __int64 lnUID,
-    int nPrice,
-    int nDiscount);
-  unsigned int __stdcall RFACC_Cancel(unsigned __int64 lnUID);
-}
 
 CRusiaBillingMgr *CRusiaBillingMgr::m_pRusiaBill;
 
@@ -42,20 +26,43 @@ CRusiaBillingMgr::~CRusiaBillingMgr()
 
 CRusiaBillingMgr *CRusiaBillingMgr::Instance()
 {
-  char *szDSN = const_cast<char *>("COIN_TEST_RU");
-  const char *v8 = "coin_test_ru";
-  const char *v9 = "rftest";
-  char *szServer = const_cast<char *>("192.168.1.185");
-  char *String = const_cast<char *>("61433");
+  const char *defaultDsn = "BILLING";
+  const char *defaultServer = "(local)";
+  const char *defaultPort = "1433";
+  const char *defaultTrustedConnection = "1";
 
-  if (g_Main.IsReleaseServiceMode())
+  char iniPath[MAX_PATH]{};
+  char currentDir[MAX_PATH]{};
+  if (GetCurrentDirectoryA(static_cast<DWORD>(sizeof(currentDir)), currentDir))
   {
-    szDSN = const_cast<char *>("BILLING");
-    v8 = "RF_GAMESERVER";
-    v9 = "r8wFipfC0FUo";
-    szServer = const_cast<char *>("81.176.70.145");
-    String = const_cast<char *>("1521");
+    sprintf_s(iniPath, "%s\\Initialize\\Database.ini", currentDir);
   }
+
+  char szDSN[64]{};
+  char szServer[64]{};
+  char szPort[32]{};
+  char szTrustedConnection[16]{};
+  if (iniPath[0] != '\0')
+  {
+    GetPrivateProfileStringA("Billing", "DB", defaultDsn, szDSN, static_cast<DWORD>(sizeof(szDSN)), iniPath);
+    GetPrivateProfileStringA("Billing", "IP", defaultServer, szServer, static_cast<DWORD>(sizeof(szServer)), iniPath);
+    GetPrivateProfileStringA("Billing", "Port", defaultPort, szPort, static_cast<DWORD>(sizeof(szPort)), iniPath);
+    GetPrivateProfileStringA(
+      "Billing",
+      "trusted_connection",
+      defaultTrustedConnection,
+      szTrustedConnection,
+      static_cast<DWORD>(sizeof(szTrustedConnection)),
+      iniPath);
+  }
+  else
+  {
+    strcpy_s(szDSN, sizeof(szDSN), defaultDsn);
+    strcpy_s(szServer, sizeof(szServer), defaultServer);
+    strcpy_s(szPort, sizeof(szPort), defaultPort);
+    strcpy_s(szTrustedConnection, sizeof(szTrustedConnection), defaultTrustedConnection);
+  }
+
   if (!CRusiaBillingMgr::m_pRusiaBill)
   {
     auto *created = static_cast<CRusiaBillingMgr *>(operator new(sizeof(CRusiaBillingMgr)));
@@ -66,8 +73,12 @@ CRusiaBillingMgr *CRusiaBillingMgr::Instance()
     CRusiaBillingMgr::m_pRusiaBill = created;
   }
 
-  const unsigned __int16 wPort = static_cast<unsigned __int16>(atoi(String));
-  if (CRusiaBillingMgr::m_pRusiaBill->ConfigUserODBC(szDSN, szServer, szDSN, wPort))
+  const unsigned long parsedPort = strtoul(szPort, nullptr, 10);
+  const unsigned __int16 wPort = (parsedPort > 0 && parsedPort <= 0xFFFFu)
+    ? static_cast<unsigned __int16>(parsedPort)
+    : static_cast<unsigned __int16>(atoi(defaultPort));
+  const bool bTrustedConnection = szTrustedConnection[0] != '\0' && szTrustedConnection[0] != '0';
+  if (CRusiaBillingMgr::m_pRusiaBill->ConfigUserODBC(szDSN, szServer, szDSN, wPort, bTrustedConnection))
   {
     if (CRusiaBillingMgr::m_pRusiaBill->Init())
     {
@@ -94,7 +105,7 @@ void CRusiaBillingMgr::Release()
 __int64 CRusiaBillingMgr::Init()
 {
   CoInitialize(nullptr);
-  if (RFACC_Init())
+  if (g_RFAcc.Init())
   {
     CoUninitialize();
     return 1;
@@ -108,7 +119,7 @@ __int64 CRusiaBillingMgr::Init()
 __int64 CRusiaBillingMgr::Free()
 {
   CoInitialize(nullptr);
-  if (RFACC_Free())
+  if (g_RFAcc.Free())
   {
     CoUninitialize();
     return 1;
@@ -119,17 +130,35 @@ __int64 CRusiaBillingMgr::Free()
   return 0;
 }
 
-bool CRusiaBillingMgr::ConfigUserODBC(char *szDSN, char *szServer, char *szDatabase, unsigned __int16 wPort)
+bool CRusiaBillingMgr::ConfigUserODBC(char *szDSN, char *szServer, char *szDatabase, unsigned __int16 wPort, bool bTrustedConnection)
 {
-  unsigned __int16 offset = 0;
   char buffer[272]{};
 
-  memset_0(buffer, 0, 0x100u);
-  offset = static_cast<unsigned __int16>(sprintf(buffer, "DSN=%s%c", szDSN, 0));
-  offset = static_cast<unsigned __int16>(offset + sprintf(&buffer[offset], "DESCRIPTION=%s%c", szDatabase, 0));
-  offset = static_cast<unsigned __int16>(offset + sprintf(&buffer[offset], "SERVER=%s,%u%c", szServer, wPort, 0));
-  offset = static_cast<unsigned __int16>(offset + sprintf(&buffer[offset], "DATABASE=%s%c", szDatabase, 0));
-  return SQLConfigDataSource(nullptr, ODBC_ADD_SYS_DSN, "SQL Server", buffer) != 0;
+  const int written = bTrustedConnection
+    ? sprintf_s(buffer, sizeof(buffer), "DSN=%s%cDESCRIPTION=%s%cSERVER=%s,%u%cDATABASE=%s%cTrusted_Connection=Yes%c%c", szDSN, '\0', szDatabase, '\0', szServer, wPort, '\0', szDatabase, '\0', '\0')
+    : sprintf_s(buffer, sizeof(buffer), "DSN=%s%cDESCRIPTION=%s%cSERVER=%s,%u%cDATABASE=%s%c%c", szDSN, '\0', szDatabase, '\0', szServer, wPort, '\0', szDatabase, '\0', '\0');
+  if (written <= 0)
+  {
+    return false;
+  }
+
+  if (SQLConfigDataSource(nullptr, ODBC_ADD_SYS_DSN, "SQL Server", buffer) != 0)
+  {
+    return true;
+  }
+  if (SQLConfigDataSource(nullptr, ODBC_CONFIG_SYS_DSN, "SQL Server", buffer) != 0)
+  {
+    return true;
+  }
+  if (SQLConfigDataSource(nullptr, ODBC_ADD_DSN, "SQL Server", buffer) != 0)
+  {
+    return true;
+  }
+  if (SQLConfigDataSource(nullptr, ODBC_CONFIG_DSN, "SQL Server", buffer) != 0)
+  {
+    return true;
+  }
+  return false;
 }
 
 bool CRusiaBillingMgr::LoadINIFile()
@@ -140,15 +169,15 @@ bool CRusiaBillingMgr::LoadINIFile()
   memset(buffer, 0, 260);
   GetCurrentDirectoryA(0x104u, buffer);
   memset(fileName, 0, 260);
-  sprintf(fileName, "%s\\rfacc.ini", buffer);
+  sprintf(fileName, "%s\\Initialize\\Database.ini", buffer);
 
   memset_0(CRusiaBillingMgr::m_pRusiaBill->m_lpszDataBase, 0, sizeof(CRusiaBillingMgr::m_pRusiaBill->m_lpszDataBase));
   if (!GetPrivateProfileStringA(
-        "RF Setting",
-        "Server",
-        "127.0.0.1",
+        "Billing",
+        "IP",
+        "(local)",
         CRusiaBillingMgr::m_pRusiaBill->m_lpszDataBase,
-        0x104u,
+        static_cast<DWORD>(sizeof(CRusiaBillingMgr::m_pRusiaBill->m_lpszDataBase)),
         fileName))
   {
     return false;
@@ -156,11 +185,11 @@ bool CRusiaBillingMgr::LoadINIFile()
 
   memset_0(CRusiaBillingMgr::m_pRusiaBill->m_lpszPort, 0, sizeof(CRusiaBillingMgr::m_pRusiaBill->m_lpszPort));
   if (!GetPrivateProfileStringA(
-        "RF Setting",
+        "Billing",
         "Port",
-        "0",
+        "1433",
         CRusiaBillingMgr::m_pRusiaBill->m_lpszPort,
-        0x104u,
+        static_cast<DWORD>(sizeof(CRusiaBillingMgr::m_pRusiaBill->m_lpszPort)),
         fileName))
   {
     return false;
@@ -168,11 +197,11 @@ bool CRusiaBillingMgr::LoadINIFile()
 
   memset_0(CRusiaBillingMgr::m_pRusiaBill->m_lpszDSN, 0, sizeof(CRusiaBillingMgr::m_pRusiaBill->m_lpszDSN));
   if (!GetPrivateProfileStringA(
-        "RF Setting",
-        "DSN",
-        "RF_RusBill",
+        "Billing",
+        "DB",
+        "BILLING",
         CRusiaBillingMgr::m_pRusiaBill->m_lpszDSN,
-        0x104u,
+        static_cast<DWORD>(sizeof(CRusiaBillingMgr::m_pRusiaBill->m_lpszDSN)),
         fileName))
   {
     return false;
@@ -180,11 +209,11 @@ bool CRusiaBillingMgr::LoadINIFile()
 
   memset_0(CRusiaBillingMgr::m_pRusiaBill->m_lpszAccount, 0, sizeof(CRusiaBillingMgr::m_pRusiaBill->m_lpszAccount));
   if (!GetPrivateProfileStringA(
-        "RF Setting",
-        "User ID",
+        "Billing",
+        "ID",
         "sa",
         CRusiaBillingMgr::m_pRusiaBill->m_lpszAccount,
-        0x104u,
+        static_cast<DWORD>(sizeof(CRusiaBillingMgr::m_pRusiaBill->m_lpszAccount)),
         fileName))
   {
     return false;
@@ -192,11 +221,11 @@ bool CRusiaBillingMgr::LoadINIFile()
 
   memset_0(CRusiaBillingMgr::m_pRusiaBill->m_lpszPassword, 0, sizeof(CRusiaBillingMgr::m_pRusiaBill->m_lpszPassword));
   return GetPrivateProfileStringA(
-           "RF Setting",
-           "Password",
-           "na4001",
+           "Billing",
+           "PWD",
+           "",
            CRusiaBillingMgr::m_pRusiaBill->m_lpszPassword,
-           0x104u,
+           static_cast<DWORD>(sizeof(CRusiaBillingMgr::m_pRusiaBill->m_lpszPassword)),
            fileName)
          != 0;
 }
@@ -282,7 +311,7 @@ void CRusiaBillingMgr::DeleteMem()
 __int64 CRusiaBillingMgr::CallFunc_RFOnline_Auth(_param_cash_select *rParam)
 {
   CoInitialize(nullptr);
-  rParam->out_dwCashAmount = static_cast<int>(RFACC_CheckBalance(rParam->in_szAcc));
+  rParam->out_dwCashAmount = static_cast<int>(g_RFAcc.CheckBalance(rParam->in_szAcc));
   CoUninitialize();
   return 0;
 }
@@ -290,27 +319,22 @@ __int64 CRusiaBillingMgr::CallFunc_RFOnline_Auth(_param_cash_select *rParam)
 __int64 CRusiaBillingMgr::CallFunc_Item_Buy(_param_cash_update *rParam, int nIdx)
 {
   CoInitialize(nullptr);
-  const float inDiscount = static_cast<float>(rParam->in_item[static_cast<__int64>(nIdx)].in_nDiscount);
-  const float inPrice = static_cast<float>(rParam->in_item[static_cast<__int64>(nIdx)].in_nPrice);
+  const int inDiscount = static_cast<int>(rParam->in_item[static_cast<__int64>(nIdx)].in_nDiscount);
+  const int inPrice = rParam->in_item[static_cast<__int64>(nIdx)].in_nPrice;
   const unsigned int overlapNum = rParam->in_item[static_cast<__int64>(nIdx)].in_byOverlapNum;
 
-  int priceBits = 0;
-  int discountBits = 0;
-  memcpy_0(&priceBits, &inPrice, sizeof(priceBits));
-  memcpy_0(&discountBits, &inDiscount, sizeof(discountBits));
-
-  if (RFACC_ChargeBalance(
+  if (g_RFAcc.ChargeBalance(
         rParam->in_szAcc,
         rParam->in_szAvatorName,
         rParam->in_item[static_cast<__int64>(nIdx)].in_strItemCode,
         overlapNum,
         rParam->in_szSvrName,
         rParam->in_item[static_cast<__int64>(nIdx)].in_lnUID,
-        priceBits,
-        discountBits))
+        inPrice,
+        inDiscount))
   {
     rParam->in_item[static_cast<__int64>(nIdx)].out_nCashAmount =
-      static_cast<int>(RFACC_CheckBalance(rParam->in_szAcc));
+      static_cast<int>(g_RFAcc.CheckBalance(rParam->in_szAcc));
     rParam->out_nCashAmount = rParam->in_item[static_cast<__int64>(nIdx)].out_nCashAmount;
     CoUninitialize();
     return 0;
@@ -324,9 +348,9 @@ __int64 CRusiaBillingMgr::CallFunc_Item_Buy(_param_cash_update *rParam, int nIdx
 __int64 CRusiaBillingMgr::CallFunc_Item_Cancel(_param_cash_rollback::__list *list, char *szUserID)
 {
   CoInitialize(nullptr);
-  if (RFACC_Cancel(list->in_lnUID))
+  if (g_RFAcc.Cancel(list->in_lnUID))
   {
-    list->out_nCashAmount = static_cast<int>(RFACC_CheckBalance(szUserID));
+    list->out_nCashAmount = static_cast<int>(g_RFAcc.CheckBalance(szUserID));
     CoUninitialize();
     return 0;
   }

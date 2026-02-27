@@ -124,7 +124,8 @@ bool CRFNewDatabase::ConfigUserODBC(
   const char *szDSN,
   const char *szServer,
   const char *szDatabase,
-  unsigned __int16 wPort)
+  unsigned __int16 wPort,
+  bool bTrustedConnection)
 {
   unsigned __int16 offset = 0;
   char buffer[272]{};
@@ -133,6 +134,10 @@ bool CRFNewDatabase::ConfigUserODBC(
   offset = static_cast<unsigned __int16>(offset + sprintf(&buffer[offset], "DESCRIPTION=%s%c", szDatabase, 0));
   offset = static_cast<unsigned __int16>(offset + sprintf(&buffer[offset], "SERVER=%s,%u%c", szServer, wPort, 0));
   offset = static_cast<unsigned __int16>(offset + sprintf(&buffer[offset], "DATABASE=%s%c", szDatabase, 0));
+  if (bTrustedConnection)
+  {
+    offset = static_cast<unsigned __int16>(offset + sprintf(&buffer[offset], "Trusted_Connection=Yes%c", 0));
+  }
 
   wchar_t bufferW[272]{};
   const int attributesLen = static_cast<int>(offset) + 2;
@@ -147,7 +152,28 @@ bool CRFNewDatabase::ConfigUserODBC(
   {
     return false;
   }
-  return SQLConfigDataSourceW(nullptr, ODBC_ADD_SYS_DSN, L"SQL Server", bufferW) != 0;
+
+  if (SQLConfigDataSourceW(nullptr, ODBC_ADD_SYS_DSN, L"SQL Server", bufferW) != 0)
+  {
+    return true;
+  }
+
+  if (SQLConfigDataSourceW(nullptr, ODBC_CONFIG_SYS_DSN, L"SQL Server", bufferW) != 0)
+  {
+    return true;
+  }
+
+  if (SQLConfigDataSourceW(nullptr, ODBC_ADD_DSN, L"SQL Server", bufferW) != 0)
+  {
+    return true;
+  }
+
+  if (SQLConfigDataSourceW(nullptr, ODBC_CONFIG_DSN, L"SQL Server", bufferW) != 0)
+  {
+    return true;
+  }
+
+  return false;
 }
 
 void CRFNewDatabase::DiagRecALog(__int16 sqlRet, SQLSMALLINT HandleType, void *Handle)
@@ -923,20 +949,46 @@ bool CRFNewDatabase::StartDataBase(const char *odbcName, const char *accountName
 
   const size_t odbcLen = strlen_0(odbcName);
   memcpy_0(m_szOdbcName, odbcName, odbcLen);
-  const size_t accountLen = strlen_0(accountName);
-  memcpy_0(m_szAccountName, accountName, accountLen);
-  const size_t passLen = strlen_0(passWord);
-  memcpy_0(m_szPassword, passWord, passLen);
+  memset_0(m_szAccountName, 0, sizeof(m_szAccountName));
+  memset_0(m_szPassword, 0, sizeof(m_szPassword));
+  if (accountName)
+  {
+    const size_t accountLen = strlen_0(accountName);
+    memcpy_0(m_szAccountName, accountName, accountLen);
+  }
+  if (passWord)
+  {
+    const size_t passLen = strlen_0(passWord);
+    memcpy_0(m_szPassword, passWord, passLen);
+  }
 
   SQLSetConnectAttr(m_hDbc, SQL_ATTR_LOGIN_TIMEOUT, reinterpret_cast<SQLPOINTER>(3), 0);
-  ret = SQLConnectA(
-    m_hDbc,
-    reinterpret_cast<SQLCHAR *>(const_cast<char *>(odbcName)),
-    SQL_NTS,
-    reinterpret_cast<SQLCHAR *>(const_cast<char *>(accountName)),
-    SQL_NTS,
-    reinterpret_cast<SQLCHAR *>(const_cast<char *>(passWord)),
-    SQL_NTS);
+  const bool bTrustedConnection = (!accountName && !passWord)
+    || ((accountName && accountName[0] == '\0') && (passWord && passWord[0] == '\0'));
+  if (bTrustedConnection)
+  {
+    ret = SQLConnectA(
+      m_hDbc,
+      reinterpret_cast<SQLCHAR *>(const_cast<char *>(odbcName)),
+      SQL_NTS,
+      nullptr,
+      0,
+      nullptr,
+      0);
+  }
+  else
+  {
+    const char *sqlUser = accountName ? accountName : "";
+    const char *sqlPass = passWord ? passWord : "";
+    ret = SQLConnectA(
+      m_hDbc,
+      reinterpret_cast<SQLCHAR *>(const_cast<char *>(odbcName)),
+      SQL_NTS,
+      reinterpret_cast<SQLCHAR *>(const_cast<char *>(sqlUser)),
+      SQL_NTS,
+      reinterpret_cast<SQLCHAR *>(const_cast<char *>(sqlPass)),
+      SQL_NTS);
+  }
 
   if (!ret || ret == SQL_SUCCESS_WITH_INFO)
   {
