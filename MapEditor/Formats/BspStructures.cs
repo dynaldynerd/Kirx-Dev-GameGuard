@@ -35,6 +35,15 @@ public readonly record struct MapBounds(Vector3 Min, Vector3 Max)
   public Vector3 Center => (Min + Max) * 0.5f;
 }
 
+public readonly record struct BspLeafBounds(Vector3 Min, Vector3 Max);
+public readonly record struct BspNode(
+  uint NormalIndex,
+  float Distance,
+  short Front,
+  short Back,
+  Vector3 Min,
+  Vector3 Max);
+
 public readonly record struct BspRenderVertex(
   Vector3 Position,
   Vector2 Uv,
@@ -142,6 +151,74 @@ public readonly record struct EntitySceneInstance(
   float RotX,
   float RotY);
 
+public readonly record struct ParticleFloatRange(float Min, float Max);
+
+public enum ParticleSpawnShape
+{
+  Box = 0,
+  Sphere = 1,
+  SphereEdge = 2,
+}
+
+public readonly record struct ParticleTrackKey(
+  float Time,
+  bool HasScale,
+  ParticleFloatRange Scale,
+  bool HasAlpha,
+  ParticleFloatRange Alpha,
+  bool HasColor,
+  ParticleFloatRange ColorR,
+  ParticleFloatRange ColorG,
+  ParticleFloatRange ColorB,
+  bool HasPower,
+  ParticleFloatRange PowerX,
+  ParticleFloatRange PowerY,
+  ParticleFloatRange PowerZ,
+  bool HasZRot,
+  ParticleFloatRange ZRot,
+  bool HasYRot,
+  ParticleFloatRange YRot,
+  bool HasFlicker);
+
+public readonly record struct ParticleRuntimeDefinition(
+  int Count,
+  ParticleSpawnShape SpawnShape,
+  ParticleFloatRange StartPosX,
+  ParticleFloatRange StartPosY,
+  ParticleFloatRange StartPosZ,
+  ParticleFloatRange LiveTime,
+  ParticleFloatRange TimeSpeed,
+  ParticleFloatRange GravityX,
+  ParticleFloatRange GravityY,
+  ParticleFloatRange GravityZ,
+  ParticleFloatRange StartPowerX,
+  ParticleFloatRange StartPowerY,
+  ParticleFloatRange StartPowerZ,
+  ParticleFloatRange StartScale,
+  ParticleFloatRange StartAlpha,
+  ParticleFloatRange StartColorR,
+  ParticleFloatRange StartColorG,
+  ParticleFloatRange StartColorB,
+  ParticleFloatRange StartZRot,
+  ParticleFloatRange StartYRot,
+  float CreateTimeEpsilon,
+  float StartTimeRange,
+  bool NoLoop,
+  bool AlwaysLive,
+  bool Free,
+  bool CheckCollision,
+  bool EmitTimeEnabled,
+  ParticleFloatRange EmitTime,
+  bool FlickerEnabled,
+  ParticleFloatRange FlickerAlpha,
+  ParticleFloatRange FlickerTime,
+  bool NoBillboard,
+  bool YBillboard,
+  bool ZBillboard,
+  bool ZFrontEnabled,
+  float ZFront,
+  ParticleTrackKey[] Tracks);
+
 public sealed class EntitySceneModel
 {
   public required int EntityId { get; init; }
@@ -149,6 +226,7 @@ public sealed class EntitySceneModel
   public required string Name { get; init; }
   public required EntitySceneObject[] Objects { get; init; }
   public required EntitySceneMatGroup[] MatGroups { get; init; }
+  public ParticleRuntimeDefinition? ParticleRuntime { get; init; }
 }
 
 public sealed class EntitySceneData
@@ -162,6 +240,11 @@ public sealed class EntitySceneData
   public required EntitySceneModel[] Models { get; init; }
   public required EntitySceneInstance[] Instances { get; init; }
 }
+
+public readonly record struct ParticleInstanceInfo(
+  int EntityId,
+  string Name,
+  Vector3 Position);
 
 public sealed class LoadedMap
 {
@@ -195,6 +278,10 @@ public sealed class LoadedMap
   public required int MapEntityModelCount { get; init; }
   public required int MapEntityInstanceCount { get; init; }
   public required Vector3[] ParticleInstancePositions { get; init; }
+  public required ParticleInstanceInfo[] ParticleInstances { get; init; }
+  public required Vector3[] BspCollisionNormals { get; init; }
+  public required BspNode[] BspCollisionNodes { get; init; }
+  public required BspLeafBounds[] BspLeafBounds { get; init; }
   public required Vector3[] CollisionVertices { get; init; }
   public required CollisionLine[] CollisionLines { get; init; }
 }

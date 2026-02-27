@@ -1,0 +1,221 @@
+Map=neutralB
+EntModels=66 EntInst=3456 FxInst=90
+EntVerts=2483868 EntSpans=1184 EntTex=120
+EntMaterials=125 EntMatSurfaceIds=125
+SceneModels=66 SceneInst=3456
+FallbackSpans=0/1184
+InterestingTextureNames=14
+cir_light:.\e_neutralB\cir_light02\ExplosionFlashTex.dds
+cir_light:.\e_neutralB\cir_light\ExplosionFlashTex.dds
+fall_fog01:.\Entity\e_neutralB\fall_fog01\fall_fog01.dds
+fall_up_fog:.\Entity\e_neutralB\fall_up_fog\fall_up_fog.dds
+fog01:.\e_neutralB\fog01\fog01.dds
+line_light:.\e_neutralB\line_light\line_light.dds
+potal01:.\Entity\e_neutralB\potal_point02\potal_01.dds
+potal01:.\e_neutralB\potal_point\potal_01.dds
+potal_light02:.\e_neutralB\potal_light02\potallight.dds
+sand:.\e_neutralB\sand\sand.dds
+smk:.\e_neutralB\blk_smk\fog_b.dds
+wave02:.\e_neutralB\wave02\wave02.dds
+wave03:.\e_neutralB\wave03\wave03.dds
+whitelight:.\e_neutralB\white_light\orange.dds
+
+Interesting material alpha types:
+mat=39 surface=1000039 alpha=0x00000003 tex=wave02:.\e_neutralB\wave02\wave02.dds hasMat=1 layers=1 l0.alpha=0x00000003 l0.argb=0xFFFFFFFF l0.flags=0x00000000
+mat=40 surface=1000040 alpha=0x00000003 tex=wave03:.\e_neutralB\wave03\wave03.dds hasMat=1 layers=1 l0.alpha=0x00000003 l0.argb=0xFFFFFFFF l0.flags=0x00000000
+mat=41 surface=1000041 alpha=0x00000003 tex=cir_light:.\e_neutralB\cir_light\ExplosionFlashTex.dds hasMat=1 layers=1 l0.alpha=0x00000003 l0.argb=0xFFFFFFFF l0.flags=0x00000000
+mat=42 surface=1000042 alpha=0x00000003 tex=whitelight:.\e_neutralB\white_light\orange.dds hasMat=1 layers=1 l0.alpha=0x00000003 l0.argb=0xFFFFFFFF l0.flags=0x00000000
+mat=43 surface=1000043 alpha=0x00000003 tex=whitelight:.\e_neutralB\white_light\orange.dds hasMat=1 layers=1 l0.alpha=0x00000003 l0.argb=0xFFFFFFFF l0.flags=0x00000000
+mat=44 surface=1000044 alpha=0x00000003 tex=sand:.\e_neutralB\sand\sand.dds hasMat=1 layers=1 l0.alpha=0x00000003 l0.argb=0xFFFFFFFF l0.flags=0x00000000
+mat=45 surface=1000045 alpha=0x00000003 tex=fog01:.\e_neutralB\fog01\fog01.dds hasMat=1 layers=1 l0.alpha=0x00000003 l0.argb=0xFFFFFFFF l0.flags=0x00000000
+mat=46 surface=1000046 alpha=0x00000003 tex=line_light:.\e_neutralB\line_light\line_light.dds hasMat=1 layers=1 l0.alpha=0x00000003 l0.argb=0xFFFFFFFF l0.flags=0x00000000
+mat=47 surface=1000047 alpha=0x00000003 tex=line_light:.\e_neutralB\line_light\line_light.dds hasMat=1 layers=1 l0.alpha=0x00000003 l0.argb=0xFFFFFFFF l0.flags=0x00000000
+mat=48 surface=1000048 alpha=0x00000001 tex=smk:.\e_neutralB\blk_smk\fog_b.dds hasMat=1 layers=1 l0.alpha=0x00000001 l0.argb=0xFFFFFFFF l0.flags=0x00000000
+mat=49 surface=1000049 alpha=0x00000003 tex=cir_light:.\e_neutralB\cir_light02\ExplosionFlashTex.dds hasMat=1 layers=1 l0.alpha=0x00000003 l0.argb=0xFFFFFFFF l0.flags=0x00000000
+mat=53 surface=1000053 alpha=0x00000003 tex=potal01:.\e_neutralB\potal_point\potal_01.dds hasMat=1 layers=1 l0.alpha=0x00000003 l0.argb=0xFFFFFFFF l0.flags=0x00000000
+mat=54 surface=1000054 alpha=0x00000001 tex=fall_up_fog:.\Entity\e_neutralB\fall_up_fog\fall_up_fog.dds hasMat=1 layers=1 l0.alpha=0x00000001 l0.argb=0xFFFFFFFF l0.flags=0x00000000
+mat=55 surface=1000055 alpha=0x00000003 tex=fall_fog01:.\Entity\e_neutralB\fall_fog01\fall_fog01.dds hasMat=1 layers=1 l0.alpha=0x00000003 l0.argb=0xFFFFFFFF l0.flags=0x00000000
+mat=57 surface=1000057 alpha=0x00000002 tex=potal_light02:.\e_neutralB\potal_light02\potallight.dds hasMat=1 layers=1 l0.alpha=0x00000002 l0.argb=0x0AFFFFFF l0.flags=0x00000000
+mat=58 surface=1000057 alpha=0x00000002 tex=potal_light02:.\e_neutralB\potal_light02\potallight.dds hasMat=1 layers=1 l0.alpha=0x00000002 l0.argb=0x0AFFFFFF l0.flags=0x00000000
+mat=59 surface=1000057 alpha=0x00000002 tex=potal_light02:.\e_neutralB\potal_light02\potallight.dds hasMat=1 layers=1 l0.alpha=0x00000002 l0.argb=0x0AFFFFFF l0.flags=0x00000000
+mat=60 surface=1000058 alpha=0x00000003 tex=potal01:.\Entity\e_neutralB\potal_point02\potal_01.dds hasMat=1 layers=1 l0.alpha=0x00000003 l0.argb=0xFFFFFFFF l0.flags=0x00000000
+
+Interesting scene models:
+id=25 inst=21 name=wave02 mats=1 objs=0 anim=False
+id=26 inst=8 name=wave03 mats=1 objs=0 anim=False
+id=27 inst=5 name=cir_light mats=1 objs=0 anim=False
+id=28 inst=5 name=whitelight mats=1 objs=0 anim=False
+id=29 inst=5 name=whitelight mats=1 objs=0 anim=False
+id=31 inst=6 name=fog01 mats=1 objs=0 anim=False
+id=32 inst=2 name=line_light mats=1 objs=0 anim=False
+id=33 inst=2 name=line_light mats=1 objs=0 anim=False
+id=35 inst=15 name=cir_light mats=1 objs=0 anim=False
+id=41 inst=2 name=potal01 mats=1 objs=0 anim=False
+id=43 inst=12 name=fall_up_fog mats=1 objs=0 anim=False
+id=44 inst=2 name=fall_fog01 mats=1 objs=0 anim=False
+id=47 inst=1 name=potal_light02 mats=3 objs=3 anim=True
+  obj parent=0 frames=1500 posT=0 rotT=301 sclT=0
+  obj parent=0 frames=1500 posT=0 rotT=301 sclT=0
+  obj parent=0 frames=1500 posT=0 rotT=301 sclT=0
+id=48 inst=1 name=potal01 mats=1 objs=0 anim=False
+
+All animated scene models:
+id=16 inst=68 name=nabi02 mats=3 objs=3
+id=17 inst=53 name=nabi03 mats=3 objs=3
+id=18 inst=63 name=nabi01 mats=3 objs=3
+id=19 inst=19 name=bat mats=5 objs=5
+id=20 inst=44 name=b_bird mats=6 objs=6
+id=47 inst=1 name=potal_light02 mats=3 objs=3
+id=62 inst=1 name=b_gate mats=5 objs=2
+id=63 inst=1 name=circlezone_blue mats=9 objs=2
+id=64 inst=1 name=circlezone mats=9 objs=2
+id=65 inst=3 name=gravityzone mats=7 objs=2
+id=66 inst=1 name=b_num10 mats=5 objs=3
+id=67 inst=1 name=b_num30 mats=5 objs=3
+id=68 inst=1 name=b_num20 mats=5 objs=3
+id=69 inst=1 name=b_num40 mats=5 objs=3
+id=70 inst=2 name=g_num50 mats=5 objs=3
+id=72 inst=1 name=r_num10 mats=5 objs=3
+id=73 inst=1 name=r_num20 mats=5 objs=3
+id=74 inst=1 name=r_num30 mats=5 objs=3
+id=75 inst=1 name=r_num40 mats=5 objs=3
+
+Portal candidate material groups:
+model id=41 name=potal01 inst=2 matGroups=1 matBase=53
+  gi=0 obj=0 mat=53 alpha=0x00000003 l0.alpha=0x00000003 l0.argb=0xFFFFFFFF l0.flags=0x00000000 tex=potal01:.\e_neutralB\potal_point\potal_01.dds verts=6
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+model id=47 name=potal_light02 inst=1 matGroups=3 matBase=57
+  objIndex=0 parent=0 frames=1500 pos=(0.37,0.37,0.00) scale=(1.000,1.000,1.000) rotQ=(0.000,0.000,0.000,1.000) posT=0 rotT=301 sclT=0
+    rot0 frame=0.00 q=(0.000,0.000,0.000,1.000)
+    rotN frame=1500.00 q=(0.000,0.000,0.000,1.000)
+    rotS frame=0.00 q=(0.000,0.000,0.000,1.000)
+    rotS frame=375.00 q=(0.000,0.000,-0.707,0.707)
+    rotS frame=750.00 q=(0.000,0.000,-1.000,-0.000)
+    rotS frame=1125.00 q=(0.000,0.000,0.707,0.707)
+    rotS frame=1500.00 q=(0.000,0.000,0.000,1.000)
+  objIndex=1 parent=0 frames=1500 pos=(0.37,0.37,0.00) scale=(1.120,1.120,1.120) rotQ=(0.000,0.000,0.000,1.000) posT=0 rotT=301 sclT=0
+    rot0 frame=0.00 q=(0.000,0.000,0.000,1.000)
+    rotN frame=1500.00 q=(0.000,0.000,0.000,1.000)
+    rotS frame=0.00 q=(0.000,0.000,0.000,1.000)
+    rotS frame=375.00 q=(0.000,0.000,-0.707,0.707)
+    rotS frame=750.00 q=(0.000,0.000,-1.000,-0.000)
+    rotS frame=1125.00 q=(0.000,0.000,0.707,0.707)
+    rotS frame=1500.00 q=(0.000,0.000,0.000,1.000)
+  objIndex=2 parent=0 frames=1500 pos=(0.37,0.37,0.00) scale=(1.058,1.058,1.058) rotQ=(0.000,0.000,0.000,1.000) posT=0 rotT=301 sclT=0
+    rot0 frame=0.00 q=(0.000,0.000,0.000,1.000)
+    rotN frame=1500.00 q=(0.000,0.000,0.000,1.000)
+    rotS frame=0.00 q=(0.000,0.000,0.000,1.000)
+    rotS frame=375.00 q=(0.000,0.000,0.707,0.707)
+    rotS frame=750.00 q=(0.000,0.000,-1.000,-0.000)
+    rotS frame=1125.00 q=(0.000,0.000,-0.707,0.707)
+    rotS frame=1500.00 q=(0.000,0.000,0.000,1.000)
+  gi=0 obj=1 mat=57 alpha=0x00000002 l0.alpha=0x00000002 l0.argb=0x0AFFFFFF l0.flags=0x00000000 tex=potal_light02:.\e_neutralB\potal_light02\potallight.dds verts=216
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+  gi=1 obj=2 mat=58 alpha=0x00000002 l0.alpha=0x00000002 l0.argb=0x0AFFFFFF l0.flags=0x00000000 tex=potal_light02:.\e_neutralB\potal_light02\potallight.dds verts=216
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+  gi=2 obj=3 mat=59 alpha=0x00000002 l0.alpha=0x00000002 l0.argb=0x0AFFFFFF l0.flags=0x00000000 tex=potal_light02:.\e_neutralB\potal_light02\potallight.dds verts=216
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+model id=48 name=potal01 inst=1 matGroups=1 matBase=60
+  gi=0 obj=0 mat=60 alpha=0x00000003 l0.alpha=0x00000003 l0.argb=0xFFFFFFFF l0.flags=0x00000000 tex=potal01:.\Entity\e_neutralB\potal_point02\potal_01.dds verts=6
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+model id=62 name=b_gate inst=1 matGroups=5 matBase=75
+  objIndex=0 parent=0 frames=350 pos=(0.12,-0.11,31.71) scale=(1.000,1.000,1.000) rotQ=(0.000,0.000,0.000,1.000) posT=68 rotT=0 sclT=0
+    pos0 frame=0.00 p=(0.118,-0.114,31.715)
+    posN frame=350.00 p=(0.118,-0.114,31.715)
+    posMin=(0.118,-0.114,8.439) posMax=(0.118,-0.114,31.911)
+  objIndex=1 parent=0 frames=350 pos=(0.12,-0.11,1.59) scale=(0.885,0.885,0.885) rotQ=(0.000,0.000,0.000,1.000) posT=68 rotT=0 sclT=0
+    pos0 frame=0.00 p=(0.118,-0.114,1.589)
+    posN frame=350.00 p=(0.118,-0.114,1.589)
+    posMin=(0.118,-0.114,1.402) posMax=(0.118,-0.114,24.016)
+  gi=0 obj=0 mat=75 alpha=0x00000000 l0.alpha=0x00000000 l0.argb=0xFFFFFFFF l0.flags=0x00000000 tex=b_gate:.\b_gate\Gate_Bel.dds verts=11508
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+  gi=1 obj=0 mat=76 alpha=0x00000001 l0.alpha=0x00000001 l0.argb=0xFFFFFFFF l0.flags=0x00000000 tex=b_gate:.\b_gate\Gate_Bel_s.dds verts=96
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+  gi=2 obj=0 mat=77 alpha=0x00000003 l0.alpha=0x00000003 l0.argb=0xFFFFFFFF l0.flags=0x00000000 tex=b_gate:.\b_gate\gete_ep01.dds verts=384
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+  gi=3 obj=1 mat=78 alpha=0x00000003 l0.alpha=0x00000003 l0.argb=0xFFFFFFFF l0.flags=0x00000000 tex=b_gate:.\b_gate\gete_ep02.dds verts=192
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+  gi=4 obj=2 mat=78 alpha=0x00000003 l0.alpha=0x00000003 l0.argb=0xFFFFFFFF l0.flags=0x00000000 tex=b_gate:.\b_gate\gete_ep02.dds verts=192
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+model id=63 name=circlezone_blue inst=1 matGroups=9 matBase=79
+  objIndex=0 parent=0 frames=300 pos=(-0.00,0.00,21.18) scale=(0.954,0.954,0.954) rotQ=(0.000,0.000,0.000,1.000) posT=0 rotT=61 sclT=0
+    rot0 frame=0.00 q=(0.000,0.000,0.000,1.000)
+    rotN frame=300.00 q=(0.000,0.000,0.000,1.000)
+    rotS frame=0.00 q=(0.000,0.000,0.000,1.000)
+    rotS frame=75.00 q=(0.000,0.000,0.707,0.707)
+    rotS frame=150.00 q=(0.000,0.000,-1.000,-0.000)
+    rotS frame=225.00 q=(0.000,0.000,-0.707,0.707)
+    rotS frame=300.00 q=(0.000,0.000,0.000,1.000)
+  objIndex=1 parent=0 frames=300 pos=(-0.03,-0.04,3.38) scale=(1.000,1.000,1.000) rotQ=(0.000,0.000,-0.907,0.422) posT=0 rotT=61 sclT=0
+    rot0 frame=0.00 q=(0.000,0.000,-0.907,0.422)
+    rotN frame=300.00 q=(0.000,0.000,-0.907,0.422)
+    rotS frame=0.00 q=(0.000,0.000,-0.907,0.422)
+    rotS frame=75.00 q=(0.000,0.000,-0.939,-0.343)
+    rotS frame=150.00 q=(0.000,0.000,0.422,0.907)
+    rotS frame=225.00 q=(0.000,0.000,-0.343,0.939)
+    rotS frame=300.00 q=(0.000,0.000,-0.907,0.422)
+  gi=0 obj=0 mat=79 alpha=0x00000000 l0.alpha=0x00000000 l0.argb=0xFFFFFFFF l0.flags=0x00000000 tex=circlezone_blue:.\circlezone_blue\cz3-01.dds verts=3360
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+  gi=1 obj=0 mat=80 alpha=0x00000000 l0.alpha=0x00000000 l0.argb=0xFFFFFFFF l0.flags=0x00000000 tex=circlezone_blue:.\circlezone_blue\cz3-02.dds verts=1044
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+  gi=2 obj=0 mat=81 alpha=0x00000000 l0.alpha=0x00000000 l0.argb=0xFFFFFFFF l0.flags=0x00000000 tex=circlezone_blue:.\circlezone_blue\cz3-03.dds verts=4128
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+  gi=3 obj=0 mat=82 alpha=0x00000000 l0.alpha=0x00000000 l0.argb=0xFFFFFFFF l0.flags=0x00000000 tex=circlezone_blue:.\circlezone_blue\cz04.dds verts=96
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+  gi=4 obj=0 mat=83 alpha=0x00000000 l0.alpha=0x00000000 l0.argb=0xFFFFFFFF l0.flags=0x00000000 tex=circlezone_blue:.\circlezone_blue\cz05.dds verts=96
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+  gi=5 obj=0 mat=84 alpha=0x00000000 l0.alpha=0x00000000 l0.argb=0xFFFFFFFF l0.flags=0x00000000 tex=circlezone_blue:.\circlezone_blue\cz06.dds verts=1296
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+  gi=6 obj=0 mat=85 alpha=0x00000003 l0.alpha=0x00000003 l0.argb=0x50FFFFFF l0.flags=0x00000210 tex=circlezone_blue:.\circlezone_blue\cz3_effect_02.dds verts=360
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+  gi=7 obj=1 mat=86 alpha=0x00000003 l0.alpha=0x00000003 l0.argb=0xFFFFFFFF l0.flags=0x00000000 tex=circlezone_blue:.\circlezone_blue\cz3_effect_03.dds verts=216
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+  gi=8 obj=2 mat=87 alpha=0x00000003 l0.alpha=0x00000003 l0.argb=0xFFFFFFFF l0.flags=0x00000020 tex=circlezone_blue:.\circlezone_blue\cz3_effect_01.dds verts=576
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+model id=64 name=circlezone inst=1 matGroups=9 matBase=88
+  objIndex=0 parent=0 frames=300 pos=(0.00,0.00,21.39) scale=(0.954,0.954,0.954) rotQ=(0.000,0.000,0.000,1.000) posT=0 rotT=61 sclT=0
+    rot0 frame=0.00 q=(0.000,0.000,0.000,1.000)
+    rotN frame=300.00 q=(0.000,0.000,0.000,1.000)
+    rotS frame=0.00 q=(0.000,0.000,0.000,1.000)
+    rotS frame=75.00 q=(0.000,0.000,0.707,0.707)
+    rotS frame=150.00 q=(0.000,0.000,-1.000,-0.000)
+    rotS frame=225.00 q=(0.000,0.000,-0.707,0.707)
+    rotS frame=300.00 q=(0.000,0.000,0.000,1.000)
+  objIndex=1 parent=0 frames=300 pos=(-0.03,-0.04,3.59) scale=(1.000,1.000,1.000) rotQ=(0.000,0.000,-0.907,0.422) posT=0 rotT=61 sclT=0
+    rot0 frame=0.00 q=(0.000,0.000,-0.907,0.422)
+    rotN frame=300.00 q=(0.000,0.000,-0.907,0.422)
+    rotS frame=0.00 q=(0.000,0.000,-0.907,0.422)
+    rotS frame=75.00 q=(0.000,0.000,-0.939,-0.343)
+    rotS frame=150.00 q=(0.000,0.000,0.422,0.907)
+    rotS frame=225.00 q=(0.000,0.000,-0.343,0.939)
+    rotS frame=300.00 q=(0.000,0.000,-0.907,0.422)
+  gi=0 obj=0 mat=88 alpha=0x00000000 l0.alpha=0x00000000 l0.argb=0xFFFFFFFF l0.flags=0x00000000 tex=circlezone:.\circlezone\cz01.dds verts=3360
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+  gi=1 obj=0 mat=89 alpha=0x00000000 l0.alpha=0x00000000 l0.argb=0xFFFFFFFF l0.flags=0x00000000 tex=circlezone:.\circlezone\cz02.dds verts=1044
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+  gi=2 obj=0 mat=90 alpha=0x00000000 l0.alpha=0x00000000 l0.argb=0xFFFFFFFF l0.flags=0x00000000 tex=circlezone:.\circlezone\cz03.dds verts=4128
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+  gi=3 obj=0 mat=91 alpha=0x00000000 l0.alpha=0x00000000 l0.argb=0xFFFFFFFF l0.flags=0x00000000 tex=circlezone:.\circlezone\cz04.dds verts=96
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+  gi=4 obj=0 mat=92 alpha=0x00000000 l0.alpha=0x00000000 l0.argb=0xFFFFFFFF l0.flags=0x00000000 tex=circlezone:.\circlezone\cz05.dds verts=96
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+  gi=5 obj=0 mat=93 alpha=0x00000000 l0.alpha=0x00000000 l0.argb=0xFFFFFFFF l0.flags=0x00000000 tex=circlezone:.\circlezone\cz06.dds verts=1296
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+  gi=6 obj=0 mat=94 alpha=0x00000003 l0.alpha=0x00000003 l0.argb=0x50FFFFFF l0.flags=0x00000210 tex=circlezone:.\circlezone\cz3_effect_02.dds verts=360
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+  gi=7 obj=1 mat=95 alpha=0x00000003 l0.alpha=0x00000003 l0.argb=0xFFFFFFFF l0.flags=0x00000000 tex=circlezone:.\circlezone\cz3_effect_03.dds verts=216
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+  gi=8 obj=2 mat=96 alpha=0x00000003 l0.alpha=0x00000003 l0.argb=0xFFFFFFFF l0.flags=0x00000020 tex=circlezone:.\circlezone\cz3_effect_01.dds verts=576
+    color min=(0.498,0.498,0.498) max=(0.498,0.498,0.498)
+
+Portal candidate instances:
+  id=41 name=potal01 pos=(4605.000,1798.000,1474.000) scale=1.0000 rotX=0.000 rotY=0.000
+  id=41 name=potal01 pos=(-6806.000,648.000,6371.000) scale=1.0000 rotX=0.000 rotY=0.000
+  id=47 name=potal_light02 pos=(4608.000,1779.000,1470.000) scale=1.0000 rotX=0.000 rotY=0.000
+  id=48 name=potal01 pos=(-5822.000,563.100,5666.000) scale=1.0000 rotX=0.000 rotY=0.000
+  id=62 name=b_gate pos=(-7582.000,622.700,5903.000) scale=1.0000 rotX=359.900 rotY=349.700
+  id=63 name=circlezone_blue pos=(-3544.000,816.000,2519.000) scale=1.0000 rotX=0.000 rotY=0.000
+  id=64 name=circlezone pos=(-6937.000,94.600,-312.000) scale=1.0000 rotX=0.000 rotY=0.000
+
+Entities near b_gate portal:
+  id=62 name=b_gate dist=0.00 mats=5 objs=2 pos=(-7582.00,622.70,5903.00)

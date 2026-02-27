@@ -24,6 +24,9 @@ public static class BspLoader
 {
   private const int BspHeaderSize = 0x2AC;
   private const int ExtBspHeaderSize = 0x184;
+  private const int BspPlaneEntrySize = 12;
+  private const int BspNodeEntrySize = 24;
+  private const int BspLeafEntrySize = 25;
   private const int EntityListEntrySize = 0x54;
   private const int ReadMapEntityEntrySize = 0x26;
   private const int EntityFileHeaderEntryCount = 10;
@@ -131,6 +134,10 @@ public static class BspLoader
       MapEntityModelCount = entityData.ModelCount,
       MapEntityInstanceCount = entityData.InstanceCount,
       ParticleInstancePositions = entityData.ParticlePositions,
+      ParticleInstances = entityData.ParticleInstances,
+      BspCollisionNormals = bsp.CollisionNormals,
+      BspCollisionNodes = bsp.CollisionNodes,
+      BspLeafBounds = bsp.LeafBounds,
       CollisionVertices = ext.CollisionVertices,
       CollisionLines = ext.CollisionLines,
     };
@@ -151,6 +158,10 @@ public static class BspLoader
     {
       throw new InvalidDataException($"Unexpected BSP version {header.Version}; expected {ExpectedBspVersion}.");
     }
+
+    Vector3[] collisionNormals = ReadBspCollisionNormals(stream, header);
+    BspNode[] collisionNodes = ReadBspCollisionNodes(stream, header);
+    BspLeafBounds[] leafBounds = ReadBspLeafBounds(stream, header);
 
     long sectionStart = BspHeaderSize
       + header.CPlanes.Size
@@ -243,7 +254,7 @@ public static class BspLoader
       triangleVertices[index] = renderVertices[index].Position;
     }
 
-    return new BspData(triangleVertices, renderVertices, mesh.MaterialSpans);
+    return new BspData(triangleVertices, renderVertices, mesh.MaterialSpans, collisionNormals, collisionNodes, leafBounds);
   }
 
   private static ExtBspData ReadExtBsp(string ebpPath)
@@ -1418,6 +1429,241 @@ public static class BspLoader
     return new BspEntry(offset, size);
   }
 
+  private static Vector3[] ReadBspCollisionNormals(FileStream stream, BspHeader header)
+  {
+    if (header.CPlanes.Size == 0)
+    {
+      return Array.Empty<Vector3>();
+    }
+
+    if ((header.CPlanes.Size % BspPlaneEntrySize) != 0)
+    {
+      return Array.Empty<Vector3>();
+    }
+
+    int normalCount = checked((int)(header.CPlanes.Size / BspPlaneEntrySize));
+    if (normalCount <= 0)
+    {
+      return Array.Empty<Vector3>();
+    }
+
+    long sequentialOffset = BspHeaderSize;
+    if (!TryResolveSectionOffset(stream.Length, header.CPlanes, sequentialOffset, out long planeOffset))
+    {
+      return Array.Empty<Vector3>();
+    }
+
+    Vector3[] normals = new Vector3[normalCount];
+    long originalPosition = stream.Position;
+    try
+    {
+      stream.Position = planeOffset;
+      using BinaryReader planeReader = new(stream, Encoding.ASCII, leaveOpen: true);
+      for (int i = 0; i < normalCount; ++i)
+      {
+        float x = planeReader.ReadSingle();
+        float y = planeReader.ReadSingle();
+        float z = planeReader.ReadSingle();
+        normals[i] = new Vector3(x, y, z);
+      }
+    }
+    finally
+    {
+      stream.Position = originalPosition;
+    }
+
+    return normals;
+  }
+
+  private static BspNode[] ReadBspCollisionNodes(FileStream stream, BspHeader header)
+  {
+    if (header.Node.Size == 0)
+    {
+      return Array.Empty<BspNode>();
+    }
+
+    if ((header.Node.Size % BspNodeEntrySize) != 0)
+    {
+      return Array.Empty<BspNode>();
+    }
+
+    int nodeCount = checked((int)(header.Node.Size / BspNodeEntrySize));
+    if (nodeCount <= 0)
+    {
+      return Array.Empty<BspNode>();
+    }
+
+    long sequentialOffset = BspHeaderSize
+      + (long)header.CPlanes.Size
+      + (long)header.CFaceId.Size;
+
+    if (!TryResolveSectionOffset(stream.Length, header.Node, sequentialOffset, out long nodeOffset))
+    {
+      return Array.Empty<BspNode>();
+    }
+
+    BspNode[] nodes = new BspNode[nodeCount];
+    long originalPosition = stream.Position;
+    try
+    {
+      stream.Position = nodeOffset;
+      using BinaryReader nodeReader = new(stream, Encoding.ASCII, leaveOpen: true);
+      for (int i = 0; i < nodeCount; ++i)
+      {
+        uint normalIndex = nodeReader.ReadUInt32();
+        float distance = nodeReader.ReadSingle();
+        short front = nodeReader.ReadInt16();
+        short back = nodeReader.ReadInt16();
+        short minX = nodeReader.ReadInt16();
+        short minY = nodeReader.ReadInt16();
+        short minZ = nodeReader.ReadInt16();
+        short maxX = nodeReader.ReadInt16();
+        short maxY = nodeReader.ReadInt16();
+        short maxZ = nodeReader.ReadInt16();
+
+        Vector3 min = new(minX, minY, minZ);
+        Vector3 max = new(maxX, maxY, maxZ);
+        if (min.X > max.X)
+        {
+          float t = min.X;
+          min.X = max.X;
+          max.X = t;
+        }
+
+        if (min.Y > max.Y)
+        {
+          float t = min.Y;
+          min.Y = max.Y;
+          max.Y = t;
+        }
+
+        if (min.Z > max.Z)
+        {
+          float t = min.Z;
+          min.Z = max.Z;
+          max.Z = t;
+        }
+
+        nodes[i] = new BspNode(normalIndex, distance, front, back, min, max);
+      }
+    }
+    finally
+    {
+      stream.Position = originalPosition;
+    }
+
+    return nodes;
+  }
+
+  private static BspLeafBounds[] ReadBspLeafBounds(FileStream stream, BspHeader header)
+  {
+    if (header.Leaf.Size == 0)
+    {
+      return Array.Empty<BspLeafBounds>();
+    }
+
+    if ((header.Leaf.Size % BspLeafEntrySize) != 0)
+    {
+      return Array.Empty<BspLeafBounds>();
+    }
+
+    int leafCount = checked((int)(header.Leaf.Size / BspLeafEntrySize));
+    if (leafCount <= 0)
+    {
+      return Array.Empty<BspLeafBounds>();
+    }
+
+    long sequentialOffset = BspHeaderSize
+      + (long)header.CPlanes.Size
+      + (long)header.CFaceId.Size
+      + (long)header.Node.Size;
+
+    if (!TryResolveSectionOffset(stream.Length, header.Leaf, sequentialOffset, out long leafOffset))
+    {
+      return Array.Empty<BspLeafBounds>();
+    }
+
+    BspLeafBounds[] leaves = new BspLeafBounds[leafCount];
+    long originalPosition = stream.Position;
+    try
+    {
+      stream.Position = leafOffset;
+      using BinaryReader leafReader = new(stream, Encoding.ASCII, leaveOpen: true);
+      for (int leafIndex = 0; leafIndex < leafCount; ++leafIndex)
+      {
+        _ = leafReader.ReadByte(); // type
+        _ = leafReader.ReadUInt16(); // face_num
+        _ = leafReader.ReadUInt32(); // face_start_id
+        _ = leafReader.ReadUInt16(); // m_group_num
+        _ = leafReader.ReadUInt32(); // m_group_start_id
+
+        short minX = leafReader.ReadInt16();
+        short minY = leafReader.ReadInt16();
+        short minZ = leafReader.ReadInt16();
+        short maxX = leafReader.ReadInt16();
+        short maxY = leafReader.ReadInt16();
+        short maxZ = leafReader.ReadInt16();
+
+        Vector3 min = new(minX, minY, minZ);
+        Vector3 max = new(maxX, maxY, maxZ);
+        if (min.X > max.X)
+        {
+          float t = min.X;
+          min.X = max.X;
+          max.X = t;
+        }
+
+        if (min.Y > max.Y)
+        {
+          float t = min.Y;
+          min.Y = max.Y;
+          max.Y = t;
+        }
+
+        if (min.Z > max.Z)
+        {
+          float t = min.Z;
+          min.Z = max.Z;
+          max.Z = t;
+        }
+
+        leaves[leafIndex] = new BspLeafBounds(min, max);
+      }
+    }
+    finally
+    {
+      stream.Position = originalPosition;
+    }
+
+    return leaves;
+  }
+
+  private static bool TryResolveSectionOffset(long fileLength, BspEntry entry, long sequentialOffset, out long offset)
+  {
+    offset = -1;
+    if (entry.Size == 0)
+    {
+      return false;
+    }
+
+    long declaredOffset = entry.Offset;
+    long declaredEnd = declaredOffset + (long)entry.Size;
+    if (declaredOffset >= BspHeaderSize && declaredEnd >= declaredOffset && declaredEnd <= fileLength)
+    {
+      offset = declaredOffset;
+      return true;
+    }
+
+    long sequentialEnd = sequentialOffset + (long)entry.Size;
+    if (sequentialOffset >= BspHeaderSize && sequentialEnd >= sequentialOffset && sequentialEnd <= fileLength)
+    {
+      offset = sequentialOffset;
+      return true;
+    }
+
+    return false;
+  }
+
   private static byte[] ReadExactBytes(BinaryReader reader, int size, string sectionName)
   {
     byte[] data = reader.ReadBytes(size);
@@ -1667,6 +1913,7 @@ public static class BspLoader
     }
 
     List<Vector3> particlePositions = new();
+    List<ParticleInstanceInfo> particleInstances = new();
     for (int index = 0; index < mapEntities.Length; ++index)
     {
       ExtMapEntity instance = mapEntities[index];
@@ -1679,13 +1926,14 @@ public static class BspLoader
       if (entityDefinitions[entityId].IsParticle && IsFinite(instance.Position))
       {
         particlePositions.Add(instance.Position);
+        particleInstances.Add(new ParticleInstanceInfo(entityId, entityDefinitions[entityId].Name, instance.Position));
       }
     }
 
     string? entityRoot = TryResolveEntityRootPath(bspPath);
     if (entityRoot == null)
     {
-      return new EntityRenderData(RenderMeshData.Empty, EntitySceneData.Empty, 0, 0, particlePositions.ToArray());
+      return new EntityRenderData(RenderMeshData.Empty, EntitySceneData.Empty, 0, 0, particlePositions.ToArray(), particleInstances.ToArray());
     }
 
     RpkArchiveManager rpkManager = GetOrCreateEntityArchiveManager(entityRoot, out _);
@@ -1760,12 +2008,12 @@ public static class BspLoader
 
     if (modelsById.Count == 0 || instanceCount == 0)
     {
-      return new EntityRenderData(RenderMeshData.Empty, EntitySceneData.Empty, 0, 0, particlePositions.ToArray());
+      return new EntityRenderData(RenderMeshData.Empty, EntitySceneData.Empty, 0, 0, particlePositions.ToArray(), particleInstances.ToArray());
     }
 
     RenderMeshData combined = BuildCombinedEntityMesh(modelsById, mapEntities);
     EntitySceneData sceneData = BuildEntitySceneData(modelsById, mapEntities);
-    return new EntityRenderData(combined, sceneData, modelsById.Count, instanceCount, particlePositions.ToArray());
+    return new EntityRenderData(combined, sceneData, modelsById.Count, instanceCount, particlePositions.ToArray(), particleInstances.ToArray());
   }
 
   private static bool TryLoadParticleEntityMesh(
@@ -1784,6 +2032,7 @@ public static class BspLoader
     ParticleScriptData script = ParseParticleScript(scriptText);
     string[] references = script.EntityFileReferences;
     uint particleAlphaType = script.AlphaType;
+    ParticleRuntimeDefinition runtime = script.Runtime;
     if (script.DisableDepthTest)
     {
       particleAlphaType |= ParticleAlphaFlagDisableDepthTest;
@@ -1824,7 +2073,18 @@ public static class BspLoader
 
     if (loadedModels.Count == 1)
     {
-      model = loadedModels[0];
+      EntityMeshData single = loadedModels[0];
+      model = new EntityMeshData(
+        single.Name,
+        single.Vertices,
+        single.MaterialSpans,
+        single.Materials,
+        single.MaterialSurfaceIds,
+        single.MaterialAlphaTypes,
+        single.SurfaceTextures,
+        single.SceneObjects,
+        single.SceneMatGroups,
+        runtime);
       return true;
     }
 
@@ -1838,7 +2098,8 @@ public static class BspLoader
       merged.MaterialAlphaTypes,
       merged.SurfaceTextures,
       Array.Empty<EntitySceneObject>(),
-      Array.Empty<EntitySceneMatGroup>());
+      Array.Empty<EntitySceneMatGroup>(),
+      runtime);
     return true;
   }
 
@@ -1911,76 +2172,495 @@ public static class BspLoader
     HashSet<string> references = new(StringComparer.OrdinalIgnoreCase);
     uint alphaType = DefaultParticleAlphaType;
     bool disableDepthTest = false;
+    int count = 1;
+    ParticleSpawnShape spawnShape = ParticleSpawnShape.Box;
+    ParticleFloatRange startPosX = new(0.0f, 0.0f);
+    ParticleFloatRange startPosY = new(0.0f, 0.0f);
+    ParticleFloatRange startPosZ = new(0.0f, 0.0f);
+    ParticleFloatRange liveTime = new(1.0f, 1.0f);
+    ParticleFloatRange timeSpeed = new(1.0f, 1.0f);
+    ParticleFloatRange gravityX = new(0.0f, 0.0f);
+    ParticleFloatRange gravityY = new(0.0f, 0.0f);
+    ParticleFloatRange gravityZ = new(0.0f, 0.0f);
+    ParticleFloatRange startPowerX = new(0.0f, 0.0f);
+    ParticleFloatRange startPowerY = new(0.0f, 0.0f);
+    ParticleFloatRange startPowerZ = new(0.0f, 0.0f);
+    ParticleFloatRange startScale = new(1.0f, 1.0f);
+    ParticleFloatRange startAlpha = new(255.0f, 255.0f);
+    ParticleFloatRange startColorR = new(255.0f, 255.0f);
+    ParticleFloatRange startColorG = new(255.0f, 255.0f);
+    ParticleFloatRange startColorB = new(255.0f, 255.0f);
+    ParticleFloatRange startZRot = new(0.0f, 0.0f);
+    ParticleFloatRange startYRot = new(0.0f, 0.0f);
+    float createTimeEpsilon = 0.0f;
+    float startTimeRange = 0.0f;
+    bool noLoop = false;
+    bool alwaysLive = false;
+    bool free = false;
+    bool checkCollision = false;
+    bool emitTimeEnabled = false;
+    ParticleFloatRange emitTime = new(0.0f, 0.0f);
+    bool flickerEnabled = false;
+    ParticleFloatRange flickerAlpha = new(0.0f, 0.0f);
+    ParticleFloatRange flickerTime = new(0.0f, 0.0f);
+    bool noBillboard = false;
+    bool yBillboard = false;
+    bool zBillboard = false;
+    bool zFrontEnabled = false;
+    float zFront = 0.0f;
+    List<ParticleTrackBuilder> tracks = new();
+    int currentTrack = -1;
 
     using StringReader reader = new(scriptText);
     string? line;
     while ((line = reader.ReadLine()) != null)
     {
-      int commentStart = line.IndexOf("//", StringComparison.Ordinal);
-      if (commentStart >= 0)
-      {
-        line = line[..commentStart];
-      }
-
-      line = line.Trim();
+      line = StripParticleScriptLine(line);
       if (line.Length == 0)
       {
         continue;
       }
 
-      if (line.StartsWith("entity_file", StringComparison.OrdinalIgnoreCase))
+      int splitIndex = line.IndexOfAny([' ', '\t']);
+      string keyword = splitIndex >= 0 ? line[..splitIndex] : line;
+      string tail = splitIndex >= 0 ? line[(splitIndex + 1)..] : string.Empty;
+      keyword = keyword.Trim().TrimStart('-', '+');
+      if (keyword.Length == 0)
       {
-        string tail = line["entity_file".Length..].Trim();
-        if (tail.Length == 0)
-        {
-          continue;
-        }
-
-        string token = ReadSptPathToken(tail);
-        string normalized = NormalizeSptAssetPathReference(token);
-        if (normalized.Length > 0)
-        {
-          references.Add(normalized);
-        }
-
         continue;
       }
 
-      if (line.StartsWith("alpha_type", StringComparison.OrdinalIgnoreCase))
+      switch (keyword.ToLowerInvariant())
       {
-        string tail = line["alpha_type".Length..].Trim();
-        string token = ReadSptPathToken(tail);
-        if (int.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsedAlphaType)
-          && parsedAlphaType >= 0)
+        case "entity_file":
         {
-          alphaType = (uint)parsedAlphaType;
-        }
+          string token = ReadSptPathToken(tail);
+          string normalized = NormalizeSptAssetPathReference(token);
+          if (normalized.Length > 0)
+          {
+            references.Add(normalized);
+          }
 
-        continue;
-      }
-
-      if (line.StartsWith("z_disable", StringComparison.OrdinalIgnoreCase))
-      {
-        string tail = line["z_disable".Length..].Trim();
-        if (tail.Length == 0)
-        {
-          disableDepthTest = true;
-          continue;
+          break;
         }
+        case "alpha_type":
+        {
+          string token = ReadSptPathToken(tail);
+          if (int.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsedAlphaType)
+            && parsedAlphaType >= 0)
+          {
+            alphaType = (uint)parsedAlphaType;
+          }
 
-        string token = ReadSptPathToken(tail);
-        if (int.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsedValue))
-        {
-          disableDepthTest = parsedValue != 0;
+          break;
         }
-        else
+        case "z_disable":
         {
-          disableDepthTest = true;
+          if (!TryReadParticleBoolToken(tail, out disableDepthTest))
+          {
+            disableDepthTest = true;
+          }
+
+          break;
+        }
+        case "num":
+        {
+          if (TryParseParticleRangeTail(tail, out ParticleFloatRange range))
+          {
+            count = Math.Max(1, (int)MathF.Round(range.Min));
+          }
+
+          break;
+        }
+        case "pos":
+        {
+          string positionTail = tail.Trim();
+          int modeSplit = positionTail.IndexOfAny([' ', '\t']);
+          string posMode = modeSplit >= 0 ? positionTail[..modeSplit].Trim() : positionTail.Trim();
+          if (modeSplit >= 0)
+          {
+            positionTail = positionTail[(modeSplit + 1)..];
+          }
+
+          if (posMode.Equals("sphere", StringComparison.OrdinalIgnoreCase))
+          {
+            spawnShape = ParticleSpawnShape.Sphere;
+          }
+          else if (posMode.Equals("sphere_edge", StringComparison.OrdinalIgnoreCase))
+          {
+            spawnShape = ParticleSpawnShape.SphereEdge;
+          }
+          else
+          {
+            spawnShape = ParticleSpawnShape.Box;
+          }
+
+          if (TryParseParticleRangeTriplet(positionTail, out startPosX, out startPosY, out startPosZ))
+          {
+          }
+
+          break;
+        }
+        case "live_time":
+        {
+          if (TryParseParticleRangeTail(tail, out ParticleFloatRange range))
+          {
+            liveTime = range;
+          }
+
+          break;
+        }
+        case "time_speed":
+        {
+          if (TryParseParticleRangeTail(tail, out ParticleFloatRange range))
+          {
+            timeSpeed = range;
+          }
+
+          break;
+        }
+        case "gravity":
+        {
+          if (TryParseParticleRangeTriplet(tail, out gravityX, out gravityY, out gravityZ))
+          {
+          }
+
+          break;
+        }
+        case "start_power":
+        {
+          if (TryParseParticleRangeTriplet(tail, out startPowerX, out startPowerY, out startPowerZ))
+          {
+          }
+
+          break;
+        }
+        case "start_scale":
+        {
+          if (TryParseParticleRangeTail(tail, out ParticleFloatRange range))
+          {
+            startScale = range;
+          }
+
+          break;
+        }
+        case "start_alpha":
+        {
+          if (TryParseParticleRangeTail(tail, out ParticleFloatRange range))
+          {
+            startAlpha = range;
+          }
+
+          break;
+        }
+        case "start_color":
+        {
+          if (TryParseParticleRangeTriplet(tail, out startColorR, out startColorG, out startColorB))
+          {
+          }
+
+          break;
+        }
+        case "start_zrot":
+        {
+          if (TryParseParticleRangeTail(tail, out ParticleFloatRange range))
+          {
+            startZRot = range;
+          }
+
+          break;
+        }
+        case "start_yrot":
+        {
+          if (TryParseParticleRangeTail(tail, out ParticleFloatRange range))
+          {
+            startYRot = range;
+          }
+
+          break;
+        }
+        case "create_time_epsilon":
+        {
+          if (TryParseParticleRangeTail(tail, out ParticleFloatRange range))
+          {
+            createTimeEpsilon = range.Min;
+          }
+
+          break;
+        }
+        case "start_time_range":
+        {
+          if (TryParseParticleRangeTail(tail, out ParticleFloatRange range))
+          {
+            startTimeRange = range.Min;
+          }
+
+          break;
+        }
+        case "no_loop":
+        {
+          noLoop = true;
+          break;
+        }
+        case "always_live":
+        {
+          alwaysLive = true;
+          break;
+        }
+        case "free":
+        {
+          free = true;
+          break;
+        }
+        case "check_collision":
+        {
+          checkCollision = true;
+          break;
+        }
+        case "emit_time":
+        {
+          if (TryParseParticleRangeTail(tail, out ParticleFloatRange range))
+          {
+            emitTimeEnabled = true;
+            emitTime = NormalizeParticleRange(range.Min, range.Max);
+          }
+
+          break;
+        }
+        case "flicker_alpha":
+        {
+          if (TryParseParticleRangeTail(tail, out ParticleFloatRange range))
+          {
+            flickerAlpha = NormalizeParticleRange(range.Min, range.Max);
+          }
+
+          break;
+        }
+        case "flicker_time":
+        {
+          if (TryParseParticleRangeTail(tail, out ParticleFloatRange range))
+          {
+            flickerTime = NormalizeParticleRange(range.Min, range.Max);
+          }
+
+          break;
+        }
+        case "no_billboard":
+        {
+          noBillboard = true;
+          yBillboard = false;
+          zBillboard = false;
+          break;
+        }
+        case "y_billboard":
+        {
+          yBillboard = true;
+          zBillboard = false;
+          noBillboard = false;
+          break;
+        }
+        case "z_billboard":
+        {
+          zBillboard = true;
+          yBillboard = false;
+          noBillboard = false;
+          break;
+        }
+        case "z_front":
+        {
+          if (TryParseParticleRangeTail(tail, out ParticleFloatRange range))
+          {
+            zFrontEnabled = true;
+            zFront = range.Min;
+          }
+
+          break;
+        }
+        case "time":
+        {
+          if (TryParseParticleRangeTail(tail, out ParticleFloatRange range))
+          {
+            tracks.Add(new ParticleTrackBuilder { Time = range.Min });
+            currentTrack = tracks.Count - 1;
+          }
+
+          break;
+        }
+        case "scale":
+        {
+          if (currentTrack >= 0 && TryParseParticleRangeTail(tail, out ParticleFloatRange range))
+          {
+            ParticleTrackBuilder track = tracks[currentTrack];
+            track.HasScale = true;
+            track.Scale = range;
+            tracks[currentTrack] = track;
+          }
+
+          break;
+        }
+        case "alpha":
+        {
+          if (currentTrack >= 0 && TryParseParticleRangeTail(tail, out ParticleFloatRange range))
+          {
+            ParticleTrackBuilder track = tracks[currentTrack];
+            track.HasAlpha = true;
+            track.Alpha = range;
+            tracks[currentTrack] = track;
+          }
+
+          break;
+        }
+        case "color":
+        {
+          if (currentTrack >= 0
+            && TryParseParticleRangeTriplet(tail, out ParticleFloatRange r, out ParticleFloatRange g, out ParticleFloatRange b))
+          {
+            ParticleTrackBuilder track = tracks[currentTrack];
+            track.HasColor = true;
+            track.ColorR = r;
+            track.ColorG = g;
+            track.ColorB = b;
+            tracks[currentTrack] = track;
+          }
+
+          break;
+        }
+        case "power":
+        {
+          if (currentTrack >= 0
+            && TryParseParticleRangeTriplet(tail, out ParticleFloatRange x, out ParticleFloatRange y, out ParticleFloatRange z))
+          {
+            ParticleTrackBuilder track = tracks[currentTrack];
+            track.HasPower = true;
+            track.PowerX = x;
+            track.PowerY = y;
+            track.PowerZ = z;
+            tracks[currentTrack] = track;
+          }
+
+          break;
+        }
+        case "zrot":
+        {
+          if (currentTrack >= 0 && TryParseParticleRangeTail(tail, out ParticleFloatRange range))
+          {
+            ParticleTrackBuilder track = tracks[currentTrack];
+            track.HasZRot = true;
+            track.ZRot = range;
+            tracks[currentTrack] = track;
+          }
+
+          break;
+        }
+        case "yrot":
+        {
+          if (currentTrack >= 0 && TryParseParticleRangeTail(tail, out ParticleFloatRange range))
+          {
+            ParticleTrackBuilder track = tracks[currentTrack];
+            track.HasYRot = true;
+            track.YRot = range;
+            tracks[currentTrack] = track;
+          }
+
+          break;
+        }
+        case "flicker":
+        {
+          flickerEnabled = true;
+          if (currentTrack >= 0)
+          {
+            ParticleTrackBuilder track = tracks[currentTrack];
+            track.HasFlicker = true;
+            tracks[currentTrack] = track;
+          }
+
+          break;
+        }
+        case "end":
+        {
+          currentTrack = -1;
+          break;
         }
       }
     }
 
-    return new ParticleScriptData(references.ToArray(), alphaType, disableDepthTest);
+    tracks.Sort(static (left, right) => left.Time.CompareTo(right.Time));
+    ParticleTrackKey[] runtimeTracks = new ParticleTrackKey[tracks.Count];
+    for (int index = 0; index < tracks.Count; ++index)
+    {
+      ParticleTrackBuilder source = tracks[index];
+      runtimeTracks[index] = new ParticleTrackKey(
+        source.Time,
+        source.HasScale,
+        source.Scale,
+        source.HasAlpha,
+        source.Alpha,
+        source.HasColor,
+        source.ColorR,
+        source.ColorG,
+        source.ColorB,
+        source.HasPower,
+        source.PowerX,
+        source.PowerY,
+        source.PowerZ,
+        source.HasZRot,
+        source.ZRot,
+        source.HasYRot,
+        source.YRot,
+        source.HasFlicker);
+    }
+
+    if (!emitTimeEnabled && emitTime.Min <= 0.0f && emitTime.Max <= 0.0f)
+    {
+      emitTime = new ParticleFloatRange(float.MaxValue, float.MaxValue);
+    }
+
+    ParticleFloatRange normalizedFlickerTime = NormalizeParticleRange(flickerTime.Min, flickerTime.Max);
+    if (!float.IsFinite(normalizedFlickerTime.Min) || normalizedFlickerTime.Min < 0.0f)
+    {
+      normalizedFlickerTime = new ParticleFloatRange(0.0f, 0.0f);
+    }
+
+    ParticleRuntimeDefinition runtime = new(
+      Math.Max(1, count),
+      spawnShape,
+      startPosX,
+      startPosY,
+      startPosZ,
+      NormalizeParticleRange(liveTime.Min, liveTime.Max),
+      NormalizeParticleRange(timeSpeed.Min, timeSpeed.Max),
+      gravityX,
+      gravityY,
+      gravityZ,
+      startPowerX,
+      startPowerY,
+      startPowerZ,
+      NormalizeParticleRange(startScale.Min, startScale.Max),
+      NormalizeParticleRange(startAlpha.Min, startAlpha.Max),
+      NormalizeParticleRange(startColorR.Min, startColorR.Max),
+      NormalizeParticleRange(startColorG.Min, startColorG.Max),
+      NormalizeParticleRange(startColorB.Min, startColorB.Max),
+      startZRot,
+      startYRot,
+      MathF.Max(0.0f, createTimeEpsilon),
+      Math.Clamp(startTimeRange, 0.0f, 1.0f),
+      noLoop,
+      alwaysLive,
+      free,
+      checkCollision,
+      emitTimeEnabled,
+      emitTimeEnabled ? emitTime : new ParticleFloatRange(float.MaxValue, float.MaxValue),
+      flickerEnabled,
+      NormalizeParticleRange(flickerAlpha.Min, flickerAlpha.Max),
+      normalizedFlickerTime,
+      noBillboard,
+      yBillboard,
+      zBillboard,
+      zFrontEnabled,
+      zFront,
+      runtimeTracks);
+
+    return new ParticleScriptData(references.ToArray(), alphaType, disableDepthTest, runtime);
   }
 
   private static EntityMeshData ApplyParticleScriptOverrides(EntityMeshData model, uint alphaType)
@@ -2006,8 +2686,6 @@ public static class BspLoader
           overriddenLayers[layerIndex] = sourceLayer with
           {
             AlphaType = alphaType,
-            Argb = 0xFFFFFFFFu,
-            LayerFlags = 0u,
           };
         }
 
@@ -2050,7 +2728,8 @@ public static class BspLoader
       materialAlphaTypes,
       model.SurfaceTextures,
       model.SceneObjects,
-      model.SceneMatGroups);
+      model.SceneMatGroups,
+      model.ParticleRuntime);
   }
 
   private static string ReadSptPathToken(string text)
@@ -2108,6 +2787,199 @@ public static class BspLoader
     }
 
     return normalized;
+  }
+
+  private static string StripParticleScriptLine(string line)
+  {
+    int slashCommentStart = line.IndexOf("//", StringComparison.Ordinal);
+    if (slashCommentStart >= 0)
+    {
+      line = line[..slashCommentStart];
+    }
+
+    int semicolonCommentStart = line.IndexOf(';');
+    if (semicolonCommentStart >= 0)
+    {
+      line = line[..semicolonCommentStart];
+    }
+
+    return line.Trim();
+  }
+
+  private static bool TryReadParticleBoolToken(string tail, out bool value)
+  {
+    tail = tail.Trim();
+    if (tail.Length == 0)
+    {
+      value = true;
+      return false;
+    }
+
+    string token = ReadSptPathToken(tail);
+    if (int.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsedInt))
+    {
+      value = parsedInt != 0;
+      return true;
+    }
+
+    if (bool.TryParse(token, out bool parsedBool))
+    {
+      value = parsedBool;
+      return true;
+    }
+
+    value = true;
+    return false;
+  }
+
+  private static bool TryParseParticleRangeTail(string tail, out ParticleFloatRange range)
+  {
+    int index = 0;
+    return TryReadParticleRange(tail, ref index, out range);
+  }
+
+  private static bool TryParseParticleRangeTriplet(
+    string tail,
+    out ParticleFloatRange x,
+    out ParticleFloatRange y,
+    out ParticleFloatRange z)
+  {
+    x = new ParticleFloatRange(0.0f, 0.0f);
+    y = new ParticleFloatRange(0.0f, 0.0f);
+    z = new ParticleFloatRange(0.0f, 0.0f);
+    int index = 0;
+    if (!TryReadParticleRange(tail, ref index, out x))
+    {
+      return false;
+    }
+
+    if (!TryReadParticleRange(tail, ref index, out y))
+    {
+      return false;
+    }
+
+    if (!TryReadParticleRange(tail, ref index, out z))
+    {
+      return false;
+    }
+
+    return true;
+  }
+
+  private static bool TryReadParticleRange(string text, ref int index, out ParticleFloatRange range)
+  {
+    range = new ParticleFloatRange(0.0f, 0.0f);
+    if (text.Length == 0)
+    {
+      return false;
+    }
+
+    SkipParticleTokenSeparators(text, ref index);
+    if (index >= text.Length)
+    {
+      return false;
+    }
+
+    if (text.AsSpan(index).StartsWith("rand", StringComparison.OrdinalIgnoreCase))
+    {
+      int randomStart = index;
+      index += 4;
+      while (index < text.Length && char.IsWhiteSpace(text[index]))
+      {
+        ++index;
+      }
+
+      if (index >= text.Length || text[index] != '(')
+      {
+        index = randomStart;
+        return false;
+      }
+
+      ++index;
+      int closeIndex = text.IndexOf(')', index);
+      if (closeIndex < 0)
+      {
+        return false;
+      }
+
+      string inside = text[index..closeIndex];
+      string[] parts = inside.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+      if (parts.Length == 0)
+      {
+        return false;
+      }
+
+      if (!TryParseParticleFloat(parts[0], out float min))
+      {
+        return false;
+      }
+
+      float max = min;
+      if (parts.Length > 1 && !TryParseParticleFloat(parts[1], out max))
+      {
+        return false;
+      }
+
+      range = NormalizeParticleRange(min, max);
+      index = closeIndex + 1;
+      return true;
+    }
+
+    int tokenStart = index;
+    while (index < text.Length && !char.IsWhiteSpace(text[index]) && text[index] != ';')
+    {
+      ++index;
+    }
+
+    string token = text[tokenStart..index].Trim().TrimEnd(',');
+    if (!TryParseParticleFloat(token, out float value))
+    {
+      return false;
+    }
+
+    range = new ParticleFloatRange(value, value);
+    return true;
+  }
+
+  private static void SkipParticleTokenSeparators(string text, ref int index)
+  {
+    while (index < text.Length && (char.IsWhiteSpace(text[index]) || text[index] == ','))
+    {
+      ++index;
+    }
+  }
+
+  private static bool TryParseParticleFloat(string token, out float value)
+  {
+    token = token.Trim();
+    if (token.Length == 0)
+    {
+      value = 0.0f;
+      return false;
+    }
+
+    return float.TryParse(token, NumberStyles.Float, CultureInfo.InvariantCulture, out value)
+      || float.TryParse(token, NumberStyles.Float, CultureInfo.CurrentCulture, out value);
+  }
+
+  private static ParticleFloatRange NormalizeParticleRange(float min, float max)
+  {
+    if (!float.IsFinite(min))
+    {
+      min = 0.0f;
+    }
+
+    if (!float.IsFinite(max))
+    {
+      max = min;
+    }
+
+    if (max < min)
+    {
+      (min, max) = (max, min);
+    }
+
+    return new ParticleFloatRange(min, max);
   }
 
   private static string[] ResolveSkyPaths(string bspPath, SkySourceMode skySourceMode)
@@ -2491,6 +3363,7 @@ public static class BspLoader
         Name = model.Name,
         Objects = model.SceneObjects,
         MatGroups = model.SceneMatGroups,
+        ParticleRuntime = model.ParticleRuntime,
       });
       materialBase += model.MaterialSurfaceIds.Length;
     }
@@ -2840,7 +3713,8 @@ public static class BspLoader
       materialData.LayerAlphaTypes,
       surfaceTextures,
       sceneObjects,
-      sceneMatGroups);
+      sceneMatGroups,
+      null);
   }
 
   private static EntityFileHeader ReadEntityFileHeader(BinaryReader reader)
@@ -4047,7 +4921,29 @@ public static class BspLoader
 
   private readonly record struct ExtMapEntity(int EntityId, float Scale, Vector3 Position, float RotX, float RotY);
 
-  private readonly record struct ParticleScriptData(string[] EntityFileReferences, uint AlphaType, bool DisableDepthTest);
+  private readonly record struct ParticleScriptData(string[] EntityFileReferences, uint AlphaType, bool DisableDepthTest, ParticleRuntimeDefinition Runtime);
+
+  private struct ParticleTrackBuilder
+  {
+    public float Time;
+    public bool HasScale;
+    public ParticleFloatRange Scale;
+    public bool HasAlpha;
+    public ParticleFloatRange Alpha;
+    public bool HasColor;
+    public ParticleFloatRange ColorR;
+    public ParticleFloatRange ColorG;
+    public ParticleFloatRange ColorB;
+    public bool HasPower;
+    public ParticleFloatRange PowerX;
+    public ParticleFloatRange PowerY;
+    public ParticleFloatRange PowerZ;
+    public bool HasZRot;
+    public ParticleFloatRange ZRot;
+    public bool HasYRot;
+    public ParticleFloatRange YRot;
+    public bool HasFlicker;
+  }
 
   private readonly record struct ReadEntityFace(ushort VertexCount, uint VertexStartId);
 
@@ -4094,16 +4990,28 @@ public static class BspLoader
 
   private sealed class BspData
   {
-    public BspData(Vector3[] triangleVertices, BspRenderVertex[] renderVertices, BspMaterialSpan[] materialSpans)
+    public BspData(
+      Vector3[] triangleVertices,
+      BspRenderVertex[] renderVertices,
+      BspMaterialSpan[] materialSpans,
+      Vector3[] collisionNormals,
+      BspNode[] collisionNodes,
+      BspLeafBounds[] leafBounds)
     {
       TriangleVertices = triangleVertices;
       RenderVertices = renderVertices;
       MaterialSpans = materialSpans;
+      CollisionNormals = collisionNormals;
+      CollisionNodes = collisionNodes;
+      LeafBounds = leafBounds;
     }
 
     public Vector3[] TriangleVertices { get; }
     public BspRenderVertex[] RenderVertices { get; }
     public BspMaterialSpan[] MaterialSpans { get; }
+    public Vector3[] CollisionNormals { get; }
+    public BspNode[] CollisionNodes { get; }
+    public BspLeafBounds[] LeafBounds { get; }
   }
 
   private sealed class MeshBuildResult
@@ -4240,20 +5148,22 @@ public static class BspLoader
 
   private sealed class EntityRenderData
   {
-    public static EntityRenderData Empty { get; } = new(RenderMeshData.Empty, EntitySceneData.Empty, 0, 0, Array.Empty<Vector3>());
+    public static EntityRenderData Empty { get; } = new(RenderMeshData.Empty, EntitySceneData.Empty, 0, 0, Array.Empty<Vector3>(), Array.Empty<ParticleInstanceInfo>());
 
     public EntityRenderData(
       RenderMeshData mesh,
       EntitySceneData sceneData,
       int modelCount,
       int instanceCount,
-      Vector3[] particlePositions)
+      Vector3[] particlePositions,
+      ParticleInstanceInfo[] particleInstances)
     {
       Mesh = mesh;
       SceneData = sceneData;
       ModelCount = modelCount;
       InstanceCount = instanceCount;
       ParticlePositions = particlePositions;
+      ParticleInstances = particleInstances;
     }
 
     public RenderMeshData Mesh { get; }
@@ -4261,6 +5171,7 @@ public static class BspLoader
     public int ModelCount { get; }
     public int InstanceCount { get; }
     public Vector3[] ParticlePositions { get; }
+    public ParticleInstanceInfo[] ParticleInstances { get; }
   }
 
   private sealed class EntityMeshData
@@ -4274,7 +5185,8 @@ public static class BspLoader
       uint[] materialAlphaTypes,
       R3TextureBlob[] surfaceTextures,
       EntitySceneObject[] sceneObjects,
-      EntitySceneMatGroup[] sceneMatGroups)
+      EntitySceneMatGroup[] sceneMatGroups,
+      ParticleRuntimeDefinition? particleRuntime)
     {
       Name = name;
       Vertices = vertices;
@@ -4285,6 +5197,7 @@ public static class BspLoader
       SurfaceTextures = surfaceTextures;
       SceneObjects = sceneObjects;
       SceneMatGroups = sceneMatGroups;
+      ParticleRuntime = particleRuntime;
     }
 
     public string Name { get; }
@@ -4296,6 +5209,7 @@ public static class BspLoader
     public R3TextureBlob[] SurfaceTextures { get; }
     public EntitySceneObject[] SceneObjects { get; }
     public EntitySceneMatGroup[] SceneMatGroups { get; }
+    public ParticleRuntimeDefinition? ParticleRuntime { get; }
   }
 
   private sealed class RpkArchiveManager

@@ -1,348 +1,227 @@
 using MapEditor.Formats;
 using MapEditor.Viewer;
+using OpenTK.Mathematics;
+using System.ComponentModel;
 using System.Text.Json;
 
 namespace MapEditor;
 
-internal sealed class MainForm : Form
+internal sealed partial class MainForm : Form
 {
   private readonly MapViewerControl _viewer;
-  private readonly ToolStripStatusLabel _statusLabel;
-  private readonly ToolStripComboBox _mapComboBox;
-  private readonly ToolStripDropDownButton _skySourceButton;
-  private readonly ToolStripMenuItem _skyMenuItem;
-  private readonly ToolStripMenuItem _sky2MenuItem;
-  private readonly ToolStripDropDownButton _pipelineButton;
-  private readonly ToolStripMenuItem _legacyPipelineMenuItem;
-  private readonly ToolStripMenuItem _parityPipelineMenuItem;
-  private readonly NumericUpDown _teleportXUpDown;
-  private readonly NumericUpDown _teleportYUpDown;
-  private readonly NumericUpDown _teleportZUpDown;
-  private readonly System.Windows.Forms.Timer _statusTimer;
   private readonly List<MapListEntry> _mapEntries = [];
+  private readonly List<LoadedMap> _editUndoHistory = [];
+  private readonly List<LoadedMap> _editRedoHistory = [];
   private readonly Dictionary<string, EntityArchiveCacheInfo> _entityArchiveCacheByRoot = new(StringComparer.OrdinalIgnoreCase);
   private readonly Dictionary<string, SavedCameraPosition> _lastCameraByMapPath = new(StringComparer.OrdinalIgnoreCase);
+  private const int MaxUndoHistory = 64;
   private SkySourceMode _skySourceMode = SkySourceMode.Sky2;
   private RenderPipelineMode _renderPipelineMode = RenderPipelineMode.R3Parity;
   private bool _suppressMapSelectionChanged;
   private string? _mapRootPath;
+  private LoadedMap? _loadedMap;
   private string? _loadedBspPath;
   private string? _loadedEbpPath;
+  private bool _suppressBoundaryCollisionValueChanged;
   private string _statusBaseText = "Ready. Ctrl+O open map folder | Select map in top combobox | Right mouse look | WASD move | Wheel zoom | F1 controls";
 
-  public MainForm(string[] args)
+  public MainForm()
+    : this(Array.Empty<string>(), isDesignerCtor: true)
   {
-    Text = "RF MapEditor (Viewer)";
-    Width = 1600;
-    Height = 900;
-    StartPosition = FormStartPosition.CenterScreen;
+  }
 
-    MenuStrip menu = new();
-    ToolStripMenuItem fileMenu = new("&File");
-    ToolStripMenuItem openMenu = new("&Open Map Folder...");
-    openMenu.ShortcutKeys = Keys.Control | Keys.O;
-    openMenu.Click += (_, _) => OpenMapRootFromDialog();
-    ToolStripMenuItem exitMenu = new("E&xit");
-    exitMenu.ShortcutKeys = Keys.Alt | Keys.F4;
-    exitMenu.Click += (_, _) => Close();
-    fileMenu.DropDownItems.Add(openMenu);
-    fileMenu.DropDownItems.Add(new ToolStripSeparator());
-    fileMenu.DropDownItems.Add(exitMenu);
+  public MainForm(string[] args)
+    : this(args, isDesignerCtor: false)
+  {
+  }
 
-    ToolStripMenuItem helpMenu = new("&Help");
-    ToolStripMenuItem controlsMenu = new("&Controls");
-    controlsMenu.ShortcutKeys = Keys.F1;
-    controlsMenu.Click += (_, _) => ShowControls();
-    helpMenu.DropDownItems.Add(controlsMenu);
+  private MainForm(string[] args, bool isDesignerCtor)
+  {
+    InitializeComponent();
 
-    menu.Items.Add(fileMenu);
-    menu.Items.Add(helpMenu);
-    MainMenuStrip = menu;
+    if (isDesignerCtor || IsDesignTimeHost())
+    {
+      _viewer = null!;
+      return;
+    }
 
-    ToolStrip speedStrip = new()
-    {
-      GripStyle = ToolStripGripStyle.Hidden,
-      Dock = DockStyle.Top,
-      RenderMode = ToolStripRenderMode.System,
-    };
-    speedStrip.Items.Add(new ToolStripLabel("Move Speed"));
-    NumericUpDown speedUpDown = new()
-    {
-      Minimum = 10,
-      Maximum = 50000,
-      Increment = 10,
-      DecimalPlaces = 0,
-      Value = 350,
-      Width = 90,
-    };
-    ToolStripControlHost speedHost = new(speedUpDown)
-    {
-      AutoSize = false,
-      Width = 90,
-    };
-    speedStrip.Items.Add(speedHost);
-    speedStrip.Items.Add(new ToolStripLabel("units/s"));
-    speedStrip.Items.Add(new ToolStripSeparator());
-    speedStrip.Items.Add(new ToolStripLabel("Cam X"));
-    _teleportXUpDown = new NumericUpDown
-    {
-      Minimum = -500000,
-      Maximum = 500000,
-      Increment = 10,
-      DecimalPlaces = 2,
-      Value = 0,
-      Width = 88,
-    };
-    ToolStripControlHost teleportXHost = new(_teleportXUpDown)
-    {
-      AutoSize = false,
-      Width = 88,
-    };
-    speedStrip.Items.Add(teleportXHost);
-    speedStrip.Items.Add(new ToolStripLabel("Y"));
-    _teleportYUpDown = new NumericUpDown
-    {
-      Minimum = -500000,
-      Maximum = 500000,
-      Increment = 10,
-      DecimalPlaces = 2,
-      Value = 0,
-      Width = 88,
-    };
-    ToolStripControlHost teleportYHost = new(_teleportYUpDown)
-    {
-      AutoSize = false,
-      Width = 88,
-    };
-    speedStrip.Items.Add(teleportYHost);
-    speedStrip.Items.Add(new ToolStripLabel("Z"));
-    _teleportZUpDown = new NumericUpDown
-    {
-      Minimum = -500000,
-      Maximum = 500000,
-      Increment = 10,
-      DecimalPlaces = 2,
-      Value = 0,
-      Width = 88,
-    };
-    ToolStripControlHost teleportZHost = new(_teleportZUpDown)
-    {
-      AutoSize = false,
-      Width = 88,
-    };
-    speedStrip.Items.Add(teleportZHost);
-    ToolStripButton goToCoordinateButton = new("Go")
-    {
-      ToolTipText = "Teleport camera to Cam XYZ values (display-space coordinates)",
-    };
-    goToCoordinateButton.Click += (_, _) => TeleportCameraToInputCoordinate();
-    speedStrip.Items.Add(goToCoordinateButton);
-    _teleportXUpDown.KeyDown += OnTeleportInputKeyDown;
-    _teleportYUpDown.KeyDown += OnTeleportInputKeyDown;
-    _teleportZUpDown.KeyDown += OnTeleportInputKeyDown;
-    speedStrip.Items.Add(new ToolStripSeparator());
-    speedStrip.Items.Add(new ToolStripLabel("Map"));
-    _mapComboBox = new ToolStripComboBox
-    {
-      AutoSize = false,
-      Width = 220,
-      DropDownStyle = ComboBoxStyle.DropDownList,
-      ToolTipText = "Select a map folder from the loaded map root",
-      Enabled = false,
-    };
-    _mapComboBox.SelectedIndexChanged += (_, _) => OnMapSelectionChanged();
-    speedStrip.Items.Add(_mapComboBox);
-    speedStrip.Items.Add(new ToolStripSeparator());
-    _skySourceButton = new ToolStripDropDownButton("Sky: sky2")
-    {
-      ToolTipText = "Switch loaded sky source between sky and sky2",
-    };
-    _skyMenuItem = new ToolStripMenuItem("Use sky");
-    _sky2MenuItem = new ToolStripMenuItem("Use sky2") { Checked = true };
-    _skyMenuItem.Click += (_, _) => SetSkySourceMode(SkySourceMode.Sky, reloadCurrentMap: true);
-    _sky2MenuItem.Click += (_, _) => SetSkySourceMode(SkySourceMode.Sky2, reloadCurrentMap: true);
-    _skySourceButton.DropDownItems.Add(_skyMenuItem);
-    _skySourceButton.DropDownItems.Add(_sky2MenuItem);
-    speedStrip.Items.Add(_skySourceButton);
-    _pipelineButton = new ToolStripDropDownButton("Pipe: R3Parity")
-    {
-      ToolTipText = "Switch renderer pipeline between LegacyCompat and R3Parity",
-    };
-    _legacyPipelineMenuItem = new ToolStripMenuItem("LegacyCompat");
-    _parityPipelineMenuItem = new ToolStripMenuItem("R3Parity") { Checked = true };
-    _legacyPipelineMenuItem.Click += (_, _) => SetRenderPipelineMode(RenderPipelineMode.LegacyCompat, invalidateViewer: true);
-    _parityPipelineMenuItem.Click += (_, _) => SetRenderPipelineMode(RenderPipelineMode.R3Parity, invalidateViewer: true);
-    _pipelineButton.DropDownItems.Add(_legacyPipelineMenuItem);
-    _pipelineButton.DropDownItems.Add(_parityPipelineMenuItem);
-    speedStrip.Items.Add(_pipelineButton);
-    ToolStripButton northSouthFlipButton = new("NSFlip")
-    {
-      CheckOnClick = true,
-      Checked = true,
-      ToolTipText = "Flip north/south axis (invert world Z) to match in-game orientation",
-    };
-    speedStrip.Items.Add(northSouthFlipButton);
-    speedStrip.Items.Add(new ToolStripSeparator());
-    ToolStripButton skyRenderButton = new("Sky")
-    {
-      CheckOnClick = true,
-      Checked = true,
-      ToolTipText = "Enable/disable sky rendering",
-    };
-    ToolStripButton r3tButton = new("R3T")
-    {
-      CheckOnClick = true,
-      Checked = true,
-      ToolTipText = "Enable/disable texture usage from R3T/Lgt.R3T",
-    };
-    ToolStripButton r3mButton = new("R3M")
-    {
-      CheckOnClick = true,
-      Checked = true,
-      ToolTipText = "Enable/disable material/layer behavior from R3M",
-    };
-    ToolStripButton r3eButton = new("R3E")
-    {
-      CheckOnClick = true,
-      Checked = true,
-      ToolTipText = "Enable/disable map entity rendering from R3E",
-    };
-    ToolStripButton r3xButton = new("R3X")
-    {
-      CheckOnClick = true,
-      Checked = true,
-      ToolTipText = "Enable/disable environment settings (fog/clear color) from R3X + EXT.spt",
-    };
-    speedStrip.Items.Add(skyRenderButton);
-    speedStrip.Items.Add(r3tButton);
-    speedStrip.Items.Add(r3mButton);
-    speedStrip.Items.Add(r3eButton);
-    speedStrip.Items.Add(r3xButton);
-    speedStrip.Items.Add(new ToolStripSeparator());
-    ToolStripButton collisionButton = new("Collision")
-    {
-      CheckOnClick = true,
-      Checked = true,
-      ToolTipText = "Show/hide EBP collision walls",
-    };
-    ToolStripButton gridButton = new("Grid")
-    {
-      CheckOnClick = true,
-      Checked = false,
-      ToolTipText = "Show/hide white reference grid",
-    };
-    speedStrip.Items.Add(collisionButton);
-    speedStrip.Items.Add(gridButton);
-    ToolStripButton dynamicLightButton = new("DynLight")
-    {
-      CheckOnClick = true,
-      Checked = true,
-      ToolTipText = "Enable/disable dynamic lighting pass",
-    };
-    ToolStripButton particleMarkersButton = new("FxMark")
-    {
-      CheckOnClick = true,
-      Checked = true,
-      ToolTipText = "Show/hide particle/effect instance markers",
-    };
-    speedStrip.Items.Add(dynamicLightButton);
-    speedStrip.Items.Add(particleMarkersButton);
-
-    StatusStrip status = new();
-    _statusLabel = new ToolStripStatusLabel(_statusBaseText);
-    status.Items.Add(_statusLabel);
+    KeyDown += OnMainFormKeyDown;
+    _statusLabel.Text = _statusBaseText;
+    WireUiEvents();
 
     _viewer = new MapViewerControl
     {
       Dock = DockStyle.Fill,
     };
-    _viewer.RenderPipelineMode = _renderPipelineMode;
-    _viewer.FlipNorthSouth = northSouthFlipButton.Checked;
-    _viewer.MoveSpeed = (float)speedUpDown.Value;
-    speedUpDown.ValueChanged += (_, _) => _viewer.MoveSpeed = (float)speedUpDown.Value;
-    _viewer.ShowSky = skyRenderButton.Checked;
-    skyRenderButton.CheckedChanged += (_, _) =>
-    {
-      _viewer.ShowSky = skyRenderButton.Checked;
-      _viewer.Invalidate();
-    };
-    _viewer.EnableR3tTextures = r3tButton.Checked;
-    r3tButton.CheckedChanged += (_, _) =>
-    {
-      _viewer.EnableR3tTextures = r3tButton.Checked;
-      _viewer.Invalidate();
-    };
-    _viewer.EnableR3mMaterials = r3mButton.Checked;
-    r3mButton.CheckedChanged += (_, _) =>
-    {
-      _viewer.EnableR3mMaterials = r3mButton.Checked;
-      _viewer.Invalidate();
-    };
-    _viewer.ShowR3eEntities = r3eButton.Checked;
-    r3eButton.CheckedChanged += (_, _) =>
-    {
-      _viewer.ShowR3eEntities = r3eButton.Checked;
-      _viewer.Invalidate();
-    };
-    _viewer.EnableR3xEnvironment = r3xButton.Checked;
-    r3xButton.CheckedChanged += (_, _) =>
-    {
-      _viewer.EnableR3xEnvironment = r3xButton.Checked;
-      _viewer.Invalidate();
-    };
-    _viewer.ShowCollisionOverlay = collisionButton.Checked;
-    collisionButton.CheckedChanged += (_, _) =>
-    {
-      _viewer.ShowCollisionOverlay = collisionButton.Checked;
-      _viewer.Invalidate();
-    };
-    _viewer.ShowGrid = gridButton.Checked;
-    gridButton.CheckedChanged += (_, _) =>
-    {
-      _viewer.ShowGrid = gridButton.Checked;
-      _viewer.Invalidate();
-    };
-    _viewer.EnableDynamicLighting = dynamicLightButton.Checked;
-    dynamicLightButton.CheckedChanged += (_, _) =>
-    {
-      _viewer.EnableDynamicLighting = dynamicLightButton.Checked;
-      _viewer.Invalidate();
-    };
-    _viewer.ShowParticleMarkers = particleMarkersButton.Checked;
-    particleMarkersButton.CheckedChanged += (_, _) =>
-    {
-      _viewer.ShowParticleMarkers = particleMarkersButton.Checked;
-      _viewer.Invalidate();
-    };
-    northSouthFlipButton.CheckedChanged += (_, _) =>
-    {
-      _viewer.FlipNorthSouth = northSouthFlipButton.Checked;
-      _viewer.Invalidate();
-      SyncTeleportInputsFromCamera();
-    };
-
+    _viewerHostPanel.Controls.Clear();
+    _viewerHostPanel.Controls.Add(_viewer);
+    _viewer.BringToFront();
+    InitializeViewerBindings();
     SyncTeleportInputsFromCamera();
 
-    _statusTimer = new System.Windows.Forms.Timer
-    {
-      Interval = 400,
-      Enabled = true,
-    };
     _statusTimer.Tick += (_, _) => RefreshRuntimeStatus();
+    _statusTimer.Start();
 
-    Controls.Add(_viewer);
-    Controls.Add(status);
-    Controls.Add(speedStrip);
-    Controls.Add(menu);
     SetSkySourceMode(_skySourceMode, reloadCurrentMap: false);
     SetRenderPipelineMode(_renderPipelineMode, invalidateViewer: false);
     LoadCameraPositionsFromSettings();
     FormClosing += OnMainFormClosing;
+    UpdateUndoUiState();
 
     if (args.Length > 0)
     {
       TryLoadFromArgs(args);
     }
+  }
+
+  private void WireUiEvents()
+  {
+    _openMapFolderMenuItem.Click += (_, _) => OpenMapRootFromDialog();
+    _saveEbpOnlyMenuItem.Click += (_, _) => SaveCurrentEbpOnlyFromDialog();
+    _saveMapAsMenuItem.Click += (_, _) => SaveCurrentMapAsFromDialog();
+    _exitMenuItem.Click += (_, _) => Close();
+    _controlsMenuItem.Click += (_, _) => ShowControls();
+    _showSpeedStripMenuItem.CheckedChanged += (_, _) => _speedStrip.Visible = _showSpeedStripMenuItem.Checked;
+    _showCollisionStripMenuItem.CheckedChanged += (_, _) => _collisionStrip.Visible = _showCollisionStripMenuItem.Checked;
+
+    _undoMenuItem.Click += (_, _) => UndoLastCollisionEdit();
+    _redoMenuItem.Click += (_, _) => RedoLastCollisionEdit();
+    _deleteSelectedCollisionMenuItem.Click += (_, _) => DeleteSelectedCollisionLineFromUi();
+
+    _goToCoordinateButton.Click += (_, _) => TeleportCameraToInputCoordinate();
+    _teleportXUpDown.KeyDown += OnTeleportInputKeyDown;
+    _teleportYUpDown.KeyDown += OnTeleportInputKeyDown;
+    _teleportZUpDown.KeyDown += OnTeleportInputKeyDown;
+    _mapComboBox.SelectedIndexChanged += (_, _) => OnMapSelectionChanged();
+    _skyMenuItem.Click += (_, _) => SetSkySourceMode(SkySourceMode.Sky, reloadCurrentMap: true);
+    _sky2MenuItem.Click += (_, _) => SetSkySourceMode(SkySourceMode.Sky2, reloadCurrentMap: true);
+    _legacyPipelineMenuItem.Click += (_, _) => SetRenderPipelineMode(RenderPipelineMode.LegacyCompat, invalidateViewer: true);
+    _parityPipelineMenuItem.Click += (_, _) => SetRenderPipelineMode(RenderPipelineMode.R3Parity, invalidateViewer: true);
+
+    _deleteSelectedCollisionButton.Click += (_, _) => DeleteSelectedCollisionLineFromUi();
+    _undoCollisionButton.Click += (_, _) => UndoLastCollisionEdit();
+    _redoCollisionButton.Click += (_, _) => RedoLastCollisionEdit();
+    _resetEditedCollisionButton.Click += (_, _) => ReloadCurrentMapFromDisk();
+  }
+
+  private void InitializeViewerBindings()
+  {
+    _viewer.RenderPipelineMode = _renderPipelineMode;
+    _viewer.FlipNorthSouth = _northSouthFlipButton.Checked;
+    _viewer.MoveSpeed = (float)_speedUpDown.Value;
+    _speedUpDown.ValueChanged += (_, _) => _viewer.MoveSpeed = (float)_speedUpDown.Value;
+
+    _viewer.ShowSky = _skyRenderButton.Checked;
+    _skyRenderButton.CheckedChanged += (_, _) =>
+    {
+      _viewer.ShowSky = _skyRenderButton.Checked;
+      _viewer.Invalidate();
+    };
+
+    _viewer.EnableR3tTextures = _r3tButton.Checked;
+    _r3tButton.CheckedChanged += (_, _) =>
+    {
+      _viewer.EnableR3tTextures = _r3tButton.Checked;
+      _viewer.Invalidate();
+    };
+
+    _viewer.EnableR3mMaterials = _r3mButton.Checked;
+    _r3mButton.CheckedChanged += (_, _) =>
+    {
+      _viewer.EnableR3mMaterials = _r3mButton.Checked;
+      _viewer.Invalidate();
+    };
+
+    _viewer.ShowR3eEntities = _r3eButton.Checked;
+    _r3eButton.CheckedChanged += (_, _) =>
+    {
+      _viewer.ShowR3eEntities = _r3eButton.Checked;
+      _viewer.Invalidate();
+    };
+
+    _viewer.EnableR3xEnvironment = _r3xButton.Checked;
+    _r3xButton.CheckedChanged += (_, _) =>
+    {
+      _viewer.EnableR3xEnvironment = _r3xButton.Checked;
+      _viewer.Invalidate();
+    };
+
+    _viewer.ShowCollisionOverlay = _collisionButton.Checked;
+    _collisionButton.CheckedChanged += (_, _) =>
+    {
+      _viewer.ShowCollisionOverlay = _collisionButton.Checked;
+      _viewer.Invalidate();
+    };
+
+    _viewer.ShowGrid = _gridButton.Checked;
+    _gridButton.CheckedChanged += (_, _) =>
+    {
+      _viewer.ShowGrid = _gridButton.Checked;
+      _viewer.Invalidate();
+    };
+
+    _viewer.EnableDynamicLighting = _dynamicLightButton.Checked;
+    _dynamicLightButton.CheckedChanged += (_, _) =>
+    {
+      _viewer.EnableDynamicLighting = _dynamicLightButton.Checked;
+      _viewer.Invalidate();
+    };
+
+    _viewer.ShowParticleMarkers = _particleMarkersButton.Checked;
+    _particleMarkersButton.CheckedChanged += (_, _) =>
+    {
+      _viewer.ShowParticleMarkers = _particleMarkersButton.Checked;
+      _viewer.Invalidate();
+    };
+
+    _viewer.CollisionDrawModeEnabled = _mouseDrawCollisionButton.Checked;
+    _mouseDrawCollisionButton.CheckedChanged += (_, _) =>
+    {
+      if (_mouseDrawCollisionButton.Checked && _selectCollisionButton.Checked)
+      {
+        _selectCollisionButton.Checked = false;
+      }
+
+      _viewer.CollisionDrawModeEnabled = _mouseDrawCollisionButton.Checked;
+      _viewer.Focus();
+    };
+
+    _viewer.CollisionSelectModeEnabled = _selectCollisionButton.Checked;
+    _selectCollisionButton.CheckedChanged += (_, _) =>
+    {
+      if (_selectCollisionButton.Checked && _mouseDrawCollisionButton.Checked)
+      {
+        _mouseDrawCollisionButton.Checked = false;
+      }
+
+      _viewer.CollisionSelectModeEnabled = _selectCollisionButton.Checked;
+      _viewer.Focus();
+      UpdateUndoUiState();
+    };
+
+    _viewer.CollisionDrawPreviewHeight = (float)_boundaryHeightUpDown.Value;
+    _viewer.CollisionDrawEmbedDepth = (float)_boundaryEmbedDepthUpDown.Value;
+    _viewer.CollisionDrawSnapDistance = (float)_boundarySnapDistanceUpDown.Value;
+    _boundaryMarginUpDown.ValueChanged += (_, _) => ApplySelectedCollisionLineEditsFromBoundaryInputs();
+    _boundaryHeightUpDown.ValueChanged += (_, _) => _viewer.CollisionDrawPreviewHeight = (float)_boundaryHeightUpDown.Value;
+    _boundaryHeightUpDown.ValueChanged += (_, _) => ApplySelectedCollisionLineEditsFromBoundaryInputs();
+    _boundaryEmbedDepthUpDown.ValueChanged += (_, _) => _viewer.CollisionDrawEmbedDepth = (float)_boundaryEmbedDepthUpDown.Value;
+    _boundaryEmbedDepthUpDown.ValueChanged += (_, _) => ApplySelectedCollisionLineEditsFromBoundaryInputs();
+    _boundarySnapDistanceUpDown.ValueChanged += (_, _) => _viewer.CollisionDrawSnapDistance = (float)_boundarySnapDistanceUpDown.Value;
+
+    _viewer.CollisionWallDrawRequested += OnViewerCollisionWallDrawRequested;
+    _viewer.CollisionLineSelectionChanged += OnViewerCollisionLineSelectionChanged;
+    _northSouthFlipButton.CheckedChanged += (_, _) =>
+    {
+      _viewer.FlipNorthSouth = _northSouthFlipButton.Checked;
+      _viewer.Invalidate();
+      SyncTeleportInputsFromCamera();
+    };
+  }
+
+  private static bool IsDesignTimeHost()
+  {
+    return LicenseManager.UsageMode == LicenseUsageMode.Designtime;
   }
 
   private void OpenMapRootFromDialog()
@@ -371,6 +250,115 @@ internal sealed class MainForm : Form
     }
 
     LoadMapRoot(dialog.SelectedPath, preferredBspPath: null, loadSelectedMap: true);
+  }
+
+  private void SaveCurrentMapAsFromDialog()
+  {
+    if (_loadedMap == null || string.IsNullOrWhiteSpace(_loadedBspPath) || string.IsNullOrWhiteSpace(_loadedEbpPath))
+    {
+      MessageBox.Show(this, "No map is loaded.", "Save Map As", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    using SaveFileDialog dialog = new()
+    {
+      Title = "Save BSP (EBP will be written alongside it)",
+      Filter = "RF BSP (*.bsp)|*.bsp|All files (*.*)|*.*",
+      DefaultExt = "bsp",
+      AddExtension = true,
+      OverwritePrompt = true,
+      FileName = Path.GetFileName(_loadedBspPath),
+      InitialDirectory = Path.GetDirectoryName(_loadedBspPath),
+    };
+
+    if (dialog.ShowDialog(this) != DialogResult.OK)
+    {
+      return;
+    }
+
+    string targetBspPath = Path.GetFullPath(dialog.FileName);
+    string targetEbpPath = Path.ChangeExtension(targetBspPath, ".ebp");
+    if (File.Exists(targetEbpPath))
+    {
+      DialogResult overwriteEbp = MessageBox.Show(
+        this,
+        $"Target EBP already exists:{Environment.NewLine}{targetEbpPath}{Environment.NewLine}{Environment.NewLine}Overwrite it?",
+        "Save Map As",
+        MessageBoxButtons.YesNo,
+        MessageBoxIcon.Question);
+      if (overwriteEbp != DialogResult.Yes)
+      {
+        return;
+      }
+    }
+
+    try
+    {
+      if (!TryValidateCollisionForSave(_loadedMap, out string validationError))
+      {
+        MessageBox.Show(this, validationError, "Save Map As Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        _statusBaseText = "Save blocked: invalid collision data.";
+        RefreshRuntimeStatus();
+        return;
+      }
+
+      MapExporter.ExportBspEbpPair(_loadedMap, _loadedBspPath, _loadedEbpPath, targetBspPath, targetEbpPath);
+      _statusBaseText = $"Saved BSP/EBP (+sidecars/entity): {Path.GetFileName(targetBspPath)} / {Path.GetFileName(targetEbpPath)}";
+      RefreshRuntimeStatus();
+    }
+    catch (Exception ex)
+    {
+      MessageBox.Show(this, ex.Message, "Save Map As Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+      _statusBaseText = "Save map failed.";
+      RefreshRuntimeStatus();
+    }
+  }
+
+  private void SaveCurrentEbpOnlyFromDialog()
+  {
+    if (_loadedMap == null || string.IsNullOrWhiteSpace(_loadedEbpPath))
+    {
+      MessageBox.Show(this, "No map is loaded.", "Save EBP Only", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    using SaveFileDialog dialog = new()
+    {
+      Title = "Save EBP Only",
+      Filter = "RF EBP (*.ebp)|*.ebp|All files (*.*)|*.*",
+      DefaultExt = "ebp",
+      AddExtension = true,
+      OverwritePrompt = true,
+      FileName = Path.GetFileName(_loadedEbpPath),
+      InitialDirectory = Path.GetDirectoryName(_loadedEbpPath),
+    };
+
+    if (dialog.ShowDialog(this) != DialogResult.OK)
+    {
+      return;
+    }
+
+    string targetEbpPath = Path.GetFullPath(dialog.FileName);
+    try
+    {
+      if (!TryValidateCollisionForSave(_loadedMap, out string validationError))
+      {
+        MessageBox.Show(this, validationError, "Save EBP Only Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        _statusBaseText = "Save blocked: invalid collision data.";
+        RefreshRuntimeStatus();
+        return;
+      }
+
+      MapExporter.ExportEbpOnly(_loadedMap, _loadedEbpPath, targetEbpPath);
+      _statusBaseText = $"Saved EBP: {Path.GetFileName(targetEbpPath)}";
+      RefreshRuntimeStatus();
+    }
+    catch (Exception ex)
+    {
+      MessageBox.Show(this, ex.Message, "Save EBP Only Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+      _statusBaseText = "Save EBP failed.";
+      RefreshRuntimeStatus();
+    }
   }
 
   private void TryLoadFromArgs(string[] args)
@@ -403,6 +391,9 @@ internal sealed class MainForm : Form
     {
       EntityArchiveCacheInfo archiveCache = EnsureEntityArchiveCacheForBsp(bspPath);
       LoadedMap map = BspLoader.Load(bspPath, ebpPath, _skySourceMode);
+      _editUndoHistory.Clear();
+      _editRedoHistory.Clear();
+      _loadedMap = map;
       _viewer.SetMap(map);
       _loadedBspPath = NormalizeMapPath(bspPath);
       _loadedEbpPath = Path.GetFullPath(ebpPath);
@@ -424,12 +415,17 @@ internal sealed class MainForm : Form
         + $" | Pipe: {GetRenderPipelineModeName(_renderPipelineMode)}"
         + $" | Bounds: ({map.Bounds.Min.X:F0},{map.Bounds.Min.Y:F0},{map.Bounds.Min.Z:F0})..({map.Bounds.Max.X:F0},{map.Bounds.Max.Y:F0},{map.Bounds.Max.Z:F0})";
       RefreshRuntimeStatus();
+      UpdateUndoUiState();
     }
     catch (Exception ex)
     {
+      _loadedMap = null;
+      _editUndoHistory.Clear();
+      _editRedoHistory.Clear();
       MessageBox.Show(this, ex.Message, "Load Map Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
       _statusBaseText = "Load failed.";
       RefreshRuntimeStatus();
+      UpdateUndoUiState();
     }
   }
 
@@ -439,14 +435,16 @@ internal sealed class MainForm : Form
       """
       Camera Controls
       - Ctrl+O: select map root folder
+      - Ctrl+S: save current EBP only (collision changes)
+      - Ctrl+Shift+S: save current loaded BSP/EBP as a new pair (+sidecars/entity)
+      - View menu: show/hide each toolbar row
       - Map combo (top bar): switch maps by folder name
       - Right mouse drag: look around
       - Mouse wheel: zoom in/out (forward/back)
       - W / A / S / D: move forward/left/back/right
-      - Space / Ctrl: move up/down
-      - Shift: faster movement
+      - Space/Ctrl/Shift movement is disabled (reserved for shortcuts)
       - Move speed: top bar numeric box
-      - Cam X/Y/Z + Go: teleport camera to exact Cam XYZ coordinate
+      - Cam X/Y/Z + Go: teleport camera to exact source/game XYZ coordinate
       - Sky dropdown: switch between sky and sky2 source
       - Pipe dropdown: switch renderer (`LegacyCompat` or `R3Parity`)
       - Sky button: show/hide sky render
@@ -454,13 +452,21 @@ internal sealed class MainForm : Form
       - R3M button: toggle material-layer behavior
       - R3E button: toggle map entities/particles
       - R3X button: toggle environment fog/clear color
+      - Collision strip (2nd row): EBP/collision tools
       - Collision button: show/hide EBP collision walls
       - Grid button: show/hide white reference grid
+      - DrawWall: left click-drag-release in viewport to append one collision wall
+      - SelWall: left click wall segment in viewport to select one collision wall
+      - DelSel/Delete: remove currently selected collision wall segment
+      - DrawWall preview turns green when endpoint glue/snap will happen
+      - Undo button or Ctrl+Z: undo latest collision edits (up to 64 steps)
+      - Redo button or Ctrl+Y/Ctrl+Shift+Z: redo last undone edit
+      - ResetMap: discard unsaved edits and reload map from source files
       - DynLight button: toggle dynamic lighting
       - FxMark button: toggle particle/effect map markers
       - R: reset camera to map default
       - Esc: release mouse-look capture
-      - Top-left HUD: camera coordinates (Cam XYZ / Src XYZ)
+      - Top-left HUD: camera coordinates (Cam XYZ, source/game-space)
       - Camera position is saved per map and restored on next load
       """;
 
@@ -484,7 +490,7 @@ internal sealed class MainForm : Form
     float x = (float)_teleportXUpDown.Value;
     float y = (float)_teleportYUpDown.Value;
     float z = (float)_teleportZUpDown.Value;
-    if (!_viewer.TrySetCameraDisplayPosition(x, y, z))
+    if (!_viewer.TrySetCameraSourcePosition(x, y, z))
     {
       return;
     }
@@ -495,10 +501,322 @@ internal sealed class MainForm : Form
 
   private void SyncTeleportInputsFromCamera()
   {
-    (float x, float y, float z) = _viewer.GetCameraDisplayPosition();
+    (float x, float y, float z) = _viewer.GetCameraSourcePosition();
     SetNumericUpDownValue(_teleportXUpDown, x);
     SetNumericUpDownValue(_teleportYUpDown, y);
     SetNumericUpDownValue(_teleportZUpDown, z);
+  }
+
+  private void OnViewerCollisionWallDrawRequested(Vector3 sourceStart, Vector3 sourceEnd)
+  {
+    if (_loadedMap == null)
+    {
+      return;
+    }
+
+    TryOrientDrawnCollisionSegmentTowardCamera(ref sourceStart, ref sourceEnd);
+
+    float wallHeight = (float)_boundaryHeightUpDown.Value;
+    float bury = (float)_boundaryEmbedDepthUpDown.Value;
+    float snap = (float)_boundarySnapDistanceUpDown.Value;
+    if (!MapEditOperations.TryAppendCollisionWallSegment(
+      _loadedMap,
+      sourceStart,
+      sourceEnd,
+      wallHeight,
+      bury,
+      snap,
+      out LoadedMap editedMap,
+      out string error,
+      out float resolvedWallHeight,
+      out float resolvedEmbedDepth,
+      out bool startSnapped,
+      out bool endSnapped))
+    {
+      if (string.Equals(error, "Collision segment is too short after snap.", StringComparison.Ordinal) ||
+          string.Equals(error, "Collision segment is too short.", StringComparison.Ordinal))
+      {
+        _statusBaseText = $"Mouse draw skipped: {error} | Tip: drag longer or reduce B-Snap";
+        RefreshRuntimeStatus();
+        return;
+      }
+
+      MessageBox.Show(this, error, "Mouse Draw Collision Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+      return;
+    }
+
+    ApplyEditedMap(editedMap);
+    _statusBaseText =
+      $"Collision wall drawn | Height: {resolvedWallHeight:F0} | Bury: {resolvedEmbedDepth:F0} | Snap: {snap:F0}"
+      + $" | Glue: {(startSnapped || endSnapped ? "Y" : "N")}"
+      + $" | A: ({sourceStart.X:F1},{sourceStart.Y:F1},{sourceStart.Z:F1})"
+      + $" | B: ({sourceEnd.X:F1},{sourceEnd.Y:F1},{sourceEnd.Z:F1})"
+      + $" | Collision: {_loadedMap.CollisionVertices.Length:N0}v/{_loadedMap.CollisionLines.Length:N0}l";
+    RefreshRuntimeStatus();
+  }
+
+  private void OnViewerCollisionLineSelectionChanged(int selectedLineIndex)
+  {
+    UpdateUndoUiState();
+    if (_loadedMap == null)
+    {
+      return;
+    }
+
+    if ((uint)selectedLineIndex < (uint)_loadedMap.CollisionLines.Length)
+    {
+      CollisionLine selected = _loadedMap.CollisionLines[selectedLineIndex];
+      if (MapEditOperations.TryGetCollisionLineEditValues(
+        _loadedMap,
+        selectedLineIndex,
+        out float selectedMargin,
+        out float selectedHeight,
+        out float selectedBury,
+        out _))
+      {
+        _suppressBoundaryCollisionValueChanged = true;
+        try
+        {
+          SetNumericUpDownValue(_boundaryMarginUpDown, selectedMargin);
+          SetNumericUpDownValue(_boundaryHeightUpDown, selectedHeight);
+          SetNumericUpDownValue(_boundaryEmbedDepthUpDown, selectedBury);
+        }
+        finally
+        {
+          _suppressBoundaryCollisionValueChanged = false;
+        }
+      }
+
+      _statusBaseText =
+        $"Selected collision #{selectedLineIndex:N0} | V:{selected.StartVertex}->{selected.EndVertex} | Height:{selected.Height:F1} | Attr:0x{selected.Attribute:X8}";
+      RefreshRuntimeStatus();
+    }
+  }
+
+  private void TryOrientDrawnCollisionSegmentTowardCamera(ref Vector3 sourceStart, ref Vector3 sourceEnd)
+  {
+    if (!_viewer.TryGetCameraSourcePose(out Vector3 sourceCameraPosition, out _))
+    {
+      return;
+    }
+
+    Vector3 horizontalDirection = sourceEnd - sourceStart;
+    horizontalDirection.Y = 0.0f;
+    if (horizontalDirection.LengthSquared < 0.000001f)
+    {
+      return;
+    }
+
+    Vector3 segmentCenter = (sourceStart + sourceEnd) * 0.5f;
+    Vector3 toCamera = sourceCameraPosition - segmentCenter;
+    toCamera.Y = 0.0f;
+    if (toCamera.LengthSquared < 0.000001f)
+    {
+      return;
+    }
+
+    // RF collision front uses the opposite side of the generated triangle winding.
+    Vector3 frontNormal = Vector3.Cross(Vector3.UnitY, horizontalDirection);
+    if (frontNormal.LengthSquared < 0.000001f)
+    {
+      return;
+    }
+
+    if (Vector3.Dot(frontNormal, toCamera) < 0.0f)
+    {
+      (sourceStart, sourceEnd) = (sourceEnd, sourceStart);
+    }
+  }
+
+  private void ApplySelectedCollisionLineEditsFromBoundaryInputs()
+  {
+    if (_suppressBoundaryCollisionValueChanged || _loadedMap == null)
+    {
+      return;
+    }
+
+    int selectedLineIndex = _viewer.SelectedCollisionLineIndex;
+    if ((uint)selectedLineIndex >= (uint)_loadedMap.CollisionLines.Length)
+    {
+      return;
+    }
+
+    float margin = (float)_boundaryMarginUpDown.Value;
+    float height = (float)_boundaryHeightUpDown.Value;
+    float bury = (float)_boundaryEmbedDepthUpDown.Value;
+    if (!MapEditOperations.TryEditCollisionLineDimensions(
+      _loadedMap,
+      selectedLineIndex,
+      margin,
+      height,
+      bury,
+      out LoadedMap editedMap,
+      out string error))
+    {
+      _statusBaseText = $"Selected collision edit skipped: {error}";
+      RefreshRuntimeStatus();
+      return;
+    }
+
+    ApplyEditedMap(editedMap, preferredSelectionIndex: selectedLineIndex);
+    _statusBaseText =
+      $"Edited collision #{selectedLineIndex:N0} | Margin:{margin:F0} | Height:{height:F0} | Bury:{bury:F0}"
+      + $" | Collision: {_loadedMap.CollisionVertices.Length:N0}v/{_loadedMap.CollisionLines.Length:N0}l";
+    RefreshRuntimeStatus();
+  }
+
+  private void DeleteSelectedCollisionLineFromUi()
+  {
+    if (_loadedMap == null)
+    {
+      MessageBox.Show(this, "No map is loaded.", "Delete Collision Segment", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    int selectedLineIndex = _viewer.SelectedCollisionLineIndex;
+    if ((uint)selectedLineIndex >= (uint)_loadedMap.CollisionLines.Length)
+    {
+      MessageBox.Show(this, "No collision segment is selected.", "Delete Collision Segment", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    if (!MapEditOperations.TryRemoveCollisionLine(_loadedMap, selectedLineIndex, out LoadedMap editedMap, out string error))
+    {
+      MessageBox.Show(this, error, "Delete Collision Segment Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+      return;
+    }
+
+    int nextSelectionIndex = Math.Min(selectedLineIndex, editedMap.CollisionLines.Length - 1);
+    ApplyEditedMap(editedMap, preferredSelectionIndex: nextSelectionIndex);
+    _statusBaseText =
+      $"Collision segment deleted #{selectedLineIndex:N0} | Collision: {_loadedMap.CollisionVertices.Length:N0}v/{_loadedMap.CollisionLines.Length:N0}l";
+    RefreshRuntimeStatus();
+  }
+
+  private void ReloadCurrentMapFromDisk()
+  {
+    if (string.IsNullOrWhiteSpace(_loadedBspPath) || string.IsNullOrWhiteSpace(_loadedEbpPath))
+    {
+      return;
+    }
+
+    LoadMap(_loadedBspPath, _loadedEbpPath);
+  }
+
+  private void ApplyEditedMap(LoadedMap editedMap, int preferredSelectionIndex = -1, bool trackUndo = true, bool clearRedo = true)
+  {
+    if (trackUndo && _loadedMap != null)
+    {
+      _editUndoHistory.Add(_loadedMap);
+      if (_editUndoHistory.Count > MaxUndoHistory)
+      {
+        _editUndoHistory.RemoveAt(0);
+      }
+    }
+    if (clearRedo)
+    {
+      _editRedoHistory.Clear();
+    }
+
+    int selectionIndex = preferredSelectionIndex >= 0 ? preferredSelectionIndex : _viewer.SelectedCollisionLineIndex;
+    _loadedMap = editedMap;
+    _viewer.ApplyCollisionEditedMap(editedMap);
+    _viewer.SetSelectedCollisionLineIndex(selectionIndex);
+    SyncTeleportInputsFromCamera();
+    UpdateUndoUiState();
+  }
+
+  private void UndoLastCollisionEdit()
+  {
+    if (_loadedMap == null || _editUndoHistory.Count == 0)
+    {
+      return;
+    }
+
+    int lastIndex = _editUndoHistory.Count - 1;
+    LoadedMap previousMap = _editUndoHistory[lastIndex];
+    _editUndoHistory.RemoveAt(lastIndex);
+    _editRedoHistory.Add(_loadedMap);
+    if (_editRedoHistory.Count > MaxUndoHistory)
+    {
+      _editRedoHistory.RemoveAt(0);
+    }
+
+    ApplyEditedMap(previousMap, trackUndo: false, clearRedo: false);
+    _statusBaseText =
+      $"Undo collision edit | Collision: {_loadedMap.CollisionVertices.Length:N0}v/{_loadedMap.CollisionLines.Length:N0}l"
+      + $" | Undo left: {_editUndoHistory.Count:N0} | Redo: {_editRedoHistory.Count:N0}";
+    RefreshRuntimeStatus();
+  }
+
+  private void RedoLastCollisionEdit()
+  {
+    if (_loadedMap == null || _editRedoHistory.Count == 0)
+    {
+      return;
+    }
+
+    int lastIndex = _editRedoHistory.Count - 1;
+    LoadedMap nextMap = _editRedoHistory[lastIndex];
+    _editRedoHistory.RemoveAt(lastIndex);
+    _editUndoHistory.Add(_loadedMap);
+    if (_editUndoHistory.Count > MaxUndoHistory)
+    {
+      _editUndoHistory.RemoveAt(0);
+    }
+
+    ApplyEditedMap(nextMap, trackUndo: false, clearRedo: false);
+    _statusBaseText =
+      $"Redo collision edit | Collision: {_loadedMap.CollisionVertices.Length:N0}v/{_loadedMap.CollisionLines.Length:N0}l"
+      + $" | Undo: {_editUndoHistory.Count:N0} | Redo left: {_editRedoHistory.Count:N0}";
+    RefreshRuntimeStatus();
+  }
+
+  private void UpdateUndoUiState()
+  {
+    bool hasMap = _loadedMap != null;
+    bool canUndo = hasMap && _editUndoHistory.Count > 0;
+    bool canRedo = hasMap && _editRedoHistory.Count > 0;
+    bool canDeleteSelected = hasMap && _viewer.SelectedCollisionLineIndex >= 0;
+    _undoCollisionButton.Enabled = canUndo;
+    _undoMenuItem.Enabled = canUndo;
+    _redoCollisionButton.Enabled = canRedo;
+    _redoMenuItem.Enabled = canRedo;
+    _deleteSelectedCollisionButton.Enabled = canDeleteSelected;
+    _deleteSelectedCollisionMenuItem.Enabled = canDeleteSelected;
+  }
+
+  private void OnMainFormKeyDown(object? sender, KeyEventArgs e)
+  {
+    if (!e.Control && !e.Alt && e.KeyCode == Keys.Delete)
+    {
+      e.Handled = true;
+      e.SuppressKeyPress = true;
+      DeleteSelectedCollisionLineFromUi();
+      return;
+    }
+
+    if (e.Control && e.KeyCode == Keys.Z)
+    {
+      e.Handled = true;
+      e.SuppressKeyPress = true;
+      if (e.Shift)
+      {
+        RedoLastCollisionEdit();
+      }
+      else
+      {
+        UndoLastCollisionEdit();
+      }
+      return;
+    }
+
+    if (e.Control && e.KeyCode == Keys.Y)
+    {
+      e.Handled = true;
+      e.SuppressKeyPress = true;
+      RedoLastCollisionEdit();
+    }
   }
 
   private static void SetNumericUpDownValue(NumericUpDown input, float value)
@@ -519,6 +837,68 @@ internal sealed class MainForm : Form
     }
 
     input.Value = bounded;
+  }
+
+  private static bool TryValidateCollisionForSave(LoadedMap map, out string error)
+  {
+    error = string.Empty;
+    if (map.CollisionVertices.Length > ushort.MaxValue)
+    {
+      error = $"Collision vertex count exceeds {ushort.MaxValue}.";
+      return false;
+    }
+
+    if (map.CollisionLines.Length > ushort.MaxValue)
+    {
+      error = $"Collision line count exceeds {ushort.MaxValue}.";
+      return false;
+    }
+
+    for (int vertexIndex = 0; vertexIndex < map.CollisionVertices.Length; ++vertexIndex)
+    {
+      Vector3 vertex = map.CollisionVertices[vertexIndex];
+      if (!float.IsFinite(vertex.X) || !float.IsFinite(vertex.Y) || !float.IsFinite(vertex.Z))
+      {
+        error = $"Collision vertex {vertexIndex} has invalid coordinate.";
+        return false;
+      }
+    }
+
+    for (int lineIndex = 0; lineIndex < map.CollisionLines.Length; ++lineIndex)
+    {
+      CollisionLine line = map.CollisionLines[lineIndex];
+      if (line.StartVertex >= map.CollisionVertices.Length || line.EndVertex >= map.CollisionVertices.Length)
+      {
+        error = $"Collision line {lineIndex} references out-of-range vertex ({line.StartVertex}->{line.EndVertex}).";
+        return false;
+      }
+
+      bool isSentinelLine =
+        lineIndex == 0 &&
+        line.Attribute == 0 &&
+        line.StartVertex == 0 &&
+        line.EndVertex == 0 &&
+        line.FrontLeaf == 0 &&
+        line.BackLeaf == 0 &&
+        line.Height == 0.0f;
+
+      if (!isSentinelLine && (!float.IsFinite(line.Height) || line.Height <= 0.0f))
+      {
+        error = $"Collision line {lineIndex} has invalid height ({line.Height}).";
+        return false;
+      }
+
+      Vector3 start = map.CollisionVertices[line.StartVertex];
+      Vector3 end = map.CollisionVertices[line.EndVertex];
+      float lengthSq = (end - start).LengthSquared;
+      if (!isSentinelLine && (!float.IsFinite(lengthSq) || lengthSq < 0.0001f))
+      {
+        error = $"Collision line {lineIndex} is too short (degenerate).";
+        return false;
+      }
+    }
+
+    return true;
   }
 
   private void SetSkySourceMode(SkySourceMode skySourceMode, bool reloadCurrentMap)
@@ -585,7 +965,8 @@ internal sealed class MainForm : Form
       _statusBaseText
       + $" | ParityDC: {_viewer.ParityEntityDrawCalls:N0}"
       + $" | ParityAnimObj: {_viewer.ParityAnimatedObjectUpdates:N0}"
-      + $" | ParitySkipLayer: {_viewer.ParitySkippedLayers:N0}";
+      + $" | ParitySkipLayer: {_viewer.ParitySkippedLayers:N0}"
+      + $" | ParityCull: {_viewer.ParityCulledDynamicInstances:N0}";
   }
 
   private void OnMainFormClosing(object? sender, FormClosingEventArgs e)

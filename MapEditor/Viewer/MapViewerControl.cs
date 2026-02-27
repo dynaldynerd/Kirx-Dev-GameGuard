@@ -62,8 +62,12 @@ internal sealed class MapViewerControl : UserControl
   private const uint MaterialLayerFlagAniAlphaFlicker = 0x00000400;
   private const uint MaterialLayerFlagAniTexture = 0x00000800;
   private const uint MaterialLayerFlagAniTileTexture = 0x00001000;
+  private const uint CollisionLineAttrFreeze = 0x40000000u;
   private const float SkyExposure = 1.18f;
+  private const float ParityDynamicEntityCullDistance = 20000.0f;
   private static readonly Vector3 DefaultClearColor = new(0.05f, 0.06f, 0.08f);
+  private static readonly Vector4 CollisionWallNormalOverlayColor = new(0.00f, 1.00f, 0.62f, 0.40f);
+  private static readonly Vector4 CollisionWallFrozenOverlayColor = new(0.00f, 0.92f, 1.00f, 0.50f);
   private const int MaxDynamicLights = 4;
   private const int MaxGlobalAlphaSortSpans = 256;
   private const int NearestEntityOverlayRefreshMs = 120;
@@ -84,6 +88,7 @@ internal sealed class MapViewerControl : UserControl
   private readonly Dictionary<int, int> _lightMapIdToTexture = [];
   private readonly Dictionary<int, EntitySceneModel> _entitySceneModelsById = [];
   private readonly Dictionary<int, bool> _entitySceneModelHasAnimation = [];
+  private readonly Dictionary<int, float> _entitySceneModelApproxRadius = [];
 
   private FreeCamera _camera = new(new Vector3(0f, 100f, 250f));
   private MapBounds _currentBounds = new(new Vector3(-100f, -100f, -100f), new Vector3(100f, 100f, 100f));
@@ -185,6 +190,9 @@ internal sealed class MapViewerControl : UserControl
   private int _wallVao;
   private int _wallVbo;
   private int _wallVertexCount;
+  private int _wallFrozenVao;
+  private int _wallFrozenVbo;
+  private int _wallFrozenVertexCount;
   private int _wallUniformMvp;
   private int _wallUniformColor;
   private int _particleProgram;
@@ -194,6 +202,23 @@ internal sealed class MapViewerControl : UserControl
   private int _particleUniformMvp;
   private int _particleUniformColor;
   private bool _showParticleMarkers = true;
+  private bool _collisionDrawModeEnabled;
+  private bool _collisionSelectModeEnabled;
+  private bool _collisionDrawDragging;
+  private Vector3 _collisionDrawStartSource;
+  private Vector3 _collisionDrawCurrentSource;
+  private float _collisionDrawPreviewHeight = 3000f;
+  private float _collisionDrawEmbedDepth = 80f;
+  private float _collisionDrawSnapDistance = 80f;
+  private bool _collisionDrawStartSnapped;
+  private bool _collisionDrawEndSnapped;
+  private int _collisionDrawPreviewVao;
+  private int _collisionDrawPreviewVbo;
+  private int _collisionDrawPreviewVertexCount;
+  private int _collisionSelectionVao;
+  private int _collisionSelectionVbo;
+  private int _collisionSelectionVertexCount;
+  private int _selectedCollisionLineIndex = -1;
 
   private int _clipDebugProgram;
   private int _checkerTexture;
@@ -215,10 +240,13 @@ internal sealed class MapViewerControl : UserControl
   private int _parityEntityDrawCalls;
   private int _parityAnimatedObjectUpdates;
   private int _paritySkippedLayers;
+  private int _parityCulledDynamicInstances;
   private bool _hasAnimatedEntityInstances;
   private string _lastCameraOverlayText = string.Empty;
   private long _lastNearestEntityOverlayTickMs = long.MinValue;
   private string _lastNearestEntityOverlayText = "Nearest Ent: n/a";
+  private long _lastNearestFxOverlayTickMs = long.MinValue;
+  private string _lastNearestFxOverlayText = "Nearest FX: n/a";
 
   [DllImport("user32.dll")]
   private static extern short GetAsyncKeyState(int vKey);
@@ -232,10 +260,19 @@ internal sealed class MapViewerControl : UserControl
   public int ParityEntityDrawCalls => _parityEntityDrawCalls;
   public int ParityAnimatedObjectUpdates => _parityAnimatedObjectUpdates;
   public int ParitySkippedLayers => _paritySkippedLayers;
+  public int ParityCulledDynamicInstances => _parityCulledDynamicInstances;
+  public int SelectedCollisionLineIndex => _selectedCollisionLineIndex;
+  public event Action<Vector3, Vector3>? CollisionWallDrawRequested;
+  public event Action<int>? CollisionLineSelectionChanged;
 
   public (float X, float Y, float Z) GetCameraDisplayPosition()
   {
     return (_camera.Position.X, _camera.Position.Y, _camera.Position.Z);
+  }
+
+  public (float X, float Y, float Z, float Yaw, float Pitch) GetCameraDisplayPose()
+  {
+    return (_camera.Position.X, _camera.Position.Y, _camera.Position.Z, _camera.Yaw, _camera.Pitch);
   }
 
   public bool TrySetCameraDisplayPosition(float x, float y, float z)
@@ -256,10 +293,77 @@ internal sealed class MapViewerControl : UserControl
     return true;
   }
 
+  public bool TrySetCameraDisplayPose(float x, float y, float z, float yaw, float pitch)
+  {
+    if (_map == null)
+    {
+      return false;
+    }
+
+    if (!float.IsFinite(x) || !float.IsFinite(y) || !float.IsFinite(z) || !float.IsFinite(yaw) || !float.IsFinite(pitch))
+    {
+      return false;
+    }
+
+    _camera = new FreeCamera(new Vector3(x, y, z), yaw, MathHelper.Clamp(pitch, -89f, 89f));
+    UpdateCameraOverlay();
+    _glControl.Invalidate();
+    return true;
+  }
+
+  public void ApplyCollisionEditedMap(LoadedMap map)
+  {
+    if (map == null)
+    {
+      return;
+    }
+
+    _map = map;
+    _currentBounds = ConvertBoundsForDisplay(map.Bounds);
+    if (_selectedCollisionLineIndex >= map.CollisionLines.Length)
+    {
+      _selectedCollisionLineIndex = -1;
+    }
+
+    if (_glReady)
+    {
+      if (TryMakeCurrent())
+      {
+        UploadCollisionGeometryOnly();
+      }
+    }
+
+    UpdateCameraOverlay();
+    _glControl.Invalidate();
+  }
+
   public (float X, float Y, float Z) GetCameraSourcePosition()
   {
     Vector3 sourcePosition = ConvertSourcePosition(_camera.Position);
     return (sourcePosition.X, sourcePosition.Y, sourcePosition.Z);
+  }
+
+  public bool TryGetCameraSourcePose(out Vector3 sourcePosition, out Vector3 sourceForward)
+  {
+    if (_map == null)
+    {
+      sourcePosition = Vector3.Zero;
+      sourceForward = new Vector3(0f, 0f, -1f);
+      return false;
+    }
+
+    sourcePosition = ConvertSourcePosition(_camera.Position);
+    sourceForward = ConvertSourceDirection(_camera.Forward);
+    if (sourceForward.LengthSquared < 0.000001f)
+    {
+      sourceForward = new Vector3(0f, 0f, -1f);
+    }
+    else
+    {
+      sourceForward = Vector3.Normalize(sourceForward);
+    }
+
+    return true;
   }
 
   public bool TrySetCameraSourcePosition(float x, float y, float z)
@@ -357,6 +461,141 @@ internal sealed class MapViewerControl : UserControl
   {
     get => _showParticleMarkers;
     set => _showParticleMarkers = value;
+  }
+
+  [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+  public bool CollisionDrawModeEnabled
+  {
+    get => _collisionDrawModeEnabled;
+    set
+    {
+      if (_collisionDrawModeEnabled == value)
+      {
+        return;
+      }
+
+      _collisionDrawModeEnabled = value;
+      if (!_collisionDrawModeEnabled)
+      {
+        _collisionDrawDragging = false;
+        UpdateCollisionDrawPreviewBuffer();
+      }
+      else if (_collisionSelectModeEnabled)
+      {
+        _collisionSelectModeEnabled = false;
+      }
+
+      _glControl.Invalidate();
+    }
+  }
+
+  [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+  public bool CollisionSelectModeEnabled
+  {
+    get => _collisionSelectModeEnabled;
+    set
+    {
+      if (_collisionSelectModeEnabled == value)
+      {
+        return;
+      }
+
+      _collisionSelectModeEnabled = value;
+      if (_collisionSelectModeEnabled)
+      {
+        _collisionDrawModeEnabled = false;
+        if (_collisionDrawDragging)
+        {
+          _collisionDrawDragging = false;
+          UpdateCollisionDrawPreviewBuffer();
+        }
+      }
+
+      _glControl.Invalidate();
+    }
+  }
+
+  public void SetSelectedCollisionLineIndex(int lineIndex)
+  {
+    int normalized = -1;
+    if (_map != null && (uint)lineIndex < (uint)_map.CollisionLines.Length)
+    {
+      normalized = lineIndex;
+    }
+
+    if (_selectedCollisionLineIndex == normalized)
+    {
+      return;
+    }
+
+    _selectedCollisionLineIndex = normalized;
+    UpdateCollisionSelectionBuffer();
+    CollisionLineSelectionChanged?.Invoke(_selectedCollisionLineIndex);
+  }
+
+  public void ClearSelectedCollisionLine()
+  {
+    SetSelectedCollisionLineIndex(-1);
+  }
+
+  [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+  public float CollisionDrawPreviewHeight
+  {
+    get => _collisionDrawPreviewHeight;
+    set
+    {
+      float bounded = Math.Clamp(value, 1.0f, 50000.0f);
+      if (MathF.Abs(_collisionDrawPreviewHeight - bounded) < 0.0001f)
+      {
+        return;
+      }
+
+      _collisionDrawPreviewHeight = bounded;
+      if (_collisionDrawDragging)
+      {
+        UpdateCollisionDrawPreviewBuffer();
+      }
+    }
+  }
+
+  [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+  public float CollisionDrawEmbedDepth
+  {
+    get => _collisionDrawEmbedDepth;
+    set
+    {
+      float bounded = Math.Clamp(value, 0.0f, 50000.0f);
+      if (MathF.Abs(_collisionDrawEmbedDepth - bounded) < 0.0001f)
+      {
+        return;
+      }
+
+      _collisionDrawEmbedDepth = bounded;
+      if (_collisionDrawDragging)
+      {
+        UpdateCollisionDrawPreviewBuffer();
+      }
+    }
+  }
+
+  [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+  public float CollisionDrawSnapDistance
+  {
+    get => _collisionDrawSnapDistance;
+    set
+    {
+      float bounded = Math.Clamp(value, 0.0f, 10000.0f);
+      if (MathF.Abs(_collisionDrawSnapDistance - bounded) < 0.0001f)
+      {
+        return;
+      }
+
+      _collisionDrawSnapDistance = bounded;
+      if (_collisionDrawDragging)
+      {
+        UpdateCollisionDrawPreviewBuffer();
+      }
+    }
   }
 
   [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -491,8 +730,14 @@ internal sealed class MapViewerControl : UserControl
     _map = map;
     _currentBounds = ConvertBoundsForDisplay(map.Bounds);
     _camera = CreateDefaultCamera(map);
+    _selectedCollisionLineIndex = -1;
+    _collisionDrawDragging = false;
+    _collisionDrawStartSnapped = false;
+    _collisionDrawEndSnapped = false;
     _lastNearestEntityOverlayTickMs = long.MinValue;
     _lastNearestEntityOverlayText = "Nearest Ent: n/a";
+    _lastNearestFxOverlayTickMs = long.MinValue;
+    _lastNearestFxOverlayText = "Nearest FX: n/a";
     BuildEntitySceneModelLookup(map);
 
     if (_glReady)
@@ -511,12 +756,14 @@ internal sealed class MapViewerControl : UserControl
   {
     _entitySceneModelsById.Clear();
     _entitySceneModelHasAnimation.Clear();
+    _entitySceneModelApproxRadius.Clear();
     EntitySceneData scene = map.EntityScene;
     for (int index = 0; index < scene.Models.Length; ++index)
     {
       EntitySceneModel model = scene.Models[index];
       _entitySceneModelsById[model.EntityId] = model;
       _entitySceneModelHasAnimation[model.EntityId] = ModelHasAnimation(model);
+      _entitySceneModelApproxRadius[model.EntityId] = ComputeApproxModelRadius(model);
     }
 
     _hasAnimatedEntityInstances = false;
@@ -533,6 +780,11 @@ internal sealed class MapViewerControl : UserControl
 
   private static bool ModelHasAnimation(EntitySceneModel model)
   {
+    if (model.ParticleRuntime.HasValue)
+    {
+      return true;
+    }
+
     for (int objectIndex = 0; objectIndex < model.Objects.Length; ++objectIndex)
     {
       EntitySceneObject obj = model.Objects[objectIndex];
@@ -543,6 +795,64 @@ internal sealed class MapViewerControl : UserControl
     }
 
     return false;
+  }
+
+  private static float ComputeApproxModelRadius(EntitySceneModel model)
+  {
+    float maxDistanceSq = 0.0f;
+    for (int groupIndex = 0; groupIndex < model.MatGroups.Length; ++groupIndex)
+    {
+      BspRenderVertex[] localVertices = model.MatGroups[groupIndex].LocalVertices;
+      for (int vertexIndex = 0; vertexIndex < localVertices.Length; ++vertexIndex)
+      {
+        float distanceSq = localVertices[vertexIndex].Position.LengthSquared;
+        if (float.IsFinite(distanceSq) && distanceSq > maxDistanceSq)
+        {
+          maxDistanceSq = distanceSq;
+        }
+      }
+    }
+
+    for (int objectIndex = 0; objectIndex < model.Objects.Length; ++objectIndex)
+    {
+      float distanceSq = model.Objects[objectIndex].Position.LengthSquared;
+      if (float.IsFinite(distanceSq) && distanceSq > maxDistanceSq)
+      {
+        maxDistanceSq = distanceSq;
+      }
+    }
+
+    if (!float.IsFinite(maxDistanceSq) || maxDistanceSq <= 0.0f)
+    {
+      return 0.0f;
+    }
+
+    return MathF.Sqrt(maxDistanceSq);
+  }
+
+  private bool ShouldCullParityDynamicInstance(
+    EntitySceneInstance instance,
+    float instanceScale,
+    int entityId,
+    Vector3 sourceCameraPosition)
+  {
+    float safeScale = float.IsFinite(instanceScale) ? MathF.Abs(instanceScale) : 1.0f;
+    if (safeScale < 0.00001f)
+    {
+      safeScale = 1.0f;
+    }
+
+    float modelRadius = 0.0f;
+    if (_entitySceneModelApproxRadius.TryGetValue(entityId, out float cachedRadius) && float.IsFinite(cachedRadius))
+    {
+      modelRadius = MathF.Max(0.0f, cachedRadius);
+    }
+
+    float maxVisibleDistance = ParityDynamicEntityCullDistance + modelRadius * safeScale;
+    float maxVisibleDistanceSq = maxVisibleDistance * maxVisibleDistance;
+    Vector3 delta = instance.Position - sourceCameraPosition;
+    float distanceSq = delta.LengthSquared;
+    return float.IsFinite(distanceSq) && distanceSq > maxVisibleDistanceSq;
   }
 
   private FreeCamera CreateDefaultCamera(LoadedMap map)
@@ -590,6 +900,13 @@ internal sealed class MapViewerControl : UserControl
     return _flipNorthSouth
       ? new Vector3(displayPosition.X, displayPosition.Y, -displayPosition.Z)
       : displayPosition;
+  }
+
+  private Vector3 ConvertSourceDirection(Vector3 displayDirection)
+  {
+    return _flipNorthSouth
+      ? new Vector3(displayDirection.X, displayDirection.Y, -displayDirection.Z)
+      : displayDirection;
   }
 
   private BspRenderVertex[] ConvertRenderVertices(BspRenderVertex[] source)
@@ -786,10 +1103,28 @@ internal sealed class MapViewerControl : UserControl
     GL.BindBuffer(BufferTarget.ArrayBuffer, _wallVbo);
     GL.EnableVertexAttribArray(0);
     GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 12, 0);
+    _wallFrozenVao = GL.GenVertexArray();
+    _wallFrozenVbo = GL.GenBuffer();
+    GL.BindVertexArray(_wallFrozenVao);
+    GL.BindBuffer(BufferTarget.ArrayBuffer, _wallFrozenVbo);
+    GL.EnableVertexAttribArray(0);
+    GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 12, 0);
     _particleVao = GL.GenVertexArray();
     _particleVbo = GL.GenBuffer();
     GL.BindVertexArray(_particleVao);
     GL.BindBuffer(BufferTarget.ArrayBuffer, _particleVbo);
+    GL.EnableVertexAttribArray(0);
+    GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 12, 0);
+    _collisionDrawPreviewVao = GL.GenVertexArray();
+    _collisionDrawPreviewVbo = GL.GenBuffer();
+    GL.BindVertexArray(_collisionDrawPreviewVao);
+    GL.BindBuffer(BufferTarget.ArrayBuffer, _collisionDrawPreviewVbo);
+    GL.EnableVertexAttribArray(0);
+    GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 12, 0);
+    _collisionSelectionVao = GL.GenVertexArray();
+    _collisionSelectionVbo = GL.GenBuffer();
+    GL.BindVertexArray(_collisionSelectionVao);
+    GL.BindBuffer(BufferTarget.ArrayBuffer, _collisionSelectionVbo);
     GL.EnableVertexAttribArray(0);
     GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 12, 0);
     GL.Enable(EnableCap.ProgramPointSize);
@@ -871,13 +1206,11 @@ internal sealed class MapViewerControl : UserControl
 
   private void UpdateCameraOverlay()
   {
-    Vector3 displayPosition = _camera.Position;
-    Vector3 sourcePosition = ConvertSourcePosition(displayPosition);
-    string positionLine = _flipNorthSouth
-      ? FormattableString.Invariant($"Cam XYZ: {displayPosition.X:F2}, {displayPosition.Y:F2}, {displayPosition.Z:F2}  |  Src XYZ: {sourcePosition.X:F2}, {sourcePosition.Y:F2}, {sourcePosition.Z:F2}")
-      : FormattableString.Invariant($"Cam XYZ: {sourcePosition.X:F2}, {sourcePosition.Y:F2}, {sourcePosition.Z:F2}");
+    Vector3 sourcePosition = ConvertSourcePosition(_camera.Position);
+    string positionLine = FormattableString.Invariant($"Cam XYZ: {sourcePosition.X:F2}, {sourcePosition.Y:F2}, {sourcePosition.Z:F2}");
     string nearestEntityLine = GetNearestEntityOverlayText(sourcePosition);
-    string line = $"{positionLine}{Environment.NewLine}{nearestEntityLine}";
+    string nearestFxLine = GetNearestFxOverlayText(sourcePosition);
+    string line = $"{positionLine}{Environment.NewLine}{nearestEntityLine}{Environment.NewLine}{nearestFxLine}";
 
     if (line == _lastCameraOverlayText)
     {
@@ -956,6 +1289,55 @@ internal sealed class MapViewerControl : UserControl
     return _lastNearestEntityOverlayText;
   }
 
+  private string GetNearestFxOverlayText(Vector3 sourceCameraPosition)
+  {
+    if (_map == null)
+    {
+      return "Nearest FX: n/a";
+    }
+
+    ParticleInstanceInfo[] fxInstances = _map.ParticleInstances;
+    if (fxInstances.Length == 0)
+    {
+      return "Nearest FX: n/a";
+    }
+
+    long nowMs = Environment.TickCount64;
+    if (_lastNearestFxOverlayTickMs != long.MinValue &&
+        nowMs - _lastNearestFxOverlayTickMs < NearestEntityOverlayRefreshMs)
+    {
+      return _lastNearestFxOverlayText;
+    }
+
+    float bestDistSq = float.MaxValue;
+    int bestIndex = -1;
+    for (int index = 0; index < fxInstances.Length; ++index)
+    {
+      Vector3 delta = fxInstances[index].Position - sourceCameraPosition;
+      float distSq = delta.LengthSquared;
+      if (distSq < bestDistSq)
+      {
+        bestDistSq = distSq;
+        bestIndex = index;
+      }
+    }
+
+    if (bestIndex < 0)
+    {
+      _lastNearestFxOverlayText = "Nearest FX: n/a";
+      _lastNearestFxOverlayTickMs = nowMs;
+      return _lastNearestFxOverlayText;
+    }
+
+    ParticleInstanceInfo info = fxInstances[bestIndex];
+    string fxName = string.IsNullOrWhiteSpace(info.Name) ? $"id{info.EntityId}" : info.Name;
+    float bestDist = MathF.Sqrt(bestDistSq);
+    _lastNearestFxOverlayText = FormattableString.Invariant(
+      $"Nearest FX: idx={bestIndex} id={info.EntityId} {fxName} dist={bestDist:F2} pos=({info.Position.X:F2},{info.Position.Y:F2},{info.Position.Z:F2})");
+    _lastNearestFxOverlayTickMs = nowMs;
+    return _lastNearestFxOverlayText;
+  }
+
   private bool TryGetFirstEntityMaterialAlphaType(EntitySceneModel model, out uint alphaType)
   {
     alphaType = 0;
@@ -1006,23 +1388,13 @@ internal sealed class MapViewerControl : UserControl
     {
       move += _camera.Right;
     }
-    if (IsMoveKeyDown(Keys.Space))
-    {
-      move += Vector3.UnitY;
-    }
-    if (IsMoveKeyDown(Keys.ControlKey))
-    {
-      move -= Vector3.UnitY;
-    }
-
     if (move.LengthSquared <= 0f)
     {
       return;
     }
 
     move = Vector3.Normalize(move);
-    float speed = IsMoveKeyDown(Keys.ShiftKey) ? _moveSpeed * _sprintMultiplier : _moveSpeed;
-    _camera.Position += move * speed * MathF.Max(0.0001f, deltaSeconds);
+    _camera.Position += move * _moveSpeed * MathF.Max(0.0001f, deltaSeconds);
   }
 
   private bool IsKeyDown(Keys key)
@@ -1338,7 +1710,7 @@ internal sealed class MapViewerControl : UserControl
       GL.Disable(EnableCap.Blend);
     }
 
-    if (_showCollisionOverlay && _wallVertexCount > 0)
+    if (_showCollisionOverlay && (_wallVertexCount > 0 || _wallFrozenVertexCount > 0))
     {
       GL.Enable(EnableCap.DepthTest);
       GL.Disable(EnableCap.CullFace);
@@ -1346,11 +1718,33 @@ internal sealed class MapViewerControl : UserControl
       GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
       GL.UseProgram(_wallProgram);
       GL.UniformMatrix4(_wallUniformMvp, true, ref mvp);
-      GL.Uniform4(_wallUniformColor, new Vector4(0.30f, 0.58f, 0.95f, 0.30f));
-      GL.BindVertexArray(_wallVao);
-      GL.DrawArrays(PrimitiveType.Triangles, 0, _wallVertexCount);
+
+      if (_wallVertexCount > 0)
+      {
+        GL.Uniform4(_wallUniformColor, CollisionWallNormalOverlayColor);
+        GL.BindVertexArray(_wallVao);
+        GL.DrawArrays(PrimitiveType.Triangles, 0, _wallVertexCount);
+      }
+
+      if (_wallFrozenVertexCount > 0)
+      {
+        GL.Uniform4(_wallUniformColor, CollisionWallFrozenOverlayColor);
+        GL.BindVertexArray(_wallFrozenVao);
+        GL.DrawArrays(PrimitiveType.Triangles, 0, _wallFrozenVertexCount);
+      }
+
       GL.Disable(EnableCap.Blend);
       GL.Enable(EnableCap.CullFace);
+    }
+
+    if (_showCollisionOverlay && _collisionSelectionVertexCount > 0)
+    {
+      GL.Enable(EnableCap.DepthTest);
+      GL.UseProgram(_lineProgram);
+      GL.UniformMatrix4(_lineUniformMvp, true, ref mvp);
+      GL.Uniform3(_lineUniformColor, new Vector3(1.00f, 0.33f, 0.22f));
+      GL.BindVertexArray(_collisionSelectionVao);
+      GL.DrawArrays(PrimitiveType.Lines, 0, _collisionSelectionVertexCount);
     }
 
     if (_showGrid && _lineVertexCount > 0)
@@ -1361,6 +1755,31 @@ internal sealed class MapViewerControl : UserControl
       GL.Uniform3(_lineUniformColor, new Vector3(0.92f, 0.97f, 1.00f));
       GL.BindVertexArray(_lineVao);
       GL.DrawArrays(PrimitiveType.Lines, 0, _lineVertexCount);
+    }
+
+    if (_collisionDrawPreviewVertexCount > 0)
+    {
+      GL.Enable(EnableCap.DepthTest);
+      GL.UseProgram(_lineProgram);
+      GL.UniformMatrix4(_lineUniformMvp, true, ref mvp);
+      GL.Uniform3(_lineUniformColor, new Vector3(1.00f, 0.78f, 0.18f));
+      GL.BindVertexArray(_collisionDrawPreviewVao);
+      GL.DrawArrays(PrimitiveType.Lines, 0, _collisionDrawPreviewVertexCount);
+      GL.Disable(EnableCap.DepthTest);
+      GL.LineWidth(2.5f);
+      if (_collisionDrawStartSnapped)
+      {
+        GL.Uniform3(_lineUniformColor, new Vector3(0.32f, 1.00f, 0.42f));
+        GL.DrawArrays(PrimitiveType.Lines, 2, 2);
+      }
+
+      if (_collisionDrawEndSnapped)
+      {
+        GL.Uniform3(_lineUniformColor, new Vector3(0.32f, 1.00f, 0.42f));
+        GL.DrawArrays(PrimitiveType.Lines, 4, 2);
+      }
+      GL.LineWidth(1.0f);
+      GL.Enable(EnableCap.DepthTest);
     }
 
     GL.Disable(EnableCap.DepthTest);
@@ -1405,7 +1824,12 @@ internal sealed class MapViewerControl : UserControl
       _parityEntityVertexCount = 0;
       _particleVertexCount = 0;
       _wallVertexCount = 0;
+      _wallFrozenVertexCount = 0;
       _lineVertexCount = 0;
+      _collisionDrawPreviewVertexCount = 0;
+      _collisionSelectionVertexCount = 0;
+      _selectedCollisionLineIndex = -1;
+      _collisionDrawDragging = false;
       _meshDrawSpans = Array.Empty<DrawSpan>();
       _skyDrawSpans = Array.Empty<DrawSpan>();
       _entityDrawSpans = Array.Empty<DrawSpan>();
@@ -1418,10 +1842,12 @@ internal sealed class MapViewerControl : UserControl
       _parityEntityDrawCalls = 0;
       _parityAnimatedObjectUpdates = 0;
       _paritySkippedLayers = 0;
+      _parityCulledDynamicInstances = 0;
       _parityEntityLastFrameTick = int.MinValue;
       _parityEntityUploadBufferLength = 0;
       _entitySceneModelsById.Clear();
       _entitySceneModelHasAnimation.Clear();
+      _entitySceneModelApproxRadius.Clear();
       _hasAnimatedEntityInstances = false;
       ReleaseMapTextures();
       ReleaseSkyTextures();
@@ -1439,6 +1865,7 @@ internal sealed class MapViewerControl : UserControl
     _parityEntityDrawCalls = 0;
     _parityAnimatedObjectUpdates = 0;
     _paritySkippedLayers = 0;
+    _parityCulledDynamicInstances = 0;
     _parityEntityLastFrameTick = int.MinValue;
     _parityEntityUploadBufferLength = 0;
 
@@ -1480,11 +1907,7 @@ internal sealed class MapViewerControl : UserControl
     _entityDrawVertices = entityRenderVertices;
     BuildParityStaticEntityMesh();
 
-    Vector3[] wallVertices = ConvertDisplayPositions(BuildCollisionWalls(_map));
-    _wallVertexCount = wallVertices.Length;
-    GL.BindVertexArray(_wallVao);
-    GL.BindBuffer(BufferTarget.ArrayBuffer, _wallVbo);
-    GL.BufferData(BufferTarget.ArrayBuffer, wallVertices.Length * 12, wallVertices, BufferUsageHint.DynamicDraw);
+    UploadCollisionWallBuffers(_map);
 
     Vector3[] lineVertices = ConvertDisplayPositions(BuildOverlayLines(_map));
     _lineVertexCount = lineVertices.Length;
@@ -1501,6 +1924,44 @@ internal sealed class MapViewerControl : UserControl
       _particleVertexCount * 12,
       particlePositions,
       BufferUsageHint.DynamicDraw);
+
+    UpdateCollisionDrawPreviewBuffer();
+    UpdateCollisionSelectionBuffer();
+  }
+
+  private void UploadCollisionGeometryOnly()
+  {
+    if (_map == null)
+    {
+      _wallVertexCount = 0;
+      _wallFrozenVertexCount = 0;
+      _collisionDrawPreviewVertexCount = 0;
+      _collisionSelectionVertexCount = 0;
+      _collisionDrawDragging = false;
+      return;
+    }
+
+    UploadCollisionWallBuffers(_map);
+
+    UpdateCollisionDrawPreviewBuffer();
+    UpdateCollisionSelectionBuffer();
+  }
+
+  private void UploadCollisionWallBuffers(LoadedMap map)
+  {
+    (Vector3[] normalWalls, Vector3[] frozenWalls) = BuildCollisionWalls(map);
+
+    Vector3[] normalDisplay = ConvertDisplayPositions(normalWalls);
+    _wallVertexCount = normalDisplay.Length;
+    GL.BindVertexArray(_wallVao);
+    GL.BindBuffer(BufferTarget.ArrayBuffer, _wallVbo);
+    GL.BufferData(BufferTarget.ArrayBuffer, normalDisplay.Length * 12, normalDisplay, BufferUsageHint.DynamicDraw);
+
+    Vector3[] frozenDisplay = ConvertDisplayPositions(frozenWalls);
+    _wallFrozenVertexCount = frozenDisplay.Length;
+    GL.BindVertexArray(_wallFrozenVao);
+    GL.BindBuffer(BufferTarget.ArrayBuffer, _wallFrozenVbo);
+    GL.BufferData(BufferTarget.ArrayBuffer, frozenDisplay.Length * 12, frozenDisplay, BufferUsageHint.DynamicDraw);
   }
 
   private void UploadMapMesh(LoadedMap map)
@@ -1782,6 +2243,21 @@ internal sealed class MapViewerControl : UserControl
     return Vector4.One;
   }
 
+  private static Vector4 MultiplyLayerColor(Vector4 baseColor, Vector4? multiplier)
+  {
+    if (!multiplier.HasValue)
+    {
+      return baseColor;
+    }
+
+    Vector4 m = multiplier.Value;
+    return new Vector4(
+      Math.Clamp(baseColor.X * m.X, 0.0f, 1.0f),
+      Math.Clamp(baseColor.Y * m.Y, 0.0f, 1.0f),
+      Math.Clamp(baseColor.Z * m.Z, 0.0f, 1.0f),
+      Math.Clamp(baseColor.W * m.W, 0.0f, 1.0f));
+  }
+
   private int ResolveLayerTextureId(
     int surfaceId,
     IReadOnlyDictionary<int, int> textureMap,
@@ -1830,6 +2306,7 @@ internal sealed class MapViewerControl : UserControl
       includeStaticModels: true,
       out BspRenderVertex[] vertices,
       out DrawSpan[] spans,
+      out _,
       out _,
       out _);
 
@@ -1934,10 +2411,12 @@ internal sealed class MapViewerControl : UserControl
       out vertices,
       out spans,
       out int animatedObjectUpdates,
-      out int skippedLayers);
+      out int skippedLayers,
+      out int culledDynamicInstances);
 
     _parityAnimatedObjectUpdates = animatedObjectUpdates;
     _paritySkippedLayers = skippedLayers;
+    _parityCulledDynamicInstances = culledDynamicInstances;
   }
 
   private void BuildParityEntityGeometry(
@@ -1947,10 +2426,12 @@ internal sealed class MapViewerControl : UserControl
     out BspRenderVertex[] vertices,
     out DrawSpan[] spans,
     out int animatedObjectUpdates,
-    out int skippedLayers)
+    out int skippedLayers,
+    out int culledDynamicInstances)
   {
     animatedObjectUpdates = 0;
     skippedLayers = 0;
+    culledDynamicInstances = 0;
     if (_map == null)
     {
       vertices = Array.Empty<BspRenderVertex>();
@@ -1969,6 +2450,7 @@ internal sealed class MapViewerControl : UserControl
     List<BspRenderVertex> frameVertices = new(Math.Max(8192, sceneData.Instances.Length * 128));
     List<DrawSpan> frameSpans = new(Math.Max(512, sceneData.Instances.Length * 4));
     Dictionary<int, NumericsMatrix4[]> modelObjectMatrices = new(Math.Max(16, sceneData.Models.Length));
+    Vector3 sourceCameraPosition = ConvertSourcePosition(_camera.Position);
 
     for (int instanceIndex = 0; instanceIndex < sceneData.Instances.Length; ++instanceIndex)
     {
@@ -1988,6 +2470,19 @@ internal sealed class MapViewerControl : UserControl
         continue;
       }
 
+      float instanceScale = float.IsFinite(instance.Scale) ? instance.Scale : 1.0f;
+      if (MathF.Abs(instanceScale) < 0.00001f)
+      {
+        instanceScale = 1.0f;
+      }
+
+      if (includeAnimatedModels && modelHasAnimation
+        && ShouldCullParityDynamicInstance(instance, instanceScale, model.EntityId, sourceCameraPosition))
+      {
+        ++culledDynamicInstances;
+        continue;
+      }
+
       if (model.MatGroups.Length == 0)
       {
         continue;
@@ -2000,10 +2495,21 @@ internal sealed class MapViewerControl : UserControl
         animatedObjectUpdates += objectMatrices.Length;
       }
 
-      float instanceScale = float.IsFinite(instance.Scale) ? instance.Scale : 1.0f;
-      if (MathF.Abs(instanceScale) < 0.00001f)
+      if (model.ParticleRuntime is ParticleRuntimeDefinition particleRuntime)
       {
-        instanceScale = 1.0f;
+        AppendParticleRuntimeGeometry(
+          frameVertices,
+          frameSpans,
+          model,
+          instance,
+          instanceIndex,
+          objectMatrices,
+          particleRuntime,
+          nowFrame,
+          instanceScale,
+          sourceCameraPosition,
+          ref skippedLayers);
+        continue;
       }
 
       for (int groupIndex = 0; groupIndex < model.MatGroups.Length; ++groupIndex)
@@ -2058,7 +2564,779 @@ internal sealed class MapViewerControl : UserControl
     spans = frameSpans.ToArray();
   }
 
-  private void AddParityMaterialSpans(List<DrawSpan> spans, int materialId, int startVertex, int vertexCount, ref int skippedLayers)
+  private void AppendParticleRuntimeGeometry(
+    List<BspRenderVertex> frameVertices,
+    List<DrawSpan> frameSpans,
+    EntitySceneModel model,
+    EntitySceneInstance instance,
+    int instanceIndex,
+    NumericsMatrix4[] objectMatrices,
+    ParticleRuntimeDefinition runtime,
+    float nowFrame,
+    float instanceScale,
+    Vector3 sourceCameraPosition,
+    ref int skippedLayers)
+  {
+    int particleCount = Math.Clamp(runtime.Count, 1, 2048);
+    for (int particleIndex = 0; particleIndex < particleCount; ++particleIndex)
+    {
+      ParticleRuntimeState state = EvaluateParticleRuntimeState(runtime, instance, instanceIndex, particleIndex, nowFrame);
+      if (!state.IsAlive)
+      {
+        continue;
+      }
+
+      Vector3 particleRight;
+      Vector3 particleUp;
+      Vector3 particleForward;
+      BuildParticleBillboardBasis(
+        runtime,
+        state.PositionOffset,
+        instanceScale,
+        instance,
+        sourceCameraPosition,
+        out particleRight,
+        out particleUp,
+        out particleForward);
+
+      Vector4 colorOverride = new(
+        Math.Clamp(state.Color.X / 255.0f, 0.0f, 1.0f),
+        Math.Clamp(state.Color.Y / 255.0f, 0.0f, 1.0f),
+        Math.Clamp(state.Color.Z / 255.0f, 0.0f, 1.0f),
+        Math.Clamp(state.Alpha, 0.0f, 1.0f));
+
+      for (int groupIndex = 0; groupIndex < model.MatGroups.Length; ++groupIndex)
+      {
+        EntitySceneMatGroup matGroup = model.MatGroups[groupIndex];
+        BspRenderVertex[] localVertices = matGroup.LocalVertices;
+        if (localVertices.Length == 0)
+        {
+          continue;
+        }
+
+        bool hasObjectMatrix = TryGetSceneObjectMatrix(objectMatrices, matGroup.ObjectId, out NumericsMatrix4 objectMatrix);
+        int startVertex = frameVertices.Count;
+        for (int vertexIndex = 0; vertexIndex < localVertices.Length; ++vertexIndex)
+        {
+          BspRenderVertex localVertex = localVertices[vertexIndex];
+          Vector3 localPosition = localVertex.Position;
+          if (hasObjectMatrix)
+          {
+            localPosition = TransformEntityPosition(localPosition, objectMatrix);
+          }
+
+          localPosition *= state.Scale;
+          localPosition = RotateY(localPosition, state.YRotRadians);
+          localPosition = RotateZ(localPosition, state.ZRotRadians);
+
+          if (!runtime.NoBillboard)
+          {
+            localPosition =
+              particleRight * localPosition.X +
+              particleUp * localPosition.Y +
+              particleForward * localPosition.Z;
+          }
+
+          localPosition += state.PositionOffset;
+          Vector3 worldPosition = runtime.Free
+            ? localPosition + instance.Position
+            : TransformEntityInstancePosition(
+                localPosition,
+                instanceScale,
+                instance.RotX,
+                instance.RotY,
+                instance.Position);
+
+          if (runtime.ZFrontEnabled && MathF.Abs(runtime.ZFront) > 0.00001f)
+          {
+            Vector3 viewDirection = sourceCameraPosition - worldPosition;
+            if (viewDirection.LengthSquared > 0.000001f)
+            {
+              worldPosition += Vector3.Normalize(viewDirection) * runtime.ZFront;
+            }
+          }
+
+          frameVertices.Add(new BspRenderVertex(ConvertWorldPosition(worldPosition), localVertex.Uv, localVertex.LightUv, localVertex.Color));
+        }
+
+        int vertexCount = frameVertices.Count - startVertex;
+        if (vertexCount <= 0)
+        {
+          continue;
+        }
+
+        int materialId = matGroup.MaterialId >= 0
+          ? matGroup.MaterialId + model.MaterialBase
+          : matGroup.MaterialId;
+        AddParityMaterialSpans(frameSpans, materialId, startVertex, vertexCount, ref skippedLayers, colorOverride);
+      }
+    }
+  }
+
+  private static ParticleRuntimeState EvaluateParticleRuntimeState(
+    ParticleRuntimeDefinition runtime,
+    EntitySceneInstance instance,
+    int instanceIndex,
+    int particleIndex,
+    float nowFrame)
+  {
+    uint seedBase = CreateParticleSeed(instance.EntityId, instanceIndex, particleIndex, 0xA17C9E3Du);
+
+    float liveTime = MathF.Max(0.001f, SampleParticleRange(runtime.LiveTime, seedBase ^ 0x1001u));
+    float timeSpeed = MathF.Max(0.001f, SampleParticleRange(runtime.TimeSpeed, seedBase ^ 0x1002u));
+    float lifeSeconds = liveTime / timeSpeed;
+    if (!float.IsFinite(lifeSeconds) || lifeSeconds <= 0.0f)
+    {
+      lifeSeconds = 0.001f;
+    }
+
+    float nowSeconds = MathF.Max(0.0f, nowFrame / 30.0f);
+    int emissionCount = Math.Max(1, runtime.Count);
+    float onePerTime = lifeSeconds / emissionCount;
+    float emissionScale = Math.Clamp(1.0f - runtime.StartTimeRange, 0.0001f, 1.0f);
+    float emissionInterval = MathF.Max(0.0001f, onePerTime * emissionScale);
+    float emitJitter = (SampleParticleUnit(seedBase ^ 0x1003u) - 0.5f) * MathF.Max(0.0f, runtime.CreateTimeEpsilon) * emissionScale;
+    float phase = particleIndex * emissionInterval + emitJitter;
+
+    float emitLimit = runtime.EmitTimeEnabled
+      ? MathF.Max(0.0f, SampleParticleRange(runtime.EmitTime, seedBase ^ 0x1004u))
+      : float.MaxValue;
+
+    if (!TryResolveParticleAge(runtime, nowSeconds, lifeSeconds, phase, emitLimit, out float ageSeconds))
+    {
+      return new ParticleRuntimeState(false, Vector3.Zero, Vector3.One * 255.0f, 0.0f, 1.0f, 0.0f, 0.0f);
+    }
+
+    float trackTime = ageSeconds * timeSpeed;
+    Vector3 startPos = BuildParticleStartPosition(runtime, seedBase ^ 0x1100u);
+    Vector3 gravity = new(
+      SampleParticleRange(runtime.GravityX, seedBase ^ 0x1201u),
+      SampleParticleRange(runtime.GravityY, seedBase ^ 0x1202u),
+      SampleParticleRange(runtime.GravityZ, seedBase ^ 0x1203u));
+    if (runtime.Free)
+    {
+      gravity = RotateGravityLikeLegacy(gravity, instance.RotX, instance.RotY);
+    }
+
+    float powerX = EvaluateParticleTrackValue(
+      runtime.Tracks,
+      SampleParticleRange(runtime.StartPowerX, seedBase ^ 0x1301u),
+      trackTime,
+      seedBase,
+      ParticleTrackChannel.PowerX);
+    float powerY = EvaluateParticleTrackValue(
+      runtime.Tracks,
+      SampleParticleRange(runtime.StartPowerY, seedBase ^ 0x1302u),
+      trackTime,
+      seedBase,
+      ParticleTrackChannel.PowerY);
+    float powerZ = EvaluateParticleTrackValue(
+      runtime.Tracks,
+      SampleParticleRange(runtime.StartPowerZ, seedBase ^ 0x1303u),
+      trackTime,
+      seedBase,
+      ParticleTrackChannel.PowerZ);
+
+    Vector3 power = new(powerX, powerY, powerZ);
+    if (runtime.Free)
+    {
+      power = RotateGravityLikeLegacy(power, instance.RotX, instance.RotY);
+    }
+
+    Vector3 positionOffset = startPos + power * trackTime + gravity * (0.5f * trackTime * trackTime);
+    if (!float.IsFinite(positionOffset.X) || !float.IsFinite(positionOffset.Y) || !float.IsFinite(positionOffset.Z))
+    {
+      positionOffset = startPos;
+    }
+
+    float scale = EvaluateParticleTrackValue(
+      runtime.Tracks,
+      SampleParticleRange(runtime.StartScale, seedBase ^ 0x1401u),
+      trackTime,
+      seedBase,
+      ParticleTrackChannel.Scale);
+    if (!float.IsFinite(scale))
+    {
+      scale = 1.0f;
+    }
+
+    scale = MathF.Max(0.0001f, scale);
+
+    float alpha = EvaluateParticleTrackValue(
+      runtime.Tracks,
+      SampleParticleRange(runtime.StartAlpha, seedBase ^ 0x1402u),
+      trackTime,
+      seedBase,
+      ParticleTrackChannel.Alpha);
+    alpha = Math.Clamp(alpha, 0.0f, 255.0f);
+
+    float colorR = EvaluateParticleTrackValue(
+      runtime.Tracks,
+      SampleParticleRange(runtime.StartColorR, seedBase ^ 0x1403u),
+      trackTime,
+      seedBase,
+      ParticleTrackChannel.ColorR);
+    float colorG = EvaluateParticleTrackValue(
+      runtime.Tracks,
+      SampleParticleRange(runtime.StartColorG, seedBase ^ 0x1404u),
+      trackTime,
+      seedBase,
+      ParticleTrackChannel.ColorG);
+    float colorB = EvaluateParticleTrackValue(
+      runtime.Tracks,
+      SampleParticleRange(runtime.StartColorB, seedBase ^ 0x1405u),
+      trackTime,
+      seedBase,
+      ParticleTrackChannel.ColorB);
+    Vector3 color = new(
+      Math.Clamp(colorR, 0.0f, 255.0f),
+      Math.Clamp(colorG, 0.0f, 255.0f),
+      Math.Clamp(colorB, 0.0f, 255.0f));
+
+    float zRotDegrees = EvaluateParticleTrackValue(
+      runtime.Tracks,
+      SampleParticleRange(runtime.StartZRot, seedBase ^ 0x1501u),
+      trackTime,
+      seedBase,
+      ParticleTrackChannel.ZRot);
+    float yRotDegrees = EvaluateParticleTrackValue(
+      runtime.Tracks,
+      SampleParticleRange(runtime.StartYRot, seedBase ^ 0x1502u),
+      trackTime,
+      seedBase,
+      ParticleTrackChannel.YRot);
+
+    if (IsParticleFlickerActive(runtime, trackTime, seedBase))
+    {
+      float minFlickerAlpha = Math.Clamp(SampleParticleRange(runtime.FlickerAlpha, seedBase ^ 0x1601u), 0.0f, 255.0f);
+      if (alpha > minFlickerAlpha)
+      {
+        alpha = minFlickerAlpha;
+      }
+    }
+
+    return new ParticleRuntimeState(
+      true,
+      positionOffset,
+      color,
+      Math.Clamp(alpha / 255.0f, 0.0f, 1.0f),
+      scale,
+      MathHelper.DegreesToRadians(zRotDegrees),
+      MathHelper.DegreesToRadians(yRotDegrees));
+  }
+
+  private static bool TryResolveParticleAge(
+    ParticleRuntimeDefinition runtime,
+    float nowSeconds,
+    float lifeSeconds,
+    float phase,
+    float emitLimit,
+    out float ageSeconds)
+  {
+    ageSeconds = 0.0f;
+    if (!float.IsFinite(lifeSeconds) || lifeSeconds <= 0.00001f)
+    {
+      return false;
+    }
+
+    float birthTime = MathF.Max(0.0f, phase);
+    if (runtime.AlwaysLive)
+    {
+      float alwaysAge = PositiveModulo(nowSeconds + birthTime, lifeSeconds);
+      ageSeconds = float.IsFinite(alwaysAge) ? alwaysAge : 0.0f;
+      return true;
+    }
+
+    if (runtime.NoLoop)
+    {
+      if (birthTime > emitLimit || nowSeconds < birthTime)
+      {
+        return false;
+      }
+
+      float singleAge = nowSeconds - birthTime;
+      if (!float.IsFinite(singleAge) || singleAge < 0.0f || singleAge >= lifeSeconds)
+      {
+        return false;
+      }
+
+      ageSeconds = singleAge;
+      return true;
+    }
+
+    if (nowSeconds < birthTime)
+    {
+      return false;
+    }
+
+    if (!runtime.EmitTimeEnabled || emitLimit >= float.MaxValue * 0.5f)
+    {
+      ageSeconds = PositiveModulo(nowSeconds - birthTime, lifeSeconds);
+      return true;
+    }
+
+    if (birthTime > emitLimit)
+    {
+      return false;
+    }
+
+    if (nowSeconds <= emitLimit)
+    {
+      ageSeconds = PositiveModulo(nowSeconds - birthTime, lifeSeconds);
+      return true;
+    }
+
+    float elapsedAtEmitLimit = emitLimit - birthTime;
+    if (elapsedAtEmitLimit < 0.0f)
+    {
+      return false;
+    }
+
+    float ageAtEmitLimit = PositiveModulo(elapsedAtEmitLimit, lifeSeconds);
+    float lastBirth = emitLimit - ageAtEmitLimit;
+    float particleEnd = lastBirth + lifeSeconds;
+    if (nowSeconds >= particleEnd)
+    {
+      return false;
+    }
+
+    ageSeconds = nowSeconds - lastBirth;
+    return ageSeconds >= 0.0f && ageSeconds < lifeSeconds;
+  }
+
+  private static Vector3 BuildParticleStartPosition(ParticleRuntimeDefinition runtime, uint seedBase)
+  {
+    if (runtime.SpawnShape == ParticleSpawnShape.Box)
+    {
+      return new Vector3(
+        SampleParticleRange(runtime.StartPosX, seedBase ^ 0x1111u),
+        SampleParticleRange(runtime.StartPosY, seedBase ^ 0x2222u),
+        SampleParticleRange(runtime.StartPosZ, seedBase ^ 0x3333u));
+    }
+
+    Vector3 center = new(
+      (runtime.StartPosX.Min + runtime.StartPosX.Max) * 0.5f,
+      (runtime.StartPosY.Min + runtime.StartPosY.Max) * 0.5f,
+      (runtime.StartPosZ.Min + runtime.StartPosZ.Max) * 0.5f);
+    Vector3 radius = new(
+      MathF.Abs(runtime.StartPosX.Max - runtime.StartPosX.Min) * 0.5f,
+      MathF.Abs(runtime.StartPosY.Max - runtime.StartPosY.Min) * 0.5f,
+      MathF.Abs(runtime.StartPosZ.Max - runtime.StartPosZ.Min) * 0.5f);
+    if (!float.IsFinite(radius.X) || radius.X < 0.0f)
+    {
+      radius.X = 0.0f;
+    }
+
+    if (!float.IsFinite(radius.Y) || radius.Y < 0.0f)
+    {
+      radius.Y = 0.0f;
+    }
+
+    if (!float.IsFinite(radius.Z) || radius.Z < 0.0f)
+    {
+      radius.Z = 0.0f;
+    }
+
+    Vector3 direction = SampleUnitSphereDirection(seedBase ^ 0x4444u, seedBase ^ 0x5555u);
+    float distance = runtime.SpawnShape == ParticleSpawnShape.SphereEdge
+      ? 1.0f
+      : MathF.Pow(Math.Clamp(SampleParticleUnit(seedBase ^ 0x6666u), 0.0f, 1.0f), 1.0f / 3.0f);
+
+    Vector3 point = new(
+      center.X + direction.X * radius.X * distance,
+      center.Y + direction.Y * radius.Y * distance,
+      center.Z + direction.Z * radius.Z * distance);
+    return IsFinite(point) ? point : center;
+  }
+
+  private static Vector3 RotateGravityLikeLegacy(Vector3 value, float rotXDeg, float rotYDeg)
+  {
+    if (!IsFinite(value))
+    {
+      return Vector3.Zero;
+    }
+
+    Vector3 rotated = RotateY(value, MathHelper.DegreesToRadians(rotYDeg));
+    rotated = RotateX(rotated, MathHelper.DegreesToRadians(rotXDeg));
+    return IsFinite(rotated) ? rotated : value;
+  }
+
+  private static bool IsParticleFlickerActive(
+    ParticleRuntimeDefinition runtime,
+    float trackTime,
+    uint seedBase)
+  {
+    bool flickerState = runtime.FlickerEnabled;
+    if (runtime.Tracks.Length > 0)
+    {
+      for (int trackIndex = 0; trackIndex < runtime.Tracks.Length; ++trackIndex)
+      {
+        ParticleTrackKey track = runtime.Tracks[trackIndex];
+        if (!track.HasFlicker || trackTime + 0.00001f < track.Time)
+        {
+          continue;
+        }
+
+        flickerState = !flickerState;
+      }
+    }
+
+    if (!flickerState)
+    {
+      return false;
+    }
+
+    float flickerPeriod = SampleParticleRange(runtime.FlickerTime, seedBase ^ 0x1701u);
+    if (!float.IsFinite(flickerPeriod) || flickerPeriod <= 0.00001f)
+    {
+      return false;
+    }
+
+    float phase = PositiveModulo(trackTime, flickerPeriod);
+    return phase < flickerPeriod * 0.5f;
+  }
+
+  private static float EvaluateParticleTrackValue(
+    ParticleTrackKey[] tracks,
+    float initialValue,
+    float trackTime,
+    uint seedBase,
+    ParticleTrackChannel channel)
+  {
+    if (tracks.Length == 0)
+    {
+      return initialValue;
+    }
+
+    float previousValue = initialValue;
+    float previousTime = 0.0f;
+    for (int trackIndex = 0; trackIndex < tracks.Length; ++trackIndex)
+    {
+      ParticleTrackKey track = tracks[trackIndex];
+      if (!TryGetParticleTrackRange(track, channel, out ParticleFloatRange range))
+      {
+        continue;
+      }
+
+      uint trackSeed = seedBase ^ unchecked((uint)trackIndex * 0x45D9F3Bu) ^ (unchecked((uint)channel) * 0x9E3779B9u);
+      float trackValue = SampleParticleRange(range, trackSeed);
+      if (trackTime <= track.Time)
+      {
+        if (track.Time <= previousTime + 0.00001f)
+        {
+          return trackValue;
+        }
+
+        float alpha = (trackTime - previousTime) / (track.Time - previousTime);
+        alpha = Math.Clamp(alpha, 0.0f, 1.0f);
+        return MathHelper.Lerp(previousValue, trackValue, alpha);
+      }
+
+      previousValue = trackValue;
+      previousTime = track.Time;
+    }
+
+    return previousValue;
+  }
+
+  private static bool TryGetParticleTrackRange(ParticleTrackKey track, ParticleTrackChannel channel, out ParticleFloatRange range)
+  {
+    range = default;
+    switch (channel)
+    {
+      case ParticleTrackChannel.Scale:
+        if (track.HasScale)
+        {
+          range = track.Scale;
+          return true;
+        }
+
+        return false;
+      case ParticleTrackChannel.Alpha:
+        if (track.HasAlpha)
+        {
+          range = track.Alpha;
+          return true;
+        }
+
+        return false;
+      case ParticleTrackChannel.ColorR:
+        if (track.HasColor)
+        {
+          range = track.ColorR;
+          return true;
+        }
+
+        return false;
+      case ParticleTrackChannel.ColorG:
+        if (track.HasColor)
+        {
+          range = track.ColorG;
+          return true;
+        }
+
+        return false;
+      case ParticleTrackChannel.ColorB:
+        if (track.HasColor)
+        {
+          range = track.ColorB;
+          return true;
+        }
+
+        return false;
+      case ParticleTrackChannel.PowerX:
+        if (track.HasPower)
+        {
+          range = track.PowerX;
+          return true;
+        }
+
+        return false;
+      case ParticleTrackChannel.PowerY:
+        if (track.HasPower)
+        {
+          range = track.PowerY;
+          return true;
+        }
+
+        return false;
+      case ParticleTrackChannel.PowerZ:
+        if (track.HasPower)
+        {
+          range = track.PowerZ;
+          return true;
+        }
+
+        return false;
+      case ParticleTrackChannel.ZRot:
+        if (track.HasZRot)
+        {
+          range = track.ZRot;
+          return true;
+        }
+
+        return false;
+      case ParticleTrackChannel.YRot:
+        if (track.HasYRot)
+        {
+          range = track.YRot;
+          return true;
+        }
+
+        return false;
+      default:
+        return false;
+    }
+  }
+
+  private static float SampleParticleRange(ParticleFloatRange range, uint seed)
+  {
+    float min = range.Min;
+    float max = range.Max;
+    if (!float.IsFinite(min))
+    {
+      min = 0.0f;
+    }
+
+    if (!float.IsFinite(max))
+    {
+      max = min;
+    }
+
+    if (max < min)
+    {
+      (min, max) = (max, min);
+    }
+
+    if (MathF.Abs(max - min) < 0.00001f)
+    {
+      return min;
+    }
+
+    return min + (max - min) * SampleParticleUnit(seed);
+  }
+
+  private static uint CreateParticleSeed(int entityId, int instanceIndex, int particleIndex, uint salt)
+  {
+    uint seed = 2166136261u;
+    seed = (seed ^ (uint)entityId) * 16777619u;
+    seed = (seed ^ (uint)instanceIndex) * 16777619u;
+    seed = (seed ^ (uint)particleIndex) * 16777619u;
+    seed = (seed ^ salt) * 16777619u;
+    return MixParticleSeed(seed);
+  }
+
+  private static uint MixParticleSeed(uint value)
+  {
+    value ^= value >> 16;
+    value *= 0x7FEB352Du;
+    value ^= value >> 15;
+    value *= 0x846CA68Bu;
+    value ^= value >> 16;
+    return value;
+  }
+
+  private static float SampleParticleUnit(uint seed)
+  {
+    uint mixed = MixParticleSeed(seed);
+    return (mixed & 0x00FFFFFFu) / 16777215.0f;
+  }
+
+  private static Vector3 SampleUnitSphereDirection(uint seedA, uint seedB)
+  {
+    float u = Math.Clamp(SampleParticleUnit(seedA), 0.0f, 1.0f);
+    float v = Math.Clamp(SampleParticleUnit(seedB), 0.0f, 1.0f);
+    float z = u * 2.0f - 1.0f;
+    float theta = v * MathF.Tau;
+    float radial = MathF.Sqrt(MathF.Max(0.0f, 1.0f - z * z));
+    Vector3 direction = new(
+      radial * MathF.Cos(theta),
+      z,
+      radial * MathF.Sin(theta));
+    return direction.LengthSquared > 0.000001f ? Vector3.Normalize(direction) : Vector3.UnitY;
+  }
+
+  private static float PositiveModulo(float value, float period)
+  {
+    if (!float.IsFinite(value) || !float.IsFinite(period) || period <= 0.00001f)
+    {
+      return 0.0f;
+    }
+
+    float modulo = value % period;
+    return modulo < 0.0f ? modulo + period : modulo;
+  }
+
+  private static Vector3 RotateX(Vector3 value, float radians)
+  {
+    if (MathF.Abs(radians) < 0.000001f)
+    {
+      return value;
+    }
+
+    float c = MathF.Cos(radians);
+    float s = MathF.Sin(radians);
+    return new Vector3(
+      value.X,
+      value.Y * c - value.Z * s,
+      value.Y * s + value.Z * c);
+  }
+
+  private static Vector3 RotateY(Vector3 value, float radians)
+  {
+    if (MathF.Abs(radians) < 0.000001f)
+    {
+      return value;
+    }
+
+    float c = MathF.Cos(radians);
+    float s = MathF.Sin(radians);
+    return new Vector3(
+      value.X * c + value.Z * s,
+      value.Y,
+      -value.X * s + value.Z * c);
+  }
+
+  private static Vector3 RotateZ(Vector3 value, float radians)
+  {
+    if (MathF.Abs(radians) < 0.000001f)
+    {
+      return value;
+    }
+
+    float c = MathF.Cos(radians);
+    float s = MathF.Sin(radians);
+    return new Vector3(
+      value.X * c - value.Y * s,
+      value.X * s + value.Y * c,
+      value.Z);
+  }
+
+  private static void BuildParticleBillboardBasis(
+    ParticleRuntimeDefinition runtime,
+    Vector3 particleLocalOffset,
+    float instanceScale,
+    EntitySceneInstance instance,
+    Vector3 sourceCameraPosition,
+    out Vector3 right,
+    out Vector3 up,
+    out Vector3 forward)
+  {
+    if (runtime.NoBillboard)
+    {
+      right = Vector3.UnitX;
+      up = Vector3.UnitY;
+      forward = Vector3.UnitZ;
+      return;
+    }
+
+    Vector3 particleWorld = runtime.Free
+      ? particleLocalOffset + instance.Position
+      : TransformEntityInstancePosition(
+          particleLocalOffset,
+          instanceScale,
+          instance.RotX,
+          instance.RotY,
+          instance.Position);
+    Vector3 toCamera = sourceCameraPosition - particleWorld;
+    if (runtime.YBillboard)
+    {
+      toCamera.Y = 0.0f;
+      if (toCamera.LengthSquared < 0.000001f)
+      {
+        toCamera = new Vector3(0.0f, 0.0f, 1.0f);
+      }
+
+      forward = Vector3.Normalize(toCamera);
+      right = Vector3.Cross(Vector3.UnitY, forward);
+      if (right.LengthSquared < 0.000001f)
+      {
+        right = Vector3.UnitX;
+      }
+      else
+      {
+        right = Vector3.Normalize(right);
+      }
+
+      up = Vector3.UnitY;
+      return;
+    }
+
+    if (toCamera.LengthSquared < 0.000001f)
+    {
+      toCamera = new Vector3(0.0f, 0.0f, 1.0f);
+    }
+
+    forward = Vector3.Normalize(toCamera);
+    Vector3 referenceUp = runtime.ZBillboard ? Vector3.UnitX : Vector3.UnitY;
+    right = Vector3.Cross(referenceUp, forward);
+    if (right.LengthSquared < 0.000001f)
+    {
+      right = Vector3.UnitX;
+    }
+    else
+    {
+      right = Vector3.Normalize(right);
+    }
+
+    up = Vector3.Cross(forward, right);
+    if (up.LengthSquared < 0.000001f)
+    {
+      up = Vector3.UnitY;
+    }
+    else
+    {
+      up = Vector3.Normalize(up);
+    }
+  }
+
+  private void AddParityMaterialSpans(
+    List<DrawSpan> spans,
+    int materialId,
+    int startVertex,
+    int vertexCount,
+    ref int skippedLayers,
+    Vector4? layerColorMultiplier = null)
   {
     if (_map == null || vertexCount <= 0)
     {
@@ -2108,7 +3386,7 @@ internal sealed class MapViewerControl : UserControl
               secondaryTextureId,
             alphaType,
             0,
-            ResolveLegacyEntityLayerColor(material, layerIndex),
+            MultiplyLayerColor(ResolveLegacyEntityLayerColor(material, layerIndex), layerColorMultiplier),
             (int)(alphaType & 0x0F) == BlendNone,
             true,
             layer,
@@ -2148,7 +3426,7 @@ internal sealed class MapViewerControl : UserControl
         0,
         fallbackAlphaType,
         0,
-        Vector4.One,
+        MultiplyLayerColor(Vector4.One, layerColorMultiplier),
         (int)(fallbackAlphaType & 0x0F) == BlendNone,
         false,
         default,
@@ -4554,9 +5832,10 @@ internal sealed class MapViewerControl : UserControl
     return output.ToArray();
   }
 
-  private static Vector3[] BuildCollisionWalls(LoadedMap map)
+  private static (Vector3[] NormalWalls, Vector3[] FrozenWalls) BuildCollisionWalls(LoadedMap map)
   {
-    List<Vector3> vertices = new(Math.Max(4096, map.CollisionLines.Length * 12));
+    List<Vector3> normalVertices = new(Math.Max(4096, map.CollisionLines.Length * 8));
+    List<Vector3> frozenVertices = new(Math.Max(1024, map.CollisionLines.Length * 4));
 
     for (int index = 0; index < map.CollisionLines.Length; ++index)
     {
@@ -4581,13 +5860,15 @@ internal sealed class MapViewerControl : UserControl
         continue;
       }
 
-      AddTriangle(vertices, start, end, endTop);
-      AddTriangle(vertices, start, endTop, startTop);
-      AddTriangle(vertices, endTop, end, start);
-      AddTriangle(vertices, startTop, endTop, start);
+      List<Vector3> target = (line.Attribute & CollisionLineAttrFreeze) != 0
+        ? frozenVertices
+        : normalVertices;
+
+      AddTriangle(target, start, end, endTop);
+      AddTriangle(target, start, endTop, startTop);
     }
 
-    return vertices.ToArray();
+    return (normalVertices.ToArray(), frozenVertices.ToArray());
   }
 
   private static void AddGrid(MapBounds bounds, List<Vector3> output)
@@ -4956,7 +6237,19 @@ internal sealed class MapViewerControl : UserControl
 
       void main()
       {
-        FragColor = uColor;
+        vec3 frontRgb = clamp(uColor.rgb * 1.08, vec3(0.0), vec3(1.0));
+        float frontAlpha = clamp(uColor.a * 1.10, 0.0, 1.0);
+        vec3 backRgb = uColor.rgb * 0.22;
+        float backAlpha = clamp(uColor.a * 0.70, 0.0, 1.0);
+
+        if (gl_FrontFacing)
+        {
+          FragColor = vec4(backRgb, backAlpha);
+        }
+        else
+        {
+          FragColor = vec4(frontRgb, frontAlpha);
+        }
       }
       """;
 
@@ -5103,33 +6396,500 @@ internal sealed class MapViewerControl : UserControl
     return texture;
   }
 
+  private void UpdateCollisionDrawPreviewBuffer()
+  {
+    if (!_glReady)
+    {
+      _collisionDrawPreviewVertexCount = 0;
+      _collisionDrawStartSnapped = false;
+      _collisionDrawEndSnapped = false;
+      return;
+    }
+
+    if (!TryMakeCurrent())
+    {
+      return;
+    }
+
+    if (!_collisionDrawDragging)
+    {
+      _collisionDrawPreviewVertexCount = 0;
+      _collisionDrawStartSnapped = false;
+      _collisionDrawEndSnapped = false;
+      _glControl.Invalidate();
+      return;
+    }
+
+    Vector3 previewStartSource = _collisionDrawStartSource;
+    Vector3 previewEndSource = _collisionDrawCurrentSource;
+    if (_map != null &&
+        MapEditOperations.TryResolveCollisionWallPreview(
+          _map,
+          _collisionDrawStartSource,
+          _collisionDrawCurrentSource,
+          _collisionDrawEmbedDepth,
+          _collisionDrawSnapDistance,
+          out Vector3 resolvedStartSource,
+          out Vector3 resolvedEndSource,
+          out _collisionDrawStartSnapped,
+          out _collisionDrawEndSnapped,
+          out _))
+    {
+      previewStartSource = resolvedStartSource;
+      previewEndSource = resolvedEndSource;
+    }
+    else
+    {
+      _collisionDrawStartSnapped = false;
+      _collisionDrawEndSnapped = false;
+    }
+
+    Vector3 startBottom = ConvertWorldPosition(previewStartSource);
+    Vector3 endBottom = ConvertWorldPosition(previewEndSource);
+    float height = Math.Clamp(_collisionDrawPreviewHeight, 1.0f, 50000.0f);
+    Vector3 startTop = startBottom + new Vector3(0f, height, 0f);
+    Vector3 endTop = endBottom + new Vector3(0f, height, 0f);
+
+    Vector3[] previewLines =
+    [
+      startBottom, endBottom,
+      startBottom, startTop,
+      endBottom, endTop,
+      startTop, endTop,
+    ];
+
+    _collisionDrawPreviewVertexCount = previewLines.Length;
+    GL.BindVertexArray(_collisionDrawPreviewVao);
+    GL.BindBuffer(BufferTarget.ArrayBuffer, _collisionDrawPreviewVbo);
+    GL.BufferData(BufferTarget.ArrayBuffer, _collisionDrawPreviewVertexCount * 12, previewLines, BufferUsageHint.DynamicDraw);
+    _glControl.Invalidate();
+  }
+
+  private void UpdateCollisionSelectionBuffer()
+  {
+    if (!_glReady)
+    {
+      _collisionSelectionVertexCount = 0;
+      return;
+    }
+
+    if (!TryMakeCurrent())
+    {
+      return;
+    }
+
+    if (!TryBuildSelectedCollisionDisplayLines(out Vector3[] displayLines))
+    {
+      _collisionSelectionVertexCount = 0;
+      _glControl.Invalidate();
+      return;
+    }
+
+    _collisionSelectionVertexCount = displayLines.Length;
+    GL.BindVertexArray(_collisionSelectionVao);
+    GL.BindBuffer(BufferTarget.ArrayBuffer, _collisionSelectionVbo);
+    GL.BufferData(BufferTarget.ArrayBuffer, _collisionSelectionVertexCount * 12, displayLines, BufferUsageHint.DynamicDraw);
+    _glControl.Invalidate();
+  }
+
+  private bool TryBuildSelectedCollisionDisplayLines(out Vector3[] displayLines)
+  {
+    displayLines = Array.Empty<Vector3>();
+    if (_map == null || (uint)_selectedCollisionLineIndex >= (uint)_map.CollisionLines.Length)
+    {
+      return false;
+    }
+
+    if (!TryBuildCollisionLineQuadSource(_map, _selectedCollisionLineIndex, out Vector3 startBottom, out Vector3 endBottom, out Vector3 startTop, out Vector3 endTop))
+    {
+      return false;
+    }
+
+    Vector3[] sourceLines =
+    [
+      startBottom, endBottom,
+      startBottom, startTop,
+      endBottom, endTop,
+      startTop, endTop,
+    ];
+    displayLines = ConvertDisplayPositions(sourceLines);
+    return displayLines.Length > 0;
+  }
+
+  private static bool TryBuildCollisionLineQuadSource(
+    LoadedMap map,
+    int lineIndex,
+    out Vector3 startBottom,
+    out Vector3 endBottom,
+    out Vector3 startTop,
+    out Vector3 endTop)
+  {
+    startBottom = Vector3.Zero;
+    endBottom = Vector3.Zero;
+    startTop = Vector3.Zero;
+    endTop = Vector3.Zero;
+    if ((uint)lineIndex >= (uint)map.CollisionLines.Length)
+    {
+      return false;
+    }
+
+    CollisionLine line = map.CollisionLines[lineIndex];
+    if (line.StartVertex >= map.CollisionVertices.Length || line.EndVertex >= map.CollisionVertices.Length)
+    {
+      return false;
+    }
+
+    float height = MathF.Max(0.0f, line.Height);
+    if (height < 0.01f)
+    {
+      return false;
+    }
+
+    startBottom = map.CollisionVertices[line.StartVertex];
+    endBottom = map.CollisionVertices[line.EndVertex];
+    startTop = startBottom + new Vector3(0f, height, 0f);
+    endTop = endBottom + new Vector3(0f, height, 0f);
+    return IsFinite(startBottom) && IsFinite(endBottom) && IsFinite(startTop) && IsFinite(endTop);
+  }
+
+  private bool TryPickCollisionLine(Point mouseLocation, out int lineIndex)
+  {
+    lineIndex = -1;
+    if (_map == null || _map.CollisionLines.Length == 0)
+    {
+      return false;
+    }
+
+    if (!TryBuildCameraRayInSource(mouseLocation, out Vector3 rayOrigin, out Vector3 rayDirection))
+    {
+      return false;
+    }
+
+    float bestT = float.PositiveInfinity;
+    int bestIndex = -1;
+    for (int i = 0; i < _map.CollisionLines.Length; ++i)
+    {
+      if (!TryBuildCollisionLineQuadSource(_map, i, out Vector3 startBottom, out Vector3 endBottom, out Vector3 startTop, out Vector3 endTop))
+      {
+        continue;
+      }
+
+      if (TryIntersectRayTriangle(rayOrigin, rayDirection, startBottom, endBottom, endTop, out float tA) && tA < bestT)
+      {
+        bestT = tA;
+        bestIndex = i;
+      }
+
+      if (TryIntersectRayTriangle(rayOrigin, rayDirection, startBottom, endTop, startTop, out float tB) && tB < bestT)
+      {
+        bestT = tB;
+        bestIndex = i;
+      }
+    }
+
+    if (bestIndex < 0 || !float.IsFinite(bestT))
+    {
+      return false;
+    }
+
+    lineIndex = bestIndex;
+    return true;
+  }
+
+  private bool TryPickSourcePoint(Point mouseLocation, bool preferFastPlane, float preferredPlaneY, out Vector3 point)
+  {
+    point = Vector3.Zero;
+    if (_map == null)
+    {
+      return false;
+    }
+
+    if (!TryBuildCameraRayInSource(mouseLocation, out Vector3 rayOrigin, out Vector3 rayDirection))
+    {
+      return false;
+    }
+
+    if (!preferFastPlane && TryRaycastMapSurface(rayOrigin, rayDirection, out Vector3 hitPoint))
+    {
+      point = hitPoint;
+      return true;
+    }
+
+    float planeY = float.IsFinite(preferredPlaneY) ? preferredPlaneY : rayOrigin.Y;
+    if (TryIntersectRayWithPlaneY(rayOrigin, rayDirection, planeY, out hitPoint))
+    {
+      point = hitPoint;
+      return true;
+    }
+
+    point = rayOrigin + rayDirection * 500.0f;
+    return true;
+  }
+
+  private bool TryBuildCameraRayInSource(Point mouseLocation, out Vector3 origin, out Vector3 direction)
+  {
+    origin = Vector3.Zero;
+    direction = -Vector3.UnitZ;
+
+    int width = Math.Max(1, _glControl.ClientSize.Width);
+    int height = Math.Max(1, _glControl.ClientSize.Height);
+    if (width <= 0 || height <= 0)
+    {
+      return false;
+    }
+
+    float nx = ((mouseLocation.X + 0.5f) / width) * 2.0f - 1.0f;
+    float ny = 1.0f - ((mouseLocation.Y + 0.5f) / height) * 2.0f;
+    float aspect = width / Math.Max(1.0f, (float)height);
+    float tanHalfFov = MathF.Tan(MathHelper.DegreesToRadians(65f) * 0.5f);
+
+    Vector3 displayForward = _camera.Forward;
+    if (displayForward.LengthSquared < 0.000001f)
+    {
+      displayForward = -Vector3.UnitZ;
+    }
+    else
+    {
+      displayForward = Vector3.Normalize(displayForward);
+    }
+
+    Vector3 displayRight = _camera.Right;
+    if (displayRight.LengthSquared < 0.000001f)
+    {
+      displayRight = Vector3.UnitX;
+    }
+    else
+    {
+      displayRight = Vector3.Normalize(displayRight);
+    }
+
+    Vector3 displayUp = Vector3.Cross(displayRight, displayForward);
+    if (displayUp.LengthSquared < 0.000001f)
+    {
+      displayUp = Vector3.UnitY;
+    }
+    else
+    {
+      displayUp = Vector3.Normalize(displayUp);
+    }
+
+    Vector3 displayDirection = displayForward
+      + displayRight * (nx * aspect * tanHalfFov)
+      + displayUp * (ny * tanHalfFov);
+    if (displayDirection.LengthSquared < 0.000001f)
+    {
+      return false;
+    }
+
+    displayDirection = Vector3.Normalize(displayDirection);
+    origin = ConvertSourcePosition(_camera.Position);
+    direction = ConvertSourceDirection(displayDirection);
+    if (direction.LengthSquared < 0.000001f)
+    {
+      return false;
+    }
+
+    direction = Vector3.Normalize(direction);
+    return true;
+  }
+
+  private bool TryRaycastMapSurface(Vector3 rayOrigin, Vector3 rayDirection, out Vector3 point)
+  {
+    point = Vector3.Zero;
+    if (_map == null)
+    {
+      return false;
+    }
+
+    BspRenderVertex[] vertices = _map.BspRenderVertices;
+    if (vertices.Length < 3)
+    {
+      return false;
+    }
+
+    float bestT = float.PositiveInfinity;
+    bool found = false;
+    for (int index = 0; index + 2 < vertices.Length; index += 3)
+    {
+      Vector3 v0 = vertices[index].Position;
+      Vector3 v1 = vertices[index + 1].Position;
+      Vector3 v2 = vertices[index + 2].Position;
+      if (!IsFinite(v0) || !IsFinite(v1) || !IsFinite(v2))
+      {
+        continue;
+      }
+
+      if (!TryIntersectRayTriangle(rayOrigin, rayDirection, v0, v1, v2, out float t))
+      {
+        continue;
+      }
+
+      if (t < bestT)
+      {
+        bestT = t;
+        found = true;
+      }
+    }
+
+    if (!found || !float.IsFinite(bestT))
+    {
+      return false;
+    }
+
+    point = rayOrigin + rayDirection * bestT;
+    return IsFinite(point);
+  }
+
+  private static bool TryIntersectRayTriangle(
+    Vector3 rayOrigin,
+    Vector3 rayDirection,
+    Vector3 v0,
+    Vector3 v1,
+    Vector3 v2,
+    out float t)
+  {
+    const float epsilon = 0.00001f;
+    t = 0.0f;
+
+    Vector3 edge1 = v1 - v0;
+    Vector3 edge2 = v2 - v0;
+    Vector3 pvec = Vector3.Cross(rayDirection, edge2);
+    float det = Vector3.Dot(edge1, pvec);
+    if (MathF.Abs(det) < epsilon)
+    {
+      return false;
+    }
+
+    float invDet = 1.0f / det;
+    Vector3 tvec = rayOrigin - v0;
+    float u = Vector3.Dot(tvec, pvec) * invDet;
+    if (u < 0.0f || u > 1.0f)
+    {
+      return false;
+    }
+
+    Vector3 qvec = Vector3.Cross(tvec, edge1);
+    float v = Vector3.Dot(rayDirection, qvec) * invDet;
+    if (v < 0.0f || u + v > 1.0f)
+    {
+      return false;
+    }
+
+    float hitT = Vector3.Dot(edge2, qvec) * invDet;
+    if (hitT < epsilon)
+    {
+      return false;
+    }
+
+    t = hitT;
+    return true;
+  }
+
+  private static bool TryIntersectRayWithPlaneY(Vector3 rayOrigin, Vector3 rayDirection, float y, out Vector3 point)
+  {
+    point = Vector3.Zero;
+    if (!float.IsFinite(y))
+    {
+      return false;
+    }
+
+    if (MathF.Abs(rayDirection.Y) < 0.000001f)
+    {
+      return false;
+    }
+
+    float t = (y - rayOrigin.Y) / rayDirection.Y;
+    if (!float.IsFinite(t) || t < 0.0f)
+    {
+      return false;
+    }
+
+    point = rayOrigin + rayDirection * t;
+    return IsFinite(point);
+  }
+
   private void OnMouseDown(object? sender, MouseEventArgs e)
   {
     _glControl.Focus();
 
-    if (e.Button != MouseButtons.Right)
+    if (_collisionSelectModeEnabled && e.Button == MouseButtons.Left)
     {
+      if (TryPickCollisionLine(e.Location, out int selectedLineIndex))
+      {
+        SetSelectedCollisionLineIndex(selectedLineIndex);
+      }
+      else
+      {
+        ClearSelectedCollisionLine();
+      }
+
       return;
     }
 
-    _capturingLook = true;
-    _lastMousePoint = e.Location;
-    _glControl.Capture = true;
+    if (_collisionDrawModeEnabled && e.Button == MouseButtons.Left)
+    {
+      if (TryPickSourcePoint(e.Location, preferFastPlane: false, preferredPlaneY: _camera.Position.Y, out Vector3 startPoint))
+      {
+        _collisionDrawDragging = true;
+        _collisionDrawStartSource = startPoint;
+        _collisionDrawCurrentSource = startPoint;
+        UpdateCollisionDrawPreviewBuffer();
+      }
+
+      return;
+    }
+
+    if (e.Button == MouseButtons.Right)
+    {
+      _capturingLook = true;
+      _lastMousePoint = e.Location;
+      _glControl.Capture = true;
+    }
   }
 
   private void OnMouseUp(object? sender, MouseEventArgs e)
   {
-    if (e.Button != MouseButtons.Right)
+    if (_collisionDrawModeEnabled && e.Button == MouseButtons.Left)
     {
+      if (_collisionDrawDragging)
+      {
+        if (TryPickSourcePoint(e.Location, preferFastPlane: false, preferredPlaneY: _collisionDrawStartSource.Y, out Vector3 endPoint))
+        {
+          _collisionDrawCurrentSource = endPoint;
+        }
+
+        Vector3 delta = _collisionDrawCurrentSource - _collisionDrawStartSource;
+        _collisionDrawDragging = false;
+        UpdateCollisionDrawPreviewBuffer();
+
+        if (delta.LengthSquared > 0.0001f)
+        {
+          CollisionWallDrawRequested?.Invoke(_collisionDrawStartSource, _collisionDrawCurrentSource);
+        }
+      }
+
       return;
     }
 
-    _capturingLook = false;
-    _glControl.Capture = false;
+    if (e.Button == MouseButtons.Right)
+    {
+      _capturingLook = false;
+      _glControl.Capture = false;
+    }
   }
 
   private void OnMouseMove(object? sender, MouseEventArgs e)
   {
+    if (_collisionDrawModeEnabled && _collisionDrawDragging)
+    {
+      if (TryPickSourcePoint(e.Location, preferFastPlane: true, preferredPlaneY: _collisionDrawStartSource.Y, out Vector3 currentPoint))
+      {
+        _collisionDrawCurrentSource = currentPoint;
+        UpdateCollisionDrawPreviewBuffer();
+      }
+      return;
+    }
+
     if (!_capturingLook)
     {
       return;
@@ -5157,6 +6917,16 @@ internal sealed class MapViewerControl : UserControl
     {
       _capturingLook = false;
       _glControl.Capture = false;
+      if (_collisionDrawDragging)
+      {
+        _collisionDrawDragging = false;
+        UpdateCollisionDrawPreviewBuffer();
+      }
+
+      if (_selectedCollisionLineIndex >= 0)
+      {
+        ClearSelectedCollisionLine();
+      }
     }
     else if (e.KeyCode == Keys.R)
     {
@@ -5222,9 +6992,21 @@ internal sealed class MapViewerControl : UserControl
         {
           GL.DeleteBuffer(_wallVbo);
         }
+        if (_wallFrozenVbo != 0)
+        {
+          GL.DeleteBuffer(_wallFrozenVbo);
+        }
         if (_particleVbo != 0)
         {
           GL.DeleteBuffer(_particleVbo);
+        }
+        if (_collisionDrawPreviewVbo != 0)
+        {
+          GL.DeleteBuffer(_collisionDrawPreviewVbo);
+        }
+        if (_collisionSelectionVbo != 0)
+        {
+          GL.DeleteBuffer(_collisionSelectionVbo);
         }
         if (_meshVao != 0)
         {
@@ -5254,9 +7036,21 @@ internal sealed class MapViewerControl : UserControl
         {
           GL.DeleteVertexArray(_wallVao);
         }
+        if (_wallFrozenVao != 0)
+        {
+          GL.DeleteVertexArray(_wallFrozenVao);
+        }
         if (_particleVao != 0)
         {
           GL.DeleteVertexArray(_particleVao);
+        }
+        if (_collisionDrawPreviewVao != 0)
+        {
+          GL.DeleteVertexArray(_collisionDrawPreviewVao);
+        }
+        if (_collisionSelectionVao != 0)
+        {
+          GL.DeleteVertexArray(_collisionSelectionVao);
         }
 
         if (_meshProgram != 0)
@@ -5300,6 +7094,29 @@ internal sealed class MapViewerControl : UserControl
     int UvGenMode,
     int MetalMode,
     float MetalScale);
+
+  private enum ParticleTrackChannel
+  {
+    Scale,
+    Alpha,
+    ColorR,
+    ColorG,
+    ColorB,
+    PowerX,
+    PowerY,
+    PowerZ,
+    ZRot,
+    YRot,
+  }
+
+  private readonly record struct ParticleRuntimeState(
+    bool IsAlive,
+    Vector3 PositionOffset,
+    Vector3 Color,
+    float Alpha,
+    float Scale,
+    float ZRotRadians,
+    float YRotRadians);
 
   private readonly record struct TransparentDrawCommand(
     int Vao,
