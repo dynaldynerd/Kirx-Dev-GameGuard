@@ -23,6 +23,7 @@ public readonly record struct EntityArchiveCacheInfo(
 public static class BspLoader
 {
   private const int BspHeaderSize = 0x2AC;
+  private const int BspHeaderEntryCount = 85;
   private const int ExtBspHeaderSize = 0x184;
   private const int BspPlaneEntrySize = 12;
   private const int BspNodeEntrySize = 24;
@@ -91,6 +92,7 @@ public static class BspLoader
     }
 
     MaterialData materialData = ReadMaterialData(resolvedBsp);
+    BspBinaryLayout bspBinaryLayout = ReadBspBinaryLayout(resolvedBsp);
     BspData bsp = ReadBsp(resolvedBsp, materialData);
     ExtBspData ext = ReadExtBsp(resolvedEbp);
     MapEnvironmentSettings environmentSettings = ReadMapEnvironmentSettings(resolvedBsp);
@@ -107,12 +109,17 @@ public static class BspLoader
       Name = Path.GetFileNameWithoutExtension(resolvedBsp),
       BspPath = resolvedBsp,
       EbpPath = resolvedEbp,
+      BspBinaryLayout = bspBinaryLayout,
+      SkySourceMode = skySourceMode,
       Environment = environmentSettings,
       ExtDummies = extDummies,
       Bounds = bounds,
       BspTriangleVertices = bsp.TriangleVertices,
       BspRenderVertices = bsp.RenderVertices,
       BspMaterialSpans = bsp.MaterialSpans,
+      BspSceneObjects = bsp.SceneObjects,
+      BspRenderVertexObjectIds = bsp.RenderVertexObjectIds,
+      BspRenderVertexLocalPositions = bsp.RenderVertexLocalPositions,
       Materials = materialData.Materials,
       MaterialSurfaceIds = materialData.MaterialSurfaceIds,
       MaterialAlphaTypes = materialData.MaterialAlphaTypes,
@@ -162,6 +169,27 @@ public static class BspLoader
     Vector3[] collisionNormals = ReadBspCollisionNormals(stream, header);
     BspNode[] collisionNodes = ReadBspCollisionNodes(stream, header);
     BspLeafBounds[] leafBounds = ReadBspLeafBounds(stream, header);
+
+    long objectSectionStart = BspHeaderSize
+      + header.CPlanes.Size
+      + header.CFaceId.Size
+      + header.Node.Size
+      + header.Leaf.Size
+      + header.MatListInLeaf.Size;
+    long trackSectionStart = objectSectionStart + header.Object.Size;
+
+    if (trackSectionStart > stream.Length)
+    {
+      throw new InvalidDataException("BSP object/track sections exceed file length.");
+    }
+
+    stream.Position = objectSectionStart;
+    byte[] bspObjectBytes = ReadExactBytes(reader, checked((int)header.Object.Size), "Object");
+    byte[] bspTrackBytes = ReadExactBytes(reader, checked((int)header.Track.Size), "Track");
+    ReadEntityAniObject[] bspObjects = ReadEntityAniObjects(bspObjectBytes);
+    EntityObjectTracks[] bspObjectTracks = BuildEntityObjectTracks(bspObjects, bspTrackBytes);
+    EntitySceneObject[] bspSceneObjects = BuildEntitySceneObjects(bspObjects, bspObjectTracks);
+    NumericsMatrix4[] bspObjectMatrices = BuildEntityObjectMatrices(bspObjects, bspObjectTracks);
 
     long sectionStart = BspHeaderSize
       + header.CPlanes.Size
@@ -242,6 +270,7 @@ public static class BspLoader
       faceIds,
       vertexIds,
       matGroups,
+      bspObjectMatrices,
       uvData,
       lgtUvData,
       vertexColor,
@@ -254,7 +283,69 @@ public static class BspLoader
       triangleVertices[index] = renderVertices[index].Position;
     }
 
-    return new BspData(triangleVertices, renderVertices, mesh.MaterialSpans, collisionNormals, collisionNodes, leafBounds);
+    return new BspData(
+      triangleVertices,
+      renderVertices,
+      mesh.MaterialSpans,
+      bspSceneObjects,
+      mesh.VertexObjectIds,
+      mesh.VertexLocalPositions,
+      collisionNormals,
+      collisionNodes,
+      leafBounds);
+  }
+
+  private static BspBinaryLayout ReadBspBinaryLayout(string bspPath)
+  {
+    byte[] bytes = File.ReadAllBytes(bspPath);
+    if (bytes.Length < BspHeaderSize)
+    {
+      throw new InvalidDataException("BSP file is too small to contain a valid header.");
+    }
+
+    using MemoryStream stream = new(bytes, writable: false);
+    using BinaryReader reader = new(stream);
+    uint version = reader.ReadUInt32();
+    BspEntry[] entries = new BspEntry[BspHeaderEntryCount];
+    for (int index = 0; index < entries.Length; ++index)
+    {
+      uint offset = reader.ReadUInt32();
+      uint size = reader.ReadUInt32();
+      entries[index] = new BspEntry(offset, size);
+    }
+
+    byte[][] sections = new byte[BspHeaderEntryCount][];
+    for (int index = 0; index < sections.Length; ++index)
+    {
+      uint sectionSize = entries[index].Size;
+      if (sectionSize == 0)
+      {
+        sections[index] = Array.Empty<byte>();
+        continue;
+      }
+
+      if (sectionSize > int.MaxValue || stream.Position + sectionSize > stream.Length)
+      {
+        throw new InvalidDataException($"BSP section {index} size is invalid.");
+      }
+
+      byte[] section = reader.ReadBytes((int)sectionSize);
+      if (section.Length != (int)sectionSize)
+      {
+        throw new EndOfStreamException($"Unexpected EOF while reading BSP section {index}.");
+      }
+
+      sections[index] = section;
+    }
+
+    byte[] trailing = bytes.AsSpan(checked((int)stream.Position)).ToArray();
+    return new BspBinaryLayout
+    {
+      Version = version,
+      Entries = entries,
+      Sections = sections,
+      Trailing = trailing,
+    };
   }
 
   private static ExtBspData ReadExtBsp(string ebpPath)
@@ -925,54 +1016,108 @@ public static class BspLoader
 
   private static R3TextureBlob[] ReadR3tTextureBlobs(byte[] r3tBytes, int surfaceIdBase)
   {
-    using MemoryStream stream = new(r3tBytes, writable: false);
-    using BinaryReader reader = new(stream);
-
-    if (stream.Length < 8)
+    if (r3tBytes.Length < 8)
     {
       throw new InvalidDataException("R3T file is too small.");
     }
 
-    float version = reader.ReadSingle();
+    float version = BitConverter.ToSingle(r3tBytes, 0);
     if (version < 1.1f)
     {
       return Array.Empty<R3TextureBlob>();
     }
 
-    uint textureCountRaw = reader.ReadUInt32();
+    uint textureCountRaw = BitConverter.ToUInt32(r3tBytes, 4);
     int textureCount = checked((int)textureCountRaw);
     if (textureCount <= 0)
     {
       return Array.Empty<R3TextureBlob>();
     }
 
-    string[] names = new string[textureCount];
-    for (int i = 0; i < textureCount; ++i)
+    if (TryReadR3tTextureBlobs(r3tBytes, textureCount, surfaceIdBase, hasNameTable: true, out R3TextureBlob[] named))
     {
-      byte[] nameBytes = ReadExactBytes(reader, 128, "R3T texture name");
-      names[i] = DecodeAscii(nameBytes);
+      return named;
     }
 
-    List<R3TextureBlob> textures = new(textureCount);
+    if (TryReadR3tTextureBlobs(r3tBytes, textureCount, surfaceIdBase, hasNameTable: false, out R3TextureBlob[] nameless))
+    {
+      return nameless;
+    }
+
+    throw new InvalidDataException("R3T structure is invalid (neither named-texture nor nameless-texture layout parsed).");
+  }
+
+  private static bool TryReadR3tTextureBlobs(
+    byte[] r3tBytes,
+    int textureCount,
+    int surfaceIdBase,
+    bool hasNameTable,
+    out R3TextureBlob[] textures)
+  {
+    textures = Array.Empty<R3TextureBlob>();
+    long nameTableSize = hasNameTable ? (long)textureCount * 128 : 0L;
+    if (8L + nameTableSize > r3tBytes.Length)
+    {
+      return false;
+    }
+
+    using MemoryStream stream = new(r3tBytes, writable: false);
+    using BinaryReader reader = new(stream);
+    stream.Position = 8;
+
+    string[] names = new string[textureCount];
+    if (hasNameTable)
+    {
+      for (int i = 0; i < textureCount; ++i)
+      {
+        if (stream.Position + 128 > stream.Length)
+        {
+          return false;
+        }
+
+        byte[] nameBytes = reader.ReadBytes(128);
+        if (nameBytes.Length != 128)
+        {
+          return false;
+        }
+
+        names[i] = DecodeAscii(nameBytes);
+      }
+    }
+    else
+    {
+      for (int i = 0; i < textureCount; ++i)
+      {
+        names[i] = string.Empty;
+      }
+    }
+
+    List<R3TextureBlob> parsed = new(textureCount);
     for (int i = 0; i < textureCount; ++i)
     {
       if (stream.Position + 4 > stream.Length)
       {
-        throw new EndOfStreamException("Unexpected EOF while reading R3T texture size.");
+        return false;
       }
 
       int textureByteSize = reader.ReadInt32();
       if (textureByteSize <= 0 || stream.Position + textureByteSize > stream.Length)
       {
-        throw new InvalidDataException("R3T texture block size is invalid.");
+        return false;
       }
 
-      byte[] textureBytes = ReadExactBytes(reader, textureByteSize, "R3T DDS texture block");
+      byte[] textureBytes = reader.ReadBytes(textureByteSize);
+      if (textureBytes.Length != textureByteSize)
+      {
+        return false;
+      }
+
       byte[] ddsBytes = DecodeR3tTextureBytes(textureBytes);
-      textures.Add(new R3TextureBlob(surfaceIdBase + i, names[i], ddsBytes));
+      parsed.Add(new R3TextureBlob(surfaceIdBase + i, names[i], ddsBytes));
     }
 
-    return textures.ToArray();
+    textures = parsed.ToArray();
+    return true;
   }
 
   private static string DecodeAscii(byte[] bytes)
@@ -1028,6 +1173,7 @@ public static class BspLoader
     uint[] faceIds,
     uint[] vertexIds,
     ReadMatGroup[] matGroups,
+    NumericsMatrix4[] objectMatrices,
     float[] uvData,
     short[] lgtUvData,
     uint[] vertexColor,
@@ -1036,12 +1182,18 @@ public static class BspLoader
     int totalVertexCount = bVertexCount + wVertexCount + fVertexCount;
     if (totalVertexCount <= 0 || matGroups.Length == 0)
     {
-      return new MeshBuildResult(Array.Empty<BspRenderVertex>(), Array.Empty<BspMaterialSpan>());
+      return new MeshBuildResult(
+        Array.Empty<BspRenderVertex>(),
+        Array.Empty<BspMaterialSpan>(),
+        Array.Empty<ushort>(),
+        Array.Empty<Vector3>());
     }
 
     Vector3[] decompressed = new Vector3[totalVertexCount];
     bool[] written = new bool[totalVertexCount];
     List<BspRenderVertex> triangles = new(Math.Max(1024, faceIds.Length * 6));
+    List<ushort> vertexObjectIds = new(Math.Max(1024, faceIds.Length * 6));
+    List<Vector3> vertexLocalPositions = new(Math.Max(1024, faceIds.Length * 6));
     List<BspMaterialSpan> spans = new(Math.Max(32, matGroups.Length));
 
     int baseCharIndex = bVertexCount;
@@ -1054,6 +1206,7 @@ public static class BspLoader
       ReadMatGroup group = matGroups[groupIndex];
       int functionId = (group.Attribute & 0x8000) != 0 ? 1 : (group.Attribute & 0x4000) != 0 ? 2 : 4;
       int baseIndex = functionId == 2 ? baseCharIndex : 0;
+      bool hasObjectMatrix = TryGetEntityObjectMatrix(objectMatrices, group.ObjectId, out NumericsMatrix4 objectMatrix);
       int groupStartVertex = triangles.Count;
 
       for (int faceInGroup = 0; faceInGroup < group.FaceCount; ++faceInGroup)
@@ -1124,8 +1277,15 @@ public static class BspLoader
         int root = faceVertexIds[0];
         for (int tri = 2; tri < faceVertexIds.Length; ++tri)
         {
+          Vector3 rootLocal = decompressed[root];
+          Vector3 firstLocal = decompressed[faceVertexIds[tri - 1]];
+          Vector3 secondLocal = decompressed[faceVertexIds[tri]];
+          Vector3 rootPosition = hasObjectMatrix ? TransformEntityPosition(rootLocal, objectMatrix) : rootLocal;
+          Vector3 firstPosition = hasObjectMatrix ? TransformEntityPosition(firstLocal, objectMatrix) : firstLocal;
+          Vector3 secondPosition = hasObjectMatrix ? TransformEntityPosition(secondLocal, objectMatrix) : secondLocal;
+
           triangles.Add(CreateRenderVertex(
-            decompressed[root],
+            rootPosition,
             faceUvIds[0],
             faceColorIds[0],
             group.MaterialId,
@@ -1134,8 +1294,10 @@ public static class BspLoader
             lgtUvData,
             vertexColor,
             materials));
+          vertexObjectIds.Add(group.ObjectId);
+          vertexLocalPositions.Add(rootLocal);
           triangles.Add(CreateRenderVertex(
-            decompressed[faceVertexIds[tri - 1]],
+            firstPosition,
             faceUvIds[tri - 1],
             faceColorIds[tri - 1],
             group.MaterialId,
@@ -1144,8 +1306,10 @@ public static class BspLoader
             lgtUvData,
             vertexColor,
             materials));
+          vertexObjectIds.Add(group.ObjectId);
+          vertexLocalPositions.Add(firstLocal);
           triangles.Add(CreateRenderVertex(
-            decompressed[faceVertexIds[tri]],
+            secondPosition,
             faceUvIds[tri],
             faceColorIds[tri],
             group.MaterialId,
@@ -1154,6 +1318,8 @@ public static class BspLoader
             lgtUvData,
             vertexColor,
             materials));
+          vertexObjectIds.Add(group.ObjectId);
+          vertexLocalPositions.Add(secondLocal);
         }
       }
 
@@ -1185,7 +1351,11 @@ public static class BspLoader
       }
     }
 
-    return new MeshBuildResult(triangles.ToArray(), spans.ToArray());
+    return new MeshBuildResult(
+      triangles.ToArray(),
+      spans.ToArray(),
+      vertexObjectIds.ToArray(),
+      vertexLocalPositions.ToArray());
   }
 
   private static BspRenderVertex CreateRenderVertex(
@@ -1759,9 +1929,9 @@ public static class BspLoader
       float posY = reader.ReadSingle();
       float posZ = reader.ReadSingle();
       float scale = reader.ReadSingle();
-      _ = reader.ReadUInt16(); // object_id
+      ushort objectId = reader.ReadUInt16();
 
-      groups[i] = new ReadMatGroup(attr, faceCount, faceStartId, mtlId, lgtId, new Vector3(posX, posY, posZ), scale);
+      groups[i] = new ReadMatGroup(attr, faceCount, faceStartId, mtlId, lgtId, new Vector3(posX, posY, posZ), scale, objectId);
     }
 
     return groups;
@@ -4634,7 +4804,11 @@ public static class BspLoader
       }
     }
 
-    return new MeshBuildResult(triangles.ToArray(), spans.ToArray());
+    return new MeshBuildResult(
+      triangles.ToArray(),
+      spans.ToArray(),
+      Array.Empty<ushort>(),
+      Array.Empty<Vector3>());
   }
 
   private static BspRenderVertex CreateEntityRenderVertex(
@@ -4915,7 +5089,8 @@ public static class BspLoader
     short MaterialId,
     short LightMapId,
     Vector3 Position,
-    float Scale);
+    float Scale,
+    ushort ObjectId);
 
   private readonly record struct ExtEntityDefinition(bool IsParticle, string Name);
 
@@ -4994,6 +5169,9 @@ public static class BspLoader
       Vector3[] triangleVertices,
       BspRenderVertex[] renderVertices,
       BspMaterialSpan[] materialSpans,
+      EntitySceneObject[] sceneObjects,
+      ushort[] renderVertexObjectIds,
+      Vector3[] renderVertexLocalPositions,
       Vector3[] collisionNormals,
       BspNode[] collisionNodes,
       BspLeafBounds[] leafBounds)
@@ -5001,6 +5179,9 @@ public static class BspLoader
       TriangleVertices = triangleVertices;
       RenderVertices = renderVertices;
       MaterialSpans = materialSpans;
+      SceneObjects = sceneObjects;
+      RenderVertexObjectIds = renderVertexObjectIds;
+      RenderVertexLocalPositions = renderVertexLocalPositions;
       CollisionNormals = collisionNormals;
       CollisionNodes = collisionNodes;
       LeafBounds = leafBounds;
@@ -5009,6 +5190,9 @@ public static class BspLoader
     public Vector3[] TriangleVertices { get; }
     public BspRenderVertex[] RenderVertices { get; }
     public BspMaterialSpan[] MaterialSpans { get; }
+    public EntitySceneObject[] SceneObjects { get; }
+    public ushort[] RenderVertexObjectIds { get; }
+    public Vector3[] RenderVertexLocalPositions { get; }
     public Vector3[] CollisionNormals { get; }
     public BspNode[] CollisionNodes { get; }
     public BspLeafBounds[] LeafBounds { get; }
@@ -5016,14 +5200,22 @@ public static class BspLoader
 
   private sealed class MeshBuildResult
   {
-    public MeshBuildResult(BspRenderVertex[] vertices, BspMaterialSpan[] materialSpans)
+    public MeshBuildResult(
+      BspRenderVertex[] vertices,
+      BspMaterialSpan[] materialSpans,
+      ushort[] vertexObjectIds,
+      Vector3[] vertexLocalPositions)
     {
       Vertices = vertices;
       MaterialSpans = materialSpans;
+      VertexObjectIds = vertexObjectIds;
+      VertexLocalPositions = vertexLocalPositions;
     }
 
     public BspRenderVertex[] Vertices { get; }
     public BspMaterialSpan[] MaterialSpans { get; }
+    public ushort[] VertexObjectIds { get; }
+    public Vector3[] VertexLocalPositions { get; }
   }
 
   private sealed class ExtBspData

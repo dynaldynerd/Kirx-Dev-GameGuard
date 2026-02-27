@@ -10,11 +10,17 @@ partial class MainForm
   private ToolStripMenuItem _openMapFolderMenuItem = null!;
   private ToolStripMenuItem _saveEbpOnlyMenuItem = null!;
   private ToolStripMenuItem _saveMapAsMenuItem = null!;
+  private ToolStripSeparator _fileBlenderSeparator = null!;
+  private ToolStripMenuItem _exportBlenderPackageMenuItem = null!;
+  private ToolStripMenuItem _importBlenderPackageMenuItem = null!;
   private ToolStripSeparator _fileMenuSeparator = null!;
   private ToolStripMenuItem _exitMenuItem = null!;
   private ToolStripMenuItem _editMenuItem = null!;
   private ToolStripMenuItem _undoMenuItem = null!;
   private ToolStripMenuItem _redoMenuItem = null!;
+  private ToolStripMenuItem _editMapMaterialsMenuItem = null!;
+  private ToolStripMenuItem _editMapTexturesMenuItem = null!;
+  private ToolStripMenuItem _editEnvironmentMenuItem = null!;
   private ToolStripSeparator _editMenuSeparator = null!;
   private ToolStripMenuItem _deleteSelectedCollisionMenuItem = null!;
   private ToolStripMenuItem _viewMenuItem = null!;
@@ -104,11 +110,17 @@ partial class MainForm
     _openMapFolderMenuItem = new ToolStripMenuItem();
     _saveEbpOnlyMenuItem = new ToolStripMenuItem();
     _saveMapAsMenuItem = new ToolStripMenuItem();
+    _fileBlenderSeparator = new ToolStripSeparator();
+    _exportBlenderPackageMenuItem = new ToolStripMenuItem();
+    _importBlenderPackageMenuItem = new ToolStripMenuItem();
     _fileMenuSeparator = new ToolStripSeparator();
     _exitMenuItem = new ToolStripMenuItem();
     _editMenuItem = new ToolStripMenuItem();
     _undoMenuItem = new ToolStripMenuItem();
     _redoMenuItem = new ToolStripMenuItem();
+    _editMapMaterialsMenuItem = new ToolStripMenuItem();
+    _editMapTexturesMenuItem = new ToolStripMenuItem();
+    _editEnvironmentMenuItem = new ToolStripMenuItem();
     _editMenuSeparator = new ToolStripSeparator();
     _deleteSelectedCollisionMenuItem = new ToolStripMenuItem();
     _viewMenuItem = new ToolStripMenuItem();
@@ -198,6 +210,9 @@ partial class MainForm
       _openMapFolderMenuItem,
       _saveEbpOnlyMenuItem,
       _saveMapAsMenuItem,
+      _fileBlenderSeparator,
+      _exportBlenderPackageMenuItem,
+      _importBlenderPackageMenuItem,
       _fileMenuSeparator,
       _exitMenuItem,
     });
@@ -216,6 +231,18 @@ partial class MainForm
     _saveMapAsMenuItem.ShortcutKeys = Keys.Control | Keys.Shift | Keys.S;
     _saveMapAsMenuItem.Text = "Save Map &As...";
 
+    _fileBlenderSeparator.Name = "_fileBlenderSeparator";
+
+    _exportBlenderPackageMenuItem.Name = "_exportBlenderPackageMenuItem";
+    _exportBlenderPackageMenuItem.ShortcutKeys = Keys.Control | Keys.Shift | Keys.E;
+    _exportBlenderPackageMenuItem.Text = "Export &Blender Package...";
+    _exportBlenderPackageMenuItem.ToolTipText = "Export map mesh/materials/textures/entities for Blender workflow";
+
+    _importBlenderPackageMenuItem.Name = "_importBlenderPackageMenuItem";
+    _importBlenderPackageMenuItem.ShortcutKeys = Keys.Control | Keys.Shift | Keys.I;
+    _importBlenderPackageMenuItem.Text = "Import B&lender Package...";
+    _importBlenderPackageMenuItem.ToolTipText = "Import map materials/textures/entities from Blender package folder";
+
     _fileMenuSeparator.Name = "_fileMenuSeparator";
 
     _exitMenuItem.Name = "_exitMenuItem";
@@ -226,6 +253,9 @@ partial class MainForm
     {
       _undoMenuItem,
       _redoMenuItem,
+      _editMapMaterialsMenuItem,
+      _editMapTexturesMenuItem,
+      _editEnvironmentMenuItem,
       _editMenuSeparator,
       _deleteSelectedCollisionMenuItem,
     });
@@ -243,6 +273,21 @@ partial class MainForm
     _redoMenuItem.ShortcutKeys = Keys.Control | Keys.Y;
     _redoMenuItem.Text = "&Redo Collision Edit";
     _redoMenuItem.ToolTipText = "Redo the last undone collision edit";
+
+    _editMapMaterialsMenuItem.Name = "_editMapMaterialsMenuItem";
+    _editMapMaterialsMenuItem.ShortcutKeys = Keys.Control | Keys.M;
+    _editMapMaterialsMenuItem.Text = "R3&M Materials...";
+    _editMapMaterialsMenuItem.ToolTipText = "Edit map R3M materials";
+
+    _editMapTexturesMenuItem.Name = "_editMapTexturesMenuItem";
+    _editMapTexturesMenuItem.ShortcutKeys = Keys.Control | Keys.T;
+    _editMapTexturesMenuItem.Text = "R3&T Textures...";
+    _editMapTexturesMenuItem.ToolTipText = "Edit map R3T textures";
+
+    _editEnvironmentMenuItem.Name = "_editEnvironmentMenuItem";
+    _editEnvironmentMenuItem.ShortcutKeys = Keys.Control | Keys.E;
+    _editEnvironmentMenuItem.Text = "R3X &Environment...";
+    _editEnvironmentMenuItem.ToolTipText = "Edit map fog/environment values saved to R3X";
 
     _editMenuSeparator.Name = "_editMenuSeparator";
 
@@ -435,13 +480,13 @@ partial class MainForm
     _parityPipelineMenuItem.Name = "_parityPipelineMenuItem";
     _parityPipelineMenuItem.Text = "R3Parity";
 
-    _northSouthFlipButton.Checked = true;
+    _northSouthFlipButton.Checked = false;
     _northSouthFlipButton.CheckOnClick = true;
-    _northSouthFlipButton.CheckState = CheckState.Checked;
+    _northSouthFlipButton.CheckState = CheckState.Unchecked;
     _northSouthFlipButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
     _northSouthFlipButton.Name = "_northSouthFlipButton";
     _northSouthFlipButton.Text = "NSFlip";
-    _northSouthFlipButton.ToolTipText = "Flip north/south axis (invert world Z) to match in-game orientation";
+    _northSouthFlipButton.ToolTipText = "Display-only north/south mirror (debug/inspection).";
 
     _speedSeparator4.Name = "_speedSeparator4";
 
@@ -495,13 +540,13 @@ partial class MainForm
     _dynamicLightButton.Text = "DynLight";
     _dynamicLightButton.ToolTipText = "Enable/disable dynamic lighting pass";
 
-    _particleMarkersButton.Checked = true;
+    _particleMarkersButton.Checked = false;
     _particleMarkersButton.CheckOnClick = true;
-    _particleMarkersButton.CheckState = CheckState.Checked;
+    _particleMarkersButton.CheckState = CheckState.Unchecked;
     _particleMarkersButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
     _particleMarkersButton.Name = "_particleMarkersButton";
     _particleMarkersButton.Text = "FxMark";
-    _particleMarkersButton.ToolTipText = "Show/hide particle/effect instance markers";
+    _particleMarkersButton.ToolTipText = "Show/hide particle/effect instances and markers";
 
     _collisionStrip.Dock = DockStyle.Top;
     _collisionStrip.GripStyle = ToolStripGripStyle.Hidden;

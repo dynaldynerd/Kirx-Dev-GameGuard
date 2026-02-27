@@ -1,138 +1,163 @@
-using System.Buffers.Binary;
 using MapEditor.Formats;
+using System.Security.Cryptography;
 
 if (args.Length < 2)
 {
-  Console.WriteLine("Usage: EbpRoundTrip <bsp> <ebp>");
+  Console.WriteLine("Usage: EbpRoundTrip <mapDir> <backupDir>");
   return;
 }
 
-string bsp = Path.GetFullPath(args[0]);
-string ebp = Path.GetFullPath(args[1]);
-string outBsp = Path.Combine(Path.GetDirectoryName(ebp)!, Path.GetFileNameWithoutExtension(ebp) + ".roundtrip.bsp");
-string outEbp = Path.Combine(Path.GetDirectoryName(ebp)!, Path.GetFileNameWithoutExtension(ebp) + ".roundtrip.ebp");
-if (File.Exists(outBsp)) File.Delete(outBsp);
-if (File.Exists(outEbp)) File.Delete(outEbp);
-
-LoadedMap map = BspLoader.Load(bsp, ebp, SkySourceMode.Sky2);
-MapExporter.ExportBspEbpPair(map, bsp, ebp, outBsp, outEbp);
-
-byte[] src = File.ReadAllBytes(ebp);
-byte[] dst = File.ReadAllBytes(outEbp);
-SectionEntry[] srcEntries = ReadEntries(src);
-SectionEntry[] dstEntries = ReadEntries(dst);
-
-byte[] srcLine = ReadSection(src, srcEntries[2]);
-byte[] dstLine = ReadSection(dst, dstEntries[2]);
-byte[] srcLeaf = ReadSection(src, srcEntries[3]);
-byte[] dstLeaf = ReadSection(dst, dstEntries[3]);
-
-Console.WriteLine($"src={src.Length} dst={dst.Length} full_equal={src.AsSpan().SequenceEqual(dst)}");
-Console.WriteLine($"CFLineId size src={srcLine.Length} dst={dstLine.Length}");
-Console.WriteLine($"CFLeaf   size src={srcLeaf.Length} dst={dstLeaf.Length}");
-
-int firstLineWord = FindFirstWordDiff(srcLine, dstLine);
-int firstLeafEntry = FindFirstLeafDiff(srcLeaf, dstLeaf);
-Console.WriteLine($"first CFLineId word diff={firstLineWord}");
-Console.WriteLine($"first CFLeaf entry diff={firstLeafEntry}");
-
-if (firstLineWord >= 0)
+string mapDir = Path.GetFullPath(args[0]);
+string backupDir = Path.GetFullPath(args[1]);
+if (!Directory.Exists(mapDir))
 {
-  DumpWordWindow("CFLineId", srcLine, dstLine, firstLineWord, 12);
-}
-if (firstLeafEntry >= 0)
-{
-  DumpLeafWindow("CFLeaf", srcLeaf, dstLeaf, firstLeafEntry, 8);
+  Console.WriteLine($"ERROR: map directory not found: {mapDir}");
+  return;
 }
 
-static SectionEntry[] ReadEntries(byte[] bytes)
+if (!Directory.Exists(backupDir))
 {
-  if (bytes.Length < 0x184) throw new InvalidDataException("header too small");
-  uint version = BinaryPrimitives.ReadUInt32LittleEndian(bytes.AsSpan(0, 4));
-  if (version != 20) throw new InvalidDataException($"version={version}");
+  Console.WriteLine($"ERROR: backup directory not found: {backupDir}");
+  return;
+}
 
-  SectionEntry[] entries = new SectionEntry[48];
-  int off = 4;
-  for (int i = 0; i < entries.Length; ++i)
+string? bspPath = Directory.EnumerateFiles(mapDir, "*.bsp", SearchOption.TopDirectoryOnly).FirstOrDefault();
+if (bspPath == null)
+{
+  Console.WriteLine($"ERROR: no BSP found in {mapDir}");
+  return;
+}
+
+string mapBase = Path.GetFileNameWithoutExtension(bspPath);
+string? ebpPath = TryResolveCaseInsensitiveFile(mapDir, mapBase + ".ebp")
+  ?? Directory.EnumerateFiles(mapDir, "*.ebp", SearchOption.TopDirectoryOnly).FirstOrDefault();
+if (ebpPath == null)
+{
+  Console.WriteLine($"ERROR: no EBP found in {mapDir}");
+  return;
+}
+
+Console.WriteLine($"Roundtrip in-place resave:");
+Console.WriteLine($"  BSP: {bspPath}");
+Console.WriteLine($"  EBP: {ebpPath}");
+
+LoadedMap loadedMap = BspLoader.Load(bspPath, ebpPath, SkySourceMode.Sky2);
+MapExporter.ExportBspEbpPair(loadedMap, bspPath, ebpPath, bspPath, ebpPath);
+Console.WriteLine("Resave complete.");
+
+Dictionary<string, string> mapFiles = Directory.EnumerateFiles(mapDir, "*", SearchOption.AllDirectories)
+  .ToDictionary(
+    path => Path.GetRelativePath(mapDir, path).Replace('\\', '/'),
+    path => path,
+    StringComparer.OrdinalIgnoreCase);
+Dictionary<string, string> backupFiles = Directory.EnumerateFiles(backupDir, "*", SearchOption.AllDirectories)
+  .ToDictionary(
+    path => Path.GetRelativePath(backupDir, path).Replace('\\', '/'),
+    path => path,
+    StringComparer.OrdinalIgnoreCase);
+
+List<string> onlyInMap = [];
+List<string> onlyInBackup = [];
+List<string> different = [];
+
+foreach ((string relative, string mapFilePath) in mapFiles)
+{
+  if (!backupFiles.TryGetValue(relative, out string? backupFilePath))
   {
-    uint o = BinaryPrimitives.ReadUInt32LittleEndian(bytes.AsSpan(off, 4));
-    uint s = BinaryPrimitives.ReadUInt32LittleEndian(bytes.AsSpan(off + 4, 4));
-    entries[i] = new SectionEntry(o, s);
-    off += 8;
+    onlyInMap.Add(relative);
+    continue;
   }
 
-  return entries;
-}
-
-static byte[] ReadSection(byte[] bytes, SectionEntry entry)
-{
-  if (entry.Size == 0) return Array.Empty<byte>();
-  if ((ulong)entry.Offset + entry.Size > (ulong)bytes.Length) return Array.Empty<byte>();
-  return bytes.AsSpan((int)entry.Offset, (int)entry.Size).ToArray();
-}
-
-static int FindFirstWordDiff(byte[] a, byte[] b)
-{
-  int words = Math.Min(a.Length, b.Length) / 2;
-  for (int i = 0; i < words; ++i)
+  FileInfo mapInfo = new(mapFilePath);
+  FileInfo backupInfo = new(backupFilePath);
+  if (mapInfo.Length != backupInfo.Length)
   {
-    ushort aw = BinaryPrimitives.ReadUInt16LittleEndian(a.AsSpan(i * 2, 2));
-    ushort bw = BinaryPrimitives.ReadUInt16LittleEndian(b.AsSpan(i * 2, 2));
-    if (aw != bw) return i;
+    different.Add($"{relative} | size {mapInfo.Length} vs {backupInfo.Length}");
+    continue;
   }
 
-  if (a.Length != b.Length) return words;
-  return -1;
-}
-
-static int FindFirstLeafDiff(byte[] a, byte[] b)
-{
-  int entries = Math.Min(a.Length, b.Length) / 6;
-  for (int i = 0; i < entries; ++i)
+  string mapHash = ComputeSha256Hex(mapFilePath);
+  string backupHash = ComputeSha256Hex(backupFilePath);
+  if (!string.Equals(mapHash, backupHash, StringComparison.OrdinalIgnoreCase))
   {
-    int off = i * 6;
-    uint asid = BinaryPrimitives.ReadUInt32LittleEndian(a.AsSpan(off, 4));
-    ushort acount = BinaryPrimitives.ReadUInt16LittleEndian(a.AsSpan(off + 4, 2));
-    uint bsid = BinaryPrimitives.ReadUInt32LittleEndian(b.AsSpan(off, 4));
-    ushort bcount = BinaryPrimitives.ReadUInt16LittleEndian(b.AsSpan(off + 4, 2));
-    if (asid != bsid || acount != bcount) return i;
-  }
-
-  if (a.Length != b.Length) return entries;
-  return -1;
-}
-
-static void DumpWordWindow(string tag, byte[] a, byte[] b, int center, int radius)
-{
-  int words = Math.Min(a.Length, b.Length) / 2;
-  int start = Math.Max(0, center - radius);
-  int end = Math.Min(words - 1, center + radius);
-  Console.WriteLine($"{tag} window [{start}..{end}]");
-  for (int i = start; i <= end; ++i)
-  {
-    ushort aw = BinaryPrimitives.ReadUInt16LittleEndian(a.AsSpan(i * 2, 2));
-    ushort bw = BinaryPrimitives.ReadUInt16LittleEndian(b.AsSpan(i * 2, 2));
-    char mark = aw == bw ? ' ' : '*';
-    Console.WriteLine($"{mark}{i,6}: src={aw,5} dst={bw,5}");
+    different.Add($"{relative} | sha256 {mapHash[..16]}.. vs {backupHash[..16]}..");
   }
 }
 
-static void DumpLeafWindow(string tag, byte[] a, byte[] b, int center, int radius)
+foreach (string relative in backupFiles.Keys)
 {
-  int entries = Math.Min(a.Length, b.Length) / 6;
-  int start = Math.Max(0, center - radius);
-  int end = Math.Min(entries - 1, center + radius);
-  Console.WriteLine($"{tag} window [{start}..{end}]");
-  for (int i = start; i <= end; ++i)
+  if (!mapFiles.ContainsKey(relative))
   {
-    int off = i * 6;
-    uint asid = BinaryPrimitives.ReadUInt32LittleEndian(a.AsSpan(off, 4));
-    ushort acount = BinaryPrimitives.ReadUInt16LittleEndian(a.AsSpan(off + 4, 2));
-    uint bsid = BinaryPrimitives.ReadUInt32LittleEndian(b.AsSpan(off, 4));
-    ushort bcount = BinaryPrimitives.ReadUInt16LittleEndian(b.AsSpan(off + 4, 2));
-    char mark = (asid == bsid && acount == bcount) ? ' ' : '*';
-    Console.WriteLine($"{mark}{i,6}: src=({asid,6},{acount,4}) dst=({bsid,6},{bcount,4})");
+    onlyInBackup.Add(relative);
   }
 }
 
-readonly record struct SectionEntry(uint Offset, uint Size);
+onlyInMap.Sort(StringComparer.OrdinalIgnoreCase);
+onlyInBackup.Sort(StringComparer.OrdinalIgnoreCase);
+different.Sort(StringComparer.OrdinalIgnoreCase);
+
+Console.WriteLine();
+Console.WriteLine($"Compare summary:");
+Console.WriteLine($"  Only in map   : {onlyInMap.Count}");
+Console.WriteLine($"  Only in backup: {onlyInBackup.Count}");
+Console.WriteLine($"  Different     : {different.Count}");
+
+if (onlyInMap.Count > 0)
+{
+  Console.WriteLine();
+  Console.WriteLine("Only in map:");
+  foreach (string line in onlyInMap.Take(64))
+  {
+    Console.WriteLine($"  + {line}");
+  }
+}
+
+if (onlyInBackup.Count > 0)
+{
+  Console.WriteLine();
+  Console.WriteLine("Only in backup:");
+  foreach (string line in onlyInBackup.Take(64))
+  {
+    Console.WriteLine($"  - {line}");
+  }
+}
+
+if (different.Count > 0)
+{
+  Console.WriteLine();
+  Console.WriteLine("Different files:");
+  foreach (string line in different.Take(256))
+  {
+    Console.WriteLine($"  * {line}");
+  }
+}
+
+if (onlyInMap.Count == 0 && onlyInBackup.Count == 0 && different.Count == 0)
+{
+  Console.WriteLine("All files are byte-identical.");
+}
+
+static string? TryResolveCaseInsensitiveFile(string directoryPath, string fileName)
+{
+  string direct = Path.Combine(directoryPath, fileName);
+  if (File.Exists(direct))
+  {
+    return direct;
+  }
+
+  foreach (string filePath in Directory.EnumerateFiles(directoryPath))
+  {
+    if (string.Equals(Path.GetFileName(filePath), fileName, StringComparison.OrdinalIgnoreCase))
+    {
+      return filePath;
+    }
+  }
+
+  return null;
+}
+
+static string ComputeSha256Hex(string filePath)
+{
+  using FileStream stream = File.OpenRead(filePath);
+  return Convert.ToHexString(SHA256.HashData(stream));
+}

@@ -3,7 +3,15 @@ using NumericsMatrix4 = System.Numerics.Matrix4x4;
 
 namespace MapEditor.Formats;
 
-internal readonly record struct BspEntry(uint Offset, uint Size);
+public readonly record struct BspEntry(uint Offset, uint Size);
+
+public sealed class BspBinaryLayout
+{
+  public required uint Version { get; init; }
+  public required BspEntry[] Entries { get; init; }
+  public required byte[][] Sections { get; init; }
+  public required byte[] Trailing { get; init; }
+}
 
 internal readonly record struct ExtBspHeader(
   uint Version,
@@ -251,12 +259,17 @@ public sealed class LoadedMap
   public required string Name { get; init; }
   public required string BspPath { get; init; }
   public required string EbpPath { get; init; }
+  public required BspBinaryLayout BspBinaryLayout { get; init; }
+  public required SkySourceMode SkySourceMode { get; init; }
   public required MapEnvironmentSettings Environment { get; init; }
   public required ExtDummyDefinition[] ExtDummies { get; init; }
   public required MapBounds Bounds { get; init; }
   public required Vector3[] BspTriangleVertices { get; init; }
   public required BspRenderVertex[] BspRenderVertices { get; init; }
   public required BspMaterialSpan[] BspMaterialSpans { get; init; }
+  public required EntitySceneObject[] BspSceneObjects { get; init; }
+  public required ushort[] BspRenderVertexObjectIds { get; init; }
+  public required Vector3[] BspRenderVertexLocalPositions { get; init; }
   public required MaterialDefinition[] Materials { get; init; }
   public required int[] MaterialSurfaceIds { get; init; }
   public required uint[] MaterialAlphaTypes { get; init; }

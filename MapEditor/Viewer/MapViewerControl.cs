@@ -103,7 +103,7 @@ internal sealed class MapViewerControl : UserControl
   private bool _enableR3mMaterials = true;
   private bool _enableR3xEnvironment = true;
   private bool _enableDynamicLighting = true;
-  private bool _flipNorthSouth = true;
+  private bool _flipNorthSouth = false;
   private bool _enableHeadlight = true;
   private float _headlightRadius = 4500f;
   private float _headlightIntensity = 0.85f;
@@ -201,7 +201,7 @@ internal sealed class MapViewerControl : UserControl
   private int _particleVertexCount;
   private int _particleUniformMvp;
   private int _particleUniformColor;
-  private bool _showParticleMarkers = true;
+  private bool _showParticleMarkers = false;
   private bool _collisionDrawModeEnabled;
   private bool _collisionSelectModeEnabled;
   private bool _collisionDrawDragging;
@@ -231,6 +231,13 @@ internal sealed class MapViewerControl : UserControl
   private DrawSpan[] _parityEntityDrawSpans = Array.Empty<DrawSpan>();
   private DrawSpan[] _parityStaticEntityDrawSpans = Array.Empty<DrawSpan>();
   private BspRenderVertex[] _mapDrawVertices = Array.Empty<BspRenderVertex>();
+  private EntitySceneObject[] _bspSceneObjects = Array.Empty<EntitySceneObject>();
+  private ushort[] _bspRenderVertexObjectIds = Array.Empty<ushort>();
+  private Vector3[] _bspRenderVertexLocalPositions = Array.Empty<Vector3>();
+  private bool _hasAnimatedBspGeometry;
+  private int _bspLastFrameTick = int.MinValue;
+  private float[] _mapUploadBuffer = Array.Empty<float>();
+  private int _mapUploadBufferLength;
   private BspRenderVertex[] _entityDrawVertices = Array.Empty<BspRenderVertex>();
   private BspRenderVertex[] _parityEntityFrameVertices = Array.Empty<BspRenderVertex>();
   private BspRenderVertex[] _parityStaticEntityVertices = Array.Empty<BspRenderVertex>();
@@ -788,6 +795,20 @@ internal sealed class MapViewerControl : UserControl
     for (int objectIndex = 0; objectIndex < model.Objects.Length; ++objectIndex)
     {
       EntitySceneObject obj = model.Objects[objectIndex];
+      if (obj.PositionTracks.Length > 0 || obj.RotationTracks.Length > 0 || obj.ScaleTracks.Length > 0)
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static bool HasAnimatedSceneObjects(EntitySceneObject[] objects)
+  {
+    for (int objectIndex = 0; objectIndex < objects.Length; ++objectIndex)
+    {
+      EntitySceneObject obj = objects[objectIndex];
       if (obj.PositionTracks.Length > 0 || obj.RotationTracks.Length > 0 || obj.ScaleTracks.Length > 0)
       {
         return true;
@@ -1447,6 +1468,7 @@ internal sealed class MapViewerControl : UserControl
     Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(65f), aspect, 0.1f, 200000f);
     Matrix4 view = _camera.GetViewMatrix();
     Matrix4 mvp = view * projection;
+    PrepareAnimatedBspFrameMesh();
 
     if (_showSky && _skyVertexCount > 0)
     {
@@ -1836,6 +1858,12 @@ internal sealed class MapViewerControl : UserControl
       _parityStaticEntityDrawSpans = Array.Empty<DrawSpan>();
       _parityEntityDrawSpans = Array.Empty<DrawSpan>();
       _mapDrawVertices = Array.Empty<BspRenderVertex>();
+      _bspSceneObjects = Array.Empty<EntitySceneObject>();
+      _bspRenderVertexObjectIds = Array.Empty<ushort>();
+      _bspRenderVertexLocalPositions = Array.Empty<Vector3>();
+      _hasAnimatedBspGeometry = false;
+      _bspLastFrameTick = int.MinValue;
+      _mapUploadBufferLength = 0;
       _entityDrawVertices = Array.Empty<BspRenderVertex>();
       _parityStaticEntityVertices = Array.Empty<BspRenderVertex>();
       _parityEntityFrameVertices = Array.Empty<BspRenderVertex>();
@@ -1868,6 +1896,7 @@ internal sealed class MapViewerControl : UserControl
     _parityCulledDynamicInstances = 0;
     _parityEntityLastFrameTick = int.MinValue;
     _parityEntityUploadBufferLength = 0;
+    _bspLastFrameTick = int.MinValue;
 
     BspRenderVertex[] skyRenderVertices = ConvertRenderVertices(_map.SkyRenderVertices);
     UploadMeshLayer(
@@ -1968,7 +1997,29 @@ internal sealed class MapViewerControl : UserControl
   {
     _mapDrawVertices = ConvertRenderVertices(map.BspRenderVertices);
     _meshVertexCount = _mapDrawVertices.Length;
-    float[] meshData = new float[_meshVertexCount * MeshFloatStride];
+    _bspSceneObjects = map.BspSceneObjects;
+    bool hasMatchingBspAnimationMetadata =
+      map.BspRenderVertexObjectIds.Length == _meshVertexCount &&
+      map.BspRenderVertexLocalPositions.Length == _meshVertexCount;
+    _bspRenderVertexObjectIds = hasMatchingBspAnimationMetadata
+      ? map.BspRenderVertexObjectIds
+      : Array.Empty<ushort>();
+    _bspRenderVertexLocalPositions = hasMatchingBspAnimationMetadata
+      ? map.BspRenderVertexLocalPositions
+      : Array.Empty<Vector3>();
+    _hasAnimatedBspGeometry =
+      hasMatchingBspAnimationMetadata &&
+      _bspSceneObjects.Length > 0 &&
+      HasAnimatedSceneObjects(_bspSceneObjects);
+    _bspLastFrameTick = int.MinValue;
+
+    int meshFloatCount = _meshVertexCount * MeshFloatStride;
+    if (_mapUploadBuffer.Length < meshFloatCount)
+    {
+      _mapUploadBuffer = new float[Math.Max(meshFloatCount, _mapUploadBuffer.Length * 2)];
+    }
+
+    float[] meshData = _mapUploadBuffer;
     for (int i = 0; i < _meshVertexCount; ++i)
     {
       int offset = i * MeshFloatStride;
@@ -1987,7 +2038,12 @@ internal sealed class MapViewerControl : UserControl
 
     GL.BindVertexArray(_meshVao);
     GL.BindBuffer(BufferTarget.ArrayBuffer, _meshVbo);
-    GL.BufferData(BufferTarget.ArrayBuffer, meshData.Length * 4, meshData, BufferUsageHint.StaticDraw);
+    _mapUploadBufferLength = _mapUploadBuffer.Length;
+    GL.BufferData(
+      BufferTarget.ArrayBuffer,
+      meshFloatCount * 4,
+      meshData,
+      _hasAnimatedBspGeometry ? BufferUsageHint.DynamicDraw : BufferUsageHint.StaticDraw);
 
     ReleaseMapTextures();
 
@@ -2402,6 +2458,80 @@ internal sealed class MapViewerControl : UserControl
     GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, floatCount * 4, meshData);
   }
 
+  private void PrepareAnimatedBspFrameMesh()
+  {
+    if (_map == null || !_hasAnimatedBspGeometry || _meshVertexCount <= 0)
+    {
+      return;
+    }
+
+    if (_bspRenderVertexObjectIds.Length != _meshVertexCount || _bspRenderVertexLocalPositions.Length != _meshVertexCount)
+    {
+      return;
+    }
+
+    int frameTick = (int)MathF.Floor((float)_animationClock.Elapsed.TotalSeconds * 30.0f);
+    if (frameTick == _bspLastFrameTick)
+    {
+      return;
+    }
+
+    _bspLastFrameTick = frameTick;
+    float nowFrame = (float)_animationClock.Elapsed.TotalSeconds * 30.0f;
+    NumericsMatrix4[] objectMatrices = BuildSceneObjectMatrices(_bspSceneObjects, nowFrame);
+
+    int floatCount = _meshVertexCount * MeshFloatStride;
+    if (_mapUploadBuffer.Length < floatCount)
+    {
+      _mapUploadBuffer = new float[Math.Max(floatCount, _mapUploadBuffer.Length * 2)];
+      for (int vertexIndex = 0; vertexIndex < _meshVertexCount; ++vertexIndex)
+      {
+        int offset = vertexIndex * MeshFloatStride;
+        BspRenderVertex vertex = _mapDrawVertices[vertexIndex];
+        _mapUploadBuffer[offset] = vertex.Position.X;
+        _mapUploadBuffer[offset + 1] = vertex.Position.Y;
+        _mapUploadBuffer[offset + 2] = vertex.Position.Z;
+        _mapUploadBuffer[offset + 3] = vertex.Uv.X;
+        _mapUploadBuffer[offset + 4] = vertex.Uv.Y;
+        _mapUploadBuffer[offset + 5] = vertex.LightUv.X;
+        _mapUploadBuffer[offset + 6] = vertex.LightUv.Y;
+        _mapUploadBuffer[offset + 7] = vertex.Color.X;
+        _mapUploadBuffer[offset + 8] = vertex.Color.Y;
+        _mapUploadBuffer[offset + 9] = vertex.Color.Z;
+      }
+    }
+
+    for (int vertexIndex = 0; vertexIndex < _meshVertexCount; ++vertexIndex)
+    {
+      ushort objectId = _bspRenderVertexObjectIds[vertexIndex];
+      Vector3 localPosition = _bspRenderVertexLocalPositions[vertexIndex];
+      Vector3 worldPosition = localPosition;
+      if (TryGetSceneObjectMatrix(objectMatrices, objectId, out NumericsMatrix4 objectMatrix))
+      {
+        worldPosition = TransformEntityPosition(worldPosition, objectMatrix);
+      }
+
+      Vector3 displayPosition = ConvertWorldPosition(worldPosition);
+      BspRenderVertex sourceVertex = _mapDrawVertices[vertexIndex];
+      _mapDrawVertices[vertexIndex] = new BspRenderVertex(displayPosition, sourceVertex.Uv, sourceVertex.LightUv, sourceVertex.Color);
+
+      int offset = vertexIndex * MeshFloatStride;
+      _mapUploadBuffer[offset] = displayPosition.X;
+      _mapUploadBuffer[offset + 1] = displayPosition.Y;
+      _mapUploadBuffer[offset + 2] = displayPosition.Z;
+    }
+
+    GL.BindVertexArray(_meshVao);
+    GL.BindBuffer(BufferTarget.ArrayBuffer, _meshVbo);
+    if (_mapUploadBufferLength < floatCount)
+    {
+      _mapUploadBufferLength = _mapUploadBuffer.Length;
+      GL.BufferData(BufferTarget.ArrayBuffer, _mapUploadBufferLength * 4, IntPtr.Zero, BufferUsageHint.DynamicDraw);
+    }
+
+    GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, floatCount * 4, _mapUploadBuffer);
+  }
+
   private void BuildParityEntityFrame(float animSeconds, out BspRenderVertex[] vertices, out DrawSpan[] spans)
   {
     BuildParityEntityGeometry(
@@ -2495,7 +2625,7 @@ internal sealed class MapViewerControl : UserControl
         animatedObjectUpdates += objectMatrices.Length;
       }
 
-      if (model.ParticleRuntime is ParticleRuntimeDefinition particleRuntime)
+      if (_showParticleMarkers && model.ParticleRuntime is ParticleRuntimeDefinition particleRuntime)
       {
         AppendParticleRuntimeGeometry(
           frameVertices,
@@ -2509,6 +2639,12 @@ internal sealed class MapViewerControl : UserControl
           instanceScale,
           sourceCameraPosition,
           ref skippedLayers);
+        continue;
+      }
+
+      if (model.ParticleRuntime.HasValue)
+      {
+        // Keep parity with the UI toggle: when FX is hidden, skip runtime particle entity geometry too.
         continue;
       }
 

@@ -806,12 +806,17 @@ public static class MapEditOperations
       Name = source.Name,
       BspPath = source.BspPath,
       EbpPath = source.EbpPath,
+      BspBinaryLayout = source.BspBinaryLayout,
+      SkySourceMode = source.SkySourceMode,
       Environment = source.Environment,
       ExtDummies = source.ExtDummies,
       Bounds = source.Bounds,
       BspTriangleVertices = source.BspTriangleVertices,
       BspRenderVertices = source.BspRenderVertices,
       BspMaterialSpans = source.BspMaterialSpans,
+      BspSceneObjects = source.BspSceneObjects,
+      BspRenderVertexObjectIds = source.BspRenderVertexObjectIds,
+      BspRenderVertexLocalPositions = source.BspRenderVertexLocalPositions,
       Materials = source.Materials,
       MaterialSurfaceIds = source.MaterialSurfaceIds,
       MaterialAlphaTypes = source.MaterialAlphaTypes,
@@ -840,6 +845,379 @@ public static class MapEditOperations
       CollisionVertices = collisionVertices,
       CollisionLines = collisionLines,
     };
+  }
+
+  public static LoadedMap WithEnvironmentData(
+    LoadedMap source,
+    MapEnvironmentSettings environment)
+  {
+    return new LoadedMap
+    {
+      Name = source.Name,
+      BspPath = source.BspPath,
+      EbpPath = source.EbpPath,
+      BspBinaryLayout = source.BspBinaryLayout,
+      SkySourceMode = source.SkySourceMode,
+      Environment = environment,
+      ExtDummies = source.ExtDummies,
+      Bounds = source.Bounds,
+      BspTriangleVertices = source.BspTriangleVertices,
+      BspRenderVertices = source.BspRenderVertices,
+      BspMaterialSpans = source.BspMaterialSpans,
+      BspSceneObjects = source.BspSceneObjects,
+      BspRenderVertexObjectIds = source.BspRenderVertexObjectIds,
+      BspRenderVertexLocalPositions = source.BspRenderVertexLocalPositions,
+      Materials = source.Materials,
+      MaterialSurfaceIds = source.MaterialSurfaceIds,
+      MaterialAlphaTypes = source.MaterialAlphaTypes,
+      SurfaceTextures = source.SurfaceTextures,
+      LightmapTextures = source.LightmapTextures,
+      SkyRenderVertices = source.SkyRenderVertices,
+      SkyMaterialSpans = source.SkyMaterialSpans,
+      SkyMaterials = source.SkyMaterials,
+      SkyMaterialSurfaceIds = source.SkyMaterialSurfaceIds,
+      SkyMaterialAlphaTypes = source.SkyMaterialAlphaTypes,
+      SkySurfaceTextures = source.SkySurfaceTextures,
+      EntityRenderVertices = source.EntityRenderVertices,
+      EntityMaterialSpans = source.EntityMaterialSpans,
+      EntityMaterials = source.EntityMaterials,
+      EntityMaterialSurfaceIds = source.EntityMaterialSurfaceIds,
+      EntityMaterialAlphaTypes = source.EntityMaterialAlphaTypes,
+      EntitySurfaceTextures = source.EntitySurfaceTextures,
+      EntityScene = source.EntityScene,
+      MapEntityModelCount = source.MapEntityModelCount,
+      MapEntityInstanceCount = source.MapEntityInstanceCount,
+      ParticleInstancePositions = source.ParticleInstancePositions,
+      ParticleInstances = source.ParticleInstances,
+      BspCollisionNormals = source.BspCollisionNormals,
+      BspCollisionNodes = source.BspCollisionNodes,
+      BspLeafBounds = source.BspLeafBounds,
+      CollisionVertices = source.CollisionVertices,
+      CollisionLines = source.CollisionLines,
+    };
+  }
+
+  public static LoadedMap WithEntitySceneData(
+    LoadedMap source,
+    EntitySceneData entityScene)
+  {
+    EntitySceneData scene = entityScene ?? EntitySceneData.Empty;
+    return new LoadedMap
+    {
+      Name = source.Name,
+      BspPath = source.BspPath,
+      EbpPath = source.EbpPath,
+      BspBinaryLayout = source.BspBinaryLayout,
+      SkySourceMode = source.SkySourceMode,
+      Environment = source.Environment,
+      ExtDummies = source.ExtDummies,
+      Bounds = source.Bounds,
+      BspTriangleVertices = source.BspTriangleVertices,
+      BspRenderVertices = source.BspRenderVertices,
+      BspMaterialSpans = source.BspMaterialSpans,
+      BspSceneObjects = source.BspSceneObjects,
+      BspRenderVertexObjectIds = source.BspRenderVertexObjectIds,
+      BspRenderVertexLocalPositions = source.BspRenderVertexLocalPositions,
+      Materials = source.Materials,
+      MaterialSurfaceIds = source.MaterialSurfaceIds,
+      MaterialAlphaTypes = source.MaterialAlphaTypes,
+      SurfaceTextures = source.SurfaceTextures,
+      LightmapTextures = source.LightmapTextures,
+      SkyRenderVertices = source.SkyRenderVertices,
+      SkyMaterialSpans = source.SkyMaterialSpans,
+      SkyMaterials = source.SkyMaterials,
+      SkyMaterialSurfaceIds = source.SkyMaterialSurfaceIds,
+      SkyMaterialAlphaTypes = source.SkyMaterialAlphaTypes,
+      SkySurfaceTextures = source.SkySurfaceTextures,
+      EntityRenderVertices = source.EntityRenderVertices,
+      EntityMaterialSpans = source.EntityMaterialSpans,
+      EntityMaterials = source.EntityMaterials,
+      EntityMaterialSurfaceIds = source.EntityMaterialSurfaceIds,
+      EntityMaterialAlphaTypes = source.EntityMaterialAlphaTypes,
+      EntitySurfaceTextures = source.EntitySurfaceTextures,
+      EntityScene = scene,
+      MapEntityModelCount = scene.Models.Length,
+      MapEntityInstanceCount = scene.Instances.Length,
+      ParticleInstancePositions = source.ParticleInstancePositions,
+      ParticleInstances = source.ParticleInstances,
+      BspCollisionNormals = source.BspCollisionNormals,
+      BspCollisionNodes = source.BspCollisionNodes,
+      BspLeafBounds = source.BspLeafBounds,
+      CollisionVertices = source.CollisionVertices,
+      CollisionLines = source.CollisionLines,
+    };
+  }
+
+  public static LoadedMap WithMapMaterialData(
+    LoadedMap source,
+    MaterialDefinition[] materials)
+  {
+    MaterialDefinition[] resolvedMaterials = materials ?? Array.Empty<MaterialDefinition>();
+    int[] surfaceIds = new int[resolvedMaterials.Length];
+    uint[] alphaTypes = new uint[resolvedMaterials.Length];
+    Array.Fill(surfaceIds, -1);
+    for (int materialIndex = 0; materialIndex < resolvedMaterials.Length; ++materialIndex)
+    {
+      MaterialLayerDefinition[] layers = resolvedMaterials[materialIndex].Layers ?? Array.Empty<MaterialLayerDefinition>();
+      if (layers.Length == 0)
+      {
+        continue;
+      }
+
+      surfaceIds[materialIndex] = layers[0].SurfaceId;
+      alphaTypes[materialIndex] = layers[0].AlphaType;
+    }
+
+    return new LoadedMap
+    {
+      Name = source.Name,
+      BspPath = source.BspPath,
+      EbpPath = source.EbpPath,
+      BspBinaryLayout = source.BspBinaryLayout,
+      SkySourceMode = source.SkySourceMode,
+      Environment = source.Environment,
+      ExtDummies = source.ExtDummies,
+      Bounds = source.Bounds,
+      BspTriangleVertices = source.BspTriangleVertices,
+      BspRenderVertices = source.BspRenderVertices,
+      BspMaterialSpans = source.BspMaterialSpans,
+      BspSceneObjects = source.BspSceneObjects,
+      BspRenderVertexObjectIds = source.BspRenderVertexObjectIds,
+      BspRenderVertexLocalPositions = source.BspRenderVertexLocalPositions,
+      Materials = resolvedMaterials,
+      MaterialSurfaceIds = surfaceIds,
+      MaterialAlphaTypes = alphaTypes,
+      SurfaceTextures = source.SurfaceTextures,
+      LightmapTextures = source.LightmapTextures,
+      SkyRenderVertices = source.SkyRenderVertices,
+      SkyMaterialSpans = source.SkyMaterialSpans,
+      SkyMaterials = source.SkyMaterials,
+      SkyMaterialSurfaceIds = source.SkyMaterialSurfaceIds,
+      SkyMaterialAlphaTypes = source.SkyMaterialAlphaTypes,
+      SkySurfaceTextures = source.SkySurfaceTextures,
+      EntityRenderVertices = source.EntityRenderVertices,
+      EntityMaterialSpans = source.EntityMaterialSpans,
+      EntityMaterials = source.EntityMaterials,
+      EntityMaterialSurfaceIds = source.EntityMaterialSurfaceIds,
+      EntityMaterialAlphaTypes = source.EntityMaterialAlphaTypes,
+      EntitySurfaceTextures = source.EntitySurfaceTextures,
+      EntityScene = source.EntityScene,
+      MapEntityModelCount = source.MapEntityModelCount,
+      MapEntityInstanceCount = source.MapEntityInstanceCount,
+      ParticleInstancePositions = source.ParticleInstancePositions,
+      ParticleInstances = source.ParticleInstances,
+      BspCollisionNormals = source.BspCollisionNormals,
+      BspCollisionNodes = source.BspCollisionNodes,
+      BspLeafBounds = source.BspLeafBounds,
+      CollisionVertices = source.CollisionVertices,
+      CollisionLines = source.CollisionLines,
+    };
+  }
+
+  public static LoadedMap WithMapTextureData(
+    LoadedMap source,
+    R3TextureBlob[] surfaceTextures)
+  {
+    R3TextureBlob[] resolvedTextures = surfaceTextures ?? Array.Empty<R3TextureBlob>();
+    return new LoadedMap
+    {
+      Name = source.Name,
+      BspPath = source.BspPath,
+      EbpPath = source.EbpPath,
+      BspBinaryLayout = source.BspBinaryLayout,
+      SkySourceMode = source.SkySourceMode,
+      Environment = source.Environment,
+      ExtDummies = source.ExtDummies,
+      Bounds = source.Bounds,
+      BspTriangleVertices = source.BspTriangleVertices,
+      BspRenderVertices = source.BspRenderVertices,
+      BspMaterialSpans = source.BspMaterialSpans,
+      BspSceneObjects = source.BspSceneObjects,
+      BspRenderVertexObjectIds = source.BspRenderVertexObjectIds,
+      BspRenderVertexLocalPositions = source.BspRenderVertexLocalPositions,
+      Materials = source.Materials,
+      MaterialSurfaceIds = source.MaterialSurfaceIds,
+      MaterialAlphaTypes = source.MaterialAlphaTypes,
+      SurfaceTextures = resolvedTextures,
+      LightmapTextures = source.LightmapTextures,
+      SkyRenderVertices = source.SkyRenderVertices,
+      SkyMaterialSpans = source.SkyMaterialSpans,
+      SkyMaterials = source.SkyMaterials,
+      SkyMaterialSurfaceIds = source.SkyMaterialSurfaceIds,
+      SkyMaterialAlphaTypes = source.SkyMaterialAlphaTypes,
+      SkySurfaceTextures = source.SkySurfaceTextures,
+      EntityRenderVertices = source.EntityRenderVertices,
+      EntityMaterialSpans = source.EntityMaterialSpans,
+      EntityMaterials = source.EntityMaterials,
+      EntityMaterialSurfaceIds = source.EntityMaterialSurfaceIds,
+      EntityMaterialAlphaTypes = source.EntityMaterialAlphaTypes,
+      EntitySurfaceTextures = source.EntitySurfaceTextures,
+      EntityScene = source.EntityScene,
+      MapEntityModelCount = source.MapEntityModelCount,
+      MapEntityInstanceCount = source.MapEntityInstanceCount,
+      ParticleInstancePositions = source.ParticleInstancePositions,
+      ParticleInstances = source.ParticleInstances,
+      BspCollisionNormals = source.BspCollisionNormals,
+      BspCollisionNodes = source.BspCollisionNodes,
+      BspLeafBounds = source.BspLeafBounds,
+      CollisionVertices = source.CollisionVertices,
+      CollisionLines = source.CollisionLines,
+    };
+  }
+
+  public static LoadedMap WithBspMeshData(
+    LoadedMap source,
+    BspBinaryLayout bspBinaryLayout,
+    BspRenderVertex[] bspRenderVertices,
+    BspMaterialSpan[] bspMaterialSpans,
+    EntitySceneObject[]? bspSceneObjects = null,
+    ushort[]? bspRenderVertexObjectIds = null,
+    Vector3[]? bspRenderVertexLocalPositions = null)
+  {
+    BspBinaryLayout layout = bspBinaryLayout ?? source.BspBinaryLayout;
+    BspRenderVertex[] renderVertices = bspRenderVertices ?? Array.Empty<BspRenderVertex>();
+    BspMaterialSpan[] materialSpans = bspMaterialSpans ?? Array.Empty<BspMaterialSpan>();
+    EntitySceneObject[] sceneObjects = bspSceneObjects ?? source.BspSceneObjects;
+
+    Vector3[] triangleVertices = new Vector3[renderVertices.Length];
+    for (int i = 0; i < renderVertices.Length; ++i)
+    {
+      triangleVertices[i] = renderVertices[i].Position;
+    }
+
+    bool hasProvidedMetadata =
+      bspRenderVertexObjectIds != null &&
+      bspRenderVertexLocalPositions != null &&
+      bspRenderVertexObjectIds.Length == renderVertices.Length &&
+      bspRenderVertexLocalPositions.Length == renderVertices.Length;
+    bool canReuseSourceMetadata =
+      ReferenceEquals(renderVertices, source.BspRenderVertices) &&
+      source.BspRenderVertexObjectIds.Length == renderVertices.Length &&
+      source.BspRenderVertexLocalPositions.Length == renderVertices.Length;
+    ushort[] renderVertexObjectIds;
+    Vector3[] renderVertexLocalPositions;
+    if (hasProvidedMetadata)
+    {
+      renderVertexObjectIds = bspRenderVertexObjectIds!;
+      renderVertexLocalPositions = bspRenderVertexLocalPositions!;
+    }
+    else if (canReuseSourceMetadata)
+    {
+      renderVertexObjectIds = source.BspRenderVertexObjectIds;
+      renderVertexLocalPositions = source.BspRenderVertexLocalPositions;
+    }
+    else
+    {
+      renderVertexObjectIds = new ushort[renderVertices.Length];
+      renderVertexLocalPositions = new Vector3[renderVertices.Length];
+      for (int i = 0; i < renderVertices.Length; ++i)
+      {
+        renderVertexLocalPositions[i] = renderVertices[i].Position;
+      }
+    }
+
+    MapBounds bounds = ComputeBoundsFromVertices(triangleVertices, source.CollisionVertices, source.Bounds);
+
+    return new LoadedMap
+    {
+      Name = source.Name,
+      BspPath = source.BspPath,
+      EbpPath = source.EbpPath,
+      BspBinaryLayout = layout,
+      SkySourceMode = source.SkySourceMode,
+      Environment = source.Environment,
+      ExtDummies = source.ExtDummies,
+      Bounds = bounds,
+      BspTriangleVertices = triangleVertices,
+      BspRenderVertices = renderVertices,
+      BspMaterialSpans = materialSpans,
+      BspSceneObjects = sceneObjects,
+      BspRenderVertexObjectIds = renderVertexObjectIds,
+      BspRenderVertexLocalPositions = renderVertexLocalPositions,
+      Materials = source.Materials,
+      MaterialSurfaceIds = source.MaterialSurfaceIds,
+      MaterialAlphaTypes = source.MaterialAlphaTypes,
+      SurfaceTextures = source.SurfaceTextures,
+      LightmapTextures = source.LightmapTextures,
+      SkyRenderVertices = source.SkyRenderVertices,
+      SkyMaterialSpans = source.SkyMaterialSpans,
+      SkyMaterials = source.SkyMaterials,
+      SkyMaterialSurfaceIds = source.SkyMaterialSurfaceIds,
+      SkyMaterialAlphaTypes = source.SkyMaterialAlphaTypes,
+      SkySurfaceTextures = source.SkySurfaceTextures,
+      EntityRenderVertices = source.EntityRenderVertices,
+      EntityMaterialSpans = source.EntityMaterialSpans,
+      EntityMaterials = source.EntityMaterials,
+      EntityMaterialSurfaceIds = source.EntityMaterialSurfaceIds,
+      EntityMaterialAlphaTypes = source.EntityMaterialAlphaTypes,
+      EntitySurfaceTextures = source.EntitySurfaceTextures,
+      EntityScene = source.EntityScene,
+      MapEntityModelCount = source.MapEntityModelCount,
+      MapEntityInstanceCount = source.MapEntityInstanceCount,
+      ParticleInstancePositions = source.ParticleInstancePositions,
+      ParticleInstances = source.ParticleInstances,
+      BspCollisionNormals = source.BspCollisionNormals,
+      BspCollisionNodes = source.BspCollisionNodes,
+      BspLeafBounds = source.BspLeafBounds,
+      CollisionVertices = source.CollisionVertices,
+      CollisionLines = source.CollisionLines,
+    };
+  }
+
+  private static MapBounds ComputeBoundsFromVertices(Vector3[] primary, Vector3[] fallback, MapBounds defaultBounds)
+  {
+    if (TryComputeBounds(primary, out MapBounds primaryBounds))
+    {
+      return primaryBounds;
+    }
+
+    if (TryComputeBounds(fallback, out MapBounds fallbackBounds))
+    {
+      return fallbackBounds;
+    }
+
+    return defaultBounds;
+  }
+
+  private static bool TryComputeBounds(Vector3[] vertices, out MapBounds bounds)
+  {
+    bounds = default;
+    if (vertices == null || vertices.Length == 0)
+    {
+      return false;
+    }
+
+    bool found = false;
+    Vector3 min = Vector3.Zero;
+    Vector3 max = Vector3.Zero;
+    for (int i = 0; i < vertices.Length; ++i)
+    {
+      Vector3 v = vertices[i];
+      if (!IsFinite(v))
+      {
+        continue;
+      }
+
+      if (!found)
+      {
+        min = v;
+        max = v;
+        found = true;
+      }
+      else
+      {
+        min = Vector3.ComponentMin(min, v);
+        max = Vector3.ComponentMax(max, v);
+      }
+    }
+
+    if (!found)
+    {
+      return false;
+    }
+
+    bounds = new MapBounds(min, max);
+    return true;
   }
 
   private static float ResolveBoundaryBaseY(LoadedMap source)

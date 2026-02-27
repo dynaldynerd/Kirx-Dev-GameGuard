@@ -1,13 +1,27 @@
 using System.Buffers.Binary;
+using System.Text;
 using OpenTK.Mathematics;
 
 namespace MapEditor.Formats;
 
 public static class MapExporter
 {
+  private const int BspHeaderSize = 0x2AC;
+  private const int BspHeaderEntryCount = 85;
   private const int ExtBspHeaderSize = 0x184;
   private const int ExtBspEntryCount = 48;
   private const uint ExpectedEbpVersion = 20;
+  private const float DefaultR3mVersion = 1.2f;
+  private const float DefaultR3tVersion = 1.2f;
+  private const float DefaultR3xVersion = 1.1f;
+  private const int R3mMaterialHeaderSize = 144;
+  private const int R3mLayerSize = 46;
+  private const int R3mNameBytes = 128;
+  private const int R3xFixedSize = 392;
+  private const uint ExtMatNoFogSky = 0x00000001;
+  private const uint ExtMatFogRange = 0x00000002;
+  private const uint ExtMatExistFirstFog = 0x00000004;
+  private const uint ExtMatExistLensFlare = 0x00000010;
   private static readonly string[] LightmapR3tSuffixes = ["lgt.r3t", ".lgt.r3t", "_lgt.r3t"];
 
   public static void ExportBspEbpPair(
@@ -60,7 +74,7 @@ public static class MapExporter
     EnsureParentDirectory(targetBsp);
     EnsureParentDirectory(targetEbp);
 
-    CopyFileIfDifferent(sourceBsp, targetBsp);
+    WriteBspFromModel(map, sourceBsp, targetBsp);
     ExportEbpWithCollisionData(
       sourceEbp,
       targetEbp,
@@ -69,7 +83,7 @@ public static class MapExporter
       map.BspLeafBounds,
       map.CollisionVertices,
       map.CollisionLines);
-    CopyMapCompanionAssets(sourceBsp, targetBsp);
+    CopyMapCompanionAssets(map, sourceBsp, targetBsp);
   }
 
   public static void ExportEbpOnly(
@@ -140,7 +154,7 @@ public static class MapExporter
     File.SetLastWriteTimeUtc(targetPath, sourceInfo.LastWriteTimeUtc);
   }
 
-  private static void CopyMapCompanionAssets(string sourceBspPath, string targetBspPath)
+  private static void CopyMapCompanionAssets(LoadedMap map, string sourceBspPath, string targetBspPath)
   {
     string sourceMapDirectory = Path.GetDirectoryName(sourceBspPath) ?? string.Empty;
     string targetMapDirectory = Path.GetDirectoryName(targetBspPath) ?? string.Empty;
@@ -152,10 +166,10 @@ public static class MapExporter
     string sourceMapName = Path.GetFileNameWithoutExtension(sourceBspPath);
     string targetMapName = Path.GetFileNameWithoutExtension(targetBspPath);
 
-    CopySiblingAssetByExtension(sourceMapDirectory, sourceMapName, targetMapDirectory, targetMapName, ".r3x");
-    CopySiblingAssetByExtension(sourceMapDirectory, sourceMapName, targetMapDirectory, targetMapName, ".r3m");
-    CopySiblingAssetByExtension(sourceMapDirectory, sourceMapName, targetMapDirectory, targetMapName, ".r3t");
-    CopyLightmapR3t(sourceMapDirectory, sourceMapName, targetMapDirectory, targetMapName);
+    ExportMapR3x(map, sourceMapDirectory, sourceMapName, targetMapDirectory, targetMapName);
+    ExportMapR3m(map, sourceMapDirectory, sourceMapName, targetMapDirectory, targetMapName);
+    ExportMapR3t(map, sourceMapDirectory, sourceMapName, targetMapDirectory, targetMapName);
+    ExportLightmapR3t(map, sourceMapDirectory, sourceMapName, targetMapDirectory, targetMapName);
 
     string? extSptPath = FindExtSptPath(sourceMapDirectory, sourceMapName);
     if (extSptPath != null)
@@ -165,53 +179,180 @@ public static class MapExporter
       CopyFileIfDifferent(extSptPath, targetExtSptPath);
     }
 
-    CopySkyAssetSet(sourceMapDirectory, targetMapDirectory, sourceMapName, targetMapName, "sky", "sky");
-    CopySkyAssetSet(sourceMapDirectory, targetMapDirectory, sourceMapName, targetMapName, "sky2", "sky2");
+    CopySkyAssetSetRaw(sourceMapDirectory, targetMapDirectory, sourceMapName, targetMapName, "sky", "sky");
+    CopySkyAssetSetRaw(sourceMapDirectory, targetMapDirectory, sourceMapName, targetMapName, "sky2", "sky2");
+    ExportLoadedSkySidecars(map, sourceMapDirectory, targetMapDirectory, sourceMapName, targetMapName);
     CopyEntityAssetRoot(sourceBspPath, targetBspPath);
   }
 
-  private static void CopySiblingAssetByExtension(
-    string sourceDirectory,
-    string sourceMapName,
-    string targetDirectory,
-    string targetMapName,
-    string extension)
-  {
-    string? sourcePath = FindSiblingFileWithExtension(sourceDirectory, sourceMapName, extension);
-    if (sourcePath == null)
-    {
-      return;
-    }
-
-    string targetPath = Path.Combine(targetDirectory, targetMapName + extension);
-    EnsureParentDirectory(targetPath);
-    CopyFileIfDifferent(sourcePath, targetPath);
-  }
-
-  private static void CopyLightmapR3t(
+  private static void ExportMapR3x(
+    LoadedMap map,
     string sourceDirectory,
     string sourceMapName,
     string targetDirectory,
     string targetMapName)
   {
-    for (int i = 0; i < LightmapR3tSuffixes.Length; ++i)
+    string? sourcePath = FindSiblingFileWithExtension(sourceDirectory, sourceMapName, ".r3x");
+    if (sourcePath == null && string.Equals(sourceDirectory, targetDirectory, StringComparison.OrdinalIgnoreCase))
     {
-      string suffix = LightmapR3tSuffixes[i];
-      string candidate = Path.Combine(sourceDirectory, sourceMapName + suffix);
-      string? sourcePath = FindPathCaseInsensitive(candidate);
+      return;
+    }
+
+    string targetPath = Path.Combine(targetDirectory, targetMapName + ".r3x");
+    WriteR3x(map.Environment, sourcePath, targetPath);
+  }
+
+  private static void ExportMapR3m(
+    LoadedMap map,
+    string sourceDirectory,
+    string sourceMapName,
+    string targetDirectory,
+    string targetMapName)
+  {
+    string? sourcePath = FindSiblingFileWithExtension(sourceDirectory, sourceMapName, ".r3m");
+    string targetPath = Path.Combine(targetDirectory, targetMapName + ".r3m");
+    if (map.Materials.Length == 0)
+    {
       if (sourcePath == null)
       {
-        continue;
+        return;
       }
 
-      string targetPath = Path.Combine(targetDirectory, targetMapName + suffix);
-      EnsureParentDirectory(targetPath);
       CopyFileIfDifferent(sourcePath, targetPath);
       return;
     }
+
+    WriteR3m(map.Materials, sourcePath, targetPath);
   }
 
-  private static void CopySkyAssetSet(
+  private static void ExportMapR3t(
+    LoadedMap map,
+    string sourceDirectory,
+    string sourceMapName,
+    string targetDirectory,
+    string targetMapName)
+  {
+    string? sourcePath = FindSiblingFileWithExtension(sourceDirectory, sourceMapName, ".r3t");
+    string targetPath = Path.Combine(targetDirectory, targetMapName + ".r3t");
+    if (map.SurfaceTextures.Length == 0)
+    {
+      if (sourcePath == null)
+      {
+        return;
+      }
+
+      CopyFileIfDifferent(sourcePath, targetPath);
+      return;
+    }
+
+    WriteR3t(map.SurfaceTextures, sourcePath, targetPath);
+  }
+
+  private static void ExportLightmapR3t(
+    LoadedMap map,
+    string sourceDirectory,
+    string sourceMapName,
+    string targetDirectory,
+    string targetMapName)
+  {
+    string? sourcePath = null;
+    string suffix = LightmapR3tSuffixes[0];
+    if (TryFindLightmapR3t(sourceDirectory, sourceMapName, out string foundSourcePath, out string foundSuffix))
+    {
+      sourcePath = foundSourcePath;
+      suffix = foundSuffix;
+    }
+
+    string targetPath = Path.Combine(targetDirectory, targetMapName + suffix);
+    if (map.LightmapTextures.Length == 0)
+    {
+      if (sourcePath == null)
+      {
+        return;
+      }
+
+      CopyFileIfDifferent(sourcePath, targetPath);
+      return;
+    }
+
+    WriteR3t(map.LightmapTextures, sourcePath, targetPath);
+  }
+
+  private static bool TryFindLightmapR3t(string directory, string mapName, out string sourcePath, out string suffix)
+  {
+    for (int i = 0; i < LightmapR3tSuffixes.Length; ++i)
+    {
+      suffix = LightmapR3tSuffixes[i];
+      string candidate = Path.Combine(directory, mapName + suffix);
+      string? resolved = FindPathCaseInsensitive(candidate);
+      if (resolved != null)
+      {
+        sourcePath = resolved;
+        return true;
+      }
+    }
+
+    sourcePath = string.Empty;
+    suffix = LightmapR3tSuffixes[0];
+    return false;
+  }
+
+  private static void ExportLoadedSkySidecars(
+    LoadedMap map,
+    string sourceMapDirectory,
+    string targetMapDirectory,
+    string sourceMapName,
+    string targetMapName)
+  {
+    if (map.SkyMaterials.Length == 0 && map.SkySurfaceTextures.Length == 0)
+    {
+      return;
+    }
+
+    string skyFolder = map.SkySourceMode == SkySourceMode.Sky ? "sky" : "sky2";
+    string skySuffix = map.SkySourceMode == SkySourceMode.Sky ? "sky" : "sky2";
+    ExportSkySidecars(map, sourceMapDirectory, targetMapDirectory, sourceMapName, targetMapName, skyFolder, skySuffix);
+  }
+
+  private static void ExportSkySidecars(
+    LoadedMap map,
+    string sourceMapDirectory,
+    string targetMapDirectory,
+    string sourceMapName,
+    string targetMapName,
+    string skyFolderName,
+    string skySuffix)
+  {
+    string sourceSkyDirectory = Path.Combine(sourceMapDirectory, skyFolderName);
+    if (!Directory.Exists(sourceSkyDirectory))
+    {
+      return;
+    }
+
+    string sourceSkyR3eFileName = $"{sourceMapName}{skySuffix}.r3e";
+    string? sourceSkyR3ePath = FindPathCaseInsensitive(Path.Combine(sourceSkyDirectory, sourceSkyR3eFileName));
+    if (sourceSkyR3ePath == null)
+    {
+      return;
+    }
+
+    string targetSkyDirectory = Path.Combine(targetMapDirectory, skyFolderName);
+    string targetSkyBasePath = Path.Combine(targetSkyDirectory, $"{targetMapName}{skySuffix}");
+    string sourceSkyBaseName = Path.GetFileNameWithoutExtension(sourceSkyR3ePath);
+    string? sourceR3mPath = FindFileByBaseNameAndExtension(sourceSkyDirectory, sourceSkyBaseName, ".r3m");
+    string? sourceR3tPath = FindFileByBaseNameAndExtension(sourceSkyDirectory, sourceSkyBaseName, ".r3t");
+    if (map.SkyMaterials.Length > 0)
+    {
+      WriteR3m(map.SkyMaterials, sourceR3mPath, targetSkyBasePath + ".r3m");
+    }
+
+    if (map.SkySurfaceTextures.Length > 0)
+    {
+      WriteR3t(map.SkySurfaceTextures, sourceR3tPath, targetSkyBasePath + ".r3t");
+    }
+  }
+
+  private static void CopySkyAssetSetRaw(
     string sourceMapDirectory,
     string targetMapDirectory,
     string sourceMapName,
@@ -235,15 +376,14 @@ public static class MapExporter
     string targetSkyDirectory = Path.Combine(targetMapDirectory, skyFolderName);
     string targetSkyBasePath = Path.Combine(targetSkyDirectory, $"{targetMapName}{skySuffix}");
     string targetSkyR3ePath = targetSkyBasePath + ".r3e";
-    EnsureParentDirectory(targetSkyR3ePath);
     CopyFileIfDifferent(sourceSkyR3ePath, targetSkyR3ePath);
 
     string sourceSkyBaseName = Path.GetFileNameWithoutExtension(sourceSkyR3ePath);
-    CopyAssetByBaseNameAndExtension(sourceSkyDirectory, sourceSkyBaseName, targetSkyBasePath, ".r3m");
-    CopyAssetByBaseNameAndExtension(sourceSkyDirectory, sourceSkyBaseName, targetSkyBasePath, ".r3t");
+    CopyAssetByBaseNameAndExtensionRaw(sourceSkyDirectory, sourceSkyBaseName, targetSkyBasePath, ".r3m");
+    CopyAssetByBaseNameAndExtensionRaw(sourceSkyDirectory, sourceSkyBaseName, targetSkyBasePath, ".r3t");
   }
 
-  private static void CopyAssetByBaseNameAndExtension(
+  private static void CopyAssetByBaseNameAndExtensionRaw(
     string sourceDirectory,
     string sourceBaseName,
     string targetBasePath,
@@ -256,7 +396,6 @@ public static class MapExporter
     }
 
     string targetPath = targetBasePath + extension;
-    EnsureParentDirectory(targetPath);
     CopyFileIfDifferent(sourcePath, targetPath);
   }
 
@@ -456,6 +595,501 @@ public static class MapExporter
       string targetFilePath = Path.Combine(targetDirectory, relative);
       CopyFileIfDifferent(sourceFilePath, targetFilePath);
     }
+  }
+
+  private static void WriteBspFromModel(LoadedMap map, string sourceBspPath, string targetBspPath)
+  {
+    BspBinaryLayout? layout = map.BspBinaryLayout;
+    if (layout == null
+      || layout.Entries.Length != BspHeaderEntryCount
+      || layout.Sections.Length != BspHeaderEntryCount)
+    {
+      CopyFileIfDifferent(sourceBspPath, targetBspPath);
+      return;
+    }
+
+    BspEntry[] rebuiltEntries = RebuildBspEntries(layout.Entries, layout.Sections);
+    using MemoryStream stream = new();
+    using BinaryWriter writer = new(stream);
+    writer.Write(layout.Version);
+    for (int i = 0; i < rebuiltEntries.Length; ++i)
+    {
+      writer.Write(rebuiltEntries[i].Offset);
+      writer.Write(rebuiltEntries[i].Size);
+    }
+
+    for (int i = 0; i < layout.Sections.Length; ++i)
+    {
+      byte[] section = layout.Sections[i] ?? Array.Empty<byte>();
+      if (section.Length > 0)
+      {
+        writer.Write(section);
+      }
+    }
+
+    if (layout.Trailing.Length > 0)
+    {
+      writer.Write(layout.Trailing);
+    }
+
+    WriteBytesIfChanged(targetBspPath, stream.ToArray());
+  }
+
+  private static BspEntry[] RebuildBspEntries(BspEntry[] sourceEntries, byte[][] sections)
+  {
+    if (sourceEntries.Length != sections.Length)
+    {
+      throw new InvalidDataException("BSP entry count mismatch while rebuilding.");
+    }
+
+    BspEntry[] rebuilt = new BspEntry[sourceEntries.Length];
+    int offset = BspHeaderSize;
+    for (int i = 0; i < sections.Length; ++i)
+    {
+      byte[] section = sections[i] ?? Array.Empty<byte>();
+      if (section.Length == 0)
+      {
+        rebuilt[i] = new BspEntry(sourceEntries[i].Offset, 0u);
+        continue;
+      }
+
+      rebuilt[i] = new BspEntry((uint)offset, (uint)section.Length);
+      offset = checked(offset + section.Length);
+    }
+
+    return rebuilt;
+  }
+
+  private static void WriteR3m(MaterialDefinition[] materials, string? sourcePath, string targetPath)
+  {
+    float version = DefaultR3mVersion;
+    byte[][] sourceNames = Array.Empty<byte[]>();
+    TryReadR3mMetadata(sourcePath, out version, out sourceNames);
+
+    using MemoryStream stream = new();
+    using BinaryWriter writer = new(stream);
+    writer.Write(version);
+    writer.Write(materials.Length);
+    for (int materialIndex = 0; materialIndex < materials.Length; ++materialIndex)
+    {
+      MaterialDefinition material = materials[materialIndex];
+      MaterialLayerDefinition[] layers = material.Layers ?? Array.Empty<MaterialLayerDefinition>();
+      writer.Write((uint)layers.Length);
+      writer.Write(material.MaterialFlags);
+      writer.Write(material.DetailSurfaceId);
+      writer.Write(material.DetailScale);
+      byte[] nameBytes = materialIndex < sourceNames.Length && sourceNames[materialIndex].Length == R3mNameBytes
+        ? sourceNames[materialIndex]
+        : BuildDefaultR3mName(materialIndex);
+      WriteFixedBytes(writer, nameBytes, R3mNameBytes);
+      for (int layerIndex = 0; layerIndex < layers.Length; ++layerIndex)
+      {
+        MaterialLayerDefinition layer = layers[layerIndex];
+        writer.Write(layer.TileAniTextureCount);
+        writer.Write(layer.SurfaceId);
+        writer.Write(layer.AlphaType);
+        writer.Write(layer.Argb);
+        writer.Write(layer.LayerFlags);
+        writer.Write(layer.UvLavaWave);
+        writer.Write(layer.UvLavaSpeed);
+        writer.Write(layer.UvScrollU);
+        writer.Write(layer.UvScrollV);
+        writer.Write(layer.UvRotate);
+        writer.Write(layer.UvScaleStart);
+        writer.Write(layer.UvScaleEnd);
+        writer.Write(layer.UvScaleSpeed);
+        writer.Write(layer.UvMetal);
+        writer.Write(layer.AniAlphaFlicker);
+        writer.Write(layer.AniAlphaFlickerRange);
+        writer.Write(layer.AniTexFrame);
+        writer.Write(layer.AniTexSpeed);
+        writer.Write(layer.GradientAlpha);
+      }
+    }
+
+    WriteBytesIfChanged(targetPath, stream.ToArray());
+  }
+
+  private static bool TryReadR3mMetadata(string? sourcePath, out float version, out byte[][] names)
+  {
+    version = DefaultR3mVersion;
+    names = Array.Empty<byte[]>();
+    if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath))
+    {
+      return false;
+    }
+
+    try
+    {
+      using FileStream stream = File.OpenRead(sourcePath);
+      using BinaryReader reader = new(stream);
+      if (stream.Length < 8)
+      {
+        return false;
+      }
+
+      version = reader.ReadSingle();
+      int materialCount = reader.ReadInt32();
+      if (materialCount < 0 || materialCount > 100_000)
+      {
+        return false;
+      }
+
+      byte[][] parsedNames = new byte[materialCount][];
+      for (int materialIndex = 0; materialIndex < materialCount; ++materialIndex)
+      {
+        if (stream.Position + R3mMaterialHeaderSize > stream.Length)
+        {
+          return false;
+        }
+
+        uint layerCount = reader.ReadUInt32();
+        _ = reader.ReadUInt32();
+        _ = reader.ReadInt32();
+        _ = reader.ReadSingle();
+        byte[] nameBytes = reader.ReadBytes(R3mNameBytes);
+        if (nameBytes.Length != R3mNameBytes)
+        {
+          return false;
+        }
+
+        parsedNames[materialIndex] = nameBytes;
+        long skip = (long)layerCount * R3mLayerSize;
+        if (skip < 0 || stream.Position + skip > stream.Length)
+        {
+          return false;
+        }
+
+        stream.Position += skip;
+      }
+
+      names = parsedNames;
+      return true;
+    }
+    catch
+    {
+      names = Array.Empty<byte[]>();
+      return false;
+    }
+  }
+
+  private static byte[] BuildDefaultR3mName(int materialIndex)
+  {
+    string name = $"material_{materialIndex:D4}";
+    return Encoding.ASCII.GetBytes(name);
+  }
+
+  private static void WriteR3t(R3TextureBlob[] textures, string? sourcePath, string targetPath)
+  {
+    float version = DefaultR3tVersion;
+    bool hasNameTable = HasAnyTextureName(textures);
+    if (TryReadR3tMetadata(sourcePath, out float sourceVersion, out bool sourceHasNameTable))
+    {
+      version = sourceVersion;
+      hasNameTable = sourceHasNameTable;
+    }
+
+    using MemoryStream stream = new();
+    using BinaryWriter writer = new(stream);
+    writer.Write(version);
+    writer.Write((uint)textures.Length);
+    if (hasNameTable)
+    {
+      for (int textureIndex = 0; textureIndex < textures.Length; ++textureIndex)
+      {
+        byte[] nameBytes = string.IsNullOrWhiteSpace(textures[textureIndex].Name)
+          ? Encoding.ASCII.GetBytes($"tex_{textureIndex:D4}")
+          : Encoding.ASCII.GetBytes(textures[textureIndex].Name);
+        WriteFixedBytes(writer, nameBytes, R3mNameBytes);
+      }
+    }
+
+    for (int textureIndex = 0; textureIndex < textures.Length; ++textureIndex)
+    {
+      byte[] block = textures[textureIndex].DdsBytes ?? Array.Empty<byte>();
+      if (block.Length == 0)
+      {
+        throw new InvalidDataException($"R3T texture {textureIndex} has empty DDS data.");
+      }
+
+      writer.Write(block.Length);
+      writer.Write(block);
+    }
+
+    WriteBytesIfChanged(targetPath, stream.ToArray());
+  }
+
+  private static bool HasAnyTextureName(R3TextureBlob[] textures)
+  {
+    for (int i = 0; i < textures.Length; ++i)
+    {
+      if (!string.IsNullOrWhiteSpace(textures[i].Name))
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static bool TryReadR3tMetadata(string? sourcePath, out float version, out bool hasNameTable)
+  {
+    version = DefaultR3tVersion;
+    hasNameTable = false;
+    if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath))
+    {
+      return false;
+    }
+
+    try
+    {
+      byte[] bytes = File.ReadAllBytes(sourcePath);
+      if (bytes.Length < 8)
+      {
+        return false;
+      }
+
+      version = BitConverter.ToSingle(bytes, 0);
+      int textureCount = checked((int)BitConverter.ToUInt32(bytes, 4));
+      bool namedLayout = TryProbeR3tLayout(bytes, textureCount, true);
+      bool namelessLayout = TryProbeR3tLayout(bytes, textureCount, false);
+      if (!namedLayout && !namelessLayout)
+      {
+        return false;
+      }
+
+      hasNameTable = namedLayout;
+      return true;
+    }
+    catch
+    {
+      hasNameTable = false;
+      return false;
+    }
+  }
+
+  private static bool TryProbeR3tLayout(byte[] bytes, int textureCount, bool hasNameTable)
+  {
+    long offset = 8L + (hasNameTable ? (long)textureCount * R3mNameBytes : 0L);
+    if (offset < 0 || offset > bytes.Length)
+    {
+      return false;
+    }
+
+    for (int textureIndex = 0; textureIndex < textureCount; ++textureIndex)
+    {
+      if (offset + 4 > bytes.Length)
+      {
+        return false;
+      }
+
+      int blockLength = BinaryPrimitives.ReadInt32LittleEndian(bytes.AsSpan((int)offset, 4));
+      offset += 4;
+      if (blockLength <= 0 || offset + blockLength > bytes.Length)
+      {
+        return false;
+      }
+
+      offset += blockLength;
+    }
+
+    return true;
+  }
+
+  private static void WriteR3x(MapEnvironmentSettings environment, string? sourcePath, string targetPath)
+  {
+    R3xState state = ReadR3xState(sourcePath);
+    state.Version = DefaultR3xVersion;
+    state.Flags = SetFlag(state.Flags, ExtMatExistFirstFog, environment.FogEnabled);
+    state.Flags = SetFlag(state.Flags, ExtMatFogRange, environment.FogRangeEnabled);
+    state.Flags = SetFlag(state.Flags, ExtMatNoFogSky, environment.NoFogSky);
+    state.Flags = SetFlag(state.Flags, ExtMatExistLensFlare, environment.HasLensFlare);
+
+    if (float.IsFinite(environment.FogStart) && environment.FogStart > 0.0f)
+    {
+      state.FogStart = environment.FogStart;
+    }
+
+    if (float.IsFinite(environment.FogEnd) && environment.FogEnd > state.FogStart)
+    {
+      state.FogEnd = environment.FogEnd;
+    }
+    else if (state.FogEnd <= state.FogStart)
+    {
+      state.FogEnd = state.FogStart + 1.0f;
+    }
+
+    state.FogColor = EncodeArgb(environment.FogColor);
+    if (IsFinite(environment.LensFlarePosition))
+    {
+      state.LensPositionX = environment.LensFlarePosition.X;
+      state.LensPositionY = environment.LensFlarePosition.Y;
+      state.LensPositionZ = environment.LensFlarePosition.Z;
+    }
+
+    using MemoryStream stream = new();
+    using BinaryWriter writer = new(stream);
+    writer.Write(state.Version);
+    writer.Write(state.Flags);
+    writer.Write(state.FogStart);
+    writer.Write(state.FogEnd);
+    writer.Write(state.FogColor);
+    writer.Write(state.FogStart2);
+    writer.Write(state.FogEnd2);
+    writer.Write(state.FogColor2);
+    writer.Write(state.Fog2BbMinX);
+    writer.Write(state.Fog2BbMinY);
+    writer.Write(state.Fog2BbMinZ);
+    writer.Write(state.Fog2BbMaxX);
+    writer.Write(state.Fog2BbMaxY);
+    writer.Write(state.Fog2BbMaxZ);
+    for (int i = 0; i < state.LensFlareScales.Length; ++i)
+    {
+      writer.Write(state.LensFlareScales[i]);
+    }
+
+    WriteFixedBytes(writer, state.LensTextureNameBytes, R3mNameBytes);
+    writer.Write(state.LensPositionX);
+    writer.Write(state.LensPositionY);
+    writer.Write(state.LensPositionZ);
+    WriteFixedBytes(writer, state.EnvEntityNameBytes, R3mNameBytes);
+    writer.Write(state.EnvId);
+    if (state.Trailing.Length > 0)
+    {
+      writer.Write(state.Trailing);
+    }
+
+    WriteBytesIfChanged(targetPath, stream.ToArray());
+  }
+
+  private static R3xState ReadR3xState(string? sourcePath)
+  {
+    if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath))
+    {
+      return R3xState.Default;
+    }
+
+    try
+    {
+      byte[] bytes = File.ReadAllBytes(sourcePath);
+      if (bytes.Length < R3xFixedSize)
+      {
+        return R3xState.Default;
+      }
+
+      using MemoryStream stream = new(bytes, writable: false);
+      using BinaryReader reader = new(stream);
+      float[] lensFlareScales = new float[16];
+      float version = reader.ReadSingle();
+      uint flags = reader.ReadUInt32();
+      float fogStart = reader.ReadSingle();
+      float fogEnd = reader.ReadSingle();
+      uint fogColor = reader.ReadUInt32();
+      float fogStart2 = reader.ReadSingle();
+      float fogEnd2 = reader.ReadSingle();
+      uint fogColor2 = reader.ReadUInt32();
+      float fog2BbMinX = reader.ReadSingle();
+      float fog2BbMinY = reader.ReadSingle();
+      float fog2BbMinZ = reader.ReadSingle();
+      float fog2BbMaxX = reader.ReadSingle();
+      float fog2BbMaxY = reader.ReadSingle();
+      float fog2BbMaxZ = reader.ReadSingle();
+      for (int i = 0; i < lensFlareScales.Length; ++i)
+      {
+        lensFlareScales[i] = reader.ReadSingle();
+      }
+
+      byte[] lensTextureNameBytes = reader.ReadBytes(R3mNameBytes);
+      float lensPositionX = reader.ReadSingle();
+      float lensPositionY = reader.ReadSingle();
+      float lensPositionZ = reader.ReadSingle();
+      byte[] envEntityNameBytes = reader.ReadBytes(R3mNameBytes);
+      uint envId = reader.ReadUInt32();
+      byte[] trailing = bytes.AsSpan(checked((int)stream.Position)).ToArray();
+      return new R3xState
+      {
+        Version = version,
+        Flags = flags,
+        FogStart = fogStart,
+        FogEnd = fogEnd,
+        FogColor = fogColor,
+        FogStart2 = fogStart2,
+        FogEnd2 = fogEnd2,
+        FogColor2 = fogColor2,
+        Fog2BbMinX = fog2BbMinX,
+        Fog2BbMinY = fog2BbMinY,
+        Fog2BbMinZ = fog2BbMinZ,
+        Fog2BbMaxX = fog2BbMaxX,
+        Fog2BbMaxY = fog2BbMaxY,
+        Fog2BbMaxZ = fog2BbMaxZ,
+        LensFlareScales = lensFlareScales,
+        LensTextureNameBytes = lensTextureNameBytes,
+        LensPositionX = lensPositionX,
+        LensPositionY = lensPositionY,
+        LensPositionZ = lensPositionZ,
+        EnvEntityNameBytes = envEntityNameBytes,
+        EnvId = envId,
+        Trailing = trailing,
+      };
+    }
+    catch
+    {
+      return R3xState.Default;
+    }
+  }
+
+  private static uint SetFlag(uint flags, uint mask, bool enabled)
+  {
+    return enabled ? (flags | mask) : (flags & ~mask);
+  }
+
+  private static uint EncodeArgb(Vector3 rgb)
+  {
+    int r = ClampColorByte(rgb.X);
+    int g = ClampColorByte(rgb.Y);
+    int b = ClampColorByte(rgb.Z);
+    return (uint)(0xFF000000u | (uint)(r << 16) | (uint)(g << 8) | (uint)b);
+  }
+
+  private static int ClampColorByte(float channel)
+  {
+    float finite = float.IsFinite(channel) ? channel : 0.0f;
+    return (int)Math.Clamp(MathF.Round(finite * 255.0f), 0.0f, 255.0f);
+  }
+
+  private static void WriteFixedBytes(BinaryWriter writer, byte[] bytes, int expectedLength)
+  {
+    byte[] source = bytes ?? Array.Empty<byte>();
+    if (source.Length == expectedLength)
+    {
+      writer.Write(source);
+      return;
+    }
+
+    byte[] fixedBytes = new byte[expectedLength];
+    int copyLength = Math.Min(source.Length, expectedLength);
+    if (copyLength > 0)
+    {
+      Buffer.BlockCopy(source, 0, fixedBytes, 0, copyLength);
+    }
+
+    writer.Write(fixedBytes);
+  }
+
+  private static void WriteBytesIfChanged(string targetPath, byte[] bytes)
+  {
+    string fullTargetPath = Path.GetFullPath(targetPath);
+    EnsureParentDirectory(fullTargetPath);
+    if (File.Exists(fullTargetPath))
+    {
+      byte[] existing = File.ReadAllBytes(fullTargetPath);
+      if (existing.AsSpan().SequenceEqual(bytes))
+      {
+        return;
+      }
+    }
+
+    File.WriteAllBytes(fullTargetPath, bytes);
   }
 
   private static void ExportEbpWithCollisionData(
@@ -1191,5 +1825,56 @@ public static class MapExporter
   }
 
   private readonly record struct PlaneEq(Vector3 Normal, float Distance);
+  private struct R3xState
+  {
+    public float Version;
+    public uint Flags;
+    public float FogStart;
+    public float FogEnd;
+    public uint FogColor;
+    public float FogStart2;
+    public float FogEnd2;
+    public uint FogColor2;
+    public float Fog2BbMinX;
+    public float Fog2BbMinY;
+    public float Fog2BbMinZ;
+    public float Fog2BbMaxX;
+    public float Fog2BbMaxY;
+    public float Fog2BbMaxZ;
+    public float[] LensFlareScales;
+    public byte[] LensTextureNameBytes;
+    public float LensPositionX;
+    public float LensPositionY;
+    public float LensPositionZ;
+    public byte[] EnvEntityNameBytes;
+    public uint EnvId;
+    public byte[] Trailing;
+
+    public static R3xState Default { get; } = new()
+    {
+      Version = DefaultR3xVersion,
+      Flags = 0u,
+      FogStart = 5.0f,
+      FogEnd = 5000.0f,
+      FogColor = 0xFF101010u,
+      FogStart2 = 0.0f,
+      FogEnd2 = 0.0f,
+      FogColor2 = 0u,
+      Fog2BbMinX = 0.0f,
+      Fog2BbMinY = 0.0f,
+      Fog2BbMinZ = 0.0f,
+      Fog2BbMaxX = 0.0f,
+      Fog2BbMaxY = 0.0f,
+      Fog2BbMaxZ = 0.0f,
+      LensFlareScales = new float[16],
+      LensTextureNameBytes = new byte[R3mNameBytes],
+      LensPositionX = 0.0f,
+      LensPositionY = 0.0f,
+      LensPositionZ = 0.0f,
+      EnvEntityNameBytes = new byte[R3mNameBytes],
+      EnvId = 0u,
+      Trailing = Array.Empty<byte>(),
+    };
+  }
   private readonly record struct SectionEntry(uint Offset, uint Size);
 }

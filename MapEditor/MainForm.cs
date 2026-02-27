@@ -20,6 +20,7 @@ internal sealed partial class MainForm : Form
   private bool _suppressMapSelectionChanged;
   private string? _mapRootPath;
   private LoadedMap? _loadedMap;
+  private MapDocument? _mapDocument;
   private string? _loadedBspPath;
   private string? _loadedEbpPath;
   private bool _suppressBoundaryCollisionValueChanged;
@@ -79,6 +80,8 @@ internal sealed partial class MainForm : Form
     _openMapFolderMenuItem.Click += (_, _) => OpenMapRootFromDialog();
     _saveEbpOnlyMenuItem.Click += (_, _) => SaveCurrentEbpOnlyFromDialog();
     _saveMapAsMenuItem.Click += (_, _) => SaveCurrentMapAsFromDialog();
+    _exportBlenderPackageMenuItem.Click += (_, _) => ExportBlenderPackageFromDialog();
+    _importBlenderPackageMenuItem.Click += (_, _) => ImportBlenderPackageFromDialog();
     _exitMenuItem.Click += (_, _) => Close();
     _controlsMenuItem.Click += (_, _) => ShowControls();
     _showSpeedStripMenuItem.CheckedChanged += (_, _) => _speedStrip.Visible = _showSpeedStripMenuItem.Checked;
@@ -86,6 +89,9 @@ internal sealed partial class MainForm : Form
 
     _undoMenuItem.Click += (_, _) => UndoLastCollisionEdit();
     _redoMenuItem.Click += (_, _) => RedoLastCollisionEdit();
+    _editMapMaterialsMenuItem.Click += (_, _) => EditMapMaterialsFromDialog();
+    _editMapTexturesMenuItem.Click += (_, _) => EditMapTexturesFromDialog();
+    _editEnvironmentMenuItem.Click += (_, _) => EditEnvironmentFromDialog();
     _deleteSelectedCollisionMenuItem.Click += (_, _) => DeleteSelectedCollisionLineFromUi();
 
     _goToCoordinateButton.Click += (_, _) => TeleportCameraToInputCoordinate();
@@ -254,7 +260,8 @@ internal sealed partial class MainForm : Form
 
   private void SaveCurrentMapAsFromDialog()
   {
-    if (_loadedMap == null || string.IsNullOrWhiteSpace(_loadedBspPath) || string.IsNullOrWhiteSpace(_loadedEbpPath))
+    LoadedMap? map = _mapDocument?.Map ?? _loadedMap;
+    if (map == null || string.IsNullOrWhiteSpace(_loadedBspPath) || string.IsNullOrWhiteSpace(_loadedEbpPath))
     {
       MessageBox.Show(this, "No map is loaded.", "Save Map As", MessageBoxButtons.OK, MessageBoxIcon.Information);
       return;
@@ -294,7 +301,7 @@ internal sealed partial class MainForm : Form
 
     try
     {
-      if (!TryValidateCollisionForSave(_loadedMap, out string validationError))
+      if (!TryValidateCollisionForSave(map, out string validationError))
       {
         MessageBox.Show(this, validationError, "Save Map As Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
         _statusBaseText = "Save blocked: invalid collision data.";
@@ -302,7 +309,7 @@ internal sealed partial class MainForm : Form
         return;
       }
 
-      MapExporter.ExportBspEbpPair(_loadedMap, _loadedBspPath, _loadedEbpPath, targetBspPath, targetEbpPath);
+      MapExporter.ExportBspEbpPair(map, _loadedBspPath, _loadedEbpPath, targetBspPath, targetEbpPath);
       _statusBaseText = $"Saved BSP/EBP (+sidecars/entity): {Path.GetFileName(targetBspPath)} / {Path.GetFileName(targetEbpPath)}";
       RefreshRuntimeStatus();
     }
@@ -316,7 +323,8 @@ internal sealed partial class MainForm : Form
 
   private void SaveCurrentEbpOnlyFromDialog()
   {
-    if (_loadedMap == null || string.IsNullOrWhiteSpace(_loadedEbpPath))
+    LoadedMap? map = _mapDocument?.Map ?? _loadedMap;
+    if (map == null || string.IsNullOrWhiteSpace(_loadedEbpPath))
     {
       MessageBox.Show(this, "No map is loaded.", "Save EBP Only", MessageBoxButtons.OK, MessageBoxIcon.Information);
       return;
@@ -341,7 +349,7 @@ internal sealed partial class MainForm : Form
     string targetEbpPath = Path.GetFullPath(dialog.FileName);
     try
     {
-      if (!TryValidateCollisionForSave(_loadedMap, out string validationError))
+      if (!TryValidateCollisionForSave(map, out string validationError))
       {
         MessageBox.Show(this, validationError, "Save EBP Only Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
         _statusBaseText = "Save blocked: invalid collision data.";
@@ -349,7 +357,7 @@ internal sealed partial class MainForm : Form
         return;
       }
 
-      MapExporter.ExportEbpOnly(_loadedMap, _loadedEbpPath, targetEbpPath);
+      MapExporter.ExportEbpOnly(map, _loadedEbpPath, targetEbpPath);
       _statusBaseText = $"Saved EBP: {Path.GetFileName(targetEbpPath)}";
       RefreshRuntimeStatus();
     }
@@ -357,6 +365,120 @@ internal sealed partial class MainForm : Form
     {
       MessageBox.Show(this, ex.Message, "Save EBP Only Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
       _statusBaseText = "Save EBP failed.";
+      RefreshRuntimeStatus();
+    }
+  }
+
+  private void ExportBlenderPackageFromDialog()
+  {
+    LoadedMap? map = _mapDocument?.Map ?? _loadedMap;
+    if (map == null)
+    {
+      MessageBox.Show(this, "No map is loaded.", "Export Blender Package", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    string initialPath = _loadedBspPath != null
+      ? Path.Combine(Path.GetDirectoryName(_loadedBspPath) ?? Environment.CurrentDirectory, $"{map.Name}_Blender")
+      : Environment.CurrentDirectory;
+
+    using FolderBrowserDialog dialog = new()
+    {
+      Description = "Select output folder for Blender package export",
+      UseDescriptionForTitle = true,
+      ShowNewFolderButton = true,
+      SelectedPath = initialPath,
+    };
+
+    if (dialog.ShowDialog(this) != DialogResult.OK)
+    {
+      return;
+    }
+
+    try
+    {
+      BlenderInterchange.ExportPackage(map, dialog.SelectedPath);
+      _statusBaseText = $"Exported Blender package: {dialog.SelectedPath}";
+      RefreshRuntimeStatus();
+      MessageBox.Show(this, "Blender package export completed.", "Export Blender Package", MessageBoxButtons.OK, MessageBoxIcon.Information);
+    }
+    catch (Exception ex)
+    {
+      MessageBox.Show(this, ex.Message, "Export Blender Package Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+      _statusBaseText = "Blender package export failed.";
+      RefreshRuntimeStatus();
+    }
+  }
+
+  private void ImportBlenderPackageFromDialog()
+  {
+    LoadedMap? map = _mapDocument?.Map ?? _loadedMap;
+    if (map == null)
+    {
+      MessageBox.Show(this, "No map is loaded.", "Import Blender Package", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    string initialPath = _loadedBspPath != null
+      ? Path.Combine(Path.GetDirectoryName(_loadedBspPath) ?? Environment.CurrentDirectory, $"{map.Name}_Blender")
+      : Environment.CurrentDirectory;
+
+    using FolderBrowserDialog dialog = new()
+    {
+      Description = "Select Blender package folder to import",
+      UseDescriptionForTitle = true,
+      ShowNewFolderButton = false,
+      SelectedPath = initialPath,
+    };
+
+    if (dialog.ShowDialog(this) != DialogResult.OK)
+    {
+      return;
+    }
+
+    DialogResult collisionChoice = MessageBox.Show(
+      this,
+      "Rebuild collision from imported mesh?\n\nYes: rebuild collision (experimental)\nNo: keep current collision data",
+      "Import Blender Package",
+      MessageBoxButtons.YesNoCancel,
+      MessageBoxIcon.Question,
+      MessageBoxDefaultButton.Button2);
+    if (collisionChoice == DialogResult.Cancel)
+    {
+      return;
+    }
+
+    bool rebuildCollisionFromMesh = collisionChoice == DialogResult.Yes;
+
+    try
+    {
+      LoadedMap edited = BlenderInterchange.ImportPackage(map, dialog.SelectedPath, rebuildCollisionFromMesh, out BlenderPackageImportReport report);
+      ApplyNonCollisionEditedMap(edited);
+
+      List<string> summaryLines = new()
+      {
+        $"Imported mesh triangles: {report.ImportedMeshTriangleCount:N0}",
+        $"Imported collision lines: {report.ImportedCollisionLineCount:N0}",
+        $"Imported materials: {report.ImportedMaterialCount:N0}",
+        $"Imported textures: {report.ImportedTextureCount:N0}",
+        $"Imported entity instances: {report.ImportedEntityInstanceCount:N0}",
+      };
+      if (report.Warnings.Length > 0)
+      {
+        summaryLines.Add(string.Empty);
+        summaryLines.Add("Warnings:");
+        summaryLines.AddRange(report.Warnings);
+      }
+
+      _statusBaseText =
+        $"Imported Blender package | MeshTri:{report.ImportedMeshTriangleCount:N0} Col:{report.ImportedCollisionLineCount:N0} Mats:{report.ImportedMaterialCount:N0} Tex:{report.ImportedTextureCount:N0} Ent:{report.ImportedEntityInstanceCount:N0}";
+      RefreshRuntimeStatus();
+      MessageBox.Show(this, string.Join(Environment.NewLine, summaryLines), "Import Blender Package", MessageBoxButtons.OK, MessageBoxIcon.Information);
+    }
+    catch (Exception ex)
+    {
+      MessageBox.Show(this, ex.Message, "Import Blender Package Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+      _statusBaseText = "Blender package import failed.";
       RefreshRuntimeStatus();
     }
   }
@@ -394,6 +516,7 @@ internal sealed partial class MainForm : Form
       _editUndoHistory.Clear();
       _editRedoHistory.Clear();
       _loadedMap = map;
+      _mapDocument = MapDocument.FromLoadedMap(map);
       _viewer.SetMap(map);
       _loadedBspPath = NormalizeMapPath(bspPath);
       _loadedEbpPath = Path.GetFullPath(ebpPath);
@@ -420,6 +543,7 @@ internal sealed partial class MainForm : Form
     catch (Exception ex)
     {
       _loadedMap = null;
+      _mapDocument = null;
       _editUndoHistory.Clear();
       _editRedoHistory.Clear();
       MessageBox.Show(this, ex.Message, "Load Map Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -437,6 +561,11 @@ internal sealed partial class MainForm : Form
       - Ctrl+O: select map root folder
       - Ctrl+S: save current EBP only (collision changes)
       - Ctrl+Shift+S: save current loaded BSP/EBP as a new pair (+sidecars/entity)
+      - Ctrl+M: edit map R3M materials
+      - Ctrl+T: edit map R3T textures
+      - Ctrl+E: edit R3X environment values (fog/lens/flags)
+      - Ctrl+Shift+E: export Blender package (mesh/materials/textures/entities)
+      - Ctrl+Shift+I: import Blender package (materials/textures/entities)
       - View menu: show/hide each toolbar row
       - Map combo (top bar): switch maps by folder name
       - Right mouse drag: look around
@@ -463,7 +592,7 @@ internal sealed partial class MainForm : Form
       - Redo button or Ctrl+Y/Ctrl+Shift+Z: redo last undone edit
       - ResetMap: discard unsaved edits and reload map from source files
       - DynLight button: toggle dynamic lighting
-      - FxMark button: toggle particle/effect map markers
+      - FxMark button: toggle particle/effect instances and map markers
       - R: reset camera to map default
       - Esc: release mouse-look capture
       - Top-left HUD: camera coordinates (Cam XYZ, source/game-space)
@@ -720,7 +849,140 @@ internal sealed partial class MainForm : Form
 
     int selectionIndex = preferredSelectionIndex >= 0 ? preferredSelectionIndex : _viewer.SelectedCollisionLineIndex;
     _loadedMap = editedMap;
+    if (_mapDocument == null)
+    {
+      _mapDocument = MapDocument.FromLoadedMap(editedMap);
+    }
+    else
+    {
+      _mapDocument.ReplaceMap(editedMap);
+    }
     _viewer.ApplyCollisionEditedMap(editedMap);
+    _viewer.SetSelectedCollisionLineIndex(selectionIndex);
+    SyncTeleportInputsFromCamera();
+    UpdateUndoUiState();
+  }
+
+  private void EditEnvironmentFromDialog()
+  {
+    if (_loadedMap == null)
+    {
+      MessageBox.Show(this, "No map is loaded.", "R3X Environment", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    using R3xEnvironmentDialog dialog = new(_loadedMap.Environment);
+    if (dialog.ShowDialog(this) != DialogResult.OK)
+    {
+      return;
+    }
+
+    LoadedMap editedMap;
+    if (_mapDocument == null)
+    {
+      editedMap = MapEditOperations.WithEnvironmentData(_loadedMap, dialog.EditedSettings);
+      _mapDocument = MapDocument.FromLoadedMap(editedMap);
+    }
+    else
+    {
+      editedMap = _mapDocument.ApplyEnvironment(dialog.EditedSettings);
+    }
+
+    _loadedMap = editedMap;
+    _viewer.ApplyCollisionEditedMap(editedMap);
+    _statusBaseText =
+      $"R3X environment updated | Fog: {(editedMap.Environment.FogEnabled ? $"On({editedMap.Environment.FogStart:F0}-{editedMap.Environment.FogEnd:F0})" : "Off")}";
+    RefreshRuntimeStatus();
+  }
+
+  private void EditMapMaterialsFromDialog()
+  {
+    if (_loadedMap == null)
+    {
+      MessageBox.Show(this, "No map is loaded.", "R3M Materials", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    if (_loadedMap.Materials.Length == 0)
+    {
+      MessageBox.Show(this, "This map has no loaded R3M material data.", "R3M Materials", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    using R3mMaterialsDialog dialog = new(_loadedMap.Materials);
+    if (dialog.ShowDialog(this) != DialogResult.OK)
+    {
+      return;
+    }
+
+    LoadedMap editedMap;
+    if (_mapDocument == null)
+    {
+      editedMap = MapEditOperations.WithMapMaterialData(_loadedMap, dialog.EditedMaterials);
+      _mapDocument = MapDocument.FromLoadedMap(editedMap);
+    }
+    else
+    {
+      editedMap = _mapDocument.ApplyMapMaterials(dialog.EditedMaterials);
+    }
+
+    ApplyNonCollisionEditedMap(editedMap);
+    _statusBaseText = $"R3M materials updated | Count: {editedMap.Materials.Length:N0}";
+    RefreshRuntimeStatus();
+  }
+
+  private void EditMapTexturesFromDialog()
+  {
+    if (_loadedMap == null)
+    {
+      MessageBox.Show(this, "No map is loaded.", "R3T Textures", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    if (_loadedMap.SurfaceTextures.Length == 0)
+    {
+      MessageBox.Show(this, "This map has no loaded R3T texture data.", "R3T Textures", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    using R3tTexturesDialog dialog = new(_loadedMap.SurfaceTextures);
+    if (dialog.ShowDialog(this) != DialogResult.OK)
+    {
+      return;
+    }
+
+    LoadedMap editedMap;
+    if (_mapDocument == null)
+    {
+      editedMap = MapEditOperations.WithMapTextureData(_loadedMap, dialog.EditedTextures);
+      _mapDocument = MapDocument.FromLoadedMap(editedMap);
+    }
+    else
+    {
+      editedMap = _mapDocument.ApplyMapTextures(dialog.EditedTextures);
+    }
+
+    ApplyNonCollisionEditedMap(editedMap);
+    _statusBaseText = $"R3T textures updated | Count: {editedMap.SurfaceTextures.Length:N0}";
+    RefreshRuntimeStatus();
+  }
+
+  private void ApplyNonCollisionEditedMap(LoadedMap editedMap)
+  {
+    (float x, float y, float z, float yaw, float pitch) pose = _viewer.GetCameraDisplayPose();
+    int selectionIndex = _viewer.SelectedCollisionLineIndex;
+    _loadedMap = editedMap;
+    if (_mapDocument == null)
+    {
+      _mapDocument = MapDocument.FromLoadedMap(editedMap);
+    }
+    else
+    {
+      _mapDocument.ReplaceMap(editedMap);
+    }
+
+    _viewer.SetMap(editedMap);
+    _ = _viewer.TrySetCameraDisplayPose(pose.x, pose.y, pose.z, pose.yaw, pose.pitch);
     _viewer.SetSelectedCollisionLineIndex(selectionIndex);
     SyncTeleportInputsFromCamera();
     UpdateUndoUiState();
