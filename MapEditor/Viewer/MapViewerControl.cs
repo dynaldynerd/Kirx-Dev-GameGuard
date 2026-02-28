@@ -75,6 +75,7 @@ internal sealed class MapViewerControl : UserControl
   private const float MaxAutoClusterFaceRatio = 0.20f;
   private const int MaxGlobalAlphaSortSpans = 256;
   private const int NearestEntityOverlayRefreshMs = 120;
+  private const float BspMoveFloorSnapRayStartOffset = 1200.0f;
 
   private readonly GLControlWinForms _glControl;
   private readonly Label _cameraOverlayLabel;
@@ -242,6 +243,9 @@ internal sealed class MapViewerControl : UserControl
   private bool _selectedBspFaceOnly;
   private int[] _bspMovePreviewVertexIndices = Array.Empty<int>();
   private Vector3[] _bspMovePreviewBaseDisplayPositions = Array.Empty<Vector3>();
+  private readonly HashSet<int> _bspMovePreviewSelectedFaces = [];
+  private Vector3 _bspMoveFloorSnapBaseSource = Vector3.Zero;
+  private bool _bspMoveHasFloorSnapAnchor;
   private Vector3 _bspMovePreviewDisplayDelta = Vector3.Zero;
   private bool _bspMovePreviewApplied;
 
@@ -7682,10 +7686,25 @@ internal sealed class MapViewerControl : UserControl
     _bspMovePreviewVertexIndices = vertexIndexSet.ToArray();
     Array.Sort(_bspMovePreviewVertexIndices);
     _bspMovePreviewBaseDisplayPositions = new Vector3[_bspMovePreviewVertexIndices.Length];
+    _bspMovePreviewSelectedFaces.Clear();
+    foreach (int faceIndex in selectedFaceSet)
+    {
+      _bspMovePreviewSelectedFaces.Add(faceIndex);
+    }
+
+    _bspMoveHasFloorSnapAnchor = false;
+    float anchorMinY = float.PositiveInfinity;
     for (int i = 0; i < _bspMovePreviewVertexIndices.Length; ++i)
     {
       int vertexIndex = _bspMovePreviewVertexIndices[i];
       _bspMovePreviewBaseDisplayPositions[i] = _mapDrawVertices[vertexIndex].Position;
+      Vector3 sourcePosition = _map.BspRenderVertices[vertexIndex].Position;
+      if (IsFinite(sourcePosition) && sourcePosition.Y < anchorMinY)
+      {
+        anchorMinY = sourcePosition.Y;
+        _bspMoveFloorSnapBaseSource = sourcePosition;
+        _bspMoveHasFloorSnapAnchor = true;
+      }
     }
 
     _bspMovePreviewDisplayDelta = Vector3.Zero;
@@ -7701,6 +7720,7 @@ internal sealed class MapViewerControl : UserControl
     }
 
     Vector3 sourceDelta = _bspMoveCurrentSource - _bspMoveStartSource;
+    // Keep drag preview responsive: defer expensive floor-snap resolve to mouse-up commit.
     ApplyBspMovePreview(sourceDelta);
   }
 
@@ -7799,8 +7819,58 @@ internal sealed class MapViewerControl : UserControl
 
     _bspMovePreviewVertexIndices = Array.Empty<int>();
     _bspMovePreviewBaseDisplayPositions = Array.Empty<Vector3>();
+    _bspMovePreviewSelectedFaces.Clear();
+    _bspMoveFloorSnapBaseSource = Vector3.Zero;
+    _bspMoveHasFloorSnapAnchor = false;
     _bspMovePreviewDisplayDelta = Vector3.Zero;
     _bspMovePreviewApplied = false;
+  }
+
+  private Vector3 ResolveBspMoveSourceDelta(Vector3 sourceDelta)
+  {
+    if (!IsFinite(sourceDelta))
+    {
+      return sourceDelta;
+    }
+
+    return ResolveBspFloorSnapSourceDelta(sourceDelta);
+  }
+
+  private Vector3 ResolveBspFloorSnapSourceDelta(Vector3 sourceDelta)
+  {
+    if (!_bspMoveHasFloorSnapAnchor || _map == null)
+    {
+      return sourceDelta;
+    }
+
+    float snapDistance = Math.Clamp(_collisionDrawSnapDistance, 0.0f, 10000.0f);
+    if (snapDistance <= 0.0001f)
+    {
+      return sourceDelta;
+    }
+
+    Vector3 movedAnchor = _bspMoveFloorSnapBaseSource + sourceDelta;
+    if (!IsFinite(movedAnchor))
+    {
+      return sourceDelta;
+    }
+
+    float rayStartOffset = MathF.Max(BspMoveFloorSnapRayStartOffset, snapDistance + 50.0f);
+    Vector3 rayOrigin = movedAnchor + new Vector3(0.0f, rayStartOffset, 0.0f);
+    float maxRayDistance = rayStartOffset + snapDistance + 10.0f;
+    if (!TryRaycastMapSurface(rayOrigin, -Vector3.UnitY, out Vector3 floorPoint, _bspMovePreviewSelectedFaces, maxRayDistance))
+    {
+      return sourceDelta;
+    }
+
+    float offsetY = floorPoint.Y - movedAnchor.Y;
+    if (!float.IsFinite(offsetY) || MathF.Abs(offsetY) > snapDistance)
+    {
+      return sourceDelta;
+    }
+
+    sourceDelta.Y += offsetY;
+    return sourceDelta;
   }
 
   private Vector3 ConvertSourceDeltaToDisplay(Vector3 sourceDelta)
@@ -7966,6 +8036,16 @@ internal sealed class MapViewerControl : UserControl
 
   private bool TryRaycastMapSurface(Vector3 rayOrigin, Vector3 rayDirection, out Vector3 point)
   {
+    return TryRaycastMapSurface(rayOrigin, rayDirection, out point, excludedFaceIndices: null, maxDistance: float.PositiveInfinity);
+  }
+
+  private bool TryRaycastMapSurface(
+    Vector3 rayOrigin,
+    Vector3 rayDirection,
+    out Vector3 point,
+    HashSet<int>? excludedFaceIndices,
+    float maxDistance)
+  {
     point = Vector3.Zero;
     if (_map == null)
     {
@@ -7980,8 +8060,13 @@ internal sealed class MapViewerControl : UserControl
 
     float bestT = float.PositiveInfinity;
     bool found = false;
-    for (int index = 0; index + 2 < vertices.Length; index += 3)
+    for (int index = 0, faceIndex = 0; index + 2 < vertices.Length; index += 3, ++faceIndex)
     {
+      if (excludedFaceIndices != null && excludedFaceIndices.Contains(faceIndex))
+      {
+        continue;
+      }
+
       Vector3 v0 = vertices[index].Position;
       Vector3 v1 = vertices[index + 1].Position;
       Vector3 v2 = vertices[index + 2].Position;
@@ -7991,6 +8076,11 @@ internal sealed class MapViewerControl : UserControl
       }
 
       if (!TryIntersectRayTriangle(rayOrigin, rayDirection, v0, v1, v2, out float t))
+      {
+        continue;
+      }
+
+      if (float.IsFinite(maxDistance) && t > maxDistance)
       {
         continue;
       }
@@ -8285,6 +8375,7 @@ internal sealed class MapViewerControl : UserControl
         }
 
         Vector3 sourceDelta = _bspMoveCurrentSource - _bspMoveStartSource;
+        sourceDelta = ResolveBspMoveSourceDelta(sourceDelta);
         _bspMoveDragging = false;
         if (sourceDelta.LengthSquared > 0.0001f && IsFinite(sourceDelta))
         {
