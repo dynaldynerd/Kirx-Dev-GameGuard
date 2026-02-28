@@ -22,6 +22,17 @@ public static class MapExporter
   private const uint ExtMatFogRange = 0x00000002;
   private const uint ExtMatExistFirstFog = 0x00000004;
   private const uint ExtMatExistLensFlare = 0x00000010;
+  private static readonly uint[] R3tHeaderXorKey =
+  [
+    0x764D802E, 0xF0D1F82E, 0x81863FBD, 0x3F3F2C58,
+    0x6F672E2E, 0x783F403F, 0xC0F13F3C, 0x9F3BF6A5,
+    0xD73F20C1, 0x85E9C1C8, 0x56EFBD86, 0x2EFBA13F,
+    0x4C618687, 0xB44E3B21, 0x97AE5778, 0x2E4A2E3F,
+    0x442E4C3F, 0xE85FC5CD, 0xBDEBECE9, 0x6CF7BBBE,
+    0x2EE4F22E, 0x9F973F3F, 0xB921B39D, 0x3F546576,
+    0xF0C6F6E6, 0xB2E2DB79, 0xEB2E2E4B, 0xABCAD3D3,
+    0x9CEDC7EA, 0x65D0D9C7, 0x35FAB448, 0x9B6A2E2E,
+  ];
   private static readonly string[] LightmapR3tSuffixes = ["lgt.r3t", ".lgt.r3t", "_lgt.r3t"];
 
   public static void ExportBspEbpPair(
@@ -777,7 +788,8 @@ public static class MapExporter
     float version = DefaultR3tVersion;
     bool hasNameTable = HasAnyTextureName(textures);
     byte[][] sourceNames = Array.Empty<byte[]>();
-    if (TryReadR3tMetadata(sourcePath, out float sourceVersion, out bool sourceHasNameTable, out sourceNames))
+    bool[] sourceHeaderXorMask = Array.Empty<bool>();
+    if (TryReadR3tMetadata(sourcePath, out float sourceVersion, out bool sourceHasNameTable, out sourceNames, out sourceHeaderXorMask))
     {
       version = sourceVersion;
       hasNameTable = sourceHasNameTable;
@@ -817,6 +829,8 @@ public static class MapExporter
         throw new InvalidDataException($"R3T texture {textureIndex} has empty DDS data.");
       }
 
+      bool encodeHeader = textureIndex < sourceHeaderXorMask.Length && sourceHeaderXorMask[textureIndex];
+      block = EncodeR3tTextureBlock(block, encodeHeader);
       writer.Write(block.Length);
       writer.Write(block);
     }
@@ -837,11 +851,17 @@ public static class MapExporter
     return false;
   }
 
-  private static bool TryReadR3tMetadata(string? sourcePath, out float version, out bool hasNameTable, out byte[][] names)
+  private static bool TryReadR3tMetadata(
+    string? sourcePath,
+    out float version,
+    out bool hasNameTable,
+    out byte[][] names,
+    out bool[] headerXorMask)
   {
     version = DefaultR3tVersion;
     hasNameTable = false;
     names = Array.Empty<byte[]>();
+    headerXorMask = Array.Empty<bool>();
     if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath))
     {
       return false;
@@ -878,14 +898,111 @@ public static class MapExporter
         names = parsedNames;
       }
 
+      if (!TryReadR3tHeaderXorMask(bytes, textureCount, hasNameTable, out bool[] parsedMask))
+      {
+        return false;
+      }
+
+      headerXorMask = parsedMask;
       return true;
     }
     catch
     {
       hasNameTable = false;
       names = Array.Empty<byte[]>();
+      headerXorMask = Array.Empty<bool>();
       return false;
     }
+  }
+
+  private static bool TryReadR3tHeaderXorMask(byte[] bytes, int textureCount, bool hasNameTable, out bool[] mask)
+  {
+    mask = Array.Empty<bool>();
+    long offset = 8L + (hasNameTable ? (long)textureCount * R3mNameBytes : 0L);
+    if (offset < 0 || offset > bytes.Length)
+    {
+      return false;
+    }
+
+    bool[] parsed = new bool[textureCount];
+    for (int textureIndex = 0; textureIndex < textureCount; ++textureIndex)
+    {
+      if (offset + 4 > bytes.Length)
+      {
+        return false;
+      }
+
+      int blockLength = BinaryPrimitives.ReadInt32LittleEndian(bytes.AsSpan((int)offset, 4));
+      offset += 4;
+      if (blockLength <= 0 || offset + blockLength > bytes.Length)
+      {
+        return false;
+      }
+
+      parsed[textureIndex] = IsR3tHeaderXorEncoded(bytes, (int)offset, blockLength);
+      offset += blockLength;
+    }
+
+    mask = parsed;
+    return true;
+  }
+
+  private static bool IsR3tHeaderXorEncoded(byte[] bytes, int blockOffset, int blockLength)
+  {
+    if (blockLength < R3mNameBytes || IsDds(bytes, blockOffset))
+    {
+      return false;
+    }
+
+    Span<byte> decodedHeader = stackalloc byte[R3mNameBytes];
+    bytes.AsSpan(blockOffset, R3mNameBytes).CopyTo(decodedHeader);
+    for (int index = 0; index < R3tHeaderXorKey.Length; ++index)
+    {
+      int keyOffset = index * sizeof(uint);
+      uint value = BinaryPrimitives.ReadUInt32LittleEndian(decodedHeader.Slice(keyOffset, sizeof(uint)));
+      value ^= R3tHeaderXorKey[index];
+      BinaryPrimitives.WriteUInt32LittleEndian(decodedHeader.Slice(keyOffset, sizeof(uint)), value);
+    }
+
+    return IsDds(decodedHeader);
+  }
+
+  private static byte[] EncodeR3tTextureBlock(byte[] block, bool encodeHeader)
+  {
+    if (!encodeHeader || block.Length < R3mNameBytes)
+    {
+      return block;
+    }
+
+    byte[] encoded = new byte[block.Length];
+    Buffer.BlockCopy(block, 0, encoded, 0, block.Length);
+    for (int index = 0; index < R3tHeaderXorKey.Length; ++index)
+    {
+      int offset = index * sizeof(uint);
+      uint value = BinaryPrimitives.ReadUInt32LittleEndian(encoded.AsSpan(offset, sizeof(uint)));
+      value ^= R3tHeaderXorKey[index];
+      BinaryPrimitives.WriteUInt32LittleEndian(encoded.AsSpan(offset, sizeof(uint)), value);
+    }
+
+    return encoded;
+  }
+
+  private static bool IsDds(byte[] bytes, int offset = 0)
+  {
+    return bytes.Length >= offset + 4
+      && bytes[offset] == (byte)'D'
+      && bytes[offset + 1] == (byte)'D'
+      && bytes[offset + 2] == (byte)'S'
+      && bytes[offset + 3] == (byte)' ';
+  }
+
+  private static bool IsDds(ReadOnlySpan<byte> bytes)
+  {
+    return bytes.Length >= 4
+      && bytes[0] == (byte)'D'
+      && bytes[1] == (byte)'D'
+      && bytes[2] == (byte)'S'
+      && bytes[3] == (byte)' ';
   }
 
   private static bool TryProbeR3tLayout(byte[] bytes, int textureCount, bool hasNameTable)

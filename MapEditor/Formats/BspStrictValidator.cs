@@ -6,6 +6,7 @@ namespace MapEditor.Formats;
 
 public static class BspStrictValidator
 {
+  private const int BspHeaderSize = 0x2AC;
   private const int BspHeaderEntryCount = 85;
   private const int BspSectionCPlanes = 0;
   private const int BspSectionCFaceId = 1;
@@ -26,6 +27,9 @@ public static class BspStrictValidator
   private const uint ExpectedBspVersion = 39;
   private const int ReadAniObjectEntrySize = 88;
   private const int MaxCollectedErrors = 128;
+  private const ushort MatGroupAttrByteVertex = 0x8000;
+  private const ushort MatGroupAttrWordVertex = 0x4000;
+  private const ushort MatGroupAttrObject = 0x2000;
 
   public static void ValidateForStrictLoad(LoadedMap map)
   {
@@ -41,10 +45,11 @@ public static class BspStrictValidator
   {
     ArgumentNullException.ThrowIfNull(map);
 
+    bool saveValidation = string.Equals(context, "Save", StringComparison.OrdinalIgnoreCase);
     List<string> errors = new();
     ValidateLoadedArrays(map, errors);
     ValidateCollisionData(map, errors);
-    ValidateBspLayout(map, errors);
+    ValidateBspLayout(map, errors, saveValidation);
 
     if (errors.Count == 0)
     {
@@ -226,7 +231,7 @@ public static class BspStrictValidator
     }
   }
 
-  private static void ValidateBspLayout(LoadedMap map, List<string> errors)
+  private static void ValidateBspLayout(LoadedMap map, List<string> errors, bool saveValidation)
   {
     BspBinaryLayout? layout = map.BspBinaryLayout;
     if (layout == null)
@@ -421,6 +426,29 @@ public static class BspStrictValidator
     for (int groupIndex = 0; groupIndex < matGroups.Length; ++groupIndex)
     {
       MatGroupEntry group = matGroups[groupIndex];
+      bool byteVertexMode = (group.Attribute & MatGroupAttrByteVertex) != 0;
+      bool wordVertexMode = (group.Attribute & MatGroupAttrWordVertex) != 0;
+      if (byteVertexMode && wordVertexMode)
+      {
+        AddError(errors, $"ReadMatGroup[{groupIndex}] has invalid attribute 0x{group.Attribute:X4}: byte and word vertex modes are both set.");
+      }
+
+      if (byteVertexMode && bVertexCount == 0)
+      {
+        AddError(errors, $"ReadMatGroup[{groupIndex}] requests byte-vertex mode but BVertex section is empty.");
+      }
+
+      if (wordVertexMode && wVertexCount == 0)
+      {
+        AddError(errors, $"ReadMatGroup[{groupIndex}] requests word-vertex mode but WVertex section is empty.");
+      }
+
+      bool hasObjectBit = (group.Attribute & MatGroupAttrObject) != 0;
+      if (objectCount > 0 && !hasObjectBit)
+      {
+        AddError(errors, $"ReadMatGroup[{groupIndex}] has attribute 0x{group.Attribute:X4} without object flag (0x2000) while object section is present (count={objectCount}).");
+      }
+
       if (group.MaterialId < -1 || group.MaterialId >= map.Materials.Length)
       {
         AddError(errors, $"ReadMatGroup[{groupIndex}] has invalid material id {group.MaterialId} (materials={map.Materials.Length}, valid -1..{Math.Max(-1, map.Materials.Length - 1)}).");
@@ -443,7 +471,7 @@ public static class BspStrictValidator
         continue;
       }
 
-      int functionId = (group.Attribute & 0x8000) != 0 ? 1 : (group.Attribute & 0x4000) != 0 ? 2 : 4;
+      int functionId = byteVertexMode ? 1 : wordVertexMode ? 2 : 4;
       int baseIndex = functionId == 2 ? bVertexCount : 0;
       for (ulong groupFaceIndex = group.FaceStartId; groupFaceIndex < groupEnd; ++groupFaceIndex)
       {
@@ -540,6 +568,199 @@ public static class BspStrictValidator
         }
       }
     }
+
+    if (saveValidation)
+    {
+      SpatialPatternMetrics rebuiltPattern = BuildSpatialPatternMetrics(faceCount, cFaceIdValues, leafEntries);
+      ValidateLegacySpatialPatternOnSave(map.BspPath, rebuiltPattern, errors);
+    }
+  }
+
+  private static void ValidateLegacySpatialPatternOnSave(
+    string sourceBspPath,
+    SpatialPatternMetrics rebuiltPattern,
+    List<string> errors)
+  {
+    if (string.IsNullOrWhiteSpace(sourceBspPath))
+    {
+      AddError(errors, "Save strict validation requires source BSP path for legacy CFaceId/Leaf diagnostics.");
+      return;
+    }
+
+    if (!TryReadSourceSpatialPatternMetrics(sourceBspPath, out SpatialPatternMetrics sourcePattern, out string readError))
+    {
+      AddError(errors, $"Save strict validation failed to inspect source BSP pattern: {readError}");
+      return;
+    }
+
+    if (sourcePattern.CFaceIdCount <= 0 || sourcePattern.RuntimeLeafCount <= 0)
+    {
+      return;
+    }
+
+    if (sourcePattern.DuplicateCFaceCount > 0 && rebuiltPattern.DuplicateCFaceCount <= 0)
+    {
+      AddError(
+        errors,
+        "CFaceId/Leaf rebuild lost all duplicate CFaceId entries. " +
+        "Legacy BSP expects repeated face references across runtime leaves.");
+    }
+
+    if (sourcePattern.CFaceIdCount > sourcePattern.FaceCount && rebuiltPattern.CFaceIdCount <= rebuiltPattern.FaceCount)
+    {
+      AddError(
+        errors,
+        "CFaceId count collapsed to one-reference-per-face, but source BSP uses multi-leaf face membership.");
+    }
+
+    if (sourcePattern.DuplicateRatio >= 0.10f && rebuiltPattern.DuplicateRatio < sourcePattern.DuplicateRatio * 0.25f)
+    {
+      AddError(
+        errors,
+        $"CFaceId duplicate ratio dropped too far from source ({rebuiltPattern.DuplicateRatio:F3} vs {sourcePattern.DuplicateRatio:F3}).");
+    }
+
+    if (sourcePattern.AvgRuntimeLeafFaceRefs >= 8.0f
+      && rebuiltPattern.AvgRuntimeLeafFaceRefs < sourcePattern.AvgRuntimeLeafFaceRefs * 0.50f)
+    {
+      AddError(
+        errors,
+        $"Average runtime leaf face references dropped too far from source ({rebuiltPattern.AvgRuntimeLeafFaceRefs:F2} vs {sourcePattern.AvgRuntimeLeafFaceRefs:F2}).");
+    }
+
+    if (sourcePattern.MaxRuntimeLeafFaceRefs >= 128
+      && rebuiltPattern.MaxRuntimeLeafFaceRefs < sourcePattern.MaxRuntimeLeafFaceRefs / 8)
+    {
+      AddError(
+        errors,
+        $"Max runtime leaf face references dropped too far from source ({rebuiltPattern.MaxRuntimeLeafFaceRefs} vs {sourcePattern.MaxRuntimeLeafFaceRefs}).");
+    }
+  }
+
+  private static bool TryReadSourceSpatialPatternMetrics(
+    string sourceBspPath,
+    out SpatialPatternMetrics metrics,
+    out string error)
+  {
+    metrics = default;
+    error = string.Empty;
+
+    string resolvedPath = Path.GetFullPath(sourceBspPath);
+    if (!File.Exists(resolvedPath))
+    {
+      error = $"Source BSP does not exist: {resolvedPath}";
+      return false;
+    }
+
+    try
+    {
+      using FileStream stream = File.OpenRead(resolvedPath);
+      using BinaryReader reader = new(stream);
+
+      if (stream.Length < BspHeaderSize)
+      {
+        error = $"Source BSP is too small ({stream.Length} bytes).";
+        return false;
+      }
+
+      _ = reader.ReadUInt32(); // version
+      BspEntry[] entries = new BspEntry[BspHeaderEntryCount];
+      for (int i = 0; i < entries.Length; ++i)
+      {
+        uint offset = reader.ReadUInt32();
+        uint size = reader.ReadUInt32();
+        entries[i] = new BspEntry(offset, size);
+      }
+
+      if ((entries[BspSectionFace].Size % 6u) != 0u
+        || (entries[BspSectionCFaceId].Size % 4u) != 0u
+        || (entries[BspSectionLeaf].Size % 25u) != 0u)
+      {
+        error = "Source BSP section stride mismatch (Face/CFaceId/Leaf).";
+        return false;
+      }
+
+      byte[] cFaceIdBytes = ReadSectionBytes(stream, entries[BspSectionCFaceId], BspSectionCFaceId);
+      byte[] leafBytes = ReadSectionBytes(stream, entries[BspSectionLeaf], BspSectionLeaf);
+
+      int faceCount = checked((int)(entries[BspSectionFace].Size / 6u));
+      uint[] cFaceIds = ParseUInt32Array(cFaceIdBytes);
+      LeafEntry[] leaves = ParseLeaves(leafBytes);
+      metrics = BuildSpatialPatternMetrics(faceCount, cFaceIds, leaves);
+      return true;
+    }
+    catch (Exception ex)
+    {
+      error = ex.Message;
+      return false;
+    }
+  }
+
+  private static byte[] ReadSectionBytes(FileStream stream, BspEntry entry, int sectionIndex)
+  {
+    if (entry.Size == 0u)
+    {
+      return Array.Empty<byte>();
+    }
+
+    long offset = entry.Offset;
+    int size = checked((int)entry.Size);
+    if (offset < 0 || offset + size > stream.Length)
+    {
+      throw new InvalidDataException(
+        $"Source BSP section {sectionIndex} is outside file bounds (offset={offset}, size={size}, file={stream.Length}).");
+    }
+
+    stream.Position = offset;
+    byte[] bytes = new byte[size];
+    int read = stream.Read(bytes, 0, size);
+    if (read != size)
+    {
+      throw new EndOfStreamException($"Failed to read full source BSP section {sectionIndex} ({read}/{size} bytes).");
+    }
+
+    return bytes;
+  }
+
+  private static SpatialPatternMetrics BuildSpatialPatternMetrics(int faceCount, uint[] cFaceIds, LeafEntry[] leaves)
+  {
+    HashSet<uint> uniqueCFaceIds = new();
+    for (int i = 0; i < cFaceIds.Length; ++i)
+    {
+      uniqueCFaceIds.Add(cFaceIds[i]);
+    }
+
+    int duplicateCFaceCount = cFaceIds.Length - uniqueCFaceIds.Count;
+    int runtimeLeafCount = Math.Max(0, leaves.Length - 1);
+    ulong runtimeLeafFaceRefTotal = 0ul;
+    int maxRuntimeLeafFaceRefs = 0;
+    for (int i = 1; i < leaves.Length; ++i)
+    {
+      int faceRefs = leaves[i].FaceCount > int.MaxValue ? int.MaxValue : (int)leaves[i].FaceCount;
+      runtimeLeafFaceRefTotal += leaves[i].FaceCount;
+      if (faceRefs > maxRuntimeLeafFaceRefs)
+      {
+        maxRuntimeLeafFaceRefs = faceRefs;
+      }
+    }
+
+    float avgRuntimeLeafFaceRefs = runtimeLeafCount > 0
+      ? (float)runtimeLeafFaceRefTotal / runtimeLeafCount
+      : 0.0f;
+    float duplicateRatio = cFaceIds.Length > 0
+      ? (float)duplicateCFaceCount / cFaceIds.Length
+      : 0.0f;
+
+    return new SpatialPatternMetrics(
+      faceCount,
+      cFaceIds.Length,
+      uniqueCFaceIds.Count,
+      duplicateCFaceCount,
+      leaves.Length,
+      runtimeLeafCount,
+      maxRuntimeLeafFaceRefs,
+      avgRuntimeLeafFaceRefs,
+      duplicateRatio);
   }
 
   private static void ValidateNodeChildRef(
@@ -731,4 +952,14 @@ public static class BspStrictValidator
     ushort ObjectId);
   private readonly record struct NodeEntry(uint NormalIndex, short Front, short Back);
   private readonly record struct LeafEntry(ulong FaceCount, ulong FaceStartId, ulong MatGroupCount, ulong MatGroupStartId);
+  private readonly record struct SpatialPatternMetrics(
+    int FaceCount,
+    int CFaceIdCount,
+    int UniqueCFaceIdCount,
+    int DuplicateCFaceCount,
+    int LeafCount,
+    int RuntimeLeafCount,
+    int MaxRuntimeLeafFaceRefs,
+    float AvgRuntimeLeafFaceRefs,
+    float DuplicateRatio);
 }

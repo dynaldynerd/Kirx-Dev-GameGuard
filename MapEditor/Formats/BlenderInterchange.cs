@@ -51,7 +51,8 @@ public static class BlenderInterchange
   private const int MaxLeafMatGroupCount = ushort.MaxValue;
   private const int MaxBspLeafCount = short.MaxValue;
   private const int MaxBspNodeCount = short.MaxValue;
-  private const int TargetFacesPerLeaf = 4096;
+  private const int DefaultTargetFacesPerLeaf = 4096;
+  private const int BspLeafSerializedSize = 25;
   private const int MaxSpatialTreeDepth = 20;
   private const int MaxConnectedClusterFacesForEdit = 6000;
 
@@ -105,7 +106,7 @@ public static class BlenderInterchange
         }
 
         ObjImportVertex v = vertices[i];
-        vertices[i] = new ObjImportVertex(v.Position + delta, v.LocalPosition + delta, v.Uv, v.LightUv, v.Color, v.MaterialId, v.ObjectId);
+        vertices[i] = new ObjImportVertex(v.Position + delta, v.LocalPosition + delta, v.Uv, v.LightUv, v.Color, v.MaterialId, v.LightMapId, v.ObjectId);
         ++movedVertexCount;
       }
     }
@@ -139,7 +140,7 @@ public static class BlenderInterchange
         for (int i = faceStart; i < faceStart + 3; ++i)
         {
           ObjImportVertex v = vertices[i];
-          vertices[i] = new ObjImportVertex(v.Position + delta, v.LocalPosition + delta, v.Uv, v.LightUv, v.Color, v.MaterialId, v.ObjectId);
+          vertices[i] = new ObjImportVertex(v.Position + delta, v.LocalPosition + delta, v.Uv, v.LightUv, v.Color, v.MaterialId, v.LightMapId, v.ObjectId);
           ++movedVertexCount;
         }
       }
@@ -756,6 +757,7 @@ public static class BlenderInterchange
           vertex.LightUv,
           vertex.Color,
           vertex.MaterialId,
+          vertex.LightMapId,
           vertex.ObjectId);
       }
 
@@ -783,7 +785,9 @@ public static class BlenderInterchange
     }
 
     int[] materialByVertex = new int[vertexCount];
+    int[] lightMapByVertex = new int[vertexCount];
     Array.Fill(materialByVertex, 0);
+    Array.Fill(lightMapByVertex, -1);
     for (int spanIndex = 0; spanIndex < source.BspMaterialSpans.Length; ++spanIndex)
     {
       BspMaterialSpan span = source.BspMaterialSpans[spanIndex];
@@ -792,6 +796,7 @@ public static class BlenderInterchange
       for (int i = start; i < end; ++i)
       {
         materialByVertex[i] = span.MaterialId;
+        lightMapByVertex[i] = span.LightMapId;
       }
     }
 
@@ -803,7 +808,7 @@ public static class BlenderInterchange
       BspRenderVertex v = render[i];
       ushort objectId = hasObjectIds ? source.BspRenderVertexObjectIds[i] : (ushort)0;
       Vector3 localPosition = hasLocalPositions ? source.BspRenderVertexLocalPositions[i] : v.Position;
-      vertices[i] = new ObjImportVertex(v.Position, localPosition, v.Uv, v.LightUv, v.Color, materialByVertex[i], objectId);
+      vertices[i] = new ObjImportVertex(v.Position, localPosition, v.Uv, v.LightUv, v.Color, materialByVertex[i], lightMapByVertex[i], objectId);
     }
 
     if ((vertexCount % 3) != 0)
@@ -849,7 +854,17 @@ public static class BlenderInterchange
     List<MaterialRun> materialRuns = BuildMaterialRuns(vertices);
     List<MaterialRun> expandedMaterialRuns = ExpandMaterialRuns(materialRuns);
     int[] faceGroupLookup = BuildFaceGroupLookup(triangleCount, expandedMaterialRuns);
-    SpatialBspSections spatialBsp = BuildSpatialBspSections(vertices, faceGroupLookup, expandedMaterialRuns.Count, warnings);
+    SpatialBspSections spatialBsp;
+    if (!TryBuildSourceGuidedSpatialBspSections(source, vertices, faceGroupLookup, expandedMaterialRuns.Count, warnings, out spatialBsp, out string spatialError))
+    {
+      warnings.Add($"Source-guided BSP leaf mapping unavailable ({spatialError}); using generated spatial BSP.");
+
+      int sourceLeafCount = ResolveSourceBspLeafCount(layout);
+      int collisionLeafHint = ResolveCollisionLeafCountHint(source.CollisionLines);
+      int leafTargetCount = Math.Max(sourceLeafCount, collisionLeafHint);
+      int targetFacesPerLeaf = ResolveTargetFacesPerLeaf(triangleCount, leafTargetCount);
+      spatialBsp = BuildSpatialBspSections(vertices, faceGroupLookup, expandedMaterialRuns.Count, targetFacesPerLeaf, warnings);
+    }
 
     BspMaterialSpan[] spans = new BspMaterialSpan[materialRuns.Count];
     for (int runIndex = 0; runIndex < materialRuns.Count; ++runIndex)
@@ -859,17 +874,18 @@ public static class BlenderInterchange
         run.MaterialId,
         run.FaceStart * 3,
         run.FaceCount * 3,
-        -1);
+        run.LightMapId);
     }
 
     byte[] fVertexSection = SerializeFloatVertexSection(indexedVertices.UniquePositions);
-    byte[] vertexColorSection = SerializeVertexColorSection(indexedVertices.UniquePositions.Length);
+    byte[] vertexColorSection = SerializeVertexColorSection(vertices);
     byte[] uvSection = SerializeUvSection(vertices);
     byte[] lightUvSection = SerializeLightUvSection(vertices);
     byte[] faceSection = SerializeFaceSection(triangleCount);
     byte[] faceIdSection = SerializeFaceIdSection(triangleCount);
     byte[] vertexIdSection = SerializeVertexIdSection(indexedVertices.VertexIds);
-    byte[] matGroupSection = SerializeMatGroupSection(expandedMaterialRuns, vertices, warnings);
+    SourceMatGroupMetadata sourceMatGroupMetadata = BuildSourceMatGroupMetadata(layout.Sections[BspSectionReadMatGroup], warnings);
+    byte[] matGroupSection = SerializeMatGroupSection(expandedMaterialRuns, vertices, sourceMatGroupMetadata, warnings);
 
     byte[][] sections = CloneSections(layout.Sections);
     sections[BspSectionCPlanes] = spatialBsp.CPlaneSection;
@@ -1005,19 +1021,22 @@ public static class BlenderInterchange
     int triangleCount = vertices.Length / 3;
     int faceStart = 0;
     int materialId = vertices[0].MaterialId;
+    int lightMapId = vertices[0].LightMapId;
     ushort objectId = vertices[0].ObjectId;
     int faceCount = 0;
     for (int face = 0; face < triangleCount; ++face)
     {
       int faceVertexBase = face * 3;
       int triMaterial = vertices[faceVertexBase].MaterialId;
+      int triLightMap = vertices[faceVertexBase].LightMapId;
       ushort triObject = vertices[faceVertexBase].ObjectId;
-      if ((triMaterial != materialId || triObject != objectId) && faceCount > 0)
+      if ((triMaterial != materialId || triLightMap != lightMapId || triObject != objectId) && faceCount > 0)
       {
-        runs.Add(new MaterialRun(materialId, objectId, faceStart, faceCount));
+        runs.Add(new MaterialRun(materialId, lightMapId, objectId, faceStart, faceCount));
         faceStart = face;
         faceCount = 0;
         materialId = triMaterial;
+        lightMapId = triLightMap;
         objectId = triObject;
       }
 
@@ -1026,7 +1045,7 @@ public static class BlenderInterchange
 
     if (faceCount > 0)
     {
-      runs.Add(new MaterialRun(materialId, objectId, faceStart, faceCount));
+      runs.Add(new MaterialRun(materialId, lightMapId, objectId, faceStart, faceCount));
     }
 
     return runs;
@@ -1043,7 +1062,7 @@ public static class BlenderInterchange
       while (remaining > 0)
       {
         int chunk = Math.Min(remaining, ushort.MaxValue);
-        expanded.Add(new MaterialRun(run.MaterialId, run.ObjectId, faceStart, chunk));
+        expanded.Add(new MaterialRun(run.MaterialId, run.LightMapId, run.ObjectId, faceStart, chunk));
         faceStart += chunk;
         remaining -= chunk;
       }
@@ -1093,6 +1112,7 @@ public static class BlenderInterchange
     ObjImportVertex[] vertices,
     int[] faceGroupLookup,
     int materialGroupCount,
+    int targetFacesPerLeaf,
     List<string> warnings)
   {
     int triangleCount = vertices.Length / 3;
@@ -1167,7 +1187,7 @@ public static class BlenderInterchange
     SpatialChildRef BuildRecursive(List<int> workingFaces, Vector3 boundsMin, Vector3 boundsMax, int depth)
     {
       bool forceSplitForLeafLimit = workingFaces.Count > MaxLeafFaceCount;
-      bool forceSplitForDepth = depth < MaxSpatialTreeDepth && workingFaces.Count > TargetFacesPerLeaf;
+      bool forceSplitForDepth = depth < MaxSpatialTreeDepth && workingFaces.Count > targetFacesPerLeaf;
       bool shouldLeaf = !forceSplitForLeafLimit && !forceSplitForDepth;
 
       if (shouldLeaf)
@@ -1288,6 +1308,496 @@ public static class BlenderInterchange
       normalArray,
       nodeState,
       leafState);
+  }
+
+  private static bool TryBuildSourceGuidedSpatialBspSections(
+    LoadedMap source,
+    ObjImportVertex[] vertices,
+    int[] faceGroupLookup,
+    int materialGroupCount,
+    List<string> warnings,
+    out SpatialBspSections spatialBsp,
+    out string error)
+  {
+    spatialBsp = default;
+    error = string.Empty;
+
+    BspBinaryLayout? layout = source.BspBinaryLayout;
+    if (layout == null
+      || layout.Sections == null
+      || layout.Sections.Length != BspHeaderEntryCount)
+    {
+      error = "missing BSP layout";
+      return false;
+    }
+
+    byte[] sourceCPlaneSection = layout.Sections[BspSectionCPlanes] ?? Array.Empty<byte>();
+    byte[] sourceNodeSection = layout.Sections[BspSectionNode] ?? Array.Empty<byte>();
+    byte[] sourceLeafSection = layout.Sections[BspSectionLeaf] ?? Array.Empty<byte>();
+    if (sourceCPlaneSection.Length == 0
+      || sourceNodeSection.Length == 0
+      || sourceLeafSection.Length == 0)
+    {
+      error = "source BSP tree sections are empty";
+      return false;
+    }
+
+    if ((sourceCPlaneSection.Length % 12) != 0
+      || (sourceNodeSection.Length % 24) != 0
+      || (sourceLeafSection.Length % BspLeafSerializedSize) != 0)
+    {
+      error = "source BSP tree section stride mismatch";
+      return false;
+    }
+
+    Vector3[] normals = ParseCPlaneNormals(sourceCPlaneSection);
+    BspNode[] nodes = ParseSourceNodes(sourceNodeSection);
+    SourceLeafEntry[] sourceLeaves = ParseSourceLeafEntries(sourceLeafSection);
+    if (normals.Length == 0 || nodes.Length <= 1 || sourceLeaves.Length <= 1)
+    {
+      error = "source BSP tree does not contain runtime nodes/leaves";
+      return false;
+    }
+
+    int triangleCount = vertices.Length / 3;
+    if (triangleCount <= 0)
+    {
+      error = "mesh has no triangles";
+      return false;
+    }
+
+    FaceSpatialData[] faces = BuildFaceSpatialData(vertices);
+    List<uint>[] leafFaceRefs = new List<uint>[sourceLeaves.Length];
+    List<ushort>[] leafMatRefs = new List<ushort>[sourceLeaves.Length];
+    List<int> hitLeaves = new(32);
+    Stack<int> pendingNodes = new(32);
+    for (int faceIndex = 0; faceIndex < triangleCount; ++faceIndex)
+    {
+      FaceSpatialData face = faces[faceIndex];
+      hitLeaves.Clear();
+      CollectSourceLeafHitsFromBounds(face.Min, face.Max, normals, nodes, sourceLeaves.Length, pendingNodes, hitLeaves);
+      if (hitLeaves.Count == 0)
+      {
+        int centroidLeaf = FindSourceLeafForPoint(face.Centroid, normals, nodes, sourceLeaves.Length);
+        if (centroidLeaf > 0)
+        {
+          hitLeaves.Add(centroidLeaf);
+        }
+      }
+
+      if (hitLeaves.Count == 0)
+      {
+        hitLeaves.Add(Math.Min(1, sourceLeaves.Length - 1));
+      }
+
+      int materialGroupId = faceIndex < faceGroupLookup.Length ? faceGroupLookup[faceIndex] : 0;
+      for (int i = 0; i < hitLeaves.Count; ++i)
+      {
+        int leafId = hitLeaves[i];
+        if (leafId <= 0 || leafId >= sourceLeaves.Length)
+        {
+          continue;
+        }
+
+        List<uint>? faceRefs = leafFaceRefs[leafId];
+        if (faceRefs == null)
+        {
+          faceRefs = new List<uint>(8);
+          leafFaceRefs[leafId] = faceRefs;
+        }
+
+        faceRefs.Add((uint)faceIndex);
+
+        if (materialGroupId >= 0 && materialGroupId < materialGroupCount)
+        {
+          if (materialGroupId > ushort.MaxValue)
+          {
+            continue;
+          }
+
+          List<ushort>? matRefs = leafMatRefs[leafId];
+          if (matRefs == null)
+          {
+            matRefs = new List<ushort>(4);
+            leafMatRefs[leafId] = matRefs;
+          }
+
+          ushort matRef = (ushort)materialGroupId;
+          if (!matRefs.Contains(matRef))
+          {
+            matRefs.Add(matRef);
+          }
+        }
+      }
+    }
+
+    List<uint> cFaceIds = new(Math.Max(1024, triangleCount));
+    List<ushort> matListInLeaf = new(Math.Max(1024, triangleCount / 4));
+    SpatialLeafEntry[] rebuiltLeaves = new SpatialLeafEntry[sourceLeaves.Length];
+    for (int leafIndex = 0; leafIndex < sourceLeaves.Length; ++leafIndex)
+    {
+      SourceLeafEntry sourceLeaf = sourceLeaves[leafIndex];
+
+      uint faceStartId = (uint)cFaceIds.Count;
+      List<uint>? faceRefs = leafFaceRefs[leafIndex];
+      int leafFaceCount = faceRefs?.Count ?? 0;
+      if (leafFaceCount > ushort.MaxValue)
+      {
+        warnings.Add($"Leaf {leafIndex} face ref count {leafFaceCount} exceeds ushort range; truncating to {ushort.MaxValue}.");
+        leafFaceCount = ushort.MaxValue;
+      }
+
+      for (int i = 0; i < leafFaceCount; ++i)
+      {
+        cFaceIds.Add(faceRefs![i]);
+      }
+
+      uint matStartId = (uint)matListInLeaf.Count;
+      List<ushort>? matRefs = leafMatRefs[leafIndex];
+      int matCount = matRefs?.Count ?? 0;
+      if (matCount > ushort.MaxValue)
+      {
+        warnings.Add($"Leaf {leafIndex} material-group ref count {matCount} exceeds ushort range; truncating to {ushort.MaxValue}.");
+        matCount = ushort.MaxValue;
+      }
+
+      for (int i = 0; i < matCount; ++i)
+      {
+        matListInLeaf.Add(matRefs![i]);
+      }
+
+      rebuiltLeaves[leafIndex] = new SpatialLeafEntry(
+        sourceLeaf.Type,
+        (ushort)leafFaceCount,
+        faceStartId,
+        (ushort)matCount,
+        matStartId,
+        sourceLeaf.Min,
+        sourceLeaf.Max);
+    }
+
+    byte[] cFaceIdSection = SerializeCFaceIdSection(cFaceIds);
+    byte[] leafSection = SerializeLeafSection(rebuiltLeaves);
+    byte[] matListInLeafSection = SerializeMatListInLeafSection(matListInLeaf);
+    BspLeafBounds[] leafState = BuildSourceLeafState(sourceLeaves);
+
+    spatialBsp = new SpatialBspSections(
+      sourceCPlaneSection.ToArray(),
+      cFaceIdSection,
+      sourceNodeSection.ToArray(),
+      leafSection,
+      matListInLeafSection,
+      normals,
+      nodes,
+      leafState);
+    return true;
+  }
+
+  private static void CollectSourceLeafHitsFromBounds(
+    Vector3 boundsMin,
+    Vector3 boundsMax,
+    Vector3[] normals,
+    BspNode[] nodes,
+    int leafCount,
+    Stack<int> pendingNodes,
+    List<int> resultLeaves)
+  {
+    if (nodes.Length <= 1)
+    {
+      return;
+    }
+
+    pendingNodes.Clear();
+    pendingNodes.Push(1);
+    while (pendingNodes.Count > 0)
+    {
+      int nodeIndex = pendingNodes.Pop();
+      if (nodeIndex <= 0 || nodeIndex >= nodes.Length)
+      {
+        continue;
+      }
+
+      BspNode node = nodes[nodeIndex];
+      if (node.NormalIndex >= normals.Length)
+      {
+        continue;
+      }
+
+      Vector3 normal = normals[node.NormalIndex];
+      float nearDot = GetAabbDot(normal, boundsMin, boundsMax, far: false);
+      float farDot = GetAabbDot(normal, boundsMin, boundsMax, far: true);
+      float planeDistance = node.Distance;
+      if (!float.IsFinite(nearDot) || !float.IsFinite(farDot) || !float.IsFinite(planeDistance))
+      {
+        continue;
+      }
+
+      if (nearDot >= planeDistance)
+      {
+        PushSpatialChild(node.Front, leafCount, pendingNodes, resultLeaves);
+      }
+      else if (farDot < planeDistance)
+      {
+        PushSpatialChild(node.Back, leafCount, pendingNodes, resultLeaves);
+      }
+      else
+      {
+        PushSpatialChild(node.Front, leafCount, pendingNodes, resultLeaves);
+        PushSpatialChild(node.Back, leafCount, pendingNodes, resultLeaves);
+      }
+    }
+  }
+
+  private static void PushSpatialChild(
+    short child,
+    int leafCount,
+    Stack<int> pendingNodes,
+    List<int> resultLeaves)
+  {
+    if (child > 0)
+    {
+      pendingNodes.Push(child);
+      return;
+    }
+
+    if (child >= 0)
+    {
+      return;
+    }
+
+    int leafIndex = -child - 1;
+    if (leafIndex <= 0 || leafIndex >= leafCount)
+    {
+      return;
+    }
+
+    AddUniqueLeaf(resultLeaves, leafIndex);
+  }
+
+  private static void AddUniqueLeaf(List<int> leaves, int leafIndex)
+  {
+    for (int i = 0; i < leaves.Count; ++i)
+    {
+      if (leaves[i] == leafIndex)
+      {
+        return;
+      }
+    }
+
+    leaves.Add(leafIndex);
+  }
+
+  private static int FindSourceLeafForPoint(
+    Vector3 point,
+    Vector3[] normals,
+    BspNode[] nodes,
+    int leafCount)
+  {
+    if (nodes.Length <= 1 || normals.Length == 0)
+    {
+      return -1;
+    }
+
+    int nodeIndex = 1;
+    int guard = 0;
+    while (nodeIndex > 0 && nodeIndex < nodes.Length && guard++ < nodes.Length + 16)
+    {
+      BspNode node = nodes[nodeIndex];
+      if (node.NormalIndex >= normals.Length)
+      {
+        return -1;
+      }
+
+      Vector3 normal = normals[node.NormalIndex];
+      float side = Vector3.Dot(normal, point) - node.Distance;
+      short child = side >= 0.0f ? node.Front : node.Back;
+      if (child < 0)
+      {
+        int leafIndex = -child - 1;
+        return leafIndex > 0 && leafIndex < leafCount ? leafIndex : -1;
+      }
+
+      if (child <= 0 || child >= nodes.Length)
+      {
+        return -1;
+      }
+
+      nodeIndex = child;
+    }
+
+    return -1;
+  }
+
+  private static float GetAabbDot(Vector3 normal, Vector3 min, Vector3 max, bool far)
+  {
+    float x = far
+      ? (normal.X >= 0.0f ? max.X : min.X)
+      : (normal.X >= 0.0f ? min.X : max.X);
+    float y = far
+      ? (normal.Y >= 0.0f ? max.Y : min.Y)
+      : (normal.Y >= 0.0f ? min.Y : max.Y);
+    float z = far
+      ? (normal.Z >= 0.0f ? max.Z : min.Z)
+      : (normal.Z >= 0.0f ? min.Z : max.Z);
+    return normal.X * x + normal.Y * y + normal.Z * z;
+  }
+
+  private static Vector3[] ParseCPlaneNormals(byte[] bytes)
+  {
+    if (bytes.Length == 0)
+    {
+      return Array.Empty<Vector3>();
+    }
+
+    int count = bytes.Length / 12;
+    Vector3[] normals = new Vector3[count];
+    for (int i = 0; i < count; ++i)
+    {
+      int offset = i * 12;
+      float x = BinaryPrimitives.ReadSingleLittleEndian(bytes.AsSpan(offset, 4));
+      float y = BinaryPrimitives.ReadSingleLittleEndian(bytes.AsSpan(offset + 4, 4));
+      float z = BinaryPrimitives.ReadSingleLittleEndian(bytes.AsSpan(offset + 8, 4));
+      normals[i] = new Vector3(x, y, z);
+    }
+
+    return normals;
+  }
+
+  private static BspNode[] ParseSourceNodes(byte[] bytes)
+  {
+    if (bytes.Length == 0)
+    {
+      return Array.Empty<BspNode>();
+    }
+
+    int count = bytes.Length / 24;
+    BspNode[] nodes = new BspNode[count];
+    for (int i = 0; i < count; ++i)
+    {
+      int offset = i * 24;
+      uint normalIndex = BinaryPrimitives.ReadUInt32LittleEndian(bytes.AsSpan(offset, 4));
+      float distance = BinaryPrimitives.ReadSingleLittleEndian(bytes.AsSpan(offset + 4, 4));
+      short front = BinaryPrimitives.ReadInt16LittleEndian(bytes.AsSpan(offset + 8, 2));
+      short back = BinaryPrimitives.ReadInt16LittleEndian(bytes.AsSpan(offset + 10, 2));
+      short minX = BinaryPrimitives.ReadInt16LittleEndian(bytes.AsSpan(offset + 12, 2));
+      short minY = BinaryPrimitives.ReadInt16LittleEndian(bytes.AsSpan(offset + 14, 2));
+      short minZ = BinaryPrimitives.ReadInt16LittleEndian(bytes.AsSpan(offset + 16, 2));
+      short maxX = BinaryPrimitives.ReadInt16LittleEndian(bytes.AsSpan(offset + 18, 2));
+      short maxY = BinaryPrimitives.ReadInt16LittleEndian(bytes.AsSpan(offset + 20, 2));
+      short maxZ = BinaryPrimitives.ReadInt16LittleEndian(bytes.AsSpan(offset + 22, 2));
+      nodes[i] = new BspNode(
+        normalIndex,
+        distance,
+        front,
+        back,
+        new Vector3(minX, minY, minZ),
+        new Vector3(maxX, maxY, maxZ));
+    }
+
+    return nodes;
+  }
+
+  private static SourceLeafEntry[] ParseSourceLeafEntries(byte[] bytes)
+  {
+    if (bytes.Length == 0)
+    {
+      return Array.Empty<SourceLeafEntry>();
+    }
+
+    int count = bytes.Length / BspLeafSerializedSize;
+    SourceLeafEntry[] leaves = new SourceLeafEntry[count];
+    for (int i = 0; i < count; ++i)
+    {
+      int offset = i * BspLeafSerializedSize;
+      byte type = bytes[offset];
+      short minX = BinaryPrimitives.ReadInt16LittleEndian(bytes.AsSpan(offset + 13, 2));
+      short minY = BinaryPrimitives.ReadInt16LittleEndian(bytes.AsSpan(offset + 15, 2));
+      short minZ = BinaryPrimitives.ReadInt16LittleEndian(bytes.AsSpan(offset + 17, 2));
+      short maxX = BinaryPrimitives.ReadInt16LittleEndian(bytes.AsSpan(offset + 19, 2));
+      short maxY = BinaryPrimitives.ReadInt16LittleEndian(bytes.AsSpan(offset + 21, 2));
+      short maxZ = BinaryPrimitives.ReadInt16LittleEndian(bytes.AsSpan(offset + 23, 2));
+      leaves[i] = new SourceLeafEntry(
+        type,
+        new Vector3(minX, minY, minZ),
+        new Vector3(maxX, maxY, maxZ));
+    }
+
+    return leaves;
+  }
+
+  private static BspLeafBounds[] BuildSourceLeafState(SourceLeafEntry[] sourceLeaves)
+  {
+    BspLeafBounds[] state = new BspLeafBounds[sourceLeaves.Length];
+    for (int i = 0; i < sourceLeaves.Length; ++i)
+    {
+      SourceLeafEntry leaf = sourceLeaves[i];
+      state[i] = new BspLeafBounds(leaf.Min, leaf.Max);
+    }
+
+    return state;
+  }
+
+  private static int ResolveSourceBspLeafCount(BspBinaryLayout layout)
+  {
+    if (layout == null || layout.Sections == null || layout.Sections.Length <= BspSectionLeaf)
+    {
+      return 0;
+    }
+
+    byte[] section = layout.Sections[BspSectionLeaf] ?? Array.Empty<byte>();
+    if (section.Length <= 0 || (section.Length % BspLeafSerializedSize) != 0)
+    {
+      return 0;
+    }
+
+    return section.Length / BspLeafSerializedSize;
+  }
+
+  private static int ResolveCollisionLeafCountHint(CollisionLine[] collisionLines)
+  {
+    if (collisionLines == null || collisionLines.Length <= 1)
+    {
+      return 0;
+    }
+
+    int maxLeafId = -1;
+    for (int lineIndex = 1; lineIndex < collisionLines.Length; ++lineIndex)
+    {
+      CollisionLine line = collisionLines[lineIndex];
+      if (line.FrontLeaf > maxLeafId)
+      {
+        maxLeafId = line.FrontLeaf;
+      }
+
+      if (line.BackLeaf > maxLeafId)
+      {
+        maxLeafId = line.BackLeaf;
+      }
+    }
+
+    return maxLeafId >= 0 ? maxLeafId + 1 : 0;
+  }
+
+  private static int ResolveTargetFacesPerLeaf(int triangleCount, int leafTargetCount)
+  {
+    if (triangleCount <= 0)
+    {
+      return DefaultTargetFacesPerLeaf;
+    }
+
+    int boundedLeafTarget = leafTargetCount;
+    if (boundedLeafTarget <= 0)
+    {
+      return DefaultTargetFacesPerLeaf;
+    }
+
+    if (boundedLeafTarget > MaxBspLeafCount)
+    {
+      boundedLeafTarget = MaxBspLeafCount;
+    }
+
+    int target = (int)Math.Ceiling(triangleCount / (double)Math.Max(1, boundedLeafTarget));
+    return Math.Clamp(target, 1, MaxLeafFaceCount);
   }
 
   private static FaceSpatialData[] BuildFaceSpatialData(ObjImportVertex[] vertices)
@@ -1914,8 +2424,8 @@ public static class BlenderInterchange
 
   private static IndexedVertexData BuildIndexedVertexData(ObjImportVertex[] vertices, List<string> warnings)
   {
-    Dictionary<VertexPositionKey, int> uniqueMap = new(Math.Max(1024, vertices.Length / 3));
-    List<Vector3> uniquePositions = new(Math.Max(1024, vertices.Length / 3));
+    // Keep 1:1 vertex indexing to preserve BSP per-vertex data (especially color/light behavior).
+    Vector3[] uniquePositions = new Vector3[vertices.Length];
     int[] vertexIds = new int[vertices.Length];
     for (int i = 0; i < vertices.Length; ++i)
     {
@@ -1926,22 +2436,11 @@ public static class BlenderInterchange
         position = Vector3.Zero;
       }
 
-      VertexPositionKey key = new(
-        BitConverter.SingleToInt32Bits(position.X),
-        BitConverter.SingleToInt32Bits(position.Y),
-        BitConverter.SingleToInt32Bits(position.Z));
-
-      if (!uniqueMap.TryGetValue(key, out int uniqueIndex))
-      {
-        uniqueIndex = uniquePositions.Count;
-        uniqueMap[key] = uniqueIndex;
-        uniquePositions.Add(position);
-      }
-
-      vertexIds[i] = uniqueIndex;
+      uniquePositions[i] = position;
+      vertexIds[i] = i;
     }
 
-    return new IndexedVertexData(uniquePositions.ToArray(), vertexIds);
+    return new IndexedVertexData(uniquePositions, vertexIds);
   }
 
   private static byte[] SerializeFloatVertexSection(Vector3[] vertices)
@@ -1960,17 +2459,30 @@ public static class BlenderInterchange
     return bytes;
   }
 
-  private static byte[] SerializeVertexColorSection(int vertexCount)
+  private static byte[] SerializeVertexColorSection(ObjImportVertex[] vertices)
   {
-    byte[] bytes = new byte[vertexCount * 4];
+    byte[] bytes = new byte[vertices.Length * 4];
     int offset = 0;
-    for (int i = 0; i < vertexCount; ++i)
+    for (int i = 0; i < vertices.Length; ++i)
     {
-      BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(offset, 4), 0xFFFFFFFFu);
+      BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(offset, 4), EncodeVertexColor(vertices[i].Color));
       offset += 4;
     }
 
     return bytes;
+  }
+
+  private static uint EncodeVertexColor(Vector3 color)
+  {
+    if (!IsFiniteVector3(color))
+    {
+      return 0xFFFFFFFFu;
+    }
+
+    byte r = (byte)Math.Clamp((int)MathF.Round(color.X * 255.0f), 0, 255);
+    byte g = (byte)Math.Clamp((int)MathF.Round(color.Y * 255.0f), 0, 255);
+    byte b = (byte)Math.Clamp((int)MathF.Round(color.Z * 255.0f), 0, 255);
+    return 0xFF000000u | ((uint)r << 16) | ((uint)g << 8) | b;
   }
 
   private static byte[] SerializeUvSection(ObjImportVertex[] vertices)
@@ -2063,7 +2575,11 @@ public static class BlenderInterchange
     return bytes;
   }
 
-  private static byte[] SerializeMatGroupSection(List<MaterialRun> runs, ObjImportVertex[] vertices, List<string> warnings)
+  private static byte[] SerializeMatGroupSection(
+    List<MaterialRun> runs,
+    ObjImportVertex[] vertices,
+    SourceMatGroupMetadata sourceMatGroupMetadata,
+    List<string> warnings)
   {
     if (runs.Count == 0)
     {
@@ -2076,6 +2592,8 @@ public static class BlenderInterchange
     {
       MaterialRun run = runs[i];
       short materialId = ClampMaterialIdToShort(run.MaterialId, warnings);
+      short lightMapId = ClampLightMapIdToShort(run.LightMapId, warnings);
+      ushort attribute = ResolveMatGroupAttribute(run, sourceMatGroupMetadata);
       int faceStart = Math.Max(0, run.FaceStart);
       int faceEndExclusive = Math.Max(faceStart, run.FaceStart + run.FaceCount);
       if (faceEndExclusive > vertices.Length / 3)
@@ -2129,12 +2647,11 @@ public static class BlenderInterchange
 
       // ReadMatGroup layout:
       // 0: attr, 2: faceCount, 4: faceStartId, 8: materialId, 10: lightMapId, ..., 40: objectId
-      // We emit float-vertex groups, so attr keeps byte/word decode bits cleared.
-      BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(offset, 2), 0);
+      BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(offset, 2), attribute);
       BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(offset + 2, 2), (ushort)run.FaceCount);
       BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(offset + 4, 4), (uint)run.FaceStart);
       BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 8, 2), materialId);
-      BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 10, 2), -1);
+      BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 10, 2), lightMapId);
       BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 12, 2), bbMinX);
       BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 14, 2), bbMinY);
       BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 16, 2), bbMinZ);
@@ -2169,6 +2686,73 @@ public static class BlenderInterchange
     }
 
     return (short)materialId;
+  }
+
+  private static short ClampLightMapIdToShort(int lightMapId, List<string> warnings)
+  {
+    if (lightMapId < -1)
+    {
+      warnings.Add($"LightMap id {lightMapId} is below supported range; clamped to -1.");
+      return -1;
+    }
+
+    if (lightMapId > short.MaxValue)
+    {
+      warnings.Add($"LightMap id {lightMapId} exceeds int16 range; clamped to {short.MaxValue}.");
+      return short.MaxValue;
+    }
+
+    return (short)lightMapId;
+  }
+
+  private static ushort ResolveMatGroupAttribute(MaterialRun run, SourceMatGroupMetadata sourceMetadata)
+  {
+    if (sourceMetadata.TryResolveAndConsume(run, out ushort attribute))
+    {
+      return attribute;
+    }
+
+    if (sourceMetadata.TryGetPreferredAttribute(run, out attribute))
+    {
+      return attribute;
+    }
+
+    // RF map BSP groups generally keep object-flag bit set even when object id is 0.
+    return 0x2000;
+  }
+
+  private static SourceMatGroupMetadata BuildSourceMatGroupMetadata(byte[] section, List<string> warnings)
+  {
+    SourceMatGroupMetadata metadata = new();
+    if (section == null || section.Length == 0)
+    {
+      return metadata;
+    }
+
+    if ((section.Length % 42) != 0)
+    {
+      warnings.Add($"Source ReadMatGroup section size ({section.Length}) is not aligned to 42 bytes; metadata preservation disabled.");
+      return metadata;
+    }
+
+    int count = section.Length / 42;
+    for (int i = 0; i < count; ++i)
+    {
+      int offset = i * 42;
+      ushort attribute = BinaryPrimitives.ReadUInt16LittleEndian(section.AsSpan(offset, 2));
+      ushort faceCount = BinaryPrimitives.ReadUInt16LittleEndian(section.AsSpan(offset + 2, 2));
+      short materialId = BinaryPrimitives.ReadInt16LittleEndian(section.AsSpan(offset + 8, 2));
+      short lightMapId = BinaryPrimitives.ReadInt16LittleEndian(section.AsSpan(offset + 10, 2));
+      ushort objectId = BinaryPrimitives.ReadUInt16LittleEndian(section.AsSpan(offset + 40, 2));
+      if (faceCount <= 0)
+      {
+        continue;
+      }
+
+      metadata.Add(materialId, lightMapId, objectId, attribute, faceCount);
+    }
+
+    return metadata;
   }
 
   private static byte[][] CloneSections(byte[][] sections)
@@ -2602,7 +3186,7 @@ public static class BlenderInterchange
       }
     }
 
-    vertex = new ObjImportVertex(position, position, uv, uv, new Vector3(1.0f, 1.0f, 1.0f), materialId, 0);
+    vertex = new ObjImportVertex(position, position, uv, uv, new Vector3(1.0f, 1.0f, 1.0f), materialId, -1, 0);
     return true;
   }
 
@@ -2921,6 +3505,7 @@ public static class BlenderInterchange
     Vector2 LightUv,
     Vector3 Color,
     int MaterialId,
+    int LightMapId,
     ushort ObjectId = 0);
   private readonly record struct ObjFaceRef(int PositionIndex, int TexcoordIndex);
   private readonly record struct IndexedVertexData(Vector3[] UniquePositions, int[] VertexIds);
@@ -2930,8 +3515,144 @@ public static class BlenderInterchange
     RfPackageDefault = 0,
     BlenderExportDefault = 1,
   }
-  private readonly record struct MaterialRun(int MaterialId, ushort ObjectId, int FaceStart, int FaceCount);
+  private readonly record struct MaterialRun(int MaterialId, int LightMapId, ushort ObjectId, int FaceStart, int FaceCount);
+  private sealed class SourceMatGroupChunk
+  {
+    public SourceMatGroupChunk(ushort attribute, int remainingFaces)
+    {
+      Attribute = attribute;
+      RemainingFaces = remainingFaces;
+    }
+
+    public ushort Attribute { get; }
+    public int RemainingFaces { get; set; }
+  }
+  private sealed class SourceMatGroupMetadata
+  {
+    private readonly Dictionary<MatGroupKey, Queue<SourceMatGroupChunk>> _byExact = new();
+    private readonly Dictionary<MatGroupLooseKey, Queue<SourceMatGroupChunk>> _byLoose = new();
+    private readonly Dictionary<MatGroupLooseKey, ushort> _preferredByLoose = new();
+    private ushort _preferredGlobal = 0x2000;
+    private bool _hasPreferredGlobal;
+
+    public void Add(int materialId, int lightMapId, ushort objectId, ushort attribute, int faceCount)
+    {
+      if (faceCount <= 0)
+      {
+        return;
+      }
+
+      SourceMatGroupChunk chunk = new(attribute, faceCount);
+      MatGroupKey exact = new(materialId, lightMapId, objectId);
+      MatGroupLooseKey loose = new(materialId, objectId);
+
+      if (!_byExact.TryGetValue(exact, out Queue<SourceMatGroupChunk>? exactQueue))
+      {
+        exactQueue = new Queue<SourceMatGroupChunk>();
+        _byExact[exact] = exactQueue;
+      }
+
+      if (!_byLoose.TryGetValue(loose, out Queue<SourceMatGroupChunk>? looseQueue))
+      {
+        looseQueue = new Queue<SourceMatGroupChunk>();
+        _byLoose[loose] = looseQueue;
+      }
+
+      if (!_preferredByLoose.TryGetValue(loose, out ushort preferred) || (preferred != 0x2000 && attribute == 0x2000))
+      {
+        _preferredByLoose[loose] = attribute;
+      }
+
+      if (!_hasPreferredGlobal || (_preferredGlobal != 0x2000 && attribute == 0x2000))
+      {
+        _preferredGlobal = attribute;
+        _hasPreferredGlobal = true;
+      }
+
+      exactQueue.Enqueue(chunk);
+      looseQueue.Enqueue(chunk);
+    }
+
+    public bool TryResolveAndConsume(MaterialRun run, out ushort attribute)
+    {
+      MatGroupKey exact = new(run.MaterialId, run.LightMapId, run.ObjectId);
+      if (TryResolveAndConsume(_byExact, exact, run.FaceCount, out attribute))
+      {
+        return true;
+      }
+
+      MatGroupLooseKey loose = new(run.MaterialId, run.ObjectId);
+      return TryResolveAndConsume(_byLoose, loose, run.FaceCount, out attribute);
+    }
+
+    public bool TryGetPreferredAttribute(MaterialRun run, out ushort attribute)
+    {
+      MatGroupLooseKey loose = new(run.MaterialId, run.ObjectId);
+      if (_preferredByLoose.TryGetValue(loose, out attribute))
+      {
+        return true;
+      }
+
+      if (_hasPreferredGlobal)
+      {
+        attribute = _preferredGlobal;
+        return true;
+      }
+
+      attribute = 0x2000;
+      return false;
+    }
+
+    private static bool TryResolveAndConsume<TKey>(
+      Dictionary<TKey, Queue<SourceMatGroupChunk>> source,
+      TKey key,
+      int faceCount,
+      out ushort attribute)
+      where TKey : notnull
+    {
+      attribute = 0;
+      if (!source.TryGetValue(key, out Queue<SourceMatGroupChunk>? queue) || queue.Count == 0)
+      {
+        return false;
+      }
+
+      while (queue.Count > 0 && queue.Peek().RemainingFaces <= 0)
+      {
+        queue.Dequeue();
+      }
+
+      if (queue.Count == 0)
+      {
+        return false;
+      }
+
+      attribute = queue.Peek().Attribute;
+      int remaining = Math.Max(0, faceCount);
+      while (remaining > 0 && queue.Count > 0)
+      {
+        SourceMatGroupChunk chunk = queue.Peek();
+        if (chunk.RemainingFaces <= 0)
+        {
+          queue.Dequeue();
+          continue;
+        }
+
+        int consume = Math.Min(remaining, chunk.RemainingFaces);
+        chunk.RemainingFaces -= consume;
+        remaining -= consume;
+        if (chunk.RemainingFaces <= 0)
+        {
+          queue.Dequeue();
+        }
+      }
+
+      return true;
+    }
+  }
+  private readonly record struct MatGroupKey(int MaterialId, int LightMapId, ushort ObjectId);
+  private readonly record struct MatGroupLooseKey(int MaterialId, ushort ObjectId);
   private readonly record struct FaceSpatialData(Vector3 Min, Vector3 Max, Vector3 Centroid);
+  private readonly record struct SourceLeafEntry(byte Type, Vector3 Min, Vector3 Max);
   private readonly record struct SpatialNodeTemp(
     uint NormalIndex,
     float Distance,

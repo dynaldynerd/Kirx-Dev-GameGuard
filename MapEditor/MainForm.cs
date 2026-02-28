@@ -51,7 +51,10 @@ internal sealed partial class MainForm : Form
     KeyDown += OnMainFormKeyDown;
     _statusLabel.Text = _statusBaseText;
     WireUiEvents();
-    _strictLoadModeEnabled = _strictLoadModeMenuItem.Checked;
+    _strictLoadModeEnabled = true;
+    _strictLoadModeMenuItem.Checked = true;
+    _strictLoadModeMenuItem.Enabled = false;
+    _strictLoadModeMenuItem.ToolTipText = "Strict load is always ON (client-parity mode).";
 
     _viewer = new MapViewerControl
     {
@@ -587,10 +590,13 @@ internal sealed partial class MainForm : Form
       _mapDocument = null;
       _editUndoHistory.Clear();
       _editRedoHistory.Clear();
-      MessageBox.Show(this, ex.Message, "Load Map Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
       _statusBaseText = "Load failed.";
       RefreshRuntimeStatus();
       UpdateUndoUiState();
+      string title = _strictLoadModeEnabled
+        ? "Load Map Failed (Strict Validation)"
+        : "Load Map Failed";
+      MessageBox.Show(this, ex.Message, title, MessageBoxButtons.OK, MessageBoxIcon.Error);
     }
   }
 
@@ -1368,8 +1374,14 @@ internal sealed partial class MainForm : Form
 
   private void OnStrictLoadModeChanged()
   {
-    _strictLoadModeEnabled = _strictLoadModeMenuItem.Checked;
-    _statusBaseText = $"Strict load mode: {(_strictLoadModeEnabled ? "ON" : "OFF")}";
+    if (!_strictLoadModeMenuItem.Checked)
+    {
+      _strictLoadModeMenuItem.Checked = true;
+      return;
+    }
+
+    _strictLoadModeEnabled = true;
+    _statusBaseText = "Strict load mode: ON (locked)";
     RefreshRuntimeStatus();
   }
 
