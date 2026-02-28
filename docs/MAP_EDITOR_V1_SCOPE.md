@@ -6,6 +6,13 @@ Deliver a reliable RF-native map editor focused on practical production use:
 2. Safe collision editing.
 3. Predictable save/export for server-side boundary control.
 4. NeutralB-first render parity progress without breaking editing workflow.
+5. Keep map/BSP production authority inside this editor (not external DCC round-trip).
+
+## Tooling Strategy (Locked)
+1. Primary map pipeline is this MapEditor for `bsp/ebp/r3*` load/edit/save behavior.
+2. `cbb-rf-online-addon` is reference-only for map behavior/inspection and quick visual cross-checks.
+3. `cbb-rf-online-addon` remains valid for character/object asset workflows (`.bn/.msh/.ani`), which are separate from map-authoritative BSP editing.
+4. Blender/OBJ round-trip is not an authoritative acceptance path for map validity in V1; client-safe RF serialization in this editor is the source of truth.
 
 ## Scope Lock (Do/Do Not)
 
@@ -38,6 +45,7 @@ Deliver a reliable RF-native map editor focused on practical production use:
 3. Complete old-client particle/effect parity for every script edge case.
 4. Full terrain/map geometry sculpting editor UX comparable to DCC tools.
 5. Multiplayer/editor collaboration features.
+6. Making external Blender tooling the primary BSP/map save path for production maps.
 
 ## V1 Acceptance Gate
 V1 is accepted only when all conditions below are true:
@@ -62,6 +70,7 @@ V1 is accepted only when all conditions below are true:
 1. Read: required.
 2. Write: limited/supportive only for current pair-save flow.
 3. Full geometry authoring parity: deferred beyond V1.
+4. Validation target: files produced by this editor must be accepted by real RF client runtime, not only by in-editor renderer.
 
 ### `r3m`
 1. Read: required.
@@ -117,8 +126,9 @@ V1 is accepted only when all conditions below are true:
 ## Phase Order
 1. Stabilize collision edit/write pipeline first (`ebp` authority).
 2. Stabilize editor UX/selection/undo behavior.
-3. Continue `R3Parity` rendering phases without breaking edit pipeline.
-4. Expand parity checks from NeutralB to two additional maps.
+3. Harden BSP save validation against real client constraints and remove map-breaking attribute drift.
+4. Continue `R3Parity` rendering phases without breaking edit pipeline.
+5. Expand parity checks from NeutralB to two additional maps.
 
 ## Change Control Rule
 Any new requested feature must be classified before implementation:

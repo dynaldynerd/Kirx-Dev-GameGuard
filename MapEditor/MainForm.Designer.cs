@@ -82,6 +82,7 @@ partial class MainForm
   private ToolStripButton _resetEditedCollisionButton = null!;
   private ToolStrip _bspEditorStrip = null!;
   private ToolStripButton _bspSelectModeButton = null!;
+  private ToolStripButton _bspMoveModeButton = null!;
   private ToolStripButton _bspDeleteButton = null!;
   private ToolStripSeparator _bspEditorSeparator1 = null!;
   private ToolStripLabel _bspMoveStepLabel = null!;
@@ -205,6 +206,7 @@ partial class MainForm
     _resetEditedCollisionButton = new ToolStripButton();
     _bspEditorStrip = new ToolStrip();
     _bspSelectModeButton = new ToolStripButton();
+    _bspMoveModeButton = new ToolStripButton();
     _bspDeleteButton = new ToolStripButton();
     _bspEditorSeparator1 = new ToolStripSeparator();
     _bspMoveStepLabel = new ToolStripLabel();
@@ -324,8 +326,8 @@ partial class MainForm
     _deleteSelectedCollisionMenuItem.Enabled = false;
     _deleteSelectedCollisionMenuItem.Name = "_deleteSelectedCollisionMenuItem";
     _deleteSelectedCollisionMenuItem.ShortcutKeys = Keys.Delete;
-    _deleteSelectedCollisionMenuItem.Text = "&Delete Selected Collision";
-    _deleteSelectedCollisionMenuItem.ToolTipText = "Delete currently selected collision wall segment";
+    _deleteSelectedCollisionMenuItem.Text = "&Delete Selected";
+    _deleteSelectedCollisionMenuItem.ToolTipText = "Delete selected item based on active edit mode";
 
     _viewMenuItem.DropDownItems.AddRange(new ToolStripItem[]
     {
@@ -651,7 +653,7 @@ partial class MainForm
     _deleteSelectedCollisionButton.Enabled = false;
     _deleteSelectedCollisionButton.Name = "_deleteSelectedCollisionButton";
     _deleteSelectedCollisionButton.Text = "DelSel";
-    _deleteSelectedCollisionButton.ToolTipText = "Delete selected collision wall segment (Delete)";
+    _deleteSelectedCollisionButton.ToolTipText = "Delete selected item based on active mode (Delete)";
 
     _collisionSeparator1.Name = "_collisionSeparator1";
 
@@ -734,16 +736,8 @@ partial class MainForm
     _bspEditorStrip.Items.AddRange(new ToolStripItem[]
     {
       _bspSelectModeButton,
+      _bspMoveModeButton,
       _bspDeleteButton,
-      _bspEditorSeparator1,
-      _bspMoveStepLabel,
-      _bspMoveStepHost,
-      _bspMoveNegXButton,
-      _bspMovePosXButton,
-      _bspMoveNegYButton,
-      _bspMovePosYButton,
-      _bspMoveNegZButton,
-      _bspMovePosZButton,
     });
     _bspEditorStrip.Location = new Point(0, 74);
     _bspEditorStrip.Name = "_bspEditorStrip";
@@ -756,6 +750,12 @@ partial class MainForm
     _bspSelectModeButton.Name = "_bspSelectModeButton";
     _bspSelectModeButton.Text = "BSP Select";
     _bspSelectModeButton.ToolTipText = "Mouse select BSP mesh object/face in viewport";
+
+    _bspMoveModeButton.CheckOnClick = true;
+    _bspMoveModeButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+    _bspMoveModeButton.Name = "_bspMoveModeButton";
+    _bspMoveModeButton.Text = "BSP Move";
+    _bspMoveModeButton.ToolTipText = "Click-drag selected BSP object/face with mouse";
 
     _bspDeleteButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
     _bspDeleteButton.Enabled = false;

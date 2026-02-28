@@ -16,6 +16,8 @@ public readonly record struct BlenderPackageImportReport(
 
 public static class BlenderInterchange
 {
+  public readonly record struct BspFaceSelection(int FaceIndex, bool FaceOnly);
+
   private const string PackageVersion = "1";
   private const string ManifestFileName = "rf_map_package.json";
   private const string MaterialsFileName = "map_materials.json";
@@ -55,6 +57,8 @@ public static class BlenderInterchange
   private const int BspLeafSerializedSize = 25;
   private const int MaxSpatialTreeDepth = 20;
   private const int MaxConnectedClusterFacesForEdit = 6000;
+  private const float MetadataMatchEpsilonSq = 0.000001f;
+  private const float MetadataPositionQuantizeScale = 1000.0f;
 
   private static readonly JsonSerializerOptions JsonOptions = new()
   {
@@ -68,6 +72,21 @@ public static class BlenderInterchange
     int selectedObjectId,
     int selectedFaceIndex,
     bool selectedFaceOnly,
+    Vector3 delta,
+    out LoadedMap edited,
+    out string error)
+  {
+    int[] selectedObjectIds = selectedObjectId >= 0 ? [selectedObjectId] : Array.Empty<int>();
+    BspFaceSelection[] selectedFaces = selectedFaceIndex >= 0
+      ? [new BspFaceSelection(selectedFaceIndex, selectedFaceOnly)]
+      : Array.Empty<BspFaceSelection>();
+    return TryTranslateMeshSelection(source, selectedObjectIds, selectedFaces, delta, out edited, out error);
+  }
+
+  public static bool TryTranslateMeshSelection(
+    LoadedMap source,
+    IReadOnlyCollection<int> selectedObjectIds,
+    IReadOnlyCollection<BspFaceSelection> selectedFaces,
     Vector3 delta,
     out LoadedMap edited,
     out string error)
@@ -94,61 +113,41 @@ public static class BlenderInterchange
       return false;
     }
 
-    int movedVertexCount = 0;
-    if (selectedObjectId >= 0)
+    if (!TryBuildSelectedFaceSet(
+      vertices,
+      selectedObjectIds,
+      selectedFaces,
+      out HashSet<int> selectedFaceSet,
+      out error))
     {
-      ushort objectId = (ushort)Math.Clamp(selectedObjectId, 0, ushort.MaxValue);
-      for (int i = 0; i < vertices.Length; ++i)
-      {
-        if (vertices[i].ObjectId != objectId)
-        {
-          continue;
-        }
-
-        ObjImportVertex v = vertices[i];
-        vertices[i] = new ObjImportVertex(v.Position + delta, v.LocalPosition + delta, v.Uv, v.LightUv, v.Color, v.MaterialId, v.LightMapId, v.ObjectId);
-        ++movedVertexCount;
-      }
-    }
-    else if (selectedFaceIndex >= 0)
-    {
-      int triangleCount = vertices.Length / 3;
-      if (selectedFaceIndex < 0 || selectedFaceIndex >= triangleCount)
-      {
-        error = $"Selected face index {selectedFaceIndex} is out of range.";
-        return false;
-      }
-
-      HashSet<int> selectedFaces;
-      bool selectionTooLarge = false;
-      if (selectedFaceOnly)
-      {
-        selectedFaces = new HashSet<int> { selectedFaceIndex };
-      }
-      else
-      {
-        selectedFaces = CollectConnectedFaceIndices(vertices, selectedFaceIndex, MaxConnectedClusterFacesForEdit, out selectionTooLarge);
-        if (selectionTooLarge)
-        {
-          error = $"Connected selection exceeds safe edit limit ({MaxConnectedClusterFacesForEdit} faces). Use face-only selection.";
-          return false;
-        }
-      }
-      foreach (int faceIndex in selectedFaces)
-      {
-        int faceStart = faceIndex * 3;
-        for (int i = faceStart; i < faceStart + 3; ++i)
-        {
-          ObjImportVertex v = vertices[i];
-          vertices[i] = new ObjImportVertex(v.Position + delta, v.LocalPosition + delta, v.Uv, v.LightUv, v.Color, v.MaterialId, v.LightMapId, v.ObjectId);
-          ++movedVertexCount;
-        }
-      }
-    }
-    else
-    {
-      error = "No BSP object/face is selected.";
       return false;
+    }
+
+    bool[] moveVertex = new bool[vertices.Length];
+    foreach (int faceIndex in selectedFaceSet)
+    {
+      int faceBase = faceIndex * 3;
+      if ((uint)(faceBase + 2) >= (uint)vertices.Length)
+      {
+        continue;
+      }
+
+      moveVertex[faceBase] = true;
+      moveVertex[faceBase + 1] = true;
+      moveVertex[faceBase + 2] = true;
+    }
+
+    int movedVertexCount = 0;
+    for (int vertexIndex = 0; vertexIndex < vertices.Length; ++vertexIndex)
+    {
+      if (!moveVertex[vertexIndex])
+      {
+        continue;
+      }
+
+      ObjImportVertex v = vertices[vertexIndex];
+      vertices[vertexIndex] = new ObjImportVertex(v.Position + delta, v.LocalPosition + delta, v.Uv, v.LightUv, v.Color, v.MaterialId, v.LightMapId, v.ObjectId, v.HasExplicitUv);
+      ++movedVertexCount;
     }
 
     if (movedVertexCount <= 0)
@@ -177,6 +176,20 @@ public static class BlenderInterchange
     out LoadedMap edited,
     out string error)
   {
+    int[] selectedObjectIds = selectedObjectId >= 0 ? [selectedObjectId] : Array.Empty<int>();
+    BspFaceSelection[] selectedFaces = selectedFaceIndex >= 0
+      ? [new BspFaceSelection(selectedFaceIndex, selectedFaceOnly)]
+      : Array.Empty<BspFaceSelection>();
+    return TryDeleteMeshSelection(source, selectedObjectIds, selectedFaces, out edited, out error);
+  }
+
+  public static bool TryDeleteMeshSelection(
+    LoadedMap source,
+    IReadOnlyCollection<int> selectedObjectIds,
+    IReadOnlyCollection<BspFaceSelection> selectedFaces,
+    out LoadedMap edited,
+    out string error)
+  {
     edited = source;
     error = string.Empty;
     if (source == null)
@@ -197,15 +210,14 @@ public static class BlenderInterchange
     List<ObjImportVertex> kept = new(sourceVertices.Length);
     int removedFaces = 0;
 
-    HashSet<int> selectedFaces = new();
-    if (selectedObjectId < 0 && selectedFaceIndex >= 0 && !selectedFaceOnly)
+    if (!TryBuildSelectedFaceSet(
+      sourceVertices,
+      selectedObjectIds,
+      selectedFaces,
+      out HashSet<int> selectedFaceSet,
+      out error))
     {
-      selectedFaces = CollectConnectedFaceIndices(sourceVertices, selectedFaceIndex, MaxConnectedClusterFacesForEdit, out bool selectionTooLarge);
-      if (selectionTooLarge)
-      {
-        error = $"Connected selection exceeds safe edit limit ({MaxConnectedClusterFacesForEdit} faces). Use face-only selection.";
-        return false;
-      }
+      return false;
     }
 
     for (int faceIndex = 0; faceIndex < triangleCount; ++faceIndex)
@@ -215,23 +227,7 @@ public static class BlenderInterchange
       ObjImportVertex v1 = sourceVertices[baseIndex + 1];
       ObjImportVertex v2 = sourceVertices[baseIndex + 2];
 
-      bool removeFace;
-      if (selectedObjectId >= 0)
-      {
-        ushort objectId = (ushort)Math.Clamp(selectedObjectId, 0, ushort.MaxValue);
-        removeFace = v0.ObjectId == objectId || v1.ObjectId == objectId || v2.ObjectId == objectId;
-      }
-      else if (selectedFaceIndex >= 0)
-      {
-        removeFace = selectedFaceOnly
-          ? faceIndex == selectedFaceIndex
-          : selectedFaces.Contains(faceIndex);
-      }
-      else
-      {
-        error = "No BSP object/face is selected.";
-        return false;
-      }
+      bool removeFace = selectedFaceSet.Contains(faceIndex);
 
       if (removeFace)
       {
@@ -266,6 +262,85 @@ public static class BlenderInterchange
       error = $"BSP delete rebuild failed: {ex.Message}";
       return false;
     }
+  }
+
+  private static bool TryBuildSelectedFaceSet(
+    ObjImportVertex[] vertices,
+    IReadOnlyCollection<int> selectedObjectIds,
+    IReadOnlyCollection<BspFaceSelection> selectedFaces,
+    out HashSet<int> selectedFaceSet,
+    out string error)
+  {
+    selectedFaceSet = new HashSet<int>();
+    error = string.Empty;
+
+    int triangleCount = vertices.Length / 3;
+    HashSet<ushort> objectIdSet = new();
+    if (selectedObjectIds != null)
+    {
+      foreach (int selectedObjectId in selectedObjectIds)
+      {
+        if (selectedObjectId < 0 || selectedObjectId > ushort.MaxValue)
+        {
+          continue;
+        }
+
+        objectIdSet.Add((ushort)selectedObjectId);
+      }
+    }
+
+    if (objectIdSet.Count > 0)
+    {
+      for (int faceIndex = 0; faceIndex < triangleCount; ++faceIndex)
+      {
+        int baseIndex = faceIndex * 3;
+        ObjImportVertex v0 = vertices[baseIndex];
+        ObjImportVertex v1 = vertices[baseIndex + 1];
+        ObjImportVertex v2 = vertices[baseIndex + 2];
+        if (objectIdSet.Contains(v0.ObjectId) || objectIdSet.Contains(v1.ObjectId) || objectIdSet.Contains(v2.ObjectId))
+        {
+          selectedFaceSet.Add(faceIndex);
+        }
+      }
+    }
+
+    if (selectedFaces != null)
+    {
+      foreach (BspFaceSelection selection in selectedFaces)
+      {
+        int faceIndex = selection.FaceIndex;
+        if (faceIndex < 0 || faceIndex >= triangleCount)
+        {
+          continue;
+        }
+
+        if (selection.FaceOnly)
+        {
+          selectedFaceSet.Add(faceIndex);
+          continue;
+        }
+
+        HashSet<int> connectedFaces = CollectConnectedFaceIndices(vertices, faceIndex, MaxConnectedClusterFacesForEdit, out bool selectionTooLarge);
+        if (selectionTooLarge)
+        {
+          error = $"Connected selection exceeds safe edit limit ({MaxConnectedClusterFacesForEdit} faces). Use face-only selection.";
+          return false;
+        }
+
+        foreach (int connectedFace in connectedFaces)
+        {
+          selectedFaceSet.Add(connectedFace);
+        }
+      }
+    }
+
+    if (selectedFaceSet.Count <= 0)
+    {
+      error = "No BSP object/face is selected.";
+      return false;
+    }
+
+    return true;
   }
 
   public static void ExportPackage(LoadedMap map, string packageDirectoryPath)
@@ -426,6 +501,7 @@ public static class BlenderInterchange
       ObjMeshData mesh = ReadObjMesh(meshObjPath, source.Bounds, warnings);
       if (mesh.Vertices.Length > 0 && (mesh.Vertices.Length % 3) == 0)
       {
+        mesh = PreserveSourceMetadataForImportedMesh(edited, mesh, warnings);
         edited = ApplyImportedMesh(edited, mesh, warnings);
 
         importedMeshTriangleCount = mesh.Vertices.Length / 3;
@@ -758,7 +834,8 @@ public static class BlenderInterchange
           vertex.Color,
           vertex.MaterialId,
           vertex.LightMapId,
-          vertex.ObjectId);
+          vertex.ObjectId,
+          vertex.HasExplicitUv);
       }
 
       if (axisMode == ObjImportAxisMode.BlenderExportDefault)
@@ -786,8 +863,8 @@ public static class BlenderInterchange
 
     int[] materialByVertex = new int[vertexCount];
     int[] lightMapByVertex = new int[vertexCount];
-    Array.Fill(materialByVertex, 0);
-    Array.Fill(lightMapByVertex, -1);
+    Array.Fill(materialByVertex, int.MinValue);
+    Array.Fill(lightMapByVertex, int.MinValue);
     for (int spanIndex = 0; spanIndex < source.BspMaterialSpans.Length; ++spanIndex)
     {
       BspMaterialSpan span = source.BspMaterialSpans[spanIndex];
@@ -800,6 +877,28 @@ public static class BlenderInterchange
       }
     }
 
+    int uncoveredCount = 0;
+    int fallbackMaterialId = source.BspMaterialSpans.Length > 0 ? source.BspMaterialSpans[0].MaterialId : 0;
+    int fallbackLightMapId = source.BspMaterialSpans.Length > 0 ? source.BspMaterialSpans[0].LightMapId : -1;
+    for (int i = 0; i < vertexCount; ++i)
+    {
+      if (materialByVertex[i] != int.MinValue && lightMapByVertex[i] != int.MinValue)
+      {
+        continue;
+      }
+
+      ++uncoveredCount;
+      materialByVertex[i] = fallbackMaterialId;
+      lightMapByVertex[i] = fallbackLightMapId;
+    }
+
+    if (uncoveredCount > 0)
+    {
+      warnings.Add(
+        $"BSP material spans did not cover {uncoveredCount:N0} render vertices; " +
+        $"fallback material/lightmap ({fallbackMaterialId}/{fallbackLightMapId}) was applied.");
+    }
+
     bool hasObjectIds = source.BspRenderVertexObjectIds.Length == vertexCount;
     bool hasLocalPositions = source.BspRenderVertexLocalPositions.Length == vertexCount;
     ObjImportVertex[] vertices = new ObjImportVertex[vertexCount];
@@ -808,7 +907,7 @@ public static class BlenderInterchange
       BspRenderVertex v = render[i];
       ushort objectId = hasObjectIds ? source.BspRenderVertexObjectIds[i] : (ushort)0;
       Vector3 localPosition = hasLocalPositions ? source.BspRenderVertexLocalPositions[i] : v.Position;
-      vertices[i] = new ObjImportVertex(v.Position, localPosition, v.Uv, v.LightUv, v.Color, materialByVertex[i], lightMapByVertex[i], objectId);
+      vertices[i] = new ObjImportVertex(v.Position, localPosition, v.Uv, v.LightUv, v.Color, materialByVertex[i], lightMapByVertex[i], objectId, true);
     }
 
     if ((vertexCount % 3) != 0)
@@ -817,6 +916,152 @@ public static class BlenderInterchange
     }
 
     return vertices;
+  }
+
+  private static ObjMeshData PreserveSourceMetadataForImportedMesh(LoadedMap source, ObjMeshData importedMesh, List<string> warnings)
+  {
+    ObjImportVertex[] imported = importedMesh.Vertices ?? Array.Empty<ObjImportVertex>();
+    if (imported.Length == 0)
+    {
+      return importedMesh;
+    }
+
+    ObjImportVertex[] sourceVertices = BuildMeshVerticesFromLoadedMap(source, warnings);
+    if (sourceVertices.Length == 0)
+    {
+      return importedMesh;
+    }
+
+    ObjImportVertex[] merged = new ObjImportVertex[imported.Length];
+    int materialCount = source.Materials?.Length ?? 0;
+    int preservedCount = 0;
+
+    if (sourceVertices.Length == imported.Length)
+    {
+      for (int index = 0; index < imported.Length; ++index)
+      {
+        merged[index] = CopySourceMetadata(imported[index], sourceVertices[index], materialCount, out bool preserved);
+        if (preserved)
+        {
+          ++preservedCount;
+        }
+      }
+
+      if (preservedCount > 0)
+      {
+        warnings.Add($"OBJ import preserved source light/color/object metadata for {preservedCount:N0} vertices (index-matched).");
+      }
+
+      return new ObjMeshData(merged);
+    }
+
+    Dictionary<QuantizedVertexKey, List<int>> sourceByPosition = new(Math.Max(1024, sourceVertices.Length / 3));
+    for (int sourceIndex = 0; sourceIndex < sourceVertices.Length; ++sourceIndex)
+    {
+      QuantizedVertexKey key = QuantizeVertex(sourceVertices[sourceIndex].Position);
+      if (!sourceByPosition.TryGetValue(key, out List<int>? indices))
+      {
+        indices = new List<int>(2);
+        sourceByPosition[key] = indices;
+      }
+
+      indices.Add(sourceIndex);
+    }
+
+    Dictionary<QuantizedVertexKey, int> sourceCursorByKey = new(sourceByPosition.Count);
+    for (int index = 0; index < imported.Length; ++index)
+    {
+      ObjImportVertex importedVertex = imported[index];
+      QuantizedVertexKey key = QuantizeVertex(importedVertex.Position);
+      if (sourceByPosition.TryGetValue(key, out List<int>? sourceIndices)
+        && sourceIndices.Count > 0)
+      {
+        int cursor = 0;
+        sourceCursorByKey.TryGetValue(key, out cursor);
+        if (cursor < sourceIndices.Count)
+        {
+          int matchedSourceIndex = sourceIndices[cursor];
+          sourceCursorByKey[key] = cursor + 1;
+          merged[index] = CopySourceMetadata(importedVertex, sourceVertices[matchedSourceIndex], materialCount, out bool preserved);
+          if (preserved)
+          {
+            ++preservedCount;
+          }
+
+          continue;
+        }
+      }
+
+      merged[index] = importedVertex;
+    }
+
+    if (preservedCount > 0)
+    {
+      warnings.Add(
+        $"OBJ import preserved source light/color/object metadata for {preservedCount:N0} vertices by position match " +
+        $"(source vertices: {sourceVertices.Length:N0}, imported vertices: {imported.Length:N0}).");
+    }
+    else
+    {
+      warnings.Add(
+        $"OBJ topology differs from source (source vertices: {sourceVertices.Length:N0}, imported vertices: {imported.Length:N0}); " +
+        "new vertices keep OBJ defaults for light/color/object metadata.");
+    }
+
+    return new ObjMeshData(merged);
+  }
+
+  private static ObjImportVertex CopySourceMetadata(ObjImportVertex imported, ObjImportVertex source, int materialCount, out bool preserved)
+  {
+    int materialId = imported.MaterialId;
+    if (materialCount > 0 && (materialId < 0 || materialId >= materialCount))
+    {
+      materialId = source.MaterialId;
+    }
+
+    Vector2 uv = imported.HasExplicitUv ? imported.Uv : source.Uv;
+    if (!float.IsFinite(uv.X) || !float.IsFinite(uv.Y))
+    {
+      uv = source.Uv;
+    }
+
+    Vector3 localPosition = imported.LocalPosition;
+    if (IsFiniteVector3(imported.Position)
+      && IsFiniteVector3(source.Position)
+      && (imported.Position - source.Position).LengthSquared <= MetadataMatchEpsilonSq)
+    {
+      localPosition = source.LocalPosition;
+    }
+
+    preserved = true;
+    return new ObjImportVertex(
+      imported.Position,
+      localPosition,
+      uv,
+      source.LightUv,
+      source.Color,
+      materialId,
+      source.LightMapId,
+      source.ObjectId,
+      imported.HasExplicitUv);
+  }
+
+  private static QuantizedVertexKey QuantizeVertex(in Vector3 position)
+  {
+    return new QuantizedVertexKey(
+      QuantizePositionComponent(position.X),
+      QuantizePositionComponent(position.Y),
+      QuantizePositionComponent(position.Z));
+  }
+
+  private static int QuantizePositionComponent(float value)
+  {
+    if (!float.IsFinite(value))
+    {
+      return 0;
+    }
+
+    return checked((int)MathF.Round(value * MetadataPositionQuantizeScale));
   }
 
   private static LoadedMap ApplyMeshVerticesToMap(LoadedMap source, ObjImportVertex[] vertices, List<string> warnings)
@@ -2587,13 +2832,23 @@ public static class BlenderInterchange
     }
 
     byte[] bytes = new byte[runs.Count * 42];
+    int preferredAttributeFallbackCount = 0;
+    int defaultAttributeFallbackCount = 0;
     int offset = 0;
     for (int i = 0; i < runs.Count; ++i)
     {
       MaterialRun run = runs[i];
       short materialId = ClampMaterialIdToShort(run.MaterialId, warnings);
       short lightMapId = ClampLightMapIdToShort(run.LightMapId, warnings);
-      ushort attribute = ResolveMatGroupAttribute(run, sourceMatGroupMetadata);
+      ushort attribute = ResolveMatGroupAttribute(run, sourceMatGroupMetadata, out MatGroupAttributeResolveMode attributeMode);
+      if (attributeMode == MatGroupAttributeResolveMode.PreferredFallback)
+      {
+        ++preferredAttributeFallbackCount;
+      }
+      else if (attributeMode == MatGroupAttributeResolveMode.DefaultFallback)
+      {
+        ++defaultAttributeFallbackCount;
+      }
       int faceStart = Math.Max(0, run.FaceStart);
       int faceEndExclusive = Math.Max(faceStart, run.FaceStart + run.FaceCount);
       if (faceEndExclusive > vertices.Length / 3)
@@ -2660,12 +2915,33 @@ public static class BlenderInterchange
       BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 22, 2), bbMaxZ);
 
       Vector3 center = 0.5f * (bbMin + bbMax);
+      Vector3 halfExtents = 0.5f * (bbMax - bbMin);
+      float cullRadius = halfExtents.Length;
+      if (!float.IsFinite(cullRadius) || cullRadius < 0.0001f)
+      {
+        cullRadius = 1.0f;
+      }
+
       BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(offset + 24, 4), center.X);
       BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(offset + 28, 4), center.Y);
       BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(offset + 32, 4), center.Z);
-      BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(offset + 36, 4), 1.0f);
+      BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(offset + 36, 4), cullRadius);
       BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(offset + 40, 2), run.ObjectId);
       offset += 42;
+    }
+
+    if (preferredAttributeFallbackCount > 0)
+    {
+      warnings.Add(
+        $"ReadMatGroup attribute exact mapping was unavailable for {preferredAttributeFallbackCount:N0} groups; " +
+        "used source-preferred fallback attributes.");
+    }
+
+    if (defaultAttributeFallbackCount > 0)
+    {
+      warnings.Add(
+        $"ReadMatGroup attribute metadata was unavailable for {defaultAttributeFallbackCount:N0} groups; " +
+        "used hardcoded default attribute 0x2000.");
     }
 
     return bytes;
@@ -2705,19 +2981,25 @@ public static class BlenderInterchange
     return (short)lightMapId;
   }
 
-  private static ushort ResolveMatGroupAttribute(MaterialRun run, SourceMatGroupMetadata sourceMetadata)
+  private static ushort ResolveMatGroupAttribute(
+    MaterialRun run,
+    SourceMatGroupMetadata sourceMetadata,
+    out MatGroupAttributeResolveMode mode)
   {
     if (sourceMetadata.TryResolveAndConsume(run, out ushort attribute))
     {
+      mode = MatGroupAttributeResolveMode.Exact;
       return attribute;
     }
 
     if (sourceMetadata.TryGetPreferredAttribute(run, out attribute))
     {
+      mode = MatGroupAttributeResolveMode.PreferredFallback;
       return attribute;
     }
 
     // RF map BSP groups generally keep object-flag bit set even when object id is 0.
+    mode = MatGroupAttributeResolveMode.DefaultFallback;
     return 0x2000;
   }
 
@@ -3171,6 +3453,7 @@ public static class BlenderInterchange
 
     Vector3 position = positions[faceRef.PositionIndex];
     Vector2 uv = Vector2.Zero;
+    bool hasExplicitUv = false;
     if (faceRef.TexcoordIndex >= 0)
     {
       if ((uint)faceRef.TexcoordIndex >= (uint)texcoords.Count)
@@ -3184,9 +3467,11 @@ public static class BlenderInterchange
       {
         uv = Vector2.Zero;
       }
+
+      hasExplicitUv = true;
     }
 
-    vertex = new ObjImportVertex(position, position, uv, uv, new Vector3(1.0f, 1.0f, 1.0f), materialId, -1, 0);
+    vertex = new ObjImportVertex(position, position, uv, uv, new Vector3(1.0f, 1.0f, 1.0f), materialId, -1, 0, hasExplicitUv);
     return true;
   }
 
@@ -3506,10 +3791,18 @@ public static class BlenderInterchange
     Vector3 Color,
     int MaterialId,
     int LightMapId,
-    ushort ObjectId = 0);
+    ushort ObjectId = 0,
+    bool HasExplicitUv = true);
+  private readonly record struct QuantizedVertexKey(int X, int Y, int Z);
   private readonly record struct ObjFaceRef(int PositionIndex, int TexcoordIndex);
   private readonly record struct IndexedVertexData(Vector3[] UniquePositions, int[] VertexIds);
   private readonly record struct VertexPositionKey(int XBits, int YBits, int ZBits);
+  private enum MatGroupAttributeResolveMode
+  {
+    Exact = 0,
+    PreferredFallback = 1,
+    DefaultFallback = 2,
+  }
   private enum ObjImportAxisMode
   {
     RfPackageDefault = 0,

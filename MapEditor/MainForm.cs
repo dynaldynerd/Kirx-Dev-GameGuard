@@ -25,6 +25,7 @@ internal sealed partial class MainForm : Form
   private string? _loadedBspPath;
   private string? _loadedEbpPath;
   private bool _suppressBoundaryCollisionValueChanged;
+  private bool _suppressToolModeSync;
   private bool _strictLoadModeEnabled = true;
   private string _statusBaseText = "Ready. Ctrl+O open map folder | Select map in top combobox | Right mouse look | WASD move | Wheel zoom | F1 controls";
 
@@ -100,7 +101,7 @@ internal sealed partial class MainForm : Form
     _editMapMaterialsMenuItem.Click += (_, _) => EditMapMaterialsFromDialog();
     _editMapTexturesMenuItem.Click += (_, _) => EditMapTexturesFromDialog();
     _editEnvironmentMenuItem.Click += (_, _) => EditEnvironmentFromDialog();
-    _deleteSelectedCollisionMenuItem.Click += (_, _) => DeleteSelectedCollisionLineFromUi();
+    _deleteSelectedCollisionMenuItem.Click += (_, _) => DeleteSelectionFromActiveModeFromUi();
 
     _goToCoordinateButton.Click += (_, _) => TeleportCameraToInputCoordinate();
     _teleportXUpDown.KeyDown += OnTeleportInputKeyDown;
@@ -112,18 +113,12 @@ internal sealed partial class MainForm : Form
     _legacyPipelineMenuItem.Click += (_, _) => SetRenderPipelineMode(RenderPipelineMode.LegacyCompat, invalidateViewer: true);
     _parityPipelineMenuItem.Click += (_, _) => SetRenderPipelineMode(RenderPipelineMode.R3Parity, invalidateViewer: true);
 
-    _deleteSelectedCollisionButton.Click += (_, _) => DeleteSelectedCollisionLineFromUi();
+    _deleteSelectedCollisionButton.Click += (_, _) => DeleteSelectionFromActiveModeFromUi();
     _undoCollisionButton.Click += (_, _) => UndoLastCollisionEdit();
     _redoCollisionButton.Click += (_, _) => RedoLastCollisionEdit();
     _resetEditedCollisionButton.Click += (_, _) => ReloadCurrentMapFromDisk();
 
     _bspDeleteButton.Click += (_, _) => DeleteSelectedBspMeshFromUi();
-    _bspMoveNegXButton.Click += (_, _) => MoveSelectedBspMeshAxis(-1.0f, 0.0f, 0.0f);
-    _bspMovePosXButton.Click += (_, _) => MoveSelectedBspMeshAxis(1.0f, 0.0f, 0.0f);
-    _bspMoveNegYButton.Click += (_, _) => MoveSelectedBspMeshAxis(0.0f, -1.0f, 0.0f);
-    _bspMovePosYButton.Click += (_, _) => MoveSelectedBspMeshAxis(0.0f, 1.0f, 0.0f);
-    _bspMoveNegZButton.Click += (_, _) => MoveSelectedBspMeshAxis(0.0f, 0.0f, -1.0f);
-    _bspMovePosZButton.Click += (_, _) => MoveSelectedBspMeshAxis(0.0f, 0.0f, 1.0f);
   }
 
   private void InitializeViewerBindings()
@@ -196,56 +191,11 @@ internal sealed partial class MainForm : Form
       _viewer.Invalidate();
     };
 
-    _viewer.CollisionDrawModeEnabled = _mouseDrawCollisionButton.Checked;
-    _mouseDrawCollisionButton.CheckedChanged += (_, _) =>
-    {
-      if (_mouseDrawCollisionButton.Checked && _selectCollisionButton.Checked)
-      {
-        _selectCollisionButton.Checked = false;
-      }
-
-      _viewer.CollisionDrawModeEnabled = _mouseDrawCollisionButton.Checked;
-      _viewer.Focus();
-    };
-
-    _viewer.CollisionSelectModeEnabled = _selectCollisionButton.Checked;
-    _selectCollisionButton.CheckedChanged += (_, _) =>
-    {
-      if (_selectCollisionButton.Checked && _mouseDrawCollisionButton.Checked)
-      {
-        _mouseDrawCollisionButton.Checked = false;
-      }
-
-      _viewer.CollisionSelectModeEnabled = _selectCollisionButton.Checked;
-      _viewer.Focus();
-      UpdateUndoUiState();
-    };
-
-    _viewer.BspSelectModeEnabled = _bspSelectModeButton.Checked;
-    _bspSelectModeButton.CheckedChanged += (_, _) =>
-    {
-      if (_bspSelectModeButton.Checked)
-      {
-        if (_mouseDrawCollisionButton.Checked)
-        {
-          _mouseDrawCollisionButton.Checked = false;
-        }
-
-        if (_selectCollisionButton.Checked)
-        {
-          _selectCollisionButton.Checked = false;
-        }
-      }
-
-      _viewer.BspSelectModeEnabled = _bspSelectModeButton.Checked;
-      if (!_bspSelectModeButton.Checked)
-      {
-        _viewer.ClearSelectedBspSelection();
-      }
-
-      _viewer.Focus();
-      UpdateUndoUiState();
-    };
+    _mouseDrawCollisionButton.CheckedChanged += (_, _) => SyncToolModesFromUi();
+    _selectCollisionButton.CheckedChanged += (_, _) => SyncToolModesFromUi();
+    _bspSelectModeButton.CheckedChanged += (_, _) => SyncToolModesFromUi();
+    _bspMoveModeButton.CheckedChanged += (_, _) => SyncToolModesFromUi();
+    SyncToolModesFromUi();
 
     _viewer.CollisionDrawPreviewHeight = (float)_boundaryHeightUpDown.Value;
     _viewer.CollisionDrawEmbedDepth = (float)_boundaryEmbedDepthUpDown.Value;
@@ -260,12 +210,148 @@ internal sealed partial class MainForm : Form
     _viewer.CollisionWallDrawRequested += OnViewerCollisionWallDrawRequested;
     _viewer.CollisionLineSelectionChanged += OnViewerCollisionLineSelectionChanged;
     _viewer.BspSelectionChanged += OnViewerBspSelectionChanged;
+    _viewer.BspTranslateRequested += OnViewerBspTranslateRequested;
     _northSouthFlipButton.CheckedChanged += (_, _) =>
     {
       _viewer.FlipNorthSouth = _northSouthFlipButton.Checked;
       _viewer.Invalidate();
       SyncTeleportInputsFromCamera();
     };
+  }
+
+  private enum ActiveDeleteMode
+  {
+    None = 0,
+    Collision = 1,
+    Bsp = 2,
+  }
+
+  private void SyncToolModesFromUi()
+  {
+    if (_suppressToolModeSync)
+    {
+      return;
+    }
+
+    _suppressToolModeSync = true;
+    try
+    {
+      if (_mouseDrawCollisionButton.Checked)
+      {
+        _selectCollisionButton.Checked = false;
+        _bspSelectModeButton.Checked = false;
+        _bspMoveModeButton.Checked = false;
+      }
+      else if (_selectCollisionButton.Checked)
+      {
+        _mouseDrawCollisionButton.Checked = false;
+        _bspSelectModeButton.Checked = false;
+        _bspMoveModeButton.Checked = false;
+      }
+      else if (_bspMoveModeButton.Checked)
+      {
+        _mouseDrawCollisionButton.Checked = false;
+        _selectCollisionButton.Checked = false;
+        _bspSelectModeButton.Checked = true;
+      }
+      else if (_bspSelectModeButton.Checked)
+      {
+        _mouseDrawCollisionButton.Checked = false;
+        _selectCollisionButton.Checked = false;
+      }
+    }
+    finally
+    {
+      _suppressToolModeSync = false;
+    }
+
+    _viewer.CollisionDrawModeEnabled = _mouseDrawCollisionButton.Checked;
+    _viewer.CollisionSelectModeEnabled = _selectCollisionButton.Checked;
+    _viewer.BspSelectModeEnabled = _bspSelectModeButton.Checked;
+    _viewer.BspMoveModeEnabled = _bspMoveModeButton.Checked;
+    if (!_bspSelectModeButton.Checked && !_bspMoveModeButton.Checked)
+    {
+      _viewer.ClearSelectedBspSelection();
+    }
+
+    _viewer.Focus();
+    UpdateUndoUiState();
+  }
+
+  private void OnViewerBspTranslateRequested(Vector3 sourceDelta)
+  {
+    if (!float.IsFinite(sourceDelta.X) || !float.IsFinite(sourceDelta.Y) || !float.IsFinite(sourceDelta.Z))
+    {
+      return;
+    }
+
+    if (sourceDelta.LengthSquared <= 0.0001f)
+    {
+      return;
+    }
+
+    TranslateSelectedBspMeshFromUi(sourceDelta);
+  }
+
+  private ActiveDeleteMode GetActiveDeleteMode()
+  {
+    if (_bspMoveModeButton.Checked || _bspSelectModeButton.Checked)
+    {
+      return ActiveDeleteMode.Bsp;
+    }
+
+    if (_selectCollisionButton.Checked)
+    {
+      return ActiveDeleteMode.Collision;
+    }
+
+    return ActiveDeleteMode.None;
+  }
+
+  private void DeleteSelectionFromActiveModeFromUi()
+  {
+    if (_loadedMap == null)
+    {
+      MessageBox.Show(this, "No map is loaded.", "Delete Selection", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    ActiveDeleteMode mode = GetActiveDeleteMode();
+    switch (mode)
+    {
+      case ActiveDeleteMode.Bsp:
+      {
+        bool hasBspSelection = _viewer.HasAnyBspSelection;
+        if (!hasBspSelection)
+        {
+          _statusBaseText = "Delete skipped: BSP mode is active, but no BSP face/object is selected.";
+          RefreshRuntimeStatus();
+          return;
+        }
+
+        DeleteSelectedBspMeshFromUi();
+        return;
+      }
+      case ActiveDeleteMode.Collision:
+      {
+        bool hasCollisionSelection =
+          _viewer.SelectedCollisionLineIndex >= 0 &&
+          _viewer.SelectedCollisionLineIndex < _loadedMap.CollisionLines.Length;
+        if (!hasCollisionSelection)
+        {
+          _statusBaseText = "Delete skipped: collision mode is active, but no collision segment is selected.";
+          RefreshRuntimeStatus();
+          return;
+        }
+
+        DeleteSelectedCollisionLineFromUi();
+        return;
+      }
+      default:
+        _statusBaseText = "Delete skipped: no selectable edit mode active (use SelWall or BSP Select/BSP Move).";
+        RefreshRuntimeStatus();
+        return;
+    }
   }
 
   private static bool IsDesignTimeHost()
@@ -634,14 +720,15 @@ internal sealed partial class MainForm : Form
       - Grid button: show/hide white reference grid
       - DrawWall: left click-drag-release in viewport to append one collision wall
       - SelWall: left click wall segment in viewport to select one collision wall
-      - DelSel/Delete: remove currently selected collision wall segment
+      - DelSel/Delete: mode-aware delete (SelWall deletes collision, BSP Select/BSP Move deletes BSP)
       - DrawWall preview turns green when endpoint glue/snap will happen
       - Undo button or Ctrl+Z: undo latest collision edits (up to 64 steps)
       - Redo button or Ctrl+Y/Ctrl+Shift+Z: redo last undone edit
       - ResetMap: discard unsaved edits and reload map from source files
       - BSP Editor strip (3rd row): enable `BSP Select`, then click geometry to select object/face
+      - Shift+click in BSP Select/BSP Move: add/remove from BSP multi-selection
+      - BSP Move: click-drag selected BSP object/face with mouse (view-plane drag)
       - BSP Del: delete selected BSP object/face
-      - BSP X/Y/Z buttons: move selected BSP object/face by configured `Step`
       - DynLight button: toggle dynamic lighting
       - FxMark button: toggle particle/effect instances and map markers
       - R: reset camera to map default
@@ -781,7 +868,14 @@ internal sealed partial class MainForm : Form
       return;
     }
 
-    if (selectedObjectId >= 0)
+    int selectedObjectCount = _viewer.GetSelectedBspObjectIdsSnapshot().Length;
+    int selectedFaceSeedCount = _viewer.GetSelectedBspFaceSelectionsSnapshot().Length;
+
+    if (selectedObjectCount > 1 || selectedFaceSeedCount > 1)
+    {
+      _statusBaseText = $"Selected BSP multi ({selectedObjectCount} object(s), {selectedFaceSeedCount} face seed(s))";
+    }
+    else if (selectedObjectId >= 0)
     {
       _statusBaseText = $"Selected BSP object #{selectedObjectId:N0} (face #{selectedFaceIndex:N0})";
     }
@@ -907,9 +1001,9 @@ internal sealed partial class MainForm : Form
       return;
     }
 
-    int selectedObjectId = _viewer.SelectedBspObjectId;
-    int selectedFaceIndex = _viewer.SelectedBspFaceIndex;
-    if (selectedObjectId < 0 && selectedFaceIndex < 0)
+    int[] selectedObjectIds = _viewer.GetSelectedBspObjectIdsSnapshot();
+    BlenderInterchange.BspFaceSelection[] selectedFaces = _viewer.GetSelectedBspFaceSelectionsSnapshot();
+    if (selectedObjectIds.Length <= 0 && selectedFaces.Length <= 0)
     {
       MessageBox.Show(this, "No BSP face/object is selected.", "Delete BSP Mesh", MessageBoxButtons.OK, MessageBoxIcon.Information);
       return;
@@ -917,9 +1011,8 @@ internal sealed partial class MainForm : Form
 
     if (!BlenderInterchange.TryDeleteMeshSelection(
       _loadedMap,
-      selectedObjectId,
-      selectedFaceIndex,
-      _viewer.SelectedBspFaceOnly,
+      selectedObjectIds,
+      selectedFaces,
       out LoadedMap editedMap,
       out string error))
     {
@@ -929,10 +1022,7 @@ internal sealed partial class MainForm : Form
 
     ApplyEditedMap(editedMap, preferredSelectionIndex: -1, trackUndo: true, clearRedo: true, geometryEdited: true);
     _viewer.ClearSelectedBspSelection();
-    _statusBaseText =
-      selectedObjectId >= 0
-        ? $"Deleted BSP object #{selectedObjectId:N0} | BSP TriVerts: {_loadedMap.BspRenderVertices.Length:N0}"
-        : $"Deleted BSP face #{selectedFaceIndex:N0} | BSP TriVerts: {_loadedMap.BspRenderVertices.Length:N0}";
+    _statusBaseText = $"Deleted BSP selection ({selectedObjectIds.Length} object(s), {selectedFaces.Length} face seed(s)) | BSP TriVerts: {_loadedMap.BspRenderVertices.Length:N0}";
     RefreshRuntimeStatus();
   }
 
@@ -943,9 +1033,9 @@ internal sealed partial class MainForm : Form
       return;
     }
 
-    int selectedObjectId = _viewer.SelectedBspObjectId;
-    int selectedFaceIndex = _viewer.SelectedBspFaceIndex;
-    if (selectedObjectId < 0 && selectedFaceIndex < 0)
+    int[] selectedObjectIds = _viewer.GetSelectedBspObjectIdsSnapshot();
+    BlenderInterchange.BspFaceSelection[] selectedFaces = _viewer.GetSelectedBspFaceSelectionsSnapshot();
+    if (selectedObjectIds.Length <= 0 && selectedFaces.Length <= 0)
     {
       _statusBaseText = "BSP translate skipped: no BSP face/object selected.";
       RefreshRuntimeStatus();
@@ -954,23 +1044,20 @@ internal sealed partial class MainForm : Form
 
     if (!BlenderInterchange.TryTranslateMeshSelection(
       _loadedMap,
-      selectedObjectId,
-      selectedFaceIndex,
-      _viewer.SelectedBspFaceOnly,
+      selectedObjectIds,
+      selectedFaces,
       sourceDelta,
       out LoadedMap editedMap,
       out string error))
     {
+      _viewer.CancelBspMovePreview();
       _statusBaseText = $"BSP translate failed: {error}";
       RefreshRuntimeStatus();
       return;
     }
 
     ApplyEditedMap(editedMap, preferredSelectionIndex: -1, trackUndo: true, clearRedo: true, geometryEdited: true);
-    _statusBaseText =
-      selectedObjectId >= 0
-        ? $"Moved BSP object #{selectedObjectId:N0} by ({sourceDelta.X:F1},{sourceDelta.Y:F1},{sourceDelta.Z:F1})"
-        : $"Moved BSP face #{selectedFaceIndex:N0} by ({sourceDelta.X:F1},{sourceDelta.Y:F1},{sourceDelta.Z:F1})";
+    _statusBaseText = $"Moved BSP selection ({selectedObjectIds.Length} object(s), {selectedFaces.Length} face seed(s)) by ({sourceDelta.X:F1},{sourceDelta.Y:F1},{sourceDelta.Z:F1})";
     RefreshRuntimeStatus();
   }
 
@@ -1220,14 +1307,36 @@ internal sealed partial class MainForm : Form
     bool hasMap = _loadedMap != null;
     bool canUndo = hasMap && _editUndoHistory.Count > 0;
     bool canRedo = hasMap && _editRedoHistory.Count > 0;
-    bool canDeleteSelected = hasMap && _viewer.SelectedCollisionLineIndex >= 0;
-    bool hasBspSelection = hasMap && (_viewer.SelectedBspObjectId >= 0 || _viewer.SelectedBspFaceIndex >= 0);
+    bool hasCollisionSelection =
+      hasMap &&
+      _viewer.SelectedCollisionLineIndex >= 0 &&
+      _viewer.SelectedCollisionLineIndex < _loadedMap!.CollisionLines.Length;
+    bool hasBspSelection = hasMap && _viewer.HasAnyBspSelection;
+    ActiveDeleteMode deleteMode = GetActiveDeleteMode();
+    bool canDeleteSelected = deleteMode switch
+    {
+      ActiveDeleteMode.Collision => hasCollisionSelection,
+      ActiveDeleteMode.Bsp => hasBspSelection,
+      _ => false,
+    };
     _undoCollisionButton.Enabled = canUndo;
     _undoMenuItem.Enabled = canUndo;
     _redoCollisionButton.Enabled = canRedo;
     _redoMenuItem.Enabled = canRedo;
     _deleteSelectedCollisionButton.Enabled = canDeleteSelected;
     _deleteSelectedCollisionMenuItem.Enabled = canDeleteSelected;
+    _deleteSelectedCollisionButton.ToolTipText = deleteMode switch
+    {
+      ActiveDeleteMode.Collision => "Delete selected collision wall segment (active mode: SelWall)",
+      ActiveDeleteMode.Bsp => "Delete selected BSP object/face (active mode: BSP Select/BSP Move)",
+      _ => "Enable SelWall or BSP Select/BSP Move to delete selection",
+    };
+    _deleteSelectedCollisionMenuItem.Text = deleteMode switch
+    {
+      ActiveDeleteMode.Bsp => "Delete Selected BSP",
+      ActiveDeleteMode.Collision => "Delete Selected Collision",
+      _ => "Delete Selected",
+    };
     _bspDeleteButton.Enabled = hasBspSelection;
     _bspMoveNegXButton.Enabled = hasBspSelection;
     _bspMovePosXButton.Enabled = hasBspSelection;
@@ -1243,7 +1352,7 @@ internal sealed partial class MainForm : Form
     {
       e.Handled = true;
       e.SuppressKeyPress = true;
-      DeleteSelectedCollisionLineFromUi();
+      DeleteSelectionFromActiveModeFromUi();
       return;
     }
 
