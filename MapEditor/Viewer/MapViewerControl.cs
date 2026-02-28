@@ -68,7 +68,10 @@ internal sealed class MapViewerControl : UserControl
   private static readonly Vector3 DefaultClearColor = new(0.05f, 0.06f, 0.08f);
   private static readonly Vector4 CollisionWallNormalOverlayColor = new(0.00f, 1.00f, 0.62f, 0.40f);
   private static readonly Vector4 CollisionWallFrozenOverlayColor = new(0.00f, 0.92f, 1.00f, 0.50f);
+  private static readonly Vector3 BspSelectionColor = new(1.00f, 0.67f, 0.18f);
   private const int MaxDynamicLights = 4;
+  private const int MaxAutoClusterFaceCap = 6000;
+  private const float MaxAutoClusterFaceRatio = 0.20f;
   private const int MaxGlobalAlphaSortSpans = 256;
   private const int NearestEntityOverlayRefreshMs = 120;
 
@@ -103,7 +106,7 @@ internal sealed class MapViewerControl : UserControl
   private bool _enableR3mMaterials = true;
   private bool _enableR3xEnvironment = true;
   private bool _enableDynamicLighting = true;
-  private bool _flipNorthSouth = false;
+  private bool _flipNorthSouth = true;
   private bool _enableHeadlight = true;
   private float _headlightRadius = 4500f;
   private float _headlightIntensity = 0.85f;
@@ -202,6 +205,7 @@ internal sealed class MapViewerControl : UserControl
   private int _particleUniformMvp;
   private int _particleUniformColor;
   private bool _showParticleMarkers = false;
+  private bool _bspSelectModeEnabled = true;
   private bool _collisionDrawModeEnabled;
   private bool _collisionSelectModeEnabled;
   private bool _collisionDrawDragging;
@@ -219,6 +223,12 @@ internal sealed class MapViewerControl : UserControl
   private int _collisionSelectionVbo;
   private int _collisionSelectionVertexCount;
   private int _selectedCollisionLineIndex = -1;
+  private int _bspSelectionVao;
+  private int _bspSelectionVbo;
+  private int _bspSelectionVertexCount;
+  private int _selectedBspFaceIndex = -1;
+  private int _selectedBspObjectId = -1;
+  private bool _selectedBspFaceOnly;
 
   private int _clipDebugProgram;
   private int _checkerTexture;
@@ -269,8 +279,12 @@ internal sealed class MapViewerControl : UserControl
   public int ParitySkippedLayers => _paritySkippedLayers;
   public int ParityCulledDynamicInstances => _parityCulledDynamicInstances;
   public int SelectedCollisionLineIndex => _selectedCollisionLineIndex;
+  public int SelectedBspFaceIndex => _selectedBspFaceIndex;
+  public int SelectedBspObjectId => _selectedBspObjectId;
+  public bool SelectedBspFaceOnly => _selectedBspFaceOnly;
   public event Action<Vector3, Vector3>? CollisionWallDrawRequested;
   public event Action<int>? CollisionLineSelectionChanged;
+  public event Action<int, int>? BspSelectionChanged;
 
   public (float X, float Y, float Z) GetCameraDisplayPosition()
   {
@@ -331,12 +345,55 @@ internal sealed class MapViewerControl : UserControl
     {
       _selectedCollisionLineIndex = -1;
     }
+    int faceCount = map.BspRenderVertices.Length / 3;
+    if (_selectedBspFaceIndex >= faceCount)
+    {
+      _selectedBspFaceIndex = -1;
+      _selectedBspObjectId = -1;
+      _selectedBspFaceOnly = false;
+    }
 
     if (_glReady)
     {
       if (TryMakeCurrent())
       {
         UploadCollisionGeometryOnly();
+        UpdateBspSelectionBuffer();
+      }
+    }
+
+    UpdateCameraOverlay();
+    _glControl.Invalidate();
+  }
+
+  public void ApplyMapGeometryEdited(LoadedMap map)
+  {
+    if (map == null)
+    {
+      return;
+    }
+
+    _map = map;
+    _currentBounds = ConvertBoundsForDisplay(map.Bounds);
+    BuildEntitySceneModelLookup(map);
+    if (_selectedCollisionLineIndex >= map.CollisionLines.Length)
+    {
+      _selectedCollisionLineIndex = -1;
+    }
+
+    int faceCount = map.BspRenderVertices.Length / 3;
+    if (_selectedBspFaceIndex >= faceCount)
+    {
+      _selectedBspFaceIndex = -1;
+      _selectedBspObjectId = -1;
+      _selectedBspFaceOnly = false;
+    }
+
+    if (_glReady)
+    {
+      if (TryMakeCurrent())
+      {
+        UploadGeometry();
       }
     }
 
@@ -471,6 +528,13 @@ internal sealed class MapViewerControl : UserControl
   }
 
   [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+  public bool BspSelectModeEnabled
+  {
+    get => _bspSelectModeEnabled;
+    set => _bspSelectModeEnabled = value;
+  }
+
+  [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
   public bool CollisionDrawModeEnabled
   {
     get => _collisionDrawModeEnabled;
@@ -543,6 +607,59 @@ internal sealed class MapViewerControl : UserControl
   public void ClearSelectedCollisionLine()
   {
     SetSelectedCollisionLineIndex(-1);
+  }
+
+  public bool TryGetSelectedBspObjectId(out int objectId)
+  {
+    objectId = _selectedBspObjectId;
+    return objectId >= 0;
+  }
+
+  public bool TryGetSelectedBspFaceIndex(out int faceIndex)
+  {
+    faceIndex = _selectedBspFaceIndex;
+    return faceIndex >= 0;
+  }
+
+  public void ClearSelectedBspSelection()
+  {
+    SetSelectedBspSelection(faceIndex: -1, objectId: -1, faceOnly: false);
+  }
+
+  private void SetSelectedBspSelection(int faceIndex, int objectId, bool faceOnly)
+  {
+    int normalizedFace = -1;
+    int normalizedObject = -1;
+    bool normalizedFaceOnly = false;
+    if (_map != null)
+    {
+      int faceCount = _map.BspRenderVertices.Length / 3;
+      if (faceIndex >= 0 && faceIndex < faceCount)
+      {
+        normalizedFace = faceIndex;
+        normalizedFaceOnly = faceOnly;
+      }
+
+      if (objectId >= 0)
+      {
+        normalizedObject = objectId;
+        normalizedFaceOnly = false;
+      }
+    }
+
+    if (_selectedBspFaceIndex == normalizedFace
+      && _selectedBspObjectId == normalizedObject
+      && _selectedBspFaceOnly == normalizedFaceOnly)
+    {
+      return;
+    }
+
+    _selectedBspFaceIndex = normalizedFace;
+    _selectedBspObjectId = normalizedObject;
+    _selectedBspFaceOnly = normalizedFaceOnly;
+    UpdateBspSelectionBuffer();
+    BspSelectionChanged?.Invoke(_selectedBspFaceIndex, _selectedBspObjectId);
+    _glControl.Invalidate();
   }
 
   [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -738,6 +855,9 @@ internal sealed class MapViewerControl : UserControl
     _currentBounds = ConvertBoundsForDisplay(map.Bounds);
     _camera = CreateDefaultCamera(map);
     _selectedCollisionLineIndex = -1;
+    _selectedBspFaceIndex = -1;
+    _selectedBspObjectId = -1;
+    _selectedBspFaceOnly = false;
     _collisionDrawDragging = false;
     _collisionDrawStartSnapped = false;
     _collisionDrawEndSnapped = false;
@@ -1146,6 +1266,12 @@ internal sealed class MapViewerControl : UserControl
     _collisionSelectionVbo = GL.GenBuffer();
     GL.BindVertexArray(_collisionSelectionVao);
     GL.BindBuffer(BufferTarget.ArrayBuffer, _collisionSelectionVbo);
+    GL.EnableVertexAttribArray(0);
+    GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 12, 0);
+    _bspSelectionVao = GL.GenVertexArray();
+    _bspSelectionVbo = GL.GenBuffer();
+    GL.BindVertexArray(_bspSelectionVao);
+    GL.BindBuffer(BufferTarget.ArrayBuffer, _bspSelectionVbo);
     GL.EnableVertexAttribArray(0);
     GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 12, 0);
     GL.Enable(EnableCap.ProgramPointSize);
@@ -1769,6 +1895,16 @@ internal sealed class MapViewerControl : UserControl
       GL.DrawArrays(PrimitiveType.Lines, 0, _collisionSelectionVertexCount);
     }
 
+    if (_bspSelectionVertexCount > 0)
+    {
+      GL.Enable(EnableCap.DepthTest);
+      GL.UseProgram(_lineProgram);
+      GL.UniformMatrix4(_lineUniformMvp, true, ref mvp);
+      GL.Uniform3(_lineUniformColor, BspSelectionColor);
+      GL.BindVertexArray(_bspSelectionVao);
+      GL.DrawArrays(PrimitiveType.Lines, 0, _bspSelectionVertexCount);
+    }
+
     if (_showGrid && _lineVertexCount > 0)
     {
       GL.Enable(EnableCap.DepthTest);
@@ -1850,7 +1986,11 @@ internal sealed class MapViewerControl : UserControl
       _lineVertexCount = 0;
       _collisionDrawPreviewVertexCount = 0;
       _collisionSelectionVertexCount = 0;
+      _bspSelectionVertexCount = 0;
       _selectedCollisionLineIndex = -1;
+      _selectedBspFaceIndex = -1;
+      _selectedBspObjectId = -1;
+      _selectedBspFaceOnly = false;
       _collisionDrawDragging = false;
       _meshDrawSpans = Array.Empty<DrawSpan>();
       _skyDrawSpans = Array.Empty<DrawSpan>();
@@ -1956,6 +2096,7 @@ internal sealed class MapViewerControl : UserControl
 
     UpdateCollisionDrawPreviewBuffer();
     UpdateCollisionSelectionBuffer();
+    UpdateBspSelectionBuffer();
   }
 
   private void UploadCollisionGeometryOnly()
@@ -1966,6 +2107,7 @@ internal sealed class MapViewerControl : UserControl
       _wallFrozenVertexCount = 0;
       _collisionDrawPreviewVertexCount = 0;
       _collisionSelectionVertexCount = 0;
+      _bspSelectionVertexCount = 0;
       _collisionDrawDragging = false;
       return;
     }
@@ -1974,6 +2116,7 @@ internal sealed class MapViewerControl : UserControl
 
     UpdateCollisionDrawPreviewBuffer();
     UpdateCollisionSelectionBuffer();
+    UpdateBspSelectionBuffer();
   }
 
   private void UploadCollisionWallBuffers(LoadedMap map)
@@ -6628,6 +6771,194 @@ internal sealed class MapViewerControl : UserControl
     _glControl.Invalidate();
   }
 
+  private void UpdateBspSelectionBuffer()
+  {
+    if (!_glReady)
+    {
+      _bspSelectionVertexCount = 0;
+      return;
+    }
+
+    if (!TryMakeCurrent())
+    {
+      return;
+    }
+
+    if (!TryBuildSelectedBspDisplayLines(out Vector3[] displayLines))
+    {
+      _bspSelectionVertexCount = 0;
+      _glControl.Invalidate();
+      return;
+    }
+
+    _bspSelectionVertexCount = displayLines.Length;
+    GL.BindVertexArray(_bspSelectionVao);
+    GL.BindBuffer(BufferTarget.ArrayBuffer, _bspSelectionVbo);
+    GL.BufferData(BufferTarget.ArrayBuffer, _bspSelectionVertexCount * 12, displayLines, BufferUsageHint.DynamicDraw);
+    _glControl.Invalidate();
+  }
+
+  private bool TryBuildSelectedBspDisplayLines(out Vector3[] displayLines)
+  {
+    displayLines = Array.Empty<Vector3>();
+    if (_map == null || _map.BspRenderVertices.Length < 3)
+    {
+      return false;
+    }
+
+    List<Vector3> lines = new(1024);
+    BspRenderVertex[] vertices = _map.BspRenderVertices;
+    ushort[] objectIds = _map.BspRenderVertexObjectIds;
+    bool hasObjectIds = objectIds.Length == vertices.Length;
+    HashSet<int>? connectedFaces = null;
+    if (_selectedBspObjectId < 0 && _selectedBspFaceIndex >= 0 && !_selectedBspFaceOnly)
+    {
+      int maxFaces = ComputeAutoClusterFaceLimit(vertices.Length / 3);
+      connectedFaces = CollectConnectedFaceIndices(_map, _selectedBspFaceIndex, maxFaces, out bool exceededLimit);
+      if (exceededLimit)
+      {
+        connectedFaces = new HashSet<int> { _selectedBspFaceIndex };
+      }
+    }
+    int triangleCount = vertices.Length / 3;
+    for (int faceIndex = 0; faceIndex < triangleCount; ++faceIndex)
+    {
+      int vertexBase = faceIndex * 3;
+      bool include;
+      if (_selectedBspObjectId >= 0 && hasObjectIds)
+      {
+        ushort a = objectIds[vertexBase];
+        ushort b = objectIds[vertexBase + 1];
+        ushort c = objectIds[vertexBase + 2];
+        include = a == _selectedBspObjectId || b == _selectedBspObjectId || c == _selectedBspObjectId;
+      }
+      else if (_selectedBspFaceIndex >= 0)
+      {
+        if (_selectedBspFaceOnly)
+        {
+          include = faceIndex == _selectedBspFaceIndex;
+        }
+        else
+        {
+          include = connectedFaces != null && connectedFaces.Contains(faceIndex);
+        }
+      }
+      else
+      {
+        include = false;
+      }
+
+      if (!include)
+      {
+        continue;
+      }
+
+      Vector3 v0 = ConvertWorldPosition(vertices[vertexBase].Position);
+      Vector3 v1 = ConvertWorldPosition(vertices[vertexBase + 1].Position);
+      Vector3 v2 = ConvertWorldPosition(vertices[vertexBase + 2].Position);
+      if (!IsFinite(v0) || !IsFinite(v1) || !IsFinite(v2))
+      {
+        continue;
+      }
+
+      lines.Add(v0);
+      lines.Add(v1);
+      lines.Add(v1);
+      lines.Add(v2);
+      lines.Add(v2);
+      lines.Add(v0);
+    }
+
+    if (lines.Count <= 0)
+    {
+      return false;
+    }
+
+    displayLines = lines.ToArray();
+    return true;
+  }
+
+  private static HashSet<int> CollectConnectedFaceIndices(LoadedMap map, int startFaceIndex, int maxFaces, out bool exceededLimit)
+  {
+    exceededLimit = false;
+    HashSet<int> result = new();
+    BspRenderVertex[] vertices = map.BspRenderVertices;
+    int triangleCount = vertices.Length / 3;
+    if (startFaceIndex < 0 || startFaceIndex >= triangleCount)
+    {
+      return result;
+    }
+
+    Dictionary<VertexKey, List<int>> faceByVertex = new(Math.Max(1024, vertices.Length / 2));
+    for (int faceIndex = 0; faceIndex < triangleCount; ++faceIndex)
+    {
+      int baseVertex = faceIndex * 3;
+      for (int k = 0; k < 3; ++k)
+      {
+        Vector3 p = vertices[baseVertex + k].Position;
+        if (!IsFinite(p))
+        {
+          continue;
+        }
+
+        VertexKey key = new(
+          BitConverter.SingleToInt32Bits(p.X),
+          BitConverter.SingleToInt32Bits(p.Y),
+          BitConverter.SingleToInt32Bits(p.Z));
+        if (!faceByVertex.TryGetValue(key, out List<int>? list))
+        {
+          list = new List<int>(4);
+          faceByVertex[key] = list;
+        }
+
+        list.Add(faceIndex);
+      }
+    }
+
+    Queue<int> pending = new();
+    result.Add(startFaceIndex);
+    pending.Enqueue(startFaceIndex);
+    while (pending.Count > 0)
+    {
+      int face = pending.Dequeue();
+      int baseVertex = face * 3;
+      for (int k = 0; k < 3; ++k)
+      {
+        Vector3 p = vertices[baseVertex + k].Position;
+        if (!IsFinite(p))
+        {
+          continue;
+        }
+
+        VertexKey key = new(
+          BitConverter.SingleToInt32Bits(p.X),
+          BitConverter.SingleToInt32Bits(p.Y),
+          BitConverter.SingleToInt32Bits(p.Z));
+        if (!faceByVertex.TryGetValue(key, out List<int>? neighborFaces))
+        {
+          continue;
+        }
+
+        for (int i = 0; i < neighborFaces.Count; ++i)
+        {
+          int neighbor = neighborFaces[i];
+          if (result.Add(neighbor))
+          {
+            if (result.Count >= maxFaces)
+            {
+              exceededLimit = true;
+              return result;
+            }
+
+            pending.Enqueue(neighbor);
+          }
+        }
+      }
+    }
+
+    return result;
+  }
+
   private bool TryBuildSelectedCollisionDisplayLines(out Vector3[] displayLines)
   {
     displayLines = Array.Empty<Vector3>();
@@ -6730,6 +7061,149 @@ internal sealed class MapViewerControl : UserControl
 
     lineIndex = bestIndex;
     return true;
+  }
+
+  private bool TryPickBspFace(Point mouseLocation, out int faceIndex)
+  {
+    faceIndex = -1;
+    if (_map == null)
+    {
+      return false;
+    }
+
+    if (!TryBuildCameraRayInSource(mouseLocation, out Vector3 rayOrigin, out Vector3 rayDirection))
+    {
+      return false;
+    }
+
+    BspRenderVertex[] vertices = _map.BspRenderVertices;
+    if (vertices.Length < 3)
+    {
+      return false;
+    }
+
+    float bestT = float.PositiveInfinity;
+    int bestFace = -1;
+    int triangleCount = vertices.Length / 3;
+    for (int i = 0; i < triangleCount; ++i)
+    {
+      int vertexBase = i * 3;
+      Vector3 v0 = vertices[vertexBase].Position;
+      Vector3 v1 = vertices[vertexBase + 1].Position;
+      Vector3 v2 = vertices[vertexBase + 2].Position;
+      if (!IsFinite(v0) || !IsFinite(v1) || !IsFinite(v2))
+      {
+        continue;
+      }
+
+      if (!TryIntersectRayTriangle(rayOrigin, rayDirection, v0, v1, v2, out float t))
+      {
+        continue;
+      }
+
+      if (t < bestT)
+      {
+        bestT = t;
+        bestFace = i;
+      }
+    }
+
+    if (bestFace < 0 || !float.IsFinite(bestT))
+    {
+      return false;
+    }
+
+    faceIndex = bestFace;
+    return true;
+  }
+
+  private bool TryResolveFaceObjectId(int faceIndex, out int objectId)
+  {
+    objectId = -1;
+    if (_map == null)
+    {
+      return false;
+    }
+
+    int vertexBase = faceIndex * 3;
+    if (vertexBase < 0 || vertexBase + 2 >= _map.BspRenderVertices.Length)
+    {
+      return false;
+    }
+
+    ushort[] objectIds = _map.BspRenderVertexObjectIds;
+    if (objectIds.Length != _map.BspRenderVertices.Length)
+    {
+      return false;
+    }
+
+    ushort a = objectIds[vertexBase];
+    ushort b = objectIds[vertexBase + 1];
+    ushort c = objectIds[vertexBase + 2];
+    if (a == b && a == c)
+    {
+      objectId = a;
+      return true;
+    }
+
+    return false;
+  }
+
+  private bool IsMeaningfulBspObjectSelection(int objectId)
+  {
+    if (_map == null || objectId < 0)
+    {
+      return false;
+    }
+
+    ushort[] objectIds = _map.BspRenderVertexObjectIds;
+    int triangleCount = _map.BspRenderVertices.Length / 3;
+    if (triangleCount <= 0 || objectIds.Length != _map.BspRenderVertices.Length)
+    {
+      return false;
+    }
+
+    int faceCount = 0;
+    for (int faceIndex = 0; faceIndex < triangleCount; ++faceIndex)
+    {
+      int baseVertex = faceIndex * 3;
+      ushort a = objectIds[baseVertex];
+      ushort b = objectIds[baseVertex + 1];
+      ushort c = objectIds[baseVertex + 2];
+      if (a == objectId || b == objectId || c == objectId)
+      {
+        ++faceCount;
+      }
+    }
+
+    if (faceCount <= 0)
+    {
+      return false;
+    }
+
+    float ratio = (float)faceCount / triangleCount;
+    return ratio < 0.90f;
+  }
+
+  private bool WouldAutoClusterBeTooLarge(int faceIndex)
+  {
+    if (_map == null)
+    {
+      return false;
+    }
+
+    int triangleCount = _map.BspRenderVertices.Length / 3;
+    int maxFaces = ComputeAutoClusterFaceLimit(triangleCount);
+    _ = CollectConnectedFaceIndices(_map, faceIndex, maxFaces, out bool exceededLimit);
+    return exceededLimit;
+  }
+
+  private static int ComputeAutoClusterFaceLimit(int triangleCount)
+  {
+    int ratioLimit = triangleCount > 0
+      ? (int)MathF.Ceiling(triangleCount * MaxAutoClusterFaceRatio)
+      : 256;
+    return Math.Max(256, Math.Min(MaxAutoClusterFaceCap, ratioLimit));
   }
 
   private bool TryPickSourcePoint(Point mouseLocation, bool preferFastPlane, float preferredPlaneY, out Vector3 point)
@@ -6975,6 +7449,34 @@ internal sealed class MapViewerControl : UserControl
       return;
     }
 
+    if (_bspSelectModeEnabled && e.Button == MouseButtons.Left)
+    {
+      if (TryPickBspFace(e.Location, out int faceIndex))
+      {
+        bool forceFaceSelection = (ModifierKeys & Keys.Control) == Keys.Control;
+        int selectedObjectId = -1;
+        if (!forceFaceSelection &&
+            TryResolveFaceObjectId(faceIndex, out int objectId) &&
+            IsMeaningfulBspObjectSelection(objectId))
+        {
+          selectedObjectId = objectId;
+        }
+
+        if (!forceFaceSelection && selectedObjectId < 0 && WouldAutoClusterBeTooLarge(faceIndex))
+        {
+          forceFaceSelection = true;
+        }
+
+        SetSelectedBspSelection(faceIndex, selectedObjectId, faceOnly: forceFaceSelection);
+      }
+      else
+      {
+        ClearSelectedBspSelection();
+      }
+
+      return;
+    }
+
     if (e.Button == MouseButtons.Right)
     {
       _capturingLook = true;
@@ -7063,6 +7565,11 @@ internal sealed class MapViewerControl : UserControl
       {
         ClearSelectedCollisionLine();
       }
+
+      if (_selectedBspFaceIndex >= 0 || _selectedBspObjectId >= 0)
+      {
+        ClearSelectedBspSelection();
+      }
     }
     else if (e.KeyCode == Keys.R)
     {
@@ -7144,6 +7651,10 @@ internal sealed class MapViewerControl : UserControl
         {
           GL.DeleteBuffer(_collisionSelectionVbo);
         }
+        if (_bspSelectionVbo != 0)
+        {
+          GL.DeleteBuffer(_bspSelectionVbo);
+        }
         if (_meshVao != 0)
         {
           GL.DeleteVertexArray(_meshVao);
@@ -7187,6 +7698,10 @@ internal sealed class MapViewerControl : UserControl
         if (_collisionSelectionVao != 0)
         {
           GL.DeleteVertexArray(_collisionSelectionVao);
+        }
+        if (_bspSelectionVao != 0)
+        {
+          GL.DeleteVertexArray(_bspSelectionVao);
         }
 
         if (_meshProgram != 0)
@@ -7276,4 +7791,6 @@ internal sealed class MapViewerControl : UserControl
     MaterialLayerDefinition Layer,
     bool HasSecondaryLayerDefinition,
     MaterialLayerDefinition SecondaryLayer);
+
+  private readonly record struct VertexKey(int XBits, int YBits, int ZBits);
 }

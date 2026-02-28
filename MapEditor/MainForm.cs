@@ -15,6 +15,7 @@ internal sealed partial class MainForm : Form
   private readonly Dictionary<string, EntityArchiveCacheInfo> _entityArchiveCacheByRoot = new(StringComparer.OrdinalIgnoreCase);
   private readonly Dictionary<string, SavedCameraPosition> _lastCameraByMapPath = new(StringComparer.OrdinalIgnoreCase);
   private const int MaxUndoHistory = 64;
+  private const float BspTranslateStep = 50.0f;
   private SkySourceMode _skySourceMode = SkySourceMode.Sky2;
   private RenderPipelineMode _renderPipelineMode = RenderPipelineMode.R3Parity;
   private bool _suppressMapSelectionChanged;
@@ -24,6 +25,7 @@ internal sealed partial class MainForm : Form
   private string? _loadedBspPath;
   private string? _loadedEbpPath;
   private bool _suppressBoundaryCollisionValueChanged;
+  private bool _strictLoadModeEnabled = true;
   private string _statusBaseText = "Ready. Ctrl+O open map folder | Select map in top combobox | Right mouse look | WASD move | Wheel zoom | F1 controls";
 
   public MainForm()
@@ -49,6 +51,7 @@ internal sealed partial class MainForm : Form
     KeyDown += OnMainFormKeyDown;
     _statusLabel.Text = _statusBaseText;
     WireUiEvents();
+    _strictLoadModeEnabled = _strictLoadModeMenuItem.Checked;
 
     _viewer = new MapViewerControl
     {
@@ -86,6 +89,8 @@ internal sealed partial class MainForm : Form
     _controlsMenuItem.Click += (_, _) => ShowControls();
     _showSpeedStripMenuItem.CheckedChanged += (_, _) => _speedStrip.Visible = _showSpeedStripMenuItem.Checked;
     _showCollisionStripMenuItem.CheckedChanged += (_, _) => _collisionStrip.Visible = _showCollisionStripMenuItem.Checked;
+    _showBspEditorStripMenuItem.CheckedChanged += (_, _) => _bspEditorStrip.Visible = _showBspEditorStripMenuItem.Checked;
+    _strictLoadModeMenuItem.CheckedChanged += (_, _) => OnStrictLoadModeChanged();
 
     _undoMenuItem.Click += (_, _) => UndoLastCollisionEdit();
     _redoMenuItem.Click += (_, _) => RedoLastCollisionEdit();
@@ -108,6 +113,14 @@ internal sealed partial class MainForm : Form
     _undoCollisionButton.Click += (_, _) => UndoLastCollisionEdit();
     _redoCollisionButton.Click += (_, _) => RedoLastCollisionEdit();
     _resetEditedCollisionButton.Click += (_, _) => ReloadCurrentMapFromDisk();
+
+    _bspDeleteButton.Click += (_, _) => DeleteSelectedBspMeshFromUi();
+    _bspMoveNegXButton.Click += (_, _) => MoveSelectedBspMeshAxis(-1.0f, 0.0f, 0.0f);
+    _bspMovePosXButton.Click += (_, _) => MoveSelectedBspMeshAxis(1.0f, 0.0f, 0.0f);
+    _bspMoveNegYButton.Click += (_, _) => MoveSelectedBspMeshAxis(0.0f, -1.0f, 0.0f);
+    _bspMovePosYButton.Click += (_, _) => MoveSelectedBspMeshAxis(0.0f, 1.0f, 0.0f);
+    _bspMoveNegZButton.Click += (_, _) => MoveSelectedBspMeshAxis(0.0f, 0.0f, -1.0f);
+    _bspMovePosZButton.Click += (_, _) => MoveSelectedBspMeshAxis(0.0f, 0.0f, 1.0f);
   }
 
   private void InitializeViewerBindings()
@@ -205,6 +218,32 @@ internal sealed partial class MainForm : Form
       UpdateUndoUiState();
     };
 
+    _viewer.BspSelectModeEnabled = _bspSelectModeButton.Checked;
+    _bspSelectModeButton.CheckedChanged += (_, _) =>
+    {
+      if (_bspSelectModeButton.Checked)
+      {
+        if (_mouseDrawCollisionButton.Checked)
+        {
+          _mouseDrawCollisionButton.Checked = false;
+        }
+
+        if (_selectCollisionButton.Checked)
+        {
+          _selectCollisionButton.Checked = false;
+        }
+      }
+
+      _viewer.BspSelectModeEnabled = _bspSelectModeButton.Checked;
+      if (!_bspSelectModeButton.Checked)
+      {
+        _viewer.ClearSelectedBspSelection();
+      }
+
+      _viewer.Focus();
+      UpdateUndoUiState();
+    };
+
     _viewer.CollisionDrawPreviewHeight = (float)_boundaryHeightUpDown.Value;
     _viewer.CollisionDrawEmbedDepth = (float)_boundaryEmbedDepthUpDown.Value;
     _viewer.CollisionDrawSnapDistance = (float)_boundarySnapDistanceUpDown.Value;
@@ -217,6 +256,7 @@ internal sealed partial class MainForm : Form
 
     _viewer.CollisionWallDrawRequested += OnViewerCollisionWallDrawRequested;
     _viewer.CollisionLineSelectionChanged += OnViewerCollisionLineSelectionChanged;
+    _viewer.BspSelectionChanged += OnViewerBspSelectionChanged;
     _northSouthFlipButton.CheckedChanged += (_, _) =>
     {
       _viewer.FlipNorthSouth = _northSouthFlipButton.Checked;
@@ -260,7 +300,7 @@ internal sealed partial class MainForm : Form
 
   private void SaveCurrentMapAsFromDialog()
   {
-    LoadedMap? map = _mapDocument?.Map ?? _loadedMap;
+    LoadedMap? map = _mapDocument?.Map;
     if (map == null || string.IsNullOrWhiteSpace(_loadedBspPath) || string.IsNullOrWhiteSpace(_loadedEbpPath))
     {
       MessageBox.Show(this, "No map is loaded.", "Save Map As", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -301,10 +341,10 @@ internal sealed partial class MainForm : Form
 
     try
     {
-      if (!TryValidateCollisionForSave(map, out string validationError))
+      if (!TryValidateMapForSave(map, out string validationError))
       {
         MessageBox.Show(this, validationError, "Save Map As Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        _statusBaseText = "Save blocked: invalid collision data.";
+        _statusBaseText = "Save blocked: strict validation failed.";
         RefreshRuntimeStatus();
         return;
       }
@@ -323,7 +363,7 @@ internal sealed partial class MainForm : Form
 
   private void SaveCurrentEbpOnlyFromDialog()
   {
-    LoadedMap? map = _mapDocument?.Map ?? _loadedMap;
+    LoadedMap? map = _mapDocument?.Map;
     if (map == null || string.IsNullOrWhiteSpace(_loadedEbpPath))
     {
       MessageBox.Show(this, "No map is loaded.", "Save EBP Only", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -349,10 +389,10 @@ internal sealed partial class MainForm : Form
     string targetEbpPath = Path.GetFullPath(dialog.FileName);
     try
     {
-      if (!TryValidateCollisionForSave(map, out string validationError))
+      if (!TryValidateMapForSave(map, out string validationError))
       {
         MessageBox.Show(this, validationError, "Save EBP Only Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        _statusBaseText = "Save blocked: invalid collision data.";
+        _statusBaseText = "Save blocked: strict validation failed.";
         RefreshRuntimeStatus();
         return;
       }
@@ -371,7 +411,7 @@ internal sealed partial class MainForm : Form
 
   private void ExportBlenderPackageFromDialog()
   {
-    LoadedMap? map = _mapDocument?.Map ?? _loadedMap;
+    LoadedMap? map = _mapDocument?.Map;
     if (map == null)
     {
       MessageBox.Show(this, "No map is loaded.", "Export Blender Package", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -412,7 +452,7 @@ internal sealed partial class MainForm : Form
 
   private void ImportBlenderPackageFromDialog()
   {
-    LoadedMap? map = _mapDocument?.Map ?? _loadedMap;
+    LoadedMap? map = _mapDocument?.Map;
     if (map == null)
     {
       MessageBox.Show(this, "No map is loaded.", "Import Blender Package", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -512,7 +552,7 @@ internal sealed partial class MainForm : Form
     try
     {
       EntityArchiveCacheInfo archiveCache = EnsureEntityArchiveCacheForBsp(bspPath);
-      LoadedMap map = BspLoader.Load(bspPath, ebpPath, _skySourceMode);
+      LoadedMap map = BspLoader.Load(bspPath, ebpPath, _skySourceMode, _strictLoadModeEnabled);
       _editUndoHistory.Clear();
       _editRedoHistory.Clear();
       _loadedMap = map;
@@ -536,6 +576,7 @@ internal sealed partial class MainForm : Form
         + $" | EntModels: {map.MapEntityModelCount:N0} | EntInst: {map.MapEntityInstanceCount:N0} | FxInst: {map.ParticleInstancePositions.Length:N0} | EntVerts: {map.EntityRenderVertices.Length:N0} | EntTex: {map.EntitySurfaceTextures.Length:N0}"
         + $" | {cacheTag}"
         + $" | Pipe: {GetRenderPipelineModeName(_renderPipelineMode)}"
+        + $" | StrictLoad: {(_strictLoadModeEnabled ? "On" : "Off")}"
         + $" | Bounds: ({map.Bounds.Min.X:F0},{map.Bounds.Min.Y:F0},{map.Bounds.Min.Z:F0})..({map.Bounds.Max.X:F0},{map.Bounds.Max.Y:F0},{map.Bounds.Max.Z:F0})";
       RefreshRuntimeStatus();
       UpdateUndoUiState();
@@ -576,6 +617,7 @@ internal sealed partial class MainForm : Form
       - Cam X/Y/Z + Go: teleport camera to exact source/game XYZ coordinate
       - Sky dropdown: switch between sky and sky2 source
       - Pipe dropdown: switch renderer (`LegacyCompat` or `R3Parity`)
+      - View > Strict Load Mode: fail map load on malformed BSP/EBP references
       - Sky button: show/hide sky render
       - R3T button: toggle texture usage (map/light/sky/entity)
       - R3M button: toggle material-layer behavior
@@ -591,6 +633,9 @@ internal sealed partial class MainForm : Form
       - Undo button or Ctrl+Z: undo latest collision edits (up to 64 steps)
       - Redo button or Ctrl+Y/Ctrl+Shift+Z: redo last undone edit
       - ResetMap: discard unsaved edits and reload map from source files
+      - BSP Editor strip (3rd row): enable `BSP Select`, then click geometry to select object/face
+      - BSP Del: delete selected BSP object/face
+      - BSP X/Y/Z buttons: move selected BSP object/face by configured `Step`
       - DynLight button: toggle dynamic lighting
       - FxMark button: toggle particle/effect instances and map markers
       - R: reset camera to map default
@@ -722,6 +767,32 @@ internal sealed partial class MainForm : Form
     }
   }
 
+  private void OnViewerBspSelectionChanged(int selectedFaceIndex, int selectedObjectId)
+  {
+    UpdateUndoUiState();
+    if (_loadedMap == null)
+    {
+      return;
+    }
+
+    if (selectedObjectId >= 0)
+    {
+      _statusBaseText = $"Selected BSP object #{selectedObjectId:N0} (face #{selectedFaceIndex:N0})";
+    }
+    else if (selectedFaceIndex >= 0)
+    {
+      _statusBaseText = _viewer.SelectedBspFaceOnly
+        ? $"Selected BSP face #{selectedFaceIndex:N0}"
+        : $"Selected BSP mesh cluster from face #{selectedFaceIndex:N0}";
+    }
+    else
+    {
+      _statusBaseText = "BSP selection cleared.";
+    }
+
+    RefreshRuntimeStatus();
+  }
+
   private void TryOrientDrawnCollisionSegmentTowardCamera(ref Vector3 sourceStart, ref Vector3 sourceEnd)
   {
     if (!_viewer.TryGetCameraSourcePose(out Vector3 sourceCameraPosition, out _))
@@ -822,6 +893,98 @@ internal sealed partial class MainForm : Form
     RefreshRuntimeStatus();
   }
 
+  private void DeleteSelectedBspMeshFromUi()
+  {
+    if (_loadedMap == null)
+    {
+      MessageBox.Show(this, "No map is loaded.", "Delete BSP Mesh", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    int selectedObjectId = _viewer.SelectedBspObjectId;
+    int selectedFaceIndex = _viewer.SelectedBspFaceIndex;
+    if (selectedObjectId < 0 && selectedFaceIndex < 0)
+    {
+      MessageBox.Show(this, "No BSP face/object is selected.", "Delete BSP Mesh", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    if (!BlenderInterchange.TryDeleteMeshSelection(
+      _loadedMap,
+      selectedObjectId,
+      selectedFaceIndex,
+      _viewer.SelectedBspFaceOnly,
+      out LoadedMap editedMap,
+      out string error))
+    {
+      MessageBox.Show(this, error, "Delete BSP Mesh Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+      return;
+    }
+
+    ApplyEditedMap(editedMap, preferredSelectionIndex: -1, trackUndo: true, clearRedo: true, geometryEdited: true);
+    _viewer.ClearSelectedBspSelection();
+    _statusBaseText =
+      selectedObjectId >= 0
+        ? $"Deleted BSP object #{selectedObjectId:N0} | BSP TriVerts: {_loadedMap.BspRenderVertices.Length:N0}"
+        : $"Deleted BSP face #{selectedFaceIndex:N0} | BSP TriVerts: {_loadedMap.BspRenderVertices.Length:N0}";
+    RefreshRuntimeStatus();
+  }
+
+  private void TranslateSelectedBspMeshFromUi(Vector3 sourceDelta)
+  {
+    if (_loadedMap == null)
+    {
+      return;
+    }
+
+    int selectedObjectId = _viewer.SelectedBspObjectId;
+    int selectedFaceIndex = _viewer.SelectedBspFaceIndex;
+    if (selectedObjectId < 0 && selectedFaceIndex < 0)
+    {
+      _statusBaseText = "BSP translate skipped: no BSP face/object selected.";
+      RefreshRuntimeStatus();
+      return;
+    }
+
+    if (!BlenderInterchange.TryTranslateMeshSelection(
+      _loadedMap,
+      selectedObjectId,
+      selectedFaceIndex,
+      _viewer.SelectedBspFaceOnly,
+      sourceDelta,
+      out LoadedMap editedMap,
+      out string error))
+    {
+      _statusBaseText = $"BSP translate failed: {error}";
+      RefreshRuntimeStatus();
+      return;
+    }
+
+    ApplyEditedMap(editedMap, preferredSelectionIndex: -1, trackUndo: true, clearRedo: true, geometryEdited: true);
+    _statusBaseText =
+      selectedObjectId >= 0
+        ? $"Moved BSP object #{selectedObjectId:N0} by ({sourceDelta.X:F1},{sourceDelta.Y:F1},{sourceDelta.Z:F1})"
+        : $"Moved BSP face #{selectedFaceIndex:N0} by ({sourceDelta.X:F1},{sourceDelta.Y:F1},{sourceDelta.Z:F1})";
+    RefreshRuntimeStatus();
+  }
+
+  private void MoveSelectedBspMeshAxis(float xSign, float ySign, float zSign)
+  {
+    if (_loadedMap == null)
+    {
+      return;
+    }
+
+    float step = (float)_bspMoveStepUpDown.Value;
+    if (!float.IsFinite(step) || step <= 0.0f)
+    {
+      step = BspTranslateStep;
+    }
+
+    Vector3 sourceDelta = new(step * xSign, step * ySign, step * zSign);
+    TranslateSelectedBspMeshFromUi(sourceDelta);
+  }
+
   private void ReloadCurrentMapFromDisk()
   {
     if (string.IsNullOrWhiteSpace(_loadedBspPath) || string.IsNullOrWhiteSpace(_loadedEbpPath))
@@ -832,7 +995,12 @@ internal sealed partial class MainForm : Form
     LoadMap(_loadedBspPath, _loadedEbpPath);
   }
 
-  private void ApplyEditedMap(LoadedMap editedMap, int preferredSelectionIndex = -1, bool trackUndo = true, bool clearRedo = true)
+  private void ApplyEditedMap(
+    LoadedMap editedMap,
+    int preferredSelectionIndex = -1,
+    bool trackUndo = true,
+    bool clearRedo = true,
+    bool geometryEdited = false)
   {
     if (trackUndo && _loadedMap != null)
     {
@@ -857,7 +1025,14 @@ internal sealed partial class MainForm : Form
     {
       _mapDocument.ReplaceMap(editedMap);
     }
-    _viewer.ApplyCollisionEditedMap(editedMap);
+    if (geometryEdited)
+    {
+      _viewer.ApplyMapGeometryEdited(editedMap);
+    }
+    else
+    {
+      _viewer.ApplyCollisionEditedMap(editedMap);
+    }
     _viewer.SetSelectedCollisionLineIndex(selectionIndex);
     SyncTeleportInputsFromCamera();
     UpdateUndoUiState();
@@ -1040,12 +1215,20 @@ internal sealed partial class MainForm : Form
     bool canUndo = hasMap && _editUndoHistory.Count > 0;
     bool canRedo = hasMap && _editRedoHistory.Count > 0;
     bool canDeleteSelected = hasMap && _viewer.SelectedCollisionLineIndex >= 0;
+    bool hasBspSelection = hasMap && (_viewer.SelectedBspObjectId >= 0 || _viewer.SelectedBspFaceIndex >= 0);
     _undoCollisionButton.Enabled = canUndo;
     _undoMenuItem.Enabled = canUndo;
     _redoCollisionButton.Enabled = canRedo;
     _redoMenuItem.Enabled = canRedo;
     _deleteSelectedCollisionButton.Enabled = canDeleteSelected;
     _deleteSelectedCollisionMenuItem.Enabled = canDeleteSelected;
+    _bspDeleteButton.Enabled = hasBspSelection;
+    _bspMoveNegXButton.Enabled = hasBspSelection;
+    _bspMovePosXButton.Enabled = hasBspSelection;
+    _bspMoveNegYButton.Enabled = hasBspSelection;
+    _bspMovePosYButton.Enabled = hasBspSelection;
+    _bspMoveNegZButton.Enabled = hasBspSelection;
+    _bspMovePosZButton.Enabled = hasBspSelection;
   }
 
   private void OnMainFormKeyDown(object? sender, KeyEventArgs e)
@@ -1161,6 +1344,33 @@ internal sealed partial class MainForm : Form
     }
 
     return true;
+  }
+
+  private static bool TryValidateMapForSave(LoadedMap map, out string error)
+  {
+    if (!TryValidateCollisionForSave(map, out error))
+    {
+      return false;
+    }
+
+    try
+    {
+      BspStrictValidator.ValidateForSave(map);
+      error = string.Empty;
+      return true;
+    }
+    catch (Exception ex)
+    {
+      error = ex.Message;
+      return false;
+    }
+  }
+
+  private void OnStrictLoadModeChanged()
+  {
+    _strictLoadModeEnabled = _strictLoadModeMenuItem.Checked;
+    _statusBaseText = $"Strict load mode: {(_strictLoadModeEnabled ? "ON" : "OFF")}";
+    RefreshRuntimeStatus();
   }
 
   private void SetSkySourceMode(SkySourceMode skySourceMode, bool reloadCurrentMap)

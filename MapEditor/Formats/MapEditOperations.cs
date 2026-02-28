@@ -1072,7 +1072,10 @@ public static class MapEditOperations
     BspMaterialSpan[] bspMaterialSpans,
     EntitySceneObject[]? bspSceneObjects = null,
     ushort[]? bspRenderVertexObjectIds = null,
-    Vector3[]? bspRenderVertexLocalPositions = null)
+    Vector3[]? bspRenderVertexLocalPositions = null,
+    Vector3[]? bspCollisionNormals = null,
+    BspNode[]? bspCollisionNodes = null,
+    BspLeafBounds[]? bspLeafBounds = null)
   {
     BspBinaryLayout layout = bspBinaryLayout ?? source.BspBinaryLayout;
     BspRenderVertex[] renderVertices = bspRenderVertices ?? Array.Empty<BspRenderVertex>();
@@ -1117,6 +1120,9 @@ public static class MapEditOperations
     }
 
     MapBounds bounds = ComputeBoundsFromVertices(triangleVertices, source.CollisionVertices, source.Bounds);
+    Vector3[] collisionNormals = bspCollisionNormals ?? source.BspCollisionNormals;
+    BspNode[] collisionNodes = bspCollisionNodes ?? source.BspCollisionNodes;
+    BspLeafBounds[] leafBounds = bspLeafBounds ?? source.BspLeafBounds;
 
     return new LoadedMap
     {
@@ -1156,9 +1162,9 @@ public static class MapEditOperations
       MapEntityInstanceCount = source.MapEntityInstanceCount,
       ParticleInstancePositions = source.ParticleInstancePositions,
       ParticleInstances = source.ParticleInstances,
-      BspCollisionNormals = source.BspCollisionNormals,
-      BspCollisionNodes = source.BspCollisionNodes,
-      BspLeafBounds = source.BspLeafBounds,
+      BspCollisionNormals = collisionNormals,
+      BspCollisionNodes = collisionNodes,
+      BspLeafBounds = leafBounds,
       CollisionVertices = source.CollisionVertices,
       CollisionLines = source.CollisionLines,
     };

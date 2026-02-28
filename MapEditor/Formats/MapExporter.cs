@@ -36,6 +36,8 @@ public static class MapExporter
       throw new ArgumentNullException(nameof(map));
     }
 
+    BspStrictValidator.ValidateForSave(map);
+
     if (string.IsNullOrWhiteSpace(sourceBspPath))
     {
       throw new ArgumentException("Source BSP path is required.", nameof(sourceBspPath));
@@ -96,6 +98,8 @@ public static class MapExporter
       throw new ArgumentNullException(nameof(map));
     }
 
+    BspStrictValidator.ValidateForSave(map);
+
     if (string.IsNullOrWhiteSpace(sourceEbpPath))
     {
       throw new ArgumentException("Source EBP path is required.", nameof(sourceEbpPath));
@@ -133,25 +137,15 @@ public static class MapExporter
     }
   }
 
-  private static void CopyFileIfDifferent(string sourcePath, string targetPath)
+  private static void CopyFileOverwrite(string sourcePath, string targetPath)
   {
     if (string.Equals(sourcePath, targetPath, StringComparison.OrdinalIgnoreCase))
     {
       return;
     }
 
-    FileInfo sourceInfo = new(sourcePath);
-    FileInfo targetInfo = new(targetPath);
-    if (targetInfo.Exists &&
-        targetInfo.Length == sourceInfo.Length &&
-        targetInfo.LastWriteTimeUtc == sourceInfo.LastWriteTimeUtc)
-    {
-      return;
-    }
-
     EnsureParentDirectory(targetPath);
     File.Copy(sourcePath, targetPath, overwrite: true);
-    File.SetLastWriteTimeUtc(targetPath, sourceInfo.LastWriteTimeUtc);
   }
 
   private static void CopyMapCompanionAssets(LoadedMap map, string sourceBspPath, string targetBspPath)
@@ -176,7 +170,7 @@ public static class MapExporter
     {
       string targetExtSptPath = Path.Combine(targetMapDirectory, $"{targetMapName}EXT.spt");
       EnsureParentDirectory(targetExtSptPath);
-      CopyFileIfDifferent(extSptPath, targetExtSptPath);
+      CopyFileOverwrite(extSptPath, targetExtSptPath);
     }
 
     CopySkyAssetSetRaw(sourceMapDirectory, targetMapDirectory, sourceMapName, targetMapName, "sky", "sky");
@@ -218,7 +212,7 @@ public static class MapExporter
         return;
       }
 
-      CopyFileIfDifferent(sourcePath, targetPath);
+      CopyFileOverwrite(sourcePath, targetPath);
       return;
     }
 
@@ -241,7 +235,7 @@ public static class MapExporter
         return;
       }
 
-      CopyFileIfDifferent(sourcePath, targetPath);
+      CopyFileOverwrite(sourcePath, targetPath);
       return;
     }
 
@@ -271,7 +265,7 @@ public static class MapExporter
         return;
       }
 
-      CopyFileIfDifferent(sourcePath, targetPath);
+      CopyFileOverwrite(sourcePath, targetPath);
       return;
     }
 
@@ -376,7 +370,7 @@ public static class MapExporter
     string targetSkyDirectory = Path.Combine(targetMapDirectory, skyFolderName);
     string targetSkyBasePath = Path.Combine(targetSkyDirectory, $"{targetMapName}{skySuffix}");
     string targetSkyR3ePath = targetSkyBasePath + ".r3e";
-    CopyFileIfDifferent(sourceSkyR3ePath, targetSkyR3ePath);
+    CopyFileOverwrite(sourceSkyR3ePath, targetSkyR3ePath);
 
     string sourceSkyBaseName = Path.GetFileNameWithoutExtension(sourceSkyR3ePath);
     CopyAssetByBaseNameAndExtensionRaw(sourceSkyDirectory, sourceSkyBaseName, targetSkyBasePath, ".r3m");
@@ -396,7 +390,7 @@ public static class MapExporter
     }
 
     string targetPath = targetBasePath + extension;
-    CopyFileIfDifferent(sourcePath, targetPath);
+    CopyFileOverwrite(sourcePath, targetPath);
   }
 
   private static string? FindSiblingFileWithExtension(string directory, string fileNameWithoutExtension, string extension)
@@ -593,7 +587,7 @@ public static class MapExporter
     {
       string relative = Path.GetRelativePath(sourceDirectory, sourceFilePath);
       string targetFilePath = Path.Combine(targetDirectory, relative);
-      CopyFileIfDifferent(sourceFilePath, targetFilePath);
+      CopyFileOverwrite(sourceFilePath, targetFilePath);
     }
   }
 
@@ -604,8 +598,7 @@ public static class MapExporter
       || layout.Entries.Length != BspHeaderEntryCount
       || layout.Sections.Length != BspHeaderEntryCount)
     {
-      CopyFileIfDifferent(sourceBspPath, targetBspPath);
-      return;
+      throw new InvalidDataException("Loaded map does not contain a valid BSP binary layout for rebuild.");
     }
 
     BspEntry[] rebuiltEntries = RebuildBspEntries(layout.Entries, layout.Sections);
@@ -632,7 +625,7 @@ public static class MapExporter
       writer.Write(layout.Trailing);
     }
 
-    WriteBytesIfChanged(targetBspPath, stream.ToArray());
+    WriteBytesAlways(targetBspPath, stream.ToArray());
   }
 
   private static BspEntry[] RebuildBspEntries(BspEntry[] sourceEntries, byte[][] sections)
@@ -707,7 +700,7 @@ public static class MapExporter
       }
     }
 
-    WriteBytesIfChanged(targetPath, stream.ToArray());
+    WriteBytesAlways(targetPath, stream.ToArray());
   }
 
   private static bool TryReadR3mMetadata(string? sourcePath, out float version, out byte[][] names)
@@ -783,7 +776,8 @@ public static class MapExporter
   {
     float version = DefaultR3tVersion;
     bool hasNameTable = HasAnyTextureName(textures);
-    if (TryReadR3tMetadata(sourcePath, out float sourceVersion, out bool sourceHasNameTable))
+    byte[][] sourceNames = Array.Empty<byte[]>();
+    if (TryReadR3tMetadata(sourcePath, out float sourceVersion, out bool sourceHasNameTable, out sourceNames))
     {
       version = sourceVersion;
       hasNameTable = sourceHasNameTable;
@@ -797,9 +791,20 @@ public static class MapExporter
     {
       for (int textureIndex = 0; textureIndex < textures.Length; ++textureIndex)
       {
-        byte[] nameBytes = string.IsNullOrWhiteSpace(textures[textureIndex].Name)
-          ? Encoding.ASCII.GetBytes($"tex_{textureIndex:D4}")
-          : Encoding.ASCII.GetBytes(textures[textureIndex].Name);
+        byte[] nameBytes;
+        if (textureIndex < sourceNames.Length && sourceNames[textureIndex].Length == R3mNameBytes)
+        {
+          nameBytes = sourceNames[textureIndex];
+        }
+        else if (string.IsNullOrWhiteSpace(textures[textureIndex].Name))
+        {
+          nameBytes = Encoding.ASCII.GetBytes($"tex_{textureIndex:D4}");
+        }
+        else
+        {
+          nameBytes = Encoding.ASCII.GetBytes(textures[textureIndex].Name);
+        }
+
         WriteFixedBytes(writer, nameBytes, R3mNameBytes);
       }
     }
@@ -816,7 +821,7 @@ public static class MapExporter
       writer.Write(block);
     }
 
-    WriteBytesIfChanged(targetPath, stream.ToArray());
+    WriteBytesAlways(targetPath, stream.ToArray());
   }
 
   private static bool HasAnyTextureName(R3TextureBlob[] textures)
@@ -832,10 +837,11 @@ public static class MapExporter
     return false;
   }
 
-  private static bool TryReadR3tMetadata(string? sourcePath, out float version, out bool hasNameTable)
+  private static bool TryReadR3tMetadata(string? sourcePath, out float version, out bool hasNameTable, out byte[][] names)
   {
     version = DefaultR3tVersion;
     hasNameTable = false;
+    names = Array.Empty<byte[]>();
     if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath))
     {
       return false;
@@ -859,11 +865,25 @@ public static class MapExporter
       }
 
       hasNameTable = namedLayout;
+      if (hasNameTable)
+      {
+        byte[][] parsedNames = new byte[textureCount][];
+        int offset = 8;
+        for (int i = 0; i < textureCount; ++i)
+        {
+          parsedNames[i] = bytes.AsSpan(offset, R3mNameBytes).ToArray();
+          offset += R3mNameBytes;
+        }
+
+        names = parsedNames;
+      }
+
       return true;
     }
     catch
     {
       hasNameTable = false;
+      names = Array.Empty<byte[]>();
       return false;
     }
   }
@@ -959,7 +979,7 @@ public static class MapExporter
       writer.Write(state.Trailing);
     }
 
-    WriteBytesIfChanged(targetPath, stream.ToArray());
+    WriteBytesAlways(targetPath, stream.ToArray());
   }
 
   private static R3xState ReadR3xState(string? sourcePath)
@@ -1076,19 +1096,10 @@ public static class MapExporter
     writer.Write(fixedBytes);
   }
 
-  private static void WriteBytesIfChanged(string targetPath, byte[] bytes)
+  private static void WriteBytesAlways(string targetPath, byte[] bytes)
   {
     string fullTargetPath = Path.GetFullPath(targetPath);
     EnsureParentDirectory(fullTargetPath);
-    if (File.Exists(fullTargetPath))
-    {
-      byte[] existing = File.ReadAllBytes(fullTargetPath);
-      if (existing.AsSpan().SequenceEqual(bytes))
-      {
-        return;
-      }
-    }
-
     File.WriteAllBytes(fullTargetPath, bytes);
   }
 
@@ -1140,7 +1151,13 @@ public static class MapExporter
     byte[] serializedCollisionLines = SerializeCollisionLines(collisionLines, collisionVertices.Length);
     sections[0] = serializedCollisionVertices;
     sections[1] = serializedCollisionLines;
-    if (bspLeafBounds.Length > 0)
+    int sourceLeafCount = ResolveLeafCount(sections[3].Length);
+    int maxLineLeafId = ResolveMaxCollisionLeafId(collisionLines);
+    bool hasIncompatibleLeafSpace =
+      maxLineLeafId >= 0 &&
+      (bspLeafBounds.Length == 0 || maxLineLeafId >= bspLeafBounds.Length);
+
+    if (bspLeafBounds.Length > 0 && !hasIncompatibleLeafSpace)
     {
       BuildCollisionLeafAssignment(
         collisionVertices,
@@ -1156,12 +1173,14 @@ public static class MapExporter
     }
     else
     {
-      sections[2] = BuildCollisionLineIdSection(collisionLines.Length, sections[2].Length);
-      int leafCount = ResolveLeafCount(sections[3].Length);
-      if (leafCount > 0)
-      {
-        sections[3] = BuildCollisionLeafSection(leafCount, collisionLines.Length);
-      }
+      int fallbackLeafCount = ResolveFallbackLeafCount(sourceLeafCount, maxLineLeafId);
+      BuildCollisionLeafAssignmentFromLineLeafRefs(
+        collisionLines,
+        fallbackLeafCount,
+        out byte[] rebuiltLineIds,
+        out byte[] rebuiltLeafLinks);
+      sections[2] = rebuiltLineIds;
+      sections[3] = rebuiltLeafLinks;
     }
 
     WriteExtEbp(targetEbpPath, version, sections, sourceEntries);
@@ -1298,6 +1317,38 @@ public static class MapExporter
     return 0;
   }
 
+  private static int ResolveMaxCollisionLeafId(CollisionLine[] collisionLines)
+  {
+    if (collisionLines == null || collisionLines.Length == 0)
+    {
+      return -1;
+    }
+
+    int maxLeafId = -1;
+    for (int lineIndex = 1; lineIndex < collisionLines.Length; ++lineIndex)
+    {
+      CollisionLine line = collisionLines[lineIndex];
+      if (line.FrontLeaf > maxLeafId)
+      {
+        maxLeafId = line.FrontLeaf;
+      }
+
+      if (line.BackLeaf > maxLeafId)
+      {
+        maxLeafId = line.BackLeaf;
+      }
+    }
+
+    return maxLeafId;
+  }
+
+  private static int ResolveFallbackLeafCount(int sourceLeafCount, int maxLineLeafId)
+  {
+    int requiredByLines = maxLineLeafId >= 0 ? maxLineLeafId + 1 : 0;
+    int resolved = Math.Max(sourceLeafCount, requiredByLines);
+    return Math.Max(resolved, 1);
+  }
+
   private static byte[] BuildCollisionLineIdSection(int lineCount, int minimumSize)
   {
     if (lineCount < 0)
@@ -1346,6 +1397,88 @@ public static class MapExporter
     }
 
     return bytes;
+  }
+
+  private static void BuildCollisionLeafAssignmentFromLineLeafRefs(
+    CollisionLine[] collisionLines,
+    int leafCount,
+    out byte[] collisionLineIds,
+    out byte[] collisionLeafLinks)
+  {
+    if (leafCount <= 0)
+    {
+      collisionLineIds = Array.Empty<byte>();
+      collisionLeafLinks = Array.Empty<byte>();
+      return;
+    }
+
+    List<ushort>[] lineIdsByLeaf = new List<ushort>[leafCount];
+    for (int lineIndex = 1; lineIndex < collisionLines.Length; ++lineIndex)
+    {
+      CollisionLine line = collisionLines[lineIndex];
+      ushort lineId = (ushort)lineIndex;
+      AddLineIdToLeaf(lineIdsByLeaf, line.FrontLeaf, lineId, leafCount);
+      if (line.BackLeaf != line.FrontLeaf)
+      {
+        AddLineIdToLeaf(lineIdsByLeaf, line.BackLeaf, lineId, leafCount);
+      }
+    }
+
+    uint[] leafStartIds = new uint[leafCount];
+    ushort[] leafLineCounts = new ushort[leafCount];
+    List<ushort> orderedLineIds = new(Math.Max(16, collisionLines.Length * 2));
+    for (int leafIndex = 0; leafIndex < leafCount; ++leafIndex)
+    {
+      leafStartIds[leafIndex] = (uint)orderedLineIds.Count;
+      List<ushort>? ids = lineIdsByLeaf[leafIndex];
+      int count = ids?.Count ?? 0;
+      if (count > ushort.MaxValue)
+      {
+        throw new InvalidDataException($"Collision leaf {leafIndex} line assignment exceeds ushort range ({count}).");
+      }
+
+      leafLineCounts[leafIndex] = (ushort)count;
+      if (ids == null || ids.Count == 0)
+      {
+        continue;
+      }
+
+      orderedLineIds.AddRange(ids);
+    }
+
+    collisionLineIds = new byte[orderedLineIds.Count * 2];
+    int lineOffset = 0;
+    for (int i = 0; i < orderedLineIds.Count; ++i)
+    {
+      BinaryPrimitives.WriteUInt16LittleEndian(collisionLineIds.AsSpan(lineOffset, 2), orderedLineIds[i]);
+      lineOffset += 2;
+    }
+
+    collisionLeafLinks = new byte[leafCount * 6];
+    int leafOffset = 0;
+    for (int i = 0; i < leafCount; ++i)
+    {
+      BinaryPrimitives.WriteUInt32LittleEndian(collisionLeafLinks.AsSpan(leafOffset, 4), leafStartIds[i]);
+      BinaryPrimitives.WriteUInt16LittleEndian(collisionLeafLinks.AsSpan(leafOffset + 4, 2), leafLineCounts[i]);
+      leafOffset += 6;
+    }
+  }
+
+  private static void AddLineIdToLeaf(List<ushort>[] lineIdsByLeaf, ushort leafId, ushort lineId, int leafCount)
+  {
+    if (leafId >= leafCount)
+    {
+      return;
+    }
+
+    List<ushort>? ids = lineIdsByLeaf[leafId];
+    if (ids == null)
+    {
+      ids = new List<ushort>(8);
+      lineIdsByLeaf[leafId] = ids;
+    }
+
+    ids.Add(lineId);
   }
 
   private static void BuildCollisionLeafAssignment(

@@ -25,6 +25,11 @@ public static class BlenderInterchange
   private const string MeshMtlFileName = "map_mesh.mtl";
   private const string TexturesDirectoryName = "MapTextures";
   private const int BspHeaderEntryCount = 85;
+  private const int BspSectionCPlanes = 0;
+  private const int BspSectionCFaceId = 1;
+  private const int BspSectionNode = 2;
+  private const int BspSectionLeaf = 3;
+  private const int BspSectionMatListInLeaf = 4;
   private const int BspSectionBVertex = 43;
   private const int BspSectionWVertex = 44;
   private const int BspSectionFVertex = 45;
@@ -42,6 +47,13 @@ public static class BlenderInterchange
   private const float CollisionQuantizeScale = 1.0f;
   private const int MaxCollisionLines = ushort.MaxValue - 1;
   private const int MaxCollisionVertices = ushort.MaxValue;
+  private const int MaxLeafFaceCount = ushort.MaxValue;
+  private const int MaxLeafMatGroupCount = ushort.MaxValue;
+  private const int MaxBspLeafCount = short.MaxValue;
+  private const int MaxBspNodeCount = short.MaxValue;
+  private const int TargetFacesPerLeaf = 4096;
+  private const int MaxSpatialTreeDepth = 20;
+  private const int MaxConnectedClusterFacesForEdit = 6000;
 
   private static readonly JsonSerializerOptions JsonOptions = new()
   {
@@ -49,6 +61,211 @@ public static class BlenderInterchange
     PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals,
   };
+
+  public static bool TryTranslateMeshSelection(
+    LoadedMap source,
+    int selectedObjectId,
+    int selectedFaceIndex,
+    bool selectedFaceOnly,
+    Vector3 delta,
+    out LoadedMap edited,
+    out string error)
+  {
+    edited = source;
+    error = string.Empty;
+    if (source == null)
+    {
+      error = "No map is loaded.";
+      return false;
+    }
+
+    if (!IsFiniteVector3(delta) || delta.LengthSquared <= 0.0000001f)
+    {
+      error = "Translation delta is invalid.";
+      return false;
+    }
+
+    List<string> warnings = new();
+    ObjImportVertex[] vertices = BuildMeshVerticesFromLoadedMap(source, warnings);
+    if (vertices.Length < 3 || (vertices.Length % 3) != 0)
+    {
+      error = "Current BSP mesh is empty or malformed.";
+      return false;
+    }
+
+    int movedVertexCount = 0;
+    if (selectedObjectId >= 0)
+    {
+      ushort objectId = (ushort)Math.Clamp(selectedObjectId, 0, ushort.MaxValue);
+      for (int i = 0; i < vertices.Length; ++i)
+      {
+        if (vertices[i].ObjectId != objectId)
+        {
+          continue;
+        }
+
+        ObjImportVertex v = vertices[i];
+        vertices[i] = new ObjImportVertex(v.Position + delta, v.LocalPosition + delta, v.Uv, v.LightUv, v.Color, v.MaterialId, v.ObjectId);
+        ++movedVertexCount;
+      }
+    }
+    else if (selectedFaceIndex >= 0)
+    {
+      int triangleCount = vertices.Length / 3;
+      if (selectedFaceIndex < 0 || selectedFaceIndex >= triangleCount)
+      {
+        error = $"Selected face index {selectedFaceIndex} is out of range.";
+        return false;
+      }
+
+      HashSet<int> selectedFaces;
+      bool selectionTooLarge = false;
+      if (selectedFaceOnly)
+      {
+        selectedFaces = new HashSet<int> { selectedFaceIndex };
+      }
+      else
+      {
+        selectedFaces = CollectConnectedFaceIndices(vertices, selectedFaceIndex, MaxConnectedClusterFacesForEdit, out selectionTooLarge);
+        if (selectionTooLarge)
+        {
+          error = $"Connected selection exceeds safe edit limit ({MaxConnectedClusterFacesForEdit} faces). Use face-only selection.";
+          return false;
+        }
+      }
+      foreach (int faceIndex in selectedFaces)
+      {
+        int faceStart = faceIndex * 3;
+        for (int i = faceStart; i < faceStart + 3; ++i)
+        {
+          ObjImportVertex v = vertices[i];
+          vertices[i] = new ObjImportVertex(v.Position + delta, v.LocalPosition + delta, v.Uv, v.LightUv, v.Color, v.MaterialId, v.ObjectId);
+          ++movedVertexCount;
+        }
+      }
+    }
+    else
+    {
+      error = "No BSP object/face is selected.";
+      return false;
+    }
+
+    if (movedVertexCount <= 0)
+    {
+      error = "Selected BSP mesh did not contain any editable vertices.";
+      return false;
+    }
+
+    try
+    {
+      edited = ApplyMeshVerticesToMap(source, vertices, warnings);
+      return true;
+    }
+    catch (Exception ex)
+    {
+      error = $"BSP translate rebuild failed: {ex.Message}";
+      return false;
+    }
+  }
+
+  public static bool TryDeleteMeshSelection(
+    LoadedMap source,
+    int selectedObjectId,
+    int selectedFaceIndex,
+    bool selectedFaceOnly,
+    out LoadedMap edited,
+    out string error)
+  {
+    edited = source;
+    error = string.Empty;
+    if (source == null)
+    {
+      error = "No map is loaded.";
+      return false;
+    }
+
+    List<string> warnings = new();
+    ObjImportVertex[] sourceVertices = BuildMeshVerticesFromLoadedMap(source, warnings);
+    if (sourceVertices.Length < 3 || (sourceVertices.Length % 3) != 0)
+    {
+      error = "Current BSP mesh is empty or malformed.";
+      return false;
+    }
+
+    int triangleCount = sourceVertices.Length / 3;
+    List<ObjImportVertex> kept = new(sourceVertices.Length);
+    int removedFaces = 0;
+
+    HashSet<int> selectedFaces = new();
+    if (selectedObjectId < 0 && selectedFaceIndex >= 0 && !selectedFaceOnly)
+    {
+      selectedFaces = CollectConnectedFaceIndices(sourceVertices, selectedFaceIndex, MaxConnectedClusterFacesForEdit, out bool selectionTooLarge);
+      if (selectionTooLarge)
+      {
+        error = $"Connected selection exceeds safe edit limit ({MaxConnectedClusterFacesForEdit} faces). Use face-only selection.";
+        return false;
+      }
+    }
+
+    for (int faceIndex = 0; faceIndex < triangleCount; ++faceIndex)
+    {
+      int baseIndex = faceIndex * 3;
+      ObjImportVertex v0 = sourceVertices[baseIndex];
+      ObjImportVertex v1 = sourceVertices[baseIndex + 1];
+      ObjImportVertex v2 = sourceVertices[baseIndex + 2];
+
+      bool removeFace;
+      if (selectedObjectId >= 0)
+      {
+        ushort objectId = (ushort)Math.Clamp(selectedObjectId, 0, ushort.MaxValue);
+        removeFace = v0.ObjectId == objectId || v1.ObjectId == objectId || v2.ObjectId == objectId;
+      }
+      else if (selectedFaceIndex >= 0)
+      {
+        removeFace = selectedFaceOnly
+          ? faceIndex == selectedFaceIndex
+          : selectedFaces.Contains(faceIndex);
+      }
+      else
+      {
+        error = "No BSP object/face is selected.";
+        return false;
+      }
+
+      if (removeFace)
+      {
+        ++removedFaces;
+        continue;
+      }
+
+      kept.Add(v0);
+      kept.Add(v1);
+      kept.Add(v2);
+    }
+
+    if (removedFaces <= 0)
+    {
+      error = "No BSP triangles matched the selection.";
+      return false;
+    }
+
+    if (kept.Count < 3)
+    {
+      error = "Delete would remove all BSP triangles; operation was blocked.";
+      return false;
+    }
+
+    try
+    {
+      edited = ApplyMeshVerticesToMap(source, kept.ToArray(), warnings);
+      return true;
+    }
+    catch (Exception ex)
+    {
+      error = $"BSP delete rebuild failed: {ex.Message}";
+      return false;
+    }
+  }
 
   public static void ExportPackage(LoadedMap map, string packageDirectoryPath)
   {
@@ -205,35 +422,28 @@ public static class BlenderInterchange
 
     if (!string.IsNullOrWhiteSpace(meshObjPath) && File.Exists(meshObjPath))
     {
-      ObjMeshData mesh = ReadObjMesh(meshObjPath, warnings);
+      ObjMeshData mesh = ReadObjMesh(meshObjPath, source.Bounds, warnings);
       if (mesh.Vertices.Length > 0 && (mesh.Vertices.Length % 3) == 0)
       {
-        if (IsMeshGeometryEquivalent(edited.BspRenderVertices, mesh.Vertices))
+        edited = ApplyImportedMesh(edited, mesh, warnings);
+
+        importedMeshTriangleCount = mesh.Vertices.Length / 3;
+        if (rebuildCollisionFromMesh)
         {
-          importedMeshTriangleCount = mesh.Vertices.Length / 3;
-          warnings.Add("OBJ geometry matches current BSP mesh; skipped mesh/collision rebuild.");
-        }
-        else
-        {
-          edited = ApplyImportedMesh(edited, mesh, warnings);
-          importedMeshTriangleCount = mesh.Vertices.Length / 3;
-          if (rebuildCollisionFromMesh)
+          (Vector3[] collisionVertices, CollisionLine[] collisionLines) = BuildAutoCollisionFromMesh(edited.BspRenderVertices, edited.Bounds, warnings);
+          if (collisionLines.Length > 1)
           {
-            (Vector3[] collisionVertices, CollisionLine[] collisionLines) = BuildAutoCollisionFromMesh(edited.BspRenderVertices, edited.Bounds, warnings);
-            if (collisionLines.Length > 1)
-            {
-              edited = MapEditOperations.WithCollisionData(edited, collisionVertices, collisionLines);
-              importedCollisionLineCount = collisionLines.Length - 1;
-            }
-            else
-            {
-              warnings.Add("Auto collision rebuild produced no lines; keeping existing collision data.");
-            }
+            edited = MapEditOperations.WithCollisionData(edited, collisionVertices, collisionLines);
+            importedCollisionLineCount = collisionLines.Length - 1;
           }
           else
           {
-            warnings.Add("Collision kept unchanged (auto rebuild disabled).");
+            warnings.Add("Auto collision rebuild produced no lines; keeping existing collision data.");
           }
+        }
+        else
+        {
+          warnings.Add("Collision kept unchanged (auto rebuild disabled).");
         }
       }
       else
@@ -418,7 +628,7 @@ public static class BlenderInterchange
     return layers[0].SurfaceId;
   }
 
-  private static ObjMeshData ReadObjMesh(string objPath, List<string> warnings)
+  private static ObjMeshData ReadObjMesh(string objPath, MapBounds referenceBounds, List<string> warnings)
   {
     List<Vector3> positions = new();
     List<Vector2> texcoords = new();
@@ -531,39 +741,116 @@ public static class BlenderInterchange
       }
     }
 
-    return new ObjMeshData(triangleVertices.ToArray());
+    ObjImportVertex[] vertices = triangleVertices.ToArray();
+    if (vertices.Length > 0)
+    {
+      ObjImportAxisMode axisMode = ResolveObjImportAxisMode(vertices, referenceBounds);
+      for (int i = 0; i < vertices.Length; ++i)
+      {
+        ObjImportVertex vertex = vertices[i];
+        Vector3 converted = ConvertObjPositionToSource(vertex.Position, axisMode);
+        vertices[i] = new ObjImportVertex(
+          converted,
+          converted,
+          vertex.Uv,
+          vertex.LightUv,
+          vertex.Color,
+          vertex.MaterialId,
+          vertex.ObjectId);
+      }
+
+      if (axisMode == ObjImportAxisMode.BlenderExportDefault)
+      {
+        warnings.Add("OBJ axis detected as Blender default export (Forward -Z / Up Y); applied automatic coordinate conversion.");
+      }
+    }
+
+    return new ObjMeshData(vertices);
   }
 
   private static LoadedMap ApplyImportedMesh(LoadedMap source, ObjMeshData mesh, List<string> warnings)
   {
+    return ApplyMeshVerticesToMap(source, mesh.Vertices, warnings);
+  }
+
+  private static ObjImportVertex[] BuildMeshVerticesFromLoadedMap(LoadedMap source, List<string> warnings)
+  {
+    BspRenderVertex[] render = source.BspRenderVertices ?? Array.Empty<BspRenderVertex>();
+    int vertexCount = render.Length;
+    if (vertexCount == 0)
+    {
+      return Array.Empty<ObjImportVertex>();
+    }
+
+    int[] materialByVertex = new int[vertexCount];
+    Array.Fill(materialByVertex, 0);
+    for (int spanIndex = 0; spanIndex < source.BspMaterialSpans.Length; ++spanIndex)
+    {
+      BspMaterialSpan span = source.BspMaterialSpans[spanIndex];
+      int start = Math.Clamp(span.StartVertex, 0, vertexCount);
+      int end = Math.Clamp(span.StartVertex + span.VertexCount, 0, vertexCount);
+      for (int i = start; i < end; ++i)
+      {
+        materialByVertex[i] = span.MaterialId;
+      }
+    }
+
+    bool hasObjectIds = source.BspRenderVertexObjectIds.Length == vertexCount;
+    bool hasLocalPositions = source.BspRenderVertexLocalPositions.Length == vertexCount;
+    ObjImportVertex[] vertices = new ObjImportVertex[vertexCount];
+    for (int i = 0; i < vertexCount; ++i)
+    {
+      BspRenderVertex v = render[i];
+      ushort objectId = hasObjectIds ? source.BspRenderVertexObjectIds[i] : (ushort)0;
+      Vector3 localPosition = hasLocalPositions ? source.BspRenderVertexLocalPositions[i] : v.Position;
+      vertices[i] = new ObjImportVertex(v.Position, localPosition, v.Uv, v.LightUv, v.Color, materialByVertex[i], objectId);
+    }
+
+    if ((vertexCount % 3) != 0)
+    {
+      warnings.Add($"Loaded BSP render vertex count ({vertexCount}) is not tri-aligned.");
+    }
+
+    return vertices;
+  }
+
+  private static LoadedMap ApplyMeshVerticesToMap(LoadedMap source, ObjImportVertex[] vertices, List<string> warnings)
+  {
     BspBinaryLayout layout = source.BspBinaryLayout;
     if (layout == null || layout.Sections.Length != BspHeaderEntryCount || layout.Entries.Length != BspHeaderEntryCount)
     {
-      throw new InvalidDataException("Current map does not expose a valid BSP binary layout for mesh import.");
+      throw new InvalidDataException("Current map does not expose a valid BSP binary layout for mesh rebuild.");
     }
 
-    if ((mesh.Vertices.Length % 3) != 0)
+    if ((vertices.Length % 3) != 0)
     {
-      throw new InvalidDataException("Imported OBJ mesh does not resolve to a triangle list.");
+      throw new InvalidDataException("BSP mesh edit does not resolve to a triangle list.");
     }
 
-    int triangleCount = mesh.Vertices.Length / 3;
-    int vertexCount = mesh.Vertices.Length;
+    int triangleCount = vertices.Length / 3;
+    int vertexCount = vertices.Length;
+    IndexedVertexData indexedVertices = BuildIndexedVertexData(vertices, warnings);
 
     BspRenderVertex[] renderVertices = new BspRenderVertex[vertexCount];
+    ushort[] vertexObjectIds = new ushort[vertexCount];
+    Vector3[] vertexLocalPositions = new Vector3[vertexCount];
     for (int i = 0; i < vertexCount; ++i)
     {
-      ObjImportVertex sourceVertex = mesh.Vertices[i];
-      Vector2 uv = sourceVertex.Uv;
-      Vector2 lightUv = new(uv.X, uv.Y);
+      ObjImportVertex sourceVertex = vertices[i];
       renderVertices[i] = new BspRenderVertex(
         sourceVertex.Position,
-        uv,
-        lightUv,
-        new Vector3(1.0f, 1.0f, 1.0f));
+        sourceVertex.Uv,
+        sourceVertex.LightUv,
+        sourceVertex.Color);
+      vertexObjectIds[i] = sourceVertex.ObjectId;
+      vertexLocalPositions[i] = sourceVertex.LocalPosition;
     }
 
-    List<MaterialRun> materialRuns = BuildMaterialRuns(mesh.Vertices);
+    List<MaterialRun> materialRuns = BuildMaterialRuns(vertices);
+    List<MaterialRun> expandedMaterialRuns = ExpandMaterialRuns(materialRuns);
+    int[] faceGroupLookup = BuildFaceGroupLookup(triangleCount, expandedMaterialRuns);
+    SpatialBspSections spatialBsp = BuildSpatialBspSections(vertices, faceGroupLookup, expandedMaterialRuns.Count, warnings);
+
     BspMaterialSpan[] spans = new BspMaterialSpan[materialRuns.Count];
     for (int runIndex = 0; runIndex < materialRuns.Count; ++runIndex)
     {
@@ -575,16 +862,21 @@ public static class BlenderInterchange
         -1);
     }
 
-    byte[] fVertexSection = SerializeFloatVertexSection(mesh.Vertices);
-    byte[] vertexColorSection = SerializeVertexColorSection(vertexCount);
-    byte[] uvSection = SerializeUvSection(mesh.Vertices);
-    byte[] lightUvSection = SerializeLightUvSection(mesh.Vertices);
+    byte[] fVertexSection = SerializeFloatVertexSection(indexedVertices.UniquePositions);
+    byte[] vertexColorSection = SerializeVertexColorSection(indexedVertices.UniquePositions.Length);
+    byte[] uvSection = SerializeUvSection(vertices);
+    byte[] lightUvSection = SerializeLightUvSection(vertices);
     byte[] faceSection = SerializeFaceSection(triangleCount);
     byte[] faceIdSection = SerializeFaceIdSection(triangleCount);
-    byte[] vertexIdSection = SerializeVertexIdSection(vertexCount);
-    byte[] matGroupSection = SerializeMatGroupSection(materialRuns, warnings);
+    byte[] vertexIdSection = SerializeVertexIdSection(indexedVertices.VertexIds);
+    byte[] matGroupSection = SerializeMatGroupSection(expandedMaterialRuns, vertices, warnings);
 
     byte[][] sections = CloneSections(layout.Sections);
+    sections[BspSectionCPlanes] = spatialBsp.CPlaneSection;
+    sections[BspSectionCFaceId] = spatialBsp.CFaceIdSection;
+    sections[BspSectionNode] = spatialBsp.NodeSection;
+    sections[BspSectionLeaf] = spatialBsp.LeafSection;
+    sections[BspSectionMatListInLeaf] = spatialBsp.MatListInLeafSection;
     sections[BspSectionBVertex] = Array.Empty<byte>();
     sections[BspSectionWVertex] = Array.Empty<byte>();
     sections[BspSectionFVertex] = fVertexSection;
@@ -606,7 +898,100 @@ public static class BlenderInterchange
       Trailing = clonedTrailing,
     };
 
-    return MapEditOperations.WithBspMeshData(source, updatedLayout, renderVertices, spans);
+    LoadedMap rebuilt = MapEditOperations.WithBspMeshData(
+      source,
+      updatedLayout,
+      renderVertices,
+      spans,
+      source.BspSceneObjects,
+      vertexObjectIds,
+      vertexLocalPositions,
+      spatialBsp.Normals,
+      spatialBsp.Nodes,
+      spatialBsp.LeafBounds);
+
+    BspStrictValidator.ValidateForSave(rebuilt);
+    return rebuilt;
+  }
+
+  private static HashSet<int> CollectConnectedFaceIndices(ObjImportVertex[] vertices, int startFaceIndex, int maxFaces, out bool selectionTooLarge)
+  {
+    selectionTooLarge = false;
+    HashSet<int> result = new();
+    int triangleCount = vertices.Length / 3;
+    if (startFaceIndex < 0 || startFaceIndex >= triangleCount)
+    {
+      return result;
+    }
+
+    Dictionary<VertexPositionKey, List<int>> faceByVertex = new(Math.Max(1024, vertices.Length / 2));
+    for (int faceIndex = 0; faceIndex < triangleCount; ++faceIndex)
+    {
+      int baseVertex = faceIndex * 3;
+      for (int k = 0; k < 3; ++k)
+      {
+        Vector3 p = vertices[baseVertex + k].Position;
+        if (!IsFiniteVector3(p))
+        {
+          continue;
+        }
+
+        VertexPositionKey key = new(
+          BitConverter.SingleToInt32Bits(p.X),
+          BitConverter.SingleToInt32Bits(p.Y),
+          BitConverter.SingleToInt32Bits(p.Z));
+        if (!faceByVertex.TryGetValue(key, out List<int>? list))
+        {
+          list = new List<int>(4);
+          faceByVertex[key] = list;
+        }
+
+        list.Add(faceIndex);
+      }
+    }
+
+    Queue<int> pending = new();
+    result.Add(startFaceIndex);
+    pending.Enqueue(startFaceIndex);
+    while (pending.Count > 0)
+    {
+      int faceIndex = pending.Dequeue();
+      int baseVertex = faceIndex * 3;
+      for (int k = 0; k < 3; ++k)
+      {
+        Vector3 p = vertices[baseVertex + k].Position;
+        if (!IsFiniteVector3(p))
+        {
+          continue;
+        }
+
+        VertexPositionKey key = new(
+          BitConverter.SingleToInt32Bits(p.X),
+          BitConverter.SingleToInt32Bits(p.Y),
+          BitConverter.SingleToInt32Bits(p.Z));
+        if (!faceByVertex.TryGetValue(key, out List<int>? neighbors))
+        {
+          continue;
+        }
+
+        for (int i = 0; i < neighbors.Count; ++i)
+        {
+          int neighborFace = neighbors[i];
+          if (result.Add(neighborFace))
+          {
+            if (result.Count >= maxFaces)
+            {
+              selectionTooLarge = true;
+              return result;
+            }
+
+            pending.Enqueue(neighborFace);
+          }
+        }
+      }
+    }
+
+    return result;
   }
 
   private static List<MaterialRun> BuildMaterialRuns(ObjImportVertex[] vertices)
@@ -620,16 +1005,20 @@ public static class BlenderInterchange
     int triangleCount = vertices.Length / 3;
     int faceStart = 0;
     int materialId = vertices[0].MaterialId;
+    ushort objectId = vertices[0].ObjectId;
     int faceCount = 0;
     for (int face = 0; face < triangleCount; ++face)
     {
-      int triMaterial = vertices[face * 3].MaterialId;
-      if (triMaterial != materialId && faceCount > 0)
+      int faceVertexBase = face * 3;
+      int triMaterial = vertices[faceVertexBase].MaterialId;
+      ushort triObject = vertices[faceVertexBase].ObjectId;
+      if ((triMaterial != materialId || triObject != objectId) && faceCount > 0)
       {
-        runs.Add(new MaterialRun(materialId, faceStart, faceCount));
+        runs.Add(new MaterialRun(materialId, objectId, faceStart, faceCount));
         faceStart = face;
         faceCount = 0;
         materialId = triMaterial;
+        objectId = triObject;
       }
 
       ++faceCount;
@@ -637,19 +1026,931 @@ public static class BlenderInterchange
 
     if (faceCount > 0)
     {
-      runs.Add(new MaterialRun(materialId, faceStart, faceCount));
+      runs.Add(new MaterialRun(materialId, objectId, faceStart, faceCount));
     }
 
     return runs;
   }
 
-  private static byte[] SerializeFloatVertexSection(ObjImportVertex[] vertices)
+  private static List<MaterialRun> ExpandMaterialRuns(List<MaterialRun> runs)
+  {
+    List<MaterialRun> expanded = new(Math.Max(1, runs.Count));
+    for (int i = 0; i < runs.Count; ++i)
+    {
+      MaterialRun run = runs[i];
+      int remaining = Math.Max(0, run.FaceCount);
+      int faceStart = Math.Max(0, run.FaceStart);
+      while (remaining > 0)
+      {
+        int chunk = Math.Min(remaining, ushort.MaxValue);
+        expanded.Add(new MaterialRun(run.MaterialId, run.ObjectId, faceStart, chunk));
+        faceStart += chunk;
+        remaining -= chunk;
+      }
+    }
+
+    return expanded;
+  }
+
+  private static int[] BuildFaceGroupLookup(int triangleCount, List<MaterialRun> expandedRuns)
+  {
+    int[] faceGroupLookup = new int[Math.Max(0, triangleCount)];
+    if (triangleCount <= 0 || expandedRuns.Count == 0)
+    {
+      return faceGroupLookup;
+    }
+
+    bool[] assigned = new bool[triangleCount];
+    for (int groupIndex = 0; groupIndex < expandedRuns.Count; ++groupIndex)
+    {
+      MaterialRun run = expandedRuns[groupIndex];
+      int start = Math.Clamp(run.FaceStart, 0, triangleCount);
+      int end = Math.Clamp(run.FaceStart + run.FaceCount, 0, triangleCount);
+      for (int face = start; face < end; ++face)
+      {
+        faceGroupLookup[face] = groupIndex;
+        assigned[face] = true;
+      }
+    }
+
+    int fallback = 0;
+    for (int face = 0; face < triangleCount; ++face)
+    {
+      if (!assigned[face])
+      {
+        faceGroupLookup[face] = fallback;
+      }
+      else
+      {
+        fallback = faceGroupLookup[face];
+      }
+    }
+
+    return faceGroupLookup;
+  }
+
+  private static SpatialBspSections BuildSpatialBspSections(
+    ObjImportVertex[] vertices,
+    int[] faceGroupLookup,
+    int materialGroupCount,
+    List<string> warnings)
+  {
+    int triangleCount = vertices.Length / 3;
+    if (triangleCount <= 0)
+    {
+      Vector3[] fallbackNormals = [Vector3.Zero, Vector3.UnitX];
+      BspNode[] fallbackNodes =
+      [
+        new BspNode(0u, 0.0f, 0, 0, Vector3.Zero, Vector3.Zero),
+        new BspNode(1u, 0.0f, -2, -2, Vector3.Zero, Vector3.Zero),
+      ];
+      BspLeafBounds[] fallbackLeaves =
+      [
+        new BspLeafBounds(Vector3.Zero, Vector3.Zero),
+        new BspLeafBounds(Vector3.Zero, Vector3.Zero),
+      ];
+
+      return new SpatialBspSections(
+        SerializeCPlaneSection(fallbackNormals),
+        Array.Empty<byte>(),
+        SerializeNodeSection(fallbackNodes),
+        SerializeLeafSection(
+          [
+            new SpatialLeafEntry(0, 0, 0u, 0, 0u, Vector3.Zero, Vector3.Zero),
+            new SpatialLeafEntry(0, 0, 0u, 0, 0u, Vector3.Zero, Vector3.Zero),
+          ]),
+        Array.Empty<byte>(),
+        fallbackNormals,
+        fallbackNodes,
+        fallbackLeaves);
+    }
+
+    if (faceGroupLookup.Length != triangleCount)
+    {
+      int[] resized = new int[triangleCount];
+      int copy = Math.Min(faceGroupLookup.Length, triangleCount);
+      if (copy > 0)
+      {
+        Array.Copy(faceGroupLookup, resized, copy);
+      }
+
+      faceGroupLookup = resized;
+    }
+
+    FaceSpatialData[] faces = BuildFaceSpatialData(vertices);
+    List<Vector3> normals = [Vector3.Zero, Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ];
+    List<SpatialNodeTemp> nodes = [new SpatialNodeTemp(0u, 0.0f, 0, 0, Vector3.Zero, Vector3.Zero)];
+    List<SpatialLeafEntry> leaves = [new SpatialLeafEntry(0, 0, 0u, 0, 0u, Vector3.Zero, Vector3.Zero)];
+    List<uint> cFaceIds = new(Math.Max(1024, triangleCount));
+    List<ushort> matListInLeaf = new(Math.Max(1024, triangleCount / 4));
+
+    Vector3 rootMin = faces[0].Min;
+    Vector3 rootMax = faces[0].Max;
+    for (int i = 1; i < faces.Length; ++i)
+    {
+      rootMin = Vector3.ComponentMin(rootMin, faces[i].Min);
+      rootMax = Vector3.ComponentMax(rootMax, faces[i].Max);
+    }
+
+    if (!IsFiniteVector3(rootMin) || !IsFiniteVector3(rootMax))
+    {
+      rootMin = Vector3.Zero;
+      rootMax = Vector3.Zero;
+    }
+
+    List<int> allFaces = new(triangleCount);
+    for (int faceIndex = 0; faceIndex < triangleCount; ++faceIndex)
+    {
+      allFaces.Add(faceIndex);
+    }
+
+    SpatialChildRef BuildRecursive(List<int> workingFaces, Vector3 boundsMin, Vector3 boundsMax, int depth)
+    {
+      bool forceSplitForLeafLimit = workingFaces.Count > MaxLeafFaceCount;
+      bool forceSplitForDepth = depth < MaxSpatialTreeDepth && workingFaces.Count > TargetFacesPerLeaf;
+      bool shouldLeaf = !forceSplitForLeafLimit && !forceSplitForDepth;
+
+      if (shouldLeaf)
+      {
+        int leafIndex = AddLeaf(
+          workingFaces,
+          boundsMin,
+          boundsMax,
+          faceGroupLookup,
+          materialGroupCount,
+          cFaceIds,
+          matListInLeaf,
+          leaves,
+          warnings);
+        return new SpatialChildRef(true, leafIndex);
+      }
+
+      bool hasSplit = TryFindSplitPlane(
+        faces,
+        workingFaces,
+        boundsMin,
+        boundsMax,
+        out int splitAxis,
+        out float splitDistance,
+        out List<int> frontFaces,
+        out List<int> backFaces);
+
+      if (!hasSplit)
+      {
+        if (!TryForceSplitByMedian(
+          faces,
+          workingFaces,
+          boundsMin,
+          boundsMax,
+          out splitAxis,
+          out splitDistance,
+          out frontFaces,
+          out backFaces))
+        {
+          int forcedLeafIndex = AddLeaf(
+            workingFaces,
+            boundsMin,
+            boundsMax,
+            faceGroupLookup,
+            materialGroupCount,
+            cFaceIds,
+            matListInLeaf,
+            leaves,
+            warnings);
+          return new SpatialChildRef(true, forcedLeafIndex);
+        }
+      }
+
+      if (nodes.Count >= MaxBspNodeCount)
+      {
+        warnings.Add($"Spatial BSP node cap {MaxBspNodeCount} reached; remaining faces packed into a leaf.");
+        int cappedLeafIndex = AddLeaf(
+          workingFaces,
+          boundsMin,
+          boundsMax,
+          faceGroupLookup,
+          materialGroupCount,
+          cFaceIds,
+          matListInLeaf,
+          leaves,
+          warnings);
+        return new SpatialChildRef(true, cappedLeafIndex);
+      }
+
+      int nodeIndex = nodes.Count;
+      nodes.Add(default);
+
+      BuildChildBounds(boundsMin, boundsMax, splitAxis, splitDistance, out Vector3 frontMin, out Vector3 frontMax, out Vector3 backMin, out Vector3 backMax);
+
+      SpatialChildRef frontRef = BuildRecursive(frontFaces, frontMin, frontMax, depth + 1);
+      SpatialChildRef backRef = BuildRecursive(backFaces, backMin, backMax, depth + 1);
+
+      short frontChild = EncodeSpatialChild(frontRef);
+      short backChild = EncodeSpatialChild(backRef);
+      uint normalIndex = (uint)ResolveAxisNormalIndex(splitAxis);
+
+      nodes[nodeIndex] = new SpatialNodeTemp(
+        normalIndex,
+        splitDistance,
+        frontChild,
+        backChild,
+        boundsMin,
+        boundsMax);
+
+      return new SpatialChildRef(false, nodeIndex);
+    }
+
+    SpatialChildRef rootRef = BuildRecursive(allFaces, rootMin, rootMax, 0);
+    if (rootRef.IsLeaf)
+    {
+      // Runtime leaf walk starts at node index 1, so synthesize a root splitter when recursion ends in a single leaf.
+      int axis = GetLongestAxis(rootMin, rootMax);
+      float split = 0.5f * (GetAxisValue(rootMin, axis) + GetAxisValue(rootMax, axis));
+      short child = EncodeSpatialChild(rootRef);
+      nodes.Add(new SpatialNodeTemp((uint)ResolveAxisNormalIndex(axis), split, child, child, rootMin, rootMax));
+    }
+
+    BspNode[] nodeState = BuildBspNodeState(nodes);
+    BspLeafBounds[] leafState = BuildBspLeafState(leaves);
+    Vector3[] normalArray = normals.ToArray();
+    byte[] cPlaneSection = SerializeCPlaneSection(normalArray);
+    byte[] cFaceIdSection = SerializeCFaceIdSection(cFaceIds);
+    byte[] nodeSection = SerializeNodeSection(nodeState);
+    byte[] leafSection = SerializeLeafSection(leaves.ToArray());
+    byte[] matListInLeafSection = SerializeMatListInLeafSection(matListInLeaf);
+
+    return new SpatialBspSections(
+      cPlaneSection,
+      cFaceIdSection,
+      nodeSection,
+      leafSection,
+      matListInLeafSection,
+      normalArray,
+      nodeState,
+      leafState);
+  }
+
+  private static FaceSpatialData[] BuildFaceSpatialData(ObjImportVertex[] vertices)
+  {
+    int triangleCount = vertices.Length / 3;
+    FaceSpatialData[] faces = new FaceSpatialData[triangleCount];
+    for (int faceIndex = 0; faceIndex < triangleCount; ++faceIndex)
+    {
+      int vertexBase = faceIndex * 3;
+      Vector3 a = vertices[vertexBase].Position;
+      Vector3 b = vertices[vertexBase + 1].Position;
+      Vector3 c = vertices[vertexBase + 2].Position;
+
+      if (!IsFiniteVector3(a))
+      {
+        a = Vector3.Zero;
+      }
+
+      if (!IsFiniteVector3(b))
+      {
+        b = Vector3.Zero;
+      }
+
+      if (!IsFiniteVector3(c))
+      {
+        c = Vector3.Zero;
+      }
+
+      Vector3 min = Vector3.ComponentMin(Vector3.ComponentMin(a, b), c);
+      Vector3 max = Vector3.ComponentMax(Vector3.ComponentMax(a, b), c);
+      Vector3 centroid = (a + b + c) / 3.0f;
+      faces[faceIndex] = new FaceSpatialData(min, max, centroid);
+    }
+
+    return faces;
+  }
+
+  private static bool TryFindSplitPlane(
+    FaceSpatialData[] faces,
+    List<int> workingFaces,
+    Vector3 boundsMin,
+    Vector3 boundsMax,
+    out int splitAxis,
+    out float splitDistance,
+    out List<int> frontFaces,
+    out List<int> backFaces)
+  {
+    splitAxis = 0;
+    splitDistance = 0.0f;
+    frontFaces = new List<int>();
+    backFaces = new List<int>();
+
+    if (workingFaces.Count <= 1)
+    {
+      return false;
+    }
+
+    int[] axisOrder = BuildAxisOrder(boundsMin, boundsMax);
+    float bestScore = float.NegativeInfinity;
+    int bestAxis = -1;
+    float bestDistance = 0.0f;
+    List<int>? bestFront = null;
+    List<int>? bestBack = null;
+    ReadOnlySpan<float> splitRatios = [0.5f, 1.0f / 3.0f, 2.0f / 3.0f];
+
+    for (int axisOrderIndex = 0; axisOrderIndex < axisOrder.Length; ++axisOrderIndex)
+    {
+      int axis = axisOrder[axisOrderIndex];
+      float min = GetAxisValue(boundsMin, axis);
+      float max = GetAxisValue(boundsMax, axis);
+      float size = max - min;
+      if (!float.IsFinite(size) || size <= 0.0001f)
+      {
+        continue;
+      }
+
+      for (int ratioIndex = 0; ratioIndex < splitRatios.Length; ++ratioIndex)
+      {
+        float ratio = splitRatios[ratioIndex];
+        float candidate = min + (size * ratio);
+        if (!float.IsFinite(candidate))
+        {
+          continue;
+        }
+
+        if (candidate <= min + 0.001f || candidate >= max - 0.001f)
+        {
+          continue;
+        }
+
+        List<int> front = new(Math.Max(4, workingFaces.Count));
+        List<int> back = new(Math.Max(4, workingFaces.Count));
+        for (int i = 0; i < workingFaces.Count; ++i)
+        {
+          int faceId = workingFaces[i];
+          FaceClass side = ClassifyFaceAgainstPlane(faces[faceId], axis, candidate);
+          if (side == FaceClass.Front)
+          {
+            front.Add(faceId);
+          }
+          else
+          {
+            back.Add(faceId);
+          }
+        }
+
+        if (front.Count == 0 || back.Count == 0)
+        {
+          continue;
+        }
+
+        float balance = Math.Min(front.Count, back.Count) / (float)Math.Max(front.Count, back.Count);
+        float centerBias = 1.0f - MathF.Abs(0.5f - ratio) * 2.0f;
+        float score = balance * 0.85f + centerBias * 0.15f;
+        if (score > bestScore)
+        {
+          bestScore = score;
+          bestAxis = axis;
+          bestDistance = candidate;
+          bestFront = front;
+          bestBack = back;
+        }
+      }
+    }
+
+    if (bestAxis < 0 || bestFront == null || bestBack == null)
+    {
+      return false;
+    }
+
+    splitAxis = bestAxis;
+    splitDistance = bestDistance;
+    frontFaces = bestFront;
+    backFaces = bestBack;
+    return true;
+  }
+
+  private static bool TryForceSplitByMedian(
+    FaceSpatialData[] faces,
+    List<int> workingFaces,
+    Vector3 boundsMin,
+    Vector3 boundsMax,
+    out int splitAxis,
+    out float splitDistance,
+    out List<int> frontFaces,
+    out List<int> backFaces)
+  {
+    splitAxis = GetLongestAxis(boundsMin, boundsMax);
+    splitDistance = 0.0f;
+    frontFaces = new List<int>();
+    backFaces = new List<int>();
+
+    if (workingFaces.Count <= 1)
+    {
+      return false;
+    }
+
+    float[] values = new float[workingFaces.Count];
+    for (int i = 0; i < workingFaces.Count; ++i)
+    {
+      values[i] = GetAxisValue(faces[workingFaces[i]].Centroid, splitAxis);
+    }
+
+    Array.Sort(values);
+    float median = values[values.Length / 2];
+    if (!float.IsFinite(median))
+    {
+      return false;
+    }
+
+    float min = GetAxisValue(boundsMin, splitAxis);
+    float max = GetAxisValue(boundsMax, splitAxis);
+    if (median <= min + 0.001f || median >= max - 0.001f)
+    {
+      median = 0.5f * (min + max);
+    }
+
+    if (!float.IsFinite(median))
+    {
+      return false;
+    }
+
+    splitDistance = median;
+    frontFaces = new List<int>(workingFaces.Count);
+    backFaces = new List<int>(workingFaces.Count);
+    for (int i = 0; i < workingFaces.Count; ++i)
+    {
+      int faceId = workingFaces[i];
+      FaceClass side = ClassifyFaceAgainstPlane(faces[faceId], splitAxis, splitDistance);
+      if (side == FaceClass.Front)
+      {
+        frontFaces.Add(faceId);
+      }
+      else
+      {
+        backFaces.Add(faceId);
+      }
+    }
+
+    return frontFaces.Count > 0 && backFaces.Count > 0;
+  }
+
+  private static int AddLeaf(
+    List<int> faceIds,
+    Vector3 boundsMin,
+    Vector3 boundsMax,
+    int[] faceGroupLookup,
+    int materialGroupCount,
+    List<uint> cFaceIds,
+    List<ushort> matListInLeaf,
+    List<SpatialLeafEntry> leaves,
+    List<string> warnings)
+  {
+    if (leaves.Count >= MaxBspLeafCount)
+    {
+      throw new InvalidDataException($"Spatial BSP leaf count exceeded limit ({MaxBspLeafCount}).");
+    }
+
+    int faceCount = faceIds.Count;
+    if (faceCount > MaxLeafFaceCount)
+    {
+      warnings.Add($"Leaf face count {faceCount} exceeds ushort range; truncating to {MaxLeafFaceCount}.");
+      faceCount = MaxLeafFaceCount;
+    }
+
+    uint faceStartId = (uint)cFaceIds.Count;
+    for (int i = 0; i < faceCount; ++i)
+    {
+      int faceId = faceIds[i];
+      if (faceId < 0)
+      {
+        faceId = 0;
+      }
+
+      cFaceIds.Add((uint)faceId);
+    }
+
+    uint matGroupStartId = (uint)matListInLeaf.Count;
+    int matGroupCount = 0;
+    if (materialGroupCount > 0 && faceCount > 0)
+    {
+      bool[] seen = new bool[materialGroupCount];
+      for (int i = 0; i < faceCount; ++i)
+      {
+        int faceId = faceIds[i];
+        if ((uint)faceId >= (uint)faceGroupLookup.Length)
+        {
+          continue;
+        }
+
+        int groupIndex = faceGroupLookup[faceId];
+        if (groupIndex < 0 || groupIndex >= materialGroupCount || seen[groupIndex])
+        {
+          continue;
+        }
+
+        if (matGroupCount >= MaxLeafMatGroupCount)
+        {
+          warnings.Add($"Leaf material-group count exceeded {MaxLeafMatGroupCount}; extra groups were dropped.");
+          break;
+        }
+
+        seen[groupIndex] = true;
+        matListInLeaf.Add((ushort)groupIndex);
+        ++matGroupCount;
+      }
+    }
+
+    int leafIndex = leaves.Count;
+    leaves.Add(new SpatialLeafEntry(
+      0,
+      (ushort)faceCount,
+      faceStartId,
+      (ushort)matGroupCount,
+      matGroupStartId,
+      boundsMin,
+      boundsMax));
+
+    return leafIndex;
+  }
+
+  private static FaceClass ClassifyFaceAgainstPlane(FaceSpatialData face, int axis, float distance)
+  {
+    float min = GetAxisValue(face.Min, axis) - distance;
+    float max = GetAxisValue(face.Max, axis) - distance;
+    if (min >= 0.0f)
+    {
+      return FaceClass.Front;
+    }
+
+    if (max <= 0.0f)
+    {
+      return FaceClass.Back;
+    }
+
+    float centroid = GetAxisValue(face.Centroid, axis) - distance;
+    return centroid >= 0.0f ? FaceClass.Front : FaceClass.Back;
+  }
+
+  private static byte[] SerializeCPlaneSection(Vector3[] normals)
+  {
+    byte[] bytes = new byte[normals.Length * 12];
+    int offset = 0;
+    for (int i = 0; i < normals.Length; ++i)
+    {
+      Vector3 n = normals[i];
+      BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(offset, 4), n.X);
+      BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(offset + 4, 4), n.Y);
+      BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(offset + 8, 4), n.Z);
+      offset += 12;
+    }
+
+    return bytes;
+  }
+
+  private static byte[] SerializeCFaceIdSection(List<uint> faceIds)
+  {
+    if (faceIds.Count == 0)
+    {
+      return Array.Empty<byte>();
+    }
+
+    byte[] bytes = new byte[faceIds.Count * 4];
+    int offset = 0;
+    for (int i = 0; i < faceIds.Count; ++i)
+    {
+      BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(offset, 4), faceIds[i]);
+      offset += 4;
+    }
+
+    return bytes;
+  }
+
+  private static byte[] SerializeNodeSection(BspNode[] nodes)
+  {
+    byte[] bytes = new byte[nodes.Length * 24];
+    int offset = 0;
+    for (int i = 0; i < nodes.Length; ++i)
+    {
+      BspNode node = nodes[i];
+      BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(offset, 4), node.NormalIndex);
+      BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(offset + 4, 4), node.Distance);
+      BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 8, 2), node.Front);
+      BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 10, 2), node.Back);
+
+      short minX = ClampToInt16((int)node.Min.X);
+      short minY = ClampToInt16((int)node.Min.Y);
+      short minZ = ClampToInt16((int)node.Min.Z);
+      short maxX = ClampToInt16((int)node.Max.X);
+      short maxY = ClampToInt16((int)node.Max.Y);
+      short maxZ = ClampToInt16((int)node.Max.Z);
+      NormalizeBounds(ref minX, ref maxX);
+      NormalizeBounds(ref minY, ref maxY);
+      NormalizeBounds(ref minZ, ref maxZ);
+
+      BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 12, 2), minX);
+      BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 14, 2), minY);
+      BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 16, 2), minZ);
+      BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 18, 2), maxX);
+      BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 20, 2), maxY);
+      BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 22, 2), maxZ);
+      offset += 24;
+    }
+
+    return bytes;
+  }
+
+  private static byte[] SerializeLeafSection(SpatialLeafEntry[] leaves)
+  {
+    byte[] bytes = new byte[leaves.Length * 25];
+    int offset = 0;
+    for (int i = 0; i < leaves.Length; ++i)
+    {
+      SpatialLeafEntry leaf = leaves[i];
+      BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(offset + 1, 2), leaf.FaceCount);
+      BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(offset + 3, 4), leaf.FaceStartId);
+      BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(offset + 7, 2), leaf.MaterialGroupCount);
+      BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(offset + 9, 4), leaf.MaterialGroupStartId);
+
+      short minX = ClampToInt16(MinFixFloatToInt(leaf.Min.X));
+      short minY = ClampToInt16(MinFixFloatToInt(leaf.Min.Y));
+      short minZ = ClampToInt16(MinFixFloatToInt(leaf.Min.Z));
+      short maxX = ClampToInt16(MaxFixFloatToInt(leaf.Max.X));
+      short maxY = ClampToInt16(MaxFixFloatToInt(leaf.Max.Y));
+      short maxZ = ClampToInt16(MaxFixFloatToInt(leaf.Max.Z));
+      NormalizeBounds(ref minX, ref maxX);
+      NormalizeBounds(ref minY, ref maxY);
+      NormalizeBounds(ref minZ, ref maxZ);
+
+      BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 13, 2), minX);
+      BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 15, 2), minY);
+      BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 17, 2), minZ);
+      BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 19, 2), maxX);
+      BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 21, 2), maxY);
+      BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 23, 2), maxZ);
+      offset += 25;
+    }
+
+    return bytes;
+  }
+
+  private static byte[] SerializeMatListInLeafSection(List<ushort> materialGroupIds)
+  {
+    if (materialGroupIds.Count == 0)
+    {
+      return Array.Empty<byte>();
+    }
+
+    byte[] bytes = new byte[materialGroupIds.Count * 2];
+    int offset = 0;
+    for (int i = 0; i < materialGroupIds.Count; ++i)
+    {
+      BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(offset, 2), materialGroupIds[i]);
+      offset += 2;
+    }
+
+    return bytes;
+  }
+
+  private static BspNode[] BuildBspNodeState(List<SpatialNodeTemp> nodes)
+  {
+    BspNode[] state = new BspNode[nodes.Count];
+    for (int i = 0; i < nodes.Count; ++i)
+    {
+      SpatialNodeTemp source = nodes[i];
+      short minX = ClampToInt16(MinFixFloatToInt(source.Min.X));
+      short minY = ClampToInt16(MinFixFloatToInt(source.Min.Y));
+      short minZ = ClampToInt16(MinFixFloatToInt(source.Min.Z));
+      short maxX = ClampToInt16(MaxFixFloatToInt(source.Max.X));
+      short maxY = ClampToInt16(MaxFixFloatToInt(source.Max.Y));
+      short maxZ = ClampToInt16(MaxFixFloatToInt(source.Max.Z));
+      NormalizeBounds(ref minX, ref maxX);
+      NormalizeBounds(ref minY, ref maxY);
+      NormalizeBounds(ref minZ, ref maxZ);
+      state[i] = new BspNode(
+        source.NormalIndex,
+        source.Distance,
+        source.Front,
+        source.Back,
+        new Vector3(minX, minY, minZ),
+        new Vector3(maxX, maxY, maxZ));
+    }
+
+    return state;
+  }
+
+  private static BspLeafBounds[] BuildBspLeafState(List<SpatialLeafEntry> leaves)
+  {
+    BspLeafBounds[] state = new BspLeafBounds[leaves.Count];
+    for (int i = 0; i < leaves.Count; ++i)
+    {
+      SpatialLeafEntry leaf = leaves[i];
+      short minX = ClampToInt16(MinFixFloatToInt(leaf.Min.X));
+      short minY = ClampToInt16(MinFixFloatToInt(leaf.Min.Y));
+      short minZ = ClampToInt16(MinFixFloatToInt(leaf.Min.Z));
+      short maxX = ClampToInt16(MaxFixFloatToInt(leaf.Max.X));
+      short maxY = ClampToInt16(MaxFixFloatToInt(leaf.Max.Y));
+      short maxZ = ClampToInt16(MaxFixFloatToInt(leaf.Max.Z));
+      NormalizeBounds(ref minX, ref maxX);
+      NormalizeBounds(ref minY, ref maxY);
+      NormalizeBounds(ref minZ, ref maxZ);
+      state[i] = new BspLeafBounds(
+        new Vector3(minX, minY, minZ),
+        new Vector3(maxX, maxY, maxZ));
+    }
+
+    return state;
+  }
+
+  private static short EncodeSpatialChild(SpatialChildRef child)
+  {
+    if (child.IsLeaf)
+    {
+      int encoded = -child.Index - 1;
+      if (encoded < short.MinValue || encoded > short.MaxValue)
+      {
+        throw new InvalidDataException($"Spatial BSP leaf reference {child.Index} exceeds int16 encoding range.");
+      }
+
+      return (short)encoded;
+    }
+
+    if (child.Index < short.MinValue || child.Index > short.MaxValue)
+    {
+      throw new InvalidDataException($"Spatial BSP node reference {child.Index} exceeds int16 encoding range.");
+    }
+
+    return (short)child.Index;
+  }
+
+  private static void BuildChildBounds(
+    Vector3 parentMin,
+    Vector3 parentMax,
+    int axis,
+    float splitDistance,
+    out Vector3 frontMin,
+    out Vector3 frontMax,
+    out Vector3 backMin,
+    out Vector3 backMax)
+  {
+    frontMin = parentMin;
+    frontMax = parentMax;
+    backMin = parentMin;
+    backMax = parentMax;
+
+    float min = GetAxisValue(parentMin, axis);
+    float max = GetAxisValue(parentMax, axis);
+    float split = Math.Clamp(splitDistance, min, max);
+    frontMin = SetAxisValue(frontMin, axis, split);
+    backMax = SetAxisValue(backMax, axis, split);
+  }
+
+  private static int ResolveAxisNormalIndex(int axis)
+  {
+    return axis switch
+    {
+      0 => 1,
+      1 => 2,
+      _ => 3,
+    };
+  }
+
+  private static int[] BuildAxisOrder(Vector3 boundsMin, Vector3 boundsMax)
+  {
+    float x = MathF.Abs(boundsMax.X - boundsMin.X);
+    float y = MathF.Abs(boundsMax.Y - boundsMin.Y);
+    float z = MathF.Abs(boundsMax.Z - boundsMin.Z);
+
+    if (x >= y && x >= z)
+    {
+      return y >= z ? [0, 1, 2] : [0, 2, 1];
+    }
+
+    if (y >= x && y >= z)
+    {
+      return x >= z ? [1, 0, 2] : [1, 2, 0];
+    }
+
+    return x >= y ? [2, 0, 1] : [2, 1, 0];
+  }
+
+  private static int GetLongestAxis(Vector3 boundsMin, Vector3 boundsMax)
+  {
+    int[] order = BuildAxisOrder(boundsMin, boundsMax);
+    return order[0];
+  }
+
+  private static float GetAxisValue(in Vector3 value, int axis)
+  {
+    return axis switch
+    {
+      0 => value.X,
+      1 => value.Y,
+      _ => value.Z,
+    };
+  }
+
+  private static Vector3 SetAxisValue(in Vector3 value, int axis, float axisValue)
+  {
+    return axis switch
+    {
+      0 => new Vector3(axisValue, value.Y, value.Z),
+      1 => new Vector3(value.X, axisValue, value.Z),
+      _ => new Vector3(value.X, value.Y, axisValue),
+    };
+  }
+
+  private static int MinFixFloatToInt(float value)
+  {
+    if (!float.IsFinite(value))
+    {
+      return 0;
+    }
+
+    float adjusted = value - 0.999f;
+    if (adjusted > int.MaxValue)
+    {
+      return int.MaxValue;
+    }
+
+    if (adjusted < int.MinValue)
+    {
+      return int.MinValue;
+    }
+
+    return (int)adjusted;
+  }
+
+  private static int MaxFixFloatToInt(float value)
+  {
+    if (!float.IsFinite(value))
+    {
+      return 0;
+    }
+
+    float adjusted = value + 0.999f;
+    if (adjusted > int.MaxValue)
+    {
+      return int.MaxValue;
+    }
+
+    if (adjusted < int.MinValue)
+    {
+      return int.MinValue;
+    }
+
+    return (int)adjusted;
+  }
+
+  private static short ClampToInt16(int value)
+  {
+    return (short)Math.Clamp(value, short.MinValue, short.MaxValue);
+  }
+
+  private static void NormalizeBounds(ref short min, ref short max)
+  {
+    if (min <= max)
+    {
+      return;
+    }
+
+    (min, max) = (max, min);
+  }
+
+  private static IndexedVertexData BuildIndexedVertexData(ObjImportVertex[] vertices, List<string> warnings)
+  {
+    Dictionary<VertexPositionKey, int> uniqueMap = new(Math.Max(1024, vertices.Length / 3));
+    List<Vector3> uniquePositions = new(Math.Max(1024, vertices.Length / 3));
+    int[] vertexIds = new int[vertices.Length];
+    for (int i = 0; i < vertices.Length; ++i)
+    {
+      Vector3 position = vertices[i].LocalPosition;
+      if (!IsFiniteVector3(position))
+      {
+        warnings.Add($"Imported vertex {i} has non-finite local position; replaced with 0,0,0.");
+        position = Vector3.Zero;
+      }
+
+      VertexPositionKey key = new(
+        BitConverter.SingleToInt32Bits(position.X),
+        BitConverter.SingleToInt32Bits(position.Y),
+        BitConverter.SingleToInt32Bits(position.Z));
+
+      if (!uniqueMap.TryGetValue(key, out int uniqueIndex))
+      {
+        uniqueIndex = uniquePositions.Count;
+        uniqueMap[key] = uniqueIndex;
+        uniquePositions.Add(position);
+      }
+
+      vertexIds[i] = uniqueIndex;
+    }
+
+    return new IndexedVertexData(uniquePositions.ToArray(), vertexIds);
+  }
+
+  private static byte[] SerializeFloatVertexSection(Vector3[] vertices)
   {
     byte[] bytes = new byte[vertices.Length * 12];
     int offset = 0;
     for (int i = 0; i < vertices.Length; ++i)
     {
-      Vector3 p = vertices[i].Position;
+      Vector3 p = vertices[i];
       BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(offset, 4), p.X);
       BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(offset + 4, 4), p.Y);
       BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(offset + 8, 4), p.Z);
@@ -693,7 +1994,7 @@ public static class BlenderInterchange
     int offset = 0;
     for (int i = 0; i < vertices.Length; ++i)
     {
-      Vector2 uv = vertices[i].Uv;
+      Vector2 uv = vertices[i].LightUv;
       short u = EncodeLightUv(uv.X);
       short v = EncodeLightUv(uv.Y);
       BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset, 2), u);
@@ -743,60 +2044,110 @@ public static class BlenderInterchange
     return bytes;
   }
 
-  private static byte[] SerializeVertexIdSection(int vertexCount)
+  private static byte[] SerializeVertexIdSection(int[] vertexIds)
   {
-    byte[] bytes = new byte[vertexCount * 4];
+    byte[] bytes = new byte[vertexIds.Length * 4];
     int offset = 0;
-    for (int vertexIndex = 0; vertexIndex < vertexCount; ++vertexIndex)
+    for (int vertexIndex = 0; vertexIndex < vertexIds.Length; ++vertexIndex)
     {
-      BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(offset, 4), (uint)vertexIndex);
+      int vertexId = vertexIds[vertexIndex];
+      if (vertexId < 0)
+      {
+        vertexId = 0;
+      }
+
+      BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(offset, 4), (uint)vertexId);
       offset += 4;
     }
 
     return bytes;
   }
 
-  private static byte[] SerializeMatGroupSection(List<MaterialRun> runs, List<string> warnings)
+  private static byte[] SerializeMatGroupSection(List<MaterialRun> runs, ObjImportVertex[] vertices, List<string> warnings)
   {
     if (runs.Count == 0)
     {
       return Array.Empty<byte>();
     }
 
-    List<MaterialRun> expanded = new();
+    byte[] bytes = new byte[runs.Count * 42];
+    int offset = 0;
     for (int i = 0; i < runs.Count; ++i)
     {
       MaterialRun run = runs[i];
-      int remaining = run.FaceCount;
-      int faceStart = run.FaceStart;
-      while (remaining > 0)
-      {
-        int chunk = Math.Min(remaining, ushort.MaxValue);
-        expanded.Add(new MaterialRun(run.MaterialId, faceStart, chunk));
-        faceStart += chunk;
-        remaining -= chunk;
-      }
-    }
-
-    byte[] bytes = new byte[expanded.Count * 42];
-    int offset = 0;
-    for (int i = 0; i < expanded.Count; ++i)
-    {
-      MaterialRun run = expanded[i];
       short materialId = ClampMaterialIdToShort(run.MaterialId, warnings);
+      int faceStart = Math.Max(0, run.FaceStart);
+      int faceEndExclusive = Math.Max(faceStart, run.FaceStart + run.FaceCount);
+      if (faceEndExclusive > vertices.Length / 3)
+      {
+        faceEndExclusive = vertices.Length / 3;
+      }
 
+      Vector3 bbMin = Vector3.Zero;
+      Vector3 bbMax = Vector3.Zero;
+      bool foundBounds = false;
+      for (int faceIndex = faceStart; faceIndex < faceEndExclusive; ++faceIndex)
+      {
+        int vertexBase = faceIndex * 3;
+        for (int vertexOffset = 0; vertexOffset < 3; ++vertexOffset)
+        {
+          Vector3 position = vertices[vertexBase + vertexOffset].LocalPosition;
+          if (!IsFiniteVector3(position))
+          {
+            continue;
+          }
+
+          if (!foundBounds)
+          {
+            bbMin = position;
+            bbMax = position;
+            foundBounds = true;
+          }
+          else
+          {
+            bbMin = Vector3.ComponentMin(bbMin, position);
+            bbMax = Vector3.ComponentMax(bbMax, position);
+          }
+        }
+      }
+
+      if (!foundBounds)
+      {
+        bbMin = Vector3.Zero;
+        bbMax = Vector3.Zero;
+      }
+
+      short bbMinX = ClampToInt16(MinFixFloatToInt(bbMin.X));
+      short bbMinY = ClampToInt16(MinFixFloatToInt(bbMin.Y));
+      short bbMinZ = ClampToInt16(MinFixFloatToInt(bbMin.Z));
+      short bbMaxX = ClampToInt16(MaxFixFloatToInt(bbMax.X));
+      short bbMaxY = ClampToInt16(MaxFixFloatToInt(bbMax.Y));
+      short bbMaxZ = ClampToInt16(MaxFixFloatToInt(bbMax.Z));
+      NormalizeBounds(ref bbMinX, ref bbMaxX);
+      NormalizeBounds(ref bbMinY, ref bbMaxY);
+      NormalizeBounds(ref bbMinZ, ref bbMaxZ);
+
+      // ReadMatGroup layout:
+      // 0: attr, 2: faceCount, 4: faceStartId, 8: materialId, 10: lightMapId, ..., 40: objectId
+      // We emit float-vertex groups, so attr keeps byte/word decode bits cleared.
       BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(offset, 2), 0);
       BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(offset + 2, 2), (ushort)run.FaceCount);
       BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(offset + 4, 4), (uint)run.FaceStart);
       BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 8, 2), materialId);
       BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 10, 2), -1);
+      BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 12, 2), bbMinX);
+      BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 14, 2), bbMinY);
+      BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 16, 2), bbMinZ);
+      BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 18, 2), bbMaxX);
+      BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 20, 2), bbMaxY);
+      BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(offset + 22, 2), bbMaxZ);
 
-      // bb_min / bb_max (6 * int16), pos (3 * float), scale (float), object_id (uint16)
-      BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(offset + 24, 4), 0.0f);
-      BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(offset + 28, 4), 0.0f);
-      BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(offset + 32, 4), 0.0f);
+      Vector3 center = 0.5f * (bbMin + bbMax);
+      BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(offset + 24, 4), center.X);
+      BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(offset + 28, 4), center.Y);
+      BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(offset + 32, 4), center.Z);
       BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(offset + 36, 4), 1.0f);
-      BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(offset + 40, 2), 0);
+      BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(offset + 40, 2), run.ObjectId);
       offset += 42;
     }
 
@@ -1234,7 +2585,7 @@ public static class BlenderInterchange
       return false;
     }
 
-    Vector3 position = ConvertBlenderPositionToSource(positions[faceRef.PositionIndex]);
+    Vector3 position = positions[faceRef.PositionIndex];
     Vector2 uv = Vector2.Zero;
     if (faceRef.TexcoordIndex >= 0)
     {
@@ -1251,7 +2602,7 @@ public static class BlenderInterchange
       }
     }
 
-    vertex = new ObjImportVertex(position, uv, materialId);
+    vertex = new ObjImportVertex(position, position, uv, uv, new Vector3(1.0f, 1.0f, 1.0f), materialId, 0);
     return true;
   }
 
@@ -1267,40 +2618,93 @@ public static class BlenderInterchange
     return new Vector3(source.X, source.Z, source.Y);
   }
 
-  private static Vector3 ConvertBlenderPositionToSource(in Vector3 blender)
+  private static Vector3 ConvertObjPositionToSource(in Vector3 obj, ObjImportAxisMode axisMode)
   {
-    // Inverse of ConvertSourcePositionToBlender.
-    return new Vector3(blender.X, blender.Z, blender.Y);
+    return axisMode switch
+    {
+      ObjImportAxisMode.RfPackageDefault => new Vector3(obj.X, obj.Z, obj.Y),
+      ObjImportAxisMode.BlenderExportDefault => new Vector3(obj.X, obj.Y, -obj.Z),
+      _ => new Vector3(obj.X, obj.Z, obj.Y),
+    };
   }
 
-  private static bool IsMeshGeometryEquivalent(BspRenderVertex[] currentVertices, ObjImportVertex[] importedVertices)
+  private static ObjImportAxisMode ResolveObjImportAxisMode(ObjImportVertex[] vertices, MapBounds referenceBounds)
   {
-    if (currentVertices == null || importedVertices == null)
+    if (vertices.Length == 0)
+    {
+      return ObjImportAxisMode.RfPackageDefault;
+    }
+
+    float defaultScore = ComputeAxisFitScore(vertices, referenceBounds, ObjImportAxisMode.RfPackageDefault);
+    float blenderExportScore = ComputeAxisFitScore(vertices, referenceBounds, ObjImportAxisMode.BlenderExportDefault);
+    if (!float.IsFinite(defaultScore))
+    {
+      return ObjImportAxisMode.RfPackageDefault;
+    }
+
+    if (float.IsFinite(blenderExportScore) && blenderExportScore + 0.0001f < defaultScore)
+    {
+      return ObjImportAxisMode.BlenderExportDefault;
+    }
+
+    return ObjImportAxisMode.RfPackageDefault;
+  }
+
+  private static float ComputeAxisFitScore(ObjImportVertex[] vertices, MapBounds referenceBounds, ObjImportAxisMode axisMode)
+  {
+    if (!TryComputeBounds(vertices, axisMode, out MapBounds convertedBounds))
+    {
+      return float.PositiveInfinity;
+    }
+
+    Vector3 refSize = referenceBounds.Size;
+    Vector3 impSize = convertedBounds.Size;
+    Vector3 refCenter = referenceBounds.Center;
+    Vector3 impCenter = convertedBounds.Center;
+    if (!IsFiniteVector3(refSize) || !IsFiniteVector3(impSize) || !IsFiniteVector3(refCenter) || !IsFiniteVector3(impCenter))
+    {
+      return float.PositiveInfinity;
+    }
+
+    float refDiagonal = MathF.Max(1.0f, refSize.Length);
+    float sizeDelta = (impSize - refSize).Length / refDiagonal;
+    float centerDelta = (impCenter - refCenter).Length / refDiagonal;
+    return sizeDelta * 0.8f + centerDelta * 0.2f;
+  }
+
+  private static bool TryComputeBounds(ObjImportVertex[] vertices, ObjImportAxisMode axisMode, out MapBounds bounds)
+  {
+    bounds = default;
+    bool found = false;
+    Vector3 min = Vector3.Zero;
+    Vector3 max = Vector3.Zero;
+    for (int index = 0; index < vertices.Length; ++index)
+    {
+      Vector3 p = ConvertObjPositionToSource(vertices[index].Position, axisMode);
+      if (!IsFiniteVector3(p))
+      {
+        continue;
+      }
+
+      if (!found)
+      {
+        min = p;
+        max = p;
+        found = true;
+      }
+      else
+      {
+        min = Vector3.ComponentMin(min, p);
+        max = Vector3.ComponentMax(max, p);
+      }
+    }
+
+    if (!found)
     {
       return false;
     }
 
-    if (currentVertices.Length != importedVertices.Length)
-    {
-      return false;
-    }
-
-    const float positionEpsilonSq = 0.0005f * 0.0005f;
-    for (int i = 0; i < currentVertices.Length; ++i)
-    {
-      Vector3 a = currentVertices[i].Position;
-      Vector3 b = importedVertices[i].Position;
-      if (!IsFiniteVector3(a) || !IsFiniteVector3(b))
-      {
-        return false;
-      }
-
-      if ((a - b).LengthSquared > positionEpsilonSq)
-      {
-        return false;
-      }
-    }
-
+    bounds = new MapBounds(min, max);
     return true;
   }
 
@@ -1348,25 +2752,35 @@ public static class BlenderInterchange
   private static string? ResolveMeshObjPath(string packageDirectory, List<string> warnings)
   {
     string canonical = Path.Combine(packageDirectory, MeshObjFileName);
-    if (File.Exists(canonical))
-    {
-      return canonical;
-    }
-
     string[] objFiles = Directory.GetFiles(packageDirectory, "*.obj", SearchOption.TopDirectoryOnly);
     if (objFiles.Length == 0)
     {
       return null;
     }
 
+    if (objFiles.Length == 1)
+    {
+      string single = objFiles[0];
+      if (!string.Equals(Path.GetFileName(single), MeshObjFileName, StringComparison.OrdinalIgnoreCase))
+      {
+        warnings.Add($"map_mesh.obj not found; using '{Path.GetFileName(single)}' instead.");
+      }
+
+      return single;
+    }
+
     string selected = objFiles[0];
-    long selectedSize = 0;
+    DateTime selectedWriteTimeUtc = DateTime.MinValue;
+    long selectedSize = -1;
     for (int i = 0; i < objFiles.Length; ++i)
     {
       string filePath = objFiles[i];
+      DateTime writeTimeUtc = DateTime.MinValue;
       long size = 0;
       try
       {
+        FileInfo info = new(filePath);
+        writeTimeUtc = info.LastWriteTimeUtc;
         size = new FileInfo(filePath).Length;
       }
       catch
@@ -1374,14 +2788,34 @@ public static class BlenderInterchange
         // Keep best effort selection when file metadata cannot be read.
       }
 
-      if (size > selectedSize)
+      if (writeTimeUtc > selectedWriteTimeUtc ||
+          (writeTimeUtc == selectedWriteTimeUtc && size > selectedSize))
       {
         selected = filePath;
+        selectedWriteTimeUtc = writeTimeUtc;
         selectedSize = size;
       }
     }
 
-    warnings.Add($"map_mesh.obj not found; using '{Path.GetFileName(selected)}' instead.");
+    bool hasCanonical = false;
+    for (int i = 0; i < objFiles.Length; ++i)
+    {
+      if (string.Equals(Path.GetFileName(objFiles[i]), MeshObjFileName, StringComparison.OrdinalIgnoreCase))
+      {
+        hasCanonical = true;
+        break;
+      }
+    }
+
+    if (hasCanonical && !string.Equals(Path.GetFileName(selected), MeshObjFileName, StringComparison.OrdinalIgnoreCase))
+    {
+      warnings.Add($"Multiple OBJ files found; selected newest '{Path.GetFileName(selected)}' instead of '{MeshObjFileName}'.");
+    }
+    else if (!hasCanonical)
+    {
+      warnings.Add($"map_mesh.obj not found; using '{Path.GetFileName(selected)}' instead.");
+    }
+
     return selected;
   }
 
@@ -1480,9 +2914,54 @@ public static class BlenderInterchange
   }
 
   private readonly record struct ObjMeshData(ObjImportVertex[] Vertices);
-  private readonly record struct ObjImportVertex(Vector3 Position, Vector2 Uv, int MaterialId);
+  private readonly record struct ObjImportVertex(
+    Vector3 Position,
+    Vector3 LocalPosition,
+    Vector2 Uv,
+    Vector2 LightUv,
+    Vector3 Color,
+    int MaterialId,
+    ushort ObjectId = 0);
   private readonly record struct ObjFaceRef(int PositionIndex, int TexcoordIndex);
-  private readonly record struct MaterialRun(int MaterialId, int FaceStart, int FaceCount);
+  private readonly record struct IndexedVertexData(Vector3[] UniquePositions, int[] VertexIds);
+  private readonly record struct VertexPositionKey(int XBits, int YBits, int ZBits);
+  private enum ObjImportAxisMode
+  {
+    RfPackageDefault = 0,
+    BlenderExportDefault = 1,
+  }
+  private readonly record struct MaterialRun(int MaterialId, ushort ObjectId, int FaceStart, int FaceCount);
+  private readonly record struct FaceSpatialData(Vector3 Min, Vector3 Max, Vector3 Centroid);
+  private readonly record struct SpatialNodeTemp(
+    uint NormalIndex,
+    float Distance,
+    short Front,
+    short Back,
+    Vector3 Min,
+    Vector3 Max);
+  private readonly record struct SpatialLeafEntry(
+    byte Type,
+    ushort FaceCount,
+    uint FaceStartId,
+    ushort MaterialGroupCount,
+    uint MaterialGroupStartId,
+    Vector3 Min,
+    Vector3 Max);
+  private readonly record struct SpatialChildRef(bool IsLeaf, int Index);
+  private readonly record struct SpatialBspSections(
+    byte[] CPlaneSection,
+    byte[] CFaceIdSection,
+    byte[] NodeSection,
+    byte[] LeafSection,
+    byte[] MatListInLeafSection,
+    Vector3[] Normals,
+    BspNode[] Nodes,
+    BspLeafBounds[] LeafBounds);
+  private enum FaceClass
+  {
+    Front = 0,
+    Back = 1,
+  }
   private readonly record struct CollisionEdgeAccum(
     float StartX,
     float StartZ,

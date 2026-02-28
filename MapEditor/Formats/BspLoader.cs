@@ -76,7 +76,11 @@ public static class BspLoader
     return new EntityArchiveCacheInfo(entityRoot, manager.ArchiveCount, manager.AssetCount, wasCached);
   }
 
-  public static LoadedMap Load(string bspPath, string ebpPath, SkySourceMode skySourceMode = SkySourceMode.Sky2)
+  public static LoadedMap Load(
+    string bspPath,
+    string ebpPath,
+    SkySourceMode skySourceMode = SkySourceMode.Sky2,
+    bool strictMode = false)
   {
     string resolvedBsp = Path.GetFullPath(bspPath);
     string resolvedEbp = Path.GetFullPath(ebpPath);
@@ -104,7 +108,7 @@ public static class BspLoader
     Vector3[] boundsSource = bsp.TriangleVertices.Length > 0 ? bsp.TriangleVertices : ext.CollisionVertices;
     MapBounds bounds = ComputeBoundsFromVertices(boundsSource);
 
-    return new LoadedMap
+    LoadedMap loadedMap = new()
     {
       Name = Path.GetFileNameWithoutExtension(resolvedBsp),
       BspPath = resolvedBsp,
@@ -148,6 +152,13 @@ public static class BspLoader
       CollisionVertices = ext.CollisionVertices,
       CollisionLines = ext.CollisionLines,
     };
+
+    if (strictMode)
+    {
+      BspStrictValidator.ValidateForStrictLoad(loadedMap);
+    }
+
+    return loadedMap;
   }
 
   private static BspData ReadBsp(string bspPath, MaterialData materialData)

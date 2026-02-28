@@ -26,6 +26,8 @@ partial class MainForm
   private ToolStripMenuItem _viewMenuItem = null!;
   private ToolStripMenuItem _showSpeedStripMenuItem = null!;
   private ToolStripMenuItem _showCollisionStripMenuItem = null!;
+  private ToolStripMenuItem _showBspEditorStripMenuItem = null!;
+  private ToolStripMenuItem _strictLoadModeMenuItem = null!;
   private ToolStripMenuItem _helpMenuItem = null!;
   private ToolStripMenuItem _controlsMenuItem = null!;
   private ToolStrip _speedStrip = null!;
@@ -78,6 +80,18 @@ partial class MainForm
   private ToolStripButton _undoCollisionButton = null!;
   private ToolStripButton _redoCollisionButton = null!;
   private ToolStripButton _resetEditedCollisionButton = null!;
+  private ToolStrip _bspEditorStrip = null!;
+  private ToolStripButton _bspSelectModeButton = null!;
+  private ToolStripButton _bspDeleteButton = null!;
+  private ToolStripSeparator _bspEditorSeparator1 = null!;
+  private ToolStripLabel _bspMoveStepLabel = null!;
+  private ToolStripControlHost _bspMoveStepHost = null!;
+  private ToolStripButton _bspMoveNegXButton = null!;
+  private ToolStripButton _bspMovePosXButton = null!;
+  private ToolStripButton _bspMoveNegYButton = null!;
+  private ToolStripButton _bspMovePosYButton = null!;
+  private ToolStripButton _bspMoveNegZButton = null!;
+  private ToolStripButton _bspMovePosZButton = null!;
   private StatusStrip _statusStrip = null!;
   private ToolStripStatusLabel _statusLabel = null!;
   private Panel _viewerHostPanel = null!;
@@ -90,6 +104,7 @@ partial class MainForm
   private NumericUpDown _boundaryHeightUpDown = null!;
   private NumericUpDown _boundaryEmbedDepthUpDown = null!;
   private NumericUpDown _boundarySnapDistanceUpDown = null!;
+  private NumericUpDown _bspMoveStepUpDown = null!;
   private System.Windows.Forms.Timer _statusTimer = null!;
 
   protected override void Dispose(bool disposing)
@@ -126,6 +141,8 @@ partial class MainForm
     _viewMenuItem = new ToolStripMenuItem();
     _showSpeedStripMenuItem = new ToolStripMenuItem();
     _showCollisionStripMenuItem = new ToolStripMenuItem();
+    _showBspEditorStripMenuItem = new ToolStripMenuItem();
+    _strictLoadModeMenuItem = new ToolStripMenuItem();
     _helpMenuItem = new ToolStripMenuItem();
     _controlsMenuItem = new ToolStripMenuItem();
     _speedStrip = new ToolStrip();
@@ -186,6 +203,19 @@ partial class MainForm
     _undoCollisionButton = new ToolStripButton();
     _redoCollisionButton = new ToolStripButton();
     _resetEditedCollisionButton = new ToolStripButton();
+    _bspEditorStrip = new ToolStrip();
+    _bspSelectModeButton = new ToolStripButton();
+    _bspDeleteButton = new ToolStripButton();
+    _bspEditorSeparator1 = new ToolStripSeparator();
+    _bspMoveStepLabel = new ToolStripLabel();
+    _bspMoveStepUpDown = new NumericUpDown();
+    _bspMoveStepHost = new ToolStripControlHost(_bspMoveStepUpDown);
+    _bspMoveNegXButton = new ToolStripButton();
+    _bspMovePosXButton = new ToolStripButton();
+    _bspMoveNegYButton = new ToolStripButton();
+    _bspMovePosYButton = new ToolStripButton();
+    _bspMoveNegZButton = new ToolStripButton();
+    _bspMovePosZButton = new ToolStripButton();
     _statusStrip = new StatusStrip();
     _statusLabel = new ToolStripStatusLabel();
     _viewerHostPanel = new Panel();
@@ -301,6 +331,8 @@ partial class MainForm
     {
       _showSpeedStripMenuItem,
       _showCollisionStripMenuItem,
+      _showBspEditorStripMenuItem,
+      _strictLoadModeMenuItem,
     });
     _viewMenuItem.Name = "_viewMenuItem";
     _viewMenuItem.Text = "&View";
@@ -316,6 +348,19 @@ partial class MainForm
     _showCollisionStripMenuItem.CheckState = CheckState.Checked;
     _showCollisionStripMenuItem.Name = "_showCollisionStripMenuItem";
     _showCollisionStripMenuItem.Text = "Show Collision Toolbar";
+
+    _showBspEditorStripMenuItem.Checked = true;
+    _showBspEditorStripMenuItem.CheckOnClick = true;
+    _showBspEditorStripMenuItem.CheckState = CheckState.Checked;
+    _showBspEditorStripMenuItem.Name = "_showBspEditorStripMenuItem";
+    _showBspEditorStripMenuItem.Text = "Show BSP Editor Toolbar";
+
+    _strictLoadModeMenuItem.Checked = true;
+    _strictLoadModeMenuItem.CheckOnClick = true;
+    _strictLoadModeMenuItem.CheckState = CheckState.Checked;
+    _strictLoadModeMenuItem.Name = "_strictLoadModeMenuItem";
+    _strictLoadModeMenuItem.Text = "Strict Load Mode";
+    _strictLoadModeMenuItem.ToolTipText = "When enabled, malformed BSP/EBP is rejected instead of tolerated.";
 
     _helpMenuItem.DropDownItems.AddRange(new ToolStripItem[] { _controlsMenuItem });
     _helpMenuItem.Name = "_helpMenuItem";
@@ -480,9 +525,9 @@ partial class MainForm
     _parityPipelineMenuItem.Name = "_parityPipelineMenuItem";
     _parityPipelineMenuItem.Text = "R3Parity";
 
-    _northSouthFlipButton.Checked = false;
+    _northSouthFlipButton.Checked = true;
     _northSouthFlipButton.CheckOnClick = true;
-    _northSouthFlipButton.CheckState = CheckState.Unchecked;
+    _northSouthFlipButton.CheckState = CheckState.Checked;
     _northSouthFlipButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
     _northSouthFlipButton.Name = "_northSouthFlipButton";
     _northSouthFlipButton.Text = "NSFlip";
@@ -684,6 +729,93 @@ partial class MainForm
     _resetEditedCollisionButton.Text = "ResetMap";
     _resetEditedCollisionButton.ToolTipText = "Discard unsaved collision edits and reload current map from source BSP/EBP";
 
+    _bspEditorStrip.Dock = DockStyle.Top;
+    _bspEditorStrip.GripStyle = ToolStripGripStyle.Hidden;
+    _bspEditorStrip.Items.AddRange(new ToolStripItem[]
+    {
+      _bspSelectModeButton,
+      _bspDeleteButton,
+      _bspEditorSeparator1,
+      _bspMoveStepLabel,
+      _bspMoveStepHost,
+      _bspMoveNegXButton,
+      _bspMovePosXButton,
+      _bspMoveNegYButton,
+      _bspMovePosYButton,
+      _bspMoveNegZButton,
+      _bspMovePosZButton,
+    });
+    _bspEditorStrip.Location = new Point(0, 74);
+    _bspEditorStrip.Name = "_bspEditorStrip";
+    _bspEditorStrip.RenderMode = ToolStripRenderMode.System;
+    _bspEditorStrip.Size = new Size(1600, 25);
+    _bspEditorStrip.TabIndex = 3;
+
+    _bspSelectModeButton.CheckOnClick = true;
+    _bspSelectModeButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+    _bspSelectModeButton.Name = "_bspSelectModeButton";
+    _bspSelectModeButton.Text = "BSP Select";
+    _bspSelectModeButton.ToolTipText = "Mouse select BSP mesh object/face in viewport";
+
+    _bspDeleteButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+    _bspDeleteButton.Enabled = false;
+    _bspDeleteButton.Name = "_bspDeleteButton";
+    _bspDeleteButton.Text = "BSP Del";
+    _bspDeleteButton.ToolTipText = "Delete selected BSP object/face";
+
+    _bspEditorSeparator1.Name = "_bspEditorSeparator1";
+
+    _bspMoveStepLabel.Name = "_bspMoveStepLabel";
+    _bspMoveStepLabel.Text = "Step";
+
+    _bspMoveStepUpDown.DecimalPlaces = 0;
+    _bspMoveStepUpDown.Increment = 5;
+    _bspMoveStepUpDown.Maximum = 5000;
+    _bspMoveStepUpDown.Minimum = 1;
+    _bspMoveStepUpDown.Name = "_bspMoveStepUpDown";
+    _bspMoveStepUpDown.Size = new Size(72, 23);
+    _bspMoveStepUpDown.Value = 50;
+
+    _bspMoveStepHost.AutoSize = false;
+    _bspMoveStepHost.Name = "_bspMoveStepHost";
+    _bspMoveStepHost.Size = new Size(72, 23);
+
+    _bspMoveNegXButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+    _bspMoveNegXButton.Enabled = false;
+    _bspMoveNegXButton.Name = "_bspMoveNegXButton";
+    _bspMoveNegXButton.Text = "X-";
+    _bspMoveNegXButton.ToolTipText = "Move selection by -X";
+
+    _bspMovePosXButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+    _bspMovePosXButton.Enabled = false;
+    _bspMovePosXButton.Name = "_bspMovePosXButton";
+    _bspMovePosXButton.Text = "X+";
+    _bspMovePosXButton.ToolTipText = "Move selection by +X";
+
+    _bspMoveNegYButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+    _bspMoveNegYButton.Enabled = false;
+    _bspMoveNegYButton.Name = "_bspMoveNegYButton";
+    _bspMoveNegYButton.Text = "Y-";
+    _bspMoveNegYButton.ToolTipText = "Move selection by -Y";
+
+    _bspMovePosYButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+    _bspMovePosYButton.Enabled = false;
+    _bspMovePosYButton.Name = "_bspMovePosYButton";
+    _bspMovePosYButton.Text = "Y+";
+    _bspMovePosYButton.ToolTipText = "Move selection by +Y";
+
+    _bspMoveNegZButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+    _bspMoveNegZButton.Enabled = false;
+    _bspMoveNegZButton.Name = "_bspMoveNegZButton";
+    _bspMoveNegZButton.Text = "Z-";
+    _bspMoveNegZButton.ToolTipText = "Move selection by -Z";
+
+    _bspMovePosZButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+    _bspMovePosZButton.Enabled = false;
+    _bspMovePosZButton.Name = "_bspMovePosZButton";
+    _bspMovePosZButton.Text = "Z+";
+    _bspMovePosZButton.ToolTipText = "Move selection by +Z";
+
     _statusStrip.Items.AddRange(new ToolStripItem[] { _statusLabel });
     _statusStrip.Location = new Point(0, 878);
     _statusStrip.Name = "_statusStrip";
@@ -696,16 +828,16 @@ partial class MainForm
     _viewerHostPanel.BackColor = Color.FromArgb(24, 28, 34);
     _viewerHostPanel.Controls.Add(_viewerHintLabel);
     _viewerHostPanel.Dock = DockStyle.Fill;
-    _viewerHostPanel.Location = new Point(0, 74);
+    _viewerHostPanel.Location = new Point(0, 99);
     _viewerHostPanel.Name = "_viewerHostPanel";
-    _viewerHostPanel.Size = new Size(1600, 804);
-    _viewerHostPanel.TabIndex = 3;
+    _viewerHostPanel.Size = new Size(1600, 779);
+    _viewerHostPanel.TabIndex = 4;
 
     _viewerHintLabel.Dock = DockStyle.Fill;
     _viewerHintLabel.ForeColor = Color.Gainsboro;
     _viewerHintLabel.Location = new Point(0, 0);
     _viewerHintLabel.Name = "_viewerHintLabel";
-    _viewerHintLabel.Size = new Size(1600, 804);
+    _viewerHintLabel.Size = new Size(1600, 779);
     _viewerHintLabel.TabIndex = 0;
     _viewerHintLabel.Text = "Runtime OpenGL viewport appears when app runs.";
     _viewerHintLabel.TextAlign = ContentAlignment.MiddleCenter;
@@ -718,6 +850,7 @@ partial class MainForm
     ClientSize = new Size(1600, 900);
     Controls.Add(_viewerHostPanel);
     Controls.Add(_statusStrip);
+    Controls.Add(_bspEditorStrip);
     Controls.Add(_collisionStrip);
     Controls.Add(_speedStrip);
     Controls.Add(_mainMenuStrip);
