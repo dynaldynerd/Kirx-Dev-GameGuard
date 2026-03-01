@@ -17,6 +17,8 @@ public readonly record struct BlenderPackageImportReport(
 public static class BlenderInterchange
 {
   public readonly record struct BspFaceSelection(int FaceIndex, bool FaceOnly);
+  public readonly record struct BspVertexSelection(int XBits, int YBits, int ZBits);
+  public readonly record struct BspEdgeSelection(BspVertexSelection A, BspVertexSelection B);
 
   private const string PackageVersion = "1";
   private const string ManifestFileName = "rf_map_package.json";
@@ -264,6 +266,941 @@ public static class BlenderInterchange
     }
   }
 
+  public static bool TryTranslateMeshPrimitiveSelection(
+    LoadedMap source,
+    IReadOnlyCollection<BspVertexSelection> selectedVertices,
+    IReadOnlyCollection<BspEdgeSelection> selectedEdges,
+    Vector3 delta,
+    out LoadedMap edited,
+    out string error)
+  {
+    edited = source;
+    error = string.Empty;
+    if (source == null)
+    {
+      error = "No map is loaded.";
+      return false;
+    }
+
+    if (!IsFiniteVector3(delta) || delta.LengthSquared <= 0.0000001f)
+    {
+      error = "Translation delta is invalid.";
+      return false;
+    }
+
+    List<string> warnings = new();
+    ObjImportVertex[] vertices = BuildMeshVerticesFromLoadedMap(source, warnings);
+    if (vertices.Length < 3 || (vertices.Length % 3) != 0)
+    {
+      error = "Current BSP mesh is empty or malformed.";
+      return false;
+    }
+
+    if (!TryBuildSelectedPrimitiveVertexIndexSet(
+      vertices,
+      selectedVertices,
+      selectedEdges,
+      out HashSet<int> selectedVertexIndices,
+      out error))
+    {
+      return false;
+    }
+
+    int movedVertexCount = 0;
+    foreach (int vertexIndex in selectedVertexIndices)
+    {
+      if ((uint)vertexIndex >= (uint)vertices.Length)
+      {
+        continue;
+      }
+
+      ObjImportVertex v = vertices[vertexIndex];
+      vertices[vertexIndex] = new ObjImportVertex(
+        v.Position + delta,
+        v.LocalPosition + delta,
+        v.Uv,
+        v.LightUv,
+        v.Color,
+        v.MaterialId,
+        v.LightMapId,
+        v.ObjectId,
+        v.HasExplicitUv);
+      ++movedVertexCount;
+    }
+
+    if (movedVertexCount <= 0)
+    {
+      error = "Selected BSP primitive did not contain any editable vertices.";
+      return false;
+    }
+
+    try
+    {
+      edited = ApplyMeshVerticesToMap(source, vertices, warnings);
+      return true;
+    }
+    catch (Exception ex)
+    {
+      error = $"BSP primitive translate rebuild failed: {ex.Message}";
+      return false;
+    }
+  }
+
+  public static bool TryDeleteMeshPrimitiveSelection(
+    LoadedMap source,
+    IReadOnlyCollection<BspVertexSelection> selectedVertices,
+    IReadOnlyCollection<BspEdgeSelection> selectedEdges,
+    out LoadedMap edited,
+    out string error)
+  {
+    edited = source;
+    error = string.Empty;
+    if (source == null)
+    {
+      error = "No map is loaded.";
+      return false;
+    }
+
+    List<string> warnings = new();
+    ObjImportVertex[] sourceVertices = BuildMeshVerticesFromLoadedMap(source, warnings);
+    if (sourceVertices.Length < 3 || (sourceVertices.Length % 3) != 0)
+    {
+      error = "Current BSP mesh is empty or malformed.";
+      return false;
+    }
+
+    if (!TryBuildSelectedPrimitiveFaceSetForDelete(
+      sourceVertices,
+      selectedVertices,
+      selectedEdges,
+      out HashSet<int> selectedFaceSet,
+      out error))
+    {
+      return false;
+    }
+
+    int triangleCount = sourceVertices.Length / 3;
+    List<ObjImportVertex> kept = new(sourceVertices.Length);
+    int removedFaces = 0;
+    for (int faceIndex = 0; faceIndex < triangleCount; ++faceIndex)
+    {
+      int baseIndex = faceIndex * 3;
+      if (selectedFaceSet.Contains(faceIndex))
+      {
+        ++removedFaces;
+        continue;
+      }
+
+      kept.Add(sourceVertices[baseIndex]);
+      kept.Add(sourceVertices[baseIndex + 1]);
+      kept.Add(sourceVertices[baseIndex + 2]);
+    }
+
+    if (removedFaces <= 0)
+    {
+      error = "No BSP triangles matched the primitive selection.";
+      return false;
+    }
+
+    if (kept.Count < 3)
+    {
+      error = "Delete would remove all BSP triangles; operation was blocked.";
+      return false;
+    }
+
+    try
+    {
+      edited = ApplyMeshVerticesToMap(source, kept.ToArray(), warnings);
+      return true;
+    }
+    catch (Exception ex)
+    {
+      error = $"BSP primitive delete rebuild failed: {ex.Message}";
+      return false;
+    }
+  }
+
+  public static bool TryDuplicateMeshSelection(
+    LoadedMap source,
+    IReadOnlyCollection<int> selectedObjectIds,
+    IReadOnlyCollection<BspFaceSelection> selectedFaces,
+    Vector3 offset,
+    out LoadedMap edited,
+    out string error)
+  {
+    edited = source;
+    error = string.Empty;
+    if (source == null)
+    {
+      error = "No map is loaded.";
+      return false;
+    }
+
+    if (!IsFiniteVector3(offset))
+    {
+      error = "Duplicate offset is invalid.";
+      return false;
+    }
+
+    List<string> warnings = new();
+    ObjImportVertex[] sourceVertices = BuildMeshVerticesFromLoadedMap(source, warnings);
+    if (sourceVertices.Length < 3 || (sourceVertices.Length % 3) != 0)
+    {
+      error = "Current BSP mesh is empty or malformed.";
+      return false;
+    }
+
+    if (!TryBuildSelectedFaceSet(
+      sourceVertices,
+      selectedObjectIds,
+      selectedFaces,
+      out HashSet<int> selectedFaceSet,
+      out error))
+    {
+      return false;
+    }
+
+    if (!TryDuplicateFaceSet(
+      source,
+      sourceVertices,
+      selectedFaceSet,
+      offset,
+      warnings,
+      "BSP duplicate",
+      out edited,
+      out error))
+    {
+      return false;
+    }
+
+    return true;
+  }
+
+  public static bool TryDuplicateMeshPrimitiveSelection(
+    LoadedMap source,
+    IReadOnlyCollection<BspVertexSelection> selectedVertices,
+    IReadOnlyCollection<BspEdgeSelection> selectedEdges,
+    Vector3 offset,
+    out LoadedMap edited,
+    out string error)
+  {
+    edited = source;
+    error = string.Empty;
+    if (source == null)
+    {
+      error = "No map is loaded.";
+      return false;
+    }
+
+    if (!IsFiniteVector3(offset))
+    {
+      error = "Duplicate offset is invalid.";
+      return false;
+    }
+
+    List<string> warnings = new();
+    ObjImportVertex[] sourceVertices = BuildMeshVerticesFromLoadedMap(source, warnings);
+    if (sourceVertices.Length < 3 || (sourceVertices.Length % 3) != 0)
+    {
+      error = "Current BSP mesh is empty or malformed.";
+      return false;
+    }
+
+    if (!TryBuildSelectedPrimitiveFaceSetForDelete(
+      sourceVertices,
+      selectedVertices,
+      selectedEdges,
+      out HashSet<int> selectedFaceSet,
+      out error))
+    {
+      return false;
+    }
+
+    if (!TryDuplicateFaceSet(
+      source,
+      sourceVertices,
+      selectedFaceSet,
+      offset,
+      warnings,
+      "BSP primitive duplicate",
+      out edited,
+      out error))
+    {
+      return false;
+    }
+
+    return true;
+  }
+
+  public static bool TryMergeMeshSelection(
+    LoadedMap source,
+    IReadOnlyCollection<int> selectedObjectIds,
+    IReadOnlyCollection<BspFaceSelection> selectedFaces,
+    IReadOnlyCollection<BspVertexSelection> selectedVertices,
+    IReadOnlyCollection<BspEdgeSelection> selectedEdges,
+    out LoadedMap edited,
+    out string error)
+  {
+    edited = source;
+    error = string.Empty;
+    if (source == null)
+    {
+      error = "No map is loaded.";
+      return false;
+    }
+
+    List<string> warnings = new();
+    ObjImportVertex[] vertices = BuildMeshVerticesFromLoadedMap(source, warnings);
+    if (vertices.Length < 3 || (vertices.Length % 3) != 0)
+    {
+      error = "Current BSP mesh is empty or malformed.";
+      return false;
+    }
+
+    HashSet<int> selectedFaceSet = new();
+    bool hasObjectFaceSelection = selectedObjectIds.Count > 0 || selectedFaces.Count > 0;
+    if (hasObjectFaceSelection)
+    {
+      if (!TryBuildSelectedFaceSet(
+        vertices,
+        selectedObjectIds,
+        selectedFaces,
+        out HashSet<int> objectFaceSet,
+        out error))
+      {
+        return false;
+      }
+
+      selectedFaceSet.UnionWith(objectFaceSet);
+    }
+
+    bool hasPrimitiveSelection = selectedVertices.Count > 0 || selectedEdges.Count > 0;
+    if (hasPrimitiveSelection)
+    {
+      if (!TryBuildSelectedPrimitiveFaceSetForDelete(
+        vertices,
+        selectedVertices,
+        selectedEdges,
+        out HashSet<int> primitiveFaceSet,
+        out error))
+      {
+        return false;
+      }
+
+      selectedFaceSet.UnionWith(primitiveFaceSet);
+    }
+
+    if (selectedFaceSet.Count <= 0)
+    {
+      error = "No BSP object/face/edge/vertex selected.";
+      return false;
+    }
+
+    if (!TryResolveMergeTargetObjectId(vertices, selectedFaceSet, selectedObjectIds, out ushort targetObjectId, out error))
+    {
+      return false;
+    }
+
+    int changedVertices = 0;
+    foreach (int faceIndex in selectedFaceSet)
+    {
+      int baseIndex = faceIndex * 3;
+      if ((uint)(baseIndex + 2) >= (uint)vertices.Length)
+      {
+        continue;
+      }
+
+      for (int k = 0; k < 3; ++k)
+      {
+        int vertexIndex = baseIndex + k;
+        ObjImportVertex v = vertices[vertexIndex];
+        if (v.ObjectId == targetObjectId)
+        {
+          continue;
+        }
+
+        vertices[vertexIndex] = new ObjImportVertex(
+          v.Position,
+          v.LocalPosition,
+          v.Uv,
+          v.LightUv,
+          v.Color,
+          v.MaterialId,
+          v.LightMapId,
+          targetObjectId,
+          v.HasExplicitUv);
+        ++changedVertices;
+      }
+    }
+
+    if (changedVertices <= 0)
+    {
+      error = "Selected BSP faces are already merged to one object.";
+      return false;
+    }
+
+    try
+    {
+      edited = ApplyMeshVerticesToMap(source, vertices, warnings);
+      return true;
+    }
+    catch (Exception ex)
+    {
+      error = $"BSP merge rebuild failed: {ex.Message}";
+      return false;
+    }
+  }
+
+  private static bool TryResolveMergeTargetObjectId(
+    ObjImportVertex[] vertices,
+    HashSet<int> selectedFaceSet,
+    IReadOnlyCollection<int> selectedObjectIds,
+    out ushort objectId,
+    out string error)
+  {
+    objectId = 0;
+    error = string.Empty;
+
+    int chosen = int.MaxValue;
+    foreach (int selectedObjectId in selectedObjectIds)
+    {
+      if (selectedObjectId < 0 || selectedObjectId > ushort.MaxValue)
+      {
+        continue;
+      }
+
+      if (selectedObjectId < chosen)
+      {
+        chosen = selectedObjectId;
+      }
+    }
+
+    if (chosen != int.MaxValue)
+    {
+      objectId = (ushort)chosen;
+      return true;
+    }
+
+    int firstFace = int.MaxValue;
+    foreach (int faceIndex in selectedFaceSet)
+    {
+      if (faceIndex >= 0 && faceIndex < firstFace)
+      {
+        firstFace = faceIndex;
+      }
+    }
+
+    if (firstFace == int.MaxValue)
+    {
+      error = "Selected BSP face set is invalid.";
+      return false;
+    }
+
+    int baseIndex = firstFace * 3;
+    if ((uint)baseIndex >= (uint)vertices.Length)
+    {
+      error = "Selected BSP face set is out of range.";
+      return false;
+    }
+
+    objectId = vertices[baseIndex].ObjectId;
+    return true;
+  }
+
+  private static bool TryDuplicateFaceSet(
+    LoadedMap source,
+    ObjImportVertex[] sourceVertices,
+    HashSet<int> selectedFaceSet,
+    Vector3 offset,
+    List<string> warnings,
+    string operationName,
+    out LoadedMap edited,
+    out string error)
+  {
+    edited = source;
+    error = string.Empty;
+    if (selectedFaceSet.Count <= 0)
+    {
+      error = "No BSP faces selected for duplicate.";
+      return false;
+    }
+
+    int triangleCount = sourceVertices.Length / 3;
+    List<int> sortedFaces = selectedFaceSet.ToList();
+    sortedFaces.Sort();
+
+    List<ObjImportVertex> merged = new(sourceVertices.Length + (sortedFaces.Count * 3));
+    merged.AddRange(sourceVertices);
+    for (int i = 0; i < sortedFaces.Count; ++i)
+    {
+      int faceIndex = sortedFaces[i];
+      if (faceIndex < 0 || faceIndex >= triangleCount)
+      {
+        continue;
+      }
+
+      int baseIndex = faceIndex * 3;
+      for (int k = 0; k < 3; ++k)
+      {
+        ObjImportVertex sourceVertex = sourceVertices[baseIndex + k];
+
+        Vector3 duplicatedPosition = sourceVertex.Position + offset;
+        Vector3 duplicatedLocalPosition = sourceVertex.LocalPosition + offset;
+        if (!IsFiniteVector3(duplicatedPosition) || !IsFiniteVector3(duplicatedLocalPosition))
+        {
+          error = $"{operationName} produced invalid vertex coordinates.";
+          return false;
+        }
+
+        merged.Add(new ObjImportVertex(
+          duplicatedPosition,
+          duplicatedLocalPosition,
+          sourceVertex.Uv,
+          sourceVertex.LightUv,
+          sourceVertex.Color,
+          sourceVertex.MaterialId,
+          sourceVertex.LightMapId,
+          sourceVertex.ObjectId,
+          sourceVertex.HasExplicitUv));
+      }
+    }
+
+    if (merged.Count == sourceVertices.Length)
+    {
+      error = "No BSP faces were duplicated.";
+      return false;
+    }
+
+    try
+    {
+      edited = ApplyMeshVerticesToMap(source, merged.ToArray(), warnings);
+      return true;
+    }
+    catch (Exception ex)
+    {
+      error = $"{operationName} rebuild failed: {ex.Message}";
+      return false;
+    }
+  }
+
+  public static bool TryScaleMeshPrimitiveSelection(
+    LoadedMap source,
+    IReadOnlyCollection<BspVertexSelection> selectedVertices,
+    IReadOnlyCollection<BspEdgeSelection> selectedEdges,
+    Vector3 scaleFactors,
+    out LoadedMap edited,
+    out string error)
+  {
+    edited = source;
+    error = string.Empty;
+    if (source == null)
+    {
+      error = "No map is loaded.";
+      return false;
+    }
+
+    if (!IsFiniteVector3(scaleFactors) ||
+        scaleFactors.X <= 0.0001f ||
+        scaleFactors.Y <= 0.0001f ||
+        scaleFactors.Z <= 0.0001f)
+    {
+      error = "Scale factor is invalid.";
+      return false;
+    }
+
+    return TryTransformMeshPrimitiveSelection(
+      source,
+      selectedVertices,
+      selectedEdges,
+      transform: (position, pivot) =>
+      {
+        Vector3 offset = position - pivot;
+        return new Vector3(
+          pivot.X + offset.X * scaleFactors.X,
+          pivot.Y + offset.Y * scaleFactors.Y,
+          pivot.Z + offset.Z * scaleFactors.Z);
+      },
+      operationName: "BSP primitive scale",
+      out edited,
+      out error);
+  }
+
+  public static bool TryRotateMeshPrimitiveSelection(
+    LoadedMap source,
+    IReadOnlyCollection<BspVertexSelection> selectedVertices,
+    IReadOnlyCollection<BspEdgeSelection> selectedEdges,
+    Vector3 axis,
+    float angleDegrees,
+    out LoadedMap edited,
+    out string error)
+  {
+    edited = source;
+    error = string.Empty;
+    if (source == null)
+    {
+      error = "No map is loaded.";
+      return false;
+    }
+
+    if (!IsFiniteVector3(axis) || axis.LengthSquared <= 0.000001f || !float.IsFinite(angleDegrees))
+    {
+      error = "Rotation axis/angle is invalid.";
+      return false;
+    }
+
+    float angleRadians = MathHelper.DegreesToRadians(angleDegrees);
+    if (!float.IsFinite(angleRadians) || MathF.Abs(angleRadians) <= 0.0000001f)
+    {
+      error = "Rotation angle is too small.";
+      return false;
+    }
+
+    Vector3 axisNormalized = Vector3.Normalize(axis);
+    return TryTransformMeshPrimitiveSelection(
+      source,
+      selectedVertices,
+      selectedEdges,
+      transform: (position, pivot) =>
+      {
+        Vector3 offset = position - pivot;
+        Vector3 rotated = RotateVectorByAxisAngle(offset, axisNormalized, angleRadians);
+        return pivot + rotated;
+      },
+      operationName: "BSP primitive rotate",
+      out edited,
+      out error);
+  }
+
+  public static bool TryScaleMeshSelection(
+    LoadedMap source,
+    IReadOnlyCollection<int> selectedObjectIds,
+    IReadOnlyCollection<BspFaceSelection> selectedFaces,
+    Vector3 scaleFactors,
+    out LoadedMap edited,
+    out string error)
+  {
+    edited = source;
+    error = string.Empty;
+    if (source == null)
+    {
+      error = "No map is loaded.";
+      return false;
+    }
+
+    if (!IsFiniteVector3(scaleFactors) ||
+        scaleFactors.X <= 0.0001f ||
+        scaleFactors.Y <= 0.0001f ||
+        scaleFactors.Z <= 0.0001f)
+    {
+      error = "Scale factor is invalid.";
+      return false;
+    }
+
+    return TryTransformMeshSelection(
+      source,
+      selectedObjectIds,
+      selectedFaces,
+      transform: (position, pivot) =>
+      {
+        Vector3 offset = position - pivot;
+        return new Vector3(
+          pivot.X + offset.X * scaleFactors.X,
+          pivot.Y + offset.Y * scaleFactors.Y,
+          pivot.Z + offset.Z * scaleFactors.Z);
+      },
+      operationName: "BSP scale",
+      out edited,
+      out error);
+  }
+
+  public static bool TryRotateMeshSelection(
+    LoadedMap source,
+    IReadOnlyCollection<int> selectedObjectIds,
+    IReadOnlyCollection<BspFaceSelection> selectedFaces,
+    Vector3 axis,
+    float angleDegrees,
+    out LoadedMap edited,
+    out string error)
+  {
+    edited = source;
+    error = string.Empty;
+    if (source == null)
+    {
+      error = "No map is loaded.";
+      return false;
+    }
+
+    if (!IsFiniteVector3(axis) || axis.LengthSquared <= 0.000001f || !float.IsFinite(angleDegrees))
+    {
+      error = "Rotation axis/angle is invalid.";
+      return false;
+    }
+
+    float angleRadians = MathHelper.DegreesToRadians(angleDegrees);
+    if (!float.IsFinite(angleRadians) || MathF.Abs(angleRadians) <= 0.0000001f)
+    {
+      error = "Rotation angle is too small.";
+      return false;
+    }
+
+    Vector3 axisNormalized = Vector3.Normalize(axis);
+    return TryTransformMeshSelection(
+      source,
+      selectedObjectIds,
+      selectedFaces,
+      transform: (position, pivot) =>
+      {
+        Vector3 offset = position - pivot;
+        Vector3 rotated = RotateVectorByAxisAngle(offset, axisNormalized, angleRadians);
+        return pivot + rotated;
+      },
+      operationName: "BSP rotate",
+      out edited,
+      out error);
+  }
+
+  private static bool TryTransformMeshSelection(
+    LoadedMap source,
+    IReadOnlyCollection<int> selectedObjectIds,
+    IReadOnlyCollection<BspFaceSelection> selectedFaces,
+    Func<Vector3, Vector3, Vector3> transform,
+    string operationName,
+    out LoadedMap edited,
+    out string error)
+  {
+    edited = source;
+    error = string.Empty;
+
+    List<string> warnings = new();
+    ObjImportVertex[] vertices = BuildMeshVerticesFromLoadedMap(source, warnings);
+    if (vertices.Length < 3 || (vertices.Length % 3) != 0)
+    {
+      error = "Current BSP mesh is empty or malformed.";
+      return false;
+    }
+
+    if (!TryBuildSelectedFaceSet(
+      vertices,
+      selectedObjectIds,
+      selectedFaces,
+      out HashSet<int> selectedFaceSet,
+      out error))
+    {
+      return false;
+    }
+
+    bool[] selectedVertex = new bool[vertices.Length];
+    foreach (int faceIndex in selectedFaceSet)
+    {
+      int faceBase = faceIndex * 3;
+      if ((uint)(faceBase + 2) >= (uint)vertices.Length)
+      {
+        continue;
+      }
+
+      selectedVertex[faceBase] = true;
+      selectedVertex[faceBase + 1] = true;
+      selectedVertex[faceBase + 2] = true;
+    }
+
+    Vector3 pivot = Vector3.Zero;
+    int pivotCount = 0;
+    for (int i = 0; i < vertices.Length; ++i)
+    {
+      if (!selectedVertex[i])
+      {
+        continue;
+      }
+
+      if (!IsFiniteVector3(vertices[i].Position))
+      {
+        continue;
+      }
+
+      pivot += vertices[i].Position;
+      ++pivotCount;
+    }
+
+    if (pivotCount <= 0)
+    {
+      error = "Selected BSP mesh did not contain any editable vertices.";
+      return false;
+    }
+
+    pivot /= pivotCount;
+    if (!IsFiniteVector3(pivot))
+    {
+      error = "Selection pivot is invalid.";
+      return false;
+    }
+
+    int transformedVertexCount = 0;
+    for (int i = 0; i < vertices.Length; ++i)
+    {
+      if (!selectedVertex[i])
+      {
+        continue;
+      }
+
+      ObjImportVertex v = vertices[i];
+      Vector3 transformedPosition = transform(v.Position, pivot);
+      Vector3 transformedLocal = transform(v.LocalPosition, pivot);
+      if (!IsFiniteVector3(transformedPosition) || !IsFiniteVector3(transformedLocal))
+      {
+        error = $"{operationName} produced invalid vertex coordinates.";
+        return false;
+      }
+
+      vertices[i] = new ObjImportVertex(
+        transformedPosition,
+        transformedLocal,
+        v.Uv,
+        v.LightUv,
+        v.Color,
+        v.MaterialId,
+        v.LightMapId,
+        v.ObjectId,
+        v.HasExplicitUv);
+      ++transformedVertexCount;
+    }
+
+    if (transformedVertexCount <= 0)
+    {
+      error = "Selected BSP mesh did not contain any editable vertices.";
+      return false;
+    }
+
+    try
+    {
+      edited = ApplyMeshVerticesToMap(source, vertices, warnings);
+      return true;
+    }
+    catch (Exception ex)
+    {
+      error = $"{operationName} rebuild failed: {ex.Message}";
+      return false;
+    }
+  }
+
+  private static bool TryTransformMeshPrimitiveSelection(
+    LoadedMap source,
+    IReadOnlyCollection<BspVertexSelection> selectedVertices,
+    IReadOnlyCollection<BspEdgeSelection> selectedEdges,
+    Func<Vector3, Vector3, Vector3> transform,
+    string operationName,
+    out LoadedMap edited,
+    out string error)
+  {
+    edited = source;
+    error = string.Empty;
+
+    List<string> warnings = new();
+    ObjImportVertex[] vertices = BuildMeshVerticesFromLoadedMap(source, warnings);
+    if (vertices.Length < 3 || (vertices.Length % 3) != 0)
+    {
+      error = "Current BSP mesh is empty or malformed.";
+      return false;
+    }
+
+    if (!TryBuildSelectedPrimitiveVertexIndexSet(
+      vertices,
+      selectedVertices,
+      selectedEdges,
+      out HashSet<int> selectedVertexIndices,
+      out error))
+    {
+      return false;
+    }
+
+    Vector3 pivot = Vector3.Zero;
+    int pivotCount = 0;
+    foreach (int vertexIndex in selectedVertexIndices)
+    {
+      if ((uint)vertexIndex >= (uint)vertices.Length)
+      {
+        continue;
+      }
+
+      Vector3 position = vertices[vertexIndex].Position;
+      if (!IsFiniteVector3(position))
+      {
+        continue;
+      }
+
+      pivot += position;
+      ++pivotCount;
+    }
+
+    if (pivotCount <= 0)
+    {
+      error = "Selected BSP primitive did not contain any editable vertices.";
+      return false;
+    }
+
+    pivot /= pivotCount;
+    if (!IsFiniteVector3(pivot))
+    {
+      error = "Selection pivot is invalid.";
+      return false;
+    }
+
+    int transformedVertexCount = 0;
+    foreach (int vertexIndex in selectedVertexIndices)
+    {
+      if ((uint)vertexIndex >= (uint)vertices.Length)
+      {
+        continue;
+      }
+
+      ObjImportVertex v = vertices[vertexIndex];
+      Vector3 transformedPosition = transform(v.Position, pivot);
+      Vector3 transformedLocal = transform(v.LocalPosition, pivot);
+      if (!IsFiniteVector3(transformedPosition) || !IsFiniteVector3(transformedLocal))
+      {
+        error = $"{operationName} produced invalid vertex coordinates.";
+        return false;
+      }
+
+      vertices[vertexIndex] = new ObjImportVertex(
+        transformedPosition,
+        transformedLocal,
+        v.Uv,
+        v.LightUv,
+        v.Color,
+        v.MaterialId,
+        v.LightMapId,
+        v.ObjectId,
+        v.HasExplicitUv);
+      ++transformedVertexCount;
+    }
+
+    if (transformedVertexCount <= 0)
+    {
+      error = "Selected BSP primitive did not contain any editable vertices.";
+      return false;
+    }
+
+    try
+    {
+      edited = ApplyMeshVerticesToMap(source, vertices, warnings);
+      return true;
+    }
+    catch (Exception ex)
+    {
+      error = $"{operationName} rebuild failed: {ex.Message}";
+      return false;
+    }
+  }
+
+  private static Vector3 RotateVectorByAxisAngle(Vector3 vector, Vector3 axisNormalized, float angleRadians)
+  {
+    float cos = MathF.Cos(angleRadians);
+    float sin = MathF.Sin(angleRadians);
+    return vector * cos
+      + Vector3.Cross(axisNormalized, vector) * sin
+      + axisNormalized * (Vector3.Dot(axisNormalized, vector) * (1.0f - cos));
+  }
+
   private static bool TryBuildSelectedFaceSet(
     ObjImportVertex[] vertices,
     IReadOnlyCollection<int> selectedObjectIds,
@@ -341,6 +1278,198 @@ public static class BlenderInterchange
     }
 
     return true;
+  }
+
+  private static bool TryBuildSelectedPrimitiveVertexIndexSet(
+    ObjImportVertex[] vertices,
+    IReadOnlyCollection<BspVertexSelection> selectedVertices,
+    IReadOnlyCollection<BspEdgeSelection> selectedEdges,
+    out HashSet<int> selectedVertexIndices,
+    out string error)
+  {
+    selectedVertexIndices = new HashSet<int>();
+    error = string.Empty;
+    if (vertices.Length < 3 || (vertices.Length % 3) != 0)
+    {
+      error = "Current BSP mesh is empty or malformed.";
+      return false;
+    }
+
+    Dictionary<BspVertexSelection, List<int>> vertexBuckets = BuildPrimitiveVertexBuckets(vertices);
+    HashSet<BspVertexSelection> vertexKeySet = new();
+    if (selectedVertices != null)
+    {
+      foreach (BspVertexSelection vertex in selectedVertices)
+      {
+        vertexKeySet.Add(vertex);
+      }
+    }
+
+    if (selectedEdges != null)
+    {
+      foreach (BspEdgeSelection edge in selectedEdges)
+      {
+        vertexKeySet.Add(edge.A);
+        vertexKeySet.Add(edge.B);
+      }
+    }
+
+    if (vertexKeySet.Count <= 0)
+    {
+      error = "No BSP vertex/edge is selected.";
+      return false;
+    }
+
+    foreach (BspVertexSelection key in vertexKeySet)
+    {
+      if (!vertexBuckets.TryGetValue(key, out List<int>? indices))
+      {
+        continue;
+      }
+
+      for (int i = 0; i < indices.Count; ++i)
+      {
+        selectedVertexIndices.Add(indices[i]);
+      }
+    }
+
+    if (selectedVertexIndices.Count <= 0)
+    {
+      error = "Selected BSP primitive does not reference editable mesh vertices.";
+      return false;
+    }
+
+    return true;
+  }
+
+  private static bool TryBuildSelectedPrimitiveFaceSetForDelete(
+    ObjImportVertex[] vertices,
+    IReadOnlyCollection<BspVertexSelection> selectedVertices,
+    IReadOnlyCollection<BspEdgeSelection> selectedEdges,
+    out HashSet<int> selectedFaceSet,
+    out string error)
+  {
+    selectedFaceSet = new HashSet<int>();
+    error = string.Empty;
+    if (vertices.Length < 3 || (vertices.Length % 3) != 0)
+    {
+      error = "Current BSP mesh is empty or malformed.";
+      return false;
+    }
+
+    HashSet<BspVertexSelection> vertexKeySet = new();
+    if (selectedVertices != null)
+    {
+      foreach (BspVertexSelection vertex in selectedVertices)
+      {
+        vertexKeySet.Add(vertex);
+      }
+    }
+
+    HashSet<PrimitiveEdgeSelectionKey> edgeKeySet = new();
+    if (selectedEdges != null)
+    {
+      foreach (BspEdgeSelection edge in selectedEdges)
+      {
+        edgeKeySet.Add(CreatePrimitiveEdgeSelectionKey(edge.A, edge.B));
+      }
+    }
+
+    if (vertexKeySet.Count <= 0 && edgeKeySet.Count <= 0)
+    {
+      error = "No BSP vertex/edge is selected.";
+      return false;
+    }
+
+    int triangleCount = vertices.Length / 3;
+    for (int faceIndex = 0; faceIndex < triangleCount; ++faceIndex)
+    {
+      int baseIndex = faceIndex * 3;
+      BspVertexSelection k0 = ToPrimitiveVertexSelection(vertices[baseIndex].Position);
+      BspVertexSelection k1 = ToPrimitiveVertexSelection(vertices[baseIndex + 1].Position);
+      BspVertexSelection k2 = ToPrimitiveVertexSelection(vertices[baseIndex + 2].Position);
+
+      bool removeByVertex =
+        vertexKeySet.Contains(k0) ||
+        vertexKeySet.Contains(k1) ||
+        vertexKeySet.Contains(k2);
+      if (removeByVertex)
+      {
+        selectedFaceSet.Add(faceIndex);
+        continue;
+      }
+
+      if (edgeKeySet.Count <= 0)
+      {
+        continue;
+      }
+
+      PrimitiveEdgeSelectionKey e01 = CreatePrimitiveEdgeSelectionKey(k0, k1);
+      PrimitiveEdgeSelectionKey e12 = CreatePrimitiveEdgeSelectionKey(k1, k2);
+      PrimitiveEdgeSelectionKey e20 = CreatePrimitiveEdgeSelectionKey(k2, k0);
+      if (edgeKeySet.Contains(e01) || edgeKeySet.Contains(e12) || edgeKeySet.Contains(e20))
+      {
+        selectedFaceSet.Add(faceIndex);
+      }
+    }
+
+    if (selectedFaceSet.Count <= 0)
+    {
+      error = "No BSP triangles matched the primitive selection.";
+      return false;
+    }
+
+    return true;
+  }
+
+  private static Dictionary<BspVertexSelection, List<int>> BuildPrimitiveVertexBuckets(ObjImportVertex[] vertices)
+  {
+    Dictionary<BspVertexSelection, List<int>> buckets = new(Math.Max(1024, vertices.Length / 2));
+    for (int vertexIndex = 0; vertexIndex < vertices.Length; ++vertexIndex)
+    {
+      BspVertexSelection key = ToPrimitiveVertexSelection(vertices[vertexIndex].Position);
+      if (!buckets.TryGetValue(key, out List<int>? indices))
+      {
+        indices = new List<int>(4);
+        buckets[key] = indices;
+      }
+
+      indices.Add(vertexIndex);
+    }
+
+    return buckets;
+  }
+
+  private static BspVertexSelection ToPrimitiveVertexSelection(Vector3 position)
+  {
+    return new(
+      BitConverter.SingleToInt32Bits(position.X),
+      BitConverter.SingleToInt32Bits(position.Y),
+      BitConverter.SingleToInt32Bits(position.Z));
+  }
+
+  private static PrimitiveEdgeSelectionKey CreatePrimitiveEdgeSelectionKey(BspVertexSelection a, BspVertexSelection b)
+  {
+    return ComparePrimitiveVertexSelection(a, b) <= 0
+      ? new PrimitiveEdgeSelectionKey(a, b)
+      : new PrimitiveEdgeSelectionKey(b, a);
+  }
+
+  private static int ComparePrimitiveVertexSelection(BspVertexSelection left, BspVertexSelection right)
+  {
+    int x = left.XBits.CompareTo(right.XBits);
+    if (x != 0)
+    {
+      return x;
+    }
+
+    int y = left.YBits.CompareTo(right.YBits);
+    if (y != 0)
+    {
+      return y;
+    }
+
+    return left.ZBits.CompareTo(right.ZBits);
   }
 
   public static void ExportPackage(LoadedMap map, string packageDirectoryPath)
@@ -3997,4 +5126,5 @@ public static class BlenderInterchange
   }
 
   private readonly record struct CollisionVertexKey(int X, int Y, int Z);
+  private readonly record struct PrimitiveEdgeSelectionKey(BspVertexSelection A, BspVertexSelection B);
 }

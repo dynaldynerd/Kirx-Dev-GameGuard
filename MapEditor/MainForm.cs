@@ -15,7 +15,10 @@ internal sealed partial class MainForm : Form
   private readonly Dictionary<string, EntityArchiveCacheInfo> _entityArchiveCacheByRoot = new(StringComparer.OrdinalIgnoreCase);
   private readonly Dictionary<string, SavedCameraPosition> _lastCameraByMapPath = new(StringComparer.OrdinalIgnoreCase);
   private const int MaxUndoHistory = 64;
+  private const float FixedSnapDistance = 10.0f;
   private const float BspTranslateStep = 50.0f;
+  private const float BspScaleStepPercent = 5.0f;
+  private const float BspRotateStepDegrees = 5.0f;
   private SkySourceMode _skySourceMode = SkySourceMode.Sky2;
   private RenderPipelineMode _renderPipelineMode = RenderPipelineMode.R3Parity;
   private bool _suppressMapSelectionChanged;
@@ -26,6 +29,7 @@ internal sealed partial class MainForm : Form
   private string? _loadedEbpPath;
   private bool _suppressBoundaryCollisionValueChanged;
   private bool _suppressToolModeSync;
+  private bool _suppressBspSelectionModeSync;
   private bool _strictLoadModeEnabled = true;
   private string _statusBaseText = "Ready. Ctrl+O open map folder | Select map in top combobox | Right mouse look | WASD move | Wheel zoom | F1 controls";
 
@@ -119,6 +123,18 @@ internal sealed partial class MainForm : Form
     _resetEditedCollisionButton.Click += (_, _) => ReloadCurrentMapFromDisk();
 
     _bspDeleteButton.Click += (_, _) => DeleteSelectedBspMeshFromUi();
+    _bspCopyButton.Click += (_, _) => DuplicateSelectedBspMeshFromUi();
+    _bspMergeButton.Click += (_, _) => MergeSelectedBspMeshFromUi();
+    _bspMoveNegXButton.Click += (_, _) => MoveSelectedBspMeshAxis(-1f, 0f, 0f);
+    _bspMovePosXButton.Click += (_, _) => MoveSelectedBspMeshAxis(1f, 0f, 0f);
+    _bspMoveNegYButton.Click += (_, _) => MoveSelectedBspMeshAxis(0f, -1f, 0f);
+    _bspMovePosYButton.Click += (_, _) => MoveSelectedBspMeshAxis(0f, 1f, 0f);
+    _bspMoveNegZButton.Click += (_, _) => MoveSelectedBspMeshAxis(0f, 0f, -1f);
+    _bspMovePosZButton.Click += (_, _) => MoveSelectedBspMeshAxis(0f, 0f, 1f);
+    _bspScaleDownButton.Click += (_, _) => ScaleSelectedBspMeshFromUi(1.0f - BspScaleStepPercent / 100.0f);
+    _bspScaleUpButton.Click += (_, _) => ScaleSelectedBspMeshFromUi(1.0f + BspScaleStepPercent / 100.0f);
+    _bspRotateNegYButton.Click += (_, _) => RotateSelectedBspMeshFromUi(-BspRotateStepDegrees);
+    _bspRotatePosYButton.Click += (_, _) => RotateSelectedBspMeshFromUi(BspRotateStepDegrees);
   }
 
   private void InitializeViewerBindings()
@@ -195,22 +211,30 @@ internal sealed partial class MainForm : Form
     _selectCollisionButton.CheckedChanged += (_, _) => SyncToolModesFromUi();
     _bspSelectModeButton.CheckedChanged += (_, _) => SyncToolModesFromUi();
     _bspMoveModeButton.CheckedChanged += (_, _) => SyncToolModesFromUi();
+    _bspScaleModeButton.CheckedChanged += (_, _) => SyncToolModesFromUi();
+    _bspRotateModeButton.CheckedChanged += (_, _) => SyncToolModesFromUi();
+    _bspModeObjectButton.Click += (_, _) => SetBspSelectionMode(MapViewerControl.BspSelectionMode.Object);
+    _bspModeFaceButton.Click += (_, _) => SetBspSelectionMode(MapViewerControl.BspSelectionMode.Face);
+    _bspModeEdgeButton.Click += (_, _) => SetBspSelectionMode(MapViewerControl.BspSelectionMode.Edge);
+    _bspModeVertexButton.Click += (_, _) => SetBspSelectionMode(MapViewerControl.BspSelectionMode.Vertex);
     SyncToolModesFromUi();
+    SetBspSelectionMode(MapViewerControl.BspSelectionMode.Object);
 
     _viewer.CollisionDrawPreviewHeight = (float)_boundaryHeightUpDown.Value;
     _viewer.CollisionDrawEmbedDepth = (float)_boundaryEmbedDepthUpDown.Value;
-    _viewer.CollisionDrawSnapDistance = (float)_boundarySnapDistanceUpDown.Value;
+    _viewer.CollisionDrawSnapDistance = FixedSnapDistance;
     _boundaryMarginUpDown.ValueChanged += (_, _) => ApplySelectedCollisionLineEditsFromBoundaryInputs();
     _boundaryHeightUpDown.ValueChanged += (_, _) => _viewer.CollisionDrawPreviewHeight = (float)_boundaryHeightUpDown.Value;
     _boundaryHeightUpDown.ValueChanged += (_, _) => ApplySelectedCollisionLineEditsFromBoundaryInputs();
     _boundaryEmbedDepthUpDown.ValueChanged += (_, _) => _viewer.CollisionDrawEmbedDepth = (float)_boundaryEmbedDepthUpDown.Value;
     _boundaryEmbedDepthUpDown.ValueChanged += (_, _) => ApplySelectedCollisionLineEditsFromBoundaryInputs();
-    _boundarySnapDistanceUpDown.ValueChanged += (_, _) => _viewer.CollisionDrawSnapDistance = (float)_boundarySnapDistanceUpDown.Value;
 
     _viewer.CollisionWallDrawRequested += OnViewerCollisionWallDrawRequested;
     _viewer.CollisionLineSelectionChanged += OnViewerCollisionLineSelectionChanged;
     _viewer.BspSelectionChanged += OnViewerBspSelectionChanged;
     _viewer.BspTranslateRequested += OnViewerBspTranslateRequested;
+    _viewer.BspScaleRequested += OnViewerBspScaleRequested;
+    _viewer.BspRotateAxisRequested += OnViewerBspRotateAxisRequested;
     _northSouthFlipButton.CheckedChanged += (_, _) =>
     {
       _viewer.FlipNorthSouth = _northSouthFlipButton.Checked;
@@ -241,23 +265,48 @@ internal sealed partial class MainForm : Form
         _selectCollisionButton.Checked = false;
         _bspSelectModeButton.Checked = false;
         _bspMoveModeButton.Checked = false;
+        _bspScaleModeButton.Checked = false;
+        _bspRotateModeButton.Checked = false;
       }
       else if (_selectCollisionButton.Checked)
       {
         _mouseDrawCollisionButton.Checked = false;
         _bspSelectModeButton.Checked = false;
         _bspMoveModeButton.Checked = false;
+        _bspScaleModeButton.Checked = false;
+        _bspRotateModeButton.Checked = false;
       }
       else if (_bspMoveModeButton.Checked)
       {
         _mouseDrawCollisionButton.Checked = false;
         _selectCollisionButton.Checked = false;
+        _bspScaleModeButton.Checked = false;
+        _bspRotateModeButton.Checked = false;
+        _bspSelectModeButton.Checked = true;
+      }
+      else if (_bspScaleModeButton.Checked)
+      {
+        _mouseDrawCollisionButton.Checked = false;
+        _selectCollisionButton.Checked = false;
+        _bspMoveModeButton.Checked = false;
+        _bspRotateModeButton.Checked = false;
+        _bspSelectModeButton.Checked = true;
+      }
+      else if (_bspRotateModeButton.Checked)
+      {
+        _mouseDrawCollisionButton.Checked = false;
+        _selectCollisionButton.Checked = false;
+        _bspMoveModeButton.Checked = false;
+        _bspScaleModeButton.Checked = false;
         _bspSelectModeButton.Checked = true;
       }
       else if (_bspSelectModeButton.Checked)
       {
         _mouseDrawCollisionButton.Checked = false;
         _selectCollisionButton.Checked = false;
+        _bspMoveModeButton.Checked = false;
+        _bspScaleModeButton.Checked = false;
+        _bspRotateModeButton.Checked = false;
       }
     }
     finally
@@ -269,13 +318,42 @@ internal sealed partial class MainForm : Form
     _viewer.CollisionSelectModeEnabled = _selectCollisionButton.Checked;
     _viewer.BspSelectModeEnabled = _bspSelectModeButton.Checked;
     _viewer.BspMoveModeEnabled = _bspMoveModeButton.Checked;
-    if (!_bspSelectModeButton.Checked && !_bspMoveModeButton.Checked)
+    _viewer.BspScaleModeEnabled = _bspScaleModeButton.Checked;
+    _viewer.BspRotateModeEnabled = _bspRotateModeButton.Checked;
+    if (!_bspSelectModeButton.Checked &&
+        !_bspMoveModeButton.Checked &&
+        !_bspScaleModeButton.Checked &&
+        !_bspRotateModeButton.Checked)
     {
       _viewer.ClearSelectedBspSelection();
     }
 
     _viewer.Focus();
     UpdateUndoUiState();
+  }
+
+  private void SetBspSelectionMode(MapViewerControl.BspSelectionMode mode)
+  {
+    if (_suppressBspSelectionModeSync)
+    {
+      return;
+    }
+
+    _suppressBspSelectionModeSync = true;
+    try
+    {
+      _bspModeObjectButton.Checked = mode == MapViewerControl.BspSelectionMode.Object;
+      _bspModeFaceButton.Checked = mode == MapViewerControl.BspSelectionMode.Face;
+      _bspModeEdgeButton.Checked = mode == MapViewerControl.BspSelectionMode.Edge;
+      _bspModeVertexButton.Checked = mode == MapViewerControl.BspSelectionMode.Vertex;
+    }
+    finally
+    {
+      _suppressBspSelectionModeSync = false;
+    }
+
+    _viewer.ActiveBspSelectionMode = mode;
+    _viewer.Focus();
   }
 
   private void OnViewerBspTranslateRequested(Vector3 sourceDelta)
@@ -293,9 +371,42 @@ internal sealed partial class MainForm : Form
     TranslateSelectedBspMeshFromUi(sourceDelta);
   }
 
+  private void OnViewerBspScaleRequested(float uniformScale)
+  {
+    if (!float.IsFinite(uniformScale))
+    {
+      return;
+    }
+
+    ScaleSelectedBspMeshFromUi(uniformScale);
+  }
+
+  private void OnViewerBspRotateAxisRequested(Vector3 axisSource, float angleDegrees)
+  {
+    if (!float.IsFinite(angleDegrees))
+    {
+      return;
+    }
+
+    if (!float.IsFinite(axisSource.X) || !float.IsFinite(axisSource.Y) || !float.IsFinite(axisSource.Z))
+    {
+      return;
+    }
+
+    if (axisSource.LengthSquared <= 0.000001f)
+    {
+      return;
+    }
+
+    RotateSelectedBspMeshFromUi(Vector3.Normalize(axisSource), angleDegrees);
+  }
+
   private ActiveDeleteMode GetActiveDeleteMode()
   {
-    if (_bspMoveModeButton.Checked || _bspSelectModeButton.Checked)
+    if (_bspMoveModeButton.Checked ||
+        _bspScaleModeButton.Checked ||
+        _bspRotateModeButton.Checked ||
+        _bspSelectModeButton.Checked)
     {
       return ActiveDeleteMode.Bsp;
     }
@@ -324,7 +435,7 @@ internal sealed partial class MainForm : Form
         bool hasBspSelection = _viewer.HasAnyBspSelection;
         if (!hasBspSelection)
         {
-          _statusBaseText = "Delete skipped: BSP mode is active, but no BSP face/object is selected.";
+          _statusBaseText = "Delete skipped: BSP mode is active, but no BSP object/face/edge/vertex is selected.";
           RefreshRuntimeStatus();
           return;
         }
@@ -725,10 +836,15 @@ internal sealed partial class MainForm : Form
       - Undo button or Ctrl+Z: undo latest collision edits (up to 64 steps)
       - Redo button or Ctrl+Y/Ctrl+Shift+Z: redo last undone edit
       - ResetMap: discard unsaved edits and reload map from source files
-      - BSP Editor strip (3rd row): enable `BSP Select`, then click geometry to select object/face
+      - BSP Editor strip (3rd row): enable `BSP Select`, then pick mode `Obj`/`Face`/`Edge`/`Vert` (Edge/Vert are true primitive selection)
       - Shift+click in BSP Select/BSP Move: add/remove from BSP multi-selection
-      - BSP Move: click-drag selected BSP object/face with mouse (view-plane drag)
-      - BSP Del: delete selected BSP object/face
+      - BSP Move: click-drag selected BSP object/face/edge/vertex with mouse (view-plane drag)
+      - X-/X+/Y-/Y+/Z+: nudge selected BSP by step value
+      - S-/S+: uniform scale selected BSP (5% step)
+      - RY-/RY+: rotate selected BSP around Y axis (5 deg step)
+      - BSP Del: delete selected BSP object/face/edge/vertex
+      - BSP Copy: duplicate selected BSP object/face/edge/vertex (+X by step)
+      - BSP Merge: merge selected BSP object/face/edge/vertex into one object group
       - DynLight button: toggle dynamic lighting
       - FxMark button: toggle particle/effect instances and map markers
       - R: reset camera to map default
@@ -785,7 +901,7 @@ internal sealed partial class MainForm : Form
 
     float wallHeight = (float)_boundaryHeightUpDown.Value;
     float bury = (float)_boundaryEmbedDepthUpDown.Value;
-    float snap = (float)_boundarySnapDistanceUpDown.Value;
+    float snap = FixedSnapDistance;
     if (!MapEditOperations.TryAppendCollisionWallSegment(
       _loadedMap,
       sourceStart,
@@ -803,7 +919,7 @@ internal sealed partial class MainForm : Form
       if (string.Equals(error, "Collision segment is too short after snap.", StringComparison.Ordinal) ||
           string.Equals(error, "Collision segment is too short.", StringComparison.Ordinal))
       {
-        _statusBaseText = $"Mouse draw skipped: {error} | Tip: drag longer or reduce B-Snap";
+        _statusBaseText = $"Mouse draw skipped: {error} | Tip: drag longer.";
         RefreshRuntimeStatus();
         return;
       }
@@ -870,8 +986,15 @@ internal sealed partial class MainForm : Form
 
     int selectedObjectCount = _viewer.GetSelectedBspObjectIdsSnapshot().Length;
     int selectedFaceSeedCount = _viewer.GetSelectedBspFaceSelectionsSnapshot().Length;
+    int selectedVertexCount = _viewer.GetSelectedBspVertexSelectionsSnapshot().Length;
+    int selectedEdgeCount = _viewer.GetSelectedBspEdgeSelectionsSnapshot().Length;
 
-    if (selectedObjectCount > 1 || selectedFaceSeedCount > 1)
+    if (selectedVertexCount > 0 || selectedEdgeCount > 0)
+    {
+      _statusBaseText =
+        $"Selected BSP primitive ({selectedVertexCount} vertex key(s), {selectedEdgeCount} edge(s)) | Mode: {_viewer.ActiveBspSelectionMode}";
+    }
+    else if (selectedObjectCount > 1 || selectedFaceSeedCount > 1)
     {
       _statusBaseText = $"Selected BSP multi ({selectedObjectCount} object(s), {selectedFaceSeedCount} face seed(s))";
     }
@@ -1003,18 +1126,33 @@ internal sealed partial class MainForm : Form
 
     int[] selectedObjectIds = _viewer.GetSelectedBspObjectIdsSnapshot();
     BlenderInterchange.BspFaceSelection[] selectedFaces = _viewer.GetSelectedBspFaceSelectionsSnapshot();
-    if (selectedObjectIds.Length <= 0 && selectedFaces.Length <= 0)
+    BlenderInterchange.BspVertexSelection[] selectedVertices = _viewer.GetSelectedBspVertexSelectionsSnapshot();
+    BlenderInterchange.BspEdgeSelection[] selectedEdges = _viewer.GetSelectedBspEdgeSelectionsSnapshot();
+    if (selectedObjectIds.Length <= 0 &&
+        selectedFaces.Length <= 0 &&
+        selectedVertices.Length <= 0 &&
+        selectedEdges.Length <= 0)
     {
-      MessageBox.Show(this, "No BSP face/object is selected.", "Delete BSP Mesh", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      MessageBox.Show(this, "No BSP object/face/edge/vertex is selected.", "Delete BSP Mesh", MessageBoxButtons.OK, MessageBoxIcon.Information);
       return;
     }
 
-    if (!BlenderInterchange.TryDeleteMeshSelection(
-      _loadedMap,
-      selectedObjectIds,
-      selectedFaces,
-      out LoadedMap editedMap,
-      out string error))
+    bool primitiveMode =
+      _viewer.ActiveBspSelectionMode is MapViewerControl.BspSelectionMode.Vertex or MapViewerControl.BspSelectionMode.Edge;
+    bool deleted = primitiveMode
+      ? BlenderInterchange.TryDeleteMeshPrimitiveSelection(
+        _loadedMap,
+        selectedVertices,
+        selectedEdges,
+        out LoadedMap editedMap,
+        out string error)
+      : BlenderInterchange.TryDeleteMeshSelection(
+        _loadedMap,
+        selectedObjectIds,
+        selectedFaces,
+        out editedMap,
+        out error);
+    if (!deleted)
     {
       MessageBox.Show(this, error, "Delete BSP Mesh Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
       return;
@@ -1022,7 +1160,113 @@ internal sealed partial class MainForm : Form
 
     ApplyEditedMap(editedMap, preferredSelectionIndex: -1, trackUndo: true, clearRedo: true, geometryEdited: true);
     _viewer.ClearSelectedBspSelection();
-    _statusBaseText = $"Deleted BSP selection ({selectedObjectIds.Length} object(s), {selectedFaces.Length} face seed(s)) | BSP TriVerts: {_loadedMap.BspRenderVertices.Length:N0}";
+    _statusBaseText = primitiveMode
+      ? $"Deleted BSP primitive selection ({selectedVertices.Length} vertex key(s), {selectedEdges.Length} edge(s)) | BSP TriVerts: {_loadedMap.BspRenderVertices.Length:N0}"
+      : $"Deleted BSP selection ({selectedObjectIds.Length} object(s), {selectedFaces.Length} face seed(s)) | BSP TriVerts: {_loadedMap.BspRenderVertices.Length:N0}";
+    RefreshRuntimeStatus();
+  }
+
+  private void DuplicateSelectedBspMeshFromUi()
+  {
+    if (_loadedMap == null)
+    {
+      MessageBox.Show(this, "No map is loaded.", "Duplicate BSP Mesh", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    int[] selectedObjectIds = _viewer.GetSelectedBspObjectIdsSnapshot();
+    BlenderInterchange.BspFaceSelection[] selectedFaces = _viewer.GetSelectedBspFaceSelectionsSnapshot();
+    BlenderInterchange.BspVertexSelection[] selectedVertices = _viewer.GetSelectedBspVertexSelectionsSnapshot();
+    BlenderInterchange.BspEdgeSelection[] selectedEdges = _viewer.GetSelectedBspEdgeSelectionsSnapshot();
+    if (selectedObjectIds.Length <= 0 &&
+        selectedFaces.Length <= 0 &&
+        selectedVertices.Length <= 0 &&
+        selectedEdges.Length <= 0)
+    {
+      MessageBox.Show(this, "No BSP object/face/edge/vertex is selected.", "Duplicate BSP Mesh", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    float step = (float)_bspMoveStepUpDown.Value;
+    if (!float.IsFinite(step) || step <= 0.0f)
+    {
+      step = BspTranslateStep;
+    }
+
+    Vector3 duplicateOffset = new(step, 0f, 0f);
+    bool primitiveMode =
+      _viewer.ActiveBspSelectionMode is MapViewerControl.BspSelectionMode.Vertex or MapViewerControl.BspSelectionMode.Edge;
+    bool duplicated = primitiveMode
+      ? BlenderInterchange.TryDuplicateMeshPrimitiveSelection(
+        _loadedMap,
+        selectedVertices,
+        selectedEdges,
+        duplicateOffset,
+        out LoadedMap editedMap,
+        out string error)
+      : BlenderInterchange.TryDuplicateMeshSelection(
+        _loadedMap,
+        selectedObjectIds,
+        selectedFaces,
+        duplicateOffset,
+        out editedMap,
+        out error);
+    if (!duplicated)
+    {
+      MessageBox.Show(this, error, "Duplicate BSP Mesh Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+      return;
+    }
+
+    ApplyEditedMap(editedMap, preferredSelectionIndex: -1, trackUndo: true, clearRedo: true, geometryEdited: true);
+    _statusBaseText = primitiveMode
+      ? $"Duplicated BSP primitive selection ({selectedVertices.Length} vertex key(s), {selectedEdges.Length} edge(s)) by ({duplicateOffset.X:F1},{duplicateOffset.Y:F1},{duplicateOffset.Z:F1})"
+      : $"Duplicated BSP selection ({selectedObjectIds.Length} object(s), {selectedFaces.Length} face seed(s)) by ({duplicateOffset.X:F1},{duplicateOffset.Y:F1},{duplicateOffset.Z:F1})";
+    RefreshRuntimeStatus();
+  }
+
+  private void MergeSelectedBspMeshFromUi()
+  {
+    if (_loadedMap == null)
+    {
+      MessageBox.Show(this, "No map is loaded.", "Merge BSP Mesh", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    int[] selectedObjectIds = _viewer.GetSelectedBspObjectIdsSnapshot();
+    BlenderInterchange.BspFaceSelection[] selectedFaces = _viewer.GetSelectedBspFaceSelectionsSnapshot();
+    BlenderInterchange.BspVertexSelection[] selectedVertices = _viewer.GetSelectedBspVertexSelectionsSnapshot();
+    BlenderInterchange.BspEdgeSelection[] selectedEdges = _viewer.GetSelectedBspEdgeSelectionsSnapshot();
+    if (selectedObjectIds.Length <= 0 &&
+        selectedFaces.Length <= 0 &&
+        selectedVertices.Length <= 0 &&
+        selectedEdges.Length <= 0)
+    {
+      MessageBox.Show(this, "No BSP object/face/edge/vertex is selected.", "Merge BSP Mesh", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    if (!BlenderInterchange.TryMergeMeshSelection(
+      _loadedMap,
+      selectedObjectIds,
+      selectedFaces,
+      selectedVertices,
+      selectedEdges,
+      out LoadedMap editedMap,
+      out string error))
+    {
+      if (error.Contains("already merged to one object", StringComparison.OrdinalIgnoreCase))
+      {
+        _statusBaseText = "Merge skipped: selected BSP faces are already in one object group.";
+        RefreshRuntimeStatus();
+        return;
+      }
+
+      MessageBox.Show(this, error, "Merge BSP Mesh Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+      return;
+    }
+
+    ApplyEditedMap(editedMap, preferredSelectionIndex: -1, trackUndo: true, clearRedo: true, geometryEdited: true);
+    _statusBaseText = $"Merged BSP selection into one object group | BSP TriVerts: {_loadedMap.BspRenderVertices.Length:N0}";
     RefreshRuntimeStatus();
   }
 
@@ -1035,20 +1279,36 @@ internal sealed partial class MainForm : Form
 
     int[] selectedObjectIds = _viewer.GetSelectedBspObjectIdsSnapshot();
     BlenderInterchange.BspFaceSelection[] selectedFaces = _viewer.GetSelectedBspFaceSelectionsSnapshot();
-    if (selectedObjectIds.Length <= 0 && selectedFaces.Length <= 0)
+    BlenderInterchange.BspVertexSelection[] selectedVertices = _viewer.GetSelectedBspVertexSelectionsSnapshot();
+    BlenderInterchange.BspEdgeSelection[] selectedEdges = _viewer.GetSelectedBspEdgeSelectionsSnapshot();
+    if (selectedObjectIds.Length <= 0 &&
+        selectedFaces.Length <= 0 &&
+        selectedVertices.Length <= 0 &&
+        selectedEdges.Length <= 0)
     {
-      _statusBaseText = "BSP translate skipped: no BSP face/object selected.";
+      _statusBaseText = "BSP translate skipped: no BSP object/face/edge/vertex selected.";
       RefreshRuntimeStatus();
       return;
     }
 
-    if (!BlenderInterchange.TryTranslateMeshSelection(
-      _loadedMap,
-      selectedObjectIds,
-      selectedFaces,
-      sourceDelta,
-      out LoadedMap editedMap,
-      out string error))
+    bool primitiveMode =
+      _viewer.ActiveBspSelectionMode is MapViewerControl.BspSelectionMode.Vertex or MapViewerControl.BspSelectionMode.Edge;
+    bool moved = primitiveMode
+      ? BlenderInterchange.TryTranslateMeshPrimitiveSelection(
+        _loadedMap,
+        selectedVertices,
+        selectedEdges,
+        sourceDelta,
+        out LoadedMap editedMap,
+        out string error)
+      : BlenderInterchange.TryTranslateMeshSelection(
+        _loadedMap,
+        selectedObjectIds,
+        selectedFaces,
+        sourceDelta,
+        out editedMap,
+        out error);
+    if (!moved)
     {
       _viewer.CancelBspMovePreview();
       _statusBaseText = $"BSP translate failed: {error}";
@@ -1057,7 +1317,9 @@ internal sealed partial class MainForm : Form
     }
 
     ApplyEditedMap(editedMap, preferredSelectionIndex: -1, trackUndo: true, clearRedo: true, geometryEdited: true);
-    _statusBaseText = $"Moved BSP selection ({selectedObjectIds.Length} object(s), {selectedFaces.Length} face seed(s)) by ({sourceDelta.X:F1},{sourceDelta.Y:F1},{sourceDelta.Z:F1})";
+    _statusBaseText = primitiveMode
+      ? $"Moved BSP primitive selection ({selectedVertices.Length} vertex key(s), {selectedEdges.Length} edge(s)) by ({sourceDelta.X:F1},{sourceDelta.Y:F1},{sourceDelta.Z:F1})"
+      : $"Moved BSP selection ({selectedObjectIds.Length} object(s), {selectedFaces.Length} face seed(s)) by ({sourceDelta.X:F1},{sourceDelta.Y:F1},{sourceDelta.Z:F1})";
     RefreshRuntimeStatus();
   }
 
@@ -1076,6 +1338,142 @@ internal sealed partial class MainForm : Form
 
     Vector3 sourceDelta = new(step * xSign, step * ySign, step * zSign);
     TranslateSelectedBspMeshFromUi(sourceDelta);
+  }
+
+  private void ScaleSelectedBspMeshFromUi(float uniformScale)
+  {
+    if (_loadedMap == null)
+    {
+      return;
+    }
+
+    if (!float.IsFinite(uniformScale) || uniformScale <= 0.0001f)
+    {
+      _statusBaseText = "BSP scale skipped: invalid scale factor.";
+      RefreshRuntimeStatus();
+      return;
+    }
+
+    int[] selectedObjectIds = _viewer.GetSelectedBspObjectIdsSnapshot();
+    BlenderInterchange.BspFaceSelection[] selectedFaces = _viewer.GetSelectedBspFaceSelectionsSnapshot();
+    BlenderInterchange.BspVertexSelection[] selectedVertices = _viewer.GetSelectedBspVertexSelectionsSnapshot();
+    BlenderInterchange.BspEdgeSelection[] selectedEdges = _viewer.GetSelectedBspEdgeSelectionsSnapshot();
+    if (selectedObjectIds.Length <= 0 &&
+        selectedFaces.Length <= 0 &&
+        selectedVertices.Length <= 0 &&
+        selectedEdges.Length <= 0)
+    {
+      _statusBaseText = "BSP scale skipped: no BSP object/face/edge/vertex selected.";
+      RefreshRuntimeStatus();
+      return;
+    }
+
+    Vector3 scale = new(uniformScale, uniformScale, uniformScale);
+    bool primitiveMode =
+      _viewer.ActiveBspSelectionMode is MapViewerControl.BspSelectionMode.Vertex or MapViewerControl.BspSelectionMode.Edge;
+    bool scaled = primitiveMode
+      ? BlenderInterchange.TryScaleMeshPrimitiveSelection(
+        _loadedMap,
+        selectedVertices,
+        selectedEdges,
+        scale,
+        out LoadedMap editedMap,
+        out string error)
+      : BlenderInterchange.TryScaleMeshSelection(
+        _loadedMap,
+        selectedObjectIds,
+        selectedFaces,
+        scale,
+        out editedMap,
+        out error);
+    if (!scaled)
+    {
+      _statusBaseText = $"BSP scale failed: {error}";
+      RefreshRuntimeStatus();
+      return;
+    }
+
+    ApplyEditedMap(editedMap, preferredSelectionIndex: -1, trackUndo: true, clearRedo: true, geometryEdited: true);
+    float percent = (uniformScale - 1.0f) * 100.0f;
+    _statusBaseText = primitiveMode
+      ? $"Scaled BSP primitive selection ({selectedVertices.Length} vertex key(s), {selectedEdges.Length} edge(s)) by {percent:+0.0;-0.0;0.0}%"
+      : $"Scaled BSP selection ({selectedObjectIds.Length} object(s), {selectedFaces.Length} face seed(s)) by {percent:+0.0;-0.0;0.0}%";
+    RefreshRuntimeStatus();
+  }
+
+  private void RotateSelectedBspMeshFromUi(float degreesY)
+  {
+    RotateSelectedBspMeshFromUi(Vector3.UnitY, degreesY);
+  }
+
+  private void RotateSelectedBspMeshFromUi(Vector3 axis, float degreesY)
+  {
+    if (_loadedMap == null)
+    {
+      return;
+    }
+
+    if (!float.IsFinite(degreesY) || MathF.Abs(degreesY) <= 0.0001f)
+    {
+      _statusBaseText = "BSP rotate skipped: invalid angle.";
+      RefreshRuntimeStatus();
+      return;
+    }
+
+    int[] selectedObjectIds = _viewer.GetSelectedBspObjectIdsSnapshot();
+    BlenderInterchange.BspFaceSelection[] selectedFaces = _viewer.GetSelectedBspFaceSelectionsSnapshot();
+    BlenderInterchange.BspVertexSelection[] selectedVertices = _viewer.GetSelectedBspVertexSelectionsSnapshot();
+    BlenderInterchange.BspEdgeSelection[] selectedEdges = _viewer.GetSelectedBspEdgeSelectionsSnapshot();
+    if (selectedObjectIds.Length <= 0 &&
+        selectedFaces.Length <= 0 &&
+        selectedVertices.Length <= 0 &&
+        selectedEdges.Length <= 0)
+    {
+      _statusBaseText = "BSP rotate skipped: no BSP object/face/edge/vertex selected.";
+      RefreshRuntimeStatus();
+      return;
+    }
+
+    if (!float.IsFinite(axis.X) || !float.IsFinite(axis.Y) || !float.IsFinite(axis.Z) || axis.LengthSquared <= 0.000001f)
+    {
+      _statusBaseText = "BSP rotate skipped: invalid axis.";
+      RefreshRuntimeStatus();
+      return;
+    }
+
+    Vector3 axisNormalized = Vector3.Normalize(axis);
+    bool primitiveMode =
+      _viewer.ActiveBspSelectionMode is MapViewerControl.BspSelectionMode.Vertex or MapViewerControl.BspSelectionMode.Edge;
+    bool rotated = primitiveMode
+      ? BlenderInterchange.TryRotateMeshPrimitiveSelection(
+        _loadedMap,
+        selectedVertices,
+        selectedEdges,
+        axisNormalized,
+        degreesY,
+        out LoadedMap editedMap,
+        out string error)
+      : BlenderInterchange.TryRotateMeshSelection(
+        _loadedMap,
+        selectedObjectIds,
+        selectedFaces,
+        axisNormalized,
+        degreesY,
+        out editedMap,
+        out error);
+    if (!rotated)
+    {
+      _statusBaseText = $"BSP rotate failed: {error}";
+      RefreshRuntimeStatus();
+      return;
+    }
+
+    ApplyEditedMap(editedMap, preferredSelectionIndex: -1, trackUndo: true, clearRedo: true, geometryEdited: true);
+    string axisLabel = $"axis ({axisNormalized.X:+0.00;-0.00;0.00},{axisNormalized.Y:+0.00;-0.00;0.00},{axisNormalized.Z:+0.00;-0.00;0.00})";
+    _statusBaseText = primitiveMode
+      ? $"Rotated BSP primitive selection ({selectedVertices.Length} vertex key(s), {selectedEdges.Length} edge(s)) around {axisLabel} by {degreesY:+0.0;-0.0;0.0} deg"
+      : $"Rotated BSP selection ({selectedObjectIds.Length} object(s), {selectedFaces.Length} face seed(s)) around {axisLabel} by {degreesY:+0.0;-0.0;0.0} deg";
+    RefreshRuntimeStatus();
   }
 
   private void ReloadCurrentMapFromDisk()
@@ -1272,9 +1670,10 @@ internal sealed partial class MainForm : Form
       _editRedoHistory.RemoveAt(0);
     }
 
-    ApplyEditedMap(previousMap, trackUndo: false, clearRedo: false);
+    ApplyEditedMap(previousMap, trackUndo: false, clearRedo: false, geometryEdited: true);
     _statusBaseText =
-      $"Undo collision edit | Collision: {_loadedMap.CollisionVertices.Length:N0}v/{_loadedMap.CollisionLines.Length:N0}l"
+      $"Undo map edit | Collision: {_loadedMap.CollisionVertices.Length:N0}v/{_loadedMap.CollisionLines.Length:N0}l"
+      + $" | BSP TriVerts: {_loadedMap.BspRenderVertices.Length:N0}"
       + $" | Undo left: {_editUndoHistory.Count:N0} | Redo: {_editRedoHistory.Count:N0}";
     RefreshRuntimeStatus();
   }
@@ -1295,9 +1694,10 @@ internal sealed partial class MainForm : Form
       _editUndoHistory.RemoveAt(0);
     }
 
-    ApplyEditedMap(nextMap, trackUndo: false, clearRedo: false);
+    ApplyEditedMap(nextMap, trackUndo: false, clearRedo: false, geometryEdited: true);
     _statusBaseText =
-      $"Redo collision edit | Collision: {_loadedMap.CollisionVertices.Length:N0}v/{_loadedMap.CollisionLines.Length:N0}l"
+      $"Redo map edit | Collision: {_loadedMap.CollisionVertices.Length:N0}v/{_loadedMap.CollisionLines.Length:N0}l"
+      + $" | BSP TriVerts: {_loadedMap.BspRenderVertices.Length:N0}"
       + $" | Undo: {_editUndoHistory.Count:N0} | Redo left: {_editRedoHistory.Count:N0}";
     RefreshRuntimeStatus();
   }
@@ -1328,7 +1728,7 @@ internal sealed partial class MainForm : Form
     _deleteSelectedCollisionButton.ToolTipText = deleteMode switch
     {
       ActiveDeleteMode.Collision => "Delete selected collision wall segment (active mode: SelWall)",
-      ActiveDeleteMode.Bsp => "Delete selected BSP object/face (active mode: BSP Select/BSP Move)",
+      ActiveDeleteMode.Bsp => "Delete selected BSP object/face/edge/vertex (active mode: BSP Select/BSP Move)",
       _ => "Enable SelWall or BSP Select/BSP Move to delete selection",
     };
     _deleteSelectedCollisionMenuItem.Text = deleteMode switch
@@ -1338,12 +1738,18 @@ internal sealed partial class MainForm : Form
       _ => "Delete Selected",
     };
     _bspDeleteButton.Enabled = hasBspSelection;
+    _bspCopyButton.Enabled = hasBspSelection;
+    _bspMergeButton.Enabled = hasBspSelection;
     _bspMoveNegXButton.Enabled = hasBspSelection;
     _bspMovePosXButton.Enabled = hasBspSelection;
     _bspMoveNegYButton.Enabled = hasBspSelection;
     _bspMovePosYButton.Enabled = hasBspSelection;
     _bspMoveNegZButton.Enabled = hasBspSelection;
     _bspMovePosZButton.Enabled = hasBspSelection;
+    _bspScaleDownButton.Enabled = hasBspSelection;
+    _bspScaleUpButton.Enabled = hasBspSelection;
+    _bspRotateNegYButton.Enabled = hasBspSelection;
+    _bspRotatePosYButton.Enabled = hasBspSelection;
   }
 
   private void OnMainFormKeyDown(object? sender, KeyEventArgs e)

@@ -83,7 +83,16 @@ partial class MainForm
   private ToolStrip _bspEditorStrip = null!;
   private ToolStripButton _bspSelectModeButton = null!;
   private ToolStripButton _bspMoveModeButton = null!;
+  private ToolStripButton _bspScaleModeButton = null!;
+  private ToolStripButton _bspRotateModeButton = null!;
+  private ToolStripSeparator _bspEditorModeSeparator = null!;
+  private ToolStripButton _bspModeObjectButton = null!;
+  private ToolStripButton _bspModeFaceButton = null!;
+  private ToolStripButton _bspModeEdgeButton = null!;
+  private ToolStripButton _bspModeVertexButton = null!;
   private ToolStripButton _bspDeleteButton = null!;
+  private ToolStripButton _bspCopyButton = null!;
+  private ToolStripButton _bspMergeButton = null!;
   private ToolStripSeparator _bspEditorSeparator1 = null!;
   private ToolStripLabel _bspMoveStepLabel = null!;
   private ToolStripControlHost _bspMoveStepHost = null!;
@@ -93,6 +102,11 @@ partial class MainForm
   private ToolStripButton _bspMovePosYButton = null!;
   private ToolStripButton _bspMoveNegZButton = null!;
   private ToolStripButton _bspMovePosZButton = null!;
+  private ToolStripSeparator _bspEditorSeparator2 = null!;
+  private ToolStripButton _bspScaleDownButton = null!;
+  private ToolStripButton _bspScaleUpButton = null!;
+  private ToolStripButton _bspRotateNegYButton = null!;
+  private ToolStripButton _bspRotatePosYButton = null!;
   private StatusStrip _statusStrip = null!;
   private ToolStripStatusLabel _statusLabel = null!;
   private Panel _viewerHostPanel = null!;
@@ -207,7 +221,16 @@ partial class MainForm
     _bspEditorStrip = new ToolStrip();
     _bspSelectModeButton = new ToolStripButton();
     _bspMoveModeButton = new ToolStripButton();
+    _bspScaleModeButton = new ToolStripButton();
+    _bspRotateModeButton = new ToolStripButton();
+    _bspEditorModeSeparator = new ToolStripSeparator();
+    _bspModeObjectButton = new ToolStripButton();
+    _bspModeFaceButton = new ToolStripButton();
+    _bspModeEdgeButton = new ToolStripButton();
+    _bspModeVertexButton = new ToolStripButton();
     _bspDeleteButton = new ToolStripButton();
+    _bspCopyButton = new ToolStripButton();
+    _bspMergeButton = new ToolStripButton();
     _bspEditorSeparator1 = new ToolStripSeparator();
     _bspMoveStepLabel = new ToolStripLabel();
     _bspMoveStepUpDown = new NumericUpDown();
@@ -218,6 +241,11 @@ partial class MainForm
     _bspMovePosYButton = new ToolStripButton();
     _bspMoveNegZButton = new ToolStripButton();
     _bspMovePosZButton = new ToolStripButton();
+    _bspEditorSeparator2 = new ToolStripSeparator();
+    _bspScaleDownButton = new ToolStripButton();
+    _bspScaleUpButton = new ToolStripButton();
+    _bspRotateNegYButton = new ToolStripButton();
+    _bspRotatePosYButton = new ToolStripButton();
     _statusStrip = new StatusStrip();
     _statusLabel = new ToolStripStatusLabel();
     _viewerHostPanel = new Panel();
@@ -614,8 +642,6 @@ partial class MainForm
       _boundaryHeightHost,
       _boundaryBuryLabel,
       _boundaryEmbedHost,
-      _boundarySnapLabel,
-      _boundarySnapHost,
     });
     _collisionStrip.Location = new Point(0, 49);
     _collisionStrip.Name = "_collisionStrip";
@@ -680,7 +706,7 @@ partial class MainForm
     _boundaryHeightUpDown.Minimum = 1;
     _boundaryHeightUpDown.Name = "_boundaryHeightUpDown";
     _boundaryHeightUpDown.Size = new Size(72, 23);
-    _boundaryHeightUpDown.Value = 3000;
+    _boundaryHeightUpDown.Value = 300;
 
     _boundaryHeightHost.AutoSize = false;
     _boundaryHeightHost.Name = "_boundaryHeightHost";
@@ -708,7 +734,7 @@ partial class MainForm
     _boundarySnapDistanceUpDown.Maximum = 10000;
     _boundarySnapDistanceUpDown.Name = "_boundarySnapDistanceUpDown";
     _boundarySnapDistanceUpDown.Size = new Size(72, 23);
-    _boundarySnapDistanceUpDown.Value = 80;
+    _boundarySnapDistanceUpDown.Value = 10;
 
     _boundarySnapHost.AutoSize = false;
     _boundarySnapHost.Name = "_boundarySnapHost";
@@ -737,7 +763,30 @@ partial class MainForm
     {
       _bspSelectModeButton,
       _bspMoveModeButton,
+      _bspScaleModeButton,
+      _bspRotateModeButton,
+      _bspEditorModeSeparator,
+      _bspModeObjectButton,
+      _bspModeFaceButton,
+      _bspModeEdgeButton,
+      _bspModeVertexButton,
       _bspDeleteButton,
+      _bspCopyButton,
+      _bspMergeButton,
+      _bspEditorSeparator1,
+      _bspMoveStepLabel,
+      _bspMoveStepHost,
+      _bspMoveNegXButton,
+      _bspMovePosXButton,
+      _bspMoveNegYButton,
+      _bspMovePosYButton,
+      _bspMoveNegZButton,
+      _bspMovePosZButton,
+      _bspEditorSeparator2,
+      _bspScaleDownButton,
+      _bspScaleUpButton,
+      _bspRotateNegYButton,
+      _bspRotatePosYButton,
     });
     _bspEditorStrip.Location = new Point(0, 74);
     _bspEditorStrip.Name = "_bspEditorStrip";
@@ -757,11 +806,62 @@ partial class MainForm
     _bspMoveModeButton.Text = "BSP Move";
     _bspMoveModeButton.ToolTipText = "Click-drag selected BSP object/face with mouse";
 
+    _bspScaleModeButton.CheckOnClick = true;
+    _bspScaleModeButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+    _bspScaleModeButton.Name = "_bspScaleModeButton";
+    _bspScaleModeButton.Text = "BSP Scale";
+    _bspScaleModeButton.ToolTipText = "Click-drag selected BSP with mouse to scale uniformly";
+
+    _bspRotateModeButton.CheckOnClick = true;
+    _bspRotateModeButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+    _bspRotateModeButton.Name = "_bspRotateModeButton";
+    _bspRotateModeButton.Text = "BSP Rot";
+    _bspRotateModeButton.ToolTipText = "Click-drag selected BSP with mouse to rotate freely";
+
+    _bspEditorModeSeparator.Name = "_bspEditorModeSeparator";
+
+    _bspModeObjectButton.CheckOnClick = false;
+    _bspModeObjectButton.Checked = true;
+    _bspModeObjectButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+    _bspModeObjectButton.Name = "_bspModeObjectButton";
+    _bspModeObjectButton.Text = "Obj";
+    _bspModeObjectButton.ToolTipText = "BSP pick mode: object (default)";
+
+    _bspModeFaceButton.CheckOnClick = false;
+    _bspModeFaceButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+    _bspModeFaceButton.Name = "_bspModeFaceButton";
+    _bspModeFaceButton.Text = "Face";
+    _bspModeFaceButton.ToolTipText = "BSP pick mode: single face";
+
+    _bspModeEdgeButton.CheckOnClick = false;
+    _bspModeEdgeButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+    _bspModeEdgeButton.Name = "_bspModeEdgeButton";
+    _bspModeEdgeButton.Text = "Edge";
+    _bspModeEdgeButton.ToolTipText = "BSP pick mode: all faces sharing the picked edge";
+
+    _bspModeVertexButton.CheckOnClick = false;
+    _bspModeVertexButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+    _bspModeVertexButton.Name = "_bspModeVertexButton";
+    _bspModeVertexButton.Text = "Vert";
+    _bspModeVertexButton.ToolTipText = "BSP pick mode: all faces sharing the picked vertex";
+
     _bspDeleteButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
     _bspDeleteButton.Enabled = false;
     _bspDeleteButton.Name = "_bspDeleteButton";
     _bspDeleteButton.Text = "BSP Del";
     _bspDeleteButton.ToolTipText = "Delete selected BSP object/face";
+
+    _bspCopyButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+    _bspCopyButton.Enabled = false;
+    _bspCopyButton.Name = "_bspCopyButton";
+    _bspCopyButton.Text = "BSP Copy";
+    _bspCopyButton.ToolTipText = "Duplicate selected BSP object/face/edge/vertex";
+
+    _bspMergeButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+    _bspMergeButton.Enabled = false;
+    _bspMergeButton.Name = "_bspMergeButton";
+    _bspMergeButton.Text = "BSP Merge";
+    _bspMergeButton.ToolTipText = "Merge selected BSP object/face/edge/vertex into one object group";
 
     _bspEditorSeparator1.Name = "_bspEditorSeparator1";
 
@@ -815,6 +915,32 @@ partial class MainForm
     _bspMovePosZButton.Name = "_bspMovePosZButton";
     _bspMovePosZButton.Text = "Z+";
     _bspMovePosZButton.ToolTipText = "Move selection by +Z";
+
+    _bspEditorSeparator2.Name = "_bspEditorSeparator2";
+
+    _bspScaleDownButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+    _bspScaleDownButton.Enabled = false;
+    _bspScaleDownButton.Name = "_bspScaleDownButton";
+    _bspScaleDownButton.Text = "S-";
+    _bspScaleDownButton.ToolTipText = "Scale selection down (uniform)";
+
+    _bspScaleUpButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+    _bspScaleUpButton.Enabled = false;
+    _bspScaleUpButton.Name = "_bspScaleUpButton";
+    _bspScaleUpButton.Text = "S+";
+    _bspScaleUpButton.ToolTipText = "Scale selection up (uniform)";
+
+    _bspRotateNegYButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+    _bspRotateNegYButton.Enabled = false;
+    _bspRotateNegYButton.Name = "_bspRotateNegYButton";
+    _bspRotateNegYButton.Text = "RY-";
+    _bspRotateNegYButton.ToolTipText = "Rotate selection around Y (negative)";
+
+    _bspRotatePosYButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+    _bspRotatePosYButton.Enabled = false;
+    _bspRotatePosYButton.Name = "_bspRotatePosYButton";
+    _bspRotatePosYButton.Text = "RY+";
+    _bspRotatePosYButton.ToolTipText = "Rotate selection around Y (positive)";
 
     _statusStrip.Items.AddRange(new ToolStripItem[] { _statusLabel });
     _statusStrip.Location = new Point(0, 878);
