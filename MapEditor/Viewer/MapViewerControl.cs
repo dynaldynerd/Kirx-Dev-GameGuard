@@ -80,11 +80,22 @@ internal sealed class MapViewerControl : UserControl
   private const uint MaterialLayerFlagAniTexture = 0x00000800;
   private const uint MaterialLayerFlagAniTileTexture = 0x00001000;
   private const uint CollisionLineAttrFreeze = 0x40000000u;
+  private const int CollisionWallColorGroupCount = 3;
   private const float SkyExposure = 1.18f;
   private const float ParityDynamicEntityCullDistance = 20000.0f;
   private static readonly Vector3 DefaultClearColor = new(0.05f, 0.06f, 0.08f);
-  private static readonly Vector4 CollisionWallNormalOverlayColor = new(0.00f, 1.00f, 0.62f, 0.40f);
-  private static readonly Vector4 CollisionWallFrozenOverlayColor = new(0.00f, 0.92f, 1.00f, 0.50f);
+  private static readonly Vector4[] CollisionWallNormalOverlayColors =
+  [
+    new Vector4(0.00f, 1.00f, 0.62f, 0.38f),
+    new Vector4(0.20f, 0.90f, 1.00f, 0.38f),
+    new Vector4(0.42f, 1.00f, 0.36f, 0.38f),
+  ];
+  private static readonly Vector4[] CollisionWallFrozenOverlayColors =
+  [
+    new Vector4(0.04f, 0.92f, 1.00f, 0.50f),
+    new Vector4(0.26f, 0.82f, 1.00f, 0.50f),
+    new Vector4(0.16f, 0.94f, 0.88f, 0.50f),
+  ];
   private static readonly Vector3 BspSelectionColor = new(1.00f, 0.67f, 0.18f);
   private static readonly Vector3 BspSelectionXrayColor = new(1.00f, 0.98f, 0.32f);
   private const float BspSelectionLineWidthXray = 4.0f;
@@ -224,9 +235,11 @@ internal sealed class MapViewerControl : UserControl
   private int _wallVao;
   private int _wallVbo;
   private int _wallVertexCount;
+  private readonly int[] _wallGroupVertexCounts = new int[CollisionWallColorGroupCount];
   private int _wallFrozenVao;
   private int _wallFrozenVbo;
   private int _wallFrozenVertexCount;
+  private readonly int[] _wallFrozenGroupVertexCounts = new int[CollisionWallColorGroupCount];
   private int _wallUniformMvp;
   private int _wallUniformColor;
   private int _particleProgram;
@@ -2495,16 +2508,38 @@ internal sealed class MapViewerControl : UserControl
 
       if (_wallVertexCount > 0)
       {
-        GL.Uniform4(_wallUniformColor, CollisionWallNormalOverlayColor);
         GL.BindVertexArray(_wallVao);
-        GL.DrawArrays(PrimitiveType.Triangles, 0, _wallVertexCount);
+        int first = 0;
+        for (int groupIndex = 0; groupIndex < CollisionWallColorGroupCount; ++groupIndex)
+        {
+          int groupCount = _wallGroupVertexCounts[groupIndex];
+          if (groupCount <= 0)
+          {
+            continue;
+          }
+
+          GL.Uniform4(_wallUniformColor, CollisionWallNormalOverlayColors[groupIndex]);
+          GL.DrawArrays(PrimitiveType.Triangles, first, groupCount);
+          first += groupCount;
+        }
       }
 
       if (_wallFrozenVertexCount > 0)
       {
-        GL.Uniform4(_wallUniformColor, CollisionWallFrozenOverlayColor);
         GL.BindVertexArray(_wallFrozenVao);
-        GL.DrawArrays(PrimitiveType.Triangles, 0, _wallFrozenVertexCount);
+        int first = 0;
+        for (int groupIndex = 0; groupIndex < CollisionWallColorGroupCount; ++groupIndex)
+        {
+          int groupCount = _wallFrozenGroupVertexCounts[groupIndex];
+          if (groupCount <= 0)
+          {
+            continue;
+          }
+
+          GL.Uniform4(_wallUniformColor, CollisionWallFrozenOverlayColors[groupIndex]);
+          GL.DrawArrays(PrimitiveType.Triangles, first, groupCount);
+          first += groupCount;
+        }
       }
 
       GL.Disable(EnableCap.Blend);
@@ -2639,6 +2674,7 @@ internal sealed class MapViewerControl : UserControl
       _particleVertexCount = 0;
       _wallVertexCount = 0;
       _wallFrozenVertexCount = 0;
+      ClearWallGroupVertexCounts();
       _lineVertexCount = 0;
       _collisionDrawPreviewVertexCount = 0;
       _collisionSelectionVertexCount = 0;
@@ -2771,6 +2807,7 @@ internal sealed class MapViewerControl : UserControl
     {
       _wallVertexCount = 0;
       _wallFrozenVertexCount = 0;
+      ClearWallGroupVertexCounts();
       _collisionDrawPreviewVertexCount = 0;
       _collisionSelectionVertexCount = 0;
       _bspSelectionLineVertexCount = 0;
@@ -2793,6 +2830,7 @@ internal sealed class MapViewerControl : UserControl
       _meshVertexCount = 0;
       _wallVertexCount = 0;
       _wallFrozenVertexCount = 0;
+      ClearWallGroupVertexCounts();
       _lineVertexCount = 0;
       _collisionDrawPreviewVertexCount = 0;
       _collisionSelectionVertexCount = 0;
@@ -2820,19 +2858,41 @@ internal sealed class MapViewerControl : UserControl
 
   private void UploadCollisionWallBuffers(LoadedMap map)
   {
-    (Vector3[] normalWalls, Vector3[] frozenWalls) = BuildCollisionWalls(map);
+    (Vector3[] normalWalls, int[] normalGroupCounts, Vector3[] frozenWalls, int[] frozenGroupCounts) = BuildCollisionWalls(map);
 
     Vector3[] normalDisplay = ConvertDisplayPositions(normalWalls);
     _wallVertexCount = normalDisplay.Length;
+    for (int groupIndex = 0; groupIndex < CollisionWallColorGroupCount; ++groupIndex)
+    {
+      _wallGroupVertexCounts[groupIndex] =
+        groupIndex < normalGroupCounts.Length
+          ? normalGroupCounts[groupIndex]
+          : 0;
+    }
+
     GL.BindVertexArray(_wallVao);
     GL.BindBuffer(BufferTarget.ArrayBuffer, _wallVbo);
     GL.BufferData(BufferTarget.ArrayBuffer, normalDisplay.Length * 12, normalDisplay, BufferUsageHint.DynamicDraw);
 
     Vector3[] frozenDisplay = ConvertDisplayPositions(frozenWalls);
     _wallFrozenVertexCount = frozenDisplay.Length;
+    for (int groupIndex = 0; groupIndex < CollisionWallColorGroupCount; ++groupIndex)
+    {
+      _wallFrozenGroupVertexCounts[groupIndex] =
+        groupIndex < frozenGroupCounts.Length
+          ? frozenGroupCounts[groupIndex]
+          : 0;
+    }
+
     GL.BindVertexArray(_wallFrozenVao);
     GL.BindBuffer(BufferTarget.ArrayBuffer, _wallFrozenVbo);
     GL.BufferData(BufferTarget.ArrayBuffer, frozenDisplay.Length * 12, frozenDisplay, BufferUsageHint.DynamicDraw);
+  }
+
+  private void ClearWallGroupVertexCounts()
+  {
+    Array.Clear(_wallGroupVertexCounts);
+    Array.Clear(_wallFrozenGroupVertexCounts);
   }
 
   private void UploadMapMesh(LoadedMap map)
@@ -6824,10 +6884,10 @@ internal sealed class MapViewerControl : UserControl
     return output.ToArray();
   }
 
-  private static (Vector3[] NormalWalls, Vector3[] FrozenWalls) BuildCollisionWalls(LoadedMap map)
+  private static (Vector3[] NormalWalls, int[] NormalGroupCounts, Vector3[] FrozenWalls, int[] FrozenGroupCounts) BuildCollisionWalls(LoadedMap map)
   {
-    List<Vector3> normalVertices = new(Math.Max(4096, map.CollisionLines.Length * 8));
-    List<Vector3> frozenVertices = new(Math.Max(1024, map.CollisionLines.Length * 4));
+    List<Vector3>[] normalGroups = CreateCollisionWallGroups(map.CollisionLines.Length);
+    List<Vector3>[] frozenGroups = CreateCollisionWallGroups(map.CollisionLines.Length);
 
     for (int index = 0; index < map.CollisionLines.Length; ++index)
     {
@@ -6852,15 +6912,69 @@ internal sealed class MapViewerControl : UserControl
         continue;
       }
 
-      List<Vector3> target = (line.Attribute & CollisionLineAttrFreeze) != 0
-        ? frozenVertices
-        : normalVertices;
+      int groupIndex = index % CollisionWallColorGroupCount;
+      List<Vector3>[] targetGroups = (line.Attribute & CollisionLineAttrFreeze) != 0
+        ? frozenGroups
+        : normalGroups;
+      List<Vector3> target = targetGroups[groupIndex];
 
       AddTriangle(target, start, end, endTop);
       AddTriangle(target, start, endTop, startTop);
     }
 
-    return (normalVertices.ToArray(), frozenVertices.ToArray());
+    int[] normalGroupCounts = new int[CollisionWallColorGroupCount];
+    int[] frozenGroupCounts = new int[CollisionWallColorGroupCount];
+    Vector3[] normalVertices = FlattenCollisionWallGroups(normalGroups, normalGroupCounts);
+    Vector3[] frozenVertices = FlattenCollisionWallGroups(frozenGroups, frozenGroupCounts);
+    return (normalVertices, normalGroupCounts, frozenVertices, frozenGroupCounts);
+  }
+
+  private static List<Vector3>[] CreateCollisionWallGroups(int lineCount)
+  {
+    int perGroupCapacity = Math.Max(512, (lineCount * 6) / CollisionWallColorGroupCount);
+    List<Vector3>[] groups = new List<Vector3>[CollisionWallColorGroupCount];
+    for (int groupIndex = 0; groupIndex < CollisionWallColorGroupCount; ++groupIndex)
+    {
+      groups[groupIndex] = new List<Vector3>(perGroupCapacity);
+    }
+
+    return groups;
+  }
+
+  private static Vector3[] FlattenCollisionWallGroups(List<Vector3>[] groups, int[] groupCounts)
+  {
+    int totalCount = 0;
+    for (int groupIndex = 0; groupIndex < groups.Length; ++groupIndex)
+    {
+      int count = groups[groupIndex].Count;
+      if (groupIndex < groupCounts.Length)
+      {
+        groupCounts[groupIndex] = count;
+      }
+
+      totalCount += count;
+    }
+
+    if (totalCount == 0)
+    {
+      return Array.Empty<Vector3>();
+    }
+
+    Vector3[] output = new Vector3[totalCount];
+    int offset = 0;
+    for (int groupIndex = 0; groupIndex < groups.Length; ++groupIndex)
+    {
+      List<Vector3> group = groups[groupIndex];
+      if (group.Count == 0)
+      {
+        continue;
+      }
+
+      group.CopyTo(output, offset);
+      offset += group.Count;
+    }
+
+    return output;
   }
 
   private static void AddGrid(MapBounds bounds, List<Vector3> output)

@@ -21,6 +21,7 @@ partial class MainForm
   private ToolStripMenuItem _editMapMaterialsMenuItem = null!;
   private ToolStripMenuItem _editMapTexturesMenuItem = null!;
   private ToolStripMenuItem _editEnvironmentMenuItem = null!;
+  private ToolStripMenuItem _analyzeCollisionLeakJointsMenuItem = null!;
   private ToolStripSeparator _editMenuSeparator = null!;
   private ToolStripMenuItem _deleteSelectedCollisionMenuItem = null!;
   private ToolStripMenuItem _viewMenuItem = null!;
@@ -151,6 +152,7 @@ partial class MainForm
     _editMapMaterialsMenuItem = new ToolStripMenuItem();
     _editMapTexturesMenuItem = new ToolStripMenuItem();
     _editEnvironmentMenuItem = new ToolStripMenuItem();
+    _analyzeCollisionLeakJointsMenuItem = new ToolStripMenuItem();
     _editMenuSeparator = new ToolStripSeparator();
     _deleteSelectedCollisionMenuItem = new ToolStripMenuItem();
     _viewMenuItem = new ToolStripMenuItem();
@@ -316,6 +318,7 @@ partial class MainForm
       _editMapMaterialsMenuItem,
       _editMapTexturesMenuItem,
       _editEnvironmentMenuItem,
+      _analyzeCollisionLeakJointsMenuItem,
       _editMenuSeparator,
       _deleteSelectedCollisionMenuItem,
     });
@@ -348,6 +351,11 @@ partial class MainForm
     _editEnvironmentMenuItem.ShortcutKeys = Keys.Control | Keys.E;
     _editEnvironmentMenuItem.Text = "R3X &Environment...";
     _editEnvironmentMenuItem.ToolTipText = "Edit map fog/environment values saved to R3X";
+
+    _analyzeCollisionLeakJointsMenuItem.Name = "_analyzeCollisionLeakJointsMenuItem";
+    _analyzeCollisionLeakJointsMenuItem.ShortcutKeys = Keys.Control | Keys.Shift | Keys.L;
+    _analyzeCollisionLeakJointsMenuItem.Text = "Analyze Collision &Leak Joints...";
+    _analyzeCollisionLeakJointsMenuItem.ToolTipText = "Run heuristic checker for leak-prone collision corners/endpoints";
 
     _editMenuSeparator.Name = "_editMenuSeparator";
 

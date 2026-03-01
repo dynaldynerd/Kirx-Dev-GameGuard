@@ -2,6 +2,7 @@ using MapEditor.Formats;
 using MapEditor.Viewer;
 using OpenTK.Mathematics;
 using System.ComponentModel;
+using System.Text;
 using System.Text.Json;
 
 namespace MapEditor;
@@ -105,6 +106,7 @@ internal sealed partial class MainForm : Form
     _editMapMaterialsMenuItem.Click += (_, _) => EditMapMaterialsFromDialog();
     _editMapTexturesMenuItem.Click += (_, _) => EditMapTexturesFromDialog();
     _editEnvironmentMenuItem.Click += (_, _) => EditEnvironmentFromDialog();
+    _analyzeCollisionLeakJointsMenuItem.Click += (_, _) => AnalyzeCollisionLeakJointsFromUi();
     _deleteSelectedCollisionMenuItem.Click += (_, _) => DeleteSelectionFromActiveModeFromUi();
 
     _goToCoordinateButton.Click += (_, _) => TeleportCameraToInputCoordinate();
@@ -808,6 +810,7 @@ internal sealed partial class MainForm : Form
       - Ctrl+M: edit map R3M materials
       - Ctrl+T: edit map R3T textures
       - Ctrl+E: edit R3X environment values (fog/lens/flags)
+      - Edit > Analyze Collision Leak Joints: rank likely corner leak spots by line index
       - Ctrl+Shift+E: export Blender package (mesh/materials/textures/entities)
       - Ctrl+Shift+I: import Blender package (materials/textures/entities)
       - View menu: show/hide each toolbar row
@@ -854,6 +857,154 @@ internal sealed partial class MainForm : Form
       """;
 
     MessageBox.Show(this, message, "Controls", MessageBoxButtons.OK, MessageBoxIcon.Information);
+  }
+
+  private void AnalyzeCollisionLeakJointsFromUi()
+  {
+    LoadedMap? map = _loadedMap;
+    if (map == null)
+    {
+      MessageBox.Show(this, "No map is loaded.", "Analyze Collision Leak Joints", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    const float scoreThreshold = 2.0f;
+    const int maxResults = 64;
+    CollisionLeakJointReport report = CollisionLeakJointAnalyzer.Analyze(map, scoreThreshold, maxResults);
+    CollisionLeakJointRisk[] selectedLineRisks = Array.Empty<CollisionLeakJointRisk>();
+    int selectedLineIndex = _viewer.SelectedCollisionLineIndex;
+    if ((uint)selectedLineIndex < (uint)map.CollisionLines.Length)
+    {
+      CollisionLeakJointReport allRisks = CollisionLeakJointAnalyzer.Analyze(map, scoreThreshold: 0.0f, maxResults: int.MaxValue);
+      selectedLineRisks = allRisks.Risks
+        .Where(static risk => risk.LineIndex >= 0)
+        .Where(risk => risk.LineIndex == selectedLineIndex)
+        .OrderByDescending(static risk => risk.Score)
+        .ToArray();
+    }
+
+    StringBuilder builder = new();
+    builder.AppendLine("Collision Leak-Prone Joint Checker (heuristic)");
+    builder.AppendLine($"Map: {map.Name}");
+    builder.AppendLine($"Scanned lines: {report.ScannedLineCount:N0}");
+    builder.AppendLine($"Threshold: {report.ScoreThreshold:F2}");
+    builder.AppendLine($"Flagged lines: {report.Risks.Length:N0}");
+    builder.AppendLine();
+    if ((uint)selectedLineIndex < (uint)map.CollisionLines.Length)
+    {
+      builder.AppendLine(FormattableString.Invariant($"Selected line: L{selectedLineIndex}"));
+      if (selectedLineRisks.Length == 0)
+      {
+        builder.AppendLine("Selected line risk: no endpoint risk found.");
+      }
+      else
+      {
+        for (int i = 0; i < selectedLineRisks.Length; ++i)
+        {
+          CollisionLeakJointRisk risk = selectedLineRisks[i];
+          string neighbor = risk.NeighborLineIndex >= 0 ? $"L{risk.NeighborLineIndex}" : "none";
+          builder.AppendLine(
+            FormattableString.Invariant(
+              $"Selected {i + 1}. L{risk.LineIndex} {risk.Endpoint} V{risk.VertexIndex} score={risk.Score:F2} angle={risk.JointAngleDegrees:F2} ratio={risk.LengthRatio:F2} deg={risk.Degree} len={risk.LineLength:F2}/{risk.NeighborLength:F2} neigh={neighbor} pos=({risk.VertexPosition.X:F2},{risk.VertexPosition.Y:F2},{risk.VertexPosition.Z:F2})"));
+        }
+      }
+
+      builder.AppendLine();
+    }
+
+    if (report.Risks.Length == 0)
+    {
+      builder.AppendLine("No lines exceeded the leak-risk threshold.");
+      builder.AppendLine("If a known exploit still exists, lower threshold or inspect that line manually.");
+      _statusBaseText = "Leak checker: no high-risk collision joints found.";
+      RefreshRuntimeStatus();
+      ShowReadOnlyReportDialog("Collision Leak Joint Report", builder.ToString());
+      return;
+    }
+
+    builder.AppendLine("Top candidates:");
+    for (int i = 0; i < report.Risks.Length; ++i)
+    {
+      CollisionLeakJointRisk risk = report.Risks[i];
+      string neighbor = risk.NeighborLineIndex >= 0 ? $"L{risk.NeighborLineIndex}" : "none";
+      builder.AppendLine(
+        FormattableString.Invariant(
+          $"{i + 1,2}. L{risk.LineIndex} {risk.Endpoint} V{risk.VertexIndex} score={risk.Score:F2} angle={risk.JointAngleDegrees:F2} ratio={risk.LengthRatio:F2} deg={risk.Degree} len={risk.LineLength:F2}/{risk.NeighborLength:F2} neigh={neighbor} pos=({risk.VertexPosition.X:F2},{risk.VertexPosition.Y:F2},{risk.VertexPosition.Z:F2})"));
+    }
+
+    CollisionLeakJointRisk topRisk = report.Risks[0];
+    _viewer.SetSelectedCollisionLineIndex(topRisk.LineIndex);
+    _statusBaseText = FormattableString.Invariant(
+      $"Leak checker: {report.Risks.Length:N0} flagged | Top L{topRisk.LineIndex} {topRisk.Endpoint} score={topRisk.Score:F2} angle={topRisk.JointAngleDegrees:F1} ratio={topRisk.LengthRatio:F2}");
+    RefreshRuntimeStatus();
+    ShowReadOnlyReportDialog("Collision Leak Joint Report", builder.ToString());
+  }
+
+  private void ShowReadOnlyReportDialog(string title, string content)
+  {
+    using Form dialog = new()
+    {
+      Text = title,
+      StartPosition = FormStartPosition.CenterParent,
+      ClientSize = new Size(980, 640),
+      MinimumSize = new Size(700, 420),
+      ShowInTaskbar = false,
+      MinimizeBox = false,
+      MaximizeBox = false,
+    };
+
+    TextBox reportBox = new()
+    {
+      Multiline = true,
+      ReadOnly = true,
+      WordWrap = false,
+      ScrollBars = ScrollBars.Both,
+      Dock = DockStyle.Fill,
+      Font = new Font("Consolas", 9.0f, FontStyle.Regular, GraphicsUnit.Point),
+      Text = content,
+    };
+
+    Button copyButton = new()
+    {
+      Text = "Copy",
+      AutoSize = true,
+      Anchor = AnchorStyles.Right | AnchorStyles.Top,
+    };
+    copyButton.Click += (_, _) =>
+    {
+      try
+      {
+        Clipboard.SetText(content);
+      }
+      catch
+      {
+      }
+    };
+
+    Button closeButton = new()
+    {
+      Text = "Close",
+      AutoSize = true,
+      DialogResult = DialogResult.OK,
+      Anchor = AnchorStyles.Right | AnchorStyles.Top,
+    };
+
+    FlowLayoutPanel buttonPanel = new()
+    {
+      Dock = DockStyle.Bottom,
+      FlowDirection = FlowDirection.RightToLeft,
+      Padding = new Padding(8),
+      Height = 48,
+      WrapContents = false,
+    };
+    buttonPanel.Controls.Add(closeButton);
+    buttonPanel.Controls.Add(copyButton);
+
+    dialog.AcceptButton = closeButton;
+    dialog.CancelButton = closeButton;
+    dialog.Controls.Add(reportBox);
+    dialog.Controls.Add(buttonPanel);
+    dialog.ShowDialog(this);
   }
 
   private void OnTeleportInputKeyDown(object? sender, KeyEventArgs e)
