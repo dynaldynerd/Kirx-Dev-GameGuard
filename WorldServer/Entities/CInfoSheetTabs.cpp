@@ -153,6 +153,11 @@ CMapTab::CMapTab()
 {
 }
 
+CMapTab::~CMapTab()
+{
+  // this is not a stub
+}
+
 void CMapTab::DoDataExchange(CDataExchange *pDX)
 {
   CPropertyPage::DoDataExchange(pDX);
@@ -268,6 +273,11 @@ CServerTab::CServerTab()
 {
 }
 
+CServerTab::~CServerTab()
+{
+  // this is not a stub
+}
+
 void CServerTab::DoDataExchange(CDataExchange *pDX)
 {
   CPropertyPage::DoDataExchange(pDX);
@@ -288,7 +298,7 @@ BOOL CServerTab::OnSetActive()
 
 void CServerTab::UpdateServerTab()
 {
-  if (g_Main.IsExcuteService() || !m_trServer.GetSafeHwnd())
+  if (g_Main.IsExcuteService())
   {
     return;
   }
@@ -303,10 +313,6 @@ void CServerTab::UpdateServerTab()
   for (int mapIndex = 0; mapIndex < g_MapOper.m_nMapNum; ++mapIndex)
   {
     CMapData *map = g_MapOper.GetMap(mapIndex);
-    if (!map || !map->m_pMapSet)
-    {
-      continue;
-    }
     line.Format(_T("%d : %S (%d)"), mapIndex, map->m_pMapSet->m_strCode, map->m_nMapInPlayerNum);
     m_trServer.InsertItem(line, charRoot, TVI_LAST);
   }
@@ -317,10 +323,6 @@ void CServerTab::UpdateServerTab()
   for (int mapIndex = 0; mapIndex < g_MapOper.m_nMapNum; ++mapIndex)
   {
     CMapData *map = g_MapOper.GetMap(mapIndex);
-    if (!map || !map->m_pMapSet)
-    {
-      continue;
-    }
     line.Format(_T("%d : %S (%d)"), mapIndex, map->m_pMapSet->m_strCode, map->m_nMapInMonsterNum);
     m_trServer.InsertItem(line, monsterRoot, TVI_LAST);
   }
@@ -340,6 +342,11 @@ CIPXTab::CIPXTab()
     m_edBellatoNum(0),
     m_edCoraNum(0)
 {
+}
+
+CIPXTab::~CIPXTab()
+{
+  // this is not a stub
 }
 
 void CIPXTab::DoDataExchange(CDataExchange *pDX)
@@ -406,6 +413,11 @@ CTCPTab::CTCPTab()
     m_edObjPercent(_T("")),
     m_edSaveFail(0)
 {
+}
+
+CTCPTab::~CTCPTab()
+{
+  // this is not a stub
 }
 
 void CTCPTab::DoDataExchange(CDataExchange *pDX)
@@ -487,6 +499,11 @@ CObjectTab::CObjectTab()
 {
 }
 
+CObjectTab::~CObjectTab()
+{
+  // this is not a stub
+}
+
 void CObjectTab::DoDataExchange(CDataExchange *pDX)
 {
   CPropertyPage::DoDataExchange(pDX);
@@ -535,6 +552,360 @@ void CObjectTab::UpdateTab()
   }
 
   CString line;
+  static const char *kEquipUnitName[3] = {"Normal", "Weapon", "Unit"};
+  static const char *kFixPartName[8] = {"Upper", "Lower", "Glove", "Shoes", "Shield", "Weapon", "Helmet", "Accessory"};
+
+  if (selected->m_ObjID.m_byKind == 0 && selected->m_ObjID.m_byID == 0)
+  {
+    CPlayer *player = static_cast<CPlayer *>(selected);
+
+    line.Format(_T("Char-Player - %S"), player->m_Param.GetCharNameA());
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Degree : %d"), static_cast<int>(player->m_byUserDgr));
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Index : %d"), selected->m_ObjID.m_wIndex);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Live : %d"), selected->m_bLive ? 1 : 0);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("RecIndex : %d"), selected->m_pRecordSet ? selected->m_pRecordSet->m_dwIndex : 0);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Move : %d"), selected->m_bMove ? 1 : 0);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(
+      _T("TarPos : [%d], [%d], [%d]"),
+      static_cast<int>(selected->m_fOldPos[0]),
+      static_cast<int>(selected->m_fOldPos[1]),
+      static_cast<int>(selected->m_fOldPos[2]));
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("m_nMoveType : %d"), static_cast<int>(player->m_byMoveType));
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(
+      _T("CurPos : [%d], [%d], [%d]"),
+      static_cast<int>(selected->m_fCurPos[0]),
+      static_cast<int>(selected->m_fCurPos[1]),
+      static_cast<int>(selected->m_fCurPos[2]));
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("CurSector : %d"), selected->GetCurSecNum());
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Dalant : %u"), player->m_Param.GetDalant());
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("Gold : %u"), player->m_Param.GetGold());
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    const int attackToolType = static_cast<int>(player->m_pmWpn.GetAttackToolType());
+    const char *attackToolName = attackToolType >= 0 && attackToolType < static_cast<int>(std::size(kEquipUnitName))
+      ? kEquipUnitName[attackToolType]
+      : "Unknown";
+    line.Format(_T("Attack Tool : %S"), attackToolName);
+    HTREEITEM attackRoot = m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(
+      _T("nGaMinAF(%d), nGaMaxAF(%d), nMaMaxAF(%d), nMaMinAF(%d)"),
+      player->m_pmWpn.nGaMinAF,
+      player->m_pmWpn.nGaMaxAF,
+      player->m_pmWpn.nMaMaxAF,
+      player->m_pmWpn.nMaMinAF);
+    m_trObject.InsertItem(line, attackRoot, TVI_LAST);
+
+    line.Format(
+      _T("byGaMinSel(%d), byGaMaxSel(%d), byMaMinSel(%d), byMaMaxSel(%d)"),
+      player->m_pmWpn.byGaMinSel,
+      player->m_pmWpn.byGaMaxSel,
+      player->m_pmWpn.byMaMinSel,
+      player->m_pmWpn.byMaMaxSel);
+    m_trObject.InsertItem(line, attackRoot, TVI_LAST);
+
+    line.Format(
+      _T("byAttTolType(%d), byWpClass(%d), byWpType(%d)"),
+      player->m_pmWpn.byAttTolType,
+      player->m_pmWpn.byWpClass,
+      player->m_pmWpn.byWpType);
+    m_trObject.InsertItem(line, attackRoot, TVI_LAST);
+
+    line.Format(_T("wGaAttRange(%d), wMaAttRange(%d)"), player->m_pmWpn.wGaAttRange, player->m_pmWpn.wMaAttRange);
+    m_trObject.InsertItem(line, attackRoot, TVI_LAST);
+
+    if (player->m_pmWpn.pFixWp)
+    {
+      _base_fld *record = g_Main.m_tblItemData[6].GetRecord(player->m_pmWpn.pFixWp->m_wItemIndex);
+      line.Format(_T("FixWeapon : %S"), record ? record[2].m_strCode : "NULL");
+    }
+    else if (player->m_pmWpn.pFixUnit)
+    {
+      _base_fld *record = g_Main.m_tblUnitFrame.GetRecord(player->m_pmWpn.pFixUnit->byFrame);
+      line.Format(_T("FixUnit : %S"), record ? record->m_strCode : "NULL");
+    }
+    else
+    {
+      line = _T("FixWeapon : NULL");
+    }
+    m_trObject.InsertItem(line, attackRoot, TVI_LAST);
+
+    HTREEITEM equipRoot = m_trObject.InsertItem(_T("Equip"), TVI_ROOT, TVI_LAST);
+    for (unsigned int slot = 0; slot < std::size(player->m_Param.m_dbEquip.m_List); ++slot)
+    {
+      _STORAGE_LIST::_db_con *equipItem = &player->m_Param.m_dbEquip.m_List[slot];
+      const unsigned __int8 effectCode = player->GetEffectEquipCode(1u, static_cast<unsigned __int8>(slot));
+      const char *partName = slot < std::size(kFixPartName) ? kFixPartName[slot] : "Unknown";
+      if (equipItem->m_bLoad)
+      {
+        _base_fld *record = g_Main.m_tblItemData[equipItem->m_byTableCode].GetRecord(equipItem->m_wItemIndex);
+        const char *upgInfo = DisplayItemUpgInfo(equipItem->m_byTableCode, static_cast<int>(equipItem->m_dwLv));
+        line.Format(
+          _T("%d: [%S]%S, [sr]%d, [dr]%I64u, [lv]%S"),
+          effectCode,
+          partName,
+          record ? record->m_strCode : "NULL",
+          equipItem->m_wSerial,
+          equipItem->m_dwDur,
+          upgInfo ? upgInfo : "");
+      }
+      else
+      {
+        line.Format(_T("%d: [%S]:def"), effectCode, partName);
+      }
+      m_trObject.InsertItem(line, equipRoot, TVI_LAST);
+    }
+
+    const int wearUsed = static_cast<int>(std::size(player->m_Param.m_dbEmbellish.m_List))
+      - player->m_Param.m_dbEmbellish.GetNumEmptyCon();
+    line.Format(_T("Wear(%d)"), wearUsed);
+    HTREEITEM wearRoot = m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+    for (unsigned int slot = 0; slot < std::size(player->m_Param.m_dbEmbellish.m_List); ++slot)
+    {
+      _STORAGE_LIST::_db_con *wearItem = &player->m_Param.m_dbEmbellish.m_List[slot];
+      if (!wearItem->m_bLoad)
+      {
+        continue;
+      }
+      _base_fld *record = g_Main.m_tblItemData[wearItem->m_byTableCode].GetRecord(wearItem->m_wItemIndex);
+      const unsigned __int8 effectCode = player->GetEffectEquipCode(2u, static_cast<unsigned __int8>(slot));
+      line.Format(
+        _T("%d: %S, [sr]%d"),
+        effectCode,
+        record ? record->m_strCode : "NULL",
+        wearItem->m_wSerial);
+      m_trObject.InsertItem(line, wearRoot, TVI_LAST);
+    }
+
+    const int bagSlotCount = (std::min)(
+      static_cast<int>(std::size(player->m_Param.m_dbInven.m_List)),
+      static_cast<int>(player->m_Param.GetBagNum()) * 20);
+    const int invenUsed = bagSlotCount - player->m_Param.m_dbInven.GetNumEmptyCon();
+    line.Format(_T("Inven(%d)"), invenUsed);
+    HTREEITEM invenRoot = m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+    for (int slot = 0; slot < bagSlotCount; ++slot)
+    {
+      _STORAGE_LIST::_db_con *invenItem = &player->m_Param.m_dbInven.m_List[slot];
+      if (!invenItem->m_bLoad)
+      {
+        continue;
+      }
+      _base_fld *record = g_Main.m_tblItemData[invenItem->m_byTableCode].GetRecord(invenItem->m_wItemIndex);
+      const char *upgInfo = DisplayItemUpgInfo(invenItem->m_byTableCode, static_cast<int>(invenItem->m_dwLv));
+      line.Format(
+        _T("%S, [amt]%I64u, [sr]%d, [lv]%S"),
+        record ? record->m_strCode : "NULL",
+        invenItem->m_dwDur,
+        invenItem->m_wSerial,
+        upgInfo ? upgInfo : "");
+      m_trObject.InsertItem(line, invenRoot, TVI_LAST);
+    }
+
+    const int forceUsed = static_cast<int>(std::size(player->m_Param.m_dbForce.m_List))
+      - player->m_Param.m_dbForce.GetNumEmptyCon();
+    line.Format(_T("Force(%d)"), forceUsed);
+    HTREEITEM forceRoot = m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+    for (unsigned int slot = 0; slot < std::size(player->m_Param.m_dbForce.m_List); ++slot)
+    {
+      _STORAGE_LIST::_db_con *forceItem = &player->m_Param.m_dbForce.m_List[slot];
+      if (!forceItem->m_bLoad)
+      {
+        continue;
+      }
+      _base_fld *record = g_Main.m_tblItemData[forceItem->m_byTableCode].GetRecord(forceItem->m_wItemIndex);
+      line.Format(
+        _T("%S, [amt]%I64u, [sr]%d"),
+        record ? record->m_strCode : "NULL",
+        forceItem->m_dwDur,
+        forceItem->m_wSerial);
+      m_trObject.InsertItem(line, forceRoot, TVI_LAST);
+    }
+
+    if (player->m_Param.GetRaceCode() == 1)
+    {
+      const int animusUsed = static_cast<int>(std::size(player->m_Param.m_dbAnimus.m_List))
+        - player->m_Param.m_dbAnimus.GetNumEmptyCon();
+      line.Format(_T("Animus(%d)"), animusUsed);
+      HTREEITEM animusRoot = m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+      for (unsigned int slot = 0; slot < std::size(player->m_Param.m_dbAnimus.m_List); ++slot)
+      {
+        _STORAGE_LIST::_db_con *animusItem = &player->m_Param.m_dbAnimus.m_List[slot];
+        if (!animusItem->m_bLoad)
+        {
+          continue;
+        }
+        _base_fld *record = g_Main.m_tblItemData[animusItem->m_byTableCode].GetRecord(animusItem->m_wItemIndex);
+        const unsigned __int16 hp = static_cast<unsigned __int16>(animusItem->m_dwLv & 0xFFFFu);
+        const unsigned __int16 fp = static_cast<unsigned __int16>((animusItem->m_dwLv >> 16) & 0xFFFFu);
+        line.Format(
+          _T("%S, [exp]%I64u, [hp]%d, [fp]%d, [sr]%d"),
+          record ? record->m_strCode : "NULL",
+          animusItem->m_dwDur,
+          hp,
+          fp,
+          animusItem->m_wSerial);
+        m_trObject.InsertItem(line, animusRoot, TVI_LAST);
+      }
+    }
+
+    const int resBufferCount = static_cast<unsigned __int8>(player->m_Param.GetResBufferNum());
+    line.Format(_T("ResBuffer(%d)"), resBufferCount);
+    HTREEITEM resRoot = m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+    if (player->m_Param.m_wCuttingResBuffer)
+    {
+      for (int resourceIndex = 0; resourceIndex < GetMaxResKind(); ++resourceIndex)
+      {
+        const unsigned __int16 amount = player->m_Param.m_wCuttingResBuffer[resourceIndex];
+        if (!amount)
+        {
+          continue;
+        }
+        _base_fld *record = g_Main.m_tblItemData[18].GetRecord(resourceIndex);
+        line.Format(_T("[code]%S, [num]%d"), record ? record->m_strCode : "NULL", amount);
+        m_trObject.InsertItem(line, resRoot, TVI_LAST);
+      }
+    }
+
+    HTREEITEM masteryRoot = m_trObject.InsertItem(_T("Mastery"), TVI_ROOT, TVI_LAST);
+    for (unsigned int masteryIndex = 0; masteryIndex < std::size(player->m_pmMst.m_mtyWp); ++masteryIndex)
+    {
+      const int cum = static_cast<int>(player->m_pmMst.GetCumPerMast(0, static_cast<unsigned __int8>(masteryIndex)));
+      const int mastery = static_cast<int>(player->m_pmMst.GetMasteryPerMast(0, static_cast<unsigned __int8>(masteryIndex)));
+      line.Format(_T("Weapon Mp.. %d) cum: %d, mp: %d"), masteryIndex, cum, mastery);
+      m_trObject.InsertItem(line, masteryRoot, TVI_LAST);
+    }
+
+    {
+      const int cum = static_cast<int>(player->m_pmMst.GetCumPerMast(1u, 0));
+      const int mastery = static_cast<int>(player->m_pmMst.GetMasteryPerMast(1u, 0));
+      line.Format(_T("Suffer Mp.. 0) cum: %d, mp: %d"), cum, mastery);
+      m_trObject.InsertItem(line, masteryRoot, TVI_LAST);
+    }
+
+    {
+      const int cum = static_cast<int>(player->m_pmMst.GetCumPerMast(2u, 0));
+      const int mastery = static_cast<int>(player->m_pmMst.GetMasteryPerMast(2u, 0));
+      line.Format(_T("Shield Mp.. 0) cum: %d, mp: %d"), cum, mastery);
+      m_trObject.InsertItem(line, masteryRoot, TVI_LAST);
+    }
+
+    for (unsigned int masteryIndex = 0; masteryIndex < std::size(player->m_pmMst.m_mtySkill); ++masteryIndex)
+    {
+      const int cum = static_cast<int>(player->m_pmMst.GetCumPerMast(3u, static_cast<unsigned __int8>(masteryIndex)));
+      const int mastery = static_cast<int>(player->m_pmMst.GetMasteryPerMast(3u, static_cast<unsigned __int8>(masteryIndex)));
+      line.Format(_T("Skill Mp.. %d) cum: %d, mp: %d"), masteryIndex, cum, mastery);
+      m_trObject.InsertItem(line, masteryRoot, TVI_LAST);
+    }
+
+    for (unsigned int masteryIndex = 0; masteryIndex < std::size(player->m_pmMst.m_mtyForce); ++masteryIndex)
+    {
+      const int cum = static_cast<int>(player->m_pmMst.GetCumPerMast(4u, static_cast<unsigned __int8>(masteryIndex)));
+      const int mastery = static_cast<int>(player->m_pmMst.GetMasteryPerMast(4u, static_cast<unsigned __int8>(masteryIndex)));
+      line.Format(_T("Force Mp.. %d) cum: %d, mp: %d"), masteryIndex, cum, mastery);
+      m_trObject.InsertItem(line, masteryRoot, TVI_LAST);
+    }
+
+    line.Format(_T("Staff Mp.. mp: %d"), static_cast<int>(player->m_pmMst.m_mtyStaff));
+    m_trObject.InsertItem(line, masteryRoot, TVI_LAST);
+
+    for (unsigned int skillIndex = 0; skillIndex < std::size(player->m_pmMst.m_lvSkill); ++skillIndex)
+    {
+      const int cum = static_cast<int>(player->m_pmMst.m_BaseCum.m_dwSkillCum[skillIndex]);
+      const int skillLv = static_cast<int>(player->m_pmMst.GetSkillLv(static_cast<unsigned __int8>(skillIndex)));
+      line.Format(_T("Skill Lv.. %d) cum: %d, lv: %d"), skillIndex, cum, skillLv);
+      m_trObject.InsertItem(line, masteryRoot, TVI_LAST);
+    }
+
+    HTREEITEM sfRoot = m_trObject.InsertItem(_T("SFCont"), TVI_ROOT, TVI_LAST);
+    const unsigned int sfContCurTime = _sf_continous::GetSFContCurTime();
+    for (unsigned int contCode = 0; contCode < std::size(player->m_SFCont); ++contCode)
+    {
+      for (unsigned int slot = 0; slot < std::size(player->m_SFCont[contCode]); ++slot)
+      {
+        const _sf_continous *cont = &player->m_SFCont[contCode][slot];
+        if (!cont->m_bExist)
+        {
+          continue;
+        }
+        _base_fld *effectRecord = nullptr;
+        if (cont->m_byEffectCode < 4)
+        {
+          effectRecord = g_Main.m_tblEffectData[cont->m_byEffectCode].GetRecord(cont->m_wEffectIndex);
+        }
+        const unsigned int passed = sfContCurTime - cont->m_dwStartSec;
+        if (effectRecord)
+        {
+          line.Format(_T("%S : pass:%d, dur:%d"), effectRecord[3].m_strCode, passed, cont->m_wDurSec);
+        }
+        else
+        {
+          line.Format(
+            _T("UNKNOWN(%d:%d) : pass:%d, dur:%d"),
+            static_cast<int>(cont->m_byEffectCode),
+            static_cast<int>(cont->m_wEffectIndex),
+            passed,
+            cont->m_wDurSec);
+        }
+        m_trObject.InsertItem(line, sfRoot, TVI_LAST);
+      }
+    }
+
+    line.Format(
+      _T("Tol : Water(%d), Fire(%d), Soil(%d), Wind(%d)"),
+      static_cast<int>(selected->GetWaterTol()),
+      static_cast<int>(selected->GetFireTol()),
+      static_cast<int>(selected->GetSoilTol()),
+      static_cast<int>(selected->GetWindTol()));
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(_T("O : %d, Y : %d"), player->m_pmWpn.nGaMaxAF, player->m_pmWpn.nMaMaxAF);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    HTREEITEM parameterRoot = m_trObject.InsertItem(_T("Parameter"), TVI_ROOT, TVI_LAST);
+    line.Format(_T("m_nST : %u"), player->m_Param.GetSP());
+    m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
+    line.Format(_T("m_nHP : %u"), player->m_Param.GetHP());
+    m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
+    line.Format(_T("m_nFP : %u"), player->m_Param.GetFP());
+    m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
+    line.Format(_T("m_dExp : %f"), static_cast<double>(player->m_Param.GetExp()));
+    m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
+    line.Format(_T("m_nLevel : %u"), player->m_Param.GetLevel());
+    m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
+
+    m_trObject.Expand(attackRoot, TVE_EXPAND);
+    m_trObject.Expand(equipRoot, TVE_EXPAND);
+    m_trObject.Expand(wearRoot, TVE_EXPAND);
+    m_trObject.Expand(invenRoot, TVE_EXPAND);
+    m_trObject.Expand(forceRoot, TVE_EXPAND);
+    m_trObject.Expand(resRoot, TVE_EXPAND);
+    m_trObject.Expand(masteryRoot, TVE_EXPAND);
+    m_trObject.Expand(sfRoot, TVE_EXPAND);
+    m_trObject.Expand(parameterRoot, TVE_EXPAND);
+    return;
+  }
 
   if (selected->m_ObjID.m_byKind == 0 && selected->m_ObjID.m_byID == 1)
   {
@@ -618,7 +989,7 @@ void CObjectTab::UpdateTab()
     line.Format(_T("U Body Def : %d"), static_cast<int>(selected->GetDefFC(0, nullptr, nullptr)));
     m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
 
-    line.Format(_T("L Body Def : %d"), static_cast<int>(selected->GetDefFC(1, nullptr, nullptr)));
+    line.Format(_T("D Body Def : %d"), static_cast<int>(selected->GetDefFC(1, nullptr, nullptr)));
     m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
 
     line.Format(_T("Hand Def : %d"), static_cast<int>(selected->GetDefFC(2, nullptr, nullptr)));
@@ -627,72 +998,6 @@ void CObjectTab::UpdateTab()
     line.Format(_T("Foot Def : %d"), static_cast<int>(selected->GetDefFC(3, nullptr, nullptr)));
     m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
 
-    m_trObject.Expand(parameterRoot, TVE_EXPAND);
-    return;
-  }
-
-  if (selected->m_ObjID.m_byKind == 0 && selected->m_ObjID.m_byID == 0)
-  {
-    CPlayer *player = static_cast<CPlayer *>(selected);
-
-    line.Format(_T("Char-Player - %S"), player->m_Param.GetCharNameA());
-    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
-
-    line.Format(_T("Index : %d"), selected->m_ObjID.m_wIndex);
-    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
-
-    line.Format(_T("Serial : %d"), selected->m_dwObjSerial);
-    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
-
-    line.Format(_T("Live : %d"), selected->m_bLive ? 1 : 0);
-    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
-
-    line.Format(_T("RecIndex : %d"), selected->m_pRecordSet ? selected->m_pRecordSet->m_dwIndex : 0);
-    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
-
-    line.Format(_T("Move : %d"), selected->m_bMove ? 1 : 0);
-    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
-
-    line.Format(
-      _T("TarPos : [%d], [%d], [%d]"),
-      static_cast<int>(selected->m_fOldPos[0]),
-      static_cast<int>(selected->m_fOldPos[1]),
-      static_cast<int>(selected->m_fOldPos[2]));
-    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
-
-    line.Format(_T("m_nMoveType : %d"), player->m_byMoveType);
-    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
-
-    line.Format(
-      _T("CurPos : [%d], [%d], [%d]"),
-      static_cast<int>(selected->m_fCurPos[0]),
-      static_cast<int>(selected->m_fCurPos[1]),
-      static_cast<int>(selected->m_fCurPos[2]));
-    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
-
-    line.Format(_T("CurSector : %d"), selected->GetCurSecNum());
-    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
-
-    line.Format(_T("Dalant : %u"), player->m_Param.GetDalant());
-    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
-
-    line.Format(_T("Gold : %u"), player->m_Param.GetGold());
-    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
-
-    line.Format(_T("CurMap : %S"), GetMapName(selected));
-    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
-
-    HTREEITEM parameterRoot = m_trObject.InsertItem(_T("Parameter"), TVI_ROOT, TVI_LAST);
-    line.Format(_T("m_nSP : %u"), player->m_Param.GetSP());
-    m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
-    line.Format(_T("m_nHP : %u"), player->m_Param.GetHP());
-    m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
-    line.Format(_T("m_nFP : %u"), player->m_Param.GetFP());
-    m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
-    line.Format(_T("m_dExp : %.0f"), static_cast<double>(player->m_Param.GetExp()));
-    m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
-    line.Format(_T("m_nLevel : %u"), player->m_Param.GetLevel());
-    m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
     m_trObject.Expand(parameterRoot, TVE_EXPAND);
     return;
   }
@@ -728,6 +1033,30 @@ void CObjectTab::UpdateTab()
       static_cast<int>(itemBox->m_fCurPos[0]),
       static_cast<int>(itemBox->m_fCurPos[1]),
       static_cast<int>(itemBox->m_fCurPos[2]));
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+    return;
+  }
+
+  if (selected->m_ObjID.m_byKind == 1 && selected->m_ObjID.m_byID == 1)
+  {
+    line.Format(_T("Index : %d"), selected->m_ObjID.m_wIndex);
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(
+      _T("Item Name : %S(%S)"),
+      selected->m_pRecordSet ? selected->m_pRecordSet->m_strCode : "NULL",
+      selected->m_pRecordSet ? selected->m_pRecordSet[2].m_strCode : "NULL");
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    const unsigned __int8 hurry = *reinterpret_cast<unsigned __int8 *>(&(selected[1].m_fAbsPos[2]));
+    line.Format(_T("hurry : %d"), static_cast<int>(hurry));
+    m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+
+    line.Format(
+      _T("CurPos : [%d], [%d], [%d]"),
+      static_cast<int>(selected->m_fCurPos[0]),
+      static_cast<int>(selected->m_fCurPos[1]),
+      static_cast<int>(selected->m_fCurPos[2]));
     m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
     return;
   }
@@ -899,15 +1228,7 @@ void CObjectTab::OnButtonSearch()
     return;
   }
 
-  CGameObject *target = nullptr;
-  if (dialog.m_szCharName[0] != '\0')
-  {
-    target = g_Main.GetCharW(dialog.m_szCharName);
-  }
-  else
-  {
-    target = g_Main.GetObjectA(&dialog.m_ID);
-  }
+  CGameObject *target = g_Main.GetObjectExpand(&dialog.m_ID, dialog.m_szCharName, dialog.m_edIndex);
 
   if (!target || !target->m_bLive)
   {

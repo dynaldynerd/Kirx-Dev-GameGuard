@@ -14,6 +14,7 @@
 #include <utility>
 
 bool CAsyncLogger::m_bProcThread;
+CAsyncLogger *CAsyncLogger::ms_Instance;
 
 CAsyncLogger::CAsyncLogger()
   : m_pSystemLogInfo(nullptr),
@@ -39,8 +40,20 @@ CAsyncLogger::~CAsyncLogger()
 
 CAsyncLogger *CAsyncLogger::Instance()
 {
-  static CAsyncLogger s_instance;
-  return &s_instance;
+  if (!ms_Instance)
+  {
+    ms_Instance = new CAsyncLogger();
+  }
+  return ms_Instance;
+}
+
+void CAsyncLogger::Destroy()
+{
+  CAsyncLogger *instance = ms_Instance;
+  if (instance)
+  {
+    delete instance;
+  }
 }
 
 bool CAsyncLogger::Regist(
@@ -94,7 +107,6 @@ bool CAsyncLogger::Regist(
 
   if (!logInfo->Init(eType, directory, filePrefix, isDaily, dwUpdateFileNameDelay, &m_logLoading))
   {
-    delete logInfo;
     return false;
   }
 
@@ -216,11 +228,23 @@ void CAsyncLogger::Loop()
   for (auto &entry : m_mapLogInfo)
   {
     CAsyncLogInfo *logInfo = entry.second;
-    if (logInfo)
-    {
-      logInfo->UpdateLogFileName();
-    }
+    logInfo->UpdateLogFileName();
   }
+}
+
+unsigned int CAsyncLogger::GetTotalWaitSize()
+{
+  if (m_kBufferList == nullptr)
+  {
+    return 0;
+  }
+
+  unsigned int totalCount = 0;
+  for (int index = 0; index < 3; ++index)
+  {
+    totalCount += static_cast<unsigned int>(m_kBufferList[index].GetProcCount());
+  }
+  return totalCount;
 }
 
 void CAsyncLogger::Log(const char *szFileName, const char *szLog, int iLenStr)
@@ -343,11 +367,48 @@ bool CAsyncLogger::LogFromArg(int iType, char *fmt, va_list arg_ptr)
 
 bool CAsyncLogger::FormatLog(int iType, const char *fmt, ...)
 {
+  auto it = m_mapLogInfo.find(iType);
+  if (it == m_mapLogInfo.end())
+  {
+    return false;
+  }
+
+  char buffer[11288]{};
+  _SYSTEMTIME systemTime{};
+  GetLocalTime(&systemTime);
+
+  const unsigned int count = it->second->GetCount();
+  const int headerLen = sprintf_s(
+    buffer,
+    0x2C00u,
+    "%u\t%04d-%02d-%02d %02d:%02d:%02d.%03d : ",
+    count,
+    systemTime.wYear,
+    systemTime.wMonth,
+    systemTime.wDay,
+    systemTime.wHour,
+    systemTime.wMinute,
+    systemTime.wSecond,
+    systemTime.wMilliseconds);
+  if (headerLen <= 0 || headerLen >= 11264)
+  {
+    return false;
+  }
+
   va_list args;
   va_start(args, fmt);
-  bool result = LogFromArg(iType, const_cast<char *>(fmt), args);
+  const int msgLen = vsprintf_s(&buffer[headerLen], 11264LL - headerLen, fmt, args);
   va_end(args);
-  return result;
+  if (msgLen <= 0)
+  {
+    return false;
+  }
+
+  const int totalLen = headerLen + msgLen;
+  const char *fileName = it->second->GetFileName();
+  Log(fileName, buffer, totalLen);
+  it->second->IncreaseCount();
+  return true;
 }
 
 void CAsyncLogger::SystemLog(const char *fmt, ...)

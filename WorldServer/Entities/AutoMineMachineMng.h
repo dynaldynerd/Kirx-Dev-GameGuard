@@ -488,6 +488,7 @@ public:
   void SendMsg_MachineInfo(unsigned int n);
   void SendMsg_ResultCode(unsigned int n, unsigned __int8 byType, unsigned __int8 byRetCode);
   void GetState(unsigned int *dwState);
+  CGuild *GetOwnerGuild();
   bool IsMaster(CPlayer *pUser);
   void SetOpenUI(bool bOpen);
 

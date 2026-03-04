@@ -12,6 +12,7 @@ public:
   CPcBangFavor();
   virtual ~CPcBangFavor();
 
+  static CPcBangFavor *ms_pInstance;
   static CPcBangFavor *Instance();
   bool Initialzie();
   bool LoadPcBangData();

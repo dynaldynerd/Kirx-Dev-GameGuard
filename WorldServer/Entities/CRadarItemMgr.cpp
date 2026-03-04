@@ -31,6 +31,15 @@ unsigned int AddRadarCharInfo(_detected_char_list &list, unsigned __int8 charTyp
 }
 }
 
+CRadarItemMgr::CRadarItemMgr()
+{
+  Init();
+}
+
+CRadarItemMgr::~CRadarItemMgr()
+{
+}
+
 void CRadarItemMgr::Init()
 {
   m_bUse = false;
@@ -82,6 +91,32 @@ void CRadarItemMgr::Init(unsigned int dwDelayTime)
 bool CRadarItemMgr::IsUse()
 {
   return m_bUse;
+}
+
+bool CRadarItemMgr::IsRadarUse()
+{
+  const unsigned int now = timeGetTime();
+  const unsigned int endTick = m_dwDelayTime + m_dwStartTime;
+  if (!endTick && !m_bUse)
+  {
+    return m_bUse;
+  }
+  if (now >= endTick)
+  {
+    Init();
+    m_bUpdate = true;
+  }
+  return m_bUse;
+}
+
+bool CRadarItemMgr::IsUpdate()
+{
+  return m_bUpdate;
+}
+
+unsigned int CRadarItemMgr::GetStartTime()
+{
+  return m_dwStartTime;
 }
 
 void CRadarItemMgr::SetUseRadar(

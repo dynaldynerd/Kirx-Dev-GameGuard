@@ -1,0 +1,6 @@
+MSBuild version 18.3.0-release-26070-10+3972042b7 for .NET Framework
+     1>D:\repo\WorldServer\Entities\CBsp.cpp(5809,22): error C2664: 'bool CheckEdge(float *const ,float *const ,float *const ,float *const )': cannot convert argument 4 from 'const float [4]' to 'float *const ' [D:\repo\WorldServer\WorldServer.vcxproj]
+     1>D:\repo\WorldServer\Entities\CBsp.cpp(5889,22): error C2664: 'bool CheckEdge(float *const ,float *const ,float *const ,float *const )': cannot convert argument 4 from 'const float [4]' to 'float *const ' [D:\repo\WorldServer\WorldServer.vcxproj]
+     1>D:\repo\WorldServer\Entities\CBsp.cpp(6066,22): error C2664: 'bool CheckEdge(float *const ,float *const ,float *const ,float *const )': cannot convert argument 4 from 'const float [4]' to 'float *const ' [D:\repo\WorldServer\WorldServer.vcxproj]
+     1>D:\repo\WorldServer\Entities\WorldServerUtil.cpp(7459,23): error C3861: 'atanf_0': identifier not found [D:\repo\WorldServer\WorldServer.vcxproj]
+     1>D:\repo\WorldServer\Entities\WorldServerUtil.cpp(7529,3): error C3861: 'ReleaseSystemTexture': identifier not found [D:\repo\WorldServer\WorldServer.vcxproj]

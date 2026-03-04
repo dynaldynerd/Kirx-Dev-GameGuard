@@ -1969,7 +1969,22 @@ void CGameObject::AlterSec()
   // this is not a stub
 }
 
+__int64 CGameObject::AttackableHeight()
+{
+  return 50;
+}
+
+void CGameObject::BeTargeted(CCharacter * /*pSeacher*/)
+{
+  // this is not a stub
+}
+
 void CGameObject::OutOfSec()
+{
+  // this is not a stub
+}
+
+void CGameObject::RecvKillMessage(CCharacter * /*pDier*/)
 {
   // this is not a stub
 }
@@ -2147,13 +2162,10 @@ char CGameObject::UpdateSecList()
     newSec = static_cast<unsigned int>(RerangeSecIndex(m_dwCurSec, newSec));
   }
 
-  if (!m_pCurMap)
+  if (!m_pCurMap->UpdateSecterList(this, m_dwCurSec, newSec))
   {
     return 0;
   }
-
-  m_pCurMap->ExitMap(this, m_dwCurSec);
-  m_pCurMap->EnterMap(this, newSec);
 
   SetCurSecNum(newSec);
   ResetSector(oldSec, newSec);
@@ -2424,7 +2436,7 @@ __int64 CGameObject::GetUseSectorRange()
   return static_cast<unsigned int>(this->m_pCurMap->m_pMapSet->m_nRadius);
 }
 
-__int64 CGameObject::CalcCurHPRate()
+unsigned __int16 CGameObject::CalcCurHPRate()
 {
   const float currentHp = static_cast<float>(GetHP());
   const int maxHp = static_cast<int>(GetMaxHP());

@@ -10,6 +10,7 @@ class  CPvpCashMng
 public:
   CPvpCashMng();
   ~CPvpCashMng();
+  static CPvpCashMng *_pkInstance;
 
   struct _talik_recvr
   {
@@ -51,8 +52,10 @@ public:
   _max_point m_LimitPoint[30];
 
   static CPvpCashMng *Instance();
+  void Release();
   bool LoadData();
   char IsTalikItem(const char *strCode);
+  unsigned __int8 GetTalikNum();
   int GetTalikRecvrPoint(unsigned __int8 byTblCode, unsigned int dwIndex);
   int GetTalikRecvrPoint(int i);
   int GetMyClassVal(char *pClass);

@@ -9,6 +9,8 @@ class CEventLootTable;
 class  CItemLootTable
 {
 public:
+  CItemLootTable();
+
   struct _linker_code
   {
     unsigned __int8 byTableCode;
@@ -18,7 +20,7 @@ public:
 
   bool ReadRecord(const char *fileName, CRecordData *itemTables, char *errCode);
 
-  virtual ~CItemLootTable() = default;
+  virtual ~CItemLootTable();
 
 private:
   bool Indexing(CRecordData *itemTables, char *errCode);

@@ -118,6 +118,11 @@ float si_interpret::GetEffectValue(unsigned int idx) const
   return 100.0f;
 }
 
+si_effect::si_effect()
+{
+  init();
+}
+
 void si_effect::init()
 {
   byTargetItemCount = 0;

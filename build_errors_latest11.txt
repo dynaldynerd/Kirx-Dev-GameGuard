@@ -1,0 +1,2 @@
+MSBuild version 18.3.0-release-26070-10+3972042b7 for .NET Framework
+     1>D:\repo\WorldServer\Entities\MathUtil.cpp(183,5): error C2664: 'void sub_1404E2FB0(float *,float *,float *)': cannot convert argument 1 from 'const float *const ' to 'float *' [D:\repo\WorldServer\WorldServer.vcxproj]

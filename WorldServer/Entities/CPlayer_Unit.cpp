@@ -494,6 +494,17 @@ void CPlayer::BreakCloakBooster()
   this->EquipItemSFAgent.ReleaseSFCont(7);
 }
 
+bool CPlayer::IsUseCloakBooster()
+{
+  return this->EquipItemSFAgent.IsUseBooster();
+}
+
+void CPlayer::Cheet_BufEffectEnd()
+{
+  const unsigned long long endTime = GetKorLocalTime();
+  this->m_PotionBufUse.SetExtPotionEndTime(endTime);
+}
+
 void CPlayer::CheckUnitCutTime()
 {
   if (!this->m_pUserDB)

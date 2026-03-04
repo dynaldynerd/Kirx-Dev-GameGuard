@@ -21,6 +21,9 @@ struct  _parkingunit_create_setdata : _object_create_setdata
 class  CParkingUnit : public CGameObject
 {
 public:
+  CParkingUnit();
+  ~CParkingUnit();
+
   static unsigned int s_dwSerialCounter;
   static int s_nLiveNum;
 
@@ -37,6 +40,9 @@ public:
   void Init(_object_id *pID);
   char Create(_parkingunit_create_setdata *pParam);
   bool Destroy(unsigned __int8 byDestoryType);
+  unsigned __int16 CalcCurHPRate() override;
+  void ChangeOwner(CPlayer *pNewOwner, unsigned __int8 byUnitSlotIndex);
+  bool IsRideRight(CPlayer *pOne);
   void SendMsg_Create();
   void SendMsg_Destroy(unsigned __int8 byDestoryType);
   void SendMsg_ChangeOwner(unsigned __int8 byUnitSlotIndex, CPlayer *pOldOwner);

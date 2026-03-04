@@ -26,6 +26,25 @@ public:
     unsigned __int8 byRace,
     int nMemberNum,
     _guild_member_info *pEstMember);
+  void SetGuild(
+    unsigned int dwSerial,
+    unsigned __int8 byGrade,
+    unsigned __int8 byRace,
+    char *pwszName,
+    char *pwszGreetingMsg,
+    unsigned int dwEmblemBack,
+    unsigned int dwEmblemMark,
+    int nNum,
+    _guild_member_info *pEstMember,
+    long double dTotalDalant,
+    long double dTotalGold,
+    unsigned int dwMasterSerial,
+    unsigned __int8 byMasterPrevGrade,
+    int nIOMoneyHisNum,
+    _io_money_data *pIOMonHisList,
+    unsigned int dwGuildBattleTotalWinCnt,
+    unsigned int dwGuildBattleTotalDrawCnt,
+    unsigned int dwGuildBattleTotalLoseCnt);
   void ClearVote();
   void StartRankJob();
   void EndRankJob();
@@ -100,6 +119,18 @@ public:
   void AddScheduleComplete(unsigned __int8 byRet, CGuild *pSrcGuild);
   char SendMsg_GuildBattleProposed(char *pwszName);
   void SendMsg_GuildDisjointInform();
+  char ActVote(_guild_member_info *pMemPtr, unsigned __int8 byCode);
+  void CancelSuggestedMatter();
+  void ForceLeave(unsigned int dwMemberSerial);
+  __int64 GetMemberNumForJoin();
+  unsigned __int8 GetRace();
+  unsigned __int8 GuildBattleSuggestRequestToDestGuild(
+    unsigned int dwSrcGuildSerial,
+    unsigned int dwStartTimeInx,
+    unsigned int dwMemberCntInx,
+    unsigned int dwMapInx);
+  void SetTemp(char *pwszName);
+  void UpdateUTATax(unsigned __int8 byTaxRate);
   void PushDQSInGuildBattleRewardMoney();
   void PushDQSInGuildBattleCost();
   void PushDQSSourceGuildOutputGuildBattleCost();

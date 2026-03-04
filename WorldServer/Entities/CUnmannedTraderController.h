@@ -19,10 +19,13 @@ struct _TRADE_DB_BASE;
 class  CUnmannedTraderController
 {
 public:
+  static CUnmannedTraderController *ms_Instance;
+
   CUnmannedTraderController();
   ~CUnmannedTraderController();
 
   static CUnmannedTraderController *Instance();
+  static void Destroy();
   bool Init();
   void Loop();
   bool Load();

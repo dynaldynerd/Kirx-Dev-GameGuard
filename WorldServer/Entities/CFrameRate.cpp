@@ -13,6 +13,11 @@ CFrameRate::CFrameRate()
 {
 }
 
+CFrameRate::~CFrameRate()
+{
+  // this is not a stub
+}
+
 void CFrameRate::CalcSpeedPerFrame()
 {
   const DWORD now = timeGetTime();

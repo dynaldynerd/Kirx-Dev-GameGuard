@@ -784,6 +784,11 @@ void AutoMineMachine::GetState(unsigned int *dwState)
   }
 }
 
+CGuild *AutoMineMachine::GetOwnerGuild()
+{
+  return m_pOwnerGuild;
+}
+
 bool AutoMineMachine::IsMaster(CPlayer *pUser)
 {
   if (!m_pOwnerGuild)

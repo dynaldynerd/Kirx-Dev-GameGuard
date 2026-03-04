@@ -2531,8 +2531,8 @@ void CPlayer::pc_MoveToOwnStoneMapRequest()
     }
     else
     {
-      intoMap = g_HolySys.m_HolyKeeperData.pCreateMap;
-      portalDummy = g_HolySys.m_pPortalDummy[this->m_Param.GetRaceCode()];
+      intoMap = g_HolySys.GetMapData();
+      portalDummy = g_HolySys.GetPortalDummy(static_cast<unsigned __int8>(this->m_Param.GetRaceCode()));
       if (portalDummy && intoMap)
       {
         if (intoMap->GetRandPosInDummy(portalDummy->m_pDumPos, pos, true))
@@ -2958,7 +2958,7 @@ void CPlayer::CheckPos_Region()
 
 void CPlayer::AlterSec()
 {
-  if (m_pPartyMgr && m_pPartyMgr->IsPartyMode())
+  if (m_pPartyMgr->IsPartyMode())
   {
     SendData_PartyMemberPos();
   }

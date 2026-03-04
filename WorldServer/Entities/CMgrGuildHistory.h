@@ -6,6 +6,7 @@
 #include "CNetIndexList.h"
 
 class CGuild;
+struct _suggested_matter;
 
 class  CMgrGuildHistory
 {
@@ -14,8 +15,11 @@ public:
   ~CMgrGuildHistory();
 
   static void IOThread(void *pv);
+  void OnLoop();
+  unsigned int GetTotalWaitSize();
   void WriteFile(const char *pszFileName, const char *pszLog);
   void GetNewFileName(unsigned int dwGuildSerial, char *pszFileName);
+  void load_guild(CGuild *pGuild, char *pszFileName);
   void start_guild(CGuild *pGuild, char *pszFileName);
   void join_member(
     char *pszJoinerName,
@@ -39,6 +43,36 @@ public:
     long double dTotalDalant,
     long double dTotalGold,
     const char *pszFileName);
+  void pop_money(
+    char *pszIOerName,
+    unsigned int dwIOerSerial,
+    int nPopDalant,
+    int nPopGold,
+    long double dTotalDalant,
+    long double dTotalGold,
+    char *pszFileName);
+  void suggest_vote(
+    char *pszSugerName,
+    unsigned int dwSugerSerial,
+    _suggested_matter *pMatter,
+    char *pszFileName);
+  void suggest_complete(
+    char *pszSugerName,
+    unsigned int dwSugerSerial,
+    _suggested_matter *pMatter,
+    bool bPass,
+    char *pszFileName);
+  void suggest_cancel(
+    char *pszSugerName,
+    unsigned int dwSugerSerial,
+    _suggested_matter *pMatter,
+    char *pszFileName);
+  void change_atrade_taxrate(
+    char *pszSugerName,
+    unsigned int dwSugerSerial,
+    unsigned __int8 byCurTax,
+    unsigned __int8 byNextTax,
+    char *pszFileName);
 
   struct __LOG_DATA
   {

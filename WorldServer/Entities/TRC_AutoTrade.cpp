@@ -90,9 +90,29 @@ bool TRC_AutoTrade::Initialzie()
   return true;
 }
 
+__int64 TRC_AutoTrade::check(unsigned int dwAvatorSerial, unsigned int dwGuildSerial)
+{
+  if (!IsOwnerGuild(dwGuildSerial))
+  {
+    return 1;
+  }
+
+  if (IsMaster(dwAvatorSerial))
+  {
+    return 0;
+  }
+
+  return 2;
+}
+
 bool TRC_AutoTrade::IsOwnerGuild(unsigned int nGuildSerial)
 {
   return m_pOwnerGuild && nGuildSerial == m_pOwnerGuild->m_dwSerial;
+}
+
+bool TRC_AutoTrade::IsMaster(unsigned int dwSerial)
+{
+  return m_pOwnerGuild && dwSerial == m_pOwnerGuild->m_MasterData.dwSerial;
 }
 
 float TRC_AutoTrade::get_taxrate()
@@ -103,6 +123,26 @@ float TRC_AutoTrade::get_taxrate()
 float TRC_AutoTrade::get_next_tax()
 {
   return static_cast<float>(static_cast<int>(this->m_suggested.dwNext));
+}
+
+unsigned __int8 TRC_AutoTrade::get_race()
+{
+  return m_pOwnerGuild->m_byRace;
+}
+
+char *TRC_AutoTrade::get_guidlname()
+{
+  if (m_pOwnerGuild)
+  {
+    return m_pOwnerGuild->m_wszName;
+  }
+
+  return nullptr;
+}
+
+CGuild *TRC_AutoTrade::getOwnerGuild()
+{
+  return m_pOwnerGuild;
 }
 
 unsigned int TRC_AutoTrade::getSuggestedTime()
@@ -360,6 +400,22 @@ int TRC_AutoTrade::ChangeOwner(CGuild *pGuild)
     prevOwner->MakeDownMemberPacket();
   }
   return 0;
+}
+
+void TRC_AutoTrade::history_used_cheet_changetaxrate(unsigned int dwProb, char *pName)
+{
+  m_serviceLog.Write("[ChangeTaxRate]:Used cheat code(changetaxrate) :: %s(%d)", pName, dwProb);
+}
+
+void TRC_AutoTrade::SetGuildMaintainMoney(int dwTax, unsigned int dwSeller)
+{
+  if (m_pOwnerGuild)
+  {
+    PushDQSData_GuildInMoney(static_cast<unsigned int>(dwTax), dwSeller);
+  }
+
+  ++m_dwTrade;
+  m_dIncomeMoney = m_dIncomeMoney + static_cast<double>(dwTax);
 }
 
 void TRC_AutoTrade::SetPatriarchTaxMoney(int dwTax)

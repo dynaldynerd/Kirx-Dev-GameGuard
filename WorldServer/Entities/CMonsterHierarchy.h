@@ -18,7 +18,9 @@ class  CMonsterHierarchy
   unsigned int m_dwChildRecallTime;
 
 public:
-  virtual ~CMonsterHierarchy() = default;
+  CMonsterHierarchy();
+  virtual ~CMonsterHierarchy();
+
   void Init();
   CMonster *GetParent();
   unsigned __int8 ChildKindCount();

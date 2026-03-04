@@ -199,6 +199,16 @@ void CNationSettingManager::OnDisConnectSession(unsigned int n)
   }
 }
 
+bool CNationSettingManager::OnCheckSession_FirstVerify(unsigned int n)
+{
+  INationGameGuardSystem *gameGuard = m_pData->GetGameGuardSystem();
+  if (!gameGuard)
+  {
+    return true;
+  }
+  return gameGuard->OnCheckSession_FirstVerify(static_cast<int>(n));
+}
+
 bool CNationSettingManager::CheckEnterWorldRequest(unsigned int n, char *pBuf)
 {
   INationGameGuardSystem *gameGuard = m_pData->GetGameGuardSystem();
@@ -229,6 +239,16 @@ void CNationSettingManager::CreateComplete(CPlayer *pOne)
 bool CNationSettingManager::IsNormalString(const char *szString)
 {
   return m_pData->IsNormalString(szString);
+}
+
+bool CNationSettingManager::ValidMacAddress()
+{
+  return m_pData->ValidMacAddress();
+}
+
+char *CNationSettingManager::GetServerVaildKey()
+{
+  return m_pData->m_szVaildKey;
 }
 
 bool CNationSettingManager::RecvGameGuardData(unsigned int n, _MSG_HEADER *pHeader, char *pBuff)

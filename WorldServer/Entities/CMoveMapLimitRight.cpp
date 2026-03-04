@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "CMoveMapLimitRight.h"
+#include <new>
 
 #include "CMoveMapLimitRightPortal.h"
 
@@ -20,7 +21,7 @@ CMoveMapLimitRight *CMoveMapLimitRight::Create(int iType)
     return nullptr;
   }
 
-  auto *right = new CMoveMapLimitRightPortal(iType);
+  auto *right = new (std::nothrow) CMoveMapLimitRightPortal(iType);
   return right;
 }
 
@@ -62,4 +63,3 @@ int CMoveMapLimitRight::GetType() const
 {
   return m_iType;
 }
-

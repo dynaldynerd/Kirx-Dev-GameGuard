@@ -75,6 +75,34 @@ void CDummyDraw::DeletePen()
   }
 }
 
+void CDummyDraw::SetDummyPoint(CMapData *pMap, float *pCenterPos, int nType, CRect *prcWnd)
+{
+  m_pMap = pMap;
+  m_nType = nType;
+
+  _bsp_info *bspInfo = pMap->GetBspInfo();
+  const float left = static_cast<float>(-bspInfo->m_nMapMinSize[0]) + (pCenterPos[0] - 80.0f);
+  const float top = static_cast<float>(bspInfo->m_nMapMaxSize[2]) - (pCenterPos[2] + 80.0f);
+  const float right = static_cast<float>(-bspInfo->m_nMapMinSize[0]) + (pCenterPos[0] + 80.0f);
+  const float bottom = static_cast<float>(bspInfo->m_nMapMaxSize[2]) - (pCenterPos[2] - 80.0f);
+
+  m_fPosAbs[0] = left;
+  m_fPosAbs[1] = top;
+  m_fPosAbs[2] = right;
+  m_fPosAbs[3] = top;
+  m_fPosAbs[4] = left;
+  m_fPosAbs[5] = bottom;
+  m_fPosAbs[6] = right;
+  m_fPosAbs[7] = bottom;
+
+  for (int j = 0; j < 4; ++j)
+  {
+    m_fScrNor[2 * j] = (m_fPosAbs[2 * j] * static_cast<float>(prcWnd->right)) / static_cast<float>(bspInfo->m_nMapSize[0]);
+    m_fScrNor[2 * j + 1] =
+      (m_fPosAbs[2 * j + 1] * static_cast<float>(prcWnd->bottom)) / static_cast<float>(bspInfo->m_nMapSize[2]);
+  }
+}
+
 void CDummyDraw::SetDummyRange(
   CMapData *pMap,
   float *pLT,

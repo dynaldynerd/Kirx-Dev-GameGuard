@@ -44,6 +44,8 @@ unsigned __int8 CMainThread::db_Load_Avator(
     *pdwAddGold = 0;
   }
 
+  pData->dbPostData.Init();
+
   if (bAll)
   {
     result = _db_Load_Base(dwSerial, pData);

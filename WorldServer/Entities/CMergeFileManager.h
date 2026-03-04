@@ -2,7 +2,7 @@
 
 #include "IdaCompat.h"
 
-struct CMergeFile;
+class CMergeFile;
 
 /* 1402 */
 class  CMergeFileManager
@@ -14,6 +14,7 @@ class  CMergeFileManager
 
 public:
   CMergeFileManager();
+  ~CMergeFileManager();
   void InitMergeFile(char *a2);
   void ReleaseMergeFile();
   unsigned int GetFileSize(char *a2);

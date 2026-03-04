@@ -152,6 +152,29 @@ unsigned int CPvpUserRankingInfo::GetCurrentRaceBossSerial(unsigned __int8 byRac
   return m_dwCurrentRaceBossSerial[byRace][byNth];
 }
 
+void CPvpUserRankingInfo::SetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth, unsigned int dwSerial)
+{
+  if (byNth < 9u)
+  {
+    m_dwCurrentRaceBossSerial[byRace][byNth] = dwSerial;
+  }
+}
+
+const _PVP_RANK_PACKED_DATA *CPvpUserRankingInfo::GetRankPackedData(
+  unsigned __int8 byRace,
+  unsigned __int8 byPage)
+{
+  if (byRace >= 3u)
+  {
+    return nullptr;
+  }
+  if (byPage < 10u)
+  {
+    return &(m_vecPackedRankData[byRace][byPage]);
+  }
+  return nullptr;
+}
+
 unsigned int CPvpUserRankingInfo::FindRank(unsigned __int8 byRaceCode, unsigned int dwAvatorSerial)
 {
   for (int rankIndex = 0; rankIndex < 100; ++rankIndex)
@@ -269,6 +292,51 @@ void CPvpUserRankingInfo::FlipPvPRankTop()
 void CPvpUserRankingInfo::IncreaseVesion()
 {
   ++m_byPvpRankDataVersion;
+}
+
+char CPvpUserRankingInfo::LoadPvpRank(char *szDate)
+{
+  for (int race = 0; race < 3; ++race)
+  {
+    g_Main.m_logLoadingError.Write("Race_%d Ranking Start!!", race);
+    _PVP_RANK_DATA *rankData = m_vecPvpRankDataCurrent[race];
+    memset_0(rankData, 0, 0x157CuLL);
+
+    const unsigned __int8 selectResult = g_Main.m_pWorldDB->Select_PvpRankInfo(
+      static_cast<unsigned __int8>(race),
+      szDate,
+      rankData);
+
+    if (selectResult != 0)
+    {
+      if (selectResult != 2)
+      {
+        MyMessageBox("DatabaseInit", "load race rank fail");
+        return 0;
+      }
+
+      for (int index = 0; index < 9; ++index)
+      {
+        m_dwUpdateRaceBossSerial[race][index] = static_cast<unsigned int>(-1);
+      }
+    }
+    else
+    {
+      for (int index = 0; index < 9; ++index)
+      {
+        if (!strlen_0(rankData[index].wszName))
+        {
+          m_dwUpdateRaceBossSerial[race][index] = static_cast<unsigned int>(-1);
+        }
+      }
+    }
+
+    g_Main.m_logLoadingError.Write("Race_%d Ranking Complete!!", race);
+  }
+
+  PvpRankDataPacking(&g_Main.m_logLoadingError);
+  g_Main.m_logLoadingError.Write("PvpRankData Packing Complete!!");
+  return 1;
 }
 
 void CPvpUserRankingInfo::ClearTomorrowPvpRankData()
@@ -596,9 +664,110 @@ void CUserRankingProcess::SetLogger(CLogFile *pkLogger)
 
 char CUserRankingProcess::Load()
 {
+  char szDate[40]{};
+  GetRankDateStr(szDate, 10uLL);
+
+  if (!CheckAndCreateTodayPvpRankTable(szDate))
+  {
+    m_pkLogger->Write(
+      "CUserRankingProcess::Load() : CheckAndCreateTodayPvpRankTable(szDate(%s)) Fail!",
+      szDate);
+    return 0;
+  }
+
+  if (!m_kPvpRankingInfo.LoadPvpRank(szDate))
+  {
+    m_pkLogger->Write("CUserRankingProcess::Load() : LoadPvpRank(szDate(%s)) Fail!", szDate);
+    return 0;
+  }
+
+  CheckTomorrowPvpRankDate();
   m_kPvpRankingInfo.IncreaseVesion();
+  if (!m_kGuildRanking.Load())
+  {
+    return 0;
+  }
   m_eState = PS_WAIT;
   return 1;
+}
+
+void CUserRankingProcess::GetRankDateStr(char *szDate, unsigned __int64 tDateStrSize)
+{
+  static_cast<void>(tDateStrSize);
+  GetTodayStr(szDate);
+}
+
+void CUserRankingProcess::GetTommorrowStr(char *szTommorrow)
+{
+  __time64_t now = 0;
+  _time64(&now);
+  now += 86400;
+
+  tm local{};
+  if (_localtime64_s(&local, &now) != 0)
+  {
+    szTommorrow[0] = 0;
+    return;
+  }
+
+  char month[8]{};
+  char day[8]{};
+  if (local.tm_mon + 1 > 9)
+  {
+    sprintf_s(month, sizeof(month), "%d", local.tm_mon + 1);
+  }
+  else
+  {
+    sprintf_s(month, sizeof(month), "0%d", local.tm_mon + 1);
+  }
+
+  if (local.tm_mday > 9)
+  {
+    sprintf_s(day, sizeof(day), "%d", local.tm_mday);
+  }
+  else
+  {
+    sprintf_s(day, sizeof(day), "0%d", local.tm_mday);
+  }
+
+  sprintf_s(szTommorrow, 10, "%d%s%s", local.tm_year + 1900, month, day);
+}
+
+char CUserRankingProcess::CheckAndCreateTodayPvpRankTable(char *szDate)
+{
+  char tableName[56]{};
+  sprintf_s(tableName, 32uLL, "tbl_PvpRank%s", szDate);
+  if (!g_Main.m_pWorldDB->TableExist(tableName))
+  {
+    if (!g_Main.m_pWorldDB->Update_RaceRank(szDate))
+    {
+      MyMessageBox("DatabaseInit", "create race-rank-table fail");
+      return 0;
+    }
+
+    g_Main.m_logLoadingError.Write("Today Rank Table(%s) Make Complete!!", tableName);
+  }
+
+  return 1;
+}
+
+void CUserRankingProcess::CheckTomorrowPvpRankDate()
+{
+  char szTommorrow[48]{};
+  char tableName[64]{};
+  const std::time_t currentTime = std::time(nullptr);
+
+  if (m_tStartTime <= static_cast<long long>(currentTime))
+  {
+    GetTommorrowStr(szTommorrow);
+    sprintf_s(tableName, 32uLL, "tbl_PvpRank%s", szTommorrow);
+    if (!g_Main.m_pWorldDB->TableExist(tableName))
+    {
+      g_Main.m_logLoadingError.Write("Tommorrow Rank Table(%s) Not Exist!!", tableName);
+    }
+  }
+
+  m_kPvpRankingInfo.IncreaseVesion();
 }
 
 void CUserRankingProcess::LoadINI(unsigned int *piHour, unsigned int *piMin)
@@ -667,6 +836,14 @@ bool CUserRankingProcess::IsCurrentRaceBossGroup(unsigned __int8 byRace, unsigne
 unsigned int CUserRankingProcess::GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth)
 {
   return m_kPvpRankingInfo.GetCurrentRaceBossSerial(byRace, byNth);
+}
+
+void CUserRankingProcess::SetCurrentRaceBossSerial(
+  unsigned __int8 byRace,
+  unsigned __int8 byNth,
+  unsigned int dwSerial)
+{
+  m_kPvpRankingInfo.SetCurrentRaceBossSerial(byRace, byNth, dwSerial);
 }
 
 unsigned int CUserRankingProcess::FindRank(unsigned __int8 byRaceCode, unsigned int dwAvatorSerial)

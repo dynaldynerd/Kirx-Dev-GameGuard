@@ -14,6 +14,19 @@ CMoveMapLimitInfoList::CMoveMapLimitInfoList()
 
 CMoveMapLimitInfoList::~CMoveMapLimitInfoList()
 {
+  CleanUp();
+}
+
+void CMoveMapLimitInfoList::CleanUp()
+{
+  for (CMoveMapLimitInfo *limitInfo : m_vecLimitInfo)
+  {
+    if (limitInfo)
+    {
+      delete limitInfo;
+    }
+  }
+  m_vecLimitInfo.clear();
 }
 
 bool CMoveMapLimitInfoList::Init(std::vector<int> *vecRightTypeList)
@@ -84,10 +97,7 @@ void CMoveMapLimitInfoList::Loop()
 {
   for (CMoveMapLimitInfo *limitInfo : m_vecLimitInfo)
   {
-    if (limitInfo)
-    {
-      limitInfo->Loop();
-    }
+    limitInfo->Loop();
   }
 }
 
@@ -95,7 +105,7 @@ CMoveMapLimitInfo *CMoveMapLimitInfoList::Get(int iLimitType, int iMapInx, unsig
 {
   for (CMoveMapLimitInfo *info : m_vecLimitInfo)
   {
-    if (info && info->IsEqualLimit(iLimitType, iMapInx, dwStoreRecordIndex))
+    if (info->IsEqualLimit(iLimitType, iMapInx, dwStoreRecordIndex))
     {
       return info;
     }

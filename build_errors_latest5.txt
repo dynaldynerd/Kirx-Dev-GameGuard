@@ -1,0 +1,5 @@
+MSBuild version 18.3.0-release-26070-10+3972042b7 for .NET Framework
+     1>D:\repo\WorldServer\Entities\D3D8Compat.h(124,78): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int [D:\repo\WorldServer\WorldServer.vcxproj]
+     1>D:\repo\WorldServer\Entities\D3D8Compat.h(124,94): error C2143: syntax error: missing ',' before '*' [D:\repo\WorldServer\WorldServer.vcxproj]
+     1>D:\repo\WorldServer\Entities\D3D8Compat.h(125,61): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int [D:\repo\WorldServer\WorldServer.vcxproj]
+     1>D:\repo\WorldServer\Entities\D3D8Compat.h(125,80): error C2143: syntax error: missing ',' before '*' [D:\repo\WorldServer\WorldServer.vcxproj]

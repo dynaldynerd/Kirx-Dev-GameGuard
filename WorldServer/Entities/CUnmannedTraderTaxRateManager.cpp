@@ -48,6 +48,15 @@ CUnmannedTraderTaxRateManager *CUnmannedTraderTaxRateManager::Instance()
   return CUnmannedTraderTaxRateManager::ms_Instance;
 }
 
+void CUnmannedTraderTaxRateManager::Destroy()
+{
+  if (CUnmannedTraderTaxRateManager::ms_Instance)
+  {
+    delete CUnmannedTraderTaxRateManager::ms_Instance;
+    CUnmannedTraderTaxRateManager::ms_Instance = nullptr;
+  }
+}
+
 void CUnmannedTraderTaxRateManager::Loop()
 {
   if (m_pkTimer && !m_vecTRC.empty() && m_pkTimer->CountingTimer())
@@ -223,6 +232,37 @@ unsigned int CUnmannedTraderTaxRateManager::GetTax(
 
   TRC_AutoTrade *autoTrade = m_vecTRC[byRace];
   return autoTrade->CalcPrice(dwGuildSerial, dwPrice);
+}
+
+char CUnmannedTraderTaxRateManager::CheatChangeTaxRate(
+  unsigned __int8 byRace,
+  int dwNewTaxRate,
+  char *pCheaterName)
+{
+  if (m_vecTRC.empty() || m_vecTRC.size() <= byRace)
+  {
+    return 0;
+  }
+
+  const float newTaxRate = static_cast<float>(dwNewTaxRate) / 100.0f;
+  if (m_vecTRC[byRace]->ChangeTaxRate(newTaxRate))
+  {
+    return 0;
+  }
+
+  m_vecTRC[byRace]->history_used_cheet_changetaxrate(dwNewTaxRate, pCheaterName);
+  return 1;
+}
+
+void CUnmannedTraderTaxRateManager::SetGuildMaintainMoney(
+  unsigned __int8 byRace,
+  unsigned int dwTax,
+  unsigned int dwSeller)
+{
+  if (!m_vecTRC.empty() && m_vecTRC.size() > byRace)
+  {
+    m_vecTRC[byRace]->SetGuildMaintainMoney(dwTax, dwSeller);
+  }
 }
 
 int CUnmannedTraderTaxRateManager::ChangeOwner(unsigned __int8 byRace, CGuild *pGuild)

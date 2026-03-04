@@ -22,6 +22,11 @@ CRaceBuffHolyQuestResultInfo::CRaceBuffHolyQuestResultInfo()
 {
 }
 
+CRaceBuffHolyQuestResultInfo::~CRaceBuffHolyQuestResultInfo()
+{
+  // this is not a stub
+}
+
 bool CRaceBuffHolyQuestResultInfo::Load()
 {
   LoadINI();
@@ -40,6 +45,12 @@ bool CRaceBuffHolyQuestResultInfo::Load()
     m_byOldFailRace,
     m_byOldLoseRace);
   return false;
+}
+
+char CRaceBuffHolyQuestResultInfo::Save()
+{
+  SaveINI();
+  return 1;
 }
 
 bool CRaceBuffHolyQuestResultInfo::LoadINI()

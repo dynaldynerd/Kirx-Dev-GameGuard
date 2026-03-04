@@ -5,6 +5,7 @@
 #include <cstring>
 #include <ctime>
 #include <cstdlib>
+#include <cstdio>
 
 #include "CMapOperation.h"
 #include "CNationSettingManager.h"
@@ -54,6 +55,32 @@ const char wszNonMakeName[3][17] = {"GM", "ADMIN", "OPERATOR"};
 const char wszGMCmp[] = "[GameMaster]";
 size_t nGMCmpLen = strlen_0(wszGMCmp);
 
+CUserDB::CUserDB()
+{
+  m_dwAccountSerial = static_cast<unsigned int>(-1);
+  m_AvatorData.InitData();
+  m_bActive = false;
+  m_bField = false;
+  m_bChatLock = false;
+  m_bNoneUpdateData = false;
+  m_dwSerial = static_cast<unsigned int>(-1);
+  m_idWorld.dwSerial = static_cast<unsigned int>(-1);
+  m_gidGlobal.dwSerial = static_cast<unsigned int>(-1);
+  m_bCreateTrunkFree = false;
+  if (!CUserDB::s_logAvatorDB.m_bInit)
+  {
+    const unsigned int localTime = GetKorLocalTime();
+    char buffer[80]{};
+    std::sprintf(buffer, "..\\ZoneServerLog\\Systemlog\\AvatorDBError%d.log", localTime);
+    CUserDB::s_logAvatorDB.SetWriteLogFile(buffer, 1, false, true, true);
+  }
+  m_AvatorData_bk.InitData();
+}
+
+CUserDB::~CUserDB()
+{
+}
+
 CUserDB *SearchAvatorWithName(CUserDB *pList, int nMax, char *pwszName)
 {
   const unsigned __int8 nameLen = static_cast<unsigned __int8>(strlen_0(pwszName));
@@ -76,6 +103,13 @@ void CUserDB::Init(unsigned __int16 index)
   m_idWorld.wIndex = index;
   ParamInit();
   m_tmrCheckPlayMin.BeginTimer(0xEA60);
+}
+
+void CUserDB::DummyCreate(unsigned int dwSerial)
+{
+  Init(0);
+  m_bActive = true;
+  m_dwSerial = dwSerial;
 }
 
 void CUserDB::ParamInit()
@@ -268,6 +302,74 @@ char CUserDB::Update_CuttingEmpty()
   return 1;
 }
 
+char CUserDB::Update_CuttingPush(unsigned __int8 resnum, _CUTTING_DB_BASE::_LIST *plist)
+{
+  if (resnum > 20u)
+  {
+    g_Main.m_logSystemError.Write(
+      "%s : Update_CuttingPush(CODE) byResNum (%d) => failed ",
+      m_aszAvatorName,
+      resnum);
+    return 0;
+  }
+
+  for (unsigned __int8 index = 0; index < resnum; ++index)
+  {
+    if (plist[index].Key.wItemIndex >= GetMaxResKind())
+    {
+      g_Main.m_logSystemError.Write(
+        "%s : Update_CuttingPush(CODE) List[%d].byResIndex (%d) => failed ",
+        m_aszAvatorName,
+        index,
+        plist[index].Key.wItemIndex);
+      return 0;
+    }
+  }
+
+  m_AvatorData.dbCutting.Init();
+  m_AvatorData.dbCutting.m_byLeftNum = resnum;
+  memcpy_0(m_AvatorData.dbCutting.m_List, plist, sizeof(_CUTTING_DB_BASE::_LIST) * resnum);
+  m_bDataUpdate = true;
+  return 1;
+}
+
+char CUserDB::Update_CuttingTrans(unsigned __int16 wResItemIndex, unsigned __int16 wLeftAmt)
+{
+  if (wResItemIndex >= GetMaxResKind())
+  {
+    g_Main.m_logSystemError.Write(
+      "%s : Update_CuttingTrans(CODE) wResItemIndex (%d) => failed ",
+      m_aszAvatorName,
+      wResItemIndex);
+    return 0;
+  }
+
+  bool found = false;
+  for (int index = 0; index < 20; ++index)
+  {
+    if (m_AvatorData.dbCutting.m_List[index].Key.wItemIndex == wResItemIndex)
+    {
+      m_AvatorData.dbCutting.m_List[index].dwDur = wLeftAmt;
+      if (!wLeftAmt)
+      {
+        m_AvatorData.dbCutting.m_List[index].Init();
+        --m_AvatorData.dbCutting.m_byLeftNum;
+      }
+      found = true;
+      break;
+    }
+  }
+
+  if (!found)
+  {
+    g_Main.m_logSystemError.Write("%s:Update_TransRes(Idx:%d)", m_aszAvatorName, wResItemIndex);
+    return 0;
+  }
+
+  m_bDataUpdate = true;
+  return 1;
+}
+
 char CUserDB::Update_NPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BASE::_NPC_QUEST_HISTORY *pHisData)
 {
   if (byIndex < 0x46u)
@@ -284,6 +386,25 @@ char CUserDB::Update_NPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BASE::_N
     m_aszAvatorName,
     byIndex);
   return 0;
+}
+
+char CUserDB::Update_StartNPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BASE::_START_NPC_QUEST_HISTORY *pHisData)
+{
+  if (byIndex >= g_Main.m_dwStartNPCQuestCnt[m_AvatorData.dbAvator.m_byRaceSexCode / 2])
+  {
+    g_Main.m_logSystemError.Write(
+      "%s : Update_NPCQuestHistory(Index OVER) : %d",
+      m_aszAvatorName,
+      byIndex);
+    return 0;
+  }
+
+  strcpy_0(m_AvatorData.dbQuest.m_StartHistory[byIndex].szQuestCode, pHisData->szQuestCode);
+  m_AvatorData.dbQuest.m_StartHistory[byIndex].byLevel = pHisData->byLevel;
+  GetLocalTime(&m_AvatorData.dbQuest.m_StartHistory[byIndex].tmStartTime);
+  m_AvatorData.dbQuest.m_StartHistory[byIndex].nEndTime = pHisData->nEndTime;
+  ++m_AvatorData.dbQuest.dwListCnt;
+  return 1;
 }
 
 void CUserDB::Update_MaxLevel(unsigned __int8 byMaxLevel)
@@ -492,6 +613,13 @@ bool CUserDB::Update_AlterPvPPoint(long double dNewPoint)
   m_AvatorData.dbAvator.m_dPvPPoint = dNewPoint;
   m_bDataUpdate = true;
   return true;
+}
+
+char CUserDB::Update_AlterPvPCashBag(long double dNewPoint)
+{
+  m_AvatorData.dbAvator.m_dPvPCashBag = dNewPoint;
+  m_bDataUpdate = true;
+  return 1;
 }
 
 bool CUserDB::Update_ItemAdd(
@@ -1083,6 +1211,43 @@ __int64 _FORCEKEY::CovDBKey()
   return static_cast<__int64>(dwKey);
 }
 
+void _EQUIP_DB_BASE::_EMBELLISH_LIST::Init()
+{
+  Key.SetRelease();
+  wAmount = 0;
+  dwItemETSerial = 0;
+  lnUID = 0;
+  byCsMethod = 0;
+  dwT = static_cast<unsigned int>(-1);
+  dwLendRegdTime = static_cast<unsigned int>(-1);
+}
+
+void _EQUIP_DB_BASE::Init()
+{
+  for (int j = 0; j < 7; ++j)
+  {
+    m_EmbellishList[j].Init();
+  }
+}
+
+void _FORCE_DB_BASE::_LIST::Init()
+{
+  Key.SetRelease();
+  dwItemETSerial = 0;
+  lnUID = 0;
+  byCsMethod = 0;
+  dwT = static_cast<unsigned int>(-1);
+  m_dwLendRegdTime = static_cast<unsigned int>(-1);
+}
+
+void _FORCE_DB_BASE::Init()
+{
+  for (int j = 0; j < 88; ++j)
+  {
+    m_List[j].Init();
+  }
+}
+
 bool _LINKKEY::IsFilled()
 {
   return wEffectCode != 0xFFFF;
@@ -1181,6 +1346,26 @@ void _ANIMUS_DB_BASE::_LIST::Init()
 _ANIMUS_DB_BASE::_ANIMUS_DB_BASE()
 {
   Init();
+}
+
+void _INVEN_DB_BASE::_LIST::Init()
+{
+  Key.SetRelease();
+  dwDur = 0;
+  dwUpt = 0x0FFFFFFF;
+  dwItemETSerial = 0;
+  lnUID = 0;
+  byCsMethod = 0;
+  dwT = static_cast<unsigned int>(-1);
+  dwLendRegdTime = static_cast<unsigned int>(-1);
+}
+
+void _INVEN_DB_BASE::Init()
+{
+  for (int j = 0; j < 100; ++j)
+  {
+    m_List[j].Init();
+  }
 }
 
 void _ANIMUS_DB_BASE::Init()
@@ -1521,6 +1706,62 @@ bool _TRUNK_DB_BASE::_LIST::Release()
   return true;
 }
 
+void _TRUNK_DB_BASE::_LIST::Init()
+{
+  Key.SetRelease();
+  dwDur = 0;
+  dwUpt = 0x0FFFFFFF;
+  byRace = 0;
+  dwItemETSerial = 0;
+  lnUID = 0;
+  byCsMethod = 0;
+  dwT = static_cast<unsigned int>(-1);
+  dwLendRegdTime = static_cast<unsigned int>(-1);
+}
+
+void _TRUNK_DB_BASE::Init()
+{
+  bySlotNum = 0;
+  for (int j = 0; j < 100; ++j)
+  {
+    m_List[j].Init();
+  }
+
+  byExtSlotNum = 0;
+  for (int k = 0; k < 40; ++k)
+  {
+    m_ExtList[k].Init();
+  }
+}
+
+void _TRADE_DB_BASE::_LIST::Clear()
+{
+  byState = 0;
+  dwRegistSerial = 0;
+  byInvenIndex = static_cast<unsigned __int8>(-1);
+  dwPrice = 0;
+  tStartTime = 0;
+  bySellTurm = 0;
+  dwBuyerSerial = static_cast<unsigned int>(-1);
+  dwTax = 0;
+  tResultTime = 0;
+  wszBuyerName[0] = '\0';
+  szBuyerAccount[0] = '\0';
+}
+
+void _TRADE_DB_BASE::Clear()
+{
+  for (int j = 0; j < 20; ++j)
+  {
+    m_List[j].Clear();
+  }
+}
+
+void _TRADE_DB_BASE::Init()
+{
+  Clear();
+}
+
 _PERSONALAMINE_INVEN_DB_BASE::_LIST::_LIST()
 {
   Init();
@@ -1543,6 +1784,81 @@ void _PERSONALAMINE_INVEN_DB_BASE::Init()
   for (int j = 0; j < 40; ++j)
   {
     m_List[j].Init();
+  }
+}
+
+void _CRYMSG_DB_BASE::_LIST::Init()
+{
+  wszCryMsg[0] = '\0';
+}
+
+void _CRYMSG_DB_BASE::Init()
+{
+  for (int j = 0; j < 10; ++j)
+  {
+    m_List[j].Init();
+  }
+}
+
+void _PVPPOINT_LIMIT_DB_BASE::Init()
+{
+  tUpdatedate = 0;
+  bUseUp = false;
+  byLimitRate = 0;
+  dOriginalPoint = 0.0;
+  dLimitPoint = 0.0;
+  dUsePoint = 0.0;
+}
+
+void _PVP_ORDER_VIEW_DB_BASE::Init()
+{
+  std::memset(this, 0, sizeof(_PVP_ORDER_VIEW_DB_BASE));
+}
+
+void _SUPPLEMENT_DB_BASE::Init()
+{
+  std::memset(this, 0, sizeof(_SUPPLEMENT_DB_BASE));
+}
+
+void _PCBANG_PLAY_TIME::Init()
+{
+  std::memset(this, 0, sizeof(_PCBANG_PLAY_TIME));
+}
+
+void _POTION_NEXT_USE_TIME_DB_BASE::Init()
+{
+  std::memset(this, 0, sizeof(_POTION_NEXT_USE_TIME_DB_BASE));
+}
+
+void _AVATOR_DB_BASE::Init()
+{
+  _REGED_AVATOR_DB::Init();
+
+  for (int j = 0; j < 3; ++j)
+  {
+    m_zClassHistory[j] = static_cast<__int16>(-1);
+  }
+
+  m_dwPvpRank = 0;
+  m_wRankRate = static_cast<unsigned __int16>(-1);
+  m_dwGuildSerial = static_cast<unsigned int>(-1);
+  m_dwGuildExplusDate = static_cast<unsigned int>(-1);
+  m_bOverlapVote = true;
+  m_dwGivebackCount = 0;
+  m_dwRadarDelayTime = 0;
+  m_dwTakeLastMentalTicket = 0;
+  m_dwTakeLastCriTicket = 0;
+  m_byMaxLevel = 0;
+
+  for (int k = 0; k < 3; ++k)
+  {
+    m_dwPunishment[k] = static_cast<unsigned int>(-1);
+    m_dwElectSerial[k] = 0;
+  }
+
+  for (int m = 0; m < 3; ++m)
+  {
+    m_dwRaceBattleRecord[m] = 0;
   }
 }
 
@@ -1678,7 +1994,30 @@ char _SYNC_STATE::chk_select()
 
 void _AVATOR_DATA::InitData()
 {
-  std::memset(this, 0, sizeof(_AVATOR_DATA));
+  dbAvator.Init();
+  dbLink.Init();
+  dbEquip.Init();
+  dbForce.Init();
+  dbAnimus.Init();
+  dbStat.Init();
+  dbInven.Init();
+  dbCutting.Init();
+  dbCutting.ReSetOldDataLoad();
+  dbQuest.Init();
+  dbSfcont.Init();
+  dbTrade.Init();
+  dbBuddy.Init();
+  dbTrunk.Init();
+  dbItemCombineEx.Init();
+  dbPersonalAmineInven.Init();
+  dbPvpPointLimit.Init();
+  dbPostData.Init();
+  dbBossCry.Init();
+  dbPvpOrderView.Init();
+  dbSupplement.Init();
+  dbPlayTimeInPcbang.Init();
+  dbPotionNextUseTime.Init();
+  dbPcBangFavorItem.Init();
   m_bCristalBattleDateUpdate = 1;
 }
 
@@ -2189,7 +2528,7 @@ bool CUserDB::Select_Char_Request(unsigned __int8 bySlotIndex)
     bySlotIndex,
     m_RegedList[bySlotIndex].m_dwRecordNum,
     m_szLobbyHistoryFileName);
-  _qry_sheet_load qry;
+  _qry_sheet_load qry{};
   qry.dwAvatorSerial = m_RegedList[bySlotIndex].m_dwRecordNum;
   qry.dwCheckSum = 0;
   memcpy_0(&qry.LoadData, &m_RegedList[bySlotIndex], 0x10DuLL);
@@ -2922,6 +3261,20 @@ char CUserDB::Update_RaceVoteInfoInit()
   m_AvatorData.dbSupplement.dwScanerGetDate = 0;
   m_AvatorData.dbSupplement.dwLastResetDate = g_Main.m_dwServerResetToken;
   m_bDataUpdate = true;
+  return 1;
+}
+
+char CUserDB::Update_UserVoteData()
+{
+  m_AvatorData.dbSupplement.VoteEnable = 0;
+  m_AvatorData.dbSupplement.byVoted = 1;
+  m_bDataUpdate = true;
+  return 1;
+}
+
+char CUserDB::Update_AutoTradeAllClear()
+{
+  m_AvatorData.dbTrade.Clear();
   return 1;
 }
 

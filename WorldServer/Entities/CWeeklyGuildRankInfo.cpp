@@ -21,6 +21,11 @@ CWeeklyGuildRankOwnerInfo::CWeeklyGuildRankOwnerInfo()
   Clear();
 }
 
+CWeeklyGuildRankOwnerInfo::~CWeeklyGuildRankOwnerInfo()
+{
+  // this is not a stub
+}
+
 void CWeeklyGuildRankOwnerInfo::Clear()
 {
   m_dwSerial = 0;

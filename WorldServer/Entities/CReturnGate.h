@@ -7,6 +7,7 @@
 class CPlayer;
 class CMapData;
 class CReturnGateCreateParam;
+struct _open_return_gate_inform_zocl;
 
 class  CReturnGate : public CGameObject
 {
@@ -30,6 +31,7 @@ public:
   bool IsClose();
   bool IsValidOwner();
   bool IsValidPosition(float *pfCurPos);
+  void GetInfo(_open_return_gate_inform_zocl *Info);
   bool Open(CReturnGateCreateParam *pParam);
   int Enter(CPlayer *pkObj);
   void Close();

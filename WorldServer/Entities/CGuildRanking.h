@@ -14,9 +14,13 @@ struct _io_money_data;
 class  CGuildRanking
 {
 public:
+  CGuildRanking();
+  ~CGuildRanking();
+
   bool Init();
   char Load();
   char UpdateRankAndGrade();
+  char CheckAndCreateTodayGuildRankTable(char *szDate);
   char LoadAllGuildData(struct _worlddb_guild_info *pkInfo);
   char SetLoadAllGuildInfo(struct _worlddb_guild_info *pkInfo);
   char LoadMemberInfo(

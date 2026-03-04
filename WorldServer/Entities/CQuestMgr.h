@@ -27,7 +27,10 @@ public:
   void CheckFailLoop(int nFailCond, char *pszCode);
 
   _quest_check_result *CheckReqAct(int nActCode, char *pszReqCode, unsigned __int16 wActCount, bool bPartyState);
+  _happen_event_cont *GetLastHappenEvent();
   _happen_event_cont *CheckQuestHappenEvent(QUEST_HAPPEN HappenType, char *pszEventCode, unsigned __int8 byRaceCode);
+  char IsRecvedQuestByNPC(int nEventIndex);
+  char IsRecvedQuestByNPC(const char *pszNPCCode);
   void CheckNPCQuestList(char *pszEventCode, unsigned __int8 byRaceCode, _NPCQuestIndexTempData *pQuestIndexData);
   _happen_event_cont *CheckNPCQuestStartable(
     char *pszEventCode,
@@ -51,6 +54,7 @@ public:
   bool __CheckCond_Race(char *pszRaceSexFlag);
   char __CheckCond_Class(char *pszClassCode);
   char DeleteQuestItem(char *pszItemCode, unsigned __int16 wCount);
+  char ReturnItem(char *pszItemCode, int nEndReturnItemCnt, unsigned __int8 byQuestDBSlot);
   bool CanGiveupQuest(unsigned __int8 byQuestDBSlot);
   char CheckFailCondition(unsigned __int8 byQuestDBSlot, int nFailCond, char *pszCode);
   void SendMsgToMaster_ReturnItemAfterQuest(unsigned __int16 wItemSerial, unsigned __int8 byNum, char byQuestDBSlot);

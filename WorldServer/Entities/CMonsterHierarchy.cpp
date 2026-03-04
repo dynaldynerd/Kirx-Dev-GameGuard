@@ -9,6 +9,14 @@
 #include "CRecordData.h"
 #include "monster_fld.h"
 
+CMonsterHierarchy::CMonsterHierarchy()
+{
+}
+
+CMonsterHierarchy::~CMonsterHierarchy()
+{
+}
+
 void CMonsterHierarchy::Init()
 {
 

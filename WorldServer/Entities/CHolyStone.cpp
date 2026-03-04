@@ -19,6 +19,7 @@
 
 #include <cstdio>
 #include <ctime>
+#include <mmsystem.h>
 
 namespace
 {
@@ -176,6 +177,49 @@ void CHolyStone::AutoRecover()
   }
 }
 
+unsigned __int16 CHolyStone::GetAddCountWithPlayer()
+{
+  unsigned __int16 playerCount = 0;
+  for (int index = 0; index < MAX_PLAYER; ++index)
+  {
+    CPlayer *player = &g_Player[index];
+    if (player->m_bLive && player->m_byHSKQuestCode != 100)
+    {
+      ++playerCount;
+    }
+  }
+
+  if (playerCount >= 3u)
+  {
+    return static_cast<unsigned __int16>(playerCount / 3);
+  }
+  return playerCount;
+}
+
+void CHolyStone::SetDropItem()
+{
+  m_nCurrLootIndex = CMonster::s_idxMonsterLoot[m_pRecordSet->m_dwIndex].nStartRecIndex;
+  m_nEndLootIndex = CMonster::s_idxMonsterLoot[m_pRecordSet->m_dwIndex].nEndRecIndex;
+  m_nCurrDropIndex = 0;
+  CEventLootTable::_event_drop *record = g_Main.m_tblItemLoot.m_pTblEvent->GetRecord(m_pRecordSet->m_strCode);
+  if (record)
+  {
+    m_wMagnifications = record->wMagnifications;
+    m_wRange = record->wRange;
+    m_wDropCntOnce = record->wDropCntOnce;
+    m_tmrDropTime.BeginTimer(record->wDropDelay);
+  }
+  else
+  {
+    m_wMagnifications = 1;
+    m_wRange = 400;
+    m_wDropCntOnce = static_cast<unsigned __int16>(-1);
+    m_tmrDropTime.BeginTimer(0);
+  }
+
+  m_wAddCountWithPlayer = GetAddCountWithPlayer();
+}
+
 void CHolyStone::DropItem()
 {
   int dropCount = 0;
@@ -290,11 +334,42 @@ void CHolyStone::DropItem()
   m_tmrDropTime.StopTimer();
 }
 
+bool CHolyStone::Destroy(unsigned __int8 byDestroyCode, CCharacter *pAtter)
+{
+  m_dwLastDestroyTime = timeGetTime();
+
+  unsigned int destroySerial = static_cast<unsigned int>(-1);
+  if (byDestroyCode || !pAtter)
+  {
+    --s_nLiveNum;
+    return CCharacter::Destroy();
+  }
+
+  CPlayer *attackerOwner = nullptr;
+  if (pAtter->m_ObjID.m_byID == 0)
+  {
+    attackerOwner = static_cast<CPlayer *>(pAtter);
+  }
+  if (pAtter->m_ObjID.m_byID == 3 && static_cast<CGuardTower *>(pAtter)->m_pMasterTwr)
+  {
+    attackerOwner = static_cast<CGuardTower *>(pAtter)->m_pMasterTwr;
+  }
+
+  SetDropItem();
+  DropItem();
+  if (attackerOwner && g_HolySys.CheckHolyMaster(attackerOwner, m_byMasterRaceCode))
+  {
+    destroySerial = attackerOwner->m_dwObjSerial;
+  }
+
+  m_bOper = false;
+  SendMsg_Destroy(0, destroySerial);
+  return true;
+}
+
 void CHolyStone::OutOfSec()
 {
-  m_dwObjSerial = static_cast<unsigned int>(-1);
-  --s_nLiveNum;
-  CCharacter::Destroy();
+  Destroy(1u, nullptr);
 }
 
 void CHolyStone::SendMsg_FixPosition(int n)
@@ -333,13 +408,12 @@ if (g_HolySys.GetSceneCode() != 1)
 
   if (nDam > 1)
   {
-    m_nHP -= nDam;
-    if (m_nHP < 0)
-      m_nHP = 0;
+    const int hpAfterDamage = m_nHP - nDam;
+    m_nHP = hpAfterDamage <= 0 ? 0 : hpAfterDamage;
   }
 
   if (m_nHP == 0)
-    OutOfSec();
+    Destroy(0, pDst);
 
   return static_cast<unsigned int>(m_nHP);
 }
@@ -441,7 +515,7 @@ void CHolyStone::SendMsg_StoneAlterOper()
   CircleReport(pbyType, reinterpret_cast<char *>(&msg), 7, false);
 }
 
-__int64 CHolyStone::CalcCurHPRate()
+unsigned __int16 CHolyStone::CalcCurHPRate()
 {
   return static_cast<unsigned int>(static_cast<int>((static_cast<float>(m_nHP) / static_cast<float>(m_nMaxHP)) * 10000.0f));
 }

@@ -335,6 +335,49 @@ void CMgrAvatorLvHistory::start_mastery(
   WriteFile(pszFileName, sData_0);
 }
 
+void CMgrAvatorLvHistory::close(int n, char *pCloseCode, char *pszFileName)
+{
+  (void)n;
+  sprintf(sData_0, "\r\nCLOSE %s [%s %s]\r\n\r\n", pCloseCode, m_szCurDate, m_szCurTime);
+  WriteFile(pszFileName, sData_0);
+}
+
+void CMgrAvatorLvHistory::die(int n, char *pszDstName, char *pszDeathName, char *pszFileName)
+{
+  (void)n;
+  sprintf(
+    sData_0,
+    "DIE %s, <CORPSE: %s> [%s %s]\r\n\r\n",
+    pszDstName,
+    pszDeathName,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pszFileName, sData_0);
+}
+
+void CMgrAvatorLvHistory::down_exp(
+  int n,
+  long double dOldExp,
+  unsigned __int16 wOldExpRate,
+  long double dNewExp,
+  unsigned __int16 wNewExpRate,
+  char *pCause,
+  char *pszFileName)
+{
+  (void)n;
+  sprintf(
+    sData_0,
+    "EXP DOWN %.0f(%d) -> %.0f(%d) : %s [%s %s]\r\n\r\n",
+    static_cast<double>(dOldExp),
+    wOldExpRate,
+    static_cast<double>(dNewExp),
+    wNewExpRate,
+    pCause,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pszFileName, sData_0);
+}
+
 void CMgrAvatorLvHistory::char_copy(
   int /*n*/,
   char *pszDstName,
@@ -372,6 +415,31 @@ void CMgrAvatorLvHistory::alter_pvp(
 
   sprintf_s(buffer, 0x80u, "[%s %s]\r\n\r\n", m_szCurDate, m_szCurTime);
   strcat_s(sData_0, 0x2710u, buffer);
+  WriteFile(pszFileName, sData_0);
+}
+
+void CMgrAvatorLvHistory::adjust_pvpcash(
+  bool bAdjust,
+  long double dPvpCash,
+  long double dPvpTempCash,
+  char *pszFileName)
+{
+  if (bAdjust)
+  {
+    sprintf(
+      sData_0,
+      "PVP Cash Adjust After  : PvpCash ( %.0f ), PvpTempCash ( %.0f )\r\n\r\n",
+      static_cast<double>(dPvpCash),
+      static_cast<double>(dPvpTempCash));
+  }
+  else
+  {
+    sprintf(
+      sData_0,
+      "PVP Cash Adjust Before : PvpCash ( %.0f ), PvpTempCash ( %.0f )\r\n\r\n",
+      static_cast<double>(dPvpCash),
+      static_cast<double>(dPvpTempCash));
+  }
   WriteFile(pszFileName, sData_0);
 }
 

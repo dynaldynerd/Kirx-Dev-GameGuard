@@ -12,12 +12,14 @@ public:
   ~CPvpUserAndGuildRankingSystem();
 
   static CPvpUserAndGuildRankingSystem *Instance();
+  static void Destroy();
   bool Init();
   void Loop();
   bool InitLogger();
   bool Load();
   bool IsCurrentRaceBossGroup(unsigned __int8 byRace, unsigned int dwSerial);
   unsigned int GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth);
+  void SetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth, unsigned int dwSerial);
   unsigned int FindRank(unsigned __int8 byRaceCode, unsigned int dwAvatorSerial);
   const _PVP_RANK_DATA *GetCurrentPvpRankData(unsigned __int8 byRace, unsigned __int8 byNth);
   void PvpRankListRequest(
@@ -29,6 +31,7 @@ public:
   unsigned __int8 GetBossType(unsigned __int8 byRace, unsigned int dwSerial);
   void Log(const char *fmt, ...);
   void SetUpdateRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth, unsigned int dwSerial);
+  void PvpRankDataPacking();
   void ApplyUpdatedBossInfo();
 
   unsigned __int8 UpdateRaceRankStep1(char *szData);
@@ -77,6 +80,7 @@ public:
   void CompleteRankInGuildStep6(unsigned __int8 byRet, char *szData);
   void CompleteRankUpdateAndSelectGarde(unsigned __int8 byRet, char *szData);
 
+  static CPvpUserAndGuildRankingSystem *ms_Instance;
   CLogFile *m_pkLogger;
   bool m_bInit;
   CUserRankingProcess m_kUserRankingProcess;

@@ -8,7 +8,7 @@ class CMapTab : public CPropertyPage
 {
 public:
   CMapTab();
-  ~CMapTab() override = default;
+  ~CMapTab() override;
 
   void UpdateTab();
 
@@ -29,7 +29,7 @@ class CServerTab : public CPropertyPage
 {
 public:
   CServerTab();
-  ~CServerTab() override = default;
+  ~CServerTab() override;
 
   void UpdateServerTab();
 
@@ -50,7 +50,7 @@ class CIPXTab : public CPropertyPage
 {
 public:
   CIPXTab();
-  ~CIPXTab() override = default;
+  ~CIPXTab() override;
 
   void UpdateTab();
 
@@ -75,7 +75,7 @@ class CTCPTab : public CPropertyPage
 {
 public:
   CTCPTab();
-  ~CTCPTab() override = default;
+  ~CTCPTab() override;
 
   void UpdateTab();
 
@@ -113,7 +113,7 @@ class CObjectTab : public CPropertyPage
 {
 public:
   CObjectTab();
-  ~CObjectTab() override = default;
+  ~CObjectTab() override;
 
   void UpdateTab();
 

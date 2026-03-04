@@ -8,7 +8,7 @@ class CObjectSearchDlg : public CDialog
 {
 public:
   explicit CObjectSearchDlg(CWnd *pParent = nullptr);
-  ~CObjectSearchDlg() override = default;
+  ~CObjectSearchDlg() override;
 
   _object_id m_ID;
   char m_szCharName[17];

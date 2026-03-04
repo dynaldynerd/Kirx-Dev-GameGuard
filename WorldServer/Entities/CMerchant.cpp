@@ -51,6 +51,15 @@ __int64 CMerchant::GetObjRace()
   return m_byRaceCode;
 }
 
+_dummy_position *CMerchant::GetStoreDummyName()
+{
+  if (m_pItemStore && m_pItemStore->m_pDum && m_pItemStore->m_pDum->m_pDumPos)
+  {
+    return m_pItemStore->m_pDum->m_pDumPos;
+  }
+  return nullptr;
+}
+
 __int64 CMerchant::GetSoilTol()
 {
   const _npc_fld *recordSet = reinterpret_cast<const _npc_fld *>(m_pRecordSet);

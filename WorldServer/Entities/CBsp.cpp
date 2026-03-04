@@ -2,6 +2,7 @@
 #include "CBsp.h"
 #include "WorldServerUtil.h"
 #include "R3EngineGlobals.h"
+#include "GlobalObjects.h"
 #include "CEntity.h"
 #include "CParticle.h"
 #include "BspReadEntities.h"
@@ -13,6 +14,8 @@
 
 namespace
 {
+    unsigned int g_BspLeafListLimit = 0;
+
     using GetVertexFromCompressFn = void (*)(float *, char *, _BSP_READ_M_GROUP *);
 
     void GetVertexFromBVertexWrap(float *dst, char *src, _BSP_READ_M_GROUP *mg)
@@ -87,6 +90,109 @@ namespace
         float dp = (n[0] * (v[0] - b[0])) + (n[1] * (v[1] - b[1])) + (n[2] * (v[2] - b[2]));
         return dp <= 0.0f;
     }
+
+    inline int CheckEdgeNormal(const float *edgeNormal, const float *point)
+    {
+        if ((edgeNormal[0] * point[0]) + (edgeNormal[1] * point[1]) + (edgeNormal[2] * point[2]) - edgeNormal[3] > -0.01f)
+        {
+            return 0;
+        }
+        return 1;
+    }
+
+    float GetSoundPan(_SOUND_ENTITIES_LIST *soundEntity, float *const pos)
+    {
+        D3DXMATRIX view = *reinterpret_cast<D3DXMATRIX *>(&stru_184A79A6C);
+        const float len = sqrtf_0((view._31 * view._31) + (view._32 * view._32) + (view._33 * view._33));
+        const float nx = view._33 / len;
+        const float ny = view._32 / len;
+        const float nz = view._31 / len;
+
+        const float camX = unk_184A79B1C;
+        const float camY = reinterpret_cast<float *>(&qword_184A79B20)[0];
+        const float camZ = reinterpret_cast<float *>(&qword_184A79B20)[1];
+
+        const float dx = camX - pos[0];
+        const float dy = camY - pos[1];
+        const float dz = camZ - pos[2];
+        const float dist = sqrtf_0((dx * dx) + (dy * dy) + (dz * dz));
+        return -(((dy / dist) * ny) + ((dx / dist) * nx) + ((dz / dist) * nz));
+    }
+
+    float GetSoundVolume(_SOUND_ENTITIES_LIST *soundEntity, float *const pos)
+    {
+        float cameraPos[3]{};
+        GetCameraPos(reinterpret_cast<float (*)[3]>(cameraPos));
+
+        const float dx = pos[0] - cameraPos[0];
+        const float dy = pos[1] - cameraPos[1];
+        const float dz = pos[2] - cameraPos[2];
+        const float dist = sqrtf_0((dx * dx) + (dy * dy) + (dz * dz));
+
+        float value = dist;
+        if (dist <= soundEntity->Scale)
+        {
+            value = soundEntity->Scale;
+        }
+        if (soundEntity->Attn <= value)
+        {
+            value = soundEntity->Attn;
+        }
+
+        return (soundEntity->Attn - value) / (soundEntity->Attn - soundEntity->Scale);
+    }
+
+    float GetSoundBoxIntensity(_SOUND_ENTITIES_LIST *soundEntity, float *const pos)
+    {
+        float local[3]{};
+        local[0] = (pos[0] * soundEntity->mInvMat[0][0]) + (pos[1] * soundEntity->mInvMat[1][0])
+                 + (pos[2] * soundEntity->mInvMat[2][0]) + soundEntity->mInvMat[3][0];
+        local[1] = (pos[0] * soundEntity->mInvMat[0][1]) + (pos[1] * soundEntity->mInvMat[1][1])
+                 + (pos[2] * soundEntity->mInvMat[2][1]) + soundEntity->mInvMat[3][1];
+        local[2] = (pos[0] * soundEntity->mInvMat[0][2]) + (pos[1] * soundEntity->mInvMat[1][2])
+                 + (pos[2] * soundEntity->mInvMat[2][2]) + soundEntity->mInvMat[3][2];
+
+        if (soundEntity->BoxAttn == 1.0f)
+        {
+            float bbMin[3]{-1.0f, -1.0f, -1.0f};
+            float bbMax[3]{1.0f, 1.0f, 1.0f};
+            if (IsCollisionBBoxPoint(bbMin, bbMax, local))
+            {
+                return 1.0f;
+            }
+            return 0.0f;
+        }
+
+        float intensity = 1.0f;
+        for (int axis = 0; axis < 3; ++axis)
+        {
+            const float axisValue = local[axis];
+            if (axisValue > 1.0f || axisValue < -1.0f)
+            {
+                return 0.0f;
+            }
+
+            if (axisValue > soundEntity->BoxAttn)
+            {
+                const float t = (1.0f - axisValue) / (1.0f - soundEntity->BoxAttn);
+                if (t <= intensity)
+                {
+                    intensity = t;
+                }
+            }
+
+            if ((-soundEntity->BoxAttn) > axisValue)
+            {
+                const float t = (axisValue + 1.0f) / (1.0f - soundEntity->BoxAttn);
+                if (t <= intensity)
+                {
+                    intensity = t;
+                }
+            }
+        }
+
+        return intensity;
+    }
 }
 
 void CBsp::ClearVariable()
@@ -138,6 +244,1297 @@ CBsp::CBsp()
 CBsp::~CBsp()
 {
   // this is not a stub
+}
+
+_BSP_MAT_GROUP *CBsp::GetMatGroup()
+{
+  return mMatGroup;
+}
+
+void *CBsp::GetDynamicVertexBuffer()
+{
+  return nullptr;
+}
+
+void CBsp::GetVertexNormal()
+{
+  // this is not a stub
+}
+
+int CBsp::SetEventAnimationState(unsigned __int16 id, int flag)
+{
+  unsigned int found = 0;
+  if (!mObjectNum)
+  {
+    return static_cast<int>(found);
+  }
+
+  for (unsigned int i = 0; i < mObjectNum; ++i)
+  {
+    if (mEventObjectID[i] == id)
+    {
+      found = 1;
+      mObject[i].flag &= 0xFFF0u;
+      if (flag == 1)
+      {
+        mObject[i].now_frame = 0.0f;
+        mObject[i].flag |= 2u;
+      }
+      else if (flag == 3)
+      {
+        mObject[i].now_frame = static_cast<float>(mObject[i].frames) - 0.001f;
+        mObject[i].flag |= 4u;
+      }
+    }
+  }
+  return static_cast<int>(found);
+}
+
+int CBsp::SetAllAnimationState(int flag)
+{
+  unsigned int found = 0;
+  if (!mObjectNum)
+  {
+    return static_cast<int>(found);
+  }
+
+  for (unsigned int i = 0; i < mObjectNum; ++i)
+  {
+    if ((*reinterpret_cast<const unsigned short *>(&mObject[i].flag) & (1u << 13)) != 0)
+    {
+      mObject[i].flag &= 0xFFF0u;
+      found = 1;
+      if (flag == 1)
+      {
+        mObject[i].now_frame = 0.0f;
+        mObject[i].flag |= 2u;
+      }
+      else if (flag == 3)
+      {
+        mObject[i].now_frame = static_cast<float>(mObject[i].frames) - 0.001f;
+        mObject[i].flag |= 4u;
+      }
+    }
+  }
+  return static_cast<int>(found);
+}
+
+unsigned int CBsp::GetEventAnimationState(unsigned __int16 id)
+{
+  if (!mObjectNum)
+  {
+    return 0;
+  }
+
+  for (unsigned int i = 0; i < mObjectNum; ++i)
+  {
+    if (mEventObjectID[i] == id)
+    {
+      return static_cast<unsigned int>(mObject[i].flag & 0xF);
+    }
+  }
+  return 0;
+}
+
+int CBsp::IsLoaded()
+{
+  return mIsLoaded;
+}
+
+void CBsp::SetIsLoaded(int isLoaded)
+{
+  mIsLoaded = isLoaded;
+}
+
+void CBsp::CalcObjectLoop()
+{
+  // this is not a stub
+}
+
+void CBsp::LoopInitRenderedMatGroup()
+{
+  if (mMatGroupCache)
+  {
+    memset_0(mMatGroupCache, 0, mMatGroupCacheSize);
+  }
+}
+
+int CBsp::IsInViewFrustum(unsigned __int16 matId)
+{
+  const __int64 index = matId;
+  if (mMatGroup[index].ObjectId)
+  {
+    return 1;
+  }
+  return IsBBoxInFrustum(mMatGroup[index].BBMin, mMatGroup[index].BBMax);
+}
+
+void CBsp::PrepareShadowRender(
+  float *const pos,
+  void *texture,
+  float intensity,
+  unsigned int blur,
+  float scale,
+  float addPos)
+{
+  ResetVertexBufferCache();
+  SetProjectShadow(pos, texture, intensity, blur, scale, addPos);
+}
+
+void CBsp::RenderReflectionMatGroup(unsigned __int16 matId)
+{
+  const __int64 index = matId;
+  SetVPIPTex2(
+    mStaticVertexBuffer[mMatGroup[index].VertexBufferId].m_lpVertexBuffer,
+    mStaticIndexedBuffer.m_lpIndexBuffer);
+
+  float worldMatrix[18]{};
+  GetBspObjectMatrix(reinterpret_cast<float (*)[4]>(worldMatrix), mMatGroup[index].ObjectId);
+  auto *const d3dDevice = GetD3dDevice();
+  d3dDevice->SetTransform(d3dDevice, static_cast<_D3DTRANSFORMSTATETYPE>(256), reinterpret_cast<const _D3DMATRIX *>(worldMatrix));
+  DrawReflectionOneMatGroup(&mStaticVertexBuffer[mMatGroup[index].VertexBufferId], &mMatGroup[index]);
+}
+
+void CBsp::PrepareAnimation()
+{
+  if (mObjectNum)
+  {
+    for (unsigned int i = 0; i < mObjectNum; ++i)
+    {
+      mObject[i].AniFrameCache = 0;
+    }
+  }
+}
+
+void CBsp::ReadyBspRender(float *const camera)
+{
+  mTempCamera[0] = camera[0];
+  mTempCamera[1] = camera[1];
+  mTempCamera[2] = camera[2];
+  SetMultiLayerCamera(camera);
+  LoopInitRenderedMatGroup();
+  mAlpha.LoopInitAlphaStack();
+  if (mEntityCache)
+  {
+    memset_0(mEntityCache, 0, mEntityCacheSize);
+  }
+  PrepareAnimation();
+  WalkNode(1);
+  FrameMoveMapEntities();
+  mNowLeafNum = GetLeafNum(camera);
+}
+
+void CBsp::FrameMoveEnvironment()
+{
+  if (!(dword_184A79920 && dword_184A79A24))
+  {
+    return;
+  }
+
+  float identity[16]{};
+  MatrixIdentity(reinterpret_cast<float (*const)[4]>(identity));
+  float rotMat[16]{};
+  MatrixCopy(reinterpret_cast<float (*const)[4]>(rotMat), reinterpret_cast<float (*const)[4]>(identity));
+
+  const float camX = unk_184A79B1C;
+  const float camY = reinterpret_cast<float *>(&qword_184A79B20)[0];
+  const float camZ = reinterpret_cast<float *>(&qword_184A79B20)[1];
+
+  float dummyCheckPos[3]{camX - 100.0f, camY, camZ - 100.0f};
+  unsigned int dummyCount = 0;
+  unsigned int dummyIndices[1024]{};
+  if (mDummy)
+  {
+    mDummy->GetDummyList(4, &dummyCount, dummyIndices);
+  }
+
+  auto *env = &___u21;
+  int *state = reinterpret_cast<int *>(&dword_184A79A24);
+  for (int i = 0; i < 2; ++i)
+  {
+    if (*state == 1)
+    {
+      CParticle *particle = env->mEnvParticle[0];
+      if (!particle)
+      {
+        goto NEXT_ENV;
+      }
+
+      D3DXMATRIX view = *reinterpret_cast<D3DXMATRIX *>(&stru_184A79A6C);
+      particle->mCreatePos[0] = camX + (view._13 * 50.0f);
+      particle->mCreatePos[1] = camY + (view._23 * 50.0f);
+      particle->mCreatePos[2] = camZ + (view._33 * 50.0f);
+      particle->mFlag |= 0x80000u;
+
+      int disableParticle = 0;
+      for (unsigned int k = 0; k < dummyCount; ++k)
+      {
+        if (mDummy && mDummy->IsInBBox(dummyIndices[k], dummyCheckPos))
+        {
+          disableParticle = 1;
+          break;
+        }
+      }
+
+      if (_bittest(reinterpret_cast<const LONG *>(&particle->mFlag), 0x10u))
+      {
+        const float dayTime = CN_GetDayTime();
+        if (dayTime > 0.24f && dayTime < 0.83f)
+        {
+          disableParticle = 1;
+        }
+      }
+
+      if (disableParticle)
+      {
+        particle->SetParticleState(0);
+      }
+      else if (!particle->mState)
+      {
+        particle->SetParticleState(1);
+      }
+
+      if (!particle->Loop())
+      {
+        goto NEXT_ENV;
+      }
+
+      particle->SetStartBoxArea();
+      MatrixCopy(reinterpret_cast<float (*const)[4]>(particle->mRotMat), reinterpret_cast<float (*const)[4]>(rotMat));
+    }
+    else if (*state == 2)
+    {
+      CParticle *particle = env->mEnvParticle[0];
+      if (!particle)
+      {
+        goto NEXT_ENV;
+      }
+
+      particle->mCreatePos[0] = camX;
+      particle->mCreatePos[1] = camY;
+      particle->mCreatePos[2] = camZ;
+      particle->mFlag |= 0x80000u;
+
+      float bbMin[3]{-4256.0f, -5779.0f, -4591.0f};
+      float bbMax[3]{4385.0f, 3139.0f, 4943.0f};
+      if (IsCollisionBBoxPoint(bbMin, bbMax, particle->mCreatePos))
+      {
+        particle->SetParticleState(0);
+      }
+      else if (!particle->mState)
+      {
+        particle->SetParticleState(1);
+      }
+
+      if (!particle->Loop())
+      {
+        goto NEXT_ENV;
+      }
+
+      particle->SetStartBoxArea();
+      MatrixCopy(reinterpret_cast<float (*const)[4]>(particle->mRotMat), reinterpret_cast<float (*const)[4]>(rotMat));
+    }
+
+  NEXT_ENV:
+    ++state;
+    env = reinterpret_cast<$1D4D54E2B5971D5BE0EAD557ED232A85 *>(reinterpret_cast<char *>(env) + 8);
+  }
+}
+
+void CBsp::FrameMoveMapEntities()
+{
+  const float camX = unk_184A79B1C;
+  const float camY = reinterpret_cast<float *>(&qword_184A79B20)[0];
+  const float camZ = reinterpret_cast<float *>(&qword_184A79B20)[1];
+
+  int cacheIndex = static_cast<int>(mEntityCacheSize) - 1;
+  if (cacheIndex < 0)
+  {
+    return;
+  }
+
+  int entityBase = 8 * cacheIndex;
+  __int64 idBase = 8LL * cacheIndex;
+  unsigned __int8 *cacheByte = &mEntityCache[cacheIndex];
+  do
+  {
+    if (*cacheByte)
+    {
+      for (int bit = 0; bit < 8; ++bit)
+      {
+        const unsigned __int8 mask = static_cast<unsigned __int8>(1u << bit);
+        if ((mask & *cacheByte) == 0)
+        {
+          continue;
+        }
+
+        const int mapIndex = entityBase + bit;
+        const __int64 listIndex = idBase + bit;
+        const unsigned __int64 entityId = mMapEntitiesList[listIndex].ID;
+
+        const float dx = camX - mMapEntitiesList[listIndex].Pos[0];
+        const float dy = camY - mMapEntitiesList[listIndex].Pos[1];
+        const float dz = camZ - mMapEntitiesList[listIndex].Pos[2];
+        const float distance = sqrtf_0((dx * dx) + (dy * dy) + (dz * dz));
+
+        const float fadeEnd = mEntityList[entityId].FadeEnd;
+        if (distance > fadeEnd)
+        {
+          mEntityCache[static_cast<size_t>(mapIndex) >> 3] &= ~(1 << (mapIndex & 7));
+          continue;
+        }
+
+        const float fadeStart = mEntityList[entityId].FadeStart;
+        if (!IsBBoxInFrustum(mMapEntitiesList[mapIndex].BBMin, mMapEntitiesList[mapIndex].BBMax))
+        {
+          mEntityCache[static_cast<size_t>(mapIndex) >> 3] &= ~(1 << (mapIndex & 7));
+          continue;
+        }
+
+        float clampedDistance = distance;
+        if (distance <= fadeStart)
+        {
+          clampedDistance = fadeStart;
+        }
+
+        mMapEntitiesList[listIndex].Color =
+          (static_cast<int>((1.0f - ((clampedDistance - fadeStart) / (fadeEnd - fadeStart))) * 255.0f) << 24) | 0xFFFFFF;
+
+        if (mEntityList[entityId].IsParticle)
+        {
+          CParticle *particle = mMapEntitiesList[listIndex].Particle;
+          if (!particle || !particle->Loop())
+          {
+            mEntityCache[static_cast<size_t>(mapIndex) >> 3] &= ~(1 << (mapIndex & 7));
+          }
+        }
+      }
+    }
+
+    --cacheIndex;
+    entityBase -= 8;
+    --cacheByte;
+    idBase -= 8LL;
+  } while (cacheIndex >= 0);
+}
+
+void CBsp::HearMapSound()
+{
+  if (!mSoundEntityListNum || !mSoundEntitiesListNum)
+  {
+    return;
+  }
+
+  float cameraPos[3]{};
+  GetCameraPos(reinterpret_cast<float (*)[3]>(cameraPos));
+
+  const _LEAF_SOUND_ENTITIES_LIST_INFO &leafInfo = mLeafSoundEntityList[mNowLeafNum];
+  for (unsigned int i = 0; i < leafInfo.entities_num; ++i)
+  {
+    const unsigned __int64 soundIndex = mSoundEntityID[i + leafInfo.start_id];
+    _SOUND_ENTITIES_LIST &sound = mSoundEntitiesList[soundIndex];
+
+    if (cameraPos[0] <= sound.BBMin[0] || sound.BBMax[0] <= cameraPos[0] || cameraPos[1] <= sound.BBMin[1]
+      || sound.BBMax[1] <= cameraPos[1] || cameraPos[2] <= sound.BBMin[2] || sound.BBMax[2] <= cameraPos[2])
+    {
+      continue;
+    }
+
+    float boxIntensity = 0.0f;
+    float pan = 0.0f;
+
+    if ((sound.Flag & 1) != 0)
+    {
+      boxIntensity = GetSoundVolume(&sound, sound.Pos);
+      if ((sound.Flag & 0x10) == 0)
+      {
+        pan = GetSoundPan(&sound, sound.Pos);
+      }
+    }
+    else
+    {
+      boxIntensity = GetSoundBoxIntensity(&sound, cameraPos);
+      if (boxIntensity <= 0.0f)
+      {
+        continue;
+      }
+      if ((sound.Flag & 0x10) == 0)
+      {
+        pan = GetSoundPan(&sound, sound.Pos);
+      }
+    }
+
+    if ((sound.Flag & 4) == 0)
+    {
+      sound.NextPlayTime = R3GetLoopTime() + sound.NextPlayTime;
+      if (sound.NextPlayTime > static_cast<float>(sound.EventTime))
+      {
+        sound.NextPlayTime = static_cast<float>(rand() % (sound.EventTime + 1));
+        const float eventTime = static_cast<float>(sound.EventTime);
+        sound.NextPlayTime = (eventTime - (eventTime * 0.25f)) + (sound.NextPlayTime * 0.5f);
+        sound.NextPlayTime = static_cast<float>(sound.EventTime) - sound.NextPlayTime;
+
+        if ((sound.Flag & 1) != 0)
+        {
+          boxIntensity = GetSoundVolume(&sound, sound.Pos);
+          pan = GetSoundPan(&sound, sound.Pos);
+        }
+
+        IM_SetLoopCntWave(mSoundEntityList[static_cast<unsigned __int64>(sound.ID)].ID, 1u);
+        IM_PlayWave(mSoundEntityList[static_cast<unsigned __int64>(sound.ID)].ID, boxIntensity, pan);
+      }
+      continue;
+    }
+
+    const unsigned __int64 cacheByteInx = soundIndex >> 3;
+    const unsigned __int8 bitMask = static_cast<unsigned __int8>(1u << (soundIndex & 7));
+    if ((mSoundEntityCache[cacheByteInx] & bitMask) != 0)
+    {
+      IM_SetWaveVolumeAndPan(mSoundEntityList[static_cast<unsigned __int64>(sound.ID)].ID, boxIntensity, pan);
+      continue;
+    }
+
+    mSoundEntityCache[cacheByteInx] |= bitMask;
+    IM_SetLoopCntWave(mSoundEntityList[static_cast<unsigned __int64>(sound.ID)].ID, 0);
+    IM_PlayWave(mSoundEntityList[static_cast<unsigned __int64>(sound.ID)].ID, boxIntensity, pan);
+  }
+
+  for (unsigned int cacheByteInx = 0; cacheByteInx < mSoundEntityCacheSize; ++cacheByteInx)
+  {
+    if (!mSoundEntityCache[cacheByteInx])
+    {
+      continue;
+    }
+
+    for (unsigned int bit = 0; bit < 8; ++bit)
+    {
+      const unsigned __int8 bitMask = static_cast<unsigned __int8>(1u << bit);
+      if ((mSoundEntityCache[cacheByteInx] & bitMask) == 0)
+      {
+        continue;
+      }
+
+      const int soundIndex = static_cast<int>(bit + (8 * cacheByteInx));
+      _SOUND_ENTITIES_LIST &sound = mSoundEntitiesList[soundIndex];
+      if (cameraPos[0] <= sound.BBMin[0] || sound.BBMax[0] <= cameraPos[0] || cameraPos[1] <= sound.BBMin[1]
+        || sound.BBMax[1] <= cameraPos[1] || cameraPos[2] <= sound.BBMin[2] || sound.BBMax[2] <= cameraPos[2])
+      {
+        IM_StopWave(mSoundEntityList[static_cast<unsigned __int64>(sound.ID)].ID);
+        mSoundEntityCache[static_cast<size_t>(soundIndex) >> 3] &= ~(1 << (soundIndex & 7));
+      }
+    }
+  }
+}
+
+void CBsp::RenderLeaf(__int16 leafId)
+{
+  int i = 0;
+  const __int64 leafIndex = leafId;
+  _BSP_LEAF *leaf = &mLeaf[leafIndex];
+  if (leaf->m_group_num)
+  {
+    do
+    {
+      DrawOneMatGroup(mStaticVertexBuffer, &mMatGroup[MatListInLeafId[i + leaf->m_group_start_id]]);
+      ++i;
+      leaf = &mLeaf[leafIndex];
+    } while (i < leaf->m_group_num);
+  }
+}
+
+void CBsp::RenderShadowMatGroup(unsigned __int16 matId)
+{
+  _BSP_MAT_GROUP *matGroup = mMatGroup;
+  const __int64 index = matId;
+  if (!matGroup[index].ObjectId)
+  {
+    SetVPIPTex2(
+      mStaticVertexBuffer[matGroup[index].VertexBufferId].m_lpVertexBuffer,
+      mStaticIndexedBuffer.m_lpIndexBuffer);
+    const float nowFrame = R3GetTime() * 30.0f;
+    float worldMatrix[18]{};
+    GetObjectMatrix(reinterpret_cast<float (*)[4]>(worldMatrix), mMatGroup[index].ObjectId, mObject, nowFrame);
+    auto *const d3dDevice = GetD3dDevice();
+    d3dDevice->SetTransform(d3dDevice, static_cast<_D3DTRANSFORMSTATETYPE>(256), reinterpret_cast<const _D3DMATRIX *>(worldMatrix));
+    DrawStripOneMatGroup(&mMatGroup[index]);
+  }
+}
+
+float CBsp::GetMatGroupPoint(unsigned __int16 groupId, float *const outPos)
+{
+  const __int64 offset = static_cast<__int64>(groupId) * 86LL;
+  _BSP_MAT_GROUP *matGroup = mMatGroup;
+  const float dy = *(float *)((char *)&matGroup->Origin[1] + offset) - *(float *)((char *)&matGroup->BBMin[1] + offset);
+  const float dx = *(float *)((char *)matGroup->Origin + offset) - *(float *)((char *)matGroup->BBMin + offset);
+  const float dz = *(float *)((char *)&matGroup->Origin[2] + offset) - *(float *)((char *)&matGroup->BBMin[2] + offset);
+  outPos[0] = *(float *)((char *)matGroup->Origin + offset);
+  outPos[1] = *(float *)((char *)&matGroup->Origin[1] + offset);
+  outPos[2] = *(float *)((char *)&matGroup->Origin[2] + offset);
+  return sqrtf_0((dx * dx) + (dy * dy) + (dz * dz));
+}
+
+void CBsp::GetHeight(float *const camera)
+{
+  const __int16 leafNum = GetLeafNum(camera);
+  mNowLeafNum = leafNum;
+  const float x = camera[0];
+  const float y = camera[1];
+  const int zBits = reinterpret_cast<int *>(camera)[2];
+  float nCamera[2]{x, y + 9999.0f};
+  float bCameraX = x;
+  float bCameraY = y - 9999.0f;
+  int bCameraZBits = zBits;
+  float ypos = GetYposInLeaf(nCamera, &bCameraX, 0.0f, y, leafNum);
+  if (ypos == -32000.0f)
+  {
+    const int nowLeafNum = mNowLeafNum;
+    nCamera[0] += 5.0f;
+    bCameraY += 5.0f;
+    ypos = GetYposInLeaf(nCamera, &bCameraX, 0.0f, y, nowLeafNum);
+    if (ypos == -32000.0f)
+    {
+      camera[1] -= 20.0f;
+      return;
+    }
+  }
+  camera[1] = ypos + 18.0f;
+}
+
+void CBsp::WalkLeaf(__int16 leafId)
+{
+  if (!leafId)
+  {
+    return;
+  }
+
+  const __int64 leafIndex = leafId;
+  if (IsBBoxInFrustum(mLeaf[leafIndex].bb_min, mLeaf[leafIndex].bb_max))
+  {
+    if (mEntityListNum)
+    {
+      if (mLeafEntityList[leafIndex].entities_num)
+      {
+        int i = 0;
+        do
+        {
+          const __int64 entityListIndex = i + mLeafEntityList[leafIndex].start_id;
+          ++i;
+          const unsigned __int64 entityId = mEntityID[entityListIndex];
+          mEntityCache[entityId >> 3] |= 1 << (entityId & 7);
+        } while (i < mLeafEntityList[leafIndex].entities_num);
+      }
+    }
+
+    int groupIter = 0;
+    _BSP_LEAF *leaf = &mLeaf[leafIndex];
+    if (leaf->m_group_num)
+    {
+      do
+      {
+        const __int64 matListIndex = groupIter + leaf->m_group_start_id;
+        ++groupIter;
+        const unsigned __int64 matId = MatListInLeafId[matListIndex];
+        mMatGroupCache[matId >> 3] |= 1 << (matId & 7);
+        leaf = &mLeaf[leafIndex];
+      } while (groupIter < leaf->m_group_num);
+    }
+  }
+}
+
+void CBsp::WalkNode(__int16 nodeId)
+{
+  while (nodeId)
+  {
+    const __int64 nodeIndex = nodeId;
+    if (!IsBBoxInFrustum(mNode[nodeId].bb_min, mNode[nodeId].bb_max))
+    {
+      return;
+    }
+
+    if ((DotProduct(mCNNormal[mNode[nodeIndex].f_normal_id], mTempCamera) - mNode[nodeIndex].d) < 0.0f)
+    {
+      const __int16 back = mNode[nodeIndex].back;
+      if (back >= 0)
+      {
+        WalkNode(back);
+      }
+      else
+      {
+        WalkLeaf(static_cast<__int16>(-1 - back));
+      }
+      nodeId = mNode[nodeIndex].front;
+      if (nodeId < 0)
+      {
+        const __int16 leafId = static_cast<__int16>(-1 - mNode[nodeIndex].front);
+        WalkLeaf(leafId);
+        return;
+      }
+    }
+    else
+    {
+      const __int16 front = mNode[nodeIndex].front;
+      if (front >= 0)
+      {
+        WalkNode(front);
+      }
+      else
+      {
+        WalkLeaf(static_cast<__int16>(-1 - front));
+      }
+      nodeId = mNode[nodeIndex].back;
+      if (nodeId < 0)
+      {
+        const __int16 leafId = static_cast<__int16>(-1 - nodeId);
+        WalkLeaf(leafId);
+        return;
+      }
+    }
+  }
+}
+
+void CBsp::ReleaseSoundEntities()
+{
+  if (mSoundEntityListNum)
+  {
+    for (unsigned int i = 0; i < mSoundEntityListNum; ++i)
+    {
+      const unsigned __int16 id = mSoundEntityList[i].ID;
+      if (id)
+      {
+        IM_StopWave(id);
+        IM_ReleaseWave(mSoundEntityList[i].ID);
+      }
+    }
+  }
+  mSoundEntityListNum = 0;
+  IM_ReleaseAllWaves();
+}
+
+void CBsp::GetBspObjectMatrix(float (*const matrix)[4], unsigned __int16 objectId)
+{
+  float nowFrame = 0.0f;
+  unsigned __int16 objId = objectId;
+  if (objectId)
+  {
+    const __int16 objectIndex16 = static_cast<__int16>(objectId - 1);
+    _ANI_OBJECT *object = mObject;
+    const unsigned __int64 objectIndex = static_cast<unsigned __int16>(objectId - 1);
+    const __int16 flag = object[objectIndex].flag;
+    if ((flag & 0x2000) == 0)
+    {
+      if (flag < 0)
+      {
+        nowFrame = R3GetTime() * 30.0f;
+      }
+      objId = static_cast<unsigned __int16>(objectIndex16 + 1);
+    }
+    else
+    {
+      const int aniState = flag & 0xF;
+      switch (aniState)
+      {
+        case 2:
+          if (!object[objectIndex].AniFrameCache)
+          {
+            object[objectIndex].now_frame = static_cast<float>(R3GetLoopTime() * 30.0) + object[objectIndex].now_frame;
+          }
+          if (mObject[objectIndex].now_frame >= static_cast<float>(mObject[objectIndex].frames))
+          {
+            mObject[objectIndex].flag &= 0xFFF0u;
+            mObject[objectIndex].flag |= 5u;
+            mObject[objectIndex].now_frame = static_cast<float>(mObject[objectIndex].frames) - 0.001f;
+            nowFrame = mObject[objectIndex].now_frame;
+            objId = static_cast<unsigned __int16>(objectIndex16 + 1);
+          }
+          else
+          {
+            nowFrame = mObject[objectIndex].now_frame;
+            objId = static_cast<unsigned __int16>(objectIndex16 + 1);
+          }
+          break;
+
+        case 4:
+          if (!object[objectIndex].AniFrameCache)
+          {
+            mObject[objectIndex].now_frame = object[objectIndex].now_frame - static_cast<float>(R3GetLoopTime() * 30.0);
+          }
+          if (mObject[objectIndex].now_frame < 0.0f)
+          {
+            mObject[objectIndex].flag &= 0xFFF0u;
+            mObject[objectIndex].now_frame = 0.0f;
+            nowFrame = mObject[objectIndex].now_frame;
+            objId = static_cast<unsigned __int16>(objectIndex16 + 1);
+          }
+          else
+          {
+            nowFrame = mObject[objectIndex].now_frame;
+            objId = static_cast<unsigned __int16>(objectIndex16 + 1);
+          }
+          break;
+
+        case 0:
+          object[objectIndex].now_frame = 0.0f;
+          nowFrame = mObject[objectIndex].now_frame;
+          objId = static_cast<unsigned __int16>(objectIndex16 + 1);
+          break;
+
+        case 5:
+          object[objectIndex].now_frame = static_cast<float>(object[objectIndex].frames) - 0.001f;
+          nowFrame = mObject[objectIndex].now_frame;
+          objId = static_cast<unsigned __int16>(objectIndex16 + 1);
+          break;
+
+        default:
+          nowFrame = mObject[objectIndex].now_frame;
+          objId = static_cast<unsigned __int16>(objectIndex16 + 1);
+          break;
+      }
+    }
+  }
+
+  GetObjectMatrix(matrix, objId, mObject, nowFrame);
+}
+
+void CBsp::ReleaseEnvironment()
+{
+  unsigned int *envId = mEnvID;
+  auto *env = &___u21;
+  __int64 i = 2LL;
+  do
+  {
+    if (*envId)
+    {
+      if ((*envId & 0x1000) != 0)
+      {
+        env->mEnvParticle[0]->ReleaseParticle();
+        env->mEnvParticle[0]->ReleaseEntity();
+        CParticle *particle = reinterpret_cast<CParticle *>(env->mEnvEntity[0]);
+        if (env->mEnvEntity[0])
+        {
+          particle->~CParticle();
+          operator delete(particle);
+        }
+        env->mEnvEntity[0] = nullptr;
+      }
+      else
+      {
+        env->mEnvEntity[0]->ReleaseEntity();
+        CEntity *entity = env->mEnvEntity[0];
+        if (env->mEnvEntity[0])
+        {
+          entity->~CEntity();
+          operator delete(entity);
+        }
+        env->mEnvEntity[0] = nullptr;
+      }
+      *envId = 0;
+    }
+    env = reinterpret_cast<$1D4D54E2B5971D5BE0EAD557ED232A85 *>(reinterpret_cast<char *>(env) + 8);
+    ++envId;
+    --i;
+  } while (i);
+}
+
+void CBsp::ReleaseEntities()
+{
+  if (mMapEntitiesListNum)
+  {
+    unsigned int i = 0;
+    __int64 idx = 0;
+    do
+    {
+      _MAP_ENTITIES_LIST *mapEntitiesList = mMapEntitiesList;
+      _ENTITY_LIST *entityList = mEntityList;
+      const __int64 id = mapEntitiesList[idx].ID;
+      if (entityList[id].IsFileExist)
+      {
+        CParticle *particle = mapEntitiesList[idx].Particle;
+        if (particle)
+        {
+          if (entityList[id].IsParticle)
+          {
+            particle->ReleaseParticle();
+            _MAP_ENTITIES_LIST *mapEntities = mMapEntitiesList;
+            CParticle *p = mapEntities[idx].Particle;
+            if (p)
+            {
+              p->~CParticle();
+              operator delete(p);
+            }
+          }
+        }
+      }
+      ++i;
+      ++idx;
+    } while (i < mMapEntitiesListNum);
+  }
+
+  if (mEntity)
+  {
+    if (mEntityListNum)
+    {
+      unsigned int i = 0;
+      __int64 idx = 0;
+      do
+      {
+        _ENTITY_LIST *entityList = mEntityList;
+        if (entityList[idx].IsFileExist)
+        {
+          if (entityList[idx].IsParticle)
+          {
+            const __int64 pidx = i;
+            mParticle[pidx].ReleaseEntity();
+            mParticle[pidx].ReleaseParticle();
+          }
+          else
+          {
+            mEntity[i].ReleaseEntity();
+          }
+        }
+        ++i;
+        ++idx;
+      } while (i < mEntityListNum);
+    }
+  }
+
+  if (mEntity)
+  {
+    Dfree(mEntity);
+    mEntity = nullptr;
+  }
+  if (mParticle)
+  {
+    Dfree(mParticle);
+    mParticle = nullptr;
+  }
+  if (mEntityCache)
+  {
+    Dfree(mEntityCache);
+    mEntityCache = nullptr;
+  }
+  if (mSoundEntityCache)
+  {
+    Dfree(mSoundEntityCache);
+    mSoundEntityCache = nullptr;
+  }
+
+  mEntityListNum = 0;
+  mLeafEntityListNum = 0;
+  mEntityIDNum = 0;
+  mMapEntitiesListNum = 0;
+  mSoundEntityIDNum = 0;
+  mLeafSoundEntityListNum = 0;
+  mSoundEntityListNum = 0;
+  mSoundEntitiesListNum = 0;
+  mDummy = nullptr;
+}
+
+void CBsp::ReleaseBsp()
+{
+  mMapEntityMFM.ReleaseMergeFile();
+  ReleaseSoundEntities();
+  ReleaseEntities();
+
+  if (mStaticAlloc)
+  {
+    Dfree(mStaticAlloc);
+    mStaticAlloc = nullptr;
+  }
+  if (mExtBspStaticAlloc)
+  {
+    Dfree(mExtBspStaticAlloc);
+    mExtBspStaticAlloc = nullptr;
+  }
+
+  for (unsigned int i = 0; i < mStaticVBCnt; ++i)
+  {
+    mStaticVertexBuffer[i].ReleaseVertexBuffer();
+  }
+  mStaticIndexedBuffer.ReleaseIndexBuffer();
+
+  if (mMatGroupCache)
+  {
+    Dfree(mMatGroupCache);
+    mMatGroupCache = nullptr;
+  }
+  if (mMultiLayerUV)
+  {
+    Dfree(mMultiLayerUV);
+    mMultiLayerUV = nullptr;
+  }
+
+  unsigned int *envId = mEnvID;
+  auto *env = &___u21;
+  __int64 j = 2LL;
+  do
+  {
+    if (*envId)
+    {
+      if ((*envId & 0x1000) != 0)
+      {
+        env->mEnvParticle[0]->ReleaseParticle();
+        env->mEnvParticle[0]->ReleaseEntity();
+        CParticle *particle = reinterpret_cast<CParticle *>(env->mEnvEntity[0]);
+        if (env->mEnvEntity[0])
+        {
+          particle->~CParticle();
+          operator delete(particle);
+        }
+        env->mEnvEntity[0] = nullptr;
+      }
+      else
+      {
+        env->mEnvEntity[0]->ReleaseEntity();
+        CEntity *entity = env->mEnvEntity[0];
+        if (env->mEnvEntity[0])
+        {
+          entity->~CEntity();
+          operator delete(entity);
+        }
+        env->mEnvEntity[0] = nullptr;
+      }
+      *envId = 0;
+    }
+    env = reinterpret_cast<$1D4D54E2B5971D5BE0EAD557ED232A85 *>(reinterpret_cast<char *>(env) + 8);
+    ++envId;
+    --j;
+  } while (j);
+
+  if (mCNEdgeNormal)
+  {
+    Dfree(mCNEdgeNormal);
+  }
+
+  ClearVariable();
+  mDummy = nullptr;
+}
+
+void CBsp::RenderEnvironment()
+{
+  if (dword_184A79920 && dword_184A79A24)
+  {
+    float identity[12]{};
+    MatrixIdentity(reinterpret_cast<float (*)[4]>(identity));
+    auto *env = &___u21;
+    unsigned int *state = &dword_184A79A24;
+    __int64 i = 2LL;
+    do
+    {
+      if (*state == 1 || *state == 2)
+      {
+        DrawCParticle(
+          env->mEnvParticle[0],
+          reinterpret_cast<CEntity *>(env->mEnvEntity[0]->mStaticIndexedBuffer.m_lpIndexBuffer),
+          reinterpret_cast<float (*)[4]>(identity),
+          0xFFFFFFFF);
+      }
+      ++state;
+      env = reinterpret_cast<$1D4D54E2B5971D5BE0EAD557ED232A85 *>(reinterpret_cast<char *>(env) + 8);
+      --i;
+    } while (i);
+  }
+}
+
+void CBsp::DrawAlphaRender(float *const camera)
+{
+  _D3DMATRIX world{};
+  world._11 = FLOAT_1_0;
+  world._22 = FLOAT_1_0;
+  world._33 = FLOAT_1_0;
+  world._44 = FLOAT_1_0;
+  auto *const d3dDevice = GetD3dDevice();
+  d3dDevice->SetTransform(d3dDevice, static_cast<_D3DTRANSFORMSTATETYPE>(256), &world);
+  DrawAlphaStack(this, camera);
+  MultiTexOff();
+}
+
+void CBsp::DrawMapEntitiesRender()
+{
+  unsigned __int8 *entityCache = mEntityCache;
+  if (GetReflectionState())
+  {
+    auto *d3dDevice = GetD3dDevice();
+    d3dDevice->SetRenderState(d3dDevice, D3DRS_CULLMODE, 2u);
+  }
+  else
+  {
+    auto *d3dDevice = GetD3dDevice();
+    d3dDevice->SetRenderState(d3dDevice, D3DRS_CULLMODE, 3u);
+  }
+
+  int cacheIndex = mEntityCacheSize - 1;
+  if (cacheIndex >= 0)
+  {
+    int entityBase = 8 * cacheIndex;
+    unsigned __int8 *cacheByte = &entityCache[cacheIndex];
+    do
+    {
+      if (*cacheByte)
+      {
+        int bitIndex = 0;
+        unsigned char bit = 1;
+        do
+        {
+          if ((bit & *cacheByte) != 0)
+          {
+            const unsigned __int16 mapEntityIndex = static_cast<unsigned __int16>(entityBase + bitIndex);
+            const __int64 entityId = mMapEntitiesList[entityBase + bitIndex].ID;
+            if (mEntity[entityId].mIsAlpha || mEntityList[entityId].IsParticle)
+            {
+              mAlpha.SetAlphaEntityStack(mapEntityIndex);
+            }
+            else
+            {
+              RenderOneEntityRender(mapEntityIndex);
+            }
+          }
+          ++bitIndex;
+          bit = static_cast<unsigned char>(bit * 2);
+        } while (bitIndex < 8);
+      }
+      entityBase -= 8;
+      --cacheByte;
+      --cacheIndex;
+    } while (cacheIndex >= 0);
+  }
+}
+
+void CBsp::DrawBspRender()
+{
+  unsigned __int8 *matGroupCache = mMatGroupCache;
+  if (dword_184A79808)
+  {
+    auto *const d3dDevice = GetD3dDevice();
+    d3dDevice->SetRenderState(d3dDevice, D3DRS_FOGENABLE, 1u);
+  }
+
+  if (matGroupCache)
+  {
+    MultiTexOn();
+    int cacheIndex = mMatGroupCacheSize - 1;
+    mNowRenderMatGroupNum = 0;
+    if (cacheIndex >= 0)
+    {
+      unsigned __int8 *cacheByte = &matGroupCache[cacheIndex];
+      __int16 matBase = static_cast<__int16>(8 * cacheIndex);
+      do
+      {
+        if (*cacheByte)
+        {
+          int bitIndex = 0;
+          unsigned char bit = 1;
+          do
+          {
+            if ((bit & *cacheByte) != 0)
+            {
+              const unsigned __int16 matId = static_cast<unsigned __int16>(matBase + static_cast<unsigned __int16>(bitIndex));
+              if (IsInViewFrustum(matId))
+              {
+                ++mNowRenderMatGroupNum;
+                RenderMatGroup(static_cast<unsigned __int16>(matBase + bitIndex));
+              }
+              else
+              {
+                *cacheByte &= static_cast<unsigned char>(~bit);
+              }
+            }
+            ++bitIndex;
+            bit = static_cast<unsigned char>(bit * 2);
+          } while (bitIndex < 8);
+        }
+        matBase = static_cast<__int16>(matBase - 8);
+        --cacheByte;
+        --cacheIndex;
+      } while (cacheIndex >= 0);
+    }
+    MultiTexOff();
+  }
+}
+
+void CBsp::SubLeafListFromBBox(float su, _BSP_NODE *node, float (*bbList)[3], __int16 *leafList, int *leafCount)
+{
+  if (su >= 0.0f)
+  {
+    if (node->front < 0)
+    {
+      if (g_BspLeafListLimit > static_cast<unsigned int>(*leafCount))
+      {
+        leafList[*leafCount] = static_cast<__int16>(-node->front - 1);
+        *leafCount = *leafCount + 1;
+      }
+    }
+    else
+    {
+      FastWalkNodeForLeafListFromBBox(node->front, bbList, leafList, leafCount);
+    }
+  }
+  else
+  {
+    if (node->back < 0)
+    {
+      if (g_BspLeafListLimit > static_cast<unsigned int>(*leafCount))
+      {
+        leafList[*leafCount] = static_cast<__int16>(-node->back - 1);
+        *leafCount = *leafCount + 1;
+      }
+    }
+    else
+    {
+      FastWalkNodeForLeafListFromBBox(node->back, bbList, leafList, leafCount);
+    }
+  }
+}
+
+void CBsp::FastWalkNodeForLeafListFromBBox(__int16 nodeId, float (*bbList)[3], __int16 *leafList, int *leafCount)
+{
+  if (nodeId == 0)
+  {
+    return;
+  }
+
+  _BSP_NODE *node = &mNode[nodeId];
+  float *normal = mCNNormal[node->f_normal_id];
+  float bbListA[8][3]{};
+  float bbListB[8][3]{};
+  float cross[3]{};
+  bool isSplit = false;
+  float r1 = 0.0f;
+  float r2 = 0.0f;
+
+  auto doCross = [&](const float *src, const float *tar) {
+    r1 = DotProduct(normal, src) - node->d;
+    r2 = DotProduct(normal, tar) - node->d;
+    if ((r1 <= 0.0f && r2 > 0.0f) || (r2 <= 0.0f && r1 > 0.0f))
+    {
+      const float rate = r1 / (r1 - r2);
+      isSplit = true;
+      cross[0] = src[0] + rate * (tar[0] - src[0]);
+      cross[1] = src[1] + rate * (tar[1] - src[1]);
+      cross[2] = src[2] + rate * (tar[2] - src[2]);
+    }
+  };
+
+  doCross(bbList[0], bbList[1]);
+  if (isSplit)
+  {
+    for (unsigned int i = 0; i < 8; ++i)
+    {
+      bbListA[i][0] = bbList[i][0];
+      bbListA[i][1] = bbList[i][1];
+      bbListA[i][2] = bbList[i][2];
+      bbListB[i][0] = bbList[i][0];
+      bbListB[i][1] = bbList[i][1];
+      bbListB[i][2] = bbList[i][2];
+    }
+    bbListA[1][2] = cross[2];
+    bbListA[2][2] = cross[2];
+    bbListA[5][2] = cross[2];
+    bbListA[6][2] = cross[2];
+    bbListB[0][2] = cross[2];
+    bbListB[3][2] = cross[2];
+    bbListB[4][2] = cross[2];
+    bbListB[7][2] = cross[2];
+  }
+
+  if (!isSplit)
+  {
+    doCross(bbList[1], bbList[2]);
+    if (isSplit)
+    {
+      for (unsigned int i = 0; i < 8; ++i)
+      {
+        bbListA[i][0] = bbList[i][0];
+        bbListA[i][1] = bbList[i][1];
+        bbListA[i][2] = bbList[i][2];
+        bbListB[i][0] = bbList[i][0];
+        bbListB[i][1] = bbList[i][1];
+        bbListB[i][2] = bbList[i][2];
+      }
+      bbListA[2][0] = cross[0];
+      bbListA[3][0] = cross[0];
+      bbListA[6][0] = cross[0];
+      bbListA[7][0] = cross[0];
+      bbListB[0][0] = cross[0];
+      bbListB[1][0] = cross[0];
+      bbListB[4][0] = cross[0];
+      bbListB[5][0] = cross[0];
+    }
+  }
+
+  if (!isSplit)
+  {
+    doCross(bbList[1], bbList[5]);
+    if (isSplit)
+    {
+      for (unsigned int i = 0; i < 8; ++i)
+      {
+        bbListA[i][0] = bbList[i][0];
+        bbListA[i][1] = bbList[i][1];
+        bbListA[i][2] = bbList[i][2];
+        bbListB[i][0] = bbList[i][0];
+        bbListB[i][1] = bbList[i][1];
+        bbListB[i][2] = bbList[i][2];
+      }
+      bbListA[4][1] = cross[1];
+      bbListA[5][1] = cross[1];
+      bbListA[6][1] = cross[1];
+      bbListA[7][1] = cross[1];
+      bbListB[0][1] = cross[1];
+      bbListB[1][1] = cross[1];
+      bbListB[2][1] = cross[1];
+      bbListB[3][1] = cross[1];
+    }
+  }
+
+  if (isSplit)
+  {
+    SubLeafListFromBBox(r1, node, bbListA, leafList, leafCount);
+    SubLeafListFromBBox(r2, node, bbListB, leafList, leafCount);
+  }
+  else
+  {
+    SubLeafListFromBBox(r1, node, bbList, leafList, leafCount);
+  }
+}
+
+void CBsp::GetFastLeafListFromBBox(
+  float *const bbMin,
+  float *const bbMax,
+  int *outLeafCount,
+  __int16 *leafList,
+  unsigned int maxLeafCount)
+{
+  float bbList[8][3]{};
+  g_BspLeafListLimit = maxLeafCount;
+  int leafCount = 0;
+
+  bbList[0][0] = bbMax[0];
+  bbList[0][1] = bbMax[1];
+  bbList[0][2] = bbMax[2];
+  bbList[1][0] = bbMax[0];
+  bbList[1][1] = bbMax[1];
+  bbList[1][2] = bbMin[2];
+  bbList[2][0] = bbMin[0];
+  bbList[2][1] = bbMax[1];
+  bbList[2][2] = bbMin[2];
+  bbList[3][0] = bbMin[0];
+  bbList[3][1] = bbMax[1];
+  bbList[3][2] = bbMax[2];
+  bbList[4][0] = bbMax[0];
+  bbList[4][1] = bbMin[1];
+  bbList[4][2] = bbMax[2];
+  bbList[5][0] = bbMax[0];
+  bbList[5][1] = bbMin[1];
+  bbList[5][2] = bbMin[2];
+  bbList[6][0] = bbMin[0];
+  bbList[6][1] = bbMin[1];
+  bbList[6][2] = bbMin[2];
+  bbList[7][0] = bbMin[0];
+  bbList[7][1] = bbMin[1];
+  bbList[7][2] = bbMax[2];
+
+  FastWalkNodeForLeafListFromBBox(1, bbList, leafList, &leafCount);
+  *outLeafCount = leafCount;
 }
 
 void CBsp::GetFaceFrontPoint(float (*a2)[3], int a3)
@@ -1246,7 +2643,7 @@ void CBsp::GetLightMapUVFromPoint(float *const a2, int a3, float *const a4)
 
 void CBsp::GetLeafList(float *const a2, float *const a3, int *const a4, __int16 *a5, unsigned int a6)
 {
-    if (!a4) return;
+    g_BspLeafListLimit = a6;
     int count = 0;
     this->WalkNodeForLeafList(1, a2, a3, a5, &count);
     *a4 = count;
@@ -1280,14 +2677,32 @@ void CBsp::WalkNodeForLeafList(short nNodeId, float *const a3, float *const a4, 
 
 void CBsp::SubLeafList(float dist, _BSP_NODE *pNode, float *const a4, float *const a5, short *a6, int *a7)
 {
-    short next = (dist >= 0.0f) ? pNode->front : pNode->back;
-    if (next < 0)
+    if (dist >= 0.0f)
     {
-        a6[(*a7)++] = -1 - next;
+        short front = pNode->front;
+        if (front < 0)
+        {
+            if (g_BspLeafListLimit > static_cast<unsigned int>(*a7))
+            {
+                a6[(*a7)++] = static_cast<short>(-1 - front);
+            }
+            return;
+        }
+
+        this->WalkNodeForLeafList(front, a4, a5, a6, a7);
+        return;
     }
-    else
+
+    short back = pNode->back;
+    if (back >= 0)
     {
-        this->WalkNodeForLeafList(next, a4, a5, a6, a7);
+        this->WalkNodeForLeafList(back, a4, a5, a6, a7);
+        return;
+    }
+
+    if (g_BspLeafListLimit > static_cast<unsigned int>(*a7))
+    {
+        a6[(*a7)++] = static_cast<short>(-1 - back);
     }
 }
 
@@ -1988,6 +3403,69 @@ LABEL_63:
         if ((v19 || v18) && v14)
             return 2;
         return 0;
+    }
+}
+
+void CBsp::LoadEnvironment()
+{
+    mMapEntityMFM.InitMergeFile(byte_184A790F0);
+    SetMergeFileManager(&mMapEntityMFM);
+
+    auto *env = &___u21;
+    int *envID = reinterpret_cast<int *>(mEnvID);
+    char *entityName = byte_184A79924;
+
+    for (int i = 0; i < 2; ++i)
+    {
+        int configuredID = unk_184A7999C[i];
+        envID[0] = configuredID;
+        if (configuredID)
+        {
+            if (IsParticle(entityName))
+            {
+                envID[0] |= 0x1000u;
+            }
+
+            if (_bittest(reinterpret_cast<const LONG *>(envID), 0xCu))
+            {
+                CParticle *particle = new CParticle();
+                env->mEnvEntity[0] = reinterpret_cast<CEntity *>(particle);
+                if (particle && particle->LoadParticleSPT(entityName, 0))
+                {
+                    particle->InitParticle();
+                    particle->SetParticleState(1u);
+                }
+                else
+                {
+                    CParticle *failedParticle = env->mEnvParticle[0];
+                    if (failedParticle)
+                    {
+                        failedParticle->~CParticle();
+                        operator delete(failedParticle);
+                    }
+                    envID[0] = 0;
+                    unk_184A7999C[i] = 0;
+                }
+            }
+            else
+            {
+                CEntity *entity = new CEntity();
+                env->mEnvEntity[0] = entity;
+                if (!entity || !entity->LoadEntity(entityName, 0))
+                {
+                    CEntity *failedEntity = env->mEnvEntity[0];
+                    if (failedEntity)
+                    {
+                        failedEntity->~CEntity();
+                        operator delete(failedEntity);
+                    }
+                }
+            }
+        }
+
+        entityName += 128;
+        ++envID;
+        env = reinterpret_cast<$1D4D54E2B5971D5BE0EAD557ED232A85 *>(reinterpret_cast<char *>(env) + 8);
     }
 }
 
@@ -3067,4 +4545,1546 @@ void CBsp::ReadDynamicDataExtBsp(FILE *Stream)
         LoadSoundEntities(soundList, soundEntities);
         Dfree(buf);
     }
+}
+
+void CBsp::DrawDynamicLights()
+{
+    unsigned int dynamicLightNum = GetDynamicLightNum();
+    int drawCount = static_cast<int>(stState.mDynamicLight);
+    if (dynamicLightNum < static_cast<unsigned int>(drawCount))
+    {
+        drawCount = static_cast<int>(dynamicLightNum);
+    }
+    if (drawCount <= 0)
+    {
+        return;
+    }
+    if (drawCount > 10)
+    {
+        drawCount = 10;
+    }
+
+    for (unsigned int i = 0; i < static_cast<unsigned int>(drawCount); ++i)
+    {
+        float lightPos[3]{};
+        float diameter = 0.0f;
+        unsigned int color = 0;
+        void *texture = nullptr;
+        unsigned int blendType = 0;
+        GetDynamicLight(i, &lightPos[0], &diameter, &color, &texture, &blendType);
+
+        float bbMin[3]{};
+        float bbMax[3]{};
+        const float radius = diameter / 7.0f;
+        bbMin[0] = lightPos[0] - radius;
+        bbMin[1] = lightPos[1] - radius;
+        bbMin[2] = lightPos[2] - radius;
+        bbMax[0] = lightPos[0] + radius;
+        bbMax[1] = lightPos[1] + radius;
+        bbMax[2] = lightPos[2] + radius;
+
+        const BOOL multiTexture = (IsMagicLight(i) == 0);
+        SetDynamicLight(&lightPos[0], diameter, color, reinterpret_cast<IDirect3DBaseTexture8 *>(texture), multiTexture, blendType);
+        if (multiTexture)
+        {
+            DrawDynamicLightSub(bbMin, bbMax);
+        }
+        else
+        {
+            DrawMagicLightSub(bbMin, bbMax);
+        }
+    }
+
+    UnSetDynamicLight();
+    UnSetProjectedShadow();
+    ResetVertexBufferCache();
+}
+
+void CBsp::DrawDynamicLightSub(float *const a2, float *const a3)
+{
+    int leafCount = 0;
+    __int16 leafList[256]{};
+    GetFastLeafListFromBBox(a2, a3, &leafCount, leafList, 0x80u);
+
+    int vertexCount = 0;
+    unsigned int uniqueFaceCount = 0;
+    __int64 vertexCursor = 0;
+    unsigned int uniqueFaceIdList[5000]{};
+    unsigned int vertices[20000]{};
+
+    if (leafCount <= 0)
+    {
+        return;
+    }
+
+    for (int leafInx = 0; leafInx < leafCount; ++leafInx)
+    {
+        const unsigned int leafId = static_cast<unsigned int>(leafList[leafInx]);
+        if (leafId >= mLeafNum)
+        {
+            continue;
+        }
+
+        const _BSP_LEAF &leaf = mLeaf[leafId];
+        if (!leaf.face_num)
+        {
+            continue;
+        }
+
+        int faceId = static_cast<int>(leaf.face_start_id);
+        for (int faceOffset = 0; faceOffset < leaf.face_num; ++faceOffset, ++faceId)
+        {
+            const unsigned int cFaceId = static_cast<unsigned int>(mCFaceId[faceId]);
+            _BSP_C_FACE &face = mCFace[cFaceId];
+            if (face.Attr & 0x10)
+            {
+                continue;
+            }
+
+            bool alreadyAdded = false;
+            for (unsigned int k = 0; k < uniqueFaceCount; ++k)
+            {
+                if (uniqueFaceIdList[k] == cFaceId)
+                {
+                    alreadyAdded = true;
+                    break;
+                }
+            }
+            if (alreadyAdded)
+            {
+                continue;
+            }
+
+            uniqueFaceIdList[uniqueFaceCount++] = cFaceId;
+
+            const int triCount = face.VNum - 2;
+            for (int tri = 0; tri < triCount; ++tri)
+            {
+                vertexCount += 3;
+
+                const unsigned int vertexIndex0 = mCVertexId[face.VStartId];
+                const unsigned int vertexIndex1 = mCVertexId[face.VStartId + tri + 1];
+                const unsigned int vertexIndex2 = mCVertexId[face.VStartId + tri + 2];
+
+                const size_t dst0 = static_cast<size_t>(vertexCursor) * 4;
+                const size_t dst1 = static_cast<size_t>(vertexCursor + 1) * 4;
+                const size_t dst2 = static_cast<size_t>(vertexCursor + 2) * 4;
+
+                memcpy(&vertices[dst0 + 0], &mCVertex[vertexIndex0][0], sizeof(float));
+                memcpy(&vertices[dst0 + 1], &mCVertex[vertexIndex0][1], sizeof(float));
+                memcpy(&vertices[dst0 + 2], &mCVertex[vertexIndex0][2], sizeof(float));
+                vertices[dst0 + 3] = 0;
+
+                memcpy(&vertices[dst1 + 0], &mCVertex[vertexIndex1][0], sizeof(float));
+                memcpy(&vertices[dst1 + 1], &mCVertex[vertexIndex1][1], sizeof(float));
+                memcpy(&vertices[dst1 + 2], &mCVertex[vertexIndex1][2], sizeof(float));
+                vertices[dst1 + 3] = 0;
+
+                memcpy(&vertices[dst2 + 0], &mCVertex[vertexIndex2][0], sizeof(float));
+                memcpy(&vertices[dst2 + 1], &mCVertex[vertexIndex2][1], sizeof(float));
+                memcpy(&vertices[dst2 + 2], &mCVertex[vertexIndex2][2], sizeof(float));
+                vertices[dst2 + 3] = 0;
+
+                vertexCursor += 3;
+                if (vertexCount >= 3000)
+                {
+                    IDirect3DDevice8 *device = GetD3dDevice();
+                    device->SetVertexShader(device, 66u);
+                    float identity[16]{};
+                    MatrixIdentity(reinterpret_cast<float (*const)[4]>(identity));
+                    device->SetTransform(device, (_D3DTRANSFORMSTATETYPE)256, reinterpret_cast<const _D3DMATRIX *>(identity));
+                    device->DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, vertexCount / 3, vertices, 16u);
+                    vertexCount = 0;
+                    vertexCursor = 0;
+                }
+            }
+        }
+    }
+
+    if (vertexCount > 0)
+    {
+        IDirect3DDevice8 *device = GetD3dDevice();
+        device->SetVertexShader(device, 66u);
+        float identity[16]{};
+        MatrixIdentity(reinterpret_cast<float (*const)[4]>(identity));
+        device->SetTransform(device, (_D3DTRANSFORMSTATETYPE)256, reinterpret_cast<const _D3DMATRIX *>(identity));
+        device->DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, vertexCount / 3, vertices, 16u);
+    }
+}
+
+void CBsp::DrawMagicLightSub(float *const a2, float *const a3)
+{
+    if ((a3[0] - a2[0]) > 1000.0f)
+    {
+        return;
+    }
+    if (a3[0] == a2[0] && a3[1] == a2[1] && a3[2] == a2[2])
+    {
+        return;
+    }
+    if (!IsCollisionBBoxPoint(mNode[1].bb_min, mNode[1].bb_max, a2))
+    {
+        return;
+    }
+    if (!IsCollisionBBoxPoint(mNode[1].bb_min, mNode[1].bb_max, a3))
+    {
+        return;
+    }
+
+    int leafCount = 0;
+    __int16 leafList[256]{};
+    GetFastLeafListFromBBox(a2, a3, &leafCount, leafList, 0x100u);
+
+    int vertexCount = 0;
+    unsigned int uniqueFaceCount = 0;
+    __int64 vertexCursor = 0;
+    unsigned int uniqueFaceIdList[5000]{};
+    unsigned int vertices[20000]{};
+
+    for (int leafInx = 0; leafInx < leafCount; ++leafInx)
+    {
+        const unsigned int leafId = static_cast<unsigned int>(leafList[leafInx]);
+        const _BSP_LEAF &leaf = mLeaf[leafId];
+        int faceId = static_cast<int>(leaf.face_start_id);
+        for (int faceOffset = 0; faceOffset < leaf.face_num; ++faceOffset, ++faceId)
+        {
+            const unsigned int cFaceId = static_cast<unsigned int>(mCFaceId[faceId]);
+            _BSP_C_FACE &face = mCFace[cFaceId];
+            if ((face.Attr & 0x30) != 0 || face.Normal[1] <= 0.0f)
+            {
+                continue;
+            }
+
+            bool alreadyAdded = false;
+            for (unsigned int k = 0; k < uniqueFaceCount; ++k)
+            {
+                if (uniqueFaceIdList[k] == cFaceId)
+                {
+                    alreadyAdded = true;
+                    break;
+                }
+            }
+            if (alreadyAdded)
+            {
+                continue;
+            }
+
+            if (uniqueFaceCount > 0xBB7)
+            {
+                uniqueFaceCount = 2999;
+                vertexCursor = 2999;
+            }
+
+            uniqueFaceIdList[uniqueFaceCount++] = cFaceId;
+
+            const int triCount = face.VNum - 2;
+            for (int tri = 0; tri < triCount; ++tri)
+            {
+                vertexCount += 3;
+
+                const unsigned int vertexIndex0 = mCVertexId[face.VStartId];
+                const unsigned int vertexIndex1 = mCVertexId[face.VStartId + tri + 1];
+                const unsigned int vertexIndex2 = mCVertexId[face.VStartId + tri + 2];
+
+                const size_t dst0 = static_cast<size_t>(vertexCursor) * 4;
+                const size_t dst1 = static_cast<size_t>(vertexCursor + 1) * 4;
+                const size_t dst2 = static_cast<size_t>(vertexCursor + 2) * 4;
+
+                memcpy(&vertices[dst0 + 0], &mCVertex[vertexIndex0][0], sizeof(float));
+                memcpy(&vertices[dst0 + 1], &mCVertex[vertexIndex0][1], sizeof(float));
+                memcpy(&vertices[dst0 + 2], &mCVertex[vertexIndex0][2], sizeof(float));
+                vertices[dst0 + 3] = 0;
+
+                memcpy(&vertices[dst1 + 0], &mCVertex[vertexIndex1][0], sizeof(float));
+                memcpy(&vertices[dst1 + 1], &mCVertex[vertexIndex1][1], sizeof(float));
+                memcpy(&vertices[dst1 + 2], &mCVertex[vertexIndex1][2], sizeof(float));
+                vertices[dst1 + 3] = 0;
+
+                memcpy(&vertices[dst2 + 0], &mCVertex[vertexIndex2][0], sizeof(float));
+                memcpy(&vertices[dst2 + 1], &mCVertex[vertexIndex2][1], sizeof(float));
+                memcpy(&vertices[dst2 + 2], &mCVertex[vertexIndex2][2], sizeof(float));
+                vertices[dst2 + 3] = 0;
+
+                vertexCursor += 3;
+                if (vertexCount >= 2000)
+                {
+                    IDirect3DDevice8 *device = GetD3dDevice();
+                    device->SetVertexShader(device, 66u);
+                    float identity[16]{};
+                    MatrixIdentity(reinterpret_cast<float (*const)[4]>(identity));
+                    device->SetTransform(device, (_D3DTRANSFORMSTATETYPE)256, reinterpret_cast<const _D3DMATRIX *>(identity));
+                    device->DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, vertexCount / 3, vertices, 16u);
+                    vertexCount = 0;
+                    vertexCursor = 0;
+                }
+            }
+        }
+    }
+
+    if (vertexCount > 0)
+    {
+        IDirect3DDevice8 *device = GetD3dDevice();
+        device->SetVertexShader(device, 66u);
+        float identity[16]{};
+        MatrixIdentity(reinterpret_cast<float (*const)[4]>(identity));
+        device->SetTransform(device, (_D3DTRANSFORMSTATETYPE)256, reinterpret_cast<const _D3DMATRIX *>(identity));
+        device->DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, vertexCount / 3, vertices, 16u);
+    }
+}
+
+void CBsp::DrawShadowRender(float *const a2, float *a3, float *a4)
+{
+    const float originalY = a2[1];
+
+    float checkPos[3]{};
+    checkPos[0] = a2[0];
+    checkPos[2] = a2[2];
+
+    float lightDirX = 0.0f;
+    float lightDirY = 0.0f;
+    float lightDirZ = 0.0f;
+    memcpy(&lightDirX, &dword_184A79B6C, sizeof(float));
+    memcpy(&lightDirY, &dword_184A79B70, sizeof(float));
+    memcpy(&lightDirZ, &dword_184A79B74, sizeof(float));
+
+    int leafCount = 0;
+    __int16 leafList[256]{};
+    float yRange = 0.0f;
+
+    if (a3 && a4)
+    {
+        const float halfY = (a4[1] - a3[1]) * 0.5f;
+        a2[1] = originalY - halfY;
+        checkPos[1] = originalY + halfY;
+        GetFastLeafListFromBBox(a3, a4, &leafCount, leafList, 0x100u);
+        yRange = a4[1] - a3[1];
+    }
+    else
+    {
+        checkPos[1] = originalY + 11.0f;
+        a2[1] = originalY - 11.0f;
+        GetLeafList(a2, checkPos, &leafCount, leafList, 0x100u);
+        yRange = 22.0f;
+    }
+
+    int vertexCount = 0;
+    unsigned int uniqueFaceCount = 0;
+    __int64 vertexCursor = 0;
+    unsigned int uniqueFaceIdList[5000]{};
+    unsigned int vertices[20000]{};
+
+    a2[1] += yRange;
+
+    for (int leafInx = 0; leafInx < leafCount; ++leafInx)
+    {
+        const unsigned int leafId = static_cast<unsigned int>(leafList[leafInx]);
+        const _BSP_LEAF &leaf = mLeaf[leafId];
+        int faceId = static_cast<int>(leaf.face_start_id);
+
+        for (int faceOffset = 0; faceOffset < leaf.face_num; ++faceOffset, ++faceId)
+        {
+            const unsigned int cFaceId = static_cast<unsigned int>(mCFaceId[faceId]);
+            _BSP_C_FACE &face = mCFace[cFaceId];
+            if ((face.Attr & 0xB0) != 0)
+            {
+                continue;
+            }
+
+            const float normalDotLight =
+                (lightDirX * face.Normal[0]) + (lightDirY * face.Normal[1]) + (lightDirZ * face.Normal[2]);
+            if (normalDotLight < 0.1f)
+            {
+                continue;
+            }
+
+            const float normalDotPos =
+                (face.Normal[0] * a2[0]) + (face.Normal[1] * a2[1]) + (face.Normal[2] * a2[2]) - face.Normal[3];
+            if (normalDotPos < 0.1f)
+            {
+                continue;
+            }
+
+            bool alreadyAdded = false;
+            for (unsigned int k = 0; k < uniqueFaceCount; ++k)
+            {
+                if (uniqueFaceIdList[k] == cFaceId)
+                {
+                    alreadyAdded = true;
+                    break;
+                }
+            }
+            if (alreadyAdded)
+            {
+                continue;
+            }
+
+            if (vertexCount < 1000)
+            {
+                uniqueFaceIdList[uniqueFaceCount++] = cFaceId;
+                const int triCount = face.VNum - 2;
+                for (int tri = 0; tri < triCount; ++tri)
+                {
+                    vertexCount += 3;
+
+                    const unsigned int vertexIndex0 = mCVertexId[face.VStartId];
+                    const unsigned int vertexIndex1 = mCVertexId[face.VStartId + tri + 1];
+                    const unsigned int vertexIndex2 = mCVertexId[face.VStartId + tri + 2];
+
+                    const size_t dst0 = static_cast<size_t>(vertexCursor) * 4;
+                    const size_t dst1 = static_cast<size_t>(vertexCursor + 1) * 4;
+                    const size_t dst2 = static_cast<size_t>(vertexCursor + 2) * 4;
+
+                    memcpy(&vertices[dst0 + 0], &mCVertex[vertexIndex0][0], sizeof(float));
+                    memcpy(&vertices[dst0 + 1], &mCVertex[vertexIndex0][1], sizeof(float));
+                    memcpy(&vertices[dst0 + 2], &mCVertex[vertexIndex0][2], sizeof(float));
+                    vertices[dst0 + 3] = 0;
+
+                    memcpy(&vertices[dst1 + 0], &mCVertex[vertexIndex1][0], sizeof(float));
+                    memcpy(&vertices[dst1 + 1], &mCVertex[vertexIndex1][1], sizeof(float));
+                    memcpy(&vertices[dst1 + 2], &mCVertex[vertexIndex1][2], sizeof(float));
+                    vertices[dst1 + 3] = 0;
+
+                    memcpy(&vertices[dst2 + 0], &mCVertex[vertexIndex2][0], sizeof(float));
+                    memcpy(&vertices[dst2 + 1], &mCVertex[vertexIndex2][1], sizeof(float));
+                    memcpy(&vertices[dst2 + 2], &mCVertex[vertexIndex2][2], sizeof(float));
+                    vertices[dst2 + 3] = 0;
+
+                    vertexCursor += 3;
+                    if (vertexCount >= 3000)
+                    {
+                        IDirect3DDevice8 *device = GetD3dDevice();
+                        device->SetVertexShader(device, 66u);
+                        float identity[16]{};
+                        MatrixIdentity(reinterpret_cast<float (*const)[4]>(identity));
+                        device->SetTransform(device, (_D3DTRANSFORMSTATETYPE)256, reinterpret_cast<const _D3DMATRIX *>(identity));
+                        device->DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, vertexCount / 3, vertices, 16u);
+                        vertexCount = 0;
+                        vertexCursor = 0;
+                    }
+                }
+            }
+        }
+    }
+
+    a2[1] -= (yRange * 0.5f);
+
+    if (vertexCount > 0)
+    {
+        IDirect3DDevice8 *device = GetD3dDevice();
+        device->SetVertexShader(device, 66u);
+        float identity[16]{};
+        MatrixIdentity(reinterpret_cast<float (*const)[4]>(identity));
+        device->SetTransform(device, (_D3DTRANSFORMSTATETYPE)256, reinterpret_cast<const _D3DMATRIX *>(identity));
+        device->DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, vertexCount / 3, vertices, 16u);
+    }
+
+    UnSetProjectedShadow();
+    ResetVertexBufferCache();
+}
+
+float CBsp::GetYposInLeafNoAttr(float *const a2, float *const a3, float a4, float a5, int a6)
+{
+    const _BSP_LEAF &leaf = mLeaf[a6];
+    float bestY = FLOAT_N32000_0;
+    if (!leaf.face_num)
+    {
+        return bestY;
+    }
+
+    unsigned int *faceIds = &mCFaceId[leaf.face_start_id];
+    for (unsigned int i = 0; i < leaf.face_num; ++i)
+    {
+        const unsigned int faceIndex = faceIds[i];
+        _BSP_C_FACE &face = mCFace[faceIndex];
+        if (face.Attr & 0x40)
+        {
+            continue;
+        }
+
+        float cross[4];
+        if (!GetPlaneCrossPoint(a2, a3, cross, face.Normal, face.Normal[3]))
+        {
+            continue;
+        }
+
+        int insideCount = 0;
+        const int vNum = face.VNum;
+        const unsigned int vStart = face.VStartId;
+        if (vNum > 0)
+        {
+            for (int j = 0; j < vNum; ++j)
+            {
+                const unsigned int v0 = mCVertexId[vStart + j];
+                const unsigned int v1 = mCVertexId[vStart + (j + 1) % vNum];
+                const float *vertex0 = mCVertex[v0];
+                const float *vertex1 = mCVertex[v1];
+                float edge[3] = {vertex0[0] - vertex1[0], vertex0[1] - vertex1[1], vertex0[2] - vertex1[2]};
+                float edgeNormal[4];
+                sub_1404E2FB0(face.Normal, edge, edgeNormal);
+                const float dx = cross[0] - vertex1[0];
+                const float dy = cross[1] - vertex1[1];
+                const float dz = cross[2] - vertex1[2];
+                if ((dx * edgeNormal[0] + dy * edgeNormal[1] + dz * edgeNormal[2]) <= 0.0f)
+                {
+                    ++insideCount;
+                }
+            }
+        }
+
+        if (insideCount == vNum)
+        {
+            const float y = cross[1];
+            if (y > bestY && y < (a4 + a5) && y > (a5 - a4))
+            {
+                bestY = y;
+                mNowCFaceId = static_cast<int>(faceIndex);
+            }
+        }
+    }
+
+    return bestY;
+}
+
+__int64 CBsp::IsCollisionFromPath(float *const a2, float *const a3)
+{
+    a2[1] += 16.0f;
+    a3[1] += 16.0f;
+
+    int leafCount = 0;
+    __int16 leafList[32000]{};
+    GetLeafList(a2, a3, &leafCount, leafList, 0x7D00u);
+
+    __int64 result = 0;
+    if (mCFLineNum >= 2 && leafCount > 0)
+    {
+        for (int leafIndex = 0; leafIndex < leafCount; ++leafIndex)
+        {
+            const _TOOL_COL_LEAF &leaf = mCFLeaf[leafList[leafIndex]];
+            if (!leaf.line_num)
+            {
+                continue;
+            }
+
+            bool hit = false;
+            for (int lineOffset = 0; lineOffset < leaf.line_num; ++lineOffset)
+            {
+                const unsigned int lineId = mCFLineId[lineOffset + leaf.start_id];
+                float *const normals = reinterpret_cast<float *>(mCFNormal);
+
+                const float srcDist =
+                    (normals[4 * lineId + 1] * a2[1]) + (normals[4 * lineId] * a2[0]) + (normals[4 * lineId + 2] * a2[2])
+                    - normals[4 * lineId + 3];
+                const float dstDist =
+                    (normals[4 * lineId + 1] * a3[1]) + (normals[4 * lineId] * a3[0]) + (normals[4 * lineId + 2] * a3[2])
+                    - normals[4 * lineId + 3];
+
+                if ((srcDist > 0.0f && dstDist > 0.0f) || (srcDist < -0.01f && dstDist < -0.01f))
+                {
+                    continue;
+                }
+
+                const float ratio = srcDist / (srcDist - dstDist);
+                float cross[3]{};
+                cross[0] = ((a3[0] - a2[0]) * ratio) + a2[0];
+                cross[1] = ((a3[1] - a2[1]) * ratio) + a2[1];
+                cross[2] = ((a3[2] - a2[2]) * ratio) + a2[2];
+                if (EdgeTest(cross, lineId))
+                {
+                    hit = true;
+                    break;
+                }
+            }
+
+            if (hit)
+            {
+                result = 1;
+                break;
+            }
+        }
+    }
+
+    a2[1] -= 16.0f;
+    a3[1] -= 16.0f;
+    return result;
+}
+
+void CBsp::RenderCollisionLeaf(__int16 a2)
+{
+    if (!a2)
+    {
+        return;
+    }
+
+    float world[4][4]{};
+    MatrixIdentity(world);
+    IDirect3DDevice8 *const d3dDevice = GetD3dDevice();
+    d3dDevice->SetTransform(d3dDevice, static_cast<_D3DTRANSFORMSTATETYPE>(256), reinterpret_cast<const _D3DMATRIX *>(world));
+
+    _D3DR3VERTEX_TEX0 vertices[3000]{};
+    int count = 0;
+    const _BSP_LEAF &leaf = mLeaf[a2];
+    int colorSeed = 250;
+
+    for (int i = 0; i < leaf.face_num; ++i)
+    {
+        const unsigned int faceId = mCFaceId[leaf.face_start_id + i];
+        const _BSP_C_FACE &face = mCFace[faceId];
+        for (int j = 0; j < face.VNum - 2; ++j)
+        {
+            const unsigned int tc = ((colorSeed % 256) << 16) | ((colorSeed % 256) << 8) | (colorSeed % 256) | 0xFF000000u;
+
+            const unsigned int v0 = mCVertexId[face.VStartId + 0];
+            const unsigned int v1 = mCVertexId[face.VStartId + j + 1];
+            const unsigned int v2 = mCVertexId[face.VStartId + j + 2];
+
+            vertices[count].x = mCVertex[v0][0];
+            vertices[count].y = mCVertex[v0][1];
+            vertices[count].z = mCVertex[v0][2];
+            vertices[count].color = tc;
+            ++count;
+
+            vertices[count].x = mCVertex[v1][0];
+            vertices[count].y = mCVertex[v1][1];
+            vertices[count].z = mCVertex[v1][2];
+            vertices[count].color = tc;
+            ++count;
+
+            vertices[count].x = mCVertex[v2][0];
+            vertices[count].y = mCVertex[v2][1];
+            vertices[count].z = mCVertex[v2][2];
+            vertices[count].color = tc;
+            ++count;
+
+            if (count >= 3000)
+            {
+                d3dDevice->DrawPrimitiveUP(d3dDevice, D3DPT_TRIANGLELIST, count / 3, vertices, sizeof(_D3DR3VERTEX_TEX0));
+                count = 0;
+            }
+        }
+    }
+
+    if (count > 0)
+    {
+        d3dDevice->DrawPrimitiveUP(d3dDevice, D3DPT_TRIANGLELIST, count / 3, vertices, sizeof(_D3DR3VERTEX_TEX0));
+    }
+}
+
+void CBsp::RenderIndepentMatGroup(unsigned __int16 a2)
+{
+    const unsigned __int64 index = a2;
+    float world[4][4]{};
+    GetBspObjectMatrix(world, mMatGroup[index].ObjectId);
+    IDirect3DDevice8 *const d3dDevice = GetD3dDevice();
+    d3dDevice->SetTransform(d3dDevice, static_cast<_D3DTRANSFORMSTATETYPE>(256), reinterpret_cast<const _D3DMATRIX *>(world));
+
+    if (mMatGroup[index].Type & 0x400)
+    {
+        float src[3]{stState.mInvMatView[3][0], stState.mInvMatView[3][1], stState.mInvMatView[3][2]};
+        float tempVec[3]{src[0] - mMatGroup[index].Origin[0], src[1] - mMatGroup[index].Origin[1], src[2] - mMatGroup[index].Origin[2]};
+        float scale = sqrtf_0((tempVec[0] * tempVec[0]) + (tempVec[1] * tempVec[1]) + (tempVec[2] * tempVec[2]));
+        scale = (sqrtf_0(scale) - stState.mNear) * 0.13f;
+
+        D3DXMATRIX calMat{};
+        D3DXMATRIX billboard = *reinterpret_cast<D3DXMATRIX *>(&stState.mInvMatView[0][0]);
+        billboard.m[3][0] = 0.0f;
+        billboard.m[3][1] = 0.0f;
+        billboard.m[3][2] = 0.0f;
+
+        D3DXMatrixIdentity_0(&calMat);
+        calMat.m[3][0] = -mMatGroup[index].Origin[0];
+        calMat.m[3][1] = -mMatGroup[index].Origin[1];
+        calMat.m[3][2] = -mMatGroup[index].Origin[2];
+        D3DXMATRIX temp1{};
+        D3DXMatrixMultiply_0(&temp1, &calMat, &billboard);
+
+        calMat.m[3][0] = mMatGroup[index].Origin[0];
+        calMat.m[3][1] = mMatGroup[index].Origin[1];
+        calMat.m[3][2] = mMatGroup[index].Origin[2];
+        calMat.m[0][0] *= scale;
+        calMat.m[1][1] *= scale;
+        calMat.m[2][2] *= scale;
+
+        D3DXMATRIX temp2{};
+        D3DXMatrixMultiply_0(&temp2, &temp1, &calMat);
+        D3DXMATRIX view = *reinterpret_cast<D3DXMATRIX *>(&stState.mMatView[0][0]);
+        D3DXMatrixMultiply_0(&temp1, &temp2, &view);
+        d3dDevice->SetTransform(d3dDevice, D3DTS_VIEW, reinterpret_cast<const _D3DMATRIX *>(&temp1));
+    }
+    else if ((*reinterpret_cast<const unsigned short *>(&mMatGroup[index]) & (1u << 11)) != 0)
+    {
+        float src[3]{stState.mInvMatView[3][0], stState.mInvMatView[3][1], stState.mInvMatView[3][2]};
+        D3DXMATRIX calMat{};
+        D3DXMATRIX billboard{};
+        GetYBillboardMatrix(&billboard, src, mMatGroup[index].Origin);
+        D3DXMatrixIdentity_0(&calMat);
+        calMat.m[3][0] = -mMatGroup[index].Origin[0];
+        calMat.m[3][1] = -mMatGroup[index].Origin[1];
+        calMat.m[3][2] = -mMatGroup[index].Origin[2];
+        D3DXMATRIX temp1{};
+        D3DXMatrixMultiply_0(&temp1, &calMat, &billboard);
+        calMat.m[3][0] = mMatGroup[index].Origin[0];
+        calMat.m[3][1] = mMatGroup[index].Origin[1];
+        calMat.m[3][2] = mMatGroup[index].Origin[2];
+        D3DXMATRIX temp2{};
+        D3DXMatrixMultiply_0(&temp2, &temp1, &calMat);
+        D3DXMATRIX view = *reinterpret_cast<D3DXMATRIX *>(&stState.mMatView[0][0]);
+        D3DXMatrixMultiply_0(&temp1, &temp2, &view);
+        d3dDevice->SetTransform(d3dDevice, D3DTS_VIEW, reinterpret_cast<const _D3DMATRIX *>(&temp1));
+    }
+
+    _R3MATERIAL *const material = &GetMainMaterial()[mMatGroup[index].MtlId];
+    if ((material->m_Layer[0].m_dwAlphaType & 0x2000) == 0)
+    {
+        d3dDevice->SetRenderState(d3dDevice, D3DRS_ZWRITEENABLE, 0);
+    }
+
+    SetVPIPTex2(mStaticVertexBuffer[mMatGroup[index].VertexBufferId].m_lpVertexBuffer, mStaticIndexedBuffer.m_lpIndexBuffer);
+    DrawOneMatGroup(&mStaticVertexBuffer[mMatGroup[index].VertexBufferId], &mMatGroup[index]);
+
+    if ((material->m_Layer[0].m_dwAlphaType & 0x2000) == 0)
+    {
+        d3dDevice->SetRenderState(d3dDevice, D3DRS_ZWRITEENABLE, 1);
+    }
+
+    if ((*reinterpret_cast<const unsigned short *>(&mMatGroup[index]) & (1u << 11)) != 0)
+    {
+        D3DXMATRIX view = *reinterpret_cast<D3DXMATRIX *>(&stState.mMatView[0][0]);
+        d3dDevice->SetTransform(d3dDevice, D3DTS_VIEW, reinterpret_cast<const _D3DMATRIX *>(&view));
+    }
+}
+
+void CBsp::RenderMatGroup(unsigned __int16 a2)
+{
+    const unsigned __int64 index = a2;
+    const short type = mMatGroup[index].Type;
+    if (type & 0x400)
+    {
+        mAlpha.SetCoronaStack(a2);
+        return;
+    }
+    if (type < 0)
+    {
+        mAlpha.SetAlphaStack(a2);
+        return;
+    }
+
+    SetVPIPTex2(mStaticVertexBuffer[mMatGroup[index].VertexBufferId].m_lpVertexBuffer, mStaticIndexedBuffer.m_lpIndexBuffer);
+    float world[4][4]{};
+    GetBspObjectMatrix(world, mMatGroup[index].ObjectId);
+    IDirect3DDevice8 *const d3dDevice = GetD3dDevice();
+    d3dDevice->SetTransform(d3dDevice, static_cast<_D3DTRANSFORMSTATETYPE>(256), reinterpret_cast<const _D3DMATRIX *>(world));
+
+    const bool isYBillboard = ((*reinterpret_cast<const unsigned short *>(&mMatGroup[index]) & (1u << 11)) != 0);
+    if (isYBillboard)
+    {
+        float pos[3]{};
+        pos[0] = (mMatGroup[index].BBMax[0] - mMatGroup[index].BBMin[0]) * 0.5f + mMatGroup[index].BBMin[0];
+        pos[1] = (mMatGroup[index].BBMax[1] - mMatGroup[index].BBMin[1]) * 0.5f + mMatGroup[index].BBMin[1];
+        pos[2] = (mMatGroup[index].BBMax[2] - mMatGroup[index].BBMin[2]) * 0.5f + mMatGroup[index].BBMin[2];
+        float src[3]{unk_184A79B1C, reinterpret_cast<float *>(&qword_184A79B20)[0], reinterpret_cast<float *>(&qword_184A79B20)[1]};
+
+        D3DXMATRIX billboard{};
+        GetYBillboardMatrix(&billboard, src, pos);
+        D3DXMATRIX calMat{};
+        D3DXMatrixIdentity_0(&calMat);
+        calMat.m[3][0] = -pos[0];
+        calMat.m[3][1] = -pos[1];
+        calMat.m[3][2] = -pos[2];
+        D3DXMATRIX temp1{};
+        D3DXMatrixMultiply_0(&temp1, &calMat, &billboard);
+        calMat.m[3][0] = pos[0];
+        calMat.m[3][1] = pos[1];
+        calMat.m[3][2] = pos[2];
+        D3DXMATRIX temp2{};
+        D3DXMatrixMultiply_0(&temp2, &temp1, &calMat);
+        D3DXMATRIX view = *reinterpret_cast<D3DXMATRIX *>(&stru_184A79A6C);
+        D3DXMatrixMultiply_0(&temp1, &temp2, &view);
+        d3dDevice->SetTransform(d3dDevice, D3DTS_VIEW, reinterpret_cast<const _D3DMATRIX *>(&temp1));
+    }
+
+    if (stState.mShowLightMap)
+    {
+        DrawLightMapGroup(&mStaticVertexBuffer[mMatGroup[index].VertexBufferId], &mMatGroup[index]);
+    }
+    else
+    {
+        DrawOneMatGroup(&mStaticVertexBuffer[mMatGroup[index].VertexBufferId], &mMatGroup[index]);
+    }
+
+    if (isYBillboard)
+    {
+        D3DXMATRIX view = *reinterpret_cast<D3DXMATRIX *>(&stru_184A79A6C);
+        d3dDevice->SetTransform(d3dDevice, D3DTS_VIEW, reinterpret_cast<const _D3DMATRIX *>(&view));
+    }
+}
+
+void CBsp::RenderOneEntityRender(unsigned __int16 a2)
+{
+    const __int64 mapIndex = a2;
+    const __int64 entityId = mMapEntitiesList[mapIndex].ID;
+    if (!mEntityList[entityId].IsFileExist)
+    {
+        return;
+    }
+
+    float world[4][4]{};
+    float worldTemp[4][4]{};
+    float scaleMat[4][4]{};
+    float rotMat[4][4]{};
+
+    MatrixIdentity(world);
+    const float scale = mMapEntitiesList[mapIndex].Scale;
+    MatrixScale(scaleMat, scale, scale, scale);
+    MatrixRotate(rotMat, mMapEntitiesList[mapIndex].RotX, mMapEntitiesList[mapIndex].RotY, 0.0f);
+    MatrixMultiply(worldTemp, scaleMat, world);
+    MatrixMultiply(world, rotMat, worldTemp);
+    world[3][0] = mMapEntitiesList[mapIndex].Pos[0];
+    world[3][1] = mMapEntitiesList[mapIndex].Pos[1];
+    world[3][2] = mMapEntitiesList[mapIndex].Pos[2];
+
+    mEntity[entityId].mAddFrame = mMapEntitiesList[mapIndex].AddFrame;
+    const unsigned int color = mMapEntitiesList[mapIndex].Color;
+    if (mEntityList[entityId].IsParticle)
+    {
+        CParticle *const particle = mMapEntitiesList[mapIndex].Particle;
+        if (!particle)
+        {
+            return;
+        }
+        MatrixCopy(particle->mRotMat, rotMat);
+        particle->mCreatePos[0] = world[3][0];
+        particle->mCreatePos[1] = world[3][1];
+        particle->mCreatePos[2] = world[3][2];
+        DrawCParticle(particle, particle->mEntity, world, color);
+    }
+    else
+    {
+        mEntity[entityId].mMapColor = mMapEntitiesList[mapIndex].mMapColor;
+        if (mEntityList[entityId].ShaderID && mEntity[entityId].IsEnableShaderID(mEntityList[entityId].ShaderID))
+        {
+            mEntity[entityId].DrawEntityVS(&mEntityList[entityId], world, color);
+        }
+        else
+        {
+            mEntity[entityId].DrawEntity(world, color, -1.0);
+        }
+    }
+}
+
+void CBsp::SaveExtBsp(char *a2, _ADD_BSP_SAVE *a3)
+{
+    FILE *stream = fopen(a2, "wb");
+    if (!stream)
+    {
+        return;
+    }
+
+    unsigned int offset = sizeof(_EXT_BSP_FILE_HEADER);
+    mExtBSPHeader.CFVertex.offset = offset;
+    offset += mExtBSPHeader.CFVertex.size;
+    mExtBSPHeader.CFLine.offset = offset;
+    offset += mExtBSPHeader.CFLine.size;
+    mExtBSPHeader.CFLineId.offset = offset;
+    offset += mExtBSPHeader.CFLineId.size;
+    mExtBSPHeader.CFLeaf.offset = offset;
+    offset += mExtBSPHeader.CFLeaf.size;
+    mExtBSPHeader.EntityList.offset = offset;
+    offset += mExtBSPHeader.EntityList.size;
+    mExtBSPHeader.EntityID.offset = offset;
+    offset += mExtBSPHeader.EntityID.size;
+    mExtBSPHeader.LeafEntityList.offset = offset;
+    offset += mExtBSPHeader.LeafEntityList.size;
+    mExtBSPHeader.SoundEntityID.offset = offset;
+    offset += mExtBSPHeader.SoundEntityID.size;
+    mExtBSPHeader.LeafSoundEntityList.offset = offset;
+    offset += mExtBSPHeader.LeafSoundEntityList.size;
+    mExtBSPHeader.MapEntitiesList.offset = offset;
+    offset += mExtBSPHeader.MapEntitiesList.size;
+    mExtBSPHeader.SoundEntityList.offset = offset;
+    offset += mExtBSPHeader.SoundEntityList.size;
+    mExtBSPHeader.SoundEntitiesList.offset = offset;
+    offset += mExtBSPHeader.SoundEntitiesList.size;
+
+    for (unsigned int i = 0; i < 18; ++i)
+    {
+        mExtBSPHeader.ReadSpare[i].offset = 0;
+        mExtBSPHeader.ReadSpare[i].size = 0;
+    }
+    for (unsigned int i = 0; i < 18; ++i)
+    {
+        mExtBSPHeader.FreeSpare[i].offset = 0;
+        mExtBSPHeader.FreeSpare[i].size = 0;
+    }
+
+    mExtBSPHeader.version = 20;
+    fwrite(&mExtBSPHeader, sizeof(_EXT_BSP_FILE_HEADER), 1, stream);
+    fwrite(a3->ColPoint, mExtBSPHeader.CFVertex.size, 1, stream);
+    fwrite(a3->ColLine, mExtBSPHeader.CFLine.size, 1, stream);
+    fwrite(a3->ColLineID, mExtBSPHeader.CFLineId.size, 1, stream);
+    fwrite(a3->ColLeaf, mExtBSPHeader.CFLeaf.size, 1, stream);
+    fwrite(a3->EntityList, mExtBSPHeader.EntityList.size, 1, stream);
+    fwrite(a3->EntityID, mExtBSPHeader.EntityID.size, 1, stream);
+    fwrite(a3->LeafEntityList, mExtBSPHeader.LeafEntityList.size, 1, stream);
+    fwrite(a3->SoundEntityID, mExtBSPHeader.SoundEntityID.size, 1, stream);
+    fwrite(a3->LeafSoundEntityList, mExtBSPHeader.LeafSoundEntityList.size, 1, stream);
+    fwrite(a3->MapEntitiesList, mExtBSPHeader.MapEntitiesList.size, 1, stream);
+    fwrite(a3->SoundEntityList, mExtBSPHeader.SoundEntityList.size, 1, stream);
+    fwrite(a3->SoundEntitiesList, mExtBSPHeader.SoundEntitiesList.size, 1, stream);
+    fclose(stream);
+}
+
+void CBsp::DrawCollisionPoly()
+{
+    _D3DR3VERTEX_TEX0 vertices[3000]{};
+    float world[4][4]{};
+    MatrixIdentity(world);
+    IDirect3DDevice8 *const d3dDevice = GetD3dDevice();
+    d3dDevice->SetTransform(d3dDevice, static_cast<_D3DTRANSFORMSTATETYPE>(256), reinterpret_cast<const _D3DMATRIX *>(world));
+
+    const unsigned int backColor = 0x7F000000u;
+    const unsigned int frontColors[3] = {0x5F00FF9Fu, 0x7C6FFFBFu, 0x5F028F7Fu};
+    const unsigned int selectedFrontColors[3] = {0x5FFF009Fu, 0x7CFF6FBFu, 0x5F8F027Fu};
+    const unsigned int freezeFrontColors[3] = {0x5F00FFFFu, 0x7C00FFFFu, 0x5F00FFFFu};
+
+    BlendOn(3);
+    int count = 0;
+    int renderedCount = 0;
+    for (int i = 1; i < static_cast<int>(mCFLineNum); ++i)
+    {
+        const float *const start = mCFVertex[mCFLine[i].start_v];
+        const float *const end = mCFVertex[mCFLine[i].end_v];
+
+        vertices[count].x = start[0];
+        vertices[count].y = start[1];
+        vertices[count].z = start[2];
+        vertices[count].color = backColor;
+        ++count;
+        vertices[count].x = end[0];
+        vertices[count].y = end[1] + mCFLine[i].height;
+        vertices[count].z = end[2];
+        vertices[count].color = backColor;
+        ++count;
+        vertices[count].x = end[0];
+        vertices[count].y = end[1];
+        vertices[count].z = end[2];
+        vertices[count].color = backColor;
+        ++count;
+
+        vertices[count].x = start[0];
+        vertices[count].y = start[1];
+        vertices[count].z = start[2];
+        vertices[count].color = backColor;
+        ++count;
+        vertices[count].x = start[0];
+        vertices[count].y = start[1] + mCFLine[i].height;
+        vertices[count].z = start[2];
+        vertices[count].color = backColor;
+        ++count;
+        vertices[count].x = end[0];
+        vertices[count].y = end[1] + mCFLine[i].height;
+        vertices[count].z = end[2];
+        vertices[count].color = backColor;
+        ++count;
+
+        if (count >= 2000)
+        {
+            BlendOn(1);
+            d3dDevice->SetRenderState(d3dDevice, D3DRS_CULLMODE, D3DCULL_CW);
+            d3dDevice->DrawPrimitiveUP(d3dDevice, D3DPT_TRIANGLELIST, count / 3, vertices, sizeof(_D3DR3VERTEX_TEX0));
+
+            BlendOn(3);
+            for (int j = count - 1; j >= 0; --j)
+            {
+                const unsigned int attr = mCFLine[j / 6 + 1].attr;
+                if (attr & 0x80000000u)
+                {
+                    vertices[j].color = selectedFrontColors[(j / 6) % 3];
+                }
+                else if (attr & 0x40000000u)
+                {
+                    vertices[j].color = freezeFrontColors[(j / 6) % 3];
+                }
+                else
+                {
+                    vertices[j].color = frontColors[(j / 6) % 3];
+                }
+            }
+
+            d3dDevice->SetRenderState(d3dDevice, D3DRS_CULLMODE, D3DCULL_CCW);
+            d3dDevice->DrawPrimitiveUP(d3dDevice, D3DPT_TRIANGLELIST, count / 3, vertices, sizeof(_D3DR3VERTEX_TEX0));
+            renderedCount += count;
+            count = 0;
+        }
+    }
+
+    BlendOn(1);
+    d3dDevice->SetRenderState(d3dDevice, D3DRS_CULLMODE, D3DCULL_CW);
+    d3dDevice->DrawPrimitiveUP(d3dDevice, D3DPT_TRIANGLELIST, count / 3, vertices, sizeof(_D3DR3VERTEX_TEX0));
+
+    for (int j = count - 1; j >= 0; --j)
+    {
+        const unsigned int attr = mCFLine[(renderedCount + j) / 6 + 1].attr;
+        if (attr & 0x80000000u)
+        {
+            vertices[j].color = selectedFrontColors[(j / 6) % 3];
+        }
+        else if (attr & 0x40000000u)
+        {
+            vertices[j].color = freezeFrontColors[(j / 6) % 3];
+        }
+        else
+        {
+            vertices[j].color = frontColors[(j / 6) % 3];
+        }
+    }
+
+    BlendOn(3);
+    d3dDevice->SetRenderState(d3dDevice, D3DRS_CULLMODE, D3DCULL_CCW);
+    d3dDevice->DrawPrimitiveUP(d3dDevice, D3DPT_TRIANGLELIST, count / 3, vertices, sizeof(_D3DR3VERTEX_TEX0));
+    BlendOff();
+}
+
+void CBsp::DrawLeafCollisionPoly(__int16 a2)
+{
+    _D3DR3VERTEX_TEX0 vertices[3000]{};
+    float world[4][4]{};
+    MatrixIdentity(world);
+    IDirect3DDevice8 *const d3dDevice = GetD3dDevice();
+    d3dDevice->SetTransform(d3dDevice, static_cast<_D3DTRANSFORMSTATETYPE>(256), reinterpret_cast<const _D3DMATRIX *>(world));
+
+    const unsigned int backColor = 0x7F000000u;
+    const unsigned int frontColors[3] = {0x5F00FF9Fu, 0x7C6FFFBFu, 0x5F028F7Fu};
+    const unsigned int selectedFrontColors[3] = {0x5FFF009Fu, 0x7CFF6FBFu, 0x5F8F027Fu};
+
+    BlendOn(3);
+    int count = 0;
+    int renderedCount = 0;
+    for (int k = 0; k < mCFLeaf[a2].line_num; ++k)
+    {
+        const int lineIndex = mCFLineId[mCFLeaf[a2].start_id + k];
+        const float *const start = mCFVertex[mCFLine[lineIndex].start_v];
+        const float *const end = mCFVertex[mCFLine[lineIndex].end_v];
+
+        vertices[count].x = start[0];
+        vertices[count].y = start[1];
+        vertices[count].z = start[2];
+        vertices[count].color = backColor;
+        ++count;
+        vertices[count].x = end[0];
+        vertices[count].y = end[1] + mCFLine[lineIndex].height;
+        vertices[count].z = end[2];
+        vertices[count].color = backColor;
+        ++count;
+        vertices[count].x = end[0];
+        vertices[count].y = end[1];
+        vertices[count].z = end[2];
+        vertices[count].color = backColor;
+        ++count;
+
+        vertices[count].x = start[0];
+        vertices[count].y = start[1];
+        vertices[count].z = start[2];
+        vertices[count].color = backColor;
+        ++count;
+        vertices[count].x = start[0];
+        vertices[count].y = start[1] + mCFLine[lineIndex].height;
+        vertices[count].z = start[2];
+        vertices[count].color = backColor;
+        ++count;
+        vertices[count].x = end[0];
+        vertices[count].y = end[1] + mCFLine[lineIndex].height;
+        vertices[count].z = end[2];
+        vertices[count].color = backColor;
+        ++count;
+
+        if (count >= 2000)
+        {
+            BlendOn(1);
+            d3dDevice->SetRenderState(d3dDevice, D3DRS_CULLMODE, D3DCULL_CW);
+            d3dDevice->DrawPrimitiveUP(d3dDevice, D3DPT_TRIANGLELIST, count / 3, vertices, sizeof(_D3DR3VERTEX_TEX0));
+
+            BlendOn(3);
+            for (int j = count - 1; j >= 0; --j)
+            {
+                if (mCFLine[j / 6 + 1].attr & 0x80000000u)
+                {
+                    vertices[j].color = selectedFrontColors[(j / 6) % 3];
+                }
+                else
+                {
+                    vertices[j].color = frontColors[(j / 6) % 3];
+                }
+            }
+
+            d3dDevice->SetRenderState(d3dDevice, D3DRS_CULLMODE, D3DCULL_CCW);
+            d3dDevice->DrawPrimitiveUP(d3dDevice, D3DPT_TRIANGLELIST, count / 3, vertices, sizeof(_D3DR3VERTEX_TEX0));
+            renderedCount += count;
+            count = 0;
+        }
+    }
+
+    BlendOn(1);
+    d3dDevice->SetRenderState(d3dDevice, D3DRS_CULLMODE, D3DCULL_CW);
+    d3dDevice->DrawPrimitiveUP(d3dDevice, D3DPT_TRIANGLELIST, count / 3, vertices, sizeof(_D3DR3VERTEX_TEX0));
+
+    for (int j = count - 1; j >= 0; --j)
+    {
+        if (mCFLine[(renderedCount + j) / 6 + 1].attr & 0x80000000u)
+        {
+            vertices[j].color = selectedFrontColors[(j / 6) % 3];
+        }
+        else
+        {
+            vertices[j].color = frontColors[(j / 6) % 3];
+        }
+    }
+
+    BlendOn(3);
+    d3dDevice->SetRenderState(d3dDevice, D3DRS_CULLMODE, D3DCULL_CCW);
+    d3dDevice->DrawPrimitiveUP(d3dDevice, D3DPT_TRIANGLELIST, count / 3, vertices, sizeof(_D3DR3VERTEX_TEX0));
+    BlendOff();
+}
+
+void CBsp::DrawLeafBBox()
+{
+    _D3DR3VERTEX_TEX0 vertices[3000]{};
+    float world[4][4]{};
+    MatrixIdentity(world);
+    IDirect3DDevice8 *const d3dDevice = GetD3dDevice();
+    d3dDevice->SetTransform(d3dDevice, static_cast<_D3DTRANSFORMSTATETYPE>(256), reinterpret_cast<const _D3DMATRIX *>(world));
+    d3dDevice->SetTexture(d3dDevice, 0, nullptr);
+
+    int count = 0;
+    const unsigned int defaultColor = 0x80FF4F00u;
+    for (int i = 1; i < static_cast<int>(mLeafNum); ++i)
+    {
+        unsigned int color = defaultColor;
+        if (i != mNowPlayerNum)
+        {
+            continue;
+        }
+
+        const float minX = static_cast<float>(mLeaf[i].bb_min[0]);
+        const float minY = static_cast<float>(mLeaf[i].bb_min[1]);
+        const float minZ = static_cast<float>(mLeaf[i].bb_min[2]);
+        const float maxX = static_cast<float>(mLeaf[i].bb_max[0]);
+        const float maxY = static_cast<float>(mLeaf[i].bb_max[1]);
+        const float maxZ = static_cast<float>(mLeaf[i].bb_max[2]);
+
+        const auto line = [&](float x, float y, float z) {
+            vertices[count].x = x;
+            vertices[count].y = y;
+            vertices[count].z = z;
+            vertices[count].color = color;
+            ++count;
+        };
+
+        line(minX, minY, minZ); line(maxX, minY, minZ);
+        line(minX, minY, minZ); line(minX, minY, maxZ);
+        line(maxX, minY, minZ); line(maxX, minY, maxZ);
+        line(minX, minY, maxZ); line(maxX, minY, maxZ);
+        line(minX, maxY, minZ); line(maxX, maxY, minZ);
+        line(minX, maxY, minZ); line(minX, maxY, maxZ);
+        line(maxX, maxY, minZ); line(maxX, maxY, maxZ);
+        line(minX, maxY, maxZ); line(maxX, maxY, maxZ);
+        line(minX, minY, minZ); line(minX, maxY, minZ);
+        line(maxX, minY, minZ); line(maxX, maxY, minZ);
+        line(minX, minY, maxZ); line(minX, maxY, maxZ);
+        line(maxX, minY, maxZ); line(maxX, maxY, maxZ);
+
+        if (count > 1000)
+        {
+            d3dDevice->DrawPrimitiveUP(d3dDevice, D3DPT_LINELIST, count / 2, vertices, sizeof(_D3DR3VERTEX_TEX0));
+            count = 0;
+        }
+    }
+
+    if (count)
+    {
+        d3dDevice->DrawPrimitiveUP(d3dDevice, D3DPT_LINELIST, count / 2, vertices, sizeof(_D3DR3VERTEX_TEX0));
+    }
+}
+
+void CBsp::DrawMatBBox()
+{
+    _D3DR3VERTEX_TEX0 vertices[3000]{};
+    float world[4][4]{};
+    MatrixIdentity(world);
+    IDirect3DDevice8 *const d3dDevice = GetD3dDevice();
+    d3dDevice->SetTransform(d3dDevice, static_cast<_D3DTRANSFORMSTATETYPE>(256), reinterpret_cast<const _D3DMATRIX *>(world));
+    d3dDevice->SetTexture(d3dDevice, 0, nullptr);
+
+    int count = 0;
+    const unsigned int color = 0x80FF4F00u;
+    for (int i = 1; i < static_cast<int>(mMatGroupNum); ++i)
+    {
+        const float minX = mMatGroup[i].BBMin[0];
+        const float minY = mMatGroup[i].BBMin[1];
+        const float minZ = mMatGroup[i].BBMin[2];
+        const float maxX = mMatGroup[i].BBMax[0];
+        const float maxY = mMatGroup[i].BBMax[1];
+        const float maxZ = mMatGroup[i].BBMax[2];
+
+        const auto line = [&](float x, float y, float z) {
+            vertices[count].x = x;
+            vertices[count].y = y;
+            vertices[count].z = z;
+            vertices[count].color = color;
+            ++count;
+        };
+
+        line(minX, minY, minZ); line(maxX, minY, minZ);
+        line(minX, minY, minZ); line(minX, minY, maxZ);
+        line(maxX, minY, minZ); line(maxX, minY, maxZ);
+        line(minX, minY, maxZ); line(maxX, minY, maxZ);
+        line(minX, maxY, minZ); line(maxX, maxY, minZ);
+        line(minX, maxY, minZ); line(minX, maxY, maxZ);
+        line(maxX, maxY, minZ); line(maxX, maxY, maxZ);
+        line(minX, maxY, maxZ); line(maxX, maxY, maxZ);
+        line(minX, minY, minZ); line(minX, maxY, minZ);
+        line(maxX, minY, minZ); line(maxX, maxY, minZ);
+        line(minX, minY, maxZ); line(minX, maxY, maxZ);
+        line(maxX, minY, maxZ); line(maxX, maxY, maxZ);
+
+        if (count > 1000)
+        {
+            d3dDevice->DrawPrimitiveUP(d3dDevice, D3DPT_LINELIST, count / 2, vertices, sizeof(_D3DR3VERTEX_TEX0));
+            count = 0;
+        }
+    }
+
+    if (count)
+    {
+        d3dDevice->DrawPrimitiveUP(d3dDevice, D3DPT_LINELIST, count / 2, vertices, sizeof(_D3DR3VERTEX_TEX0));
+    }
+}
+
+__int64 CBsp::GetPointFromScreenRay(float a2, float a3, float *const a4, float *const a5)
+{
+    const float nx = (((2.0f * a2) / static_cast<float>(stState.mViewXL)) - 1.0f) / stState.mMatProj[0][0];
+    const float ny = -((((2.0f * a3) / static_cast<float>(stState.mViewYL)) - 1.0f) / stState.mMatProj[1][1]);
+
+    float invView[4][4]{};
+    D3DXMatrixInverse_0(reinterpret_cast<D3DXMATRIX *>(invView), nullptr, reinterpret_cast<const D3DXMATRIX *>(&stState.mMatView[0][0]));
+
+    float src[3]{invView[3][0], invView[3][1], invView[3][2]};
+    float dst[3]{};
+    dst[0] = (invView[0][0] * nx * 13660.0f) + (invView[1][0] * ny * 13660.0f) + (invView[2][0] * 13660.0f) + invView[3][0];
+    dst[1] = (invView[0][1] * nx * 13660.0f) + (invView[1][1] * ny * 13660.0f) + (invView[2][1] * 13660.0f) + invView[3][1];
+    dst[2] = (invView[0][2] * nx * 13660.0f) + (invView[1][2] * ny * 13660.0f) + (invView[2][2] * 13660.0f) + invView[3][2];
+
+    a5[0] = src[0];
+    a5[1] = src[1];
+    a5[2] = src[2];
+
+    int leafNum = 0;
+    __int16 leafIds[32000]{};
+    GetLeafList(src, dst, &leafNum, leafIds, 32000);
+
+    bool found = false;
+    double bestDist = 1000000.0;
+    for (int l = 0; l < leafNum; ++l)
+    {
+        const _BSP_LEAF &leaf = mLeaf[leafIds[l]];
+        for (int k = 0; k < leaf.face_num; ++k)
+        {
+            const unsigned int faceId = mCFaceId[leaf.face_start_id + k];
+            const _BSP_C_FACE &face = mCFace[faceId];
+            if (face.Attr & 0x40)
+            {
+                continue;
+            }
+
+            float cross[3]{};
+            if (!GetPlaneCrossPoint(src, dst, cross, face.Normal, face.Normal[3]))
+            {
+                continue;
+            }
+
+            int inside = 0;
+            for (int j = 0; j < face.VNum; ++j)
+            {
+                const unsigned int v0 = mCVertexId[face.VStartId + j];
+                const unsigned int v1 = mCVertexId[face.VStartId + (j + 1) % face.VNum];
+                if (!CheckEdge(mCVertex[v0], mCVertex[v1], cross, face.Normal))
+                {
+                    continue;
+                }
+                ++inside;
+            }
+
+            if (inside == face.VNum)
+            {
+                float diff[3]{cross[0] - src[0], cross[1] - src[1], cross[2] - src[2]};
+                const float dist = sqrtf_0((diff[0] * diff[0]) + (diff[1] * diff[1]) + (diff[2] * diff[2]));
+                if (bestDist > dist)
+                {
+                    found = true;
+                    bestDist = dist;
+                    mPickPoly = static_cast<int>(faceId);
+                    a4[0] = cross[0];
+                    a4[1] = cross[1];
+                    a4[2] = cross[2];
+                }
+            }
+        }
+    }
+
+    if (!found)
+    {
+        mPickPoly = -1;
+        a4[0] = dst[0];
+        a4[1] = a5[1];
+        a4[2] = dst[2];
+    }
+
+    return 1;
+}
+
+__int64 CBsp::GetPointFromScreenRayFar(float a2, float a3, float *const a4, float *const a5)
+{
+    const float nx = (((2.0f * a2) / static_cast<float>(stState.mViewXL)) - 1.0f) / stState.mMatProj[0][0];
+    const float ny = -((((2.0f * a3) / static_cast<float>(stState.mViewYL)) - 1.0f) / stState.mMatProj[1][1]);
+
+    const D3DXMATRIX invView = *reinterpret_cast<const D3DXMATRIX *>(&stState.mInvMatView[0][0]);
+    float src[3]{invView.m[3][0], invView.m[3][1], invView.m[3][2]};
+    float dst[3]{};
+    dst[0] = (invView.m[0][0] * nx * 3660000.0f) + (invView.m[1][0] * ny * 3660000.0f) + (invView.m[2][0] * 3660000.0f);
+    dst[1] = (invView.m[0][1] * nx * 3660000.0f) + (invView.m[1][1] * ny * 3660000.0f) + (invView.m[2][1] * 3660000.0f);
+    dst[2] = (invView.m[0][2] * nx * 3660000.0f) + (invView.m[1][2] * ny * 3660000.0f) + (invView.m[2][2] * 3660000.0f);
+
+    a5[0] = src[0];
+    a5[1] = src[1];
+    a5[2] = src[2];
+
+    int leafNum = 0;
+    __int16 leafIds[32000]{};
+    GetLeafList(src, dst, &leafNum, leafIds, 32000);
+
+    bool found = false;
+    double bestDist = -1000.0;
+    for (int l = 0; l < leafNum; ++l)
+    {
+        const _BSP_LEAF &leaf = mLeaf[leafIds[l]];
+        for (int k = 0; k < leaf.face_num; ++k)
+        {
+            const unsigned int faceId = mCFaceId[leaf.face_start_id + k];
+            const _BSP_C_FACE &face = mCFace[faceId];
+            if (face.Attr & 0x40)
+            {
+                continue;
+            }
+
+            float cross[3]{};
+            if (!GetPlaneCrossPoint(src, dst, cross, face.Normal, face.Normal[3]))
+            {
+                continue;
+            }
+
+            int inside = 0;
+            for (int j = 0; j < face.VNum; ++j)
+            {
+                const unsigned int v0 = mCVertexId[face.VStartId + j];
+                const unsigned int v1 = mCVertexId[face.VStartId + (j + 1) % face.VNum];
+                if (!CheckEdge(mCVertex[v0], mCVertex[v1], cross, face.Normal))
+                {
+                    continue;
+                }
+                ++inside;
+            }
+
+            if (inside == face.VNum)
+            {
+                float diff[3]{cross[0] - src[0], cross[1] - src[1], cross[2] - src[2]};
+                const float dist = sqrtf_0((diff[0] * diff[0]) + (diff[1] * diff[1]) + (diff[2] * diff[2]));
+                if (bestDist < dist)
+                {
+                    found = true;
+                    bestDist = dist;
+                    mPickPoly = static_cast<int>(faceId);
+                    a4[0] = cross[0];
+                    a4[1] = cross[1];
+                    a4[2] = cross[2];
+                }
+            }
+        }
+    }
+
+    if (!found)
+    {
+        mPickPoly = -1;
+        a4[0] = (invView.m[0][0] * nx * 2000.0f) + (invView.m[1][0] * ny * 2000.0f) + (invView.m[2][0] * 2000.0f);
+        a4[1] = a5[1];
+        a4[2] = (invView.m[0][2] * nx * 2000.0f) + (invView.m[1][2] * ny * 2000.0f) + (invView.m[2][2] * 2000.0f);
+    }
+
+    return 1;
+}
+
+__int64 CBsp::IsCollisionFaceForServer(float *const a2, float *const a3)
+{
+    int leafNum = 0;
+    __int16 leafIds[32000]{};
+    GetLeafList(a2, a3, &leafNum, leafIds, 32000);
+
+    for (int k = 0; k < leafNum; ++k)
+    {
+        const _BSP_LEAF &leaf = mLeaf[leafIds[k]];
+        for (int i = 0; i < leaf.face_num; ++i)
+        {
+            const unsigned int faceId = mCFaceId[leaf.face_start_id + i];
+            const _BSP_C_FACE &face = mCFace[faceId];
+            if (face.Attr & 0x40)
+            {
+                continue;
+            }
+
+            float cross[3]{};
+            if (!GetPlaneCrossPoint(a2, a3, cross, face.Normal, face.Normal[3]))
+            {
+                continue;
+            }
+
+            int inside = 0;
+            for (int j = 0; j < face.VNum; ++j)
+            {
+                if (CheckEdgeNormal(mCNEdgeNormal[(faceId << 2) + j], cross))
+                {
+                    break;
+                }
+                ++inside;
+            }
+
+            if (inside == face.VNum)
+            {
+                return 1;
+            }
+        }
+    }
+
+    return 0;
+}
+
+__int64 CBsp::IsCollisionFaceForServer(float *const a2, float *const a3, float (*a4)[3], float a5)
+{
+    int leafNum = 0;
+    __int16 leafIds[32000]{};
+    GetLeafList(a2, a3, &leafNum, leafIds, 32000);
+
+    float bestDist = 100000000.0f;
+    bool found = false;
+    unsigned int bestFace = 0;
+    for (int k = 0; k < leafNum; ++k)
+    {
+        const _BSP_LEAF &leaf = mLeaf[leafIds[k]];
+        for (int i = 0; i < leaf.face_num; ++i)
+        {
+            const unsigned int faceId = mCFaceId[leaf.face_start_id + i];
+            const _BSP_C_FACE &face = mCFace[faceId];
+            if (face.Attr & 0x40)
+            {
+                continue;
+            }
+
+            float cross[3]{};
+            if (!GetPlaneCrossPoint(a2, a3, cross, face.Normal, face.Normal[3]))
+            {
+                continue;
+            }
+
+            int inside = 0;
+            for (int j = 0; j < face.VNum; ++j)
+            {
+                if (CheckEdgeNormal(mCNEdgeNormal[(faceId << 2) + j], cross))
+                {
+                    break;
+                }
+                ++inside;
+            }
+
+            if (inside == face.VNum)
+            {
+                float diff[3]{cross[0] - a2[0], cross[1] - a2[1], cross[2] - a2[2]};
+                const float distSq = (diff[0] * diff[0]) + (diff[1] * diff[1]) + (diff[2] * diff[2]);
+                if (distSq < bestDist)
+                {
+                    found = true;
+                    bestDist = distSq;
+                    bestFace = faceId;
+                    (*a4)[0] = cross[0];
+                    (*a4)[1] = cross[1];
+                    (*a4)[2] = cross[2];
+                }
+            }
+        }
+    }
+
+    if (found)
+    {
+        float dir[3]{a2[0] - a3[0], a2[1] - a3[1], a2[2] - a3[2]};
+        Normalize(dir);
+        const float su = a5 / DotProduct(dir, mCFace[bestFace].Normal);
+        (*a4)[0] = (dir[0] * su) + (*a4)[0];
+        (*a4)[1] = (dir[1] * su) + (*a4)[1];
+        (*a4)[2] = (dir[2] * su) + (*a4)[2];
+        return 1;
+    }
+
+    return 0;
+}
+
+__int64 CBsp::IsInWater(float *const a2, float *const a3, float (*a4)[3], float a5)
+{
+    int leafNum = 0;
+    __int16 leafIds[32000]{};
+    GetLeafList(a2, a3, &leafNum, leafIds, 32000);
+
+    for (int k = 0; k < leafNum; ++k)
+    {
+        const _BSP_LEAF &leaf = mLeaf[leafIds[k]];
+        for (int i = 0; i < leaf.face_num; ++i)
+        {
+            const unsigned int faceId = mCFaceId[leaf.face_start_id + i];
+            const _BSP_C_FACE &face = mCFace[faceId];
+            if ((face.Attr & 0x20) == 0)
+            {
+                continue;
+            }
+
+            float cross[3]{};
+            const int crossResult = GetPlaneCrossPoint(a2, a3, cross, face.Normal, face.Normal[3]);
+            if (crossResult != -1)
+            {
+                continue;
+            }
+
+            int inside = 0;
+            for (int j = 0; j < face.VNum; ++j)
+            {
+                const unsigned int v0 = mCVertexId[face.VStartId + j];
+                const unsigned int v1 = mCVertexId[face.VStartId + (j + 1) % face.VNum];
+                if (!CheckEdge(mCVertex[v0], mCVertex[v1], cross, face.Normal))
+                {
+                    continue;
+                }
+                ++inside;
+            }
+
+            if (inside == face.VNum)
+            {
+                if (a4)
+                {
+                    float dir[3]{a2[0] - a3[0], a2[1] - a3[1], a2[2] - a3[2]};
+                    Normalize(dir);
+                    const float su = a5 / DotProduct(dir, face.Normal);
+                    (*a4)[0] = (dir[0] * su) + cross[0];
+                    (*a4)[1] = (dir[1] * su) + cross[1];
+                    (*a4)[2] = (dir[2] * su) + cross[2];
+                }
+                return 1;
+            }
+        }
+    }
+
+    return 0;
 }

@@ -712,6 +712,7 @@ enum PVP_CASH_IO_CODE : int
 /* 1756 */
 struct  ItemCombineMgr
 {
+  ItemCombineMgr();
   static bool LoadData();
   static bool CheckLoadData();
   void InitMgr(CPlayer *pOne);
@@ -779,6 +780,7 @@ struct  MiningTicket
 
   _AuthKeyTicket m_dwTakeLastMentalTicket;
   _AuthKeyTicket m_dwTakeLastCriTicket;
+  MiningTicket();
   void Init();
   bool AuthLastMentalTicket(
     unsigned __int16 byCurrentYear,
@@ -1320,6 +1322,8 @@ public:
     unsigned __int8 byPvpGrade,
     char *pwszSender);
   void AddGold(int dwPush, bool bApply);
+  void pc_ExchangeGoldForPvP(unsigned int dwGold);
+  void pc_BillingInfoRequest();
   void SubGold(unsigned int dwSub);
   void SubPoint(int dwSub);
   void SubActPoint(unsigned __int8 byCode, unsigned int dwSub);
@@ -1547,6 +1551,7 @@ public:
   void pc_MoveNext(unsigned __int8 byMoveType, float *pfCur, float *pfTar, unsigned __int8 byDirect);
   void pc_RealMovPos(float *pfCur);
   bool SetTarPos(float *fTarPos, bool bColl);
+  bool IsTargetObj(CGameObject *pkObj);
   void pc_MoveStop(float *pfCur);
   void pc_Stop();
   void pc_MoveModeChangeRequest(unsigned __int8 byMoveType);
@@ -1624,6 +1629,11 @@ public:
     unsigned __int8 byReason,
     const char *strErrorCodePos,
     bool bNoUseExpMasteryBonus);
+  void Emb_AlterStat_F(
+    unsigned __int8 byMasteryClass,
+    unsigned __int8 byIndex,
+    float fAlter,
+    unsigned __int8 byReason);
   void apply_normal_item_std_effect(int nEffCode, float fVal, bool bEquip);
   void apply_case_equip_std_effect(_STORAGE_LIST::_db_con *pItem, bool bEquip);
   void apply_case_equip_upgrade_effect(_STORAGE_LIST::_db_con *pItem, bool bEquip);
@@ -1635,10 +1645,14 @@ public:
   void SetMstPt(int nMstCode, float fVal, bool bAdd, unsigned int nWpType);
   void CalcDefTol();
   bool IsRidingUnit();
+  bool IsInTown() override;
+  __int64 GetWeaponRange();
   float GetMoveSpeed();
   void CalcEquipSpeed();
   float GetAddSpeed();
   void BreakCloakBooster();
+  bool IsUseCloakBooster();
+  void Cheet_BufEffectEnd();
   void SendMsg_AlterSPInform();
   void SendMsg_AlterEquipSPInform();
   void CalcEquipMaxDP(bool bInit);
@@ -1654,6 +1668,7 @@ public:
   void SetPotionActDelay(unsigned __int8 byPotionClass, unsigned int dwCurrTime, unsigned int dwActDelay);
   void SendMsg_PremiumCashItemUse(unsigned __int16 wSerial);
   int GetCashAmount();
+  __int64 GetBillingType();
   void SetCashAmount(int nAmount);
   void DeleteCouponItem(_STORAGE_POS_INDIV *CouponItem, int n);
   void DTradeInit();
@@ -1705,7 +1720,7 @@ public:
   __int64 GetLevel();
   __int64 GetHP();
   __int64 GetMaxHP();
-  __int64 CalcCurHPRate();
+  unsigned __int16 CalcCurHPRate() override;
   __int64 CalcCurFPRate();
   __int64 CalcCurSPRate();
   unsigned __int64 GetStateFlag();

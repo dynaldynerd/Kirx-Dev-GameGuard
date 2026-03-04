@@ -8,7 +8,7 @@ class CInfoSheet : public CPropertySheet
 {
 public:
   CInfoSheet();
-  virtual ~CInfoSheet() = default;
+  ~CInfoSheet() override;
 
   void Construct(const char *pszCaption, CWnd *pParentWnd, unsigned int iSelectPage);
   void MoveWindow(int x, int y, int nWidth, int nHeight);

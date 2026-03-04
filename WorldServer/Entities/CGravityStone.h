@@ -13,6 +13,11 @@ public:
   ~CGravityStone();
   static unsigned int ms_dwSerialCnt;
 
+  unsigned __int8 Get(unsigned __int16 wIndex, unsigned int dwObjSerial, CPlayer *pkPlayer);
+  unsigned __int8 CheatGet(CPlayer *pkPlayer);
+  CPlayer *GetOwner();
+  float *GetOwnerCurPos();
+  bool IsNearPosition(const float *pfCurPos);
   bool IsValidOwner(CPlayer *pkPlayer);
   bool IsInTown();
   char CheckTakeTimeLimit();

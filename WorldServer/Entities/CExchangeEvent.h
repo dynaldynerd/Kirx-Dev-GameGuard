@@ -15,9 +15,11 @@ class CPlayer;
 class  CExchangeEvent : public RFEventBase
 {
 public:
+  static CExchangeEvent *m_Instance;
   CExchangeEvent();
   ~CExchangeEvent();
   static CExchangeEvent *Instance();
+  static void Destroy();
   bool Initialzie();
   void Loop() override;
   bool IsEnable();

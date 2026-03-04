@@ -5,6 +5,8 @@
 
 class CPlayer;
 class CAttack;
+class CMapData;
+struct _trap_create_setdata;
 
 /* 1746 */
 class  CTrap : public CCharacter
@@ -34,6 +36,7 @@ public:
   float GetWidth() override;
   __int64 GetWindTol() override;
   bool IsBeAttackedAble(bool bFirst) override;
+  bool IsInTown() override;
   void Loop() override;
   void OutOfSec() override;
   void RecvKillMessage(CCharacter *pDier) override;
@@ -48,6 +51,12 @@ public:
   void SendMsg_Attack(CAttack *pAt);
   void SendMsg_TrapCompleteInform();
   void SendMsg_AlterTranspar(bool bTranspar);
+  bool Create(_trap_create_setdata *pData);
+  static char IsHaveEmpty();
+  static __int64 GetNewSerial();
+
+  static int s_nLiveNum;
+  static unsigned int s_dwSerialCnt;
 
   int m_nHP;
   CPlayer *m_pMaster;
@@ -75,4 +84,11 @@ public:
     bool bJadeReturn) override;
   __int64 SetDamage(int nDam, CCharacter *pDst, int nDstLv);
 };
+
+CTrap *CreateTrap(
+  CMapData *pMap,
+  unsigned __int16 wLayer,
+  float *fPos,
+  CPlayer *pMaster,
+  int nTrapItemIndex);
 

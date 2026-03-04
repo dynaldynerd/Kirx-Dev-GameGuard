@@ -21,6 +21,27 @@ int _pvp_order_view_inform_zocl::size() const
   return 24;
 }
 
+char CPvpOrderView::Init()
+{
+  m_dwLastAttackTime = 0;
+  m_dwLastDamagedTime = 0;
+  m_bAttack = false;
+  m_bDamaged = false;
+  return 1;
+}
+
+void CPvpOrderView::SetOrderViewAttackState()
+{
+  m_bAttack = true;
+  m_dwLastAttackTime = timeGetTime();
+}
+
+void CPvpOrderView::SetOrderViewDamagedState()
+{
+  m_bDamaged = true;
+  m_dwLastDamagedTime = timeGetTime();
+}
+
 void CPvpOrderView::Loop(unsigned __int16 wIndex)
 {
   const unsigned int now = timeGetTime();
@@ -218,6 +239,47 @@ void CPvpOrderView::Notify_PvpTempCash(unsigned __int16 wIndex)
 
   unsigned __int8 type[2] = {11, 15};
   g_Network.m_pProcess[0]->LoadSendMsg(wIndex, type, szMsg, 8u);
+}
+
+void CPvpOrderView::UpdatePvPKill(unsigned __int16 wIndex, unsigned int dwTarSerial)
+{
+  ++m_nKillCnt;
+
+  __int64 updateTime = 0;
+  time_20(&updateTime);
+  Update(updateTime, m_nDeahtCnt, m_nKillCnt, m_dTodayPvpPoint, m_dOriginalPvpPoint, m_dPvpTempCash);
+  Notify_OrderView(wIndex);
+  if (m_dPvpPoint > 0.0)
+  {
+    Notify_Point(wIndex, m_dPvpPoint, dwTarSerial);
+    m_dPvpPoint = 0.0;
+  }
+}
+
+void CPvpOrderView::UpdatePvPDeath(unsigned __int16 wIndex, unsigned int dwTarSerial)
+{
+  ++m_nDeahtCnt;
+
+  __int64 updateTime = 0;
+  time_20(&updateTime);
+  Update(updateTime, m_nDeahtCnt, m_nKillCnt, m_dTodayPvpPoint, m_dOriginalPvpPoint, m_dPvpTempCash);
+  Notify_OrderView(wIndex);
+  if (m_dPvpPoint < 0.0)
+  {
+    Notify_Point(wIndex, m_dPvpPoint, dwTarSerial);
+    m_dPvpPoint = 0.0;
+  }
+}
+
+void CPvpOrderView::Update_KillerList(unsigned int dwSerial, int nIndex)
+{
+  if (m_pkInfo)
+  {
+    __int64 updateTime = 0;
+    time_20(&updateTime);
+    m_pkInfo->tUpdatedate = updateTime;
+    m_pkInfo->dwKillerSerial[nIndex] = dwSerial;
+  }
 }
 
 void CPvpOrderView::Update_RaceWarRecvr(bool bUse)

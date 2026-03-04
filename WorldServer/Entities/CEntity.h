@@ -61,7 +61,30 @@ public:
   float mFrame;
 
 public:
+  CEntity();
+  ~CEntity();
+
   __int64 LoadEntity(char *a2, unsigned int a3);
+  void AddFlag(int a2);
+  __int64 DrawEntity(float (*const a2)[4], unsigned int a3, double a4);
+  __int64 DrawEntityVS(_ENTITY_LIST *a2, float (*const a3)[4], unsigned int a4);
+  void SetMaterialAndLight(unsigned int a2);
+  void SetVertexShaderID(_ENTITY_LIST *a2, float (*const a3)[4], unsigned int a4);
+  void DrawOneMatGroup(_ENTITY_M_GROUP *a2);
+  void DrawOneMatGroupVS(_ENTITY_M_GROUP *a2);
+  void GetAnimationMatrix(float (*const a2)[4], _ANI_OBJECT *a3, double a4);
+  _ENTITY_M_GROUP *GetMatGroup();
+  __int64 GetMatGroupNum();
+  __int64 GetMatNum();
+  _ANI_OBJECT *GetObjectA();
+  CIndexBuffer *GetStaticIndexedBuffer();
+  CVertexBuffer *GetStaticVertexBuffer();
+  __int64 GetUsedVertexBufferSize();
+  __int64 IsAlpha();
+  bool IsEnableShaderID(int a2);
+  bool IsFirstAlpha();
+  void SetMapColor(unsigned int a2);
+  __int64 OnceDrawEntity(float (*const a2)[4], unsigned int a3);
   void ReleaseEntity();
   void ReleaseTexMem();
   void RestoreTexMem();

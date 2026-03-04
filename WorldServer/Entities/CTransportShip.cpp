@@ -597,6 +597,20 @@ bool CTransportShip::IsMemberBeforeLogoff(unsigned int dwPlayerSerial)
   return this->m_listLogoffMember.IsInList(dwPlayerSerial);
 }
 
+char CTransportShip::IsOldMember(CPlayer *pMember)
+{
+  for (int j = 0; j < MAX_PLAYER; ++j)
+  {
+    __mgr_member *member = &m_OldMember[j];
+    if (member->is_fill() && member->pPtr == pMember && member->dwSerial == pMember->m_dwObjSerial)
+    {
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
 void CTransportShip::GetStartPosInShip(float *pfPos)
 {
   if (this->m_pLinkShipMap)

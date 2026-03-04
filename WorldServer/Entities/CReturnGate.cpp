@@ -8,6 +8,7 @@
 #include "CReturnGateCreateParam.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
+#include "CMainThread.h"
 
 #include <cstring>
 
@@ -66,6 +67,15 @@ bool CReturnGate::IsValidOwner()
 bool CReturnGate::IsValidPosition(float *pfCurPos)
 {
   return GetSqrt(m_fCurPos, pfCurPos) <= 100.0;
+}
+
+void CReturnGate::GetInfo(_open_return_gate_inform_zocl *Info)
+{
+  Info->wGateInx = m_ObjID.m_wIndex;
+  Info->dwOpenerSerial = m_dwOwnerSerial;
+  const char *charName = m_pkOwner->m_Param.GetCharNameW();
+  strcpy_0(Info->wszOpenerName, charName);
+  FloatToShort(m_fCurPos, Info->zPos, 3);
 }
 
 bool CReturnGate::Open(CReturnGateCreateParam *pParam)

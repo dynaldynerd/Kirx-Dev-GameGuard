@@ -8,6 +8,7 @@
 #include "CBsp.h"
 #include "CObjectList.h"
 #include "CMonster.h"
+#include "CTrap.h"
 #include "pnt_rect.h"
 #include "CMainThread.h"
 #include "CItemStore.h"
@@ -1406,58 +1407,6 @@ void CPlayer::pc_ThrowUnitRequest(_CHRID *pidDst, unsigned __int16 *pConsumeSeri
 namespace
 {
 
-unsigned int GenerateTransientObjSerial()
-{
-  static unsigned int s_serialCounter = 1;
-  return ++s_serialCounter;
-}
-
-CTrap *FindEmptyTrapSlot()
-{
-  for (int index = 0; index < MAX_TRAP; ++index)
-  {
-    if (!g_Trap[index].m_bLive)
-    {
-      return &g_Trap[index];
-    }
-  }
-  return nullptr;
-}
-
-CTrap *CreateTrapObject(CPlayer *player, unsigned __int16 trapItemIndex, float *position)
-{
-  CTrap *slot = FindEmptyTrapSlot();
-  if (!slot)
-  {
-    return nullptr;
-  }
-
-  _character_create_setdata createData{};
-  createData.m_pMap = player->m_pCurMap;
-  createData.m_nLayerIndex = player->m_wMapLayerIndex;
-  createData.m_pRecordSet = g_Main.m_tblItemData[26].GetRecord(trapItemIndex);
-  if (!createData.m_pRecordSet)
-  {
-    return nullptr;
-  }
-  std::memcpy(createData.m_fStartPos, position, sizeof(createData.m_fStartPos));
-  if (!slot->Create(&createData))
-  {
-    return nullptr;
-  }
-
-  slot->m_dwObjSerial = GenerateTransientObjSerial();
-  slot->m_pMaster = player;
-  slot->m_dwMasterSerial = player->m_dwObjSerial;
-  slot->m_byRaceCode = static_cast<unsigned __int8>(player->m_Param.GetRaceCode());
-  slot->m_dwStartMakeTime = GetLoopTime();
-  slot->m_nTrapMaxAttackPnt = player->m_nTrapMaxAttackPnt;
-
-  _TrapItem_fld *trapInfo = reinterpret_cast<_TrapItem_fld *>(createData.m_pRecordSet);
-  slot->m_nHP = static_cast<int>(trapInfo->m_fMaxHP);
-  return slot;
-}
-
 CGuardTower *CreateGuardTower(
   CMapData *pMap,
   unsigned __int16 wLayer,
@@ -1936,6 +1885,10 @@ void CPlayer::pc_MakeTrapRequest(
   {
     byErrCode = 16;
   }
+  else if (!CTrap::IsHaveEmpty())
+  {
+    byErrCode = 1;
+  }
   else if (!classSkill)
   {
     byErrCode = 13;
@@ -2017,7 +1970,7 @@ void CPlayer::pc_MakeTrapRequest(
     const int remainFp = (currentFp > needFp) ? (currentFp - needFp) : 0;
     SetFP(remainFp, true);
 
-    CTrap *trap = CreateTrapObject(this, trapItem->m_wItemIndex, pfPos);
+    CTrap *trap = CreateTrap(this->m_pCurMap, this->m_wMapLayerIndex, pfPos, this, trapItem->m_wItemIndex);
     if (!trap)
     {
       byErrCode = 1;

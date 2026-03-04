@@ -4,6 +4,17 @@
 #include "WorldServerUtil.h"
 #include "R3EngineGlobals.h"
 
+CVertexBuffer::CVertexBuffer()
+{
+  m_Flag = 0;
+  m_Size = 0;
+  ___u2.m_lpVertexBuffer = nullptr;
+}
+
+CVertexBuffer::~CVertexBuffer()
+{
+}
+
 void CVertexBuffer::InitVertexBuffer(unsigned int a2, unsigned int a3, unsigned int a4)
 {
   dword_184A7B2D8 += a2;

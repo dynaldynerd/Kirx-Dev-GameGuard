@@ -167,6 +167,21 @@ struct _MAP_ENTITIES_LIST;
 struct _READ_MAP_ENTITIES_LIST;
 struct _READ_SOUND_ENTITY_LIST;
 struct _READ_SOUND_ENTITIES_LIST;
+struct _ADD_BSP_SAVE
+{
+  float (*ColPoint)[3];
+  _TOOL_COL_LINE *ColLine;
+  unsigned __int16 *ColLineID;
+  _TOOL_COL_LEAF *ColLeaf;
+  _ENTITY_LIST *EntityList;
+  _LEAF_ENTITIES_LIST_INFO *LeafEntityList;
+  _READ_MAP_ENTITIES_LIST *MapEntitiesList;
+  unsigned __int16 *EntityID;
+  _READ_SOUND_ENTITY_LIST *SoundEntityList;
+  _LEAF_SOUND_ENTITIES_LIST_INFO *LeafSoundEntityList;
+  _READ_SOUND_ENTITIES_LIST *SoundEntitiesList;
+  unsigned __int16 *SoundEntityID;
+};
 class CEntity;
 class CParticle;
 class CExtDummy;
@@ -281,7 +296,75 @@ public:
 
   void LoadBsp(char *szFileName);
   void LoadExtBsp(char *szFileName);
+  void LoadEnvironment();
   void CalcEntitiesMainColor();
+  void CalcObjectLoop();
+  _BSP_MAT_GROUP *GetMatGroup();
+  void *GetDynamicVertexBuffer();
+  void GetVertexNormal();
+  int SetEventAnimationState(unsigned __int16 id, int flag);
+  int SetAllAnimationState(int flag);
+  unsigned int GetEventAnimationState(unsigned __int16 id);
+  int IsLoaded();
+  void SetIsLoaded(int isLoaded);
+  void LoopInitRenderedMatGroup();
+  int IsInViewFrustum(unsigned __int16 matId);
+  void PrepareShadowRender(
+    float *const pos,
+    void *texture,
+    float intensity,
+    unsigned int blur,
+    float scale,
+    float addPos);
+  void RenderReflectionMatGroup(unsigned __int16 matId);
+  void PrepareAnimation();
+  void ReadyBspRender(float *const camera);
+  void FrameMoveEnvironment();
+  void FrameMoveMapEntities();
+  void RenderLeaf(__int16 leafId);
+  void RenderShadowMatGroup(unsigned __int16 matId);
+  float GetMatGroupPoint(unsigned __int16 groupId, float *const outPos);
+  void GetHeight(float *const camera);
+  void WalkLeaf(__int16 leafId);
+  void WalkNode(__int16 nodeId);
+  void ReleaseSoundEntities();
+  void ReleaseEntities();
+  void ReleaseEnvironment();
+  void ReleaseBsp();
+  void GetBspObjectMatrix(float (*const matrix)[4], unsigned __int16 objectId);
+  void RenderEnvironment();
+  void DrawCollisionPoly();
+  void DrawAlphaRender(float *const camera);
+  void DrawMapEntitiesRender();
+  void DrawBspRender();
+  void DrawDynamicLights();
+  void DrawDynamicLightSub(float *const a2, float *const a3);
+  void DrawMagicLightSub(float *const a2, float *const a3);
+  void DrawShadowRender(float *const a2, float *a3, float *a4);
+  void DrawLeafBBox();
+  void DrawLeafCollisionPoly(__int16 a2);
+  void DrawMatBBox();
+  float GetYposInLeafNoAttr(float *const a2, float *const a3, float a4, float a5, int a6);
+  __int64 GetPointFromScreenRay(float a2, float a3, float *const a4, float *const a5);
+  __int64 GetPointFromScreenRayFar(float a2, float a3, float *const a4, float *const a5);
+  void HearMapSound();
+  __int64 IsCollisionFaceForServer(float *const a2, float *const a3);
+  __int64 IsCollisionFaceForServer(float *const a2, float *const a3, float (*a4)[3], float a5);
+  __int64 IsCollisionFromPath(float *const a2, float *const a3);
+  __int64 IsInWater(float *const a2, float *const a3, float (*a4)[3], float a5);
+  void RenderCollisionLeaf(__int16 a2);
+  void RenderIndepentMatGroup(unsigned __int16 a2);
+  void RenderMatGroup(unsigned __int16 a2);
+  void RenderOneEntityRender(unsigned __int16 a2);
+  void SaveExtBsp(char *a2, _ADD_BSP_SAVE *a3);
+  void FastWalkNodeForLeafListFromBBox(__int16 nodeId, float (*bbList)[3], __int16 *leafList, int *leafCount);
+  void SubLeafListFromBBox(float su, _BSP_NODE *node, float (*bbList)[3], __int16 *leafList, int *leafCount);
+  void GetFastLeafListFromBBox(
+    float *const bbMin,
+    float *const bbMax,
+    int *outLeafCount,
+    __int16 *leafList,
+    unsigned int maxLeafCount);
 
 private:
   void ClearVariable();

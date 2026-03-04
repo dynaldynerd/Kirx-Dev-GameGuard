@@ -595,7 +595,10 @@ if (g_HolySys.GetSceneCode() != 3)
   }
 
   if (m_nHP == 0)
+  {
     Destroy(0, nullptr);
+    g_HolySys.ReceiveDestroyKeeper(pDst);
+  }
 
   return static_cast<unsigned int>(m_nHP);
 }
@@ -802,10 +805,32 @@ CCharacter *CHolyKeeper::SearchAttackTarget()
 
   for (int i = 0; i < MAX_PLAYER; ++i)
   {
+    CPlayer *player = &g_Player[i];
+    AutominePersonal *autoMine = player->m_Param.m_pAPM;
+    if (autoMine && autoMine->is_installed())
+    {
+      const bool sameRace = (autoMine->GetObjRace() == m_nMasterRace);
+      const bool validMiningTicket =
+        g_HolySys.CHolyStoneSystem::AuthMiningTicket(player->m_MinigTicket.GetLastCriTicket());
+      if (!sameRace || !validMiningTicket)
+      {
+        const float autoMineDx = std::fabs(autoMine->m_fCurPos[0] - attackPivot[0]);
+        const float autoMineDz = std::fabs(autoMine->m_fCurPos[2] - attackPivot[2]);
+        const int autoMineDistance = static_cast<int>((autoMineDx > autoMineDz) ? autoMineDx : autoMineDz);
+        if (autoMine->m_pCurMap == m_pCurMap
+            && std::fabs(autoMine->m_fCurPos[1] - attackPivot[1]) <= 200.0f
+            && autoMineDistance <= attackRange)
+        {
+          candidates[count++] = autoMine;
+          if (count >= MAX_PLAYER)
+            break;
+        }
+      }
+    }
+
     if (!m_bPlayerCircleList[i])
       continue;
 
-    CPlayer *player = &g_Player[i];
     if (!player->m_bLive || player->m_bCorpse)
       continue;
     if (player->m_Param.GetRaceCode() == m_nMasterRace)

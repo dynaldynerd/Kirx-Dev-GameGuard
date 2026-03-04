@@ -17,6 +17,11 @@ __int64 _total_guild_rank_result_zocl::size()
   return 0;
 }
 
+CTotalGuildRankRecord::CTotalGuildRankRecord()
+{
+  Clear();
+}
+
 CTotalGuildRankRecord::~CTotalGuildRankRecord()
 {
   Clear();

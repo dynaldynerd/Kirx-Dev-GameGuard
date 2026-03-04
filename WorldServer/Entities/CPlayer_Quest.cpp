@@ -373,42 +373,81 @@ void CPlayer::pc_RequestQuestFromNPC(CItemStore *pStore, unsigned int dwNPCQuest
 bool CPlayer::Emb_CreateNPCQuest(char *pszEventCode, unsigned int dwNPCQuestIndex)
 {
   unsigned int happenIndex = 0;
-  bool found = false;
+  bool hasIndex = false;
   for (int index = 0; index < 30; ++index)
   {
     if (m_NPCQuestIndexTempData.IndexData[index].dwQuestIndex == dwNPCQuestIndex)
     {
       happenIndex = m_NPCQuestIndexTempData.IndexData[index].dwQuestHappenIndex;
-      found = true;
+      hasIndex = true;
       break;
     }
   }
-  if (!found)
+  if (!hasIndex)
   {
     return false;
   }
 
-  _happen_event_cont *happenEvent = m_QuestMgr.CheckNPCQuestStartable(
+  _happen_event_cont *sourceEvent = m_QuestMgr.CheckNPCQuestStartable(
     pszEventCode,
     static_cast<unsigned __int8>(m_Param.GetRaceCode()),
     static_cast<int>(dwNPCQuestIndex),
     happenIndex);
-  if (!happenEvent)
+  if (!sourceEvent)
   {
     return false;
   }
 
-  if (Emb_StartQuest(0xFFu, happenEvent))
+  char skipStartHistoryInsert = 0;
+  _base_fld *questRecord = CQuestMgr::s_tblQuest->GetRecord(static_cast<int>(dwNPCQuestIndex));
+  if (m_pUserDB->m_AvatorData.dbQuest.dwListCnt)
   {
-    return true;
+    for (unsigned int index = 0; index < m_pUserDB->m_AvatorData.dbQuest.dwListCnt; ++index)
+    {
+      if (!strcmp_0(m_pUserDB->m_AvatorData.dbQuest.m_StartHistory[index].szQuestCode, questRecord->m_strCode))
+      {
+        if (*reinterpret_cast<int *>(&questRecord[1].m_strCode[4]))
+        {
+          break;
+        }
+        skipStartHistoryInsert = 1;
+        return false;
+      }
+    }
+  }
+
+  _happen_event_cont happenEvent{};
+  std::memcpy(&happenEvent, sourceEvent, sizeof(happenEvent));
+  if (Emb_StartQuest(0xFFu, &happenEvent))
+  {
+    if (skipStartHistoryInsert)
+    {
+      return true;
+    }
+    if (*reinterpret_cast<int *>(&questRecord[1].m_strCode[4]))
+    {
+      return true;
+    }
+
+    _QUEST_DB_BASE::_START_NPC_QUEST_HISTORY history{};
+    strcpy_0(history.szQuestCode, questRecord->m_strCode);
+    history.byLevel = static_cast<unsigned __int8>(m_Param.GetLevel());
+    __time64_t now = 0;
+    _time64(&now);
+    history.nEndTime = static_cast<unsigned int>(
+      static_cast<int>(static_cast<double>(static_cast<int>(now)) + *reinterpret_cast<double *>(&questRecord[1].m_strCode[8])));
+    return m_pUserDB->Update_StartNPCQuestHistory(
+             static_cast<unsigned __int8>(m_pUserDB->m_AvatorData.dbQuest.dwListCnt),
+             &history)
+      != 0;
   }
 
   for (int index = 0; index < 3; ++index)
   {
     if (!m_QuestMgr.m_pTempHappenEvent[index].isset())
     {
-      std::memcpy(&m_QuestMgr.m_pTempHappenEvent[index], happenEvent, sizeof(_happen_event_cont));
-      break;
+      std::memcpy(&m_QuestMgr.m_pTempHappenEvent[index], &happenEvent, sizeof(m_QuestMgr.m_pTempHappenEvent[index]));
+      return false;
     }
   }
 

@@ -22,6 +22,8 @@
 #include <cstdio>
 #include <atltime.h>
 
+CPostSystemManager *CPostSystemManager::ms_Instance = nullptr;
+
 CPostSystemManager::CPostSystemManager()
 {
   m_byRegiNum = 20;
@@ -47,8 +49,21 @@ CPostSystemManager::~CPostSystemManager()
 
 CPostSystemManager *CPostSystemManager::Instace()
 {
-  static CPostSystemManager s_instance;
-  return &s_instance;
+  if (!ms_Instance)
+  {
+    ms_Instance = new CPostSystemManager();
+  }
+
+  return ms_Instance;
+}
+
+void CPostSystemManager::Destroy()
+{
+  if (ms_Instance)
+  {
+    delete ms_Instance;
+    ms_Instance = nullptr;
+  }
 }
 
 bool CPostSystemManager::InitLogger()

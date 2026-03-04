@@ -39,6 +39,7 @@ public:
   void Loop() override;
   bool Init(_object_id *pID);
   bool Create(_nuclear_create_setdata *pData);
+  bool Destroy();
   bool GetUse();
   unsigned __int8 GetBombStatus();
   __int64 GetDamagedObjNum();
@@ -57,10 +58,12 @@ public:
   void SendMsg_NuclearFind(unsigned int n, unsigned __int8 race);
   void SendMsg_InformDropPos();
   void SendMsg_AddEffect();
+  void SendMsg_Attack(int StartNum, int Obj_Num);
   void SendMsg_InformAttack();
   void SendMsg_MasterDie();
   void SendMsg_Result(unsigned int n, unsigned __int8 byCode);
   void SendMsg_DropMissile();
+  void RecvKillMessage(CCharacter *pDier) override;
 
   static __int64 GetNewSerial();
 

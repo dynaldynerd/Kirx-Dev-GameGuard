@@ -63,14 +63,18 @@ namespace GUILD_BATTLE
   class CGuildBattle
   {
   public:
-    virtual ~CGuildBattle() = default;
+    CGuildBattle();
+    virtual ~CGuildBattle();
+
     virtual int GetObjType();
   };
 
   class CGuildBattleState
   {
   public:
-    virtual ~CGuildBattleState() = default;
+    CGuildBattleState();
+    virtual ~CGuildBattleState();
+
     virtual int Enter(CGuildBattle *pkBattle);
     virtual int Loop(CGuildBattle *pkBattle);
     virtual int Fin(CGuildBattle *pkBattle);
@@ -96,7 +100,7 @@ namespace GUILD_BATTLE
     };
 
     CGuildBattleStateList(int iStateMax, GBS_LOOP_TYPE iLoopType, unsigned int uiLoopCnt);
-    virtual ~CGuildBattleStateList() = default;
+    virtual ~CGuildBattleStateList();
     virtual void SetNextState();
     void Clear();
     void SetWait();
@@ -127,6 +131,7 @@ namespace GUILD_BATTLE
   {
   public:
     CNormalGuildBattleState();
+    ~CNormalGuildBattleState() override;
     int Loop(CGuildBattle *pkBattle) override;
     void Log(CNormalGuildBattle *pkBattle, char *szFormat, ...);
   };
@@ -135,24 +140,28 @@ namespace GUILD_BATTLE
   {
   public:
     CNormalGuildBattleStateNotify();
+    ~CNormalGuildBattleStateNotify() override;
   };
 
   class CNormalGuildBattleStateReady : public CNormalGuildBattleState
   {
   public:
     CNormalGuildBattleStateReady();
+    ~CNormalGuildBattleStateReady() override;
   };
 
   class CNormalGuildBattleStateCountDown : public CNormalGuildBattleState
   {
   public:
     CNormalGuildBattleStateCountDown();
+    ~CNormalGuildBattleStateCountDown() override;
   };
 
   class CNormalGuildBattleStateRound : public CGuildBattleState
   {
   public:
     CNormalGuildBattleStateRound();
+    ~CNormalGuildBattleStateRound() override;
     int Loop(CGuildBattle *pkBattle) override;
     void Log(CNormalGuildBattle *pkBattle, char *szFormat, ...);
   };
@@ -161,6 +170,7 @@ namespace GUILD_BATTLE
   {
   public:
     CNormalGuildBattleStateRoundStart();
+    ~CNormalGuildBattleStateRoundStart() override;
     int Loop(CGuildBattle *pkBattle) override;
 
     CMyTimer *m_pkTimer;
@@ -170,6 +180,7 @@ namespace GUILD_BATTLE
   {
   public:
     CNormalGuildBattleStateRoundProcess();
+    ~CNormalGuildBattleStateRoundProcess() override;
     int Loop(CGuildBattle *pkBattle) override;
 
     CMyTimer *m_pkTimer;
@@ -179,6 +190,7 @@ namespace GUILD_BATTLE
   {
   public:
     CNormalGuildBattleStateRoundReturnStartPos();
+    ~CNormalGuildBattleStateRoundReturnStartPos() override;
     int Loop(CGuildBattle *pkBattle) override;
 
     CMyTimer *m_pkTimer;
@@ -188,6 +200,7 @@ namespace GUILD_BATTLE
   {
   public:
     CNormalGuildBattleStateRoundList();
+    ~CNormalGuildBattleStateRoundList() override;
     bool IsInBattleRegenState();
 
     CNormalGuildBattleStateRoundStart START;
@@ -200,6 +213,7 @@ namespace GUILD_BATTLE
   {
   public:
     CNormalGuildBattleStateInBattle();
+    ~CNormalGuildBattleStateInBattle() override;
     int Loop(CGuildBattle *pkBattle) override;
     void SetBattleTime(ATL::CTimeSpan kTime);
     bool IsInBattleRegenState();
@@ -213,24 +227,28 @@ namespace GUILD_BATTLE
   {
   public:
     CNormalGuildBattleStateDivide();
+    ~CNormalGuildBattleStateDivide() override;
   };
 
   class CNormalGuildBattleStateReturn : public CNormalGuildBattleState
   {
   public:
     CNormalGuildBattleStateReturn();
+    ~CNormalGuildBattleStateReturn() override;
   };
 
   class CNormalGuildBattleStateFin : public CNormalGuildBattleState
   {
   public:
     CNormalGuildBattleStateFin();
+    ~CNormalGuildBattleStateFin() override;
   };
 
   class CNormalGuildBattleStateList : public CGuildBattleStateList
   {
   public:
     CNormalGuildBattleStateList();
+    ~CNormalGuildBattleStateList() override;
     void SetNextState() override;
     bool IsReadyOrCountState();
     bool IsInBattle();
@@ -252,7 +270,9 @@ namespace GUILD_BATTLE
   {
   public:
     static CNormalGuildBattleStateListPool *Instance();
+    static void Destroy();
     CNormalGuildBattleStateListPool();
+    ~CNormalGuildBattleStateListPool();
     bool Init();
     CNormalGuildBattleStateList *Get(unsigned int dwID);
 
@@ -264,19 +284,30 @@ namespace GUILD_BATTLE
   class CNormalGuildBattleField
   {
   public:
+    CNormalGuildBattleField();
+    ~CNormalGuildBattleField();
+
     bool Init(unsigned int uiMapInx);
+    void Destroy();
     char CreateFieldObject();
+    void DestroyFieldObject();
+    char ClearRegen();
     char ClearBall();
     char CheckIsInTown();
     bool CheckBallTakeLimitTime();
     bool Start(unsigned __int8 byStartPos, CPlayer *pkPlayer);
     char MoveStartPos(unsigned __int8 byStartPos, unsigned __int8 byMapOutType, CPlayer *pkPlayer);
+    CGravityStone *GetStone();
+    CGravityStoneRegener *GetRegener(int iInx);
+    CCircleZone *GetCircleZone(int iInx);
     unsigned __int8 DropBall(CPlayer *pkPlayer);
     unsigned __int8 TakeBall(int iPortalInx, CPlayer *pkPlayer);
     int CheatRegenStone(unsigned int uiPos);
     int CheatRegenStone(CPlayer *pkPlayer);
     unsigned __int8 CheatTakeStone(int iPortalInx, CPlayer *pkPlayer);
     unsigned __int8 CheatGetStone(CPlayer *pkPlayer);
+    char CheatForceTakeStone(CPlayer *pkPlayer);
+    void CheatDestroyStone();
     void GetPortalIndexInfo(int *iRedPortalInx, int *iBluePortalInx, int *piRegenPortalInx);
     unsigned __int8 CheatDropStone(CPlayer *pkPlayer);
     unsigned int GetMapCode();
@@ -299,7 +330,9 @@ namespace GUILD_BATTLE
   {
   public:
     static CNormalGuildBattleFieldList *Instance();
+    static void Destroy();
     CNormalGuildBattleFieldList();
+    ~CNormalGuildBattleFieldList();
     bool Init();
     bool InitUseField(unsigned __int8 byRace, char *szKeyName, char *szStrBuff, char **szParseBuff);
     unsigned int GetMapCnt();
@@ -307,6 +340,9 @@ namespace GUILD_BATTLE
     __int64 GetMapInxList(unsigned __int8 byRace, unsigned __int8 *pbyInxList);
     CNormalGuildBattleField *GetField(unsigned int dwMapID);
     CNormalGuildBattleField *GetField(unsigned __int8 byRace, unsigned int dwMapCode);
+    CGravityStone *GetStone(int iInx);
+    CGravityStoneRegener *GetRegener(int iInx);
+    CCircleZone *GetCircleZone(int iInx);
 
     static CNormalGuildBattleFieldList *ms_Instance;
     unsigned int m_dwCnt;
@@ -319,9 +355,10 @@ namespace GUILD_BATTLE
   {
   public:
     CNormalGuildBattleLogger();
+    ~CNormalGuildBattleLogger();
     bool Init();
     void CreateLogFile(char *szLogName);
-    void Log(char *fmt, ...);
+    void Log(const char *fmt, ...);
 
     CLogFile *m_pkLogger;
   };
@@ -330,6 +367,7 @@ namespace GUILD_BATTLE
   {
   public:
     CNormalGuildBattleGuildMember();
+    ~CNormalGuildBattleGuildMember();
     void Clear();
     bool IsEmpty();
     bool IsExist();
@@ -337,6 +375,7 @@ namespace GUILD_BATTLE
     unsigned int GetSerial();
     unsigned __int16 GetIndex();
     CPlayer *GetPlayer();
+    void AddKillCnt();
     void StockOldInfo();
     void SetReStartFlag();
     void SetBattleState(bool bFlag, unsigned __int8 byColorInx);
@@ -363,6 +402,7 @@ namespace GUILD_BATTLE
   {
   public:
     explicit CNormalGuildBattleGuild(unsigned __int8 byID);
+    ~CNormalGuildBattleGuild();
     void Clear();
     void SetGuild(CGuild *pkGuild);
     CGuild *GetGuild();
@@ -372,6 +412,11 @@ namespace GUILD_BATTLE
     unsigned __int8 GetColorInx();
     char IsJoinMember(unsigned int dwSerial);
     __int64 GetMember(unsigned int dwSerial);
+    CNormalGuildBattleGuildMember *GetMemberPtr(unsigned int dwSerial);
+    CPlayer *GetMemberPlayer(unsigned int dwSerial);
+    unsigned int GetScore();
+    void UpdateScore();
+    int Kill(CNormalGuildBattleGuildMember *pkSrcMember, CNormalGuildBattleGuildMember *pkDestMember);
     void AskJoin(int n, unsigned int dwSerial, unsigned __int8 GuildBattleNumber, char *wszDestGuild, CNormalGuildBattleLogger *kLogger);
     void AskJoin(unsigned int n, char *wszDestGuildName, CNormalGuildBattleLogger *kLogger);
     void LogIn(
@@ -419,6 +464,7 @@ namespace GUILD_BATTLE
   {
   public:
     CNormalGuildBattle(unsigned int dwID);
+    ~CNormalGuildBattle() override;
     bool CreateLogger();
     void CreateLogFile();
     void Clear();
@@ -443,12 +489,15 @@ namespace GUILD_BATTLE
     unsigned __int8 Join(unsigned int dwGuildSerial, unsigned int dwCharacSerial);
     unsigned __int8 Start(CPlayer *pkPlayer, unsigned int dwGuildSerial, unsigned int dwCharacSerial);
     unsigned __int8 ReStart(CPlayer *pkPlayer, unsigned int dwGuildSerial, unsigned int dwCharacSerial);
+    unsigned __int8 DropGravityStone(unsigned int dwCharacSerial);
+    int Kill(unsigned int dwSrcCharacSerial, unsigned int dwDestCharacSerial);
     void AskJoin(int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial);
     void LogIn(int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial);
     unsigned __int8 NetClose(unsigned int dwCharacSerial, CPlayer *pkPlayer);
     unsigned __int8 LeaveGuild(CPlayer *pkPlayer);
     void NotifyBeforeStart();
     void NotifyBattleResult(char byResult);
+    void SendKillInform();
     void SendWebBattleStartInfo();
     void SendWebBattleEndInfo();
     void SendGoalMsg(bool b1P, char *wszGuildName, CPlayer *pkPlayer);
@@ -490,7 +539,9 @@ namespace GUILD_BATTLE
   {
   public:
     static CNormalGuildBattleManager *Instance();
+    static void Destroy();
     CNormalGuildBattleManager();
+    ~CNormalGuildBattleManager();
     bool Init();
     bool Load(int iCurDay, unsigned int uiOldMapCnt, int iToday, unsigned int iTodayDayID, int iTomorrow, unsigned int iTomorrowDayID);
     char Load(bool bToday, unsigned int uiDayID, CNormalGuildBattle **ppkStart);
@@ -516,6 +567,8 @@ namespace GUILD_BATTLE
     void AddComplete(unsigned __int8 byRet, unsigned int dwBattleID);
     void LogIn(int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial);
     unsigned __int8 NetClose(unsigned int dwGuildSerial, unsigned int dwCharacSerial, CPlayer *pkPlayer);
+    unsigned __int8 DropGravityStone(unsigned int dwGuildSerial, unsigned int dwCharacSerial);
+    int Kill(unsigned int dwGuildSerial, unsigned int dwSrcCharacSerial, unsigned int dwDestCharacSerial);
     void CheckTakeGravityStone(int iPortalInx, unsigned int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial);
     void CheckGetGravityStone(
       unsigned __int16 wIndex,
@@ -554,6 +607,7 @@ namespace GUILD_BATTLE
   {
   public:
     CGuildBattleSchedule(unsigned int dwScheduleID);
+    ~CGuildBattleSchedule();
     enum GS_STATE : __int32
     {
       GS_NONE = 0,
@@ -595,6 +649,7 @@ namespace GUILD_BATTLE
   public:
     static CGuildBattleSchedulePool *Instance();
     CGuildBattleSchedulePool();
+    ~CGuildBattleSchedulePool();
     bool Init(unsigned int uiMapCnt);
     CGuildBattleSchedule *Get(unsigned int dwSID);
     CGuildBattleSchedule *Get(unsigned int uiSLID, unsigned int dwStartInx);
@@ -612,6 +667,7 @@ namespace GUILD_BATTLE
   {
   public:
     CGuildBattleReservedSchedule(unsigned int uiScheduleListID);
+    ~CGuildBattleReservedSchedule();
     void Clear();
     char Clear(unsigned int dwID);
     unsigned int GetID();
@@ -640,6 +696,7 @@ namespace GUILD_BATTLE
   {
   public:
     CGuildBattleReservedScheduleMapGroup();
+    ~CGuildBattleReservedScheduleMapGroup();
     bool Init(unsigned int uiDayInx, unsigned int uiMapCnt);
     char Load(bool bToday);
     unsigned __int8 Add(
@@ -673,6 +730,7 @@ namespace GUILD_BATTLE
   public:
     static CGuildBattleScheduleManager *Instance();
     CGuildBattleScheduleManager();
+    ~CGuildBattleScheduleManager();
     bool Init(unsigned int uiMapCnt);
     void Loop();
     void UpdateDayChangedWork();
@@ -711,7 +769,9 @@ namespace GUILD_BATTLE
   {
   public:
     static CGuildBattleLogger *Instance();
+    static void Destroy();
     CGuildBattleLogger();
+    ~CGuildBattleLogger();
     bool Init();
     void CreateLogFile(char *szLogName);
     void Log(const char *fmt, ...);
@@ -742,6 +802,7 @@ namespace GUILD_BATTLE
   public:
     static CGuildBattleRewardItemManager *Instance();
     CGuildBattleRewardItemManager();
+    ~CGuildBattleRewardItemManager();
     bool Init();
     const CGuildBattleRewardItem *Give(CPlayer *pkPlayer);
 
@@ -753,8 +814,11 @@ namespace GUILD_BATTLE
   {
   public:
     static CGuildBattleRankManager *Instance();
+    static void Destroy();
     CGuildBattleRankManager();
+    ~CGuildBattleRankManager();
     bool Init();
+    void CleanUp();
     char Load();
     char Load(unsigned __int8 byRace);
     bool CheckRecord(unsigned int dwGuildSerial);
@@ -793,6 +857,7 @@ namespace GUILD_BATTLE
   {
   public:
     CReservedGuildSchedulePage();
+    ~CReservedGuildSchedulePage();
     bool Init(unsigned __int8 ucPageInx);
     bool Clear();
     char Find(unsigned int dwGuildSerial);
@@ -811,6 +876,7 @@ namespace GUILD_BATTLE
   {
   public:
     CReservedGuildScheduleMapGroup();
+    ~CReservedGuildScheduleMapGroup();
     bool Init(unsigned int uiMapInx);
     char Load(unsigned __int8 byDayID, _worlddb_guild_battle_reserved_schedule_info *kInfo);
     char Clear();
@@ -828,6 +894,7 @@ namespace GUILD_BATTLE
   {
   public:
     CReservedGuildScheduleDayGroup();
+    ~CReservedGuildScheduleDayGroup();
     bool Init(unsigned int uiMapCnt);
     bool Load(unsigned __int8 byDayID, unsigned int uiMapInx, _worlddb_guild_battle_reserved_schedule_info *kInfo);
     char Clear();
@@ -851,7 +918,9 @@ namespace GUILD_BATTLE
   {
   public:
     static CGuildBattleReservedScheduleListManager *Instance();
+    static void Destroy();
     CGuildBattleReservedScheduleListManager();
+    ~CGuildBattleReservedScheduleListManager();
     bool Init();
     char Load(int iCurDay, unsigned int uiOldMapCnt, int iToday, int iTomorrow);
     char LoadTodaySchedule();
@@ -881,6 +950,9 @@ namespace GUILD_BATTLE
   class CGuildBattleScheduler
   {
   public:
+    CGuildBattleScheduler();
+    ~CGuildBattleScheduler();
+
     static CGuildBattleScheduler *Instance();
     bool Init();
     static void Destroy();
@@ -893,7 +965,10 @@ namespace GUILD_BATTLE
   {
   public:
     static CCurrentGuildBattleInfoManager *Instance();
+    static void Destroy();
     CCurrentGuildBattleInfoManager();
+    ~CCurrentGuildBattleInfoManager();
+    void CleanUp();
     bool Init();
     void Send(unsigned int n, unsigned int uiMapID);
     unsigned __int8 GetLeftTime(unsigned int uiMapID);
@@ -911,7 +986,9 @@ namespace GUILD_BATTLE
   {
   public:
     static CPossibleBattleGuildListManager *Instance();
+    static void Destroy();
     CPossibleBattleGuildListManager();
+    ~CPossibleBattleGuildListManager();
     bool Init();
     char Load();
     void Clear();

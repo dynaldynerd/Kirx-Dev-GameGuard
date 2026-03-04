@@ -43,6 +43,7 @@ public:
   static constexpr ASYNC_LOG_TYPE ALT_NONE = ::ALT_NONE;
 
   static CAsyncLogger *Instance();
+  static void Destroy();
   bool Regist(
     ASYNC_LOG_TYPE eType,
     const char *directory,
@@ -56,10 +57,12 @@ public:
   void SystemLog(const char *fmt, ...);
   int Init();
   void Loop();
+  unsigned int GetTotalWaitSize();
   void ProcWrite();
   static void __cdecl ProcThread(void *param);
 
   static bool m_bProcThread;
+  static CAsyncLogger *ms_Instance;
 
 private:
   CFrameRate m_FrameRate;

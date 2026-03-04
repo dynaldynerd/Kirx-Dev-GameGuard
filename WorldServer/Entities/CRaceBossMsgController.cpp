@@ -18,10 +18,24 @@
 #include "raceboss_msg_confirm_zowb.h"
 #include "racebosssms_fromweb_send_error_result_zowb.h"
 
+CRaceBossMsgController *CRaceBossMsgController::ms_Instance = nullptr;
+
 CRaceBossMsgController *CRaceBossMsgController::Instance()
 {
-  static CRaceBossMsgController s_instance;
-  return &s_instance;
+  if (!ms_Instance)
+  {
+    ms_Instance = new CRaceBossMsgController();
+  }
+  return ms_Instance;
+}
+
+void CRaceBossMsgController::Destroy()
+{
+  if (ms_Instance)
+  {
+    delete ms_Instance;
+    ms_Instance = nullptr;
+  }
 }
 
 CRaceBossMsgController::CRaceBossMsgController()
@@ -48,6 +62,11 @@ RACE_BOSS_MSG::CMsg::CMsg(unsigned __int8 /*ucRace*/, unsigned int dwID)
   Clear();
   m_dwID = dwID;
   m_dwWebSendDBID = 0;
+}
+
+RACE_BOSS_MSG::CMsg::~CMsg()
+{
+  // this is not a stub
 }
 
 void RACE_BOSS_MSG::CMsg::Clear()

@@ -52,7 +52,9 @@ public:
   CItemStoreManager();
   ~CItemStoreManager();
 
+  static CItemStoreManager *ms_Instance;
   static CItemStoreManager *Instance();
+  static void Destroy();
   bool Init(int nMapNum, int nInstanceListNum);
   void Loop();
   char Load();

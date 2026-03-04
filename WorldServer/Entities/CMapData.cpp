@@ -44,6 +44,63 @@ CMapData::CMapData()
   m_nMonTotalCount = 0;
 }
 
+CMapData::~CMapData()
+{
+  if (m_pMonBlock)
+  {
+    delete[] m_pMonBlock;
+    m_pMonBlock = nullptr;
+  }
+
+  if (m_pPortal)
+  {
+    delete[] m_pPortal;
+    m_pPortal = nullptr;
+  }
+
+  if (m_pItemStoreDummy)
+  {
+    delete[] m_pItemStoreDummy;
+    m_pItemStoreDummy = nullptr;
+  }
+
+  if (m_pStartDummy)
+  {
+    delete[] m_pStartDummy;
+    m_pStartDummy = nullptr;
+  }
+
+  if (m_pBindDummy)
+  {
+    delete[] m_pBindDummy;
+    m_pBindDummy = nullptr;
+  }
+
+  if (m_pResDummy)
+  {
+    delete[] m_pResDummy;
+    m_pResDummy = nullptr;
+  }
+
+  if (m_ls)
+  {
+    delete[] m_ls;
+    m_ls = nullptr;
+  }
+
+  if (m_mb)
+  {
+    delete[] m_mb;
+    m_mb = nullptr;
+  }
+
+  if (m_pExtDummy_Town)
+  {
+    delete m_pExtDummy_Town;
+    m_pExtDummy_Town = nullptr;
+  }
+}
+
 void CMapData::Init(_map_fld *pMapSet)
 {
   this->m_nMapCode = pMapSet->m_dwIndex;
@@ -1023,6 +1080,27 @@ _portal_dummy *CMapData::GetPortal(char *pPortalCode)
     return nullptr;
 }
 
+_portal_dummy *CMapData::GetLinkPortal(char *pPortalCode)
+{
+  for (int index = 0; index < m_nPortalNum; ++index)
+  {
+    if (!strcmp_0(m_pPortal[index].m_pPortalRec->m_strLinkPortalCode, pPortalCode))
+    {
+      return &m_pPortal[index];
+    }
+  }
+  return nullptr;
+}
+
+int CMapData::GetSectorNumByLayerIndex(unsigned __int16 wLayerIndex)
+{
+  if (m_pMapSet && wLayerIndex <= m_pMapSet->m_nLayerNum)
+  {
+    return m_ls[wLayerIndex].m_nSecNum;
+  }
+  return -1;
+}
+
 _bsp_info *CMapData::GetBspInfo()
 {
   return &this->m_BspInfo;
@@ -1158,6 +1236,36 @@ void CMapData::GetRectInRadius(_pnt_rect *pRect, int nRadius, unsigned int nSecN
   {
     memset_0(pRect, 0, sizeof(_pnt_rect));
   }
+}
+
+char CMapData::UpdateSecterList(CGameObject *pObj, unsigned int dwOldSec, unsigned int dwNewSec)
+{
+  if (dwOldSec != static_cast<unsigned int>(-1))
+  {
+    _object_list_point *sectorPoint = &pObj->m_SectorPoint;
+    CObjectList *oldSectorListObj = GetSectorListObj(pObj->m_wMapLayerIndex, dwOldSec);
+    oldSectorListObj->DeleteItem(sectorPoint);
+  }
+
+  _object_list_point *newSectorPoint = &pObj->m_SectorPoint;
+  CObjectList *newSectorListObj = GetSectorListObj(pObj->m_wMapLayerIndex, dwNewSec);
+  newSectorListObj->PushItem(newSectorPoint);
+
+  if (!pObj->m_ObjID.m_byKind && !pObj->m_ObjID.m_byID)
+  {
+    if (dwOldSec != static_cast<unsigned int>(-1))
+    {
+      _object_list_point *sectorNetPoint = &pObj->m_SectorNetPoint;
+      CObjectList *oldSectorListPlayer = GetSectorListPlayer(pObj->m_wMapLayerIndex, dwOldSec);
+      oldSectorListPlayer->DeleteItem(sectorNetPoint);
+    }
+
+    _object_list_point *newSectorNetPoint = &pObj->m_SectorNetPoint;
+    CObjectList *newSectorListPlayer = GetSectorListPlayer(pObj->m_wMapLayerIndex, dwNewSec);
+    newSectorListPlayer->PushItem(newSectorNetPoint);
+  }
+
+  return 1;
 }
 
 void CMapData::EnterMap(CGameObject *pObj, unsigned int dwSecIndex)

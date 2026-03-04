@@ -28,12 +28,17 @@ public:
   TRC_AutoTrade(unsigned char byRace);
 
   bool Initialzie();
+  __int64 check(unsigned int dwAvatorSerial, unsigned int dwGuildSerial);
   bool IsOwnerGuild(unsigned int nGuildSerial);
+  bool IsMaster(unsigned int dwSerial);
   void sendmsg_taxrate(unsigned int n, unsigned __int8 byRet);
   void SendMsg_PatriarchTaxRate(unsigned int n);
   void SendMsg_UserLogInNotifyTaxRate(unsigned int n);
   float get_taxrate();
   float get_next_tax();
+  unsigned __int8 get_race();
+  char *get_guidlname();
+  CGuild *getOwnerGuild();
   unsigned int getSuggestedTime();
   void set_suggested(
     unsigned __int8 byMatterType,
@@ -48,6 +53,8 @@ public:
   void AddGDalant(char *pdata);
   unsigned int CalcPrice(unsigned int nGuildSerial, unsigned int nPrice);
   int ChangeOwner(CGuild *pGuild);
+  void history_used_cheet_changetaxrate(unsigned int dwProb, char *pName);
+  void SetGuildMaintainMoney(int dwTax, unsigned int dwSeller);
   void SetPatriarchTaxMoney(int dwTax);
   void set_owner(CGuild *pGuild);
   char _db_load(unsigned __int8 byRace);

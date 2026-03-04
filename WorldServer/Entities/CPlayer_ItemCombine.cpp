@@ -353,6 +353,11 @@ bool BuildFailItemShortBuffer(
 }
 } // namespace
 
+ItemCombineMgr::ItemCombineMgr()
+{
+  // this is not a stub
+}
+
 void ItemCombineMgr::InitMgr(CPlayer *pOne)
 {
   this->m_pMaster = pOne;

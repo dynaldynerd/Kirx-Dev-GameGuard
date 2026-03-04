@@ -9,6 +9,7 @@ class  CRecallRequest
 {
 public:
   CRecallRequest(unsigned __int16 usID);
+  ~CRecallRequest();
 
   void Clear();
   void Close(bool bDone);

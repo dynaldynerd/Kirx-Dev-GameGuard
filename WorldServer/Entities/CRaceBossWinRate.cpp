@@ -35,6 +35,15 @@ CRaceBossWinRate *CRaceBossWinRate::Instance()
   return m_Inst;
 }
 
+void CRaceBossWinRate::Destroy()
+{
+  if (m_Inst)
+  {
+    delete m_Inst;
+    m_Inst = nullptr;
+  }
+}
+
 void CRaceBossWinRate::UpdateTotalCnt()
 {
   ++m_byTotalBattleCnt;
@@ -61,6 +70,75 @@ void CRaceBossWinRate::UpdateRaceBossWinRate()
   }
   m_byTotalBattleCnt = 0;
   Notify();
+}
+
+char CRaceBossWinRate::LoadINI()
+{
+  m_byTotalBattleCnt = static_cast<unsigned __int8>(
+    GetPrivateProfileIntA("RaceBossWinRate", "TotalBattleCnt", 0, "..\\SystemSave\\ServerState.ini"));
+  m_byWinCnt[0] = static_cast<unsigned __int8>(
+    GetPrivateProfileIntA("RaceBossWinRate", "B_WinCnt", 0, "..\\SystemSave\\ServerState.ini"));
+  m_byWinCnt[1] = static_cast<unsigned __int8>(
+    GetPrivateProfileIntA("RaceBossWinRate", "C_WinCnt", 0, "..\\SystemSave\\ServerState.ini"));
+  m_byWinCnt[2] = static_cast<unsigned __int8>(
+    GetPrivateProfileIntA("RaceBossWinRate", "A_WinCnt", 0, "..\\SystemSave\\ServerState.ini"));
+  return 1;
+}
+
+char CRaceBossWinRate::SaveINI()
+{
+  char buffer[272]{};
+  memset_0(buffer, 0, 0xFFu);
+
+  sprintf(buffer, "%d", m_byTotalBattleCnt);
+  if (!WritePrivateProfileStringA("RaceBossWinRate", "TotalBattleCnt", buffer, "..\\SystemSave\\ServerState.ini"))
+  {
+    g_Main.m_logSystemError.Write(
+      "CRaceBuffOldHistoryInfo::SaveINI() : WritePrivateProfileString( %s, %s, %s, %s )",
+      "RaceBossWinRate",
+      "TotalBattleCnt",
+      buffer,
+      "..\\SystemSave\\ServerState.ini");
+    return 0;
+  }
+
+  sprintf(buffer, "%d", m_byWinCnt[0]);
+  if (!WritePrivateProfileStringA("RaceBossWinRate", "B_WinCnt", buffer, "..\\SystemSave\\ServerState.ini"))
+  {
+    g_Main.m_logSystemError.Write(
+      "CRaceBuffOldHistoryInfo::SaveINI() : WritePrivateProfileString( %s, %s, %s, %s )",
+      "RaceBossWinRate",
+      "B_WinCnt",
+      buffer,
+      "..\\SystemSave\\ServerState.ini");
+    return 0;
+  }
+
+  sprintf(buffer, "%d", m_byWinCnt[1]);
+  if (!WritePrivateProfileStringA("RaceBossWinRate", "C_WinCnt", buffer, "..\\SystemSave\\ServerState.ini"))
+  {
+    g_Main.m_logSystemError.Write(
+      "CRaceBuffOldHistoryInfo::SaveINI() : WritePrivateProfileString( %s, %s, %s, %s )",
+      "RaceBossWinRate",
+      "C_WinCnt",
+      buffer,
+      "..\\SystemSave\\ServerState.ini");
+    return 0;
+  }
+
+  sprintf(buffer, "%d", m_byWinCnt[2]);
+  if (!WritePrivateProfileStringA("RaceBossWinRate", "A_WinCnt", buffer, "..\\SystemSave\\ServerState.ini"))
+  {
+    g_Main.m_logSystemError.Write(
+      "CRaceBuffOldHistoryInfo::SaveINI() : WritePrivateProfileString( %s, %s, %s, %s )",
+      "RaceBossWinRate",
+      "A_WinCnt",
+      buffer,
+      "..\\SystemSave\\ServerState.ini");
+    return 0;
+  }
+
+  return 1;
 }
 
 char CRaceBossWinRate::LoadBossCurrentWinRate()

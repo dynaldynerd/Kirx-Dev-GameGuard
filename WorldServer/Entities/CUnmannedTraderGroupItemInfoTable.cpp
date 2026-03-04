@@ -27,6 +27,15 @@ CUnmannedTraderGroupItemInfoTable *CUnmannedTraderGroupItemInfoTable::Instance()
   return CUnmannedTraderGroupItemInfoTable::ms_Instance;
 }
 
+void CUnmannedTraderGroupItemInfoTable::Destroy()
+{
+  if (CUnmannedTraderGroupItemInfoTable::ms_Instance)
+  {
+    delete CUnmannedTraderGroupItemInfoTable::ms_Instance;
+    CUnmannedTraderGroupItemInfoTable::ms_Instance = nullptr;
+  }
+}
+
 bool CUnmannedTraderGroupItemInfoTable::Init()
 {
   if (!this->m_kGroupIDInfo.LoadXML(

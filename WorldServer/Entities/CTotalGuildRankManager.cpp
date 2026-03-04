@@ -9,10 +9,24 @@
 
 #include <cstring>
 
+CTotalGuildRankManager *CTotalGuildRankManager::ms_Instance = nullptr;
+
 CTotalGuildRankManager *CTotalGuildRankManager::Instance()
 {
-  static CTotalGuildRankManager s_instance;
-  return &s_instance;
+  if (!ms_Instance)
+  {
+    ms_Instance = new CTotalGuildRankManager();
+  }
+  return ms_Instance;
+}
+
+void CTotalGuildRankManager::Destroy()
+{
+  if (ms_Instance)
+  {
+    delete ms_Instance;
+    ms_Instance = nullptr;
+  }
 }
 
 CTotalGuildRankManager::CTotalGuildRankManager()

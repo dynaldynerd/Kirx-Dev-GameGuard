@@ -4,6 +4,21 @@
 #include "WorldServerUtil.h"
 #include "R3EngineGlobals.h"
 
+CIndexBuffer::CIndexBuffer()
+{
+  m_Flag = 0;
+  m_Size = 0;
+  ___u2.m_lpIndexBuffer = nullptr;
+}
+
+CIndexBuffer::~CIndexBuffer()
+{
+  if (___u2.m_lpIndexBuffer)
+  {
+    ReleaseIndexBuffer();
+  }
+}
+
 void CIndexBuffer::InitIndexBuffer(unsigned int a2, unsigned int a3)
 {
   dword_184A7B2D8 += a2;
@@ -21,7 +36,7 @@ void CIndexBuffer::InitIndexBuffer(unsigned int a2, unsigned int a3)
     {
       IDirect3DDevice8 *D3dDevice = GetD3dDevice();
       if (D3dDevice)
-        D3dDevice->CreateIndexBuffer(D3dDevice, a2, 8);
+        D3dDevice->CreateIndexBuffer(D3dDevice, a2, 8, D3DFMT_INDEX16, D3DPOOL_MANAGED, &v7);
     }
     if (!v7)
     {

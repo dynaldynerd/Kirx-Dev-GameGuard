@@ -13,7 +13,7 @@ protected:
   CGameServerView();
 
 public:
-  ~CGameServerView() override = default;
+  ~CGameServerView() override;
 
   enum
   {

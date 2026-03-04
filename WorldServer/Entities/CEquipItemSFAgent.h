@@ -39,6 +39,7 @@ public:
   _sf_continous *GetEquipSFCont(unsigned int nEquipTblIndex);
   bool IsUseBooster();
   float GetBoosterAddSpeed();
+  float SearchItemAddSpeed(_STORAGE_LIST::_db_con *pItem);
   void ReleaseSFCont(int nEquipTblIndex);
 };
 

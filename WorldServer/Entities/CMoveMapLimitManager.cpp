@@ -3,6 +3,9 @@
 #include "CMoveMapLimitManager.h"
 #include "CMoveMapLimitEnviromentValues.h"
 #include "CPlayer.h"
+#include "GlobalObjects.h"
+
+CMoveMapLimitManager *CMoveMapLimitManager::ms_Instance = nullptr;
 
 CMoveMapLimitManager::CMoveMapLimitManager()
 {
@@ -14,8 +17,20 @@ CMoveMapLimitManager::~CMoveMapLimitManager()
 
 CMoveMapLimitManager *CMoveMapLimitManager::Instance()
 {
-  static CMoveMapLimitManager s_instance;
-  return &s_instance;
+  if (!ms_Instance)
+  {
+    ms_Instance = new CMoveMapLimitManager();
+  }
+  return ms_Instance;
+}
+
+void CMoveMapLimitManager::Destroy()
+{
+  if (ms_Instance)
+  {
+    delete ms_Instance;
+    ms_Instance = nullptr;
+  }
 }
 
 void CMoveMapLimitManager::Loop()
@@ -63,6 +78,25 @@ bool CMoveMapLimitManager::RequestElanMapUserForceMoveHQ()
     CMoveMapLimitEnviromentValues::ELAN_1TH_LIMIT_NPC_RECORD_INDEX,
     -1,
     nullptr);
+}
+
+void CMoveMapLimitManager::Load(CPlayer *pkPlayer)
+{
+  m_kRightInfo.Load(pkPlayer);
+  CMoveMapLimitRightInfo *rightInfo = m_kRightInfo.Get(pkPlayer->m_ObjID.m_wIndex);
+  m_kLimitInfo.Load(pkPlayer, rightInfo);
+}
+
+char CMoveMapLimitManager::MoveLimitMapZoneRequest(int iUserInx, char *pRequest)
+{
+  CPlayer *player = &g_Player[iUserInx];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return 1;
+  }
+
+  Request(0, 2, player->m_pCurMap->m_nMapCode, *reinterpret_cast<unsigned int *>(pRequest), iUserInx, pRequest);
+  return 1;
 }
 
 void CMoveMapLimitManager::LogIn(CPlayer *pkPlayer)

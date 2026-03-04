@@ -22,7 +22,7 @@ class  CMapData
 {
 public:
   CMapData();
-  virtual ~CMapData() = default;
+  virtual ~CMapData();
 
   _bsp_info *GetBspInfo();
   _sec_info *GetSecInfo();
@@ -34,6 +34,7 @@ public:
   CObjectList *GetSectorListPlayer(unsigned __int16 wLayerIndex, unsigned int dwSecIndex);
   CObjectList *GetSectorListTower(unsigned __int16 wLayerIndex, unsigned int dwSecIndex);
   void GetRectInRadius(_pnt_rect *pRect, int nRadius, unsigned int nSecNum);
+  char UpdateSecterList(CGameObject *pObj, unsigned int dwOldSec, unsigned int dwNewSec);
   void EnterMap(CGameObject *pObj, unsigned int dwSecIndex);
   void ExitMap(CGameObject *pObj, unsigned int dwSecIndex);
   bool IsMapIn(float *fPos);
@@ -51,7 +52,9 @@ public:
   void OnLoop();
   _portal_dummy *GetPortal(int nPortalIndex);
   _portal_dummy *GetPortal(char *pPortalCode);
+  _portal_dummy *GetLinkPortal(char *pPortalCode);
   int GetPortalInx(char *pPortalCode);
+  int GetSectorNumByLayerIndex(unsigned __int16 wLayerIndex);
 
   bool _LoadBspSec(char *pszMapCode);
   bool _LoadMonBlk(char *pszMapCode, _map_fld *pMapFld);

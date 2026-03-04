@@ -10,6 +10,15 @@ CItemUpgradeTable::CItemUpgradeTable()
 {
 }
 
+CItemUpgradeTable::~CItemUpgradeTable()
+{
+  if (m_pwResIndex != nullptr)
+  {
+    delete[] m_pwResIndex;
+    m_pwResIndex = nullptr;
+  }
+}
+
 bool CItemUpgradeTable::ReadRecord(const char *fileName, CRecordData *resTable, char *errCode)
 {
   if (!m_tblItemUpgrade.ReadRecord(fileName, 0xD8, errCode))
@@ -50,6 +59,11 @@ _ItemUpgrade_fld *CItemUpgradeTable::GetRecordFromRes(unsigned int dwResIndex)
     }
   }
   return nullptr;
+}
+
+unsigned int CItemUpgradeTable::GetSize()
+{
+  return static_cast<unsigned int>(m_nResNum);
 }
 
 bool CItemUpgradeTable::Indexing(CRecordData *resTable, char *errCode)

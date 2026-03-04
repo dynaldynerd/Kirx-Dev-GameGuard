@@ -19,6 +19,10 @@ CMsgProcess::CMsgProcess(int nObjNum)
 {
 }
 
+CMsgProcess::~CMsgProcess()
+{
+}
+
 void CMsgProcess::ProcessMessage(_message *pMsg)
 {
   unsigned int message = pMsg->GetMessageA();

@@ -2,6 +2,8 @@
 
 #include "IdaCompat.h"
 
+#include <afxstr.h>
+
 #include "CCharacter.h"
 
 class CMapData;
@@ -23,7 +25,17 @@ public:
 
   CGravityStoneRegener();
   ~CGravityStoneRegener();
+  static unsigned int ms_dwSerialCnt;
+
+  char Create(CMapData *pkMap);
+  void Destroy();
+  const char *GetStateString(CString *strState);
+  bool IsNearPosition(const float *pfCurPos);
+  int Regen();
+  unsigned __int8 Take(CMapData *pkMap, const float *pfCurPos);
+  void CheatClearRegenState();
   bool Init(unsigned int uiMapInx, unsigned __int16 wInx, CMapData *pkMap);
+  char ClearRegen();
   int GetPortalInx() const;
   void SendMsgAlterState();
   void SendMsg_FixPosition(int n) override;

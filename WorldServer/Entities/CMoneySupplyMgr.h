@@ -34,12 +34,13 @@ public:
   void UpdateBuyData(unsigned __int8 byRace, int nLv, char *szClass, unsigned int nAmount);
   void UpdateSellData(unsigned __int8 byRace, int nLv, char *szClass, unsigned int nAmount);
   void UpdateQuestRewardMoneyData(unsigned __int8 byRace, int nLv, char *szClass, unsigned int nAmount);
+  void UpdateGateRewardMoneyData(unsigned __int8 byRace, int nLv, char *szClass, unsigned int nAmount);
   void UpdateBuyUnitData(int nLv, unsigned int nAmount);
   void UpdateUnitRepairingChargesData(int nLv, unsigned int nAmount);
   void UpdateFeeMoneyData(unsigned __int8 byRace, int nLv, unsigned int nAmount);
   void UpdateHonorGuildMoneyData(unsigned __int8 byTradeType, unsigned __int8 byRace, unsigned int nAmount);
   CMoneySupplyMgr();
-  virtual ~CMoneySupplyMgr() = default;
+  virtual ~CMoneySupplyMgr();
 
   static CMoneySupplyMgr *pInstance;
 

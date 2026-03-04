@@ -185,3 +185,4 @@ unsigned __int8 Major_Scroll_Item = 0;
 unsigned __int8 Major_Cash_Item = 0;
 unsigned __int8 Major_Add_Character = 0;
 unsigned int g_dwCurTime = 0;
+C24Timer g_24Time{};

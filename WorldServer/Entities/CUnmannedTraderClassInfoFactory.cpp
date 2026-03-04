@@ -88,5 +88,4 @@ void CUnmannedTraderClassInfoFactory::Destroy()
       delete info;
     }
   }
-  this->m_vecTable.clear();
 }

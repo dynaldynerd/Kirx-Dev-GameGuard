@@ -38,6 +38,8 @@ public:
     unsigned __int8 byRet);
   bool IsCurrentRaceBossGroup(unsigned __int8 byRace, unsigned int dwSerial);
   unsigned int GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth);
+  void SetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth, unsigned int dwSerial);
+  const _PVP_RANK_PACKED_DATA *GetRankPackedData(unsigned __int8 byRace, unsigned __int8 byPage);
   unsigned int FindRank(unsigned __int8 byRaceCode, unsigned int dwAvatorSerial);
   const _PVP_RANK_DATA *GetCurrentPvpRankData(unsigned __int8 byRace, unsigned __int8 byNth);
   unsigned __int8 GetBossType(unsigned __int8 byRaceCode, unsigned int dwSerial);
@@ -45,6 +47,7 @@ public:
   void SetUpdateRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth, unsigned int dwSerial);
   void FlipPvPRankTop();
   void IncreaseVesion();
+  char LoadPvpRank(char *szDate);
   void PvpRankDataPacking(CLogFile *pkLogger);
   _PVP_RANK_DATA *GetTomorrowPvpRankData(unsigned __int8 byRace, unsigned __int8 byNth);
   unsigned __int8 UpdateRaceRankStep1(char *szData);
@@ -128,6 +131,10 @@ public:
   void Loop();
   void SetLogger(CLogFile *pkLogger);
   char Load();
+  void GetRankDateStr(char *szDate, unsigned __int64 tDateStrSize);
+  void GetTommorrowStr(char *szTommorrow);
+  char CheckAndCreateTodayPvpRankTable(char *szDate);
+  void CheckTomorrowPvpRankDate();
   void LoadINI(unsigned int *piHour, unsigned int *piMin);
   bool SetRankingStartTime(int iHour, int iMin);
   bool AllocObject();
@@ -136,6 +143,7 @@ public:
 
   bool IsCurrentRaceBossGroup(unsigned __int8 byRace, unsigned int dwSerial);
   unsigned int GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth);
+  void SetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth, unsigned int dwSerial);
   unsigned int FindRank(unsigned __int8 byRaceCode, unsigned int dwAvatorSerial);
   const _PVP_RANK_DATA *GetCurrentPvpRankData(unsigned __int8 byRace, unsigned __int8 byNth);
   unsigned __int8 GetBossType(unsigned __int8 byRace, unsigned int dwSerial);

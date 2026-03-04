@@ -1903,32 +1903,18 @@ bool __fastcall ct_cur_guildbattle_color(CPlayer *pOne)
 
 bool __fastcall ct_create_guildbattle_field_object(CPlayer *pOne)
 {
-  GUILD_BATTLE::CNormalGuildBattleField *field = GetBattleFieldFromPlayer(pOne);
-  if (!field || !field->m_pkBall || !field->m_pkMap)
-  {
+  if (!pOne)
     return false;
-  }
-
-  _object_create_setdata createData{};
-  createData.m_pRecordSet = nullptr;
-  createData.m_pMap = field->m_pkMap;
-  createData.m_nLayerIndex = pOne->m_wMapLayerIndex;
-  createData.m_fStartPos[0] = pOne->m_fCurPos[0];
-  createData.m_fStartPos[1] = pOne->m_fCurPos[1];
-  createData.m_fStartPos[2] = pOne->m_fCurPos[2];
-  field->m_pkBall->Clear();
-  return field->m_pkBall->Regen(&createData) != 0;
+  CGuildBattleController *controller = CGuildBattleController::Instance();
+  return controller->CheatCreateFieldObject(pOne);
 }
 
 bool __fastcall ct_destroy_guildbattle_field_object(CPlayer *pOne)
 {
-  GUILD_BATTLE::CNormalGuildBattleField *field = GetBattleFieldFromPlayer(pOne);
-  if (!field || !field->m_pkBall)
-  {
+  if (!pOne)
     return false;
-  }
-  field->m_pkBall->Clear();
-  return true;
+  CGuildBattleController *controller = CGuildBattleController::Instance();
+  return controller->CheatDestroyFieldObject(pOne);
 }
 
 bool __fastcall ct_regen_gravitystone(CPlayer *pOne)
@@ -1966,13 +1952,12 @@ bool __fastcall ct_regen_gravitystone(CPlayer *pOne)
 
 bool __fastcall ct_destroy_gravitystone(CPlayer *pOne)
 {
-  GUILD_BATTLE::CNormalGuildBattleField *field = GetBattleFieldFromPlayer(pOne);
-  if (!field || !field->m_pkBall || s_nWordCount)
-  {
+  if (!pOne)
     return false;
-  }
-  field->m_pkBall->Clear();
-  return true;
+  if (s_nWordCount)
+    return false;
+  CGuildBattleController *controller = CGuildBattleController::Instance();
+  return controller->CheatDestroyStone(pOne);
 }
 
 bool __fastcall ct_take_gravitystone(CPlayer *pOne)
@@ -2029,26 +2014,20 @@ bool __fastcall ct_get_gravitystone(CPlayer *pOne)
 
 bool __fastcall ct_drop_gravitystone(CPlayer *pOne)
 {
-  GUILD_BATTLE::CNormalGuildBattleField *field = GetBattleFieldFromPlayer(pOne);
-  if (!field || !field->m_pkBall || s_nWordCount)
-  {
+  if (!pOne)
     return false;
-  }
-  return field->m_pkBall->Drop(pOne) == 0;
+  if (s_nWordCount)
+    return false;
+  CGuildBattleController *controller = CGuildBattleController::Instance();
+  return controller->CheatDropStone(pOne);
 }
 
 bool __fastcall ct_guild_battle_force_stone(CPlayer *pOne)
 {
-  GUILD_BATTLE::CNormalGuildBattleField *field = GetBattleFieldFromPlayer(pOne);
-  if (!field || !field->m_pkBall)
-  {
+  if (!pOne)
     return false;
-  }
-  if (!field->m_pkBall->m_bLive && !CheatRegenStoneOnField(field, pOne, 0, nullptr))
-  {
-    return false;
-  }
-  return CheatAssignStoneToPlayer(field, pOne);
+  CGuildBattleController *controller = CGuildBattleController::Instance();
+  return controller->CheatForceTakeStone(pOne);
 }
 
 bool __fastcall ct_check_guild_batlle_goal(CPlayer *pOne)
@@ -2529,16 +2508,11 @@ bool __fastcall ct_ClassRefineEvent(CPlayer *pOne)
 
 bool __fastcall ct_takeholymental(CPlayer *pOne)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  const char *HolyMentalString; // rax
-  __int64 v5; // [rsp+0h] [rbp-28h] BYREF
-
-  if ( !pOne || !pOne->m_bOper )
-    return 0;
-  HolyMentalString = g_HolySys.m_strHolyMental;
-  pOne->CheckMentalTakeAndUpdateLastMetalTicket(HolyMentalString);
-  return 1;
+  if (!pOne || !pOne->m_bOper)
+    return false;
+  const char *holyMentalString = g_HolySys.GetHolyMentalString();
+  pOne->CheckMentalTakeAndUpdateLastMetalTicket(holyMentalString);
+  return true;
 }
 
 bool __fastcall ct_HolySystem(CPlayer *pOne)
@@ -2568,11 +2542,11 @@ bool __fastcall ct_HolySystem(CPlayer *pOne)
     return 0;
   }
   if ( !strcmp_0("end", s_pwszDstCheat[0]) )
-    return CheatHolyStopBattle();
+    return g_HolySys.ct_StopBattle();
   if ( strcmp_0("Ű", s_pwszDstCheat[0]) )
   {
     if ( s_nWordCount >= 1 && !strcmp_0("state", s_pwszDstCheat[0]) )
-      return CheatHolyState(pOne);
+      return g_HolySys.ct_State(pOne);
     return 0;
   }
   if ( s_nWordCount < 2 )
@@ -2585,7 +2559,7 @@ bool __fastcall ct_HolySystem(CPlayer *pOne)
       nPassTime = 0;
       if ( s_nWordCount >= 4 )
         nPassTime = atoi(s_pwszDstCheat[3]);
-      return CheatHolyKeeperStart(3, nRace, static_cast<unsigned int>(nPassTime));
+      return g_HolySys.ct_KeeperStart(3, nRace, static_cast<unsigned int>(nPassTime));
     }
     return 0;
   }
@@ -2594,7 +2568,7 @@ bool __fastcall ct_HolySystem(CPlayer *pOne)
     if ( !strcmp_0("chaos", s_pwszDstCheat[1]) && s_nWordCount >= 3 )
     {
       v10 = atoi(s_pwszDstCheat[2]);
-      return CheatHolyKeeperStart(6, v10, 0);
+      return g_HolySys.ct_KeeperStart(6, v10, 0);
     }
     return 0;
   }
@@ -2604,7 +2578,7 @@ bool __fastcall ct_HolySystem(CPlayer *pOne)
   v9 = 0;
   if ( s_nWordCount >= 4 )
     v9 = atoi(s_pwszDstCheat[3]);
-  return CheatHolyKeeperStart(4, v8, static_cast<unsigned int>(v9));
+  return g_HolySys.ct_KeeperStart(4, v8, static_cast<unsigned int>(v9));
 }
 
 bool __fastcall ct_HolySystem_Jp(CPlayer *pOne)
@@ -2634,11 +2608,11 @@ bool __fastcall ct_HolySystem_Jp(CPlayer *pOne)
     return 0;
   }
   if ( !strcmp_0("end", s_pwszDstCheat[0]) )
-    return CheatHolyStopBattle();
+    return g_HolySys.ct_StopBattle();
   if ( strcmp_0("keeper", s_pwszDstCheat[0]) )
   {
     if ( s_nWordCount >= 1 && !strcmp_0("state", s_pwszDstCheat[0]) )
-      return CheatHolyState(pOne);
+      return g_HolySys.ct_State(pOne);
     return 0;
   }
   if ( s_nWordCount < 2 )
@@ -2651,7 +2625,7 @@ bool __fastcall ct_HolySystem_Jp(CPlayer *pOne)
       nPassTime = 0;
       if ( s_nWordCount >= 4 )
         nPassTime = atoi(s_pwszDstCheat[3]);
-      return CheatHolyKeeperStart(3, nRace, static_cast<unsigned int>(nPassTime));
+      return g_HolySys.ct_KeeperStart(3, nRace, static_cast<unsigned int>(nPassTime));
     }
     return 0;
   }
@@ -2660,7 +2634,7 @@ bool __fastcall ct_HolySystem_Jp(CPlayer *pOne)
     if ( !strcmp_0("chaos", s_pwszDstCheat[1]) && s_nWordCount >= 3 )
     {
       v10 = atoi(s_pwszDstCheat[2]);
-      return CheatHolyKeeperStart(6, v10, 0);
+      return g_HolySys.ct_KeeperStart(6, v10, 0);
     }
     return 0;
   }
@@ -2670,7 +2644,7 @@ bool __fastcall ct_HolySystem_Jp(CPlayer *pOne)
   v9 = 0;
   if ( s_nWordCount >= 4 )
     v9 = atoi(s_pwszDstCheat[3]);
-  return CheatHolyKeeperStart(4, v8, static_cast<unsigned int>(v9));
+  return g_HolySys.ct_KeeperStart(4, v8, static_cast<unsigned int>(v9));
 }
 
 bool __fastcall ct_HolyKeeperAttack(CPlayer *pOne)
@@ -3231,7 +3205,7 @@ bool __fastcall ct_eventset_start(CPlayer *pOne)
   W2M(s_pwszDstCheat[0], szTran, 0x20u);
   if ( !pOne )
     return 0;
-  started = g_MonsterEventSet.StartEventSet(szTran, pwszErrCode, pOne);
+  started = g_MonsterEventSet->StartEventSet(szTran, pwszErrCode, pOne);
   if ( started )
     sprintf(wszRespon, "Event Set Start Success %s >> %s", s_pwszDstCheat[0], pwszErrCode);
   else
@@ -3250,7 +3224,7 @@ bool __fastcall ct_eventset_stop(CPlayer *pOne)
   bool v7; // [rsp+114h] [rbp-24h]
 
   W2M(s_pwszDstCheat[0], szTran, 0x20u);
-  v7 = g_MonsterEventSet.StopEventSet(szTran, pwszErrCode);
+  v7 = g_MonsterEventSet->StopEventSet(szTran, pwszErrCode);
   if ( !pOne )
     return 0;
   if ( v7 )
@@ -3294,7 +3268,7 @@ bool __fastcall ct_buf_potion_use(CPlayer *pOne)
   if ( s_nWordCount > 3 )
     return 0;
   if ( !strcmp_0("end", s_pwszDstCheat[0]) )
-    pOne->m_pUserDB->m_AvatorData.dbSupplement.dwBufPotionEndTime = 0;
+    pOne->Cheet_BufEffectEnd();
   return 1;
 }
 

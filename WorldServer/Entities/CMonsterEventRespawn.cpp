@@ -38,6 +38,11 @@ CMonsterEventRespawn::CMonsterEventRespawn()
 {
 }
 
+CMonsterEventRespawn::~CMonsterEventRespawn()
+{
+  // this is not a stub
+}
+
 void _event_respawn::_state::init()
 {
   memset_0(this, 0, sizeof(*this));

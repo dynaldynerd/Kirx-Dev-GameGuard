@@ -123,7 +123,6 @@ bool CRecordData::ReadRecord_Ex(const char *fileName1, const char *fileName2, un
 
   const unsigned int recordCount = static_cast<unsigned int>(m_Header.m_nRecordNum);
   m_ppsRecord = new char *[recordCount];
-  m_nLowNum = m_Header.m_nRecordNum;
 
   for (int j = 0; j < m_Header.m_nRecordNum; ++j)
   {

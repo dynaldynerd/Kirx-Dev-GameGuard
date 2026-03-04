@@ -1,6 +1,2 @@
 #pragma once
-#include "IdaCompat.h"
-#pragma pack(push, 1)
-struct _darkhole_ask_reenter_inform_zocl{ unsigned __int16 wChannelIndex; unsigned int dwChannelSerial; unsigned __int16 size() const;};
-#pragma pack(pop)
-inline unsigned __int16 _darkhole_ask_reenter_inform_zocl::size() const{ return 6;}
+#include "Packet/ZoneClientPacket.h"

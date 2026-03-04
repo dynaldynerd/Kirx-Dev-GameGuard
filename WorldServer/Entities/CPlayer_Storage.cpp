@@ -222,7 +222,7 @@ void CPlayer::SendMsg_ResDivision(char byErrCode, _STORAGE_LIST::_db_con *pStart
   unsigned __int8 pbyType[2] = {13, 9};
   char msg[7]{};
   msg[0] = byErrCode;
-  if (!byErrCode && pStartOre && pTargetOre)
+  if (!byErrCode)
   {
     std::memcpy(&msg[1], &pStartOre->m_wSerial, sizeof(pStartOre->m_wSerial));
     msg[3] = pStartOre->m_bLoad ? static_cast<char>(pStartOre->m_dwDur) : 0;
@@ -791,7 +791,7 @@ void CPlayer::pc_RequestUILockInit(
           resultCode = 2;
         }
         else if (m_Param.GetTrunkSlotNum()
-                 && !strcmp_0(szUILockPW, m_Param.m_wszTrunkPasswd))
+                 && !strcmp_0(szUILockPW, m_Param.GetTrunkPasswdW()))
         {
           resultCode = 2;
         }
@@ -935,7 +935,7 @@ void CPlayer::pc_RequestUILockUpdate(
               resultCode = 2;
             }
             else if (m_Param.GetTrunkSlotNum()
-                     && !strcmp_0(uszUILockPW, m_Param.m_wszTrunkPasswd))
+                     && !strcmp_0(uszUILockPW, m_Param.GetTrunkPasswdW()))
             {
               resultCode = 2;
             }

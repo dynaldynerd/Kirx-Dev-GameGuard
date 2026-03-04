@@ -13,7 +13,7 @@ class CGameServerDoc : public CDocument
 
 public:
   CGameServerDoc();
-  ~CGameServerDoc() override = default;
+  ~CGameServerDoc() override;
 
   BOOL OnNewDocument() override;
   void Serialize(CArchive &ar) override;

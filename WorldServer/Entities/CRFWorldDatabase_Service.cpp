@@ -13,6 +13,7 @@
 #include "worlddb_guild_battle_schedule_list.h"
 #include "worlddb_guild_battle_info.h"
 #include "worlddb_guild_battle_reserved_schedule_info.h"
+#include "worlddb_rankinguild_info.h"
 #include "CPostData.h"
 #include "WorldServerUtil.h"
 #include "unmannedtrader_stade_id_info.h"
@@ -1095,6 +1096,243 @@ char CRFWorldDatabase::Select_PvpPointLimitInfo(unsigned int dwSerial,
     this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
     return 1;
   }
+}
+
+char CRFWorldDatabase::Update_RankInGuild(unsigned int dwGuildSerial, _worlddb_rankinguild_info *pGuildMemberRankData)
+{
+  SQLRETURN ret = 0;
+  SQLLEN indicator[5]{};
+  char buffer[544]{};
+  char source[132]{};
+  int gradeValue = 2;
+  unsigned int gradeRows[157]{};
+  int levelValue = 0;
+  double pvpPoint = 0.0;
+
+  if (m_bSaveDBLog)
+  {
+    Log("Update_RankInGuild Start");
+  }
+
+  if (!(m_hStmtUpdate || ReConnectDataBase()))
+  {
+    ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
+    return 0;
+  }
+
+  sprintf(buffer, "select top %u IDENTITY(int, 1, 1) AS Rank, -1 as Rate, -1 as NewGrade, ", 50);
+  strcat_0(buffer, "b.serial, b.lv, g.Pvppoint, g.GuildGrade as CurGrade into #tbl_RankInGuild ");
+  strcat_0(buffer, "from tbl_general as g join tbl_base as b on g.serial = b.serial ");
+  sprintf(source, "where g.guildserial=%d and b.dck=0 order by g.Pvppoint desc", dwGuildSerial);
+  strcat_0(buffer, source);
+  ret = SQLExecDirectA(m_hStmtUpdate, reinterpret_cast<SQLCHAR *>(buffer), SQL_NTS);
+  if (ret && ret != SQL_SUCCESS_WITH_INFO)
+  {
+    ExecUpdateQuery("drop table #tbl_RankInGuild", false);
+    if (ret != SQL_NO_DATA)
+    {
+      ErrorMsgLog(ret, buffer, "SQLExecDirect", m_hStmtUpdate);
+    }
+    return 0;
+  }
+
+  ExecUpdateQuery("update #tbl_RankInGuild set Rate = ( (Rank*10000)/(select count(*) from #tbl_RankInGuild) )", false);
+  ExecUpdateQuery("update #tbl_RankInGuild set NewGrade=0", false);
+  ExecUpdateQuery("update #tbl_RankInGuild set NewGrade=3 where lv >= 30 and lv <= 34 and rate <= 6500", false);
+  ExecUpdateQuery(
+    "update #tbl_RankInGuild set NewGrade=2 where lv >= 30 and lv <= 34 and rate > 6500 and rate <= 8500",
+    false);
+  ExecUpdateQuery(
+    "update #tbl_RankInGuild set NewGrade=1 where lv >= 30 and lv <= 34 and rate > 8500 and rate <= 9500",
+    false);
+  ExecUpdateQuery("update #tbl_RankInGuild set NewGrade=4 where lv >= 35 and lv <= 39 and rate <= 3500", false);
+  ExecUpdateQuery(
+    "update #tbl_RankInGuild set NewGrade=3 where lv >= 35 and lv <= 39 and rate > 3500 and rate <= 6500",
+    false);
+  ExecUpdateQuery(
+    "update #tbl_RankInGuild set NewGrade=2 where lv >= 35 and lv <= 39 and rate > 6500 and rate <= 8500",
+    false);
+  ExecUpdateQuery(
+    "update #tbl_RankInGuild set NewGrade=1 where lv >= 35 and lv <= 39 and rate > 8500 and rate <= 9500",
+    false);
+  ExecUpdateQuery("update #tbl_RankInGuild set NewGrade=5 where lv >= 40 and lv <= 44 and rate <= 1500", false);
+  ExecUpdateQuery(
+    "update #tbl_RankInGuild set NewGrade=4 where lv >= 40 and lv <= 44 and rate > 1500 and rate <= 3500",
+    false);
+  ExecUpdateQuery(
+    "update #tbl_RankInGuild set NewGrade=3 where lv >= 40 and lv <= 44 and rate > 3500 and rate <= 6500",
+    false);
+  ExecUpdateQuery(
+    "update #tbl_RankInGuild set NewGrade=2 where lv >= 40 and lv <= 44 and rate > 6500 and rate <= 8500",
+    false);
+  ExecUpdateQuery(
+    "update #tbl_RankInGuild set NewGrade=1 where lv >= 40 and lv <= 44 and rate > 8500 and rate <= 9500",
+    false);
+  ExecUpdateQuery("update #tbl_RankInGuild set NewGrade=6 where lv >= 45 and lv <= 49 and rate <= 500", false);
+  ExecUpdateQuery(
+    "update #tbl_RankInGuild set NewGrade=5 where lv >= 45 and lv <= 49 and rate > 500 and rate <= 1500",
+    false);
+  ExecUpdateQuery(
+    "update #tbl_RankInGuild set NewGrade=4 where lv >= 45 and lv <= 49 and rate > 1500 and rate <= 3500",
+    false);
+  ExecUpdateQuery(
+    "update #tbl_RankInGuild set NewGrade=3 where lv >= 45 and lv <= 49 and rate > 3500 and rate <= 6500",
+    false);
+  ExecUpdateQuery(
+    "update #tbl_RankInGuild set NewGrade=2 where lv >= 45 and lv <= 49 and rate > 6500 and rate <= 8500",
+    false);
+  ExecUpdateQuery(
+    "update #tbl_RankInGuild set NewGrade=1 where lv >= 45 and lv <= 49 and rate > 8500 and rate <= 9500",
+    false);
+  ExecUpdateQuery("update #tbl_RankInGuild set NewGrade=7 where lv >= 50 and rate <= 100", false);
+  ExecUpdateQuery(
+    "update #tbl_RankInGuild set NewGrade=6 where lv >= 50 and rate > 100 and rate <= 500",
+    false);
+  ExecUpdateQuery(
+    "update #tbl_RankInGuild set NewGrade=5 where lv >= 50 and rate > 500 and rate <= 1500",
+    false);
+  ExecUpdateQuery(
+    "update #tbl_RankInGuild set NewGrade=4 where lv >= 50 and rate > 1500 and rate <= 3500",
+    false);
+  ExecUpdateQuery(
+    "update #tbl_RankInGuild set NewGrade=3 where lv >= 50 and rate > 3500 and rate <= 6500",
+    false);
+  ExecUpdateQuery(
+    "update #tbl_RankInGuild set NewGrade=2 where lv >= 50 and rate > 6500 and rate <= 8500",
+    false);
+  ExecUpdateQuery(
+    "update #tbl_RankInGuild set NewGrade=1 where lv >= 50 and rate > 8500 and rate <= 9500",
+    false);
+  ExecUpdateQuery(
+    "select IDENTITY(int, 1, 1) AS NewRank, -1 as Grade, serial, CurGrade, lv, Pvppoint into #tbl_RankInGuildAll from #tbl_RankInGuild order by NewGrade desc, rate ",
+    false);
+  ExecUpdateQuery(
+    "select IDENTITY(int, 1, 1) AS NewRank, -1 as NewRate, -1 as Grade, serial, CurGrade, lv, PvpPoint into #tbl_RankInGuildCom from #tbl_RankInGuild where CurGrade <> 0 and CurGrade <> 3 order by NewGrade desc, rate ",
+    false);
+  ExecUpdateQuery(
+    "update #tbl_RankInGuildCom set NewRate = ( (NewRank*10000)/(select count(*) from #tbl_RankInGuildCom) ) ",
+    false);
+  ExecUpdateQuery("update #tbl_RankInGuildCom set Grade = 2", false);
+  ExecUpdateQuery("update #tbl_RankInGuildCom set Grade = 1 where NewRate <= 1000", false);
+  ExecUpdateQuery(
+    "update tbl_general set GuildGrade = Grade from ( select serial, Grade from #tbl_RankInGuildCom ) as rank where tbl_general.serial = rank.serial",
+    false);
+  ExecUpdateQuery(
+    "update tbl_general set GuildRank = rank.NewRank\tfrom ( select serial, NewRank from #tbl_RankInGuildAll ) as rank where tbl_general.serial = rank.serial",
+    false);
+
+  memset_0(gradeRows, 0, 0x258u);
+  sprintf(buffer, "select serial, Grade from #tbl_RankInGuildCom order by Grade");
+  if (!(m_hStmtSelect || ReConnectDataBase()))
+  {
+    ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
+    return 0;
+  }
+
+  ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(buffer), SQL_NTS);
+  if (ret && ret != SQL_SUCCESS_WITH_INFO)
+  {
+    ExecUpdateQuery("drop table #tbl_RankInGuild", false);
+    ExecUpdateQuery("drop table #tbl_RankInGuildAll", false);
+    ExecUpdateQuery("drop table #tbl_RankInGuildCom", false);
+    if (ret != SQL_NO_DATA)
+    {
+      ErrorMsgLog(ret, buffer, "SQLExecDirect", m_hStmtSelect);
+      ErrorAction(ret, m_hStmtSelect);
+    }
+    return 0;
+  }
+
+  int row = 0;
+  while (true)
+  {
+    ret = SQLFetch(m_hStmtSelect);
+    if (ret && ret != SQL_SUCCESS_WITH_INFO)
+    {
+      break;
+    }
+
+    ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_LONG, &gradeRows[3 * row], 0, indicator);
+    ret = SQLGetData(m_hStmtSelect, 2u, SQL_C_LONG, &gradeValue, 0, indicator);
+    gradeRows[3 * row + 1] = static_cast<unsigned int>(gradeValue & 0xFF);
+    ++row;
+  }
+
+  if (m_hStmtSelect)
+  {
+    SQLCloseCursor(m_hStmtSelect);
+  }
+
+  sprintf(buffer, "select serial, lv, Pvppoint, CurGrade from #tbl_RankInGuildAll order by NewRank");
+  if (!(m_hStmtSelect || ReConnectDataBase()))
+  {
+    ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
+    return 0;
+  }
+
+  ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(buffer), SQL_NTS);
+  if (ret && ret != SQL_SUCCESS_WITH_INFO)
+  {
+    ExecUpdateQuery("drop table #tbl_RankInGuild", false);
+    ExecUpdateQuery("drop table #tbl_RankInGuildAll", false);
+    ExecUpdateQuery("drop table #tbl_RankInGuildCom", false);
+    if (ret != SQL_NO_DATA)
+    {
+      ErrorMsgLog(ret, buffer, "SQLExecDirect", m_hStmtSelect);
+      ErrorAction(ret, m_hStmtSelect);
+    }
+    return 0;
+  }
+
+  row = 0;
+  levelValue = 0;
+  gradeValue = 0;
+  pvpPoint = 0.0;
+  while (true)
+  {
+    ret = SQLFetch(m_hStmtSelect);
+    if (ret && ret != SQL_SUCCESS_WITH_INFO)
+    {
+      break;
+    }
+
+    ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_LONG, &pGuildMemberRankData->MemberData[row].dwSerial, 0, indicator);
+    ret = SQLGetData(m_hStmtSelect, 2u, SQL_C_LONG, &levelValue, 0, indicator);
+    ret = SQLGetData(m_hStmtSelect, 3u, SQL_C_DOUBLE, &pvpPoint, 0, indicator);
+    ret = SQLGetData(m_hStmtSelect, 4u, SQL_C_LONG, &gradeValue, 0, indicator);
+    pGuildMemberRankData->MemberData[row].byLv = static_cast<unsigned __int8>(levelValue);
+    pGuildMemberRankData->MemberData[row].dwPvpPoint = static_cast<int>(pvpPoint);
+    if (gradeValue == 2)
+    {
+      pGuildMemberRankData->MemberData[row].byGrade = 2;
+    }
+    else
+    {
+      pGuildMemberRankData->MemberData[row].byGrade = 0;
+    }
+
+    for (int gradeIndex = 0; gradeIndex < 50; ++gradeIndex)
+    {
+      if (pGuildMemberRankData->MemberData[row].dwSerial == gradeRows[3 * gradeIndex])
+      {
+        pGuildMemberRankData->MemberData[row].byGrade = static_cast<unsigned __int8>(gradeRows[3 * gradeIndex + 1]);
+        break;
+      }
+    }
+
+    ++row;
+  }
+
+  pGuildMemberRankData->wRecordCount = static_cast<unsigned __int16>(row);
+  if (m_hStmtSelect)
+  {
+    SQLCloseCursor(m_hStmtSelect);
+  }
+
+  ExecUpdateQuery("drop table #tbl_RankInGuild", false);
+  ExecUpdateQuery("drop table #tbl_RankInGuildAll", false);
+  ExecUpdateQuery("drop table #tbl_RankInGuildCom", false);
+  return 1;
 }
 
 unsigned __int8 CRFWorldDatabase::Update_RankInGuild_Step1(unsigned int dwGuildSerial)
@@ -3216,6 +3454,87 @@ char CRFWorldDatabase::SelectGuildBattleRerservedList(
 
   ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
   return 0;
+}
+
+char CRFWorldDatabase::SelectGuildBattleScheduleInfoID(unsigned int dwID)
+{
+  SQLLEN indicator = 0;
+  SQLRETURN ret = 0;
+  char buffer[1028]{};
+  unsigned int targetValue = 0;
+
+  sprintf(buffer, "{ CALL pSelect_GuildBattleScheduleID( %u ) }", dwID);
+  if (m_bSaveDBLog)
+  {
+    Log(buffer);
+  }
+
+  if (!(m_hStmtSelect || ReConnectDataBase()))
+  {
+    ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
+    return 1;
+  }
+
+  ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(buffer), SQL_NTS);
+  if (ret && ret != SQL_SUCCESS_WITH_INFO)
+  {
+    if (ret == SQL_NO_DATA)
+    {
+      return 2;
+    }
+
+    ErrorMsgLog(ret, buffer, "SQLExecDirectA", m_hStmtSelect);
+    ErrorAction(ret, m_hStmtSelect);
+    return 1;
+  }
+
+  ret = SQLFetch(m_hStmtSelect);
+  if (ret && ret != SQL_SUCCESS_WITH_INFO)
+  {
+    char result = 0;
+    if (ret == SQL_NO_DATA)
+    {
+      result = 2;
+    }
+    else
+    {
+      ErrorMsgLog(ret, buffer, "SQLFetch", m_hStmtSelect);
+      ErrorAction(ret, m_hStmtSelect);
+      result = 1;
+    }
+
+    if (m_hStmtSelect)
+    {
+      SQLCloseCursor(m_hStmtSelect);
+    }
+    return result;
+  }
+
+  targetValue = 0;
+  ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_ULONG, &targetValue, 0, &indicator);
+  if (ret == SQL_NO_DATA)
+  {
+    if (m_hStmtSelect)
+    {
+      SQLCloseCursor(m_hStmtSelect);
+    }
+    return 2;
+  }
+
+  if (targetValue == dwID)
+  {
+    if (m_hStmtSelect)
+    {
+      SQLCloseCursor(m_hStmtSelect);
+    }
+    if (m_bSaveDBLog)
+    {
+      FmtLog("%s Success", buffer);
+    }
+    return 0;
+  }
+
+  return 2;
 }
 
 bool CRFWorldDatabase::UpdateClearGuildBattleScheduleInfo(unsigned int uiStartListID, unsigned int uiEndListID)

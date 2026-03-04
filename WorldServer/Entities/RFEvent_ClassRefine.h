@@ -34,13 +34,15 @@ typedef struct _FILETIME
 class  RFEvent_ClassRefine : public RFEventBase
 {
 public:
+  RFEvent_ClassRefine();
   bool Initialzie();
+  bool IsEnable();
   void Loop();
   bool CheckRefineEventData();
   void ResetRefineData();
   unsigned __int8 CanDoEvent(CPlayer *pOne);
   unsigned __int8 DoEvent(CPlayer *pOne) override;
-  char SetEvent(const char *p, int size, bool bInit);
+  bool SetEvent(const char *p, int size, bool bInit) override;
   bool IsDbUpdate(unsigned int nIdx) override;
   _event_participant_classrefine *GetPlayerState(unsigned int nIdx, unsigned int nAvator) override;
   bool SetPlayerState(void *const p, int size) override;

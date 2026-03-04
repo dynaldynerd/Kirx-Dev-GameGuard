@@ -23,6 +23,60 @@ CGravityStone::CGravityStone(unsigned __int16 wInx) : m_dwTakeLimitTime(0), m_pk
 
 CGravityStone::~CGravityStone() = default;
 
+unsigned __int8 CGravityStone::Get(
+  unsigned __int16 wIndex,
+  unsigned int dwObjSerial,
+  CPlayer *pkPlayer)
+{
+  if (!m_bLive)
+  {
+    return static_cast<unsigned __int8>(-124);
+  }
+
+  if (m_ObjID.m_wIndex != wIndex || m_dwObjSerial != dwObjSerial)
+  {
+    return static_cast<unsigned __int8>(-124);
+  }
+
+  if (pkPlayer->IsRidingUnit())
+  {
+    return static_cast<unsigned __int8>(-117);
+  }
+
+  if (!IsNearPosition(pkPlayer->m_fCurPos))
+  {
+    return static_cast<unsigned __int8>(-126);
+  }
+
+  SetOwner(pkPlayer);
+  Destroy();
+  return 0;
+}
+
+unsigned __int8 CGravityStone::CheatGet(CPlayer *pkPlayer)
+{
+  return Get(m_ObjID.m_wIndex, m_dwObjSerial, pkPlayer);
+}
+
+CPlayer *CGravityStone::GetOwner()
+{
+  return m_pkOwner;
+}
+
+float *CGravityStone::GetOwnerCurPos()
+{
+  if (m_pkOwner)
+  {
+    return m_pkOwner->m_fCurPos;
+  }
+  return nullptr;
+}
+
+bool CGravityStone::IsNearPosition(const float *pfCurPos)
+{
+  return GetSqrt(m_fCurPos, const_cast<float *>(pfCurPos)) <= 30.0f;
+}
+
 bool CGravityStone::IsValidOwner(CPlayer *pkPlayer)
 {
   return m_pkOwner && m_pkOwner == pkPlayer && m_pkOwner->m_pUserDB->m_dwSerial == pkPlayer->m_pUserDB->m_dwSerial;

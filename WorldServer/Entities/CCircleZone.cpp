@@ -10,6 +10,10 @@
 #include "DummyPosition.h"
 #include "GlobalObjects.h"
 #include "GuildBattle.h"
+#include "ObjectCreateSetData.h"
+#include "WorldServerUtil.h"
+
+unsigned int CCircleZone::ms_dwSerialCnt = 1;
 
 CCircleZone::CCircleZone()
   : m_eState(CZ_NONE),
@@ -20,6 +24,38 @@ CCircleZone::CCircleZone()
 }
 
 CCircleZone::~CCircleZone() = default;
+
+char CCircleZone::Create(CMapData *pkMap, unsigned __int8 byColor)
+{
+  if (m_eState == CZ_NONE || !pkMap)
+  {
+    return 0;
+  }
+
+  _object_create_setdata data;
+  data.m_nLayerIndex = 0;
+  data.m_pMap = pkMap;
+  memcpy_0(data.m_fStartPos, m_pkGoalPos->m_fCenterPos, sizeof(data.m_fStartPos));
+  data.m_pRecordSet = nullptr;
+  if (!CGameObject::Create(&data))
+  {
+    return 0;
+  }
+
+  m_dwObjSerial = ms_dwSerialCnt++;
+  m_byColor = byColor;
+  return 1;
+}
+
+void CCircleZone::Destroy()
+{
+  if (m_eState != CZ_NONE)
+  {
+    m_eState = CZ_DESTROY;
+    m_byColor = static_cast<unsigned __int8>(-1);
+    CCharacter::Destroy();
+  }
+}
 
 bool CCircleZone::Init(
   unsigned int uiMapInx,
@@ -86,6 +122,30 @@ bool CCircleZone::Init(
 int CCircleZone::GetPortalInx() const
 {
   return m_iPortalInx;
+}
+
+unsigned __int8 CCircleZone::GetColor() const
+{
+  return m_byColor;
+}
+
+unsigned __int8 CCircleZone::Goal(CMapData *pkMap, const float *pfCurPos)
+{
+  if (!pkMap || m_eState == CZ_CREATE)
+  {
+    return 110;
+  }
+  if (!IsNearPosition(const_cast<float *>(pfCurPos)))
+  {
+    return static_cast<unsigned __int8>(-122);
+  }
+  SendMsgGoal();
+  return 0;
+}
+
+bool CCircleZone::IsNearPosition(float *pfCurPos)
+{
+  return GetSqrt(m_fCurPos, pfCurPos) <= 200.0f;
 }
 
 void CCircleZone::SendMsg_FixPosition(int n)

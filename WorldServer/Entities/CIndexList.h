@@ -16,6 +16,8 @@ public:
     _index_node *m_pPrev;
     _index_node *m_pNext;
 
+    _index_node();
+    ~_index_node();
     bool AllocInfo(unsigned int infoSize);
   };
 
@@ -29,15 +31,19 @@ public:
   unsigned int m_dwBufCount;
   unsigned int m_dwMaxBufNum;
 
+  CIndexList();
   bool SetList(unsigned int maxBufNum, unsigned int infoSize, bool useMultiThread);
   bool PushNode_Back(unsigned int index, char *infoData);
   bool PushNode_Front(unsigned int index, char *infoData);
   bool PopNode_Front(unsigned int *pdwOutIndex, char *pInfoData);
   bool FindNode(unsigned int dwIndex, char *pInfoData);
   bool IsInList(unsigned int dwIndex, char *pInfoData);
+  bool IsSetting();
+  char CopyFront(unsigned int *pdwOutIndex, char *pInfoData);
+  _index_node *GetAllNode(unsigned int *pdwMaxNodeNum);
   unsigned int GetSize();
   void ResetList();
-  virtual ~CIndexList() = default;
+  virtual ~CIndexList();
 };
 
 

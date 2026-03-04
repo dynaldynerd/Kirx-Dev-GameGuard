@@ -17,6 +17,7 @@ public:
   static void InitPen();
   static void DeletePen();
 
+  void SetDummyPoint(CMapData *pMap, float *pCenterPos, int nType, CRect *prcWnd);
   void SetDummyRange(CMapData *pMap, float *pLT, float *pRB, float *pRT, float *pLB, int nType, CRect *prcWnd);
   char CalcAbsExt(CRect *prcArea);
   void CalcScrExt(CRect *prcArea, CRect *prcWnd);

@@ -23,6 +23,24 @@ CGuildBattleController::CGuildBattleController()
   // this is not a stub
 }
 
+CGuildBattleController::~CGuildBattleController()
+{
+  CleanUp();
+}
+
+void CGuildBattleController::CleanUp()
+{
+  GUILD_BATTLE::CGuildBattleLogger::Destroy();
+  GUILD_BATTLE::CGuildBattleRankManager::Destroy();
+  GUILD_BATTLE::CNormalGuildBattleFieldList::Destroy();
+  GUILD_BATTLE::CGuildBattleScheduler::Destroy();
+  GUILD_BATTLE::CPossibleBattleGuildListManager::Destroy();
+  GUILD_BATTLE::CNormalGuildBattleManager::Destroy();
+  GUILD_BATTLE::CGuildBattleReservedScheduleListManager::Destroy();
+  GUILD_BATTLE::CCurrentGuildBattleInfoManager::Destroy();
+  GUILD_BATTLE::CNormalGuildBattleStateListPool::Destroy();
+}
+
 void CGuildBattleController::Loop()
 {
   GUILD_BATTLE::CGuildBattleScheduleManager *scheduleManager = GUILD_BATTLE::CGuildBattleScheduleManager::Instance();
@@ -725,6 +743,132 @@ void CGuildBattleController::CheckGoal(CPlayer *pkPlayer, int iPortalInx)
   manager->CheckGoal(n, guildSerial, charSerial, iPortalInx);
 }
 
+bool CGuildBattleController::CheatCreateFieldObject(CPlayer *pkPlayer)
+{
+  GUILD_BATTLE::CNormalGuildBattleField *field = nullptr;
+  if (pkPlayer->m_pCurMap)
+  {
+    CMapData *mapData = pkPlayer->m_pCurMap;
+    const int raceCode = pkPlayer->m_Param.GetRaceCode();
+    GUILD_BATTLE::CNormalGuildBattleFieldList *fieldList = GUILD_BATTLE::CNormalGuildBattleFieldList::Instance();
+    field = fieldList->GetField(raceCode, mapData->m_nMapCode);
+  }
+  return field && field->CreateFieldObject();
+}
+
+char CGuildBattleController::CheatDestroyFieldObject(CPlayer *pkPlayer)
+{
+  GUILD_BATTLE::CNormalGuildBattleField *field = nullptr;
+  if (pkPlayer->m_pCurMap)
+  {
+    CMapData *mapData = pkPlayer->m_pCurMap;
+    const int raceCode = pkPlayer->m_Param.GetRaceCode();
+    GUILD_BATTLE::CNormalGuildBattleFieldList *fieldList = GUILD_BATTLE::CNormalGuildBattleFieldList::Instance();
+    field = fieldList->GetField(raceCode, mapData->m_nMapCode);
+  }
+  if (!field)
+  {
+    return 0;
+  }
+  field->DestroyFieldObject();
+  return 1;
+}
+
+char CGuildBattleController::CheatDestroyStone(CPlayer *pkPlayer)
+{
+  GUILD_BATTLE::CNormalGuildBattleField *field = nullptr;
+  if (pkPlayer->m_pCurMap)
+  {
+    CMapData *mapData = pkPlayer->m_pCurMap;
+    const int raceCode = pkPlayer->m_Param.GetRaceCode();
+    GUILD_BATTLE::CNormalGuildBattleFieldList *fieldList = GUILD_BATTLE::CNormalGuildBattleFieldList::Instance();
+    field = fieldList->GetField(raceCode, mapData->m_nMapCode);
+  }
+  if (!field)
+  {
+    return 0;
+  }
+  field->CheatDestroyStone();
+  return 1;
+}
+
+bool CGuildBattleController::CheatDropStone(CPlayer *pkPlayer)
+{
+  GUILD_BATTLE::CNormalGuildBattleField *field = nullptr;
+  if (pkPlayer->m_pCurMap)
+  {
+    CMapData *mapData = pkPlayer->m_pCurMap;
+    const int raceCode = pkPlayer->m_Param.GetRaceCode();
+    GUILD_BATTLE::CNormalGuildBattleFieldList *fieldList = GUILD_BATTLE::CNormalGuildBattleFieldList::Instance();
+    field = fieldList->GetField(raceCode, mapData->m_nMapCode);
+  }
+  return field && field->CheatDropStone(pkPlayer) == 0;
+}
+
+bool CGuildBattleController::CheatForceTakeStone(CPlayer *pkPlayer)
+{
+  GUILD_BATTLE::CNormalGuildBattleField *field = nullptr;
+  if (pkPlayer->m_pCurMap)
+  {
+    CMapData *mapData = pkPlayer->m_pCurMap;
+    const int raceCode = pkPlayer->m_Param.GetRaceCode();
+    GUILD_BATTLE::CNormalGuildBattleFieldList *fieldList = GUILD_BATTLE::CNormalGuildBattleFieldList::Instance();
+    field = fieldList->GetField(raceCode, mapData->m_nMapCode);
+  }
+  return field && field->CheatForceTakeStone(pkPlayer);
+}
+
+void CGuildBattleController::Destroy()
+{
+  CGuildBattleController::Instance()->CleanUp();
+}
+
+void CGuildBattleController::DropGravityStone(CPlayer *pkPlayer)
+{
+  if (!pkPlayer)
+  {
+    return;
+  }
+
+  const int raceCode = pkPlayer->m_Param.GetRaceCode();
+  (void)raceCode;
+
+  unsigned int guildSerial = static_cast<unsigned int>(-1);
+  if (pkPlayer->m_Param.m_pGuild)
+  {
+    guildSerial = pkPlayer->m_Param.m_pGuild->m_dwSerial;
+  }
+  const unsigned int charSerial = pkPlayer->m_pUserDB->m_dwSerial;
+
+  GUILD_BATTLE::CNormalGuildBattleManager *manager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
+  const unsigned __int8 result = manager->DropGravityStone(guildSerial, charSerial);
+  if (result)
+  {
+    GUILD_BATTLE::CGuildBattleLogger::Instance()->Log(
+      "CGuildBattleController::DropGravityStone( %s ) : CNormalGuildBattleManager::Instance()->DropGravityStone( %u, %u ) Return(%u) Fail!",
+      pkPlayer->m_Param.GetCharNameW(),
+      guildSerial,
+      charSerial,
+      result);
+  }
+}
+
+void CGuildBattleController::Kill(CPlayer *pkSrcPlayer, CPlayer *pkDestPlayer)
+{
+  const int raceCode = pkSrcPlayer->m_Param.GetRaceCode();
+  (void)raceCode;
+
+  unsigned int guildSerial = static_cast<unsigned int>(-1);
+  if (pkSrcPlayer->m_Param.m_pGuild)
+  {
+    guildSerial = pkSrcPlayer->m_Param.m_pGuild->m_dwSerial;
+  }
+  const unsigned int srcCharSerial = pkSrcPlayer->m_pUserDB->m_dwSerial;
+  const unsigned int destCharSerial = pkDestPlayer->m_pUserDB->m_dwSerial;
+
+  GUILD_BATTLE::CNormalGuildBattleManager::Instance()->Kill(guildSerial, srcCharSerial, destCharSerial);
+}
+
 int CGuildBattleController::CheatRegenStone(CPlayer *pkPlayer, int iRengenPos)
 {
   GUILD_BATTLE::CNormalGuildBattleField *field = nullptr;
@@ -830,6 +974,24 @@ char CGuildBattleController::CheatGetStone(CPlayer *pkPlayer)
     reinterpret_cast<char *>(&msg),
     static_cast<unsigned __int16>(sizeof(msg)));
   return 1;
+}
+
+CGravityStoneRegener *CGuildBattleController::GetRegener(int iInx)
+{
+  GUILD_BATTLE::CNormalGuildBattleFieldList *fieldList = GUILD_BATTLE::CNormalGuildBattleFieldList::Instance();
+  return fieldList->GetRegener(iInx);
+}
+
+CCircleZone *CGuildBattleController::GetCircleZone(int iInx)
+{
+  GUILD_BATTLE::CNormalGuildBattleFieldList *fieldList = GUILD_BATTLE::CNormalGuildBattleFieldList::Instance();
+  return fieldList->GetCircleZone(iInx);
+}
+
+CGravityStone *CGuildBattleController::GetStone(int iInx)
+{
+  GUILD_BATTLE::CNormalGuildBattleFieldList *fieldList = GUILD_BATTLE::CNormalGuildBattleFieldList::Instance();
+  return fieldList->GetStone(iInx);
 }
 
 void CGuildBattleController::SendPossibleBattleGuildListFirst(int n, unsigned __int8 byRace)

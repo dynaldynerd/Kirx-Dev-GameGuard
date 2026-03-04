@@ -7,7 +7,9 @@
 class  ClassOrderProcessor : public ElectProcessor
 {
 public:
+  static ClassOrderProcessor *_pkInstance;
   ClassOrderProcessor();
+  ~ClassOrderProcessor() override;
   bool Initialize() override;
   int Doit(Cmd cmd, CPlayer *pkPlayer, char *pszData) override;
 

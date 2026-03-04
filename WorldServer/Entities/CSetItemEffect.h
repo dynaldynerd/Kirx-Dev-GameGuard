@@ -22,6 +22,7 @@ class  CSetItemEffect
 
 public:
   CSetItemEffect();
+  ~CSetItemEffect();
   void Init_Info();
   void Init_Data(unsigned __int8 byIdx);
   __int64 SetOnEffect(

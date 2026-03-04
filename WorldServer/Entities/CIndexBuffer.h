@@ -12,13 +12,21 @@ union $736DB51CE9487475C2E813E4336CA27C
 /* 1393 */
 class  CIndexBuffer
 {
+public:
   unsigned int m_Flag;
   unsigned int m_Size;
-  $736DB51CE9487475C2E813E4336CA27C ___u2;
+  union
+  {
+    $736DB51CE9487475C2E813E4336CA27C ___u2;
+    struct
+    {
+      IDirect3DIndexBuffer8 *m_lpIndexBuffer;
+      unsigned short *m_IndexBuffer;
+    };
+  };
 
-public:
-  CIndexBuffer() : m_Flag(0), m_Size(0) { ___u2.m_lpIndexBuffer = nullptr; }
-  ~CIndexBuffer() = default;
+  CIndexBuffer();
+  ~CIndexBuffer();
 
   void InitIndexBuffer(unsigned int a2, unsigned int a3);
   void ReleaseIndexBuffer();

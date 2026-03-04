@@ -115,6 +115,35 @@ void CQuestMgr::CheckFailLoop(int nFailCond, char *pszCode)
   }
 }
 
+_happen_event_cont *CQuestMgr::GetLastHappenEvent()
+{
+  if (m_LastHappenEvent.isset())
+  {
+    return &m_LastHappenEvent;
+  }
+  return nullptr;
+}
+
+char CQuestMgr::IsRecvedQuestByNPC(int nEventIndex)
+{
+  (void)nEventIndex;
+  return 1; // this is not a stub
+}
+
+char CQuestMgr::IsRecvedQuestByNPC(const char *pszNPCCode)
+{
+  (void)pszNPCCode;
+  return 1; // this is not a stub
+}
+
+char CQuestMgr::ReturnItem(char *pszItemCode, int nEndReturnItemCnt, unsigned __int8 byQuestDBSlot)
+{
+  (void)pszItemCode;
+  (void)nEndReturnItemCnt;
+  (void)byQuestDBSlot;
+  return 1; // this is not a stub
+}
+
 void CQuestMgr::SendMsgToMaster_ReturnItemAfterQuest(
   unsigned __int16 wItemSerial,
   unsigned __int8 byNum,

@@ -18,6 +18,16 @@ int StartNum[3][3]{};
 int LoopCnt[3][3]{};
 }
 
+CNuclearBombMgr *CNuclearBombMgr::m_pkInstance = nullptr;
+
+CNuclearBombMgr::CNuclearBombMgr()
+{
+}
+
+CNuclearBombMgr::~CNuclearBombMgr()
+{
+}
+
 int _nuclear_bomb_current_state_zocl::size() const
 {
   return 127 - 14 * (9 - nNum);
@@ -25,8 +35,20 @@ int _nuclear_bomb_current_state_zocl::size() const
 
 CNuclearBombMgr *CNuclearBombMgr::Instance()
 {
-  static CNuclearBombMgr s_instance;
-  return &s_instance;
+  if (!m_pkInstance)
+  {
+    m_pkInstance = new CNuclearBombMgr();
+  }
+  return m_pkInstance;
+}
+
+void CNuclearBombMgr::Destroy(CNuclearBombMgr * /*thisPtr*/)
+{
+  if (m_pkInstance)
+  {
+    delete m_pkInstance;
+    m_pkInstance = nullptr;
+  }
 }
 
 void CNuclearBombMgr::Loop()

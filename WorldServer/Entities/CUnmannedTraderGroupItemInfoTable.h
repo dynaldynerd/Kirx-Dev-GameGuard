@@ -9,6 +9,7 @@ class  CUnmannedTraderGroupItemInfoTable
 {
 public:
   static CUnmannedTraderGroupItemInfoTable *Instance();
+  static void Destroy();
 
   CUnmannedTraderGroupItemInfoTable();
   ~CUnmannedTraderGroupItemInfoTable();

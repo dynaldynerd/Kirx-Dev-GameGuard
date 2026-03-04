@@ -7,6 +7,7 @@
 #include "base_fld.h"
 #include "CPlayer.h"
 #include "CloakItem_fld.h"
+#include "ITEM_EFFECT.h"
 
 CEquipItemSFAgent::CEquipItemSFAgent()
 {
@@ -81,6 +82,30 @@ float CEquipItemSFAgent::GetBoosterAddSpeed()
   }
 
   return itemRecord->m_fBoosterSpeed;
+}
+
+float CEquipItemSFAgent::SearchItemAddSpeed(_STORAGE_LIST::_db_con *pItem)
+{
+  if (!pItem)
+  {
+    return 0.0f;
+  }
+
+  _ITEM_EFFECT *itemEffect = m_pMaster->_GetItemEffect(pItem);
+  if (!itemEffect)
+  {
+    return 0.0f;
+  }
+
+  for (int j = 0; j < 4; ++j)
+  {
+    if (itemEffect[j].nEffectCode == 12)
+    {
+      return itemEffect[j].fEffectValue;
+    }
+  }
+
+  return 0.0f;
 }
 
 void CEquipItemSFAgent::AllEndContSF()

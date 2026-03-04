@@ -128,7 +128,10 @@ public:
   void Set_Box_Count(unsigned __int8 byIndex);
   unsigned __int16 Get_BoxItem_Count(unsigned __int8 byIndex, unsigned int dwIndex);
   void Set_FromINIToStruct(_golden_box_item_ini *pIni);
+  void Set_FromStruct();
   void Set_ToStruct();
+  void Set_DCK(unsigned __int8 byDCK);
+  unsigned __int16 GetOreItemTotalCnt();
   void BoxItemDataCopy();
   void RateCheck(unsigned __int8 byIndex);
   char *GetGoldBoxItemPtr();

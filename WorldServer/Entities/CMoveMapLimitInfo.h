@@ -17,7 +17,7 @@ public:
   };
 
   CMoveMapLimitInfo(unsigned int uiInx, OBJ_TYPE iType);
-  virtual ~CMoveMapLimitInfo() = default;
+  virtual ~CMoveMapLimitInfo();
   virtual unsigned __int8 Request(int iUserInx, int iRequetType, char *pRequest, CMoveMapLimitRightInfo *pkRight) = 0;
   virtual void Load(CPlayer *pkPlayer, CMoveMapLimitRightInfo *pkRight);
   virtual void LogIn(CPlayer *pkPlayer, CMoveMapLimitRightInfo *pkRight);

@@ -22,3 +22,8 @@ CReturnGateCreateParam::~CReturnGateCreateParam()
 {
 // this is not a stub
 }
+
+CPlayer *CReturnGateCreateParam::GetOwner()
+{
+  return m_pkOwner;
+}

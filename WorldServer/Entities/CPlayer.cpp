@@ -2567,6 +2567,11 @@ bool MiningTicket::_AuthKeyTicket::operator!=(const _AuthKeyTicket &src) const
   return ___u0.uiData != src.___u0.uiData;
 }
 
+MiningTicket::MiningTicket()
+{
+  Init();
+}
+
 void MiningTicket::Init()
 {
   m_dwTakeLastMentalTicket.Init();
@@ -5437,7 +5442,7 @@ __int64 CPlayer::GetMaxHP()
   return maxHp;
 }
 
-__int64 CPlayer::CalcCurHPRate()
+unsigned __int16 CPlayer::CalcCurHPRate()
 {
   if (IsRidingUnit())
   {
@@ -10180,6 +10185,20 @@ int CPlayer::GetCashAmount()
   return m_nCashAmount;
 }
 
+__int64 CPlayer::GetBillingType()
+{
+  if (m_pUserDB)
+  {
+    return static_cast<unsigned int>(m_pUserDB->GetBillingType());
+  }
+  return 0;
+}
+
+void CPlayer::pc_BillingInfoRequest()
+{
+// this is not a stub
+}
+
 void CPlayer::SetCashAmount(int nAmount)
 {
   m_nCashAmount = nAmount;
@@ -10433,6 +10452,32 @@ CGameObject *CPlayer::GetTargetObj()
 
   m_TargetObject.init();
   return nullptr;
+}
+
+bool CPlayer::IsTargetObj(CGameObject *pkObj)
+{
+  if (!pkObj || !m_TargetObject.pObject)
+  {
+    return false;
+  }
+
+  CGameObject *targetObject = m_TargetObject.pObject;
+  if (targetObject->m_bLive && m_TargetObject.byKind == targetObject->m_ObjID.m_byKind
+      && m_TargetObject.byID == targetObject->m_ObjID.m_byID
+      && m_TargetObject.dwSerial == targetObject->m_dwObjSerial
+      && m_TargetObject.pObject->m_pCurMap == m_pCurMap)
+  {
+    return m_TargetObject.byKind == pkObj->m_ObjID.m_byKind && m_TargetObject.byID == pkObj->m_ObjID.m_byID
+           && m_TargetObject.dwSerial == pkObj->m_dwObjSerial;
+  }
+
+  m_TargetObject.init();
+  return false;
+}
+
+bool CPlayer::IsInTown()
+{
+  return m_byPosRaceTown != static_cast<unsigned __int8>(-1);
 }
 
 bool CPlayer::IsChaosMode()
@@ -12543,6 +12588,33 @@ void CPlayer::pc_ExchangeGoldForDalant(unsigned int dwGold)
   SendMsg_ExchangeMoneyResult(resultCode);
 }
 
+void CPlayer::pc_ExchangeGoldForPvP(unsigned int dwGold)
+{
+  unsigned __int8 resultCode = 0;
+  const double requiredPvPCash = static_cast<double>(static_cast<int>(200u * dwGold));
+  if (requiredPvPCash > static_cast<double>(m_Param.GetPvPCashBag()))
+  {
+    resultCode = 1;
+  }
+  else if (dwGold)
+  {
+    const unsigned int currentGold = m_Param.GetGold();
+    if (!CanAddMoneyForMaxLimGold(dwGold, currentGold))
+    {
+      resultCode = 2;
+    }
+  }
+
+  if (!resultCode)
+  {
+    AlterPvPCashBag(-requiredPvPCash, pm_kill);
+    AddGold(static_cast<int>(dwGold), true);
+    s_MgrItemHistory.exchange_pvp_gold(m_ObjID.m_wIndex, dwGold, m_Param.GetDalant(), m_Param.GetGold(), m_szItemHistoryFileName);
+  }
+
+  SendMsg_ExchangeMoneyResult(resultCode);
+}
+
 void CPlayer::pc_LimitItemNumRequest(unsigned int dwStoreIndex)
 {
   if (!m_pCurMap)
@@ -13676,6 +13748,14 @@ char CPlayer::Corpse(CCharacter *pAtter)
         break;
     }
 
+    if (killerOwner
+        && m_bInGuildBattle
+        && killerOwner->m_bInGuildBattle
+        && m_byGuildBattleColorInx != killerOwner->m_byGuildBattleColorInx)
+    {
+      CGuildBattleController::Instance()->Kill(killerOwner, this);
+    }
+
     if (!IsInTown() && !m_pCurMap->m_pMapSet->m_nMapType && m_Param.GetExp() > 0.0 && pAtter->m_ObjID.m_byID == 1)
     {
       CMonster *attackerMon = static_cast<CMonster *>(pAtter);
@@ -13729,7 +13809,7 @@ char CPlayer::Corpse(CCharacter *pAtter)
   if (m_bInGuildBattle && m_bTakeGravityStone)
   {
     SendMsg_Notify_Gravity_Stone_Owner_Die();
-    ClearGravityStone();
+    CGuildBattleController::Instance()->DropGravityStone(this);
   }
 
   if (m_pRecalledAnimusChar && !s_AnimusReturnDelay.Push(m_ObjID.m_wIndex, m_dwObjSerial))
@@ -16801,11 +16881,20 @@ char CPlayer::IsSFUseableRace(unsigned __int8 byEffectCode, unsigned __int16 wEf
   if (byEffectCode == 0 || byEffectCode == 2 || byEffectCode == 3)
   {
     _skill_fld *record = reinterpret_cast<_skill_fld *>(g_Main.m_tblEffectData[byEffectCode].GetRecord(wEffectIndex));
-    return record && record->m_strUsableRace[raceSexCode] == '1';
+    if (record->m_strUsableRace[raceSexCode] == '1')
+    {
+      return 1;
+    }
   }
-
-  _force_fld *record = reinterpret_cast<_force_fld *>(g_Main.m_tblEffectData[byEffectCode].GetRecord(wEffectIndex));
-  return record && record->m_strUsableRace[raceSexCode] == '1';
+  else
+  {
+    _force_fld *record = reinterpret_cast<_force_fld *>(g_Main.m_tblEffectData[byEffectCode].GetRecord(wEffectIndex));
+    if (record->m_strUsableRace[raceSexCode] == '1')
+    {
+      return 1;
+    }
+  }
+  return 0;
 }
 
 char CPlayer::IsSFUsableSFMastery(unsigned __int8 byMasteryCode, int nMasteryIndex)
@@ -21665,6 +21754,11 @@ __int64 CPlayer::GetAttackLevel()
 float CPlayer::GetAttackRange()
 {
   return static_cast<float>(m_pmWpn.wGaAttRange);
+}
+
+__int64 CPlayer::GetWeaponRange()
+{
+  return static_cast<unsigned int>(m_pmWpn.wGaAttRange) - 40;
 }
 
 __int64 CPlayer::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)

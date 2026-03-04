@@ -31,6 +31,9 @@ struct  _tower_create_setdata : _character_create_setdata
 class  CGuardTower : public CCharacter
 {
 public:
+  CGuardTower();
+  ~CGuardTower();
+
   __int64 AttackableHeight();
   __int64 GetAttackDP() override;
   float GetAttackRange() override;
@@ -53,9 +56,11 @@ public:
   __int64 GetWindTol() override;
   bool IsBeAttackedAble(bool bFirst) override;
   char IsBeDamagedAble(CCharacter *pAtter) override;
+  bool IsInTown();
   bool RobbedHP(CCharacter *pDst, int nDecHP) override;
   void Loop() override;
   void OutOfSec() override;
+  void RecvKillMessage(CCharacter *pDier) override;
   void SendMsg_FixPosition(int n) override;
   __int64 SetDamage(
     int nDam,
@@ -98,6 +103,7 @@ public:
   CCharacter *SearchNearEnemy();
   void Attack(CCharacter *pTarget);
   static void OnLoop_Static();
+  static char IsHaveEmpty();
   static __int64 GetNewSerial();
 };
 

@@ -172,22 +172,20 @@ public:
   void OnLoop();
   virtual bool IsAttackableInTown();
   virtual void AlterSec();
+  virtual __int64 AttackableHeight();
+  virtual void BeTargeted(CCharacter *pSeacher);
   virtual char IsRecvableContEffect();
   virtual bool IsRewardExp();
   virtual bool Is_Battle_Mode();
   virtual void Loop();
   virtual void OutOfSec();
-  virtual void RecvKillMessage(CCharacter *pDier)
-  {
-    // this is not a stub
-    (void)pDier;
-  }
+  virtual void RecvKillMessage(CCharacter *pDier);
   __int64 CalcCirclePlayerNum(int nRange);
   char IsCircleObject(int nRange, CGameObject *pObject);
-  virtual __int64 CalcCurHPRate();
+  virtual unsigned __int16 CalcCurHPRate();
   __int64 RerangeSecIndex(unsigned int dwOld, unsigned int dwNew);
   void ResetSector(unsigned int dwOldSec, unsigned int dwNewSec);
-  bool IsInTown();
+  virtual bool IsInTown();
   __int64 GetCurSecNum();
   virtual __int64 GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart);
   virtual float GetDefFacing(int nPart);

@@ -15,7 +15,9 @@ public:
   CWeeklyGuildRankManager();
   ~CWeeklyGuildRankManager();
 
+  static CWeeklyGuildRankManager *ms_Instance;
   static CWeeklyGuildRankManager *Instance();
+  static void Destroy();
   bool Init();
   bool InitNextSetOwnerDate();
   void SetNextRankDate();

@@ -31,9 +31,12 @@ struct _guild_honor_list_result_zocl
 class  CHonorGuild
 {
 public:
+  static CHonorGuild *m_pInstance;
+
   CHonorGuild();
 
   static CHonorGuild *Instance();
+  static void Destroy(CHonorGuild *thisPtr);
   bool Init();
   void Loop();
   void LoopSubProcSendInform(unsigned __int8 byRace);
@@ -51,7 +54,7 @@ public:
   void SetGuildMaintainMoney(unsigned __int8 byRace, unsigned int dwTax, unsigned int dwSeller);
   void DQSCompleteInAtradTaxMoney(char *pdata);
 
-  virtual ~CHonorGuild() = default;
+  virtual ~CHonorGuild();
 
   bool m_bNext[3];
   bool m_bSendInform[3];

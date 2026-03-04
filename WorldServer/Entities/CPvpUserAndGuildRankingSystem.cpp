@@ -10,14 +10,28 @@
 #include <cstdarg>
 #include <cstdio>
 
+CPvpUserAndGuildRankingSystem *CPvpUserAndGuildRankingSystem::ms_Instance = nullptr;
+
 CPvpUserAndGuildRankingSystem::CPvpUserAndGuildRankingSystem() = default;
 
 CPvpUserAndGuildRankingSystem::~CPvpUserAndGuildRankingSystem() = default;
 
 CPvpUserAndGuildRankingSystem *CPvpUserAndGuildRankingSystem::Instance()
 {
-  static CPvpUserAndGuildRankingSystem s_instance;
-  return &s_instance;
+  if (!ms_Instance)
+  {
+    ms_Instance = new CPvpUserAndGuildRankingSystem();
+  }
+  return ms_Instance;
+}
+
+void CPvpUserAndGuildRankingSystem::Destroy()
+{
+  if (ms_Instance)
+  {
+    delete ms_Instance;
+    ms_Instance = nullptr;
+  }
 }
 
 void CPvpUserAndGuildRankingSystem::Loop()
@@ -64,6 +78,14 @@ bool CPvpUserAndGuildRankingSystem::IsCurrentRaceBossGroup(unsigned __int8 byRac
 unsigned int CPvpUserAndGuildRankingSystem::GetCurrentRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth)
 {
   return m_kUserRankingProcess.GetCurrentRaceBossSerial(byRace, byNth);
+}
+
+void CPvpUserAndGuildRankingSystem::SetCurrentRaceBossSerial(
+  unsigned __int8 byRace,
+  unsigned __int8 byNth,
+  unsigned int dwSerial)
+{
+  m_kUserRankingProcess.SetCurrentRaceBossSerial(byRace, byNth, dwSerial);
 }
 
 unsigned int CPvpUserAndGuildRankingSystem::FindRank(unsigned __int8 byRaceCode, unsigned int dwAvatorSerial)
@@ -114,6 +136,11 @@ void CPvpUserAndGuildRankingSystem::SetUpdateRaceBossSerial(
   unsigned int dwSerial)
 {
   m_kUserRankingProcess.SetUpdateRaceBossSerial(byRace, byNth, dwSerial);
+}
+
+void CPvpUserAndGuildRankingSystem::PvpRankDataPacking()
+{
+  m_kUserRankingProcess.PvpRankDataPacking();
 }
 
 void CPvpUserAndGuildRankingSystem::ApplyUpdatedBossInfo()

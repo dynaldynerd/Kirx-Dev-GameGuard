@@ -12,6 +12,8 @@
 #include <cstring>
 #include <mmsystem.h>
 
+ClassOrderProcessor *ClassOrderProcessor::_pkInstance = nullptr;
+
 namespace
 {
 #pragma pack(push, 1)
@@ -39,6 +41,10 @@ ClassOrderProcessor::ClassOrderProcessor()
       _kSend[raceIndex].body[classType].byClassType = static_cast<unsigned __int8>(classType);
     }
   }
+}
+
+ClassOrderProcessor::~ClassOrderProcessor()
+{
 }
 
 bool ClassOrderProcessor::Initialize()
@@ -78,8 +84,11 @@ int ClassOrderProcessor::Doit(Cmd cmd, CPlayer *player, char *payload)
 
 ClassOrderProcessor *ClassOrderProcessor::Instance()
 {
-  PatriarchElectProcessor *processor = PatriarchElectProcessor::Instance();
-  return static_cast<ClassOrderProcessor *>(processor->_kProcessor[ElectProcessor::_eClassOrderProcessor]);
+  if (!_pkInstance)
+  {
+    _pkInstance = new ClassOrderProcessor();
+  }
+  return _pkInstance;
 }
 
 int ClassOrderProcessor::_CheckUserInfo(unsigned __int8 byRace, unsigned __int8 byClassType, CPlayer *user)

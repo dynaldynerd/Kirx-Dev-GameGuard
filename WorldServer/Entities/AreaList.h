@@ -16,6 +16,7 @@ struct AreaList
 
     AreaList();
     ~AreaList();
+    AreaList& operator=(const AreaList& rhs);
     void ExtractData();
     void Push(AreaData *adata);
 };

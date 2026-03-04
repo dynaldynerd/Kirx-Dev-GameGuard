@@ -27,6 +27,7 @@
 #include "R3EngineState.h"
 #include "CNetworkEX.h"
 #include "CVoteSystem.h"
+#include "C24Timer.h"
 
 class CWnd;
 class CGameServerDoc;
@@ -107,3 +108,4 @@ extern unsigned __int8 Major_Scroll_Item;
 extern unsigned __int8 Major_Cash_Item;
 extern unsigned __int8 Major_Add_Character;
 extern unsigned int g_dwCurTime;
+extern C24Timer g_24Time;

@@ -34,6 +34,9 @@ struct  _event_set
       int nRespawnNum;
       bool bOper;
       _mon MonInfo[100];
+
+      _state();
+      void init();
     };
 
     CMapData *pMap;
@@ -46,11 +49,16 @@ struct  _event_set
     bool bUnknownMap;
     bool bIsSet;
     _state m_State;
+
+    _monster_set();
   };
 
   char m_strId[64];
   _monster_set m_MonSet[10];
   bool m_bOper;
+
+  _event_set();
+  void init();
 };
 
 struct  _event_set_looting
@@ -70,20 +78,26 @@ struct  _event_set_looting
   unsigned __int8 byLootAuth;
   _event_item stEventItemList[50];
   int nItemCount;
+
+  _event_set_looting();
+  void init();
 };
 
 class  CMonsterEventSet
 {
 public:
+  CMonsterEventSet();
+  virtual ~CMonsterEventSet();
+
   bool IsINIFileChanged(const char *pszFileName, _FILETIME ftCurr);
   bool StartEventSet(char *pszEventCode, char *pwszErrCode, CPlayer *pOne);
   bool StopEventSet(char *pszEventCode, char *pwszErrCode);
   void CheckEventSetRespawn();
+  _event_set *GetEmptyEventSet();
+  _event_set::_monster_set *GetMonsterSet(_event_set *eventSet);
   bool LoadEventSet(char *errBuffer);
   bool LoadEventSetLooting();
   _event_set_looting *GetEvenSetLooting(const char *pszCode);
-
-  virtual ~CMonsterEventSet() = default;
 
   _event_set m_EventSet[10];
   _event_set_looting m_EventSetLootingList[100];
@@ -92,5 +106,5 @@ public:
   bool m_bLoadEventLooting;
 };
 
-extern CMonsterEventSet g_MonsterEventSet;
+extern CMonsterEventSet *g_MonsterEventSet;
 

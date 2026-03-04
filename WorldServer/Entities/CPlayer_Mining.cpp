@@ -602,18 +602,8 @@ void CPlayer::pc_OreCutting(unsigned __int16 wOreSerial, unsigned __int8 byProce
   const int raceCode = m_Param.GetRaceCode();
   const unsigned int texRate = eGetTexRate(raceCode) + 10000;
 
-  bool hasBufferedRes = false;
   const int maxResKind = GetMaxResKind();
-  for (int index = 0; index < maxResKind; ++index)
-  {
-    if (m_Param.m_wCuttingResBuffer[index])
-    {
-      hasBufferedRes = true;
-      break;
-    }
-  }
-
-  if (hasBufferedRes)
+  if (m_Param.GetResBufferNum())
   {
     resultCode = 4;
   }
@@ -718,6 +708,29 @@ void CPlayer::pc_OreCutting(unsigned __int16 wOreSerial, unsigned __int8 byProce
       m_pUserDB->Update_User_Action_Point(0, nextPoint);
       SendMsg_Alter_Action_Point(0, nextPoint);
     }
+
+    if (m_pUserDB)
+    {
+      _CUTTING_DB_BASE::_LIST cuttingList[20];
+      for (int index = 0; index < 20; ++index)
+      {
+        cuttingList[index].Init();
+      }
+
+      int pushCount = 0;
+      for (int resIndex = 0; resIndex < GetMaxResKind() && pushCount < 20; ++resIndex)
+      {
+        if (m_Param.m_wCuttingResBuffer[resIndex])
+        {
+          cuttingList[pushCount].Key.byTableCode = 18;
+          cuttingList[pushCount].Key.wItemIndex = static_cast<unsigned __int16>(resIndex);
+          cuttingList[pushCount].dwDur = m_Param.m_wCuttingResBuffer[resIndex];
+          ++pushCount;
+        }
+      }
+
+      m_pUserDB->Update_CuttingPush(static_cast<unsigned __int8>(pushCount), cuttingList);
+    }
   }
 
   this->SendMsg_OreCuttingResult(resultCode, static_cast<unsigned __int8>(leftOreCount), consumedDalant);
@@ -794,6 +807,11 @@ void CPlayer::pc_OreIntoBag(
     else
     {
       Emb_AlterDurPoint(0, targetItem->m_byStorageIndex, byAddAmount, false, false);
+    }
+
+    if (m_pUserDB)
+    {
+      m_pUserDB->Update_CuttingTrans(wResIndex, m_Param.m_wCuttingResBuffer[wResIndex]);
     }
 
     _base_fld *resRecord = g_Main.m_tblItemData[18].GetRecord(wResIndex);

@@ -14,6 +14,7 @@ public:
   CMoveMapLimitInfoList();
   ~CMoveMapLimitInfoList();
 
+  void CleanUp();
   bool Init(std::vector<int> *vecRightTypeList);
   void Loop();
   CMoveMapLimitInfo *Get(int iLimitType, int iMapInx, unsigned int dwStoreRecordIndex);

@@ -8,7 +8,7 @@ struct _total_guild_rank_result_zocl;
 class  CTotalGuildRankRecord
 {
 public:
-  CTotalGuildRankRecord() = default;
+  CTotalGuildRankRecord();
   ~CTotalGuildRankRecord();
   void Clear();
 

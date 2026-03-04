@@ -37,6 +37,48 @@ namespace
   }
 }
 
+CIndexList::_index_node::_index_node()
+{
+  m_bLoad = false;
+  m_pNext = nullptr;
+  m_pPrev = nullptr;
+  m_dwInfoDataSize = 0;
+  m_pInfo = nullptr;
+}
+
+CIndexList::_index_node::~_index_node()
+{
+  if (m_pInfo)
+  {
+    delete[] m_pInfo;
+  }
+}
+
+CIndexList::CIndexList()
+{
+  m_Head.m_pPrev = &m_Head;
+  m_Head.m_pNext = &m_Tail;
+  m_Tail.m_pPrev = &m_Head;
+  m_Tail.m_pNext = &m_Tail;
+  m_BufHead.m_pPrev = &m_BufHead;
+  m_BufHead.m_pNext = &m_BufTail;
+  m_BufTail.m_pPrev = &m_BufHead;
+  m_BufTail.m_pNext = &m_BufTail;
+  m_dwCount = 0;
+  m_dwBufCount = 0;
+  m_dwMaxBufNum = 0;
+  m_pBufNode = nullptr;
+}
+
+CIndexList::~CIndexList()
+{
+  if (m_pBufNode)
+  {
+    delete[] m_pBufNode;
+    m_pBufNode = nullptr;
+  }
+}
+
 bool CIndexList::_index_node::AllocInfo(unsigned int infoSize)
 {
   if (infoSize == 0)
@@ -260,6 +302,50 @@ bool CIndexList::IsInList(unsigned int dwIndex, char *pInfoData)
 
   m_csList.Unlock();
   return false;
+}
+
+bool CIndexList::IsSetting()
+{
+  return m_pBufNode != nullptr;
+}
+
+char CIndexList::CopyFront(unsigned int *pdwOutIndex, char *pInfoData)
+{
+  m_csList.Lock();
+  if (m_Head.m_pNext == &m_Tail)
+  {
+    m_csList.Unlock();
+    return 0;
+  }
+
+  _index_node *frontNode = m_Head.m_pNext;
+  if (pdwOutIndex)
+  {
+    *pdwOutIndex = frontNode->m_dwIndex;
+  }
+
+  if (pInfoData && frontNode->m_dwInfoDataSize)
+  {
+    memcpy_0(pInfoData, frontNode->m_pInfo, frontNode->m_dwInfoDataSize);
+  }
+
+  m_csList.Unlock();
+  return 1;
+}
+
+CIndexList::_index_node *CIndexList::GetAllNode(unsigned int *pdwMaxNodeNum)
+{
+  if (m_csList.IsUse())
+  {
+    return nullptr;
+  }
+
+  if (pdwMaxNodeNum)
+  {
+    *pdwMaxNodeNum = m_dwMaxBufNum;
+  }
+
+  return m_pBufNode;
 }
 
 unsigned int CIndexList::GetSize()

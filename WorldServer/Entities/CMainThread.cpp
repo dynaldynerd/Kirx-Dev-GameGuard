@@ -149,9 +149,11 @@ namespace
 unsigned int g_dwTimeAliveMonNum = 0;
 unsigned int g_dwMaxDeadMonNum = 0;
 constexpr const char kCandidateMgrInitFailFmt[] = "CandidateMgr::Instance()->Initialize(%d) Fail!";
+constexpr DWORD kHalfDays = 0x02932E00u;
 }
 
 unsigned int TimeLimitMgr::m_dwCnt;
+TimeLimitMgr *TimeLimitMgr::m_pTLStatusMgr = nullptr;
 
 _BILLING_INFO::_BILLING_INFO()
 {
@@ -270,6 +272,65 @@ void _server_rate_realtime_load::Init(unsigned int dwReadTerm)
 }
 
 CMainThread::CMainThread() = default;
+
+CMainThread::~CMainThread()
+{
+  Release();
+}
+
+void CMainThread::Release()
+{
+  m_bRuleThread = false;
+  m_bDQSThread = false;
+  Sleep(0xBB8u);
+
+  if (m_pWorldDB)
+  {
+    delete m_pWorldDB;
+    m_pWorldDB = nullptr;
+  }
+
+  CGuildBattleController::Destroy();
+  CRaceBossMsgController::Instance()->CleanUp();
+  CReturnGateController::Destroy();
+  CRecallEffectController::Destroy();
+  CTotalGuildRankManager::Destroy();
+  CWeeklyGuildRankManager::Destroy();
+  AutoMineMachineMng::Release();
+  CLogTypeDBTaskManager::Destroy();
+  CLuaScriptMgr::Destroy();
+  CItemStoreManager::Destroy();
+  COreAmountMgr::Instance()->Release();
+  cStaticMember_Player::Release();
+
+  delete[] g_Monster;
+  g_Monster = nullptr;
+  delete[] g_NPC;
+  g_NPC = nullptr;
+  delete[] g_Animus;
+  g_Animus = nullptr;
+  delete[] g_Tower;
+  g_Tower = nullptr;
+  delete[] g_ItemBox;
+  g_ItemBox = nullptr;
+  delete[] g_ParkingUnit;
+  g_ParkingUnit = nullptr;
+  delete[] g_Stone;
+  g_Stone = nullptr;
+  delete[] g_Keeper;
+  g_Keeper = nullptr;
+  delete[] g_Trap;
+  g_Trap = nullptr;
+  delete[] g_DarkHole;
+  g_DarkHole = nullptr;
+  delete[] g_Guild;
+  g_Guild = nullptr;
+  if (g_MonsterEventSet)
+  {
+    delete g_MonsterEventSet;
+    g_MonsterEventSet = nullptr;
+  }
+}
 
 bool CMainThread::IsTestServer() const
 {
@@ -492,6 +553,169 @@ bool CMainThread::gm_MonsterInit(CMonster *pExt)
   return g_MapOper.m_bReSpawnMonster;
 }
 
+char CMainThread::check_item_code_index()
+{
+  return 1; // this is not a stub
+}
+
+void CMainThread::CheckServiceableTime()
+{
+  const DWORD currentTick = timeGetTime();
+  if ((0xFFFFFFFFu - currentTick) < kHalfDays)
+  {
+    m_bCheckOverTickCount = true;
+    SerivceSelfStop();
+    pc_AllUserKickInform();
+    m_logLoadingError.Write("Must Be Rebooting!!");
+  }
+}
+
+CPlayer *CMainThread::GetChar(char *pszCharName)
+{
+  for (int index = 0; index < MAX_PLAYER; ++index)
+  {
+    if (g_Player[index].m_bLive)
+    {
+      const char *charName = g_Player[index].m_Param.GetCharNameA();
+      if (!strcmp_0(charName, pszCharName))
+      {
+        return &g_Player[index];
+      }
+    }
+  }
+  return nullptr;
+}
+
+CGameObject *CMainThread::GetObjectExpand(_object_id *pObjID, char *szCharName, unsigned __int16 wSearchIndex)
+{
+  CGameObject *found = nullptr;
+  int scanIndex = 0;
+  unsigned __int16 matchIndex = 0;
+
+  if (szCharName && strlen_0(szCharName))
+  {
+    if (pObjID->m_byKind == 0 && pObjID->m_byID == 0)
+    {
+      return GetChar(szCharName);
+    }
+
+    if (pObjID->m_byKind == 0 && pObjID->m_byID == 1)
+    {
+      for (scanIndex = 0; scanIndex < MAX_MONSTER; ++scanIndex)
+      {
+        if (g_Monster[scanIndex].m_bLive
+            && g_Monster[scanIndex].m_pMonRec
+            && !strcmp_0(g_Monster[scanIndex].m_pMonRec->m_strCode, szCharName))
+        {
+          if (wSearchIndex == matchIndex)
+          {
+            return &g_Monster[scanIndex];
+          }
+          ++matchIndex;
+        }
+      }
+      return nullptr;
+    }
+
+    if (pObjID->m_byKind == 0 && pObjID->m_byID == 2)
+    {
+      for (scanIndex = 0; scanIndex < MAX_NPC; ++scanIndex)
+      {
+        if (g_NPC[scanIndex].m_bLive
+            && g_NPC[scanIndex].m_pRecordSet
+            && !strcmp_0(g_NPC[scanIndex].m_pRecordSet->m_strCode, szCharName))
+        {
+          if (wSearchIndex == matchIndex)
+          {
+            return &g_NPC[scanIndex];
+          }
+          ++matchIndex;
+        }
+      }
+      return nullptr;
+    }
+  }
+
+  if (found)
+  {
+    return found;
+  }
+  return GetObjectA(pObjID);
+}
+
+void CMainThread::GetTommorrowStr(char *szTommorrow)
+{
+  __time64_t rawTime = 0;
+  _time64(&rawTime);
+  rawTime += 24 * 60 * 60;
+
+  tm localTime{};
+  _localtime64_s(&localTime, &rawTime);
+  const unsigned int year = static_cast<unsigned int>(localTime.tm_year + 1900);
+  const unsigned int month = static_cast<unsigned int>(localTime.tm_mon + 1);
+  const unsigned int day = static_cast<unsigned int>(localTime.tm_mday);
+  sprintf(szTommorrow, "%04u%02u%02u", year, month, day);
+}
+
+void CMainThread::pc_UserChatBlockResult(char byBlockResult, _CLID *pcidTarget, _CLID *pcidGM, int bLogin)
+{
+  CPlayer *target = nullptr;
+  CPlayer *gameMaster = nullptr;
+  if (bLogin)
+  {
+    target = &g_Player[pcidTarget->wIndex];
+  }
+
+  gameMaster = &g_Player[pcidGM->wIndex];
+  if (target && target->m_pUserDB->m_bActive)
+  {
+    target->m_pUserDB->SetChatLock(true);
+  }
+
+  if (gameMaster->m_pUserDB->m_bActive)
+  {
+    char buffer[144]{};
+    if (byBlockResult == 1)
+    {
+      sprintf(buffer, "Kick - Success");
+    }
+    else if (byBlockResult == -1)
+    {
+      sprintf(buffer, "Kick - ChatBlock is already adjusted");
+    }
+    else if (byBlockResult == -2)
+    {
+      sprintf(buffer, "Kick - OtherBlock is already adjusted");
+    }
+    else
+    {
+      sprintf(buffer, "Kick - Failed");
+    }
+
+    gameMaster->SendData_ChatTrans(0, 0xFFFFFFFFu, 0xFFu, false, buffer, 0xFFu, nullptr);
+  }
+}
+
+void CMainThread::QryCaseAddpvppoint(_DB_QRY_SYN_DATA *pData)
+{
+  char *loadData = pData->m_sData;
+  CPlayer *player = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, *reinterpret_cast<unsigned int *>(loadData));
+  if (player && player->m_bLoad)
+  {
+    player->AlterPvPPoint(static_cast<double>(*reinterpret_cast<int *>(loadData + 4)), logoff_inc, 0xFFFFFFFFu);
+  }
+}
+
+bool CMainThread::ValidMacAddress()
+{
+  if (!g_Main.IsReleaseServiceMode())
+  {
+    return true;
+  }
+  CNationSettingManager *settingMgr = CTSingleton<CNationSettingManager>::Instance();
+  return settingMgr->ValidMacAddress();
+}
+
 CPlayer *CMainThread::GetCharW(char *wpszCharName)
 {
   for (int index = 0; index < MAX_PLAYER; ++index)
@@ -540,6 +764,18 @@ CGameObject *CMainThread::GetObjectA(int kind, int id, unsigned int index)
         return index < MAX_KEEPER ? g_Keeper : nullptr;
       case 7:
         return index < MAX_TRAP ? &g_Trap[index] : nullptr;
+      case 8:
+      {
+        CGuildBattleController *controller = CGuildBattleController::Instance();
+        controller->GetRegener(static_cast<int>(index));
+        return nullptr;
+      }
+      case 9:
+      {
+        CGuildBattleController *controller = CGuildBattleController::Instance();
+        controller->GetCircleZone(static_cast<int>(index));
+        return nullptr;
+      }
       case 11:
       {
         AutominePersonalMgr *automineMgr = AutominePersonalMgr::instance();
@@ -560,6 +796,13 @@ CGameObject *CMainThread::GetObjectA(int kind, int id, unsigned int index)
         return index < MAX_DARKHOLE ? &g_DarkHole[index] : nullptr;
       case 2:
         return index < MAX_PARKING_UNIT ? &g_ParkingUnit[index] : nullptr;
+      case 3:
+        return index < MAX_DARKHOLE ? &g_DarkHole[index] : nullptr;
+      case 4:
+      {
+        CGuildBattleController *controller = CGuildBattleController::Instance();
+        return reinterpret_cast<CGameObject *>(controller->GetStone(static_cast<int>(index)));
+      }
       default:
         return nullptr;
     }
@@ -659,6 +902,10 @@ bool CMainThread::Push_ChargeItem(
 }
 
 char CMainThread::ms_szClientVerCheck[33];
+
+GuildCreateEventInfo::GuildCreateEventInfo()
+{
+}
 
 void GuildCreateEventInfo::Init()
 {
@@ -803,8 +1050,90 @@ __int64 GuildCreateEventInfo::GetEmblemDalant() const
 
 TimeLimitMgr *TimeLimitMgr::Instance()
 {
-  static TimeLimitMgr s_instance;
-  return &s_instance;
+  if (!m_pTLStatusMgr)
+  {
+    m_pTLStatusMgr = new TimeLimitMgr();
+  }
+  return m_pTLStatusMgr;
+}
+
+TimeLimitMgr::TimeLimitMgr()
+{
+  m_wEnable = 0;
+  m_dwLogoutTerm = 300;
+  m_dwNotifyTerm = 300;
+}
+
+void TimeLimitMgr::Delete_All()
+{
+  for (int index = 0; index < MAX_PLAYER; ++index)
+  {
+    memset_0(&m_lstTLStaus[index], 0, sizeof(m_lstTLStaus[index]));
+  }
+  TimeLimitMgr::m_dwCnt = 0;
+}
+
+unsigned __int16 TimeLimitMgr::GetPlayerData(
+  unsigned __int16 wIndex,
+  unsigned __int8 *psStatus,
+  long double *pdPercent)
+{
+  if (!m_lstTLStaus[wIndex].m_bUse)
+  {
+    return 100;
+  }
+
+  *psStatus = m_lstTLStaus[wIndex].m_byTL_Status;
+  *pdPercent = m_lstTLStaus[wIndex].m_dPercent;
+  return m_lstTLStaus[wIndex].m_byTL_Status;
+}
+
+char TimeLimitMgr::SetConfig(
+  unsigned __int16 time1,
+  unsigned __int16 time2,
+  unsigned __int16 time3,
+  unsigned __int16 time4,
+  unsigned __int16 time5)
+{
+  unsigned __int16 config[5]{time1, time2, time3, time4, time5};
+  for (int index = 0; index < m_wPeriodCnt; ++index)
+  {
+    m_pwTime[index] = config[index];
+  }
+  return 1;
+}
+
+__int64 TimeLimitMgr::SumMinuteOne(_SYSTEMTIME *tm)
+{
+  int sumDays = 0;
+  int daysInMonth = 0;
+  for (int month = 0; month < tm->wMonth - 1; ++month)
+  {
+    if (tm->wMonth == 2)
+    {
+      if ((tm->wYear & 3) != 0 && tm->wYear % 100 || tm->wYear % 400)
+      {
+        daysInMonth = 29;
+      }
+      else
+      {
+        daysInMonth = 28;
+      }
+    }
+    else if (tm->wMonth == 4 || tm->wMonth == 6 || tm->wMonth == 9 || tm->wMonth == 11)
+    {
+      daysInMonth = 30;
+    }
+    else
+    {
+      daysInMonth = 31;
+    }
+    sumDays += daysInMonth;
+  }
+
+  sumDays += tm->wDay;
+  sumDays *= 1440;
+  return 60 * tm->wHour + sumDays + static_cast<unsigned int>(tm->wMinute);
 }
 
 void TimeLimitMgr::LoadTLINIFile()
@@ -1458,12 +1787,12 @@ bool CMainThread::Init()
   }
 
   char errCode[1028]{};
-  if (!g_MonsterEventSet.LoadEventSet(errCode))
+  if (!g_MonsterEventSet->LoadEventSet(errCode))
   {
     MyMessageBox("CGameServerDoc Error", "Read Error Event Set Script, Reason : %s", errCode);
     return false;
   }
-  if (!g_MonsterEventSet.LoadEventSetLooting())
+  if (!g_MonsterEventSet->LoadEventSetLooting())
   {
     MyMessageBox("CGameServerDoc Error", "Read Error Event Set Looting Script");
     return false;
@@ -2663,7 +2992,7 @@ bool CMainThread::SetGlobalDataName()
           "Get Unit Part Data Error : UnitPartNum(%d), UnitPartIndex(%d)",
           j,
           n);
-        return false;
+        break;
       }
 
       _NameTxt_fld *nameRecord =
@@ -3282,8 +3611,8 @@ bool CMainThread::ObjectInit()
     return false;
   }
 
-  g_MonsterEventSet = CMonsterEventSet();
-  return true;
+  g_MonsterEventSet = new CMonsterEventSet();
+  return g_MonsterEventSet != nullptr;
 }
 
 bool CMainThread::NetworkInit()
@@ -3294,9 +3623,6 @@ bool CMainThread::NetworkInit()
   params[0].m_wSocketMaxNum = MAX_PLAYER;
   params[0].m_bRealSockCheck = 1;
   params[0].m_bSystemLogFile = 1;
-#ifdef _DEBUG
-  params[0].m_bSendLogFile = 1;
-#endif
   if (m_bReleaseServiceMode)
   {
     params[0].m_byRecvThreadNum = 8;

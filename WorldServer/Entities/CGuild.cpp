@@ -308,6 +308,115 @@ void CGuild::EstGuild(
   s_MgrHistory.start_guild(this, m_szHistoryFileName);
 }
 
+void CGuild::SetGuild(
+  unsigned int dwSerial,
+  unsigned __int8 byGrade,
+  unsigned __int8 byRace,
+  char *pwszName,
+  char *pwszGreetingMsg,
+  unsigned int dwEmblemBack,
+  unsigned int dwEmblemMark,
+  int nNum,
+  _guild_member_info *pEstMember,
+  long double dTotalDalant,
+  long double dTotalGold,
+  unsigned int dwMasterSerial,
+  unsigned __int8 byMasterPrevGrade,
+  int nIOMoneyHisNum,
+  _io_money_data *pIOMonHisList,
+  unsigned int dwGuildBattleTotalWinCnt,
+  unsigned int dwGuildBattleTotalDrawCnt,
+  unsigned int dwGuildBattleTotalLoseCnt)
+{
+  m_dwSerial = dwSerial;
+  m_byGrade = byGrade;
+  strcpy_0(m_wszName, pwszName);
+  W2M(m_wszName, m_aszName, 0x11u);
+  strcpy_s(m_wszGreetingMsg, 0x100uLL, pwszGreetingMsg);
+  s_MgrHistory.GetNewFileName(dwSerial, m_szHistoryFileName);
+
+  m_nApplierNum = 0;
+  m_nMemberNum = nNum;
+  memcpy_0(m_MemberData, pEstMember, sizeof(_guild_member_info) * nNum);
+  m_bDBWait = false;
+  m_bIOWait = false;
+  m_bRankWait = false;
+  m_byMoneyOutputKind = 0;
+  m_dwEmblemBack = dwEmblemBack;
+  m_dwEmblemMark = dwEmblemMark;
+  m_dTotalDalant = dTotalDalant;
+  m_dTotalGold = dTotalGold;
+  m_byRace = byRace;
+
+  const int ioCount = nIOMoneyHisNum >= 100 ? 100 : nIOMoneyHisNum;
+  m_nIOMoneyHistoryNum = ioCount;
+  if (m_nIOMoneyHistoryNum > 0)
+  {
+    memcpy_0(m_IOMoneyHistory, pIOMonHisList, static_cast<size_t>(m_nIOMoneyHistoryNum) * sizeof(_io_money_data));
+  }
+
+  m_MasterData.init();
+  m_MasterData.dwSerial = dwMasterSerial;
+  m_MasterData.byPrevGrade = byMasterPrevGrade;
+  for (int j = 0; j < m_nMemberNum; ++j)
+  {
+    if (m_MasterData.dwSerial == m_MemberData[j].dwSerial && m_MasterData.dwSerial != static_cast<unsigned int>(-1))
+    {
+      m_MasterData.pMember = &m_MemberData[j];
+    }
+    if (m_MemberData[j].byClassInGuild == 1)
+    {
+      for (int k = 0; k < 3; ++k)
+      {
+        if (!m_pGuildCommittee[k])
+        {
+          m_pGuildCommittee[k] = &m_MemberData[j];
+          break;
+        }
+      }
+    }
+  }
+
+  m_dwGuildBattleTotWin = dwGuildBattleTotalWinCnt;
+  m_dwGuildBattleTotDraw = dwGuildBattleTotalDrawCnt;
+  m_dwGuildBattleTotLose = dwGuildBattleTotalLoseCnt;
+
+  m_bPossibleElectMaster = false;
+  if (m_MasterData.IsFill())
+  {
+    unsigned long long lastConnTime = static_cast<unsigned long long>(-1);
+    const unsigned long long limitConnTime = GetConnectTime_AddBySec(-1814400);
+    g_Main.m_pWorldDB->Select_GuildMasterLastConn(m_MasterData.dwSerial, limitConnTime, &lastConnTime);
+    if (lastConnTime != static_cast<unsigned long long>(-1))
+    {
+      m_bPossibleElectMaster = true;
+    }
+  }
+  else
+  {
+    m_bPossibleElectMaster = true;
+  }
+
+  MakeDownMemberPacket();
+  MakeDownApplierPacket();
+  MakeQueryInfoPacket();
+  MakeMoneyIOPacket();
+  MakeBuddyPacket();
+  m_dwLastLoopTime = GetLoopTime();
+
+  char *pwszMasterName = nullptr;
+  if (m_MasterData.pMember)
+  {
+    pwszMasterName = m_MasterData.pMember->wszName;
+  }
+  else
+  {
+    pwszMasterName = CTSingleton<CNationSettingManager>::Instance()->GetNoneString();
+  }
+  s_GuildList.AddList(m_byRace, m_byGrade, m_wszName, pwszMasterName);
+  s_MgrHistory.load_guild(this, m_szHistoryFileName);
+}
+
 void CGuild::ClearVote()
 {
   if (m_bNowProcessSgtMter)
@@ -2664,6 +2773,115 @@ void CGuild::CompleteSelectMasterLastConn(unsigned long long dwLastConnTime)
 unsigned int CGuild::GetMemberNum()
 {
   return static_cast<unsigned int>(m_nMemberNum);
+}
+
+char CGuild::ActVote(_guild_member_info *pMemPtr, unsigned __int8 byCode)
+{
+  if (!pMemPtr)
+  {
+    return 0;
+  }
+
+  pMemPtr->bVote = 1;
+  ++m_SuggestedMatter.byVoteState[byCode];
+  SendMsg_VoteState();
+  return 1;
+}
+
+void CGuild::CancelSuggestedMatter()
+{
+  m_GuildBattleSugestMatter.CancelSuggestedMatter();
+  SendMsg_VoteCancelInform();
+  InitVote();
+}
+
+void CGuild::ForceLeave(unsigned int dwMemberSerial)
+{
+  _guild_member_info *member = GetMemberFromSerial(dwMemberSerial);
+  if (!member)
+  {
+    return;
+  }
+
+  if (member->pPlayer)
+  {
+    member->pPlayer->m_Param.m_bGuildLock = 1;
+  }
+
+  _qry_case_forceleave qry{};
+  qry.in_leaverserial = dwMemberSerial;
+  qry.in_guildIndex = m_nIndex;
+  qry.in_guildserial = m_dwSerial;
+  qry.in_seniornum = static_cast<int>(GetMemberNum() - 1);
+  qry.in_apprnum = static_cast<unsigned __int8>(GetMemberNum() - 1);
+  qry.in_MemberNum = static_cast<int>(GetMemberNum() - 1);
+  qry.in_bPunish = 1;
+
+  const int nSize = static_cast<int>(qry.size());
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x12u, reinterpret_cast<char *>(&qry), nSize);
+}
+
+__int64 CGuild::GetMemberNumForJoin()
+{
+  return static_cast<unsigned int>(m_nTempMemberNum + m_nMemberNum);
+}
+
+unsigned __int8 CGuild::GetRace()
+{
+  return m_byRace;
+}
+
+unsigned __int8 CGuild::GuildBattleSuggestRequestToDestGuild(
+  unsigned int dwSrcGuildSerial,
+  unsigned int dwStartTimeInx,
+  unsigned int dwMemberCntInx,
+  unsigned int dwMapInx)
+{
+  if (m_bRankWait)
+  {
+    return static_cast<unsigned __int8>(-92);
+  }
+  if (m_bNowProcessSgtMter)
+  {
+    return static_cast<unsigned __int8>(-91);
+  }
+  if (m_dTotalGold < 5000.0)
+  {
+    return static_cast<unsigned __int8>(-90);
+  }
+  if (!GetGuildDataFromSerial(g_Guild, MAX_GUILD, dwSrcGuildSerial))
+  {
+    return 111;
+  }
+  if (!GetGuildDataFromSerial(g_Guild, MAX_GUILD, m_dwSerial))
+  {
+    return 111;
+  }
+
+  const unsigned __int8 availability = DestGuildIsAvailableBattleRequestState();
+  if (availability)
+  {
+    return availability;
+  }
+
+  char emptyComment[36]{};
+  if (RegSuggestedMatter(0xFFFFFFFF, 5u, dwSrcGuildSerial, emptyComment, dwStartTimeInx, dwMemberCntInx, dwMapInx))
+  {
+    return 0;
+  }
+  return static_cast<unsigned __int8>(-89);
+}
+
+void CGuild::SetTemp(char *pwszName)
+{
+  strcpy_0(m_wszName, pwszName);
+  W2M(m_wszName, m_aszName, 0x11u);
+  m_bDBWait = 1;
+}
+
+void CGuild::UpdateUTATax(unsigned __int8 byTaxRate)
+{
+  // this is not a stub
 }
 
 void CGuild::Release()

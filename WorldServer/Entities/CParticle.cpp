@@ -11,6 +11,32 @@
 #include <cstdlib>
 #include <cstring>
 
+struct _PRE_PARTICLE_LIST
+{
+  char name[64];
+  unsigned int mFlag;
+  int mCreateArea[3];
+  float mLiveTime;
+  float mStartGravity;
+  float mEndGravity;
+  float mPowerNormal[3];
+  float mTimeSpeed;
+  unsigned __int8 mATrack[6];
+  unsigned __int8 mRTrack[6];
+  unsigned __int8 mGTrack[6];
+  unsigned __int8 mBTrack[6];
+  float mScaleTrack[6];
+};
+
+static const _PRE_PARTICLE_LIST stPreParticleList[] = {
+  { "", 0, { 0, 0, 0 }, 1.0f, 2.0f, 2.0f, { 0.0f, 0.0f, 0.0f }, 1.0f, { 255, 203, 152, 101, 50, 0 }, { 255, 255, 255, 255, 255, 255 }, { 255, 255, 255, 255, 255, 255 }, { 255, 255, 255, 255, 255, 255 }, { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f } },
+  { "", 0, { 0, 0, 0 }, 4.0f, 2.0f, 2.0f, { 0.0f, 0.0f, 0.0f }, 1.0f, { 255, 203, 152, 101, 50, 0 }, { 255, 255, 255, 255, 255, 255 }, { 255, 255, 255, 255, 255, 255 }, { 255, 255, 255, 255, 255, 255 }, { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f } },
+  { "", 0, { 0, 0, 0 }, 4.0f, -2.0f, -2.0f, { 0.0f, 0.0f, 0.0f }, 1.0f, { 255, 203, 152, 101, 50, 0 }, { 255, 255, 255, 255, 255, 255 }, { 255, 255, 255, 255, 255, 255 }, { 255, 255, 255, 255, 255, 255 }, { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f } },
+  { "", 0, { 0, 0, 0 }, 1.0f, 2.0f, 2.0f, { 0.0f, 0.0f, 0.0f }, 1.0f, { 255, 203, 152, 101, 50, 0 }, { 255, 255, 255, 255, 255, 255 }, { 255, 255, 255, 255, 255, 255 }, { 255, 255, 255, 255, 255, 255 }, { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f } },
+  { "", 0, { 0, 0, 0 }, 4.0f, 2.0f, -0.7f, { 0.0f, -5.0f, -10.0f }, 2.0f, { 255, 203, 152, 101, 50, 0 }, { 255, 255, 255, 255, 255, 255 }, { 255, 255, 255, 255, 255, 255 }, { 255, 255, 255, 255, 255, 255 }, { 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 2.0f } },
+  { "", 0, { 100, 0, 100 }, 4.0f, -2.0f, -2.0f, { 0.0f, 0.0f, 0.0f }, 1.0f, { 255, 203, 152, 101, 50, 0 }, { 255, 255, 255, 255, 255, 255 }, { 255, 255, 255, 255, 255, 255 }, { 255, 255, 255, 255, 255, 255 }, { 0.2f, 1.0f, 1.0f, 1.0f, 1.0f, 4.0f } },
+};
+
 float sub_140517000(float result, float a2)
 {
   float v2 = a2 * 32767.0f;
@@ -130,6 +156,207 @@ CParticle::~CParticle()
   _PARTICLE_ELEMENT *mElement = this->mElement;
   if (mElement)
     Dfree(mElement);
+}
+
+void CParticle::SetCreatePos(float *const a2)
+{
+  mCreatePos[0] = *a2;
+  mCreatePos[1] = a2[1];
+  mCreatePos[2] = a2[2];
+}
+
+void CParticle::CopyParticleToSaveParticle(_SAVE_PARTICLE *sParticle)
+{
+  memset_0(sParticle, 0, sizeof(_SAVE_PARTICLE));
+  strcpy_0(sParticle->mEntityName, mEntityName);
+  sParticle->mNum = mNum;
+  sParticle->mAlphaType = mAlphaType;
+  sParticle->mFlag = mFlag;
+  sParticle->mLiveTime = mLiveTime;
+  sParticle->mGravity[0] = mGravity[0];
+  sParticle->mGravity[1] = mGravity[1];
+  sParticle->mGravity[2] = mGravity[2];
+  sParticle->mTimeSpeed = mTimeSpeed;
+  memcpy_0(sParticle->mATrack, mATrack, 0x60uLL);
+}
+
+void CParticle::CopySaveParticleToParticle(_SAVE_PARTICLE *sParticle)
+{
+  memset_0(this, 0, sizeof(CParticle));
+  strcpy_0(mEntityName, sParticle->mEntityName);
+  mFlag = sParticle->mFlag;
+  mNum = static_cast<int>(sParticle->mNum);
+  mAlphaType = sParticle->mAlphaType;
+  mLiveTime = sParticle->mLiveTime;
+  mTimeSpeed = sParticle->mTimeSpeed;
+  memcpy_0(mATrack, sParticle->mATrack, 0x60uLL);
+}
+
+void CParticle::SetPreCalcParticle(unsigned int type)
+{
+  if (type >= (sizeof(stPreParticleList) / sizeof(stPreParticleList[0])))
+  {
+    return;
+  }
+
+  mFlag = stPreParticleList[type].mFlag;
+  mLiveTime = stPreParticleList[type].mLiveTime;
+  mTimeSpeed = stPreParticleList[type].mTimeSpeed;
+  memcpy_0(mATrack, stPreParticleList[type].mATrack, 0x60uLL);
+}
+
+__int64 CParticle::GetParticleState()
+{
+  return static_cast<unsigned int>(mState);
+}
+
+void CParticle::ResetOnePerTime()
+{
+  mOnePerTime = (float)(mLiveTime / mTimeSpeed) / (float)mNum;
+}
+
+void CParticle::ReInitParticle(int a2)
+{
+  const int previousNum = mNum;
+  if (previousNum == a2)
+  {
+    return;
+  }
+
+  mTotalTime = 0.0f;
+  mElement = reinterpret_cast<_PARTICLE_ELEMENT *>(ReAlloc(reinterpret_cast<_DWORD *>(mElement), 104 * previousNum, 104 * a2));
+  for (int index = previousNum; index < a2; ++index)
+  {
+    InitElement(index, 0.0f);
+  }
+  mNum = a2;
+  mOnePerTime = (float)(mLiveTime / mTimeSpeed) / (float)a2;
+}
+
+void CParticle::ReleaseParticle()
+{
+  if (mElement)
+  {
+    Dfree(mElement);
+  }
+  mNum = 0;
+  mElement = nullptr;
+}
+
+void CParticle::ReleaseEntity()
+{
+  CEntity *entity = mEntity;
+  if (entity)
+  {
+    entity->ReleaseEntity();
+    entity->~CEntity();
+    operator delete(entity);
+    mEntity = nullptr;
+  }
+}
+
+void CParticle::GetBBox(float *const getMin, float *const getMax)
+{
+  *getMin = 65000.0f;
+  getMin[1] = 65000.0f;
+  getMin[2] = 65000.0f;
+  *getMax = -65000.0f;
+  getMax[1] = -65000.0f;
+  getMax[2] = -65000.0f;
+
+  _PARTICLE_ELEMENT elementBackup{};
+  memcpy_0(&elementBackup, mElement, sizeof(_PARTICLE_ELEMENT));
+
+  _ENTITY_M_GROUP *matGroup = &mEntity->mMatGroup[0];
+  float bbMax = -65000.0f;
+  for (int vertexIndex = 0; vertexIndex < static_cast<int>(matGroup->VCnt); ++vertexIndex)
+  {
+    _D3DR3VERTEX_TEX1 *vertex = &mEntity->mStaticVertexBuffer.m_VertexBufferTex1[vertexIndex + matGroup->VBMinIndex];
+    const float absX = static_cast<float>(std::fabs(vertex->x));
+    const float absY = static_cast<float>(std::fabs(vertex->y));
+    const float absZ = static_cast<float>(std::fabs(vertex->z));
+    if (bbMax < absX) bbMax = absX;
+    if (bbMax < absY) bbMax = absY;
+    if (bbMax < absZ) bbMax = absZ;
+  }
+
+  float startPosBackup[3][3]{};
+  memcpy_0(startPosBackup[0], mStartPos[0], sizeof(float) * 3);
+  memcpy_0(startPosBackup[1], mStartPos[1], sizeof(float) * 3);
+  memcpy_0(startPosBackup[2], mCreatePos, sizeof(float) * 3);
+
+  mCreatePos[0] = 0.0f;
+  mCreatePos[1] = 0.0f;
+  mCreatePos[2] = 0.0f;
+  mStartPos[0][0] = 0.0f;
+  mStartPos[0][1] = 0.0f;
+  mStartPos[0][2] = 0.0f;
+  mStartPos[1][0] = 0.0f;
+  mStartPos[1][1] = 0.0f;
+  mStartPos[1][2] = 0.0f;
+
+  InitElement(0, 0.0f);
+  for (float time = 0.0f; time < (mLiveTime / mTimeSpeed); time += 0.1f)
+  {
+    mElement[0].mTime = time;
+    GetPartcleStep(0, 0.1f);
+
+    if (mElement[0].mPos[0] < getMin[0])
+      getMin[0] = mElement[0].mPos[0];
+    if (mElement[0].mPos[1] < getMin[1])
+      getMin[1] = mElement[0].mPos[1];
+    if (mElement[0].mPos[2] < getMin[2])
+      getMin[2] = mElement[0].mPos[2];
+
+    if (mElement[0].mPos[0] > getMax[0])
+      getMax[0] = mElement[0].mPos[0];
+    if (mElement[0].mPos[1] > getMax[1])
+      getMax[1] = mElement[0].mPos[1];
+    if (mElement[0].mPos[2] > getMax[2])
+      getMax[2] = mElement[0].mPos[2];
+  }
+
+  getMin[0] -= bbMax;
+  getMin[1] -= bbMax;
+  getMin[2] -= bbMax;
+  getMax[0] += bbMax;
+  getMax[1] += bbMax;
+  getMax[2] += bbMax;
+
+  memcpy_0(mStartPos[0], startPosBackup[0], sizeof(float) * 3);
+  memcpy_0(mStartPos[1], startPosBackup[1], sizeof(float) * 3);
+  memcpy_0(mCreatePos, startPosBackup[2], sizeof(float) * 3);
+
+  getMin[0] += mStartPos[0][0];
+  getMin[1] += mStartPos[0][1];
+  getMin[2] += mStartPos[0][2];
+  getMax[0] += mStartPos[1][0];
+  getMax[1] += mStartPos[1][1];
+  getMax[2] += mStartPos[1][2];
+
+  memcpy_0(mElement, &elementBackup, sizeof(_PARTICLE_ELEMENT));
+}
+
+void CParticle::GetFlickerARGB(int i, unsigned int *dwArgb)
+{
+  if ((mElement[i].mFlag & 1) == 0)
+  {
+    return;
+  }
+
+  const unsigned int flickerTime = static_cast<unsigned int>(mFlickerTime * 65536.0f);
+  if (flickerTime == 0)
+  {
+    return;
+  }
+
+  if (static_cast<unsigned int>(mElement[i].mNowFrame * 32768.0f) % flickerTime < (flickerTime >> 1))
+  {
+    if (HIBYTE(*dwArgb) > mFlickerAlpha)
+    {
+      *dwArgb = (*dwArgb & 0xFFFFFF) | (mFlickerAlpha << 24);
+    }
+  }
 }
 
 __int64 CParticle::Loop()
@@ -1122,6 +1349,50 @@ LABEL_15:
         this->mElement[v13++].mIsLive = 0;
       } while (v12 < this->mNum);
     }
+  }
+}
+
+void CParticle::SetStartBoxArea()
+{
+  if (mNum <= 0)
+  {
+    return;
+  }
+
+  for (int i = 0; i < mNum; ++i)
+  {
+    _PARTICLE_ELEMENT &element = mElement[i];
+    if (!element.mIsLive)
+    {
+      continue;
+    }
+
+    const float createX = mCreatePos[0];
+    const float createZ = mCreatePos[2];
+    const float widthX = mStartPos[1][0] - mStartPos[0][0];
+    const float widthZ = mStartPos[1][2] - mStartPos[0][2];
+
+    float localX = element.mPos[0] - createX;
+    if (mStartPos[0][0] > localX)
+    {
+      localX += widthX;
+    }
+    if (localX > mStartPos[1][0])
+    {
+      localX -= widthX;
+    }
+    element.mPos[0] = createX + localX;
+
+    float localZ = element.mPos[2] - createZ;
+    if (mStartPos[0][2] > localZ)
+    {
+      localZ += widthZ;
+    }
+    if (localZ > mStartPos[1][2])
+    {
+      localZ -= widthZ;
+    }
+    element.mPos[2] = createZ + localZ;
   }
 }
 

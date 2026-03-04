@@ -1,5 +1,2 @@
 #pragma once
-#include "IdaCompat.h"
-#pragma pack(push, 1)
-struct  _pvp_rank_list_result_data_zocl{ unsigned __int8 byRace; unsigned __int8 byVersion; unsigned __int8 byPage; unsigned __int16 wRankDataLen; char szPvpRankData[4000]; _pvp_rank_list_result_data_zocl(); __int64 size();};
-#pragma pack(pop)
+#include "Packet/ZoneClientPacket.h"

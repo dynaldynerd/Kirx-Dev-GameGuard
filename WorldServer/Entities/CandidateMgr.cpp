@@ -120,6 +120,112 @@ bool CandidateMgr::Initialize(int maxCount)
   return true;
 }
 
+char CandidateMgr::LoadDatabase()
+{
+  InitCandidate();
+
+  const unsigned int electSerial = PatriarchElectProcessor::Instance()->GetElectSerial();
+  if (electSerial)
+  {
+    for (int raceIndex = 0; raceIndex < 3; ++raceIndex)
+    {
+      if (g_Main.m_pWorldDB->Select_PatriarchCandidate(
+            electSerial,
+            static_cast<unsigned __int8>(raceIndex),
+            m_kCandidate[raceIndex])
+          == 1)
+      {
+        return 0;
+      }
+    }
+  }
+
+  memcpy_0(m_kCandidate_old[0], m_kCandidate[0], sizeof(_candidate_info) * m_nMaxNum);
+  memcpy_0(m_kCandidate_old[1], m_kCandidate[1], sizeof(_candidate_info) * m_nMaxNum);
+  memcpy_0(m_kCandidate_old[2], m_kCandidate[2], sizeof(_candidate_info) * m_nMaxNum);
+
+  for (int raceIndex = 0; raceIndex < 3; ++raceIndex)
+  {
+    for (int candidateIndex = 0; candidateIndex < 500; ++candidateIndex)
+    {
+      if (m_kCandidate[raceIndex][candidateIndex].byRace != 0xFF)
+      {
+        if (m_kCandidate[raceIndex][candidateIndex].eStatus == _candidate_info::candidate_1st)
+        {
+          m_kCandidate[raceIndex][candidateIndex].bLoad = true;
+          m_pkCandidateLink_1st[raceIndex][m_nCandidateCnt_1st[raceIndex]++] = &m_kCandidate[raceIndex][candidateIndex];
+          if (g_Main.m_pWorldDB->Select_PatriarchWinCnt(
+                static_cast<unsigned __int8>(raceIndex),
+                m_kCandidate[raceIndex][candidateIndex].dwAvatorSerial,
+                &m_kCandidate[raceIndex][candidateIndex].dwWinCnt)
+              == 1)
+          {
+            return 0;
+          }
+        }
+        else if (m_kCandidate[raceIndex][candidateIndex].eStatus == _candidate_info::candidate_2st)
+        {
+          m_kCandidate[raceIndex][candidateIndex].bLoad = true;
+          m_pkCandidateLink_2st[raceIndex][m_nCandidateCnt_2st[raceIndex]++] = &m_kCandidate[raceIndex][candidateIndex];
+        }
+
+        if (m_kCandidate[raceIndex][candidateIndex].eClassType < _candidate_info::patriarch_group_num)
+        {
+          m_kCandidate[raceIndex][candidateIndex].bLoad = true;
+          m_pkLeader[raceIndex][m_kCandidate[raceIndex][candidateIndex].eClassType] = &m_kCandidate[raceIndex][candidateIndex];
+        }
+      }
+    }
+  }
+
+  return 1;
+}
+
+bool CandidateMgr::LoadLeaderPreVersion(unsigned __int8 byRace)
+{
+  const int result = g_Main.m_pWorldDB->Select_OldVerPatriarchGroup(byRace, m_kPatriarchGroup[byRace]);
+  return result != 1 && result != 2;
+}
+
+char CandidateMgr::LoadPatriarchGroup()
+{
+  for (int raceIndex = 0; raceIndex < 3; ++raceIndex)
+  {
+    const int result =
+      g_Main.m_pWorldDB->Select_PatriarchGroup(static_cast<unsigned __int8>(raceIndex), m_kPatriarchGroup[raceIndex]);
+    if (result == 1)
+    {
+      return 0;
+    }
+    if (result == 2)
+    {
+      LoadLeaderPreVersion(static_cast<unsigned __int8>(raceIndex));
+    }
+  }
+  return 1;
+}
+
+void CandidateMgr::Release()
+{
+  for (int raceIndex = 0; raceIndex < 3; ++raceIndex)
+  {
+    if (m_kCandidate[raceIndex])
+    {
+      delete[] m_kCandidate[raceIndex];
+    }
+
+    if (m_kCandidate_old[raceIndex])
+    {
+      delete[] m_kCandidate_old[raceIndex];
+    }
+
+    if (m_kPatriarchGroup[raceIndex])
+    {
+      delete[] m_kPatriarchGroup[raceIndex];
+    }
+  }
+}
+
 void CandidateMgr::InitCandidate()
 {
   for (int raceIndex = 0; raceIndex < 3; ++raceIndex)

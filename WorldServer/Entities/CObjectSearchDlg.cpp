@@ -23,6 +23,11 @@ CObjectSearchDlg::CObjectSearchDlg(CWnd *pParent)
 {
 }
 
+CObjectSearchDlg::~CObjectSearchDlg()
+{
+  // this is not a stub
+}
+
 void CObjectSearchDlg::DoDataExchange(CDataExchange *pDX)
 {
   CDialog::DoDataExchange(pDX);

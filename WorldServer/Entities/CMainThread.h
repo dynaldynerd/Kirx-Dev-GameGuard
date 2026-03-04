@@ -11,7 +11,6 @@
 #include "attack_param.h"
 #include "D3DXMATRIX.h"
 #include "EntityTypes.h"
-#include "attack_gen_result_zocl.h"
 
 #include <utility>
 #include <vector>
@@ -316,6 +315,7 @@ struct _event_info
 /* 1811 */
 struct  GuildCreateEventInfo
 {
+  GuildCreateEventInfo();
   void Init();
   void Loop();
   void ReadEventInfo();
@@ -497,6 +497,7 @@ public:
   static char ms_szClientVerCheck[33];
 
   CMainThread();
+  void Release();
   bool Init();
   void AccountServerLogin();
   void gm_DisplaymodeChange();
@@ -530,6 +531,14 @@ public:
     unsigned __int8 byType);
   void OnDQSRun();
   void DQSCompleteProcess();
+  char check_item_code_index();
+  void CheckServiceableTime();
+  CPlayer *GetChar(char *pszCharName);
+  CGameObject *GetObjectExpand(_object_id *pObjID, char *szCharName, unsigned __int16 wSearchIndex);
+  void GetTommorrowStr(char *szTommorrow);
+  void pc_UserChatBlockResult(char byBlockResult, _CLID *pcidTarget, _CLID *pcidGM, int bLogin);
+  void QryCaseAddpvppoint(_DB_QRY_SYN_DATA *pData);
+  bool ValidMacAddress();
   CPlayer *GetCharW(char *wpszCharName);
   CGameObject *GetObjectA(_object_id *pObjID);
   CGameObject *GetObjectA(int kind, int id, unsigned int index);
@@ -958,7 +967,7 @@ public:
   void SerivceForceSet(bool bService);
   unsigned int CreateDataResetToken(_SYSTEMTIME *tm);
   void PushResetServerToken();
-  virtual ~CMainThread() = default;
+  virtual ~CMainThread();
 
 private:
   void OnRun();
@@ -1058,9 +1067,13 @@ struct event_date_range
 /* 1307 */
 struct  RFEventBase
 {
+  RFEventBase();
   unsigned int _nOldLoopTime;
   event_date_range _kDateRange;
   virtual ~RFEventBase() = default;
+  virtual bool Initialzie();
+  virtual bool IsEnable();
+  virtual bool SetEvent(const char *p, int size, bool bInit);
   virtual void Loop();
   virtual unsigned __int8 DoEvent(CPlayer *pOne);
   virtual bool IsDbUpdate(unsigned int nIdx);
@@ -1087,7 +1100,18 @@ struct Player_TL_Status
 /* 1815 */
 struct  TimeLimitMgr
 {
+  TimeLimitMgr();
   static TimeLimitMgr *Instance();
+  static TimeLimitMgr *m_pTLStatusMgr;
+  void Delete_All();
+  unsigned __int16 GetPlayerData(unsigned __int16 wIndex, unsigned __int8 *psStatus, long double *pdPercent);
+  char SetConfig(
+    unsigned __int16 time1,
+    unsigned __int16 time2,
+    unsigned __int16 time3,
+    unsigned __int16 time4,
+    unsigned __int16 time5);
+  __int64 SumMinuteOne(_SYSTEMTIME *tm);
   void LoadTLINIFile();
   void InitializeTLMgr();
   void Chack_Time();
@@ -1281,6 +1305,8 @@ struct   _AVATOR_DB_BASE : _REGED
   unsigned int m_dwElectSerial[3];
   unsigned int m_dwRaceBattleRecord[3];
   long double m_dPvPPointLeak;
+
+  void Init();
 };
 #pragma pack(pop)
 
@@ -1354,12 +1380,15 @@ struct  _EQUIP_DB_BASE
     unsigned int dwT;
     unsigned int dwLendRegdTime;
 
+    void Init();
     bool Set(const _STORAGE_LIST::_db_con *pItem);
     bool Release();
   };
   #pragma pack(pop)
 
   _EMBELLISH_LIST m_EmbellishList[7];
+
+  void Init();
 };
 #pragma pack(pop)
 
@@ -1391,12 +1420,15 @@ struct  _FORCE_DB_BASE
     unsigned int dwT;
     unsigned int m_dwLendRegdTime;
 
+    void Init();
     bool Set(const _STORAGE_LIST::_db_con *pItem);
     bool Release();
   };
   #pragma pack(pop)
 
   _LIST m_List[88];
+
+  void Init();
 };
 #pragma pack(pop)
 
@@ -1457,6 +1489,7 @@ struct  _INVEN_DB_BASE
     unsigned int dwT;
     unsigned int dwLendRegdTime;
 
+    void Init();
     _LIST &operator=(const _LIST &rhs);
 
     bool Set(const _STORAGE_LIST::_db_con *pItem);
@@ -1466,6 +1499,7 @@ struct  _INVEN_DB_BASE
 
   _LIST m_List[100];
 
+  void Init();
   _INVEN_DB_BASE &operator=(const _INVEN_DB_BASE &rhs);
 };
 #pragma pack(pop)
@@ -1512,11 +1546,15 @@ struct  _TRADE_DB_BASE
     char wszBuyerName[17];
     char szBuyerAccount[13];
 
+    void Clear();
     bool IsEmpty();
   };
   #pragma pack(pop)
 
   _LIST m_List[20];
+
+  void Init();
+  void Clear();
 };
 #pragma pack(pop)
 
@@ -1560,6 +1598,7 @@ struct   _TRUNK_DB_BASE
     unsigned int dwT;
     unsigned int dwLendRegdTime;
 
+    void Init();
     bool Set(const _STORAGE_LIST::_db_con *pItem, unsigned __int8 byRaceCode);
     bool Release();
   };
@@ -1574,6 +1613,8 @@ struct   _TRUNK_DB_BASE
   _LIST m_List[100];
   unsigned __int8 byExtSlotNum;
   _LIST m_ExtList[40];
+
+  void Init();
 };
 #pragma pack(pop)
 
@@ -1689,10 +1730,14 @@ struct  _CRYMSG_DB_BASE
   struct _LIST
   {
     char wszCryMsg[65];
+
+    void Init();
   };
   #pragma pack(pop)
 
   _LIST m_List[10];
+
+  void Init();
 };
 
 /* 1585 */
@@ -1730,6 +1775,8 @@ struct _PVPPOINT_LIMIT_DB_BASE
   long double dOriginalPoint;
   long double dLimitPoint;
   long double dUsePoint;
+
+  void Init();
 };
 #pragma pack(pop)
 
@@ -1748,6 +1795,8 @@ struct  _PVP_ORDER_VIEW_DB_BASE
   unsigned __int8 byContHaveCash;
   unsigned __int8 byContLoseCash;
   bool bRaceWarRecvr;
+
+  void Init();
 };
 #pragma pack(pop)
 
@@ -1793,6 +1842,8 @@ struct   _SUPPLEMENT_DB_BASE
   unsigned int dwAccumPlayTime;
   unsigned int dwLastResetDate;
   unsigned int dwActionPoint[3];
+
+  void Init();
 };
 #pragma pack(pop)
 
@@ -1806,6 +1857,8 @@ struct  _PCBANG_PLAY_TIME
   bool bForcedClose;
   unsigned __int8 byReceiveCoupon;
   unsigned __int8 byEnsureTime;
+
+  void Init();
 };
 #pragma pack(pop)
 
@@ -1813,6 +1866,8 @@ struct  _PCBANG_PLAY_TIME
 struct  _POTION_NEXT_USE_TIME_DB_BASE
 {
   unsigned int dwPotionNextUseTime[38];
+
+  void Init();
 };
 
 /* 1590 */
@@ -2140,6 +2195,7 @@ struct  _guild_battle_suggest_matter
 
   _guild_battle_suggest_matter();
   void Clear();
+  void CancelSuggestedMatter();
 };
 
 /* 1729 */
@@ -2972,6 +3028,7 @@ public:
 /* 1670 */
 struct  SF_Timer
 {
+  SF_Timer();
   unsigned int m_dwLastCheckTime;
   unsigned int m_dwGapCheckTime;
 
@@ -3680,6 +3737,8 @@ struct _attack_test_request_clzo
   __int16 zTar[2];
 };
 #pragma pack(pop)
+
+#include "Packet/ZoneClientPacket.h"
 
 #pragma pack(push, 1)
 struct _attack_keeper_inform_zocl

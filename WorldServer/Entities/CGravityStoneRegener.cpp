@@ -3,6 +3,7 @@
 #include "CGravityStoneRegener.h"
 
 #include <new>
+#include <cstdlib>
 
 #include "CGameObject.h"
 #include "CMapData.h"
@@ -10,12 +11,119 @@
 #include "DummyPosition.h"
 #include "GlobalObjects.h"
 #include "GuildBattle.h"
+#include "ObjectCreateSetData.h"
+#include "WorldServerUtil.h"
+
+unsigned int CGravityStoneRegener::ms_dwSerialCnt = 1;
 
 CGravityStoneRegener::CGravityStoneRegener() : m_eState(GSR_NONE), m_iPortalInx(-1), m_pkRegenPos(nullptr)
 {
 }
 
 CGravityStoneRegener::~CGravityStoneRegener() = default;
+
+char CGravityStoneRegener::Create(CMapData *pkMap)
+{
+  if (m_eState == GSR_NONE || !pkMap)
+  {
+    return 0;
+  }
+
+  _object_create_setdata data;
+  data.m_nLayerIndex = 0;
+  data.m_pMap = pkMap;
+  memcpy_0(data.m_fStartPos, m_pkRegenPos->m_fCenterPos, sizeof(data.m_fStartPos));
+  data.m_pRecordSet = nullptr;
+  if (!CGameObject::Create(&data))
+  {
+    return 0;
+  }
+
+  m_dwObjSerial = ms_dwSerialCnt++;
+  m_eState = GSR_CREATE;
+  return 1;
+}
+
+void CGravityStoneRegener::Destroy()
+{
+  m_eState = GSR_DESTROY;
+  CCharacter::Destroy();
+}
+
+const char *CGravityStoneRegener::GetStateString(CString *strState)
+{
+  switch (m_eState)
+  {
+    case GSR_CREATE:
+      *strState = "Create";
+      break;
+    case GSR_REGEN:
+      *strState = "Regen";
+      break;
+    case GSR_TAKE:
+      *strState = "Take";
+      break;
+    default:
+      *strState = "None";
+      break;
+  }
+#ifdef UNICODE
+  static char stateText[32]{};
+  size_t converted = 0;
+  wcstombs_s(&converted, stateText, strState->GetString(), _TRUNCATE);
+  return stateText;
+#else
+  return strState->GetString();
+#endif
+}
+
+bool CGravityStoneRegener::IsNearPosition(const float *pfCurPos)
+{
+  return GetSqrt(m_fCurPos, const_cast<float *>(pfCurPos)) <= 100.0f;
+}
+
+int CGravityStoneRegener::Regen()
+{
+  if (m_eState != GSR_CREATE && m_eState != GSR_TAKE)
+  {
+    return -1;
+  }
+
+  m_eState = GSR_REGEN;
+  SendMsgAlterState();
+  return m_iPortalInx;
+}
+
+unsigned __int8 CGravityStoneRegener::Take(CMapData *pkMap, const float *pfCurPos)
+{
+  if (!pkMap)
+  {
+    return 110;
+  }
+
+  if (m_eState != GSR_REGEN)
+  {
+    return static_cast<unsigned __int8>(-121);
+  }
+
+  if (!IsNearPosition(pfCurPos))
+  {
+    return static_cast<unsigned __int8>(-120);
+  }
+
+  m_eState = GSR_TAKE;
+  SendMsgAlterState();
+  return 0;
+}
+
+void CGravityStoneRegener::CheatClearRegenState()
+{
+  if (m_eState == GSR_CREATE || m_eState == GSR_REGEN || m_eState == GSR_TAKE)
+  {
+    m_eState = GSR_CREATE;
+    SendMsgAlterState();
+  }
+}
 
 bool CGravityStoneRegener::Init(unsigned int uiMapInx, unsigned __int16 wInx, CMapData *pkMap)
 {
@@ -81,6 +189,26 @@ bool CGravityStoneRegener::Init(unsigned int uiMapInx, unsigned __int16 wInx, CM
 
   m_eState = GSR_INIT;
   return true;
+}
+
+char CGravityStoneRegener::ClearRegen()
+{
+  if (m_eState == GSR_CREATE || m_eState == GSR_REGEN || m_eState == GSR_TAKE)
+  {
+    m_eState = GSR_CREATE;
+    return 1;
+  }
+
+  const char *stateName[] = {"NONE", "INIT", "CREATE", "REGEN", "TAKE", "DESTROY"};
+  if (m_eState > GSR_DESTROY)
+  {
+    m_eState = GSR_NONE;
+  }
+
+  GUILD_BATTLE::CGuildBattleLogger::Instance()->Log(
+    "CGravityStoneRegener::ClearRegen() : (%s) : Invalid Goal State",
+    stateName[static_cast<int>(m_eState) + 1]);
+  return 0;
 }
 
 int CGravityStoneRegener::GetPortalInx() const

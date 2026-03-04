@@ -9,6 +9,9 @@ class CPlayer;
 class  CRealMoveRequestDelayChecker
 {
 public:
+  CRealMoveRequestDelayChecker();
+  ~CRealMoveRequestDelayChecker();
+
   CIndexList m_kNodeInxOrderList;
   std::vector<unsigned long> m_vecDelayList;
   unsigned __int16 m_wTotalMissCount;

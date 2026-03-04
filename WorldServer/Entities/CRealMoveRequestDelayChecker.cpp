@@ -10,6 +10,20 @@
 #include "CUserDB.h"
 #include "GlobalObjects.h"
 
+CRealMoveRequestDelayChecker::CRealMoveRequestDelayChecker()
+{
+  m_wTotalMissCount = 0;
+  m_bPrevRet = true;
+  m_wContinueMissCount = 0;
+  m_wSingleMissCount = 0;
+  m_wContinueValiedCount = 0;
+  m_wTotalContinueValiedCount = 0;
+}
+
+CRealMoveRequestDelayChecker::~CRealMoveRequestDelayChecker()
+{
+}
+
 bool CRealMoveRequestDelayChecker::Init(unsigned int listCount)
 {
   if (listCount == 0)

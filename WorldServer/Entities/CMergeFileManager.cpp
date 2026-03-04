@@ -15,6 +15,11 @@ CMergeFileManager::CMergeFileManager()
   mMergeFile = nullptr;
 }
 
+CMergeFileManager::~CMergeFileManager()
+{
+  ReleaseMergeFile();
+}
+
 void CMergeFileManager::InitMergeFile(char *a2)
 {
   char *v2 = a2;

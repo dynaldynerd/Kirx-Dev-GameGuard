@@ -572,6 +572,12 @@ void Us_HFSM::OnProcess(unsigned int dwLastTime)
   }
 }
 
+SF_Timer::SF_Timer()
+{
+  m_dwGapCheckTime = static_cast<unsigned int>(-1);
+  m_dwLastCheckTime = static_cast<unsigned int>(-1);
+}
+
 void SF_Timer::Set(unsigned int dwTimeDelay)
 {
   m_dwGapCheckTime = dwTimeDelay;

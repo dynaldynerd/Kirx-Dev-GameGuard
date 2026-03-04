@@ -12,7 +12,10 @@ struct _PERSONALAMINE_INVEN_DB_BASE;
 class  AutominePersonalMgr
 {
 public:
+  static AutominePersonalMgr *m_pInstance;
   static AutominePersonalMgr *instance();
+  static void release();
+  AutominePersonalMgr();
   bool initialize();
   bool CreateDBTable();
   AutominePersonal *get_machine(unsigned int nIdx);

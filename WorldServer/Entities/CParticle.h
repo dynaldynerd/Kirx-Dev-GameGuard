@@ -3,6 +3,27 @@
 #include "IdaCompat.h"
 #include "CMainThread.h"
 
+#define _PARTICLE_SPARE_SIZE 127
+
+struct _SAVE_PARTICLE
+{
+  char mEntityName[128];
+  unsigned int mFlag;
+  unsigned int mNum;
+  unsigned int mAlphaType;
+  int mCreateArea[3];
+  float mLiveTime;
+  float mGravity[3];
+  float mPowerNormal[3];
+  float mTimeSpeed;
+  unsigned __int8 mATrack[12];
+  unsigned __int8 mRTrack[12];
+  unsigned __int8 mGTrack[12];
+  unsigned __int8 mBTrack[12];
+  float mScaleTrack[12];
+  unsigned int spare[_PARTICLE_SPARE_SIZE];
+};
+
 /* 1398 */
 class  CParticle
 {
@@ -63,8 +84,20 @@ public:
   __int64 SpecialLoop();
   __int64 SpecialLoop2();
   __int64 LoadParticleSPT(char *a2, int a3);
+  void CopyParticleToSaveParticle(_SAVE_PARTICLE *sParticle);
+  void CopySaveParticleToParticle(_SAVE_PARTICLE *sParticle);
   void InitParticle();
+  void ReInitParticle(int num);
+  void ReleaseParticle();
+  void ReleaseEntity();
+  void GetBBox(float *const getMin, float *const getMax);
+  void GetFlickerARGB(int i, unsigned int *dwArgb);
+  __int64 GetParticleState();
   void SetParticleState(int a2);
+  void SetCreatePos(float *const pos);
+  void SetPreCalcParticle(unsigned int type = 1);
+  void ResetOnePerTime();
+  void SetStartBoxArea();
   void InitElement(int a2, float a3);
   void GetPartcleStep(int a2, float a3);
   void CheckCollision(int a2, float a3);

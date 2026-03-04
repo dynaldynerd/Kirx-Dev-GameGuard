@@ -23,6 +23,7 @@ public:
   void SendMsg_FixPosition(int n) override;
   void SendMsg_RealFixPosition(bool bCircle) override;
   void SendMsg_RealMovePoint(int n) override;
+  _dummy_position *GetStoreDummyName();
 
   CItemStore *m_pItemStore;
   unsigned __int8 m_byRaceCode;

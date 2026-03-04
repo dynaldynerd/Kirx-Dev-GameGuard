@@ -62,6 +62,11 @@ void CMyTimer::TermTimeRun()
   m_dwTickOld = timeGetTime();
 }
 
+void CMyTimer::NextTimeRun()
+{
+  m_dwTickOld = timeGetTime() + m_nTickTerm + 1;
+}
+
 void CMyTimer::StopTimer()
 {
   m_bOper = false;

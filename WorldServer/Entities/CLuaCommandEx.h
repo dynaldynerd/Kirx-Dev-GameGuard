@@ -7,6 +7,7 @@
 class  CLuaCommandEx : public CLuaCommand
 {
 public:
+  CLuaCommandEx();
   ~CLuaCommandEx() override;
 
   class _State

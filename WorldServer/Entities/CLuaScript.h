@@ -9,7 +9,7 @@ class  CLuaScript
 {
 public:
   CLuaScript();
-  virtual ~CLuaScript() = default;
+  virtual ~CLuaScript();
 
   virtual const char *GetName();
   virtual lua_State *GetLuaState();

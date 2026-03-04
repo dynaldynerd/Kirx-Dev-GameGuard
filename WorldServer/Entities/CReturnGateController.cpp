@@ -8,6 +8,8 @@
 
 #include <cstring>
 
+CReturnGateController *CReturnGateController::ms_Instance = nullptr;
+
 CReturnGateController::CReturnGateController()
 {
   m_pkTimer = nullptr;
@@ -61,8 +63,20 @@ void CReturnGateController::CleanUp()
 
 CReturnGateController *CReturnGateController::Instance()
 {
-  static CReturnGateController s_instance;
-  return &s_instance;
+  if (!ms_Instance)
+  {
+    ms_Instance = new CReturnGateController();
+  }
+  return ms_Instance;
+}
+
+void CReturnGateController::Destroy()
+{
+  if (ms_Instance)
+  {
+    delete ms_Instance;
+    ms_Instance = nullptr;
+  }
 }
 
 bool CReturnGateController::Init(unsigned int gateCount)

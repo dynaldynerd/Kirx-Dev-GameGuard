@@ -15,6 +15,15 @@ class  CAlpha
 
 public:
   CAlpha();
+  ~CAlpha();
+  void CheckAlphaAlloc();
+  unsigned int *GetAlphaFace();
+  __int64 GetAlphaFaceCnt();
+  void LoopInitAlphaStack();
+  void SetAlphaEntityStack(unsigned __int16 faceIndex);
+  void SetAlphaStack(unsigned __int16 faceIndex);
+  void SetCoronaStack(unsigned __int16 faceIndex);
+  unsigned int *SortAlphaStack(float *const cameraPos);
   void InitAlpha(void *a2);
 };
 

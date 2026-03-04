@@ -25,7 +25,7 @@ public:
   };
 
   CNationSettingData();
-  ~CNationSettingData() = default;
+  ~CNationSettingData();
 
   virtual int Init();
   virtual void Loop();

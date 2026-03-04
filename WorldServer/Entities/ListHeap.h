@@ -13,8 +13,8 @@ public:
   class CIndexListEx : public CNetIndexList
   {
   public:
-    CIndexListEx() : CNetIndexList() {}
-    ~CIndexListEx() = default;
+    CIndexListEx();
+    ~CIndexListEx();
 
     bool Push(CNetIndexList::_index_node *pos, unsigned int dwIndex)
     {
@@ -216,3 +216,14 @@ public:
   CIndexListEx _listData;
   unsigned __int64 _nMaxSize = 0;
 };
+
+template <typename T>
+ListHeap<T>::CIndexListEx::CIndexListEx()
+  : CNetIndexList()
+{
+}
+
+template <typename T>
+ListHeap<T>::CIndexListEx::~CIndexListEx()
+{
+}

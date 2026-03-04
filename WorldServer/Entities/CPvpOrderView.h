@@ -22,6 +22,9 @@ struct  _pvp_order_view_inform_zocl
 class CPvpOrderView
 {
 public:
+  char Init();
+  void SetOrderViewAttackState();
+  void SetOrderViewDamagedState();
   void Loop(unsigned __int16 wIndex);
   long double GetPvpCash();
   long double GetPvpTempCash();
@@ -36,6 +39,9 @@ public:
   void Notify_Point(unsigned __int16 wIndex, long double dChangePoint, unsigned int dwTarSerial);
   void Notify_PvPEnd(unsigned __int16 wIndex);
   void Notify_PvpTempCash(unsigned __int16 wIndex);
+  void UpdatePvPKill(unsigned __int16 wIndex, unsigned int dwTarSerial);
+  void UpdatePvPDeath(unsigned __int16 wIndex, unsigned int dwTarSerial);
+  void Update_KillerList(unsigned int dwSerial, int nIndex);
   void Update_RaceWarRecvr(bool bUse);
   void ResetPvPOrderView();
   void Update(

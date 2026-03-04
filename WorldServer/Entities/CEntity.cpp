@@ -8,6 +8,22 @@
 
 #include "WorldServerUtil.h"
 #include "R3EngineGlobals.h"
+#include "GlobalObjects.h"
+
+CEntity::CEntity()
+{
+  mVetexBufferSize = 0;
+  mIsEntityLoad = 0;
+  mTextureSize = 0;
+  mMat = nullptr;
+  mFrame = 0.0f;
+  mFlag = 0;
+  mIndependencyTex = nullptr;
+}
+
+CEntity::~CEntity()
+{
+}
 
 #pragma pack(push, 1)
 struct _ENTITY_COMP_HEADER
@@ -571,5 +587,448 @@ void CEntity::PrepareAnimation()
       } while (idx < mObjectNum);
     }
   }
+}
+
+__int64 CEntity::GetUsedVertexBufferSize()
+{
+  return mVetexBufferSize;
+}
+
+void CEntity::GetAnimationMatrix(float (*const a2)[4], _ANI_OBJECT *a3, double a4)
+{
+  GetAniMatrix(a2, a3, a4);
+}
+
+void CEntity::AddFlag(int a2)
+{
+  mFlag |= a2;
+}
+
+_ENTITY_M_GROUP *CEntity::GetMatGroup()
+{
+  return mMatGroup;
+}
+
+__int64 CEntity::GetMatGroupNum()
+{
+  return static_cast<unsigned int>(mMatGroupNum);
+}
+
+__int64 CEntity::GetMatNum()
+{
+  return mMat->m_iMatNum;
+}
+
+_ANI_OBJECT *CEntity::GetObjectA()
+{
+  return mObject;
+}
+
+CIndexBuffer *CEntity::GetStaticIndexedBuffer()
+{
+  return &mStaticIndexedBuffer;
+}
+
+CVertexBuffer *CEntity::GetStaticVertexBuffer()
+{
+  return &mStaticVertexBuffer;
+}
+
+__int64 CEntity::IsAlpha()
+{
+  return static_cast<unsigned int>(mIsAlpha);
+}
+
+bool CEntity::IsEnableShaderID(int a2)
+{
+  if (!a2 || (a2 != 1 && a2 != 2))
+    return false;
+  if (mFlag & 0x40)
+    return IsEnableShader(1u) != 0;
+  return IsEnableShader(0) != 0;
+}
+
+bool CEntity::IsFirstAlpha()
+{
+  return mMatGroupNum > 0 && mMat != nullptr && mMat->m_Layer[0].m_dwAlphaType != 0;
+}
+
+void CEntity::SetMapColor(unsigned int a2)
+{
+  mMapColor = a2;
+}
+
+void CEntity::DrawOneMatGroup(_ENTITY_M_GROUP *a2)
+{
+  IDirect3DDevice8 *const d3dDevice = GetD3dDevice();
+  _R3MATERIAL *const mat = &mMat[a2->MtlId];
+
+  if (a2->MtlId == -1)
+  {
+    d3dDevice->SetTexture(d3dDevice, 0, nullptr);
+    d3dDevice->DrawIndexedPrimitive(d3dDevice, D3DPT_TRIANGLELIST, a2->VBMinIndex, a2->VCnt, a2->IBMinIndex, a2->TriNum);
+    return;
+  }
+
+  for (unsigned int layerIndex = 0; layerIndex < mat->m_dwLayerNum; ++layerIndex)
+  {
+    _ONE_LAYER &layer = mat->m_Layer[layerIndex];
+    D3DXMATRIX texMat{};
+    const bool hasTextureMatrix = GetTextureMatrix(mat, layerIndex, &texMat, mStartTime) != 0;
+    if (hasTextureMatrix)
+    {
+      d3dDevice->SetTextureStageState(d3dDevice, 0, D3DTSS_TEXTURETRANSFORMFLAGS, 2u);
+      d3dDevice->SetTransform(d3dDevice, D3DTS_TEXTURE0, reinterpret_cast<const _D3DMATRIX *>(&texMat));
+    }
+
+    if (layer.m_dwFlag & 4)
+    {
+      auto *const locked = mStaticVertexBuffer.VPLock(36 * a2->VBMinIndex, 36 * a2->VCnt, 0);
+      MakeUV(reinterpret_cast<_D3DR3VERTEX_TEX1 *>(locked), a2->VCnt, reinterpret_cast<unsigned int *>(a2->MultiSourceUV), mat, layerIndex);
+      mStaticVertexBuffer.VPUnLock();
+    }
+
+    if (mFlag & 8)
+    {
+      auto **const independentTextures = reinterpret_cast<IDirect3DBaseTexture8 **>(mIndependencyTex);
+      d3dDevice->SetTexture(d3dDevice, 0, independentTextures[layer.m_iSurface - mStartTexID]);
+    }
+    else if (layer.m_dwFlag & 0x1000)
+    {
+      const int tileOffset = GetTileAniTextureAddId(mat, layerIndex, mStartTime);
+      d3dDevice->SetTexture(d3dDevice, 0, R3GetSurface(layer.m_iSurface + tileOffset));
+    }
+    else
+    {
+      d3dDevice->SetTexture(d3dDevice, 0, R3GetSurface(layer.m_iSurface));
+    }
+
+    if (layer.m_dwAlphaType)
+      BlendOn(layer.m_dwAlphaType);
+
+    d3dDevice->DrawIndexedPrimitive(d3dDevice, D3DPT_TRIANGLELIST, a2->VBMinIndex, a2->VCnt, a2->IBMinIndex, a2->TriNum);
+
+    if (hasTextureMatrix)
+      d3dDevice->SetTextureStageState(d3dDevice, 0, D3DTSS_TEXTURETRANSFORMFLAGS, 24u);
+
+    if (layer.m_dwFlag & 0x400)
+    {
+      d3dDevice->SetRenderState(d3dDevice, D3DRS_LIGHTING, 0);
+      d3dDevice->SetRenderState(d3dDevice, D3DRS_DIFFUSEMATERIALSOURCE, 1u);
+      d3dDevice->SetRenderState(d3dDevice, D3DRS_ALPHATESTENABLE, 1u);
+    }
+
+    if (layer.m_dwAlphaType)
+      BlendOff();
+  }
+}
+
+void CEntity::DrawOneMatGroupVS(_ENTITY_M_GROUP *a2)
+{
+  IDirect3DDevice8 *const d3dDevice = GetD3dDevice();
+  _R3MATERIAL *const mat = &mMat[a2->MtlId];
+
+  if (a2->MtlId == -1)
+  {
+    d3dDevice->SetTexture(d3dDevice, 0, nullptr);
+    d3dDevice->DrawIndexedPrimitive(d3dDevice, D3DPT_TRIANGLELIST, a2->VBMinIndex, a2->VCnt, a2->IBMinIndex, a2->TriNum);
+    return;
+  }
+
+  for (unsigned int layerIndex = 0; layerIndex < mat->m_dwLayerNum; ++layerIndex)
+  {
+    _ONE_LAYER &layer = mat->m_Layer[layerIndex];
+    if (mFlag & 8)
+    {
+      auto **const independentTextures = reinterpret_cast<IDirect3DBaseTexture8 **>(mIndependencyTex);
+      d3dDevice->SetTexture(d3dDevice, 0, independentTextures[layer.m_iSurface - mStartTexID]);
+    }
+    else if (layer.m_dwFlag & 0x1000)
+    {
+      const int tileOffset = GetTileAniTextureAddId(mat, layerIndex, 0.0);
+      d3dDevice->SetTexture(d3dDevice, 0, R3GetSurface(layer.m_iSurface + tileOffset));
+    }
+    else
+    {
+      d3dDevice->SetTexture(d3dDevice, 0, R3GetSurface(layer.m_iSurface));
+    }
+
+    if (layer.m_dwAlphaType)
+      BlendOn(layer.m_dwAlphaType);
+
+    d3dDevice->DrawIndexedPrimitive(d3dDevice, D3DPT_TRIANGLELIST, a2->VBMinIndex, a2->VCnt, a2->IBMinIndex, a2->TriNum);
+
+    if (layer.m_dwAlphaType)
+      BlendOff();
+  }
+}
+
+void CEntity::SetMaterialAndLight(unsigned int a2)
+{
+  D3DMATERIAL8 material{};
+  IDirect3DDevice8 *const d3dDevice = GetD3dDevice();
+
+  if (mFlag & 0x40)
+  {
+    d3dDevice->LightEnable(d3dDevice, 0, 1);
+    MultiTexOff();
+
+    D3DLIGHT8 light{};
+    const unsigned int dayColor = CN_MixDayColor();
+    GetMatLightFromColor(&light, &material, dayColor, 1.0f);
+
+    light.Direction.x = -light.Direction.x;
+    light.Direction.y = -light.Direction.y;
+    light.Direction.z = -light.Direction.z;
+
+    material.Ambient.r += 0.1f;
+    material.Ambient.g += 0.1f;
+    material.Ambient.b += 0.1f;
+
+    material.Diffuse.a = static_cast<float>(HIBYTE(a2)) / 255.0f;
+    material.Diffuse.r += 0.25f;
+    material.Diffuse.g += 0.2f;
+    material.Diffuse.b += 0.2f;
+
+    if (material.Diffuse.r > 1.0f)
+      material.Diffuse.r = 1.0f;
+    if (material.Diffuse.g > 1.0f)
+      material.Diffuse.g = 1.0f;
+    if (material.Diffuse.b > 1.0f)
+      material.Diffuse.b = 1.0f;
+
+    if (material.Ambient.r > 1.0f)
+      material.Ambient.r = 1.0f;
+    if (material.Ambient.g > 1.0f)
+      material.Ambient.g = 1.0f;
+    if (material.Ambient.b > 1.0f)
+      material.Ambient.b = 1.0f;
+
+    d3dDevice->SetLight(d3dDevice, 0, &light);
+    d3dDevice->SetTextureStageState(d3dDevice, 0, D3DTSS_COLORARG1, 4u);
+    d3dDevice->SetRenderState(d3dDevice, D3DRS_COLORVERTEX, 0);
+
+    material.Emissive.a = static_cast<float>(HIBYTE(a2)) / 255.0f;
+    material.Emissive.r = 0.0f;
+    material.Emissive.g = 0.0f;
+    material.Emissive.b = 0.0f;
+    d3dDevice->SetRenderState(d3dDevice, D3DRS_EMISSIVEMATERIALSOURCE, 0);
+    d3dDevice->LightEnable(d3dDevice, 0, 1);
+  }
+  else
+  {
+    const float alpha = static_cast<float>(HIBYTE(a2)) / 255.0f;
+    material.Diffuse.a = alpha;
+    material.Diffuse.r = (static_cast<float>(BYTE2(a2)) / 255.0f) / (static_cast<float>(BYTE2(a2)) / 255.0f);
+    material.Diffuse.g = (static_cast<float>(BYTE1(a2)) / 255.0f) / (static_cast<float>(BYTE1(a2)) / 255.0f);
+    material.Diffuse.b = (static_cast<float>(LOBYTE(a2)) / 255.0f) / (static_cast<float>(LOBYTE(a2)) / 255.0f);
+
+    if ((a2 & 0xFFFFFF) == 0xFFFFFF)
+    {
+      d3dDevice->SetRenderState(d3dDevice, D3DRS_EMISSIVEMATERIALSOURCE, 1u);
+      d3dDevice->LightEnable(d3dDevice, 0, 0);
+    }
+    else
+    {
+      material.Emissive.a = alpha;
+      material.Emissive.r = static_cast<float>(BYTE2(a2)) / 255.0f;
+      material.Emissive.g = static_cast<float>(BYTE1(a2)) / 255.0f;
+      material.Emissive.b = static_cast<float>(LOBYTE(a2)) / 255.0f;
+      d3dDevice->SetRenderState(d3dDevice, D3DRS_EMISSIVEMATERIALSOURCE, 0);
+      d3dDevice->LightEnable(d3dDevice, 0, 1);
+    }
+
+    d3dDevice->SetTextureStageState(d3dDevice, 0, D3DTSS_COLORARG1, 5u);
+    d3dDevice->SetRenderState(d3dDevice, D3DRS_COLORVERTEX, 1u);
+
+    if (mFlag & 0x20)
+    {
+      d3dDevice->SetTextureStageState(d3dDevice, 0, D3DTSS_COLORARG2, 3u);
+      d3dDevice->SetRenderState(d3dDevice, D3DRS_TEXTUREFACTOR, CN_MixDayColor());
+      d3dDevice->SetTextureStageState(d3dDevice, 1, D3DTSS_TEXCOORDINDEX, 1u);
+      d3dDevice->SetTextureStageState(d3dDevice, 1, D3DTSS_COLORARG1, 2u);
+      d3dDevice->SetTextureStageState(d3dDevice, 1, D3DTSS_COLORARG2, 1u);
+      d3dDevice->SetTextureStageState(d3dDevice, 1, D3DTSS_COLOROP, 5u);
+    }
+    else
+    {
+      MultiTexOff();
+    }
+  }
+
+  d3dDevice->SetRenderState(d3dDevice, D3DRS_LIGHTING, 1u);
+  d3dDevice->SetMaterial(d3dDevice, &material);
+  d3dDevice->SetRenderState(d3dDevice, D3DRS_DIFFUSEMATERIALSOURCE, 0);
+}
+
+void CEntity::SetVertexShaderID(_ENTITY_LIST *a2, float (*const a3)[4], unsigned int a4)
+{
+  const float alpha = static_cast<float>(HIBYTE(a4)) / 255.0f;
+  if ((a2->ShaderID - 1) > 1)
+    return;
+
+  if (mFlag & 0x40)
+  {
+    float invWorld[20]{};
+    MatrixInvert(reinterpret_cast<float (*)[4]>(invWorld), a3);
+    invWorld[12] = 0.0f;
+    invWorld[13] = 0.0f;
+    invWorld[14] = 0.0f;
+
+    float transformedDir[3]{};
+    Vector3fTransform(transformedDir, stState.mMainLightNomal, reinterpret_cast<float (*)[4]>(invWorld));
+
+    const float dirLength =
+      sqrtf_0((transformedDir[0] * transformedDir[0]) + (transformedDir[1] * transformedDir[1]) + (transformedDir[2] * transformedDir[2]));
+    transformedDir[0] /= dirLength;
+    transformedDir[1] /= dirLength;
+    transformedDir[2] /= dirLength;
+
+    SetLitGrassVS(mAddFrame, a2->Factor, alpha, CN_MixDayColor(), transformedDir);
+  }
+  else
+  {
+    SetGrassVS(mAddFrame, a2->Factor, alpha, CN_MixDayColor());
+  }
+}
+
+__int64 CEntity::DrawEntity(float (*const a2)[4], unsigned int a3, double a4)
+{
+  double aniFrame = a4;
+  CEntity::PrepareAnimation();
+  IDirect3DDevice8 *const d3dDevice = GetD3dDevice();
+  if (!mIsEntityLoad || !mStaticVertexBuffer.m_lpVertexBuffer)
+    return 0;
+
+  if (mFlag & 0x10)
+    d3dDevice->SetRenderState(d3dDevice, D3DRS_ZENABLE, 0);
+
+  CEntity::SetMaterialAndLight(a3);
+  SetVPIPTex1(mStaticVertexBuffer.m_lpVertexBuffer, mStaticIndexedBuffer.m_lpIndexBuffer);
+
+  if (static_cast<float>(a4) == -1.0f)
+    aniFrame = static_cast<float>(R3GetTime() + mAddFrame) * 30.0f;
+
+  for (int i = 0; i < mMatGroupNum; ++i)
+  {
+    float objectMatrix[16]{};
+    GetObjectMatrix(reinterpret_cast<float (*)[4]>(objectMatrix), mMatGroup[i].ObjectId, mObject, aniFrame);
+    if (SLOBYTE(mFlag) < 0)
+    {
+      float billboard[16]{};
+      memcpy_0(billboard, &dword_184A79AEC, sizeof(billboard));
+      billboard[12] = 0.0f;
+      billboard[13] = 0.0f;
+      billboard[14] = 0.0f;
+      MatrixMultiply(reinterpret_cast<float (*)[4]>(objectMatrix), reinterpret_cast<float (*)[4]>(billboard), reinterpret_cast<float (*)[4]>(objectMatrix));
+    }
+    MatrixMultiply(reinterpret_cast<float (*)[4]>(objectMatrix), a2, reinterpret_cast<float (*)[4]>(objectMatrix));
+    d3dDevice->SetTransform(d3dDevice, static_cast<_D3DTRANSFORMSTATETYPE>(256), reinterpret_cast<const _D3DMATRIX *>(objectMatrix));
+
+    if ((static_cast<float>(HIBYTE(a3)) / 255.0f) != 1.0f)
+      BlendOn(13);
+
+    const unsigned int alphaType = mMat[mMatGroup[i].MtlId].m_Layer[0].m_dwAlphaType;
+    if (alphaType)
+    {
+      if (alphaType & 0x2000)
+        d3dDevice->SetRenderState(d3dDevice, D3DRS_ZWRITEENABLE, 1u);
+      else
+        d3dDevice->SetRenderState(d3dDevice, D3DRS_ZWRITEENABLE, 0);
+      if (dword_184A79808)
+        d3dDevice->SetRenderState(d3dDevice, D3DRS_FOGENABLE, 0);
+    }
+    else
+    {
+      if (dword_184A79808)
+        d3dDevice->SetRenderState(d3dDevice, D3DRS_FOGENABLE, 1u);
+      d3dDevice->SetRenderState(d3dDevice, D3DRS_ZWRITEENABLE, 1u);
+    }
+
+    CEntity::DrawOneMatGroup(&mMatGroup[i]);
+    d3dDevice->SetRenderState(d3dDevice, D3DRS_ZWRITEENABLE, 1u);
+  }
+
+  if (mFlag & 0x20)
+    d3dDevice->SetTextureStageState(d3dDevice, 0, D3DTSS_COLORARG2, 3u);
+
+  BlendOff();
+  d3dDevice->SetRenderState(d3dDevice, D3DRS_ALPHABLENDENABLE, 0);
+  d3dDevice->SetRenderState(d3dDevice, D3DRS_LIGHTING, 0);
+  d3dDevice->SetRenderState(d3dDevice, D3DRS_DIFFUSEMATERIALSOURCE, 1u);
+  if ((mFlag & 0x40) == 0 && (a3 & 0xFFFFFF) == 0xFFFFFF)
+    d3dDevice->SetRenderState(d3dDevice, D3DRS_EMISSIVEMATERIALSOURCE, 0);
+  if (mFlag & 0x10)
+    d3dDevice->SetRenderState(d3dDevice, D3DRS_ZENABLE, 1u);
+  return 1;
+}
+
+__int64 CEntity::DrawEntityVS(_ENTITY_LIST *a2, float (*const a3)[4], unsigned int a4)
+{
+  CEntity::PrepareAnimation();
+  IDirect3DDevice8 *const d3dDevice = GetD3dDevice();
+  if (!mIsEntityLoad || !mStaticVertexBuffer.m_lpVertexBuffer)
+    return 0;
+
+  const float alpha = static_cast<float>(HIBYTE(a4)) / 255.0f;
+  MultiTexOff();
+  SetVPIPTex1(mStaticVertexBuffer.m_lpVertexBuffer, mStaticIndexedBuffer.m_lpIndexBuffer);
+  CEntity::SetVertexShaderID(a2, a3, a4);
+
+  if (mFlag & 0x40)
+    d3dDevice->SetTextureStageState(d3dDevice, 0, D3DTSS_COLOROP, 4u);
+  else
+    d3dDevice->SetTextureStageState(d3dDevice, 0, D3DTSS_COLOROP, 5u);
+
+  if (dword_184A79808)
+  {
+    d3dDevice->SetRenderState(d3dDevice, D3DRS_FOGENABLE, 1u);
+    d3dDevice->SetRenderState(d3dDevice, D3DRS_FOGVERTEXMODE, 0);
+  }
+
+  for (int i = 0; i < mMatGroupNum; ++i)
+  {
+    float objectMatrix[16]{};
+    GetObjectMatrix(reinterpret_cast<float (*)[4]>(objectMatrix), mMatGroup[i].ObjectId, mObject, 0.0);
+    if (SLOBYTE(mFlag) < 0)
+    {
+      float billboard[16]{};
+      memcpy_0(billboard, &dword_184A79AEC, sizeof(billboard));
+      billboard[12] = 0.0f;
+      billboard[13] = 0.0f;
+      billboard[14] = 0.0f;
+      MatrixMultiply(reinterpret_cast<float (*)[4]>(objectMatrix), reinterpret_cast<float (*)[4]>(billboard), reinterpret_cast<float (*)[4]>(objectMatrix));
+    }
+    MatrixMultiply(reinterpret_cast<float (*)[4]>(objectMatrix), a3, reinterpret_cast<float (*)[4]>(objectMatrix));
+
+    if (alpha != 1.0f)
+      BlendOn(13);
+
+    const unsigned int alphaType = mMat[mMatGroup[i].MtlId].m_Layer[0].m_dwAlphaType;
+    if (!alphaType || (alphaType & 0x2000))
+      d3dDevice->SetRenderState(d3dDevice, D3DRS_ZWRITEENABLE, 1u);
+    else
+      d3dDevice->SetRenderState(d3dDevice, D3DRS_ZWRITEENABLE, 0);
+
+    SetWorldViewMatrixVS(reinterpret_cast<float (*)[4]>(objectMatrix));
+    CEntity::DrawOneMatGroupVS(&mMatGroup[i]);
+    d3dDevice->SetRenderState(d3dDevice, D3DRS_ZWRITEENABLE, 1u);
+  }
+
+  if (dword_184A79808)
+    d3dDevice->SetRenderState(d3dDevice, D3DRS_FOGVERTEXMODE, 3u);
+
+  BlendOff();
+  return 1;
+}
+
+__int64 CEntity::OnceDrawEntity(float (*const a2)[4], unsigned int a3)
+{
+  const double frame = mFrame;
+  if (static_cast<float>(frame) > static_cast<float>(mObject->frames))
+    return 0;
+  CEntity::DrawEntity(a2, a3, frame);
+  mFrame += static_cast<float>(R3GetLoopTime() * 30.0);
+  return 1;
 }
 

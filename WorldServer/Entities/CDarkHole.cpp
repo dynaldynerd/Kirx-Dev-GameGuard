@@ -22,6 +22,19 @@
 int CDarkHole::s_nLiveNum;
 unsigned int CDarkHole::s_dwSerialCounter;
 
+CDarkHole::CDarkHole()
+{
+  m_pChannel = nullptr;
+  m_dwChannelSerial = static_cast<unsigned int>(-1);
+  m_dwNextCloseTime = 0;
+  m_dwNextHurryTime = 0;
+  m_bHurry = false;
+}
+
+CDarkHole::~CDarkHole()
+{
+}
+
 void CDarkHole::Init(_object_id *pID)
 {
   CGameObject::Init(pID);
@@ -96,6 +109,11 @@ bool CDarkHole::IsNewEnterAbleNum()
 bool CDarkHole::IsNewEnterAblePlayer(CPlayer *pEnter)
 {
   return m_pChannel && m_pChannel->CanYouEnterHole(pEnter);
+}
+
+bool CDarkHole::IsOpenPartyMember(CPlayer *pOpener)
+{
+  return m_pChannel && m_pChannel->IsOpenPartyMember(pOpener);
 }
 
 bool CDarkHole::GetEnterNewPos(_ENTER_DUNGEON_NEW_POS *pNewPos)

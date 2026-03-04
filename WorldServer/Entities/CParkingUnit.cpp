@@ -13,6 +13,17 @@
 int CParkingUnit::s_nLiveNum;
 unsigned int CParkingUnit::s_dwSerialCounter = 0;
 
+CParkingUnit::CParkingUnit()
+{
+  m_pOwner = nullptr;
+  m_dwOwnerSerial = static_cast<unsigned int>(-1);
+  m_dwParkingStartTime = 0;
+}
+
+CParkingUnit::~CParkingUnit()
+{
+}
+
 void CParkingUnit::Init(_object_id *pID)
 {
   CGameObject::Init(pID);
@@ -57,6 +68,25 @@ bool CParkingUnit::Destroy(unsigned __int8 byDestoryType)
   SendMsg_Destroy(byDestoryType);
   --s_nLiveNum;
   return CGameObject::Destroy();
+}
+
+unsigned __int16 CParkingUnit::CalcCurHPRate()
+{
+  return m_wHPRate;
+}
+
+void CParkingUnit::ChangeOwner(CPlayer *pNewOwner, unsigned __int8 byUnitSlotIndex)
+{
+  CPlayer *oldOwner = m_pOwner;
+  m_pOwner = pNewOwner;
+  m_dwOwnerSerial = pNewOwner->m_dwObjSerial;
+  SendMsg_ChangeOwner(byUnitSlotIndex, oldOwner);
+}
+
+bool CParkingUnit::IsRideRight(CPlayer *pOne)
+{
+  (void)pOne;
+  return false; // this is not a stub
 }
 
 void CParkingUnit::SendMsg_Destroy(unsigned __int8 byDestoryType)

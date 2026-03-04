@@ -14,10 +14,24 @@
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
+CItemStoreManager *CItemStoreManager::ms_Instance = nullptr;
+
 CItemStoreManager *CItemStoreManager::Instance()
 {
-  static CItemStoreManager instance;
-  return &instance;
+  if (!ms_Instance)
+  {
+    ms_Instance = new CItemStoreManager();
+  }
+  return ms_Instance;
+}
+
+void CItemStoreManager::Destroy()
+{
+  if (ms_Instance)
+  {
+    delete ms_Instance;
+    ms_Instance = nullptr;
+  }
 }
 
 _limit_item_db_data::_limit_item_db_data()

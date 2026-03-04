@@ -38,8 +38,19 @@ public:
 
   void OnLoop();
   unsigned int GetTotalWaitSize();
+  void close(int n, char *pCloseCode, char *pszFileName);
+  void die(int n, char *pszDstName, char *pszDeathName, char *pszFileName);
+  void down_exp(
+    int n,
+    long double dOldExp,
+    unsigned __int16 wOldExpRate,
+    long double dNewExp,
+    unsigned __int16 wNewExpRate,
+    char *pCause,
+    char *pszFileName);
   void char_copy(int n, char *pszDstName, unsigned int dwDstSerial, char *pszFileName);
   void alter_pvp(int n, long double dPvpVariation, CPartyPlayer *pParty, char *pszFileName);
+  void adjust_pvpcash(bool bAdjust, long double dPvpCash, long double dPvpTempCash, char *pszFileName);
   void recovery_exp(
     int n,
     long double dOldExp,

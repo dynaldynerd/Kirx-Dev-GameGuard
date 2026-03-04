@@ -8,6 +8,8 @@
 #include "WorldServerUtil.h"
 #include "base_fld.h"
 
+CExchangeEvent *CExchangeEvent::m_Instance = nullptr;
+
 CExchangeEvent::CExchangeEvent()
   : m_bEnable(false),
     m_bDelete(false),
@@ -31,8 +33,20 @@ CExchangeEvent::~CExchangeEvent() = default;
 
 CExchangeEvent *CExchangeEvent::Instance()
 {
-  static CExchangeEvent s_instance;
-  return &s_instance;
+  if (!m_Instance)
+  {
+    m_Instance = new CExchangeEvent();
+  }
+  return m_Instance;
+}
+
+void CExchangeEvent::Destroy()
+{
+  if (m_Instance)
+  {
+    delete m_Instance;
+    m_Instance = nullptr;
+  }
 }
 
 bool CExchangeEvent::Initialzie()

@@ -37,6 +37,10 @@ public:
   bool IsClassChangeableLv();
   unsigned __int8 GetTrunkSlotNum();
   unsigned __int8 GetExtTrunkSlotNum();
+  unsigned __int8 GetTrunkSlotRace(unsigned __int16 dwItemSerial);
+  unsigned __int8 GetExtTrunkSlotRace(unsigned __int16 dwItemSerial);
+  char *GetTrunkPasswdW();
+  long double GetPvPCashBag();
   _class_fld *GetPtrCurClass();
   _class_fld *GetPtrBaseClass();
   unsigned int GetHP();
@@ -55,6 +59,14 @@ public:
   unsigned __int8 GetBagNum();
   void SetBagNum(unsigned __int8 byNum);
   int GetUseSlot();
+  __int64 GetHaveUnitNum();
+  __int64 GetInvenItemCountFromCode(char *pszItemCode);
+  char DeleteItemCountFromCode(char *pszItemCode, int nCount);
+  char GetResBufferNum();
+  void AddTrunkDalant(int dwPush);
+  void AddTrunkGold(int dwPush);
+  void SubTrunkDalant(int dwSub);
+  void SubTrunkGold(int dwSub);
   _STORAGE_LIST::_db_con *GetItem(unsigned __int8 byInvenIndex);
   unsigned __int16 GetCurItemSerial();
   unsigned __int16 GetNewItemSerial();

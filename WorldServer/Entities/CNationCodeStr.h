@@ -6,6 +6,7 @@ class  CNationCodeStr
 {
 public:
   CNationCodeStr() = default;
+  ~CNationCodeStr();
   CNationCodeStr(int code, const char *codeStr);
   bool IsNULL();
   int GetKey();

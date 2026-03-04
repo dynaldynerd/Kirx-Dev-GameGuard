@@ -9,6 +9,11 @@ CSyncCS::CSyncCS()
 {
 }
 
+bool CSyncCS::IsUse()
+{
+  return m_bUse;
+}
+
 void CSyncCS::SetUse(bool use)
 {
   if (this == nullptr)

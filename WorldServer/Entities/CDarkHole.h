@@ -12,6 +12,9 @@ struct _ENTER_DUNGEON_NEW_POS;
 class  CDarkHole : public CGameObject
 {
 public:
+  CDarkHole();
+  ~CDarkHole();
+
   static int s_nLiveNum;
   static unsigned int s_dwSerialCounter;
 
@@ -35,6 +38,7 @@ public:
     bool bReconnect);
   bool IsNewEnterAbleNum();
   bool IsNewEnterAblePlayer(CPlayer *pEnter);
+  bool IsOpenPartyMember(CPlayer *pOpener);
   bool GetEnterNewPos(_ENTER_DUNGEON_NEW_POS *pNewPos);
   void Loop() override;
   void SendMsg_Create();

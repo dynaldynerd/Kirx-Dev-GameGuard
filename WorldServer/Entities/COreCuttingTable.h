@@ -9,6 +9,8 @@ class  COreCuttingTable
 public:
   struct _ore_cut_list
   {
+    _ore_cut_list();
+
     struct _res_list
     {
       unsigned __int16 wResIndex;
@@ -26,7 +28,7 @@ public:
   bool ReadRecord(const char *fileName, CRecordData *oreTable, CRecordData *resTable, char *errCode);
   unsigned int GetOreIndexFromRate(unsigned int dwOreIndex, unsigned int dwRate);
 
-  virtual ~COreCuttingTable() = default;
+  virtual ~COreCuttingTable();
 
 private:
   bool Indexing(CRecordData *oreTable, CRecordData *resTable, char *errCode);

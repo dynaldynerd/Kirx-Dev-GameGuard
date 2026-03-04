@@ -8,8 +8,8 @@
 class  CNationCodeStrTable
 {
 public:
-  CNationCodeStrTable() = default;
-  ~CNationCodeStrTable() = default;
+  CNationCodeStrTable();
+  ~CNationCodeStrTable();
 
   bool Init();
   int RegistCode();

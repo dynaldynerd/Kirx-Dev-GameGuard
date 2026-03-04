@@ -24,6 +24,10 @@ using AntiCpAnalyzeGuidAckMsgFn = unsigned int(__cdecl *)(
   char *pMsg,
   unsigned __int8 *pGuidClientInfo,
   _HSHIELD_CLIENT_CONTEXT *pContext);
+using AntiCpAnalyzeAckMsgFn = unsigned int(__cdecl *)(
+  _HSHIELD_CLIENT_CONTEXT *pContext,
+  char *pMsg,
+  unsigned __int8 *pGuidClientInfo);
 
 HMODULE _ResolveAntiCpModule()
 {
@@ -109,6 +113,19 @@ AntiCpAnalyzeGuidAckMsgFn _ResolveAnalyzeGuidAckMsg()
     s_resolved = true;
     s_fn = reinterpret_cast<AntiCpAnalyzeGuidAckMsgFn>(
       _ResolveAntiCpProc("_AntiCpSvr_AnalyzeGuidAckMsg", "AntiCpSvr_AnalyzeGuidAckMsg"));
+  }
+  return s_fn;
+}
+
+AntiCpAnalyzeAckMsgFn _ResolveAnalyzeAckMsg()
+{
+  static AntiCpAnalyzeAckMsgFn s_fn = nullptr;
+  static bool s_resolved = false;
+  if (!s_resolved)
+  {
+    s_resolved = true;
+    s_fn = reinterpret_cast<AntiCpAnalyzeAckMsgFn>(
+      _ResolveAntiCpProc("_AntiCpSvr_AnalyzeAckMsg", "AntiCpSvr_AnalyzeAckMsg"));
   }
   return s_fn;
 }
@@ -284,5 +301,105 @@ char HACKSHEILD_PARAM_ANTICP::OnRecvSession_ClientCheckSum_Response(unsigned __i
   }
 
   Kick(2u, 0xFFFFFFFFu);
+  return 1;
+}
+
+bool HACKSHEILD_PARAM_ANTICP::IsLogPass()
+{
+  return m_byVerifyState >= 2;
+}
+
+char HACKSHEILD_PARAM_ANTICP::OnCheckSession_FirstVerify(int n)
+{
+  if (IsLogPass())
+  {
+    return 1;
+  }
+
+  m_nSocketIndex = n;
+  Kick(4u, 0);
+  return 0;
+}
+
+void HACKSHEILD_PARAM_ANTICP::OnConnect(int nIndex)
+{
+  // this is not a stub
+  (void)nIndex;
+  Init();
+}
+
+void HACKSHEILD_PARAM_ANTICP::OnDisConnect()
+{
+  // this is not a stub
+  Init();
+}
+
+void HACKSHEILD_PARAM_ANTICP::OnLoop()
+{
+  if (m_byVerifyState == 2 || m_byVerifyState == 4)
+  {
+    if (GetLoopTime() > m_dwLastSyncQryTime + 300000)
+    {
+      CheckClient();
+    }
+  }
+  else if (m_byVerifyState == 3 && GetLoopTime() > m_dwLastSyncQryTime + 180000)
+  {
+    unsigned int currentLoopTime = GetLoopTime();
+    Kick(1u, currentLoopTime - (m_dwLastSyncQryTime + 180000));
+  }
+}
+
+bool HACKSHEILD_PARAM_ANTICP::OnRecvSession(
+  CHackShieldExSystem *mgr,
+  int nIndex,
+  unsigned __int8 byProtocol,
+  unsigned __int64 tSize,
+  char *pMsg)
+{
+  (void)mgr;
+  if (byProtocol == 1)
+  {
+    return OnRecvSession_ServerCheckSum_Request(static_cast<unsigned int>(nIndex));
+  }
+  if (byProtocol == 3)
+  {
+    return OnRecvSession_ClientCheckSum_Response(tSize, pMsg);
+  }
+  if (byProtocol == 5)
+  {
+    return OnRecvSession_ClientCrc_Response(tSize, pMsg);
+  }
+  return false;
+}
+
+char HACKSHEILD_PARAM_ANTICP::OnRecvSession_ClientCrc_Response(unsigned __int64 tSize, char *pMsg)
+{
+  if (tSize != 74)
+  {
+    return 0;
+  }
+
+  if (m_nSocketIndex < 0 || m_nSocketIndex >= MAX_PLAYER)
+  {
+    return 0;
+  }
+
+  if (m_byVerifyState == 3)
+  {
+    AntiCpAnalyzeAckMsgFn analyzeAckMsg = _ResolveAnalyzeAckMsg();
+    const unsigned int ret = analyzeAckMsg ? analyzeAckMsg(&m_CrcInfo, pMsg + 2, m_byGUIDClientInfo) : 1u;
+    if (ret)
+    {
+      Kick(3u, ret);
+    }
+    else
+    {
+      m_byVerifyState = 4;
+    }
+    return 1;
+  }
+
+  Kick(3u, 0xFFFFFFFFu);
   return 1;
 }

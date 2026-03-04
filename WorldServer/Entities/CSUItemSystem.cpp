@@ -5,10 +5,15 @@
 #include "CSUItemSystem.h"
 #include "SetItemEff_fld.h"
 
+CSUItemSystem *CSUItemSystem::SCSUITEMSYSTEM = nullptr;
+
 CSUItemSystem *CSUItemSystem::Instance()
 {
-  static CSUItemSystem s_instance;
-  return &s_instance;
+  if (!SCSUITEMSYSTEM)
+  {
+    SCSUITEMSYSTEM = new CSUItemSystem();
+  }
+  return SCSUITEMSYSTEM;
 }
 
 CSUItemSystem::CSUItemSystem()
@@ -84,6 +89,29 @@ bool CSUItemSystem::SUItemSystem_CheckData()
   }
 
   return true;
+}
+
+char CSUItemSystem::SUItemSystem_UnInit()
+{
+  Class_Init();
+  return 1;
+}
+
+CSUItemSystem *CSUItemSystem::GetCRecordData_SetItem()
+{
+  if (!m_bySUItemCount)
+  {
+    return nullptr;
+  }
+  if (!m_bLoadData[0])
+  {
+    return nullptr;
+  }
+  if (m_bChangeData[0])
+  {
+    return this;
+  }
+  return nullptr;
 }
 
 void CSUItemSystem::Class_Init()

@@ -11,6 +11,7 @@ class  CUnmannedTraderTaxRateManager
 {
 public:
   static CUnmannedTraderTaxRateManager *Instance();
+  static void Destroy();
 
   CUnmannedTraderTaxRateManager();
   ~CUnmannedTraderTaxRateManager();
@@ -32,6 +33,8 @@ public:
     unsigned int dwNext);
   void DQSCompleteInAtradTaxMoney(unsigned __int8 byRace, char *pdata);
   unsigned int GetTax(unsigned __int8 byRace, unsigned int dwGuildSerial, unsigned int dwPrice);
+  char CheatChangeTaxRate(unsigned __int8 byRace, int dwNewTaxRate, char *pCheaterName);
+  void SetGuildMaintainMoney(unsigned __int8 byRace, unsigned int dwTax, unsigned int dwSeller);
   int ChangeOwner(unsigned __int8 byRace, CGuild *pGuild);
   void SetPatriarchTaxMoney(unsigned __int8 byRace, unsigned int dwTax);
 

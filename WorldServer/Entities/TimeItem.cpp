@@ -9,12 +9,20 @@
 #include <cstdio>
 #include <cstring>
 
+TimeItem *TimeItem::_pkInstance = nullptr;
 TimeItem::TimeItemMap *TimeItem::_phmapTbl;
+
+TimeItem::TimeItem()
+{
+}
 
 TimeItem *TimeItem::Instance()
 {
-  static TimeItem s_instance;
-  return &s_instance;
+  if (!_pkInstance)
+  {
+    _pkInstance = new TimeItem();
+  }
+  return _pkInstance;
 }
 
 const _TimeItem_fld *TimeItem::FindTimeRec(unsigned int nTbl, int nIdx)

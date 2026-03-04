@@ -15,6 +15,7 @@
 #include "pnt_rect.h"
 #include "qry_case_addpvppoint.h"
 #include "TrapItem_fld.h"
+#include "trap_create_setdata.h"
 
 #include <cstring>
 #include <cstdio>
@@ -27,12 +28,95 @@ namespace
 char s_trapObjectName[256]{};
 }
 
+int CTrap::s_nLiveNum;
+unsigned int CTrap::s_dwSerialCnt;
+
 CTrap::CTrap()
 {
   m_pMaster = nullptr;
 }
 
 CTrap::~CTrap() = default;
+
+bool CTrap::Create(_trap_create_setdata *pData)
+{
+  if (!CCharacter::Create(pData))
+  {
+    return false;
+  }
+
+  const _TrapItem_fld *trapRecord = reinterpret_cast<const _TrapItem_fld *>(m_pRecordSet);
+  m_nHP = static_cast<int>(trapRecord->m_fMaxHP);
+  m_pMaster = pData->pMaster;
+  m_dwMasterSerial = pData->pMaster->m_dwObjSerial;
+  const char *charNameW = pData->pMaster->m_Param.GetCharNameW();
+  strcpy_0(m_wszMasterName, charNameW);
+  W2M(m_wszMasterName, m_aszMasterName, sizeof(m_aszMasterName));
+  m_dMasterPvPPoint = pData->pMaster->m_Param.GetPvPPoint();
+  m_byRaceCode = static_cast<unsigned __int8>(pData->pMaster->m_Param.GetRaceCode());
+  m_dwObjSerial = static_cast<unsigned int>(GetNewSerial());
+  m_dwStartMakeTime = GetLoopTime();
+  m_bComplete = false;
+  SetBreakTranspar(false);
+  m_bBreakTransparBuffer = m_bBreakTranspar;
+  m_nTrapMaxAttackPnt = pData->nTrapMaxAttackPnt;
+  SendMsg_Create();
+  ++s_nLiveNum;
+  return true;
+}
+
+char CTrap::IsHaveEmpty()
+{
+  for (int index = 0; index < MAX_TRAP; ++index)
+  {
+    if (!g_Trap[index].m_bLive)
+    {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+__int64 CTrap::GetNewSerial()
+{
+  return s_dwSerialCnt++;
+}
+
+CTrap *CreateTrap(CMapData *pMap, unsigned __int16 wLayer, float *fPos, CPlayer *pMaster, int nTrapItemIndex)
+{
+  CTrap *trap = nullptr;
+  for (int index = 0; index < MAX_TRAP; ++index)
+  {
+    if (!g_Trap[index].m_bLive)
+    {
+      trap = &g_Trap[index];
+      break;
+    }
+  }
+
+  if (!trap)
+  {
+    return nullptr;
+  }
+
+  _trap_create_setdata data{};
+  data.m_pMap = pMap;
+  data.m_nLayerIndex = wLayer;
+  data.m_pRecordSet = g_Main.m_tblItemData[26].GetRecord(nTrapItemIndex);
+  if (!data.m_pRecordSet)
+  {
+    return nullptr;
+  }
+
+  memcpy_0(data.m_fStartPos, fPos, sizeof(data.m_fStartPos));
+  data.pMaster = pMaster;
+  data.nTrapMaxAttackPnt = pMaster->m_nTrapMaxAttackPnt;
+  if (trap->Create(&data))
+  {
+    return trap;
+  }
+  return nullptr;
+}
 
 __int64 CTrap::GetAttackDP()
 {
@@ -173,6 +257,12 @@ bool CTrap::IsBeAttackedAble(bool bFirst)
   return true;
 }
 
+bool CTrap::IsInTown()
+{
+// this is not a stub
+  return false;
+}
+
 void CTrap::Init(_object_id *pID)
 {
   CCharacter::Init(pID);
@@ -260,6 +350,7 @@ bool CTrap::Destroy(unsigned __int8 byDesType)
   m_pMaster = nullptr;
   m_dwObjSerial = static_cast<unsigned int>(-1);
   m_dwMasterSerial = static_cast<unsigned int>(-1);
+  --s_nLiveNum;
   return CCharacter::Destroy();
 }
 

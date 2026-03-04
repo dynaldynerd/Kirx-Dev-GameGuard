@@ -11,6 +11,9 @@ struct _ENTER_DUNGEON_NEW_POS;
 class  CDarkHoleChannel
 {
 public:
+  CDarkHoleChannel();
+  virtual ~CDarkHoleChannel();
+
   static unsigned int s_dwChannelSerialCounter;
 
   struct  __enter_member
@@ -107,8 +110,6 @@ public:
   void SendMsg_PopMember(CPlayer *pPopMember, bool bDisconnect);
   void SendMsg_LeaderChange(CPlayer *pNewLeader);
   char _Reward();
-
-  virtual ~CDarkHoleChannel() = default;
 };
 
 

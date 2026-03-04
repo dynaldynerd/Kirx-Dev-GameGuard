@@ -45,6 +45,7 @@ public:
   void ApplyTicketReserver();
   int GetLeftTicketIncludeReserNum(char *pszTarMapCode, int nAdd);
   bool IsMemberBeforeLogoff(unsigned int dwPlayerSerial);
+  char IsOldMember(CPlayer *pMember);
   void GetStartPosInShip(float *pfPos);
 
   struct  __mgr_member

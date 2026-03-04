@@ -10,6 +10,8 @@
 #include "map_fld.h"
 #include "GlobalObjects.h"
 
+CRecallEffectController *CRecallEffectController::ms_Instance = nullptr;
+
 CRecallEffectController::CRecallEffectController()
 {
   m_uiInfoTotCnt = 0;
@@ -55,8 +57,6 @@ void CRecallEffectController::CleanUp()
     operator delete[](m_ppkReqeust);
     m_ppkReqeust = nullptr;
   }
-
-  m_uiInfoTotCnt = 0;
 }
 
 namespace
@@ -80,14 +80,24 @@ CMapData *GetGuildBattleMap(unsigned int guildSerial)
 
 CRecallEffectController *CRecallEffectController::Instance()
 {
-  static CRecallEffectController s_instance;
-  return &s_instance;
+  if (!ms_Instance)
+  {
+    ms_Instance = new CRecallEffectController();
+  }
+  return ms_Instance;
+}
+
+void CRecallEffectController::Destroy()
+{
+  if (ms_Instance)
+  {
+    delete ms_Instance;
+    ms_Instance = nullptr;
+  }
 }
 
 bool CRecallEffectController::Init(unsigned int infoCount)
 {
-  CleanUp();
-
   if (infoCount == 0)
   {
     return false;

@@ -37,6 +37,16 @@ CDisplayView::CDisplayView(CWnd *pParent)
 {
 }
 
+CDisplayView::~CDisplayView()
+{
+  // this is not a stub
+}
+
+void CDisplayView::DoDataExchange(CDataExchange *pDX)
+{
+  CWnd::DoDataExchange(pDX);
+}
+
 void CDisplayView::GetDrawableRect(CRect *rcOut)
 {
   GetClientRect(rcOut);

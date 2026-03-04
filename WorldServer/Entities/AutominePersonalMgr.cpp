@@ -37,10 +37,35 @@ namespace
   };
 }
 
+AutominePersonalMgr *AutominePersonalMgr::m_pInstance = nullptr;
+
+AutominePersonalMgr::AutominePersonalMgr()
+{
+  m_dwObjSerial = 0;
+}
+
 AutominePersonalMgr *AutominePersonalMgr::instance()
 {
-  static AutominePersonalMgr s_instance;
-  return &s_instance;
+  if (!m_pInstance)
+  {
+    m_pInstance = new AutominePersonalMgr();
+  }
+  return m_pInstance;
+}
+
+void AutominePersonalMgr::release()
+{
+  if (m_pInstance)
+  {
+    if (m_pInstance->m_pMachine)
+    {
+      delete[] m_pInstance->m_pMachine;
+      m_pInstance->m_pMachine = nullptr;
+    }
+
+    delete m_pInstance;
+    m_pInstance = nullptr;
+  }
 }
 
 bool AutominePersonalMgr::initialize()

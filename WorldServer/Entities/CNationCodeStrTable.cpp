@@ -4,6 +4,14 @@
 
 #include "WorldServerUtil.h"
 
+CNationCodeStrTable::CNationCodeStrTable()
+{
+}
+
+CNationCodeStrTable::~CNationCodeStrTable()
+{
+}
+
 bool CNationCodeStrTable::Init()
 {
   const int ret = RegistCode();

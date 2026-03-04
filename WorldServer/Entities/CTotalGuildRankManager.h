@@ -12,7 +12,9 @@ public:
   CTotalGuildRankManager();
   ~CTotalGuildRankManager();
 
+  static CTotalGuildRankManager *ms_Instance;
   static CTotalGuildRankManager *Instance();
+  static void Destroy();
   bool Init();
   bool Load();
   __int64 Load(unsigned __int8 byDayAfter, _total_guild_rank_info *pkInfo);

@@ -8,6 +8,21 @@ COreCuttingTable::COreCuttingTable()
 {
 }
 
+COreCuttingTable::_ore_cut_list::_ore_cut_list()
+  : nResNum(0),
+    dwTotalRate(0)
+{
+}
+
+COreCuttingTable::~COreCuttingTable()
+{
+  if (pOreList)
+  {
+    delete[] pOreList;
+    pOreList = nullptr;
+  }
+}
+
 bool COreCuttingTable::ReadRecord(const char *fileName, CRecordData *oreTable, CRecordData *resTable, char *errCode)
 {
   if (!m_tblOreCutting.ReadRecord(fileName, 0x88, errCode))
@@ -25,7 +40,7 @@ bool COreCuttingTable::ReadRecord(const char *fileName, CRecordData *oreTable, C
     return false;
   }
 
-  pOreList = new _ore_cut_list[m_nOreNum]();
+  pOreList = new _ore_cut_list[m_nOreNum];
   return Indexing(oreTable, resTable, errCode);
 }
 

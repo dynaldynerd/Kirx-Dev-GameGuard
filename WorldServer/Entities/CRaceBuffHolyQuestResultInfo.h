@@ -6,9 +6,10 @@ class  CRaceBuffHolyQuestResultInfo
 {
 public:
   CRaceBuffHolyQuestResultInfo();
-  ~CRaceBuffHolyQuestResultInfo() = default;
+  ~CRaceBuffHolyQuestResultInfo();
 
   bool Load();
+  char Save();
   bool LoadINI();
   bool SaveINI();
   bool SaveINISubProcSaveNum(const char *szItem, unsigned int value);

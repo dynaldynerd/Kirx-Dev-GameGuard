@@ -125,6 +125,20 @@ CNetWorking::~CNetWorking()
   Release();
 }
 
+CNetworkEX::CNetworkEX()
+{
+  dwPlayerPosMiss = 0;
+  dwMonsterPosMiss = 0;
+  m_byStatus[0] = 0;
+  m_byStatus[1] = 0;
+  m_byStatus[2] = 0;
+  m_byStatus[3] = 0;
+}
+
+CNetworkEX::~CNetworkEX()
+{
+}
+
 _socket *CNetWorking::GetSocket(unsigned int dwProID, unsigned int dwSocketIndex)
 {
   if (dwProID < this->m_dwUseProcessNum)
@@ -9135,6 +9149,37 @@ char CNetworkEX::BuddyDelRequest(int n, char *pBuf)
   {
     player->pc_BuddyDelRequest(*reinterpret_cast<unsigned int *>(pBuf));
   }
+  return 1;
+}
+
+char CNetworkEX::ExchangeGoldForPvPRequest(int n, char *pBuf)
+{
+  unsigned int *goldAmount = reinterpret_cast<unsigned int *>(pBuf);
+  CPlayer *player = &g_Player[n];
+  if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
+  {
+    return 1;
+  }
+
+  player->pc_ExchangeGoldForPvP(*goldAmount);
+  return 1;
+}
+
+char CNetworkEX::OpenControlInform(unsigned int n, char *pMsg)
+{
+  (void)n;
+  (void)pMsg;
+  return 1; // this is not a stub
+}
+
+char CNetworkEX::UserBlockResult(unsigned int n, char *pMsg)
+{
+  (void)n;
+  g_Main.pc_UserChatBlockResult(
+    *pMsg,
+    reinterpret_cast<_CLID *>(pMsg + 1),
+    reinterpret_cast<_CLID *>(pMsg + 7),
+    *reinterpret_cast<unsigned int *>(pMsg + 17));
   return 1;
 }
 

@@ -42,6 +42,16 @@
 
 unsigned int CDarkHoleChannel::s_dwChannelSerialCounter;
 
+CDarkHoleChannel::CDarkHoleChannel()
+{
+  m_listEnterMember.SetList(0x40u, 8u, false);
+  Init();
+}
+
+CDarkHoleChannel::~CDarkHoleChannel()
+{
+}
+
 void _dh_player_mgr::_pos::init()
 {
   pMap = nullptr;
@@ -1453,7 +1463,7 @@ void CDarkHoleChannel::CloseDungeon()
   SendMsg_ChannelClose();
 
   CMapData *useMap = m_pQuestSetup->pUseMap;
-  const int sectorCount = useMap->m_ls[m_wLayerIndex].m_nSecNum;
+  const int sectorCount = useMap->GetSectorNumByLayerIndex(m_wLayerIndex);
   for (int sectorIndex = 0; sectorIndex < sectorCount; ++sectorIndex)
   {
     CObjectList *towerList = useMap->GetSectorListTower(m_wLayerIndex, static_cast<unsigned int>(sectorIndex));

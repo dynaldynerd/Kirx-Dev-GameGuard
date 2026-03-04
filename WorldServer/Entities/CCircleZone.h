@@ -20,11 +20,18 @@ public:
 
   CCircleZone();
   ~CCircleZone();
+  char Create(CMapData *pkMap, unsigned __int8 byColor);
+  void Destroy();
   bool Init(unsigned int uiMapInx, int iPlayerInx, int iNth, unsigned __int16 wInx, CMapData *pkMap);
+  unsigned __int8 GetColor() const;
+  unsigned __int8 Goal(CMapData *pkMap, const float *pfCurPos);
+  bool IsNearPosition(float *pfCurPos);
   int GetPortalInx() const;
   void SendMsgCreate();
   void SendMsgGoal();
   void SendMsg_FixPosition(int n) override;
+
+  static unsigned int ms_dwSerialCnt;
 
   GCZ_STATE m_eState;
   int m_iPortalInx;

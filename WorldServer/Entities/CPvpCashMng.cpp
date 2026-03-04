@@ -12,6 +12,8 @@
 #include <cstdio>
 #include <cstdlib>
 
+CPvpCashMng *CPvpCashMng::_pkInstance = nullptr;
+
 CPvpCashMng::_talik_recvr_list::_talik_recvr_list()
 {
   memset_0(this, 0, sizeof(_talik_recvr_list));
@@ -46,8 +48,20 @@ CPvpCashMng::~CPvpCashMng()
 
 CPvpCashMng *CPvpCashMng::Instance()
 {
-  static CPvpCashMng s_instance;
-  return &s_instance;
+  if (!_pkInstance)
+  {
+    _pkInstance = new CPvpCashMng();
+  }
+  return _pkInstance;
+}
+
+void CPvpCashMng::Release()
+{
+  if (_pkInstance)
+  {
+    delete _pkInstance;
+    _pkInstance = nullptr;
+  }
 }
 
 bool CPvpCashMng::LoadData()
@@ -171,6 +185,11 @@ int CPvpCashMng::GetTalikRecvrPoint(unsigned __int8 byTblCode, unsigned int dwIn
 int CPvpCashMng::GetTalikRecvrPoint(int i)
 {
   return m_TalikList.TalikInfo[i].nRecvrPoint;
+}
+
+unsigned __int8 CPvpCashMng::GetTalikNum()
+{
+  return m_TalikList.byTalikNum;
 }
 
 int CPvpCashMng::GetMyClassVal(char *pClass)

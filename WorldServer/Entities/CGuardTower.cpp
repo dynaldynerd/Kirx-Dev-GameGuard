@@ -19,6 +19,15 @@ unsigned int CGuardTower::s_dwSerialCnt;
 unsigned int CGuardTower::s_dwOldTick_CheckTemp;
 __TEMP_WAIT_TOWER CGuardTower::s_Temp[MAX_PLAYER];
 
+CGuardTower::CGuardTower()
+{
+  m_pMasterTwr = nullptr;
+}
+
+CGuardTower::~CGuardTower()
+{
+}
+
 __int64 CGuardTower::AttackableHeight()
 {
   return 50;
@@ -681,6 +690,32 @@ bool CGuardTower::Destroy(unsigned __int8 byDesType, bool bSystemBack)
   m_dwObjSerial = static_cast<unsigned int>(GetNewSerial());
   SendMsg_Create();
   return true;
+}
+
+char CGuardTower::IsHaveEmpty()
+{
+  for (int j = 0; j < MAX_TOWER; ++j)
+  {
+    if (!g_Tower[j].m_bLive)
+    {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+bool CGuardTower::IsInTown()
+{
+  // this is not a stub
+  return false;
+}
+
+void CGuardTower::RecvKillMessage(CCharacter *pDier)
+{
+  if (m_pMasterTwr)
+  {
+    m_pMasterTwr->RecvKillMessage(pDier);
+  }
 }
 
 void CGuardTower::OnLoop_Static()

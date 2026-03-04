@@ -878,6 +878,29 @@ void CGoldenBoxItemMgr::Set_FromINIToStruct(_golden_box_item_ini *pIni)
   Set_ToStruct();
 }
 
+void CGoldenBoxItemMgr::Set_FromStruct()
+{
+  m_golden_box_item.m_bydck = m_golden_box_item_New.bydck;
+  m_golden_box_item.m_dwStarterBoxCnt = m_golden_box_item_New.dwStarterBoxCnt;
+
+  for (int j = 0; j < m_golden_box_event.m_ini.m_byLoopCnt; ++j)
+  {
+    const int boxCode = m_golden_box_item_New.nBoxcode[j];
+    m_golden_box_item.m_byBoxTableCode[j] = static_cast<unsigned __int8>((boxCode >> 8) & 0xFF);
+    m_golden_box_item.m_dwBoxIndex[j] = static_cast<unsigned __int16>((boxCode >> 16) & 0xFFFF);
+    m_golden_box_item.m_wBoxMax[j] = m_golden_box_item_New.wBoxMax[j];
+    m_golden_box_item.m_bygolden_item_num[j] = m_golden_box_item_New.bygolden_item_num[j];
+
+    for (int k = 0; k < m_golden_box_item.m_bygolden_item_num[j]; ++k)
+    {
+      const int itemCode = m_golden_box_item_New.List[j][k].ncode;
+      m_golden_box_item.m_golden_box_item_info[j][k].m_byTableCode = static_cast<unsigned __int8>((itemCode >> 8) & 0xFF);
+      m_golden_box_item.m_golden_box_item_info[j][k].m_dwIndex = static_cast<unsigned __int16>((itemCode >> 16) & 0xFFFF);
+      m_golden_box_item.m_golden_box_item_info[j][k].m_wNum = m_golden_box_item_New.List[j][k].wcount;
+    }
+  }
+}
+
 void CGoldenBoxItemMgr::Set_ToStruct()
 {
   m_golden_box_item_New.bydck = m_golden_box_item.m_bydck;
@@ -900,6 +923,26 @@ void CGoldenBoxItemMgr::Set_ToStruct()
       m_golden_box_item_New.List[j][k].wcount = m_golden_box_item.m_golden_box_item_info[j][k].m_wNum;
     }
   }
+}
+
+void CGoldenBoxItemMgr::Set_DCK(unsigned __int8 byDCK)
+{
+  m_golden_box_item.m_bydck = byDCK;
+}
+
+unsigned __int16 CGoldenBoxItemMgr::GetOreItemTotalCnt()
+{
+  unsigned __int16 oreItemTotalCount = 0;
+  const int recordCount = g_Main.m_tblItemData[17].GetRecordNum();
+  for (int n = 0; n < recordCount; ++n)
+  {
+    _OreItem_fld *record = reinterpret_cast<_OreItem_fld *>(g_Main.m_tblItemData[17].GetRecord(n));
+    if (record && !record->m_nOre_Level)
+    {
+      ++oreItemTotalCount;
+    }
+  }
+  return oreItemTotalCount;
 }
 
 unsigned __int8 CGoldenBoxItemMgr::IsBuyRaceBossGoldBox(CPlayer *pOne)

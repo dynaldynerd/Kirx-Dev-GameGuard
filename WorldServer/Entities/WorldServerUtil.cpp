@@ -5988,6 +5988,29 @@ void IM_ReleaseAllWaves()
 {
 }
 
+void IM_SetLoopCntWave(__int64 waveId, unsigned int loopCount)
+{
+  (void)waveId;
+  (void)loopCount;
+  // this is not a stub
+}
+
+void IM_PlayWave(__int64 waveId, float volume, float pan)
+{
+  (void)waveId;
+  (void)volume;
+  (void)pan;
+  // this is not a stub
+}
+
+void IM_SetWaveVolumeAndPan(__int64 waveId, float volume, float pan)
+{
+  (void)waveId;
+  (void)volume;
+  (void)pan;
+  // this is not a stub
+}
+
 static HRESULT __fastcall Texture_QueryInterface(IDA_IUnknown *self, const IDA_GUID *, void **outObject)
 {
 if (outObject)
@@ -7384,5 +7407,130 @@ __time64_t time_19(__int64 *_Time)
 bool IsSaveItem(int nTableCode)
 {
   return nTableCode != 14 && nTableCode != 29;
+}
+
+void D3DXMatrixIdentity_0(D3DXMATRIX *out)
+{
+  if (!out)
+  {
+    return;
+  }
+  MatrixIdentity(reinterpret_cast<float (*)[4]>(out));
+}
+
+__int64 D3DXMatrixMultiply_0(D3DXMATRIX *out, const D3DXMATRIX *a, const D3DXMATRIX *b)
+{
+  if (!out || !a || !b)
+  {
+    return 0;
+  }
+  MatrixMultiply(
+    reinterpret_cast<float (*)[4]>(out),
+    reinterpret_cast<float (*)[4]>(const_cast<D3DXMATRIX *>(a)),
+    reinterpret_cast<float (*)[4]>(const_cast<D3DXMATRIX *>(b)));
+  return reinterpret_cast<__int64>(out);
+}
+
+__int64 D3DXMatrixInverse_0(D3DXMATRIX *out, void *det, const D3DXMATRIX *in)
+{
+  (void)det;
+  if (!out || !in)
+  {
+    return 0;
+  }
+  if (!MatrixInvert(
+        reinterpret_cast<float (*)[4]>(out),
+        reinterpret_cast<float (*)[4]>(const_cast<D3DXMATRIX *>(in))))
+  {
+    return 0;
+  }
+  return reinterpret_cast<__int64>(out);
+}
+
+void GetYBillboardMatrix(D3DXMATRIX *out, float *const src, float *const dst)
+{
+  const float dx = dst[0] - src[0];
+  if (dx == 0.0f)
+  {
+    D3DXMatrixIdentity_0(out);
+    return;
+  }
+
+  const float angle = atanf_0((dst[2] - src[2]) / dx);
+  D3DXMatrixIdentity_0(out);
+  const float c = cosf_0(angle);
+  const float s = sinf_0(angle);
+  out->_11 = c;
+  out->_13 = -s;
+  out->_31 = s;
+  out->_33 = c;
+}
+
+void DrawLightMapGroup(CVertexBuffer *vertexBuffer, _BSP_MAT_GROUP *matGroup)
+{
+  (void)vertexBuffer;
+  IDirect3DDevice8 *const d3d = GetD3dDevice();
+  if (!d3d || !matGroup)
+  {
+    return;
+  }
+
+  if (matGroup->MtlId == -1)
+  {
+    d3d->SetTexture(d3d, 0, nullptr);
+    d3d->DrawIndexedPrimitive(d3d, D3DPT_TRIANGLELIST, matGroup->VBMinIndex, matGroup->VCnt, matGroup->IBMinIndex, matGroup->TriNum);
+    return;
+  }
+
+  GetMainMaterial();
+  d3d->SetTexture(d3d, 0, nullptr);
+  if (matGroup->LgtId == -1)
+  {
+    MultiTexOff();
+    d3d->SetTextureStageState(d3d, 0, D3DTSS_COLOROP, 5u);
+  }
+  else
+  {
+    MultiTexOn();
+  }
+
+  d3d->SetTextureStageState(d3d, 0, D3DTSS_COLOROP, 4u);
+  d3d->SetTextureStageState(d3d, 1, D3DTSS_COLOROP, 4u);
+  d3d->SetTextureStageState(d3d, 0, D3DTSS_COLORARG1, 3u);
+  d3d->SetTextureStageState(d3d, 1, D3DTSS_COLOROP, 2u);
+  d3d->SetTextureStageState(d3d, 0, D3DTSS_COLOROP, 2u);
+  d3d->SetTextureStageState(d3d, 2, D3DTSS_COLOROP, 1u);
+  d3d->SetTextureStageState(d3d, 2, D3DTSS_ALPHAOP, 1u);
+
+  d3d->SetTexture(d3d, 0, reinterpret_cast<IDirect3DBaseTexture8 *>(R3GetSurface(matGroup->LgtId)));
+  d3d->DrawIndexedPrimitive(d3d, D3DPT_TRIANGLELIST, matGroup->VBMinIndex, matGroup->VCnt, matGroup->IBMinIndex, matGroup->TriNum);
+}
+
+void R3ReleaseAllTextures()
+{
+  int index = 1;
+  if (dword_14097895C > 1)
+  {
+    while (index < static_cast<int>(dword_14097895C))
+    {
+      auto *textures = reinterpret_cast<unsigned long long *>(qword_184A79D68);
+      if (textures && textures[2 * index])
+      {
+        IDirect3DTexture8 *const texture = reinterpret_cast<IDirect3DTexture8 *>(textures[2 * index]);
+        if (texture && texture->__vftable && texture->__vftable->Release)
+        {
+          texture->__vftable->Release(reinterpret_cast<IDA_IUnknown *>(texture));
+        }
+        textures[2 * index] = 0;
+      }
+      ++index;
+    }
+  }
+  RestoreSystemTexture();
+}
+
+unsigned __int16 GetExcelIndexFromCombineExCheckKey(unsigned int dwCombineExCheckKey)
+{
+  return static_cast<unsigned __int16>(HIWORD(dwCombineExCheckKey));
 }
 

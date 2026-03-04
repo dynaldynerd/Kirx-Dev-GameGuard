@@ -1064,20 +1064,18 @@ bool CUnmannedTraderUserInfo::CheatCancelRegistAll()
   qryData.wInx = m_wInx;
   qryData.dwOwnerSerial = m_dwUserSerial;
 
-  for (auto it = m_vecRegistItemInfo.begin(); it != m_vecRegistItemInfo.end(); ++it)
+  auto it = m_vecRegistItemInfo.begin();
+  for (unsigned __int8 index = 0; index < static_cast<unsigned __int8>(m_vecRegistItemInfo.size()); ++index)
   {
-    if (!it->IsRegist())
-    {
-      continue;
-    }
-
-    if (qryData.byNum >= 10)
+    it = FindRegist(it);
+    if (it == m_vecRegistItemInfo.end())
     {
       break;
     }
 
     qryData.List[qryData.byNum].dwRegistSerial = it->GetRegistSerial();
     ++qryData.byNum;
+    ++it;
   }
 
   if (qryData.byNum)
@@ -1096,18 +1094,38 @@ bool CUnmannedTraderUserInfo::CheatCancelRegistSingle(unsigned __int8 byNth)
     return false;
   }
 
-  unsigned __int8 currentNth = 0;
-  for (auto it = m_vecRegistItemInfo.begin(); it != m_vecRegistItemInfo.end(); ++it)
+  auto it = m_vecRegistItemInfo.begin();
+  unsigned __int8 registCount = 0;
+  unsigned __int8 registIndex = 0;
+  bool found = false;
+  for (unsigned __int8 index = 0; index < static_cast<unsigned __int8>(m_vecRegistItemInfo.size()); ++index)
+  {
+    it = FindRegist(it);
+    if (it == m_vecRegistItemInfo.end())
+    {
+      break;
+    }
+
+    ++registCount;
+    if (byNth <= registCount)
+    {
+      registIndex = index;
+      found = true;
+      break;
+    }
+
+    ++it;
+  }
+
+  if (found)
   {
     if (!it->IsRegist())
     {
-      continue;
-    }
-
-    ++currentNth;
-    if (currentNth < byNth)
-    {
-      continue;
+      char message[272]{};
+      const CUnmannedTraderItemState::STATE state = it->GetState();
+      std::sprintf(message, "(%u)th : %u State(%d) Not Regist Item!", byNth, registIndex, static_cast<int>(state));
+      owner->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, message, 0xFFu, 0LL);
+      return false;
     }
 
     _qry_case_unmandtrader_cheat_updateregisttime qryData{};
@@ -1121,7 +1139,7 @@ bool CUnmannedTraderUserInfo::CheatCancelRegistSingle(unsigned __int8 byNth)
   }
 
   char buffer[288]{};
-  sprintf(buffer, "Not Exist (%u)th Index!", byNth);
+  std::sprintf(buffer, "Not Exist (%u)th Index %u!", byNth, static_cast<unsigned int>(registCount));
   owner->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, buffer, 0xFFu, 0LL);
   return false;
 }
@@ -1200,27 +1218,38 @@ CUnmannedTraderUserInfo &CUnmannedTraderUserInfo::operator=(const CUnmannedTrade
 
 std::vector<CUnmannedTraderRegistItemInfo>::iterator CUnmannedTraderUserInfo::Find(unsigned int dwRegistSerial)
 {
-  const size_t maxCount =
-    std::min<size_t>(this->m_byMaxRegistCnt, this->m_vecRegistItemInfo.size());
-  for (size_t index = 0; index < maxCount; ++index)
+  for (unsigned __int8 index = 0; index < this->m_byMaxRegistCnt; ++index)
   {
     if (this->m_vecRegistItemInfo[index].GetRegistSerial() == dwRegistSerial)
     {
-      return this->m_vecRegistItemInfo.begin() + static_cast<std::ptrdiff_t>(index);
+      return this->m_vecRegistItemInfo.begin() + index;
     }
   }
   return this->m_vecRegistItemInfo.end();
 }
 
+std::vector<CUnmannedTraderRegistItemInfo>::iterator CUnmannedTraderUserInfo::FindRegist(
+  std::vector<CUnmannedTraderRegistItemInfo>::iterator iterStart)
+{
+  while (iterStart != m_vecRegistItemInfo.end())
+  {
+    const CUnmannedTraderItemState::STATE state = iterStart->GetState();
+    if (state == CUnmannedTraderItemState::STATE::WATEREL || state == CUnmannedTraderItemState::STATE::SOILEL)
+    {
+      return iterStart;
+    }
+    ++iterStart;
+  }
+  return m_vecRegistItemInfo.end();
+}
+
 std::vector<CUnmannedTraderRegistItemInfo>::iterator CUnmannedTraderUserInfo::FindEmpty()
 {
-  const size_t maxCount =
-    std::min<size_t>(this->m_byMaxRegistCnt, this->m_vecRegistItemInfo.size());
-  for (size_t index = 0; index < maxCount; ++index)
+  for (unsigned __int8 index = 0; index < this->m_byMaxRegistCnt; ++index)
   {
     if (this->m_vecRegistItemInfo[index].IsEmpty())
     {
-      return this->m_vecRegistItemInfo.begin() + static_cast<std::ptrdiff_t>(index);
+      return this->m_vecRegistItemInfo.begin() + index;
     }
   }
   return this->m_vecRegistItemInfo.end();
@@ -1310,6 +1339,64 @@ bool CUnmannedTraderUserInfo::CompleteUpdateState(
   }
 
   return false;
+}
+
+void CUnmannedTraderUserInfo::SetAllItemState(unsigned __int8 byState, unsigned __int8 byMaxCnt)
+{
+  if (m_vecRegistItemInfo.size() >= byMaxCnt)
+  {
+    for (unsigned __int8 index = 0; index < byMaxCnt; ++index)
+    {
+      m_vecRegistItemInfo[index].SetState(byState);
+    }
+  }
+}
+
+void CUnmannedTraderUserInfo::PrcoSellUpdateWaitItem(
+  _qry_case_unmandtrader_log_in_proc_update_complete *pkResult,
+  unsigned __int8 byGroupType,
+  CLogFile *pkLogger)
+{
+  (void)byGroupType;
+  CPlayer *owner = FindOwner();
+  auto *result = reinterpret_cast<_qry_case_unmandtrader_log_in_proc_update_complete_create *>(pkResult);
+  if (owner && owner->m_bOper)
+  {
+    for (int index = 0; index < 20; ++index)
+    {
+      result->List[index].byProcUpdate = 0xFF;
+      CUnmannedTraderRegistItemInfo &loadItem = m_vecLoadItemInfo[index];
+      if (!loadItem.IsSellUpdateWait())
+      {
+        continue;
+      }
+
+      _STORAGE_LIST::_db_con *inventoryItem = owner->m_Param.m_dbInven.GetPtrFromSerial(loadItem.GetItemSerial());
+      if (inventoryItem)
+      {
+        result->List[result->wNum].byProcUpdate = 92;
+        result->List[result->wNum].dwBuyer = 0;
+        result->List[result->wNum].dwRegistSerial = loadItem.GetRegistSerial();
+        result->List[result->wNum++].byUpdateState = 1;
+        loadItem.ClearBuyerInfo();
+        loadItem.SetState(1u);
+      }
+      else
+      {
+        result->List[result->wNum].byProcUpdate = 83;
+        result->List[result->wNum].dwBuyer = 0;
+        result->List[result->wNum].dwRegistSerial = loadItem.GetRegistSerial();
+        result->List[result->wNum++].byUpdateState = 5;
+        loadItem.ClearToWaitState();
+      }
+    }
+  }
+  else if (pkLogger)
+  {
+    pkLogger->Write(
+      "CUnmannedTraderUserInfo::PrcoSellUpdateWaitItem()\r\n\t\t( 0 == pkOwner || !pkOwner->m_bOper(%d) )\r\n",
+      owner ? owner->m_bOper : -1);
+  }
 }
 
 void CUnmannedTraderUserInfo::CompleteCreate(CLogFile *pkLogger)

@@ -2756,4 +2756,663 @@ void CMgrAvatorItemHistory::item_serial_full(int n, char *pszFileName)
   WriteFile(pszFileName, sData);
 }
 
+void CMgrAvatorItemHistory::ClearLogBuffer()
+{
+  sData[0] = 0;
+}
+
+void CMgrAvatorItemHistory::WriteLog(char *pszFileName)
+{
+  if (sData[0])
+  {
+    WriteFile(pszFileName, sData);
+  }
+}
+
+void CMgrAvatorItemHistory::combine_ex_reward_item(
+  int n,
+  unsigned __int8 byMakeNum,
+  _ITEMCOMBINE_DB_BASE *pCombineDB,
+  unsigned __int8 *pbyRewardTypeList,
+  unsigned __int64 *lnUIDs,
+  char *strFileName)
+{
+  if (!pCombineDB)
+  {
+    return;
+  }
+
+  const unsigned __int16 excelIndex = GetExcelIndexFromCombineExCheckKey(pCombineDB->m_dwCheckKey);
+  const int listCount = pCombineDB->m_byItemListNum >= 0x18u ? 24 : pCombineDB->m_byItemListNum;
+  sprintf(
+    sData,
+    "\r\nCOMBINE_EX[REWARD]\r\n\tCombine%d@%d, type:%d, num:%d, (D:%u) [%s %s]\r\n",
+    excelIndex + 1,
+    pCombineDB->m_dwCheckKey,
+    pCombineDB->m_byDlgType,
+    byMakeNum,
+    pCombineDB->m_dwDalant,
+    m_szCurDate,
+    m_szCurTime);
+
+  for (int itemIndex = 0; itemIndex < listCount; ++itemIndex)
+  {
+    _ITEMCOMBINE_DB_BASE::_LIST *list = &pCombineDB->m_List[itemIndex];
+    _base_fld *record = g_Main.m_tblItemData[list->Key.byTableCode].GetRecord(list->Key.wItemIndex);
+    if (!record)
+    {
+      continue;
+    }
+
+    if (pbyRewardTypeList[itemIndex] == 2)
+    {
+      const char *upgInfo = DisplayItemUpgInfo(list->Key.byTableCode, list->dwUpt);
+      sprintf(sBuf, "\t%s_%u_@%s World \r\n", record->m_strCode, list->dwDur, upgInfo);
+      strcat_0(sData, sBuf);
+    }
+    else if (pbyRewardTypeList[itemIndex] == 1)
+    {
+      const char *upgInfo = DisplayItemUpgInfo(list->Key.byTableCode, list->dwUpt);
+      sprintf(sBuf, "\t%s_%u_@%s[%I64u] Inven \r\n", record->m_strCode, list->dwDur, upgInfo, lnUIDs[itemIndex]);
+      strcat_0(sData, sBuf);
+    }
+  }
+
+  WriteFile(strFileName, sData);
+}
+
+void CMgrAvatorItemHistory::combine_ex_using_material(
+  int n,
+  unsigned int dwCheckKey,
+  unsigned __int8 bySlotNum,
+  _STORAGE_LIST::_db_con **ppMaterial,
+  unsigned __int8 *pbyMtrNum,
+  unsigned int dwFee,
+  char *strFileName,
+  int bSucc,
+  unsigned int dwFailCount)
+{
+  if (!ppMaterial || !pbyMtrNum)
+  {
+    return;
+  }
+
+  const unsigned __int16 excelIndex = GetExcelIndexFromCombineExCheckKey(dwCheckKey);
+  if (bSucc)
+  {
+    sprintf(
+      sData,
+      "\r\nCOMBINE_EX[CONSUME]\r\n\tCombine%d@%d,  num:%d, (D:%d) [%s %s] : Succ \r\n",
+      excelIndex + 1,
+      dwCheckKey,
+      bySlotNum,
+      dwFee,
+      m_szCurDate,
+      m_szCurTime);
+  }
+  else
+  {
+    sprintf(
+      sData,
+      "\r\nCOMBINE_EX[CONSUME]\r\n\tCombine%d@%d,  num:%d, (D:%d) [%s %s] : Fail( %u ) \r\n",
+      excelIndex + 1,
+      dwCheckKey,
+      bySlotNum,
+      dwFee,
+      m_szCurDate,
+      m_szCurTime,
+      dwFailCount);
+  }
+
+  for (int itemIndex = 0; itemIndex < bySlotNum; ++itemIndex)
+  {
+    _STORAGE_LIST::_db_con *material = ppMaterial[itemIndex];
+    if (!material)
+    {
+      continue;
+    }
+
+    _base_fld *record = g_Main.m_tblItemData[material->m_byTableCode].GetRecord(material->m_wItemIndex);
+    if (!record)
+    {
+      continue;
+    }
+
+    if (pbyMtrNum[itemIndex])
+    {
+      sprintf(
+        sBuf,
+        "\t - %s_%u [%u] [%I64u] Delete \r\n",
+        record->m_strCode,
+        material->m_dwDur,
+        pbyMtrNum[itemIndex],
+        material->m_lnUID);
+    }
+    else
+    {
+      sprintf(
+        sBuf,
+        "\t - %s_%u [%u] [%I64u]\r\n",
+        record->m_strCode,
+        material->m_dwDur,
+        pbyMtrNum[itemIndex],
+        material->m_lnUID);
+    }
+    strcat_0(sData, sBuf);
+  }
+
+  WriteFile(strFileName, sData);
+}
+
+void CMgrAvatorItemHistory::cut_item(
+  int n,
+  _STORAGE_LIST::_db_con *pOreItem,
+  int nOreNum,
+  unsigned __int16 *pwCuttingResBuffer,
+  unsigned int dwCostDalant,
+  unsigned int dwNewDalant,
+  char *pszFileName)
+{
+  sData[0] = 0;
+  _base_fld *record = g_Main.m_tblItemData[pOreItem->m_byTableCode].GetRecord(pOreItem->m_wItemIndex);
+  sprintf(
+    sBuf,
+    "CUT: %s * %d pay(D:%u) $D:%u [%s %s]\r\n",
+    record->m_strCode,
+    nOreNum,
+    dwCostDalant,
+    dwNewDalant,
+    m_szCurDate,
+    m_szCurTime);
+  strcat_0(sData, sBuf);
+
+  for (int resourceIndex = 0; resourceIndex < GetMaxResKind(); ++resourceIndex)
+  {
+    if (!pwCuttingResBuffer[resourceIndex])
+    {
+      continue;
+    }
+
+    _base_fld *resourceRecord = g_Main.m_tblItemData[18].GetRecord(resourceIndex);
+    sprintf(sBuf, "\t+ %s_%d\r\n", resourceRecord->m_strCode, pwCuttingResBuffer[resourceIndex]);
+    strcat_0(sData, sBuf);
+  }
+
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::buy_unit(
+  int n,
+  unsigned __int8 bySlotIndex,
+  void *pData,
+  unsigned int *pdwConsumMoney,
+  unsigned int dwNewDalant,
+  unsigned int dwNewGold,
+  char *pszFileName)
+{
+  _UNIT_DB_BASE::_LIST *unitData = static_cast<_UNIT_DB_BASE::_LIST *>(pData);
+  sprintf(
+    sData,
+    "UNIT BUY: %d>fr:%d %d/%d/%d/%d/%d/%d pay(D:%u G%u) $D:%u $G:%u [%s %s]\r\n",
+    bySlotIndex,
+    unitData->byFrame,
+    unitData->byPart[0],
+    unitData->byPart[1],
+    unitData->byPart[2],
+    unitData->byPart[3],
+    unitData->byPart[4],
+    unitData->byPart[5],
+    *pdwConsumMoney,
+    pdwConsumMoney[1],
+    dwNewDalant,
+    dwNewGold,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::destroy_unit(
+  int n,
+  unsigned __int8 bySlotIndex,
+  unsigned __int8 byFrameCode,
+  char *pszFileName)
+{
+  sprintf(sData, "UNIT DESTROY: %d>fr:%d [%s %s]\r\n", bySlotIndex, byFrameCode, m_szCurDate, m_szCurTime);
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::exchange_pvp_gold(
+  int n,
+  unsigned int dwPoint,
+  unsigned int dwNewDalant,
+  unsigned int dwNewGold,
+  char *pszFileName)
+{
+  sprintf(
+    sData,
+    "CB EXCHANGE: rev(G:%d) $D:%d $G:%d [%s %s]\r\n",
+    dwPoint,
+    dwNewDalant,
+    dwNewGold,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::guild_est_money(
+  int n,
+  char *pszGuildName,
+  unsigned int dwEstDalant,
+  unsigned int dwLeftDalant,
+  char *pszFileName)
+{
+  sprintf(
+    sData,
+    "GUILD EST PAY: guild(%s) pay(D:%u) $D:%u [%s %s]\r\n",
+    pszGuildName,
+    dwEstDalant,
+    dwLeftDalant,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::guild_push_money(
+  int n,
+  char *pszGuildName,
+  unsigned int dwPushDalant,
+  unsigned int dwPushGold,
+  unsigned int dwLeftDalant,
+  unsigned int dwLeftGold,
+  char *pszFileName)
+{
+  sprintf(
+    sData,
+    "GUILD MONEY PUSH: guild(%s) pay(D:%u G%u) $D:%u $G:%u [%s %s]\r\n",
+    pszGuildName,
+    dwPushDalant,
+    dwPushGold,
+    dwLeftDalant,
+    dwLeftGold,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::guild_push_money_rollback(
+  int n,
+  char *pszGuildName,
+  unsigned int dwPushDalant,
+  unsigned int dwPushGold,
+  unsigned int dwLeftDalant,
+  unsigned int dwLeftGold,
+  char *pszFileName)
+{
+  sprintf(
+    sData,
+    "GUILD MONEY PUSH CANCEL: guild(%s) rev(D:%u G%u) $D:%u $G:%u [%s %s]\r\n",
+    pszGuildName,
+    dwPushDalant,
+    dwPushGold,
+    dwLeftDalant,
+    dwLeftGold,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::guild_suggest_change_taxrate(
+  unsigned int dwGuild,
+  unsigned int dwMatterObj2,
+  char *szFile)
+{
+  memset_0(sData, 0, sizeof(sData));
+  const unsigned int korLocalTime = GetKorLocalTime();
+  sprintf_s(sData, sizeof(sData), "[SUGGEST TAX RATE][Guild:%d] - %d - %d\r\n", dwGuild, dwMatterObj2, korLocalTime);
+  WriteFile(szFile, sData);
+}
+
+void CMgrAvatorItemHistory::login_cancel_auto_trade(
+  int n,
+  unsigned int dwRegistSerial,
+  _STORAGE_LIST::_db_con *pRegItem,
+  __int64 tResultTime)
+{
+  _base_fld *record = g_Main.m_tblItemData[pRegItem->m_byTableCode].GetRecord(pRegItem->m_wItemIndex);
+  sBuf[0] = 0;
+
+  tm *localTime = localtime_5(&tResultTime);
+  if (localTime)
+  {
+    const char *upgInfo = DisplayItemUpgInfo(pRegItem->m_byTableCode, pRegItem->m_dwLv);
+    sprintf_s(
+      sBuf,
+      sizeof(sBuf),
+      "TIMEOUT_AUTO_TRADE: login canceldate(%04d-%02d-%02d %02d:%02d:%02d) reg(%u) %s_%u_@%s[%I64u] [%s %s]\r\n",
+      localTime->tm_year + 1900,
+      localTime->tm_mon + 1,
+      localTime->tm_mday,
+      localTime->tm_hour,
+      localTime->tm_min,
+      localTime->tm_sec,
+      dwRegistSerial,
+      record->m_strCode,
+      pRegItem->m_dwDur,
+      upgInfo,
+      pRegItem->m_lnUID,
+      m_szCurDate,
+      m_szCurTime);
+  }
+  else
+  {
+    const char *upgInfo = DisplayItemUpgInfo(pRegItem->m_byTableCode, pRegItem->m_dwLv);
+    sprintf_s(
+      sBuf,
+      sizeof(sBuf),
+      "TIMEOUT_AUTO_TRADE: login canceldate(invalid(%u)) reg(%u) %s_%u_@%s[%I64u] [%s %s]\r\n",
+      static_cast<unsigned int>(tResultTime),
+      dwRegistSerial,
+      record->m_strCode,
+      pRegItem->m_dwDur,
+      upgInfo,
+      pRegItem->m_lnUID,
+      m_szCurDate,
+      m_szCurTime);
+  }
+
+  strcat_s(sData, sizeof(sData), sBuf);
+}
+
+void CMgrAvatorItemHistory::personal_amine_install(
+  unsigned __int8 byTblCode,
+  unsigned __int16 wItemIndex,
+  _personal_amine_inven_db_load *pCon,
+  char *szFileName)
+{
+  memset_0(sData, 0, sizeof(sData));
+  const char *itemKorName = GetItemKorName(byTblCode, wItemIndex);
+  sprintf_s(sData, sizeof(sData), "[PERSONA_AMINE_INSTALL] - %s\r\n", itemKorName);
+
+  char *buffer = &sData[strlen_0(sData)];
+  for (int itemIndex = 0; itemIndex < 40; ++itemIndex)
+  {
+    if (!pCon->m_List[itemIndex].m_bLoad)
+    {
+      continue;
+    }
+
+    const char *oreName = GetItemKorName(pCon->m_List[itemIndex].m_byTableCode, pCon->m_List[itemIndex].m_wItemIndex);
+    sprintf_s(
+      buffer,
+      sizeof(sData) - static_cast<size_t>(buffer - sData),
+      "[%02d]%s >> num: %d\r\n",
+      pCon->m_List[itemIndex].m_byStorageIndex,
+      oreName,
+      pCon->m_List[itemIndex].m_dwDur);
+    buffer += strlen_0(buffer);
+  }
+
+  WriteFile(szFileName, sData);
+}
+
+void CMgrAvatorItemHistory::raceboss_vote(
+  unsigned int dwSerial,
+  unsigned int dwAvatorSerial,
+  char *pAvatorName,
+  char *pszFileName)
+{
+  const unsigned int korLocalTime = GetKorLocalTime();
+  sprintf(
+    sData,
+    "[RACE BOSS]vote: Serial:%d\tTarget:%s(%d)\tTime:%d\n",
+    dwSerial,
+    pAvatorName,
+    dwAvatorSerial,
+    korLocalTime);
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::sell_unit(
+  int n,
+  unsigned __int8 bySlotIndex,
+  unsigned __int8 byFrameCode,
+  float fGaugeRate,
+  unsigned int dwSellMoney,
+  unsigned int dwPayDalant,
+  unsigned int dwNewDalant,
+  unsigned int dwNewGold,
+  char *pszFileName)
+{
+  sprintf(
+    sData,
+    "UNIT SELL: %d>fr:%d gauge:%.0f%% rev(D:%u) pay(D:%u) $D:%u $G:%u [%s %s]\r\n",
+    bySlotIndex,
+    byFrameCode,
+    (float)(fGaugeRate * 100.0),
+    dwSellMoney,
+    dwPayDalant,
+    dwNewDalant,
+    dwNewGold,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::trade(
+  int n,
+  _STORAGE_LIST::_db_con *pOutItem,
+  int nOutItemNum,
+  unsigned int dwOutDalant,
+  unsigned int dwOutGold,
+  _STORAGE_LIST::_db_con *pInItem,
+  int nInItemNum,
+  unsigned int dwInDalant,
+  unsigned int dwInGold,
+  char *pszDstName,
+  unsigned int dwDstSerial,
+  char *pszDstID,
+  unsigned int dwSumDalant,
+  unsigned int dwSumGold,
+  char *pMapCode,
+  float *pfPos,
+  char *pszFileName)
+{
+  sData[0] = 0;
+  sprintf(
+    sBuf,
+    "TRADE: dst(%s:%d id:%s) pay(D:%u G:%u) rev(D:%u G:%u) $D:%u $G:%u \t{POS:%s (%d, %d, %d)} [%s %s]\r\n",
+    pszDstName,
+    dwDstSerial,
+    pszDstID,
+    dwOutDalant,
+    dwOutGold,
+    dwInDalant,
+    dwInGold,
+    dwSumDalant,
+    dwSumGold,
+    pMapCode,
+    (int)*pfPos,
+    (int)pfPos[1],
+    (int)pfPos[2],
+    m_szCurDate,
+    m_szCurTime);
+  strcat_0(sData, sBuf);
+
+  for (int itemIndex = 0; itemIndex < nOutItemNum; ++itemIndex)
+  {
+    _base_fld *record = g_Main.m_tblItemData[pOutItem[itemIndex].m_byTableCode].GetRecord(pOutItem[itemIndex].m_wItemIndex);
+    const char *upgInfo = DisplayItemUpgInfo(pOutItem[itemIndex].m_byTableCode, pOutItem[itemIndex].m_dwLv);
+    sprintf(
+      sBuf,
+      "\t- %s_%u_@%s[%I64u]\r\n",
+      record->m_strCode,
+      pOutItem[itemIndex].m_dwDur,
+      upgInfo,
+      pOutItem[itemIndex].m_lnUID);
+    strcat_0(sData, sBuf);
+  }
+
+  for (int itemIndex = 0; itemIndex < nInItemNum; ++itemIndex)
+  {
+    _base_fld *record = g_Main.m_tblItemData[pInItem[itemIndex].m_byTableCode].GetRecord(pInItem[itemIndex].m_wItemIndex);
+    const char *upgInfo = DisplayItemUpgInfo(pInItem[itemIndex].m_byTableCode, pInItem[itemIndex].m_dwLv);
+    sprintf(
+      sBuf,
+      "\t+ %s_%u_@%s[%I64u]\r\n",
+      record->m_strCode,
+      pInItem[itemIndex].m_dwDur,
+      upgInfo,
+      pInItem[itemIndex].m_lnUID);
+    strcat_0(sData, sBuf);
+  }
+
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::trunk_io_item(
+  int n,
+  _STORAGE_LIST::_db_con *pIOItem,
+  bool bInput,
+  unsigned int dwFeeDalant,
+  unsigned int dwNewDalant,
+  char *pszFileName)
+{
+  const char *ioType[2] = { "OUT", "IN" };
+  _base_fld *record = g_Main.m_tblItemData[pIOItem->m_byTableCode].GetRecord(pIOItem->m_wItemIndex);
+  const char *upgInfo = DisplayItemUpgInfo(pIOItem->m_byTableCode, pIOItem->m_dwLv);
+  sprintf(
+    sData,
+    "TRUNK ITEM %s: %s_%u_@%s[%I64u] pay(%d) $D:%d [%s %s]\r\n",
+    ioType[bInput ? 1 : 0],
+    record->m_strCode,
+    pIOItem->m_dwDur,
+    upgInfo,
+    pIOItem->m_lnUID,
+    dwFeeDalant,
+    dwNewDalant,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::trunk_io_money(
+  int n,
+  bool bInput,
+  unsigned int dwIODalant,
+  unsigned int dwIOGold,
+  unsigned int dwPayDalant,
+  unsigned int dwInvenDalant,
+  unsigned int dwInvenGold,
+  unsigned int dwTrkDalant,
+  unsigned int dwTrkGold,
+  char *pszFileName)
+{
+  const char *ioType[2] = { "OUT", "IN" };
+  sprintf(
+    sData,
+    "TRUNK MONEY %s: io(D:%u, G:%u) pay(%u) $D:%u $G:%u \t^D%u ^G:%u [%s %s]\r\n",
+    ioType[bInput ? 1 : 0],
+    dwIODalant,
+    dwIOGold,
+    dwPayDalant,
+    dwInvenDalant,
+    dwInvenGold,
+    dwTrkDalant,
+    dwTrkGold,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::trunk_swap_item(
+  int n,
+  _STORAGE_LIST::_db_con *pInputItem,
+  _STORAGE_LIST::_db_con *pOutputItem,
+  unsigned int dwFeeDalant,
+  unsigned int dwNewDalant,
+  char *pszFileName)
+{
+  _base_fld *inRecord = g_Main.m_tblItemData[pInputItem->m_byTableCode].GetRecord(pInputItem->m_wItemIndex);
+  _base_fld *outRecord = g_Main.m_tblItemData[pOutputItem->m_byTableCode].GetRecord(pOutputItem->m_wItemIndex);
+  const char *inUpgInfo = DisplayItemUpgInfo(pInputItem->m_byTableCode, pInputItem->m_dwLv);
+  const char *outUpgInfo = DisplayItemUpgInfo(pOutputItem->m_byTableCode, pOutputItem->m_dwLv);
+  sprintf(
+    sData,
+    "TRUNK ITEM SWAP: IN> %s_%u_@%s[%I64u] OUT> %s_%d_@%s[%I64u], pay(%u) $D:%u [%s %s]\r\n",
+    inRecord->m_strCode,
+    pInputItem->m_dwDur,
+    inUpgInfo,
+    pInputItem->m_lnUID,
+    outRecord->m_strCode,
+    pOutputItem->m_dwDur,
+    outUpgInfo,
+    pOutputItem->m_lnUID,
+    dwFeeDalant,
+    dwNewDalant,
+    m_szCurDate,
+    m_szCurTime);
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::auto_trade_login_sell(
+  const char *szBuyerName,
+  unsigned int dwBuyerSerial,
+  const char *szBuyerID,
+  unsigned int dwRegistSerial,
+  _STORAGE_LIST::_db_con *pItem,
+  __int64 tResultTime,
+  unsigned int dwPrice,
+  unsigned int dwTax,
+  unsigned int dwLeftDalant,
+  unsigned int dwLeftGold)
+{
+  tm *localTime = localtime_5(&tResultTime);
+  sBuf[0] = 0;
+  if (localTime)
+  {
+    sprintf_s(
+      sBuf,
+      sizeof(sBuf),
+      "AUTO TRADE(SELL): login sell selldate(%04d-%02d-%02d %02d:%02d:%02d) reg(%u) buyer(%s:%u id:%s) recv(D:%u) tax(%u) $D:%u $G:%u [%s %s]\r\n",
+      localTime->tm_year + 1900,
+      localTime->tm_mon + 1,
+      localTime->tm_mday,
+      localTime->tm_hour,
+      localTime->tm_min,
+      localTime->tm_sec,
+      dwRegistSerial,
+      szBuyerName,
+      dwBuyerSerial,
+      szBuyerID,
+      dwPrice,
+      dwTax,
+      dwLeftDalant,
+      dwLeftGold,
+      m_szCurDate,
+      m_szCurTime);
+  }
+  else
+  {
+    sprintf_s(
+      sBuf,
+      sizeof(sBuf),
+      "AUTO TRADE(SELL): login sell selldate(invalid) reg(%u) buyer(%s:%u id:%s) recv(D:%u) tax(%u) $D:%u $G:%u [%s %s]\r\n",
+      dwRegistSerial,
+      szBuyerName,
+      dwBuyerSerial,
+      szBuyerID,
+      dwPrice,
+      dwTax,
+      dwLeftDalant,
+      dwLeftGold,
+      m_szCurDate,
+      m_szCurTime);
+  }
+  strcat_s(sData, sizeof(sData), sBuf);
+
+  _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
+  const char *upgInfo = DisplayItemUpgInfo(pItem->m_byTableCode, pItem->m_dwLv);
+  sprintf_s(sBuf, sizeof(sBuf), "\t- %s_%u_@%s[%I64u]\r\n", record->m_strCode, pItem->m_dwDur, upgInfo, pItem->m_lnUID);
+  strcat_s(sData, sizeof(sData), sBuf);
+}
 

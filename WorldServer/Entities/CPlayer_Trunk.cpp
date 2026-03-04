@@ -269,7 +269,9 @@ void CPlayer::pc_TrunkEstRequest(char *pwszPassword, unsigned __int8 byHintIndex
     if (this->m_pUserDB)
     {
       this->m_pUserDB->Update_TrunkSlotNum(this->m_Param.GetTrunkSlotNum());
-      SyncTrunkMetaToUserDB(this);
+      this->m_pUserDB->Update_TrunkPassword(this->m_Param.GetTrunkPasswdW());
+      this->m_pUserDB->Update_TrunkMoney(this->m_Param.m_dTrunkDalant, this->m_Param.m_dTrunkGold);
+      this->m_pUserDB->Update_TrunkHint(this->m_Param.m_byTrunkHintIndex, this->m_Param.m_wszTrunkHintAnswer);
     }
 
     const int level = this->m_Param.GetLevel();
@@ -298,7 +300,7 @@ void CPlayer::pc_TrunkDownloadRequest(char *pwszPassword)
   {
     byRetCode = 2;
   }
-  else if (strcmp_0(pwszPassword, this->m_Param.m_wszTrunkPasswd))
+  else if (strcmp_0(pwszPassword, this->m_Param.GetTrunkPasswdW()))
   {
     byRetCode = 1;
   }
@@ -334,7 +336,7 @@ void CPlayer::pc_TrunkChangePasswdRequest(
   else if (
     strlen_0(pwszPrevPassword) < 2
     || strlen_0(pwszPrevPassword) > 12
-    || strcmp_0(pwszPrevPassword, this->m_Param.m_wszTrunkPasswd))
+    || strcmp_0(pwszPrevPassword, this->m_Param.GetTrunkPasswdW()))
   {
     byRetCode = 1;
   }
@@ -362,7 +364,11 @@ void CPlayer::pc_TrunkChangePasswdRequest(
     strcpy_0(this->m_Param.m_wszTrunkPasswd, pwszChngPassword);
     this->m_Param.m_byTrunkHintIndex = byHintIndex;
     strcpy_0(this->m_Param.m_wszTrunkHintAnswer, pwszHintAnswer);
-    SyncTrunkMetaToUserDB(this);
+    if (this->m_pUserDB)
+    {
+      this->m_pUserDB->Update_TrunkPassword(this->m_Param.GetTrunkPasswdW());
+      this->m_pUserDB->Update_TrunkHint(this->m_Param.m_byTrunkHintIndex, this->m_Param.m_wszTrunkHintAnswer);
+    }
   }
 
   this->SendMsg_TrunkChangPasswdResult(static_cast<char>(byRetCode));
@@ -758,10 +764,16 @@ void CPlayer::pc_TrunkIoMoveRequest(
           else
           {
             const int raceCode = this->m_Param.GetRaceCode();
-            if (byStartStorageIndex == 5 || byStartStorageIndex == 7)
+            if (byStartStorageIndex == 5)
             {
-              unsigned __int8 itemRace = 0;
-              if (!GetTrunkSlotRaceBySerial(this, byStartStorageIndex, wItemSerial, &itemRace) || itemRace != raceCode)
+              if (this->m_Param.GetTrunkSlotRace(wItemSerial) != raceCode)
+              {
+                byRetCode = 17;
+              }
+            }
+            else if (byStartStorageIndex == 7)
+            {
+              if (this->m_Param.GetExtTrunkSlotRace(wItemSerial) != raceCode)
               {
                 byRetCode = 17;
               }
@@ -976,11 +988,16 @@ void CPlayer::pc_TrunkIoSwapRequest(
           {
             byRetCode = 6;
           }
-          else if (byStartStorageIndex == 5 || byStartStorageIndex == 7)
+          else if (byStartStorageIndex == 5)
           {
-            unsigned __int8 itemRace = 0;
-            if (!GetTrunkSlotRaceBySerial(this, byStartStorageIndex, wStartItemSerial, &itemRace)
-                || itemRace != this->m_Param.GetRaceCode())
+            if (this->m_Param.GetTrunkSlotRace(wStartItemSerial) != this->m_Param.GetRaceCode())
+            {
+              byRetCode = 17;
+            }
+          }
+          else if (byStartStorageIndex == 7)
+          {
+            if (this->m_Param.GetExtTrunkSlotRace(wStartItemSerial) != this->m_Param.GetRaceCode())
             {
               byRetCode = 17;
             }
@@ -1254,8 +1271,8 @@ void CPlayer::pc_TrunkIoMoneyRequest(unsigned __int8 byCase, int dwDalant, int d
   {
     if (byCase)
     {
-      this->m_Param.m_dTrunkDalant -= static_cast<double>(dwDalant);
-      this->m_Param.m_dTrunkGold -= static_cast<double>(dwGold);
+      this->m_Param.SubTrunkDalant(dwDalant);
+      this->m_Param.SubTrunkGold(dwGold);
       this->AddDalant(dwDalant, false);
       this->AddGold(dwGold, false);
     }
@@ -1263,11 +1280,14 @@ void CPlayer::pc_TrunkIoMoneyRequest(unsigned __int8 byCase, int dwDalant, int d
     {
       this->SubDalant(static_cast<unsigned int>(dwDalant));
       this->SubGold(static_cast<unsigned int>(dwGold));
-      this->m_Param.m_dTrunkDalant += static_cast<double>(dwDalant);
-      this->m_Param.m_dTrunkGold += static_cast<double>(dwGold);
+      this->m_Param.AddTrunkDalant(dwDalant);
+      this->m_Param.AddTrunkGold(dwGold);
     }
 
-    SyncTrunkMetaToUserDB(this);
+    if (this->m_pUserDB)
+    {
+      this->m_pUserDB->Update_TrunkMoney(this->m_Param.m_dTrunkGold, this->m_Param.m_dTrunkDalant);
+    }
   }
 
   this->SendMsg_TrunkIoMoneyResult(

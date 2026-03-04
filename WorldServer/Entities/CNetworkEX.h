@@ -48,6 +48,9 @@ public:
 class  CNetworkEX : public CNetWorking
 {
 public:
+  CNetworkEX();
+  ~CNetworkEX() override;
+
   unsigned int dwMonsterPosMiss;
   unsigned int dwPlayerPosMiss;
   unsigned __int8 m_byStatus[4];
@@ -116,6 +119,9 @@ public:
   bool StoreListRequest(unsigned int n, char *pBuf);
   bool ExchangeDalantForGoldRequest(unsigned int n, char *pBuf);
   bool ExchangeGoldForDalantRequest(unsigned int n, char *pBuf);
+  char ExchangeGoldForPvPRequest(int n, char *pBuf);
+  char OpenControlInform(unsigned int n, char *pMsg);
+  char UserBlockResult(unsigned int n, char *pMsg);
   bool LimitItemNumRequest(unsigned int n, char *pBuf);
   bool TalikRecorverList(unsigned int n, char *pBuf);
   bool PvpCashRecorverWithTalik(unsigned int n, char *pBuf);

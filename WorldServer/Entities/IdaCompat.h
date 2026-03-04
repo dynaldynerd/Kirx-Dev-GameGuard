@@ -34,6 +34,22 @@ using _QWORD = unsigned __int64;
 #define BYTE2(x) (*((unsigned char *)&(x) + 2))
 #endif
 
+#ifndef BYTE1
+#define BYTE1(x) (*((unsigned char *)&(x) + 1))
+#endif
+
+#ifndef LOBYTE
+#define LOBYTE(x) (*((unsigned char *)&(x)))
+#endif
+
+#ifndef HIBYTE
+#define HIBYTE(x) (*((unsigned char *)&(x) + 1))
+#endif
+
+#ifndef SLOBYTE
+#define SLOBYTE(x) (*((signed char *)&(x)))
+#endif
+
 #ifndef LODWORD
 #define LODWORD(x) (*((unsigned int *)&(x)))
 #endif
@@ -52,6 +68,7 @@ inline float sinf_0(float v) { return std::sinf(v); }
 inline float cosf_0(float v) { return std::cosf(v); }
 inline float acosf_0(float v) { return std::acosf(v); }
 inline float asinf_0(float v) { return std::asinf(v); }
+inline float atanf_0(float v) { return std::atan(v); }
 inline double sin_0(double v) { return std::sin(v); }
 inline double cos_0(double v) { return std::cos(v); }
 inline double acos_0(double v) { return std::acos(v); }

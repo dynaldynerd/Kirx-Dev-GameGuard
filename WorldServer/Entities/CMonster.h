@@ -24,6 +24,8 @@ class  CMonster : public CCharacter
 public:
   CMonster();
   ~CMonster();
+  __int64 AttackableHeight() override;
+  void BeTargeted(CCharacter *pSeacher) override;
 
   bool m_bOper;
   bool m_bApparition;

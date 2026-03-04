@@ -9,7 +9,7 @@ class  CMsgProcess : public CMsgData
 public:
   CMsgProcess();
   explicit CMsgProcess(int nObjNum);
-  virtual ~CMsgProcess() = default;
+  virtual ~CMsgProcess();
   void ProcessMessage(_message *pMsg) override;
 };
 

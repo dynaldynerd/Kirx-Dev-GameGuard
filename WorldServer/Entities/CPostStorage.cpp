@@ -9,6 +9,11 @@ CPostStorage::CPostStorage()
   Init();
 }
 
+CPostStorage::~CPostStorage()
+{
+  // this is not a stub
+}
+
 void CPostStorage::Init()
 {
   for (int j = 0; j < 50; ++j)

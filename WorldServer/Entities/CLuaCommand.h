@@ -6,9 +6,11 @@
 class  CLuaCommand
 {
 public:
+  CLuaCommand();
+  virtual ~CLuaCommand();
+
   unsigned __int8 m_byCommand;
   char m_strBuff[2048];
-  virtual ~CLuaCommand() = default;
   void Init();
   unsigned __int8 GetType();
   char *GetBuffer();

@@ -18,10 +18,24 @@
 #include <ctime>
 #include <cstring>
 
+CWeeklyGuildRankManager *CWeeklyGuildRankManager::ms_Instance = nullptr;
+
 CWeeklyGuildRankManager *CWeeklyGuildRankManager::Instance()
 {
-  static CWeeklyGuildRankManager s_instance;
-  return &s_instance;
+  if (!ms_Instance)
+  {
+    ms_Instance = new CWeeklyGuildRankManager();
+  }
+  return ms_Instance;
+}
+
+void CWeeklyGuildRankManager::Destroy()
+{
+  if (ms_Instance)
+  {
+    delete ms_Instance;
+    ms_Instance = nullptr;
+  }
 }
 
 CWeeklyGuildRankManager::CWeeklyGuildRankManager()

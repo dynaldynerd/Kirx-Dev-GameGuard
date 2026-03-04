@@ -2,6 +2,16 @@
 
 #include "CLuaCommand.h"
 
+CLuaCommand::CLuaCommand()
+{
+  memset_0(m_strBuff, 0, sizeof(m_strBuff));
+  m_byCommand = 0;
+}
+
+CLuaCommand::~CLuaCommand()
+{
+}
+
 void CLuaCommand::Init()
 {
   m_byCommand = 0;

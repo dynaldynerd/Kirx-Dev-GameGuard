@@ -12,6 +12,7 @@ class  CRecallEffectController
 public:
   CRecallEffectController();
   ~CRecallEffectController();
+  static CRecallEffectController *ms_Instance;
 
   unsigned int m_uiInfoTotCnt;
   CRecallRequest **m_ppkReqeust;

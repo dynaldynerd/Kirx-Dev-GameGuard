@@ -12,7 +12,7 @@ public:
   unsigned int m_dwFrameTime;
   unsigned int m_dwFrameCount;
   unsigned int m_dwDisplayTick;
-  virtual ~CFrameRate() = default;
+  virtual ~CFrameRate();
 
   void CalcSpeedPerFrame();
   float GetSpeedPerFrame();

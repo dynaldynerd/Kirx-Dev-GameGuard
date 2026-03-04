@@ -4,6 +4,9 @@
 
 class CGuild;
 class CPlayer;
+class CGravityStone;
+class CGravityStoneRegener;
+class CCircleZone;
 
 class  CGuildBattleController
 {
@@ -13,6 +16,7 @@ public:
   static CGuildBattleController *Instance();
   bool Init();
   void Loop();
+  void CleanUp();
   void Clear();
   void Flip();
   char Load();
@@ -93,11 +97,22 @@ public:
   void CheckTakeGravityStone(int iPortalInx, CPlayer *pkPlayer);
   void CheckGetGravityStone(unsigned __int16 wIndex, unsigned int dwObjSerial, CPlayer *pkPlayer);
   void CheckGoal(CPlayer *pkPlayer, int iPortalInx);
+  bool CheatCreateFieldObject(CPlayer *pkPlayer);
+  char CheatDestroyFieldObject(CPlayer *pkPlayer);
+  char CheatDestroyStone(CPlayer *pkPlayer);
+  bool CheatDropStone(CPlayer *pkPlayer);
+  bool CheatForceTakeStone(CPlayer *pkPlayer);
   int CheatRegenStone(CPlayer *pkPlayer, int iRengenPos);
   char CheatTakeStone(int iPortalInx, CPlayer *pkPlayer);
   char CheatGetStone(CPlayer *pkPlayer);
+  static void Destroy();
+  void DropGravityStone(CPlayer *pkPlayer);
+  void Kill(CPlayer *pkSrcPlayer, CPlayer *pkDestPlayer);
+  CGravityStoneRegener *GetRegener(int iInx);
+  CCircleZone *GetCircleZone(int iInx);
+  CGravityStone *GetStone(int iInx);
   void SendPossibleBattleGuildListFirst(int n, unsigned __int8 byRace);
 
-  virtual ~CGuildBattleController() = default;
+  virtual ~CGuildBattleController();
 };
 

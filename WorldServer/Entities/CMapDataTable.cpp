@@ -6,6 +6,21 @@
 #include <cstring>
 #include "map_fld.h"
 
+CMapDataTable::CMapDataTable()
+{
+  m_pRecord = nullptr;
+  m_dwRecordNum = 0;
+}
+
+CMapDataTable::~CMapDataTable()
+{
+  if (m_pRecord)
+  {
+    delete[] m_pRecord;
+    m_pRecord = nullptr;
+  }
+}
+
 bool CMapDataTable::ReadScript(const char *szFileName)
 {
   if (this->m_pRecord)

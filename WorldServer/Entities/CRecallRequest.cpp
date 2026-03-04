@@ -37,6 +37,11 @@ CRecallRequest::CRecallRequest(unsigned __int16 usID)
   Clear();
 }
 
+CRecallRequest::~CRecallRequest()
+{
+  // this is not a stub
+}
+
 void CRecallRequest::Clear()
 {
   m_eState = CUnmannedTraderSchedule::STATE::EMPTY;

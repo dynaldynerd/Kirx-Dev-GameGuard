@@ -1305,8 +1305,7 @@ void CPlayer::pc_GuildEstablishRequest(char *pwszGuildName)
     if (!g_Guild[guildIndex].IsFill() && !g_Guild[guildIndex].m_bDBWait)
     {
       g_Guild[guildIndex].m_nIndex = guildIndex;
-      g_Guild[guildIndex].m_bDBWait = true;
-      strcpy_0(g_Guild[guildIndex].m_wszName, pwszGuildName);
+      g_Guild[guildIndex].SetTemp(pwszGuildName);
       selectedGuildIndex = guildIndex;
       break;
     }
@@ -1422,7 +1421,7 @@ void CPlayer::pc_GuildJoinApplyRequest(char *pwszGuildName)
     {
       result = 25;
     }
-    else if (this->m_Param.GetRaceCode() != static_cast<int>(applyGuild->m_byRace))
+    else if (this->m_Param.GetRaceCode() != static_cast<int>(applyGuild->GetRace()))
     {
       result = 70;
     }
@@ -1498,11 +1497,11 @@ void CPlayer::pc_GuildJoinAcceptRequest(unsigned int dwApplierSerial, bool bAcce
     {
       result = static_cast<unsigned __int8>(-53);
     }
-    else if (static_cast<int>(guild->GetMemberNum()) + guild->m_nTempMemberNum >= 50)
+    else if (guild->GetMemberNumForJoin() >= 50)
     {
       result = static_cast<unsigned __int8>(-50);
     }
-    else if (applierInfo->pPlayer->m_Param.GetRaceCode() != static_cast<int>(guild->m_byRace))
+    else if (applierInfo->pPlayer->m_Param.GetRaceCode() != static_cast<int>(guild->GetRace()))
     {
       result = 70;
     }
@@ -1945,8 +1944,6 @@ void CPlayer::pc_GuildNextHonorListRequest()
 
 void CPlayer::pc_GuildCancelSuggestRequest(unsigned int dwMatterVoteSynKey)
 {
-  (void)dwMatterVoteSynKey;
-
   unsigned __int8 resultCode = 0;
   CGuild *guild = m_Param.m_pGuild;
   if (!guild)
@@ -1963,10 +1960,7 @@ void CPlayer::pc_GuildCancelSuggestRequest(unsigned int dwMatterVoteSynKey)
   }
 
   if (!resultCode)
-  {
-    guild->SendMsg_VoteCancelInform();
-    guild->InitVote();
-  }
+    guild->CancelSuggestedMatter();
 
   this->SendMsg_CancelSuggestResult(static_cast<char>(resultCode));
 }
@@ -2001,13 +1995,7 @@ void CPlayer::pc_GuildVoteRequest(unsigned int dwMatterVoteSynKey, unsigned __in
   }
 
   if (!resultCode)
-  {
-    m_Param.m_pGuildMemPtr->bVote = true;
-    if (byVoteCode < 2)
-    {
-      ++guild->m_SuggestedMatter.byVoteState[byVoteCode];
-    }
-  }
+    guild->ActVote(m_Param.m_pGuildMemPtr, byVoteCode);
 
   this->SendMsg_VoteResult(dwMatterVoteSynKey, resultCode);
 }

@@ -62,6 +62,10 @@ public:
 
   static CandidateMgr *Instance();
   bool Initialize(int maxCount);
+  char LoadDatabase();
+  bool LoadLeaderPreVersion(unsigned __int8 byRace);
+  char LoadPatriarchGroup();
+  void Release();
   void InitCandidate();
   _candidate_info *GetEmpty(unsigned __int8 byRace);
   bool Regist(CPlayer *pOne);

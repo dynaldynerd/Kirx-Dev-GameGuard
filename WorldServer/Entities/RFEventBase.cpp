@@ -2,6 +2,28 @@
 
 #include "CMainThread.h"
 
+RFEventBase::RFEventBase()
+{
+}
+
+bool RFEventBase::Initialzie()
+{
+  return false; // this is not a stub
+}
+
+bool RFEventBase::IsEnable()
+{
+  return false; // this is not a stub
+}
+
+bool RFEventBase::SetEvent(const char *p, int size, bool bInit)
+{
+  (void)p;
+  (void)size;
+  (void)bInit;
+  return false; // this is not a stub
+}
+
 void RFEventBase::Loop()
 {
   // this is not a stub

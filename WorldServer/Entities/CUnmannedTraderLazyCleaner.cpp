@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "CUnmannedTraderLazyCleaner.h"
+#include <new>
 #include "CUnmannedTraderEnvironmentValue.h"
 #include "CMainThread.h"
 #include "CRFWorldDatabase.h"
@@ -22,7 +23,7 @@ CUnmannedTraderLazyCleaner::~CUnmannedTraderLazyCleaner()
 
 bool CUnmannedTraderLazyCleaner::Init()
 {
-  this->m_pkTimer = new CMyTimer();
+  this->m_pkTimer = new (std::nothrow) CMyTimer();
   if (!this->m_pkTimer)
   {
     return false;

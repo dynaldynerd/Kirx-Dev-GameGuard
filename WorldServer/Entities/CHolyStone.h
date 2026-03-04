@@ -46,7 +46,10 @@ public:
   char IsBeDamagedAble(CCharacter *pAtter) override;
   void Loop() override;
   void AutoRecover();
+  unsigned __int16 GetAddCountWithPlayer();
+  void SetDropItem();
   void DropItem();
+  bool Destroy(unsigned __int8 byDestroyCode, CCharacter *pAtter);
   void OutOfSec() override;
   void SendMsg_FixPosition(int n) override;
 
@@ -56,7 +59,7 @@ public:
   void SendMsg_Destroy(unsigned __int8 byDestroyCode, unsigned int dwDestroySerial);
   void SetOper(bool bOper, float fHPRate);
   void SendMsg_StoneAlterOper();
-  __int64 CalcCurHPRate();
+  unsigned __int16 CalcCurHPRate() override;
   char IsChangedHP(unsigned __int16 wAlterRate);
   __int64 GetHP();
   char SetHP(int nHP, bool bOver = false);

@@ -6,13 +6,14 @@ class CDisplayView : public CDialog
 {
 public:
   explicit CDisplayView(CWnd *pParent = nullptr);
-  virtual ~CDisplayView() = default;
+  ~CDisplayView() override;
 
   void GetDrawableRect(CRect *rcOut);
   void SetExtendMode(int bExtend);
 
 protected:
   virtual BOOL OnInitDialog() override;
+  void DoDataExchange(CDataExchange *pDX) override;
 
   afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
   afx_msg void OnDestroy();

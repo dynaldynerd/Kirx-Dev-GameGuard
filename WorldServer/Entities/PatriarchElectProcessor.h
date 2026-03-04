@@ -9,8 +9,12 @@ struct _DB_QRY_SYN_DATA;
 class  PatriarchElectProcessor
 {
 public:
+  PatriarchElectProcessor();
+  static PatriarchElectProcessor *_pkInstance;
   static PatriarchElectProcessor *Instance();
+  void Destroy();
   bool Initialize();
+  char LoadDatabae();
   void Loop();
   bool InitProcess();
   void TimeCheck(unsigned __int16 wDayOfWeek, unsigned __int16 wHour);
@@ -20,6 +24,7 @@ public:
   void SetTimeCheck(bool bFlag);
   bool ForceChangeProcessor(ElectProcessor::ProcessorType eProc);
   unsigned int GetCurrPatriarchElectSerial();
+  void SetCurrPatriarchElectSerial(unsigned int dwSerial);
   char Doit(Cmd eCmd, CPlayer *pOne, char *pdata);
   void PushDQSCheckInvalidChar();
   void SendMsg_ResultCode(unsigned int n, unsigned __int8 byCode);

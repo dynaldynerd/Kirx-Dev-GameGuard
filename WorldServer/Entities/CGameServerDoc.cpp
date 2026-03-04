@@ -18,6 +18,11 @@ CGameServerDoc::CGameServerDoc()
   g_pDoc = this;
 }
 
+CGameServerDoc::~CGameServerDoc()
+{
+  // this is not a stub
+}
+
 BOOL CGameServerDoc::OnNewDocument()
 {
   return CDocument::OnNewDocument();

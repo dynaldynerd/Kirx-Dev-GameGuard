@@ -14,18 +14,51 @@
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
-CMonsterEventSet g_MonsterEventSet;
+CMonsterEventSet *g_MonsterEventSet = nullptr;
 
-namespace
+_event_set::_monster_set::_state::_state()
 {
-void ResetMonsterState(_event_set::_monster_set::_state *state)
-{
-  if (state)
-  {
-    memset_0(state, 0, sizeof(*state));
-  }
+  init();
 }
-} // namespace
+
+void _event_set::_monster_set::_state::init()
+{
+  memset_0(this, 0, sizeof(*this));
+}
+
+_event_set::_monster_set::_monster_set()
+  : m_State()
+{
+}
+
+_event_set::_event_set()
+{
+  init();
+}
+
+void _event_set::init()
+{
+  memset_0(this, 0, sizeof(*this));
+}
+
+_event_set_looting::_event_set_looting()
+{
+  init();
+}
+
+void _event_set_looting::init()
+{
+  memset_0(this, 0, sizeof(*this));
+}
+
+CMonsterEventSet::CMonsterEventSet()
+{
+  m_bLoadEventLooting = false;
+}
+
+CMonsterEventSet::~CMonsterEventSet()
+{
+}
 
 bool CMonsterEventSet::IsINIFileChanged(const char *pszFileName, _FILETIME ftCurr)
 {
@@ -91,22 +124,12 @@ bool CMonsterEventSet::StartEventSet(char *pszEventCode, char *pwszErrCode, CPla
         continue;
       }
 
-      ResetMonsterState(&monsterSet->m_State);
+      monsterSet->m_State.init();
 
       if (monsterSet->bUnknownMap)
       {
-        if (!pOne || !pOne->m_pCurMap)
-        {
-          continue;
-        }
-
         monsterSet->pMap = pOne->m_pCurMap;
         memcpy_0(monsterSet->fPos, pOne->m_fCurPos, sizeof(monsterSet->fPos));
-      }
-
-      if (!monsterSet->pMap || !monsterSet->pMonsterFld)
-      {
-        continue;
       }
 
       int spawnRange = static_cast<int>(monsterSet->wNum) * 20;
@@ -151,7 +174,7 @@ bool CMonsterEventSet::StartEventSet(char *pszEventCode, char *pwszErrCode, CPla
         ++spawnedCount;
 
         repMonster->DisableStdItemLoot();
-        repMonster->m_pEventSet = eventSet;
+        repMonster->LinkEventSet(eventSet);
       }
 
       monsterSet->m_State.nRespawnNum = spawnedCount;
@@ -216,7 +239,7 @@ bool CMonsterEventSet::StopEventSet(char *pszEventCode, char *pwszErrCode)
         }
       }
 
-      ResetMonsterState(&monsterSet->m_State);
+      monsterSet->m_State.init();
     }
 
     eventSet->m_bOper = false;
@@ -267,7 +290,7 @@ void CMonsterEventSet::CheckEventSetRespawn()
           }
         }
 
-        ResetMonsterState(&monsterSet->m_State);
+        monsterSet->m_State.init();
         g_Main.m_logEvent.Write("Stop Event Monster Set (by during) >> %s", monsterSet->pMonsterFld->m_strCode);
       }
       else if (now - monsterSet->m_State.dwLastUpdateTime >= monsterSet->dwRegenTerm)
@@ -341,12 +364,197 @@ void CMonsterEventSet::CheckEventSetRespawn()
   }
 }
 
+_event_set *CMonsterEventSet::GetEmptyEventSet()
+{
+  for (int index = 0; index < 10; ++index)
+  {
+    if (m_EventSet[index].m_strId[0] == '\0')
+    {
+      return &m_EventSet[index];
+    }
+  }
+  return nullptr;
+}
+
+_event_set::_monster_set *CMonsterEventSet::GetMonsterSet(_event_set *eventSet)
+{
+  if (!eventSet)
+  {
+    return nullptr;
+  }
+
+  for (int index = 0; index < 10; ++index)
+  {
+    if (!eventSet->m_MonSet[index].bIsSet)
+    {
+      return &eventSet->m_MonSet[index];
+    }
+  }
+  return nullptr;
+}
+
 bool CMonsterEventSet::LoadEventSet(char *errBuffer)
 {
-  if (errBuffer != nullptr)
+  _FILETIME writeTime{};
+  if (!GetLastWriteFileTime(".\\Initialize\\EventSet.ini", &writeTime))
   {
-    errBuffer[0] = '\0';
+    sprintf(errBuffer, "Event Set Load Error >> can't find .ini file : %s", ".\\Initialize\\EventSet.ini");
+    g_Main.m_logLoadingError.Write(errBuffer);
+    return false;
   }
+
+  m_ftWrite = writeTime;
+
+  FILE *stream = nullptr;
+  if (fopen_s(&stream, ".\\Initialize\\EventSet.ini", "r+t"))
+  {
+    return false;
+  }
+
+  char tokenStorage[10][64]{};
+  char *token0 = tokenStorage[0];
+  char *token1 = tokenStorage[1];
+  char *token2 = tokenStorage[2];
+  char *token3 = tokenStorage[3];
+  char *token4 = tokenStorage[4];
+  char *token5 = tokenStorage[5];
+  char *token6 = tokenStorage[6];
+  char *token7 = tokenStorage[7];
+  char *token8 = tokenStorage[8];
+  char *token9 = tokenStorage[9];
+  char *tokens[10] = {token0, token1, token2, token3, token4, token5, token6, token7, token8, token9};
+  char buffer[1056]{};
+
+  while (fgets(buffer, 1024, stream))
+  {
+    if (buffer[0] == ';' || buffer[0] == '\n' || buffer[0] == '\r')
+    {
+      continue;
+    }
+
+    memset_0(tokenStorage, 0, sizeof(tokenStorage));
+    const int parsedCount = ParsingCommandA(buffer, 10, tokens, 64);
+    if (parsedCount == 1)
+    {
+      continue;
+    }
+
+    if (parsedCount != 10)
+    {
+      sprintf(errBuffer, "Event Set Load Error >> event parameter count error : %d", parsedCount);
+      g_Main.m_logLoadingError.Write(errBuffer);
+      fclose(stream);
+      return false;
+    }
+
+    _event_set *eventSet = GetEmptyEventSet();
+    if (!eventSet)
+    {
+      sprintf(errBuffer, "Event Set Load Error >> over max event set error : %d", 10);
+      g_Main.m_logLoadingError.Write(errBuffer);
+      fclose(stream);
+      return false;
+    }
+
+    if (eventSet->m_strId[0] == '\0')
+    {
+      strcpy_0(eventSet->m_strId, token0);
+    }
+
+    _event_set::_monster_set *monsterSet = GetMonsterSet(eventSet);
+
+    char mapCodeUpper[72]{};
+    strcpy_0(mapCodeUpper, token1);
+    if (!strcmp_0(_strupr(mapCodeUpper), "UNKNOWN"))
+    {
+      monsterSet->pMap = nullptr;
+      monsterSet->fPos[0] = -1.0f;
+      monsterSet->fPos[1] = -1.0f;
+      monsterSet->fPos[2] = -1.0f;
+      monsterSet->bUnknownMap = true;
+    }
+    else
+    {
+      CMapData *map = g_MapOper.GetMap(token1);
+      if (!map)
+      {
+        sprintf(errBuffer, "Event Set Load Error : %s >> map code error : %s", token0, token1);
+        g_Main.m_logLoadingError.Write(errBuffer);
+        fclose(stream);
+        return false;
+      }
+
+      monsterSet->pMap = map;
+      monsterSet->fPos[0] = static_cast<float>(atoi(token2));
+      monsterSet->fPos[1] = static_cast<float>(atoi(token3));
+      monsterSet->fPos[2] = static_cast<float>(atoi(token4));
+      if (!map->IsMapIn(monsterSet->fPos))
+      {
+        sprintf(
+          errBuffer,
+          "Event Set Load Error : %s >> xyz range error : %d %d %d",
+          token0,
+          static_cast<int>(monsterSet->fPos[0]),
+          static_cast<int>(monsterSet->fPos[1]),
+          static_cast<int>(monsterSet->fPos[2]));
+        g_Main.m_logLoadingError.Write(errBuffer);
+        fclose(stream);
+        return false;
+      }
+      monsterSet->bUnknownMap = false;
+    }
+
+    _base_fld *record = g_Main.m_tblMonster.GetRecord(token5);
+    if (!record)
+    {
+      sprintf(errBuffer, "Event Set Load Error : %s >> mon code error : %s", token0, token5);
+      g_Main.m_logLoadingError.Write(errBuffer);
+      fclose(stream);
+      return false;
+    }
+
+    monsterSet->pMonsterFld = record;
+    monsterSet->wNum = static_cast<unsigned __int16>(atoi(token6));
+    if (!monsterSet->wNum || monsterSet->wNum > 100)
+    {
+      sprintf(errBuffer, "Event Set Load Error : %s >> mon num error : %d", token0, monsterSet->wNum);
+      g_Main.m_logLoadingError.Write(errBuffer);
+      fclose(stream);
+      return false;
+    }
+
+    monsterSet->dwRegenTerm = 1000 * static_cast<unsigned int>(atol(token7));
+    if (!monsterSet->dwRegenTerm)
+    {
+      sprintf(errBuffer, "Event Set Load Error : %s >> mon regen term error : %d", token0, monsterSet->dwRegenTerm);
+      g_Main.m_logLoadingError.Write(errBuffer);
+      fclose(stream);
+      return false;
+    }
+
+    monsterSet->byRegenProb = static_cast<unsigned __int8>(atoi(token8));
+    if (!monsterSet->byRegenProb || monsterSet->byRegenProb > 100)
+    {
+      sprintf(errBuffer, "Event Set Load Error : %s >> mon regen prob error : %d", token0, monsterSet->byRegenProb);
+      g_Main.m_logLoadingError.Write(errBuffer);
+      fclose(stream);
+      return false;
+    }
+
+    monsterSet->dwDuring = static_cast<unsigned int>(atoi(token9));
+    if (monsterSet->dwDuring > 7)
+    {
+      sprintf(errBuffer, "Event Set Load Error : %s >> event during error : %d", token0, monsterSet->dwDuring);
+      g_Main.m_logLoadingError.Write(errBuffer);
+      fclose(stream);
+      return false;
+    }
+
+    monsterSet->dwDuring *= 86400000;
+    monsterSet->bIsSet = true;
+  }
+
+  fclose(stream);
   return true;
 }
 

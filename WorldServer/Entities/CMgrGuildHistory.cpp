@@ -14,6 +14,8 @@ namespace
   char s_guildHistoryLogData[10000]{};
   const char kGuildHistoryMoneyFmt[] =
     "GUILD MONEY : Name(%s) Serial(%u) D:%d G:%d TotalD:%.0f TotalG:%.0f [%s]\r\n";
+  const char kGuildHistoryLoadFmt[] =
+    "LOAD GUILD : Name(%s) Serial(%u) Grade(%d) TotalD:%.0f TotalG:%.0f [%s]\r\n";
   const char kGuildHistoryStartFmt[] =
     "START GUILD : Name(%s) Serial(%u) Grade(%d) TotalD:%.0f TotalG:%.0f [%s]\r\n";
   const char kGuildHistoryMemberCountFmt[] = "MEMBER COUNT : %u\r\n";
@@ -96,6 +98,25 @@ void CMgrGuildHistory::IOThread(void *pv)
   _endthreadex(0);
 }
 
+void CMgrGuildHistory::OnLoop()
+{
+  if (m_tmrUpdateTime.CountingTimer())
+  {
+    char dateBuffer[160]{};
+    char timeBuffer[144]{};
+    _strdate_s(dateBuffer, 0x80u);
+    dateBuffer[5] = 0;
+    _strtime_s(timeBuffer, 0x80u);
+    timeBuffer[5] = 0;
+    sprintf_s(m_szCurTime, 0x20u, "%s %s", dateBuffer, timeBuffer);
+  }
+}
+
+unsigned int CMgrGuildHistory::GetTotalWaitSize()
+{
+  return m_listLogData.size();
+}
+
 void CMgrGuildHistory::WriteFile(const char *pszFileName, const char *pszLog)
 {
   const unsigned int logSize = static_cast<unsigned int>(strlen_0(pszLog));
@@ -118,6 +139,38 @@ void CMgrGuildHistory::WriteFile(const char *pszFileName, const char *pszLog)
 void CMgrGuildHistory::GetNewFileName(unsigned int dwGuildSerial, char *pszFileName)
 {
   sprintf(pszFileName, "%s\\%u.ghi", m_szStdPath, dwGuildSerial);
+}
+
+void CMgrGuildHistory::load_guild(CGuild *pGuild, char *pszFileName)
+{
+  char memberName[128]{};
+  s_guildHistoryLogData[0] = 0;
+
+  char line[128]{};
+  sprintf_s(
+    line,
+    sizeof(line),
+    kGuildHistoryLoadFmt,
+    pGuild->m_aszName,
+    pGuild->m_dwSerial,
+    pGuild->m_byGrade,
+    pGuild->m_dTotalDalant,
+    pGuild->m_dTotalGold,
+    m_szCurTime);
+  strcat_s(s_guildHistoryLogData, sizeof(s_guildHistoryLogData), line);
+
+  sprintf_s(line, sizeof(line), kGuildHistoryMemberCountFmt, static_cast<unsigned int>(pGuild->m_nMemberNum));
+  strcat_s(s_guildHistoryLogData, sizeof(s_guildHistoryLogData), line);
+
+  for (int j = 0; j < pGuild->m_nMemberNum; ++j)
+  {
+    W2M(pGuild->m_MemberData[j].wszName, memberName, sizeof(memberName));
+    sprintf_s(line, sizeof(line), "\t %s %u\r\n", memberName, pGuild->m_MemberData[j].dwSerial);
+    strcat_s(s_guildHistoryLogData, sizeof(s_guildHistoryLogData), line);
+  }
+
+  s_guildHistoryLogData[9999] = 0;
+  WriteFile(pszFileName, s_guildHistoryLogData);
 }
 
 void CMgrGuildHistory::start_guild(CGuild *pGuild, char *pszFileName)
@@ -242,6 +295,202 @@ void CMgrGuildHistory::push_money(
     nPushGold,
     dTotalDalant,
     dTotalGold,
+    m_szCurTime);
+  s_guildHistoryLogData[9999] = 0;
+  WriteFile(pszFileName, s_guildHistoryLogData);
+}
+
+void CMgrGuildHistory::pop_money(
+  char *pszIOerName,
+  unsigned int dwIOerSerial,
+  int nPopDalant,
+  int nPopGold,
+  long double dTotalDalant,
+  long double dTotalGold,
+  char *pszFileName)
+{
+  s_guildHistoryLogData[0] = 0;
+  sprintf(
+    s_guildHistoryLogData,
+    ": ( %s , %d ) pop( D:%d , G:%d ) $D:%.0f $G:%.0f [%s]\r\n",
+    pszIOerName,
+    dwIOerSerial,
+    nPopDalant,
+    nPopGold,
+    dTotalDalant,
+    dTotalGold,
+    m_szCurTime);
+  s_guildHistoryLogData[9999] = 0;
+  WriteFile(pszFileName, s_guildHistoryLogData);
+}
+
+void CMgrGuildHistory::suggest_vote(
+  char *pszSugerName,
+  unsigned int dwSugerSerial,
+  _suggested_matter *pMatter,
+  char *pszFileName)
+{
+  s_guildHistoryLogData[0] = 0;
+  const unsigned __int8 matterType = pMatter->byMatterType;
+  switch (matterType)
+  {
+    case 0:
+    {
+      if (pMatter->wszMatterDst[0])
+      {
+        char dstName[160]{};
+        W2M(pMatter->wszMatterDst, dstName, 0x80u);
+        sprintf_s(
+          s_guildHistoryLogData,
+          sizeof(s_guildHistoryLogData),
+          ":%d ( %s , %d ) dst( %s , %d ) [%s]\r\n",
+          pMatter->dwMatterVoteSynKey,
+          pszSugerName,
+          dwSugerSerial,
+          dstName,
+          pMatter->dwMatterDst,
+          m_szCurTime);
+      }
+      else
+      {
+        sprintf_s(
+          s_guildHistoryLogData,
+          sizeof(s_guildHistoryLogData),
+          ":%d ( %s , %d ) dst( %d ) [%s]\r\n",
+          pMatter->dwMatterVoteSynKey,
+          pszSugerName,
+          dwSugerSerial,
+          pMatter->dwMatterDst,
+          m_szCurTime);
+      }
+      break;
+    }
+    case 1:
+    {
+      if (pMatter->wszMatterDst[0])
+      {
+        char dstName[160]{};
+        W2M(pMatter->wszMatterDst, dstName, 0x80u);
+        sprintf_s(
+          s_guildHistoryLogData,
+          sizeof(s_guildHistoryLogData),
+          ":%d ( %s , %d ) dst( %s , %d ) money( D:%d G:%d) [%s]\r\n",
+          pMatter->dwMatterVoteSynKey,
+          pszSugerName,
+          dwSugerSerial,
+          dstName,
+          pMatter->dwMatterDst,
+          pMatter->dwMatterObj2,
+          pMatter->dwMatterObj1,
+          m_szCurTime);
+      }
+      else
+      {
+        sprintf_s(
+          s_guildHistoryLogData,
+          sizeof(s_guildHistoryLogData),
+          ":%d ( %s , %d ) dst( %d ) money( D:%d G:%d) [%s]\r\n",
+          pMatter->dwMatterVoteSynKey,
+          pszSugerName,
+          dwSugerSerial,
+          pMatter->dwMatterDst,
+          pMatter->dwMatterObj2,
+          pMatter->dwMatterObj1,
+          m_szCurTime);
+      }
+      break;
+    }
+    case 3:
+    {
+      char comment[1296]{};
+      W2M(pMatter->wszComment, comment, 0x500u);
+      sprintf_s(
+        s_guildHistoryLogData,
+        sizeof(s_guildHistoryLogData),
+        ":%d ( %s , %d ) contents: %s [%s]\r\n",
+        pMatter->dwMatterVoteSynKey,
+        pszSugerName,
+        dwSugerSerial,
+        comment,
+        m_szCurTime);
+      break;
+    }
+    default:
+      return;
+  }
+
+  s_guildHistoryLogData[9999] = 0;
+  WriteFile(pszFileName, s_guildHistoryLogData);
+}
+
+void CMgrGuildHistory::suggest_complete(
+  char *pszSugerName,
+  unsigned int dwSugerSerial,
+  _suggested_matter *pMatter,
+  bool bPass,
+  char *pszFileName)
+{
+  s_guildHistoryLogData[0] = 0;
+  if (bPass)
+  {
+    sprintf_s(
+      s_guildHistoryLogData,
+      sizeof(s_guildHistoryLogData),
+      ":%d (%d vs %d) [%s]\r\n",
+      pMatter->dwMatterVoteSynKey,
+      pMatter->byVoteState[0],
+      pMatter->byVoteState[1],
+      m_szCurTime);
+  }
+  else
+  {
+    sprintf_s(
+      s_guildHistoryLogData,
+      sizeof(s_guildHistoryLogData),
+      ":%d (%d vs %d) [%s]\r\n",
+      pMatter->dwMatterVoteSynKey,
+      pMatter->byVoteState[0],
+      pMatter->byVoteState[1],
+      m_szCurTime);
+  }
+
+  s_guildHistoryLogData[9999] = 0;
+  WriteFile(pszFileName, s_guildHistoryLogData);
+}
+
+void CMgrGuildHistory::suggest_cancel(
+  char *pszSugerName,
+  unsigned int dwSugerSerial,
+  _suggested_matter *pMatter,
+  char *pszFileName)
+{
+  s_guildHistoryLogData[0] = 0;
+  sprintf_s(
+    s_guildHistoryLogData,
+    sizeof(s_guildHistoryLogData),
+    ":%d [%s]\r\n",
+    pMatter->dwMatterVoteSynKey,
+    m_szCurTime);
+  s_guildHistoryLogData[9999] = 0;
+  WriteFile(pszFileName, s_guildHistoryLogData);
+}
+
+void CMgrGuildHistory::change_atrade_taxrate(
+  char *pszSugerName,
+  unsigned int dwSugerSerial,
+  unsigned __int8 byCurTax,
+  unsigned __int8 byNextTax,
+  char *pszFileName)
+{
+  s_guildHistoryLogData[0] = 0;
+  sprintf_s(
+    s_guildHistoryLogData,
+    sizeof(s_guildHistoryLogData),
+    "[CHANGE TAXRATE SUGGEST] %s(%u) %d >> %d [%s]\r\n",
+    pszSugerName,
+    dwSugerSerial,
+    byCurTax,
+    byNextTax,
     m_szCurTime);
   s_guildHistoryLogData[9999] = 0;
   WriteFile(pszFileName, s_guildHistoryLogData);

@@ -20,6 +20,37 @@ CUnmannedTraderDivisionInfo::~CUnmannedTraderDivisionInfo()
   CleanUp();
 }
 
+const CUnmannedTraderDivisionInfo *CUnmannedTraderDivisionInfo::Copy(
+  const CUnmannedTraderDivisionInfo *lhs)
+{
+  m_dwID = lhs->m_dwID;
+  strcpy_0(m_szName, lhs->m_szName);
+  m_vecClass.clear();
+  if (!lhs->m_vecClass.empty())
+  {
+    m_vecClass.insert(m_vecClass.begin(), lhs->m_vecClass.begin(), lhs->m_vecClass.end());
+  }
+  return this;
+}
+
+CUnmannedTraderSortType *CUnmannedTraderDivisionInfo::FindSortType(unsigned int dwID)
+{
+  if (m_vecSortType.empty())
+  {
+    return nullptr;
+  }
+
+  for (CUnmannedTraderSortType *sortType : m_vecSortType)
+  {
+    if (sortType && dwID == sortType->GetID())
+    {
+      return sortType;
+    }
+  }
+
+  return nullptr;
+}
+
 void CUnmannedTraderDivisionInfo::CleanUp()
 {
   if (!this->m_vecClass.empty())
@@ -290,7 +321,7 @@ CUnmannedTraderSortType *CUnmannedTraderDivisionInfo::GetSortType(unsigned __int
 
   for (CUnmannedTraderSortType *sortType : this->m_vecSortType)
   {
-    if (sortType && sortType->GetID() == bySortType)
+    if (sortType->GetID() == bySortType)
     {
       return sortType;
     }

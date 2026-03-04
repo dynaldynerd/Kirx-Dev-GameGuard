@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CRFNewDatabase.h"
+#include "CandidateMgr.h"
 #include "DqsDbStructs.h"
 #include "unmannedtrader_page_info.h"
 
@@ -20,10 +21,13 @@ struct _worlddb_cash_limited_sale;
 struct _worlddb_character_base_info;
 struct _worlddb_character_general_info;
 struct _worlddb_character_base_info_array;
+struct _worlddb_character_array_info;
 struct _worlddb_crymsg_info;
 struct _worlddb_economy_history_info;
 struct _worlddb_economy_history_info_array;
 struct _worlddb_guild_info;
+struct _worlddb_guild_member_info;
+struct _worlddb_guild_money_io_info;
 struct _worlddb_guild_battle_info;
 struct _worlddb_guild_battle_rank_list;
 struct _worlddb_guild_battle_schedule_list;
@@ -38,6 +42,8 @@ struct _worlddb_quest_array;
 struct _worlddb_sf_delay_info;
 struct _worlddb_time_limit_info;
 struct _worlddb_update_char_query;
+struct _worlddb_user_count_info;
+struct _worlddb_item_list;
 struct _personal_amine_inven;
 struct _pvporderview_info;
 struct _pvppointlimit_info;
@@ -69,7 +75,9 @@ public:
   unsigned __int8 Select_CharacterBaseInfoBySerial(
     unsigned int dwAccountSerial,
     _worlddb_character_base_info_array *pCharacterDataArray);
+  char Select_CharacterBaseInfoByName(char *pwszCharacterName, _worlddb_character_base_info *pCharacterData);
   char Select_CharacterBaseInfo(unsigned int dwCharacterSerial, _worlddb_character_base_info *pCharacterData);
+  char Select_CharactersInfo(unsigned int dwAccountSerial, _worlddb_character_array_info *pCharacterData);
   char Select_CharacterGeneralInfo(unsigned int dwCharacterSerial, _worlddb_character_general_info *pCharacterData);
   char Select_Inven(unsigned int dwSerial, unsigned __int16 wBagCount, _worlddb_inven_info *pInvenData);
   char Select_Quest(unsigned int dwSerial, _worlddb_quest_array *pQuestData);
@@ -128,6 +136,8 @@ public:
   char Select_Equal_Name(char *pwszCharacterName);
   char Select_Equal_DeleteName_NoArranged(char *pwszCharacterName);
   char Select_CharacterSerial(char *pwszCharacterName, unsigned int *pSerial);
+  char Select_AccountSerial(char *pwszCharacterName, char *szAccount, unsigned int *pSerial);
+  char Select_AccountByAvatorName(char *pwszAvatorName, char *szAccount);
   bool Insert_CharacterData(
     char *pwszCharacterName,
     char *szClassCode,
@@ -142,6 +152,10 @@ public:
   bool Delete_CharacterData(unsigned int dwSerial);
   bool Insert_Level_Log(unsigned int dwCharacterSerial, unsigned __int8 byLevel, unsigned int dwTotalPlayMin);
   bool Insert_UserNum_Log(int nAvgUserNum, int nMaxUserNum);
+  char Select_UserCountInfo(
+    char *szStartDate,
+    char *szEndDate,
+    _worlddb_user_count_info *pUserCountData);
   unsigned __int8 Select_Exist_Economy(unsigned int dwDate, _worlddb_economy_history_info *pEconomyData);
   unsigned __int8 Select_Economy_History(_worlddb_economy_history_info_array *pEconomyData, unsigned int dwDate);
   bool Insert_Economy_History(unsigned int dwDate, _worlddb_economy_history_info *pEconomyData);
@@ -204,7 +218,19 @@ public:
     unsigned int dwGuildSerial,
     unsigned int dwDalant,
     unsigned int dwGold);
+  bool Update_OutputGuildMoney(
+    unsigned int dwGuildSerial,
+    unsigned int dwDalant,
+    unsigned int dwGold);
+  unsigned __int16 Select_AllGuildNum();
+  bool UpdateGuildMoney(unsigned int dwSerial, long double dDalant, long double dGold);
   char Select_GuildData(unsigned int dwGuildSerial, _worlddb_guild_info::__guild_info *pGuildData);
+  char Select_AllGuildData(_worlddb_guild_info *pGuildInfo);
+  char Select_GuildMemberData(
+    unsigned __int16 wMaxMember,
+    unsigned int dwGuildSerial,
+    _worlddb_guild_member_info *pGuildMemberInfo);
+  char Select_GuildMoneyIOData(unsigned int dwGuildSerial, _worlddb_guild_money_io_info *pGuildIOData);
   bool Insert_GuildMoneyHistory(
     unsigned int dwGuildSerial,
     long double dIO_Dalant,
@@ -257,9 +283,11 @@ public:
   bool update_cristalbattle_date(unsigned int dwCharSerial, unsigned __int8 bHSKTime);
   bool Insert_Supplement(unsigned int dwSerial);
   bool create_automine_table();
+  bool create_sumtotal_dungeon(int nRecodeNum, char **ppKey);
   unsigned __int8 select_automine(_DB_LOAD_AUTOMINE_MACHINE *pData);
   unsigned __int8 exist_automine(unsigned __int8 byCollisionType, unsigned __int8 byRace);
   bool create_amine_personal();
+  unsigned __int8 exist_aminpersonal_inven(unsigned int dwSerial);
   unsigned __int8 select_amine_personal(unsigned int dwSerial);
   unsigned __int8 select_amine_personal(unsigned int dwSerial, _personal_amine_inven *pInven);
   bool insert_amine_personal(unsigned int dwSerial);
@@ -318,6 +346,13 @@ public:
     unsigned __int8 byLevel,
     char *szTime,
     __int64 nEndTime);
+  bool Update_Start_NpcQuest_History(
+    unsigned int dwSerial,
+    char *szQuestCode,
+    unsigned __int8 byLevel,
+    char *szTime,
+    __int64 nEndTime);
+  bool Update_Level(unsigned int dwSerial, unsigned __int8 byLv);
   bool Update_GuildMaster(unsigned int dwGuildSerial, unsigned int dwMasterSerial, unsigned __int8 byPrevGrade);
   bool Update_Dalant(unsigned int dwSerial, unsigned int dwDalant);
   bool Update_Gold(unsigned int dwSerial, unsigned int dwGold);
@@ -428,6 +463,7 @@ public:
   char SelectGuildBattleRankRecord(unsigned int dwGuildSerial);
   bool InsertGuildBattleRankRecord(unsigned int dwGuildSerial);
   char SelectGuildBattleRankList(unsigned __int8 byRace, _worlddb_guild_battle_rank_list *pkInfo);
+  char SelectGuildBattleScheduleInfoID(unsigned int dwID);
   char SelectGuildBattleRerservedList(
     unsigned int uiStartSLID,
     unsigned int uiEndSLID,
@@ -516,6 +552,8 @@ public:
   bool Update_ClearWeeklyPvpPointSum();
   bool Update_IncreaseWeeklyGuildGuildBattlePvpPointSum(unsigned int dwSerial, long double dPvpPoint);
 
+  char Update_GuildRank(char *szDate);
+  char Update_RaceRank(char *szDate);
   char Update_RaceRank_Step1(char *szDate);
   char Update_RaceRank_Step2(char *szDate);
   char Update_RaceRank_Step3(char *szDate);
@@ -539,6 +577,7 @@ public:
   bool Update_GuildGrade();
 
   unsigned __int8 Update_RankInGuild_Step1(unsigned int dwGuildSerial);
+  char Update_RankInGuild(unsigned int dwGuildSerial, _worlddb_rankinguild_info *pGuildMemberRankData);
   char Update_RankInGuild_Step2(unsigned int dwGuildSerial);
   char Update_RankInGuild_Step3(unsigned int dwGuildSerial);
   char Update_RankInGuild_Step4(unsigned int dwGuildSerial);
@@ -558,6 +597,7 @@ public:
     unsigned long long *pdwLastConnTime);
   char Select_CharacterReName(char *pwszName, unsigned int *pSerial);
   bool Update_CharacterReName(char *pwszName, unsigned int dwSerial);
+  bool Rebirth_Base(unsigned int dwCharacterSerial, char *pwszName);
 
   __int64 Updatet_Account_Vote_Available(unsigned int dwSerial, unsigned __int8 *byVoteEnable);
   bool Update_Player_Vote_Info(
@@ -602,8 +642,21 @@ public:
     unsigned __int8 *pbyRace,
     unsigned int *pdwDBID,
     int *piTime);
+  char Select_AccountItemCharge_Extend(
+    unsigned int dwAccountSerial,
+    unsigned __int8 *pbyType,
+    unsigned int *pdwItemCode_K,
+    unsigned __int64 *pdwItemCode_D,
+    unsigned int *pdwItemCode_U,
+    unsigned __int8 *pbyRace,
+    unsigned int *pdwDBID,
+    int *piTime);
   bool Delete_ItemCharge(unsigned int dwItemChargeIndex);
   bool Delete_TrunkItemCharge(unsigned int dwDBID);
+  bool Delete_TrunkItemCharge_Extend(unsigned int dwDBID);
+  bool Insert_PatrirchItemChargeRefund(char *szData);
+  unsigned __int8 Select_WaitItem(unsigned int dwAvatorSerial, _worlddb_item_list *itemList);
+  unsigned __int8 Select_TakeItem(unsigned int dwAvatorSerial, _worlddb_item_list *itemList);
 
   char Select_LimitItemUsedRecord(
     unsigned __int8 byType,
@@ -732,6 +785,12 @@ public:
     unsigned int *pdwRace);
   __int64 Select_PostRecvStorageCheck(unsigned int dwSerial);
   unsigned __int8 Select_IsValidChar(unsigned int dwSerial, unsigned int *dwDbSerial);
+  unsigned __int8 Select_PatriarchCandidate(
+    unsigned int dwSerial,
+    unsigned __int8 byRace,
+    CandidateMgr::_candidate_info *p);
+  unsigned __int8 Select_PatriarchGroup(unsigned __int8 byRace, CandidateMgr::_candidate_info *p);
+  int Select_OldVerPatriarchGroup(unsigned __int8 byRace, CandidateMgr::_candidate_info *p);
   unsigned __int8 Select_PatriarchWinCnt(
     unsigned __int8 byRace,
     unsigned int dwAvatorSerial,

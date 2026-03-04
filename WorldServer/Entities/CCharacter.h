@@ -93,11 +93,15 @@ public:
   bool Destroy();
   void Init(_object_id *pID);
   bool SetTarPos(float *fTarPos, bool bColl);
+  float CalcDistForSec(float fSec, float fSpeed);
   void Move(float fSpeed);
   void MoveBreak(float fSpeed);
   void Go();
   void Stop();
+  unsigned int GetNextGenAttTime();
+  void SetNextGenAttTime(unsigned int dwNextTime);
   void ResetSlot();
+  __int64 GetSlot(CCharacter *p);
   __int64 RemoveSlot(CCharacter *p);
   __int64 GetNearEmptySlot(unsigned int pos, float dist, float *cur, float *target);
   __int64 InsertSlot(CCharacter *p, int pos);
@@ -151,6 +155,8 @@ public:
     char *psActableDst,
     CCharacter **ppDsts);
   char IsEffectableDst(char *psActableDst, CCharacter *pDst);
+  char IsDamageEffect(unsigned int uiEffectCodeType, unsigned __int16 wEffectIndex);
+  char IsPotionEffectableDst(char *psActableDst, CPlayer *pDst);
   char AssistSkill(
     CCharacter *pDstChar,
     int nEffectCode,

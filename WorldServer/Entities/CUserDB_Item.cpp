@@ -27,6 +27,29 @@ char CUserDB::Update_ExtTrunkSlotNum(unsigned __int8 byExtSlotNum)
   return 1;
 }
 
+char CUserDB::Update_TrunkPassword(char *pwszPassword)
+{
+  strcpy_0(this->m_AvatorData.dbTrunk.wszPasswd, pwszPassword);
+  this->m_bDataUpdate = 1;
+  return 1;
+}
+
+char CUserDB::Update_TrunkHint(unsigned __int8 byHintIndex, char *pwszHintAnswer)
+{
+  this->m_AvatorData.dbTrunk.byHintIndex = byHintIndex;
+  strcpy_0(this->m_AvatorData.dbTrunk.wszHintAnswer, pwszHintAnswer);
+  this->m_bDataUpdate = 1;
+  return 1;
+}
+
+char CUserDB::Update_TrunkMoney(long double dGold, long double dDalant)
+{
+  this->m_AvatorData.dbTrunk.dGold = dGold;
+  this->m_AvatorData.dbTrunk.dDalant = dDalant;
+  this->m_bDataUpdate = 1;
+  return 1;
+}
+
 char CUserDB::Update_ItemUpgrade(unsigned __int8 storage, unsigned __int8 slot, unsigned int upg, bool bUpdate)
 {
   if (!IsStorageRange(storage, slot))

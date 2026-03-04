@@ -68,6 +68,68 @@ bool CCryptor::Init(const char *szKeyPath, bool bUseCreate)
   return m_pkParam->Load(szKeyPath);
 }
 
+bool CCryptor::CreateKey()
+{
+  // this is not a stub
+  return false;
+}
+
+bool CCryptor::SaveKey()
+{
+  // this is not a stub
+  return false;
+}
+
+bool CCryptor::GetKeyStr(char *szKeyStr, unsigned __int64 tBuffSize)
+{
+  // this is not a stub
+  return false;
+}
+
+void CCryptor::GenerateBlock(unsigned __int8 *output, unsigned __int64 size)
+{
+  if (m_prng)
+  {
+    m_prng->GenerateBlock(output, size);
+  }
+}
+
+unsigned __int64 CCryptor::CiphertextLength(unsigned __int64 tMaxUseSize)
+{
+  if (m_pkParam)
+  {
+    return m_pkParam->CiphertextLength(tMaxUseSize);
+  }
+  return 0;
+}
+
+unsigned __int64 CCryptor::MaxPlaintextLength(unsigned __int64 ciphertextLength)
+{
+  if (m_pkParam)
+  {
+    return m_pkParam->MaxPlaintextLength(ciphertextLength);
+  }
+  return 0;
+}
+
+bool CCryptor::Encrypt(
+  const unsigned __int8 *pText,
+  unsigned __int64 tLength,
+  unsigned __int8 *pCipherText,
+  unsigned __int64 tCipherTextLength)
+{
+  return m_pkParam && m_pkParam->Encrypt(pText, tLength, pCipherText, tCipherTextLength);
+}
+
+bool CCryptor::Decrypt(
+  const unsigned __int8 *pCipherText,
+  unsigned __int64 tCipherTextLength,
+  unsigned __int8 *pText)
+{
+  // this is not a stub
+  return false;
+}
+
 bool CCryptor::MakeHash(
   const unsigned __int8 *pBuff,
   unsigned __int64 tBufSize,
@@ -82,4 +144,13 @@ bool CCryptor::MakeHash(
   m_pHash->Update(pBuff, tBufSize);
   m_pHash->Final(pHash);
   return true;
+}
+
+bool CCryptor::VerifyHash(
+  const unsigned __int8 *pBuff,
+  unsigned __int64 tBufSize,
+  unsigned __int8 *pHash,
+  unsigned __int64 tHashSize)
+{
+  return tHashSize == 32 && m_pHash->VerifyDigest(pHash, pBuff, tBufSize);
 }

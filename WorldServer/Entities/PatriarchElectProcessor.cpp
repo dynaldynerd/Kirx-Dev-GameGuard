@@ -35,10 +35,104 @@ static_assert(sizeof(FinalDecisionProcessor) == 0x1C8, "FinalDecisionProcessor s
 static_assert(sizeof(FinalDecisionApplyer) == 0xC8, "FinalDecisionApplyer size mismatch");
 static_assert(sizeof(ClassOrderProcessor) == 0x210, "ClassOrderProcessor size mismatch");
 
+PatriarchElectProcessor *PatriarchElectProcessor::_pkInstance = nullptr;
+
+PatriarchElectProcessor::PatriarchElectProcessor()
+{
+  _eProcessType = ElectProcessor::_eNonProcessor;
+  _kRunningProcessor = nullptr;
+  _bTimeCheck = true;
+  _bInitProce = false;
+  _dwNextCheckTime = 0;
+  _dwNextCheckDay = 0;
+  _dwNextScoreUpdateTime = 0;
+  _dwElectSerial = 0;
+  _dwCurrPatriarchElectSerial = 0;
+  for (int index = 0; index < 6; ++index)
+  {
+    _kProcessor[index] = nullptr;
+  }
+  for (int race = 0; race < 3; ++race)
+  {
+    m_dwNonvoteCnt[race] = 0;
+    m_dwTotalVoteCnt[race] = 0;
+    m_dwHighGradeNum[race] = 0;
+  }
+}
+
 PatriarchElectProcessor *PatriarchElectProcessor::Instance()
 {
-  static PatriarchElectProcessor s_instance;
-  return &s_instance;
+  if (!_pkInstance)
+  {
+    _pkInstance = new PatriarchElectProcessor();
+  }
+  return _pkInstance;
+}
+
+void PatriarchElectProcessor::Destroy()
+{
+  if (_pkInstance)
+  {
+    delete _pkInstance;
+    _pkInstance = nullptr;
+  }
+}
+
+char PatriarchElectProcessor::LoadDatabae()
+{
+  if (!LoadElectState())
+  {
+    return 0;
+  }
+  if (!CandidateMgr::Instance()->LoadDatabase())
+  {
+    return 0;
+  }
+  if (!CandidateMgr::Instance()->LoadPatriarchGroup())
+  {
+    return 0;
+  }
+
+  for (int race = 0; race < 3; ++race)
+  {
+    for (
+      CandidateMgr::_candidate_info::ClassType classType = CandidateMgr::_candidate_info::patriarch;
+      classType < CandidateMgr::_candidate_info::patriarch_group_num;
+      classType = static_cast<CandidateMgr::_candidate_info::ClassType>(classType + 1))
+    {
+      CandidateMgr::_candidate_info *group = CandidateMgr::Instance()->GetPatriarchGroup(race, classType);
+      if (!group)
+      {
+        continue;
+      }
+
+      if (group->eStatus != CandidateMgr::_candidate_info::candidate_discharge)
+      {
+        CPvpUserAndGuildRankingSystem::Instance()->SetUpdateRaceBossSerial(
+          race,
+          static_cast<unsigned __int8>(classType),
+          group->dwAvatorSerial);
+        CPvpUserAndGuildRankingSystem::Instance()->SetCurrentRaceBossSerial(
+          race,
+          static_cast<unsigned __int8>(classType),
+          group->dwAvatorSerial);
+        g_Main.m_kEtcNotifyInfo.UpdateRaceLeader(
+          race,
+          static_cast<unsigned __int8>(classType),
+          group->wszName);
+      }
+
+      if (group->eClassType >= 5)
+      {
+        ClassOrderProcessor::Instance()->UpdatePacket(
+          static_cast<unsigned __int8>(race),
+          static_cast<unsigned __int8>(group->eClassType));
+      }
+    }
+  }
+
+  CPvpUserAndGuildRankingSystem::Instance()->PvpRankDataPacking();
+  return 1;
 }
 
 bool PatriarchElectProcessor::Initialize()
@@ -297,6 +391,11 @@ void PatriarchElectProcessor::TimeCheck(unsigned __int16 wDayOfWeek, unsigned __
 unsigned int PatriarchElectProcessor::GetCurrPatriarchElectSerial()
 {
   return _dwCurrPatriarchElectSerial;
+}
+
+void PatriarchElectProcessor::SetCurrPatriarchElectSerial(unsigned int dwSerial)
+{
+  _dwCurrPatriarchElectSerial = dwSerial;
 }
 
 char PatriarchElectProcessor::Doit(Cmd eCmd, CPlayer *pOne, char *pdata)

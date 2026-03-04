@@ -4,7 +4,13 @@
 
 CLuaCommandEx::_State CLuaCommandEx::_State::ms_cEmpty;
 
-CLuaCommandEx::~CLuaCommandEx() = default;
+CLuaCommandEx::CLuaCommandEx()
+{
+}
+
+CLuaCommandEx::~CLuaCommandEx()
+{
+}
 
 CLuaCommandEx::_State::_State() : m_bExist(false) {}
 

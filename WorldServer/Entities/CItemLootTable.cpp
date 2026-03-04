@@ -10,6 +10,38 @@
 #include "CEventLootTable.h"
 #include "WorldServerUtil.h"
 
+CItemLootTable::CItemLootTable()
+  : m_pTblEvent(nullptr),
+    m_ppLinkCode(nullptr),
+    m_nLootNum(0)
+{
+  m_pTblEvent = new CEventLootTable();
+}
+
+CItemLootTable::~CItemLootTable()
+{
+  if (m_ppLinkCode)
+  {
+    for (int index = 0; index < m_nLootNum; ++index)
+    {
+      if (m_ppLinkCode[index])
+      {
+        operator delete[](m_ppLinkCode[index]);
+        m_ppLinkCode[index] = nullptr;
+      }
+    }
+
+    operator delete[](m_ppLinkCode);
+    m_ppLinkCode = nullptr;
+  }
+
+  if (m_pTblEvent)
+  {
+    delete m_pTblEvent;
+    m_pTblEvent = nullptr;
+  }
+}
+
 bool CItemLootTable::ReadRecord(const char *fileName, CRecordData *itemTables, char *errCode)
 {
   if (!m_tblLoot.ReadRecord(fileName, 0x694, errCode))
@@ -29,10 +61,7 @@ bool CItemLootTable::ReadRecord(const char *fileName, CRecordData *itemTables, c
     m_ppLinkCode[index] = nullptr;
   }
 
-  if (m_pTblEvent)
-  {
-    m_pTblEvent->ReadRecord();
-  }
+  m_pTblEvent->ReadRecord();
 
   return Indexing(itemTables, errCode);
 }

@@ -99,6 +99,8 @@ public:
     unsigned int *pdwTax,
     unsigned int *pdwListIndex);
   std::vector<CUnmannedTraderRegistItemInfo>::iterator Find(unsigned int dwRegistSerial);
+  std::vector<CUnmannedTraderRegistItemInfo>::iterator FindRegist(
+    std::vector<CUnmannedTraderRegistItemInfo>::iterator iterStart);
   std::vector<CUnmannedTraderRegistItemInfo>::iterator FindEmpty();
   void CountRegistItem();
   void GetCurrentRegItemStateStr(char *szStateStr, int iBuffSize);
@@ -107,6 +109,11 @@ public:
     CPlayer **pkOwner);
   bool CompleteUpdateState(unsigned int dwRegistSerial, unsigned __int8 byState, bool bReCountRegist);
   void CompleteCreate(CLogFile *pkLogger);
+  void SetAllItemState(unsigned __int8 byState, unsigned __int8 byMaxCnt);
+  void PrcoSellUpdateWaitItem(
+    _qry_case_unmandtrader_log_in_proc_update_complete *pkResult,
+    unsigned __int8 byGroupType,
+    CLogFile *pkLogger);
   void ProcSellWaitItem(
     _qry_case_unmandtrader_log_in_proc_update_complete *pkResult,
     unsigned __int8 byGroupType,

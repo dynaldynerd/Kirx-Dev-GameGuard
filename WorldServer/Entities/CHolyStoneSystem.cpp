@@ -10,6 +10,7 @@
 #include <mmsystem.h>
 
 #include "CHolyKeeper.h"
+#include "CAnimus.h"
 #include "CHolyStone.h"
 #include "CHolyStoneSystemDataMgr.h"
 #include "COreAmountMgr.h"
@@ -54,6 +55,41 @@ const _trand_tbl *_GetTransTBL(int nState)
   return nullptr;
 }
 } // namespace
+
+__holy_keeper_data::__holy_keeper_data()
+  : pCreateMap(nullptr),
+    pRec(nullptr)
+{
+}
+
+__holy_stone_data::__holy_stone_data()
+  : pCreateMap(nullptr),
+    pRec(nullptr),
+    nRace(0)
+{
+}
+
+_QUEST_CASH::_QUEST_CASH()
+{
+  init();
+}
+
+_QUEST_CASH_OTHER::_QUEST_CASH_OTHER()
+{
+  init();
+}
+
+CHolyStoneSystem::CHolyStoneSystem()
+  : m_pkDestroyer(nullptr),
+    m_dwNextStartTime(0),
+    m_bConsumable(false),
+    m_pMentalPass(true)
+{
+  m_tmrCumPlayer.BeginTimer(0xEA60u);
+  m_tmrHSKSystem.BeginTimer(0x3E8u);
+}
+
+CHolyStoneSystem::~CHolyStoneSystem() = default;
 
 bool CHolyStoneSystem::InitHolySystem()
 {
@@ -523,6 +559,180 @@ void CHolyStoneSystem::SetTermTimeDefault(unsigned __int8 byNumOfTime)
       - (scheduleNode->m_nSceneTime[2] + scheduleNode->m_nSceneTime[0] + scheduleNode->m_nSceneTime[1]);
     m_SaveData.m_dwTerm[1] = scheduleNode->m_nSceneTime[3];
   }
+}
+
+bool CHolyStoneSystem::AuthMiningTicket(unsigned int dwKey)
+{
+  const unsigned __int8 numOfTime = GetNumOfTime();
+  const unsigned __int8 startHour = GetStartHour();
+  const unsigned __int8 startDay = GetStartDay();
+  const unsigned __int8 startMonth = GetStartMonth();
+  const unsigned __int16 startYear = GetStartYear();
+
+  MiningTicket::_AuthKeyTicket authKey{};
+  authKey.Set(startYear, startMonth, startDay, startHour, numOfTime);
+  return authKey.___u0.uiData == dwKey;
+}
+
+char CHolyStoneSystem::ct_KeeperStart(int nKeeperState, int nRace, unsigned int nPassTime)
+{
+  if (m_SaveData.m_nSceneCode < 2 || m_SaveData.m_nSceneCode >= 6)
+  {
+    return 0;
+  }
+
+  m_SaveData.m_nHolyMasterRace = nRace;
+  SetScene(m_SaveData.m_byNumOfTime, nKeeperState, nPassTime, 1);
+  return 1;
+}
+
+char CHolyStoneSystem::ct_State(CPlayer *pOne)
+{
+  unsigned int remainMinute = 0;
+  bool showStage1 = false;
+  bool showStage2 = false;
+  bool showStage3 = false;
+  bool showStage4 = false;
+  bool showStage5 = false;
+  bool showStage6 = false;
+
+  const int numOfTime = GetNumOfTime();
+  const int startMin = GetStartMin();
+  const int startHour = GetStartHour();
+  const int startDay = GetStartDay();
+  const unsigned int startMonth = GetStartMonth();
+  const unsigned int startYear = GetStartYear();
+
+  char chat[2000]{};
+  sprintf(chat, "HolySchedule %u/%u/%u %u:%u (%u)", startYear, startMonth, startDay, startHour, startMin, numOfTime);
+  pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+
+  const int sceneCode = GetSceneCode();
+  switch (sceneCode)
+  {
+    case 0:
+      sprintf(chat, "Scene 0");
+      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+      break;
+    case 1:
+      sprintf(chat, "Scene 1");
+      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+      showStage1 = true;
+      showStage2 = true;
+      showStage6 = true;
+      break;
+    case 2:
+      sprintf(chat, "Scene 2");
+      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+      showStage1 = true;
+      showStage3 = true;
+      showStage4 = true;
+      showStage5 = true;
+      showStage6 = true;
+      break;
+    case 3:
+      sprintf(chat, "Scene 3");
+      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+      showStage4 = true;
+      showStage5 = true;
+      showStage6 = true;
+      break;
+    case 4:
+      sprintf(chat, "Scene 4");
+      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+      showStage5 = true;
+      showStage6 = true;
+      break;
+    case 5:
+      sprintf(chat, "Scene 5");
+      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+      showStage5 = true;
+      showStage6 = true;
+      break;
+    case 6:
+      sprintf(chat, "Scene 6");
+      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+      showStage6 = true;
+      break;
+    default:
+      break;
+  }
+
+  if (showStage1)
+  {
+    remainMinute = static_cast<unsigned int>(g_24Time.Get24TimeFromTickTime(m_dwCheckTime[0]));
+    sprintf(chat, "    1. %u:%u", remainMinute / 60, remainMinute % 60);
+    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+  }
+  if (showStage2)
+  {
+    remainMinute = static_cast<unsigned int>(g_24Time.Get24TimeFromTickTime(m_dwCheckTime[1]));
+    sprintf(chat, "    2. %u:%u", remainMinute / 60, remainMinute % 60);
+    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+  }
+  if (showStage3)
+  {
+    remainMinute = static_cast<unsigned int>(g_24Time.Get24TimeFromTickTime(m_dwCheckTime[2]));
+    sprintf(chat, "    3. %u:%u", remainMinute / 60, remainMinute % 60);
+    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+  }
+  if (showStage4)
+  {
+    remainMinute = static_cast<unsigned int>(g_24Time.Get24TimeFromTickTime(m_dwCheckTime[3]));
+    sprintf(chat, "    4. %u:%u", remainMinute / 60, remainMinute % 60);
+    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+  }
+  if (showStage5)
+  {
+    remainMinute = static_cast<unsigned int>(g_24Time.Get24TimeFromTickTime(m_dwCheckTime[5]));
+    sprintf(chat, "    5. %u:%u", remainMinute / 60, remainMinute % 60);
+    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+  }
+  if (showStage6)
+  {
+    remainMinute = static_cast<unsigned int>(g_24Time.Get24TimeFromTickTime(m_dwCheckTime[6]));
+    sprintf(chat, "    6. %u:%u", remainMinute / 60, remainMinute % 60);
+    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+  }
+
+  return 1;
+}
+
+char CHolyStoneSystem::ct_StopBattle()
+{
+  if (m_SaveData.m_nSceneCode != 1)
+  {
+    return 0;
+  }
+
+  m_dwCheckTime[1] = GetLoopTime();
+  return 1;
+}
+
+char *CHolyStoneSystem::GetHolyMentalString()
+{
+  return m_strHolyMental;
+}
+
+CMapData *CHolyStoneSystem::GetMapData()
+{
+  return m_HolyKeeperData.pCreateMap;
+}
+
+_portal_dummy *CHolyStoneSystem::GetPortalDummy(unsigned __int8 byRace)
+{
+  if (byRace < 3u)
+  {
+    return m_pPortalDummy[byRace];
+  }
+
+  return nullptr;
+}
+
+void CHolyStoneSystem::On_HS_SCENE_INIT()
+{
+  DestroyHolyStone();
+  DestroyHolyKeeper();
 }
 
 void CHolyStoneSystem::CheckKeeperPlusTime()
@@ -1629,6 +1839,38 @@ void CHolyStoneSystem::RecoverPvpCash()
     {
       player->RewardRaceWarPvpCash();
     }
+  }
+}
+
+void CHolyStoneSystem::ReceiveDestroyKeeper(CCharacter *pCharacter)
+{
+  if (GetSceneCode() == 3)
+  {
+    SetScene(GetNumOfTime(), 5, 0, 3);
+    if (pCharacter->m_ObjID.m_byID == 3)
+    {
+      CAnimus *animus = static_cast<CAnimus *>(pCharacter);
+      if (animus->m_pMaster)
+      {
+        SendMsg_to_webagent_about_last_attacker_for_keeper(animus->m_pMaster, 1);
+        SetKeeperDestroyRace(static_cast<unsigned __int8>(animus->m_pMaster->m_Param.GetRaceCode()));
+      }
+    }
+    else if (pCharacter->m_ObjID.m_byID == 0)
+    {
+      CPlayer *player = static_cast<CPlayer *>(pCharacter);
+      SendMsg_to_webagent_about_last_attacker_for_keeper(player, 0);
+      SetKeeperDestroyRace(static_cast<unsigned __int8>(player->m_Param.GetRaceCode()));
+    }
+
+    COreAmountMgr *oreMgr = COreAmountMgr::Instance();
+    oreMgr->InitRemainOreAmount(0xFFFFFFFF, 0xFFFFFFFF);
+    oreMgr = COreAmountMgr::Instance();
+    oreMgr->InsertOreLog(1u);
+    oreMgr = COreAmountMgr::Instance();
+    oreMgr->IncreaseOreAmount();
+    oreMgr = COreAmountMgr::Instance();
+    oreMgr->IncreaseOreCount();
   }
 }
 

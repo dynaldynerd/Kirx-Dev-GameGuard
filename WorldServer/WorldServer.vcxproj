@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -967,7 +967,12 @@
     <ClInclude Include="Entities\wrac_packets.h" />
     <ClInclude Include="ThirdParty\tinyxml\tinystr.h" />
     <ClInclude Include="ThirdParty\tinyxml\tinyxml.h" />
-</ItemGroup>
+
+    <ClInclude Include="Entities\Packet\ClientZonePacket.h" />
+    <ClInclude Include="Entities\Packet\ZoneClientPacket.h" />
+    <ClInclude Include="Entities\Packet\WorldAccountPacket.h" />
+    <ClInclude Include="Entities\Packet\AccountWorldPacket.h" />
+  </ItemGroup>
 
   <ItemGroup>
     <ClCompile Include="MainFrm.cpp" />
@@ -1416,6 +1421,7 @@
     <ClCompile Include="Entities\quest_check_result.cpp" />
     <ClCompile Include="Entities\quest_fail_result.cpp" />
     <ClCompile Include="Entities\R3EngineGlobals.cpp" />
+    <ClCompile Include="Entities\R3EngineFallback.cpp" />
     <ClCompile Include="Entities\R3TimerCompat.cpp" />
     <ClCompile Include="Entities\radar_char_list_result_zocl.cpp" />
     <ClCompile Include="Entities\ResourceDummy.cpp" />
@@ -1448,6 +1454,11 @@
     <ClCompile Include="ThirdParty\tinyxml\tinyxml.cpp" />
     <ClCompile Include="ThirdParty\tinyxml\tinyxmlerror.cpp" />
     <ClCompile Include="ThirdParty\tinyxml\tinyxmlparser.cpp" />
+  
+    <ClCompile Include="Entities\Packet\ZoneClientPacket.cpp" />
+    <ClCompile Include="Entities\Packet\ClientZonePacket.cpp" />
+    <ClCompile Include="Entities\Packet\WorldAccountPacket.cpp" />
+    <ClCompile Include="Entities\Packet\AccountWorldPacket.cpp" />
   </ItemGroup>
 
   <ItemGroup>

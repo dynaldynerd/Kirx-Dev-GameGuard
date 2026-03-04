@@ -58,6 +58,15 @@ CMapOperation::CMapOperation()
   m_SettlementMapData[2][1] = nullptr;
 }
 
+CMapOperation::~CMapOperation()
+{
+  if (m_Map)
+  {
+    delete[] m_Map;
+    m_Map = nullptr;
+  }
+}
+
 int GetRegionIndex(int nMapIndex, unsigned int x, unsigned int y, unsigned int dwMaxX, unsigned int dwMaxY)
 {
   AreaList *areaList = g_AreaIndexTable[nMapIndex];
@@ -201,7 +210,7 @@ void CMapOperation::OnLoop()
     }
 
     g_MonsterEventRespawn.CheckRespawnEvent();
-    g_MonsterEventSet.CheckEventSetRespawn();
+    g_MonsterEventSet->CheckEventSetRespawn();
   }
 
   if (m_tmrObjTerm.CountingTimer())
@@ -702,4 +711,14 @@ int CMapOperation::GetMap(CMapData *pMap)
     }
   }
   return -1;
+}
+
+CMapData *CMapOperation::GetSettlementMapData(int iRace, int iTh)
+{
+  if (iRace < 3 && iTh < 2)
+  {
+    return m_SettlementMapData[iRace][iTh];
+  }
+
+  return nullptr;
 }

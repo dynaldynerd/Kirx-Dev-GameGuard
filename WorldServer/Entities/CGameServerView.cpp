@@ -34,6 +34,11 @@ CGameServerView::CGameServerView()
 {
 }
 
+CGameServerView::~CGameServerView()
+{
+  // this is not a stub
+}
+
 void CGameServerView::DoDataExchange(CDataExchange *pDX)
 {
   CFormView::DoDataExchange(pDX);

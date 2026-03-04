@@ -10,6 +10,7 @@ class  CWeeklyGuildRankOwnerInfo
 {
 public:
   CWeeklyGuildRankOwnerInfo();
+  ~CWeeklyGuildRankOwnerInfo();
   void Clear();
   bool IsEmpty();
 

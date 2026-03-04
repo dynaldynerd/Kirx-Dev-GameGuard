@@ -66,6 +66,17 @@ CMonster::~CMonster()
   _DestroySDM();
 }
 
+__int64 CMonster::AttackableHeight()
+{
+  return 50;
+}
+
+void CMonster::BeTargeted(CCharacter *pSeacher)
+{
+  (void)pSeacher;
+  m_LifeCicle = GetLoopTime();
+}
+
 void CMonster::Init(_object_id *pID)
 {
   CCharacter::Init(pID);
@@ -2480,7 +2491,7 @@ char CMonster::_LootItem_EventSet(CPlayer *pOwner)
     return looted;
   }
 
-  _event_set_looting *eventLoot = g_MonsterEventSet.GetEvenSetLooting(m_pMonRec->m_strCode);
+  _event_set_looting *eventLoot = g_MonsterEventSet->GetEvenSetLooting(m_pMonRec->m_strCode);
   if (eventLoot)
   {
     for (int j = 0; j < eventLoot->nItemCount; ++j)

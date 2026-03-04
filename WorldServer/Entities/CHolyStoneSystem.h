@@ -16,6 +16,8 @@ struct _portal_dummy;
 
 struct  __holy_keeper_data
 {
+  __holy_keeper_data();
+
   CMapData *pCreateMap;
   _dummy_position CreateDummy;
   _dummy_position ActiveDummy;
@@ -25,6 +27,8 @@ struct  __holy_keeper_data
 
 struct  __holy_stone_data
 {
+  __holy_stone_data();
+
   CMapData *pCreateMap;
   _dummy_position CreateDummy;
   _monster_fld *pRec;
@@ -33,6 +37,8 @@ struct  __holy_stone_data
 
 struct  _QUEST_CASH
 {
+  _QUEST_CASH();
+
   unsigned int dwAvatorSerial;
   unsigned __int8 byQuestType;
   int nPvpPoint;
@@ -50,6 +56,8 @@ struct  _QUEST_CASH
 
 struct  _QUEST_CASH_OTHER
 {
+  _QUEST_CASH_OTHER();
+
   unsigned int dwAvatorSerial;
   unsigned __int8 byStoneMapMoveInfo;
 
@@ -63,6 +71,9 @@ struct  _QUEST_CASH_OTHER
 class  CHolyStoneSystem
 {
 public:
+  CHolyStoneSystem();
+  ~CHolyStoneSystem();
+
   bool InitHolySystem();
   void OnLoop();
   void AlterSchedule(unsigned __int8 byScheduleCode, unsigned __int8 byNumOfTime);
@@ -71,6 +82,14 @@ public:
   void InitQuestCash();
   bool SetScene(unsigned __int8 byNumOfTime, int nSceneCode, unsigned int nPassTime, int nChangeReason);
   void SetTermTimeDefault(unsigned __int8 byNumOfTime);
+  bool AuthMiningTicket(unsigned int dwKey);
+  char ct_KeeperStart(int nKeeperState, int nRace, unsigned int nPassTime);
+  char ct_State(CPlayer *pOne);
+  char ct_StopBattle();
+  char *GetHolyMentalString();
+  CMapData *GetMapData();
+  _portal_dummy *GetPortalDummy(unsigned __int8 byRace);
+  void On_HS_SCENE_INIT();
   void CheckKeeperPlusTime();
   unsigned __int8 GetNumOfTime();
   int GetDestroyerState();
@@ -138,6 +157,7 @@ public:
   void SetEffectToDestroyerGuildMember();
   void RecoverPvpCash();
   char CheckHolyMaster(CPlayer *pAtter, unsigned __int8 byDestroyStoneRaceCode);
+  void ReceiveDestroyKeeper(CCharacter *pCharacter);
   void PushStoreQuestCash(
     unsigned int dwAvatorSerial,
     unsigned __int8 byQuestType,

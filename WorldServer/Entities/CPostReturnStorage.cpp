@@ -7,6 +7,11 @@ CPostReturnStorage::CPostReturnStorage()
   Init();
 }
 
+CPostReturnStorage::~CPostReturnStorage()
+{
+  // this is not a stub
+}
+
 void CPostReturnStorage::Init()
 {
   for (int j = 0; j < 10; ++j)

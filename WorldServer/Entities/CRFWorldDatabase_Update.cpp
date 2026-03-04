@@ -836,3 +836,46 @@ bool CRFWorldDatabase::Insert_Start_NpcQuest_History(
     nEndTime);
   return ExecUpdateQuery( buffer, true);
 }
+
+bool CRFWorldDatabase::Update_Start_NpcQuest_History(
+  unsigned int dwSerial,
+  char *szQuestCode,
+  unsigned __int8 byLevel,
+  char *szTime,
+  __int64 nEndTime)
+{
+  char buffer[272]{};
+  sprintf_s(
+    buffer,
+    0x100u,
+    "{ CALL pUpdate_Start_Npc_Quest_History_Type1( %d, '%s', %d, '%s', %I64d) }",
+    dwSerial,
+    szQuestCode,
+    byLevel,
+    szTime,
+    nEndTime);
+  return ExecUpdateQuery(buffer, true);
+}
+
+bool CRFWorldDatabase::Update_Level(unsigned int dwSerial, unsigned __int8 byLv)
+{
+  char buffer[272]{};
+  sprintf(buffer, "{ CALL pUpdate_Level( %d, %d ) }", dwSerial, byLv);
+  return ExecUpdateQuery(buffer, true);
+}
+
+bool CRFWorldDatabase::Update_OutputGuildMoney(
+  unsigned int dwGuildSerial,
+  unsigned int dwDalant,
+  unsigned int dwGold)
+{
+  char buffer[272]{};
+  memset(buffer, 0, 256);
+  sprintf(
+    buffer,
+    "update tbl_guild set dalant = dalant - %u, gold = gold - %u where Serial = %u",
+    dwDalant,
+    dwGold,
+    dwGuildSerial);
+  return ExecUpdateQuery(buffer, true);
+}

@@ -14,6 +14,14 @@ CMoveMapLimitInfo::CMoveMapLimitInfo(unsigned int uiInx, OBJ_TYPE iType)
 {
 }
 
+CMoveMapLimitInfo::~CMoveMapLimitInfo()
+{
+  m_eType = OT_NONE;
+  m_uiInx = static_cast<unsigned int>(-1);
+  m_iMapInx = -1;
+  m_pStoreNPC = nullptr;
+}
+
 void CMoveMapLimitInfo::Load(CPlayer *pkPlayer, CMoveMapLimitRightInfo *pkRight)
 {
 // this is not a stub

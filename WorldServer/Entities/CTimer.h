@@ -5,6 +5,17 @@
 /* 1428 */
 class  CTimer
 {
+public:
+  CTimer();
+  void CalculateTime();
+  float GetDuration();
+  float GetLoopTime();
+  LARGE_INTEGER GetTicks();
+  float GetTime();
+  void SetMinFPS(float fps);
+  void SetTime(float timeValue);
+
+public:
   float mLoopTime;
   float mTime;
   float mRealTime;

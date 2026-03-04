@@ -46,10 +46,13 @@ public:
   void SetCashDBInitState();
   void OnConnectSession(unsigned int n);
   void OnDisConnectSession(unsigned int n);
+  bool OnCheckSession_FirstVerify(unsigned int n);
   bool CheckEnterWorldRequest(unsigned int n, char *pBuf);
   bool IsPersonalFreeFixedAmountBillingType(__int16 *pDest1, __int16 *pDest2);
   void CreateComplete(CPlayer *pOne);
   bool IsNormalString(const char *szString);
+  bool ValidMacAddress();
+  char *GetServerVaildKey();
   bool RecvGameGuardData(unsigned int n, _MSG_HEADER *pHeader, char *pBuff);
   void SendCashDBDSNRequest();
   void Loop();

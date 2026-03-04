@@ -18,6 +18,11 @@ CInfoSheet::CInfoSheet()
 {
 }
 
+CInfoSheet::~CInfoSheet()
+{
+  // this is not a stub
+}
+
 void CInfoSheet::Construct(const char *pszCaption, CWnd *pParentWnd, unsigned int iSelectPage)
 {
   CString caption(pszCaption);

@@ -9,7 +9,7 @@ class COpenDlg : public CDialog
 
 public:
   explicit COpenDlg(CWnd *pParent = nullptr);
-  ~COpenDlg() override = default;
+  ~COpenDlg() override;
 
 protected:
   void DoDataExchange(CDataExchange *pDX) override;

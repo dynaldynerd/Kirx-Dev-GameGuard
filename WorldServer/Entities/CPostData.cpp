@@ -7,6 +7,11 @@ CPostData::CPostData()
   Init();
 }
 
+CPostData::~CPostData()
+{
+  // this is not a stub
+}
+
 void CPostData::Init()
 {
   m_nNumber = 0;

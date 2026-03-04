@@ -74,7 +74,7 @@ public:
   bool StartRespawnEvent(char *pszEventCode, char *pwszErrCode);
   bool StopRespawnEvent(char *pszEventCode, char *pwszErrCode);
 
-  virtual ~CMonsterEventRespawn() = default;
+  virtual ~CMonsterEventRespawn();
 
   int m_nLoadEventRespawn;
   _event_respawn m_EventRespawn[32];

@@ -1,6 +1,2 @@
 #pragma once
-#include "IdaCompat.h"
-#pragma pack(push, 1)
-struct _pt_result_appoint_zocl{ unsigned __int8 byLevel; unsigned __int8 byClassType; long double dPvpPoint; char wszAvatorName[17]; _pt_result_appoint_zocl(); __int64 size() const;};
-#pragma pack(pop)
-inline _pt_result_appoint_zocl::_pt_result_appoint_zocl(){ memset_0(this, 0, sizeof(*this));}inline __int64 _pt_result_appoint_zocl::size() const{ return 27;}
+#include "Packet/ZoneClientPacket.h"

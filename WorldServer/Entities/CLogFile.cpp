@@ -59,7 +59,57 @@ void CLogFile::Write(const char *format, ...)
 {
   va_list args;
   va_start(args, format);
-  WriteFromArg(format, args);
+  if (m_bInit && m_bWriteAble)
+  {
+    char line[11296]{};
+    char message[10272]{};
+    char date[160]{};
+    char time[152]{};
+
+    vsprintf_s(message, sizeof(message), format, args);
+    if (m_bDate)
+    {
+      _strdate_s(date, 0x80u);
+      _strtime_s(time, 0x80u);
+    }
+    else
+    {
+      date[0] = 0;
+      time[0] = 0;
+    }
+
+    if (m_bAddCount)
+    {
+      if (m_bDate)
+      {
+        const unsigned int count = m_dwLogCount++;
+        wsprintfA(line, "%d %s %s : %s\r\n", count, date, time, message);
+      }
+      else
+      {
+        const unsigned int count = m_dwLogCount++;
+        wsprintfA(line, "%d : %s\r\n", count, message);
+      }
+    }
+    else if (m_bDate)
+    {
+      wsprintfA(line, "%s %s %s\r\n", date, time, message);
+    }
+    else
+    {
+      wsprintfA(line, "%s\r\n", message);
+    }
+
+    HANDLE file = CreateFileA(m_szFileName, GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (file != INVALID_HANDLE_VALUE)
+    {
+      SetFilePointer(file, 0, nullptr, FILE_END);
+      const DWORD length = static_cast<DWORD>(strlen_0(line));
+      DWORD written = 0;
+      WriteFile(file, line, length, &written, nullptr);
+      CloseHandle(file);
+    }
+  }
   va_end(args);
 }
 

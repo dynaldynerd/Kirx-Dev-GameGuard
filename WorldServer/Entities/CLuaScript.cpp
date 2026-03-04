@@ -23,6 +23,11 @@ CLuaScript::CLuaScript()
   m_strName[0] = '\0';
 }
 
+CLuaScript::~CLuaScript()
+{
+  // this is not a stub
+}
+
 const char *CLuaScript::GetName()
 {
   return m_strName;

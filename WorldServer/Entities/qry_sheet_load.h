@@ -30,11 +30,7 @@ struct  _qry_sheet_load
 
 inline _qry_sheet_load::_qry_sheet_load()
 {
-  memset_0(this->bAddItem, 0, sizeof(this->bAddItem));
-  this->dwAddDalant = 0;
-  memset_0(this->bTrunkAddItem, 0, sizeof(this->bTrunkAddItem));
-  this->bCreateTrunkFree = false;
-  memset_0(this->bExtTrunkAddItem, 0, sizeof(this->bExtTrunkAddItem));
+  memset_0(this, 0, sizeof(*this));
 }
 
 inline _qry_sheet_load::~_qry_sheet_load() = default;

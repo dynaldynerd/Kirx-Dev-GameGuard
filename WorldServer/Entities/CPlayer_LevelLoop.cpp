@@ -722,6 +722,9 @@ void CPlayer::UpdatePvpPointLimiter(__int64 tCurTime)
 void CPlayer::UpdatePvpOrderView(__int64 tCurTime)
 {
   const long double pvpTempCash = m_kPvpOrderView.GetPvpTempCash();
+  const long double pvpCashBefore = m_kPvpOrderView.GetPvpCash();
+  CPlayer::s_MgrLvHistory.adjust_pvpcash(false, pvpCashBefore, pvpTempCash, m_szLvHistoryFileName);
+
   AlterPvPCashBag(pvpTempCash, pm_kill);
   m_kPvpOrderView.Update_RaceWarRecvr(false);
 
@@ -731,6 +734,10 @@ void CPlayer::UpdatePvpOrderView(__int64 tCurTime)
   m_kPvpOrderView.Notify_PvpTempCash(m_ObjID.m_wIndex);
   m_kPvpOrderView.Notify_OrderView(m_ObjID.m_wIndex);
   SendMsg_AlterPvPCash(0);
+
+  const long double pvpCashAfter = m_kPvpOrderView.GetPvpCash();
+  const long double pvpTempCashAfter = m_kPvpOrderView.GetPvpTempCash();
+  CPlayer::s_MgrLvHistory.adjust_pvpcash(true, pvpCashAfter, pvpTempCashAfter, m_szLvHistoryFileName);
 }
 
 void CPlayer::AutoRecover()
@@ -2094,6 +2101,83 @@ unsigned int CPlayer::_check_mastery_cum_lim(unsigned __int8 byMasteryClass, uns
   }
 
   return (curLimit <= baseLimit) ? baseLimit : curLimit;
+}
+
+void CPlayer::Emb_AlterStat_F(
+  unsigned __int8 byMasteryClass,
+  unsigned __int8 byIndex,
+  float fAlter,
+  unsigned __int8 byReason)
+{
+  if (!_STAT_DB_BASE::IsRangePerMastery(byMasteryClass, byIndex))
+  {
+    const char *charName = m_Param.GetCharNameA();
+    g_Main.m_logSystemError.Write(
+      "%s: _STAT_DB_BASE::IsRangePerMastery(%d, %d) == false",
+      charName,
+      byMasteryClass,
+      byIndex);
+    return;
+  }
+
+  if (!byReason)
+  {
+    fAlter *= static_cast<float>(static_cast<int>(GetLevel()) / 10 + 1);
+  }
+
+  unsigned __int8 checkIndex = byIndex;
+  if (byMasteryClass == 3)
+  {
+    _skill_fld *record = reinterpret_cast<_skill_fld *>(_MASTERY_PARAM::s_pSkillData->GetRecord(byIndex));
+    if (record)
+    {
+      if (record->m_nMastIndex >= 8)
+      {
+        return;
+      }
+      checkIndex = static_cast<unsigned __int8>(record->m_nMastIndex);
+    }
+  }
+
+  const unsigned int limitCum = _check_mastery_cum_lim(byMasteryClass, checkIndex);
+  const int currentCum = static_cast<int>(m_pmMst.GetCumPerMast(byMasteryClass, checkIndex));
+  int remainCum = static_cast<int>(limitCum) - currentCum;
+  if (remainCum < 0)
+  {
+    remainCum = 0;
+  }
+  if (fAlter > static_cast<float>(remainCum))
+  {
+    fAlter = static_cast<float>(remainCum);
+  }
+  if (fAlter <= 0.0f)
+  {
+    return;
+  }
+
+  const int addCum = static_cast<int>(fAlter + 0.5f);
+  const int statIndex = _STAT_DB_BASE::GetStatIndex(byMasteryClass, byIndex);
+  if (m_pmMst.m_BaseCum.m_dwDamWpCnt[statIndex] > 0xEE6B2800)
+  {
+    return;
+  }
+
+  unsigned int newStat[4]{};
+  const bool updateEquip = m_pmMst.AlterCumPerMast(byMasteryClass, byIndex, addCum, newStat);
+  if (m_pmMst.m_bUpdateEquipMast)
+  {
+    m_bUpCheckEquipEffect = 1;
+  }
+  SendMsg_StatInform(static_cast<unsigned __int8>(statIndex), newStat[0], byReason);
+  if (m_pmMst.m_MastUpData.bUpdate)
+  {
+    ReCalcMaxHFSP(1, 0);
+  }
+  if (m_pUserDB)
+  {
+    m_pUserDB->Update_Stat(static_cast<unsigned __int8>(statIndex), newStat[0], updateEquip);
+  }
+  m_Param.m_dwAlterMastery[statIndex] += addCum;
 }
 
 void CPlayer::Emb_AlterStat(

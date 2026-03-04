@@ -91,6 +91,30 @@ void CashItemRemoteStore::Loop_TatalCashEvent()
   }
 }
 
+void CashItemRemoteStore::loop_cash_discount_event()
+{
+  check_cash_discount_ini();
+  check_cash_discount_status();
+}
+
+void CashItemRemoteStore::Loop_Cash_Event()
+{
+  for (int j = 0; j < 3; ++j)
+  {
+    Check_CashEvent_INI(static_cast<unsigned __int8>(j));
+    if (g_Main.m_pWorldDB && g_Main.m_pWorldDB->IsConectionActive())
+    {
+      Check_CashEvent_Status(static_cast<unsigned __int8>(j));
+    }
+  }
+}
+
+void CashItemRemoteStore::Loop_ContEvent()
+{
+  Check_Conditional_Event_INI();
+  Check_Conditional_Event_Status();
+}
+
 bool CashItemRemoteStore::GoodsList(unsigned __int16 wSock, char *pPacket)
 {
   if (_bIsBuyCashItemByGold)
@@ -107,6 +131,197 @@ bool CashItemRemoteStore::Buy(unsigned __int16 wSock, char *pPacket)
     return BuyByGold(wSock, reinterpret_cast<_request_csi_buy_clzo *>(pPacket)) != 0;
   }
   return BuyByCash(wSock, pPacket) != 0;
+}
+
+char CashItemRemoteStore::Sell(unsigned __int16 wSock, char *pPacket)
+{
+  (void)wSock;
+  (void)pPacket;
+  // this is not a stub
+  return 1;
+}
+
+char CashItemRemoteStore::start_cde(int iBegin_TT, int iB30_TT, int iB5_TT, int iEnd_TT)
+{
+  if (m_cde.m_ini.m_bUseCashDiscount && is_cde_time())
+  {
+    m_cde.m_cde_log.Write("Cheat-Command was disregarded. Other Event is on");
+    return 0;
+  }
+
+  __time32_t now[8]{};
+  _time32(now);
+  __time32_t beginTime[8]{};
+  __time32_t endTime[9]{};
+  beginTime[0] = iBegin_TT + now[0];
+  endTime[0] = iEnd_TT + iB5_TT + iB30_TT + iBegin_TT + now[0];
+
+  m_cde.m_ini.m_bUseCashDiscount = 1;
+  m_cde.m_ini.m_cdeTime[0] = beginTime[0];
+  m_cde.m_ini.m_cdeTime[1] = endTime[0];
+  m_cde.m_cde_inform_before[0] = iB5_TT + iB30_TT;
+  m_cde.m_cde_inform_before[1] = iB30_TT;
+
+  std::tm beginTm{};
+  std::tm endTm{};
+  _localtime32_s(&beginTm, beginTime);
+  _localtime32_s(&endTm, endTime);
+  m_cde.m_ini.m_wYear[0] = beginTm.tm_year + 1900;
+  m_cde.m_ini.m_byMonth[0] = beginTm.tm_mon + 1;
+  m_cde.m_ini.m_byDay[0] = beginTm.tm_mday;
+  m_cde.m_ini.m_byHour[0] = beginTm.tm_hour;
+  m_cde.m_ini.m_byMinute[0] = beginTm.tm_min;
+  m_cde.m_ini.m_wYear[1] = endTm.tm_year + 1900;
+  m_cde.m_ini.m_byMonth[1] = endTm.tm_mon + 1;
+  m_cde.m_ini.m_byDay[1] = endTm.tm_mday;
+  m_cde.m_ini.m_byHour[1] = endTm.tm_hour;
+  m_cde.m_ini.m_byMinute[1] = endTm.tm_min;
+  set_cde_status(1u);
+  log_about_cash_event("Loaded From Cheat-Args <When Server Running>", &m_cde.m_ini);
+  return 1;
+}
+
+char CashItemRemoteStore::start_cashevent(
+  int iBegin_TT,
+  int iB30_TT,
+  int iB5_TT,
+  int iEnd_TT,
+  unsigned __int8 byEventType)
+{
+  __time32_t now[8]{};
+  _time32(now);
+  __time32_t beginTime[8]{};
+  __time32_t endTime[4]{};
+  beginTime[0] = iBegin_TT + now[0];
+  endTime[0] = iEnd_TT + iB5_TT + iB30_TT + iBegin_TT + now[0];
+
+  for (int j = 0; j < 3; ++j)
+  {
+    m_cash_event[j].m_ini.m_bUseCashEvent = (j == byEventType);
+  }
+  m_cash_event[byEventType].m_ini.m_EventTime[0] = beginTime[0];
+  m_cash_event[byEventType].m_ini.m_EventTime[1] = endTime[0];
+  m_cash_event[byEventType].m_event_inform_before[0] = iB5_TT + iB30_TT;
+  m_cash_event[byEventType].m_event_inform_before[1] = iB30_TT;
+
+  std::tm beginTm{};
+  std::tm endTm{};
+  _localtime32_s(&beginTm, beginTime);
+  _localtime32_s(&endTm, endTime);
+  m_cash_event[byEventType].m_ini.m_wYear[0] = beginTm.tm_year + 1900;
+  m_cash_event[byEventType].m_ini.m_byMonth[0] = beginTm.tm_mon + 1;
+  m_cash_event[byEventType].m_ini.m_byDay[0] = beginTm.tm_mday;
+  m_cash_event[byEventType].m_ini.m_byHour[0] = beginTm.tm_hour;
+  m_cash_event[byEventType].m_ini.m_byMinute[0] = beginTm.tm_min;
+  m_cash_event[byEventType].m_ini.m_wYear[1] = endTm.tm_year + 1900;
+  m_cash_event[byEventType].m_ini.m_byMonth[1] = endTm.tm_mon + 1;
+  m_cash_event[byEventType].m_ini.m_byDay[1] = endTm.tm_mday;
+  m_cash_event[byEventType].m_ini.m_byHour[1] = endTm.tm_hour;
+  m_cash_event[byEventType].m_ini.m_byMinute[1] = endTm.tm_min;
+
+  for (int k = 0; k < 3; ++k)
+  {
+    if (k != byEventType)
+    {
+      Inform_CashEvent_Status_All(static_cast<unsigned __int8>(k), 5u, &m_cash_event[k].m_ini);
+      Set_CashEvent_Status(static_cast<unsigned __int8>(k), 1u);
+    }
+  }
+
+  const unsigned __int8 cashEventStatus = Get_CashEvent_Status(byEventType);
+  if (cashEventStatus >= 2u && cashEventStatus <= 4u)
+  {
+    Inform_CashEvent_Status_All(byEventType, 5u, &m_cash_event[byEventType].m_ini);
+  }
+  Set_CashEvent_Status(byEventType, 1u);
+  return 1;
+}
+
+char CashItemRemoteStore::start_conevent(int iBegin_TT, int iEnd_TT, unsigned __int8 byEventType)
+{
+  __time32_t now[8]{};
+  _time32(now);
+  __time32_t beginTime[8]{};
+  __time32_t endTime[9]{};
+  beginTime[0] = iBegin_TT + now[0];
+  endTime[0] = iEnd_TT + iBegin_TT + now[0];
+
+  m_con_event.m_ini.m_bUseConEvent = byEventType < 3u;
+  m_con_event.m_bConEvent = true;
+  m_con_event.m_eventtime.m_EventTime[0] = beginTime[0];
+  m_con_event.m_eventtime.m_EventTime[1] = endTime[0];
+
+  std::tm beginTm{};
+  std::tm endTm{};
+  _localtime32_s(&beginTm, beginTime);
+  _localtime32_s(&endTm, endTime);
+  const unsigned __int8 conditionalStatus = Get_Conditional_Event_Status();
+  if (conditionalStatus == 2 || conditionalStatus == 3)
+  {
+    Inform_ConditionalEvent_Status_All(
+      m_con_event.m_ini.m_byEventKind,
+      4u,
+      m_con_event.m_ini.m_szEndMsg);
+    Set_Conditional_Evnet_Status(1u);
+  }
+
+  m_con_event.m_bConEvent = true;
+  m_con_event.m_ini.m_byEventKind = byEventType;
+  Set_Conditional_Evnet_Status(1u);
+  return 1;
+}
+
+bool CashItemRemoteStore::CheatBuy(unsigned __int16 wSock, char *szItemCode, char nNum)
+{
+  int tableCode = GetItemTableCode(szItemCode);
+  if (tableCode == -1)
+  {
+    return false;
+  }
+
+  _base_fld *itemRecord = g_Main.m_tblItemData[tableCode].GetRecord(szItemCode, 8);
+  if (!itemRecord)
+  {
+    return false;
+  }
+
+  const _CashShop_fld *cashRecord = FindCashRec(static_cast<unsigned int>(tableCode), itemRecord->m_dwIndex);
+  if (!cashRecord)
+  {
+    return false;
+  }
+
+  _request_csi_buy_clzo packet{};
+  memset_0(&packet, 0, sizeof(packet));
+  packet.nNum = 1;
+  packet.item[0].nPrice = cashRecord->m_nCsPrice;
+  packet.item[0].byDiscount = static_cast<unsigned __int8>(cashRecord->m_nCsDiscount);
+  packet.item[0].byTblCode = static_cast<unsigned __int8>(tableCode);
+  packet.item[0].wItemIdx = static_cast<unsigned __int16>(itemRecord->m_dwIndex);
+  packet.item[0].wStoreIdx = static_cast<unsigned __int16>(cashRecord->m_dwIndex);
+  packet.item[0].byOverlapNum = static_cast<unsigned __int8>(nNum);
+  return Buy(wSock, reinterpret_cast<char *>(&packet));
+}
+
+char CashItemRemoteStore::CheatLoadCashAmount(unsigned __int16 wSock, int nNum)
+{
+  if (_kRecGoods.GetRecordNum() <= nNum)
+  {
+    return 0;
+  }
+
+  CPlayer *player = &g_Player[wSock];
+  if (!player->m_bOper)
+  {
+    return 0;
+  }
+
+  _param_cash_select query(player->m_pUserDB->m_dwAccountSerial, player->m_Param.GetCharSerial(), wSock);
+  strcpy_s(query.in_szAcc, sizeof(query.in_szAcc), player->m_pUserDB->m_szAccountID);
+  const unsigned __int64 querySize = static_cast<unsigned __int64>(query.size());
+  CCashDBWorkManager *cashWorkManager = CTSingleton<CCashDBWorkManager>::Instance();
+  cashWorkManager->PushTask(0, reinterpret_cast<unsigned __int8 *>(&query), querySize);
+  return 1;
 }
 
 char CashItemRemoteStore::GoodsListBuyByCash(unsigned __int16 wSock, char *pPacket)
@@ -1463,6 +1678,63 @@ const _CashShop_fld *CashItemRemoteStore::FindCashRec(unsigned int nTbl, int nId
   return it->second;
 }
 
+__int64 CashItemRemoteStore::GetRemainNumOfGood(unsigned __int16 wStoreIndex)
+{
+  if (!_pkRemainInfo)
+  {
+    return 0LL;
+  }
+
+  const int storeIndex = wStoreIndex;
+  const int recordNum = _kRecGoods.GetRecordNum();
+  if (storeIndex < recordNum)
+  {
+    return static_cast<unsigned int>(_pkRemainInfo[wStoreIndex].nRemainNum);
+  }
+  return 0LL;
+}
+
+__int64 CashItemRemoteStore::GetRemainNumOfGood(char *strCode)
+{
+  if (!_pkRemainInfo)
+  {
+    return 0LL;
+  }
+
+  for (int j = 0;; ++j)
+  {
+    const int recordNum = _kRecGoods.GetRecordNum();
+    if (j >= recordNum)
+    {
+      break;
+    }
+    if (!strncmp(_pkRemainInfo[j].strCode, strCode, 8uLL))
+    {
+      return static_cast<unsigned int>(_pkRemainInfo[j].nRemainNum);
+    }
+  }
+  return 0LL;
+}
+
+void CashItemRemoteStore::Inform_CashEvent(unsigned __int16 wIndex)
+{
+  for (int j = 0; j < 3; ++j)
+  {
+    if (m_cash_event[j].m_ini.m_bUseCashEvent)
+    {
+      if (IsEventTime(static_cast<unsigned __int8>(j)))
+      {
+        ICsSendInterface::SendMsg_CashEventInform(
+          wIndex,
+          static_cast<unsigned __int8>(j),
+          m_cash_event[j].m_event_status,
+          &m_cash_event[j].m_ini,
+          &m_lim_event);
+      }
+    }
+  }
+}
+
 void CashItemRemoteStore::Check_Grosssales(unsigned int dwTotalSellCash)
 {
   __time32_t timeValue[4]{};
@@ -1814,6 +2086,222 @@ void CashItemRemoteStore::Load_Conditional_Event()
   m_con_event.m_conevent_log.Write("Complete For Conditional Event");
 }
 
+unsigned __int8 CashItemRemoteStore::Get_Conditional_Event_Status()
+{
+  return m_con_event.m_conevent_status;
+}
+
+void CashItemRemoteStore::Get_Conditional_Event_Name(unsigned __int8 byEventType, char *szEventName)
+{
+  if (byEventType)
+  {
+    if (byEventType == 1)
+    {
+      wsprintfA(szEventName, "%s", "Set");
+    }
+    else if (byEventType == 2)
+    {
+      wsprintfA(szEventName, "%s", "One&One");
+    }
+    else
+    {
+      wsprintfA(szEventName, "%s", "NULL");
+    }
+  }
+  else
+  {
+    wsprintfA(szEventName, "%s", "Discount");
+  }
+}
+
+char CashItemRemoteStore::Check_CashEvent_INI(unsigned __int8 byEventType)
+{
+  _cash_event_ini newIni{};
+  _FILETIME newFileTime{};
+  char eventName[260]{};
+  Get_CashEvent_Name(byEventType, eventName);
+  Load_Event_INI(&newIni, &newFileTime, eventName);
+  if (newFileTime.dwHighDateTime == m_cash_event[byEventType].m_event_ini_file_time.dwHighDateTime
+      && newFileTime.dwLowDateTime == m_cash_event[byEventType].m_event_ini_file_time.dwLowDateTime)
+  {
+    return 0;
+  }
+
+  m_cash_event[byEventType].m_event_ini_file_time = newFileTime;
+  m_cash_event[byEventType].m_event_log.Write("Event INI File Changed (Server Runing)");
+
+  unsigned __int8 status = 0;
+  __time32_t now[4]{};
+  _time32(now);
+  if (newIni.m_bUseCashEvent)
+  {
+    if (now[0] >= newIni.m_EventTime[0])
+    {
+      if (now[0] > newIni.m_EventTime[1])
+      {
+        status = 5;
+        if (m_cash_event[byEventType].m_ini.m_bUseCashEvent && IsEventTime(byEventType))
+        {
+          Inform_CashEvent_Status_All(byEventType, status, &newIni);
+        }
+      }
+      else
+      {
+        const unsigned int remain = static_cast<unsigned int>(newIni.m_EventTime[1] - now[0]);
+        if (newIni.m_EventTime[1] == now[0])
+        {
+          status = 0;
+        }
+        else if (remain && remain <= static_cast<unsigned int>(m_cash_event[byEventType].m_event_inform_before[1]))
+        {
+          status = 4;
+        }
+        else if (
+          remain <= static_cast<unsigned int>(m_cash_event[byEventType].m_event_inform_before[1])
+          || remain > static_cast<unsigned int>(m_cash_event[byEventType].m_event_inform_before[0]))
+        {
+          status = static_cast<unsigned __int8>(
+            remain > static_cast<unsigned int>(m_cash_event[byEventType].m_event_inform_before[0]));
+        }
+        else
+        {
+          status = 3;
+        }
+
+        if (m_cash_event[byEventType].m_ini.m_bUseCashEvent && IsEventTime(byEventType) && status)
+        {
+          Inform_CashEvent_Status_All(byEventType, status, &newIni);
+        }
+      }
+    }
+    else
+    {
+      status = 1;
+      if (m_cash_event[byEventType].m_ini.m_bUseCashEvent && IsEventTime(byEventType))
+      {
+        Inform_CashEvent_Status_All(byEventType, status, &newIni);
+      }
+    }
+  }
+  else if (m_cash_event[byEventType].m_ini.m_bUseCashEvent && byEventType == 0)
+  {
+    status = 5;
+    Inform_CashEvent_Status_All(0, 5u, &newIni);
+  }
+
+  Set_CashEvent_Status(byEventType, status);
+  Update_INI(&newIni, byEventType);
+  return 1;
+}
+
+void CashItemRemoteStore::Update_INI(_cash_event_ini *pNewIni, unsigned __int8 byEventType)
+{
+  if (!pNewIni)
+  {
+    return;
+  }
+
+  m_cash_event[byEventType].m_event_log.Write(
+    "Updated INI File : [%d/%d/%d %d:%d ~ %d/%d/%d %d:%d] -> [%d/%d/%d %d:%d ~ %d/%d/%d %d:%d",
+    m_cash_event[byEventType].m_ini.m_wYear[0],
+    m_cash_event[byEventType].m_ini.m_byMonth[0],
+    m_cash_event[byEventType].m_ini.m_byDay[0],
+    m_cash_event[byEventType].m_ini.m_byHour[0],
+    m_cash_event[byEventType].m_ini.m_byMinute[0],
+    m_cash_event[byEventType].m_ini.m_wYear[1],
+    m_cash_event[byEventType].m_ini.m_byMonth[1],
+    m_cash_event[byEventType].m_ini.m_byDay[1],
+    m_cash_event[byEventType].m_ini.m_byHour[1],
+    m_cash_event[byEventType].m_ini.m_byMinute[1],
+    pNewIni->m_wYear[0],
+    pNewIni->m_byMonth[0],
+    pNewIni->m_byDay[0],
+    pNewIni->m_byHour[0],
+    pNewIni->m_byMinute[0],
+    pNewIni->m_wYear[1],
+    pNewIni->m_byMonth[1],
+    pNewIni->m_byDay[1],
+    pNewIni->m_byHour[1],
+    pNewIni->m_byMinute[1]);
+
+  m_cash_event[byEventType].m_event_log.Write(
+    "Repeat Information >> Repeat:%d , RepeatDay:%d",
+    m_cash_event[byEventType].m_ini.m_bRepeat,
+    m_cash_event[byEventType].m_ini.m_byRepeatDay);
+  m_cash_event[byEventType].m_event_log.Write(
+    "Expire Date >> [%d/%d/%d %d:%d]",
+    m_cash_event[byEventType].m_ini.m_wYear[2],
+    m_cash_event[byEventType].m_ini.m_byMonth[2],
+    m_cash_event[byEventType].m_ini.m_byDay[2],
+    m_cash_event[byEventType].m_ini.m_byHour[2],
+    m_cash_event[byEventType].m_ini.m_byMinute[2]);
+
+  if (m_cash_event[byEventType].m_ini.m_bUseCashEvent != pNewIni->m_bUseCashEvent)
+  {
+    m_cash_event[byEventType].m_event_log.Write(
+      "Updated Use of INI File : [%d -> %d]",
+      m_cash_event[byEventType].m_ini.m_bUseCashEvent,
+      pNewIni->m_bUseCashEvent);
+  }
+
+  m_cash_event[byEventType].m_ini.m_bUseCashEvent = pNewIni->m_bUseCashEvent;
+  m_cash_event[byEventType].m_ini.m_bRepeat = pNewIni->m_bRepeat;
+  m_cash_event[byEventType].m_ini.m_byRepeatDay = pNewIni->m_byRepeatDay;
+  for (int j = 0; j < 3; ++j)
+  {
+    m_cash_event[byEventType].m_ini.m_wYear[j] = pNewIni->m_wYear[j];
+    m_cash_event[byEventType].m_ini.m_byMonth[j] = pNewIni->m_byMonth[j];
+    m_cash_event[byEventType].m_ini.m_byDay[j] = pNewIni->m_byDay[j];
+    m_cash_event[byEventType].m_ini.m_byHour[j] = pNewIni->m_byHour[j];
+    m_cash_event[byEventType].m_ini.m_byMinute[j] = pNewIni->m_byMinute[j];
+    m_cash_event[byEventType].m_ini.m_EventTime[j] = pNewIni->m_EventTime[j];
+  }
+
+  if (byEventType == 0)
+  {
+    m_cash_event[0].m_ini.m_byDiscout[0] = pNewIni->m_byDiscout[0];
+    m_cash_event[0].m_ini.m_byDiscout[1] = pNewIni->m_byDiscout[1];
+    m_cash_event[0].m_ini.m_byDiscout[2] = pNewIni->m_byDiscout[2];
+    m_cash_event[0].m_ini.m_byDiscout[3] = pNewIni->m_byDiscout[3];
+  }
+  SetNextEventTime(byEventType);
+}
+
+void CashItemRemoteStore::GetEvnetTime(_cash_event_time *pETime, int itime)
+{
+  __time32_t now[5]{};
+  _time32(now);
+  std::tm *tmValue = _localtime32(now);
+  tmValue->tm_min += 5;
+  pETime->m_EventTime[0] = _mktime32(tmValue);
+  tmValue = _localtime32(reinterpret_cast<const __time32_t *>(pETime->m_EventTime));
+  pETime->m_nYear[0] = tmValue->tm_year;
+  pETime->m_nMonth[0] = tmValue->tm_mon;
+  pETime->m_nDay[0] = tmValue->tm_mday;
+  pETime->m_nHour[0] = tmValue->tm_hour;
+  pETime->m_nMinute[0] = tmValue->tm_min;
+  tmValue->tm_min += itime;
+  pETime->m_EventTime[1] = _mktime32(tmValue);
+  tmValue = _localtime32(reinterpret_cast<const __time32_t *>(&pETime->m_EventTime[1]));
+  pETime->m_nYear[1] = tmValue->tm_year;
+  pETime->m_nMonth[1] = tmValue->tm_mon;
+  pETime->m_nDay[1] = tmValue->tm_mday;
+  pETime->m_nHour[1] = tmValue->tm_hour;
+  pETime->m_nMinute[1] = tmValue->tm_min;
+}
+
+bool CashItemRemoteStore::isConEventTime()
+{
+  if (!m_con_event.m_ini.m_bUseConEvent)
+  {
+    return false;
+  }
+
+  __time32_t now[9]{};
+  _time32(now);
+  return m_con_event.m_eventtime.m_EventTime[0] <= now[0] && m_con_event.m_eventtime.m_EventTime[1] >= now[0];
+}
+
 void CashItemRemoteStore::load_con_event_ini(_con_event_ini *pIni, _FILETIME *pft)
 {
   if (!pIni || !pft)
@@ -1908,6 +2396,211 @@ void CashItemRemoteStore::load_con_event_ini(_con_event_ini *pIni, _FILETIME *pf
         pIni->m_bUseConEvent = 0;
       }
     }
+  }
+}
+
+void CashItemRemoteStore::Check_Conditional_Event_INI()
+{
+  _con_event_ini newIni{};
+  _FILETIME newFileTime{};
+  load_con_event_ini(&newIni, &newFileTime);
+  if (newFileTime.dwHighDateTime != m_con_event.m_conevent_ini_file_time.dwHighDateTime
+      || newFileTime.dwLowDateTime != m_con_event.m_conevent_ini_file_time.dwLowDateTime)
+  {
+    m_con_event.m_conevent_ini_file_time = newFileTime;
+    if (m_con_event.m_ini.m_bUseConEvent && isConEventTime())
+    {
+      m_con_event.m_conevent_log.Write("The New Ini File was disregarded. Other Event is on");
+    }
+    else
+    {
+      m_con_event.m_ini.m_bUseConEvent = newIni.m_bUseConEvent;
+      m_con_event.m_ini.m_byEventKind = newIni.m_byEventKind;
+      m_con_event.m_ini.m_dwCashMin = newIni.m_dwCashMin;
+      m_con_event.m_ini.m_iEventTime = newIni.m_iEventTime;
+      strcpy_0(m_con_event.m_ini.m_szStartMsg, newIni.m_szStartMsg);
+      strcpy_0(m_con_event.m_ini.m_szMiddletMsg, newIni.m_szMiddletMsg);
+      strcpy_0(m_con_event.m_ini.m_szEndMsg, newIni.m_szEndMsg);
+    }
+  }
+}
+
+void CashItemRemoteStore::Inform_ConditionalEvent_Status_All(
+  unsigned __int8 byEventType,
+  unsigned __int8 byStatus,
+  char *pszMsg)
+{
+  for (unsigned __int16 j = 0; j < MAX_PLAYER; ++j)
+  {
+    CPlayer *player = &g_Player[j];
+    if (player->m_bOper && player->m_bLive)
+    {
+      unsigned __int16 discount = 0;
+      if (byEventType == 2)
+      {
+        discount = m_cde.m_ini.m_wCsDiscount;
+      }
+      ICsSendInterface::SendMsg_ConditionalEventInform(j, byEventType, discount, byStatus, pszMsg);
+    }
+  }
+
+  char eventName[80]{};
+  Get_Conditional_Event_Name(byEventType, eventName);
+  m_con_event.m_conevent_log.Write(
+    "[ %s Conditional Event Inform when Event status change] [EventState : %d] [EventTime : %d/%d/%d %d:%d  ~ %d/%d/%d %d:%d ]",
+    eventName,
+    byStatus,
+    m_con_event.m_eventtime.m_nYear[0] + 1900,
+    m_con_event.m_eventtime.m_nMonth[0] + 1,
+    m_con_event.m_eventtime.m_nDay[0],
+    m_con_event.m_eventtime.m_nHour[0],
+    m_con_event.m_eventtime.m_nMinute[0],
+    m_con_event.m_eventtime.m_nYear[1] + 1900,
+    m_con_event.m_eventtime.m_nMonth[1] + 1,
+    m_con_event.m_eventtime.m_nDay[1],
+    m_con_event.m_eventtime.m_nHour[1],
+    m_con_event.m_eventtime.m_nMinute[1]);
+}
+
+void CashItemRemoteStore::Check_Conditional_Event_Status()
+{
+  const unsigned __int8 conditionalStatus = Get_Conditional_Event_Status();
+
+  __time32_t now[4]{};
+  _time32(now);
+  if (m_cde.m_ini.m_cdeTime[0] > now[0] && m_cde.m_ini.m_cdeTime[0] - now[0] < 300 && m_con_event.m_bConEvent)
+  {
+    Set_Conditional_Evnet_Status(0);
+    Inform_ConditionalEvent_Status_All(m_con_event.m_ini.m_byEventKind, 4u, m_con_event.m_ini.m_szEndMsg);
+    m_con_event.m_bConEvent = false;
+    return;
+  }
+
+  for (int j = 0; j < 3; ++j)
+  {
+    if (m_cash_event[j].m_ini.m_EventTime[0] > now[0]
+        && m_cash_event[j].m_ini.m_EventTime[0] - now[0] < 300
+        && m_con_event.m_bConEvent)
+    {
+      Set_Conditional_Evnet_Status(0);
+      Inform_ConditionalEvent_Status_All(m_con_event.m_ini.m_byEventKind, 4u, m_con_event.m_ini.m_szEndMsg);
+      m_con_event.m_bConEvent = false;
+      return;
+    }
+  }
+
+  if (conditionalStatus == 1)
+  {
+    if (now[0] >= m_con_event.m_eventtime.m_EventTime[0])
+    {
+      Set_Conditional_Evnet_Status(2u);
+      Inform_ConditionalEvent_Status_All(m_con_event.m_ini.m_byEventKind, 2u, m_con_event.m_ini.m_szStartMsg);
+    }
+  }
+  else if (conditionalStatus == 2)
+  {
+    const int halfDuration = (m_con_event.m_eventtime.m_EventTime[1] - m_con_event.m_eventtime.m_EventTime[0]) / 2;
+    if (halfDuration >= m_con_event.m_eventtime.m_EventTime[1] - now[0])
+    {
+      Set_Conditional_Evnet_Status(3u);
+      Inform_ConditionalEvent_Status_All(m_con_event.m_ini.m_byEventKind, 3u, m_con_event.m_ini.m_szMiddletMsg);
+    }
+  }
+  else if (conditionalStatus == 3 && m_con_event.m_eventtime.m_EventTime[1] <= now[0])
+  {
+    Set_Conditional_Evnet_Status(0);
+    Inform_ConditionalEvent_Status_All(m_con_event.m_ini.m_byEventKind, 4u, m_con_event.m_ini.m_szEndMsg);
+    m_con_event.m_bConEvent = false;
+  }
+}
+
+void CashItemRemoteStore::Inform_ConditionalEvent(unsigned __int16 wIndex)
+{
+  if (m_con_event.m_ini.m_bUseConEvent && isConEventTime())
+  {
+    unsigned __int16 discount = 0;
+    if (m_con_event.m_ini.m_byEventKind == 2)
+    {
+      discount = m_cde.m_ini.m_wCsDiscount;
+    }
+
+    switch (m_con_event.m_conevent_status)
+    {
+      case 2u:
+        ICsSendInterface::SendMsg_ConditionalEventInform(
+          wIndex,
+          m_con_event.m_ini.m_byEventKind,
+          discount,
+          m_con_event.m_conevent_status,
+          m_con_event.m_ini.m_szStartMsg);
+        break;
+
+      case 3u:
+        ICsSendInterface::SendMsg_ConditionalEventInform(
+          wIndex,
+          m_con_event.m_ini.m_byEventKind,
+          discount,
+          m_con_event.m_conevent_status,
+          m_con_event.m_ini.m_szMiddletMsg);
+        break;
+
+      case 4u:
+        ICsSendInterface::SendMsg_ConditionalEventInform(
+          wIndex,
+          m_con_event.m_ini.m_byEventKind,
+          0,
+          m_con_event.m_conevent_status,
+          m_con_event.m_ini.m_szEndMsg);
+        break;
+
+      default:
+        break;
+    }
+  }
+}
+
+void CashItemRemoteStore::Change_Conditional_Event_Status()
+{
+  __time32_t now[4]{};
+  _time32(now);
+
+  if (!m_con_event.m_ini.m_bUseConEvent)
+  {
+    Set_Conditional_Evnet_Status(0);
+  }
+
+  if (m_con_event.m_eventtime.m_EventTime[1] >= now[0])
+  {
+    if (m_con_event.m_eventtime.m_EventTime[0] > now[0] || m_con_event.m_eventtime.m_EventTime[1] < now[0])
+    {
+      if (m_con_event.m_eventtime.m_EventTime[0] > now[0])
+      {
+        Set_Conditional_Evnet_Status(1u);
+      }
+    }
+    else if (m_con_event.m_eventtime.m_EventTime[1] > now[0])
+    {
+      if (now[0] - m_con_event.m_eventtime.m_EventTime[0] <= 5 || m_con_event.m_eventtime.m_EventTime[1] <= now[0])
+      {
+        if (now[0] - m_con_event.m_eventtime.m_EventTime[0] <= 5)
+        {
+          Set_Conditional_Evnet_Status(2u);
+        }
+      }
+      else
+      {
+        Set_Conditional_Evnet_Status(3u);
+      }
+    }
+    else
+    {
+      Set_Conditional_Evnet_Status(4u);
+      m_con_event.m_bConEvent = false;
+    }
+  }
+  else
+  {
+    Set_Conditional_Evnet_Status(0);
   }
 }
 
@@ -2212,6 +2905,153 @@ void CashItemRemoteStore::log_about_cash_event(const char *szLoadInfo, _cash_dis
   m_cde.m_cde_log.Write("\t##End <Information about loaded Cash Discount-Rate Event>");
 }
 
+char CashItemRemoteStore::ChangeDiscountEventTime()
+{
+  if (!m_cde.m_ini.m_bRepeat)
+  {
+    return 0;
+  }
+
+  std::tm tmValue{};
+  tmValue.tm_year = m_cde.m_ini.m_wYear[0] - 1900;
+  tmValue.tm_mon = m_cde.m_ini.m_byMonth[0] - 1;
+  tmValue.tm_mday = m_cde.m_ini.m_byDay[0] + m_cde.m_ini.m_byRepeatDay;
+  tmValue.tm_hour = m_cde.m_ini.m_byHour[0];
+  tmValue.tm_min = m_cde.m_ini.m_byMinute[0];
+  tmValue.tm_sec = 0;
+  tmValue.tm_isdst = -1;
+  m_cde.m_ini.m_cdeTime[0] = _mktime32(&tmValue);
+  if (m_cde.m_ini.m_cdeTime[0] == -1)
+  {
+    m_cde.m_ini.m_bRepeat = 0;
+    m_cde.m_cde_log.Write("ChangeDiscountEventTime() : Fail When Calculate Discount Event Begin Time");
+    return 0;
+  }
+  m_cde.m_ini.m_wYear[0] = tmValue.tm_year + 1900;
+  m_cde.m_ini.m_byMonth[0] = tmValue.tm_mon + 1;
+  m_cde.m_ini.m_byDay[0] = tmValue.tm_mday;
+  m_cde.m_ini.m_byHour[0] = tmValue.tm_hour;
+  m_cde.m_ini.m_byMinute[0] = tmValue.tm_min;
+
+  memset_0(&tmValue, 0, sizeof(tmValue));
+  tmValue.tm_year = m_cde.m_ini.m_wYear[1] - 1900;
+  tmValue.tm_mon = m_cde.m_ini.m_byMonth[1] - 1;
+  tmValue.tm_mday = m_cde.m_ini.m_byDay[1] + m_cde.m_ini.m_byRepeatDay;
+  tmValue.tm_hour = m_cde.m_ini.m_byHour[1];
+  tmValue.tm_min = m_cde.m_ini.m_byMinute[1];
+  tmValue.tm_sec = 0;
+  tmValue.tm_isdst = -1;
+  m_cde.m_ini.m_cdeTime[1] = _mktime32(&tmValue);
+  if (m_cde.m_ini.m_cdeTime[1] == -1)
+  {
+    m_cde.m_ini.m_bRepeat = 0;
+    m_cde.m_cde_log.Write("ChangeDiscountEventTime() : Fail When Calculate Discount Event End Time");
+    return 0;
+  }
+  m_cde.m_ini.m_wYear[1] = tmValue.tm_year + 1900;
+  m_cde.m_ini.m_byMonth[1] = tmValue.tm_mon + 1;
+  m_cde.m_ini.m_byDay[1] = tmValue.tm_mday;
+  m_cde.m_ini.m_byHour[1] = tmValue.tm_hour;
+  m_cde.m_ini.m_byMinute[1] = tmValue.tm_min;
+  return 1;
+}
+
+void CashItemRemoteStore::check_cash_discount_ini()
+{
+  _cash_discount_ini_ newIni{};
+  _FILETIME newFileTime{};
+  load_cde_ini(&newIni, &newFileTime);
+
+  if (m_cde.m_ini.m_wCsDiscount != newIni.m_wCsDiscount)
+  {
+    m_cde.m_ini.m_wCsDiscount = newIni.m_wCsDiscount;
+  }
+
+  if (newFileTime.dwHighDateTime != m_cde.m_cde_ini_file_time.dwHighDateTime
+      || newFileTime.dwLowDateTime != m_cde.m_cde_ini_file_time.dwLowDateTime)
+  {
+    m_cde.m_cde_ini_file_time = newFileTime;
+    log_about_cash_event("Loaded From Ini File <When Server Running>", &newIni);
+    if (m_cde.m_ini.m_bUseCashDiscount && is_cde_time())
+    {
+      m_cde.m_cde_log.Write("The New Ini File was disregarded. Other Event is on");
+    }
+    else
+    {
+      unsigned __int8 status = 0;
+      __time32_t now[4]{};
+      _time32(now);
+      if (newIni.m_bUseCashDiscount)
+      {
+        if (now[0] >= newIni.m_cdeTime[0])
+        {
+          if (now[0] > newIni.m_cdeTime[1])
+          {
+            status = 5;
+          }
+          else
+          {
+            const unsigned int remain = static_cast<unsigned int>(newIni.m_cdeTime[1] - now[0]);
+            if (newIni.m_cdeTime[1] == now[0])
+            {
+              status = 0;
+            }
+            else if (remain && remain <= static_cast<unsigned int>(m_cde.m_cde_inform_before[1]))
+            {
+              status = 4;
+            }
+            else if (
+              remain <= static_cast<unsigned int>(m_cde.m_cde_inform_before[1])
+              || remain > static_cast<unsigned int>(m_cde.m_cde_inform_before[0]))
+            {
+              if (remain <= static_cast<unsigned int>(m_cde.m_cde_inform_before[0]))
+              {
+                status = 0;
+              }
+              else
+              {
+                status = 2;
+              }
+            }
+            else
+            {
+              status = 3;
+            }
+          }
+        }
+        else
+        {
+          status = 1;
+        }
+      }
+      set_cde_status(status);
+      update_ini(&newIni);
+    }
+  }
+}
+
+void CashItemRemoteStore::update_ini(_cash_discount_ini_ *pNewIni)
+{
+  if (!pNewIni)
+  {
+    return;
+  }
+
+  m_cde.m_ini.m_bUseCashDiscount = pNewIni->m_bUseCashDiscount;
+  m_cde.m_ini.m_bRepeat = pNewIni->m_bRepeat;
+  m_cde.m_ini.m_byRepeatDay = pNewIni->m_byRepeatDay;
+  for (unsigned __int8 j = 0; j < 3u; ++j)
+  {
+    m_cde.m_ini.m_wYear[j] = pNewIni->m_wYear[j];
+    m_cde.m_ini.m_byMonth[j] = pNewIni->m_byMonth[j];
+    m_cde.m_ini.m_byDay[j] = pNewIni->m_byDay[j];
+    m_cde.m_ini.m_byHour[j] = pNewIni->m_byHour[j];
+    m_cde.m_ini.m_byMinute[j] = pNewIni->m_byMinute[j];
+    m_cde.m_ini.m_cdeTime[j] = pNewIni->m_cdeTime[j];
+  }
+  SetNextDiscountEventTime();
+}
+
 void CashItemRemoteStore::check_loaded_cde_status()
 {
   if (!m_cde.m_ini.m_bUseCashDiscount)
@@ -2262,6 +3102,139 @@ void CashItemRemoteStore::check_loaded_cde_status()
   }
 
   SetNextDiscountEventTime();
+}
+
+void CashItemRemoteStore::check_cash_discount_status()
+{
+  const unsigned __int8 currentStatus = get_cde_status();
+  m_cde.m_ini.m_bCoEvent = 0;
+  if (m_con_event.m_ini.m_byEventKind == 2 && m_con_event.m_bConEvent)
+  {
+    m_cde.m_ini.m_bCoEvent = 1;
+  }
+
+  __time32_t now[4]{};
+  _time32(now);
+  switch (currentStatus)
+  {
+    case 0u:
+    {
+      if (!m_cde.m_ini.m_bUseCashDiscount || !m_cde.m_ini.m_bRepeat)
+      {
+        set_cde_status(5u);
+        break;
+      }
+      const bool changed = ChangeDiscountEventTime() != 0;
+      if (m_cde.m_ini.m_NextEventTime[1] <= now[0] || !changed)
+      {
+        set_cde_status(5u);
+      }
+      else
+      {
+        set_cde_status(1u);
+      }
+      break;
+    }
+
+    case 1u:
+      if (m_cde.m_ini.m_cdeTime[2] > now[0])
+      {
+        if (now[0] >= m_cde.m_ini.m_cdeTime[0])
+        {
+          set_cde_status(2u);
+          inform_cashdiscount_status_all(2u, &m_cde.m_ini);
+        }
+      }
+      else
+      {
+        set_cde_status(5u);
+      }
+      break;
+
+    case 2u:
+      if (m_cde.m_ini.m_cdeTime[1] - now[0] <= m_cde.m_cde_inform_before[0])
+      {
+        set_cde_status(3u);
+        inform_cashdiscount_status_all(3u, &m_cde.m_ini);
+      }
+      break;
+
+    case 3u:
+      if (m_cde.m_ini.m_cdeTime[1] - now[0] <= m_cde.m_cde_inform_before[1])
+      {
+        set_cde_status(4u);
+        inform_cashdiscount_status_all(4u, &m_cde.m_ini);
+      }
+      break;
+
+    case 4u:
+      if (now[0] >= m_cde.m_ini.m_cdeTime[1])
+      {
+        set_cde_status(5u);
+        inform_cashdiscount_status_all(5u, &m_cde.m_ini);
+      }
+      break;
+
+    case 5u:
+      if (!m_cde.m_ini.m_bUseCashDiscount || !m_cde.m_ini.m_bRepeat)
+      {
+        set_cde_status(7u);
+        break;
+      }
+      if (m_cde.m_ini.m_cdeTime[2] <= now[0])
+      {
+        m_cde.m_ini.m_bUseCashDiscount = 0;
+        m_cde.m_ini.m_bRepeat = 0;
+        set_cde_status(7u);
+      }
+      else if (SetNextDiscountEventTime())
+      {
+        set_cde_status(0);
+      }
+      else
+      {
+        set_cde_status(7u);
+      }
+      break;
+
+    default:
+      break;
+  }
+}
+
+void CashItemRemoteStore::inform_cashdiscount_event(unsigned __int16 widx)
+{
+  ICsSendInterface::SendMsg_CashDiscountEventInform(widx, m_cde.m_cde_status, &m_cde.m_ini);
+}
+
+void CashItemRemoteStore::inform_cashdiscount_status_all(unsigned __int8 byType, _cash_discount_ini_ *pIni)
+{
+  (void)pIni;
+  for (unsigned __int16 j = 0; j < MAX_PLAYER; ++j)
+  {
+    CPlayer *player = &g_Player[j];
+    if (player->m_bLive)
+    {
+      ICsSendInterface::SendMsg_CashDiscountEventInform(j, byType, &m_cde.m_ini);
+    }
+  }
+}
+
+void CashItemRemoteStore::force_endup_cash_discount_event()
+{
+  if (m_cde.m_ini.m_bUseCashDiscount)
+  {
+    set_cde_status(5u);
+    if (is_cde_time())
+    {
+      inform_cashdiscount_status_all(5u, &m_cde.m_ini);
+    }
+    else
+    {
+      m_cde.m_ini.m_bUseCashDiscount = 0;
+      m_cde.m_cde_log.Write("A Event which was Registated is ended up by perforce");
+    }
+  }
 }
 
 unsigned __int8 CashItemRemoteStore::get_cde_status()

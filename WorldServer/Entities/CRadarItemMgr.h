@@ -11,6 +11,9 @@ struct _RadarItem_fld;
 class  CRadarItemMgr
 {
 public:
+  CRadarItemMgr();
+  ~CRadarItemMgr();
+
   bool m_bUse;
   bool m_bUpdate;
   unsigned int m_dwStartTime;
@@ -32,6 +35,9 @@ public:
   void Init();
   void Init(unsigned int dwDelayTime);
   bool IsUse();
+  bool IsRadarUse();
+  bool IsUpdate();
+  unsigned int GetStartTime();
   void SetUseRadar(char (*strRadarCode)[64], CPlayer *pMaster, unsigned int dwDurTime, unsigned int dwDelayTime);
   char RadarProc(_RadarItem_fld *pRadarFld);
   void ResetFlags();

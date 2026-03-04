@@ -26,10 +26,25 @@
 #include "unmannedtrader_seller_info.h"
 #include "unmannedtrader_stade_id_info.h"
 
+CUnmannedTraderController *CUnmannedTraderController::ms_Instance = nullptr;
+
 CUnmannedTraderController *CUnmannedTraderController::Instance()
 {
-  static CUnmannedTraderController s_instance;
-  return &s_instance;
+  if (!ms_Instance)
+  {
+    ms_Instance = new CUnmannedTraderController();
+  }
+
+  return ms_Instance;
+}
+
+void CUnmannedTraderController::Destroy()
+{
+  if (ms_Instance)
+  {
+    delete ms_Instance;
+    ms_Instance = nullptr;
+  }
 }
 
 CUnmannedTraderController::CUnmannedTraderController()

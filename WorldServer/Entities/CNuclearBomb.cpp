@@ -144,6 +144,28 @@ bool CNuclearBomb::Create(_nuclear_create_setdata *pData)
   return true;
 }
 
+bool CNuclearBomb::Destroy()
+{
+  m_dwStartTime = 0;
+  m_dwDurTime = 0;
+  m_dwObjSerial = 0;
+  m_pMaster = nullptr;
+  for (int index = 0; index < 3; ++index)
+  {
+    m_fDropPos[index] = 0.0f;
+  }
+  memset_0(m_DamList, 0, sizeof(m_DamList));
+  m_nDamagedObjNum = 0;
+  memset_0(m_EffList, 0, sizeof(m_EffList));
+  m_nEffObjNum = 0;
+  m_bUse = false;
+  m_bIsLive = false;
+  m_dwDelayTime = 0;
+  m_wControlSerial = static_cast<unsigned __int16>(-1);
+  m_wItemIndex = static_cast<unsigned __int16>(-1);
+  return CCharacter::Destroy();
+}
+
 bool CNuclearBomb::GetUse()
 {
   return m_bUse;
@@ -383,6 +405,13 @@ void CNuclearBomb::SendMsg_AddEffect()
   SendMsg_InformAttack();
 }
 
+void CNuclearBomb::SendMsg_Attack(int StartNum, int Obj_Num)
+{
+  (void)StartNum;
+  (void)Obj_Num;
+  // this is not a stub
+}
+
 void CNuclearBomb::SendMsg_InformAttack()
 {
   const unsigned __int8 raceCode = m_pMaster->m_Param.GetRaceCode();
@@ -441,6 +470,14 @@ void CNuclearBomb::SendMsg_DropMissile()
 
   unsigned __int8 type[2]{60, 5};
   CircleReport(type, payload, 5, false);
+}
+
+void CNuclearBomb::RecvKillMessage(CCharacter *pDier)
+{
+  if (m_pMaster && m_pMaster->m_bLive && m_pMaster->m_bOper && !m_pMaster->m_bCorpse)
+  {
+    m_pMaster->RecvKillMessage(pDier);
+  }
 }
 
 __int64 CNuclearBomb::GetNewSerial()

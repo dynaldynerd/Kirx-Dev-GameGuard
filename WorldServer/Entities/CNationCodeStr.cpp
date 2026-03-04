@@ -4,6 +4,11 @@
 
 #include <cstring>
 
+CNationCodeStr::~CNationCodeStr()
+{
+  // this is not a stub
+}
+
 CNationCodeStr::CNationCodeStr(int code, const char *codeStr)
 {
   m_iCode = code;

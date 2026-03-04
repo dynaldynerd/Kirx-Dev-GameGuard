@@ -22,6 +22,8 @@ public:
 
   struct  _SYN_HEADER
   {
+    _SYN_HEADER();
+
     unsigned int m_dwQryIndex;
     unsigned int m_dwQrySerial;
     unsigned __int8 m_byResult;
@@ -30,6 +32,9 @@ public:
 
   struct  _SYN_DATA : _SYN_HEADER
   {
+    _SYN_DATA();
+    ~_SYN_DATA();
+
     bool m_bUse;
     bool m_bProcess;
     char *m_psData;
@@ -40,6 +45,14 @@ public:
   virtual void CrashThread();
   virtual unsigned char WorkProcess(_SYN_DATA *pSynData);
   virtual void CompleteProcess(_SYN_DATA *pSynData);
+  char RegisterSyncData(int nCaseCode, unsigned int dwDataSize);
+  _SYN_DATA *PushData(_SYN_HEADER *pHeader, char *pQryData, unsigned int nQrySize);
+  char StartThread(_THREAD_CONFIG *pConfig, unsigned int dwSynDataNum);
+  void RunOnThread();
+  void RunOnLoop();
+  void ProcessOnThread();
+  void CompleteOnLoop();
+  static void Thread(void *pv);
 
   _SYN_DATA *m_pSynData;
   CNetIndexList m_listData;

@@ -13,6 +13,8 @@ class  CUnmannedTraderDivisionInfo
 public:
   CUnmannedTraderDivisionInfo(unsigned int dwID, char *szName);
   ~CUnmannedTraderDivisionInfo();
+  const CUnmannedTraderDivisionInfo *Copy(const CUnmannedTraderDivisionInfo *lhs);
+  CUnmannedTraderSortType *FindSortType(unsigned int dwID);
 
   void CleanUp();
   bool LoadXML(TiXmlElement *pkElement, CLogFile *kLogger);

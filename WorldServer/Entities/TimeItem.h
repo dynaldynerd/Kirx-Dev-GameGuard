@@ -14,6 +14,8 @@
 class  TimeItem
 {
 public:
+  TimeItem();
+  static TimeItem *_pkInstance;
   static TimeItem *Instance();
   static const _TimeItem_fld *FindTimeRec(unsigned int nTbl, int nIdx);
 

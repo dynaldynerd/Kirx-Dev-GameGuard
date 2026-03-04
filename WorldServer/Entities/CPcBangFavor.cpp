@@ -10,6 +10,8 @@
 #include "PcRoom_fld.h"
 #include "WorldServerUtil.h"
 
+CPcBangFavor *CPcBangFavor::ms_pInstance = nullptr;
+
 CPcBangFavor::CPcBangFavor()
 {
   m_bEnable = 0;
@@ -19,8 +21,11 @@ CPcBangFavor::~CPcBangFavor() = default;
 
 CPcBangFavor *CPcBangFavor::Instance()
 {
-  static CPcBangFavor s_instance;
-  return &s_instance;
+  if (!ms_pInstance)
+  {
+    ms_pInstance = new CPcBangFavor();
+  }
+  return ms_pInstance;
 }
 
 bool CPcBangFavor::Initialzie()

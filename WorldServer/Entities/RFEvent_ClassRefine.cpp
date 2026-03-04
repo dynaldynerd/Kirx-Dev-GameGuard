@@ -18,6 +18,18 @@ __int64 _event_participant_classrefine::size()
   return 20;
 }
 
+RFEvent_ClassRefine::RFEvent_ClassRefine()
+{
+  _pkParticipant = nullptr;
+  m_bUserDataReset = false;
+  m_bDateReset = false;
+}
+
+bool RFEvent_ClassRefine::IsEnable()
+{
+  return _kEvent.bEnable;
+}
+
 bool RFEvent_ClassRefine::Initialzie()
 {
   if (!GetLastWriteFileTime(".\\Initialize\\WorldSystem.ini", &m_ftWrite))
@@ -169,11 +181,11 @@ unsigned __int8 RFEvent_ClassRefine::DoEvent(CPlayer *pOne)
   return 0;
 }
 
-char RFEvent_ClassRefine::SetEvent(const char *p, int size, bool bInit)
+bool RFEvent_ClassRefine::SetEvent(const char *p, int size, bool bInit)
 {
   if (size != 16)
   {
-    return 0;
+    return false;
   }
 
   memcpy_0(&_kEvent, p, size);
@@ -187,7 +199,7 @@ char RFEvent_ClassRefine::SetEvent(const char *p, int size, bool bInit)
       _pkParticipant[index].nCurRefineCnt = 0;
     }
   }
-  return 1;
+  return true;
 }
 
 bool RFEvent_ClassRefine::IsDbUpdate(unsigned int nIdx)

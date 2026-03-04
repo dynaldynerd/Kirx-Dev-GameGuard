@@ -15,6 +15,9 @@ struct _ITEMCOMBINE_DB_BASE;
 class  CUserDB
 {
 public:
+  CUserDB();
+  virtual ~CUserDB();
+
   static int s_nLoginNum;
   static CLogFile s_logAvatorDB;
   static CMgrAccountLobbyHistory s_MgrLobbyHistory;
@@ -71,6 +74,7 @@ public:
   unsigned int m_dwTournamentCharacterSerialList[3];
   char m_szLobbyHistoryFileName[64];
   void Init(unsigned __int16 index);
+  void DummyCreate(unsigned int dwSerial);
   void ParamInit();
   bool Update_Map(unsigned __int8 map, float *pos);
   char Update_Bind(char *pszMapCode, char *pDummyCode, bool bUpdate);
@@ -107,6 +111,7 @@ public:
   void StartFieldMode();
   void Update_PotionNextUseTime(unsigned __int8 byPotionClass, unsigned int dwNextUseTime);
   bool Update_AlterPvPPoint(long double dNewPoint);
+  char Update_AlterPvPCashBag(long double dNewPoint);
   bool Update_ItemAdd(
     unsigned __int8 storage,
     unsigned __int8 slot,
@@ -147,6 +152,14 @@ public:
   char Update_CombineExResult_Push(_ITEMCOMBINE_DB_BASE *pItemCombineDB_IN);
   char Update_CombineExResult_Pop();
   char Update_CuttingEmpty();
+  char Update_CuttingPush(unsigned __int8 resnum, _CUTTING_DB_BASE::_LIST *plist);
+  char Update_CuttingTrans(unsigned __int16 wResItemIndex, unsigned __int16 wLeftAmt);
+  char Update_StartNPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BASE::_START_NPC_QUEST_HISTORY *pHisData);
+  char Update_TrunkHint(unsigned __int8 byHintIndex, char *pwszHintAnswer);
+  char Update_TrunkMoney(long double dGold, long double dDalant);
+  char Update_TrunkPassword(char *pwszPassword);
+  char Update_UserVoteData();
+  char Update_AutoTradeAllClear();
   char Update_TakeLastCriTicket(unsigned int dwCriTicket);
   void SetDBPostData(
     unsigned int n,
@@ -256,7 +269,6 @@ public:
   static void ReRangeClientIndex(_AVATOR_DATA *pData);
   static char CheckDQSLoadCharacterData(_AVATOR_DATA *pData);
   static void OnLoop_Static();
-  virtual ~CUserDB() = default;
 };
 
 CUserDB *SearchAvatorWithName(CUserDB *pList, int nMax, char *pwszName);

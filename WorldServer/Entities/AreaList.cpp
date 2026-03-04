@@ -25,6 +25,18 @@ AreaList::~AreaList()
     }
 }
 
+AreaList& AreaList::operator=(const AreaList& rhs)
+{
+    List = rhs.List;
+    Count = rhs.Count;
+    Width = rhs.Width;
+    Height = rhs.Height;
+    pData = rhs.pData;
+    DataEnd = rhs.DataEnd;
+    pRealData = rhs.pRealData;
+    return *this;
+}
+
 void AreaList::Push(AreaData *adata)
 {
     List.push_back(*adata);

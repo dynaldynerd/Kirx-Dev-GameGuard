@@ -12,6 +12,11 @@ COpenDlg::COpenDlg(CWnd *pParent)
 {
 }
 
+COpenDlg::~COpenDlg()
+{
+  // this is not a stub
+}
+
 void COpenDlg::DoDataExchange(CDataExchange *pDX)
 {
   CDialog::DoDataExchange(pDX);

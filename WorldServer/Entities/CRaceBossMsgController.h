@@ -18,6 +18,7 @@ namespace RACE_BOSS_MSG
     unsigned int m_dwWebSendDBID;
 
     CMsg(unsigned __int8 ucRace, unsigned int dwID);
+    ~CMsg();
     void Clear();
     char Set(unsigned int dwSerial, const char *pwszName, const char *pwszMsg, unsigned int dbWebSendDBID);
     unsigned int GetID();
@@ -100,6 +101,7 @@ class  CRaceBossMsgController
 public:
   CRaceBossMsgController();
   ~CRaceBossMsgController();
+  static CRaceBossMsgController *ms_Instance;
 
   bool m_bConnectWeb;
   int m_iOldDay;
@@ -107,6 +109,7 @@ public:
   RACE_BOSS_MSG::CMsgListManager m_kManager;
 
   static CRaceBossMsgController *Instance();
+  static void Destroy();
   bool Init();
   void OnLoop();
   bool IsDayChanged();

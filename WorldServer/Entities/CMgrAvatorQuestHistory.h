@@ -6,12 +6,23 @@
 #include "CFrameRate.h"
 #include "CNetIndexList.h"
 
+struct _QUEST_DB_BASE;
+
 class  CMgrAvatorQuestHistory
 {
 public:
   CMgrAvatorQuestHistory();
   ~CMgrAvatorQuestHistory();
   static void __cdecl IOThread(void *pv);
+  void OnLoop();
+  unsigned int GetTotalWaitSize();
+  void WriteFile(char *pszFileName, char *pszLog);
+  void GetNewFileName(unsigned int dwAvatorSerial, char *pszFileName);
+  void init_quest(char *pszAvatorName, _QUEST_DB_BASE *pQuestDB, char *pszFileName);
+  void insert_quest(unsigned int nSlot, char *pszQuestCode, char *pszFileName);
+  void complete_quest(unsigned int nSlot, char *pszQuestCode, char *pszFileName);
+  void fail_quest(unsigned int nSlot, char *pszQuestCode, char *pszFailCode, char *pszFileName);
+  void char_copy(char *pszDstName, unsigned int dwDstSerial, char *pszFileName);
 
   struct __LOG_DATA
   {

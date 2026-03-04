@@ -12,7 +12,7 @@ class  CNetwork
 public:
   CNetwork();
 
-  virtual ~CNetwork() = default;
+  virtual ~CNetwork();
 
   HINSTANCE__ *m_hChinaDLL;
   void (__fastcall *SetDataAnalysisFunc)(bool (__fastcall *)(unsigned int, unsigned int, _MSG_HEADER *, char *));
@@ -25,4 +25,8 @@ public:
   _socket *(__fastcall *GetSocket)(unsigned int, unsigned int);
   bool (__fastcall *RecvS)(char *, int, int *);
   bool (__fastcall *SendS)(char *, int, int *);
+
+  bool LoadDll(char *dll_name);
+  void InitNetwork();
+  void FreeDLL();
 };

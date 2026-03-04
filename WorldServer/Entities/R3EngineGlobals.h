@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 #include "D3D8Compat.h"
+#include "D3DXMATRIX.h"
 
 class CMergeFileManager;
 struct _R3MATERIAL;
@@ -72,12 +73,20 @@ extern unsigned int dword_184A79914;
 extern unsigned int dword_184A79918;
 extern unsigned int dword_184A7991C;
 extern unsigned int dword_184A79C3C;
+extern unsigned int dword_184A79B6C;
+extern unsigned int dword_184A79B70;
+extern unsigned int dword_184A79B74;
 extern int dword_184A7B2F0;
 extern char byte_184A79850[128];
 extern float unk_184A798D4[16];
 extern int stRealSky;
 extern int stShakeState;
 extern int stDLightNum;
+extern D3DXMATRIX stru_184A79A6C;
+extern D3DXMATRIX dword_184A79AEC;
+extern float unk_184A79B1C;
+extern unsigned long long qword_184A79B20;
+extern unsigned int dword_184A79B2C[16];
 
 // Animation interpolation indices.
 extern int dword_184A893FC;

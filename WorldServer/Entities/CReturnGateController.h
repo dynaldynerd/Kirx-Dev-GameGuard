@@ -12,6 +12,7 @@ class  CReturnGateController
 public:
   CReturnGateController();
   ~CReturnGateController();
+  static CReturnGateController *ms_Instance;
 
   CMyTimer *m_pkTimer;
   CNetIndexList *m_pkEmptyInxList;
@@ -21,6 +22,7 @@ public:
 
   void CleanUp();
   static CReturnGateController *Instance();
+  static void Destroy();
   bool Init(unsigned int gateCount);
   void OnLoop();
   void UpdateClose();

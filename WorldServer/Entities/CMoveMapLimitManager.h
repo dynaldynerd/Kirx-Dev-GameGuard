@@ -14,8 +14,11 @@ public:
   ~CMoveMapLimitManager();
 
   static CMoveMapLimitManager *Instance();
+  static void Destroy();
   void Loop();
   bool Init();
+  void Load(CPlayer *pkPlayer);
+  char MoveLimitMapZoneRequest(int iUserInx, char *pRequest);
   bool Request(
     int iLimitType,
     int iRequetType,
@@ -30,4 +33,7 @@ public:
 
   CMoveMapLimitRightInfoList m_kRightInfo;
   CMoveMapLimitInfoList m_kLimitInfo;
+
+private:
+  static CMoveMapLimitManager *ms_Instance;
 };

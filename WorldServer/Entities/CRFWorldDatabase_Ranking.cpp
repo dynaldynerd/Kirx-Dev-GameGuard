@@ -5,6 +5,8 @@
 #include "CPotionMgr.h"
 #include "PatriarchElectProcessor.h"
 #include "WorldServerUtil.h"
+#include "worlddb_guild_member_info.h"
+#include "worlddb_guild_money_io_info.h"
 #include "worlddb_rankinguild_info.h"
 
 #include <cstring>
@@ -1503,6 +1505,282 @@ bool CRFWorldDatabase::Update_UserGuildData(
   return this->ExecUpdateQuery( Buffer, 1);
 }
 
+bool CRFWorldDatabase::UpdateGuildMoney(unsigned int dwSerial, long double dDalant, long double dGold)
+{
+  char buffer[1040]{};
+  sprintf(buffer, "update [dbo].[tbl_guild] set Dalant = %f, Gold = %f where serial = %u", static_cast<double>(dDalant), static_cast<double>(dGold), dwSerial);
+  return ExecUpdateQuery(buffer, 1);
+}
+
+char CRFWorldDatabase::Select_AllGuildData(_worlddb_guild_info *pGuildInfo)
+{
+  SQLLEN strLenOrInd = 0;
+  SQLRETURN ret = SQL_ERROR;
+  char query[10244]{};
+  int index = 0;
+
+  sprintf(
+    query,
+    "select top %d g.serial, g.grade, g.race, id, emblemBack, emblemMark, dalant, gold, masterserial, MasterBeforeGrade, "
+    "r.totwin, r.totdraw, r.totlose, GMsg from tbl_guild as g left join tbl_GuildBattleRank as r on g.serial = r.serial "
+    "where g.dck=0 order by g.serial",
+    500);
+  if (m_bSaveDBLog)
+  {
+    Log(query);
+  }
+  if (!m_hStmtSelect && !ReConnectDataBase())
+  {
+    ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+    return 0;
+  }
+
+  ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), -3);
+  if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+  {
+    while (true)
+    {
+      ret = SQLFetch(m_hStmtSelect);
+      if (ret && ret != SQL_SUCCESS_WITH_INFO)
+      {
+        break;
+      }
+      ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_ULONG, &pGuildInfo->GuildData[index], 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 2u, SQL_C_UTINYINT, &pGuildInfo->GuildData[index].byGuildGrade, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 3u, SQL_C_UTINYINT, &pGuildInfo->GuildData[index].byRace, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 4u, SQL_C_CHAR, pGuildInfo->GuildData[index].wszGuildName, 17, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 5u, SQL_C_ULONG, &pGuildInfo->GuildData[index].dwEmblemBack, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 6u, SQL_C_ULONG, &pGuildInfo->GuildData[index].dwEmblemMark, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 7u, SQL_C_DOUBLE, &pGuildInfo->GuildData[index].dDalant, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 8u, SQL_C_DOUBLE, &pGuildInfo->GuildData[index].dGold, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 9u, SQL_C_ULONG, &pGuildInfo->GuildData[index].dwMasterSerial, 0, &strLenOrInd);
+      ret = SQLGetData(
+        m_hStmtSelect,
+        0xAu,
+        SQL_C_UTINYINT,
+        &pGuildInfo->GuildData[index].byMasterPrevGrade,
+        0,
+        &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 0xBu, SQL_C_ULONG, &pGuildInfo->GuildData[index].dwTotWin, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 0xCu, SQL_C_ULONG, &pGuildInfo->GuildData[index].dwTotDraw, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 0xDu, SQL_C_ULONG, &pGuildInfo->GuildData[index].dwTotLose, 0, &strLenOrInd);
+      ret = SQLGetData(
+        m_hStmtSelect,
+        0xEu,
+        SQL_C_CHAR,
+        pGuildInfo->GuildData[index].wszGreetingMsg,
+        256,
+        &strLenOrInd);
+      ++index;
+    }
+    pGuildInfo->wGuildCount = static_cast<unsigned __int16>(index);
+    if (m_hStmtSelect)
+    {
+      SQLCloseCursor(m_hStmtSelect);
+    }
+    if (m_bSaveDBLog)
+    {
+      FmtLog("%s Success", query);
+    }
+    return 1;
+  }
+
+  if (ret == SQL_NO_DATA)
+  {
+    pGuildInfo->wGuildCount = static_cast<unsigned __int16>(index);
+    return 1;
+  }
+
+  ErrorMsgLog(ret, query, "SQLExecDirectA", m_hStmtSelect);
+  ErrorAction(ret, m_hStmtSelect);
+  return 0;
+}
+
+char CRFWorldDatabase::Select_GuildMemberData(
+  unsigned __int16 wMaxMember,
+  unsigned int dwGuildSerial,
+  _worlddb_guild_member_info *pGuildMemberInfo)
+{
+  SQLLEN strLenOrInd = 0;
+  SQLRETURN ret = SQL_ERROR;
+  char query[260]{};
+  int index = 0;
+  double pvpPoint[3]{};
+
+  sprintf(
+    query,
+    "select top %u g.serial, g.pvppoint, g.guildstatus, g.guildrank, b.lv, b.name from tbl_general as g join tbl_base as "
+    "b on g.serial = b.serial where g.guildserial = %d and b.dck=0 order by guildstatus ",
+    wMaxMember,
+    dwGuildSerial);
+  if (m_bSaveDBLog)
+  {
+    Log(query);
+  }
+  if (!m_hStmtSelect && !ReConnectDataBase())
+  {
+    ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+    return 0;
+  }
+
+  ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), -3);
+  if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+  {
+    while (true)
+    {
+      pvpPoint[0] = 0.0;
+      ret = SQLFetch(m_hStmtSelect);
+      if (ret && ret != SQL_SUCCESS_WITH_INFO)
+      {
+        break;
+      }
+
+      ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_ULONG, &pGuildMemberInfo->MemberData[index], 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 2u, SQL_C_DOUBLE, pvpPoint, 0, &strLenOrInd);
+      ret = SQLGetData(
+        m_hStmtSelect,
+        3u,
+        SQL_C_UTINYINT,
+        &pGuildMemberInfo->MemberData[index].byClassInGuild,
+        0,
+        &strLenOrInd);
+      ret = SQLGetData(
+        m_hStmtSelect,
+        4u,
+        SQL_C_USHORT,
+        &pGuildMemberInfo->MemberData[index].wRank,
+        0,
+        &strLenOrInd);
+      ret = SQLGetData(
+        m_hStmtSelect,
+        5u,
+        SQL_C_UTINYINT,
+        &pGuildMemberInfo->MemberData[index].byLv,
+        0,
+        &strLenOrInd);
+      ret = SQLGetData(
+        m_hStmtSelect,
+        6u,
+        SQL_C_CHAR,
+        pGuildMemberInfo->MemberData[index].wszName,
+        17,
+        &strLenOrInd);
+      pGuildMemberInfo->MemberData[index].dwPvpPoint = static_cast<unsigned int>(pvpPoint[0]);
+      ++index;
+    }
+
+    pGuildMemberInfo->wMemberCount = static_cast<unsigned __int16>(index);
+    if (m_hStmtSelect)
+    {
+      SQLCloseCursor(m_hStmtSelect);
+    }
+    if (m_bSaveDBLog)
+    {
+      FmtLog("%s Success", query);
+    }
+    return 1;
+  }
+
+  if (ret != SQL_NO_DATA)
+  {
+    ErrorMsgLog(ret, query, "SQLExecDirect", m_hStmtSelect);
+    ErrorAction(ret, m_hStmtSelect);
+  }
+  return 0;
+}
+
+char CRFWorldDatabase::Select_GuildMoneyIOData(
+  unsigned int dwGuildSerial,
+  _worlddb_guild_money_io_info *pGuildIOData)
+{
+  SQLLEN strLenOrInd = 0;
+  SQLRETURN ret = SQL_ERROR;
+  char query[260]{};
+  int index = 0;
+  long double ioDalant[4]{};
+  long double ioGold[4]{};
+  long double leftDalant[4]{};
+  long double leftGold[4]{};
+  char rawDate[44]{};
+  char oneToken[16]{};
+
+  sprintf(
+    query,
+    "select top 100 InoutDalant, InoutGold, ResultDalant, ResultGold, AvatorSerial, AvatorName, LogDate from "
+    "tbl_GuildMoneyHistory_Log where GuildSerial = %d order by serial desc",
+    dwGuildSerial);
+  if (m_bSaveDBLog)
+  {
+    Log(query);
+  }
+  if (!m_hStmtSelect && !ReConnectDataBase())
+  {
+    ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+    return 0;
+  }
+
+  ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), -3);
+  if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+  {
+    while (true)
+    {
+      ioDalant[0] = 0.0;
+      ioGold[0] = 0.0;
+      leftDalant[0] = 0.0;
+      leftGold[0] = 0.0;
+      memset(rawDate, 0, 9);
+
+      ret = SQLFetch(m_hStmtSelect);
+      if (ret && ret != SQL_SUCCESS_WITH_INFO)
+      {
+        break;
+      }
+
+      ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_DOUBLE, ioDalant, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 2u, SQL_C_DOUBLE, ioGold, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 3u, SQL_C_DOUBLE, leftDalant, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 4u, SQL_C_DOUBLE, leftGold, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 5u, SQL_C_ULONG, &pGuildIOData->IOData[index].dwIOerSerial, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 6u, SQL_C_CHAR, &pGuildIOData->IOData[index], 17, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 7u, SQL_C_CHAR, rawDate, 9, &strLenOrInd);
+      if (ret && ret != SQL_SUCCESS_WITH_INFO)
+      {
+        break;
+      }
+
+      pGuildIOData->IOData[index].dIODalant = ioDalant[0];
+      pGuildIOData->IOData[index].dIOGold = ioGold[0];
+      pGuildIOData->IOData[index].dLeftDalant = leftDalant[0];
+      pGuildIOData->IOData[index].dLeftGold = leftGold[0];
+      for (int j = 0; j < 4; ++j)
+      {
+        memset_0(oneToken, 0, 3uLL);
+        memcpy_0(oneToken, &rawDate[2 * j], 2uLL);
+        pGuildIOData->IOData[index].byDate[j] = static_cast<unsigned __int8>(atoi(oneToken));
+      }
+      ++index;
+    }
+
+    pGuildIOData->wRecordCount = static_cast<unsigned __int16>(index);
+    if (m_hStmtSelect)
+    {
+      SQLCloseCursor(m_hStmtSelect);
+    }
+    if (m_bSaveDBLog)
+    {
+      FmtLog("%s Success", query);
+    }
+    return 1;
+  }
+
+  if (ret != SQL_NO_DATA)
+  {
+    ErrorMsgLog(ret, query, "SQLExecDirect", m_hStmtSelect);
+    ErrorAction(ret, m_hStmtSelect);
+  }
+  return 0;
+}
+
 char CRFWorldDatabase::Select_GuildData(
         unsigned int dwGuildSerial,
         _worlddb_guild_info::__guild_info *pGuildData)
@@ -1788,6 +2066,19 @@ char CRFWorldDatabase::Update_CharSlot( unsigned int dwAvatorSerial)
     this->FmtLog( "ReConnectDataBase Fail. Query : %s", Buffer);
     return 0;
   }
+}
+
+char CRFWorldDatabase::Update_GuildRank(char *szDate)
+{
+  if (!Update_GuildRank_Step1(szDate))
+  {
+    return 0;
+  }
+  if (!Update_GuildRank_Step2(szDate))
+  {
+    return 0;
+  }
+  return Update_GuildRank_Step3(szDate);
 }
 
 char CRFWorldDatabase::Update_GuildRank_Step1( char *szDate)
@@ -2081,6 +2372,51 @@ char CRFWorldDatabase::Update_GuildRank_Step3( char *szDate)
       Buffer);
     return 0;
   }
+}
+
+char CRFWorldDatabase::Update_RaceRank(char *szDate)
+{
+  if (!Update_RaceRank_Step1(szDate))
+  {
+    return 0;
+  }
+
+  if (!Update_RaceRank_Step2(szDate))
+  {
+    return 0;
+  }
+
+  if (!Update_RaceRank_Step3(szDate))
+  {
+    return 0;
+  }
+
+  if (!Update_RaceRank_Step4(szDate))
+  {
+    return 0;
+  }
+
+  if (!Update_RaceRank_Step5(szDate))
+  {
+    return 0;
+  }
+
+  if (!Update_RaceRank_Step6(szDate))
+  {
+    return 0;
+  }
+
+  if (!Update_RaceRank_Step7(szDate))
+  {
+    return 0;
+  }
+
+  if (!Update_RaceRank_Step8(szDate))
+  {
+    return 0;
+  }
+
+  return Update_RaceRank_Step9(szDate);
 }
 
 char CRFWorldDatabase::Update_RaceRank_Step1( char *szDate)

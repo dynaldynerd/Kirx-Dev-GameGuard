@@ -12,6 +12,7 @@ public:
   bool CountingTimer();
   unsigned int GetTerm();
   void TermTimeRun();
+  void NextTimeRun();
   void StopTimer();
   virtual ~CMyTimer();
 

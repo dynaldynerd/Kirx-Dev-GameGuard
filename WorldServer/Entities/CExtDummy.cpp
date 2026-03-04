@@ -19,10 +19,16 @@ CExtDummy::CExtDummy()
 
 CExtDummy::~CExtDummy()
 {
+  ReleaseExtDummy();
+}
+
+void CExtDummy::ReleaseExtDummy()
+{
   if (mDummy)
   {
     Dfree(mDummy);
   }
+
   mMaxNum = 0;
   mNum = 0;
   mDummy = nullptr;
@@ -198,6 +204,118 @@ _EXT_DUMMY *CExtDummy::GetDummy(unsigned int nDummyIndex)
     nDummyIndex = lastIndex;
   }
   return &mDummy[nDummyIndex];
+}
+
+void CExtDummy::GetDummyList(int flagMask, unsigned int *outCount, unsigned int *outIndices)
+{
+  *outCount = 0;
+  if (!mDummy || !mNum)
+  {
+    return;
+  }
+
+  for (unsigned int j = 0; j < mNum; ++j)
+  {
+    if ((flagMask & mDummy[j].mFlag) != 0)
+    {
+      outIndices[(*outCount)++] = j;
+    }
+  }
+}
+
+void CExtDummy::DrawDummyBBox(unsigned int nDummyIndex)
+{
+  if (!mDummy || !mNum || nDummyIndex >= mNum)
+  {
+    return;
+  }
+
+  _EXT_DUMMY *dummy = &mDummy[nDummyIndex];
+  float p0[3]{};
+  float p1[3]{};
+  float p2[3]{};
+  float p3[3]{};
+  float p4[3]{};
+  float p5[3]{};
+  float p6[3]{};
+  float p7[3]{};
+  float source[3]{};
+
+  source[0] = dummy->mBBmax[0];
+  source[1] = dummy->mBBmax[1];
+  source[2] = dummy->mBBmax[2];
+  Vector3fTransform(p0, source, dummy->mMat);
+
+  source[0] = dummy->mBBmin[0];
+  source[1] = dummy->mBBmax[1];
+  source[2] = dummy->mBBmax[2];
+  Vector3fTransform(p1, source, dummy->mMat);
+
+  source[0] = dummy->mBBmin[0];
+  source[1] = dummy->mBBmax[1];
+  source[2] = dummy->mBBmin[2];
+  Vector3fTransform(p2, source, dummy->mMat);
+
+  source[0] = dummy->mBBmax[0];
+  source[1] = dummy->mBBmax[1];
+  source[2] = dummy->mBBmin[2];
+  Vector3fTransform(p3, source, dummy->mMat);
+
+  source[0] = dummy->mBBmax[0];
+  source[1] = dummy->mBBmin[1];
+  source[2] = dummy->mBBmax[2];
+  Vector3fTransform(p4, source, dummy->mMat);
+
+  source[0] = dummy->mBBmin[0];
+  source[1] = dummy->mBBmin[1];
+  source[2] = dummy->mBBmax[2];
+  Vector3fTransform(p5, source, dummy->mMat);
+
+  source[0] = dummy->mBBmin[0];
+  source[1] = dummy->mBBmin[1];
+  source[2] = dummy->mBBmin[2];
+  Vector3fTransform(p6, source, dummy->mMat);
+
+  source[0] = dummy->mBBmax[0];
+  source[1] = dummy->mBBmin[1];
+  source[2] = dummy->mBBmin[2];
+  Vector3fTransform(p7, source, dummy->mMat);
+
+  R3DrawLine(p0, p1, 0xFFFFFFFF);
+  R3DrawLine(p1, p2, 0xFFFFFFFF);
+  R3DrawLine(p2, p3, 0xFFFFFFFF);
+  R3DrawLine(p3, p0, 0xFFFFFFFF);
+  R3DrawLine(p4, p5, 0xFFFFFFFF);
+  R3DrawLine(p5, p6, 0xFFFFFFFF);
+  R3DrawLine(p6, p7, 0xFFFFFFFF);
+  R3DrawLine(p7, p4, 0xFFFFFFFF);
+  R3DrawLine(p0, p4, 0xFFFFFFFF);
+  R3DrawLine(p1, p5, 0xFFFFFFFF);
+  R3DrawLine(p2, p6, 0xFFFFFFFF);
+  R3DrawLine(p3, p7, 0xFFFFFFFF);
+}
+
+void CExtDummy::DrawAllDummyBBox()
+{
+  for (unsigned int j = 0; j < mNum; ++j)
+  {
+    DrawDummyBBox(j);
+  }
+}
+
+bool CExtDummy::GetLocalFromWorld(float *fOutPos, unsigned int nDummyIndex, float *v7)
+{
+  if (!mDummy)
+  {
+    return false;
+  }
+  if (!mNum || nDummyIndex >= mNum)
+  {
+    return false;
+  }
+
+  Vector3fTransform(fOutPos, v7, mDummy[nDummyIndex].mInvMat);
+  return true;
 }
 
 bool CExtDummy::GetWorldFromLocal(float *fOutPos, unsigned int nDummyIndex, float *v7)

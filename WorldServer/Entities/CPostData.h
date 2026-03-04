@@ -8,6 +8,7 @@ class  CPostData
 {
 public:
   CPostData();
+  ~CPostData();
   void Init();
   unsigned __int8 GetState();
   void SetState(unsigned __int8 byState);

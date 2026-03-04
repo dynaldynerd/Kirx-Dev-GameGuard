@@ -10,6 +10,7 @@ struct  si_effect
   unsigned __int8 byTargetItemCount;
   unsigned __int8 byTargetEffectCount;
 
+  si_effect();
   void init();
   void set_effect_count_info(unsigned __int8 byCountOfItem, unsigned __int8 byCountOfEffect);
   unsigned __int8 GetCountOfItem() const;

@@ -94,3 +94,11 @@ void _guild_battle_suggest_matter::Clear()
   dwNumber = 0;
   dwMapIdx = 0;
 }
+
+void _guild_battle_suggest_matter::CancelSuggestedMatter()
+{
+  if (eState == BATTLE_REQUEST_SUGGEST)
+  {
+    eState = WAIT_BATTLE_REQUEST;
+  }
+}

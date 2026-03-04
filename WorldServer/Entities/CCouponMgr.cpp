@@ -28,6 +28,11 @@ CCouponMgr::~CCouponMgr()
 {
 }
 
+bool CCouponMgr::IsEnableGetCoupon()
+{
+  return m_byRemainTime != 0 && m_byRemainTime <= static_cast<unsigned __int8>(5 - m_byReceiveCoupon);
+}
+
 void CCouponMgr::Init(unsigned __int16 wIdx)
 {
   CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();

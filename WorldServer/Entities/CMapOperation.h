@@ -23,6 +23,7 @@ public:
   CMapData *GetMap(const char *szMapCode);
   CMapData *GetMap(int nIndex);
   int GetMap(CMapData *pMap);
+  CMapData *GetSettlementMapData(int iRace, int iTh);
   CMapData *GetStartMap(unsigned __int8 byRaceCode);
   CMapData *GetPosStartMap(unsigned __int8 byRaceCode, bool bRand, float *pfoutPos);
   bool LoadMaps();
@@ -48,7 +49,7 @@ public:
   CMyTimer m_tmrRecover;
   unsigned int m_dwLastObjLoopTime;
   CMapData *m_SettlementMapData[3][2];
-  virtual ~CMapOperation() = default;
+  virtual ~CMapOperation();
 };
 
 #include <map>

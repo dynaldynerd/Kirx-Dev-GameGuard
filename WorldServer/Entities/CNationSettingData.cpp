@@ -35,6 +35,8 @@ CNationSettingData::CNationSettingData()
   memset_0(m_szVaildKey, 0, sizeof(m_szVaildKey));
 }
 
+CNationSettingData::~CNationSettingData() = default;
+
 int CNationSettingData::Init()
 {
   // this is not a stub

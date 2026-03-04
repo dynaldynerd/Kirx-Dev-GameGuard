@@ -8,6 +8,7 @@ class  CPostStorage
 {
 public:
   CPostStorage();
+  ~CPostStorage();
   void Init();
   int GetSize();
   CPostData *GetPostDataFromInx(unsigned int nIndex);

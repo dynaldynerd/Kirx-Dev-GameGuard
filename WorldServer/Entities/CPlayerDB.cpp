@@ -151,6 +151,11 @@ long double CPlayerDB::GetPvPPoint()
   return this->m_dbChar.m_dPvPPoint;
 }
 
+long double CPlayerDB::GetPvPCashBag()
+{
+  return this->m_dbChar.m_dPvPCashBag;
+}
+
 void CPlayerDB::SetPvPPoint(long double dPoint)
 {
   this->m_dbChar.m_dPvPPoint = dPoint;
@@ -208,6 +213,31 @@ unsigned __int8 CPlayerDB::GetTrunkSlotNum()
 unsigned __int8 CPlayerDB::GetExtTrunkSlotNum()
 {
   return this->m_byExtTrunkSlotNum;
+}
+
+unsigned __int8 CPlayerDB::GetTrunkSlotRace(unsigned __int16 dwItemSerial)
+{
+  const int index = this->m_dbTrunk.GetIndexFromSerial(dwItemSerial);
+  if (index == 255)
+  {
+    return static_cast<unsigned __int8>(-1);
+  }
+  return this->m_dbTrunk.m_byItemSlotRace[index];
+}
+
+unsigned __int8 CPlayerDB::GetExtTrunkSlotRace(unsigned __int16 dwItemSerial)
+{
+  const int index = this->m_dbExtTrunk.GetIndexFromSerial(dwItemSerial);
+  if (index == 255)
+  {
+    return static_cast<unsigned __int8>(-1);
+  }
+  return this->m_dbExtTrunk.m_byItemSlotRace[index];
+}
+
+char *CPlayerDB::GetTrunkPasswdW()
+{
+  return this->m_wszTrunkPasswd;
 }
 
 void CPlayerDB::SetMaxLevel(unsigned __int8 nLv)
@@ -289,6 +319,46 @@ void CPlayerDB::SetGold(unsigned int dwGold)
   this->m_dbChar.m_dwGold = dwGold;
 }
 
+void CPlayerDB::AddTrunkDalant(int dwPush)
+{
+  double trunkDalant = this->m_dTrunkDalant + static_cast<double>(dwPush);
+  if (trunkDalant > 1000000000.0 || this->m_dTrunkDalant > trunkDalant)
+  {
+    trunkDalant = 1000000000.0;
+  }
+  this->m_dTrunkDalant = trunkDalant;
+}
+
+void CPlayerDB::AddTrunkGold(int dwPush)
+{
+  double trunkGold = this->m_dTrunkGold + static_cast<double>(dwPush);
+  if (trunkGold > 500000.0 || this->m_dTrunkGold > trunkGold)
+  {
+    trunkGold = 500000.0;
+  }
+  this->m_dTrunkGold = trunkGold;
+}
+
+void CPlayerDB::SubTrunkDalant(int dwSub)
+{
+  double trunkDalant = this->m_dTrunkDalant - static_cast<double>(dwSub);
+  if (static_cast<double>(dwSub) > this->m_dTrunkDalant)
+  {
+    trunkDalant = 0.0;
+  }
+  this->m_dTrunkDalant = trunkDalant;
+}
+
+void CPlayerDB::SubTrunkGold(int dwSub)
+{
+  double trunkGold = this->m_dTrunkGold - static_cast<double>(dwSub);
+  if (static_cast<double>(dwSub) > this->m_dTrunkGold)
+  {
+    trunkGold = 0.0;
+  }
+  this->m_dTrunkGold = trunkGold;
+}
+
 void CPlayerDB::SetCurPos(float *fPos)
 {
   memcpy_0(this->m_dbChar.m_fStartPos, fPos, sizeof(this->m_dbChar.m_fStartPos));
@@ -307,6 +377,100 @@ void CPlayerDB::SetBagNum(unsigned __int8 byNum)
 int CPlayerDB::GetUseSlot()
 {
   return 20 * static_cast<unsigned int>(this->m_dbChar.m_byUseBagNum);
+}
+
+__int64 CPlayerDB::GetHaveUnitNum()
+{
+  unsigned int count = 0;
+  for (int index = 0; index < 4; ++index)
+  {
+    if (this->m_UnitDB.m_List[index].byFrame != static_cast<unsigned __int8>(-1))
+    {
+      ++count;
+    }
+  }
+  return count;
+}
+
+__int64 CPlayerDB::GetInvenItemCountFromCode(char *pszItemCode)
+{
+  unsigned int totalCount = 0;
+  for (int index = 0; index < this->m_dbInven.m_nUsedNum; ++index)
+  {
+    if (!this->m_dbInven.m_pStorageList[index].m_bLoad)
+    {
+      continue;
+    }
+
+    _base_fld *record = g_Main.m_tblItemData[this->m_dbInven.m_pStorageList[index].m_byTableCode].GetRecord(
+      this->m_dbInven.m_pStorageList[index].m_wItemIndex);
+    if (record && !strcmp_0(record->m_strCode, pszItemCode))
+    {
+      totalCount += static_cast<unsigned int>(this->m_dbInven.m_pStorageList[index].m_dwDur);
+    }
+  }
+  return totalCount;
+}
+
+char CPlayerDB::DeleteItemCountFromCode(char *pszItemCode, int nCount)
+{
+  int remainCount = nCount;
+  while (true)
+  {
+    _STORAGE_LIST::_db_con *item = nullptr;
+    for (int index = 0; index < this->m_dbInven.m_nUsedNum; ++index)
+    {
+      if (!this->m_dbInven.m_pStorageList[index].m_bLoad)
+      {
+        continue;
+      }
+
+      _base_fld *record = g_Main.m_tblItemData[this->m_dbInven.m_pStorageList[index].m_byTableCode].GetRecord(
+        this->m_dbInven.m_pStorageList[index].m_wItemIndex);
+      if (record && !strcmp_0(record->m_strCode, pszItemCode))
+      {
+        item = &this->m_dbInven.m_pStorageList[index];
+        break;
+      }
+    }
+
+    if (!item)
+    {
+      return 0;
+    }
+
+    if (item->m_dwDur < static_cast<unsigned int>(remainCount))
+    {
+      const int deleteCount = static_cast<int>(item->m_dwDur);
+      const unsigned __int16 newSerial = static_cast<unsigned __int16>(
+        this->m_pThis->Emb_AlterDurPoint(0, item->m_byStorageIndex, -deleteCount, false, false));
+      if (newSerial)
+      {
+        this->m_pThis->SendMsg_AdjustAmountInform(0, item->m_wSerial, newSerial);
+      }
+      else
+      {
+        CPlayer::s_MgrItemHistory.consume_del_item(
+          this->m_pThis->m_ObjID.m_wIndex,
+          item,
+          this->m_pThis->m_szItemHistoryFileName);
+      }
+      remainCount -= deleteCount;
+      continue;
+    }
+
+    const unsigned __int16 newSerial = static_cast<unsigned __int16>(
+      this->m_pThis->Emb_AlterDurPoint(0, item->m_byStorageIndex, -remainCount, false, false));
+    if (newSerial)
+    {
+      this->m_pThis->SendMsg_AdjustAmountInform(0, item->m_wSerial, newSerial);
+    }
+    else
+    {
+      CPlayer::s_MgrItemHistory.consume_del_item(this->m_pThis->m_ObjID.m_wIndex, item, this->m_pThis->m_szItemHistoryFileName);
+    }
+    return 1;
+  }
 }
 
 _STORAGE_LIST::_db_con *CPlayerDB::GetItem(unsigned __int8 byInvenIndex)
@@ -393,6 +557,19 @@ void CPlayerDB::InitResBuffer()
       m_wCuttingResBuffer[j] = 0;
     }
   }
+}
+
+char CPlayerDB::GetResBufferNum()
+{
+  char count = 0;
+  for (int index = 0; index < GetMaxResKind(); ++index)
+  {
+    if (this->m_wCuttingResBuffer[index])
+    {
+      ++count;
+    }
+  }
+  return count;
 }
 
 void CPlayerDB::InitAlterMastery()

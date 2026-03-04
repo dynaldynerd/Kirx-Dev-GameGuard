@@ -22,6 +22,8 @@
 #include "guild_honor_set_request_clzo.h"
 #include "qry_case_in_atrade_tax.h"
 
+CHonorGuild *CHonorGuild::m_pInstance = nullptr;
+
 _guild_honor_list_result_zocl::_guild_honor_list_result_zocl()
 {
   std::memset(this, 0, sizeof(*this));
@@ -42,10 +44,39 @@ CHonorGuild::CHonorGuild()
   std::memset(m_uiProccessIndex, 0, sizeof(m_uiProccessIndex));
 }
 
+CHonorGuild::~CHonorGuild()
+{
+  for (int j = 0; j < 3; ++j)
+  {
+    if (m_pCurrHonorGuild[j] != nullptr)
+    {
+      delete m_pCurrHonorGuild[j];
+      m_pCurrHonorGuild[j] = nullptr;
+    }
+    if (m_pNextHonorGuild[j] != nullptr)
+    {
+      delete m_pNextHonorGuild[j];
+      m_pNextHonorGuild[j] = nullptr;
+    }
+  }
+}
+
 CHonorGuild *CHonorGuild::Instance()
 {
-  static CHonorGuild s_instance;
-  return &s_instance;
+  if (!m_pInstance)
+  {
+    m_pInstance = new CHonorGuild();
+  }
+  return m_pInstance;
+}
+
+void CHonorGuild::Destroy(CHonorGuild * /*thisPtr*/)
+{
+  if (m_pInstance)
+  {
+    delete m_pInstance;
+    m_pInstance = nullptr;
+  }
 }
 
 bool CHonorGuild::Init()

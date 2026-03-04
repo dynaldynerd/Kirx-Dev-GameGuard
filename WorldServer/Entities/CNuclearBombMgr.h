@@ -28,7 +28,12 @@ struct  _nuclear_bomb_current_state_zocl
 class  CNuclearBombMgr
 {
 public:
+  CNuclearBombMgr();
+  virtual ~CNuclearBombMgr();
+
+  static CNuclearBombMgr *m_pkInstance;
   static CNuclearBombMgr *Instance();
+  static void Destroy(CNuclearBombMgr *thisPtr);
   bool MissileInit();
   bool LoadIni();
   void Loop();
@@ -44,8 +49,6 @@ public:
     unsigned int warnTime,
     unsigned int informTime,
     unsigned int startTime);
-
-  virtual ~CNuclearBombMgr() = default;
 
   char m_szStickCode[64];
   CNuclearBomb m_Missile[3][3];

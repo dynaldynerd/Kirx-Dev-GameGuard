@@ -249,6 +249,11 @@ void CCharacter::Stop()
   }
 }
 
+float CCharacter::CalcDistForSec(float fSec, float fSpeed)
+{
+  return (fSec * 15.0f) * fSpeed;
+}
+
 bool CCharacter::Create(_character_create_setdata *pData)
 {
   if (!CGameObject::Create(pData))
@@ -317,6 +322,28 @@ void CCharacter::ResetSlot()
     memset_0(m_AroundSlot, 0, sizeof(m_AroundSlot));
     m_AroundNum = 0;
   }
+}
+
+unsigned int CCharacter::GetNextGenAttTime()
+{
+  return m_dwNextGenAttackTime;
+}
+
+void CCharacter::SetNextGenAttTime(unsigned int dwNextTime)
+{
+  m_dwNextGenAttackTime = dwNextTime;
+}
+
+__int64 CCharacter::GetSlot(CCharacter *p)
+{
+  for (int i = 0; i < 5; ++i)
+  {
+    if (m_AroundSlot[i] == p)
+    {
+      return static_cast<unsigned int>(i);
+    }
+  }
+  return 0xFFFFFFFFLL;
 }
 
 bool CCharacter::GetStealth(bool bInvisible)
@@ -1306,6 +1333,152 @@ __int64 CCharacter::_GetFlashEffectMember(
   }
 
   return count;
+}
+
+char CCharacter::IsDamageEffect(unsigned int uiEffectCodeType, unsigned __int16 wEffectIndex)
+{
+  auto hasFlagAt = [](_base_fld *record, size_t recordIndex, size_t byteOffset) -> bool
+  {
+    if (!record)
+    {
+      return false;
+    }
+    const char *const base = reinterpret_cast<const char *>(record + recordIndex);
+    return *reinterpret_cast<const int *>(base + byteOffset) != 0;
+  };
+
+  if (uiEffectCodeType == 0)
+  {
+    _base_fld *record = g_Main.m_tblEffectData[0].GetRecord(wEffectIndex);
+    if (record && !hasFlagAt(record, 13, 32))
+    {
+      return 1;
+    }
+    return 0;
+  }
+
+  if (uiEffectCodeType == 1)
+  {
+    _base_fld *record = g_Main.m_tblEffectData[1].GetRecord(wEffectIndex);
+    if (hasFlagAt(record, 12, 48))
+    {
+      return 1;
+    }
+    return 0;
+  }
+
+  if (uiEffectCodeType == 2)
+  {
+    _base_fld *record = g_Main.m_tblEffectData[2].GetRecord(wEffectIndex);
+    if (hasFlagAt(record, 13, 32))
+    {
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
+char CCharacter::IsPotionEffectableDst(char *psActableDst, CPlayer *pDst)
+{
+  if (psActableDst[0] == '1')
+  {
+    if (pDst == this)
+    {
+      return 1;
+    }
+  }
+  else if (pDst == this)
+  {
+    return 0;
+  }
+
+  if (psActableDst[1] == '1')
+  {
+    if (pDst->m_ObjID.m_byID || m_ObjID.m_byID)
+    {
+      if (pDst->GetObjRace() == GetObjRace())
+      {
+        return 1;
+      }
+    }
+    else
+    {
+      CPlayer *srcPlayer = static_cast<CPlayer *>(this);
+      if (pDst->m_bInGuildBattle && srcPlayer->m_bInGuildBattle)
+      {
+        if (!pDst->m_bTakeGravityStone && srcPlayer->m_byGuildBattleColorInx == pDst->m_byGuildBattleColorInx)
+        {
+          return 1;
+        }
+      }
+      else if (!pDst->m_bInGuildBattle && !srcPlayer->m_bInGuildBattle)
+      {
+        if (pDst->GetObjRace() == GetObjRace())
+        {
+          return 1;
+        }
+      }
+    }
+  }
+
+  if (psActableDst[2] == '1')
+  {
+    if (pDst->m_ObjID.m_byID || m_ObjID.m_byID)
+    {
+      if (pDst->GetObjRace() != GetObjRace() && pDst->m_ObjID.m_byID != 1)
+      {
+        return 1;
+      }
+    }
+    else
+    {
+      CPlayer *srcPlayer = static_cast<CPlayer *>(this);
+      if (pDst->m_bInGuildBattle && srcPlayer->m_bInGuildBattle)
+      {
+        if (!pDst->m_bTakeGravityStone && srcPlayer->m_byGuildBattleColorInx != pDst->m_byGuildBattleColorInx)
+        {
+          return 1;
+        }
+      }
+      else if (!pDst->m_bInGuildBattle && !srcPlayer->m_bInGuildBattle)
+      {
+        if (srcPlayer->IsChaosMode())
+        {
+          return 1;
+        }
+        if (pDst->IsPunished(1u, false))
+        {
+          return 1;
+        }
+        if (pDst->GetObjRace() != GetObjRace())
+        {
+          return 1;
+        }
+      }
+    }
+  }
+
+  if (psActableDst[3] == '1')
+  {
+    if (m_ObjID.m_byID)
+    {
+      if (pDst->m_ObjID.m_byID == 1)
+      {
+        return 1;
+      }
+    }
+    else
+    {
+      CPlayer *srcPlayer = static_cast<CPlayer *>(this);
+      if (!srcPlayer->m_bInGuildBattle && pDst->m_ObjID.m_byID == 1)
+      {
+        return 1;
+      }
+    }
+  }
+
+  return 0;
 }
 
 char CCharacter::IsEffectableDst(char *psActableDst, CCharacter *pDst)

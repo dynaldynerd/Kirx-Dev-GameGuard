@@ -13,10 +13,13 @@ struct _STORAGE_POS_INDIV;
 class  CPostSystemManager
 {
 public:
+  static CPostSystemManager *ms_Instance;
+
   CPostSystemManager();
   ~CPostSystemManager();
 
   static CPostSystemManager *Instace();
+  static void Destroy();
   bool Init();
   void Loop();
   bool Load();

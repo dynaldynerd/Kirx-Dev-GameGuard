@@ -12,6 +12,11 @@ CSetItemEffect::CSetItemEffect()
   Init_Info();
 }
 
+CSetItemEffect::~CSetItemEffect()
+{
+  Init_Info();
+}
+
 void CSetItemEffect::Init_Info()
 {
   for (int j = 0; j < 6; ++j)
