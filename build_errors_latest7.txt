@@ -1,3 +1,0 @@
-MSBuild version 18.3.0-release-26070-10+3972042b7 for .NET Framework
-     1>D:\repo\WorldServer\Entities\D3D8Compat.h(32,8): error C2371: 'D3DCOLORVALUE': redefinition; different basic types [D:\repo\WorldServer\WorldServer.vcxproj]
-     1>D:\repo\WorldServer\Entities\D3D8Compat.h(49,8): error C2371: 'D3DVECTOR': redefinition; different basic types [D:\repo\WorldServer\WorldServer.vcxproj]

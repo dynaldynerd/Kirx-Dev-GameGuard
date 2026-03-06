@@ -1,8 +1,0 @@
-MSBuild version 18.3.0-release-26070-10+3972042b7 for .NET Framework
-     1>D:\repo\WorldServer\Entities\R3EngineFallback.cpp(399,29): error C2589: '(': illegal token on right side of '::' [D:\repo\WorldServer\WorldServer.vcxproj]
-     1>D:\repo\WorldServer\Entities\R3EngineFallback.cpp(399,29): error C2059: syntax error: ')' [D:\repo\WorldServer\WorldServer.vcxproj]
-     1>D:\repo\WorldServer\Entities\R3EngineFallback.cpp(399,15): error C2737: 'scaled': const object must be initialized [D:\repo\WorldServer\WorldServer.vcxproj]
-     1>D:\repo\WorldServer\Entities\R3EngineFallback.cpp(610,17): error C2589: '(': illegal token on right side of '::' [D:\repo\WorldServer\WorldServer.vcxproj]
-     1>D:\repo\WorldServer\Entities\R3EngineFallback.cpp(610,17): error C2059: syntax error: ')' [D:\repo\WorldServer\WorldServer.vcxproj]
-     1>D:\repo\WorldServer\Entities\R3EngineFallback.cpp(611,17): error C2589: '(': illegal token on right side of '::' [D:\repo\WorldServer\WorldServer.vcxproj]
-     1>D:\repo\WorldServer\Entities\R3EngineFallback.cpp(611,17): error C2059: syntax error: ')' [D:\repo\WorldServer\WorldServer.vcxproj]
