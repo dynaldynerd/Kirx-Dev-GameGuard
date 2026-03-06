@@ -95,7 +95,10 @@ bool _TRADE_DB_BASE::_LIST::IsEmpty()
 #include "CRtc.h"
 #include "CNationCodeStrTable.h"
 #include "CNationSettingManager.h"
-#include "wrac_packets.h"
+#include "DqsOnRunPayloads.h"
+#include "Packet/AccountZonePacket.h"
+#include "Packet/ZoneAccountPacket.h"
+#include "Packet/ZoneWebPacket.h"
 #include "CheatCommands.h"
 #include "NameTxt_fld.h"
 #include "ResourceItem_fld.h"
@@ -373,7 +376,7 @@ void CMainThread::AccountServerLogin()
 
   unsigned __int8 type[2] = {1, 1};
   const unsigned __int16 len = request.size();
-  g_Network.m_pProcess[1]->LoadSendMsg(0, type, request.szWorldName, len);
+  g_Network.m_pProcess[1]->LoadSendMsg(0, type, reinterpret_cast<char *>(&request), len);
 
   CNationSettingManager::Instance()->SendCashDBDSNRequest();
 }
@@ -4072,17 +4075,20 @@ void CMainThread::CheckConnNumLog()
       qryData.nCount = sheet->nCount;
       PushDQSData(0xFFFFFFFFu, nullptr, 8u, reinterpret_cast<char *>(&qryData), qryData.size());
 
-      char userNumReport[37]{};
-      *reinterpret_cast<unsigned int *>(userNumReport) = static_cast<unsigned int>(sheet->nAveragePerHour);
-      *reinterpret_cast<unsigned int *>(userNumReport + 4) = static_cast<unsigned int>(sheet->nMaxPerHour);
+      _user_num_report_wrac userNumReport{};
+      userNumReport.dwAveragePerHour = static_cast<unsigned int>(sheet->nAveragePerHour);
+      userNumReport.dwMaxPerHour = static_cast<unsigned int>(sheet->nMaxPerHour);
       for (int race = 0; race < 3; ++race)
       {
-        *reinterpret_cast<unsigned int *>(userNumReport + 8 + race * sizeof(unsigned int)) =
-          static_cast<unsigned int>(CPlayer::s_nRaceNum[race]);
+        userNumReport.dwPlayerPerRace[race] = static_cast<unsigned int>(CPlayer::s_nRaceNum[race]);
       }
-      GetNowDateTime(userNumReport + 20);
+      GetNowDateTime(userNumReport.szLogDate);
       unsigned __int8 packetType[2]{'2', 'd'};
-      g_Network.m_pProcess[1]->LoadSendMsg(0, packetType, userNumReport, 37u);
+      g_Network.m_pProcess[1]->LoadSendMsg(
+        0,
+        packetType,
+        reinterpret_cast<char *>(&userNumReport),
+        static_cast<unsigned __int16>(sizeof(userNumReport)));
 
       m_logServerState.Write(
         "User Num : average( %d ), max( %d )",
@@ -4320,45 +4326,57 @@ void CMainThread::ServerStateMsgGotoWebAgent()
     return;
   }
 
-  char liveStateMessage[3]{};
-  liveStateMessage[0] = static_cast<char>(m_byWorldCode);
-  *reinterpret_cast<unsigned __int16 *>(&liveStateMessage[1]) = static_cast<unsigned __int16>(CPlayer::s_nLiveNum);
+  _world_user_num_zowb liveStateMessage{};
+  liveStateMessage.byWorldCode = static_cast<unsigned __int8>(m_byWorldCode);
+  liveStateMessage.wUserNum = static_cast<unsigned __int16>(CPlayer::s_nLiveNum);
   unsigned __int8 stateType[2]{51, 6};
   if (g_Main.m_bConnectedWebAgentServer)
   {
-    g_Network.m_pProcess[2]->LoadSendMsg(g_Main.m_byWebAgentServerNetInx, stateType, liveStateMessage, 3u);
+    g_Network.m_pProcess[2]->LoadSendMsg(
+      g_Main.m_byWebAgentServerNetInx,
+      stateType,
+      reinterpret_cast<char *>(&liveStateMessage),
+      static_cast<unsigned __int16>(sizeof(liveStateMessage)));
   }
 
-  char worldStateMessage[3]{};
-  worldStateMessage[0] = static_cast<char>(m_byWorldCode);
-  worldStateMessage[1] = (m_bWorldService && m_bWorldOpen) ? 1 : 2;
-  worldStateMessage[2] = (m_byWorldType && m_byWorldType != 3) ? 1 : 0;
+  _world_onoff_notice_zowb worldStateMessage{};
+  worldStateMessage.byWorldCode = static_cast<unsigned __int8>(m_byWorldCode);
+  worldStateMessage.byOnOff = (m_bWorldService && m_bWorldOpen) ? 1 : 2;
+  worldStateMessage.cServerType = (m_byWorldType && m_byWorldType != 3) ? 1 : 0;
   unsigned __int8 worldStateType[2]{51, 7};
   if (g_Main.m_bConnectedWebAgentServer)
   {
-    g_Network.m_pProcess[2]->LoadSendMsg(g_Main.m_byWebAgentServerNetInx, worldStateType, worldStateMessage, 3u);
+    g_Network.m_pProcess[2]->LoadSendMsg(
+      g_Main.m_byWebAgentServerNetInx,
+      worldStateType,
+      reinterpret_cast<char *>(&worldStateMessage),
+      static_cast<unsigned __int16>(sizeof(worldStateMessage)));
   }
 
-  char holyStateMessage[2]{};
-  holyStateMessage[0] = static_cast<char>(m_byWorldCode);
+  _holy_quest_now_report_zowb holyStateMessage{};
+  holyStateMessage.byWorldCode = static_cast<unsigned __int8>(m_byWorldCode);
   const int sceneCode = g_HolySys.GetSceneCode();
   if (sceneCode < 2 || sceneCode > 6)
   {
-    holyStateMessage[1] = static_cast<char>(-1);
+    holyStateMessage.byRaceCode = static_cast<unsigned __int8>(-1);
   }
   else if (sceneCode == 6)
   {
-    holyStateMessage[1] = static_cast<char>(-2);
+    holyStateMessage.byRaceCode = static_cast<unsigned __int8>(-2);
   }
   else
   {
-    holyStateMessage[1] = static_cast<char>(g_HolySys.GetHolyMasterRace());
+    holyStateMessage.byRaceCode = static_cast<unsigned __int8>(g_HolySys.GetHolyMasterRace());
   }
 
   unsigned __int8 holyStateType[2]{51, 8};
   if (g_Main.m_bConnectedWebAgentServer)
   {
-    g_Network.m_pProcess[2]->LoadSendMsg(g_Main.m_byWebAgentServerNetInx, holyStateType, holyStateMessage, 2u);
+    g_Network.m_pProcess[2]->LoadSendMsg(
+      g_Main.m_byWebAgentServerNetInx,
+      holyStateType,
+      reinterpret_cast<char *>(&holyStateMessage),
+      static_cast<unsigned __int16>(sizeof(holyStateMessage)));
   }
 }
 
@@ -4370,8 +4388,12 @@ void CMainThread::PingToAccount()
   }
 
   unsigned __int8 packetType[2]{20, 1};
-  char dummy = 0;
-  g_Network.m_pProcess[1]->LoadSendMsg(0, packetType, &dummy, 0u);
+  _world_account_ping_wrac request{};
+  g_Network.m_pProcess[1]->LoadSendMsg(
+    0,
+    packetType,
+    reinterpret_cast<char *>(&request),
+    request.size());
 }
 
 char CMainThread::LoadServerRateINIFile()
@@ -4759,21 +4781,21 @@ void CMainThread::pc_EnterWorldResult(unsigned __int8 byRetCode, _CLID *pidWorld
   }
 }
 
-void CMainThread::pc_UILockInitResult(char *pMsg)
+void CMainThread::pc_UILockInitResult(const _uilock_init_result_acwr *request)
 {
-  CUserDB *user = &g_UserDB[*reinterpret_cast<unsigned __int16 *>(pMsg + 1)];
+  CUserDB *user = &g_UserDB[request->wUserIndex];
   if (user->m_bActive)
   {
-    user->UILockInfo_Init(pMsg);
+    user->UILockInfo_Init(request);
   }
 }
 
-void CMainThread::pc_UILockUpdateResult(char *pMsg)
+void CMainThread::pc_UILockUpdateResult(const _uilock_update_result_acwr *request)
 {
-  CUserDB *user = &g_UserDB[*reinterpret_cast<unsigned __int16 *>(pMsg + 1)];
+  CUserDB *user = &g_UserDB[request->wUserIndex];
   if (user->m_bActive)
   {
-    user->UILockInfo_Update(pMsg);
+    user->UILockInfo_Update(request);
   }
 }
 
@@ -4967,21 +4989,16 @@ void CMainThread::pc_TaiwanBillingUserCertify(char *szAccount, unsigned __int8 b
 // this is not a stub (intentionally unimplemented for non-RU per rule #19)
 }
 
-void CMainThread::ManageClientLimitRunRequest(char *pBuf)
+void CMainThread::ManageClientLimitRunRequest(const _manage_client_limit_run_request_acwr *request)
 {
   OutputDebugLog("ManageClientLimitRunRequest Start");
 
-  char pQryData[36]{};
-  memset_0(&pQryData[2], 0, 5uLL);
-  memcpy_0(pQryData, pBuf, 6uLL);
-  pQryData[6] = pBuf[6];
-  if (!PushDQSData(0xFFFFFFFF, nullptr, 0xA1u, pQryData, 7))
+  if (!PushDQSData(0xFFFFFFFF, nullptr, 0xA1u, reinterpret_cast<char *>(const_cast<_manage_client_limit_run_request_acwr *>(request)), 7))
   {
-
     _manage_client_limit_run_result_wrac result{};
     result.byRet = 24;
-    memcpy_0(&result.idLocal, pBuf, sizeof(result.idLocal));
-    result.byLoginServerIndex = static_cast<unsigned __int8>(pBuf[6]);
+    memcpy_0(&result.idLocal, request, sizeof(result.idLocal));
+    result.byLoginServerIndex = request->byCode;
     unsigned __int8 pbyType[2]{1, 26};
     g_Network.m_pProcess[1]->LoadSendMsg(
       0,
@@ -5256,7 +5273,12 @@ void CMainThread::SerivceSelfStop()
   {
     m_bWorldService = false;
     unsigned __int8 pbyType[2]{1, 4};
-    g_Network.m_pProcess[1]->LoadSendMsg(0, pbyType, nullptr, 0);
+    _world_exit_report_wrac request{};
+    g_Network.m_pProcess[1]->LoadSendMsg(
+      0,
+      pbyType,
+      reinterpret_cast<char *>(&request),
+      request.size());
   }
 }
 

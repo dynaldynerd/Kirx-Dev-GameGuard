@@ -6,7 +6,7 @@
 #include "CPlayer.h"
 #include "CUserDB.h"
 #include "NameTxt_fld.h"
-#include "wrac_packets.h"
+#include "Packet/ZoneAccountPacket.h"
 
 #include <Windows.h>
 #include <cwchar>

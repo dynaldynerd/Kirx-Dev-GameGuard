@@ -2,32 +2,11 @@
 
 #include "IdaCompat.h"
 #include "ElectProcessor.h"
+#include "Packet/ZoneClientPacket.h"
 
 class  CandidateRegister : public ElectProcessor
 {
 public:
-#pragma pack(push, 1)
-  struct  _pt_result_fcandidacy_list_zocl
-  {
-    #pragma pack(push, 1)
-    struct __candi_info
-    {
-      unsigned __int8 byGrade;
-      long double dPvpPoint;
-      unsigned int dwWinCnt;
-      char wszAvatorName[17];
-      char wszGuildName[17];
-    };
-    #pragma pack(pop)
-
-    _pt_result_fcandidacy_list_zocl();
-    unsigned __int16 size() const;
-
-    unsigned __int8 byCnt;
-    __candi_info Candidacy[500];
-  };
-#pragma pack(pop)
-
   CandidateRegister();
   ~CandidateRegister() override;
   bool Initialize() override;

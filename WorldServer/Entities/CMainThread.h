@@ -11,6 +11,7 @@
 #include "attack_param.h"
 #include "D3DXMATRIX.h"
 #include "EntityTypes.h"
+#include "Packet/ClientZonePacket.h"
 
 #include <utility>
 #include <vector>
@@ -32,6 +33,7 @@ struct _BUDDY_DB_BASE;
 struct _TRUNK_DB_BASE;
 struct _TRADE_DB_BASE;
 struct _AIOC_A_MACRODATA;
+struct _manage_client_limit_run_request_acwr;
 struct _economy_history_data;
 struct _CRYMSG_DB_BASE;
 struct _worlddb_sf_delay_info;
@@ -75,6 +77,8 @@ struct _MAP_ENTITIES_LIST;
 struct _SOUND_ENTITY_LIST;
 struct _SOUND_ENTITIES_LIST;
 struct _LEAF_SOUND_ENTITIES_LIST_INFO;
+struct _uilock_init_result_acwr;
+struct _uilock_update_result_acwr;
 struct _BSP_NODE;
 struct _BSP_LEAF;
 struct _TOOL_COL_LINE;
@@ -153,6 +157,12 @@ struct _qry_case_sendwebracebosssms;
 struct _qry_case_gm_greetingmsg;
 struct _qry_case_race_greetingmsg;
 struct _qry_case_guild_greetingmsg;
+struct _qry_case_post_storage_list_get;
+struct _qry_case_post_return_list_get;
+struct _qry_case_post_content_get;
+struct _qry_case_update_data_for_post_send;
+struct _qry_case_update_data_for_trade;
+struct _qry_case_select_patriarch_comm;
 struct _qry_case_guildroom_insert;
 struct _qry_case_guildroom_update;
 struct _qry_case_update_guildmaster;
@@ -163,6 +173,345 @@ struct _animus_fld;
 class CAnimus;
 struct TimeLimitMgr;
 struct _mob_message;
+struct _a_trade_sell_inform_zocl;
+struct _add_holyquest_actcum_inform_zocl;
+struct _adjust_amount_inform_zocl;
+struct _alive_char_request_clzo;
+struct _alter_equip_sp_inform_zocl;
+struct _alter_item_dur_zocl;
+struct _alter_money_inform_zocl;
+struct _alter_pvp_cash_zocl;
+struct _alter_ranking_inform_zocl;
+struct _alter_tower_hp_zocl;
+struct _alter_unit_bullet_inform_zocl;
+struct _alter_unit_hp_inform_zocl;
+struct _animus_act_heal_inform_zocl;
+struct _animus_create_zocl;
+struct _animus_destroy_zocl;
+struct _animus_exp_inform_zocl;
+struct _animus_fixpositon_zocl;
+struct _animus_lvup_inform_zocl;
+struct _animus_move_zocl;
+struct _animus_real_move_zocl;
+struct _animus_recall_result_zocl;
+struct _animus_return_result_zocl;
+struct _animus_target_request_clzo;
+struct _attack_force_request_clzo;
+struct _attack_gen_request_clzo;
+struct _attack_keeper_inform_zocl;
+struct _attack_siege_request_clzo;
+struct _attack_skill_request_clzo;
+struct _attack_test_request_clzo;
+struct _attack_test_result_zocl;
+struct _attack_tower_inform_zocl;
+struct _attack_trap_inform_zocl;
+struct _attack_unit_request_clzo;
+struct _away_party_join_invitation_question_zocl;
+struct _back_tower_result_zocl;
+struct _back_trap_request_clzo;
+struct _billing_expire_inform_zocl;
+struct _boss_sms_cancel_result_zocl;
+struct _break_stop_result_zocl;
+struct _breakdown_equip_item_zocl;
+struct _buddy_add_answer_clzo;
+struct _buddy_add_ask_zocl;
+struct _buddy_add_fail_zocl;
+struct _buddy_add_request_clzo;
+struct _buddy_add_result_zocl;
+struct _buddy_del_result_clzo;
+struct _buddy_download_result_zocl;
+struct _buddy_in_reged_player_inform_zocl;
+struct _buddy_off_reged_player_inform_zocl;
+struct _buddy_pos_inform_zocl;
+struct _buddy_renewal_zocl;
+struct _cash_discount_event_inform_zocl;
+struct _cash_event_inform_zocl;
+struct _cast_vote_request_clzo;
+struct _cast_vote_result_zocl;
+struct _change_billing_type_inform_zocl;
+struct _change_class_other_zocl;
+struct _chat_guild_request_clzo;
+struct _circle_zone_fix_position_zocl;
+struct _class_skill_recall_teleport_request_clzo;
+struct _class_skill_result_one_zocl;
+struct _class_skill_result_other_zocl;
+struct _combine_item_result_zocl;
+struct _complete_vote_inform_zocl;
+struct _count_succ_inform_zocl;
+struct _create_circle_zone_stone_zocl;
+struct _create_gravity_stone_zocl;
+struct _current_billing_type_inform_zocl;
+struct _cutting_complete_result_zocl;
+struct _d_trade_accomplish_inform_zocl;
+struct _d_trade_add_inform_zocl;
+struct _d_trade_add_request_clzo;
+struct _d_trade_bet_inform_zocl;
+struct _d_trade_bet_request_clzo;
+struct _d_trade_start_inform_zocl;
+struct _d_trade_unit_add_inform_zocl;
+struct _d_trade_unit_info_inform_zocl;
+struct _darkhole_answer_reenter_request_clzo;
+struct _darkhole_enter_request_clzo;
+struct _darkhole_reward_message_inform_zocl;
+struct _decide_recall_error_result_zocl;
+struct _decide_recall_request_clzo;
+struct _delete_storage_inform_zocl;
+struct _destroy_gravity_stone_zocl;
+struct _economy_rate_inform_zocl;
+struct _effect_add_inform_zocl;
+struct _effect_remove_inform_zocl;
+struct _effect_start_inform_zocl;
+struct _exchange_money_result_zocl;
+struct _fcitem_inform_zocl;
+struct _force_recall_teleport_request_clzo;
+struct _force_result_one_zocl;
+struct _force_result_other_zocl;
+struct _gesture_inform_zocl;
+struct _goto_avator_result_zocl;
+struct _gravity_stone_fix_position_zocl;
+struct _gravity_stone_regener_fix_position_zocl;
+struct _gravity_stone_regener_inform_zocl;
+struct _group_target_inform_zocl;
+struct _guild_add_join_applier_inform_zocl;
+struct _guild_atrade_tax_zocl;
+struct _guild_battle_apply_build_battle_result_zocl;
+struct _guild_battle_fin_pvppoint_result_zocl;
+struct _guild_battle_get_gravity_stone_request_clzo;
+struct _guild_battle_notify_ball_position_zocl;
+struct _guild_battle_notify_battle_result_zocl;
+struct _guild_battle_notify_before_start_zocl;
+struct _guild_battle_notify_committee_member_position_zocl;
+struct _guild_battle_notify_gravity_stone_owner_die_zocl;
+struct _guild_battle_pvp_inform_zocl;
+struct _guild_battle_rank_list_request_clzo;
+struct _guild_battle_rank_list_result_no_data_zocl;
+struct _guild_battle_reserved_schedule_request_clzo;
+struct _guild_battle_restart_zocl;
+struct _guild_battle_start_zocl;
+struct _guild_del_join_applier_inform_zocl;
+struct _guild_honorguild_mark_zocl;
+struct _guild_info_update_inform_zocl;
+struct _guild_io_money_inform_zocl;
+struct _guild_join_accept_fail_zocl;
+struct _guild_join_accept_inform_zocl;
+struct _guild_join_accept_request_clzo;
+struct _guild_join_apply_result_zocl;
+struct _guild_join_other_inform_zocl;
+struct _guild_leave_inform_zocl;
+struct _guild_list_result_zocl;
+struct _guild_manage_committee_inform_zocl;
+struct _guild_master_info_zocl;
+struct _guild_member_login_inform_zocl;
+struct _guild_member_pos_inform_zocl;
+struct _guild_offer_suggest_request_clzo;
+struct _guild_push_money_result_zocl;
+struct _guild_vote_complete_zocl;
+struct _guild_vote_request_clzo;
+struct _guild_vote_result_zocl;
+struct _guild_vote_state_zocl;
+struct _guildroom_enter_result_zocl;
+struct _guildroom_rent_result_zocl;
+struct _holy_stone_hp_inform_zocl;
+struct _holystone_alter_oper_circle_inform_zocl;
+struct _insert_item_inform_zocl;
+struct _insert_quest_failure_zocl;
+struct _insert_quest_item_inform_zocl;
+struct _itembox_create_zocl;
+struct _itembox_fixpositon_zocl;
+struct _itembox_state_change_zocl;
+struct _keeper_create_zocl;
+struct _keeper_destroy_zocl;
+struct _keeper_enter_inform_zocl;
+struct _keeper_fixpositon_zocl;
+struct _keeper_move_zocl;
+struct _keeper_real_move_zocl;
+struct _last_effect_change_inform_zocl;
+struct _lend_item_time_expired_zocl;
+struct _level_up_zocl;
+struct _linkboard_download_result_zocl;
+struct _make_tower_result_zocl;
+struct _make_trap_result_zocl;
+struct _map_env_code_inform_zocl;
+struct _max_dp_zocl;
+struct _mine_complete_result_zocl;
+struct _monster_change_rotate_zocl;
+struct _monster_change_state_zocl;
+struct _monster_create_zocl;
+struct _monster_destroy_zocl;
+struct _monster_fixpositon_zocl;
+struct _monster_move_zocl;
+struct _monster_present_emotion_zocl;
+struct _monster_real_move_zocl;
+struct _move_error_result_zocl;
+struct _move_potal_request_clzo;
+struct _move_potal_result_zocl;
+struct _move_request_clzo;
+struct _notice_next_quest_inform_zocl;
+struct _notify_effect_for_get_gold_box_item_zocl;
+struct _notify_gold_box_event_status_zocl;
+struct _notify_player_time_limit_Info_zocl;
+struct _notify_race_battle_penelty_zocl;
+struct _notify_recall_request_zocl;
+struct _notify_set_race_buff_by_holy_quest_zocl;
+struct _notify_unmanned_trader_weekly_daily_income_zocl;
+struct _notify_update_player_time_limit_Info_zocl;
+struct _npc_create_zocl;
+struct _npc_destroy_zocl;
+struct _npc_fixpositon_zocl;
+struct _npc_move_zocl;
+struct _npc_quest_list_result_zocl;
+struct _npc_real_move_zocl;
+struct _nuclear_bomb_drop_result_zocl;
+struct _nuclear_bomb_position_inform_zocl;
+struct _object_server_pos_result_zocl;
+struct _open_return_gate_inform_zocl;
+struct _ore_cutting_request_clzo;
+struct _ore_cutting_result_zocl;
+struct _ore_into_bag_request_clzo;
+struct _ore_into_bag_result_zocl;
+struct _other_map_out_zocl;
+struct _other_new_view_zocl;
+struct _other_shape_cash_rename_zocl;
+struct _other_shape_change_zocl;
+struct _other_shape_failure_zocl;
+struct _other_unit_ride_change_zocl;
+struct _parkingunit_change_owner_zocl;
+struct _parkingunit_create_zocl;
+struct _parkingunit_destroy_zocl;
+struct _parkingunit_fixpositon_zocl;
+struct _party_join_application_question_zocl;
+struct _party_join_invitation_question_zocl;
+struct _party_join_joiner_result_zocl;
+struct _party_join_member_result_zocl;
+struct _party_leave_compulsion_result_zocl;
+struct _party_leave_self_result_zocl;
+struct _pc_room_reward_info_clzo;
+struct _personal_amine_mineore_zocl;
+struct _personal_automine_battery_extract_clzo;
+struct _personal_automine_battery_insert_clzo;
+struct _personal_automine_current_state_zocl;
+struct _personal_automine_install_clzo;
+struct _personal_automine_popore_clzo;
+struct _personal_automine_selore_clzo;
+struct _personal_automine_uninstall_circle_zocl;
+struct _personal_automine_uninstall_clzo;
+struct _personal_automine_uninstall_zocl;
+struct _player_destroy_zocl;
+struct _player_die_zocl;
+struct _player_fixpositon_zocl;
+struct _player_macro_update_request_clzo;
+struct _player_move_zocl;
+struct _player_real_move_zocl;
+struct _player_resurrect_zocl;
+struct _player_revival_zocl;
+struct _player_stop_zocl;
+struct _possible_battle_guild_list_request_clzo;
+struct _post_delete_reply_zocl;
+struct _post_request_clzo;
+struct _post_return_confirm_result_zocl;
+struct _potion_delay_time_information_zocl;
+struct _potionsocket_division_request_clzo;
+struct _potionsocket_division_result_zocl;
+struct _potionsocket_separation_request_clzo;
+struct _potionsocket_separation_result_zocl;
+struct _progress_vote_inform_zocl;
+struct _propose_vote_request_clzo;
+struct _pt_automine_getoutore_clzo;
+struct _pt_automine_merge_clzo;
+struct _pt_request_punishment_clzo;
+struct _pt_result_fcandidacy_list_zocl;
+struct _pvp_cash_point_recorver_request_clzo;
+struct _pvp_cash_point_recover_result_zocl;
+struct _pvp_order_view_point_inform_zocl;
+struct _quest_return_item_after_quest_zocl;
+struct _recall_request_result_zocl;
+struct _recv_hsk_quest_inform_zocl;
+struct _refresh_group_target_position_zocl;
+struct _release_siege_mode_other_inform_zocl;
+struct _remaintime_inform_zocl;
+struct _res_division_request_clzo;
+struct _res_division_result_zocl;
+struct _res_separation_request_clzo;
+struct _res_separation_result_zocl;
+struct _return_gate_fix_position_zocl;
+struct _reward_add_item_zocl;
+struct _select_class_request_clzo;
+struct _select_waited_quest_command_zocl;
+struct _set_dp_inform_zocl;
+struct _set_group_map_point_request_clzo;
+struct _set_group_map_point_result_zocl;
+struct _set_group_target_object_result_zocl;
+struct _set_item_check_request_clzo;
+struct _set_item_check_result_zocl;
+struct _set_target_object_result_zocl;
+struct _shield_equip_dur_dec_zocl;
+struct _skill_recall_teleport_request_clzo;
+struct _skill_request_clzo;
+struct _skill_result_one_zocl;
+struct _skill_result_other_zocl;
+struct _started_vote_inform_zocl;
+struct _stat_inform_zocl;
+struct _state_inform_zocl;
+struct _stone_create_zocl;
+struct _stone_destroy_zocl;
+struct _stone_enter_inform_zocl;
+struct _stone_fixpositon_zocl;
+struct _take_loot_item_inform_zocl;
+struct _target_object_hp_inform_clzo;
+struct _teleport_error_result_zocl;
+struct _throw_skill_result_one_zocl;
+struct _throw_skill_result_other_zocl;
+struct _throw_unit_result_one_zocl;
+struct _throw_unit_result_other_zocl;
+struct _total_guild_rank_request_clzo;
+struct _tower_complete_inform_zocl;
+struct _tower_create_zocl;
+struct _tower_destroy_zocl;
+struct _tower_fixpositon_zocl;
+struct _trans_ship_state_inform_zocl;
+struct _trans_ship_ticket_inform_zocl;
+struct _trans_ship_ticket_pass_inform_zocl;
+struct _transform_siege_mode_other_inform_zocl;
+struct _trap_alter_transpar_inform_zocl;
+struct _trap_create_zocl;
+struct _trap_destroy_zocl;
+struct _trap_fixpositon_zocl;
+struct _trunk_alter_item_slot_request_clzo;
+struct _trunk_io_money_request_clzo;
+struct _trunk_io_move_request_clzo;
+struct _trunk_potionsocket_division_request_clzo;
+struct _trunk_res_division_request_clzo;
+struct _unit_alter_fee_inform_zocl;
+struct _unit_booster_charge_inform_zocl;
+struct _unit_bullet_fill_request_clzo;
+struct _unit_bullet_fill_result_zocl;
+struct _unit_delivery_request_clzo;
+struct _unit_delivery_result_zocl;
+struct _unit_force_return_inform_zocl;
+struct _unit_frame_buy_request_clzo;
+struct _unit_frame_buy_result_zocl;
+struct _unit_frame_repair_request_clzo;
+struct _unit_frame_repair_result_zocl;
+struct _unit_pack_fill_result_zocl;
+struct _unit_part_tuning_request_clzo;
+struct _unit_part_tuning_result_zocl;
+struct _unit_return_result_zocl;
+struct _unit_sell_request_clzo;
+struct _unit_sell_result_zocl;
+struct _unmannedtrader_regist_item_error_result_zocl;
+struct _unmannedtrader_search_list_result_zocl;
+struct _unmannedtrader_Sell_Wait_item_inform_zocl;
+struct _use_active_jade_result_zocl;
+struct _use_fire_cracker_item_inform_zocl;
+struct _use_fire_cracker_item_result_zocl;
+struct _use_potion_result_other_zocl;
+struct _use_potion_result_zocl;
+struct _use_radar_result_zocl;
+struct _use_soccer_ball_item_inform_zocl;
+struct _use_soccer_ball_item_result_zocl;
+struct _weekly_guild_rank_request_clzo;
+struct _weekly_guild_rank_result_no_data_zocl;
+struct _weekly_guild_rank_result_zocl;
 
 /* 1258 */
 struct  _SRAND
@@ -683,9 +1032,9 @@ public:
   unsigned __int8 db_GM_GreetingMsg(_qry_case_gm_greetingmsg *pSheet);
   unsigned __int8 db_RACE_GreetingMsg(_qry_case_race_greetingmsg *pSheet);
   unsigned __int8 db_GUILD_GreetingMsg(_qry_case_guild_greetingmsg *pSheet);
-  unsigned __int8 db_Load_PostStorage(char *pData);
-  unsigned __int8 db_Load_ReturnPost(char *pData);
-  unsigned __int8 db_Load_Content(char *pData);
+  unsigned __int8 db_Load_PostStorage(_qry_case_post_storage_list_get *pSheet);
+  unsigned __int8 db_Load_ReturnPost(_qry_case_post_return_list_get *pSheet);
+  unsigned __int8 db_Load_Content(_qry_case_post_content_get *pSheet);
   unsigned __int8 db_update_guildmaster(_qry_case_update_guildmaster *pSheet);
   unsigned __int8 db_input_guild_money_atradetax(
     unsigned int dwGuildSerial,
@@ -708,14 +1057,14 @@ public:
   unsigned __int8 _db_init_classrefine_count();
   unsigned __int8 _db_GuildRoom_Insert(_qry_case_guildroom_insert *pSheet);
   bool _db_GuildRoom_Update(_qry_case_guildroom_update *pSheet);
-  unsigned __int8 _db_Load_PatriarchComm(char *pData);
+  unsigned __int8 _db_Load_PatriarchComm(_qry_case_select_patriarch_comm *pSheet);
   unsigned __int8 _db_Load_Cash_LimSale(qry_case_cash_limsale *pSheet);
   unsigned __int8 _db_Update_Cash_LimSale(_db_cash_limited_sale *pNewData, _db_cash_limited_sale *pOldData);
   unsigned __int8 _db_Update_Set_Limit_Run();
   unsigned __int8 _db_Update_GoldBoxItem(int nDBSerial, _db_golden_box_item *pNewData, _db_golden_box_item *pOldData);
-  unsigned __int8 _db_Select_RegeAvator_For_Lobby_Logout(char *pData);
-  unsigned __int8 _db_Update_Data_For_Post_Send(char *pSheet);
-  unsigned __int8 _db_Update_Data_For_Trade(char *pSheet);
+  unsigned __int8 _db_Select_RegeAvator_For_Lobby_Logout(_qry_case_lobby_logout *pSheet);
+  unsigned __int8 _db_Update_Data_For_Post_Send(_qry_case_update_data_for_post_send *pSheet);
+  unsigned __int8 _db_Update_Data_For_Trade(_qry_case_update_data_for_trade *pSheet);
   unsigned __int8 _db_Load_Base(unsigned int dwSerial, _AVATOR_DATA *pData);
   unsigned __int8 _db_Load_General(unsigned int dwSerial, unsigned __int8 byRace, _AVATOR_DATA *pData);
   unsigned __int8 _db_Load_Supplement(unsigned int dwSerial, _SUPPLEMENT_DB_BASE *pSupplement);
@@ -903,8 +1252,8 @@ public:
   void CompleteUpdateServerToken(char *pData);
   void CompleteUpdateSetLimitRun(char byRet, char *pData);
   void Complete_Select_RegeAvator_For_Lobby_Logout(_qry_case_lobby_logout *pSheet);
-  void Complete_db_Update_Data_For_Post_Send(char *pSheet);
-  void Complete_db_Update_Data_For_Trade(char *pSheet);
+  void Complete_db_Update_Data_For_Post_Send(_qry_case_update_data_for_post_send *pSheet);
+  void Complete_db_Update_Data_For_Trade(_qry_case_update_data_for_trade *pSheet);
   void _db_complete_event_classrefine(
     unsigned __int16 wSock,
     unsigned int dwAvatorSerial,
@@ -940,8 +1289,8 @@ public:
     unsigned int *pdwRequestMoveCharacterSerialList,
     unsigned int *pdwTournamentCharacterSerialList);
   void pc_EnterWorldResult(unsigned __int8 byRetCode, _CLID *pidWorld);
-  void pc_UILockInitResult(char *pMsg);
-  void pc_UILockUpdateResult(char *pMsg);
+  void pc_UILockInitResult(const _uilock_init_result_acwr *request);
+  void pc_UILockUpdateResult(const _uilock_update_result_acwr *request);
   void pc_AllUserMsgInform(char *pwszMsg);
   void pc_AllUserGMNoticeInform(char *pwszMsg);
   void pc_SetMainGreetingMsg(char *pwszGMName, char *pwszMsg);
@@ -956,7 +1305,7 @@ public:
     char *szPassword,
     unsigned int dwPort);
   void pc_TaiwanBillingUserCertify(char *szAccount, unsigned __int8 byCertify);
-  void ManageClientLimitRunRequest(char *pBuf);
+  void ManageClientLimitRunRequest(const _manage_client_limit_run_request_acwr *request);
   void EndServer();
   char _CheckTotalSales();
   bool DatabaseInit(char *pszDBName, char *pszDBIP);
@@ -1216,36 +1565,8 @@ struct _sec_info
 /* 1313 */
 #include "CMapData.h"
 
-/* 1538 */
-struct _EQUIPKEY
-{
-  __int16 zItemIndex;
-  void SetRelease();
-  bool IsFilled();
-  void LoadDBKey(__int16 key);
-  __int16 CovDBKey();
-};
-
-/* 1539 */
-#pragma pack(push, 1)
-struct   _REGED_AVATOR_DB
-{
-  char m_wszAvatorName[17];
-  unsigned int m_dwRecordNum;
-  unsigned __int8 m_byRaceSexCode;
-  unsigned __int8 m_bySlotIndex;
-  char m_szClassCode[5];
-  unsigned __int8 m_byLevel;
-  unsigned int m_dwDalant;
-  unsigned int m_dwGold;
-  unsigned int m_dwBaseShape;
-  _EQUIPKEY m_EquipKey[8];
-  unsigned __int8 m_byEquipLv[8];
-  unsigned int m_dwLastConnTime;
-  _REGED_AVATOR_DB();
-  void Init();
-};
-#pragma pack(pop)
+/* 1538/1539 */
+#include "REGED_AVATOR_DB.h"
 
 /* 1540 */
 #pragma pack(push, 1)
@@ -1263,6 +1584,9 @@ struct   _REGED : _REGED_AVATOR_DB
   bool Release(unsigned __int8 bySlot);
 };
 #pragma pack(pop)
+
+/* moved packet structs */
+#include "Packet/ZoneClientPacket.h"
 
 /* 1541 */
 #pragma pack(push, 1)
@@ -1810,6 +2134,8 @@ struct  _worlddb_sf_delay_info
     unsigned __int8 byEffectCode;
     unsigned __int16 wEffectIndex;
     unsigned int dwNextTime;
+
+    _eff_list();
   };
   #pragma pack(pop)
 
@@ -1819,11 +2145,15 @@ struct  _worlddb_sf_delay_info
     unsigned __int8 byEffectCode;
     unsigned __int8 byMastery;
     unsigned int dwNextTime;
+
+    _mas_list();
   };
   #pragma pack(pop)
 
   _eff_list EFF[10];
   _mas_list MAS[10];
+
+  _worlddb_sf_delay_info();
 };
 #pragma pack(pop)
 
@@ -1929,6 +2259,8 @@ struct   _AVATOR_DATA
   _POTION_NEXT_USE_TIME_DB_BASE dbPotionNextUseTime;
   _PCBANG_FAVOR_ITEM_DB_BASE dbPcBangFavorItem;
   _TIMELIMITINFO_DB_BASE dbTimeLimitInfo;
+
+  _AVATOR_DATA();
   void InitData();
   void PostUpdateInit();
 };
@@ -1957,75 +2289,12 @@ struct  _SYNC_STATE
 /* 1561 */
 
 /* 1707 */
-#pragma pack(push, 1)
-struct _personal_amine_mineore_zocl
-{
-  #pragma pack(push, 1)
-  struct __changed
-  {
-    unsigned __int16 wItemIndex;
-    unsigned int dwDur;
-    unsigned __int16 wItemSerial;
-  };
-  #pragma pack(pop)
-
-  unsigned int dwObjSerial;
-  unsigned __int8 m_byUseBattery;
-  unsigned int dwBattery;
-  unsigned __int8 byChangedNum;
-  __changed change[40];
-
-  void clear();
-};
 
 /* 5884 */
-#pragma pack(push, 1)
-struct _personal_automine_uninstall_zocl
-{
-  #pragma pack(push, 1)
-  struct __battery
-  {
-    unsigned int dwDur;
-    unsigned __int16 wSerial;
-  };
-  #pragma pack(pop)
-
-  unsigned int dwObjSerial;
-  unsigned __int8 byActType;
-  unsigned int dwOwnerSerial;
-  unsigned __int16 wItemSerial;
-  unsigned __int8 byCnt;
-  __battery battery[2];
-
-  _personal_automine_uninstall_zocl();
-  unsigned int size() const;
-};
-#pragma pack(pop)
 
 /* 5886 */
-#pragma pack(push, 1)
-struct _personal_automine_uninstall_circle_zocl
-{
-  unsigned int dwObjSerial;
-  unsigned __int8 byActType;
-
-  _personal_automine_uninstall_circle_zocl();
-  unsigned int size() const;
-};
-#pragma pack(pop)
 
 /* 5896 */
-#pragma pack(push, 1)
-struct _personal_automine_current_state_zocl
-{
-  unsigned __int16 wItemSerial;
-  unsigned __int8 byFilledSlotCnt;
-  unsigned int dwBatteryGage;
-
-  _personal_automine_current_state_zocl();
-  unsigned int size() const;
-};
-#pragma pack(pop)
 
 /* 1709 */
 struct  _qry_case_update_mineore
@@ -2630,64 +2899,14 @@ static_assert(sizeof(_guild_applier_info) == 0x10, "_guild_applier_info size mus
 static_assert(alignof(_guild_applier_info) == 8, "_guild_applier_info alignment must match IDA (8)");
 
 /* 1724 */
-#pragma pack(push, 1)
-struct _guild_member_download_zocl
-{
-  unsigned __int8 byDownType;
-  unsigned int dwGuildSerial;
-  unsigned __int8 byGuildGrade;
-  unsigned int dwEmblemBack;
-  unsigned int dwEmblemMark;
-  long double dDalant;
-  long double dGold;
-  unsigned __int8 byGuildRoomType;
-  int GuildRoomRestTime;
-  unsigned __int8 byCurTax;
-  unsigned int dwTotWin;
-  unsigned int dwTotDraw;
-  unsigned int dwTotLose;
-  bool bPossibleElectMaster;
-  unsigned __int16 wDataSize;
-  char sData[10000];
-};
-#pragma pack(pop)
 
 /* 1725 */
-struct  _guild_applier_download_zocl
-{
-  unsigned __int16 wDataSize;
-  char sData[10000];
-};
 
 /* 1726 */
-#pragma pack(push, 1)
-struct _guild_query_info_result_zocl
-{
-  unsigned int dwGuildSerial;
-  char wszGuildName[17];
-  unsigned __int8 byGrade;
-  unsigned int dwEmblemBack;
-  unsigned int dwEmblemMark;
-  unsigned int dwTotWin;
-  unsigned int dwTotDraw;
-  unsigned int dwTotLose;
-  unsigned __int8 byCurTax;
-};
-#pragma pack(pop)
 
 /* 1727 */
-struct  _guild_money_io_download_zocl
-{
-  unsigned __int16 wDataSize;
-  char sData[10000];
-};
 
 /* 1728 */
-struct  _guild_member_buddy_download_zocl
-{
-  unsigned __int16 wDataSize;
-  char sData[900];
-};
 
 /* 1599 */
 
@@ -3605,23 +3824,6 @@ struct  ScheduleMSG
   void Init();
 };
 
-#pragma pack(push, 1)
-struct _party_join_joiner_result_zocl
-{
-  #pragma pack(push, 1)
-  struct _list
-  {
-    unsigned __int16 wIndex;
-    unsigned int dwSerial;
-    char wszAvatorName[17];
-  };
-  #pragma pack(pop)
-
-  char byLootShareMode;
-  char byListNum;
-  _party_join_joiner_result_zocl::_list List[8];
-};
-#pragma pack(pop)
 
 #pragma pack(push, 1)
 struct _extraBytes_45
@@ -3632,37 +3834,6 @@ struct _extraBytes_45
 };
 #pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _cash_event_inform_zocl
-{
-  #pragma pack(push, 1)
-  struct __lim_sale
-  {
-    #pragma pack(push, 1)
-    struct __Item
-    {
-      char byTableCode;
-      unsigned int dwIndex;
-      unsigned __int16 wNum;
-    };
-    #pragma pack(pop)
-
-    char byCount;
-    char byDiscount;
-    __Item item[20];
-  };
-  #pragma pack(pop)
-
-  char byEventType;
-  char byEventStatus;
-  unsigned __int16 wYear[2];
-  char byMonth[2];
-  char byDay[2];
-  char byHour[2];
-  char byMinute[2];
-  __lim_sale LimitedSale;
-};
-#pragma pack(pop)
 
 #pragma pack(push, 1)
 struct _extraBytes_21
@@ -3673,28 +3844,7 @@ struct _extraBytes_21
 };
 #pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _cash_discount_event_inform_zocl
-{
-  char byEventType;
-  unsigned __int16 wCsDiscount;
-  unsigned __int16 wYear[2];
-  char byMonth[2];
-  char byDay[2];
-  char byHour[2];
-  char byMinute[2];
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _set_item_check_request_clzo
-{
-  bool bSet;
-  unsigned int dwSetIndex;
-  char bySetItemNum;
-  char bySetEffectNum;
-};
-#pragma pack(pop)
 
 #pragma pack(push, 1)
 struct _extraBytes_27
@@ -3711,42 +3861,6 @@ struct _extraBytes_15
   const void *pVFTable;
   void *spare;
   char name[15];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _guild_offer_suggest_request_clzo
-{
-  char byMatterType;
-  unsigned int dwMatterDst;
-  unsigned int dwMatterObj1;
-  unsigned int dwMatterObj2;
-  unsigned int dwMatterObj3;
-  char byCommentLen;
-  char wszComment[65];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _attack_test_request_clzo
-{
-  char byEffectCode;
-  char byEffectIndex;
-  unsigned __int16 wBulletSerial;
-  char byWeaponPart;
-  __int16 zTar[2];
-};
-#pragma pack(pop)
-
-#include "Packet/ZoneClientPacket.h"
-
-#pragma pack(push, 1)
-struct _attack_keeper_inform_zocl
-{
-  unsigned int dwAtterSerial;
-  bool bCritical;
-  char byListNum;
-  _attack_gen_result_zocl::_dam_list DamList[32];
 };
 #pragma pack(pop)
 
@@ -3768,37 +3882,8 @@ struct _extraBytes_14
 };
 #pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _notify_update_player_time_limit_Info_zocl
-{
-  unsigned int dwFatigue;
-  unsigned __int16 wStatus;
-  unsigned int dwRemainTime;
-  unsigned int dwAccumPlayTime;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _guildroom_enter_result_zocl
-{
-  char byRetCode;
-  char byRetSubCode;
-  char byMapIndex;
-  unsigned __int16 wMapLayerIndex;
-  __int16 sNewPos[3];
-  int restTime;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _pt_request_punishment_clzo
-{
-  char byType;
-  unsigned __int16 wContentSize;
-  char wszCharName[17];
-  char wszContent[1280];
-};
-#pragma pack(pop)
 
 #pragma pack(push, 1)
 struct _extraBytes_35
@@ -3809,76 +3894,10 @@ struct _extraBytes_35
 };
 #pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _weekly_guild_rank_result_zocl
-{
-  #pragma pack(push, 1)
-  struct _list
-  {
-    char byRank;
-    char wszGuildName[17];
-    char byGrade;
-    unsigned int dwPvpPoint;
-  };
-  #pragma pack(pop)
 
-  unsigned int dwVer;
-  char byRace;
-  char byExistSelfRankInfo;
-  char byCnt;
-  _weekly_guild_rank_result_zocl::_list list[11];
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _unit_pack_fill_result_zocl
-{
-  char byRetCode;
-  char bySlotIndex;
-  unsigned int dwComsumMoney[7];
-  unsigned int dwLeftMoney[7];
-  char byFillNum;
-  _unit_pack_fill_request_clzo::__list List[8];
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _throw_skill_result_one_zocl
-{
-  #pragma pack(push, 1)
-  struct __effected_list
-  {
-    char byObjID;
-    unsigned int dwObjSerial;
-    char byRetCode;
-    unsigned __int16 wEffectValue;
-  };
-  #pragma pack(pop)
 
-  char byErrCode;
-  char byAttackSerial;
-  _CHRID idDster;
-  char byEffectedNum;
-  _throw_skill_result_one_zocl::__effected_list list[30];
-};
-#pragma pack(pop)
-
-struct _throw_unit_result_one_zocl
-{
-  char byErrCode;
-  char byAttackSerial;
-  _CHRID idDster;
-  char byEffectedNum;
-  _throw_skill_result_one_zocl::__effected_list list[30];
-};
-
-#pragma pack(push, 1)
-struct _npc_quest_list_result_zocl
-{
-  char byQuestNum;
-  unsigned int QuestIndexList[30];
-};
-#pragma pack(pop)
 
 #pragma pack(push, 1)
 struct _extraBytes_22
@@ -3889,75 +3908,7 @@ struct _extraBytes_22
 };
 #pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _attack_trap_inform_zocl
-{
-  unsigned int dwAtterSerial;
-  bool bCritical;
-  char byListNum;
-  _attack_gen_result_zocl::_dam_list DamList[32];
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _guild_atrade_tax_zocl
-{
-  unsigned int dwGSerial;
-  char byTax;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _money_supply_gatering_inform_zowb
-{
-  #pragma pack(push, 1)
-  struct _money_supply
-  {
-    int nLv[4];
-    int nRace[3];
-    int nClass[60];
-  };
-  #pragma pack(pop)
-
-  __int64 dwAmount[9];
-  _money_supply ms_data[4];
-  int nFeeLv[4];
-  int nFeeRace[3];
-  int nHonorGuildRace[2][3];
-  int nUnitRepairLv[4];
-  int nBuyUnitLv[4];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _notify_effect_for_get_gold_box_item_zocl
-{
-  char byBoxType;
-  char byTableCode;
-  unsigned __int16 wItemIndex;
-  char byBoxDur;
-  unsigned int dwCharSerial;
-  char szCharacterName[17];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _set_item_check_result_zocl
-{
-  char byResult;
-  unsigned int dwSetIndex;
-  char bySetEffectNum;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _chat_guild_request_clzo
-{
-  unsigned int dwDstSerial;
-  char bySize;
-  char wszChatData[256];
-};
-#pragma pack(pop)
 
 #pragma pack(push, 1)
 struct _extraBytes_46
@@ -3968,61 +3919,9 @@ struct _extraBytes_46
 };
 #pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _nuclear_bomb_drop_result_zocl
-{
-  char byRaceCode;
-  char byItemTableCode;
-  unsigned __int16 wItemRecIndex;
-  char byUseClass;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _throw_unit_result_other_zocl
-{
-  char byRetCode;
-  _CHRID idPerformer;
-  unsigned __int16 wBulletIndex;
-  char byAttackSerial;
-  _CHRID idDster;
-  char byEffectedNum;
-  _throw_skill_result_one_zocl::__effected_list list[30];
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _started_vote_inform_zocl
-{
-  int nVoteSerial;
-  char byLimGrade;
-  unsigned __int16 wLeftSec;
-  bool bActed;
-  unsigned __int16 wPoint[3];
-  bool bHurry;
-  unsigned __int16 wContentSize;
-  char wszContent[1280];
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _other_shape_change_zocl
-{
-  #pragma pack(push, 1)
-  struct _model
-  {
-    unsigned __int16 wPartIndex;
-    char byLv;
-  };
-  #pragma pack(pop)
-
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  unsigned __int16 wEquipVer;
-  char byPartIndex;
-  _other_shape_change_zocl::_model ModelPerPart;
-};
-#pragma pack(pop)
 
 #pragma pack(push, 1)
 struct _extraBytes_23
@@ -4033,26 +3932,6 @@ struct _extraBytes_23
 };
 #pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _combine_item_result_zocl
-{
-  #pragma pack(push, 1)
-  struct __item
-  {
-    char byTableCode;
-    unsigned __int16 wItemIndex;
-    unsigned int dwDurPoint;
-    unsigned __int16 wSerial;
-    unsigned int dwLv;
-  };
-  #pragma pack(pop)
-
-  char byErrCode;
-  unsigned int dwFee;
-  unsigned int dwLeftDalant;
-  _combine_item_result_zocl::__item NewItem;
-};
-#pragma pack(pop)
 
 #pragma pack(push, 1)
 struct _extraBytes_29
@@ -4081,103 +3960,14 @@ struct _extraBytes_20
 };
 #pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _propose_vote_request_clzo
-{
-  char byLimGrade;
-  unsigned __int16 wContentSize;
-  char wszContent[1280];
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _unit_part_tuning_request_clzo
-{
-  char bySlotIndex;
-  char byTuningNum;
-  int bUseNPCLinkIntem;
-  _tuning_data TuningList[6];
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _pvp_order_view_point_inform_zocl
-{
-  unsigned int dwSerial;
-  long double dPvpPoint;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _notify_player_time_limit_Info_zocl
-{
-  unsigned int dwFatigue;
-  unsigned __int16 wStatus;
-  unsigned int dwRemainTime;
-  unsigned int dwAccumPlayTime;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _use_active_jade_result_zocl
-{
-  int nErrorCode;
-  unsigned __int16 wSerial;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _trans_ship_ticket_inform_zocl
-{
-  struct __list
-  {
-    char byDirectCode;
-    unsigned __int16 wLeftTicketNum;
-  };
 
-  unsigned int dwNpcSerial;
-  _trans_ship_ticket_inform_zocl::__list TicketList[2];
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _unmannedtrader_Sell_Wait_item_inform_zocl
-{
-  struct __list
-  {
-    unsigned __int16 wItemSerial;
-    unsigned int dwSellDalant;
-    unsigned int dwTax;
-  };
 
-  char byNum;
-  unsigned int dwTotalSellDalant;
-  unsigned int dwTotalTaxDalant;
-  unsigned int dwCurInvenDalant;
-  _unmannedtrader_Sell_Wait_item_inform_zocl::__list List[10];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _nuclear_bomb_position_inform_zocl
-{
-  char byRaceCode;
-  char byUseClass;
-  float zPos[3];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _notify_gold_box_event_status_zocl
-{
-  char byBoxType;
-  char byTableCode;
-  unsigned __int16 wItemIndex;
-  char byBoxDur;
-  unsigned int dwCharSerial;
-  char szCharacterName[17];
-};
-#pragma pack(pop)
 
 #pragma pack(push, 1)
 struct _party_member_info_upd
@@ -4202,35 +3992,6 @@ struct _party_member_info_upd
 };
 #pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _unmannedtrader_search_list_result_zocl
-{
-  struct __list
-  {
-    unsigned int dwRegistSerial;
-    char byTableCode;
-    unsigned __int16 wItemIndex;
-    unsigned __int64 dwD;
-    unsigned int dwU;
-    unsigned int dwPrice;
-    unsigned int dwOwner;
-    char wszOwnerName[17];
-    unsigned int dwLeftSec;
-  };
-
-  char byRet;
-  unsigned int dwListIndex;
-  char byDivision;
-  char byClass;
-  char bySubClass;
-  char bySortType;
-  unsigned int dwVer;
-  char byPage;
-  unsigned int dwMaxPage;
-  char byCnt;
-  _unmannedtrader_search_list_result_zocl::__list List[10];
-};
-#pragma pack(pop)
 
 #pragma pack(push, 1)
 struct _extraBytes_16
@@ -4678,169 +4439,14 @@ struct _extraBytes_42
 };
 #pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _pvp_cash_point_recover_result_zocl
-{
-  char byRetCode;
-  int nRecvrPoint;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _guild_battle_fin_pvppoint_result_zocl
-{
-  char byWin;
-  long double dPvpPoint;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _guild_battle_notify_committee_member_position_zocl
-{
-  __int16 zPos[2];
-  char byColor;
-  unsigned int dwObjSerial;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _guild_battle_restart_zocl
-{
-  char byColorInx;
-  unsigned int dwLeftRedScore;
-  unsigned int dwRightBlueScore;
-  unsigned int dwLeftRedGoalCnt;
-  unsigned int dwRightBlueGoalCnt;
-  char byLeftHour;
-  char byLeftMin;
-  char byLeftSec;
-  int iRedPortalInx;
-  int iBluePortalInx;
-  int iRegenPortalInx[3];
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _guild_battle_start_zocl
-{
-  char byColorInx;
-  unsigned int dwLeftRedScore;
-  unsigned int dwRightBlueScore;
-  unsigned int dwLeftRedGoalCnt;
-  unsigned int dwRightBlueGoalCnt;
-  char byLeftHour;
-  char byLeftMin;
-  char byLeftSec;
-  int iRedPortalInx;
-  int iBluePortalInx;
-  int iRegenPortalInx[3];
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _guild_battle_notify_ball_position_zocl
-{
-  __int16 zPos[2];
-  char byColor;
-  unsigned int dwOwnerObjSerial;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _guild_battle_pvp_inform_zocl
-{
-  unsigned int dwLeftRedScore;
-  unsigned int dwRightBlueScore;
-  char byLeftHour;
-  char byLeftMin;
-  char byLeftSec;
-};
-#pragma pack(pop)
 
-struct _guild_battle_notify_before_start_zocl
-{
-  unsigned __int8 byLeftMinutes;
-  char wszGuildNameRed[17];
-  char wszGuildNameBlue[17];
-};
 
-struct _guild_battle_notify_battle_result_zocl
-{
-  unsigned __int8 byResult;
-  char wszGuildNameRed[17];
-  char wszGuildNameBlue[17];
-};
-
-#pragma pack(push, 1)
-struct _guild_battle_complete_msg_zowb
-{
-  char szStartTime[17];
-  char szEndTime[17];
-  unsigned int dwRedSerial;
-  char wszRedName[17];
-  unsigned int dwBlueSerial;
-  char wszBlueName[17];
-  unsigned int dwRedScore;
-  unsigned int dwBlueScore;
-  unsigned int dwRedMaxJoinCnt;
-  unsigned int dwBlueMaxJoinCnt;
-  unsigned int dwRedGoalCnt;
-  unsigned int dwBlueGoalCnt;
-  unsigned int dwRedKillCntSum;
-  unsigned int dwBlueKillCntSum;
-  char byBattleResult;
-  unsigned int dwMaxGoalCharacSerial;
-  char wszMaxGoalCharacName[17];
-  unsigned int dwMaxKillCharacSerial;
-  char wszMaxKillCharacName[17];
-  char byJoinLimit;
-  unsigned int dwGuildBattleCost;
-  char szBattleMapCode[12];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _guild_battle_reserve_msg_zowb
-{
-  char byTimeID;
-  char byRace;
-  unsigned int dw1PGuildSerial;
-  char by1PGuildGrade;
-  char wsz1PName[17];
-  unsigned int dw2PGuildSerial;
-  char by2PGuildGrade;
-  char wsz2PName[17];
-  char byJoinLimit;
-  unsigned int dwGuildBattleCost;
-  char szBattleMapCode[12];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _guild_battle_rank_list_result_no_data_zocl
-{
-  char byRace;
-  unsigned int dwCurVer;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _effect_start_inform_zocl
-{
-  char byLv;
-  unsigned __int16 wEffectCode;
-  unsigned __int16 wDurSec;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _notify_set_race_buff_by_holy_quest_zocl
-{
-  char byLv;
-  unsigned __int16 wEffectIndex;
-  unsigned int dwDestSerial;
-};
-#pragma pack(pop)
 
 #pragma pack(push, 1)
 struct _extraBytes_31
@@ -4851,41 +4457,9 @@ struct _extraBytes_31
 };
 #pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _other_shape_cash_rename_zocl
-{
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  char wszName[17];
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _notify_unmanned_trader_weekly_daily_income_zocl
-{
-  unsigned __int64 ui64TotalIncome;
-  char wszRaceLeaderName[17];
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _unmannedtrader_regist_item_error_result_zocl
-{
-  char byRet;
-  unsigned __int16 wItemSerial;
-  unsigned int dwRetParam1;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _a_trade_sell_inform_zocl
-{
-  unsigned __int16 wItemSerial;
-  unsigned int dwAddDalant;
-  unsigned int dwTaxDalant;
-  unsigned int dwTotalDalant;
-};
-#pragma pack(pop)
 
 #pragma pack(push, 1)
 struct _extraBytes_13
@@ -4896,272 +4470,18 @@ struct _extraBytes_13
 };
 #pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _personal_automine_install_clzo
-{
-  char byMineDummyIndex;
-  unsigned __int16 wItemSerial;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _personal_automine_uninstall_clzo
-{
-  unsigned int dwObjSerial;
-  unsigned __int16 wItemSerial;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _personal_automine_selore_clzo
-{
-  unsigned int dwObjSerial;
-  char bySelectOre;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _personal_automine_battery_insert_clzo
-{
-  unsigned int dwObjSerial;
-  char byInPos;
-  unsigned __int16 wItemSerial;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _personal_automine_battery_extract_clzo
-{
-  unsigned int dwObjSerial;
-  char byPos;
-  char bySlotIdx;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _personal_automine_popore_clzo
-{
-  unsigned __int16 wItemSerial;
-  char byNum;
-  char byStorageIndex_L;
-  char byStorageIndex_R;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _ore_cutting_result_zocl
-{
-  #pragma pack(push, 1)
-  struct _list
-  {
-    unsigned __int16 wResIndex;
-    char byAddAmount;
-  };
-  #pragma pack(pop)
 
-  char byErrCode;
-  char byLeftNum;
-  unsigned int dwLeftDalant;
-  unsigned int dwConsumDalant;
-  char byCuttingNum;
-  _ore_cutting_result_zocl::_list ResList[100];
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _pt_automine_merge_clzo
-{
-  char byPage;
-  _INVENKEY item;
-  char byOverlapNum;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _pt_automine_getoutore_clzo
-{
-  char bySrcPage;
-  unsigned int dwSrcK;
-  char byDstBag;
-  unsigned int dwDstK;
-  char byOverlapNum;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _weekly_guild_rank_result_no_data_zocl
-{
-  unsigned int dwVer;
-  char byRace;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _pt_result_fcandidacy_list_zocl
-{
-  #pragma pack(push, 1)
-  struct __candi_info
-  {
-    char byGrade;
-    long double dPvpPoint;
-    unsigned int dwWinCnt;
-    char wszAvatorName[17];
-    char wszGuildName[17];
-  };
-  #pragma pack(pop)
 
-  char byCnt;
-  _pt_result_fcandidacy_list_zocl::__candi_info Candidacy[500];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _complete_vote_inform_zocl
-{
-  int nVoteSerial;
-  unsigned __int16 wPoint[3];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _progress_vote_inform_zocl
-{
-  int nVoteSerial;
-  unsigned __int16 wPoint[3];
-  bool bHurry;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _economy_data_inform_zowb
-{
-  float fPayExgRate[3];
-  float fTexRate[3];
-  unsigned __int16 wEconomyGuide[3];
-  unsigned __int16 wYear;
-  char byMonth;
-  char byDay;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _confirm_sms_infom_zoct
-{
-  int nCountIndex;
-  int nWorldCode;
-  char byRaceCode;
-  char wszMasterName[17];
-  char wszMsg[255];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _send_raceboss_msg_request_zowb
-{
-  int nCountIndex;
-  int nWorldCode;
-  char byRaceCode;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _send_fromweb_raceboss_msg_request_zowb
-{
-  unsigned int dwWebSendDBID;
-  int nCountIndex;
-  int nWorldCode;
-  char byRaceCode;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _boss_sms_cancel_result_zocl
-{
-  char byRetCode;
-  unsigned int dwMsgID;
-  char wszBossName[17];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _cancel_raceboss_msg_request_zowb
-{
-  int nCountIndex;
-  int nWorldCode;
-  char byRaceCode;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _cancel_raceboss_msg_request_ctzo
-{
-  char byRaceCode;
-  int nID;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _pc_room_reward_info_clzo
-{
-  unsigned int dwPcRoomIndex;
-  char bySelect_ItemIndex[5];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _billing_alive_request_zobi
-{
-  char szID[13];
-  char szIP[16];
-  char szCMS[7];
-  __int16 iType;
-  bool bIsPcBang;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _billing_login_request_zobi
-{
-  char szID[13];
-  char szIP[16];
-  char szCMS[7];
-  __int16 iType;
-  int lRemainTime;
-  _SYSTEMTIME stEndDate;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _quest_return_item_after_quest_zocl
-{
-  char byQuestDBSlot;
-  unsigned __int16 wSerial;
-  char byNum;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _last_attacker_for_the_keeper_inform_zowb
-{
-  int nWorldCode;
-  char byNumOfTime;
-  unsigned __int16 wStartYear;
-  char byStartMonth;
-  char byStartDay;
-  char uszKeeperHitter[17];
-  int bByAnimus;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _holy_minetime_extend_inform_zowb
-{
-  int nWorldCode;
-  char byChaosHour;
-  char byChaosMin;
-  char byNumOfTime;
-};
-#pragma pack(pop)
 
 #pragma pack(push, 1)
 struct _notice_is_arrive_master
@@ -5173,62 +4493,6 @@ struct _notice_is_arrive_master
 };
 #pragma pack(pop)
 
-struct _holy_stone_hp_inform_zocl
-{
-  unsigned __int16 wHPRate[3];
-};
-
-#pragma pack(push, 1)
-struct _holy_complete_quest_inform_zowb
-{
-  int nWorldCode;
-  char szWorldName[33];
-  char wszRaceBossName[3][17];
-  char byMasterRaceCode;
-  char byDestoryRaceCode;
-  char wszMasterName[17];
-  char byChaosHour;
-  char byChaosMin;
-  char byNumOfTime;
-  char byMasterLv;
-  char szMasterClass[5];
-  char wszMasterRaceSubBoss[5][17];
-  char byStartHour;
-  char byStartMin;
-  unsigned __int16 wStartYear;
-  char byStartMonth;
-  char byStartDay;
-  char byEndHour;
-  char byEndMin;
-  unsigned __int16 wEndYear;
-  char byEndMonth;
-  char byEndDay;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _keeper_enter_inform_zocl
-{
-  bool bNow;
-  unsigned __int16 wTotalSecTime;
-  __int16 zHurrySecTime;
-  __int16 zExitSecTime;
-  char byMasterRace;
-  bool bChaos;
-  char byAttackAbleType;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _stone_enter_inform_zocl
-{
-  bool bNow;
-  unsigned __int16 wTotalSecTime;
-  __int16 zHurrySecTime;
-  __int16 zExitSecTime;
-  unsigned __int16 wElapseTime;
-};
-#pragma pack(pop)
 
 #pragma pack(push, 1)
 struct _holy_keeper_change_chaos_inform
@@ -5238,216 +4502,27 @@ struct _holy_keeper_change_chaos_inform
 };
 #pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _notice_next_quest_inform_zocl
-{
-  unsigned __int16 wLeftSec;
-  char byStoneMapMoveInfo;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _darkhole_answer_reenter_request_clzo
-{
-  bool bEnter;
-  unsigned __int16 wChannelIndex;
-  unsigned int dwChannelSerial;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _darkhole_enter_request_clzo
-{
-  unsigned __int16 wHoleIndex;
-  unsigned int dwHoleSerial;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _darkhole_reward_message_inform_zocl
-{
-  int bIsRewarded;
-  unsigned int dwPartyMemberIndex;
-  char byTableCode;
-  unsigned __int16 wItemIndex;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _trans_ship_ticket_pass_inform_zocl
-{
-  bool bPass;
-  unsigned __int16 wTicketSerial;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _trans_ship_state_inform_zocl
-{
-  bool bAnchor;
-  bool bHurry;
-  char byDirect;
-  unsigned int dwPassSec;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _guild_info_update_inform_zocl
-{
-  unsigned int dwGuildSerial;
-  char byGrade;
-  unsigned int dwEmblemBack;
-  unsigned int dwEmblemMark;
-  unsigned int dwTotWin;
-  unsigned int dwTotDraw;
-  unsigned int dwTotLose;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _guild_leave_inform_zocl
-{
-  bool bSelf;
-  bool bPunised;
-  unsigned int dwMemberSerial;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _guild_vote_complete_zocl
-{
-  unsigned int dwMatterVoteSynKey;
-  char byApprPoint;
-  char byOppoPoint;
-  bool bPassed;
-};
-#pragma pack(pop)
 
-struct _guild_vote_state_zocl
-{
-  unsigned int dwMatterVoteSynKey;
-  unsigned __int8 byApprPoint;
-  unsigned __int8 byOppoPoint;
-  unsigned __int8 byLoginSeniorNum;
-  unsigned __int8 byTotalSeniorNum;
-};
 
-#pragma pack(push, 1)
-struct _guild_add_join_applier_inform_zocl
-{
-  unsigned int dwApplierSerial;
-  char wszName[17];
-  char byLv;
-  unsigned int dwPvpPoint;
-  unsigned int dwApplyTime;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _guild_del_join_applier_inform_zocl
-{
-  unsigned int dwApplierSerial;
-  char byDelCode;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _guild_join_accept_inform_zocl
-{
-  unsigned int dwAccepterSerial;
-  unsigned int dwApplierSerial;
-  char wszName[17];
-  char byClassInGuild;
-  char byLv;
-  unsigned int dwPvpPoint;
-  char byGuildRank;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _guild_io_money_inform_zocl
-{
-  unsigned int dwIOerSerial;
-  char byKind;
-  bool bInPut;
-  long double dIODalant;
-  long double dIOGold;
-  long double dTotalDalant;
-  long double dTotalGold;
-  char byDate[4];
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _guild_member_login_inform_zocl
-{
-  unsigned int dwSerial;
-  unsigned __int16 wMapCode;
-  char byRegionIndex;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _guild_member_pos_inform_zocl
-{
-  unsigned int dwSerial;
-  unsigned __int16 wMapCode;
-  char byRegionIndex;
-};
-#pragma pack(pop)
 
-struct _guild_battle_apply_build_battle_result_zocl
-{
-  unsigned __int8 byRet;
-  char wszDestGuildName[17];
-};
 
-struct _guild_manage_committee_inform_zocl
-{
-  bool bAppoint;
-  char wszName[17];
-};
 
-#pragma pack(push, 1)
-struct _open_return_gate_inform_zocl
-{
-  unsigned __int16 wGateInx;
-  unsigned int dwObjSerial;
-  unsigned int dwOpenerSerial;
-  char wszOpenerName[17];
-  __int16 zPos[3];
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _notify_recall_request_zocl
-{
-  unsigned __int16 wRequestID;
-  char wszPerformerName[17];
-};
-#pragma pack(pop)
 
-struct _recall_request_result_zocl
-{
-  unsigned __int8 byRet;
-  char wszDestName[17];
-};
 
-#pragma pack(push, 1)
-struct _decide_recall_error_result_zocl
-{
-  char byErr;
-  int nMapCode;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _world_user_num_zowb
-{
-  char byWorldCode;
-  unsigned __int16 wUserNum;
-};
-#pragma pack(pop)
 
 #ifndef _RICHEDIT_
 #pragma pack(push, 1)
@@ -5556,1668 +4631,153 @@ struct _gettextex
 #pragma pack(pop)
 #endif
 
-#pragma pack(push, 1)
-struct _post_request_clzo
-{
-  char wszRecvName[17];
-  char wszTitle[21];
-  char wszContent[201];
-  _STORAGE_POS_INDIV Item;
-  unsigned int dwGold;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _unit_frame_buy_request_clzo
-{
-  char byFrameCode;
-  int bUseNPCLinkIntem;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _unit_sell_request_clzo
-{
-  char bySlotIndex;
-  int bUseNPCLinkIntem;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _unit_frame_repair_request_clzo
-{
-  char bySlotIndex;
-  int bUseNPCLinkIntem;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _unit_bullet_fill_request_clzo
-{
-  char bySlotIndex;
-  int bUseNPCLinkIntem;
-  unsigned __int16 wBulletIndex[2];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _unit_delivery_request_clzo
-{
-  char bySlotIndex;
-  unsigned int dwStoreIndex;
-  __int16 zUnitNewPos[3];
-  int bUseNPCLinkIntem;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _res_separation_request_clzo
-{
-  unsigned __int16 wStartSerial;
-  char byMoveAmount;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _res_division_request_clzo
-{
-  unsigned __int16 wStartSerial;
-  unsigned __int16 wTarSerial;
-  char byMoveAmount;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _potionsocket_separation_request_clzo
-{
-  unsigned __int16 wStartSerial;
-  char byMoveAmount;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _potionsocket_division_request_clzo
-{
-  unsigned __int16 wStartSerial;
-  unsigned __int16 wTarSerial;
-  char byMoveAmount;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _total_guild_rank_request_clzo
-{
-  unsigned int dwVer;
-  char byRace;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _weekly_guild_rank_request_clzo
-{
-  unsigned int dwVer;
-  char byRace;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _set_group_map_point_request_clzo
-{
-  char byGroupType;
-  float zPos[2];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _trunk_io_move_request_clzo
-{
-  char byStartStorageIndex;
-  char byTarStorageIndex;
-  unsigned __int16 wItemSerial;
-  char byClientSlotIndex;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _trunk_alter_item_slot_request_clzo
-{
-  unsigned int dwItemSerial;
-  char byClientSlotIndex;
-  char byStorageIndex;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _trunk_res_division_request_clzo
-{
-  unsigned __int16 wStartSerial;
-  unsigned __int16 wTarSerial;
-  unsigned __int16 wMoveAmount;
-  char byStorageIndex;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _trunk_potionsocket_division_request_clzo
-{
-  unsigned __int16 wStartSerial;
-  unsigned __int16 wTarSerial;
-  unsigned __int16 wMoveAmount;
-  char byStorageIndex;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _trunk_io_money_request_clzo
-{
-  char byCase;
-  unsigned int dwDalant;
-  unsigned int dwGold;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _d_trade_add_request_clzo
-{
-  char byStorageCode;
-  unsigned int dwSerial;
-  char bySlotIndex;
-  char byAmount;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _d_trade_bet_request_clzo
-{
-  char byMoneyUnit;
-  unsigned int dwBetAmount;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _pvp_cash_point_recorver_request_clzo
-{
-  unsigned int dwItemSerial;
-  char byItemCnt;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _alive_char_request_clzo
-{
-  char byCase;
-  unsigned int dwSerial;
-  char wszNewName[17];
-  char bySlotIndex;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _ore_cutting_request_clzo
-{
-  char byCuttingHouse;
-  unsigned __int16 wOreSerial;
-  char byProcessNum;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _ore_into_bag_request_clzo
-{
-  unsigned __int16 wResIndex;
-  unsigned __int16 wSerial;
-  char byAddAmount;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _animus_target_request_clzo
-{
-  char byObjectID;
-  unsigned __int16 wObjectIndex;
-  unsigned int dwObjectSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _select_class_request_clzo
-{
-  unsigned __int16 wSelClassIndex;
-  char bySelectRewardItem;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _cast_vote_request_clzo
-{
-  int nVoteSerial;
-  char byCode;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _move_request_clzo
-{
-  char byMoveType;
-  float fCur[3];
-  unsigned int dwSerial;
-  __int16 zTar[2];
-  char byDirect;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _object_server_pos_result_zocl
-{
-  char byErrCode;
-  char byObjKind;
-  char byObjID;
-  unsigned __int16 wObjIndex;
-  unsigned int dwObjSerial;
-  float fServerPos[3];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _move_potal_request_clzo
-{
-  char byPotalIndex;
-  unsigned __int16 wConsumeItemSerial[3];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _use_fire_cracker_item_result_zocl
-{
-  char cRet;
-  unsigned __int16 wSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _use_fire_cracker_item_inform_zocl
-{
-  unsigned int dwUserObjSerial;
-  unsigned __int16 wItemIndex;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _use_soccer_ball_item_result_zocl
-{
-  char byRet;
-  unsigned __int16 wSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _use_soccer_ball_item_inform_zocl
-{
-  unsigned int dwUserObjSerial;
-  unsigned __int16 wItemIndex;
-  bool bTakeSoccerBall;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _guild_join_accept_request_clzo
-{
-  bool bAccept;
-  unsigned int dwApplierSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _guild_vote_request_clzo
-{
-  unsigned int dwMatterVoteSynKey;
-  char byVoteCode;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _possible_battle_guild_list_request_clzo
-{
-  char byPage;
-  unsigned int dwCurVer;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _guild_battle_rank_list_request_clzo
-{
-  unsigned int dwCurVer;
-  char byRace;
-  char byPage;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _guild_battle_reserved_schedule_request_clzo
-{
-  unsigned int dwVer;
-  char byDay;
-  char byPage;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _guild_battle_get_gravity_stone_request_clzo
-{
-  unsigned __int16 wIndex;
-  unsigned int dwObjSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _buddy_add_request_clzo
-{
-  unsigned __int16 wDstIndex;
-  unsigned int dwDstSerial;
-  char wszDstName[17];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _buddy_add_answer_clzo
-{
-  bool bAccept;
-  unsigned __int16 wAskerIndex;
-  unsigned int dwAskerSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _remaintime_personal_request_bizo
-{
-  char szAccount[13];
-  __int16 iType;
-  int lRemainTime;
-  _SYSTEMTIME stEndDate;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _remaintime_pcbang_request_bizo
-{
-  char szCMSCode[7];
-  __int16 iType;
-  int lRemainTime;
-  _SYSTEMTIME stEndDate;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _change_type_request_bizo
-{
-  char szAccount[13];
-  char szCMSCode[7];
-  __int16 iType;
-  int lRemainTime;
-  _SYSTEMTIME stEndDate;
-  char byReason;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _attack_gen_request_clzo
-{
-  char byID;
-  unsigned __int16 wIndex;
-  char byAttPart;
-  unsigned __int16 wBulletSerial;
-  unsigned __int16 wEffBulletSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _attack_skill_request_clzo
-{
-  char byID;
-  unsigned __int16 wIndex;
-  char byEffectCode;
-  unsigned __int16 wSkillIndex;
-  unsigned __int16 wBulletSerial;
-  __int16 zAreaPos[2];
-  unsigned __int16 wConsumeItemSerial[3];
-  unsigned __int16 wEffBulletSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _attack_force_request_clzo
-{
-  char byID;
-  unsigned __int16 wIndex;
-  __int16 zAreaPos[2];
-  unsigned __int16 wForceSerial;
-  unsigned __int16 wConsumeItemSerial[3];
-  unsigned __int16 wEffBulletSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _attack_unit_request_clzo
-{
-  char byID;
-  unsigned __int16 wIndex;
-  char byWeaponPart;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _attack_siege_request_clzo
-{
-  char byID;
-  unsigned __int16 wIndex;
-  __int16 zAttackPos[2];
-  char byAttPart;
-  unsigned __int16 wBulletSerial;
-  unsigned __int16 wEffBulletSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _skill_request_clzo
-{
-  char bySkillIndex;
-  _CHRID idDst;
-  char byAttackSerial;
-  unsigned __int16 wConsumeItemSerial[3];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _decide_recall_request_clzo
-{
-  unsigned __int16 wRequestID;
-  char byAgree;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _back_trap_request_clzo
-{
-  unsigned int dwTrapObjSerial;
-  unsigned __int16 wAddSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _force_recall_teleport_request_clzo
-{
-  unsigned __int16 wForceSerial;
-  char wszRecallName[17];
-  unsigned __int16 wConsumeItemSerial[3];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _skill_recall_teleport_request_clzo
-{
-  unsigned __int16 wSkillIndex;
-  char wszRecallName[17];
-  unsigned __int16 wConsumeItemSerial[3];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _class_skill_recall_teleport_request_clzo
-{
-  unsigned __int16 wSkillIndex;
-  char wszRecallName[17];
-  unsigned __int16 wConsumeItemSerial[3];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _break_stop_result_zocl
-{
-  char byObjID;
-  unsigned int dwObjSerial;
-  __int16 zCur[3];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _last_effect_change_inform_zocl
-{
-  char byObjID;
-  unsigned int dwSerial;
-  unsigned __int16 wLastContEffect;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _count_succ_inform_zocl
-{
-  char byActEffectCode;
-  char byAtterID;
-  unsigned int dwAtterSerial;
-  char byDamerID;
-  unsigned int dwDamerSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _return_gate_fix_position_zocl
-{
-  unsigned __int16 wGateInx;
-  unsigned int dwObjSerial;
-  unsigned int dwOpenerSerial;
-  char wszOpenerName[17];
-  __int16 zPos[3];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _move_potal_result_zocl
-{
-  char byRet;
-  char byMapIndex;
-  float fStartPos[3];
-  char byZoneCode;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _parkingunit_create_zocl
-{
-  unsigned __int16 wObjIndex;
-  unsigned int dwObjSerial;
-  char byCreateType;
-  char byFrame;
-  char byPart[6];
-  unsigned int dwOwerSerial;
-  __int16 zPos[3];
-  char byTransDistCode;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _parkingunit_destroy_zocl
-{
-  unsigned __int16 wObjIndex;
-  unsigned int dwObjSerial;
-  char byDestroyCode;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _parkingunit_change_owner_zocl
-{
-  unsigned __int16 wObjIndex;
-  unsigned int dwObjSerial;
-  unsigned int dwOldOwnerSerial;
-  unsigned int dwNewOwnerSerial;
-  char byNewOwnerUnitSlotIndex;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _parkingunit_fixpositon_zocl
-{
-  unsigned __int16 wObjIndex;
-  unsigned int dwObjSerial;
-  char byFrame;
-  char byPart[6];
-  __int16 zPos[3];
-  unsigned int dwMasterSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _itembox_create_zocl
-{
-  char byItemTableCode;
-  unsigned __int16 wItemRecIndex;
-  char byAmount;
-  unsigned __int16 wBoxIndex;
-  unsigned int dwOwerSerial;
-  _CHRID idDumber;
-  char byState;
-  __int16 zPos[3];
-  char byThrowerRace;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _itembox_fixpositon_zocl
-{
-  char byItemTableCode;
-  unsigned __int16 wItemRecIndex;
-  char byAmount;
-  unsigned __int16 wItemBoxIndex;
-  unsigned int dwOwerSerial;
-  __int16 zPos[3];
-  char byState;
-  char byThrowerRace;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _itembox_state_change_zocl
-{
-  unsigned __int16 wItemBoxIndex;
-  unsigned int dwOwerSerial;
-  char byState;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _gravity_stone_fix_position_zocl
-{
-  unsigned __int16 wObjIndex;
-  unsigned __int16 wRecIndex;
-  unsigned int dwObjSerial;
-  __int16 zPos[3];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _create_gravity_stone_zocl
-{
-  unsigned __int16 wIndex;
-  unsigned __int16 wRecIndex;
-  unsigned int dwObjSerial;
-  __int16 zPos[3];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _destroy_gravity_stone_zocl
-{
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _class_skill_result_other_zocl
-{
-  char byRetCode;
-  _CHRID idPerformer;
-  _CHRID idDster;
-  unsigned __int16 wSkillIndex;
-  char byAttackSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _monster_create_zocl
-{
-  unsigned __int16 wRecIndex;
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  __int16 zPos[3];
-  char bYAngle;
-  unsigned __int16 wStateInfo;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _monster_fixpositon_zocl
-{
-  unsigned __int16 wRecIndex;
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  unsigned __int16 wLastEffectCode;
-  __int16 zCur[3];
-  char bYAngle;
-  unsigned __int16 wStateInfo;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _monster_real_move_zocl
-{
-  unsigned __int16 wRecIndex;
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  unsigned __int16 wLastEffectCode;
-  __int16 zCur[3];
-  __int16 zTar[2];
-  unsigned __int16 wStateInfo;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _monster_change_state_zocl
-{
-  unsigned int dwSerial;
-  unsigned __int16 wMonsterState;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _monster_change_rotate_zocl
-{
-  unsigned int dwSerial;
-  char byAngle;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _monster_present_emotion_zocl
-{
-  unsigned int dwSerial;
-  char byType;
-  unsigned __int16 wIndex;
-  unsigned __int16 wRIndex;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _monster_destroy_zocl
-{
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  char byDestroyCode;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _monster_move_zocl
-{
-  unsigned int dwSerial;
-  __int16 zCur[3];
-  __int16 zTar[2];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _trap_create_zocl
-{
-  unsigned __int16 wRecIndex;
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  __int16 zPos[3];
-  unsigned int dwMasterSerial;
-  char byRaceCode;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _trap_destroy_zocl
-{
-  unsigned int dwSerial;
-  char byDestroyCode;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _trap_fixpositon_zocl
-{
-  unsigned __int16 wRecIndex;
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  __int16 zCur[3];
-  unsigned __int16 wCompLeftSec;
-  unsigned int dwMasterSerial;
-  bool bTranspar;
-  char byRaceCode;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _trap_alter_transpar_inform_zocl
-{
-  unsigned int dwTrapSerial;
-  bool bTranspar;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _npc_create_zocl
-{
-  unsigned __int16 wRecIndex;
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  __int16 zPos[3];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _npc_destroy_zocl
-{
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _npc_move_zocl
-{
-  unsigned int dwSerial;
-  __int16 zCur[3];
-  __int16 zTar[2];
-};
-#pragma pack(pop)
-
-struct _npc_fixpositon_zocl
-{
-  unsigned __int16 wRecIndex;
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  unsigned __int16 wLastEffectCode;
-  __int16 zCur[3];
-};
-
-struct _npc_real_move_zocl
-{
-  unsigned __int16 wRecIndex;
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  unsigned __int16 wLastEffectCode;
-  __int16 zCur[3];
-  __int16 zTar[2];
-};
-
-#pragma pack(push, 1)
-struct _stone_create_zocl
-{
-  unsigned __int16 wRecIndex;
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  __int16 zPos[3];
-  char byMasterRace;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _stone_destroy_zocl
-{
-  unsigned int dwSerial;
-  char byDestroyCode;
-  unsigned int dwDestroyerSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _stone_fixpositon_zocl
-{
-  unsigned __int16 wRecIndex;
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  __int16 zCur[3];
-  char byMasterRace;
-  bool bOper;
-  bool bChip;
-  int nControlLeftSec;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _holystone_alter_oper_circle_inform_zocl
-{
-  unsigned int dwSerial;
-  bool bOper;
-  unsigned __int16 wCurHPRate;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _keeper_create_zocl
-{
-  unsigned __int16 wRecIndex;
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  __int16 zPos[3];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _keeper_destroy_zocl
-{
-  unsigned int dwSerial;
-  char byDestroyCode;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _keeper_move_zocl
-{
-  unsigned int dwSerial;
-  __int16 zCur[3];
-  __int16 zTar[2];
-  char byMoveType;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _keeper_fixpositon_zocl
-{
-  unsigned __int16 wRecIndex;
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  __int16 zCur[3];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _keeper_real_move_zocl
-{
-  unsigned __int16 wRecIndex;
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  __int16 zCur[3];
-  __int16 zTar[2];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _tower_create_zocl
-{
-  unsigned __int16 wIndex;
-  unsigned __int16 wRecIndex;
-  unsigned int dwSerial;
-  __int16 zPos[3];
-  unsigned int dwMasterSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _tower_destroy_zocl
-{
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  char byDestroyCode;
-  unsigned int dwMasterSerial;
-};
-#pragma pack(pop)
-
-struct _tower_fixpositon_zocl
-{
-  unsigned __int16 wRecIndex;
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  __int16 zCur[3];
-  unsigned __int16 wCompLeftSec;
-  unsigned int dwMasterSerial;
-};
-
-struct _tower_complete_inform_zocl
-{
-  unsigned int dwTowerObjSerial;
-  unsigned int dwMasterSerial;
-};
-
-#pragma pack(push, 1)
-struct _attack_tower_inform_zocl
-{
-  unsigned int dwAtterSerial;
-  char byAttackPart;
-  bool bCritical;
-  char byDstID;
-  unsigned int dwDstSerial;
-  unsigned __int16 wDamage;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _gravity_stone_regener_fix_position_zocl
-{
-  int iPortalInx;
-  char byState;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _gravity_stone_regener_inform_zocl
-{
-  int iPortalInx;
-  char byState;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _create_circle_zone_stone_zocl
-{
-  int iPortalInx;
-  char byColor;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _circle_zone_fix_position_zocl
-{
-  int iPortalInx;
-  char byColor;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _animus_create_zocl
-{
-  unsigned __int16 wIndex;
-  unsigned __int16 wRecIndex;
-  unsigned int dwSerial;
-  __int16 zPos[3];
-  char byLv;
-  unsigned int dwMasterSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _animus_destroy_zocl
-{
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  char byDestroyCode;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _animus_move_zocl
-{
-  unsigned int dwSerial;
-  __int16 zCur[3];
-  __int16 zTar[2];
-  float fSpeed;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _animus_fixpositon_zocl
-{
-  unsigned __int16 wRecIndex;
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  __int16 zCur[3];
-  char byLv;
-  unsigned __int16 wLastEffectCode;
-  unsigned int dwMasterSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _animus_real_move_zocl
-{
-  unsigned __int16 wRecIndex;
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  __int16 zCur[3];
-  __int16 zTar[2];
-  char byLv;
-  unsigned __int16 wLastEffectCode;
-  unsigned int dwMasterSerial;
-  float fSpeed;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _animus_lvup_inform_zocl
-{
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  char byLv;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _animus_act_heal_inform_zocl
-{
-  unsigned int dwAnimusSerial;
-  unsigned int dwDstSerial;
-  unsigned __int16 wAddHP;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _player_macro_update_request_clzo
-{
-  unsigned int potion[3];
-  unsigned int potionvalue[3];
-  unsigned int behavior[30];
-  char chatting[2][5][81];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _current_billing_type_inform_zocl
-{
-  __int16 iType;
-  int lRemainMin;
-  _SYSTEMTIME stEndDate;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _other_new_view_zocl
-{
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  unsigned __int16 wEquipVer;
-  __int16 zPos[3];
-  char byRaceCode;
-  char byViewType;
-  unsigned __int64 dwStateFlag;
-  unsigned __int16 wLastEffectCode;
-  char byColor;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _attack_test_result_zocl
-{
-  unsigned int dwAtterSerial;
-  unsigned __int16 wBulletIndex;
-  char byEffectCode;
-  char byEffectIndex;
-  char byEffectLv;
-  char byWeaponPart;
-  __int16 zTar[2];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _shield_equip_dur_dec_zocl
-{
-  char byPartIndex;
-  unsigned __int16 wSerial;
-  unsigned __int16 wLeftDurPoint;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _other_unit_ride_change_zocl
-{
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  unsigned __int16 wEquipVer;
-  bool bTake;
-  unsigned int dwUnitSerial;
-  __int16 zNewPos[3];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _other_shape_failure_zocl
-{
-  unsigned __int16 wOtherIndex;
-  char byErrCode;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _player_destroy_zocl
-{
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  char byState;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _player_die_zocl
-{
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _player_fixpositon_zocl
-{
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  unsigned __int16 wEquipVer;
-  char byRaceCode;
-  __int16 zCur[3];
-  unsigned __int16 wLastEffectCode;
-  unsigned __int64 dwStateFlag;
-  char byColor;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _player_real_move_zocl
-{
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  unsigned __int16 dwEquipVer;
-  char byRaceCode;
-  __int16 zCur[3];
-  __int16 zTar[2];
-  unsigned __int16 wLastEffectCode;
-  unsigned __int64 dwStateFlag;
-  __int16 nAddSpeed;
-  char byDirect;
-  char byColor;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _player_move_zocl
-{
-  unsigned int dwSerial;
-  __int16 zCur[3];
-  __int16 zTar[2];
-  __int16 nAddSpeed;
-  char byDirect;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _player_revival_zocl
-{
-  char byRet;
-  unsigned __int16 wStartMapIndex;
-  __int16 zPos[3];
-  char byLevel;
-  unsigned __int16 wCurHP;
-  unsigned __int16 wCurFP;
-  unsigned __int16 wCurST;
-  char byZoneCode;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _player_resurrect_zocl
-{
-  char byRet;
-  char byLevel;
-  unsigned __int16 wCurHP;
-  unsigned __int16 wCurFP;
-  unsigned __int16 wCurST;
-  bool bQuickPotion;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _player_stop_zocl
-{
-  unsigned int dwSerial;
-  __int16 zCur[3];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _move_error_result_zocl
-{
-  char byErrCode;
-  float fCur[3];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _level_up_zocl
-{
-  unsigned int dwSerial;
-  char byLevel;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _unit_booster_charge_inform_zocl
-{
-  char bySlotIndex;
-  unsigned __int16 wBoosterGauge;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _other_map_out_zocl
-{
-  char byMapOutType;
-  unsigned int dwSerial;
-  char byNextMap;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _state_inform_zocl
-{
-  unsigned int dwSerial;
-  unsigned __int64 dwState;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _goto_avator_result_zocl
-{
-  char byRet;
-  char byMapCode;
-  float fStartPos[3];
-  char byMapInType;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _stat_inform_zocl
-{
-  char byStatIndex;
-  unsigned int dwNewStat;
-  char byReason;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _fcitem_inform_zocl
-{
-  unsigned __int16 wItemSerial;
-  unsigned int dwNewStat;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _exchange_money_result_zocl
-{
-  char byErrCode;
-  unsigned int dwLeftGold;
-  unsigned int dwLeftDalant;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _economy_rate_inform_zocl
-{
-  bool bStart;
-  float fPayExgRate;
-  float fTexRate;
-  unsigned __int16 wMgrValue;
-  unsigned __int16 wEconomyGuide[3];
-  float fOreSellRate;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _use_potion_result_zocl
-{
-  char byErrCode;
-  unsigned __int16 wPotionSerial;
-  unsigned __int16 wHP;
-  unsigned __int16 wFP;
-  unsigned __int16 wSP;
-  char byLeftNum;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _use_potion_result_other_zocl
-{
-  char byRetCode;
-  unsigned __int16 wPotionIndex;
-  _CHRID idPerformer;
-  _CHRID idDster;
-  unsigned __int16 wHP;
-  unsigned __int16 wFP;
-  unsigned __int16 wSP;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _potionsocket_separation_result_zocl
-{
-  char sErrorCode;
-  unsigned __int16 wParentSerial;
-  char byParentAmount;
-  unsigned __int16 wChildSerial;
-  char byChildAmount;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _potionsocket_division_result_zocl
-{
-  char sErrorCode;
-  unsigned __int16 wSerial;
-  char byParentAmount;
-  unsigned __int16 wChildSerial;
-  char byChildAmount;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _linkboard_download_result_zocl
-{
-  unsigned __int16 wLinkBoard[50];
-  char byLinkLock;
-  unsigned int dwSkill[2];
-  unsigned int dwForce[2];
-  unsigned int dwCharacter[2];
-  unsigned int dwAnimus[2];
-  unsigned int dwInven;
-  unsigned int dwInvenWindow[5];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _gesture_inform_zocl
-{
-  unsigned int dwActorSerial;
-  char byGestureType;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _unit_frame_buy_result_zocl
-{
-  char byRetCode;
-  char byFrameCode;
-  char byAddUnitSlot;
-  char byKeyIndex;
-  unsigned __int16 wKeySerial;
-  unsigned int dwLeftMoney[7];
-  unsigned int dwConsumMoney[7];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _unit_frame_repair_result_zocl
-{
-  char byRetCode;
-  char bySlotIndex;
-  unsigned int dwNewGauge;
-  unsigned int dwConsumDalant;
-  unsigned int dwLeftDalant;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _unit_bullet_fill_result_zocl
-{
-  char byRetCode;
-  char bySlotIndex;
-  unsigned __int16 wBulletIndex[2];
-  unsigned int dwComsumMoney[7];
-  unsigned int dwLeftMoney[7];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _unit_delivery_result_zocl
-{
-  char byRetCode;
-  char bySlotIndex;
-  char byTransDistCode;
-  unsigned int dwParkingUnitSerial;
-  unsigned int dwPayDalant;
-  unsigned int dwLeftDalant;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _unit_return_result_zocl
-{
-  char byRetCode;
-  unsigned int dwPayDalant;
-  unsigned int dwNewDalant;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _unit_alter_fee_inform_zocl
-{
-  char bySlotIndex;
-  unsigned int dwPullingFee;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _unit_force_return_inform_zocl
-{
-  char bySlotIndex;
-  unsigned int dwDebt;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _alter_unit_hp_inform_zocl
-{
-  char bySlotIndex;
-  unsigned int dwLeftHP;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _animus_recall_result_zocl
-{
-  char byResultCode;
-  unsigned int dwAnimusSerial;
-  unsigned __int16 wAnimusHP;
-  unsigned __int16 wAnimusFP;
-  unsigned __int64 dwAnimusExp;
-  unsigned __int16 wLeftFP;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _animus_return_result_zocl
-{
-  char byResultCode;
-  unsigned __int16 wAnimusItemSerial;
-  char byReturnType;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _animus_exp_inform_zocl
-{
-  unsigned __int16 wAnimusItemSerial;
-  unsigned __int64 dwExp;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _breakdown_equip_item_zocl
-{
-  unsigned __int16 wPlayerIndex;
-  unsigned int dwPlayerSerial;
-  unsigned __int16 dwEquipVer;
-  char byPartIndex;
-  unsigned __int16 wItemSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _res_separation_result_zocl
-{
-  char byErrCode;
-  unsigned __int16 wParentSerial;
-  char byParentAmount;
-  unsigned __int16 wChildSerial;
-  char byChildAmount;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _res_division_result_zocl
-{
-  char byErrCode;
-  unsigned __int16 wParentSerial;
-  char byParentAmount;
-  unsigned __int16 wChildSerial;
-  char byChildAmount;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _delete_storage_inform_zocl
-{
-  char byStorageCode;
-  unsigned __int16 wSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _adjust_amount_inform_zocl
-{
-  char byStorageCode;
-  unsigned __int16 wSerial;
-  unsigned int dwNewDur;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _mine_complete_result_zocl
-{
-  char byErrCode;
-  unsigned __int16 wEquipLeftDur;
-  unsigned __int16 wBatteryLeftDur;
-  char byOreIndex;
-  unsigned __int16 wOreSerial;
-  char byOreDur;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _ore_into_bag_result_zocl
-{
-  char byErrCode;
-  unsigned __int16 wNewSerial;
-  char byCsMethod;
-  unsigned int dwT;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _cutting_complete_result_zocl
-{
-  unsigned int dwLeftGold;
-  char byRet;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _party_leave_self_result_zocl
-{
-  unsigned int dwExiterSerial;
-  bool bWorldExit;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _party_member_hp_upd
-{
-  unsigned int dwMemSerial;
-  unsigned __int16 wHPRate;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _party_member_fp_upd
-{
-  unsigned int dwMemSerial;
-  unsigned __int16 wFPRate;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _party_member_sp_upd
-{
-  unsigned int dwMemSerial;
-  unsigned __int16 wSPRate;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _party_member_lv_upd
-{
-  unsigned int dwMemSerial;
-  char byLv;
-};
-#pragma pack(pop)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #pragma pack(push, 1)
 struct _party_member_pos_upd
@@ -7228,745 +4788,89 @@ struct _party_member_pos_upd
 };
 #pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _party_member_max_hfsp_upd
-{
-  unsigned int dwMemSerial;
-  unsigned __int16 wMaxHP;
-  unsigned __int16 wMaxFP;
-  unsigned __int16 wMaxSP;
-};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _party_member_effect_upd
-{
-  unsigned int dwMemSerial;
-  char byAlterCode;
-  unsigned __int16 wEffectCode;
-  char byEffectLv;
-};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-struct _take_loot_item_inform_zocl
-{
-  unsigned int dwTakerSerial;
-  char byItemTableCode;
-  unsigned __int16 wItemIndex;
-  char byNum;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _alter_item_dur_zocl
-{
-  char byStorageCode;
-  unsigned __int16 wItemSerial;
-  unsigned __int64 dwDur;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _change_class_other_zocl
-{
-  unsigned int dwPlayerSerial;
-  unsigned __int16 wClassIndex;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _reward_add_item_zocl
-{
-  char byTableCode;
-  unsigned __int16 wItemIndex;
-  unsigned __int64 dwDur;
-  unsigned int dwLv;
-  unsigned __int16 wItemSerial;
-  char byReason;
-  char byCsMethod;
-  unsigned int dwT;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _alter_unit_bullet_inform_zocl
-{
-  char byPart;
-  unsigned __int16 wLeftNum;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _alter_pvp_cash_zocl
-{
-  long double dNewPoint;
-  char byIOCode;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _alter_ranking_inform_zocl
-{
-  unsigned __int16 wRankRate;
-  unsigned int dwRank;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _alter_money_inform_zocl
-{
-  char byReason;
-  unsigned int dwGold;
-  unsigned int dwDalant;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _add_holyquest_actcum_inform_zocl
-{
-  int nPvpPoint;
-  unsigned __int16 wKillPoint;
-  char byHolyMentalCount;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _force_result_one_zocl
-{
-  char byErrCode;
-  unsigned int dwItemCum;
-  char byAttackSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _insert_item_inform_zocl
-{
-  char byStorageCode;
-  char byTableCode;
-  unsigned __int16 wItemIndex;
-  unsigned int dwDurPoint;
-  unsigned __int16 wSerial;
-  unsigned int dwLv;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _insert_quest_item_inform_zocl
-{
-  char byTableCode;
-  unsigned __int16 wItemIndex;
-  unsigned int dwDurPoint;
-  unsigned int dwLv;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _make_tower_result_zocl
-{
-  char byErrCode;
-  unsigned int dwTowerObjSerial;
-  unsigned __int16 wLeftFP;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _back_tower_result_zocl
-{
-  char byErrCode;
-  unsigned __int16 wItemSerial;
-  unsigned __int16 wLeftHP;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _effect_add_inform_zocl
-{
-  char byLv;
-  unsigned __int16 wEffectCode;
-  unsigned __int16 wDurSec;
-  unsigned int dwPlayerSerial;
-  char wszPlayerName[17];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _effect_remove_inform_zocl
-{
-  unsigned __int16 wEffectCode;
-  unsigned int dwPlayerSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _make_trap_result_zocl
-{
-  char byErrCode;
-  unsigned int dwTrapObjSerial;
-  unsigned __int16 wLeftFP;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _continue_tower_inform
-{
-  unsigned __int16 wItemSerial;
-  unsigned __int16 wTwrRecIndex;
-  unsigned __int16 wTwrIndex;
-  unsigned int dwTwrSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _d_trade_start_inform_zocl
-{
-  _CLID idAsker;
-  char byAskerEmptyNum;
-  _CLID idAnswer;
-  char byAnswerEmptyNum;
-  unsigned int dwKey[4];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _d_trade_add_inform_zocl
-{
-  char bySlotIndex;
-  char byTableCode;
-  unsigned __int16 wItemIndex;
-  unsigned __int64 dwDurPoint;
-  unsigned int dwUdtInfo;
-  char byAmount;
-  char byEmptyInvenNum;
-  char byCsMethod;
-  unsigned int dwT;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _d_trade_bet_inform_zocl
-{
-  char byMoneyUnit;
-  unsigned int dwBetAmount;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _d_trade_accomplish_inform_zocl
-{
-  unsigned int dwDalant;
-  unsigned int dwGold;
-  unsigned __int16 wStartSerial;
-  bool bSucc;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _d_trade_unit_info_inform_zocl
-{
-  char byTradeSlotIndex;
-  char byFrame;
-  unsigned int dwGauge;
-  char byPart[6];
-  unsigned int dwBullet[2];
-  unsigned int dwSpare[8];
-  int nDebtFee;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _d_trade_unit_add_inform_zocl
-{
-  unsigned __int16 wUnitKeySerial;
-  char bySlotIndex;
-  char byFrame;
-  unsigned int dwGauge;
-  char byPart[6];
-  unsigned int dwBullet[2];
-  unsigned int dwSpare[8];
-  int nPullingFee;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _select_waited_quest_command_zocl
-{
-  char byEventType;
-  unsigned int dwEventIndex;
-  char byEventNodeIndex;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _insert_quest_failure_zocl
-{
-  char byEventType;
-  unsigned int dwEventIndex;
-  char byEventNodeIndex;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _recv_hsk_quest_inform_zocl
-{
-  char byHSKQuestCode;
-  int nPvpPoint;
-  unsigned __int16 wKillPoint;
-  char byHolyMentalCount;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _target_object_hp_inform_clzo
-{
-  char byKind;
-  char byID;
-  unsigned int dwSerial;
-  unsigned __int16 wHPRate;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _set_target_object_result_zocl
-{
-  char byRetCode;
-  char byKind;
-  char byID;
-  unsigned int dwSerial;
-  unsigned __int16 wHPRate;
-  char byGrade;
-  bool bForce;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _refresh_group_target_position_zocl
-{
-  char byGroupType;
-  char byMapCode;
-  char byID;
-  unsigned int dwSerial;
-  float fPos[3];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _cast_vote_result_zocl
-{
-  char byRetCode;
-  int nVoteSerial;
-  unsigned __int16 wPoint[3];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _guild_join_apply_result_zocl
-{
-  char byRetCode;
-  unsigned int dwGuildSerial;
-  char wszGuildName[17];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _guild_vote_result_zocl
-{
-  unsigned int dwMatterVoteSynKey;
-  char byRetCode;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _guild_join_accept_fail_zocl
-{
-  char byRetCode;
-  unsigned int dwApplierSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _guild_push_money_result_zocl
-{
-  char byRetCode;
-  unsigned int dwLeftDalant;
-  unsigned int dwLeftGold;
-};
-#pragma pack(pop)
-
-struct _group_target_inform_zocl
-{
-  char byGroupType;
-  char wszTargetName[65];
-};
-
-struct _guildroom_rent_result_zocl
-{
-  char byRetCode;
-  char bySubRetCode;
-  char byRoomType;
-};
-
-struct _alter_tower_hp_zocl
-{
-  unsigned __int16 wItemSerial;
-  unsigned __int16 wLeftHP;
-};
-
-struct _alter_equip_sp_inform_zocl
-{
-  float fEquipUseSP;
-};
-
-struct _set_dp_inform_zocl
-{
-  unsigned __int16 wDP;
-};
-
-struct _max_dp_zocl
-{
-  unsigned __int16 wMaxDP;
-};
-
-struct _buddy_off_reged_player_inform_zocl
-{
-  unsigned int dwSerial;
-};
-
-struct _buddy_add_fail_zocl
-{
-  char byRetCode;
-  char wszDstName[17];
-};
-
-struct _party_join_invitation_question_zocl
-{
-  _CLID idBoss;
-};
-
-struct _party_join_application_question_zocl
-{
-  _CLID idApplicant;
-};
-
-struct _party_join_member_result_zocl
-{
-  unsigned int dwJoinerSerial;
-  char wszJoinerName[17];
-  char byLootShareMode;
-  unsigned __int16 wIndex;
-};
-
-struct _party_leave_compulsion_result_zocl
-{
-  unsigned int dwExiterSerial;
-};
-
-struct _away_party_join_invitation_question_zocl
-{
-  _CLID idBoss;
-  char wszCharName[17];
-};
-
-struct _guild_master_info_zocl
-{
-  char byState;
-  char byGrade;
-  char byEffectValue[4];
-};
-
-struct _set_group_target_object_result_zocl
-{
-  char byRetCode;
-  char byGroupType;
-  char byMapCode;
-  char byID;
-  unsigned int dwSerial;
-  float fPos[3];
-};
-
-struct _set_group_map_point_result_zocl
-{
-  char byRetCode;
-  char byGroupType;
-  char byMapCode;
-  char byRemain;
-  float zPos[2];
-};
-
-struct _buddy_download_result_zocl
-{
-  unsigned __int16 wDataSize;
-  char sData[10000];
-};
-
-struct _unit_sell_result_zocl
-{
-  char byRetCode;
-  char bySlotIndex;
-  unsigned __int16 wKeySerial;
-  unsigned int dwNonPayDalant;
-  int nAddMoney[7];
-  unsigned int dwLeftMoney[7];
-};
-
-struct _unit_part_tuning_result_zocl
-{
-  char byRetCode;
-  char bySlotIndex;
-  char byPart[6];
-  unsigned int dwBullet[2];
-  int nCost[7];
-  unsigned int dwLeftMoney[7];
-};
-
-struct _skill_result_one_zocl
-{
-  char byErrCode;
-  char byAttackSerial;
-};
-
-struct _skill_result_other_zocl
-{
-  char byRetCode;
-  _CHRID idPerformer;
-  _CHRID idDster;
-  char bySkillIndex;
-  char bySkillLv;
-  char byAttackSerial;
-};
-
-struct _class_skill_result_one_zocl
-{
-  char byErrCode;
-  char byAttackSerial;
-};
-
-struct _force_result_other_zocl
-{
-  char byRetCode;
-  char byForceIndex;
-  char byForceLv;
-  _CHRID idPerformer;
-  _CHRID idDster;
-  char byAttackSerial;
-};
-
-struct _potion_delay_time_information_zocl
-{
-  int nMaxNum;
-  unsigned int dwPotionDelayTime[38];
-};
-
-struct _guild_list_result_zocl
-{
-  struct __list
-  {
-    char byGrade;
-    char wszGuildName[17];
-    char wszMasterName[17];
-  };
-
-  char byPage;
-  char byMaxPage;
-  char byListCnt;
-  _guild_list_result_zocl::__list GuildList[4];
-};
-
-struct _throw_skill_result_other_zocl
-{
-  char byRetCode;
-  _CHRID idPerformer;
-  char bySkillIndex;
-  char byAttackSerial;
-  _CHRID idDster;
-  char byEffectedNum;
-  _throw_skill_result_one_zocl::__effected_list list[30];
-};
-
-#pragma pack(push, 1)
-struct _guild_join_other_inform_zocl
-{
-  unsigned int dwAvatorSerial;
-  unsigned int dwGuildSerial;
-  unsigned __int16 wVisualVersion;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _guild_battle_notify_gravity_stone_owner_die_zocl
-{
-  char byObjID;
-  unsigned int dwObjSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _transform_siege_mode_other_inform_zocl
-{
-  unsigned int dwAvatorSerial;
-  unsigned __int16 wWeaponItemIndex;
-  char bySiegeItemIndex;
-  unsigned __int16 wVisualVer;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _release_siege_mode_other_inform_zocl
-{
-  unsigned int dwAvatorSerial;
-  unsigned __int16 wVisualVer;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _remaintime_inform_zocl
-{
-  __int16 iType;
-  int lRemainMin;
-  _SYSTEMTIME stEndDate;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _change_billing_type_inform_zocl
-{
-  __int16 iCurrentType;
-  __int16 iChangeType;
-  int lRemainMin;
-  _SYSTEMTIME stEndDate;
-  char byReason;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _billing_expire_inform_zocl
-{
-  char byKind;
-  unsigned __int16 wWaitSec;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _buddy_in_reged_player_inform_zocl
-{
-  unsigned int dwSerial;
-  char byMapIndex;
-  char byPositionCode;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _buddy_add_ask_zocl
-{
-  unsigned __int16 wAskerIndex;
-  unsigned int dwAskerSerial;
-  char wszAskerName[17];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _buddy_add_result_zocl
-{
-  char byRetCode;
-  bool bAccept;
-  unsigned int dwAskerSerial;
-  unsigned __int16 wAdderIndex;
-  unsigned int dwAdderSerial;
-  char wszAdderName[17];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _buddy_del_result_clzo
-{
-  char byRetCode;
-  unsigned int dwSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _buddy_pos_inform_zocl
-{
-  unsigned int dwSerial;
-  char byMapIndex;
-  char byPositionCode;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _map_env_code_inform_zocl
-{
-  char byMapCode;
-  unsigned int dwEnvCode;
-  int long_time;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _use_radar_result_zocl
-{
-  char byErrCode;
-  unsigned __int16 wRadarSerial;
-  unsigned int dwDelay;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _post_delete_reply_zocl
-{
-  unsigned int dwPostSerial;
-  char byErrCode;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _post_return_confirm_result_zocl
-{
-  char byErrCode;
-  unsigned int dwPostSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _notify_race_battle_penelty_zocl
-{
-  char byLoseType;
-  int nAlterPoint;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _guild_honorguild_mark_zocl
-{
-  char byHonorRank;
-  unsigned int dwSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _teleport_error_result_zocl
-{
-  char byErrorCode;
-  unsigned int dwMapIndex;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _buddy_renewal_zocl
-{
-  unsigned int dwSerial;
-  char wszBuddyName[17];
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct _lend_item_time_expired_zocl
-{
-  char byStorageCode;
-  unsigned __int16 wSerial;
-};
-#pragma pack(pop)
-
-#pragma pack(pop)
 

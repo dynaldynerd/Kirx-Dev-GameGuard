@@ -9,6 +9,7 @@
 #include "ObjectCreateSetData.h"
 #include "CNetProcess.h"
 #include "GlobalObjects.h"
+#include "Packet/ZoneClientPacket.h"
 #include "WorldServerUtil.h"
 
 unsigned int CGravityStone::ms_dwSerialCnt = 1;
@@ -157,35 +158,39 @@ void CGravityStone::SetOwner(CPlayer *pkPlayer)
 
 void CGravityStone::SendMsg_Create()
 {
-  char msg[14]{};
-  *reinterpret_cast<unsigned __int16 *>(msg) = m_ObjID.m_wIndex;
-  *reinterpret_cast<unsigned __int16 *>(msg + 2) = 89;
-  *reinterpret_cast<unsigned int *>(msg + 4) = m_dwObjSerial;
-  FloatToShort(m_fCurPos, reinterpret_cast<short *>(msg + 8), 3);
+  _create_gravity_stone_zocl msg{};
+  msg.wIndex = m_ObjID.m_wIndex;
+  msg.wRecIndex = 89;
+  msg.dwObjSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, msg.zPos, 3);
 
   unsigned __int8 type[2] = {3, 51};
-  CircleReport(type, msg, 14, false);
+  CircleReport(type, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), false);
 }
 
 void CGravityStone::SendMsg_Destroy()
 {
-  char msg[6]{};
-  *reinterpret_cast<unsigned __int16 *>(msg) = m_ObjID.m_wIndex;
-  *reinterpret_cast<unsigned int *>(msg + 2) = m_dwObjSerial;
+  _destroy_gravity_stone_zocl msg{};
+  msg.wIndex = m_ObjID.m_wIndex;
+  msg.dwSerial = m_dwObjSerial;
   unsigned __int8 type[2] = {3, 52};
-  CircleReport(type, msg, 6, false);
+  CircleReport(type, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), false);
 }
 
 void CGravityStone::SendMsg_FixPosition(int n)
 {
-  char msg[14]{};
-  *reinterpret_cast<unsigned __int16 *>(msg) = m_ObjID.m_wIndex;
-  *reinterpret_cast<unsigned __int16 *>(msg + 2) = 89;
-  *reinterpret_cast<unsigned int *>(msg + 4) = m_dwObjSerial;
-  FloatToShort(m_fCurPos, reinterpret_cast<short *>(msg + 8), 3);
+  _gravity_stone_fix_position_zocl msg{};
+  msg.wObjIndex = m_ObjID.m_wIndex;
+  msg.wRecIndex = 89;
+  msg.dwObjSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, msg.zPos, 3);
 
   unsigned __int8 packetType[2] = {4, static_cast<unsigned __int8>(-85)};
-  g_Network.m_pProcess[0]->LoadSendMsg(n, packetType, msg, static_cast<unsigned __int16>(sizeof(msg)));
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    n,
+    packetType,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CGravityStone::Destroy()

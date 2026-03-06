@@ -11,6 +11,7 @@
 #include "GlobalObjects.h"
 #include "GuildBattle.h"
 #include "ObjectCreateSetData.h"
+#include "Packet/ZoneClientPacket.h"
 #include "WorldServerUtil.h"
 
 unsigned int CCircleZone::ms_dwSerialCnt = 1;
@@ -150,33 +151,33 @@ bool CCircleZone::IsNearPosition(float *pfCurPos)
 
 void CCircleZone::SendMsg_FixPosition(int n)
 {
-  char msg[5]{};
-  *reinterpret_cast<int *>(msg) = m_iPortalInx;
-  msg[4] = static_cast<char>(m_byColor);
+  _circle_zone_fix_position_zocl msg{};
+  msg.iPortalInx = m_iPortalInx;
+  msg.byColor = static_cast<char>(m_byColor);
 
   unsigned __int8 packetType[2] = {4, static_cast<unsigned __int8>(-81)};
   g_Network.m_pProcess[0]->LoadSendMsg(
     n,
     packetType,
-    msg,
+    reinterpret_cast<char *>(&msg),
     static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CCircleZone::SendMsgCreate()
 {
-  char payload[5]{};
-  *reinterpret_cast<int *>(payload) = m_iPortalInx;
-  payload[4] = static_cast<char>(m_byColor);
+  _create_circle_zone_stone_zocl msg{};
+  msg.iPortalInx = m_iPortalInx;
+  msg.byColor = static_cast<char>(m_byColor);
 
   unsigned __int8 type[2] = {3, 53};
-  CircleReport(type, payload, 5, false);
+  CircleReport(type, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), false);
 }
 
 void CCircleZone::SendMsgGoal()
 {
-  char payload[4]{};
-  *reinterpret_cast<int *>(payload) = m_iPortalInx;
+  _circle_zone_goal_inform_zocl msg{};
+  msg.iPortalInx = m_iPortalInx;
 
   unsigned __int8 type[2] = {4, static_cast<unsigned __int8>(-82)};
-  CircleReport(type, payload, 4, false);
+  CircleReport(type, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), false);
 }

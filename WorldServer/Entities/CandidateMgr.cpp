@@ -12,36 +12,12 @@
 #include "ClassOrderProcessor.h"
 #include "GlobalObjects.h"
 #include "PatriarchElectProcessor.h"
+#include "qry_case_discharge_patriarch.h"
 #include "qry_case_insert_candidate.h"
 #include "qry_case_request_refund.h"
 #include "update_candidate_wincount_packing.h"
 
 #include <new>
-
-namespace
-{
-#pragma pack(push, 1)
-struct _qry_case_discharge_patriarch
-{
-  unsigned __int8 byRace;
-  unsigned int dwAvatorSerial;
-  unsigned int dwElectSerial;
-
-  _qry_case_discharge_patriarch(
-    unsigned __int8 race,
-    unsigned int avatorSerial,
-    unsigned int electSerial)
-    : byRace(race), dwAvatorSerial(avatorSerial), dwElectSerial(electSerial)
-  {
-  }
-
-  int size() const
-  {
-    return sizeof(*this);
-  }
-};
-#pragma pack(pop)
-}
 
 CandidateMgr *CandidateMgr::Instance()
 {
@@ -964,9 +940,9 @@ __int64 CandidateMgr::Update_Refund()
   return 0;
 }
 
-__int64 CandidateMgr::Update_DischargePatriarch(char *p)
+__int64 CandidateMgr::Update_DischargePatriarch(_qry_case_discharge_patriarch *p)
 {
-  if (!GetPatriarchGroupBySerial(static_cast<unsigned __int8>(*p), *reinterpret_cast<unsigned int *>(p + 4)))
+  if (!GetPatriarchGroupBySerial(p->byRace, p->dwAvatorSerial))
   {
     return 0;
   }
@@ -977,9 +953,9 @@ __int64 CandidateMgr::Update_DischargePatriarch(char *p)
     sizeof(buffer),
     "{ CALL pUpdate_Patriarch_Status ( %d, %d, %d, %d ) }",
     4,
-    *reinterpret_cast<unsigned int *>(p + 8),
-    *reinterpret_cast<unsigned int *>(p + 4),
-    static_cast<unsigned __int8>(*p));
+    p->dwElectSerial,
+    p->dwAvatorSerial,
+    p->byRace);
 
   return g_Main.m_pWorldDB->ExecUpdateQuery(buffer, true) ? 0 : 24;
 }
@@ -1062,29 +1038,29 @@ __int64 CandidateMgr::Update_VoteTime(unsigned int dwSerial)
   return g_Main.m_pWorldDB->ExecUpdateQuery(buffer, true) ? 0 : 24;
 }
 
-__int64 CandidateMgr::Insert_Candidate(char *p)
+__int64 CandidateMgr::Insert_Candidate(unsigned __int8 byQryCase, _qry_case_insert_candidate *p)
 {
   _candidate_info *candidate = nullptr;
-  char *data = p + 16;
 
-  if (p[14] == 117)
+  if (byQryCase == 117)
   {
-    candidate = GetCandidateBySerial(static_cast<unsigned __int8>(*data), *reinterpret_cast<unsigned int *>(data + 8));
+    candidate = GetCandidateBySerial(p->byRace, p->dwAvatorSerial);
   }
-  else if (p[14] == 125)
+  else if (byQryCase == 125)
   {
-    candidate = GetPatriarchGroupBySerial(static_cast<unsigned __int8>(*data), *reinterpret_cast<unsigned int *>(data + 8));
+    candidate = GetPatriarchGroupBySerial(p->byRace, p->dwAvatorSerial);
   }
 
   if (!candidate)
   {
-    m_kSysLog.Write("CANDIDATE RANK AUTO ERROR : Serial=%d", *reinterpret_cast<unsigned int *>(data + 8));
+    m_kSysLog.Write("CANDIDATE RANK AUTO ERROR : Serial=%d", p->dwAvatorSerial);
     return 24;
   }
 
   const int selectResult =
-    g_Main.m_pWorldDB->Select_PatriarchWinCnt(static_cast<unsigned __int8>(*data),
-      *reinterpret_cast<unsigned int *>(data + 8),
+    g_Main.m_pWorldDB->Select_PatriarchWinCnt(
+      p->byRace,
+      p->dwAvatorSerial,
       &candidate->dwWinCnt);
   if (selectResult == 1)
   {
@@ -1096,7 +1072,7 @@ __int64 CandidateMgr::Insert_Candidate(char *p)
     buffer,
     sizeof(buffer),
     "{ CALL pInsert_Patriarch_Candidate_070313 ( %d, %d, %d, %d, %d, %f, %d, '%s', %d, '%s', %d, %d ) }",
-    *reinterpret_cast<unsigned int *>(data + 4),
+    p->dwElectSerial,
     candidate->byRace,
     candidate->byLevel,
     candidate->dwRank,
@@ -1112,23 +1088,22 @@ __int64 CandidateMgr::Insert_Candidate(char *p)
   return g_Main.m_pWorldDB->ExecUpdateQuery(buffer, true) ? 0 : 24;
 }
 
-void CandidateMgr::CompleteInsertCandidate(unsigned __int8 byRet, char *p)
+void CandidateMgr::CompleteInsertCandidate(unsigned __int8 byRet, _qry_case_insert_candidate *p)
 {
-  unsigned __int8 *data = reinterpret_cast<unsigned __int8 *>(p);
   if (byRet)
   {
-    if (*reinterpret_cast<unsigned __int16 *>(data + 2) != 0xFFFF)
+    if (p->wIndex != 0xFFFF)
     {
-      CPlayer *player = &g_Player[*reinterpret_cast<unsigned __int16 *>(data + 2)];
+      CPlayer *player = &g_Player[p->wIndex];
       if (player->m_bOper)
       {
         const unsigned int charSerial = player->m_Param.GetCharSerial();
-        if (charSerial == *reinterpret_cast<unsigned int *>(data + 8))
+        if (charSerial == p->dwAvatorSerial)
         {
           _qry_case_request_refund refund(
-            *data,
-            *reinterpret_cast<unsigned __int16 *>(data + 2),
-            *reinterpret_cast<unsigned int *>(data + 8),
+            p->byRace,
+            p->wIndex,
+            p->dwAvatorSerial,
             0x989680uLL);
           const int size = static_cast<int>(refund.size());
           g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x7Cu, reinterpret_cast<char *>(&refund), size);
@@ -1139,11 +1114,11 @@ void CandidateMgr::CompleteInsertCandidate(unsigned __int8 byRet, char *p)
     m_kSysLog.Write(
       "FAILED DB_RET(%s_%d):%d(Race:%d)",
       "Candidate Insert",
-      *reinterpret_cast<unsigned int *>(data + 4),
-      *reinterpret_cast<unsigned int *>(data + 8),
-      *data);
+      p->dwElectSerial,
+      p->dwAvatorSerial,
+      p->byRace);
 
-    _candidate_info *candidate = GetCandidateBySerial(*data, *reinterpret_cast<unsigned int *>(data + 8));
+    _candidate_info *candidate = GetCandidateBySerial(p->byRace, p->dwAvatorSerial);
     if (candidate)
     {
       candidate->_Init();
@@ -1151,7 +1126,7 @@ void CandidateMgr::CompleteInsertCandidate(unsigned __int8 byRet, char *p)
     return;
   }
 
-  _candidate_info *candidate = GetCandidateBySerial(*data, *reinterpret_cast<unsigned int *>(data + 8));
+  _candidate_info *candidate = GetCandidateBySerial(p->byRace, p->dwAvatorSerial);
   if (candidate && candidate->dwWinCnt)
   {
     PatriarchElectProcessor *processor = PatriarchElectProcessor::Instance();
@@ -1167,7 +1142,7 @@ void CandidateMgr::CompleteInsertCandidate(unsigned __int8 byRet, char *p)
 
   m_kSysLog.Write(
     "CompleteInsertCandidate(%d):Serial:%d(Race:%d)",
-    *reinterpret_cast<unsigned int *>(data + 4),
-    *reinterpret_cast<unsigned int *>(data + 8),
-    *data);
+    p->dwElectSerial,
+    p->dwAvatorSerial,
+    p->byRace);
 }

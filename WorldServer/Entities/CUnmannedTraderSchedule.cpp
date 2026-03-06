@@ -9,6 +9,7 @@
 #include "CPlayerDB.h"
 #include "GlobalObjects.h"
 #include "InvenKey.h"
+#include "qry_case_unmandtrader_time_out_cancelitem.h"
 
 CUnmannedTraderSchedule::CUnmannedTraderSchedule()
 {
@@ -99,22 +100,22 @@ void CUnmannedTraderSchedule::PushClear(bool bTimeLimit)
        updateState == static_cast<CUnmannedTraderItemState::STATE>(
          static_cast<int>(CUnmannedTraderItemState::STATE::WINDEL) | 0x8)))
   {
-    char qryData[80]{};
-    qryData[0] = static_cast<char>(m_byType);
-    *reinterpret_cast<unsigned int *>(qryData + 4) = m_dwRegistSerial;
-    qryData[8] = static_cast<char>(updateState);
-    *reinterpret_cast<unsigned int *>(qryData + 12) = m_dwOwnerSerial;
-    qryData[16] = static_cast<char>(m_byItemTableCode);
-    *reinterpret_cast<unsigned __int16 *>(qryData + 18) = m_wItemTableIndex;
+    _qry_case_unmandtrader_time_out_cancelitem qryData{};
+    qryData.byType = m_byType;
+    qryData.dwRegistSerial = m_dwRegistSerial;
+    qryData.byState = static_cast<unsigned __int8>(updateState);
+    qryData.dwOwnerSerial = m_dwOwnerSerial;
+    qryData.byItemTableCode = m_byItemTableCode;
+    qryData.wItemTableIndex = m_wItemTableIndex;
 
     if (owner)
     {
-      strcpy_s(qryData + 20, 13, owner->m_pUserDB->m_szAccountID);
+      strcpy_s(qryData.szAccountID, 13, owner->m_pUserDB->m_szAccountID);
       const char *charName = owner->m_Param.GetCharNameW();
-      strcpy_s(qryData + 33, 17, charName);
+      strcpy_s(qryData.wszName, 17, charName);
     }
 
-    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x3Eu, qryData, 80);
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x3Eu, reinterpret_cast<char *>(&qryData), sizeof(qryData));
   }
 }
 

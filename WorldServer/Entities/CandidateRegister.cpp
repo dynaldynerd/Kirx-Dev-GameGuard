@@ -15,15 +15,15 @@
 #include "KorLocalTime.h"
 #include "PatriarchElectProcessor.h"
 
-static_assert(sizeof(CandidateRegister::_pt_result_fcandidacy_list_zocl::__candi_info) == 47, "Candidacy packet entry size mismatch");
-static_assert(sizeof(CandidateRegister::_pt_result_fcandidacy_list_zocl) == 23501, "Candidate list packet size mismatch");
+static_assert(sizeof(_pt_result_fcandidacy_list_zocl::__candi_info) == 47, "Candidacy packet entry size mismatch");
+static_assert(sizeof(_pt_result_fcandidacy_list_zocl) == 23501, "Candidate list packet size mismatch");
 
-CandidateRegister::_pt_result_fcandidacy_list_zocl::_pt_result_fcandidacy_list_zocl()
+_pt_result_fcandidacy_list_zocl::_pt_result_fcandidacy_list_zocl()
 {
   memset_0(this, 0, sizeof(*this));
 }
 
-unsigned __int16 CandidateRegister::_pt_result_fcandidacy_list_zocl::size() const
+unsigned __int16 _pt_result_fcandidacy_list_zocl::size() const
 {
   return static_cast<unsigned __int16>(1 + static_cast<unsigned int>(byCnt) * sizeof(__candi_info));
 }

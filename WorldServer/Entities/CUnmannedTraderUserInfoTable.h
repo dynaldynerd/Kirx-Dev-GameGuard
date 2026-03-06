@@ -17,6 +17,16 @@ struct _a_trade_reg_item_request_clzo;
 struct _unmannedtrader_buy_item_request_clzo;
 struct _unmannedtrader_re_regist_request_clzo;
 struct _unmannedtrader_search_list_request_clzo;
+struct _qry_case_unmandtrader_cancelitem;
+struct _qry_case_unmandtrader_buy_get_info;
+struct _qry_case_unmandtrader_cheat_updateregisttime;
+struct _qry_case_unmandtrader_log_in_proc_update_complete;
+struct _qry_case_unmandtrader_re_registsingleitem;
+struct _qry_case_unmandtrader_re_registsingleitem_roll_back;
+struct _qry_case_unmandtrader_registsingleitem;
+struct _qry_case_unmandtrader_time_out_cancelitem;
+struct _qry_case_unmandtrader_update_reprice;
+struct _lt_qry_case_unmandtrader_select_list;
 
 class  CUnmannedTraderUserInfoTable
 {
@@ -48,19 +58,23 @@ public:
     unsigned int dwRegistSerial,
     CPlayer **pkOwner);
   bool CompleteUpdateState(unsigned int dwOwnerSerial, unsigned int dwRegistSerial, unsigned __int8 byState);
-  void CompleteRegist(unsigned __int8 byRet, char *pLoadData);
-  void CompleteCancelRegist(unsigned __int8 byRet, char *pLoadData);
-  void CompleteTimeOutClear(char *pLoadData);
-  void CompleteReprice(unsigned __int8 byRet, char *pLoadData);
+  void CompleteRegist(unsigned __int8 byRet, _qry_case_unmandtrader_registsingleitem *pLoadData);
+  void CompleteCancelRegist(unsigned __int8 byRet, _qry_case_unmandtrader_cancelitem *pLoadData);
+  void CompleteTimeOutClear(_qry_case_unmandtrader_time_out_cancelitem *pLoadData);
+  void CompleteReprice(unsigned __int8 byRet, _qry_case_unmandtrader_update_reprice *pLoadData);
   void ClearRequest(unsigned __int16 wInx, unsigned int dwOwner);
   void CompleteBuy(
     unsigned __int8 byRet,
     _qry_case_unmandtrader_buy_update_wait *pLoadData,
     CUnmannedTraderTradeInfo *pkTaradInfo);
-  void CompleteReRegist(char *pLoadData);
-  void CompleteUpdateCheatRegistTime(char *pLoadData);
-  void CompleteReRegistRollBack(unsigned __int16 wInx, unsigned int dwOwnerSerial, char *pData);
-  void CompleteSearch(unsigned __int8 byDBRet, unsigned __int8 byProcRet, char *pLoadData);
+  void CompleteReRegist(_qry_case_unmandtrader_re_registsingleitem *pLoadData);
+  void CompleteUpdateCheatRegistTime(_qry_case_unmandtrader_cheat_updateregisttime *pLoadData);
+  void CompleteReRegistRollBack(
+    _qry_case_unmandtrader_re_registsingleitem_roll_back *pData);
+  void CompleteSearch(
+    unsigned __int8 byDBRet,
+    unsigned __int8 byProcRet,
+    _lt_qry_case_unmandtrader_select_list *pLoadData);
   void LogOut(unsigned __int16 wInx, unsigned int dwSerial);
   void ClearLogLogOutState(
     const char *szType,

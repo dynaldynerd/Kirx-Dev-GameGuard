@@ -186,11 +186,12 @@ void CRaceBuffInfoByHolyQuest::NotifySetBuff(CPlayer *pkDest)
 
 void CRaceBuffInfoByHolyQuest::NotifyReleaseBuff(unsigned __int16 wUserInx)
 {
-  unsigned int msg = 0;
+  _notify_release_race_buff_by_holy_quest_zocl msg{};
+  msg.nError = 0;
   unsigned __int8 type[2]{};
   type[0] = 17;
   type[1] = 37;
-  g_Network.m_pProcess[0]->LoadSendMsg(wUserInx, type, reinterpret_cast<char *>(&msg), 4u);
+  g_Network.m_pProcess[0]->LoadSendMsg(wUserInx, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
 void CRaceBuffInfoByHolyQuest::NotifyLogInSetBuff(unsigned __int16 wUserInx)

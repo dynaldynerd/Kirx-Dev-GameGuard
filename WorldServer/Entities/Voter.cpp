@@ -7,6 +7,7 @@
 #include "PatriarchElectProcessor.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
+#include "qry_case_candidate_scalar_payloads.h"
 
 #include <cstring>
 #include <cstdio>
@@ -232,8 +233,14 @@ int Voter::_Vote(CPlayer *player, char *payload)
     player->m_pUserDB->m_AvatorData.dbAvator.m_bOverlapVote = 1;
     player->PushDQSUpdateVoteAvilable();
 
-    unsigned int voteSerial = player->m_Param.GetCharSerial();
-    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x8Bu, reinterpret_cast<char *>(&voteSerial), 4);
+    _qry_case_update_vote_time voteTimeQuery{};
+    voteTimeQuery.dwSerial = player->m_Param.GetCharSerial();
+    g_Main.PushDQSData(
+      0xFFFFFFFF,
+      nullptr,
+      0x8Bu,
+      reinterpret_cast<char *>(&voteTimeQuery),
+      static_cast<int>(voteTimeQuery.size()));
 
     if (!PatriarchElectProcessor::Instance()->GetTimeCheck())
     {

@@ -97,6 +97,7 @@
 #include "combine_ex_item_result_zocl.h"
 #include "combine_ex_item_accept_request_clzo.h"
 #include "combine_ex_item_accept_result_zocl.h"
+#include "Packet/ZoneClientPacket.h"
 #include "qry_case_disjointguild.h"
 #include "WorldServerUtil.h"
 #include "NetCheckPackets.h"
@@ -110,31 +111,43 @@
 
 void CPlayer::SendMsg_PostItemGold(char byErrCode)
 {
-  char payload[1];
-  payload[0] = byErrCode;
+  _post_itemgold_reply_zocl msg{};
+  msg.byErrCode = byErrCode;
 
   unsigned __int8 type[2]{58, 10};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, payload, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CPlayer::SendMsg_PostDelete(unsigned __int8 byErrCode, unsigned int dwPostSerial)
 {
-  char payload[5];
-  memcpy_0(payload, &dwPostSerial, sizeof(dwPostSerial));
-  payload[4] = static_cast<char>(byErrCode);
+  _post_delete_reply_zocl msg{};
+  msg.dwPostSerial = dwPostSerial;
+  msg.byErrCode = static_cast<char>(byErrCode);
 
   unsigned __int8 type[2]{58, 12};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, payload, 5u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CPlayer::SendMsg_PostReturnConfirm(char byErrCode, unsigned int dwPostSerial)
 {
-  char payload[5];
-  payload[0] = byErrCode;
-  memcpy_0(payload + 1, &dwPostSerial, sizeof(dwPostSerial));
+  _post_return_confirm_result_zocl msg{};
+  msg.byErrCode = byErrCode;
+  msg.dwPostSerial = dwPostSerial;
 
   unsigned __int8 type[2]{58, 15};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, payload, 5u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 bool CPlayer::UpdateDelPost(unsigned int dwPostSerial, int nIndex)

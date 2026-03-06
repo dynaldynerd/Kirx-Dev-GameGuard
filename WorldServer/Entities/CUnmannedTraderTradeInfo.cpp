@@ -118,7 +118,7 @@ void CUnmannedTraderTradeInfo::UpdateIncome()
 void CUnmannedTraderTradeInfo::NotifyIncome()
 {
   unsigned __int8 type[2] = {13, 102};
-  char msg[75]{};
+  _notify_unmanned_trader_weekly_daily_income_zocl msg[3]{};
 
   for (int j = 0; j < 3; ++j)
   {
@@ -137,9 +137,8 @@ void CUnmannedTraderTradeInfo::NotifyIncome()
       source = settingManager->GetNoneString();
     }
 
-    char *chunk = &msg[25 * j];
-    *reinterpret_cast<unsigned __int64 *>(chunk) = m_ui64TotalOldIncome;
-    strncpy_s(chunk + 8, 0x11u, source, 0x10u);
+    msg[j].ui64TotalIncome = m_ui64TotalOldIncome;
+    strncpy_s(msg[j].wszRaceLeaderName, sizeof(msg[j].wszRaceLeaderName), source, 0x10u);
   }
 
   for (int k = 0; k < MAX_PLAYER; ++k)
@@ -151,8 +150,8 @@ void CUnmannedTraderTradeInfo::NotifyIncome()
       g_Network.m_pProcess[0]->LoadSendMsg(
         player->m_ObjID.m_wIndex,
         type,
-        &msg[25 * raceCode],
-        0x19u);
+        reinterpret_cast<char *>(&msg[raceCode]),
+        static_cast<unsigned __int16>(sizeof(_notify_unmanned_trader_weekly_daily_income_zocl)));
     }
   }
 }
@@ -160,7 +159,7 @@ void CUnmannedTraderTradeInfo::NotifyIncome()
 void CUnmannedTraderTradeInfo::NotifyIncome(unsigned __int8 byRace, unsigned __int16 wIndex)
 {
   unsigned __int8 type[2] = {13, 102};
-  char msg[25]{};
+  _notify_unmanned_trader_weekly_daily_income_zocl msg{};
 
   CandidateMgr *candidateMgr = CandidateMgr::Instance();
   const CandidateMgr::_candidate_info *patriarchInfo =
@@ -177,10 +176,14 @@ void CUnmannedTraderTradeInfo::NotifyIncome(unsigned __int8 byRace, unsigned __i
     source = settingManager->GetNoneString();
   }
 
-  *reinterpret_cast<unsigned __int64 *>(msg) = m_ui64TotalOldIncome;
-  strncpy_s(msg + 8, 0x11u, source, 0x10u);
+  msg.ui64TotalIncome = m_ui64TotalOldIncome;
+  strncpy_s(msg.wszRaceLeaderName, sizeof(msg.wszRaceLeaderName), source, 0x10u);
 
-  g_Network.m_pProcess[0]->LoadSendMsg(wIndex, type, msg, 0x19u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CUnmannedTraderTradeInfo::AddIncome(unsigned int dwOriPrice)

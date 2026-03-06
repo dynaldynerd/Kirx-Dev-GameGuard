@@ -7,6 +7,7 @@
 #include "CPotionMgr.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
+#include "Packet/ZoneClientPacket.h"
 
 CExtPotionBuf::CExtPotionBuf()
   : m_bExtPotionBufUse(false), m_bDayChange(false), m_dwEndPotionTime(0)
@@ -139,17 +140,31 @@ void CExtPotionBuf::SendMsg_RemainBufUseTime(
   char nEndHour,
   char nEndMin)
 {
-  char msg[4]{bUse, nEndDay, nEndHour, nEndMin};
+  _remain_potion_buf_use_time_inform_zocl msg{};
+  msg.bUse = bUse != 0;
+  msg.byDay = nEndDay;
+  msg.byHour = nEndHour;
+  msg.byMin = nEndMin;
+
   unsigned __int8 pbyType[2]{7, 110};
-  g_Network.m_pProcess[0]->LoadSendMsg(wIndex, pbyType, msg, 4u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CExtPotionBuf::SednMsg_RemovePotionContEffect(unsigned __int16 wPotionInx, unsigned __int16 wIndex)
 {
-  char msg[2]{};
-  *reinterpret_cast<unsigned __int16 *>(msg) = wPotionInx;
+  _remove_potion_effect_inform_zocl msg{};
+  msg.wPotionIndex = wPotionInx;
+
   unsigned __int8 pbyType[2]{7, 109};
-  g_Network.m_pProcess[0]->LoadSendMsg(wIndex, pbyType, msg, 2u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CExtPotionBuf::UseBuffPotion(CPlayer *pOne)

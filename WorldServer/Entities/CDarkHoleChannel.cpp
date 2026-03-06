@@ -601,7 +601,7 @@ void CDarkHoleChannel::SendMsg_RealMsgInform(char *pMsg)
       g_Network.m_pProcess[0]->LoadSendMsg(
         entry->pOne->m_ObjID.m_wIndex,
         type,
-        msg.szMsg,
+        reinterpret_cast<char *>(&msg),
         len);
     }
   }
@@ -1150,7 +1150,7 @@ void CDarkHoleChannel::SendMsg_QuestInfo(CPlayer *pDst)
 
   unsigned __int8 type[2]{35, 4};
   const unsigned __int16 len = msg.size();
-  g_Network.m_pProcess[0]->LoadSendMsg(pDst->m_ObjID.m_wIndex, type, msg.szDescirptCode, len);
+  g_Network.m_pProcess[0]->LoadSendMsg(pDst->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
 }
 
 void CDarkHoleChannel::SendMsg_MissionInfo(CPlayer *pDst)
@@ -1197,7 +1197,7 @@ void CDarkHoleChannel::SendMsg_MissionInfo(CPlayer *pDst)
 
   unsigned __int8 type[2]{35, 17};
   const unsigned __int16 len = msg.size();
-  g_Network.m_pProcess[0]->LoadSendMsg(pDst->m_ObjID.m_wIndex, type, msg.szDescirptCode, len);
+  g_Network.m_pProcess[0]->LoadSendMsg(pDst->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
 }
 
 void CDarkHoleChannel::SendMsg_MemberInfo(CPlayer *pDst)
@@ -1938,7 +1938,11 @@ void CDarkHoleChannel::SendMsg_ChannelClose()
     _dh_player_mgr *entry = &m_Quester[index];
     if (entry->IsFill())
     {
-      g_Network.m_pProcess[0]->LoadSendMsg(entry->pOne->m_ObjID.m_wIndex, type, &msg.sDum, msg.size());
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        entry->pOne->m_ObjID.m_wIndex,
+        type,
+        reinterpret_cast<char *>(&msg),
+        msg.size());
     }
   }
 }
@@ -1991,7 +1995,11 @@ void CDarkHoleChannel::SendMsg_MissionPass()
     _dh_player_mgr *entry = &m_Quester[index];
     if (entry->IsFill())
     {
-      g_Network.m_pProcess[0]->LoadSendMsg(entry->pOne->m_ObjID.m_wIndex, type, msg.szCompleteMsgCode, msg.size());
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        entry->pOne->m_ObjID.m_wIndex,
+        type,
+        reinterpret_cast<char *>(&msg),
+        msg.size());
     }
   }
 }
@@ -2035,7 +2043,11 @@ void CDarkHoleChannel::SendMsg_NewMission()
     _dh_player_mgr *entry = &m_Quester[index];
     if (entry->IsFill())
     {
-      g_Network.m_pProcess[0]->LoadSendMsg(entry->pOne->m_ObjID.m_wIndex, type, msg.szDescirptCode, msg.size());
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        entry->pOne->m_ObjID.m_wIndex,
+        type,
+        reinterpret_cast<char *>(&msg),
+        msg.size());
     }
   }
 }
@@ -2102,7 +2114,11 @@ void CDarkHoleChannel::SendMsg_QuestPass()
     _dh_player_mgr *entry = &m_Quester[index];
     if (entry->IsFill())
     {
-      g_Network.m_pProcess[0]->LoadSendMsg(entry->pOne->m_ObjID.m_wIndex, type, &msg.sDum, msg.size());
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        entry->pOne->m_ObjID.m_wIndex,
+        type,
+        reinterpret_cast<char *>(&msg),
+        msg.size());
     }
   }
 }
@@ -2116,7 +2132,11 @@ void CDarkHoleChannel::SendMsg_TimeOut()
     _dh_player_mgr *entry = &m_Quester[index];
     if (entry->IsFill())
     {
-      g_Network.m_pProcess[0]->LoadSendMsg(entry->pOne->m_ObjID.m_wIndex, type, &msg.sDum, msg.size());
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        entry->pOne->m_ObjID.m_wIndex,
+        type,
+        reinterpret_cast<char *>(&msg),
+        msg.size());
     }
   }
 }

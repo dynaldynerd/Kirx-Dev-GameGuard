@@ -3,30 +3,7 @@
 #include "IdaCompat.h"
 
 struct _guild_honor_set_request_clzo;
-
-#pragma pack(push, 1)
-struct _guild_honor_list_result_zocl
-{
-  #pragma pack(push, 1)
-  struct __list
-  {
-    unsigned int dwGuildSerial;
-    unsigned int dwEmblemBack;
-    unsigned int dwEmblemMark;
-    char wszGuildName[17];
-    char wszMasterName[17];
-    unsigned __int8 byTaxRate;
-  };
-  #pragma pack(pop)
-
-  unsigned __int8 byListNum;
-  unsigned __int8 byUI;
-  __list GuildList[5];
-
-  _guild_honor_list_result_zocl();
-  int size() const;
-};
-#pragma pack(pop)
+struct _guild_honor_list_result_zocl;
 
 class  CHonorGuild
 {

@@ -13,6 +13,7 @@
 #include "GlobalObjects.h"
 #include "DqsDbStructs.h"
 #include "CMgrAvatorItemHistory.h"
+#include "Packet/ClientZonePacket.h"
 #include "personal_amine_errmsg_zocl.h"
 #include "personal_amine_infoui_open_zocl.h"
 #include "personal_amine_make_storage_zocl.h"
@@ -22,6 +23,7 @@
 #include "personal_automine_selore_zocl.h"
 #include "personal_automine_stop_zocl.h"
 #include "qry_case_make_storage.h"
+#include "qry_case_make_storage_update.h"
 
 #include <cstdio>
 #include <cstring>
@@ -178,7 +180,7 @@ char AutominePersonalMgr::db_load_inven(unsigned int dwSerial, _PERSONALAMINE_IN
   return 1;
 }
 
-char AutominePersonalMgr::make_storagebox(int n, char *pmsg)
+char AutominePersonalMgr::make_storagebox(int n, const _personal_amine_make_storage_clzo *request)
 {
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
@@ -203,7 +205,7 @@ char AutominePersonalMgr::make_storagebox(int n, char *pmsg)
     return 1;
   }
 
-  if (!pmsg || *reinterpret_cast<unsigned int *>(pmsg) != player->m_dwObjSerial)
+  if (!request || request->dwAvatorSerial != player->m_dwObjSerial)
   {
     send_ecode(n, 0x16u);
     return 1;
@@ -230,32 +232,33 @@ _qry_case_make_storage qry{};
   g_Main.PushDQSData(0xFFFFFFFFu, nullptr, 0x38u, reinterpret_cast<char *>(&qry), size);
 }
 
-unsigned __int8 AutominePersonalMgr::request_query(char *pdata)
+unsigned __int8 AutominePersonalMgr::request_query(const _qry_case_make_storage *query)
 {
-  if (!pdata)
+  if (!query)
   {
     return 24;
   }
 
-  if (*pdata)
+  if (query->bySubQry)
   {
-    if (*pdata == 1)
+    if (query->bySubQry == 1)
     {
+      const auto *updateQuery = reinterpret_cast<const _qry_case_make_storage_update_header *>(query);
+      const auto *entries = reinterpret_cast<const _qry_case_make_storage_update_entry *>(updateQuery + 1);
       char buffer[10244]{};
       std::memset(buffer, 0, 10240);
       sprintf(buffer, "update [dbo].[tbl_aminepersonal_inven] set ");
 
       int len = static_cast<int>(strlen_0(buffer));
-      for (int j = 0; j < static_cast<unsigned __int8>(pdata[12]); ++j)
+      for (int j = 0; j < updateQuery->byChangeCount; ++j)
       {
-        int num = static_cast<unsigned __int8>(pdata[12 * j + 24]);
-        int slot = static_cast<unsigned __int8>(pdata[12 * j + 16]);
+        const _qry_case_make_storage_update_entry &entry = entries[j];
         char *dest = &buffer[len];
-        sprintf(dest, ",K%d=%d,N%d=%d,", slot, *reinterpret_cast<unsigned int *>(&pdata[12 * j + 20]), slot, num);
+        sprintf(dest, ",K%d=%d,N%d=%d,", entry.bySlot, entry.dwItemKey, entry.bySlot, entry.byAmount);
       }
 
       len = static_cast<int>(strlen_0(buffer));
-      sprintf(&buffer[len - 1], " where avatorserial = %d", *reinterpret_cast<unsigned int *>(pdata + 8));
+      sprintf(&buffer[len - 1], " where avatorserial = %d", updateQuery->base.dwAvatorSerial);
       if (g_Main.m_pWorldDB->update_amine_personal(buffer))
       {
         return 0;
@@ -265,34 +268,34 @@ unsigned __int8 AutominePersonalMgr::request_query(char *pdata)
     return 24;
   }
 
-  if (g_Main.m_pWorldDB->select_amine_personal(*reinterpret_cast<unsigned int *>(pdata + 8)) != 2
-      || g_Main.m_pWorldDB->insert_amine_personal(*reinterpret_cast<unsigned int *>(pdata + 8)))
+  if (g_Main.m_pWorldDB->select_amine_personal(query->dwAvatorSerial) != 2
+      || g_Main.m_pWorldDB->insert_amine_personal(query->dwAvatorSerial))
   {
     return 0;
   }
   return 24;
 }
 
-void AutominePersonalMgr::result_query(unsigned __int8 byRet, char *pdata)
+void AutominePersonalMgr::result_query(unsigned __int8 byRet, const _qry_case_make_storage *query)
 {
-  if (!pdata)
+  if (!query)
   {
     return;
   }
 
-  if (!*pdata)
+  if (!query->bySubQry)
   {
-    pop_dqs_makestorage(byRet, pdata);
+    pop_dqs_makestorage(byRet, query);
   }
 }
 
-void AutominePersonalMgr::pop_dqs_makestorage(unsigned __int8 byRet, char *pdata)
+void AutominePersonalMgr::pop_dqs_makestorage(unsigned __int8 byRet, const _qry_case_make_storage *query)
 {
-  CPlayer *player = &g_Player[*reinterpret_cast<int *>(pdata + 4)];
+  CPlayer *player = &g_Player[query->nSockIdx];
   if (player->m_bOper)
   {
     unsigned int charSerial = player->m_Param.GetCharSerial();
-    if (charSerial == *reinterpret_cast<unsigned int *>(pdata + 8))
+    if (charSerial == query->dwAvatorSerial)
     {
       if (byRet == 24)
       {
@@ -385,7 +388,7 @@ _STORAGE_LIST::_db_con *AutominePersonalMgr::get_localitem(CPlayer *pOne, unsign
   return item;
 }
 
-char AutominePersonalMgr::install(int n, char *pmsg)
+char AutominePersonalMgr::install(int n, const _personal_automine_install_clzo *request)
 {
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
@@ -424,20 +427,20 @@ char AutominePersonalMgr::install(int n, char *pmsg)
     return 1;
   }
 
-  if (pmsg == nullptr || !check_dummy(player->m_pCurMap, static_cast<unsigned __int8>(pmsg[0]), player->m_fCurPos))
+  if (request == nullptr || !check_dummy(player->m_pCurMap, static_cast<unsigned __int8>(request->byMineDummyIndex), player->m_fCurPos))
   {
     send_ecode(n, 1u);
     return 1;
   }
 
-  _res_dummy *resDummy = &player->m_pCurMap->m_pResDummy[static_cast<unsigned __int8>(pmsg[0])];
+  _res_dummy *resDummy = &player->m_pCurMap->m_pResDummy[static_cast<unsigned __int8>(request->byMineDummyIndex)];
   if (resDummy->GetQualityGrade() != 2 && !player->IsMiningByMinigTicket())
   {
     send_ecode(n, 0x1Au);
     return 1;
   }
 
-  _STORAGE_LIST::_db_con *installItem = get_localitem(player, *reinterpret_cast<unsigned __int16 *>(pmsg + 1));
+  _STORAGE_LIST::_db_con *installItem = get_localitem(player, request->wItemSerial);
   if (installItem == nullptr || installItem->m_byTableCode != 33)
   {
     send_ecode(n, 5u);
@@ -451,7 +454,7 @@ char AutominePersonalMgr::install(int n, char *pmsg)
   if (machine->regist_to_map(
         player,
         installItem,
-        static_cast<unsigned __int8>(pmsg[0]),
+        static_cast<unsigned __int8>(request->byMineDummyIndex),
         m_dwObjSerial,
         delayProf))
   {
@@ -465,7 +468,7 @@ char AutominePersonalMgr::install(int n, char *pmsg)
   return 1;
 }
 
-char AutominePersonalMgr::uninstall(int n, char *pmsg)
+char AutominePersonalMgr::uninstall(int n, const _personal_automine_uninstall_clzo *request)
 {
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
@@ -474,8 +477,8 @@ char AutominePersonalMgr::uninstall(int n, char *pmsg)
   }
 
   AutominePersonal *machine = player->m_Param.m_pAPM;
-  _STORAGE_LIST::_db_con *item = get_localitem(player, *(reinterpret_cast<unsigned __int16 *>(pmsg) + 2));
-  if (!check_machine(n, *reinterpret_cast<unsigned int *>(pmsg), machine, item))
+  _STORAGE_LIST::_db_con *item = get_localitem(player, request->wItemSerial);
+  if (!check_machine(n, request->dwObjSerial, machine, item))
   {
     return 1;
   }
@@ -517,7 +520,7 @@ char AutominePersonalMgr::uninstall(int n)
   return 1;
 }
 
-char AutominePersonalMgr::selectore(unsigned int n, char *pmsg)
+char AutominePersonalMgr::selectore(unsigned int n, const _personal_automine_selore_clzo *request)
 {
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
@@ -526,12 +529,12 @@ char AutominePersonalMgr::selectore(unsigned int n, char *pmsg)
   }
 
   AutominePersonal *machine = player->m_Param.m_pAPM;
-  if (!check_machine(static_cast<int>(n), *reinterpret_cast<unsigned int *>(pmsg), machine, nullptr))
+  if (!check_machine(static_cast<int>(n), request->dwObjSerial, machine, nullptr))
   {
     return 1;
   }
 
-  const unsigned __int8 oreSlot = static_cast<unsigned __int8>(pmsg[4]);
+  const unsigned __int8 oreSlot = static_cast<unsigned __int8>(request->bySelectOre);
   if (oreSlot >= 5u)
   {
     send_ecode(n, 9u);
@@ -553,7 +556,7 @@ char AutominePersonalMgr::selectore(unsigned int n, char *pmsg)
   return 1;
 }
 
-char AutominePersonalMgr::insert_battery(unsigned int n, char *pmsg)
+char AutominePersonalMgr::insert_battery(unsigned int n, const _personal_automine_battery_insert_clzo *request)
 {
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
@@ -562,12 +565,14 @@ char AutominePersonalMgr::insert_battery(unsigned int n, char *pmsg)
   }
 
   AutominePersonal *machine = player->m_Param.m_pAPM;
-  if (!check_machine(static_cast<int>(n), *reinterpret_cast<unsigned int *>(pmsg), machine, nullptr))
+  if (!check_machine(static_cast<int>(n), request->dwObjSerial, machine, nullptr))
   {
     return 1;
   }
 
-  if (!machine->insert_battery(static_cast<unsigned __int8>(pmsg[4]), *reinterpret_cast<unsigned __int16 *>(pmsg + 5)))
+  if (!machine->insert_battery(
+        static_cast<unsigned __int8>(request->byInPos),
+        request->wItemSerial))
   {
     send_ecode(n, 0x18u);
     return 1;
@@ -593,7 +598,7 @@ char AutominePersonalMgr::insert_battery(unsigned int n, char *pmsg)
   return 1;
 }
 
-char AutominePersonalMgr::extract_battery(unsigned int n, char *pmsg)
+char AutominePersonalMgr::extract_battery(unsigned int n, const _personal_automine_battery_extract_clzo *request)
 {
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
@@ -602,14 +607,14 @@ char AutominePersonalMgr::extract_battery(unsigned int n, char *pmsg)
   }
 
   AutominePersonal *machine = player->m_Param.m_pAPM;
-  if (!check_machine(static_cast<int>(n), *reinterpret_cast<unsigned int *>(pmsg), machine, nullptr))
+  if (!check_machine(static_cast<int>(n), request->dwObjSerial, machine, nullptr))
   {
     return 1;
   }
 
   _STORAGE_LIST::_db_con battery{};
-  machine->extract_battery(static_cast<unsigned __int8>(pmsg[4]), &battery);
-  battery.m_byClientIndex = static_cast<unsigned __int8>(pmsg[5]);
+  machine->extract_battery(static_cast<unsigned __int8>(request->byPos), &battery);
+  battery.m_byClientIndex = static_cast<unsigned __int8>(request->bySlotIdx);
 
   _STORAGE_LIST::_db_con *added = player->Emb_AddStorage(0, &battery, false, false);
   if (added == nullptr)
@@ -760,7 +765,7 @@ char AutominePersonalMgr::extract_battery(unsigned int n)
   return 1;
 }
 
-char AutominePersonalMgr::pop_ore(unsigned int n, char *pmsg)
+char AutominePersonalMgr::pop_ore(unsigned int n, const _personal_automine_popore_clzo *request)
 {
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
@@ -775,10 +780,10 @@ char AutominePersonalMgr::pop_ore(unsigned int n, char *pmsg)
   }
 
   _STORAGE_LIST::_storage_con *sourceOre =
-    player->m_Param.m_pStoragePtr[6]->GetPtrFromSerial(*reinterpret_cast<unsigned __int16 *>(pmsg));
+    player->m_Param.m_pStoragePtr[6]->GetPtrFromSerial(request->wItemSerial);
   if (sourceOre == nullptr)
   {
-    m_logError.Write("AutominePersonalMgr::pop_ore() >> Is not exist item(%d)", *reinterpret_cast<unsigned __int16 *>(pmsg));
+    m_logError.Write("AutominePersonalMgr::pop_ore() >> Is not exist item(%d)", request->wItemSerial);
     return 1;
   }
 
@@ -789,8 +794,11 @@ char AutominePersonalMgr::pop_ore(unsigned int n, char *pmsg)
     return 1;
   }
 
-  added->m_byClientIndex = static_cast<unsigned __int8>(pmsg[4]);
-  if (!player->m_pUserDB->Update_ItemSlot(0, added->m_byStorageIndex, static_cast<unsigned __int8>(pmsg[4])))
+  added->m_byClientIndex = static_cast<unsigned __int8>(request->byStorageIndex_R);
+  if (!player->m_pUserDB->Update_ItemSlot(
+        0,
+        added->m_byStorageIndex,
+        static_cast<unsigned __int8>(request->byStorageIndex_R)))
   {
     m_logError.Write("AutominePersonalMgr::pop_ore() >> Failed CPlayer::CUserDB::Update_ItemSlot()");
     return 1;
@@ -803,7 +811,8 @@ char AutominePersonalMgr::pop_ore(unsigned int n, char *pmsg)
   }
 
   _personal_automine_popore_zocl msg{};
-  msg = *reinterpret_cast<_personal_automine_popore_zocl *>(pmsg);
+  msg.wItemSerial = request->wItemSerial;
+  msg.byNum = request->byNum;
   unsigned __int8 type[2] = {14, 57};
   g_Network.m_pProcess[0]->LoadSendMsg(
     static_cast<int>(n),
@@ -832,7 +841,7 @@ char AutominePersonalMgr::pop_ore(unsigned int n, char *pmsg)
   return 1;
 }
 
-char AutominePersonalMgr::Open_InvenUI(int n, bool *pmsg)
+char AutominePersonalMgr::Open_InvenUI(int n, const _personal_amine_infoui_open_clzo *request)
 {
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
@@ -842,13 +851,13 @@ char AutominePersonalMgr::Open_InvenUI(int n, bool *pmsg)
 
   if (player->m_Param.m_pAPM)
   {
-    player->m_Param.m_pAPM->set_openUI_Inven(*pmsg);
+    player->m_Param.m_pAPM->set_openUI_Inven(request->bIsOpen);
     player->m_Param.m_pAPM->send_changed_packet(static_cast<unsigned int>(n));
   }
   return 1;
 }
 
-char AutominePersonalMgr::Open_InfoUI(unsigned int n, bool *pmsg)
+char AutominePersonalMgr::Open_InfoUI(unsigned int n, const _personal_amine_infoui_open_clzo *request)
 {
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
@@ -857,7 +866,7 @@ char AutominePersonalMgr::Open_InfoUI(unsigned int n, bool *pmsg)
   }
 
   AutominePersonal *machine = player->m_Param.m_pAPM;
-  machine->set_openUI_battery(*pmsg);
+  machine->set_openUI_battery(request->bIsOpen);
 
   _personal_amine_infoui_open_zocl msg{};
   msg.dwObjSerial = machine->get_objserial();

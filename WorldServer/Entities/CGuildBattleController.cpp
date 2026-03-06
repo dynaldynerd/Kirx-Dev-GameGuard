@@ -896,13 +896,17 @@ int CGuildBattleController::CheatRegenStone(CPlayer *pkPlayer, int iRengenPos)
     return -1;
   }
 
-  char msg[4]{};
-  *reinterpret_cast<int *>(msg) = portalInx;
+  _guild_battle_regen_stone_result_zocl msg{};
+  msg.nPortalInx = portalInx;
 
   unsigned __int8 type[2]{};
   type[0] = 27;
   type[1] = 69;
-  g_Network.m_pProcess[0]->LoadSendMsg(pkPlayer->m_ObjID.m_wIndex, type, msg, 4u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    pkPlayer->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
   return portalInx;
 }
 

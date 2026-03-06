@@ -5,6 +5,7 @@
 #include "CReturnGateCreateParam.h"
 #include "CPlayer.h"
 #include "GlobalObjects.h"
+#include "Packet/ZoneClientPacket.h"
 
 #include <cstring>
 
@@ -277,10 +278,14 @@ int CReturnGateController::ProcessEnter(unsigned int uiGateInx, CPlayer *pkObj)
 
 void CReturnGateController::SendEnterResult(char iResult, CPlayer *pkObj)
 {
-  char msg[1]{};
-  msg[0] = iResult;
+  _enter_return_gate_result_zocl msg{};
+  msg.byResult = iResult;
   unsigned __int8 pbyType[2] = {8, 10};
-  g_Network.m_pProcess[0]->LoadSendMsg(pkObj->m_ObjID.m_wIndex, pbyType, msg, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    pkObj->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 char CReturnGateController::Enter(unsigned int uiGateInx, CPlayer *pkObj)

@@ -3,9 +3,7 @@
 #include "qry_case_contsave.h"
 
 _qry_case_contsave::_qry_case_contsave()
-{
-  memset_0(this, 0, sizeof(_qry_case_contsave));
-}
+  = default;
 
 _qry_case_contsave::~_qry_case_contsave() = default;
 

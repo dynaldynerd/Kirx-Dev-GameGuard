@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "WorldAccountPacket.h"
+#include "ZoneAccountPacket.h"
 
 unsigned __int16 _character_disconnect_result_wrac::size() const
 {

@@ -125,13 +125,15 @@ char CPlayer::dev_animus_recall_time_free(bool bFree)
   }
 
   this->m_bFreeRecallWaitTime = bFree;
-  char szMsg[32]{};
-  szMsg[0] = static_cast<char>(bFree);
+  _animus_recall_wait_time_free_inform_zocl msg{};
+  msg.bFree = bFree;
 
-  unsigned __int8 pbyType[36]{};
-  pbyType[0] = 22;
-  pbyType[1] = 13;
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, szMsg, 1u);
+  unsigned __int8 pbyType[2]{22, 13};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
   return 1;
 }
 
@@ -350,15 +352,23 @@ char CPlayer::dev_full_animus_gauge()
 
     unsigned __int8 typeHp[2]{22, 9};
     unsigned __int8 typeFp[2]{22, 10};
-    unsigned __int8 msgHp[4]{};
-    unsigned __int8 msgFp[4]{};
-    *reinterpret_cast<unsigned __int16 *>(msgHp) = animus->m_wSerial;
-    *reinterpret_cast<unsigned __int16 *>(msgHp + 2) = *reinterpret_cast<unsigned __int16 *>(levelPtr);
-    g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, typeHp, reinterpret_cast<char *>(msgHp), 4u);
+    _animus_hp_inform_zocl msgHp{};
+    msgHp.wAnimusItemSerial = animus->m_wSerial;
+    msgHp.wLeftHP = *reinterpret_cast<unsigned __int16 *>(levelPtr);
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      this->m_ObjID.m_wIndex,
+      typeHp,
+      reinterpret_cast<char *>(&msgHp),
+      static_cast<unsigned __int16>(sizeof(msgHp)));
 
-    *reinterpret_cast<unsigned __int16 *>(msgFp) = animus->m_wSerial;
-    *reinterpret_cast<unsigned __int16 *>(msgFp + 2) = *(reinterpret_cast<unsigned __int16 *>(levelPtr) + 1);
-    g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, typeFp, reinterpret_cast<char *>(msgFp), 4u);
+    _animus_fp_inform_zocl msgFp{};
+    msgFp.wAnimusItemSerial = animus->m_wSerial;
+    msgFp.wLeftFP = *(reinterpret_cast<unsigned __int16 *>(levelPtr) + 1);
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      this->m_ObjID.m_wIndex,
+      typeFp,
+      reinterpret_cast<char *>(&msgFp),
+      static_cast<unsigned __int16>(sizeof(msgFp)));
   }
   return 1;
 }
@@ -1006,103 +1016,114 @@ char CPlayer::dev_quest_complete_other(char *pwszCharName)
 
 char CPlayer::dev_set_animus_exp(unsigned __int64 dwExpPoint)
 {
+  if (!this->m_pUserDB)
+  {
+    return 0;
+  }
 
-    __int64 *v2; // rdi
-    __int64 i; // rcx
-    __int64 v5; // [rsp+0h] [rbp-98h] BYREF
-    int j; // [rsp+30h] [rbp-68h]
-    char szMsg[2]; // [rsp+48h] [rbp-50h] BYREF
-    unsigned __int64 v8; // [rsp+4Ah] [rbp-4Eh]
-    unsigned __int8 pbyType[36]; // [rsp+74h] [rbp-24h] BYREF
-  if ( !this->m_pUserDB )
-      return 0;
-    for ( j = 0; j < 4; ++j )
+  unsigned __int8 pbyType[2]{22, 11};
+  for (int j = 0; j < 4; ++j)
+  {
+    _STORAGE_LIST::_db_con &animus = this->m_Param.m_dbAnimus.m_pStorageList[j];
+    if (!animus.m_bLoad || animus.m_bLock || animus.m_dwDur == dwExpPoint)
     {
-      if ( this->m_Param.m_dbAnimus.m_pStorageList[j].m_bLoad
-        && !this->m_Param.m_dbAnimus.m_pStorageList[j].m_bLock
-        && this->m_Param.m_dbAnimus.m_pStorageList[j].m_dwDur != dwExpPoint )
-      {
-        this->m_Param.m_dbAnimus.m_pStorageList[j].m_dwDur = dwExpPoint;
-        if ( this->m_pUserDB )
-          this->m_pUserDB->Update_ItemDur( 4u, j, dwExpPoint, 0);
-        *(_WORD *)szMsg = this->m_Param.m_dbAnimus.m_pStorageList[j].m_wSerial;
-        v8 = dwExpPoint;
-        pbyType[0] = 22;
-        pbyType[1] = 11;
-        g_Network.m_pProcess[0]->LoadSendMsg( this->m_ObjID.m_wIndex, pbyType, szMsg, 0xAu);
-      }
+      continue;
     }
-    return 1;
+
+    animus.m_dwDur = dwExpPoint;
+    this->m_pUserDB->Update_ItemDur(4u, j, dwExpPoint, 0);
+
+    _animus_exp_inform_zocl msg{};
+    msg.wAnimusItemSerial = animus.m_wSerial;
+    msg.dwExp = dwExpPoint;
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      this->m_ObjID.m_wIndex,
+      pbyType,
+      reinterpret_cast<char *>(&msg),
+      static_cast<unsigned __int16>(sizeof(msg)));
+  }
+
+  return 1;
 }
 
 char CPlayer::dev_set_animus_lv(int nAnimusLv)
 {
+  if (!this->m_pUserDB)
+  {
+    return 0;
+  }
+  if (nAnimusLv > this->m_Param.GetMaxLevel() || nAnimusLv == 0)
+  {
+    return 0;
+  }
 
-    __int64 *v2; // rdi
-    __int64 i; // rcx
-    __int64 v5; // [rsp+0h] [rbp-128h] BYREF
-    _animus_fld *v6; // [rsp+30h] [rbp-F8h]
-    _animus_fld *AnimusFldFromLv; // [rsp+38h] [rbp-F0h]
-    unsigned int *p_m_dwLv; // [rsp+40h] [rbp-E8h]
-    int j; // [rsp+48h] [rbp-E0h]
-    char szMsg[2]; // [rsp+58h] [rbp-D0h] BYREF
-    unsigned __int64 m_dwDur; // [rsp+5Ah] [rbp-CEh]
-    unsigned __int8 pbyType[32]; // [rsp+84h] [rbp-A4h] BYREF
-    char v13[2]; // [rsp+A4h] [rbp-84h] BYREF
-    __int16 v14; // [rsp+A6h] [rbp-82h]
-    unsigned __int8 v15[32]; // [rsp+C4h] [rbp-64h] BYREF
-    char v16[2]; // [rsp+E4h] [rbp-44h] BYREF
-    __int16 v17; // [rsp+E6h] [rbp-42h]
-    unsigned __int8 v18[36]; // [rsp+104h] [rbp-24h] BYREF
-  if ( !this->m_pUserDB )
-      return 0;
-    if ( nAnimusLv > this->m_Param.GetMaxLevel() || !nAnimusLv )
-      return 0;
-    v6 = 0LL;
-    AnimusFldFromLv = 0LL;
-    p_m_dwLv = 0LL;
-    for ( j = 0; j < 4; ++j )
+  unsigned __int8 typeExp[2]{22, 11};
+  unsigned __int8 typeHp[2]{22, 9};
+  unsigned __int8 typeFp[2]{22, 10};
+  for (int j = 0; j < 4; ++j)
+  {
+    _STORAGE_LIST::_db_con &animus = this->m_Param.m_dbAnimus.m_pStorageList[j];
+    if (!animus.m_bLoad || animus.m_bLock)
     {
-      if ( this->m_Param.m_dbAnimus.m_pStorageList[j].m_bLoad && !this->m_Param.m_dbAnimus.m_pStorageList[j].m_bLock )
-      {
-        p_m_dwLv = &this->m_Param.m_dbAnimus.m_pStorageList[j].m_dwLv;
-        if ( nAnimusLv == 1 )
-        {
-          this->m_Param.m_dbAnimus.m_pStorageList[j].m_dwDur = 0LL;
-          AnimusFldFromLv = GetAnimusFldFromLv(this->m_Param.m_dbAnimus.m_pStorageList[j].m_wItemIndex, 1u);
-          *(_WORD *)p_m_dwLv = AnimusFldFromLv->m_nMaxHP;
-          *((_WORD *)p_m_dwLv + 1) = AnimusFldFromLv->m_nMaxFP;
-        }
-        else
-        {
-          v6 = GetAnimusFldFromLv(this->m_Param.m_dbAnimus.m_pStorageList[j].m_wItemIndex, nAnimusLv - 1);
-          AnimusFldFromLv = GetAnimusFldFromLv(this->m_Param.m_dbAnimus.m_pStorageList[j].m_wItemIndex, nAnimusLv);
-          if ( !v6 || !AnimusFldFromLv )
-            return 0;
-          this->m_Param.m_dbAnimus.m_pStorageList[j].m_dwDur = v6->m_nForLvUpExp + 1;
-          *(_WORD *)p_m_dwLv = AnimusFldFromLv->m_nMaxHP;
-          *((_WORD *)p_m_dwLv + 1) = AnimusFldFromLv->m_nMaxFP;
-        }
-        if ( this->m_pUserDB )
-          this->m_pUserDB->Update_ItemDur( 4u, j, this->m_Param.m_dbAnimus.m_pStorageList[j].m_dwDur, 0);
-        *(_WORD *)szMsg = this->m_Param.m_dbAnimus.m_pStorageList[j].m_wSerial;
-        m_dwDur = this->m_Param.m_dbAnimus.m_pStorageList[j].m_dwDur;
-        pbyType[0] = 22;
-        pbyType[1] = 11;
-        g_Network.m_pProcess[0]->LoadSendMsg( this->m_ObjID.m_wIndex, pbyType, szMsg, 0xAu);
-        *(_WORD *)v13 = this->m_Param.m_dbAnimus.m_pStorageList[j].m_wSerial;
-        v14 = *(_WORD *)p_m_dwLv;
-        v15[0] = 22;
-        v15[1] = 9;
-        g_Network.m_pProcess[0]->LoadSendMsg( this->m_ObjID.m_wIndex, v15, v13, 4u);
-        *(_WORD *)v16 = this->m_Param.m_dbAnimus.m_pStorageList[j].m_wSerial;
-        v17 = *((_WORD *)p_m_dwLv + 1);
-        v18[0] = 22;
-        v18[1] = 10;
-        g_Network.m_pProcess[0]->LoadSendMsg( this->m_ObjID.m_wIndex, v18, v16, 4u);
-      }
+      continue;
     }
-    return 1;
+
+    unsigned int *p_m_dwLv = &animus.m_dwLv;
+    _animus_fld *animusFldFromLv = nullptr;
+    if (nAnimusLv == 1)
+    {
+      animus.m_dwDur = 0;
+      animusFldFromLv = GetAnimusFldFromLv(animus.m_wItemIndex, 1u);
+      *reinterpret_cast<unsigned __int16 *>(p_m_dwLv) = static_cast<unsigned __int16>(animusFldFromLv->m_nMaxHP);
+      *(reinterpret_cast<unsigned __int16 *>(p_m_dwLv) + 1) =
+        static_cast<unsigned __int16>(animusFldFromLv->m_nMaxFP);
+    }
+    else
+    {
+      _animus_fld *prevAnimusFld = GetAnimusFldFromLv(animus.m_wItemIndex, nAnimusLv - 1);
+      animusFldFromLv = GetAnimusFldFromLv(animus.m_wItemIndex, nAnimusLv);
+      if (!prevAnimusFld || !animusFldFromLv)
+      {
+        return 0;
+      }
+
+      animus.m_dwDur = prevAnimusFld->m_nForLvUpExp + 1;
+      *reinterpret_cast<unsigned __int16 *>(p_m_dwLv) = static_cast<unsigned __int16>(animusFldFromLv->m_nMaxHP);
+      *(reinterpret_cast<unsigned __int16 *>(p_m_dwLv) + 1) =
+        static_cast<unsigned __int16>(animusFldFromLv->m_nMaxFP);
+    }
+
+    this->m_pUserDB->Update_ItemDur(4u, j, animus.m_dwDur, 0);
+
+    _animus_exp_inform_zocl msgExp{};
+    msgExp.wAnimusItemSerial = animus.m_wSerial;
+    msgExp.dwExp = animus.m_dwDur;
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      this->m_ObjID.m_wIndex,
+      typeExp,
+      reinterpret_cast<char *>(&msgExp),
+      static_cast<unsigned __int16>(sizeof(msgExp)));
+
+    _animus_hp_inform_zocl msgHp{};
+    msgHp.wAnimusItemSerial = animus.m_wSerial;
+    msgHp.wLeftHP = *reinterpret_cast<unsigned __int16 *>(p_m_dwLv);
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      this->m_ObjID.m_wIndex,
+      typeHp,
+      reinterpret_cast<char *>(&msgHp),
+      static_cast<unsigned __int16>(sizeof(msgHp)));
+
+    _animus_fp_inform_zocl msgFp{};
+    msgFp.wAnimusItemSerial = animus.m_wSerial;
+    msgFp.wLeftFP = *(reinterpret_cast<unsigned __int16 *>(p_m_dwLv) + 1);
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      this->m_ObjID.m_wIndex,
+      typeFp,
+      reinterpret_cast<char *>(&msgFp),
+      static_cast<unsigned __int16>(sizeof(msgFp)));
+  }
+
+  return 1;
 }
 
 char CPlayer::dev_set_hp(float prob)
@@ -1636,22 +1657,19 @@ char CPlayer::dev_up_skill(char *pszSkillCode, unsigned int nCum)
 
 char CPlayer::dev_view_boss()
 {
+  const unsigned __int64 stateWithBossFlag = this->m_dwLastState | 0x10000uLL;
 
-    __int64 *v1; // rdi
-    __int64 i; // rcx
-    __int64 v4; // [rsp+0h] [rbp-98h] BYREF
-    unsigned __int64 m_dwLastState; // [rsp+30h] [rbp-68h]
-    char szMsg[4]; // [rsp+48h] [rbp-50h] BYREF
-    unsigned __int64 v7; // [rsp+4Ch] [rbp-4Ch]
-    unsigned __int8 pbyType[36]; // [rsp+74h] [rbp-24h] BYREF
-  m_dwLastState = this->m_dwLastState;
-    m_dwLastState |= 0x10000uLL;
-    *(_DWORD *)szMsg = this->m_dwObjSerial;
-    v7 = m_dwLastState;
-    pbyType[0] = 4;
-    pbyType[1] = 25;
-    g_Network.m_pProcess[0]->LoadSendMsg( this->m_ObjID.m_wIndex, pbyType, szMsg, 0xCu);
-    return 1;
+  _state_inform_zocl msg{};
+  msg.dwSerial = this->m_dwObjSerial;
+  msg.dwState = stateWithBossFlag;
+
+  unsigned __int8 pbyType[2]{4, 25};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
+  return 1;
 }
 
 char CPlayer::dev_view_method(char *pwszDstName)

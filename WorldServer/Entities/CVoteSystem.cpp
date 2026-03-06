@@ -30,12 +30,12 @@ __int64 _starting_vote_inform_zocl::size()
   return 1289LL - (1280 - wContentSize);
 }
 
-CVoteSystem::_started_vote_inform_zocl::_started_vote_inform_zocl()
+_started_vote_inform_zocl::_started_vote_inform_zocl()
 {
   wContentSize = 0;
 }
 
-__int64 CVoteSystem::_started_vote_inform_zocl::size()
+__int64 _started_vote_inform_zocl::size()
 {
   if (wContentSize > 0x500u)
   {
@@ -238,16 +238,13 @@ void CVoteSystem::Loop()
 
   m_dwLastBroadcastTime = loopTime;
 
-  char msg[11]{};
-  *reinterpret_cast<int *>(msg) = m_nSerial;
-  unsigned __int16 point[3]{};
+  _progress_vote_inform_zocl msg{};
+  msg.nVoteSerial = m_nSerial;
   for (int index = 0; index < 3; ++index)
   {
-    point[index] = static_cast<unsigned __int16>(m_dwPoint[index]);
+    msg.wPoint[index] = static_cast<unsigned __int16>(m_dwPoint[index]);
   }
-  const bool hurry = m_bHurry;
-  memcpy_0(msg + 4, point, sizeof(point));
-  msg[10] = static_cast<char>(hurry);
+  msg.bHurry = m_bHurry;
 
   unsigned __int8 type[20]{};
   type[0] = 26;
@@ -258,7 +255,11 @@ void CVoteSystem::Loop()
     CPlayer *player = &g_Player[clientIndex];
     if (player->m_bLive && static_cast<unsigned int>(player->m_Param.GetRaceCode()) == m_byRaceCode)
     {
-      g_Network.m_pProcess[0]->LoadSendMsg(clientIndex, type, msg, 11);
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        clientIndex,
+        type,
+        reinterpret_cast<char *>(&msg),
+        static_cast<unsigned __int16>(sizeof(msg)));
     }
   }
 }
@@ -273,14 +274,12 @@ char CVoteSystem::StopVote()
   m_bActive = false;
   m_listVote.ResetList();
 
-  char msg[10]{};
-  *reinterpret_cast<int *>(msg) = m_nSerial;
-  unsigned __int16 point[3]{};
+  _complete_vote_inform_zocl msg{};
+  msg.nVoteSerial = m_nSerial;
   for (int index = 0; index < 3; ++index)
   {
-    point[index] = static_cast<unsigned __int16>(m_dwPoint[index]);
+    msg.wPoint[index] = static_cast<unsigned __int16>(m_dwPoint[index]);
   }
-  memcpy_0(msg + 4, point, sizeof(point));
 
   unsigned __int8 type[20]{};
   type[0] = 26;
@@ -291,7 +290,11 @@ char CVoteSystem::StopVote()
     CPlayer *player = &g_Player[clientIndex];
     if (player->m_bLive && static_cast<unsigned int>(player->m_Param.GetRaceCode()) == m_byRaceCode)
     {
-      g_Network.m_pProcess[0]->LoadSendMsg(clientIndex, type, msg, 10);
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        clientIndex,
+        type,
+        reinterpret_cast<char *>(&msg),
+        static_cast<unsigned __int16>(sizeof(msg)));
     }
   }
 

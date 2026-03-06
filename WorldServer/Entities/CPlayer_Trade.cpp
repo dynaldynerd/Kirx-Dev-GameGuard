@@ -101,6 +101,7 @@
 #include "WorldServerUtil.h"
 #include "NetCheckPackets.h"
 #include "GlobalObjectDefs.h"
+#include "Packet/ZoneClientPacket.h"
 
 #include <ctime>
 #include <mmsystem.h>
@@ -110,24 +111,33 @@
 
 void CPlayer::SendMsg_StartShopping()
 {
-  char payload[1]{};
+  _start_trade_inform_zocl payload{};
+  payload.s = 0;
 
   unsigned __int8 type[2] = {12, 16};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
 }
 
 void CPlayer::SendMsg_RemainTimeInform(__int16 iType, int lRemainTime, _SYSTEMTIME *pstEndDate)
 {
-  char payload[0x16]{};
-  *reinterpret_cast<__int16 *>(payload) = iType;
-  *reinterpret_cast<int *>(payload + 2) = lRemainTime;
+  _remaintime_inform_zocl payload{};
+  payload.iType = iType;
+  payload.lRemainMin = lRemainTime;
   if (pstEndDate)
   {
-    memcpy_0(payload + 6, pstEndDate, 0x10uLL);
+    payload.stEndDate = *pstEndDate;
   }
 
   unsigned __int8 type[2] = {29, 1};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x16u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
 }
 
 void CPlayer::SendMsg_BillingTypeChangeInform(
@@ -136,35 +146,43 @@ void CPlayer::SendMsg_BillingTypeChangeInform(
   _SYSTEMTIME *pstEndDate,
   unsigned __int8 byReason)
 {
-  char payload[0x19]{};
-  *reinterpret_cast<__int16 *>(payload) = this->m_pUserDB->m_BillingInfo.iType;
-  *reinterpret_cast<__int16 *>(payload + 2) = iType;
-  *reinterpret_cast<int *>(payload + 4) = lRemainTime;
+  _change_billing_type_inform_zocl payload{};
+  payload.iCurrentType = this->m_pUserDB->m_BillingInfo.iType;
+  payload.iChangeType = iType;
+  payload.lRemainMin = lRemainTime;
   if (pstEndDate)
   {
-    memcpy_0(payload + 8, pstEndDate, 0x10uLL);
+    payload.stEndDate = *pstEndDate;
   }
-  payload[24] = static_cast<char>(byReason);
+  payload.byReason = static_cast<char>(byReason);
 
   unsigned __int8 type[2] = {29, 3};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x19u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
 }
 
 void CPlayer::SendMsg_EconomyHistoryInform()
 {
-  char msg[0x48]{};
+  _economy_history_inform_zocl msg{};
   _economy_history_data *history = eGetGuideHistory();
 
   for (int race = 0; race < 3; ++race)
   {
     for (int index = 0; index < 12; ++index)
     {
-      *reinterpret_cast<unsigned __int16 *>(&msg[24 * race + 2 * index]) = history[index].wEconomyGuide[race];
+      msg.wEconomyGuide[race][index] = history[index].wEconomyGuide[race];
     }
   }
 
   unsigned __int8 type[2] = {12, 14};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, msg, 0x48u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CPlayer::SendMsg_EconomyRateInform(char bStart)
@@ -260,164 +278,228 @@ void CPlayer::SendMsg_TransShipRenewTicketResult(char byErrCode)
 
 void CPlayer::SendMsg_DTradeAskInform(CPlayer *pAsker)
 {
-  char payload[6]{};
-  *reinterpret_cast<unsigned __int16 *>(payload) = pAsker->m_ObjID.m_wIndex;
-  *reinterpret_cast<unsigned int *>(payload + 2) = pAsker->m_dwObjSerial;
+  _d_trade_ask_inform_zocl payload{};
+  payload.idAsker.wIndex = pAsker->m_ObjID.m_wIndex;
+  payload.idAsker.dwSerial = pAsker->m_dwObjSerial;
 
   unsigned __int8 type[2] = {18, 3};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 6u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
 }
 
 void CPlayer::SendMsg_DTradeAnswerResult(char byErrCode)
 {
-  char payload[1]{};
-  payload[0] = byErrCode;
+  _d_trade_answer_result_zocl payload{};
+  payload.byErrCode = byErrCode;
 
   unsigned __int8 type[2] = {18, 5};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
 }
 
 void CPlayer::SendMsg_DTradeStartInform(CPlayer *pAsker, CPlayer *pAnswer, unsigned int *pdwKey)
 {
-  char payload[0x1E]{};
-  *reinterpret_cast<unsigned __int16 *>(payload) = pAsker->m_ObjID.m_wIndex;
-  *reinterpret_cast<unsigned int *>(payload + 2) = pAsker->m_dwObjSerial;
-  payload[6] = static_cast<char>(pAsker->m_pmTrd.byEmptyInvenNum);
-  *reinterpret_cast<unsigned __int16 *>(payload + 7) = pAnswer->m_ObjID.m_wIndex;
-  *reinterpret_cast<unsigned int *>(payload + 9) = pAnswer->m_dwObjSerial;
-  payload[13] = static_cast<char>(pAnswer->m_pmTrd.byEmptyInvenNum);
+  _d_trade_start_inform_zocl payload{};
+  payload.idAsker.wIndex = pAsker->m_ObjID.m_wIndex;
+  payload.idAsker.dwSerial = pAsker->m_dwObjSerial;
+  payload.byAskerEmptyNum = static_cast<char>(pAsker->m_pmTrd.byEmptyInvenNum);
+  payload.idAnswer.wIndex = pAnswer->m_ObjID.m_wIndex;
+  payload.idAnswer.dwSerial = pAnswer->m_dwObjSerial;
+  payload.byAnswerEmptyNum = static_cast<char>(pAnswer->m_pmTrd.byEmptyInvenNum);
   if (pdwKey)
   {
-    memcpy_0(payload + 14, pdwKey, 0x10uLL);
+    memcpy_0(payload.dwKey, pdwKey, sizeof(payload.dwKey));
   }
 
   unsigned __int8 type[2] = {18, 6};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x1Eu);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
 }
 
 void CPlayer::SendMsg_DTradeLockResult(char byErrCode)
 {
-  char payload[1]{};
-  payload[0] = byErrCode;
+  _d_trade_lock_result_zocl payload{};
+  payload.byErrCode = byErrCode;
 
   unsigned __int8 type[2] = {18, 11};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
 }
 
 void CPlayer::SendMsg_DTradeLockInform()
 {
-  char payload[1]{};
+  _d_trade_lock_inform_zocl payload{};
+  payload.dummy[0] = 0;
 
   unsigned __int8 type[2] = {18, 12};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
 }
 
 void CPlayer::SendMsg_DTradeAddResult(char byErrCode)
 {
-  char payload[1]{};
-  payload[0] = byErrCode;
+  _d_trade_add_result_zocl payload{};
+  payload.byErrCode = byErrCode;
 
   unsigned __int8 type[2] = {18, 14};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
 }
 
 void CPlayer::SendMsg_DTradeAddInform(char bySlotIndex, _STORAGE_LIST::_db_con *pItem, unsigned __int8 byAmount)
 {
-  char payload[0x17]{};
-  payload[0] = bySlotIndex;
-  payload[1] = static_cast<char>(pItem->m_byTableCode);
-  *reinterpret_cast<unsigned __int16 *>(payload + 2) = pItem->m_wItemIndex;
-  *reinterpret_cast<unsigned __int64 *>(payload + 4) = pItem->m_dwDur;
-  *reinterpret_cast<unsigned int *>(payload + 12) = pItem->m_dwLv;
-  payload[16] = static_cast<char>(byAmount);
-  payload[17] = static_cast<char>(this->m_pmTrd.byEmptyInvenNum);
-  payload[18] = static_cast<char>(pItem->m_byCsMethod);
-  *reinterpret_cast<unsigned int *>(payload + 19) = pItem->m_dwT;
+  _d_trade_add_inform_zocl payload{};
+  payload.bySlotIndex = bySlotIndex;
+  payload.byTableCode = static_cast<char>(pItem->m_byTableCode);
+  payload.wItemIndex = pItem->m_wItemIndex;
+  payload.dwDurPoint = pItem->m_dwDur;
+  payload.dwUdtInfo = pItem->m_dwLv;
+  payload.byAmount = static_cast<char>(byAmount);
+  payload.byEmptyInvenNum = static_cast<char>(this->m_pmTrd.byEmptyInvenNum);
+  payload.byCsMethod = static_cast<char>(pItem->m_byCsMethod);
+  payload.dwT = pItem->m_dwT;
 
   unsigned __int8 type[2] = {18, 15};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x17u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
 }
 
 void CPlayer::SendMsg_DTradeDelResult(char byErrCode)
 {
-  char payload[1]{};
-  payload[0] = byErrCode;
+  _d_trade_del_result_zocl payload{};
+  payload.byErrCode = byErrCode;
 
   unsigned __int8 type[2] = {18, 17};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
 }
 
 void CPlayer::SendMsg_DTradeDelInform(char bySlotIndex)
 {
-  char payload[2]{};
-  payload[0] = bySlotIndex;
-  payload[1] = static_cast<char>(this->m_pmTrd.byEmptyInvenNum);
+  _d_trade_del_inform_zocl payload{};
+  payload.bySlotIndex = bySlotIndex;
+  payload.byEmptyInvenNum = static_cast<char>(this->m_pmTrd.byEmptyInvenNum);
 
   unsigned __int8 type[2] = {18, 18};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 2u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
 }
 
 void CPlayer::SendMsg_DTradeBetResult(char byErrCode)
 {
-  char payload[1]{};
-  payload[0] = byErrCode;
+  _d_trade_bet_result_zocl payload{};
+  payload.byErrCode = byErrCode;
 
   unsigned __int8 type[2] = {18, 20};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
 }
 
 void CPlayer::SendMsg_DTradeBetInform(char byUnitCode, unsigned int dwAmount)
 {
-  char payload[5]{};
-  payload[0] = byUnitCode;
-  *reinterpret_cast<unsigned int *>(payload + 1) = dwAmount;
+  _d_trade_bet_inform_zocl payload{};
+  payload.byMoneyUnit = byUnitCode;
+  payload.dwBetAmount = dwAmount;
 
   unsigned __int8 type[2] = {18, 21};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 5u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
 }
 
 void CPlayer::SendMsg_DTradeUnitInfoInform(char byTradeSlotIndex, _UNIT_DB_BASE::_LIST *pUnitData)
 {
-  char payload[0x38]{};
-  payload[0] = byTradeSlotIndex;
-  payload[1] = static_cast<char>(pUnitData->byFrame);
-  *reinterpret_cast<unsigned int *>(payload + 2) = pUnitData->dwGauge;
-  memcpy_0(payload + 6, pUnitData->byPart, sizeof(pUnitData->byPart));
-  memcpy_0(payload + 12, pUnitData->dwBullet, sizeof(pUnitData->dwBullet));
-  memcpy_0(payload + 20, pUnitData->dwSpare, sizeof(pUnitData->dwSpare));
-  *reinterpret_cast<int *>(payload + 52) = pUnitData->nPullingFee;
+  _d_trade_unit_info_inform_zocl payload{};
+  payload.byTradeSlotIndex = byTradeSlotIndex;
+  payload.byFrame = static_cast<char>(pUnitData->byFrame);
+  payload.dwGauge = pUnitData->dwGauge;
+  memcpy_0(payload.byPart, pUnitData->byPart, sizeof(payload.byPart));
+  memcpy_0(payload.dwBullet, pUnitData->dwBullet, sizeof(payload.dwBullet));
+  memcpy_0(payload.dwSpare, pUnitData->dwSpare, sizeof(payload.dwSpare));
+  payload.nDebtFee = pUnitData->nPullingFee;
 
   unsigned __int8 type[2] = {18, 27};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x38u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
 }
 
 void CPlayer::SendMsg_DTradeUnitAddInform(unsigned __int16 wUnitKeySerial, _UNIT_DB_BASE::_LIST *pUnitData)
 {
-  char payload[0x3A]{};
-  *reinterpret_cast<unsigned __int16 *>(payload) = wUnitKeySerial;
-  payload[2] = static_cast<char>(pUnitData->bySlotIndex);
-  payload[3] = static_cast<char>(pUnitData->byFrame);
-  *reinterpret_cast<unsigned int *>(payload + 4) = pUnitData->dwGauge;
-  memcpy_0(payload + 8, pUnitData->byPart, sizeof(pUnitData->byPart));
-  memcpy_0(payload + 14, pUnitData->dwBullet, sizeof(pUnitData->dwBullet));
-  memcpy_0(payload + 22, pUnitData->dwSpare, sizeof(pUnitData->dwSpare));
-  *reinterpret_cast<int *>(payload + 54) = pUnitData->nPullingFee;
+  _d_trade_unit_add_inform_zocl payload{};
+  payload.wUnitKeySerial = wUnitKeySerial;
+  payload.bySlotIndex = static_cast<char>(pUnitData->bySlotIndex);
+  payload.byFrame = static_cast<char>(pUnitData->byFrame);
+  payload.dwGauge = pUnitData->dwGauge;
+  memcpy_0(payload.byPart, pUnitData->byPart, sizeof(payload.byPart));
+  memcpy_0(payload.dwBullet, pUnitData->dwBullet, sizeof(payload.dwBullet));
+  memcpy_0(payload.dwSpare, pUnitData->dwSpare, sizeof(payload.dwSpare));
+  payload.nPullingFee = pUnitData->nPullingFee;
 
   unsigned __int8 type[2] = {18, 28};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x3Au);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
 }
 
 void CPlayer::SendMsg_DTradeOKResult(char byErrCode)
 {
+  _d_trade_ok_result_zocl payload{};
+  payload.byErrCode = byErrCode;
   unsigned __int8 type[2] = {18, 23};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &byErrCode, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
 }
 
 void CPlayer::SendMsg_DTradeOKInform()
 {
-  char payload = 0;
+  _d_trade_ok_inform_zocl payload{};
+  payload.dummy[0] = 0;
   unsigned __int8 type[2] = {18, 24};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &payload, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
 }
 
 void CPlayer::SendMsg_DTradeAccomplishInform(bool bSucc, unsigned __int16 wStartSerial)
@@ -439,8 +521,14 @@ void CPlayer::SendMsg_DTradeAccomplishInform(bool bSucc, unsigned __int16 wStart
 
 void CPlayer::SendMsg_DTradeAskResult(char byErrCode)
 {
+  _d_trade_ask_result_zocl payload{};
+  payload.byErrCode = byErrCode;
   unsigned __int8 type[2] = {18, 2};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &byErrCode, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
 }
 
 void CPlayer::pc_DTradeCancleRequest()
@@ -522,11 +610,15 @@ void CPlayer::pc_DTradeAskRequest(unsigned __int16 wDstIndex)
     this->m_pmTrd.wDTradeDstIndex = dst->m_ObjID.m_wIndex;
     this->m_pmTrd.dwDTradeDstSerial = dst->m_dwObjSerial;
 
-    char askMsg[6] = {};
-    memcpy_0(askMsg, &this->m_ObjID.m_wIndex, sizeof(this->m_ObjID.m_wIndex));
-    memcpy_0(askMsg + 2, &this->m_dwObjSerial, sizeof(this->m_dwObjSerial));
+    _d_trade_ask_inform_zocl askMsg{};
+    askMsg.idAsker.wIndex = this->m_ObjID.m_wIndex;
+    askMsg.idAsker.dwSerial = this->m_dwObjSerial;
     unsigned __int8 askType[2] = {18, 3};
-    g_Network.m_pProcess[0]->LoadSendMsg(dst->m_ObjID.m_wIndex, askType, askMsg, 6u);
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      dst->m_ObjID.m_wIndex,
+      askType,
+      reinterpret_cast<char *>(&askMsg),
+      static_cast<unsigned __int16>(sizeof(askMsg)));
   }
 
   this->SendMsg_DTradeAskResult(static_cast<char>(result));
@@ -585,9 +677,14 @@ void CPlayer::pc_DTradeAnswerRequest(_CLID *pidAsker)
 
   if (result)
   {
-    char answerMsg[1] = {static_cast<char>(result)};
+    _d_trade_answer_result_zocl answerMsg{};
+    answerMsg.byErrCode = static_cast<char>(result);
     unsigned __int8 answerType[2] = {18, 5};
-    g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, answerType, answerMsg, 1u);
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      this->m_ObjID.m_wIndex,
+      answerType,
+      reinterpret_cast<char *>(&answerMsg),
+      static_cast<unsigned __int16>(sizeof(answerMsg)));
     return;
   }
 
@@ -699,13 +796,23 @@ void CPlayer::pc_DTradeLockRequest()
 
   this->m_pmTrd.bDTradeLock = true;
 
-  char lockInform[1] = {0};
+  _d_trade_lock_inform_zocl lockInform{};
+  lockInform.dummy[0] = 0;
   unsigned __int8 lockInformType[2] = {18, 12};
-  g_Network.m_pProcess[0]->LoadSendMsg(tradeDst->m_ObjID.m_wIndex, lockInformType, lockInform, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    tradeDst->m_ObjID.m_wIndex,
+    lockInformType,
+    reinterpret_cast<char *>(&lockInform),
+    static_cast<unsigned __int16>(sizeof(lockInform)));
 
-  char lockResult[1] = {0};
+  _d_trade_lock_result_zocl lockResult{};
+  lockResult.byErrCode = 0;
   unsigned __int8 lockResultType[2] = {18, 11};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, lockResultType, lockResult, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    lockResultType,
+    reinterpret_cast<char *>(&lockResult),
+    static_cast<unsigned __int16>(sizeof(lockResult)));
 }
 
 void CPlayer::pc_DTradeAddRequest(
@@ -814,22 +921,31 @@ void CPlayer::pc_DTradeAddRequest(
   tradeItem.dwSerial = dwSerial;
   tradeItem.byAmount = byAmount;
 
-  char inform[23] = {};
-  inform[0] = static_cast<char>(bySlotIndex);
-  inform[1] = static_cast<char>(item->m_byTableCode);
-  memcpy_0(inform + 2, &item->m_wItemIndex, sizeof(item->m_wItemIndex));
-  memcpy_0(inform + 4, &item->m_dwDur, sizeof(item->m_dwDur));
-  memcpy_0(inform + 12, &item->m_dwLv, sizeof(item->m_dwLv));
-  inform[16] = static_cast<char>(byAmount);
-  inform[17] = static_cast<char>(this->m_pmTrd.byEmptyInvenNum);
-  inform[18] = static_cast<char>(item->m_byCsMethod);
-  memcpy_0(inform + 19, &item->m_dwT, sizeof(item->m_dwT));
+  _d_trade_add_inform_zocl inform{};
+  inform.bySlotIndex = static_cast<char>(bySlotIndex);
+  inform.byTableCode = static_cast<char>(item->m_byTableCode);
+  inform.wItemIndex = item->m_wItemIndex;
+  inform.dwDurPoint = item->m_dwDur;
+  inform.dwUdtInfo = item->m_dwLv;
+  inform.byAmount = static_cast<char>(byAmount);
+  inform.byEmptyInvenNum = static_cast<char>(this->m_pmTrd.byEmptyInvenNum);
+  inform.byCsMethod = static_cast<char>(item->m_byCsMethod);
+  inform.dwT = item->m_dwT;
   unsigned __int8 informType[2] = {18, 15};
-  g_Network.m_pProcess[0]->LoadSendMsg(tradeDst->m_ObjID.m_wIndex, informType, inform, 23u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    tradeDst->m_ObjID.m_wIndex,
+    informType,
+    reinterpret_cast<char *>(&inform),
+    static_cast<unsigned __int16>(sizeof(inform)));
 
-  char addResult[1] = {0};
+  _d_trade_add_result_zocl addResult{};
+  addResult.byErrCode = 0;
   unsigned __int8 addResultType[2] = {18, 14};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, addResultType, addResult, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    addResultType,
+    reinterpret_cast<char *>(&addResult),
+    static_cast<unsigned __int16>(sizeof(addResult)));
 }
 
 void CPlayer::pc_DTradeDelRequest(unsigned __int8 bySlotIndex)
@@ -900,16 +1016,24 @@ void CPlayer::pc_DTradeDelRequest(unsigned __int8 bySlotIndex)
   --this->m_pmTrd.bySellItemNum;
   tradeItem.bLoad = false;
 
-  char delInform[2] = {
-    static_cast<char>(bySlotIndex),
-    static_cast<char>(this->m_pmTrd.byEmptyInvenNum),
-  };
+  _d_trade_del_inform_zocl delInform{};
+  delInform.bySlotIndex = static_cast<char>(bySlotIndex);
+  delInform.byEmptyInvenNum = static_cast<char>(this->m_pmTrd.byEmptyInvenNum);
   unsigned __int8 delInformType[2] = {18, 18};
-  g_Network.m_pProcess[0]->LoadSendMsg(tradeDst->m_ObjID.m_wIndex, delInformType, delInform, 2u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    tradeDst->m_ObjID.m_wIndex,
+    delInformType,
+    reinterpret_cast<char *>(&delInform),
+    static_cast<unsigned __int16>(sizeof(delInform)));
 
-  char delResult[1] = {0};
+  _d_trade_del_result_zocl delResult{};
+  delResult.byErrCode = 0;
   unsigned __int8 delResultType[2] = {18, 17};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, delResultType, delResult, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    delResultType,
+    reinterpret_cast<char *>(&delResult),
+    static_cast<unsigned __int16>(sizeof(delResult)));
 }
 
 void CPlayer::pc_DTradeBetRequest(unsigned __int8 byMoneyUnit, unsigned int dwBetAmount)
@@ -964,15 +1088,24 @@ void CPlayer::pc_DTradeBetRequest(unsigned __int8 byMoneyUnit, unsigned int dwBe
     this->m_pmTrd.dwDTrade_Dalant = dwBetAmount;
   }
 
-  char betInform[5] = {0};
-  betInform[0] = static_cast<char>(byMoneyUnit);
-  memcpy_0(betInform + 1, &dwBetAmount, sizeof(dwBetAmount));
+  _d_trade_bet_inform_zocl betInform{};
+  betInform.byMoneyUnit = static_cast<char>(byMoneyUnit);
+  betInform.dwBetAmount = dwBetAmount;
   unsigned __int8 betInformType[2] = {18, 21};
-  g_Network.m_pProcess[0]->LoadSendMsg(tradeDst->m_ObjID.m_wIndex, betInformType, betInform, 5u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    tradeDst->m_ObjID.m_wIndex,
+    betInformType,
+    reinterpret_cast<char *>(&betInform),
+    static_cast<unsigned __int16>(sizeof(betInform)));
 
-  char betResult[1] = {0};
+  _d_trade_bet_result_zocl betResult{};
+  betResult.byErrCode = 0;
   unsigned __int8 betResultType[2] = {18, 20};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, betResultType, betResult, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    betResultType,
+    reinterpret_cast<char *>(&betResult),
+    static_cast<unsigned __int16>(sizeof(betResult)));
 }
 
 void CPlayer::pc_UpdateDataForTrade(CPlayer *pTrader)
@@ -1295,8 +1428,13 @@ void CPlayer::pc_DTradeOKRequest(unsigned int *pdwKey)
 
 void CPlayer::SendMsg_DTradeCancleResult(char byErrCode)
 {
-  char msg[1] = {byErrCode};
+  _d_trade_cancle_result_zocl msg{};
+  msg.byErrCode = byErrCode;
   unsigned __int8 type[2] = {18, 8};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, msg, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 

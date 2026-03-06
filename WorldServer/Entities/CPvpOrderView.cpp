@@ -5,6 +5,7 @@
 #include "CNetworkEX.h"
 #include "CMainThread.h"
 #include "GlobalObjects.h"
+#include "Packet/ZoneClientPacket.h"
 #include "WorldServerUtil.h"
 
 #include <cstring>
@@ -234,11 +235,15 @@ void CPvpOrderView::Notify_PvPEnd(unsigned __int16 wIndex)
 
 void CPvpOrderView::Notify_PvpTempCash(unsigned __int16 wIndex)
 {
-  char szMsg[8]{};
-  *reinterpret_cast<long double *>(szMsg) = m_dPvpTempCash;
+  _alter_pvp_temp_cash_zocl msg{};
+  msg.dNewTempPoint = m_dPvpTempCash;
 
   unsigned __int8 type[2] = {11, 15};
-  g_Network.m_pProcess[0]->LoadSendMsg(wIndex, type, szMsg, 8u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CPvpOrderView::UpdatePvPKill(unsigned __int16 wIndex, unsigned int dwTarSerial)

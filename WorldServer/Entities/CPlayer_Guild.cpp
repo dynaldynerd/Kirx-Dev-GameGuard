@@ -69,6 +69,7 @@
 #include "PCBANG_PRIMIUM_FAVOR.h"
 #include "economy_history_data.h"
 #include "DqsDbStructs.h"
+#include "DqsOnRunPayloads.h"
 #include "EconomySystemFunctions.h"
 #include "TimeItem.h"
 #include "trans_ship_renew_ticket_result_zocl.h"
@@ -99,6 +100,7 @@
 #include "combine_ex_item_accept_request_clzo.h"
 #include "combine_ex_item_accept_result_zocl.h"
 #include "qry_case_disjointguild.h"
+#include "qry_case_selfleave.h"
 #include "WorldServerUtil.h"
 #include "NetCheckPackets.h"
 #include "GlobalObjectDefs.h"
@@ -111,73 +113,6 @@
 
 namespace
 {
-struct _qry_case_joinacguild_local
-{
-  unsigned int in_guildindex;
-  unsigned int in_guildserial;
-  unsigned int in_applierindex;
-  unsigned int in_applierserial;
-  unsigned int in_accepterserial;
-  int in_Grade;
-  int in_MemberNum;
-
-  __int64 size() const
-  {
-    return sizeof(*this);
-  }
-};
-
-struct   _qry_case_insertguild_local
-{
-  unsigned int in_guildindex;
-  char in_w_guildName[17];
-  unsigned __int8 in_guildRace;
-  unsigned __int8 in_membernum;
-  unsigned __int8 in_padding;
-  unsigned int in_memberindex[8];
-  unsigned int in_memberserial[8];
-  char tmp_w_membername[136];
-  unsigned __int8 tmp_lv[8];
-  unsigned __int8 tmp_grade[8];
-  unsigned int tmp_pvp[8];
-  unsigned int out_guildserial;
-  unsigned int tmp_Esterindex;
-  unsigned int tmp_Esterserial;
-
-  _qry_case_insertguild_local()
-  {
-    memset_0(this, 0, sizeof(*this));
-    in_guildindex = static_cast<unsigned int>(-1);
-    out_guildserial = static_cast<unsigned int>(-1);
-    tmp_Esterindex = static_cast<unsigned int>(-1);
-    tmp_Esterserial = static_cast<unsigned int>(-1);
-  }
-
-  __int64 size() const
-  {
-    return sizeof(*this);
-  }
-};
-
-struct _qry_case_inputgmoney_local
-{
-  unsigned int in_pusherserial;
-  char in_w_pushername[17];
-  unsigned int tmp_guildindex;
-  unsigned int in_guildserial;
-  unsigned int dwAddGold;
-  unsigned int dwAddDalant;
-  unsigned __int8 in_date[4];
-  long double out_totalgold;
-  long double out_totaldalant;
-  unsigned __int8 byProcRet;
-
-  __int64 size() const
-  {
-    return sizeof(*this);
-  }
-};
-
 bool IsEconomyFeeLevel(int level)
 {
   return level == 30 || level == 40 || level == 50 || level == 60;
@@ -210,15 +145,18 @@ void CPlayer::SendMsg_GuildJoinApplyResult(char byRetCode, CGuild *pApplyGuild)
 
 void CPlayer::SendMsg_GuildJoinApplyCancelResult(char byRetCode)
 {
+  _guild_join_apply_cancel_result_zocl payload{};
+  payload.byRetCode = byRetCode;
   unsigned __int8 type[2] = {27, 11};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &byRetCode, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&payload), sizeof(payload));
 }
 
 void CPlayer::SendMsg_GuildJoinApplyRejectInform()
 {
-  char payload = 0;
+  _guild_join_apply_reject_inform_zocl payload{};
+  payload.sDum = 0;
   unsigned __int8 type[2] = {27, 12};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &payload, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&payload), sizeof(payload));
 }
 
 void CPlayer::SendMsg_GuildJoinAcceptFail(char byRetCode, unsigned int dwApplierSerial)
@@ -253,14 +191,18 @@ void CPlayer::SendMsg_VoteResult(unsigned int dwMatterVoteSynKey, unsigned __int
 
 void CPlayer::SendMsg_CancelSuggestResult(char byRetCode)
 {
+  _guild_cancel_suggest_result_zocl payload{};
+  payload.byRetCode = byRetCode;
   unsigned __int8 type[2] = {27, 22};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &byRetCode, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&payload), sizeof(payload));
 }
 
 void CPlayer::SendMsg_GuildSetHonorResult(char byRetCode)
 {
+  _guild_honor_set_result_zocl payload{};
+  payload.byRetCode = byRetCode;
   unsigned __int8 type[2] = {27, 114};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &byRetCode, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&payload), sizeof(payload));
 }
 
 void CPlayer::SendMsg_GuildPushMoneyResult(char byRetCode)
@@ -281,8 +223,10 @@ void CPlayer::SendMsg_GuildPushMoneyResult(char byRetCode)
 
 void CPlayer::SendMsg_OfferSuggestResult(char byRetCode)
 {
+  _guild_offer_suggest_result_zocl payload{};
+  payload.byRetCode = byRetCode;
   unsigned __int8 type[2] = {27, 20};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &byRetCode, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&payload), sizeof(payload));
 }
 
 
@@ -327,23 +271,22 @@ void CPlayer::SendMsg_GuildRoomRestTimeResult()
 
 void CPlayer::SendMsg_GuildEstablishFail(char byRetCode)
 {
-  char msg[1]{};
-  msg[0] = byRetCode;
+  _guild_establish_fail_zocl msg{};
+  msg.byRetCode = byRetCode;
 
   unsigned __int8 type[2] = {27, 2};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, msg, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
 void CPlayer::SendMsg_GuildJoinOtherInform()
 {
-  char msg[10]{};
-  *reinterpret_cast<unsigned int *>(msg) = this->m_id.dwSerial;
-  *reinterpret_cast<unsigned int *>(msg + 4) = this->m_Param.m_pGuild ? this->m_Param.m_pGuild->m_dwSerial
-                                                                     : static_cast<unsigned int>(-1);
-  *reinterpret_cast<unsigned __int16 *>(msg + 8) = this->m_wVisualVer;
+  _guild_join_other_inform_zocl msg{};
+  msg.dwAvatorSerial = this->m_id.dwSerial;
+  msg.dwGuildSerial = this->m_Param.m_pGuild ? this->m_Param.m_pGuild->m_dwSerial : static_cast<unsigned int>(-1);
+  msg.wVisualVersion = this->m_wVisualVer;
 
   unsigned __int8 type[2] = {27, 39};
-  CircleReport(type, msg, 10, false);
+  CircleReport(type, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), false);
 }
 
 
@@ -356,762 +299,515 @@ void CPlayer::SendMsg_GuildJoinOtherInform()
 
 void CPlayer::Guild_Insert_Complete(_DB_QRY_SYN_DATA *pData)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  unsigned int EstConsumeDalant; // eax
-  unsigned int v4; // eax
-  CPlayer::CashChangeStateFlag *v5; // rax
-  CGuildBattleController *v6; // rax
-  __int64 v7; // [rsp+0h] [rbp-4C8h] BYREF
-  int v8; // [rsp+30h] [rbp-498h]
-  unsigned int dwSerial; // [rsp+34h] [rbp-494h]
-  char Destination[28]; // [rsp+48h] [rbp-480h] BYREF
-  unsigned __int8 v11; // [rsp+64h] [rbp-464h]
-  unsigned __int8 v12; // [rsp+65h] [rbp-463h]
-  unsigned int v13[16]; // [rsp+78h] [rbp-450h] BYREF
-  unsigned int dwMemberSerial[18]; // [rsp+B8h] [rbp-410h] BYREF
-  char Source[168]; // [rsp+100h] [rbp-3C8h] BYREF
-  _BYTE v16[32]; // [rsp+1A8h] [rbp-320h] BYREF
-  _BYTE v17[32]; // [rsp+1C8h] [rbp-300h] BYREF
-  _DWORD v18[11]; // [rsp+1E8h] [rbp-2E0h] BYREF
-  int v19; // [rsp+214h] [rbp-2B4h]
-  int v20; // [rsp+218h] [rbp-2B0h]
-  char *m_sData; // [rsp+220h] [rbp-2A8h]
-  CGuild *v22; // [rsp+228h] [rbp-2A0h]
-  int j; // [rsp+230h] [rbp-298h]
-  CPlayer *v24; // [rsp+238h] [rbp-290h]
-  CPlayer *v25; // [rsp+240h] [rbp-288h]
-  char szTran[136]; // [rsp+260h] [rbp-268h] BYREF
-  CPlayer *v27; // [rsp+2E8h] [rbp-1E0h]
-  _guild_member_info __t[8]; // [rsp+300h] [rbp-1C8h] BYREF
-  CPlayer *pPtr; // [rsp+488h] [rbp-40h]
-  _guild_member_info *pMem; // [rsp+490h] [rbp-38h]
-  CPlayer::CashChangeStateFlag v31{0}; // [rsp+4A0h] [rbp-28h] BYREF
-  char *pszFileName; // [rsp+4A8h] [rbp-20h]
-  unsigned int dwLeftDalant; // [rsp+4B0h] [rbp-18h]
+  const auto *query = reinterpret_cast<_qry_case_insertguild_local *>(pData->m_sData);
+  CGuild *guild = &g_Guild[query->in_guildindex];
+  _guild_member_info members[8]{};
+  CPlayer::CashChangeStateFlag cashChangeState{0};
 
-  v8 = -1;
-  dwSerial = -1;
-  v11 = 0;
-  v12 = 0;
-  v19 = -1;
-  v20 = -1;
-  m_sData = pData->m_sData;
-  v8 = *(_DWORD *)pData->m_sData;
-  dwSerial = *(_DWORD *)&pData->m_sData[272];
-  v19 = *(_DWORD *)&pData->m_sData[276];
-  v20 = *(_DWORD *)&pData->m_sData[280];
-  v11 = pData->m_sData[21];
-  v12 = pData->m_sData[22];
-  strcpy_0(Destination, &pData->m_sData[4]);
-  memcpy_0(v13, m_sData + 24, 0x20uLL);
-  memcpy_0(dwMemberSerial, m_sData + 56, 0x20uLL);
-  memcpy_0(v18, m_sData + 240, 0x20uLL);
-  memcpy_0(v16, m_sData + 224, 8uLL);
-  memcpy_0(v17, m_sData + 232, 8uLL);
-  memcpy_0(Source, m_sData + 88, 0x88uLL);
-  v22 = &g_Guild[v8];
-  v22->ReleaseTemp();
-  for ( j = 0; j < v12; ++j )
+  guild->ReleaseTemp();
+  for (unsigned __int8 memberSlot = 0; memberSlot < query->in_membernum; ++memberSlot)
   {
-    v24 = &g_Player[v13[j]];
-    if ( v24->m_bLive && v24->m_dwObjSerial == dwMemberSerial[j] )
-      v24->m_Param.m_bGuildLock = 0;
-  }
-  if ( pData->m_byResult || v22->IsFill() )
-  {
-    v25 = &g_Player[v19];
-    if ( v25->m_bLive && v25->m_dwObjSerial == v20 )
+    CPlayer *member = &g_Player[query->in_memberindex[memberSlot]];
+    if (member->m_bLive && member->m_dwObjSerial == query->in_memberserial[memberSlot])
     {
-      v25->SendMsg_GuildEstablishFail( 0xFFu);
-      EstConsumeDalant = g_Main.m_GuildCreateEventInfo.GetEstConsumeDalant();
-      v25->AddDalant( EstConsumeDalant, 0);
-      W2M(Destination, szTran, 0x80u);
-      pszFileName = v25->m_szItemHistoryFileName;
-      dwLeftDalant = v25->m_Param.GetDalant();
-      v4 = g_Main.m_GuildCreateEventInfo.GetEstConsumeDalant();
+      member->m_Param.m_bGuildLock = 0;
+    }
+  }
+
+  if (pData->m_byResult || guild->IsFill())
+  {
+    CPlayer *guildMaster = &g_Player[query->tmp_Esterindex];
+    if (guildMaster->m_bLive && guildMaster->m_dwObjSerial == query->tmp_Esterserial)
+    {
+      char guildNameAnsi[136]{};
+      char guildNameWide[17]{};
+      const unsigned int estConsumeDalant =
+        static_cast<unsigned int>(g_Main.m_GuildCreateEventInfo.GetEstConsumeDalant());
+
+      guildMaster->SendMsg_GuildEstablishFail(0xFFu);
+      guildMaster->AddDalant(estConsumeDalant, 0);
+      strcpy_0(guildNameWide, query->in_w_guildName);
+      W2M(guildNameWide, guildNameAnsi, 0x80u);
       CPlayer::s_MgrItemHistory.guild_est_money_rollback(
-        v25->m_ObjID.m_wIndex,
-        szTran,
-        v4,
-        dwLeftDalant,
-        pszFileName);
+        guildMaster->m_ObjID.m_wIndex,
+        guildNameAnsi,
+        estConsumeDalant,
+        guildMaster->m_Param.GetDalant(),
+        guildMaster->m_szItemHistoryFileName);
     }
+    return;
   }
-  else
+
+  CPlayer *guildMaster = &g_Player[query->tmp_Esterindex];
+  if (guildMaster->m_bLive && guildMaster->m_dwObjSerial == query->tmp_Esterserial)
   {
-    v27 = &g_Player[v19];
-    if ( v27->m_bLive && v27->m_dwObjSerial == v20 )
-      v27->SendMsg_AlterMoneyInform( 0);
-    for ( j = 0; j < v12; ++j )
-    {
-      __t[j].dwSerial = dwMemberSerial[j];
-      strcpy_0(__t[j].wszName, &Source[17 * j]);
-      __t[j].byLv = v16[j];
-      __t[j].dwPvpPoint = v18[j];
-      __t[j].byClassInGuild = 0;
-      __t[j].byGrade = v17[j];
-    }
-    v22->EstGuild( dwSerial, Destination, v11, v12, __t);
-    for ( j = 0; j < v12; ++j )
-    {
-      pPtr = &g_Player[v13[j]];
-      if ( pPtr->m_bLive && pPtr->m_dwObjSerial == dwMemberSerial[j] )
-      {
-        pMem = v22->LoginMember( dwMemberSerial[j], pPtr);
-        v22->SendMsg_DownPacket( 0, pMem);
-        pPtr->m_pUserDB->m_AvatorData.dbAvator.m_dwGuildSerial = dwSerial;
-        pPtr->m_Param.m_pGuild = v22;
-        pPtr->m_Param.m_pGuildMemPtr = pMem;
-        pPtr->m_Param.SetClassInGuild( 0);
-        pPtr->UpdateVisualVer(v31);
-        pPtr->SendMsg_GuildJoinOtherInform();
-      }
-    }
-    v6 = CGuildBattleController::Instance();
-    v6->UpdatePossibleBattleGuildList();
+    guildMaster->SendMsg_AlterMoneyInform(0);
   }
+
+  for (unsigned __int8 memberSlot = 0; memberSlot < query->in_membernum; ++memberSlot)
+  {
+    _guild_member_info &memberInfo = members[memberSlot];
+    memberInfo.dwSerial = query->in_memberserial[memberSlot];
+    strcpy_0(memberInfo.wszName, &query->tmp_w_membername[17 * memberSlot]);
+    memberInfo.byLv = query->tmp_lv[memberSlot];
+    memberInfo.dwPvpPoint = query->tmp_pvp[memberSlot];
+    memberInfo.byClassInGuild = 0;
+    memberInfo.byGrade = query->tmp_grade[memberSlot];
+  }
+
+  guild->EstGuild(
+    query->out_guildserial,
+    const_cast<char *>(query->in_w_guildName),
+    query->in_guildRace,
+    query->in_membernum,
+    members);
+
+  for (unsigned __int8 memberSlot = 0; memberSlot < query->in_membernum; ++memberSlot)
+  {
+    CPlayer *member = &g_Player[query->in_memberindex[memberSlot]];
+    if (member->m_bLive && member->m_dwObjSerial == query->in_memberserial[memberSlot])
+    {
+      _guild_member_info *guildMember = guild->LoginMember(query->in_memberserial[memberSlot], member);
+      guild->SendMsg_DownPacket(0, guildMember);
+      member->m_pUserDB->m_AvatorData.dbAvator.m_dwGuildSerial = query->out_guildserial;
+      member->m_Param.m_pGuild = guild;
+      member->m_Param.m_pGuildMemPtr = guildMember;
+      member->m_Param.SetClassInGuild(0);
+      member->UpdateVisualVer(cashChangeState);
+      member->SendMsg_GuildJoinOtherInform();
+    }
+  }
+
+  CGuildBattleController::Instance()->UpdatePossibleBattleGuildList();
 }
 
 void CPlayer::Guild_Join_Accept_Complete(_DB_QRY_SYN_DATA *pData)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  const char *CharNameW; // rax
-  CPlayer::CashChangeStateFlag *v4; // rax
-  char *CharNameA; // rax
-  CGuildBattleController *v6; // rax
-  __int64 v7; // [rsp+0h] [rbp-198h] BYREF
-  int v8; // [rsp+40h] [rbp-158h]
-  int v9; // [rsp+44h] [rbp-154h]
-  int v10; // [rsp+48h] [rbp-150h]
-  unsigned int dwApplierSerial; // [rsp+4Ch] [rbp-14Ch]
-  unsigned int dwMemberSerial; // [rsp+50h] [rbp-148h]
-  char *m_sData; // [rsp+58h] [rbp-140h]
-  CPlayer *pPlayer; // [rsp+60h] [rbp-138h]
-  CGuild *v15; // [rsp+68h] [rbp-130h]
-  _guild_member_info *MemberFromSerial; // [rsp+70h] [rbp-128h]
-  _guild_applier_info *ApplierFromSerial; // [rsp+78h] [rbp-120h]
-  _guild_member_info pSheet; // [rsp+88h] [rbp-110h] BYREF
-  _guild_member_info *p; // [rsp+C8h] [rbp-D0h]
-  char szTran[144]; // [rsp+E0h] [rbp-B8h] BYREF
-  CPlayer::CashChangeStateFlag v21{0}; // [rsp+170h] [rbp-28h] BYREF
-  char *pszFileName; // [rsp+178h] [rbp-20h]
-  int n; // [rsp+180h] [rbp-18h]
+  const auto *query = reinterpret_cast<_qry_case_joinacguild_local *>(pData->m_sData);
+  CPlayer *applicant = &g_Player[query->in_applierindex];
+  CGuild *guild = &g_Guild[query->in_guildindex];
 
-  v8 = -1;
-  v9 = -1;
-  v10 = -1;
-  dwApplierSerial = -1;
-  dwMemberSerial = -1;
-  m_sData = pData->m_sData;
-  v8 = *(_DWORD *)pData->m_sData;
-  v9 = *(_DWORD *)&pData->m_sData[4];
-  v10 = *(_DWORD *)&pData->m_sData[8];
-  dwApplierSerial = *(_DWORD *)&pData->m_sData[12];
-  dwMemberSerial = *(_DWORD *)&pData->m_sData[16];
-  pPlayer = &g_Player[v10];
-  if ( pPlayer->m_bLive && pPlayer->m_dwObjSerial == dwApplierSerial )
-    pPlayer->m_Param.m_bGuildLock = 0;
-  v15 = &g_Guild[v8];
-  if ( v15->m_dwSerial == v9 )
+  if (applicant->m_bLive && applicant->m_dwObjSerial == query->in_applierserial)
   {
-    --v15->m_nTempMemberNum;
-    if ( v15->m_nMemberNum < 50 && !pData->m_byResult )
-    {
-      MemberFromSerial = v15->GetMemberFromSerial( dwMemberSerial);
-      if ( MemberFromSerial )
-      {
-        ApplierFromSerial = v15->GetApplierFromSerial( dwApplierSerial);
-        if ( ApplierFromSerial )
-        {
-          pPlayer = ApplierFromSerial->pPlayer;
-          pPlayer->m_Param.SetClassInGuild( 0);
-          pPlayer->m_Param.m_pApplyGuild = 0LL;
-          v15->PopApplier( dwApplierSerial, 0);
-          pSheet.dwSerial = pPlayer->m_dwObjSerial;
-          CharNameW = pPlayer->m_Param.GetCharNameW();
-          strcpy_0(pSheet.wszName, CharNameW);
-          pSheet.byLv = pPlayer->GetLevel();
-          pSheet.dwPvpPoint = (int)pPlayer->m_Param.GetPvPPoint();
-          pSheet.byClassInGuild = pPlayer->m_Param.GetClassInGuild();
-          pSheet.pPlayer = pPlayer;
-          p = v15->PushMember( &pSheet);
-          if ( p )
-            v15->SendMsg_GuildJoinAcceptInform( p, dwMemberSerial);
-          pPlayer->m_Param.m_pGuild = v15;
-          pPlayer->m_Param.m_pGuildMemPtr = p;
-          pPlayer->UpdateVisualVer(v21);
-          pPlayer->SendMsg_GuildJoinOtherInform();
-          
-            v15->SendMsg_GuildMemberLogin(
-            pPlayer->m_dwObjSerial,
-            pPlayer->m_wRegionMapIndex,
-            pPlayer->m_wRegionIndex);
-          W2M(MemberFromSerial->wszName, szTran, 0x80u);
-          pszFileName = v15->m_szHistoryFileName;
-          CharNameA = pPlayer->m_Param.GetCharNameA();
-          CGuild::s_MgrHistory.join_member(
-            CharNameA,
-            pPlayer->m_dwObjSerial,
-            szTran,
-            MemberFromSerial->dwSerial,
-            v15->m_nMemberNum,
-            pszFileName);
-          n = pPlayer->m_ObjID.m_wIndex;
-          v6 = CGuildBattleController::Instance();
-          v6->JoinGuild(n, v15->m_dwSerial, pPlayer->m_dwObjSerial);
-        }
-      }
-    }
+    applicant->m_Param.m_bGuildLock = 0;
   }
+
+  if (guild->m_dwSerial != query->in_guildserial)
+  {
+    return;
+  }
+
+  --guild->m_nTempMemberNum;
+  if (guild->m_nMemberNum >= 50 || pData->m_byResult)
+  {
+    return;
+  }
+
+  _guild_member_info *acceptor = guild->GetMemberFromSerial(query->in_accepterserial);
+  if (!acceptor)
+  {
+    return;
+  }
+
+  _guild_applier_info *guildApplicant = guild->GetApplierFromSerial(query->in_applierserial);
+  if (!guildApplicant)
+  {
+    return;
+  }
+
+  applicant = guildApplicant->pPlayer;
+  applicant->m_Param.SetClassInGuild(0);
+  applicant->m_Param.m_pApplyGuild = 0LL;
+  guild->PopApplier(query->in_applierserial, 0);
+
+  _guild_member_info memberSheet{};
+  memberSheet.dwSerial = applicant->m_dwObjSerial;
+  strcpy_0(memberSheet.wszName, applicant->m_Param.GetCharNameW());
+  memberSheet.byLv = static_cast<unsigned __int8>(applicant->GetLevel());
+  memberSheet.dwPvpPoint = static_cast<int>(applicant->m_Param.GetPvPPoint());
+  memberSheet.byClassInGuild = applicant->m_Param.GetClassInGuild();
+  memberSheet.pPlayer = applicant;
+
+  _guild_member_info *guildMember = guild->PushMember(&memberSheet);
+  if (guildMember)
+  {
+    guild->SendMsg_GuildJoinAcceptInform(guildMember, query->in_accepterserial);
+  }
+
+  CPlayer::CashChangeStateFlag cashChangeState{0};
+  applicant->m_Param.m_pGuild = guild;
+  applicant->m_Param.m_pGuildMemPtr = guildMember;
+  applicant->UpdateVisualVer(cashChangeState);
+  applicant->SendMsg_GuildJoinOtherInform();
+  guild->SendMsg_GuildMemberLogin(
+    applicant->m_dwObjSerial,
+    applicant->m_wRegionMapIndex,
+    applicant->m_wRegionIndex);
+
+  char accepterNameAnsi[144]{};
+  W2M(acceptor->wszName, accepterNameAnsi, 0x80u);
+  CGuild::s_MgrHistory.join_member(
+    applicant->m_Param.GetCharNameA(),
+    applicant->m_dwObjSerial,
+    accepterNameAnsi,
+    acceptor->dwSerial,
+    guild->m_nMemberNum,
+    guild->m_szHistoryFileName);
+
+  CGuildBattleController::Instance()->JoinGuild(
+    applicant->m_ObjID.m_wIndex,
+    guild->m_dwSerial,
+    applicant->m_dwObjSerial);
 }
 
 void CPlayer::Guild_Self_Leave_Complete(_DB_QRY_SYN_DATA *pData)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CGuildRoomSystem *Instance; // rax
-  CGuildRoomSystem *v4; // rax
-  CGuildBattleController *v5; // rax
-  CGuildMasterEffect *v6; // rax
-  CPlayer::CashChangeStateFlag *v7; // rax
-  char *CharNameA; // rax
-  int v9; // eax
-  __int64 v10; // [rsp+0h] [rbp-E8h] BYREF
-  char v11; // [rsp+40h] [rbp-A8h]
-  CPlayer *pkPlayer; // [rsp+48h] [rbp-A0h]
-  CGuild *v13; // [rsp+50h] [rbp-98h]
-  int v14; // [rsp+58h] [rbp-90h]
-  unsigned int dwMemberSerial; // [rsp+5Ch] [rbp-8Ch]
-  int v16; // [rsp+60h] [rbp-88h]
-  int v17; // [rsp+64h] [rbp-84h]
-  char *m_sData; // [rsp+68h] [rbp-80h]
-  char v19; // [rsp+70h] [rbp-78h]
-  _qry_case_disjointguild v20; // [rsp+88h] [rbp-60h] BYREF
-  CPlayer::CashChangeStateFlag v21{0}; // [rsp+94h] [rbp-54h] BYREF
-  CUserDB *m_pUserDB; // [rsp+98h] [rbp-50h]
-  int n; // [rsp+A0h] [rbp-48h]
-  CGuild *m_pGuild; // [rsp+A8h] [rbp-40h]
-  CUserDB *v25; // [rsp+B0h] [rbp-38h]
-  int m_wIndex; // [rsp+B8h] [rbp-30h]
-  CGuild *v27; // [rsp+C0h] [rbp-28h]
-  unsigned __int8 Grade; // [rsp+C8h] [rbp-20h]
-  char *pszFileName; // [rsp+D0h] [rbp-18h]
+  const auto *query = reinterpret_cast<_qry_case_selfleave *>(pData->m_sData);
+  CPlayer *player = &g_Player[query->tmp_leaverindex];
+  CGuild *guild = &g_Guild[query->tmp_guildindex];
 
-  v11 = 0;
-  pkPlayer = 0LL;
-  v13 = 0LL;
-  v14 = -1;
-  dwMemberSerial = -1;
-  v16 = -1;
-  v17 = -1;
-  m_sData = pData->m_sData;
-  v14 = *(_DWORD *)&pData->m_sData[8];
-  dwMemberSerial = *(_DWORD *)pData->m_sData;
-  v16 = *(_DWORD *)&pData->m_sData[12];
-  v17 = *(_DWORD *)&pData->m_sData[16];
-  v19 = 0;
-  pkPlayer = &g_Player[v14];
-  if ( pkPlayer->m_bLive && pkPlayer->m_dwObjSerial == dwMemberSerial )
+  if (player->m_bLive && player->m_dwObjSerial == query->in_leaverserial)
   {
-    pkPlayer->m_Param.m_bGuildLock = 0;
-    v19 = 1;
+    player->m_Param.m_bGuildLock = 0;
   }
-  if ( !v19 )
-    pkPlayer = 0LL;
-  v19 = 0;
-  v13 = &g_Guild[v16];
-  if ( v13->IsFill() && v13->m_dwSerial == v17 )
-    v19 = 1;
-  if ( v19 )
+  else
   {
-    if ( !pkPlayer )
-      goto LABEL_22;
-    if ( !pkPlayer->m_pUserDB )
-      goto LABEL_22;
-    if ( !pkPlayer->m_Param.m_pGuild )
-      goto LABEL_22;
-    m_pUserDB = pkPlayer->m_pUserDB;
-    n = pkPlayer->m_ObjID.m_wIndex;
-    m_pGuild = pkPlayer->m_Param.m_pGuild;
-    Instance = CGuildRoomSystem::GetInstance();
-    if (!Instance->IsGuildRoomMemberIn(m_pGuild->m_dwSerial, n, m_pUserDB->m_dwSerial))
-      goto LABEL_22;
-    v25 = pkPlayer->m_pUserDB;
-    m_wIndex = pkPlayer->m_ObjID.m_wIndex;
-    v27 = pkPlayer->m_Param.m_pGuild;
-    v4 = CGuildRoomSystem::GetInstance();
-    if (v4->SetPlayerOut(v27->m_dwSerial, m_wIndex, v25->m_dwSerial))
+    player = 0LL;
+  }
+
+  if (!guild->IsFill() || guild->m_dwSerial != query->tmp_guildserial)
+  {
+    if (player)
     {
-      pkPlayer->SendMsg_GuildSelfLeaveResult( 0xFFu);
+      player->SendMsg_GuildSelfLeaveResult(0xFFu);
     }
-    else
+    return;
+  }
+
+  if (player && player->m_pUserDB && player->m_Param.m_pGuild)
+  {
+    CGuildRoomSystem *guildRoomSystem = CGuildRoomSystem::GetInstance();
+    if (guildRoomSystem->IsGuildRoomMemberIn(
+          player->m_Param.m_pGuild->m_dwSerial,
+          player->m_ObjID.m_wIndex,
+          player->m_pUserDB->m_dwSerial))
     {
-LABEL_22:
-      v5 = CGuildBattleController::Instance();
-      v5->LeaveGuild(pkPlayer);
-      if ( pkPlayer && pkPlayer->m_Param.m_byClassInGuild == 2 )
+      if (guildRoomSystem->SetPlayerOut(
+            player->m_Param.m_pGuild->m_dwSerial,
+            player->m_ObjID.m_wIndex,
+            player->m_pUserDB->m_dwSerial))
       {
-        Grade = v13->GetGrade();
-        v6 = CGuildMasterEffect::GetInstance();
-        v6->out_player(pkPlayer, Grade);
-      }
-      v13->SendMsg_LeaveMember( dwMemberSerial, 1, 0);
-      v13->PopMember( dwMemberSerial);
-      if ( pkPlayer )
-      {
-        pkPlayer->m_Param.m_pGuild = 0LL;
-        pkPlayer->SendMsg_GuildSelfLeaveResult( 0);
-        pkPlayer->UpdateVisualVer(v21);
-        pkPlayer->SendMsg_GuildJoinOtherInform();
-        pkPlayer->SetLastAttBuff( 0);
-        pszFileName = v13->m_szHistoryFileName;
-        CharNameA = pkPlayer->m_Param.GetCharNameA();
-        CGuild::s_MgrHistory.leave_member(
-          CharNameA,
-          pkPlayer->m_dwObjSerial,
-          1,
-          v13->m_nMemberNum,
-          pszFileName,
-          0);
-      }
-      if ( v13->GetMemberNum() <= 0 )
-      {
-        v20.in_guildserial = v13->m_dwSerial;
-        v20.tmp_guildindex = v13->m_nIndex;
-        v9 = v20.size();
-        g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x16u, (char *)&v20, v9);
+        player->SendMsg_GuildSelfLeaveResult(0xFFu);
+        return;
       }
     }
   }
-  else if ( pkPlayer )
+
+  CGuildBattleController::Instance()->LeaveGuild(player);
+  if (player && player->m_Param.m_byClassInGuild == 2)
   {
-    pkPlayer->SendMsg_GuildSelfLeaveResult( 0xFFu);
+    CGuildMasterEffect::GetInstance()->out_player(player, guild->GetGrade());
+  }
+
+  guild->SendMsg_LeaveMember(query->in_leaverserial, 1, 0);
+  guild->PopMember(query->in_leaverserial);
+
+  if (player)
+  {
+    CPlayer::CashChangeStateFlag cashChangeState{0};
+    player->m_Param.m_pGuild = 0LL;
+    player->SendMsg_GuildSelfLeaveResult(0);
+    player->UpdateVisualVer(cashChangeState);
+    player->SendMsg_GuildJoinOtherInform();
+    player->SetLastAttBuff(0);
+    CGuild::s_MgrHistory.leave_member(
+      player->m_Param.GetCharNameA(),
+      player->m_dwObjSerial,
+      1,
+      guild->m_nMemberNum,
+      guild->m_szHistoryFileName,
+      0);
+  }
+
+  if (guild->GetMemberNum() <= 0)
+  {
+    _qry_case_disjointguild disjointQuery{};
+    disjointQuery.in_guildserial = guild->m_dwSerial;
+    disjointQuery.tmp_guildindex = guild->m_nIndex;
+    g_Main.PushDQSData(
+      0xFFFFFFFF,
+      0LL,
+      0x16u,
+      reinterpret_cast<char *>(&disjointQuery),
+      static_cast<int>(disjointQuery.size()));
   }
 }
 
 void CPlayer::Guild_Force_Leave_Complete(_DB_QRY_SYN_DATA *pData)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  CGuildBattleController *v3; // rax
-  CGuildRoomSystem *Instance; // rax
-  CGuildRoomSystem *v5; // rax
-  CPlayer::CashChangeStateFlag *v6; // rax
-  char *CharNameA; // rax
-  __int64 v8; // [rsp+0h] [rbp-C8h] BYREF
-  CGuild *v9; // [rsp+40h] [rbp-88h]
-  unsigned int dwMemberSerial; // [rsp+48h] [rbp-80h]
-  int v11; // [rsp+4Ch] [rbp-7Ch]
-  int v12; // [rsp+50h] [rbp-78h]
-  char *m_sData; // [rsp+58h] [rbp-70h]
-  char v14; // [rsp+60h] [rbp-68h]
-  _guild_member_info *MemberFromSerial; // [rsp+68h] [rbp-60h]
-  CPlayer *pPlayer; // [rsp+70h] [rbp-58h]
-  CPlayer::CashChangeStateFlag v17{0}; // [rsp+78h] [rbp-50h] BYREF
-  CUserDB *m_pUserDB; // [rsp+80h] [rbp-48h]
-  int n; // [rsp+88h] [rbp-40h]
-  CGuild *m_pGuild; // [rsp+90h] [rbp-38h]
-  CUserDB *v21; // [rsp+98h] [rbp-30h]
-  int m_wIndex; // [rsp+A0h] [rbp-28h]
-  CGuild *v23; // [rsp+A8h] [rbp-20h]
-  char *pszFileName; // [rsp+B0h] [rbp-18h]
-  int nMemNum; // [rsp+B8h] [rbp-10h]
+  const auto *query = reinterpret_cast<_qry_case_forceleave *>(pData->m_sData);
+  CGuild *guild = &g_Guild[query->in_guildIndex];
 
-  v9 = 0LL;
-  dwMemberSerial = -1;
-  v11 = -1;
-  v12 = -1;
-  m_sData = pData->m_sData;
-  dwMemberSerial = *(_DWORD *)pData->m_sData;
-  v11 = *(_DWORD *)&pData->m_sData[4];
-  v12 = *(_DWORD *)&pData->m_sData[8];
-  v14 = 0;
-  v9 = &g_Guild[v11];
-  if ( v9->IsFill() && v9->m_dwSerial == v12 )
-    v14 = 1;
-  if ( v14 )
+  if (!guild->IsFill() || guild->m_dwSerial != query->in_guildserial)
   {
-    MemberFromSerial = v9->GetMemberFromSerial( dwMemberSerial);
-    if ( MemberFromSerial )
-    {
-      if ( MemberFromSerial->pPlayer )
-      {
-        v3 = CGuildBattleController::Instance();
-        v3->LeaveGuild(MemberFromSerial->pPlayer);
-        pPlayer = MemberFromSerial->pPlayer;
-        if ( pPlayer->m_Param.m_pGuild )
-        {
-          m_pUserDB = pPlayer->m_pUserDB;
-          n = pPlayer->m_ObjID.m_wIndex;
-          m_pGuild = pPlayer->m_Param.m_pGuild;
-          Instance = CGuildRoomSystem::GetInstance();
-          if (Instance->IsGuildRoomMemberIn(m_pGuild->m_dwSerial, n, m_pUserDB->m_dwSerial))
-          {
-            v21 = pPlayer->m_pUserDB;
-            m_wIndex = pPlayer->m_ObjID.m_wIndex;
-            v23 = pPlayer->m_Param.m_pGuild;
-            v5 = CGuildRoomSystem::GetInstance();
-            v5->SetPlayerOut(v23->m_dwSerial, m_wIndex, v21->m_dwSerial);
-          }
-        }
-        MemberFromSerial->pPlayer->m_Param.m_bGuildLock = 0;
-        MemberFromSerial->pPlayer->m_Param.m_pGuild = 0LL;
-        MemberFromSerial->pPlayer->m_Param.m_pGuildMemPtr = 0LL;
-        MemberFromSerial->pPlayer->UpdateVisualVer(v17);
-        MemberFromSerial->pPlayer->SendMsg_GuildJoinOtherInform();
-        MemberFromSerial->pPlayer->SetLastAttBuff( 0);
-        if ( m_sData[24] )
-          MemberFromSerial->pPlayer->SendMsg_GuildForceLeaveBoradori();
-        pszFileName = v9->m_szHistoryFileName;
-        nMemNum = v9->m_nMemberNum - 1;
-        CharNameA = MemberFromSerial->pPlayer->m_Param.GetCharNameA();
-        CGuild::s_MgrHistory.leave_member(
-          CharNameA,
-          MemberFromSerial->dwSerial,
-          0,
-          nMemNum,
-          pszFileName,
-          m_sData[24]);
-      }
-      v9->SendMsg_LeaveMember( dwMemberSerial, 0, m_sData[24]);
-      v9->PopMember( dwMemberSerial);
-    }
+    return;
   }
+
+  _guild_member_info *member = guild->GetMemberFromSerial(query->in_leaverserial);
+  if (!member)
+  {
+    return;
+  }
+
+  if (member->pPlayer)
+  {
+    CPlayer *player = member->pPlayer;
+    CGuildBattleController::Instance()->LeaveGuild(player);
+    if (player->m_Param.m_pGuild)
+    {
+      CGuildRoomSystem *guildRoomSystem = CGuildRoomSystem::GetInstance();
+      if (guildRoomSystem->IsGuildRoomMemberIn(
+            player->m_Param.m_pGuild->m_dwSerial,
+            player->m_ObjID.m_wIndex,
+            player->m_pUserDB->m_dwSerial))
+      {
+        guildRoomSystem->SetPlayerOut(
+          player->m_Param.m_pGuild->m_dwSerial,
+          player->m_ObjID.m_wIndex,
+          player->m_pUserDB->m_dwSerial);
+      }
+    }
+
+    CPlayer::CashChangeStateFlag cashChangeState{0};
+    player->m_Param.m_bGuildLock = 0;
+    player->m_Param.m_pGuild = 0LL;
+    player->m_Param.m_pGuildMemPtr = 0LL;
+    player->UpdateVisualVer(cashChangeState);
+    player->SendMsg_GuildJoinOtherInform();
+    player->SetLastAttBuff(0);
+    if (query->in_bPunish)
+    {
+      player->SendMsg_GuildForceLeaveBoradori();
+    }
+
+    CGuild::s_MgrHistory.leave_member(
+      player->m_Param.GetCharNameA(),
+      member->dwSerial,
+      0,
+      guild->m_nMemberNum - 1,
+      guild->m_szHistoryFileName,
+      query->in_bPunish);
+  }
+
+  guild->SendMsg_LeaveMember(query->in_leaverserial, 0, query->in_bPunish);
+  guild->PopMember(query->in_leaverserial);
 }
 
 void CPlayer::Guild_Push_Money_Complete(_DB_QRY_SYN_DATA *pData)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  unsigned int Dalant; // eax
-  __int64 v4; // [rsp+0h] [rbp-108h] BYREF
-  int v5; // [rsp+50h] [rbp-B8h]
-  int v6; // [rsp+54h] [rbp-B4h]
-  unsigned int dwIOerSerial; // [rsp+58h] [rbp-B0h]
-  char Destination[28]; // [rsp+68h] [rbp-A0h] BYREF
-  unsigned int dwPush; // [rsp+84h] [rbp-84h]
-  unsigned int dwPopDalant; // [rsp+88h] [rbp-80h]
-  long double dTotalGold; // [rsp+90h] [rbp-78h]
-  long double dTotalDalant; // [rsp+98h] [rbp-70h]
-  unsigned __int8 pbyDate[20]; // [rsp+A4h] [rbp-64h] BYREF
-  char *m_sData; // [rsp+B8h] [rbp-50h]
-  CGuild *v15; // [rsp+C0h] [rbp-48h]
-  _guild_member_info *MemberFromSerial; // [rsp+C8h] [rbp-40h]
-  CPlayer *pPlayer; // [rsp+D0h] [rbp-38h]
-  char *pszFileName; // [rsp+E0h] [rbp-28h]
-  unsigned int dwLeftGold; // [rsp+E8h] [rbp-20h]
+  const auto *query = reinterpret_cast<_qry_case_inputgmoney_local *>(pData->m_sData);
+  CGuild *guild = &g_Guild[query->tmp_guildindex];
 
-  v5 = -1;
-  v6 = -1;
-  dwIOerSerial = -1;
-  dwPush = 0;
-  dwPopDalant = 0;
-  dTotalGold = 0.0;
-  dTotalDalant = 0.0;
-  m_sData = pData->m_sData;
-  v5 = *(_DWORD *)&pData->m_sData[24];
-  v6 = *(_DWORD *)&pData->m_sData[28];
-  dwIOerSerial = *(_DWORD *)pData->m_sData;
-  dwPopDalant = *(_DWORD *)&pData->m_sData[36];
-  dwPush = *(_DWORD *)&pData->m_sData[32];
-  dTotalDalant = *(long double *)&pData->m_sData[56];
-  dTotalGold = *(long double *)&pData->m_sData[48];
-  strcpy_0(Destination, &pData->m_sData[4]);
-  memcpy_0(pbyDate, m_sData + 40, 4uLL);
-  v15 = &g_Guild[v5];
-  if ( v15->m_dwSerial == v6 )
+  if (guild->m_dwSerial != query->in_guildserial)
   {
-    v15->m_bIOWait = 0;
-    if ( pData->m_byResult )
-    {
-      MemberFromSerial = v15->GetMemberFromSerial( dwIOerSerial);
-      if ( MemberFromSerial )
-      {
-        pPlayer = MemberFromSerial->pPlayer;
-        if ( pPlayer )
-        {
-          pPlayer->AddGold( dwPush, 1);
-          pPlayer->AddDalant( dwPopDalant, 1);
-          pszFileName = pPlayer->m_szItemHistoryFileName;
-          dwLeftGold = pPlayer->m_Param.GetGold();
-          Dalant = pPlayer->m_Param.GetDalant();
-          CPlayer::s_MgrItemHistory.guild_pop_money_rollback(
-            pPlayer->m_ObjID.m_wIndex,
-            v15->m_aszName,
-            dwPopDalant,
-            dwPush,
-            Dalant,
-            dwLeftGold,
-            pszFileName);
-        }
-      }
-    }
-    else
-    {
-      v15->m_byMoneyOutputKind = 0;
-      
-        v15->IOMoney(
-        Destination,
-        dwIOerSerial,
-        (double)(int)dwPopDalant,
-        (double)(int)dwPush,
-        dTotalDalant,
-        dTotalGold,
-        pbyDate,
-        1);
-    }
+    return;
   }
+
+  guild->m_bIOWait = 0;
+  if (pData->m_byResult)
+  {
+    _guild_member_info *member = guild->GetMemberFromSerial(query->in_pusherserial);
+    if (member && member->pPlayer)
+    {
+      CPlayer *player = member->pPlayer;
+      player->AddGold(query->dwAddGold, 1);
+      player->AddDalant(query->dwAddDalant, 1);
+      CPlayer::s_MgrItemHistory.guild_pop_money_rollback(
+        player->m_ObjID.m_wIndex,
+        guild->m_aszName,
+        query->dwAddDalant,
+        query->dwAddGold,
+        player->m_Param.GetDalant(),
+        player->m_Param.GetGold(),
+        player->m_szItemHistoryFileName);
+    }
+    return;
+  }
+
+  guild->m_byMoneyOutputKind = 0;
+  unsigned __int8 date[4]{};
+  memcpy_0(date, query->in_date, sizeof(date));
+  guild->IOMoney(
+    query->in_w_pushername,
+    query->in_pusherserial,
+    static_cast<double>(static_cast<int>(query->dwAddDalant)),
+    static_cast<double>(static_cast<int>(query->dwAddGold)),
+    query->out_totaldalant,
+    query->out_totalgold,
+    date,
+    1);
 }
 
 void CPlayer::Guild_Pop_Money_Complete(_DB_QRY_SYN_DATA *pData)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  unsigned int Dalant; // eax
-  __int64 v4; // [rsp+0h] [rbp-108h] BYREF
-  __int64 dTotalDalant; // [rsp+28h] [rbp-E0h]
-  __int64 dTotalGold; // [rsp+30h] [rbp-D8h]
-  __int64 bInPut; // [rsp+40h] [rbp-C8h]
-  __int64 v8; // [rsp+48h] [rbp-C0h]
-  int v9; // [rsp+50h] [rbp-B8h]
-  unsigned int v10; // [rsp+54h] [rbp-B4h]
-  unsigned int dwIOerSerial; // [rsp+58h] [rbp-B0h]
-  char Destination[28]; // [rsp+68h] [rbp-A0h] BYREF
-  unsigned int dwPopGold; // [rsp+84h] [rbp-84h]
-  unsigned int dwPush; // [rsp+88h] [rbp-80h]
-  long double v15; // [rsp+90h] [rbp-78h]
-  long double v16; // [rsp+98h] [rbp-70h]
-  unsigned __int8 pbyDate[20]; // [rsp+A4h] [rbp-64h] BYREF
-  char *m_sData; // [rsp+B8h] [rbp-50h]
-  CGuild *v19; // [rsp+C0h] [rbp-48h]
-  _guild_member_info *MemberFromSerial; // [rsp+C8h] [rbp-40h]
-  CPlayer *pPlayer; // [rsp+D0h] [rbp-38h]
-  char *pszFileName; // [rsp+E0h] [rbp-28h]
-  unsigned int dwLeftGold; // [rsp+E8h] [rbp-20h]
+  const auto *query = reinterpret_cast<_qry_case_outputgmoney *>(pData->m_sData);
+  CGuild *guild = &g_Guild[query->tmp_guildindex];
 
-  v9 = -1;
-  v10 = -1;
-  dwIOerSerial = -1;
-  dwPopGold = 0;
-  dwPush = 0;
-  v15 = 0.0;
-  v16 = 0.0;
-  m_sData = pData->m_sData;
-  v9 = *(_DWORD *)&pData->m_sData[24];
-  v10 = *(_DWORD *)&pData->m_sData[28];
-  dwIOerSerial = *(_DWORD *)pData->m_sData;
-  dwPush = *(_DWORD *)&pData->m_sData[36];
-  dwPopGold = *(_DWORD *)&pData->m_sData[32];
-  v16 = *(double *)&pData->m_sData[56];
-  v15 = *(double *)&pData->m_sData[48];
-  strcpy_0(Destination, &pData->m_sData[4]);
-  memcpy_0(pbyDate, m_sData + 40, 4uLL);
-  v19 = &g_Guild[v9];
-  if ( v19->m_dwSerial == v10 )
+  if (guild->m_dwSerial != query->in_guildserial)
   {
-    v19->m_bIOWait = 0;
-	    if ( m_sData[64] )
-	    {
-	      const unsigned __int8 qryRet = static_cast<unsigned __int8>(m_sData[64]);
-	      const unsigned int ioerSerialForLog = *reinterpret_cast<unsigned int *>(m_sData);
-	      const unsigned int subGold = dwPopGold;
-	      const unsigned int subDalant = dwPush;
-	      g_Main.m_logSystemError.Write(
-	        
-	        "CPlayer::Guild_Pop_Money_Complete(...) : \r\n"
-	        "\t\tGuild(%u) TotD(%f) TotG(%f) SubD(%u) SubG(%u) %s(%u)\r\n"
-	        "\t\t_qry_case_outputgmoney Ret(%u) Fail!",
-	        v10,
-	        v16,
-	        v15,
-	        subDalant,
-	        subGold,
-	        Destination,
-	        ioerSerialForLog,
-	        qryRet);
-	    }
-    else if ( !pData->m_byResult )
-    {
-      
-        v19->IOMoney(
-        Destination,
-        dwIOerSerial,
-        -0.0 - (double)(int)dwPush,
-        -0.0 - (double)(int)dwPopGold,
-        v16,
-        v15,
-        pbyDate,
-        0);
-      MemberFromSerial = v19->GetMemberFromSerial( dwIOerSerial);
-      if ( MemberFromSerial )
-      {
-        pPlayer = MemberFromSerial->pPlayer;
-        if ( pPlayer )
-        {
-          pPlayer->AddDalant( dwPush, 1);
-          pPlayer->AddGold( dwPopGold, 1);
-          pszFileName = pPlayer->m_szItemHistoryFileName;
-          dwLeftGold = pPlayer->m_Param.GetGold();
-          Dalant = pPlayer->m_Param.GetDalant();
-          CPlayer::s_MgrItemHistory.guild_pop_money(
-            pPlayer->m_ObjID.m_wIndex,
-            v19->m_aszName,
-            dwPush,
-            dwPopGold,
-            Dalant,
-            dwLeftGold,
-            pszFileName);
-          pPlayer->SendMsg_AlterMoneyInform( 0);
-        }
-        else
-        {
-          if (dwPush)
-            g_Main.Push_ChargeItem(dwIOerSerial, 0xFFFFFFFF, dwPush, 0xFFFFFFFu, 1u);
-          if (dwPopGold)
-            g_Main.Push_ChargeItem(dwIOerSerial, 0xFFFFFFFF, dwPopGold, 0xFFFFFFFu, 2u);
-          g_Main.m_logSystemError.Write(
-            "CPlayer::Guild_Pop_Money_Complete(...) : \r\n"
-            "\t\tPush Charge Money BECAUSE Poper Connection Closed : Poper Serial(%u) Pop Dalant(%u) Pop Gold(%u)\r\n",
-            dwIOerSerial,
-            dwPush,
-            dwPopGold);
-        }
-      }
-    }
+    return;
   }
+
+  guild->m_bIOWait = 0;
+  if (query->byProcRet)
+  {
+    g_Main.m_logSystemError.Write(
+      "CPlayer::Guild_Pop_Money_Complete(...) : \r\n"
+      "\t\tGuild(%u) TotD(%f) TotG(%f) SubD(%u) SubG(%u) %s(%u)\r\n"
+      "\t\t_qry_case_outputgmoney Ret(%u) Fail!",
+      query->in_guildserial,
+      query->out_totaldalant,
+      query->out_totalgold,
+      query->dwSubDalant,
+      query->dwSubGold,
+      query->in_w_popername,
+      query->in_poperserial,
+      query->byProcRet);
+    return;
+  }
+
+  if (pData->m_byResult)
+  {
+    return;
+  }
+
+  unsigned __int8 date[4]{};
+  memcpy_0(date, query->in_date, sizeof(date));
+  guild->IOMoney(
+    query->in_w_popername,
+    query->in_poperserial,
+    -0.0 - static_cast<double>(static_cast<int>(query->dwSubDalant)),
+    -0.0 - static_cast<double>(static_cast<int>(query->dwSubGold)),
+    query->out_totaldalant,
+    query->out_totalgold,
+    date,
+    0);
+
+  _guild_member_info *member = guild->GetMemberFromSerial(query->in_poperserial);
+  if (!member)
+  {
+    return;
+  }
+
+  CPlayer *player = member->pPlayer;
+  if (player)
+  {
+    player->AddDalant(query->dwSubDalant, 1);
+    player->AddGold(query->dwSubGold, 1);
+    CPlayer::s_MgrItemHistory.guild_pop_money(
+      player->m_ObjID.m_wIndex,
+      guild->m_aszName,
+      query->dwSubDalant,
+      query->dwSubGold,
+      player->m_Param.GetDalant(),
+      player->m_Param.GetGold(),
+      player->m_szItemHistoryFileName);
+    player->SendMsg_AlterMoneyInform(0);
+    return;
+  }
+
+  if (query->dwSubDalant)
+  {
+    g_Main.Push_ChargeItem(query->in_poperserial, 0xFFFFFFFF, query->dwSubDalant, 0xFFFFFFFu, 1u);
+  }
+  if (query->dwSubGold)
+  {
+    g_Main.Push_ChargeItem(query->in_poperserial, 0xFFFFFFFF, query->dwSubGold, 0xFFFFFFFu, 2u);
+  }
+
+  g_Main.m_logSystemError.Write(
+    "CPlayer::Guild_Pop_Money_Complete(...) : \r\n"
+    "\t\tPush Charge Money BECAUSE Poper Connection Closed : Poper Serial(%u) Pop Dalant(%u) Pop Gold(%u)\r\n",
+    query->in_poperserial,
+    query->dwSubDalant,
+    query->dwSubGold);
 }
 
 void CPlayer::Guild_Buy_Emblem_Complete(_DB_QRY_SYN_DATA *pData)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  __int64 v3; // [rsp+0h] [rbp-F8h] BYREF
-  __int64 dTotalDalant; // [rsp+28h] [rbp-D0h]
-  unsigned __int8 *pbyDate; // [rsp+38h] [rbp-C0h]
-  bool bInPut[16]; // [rsp+40h] [rbp-B8h]
-  int v7; // [rsp+50h] [rbp-A8h]
-  unsigned int v8; // [rsp+54h] [rbp-A4h]
-  unsigned int dwEmblemBack; // [rsp+58h] [rbp-A0h]
-  unsigned int dwEmblemMark; // [rsp+5Ch] [rbp-9Ch]
-  unsigned int dwIOerSerial; // [rsp+60h] [rbp-98h]
-  char Destination[28]; // [rsp+78h] [rbp-80h] BYREF
-  int v13; // [rsp+94h] [rbp-64h]
-  int v14; // [rsp+98h] [rbp-60h]
-  long double dTotalGold; // [rsp+A0h] [rbp-58h]
-  long double v16; // [rsp+A8h] [rbp-50h]
-  unsigned __int8 v17[20]; // [rsp+B4h] [rbp-44h] BYREF
-  char *m_sData; // [rsp+C8h] [rbp-30h]
-  CGuild *v19; // [rsp+D0h] [rbp-28h]
+  const auto *query = reinterpret_cast<_qry_case_buyemblem *>(pData->m_sData);
+  CGuild *guild = &g_Guild[query->tmp_guildindex];
 
-  v7 = -1;
-  v8 = -1;
-  dwEmblemBack = -1;
-  dwEmblemMark = -1;
-  dwIOerSerial = -1;
-  v13 = 0;
-  v14 = 0;
-  dTotalGold = 0.0;
-  v16 = 0.0;
-  memset(v17, 0, 4);
-  m_sData = pData->m_sData;
-  v7 = *(_DWORD *)&pData->m_sData[24];
-  v8 = *(_DWORD *)pData->m_sData;
-  dwEmblemBack = *(_DWORD *)&pData->m_sData[4];
-  dwEmblemMark = *(_DWORD *)&pData->m_sData[8];
-  dwIOerSerial = *(_DWORD *)&pData->m_sData[16];
-  v14 = *(_DWORD *)&pData->m_sData[12];
-  v16 = *(double *)&pData->m_sData[56];
-  dTotalGold = *(double *)&pData->m_sData[48];
-  memcpy_0(v17, &pData->m_sData[20], 4uLL);
-  strcpy_0(Destination, m_sData + 28);
-  v19 = &g_Guild[v7];
-  if ( v19->m_dwSerial == v8 )
+  if (guild->m_dwSerial != query->in_guildserial)
   {
-    v19->m_bIOWait = 0;
-	    if ( m_sData[64] )
-	    {
-	      const unsigned __int8 qryRet = static_cast<unsigned __int8>(m_sData[64]);
-	      const unsigned int ioerSerialForLog = *((_DWORD *)m_sData + 4);
-	      const int subDalant = v14;
-	      g_Main.m_logSystemError.Write(
-	        
-	        "CPlayer::Guild_Buy_Emblem_Complete(...) : \r\n"
-	        "\t\tGuild(%u) TotD(%f) TotG(%f) SubD(%d) %s(%u)\r\n"
-	        "\t\tqry_case_buyemblem Ret(%u) Fail!",
-	        v8,
-	        v16,
-	        dTotalGold,
-	        subDalant,
-	        m_sData + 28,
-	        ioerSerialForLog,
-	        qryRet);
-	    }
-    else if ( !pData->m_byResult )
-    {
-      v19->m_byMoneyOutputKind = 1;
-      v19->IOMoney( Destination, dwIOerSerial, (double)v14, 0.0, v16, dTotalGold, v17, 0);
-      v19->UpdateEmblem( dwEmblemBack, dwEmblemMark);
-    }
+    return;
   }
+
+  guild->m_bIOWait = 0;
+  if (query->byProcRet)
+  {
+    g_Main.m_logSystemError.Write(
+      "CPlayer::Guild_Buy_Emblem_Complete(...) : \r\n"
+      "\t\tGuild(%u) TotD(%f) TotG(%f) SubD(%d) %s(%u)\r\n"
+      "\t\tqry_case_buyemblem Ret(%u) Fail!",
+      query->in_guildserial,
+      query->out_totaldalant,
+      query->out_totalgold,
+      query->in_emblemdlant,
+      query->tmp_w_suggestorname,
+      query->in_suggestorSerial,
+      query->byProcRet);
+    return;
+  }
+
+  if (pData->m_byResult)
+  {
+    return;
+  }
+
+  guild->m_byMoneyOutputKind = 1;
+  unsigned __int8 date[4]{};
+  memcpy_0(date, query->in_date, sizeof(date));
+  guild->IOMoney(
+    query->tmp_w_suggestorname,
+    query->in_suggestorSerial,
+    static_cast<double>(query->in_emblemdlant),
+    0.0,
+    query->out_totaldalant,
+    query->out_totalgold,
+    date,
+    0);
+  guild->UpdateEmblem(query->in_emblemback, query->in_emblemmark);
 }
 
 void CPlayer::Guild_Disjoint_Complete(_DB_QRY_SYN_DATA *pData)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  __int64 v3; // [rsp+0h] [rbp-48h] BYREF
-  int v4; // [rsp+20h] [rbp-28h]
-  int v5; // [rsp+24h] [rbp-24h]
-  char *m_sData; // [rsp+28h] [rbp-20h]
-  CGuild *v7; // [rsp+30h] [rbp-18h]
+  const auto *query = reinterpret_cast<_qry_case_disjointguild *>(pData->m_sData);
+  CGuild *guild = &g_Guild[query->tmp_guildindex];
 
-  v4 = -1;
-  v5 = -1;
-  m_sData = pData->m_sData;
-  v4 = *(_DWORD *)&pData->m_sData[4];
-  v5 = *(_DWORD *)pData->m_sData;
-  v7 = &g_Guild[v4];
-  if ( v7 && v7->m_dwSerial == v5 && !pData->m_byResult )
+  if (guild && guild->m_dwSerial == query->in_guildserial && !pData->m_byResult)
   {
-    if ( v7->m_nApplierNum > 0 )
-      v7->SendMsg_GuildDisjointInform();
-    v7->Release();
+    if (guild->m_nApplierNum > 0)
+    {
+      guild->SendMsg_GuildDisjointInform();
+    }
+    guild->Release();
   }
 }
 
 void CPlayer::Guild_Update_GuildMater_Complete(_DB_QRY_SYN_DATA *pData)
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  __int64 v3; // [rsp+0h] [rbp-68h] BYREF
-  int v4; // [rsp+30h] [rbp-38h]
-  int v5; // [rsp+34h] [rbp-34h]
-  unsigned int in_guild_prev_masterSerial; // [rsp+38h] [rbp-30h]
-  unsigned __int8 v7; // [rsp+3Ch] [rbp-2Ch]
-  unsigned int in_guild_new_masterSerial; // [rsp+40h] [rbp-28h]
-  unsigned __int8 in_guild_new_masterPrevGrade; // [rsp+44h] [rbp-24h]
-  char *m_sData; // [rsp+48h] [rbp-20h]
-  CGuild *v11; // [rsp+50h] [rbp-18h]
+  const auto *query = reinterpret_cast<_qry_case_update_guildmaster *>(pData->m_sData);
+  CGuild *guild = &g_Guild[query->tmp_guildindex];
 
-  v4 = -1;
-  v5 = -1;
-  m_sData = pData->m_sData;
-  v4 = *(_DWORD *)&pData->m_sData[4];
-  v5 = *(_DWORD *)pData->m_sData;
-  in_guild_prev_masterSerial = *(_DWORD *)&pData->m_sData[8];
-  v7 = pData->m_sData[12];
-  in_guild_new_masterSerial = *(_DWORD *)&pData->m_sData[16];
-  in_guild_new_masterPrevGrade = pData->m_sData[20];
-  v11 = &g_Guild[v4];
-  if ( v11 && v11->m_dwSerial == v5 && !pData->m_byResult )
-    
-      v11->DB_Update_GuildMaster_Complete(
-      in_guild_prev_masterSerial,
-      v7,
-      in_guild_new_masterSerial,
-      in_guild_new_masterPrevGrade);
+  if (guild && guild->m_dwSerial == query->in_guildserial && !pData->m_byResult)
+  {
+    guild->DB_Update_GuildMaster_Complete(
+      query->in_guild_prev_masterSerial,
+      query->in_guild_prev_masterPrevGrade,
+      query->in_guild_new_masterSerial,
+      query->in_guild_new_masterPrevGrade);
+  }
 }
 
 
@@ -1324,7 +1020,11 @@ SEND_RESULT:
     return;
   }
 
-  _qry_case_insertguild_local query;
+  _qry_case_insertguild_local query{};
+  query.in_guildindex = 0xFFFFFFFFu;
+  query.out_guildserial = 0xFFFFFFFFu;
+  query.tmp_Esterindex = 0xFFFFFFFFu;
+  query.tmp_Esterserial = 0xFFFFFFFFu;
   query.in_guildindex = static_cast<unsigned int>(selectedGuildIndex);
   query.tmp_Esterindex = this->m_id.wIndex;
   query.tmp_Esterserial = this->m_id.dwSerial;
@@ -1343,7 +1043,7 @@ SEND_RESULT:
         nullptr,
         0x0Fu,
         reinterpret_cast<char *>(&query),
-        static_cast<int>(query.size())))
+        static_cast<int>(sizeof(query))))
   {
     return;
   }
@@ -1354,7 +1054,8 @@ SEND_RESULT:
     member->m_Param.m_bGuildLock = true;
   }
 
-  const unsigned int consumeDalant = g_Main.m_GuildCreateEventInfo.GetEstConsumeDalant();
+  const unsigned int consumeDalant =
+    static_cast<unsigned int>(g_Main.m_GuildCreateEventInfo.GetEstConsumeDalant());
   this->SubDalant(consumeDalant);
 
   const int level = this->m_Param.GetLevel();
@@ -1530,7 +1231,7 @@ void CPlayer::pc_GuildJoinAcceptRequest(unsigned int dwApplierSerial, bool bAcce
       query.in_Grade = 0;
       query.in_MemberNum = static_cast<int>(guild->GetMemberNum()) + 1;
 
-      if (g_Main.PushDQSData(0xFFFFFFFFu, &this->m_id, 0x10u, reinterpret_cast<char *>(&query), static_cast<int>(query.size())))
+      if (g_Main.PushDQSData(0xFFFFFFFFu, &this->m_id, 0x10u, reinterpret_cast<char *>(&query), static_cast<int>(sizeof(query))))
       {
         applierInfo->pPlayer->m_Param.m_bGuildLock = true;
         ++guild->m_nTempMemberNum;
@@ -1599,7 +1300,7 @@ void CPlayer::pc_GuildPushMoneyRequest(unsigned int dwPushDalant, unsigned int d
     query.in_date[3] = GetCurrentMin();
     strcpy_0(query.in_w_pushername, this->m_Param.GetCharNameW());
 
-    if (g_Main.PushDQSData(0xFFFFFFFFu, nullptr, 0x13u, reinterpret_cast<char *>(&query), static_cast<int>(query.size())))
+    if (g_Main.PushDQSData(0xFFFFFFFFu, nullptr, 0x13u, reinterpret_cast<char *>(&query), static_cast<int>(sizeof(query))))
     {
       guild->m_bIOWait = true;
       this->SubDalant(dwPushDalant);

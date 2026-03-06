@@ -21,6 +21,7 @@
 #include "WorldServerUtil.h"
 #include "CBsp.h"
 #include "CMapOperation.h"
+#include "Packet/ZoneClientPacket.h"
 #include "pnt_rect.h"
 
 CMyTimer::~CMyTimer() = default;
@@ -947,41 +948,41 @@ __int64 CCharacter::GetAttackRandomPart()
 
 void CCharacter::SendMsg_AttackActEffect(unsigned __int8 byActEffect, CCharacter *pDamer)
 {
-  char payload[11]{};
-  payload[0] = static_cast<char>(byActEffect);
-  payload[1] = static_cast<char>(m_ObjID.m_byID);
-  *reinterpret_cast<unsigned int *>(payload + 2) = m_dwObjSerial;
-  payload[6] = static_cast<char>(pDamer->m_ObjID.m_byID);
-  *reinterpret_cast<unsigned int *>(payload + 7) = pDamer->m_dwObjSerial;
+  _count_succ_inform_zocl msg{};
+  msg.byActEffectCode = static_cast<char>(byActEffect);
+  msg.byAtterID = static_cast<char>(m_ObjID.m_byID);
+  msg.dwAtterSerial = m_dwObjSerial;
+  msg.byDamerID = static_cast<char>(pDamer->m_ObjID.m_byID);
+  msg.dwDamerSerial = pDamer->m_dwObjSerial;
 
   unsigned __int8 type[2] = {5, 24};
-  CircleReport(type, payload, 11, true);
+  CircleReport(type, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), true);
 }
 
 void CCharacter::SendMsg_LastEffectChangeInform()
 {
-  char payload[7]{};
-  payload[0] = static_cast<char>(m_ObjID.m_byID);
-  *reinterpret_cast<unsigned int *>(payload + 1) = m_dwObjSerial;
-  *reinterpret_cast<unsigned __int16 *>(payload + 5) = m_wLastContEffect;
+  _last_effect_change_inform_zocl msg{};
+  msg.byObjID = static_cast<char>(m_ObjID.m_byID);
+  msg.dwSerial = m_dwObjSerial;
+  msg.wLastContEffect = m_wLastContEffect;
 
   unsigned __int8 type[2] = {17, 17};
-  CircleReport(type, payload, 7, true);
+  CircleReport(type, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), true);
 }
 
 void CCharacter::SendMsg_RobedHP(const CCharacter *pkPerform, unsigned __int16 wRobedHP)
 {
-  char payload[16]{};
-  payload[0] = static_cast<char>(m_ObjID.m_byID);
-  *reinterpret_cast<unsigned __int16 *>(payload + 1) = m_ObjID.m_wIndex;
-  *reinterpret_cast<unsigned int *>(payload + 3) = m_dwObjSerial;
-  payload[7] = static_cast<char>(pkPerform->m_ObjID.m_byID);
-  *reinterpret_cast<unsigned __int16 *>(payload + 8) = pkPerform->m_ObjID.m_wIndex;
-  *reinterpret_cast<unsigned int *>(payload + 10) = pkPerform->m_dwObjSerial;
-  *reinterpret_cast<unsigned __int16 *>(payload + 14) = wRobedHP;
+  _robed_hp_inform_zocl msg{};
+  msg.idDster.byID = static_cast<char>(m_ObjID.m_byID);
+  msg.idDster.wIndex = m_ObjID.m_wIndex;
+  msg.idDster.dwSerial = m_dwObjSerial;
+  msg.idPerformer.byID = static_cast<char>(pkPerform->m_ObjID.m_byID);
+  msg.idPerformer.wIndex = pkPerform->m_ObjID.m_wIndex;
+  msg.idPerformer.dwSerial = pkPerform->m_dwObjSerial;
+  msg.wRobedHP = wRobedHP;
 
   unsigned __int8 type[2] = {17, 31};
-  CircleReport(type, payload, 16, false);
+  CircleReport(type, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), false);
 }
 
 int _CheckCumulativeSF(
@@ -2284,11 +2285,11 @@ void CCharacter::_set_sf_cont(
 
 void CCharacter::SendMsg_StunInform()
 {
-  char msg[7]{};
-  msg[0] = static_cast<char>(m_ObjID.m_byID);
-  *reinterpret_cast<unsigned __int16 *>(&msg[1]) = m_ObjID.m_wIndex;
-  *reinterpret_cast<unsigned int *>(&msg[3]) = m_dwObjSerial;
+  _character_stun_inform_zocl msg{};
+  msg.byObjID = static_cast<char>(m_ObjID.m_byID);
+  msg.wObjIndex = m_ObjID.m_wIndex;
+  msg.dwObjSerial = m_dwObjSerial;
 
   unsigned __int8 packetType[2] = {17, 16};
-  CircleReport(packetType, msg, sizeof(msg), false);
+  CircleReport(packetType, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), false);
 }

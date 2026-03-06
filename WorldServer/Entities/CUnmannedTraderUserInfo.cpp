@@ -28,7 +28,15 @@
 #include "a_trade_clear_item_request_clzo.h"
 #include "a_trade_clear_item_result_zocl.h"
 #include "a_trade_reg_item_request_clzo.h"
+#include "lt_qry_case_unmandtrader_select_list.h"
+#include "qry_case_unmandtrader_cancelitem.h"
+#include "qry_case_unmandtrader_buy_get_info.h"
+#include "qry_case_unmandtrader_cheat_updateregisttime.h"
 #include "qry_case_unmandtrader_log_in_proc_update_complete.h"
+#include "qry_case_unmandtrader_re_registsingleitem.h"
+#include "qry_case_unmandtrader_re_registsingleitem_roll_back.h"
+#include "qry_case_unmandtrader_registsingleitem.h"
+#include "qry_case_unmandtrader_update_reprice.h"
 #include "unmannedtrader_Regist_item_inform_zocl.h"
 #include "unmannedtrader_buy_item_request_clzo.h"
 #include "unmannedtrader_buy_item_result_zocl.h"
@@ -423,54 +431,49 @@ unsigned __int8 CUnmannedTraderUserInfo::RegistItem(
     CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(owner->m_Param.GetRaceCode(), level, dwTax);
   }
 
-  char queryData[88]{};
-  *reinterpret_cast<unsigned __int16 *>(queryData + 0) = this->m_wInx;
-  *reinterpret_cast<unsigned __int16 *>(queryData + 2) = sourceItemSerial;
-  *reinterpret_cast<unsigned int *>(queryData + 4) = owner->m_Param.GetDalant();
-  *reinterpret_cast<unsigned __int16 *>(queryData + 8) = splitItemSerial;
-  queryData[10] = pRequest->byAmount;
-  queryData[11] = sourceStorageIndex;
-  queryData[12] = registTarget->m_byStorageIndex;
-  queryData[13] = byType;
-  queryData[14] = CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Sell_Turm;
-  queryData[15] = static_cast<char>(owner->m_Param.GetRaceCode());
-  queryData[16] = sourceStorageIndex;
-  queryData[17] = registTarget->m_byStorageIndex;
-  *reinterpret_cast<unsigned int *>(queryData + 20) = 0;
-  queryData[24] = 0;
-  queryData[25] = byType;
-  queryData[26] = CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Sell_Turm;
-  queryData[27] = static_cast<char>(owner->m_Param.GetRaceCode());
-  *reinterpret_cast<unsigned int *>(queryData + 28) = owner->m_dwObjSerial;
-  *reinterpret_cast<unsigned int *>(queryData + 32) = pRequest->dwPrice;
-  queryData[36] = registTarget->m_byStorageIndex;
+  _qry_case_unmandtrader_registsingleitem queryData{};
+  queryData.wInx = this->m_wInx;
+  queryData.wItemSerialOld = sourceItemSerial;
+  queryData.dwLeftDalant = owner->m_Param.GetDalant();
+  queryData.wSepaSerial = splitItemSerial;
+  queryData.bySepaAmount = pRequest->byAmount;
+  queryData.byOldStorageIndex = sourceStorageIndex;
+  queryData.byStorageIndex = registTarget->m_byStorageIndex;
+  queryData.byType = byType;
+  queryData.bySellTurm = CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Sell_Turm;
+  queryData.byRace = static_cast<unsigned __int8>(owner->m_Param.GetRaceCode());
+  queryData.dwRegedSerial = 0;
+  queryData.bInserted = false;
+  queryData.dwOwnerSerial = owner->m_dwObjSerial;
+  queryData.dwPrice = pRequest->dwPrice;
+  queryData.byInveninx = registTarget->m_byStorageIndex;
 
   _INVENKEY itemKey(0, registTarget->m_byTableCode, registTarget->m_wItemIndex);
-  *reinterpret_cast<unsigned int *>(queryData + 40) = static_cast<unsigned int>(itemKey.CovDBKey());
-  *reinterpret_cast<unsigned __int64 *>(queryData + 48) = registTarget->m_dwDur;
-  *reinterpret_cast<unsigned int *>(queryData + 56) = registTarget->m_dwLv;
+  queryData.dwK = static_cast<unsigned int>(itemKey.CovDBKey());
+  queryData.dwD = registTarget->m_dwDur;
+  queryData.dwU = registTarget->m_dwLv;
 
   if (registTarget->m_byTableCode == 15)
   {
     _force_fld *effectRecord = static_cast<_force_fld *>(
       g_Main.m_tblEffectData[1].GetRecord(CPlayer::s_pnLinkForceItemToEffect[registTarget->m_wItemIndex]));
-    queryData[60] = effectRecord ? static_cast<char>(effectRecord->m_nLv) : 0;
+    queryData.byLv = effectRecord ? static_cast<unsigned __int8>(effectRecord->m_nLv) : 0;
   }
   else
   {
-    queryData[60] = GetItemEquipLevel(registTarget->m_byTableCode, registTarget->m_wItemIndex);
+    queryData.byLv = GetItemEquipLevel(registTarget->m_byTableCode, registTarget->m_wItemIndex);
   }
-  queryData[61] = GetItemGrade(registTarget->m_byTableCode, registTarget->m_wItemIndex);
-  queryData[62] = byDivision;
-  queryData[63] = byClass;
-  queryData[64] = bySubClass;
-  *reinterpret_cast<unsigned int *>(queryData + 68) = registTarget->m_dwT;
-  *reinterpret_cast<unsigned __int64 *>(queryData + 72) = registTarget->m_lnUID;
-  *reinterpret_cast<unsigned int *>(queryData + 80) = dwTax;
-  *reinterpret_cast<unsigned int *>(queryData + 84) = dwListIndex;
+  queryData.byGrade = GetItemGrade(registTarget->m_byTableCode, registTarget->m_wItemIndex);
+  queryData.byClass1 = byDivision;
+  queryData.byClass2 = byClass;
+  queryData.byClass3 = bySubClass;
+  queryData.dwT = registTarget->m_dwT;
+  queryData.lnUID = registTarget->m_lnUID;
+  queryData.dwTax = dwTax;
+  queryData.dwListIndex = dwListIndex;
 
   this->m_kRequestState.SetRequest(static_cast<CUnmannedTraderRequestLimiter::REQUEST_TYPE>(0));
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x3Cu, queryData, sizeof(queryData));
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x3Cu, reinterpret_cast<char *>(&queryData), sizeof(queryData));
   return 0;
 }
 
@@ -493,16 +496,16 @@ void CUnmannedTraderUserInfo::ModifyPrice(
     return;
   }
 
-  char queryData[32]{};
-  *reinterpret_cast<unsigned int *>(queryData + 0) = oldPrice;
-  *reinterpret_cast<unsigned __int16 *>(queryData + 4) = this->m_wInx;
-  *reinterpret_cast<unsigned int *>(queryData + 8) = this->m_dwUserSerial;
-  *reinterpret_cast<unsigned __int16 *>(queryData + 12) = pRequest->wItemSerial;
-  *reinterpret_cast<unsigned int *>(queryData + 16) = taxDalant;
-  queryData[20] = 0;
-  queryData[21] = byType;
-  *reinterpret_cast<unsigned int *>(queryData + 24) = pRequest->dwRegistSerial;
-  *reinterpret_cast<unsigned int *>(queryData + 28) = pRequest->dwNewPrice;
+  _qry_case_unmandtrader_update_reprice queryData{};
+  queryData.dwOldPrice = oldPrice;
+  queryData.wInx = this->m_wInx;
+  queryData.dwOwnerSerial = this->m_dwUserSerial;
+  queryData.wItemSerial = pRequest->wItemSerial;
+  queryData.dwTax = taxDalant;
+  queryData.byProcRet = 0;
+  queryData.byType = byType;
+  queryData.dwRegistSerial = pRequest->dwRegistSerial;
+  queryData.dwNewPrice = pRequest->dwNewPrice;
 
   g_Player[this->m_wInx].SubDalant(taxDalant);
   const int level = g_Player[this->m_wInx].m_Param.GetLevel();
@@ -512,7 +515,7 @@ void CUnmannedTraderUserInfo::ModifyPrice(
   }
 
   this->m_kRequestState.SetRequest(static_cast<CUnmannedTraderRequestLimiter::REQUEST_TYPE>(1));
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x3Fu, queryData, sizeof(queryData));
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x3Fu, reinterpret_cast<char *>(&queryData), sizeof(queryData));
 }
 
 unsigned __int8 CUnmannedTraderUserInfo::CheckModifyPrice(
@@ -582,20 +585,19 @@ void CUnmannedTraderUserInfo::CancelRegist(
     return;
   }
 
-  char queryData[60]{};
-  *reinterpret_cast<unsigned __int16 *>(queryData + 0) = this->m_wInx;
-  *reinterpret_cast<unsigned __int16 *>(queryData + 2) = pRequest->wItemSerial;
-  *reinterpret_cast<unsigned int *>(queryData + 4) = this->m_dwUserSerial;
-  strcpy_s(queryData + 8, 13, g_Player[this->m_wInx].m_pUserDB->m_szAccountID);
-  strcpy_s(queryData + 21, 17, g_Player[this->m_wInx].m_Param.GetCharNameW());
-  queryData[38] = byType;
-  queryData[39] = 0;
-  *reinterpret_cast<unsigned int *>(queryData + 40) = pRequest->dwRegistSerial;
-  queryData[44] = 5;
-  queryData[45] = 0;
+  _qry_case_unmandtrader_cancelitem queryData{};
+  queryData.wInx = this->m_wInx;
+  queryData.wItemSerial = pRequest->wItemSerial;
+  queryData.dwOwnerSerial = this->m_dwUserSerial;
+  strcpy_s(queryData.szAccount, 13, g_Player[this->m_wInx].m_pUserDB->m_szAccountID);
+  strcpy_s(queryData.wszName, 17, g_Player[this->m_wInx].m_Param.GetCharNameW());
+  queryData.byType = byType;
+  queryData.dwRegistSerial = pRequest->dwRegistSerial;
+  queryData.byState = 5;
+  queryData.byProcRet = 0;
 
   this->m_kRequestState.SetRequest(static_cast<CUnmannedTraderRequestLimiter::REQUEST_TYPE>(2));
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x3Du, queryData, sizeof(queryData));
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x3Du, reinterpret_cast<char *>(&queryData), sizeof(queryData));
 }
 
 unsigned __int8 CUnmannedTraderUserInfo::CheckCancelRegist(
@@ -640,7 +642,9 @@ void CUnmannedTraderUserInfo::Buy(
   _unmannedtrader_buy_item_request_clzo *pRequest,
   CLogFile *pkLogger)
 {
-if (byType >= 2u)
+  (void)pkLogger;
+
+  if (byType >= 2u)
   {
     return;
   }
@@ -653,25 +657,25 @@ if (byType >= 2u)
     return;
   }
 
-  char queryData[736]{};
-  *reinterpret_cast<unsigned __int16 *>(queryData + 0) = this->m_wInx;
-  *reinterpret_cast<unsigned int *>(queryData + 4) = this->m_dwUserSerial;
-  queryData[8] = static_cast<char>(buyer->m_Param.GetRaceCode());
-  queryData[9] = buyer->m_byUserDgr;
-  queryData[10] = pRequest->byDivision;
-  queryData[11] = pRequest->byClass;
-  queryData[12] = pRequest->bySubClass;
-  queryData[13] = byType;
-  queryData[14] = pRequest->byNum;
+  _qry_case_unmandtrader_buy_get_info queryData{};
+  queryData.wInx = this->m_wInx;
+  queryData.dwBuyer = this->m_dwUserSerial;
+  queryData.byRace = static_cast<unsigned __int8>(buyer->m_Param.GetRaceCode());
+  queryData.byUserGrade = buyer->m_byUserDgr;
+  queryData.byDivision = pRequest->byDivision;
+  queryData.byClass = pRequest->byClass;
+  queryData.bySubClass = pRequest->bySubClass;
+  queryData.byType = byType;
+  queryData.byNum = pRequest->byNum;
 
   for (int index = 0; index < pRequest->byNum; ++index)
   {
-    *reinterpret_cast<unsigned int *>(queryData + 16 + index * 72) = pRequest->List[index].dwRegistSerial;
-    *reinterpret_cast<unsigned int *>(queryData + 20 + index * 72) = pRequest->List[index].dwPrice;
+    queryData.List[index].dwRegistSerial = pRequest->List[index].dwRegistSerial;
+    queryData.List[index].dwPrice = pRequest->List[index].dwPrice;
   }
 
   this->m_kRequestState.SetRequest(static_cast<CUnmannedTraderRequestLimiter::REQUEST_TYPE>(3));
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x40u, queryData, sizeof(queryData));
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x40u, reinterpret_cast<char *>(&queryData), sizeof(queryData));
 }
 
 unsigned __int8 CUnmannedTraderUserInfo::CheckBuy(
@@ -712,7 +716,9 @@ void CUnmannedTraderUserInfo::Search(
   _unmannedtrader_search_list_request_clzo *pRequest,
   CLogFile *pkLogger)
 {
-if (byType >= 2u)
+  (void)pkLogger;
+
+  if (byType >= 2u)
   {
     return;
   }
@@ -730,25 +736,25 @@ if (byType >= 2u)
     CUnmannedTraderGroupItemInfoTable::Instance()->GetSortType(pRequest->byDivision, pRequest->bySortType);
   const char *queryText = sortType ? sortType->GetQuery() : nullptr;
 
-  char queryData[0x378]{};
-  *reinterpret_cast<unsigned __int16 *>(queryData + 0) = this->m_wInx;
-  *reinterpret_cast<unsigned int *>(queryData + 4) = this->m_dwUserSerial;
-  queryData[8] = byType;
-  queryData[9] = static_cast<char>(g_Player[this->m_wInx].m_Param.GetRaceCode());
-  *reinterpret_cast<unsigned int *>(queryData + 12) = listIndex;
-  queryData[16] = pRequest->byDivision;
-  queryData[17] = pRequest->byClass;
-  queryData[18] = pRequest->bySubClass;
-  queryData[19] = pRequest->bySortType;
-  *reinterpret_cast<unsigned int *>(queryData + 20) = currentVersion;
-  queryData[24] = pRequest->byPage;
+  _lt_qry_case_unmandtrader_select_list queryData{};
+  queryData.wInx = this->m_wInx;
+  queryData.dwOwnerSerial = this->m_dwUserSerial;
+  queryData.byType = byType;
+  queryData.byRace = static_cast<unsigned __int8>(g_Player[this->m_wInx].m_Param.GetRaceCode());
+  queryData.dwListIndex = listIndex;
+  queryData.byClass1 = pRequest->byDivision;
+  queryData.byClass2 = pRequest->byClass;
+  queryData.byClass3 = pRequest->bySubClass;
+  queryData.bySortType = pRequest->bySortType;
+  queryData.dwVer = currentVersion;
+  queryData.byPage = pRequest->byPage;
   if (queryText)
   {
-    strcpy_0(queryData + 25, queryText);
+    strcpy_0(queryData.szSortQuery, queryText);
   }
 
   this->m_kRequestState.SetRequest(static_cast<CUnmannedTraderRequestLimiter::REQUEST_TYPE>(4));
-  CLogTypeDBTaskManager::Instance()->Push(1u, queryData, 0x378u);
+  CLogTypeDBTaskManager::Instance()->Push(1u, reinterpret_cast<char *>(&queryData), 0x378u);
 }
 
 unsigned __int8 CUnmannedTraderUserInfo::CheckSearch(
@@ -806,27 +812,27 @@ void CUnmannedTraderUserInfo::ReRegist(
   CountRegistItem();
   unsigned int totalTax = 0;
 
-  char queryData[292]{};
-  queryData[0] = 0;
-  *reinterpret_cast<unsigned __int16 *>(queryData + 2) = this->m_wInx;
-  queryData[4] = pRequest->byRegedNum;
-  *reinterpret_cast<unsigned int *>(queryData + 8) = this->m_dwUserSerial;
+  _qry_case_unmandtrader_re_registsingleitem queryData{};
+  queryData.byType = 0;
+  queryData.wInx = this->m_wInx;
+  queryData.byNum = pRequest->byRegedNum;
+  queryData.dwOwnerSerial = this->m_dwUserSerial;
 
   for (int index = 0; index < pRequest->byRegedNum; ++index)
   {
-    const size_t entryOffset = 12u + static_cast<size_t>(index) * 28u;
-    queryData[entryOffset + 1] = pRequest->List[index].bRegist ? 1 : 0;
-    *reinterpret_cast<unsigned __int16 *>(queryData + entryOffset + 2) = pRequest->List[index].wItemSerial;
-    *reinterpret_cast<unsigned int *>(queryData + entryOffset + 16) = pRequest->List[index].dwPrice;
-    *reinterpret_cast<unsigned int *>(queryData + entryOffset + 20) = pRequest->List[index].dwRegistSerial;
-    queryData[entryOffset + 24] = 11;
+    _qry_case_unmandtrader_re_registsingleitem::__list &entry = queryData.List[index];
+    entry.bRegist = pRequest->List[index].bRegist;
+    entry.wItemSerial = pRequest->List[index].wItemSerial;
+    entry.dwPrice = pRequest->List[index].dwPrice;
+    entry.dwRegistSerial = pRequest->List[index].dwRegistSerial;
+    entry.byUpdateState = 11;
 
-    if (!queryData[entryOffset + 1])
+    if (!entry.bRegist)
     {
       continue;
     }
 
-    const unsigned __int8 ret = CheckReRegist(
+    entry.byProcRet = CheckReRegist(
       byType,
       pkLogger,
       pRequest->List[index].wItemSerial,
@@ -835,16 +841,15 @@ void CUnmannedTraderUserInfo::ReRegist(
       pRequest->List[index].wItemIndex,
       pRequest->List[index].dwRegistSerial,
       pRequest->List[index].dwPrice,
-      reinterpret_cast<unsigned __int8 *>(queryData + entryOffset + 25),
-      reinterpret_cast<unsigned __int8 *>(queryData + entryOffset + 26),
-      reinterpret_cast<unsigned __int8 *>(queryData + entryOffset + 27),
-      reinterpret_cast<unsigned int *>(queryData + entryOffset + 4),
-      reinterpret_cast<unsigned int *>(queryData + entryOffset + 8));
-    queryData[entryOffset] = ret;
-    if (!ret)
+      &entry.byClass1,
+      &entry.byClass2,
+      &entry.byClass3,
+      &entry.dwTax,
+      &entry.dwListIndex);
+    if (!entry.byProcRet)
     {
-      queryData[entryOffset + 24] = 1;
-      totalTax += *reinterpret_cast<unsigned int *>(queryData + entryOffset + 4);
+      entry.byUpdateState = 1;
+      totalTax += entry.dwTax;
     }
   }
 
@@ -859,8 +864,12 @@ void CUnmannedTraderUserInfo::ReRegist(
   }
 
   this->m_kRequestState.SetRequest(static_cast<CUnmannedTraderRequestLimiter::REQUEST_TYPE>(5));
-  const int querySize = 12 + 28 * pRequest->byRegedNum;
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x8Cu, queryData, querySize);
+  g_Main.PushDQSData(
+    0xFFFFFFFF,
+    nullptr,
+    0x8Cu,
+    reinterpret_cast<char *>(&queryData),
+    static_cast<int>(queryData.size()));
 }
 
 unsigned __int8 CUnmannedTraderUserInfo::CheckReRegist(
@@ -1018,13 +1027,13 @@ const CUnmannedTraderRegistItemInfo *CUnmannedTraderUserInfo::GetRegItemInfo()
 
 void CUnmannedTraderUserInfo::SendSearchErrorResult(unsigned __int16 wInx, char byRet)
 {
-  char msg[532];
-  msg[0] = byRet;
+  _unmannedtrader_search_list_result_zocl msg{};
+  msg.byRet = byRet;
 
   unsigned __int8 pbyType[2]{};
   pbyType[0] = 30;
   pbyType[1] = 33;
-  g_Network.m_pProcess[0]->LoadSendMsg(wInx, pbyType, msg, 0x1F3u);
+  g_Network.m_pProcess[0]->LoadSendMsg(wInx, pbyType, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
 void CUnmannedTraderUserInfo::LogOut(unsigned int dwSerial, CLogFile *pkLogger)
@@ -1080,7 +1089,12 @@ bool CUnmannedTraderUserInfo::CheatCancelRegistAll()
 
   if (qryData.byNum)
   {
-    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x8Du, reinterpret_cast<char *>(&qryData), sizeof(qryData));
+    g_Main.PushDQSData(
+      0xFFFFFFFF,
+      nullptr,
+      0x8Du,
+      reinterpret_cast<char *>(&qryData),
+      static_cast<int>(qryData.size()));
   }
 
   return true;
@@ -1134,7 +1148,12 @@ bool CUnmannedTraderUserInfo::CheatCancelRegistSingle(unsigned __int8 byNth)
     qryData.wInx = m_wInx;
     qryData.dwOwnerSerial = m_dwUserSerial;
     qryData.List[0].dwRegistSerial = it->GetRegistSerial();
-    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x8Du, reinterpret_cast<char *>(&qryData), sizeof(qryData));
+    g_Main.PushDQSData(
+      0xFFFFFFFF,
+      nullptr,
+      0x8Du,
+      reinterpret_cast<char *>(&qryData),
+      static_cast<int>(qryData.size()));
     return true;
   }
 
@@ -1144,25 +1163,23 @@ bool CUnmannedTraderUserInfo::CheatCancelRegistSingle(unsigned __int8 byNth)
   return false;
 }
 
-void CUnmannedTraderUserInfo::SendSearchResult(unsigned __int16 wInx, char *pLoadData)
+void CUnmannedTraderUserInfo::SendSearchResult(
+  unsigned __int16 wInx,
+  _lt_qry_case_unmandtrader_select_list *pLoadData)
 {
-  char *reqData = pLoadData;
-  char msg[0x1F3];
-  msg[0] = 0;
+  _unmannedtrader_search_list_result_zocl msg{};
+  msg.byRet = 0;
 
-  const int totalCount = *reinterpret_cast<int *>(reqData + 12);
-  std::memcpy(msg + 1, &totalCount, sizeof(totalCount));
-  msg[5] = reqData[16];
-  msg[6] = reqData[17];
-  msg[7] = reqData[18];
-  msg[8] = reqData[19];
-  const int reserved = *reinterpret_cast<int *>(reqData + 20);
-  std::memcpy(msg + 9, &reserved, sizeof(reserved));
-  msg[13] = reqData[24];
-  const int pageCount = *reinterpret_cast<int *>(reqData + 156);
-  std::memcpy(msg + 14, &pageCount, sizeof(pageCount));
-  const unsigned __int8 itemCount = static_cast<unsigned __int8>(reqData[160]);
-  msg[18] = itemCount;
+  msg.dwListIndex = pLoadData->dwListIndex;
+  msg.byDivision = static_cast<char>(pLoadData->byClass1);
+  msg.byClass = static_cast<char>(pLoadData->byClass2);
+  msg.bySubClass = static_cast<char>(pLoadData->byClass3);
+  msg.bySortType = static_cast<char>(pLoadData->bySortType);
+  msg.dwVer = pLoadData->dwVer;
+  msg.byPage = static_cast<char>(pLoadData->byPage);
+  msg.dwMaxPage = pLoadData->dwMaxPage;
+  const unsigned __int8 itemCount = static_cast<unsigned __int8>(pLoadData->dwCnt);
+  msg.byCnt = static_cast<char>(itemCount);
 
   __time64_t now{};
   time_18(reinterpret_cast<__int64 *>(&now));
@@ -1170,32 +1187,28 @@ void CUnmannedTraderUserInfo::SendSearchResult(unsigned __int16 wInx, char *pLoa
   _INVENKEY key;
   for (unsigned int index = 0; index < itemCount; ++index)
   {
-    const unsigned int dataOffset = 72 * index;
-    char *item = msg + 19 + 48 * index;
+    msg.List[index].dwRegistSerial = pLoadData->list[index].dwSerial;
+    key.LoadDBKey(static_cast<int>(pLoadData->list[index].dwK));
+    msg.List[index].byTableCode = static_cast<char>(key.byTableCode);
+    msg.List[index].wItemIndex = key.wItemIndex;
+    msg.List[index].dwD = pLoadData->list[index].dwD;
+    msg.List[index].dwU = pLoadData->list[index].dwU;
+    msg.List[index].dwPrice = pLoadData->list[index].dwPrice;
+    msg.List[index].dwOwner = pLoadData->list[index].dwOwner;
 
-    *reinterpret_cast<unsigned int *>(item) = *reinterpret_cast<unsigned int *>(reqData + dataOffset + 168);
-    key.LoadDBKey(*reinterpret_cast<int *>(reqData + dataOffset + 172));
-    item[4] = static_cast<char>(key.byTableCode);
-    *reinterpret_cast<unsigned __int16 *>(item + 5) = key.wItemIndex;
-    *reinterpret_cast<unsigned __int64 *>(item + 7) =
-      *reinterpret_cast<unsigned __int64 *>(reqData + dataOffset + 176);
-    *reinterpret_cast<unsigned int *>(item + 15) = *reinterpret_cast<unsigned int *>(reqData + dataOffset + 184);
-    *reinterpret_cast<unsigned int *>(item + 19) = *reinterpret_cast<unsigned int *>(reqData + dataOffset + 188);
-    *reinterpret_cast<unsigned int *>(item + 23) = *reinterpret_cast<unsigned int *>(reqData + dataOffset + 192);
-
-    const char *source = reqData[dataOffset + 196] ? reqData + dataOffset + 196 : "NULL";
-    strcpy_s(item + 27, 0x11u, source);
+    const char *source = pLoadData->list[index].wszOwnerName[0] ? pLoadData->list[index].wszOwnerName : "NULL";
+    strcpy_s(msg.List[index].wszOwnerName, sizeof(msg.List[index].wszOwnerName), source);
 
     const __int64 regTime =
-      *reinterpret_cast<__int64 *>(reqData + dataOffset + 216) +
-      3600 * static_cast<unsigned __int8>(reqData[dataOffset + 224]);
-    *reinterpret_cast<unsigned int *>(item + 44) = static_cast<unsigned int>(regTime - now);
+      pLoadData->list[index].tRegdate +
+      3600 * static_cast<unsigned __int8>(pLoadData->list[index].bySellturm);
+    msg.List[index].dwLeftSec = static_cast<unsigned int>(regTime - now);
   }
 
   unsigned __int8 pbyType[2]{};
   pbyType[0] = 30;
   pbyType[1] = 33;
-  g_Network.m_pProcess[0]->LoadSendMsg(wInx, pbyType, msg, 0x1F3u);
+  g_Network.m_pProcess[0]->LoadSendMsg(wInx, pbyType, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
 bool CUnmannedTraderUserInfo::operator==(unsigned int dwSerial)
@@ -1359,12 +1372,11 @@ void CUnmannedTraderUserInfo::PrcoSellUpdateWaitItem(
 {
   (void)byGroupType;
   CPlayer *owner = FindOwner();
-  auto *result = reinterpret_cast<_qry_case_unmandtrader_log_in_proc_update_complete_create *>(pkResult);
   if (owner && owner->m_bOper)
   {
     for (int index = 0; index < 20; ++index)
     {
-      result->List[index].byProcUpdate = 0xFF;
+      pkResult->List[index].byProcUpdate = 0xFF;
       CUnmannedTraderRegistItemInfo &loadItem = m_vecLoadItemInfo[index];
       if (!loadItem.IsSellUpdateWait())
       {
@@ -1374,19 +1386,19 @@ void CUnmannedTraderUserInfo::PrcoSellUpdateWaitItem(
       _STORAGE_LIST::_db_con *inventoryItem = owner->m_Param.m_dbInven.GetPtrFromSerial(loadItem.GetItemSerial());
       if (inventoryItem)
       {
-        result->List[result->wNum].byProcUpdate = 92;
-        result->List[result->wNum].dwBuyer = 0;
-        result->List[result->wNum].dwRegistSerial = loadItem.GetRegistSerial();
-        result->List[result->wNum++].byUpdateState = 1;
+        pkResult->List[pkResult->wNum].byProcUpdate = 92;
+        pkResult->List[pkResult->wNum].dwBuyer = 0;
+        pkResult->List[pkResult->wNum].dwRegistSerial = loadItem.GetRegistSerial();
+        pkResult->List[pkResult->wNum++].byUpdateState = 1;
         loadItem.ClearBuyerInfo();
         loadItem.SetState(1u);
       }
       else
       {
-        result->List[result->wNum].byProcUpdate = 83;
-        result->List[result->wNum].dwBuyer = 0;
-        result->List[result->wNum].dwRegistSerial = loadItem.GetRegistSerial();
-        result->List[result->wNum++].byUpdateState = 5;
+        pkResult->List[pkResult->wNum].byProcUpdate = 83;
+        pkResult->List[pkResult->wNum].dwBuyer = 0;
+        pkResult->List[pkResult->wNum].dwRegistSerial = loadItem.GetRegistSerial();
+        pkResult->List[pkResult->wNum++].byUpdateState = 5;
         loadItem.ClearToWaitState();
       }
     }
@@ -1401,7 +1413,7 @@ void CUnmannedTraderUserInfo::PrcoSellUpdateWaitItem(
 
 void CUnmannedTraderUserInfo::CompleteCreate(CLogFile *pkLogger)
 {
-  _qry_case_unmandtrader_log_in_proc_update_complete_create updateInfo{};
+  _qry_case_unmandtrader_log_in_proc_update_complete updateInfo{};
   std::memset(&updateInfo, 0, sizeof(updateInfo));
   updateInfo.wInx = this->m_wInx;
   updateInfo.dwSeller = this->m_dwUserSerial;
@@ -1430,7 +1442,7 @@ void CUnmannedTraderUserInfo::CompleteCreate(CLogFile *pkLogger)
     }
 
     _STORAGE_LIST::_db_con *inventoryItem = owner->m_Param.m_dbInven.GetPtrFromSerial(loadItem.GetItemSerial());
-    _qry_case_unmandtrader_log_in_proc_update_complete_create::__list &entry = updateInfo.List[updateInfo.wNum];
+    _qry_case_unmandtrader_log_in_proc_update_complete::__list &entry = updateInfo.List[updateInfo.wNum];
     entry.dwBuyer = 0;
     entry.dwRegistSerial = loadItem.GetRegistSerial();
 
@@ -1522,7 +1534,7 @@ void CUnmannedTraderUserInfo::CompleteCreate(CLogFile *pkLogger)
     const unsigned __int8 resultCode = loadItem.SellWaitItem(this->m_wInx, pkLogger, loadItem.GetResultTime(), &storageSlot);
     if ((resultCode == 37 || resultCode == 94 || resultCode == 34) && updateInfo.wNum < 20)
     {
-      _qry_case_unmandtrader_log_in_proc_update_complete_create::__list &entry = updateInfo.List[updateInfo.wNum];
+      _qry_case_unmandtrader_log_in_proc_update_complete::__list &entry = updateInfo.List[updateInfo.wNum];
       entry.byProcUpdate = 37;
       entry.dwBuyer = loadItem.GetBuyerSerial();
       entry.dwRegistSerial = loadItem.GetRegistSerial();
@@ -1555,7 +1567,7 @@ void CUnmannedTraderUserInfo::CompleteCreate(CLogFile *pkLogger)
 
     if (updateInfo.wNum < 20)
     {
-      _qry_case_unmandtrader_log_in_proc_update_complete_create::__list &updateEntry = updateInfo.List[updateInfo.wNum];
+      _qry_case_unmandtrader_log_in_proc_update_complete::__list &updateEntry = updateInfo.List[updateInfo.wNum];
       updateEntry.byProcUpdate = 90;
       updateEntry.dwBuyer = loadItem.GetBuyerSerial();
       updateEntry.dwRegistSerial = loadItem.GetRegistSerial();
@@ -1610,7 +1622,7 @@ void CUnmannedTraderUserInfo::CompleteCreate(CLogFile *pkLogger)
 
     if (updateInfo.wNum < 20)
     {
-      _qry_case_unmandtrader_log_in_proc_update_complete_create::__list &entry = updateInfo.List[updateInfo.wNum];
+      _qry_case_unmandtrader_log_in_proc_update_complete::__list &entry = updateInfo.List[updateInfo.wNum];
       entry.byProcUpdate = 82;
       entry.dwBuyer = loadItem.GetBuyerSerial();
       entry.dwRegistSerial = loadItem.GetRegistSerial();
@@ -1653,7 +1665,6 @@ void CUnmannedTraderUserInfo::ProcSellWaitItem(
 {
   (void)byGroupType;
 
-  auto *result = reinterpret_cast<_qry_case_unmandtrader_log_in_proc_update_complete_create *>(pkResult);
   _unmannedtrader_Sell_Wait_item_inform_zocl inform{};
   std::memset(&inform, 0, sizeof(inform));
 
@@ -1677,10 +1688,10 @@ void CUnmannedTraderUserInfo::ProcSellWaitItem(
     byProcResult = loadItem.SellWaitItem(this->m_wInx, pkLogger, loadItem.GetResultTime(), storageIndex);
     if (byProcResult == 37 || byProcResult == 94 || byProcResult == 34)
     {
-      result->List[result->wNum].byProcUpdate = 37;
-      result->List[result->wNum].dwBuyer = loadItem.GetBuyerSerial();
-      result->List[result->wNum].dwRegistSerial = loadItem.GetRegistSerial();
-      result->List[result->wNum++].byUpdateState = 8;
+      pkResult->List[pkResult->wNum].byProcUpdate = 37;
+      pkResult->List[pkResult->wNum].dwBuyer = loadItem.GetBuyerSerial();
+      pkResult->List[pkResult->wNum].dwRegistSerial = loadItem.GetRegistSerial();
+      pkResult->List[pkResult->wNum++].byUpdateState = 8;
       loadItem.Clear();
       loadItem.SetState(8u);
       continue;
@@ -1699,10 +1710,10 @@ void CUnmannedTraderUserInfo::ProcSellWaitItem(
     inform.dwTotalSellDalant += inform.List[inform.byNum].dwSellDalant;
     inform.dwTotalTaxDalant += inform.List[inform.byNum++].dwTax;
 
-    result->List[result->wNum].byProcUpdate = 90;
-    result->List[result->wNum].dwBuyer = loadItem.GetBuyerSerial();
-    result->List[result->wNum].dwRegistSerial = loadItem.GetRegistSerial();
-    result->List[result->wNum++].byUpdateState = 3;
+    pkResult->List[pkResult->wNum].byProcUpdate = 90;
+    pkResult->List[pkResult->wNum].dwBuyer = loadItem.GetBuyerSerial();
+    pkResult->List[pkResult->wNum].dwRegistSerial = loadItem.GetRegistSerial();
+    pkResult->List[pkResult->wNum++].byUpdateState = 3;
 
     loadItem.Clear();
     loadItem.SetState(3u);
@@ -1723,7 +1734,6 @@ void CUnmannedTraderUserInfo::NotifyCloseItem(
   _qry_case_unmandtrader_log_in_proc_update_complete *pkResult,
   CLogFile *pkLogger)
 {
-  auto *result = reinterpret_cast<_qry_case_unmandtrader_log_in_proc_update_complete_create *>(pkResult);
   CPlayer *owner = FindOwner();
   if (owner && owner->m_bOper)
   {
@@ -1759,10 +1769,10 @@ void CUnmannedTraderUserInfo::NotifyCloseItem(
       }
       else
       {
-        result->List[result->wNum].byProcUpdate = 82;
-        result->List[result->wNum].dwBuyer = loadItem.GetBuyerSerial();
-        result->List[result->wNum].dwRegistSerial = loadItem.GetRegistSerial();
-        result->List[result->wNum++].byUpdateState = 7;
+        pkResult->List[pkResult->wNum].byProcUpdate = 82;
+        pkResult->List[pkResult->wNum].dwBuyer = loadItem.GetBuyerSerial();
+        pkResult->List[pkResult->wNum].dwRegistSerial = loadItem.GetRegistSerial();
+        pkResult->List[pkResult->wNum++].byUpdateState = 7;
 
         loadItem.Clear();
         loadItem.SetState(7u);
@@ -1812,33 +1822,34 @@ char CUnmannedTraderUserInfo::CheckIsUpdatedTaxRate(unsigned __int8 byTax, CLogF
     return 0;
   }
 
-  char msg[32]{};
-  msg[0] = static_cast<char>(currentTaxRate);
+  _unmannedtrader_taxrate_inform_zocl msg{};
+  msg.byTaxRate = static_cast<char>(currentTaxRate);
 
   unsigned __int8 type[2] = {30, 36};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_wInx, type, msg, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_wInx, type, reinterpret_cast<char *>(&msg), sizeof(msg));
   return 1;
 }
 
-void CUnmannedTraderUserInfo::CompleteRegist(unsigned __int8 byRet, char *pLoadData, CLogFile *pkLogger)
+void CUnmannedTraderUserInfo::CompleteRegist(
+  unsigned __int8 byRet,
+  _qry_case_unmandtrader_registsingleitem *pLoadData,
+  CLogFile *pkLogger)
 {
-  char *query = pLoadData;
-  const unsigned __int16 sepaSerial = *reinterpret_cast<unsigned __int16 *>(query + 8);
-  const unsigned __int16 itemSerial =
-    sepaSerial == 0xFFFF ? *reinterpret_cast<unsigned __int16 *>(query + 2) : sepaSerial;
-  const unsigned int registSerial = *reinterpret_cast<unsigned int *>(query + 20);
-  const unsigned int price = *reinterpret_cast<unsigned int *>(query + 32);
-  const unsigned int taxDalant = *reinterpret_cast<unsigned int *>(query + 80);
-  const unsigned int ownerSerial = *reinterpret_cast<unsigned int *>(query + 28);
-  const unsigned int dbKey = *reinterpret_cast<unsigned int *>(query + 40);
-  const unsigned __int64 dbDur = *reinterpret_cast<unsigned __int64 *>(query + 48);
-  const unsigned int dbLv = *reinterpret_cast<unsigned int *>(query + 56);
-  const unsigned __int8 sellTurm = static_cast<unsigned __int8>(query[26]);
-  const unsigned __int8 storageIndex = static_cast<unsigned __int8>(query[17]);
-  const bool inserted = query[24] != 0;
-  const unsigned __int8 byType = static_cast<unsigned __int8>(query[25]);
-  const unsigned __int8 class1 = static_cast<unsigned __int8>(query[62]);
-  const unsigned __int8 class2 = static_cast<unsigned __int8>(query[63]);
+  const unsigned __int16 sepaSerial = pLoadData->wSepaSerial;
+  const unsigned __int16 itemSerial = sepaSerial == 0xFFFF ? pLoadData->wItemSerialOld : sepaSerial;
+  const unsigned int registSerial = pLoadData->dwRegedSerial;
+  const unsigned int price = pLoadData->dwPrice;
+  const unsigned int taxDalant = pLoadData->dwTax;
+  const unsigned int ownerSerial = pLoadData->dwOwnerSerial;
+  const unsigned int dbKey = pLoadData->dwK;
+  const unsigned __int64 dbDur = pLoadData->dwD;
+  const unsigned int dbLv = pLoadData->dwU;
+  const unsigned __int8 sellTurm = pLoadData->bySellTurm;
+  const unsigned __int8 storageIndex = pLoadData->byStorageIndex;
+  const bool inserted = pLoadData->bInserted;
+  const unsigned __int8 byType = pLoadData->byType;
+  const unsigned __int8 class1 = pLoadData->byClass1;
+  const unsigned __int8 class2 = pLoadData->byClass2;
 
   CPlayer *owner = FindOwner();
   if (!owner || !owner->m_bOper)
@@ -1865,13 +1876,13 @@ void CUnmannedTraderUserInfo::CompleteRegist(unsigned __int8 byRet, char *pLoadD
     {
       owner->Emb_AlterDurPoint(
         0,
-        static_cast<unsigned __int8>(query[16]),
-        static_cast<int>(static_cast<unsigned __int8>(query[10])),
+        pLoadData->byOldStorageIndex,
+        static_cast<int>(pLoadData->bySepaAmount),
         false,
         false);
       owner->Emb_DelStorage(
         0,
-        static_cast<unsigned __int8>(query[17]),
+        pLoadData->byStorageIndex,
         false,
         false,
         "CUnmannedTraderUserInfo::CompleteRegist()");
@@ -1995,13 +2006,13 @@ void CUnmannedTraderUserInfo::CompleteRegist(unsigned __int8 byRet, char *pLoadD
   {
     owner->Emb_AlterDurPoint(
       0,
-      static_cast<unsigned __int8>(query[16]),
-      static_cast<int>(static_cast<unsigned __int8>(query[10])),
+      pLoadData->byOldStorageIndex,
+      static_cast<int>(pLoadData->bySepaAmount),
       false,
       false);
     owner->Emb_DelStorage(
       0,
-      static_cast<unsigned __int8>(query[17]),
+      pLoadData->byStorageIndex,
       false,
       false,
       "CUnmannedTraderUserInfo::CompleteRegist()");
@@ -2055,23 +2066,25 @@ bool CUnmannedTraderUserInfo::CompleteRegistItem(
   return true;
 }
 
-void CUnmannedTraderUserInfo::CompleteCancelRegist(unsigned __int8 byRet, char *pLoadData, CLogFile *pkLogger)
+void CUnmannedTraderUserInfo::CompleteCancelRegist(
+  unsigned __int8 byRet,
+  _qry_case_unmandtrader_cancelitem *pLoadData,
+  CLogFile *pkLogger)
 {
-  char *query = pLoadData;
   CPlayer *owner = FindOwner();
   if (!owner || !owner->m_bLive)
   {
     return;
   }
 
-  const unsigned __int8 procRet = static_cast<unsigned __int8>(query[45]);
+  const unsigned __int8 procRet = pLoadData->byProcRet;
   if (byRet || procRet)
   {
     SendCancelRegistErrorResult(owner->m_ObjID.m_wIndex, procRet);
     return;
   }
 
-  const unsigned __int16 itemSerial = *reinterpret_cast<unsigned __int16 *>(query + 2);
+  const unsigned __int16 itemSerial = pLoadData->wItemSerial;
   _STORAGE_LIST::_storage_con *regItem = owner->m_Param.m_dbInven.GetPtrFromSerial(itemSerial);
   if (!regItem)
   {
@@ -2081,8 +2094,8 @@ void CUnmannedTraderUserInfo::CompleteCancelRegist(unsigned __int8 byRet, char *
         "CUnmannedTraderUserInfo::CompleteCancelRegist( BYTE byRet, char * pLoadData, CLogFile * pkLogger )\r\n"
         "\t\tpkQuery->byType(%u), pkQuery->dwRegistSerial(%u)\r\n"
         "\t\tpkRegister->m_Param.m_dbInven.GetPtrFromSerial( wItemSerial(%u) ) NULL!\r\n",
-        static_cast<unsigned __int8>(query[38]),
-        *reinterpret_cast<unsigned int *>(query + 40),
+        pLoadData->byType,
+        pLoadData->dwRegistSerial,
         itemSerial);
     }
     SendCancelRegistErrorResult(owner->m_ObjID.m_wIndex, 8u);
@@ -2090,7 +2103,7 @@ void CUnmannedTraderUserInfo::CompleteCancelRegist(unsigned __int8 byRet, char *
   }
 
   regItem->lock(false);
-  const unsigned int registSerial = *reinterpret_cast<unsigned int *>(query + 40);
+  const unsigned int registSerial = pLoadData->dwRegistSerial;
   if (CompleteCancelRegistItem(registSerial, itemSerial, pkLogger))
   {
     if (!CUnmannedTraderGroupItemInfoTable::Instance()->IncreaseVersion(
@@ -2226,26 +2239,28 @@ void CUnmannedTraderUserInfo::CompleteTimeOutClear(unsigned int dwRegistSerial, 
   }
 }
 
-void CUnmannedTraderUserInfo::CompleteReprice(unsigned __int8 byRet, char *pLoadData, CLogFile *pkLogger)
+void CUnmannedTraderUserInfo::CompleteReprice(
+  unsigned __int8 byRet,
+  _qry_case_unmandtrader_update_reprice *pLoadData,
+  CLogFile *pkLogger)
 {
-  char *query = pLoadData;
   CPlayer *receiver = FindOwner();
   if (receiver && receiver->m_bLive)
   {
-    const unsigned __int8 procRet = static_cast<unsigned __int8>(query[20]);
+    const unsigned __int8 procRet = pLoadData->byProcRet;
     if (byRet || procRet)
     {
       SendRepriceErrorResult(receiver, procRet);
-      receiver->AddDalant(static_cast<int>(*reinterpret_cast<unsigned int *>(query + 16)), true);
+      receiver->AddDalant(static_cast<int>(pLoadData->dwTax), true);
       return;
     }
 
-    const unsigned __int16 itemSerial = *reinterpret_cast<unsigned __int16 *>(query + 12);
+    const unsigned __int16 itemSerial = pLoadData->wItemSerial;
     _STORAGE_LIST::_db_con *regItem = receiver->m_Param.m_dbInven.GetPtrFromSerial(itemSerial);
     if (regItem)
     {
-      const unsigned int registSerial = *reinterpret_cast<unsigned int *>(query + 24);
-      const unsigned int newPrice = *reinterpret_cast<unsigned int *>(query + 28);
+      const unsigned int registSerial = pLoadData->dwRegistSerial;
+      const unsigned int newPrice = pLoadData->dwNewPrice;
       if (CompleteRepriceItem(registSerial, itemSerial, newPrice))
       {
         if (!CUnmannedTraderGroupItemInfoTable::Instance()->IncreaseVersion(
@@ -2271,13 +2286,13 @@ void CUnmannedTraderUserInfo::CompleteReprice(unsigned __int8 byRet, char *pLoad
           itemSerial,
           newPrice,
           registSerial,
-          *reinterpret_cast<unsigned int *>(query + 16));
+          pLoadData->dwTax);
         CPlayer::s_MgrItemHistory.price_auto_trade(
           receiver->m_ObjID.m_wIndex,
           registSerial,
           regItem,
-          *reinterpret_cast<unsigned int *>(query + 16),
-          *reinterpret_cast<unsigned int *>(query),
+          pLoadData->dwTax,
+          pLoadData->dwOldPrice,
           newPrice,
           receiver->m_szItemHistoryFileName);
       }
@@ -2303,8 +2318,8 @@ void CUnmannedTraderUserInfo::CompleteReprice(unsigned __int8 byRet, char *pLoad
           "CCUnmannedTraderUserInfo::CompleteReprice( BYTE byRet, char * pLoadData, CLogFile * pkLogger )\r\n"
           "\t\tpkQuery->dwRegistSerial(%u), pkQuery->dwNewPrice(%u)\r\n"
           "\t\tpkRegister->m_Param.m_dbInven.GetPtrFromSerial( wItemSerial(%u) ) NULL!\r\n",
-          *reinterpret_cast<unsigned int *>(query + 24),
-          *reinterpret_cast<unsigned int *>(query + 28),
+          pLoadData->dwRegistSerial,
+          pLoadData->dwNewPrice,
           itemSerial);
       }
       SendRepriceErrorResult(receiver, 8u);
@@ -2312,12 +2327,12 @@ void CUnmannedTraderUserInfo::CompleteReprice(unsigned __int8 byRet, char *pLoad
     return;
   }
 
-  if (byRet || query[20])
+  if (byRet || pLoadData->byProcRet)
   {
     g_Main.Push_ChargeItem(
-      *reinterpret_cast<unsigned int *>(query + 8),
+      pLoadData->dwOwnerSerial,
       0xFFFFFFFF,
-      *reinterpret_cast<unsigned int *>(query + 16),
+      pLoadData->dwTax,
       0xFFFFFFFu,
       1u);
   }
@@ -2338,7 +2353,9 @@ bool CUnmannedTraderUserInfo::CompleteRepriceItem(
   return true;
 }
 
-void CUnmannedTraderUserInfo::CompleteReRegist(char *pLoadData, CLogFile *pkLogger)
+void CUnmannedTraderUserInfo::CompleteReRegist(
+  _qry_case_unmandtrader_re_registsingleitem *pLoadData,
+  CLogFile *pkLogger)
 {
   CPlayer *owner = FindOwner();
   if (!owner)
@@ -2346,26 +2363,24 @@ void CUnmannedTraderUserInfo::CompleteReRegist(char *pLoadData, CLogFile *pkLogg
     return;
   }
 
-  unsigned char *query = reinterpret_cast<unsigned char *>(pLoadData);
-  _qry_case_unmandtrader_log_in_proc_update_complete updateComplete{};
-  std::memset(&updateComplete, 0, sizeof(updateComplete));
-  updateComplete.byType = query[0];
+  _qry_case_unmandtrader_re_registsingleitem_roll_back updateComplete{};
+  updateComplete.byType = pLoadData->byType;
   updateComplete.wInx = this->m_wInx;
-  updateComplete.dwSeller = this->m_dwUserSerial;
+  updateComplete.dwOwnerSerial = this->m_dwUserSerial;
 
   _unmannedtrader_re_regist_result_zocl result{};
-  result.byNum = query[4];
+  result.byNum = pLoadData->byNum;
 
-  for (unsigned __int8 j = 0; j < static_cast<unsigned __int8>(query[4]); ++j)
+  for (unsigned __int8 j = 0; j < pLoadData->byNum; ++j)
   {
-    const size_t entryOffset = 28u * j + 12u;
-    const unsigned __int8 procRet = query[entryOffset];
-    const unsigned __int8 registFlag = query[entryOffset + 1];
-    const unsigned __int16 itemSerial = *reinterpret_cast<unsigned __int16 *>(query + entryOffset + 2);
-    const unsigned int taxDalant = *reinterpret_cast<unsigned int *>(query + entryOffset + 4);
-    const unsigned int listIndex = *reinterpret_cast<unsigned int *>(query + entryOffset + 8);
-    const unsigned int price = *reinterpret_cast<unsigned int *>(query + entryOffset + 16);
-    const unsigned int registSerial = *reinterpret_cast<unsigned int *>(query + entryOffset + 20);
+    _qry_case_unmandtrader_re_registsingleitem::__list &entry = pLoadData->List[j];
+    const unsigned __int8 procRet = entry.byProcRet;
+    const bool registFlag = entry.bRegist;
+    const unsigned __int16 itemSerial = entry.wItemSerial;
+    const unsigned int taxDalant = entry.dwTax;
+    const unsigned int listIndex = entry.dwListIndex;
+    const unsigned int price = entry.dwPrice;
+    const unsigned int registSerial = entry.dwRegistSerial;
 
     result.List[j].byRet = procRet;
     result.List[j].bRegist = registFlag;
@@ -2401,7 +2416,7 @@ void CUnmannedTraderUserInfo::CompleteReRegist(char *pLoadData, CLogFile *pkLogg
               itemSerial);
           }
         }
-        else if (CompleteReRegistItem(registSerial, itemSerial, price, pkLogger, &query[entryOffset]))
+        else if (CompleteReRegistItem(registSerial, itemSerial, price, pkLogger, &entry.byProcRet))
         {
           const unsigned int leftDalant = owner->m_Param.GetDalant();
           CPlayer::s_MgrItemHistory.re_reg_auto_trade(
@@ -2441,9 +2456,9 @@ void CUnmannedTraderUserInfo::CompleteReRegist(char *pLoadData, CLogFile *pkLogg
         }
         else
         {
-          result.List[j].byRet = query[entryOffset];
+          result.List[j].byRet = entry.byProcRet;
           owner->AddDalant(static_cast<int>(taxDalant), true);
-          updateComplete.List[updateComplete.byNum].byOldState = 12;
+          updateComplete.List[updateComplete.byNum].byState = 12;
           updateComplete.List[updateComplete.byNum].dwRegistSerial = registSerial;
           ++updateComplete.byNum;
         }
@@ -2468,7 +2483,7 @@ void CUnmannedTraderUserInfo::CompleteReRegist(char *pLoadData, CLogFile *pkLogg
     }
     else
     {
-      query[entryOffset] = 25;
+      entry.byProcRet = 25;
       result.List[j].byRet = 25;
       const char *ownerName = owner->m_Param.GetCharNameA();
       if (pkLogger)
@@ -2487,7 +2502,7 @@ void CUnmannedTraderUserInfo::CompleteReRegist(char *pLoadData, CLogFile *pkLogg
       {
         owner->AddDalant(static_cast<int>(taxDalant), true);
       }
-      updateComplete.List[updateComplete.byNum].byOldState = 11;
+      updateComplete.List[updateComplete.byNum].byState = 11;
       updateComplete.List[updateComplete.byNum].dwRegistSerial = registSerial;
       ++updateComplete.byNum;
     }
@@ -2495,7 +2510,7 @@ void CUnmannedTraderUserInfo::CompleteReRegist(char *pLoadData, CLogFile *pkLogg
 
   if (updateComplete.byNum)
   {
-    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x93u, reinterpret_cast<char *>(&updateComplete), 92);
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x93u, reinterpret_cast<char *>(&updateComplete), sizeof(updateComplete));
   }
 
   result.dwLeftDalant = owner->m_Param.GetDalant();
@@ -2547,14 +2562,14 @@ bool CUnmannedTraderUserInfo::CompleteReRegistItem(
   return false;
 }
 
-void CUnmannedTraderUserInfo::CompleteUpdateCheatRegistTime(char *pLoadData)
+void CUnmannedTraderUserInfo::CompleteUpdateCheatRegistTime(
+  _qry_case_unmandtrader_cheat_updateregisttime *pLoadData)
 {
-  unsigned char *data = reinterpret_cast<unsigned char *>(pLoadData);
-  for (unsigned __int8 j = 0; j < static_cast<unsigned __int8>(data[1]); ++j)
+  for (unsigned __int8 j = 0; j < pLoadData->byNum; ++j)
   {
-    if (!data[8 * j + 8])
+    if (!pLoadData->List[j].byProcRet)
     {
-      auto it = Find(*reinterpret_cast<unsigned int *>(data + 8 * j + 12));
+      auto it = Find(pLoadData->List[j].dwRegistSerial);
       if (it != this->m_vecRegistItemInfo.end())
       {
         it->SetOverRegistTime();
@@ -2563,30 +2578,32 @@ void CUnmannedTraderUserInfo::CompleteUpdateCheatRegistTime(char *pLoadData)
   }
 }
 
-void CUnmannedTraderUserInfo::CompleteReRegistRollBack(char *pData, CLogFile *pkLogger)
+void CUnmannedTraderUserInfo::CompleteReRegistRollBack(
+  _qry_case_unmandtrader_re_registsingleitem_roll_back *pData,
+  CLogFile *pkLogger)
 {
   if (pkLogger)
   {
     pkLogger->Write(
       "CUnmannedTraderUserInfo::CompleteReRegistRollBack( char * pLoadData, CLogFile * pkLogger )\r\n"
       "\t\tType(%u) wInx(%u) Owner(%u)\r\n",
-      static_cast<unsigned __int8>(*pData),
-      *reinterpret_cast<unsigned __int16 *>(pData + 2),
-      *reinterpret_cast<unsigned int *>(pData + 4));
+      pData->byType,
+      pData->wInx,
+      pData->dwOwnerSerial);
   }
 
-  for (int j = 0; j < static_cast<unsigned __int8>(pData[1]); ++j)
+  for (unsigned __int8 j = 0; j < pData->byNum; ++j)
   {
-    if (!pData[8 * j + 12] &&
-        !CompleteUpdateState(*reinterpret_cast<unsigned int *>(pData + 8 * j + 16), pData[8 * j + 13], false))
+    if (!pData->List[j].byProcRet &&
+        !CompleteUpdateState(pData->List[j].dwRegistSerial, pData->List[j].byState, false))
     {
       if (pkLogger)
       {
         pkLogger->Write(
           "\t\t(%d)Nth RegistSerial(%u) CompleteUpdateState(..) State(%u) Fail!\r\n",
           j,
-          *reinterpret_cast<unsigned int *>(pData + 8 * j + 16),
-          static_cast<unsigned __int8>(pData[8 * j + 12]));
+          pData->List[j].dwRegistSerial,
+          pData->List[j].byProcRet);
       }
     }
     if (pkLogger)
@@ -2594,8 +2611,8 @@ void CUnmannedTraderUserInfo::CompleteReRegistRollBack(char *pData, CLogFile *pk
       pkLogger->Write(
         "\t\t(%d)Nth RegistSerial(%u) byProcRet(%u)\r\n",
         j,
-        *reinterpret_cast<unsigned int *>(pData + 8 * j + 16),
-        static_cast<unsigned __int8>(pData[8 * j + 12]));
+        pData->List[j].dwRegistSerial,
+        pData->List[j].byProcRet);
     }
   }
 
@@ -2887,17 +2904,17 @@ void CUnmannedTraderUserInfo::NotifyRegistItem()
 void CUnmannedTraderUserInfo::SendRegistItemSuccessResult(
   unsigned int dwLeftDalant,
   unsigned __int16 wInx,
-  char *pLoadData)
+  const _qry_case_unmandtrader_registsingleitem *pLoadData)
 {
   _unmannedtrader_regist_item_success_result_zocl result{};
-  result.wItemSerial = *reinterpret_cast<unsigned __int16 *>(pLoadData + 2);
-  result.dwPrice = *reinterpret_cast<unsigned int *>(pLoadData + 32);
-  result.dwRegedSerial = *reinterpret_cast<unsigned int *>(pLoadData + 20);
-  result.dwListIndex = *reinterpret_cast<unsigned int *>(pLoadData + 12);
-  result.dwTax = *reinterpret_cast<unsigned int *>(pLoadData + 80);
+  result.wItemSerial = pLoadData->wItemSerialOld;
+  result.dwPrice = pLoadData->dwPrice;
+  result.dwRegedSerial = pLoadData->dwRegedSerial;
+  result.dwListIndex = pLoadData->dwListIndex;
+  result.dwTax = pLoadData->dwTax;
   result.dwLeftDalant = dwLeftDalant;
-  result.wSepaSerial = *reinterpret_cast<unsigned __int16 *>(pLoadData + 8);
-  result.bySepaAmount = static_cast<unsigned __int8>(pLoadData[10]);
+  result.wSepaSerial = pLoadData->wSepaSerial;
+  result.bySepaAmount = pLoadData->bySepaAmount;
 
   unsigned __int8 pbyType[16]{};
   pbyType[0] = 30;
@@ -2912,20 +2929,20 @@ void CUnmannedTraderUserInfo::SendRegistItemErrorResult(
   unsigned __int16 wItemSerial,
   unsigned int dwRetParam1)
 {
-  char msg[7]{};
-  msg[0] = byRet;
-  *reinterpret_cast<unsigned __int16 *>(msg + 1) = wItemSerial;
-  *reinterpret_cast<unsigned int *>(msg + 3) = static_cast<unsigned int>(-1);
+  _unmannedtrader_regist_item_error_result_zocl msg{};
+  msg.byRet = byRet;
+  msg.wItemSerial = wItemSerial;
+  msg.dwRetParam1 = static_cast<unsigned int>(-1);
 
   if (byRet == 6 || byRet == 24 || byRet == static_cast<char>(-56))
   {
-    *reinterpret_cast<unsigned int *>(msg + 3) = dwRetParam1;
+    msg.dwRetParam1 = dwRetParam1;
   }
 
   unsigned __int8 pbyType[16]{};
   pbyType[0] = 30;
   pbyType[1] = 29;
-  g_Network.m_pProcess[0]->LoadSendMsg(wInx, pbyType, msg, 7u);
+  g_Network.m_pProcess[0]->LoadSendMsg(wInx, pbyType, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
 void CUnmannedTraderUserInfo::SendCancelRegistSuccessResult(
@@ -3011,16 +3028,16 @@ void CUnmannedTraderUserInfo::SendSellInfom(
   unsigned int dwTaxDalant,
   unsigned int dwTotalDalant)
 {
-  char msg[14]{};
-  *reinterpret_cast<unsigned __int16 *>(msg) = wItemSerial;
-  *reinterpret_cast<unsigned int *>(msg + 2) = dwAddDalant;
-  *reinterpret_cast<unsigned int *>(msg + 6) = dwTaxDalant;
-  *reinterpret_cast<unsigned int *>(msg + 10) = dwTotalDalant;
+  _a_trade_sell_inform_zocl msg{};
+  msg.wItemSerial = wItemSerial;
+  msg.dwAddDalant = dwAddDalant;
+  msg.dwTaxDalant = dwTaxDalant;
+  msg.dwTotalDalant = dwTotalDalant;
 
   unsigned __int8 pbyType[16]{};
   pbyType[0] = 30;
   pbyType[1] = 9;
-  g_Network.m_pProcess[0]->LoadSendMsg(wInx, pbyType, msg, 0xEu);
+  g_Network.m_pProcess[0]->LoadSendMsg(wInx, pbyType, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
 void CUnmannedTraderUserInfo::SendNotifyCloseItem(

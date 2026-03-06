@@ -3,6 +3,7 @@
 #include "CGuardTower.h"
 
 #include "CAttack.h"
+#include "CAnimus.h"
 #include "CMonster.h"
 #include "CObjectList.h"
 #include "WorldServerUtil.h"
@@ -207,7 +208,7 @@ char CGuardTower::IsBeDamagedAble(CCharacter *pAtter)
   }
   else if (attackerId == 3)
   {
-    validatedAttacker = *reinterpret_cast<CCharacter **>(&pAtter[1].m_bLive);
+    validatedAttacker = static_cast<CAnimus *>(pAtter)->m_pMaster;
   }
 
   if (!validatedAttacker)

@@ -25,6 +25,7 @@
 #include "holy_quest_report_wrac.h"
 #include "holy_keeper_attackable_inform_zocl.h"
 #include "CNetworkEX.h"
+#include "Packet/ZoneWebPacket.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 #include "trand_tbl.h"
@@ -1111,7 +1112,11 @@ void CHolyStoneSystem::SendIsArriveDestroyer(char byArrive)
   {
     if (g_Player[index].m_bLive)
     {
-      g_Network.m_pProcess[0]->LoadSendMsg( index, type, reinterpret_cast<char *>(&msg), 0x17u);
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        index,
+        type,
+        reinterpret_cast<char *>(&msg),
+        static_cast<unsigned __int16>(sizeof(msg)));
     }
   }
 }
@@ -1219,17 +1224,17 @@ void CHolyStoneSystem::SendSMS_CompleteQuest(
     return;
   }
 
-  char msg[0xD5]{};
-  *reinterpret_cast<unsigned int *>(msg) = g_Main.m_byWorldCode;
-  strcpy_0(msg + 4, g_Main.m_szWorldName);
+  _holy_complete_quest_inform_zowb msg{};
+  msg.nWorldCode = g_Main.m_byWorldCode;
+  strcpy_0(msg.szWorldName, g_Main.m_szWorldName);
 
-  msg[88] = static_cast<char>(GetHolyMasterRace());
-  msg[89] = byDestroyedRace;
-  strcpy_0(msg + 90, pwszMasterName);
-  msg[110] = static_cast<char>(byMasterLv);
+  msg.byMasterRaceCode = static_cast<unsigned __int8>(GetHolyMasterRace());
+  msg.byDestoryRaceCode = static_cast<unsigned __int8>(byDestroyedRace);
+  strcpy_0(msg.wszMasterName, pwszMasterName);
+  msg.byMasterLv = byMasterLv;
 
-  memcpy_0(msg + 111, szMasterClass, 4u);
-  msg[115] = 0;
+  memcpy_0(msg.szMasterClass, szMasterClass, 4u);
+  msg.szMasterClass[4] = 0;
 
   const int holyMasterRace = GetHolyMasterRace();
   if (holyMasterRace >= 0 && holyMasterRace < 3)
@@ -1240,7 +1245,7 @@ void CHolyStoneSystem::SendSMS_CompleteQuest(
     {
       for (int j = 0; j < 5; ++j)
       {
-        strcpy_0(msg + 116 + 17 * j, rankData[j + 1].wszName);
+        strcpy_0(msg.wszMasterRaceSubBoss[j], rankData[j + 1].wszName);
       }
     }
   }
@@ -1250,12 +1255,12 @@ void CHolyStoneSystem::SendSMS_CompleteQuest(
     const _PVP_RANK_DATA *rankData = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentPvpRankData(race, 0);
     if (rankData && rankData->wszName[0])
     {
-      strcpy_0(msg + 37 + 17 * race, rankData->wszName);
-      msg[53 + 17 * race] = 0;
+      strcpy_0(msg.wszRaceBossName[race], rankData->wszName);
+      msg.wszRaceBossName[race][16] = 0;
     }
     else
     {
-      msg[37 + 17 * race] = 0;
+      msg.wszRaceBossName[race][0] = 0;
     }
   }
 
@@ -1269,15 +1274,15 @@ void CHolyStoneSystem::SendSMS_CompleteQuest(
     targetHour = (targetHour + 1) % 24;
   }
 
-  msg[107] = static_cast<char>(targetHour);
-  msg[108] = static_cast<char>(targetMin);
-  msg[109] = static_cast<char>(GetNumOfTime());
+  msg.byChaosHour = static_cast<unsigned __int8>(targetHour);
+  msg.byChaosMin = static_cast<unsigned __int8>(targetMin);
+  msg.byNumOfTime = static_cast<unsigned __int8>(GetNumOfTime());
 
-  msg[201] = static_cast<char>(GetStartHour());
-  msg[202] = static_cast<char>(GetStartMin());
-  *reinterpret_cast<unsigned __int16 *>(msg + 203) = GetStartYear();
-  msg[205] = static_cast<char>(GetStartMonth());
-  msg[206] = static_cast<char>(GetStartDay());
+  msg.byStartHour = static_cast<unsigned __int8>(GetStartHour());
+  msg.byStartMin = static_cast<unsigned __int8>(GetStartMin());
+  msg.wStartYear = GetStartYear();
+  msg.byStartMonth = static_cast<unsigned __int8>(GetStartMonth());
+  msg.byStartDay = static_cast<unsigned __int8>(GetStartDay());
 
   unsigned __int8 type[2]{};
   type[0] = 51;
@@ -1285,7 +1290,11 @@ void CHolyStoneSystem::SendSMS_CompleteQuest(
 
   if (g_Main.m_bConnectedWebAgentServer)
   {
-    g_Network.m_pProcess[2]->LoadSendMsg(g_Main.m_byWebAgentServerNetInx, type, msg, 0xD5u);
+    g_Network.m_pProcess[2]->LoadSendMsg(
+      g_Main.m_byWebAgentServerNetInx,
+      type,
+      reinterpret_cast<char *>(&msg),
+      static_cast<unsigned __int16>(sizeof(msg)));
   }
 
   m_logQuestDestroy.Write(">> Complete Quest! Next(%d:%d)", targetHour, targetMin);
@@ -1322,7 +1331,7 @@ void CHolyStoneSystem::SendMsg_WaitStone(unsigned int n)
   unsigned __int8 type[2]{};
   type[0] = 25;
   type[1] = 45;
-  char msg[1]{};
+  _stone_wait_inform_zocl msg{};
 
   if (n == static_cast<unsigned int>(-1))
   {
@@ -1330,13 +1339,21 @@ void CHolyStoneSystem::SendMsg_WaitStone(unsigned int n)
     {
       if (g_Player[index].m_bLive)
       {
-        g_Network.m_pProcess[0]->LoadSendMsg(index, type, msg, 1u);
+        g_Network.m_pProcess[0]->LoadSendMsg(
+          index,
+          type,
+          reinterpret_cast<char *>(&msg),
+          static_cast<unsigned __int16>(sizeof(msg)));
       }
     }
   }
   else
   {
-    g_Network.m_pProcess[0]->LoadSendMsg(n, type, msg, 1u);
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      n,
+      type,
+      reinterpret_cast<char *>(&msg),
+      static_cast<unsigned __int16>(sizeof(msg)));
   }
 }
 
@@ -1375,20 +1392,28 @@ void CHolyStoneSystem::SendMsg_NoticeNextQuest(unsigned int n, unsigned __int8 b
       else
       {
         g_Player[index].m_byStoneMapMoveInfo = byStoneMapMoveInfo;
-        g_Network.m_pProcess[0]->LoadSendMsg( index, type, reinterpret_cast<char *>(&msg), 3u);
+        g_Network.m_pProcess[0]->LoadSendMsg(
+          index,
+          type,
+          reinterpret_cast<char *>(&msg),
+          static_cast<unsigned __int16>(sizeof(msg)));
       }
     }
   }
   else
   {
-    g_Network.m_pProcess[0]->LoadSendMsg( n, type, reinterpret_cast<char *>(&msg), 3u);
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      n,
+      type,
+      reinterpret_cast<char *>(&msg),
+      static_cast<unsigned __int16>(sizeof(msg)));
   }
 }
 
 void CHolyStoneSystem::SendMsg_NotifyHolyKeeperAttackTimeBeKeepKeeper(char bKeepKeeper)
 {
-  char msg[1]{};
-  msg[0] = bKeepKeeper;
+  _notify_holy_keeper_attack_time_be_keep_keeper_zocl msg{};
+  msg.bKeepKeeper = (bKeepKeeper != 0);
 
   unsigned __int8 type[2]{};
   type[0] = 25;
@@ -1398,7 +1423,11 @@ void CHolyStoneSystem::SendMsg_NotifyHolyKeeperAttackTimeBeKeepKeeper(char bKeep
   {
     if (g_Player[index].m_bLive)
     {
-      g_Network.m_pProcess[0]->LoadSendMsg( index, type, msg, 1u);
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        index,
+        type,
+        reinterpret_cast<char *>(&msg),
+        static_cast<unsigned __int16>(sizeof(msg)));
     }
   }
 }
@@ -1432,20 +1461,28 @@ void CHolyStoneSystem::SendMsg_EnterStone(unsigned int n)
     {
       if (g_Player[index].m_bLive)
       {
-        g_Network.m_pProcess[0]->LoadSendMsg( index, type, reinterpret_cast<char *>(&msg), 9u);
+        g_Network.m_pProcess[0]->LoadSendMsg(
+          index,
+          type,
+          reinterpret_cast<char *>(&msg),
+          static_cast<unsigned __int16>(sizeof(msg)));
       }
     }
   }
   else
   {
-    g_Network.m_pProcess[0]->LoadSendMsg( n, type, reinterpret_cast<char *>(&msg), 9u);
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      n,
+      type,
+      reinterpret_cast<char *>(&msg),
+      static_cast<unsigned __int16>(sizeof(msg)));
   }
 }
 
 void CHolyStoneSystem::SendMsg_ExitStone()
 {
-  char msg[1]{};
-  msg[0] = static_cast<char>(GetHolyMasterRace());
+  _stone_exit_inform_zocl msg{};
+  msg.byMasterRace = static_cast<char>(GetHolyMasterRace());
 
   unsigned __int8 type[2]{};
   type[0] = 25;
@@ -1455,14 +1492,18 @@ void CHolyStoneSystem::SendMsg_ExitStone()
   {
     if (g_Player[index].m_bLive)
     {
-      g_Network.m_pProcess[0]->LoadSendMsg( index, type, msg, 1u);
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        index,
+        type,
+        reinterpret_cast<char *>(&msg),
+        static_cast<unsigned __int16>(sizeof(msg)));
     }
   }
 }
 
 void CHolyStoneSystem::SendMsg_StartBattle()
 {
-  char msg[1]{};
+  _notice_start_quest_inform_zocl msg{};
 
   unsigned __int8 type[2]{};
   type[0] = 25;
@@ -1473,16 +1514,20 @@ void CHolyStoneSystem::SendMsg_StartBattle()
     if (g_Player[index].m_bLive)
     {
       g_Player[index].SetCntEnable(true);
-      g_Network.m_pProcess[0]->LoadSendMsg( index, type, msg, 1u);
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        index,
+        type,
+        reinterpret_cast<char *>(&msg),
+        static_cast<unsigned __int16>(sizeof(msg)));
     }
   }
 }
 
 void CHolyStoneSystem::SendMsg_EndBattle(char byLoseRace)
 {
-  char msg[2]{};
-  msg[0] = static_cast<char>(GetHolyMasterRace());
-  msg[1] = byLoseRace;
+  _notice_end_quest_inform_zocl msg{};
+  msg.byWinRace = static_cast<char>(GetHolyMasterRace());
+  msg.byLoseRace = byLoseRace;
 
   unsigned __int8 type[2]{};
   type[0] = 25;
@@ -1493,7 +1538,11 @@ void CHolyStoneSystem::SendMsg_EndBattle(char byLoseRace)
     if (g_Player[index].m_bLive)
     {
       g_Player[index].SetCntEnable(false);
-      g_Network.m_pProcess[0]->LoadSendMsg( index, type, msg, 2u);
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        index,
+        type,
+        reinterpret_cast<char *>(&msg),
+        static_cast<unsigned __int16>(sizeof(msg)));
     }
   }
 }
@@ -1530,21 +1579,29 @@ void CHolyStoneSystem::SendMsg_EnterKeeper(unsigned int n)
     {
       if (g_Player[index].m_bLive)
       {
-        g_Network.m_pProcess[0]->LoadSendMsg( index, type, reinterpret_cast<char *>(&msg), 0xAu);
+        g_Network.m_pProcess[0]->LoadSendMsg(
+          index,
+          type,
+          reinterpret_cast<char *>(&msg),
+          static_cast<unsigned __int16>(sizeof(msg)));
       }
     }
   }
   else
   {
-    g_Network.m_pProcess[0]->LoadSendMsg( n, type, reinterpret_cast<char *>(&msg), 0xAu);
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      n,
+      type,
+      reinterpret_cast<char *>(&msg),
+      static_cast<unsigned __int16>(sizeof(msg)));
   }
 }
 
 void CHolyStoneSystem::SendMsg_WaitKeeper(unsigned int n, char byWaitType)
 {
-  char msg[2]{};
-  msg[0] = byWaitType;
-  msg[1] = static_cast<char>(GetHolyMasterRace());
+  _kepper_wait_inform_zocl msg{};
+  msg.byWaitType = byWaitType;
+  msg.byMasterRace = static_cast<char>(GetHolyMasterRace());
 
   unsigned __int8 type[2]{};
   type[0] = 25;
@@ -1556,13 +1613,21 @@ void CHolyStoneSystem::SendMsg_WaitKeeper(unsigned int n, char byWaitType)
     {
       if (g_Player[index].m_bLive)
       {
-        g_Network.m_pProcess[0]->LoadSendMsg( index, type, msg, 2u);
+        g_Network.m_pProcess[0]->LoadSendMsg(
+          index,
+          type,
+          reinterpret_cast<char *>(&msg),
+          static_cast<unsigned __int16>(sizeof(msg)));
       }
     }
   }
   else
   {
-    g_Network.m_pProcess[0]->LoadSendMsg( n, type, msg, 2u);
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      n,
+      type,
+      reinterpret_cast<char *>(&msg),
+      static_cast<unsigned __int16>(sizeof(msg)));
   }
 }
 
@@ -1581,7 +1646,11 @@ void CHolyStoneSystem::SendMsg_HolyKeeperStateChaos()
   {
     if (g_Player[index].m_bLive)
     {
-      g_Network.m_pProcess[0]->LoadSendMsg( index, type, reinterpret_cast<char *>(&msg), 5u);
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        index,
+        type,
+        reinterpret_cast<char *>(&msg),
+        static_cast<unsigned __int16>(sizeof(msg)));
     }
   }
 }
@@ -1659,7 +1728,11 @@ void CHolyStoneSystem::SendHolyStoneHPToRaceBoss()
       const int race = player->m_Param.GetRaceCode();
       if (CPvpUserAndGuildRankingSystem::Instance()->IsCurrentRaceBossGroup(race, serial))
       {
-        g_Network.m_pProcess[0]->LoadSendMsg( player->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 6u);
+        g_Network.m_pProcess[0]->LoadSendMsg(
+          player->m_ObjID.m_wIndex,
+          type,
+          reinterpret_cast<char *>(&msg),
+          static_cast<unsigned __int16>(sizeof(msg)));
       }
     }
   }
@@ -1680,22 +1753,25 @@ void CHolyStoneSystem::SendHolyStoneHP(CPlayer *pkPlayer)
     return;
   }
 
-  unsigned __int8 msg[6]{};
+  _holy_stone_hp_inform_zocl msg{};
   for (int j = 0; j < 3; ++j)
   {
-    const unsigned __int16 hpRate = static_cast<unsigned __int16>(g_Stone[j].CalcCurHPRate());
-    *reinterpret_cast<unsigned __int16 *>(&msg[2 * j]) = hpRate;
+    msg.wHPRate[j] = static_cast<unsigned __int16>(g_Stone[j].CalcCurHPRate());
   }
 
   unsigned __int8 type[2]{};
   type[0] = 13;
   type[1] = 33;
-  g_Network.m_pProcess[0]->LoadSendMsg(pkPlayer->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(msg), 6u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    pkPlayer->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CHolyStoneSystem::SendNotifyHolyStoneDestroyedToRaceBoss()
 {
-  char msg[1]{};
+  _notify_holy_stone_destroyed_zocl msg{};
 
   unsigned __int8 type[2]{};
   type[0] = 13;
@@ -1710,7 +1786,11 @@ void CHolyStoneSystem::SendNotifyHolyStoneDestroyedToRaceBoss()
       const int race = player->m_Param.GetRaceCode();
       if (CPvpUserAndGuildRankingSystem::Instance()->IsCurrentRaceBossGroup(race, serial))
       {
-        g_Network.m_pProcess[0]->LoadSendMsg( player->m_ObjID.m_wIndex, type, msg, 1u);
+        g_Network.m_pProcess[0]->LoadSendMsg(
+          player->m_ObjID.m_wIndex,
+          type,
+          reinterpret_cast<char *>(&msg),
+          static_cast<unsigned __int16>(sizeof(msg)));
       }
     }
   }

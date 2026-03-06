@@ -186,14 +186,18 @@ void HACKSHEILD_PARAM_ANTICP::CheckClient()
 
   m_byVerifyState = 3;
 
-  char msg[0xA2]{};
-  *reinterpret_cast<unsigned __int16 *>(msg) = 0;
-  memcpy_0(msg + 2, reqPayload, sizeof(reqPayload));
+  _hs_msg_make_crc_req_msg_zocl msg{};
+  msg.wSeq = 0;
+  memcpy_0(msg.byReqMsg, reqPayload, sizeof(msg.byReqMsg));
 
   unsigned __int8 type[2]{};
   type[0] = 98;
   type[1] = 4;
-  g_Network.m_pProcess[0]->LoadSendMsg(m_nSocketIndex, type, msg, 0xA2u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    m_nSocketIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void HACKSHEILD_PARAM_ANTICP::Kick(unsigned __int8 byReason, unsigned int dwRet)
@@ -243,16 +247,20 @@ char HACKSHEILD_PARAM_ANTICP::OnRecvSession_ServerCheckSum_Request(unsigned int 
   Init();
 
   char guidRequest[20]{};
-  char msg[0x16]{};
+  _hs_msg_make_guid_req_msg_zocl msg{};
   AntiCpMakeGuidReqMsgFn makeGuidReqMsg = _ResolveMakeGuidReqMsg();
   const unsigned int ret = makeGuidReqMsg ? makeGuidReqMsg(guidRequest, m_byGUIDClientInfo) : 1u;
-  *reinterpret_cast<unsigned __int16 *>(msg) = static_cast<unsigned __int16>(ret);
-  memcpy_0(msg + 2, guidRequest, sizeof(guidRequest));
+  msg.wSeq = static_cast<unsigned __int16>(ret);
+  memcpy_0(msg.byGuidReqMsg, guidRequest, sizeof(msg.byGuidReqMsg));
 
   unsigned __int8 type[2]{};
   type[0] = 98;
   type[1] = 2;
-  g_Network.m_pProcess[0]->LoadSendMsg(nIndex, type, msg, 0x16u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    nIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 
   if (ret)
   {
@@ -288,13 +296,17 @@ char HACKSHEILD_PARAM_ANTICP::OnRecvSession_ClientCheckSum_Response(unsigned __i
     }
     else
     {
-      char msg[2]{};
-      *reinterpret_cast<unsigned __int16 *>(msg) = 0;
+      _hs_msg_ack_guid_ack_msg_zocl msg{};
+      msg.wSeq = 0;
 
       unsigned __int8 type[2]{};
       type[0] = 98;
       type[1] = 6;
-      g_Network.m_pProcess[0]->LoadSendMsg(m_nSocketIndex, type, msg, 2u);
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        m_nSocketIndex,
+        type,
+        reinterpret_cast<char *>(&msg),
+        static_cast<unsigned __int16>(sizeof(msg)));
       m_byVerifyState = 2;
     }
     return 1;

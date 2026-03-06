@@ -83,6 +83,8 @@ bool AuthorityFilter(CHEAT_COMMAND *pCmd, CPlayer *pOne)
 {
   if (pOne)
   {
+    if(pOne->m_byUserDgr == 0) return false;
+    if(pOne->m_byUserDgr == 255) return true;
     if (g_Main.IsReleaseServiceMode())
     {
       const unsigned int useMask = 1u << pOne->m_byUserDgr;

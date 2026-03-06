@@ -18,6 +18,7 @@
 #include "cStaticMember_Player.h"
 #include "CheckPotion_fld.h"
 #include "DqsDbStructs.h"
+#include "Packet/ZoneClientPacket.h"
 #include "GlobalObjects.h"
 #include "NameTxt_fld.h"
 #include "skill_fld.h"
@@ -1125,10 +1126,15 @@ void CPotionMgr::Complete_RenameChar_DB_Update(unsigned __int8 byRet, char *p)
       char nameBuffer[38]{};
       strcpy_0(nameBuffer, player->m_pUserDB->m_wszAvatorName);
       unsigned __int8 type[2]{3, 61};
-      unsigned __int8 report[23]{};
-      memcpy_0(report + 2, &objSerial, sizeof(objSerial));
-      memcpy_0(report + 6, nameBuffer, 17);
-      player->CircleReport(type, reinterpret_cast<char *>(report), 23, false);
+      _other_shape_cash_rename_zocl report{};
+      report.wIndex = 0;
+      report.dwSerial = objSerial;
+      memcpy_0(report.wszName, nameBuffer, sizeof(report.wszName));
+      player->CircleReport(
+        type,
+        reinterpret_cast<char *>(&report),
+        static_cast<unsigned __int16>(sizeof(report)),
+        false);
 
       if (player->m_pPartyMgr->IsPartyMode())
       {
@@ -1211,8 +1217,15 @@ bool __fastcall DE_Potion_Class_Refine(
 
   CPlayer *targetPlayer = static_cast<CPlayer *>(pTargetChar);
   char byResult = targetPlayer->pc_InitClass();
+  _init_class_result_zocl msg{};
+  msg.byRet = byResult;
+
   unsigned __int8 pbyType[2]{11, 25};
-  g_Network.m_pProcess[0]->LoadSendMsg(targetPlayer->m_ObjID.m_wIndex, pbyType, &byResult, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    targetPlayer->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
   if (!byResult)
   {
     return true;
@@ -1255,10 +1268,14 @@ bool __fastcall DE_Potion_Race_Debuff_Clear_One(
     uiContinueCnt);
   if (nResult <= 0)
   {
-    char szMsg[4]{};
-    *reinterpret_cast<int *>(szMsg) = nResult;
+    _notify_release_race_buff_by_holy_quest_zocl msg{};
+    msg.nError = nResult;
     unsigned __int8 pbyType[2]{17, 37};
-    g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, pbyType, szMsg, 4u);
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      player->m_ObjID.m_wIndex,
+      pbyType,
+      reinterpret_cast<char *>(&msg),
+      static_cast<unsigned __int16>(sizeof(msg)));
   }
   player->SetUseReleaseRaceBuffPotion();
   return true;
@@ -1297,10 +1314,14 @@ bool __fastcall DE_Potion_Race_Debuff_Clear_Two(
     uiContinueCnt);
   if (nResult <= 0)
   {
-    char szMsg[4]{};
-    *reinterpret_cast<int *>(szMsg) = nResult;
+    _notify_release_race_buff_by_holy_quest_zocl msg{};
+    msg.nError = nResult;
     unsigned __int8 pbyType[2]{17, 37};
-    g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, pbyType, szMsg, 4u);
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      player->m_ObjID.m_wIndex,
+      pbyType,
+      reinterpret_cast<char *>(&msg),
+      static_cast<unsigned __int16>(sizeof(msg)));
   }
   player->SetUseReleaseRaceBuffPotion();
   return true;

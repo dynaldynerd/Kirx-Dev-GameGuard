@@ -17,6 +17,8 @@
 #include "WorldServerUtil.h"
 #include "raceboss_msg_confirm_zowb.h"
 #include "racebosssms_fromweb_send_error_result_zowb.h"
+#include "Packet/ZoneWebPacket.h"
+#include "Packet/ZoneClientPacket.h"
 
 CRaceBossMsgController *CRaceBossMsgController::ms_Instance = nullptr;
 
@@ -784,11 +786,15 @@ char CRaceBossMsgController::Send(CPlayer *pkSender, const char *pwszMsg)
 
 void CRaceBossMsgController::SendMsgRequestResult(unsigned __int16 usInx, char ucRet)
 {
-  char msg[32]{};
+  _boss_sms_msg_result_zocl msg{};
   unsigned __int8 type[2]{52, 2};
 
-  msg[0] = ucRet;
-  g_Network.m_pProcess[0]->LoadSendMsg(usInx, type, msg, 1u);
+  msg.byRetCode = ucRet;
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    usInx,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CRaceBossMsgController::SendWebRaceBossSMSErrorResult(char iRet, unsigned int dwWebDBID)
@@ -960,10 +966,14 @@ void CRaceBossMsgController::SendInfomSender(unsigned int dwSerial, unsigned __i
     return;
   }
 
-  char payload[1]{};
-  payload[0] = static_cast<char>(ucRemainCnt);
+  _boss_sms_send_inform_zocl payload{};
+  payload.byRemainCnt = static_cast<char>(ucRemainCnt);
   unsigned __int8 type[2]{52, 4};
-  g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, type, payload, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    player->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
 }
 
 void CRaceBossMsgController::SendRequestWeb(unsigned __int8 ucRace, RACE_BOSS_MSG::CMsg *pkMsg)
@@ -995,14 +1005,18 @@ void CRaceBossMsgController::SendRequestWeb(unsigned __int8 ucRace, RACE_BOSS_MS
   }
 
   unsigned __int8 type[2]{51, 10};
-  char payload[9]{};
-  *reinterpret_cast<unsigned int *>(payload) = pkMsg->GetID();
-  *reinterpret_cast<int *>(payload + 4) = static_cast<int>(g_Main.m_byWorldCode);
-  payload[8] = static_cast<char>(ucRace);
+  _send_raceboss_msg_request_zowb payload{};
+  payload.nCountIndex = static_cast<int>(pkMsg->GetID());
+  payload.nWorldCode = static_cast<int>(g_Main.m_byWorldCode);
+  payload.byRaceCode = ucRace;
 
   if (g_Main.m_bConnectedWebAgentServer)
   {
-    g_Network.m_pProcess[2]->LoadSendMsg(g_Main.m_byWebAgentServerNetInx, type, payload, 9u);
+    g_Network.m_pProcess[2]->LoadSendMsg(
+      g_Main.m_byWebAgentServerNetInx,
+      type,
+      reinterpret_cast<char *>(&payload),
+      static_cast<unsigned __int16>(sizeof(payload)));
   }
 }
 
@@ -1078,8 +1092,13 @@ void CRaceBossMsgController::SendCancleInfomSender(unsigned int dwSerial)
   if (player && player->m_bLive)
   {
     unsigned __int8 pbyType[2] = {52, 3};
-    char szMsg[1]{};
-    g_Network.m_pProcess[0]->LoadSendMsg(player->m_ObjID.m_wIndex, pbyType, szMsg, 1u);
+    _boss_sms_refuse_inform_zocl msg{};
+    msg.sDum = 0;
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      player->m_ObjID.m_wIndex,
+      pbyType,
+      reinterpret_cast<char *>(&msg),
+      static_cast<unsigned __int16>(sizeof(msg)));
   }
 }
 
@@ -1089,16 +1108,21 @@ void CRaceBossMsgController::SendCancleInfomManager(
   unsigned int dwMsgID,
   const char *pwszName)
 {
-char szMsg[0x16]{};
-  szMsg[0] = ucRet;
+  _boss_sms_cancel_result_zocl msg{};
+  msg.byRetCode = ucRet;
+  msg.dwMsgID = dwMsgID;
   if (pwszName)
   {
-    strncpy_s(szMsg + 1, 0x10u, pwszName, 0x10u);
-    szMsg[17] = '\0';
+    strncpy_s(msg.wszBossName, sizeof(msg.wszBossName), pwszName, 0x10u);
+    msg.wszBossName[16] = '\0';
   }
 
   unsigned __int8 pbyType[2] = {52, 5};
-  g_Network.m_pProcess[0]->LoadSendMsg(usInx, pbyType, szMsg, 0x16u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    usInx,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CRaceBossMsgController::SendCancelWeb(unsigned __int8 ucRace, RACE_BOSS_MSG::CMsg *pkMsg)
@@ -1108,14 +1132,18 @@ void CRaceBossMsgController::SendCancelWeb(unsigned __int8 ucRace, RACE_BOSS_MSG
     return;
   }
 
-  char szMsg[9]{};
-  *reinterpret_cast<unsigned int *>(szMsg) = pkMsg->GetID();
-  *reinterpret_cast<int *>(szMsg + 4) = g_Main.m_byWorldCode;
-  szMsg[8] = static_cast<char>(ucRace);
+  _cancel_raceboss_msg_request_zowb request{};
+  request.nCountIndex = static_cast<int>(pkMsg->GetID());
+  request.nWorldCode = g_Main.m_byWorldCode;
+  request.byRaceCode = ucRace;
 
   unsigned __int8 pbyType[2] = {51, 11};
   if (g_Main.m_bConnectedWebAgentServer)
   {
-    g_Network.m_pProcess[2]->LoadSendMsg(g_Main.m_byWebAgentServerNetInx, pbyType, szMsg, 9u);
+    g_Network.m_pProcess[2]->LoadSendMsg(
+      g_Main.m_byWebAgentServerNetInx,
+      pbyType,
+      reinterpret_cast<char *>(&request),
+      static_cast<unsigned __int16>(sizeof(request)));
   }
 }

@@ -6,6 +6,7 @@
 
 #include "CNetworkEX.h"
 #include "GlobalObjects.h"
+#include "Packet/ZoneClientPacket.h"
 #include "WorldServerUtil.h"
 
 __int64 _total_guild_rank_result_zocl::size()

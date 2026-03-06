@@ -195,12 +195,12 @@ unsigned __int8 CPvpUserAndGuildRankingSystem::UpdateRaceRankStep9(char *szData)
   return m_kUserRankingProcess.UpdateRaceRankStep9(szData);
 }
 
-unsigned __int8 CPvpUserAndGuildRankingSystem::UpdateRaceRankStep10(char *szData)
+unsigned __int8 CPvpUserAndGuildRankingSystem::UpdateRaceRankStep10(_qry_case_rank_racerank_guildrank *szData)
 {
   return m_kUserRankingProcess.UpdateRaceRankStep10(szData);
 }
 
-unsigned __int8 CPvpUserAndGuildRankingSystem::UpdateRaceRankStep11(char *szData)
+unsigned __int8 CPvpUserAndGuildRankingSystem::UpdateRaceRankStep11(_qry_case_rank_racerank_guildrank *szData)
 {
   return m_kUserRankingProcess.UpdateRaceRankStep11(szData);
 }
@@ -335,37 +335,39 @@ void CPvpUserAndGuildRankingSystem::CompleteGuildRankStep4(unsigned __int8 byRet
   m_kUserRankingProcess.CompleteGuildRankStep4(byRet, szData);
 }
 
-void CPvpUserAndGuildRankingSystem::CompleteRankInGuildStep1(unsigned __int8 byRet, char *szData)
+void CPvpUserAndGuildRankingSystem::CompleteRankInGuildStep1(unsigned __int8 byRet, _qry_case_rank_racerank_guildrank *szData)
 {
   m_kUserRankingProcess.CompleteRankInGuildStep1(byRet, szData);
 }
 
-void CPvpUserAndGuildRankingSystem::CompleteRankInGuildStep2(unsigned __int8 byRet, char *szData)
+void CPvpUserAndGuildRankingSystem::CompleteRankInGuildStep2(unsigned __int8 byRet, _qry_case_rank_racerank_guildrank *szData)
 {
   m_kUserRankingProcess.CompleteRankInGuildStep2(byRet, szData);
 }
 
-void CPvpUserAndGuildRankingSystem::CompleteRankInGuildStep3(unsigned __int8 byRet, char *szData)
+void CPvpUserAndGuildRankingSystem::CompleteRankInGuildStep3(unsigned __int8 byRet, _qry_case_rank_racerank_guildrank *szData)
 {
   m_kUserRankingProcess.CompleteRankInGuildStep3(byRet, szData);
 }
 
-void CPvpUserAndGuildRankingSystem::CompleteRankInGuildStep4(unsigned __int8 byRet, char *szData)
+void CPvpUserAndGuildRankingSystem::CompleteRankInGuildStep4(unsigned __int8 byRet, _qry_case_rank_racerank_guildrank *szData)
 {
   m_kUserRankingProcess.CompleteRankInGuildStep4(byRet, szData);
 }
 
-void CPvpUserAndGuildRankingSystem::CompleteRankInGuildStep5(unsigned __int8 byRet, char *szData)
+void CPvpUserAndGuildRankingSystem::CompleteRankInGuildStep5(unsigned __int8 byRet, _qry_case_rank_racerank_guildrank *szData)
 {
   m_kUserRankingProcess.CompleteRankInGuildStep5(byRet, szData);
 }
 
-void CPvpUserAndGuildRankingSystem::CompleteRankInGuildStep6(unsigned __int8 byRet, char *szData)
+void CPvpUserAndGuildRankingSystem::CompleteRankInGuildStep6(unsigned __int8 byRet, _qry_case_rank_racerank_guildrank *szData)
 {
   m_kUserRankingProcess.CompleteRankInGuildStep6(byRet, szData);
 }
 
-void CPvpUserAndGuildRankingSystem::CompleteRankUpdateAndSelectGarde(unsigned __int8 byRet, char *szData)
+void CPvpUserAndGuildRankingSystem::CompleteRankUpdateAndSelectGarde(
+  unsigned __int8 byRet,
+  _qry_case_rank_racerank_guildrank *szData)
 {
   m_kUserRankingProcess.CompleteRankUpdateAndSelectGarde(byRet, szData);
 }

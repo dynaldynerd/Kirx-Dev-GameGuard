@@ -5,25 +5,7 @@
 #include "CNuclearBomb.h"
 
 class CPlayer;
-
-#pragma pack(push, 1)
-struct  _nuclear_bomb_current_state_zocl
-{
-  #pragma pack(push, 1)
-  struct  __nuclear
-  {
-    unsigned __int8 byRaceCode;
-    unsigned __int8 byUseClass;
-    float zPos[3];
-  };
-  #pragma pack(pop)
-
-  unsigned __int8 nNum;
-  __nuclear nuclear[9];
-
-  int size() const;
-};
-#pragma pack(pop)
+struct _nuclear_bomb_current_state_zocl;
 
 class  CNuclearBombMgr
 {

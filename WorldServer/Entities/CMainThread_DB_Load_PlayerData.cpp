@@ -163,130 +163,137 @@ unsigned __int8 CMainThread::_db_Load_General(
   unsigned __int8 byRaceCode,
   _AVATOR_DATA *pCon)
 {
-  __int64 *v4; // rdi
-  __int64 i; // rcx
-  unsigned __int16 v7; // ax
-  unsigned int v8; // eax
-  __int64 v9; // [rsp+0h] [rbp-BF8h] BYREF
-  int k; // [rsp+20h] [rbp-BD8h]
-  char String[160]; // [rsp+40h] [rbp-BB8h] BYREF
-  _worlddb_character_general_info pCharacterData; // [rsp+E0h] [rbp-B18h] BYREF
-  unsigned __int8 v13; // [rsp+AE4h] [rbp-114h]
-  char Destination[212]; // [rsp+B00h] [rbp-F8h] BYREF
-  int v15; // [rsp+BD4h] [rbp-24h]
-  int v16; // [rsp+BD8h] [rbp-20h]
-  int j; // [rsp+BDCh] [rbp-1Ch]
+  char parseBuffer[160];
+  _worlddb_character_general_info characterData;
+  char leftResListBuffer[212];
+  int leftResLength = 0;
+  int leftResOffset = 0;
 
-  v4 = &v9;
-  k = 0;
-  memset(String, 0, 128);
-  memset_0(String, 0, 0x80uLL);
-  memset_0(&pCharacterData, 0, sizeof(pCharacterData));
-  v13 = this->m_pWorldDB->Select_CharacterGeneralInfo(dwSerial, &pCharacterData);
-  if ( v13 == 1 )
+  memset(parseBuffer, 0, 128);
+  memset_0(parseBuffer, 0, 0x80uLL);
+  memset_0(&characterData, 0, sizeof(characterData));
+
+  const unsigned __int8 dbResult = this->m_pWorldDB->Select_CharacterGeneralInfo(dwSerial, &characterData);
+  if ( dbResult == 1 )
     return 24;
-  if ( v13 == 2 )
+  if ( dbResult == 2 )
     return 37;
-  pCon->dbAvator.m_dwHP = pCharacterData.dwHP;
-  pCon->dbAvator.m_dwFP = pCharacterData.dwFP;
-  pCon->dbAvator.m_dwSP = pCharacterData.dwSP;
-  pCon->dbAvator.m_dwDP = pCharacterData.dwDP;
-  pCon->dbAvator.m_dExp = pCharacterData.dExp;
-  pCon->dbAvator.m_dLossExp = pCharacterData.dLoseExp;
-  pCon->dbAvator.m_byBagNum = pCharacterData.byBagNum;
-  pCon->dbAvator.m_byMapCode = pCharacterData.byMapCode;
-  pCon->dbAvator.m_fStartPos[0] = pCharacterData.fStartPos[0];
-  pCon->dbAvator.m_fStartPos[1] = pCharacterData.fStartPos[1];
-  pCon->dbAvator.m_fStartPos[2] = pCharacterData.fStartPos[2];
-  pCon->dbAvator.m_dwTotalPlayMin = pCharacterData.dwTotalPlayMin;
-  strcpy_0(Destination, pCharacterData.szLeftResList);
+
+  pCon->dbAvator.m_dwHP = characterData.dwHP;
+  pCon->dbAvator.m_dwFP = characterData.dwFP;
+  pCon->dbAvator.m_dwSP = characterData.dwSP;
+  pCon->dbAvator.m_dwDP = characterData.dwDP;
+  pCon->dbAvator.m_dExp = characterData.dExp;
+  pCon->dbAvator.m_dLossExp = characterData.dLoseExp;
+  pCon->dbAvator.m_byBagNum = characterData.byBagNum;
+  pCon->dbAvator.m_byMapCode = characterData.byMapCode;
+  pCon->dbAvator.m_fStartPos[0] = characterData.fStartPos[0];
+  pCon->dbAvator.m_fStartPos[1] = characterData.fStartPos[1];
+  pCon->dbAvator.m_fStartPos[2] = characterData.fStartPos[2];
+  pCon->dbAvator.m_dwTotalPlayMin = characterData.dwTotalPlayMin;
+
+  strcpy_0(leftResListBuffer, characterData.szLeftResList);
   pCon->dbCutting.Init();
-  if ( Destination[0] != 42 )
+  if ( leftResListBuffer[0] != 42 )
   {
-    v15 = strlen_0(Destination);
-    if ( !(v15 % 5) )
+    leftResLength = static_cast<int>(strlen_0(leftResListBuffer));
+    if ( !(leftResLength % 5) )
     {
-      pCon->dbCutting.m_byLeftNum = v15 / 5;
-      v16 = 0;
-      for ( j = 0; j < pCon->dbCutting.m_byLeftNum; ++j )
+      pCon->dbCutting.m_byLeftNum = static_cast<unsigned __int8>(leftResLength / 5);
+      leftResOffset = 0;
+      for ( int leftResIndex = 0; leftResIndex < pCon->dbCutting.m_byLeftNum; ++leftResIndex )
       {
-        memcpy_0(String, &Destination[v16], 2uLL);
-        String[2] = 0;
-        v16 += 2;
-        pCon->dbCutting.m_List[j].Key.byTableCode = 18;
-        v7 = atoi(String);
-        pCon->dbCutting.m_List[j].Key.wItemIndex = v7;
-        memcpy_0(String, &Destination[v16], 3uLL);
-        String[3] = 0;
-        v16 += 3;
-        v8 = atoi(String);
-        pCon->dbCutting.m_List[j].dwDur = v8;
+        memcpy_0(parseBuffer, &leftResListBuffer[leftResOffset], 2uLL);
+        parseBuffer[2] = 0;
+        leftResOffset += 2;
+        pCon->dbCutting.m_List[leftResIndex].Key.byTableCode = 18;
+        pCon->dbCutting.m_List[leftResIndex].Key.wItemIndex = static_cast<unsigned __int16>(atoi(parseBuffer));
+        memcpy_0(parseBuffer, &leftResListBuffer[leftResOffset], 3uLL);
+        parseBuffer[3] = 0;
+        leftResOffset += 3;
+        pCon->dbCutting.m_List[leftResIndex].dwDur = static_cast<unsigned int>(atoi(parseBuffer));
       }
       pCon->dbCutting.m_bOldDataLoad = 1;
     }
   }
-  for ( k = 0; k < 7; ++k )
+
+  for ( int index = 0; index < 7; ++index )
   {
-    _EMBELLKEY embellKey = EmbellKeyFromDb(pCharacterData.lEK[k]);
-    pCon->dbEquip.m_EmbellishList[k].Key.LoadDBKey(embellKey);
-    pCon->dbEquip.m_EmbellishList[k].wAmount = pCharacterData.wED[k];
-    pCon->dbEquip.m_EmbellishList[k].dwT = pCharacterData.dwET[k];
-    pCon->dbEquip.m_EmbellishList[k].lnUID = pCharacterData.lnUID_E[k];
+    _EMBELLKEY embellKey = EmbellKeyFromDb(characterData.lEK[index]);
+    pCon->dbEquip.m_EmbellishList[index].Key.LoadDBKey(embellKey);
+    pCon->dbEquip.m_EmbellishList[index].wAmount = characterData.wED[index];
+    pCon->dbEquip.m_EmbellishList[index].dwT = characterData.dwET[index];
+    pCon->dbEquip.m_EmbellishList[index].lnUID = characterData.lnUID_E[index];
   }
-  for ( k = 0; k < 88; ++k )
+
+  for ( int index = 0; index < 88; ++index )
   {
-    pCon->dbForce.m_List[k].Key.dwKey = pCharacterData.lF[k];
-    pCon->dbForce.m_List[k].lnUID = pCharacterData.lnUID_F[k];
+    pCon->dbForce.m_List[index].Key.dwKey = characterData.lF[index];
+    pCon->dbForce.m_List[index].lnUID = characterData.lnUID_F[index];
   }
+
   if ( byRaceCode == 1 )
   {
-    for ( k = 0; k < 4; ++k )
+    for ( int index = 0; index < 4; ++index )
     {
-      pCon->dbAnimus.m_List[k].Key.LoadDBKey(pCharacterData.byAK[k]);
-      pCon->dbAnimus.m_List[k].dwExp = pCharacterData.dwAD[k];
-      pCon->dbAnimus.m_List[k].dwParam = pCharacterData.dwAP[k];
-      pCon->dbAnimus.m_List[k].lnUID = pCharacterData.lnUID_A[k];
+      pCon->dbAnimus.m_List[index].Key.LoadDBKey(characterData.byAK[index]);
+      pCon->dbAnimus.m_List[index].dwExp = characterData.dwAD[index];
+      pCon->dbAnimus.m_List[index].dwParam = characterData.dwAP[index];
+      pCon->dbAnimus.m_List[index].lnUID = characterData.lnUID_A[index];
     }
   }
-  for ( k = 0; k < 2; ++k )
+
+  for ( int index = 0; index < 2; ++index )
   {
-    sprintf(String, "WM%d", k);
-    pCon->dbStat.m_dwDamWpCnt[k] = pCharacterData.dwWM[k];
+    sprintf_s(parseBuffer, sizeof(parseBuffer), "WM%d", index);
+    pCon->dbStat.m_dwDamWpCnt[index] = characterData.dwWM[index];
   }
-  for ( k = 0; k < 24; ++k )
+
+  for ( int index = 0; index < 24; ++index )
   {
-    sprintf(String, "FM%d", k);
-    pCon->dbStat.m_dwForceCum[k] = pCharacterData.dwFM[k];
+    sprintf_s(parseBuffer, sizeof(parseBuffer), "FM%d", index);
+    pCon->dbStat.m_dwForceCum[index] = characterData.dwFM[index];
   }
-  for ( k = 0; k < 48; ++k )
+
+  for ( int index = 0; index < 48; ++index )
   {
-    sprintf(String, "SM%d", k);
-    pCon->dbStat.m_dwSkillCum[k] = pCharacterData.dwSM[k];
+    sprintf_s(parseBuffer, sizeof(parseBuffer), "SM%d", index);
+    pCon->dbStat.m_dwSkillCum[index] = characterData.dwSM[index];
   }
-  for ( k = 0; k < 3; ++k )
+
+  for ( int index = 0; index < 3; ++index )
   {
-    sprintf(String, "MI%d", k);
-    pCon->dbStat.m_dwMakeCum[k] = pCharacterData.dwMI[k];
+    sprintf_s(parseBuffer, sizeof(parseBuffer), "MI%d", index);
+    pCon->dbStat.m_dwMakeCum[index] = characterData.dwMI[index];
   }
-  pCon->dbStat.m_dwSpecialCum = pCharacterData.dwSR;
-  pCon->dbStat.m_dwDefenceCnt = pCharacterData.dwDM;
-  pCon->dbStat.m_dwShieldCnt = pCharacterData.dwPM;
-  for ( k = 0; k < 3; ++k )
-    pCon->dbAvator.m_zClassHistory[k] = pCharacterData.zClassHistory[k];
-  pCon->dbAvator.m_dwClassInitCnt = pCharacterData.dwClassInitCnt;
-  pCon->dbAvator.m_byLastClassGrade = pCharacterData.byLastClassGrade;
-  pCon->dbAvator.m_dPvPPoint = pCharacterData.dPvPPoint;
-  pCon->dbAvator.m_dPvPCashBag = pCharacterData.dPvPCashBag;
-  memcpy_0(pCon->dbAvator.m_szBindMapCode, pCharacterData.szBindMapCode, sizeof(pCon->dbAvator.m_szBindMapCode));
+
+  pCon->dbStat.m_dwSpecialCum = characterData.dwSR;
+  pCon->dbStat.m_dwDefenceCnt = characterData.dwDM;
+  pCon->dbStat.m_dwShieldCnt = characterData.dwPM;
+
+  for ( int index = 0; index < 3; ++index )
+    pCon->dbAvator.m_zClassHistory[index] = characterData.zClassHistory[index];
+
+  pCon->dbAvator.m_dwClassInitCnt = characterData.dwClassInitCnt;
+  pCon->dbAvator.m_byLastClassGrade = characterData.byLastClassGrade;
+  pCon->dbAvator.m_dPvPPoint = characterData.dPvPPoint;
+  pCon->dbAvator.m_dPvPCashBag = characterData.dPvPCashBag;
+  memcpy_0(
+    pCon->dbAvator.m_szBindMapCode,
+    characterData.szBindMapCode,
+    sizeof(pCon->dbAvator.m_szBindMapCode));
   pCon->dbAvator.m_szBindMapCode[11] = 0;
-  memcpy_0(pCon->dbAvator.m_szBindDummy, pCharacterData.szBindDummy, sizeof(pCon->dbAvator.m_szBindDummy));
+  memcpy_0(
+    pCon->dbAvator.m_szBindDummy,
+    characterData.szBindDummy,
+    sizeof(pCon->dbAvator.m_szBindDummy));
   pCon->dbAvator.m_szBindDummy[11] = 0;
-  pCon->dbAvator.m_dwGuildSerial = pCharacterData.dwGuildSerial;
-  pCon->dbAvator.m_byClassInGuild = pCharacterData.byGuildGrade;
-  pCon->dbAvator.m_dwRadarDelayTime = pCharacterData.dwRadarDelayTime;
-  pCon->dbAvator.m_dwTakeLastMentalTicket = pCharacterData.dwTakeLastMentalTicket;
-  pCon->dbAvator.m_dwTakeLastCriTicket = pCharacterData.dwTakeLastCriTicket;
-  pCon->dbAvator.m_byMaxLevel = pCharacterData.byMaxLevel;
+  pCon->dbAvator.m_dwGuildSerial = characterData.dwGuildSerial;
+  pCon->dbAvator.m_byClassInGuild = characterData.byGuildGrade;
+  pCon->dbAvator.m_dwRadarDelayTime = characterData.dwRadarDelayTime;
+  pCon->dbAvator.m_dwTakeLastMentalTicket = characterData.dwTakeLastMentalTicket;
+  pCon->dbAvator.m_dwTakeLastCriTicket = characterData.dwTakeLastCriTicket;
+  pCon->dbAvator.m_byMaxLevel = characterData.byMaxLevel;
   return 0;
 }
 

@@ -3,27 +3,11 @@
 #include "IdaCompat.h"
 #include "CNetIndexList.h"
 #include "starting_vote_inform_zocl.h"
+#include "Packet/ZoneClientPacket.h"
 
 class  CVoteSystem
 {
 public:
-#pragma pack(push, 1)
-  struct  _started_vote_inform_zocl
-  {
-    int nVoteSerial;
-    unsigned __int8 byLimGrade;
-    unsigned __int16 wLeftSec;
-    bool bActed;
-    unsigned __int16 wPoint[3];
-    bool bHurry;
-    unsigned __int16 wContentSize;
-    char wszContent[1280];
-
-    _started_vote_inform_zocl();
-    __int64 size();
-  };
-#pragma pack(pop)
-
   CVoteSystem();
   ~CVoteSystem();
 

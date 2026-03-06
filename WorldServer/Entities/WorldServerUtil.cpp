@@ -849,15 +849,10 @@ int GetCurwDay()
 
 void GetNowDateTime(char *szDateTime)
 {
-  if (!szDateTime)
-  {
-    return;
-  }
-
-  char month[32]{};
-  char day[32]{};
-  char hour[32]{};
-  char minute[16]{};
+  char month[32];
+  char day[32];
+  char hour[32];
+  char minute[16];
 
   const unsigned __int16 year = static_cast<unsigned __int16>(GetCurrentYear());
   const unsigned __int16 curMonth = static_cast<unsigned __int16>(GetCurrentMonth());
@@ -865,27 +860,32 @@ void GetNowDateTime(char *szDateTime)
   const unsigned __int16 curHour = static_cast<unsigned __int16>(GetCurrentHour());
   const unsigned __int16 curMin = static_cast<unsigned __int16>(GetCurrentMin());
 
+  memset(month, 0, 4);
+  memset(day, 0, 4);
+  memset(hour, 0, 4);
+  memset(minute, 0, 4);
+
   if (curMonth > 9)
-    sprintf_s(month, "%d", curMonth);
+    sprintf(month, "%d", curMonth);
   else
-    sprintf_s(month, "0%d", curMonth);
+    sprintf(month, "0%d", curMonth);
 
   if (curDay > 9)
-    sprintf_s(day, "%d", curDay);
+    sprintf(day, "%d", curDay);
   else
-    sprintf_s(day, "0%d", curDay);
+    sprintf(day, "0%d", curDay);
 
   if (curHour > 9)
-    sprintf_s(hour, "%d", curHour);
+    sprintf(hour, "%d", curHour);
   else
-    sprintf_s(hour, "0%d", curHour);
+    sprintf(hour, "0%d", curHour);
 
   if (curMin > 9)
-    sprintf_s(minute, "%d", curMin);
+    sprintf(minute, "%d", curMin);
   else
-    sprintf_s(minute, "0%d", curMin);
+    sprintf(minute, "0%d", curMin);
 
-  sprintf_s(szDateTime, 128, "%d-%s-%s %s:%s", year, month, day, hour, minute);
+  sprintf(szDateTime, "%d-%s-%s %s:%s", year, month, day, hour, minute);
 }
 
 unsigned __int8 GetItemKindCode(int nTableCode)

@@ -101,6 +101,7 @@
 #include "combine_ex_item_result_zocl.h"
 #include "combine_ex_item_accept_request_clzo.h"
 #include "combine_ex_item_accept_result_zocl.h"
+#include "Packet/ZoneClientPacket.h"
 #include "qry_case_disjointguild.h"
 #include "WorldServerUtil.h"
 #include "NetCheckPackets.h"
@@ -135,47 +136,60 @@ void CPlayer::SendMsg_MineCompleteResult(
   unsigned __int8 byOreDur,
   unsigned __int16 dwBatteryLeftDurPoint)
 {
-  char payload[9]{};
-  payload[0] = byErrCode;
-  *reinterpret_cast<__int16 *>(payload + 1) = static_cast<__int16>(this->m_Param.m_dbEquip.m_pStorageList[6].m_dwDur);
-  *reinterpret_cast<unsigned __int16 *>(payload + 3) = dwBatteryLeftDurPoint;
-  payload[5] = static_cast<char>(byNewOreIndex);
-  *reinterpret_cast<unsigned __int16 *>(payload + 6) = dwOreSerial;
-  payload[8] = static_cast<char>(byOreDur);
+  _mine_complete_result_zocl msg{};
+  msg.byErrCode = byErrCode;
+  msg.wEquipLeftDur = static_cast<unsigned __int16>(this->m_Param.m_dbEquip.m_pStorageList[6].m_dwDur);
+  msg.wBatteryLeftDur = dwBatteryLeftDurPoint;
+  msg.byOreIndex = static_cast<char>(byNewOreIndex);
+  msg.wOreSerial = dwOreSerial;
+  msg.byOreDur = static_cast<char>(byOreDur);
 
   unsigned __int8 type[2] = {14, 6};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 9u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CPlayer::SendMsg_MineStartResult(unsigned __int8 resultCode)
 {
-  char payload = static_cast<char>(resultCode);
+  _mine_start_result_zocl msg{};
+  msg.byErrCode = static_cast<char>(resultCode);
   unsigned __int8 type[2] = {14, 2};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &payload, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CPlayer::SendMsg_OreIntoBagResult(char resultCode, unsigned __int16 newSerial, unsigned __int8 lendType, unsigned int lendTime)
 {
-  char payload[8] = {};
-  payload[0] = resultCode;
-  *reinterpret_cast<unsigned __int16 *>(&payload[1]) = newSerial;
-  payload[3] = static_cast<char>(lendType);
-  *reinterpret_cast<unsigned int *>(&payload[4]) = lendTime;
+  _ore_into_bag_result_zocl msg{};
+  msg.byErrCode = resultCode;
+  msg.wNewSerial = newSerial;
+  msg.byCsMethod = static_cast<char>(lendType);
+  msg.dwT = lendTime;
 
   unsigned __int8 type[2] = {14, 12};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 8u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CPlayer::SendMsg_OreCuttingResult(unsigned __int8 resultCode, unsigned __int8 leftOreCount, unsigned int consumedDalant)
 {
-  char payload[11 + 100 * 3] = {};
-  payload[0] = static_cast<char>(resultCode);
+  _ore_cutting_result_zocl msg{};
+  msg.byErrCode = static_cast<char>(resultCode);
 
   if (!resultCode)
   {
-    payload[1] = static_cast<char>(leftOreCount);
-    *reinterpret_cast<unsigned int *>(&payload[2]) = this->m_Param.GetDalant();
-    *reinterpret_cast<unsigned int *>(&payload[6]) = consumedDalant;
+    msg.byLeftNum = static_cast<char>(leftOreCount);
+    msg.dwLeftDalant = this->m_Param.GetDalant();
+    msg.dwConsumDalant = consumedDalant;
 
     unsigned __int8 resultCount = 0;
     const int maxResKind = GetMaxResKind();
@@ -187,18 +201,22 @@ void CPlayer::SendMsg_OreCuttingResult(unsigned __int8 resultCode, unsigned __in
         continue;
       }
 
-      const int baseOffset = 11 + resultCount * 3;
-      *reinterpret_cast<unsigned __int16 *>(&payload[baseOffset]) = static_cast<unsigned __int16>(resIndex);
-      payload[baseOffset + 2] = static_cast<char>(addedAmount);
+      msg.ResList[resultCount].wResIndex = static_cast<unsigned __int16>(resIndex);
+      msg.ResList[resultCount].byAddAmount = static_cast<char>(addedAmount);
       ++resultCount;
     }
-    payload[10] = static_cast<char>(resultCount);
+    msg.byCuttingNum = static_cast<char>(resultCount);
   }
 
-  const unsigned __int8 resultCount = static_cast<unsigned __int8>(payload[10]);
-  const unsigned __int16 payloadLength = static_cast<unsigned __int16>(11 + 3 * resultCount);
+  const unsigned __int16 payloadLength = static_cast<unsigned __int16>(
+    offsetof(_ore_cutting_result_zocl, ResList)
+    + static_cast<unsigned __int8>(msg.byCuttingNum) * sizeof(_ore_cutting_result_zocl::_list));
   unsigned __int8 type[2] = {14, 10};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, payloadLength);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    payloadLength);
 }
 
 bool CPlayer::IsMineMode()
@@ -387,13 +405,16 @@ void CPlayer::pc_MineComplete()
 
 void CPlayer::SendMsg_CuttingCompleteResult(unsigned __int8 byRet)
 {
-  char msg[5]{};
-  const unsigned int gold = this->m_Param.GetGold();
-  std::memcpy(msg, &gold, sizeof(gold));
-  msg[4] = static_cast<char>(byRet);
+  _cutting_complete_result_zocl msg{};
+  msg.dwLeftGold = this->m_Param.GetGold();
+  msg.byRet = static_cast<char>(byRet);
 
   unsigned __int8 type[2] = {14, 14};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, msg, 5u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CPlayer::pc_CuttingComplete(unsigned __int8 byNpcRace)

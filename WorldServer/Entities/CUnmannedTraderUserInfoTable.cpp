@@ -12,6 +12,15 @@
 #include "GlobalObjects.h"
 #include "InvenKey.h"
 #include "WorldServerUtil.h"
+#include "lt_qry_case_unmandtrader_select_list.h"
+#include "qry_case_unmandtrader_cancelitem.h"
+#include "qry_case_unmandtrader_buy_get_info.h"
+#include "qry_case_unmandtrader_cheat_updateregisttime.h"
+#include "qry_case_unmandtrader_re_registsingleitem.h"
+#include "qry_case_unmandtrader_re_registsingleitem_roll_back.h"
+#include "qry_case_unmandtrader_registsingleitem.h"
+#include "qry_case_unmandtrader_time_out_cancelitem.h"
+#include "qry_case_unmandtrader_update_reprice.h"
 
 #include <algorithm>
 #include <cstdarg>
@@ -265,10 +274,9 @@ void CUnmannedTraderUserInfoTable::CompleteCreate(unsigned __int16 wInx)
 void CUnmannedTraderUserInfoTable::CompleteSearch(
   unsigned __int8 byDBRet,
   unsigned __int8 byProcRet,
-  char *pLoadData)
+  _lt_qry_case_unmandtrader_select_list *pLoadData)
 {
-  CUnmannedTraderUserInfo *user =
-    FindUser(*reinterpret_cast<unsigned __int16 *>(pLoadData), *reinterpret_cast<unsigned int *>(pLoadData + 4));
+  CUnmannedTraderUserInfo *user = FindUser(pLoadData->wInx, pLoadData->dwOwnerSerial);
   if (!user->IsNull() && g_Player[user->GetIndex()].m_bOper)
   {
     user->ClearRequest();
@@ -317,10 +325,12 @@ bool CUnmannedTraderUserInfoTable::CompleteUpdateState(
   return !user->IsNull() && user->CompleteUpdateState(dwRegistSerial, byState, true);
 }
 
-void CUnmannedTraderUserInfoTable::CompleteRegist(unsigned __int8 byRet, char *pLoadData)
+void CUnmannedTraderUserInfoTable::CompleteRegist(
+  unsigned __int8 byRet,
+  _qry_case_unmandtrader_registsingleitem *pLoadData)
 {
   CUnmannedTraderUserInfo *user =
-    FindUser(*reinterpret_cast<unsigned __int16 *>(pLoadData), *reinterpret_cast<unsigned int *>(pLoadData + 28));
+    FindUser(pLoadData->wInx, pLoadData->dwOwnerSerial);
   CPlayer *owner = nullptr;
   if (!user->IsNull() && (owner = user->FindOwner()) != nullptr && owner->m_bOper)
   {
@@ -330,26 +340,24 @@ void CUnmannedTraderUserInfoTable::CompleteRegist(unsigned __int8 byRet, char *p
   else if (byRet)
   {
     g_Main.Push_ChargeItem(
-      *reinterpret_cast<unsigned int *>(pLoadData + 28),
+      pLoadData->dwOwnerSerial,
       0xFFFFFFFF,
-      *reinterpret_cast<unsigned int *>(pLoadData + 80),
+      pLoadData->dwTax,
       0xFFFFFFFu,
       1u);
     Log(
       "CUnmannedTraderUserInfoTable::CompleteRegist( BYTE byRet, char * pLoadData )\r\n"
       "\t\tdwRegistSerial(%u) dwOwnerSerial(%u)\r\n"
       "\t\tPush_ChargeItem( dwOwnerSerial(%u), Tax(%u) )!\r\n",
-      *reinterpret_cast<unsigned int *>(pLoadData + 20),
-      *reinterpret_cast<unsigned int *>(pLoadData + 28),
-      *reinterpret_cast<unsigned int *>(pLoadData + 28),
-      *reinterpret_cast<unsigned int *>(pLoadData + 80));
+      pLoadData->dwRegedSerial,
+      pLoadData->dwOwnerSerial,
+      pLoadData->dwOwnerSerial,
+      pLoadData->dwTax);
   }
   else
   {
     CUnmannedTraderGroupItemInfoTable *groupTable = CUnmannedTraderGroupItemInfoTable::Instance();
-    if (!groupTable->IncreaseVersion(
-          static_cast<unsigned __int8>(pLoadData[62]),
-          static_cast<unsigned __int8>(pLoadData[63])))
+    if (!groupTable->IncreaseVersion(pLoadData->byClass1, pLoadData->byClass2))
     {
       if (m_pkLogger)
       {
@@ -358,18 +366,19 @@ void CUnmannedTraderUserInfoTable::CompleteRegist(unsigned __int8 byRet, char *p
           "\t\tOwner : (%u)\r\n"
           "\t\tCUnmannedTraderGroupItemInfoTable::Instance()->IncreaseVersion(\r\n"
           "\t\tpkQuery->byClass1(%u), pkQuery->byClass2(%u) ) Fail!\r\n",
-          *reinterpret_cast<unsigned int *>(pLoadData + 28),
-          static_cast<unsigned __int8>(pLoadData[62]),
-          static_cast<unsigned __int8>(pLoadData[63]));
+          pLoadData->dwOwnerSerial,
+          pLoadData->byClass1,
+          pLoadData->byClass2);
       }
     }
   }
 }
 
-void CUnmannedTraderUserInfoTable::CompleteCancelRegist(unsigned __int8 byRet, char *pLoadData)
+void CUnmannedTraderUserInfoTable::CompleteCancelRegist(
+  unsigned __int8 byRet,
+  _qry_case_unmandtrader_cancelitem *pLoadData)
 {
-  CUnmannedTraderUserInfo *user =
-    FindUser(*reinterpret_cast<unsigned __int16 *>(pLoadData), *reinterpret_cast<unsigned int *>(pLoadData + 4));
+  CUnmannedTraderUserInfo *user = FindUser(pLoadData->wInx, pLoadData->dwOwnerSerial);
   if (!user->IsNull() && g_Player[user->GetIndex()].m_bOper && user->FindOwner())
   {
     user->ClearRequest();
@@ -379,41 +388,42 @@ void CUnmannedTraderUserInfoTable::CompleteCancelRegist(unsigned __int8 byRet, c
   {
     ClearLogLogOutState(
       "Self Cancel",
-      *reinterpret_cast<unsigned int *>(pLoadData + 4),
-      pLoadData + 8,
-      pLoadData + 21,
-      *reinterpret_cast<unsigned int *>(pLoadData + 40),
-      *reinterpret_cast<unsigned int *>(pLoadData + 48),
-      *reinterpret_cast<unsigned int *>(pLoadData + 52),
-      *reinterpret_cast<unsigned int *>(pLoadData + 56));
+      pLoadData->dwOwnerSerial,
+      pLoadData->szAccount,
+      pLoadData->wszName,
+      pLoadData->dwRegistSerial,
+      pLoadData->dwK,
+      pLoadData->dwD,
+      pLoadData->dwU);
   }
 }
 
-void CUnmannedTraderUserInfoTable::CompleteTimeOutClear(char *pLoadData)
+void CUnmannedTraderUserInfoTable::CompleteTimeOutClear(_qry_case_unmandtrader_time_out_cancelitem *pLoadData)
 {
-  CUnmannedTraderUserInfo *user = Find(*reinterpret_cast<unsigned int *>(pLoadData + 12));
+  CUnmannedTraderUserInfo *user = Find(pLoadData->dwOwnerSerial);
   if (!user->IsNull() && g_Player[user->GetIndex()].m_bOper && user->FindOwner())
   {
-    user->CompleteTimeOutClear(*reinterpret_cast<unsigned int *>(pLoadData + 4), m_pkLogger);
+    user->CompleteTimeOutClear(pLoadData->dwRegistSerial, m_pkLogger);
   }
   else
   {
     ClearLogLogOutState(
       "Time Out",
-      *reinterpret_cast<unsigned int *>(pLoadData + 12),
-      pLoadData + 20,
-      pLoadData + 33,
-      *reinterpret_cast<unsigned int *>(pLoadData + 4),
-      *reinterpret_cast<unsigned int *>(pLoadData + 52),
-      *reinterpret_cast<unsigned int *>(pLoadData + 56),
-      *reinterpret_cast<unsigned int *>(pLoadData + 60));
+      pLoadData->dwOwnerSerial,
+      pLoadData->szAccountID,
+      pLoadData->wszName,
+      pLoadData->dwRegistSerial,
+      pLoadData->dwK,
+      pLoadData->dwD,
+      pLoadData->dwU);
   }
 }
 
-void CUnmannedTraderUserInfoTable::CompleteReprice(unsigned __int8 byRet, char *pLoadData)
+void CUnmannedTraderUserInfoTable::CompleteReprice(
+  unsigned __int8 byRet,
+  _qry_case_unmandtrader_update_reprice *pLoadData)
 {
-  CUnmannedTraderUserInfo *user =
-    FindUser(*reinterpret_cast<unsigned __int16 *>(pLoadData + 4), *reinterpret_cast<unsigned int *>(pLoadData + 8));
+  CUnmannedTraderUserInfo *user = FindUser(pLoadData->wInx, pLoadData->dwOwnerSerial);
   if (!user->IsNull() && g_Player[user->GetIndex()].m_bOper)
   {
     user->ClearRequest();
@@ -476,7 +486,7 @@ CUnmannedTraderUserInfo *pkBuyUser = nullptr;
 
     if (qry.byNum)
     {
-      g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x44u, reinterpret_cast<char *>(&qry), 172);
+      g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x44u, reinterpret_cast<char *>(&qry), sizeof(qry));
     }
 
     if (successCount < result.byNum)
@@ -494,10 +504,9 @@ CUnmannedTraderUserInfo *pkBuyUser = nullptr;
   }
 }
 
-void CUnmannedTraderUserInfoTable::CompleteReRegist(char *pLoadData)
+void CUnmannedTraderUserInfoTable::CompleteReRegist(_qry_case_unmandtrader_re_registsingleitem *pLoadData)
 {
-  CUnmannedTraderUserInfo *user =
-    FindUser(*reinterpret_cast<unsigned __int16 *>(pLoadData + 2), *reinterpret_cast<unsigned int *>(pLoadData + 8));
+  CUnmannedTraderUserInfo *user = FindUser(pLoadData->wInx, pLoadData->dwOwnerSerial);
   CPlayer *owner = nullptr;
   if (!user->IsNull() && (owner = user->FindOwner()) != nullptr && owner->m_bOper)
   {
@@ -507,30 +516,27 @@ void CUnmannedTraderUserInfoTable::CompleteReRegist(char *pLoadData)
   else
   {
     unsigned int sumTax = 0;
-    for (unsigned __int8 j = 0; j < static_cast<unsigned __int8>(pLoadData[4]); ++j)
+    for (unsigned __int8 j = 0; j < pLoadData->byNum; ++j)
     {
-      if (pLoadData[28 * j + 12])
+      const _qry_case_unmandtrader_re_registsingleitem::__list &entry = pLoadData->List[j];
+      if (entry.byProcRet)
       {
-        if (pLoadData[28 * j + 13] &&
-            (static_cast<unsigned __int8>(pLoadData[28 * j + 12]) == 202 ||
-             static_cast<unsigned __int8>(pLoadData[28 * j + 12]) == 24))
+        if (entry.bRegist && (entry.byProcRet == 202 || entry.byProcRet == 24))
         {
-          sumTax += *reinterpret_cast<unsigned int *>(pLoadData + 28 * j + 16);
+          sumTax += entry.dwTax;
         }
         Log(
           "CUnmannedTraderUserInfoTable::CompleteReRegist( BYTE byRet, char * pLoadData )\r\n"
           "\t\tdwRegistSerial(%u) dwOwnerSerial(%u) bRegist(%d) byProcRet(%u)\r\n",
-          *reinterpret_cast<unsigned int *>(pLoadData + 28 * j + 32),
-          *reinterpret_cast<unsigned int *>(pLoadData + 8),
-          static_cast<unsigned __int8>(pLoadData[28 * j + 13]),
-          static_cast<unsigned __int8>(pLoadData[28 * j + 12]));
+          entry.dwRegistSerial,
+          pLoadData->dwOwnerSerial,
+          entry.bRegist,
+          entry.byProcRet);
       }
       else
       {
         CUnmannedTraderGroupItemInfoTable *groupTable = CUnmannedTraderGroupItemInfoTable::Instance();
-        if (!groupTable->IncreaseVersion(
-              static_cast<unsigned __int8>(pLoadData[28 * j + 24]),
-              static_cast<unsigned __int8>(pLoadData[28 * j + 25])))
+        if (!groupTable->IncreaseVersion(entry.byClass1, entry.byClass2))
         {
           if (m_pkLogger)
           {
@@ -539,9 +545,9 @@ void CUnmannedTraderUserInfoTable::CompleteReRegist(char *pLoadData)
               "\t\tOwner : (%u)\r\n"
               "\t\tCUnmannedTraderGroupItemInfoTable::Instance()->IncreaseVersion(\r\n"
               "\t\tpkQuery->byClass1(%u), pkQuery->byClass2(%u) ) Fail!\r\n",
-              *reinterpret_cast<unsigned int *>(pLoadData + 8),
-              static_cast<unsigned __int8>(pLoadData[28 * j + 24]),
-              static_cast<unsigned __int8>(pLoadData[28 * j + 25]));
+              pLoadData->dwOwnerSerial,
+              entry.byClass1,
+              entry.byClass2);
           }
         }
       }
@@ -549,20 +555,20 @@ void CUnmannedTraderUserInfoTable::CompleteReRegist(char *pLoadData)
 
     if (sumTax)
     {
-      g_Main.Push_ChargeItem(*reinterpret_cast<unsigned int *>(pLoadData + 8), 0xFFFFFFFF, sumTax, 0xFFFFFFFu, 1u);
+      g_Main.Push_ChargeItem(pLoadData->dwOwnerSerial, 0xFFFFFFFF, sumTax, 0xFFFFFFFu, 1u);
       Log(
         "CUnmannedTraderUserInfoTable::CompleteReRegist( BYTE byRet, char * pLoadData )\r\n"
         "\t\tdwOwnerSerial(%u) Push_ChargeItem( dwSumTax(%u) )!\r\n",
-        *reinterpret_cast<unsigned int *>(pLoadData + 8),
+        pLoadData->dwOwnerSerial,
         sumTax);
     }
   }
 }
 
-void CUnmannedTraderUserInfoTable::CompleteUpdateCheatRegistTime(char *pLoadData)
+void CUnmannedTraderUserInfoTable::CompleteUpdateCheatRegistTime(
+  _qry_case_unmandtrader_cheat_updateregisttime *pLoadData)
 {
-  CUnmannedTraderUserInfo *user =
-    FindUser(*reinterpret_cast<unsigned __int16 *>(pLoadData + 2), *reinterpret_cast<unsigned int *>(pLoadData + 4));
+  CUnmannedTraderUserInfo *user = FindUser(pLoadData->wInx, pLoadData->dwOwnerSerial);
   if (!user->IsNull())
   {
     CPlayer *owner = user->FindOwner();
@@ -574,12 +580,9 @@ void CUnmannedTraderUserInfoTable::CompleteUpdateCheatRegistTime(char *pLoadData
 }
 
 void CUnmannedTraderUserInfoTable::CompleteReRegistRollBack(
-  unsigned __int16 wInx,
-  unsigned int dwOwnerSerial,
-  char *pData)
+  _qry_case_unmandtrader_re_registsingleitem_roll_back *pData)
 {
-CUnmannedTraderUserInfo *user =
-    FindUser(*reinterpret_cast<unsigned __int16 *>(pData + 2), *reinterpret_cast<unsigned int *>(pData + 8));
+  CUnmannedTraderUserInfo *user = FindUser(pData->wInx, pData->dwOwnerSerial);
   if (!user->IsNull())
   {
     CPlayer *owner = user->FindOwner();

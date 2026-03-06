@@ -6,6 +6,7 @@
 #include "CMainThread.h"
 #include "CRFWorldDatabase.h"
 #include "GlobalObjects.h"
+#include "qry_case_unmandtrader_lazyclean_flags.h"
 
 CUnmannedTraderLazyCleaner::CUnmannedTraderLazyCleaner()
   : m_pkTimer(nullptr), m_bClearProcess(false), m_uiRetryCnt(0)
@@ -37,22 +38,21 @@ void CUnmannedTraderLazyCleaner::Loop()
 {
   if (!m_bClearProcess && m_pkTimer && m_pkTimer->CountingTimer())
   {
-    char pQryData[4]{};
-    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x43u, pQryData, 4);
+    _qry_case_unmandtrader_lazyclean_flags qryData{};
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x43u, reinterpret_cast<char *>(&qryData), sizeof(qryData));
     m_bClearProcess = true;
   }
 }
 
-unsigned __int8 CUnmannedTraderLazyCleaner::UpdateClear(bool *p)
+unsigned __int8 CUnmannedTraderLazyCleaner::UpdateClear(_qry_case_unmandtrader_lazyclean_flags *pFlags)
 {
-  bool *pbRemain = p;
   _SYSTEMTIME systemTime{};
   GetLocalTime(&systemTime);
 
-  const unsigned __int8 ret1 = ProcUpdate(5u, &systemTime, pbRemain);
-  const unsigned __int8 ret2 = ProcUpdate(3u, &systemTime, pbRemain + 1);
-  const unsigned __int8 ret3 = ProcUpdate(0xBu, &systemTime, pbRemain + 2);
-  const unsigned __int8 ret4 = ProcUpdate(7u, &systemTime, pbRemain + 3);
+  const unsigned __int8 ret1 = ProcUpdate(5u, &systemTime, &pFlags->bFlag[0]);
+  const unsigned __int8 ret2 = ProcUpdate(3u, &systemTime, &pFlags->bFlag[1]);
+  const unsigned __int8 ret3 = ProcUpdate(0xBu, &systemTime, &pFlags->bFlag[2]);
+  const unsigned __int8 ret4 = ProcUpdate(7u, &systemTime, &pFlags->bFlag[3]);
 
   if (ret1 == 1 || ret2 == 1 || ret3 == 1 || ret4 == 1)
   {
@@ -96,13 +96,13 @@ unsigned __int8 CUnmannedTraderLazyCleaner::ProcUpdate(
   return result;
 }
 
-void CUnmannedTraderLazyCleaner::CompleteUpdateClear(char *p)
+void CUnmannedTraderLazyCleaner::CompleteUpdateClear(_qry_case_unmandtrader_lazyclean_flags *pFlags)
 {
   if (CUnmannedTraderEnvironmentValue::UNMANNEDTRADETRADER_LAZYCLEANER_UPDATE_MAX_RETRY_CNT > m_uiRetryCnt &&
-      (p[0] || p[1] || p[2] || p[3]))
+      (pFlags->bFlag[0] || pFlags->bFlag[1] || pFlags->bFlag[2] || pFlags->bFlag[3]))
   {
-    char pQryData[4]{};
-    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x43u, pQryData, 4);
+    _qry_case_unmandtrader_lazyclean_flags qryData{};
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x43u, reinterpret_cast<char *>(&qryData), sizeof(qryData));
     ++m_uiRetryCnt;
     m_bClearProcess = true;
     return;

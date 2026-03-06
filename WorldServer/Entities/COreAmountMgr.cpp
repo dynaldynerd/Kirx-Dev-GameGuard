@@ -339,11 +339,13 @@ void COreAmountMgr::InsertOreLog(unsigned __int8 byType)
     return;
   }
 
-  char zeroDate[17]{};
+  char zeroDate[17];
   const int liveUserCount = CPlayer::s_nLiveNum;
   _qry_case_insert_orelog qryData;
-  char szDateTime[40]{};
+  char szDateTime[40];
 
+  std::memset(zeroDate, 0, 17);
+  std::memset(szDateTime, 0, 17);
   GetNowDateTime(szDateTime);
   qryData.byType = byType;
   std::memcpy(qryData.szLogDate, zeroDate, sizeof(qryData.szLogDate));

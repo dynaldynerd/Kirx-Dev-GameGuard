@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IdaCompat.h"
+#include "CHRID.h"
 #include "InvenKey.h"
 
 #pragma pack(push, 1)
@@ -435,25 +436,6 @@ struct  _quick_link
 #include "CPlayerDB.h"
 
 /* 1276 */
-struct  _CLID
-{
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-};
-
-struct  _WA_AVATOR_CODE
-{
-  _CLID m_id;
-  char m_wszName[17];
-};
-
-struct  _CHRID
-{
-  unsigned __int8 byID;
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-};
-
 /* 1692 */
 #include "CSyncCS.h"
 
@@ -885,49 +867,10 @@ struct _MEM_PAST_WHISPER
 /* 1784 */
 #include "CExtPotionBuf.h"
 
+/* moved packet structs */
+#include "Packet/ZoneClientPacket.h"
+
 /* 1786 */
-#pragma pack(push, 1)
-struct   _target_monster_contsf_allinform_zocl
-{
-  #pragma pack(push, 1)
-  struct _moncontsf
-  {
-    unsigned __int16 wSfcode;
-  };
-  #pragma pack(pop)
-
-  unsigned int dwSerial;
-  unsigned __int8 byContCount;
-  _moncontsf m_MonContSf[8];
-
-  _target_monster_contsf_allinform_zocl();
-  void Init();
-};
-#pragma pack(pop)
-
-/* 1788 */
-#pragma pack(push, 1)
-struct   _target_player_damage_contsf_allinform_zocl
-{
-  #pragma pack(push, 1)
-  struct _playercontsf
-  {
-    unsigned __int16 wSfcode;
-    unsigned __int8 byContCount;
-  };
-  #pragma pack(pop)
-
-  unsigned int dwSerial;
-  unsigned __int8 byContCount;
-  _playercontsf m_PlayerContSf[8];
-
-  _target_player_damage_contsf_allinform_zocl();
-  void Init();
-};
-#pragma pack(pop)
-
-
-
 /* 1792 */
 struct  _ATTACK_DELAY_CHECKER
 {
@@ -998,66 +941,6 @@ struct  _NameChangeBuddyInfo
 };
 
 /* 1800 */
-#pragma pack(push, 1)
-struct  _other_shape_all_zocl
-{
-  #pragma pack(push, 1)
-  struct  _model
-  {
-    unsigned __int16 wPartIndex;
-    unsigned __int8 byLv;
-  };
-  #pragma pack(pop)
-
-  unsigned __int16 wIndex;
-   unsigned int dwSerial;
-  unsigned __int16 wEquipVer;
-  unsigned __int8 byCashChangeStateFlag;
-  unsigned __int8 byRecIndex;
-  unsigned __int8 byFaceIndex;
-  unsigned __int8 byHairIndex;
-  _model ModelPerPart[8];
-  unsigned __int8 byUserGrade;
-   unsigned int dwGuildSerial;
-  char wszName[17];
-  unsigned __int8 byColor;
-  unsigned __int8 byHonorGuildRank;
-  unsigned __int8 bySpecialPart;
-  unsigned __int8 byFrameIndex;
-  unsigned __int8 byUnitPartIndex[6];
-
-  _other_shape_all_zocl();
-  unsigned __int64 size();
-};
-#pragma pack(pop)
-
-/* 1802 */
-#pragma pack(push, 1)
-struct   _other_shape_part_zocl
-{
-  #pragma pack(push, 1)
-  struct  _model
-  {
-    unsigned __int16 wPartIndex;
-    unsigned __int8 byLv;
-  };
-  #pragma pack(pop)
-
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
-  unsigned __int16 wEquipVer;
-  unsigned __int8 byCashChangeStateFlag;
-  _model ModelPerPart[8];
-  unsigned __int8 byHonorGuildRank;
-  unsigned __int8 bySpecialPart;
-  unsigned __int8 byFrameIndex;
-  unsigned __int8 byUnitPartIndex[6];
-
-  _other_shape_part_zocl();
-  unsigned __int64 size();
-};
-#pragma pack(pop)
-
 /* 1310 */
 class  CPlayer : public CCharacter
 {

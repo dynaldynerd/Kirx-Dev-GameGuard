@@ -14,6 +14,7 @@
 #include "GlobalObjects.h"
 #include "economy_history_data.h"
 #include "qry_case_cash_limsale.h"
+#include "qry_logout.h"
 #include "WorldServerUtil.h"
 
 namespace
@@ -749,68 +750,67 @@ unsigned __int8 CMainThread::db_GUILD_GreetingMsg(_qry_case_guild_greetingmsg *p
   return 24;
 }
 
-unsigned __int8 CMainThread::db_Load_PostStorage(char *pData)
+unsigned __int8 CMainThread::db_Load_PostStorage(_qry_case_post_storage_list_get *pSheet)
 {
   _post_storage_list listData{};
-  unsigned __int8 result = m_pWorldDB->Select_PostStorageList(*reinterpret_cast<unsigned int *>(pData), &listData);
-  pData[4] = static_cast<char>(result);
-  if (pData[4] != 1)
+  pSheet->byProcRet = m_pWorldDB->Select_PostStorageList(pSheet->dwMasterSerial, &listData);
+  if (pSheet->byProcRet != 1)
   {
-    for (int j = 0; j < static_cast<int>(listData.dwCount); ++j)
+    pSheet->dwCount = listData.dwCount;
+    for (unsigned int j = 0; j < listData.dwCount; ++j)
     {
-      *reinterpret_cast<unsigned int *>(&pData[80 * j + 16]) = listData.List[j].dwSerial;
-      pData[80 * j + 20] = static_cast<char>(listData.List[j].byIndex);
-      pData[80 * j + 21] = static_cast<char>(listData.List[j].byState);
-      strcpy_s(&pData[80 * j + 22], 0x11uLL, listData.List[j].wszSendName);
-      strcpy_s(&pData[80 * j + 39], 0x15uLL, listData.List[j].wszTitle);
-      reinterpret_cast<_INVENKEY *>(&pData[80 * j + 60])->LoadDBKey(listData.List[j].nK);
-      *reinterpret_cast<unsigned long long *>(&pData[80 * j + 64]) = listData.List[j].dwDur;
-      *reinterpret_cast<unsigned int *>(&pData[80 * j + 72]) = listData.List[j].dwUpt;
-      *reinterpret_cast<unsigned int *>(&pData[80 * j + 88]) = listData.List[j].dwGold;
-      *reinterpret_cast<unsigned long long *>(&pData[80 * j + 80]) = listData.List[j].lnUID;
-      *reinterpret_cast<unsigned __int16 *>(&pData[80 * j + 92]) = listData.List[j].wStorageIndex;
+      _qry_case_post_storage_list_get::__list &entry = pSheet->List[j];
+      entry.dwSerial = listData.List[j].dwSerial;
+      entry.byIndex = listData.List[j].byIndex;
+      entry.byState = listData.List[j].byState;
+      strcpy_s(entry.wszSendName, sizeof(entry.wszSendName), listData.List[j].wszSendName);
+      strcpy_s(entry.wszTitle, sizeof(entry.wszTitle), listData.List[j].wszTitle);
+      entry.key.LoadDBKey(listData.List[j].nK);
+      entry.dwDur = listData.List[j].dwDur;
+      entry.dwUpt = listData.List[j].dwUpt;
+      entry.dwGold = listData.List[j].dwGold;
+      entry.lnUID = listData.List[j].lnUID;
+      entry.wStorageIndex = listData.List[j].wStorageIndex;
     }
-    *reinterpret_cast<unsigned int *>(pData + 8) = listData.dwCount;
   }
   return 0;
 }
 
-unsigned __int8 CMainThread::db_Load_ReturnPost(char *pData)
+unsigned __int8 CMainThread::db_Load_ReturnPost(_qry_case_post_return_list_get *pSheet)
 {
   _return_post_list retData{};
-  unsigned __int8 result = m_pWorldDB->Select_ReturnPost(
-    *reinterpret_cast<unsigned int *>(pData + 4),
-    *reinterpret_cast<unsigned int *>(pData),
+  pSheet->byProcRet = m_pWorldDB->Select_ReturnPost(
+    pSheet->dwMasterSerial,
+    pSheet->dwMax,
     &retData);
-  pData[8] = static_cast<char>(result);
-  if (!pData[8])
+  if (!pSheet->byProcRet)
   {
-    for (int j = 0; j < static_cast<int>(retData.dwCount); ++j)
+    pSheet->dwCount = retData.dwCount;
+    for (unsigned int j = 0; j < retData.dwCount; ++j)
     {
-      *reinterpret_cast<unsigned int *>(&pData[280 * j + 16]) = retData.List[j].dwSerial;
-      pData[280 * j + 20] = static_cast<char>(retData.List[j].byState);
-      strcpy_s(&pData[280 * j + 21], 0x11uLL, retData.List[j].wszRecvName);
-      strcpy_s(&pData[280 * j + 38], 0x15uLL, retData.List[j].wszTitle);
-      strcpy_s(&pData[280 * j + 59], 0xC9uLL, retData.List[j].wszContent);
-      reinterpret_cast<_INVENKEY *>(&pData[280 * j + 260])->LoadDBKey(retData.List[j].nK);
-      *reinterpret_cast<unsigned long long *>(&pData[280 * j + 264]) = retData.List[j].dwDur;
-      *reinterpret_cast<unsigned int *>(&pData[280 * j + 272]) = retData.List[j].dwUpt;
-      *reinterpret_cast<unsigned int *>(&pData[280 * j + 288]) = retData.List[j].dwGold;
-      pData[280 * j + 292] = static_cast<char>(retData.List[j].byErr);
-      *reinterpret_cast<unsigned long long *>(&pData[280 * j + 280]) = retData.List[j].lnUID;
+      _qry_case_post_return_list_get::__list &entry = pSheet->List[j];
+      entry.dwSerial = retData.List[j].dwSerial;
+      entry.byState = retData.List[j].byState;
+      strcpy_s(entry.wszRecvName, sizeof(entry.wszRecvName), retData.List[j].wszRecvName);
+      strcpy_s(entry.wszTitle, sizeof(entry.wszTitle), retData.List[j].wszTitle);
+      strcpy_s(entry.wszContent, sizeof(entry.wszContent), retData.List[j].wszContent);
+      entry.key.LoadDBKey(retData.List[j].nK);
+      entry.dwDur = retData.List[j].dwDur;
+      entry.dwUpt = retData.List[j].dwUpt;
+      entry.dwGold = retData.List[j].dwGold;
+      entry.byErr = retData.List[j].byErr;
+      entry.lnUID = retData.List[j].lnUID;
     }
-    *reinterpret_cast<unsigned int *>(pData + 12) = retData.dwCount;
   }
   return 0;
 }
 
-unsigned __int8 CMainThread::db_Load_Content(char *pData)
+unsigned __int8 CMainThread::db_Load_Content(_qry_case_post_content_get *pSheet)
 {
-  unsigned __int8 result = m_pWorldDB->Select_PostContent(
-    *reinterpret_cast<unsigned int *>(pData),
-    pData + 16,
-    201);
-  pData[4] = static_cast<char>(result);
+  pSheet->byProcRet = m_pWorldDB->Select_PostContent(
+    pSheet->dwSerial,
+    pSheet->wszContent,
+    sizeof(pSheet->wszContent));
   return 0;
 }
 
@@ -1050,24 +1050,21 @@ bool CMainThread::_db_GuildRoom_Update(_qry_case_guildroom_update *pSheet)
   return m_pWorldDB->Update_GuildRoom(pSheet->dwGuildSerial);
 }
 
-unsigned __int8 CMainThread::_db_Load_PatriarchComm(char *pData)
+unsigned __int8 CMainThread::_db_Load_PatriarchComm(_qry_case_select_patriarch_comm *pSheet)
 {
   _patriarch_comm_list outList{};
-  unsigned __int8 result = m_pWorldDB->Select_PatriarchComm(
-    *reinterpret_cast<unsigned int *>(pData),
-    &outList);
-  pData[4] = static_cast<char>(result);
-  if (pData[4] == 1)
+  pSheet->byDBRet = m_pWorldDB->Select_PatriarchComm(pSheet->dwSerial, &outList);
+  if (pSheet->byDBRet == 1)
   {
     return 24;
   }
-  if (pData[4] == 2)
+  if (pSheet->byDBRet == 2)
   {
     return 0;
   }
-  if (!pData[4] && outList.dwCount)
+  if (!pSheet->byDBRet && outList.dwCount)
   {
-    CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, *reinterpret_cast<unsigned int *>(pData));
+    CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, pSheet->dwSerial);
     if (!player || !player->m_bOper)
     {
       return 0;
@@ -1081,7 +1078,7 @@ unsigned __int8 CMainThread::_db_Load_PatriarchComm(char *pData)
         return 0;
       }
       player->AlterDalant(static_cast<double>(static_cast<int>(outList.List[j].dwDalant)));
-      if (!m_pWorldDB->Delete_PatriarchComm(*reinterpret_cast<unsigned int *>(pData), outList.List[j].pszDepDate))
+      if (!m_pWorldDB->Delete_PatriarchComm(pSheet->dwSerial, outList.List[j].pszDepDate))
       {
         player->AlterDalant(-static_cast<double>(outList.List[j].dwDalant));
         return 0;
@@ -1285,27 +1282,24 @@ unsigned __int8 CMainThread::_db_Update_GoldBoxItem(
   return 0;
 }
 
-unsigned __int8 CMainThread::_db_Select_RegeAvator_For_Lobby_Logout(char *pData)
+unsigned __int8 CMainThread::_db_Select_RegeAvator_For_Lobby_Logout(_qry_case_lobby_logout *pSheet)
 {
   _rege_char_data regeCharData{};
-  unsigned __int8 result = m_pWorldDB->Select_RegeAvator_For_Lobby_Logout(
-    *reinterpret_cast<unsigned int *>(pData),
-    &regeCharData);
-  pData[68] = static_cast<char>(result);
-  if (pData[68])
+  pSheet->byDBRet = m_pWorldDB->Select_RegeAvator_For_Lobby_Logout(pSheet->dwAccountSerial, &regeCharData);
+  if (pSheet->byDBRet)
   {
     return 24;
   }
 
-  *reinterpret_cast<int *>(pData + 72) = regeCharData.nCharNum;
-  for (int j = 0; j < *reinterpret_cast<int *>(pData + 72); ++j)
+  pSheet->nRegeNum = regeCharData.nCharNum;
+  for (int j = 0; j < pSheet->nRegeNum; ++j)
   {
-    pData[40 * j + 76] = static_cast<char>(regeCharData.RegeList[j].bySlotIndex);
-    *reinterpret_cast<unsigned int *>(&pData[40 * j + 80]) = regeCharData.RegeList[j].dwCharSerial;
-    *reinterpret_cast<int *>(&pData[40 * j + 104]) = regeCharData.RegeList[j].nLevel;
-    *reinterpret_cast<unsigned int *>(&pData[40 * j + 108]) = regeCharData.RegeList[j].dwDalant;
-    *reinterpret_cast<unsigned int *>(&pData[40 * j + 112]) = regeCharData.RegeList[j].dwGold;
-    strcpy_s(&pData[40 * j + 84], 0x11uLL, regeCharData.RegeList[j].szCharName);
+    pSheet->RegeList[j].bySlotIndex = regeCharData.RegeList[j].bySlotIndex;
+    pSheet->RegeList[j].dwCharSerial = regeCharData.RegeList[j].dwCharSerial;
+    pSheet->RegeList[j].nLevel = regeCharData.RegeList[j].nLevel;
+    pSheet->RegeList[j].dwDalant = regeCharData.RegeList[j].dwDalant;
+    pSheet->RegeList[j].dwGold = regeCharData.RegeList[j].dwGold;
+    strcpy_s(pSheet->RegeList[j].szCharName, sizeof(pSheet->RegeList[j].szCharName), regeCharData.RegeList[j].szCharName);
   }
   return 0;
 }
@@ -1422,16 +1416,15 @@ char CMainThread::_db_Update_Inven(
   return 1;
 }
 
-unsigned __int8 CMainThread::_db_Update_Data_For_Post_Send(char *pSheet)
+unsigned __int8 CMainThread::_db_Update_Data_For_Post_Send(_qry_case_update_data_for_post_send *pSheet)
 {
-  unsigned int *serial = reinterpret_cast<unsigned int *>(pSheet);
-  if (m_pWorldDB->Update_Gold(serial[0], serial[1]))
+  if (m_pWorldDB->Update_Gold(pSheet->dwSerial, pSheet->dwGlod))
   {
     char query[2048]{};
     if (_db_Update_Inven(
-          serial[0],
-          reinterpret_cast<_AVATOR_DATA *>(serial[2]),
-          reinterpret_cast<_AVATOR_DATA *>(serial[3]),
+          pSheet->dwSerial,
+          pSheet->pNewData,
+          pSheet->pOldData,
           query))
     {
       if (m_pWorldDB->ExecUpdateQuery(query, true))
@@ -1440,39 +1433,34 @@ unsigned __int8 CMainThread::_db_Update_Data_For_Post_Send(char *pSheet)
       }
       return 24;
     }
-    m_logSystemError.Write( "_db_Update_Inven..failed ..", serial[0]);
+    m_logSystemError.Write( "_db_Update_Inven..failed ..", pSheet->dwSerial);
     return 24;
   }
-  m_logSystemError.Write( "_db_Update_Glod(sr:%d) ..failed ..", serial[0]);
+  m_logSystemError.Write( "_db_Update_Glod(sr:%d) ..failed ..", pSheet->dwSerial);
   return 24;
 }
 
-unsigned __int8 CMainThread::_db_Update_Data_For_Trade(char *pSheet)
+unsigned __int8 CMainThread::_db_Update_Data_For_Trade(_qry_case_update_data_for_trade *pSheet)
 {
   for (int i = 0; i < 2; ++i)
   {
-    const char *entry = pSheet + 32 * i;
-    unsigned int serial = *reinterpret_cast<const unsigned int *>(entry);
-    unsigned int dalant = *reinterpret_cast<const unsigned int *>(entry + 4);
-    unsigned int gold = *reinterpret_cast<const unsigned int *>(entry + 8);
-    _AVATOR_DATA *newData = *reinterpret_cast<_AVATOR_DATA *const *>(entry + 16);
-    _AVATOR_DATA *oldData = *reinterpret_cast<_AVATOR_DATA *const *>(entry + 24);
+    _qry_case_update_data_for_trade::list &tradeData = pSheet->tradelist[i];
 
-    if (!m_pWorldDB->Update_Dalant(serial, dalant))
+    if (!m_pWorldDB->Update_Dalant(tradeData.dwSerial, tradeData.dwDalant))
     {
-      m_logSystemError.Write( "Update_Dalant(sr:%d) ..failed ..", serial);
+      m_logSystemError.Write( "Update_Dalant(sr:%d) ..failed ..", tradeData.dwSerial);
       return 24;
     }
-    if (!m_pWorldDB->Update_Gold(serial, gold))
+    if (!m_pWorldDB->Update_Gold(tradeData.dwSerial, tradeData.dwGlod))
     {
-      m_logSystemError.Write( "_db_Update_Glod(sr:%d) ..failed ..", serial);
+      m_logSystemError.Write( "_db_Update_Glod(sr:%d) ..failed ..", tradeData.dwSerial);
       return 24;
     }
 
     char query[2048]{};
-    if (!_db_Update_Inven(serial, newData, oldData, query))
+    if (!_db_Update_Inven(tradeData.dwSerial, tradeData.pNewData, tradeData.pOldData, query))
     {
-      m_logSystemError.Write( "_db_Update_Inven..failed ..", serial);
+      m_logSystemError.Write( "_db_Update_Inven..failed ..", tradeData.dwSerial);
       return 24;
     }
     if (!m_pWorldDB->ExecUpdateQuery(query, true))

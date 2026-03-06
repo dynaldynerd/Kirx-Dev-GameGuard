@@ -11,21 +11,6 @@
 #include "limitedsale_event_inform_zocl.h"
 #include "WorldServerUtil.h"
 
-#pragma pack(push, 1)
-struct _conditional_event_inform_zocl_local
-{
-  unsigned __int8 byEventType;
-  unsigned __int16 wCsDiscount;
-  unsigned __int8 byEventStatus;
-  char szMsgCode[8];
-
-  unsigned __int16 size() const
-  {
-    return static_cast<unsigned __int16>(sizeof(*this));
-  }
-};
-#pragma pack(pop)
-
 void ICsSendInterface::SendMsg_GoodsList(unsigned __int16 wSock, const _param_cash_select *psheet)
 {
   _result_csi_goods_list_zocl msg{};
@@ -174,10 +159,10 @@ void ICsSendInterface::SendMsg_ConditionalEventInform(
   unsigned __int8 byStatus,
   const char *pEMsg)
 {
-  _conditional_event_inform_zocl_local msg{};
+  _conditional_event_inform_zocl msg{};
   msg.byEventType = byEventType;
-  msg.wCsDiscount = wCsDiscount;
   msg.byEventStatus = byStatus;
+  msg.wCsDiscount = wCsDiscount;
   if (pEMsg)
   {
     strcpy_0(msg.szMsgCode, pEMsg);
@@ -188,7 +173,11 @@ void ICsSendInterface::SendMsg_ConditionalEventInform(
   }
 
   unsigned __int8 pbyType[2]{57, 9};
-  g_Network.m_pProcess[0]->LoadSendMsg(wSock, pbyType, reinterpret_cast<char *>(&msg), msg.size());
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    wSock,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void ICsSendInterface::SendMsg_LimitedsaleEventInform(

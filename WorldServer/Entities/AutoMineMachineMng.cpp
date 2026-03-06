@@ -14,6 +14,8 @@
 #include "DB_LOAD_AUTOMINE_MACHINE.h"
 #include "GlobalObjects.h"
 #include "KorLocalTime.h"
+#include "Packet/ClientZonePacket.h"
+#include "Packet/ZoneClientPacket.h"
 #include "StorageList.h"
 #include "WorldServerUtil.h"
 #include "pt_automine_getoutore_zocl.h"
@@ -21,6 +23,7 @@
 #include "pt_automine_info_zocl.h"
 #include "pt_automine_result_zocl.h"
 #include "pt_automine_state_zocl.h"
+#include "qry_case_amine_header.h"
 #include "qry_case_amine_battery_discharge.h"
 #include "qry_case_amine_batterycharge.h"
 #include "qry_case_amine_mineore.h"
@@ -61,25 +64,25 @@ AutoMineMachine::AutoMineMachine()
 
 AutoMineMachine::~AutoMineMachine() = default;
 
-void AutoMineMachine::SubChargeCost(unsigned __int8 byRet, char *pdata)
+void AutoMineMachine::SubChargeCost(unsigned __int8 byRet, const _qry_case_amine_batterycharge *query)
 {
-  if (pdata == nullptr)
+  if (query == nullptr)
   {
     return;
   }
 
-  if (byRet || pdata[45])
+  if (byRet || query->byProcRet)
   {
-    CPlayer *player = &g_Player[*reinterpret_cast<unsigned __int16 *>(pdata + 11)];
-    if (player->m_dwObjSerial != *reinterpret_cast<unsigned int *>(pdata + 13))
+    CPlayer *player = &g_Player[query->wIndex];
+    if (player->m_dwObjSerial != query->in_master)
     {
-      player = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, *reinterpret_cast<unsigned int *>(pdata + 13));
+      player = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, query->in_master);
     }
 
     if (player && player->m_bLive)
     {
       _pt_automine_charge_money_db_update_fail_zocl payload{};
-      payload.nCharge = *reinterpret_cast<int *>(pdata + 17);
+      payload.nCharge = query->in_charge;
 
       unsigned __int8 type[36]{};
       type[0] = 14;
@@ -91,31 +94,30 @@ void AutoMineMachine::SubChargeCost(unsigned __int8 byRet, char *pdata)
     return;
   }
 
-  m_Battery.m_nCurGage += *reinterpret_cast<int *>(pdata + 17);
+  m_Battery.m_nCurGage += query->in_charge;
   if (m_Battery.m_nCurGage > m_Battery.m_nMaxGage)
   {
     m_Battery.m_nCurGage = m_Battery.m_nMaxGage;
   }
 
   m_pOwnerGuild->m_byMoneyOutputKind = 7;
-  const long double outDalant = static_cast<long double>(-*reinterpret_cast<int *>(pdata + 21));
+  const long double outDalant = static_cast<long double>(-query->in_gold);
   CGuild *ownerGuild = m_pOwnerGuild;
-  unsigned __int8 *date = reinterpret_cast<unsigned __int8 *>(pdata + 41);
   m_pOwnerGuild->IOMoney(
     "AutoMine Charge",
     ownerGuild->m_MasterData.dwSerial,
     0.0,
     outDalant,
-    *reinterpret_cast<long double *>(pdata + 25),
-    *reinterpret_cast<long double *>(pdata + 33),
-    date,
+    query->out_totaldalant,
+    query->out_totalgold,
+    const_cast<unsigned __int8 *>(query->byDate),
     0);
 
   m_Log.Write(
     "Cost : serial:%d, out:%d, total:%.0f)",
-    *reinterpret_cast<int *>(pdata + 3),
-    *reinterpret_cast<int *>(pdata + 21),
-    *reinterpret_cast<double *>(pdata + 33));
+    query->dwGuildSerial,
+    query->in_gold,
+    static_cast<double>(query->out_totalgold));
 }
 
 bool AutoMineMachine::Initialize(unsigned __int8 byRace, unsigned __int8 byCollisionType)
@@ -557,32 +559,33 @@ void AutoMineMachine::Discharge()
   // this is not a stub
 }
 
-void AutoMineMachine::GetOutOreInAutoMine(CPlayer *pUser, char *pMsg)
+void AutoMineMachine::GetOutOreInAutoMine(CPlayer *pUser, const _pt_automine_getoutore_clzo *request)
 {
   if (m_pOwnerGuild)
   {
-    _INVENKEY *pItem = reinterpret_cast<_INVENKEY *>(pMsg + 1);
-    const int nNum = static_cast<unsigned __int8>(pMsg[10]);
-    const int nPage = static_cast<unsigned __int8>(pMsg[0]);
-    const int nSlot = static_cast<unsigned __int8>(pMsg[1]);
+    _INVENKEY item{};
+    item.LoadDBKey(static_cast<int>(request->dwSrcK));
+    const int nNum = static_cast<unsigned __int8>(request->byOverlapNum);
+    const int nPage = static_cast<unsigned __int8>(request->bySrcPage);
+    const int nSlot = static_cast<unsigned __int8>(item.bySlotIndex);
 
-    const int popRet = m_Inven.pop(nPage, nSlot, pItem, nNum);
+    const int popRet = m_Inven.pop(nPage, nSlot, &item, nNum);
     if (popRet == -1)
     {
       SendMsg_ResultCode(pUser->m_ObjID.m_wIndex, 0x15u, 0xCu);
       m_sysLog.Write(
         "[ERR-GetOutOreInAutoMine]:automine_invalid_values(%d,%d,%d,%d)",
         nPage,
-        pItem->bySlotIndex,
-        *pItem,
+        item.bySlotIndex,
+        static_cast<int>(item.CovDBKey()),
         nNum);
     }
     else
     {
       _STORAGE_LIST::_storage_con pCon{};
-      pCon.m_byClientIndex = pItem->bySlotIndex;
-      pCon.m_byTableCode = pItem->byTableCode;
-      pCon.m_wItemIndex = pItem->wItemIndex;
+      pCon.m_byClientIndex = item.bySlotIndex;
+      pCon.m_byTableCode = item.byTableCode;
+      pCon.m_wItemIndex = item.wItemIndex;
       pCon.m_dwDur += static_cast<unsigned int>(nNum);
       pCon.m_wSerial = pUser->m_Param.GetNewItemSerial();
 
@@ -595,38 +598,38 @@ void AutoMineMachine::GetOutOreInAutoMine(CPlayer *pUser, char *pMsg)
         const unsigned __int16 len = static_cast<unsigned __int16>(packet.size());
         g_Network.m_pProcess[0]->LoadSendMsg(pUser->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), len);
 
-        TInvenSlot<_INVENKEY> *slot = m_Inven.get_slot(nPage, pItem->bySlotIndex);
+        TInvenSlot<_INVENKEY> *slot = m_Inven.get_slot(nPage, item.bySlotIndex);
         if (slot)
         {
           const unsigned __int8 overlapnum = static_cast<unsigned __int8>(slot->get_overlapnum());
-          push_dqs_getore(static_cast<char>(nPage), static_cast<char>(pItem->bySlotIndex), overlapnum);
+          push_dqs_getore(static_cast<char>(nPage), static_cast<char>(item.bySlotIndex), overlapnum);
         }
         else
         {
-          m_sysLog.Write("ERR - get_slot(%d, %d) is NULL", nPage, pItem->bySlotIndex);
+          m_sysLog.Write("ERR - get_slot(%d, %d) is NULL", nPage, item.bySlotIndex);
         }
 
-        const char *itemName = GetItemKorName(pItem->byTableCode, pItem->wItemIndex);
+        const char *itemName = GetItemKorName(item.byTableCode, item.wItemIndex);
         m_Log.Write(
           "[POP ORE] GuildSerial%d MasterSerial:%d [Page:%d_Slot:%d_Ore:%s], Num:%d",
           m_pOwnerGuild->m_dwSerial,
           m_pOwnerGuild->m_MasterData.dwSerial,
           nPage,
-          pItem->bySlotIndex,
+          item.bySlotIndex,
           itemName,
           nNum);
       }
       else
       {
-        if (m_Inven.push(nPage, pItem->bySlotIndex, pItem, nNum))
+        if (m_Inven.push(nPage, item.bySlotIndex, &item, nNum))
         {
           m_sysLog.Write(
             "[ERR-GetOutOreInAutoMine]::m_Inven.push(%d, %d, [%d/%d/%d], %d)_LINE:%d",
             nPage,
-            pItem->bySlotIndex,
-            pItem->bySlotIndex,
-            pItem->byTableCode,
-            pItem->wItemIndex,
+            item.bySlotIndex,
+            item.bySlotIndex,
+            item.byTableCode,
+            item.wItemIndex,
             nNum,
             466);
         }
@@ -706,21 +709,22 @@ void AutoMineMachine::MoveOreInAutoMine(
   }
 }
 
-void AutoMineMachine::OreMerge(int n, char *pMsg)
+void AutoMineMachine::OreMerge(int n, const _pt_automine_merge_clzo *request)
 {
-  const unsigned __int8 page = static_cast<unsigned __int8>(pMsg[0]);
-  const unsigned __int8 slot = static_cast<unsigned __int8>(pMsg[1]);
-  const int num = static_cast<unsigned __int8>(pMsg[5]);
+  const unsigned __int8 page = static_cast<unsigned __int8>(request->byPage);
+  const unsigned __int8 slot = static_cast<unsigned __int8>(request->item.bySlotIndex);
+  const int num = static_cast<unsigned __int8>(request->byOverlapNum);
 
-  const int popRet = m_Inven.pop(page, slot, reinterpret_cast<_INVENKEY *>(pMsg + 1), num);
+  const int popRet = m_Inven.pop(page, slot, &request->item, num);
   if (popRet == -1)
   {
+    _INVENKEY item = request->item;
     SendMsg_ResultCode(n, 0x1Au, 0xCu);
     m_sysLog.Write(
       "[ERR-OreMerge]:automine_invalid_values(%d,%d,%d,%d)",
       page,
       slot,
-      *reinterpret_cast<int *>(pMsg + 1),
+      static_cast<int>(item.CovDBKey()),
       num);
   }
   else
@@ -1126,7 +1130,7 @@ bool AutoMineMachineMng::StopWorkMachine(int n)
   return true;
 }
 
-bool AutoMineMachineMng::SelectOreType(int n, char *pMsg)
+bool AutoMineMachineMng::SelectOreType(int n, const _pt_automine_selectore_clzo *request)
 {
   CPlayer *pUser = &g_Player[n];
   if (!pUser->m_bOper)
@@ -1142,12 +1146,12 @@ bool AutoMineMachineMng::SelectOreType(int n, char *pMsg)
   }
   else
   {
-    m_Machine[raceCode][type].SelectOre(n, static_cast<unsigned __int8>(*pMsg));
+    m_Machine[raceCode][type].SelectOre(n, static_cast<unsigned __int8>(request->bySelected));
   }
   return true;
 }
 
-bool AutoMineMachineMng::GetOutOre(int n, char *pMsg)
+bool AutoMineMachineMng::GetOutOre(int n, const _pt_automine_getoutore_clzo *request)
 {
   CPlayer *pUser = &g_Player[n];
   if (!pUser->m_bOper)
@@ -1163,12 +1167,12 @@ bool AutoMineMachineMng::GetOutOre(int n, char *pMsg)
   }
   else
   {
-    m_Machine[raceCode][type].GetOutOreInAutoMine(pUser, pMsg);
+    m_Machine[raceCode][type].GetOutOreInAutoMine(pUser, request);
   }
   return true;
 }
 
-bool AutoMineMachineMng::MoveOrePos(int n, char *pMsg)
+bool AutoMineMachineMng::MoveOrePos(int n, const _pt_automine_moveore_clzo *request)
 {
   CPlayer *pUser = &g_Player[n];
   if (!pUser->m_bOper)
@@ -1186,15 +1190,15 @@ bool AutoMineMachineMng::MoveOrePos(int n, char *pMsg)
   {
     m_Machine[raceCode][type].MoveOreInAutoMine(
       n,
-      static_cast<unsigned __int8>(pMsg[0]),
-      static_cast<unsigned __int8>(pMsg[1]),
-      static_cast<unsigned __int8>(pMsg[2]),
-      static_cast<unsigned __int8>(pMsg[3]));
+      static_cast<unsigned __int8>(request->bySrcPage),
+      static_cast<unsigned __int8>(request->bySrcSlot),
+      static_cast<unsigned __int8>(request->byDstPage),
+      static_cast<unsigned __int8>(request->byDstSlot));
   }
   return true;
 }
 
-bool AutoMineMachineMng::BatteryCharge(int n, char *pMsg)
+bool AutoMineMachineMng::BatteryCharge(int n, const _pt_automine_charge_clzo *request)
 {
   CPlayer *pUser = &g_Player[n];
   if (!pUser->m_bOper)
@@ -1210,12 +1214,12 @@ bool AutoMineMachineMng::BatteryCharge(int n, char *pMsg)
   }
   else
   {
-    m_Machine[raceCode][type].Charge(n, *reinterpret_cast<int *>(pMsg), *(reinterpret_cast<int *>(pMsg) + 1));
+    m_Machine[raceCode][type].Charge(n, request->nCharge, request->nGold);
   }
   return true;
 }
 
-bool AutoMineMachineMng::OreMerge(int n, char *pMsg)
+bool AutoMineMachineMng::OreMerge(int n, const _pt_automine_merge_clzo *request)
 {
   CPlayer *pUser = &g_Player[n];
   if (!pUser->m_bOper)
@@ -1231,7 +1235,7 @@ bool AutoMineMachineMng::OreMerge(int n, char *pMsg)
   }
   else
   {
-    m_Machine[raceCode][type].OreMerge(n, pMsg);
+    m_Machine[raceCode][type].OreMerge(n, request);
   }
   return true;
 }
@@ -1286,49 +1290,48 @@ AutoMineMachineMng *AutoMineMachineMng::Instance()
   return m_pInstance;
 }
 
-unsigned __int8 AutoMineMachineMng::request_db_query(char *pdata)
+unsigned __int8 AutoMineMachineMng::request_db_query(_qry_case_amine_header *query)
 {
-  if (!pdata)
+  if (!query)
   {
     return 24;
   }
 
-  const unsigned __int8 subQueryCase = static_cast<unsigned __int8>(pdata[0]);
-  switch (subQueryCase)
+  switch (query->bySubQryCase)
   {
     case 0:
-      return _db_qry_insert_newowner(reinterpret_cast<_qry_case_amine_newowner *>(pdata));
+      return _db_qry_insert_newowner(reinterpret_cast<const _qry_case_amine_newowner *>(query));
     case 1:
-      return _db_qry_update_battery_charge(reinterpret_cast<_qry_case_amine_batterycharge *>(pdata));
+      return _db_qry_update_battery_charge(reinterpret_cast<_qry_case_amine_batterycharge *>(query));
     case 2:
-      return _db_qry_update_mineore(reinterpret_cast<_qry_case_amine_mineore *>(pdata));
+      return _db_qry_update_mineore(reinterpret_cast<const _qry_case_amine_mineore *>(query));
     case 3:
-      return _db_qry_update_workstate(reinterpret_cast<_qry_case_amine_workstate *>(pdata));
+      return _db_qry_update_workstate(reinterpret_cast<const _qry_case_amine_workstate *>(query));
     case 4:
-      return _db_qry_update_selore(reinterpret_cast<_qry_case_amine_selore *>(pdata));
+      return _db_qry_update_selore(reinterpret_cast<const _qry_case_amine_selore *>(query));
     case 5:
-      return _db_qry_update_battery_discharge(reinterpret_cast<_qry_case_amine_battery_discharge *>(pdata));
+      return _db_qry_update_battery_discharge(reinterpret_cast<const _qry_case_amine_battery_discharge *>(query));
     case 6:
-      return _db_qry_update_moveore(reinterpret_cast<_qry_case_amine_moveore *>(pdata));
+      return _db_qry_update_moveore(reinterpret_cast<const _qry_case_amine_moveore *>(query));
     default:
       return 24;
   }
 }
 
-void AutoMineMachineMng::result_db_query(unsigned __int8 byRet, char *pdata)
+void AutoMineMachineMng::result_db_query(unsigned __int8 byRet, const _qry_case_amine_header *query)
 {
-  if (pdata == nullptr)
+  if (query == nullptr)
   {
     return;
   }
 
-  switch (static_cast<unsigned __int8>(pdata[0]))
+  switch (query->bySubQryCase)
   {
     case 1:
     {
-      auto *batteryChargeQuery = reinterpret_cast<_qry_case_amine_batterycharge *>(pdata);
+      auto *batteryChargeQuery = reinterpret_cast<const _qry_case_amine_batterycharge *>(query);
       AutoMineMachine *machine = GetMachine(batteryChargeQuery->byRace, batteryChargeQuery->byCollisionType);
-      machine->SubChargeCost(byRet, reinterpret_cast<char *>(batteryChargeQuery));
+      machine->SubChargeCost(byRet, batteryChargeQuery);
       break;
     }
     default:

@@ -9,6 +9,12 @@
 class CGuild;
 class CPlayer;
 struct _DB_LOAD_AUTOMINE_MACHINE;
+struct _pt_automine_charge_clzo;
+struct _pt_automine_getoutore_clzo;
+struct _pt_automine_merge_clzo;
+struct _pt_automine_moveore_clzo;
+struct _pt_automine_selectore_clzo;
+struct _qry_case_amine_header;
 struct _qry_case_amine_newowner;
 struct _qry_case_amine_batterycharge;
 struct _qry_case_amine_mineore;
@@ -457,14 +463,7 @@ void TInventory<T>::swap(TInvenSlot<T> *pSrc, TInvenSlot<T> *pDst)
   }
 }
 
-#pragma pack(push, 1)
-struct _pt_automine_charge_money_db_update_fail_zocl
-{
-  int nCharge;
-
-  __int64 size();
-};
-#pragma pack(pop)
+struct _pt_automine_charge_money_db_update_fail_zocl;
 
 class AutoMineMachine
 {
@@ -482,9 +481,9 @@ public:
   void SelectOre(int n, unsigned __int8 byOre);
   void Charge(int n, int nCharge, int nGold);
   void Discharge();
-  void GetOutOreInAutoMine(CPlayer *pUser, char *pMsg);
+  void GetOutOreInAutoMine(CPlayer *pUser, const _pt_automine_getoutore_clzo *request);
   void MoveOreInAutoMine(int n, unsigned __int8 sl, unsigned __int8 ss, unsigned __int8 dl, unsigned __int8 ds);
-  void OreMerge(int n, char *pMsg);
+  void OreMerge(int n, const _pt_automine_merge_clzo *request);
   void SendMsg_MachineInfo(unsigned int n);
   void SendMsg_ResultCode(unsigned int n, unsigned __int8 byType, unsigned __int8 byRetCode);
   void GetState(unsigned int *dwState);
@@ -492,7 +491,7 @@ public:
   bool IsMaster(CPlayer *pUser);
   void SetOpenUI(bool bOpen);
 
-  void SubChargeCost(unsigned __int8 byRet, char *pdata);
+  void SubChargeCost(unsigned __int8 byRet, const _qry_case_amine_batterycharge *query);
   void ChangeOwner(CGuild *pOwnerGuild);
   void push_dqs_newowner();
   void push_dqs_workingstate();
@@ -546,15 +545,15 @@ public:
   bool CloseUI(int n);
   bool StartWorkMachine(int n);
   bool StopWorkMachine(int n);
-  bool SelectOreType(int n, char *pMsg);
-  bool GetOutOre(int n, char *pMsg);
-  bool MoveOrePos(int n, char *pMsg);
-  bool BatteryCharge(int n, char *pMsg);
-  bool OreMerge(int n, char *pMsg);
+  bool SelectOreType(int n, const _pt_automine_selectore_clzo *request);
+  bool GetOutOre(int n, const _pt_automine_getoutore_clzo *request);
+  bool MoveOrePos(int n, const _pt_automine_moveore_clzo *request);
+  bool BatteryCharge(int n, const _pt_automine_charge_clzo *request);
+  bool OreMerge(int n, const _pt_automine_merge_clzo *request);
   bool Command(int n, int nType, char *pMsg);
 
-  unsigned __int8 request_db_query(char *pdata);
-  void result_db_query(unsigned __int8 byRet, char *pdata);
+  unsigned __int8 request_db_query(_qry_case_amine_header *query);
+  void result_db_query(unsigned __int8 byRet, const _qry_case_amine_header *query);
   AutoMineMachine *GetMachine(unsigned __int8 byRace, unsigned __int8 byCollisionType);
   void ChangeOwner(int nRaceCode, CGuild *pGuild, unsigned __int8 byCollisionType);
 

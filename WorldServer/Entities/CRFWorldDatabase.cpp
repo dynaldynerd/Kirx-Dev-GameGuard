@@ -341,7 +341,7 @@ unsigned __int8 CRFWorldDatabase::Select_NpcData(unsigned int dwSerial, unsigned
       {
         for (int j = 0; j < 6; ++j)
         {
-          ret = SQLGetData(m_hStmtSelect, ++column, SQL_C_ULONG, &pNpcData[j], 0, &indicator);
+          ret = SQLGetData(m_hStmtSelect, ++column, SQL_C_LONG, &pNpcData[j], 0, &indicator);
           if (ret && ret != SQL_SUCCESS_WITH_INFO)
           {
             break;

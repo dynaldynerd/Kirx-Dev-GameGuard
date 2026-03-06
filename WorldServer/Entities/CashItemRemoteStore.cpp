@@ -41,6 +41,31 @@ namespace
 CashItemRemoteStore *CashItemRemoteStore::_pkInstance;
 CashItemRemoteStore::CashMap *CashItemRemoteStore::_phmapTbl;
 
+_cash_discount_ini_::_cash_discount_ini_()
+{
+  memset_0(this, 0, sizeof(_cash_discount_ini_));
+}
+
+_cash_discount_::_cash_discount_()
+{
+  memset_0(this, 0, sizeof(_cash_discount_));
+}
+
+_cash_event_ini::_cash_event_ini()
+{
+  memset_0(this, 0, sizeof(_cash_event_ini));
+}
+
+_cash_event::_cash_event()
+{
+  memset_0(this, 0, sizeof(_cash_event));
+}
+
+_con_event_::_con_event_()
+{
+  memset_0(this, 0, sizeof(_con_event_));
+}
+
 CashItemRemoteStore::CashItemRemoteStore()
 {
   _bIsBuyCashItemByGold = false;

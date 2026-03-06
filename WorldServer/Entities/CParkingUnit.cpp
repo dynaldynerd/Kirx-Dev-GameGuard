@@ -103,32 +103,40 @@ void CParkingUnit::SendMsg_Destroy(unsigned __int8 byDestoryType)
 
 void CParkingUnit::SendMsg_Create()
 {
-  char payload[25]{};
-  *reinterpret_cast<unsigned __int16 *>(payload) = m_ObjID.m_wIndex;
-  *reinterpret_cast<unsigned int *>(payload + 2) = m_dwObjSerial;
-  payload[6] = static_cast<char>(m_byCreateType);
-  payload[7] = static_cast<char>(m_byFrame);
-  memcpy_0(payload + 8, m_byPartCode, sizeof(m_byPartCode));
-  *reinterpret_cast<unsigned int *>(payload + 14) = m_dwOwnerSerial;
-  FloatToShort(m_fCurPos, reinterpret_cast<short *>(payload + 18), 3);
-  payload[24] = static_cast<char>(m_byTransDistCode);
+  _parkingunit_create_zocl payload{};
+  payload.wObjIndex = m_ObjID.m_wIndex;
+  payload.dwObjSerial = m_dwObjSerial;
+  payload.byCreateType = static_cast<char>(m_byCreateType);
+  payload.byFrame = static_cast<char>(m_byFrame);
+  memcpy_0(payload.byPart, m_byPartCode, sizeof(m_byPartCode));
+  payload.dwOwerSerial = m_dwOwnerSerial;
+  FloatToShort(m_fCurPos, payload.zPos, 3);
+  payload.byTransDistCode = static_cast<char>(m_byTransDistCode);
 
   unsigned __int8 type[2] = {3, 21};
-  CircleReport(type, payload, 25, false);
+  CircleReport(type, reinterpret_cast<char *>(&payload), static_cast<unsigned __int16>(sizeof(payload)), false);
 }
 
 void CParkingUnit::SendMsg_ChangeOwner(unsigned __int8 byUnitSlotIndex, CPlayer *pOldOwner)
 {
-  char payload[15]{};
-  *reinterpret_cast<unsigned __int16 *>(payload) = m_ObjID.m_wIndex;
-  *reinterpret_cast<unsigned int *>(payload + 2) = m_dwObjSerial;
-  *reinterpret_cast<unsigned int *>(payload + 6) = pOldOwner->m_dwObjSerial;
-  *reinterpret_cast<unsigned int *>(payload + 10) = m_pOwner->m_dwObjSerial;
-  payload[14] = static_cast<char>(byUnitSlotIndex);
+  _parkingunit_change_owner_zocl payload{};
+  payload.wObjIndex = m_ObjID.m_wIndex;
+  payload.dwObjSerial = m_dwObjSerial;
+  payload.dwOldOwnerSerial = pOldOwner->m_dwObjSerial;
+  payload.dwNewOwnerSerial = m_pOwner->m_dwObjSerial;
+  payload.byNewOwnerUnitSlotIndex = static_cast<char>(byUnitSlotIndex);
 
   unsigned __int8 type[2] = {23, 22};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_pOwner->m_ObjID.m_wIndex, type, payload, 0xFu);
-  g_Network.m_pProcess[0]->LoadSendMsg(pOldOwner->m_ObjID.m_wIndex, type, payload, 0xFu);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    m_pOwner->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    pOldOwner->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
 }
 
 void CParkingUnit::Loop()
@@ -138,19 +146,19 @@ void CParkingUnit::Loop()
 
 void CParkingUnit::SendMsg_FixPosition(int n)
 {
-  char msg[23]{};
-  *reinterpret_cast<unsigned __int16 *>(msg) = m_ObjID.m_wIndex;
-  *reinterpret_cast<unsigned int *>(msg + 2) = m_dwObjSerial;
-  msg[6] = static_cast<char>(m_byFrame);
-  memcpy_0(msg + 7, m_byPartCode, sizeof(m_byPartCode));
-  FloatToShort(m_fCurPos, reinterpret_cast<short *>(msg + 13), 3);
-  *reinterpret_cast<unsigned int *>(msg + 19) = m_pOwner->m_dwObjSerial;
+  _parkingunit_fixpositon_zocl msg{};
+  msg.wObjIndex = m_ObjID.m_wIndex;
+  msg.dwObjSerial = m_dwObjSerial;
+  msg.byFrame = static_cast<char>(m_byFrame);
+  memcpy_0(msg.byPart, m_byPartCode, sizeof(m_byPartCode));
+  FloatToShort(m_fCurPos, msg.zPos, 3);
+  msg.dwMasterSerial = m_pOwner->m_dwObjSerial;
 
   unsigned __int8 packetType[2] = {4, 16};
   g_Network.m_pProcess[0]->LoadSendMsg(
     n,
     packetType,
-    msg,
+    reinterpret_cast<char *>(&msg),
     static_cast<unsigned __int16>(sizeof(msg)));
 }
 

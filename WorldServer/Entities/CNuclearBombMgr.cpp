@@ -6,6 +6,7 @@
 #include "CNetworkEX.h"
 #include "CPvpUserAndGuildRankingSystem.h"
 #include "GlobalObjects.h"
+#include "Packet/ZoneClientPacket.h"
 #include "WorldServerUtil.h"
 #include "nuclear_create_setdata.h"
 #include "nuclear_position_result_zocl.h"

@@ -8,24 +8,12 @@
 #include "CPlayer.h"
 #include "WorldServerUtil.h"
 #include "GlobalObjects.h"
+#include "Packet/ZoneClientPacket.h"
 
 #include <cstring>
 #include <mmsystem.h>
 
 ClassOrderProcessor *ClassOrderProcessor::_pkInstance = nullptr;
-
-namespace
-{
-#pragma pack(push, 1)
-struct _pt_propose_appoint_zocl
-{
-  unsigned __int8 byClassType;
-
-  _pt_propose_appoint_zocl() : byClassType(0) {}
-  unsigned __int16 size() const { return sizeof(*this); }
-};
-#pragma pack(pop)
-}
 
 ClassOrderProcessor::ClassOrderProcessor()
   : ElectProcessor(_eClassOrderProcessor)
@@ -168,7 +156,7 @@ int ClassOrderProcessor::_RequestAppoint(CPlayer *player, char *data)
     target->m_id.wIndex,
     const_cast<unsigned __int8 *>(msgType),
     reinterpret_cast<char *>(&msg),
-    msg.size());
+    static_cast<unsigned __int16>(sizeof(msg)));
   return 0;
 }
 

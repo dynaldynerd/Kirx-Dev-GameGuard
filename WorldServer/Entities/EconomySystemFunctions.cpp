@@ -6,6 +6,7 @@
 #include "CMainThread.h"
 #include "ECONOMY_SYSTEM.h"
 #include "GlobalObjects.h"
+#include "Packet/ZoneWebPacket.h"
 #include "WorldServerUtil.h"
 
 #include <cmath>

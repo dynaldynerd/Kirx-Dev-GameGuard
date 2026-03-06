@@ -334,9 +334,14 @@ void TRC_AutoTrade::SendMsg_PatriarchTaxRate(unsigned int n)
 
 void TRC_AutoTrade::SendMsg_UserLogInNotifyTaxRate(unsigned int n)
 {
-  char msg[1] = {1};
+  _unmannedtrader_taxrate_inform_zocl msg{};
+  msg.byTaxRate = 1;
   unsigned __int8 type[2] = {30, 39};
-  g_Network.m_pProcess[0]->LoadSendMsg(n, type, msg, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    n,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void TRC_AutoTrade::AddGDalant(char *pdata)

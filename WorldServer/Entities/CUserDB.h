@@ -10,6 +10,8 @@
 
 struct _EXIT_ALTER_PARAM;
 struct _ITEMCOMBINE_DB_BASE;
+struct _uilock_init_result_acwr;
+struct _uilock_update_result_acwr;
 
 /* 1536 */
 class  CUserDB
@@ -211,8 +213,8 @@ public:
   void SetBillingNoLogout(bool bNoLogout);
   void SendMsg_BillingInfo();
   void SetRemainTime(int lRemainTime);
-  void UILockInfo_Init(char *pMsg);
-  void UILockInfo_Update(char *pMsg);
+  void UILockInfo_Init(const _uilock_init_result_acwr *request);
+  void UILockInfo_Update(const _uilock_update_result_acwr *request);
   void SendMsg_Inform_UILock();
   void SetChatLock(bool bLock);
   void SetWorldCLID(unsigned int dwSerial, unsigned int *pipAddr);

@@ -8,6 +8,15 @@ class AutominePersonal;
 class CMapData;
 class CPlayer;
 struct _PERSONALAMINE_INVEN_DB_BASE;
+struct _personal_amine_infoui_open_clzo;
+struct _personal_amine_make_storage_clzo;
+struct _personal_automine_battery_extract_clzo;
+struct _personal_automine_battery_insert_clzo;
+struct _personal_automine_install_clzo;
+struct _personal_automine_popore_clzo;
+struct _personal_automine_selore_clzo;
+struct _personal_automine_uninstall_clzo;
+struct _qry_case_make_storage;
 
 class  AutominePersonalMgr
 {
@@ -20,21 +29,21 @@ public:
   bool CreateDBTable();
   AutominePersonal *get_machine(unsigned int nIdx);
   char db_load_inven(unsigned int dwSerial, _PERSONALAMINE_INVEN_DB_BASE *pCon);
-  char make_storagebox(int n, char *pmsg);
-  char install(int n, char *pmsg);
-  char uninstall(int n, char *pmsg);
+  char make_storagebox(int n, const _personal_amine_make_storage_clzo *request);
+  char install(int n, const _personal_automine_install_clzo *request);
+  char uninstall(int n, const _personal_automine_uninstall_clzo *request);
   char uninstall(int n);
-  char selectore(unsigned int n, char *pmsg);
-  char insert_battery(unsigned int n, char *pmsg);
-  char extract_battery(unsigned int n, char *pmsg);
+  char selectore(unsigned int n, const _personal_automine_selore_clzo *request);
+  char insert_battery(unsigned int n, const _personal_automine_battery_insert_clzo *request);
+  char extract_battery(unsigned int n, const _personal_automine_battery_extract_clzo *request);
   char extract_battery(unsigned int n);
-  char pop_ore(unsigned int n, char *pmsg);
-  char Open_InvenUI(int n, bool *pmsg);
-  char Open_InfoUI(unsigned int n, bool *pmsg);
+  char pop_ore(unsigned int n, const _personal_automine_popore_clzo *request);
+  char Open_InvenUI(int n, const _personal_amine_infoui_open_clzo *request);
+  char Open_InfoUI(unsigned int n, const _personal_amine_infoui_open_clzo *request);
   bool Is_MineRun(int n);
-  unsigned __int8 request_query(char *pdata);
-  void result_query(unsigned __int8 byRet, char *pdata);
-  void pop_dqs_makestorage(unsigned __int8 byRet, char *pdata);
+  unsigned __int8 request_query(const _qry_case_make_storage *query);
+  void result_query(unsigned __int8 byRet, const _qry_case_make_storage *query);
+  void pop_dqs_makestorage(unsigned __int8 byRet, const _qry_case_make_storage *query);
   void push_dqs_makestorage(int n, unsigned int dwAvatorSerial, unsigned int dwTotGold);
   void send_ecode(unsigned int n, unsigned __int8 byCode);
 

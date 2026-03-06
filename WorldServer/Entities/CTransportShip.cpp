@@ -14,6 +14,7 @@
 #include "CMgrAvatorItemHistory.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
+#include "Packet/ZoneClientPacket.h"
 
 CTransportShip::__mgr_member::__mgr_member()
 {
@@ -389,8 +390,13 @@ void CTransportShip::SendMsg_KickForSail(unsigned int n)
   unsigned __int8 type[2]{};
   type[0] = 33;
   type[1] = 2;
-  char message[1]{};
-  g_Network.m_pProcess[0]->LoadSendMsg(n, type, message, 1);
+  _trans_ship_kick_inform_zocl message{};
+  message.sDum = 0;
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    n,
+    type,
+    reinterpret_cast<char *>(&message),
+    static_cast<unsigned __int16>(sizeof(message)));
 }
 
 void CTransportShip::SendMsg_TicketCheck(unsigned int n, char bPass, unsigned __int16 wTicketSerial)
@@ -411,17 +417,17 @@ void CTransportShip::SendMsg_TransportShipState(int n)
   type[0] = 33;
   type[1] = 1;
 
-  unsigned __int8 message[7]{};
-  message[0] = static_cast<unsigned __int8>(m_bAnchor);
-  message[1] = static_cast<unsigned __int8>(m_bHurry);
-  message[2] = m_byDirect;
+  _trans_ship_state_inform_zocl message{};
+  message.bAnchor = m_bAnchor;
+  message.bHurry = m_bHurry;
+  message.byDirect = static_cast<char>(m_byDirect);
 
   DWORD passSec = 0;
   if (n != -1)
   {
     passSec = timeGetTime() - m_dwEventCreateTime;
   }
-  memcpy_0(&message[3], &passSec, sizeof(passSec));
+  message.dwPassSec = passSec;
 
   if (n == -1)
   {
@@ -430,7 +436,11 @@ void CTransportShip::SendMsg_TransportShipState(int n)
       CPlayer *player = &g_Player[index];
       if (player->m_bLive && static_cast<unsigned int>(player->m_Param.GetRaceCode()) == m_byRaceCode_Layer)
       {
-        g_Network.m_pProcess[0]->LoadSendMsg(index, type, reinterpret_cast<char *>(message), sizeof(message));
+        g_Network.m_pProcess[0]->LoadSendMsg(
+          index,
+          type,
+          reinterpret_cast<char *>(&message),
+          static_cast<unsigned __int16>(sizeof(message)));
       }
     }
   }
@@ -439,8 +449,8 @@ void CTransportShip::SendMsg_TransportShipState(int n)
     g_Network.m_pProcess[0]->LoadSendMsg(
       static_cast<unsigned int>(n),
       type,
-      reinterpret_cast<char *>(message),
-      sizeof(message));
+      reinterpret_cast<char *>(&message),
+      static_cast<unsigned __int16>(sizeof(message)));
   }
 }
 

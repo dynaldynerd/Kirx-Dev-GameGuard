@@ -19,6 +19,19 @@
 #include "KorLocalTime.h"
 #include "UIDGenerator.h"
 #include "WorldServerUtil.h"
+#include "lt_qry_case_unmandtrader_select_list.h"
+#include "qry_case_unmandtrader_cancelitem.h"
+#include "qry_case_unmandtrader_buy_get_info.h"
+#include "qry_case_unmandtrader_buy_update.h"
+#include "qry_case_unmandtrader_cheat_updateregisttime.h"
+#include "qry_case_unmandtrader_lazyclean_flags.h"
+#include "qry_case_unmandtrader_log_in_proc_update_complete.h"
+#include "qry_case_unmandtrader_re_registsingleitem.h"
+#include "qry_case_unmandtrader_re_registsingleitem_roll_back.h"
+#include "qry_case_unmandtrader_registsingleitem.h"
+#include "qry_case_unmandtrader_time_out_cancelitem.h"
+#include "qry_case_unmandtrader_update_reprice.h"
+#include "qry_case_unmandtrader_updateitemstate.h"
 #include "unmannedtrader_page_info.h"
 #include "unmannedtrader_buy_item_info.h"
 #include "unmannedtrader_buy_item_result_zocl.h"
@@ -255,11 +268,10 @@ bool CUnmannedTraderController::InitLogger()
 }
 
 unsigned __int8 CUnmannedTraderController::SelectSearchList(
-  char *pData,
+  _lt_qry_case_unmandtrader_select_list *pData,
   CRFWorldDatabase *pkWorldDB,
   unsigned __int8 *byProcRet)
 {
-  char *reqData = pData;
   if (!pkWorldDB)
   {
     *byProcRet = 60;
@@ -268,11 +280,11 @@ unsigned __int8 CUnmannedTraderController::SelectSearchList(
 
   unsigned int count[4]{};
   const unsigned __int8 dbRet = pkWorldDB->Select_UnmannedTraderSearchGroupTotalRowCount(
-    static_cast<unsigned __int8>(reqData[8]),
-    static_cast<unsigned __int8>(reqData[9]),
-    static_cast<unsigned __int8>(reqData[16]),
-    static_cast<unsigned __int8>(reqData[17]),
-    static_cast<unsigned __int8>(reqData[18]),
+    pData->byType,
+    pData->byRace,
+    pData->byClass1,
+    pData->byClass2,
+    pData->byClass3,
     count);
   if (dbRet == 1)
   {
@@ -290,31 +302,31 @@ unsigned __int8 CUnmannedTraderController::SelectSearchList(
   {
     ++pageCount;
   }
-  *reinterpret_cast<unsigned int *>(reqData + 156) = pageCount;
+  pData->dwMaxPage = pageCount;
   if (!pageCount)
   {
     *byProcRet = 62;
     return 0;
   }
 
-  if (static_cast<unsigned __int8>(reqData[24]) >= pageCount)
+  if (pData->byPage >= pageCount)
   {
     *byProcRet = 63;
     return 0;
   }
 
   const unsigned int excludeCount =
-    CUnmannedTraderEnvironmentValue::Unmanned_Trader_Max_Row_Count_Search * static_cast<unsigned __int8>(reqData[24]);
+    CUnmannedTraderEnvironmentValue::Unmanned_Trader_Max_Row_Count_Search * pData->byPage;
   const unsigned __int8 pageRet = pkWorldDB->Select_UnmannedTraderSearchPageInfo(
-    static_cast<unsigned __int8>(reqData[8]),
-    static_cast<unsigned __int8>(reqData[9]),
-    static_cast<unsigned __int8>(reqData[16]),
-    static_cast<unsigned __int8>(reqData[17]),
-    static_cast<unsigned __int8>(reqData[18]),
+    pData->byType,
+    pData->byRace,
+    pData->byClass1,
+    pData->byClass2,
+    pData->byClass3,
     CUnmannedTraderEnvironmentValue::Unmanned_Trader_Max_Row_Count_Search,
     excludeCount,
-    reqData + 25,
-    reinterpret_cast<_unmannedtrader_page_info *>(reqData + 160));
+    pData->szSortQuery,
+    reinterpret_cast<_unmannedtrader_page_info *>(&pData->dwCnt));
   if (pageRet == 1)
   {
     *byProcRet = 64;
@@ -333,7 +345,7 @@ unsigned __int8 CUnmannedTraderController::SelectSearchList(
 void CUnmannedTraderController::CompleteSelectSearchList(
   unsigned __int8 byDBRet,
   unsigned __int8 byProcRet,
-  char *pLoadData)
+  _lt_qry_case_unmandtrader_select_list *pLoadData)
 {
   CUnmannedTraderUserInfoTable *table = CUnmannedTraderUserInfoTable::Instance();
   table->CompleteSearch(byDBRet, byProcRet, pLoadData);
@@ -534,15 +546,15 @@ void CUnmannedTraderController::Log(const char *fmt, ...)
   va_end(va);
 }
 
-unsigned __int8 CUnmannedTraderController::UpdateItemState(char *pData)
+unsigned __int8 CUnmannedTraderController::UpdateItemState(_qry_case_unmandtrader_updateitemstate *pData)
 {
   SYSTEMTIME systemTime{};
   GetLocalTime(&systemTime);
 
   if (g_Main.m_pWorldDB->Update_UnmannedTraderItemState(
-        static_cast<unsigned __int8>(pData[0]),
-        *reinterpret_cast<unsigned int *>(pData + 4),
-        static_cast<unsigned __int8>(pData[8]),
+        pData->byType,
+        pData->dwRegistSerial,
+        pData->byState,
         &systemTime))
   {
     return 0;
@@ -551,55 +563,55 @@ unsigned __int8 CUnmannedTraderController::UpdateItemState(char *pData)
   return 24;
 }
 
-unsigned __int8 CUnmannedTraderController::UpdateRegistItem(char *pData)
+unsigned __int8 CUnmannedTraderController::UpdateRegistItem(_qry_case_unmandtrader_registsingleitem *pData)
 {
   bool recordInserted = false;
-  unsigned __int8 result = GetEmptyRecordSerial(reinterpret_cast<unsigned int *>(pData) + 5, &recordInserted);
+  unsigned __int8 result = GetEmptyRecordSerial(&pData->dwRegedSerial, &recordInserted);
   if (!result)
   {
     _unmannedtrader_registsingleitem info{};
-    info.byType = static_cast<unsigned __int8>(pData[25]);
-    info.bySellTurm = static_cast<unsigned __int8>(pData[26]);
-    info.byRace = static_cast<unsigned __int8>(pData[27]);
-    info.dwOwnerSerial = *reinterpret_cast<unsigned int *>(pData + 28);
-    info.dwPrice = *reinterpret_cast<unsigned int *>(pData + 32);
-    info.byInveninx = static_cast<unsigned __int8>(pData[36]);
-    info.dwK = *reinterpret_cast<unsigned int *>(pData + 40);
-    info.dwD = *reinterpret_cast<unsigned long long *>(pData + 48);
-    info.dwU = *reinterpret_cast<unsigned int *>(pData + 56);
-    info.byLv = static_cast<unsigned __int8>(pData[60]);
-    info.byGrade = static_cast<unsigned __int8>(pData[61]);
-    info.byClass1 = static_cast<unsigned __int8>(pData[62]);
-    info.byClass2 = static_cast<unsigned __int8>(pData[63]);
-    info.byClass3 = static_cast<unsigned __int8>(pData[64]);
-    info.dwT = *reinterpret_cast<unsigned int *>(pData + 68);
-    info.lnUID = *reinterpret_cast<unsigned long long *>(pData + 72);
-    info.dwTax = *reinterpret_cast<unsigned int *>(pData + 80);
+    info.byType = pData->byType;
+    info.bySellTurm = pData->bySellTurm;
+    info.byRace = pData->byRace;
+    info.dwOwnerSerial = pData->dwOwnerSerial;
+    info.dwPrice = pData->dwPrice;
+    info.byInveninx = pData->byInveninx;
+    info.dwK = pData->dwK;
+    info.dwD = pData->dwD;
+    info.dwU = pData->dwU;
+    info.byLv = pData->byLv;
+    info.byGrade = pData->byGrade;
+    info.byClass1 = pData->byClass1;
+    info.byClass2 = pData->byClass2;
+    info.byClass3 = pData->byClass3;
+    info.dwT = pData->dwT;
+    info.lnUID = pData->lnUID;
+    info.dwTax = pData->dwTax;
 
     if (!g_Main.m_pWorldDB->Regist_UnmannedTraderSingleItem(
-          *reinterpret_cast<unsigned int *>(pData + 20),
+          pData->dwRegedSerial,
           &info,
           recordInserted))
     {
       return 24;
     }
 
-    pData[24] = recordInserted ? 1 : 0;
+    pData->bInserted = recordInserted;
   }
   return result;
 }
 
 
-unsigned __int8 CUnmannedTraderController::UpdateCancelRegist(char *pData)
+unsigned __int8 CUnmannedTraderController::UpdateCancelRegist(_qry_case_unmandtrader_cancelitem *pData)
 {
-  pData[45] = 0;
+  pData->byProcRet = 0;
   unsigned __int8 state = 0xFF;
   unsigned __int8 dbRet = CheckDBItemState(
-    static_cast<unsigned __int8>(pData[38]),
-    *reinterpret_cast<unsigned int *>(pData + 40),
+    pData->byType,
+    pData->dwRegistSerial,
     &state,
-    reinterpret_cast<unsigned __int8 *>(pData + 45));
-  if (pData[45])
+    &pData->byProcRet);
+  if (pData->byProcRet)
   {
     return dbRet;
   }
@@ -609,43 +621,43 @@ unsigned __int8 CUnmannedTraderController::UpdateCancelRegist(char *pData)
 
   _unmannedtrader_buy_item_info buyInfo{};
   dbRet = g_Main.m_pWorldDB->Select_UnmannedTraderBuySingleItemInfo(
-    static_cast<unsigned __int8>(pData[38]),
-    *reinterpret_cast<unsigned int *>(pData + 40),
+    pData->byType,
+    pData->dwRegistSerial,
     &buyInfo);
   if (dbRet == 1)
   {
-    pData[45] = 49;
+    pData->byProcRet = 49;
     return 24;
   }
   if (dbRet == 2)
   {
-    pData[45] = 50;
+    pData->byProcRet = 50;
     return 0;
   }
 
   if (g_Main.m_pWorldDB->Update_UnmannedTraderItemState(
-        static_cast<unsigned __int8>(pData[38]),
-        *reinterpret_cast<unsigned int *>(pData + 40),
-        static_cast<unsigned __int8>(pData[44]),
+        pData->byType,
+        pData->dwRegistSerial,
+        pData->byState,
         &systemTime))
   {
     return 0;
   }
 
-  pData[45] = 30;
+  pData->byProcRet = 30;
   return 24;
 }
 
-unsigned __int8 CUnmannedTraderController::UpdateTimeOutCancelRegist(char *pData)
+unsigned __int8 CUnmannedTraderController::UpdateTimeOutCancelRegist(_qry_case_unmandtrader_time_out_cancelitem *pData)
 {
-  pData[50] = 0;
+  pData->byProcRet = 0;
   unsigned __int8 state = 0xFF;
   unsigned __int8 dbRet = CheckDBItemState(
-    static_cast<unsigned __int8>(pData[0]),
-    *reinterpret_cast<unsigned int *>(pData + 4),
+    pData->byType,
+    pData->dwRegistSerial,
     &state,
-    reinterpret_cast<unsigned __int8 *>(pData + 50));
-  if (pData[50])
+    &pData->byProcRet);
+  if (pData->byProcRet)
   {
     return dbRet;
   }
@@ -655,168 +667,168 @@ unsigned __int8 CUnmannedTraderController::UpdateTimeOutCancelRegist(char *pData
 
   _unmannedtrader_buy_item_info buyInfo{};
   dbRet = g_Main.m_pWorldDB->Select_UnmannedTraderBuySingleItemInfo(
-    static_cast<unsigned __int8>(pData[0]),
-    *reinterpret_cast<unsigned int *>(pData + 4),
+    pData->byType,
+    pData->dwRegistSerial,
     &buyInfo);
   if (dbRet == 1)
   {
-    pData[50] = 47;
+    pData->byProcRet = 47;
     g_Main.m_pWorldDB->Update_UnmannedTraderItemState(
-      static_cast<unsigned __int8>(pData[0]),
-      *reinterpret_cast<unsigned int *>(pData + 4),
+      pData->byType,
+      pData->dwRegistSerial,
       9u,
       &systemTime);
     return 24;
   }
   if (dbRet == 2)
   {
-    pData[50] = 48;
+    pData->byProcRet = 48;
     return 0;
   }
 
-  if (buyInfo.dwSeller == *reinterpret_cast<unsigned int *>(pData + 12))
+  if (buyInfo.dwSeller == pData->dwOwnerSerial)
   {
-    *reinterpret_cast<unsigned int *>(pData + 52) = buyInfo.dwK;
-    *reinterpret_cast<unsigned int *>(pData + 56) = static_cast<unsigned int>(buyInfo.dwD);
-    *reinterpret_cast<unsigned int *>(pData + 60) = buyInfo.dwU;
-    *reinterpret_cast<unsigned int *>(pData + 64) = buyInfo.dwT;
+    pData->dwK = buyInfo.dwK;
+    pData->dwD = static_cast<unsigned int>(buyInfo.dwD);
+    pData->dwU = buyInfo.dwU;
+    pData->dwT = buyInfo.dwT;
     if (buyInfo.lnUID)
     {
-      *reinterpret_cast<unsigned long long *>(pData + 72) = buyInfo.lnUID;
+      pData->lnUID = buyInfo.lnUID;
     }
     else
     {
-      *reinterpret_cast<unsigned long long *>(pData + 72) = UIDGenerator::getuid(g_Main.m_byWorldCode);
+      pData->lnUID = UIDGenerator::getuid(g_Main.m_byWorldCode);
     }
 
-    if (!pData[20] || !pData[33])
+    if (!pData->szAccountID[0] || !pData->wszName[0])
     {
       g_Main.m_pWorldDB->Select_CharacterName(
-        *reinterpret_cast<unsigned int *>(pData + 12),
-        pData + 33,
-        pData + 20);
+        pData->dwOwnerSerial,
+        pData->wszName,
+        pData->szAccountID);
     }
 
     if (g_Main.m_pWorldDB->Update_UnmannedTraderItemState(
-          static_cast<unsigned __int8>(pData[0]),
-          *reinterpret_cast<unsigned int *>(pData + 4),
-          static_cast<unsigned __int8>(pData[8]),
+          pData->byType,
+          pData->dwRegistSerial,
+          pData->byState,
           &systemTime))
     {
       return 0;
     }
 
-    pData[50] = 46;
+    pData->byProcRet = 46;
     return 24;
   }
 
-  pData[50] = 93;
+  pData->byProcRet = 93;
   return 0;
 }
 
-unsigned __int8 CUnmannedTraderController::UpdateRePrice(char *pData)
+unsigned __int8 CUnmannedTraderController::UpdateRePrice(_qry_case_unmandtrader_update_reprice *pData)
 {
-  pData[20] = 0;
+  pData->byProcRet = 0;
   unsigned __int8 state = 0xFF;
   unsigned __int8 dbRet = CheckDBItemState(
-    static_cast<unsigned __int8>(pData[21]),
-    *reinterpret_cast<unsigned int *>(pData + 24),
+    pData->byType,
+    pData->dwRegistSerial,
     &state,
-    reinterpret_cast<unsigned __int8 *>(pData + 20));
-  if (pData[20])
+    &pData->byProcRet);
+  if (pData->byProcRet)
   {
     return dbRet;
   }
 
   if (g_Main.m_pWorldDB->Update_UnmannedTraderSellInfoPrice(
-        static_cast<unsigned __int8>(pData[21]),
-        *reinterpret_cast<unsigned int *>(pData + 24),
-        *reinterpret_cast<unsigned int *>(pData + 8),
-        *reinterpret_cast<unsigned int *>(pData + 28)))
+        pData->byType,
+        pData->dwRegistSerial,
+        pData->dwOwnerSerial,
+        pData->dwNewPrice))
   {
     return 0;
   }
 
-  pData[20] = 27;
+  pData->byProcRet = 27;
   return 24;
 }
 
 
-unsigned __int8 CUnmannedTraderController::SelectBuy(char *pData)
+unsigned __int8 CUnmannedTraderController::SelectBuy(_qry_case_unmandtrader_buy_get_info *pData)
 {
   unsigned int salesTotals[5]{};
   unsigned long long totalSales = 0;
   unsigned __int8 state = 0xFF;
   _unmannedtrader_seller_info sellerInfo{};
 
-  for (int j = 0; j < static_cast<unsigned __int8>(pData[14]); ++j)
+  for (int j = 0; j < pData->byNum; ++j)
   {
-    pData[72 * j + 84] = 0;
+    pData->List[j].byProcRet = 0;
     CheckDBItemState(
-      static_cast<unsigned __int8>(pData[13]),
-      *reinterpret_cast<unsigned int *>(&pData[72 * j + 16]),
+      pData->byType,
+      pData->List[j].dwRegistSerial,
       &state,
-      reinterpret_cast<unsigned __int8 *>(&pData[72 * j + 84]));
-    if (!pData[72 * j + 84])
+      &pData->List[j].byProcRet);
+    if (!pData->List[j].byProcRet)
     {
       unsigned __int8 dbRet = g_Main.m_pWorldDB->Select_UnmannedTraderSellInfo(
-        static_cast<unsigned __int8>(pData[13]),
-        *reinterpret_cast<unsigned int *>(&pData[72 * j + 16]),
-        static_cast<unsigned __int8>(pData[8]),
+        pData->byType,
+        pData->List[j].dwRegistSerial,
+        pData->byRace,
         &sellerInfo);
       if (dbRet == 1)
       {
-        pData[72 * j + 84] = 31;
+        pData->List[j].byProcRet = 31;
       }
       else if (dbRet == 2)
       {
-        pData[72 * j + 84] = 32;
+        pData->List[j].byProcRet = 32;
       }
-      else if (sellerInfo.dwPrice == *reinterpret_cast<unsigned int *>(&pData[72 * j + 20]))
+      else if (sellerInfo.dwPrice == pData->List[j].dwPrice)
       {
-        if (sellerInfo.dwSeller == *reinterpret_cast<unsigned int *>(pData + 4))
+        if (sellerInfo.dwSeller == pData->dwBuyer)
         {
-          pData[72 * j + 84] = 39;
+          pData->List[j].byProcRet = 39;
         }
         else
         {
           salesTotals[0] = 0;
           totalSales = 0;
           dbRet = g_Main.m_pWorldDB->Select_utSellWaitItems_SalesTotals(
-            static_cast<unsigned __int8>(pData[13]),
+            pData->byType,
             sellerInfo.dwSeller,
             salesTotals);
           if (dbRet == 1)
           {
-            pData[72 * j + 84] = 31;
+            pData->List[j].byProcRet = 31;
           }
           else
           {
-            *reinterpret_cast<unsigned int *>(&pData[72 * j + 20]) = sellerInfo.dwPrice;
-            *reinterpret_cast<unsigned int *>(&pData[72 * j + 24]) = sellerInfo.dwSeller;
-            pData[72 * j + 28] = sellerInfo.byRaceSexCode;
+            pData->List[j].dwPrice = sellerInfo.dwPrice;
+            pData->List[j].dwSeller = sellerInfo.dwSeller;
+            pData->List[j].byRaceSexCode = sellerInfo.byRaceSexCode;
             totalSales = salesTotals[0] + sellerInfo.dwDalant;
             if (totalSales > 2000000000ULL)
             {
               totalSales = 2000000000ULL;
             }
-            *reinterpret_cast<unsigned int *>(&pData[72 * j + 32]) = static_cast<unsigned int>(totalSales);
-            *reinterpret_cast<unsigned int *>(&pData[72 * j + 36]) = sellerInfo.dwGuildSerial;
-            *reinterpret_cast<unsigned int *>(&pData[72 * j + 44]) = sellerInfo.dwAccountSerial;
-            strcpy_s(&pData[72 * j + 48], 13, sellerInfo.szAccountID);
-            strcpy_s(&pData[72 * j + 61], 17, sellerInfo.wszName);
-            pData[72 * j + 40] = 0;
+            pData->List[j].dwDalant = static_cast<unsigned int>(totalSales);
+            pData->List[j].dwGuildSerial = sellerInfo.dwGuildSerial;
+            pData->List[j].dwAccountSerial = sellerInfo.dwAccountSerial;
+            strcpy_s(pData->List[j].szAccountID, 13, sellerInfo.szAccountID);
+            strcpy_s(pData->List[j].wszName, 17, sellerInfo.wszName);
+            pData->List[j].byUserGrade = 0;
             if (CUnmannedTraderEnvironmentValue::Unmanned_Trader_Dev_Account_Start_Serial <=
-                *reinterpret_cast<unsigned int *>(&pData[72 * j + 44]))
+                pData->List[j].dwAccountSerial)
             {
-              pData[72 * j + 40] = 3;
+              pData->List[j].byUserGrade = 3;
             }
           }
         }
       }
       else
       {
-        pData[72 * j + 84] = 44;
+        pData->List[j].byProcRet = 44;
       }
     }
   }
@@ -824,66 +836,67 @@ unsigned __int8 CUnmannedTraderController::SelectBuy(char *pData)
   return 0;
 }
 
-unsigned __int8 CUnmannedTraderController::UpdateBuy(char *pData)
+unsigned __int8 CUnmannedTraderController::UpdateBuy(_qry_case_unmandtrader_buy_update_wait *pData)
 {
   SYSTEMTIME systemTime{};
   GetLocalTime(&systemTime);
-  time_17(reinterpret_cast<__int64 *>(pData) + 2);
+  time_17(&pData->tResultTime);
 
   _unmannedtrader_buy_item_info buyInfo{};
 
-  for (int j = 0; j < static_cast<unsigned __int8>(pData[25]); ++j)
+  for (int j = 0; j < pData->byNum; ++j)
   {
-    if (!pData[96 * j + 77])
+    _qry_case_unmandtrader_buy_update_wait::__list &entry = pData->List[j];
+    if (!entry.byProcRet)
     {
       CheckDBItemState(
-        static_cast<unsigned __int8>(pData[24]),
-        *reinterpret_cast<unsigned int *>(&pData[96 * j + 32]),
-        reinterpret_cast<unsigned __int8 *>(&pData[96 * j + 84]),
-        reinterpret_cast<unsigned __int8 *>(&pData[96 * j + 77]));
-      if (!pData[96 * j + 77])
+        pData->byType,
+        entry.dwRegistSerial,
+        &entry.byOldState,
+        &entry.byProcRet);
+      if (!entry.byProcRet)
       {
         unsigned __int8 dbRet = g_Main.m_pWorldDB->Select_UnmannedTraderBuySingleItemInfo(
-          static_cast<unsigned __int8>(pData[24]),
-          *reinterpret_cast<unsigned int *>(&pData[96 * j + 32]),
+          pData->byType,
+          entry.dwRegistSerial,
           &buyInfo);
         if (dbRet == 1)
         {
-          pData[96 * j + 77] = 31;
+          entry.byProcRet = 31;
         }
         else if (dbRet == 2)
         {
-          pData[96 * j + 77] = 32;
+          entry.byProcRet = 32;
         }
-        else if (buyInfo.dwPrice == *reinterpret_cast<unsigned int *>(&pData[96 * j + 108]))
+        else if (buyInfo.dwPrice == entry.dwPrice)
         {
-          pData[96 * j + 85] = buyInfo.byInveninx;
-          *reinterpret_cast<unsigned int *>(&pData[96 * j + 88]) = buyInfo.dwK;
-          *reinterpret_cast<unsigned long long *>(&pData[96 * j + 96]) = buyInfo.dwD;
-          *reinterpret_cast<unsigned int *>(&pData[96 * j + 104]) = buyInfo.dwU;
-          *reinterpret_cast<unsigned int *>(&pData[96 * j + 112]) = buyInfo.dwT;
+          entry.byInveninx = buyInfo.byInveninx;
+          entry.dwK = buyInfo.dwK;
+          entry.dwD = buyInfo.dwD;
+          entry.dwU = buyInfo.dwU;
+          entry.dwT = buyInfo.dwT;
           if (buyInfo.lnUID)
           {
-            *reinterpret_cast<unsigned long long *>(&pData[96 * j + 120]) = buyInfo.lnUID;
+            entry.lnUID = buyInfo.lnUID;
           }
           else
           {
-            *reinterpret_cast<unsigned long long *>(&pData[96 * j + 120]) = UIDGenerator::getuid(g_Main.m_byWorldCode);
+            entry.lnUID = UIDGenerator::getuid(g_Main.m_byWorldCode);
           }
           if (!g_Main.m_pWorldDB->Update_UnmannedTraderResutlInfo(
-                static_cast<unsigned __int8>(pData[24]),
-                *reinterpret_cast<unsigned int *>(&pData[96 * j + 32]),
+                pData->byType,
+                entry.dwRegistSerial,
                 0xAu,
-                *reinterpret_cast<unsigned int *>(pData + 4),
-                *reinterpret_cast<unsigned int *>(&pData[96 * j + 80]),
+                pData->dwBuyer,
+                entry.byOldState,
                 &systemTime))
           {
-            pData[96 * j + 77] = 33;
+            entry.byProcRet = 33;
           }
         }
         else
         {
-          pData[96 * j + 77] = 44;
+          entry.byProcRet = 44;
         }
       }
     }
@@ -892,45 +905,46 @@ unsigned __int8 CUnmannedTraderController::UpdateBuy(char *pData)
   return 0;
 }
 
-unsigned __int8 CUnmannedTraderController::UpdateBuyRollBack(char *pData)
+unsigned __int8 CUnmannedTraderController::UpdateBuyRollBack(_qry_case_unmandtrader_buy_update_rollback *pData)
 {
   SYSTEMTIME systemTime{};
   GetLocalTime(&systemTime);
 
-  for (int j = 0; j < static_cast<unsigned __int8>(pData[10]); ++j)
+  for (int j = 0; j < pData->byNum; ++j)
   {
-    pData[12 * j + 12] = 0;
+    pData->List[j].byProcRet = 0;
     if (!g_Main.m_pWorldDB->Update_UnmannedTraderResutlInfo(
-          static_cast<unsigned __int8>(pData[9]),
-          *reinterpret_cast<unsigned int *>(&pData[12 * j + 16]),
-          static_cast<unsigned __int8>(pData[12 * j + 20]),
+          pData->byType,
+          pData->List[j].dwRegistSerial,
+          pData->List[j].byOldState,
           0,
           0,
           &systemTime))
     {
-      pData[12 * j + 12] = 36;
+      pData->List[j].byProcRet = 36;
     }
   }
 
   return 0;
 }
 
-unsigned __int8 CUnmannedTraderController::UpdateLazyClean(char *pData)
+unsigned __int8 CUnmannedTraderController::UpdateLazyClean(_qry_case_unmandtrader_lazyclean_flags *pData)
 {
-  return m_kLazyCleaner.UpdateClear(reinterpret_cast<bool *>(pData));
+  return m_kLazyCleaner.UpdateClear(pData);
 }
 
 
-unsigned __int8 CUnmannedTraderController::UpdateBuyComplete(char *pData)
+unsigned __int8 CUnmannedTraderController::UpdateBuyComplete(_qry_case_unmandtrader_buy_update_complete *pData)
 {
-  pData[9] = 1;
+  pData->bAllSuccess = true;
   SYSTEMTIME systemTime{};
   GetLocalTime(&systemTime);
 
-  for (int j = 0; j < static_cast<unsigned __int8>(pData[11]); ++j)
+  for (int j = 0; j < pData->byNum; ++j)
   {
-    pData[16 * j + 12] = 0;
-    unsigned __int8 state = static_cast<unsigned __int8>(pData[16 * j + 13]);
+    _qry_case_unmandtrader_buy_update_complete::__list &entry = pData->List[j];
+    entry.byProcRet = 0;
+    unsigned __int8 state = entry.byProcUpdate;
     switch (state - 34)
     {
       case 0:
@@ -941,27 +955,27 @@ unsigned __int8 CUnmannedTraderController::UpdateBuyComplete(char *pData)
       case 116:
       case 117:
         if (!g_Main.m_pWorldDB->Update_UnmannedTraderResutlInfo(
-              static_cast<unsigned __int8>(pData[10]),
-              *reinterpret_cast<unsigned int *>(&pData[16 * j + 20]),
-              static_cast<unsigned __int8>(pData[16 * j + 24]),
+              pData->byType,
+              entry.dwRegistSerial,
+              entry.byUpdateState,
               0,
               0,
               &systemTime))
         {
-          pData[16 * j + 12] = 1;
-          pData[9] = 0;
+          entry.byProcRet = 1;
+          pData->bAllSuccess = false;
         }
         break;
       case 47:
       case 56:
         if (!g_Main.m_pWorldDB->Update_UnmannedTraderItemState(
-              static_cast<unsigned __int8>(pData[10]),
-              *reinterpret_cast<unsigned int *>(&pData[16 * j + 20]),
-              static_cast<unsigned __int8>(pData[16 * j + 24]),
+              pData->byType,
+              entry.dwRegistSerial,
+              entry.byUpdateState,
               &systemTime))
         {
-          pData[16 * j + 12] = 1;
-          pData[9] = 0;
+          entry.byProcRet = 1;
+          pData->bAllSuccess = false;
         }
         break;
       default:
@@ -972,16 +986,18 @@ unsigned __int8 CUnmannedTraderController::UpdateBuyComplete(char *pData)
   return 0;
 }
 
-unsigned __int8 CUnmannedTraderController::UpdateLogInComplete(char *pData)
+unsigned __int8 CUnmannedTraderController::UpdateLogInComplete(
+  _qry_case_unmandtrader_log_in_proc_update_complete *pData)
 {
-  pData[8] = 1;
+  pData->bAllSuccess = true;
   SYSTEMTIME systemTime{};
   GetLocalTime(&systemTime);
 
-  for (int j = 0; j < *reinterpret_cast<unsigned __int16 *>(pData + 10); ++j)
+  for (int j = 0; j < pData->wNum; ++j)
   {
-    pData[16 * j + 12] = 0;
-    unsigned __int8 state = static_cast<unsigned __int8>(pData[16 * j + 13]);
+    _qry_case_unmandtrader_log_in_proc_update_complete::__list &entry = pData->List[j];
+    entry.byProcRet = 0;
+    unsigned __int8 state = entry.byProcUpdate;
     switch (state - 37)
     {
       case 0:
@@ -991,26 +1007,26 @@ unsigned __int8 CUnmannedTraderController::UpdateLogInComplete(char *pData)
       case 54:
       case 57:
         if (!g_Main.m_pWorldDB->Update_UnmannedTraderItemState(
-              static_cast<unsigned __int8>(pData[9]),
-              *reinterpret_cast<unsigned int *>(&pData[16 * j + 20]),
-              static_cast<unsigned __int8>(pData[16 * j + 24]),
+              pData->byType,
+              entry.dwRegistSerial,
+              entry.byUpdateState,
               &systemTime))
         {
-          pData[16 * j + 12] = 1;
-          pData[8] = 0;
+          entry.byProcRet = 1;
+          pData->bAllSuccess = false;
         }
         break;
       case 55:
         if (!g_Main.m_pWorldDB->Update_UnmannedTraderResutlInfo(
-              static_cast<unsigned __int8>(pData[9]),
-              *reinterpret_cast<unsigned int *>(&pData[16 * j + 20]),
-              static_cast<unsigned __int8>(pData[16 * j + 24]),
+              pData->byType,
+              entry.dwRegistSerial,
+              entry.byUpdateState,
               0,
               0,
               &systemTime))
         {
-          pData[16 * j + 12] = 1;
-          pData[8] = 0;
+          entry.byProcRet = 1;
+          pData->bAllSuccess = false;
         }
         break;
       default:
@@ -1022,7 +1038,7 @@ unsigned __int8 CUnmannedTraderController::UpdateLogInComplete(char *pData)
 }
 
 
-unsigned __int8 CUnmannedTraderController::UpdateReRegist(char *pData)
+unsigned __int8 CUnmannedTraderController::UpdateReRegist(_qry_case_unmandtrader_re_registsingleitem *pData)
 {
   SYSTEMTIME systemTime{};
   GetLocalTime(&systemTime);
@@ -1031,134 +1047,136 @@ unsigned __int8 CUnmannedTraderController::UpdateReRegist(char *pData)
   unsigned __int8 procRet = 0;
   unsigned int registerOwner[4]{};
 
-  for (int j = 0; j < static_cast<unsigned __int8>(pData[4]); ++j)
+  for (int j = 0; j < pData->byNum; ++j)
   {
+    _qry_case_unmandtrader_re_registsingleitem::__list &entry = pData->List[j];
     state = 0xFF;
     procRet = 0;
     CheckDBItemState(
-      static_cast<unsigned __int8>(pData[0]),
-      *reinterpret_cast<unsigned int *>(&pData[28 * j + 32]),
+      pData->byType,
+      entry.dwRegistSerial,
       &state,
       &procRet);
     if (procRet == 8 || procRet == 38)
     {
-      pData[28 * j + 12] = procRet;
+      entry.byProcRet = procRet;
     }
     else if (state == 6 || state == 13)
     {
-      if (pData[28 * j + 13])
+      if (entry.bRegist)
       {
-        if (pData[28 * j + 12])
+        if (entry.byProcRet)
         {
           if (!g_Main.m_pWorldDB->Update_UnmannedTraderItemState(
-                static_cast<unsigned __int8>(pData[0]),
-                *reinterpret_cast<unsigned int *>(&pData[28 * j + 32]),
+                pData->byType,
+                entry.dwRegistSerial,
                 5u,
                 &systemTime))
           {
-            pData[28 * j + 12] = 30;
+            entry.byProcRet = 30;
           }
         }
         else
         {
           state = g_Main.m_pWorldDB->Select_UnmannedTraderRegister(
-            static_cast<unsigned __int8>(pData[0]),
-            *reinterpret_cast<unsigned int *>(&pData[28 * j + 32]),
+            pData->byType,
+            entry.dwRegistSerial,
             registerOwner);
           if (state)
           {
-            pData[28 * j + 12] = 24;
+            entry.byProcRet = 24;
           }
-          else if (registerOwner[0] == *reinterpret_cast<unsigned int *>(pData + 8))
+          else if (registerOwner[0] == pData->dwOwnerSerial)
           {
             if (!g_Main.m_pWorldDB->Update_UnmannedTraderReRegist(
-                  static_cast<unsigned __int8>(pData[0]),
-                  *reinterpret_cast<unsigned int *>(&pData[28 * j + 32]),
-                  static_cast<unsigned __int8>(pData[28 * j + 36]),
-                  *reinterpret_cast<unsigned int *>(&pData[28 * j + 28]),
-                  *reinterpret_cast<unsigned int *>(&pData[28 * j + 16]),
+                  pData->byType,
+                  entry.dwRegistSerial,
+                  entry.byUpdateState,
+                  entry.dwPrice,
+                  entry.dwTax,
                   &systemTime))
             {
-              pData[28 * j + 12] = 24;
+              entry.byProcRet = 24;
             }
           }
           else
           {
-            pData[28 * j + 12] = static_cast<char>(-54);
+            entry.byProcRet = static_cast<unsigned __int8>(-54);
           }
         }
       }
       else if (!g_Main.m_pWorldDB->Update_UnmannedTraderItemState(
-                 static_cast<unsigned __int8>(pData[0]),
-                 *reinterpret_cast<unsigned int *>(&pData[28 * j + 32]),
-                 static_cast<unsigned __int8>(pData[28 * j + 36]),
+                 pData->byType,
+                 entry.dwRegistSerial,
+                 entry.byUpdateState,
                  &systemTime))
       {
-        pData[28 * j + 12] = 30;
+        entry.byProcRet = 30;
       }
     }
     else
     {
-      pData[28 * j + 12] = static_cast<char>(-53);
+      entry.byProcRet = static_cast<unsigned __int8>(-53);
     }
   }
 
   return 0;
 }
 
-unsigned __int8 CUnmannedTraderController::UpdateCheatRegistTime(char *pData)
+unsigned __int8 CUnmannedTraderController::UpdateCheatRegistTime(
+  _qry_case_unmandtrader_cheat_updateregisttime *pData)
 {
-  unsigned __int8 *data = reinterpret_cast<unsigned __int8 *>(pData);
-  for (unsigned __int8 j = 0; j < data[1]; ++j)
+  for (unsigned __int8 j = 0; j < pData->byNum; ++j)
   {
+    _qry_case_unmandtrader_cheat_updateregisttime::__list &entry = pData->List[j];
     CheckDBItemState(
-      data[0],
-      *reinterpret_cast<unsigned int *>(&data[8 * j + 12]),
-      &data[8 * j + 9],
-      &data[8 * j + 8]);
-    if (!data[8 * j + 8] &&
-        !g_Main.m_pWorldDB->Update_UnmannedTraderCheatUpdateRegistDate(
-          data[0],
-          *reinterpret_cast<unsigned int *>(&data[8 * j + 12])))
+      pData->byType,
+      entry.dwRegistSerial,
+      &entry.byState,
+      &entry.byProcRet);
+    if (!entry.byProcRet && !g_Main.m_pWorldDB->Update_UnmannedTraderCheatUpdateRegistDate(
+                              pData->byType,
+                              entry.dwRegistSerial))
     {
-      data[8 * j + 8] = 30;
+      entry.byProcRet = 30;
     }
   }
 
   return 0;
 }
 
-unsigned __int8 CUnmannedTraderController::UpdateReRegistRollBack(char *pData)
+unsigned __int8 CUnmannedTraderController::UpdateReRegistRollBack(
+  _qry_case_unmandtrader_re_registsingleitem_roll_back *pData)
 {
-  unsigned __int8 *data = reinterpret_cast<unsigned __int8 *>(pData);
   unsigned __int8 state = 0;
   unsigned __int8 procRet = 0;
   SYSTEMTIME systemTime{};
   GetLocalTime(&systemTime);
 
-  data[4] = 1;
-  for (unsigned __int8 j = 0; j < data[1]; ++j)
+  pData->bAllSuccess = true;
+  for (unsigned __int8 j = 0; j < pData->byNum; ++j)
   {
+    _qry_case_unmandtrader_re_registsingleitem_roll_back::__list &entry = pData->List[j];
     state = 0;
     procRet = 0;
     CheckDBItemState(
-      data[0],
-      *reinterpret_cast<unsigned int *>(&data[8 * j + 16]),
+      pData->byType,
+      entry.dwRegistSerial,
       &state,
       &procRet);
     if (procRet)
     {
-      data[8 * j + 12] = procRet;
-      data[4] = 0;
+      entry.byProcRet = procRet;
+      pData->bAllSuccess = false;
     }
     else if (!g_Main.m_pWorldDB->Update_UnmannedTraderItemState(
-               data[0],
-               *reinterpret_cast<unsigned int *>(&data[8 * j + 16]),
-               data[8 * j + 13],
+               pData->byType,
+               entry.dwRegistSerial,
+               entry.byState,
                &systemTime))
     {
-      data[8 * j + 12] = 30;
-      data[4] = 0;
+      entry.byProcRet = 30;
+      pData->bAllSuccess = false;
     }
   }
 
@@ -1177,21 +1195,21 @@ void CUnmannedTraderController::CompleteSelectReservedSchedule(
   }
 }
 
-void CUnmannedTraderController::CompleteUpdateState(unsigned __int8 byRet, char *pLoadData)
+void CUnmannedTraderController::CompleteUpdateState(
+  unsigned __int8 byRet,
+  _qry_case_unmandtrader_updateitemstate *pLoadData)
 {
-  unsigned __int8 state = static_cast<unsigned __int8>(pLoadData[8]);
+  unsigned __int8 state = pLoadData->byState;
   if ((state == 3 || state == 5 || state == 7) && !byRet)
   {
     CUnmannedTraderUserInfoTable *table = CUnmannedTraderUserInfoTable::Instance();
     if (table->CompleteUpdateState(
-          *reinterpret_cast<unsigned int *>(pLoadData + 12),
-          *reinterpret_cast<unsigned int *>(pLoadData + 4),
-          static_cast<unsigned __int8>(pLoadData[8])))
+          pLoadData->dwOwnerSerial,
+          pLoadData->dwRegistSerial,
+          pLoadData->byState))
     {
       CUnmannedTraderGroupItemInfoTable *groupTable = CUnmannedTraderGroupItemInfoTable::Instance();
-      groupTable->IncreaseVersion(
-        static_cast<unsigned __int8>(pLoadData[16]),
-        *reinterpret_cast<unsigned __int16 *>(pLoadData + 18));
+      groupTable->IncreaseVersion(pLoadData->byItemTableCode, pLoadData->wItemTableIndex);
     }
   }
 
@@ -1203,45 +1221,51 @@ void CUnmannedTraderController::CompleteUpdateState(unsigned __int8 byRet, char 
       "\t\tRET_CODE_SUCCESS != byRet\r\n",
       byRet,
       byRet,
-      static_cast<unsigned __int8>(pLoadData[0]),
-      *reinterpret_cast<unsigned int *>(pLoadData + 4),
-      static_cast<unsigned __int8>(pLoadData[8]),
-      *reinterpret_cast<unsigned int *>(pLoadData + 12),
-      static_cast<unsigned __int8>(pLoadData[16]));
+      pLoadData->byType,
+      pLoadData->dwRegistSerial,
+      pLoadData->byState,
+      pLoadData->dwOwnerSerial,
+      pLoadData->byItemTableCode);
   }
 }
 
-void CUnmannedTraderController::CompleteRegistItem(unsigned __int8 byRet, char *pLoadData)
+void CUnmannedTraderController::CompleteRegistItem(
+  unsigned __int8 byRet,
+  _qry_case_unmandtrader_registsingleitem *pLoadData)
 {
   CUnmannedTraderUserInfoTable *table = CUnmannedTraderUserInfoTable::Instance();
   table->CompleteRegist(byRet, pLoadData);
 }
 
-void CUnmannedTraderController::CompleteCancelRegist(unsigned __int8 byRet, char *pLoadData)
+void CUnmannedTraderController::CompleteCancelRegist(
+  unsigned __int8 byRet,
+  _qry_case_unmandtrader_cancelitem *pLoadData)
 {
   CUnmannedTraderUserInfoTable *table = CUnmannedTraderUserInfoTable::Instance();
   table->CompleteCancelRegist(byRet, pLoadData);
 }
 
-void CUnmannedTraderController::CompleteTimeOutCancelRegist(unsigned __int8 byRet, char *pLoadData)
+void CUnmannedTraderController::CompleteTimeOutCancelRegist(
+  unsigned __int8 byRet,
+  _qry_case_unmandtrader_time_out_cancelitem *pLoadData)
 {
-  if (byRet || pLoadData[50])
+  if (byRet || pLoadData->byProcRet)
   {
-    const char *senderName = pLoadData[20] ? pLoadData + 20 : "NULL";
-    const char *charName = pLoadData[33] ? pLoadData + 33 : "NULL";
+    const char *senderName = pLoadData->szAccountID[0] ? pLoadData->szAccountID : "NULL";
+    const char *charName = pLoadData->wszName[0] ? pLoadData->wszName : "NULL";
     Log(
       "CUnmannedTraderController::CompleteTimeOutCancelRegist( byRet, char * pLoadData )\r\n"
       "\t\tType(%u) RegistSerial(%u) State(%u) : %s(%u) ID(%s) TableCode(%u) TableIndex(%u)\r\n"
       "\t\tProcRet(%u) RET_CODE_SUCCESS != byRet(%u)\r\n",
-      static_cast<unsigned __int8>(pLoadData[0]),
-      *reinterpret_cast<unsigned int *>(pLoadData + 4),
-      static_cast<unsigned __int8>(pLoadData[8]),
+      pLoadData->byType,
+      pLoadData->dwRegistSerial,
+      pLoadData->byState,
       charName,
-      *reinterpret_cast<unsigned int *>(pLoadData + 12),
+      pLoadData->dwOwnerSerial,
       senderName,
-      static_cast<unsigned __int8>(pLoadData[16]),
-      *reinterpret_cast<unsigned __int16 *>(pLoadData + 18),
-      static_cast<unsigned __int8>(pLoadData[50]),
+      pLoadData->byItemTableCode,
+      pLoadData->wItemTableIndex,
+      pLoadData->byProcRet,
       byRet);
   }
   else
@@ -1249,135 +1273,119 @@ void CUnmannedTraderController::CompleteTimeOutCancelRegist(unsigned __int8 byRe
     CUnmannedTraderUserInfoTable *table = CUnmannedTraderUserInfoTable::Instance();
     table->CompleteTimeOutClear(pLoadData);
     CUnmannedTraderGroupItemInfoTable *groupTable = CUnmannedTraderGroupItemInfoTable::Instance();
-    groupTable->IncreaseVersion(
-      static_cast<unsigned __int8>(pLoadData[16]),
-      *reinterpret_cast<unsigned __int16 *>(pLoadData + 18));
+    groupTable->IncreaseVersion(pLoadData->byItemTableCode, pLoadData->wItemTableIndex);
   }
 
   CUnmannedTraderScheduler *scheduler = CUnmannedTraderScheduler::Instance();
-  scheduler->CompleteClear(
-    byRet,
-    static_cast<unsigned __int8>(pLoadData[50]),
-    static_cast<unsigned __int8>(pLoadData[0]),
-    *reinterpret_cast<unsigned int *>(pLoadData + 4));
+  scheduler->CompleteClear(byRet, pLoadData->byProcRet, pLoadData->byType, pLoadData->dwRegistSerial);
 }
 
-void CUnmannedTraderController::CompleteReprice(unsigned __int8 byRet, char *pLoadData)
+void CUnmannedTraderController::CompleteReprice(
+  unsigned __int8 byRet,
+  _qry_case_unmandtrader_update_reprice *pLoadData)
 {
   CUnmannedTraderUserInfoTable *table = CUnmannedTraderUserInfoTable::Instance();
   table->CompleteReprice(byRet, pLoadData);
 }
 
 
-void CUnmannedTraderController::CompleteSelectBuyInfo(unsigned __int8 byRet, char *pLoadData)
+void CUnmannedTraderController::CompleteSelectBuyInfo(
+  unsigned __int8 byRet,
+  _qry_case_unmandtrader_buy_get_info *pLoadData)
 {
-  char qryData[2]{};
-  unsigned int ownerSerial = 0;
-  char byType = 0;
-  char byRace = 0;
-  char byListNum = 0;
-  char bySellTurn = 0;
+  (void)byRet;
 
-  std::memset(qryData, 0, sizeof(qryData));
-  *reinterpret_cast<unsigned __int16 *>(qryData) = *reinterpret_cast<unsigned __int16 *>(pLoadData);
-  ownerSerial = *reinterpret_cast<unsigned int *>(pLoadData + 4);
-  byType = pLoadData[8];
-  bySellTurn = pLoadData[13];
-  byListNum = pLoadData[14];
-  byRace = pLoadData[10];
-  char byClass1 = pLoadData[11];
-  char byClass2 = pLoadData[12];
+  _qry_case_unmandtrader_buy_update_wait qryData{};
+  qryData.wInx = pLoadData->wInx;
+  qryData.dwBuyer = pLoadData->dwBuyer;
+  qryData.byRace = pLoadData->byRace;
+  qryData.byDivision = pLoadData->byDivision;
+  qryData.byClass = pLoadData->byClass;
+  qryData.bySubClass = pLoadData->bySubClass;
+  qryData.byType = pLoadData->byType;
+  qryData.byNum = pLoadData->byNum;
 
   unsigned int addMoney = 0;
   unsigned char addMoneyCount = 0;
-  char destination[960]{};
-  unsigned int listData[2]{};
 
-  for (int j = 0; j < static_cast<unsigned __int8>(pLoadData[14]); ++j)
+  for (int j = 0; j < pLoadData->byNum; ++j)
   {
-    listData[24 * j] = *reinterpret_cast<unsigned int *>(&pLoadData[72 * j + 16]);
-    listData[24 * j + 1] = *reinterpret_cast<unsigned int *>(&pLoadData[72 * j + 24]);
-    strcpy_s(&destination[96 * j], 13, &pLoadData[72 * j + 48]);
-    *reinterpret_cast<unsigned int *>(&destination[96 * j + 16]) =
-      *reinterpret_cast<unsigned int *>(&pLoadData[72 * j + 44]);
-    strcpy_s(&destination[96 * j + 20], 17, &pLoadData[72 * j + 61]);
-    *reinterpret_cast<unsigned int *>(&destination[96 * j + 68]) =
-      *reinterpret_cast<unsigned int *>(&pLoadData[72 * j + 20]);
-    destination[96 * j + 37] = pLoadData[72 * j + 84];
+    const _qry_case_unmandtrader_buy_get_info::__list &infoEntry = pLoadData->List[j];
+    _qry_case_unmandtrader_buy_update_wait::__list &updateEntry = qryData.List[j];
+    updateEntry.dwRegistSerial = infoEntry.dwRegistSerial;
+    updateEntry.dwSeller = infoEntry.dwSeller;
+    strcpy_s(updateEntry.szAccountID, 13, infoEntry.szAccountID);
+    updateEntry.dwAccountSerial = infoEntry.dwAccountSerial;
+    strcpy_s(updateEntry.wszName, 17, infoEntry.wszName);
+    updateEntry.byProcRet = infoEntry.byProcRet;
+    updateEntry.dwPrice = infoEntry.dwPrice;
 
-    if (!destination[96 * j + 37])
+    if (!updateEntry.byProcRet)
     {
-      CPlayer *seller = GetPtrPlayerFromSerial(g_Player, 2532, *reinterpret_cast<unsigned int *>(&pLoadData[72 * j + 24]));
+      CPlayer *seller = GetPtrPlayerFromSerial(g_Player, 2532, infoEntry.dwSeller);
       if (seller && !seller->m_bLive)
       {
-        pLoadData[72 * j + 28] = static_cast<unsigned __int8>(seller->m_Param.GetRaceSexCode());
-        *reinterpret_cast<unsigned int *>(&pLoadData[72 * j + 32]) = seller->m_Param.GetDalant();
-        *reinterpret_cast<unsigned int *>(&pLoadData[72 * j + 36]) = seller->m_Param.GetGuildSerial();
-        pLoadData[72 * j + 40] = seller->m_byUserDgr;
+        pLoadData->List[j].byRaceSexCode = static_cast<unsigned __int8>(seller->m_Param.GetRaceSexCode());
+        pLoadData->List[j].dwDalant = seller->m_Param.GetDalant();
+        pLoadData->List[j].dwGuildSerial = seller->m_Param.GetGuildSerial();
+        pLoadData->List[j].byUserGrade = seller->m_byUserDgr;
       }
 
       CUnmannedTraderTaxRateManager *taxMgr = CUnmannedTraderTaxRateManager::Instance();
-      unsigned int tax = taxMgr->GetTax(
-        static_cast<unsigned __int8>(pLoadData[8]),
-        *reinterpret_cast<unsigned int *>(&pLoadData[72 * j + 36]),
-        *reinterpret_cast<unsigned int *>(&pLoadData[72 * j + 20]));
-      *reinterpret_cast<unsigned int *>(&destination[96 * j + 40]) = tax;
+      updateEntry.dwTax = taxMgr->GetTax(pLoadData->byType, pLoadData->List[j].dwGuildSerial, pLoadData->List[j].dwPrice);
 
-      if (*reinterpret_cast<unsigned int *>(&pLoadData[72 * j + 20]) <=
-          *reinterpret_cast<unsigned int *>(&destination[96 * j + 40]))
+      if (pLoadData->List[j].dwPrice <= updateEntry.dwTax)
       {
         Log(
           "CUnmannedTraderController::CompleteSelectBuyInfo(...) Exceed Tax Price!\r\n"
           "\t\t dwRegistSerial(%u) dwSeller(%u)\r\n"
           "\t\t dwBuyer(%u) dwGuildSerial(%u) dwCurDalant(%u)\r\n"
           "\t\t dwPrice(%u) dwTax(%u)\r\n",
-          listData[24 * j],
-          listData[24 * j + 1],
-          ownerSerial,
-          *reinterpret_cast<unsigned int *>(&pLoadData[72 * j + 36]),
-          *reinterpret_cast<unsigned int *>(&pLoadData[72 * j + 32]),
-          *reinterpret_cast<unsigned int *>(&pLoadData[72 * j + 20]),
-          *reinterpret_cast<unsigned int *>(&destination[96 * j + 40]));
-        *reinterpret_cast<unsigned int *>(&destination[96 * j + 40]) =
-          static_cast<int>(static_cast<float>(*reinterpret_cast<int *>(&pLoadData[72 * j + 20])) * 0.050000001f);
+          infoEntry.dwRegistSerial,
+          infoEntry.dwSeller,
+          pLoadData->dwBuyer,
+          pLoadData->List[j].dwGuildSerial,
+          pLoadData->List[j].dwDalant,
+          pLoadData->List[j].dwPrice,
+          updateEntry.dwTax);
+        updateEntry.dwTax = static_cast<unsigned int>(static_cast<float>(pLoadData->List[j].dwPrice) * 0.050000001f);
       }
 
-      addMoney += *reinterpret_cast<unsigned int *>(&pLoadData[72 * j + 20]) -
-                  *reinterpret_cast<unsigned int *>(&destination[96 * j + 40]);
-      if (CanAddMoneyForMaxLimMoney(addMoney, *reinterpret_cast<unsigned int *>(&pLoadData[72 * j + 32])))
+      addMoney += pLoadData->List[j].dwPrice - updateEntry.dwTax;
+      if (CanAddMoneyForMaxLimMoney(addMoney, pLoadData->List[j].dwDalant))
       {
-        if (pLoadData[9] == pLoadData[72 * j + 40])
+        if (pLoadData->byUserGrade == pLoadData->List[j].byUserGrade)
         {
           ++addMoneyCount;
         }
         else
         {
-          destination[96 * j + 37] = 35;
+          updateEntry.byProcRet = 35;
         }
       }
       else
       {
-        destination[96 * j + 37] = 34;
+        updateEntry.byProcRet = 34;
       }
     }
   }
 
   if (addMoneyCount)
   {
-    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x41u, qryData, 992);
+    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x41u, reinterpret_cast<char *>(&qryData), sizeof(qryData));
   }
   else
   {
-    CPlayer *buyer = GetPtrPlayerFromSerial(g_Player, 2532, ownerSerial);
+    CPlayer *buyer = GetPtrPlayerFromSerial(g_Player, 2532, pLoadData->dwBuyer);
     if (buyer && buyer->m_bOper)
     {
       _unmannedtrader_buy_item_result_zocl result{};
       result.byRetCode = static_cast<unsigned __int8>(-1);
-      result.byNum = static_cast<unsigned __int8>(pLoadData[14]);
-      for (int k = 0; k < static_cast<unsigned __int8>(pLoadData[14]); ++k)
+      result.byNum = static_cast<unsigned __int8>(pLoadData->byNum);
+      for (int k = 0; k < pLoadData->byNum; ++k)
       {
-        result.List[k].byRet = destination[96 * k + 37];
-        result.List[k].dwPrice = *reinterpret_cast<unsigned int *>(&destination[96 * k + 68]);
+        result.List[k].byRet = qryData.List[k].byProcRet;
+        result.List[k].dwPrice = qryData.List[k].dwPrice;
       }
       result.dwLeftDalant = buyer->m_Param.GetDalant();
 
@@ -1389,140 +1397,140 @@ void CUnmannedTraderController::CompleteSelectBuyInfo(unsigned __int8 byRet, cha
     }
 
     CUnmannedTraderUserInfoTable *table = CUnmannedTraderUserInfoTable::Instance();
-    table->ClearRequest(*reinterpret_cast<unsigned __int16 *>(qryData), ownerSerial);
+    table->ClearRequest(qryData.wInx, pLoadData->dwBuyer);
   }
 }
 
-void CUnmannedTraderController::CompleteBuy(unsigned __int8 byRet, char *pLoadData)
+void CUnmannedTraderController::CompleteBuy(unsigned __int8 byRet, _qry_case_unmandtrader_buy_update_wait *pLoadData)
 {
   CUnmannedTraderUserInfoTable *table = CUnmannedTraderUserInfoTable::Instance();
-  table->CompleteBuy(
-    byRet,
-    reinterpret_cast<_qry_case_unmandtrader_buy_update_wait *>(pLoadData),
-    &m_kTradeInfo);
+  table->CompleteBuy(byRet, pLoadData, &m_kTradeInfo);
 }
 
-void CUnmannedTraderController::CompleteBuyRollBack(unsigned __int8 byRet, char *pLoadData)
+void CUnmannedTraderController::CompleteBuyRollBack(
+  unsigned __int8 byRet,
+  _qry_case_unmandtrader_buy_update_rollback *pLoadData)
 {
-  for (int j = 0; j < static_cast<unsigned __int8>(pLoadData[10]); ++j)
+  (void)byRet;
+
+  for (int j = 0; j < pLoadData->byNum; ++j)
   {
-    const char *result = pLoadData[12 * j + 12] ? "Fail" : "Success";
+    const char *result = pLoadData->List[j].byProcRet ? "Fail" : "Success";
     Log(
       "CUnmannedTraderController::CompleteBuyRollBack( BYTE byRet, char * pLoadData )\r\n"
       "\t\tType(%u) Regist Serial(%u), Old State(%u) wInx(%u) Race(%u) BuyerSerial(%u) RollBack %s\r\n",
-      static_cast<unsigned __int8>(pLoadData[9]),
-      *reinterpret_cast<unsigned int *>(&pLoadData[12 * j + 16]),
-      static_cast<unsigned __int8>(pLoadData[12 * j + 20]),
-      *reinterpret_cast<unsigned __int16 *>(pLoadData),
-      static_cast<unsigned __int8>(pLoadData[8]),
-      *reinterpret_cast<unsigned int *>(pLoadData + 4),
+      pLoadData->byType,
+      pLoadData->List[j].dwRegistSerial,
+      pLoadData->List[j].byOldState,
+      pLoadData->wInx,
+      pLoadData->byRace,
+      pLoadData->dwBuyer,
       result);
   }
 }
 
-void CUnmannedTraderController::ComleteLazyClean(char *pData)
+void CUnmannedTraderController::ComleteLazyClean(_qry_case_unmandtrader_lazyclean_flags *pData)
 {
   m_kLazyCleaner.CompleteUpdateClear(pData);
 }
 
-void CUnmannedTraderController::CompleteBuyComplete(char *pData)
+void CUnmannedTraderController::CompleteBuyComplete(_qry_case_unmandtrader_buy_update_complete *pData)
 {
-  if (!pData[9])
+  if (!pData->bAllSuccess)
   {
     Log(
       "CUnmannedTraderController::CompleteBuyRollBack( BYTE byRet, char * pLoadData )\r\n"
       "\t\tType(%u) wInx(%u) Race(%u) BuyerSerial(%u)\r\n",
-      static_cast<unsigned __int8>(pData[10]),
-      *reinterpret_cast<unsigned __int16 *>(pData),
-      static_cast<unsigned __int8>(pData[8]),
-      *reinterpret_cast<unsigned int *>(pData + 4));
-    for (int j = 0; j < static_cast<unsigned __int8>(pData[11]); ++j)
+      pData->byType,
+      pData->wInx,
+      pData->byRace,
+      pData->dwBuyer);
+    for (int j = 0; j < pData->byNum; ++j)
     {
-      if (static_cast<unsigned __int8>(pData[16 * j + 13]) != 255 && pData[16 * j + 12])
+      const _qry_case_unmandtrader_buy_update_complete::__list &entry = pData->List[j];
+      if (entry.byProcUpdate != 255 && entry.byProcRet)
       {
         Log(
           "\t\t(%d)Nth Regist Serial(%u) dwSeller(%u) UpdateState(%u) byProcUpdate(%u) DB Error!\r\n",
           j,
-          *reinterpret_cast<unsigned int *>(&pData[16 * j + 20]),
-          *reinterpret_cast<unsigned int *>(&pData[16 * j + 16]),
-          static_cast<unsigned __int8>(pData[16 * j + 24]),
-          static_cast<unsigned __int8>(pData[16 * j + 13]));
+          entry.dwRegistSerial,
+          entry.dwSeller,
+          entry.byUpdateState,
+          entry.byProcUpdate);
       }
     }
   }
 }
 
-void CUnmannedTraderController::CompleteLogInCompete(char *pData)
+void CUnmannedTraderController::CompleteLogInCompete(_qry_case_unmandtrader_log_in_proc_update_complete *pData)
 {
-  if (!pData[8])
+  if (!pData->bAllSuccess)
   {
     Log(
       "CUnmannedTraderController::CompleteLogInCompete( BYTE byRet, char * pLoadData )\r\n"
       "\t\tType(%u) wInx(%u) dwSeller(%u)\r\n",
-      static_cast<unsigned __int8>(pData[9]),
-      *reinterpret_cast<unsigned __int16 *>(pData),
-      *reinterpret_cast<unsigned int *>(pData + 4));
-    for (int j = 0; j < *reinterpret_cast<unsigned __int16 *>(pData + 10); ++j)
+      pData->byType,
+      pData->wInx,
+      pData->dwSeller);
+    for (int j = 0; j < pData->wNum; ++j)
     {
-      if (static_cast<unsigned __int8>(pData[16 * j + 13]) != 255 && pData[16 * j + 12])
+      const _qry_case_unmandtrader_log_in_proc_update_complete::__list &entry = pData->List[j];
+      if (entry.byProcUpdate != 255 && entry.byProcRet)
       {
         Log(
           "\t\t(%d)Nth Regist Serial(%u) dwBuyer(%u) UpdateState(%u) byProcUpdate(%u) DB Error!\r\n",
           j,
-          *reinterpret_cast<unsigned int *>(&pData[16 * j + 20]),
-          *reinterpret_cast<unsigned int *>(&pData[16 * j + 16]),
-          static_cast<unsigned __int8>(pData[16 * j + 24]),
-          static_cast<unsigned __int8>(pData[16 * j + 13]));
+          entry.dwRegistSerial,
+          entry.dwBuyer,
+          entry.byUpdateState,
+          entry.byProcUpdate);
       }
     }
   }
 }
 
-void CUnmannedTraderController::CompleteReRegist(char *pLoadData)
+void CUnmannedTraderController::CompleteReRegist(_qry_case_unmandtrader_re_registsingleitem *pLoadData)
 {
   CUnmannedTraderUserInfoTable *table = CUnmannedTraderUserInfoTable::Instance();
   table->CompleteReRegist(pLoadData);
 }
 
-void CUnmannedTraderController::CompleteUpdateCheatRegistTime(char *pLoadData)
+void CUnmannedTraderController::CompleteUpdateCheatRegistTime(
+  _qry_case_unmandtrader_cheat_updateregisttime *pLoadData)
 {
-  unsigned __int8 *data = reinterpret_cast<unsigned __int8 *>(pLoadData);
-  if (*reinterpret_cast<unsigned __int16 *>(pLoadData + 2) < 0x9E4u && data[1])
+  if (pLoadData->wInx < 0x9E4u && pLoadData->byNum)
   {
     CUnmannedTraderUserInfoTable *table = CUnmannedTraderUserInfoTable::Instance();
     table->CompleteUpdateCheatRegistTime(pLoadData);
     CUnmannedTraderScheduler *scheduler = CUnmannedTraderScheduler::Instance();
     scheduler->CheatPushLoad();
 
-    CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, *reinterpret_cast<unsigned int *>(data + 4));
+    CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, pLoadData->dwOwnerSerial);
     if (player && player->m_bOper)
     {
       char buffer[260]{};
-      sprintf(buffer, "Cnt : %u", data[1]);
+      sprintf_s(buffer, "Cnt : %u", pLoadData->byNum);
       player->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, buffer, 0xFFu, nullptr);
-      sprintf(buffer, "th  serial  state  ret");
+      sprintf_s(buffer, "th  serial  state  ret");
       player->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, buffer, 0xFFu, nullptr);
-      for (unsigned __int8 j = 0; j < data[1]; ++j)
+      for (unsigned __int8 j = 0; j < pLoadData->byNum; ++j)
       {
-        sprintf(
+        sprintf_s(
           buffer,
           " %u    %u       %u     %u",
           j,
-          *reinterpret_cast<unsigned int *>(&data[8 * j + 12]),
-          static_cast<unsigned __int8>(data[8 * j + 9]),
-          static_cast<unsigned __int8>(data[8 * j + 8]));
+          pLoadData->List[j].dwRegistSerial,
+          pLoadData->List[j].byState,
+          pLoadData->List[j].byProcRet);
         player->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, buffer, 0xFFu, nullptr);
       }
     }
   }
 }
 
-void CUnmannedTraderController::CompleteReRegistRollBack(char *pData)
+void CUnmannedTraderController::CompleteReRegistRollBack(
+  _qry_case_unmandtrader_re_registsingleitem_roll_back *pData)
 {
-  unsigned __int8 *data = reinterpret_cast<unsigned __int8 *>(pData);
   CUnmannedTraderUserInfoTable *table = CUnmannedTraderUserInfoTable::Instance();
-  table->CompleteReRegistRollBack(
-    *reinterpret_cast<unsigned __int16 *>(data + 2),
-    *reinterpret_cast<unsigned int *>(data + 8),
-    pData);
+  table->CompleteReRegistRollBack(pData);
 }

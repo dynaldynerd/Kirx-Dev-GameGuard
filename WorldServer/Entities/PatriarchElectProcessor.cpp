@@ -21,6 +21,7 @@
 #include "pt_result_appoint_zocl.h"
 #include "pt_result_code_zocl.h"
 #include "qry_case_request_refund.h"
+#include "qry_case_candidate_scalar_payloads.h"
 #include "sel_patriarch_elect_state.h"
 #include "DqsDbStructs.h"
 
@@ -462,9 +463,14 @@ char PatriarchElectProcessor::Doit(Cmd eCmd, CPlayer *pOne, char *pdata)
 
 void PatriarchElectProcessor::PushDQSCheckInvalidChar()
 {
-  char queryData[1]{};
-  queryData[0] = static_cast<char>(_eProcessType);
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x8Au, queryData, 1);
+  _qry_case_check_invalid_character queryData{};
+  queryData.byProc = static_cast<unsigned __int8>(_eProcessType);
+  g_Main.PushDQSData(
+    0xFFFFFFFF,
+    nullptr,
+    0x8Au,
+    reinterpret_cast<char *>(&queryData),
+    static_cast<int>(queryData.size()));
 }
 
 void PatriarchElectProcessor::SendMsg_ResultCode(unsigned int n, unsigned __int8 byCode)

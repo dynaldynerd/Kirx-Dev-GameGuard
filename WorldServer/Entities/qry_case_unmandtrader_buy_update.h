@@ -2,6 +2,8 @@
 
 #include "IdaCompat.h"
 
+#pragma pack(push, 8)
+
 struct _qry_case_unmandtrader_buy_update_wait
 {
   struct __list
@@ -34,6 +36,8 @@ struct _qry_case_unmandtrader_buy_update_wait
   unsigned __int8 byNum;
   __list List[10];
 };
+static_assert(sizeof(_qry_case_unmandtrader_buy_update_wait::__list) == 96);
+static_assert(sizeof(_qry_case_unmandtrader_buy_update_wait) == 992);
 
 struct _qry_case_unmandtrader_buy_update_complete
 {
@@ -54,6 +58,8 @@ struct _qry_case_unmandtrader_buy_update_complete
   unsigned __int8 byNum;
   __list List[10];
 };
+static_assert(sizeof(_qry_case_unmandtrader_buy_update_complete::__list) == 16);
+static_assert(sizeof(_qry_case_unmandtrader_buy_update_complete) == 172);
 
 struct _qry_case_unmandtrader_buy_update_rollback
 {
@@ -71,4 +77,8 @@ struct _qry_case_unmandtrader_buy_update_rollback
   unsigned __int8 byNum;
   __list List[10];
 };
+static_assert(sizeof(_qry_case_unmandtrader_buy_update_rollback::__list) == 12);
+static_assert(sizeof(_qry_case_unmandtrader_buy_update_rollback) == 132);
+
+#pragma pack(pop)
 

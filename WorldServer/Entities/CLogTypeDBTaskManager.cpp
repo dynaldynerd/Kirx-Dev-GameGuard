@@ -14,6 +14,7 @@
 #include "CNationSettingManager.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
+#include "lt_qry_case_unmandtrader_select_list.h"
 
 CLogTypeDBTaskManager *CLogTypeDBTaskManager::ms_Instance;
 
@@ -527,7 +528,10 @@ void CLogTypeDBTaskManager::DBProcess()
       {
         char *data = pTask->GetData();
         CUnmannedTraderController *controller = CUnmannedTraderController::Instance();
-        dbRet = controller->SelectSearchList(data, m_pkWorldDB, &procRet);
+        dbRet = controller->SelectSearchList(
+          reinterpret_cast<_lt_qry_case_unmandtrader_select_list *>(data),
+          m_pkWorldDB,
+          &procRet);
       }
       else if (queryType == 2)
       {
@@ -586,7 +590,10 @@ void CLogTypeDBTaskManager::ProcComplete()
       const unsigned __int8 procRet = pTask->GetProcRet();
       const unsigned __int8 dbRet = pTask->GetDBRet();
       CUnmannedTraderController *controller = CUnmannedTraderController::Instance();
-      controller->CompleteSelectSearchList(dbRet, procRet, data);
+      controller->CompleteSelectSearchList(
+        dbRet,
+        procRet,
+        reinterpret_cast<_lt_qry_case_unmandtrader_select_list *>(data));
     }
 
     m_kPool.SetEmpty(pTask, m_pkLogger);

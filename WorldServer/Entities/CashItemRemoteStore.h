@@ -36,6 +36,8 @@ struct _cash_discount_ini_
   int m_byHour[3];
   int m_byMinute[3];
   int m_cdeTime[3];
+
+  _cash_discount_ini_();
 };
 
 struct  _cash_discount_
@@ -46,6 +48,8 @@ struct  _cash_discount_
   CLogFile m_cde_log;
   int m_cde_inform_before[2];
   _cash_discount_ini_ m_ini;
+
+  _cash_discount_();
 };
 
 struct _cash_event_ini
@@ -71,6 +75,8 @@ struct _cash_event_ini
   unsigned __int8 m_byDCK;
   unsigned __int8 m_byLimited_sale_num;
   _cash_limited_sale m_Limited_sale[20];
+
+  _cash_event_ini();
 };
 
 struct  _cash_event
@@ -81,6 +87,8 @@ struct  _cash_event
   CLogFile m_event_log;
   int m_event_inform_before[2];
   _cash_event_ini m_ini;
+
+  _cash_event();
 };
 
 struct _con_event_ini
@@ -112,6 +120,8 @@ struct  _con_event_
   bool m_bConEvent;
   _con_event_ini m_ini;
   _cash_event_time m_eventtime;
+
+  _con_event_();
 };
 
 struct _cash_lim_sale

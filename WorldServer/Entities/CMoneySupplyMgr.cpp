@@ -5,6 +5,7 @@
 #include <new>
 #include <mmsystem.h>
 
+#include "Packet/ZoneWebPacket.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
@@ -40,13 +41,17 @@ void CMoneySupplyMgr::Initialize()
 
 void CMoneySupplyMgr::SendMsg_MoneySupplyDataToWeb(_MONEY_SUPPLY_DATA *pMSData)
 {
-  char packet[0x4CC]{};
-  memcpy_0(packet, pMSData, sizeof(packet));
+  _money_supply_gatering_inform_zowb packet{};
+  memcpy_0(&packet, pMSData, sizeof(packet));
 
   unsigned __int8 type[2]{51, 20};
   if (g_Main.m_bConnectedWebAgentServer)
   {
-    g_Network.m_pProcess[2]->LoadSendMsg(g_Main.m_byWebAgentServerNetInx, type, packet, sizeof(packet));
+    g_Network.m_pProcess[2]->LoadSendMsg(
+      g_Main.m_byWebAgentServerNetInx,
+      type,
+      reinterpret_cast<char *>(&packet),
+      static_cast<unsigned __int16>(sizeof(packet)));
   }
 }
 

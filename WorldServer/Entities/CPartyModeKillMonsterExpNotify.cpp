@@ -5,6 +5,7 @@
 #include "CNetProcess.h"
 #include "CPartyPlayer.h"
 #include "GlobalObjects.h"
+#include "Packet/ZoneClientPacket.h"
 
 CPartyModeKillMonsterExpNotify::CExpInfo::CExpInfo()
 {
@@ -24,11 +25,15 @@ void CPartyModeKillMonsterExpNotify::CExpInfo::Notify()
 {
   if (m_pkMember && m_pkMember->m_bOper && m_fExp != 0.0f)
   {
-    char msg[4]{};
-    *reinterpret_cast<float *>(msg) = m_fExp;
+    _party_mode_monsterkillexp_inform_zocl msg{};
+    msg.fExp = m_fExp;
 
     unsigned __int8 type[2]{11, 30};
-    g_Network.m_pProcess[0]->LoadSendMsg( m_pkMember->m_ObjID.m_wIndex, type, msg, 4u);
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      m_pkMember->m_ObjID.m_wIndex,
+      type,
+      reinterpret_cast<char *>(&msg),
+      static_cast<unsigned __int16>(sizeof(msg)));
   }
 }
 

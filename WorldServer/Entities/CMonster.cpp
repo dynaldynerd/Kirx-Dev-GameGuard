@@ -30,6 +30,7 @@
 #include "CMapData.h"
 #include "CGuardTower.h"
 #include "CTrap.h"
+#include "Packet/ZoneClientPacket.h"
 #include "monster_fld.h"
 
 #include <cstring>
@@ -863,7 +864,9 @@ int CMonster::IsValidPlayer()
     return 0;
   }
 
-  if (m_pTargetChar->m_ObjID.m_byID || !BYTE2(m_pTargetChar[1].m_fCurPos[2]))
+  const bool targetInGuildBattle =
+    !m_pTargetChar->m_ObjID.m_byID && static_cast<CPlayer *>(m_pTargetChar)->m_bInGuildBattle;
+  if (m_pTargetChar->m_ObjID.m_byID || !targetInGuildBattle)
   {
     if (m_pTargetChar->m_ObjID.m_byID == 3)
     {
@@ -902,7 +905,7 @@ char CMonster::IsBeDamagedAble(CCharacter *pAtter)
   const unsigned __int8 attackerId = pAtter->m_ObjID.m_byID;
   if (!attackerId)
   {
-    if (BYTE2(pAtter[1].m_fCurPos[2]))
+    if (static_cast<CPlayer *>(pAtter)->m_bInGuildBattle)
     {
       return 0;
     }
@@ -1421,17 +1424,17 @@ void CMonster::ChangeApparition(bool bApparition, unsigned int dwAfterKillTerm)
 
 void CMonster::SendMsg_Change_MonsterTarget(CCharacter *pChar)
 {
-  unsigned int msg[2];
-  msg[0] = m_dwObjSerial;
-  msg[1] = static_cast<unsigned int>(-1);
+  _monster_change_target_zocl msg{};
+  msg.dwMonsterSerial = m_dwObjSerial;
+  msg.dwTargetSerial = static_cast<unsigned int>(-1);
   if (pChar && !pChar->m_ObjID.m_byID)
   {
-    msg[1] = pChar->m_dwObjSerial;
+    msg.dwTargetSerial = pChar->m_dwObjSerial;
   }
   unsigned __int8 type[2];
   type[0] = 11;
   type[1] = static_cast<unsigned __int8>(-103);
-  CircleReport(type, reinterpret_cast<char *>(msg), 8, false);
+  CircleReport(type, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), false);
 }
 
 bool CMonster::CheckEventEmotionPresentation(unsigned __int8 byCheckType, CCharacter *pTarget)
@@ -2031,50 +2034,49 @@ void CMonster::SendMsg_Move()
 
 void CMonster::SendMsg_Create()
 {
-  unsigned __int8 msg[17];
-  *reinterpret_cast<unsigned __int16 *>(msg) = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
-  *reinterpret_cast<unsigned __int16 *>(msg + 2) = m_ObjID.m_wIndex;
-  *reinterpret_cast<unsigned int *>(msg + 4) = m_dwObjSerial;
-  __int16 *pos = reinterpret_cast<__int16 *>(msg + 8);
-  FloatToShort(m_fCurPos, pos, 3);
-  msg[14] = GetYAngleByte();
-  *reinterpret_cast<unsigned __int16 *>(msg + 15) = GetMonStateInfo();
+  _monster_create_zocl msg{};
+  msg.wRecIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
+  msg.wIndex = m_ObjID.m_wIndex;
+  msg.dwSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, msg.zPos, 3);
+  msg.bYAngle = GetYAngleByte();
+  msg.wStateInfo = GetMonStateInfo();
   unsigned __int8 type[2];
   type[0] = 3;
   type[1] = 16;
-  CircleReport(type, reinterpret_cast<char *>(msg), 17, 0);
+  CircleReport(type, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), 0);
 }
 
 void CMonster::SendMsg_Destroy(unsigned __int8 byDestroyCode)
 {
-  unsigned __int8 msg[7];
-  *reinterpret_cast<unsigned __int16 *>(msg) = m_ObjID.m_wIndex;
-  *reinterpret_cast<unsigned int *>(msg + 2) = m_dwObjSerial;
-  msg[6] = byDestroyCode;
+  _monster_destroy_zocl msg{};
+  msg.wIndex = m_ObjID.m_wIndex;
+  msg.dwSerial = m_dwObjSerial;
+  msg.byDestroyCode = static_cast<char>(byDestroyCode);
   unsigned __int8 type[2];
   type[0] = 3;
   type[1] = 24;
-  CircleReport(type, reinterpret_cast<char *>(msg), 7, 0);
+  CircleReport(type, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), 0);
 }
 
 void CMonster::SendMsg_Change_MonsterState()
 {
-  char payload[6]{};
-  *reinterpret_cast<unsigned int *>(payload) = m_dwObjSerial;
-  *reinterpret_cast<unsigned __int16 *>(payload + 4) = static_cast<unsigned __int16>(GetMonStateInfo());
+  _monster_change_state_zocl msg{};
+  msg.dwSerial = m_dwObjSerial;
+  msg.wMonsterState = static_cast<unsigned __int16>(GetMonStateInfo());
 
   unsigned __int8 type[2] = {11, static_cast<unsigned __int8>(-105)};
-  CircleReport(type, payload, 6, false);
+  CircleReport(type, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), false);
 }
 
 void CMonster::SendMsg_Change_MonsterRotate()
 {
-  char payload[5]{};
-  *reinterpret_cast<unsigned int *>(payload) = m_dwObjSerial;
-  payload[4] = static_cast<char>(GetYAngleByte());
+  _monster_change_rotate_zocl msg{};
+  msg.dwSerial = m_dwObjSerial;
+  msg.byAngle = static_cast<char>(GetYAngleByte());
 
   unsigned __int8 type[2] = {11, static_cast<unsigned __int8>(-104)};
-  CircleReport(type, payload, 5, false);
+  CircleReport(type, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), false);
 }
 
 void CMonster::SendMsg_FixPosition(int n)
@@ -2149,37 +2151,39 @@ void CMonster::SendMsg_Assist_Skill(
   {
     if (nEffectCode == 2)
     {
-      unsigned __int8 msg[18];
-      msg[0] = static_cast<unsigned __int8>(byErrCode);
-      msg[1] = m_ObjID.m_byID;
-      *reinterpret_cast<unsigned __int16 *>(msg + 2) = m_ObjID.m_wIndex;
-      *reinterpret_cast<unsigned int *>(msg + 4) = m_dwObjSerial;
-      msg[8] = pDst->m_ObjID.m_byID;
-      *reinterpret_cast<unsigned __int16 *>(msg + 9) = pDst->m_ObjID.m_wIndex;
-      *reinterpret_cast<unsigned int *>(msg + 11) = pDst->m_dwObjSerial;
-      *reinterpret_cast<unsigned __int16 *>(msg + 15) = static_cast<unsigned __int16>(pSkill_fld->m_dwIndex);
+      _class_skill_result_other_zocl msg{};
+      msg.byRetCode = byErrCode;
+      msg.idPerformer.byID = m_ObjID.m_byID;
+      msg.idPerformer.wIndex = m_ObjID.m_wIndex;
+      msg.idPerformer.dwSerial = m_dwObjSerial;
+      msg.idDster.byID = pDst->m_ObjID.m_byID;
+      msg.idDster.wIndex = pDst->m_ObjID.m_wIndex;
+      msg.idDster.dwSerial = pDst->m_dwObjSerial;
+      msg.wSkillIndex = static_cast<unsigned __int16>(pSkill_fld->m_dwIndex);
+      msg.byAttackSerial = 0;
       unsigned __int8 type[2];
       type[0] = 17;
       type[1] = 9;
-      CircleReport(type, reinterpret_cast<char *>(msg), 18, 0);
+      CircleReport(type, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), 0);
     }
     return;
   }
 
-  unsigned __int8 msg[18];
-  msg[0] = static_cast<unsigned __int8>(byErrCode);
-  msg[1] = m_ObjID.m_byID;
-  *reinterpret_cast<unsigned __int16 *>(msg + 2) = m_ObjID.m_wIndex;
-  *reinterpret_cast<unsigned int *>(msg + 4) = m_dwObjSerial;
-  msg[8] = pDst->m_ObjID.m_byID;
-  *reinterpret_cast<unsigned __int16 *>(msg + 9) = pDst->m_ObjID.m_wIndex;
-  *reinterpret_cast<unsigned int *>(msg + 11) = pDst->m_dwObjSerial;
-  msg[15] = static_cast<unsigned __int8>(pSkill_fld->m_dwIndex);
-  msg[16] = static_cast<unsigned __int8>(nSFLv);
+  _skill_result_other_zocl msg{};
+  msg.byRetCode = byErrCode;
+  msg.idPerformer.byID = m_ObjID.m_byID;
+  msg.idPerformer.wIndex = m_ObjID.m_wIndex;
+  msg.idPerformer.dwSerial = m_dwObjSerial;
+  msg.idDster.byID = pDst->m_ObjID.m_byID;
+  msg.idDster.wIndex = pDst->m_ObjID.m_wIndex;
+  msg.idDster.dwSerial = pDst->m_dwObjSerial;
+  msg.bySkillIndex = static_cast<char>(pSkill_fld->m_dwIndex);
+  msg.bySkillLv = nSFLv;
+  msg.byAttackSerial = 0;
   unsigned __int8 type[2];
   type[0] = 17;
   type[1] = 6;
-  CircleReport(type, reinterpret_cast<char *>(msg), 18, 0);
+  CircleReport(type, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), 0);
 }
 
 void CMonster::SendMsg_Assist_Force(
@@ -2201,20 +2205,21 @@ void CMonster::SendMsg_Assist_Force(
     return;
   }
 
-  unsigned __int8 msg[18];
-  msg[0] = static_cast<unsigned __int8>(byErrCode);
-  msg[1] = static_cast<unsigned __int8>(pForc_fld->m_dwIndex);
-  msg[2] = static_cast<unsigned __int8>(nSFLv);
-  msg[3] = m_ObjID.m_byID;
-  *reinterpret_cast<unsigned __int16 *>(msg + 4) = m_ObjID.m_wIndex;
-  *reinterpret_cast<unsigned int *>(msg + 6) = m_dwObjSerial;
-  msg[10] = pDst->m_ObjID.m_byID;
-  *reinterpret_cast<unsigned __int16 *>(msg + 11) = pDst->m_ObjID.m_wIndex;
-  *reinterpret_cast<unsigned int *>(msg + 13) = pDst->m_dwObjSerial;
+  _force_result_other_zocl msg{};
+  msg.byRetCode = byErrCode;
+  msg.byForceIndex = static_cast<char>(pForc_fld->m_dwIndex);
+  msg.byForceLv = nSFLv;
+  msg.idPerformer.byID = m_ObjID.m_byID;
+  msg.idPerformer.wIndex = m_ObjID.m_wIndex;
+  msg.idPerformer.dwSerial = m_dwObjSerial;
+  msg.idDster.byID = pDst->m_ObjID.m_byID;
+  msg.idDster.wIndex = pDst->m_ObjID.m_wIndex;
+  msg.idDster.dwSerial = pDst->m_dwObjSerial;
+  msg.byAttackSerial = 0;
   unsigned __int8 type[2];
   type[0] = 17;
   type[1] = 3;
-  CircleReport(type, reinterpret_cast<char *>(msg), 18, 0);
+  CircleReport(type, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), 0);
 }
 
 void CMonster::SendMsg_Emotion_Presentation(
@@ -2223,25 +2228,30 @@ void CMonster::SendMsg_Emotion_Presentation(
   unsigned __int16 wRandIndex,
   unsigned int nSendTargetIndex)
 {
-  unsigned __int8 msg[9];
-  *reinterpret_cast<unsigned int *>(msg) = m_dwObjSerial;
-  msg[4] = bylhw;
-  *reinterpret_cast<unsigned __int16 *>(msg + 5) = wSubIndex;
-  *reinterpret_cast<unsigned __int16 *>(msg + 7) = wRandIndex;
+  _monster_present_emotion_zocl msg{};
+  msg.dwSerial = m_dwObjSerial;
+  msg.byType = static_cast<char>(bylhw);
+  msg.wIndex = wSubIndex;
+  msg.wRIndex = wRandIndex;
+
   unsigned __int8 type[2];
   type[0] = 11;
   type[1] = static_cast<unsigned __int8>(-102);
   if (nSendTargetIndex == static_cast<unsigned int>(-1))
   {
-    CircleReport(type, reinterpret_cast<char *>(msg), 9, 0);
+    CircleReport(
+      type,
+      reinterpret_cast<char *>(&msg),
+      static_cast<unsigned __int16>(sizeof(msg)),
+      0);
   }
   else
   {
     g_Network.m_pProcess[0]->LoadSendMsg(
       static_cast<unsigned int>(nSendTargetIndex),
       type,
-      reinterpret_cast<char *>(msg),
-      9u);
+      reinterpret_cast<char *>(&msg),
+      static_cast<unsigned __int16>(sizeof(msg)));
   }
 }
 

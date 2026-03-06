@@ -103,6 +103,7 @@
 #include "WorldServerUtil.h"
 #include "NetCheckPackets.h"
 #include "GlobalObjectDefs.h"
+#include "Packet/ZoneClientPacket.h"
 
 #include <ctime>
 #include <mmsystem.h>
@@ -158,31 +159,31 @@ _UnitKeyItem_fld *gGetUnitKeyMatchFrame(unsigned __int8 byFrameCode)
 
 void CPlayer::SendMsg_UnitReturnResult(char byRetCode, unsigned int dwPayDalant)
 {
-  char payload[9]{};
-  payload[0] = byRetCode;
-  *reinterpret_cast<unsigned int *>(payload + 1) = dwPayDalant;
-  *reinterpret_cast<unsigned int *>(payload + 5) = this->m_Param.GetDalant();
+  _unit_return_result_zocl packet{};
+  packet.byRetCode = byRetCode;
+  packet.dwPayDalant = dwPayDalant;
+  packet.dwNewDalant = this->m_Param.GetDalant();
 
   unsigned __int8 type[2] = {23, 16};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 9u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_UnitBulletReplaceResult(char byRetCode)
 {
-  char payload[1]{};
-  payload[0] = byRetCode;
+  _unit_bullet_replace_result_zocl packet{};
+  packet.byRetCode = byRetCode;
 
   unsigned __int8 type[2] = {23, 24};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_UnitDestroy(char bySlotIndex)
 {
-  char payload[1]{};
-  payload[0] = bySlotIndex;
+  _unit_destroy_inform_zocl packet{};
+  packet.bySlotIndex = bySlotIndex;
 
   unsigned __int8 type[2] = {23, 26};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::_UnitDestroy(unsigned __int8 byUnitSlot)
@@ -273,7 +274,7 @@ void CPlayer::Emb_RidindUnit(bool bRiding, CParkingUnit *pCreateUnit)
     m_EP.SetLock(false);
 
     _STORAGE_LIST::_db_con *weapon = m_Param.m_dbEquip.m_pStorageList + 6;
-    if (weapon->m_bLoad && weapon->m_byTableCode == 6)
+    if (weapon->m_bLoad)
     {
       m_pmWpn.FixWeapon(weapon);
     }
@@ -291,19 +292,16 @@ void CPlayer::Emb_RidindUnit(bool bRiding, CParkingUnit *pCreateUnit)
 
 void CPlayer::SendMsg_UnitRideChange(bool bTake, CParkingUnit *pUnit)
 {
-  char payload[0x13]{};
-  *reinterpret_cast<unsigned __int16 *>(payload) = this->m_ObjID.m_wIndex;
-  *reinterpret_cast<unsigned int *>(payload + 2) = this->m_dwObjSerial;
-  *reinterpret_cast<unsigned __int16 *>(payload + 6) = this->GetVisualVer();
-  payload[8] = bTake ? 1 : 0;
-  *reinterpret_cast<unsigned int *>(payload + 9) = pUnit->m_dwObjSerial;
-
-  short shortPos[3]{};
-  FloatToShort(this->m_fCurPos, shortPos, 3);
-  memcpy_0(payload + 13, shortPos, sizeof(shortPos));
+  _other_unit_ride_change_zocl payload{};
+  payload.wIndex = this->m_ObjID.m_wIndex;
+  payload.dwSerial = this->m_dwObjSerial;
+  payload.wEquipVer = this->GetVisualVer();
+  payload.bTake = bTake;
+  payload.dwUnitSerial = pUnit->m_dwObjSerial;
+  FloatToShort(this->m_fCurPos, payload.zNewPos, 3);
 
   unsigned __int8 type[2] = {3, 35};
-  this->CircleReport(type, payload, 19, false);
+  this->CircleReport(type, reinterpret_cast<char *>(&payload), static_cast<unsigned __int16>(sizeof(payload)), false);
 }
 
 void CPlayer::SendMsg_UnitFrameBuyResult(char byRetCode, char byFrameCode, char byUnitSlotIndex, unsigned __int16 wKeyIndex, unsigned __int16 wKeySerial, unsigned int *pdwConsumMoney)
@@ -452,27 +450,28 @@ void CPlayer::SendMsg_UnitDeliveryResult(char byRetCode, char bySlotIndex, unsig
 
 void CPlayer::SendMsg_UnitTakeResult(char byRetCode)
 {
+  _unit_take_result_zocl packet{};
+  packet.byRetCode = byRetCode;
   unsigned __int8 type[2] = {23, 18};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &byRetCode, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_UnitLeaveResult(char byRetCode)
 {
+  _unit_leave_result_zocl packet{};
+  packet.byRetCode = byRetCode;
   unsigned __int8 type[2] = {23, 20};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &byRetCode, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_AlterUnitHPInform(char bySlotIndex, unsigned int dwGauge)
 {
-  char szMsg; // [rsp+34h] [rbp-44h] BYREF
-  unsigned int v7; // [rsp+35h] [rbp-43h]
-  unsigned __int8 pbyType[36]; // [rsp+54h] [rbp-24h] BYREF
+  _alter_unit_hp_inform_zocl packet{};
+  packet.bySlotIndex = bySlotIndex;
+  packet.dwLeftHP = dwGauge;
 
-  szMsg = bySlotIndex;
-  v7 = dwGauge;
-  pbyType[0] = 5;
-  pbyType[1] = 23;
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, &szMsg, 5u);
+  unsigned __int8 pbyType[2] = {5, 23};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 float CPlayer::GetAddSpeed()
@@ -542,12 +541,16 @@ void CPlayer::CheckUnitCutTime()
 
 void CPlayer::SendMsg_AlterBooster()
 {
-  char payload[3]{};
-  payload[0] = static_cast<char>(m_pUsingUnit->bySlotIndex);
-  *reinterpret_cast<unsigned __int16 *>(&payload[1]) = m_pUsingUnit->wBooster;
+  _unit_booster_charge_inform_zocl packet{};
+  packet.bySlotIndex = static_cast<char>(m_pUsingUnit->bySlotIndex);
+  packet.wBoosterGauge = m_pUsingUnit->wBooster;
 
   unsigned __int8 type[2]{23, 25};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, payload, sizeof(payload));
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
 }
 
 void CPlayer::AutoCharge_Booster()
@@ -747,13 +750,12 @@ void CPlayer::pc_UnitReturnRequest()
     this->m_pParkingUnit = nullptr;
   }
 
-  char msg[9] = {};
-  msg[0] = static_cast<char>(result);
-  memcpy_0(msg + 1, &pullFee, sizeof(pullFee));
-  const unsigned int dalant = this->m_Param.GetDalant();
-  memcpy_0(msg + 5, &dalant, sizeof(dalant));
+  _unit_return_result_zocl msg{};
+  msg.byRetCode = static_cast<char>(result);
+  msg.dwPayDalant = pullFee;
+  msg.dwNewDalant = this->m_Param.GetDalant();
   unsigned __int8 type[2] = {23, 16};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, msg, 9u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
 void CPlayer::pc_UnitBulletReplaceRequest(
@@ -784,9 +786,10 @@ void CPlayer::pc_UnitBulletReplaceRequest(
     this->m_pUserDB->Update_UnitData(bySlotIndex, unitData);
   }
 
-  char msg[1] = {static_cast<char>(result)};
+  _unit_bullet_replace_result_zocl msg{};
+  msg.byRetCode = static_cast<char>(result);
   unsigned __int8 type[2] = {23, 24};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, msg, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
 void CPlayer::pc_UnitFrameBuyRequest(unsigned __int8 byFrameCode, int bUseNPCLinkIntem)
@@ -1894,12 +1897,12 @@ void CPlayer::pc_UnitTakeRequest()
     {
       for (int index = 0; index < 4; ++index)
       {
-        void *historyEffect = m_Param.m_ppHistoryEffect[index];
+        _class_fld *historyEffect = *m_Param.m_ppHistoryEffect[index];
         if (!historyEffect)
         {
           break;
         }
-        if (*reinterpret_cast<int *>(reinterpret_cast<char *>(historyEffect) + 1436))
+        if (historyEffect->m_bUnitUsable)
         {
           canUseUnit = true;
           break;

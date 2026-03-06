@@ -12,6 +12,7 @@
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 #include "QuestHappenEvent_fld.h"
+#include "Packet/ZoneClientPacket.h"
 
 #include <cstring>
 #include <mmsystem.h>
@@ -165,20 +166,41 @@ void CQuestMgr::SendMsgToMaster_ReturnItemAfterQuest(
 
 void CQuestMgr::SendMsgToMaster_NoCompleteQuestFromNPC(char byQuestDBSlot)
 {
+  _quest_no_complete_from_npc_zocl msg{};
+  msg.byQuestDBSlot = byQuestDBSlot;
+
   unsigned __int8 pbyType[2]{24, 44};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_pMaster->m_ObjID.m_wIndex, pbyType, &byQuestDBSlot, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    m_pMaster->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CQuestMgr::SendMsgToMaster_NoHaveGiveItem(char byQuestDBSlot)
 {
+  _quest_no_have_give_item_zocl msg{};
+  msg.byQuestDBSlot = byQuestDBSlot;
+
   unsigned __int8 pbyType[2]{24, 47};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_pMaster->m_ObjID.m_wIndex, pbyType, &byQuestDBSlot, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    m_pMaster->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CQuestMgr::SendMsgToMaster_NoHaveReturnItem(char byQuestDBSlot)
 {
+  _quest_no_have_return_item_zocl msg{};
+  msg.byQuestDBSlot = byQuestDBSlot;
+
   unsigned __int8 pbyType[2]{24, 48};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_pMaster->m_ObjID.m_wIndex, pbyType, &byQuestDBSlot, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    m_pMaster->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void _quest_check_result::init()

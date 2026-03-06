@@ -14,7 +14,15 @@ struct _a_trade_reg_item_request_clzo;
 struct _unmannedtrader_buy_item_request_clzo;
 struct _unmannedtrader_re_regist_request_clzo;
 struct _unmannedtrader_search_list_request_clzo;
+struct _qry_case_unmandtrader_cheat_updateregisttime;
 struct _qry_case_unmandtrader_log_in_proc_update_complete;
+struct _qry_case_unmandtrader_cancelitem;
+struct _lt_qry_case_unmandtrader_select_list;
+struct _qry_case_unmandtrader_registsingleitem;
+struct _qry_case_unmandtrader_buy_get_info;
+struct _qry_case_unmandtrader_re_registsingleitem;
+struct _qry_case_unmandtrader_re_registsingleitem_roll_back;
+struct _qry_case_unmandtrader_update_reprice;
 
 class  CUnmannedTraderUserInfo
 {
@@ -122,7 +130,10 @@ public:
     _qry_case_unmandtrader_log_in_proc_update_complete *pkResult,
     CLogFile *pkLogger);
   char CheckIsUpdatedTaxRate(unsigned __int8 byTax, CLogFile *pkLogger);
-  void CompleteRegist(unsigned __int8 byRet, char *pLoadData, CLogFile *pkLogger);
+  void CompleteRegist(
+    unsigned __int8 byRet,
+    _qry_case_unmandtrader_registsingleitem *pLoadData,
+    CLogFile *pkLogger);
   bool CompleteRegistItem(
     unsigned int dwRegistSerial,
     unsigned __int16 dwItemSerial,
@@ -135,23 +146,29 @@ public:
     unsigned __int64 dwD,
     unsigned int dwU,
     bool bInserted);
-  void CompleteCancelRegist(unsigned __int8 byRet, char *pLoadData, CLogFile *pkLogger);
+  void CompleteCancelRegist(
+    unsigned __int8 byRet,
+    _qry_case_unmandtrader_cancelitem *pLoadData,
+    CLogFile *pkLogger);
   bool CompleteCancelRegistItem(
     unsigned int dwRegistSerial,
     unsigned __int16 dwItemSerial,
     CLogFile *pkLogger);
   void CompleteTimeOutClear(unsigned int dwRegistSerial, CLogFile *pkLogger);
-  void CompleteReprice(unsigned __int8 byRet, char *pLoadData, CLogFile *pkLogger);
+  void CompleteReprice(
+    unsigned __int8 byRet,
+    _qry_case_unmandtrader_update_reprice *pLoadData,
+    CLogFile *pkLogger);
   bool CompleteRepriceItem(unsigned int dwRegistSerial, unsigned __int16 dwItemSerial, unsigned int dwPrice);
-  void CompleteReRegist(char *pLoadData, CLogFile *pkLogger);
+  void CompleteReRegist(_qry_case_unmandtrader_re_registsingleitem *pLoadData, CLogFile *pkLogger);
   bool CompleteReRegistItem(
     unsigned int dwRegistSerial,
     unsigned __int16 dwItemSerial,
     unsigned int dwPrice,
     CLogFile *pkLogger,
     unsigned __int8 *pbyProcRet);
-  void CompleteUpdateCheatRegistTime(char *pLoadData);
-  void CompleteReRegistRollBack(char *pData, CLogFile *pkLogger);
+  void CompleteUpdateCheatRegistTime(_qry_case_unmandtrader_cheat_updateregisttime *pLoadData);
+  void CompleteReRegistRollBack(_qry_case_unmandtrader_re_registsingleitem_roll_back *pData, CLogFile *pkLogger);
   unsigned __int8 CheckSellComplete(
     CPlayer *pkSellPlayer,
     CPlayer *pkBuyer,
@@ -182,7 +199,10 @@ public:
     CLogFile *pkLogger,
     unsigned __int16 *wAddItemSerial);
   void NotifyRegistItem();
-  void SendRegistItemSuccessResult(unsigned int dwLeftDalant, unsigned __int16 wInx, char *pLoadData);
+  void SendRegistItemSuccessResult(
+    unsigned int dwLeftDalant,
+    unsigned __int16 wInx,
+    const _qry_case_unmandtrader_registsingleitem *pLoadData);
   void SendRegistItemErrorResult(
     unsigned __int16 wInx,
     char byRet,
@@ -218,7 +238,7 @@ public:
   const CUnmannedTraderRegistItemInfo *GetRegItemInfo();
   bool IsNull();
   void SendSearchErrorResult(unsigned __int16 wInx, char byRet);
-  void SendSearchResult(unsigned __int16 wInx, char *pLoadData);
+  void SendSearchResult(unsigned __int16 wInx, _lt_qry_case_unmandtrader_select_list *pLoadData);
   void LogOut(unsigned int dwSerial, CLogFile *pkLogger);
   bool CheatCancelRegist(unsigned __int8 byNth);
   bool CheatCancelRegistAll();

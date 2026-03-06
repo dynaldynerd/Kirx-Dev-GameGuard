@@ -4,19 +4,7 @@
 
 struct _PVP_ORDER_VIEW_DB_BASE;
 class CPlayer;
-
-#pragma pack(push, 1)
-struct  _pvp_order_view_inform_zocl
-{
-  int nKillCnt;
-  int nDeahtCnt;
-  long double dTodayPvpPoint;
-  long double dOriginalPvpPoint;
-
-  _pvp_order_view_inform_zocl();
-  int size() const;
-};
-#pragma pack(pop)
+struct _pvp_order_view_inform_zocl;
 
 /* 1794 */
 class CPvpOrderView

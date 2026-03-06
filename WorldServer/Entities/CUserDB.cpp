@@ -19,8 +19,6 @@
 #include "CNetworkEX.h"
 #include "add_char_result_zone.h"
 #include "alive_char_result_zocl.h"
-#include "enter_lobby_report_wrac.h"
-#include "enter_world_request_wrac.h"
 #include "enter_world_result_zone.h"
 #include "chat_lock_inform_zocl.h"
 #include "del_char_result_zone.h"
@@ -34,15 +32,16 @@
 #include "qry_sheet_reged.h"
 #include "reged_char_result_zone.h"
 #include "sel_char_result_zone.h"
-#include "select_avator_report_wrac.h"
 #include "server_notify_inform_zone.h"
 #include "log_change_class_after_init_class.h"
 #include "log_case_charselect.h"
-#include "wrac_packets.h"
 #include "qry_logout.h"
 #include "exit_alter_param.h"
 #include "RFEvent_ClassRefine.h"
 #include "CNetIndexList.h"
+#include "Packet/AccountZonePacket.h"
+#include "Packet/ZoneAccountPacket.h"
+#include "Packet/ZoneClientPacket.h"
 
 int CUserDB::s_nLoginNum;
 CLogFile CUserDB::s_logAvatorDB;
@@ -511,88 +510,88 @@ void CUserDB::SetRemainTime(int lRemainTime)
   m_BillingInfo.lRemainTime = lRemainTime;
 }
 
-void CUserDB::UILockInfo_Init(char *pMsg)
+void CUserDB::UILockInfo_Init(const _uilock_init_result_acwr *request)
 {
-  if (!pMsg)
+  if (!request)
   {
     return;
   }
 
-  char msg[2]{};
+  _uilock_init_result_zocl msg{};
   if (m_byUILock)
   {
-    msg[0] = 11;
+    msg.byRet = 11;
   }
-  else if (*pMsg)
+  else if (request->byRet)
   {
-    if (*pMsg == 1)
+    if (request->byRet == 1)
     {
-      msg[0] = 11;
+      msg.byRet = 11;
     }
-    else if (*pMsg == 2)
+    else if (request->byRet == 2)
     {
-      msg[0] = 12;
+      msg.byRet = 12;
     }
     else
     {
-      msg[0] = 15;
+      msg.byRet = 15;
     }
   }
   else
   {
-    msg[0] = 0;
-    msg[1] = pMsg[16];
+    msg.byRet = 0;
+    msg.byUILock_HintIndex = request->byHintIndex;
     m_byUILock = 1;
-    strcpy_0(m_szUILock_PW, pMsg + 3);
-    m_byUILock_HintIndex = pMsg[16];
-    strcpy_0(m_uszUILock_HintAnswer, pMsg + 17);
+    strcpy_0(m_szUILock_PW, request->uszUILockPW);
+    m_byUILock_HintIndex = request->byHintIndex;
+    strcpy_0(m_uszUILock_HintAnswer, request->uszHintAnswer);
   }
 
   unsigned __int8 pbyType[2]{13, 0x80};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, pbyType, msg, 2u);
+  g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, pbyType, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
-void CUserDB::UILockInfo_Update(char *pMsg)
+void CUserDB::UILockInfo_Update(const _uilock_update_result_acwr *request)
 {
-  if (!pMsg)
+  if (!request)
   {
     return;
   }
 
-  char msg[1]{};
+  _uilock_update_info_result_zocl msg{};
   if (m_byUILock >= 2u)
   {
-    if (*pMsg)
+    if (request->byRet)
     {
-      if (*pMsg == 1)
+      if (request->byRet == 1)
       {
-        msg[0] = 10;
+        msg.byRet = 10;
       }
-      else if (*pMsg == 2)
+      else if (request->byRet == 2)
       {
-        msg[0] = 12;
+        msg.byRet = 12;
       }
       else
       {
-        msg[0] = 8;
+        msg.byRet = 8;
       }
     }
     else
     {
-      msg[0] = 0;
+      msg.byRet = 0;
       m_byUILock = 2;
-      strcpy_0(m_szUILock_PW, pMsg + 3);
-      m_byUILock_HintIndex = pMsg[16];
-      strcpy_0(m_uszUILock_HintAnswer, pMsg + 17);
+      strcpy_0(m_szUILock_PW, request->uszUILockPW);
+      m_byUILock_HintIndex = request->byHintIndex;
+      strcpy_0(m_uszUILock_HintAnswer, request->uszHintAnswer);
     }
   }
   else
   {
-    msg[0] = 7;
+    msg.byRet = 7;
   }
 
   unsigned __int8 pbyType[2]{13, static_cast<unsigned __int8>(-124)};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, pbyType, msg, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, pbyType, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
 void CUserDB::SetChatLock(bool bLock)
@@ -604,7 +603,7 @@ void CUserDB::SetChatLock(bool bLock)
     msg.bLock = 1;
     unsigned __int8 pbyType[2]{2, 12};
     const unsigned __int16 len = msg.size();
-    g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, pbyType, reinterpret_cast<char *>(&msg.bLock), len);
+    g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, pbyType, reinterpret_cast<char *>(&msg), len);
   }
 }
 
@@ -1990,6 +1989,38 @@ char _SYNC_STATE::chk_select()
   }
   bSelect = true;
   return 1;
+}
+
+_worlddb_sf_delay_info::_eff_list::_eff_list()
+{
+  byEffectCode = static_cast<unsigned __int8>(-1);
+  wEffectIndex = 0;
+  dwNextTime = 0;
+}
+
+_worlddb_sf_delay_info::_mas_list::_mas_list()
+{
+  byEffectCode = static_cast<unsigned __int8>(-1);
+  byMastery = 0;
+  dwNextTime = 0;
+}
+
+_worlddb_sf_delay_info::_worlddb_sf_delay_info()
+{
+  for (int index = 0; index < 10; ++index)
+  {
+    EFF[index].byEffectCode = static_cast<unsigned __int8>(-1);
+    EFF[index].wEffectIndex = 0;
+    EFF[index].dwNextTime = 0;
+    MAS[index].byEffectCode = static_cast<unsigned __int8>(-1);
+    MAS[index].byMastery = 0;
+    MAS[index].dwNextTime = 0;
+  }
+}
+
+_AVATOR_DATA::_AVATOR_DATA()
+{
+  InitData();
 }
 
 void _AVATOR_DATA::InitData()
@@ -3719,14 +3750,14 @@ void CUserDB::Update_Post(
 
 void CUserDB::SendMsg_Inform_UILock()
 {
-  char payload[32]{};
-  payload[0] = static_cast<char>(m_byUILock);
-  payload[1] = static_cast<char>(m_byUILock_FailCnt);
-  payload[2] = static_cast<char>(m_byUILock_HintIndex);
-  payload[3] = static_cast<char>(m_byUILockFindPassFailCount);
+  _uilock_inform_request_zocl payload{};
+  payload.byInformType = static_cast<char>(m_byUILock);
+  payload.byFailCount = static_cast<char>(m_byUILock_FailCnt);
+  payload.byHintIndex = static_cast<char>(m_byUILock_HintIndex);
+  payload.byFindPassFailCount = static_cast<char>(m_byUILockFindPassFailCount);
 
   unsigned __int8 type[2] = {13, static_cast<unsigned __int8>(-123)};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, type, payload, 4u);
+  g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, type, reinterpret_cast<char *>(&payload), sizeof(payload));
 }
 
 

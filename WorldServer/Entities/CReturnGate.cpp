@@ -141,49 +141,54 @@ void CReturnGate::Close()
 
 void CReturnGate::SendMsg_Create()
 {
-  char payload[33]{};
-  *reinterpret_cast<unsigned __int16 *>(payload) = m_ObjID.m_wIndex;
-  *reinterpret_cast<unsigned int *>(payload + 2) = m_dwObjSerial;
-  *reinterpret_cast<unsigned int *>(payload + 6) = m_dwOwnerSerial;
-  strcpy_0(payload + 10, m_pkOwner->m_Param.GetCharNameW());
-  FloatToShort(m_fCurPos, reinterpret_cast<short *>(payload + 27), 3);
+  _open_return_gate_inform_zocl payload{};
+  payload.wGateInx = m_ObjID.m_wIndex;
+  payload.dwObjSerial = m_dwObjSerial;
+  payload.dwOpenerSerial = m_dwOwnerSerial;
+  strcpy_0(payload.wszOpenerName, m_pkOwner->m_Param.GetCharNameW());
+  FloatToShort(m_fCurPos, payload.zPos, 3);
 
   unsigned __int8 type[2] = {8, 7};
-  CircleReport(type, payload, 33, false);
+  CircleReport(type, reinterpret_cast<char *>(&payload), static_cast<unsigned __int16>(sizeof(payload)), false);
 }
 
 void CReturnGate::SendMsg_FixPosition(int n)
 {
-  char msg[33]{};
-  *reinterpret_cast<unsigned __int16 *>(msg) = m_ObjID.m_wIndex;
-  *reinterpret_cast<unsigned int *>(msg + 2) = m_dwObjSerial;
-  *reinterpret_cast<unsigned int *>(msg + 6) = m_dwOwnerSerial;
-  strcpy_0(msg + 10, m_pkOwner->m_Param.GetCharNameW());
-  FloatToShort(m_fCurPos, reinterpret_cast<short *>(msg + 27), 3);
+  _return_gate_fix_position_zocl msg{};
+  msg.wGateInx = m_ObjID.m_wIndex;
+  msg.dwObjSerial = m_dwObjSerial;
+  msg.dwOpenerSerial = m_dwOwnerSerial;
+  strcpy_0(msg.wszOpenerName, m_pkOwner->m_Param.GetCharNameW());
+  FloatToShort(m_fCurPos, msg.zPos, 3);
 
   unsigned __int8 packetType[2] = {4, static_cast<unsigned __int8>(-86)};
   g_Network.m_pProcess[0]->LoadSendMsg(
     n,
     packetType,
-    msg,
+    reinterpret_cast<char *>(&msg),
     static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CReturnGate::SendMsg_Destroy()
 {
-  unsigned int objSerial = m_dwObjSerial;
+  _return_gate_destroy_inform_zocl msg{};
+  msg.dwObjSerial = m_dwObjSerial;
   unsigned __int8 pbyType[2];
   std::memset(pbyType, 8, sizeof(pbyType));
-  CircleReport(pbyType, reinterpret_cast<char *>(&objSerial), sizeof(objSerial), false);
+  CircleReport(pbyType, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), false);
 }
 
 void CReturnGate::SendMsg_MovePortal(CPlayer *pkObj)
 {
-  unsigned __int8 msg[15]{};
-  msg[0] = 0;
-  msg[1] = static_cast<unsigned __int8>(m_pDestMap->m_pMapSet->m_dwIndex);
-  memcpy_0(msg + 2, m_fBindPos, 12);
-  msg[14] = 2;
+  _move_potal_result_zocl msg{};
+  msg.byRet = 0;
+  msg.byMapIndex = static_cast<char>(m_pDestMap->m_pMapSet->m_dwIndex);
+  memcpy_0(msg.fStartPos, m_fBindPos, sizeof(msg.fStartPos));
+  msg.byZoneCode = 2;
   unsigned __int8 pbyType[2] = {8, 2};
-  g_Network.m_pProcess[0]->LoadSendMsg(pkObj->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(msg), 15u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    pkObj->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }

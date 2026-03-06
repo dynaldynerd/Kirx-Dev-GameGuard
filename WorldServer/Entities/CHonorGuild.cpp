@@ -405,8 +405,13 @@ void CHonorGuild::SendInformChange(unsigned __int8 byRace, unsigned __int16 wInd
   unsigned __int8 type[2]{};
   type[0] = 27;
   type[1] = 117;
-  char msg{};
-  g_Network.m_pProcess[0]->LoadSendMsg(targetIndex, type, &msg, 1u);
+  _guild_honor_set_result_zocl msg{};
+  msg.byRetCode = 0;
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    targetIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
   m_bSendInform[byRace] = false;
 }
 

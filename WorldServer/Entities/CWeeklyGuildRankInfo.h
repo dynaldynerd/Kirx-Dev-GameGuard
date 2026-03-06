@@ -4,6 +4,7 @@
 
 struct _pvppoint_guild_rank_info;
 struct _weeklyguildrank_owner_info;
+struct _weekly_guild_rank_result_zocl;
 class CGuild;
 
 class  CWeeklyGuildRankOwnerInfo
@@ -78,29 +79,6 @@ public:
   CWeeklyGuildRankOwnerInfo m_kOwnerInfo[3][2];
   unsigned int m_dwMaxCnt;
   CWeeklyGuildRankRecord **m_ppkInfo;
-#pragma pack(push, 1)
-  struct  _weekly_guild_rank_result_zocl
-  {
-    #pragma pack(push, 1)
-    struct _list
-    {
-      unsigned __int8 byRank;
-      char wszGuildName[17];
-      unsigned __int8 byGrade;
-      unsigned int dwPvpPoint;
-    };
-    #pragma pack(pop)
-
-    unsigned int dwVer;
-    unsigned __int8 byRace;
-    unsigned __int8 byExistSelfRankInfo;
-    unsigned __int8 byCnt;
-    _list list[11];
-
-    __int64 size();
-  };
-#pragma pack(pop)
-
   _weekly_guild_rank_result_zocl *m_pkSendList;
 };
 

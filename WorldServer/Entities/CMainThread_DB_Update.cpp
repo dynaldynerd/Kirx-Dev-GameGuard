@@ -175,15 +175,22 @@ char CMainThread::db_Update_Avator(
     return 24;
   }
 
-  CCheckSumCharacAccountTrunkData checkSum(
-    dwSerial,
-    pNewData->dbAvator.m_dwAccountSerial,
-    static_cast<unsigned __int8>(pNewData->dbAvator.m_byRaceSexCode / 2));
-  checkSum.Encode(pNewData);
-  if (!checkSum.Update(m_pWorldDB))
+  // NOTE: This is intentionally against IDA parity.
+  // IDA updates checksum rows unconditionally in db_Update_Avator, but we skip this when checksum is disabled.
+  // Reason: with CheckSum=FALSE, load path skips checksum seeding, so unconditional update may fail with SQL_NO_DATA
+  // on tbl_NpcData and block character save.
+  if (m_bCheckSumActive)
   {
-    m_logSystemError.Write( "_db_Update_NpcData(sr:%d) => _db_Update_NpcData..failed ..", dwSerial);
-    return 24;
+    CCheckSumCharacAccountTrunkData checkSum(
+      dwSerial,
+      pNewData->dbAvator.m_dwAccountSerial,
+      static_cast<unsigned __int8>(pNewData->dbAvator.m_byRaceSexCode / 2));
+    checkSum.Encode(pNewData);
+    if (!checkSum.Update(m_pWorldDB))
+    {
+      m_logSystemError.Write( "_db_Update_NpcData(sr:%d) => _db_Update_NpcData..failed ..", dwSerial);
+      return 24;
+    }
   }
 
   if (pOldData->dbAvator.m_dwGuildSerial != static_cast<unsigned int>(-1)

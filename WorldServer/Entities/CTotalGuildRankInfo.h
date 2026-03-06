@@ -20,31 +20,6 @@ public:
   char m_wszMasterName[17];
 };
 
-#pragma pack(push, 1)
-struct  _total_guild_rank_result_zocl
-{
-  #pragma pack(push, 1)
-  struct _list
-  {
-    unsigned __int8 byRank;
-    char wszGuildName[17];
-    unsigned __int8 byGrade;
-    char wszMasterName[17];
-  };
-  #pragma pack(pop)
-
-  unsigned int dwVer;
-  unsigned __int8 byRace;
-  unsigned __int8 byExistSelfRankInfo;
-  unsigned __int8 byCnt;
-  _list list[11];
-
-  __int64 size();
-};
-#pragma pack(pop)
-
-static_assert(sizeof(_total_guild_rank_result_zocl) == 403, "_total_guild_rank_result_zocl size mismatch");
-
 class  CTotalGuildRankInfo
 {
 public:

@@ -102,6 +102,7 @@
 #include "WorldServerUtil.h"
 #include "NetCheckPackets.h"
 #include "GlobalObjectDefs.h"
+#include "Packet/ZoneClientPacket.h"
 
 #include <ctime>
 #include <mmsystem.h>
@@ -177,9 +178,9 @@ void CPlayer::SendData_PartyMemberHP()
     return;
   }
 
-  char payload[6]{};
-  *reinterpret_cast<unsigned int *>(payload) = this->m_dwObjSerial;
-  *reinterpret_cast<unsigned __int16 *>(payload + 4) = this->m_wPointRate_PartySend[0];
+  _party_member_hp_upd packet{};
+  packet.dwMemSerial = this->m_dwObjSerial;
+  packet.wHPRate = this->m_wPointRate_PartySend[0];
 
   const int memberCount = static_cast<int>(this->m_pPartyMgr->GetPopPartyMember());
   unsigned __int8 type[2] = {16, 20};
@@ -187,7 +188,8 @@ void CPlayer::SendData_PartyMemberHP()
   {
     if (partyMembers[index] != this->m_pPartyMgr)
     {
-      g_Network.m_pProcess[0]->LoadSendMsg(partyMembers[index]->m_wZoneIndex, type, payload, 6u);
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        partyMembers[index]->m_wZoneIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
     }
   }
 }
@@ -205,9 +207,9 @@ void CPlayer::SendData_PartyMemberFP()
     return;
   }
 
-  char payload[6]{};
-  *reinterpret_cast<unsigned int *>(payload) = this->m_dwObjSerial;
-  *reinterpret_cast<unsigned __int16 *>(payload + 4) = this->m_wPointRate_PartySend[1];
+  _party_member_fp_upd packet{};
+  packet.dwMemSerial = this->m_dwObjSerial;
+  packet.wFPRate = this->m_wPointRate_PartySend[1];
 
   const int memberCount = static_cast<int>(this->m_pPartyMgr->GetPopPartyMember());
   unsigned __int8 type[2] = {16, 21};
@@ -215,7 +217,8 @@ void CPlayer::SendData_PartyMemberFP()
   {
     if (partyMembers[index] != this->m_pPartyMgr)
     {
-      g_Network.m_pProcess[0]->LoadSendMsg(partyMembers[index]->m_wZoneIndex, type, payload, 6u);
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        partyMembers[index]->m_wZoneIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
     }
   }
 }
@@ -233,9 +236,9 @@ void CPlayer::SendData_PartyMemberSP()
     return;
   }
 
-  char payload[6]{};
-  *reinterpret_cast<unsigned int *>(payload) = this->m_dwObjSerial;
-  *reinterpret_cast<unsigned __int16 *>(payload + 4) = this->m_wPointRate_PartySend[2];
+  _party_member_sp_upd packet{};
+  packet.dwMemSerial = this->m_dwObjSerial;
+  packet.wSPRate = this->m_wPointRate_PartySend[2];
 
   const int memberCount = static_cast<int>(this->m_pPartyMgr->GetPopPartyMember());
   unsigned __int8 type[2] = {16, 22};
@@ -243,7 +246,8 @@ void CPlayer::SendData_PartyMemberSP()
   {
     if (partyMembers[index] != this->m_pPartyMgr)
     {
-      g_Network.m_pProcess[0]->LoadSendMsg(partyMembers[index]->m_wZoneIndex, type, payload, 6u);
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        partyMembers[index]->m_wZoneIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
     }
   }
 }
@@ -261,11 +265,11 @@ void CPlayer::SendData_PartyMemberEffect(unsigned __int8 byAlterCode, unsigned _
     return;
   }
 
-  char payload[8]{};
-  *reinterpret_cast<unsigned int *>(payload) = this->m_dwObjSerial;
-  payload[4] = static_cast<char>(byAlterCode);
-  *reinterpret_cast<unsigned __int16 *>(payload + 5) = wEffectCode;
-  payload[7] = static_cast<char>(byLv);
+  _party_member_effect_upd packet{};
+  packet.dwMemSerial = this->m_dwObjSerial;
+  packet.byAlterCode = static_cast<char>(byAlterCode);
+  packet.wEffectCode = wEffectCode;
+  packet.byEffectLv = static_cast<char>(byLv);
 
   const int memberCount = static_cast<int>(this->m_pPartyMgr->GetPopPartyMember());
   unsigned __int8 type[2] = {16, 26};
@@ -273,7 +277,8 @@ void CPlayer::SendData_PartyMemberEffect(unsigned __int8 byAlterCode, unsigned _
   {
     if (partyMembers[index] != this->m_pPartyMgr)
     {
-      g_Network.m_pProcess[0]->LoadSendMsg(partyMembers[index]->m_wZoneIndex, type, payload, 8u);
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        partyMembers[index]->m_wZoneIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
     }
   }
 }
@@ -364,18 +369,11 @@ void CPlayer::SendMsg_PartyLeaveSelfResult(CPartyPlayer *pLeaver, bool bWorldExi
 
 void CPlayer::SendMsg_PartySuccessResult(CPartyPlayer *pSuccessor)
 {
-  char msg[4]{};
-  if (pSuccessor)
-  {
-    *reinterpret_cast<unsigned int *>(msg) = pSuccessor->m_id.dwSerial;
-  }
-  else
-  {
-    *reinterpret_cast<unsigned int *>(msg) = static_cast<unsigned int>(-1);
-  }
+  _party_succession_result_zocl msg{};
+  msg.dwSuccessorSerial = pSuccessor ? pSuccessor->m_id.dwSerial : static_cast<unsigned int>(-1);
 
   unsigned __int8 type[2] = {16, 16};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, 4u);
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
 void CPlayer::SendMsg_PartyJoinInvitationQuestion(unsigned __int16 wJoinerIndex)
@@ -448,16 +446,17 @@ void CPlayer::SendMsg_PartyJoinMemberResult(CPartyPlayer *pJoiner, char byLootSh
 
 void CPlayer::SendMsg_PartyJoinFailLevel()
 {
-  char msg[1]{};
+  _party_join_fail_level_inform_zocl msg{};
   unsigned __int8 type[2] = {16, 66};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
 void CPlayer::SendMsg_AwayPartyRequestResult(char byRetCode)
 {
-  char msg[1]{byRetCode};
+  _away_party_invitation_result_zocl msg{};
+  msg.byRetCode = byRetCode;
   unsigned __int8 type[2] = {16, 32};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
 void CPlayer::SendMsg_AwayPartyInvitationQuestion(unsigned __int16 wJoinerIndex)
@@ -484,23 +483,26 @@ void CPlayer::SendMsg_PartyLeaveCompulsionResult(CPartyPlayer *pLeaver)
 
 void CPlayer::SendMsg_PartyDisjointResult(char bSuccess)
 {
-  char msg[1]{bSuccess};
+  _party_disjoint_result_zocl msg{};
+  msg.bySuccess = bSuccess;
   unsigned __int8 type[2] = {16, 14};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
 void CPlayer::SendMsg_PartyLockResult(char byRet)
 {
-  char msg[1]{byRet};
+  _party_lock_result_zocl msg{};
+  msg.byLock = byRet;
   unsigned __int8 type[2] = {16, 18};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
 void CPlayer::SendMsg_PartyAlterLootShareResult(char byLootShareMode)
 {
-  char msg[1]{byLootShareMode};
+  _alter_party_loot_share_result_zocl msg{};
+  msg.byLootShareMode = byLootShareMode;
   unsigned __int8 type[2] = {16, 29};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, msg, sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
 void CPlayer::SendData_PartyMemberInfo(unsigned __int16 wDstIndex)
@@ -1821,40 +1823,40 @@ void CPlayer::_check_target_object()
 
 void CPlayer::SendMsg_TargetObjectHPInform()
 {
-  char payload[8]{};
-  payload[0] = static_cast<char>(this->m_TargetObject.byKind);
-  payload[1] = static_cast<char>(this->m_TargetObject.byID);
-  *reinterpret_cast<unsigned int *>(payload + 2) = this->m_TargetObject.dwSerial;
-  *reinterpret_cast<unsigned __int16 *>(payload + 6) = this->m_TargetObject.wHPRate;
+  _target_object_hp_inform_clzo packet{};
+  packet.byKind = static_cast<char>(this->m_TargetObject.byKind);
+  packet.byID = static_cast<char>(this->m_TargetObject.byID);
+  packet.dwSerial = this->m_TargetObject.dwSerial;
+  packet.wHPRate = this->m_TargetObject.wHPRate;
 
   unsigned __int8 type[2] = {13, 29};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 8u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_RefeshGroupTargetPosition(char byGroupType)
 {
-  char payload[0x13]{};
-  payload[0] = byGroupType;
+  _refresh_group_target_position_zocl packet{};
+  packet.byGroupType = byGroupType;
 
   const unsigned __int8 groupIndex = static_cast<unsigned __int8>(byGroupType);
   CGameObject *groupObject = this->m_GroupTargetObject[groupIndex].pObject;
-  payload[1] = static_cast<char>(groupObject->m_pCurMap->m_pMapSet->m_dwIndex);
-  payload[2] = static_cast<char>(this->m_GroupTargetObject[groupIndex].byID);
-  *reinterpret_cast<unsigned int *>(payload + 3) = this->m_GroupTargetObject[groupIndex].dwSerial;
-  memcpy_0(payload + 7, groupObject->m_fCurPos, 0xCuLL);
+  packet.byMapCode = static_cast<char>(groupObject->m_pCurMap->m_pMapSet->m_dwIndex);
+  packet.byID = static_cast<char>(this->m_GroupTargetObject[groupIndex].byID);
+  packet.dwSerial = this->m_GroupTargetObject[groupIndex].dwSerial;
+  memcpy_0(packet.fPos, groupObject->m_fCurPos, sizeof(packet.fPos));
 
   unsigned __int8 type[2] = {13, 110};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x13u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_BuddyNameReNewal(unsigned int dwSerial, char *wszName)
 {
-  char payload[0x15]{};
-  *reinterpret_cast<unsigned int *>(payload) = dwSerial;
-  strcpy_s(payload + 4, 0x11u, wszName);
+  _buddy_renewal_zocl packet{};
+  packet.dwSerial = dwSerial;
+  strcpy_s(packet.wszBuddyName, sizeof(packet.wszBuddyName), wszName);
 
   unsigned __int8 type[2] = {31, 17};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x15u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_SetTargetObjectResult(char byRetCode, bool bForce)
@@ -2417,12 +2419,12 @@ void CPlayer::pc_SetGroupMapPointRequest(unsigned __int8 byGroupType, float *pzT
 
 void CPlayer::SendMsg_BuddyDelResult(char byRetCode, unsigned int dwSerial)
 {
-  char msg[5]{};
-  msg[0] = byRetCode;
-  std::memcpy(&msg[1], &dwSerial, sizeof(dwSerial));
+  _buddy_del_result_clzo msg{};
+  msg.byRetCode = byRetCode;
+  msg.dwSerial = dwSerial;
 
   unsigned __int8 type[2] = {31, 16};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, msg, 5u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
 void CPlayer::pc_BuddyDelRequest(unsigned int dwSerial)
@@ -2445,22 +2447,21 @@ void CPlayer::pc_BuddyDelRequest(unsigned int dwSerial)
 
 void CPlayer::SendMsg_CastVoteResult(char byRetCode)
 {
-  char payload[0x0B]{};
-  payload[0] = byRetCode;
+  _cast_vote_result_zocl packet{};
+  packet.byRetCode = byRetCode;
 
   if (byRetCode == 0)
   {
-    *reinterpret_cast<int *>(payload + 1) = this->m_nVoteSerial;
+    packet.nVoteSerial = this->m_nVoteSerial;
     const int raceCode = this->m_Param.GetRaceCode();
     for (int index = 0; index < 3; ++index)
     {
-      *reinterpret_cast<unsigned __int16 *>(payload + 5 + (2 * index)) =
-        static_cast<unsigned __int16>(g_VoteSys[raceCode].m_dwPoint[index]);
+      packet.wPoint[index] = static_cast<unsigned __int16>(g_VoteSys[raceCode].m_dwPoint[index]);
     }
   }
 
   unsigned __int8 type[2] = {26, 6};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x0Bu);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_MoveToOwnStoneMapInform(unsigned __int8 byStoneMapMoveInfo)
@@ -2589,19 +2590,19 @@ void CPlayer::SendMsg_ResultChangeTaxRate(unsigned __int8 byRetCode, unsigned __
 
 void CPlayer::SendMsg_RaceBossCryMsg()
 {
-  char messages[650]{};
+  _notify_raceboss_cry_msg_request_zocl packet{};
 
   for (int index = 0; index < 10; ++index)
   {
-    strcpy_0(&messages[65 * index], this->m_pmCryMsg.m_List[index].wszCryMsg);
+    strcpy_0(packet.wszCryMsg[index], this->m_pmCryMsg.m_List[index].wszCryMsg);
   }
 
   unsigned __int8 type[2]{13, 105};
   g_Network.m_pProcess[0]->LoadSendMsg(
     this->m_ObjID.m_wIndex,
     type,
-    messages,
-    static_cast<unsigned __int16>(sizeof(messages)));
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
 }
 
 void CPlayer::pc_NotifyRaceBossCryMsg()
@@ -2851,30 +2852,26 @@ void CPlayer::SendMsg_GUILD_Greeting(char *wszName, char *wszMsg)
 
 void CPlayer::SendMsg_Notify_ExceptFromRaceRanking(int bExcepted)
 {
+  _notify_excepted_from_raceranking packet{};
+  packet.bExcepted = bExcepted;
   unsigned __int8 type[2] = {59, 3};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&bExcepted), 4u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_AlterTownOrField()
 {
-  char szMsg[32]{};
-  unsigned __int8 pbyType[36]{};
-
-  szMsg[0] = this->m_byPosRaceTown;
-  pbyType[0] = 4;
-  pbyType[1] = 34;
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, szMsg, 1u);
+  _town_or_field_inform_zocl packet{};
+  packet.byTown = this->m_byPosRaceTown;
+  unsigned __int8 pbyType[2]{4, 34};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_AlterRegionInform(__int16 nRegionIndex)
 {
-  char szMsg[32]{};
-  unsigned __int8 pbyType[36]{};
-
-  *reinterpret_cast<__int16 *>(szMsg) = nRegionIndex;
-  pbyType[0] = 8;
-  pbyType[1] = 6;
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, szMsg, 2u);
+  _alter_region_inform_zocl packet{};
+  packet.wRegionIndex = static_cast<unsigned __int16>(nRegionIndex);
+  unsigned __int8 pbyType[2]{8, 6};
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::CheckPosInTown()
@@ -2966,12 +2963,12 @@ void CPlayer::AlterSec()
 
 void CPlayer::SendMsg_TeleportError(char byErrorCode, unsigned int dwMapIndex)
 {
-  char payload[5]{};
-  payload[0] = byErrorCode;
-  *reinterpret_cast<unsigned int *>(payload + 1) = dwMapIndex;
+  _teleport_error_result_zocl packet{};
+  packet.byErrorCode = byErrorCode;
+  packet.dwMapIndex = dwMapIndex;
 
   unsigned __int8 type[2] = {17, 43};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 5u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_ApexInform(unsigned __int16 dwRecvSize, char *pMsg)

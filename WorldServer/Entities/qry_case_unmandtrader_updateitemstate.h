@@ -19,3 +19,5 @@ inline __int64 _qry_case_unmandtrader_updateitemstate::size() const
 {
   return 20;
 }
+
+static_assert(sizeof(_qry_case_unmandtrader_updateitemstate) == 20);

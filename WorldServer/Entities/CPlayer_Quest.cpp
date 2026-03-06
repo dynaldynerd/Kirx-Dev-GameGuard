@@ -97,6 +97,7 @@
 #include "combine_ex_item_result_zocl.h"
 #include "combine_ex_item_accept_request_clzo.h"
 #include "combine_ex_item_accept_result_zocl.h"
+#include "Packet/ZoneClientPacket.h"
 #include "qry_case_disjointguild.h"
 #include "WorldServerUtil.h"
 #include "NetCheckPackets.h"
@@ -110,24 +111,32 @@
 
 void CPlayer::SendMsg_HSKQuestSucc(char byQuestCode, char bSucc)
 {
-  char payload[2]{};
-  payload[0] = byQuestCode;
-  payload[1] = bSucc;
+  _holyquest_succ_inform_zocl msg{};
+  msg.byQuestCode = byQuestCode;
+  msg.bSucc = bSucc != 0;
 
   unsigned __int8 type[2] = {25, 13};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 2u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CPlayer::SendMsg_InsertQuestItemInform(_STORAGE_LIST::_db_con *pItem)
 {
-  char payload[0x0B]{};
-  payload[0] = static_cast<char>(pItem->m_byTableCode);
-  *reinterpret_cast<unsigned __int16 *>(payload + 1) = pItem->m_wItemIndex;
-  *reinterpret_cast<unsigned int *>(payload + 3) = static_cast<unsigned int>(pItem->m_dwDur);
-  *reinterpret_cast<unsigned int *>(payload + 7) = pItem->m_dwLv;
+  _insert_quest_item_inform_zocl msg{};
+  msg.byTableCode = static_cast<char>(pItem->m_byTableCode);
+  msg.wItemIndex = pItem->m_wItemIndex;
+  msg.dwDurPoint = static_cast<unsigned int>(pItem->m_dwDur);
+  msg.dwLv = pItem->m_dwLv;
 
   unsigned __int8 type[2] = {24, 15};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x0Bu);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CPlayer::SendMsg_NpcQuestListResult(_NPCQuestIndexTempData *pQuestIndexData)
@@ -151,23 +160,30 @@ void CPlayer::SendMsg_NpcQuestListResult(_NPCQuestIndexTempData *pQuestIndexData
 
 void CPlayer::SendMsg_ResultNpcQuest(char bSucc)
 {
+  _npc_quest_result_zocl msg{};
+  msg.bSuccess = bSucc != 0;
+
   unsigned __int8 type[2] = {24, 18};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &bSucc, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CPlayer::SendMsg_InsertQuestFailure(char byEventType, unsigned int dwEventIndex, unsigned __int8 byEventNodeIndex)
 {
-  char szMsg; // [rsp+34h] [rbp-44h] BYREF
-  unsigned int dwIndex; // [rsp+35h] [rbp-43h]
-  unsigned __int8 byNode; // [rsp+39h] [rbp-3Fh]
-  unsigned __int8 pbyType[36]{}; // [rsp+54h] [rbp-24h] BYREF
+  _insert_quest_failure_zocl msg{};
+  msg.byEventType = byEventType;
+  msg.dwEventIndex = dwEventIndex;
+  msg.byEventNodeIndex = static_cast<char>(byEventNodeIndex);
 
-  szMsg = byEventType;
-  dwIndex = dwEventIndex;
-  byNode = byEventNodeIndex;
-  pbyType[0] = 24;
-  pbyType[1] = 4;
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, &szMsg, 6u);
+  unsigned __int8 pbyType[2]{24, 4};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CPlayer::pc_SelectQuestAfterHappenEvent(unsigned __int8 bySelectIndex)

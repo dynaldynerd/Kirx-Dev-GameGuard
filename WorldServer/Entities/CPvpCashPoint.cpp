@@ -9,6 +9,7 @@
 #include "CPvpCashMng.h"
 #include "GlobalObjects.h"
 #include "pvp_cash_recover_itemlist_result_zocl.h"
+#include "Packet/ZoneClientPacket.h"
 
 CPvpCashPoint::CPvpCashPoint()
 {
@@ -249,8 +250,13 @@ void CPvpCashPoint::SendMsg_RecoverResult(unsigned int n, char byRet, int nRecvr
 
 void CPvpCashPoint::SendMsg_PvpCashInform(unsigned int n, unsigned __int8 byError)
 {
-  char msg = static_cast<char>(byError);
+  _notify_pvp_cash_point_error_zocl msg{};
+  msg.byRetCode = static_cast<char>(byError);
   unsigned __int8 pbyType[2]{59, 5};
-  g_Network.m_pProcess[0]->LoadSendMsg(n, pbyType, &msg, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    n,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 

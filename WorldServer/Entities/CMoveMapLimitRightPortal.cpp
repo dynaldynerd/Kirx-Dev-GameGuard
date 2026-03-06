@@ -6,6 +6,7 @@
 #include "CHolyStoneSystem.h"
 #include "GlobalObjects.h"
 #include "notice_move_limit_map_msg_zocl.h"
+#include "Packet/ZoneClientPacket.h"
 
 CMoveMapLimitRightPortal::CMoveMapLimitRightPortal(int iType)
   : CMoveMapLimitRight(iType),
@@ -31,7 +32,11 @@ void CMoveMapLimitRightPortal::CreateComplete(CPlayer *pkPlayer)
 
     _notice_move_limit_map_msg_zocl msg{};
     msg.byType = 2;
-    g_Network.m_pProcess[0]->LoadSendMsg(pkPlayer->m_ObjID.m_wIndex, type, (char *)&msg, 1u);
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      pkPlayer->m_ObjID.m_wIndex,
+      type,
+      reinterpret_cast<char *>(&msg),
+      static_cast<unsigned __int16>(sizeof(msg)));
     m_bNotifyForceMoveStartPosition = false;
   }
 }
@@ -69,4 +74,3 @@ void CMoveMapLimitRightPortal::SetFlag(int iType, bool bFlag)
     m_bNotifyForceMoveStartPosition = bFlag;
   }
 }
-

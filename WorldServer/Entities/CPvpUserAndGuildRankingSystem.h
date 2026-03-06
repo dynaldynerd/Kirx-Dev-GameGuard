@@ -43,8 +43,8 @@ public:
   unsigned __int8 UpdateRaceRankStep7(char *szData);
   unsigned __int8 UpdateRaceRankStep8(char *szData);
   unsigned __int8 UpdateRaceRankStep9(char *szData);
-  unsigned __int8 UpdateRaceRankStep10(char *szData);
-  unsigned __int8 UpdateRaceRankStep11(char *szData);
+  unsigned __int8 UpdateRaceRankStep10(_qry_case_rank_racerank_guildrank *szData);
+  unsigned __int8 UpdateRaceRankStep11(_qry_case_rank_racerank_guildrank *szData);
   unsigned __int8 UpdateGuildRankStep1(char *szData);
   unsigned __int8 UpdateGuildRankStep2(char *szData);
   unsigned __int8 UpdateGuildRankStep3(char *szData);
@@ -72,13 +72,13 @@ public:
   void CompleteGuildRankStep2(unsigned __int8 byRet, char *szData);
   void CompleteGuildRankStep3(unsigned __int8 byRet, char *szData);
   void CompleteGuildRankStep4(unsigned __int8 byRet, char *szData);
-  void CompleteRankInGuildStep1(unsigned __int8 byRet, char *szData);
-  void CompleteRankInGuildStep2(unsigned __int8 byRet, char *szData);
-  void CompleteRankInGuildStep3(unsigned __int8 byRet, char *szData);
-  void CompleteRankInGuildStep4(unsigned __int8 byRet, char *szData);
-  void CompleteRankInGuildStep5(unsigned __int8 byRet, char *szData);
-  void CompleteRankInGuildStep6(unsigned __int8 byRet, char *szData);
-  void CompleteRankUpdateAndSelectGarde(unsigned __int8 byRet, char *szData);
+  void CompleteRankInGuildStep1(unsigned __int8 byRet, _qry_case_rank_racerank_guildrank *szData);
+  void CompleteRankInGuildStep2(unsigned __int8 byRet, _qry_case_rank_racerank_guildrank *szData);
+  void CompleteRankInGuildStep3(unsigned __int8 byRet, _qry_case_rank_racerank_guildrank *szData);
+  void CompleteRankInGuildStep4(unsigned __int8 byRet, _qry_case_rank_racerank_guildrank *szData);
+  void CompleteRankInGuildStep5(unsigned __int8 byRet, _qry_case_rank_racerank_guildrank *szData);
+  void CompleteRankInGuildStep6(unsigned __int8 byRet, _qry_case_rank_racerank_guildrank *szData);
+  void CompleteRankUpdateAndSelectGarde(unsigned __int8 byRet, _qry_case_rank_racerank_guildrank *szData);
 
   static CPvpUserAndGuildRankingSystem *ms_Instance;
   CLogFile *m_pkLogger;

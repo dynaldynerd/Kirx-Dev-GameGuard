@@ -10,6 +10,7 @@
 #include "CNotifyNotifyRaceLeaderSownerUTaxrate.h"
 #include "CPvpUserAndGuildRankingSystem.h"
 #include "GlobalObjects.h"
+#include "Packet/ZoneClientPacket.h"
 #include "WorldServerUtil.h"
 #include "pvppoint_guild_rank_info.h"
 #include "weeklyguildrank_owner_info.h"
@@ -64,7 +65,7 @@ void CWeeklyGuildRankRecord::Clear()
   m_dGuildBattlePvpPoint = 0.0;
 }
 
-__int64 CWeeklyGuildRankInfo::_weekly_guild_rank_result_zocl::size()
+__int64 _weekly_guild_rank_result_zocl::size()
 {
   if (byCnt < 0xBu)
   {
@@ -535,13 +536,17 @@ void CWeeklyGuildRankInfo::Send(
         bySelfRace,
         dwGuildSerial);
 
-      unsigned __int8 msg[5]{};
-      *reinterpret_cast<unsigned int *>(msg) = m_pkSendList[byTabRace].dwVer;
-      msg[4] = byTabRace;
+      _weekly_guild_rank_result_no_data_zocl msg{};
+      msg.dwVer = m_pkSendList[byTabRace].dwVer;
+      msg.byRace = static_cast<char>(byTabRace);
       unsigned __int8 type[16]{};
       type[0] = 13;
       type[1] = 41;
-      g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(msg), 5u);
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        n,
+        type,
+        reinterpret_cast<char *>(&msg),
+        static_cast<unsigned __int16>(sizeof(msg)));
     }
   }
 }

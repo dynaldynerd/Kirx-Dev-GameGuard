@@ -15,6 +15,21 @@ struct _unmannedtrader_buy_item_request_clzo;
 struct _unmannedtrader_re_regist_request_clzo;
 struct _unmannedtrader_search_list_request_clzo;
 struct _TRADE_DB_BASE;
+struct _qry_case_unmandtrader_cancelitem;
+struct _qry_case_unmandtrader_registsingleitem;
+struct _qry_case_unmandtrader_time_out_cancelitem;
+struct _qry_case_unmandtrader_update_reprice;
+struct _qry_case_unmandtrader_updateitemstate;
+struct _qry_case_unmandtrader_buy_get_info;
+struct _qry_case_unmandtrader_buy_update_complete;
+struct _qry_case_unmandtrader_buy_update_rollback;
+struct _qry_case_unmandtrader_buy_update_wait;
+struct _qry_case_unmandtrader_cheat_updateregisttime;
+struct _qry_case_unmandtrader_lazyclean_flags;
+struct _qry_case_unmandtrader_log_in_proc_update_complete;
+struct _qry_case_unmandtrader_re_registsingleitem;
+struct _qry_case_unmandtrader_re_registsingleitem_roll_back;
+struct _lt_qry_case_unmandtrader_select_list;
 
 class  CUnmannedTraderController
 {
@@ -41,39 +56,45 @@ public:
   void LogOut(unsigned __int16 wInx, unsigned int dwSerial);
   void CompleteCreate(unsigned __int16 wInx);
   void CompleteCreateNotifyTradeInfo(unsigned __int8 byRace, unsigned __int16 wInx);
-  unsigned __int8 SelectSearchList(char *pData, CRFWorldDatabase *pkWorldDB, unsigned __int8 *byProcRet);
-  void CompleteSelectSearchList(unsigned __int8 byDBRet, unsigned __int8 byProcRet, char *pLoadData);
-  unsigned __int8 UpdateItemState(char *pData);
-  unsigned __int8 UpdateRegistItem(char *pData);
-  unsigned __int8 UpdateCancelRegist(char *pData);
-  unsigned __int8 UpdateTimeOutCancelRegist(char *pData);
-  unsigned __int8 UpdateRePrice(char *pData);
-  unsigned __int8 SelectBuy(char *pData);
-  unsigned __int8 UpdateBuy(char *pData);
-  unsigned __int8 UpdateBuyRollBack(char *pData);
-  unsigned __int8 UpdateLazyClean(char *pData);
-  unsigned __int8 UpdateBuyComplete(char *pData);
-  unsigned __int8 UpdateLogInComplete(char *pData);
-  unsigned __int8 UpdateReRegist(char *pData);
-  unsigned __int8 UpdateCheatRegistTime(char *pData);
-  unsigned __int8 UpdateReRegistRollBack(char *pData);
+  unsigned __int8 SelectSearchList(
+    _lt_qry_case_unmandtrader_select_list *pData,
+    CRFWorldDatabase *pkWorldDB,
+    unsigned __int8 *byProcRet);
+  void CompleteSelectSearchList(
+    unsigned __int8 byDBRet,
+    unsigned __int8 byProcRet,
+    _lt_qry_case_unmandtrader_select_list *pLoadData);
+  unsigned __int8 UpdateItemState(_qry_case_unmandtrader_updateitemstate *pData);
+  unsigned __int8 UpdateRegistItem(_qry_case_unmandtrader_registsingleitem *pData);
+  unsigned __int8 UpdateCancelRegist(_qry_case_unmandtrader_cancelitem *pData);
+  unsigned __int8 UpdateTimeOutCancelRegist(_qry_case_unmandtrader_time_out_cancelitem *pData);
+  unsigned __int8 UpdateRePrice(_qry_case_unmandtrader_update_reprice *pData);
+  unsigned __int8 SelectBuy(_qry_case_unmandtrader_buy_get_info *pData);
+  unsigned __int8 UpdateBuy(_qry_case_unmandtrader_buy_update_wait *pData);
+  unsigned __int8 UpdateBuyRollBack(_qry_case_unmandtrader_buy_update_rollback *pData);
+  unsigned __int8 UpdateLazyClean(_qry_case_unmandtrader_lazyclean_flags *pData);
+  unsigned __int8 UpdateBuyComplete(_qry_case_unmandtrader_buy_update_complete *pData);
+  unsigned __int8 UpdateLogInComplete(_qry_case_unmandtrader_log_in_proc_update_complete *pData);
+  unsigned __int8 UpdateReRegist(_qry_case_unmandtrader_re_registsingleitem *pData);
+  unsigned __int8 UpdateCheatRegistTime(_qry_case_unmandtrader_cheat_updateregisttime *pData);
+  unsigned __int8 UpdateReRegistRollBack(_qry_case_unmandtrader_re_registsingleitem_roll_back *pData);
   bool CheatCancelRegist(unsigned __int16 wInx, unsigned int dwOwnerSerial, unsigned __int8 byNth);
 
   void CompleteSelectReservedSchedule(unsigned __int8 byRet, _unmannedtrader_reserved_schedule_info *pLoadData);
-  void CompleteUpdateState(unsigned __int8 byRet, char *pLoadData);
-  void CompleteRegistItem(unsigned __int8 byRet, char *pLoadData);
-  void CompleteCancelRegist(unsigned __int8 byRet, char *pLoadData);
-  void CompleteTimeOutCancelRegist(unsigned __int8 byRet, char *pLoadData);
-  void CompleteReprice(unsigned __int8 byRet, char *pLoadData);
-  void CompleteSelectBuyInfo(unsigned __int8 byRet, char *pLoadData);
-  void CompleteBuy(unsigned __int8 byRet, char *pLoadData);
-  void CompleteBuyRollBack(unsigned __int8 byRet, char *pLoadData);
-  void ComleteLazyClean(char *pData);
-  void CompleteBuyComplete(char *pData);
-  void CompleteLogInCompete(char *pData);
-  void CompleteReRegist(char *pLoadData);
-  void CompleteUpdateCheatRegistTime(char *pLoadData);
-  void CompleteReRegistRollBack(char *pData);
+  void CompleteUpdateState(unsigned __int8 byRet, _qry_case_unmandtrader_updateitemstate *pLoadData);
+  void CompleteRegistItem(unsigned __int8 byRet, _qry_case_unmandtrader_registsingleitem *pLoadData);
+  void CompleteCancelRegist(unsigned __int8 byRet, _qry_case_unmandtrader_cancelitem *pLoadData);
+  void CompleteTimeOutCancelRegist(unsigned __int8 byRet, _qry_case_unmandtrader_time_out_cancelitem *pLoadData);
+  void CompleteReprice(unsigned __int8 byRet, _qry_case_unmandtrader_update_reprice *pLoadData);
+  void CompleteSelectBuyInfo(unsigned __int8 byRet, _qry_case_unmandtrader_buy_get_info *pLoadData);
+  void CompleteBuy(unsigned __int8 byRet, _qry_case_unmandtrader_buy_update_wait *pLoadData);
+  void CompleteBuyRollBack(unsigned __int8 byRet, _qry_case_unmandtrader_buy_update_rollback *pLoadData);
+  void ComleteLazyClean(_qry_case_unmandtrader_lazyclean_flags *pData);
+  void CompleteBuyComplete(_qry_case_unmandtrader_buy_update_complete *pData);
+  void CompleteLogInCompete(_qry_case_unmandtrader_log_in_proc_update_complete *pData);
+  void CompleteReRegist(_qry_case_unmandtrader_re_registsingleitem *pLoadData);
+  void CompleteUpdateCheatRegistTime(_qry_case_unmandtrader_cheat_updateregisttime *pLoadData);
+  void CompleteReRegistRollBack(_qry_case_unmandtrader_re_registsingleitem_roll_back *pData);
 
 private:
   bool InitLogger();

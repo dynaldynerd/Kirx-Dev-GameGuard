@@ -11,6 +11,7 @@
 #include "TrapItem_fld.h"
 #include "nuclear_find_rader_result_zocl.h"
 #include "nuclear_result_code_zocl.h"
+#include "Packet/ZoneClientPacket.h"
 #include "pnt_rect.h"
 
 #include <mmsystem.h>
@@ -367,21 +368,25 @@ void CNuclearBomb::SendMsg_NuclearFind(unsigned int n, unsigned __int8 race)
 
 void CNuclearBomb::SendMsg_InformDropPos()
 {
-  char payload[0x0E]{};
+  _nuclear_bomb_position_inform_zocl payload{};
   for (unsigned int clientIndex = 0; clientIndex < MAX_PLAYER; ++clientIndex)
   {
     CPlayer *targetPlayer = &g_Player[clientIndex];
     if (targetPlayer->m_bOper && !targetPlayer->m_bCorpse &&
         strcmp_0(targetPlayer->m_pCurMap->m_pMapSet->m_strCode, "resources") == 0)
     {
-      payload[0] = static_cast<char>(m_pMaster->m_Param.GetRaceCode());
-      payload[1] = static_cast<char>(GetMasterClass());
-      *reinterpret_cast<float *>(payload + 2) = m_fCurPos[0];
-      *reinterpret_cast<float *>(payload + 6) = m_fCurPos[1];
-      *reinterpret_cast<float *>(payload + 10) = m_fCurPos[2];
+      payload.byRaceCode = static_cast<char>(m_pMaster->m_Param.GetRaceCode());
+      payload.byUseClass = static_cast<char>(GetMasterClass());
+      payload.zPos[0] = m_fCurPos[0];
+      payload.zPos[1] = m_fCurPos[1];
+      payload.zPos[2] = m_fCurPos[2];
 
       unsigned __int8 type[2]{60, 7};
-      g_Network.m_pProcess[0]->LoadSendMsg(clientIndex, type, payload, 0x0Eu);
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        clientIndex,
+        type,
+        reinterpret_cast<char *>(&payload),
+        static_cast<unsigned __int16>(sizeof(payload)));
     }
   }
 }
@@ -393,12 +398,16 @@ void CNuclearBomb::SendMsg_AddEffect()
     if (m_EffList[index].m_pChar &&
         strcmp_0(m_EffList[index].m_pChar->m_pCurMap->m_pMapSet->m_strCode, "resources") == 0)
     {
-      char payload[2]{};
-      payload[0] = static_cast<char>(m_pMaster->m_Param.GetRaceCode());
-      payload[1] = static_cast<char>(GetMasterClass());
+      _nuclear_bomb_explosion_result_zocl payload{};
+      payload.byRaceCode = static_cast<char>(m_pMaster->m_Param.GetRaceCode());
+      payload.byUseClass = static_cast<char>(GetMasterClass());
 
       unsigned __int8 type[2]{60, 6};
-      g_Network.m_pProcess[0]->LoadSendMsg(m_EffList[index].m_pChar->m_ObjID.m_wIndex, type, payload, 2u);
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        m_EffList[index].m_pChar->m_ObjID.m_wIndex,
+        type,
+        reinterpret_cast<char *>(&payload),
+        static_cast<unsigned __int16>(sizeof(payload)));
     }
   }
 
@@ -421,12 +430,16 @@ void CNuclearBomb::SendMsg_InformAttack()
     if (targetPlayer->m_bOper && !targetPlayer->m_bCorpse && targetPlayer->m_bLive &&
         strcmp_0(targetPlayer->m_pCurMap->m_pMapSet->m_strCode, "resources") == 0)
     {
-      char payload[2]{};
-      payload[0] = static_cast<char>(raceCode);
-      payload[1] = static_cast<char>(GetMasterClass());
+      _nuclear_explosion_success_zocl payload{};
+      payload.byRaceCode = static_cast<char>(raceCode);
+      payload.byUseClass = static_cast<char>(GetMasterClass());
 
       unsigned __int8 type[2]{60, 8};
-      g_Network.m_pProcess[0]->LoadSendMsg(clientIndex, type, payload, 2u);
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        clientIndex,
+        type,
+        reinterpret_cast<char *>(&payload),
+        static_cast<unsigned __int16>(sizeof(payload)));
     }
   }
 }
@@ -441,12 +454,16 @@ void CNuclearBomb::SendMsg_MasterDie()
         strcmp_0(targetPlayer->m_pCurMap->m_pMapSet->m_strCode, "resources") == 0 &&
         m_byBombState != 0 && m_byBombState < 5u)
     {
-      char payload[2]{};
-      payload[0] = static_cast<char>(raceCode);
-      payload[1] = static_cast<char>(GetMasterClass());
+      _nuclear_bomb_destruction_zocl payload{};
+      payload.byRaceCode = static_cast<char>(raceCode);
+      payload.byUseClass = static_cast<char>(GetMasterClass());
 
       unsigned __int8 type[2]{60, 9};
-      g_Network.m_pProcess[0]->LoadSendMsg(clientIndex, type, payload, 2u);
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        clientIndex,
+        type,
+        reinterpret_cast<char *>(&payload),
+        static_cast<unsigned __int16>(sizeof(payload)));
     }
   }
 }
@@ -462,14 +479,14 @@ void CNuclearBomb::SendMsg_Result(unsigned int n, unsigned __int8 byCode)
 
 void CNuclearBomb::SendMsg_DropMissile()
 {
-  char payload[5]{};
-  payload[0] = static_cast<char>(m_pMaster->m_Param.GetRaceCode());
-  payload[1] = 26;
-  *reinterpret_cast<unsigned __int16 *>(payload + 2) = m_wItemIndex;
-  payload[4] = static_cast<char>(GetMasterClass());
+  _nuclear_bomb_drop_result_zocl payload{};
+  payload.byRaceCode = static_cast<char>(m_pMaster->m_Param.GetRaceCode());
+  payload.byItemTableCode = 26;
+  payload.wItemRecIndex = m_wItemIndex;
+  payload.byUseClass = static_cast<char>(GetMasterClass());
 
   unsigned __int8 type[2]{60, 5};
-  CircleReport(type, payload, 5, false);
+  CircleReport(type, reinterpret_cast<char *>(&payload), static_cast<unsigned __int16>(sizeof(payload)), false);
 }
 
 void CNuclearBomb::RecvKillMessage(CCharacter *pDier)

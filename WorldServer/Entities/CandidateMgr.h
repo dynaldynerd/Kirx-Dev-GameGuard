@@ -5,6 +5,8 @@
 
 class CPlayer;
 struct _PVP_RANK_DATA;
+struct _qry_case_discharge_patriarch;
+struct _qry_case_insert_candidate;
 
 class  CandidateMgr
 {
@@ -92,12 +94,12 @@ public:
   __int64 Update_RegistCandidate_2st();
   __int64 Update_Score();
   __int64 Update_ClassType();
-  __int64 Insert_Candidate(char *p);
+  __int64 Insert_Candidate(unsigned __int8 byQryCase, _qry_case_insert_candidate *p);
   __int64 Update_Refund();
-  __int64 Update_DischargePatriarch(char *p);
+  __int64 Update_DischargePatriarch(_qry_case_discharge_patriarch *p);
   __int64 CheckDBValidCharacter(unsigned __int8 byProc);
   __int64 Update_VoteTime(unsigned int dwSerial);
-  void CompleteInsertCandidate(unsigned __int8 byRet, char *p);
+  void CompleteInsertCandidate(unsigned __int8 byRet, _qry_case_insert_candidate *p);
   __int64 __SortByPvpPoint();
   __int64 __SortByRank();
   __int64 __SortByScore();

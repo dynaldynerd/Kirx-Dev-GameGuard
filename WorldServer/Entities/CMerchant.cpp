@@ -167,20 +167,14 @@ unsigned int CMerchant::GetNewMonSerial()
 
 void CMerchant::SendMsg_Create()
 {
-  unsigned __int16 wIndex = m_ObjID.m_wIndex;
-  unsigned __int8 pbyType[28];
-  __int16 pShort[18];
-  unsigned __int8 msg[14];
+  _npc_create_zocl msg{};
+  msg.wRecIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
+  msg.wIndex = m_ObjID.m_wIndex;
+  msg.dwSerial = m_dwObjSerial;
+  FloatToShort(m_fCurPos, msg.zPos, 3);
 
-  *reinterpret_cast<unsigned __int16 *>(&msg[0]) = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
-  *reinterpret_cast<unsigned __int16 *>(&msg[2]) = wIndex;
-  *reinterpret_cast<unsigned int *>(&msg[4]) = m_dwObjSerial;
-  FloatToShort(m_fCurPos, pShort, 3);
-  memcpy_0(&msg[8], pShort, sizeof(__int16) * 3);
-
-  pbyType[0] = 3;
-  pbyType[1] = 17;
-  CircleReport(pbyType, reinterpret_cast<char *>(msg), 14, false);
+  unsigned __int8 pbyType[2]{3, 17};
+  CircleReport(pbyType, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), false);
 }
 
 void CMerchant::SendMsg_Destroy()

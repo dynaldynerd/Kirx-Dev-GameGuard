@@ -8,6 +8,7 @@
 #include "CMonster.h"
 #include "CPartyPlayer.h"
 #include "CGameObject.h"
+#include "CPlayer.h"
 #include "CNetProcess.h"
 #include "GlobalObjects.h"
 #include "PCBANG_PRIMIUM_FAVOR.h"
@@ -568,13 +569,19 @@ CCharacter *CAnimus::SearchNearPlayerAttack()
 void CAnimus::make_gen_attack_param(CCharacter *pDst, unsigned __int8 byPart, _attack_param *pAP, int nSkillIndex)
 {
   pAP->pDst = pDst;
-  if (!pDst || pDst->m_ObjID.m_byID || static_cast<unsigned __int8>(pDst[25].m_SFCont[0][5].m_wszPlayerName[16]) == 255)
+  unsigned __int8 forcedPart = 0xFF;
+  if (pDst && !pDst->m_ObjID.m_byID)
+  {
+    forcedPart = static_cast<CPlayer *>(pDst)->m_byDamagePart;
+  }
+
+  if (!pDst || pDst->m_ObjID.m_byID || forcedPart == 0xFF)
   {
     pAP->nPart = byPart;
   }
   else
   {
-    pAP->nPart = static_cast<unsigned __int8>(pDst[25].m_SFCont[0][5].m_wszPlayerName[16]);
+    pAP->nPart = forcedPart;
   }
   pAP->nClass = m_byRoleCode != 1;
   pAP->nTol = m_Skill[nSkillIndex].m_Element;
@@ -859,9 +866,9 @@ char CAnimus::Heal(unsigned int skill)
     }
 
     CPlayer *targetPlayer = static_cast<CPlayer *>(m_pTarget);
-    if (BYTE2(targetPlayer[1].m_fCurPos[2]) && m_pMaster->m_bInGuildBattle)
+    if (targetPlayer->m_bInGuildBattle && m_pMaster->m_bInGuildBattle)
     {
-      if (LOBYTE(targetPlayer[1].m_fAbsPos[0]) != m_pMaster->m_byGuildBattleColorInx)
+      if (targetPlayer->m_byGuildBattleColorInx != m_pMaster->m_byGuildBattleColorInx)
       {
         if (isInanna)
         {
@@ -870,7 +877,7 @@ char CAnimus::Heal(unsigned int skill)
         m_pTarget = m_pMaster;
         return 0;
       }
-      if (LOBYTE(targetPlayer[1].m_fCurPos[2]))
+      if (targetPlayer->m_bTakeGravityStone)
       {
         if (isInanna)
         {
@@ -883,7 +890,7 @@ char CAnimus::Heal(unsigned int skill)
     }
     else
     {
-      if (BYTE2(targetPlayer[1].m_fCurPos[2]) || m_pMaster->m_bInGuildBattle)
+      if (targetPlayer->m_bInGuildBattle || m_pMaster->m_bInGuildBattle)
       {
         if (isInanna)
         {

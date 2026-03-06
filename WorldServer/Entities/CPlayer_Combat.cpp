@@ -1583,14 +1583,28 @@ void CPlayer::SendMsg_CreateTrapResult(char byErrCode, unsigned int dwTrapObjSer
 
 void CPlayer::SendMsg_BackTrapResult(char byErrCode)
 {
+  _back_trap_result_zocl msg{};
+  msg.byErrCode = byErrCode;
+
   unsigned __int8 type[2] = {17, 39};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &byErrCode, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CPlayer::SendMsg_MadeTrapNumInform(char byNum)
 {
+  _made_trap_num_inform_zocl msg{};
+  msg.byNum = byNum;
+
   unsigned __int8 type[2] = {17, 29};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, &byNum, 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CPlayer::SendMsg_TowerContinue(unsigned __int16 wItemSerial, CGuardTower *pTwr)
@@ -1603,7 +1617,11 @@ _continue_tower_inform msg{};
   msg.dwTwrSerial = pTwr->m_dwObjSerial;
 
   unsigned __int8 type[2] = {17, 30};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0xAu);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CPlayer::pc_MakeTowerRequest(
@@ -2321,18 +2339,22 @@ void CPlayer::SendMsg_AddEffect(
   unsigned int dwPlayerSerial,
   char *wszPlayerName)
 {
-  char payload[0x1A]{};
-  payload[0] = static_cast<char>(byLv);
-  *reinterpret_cast<unsigned __int16 *>(payload + 1) = wEffectCode;
-  *reinterpret_cast<unsigned __int16 *>(payload + 3) = wDurSec;
-  *reinterpret_cast<unsigned int *>(payload + 5) = dwPlayerSerial;
+  _effect_add_inform_zocl payload{};
+  payload.byLv = static_cast<char>(byLv);
+  payload.wEffectCode = wEffectCode;
+  payload.wDurSec = wDurSec;
+  payload.dwPlayerSerial = dwPlayerSerial;
   if (dwPlayerSerial != 0)
   {
-    strcpy_s(payload + 9, 0x11u, wszPlayerName);
+    strcpy_s(payload.wszPlayerName, sizeof(payload.wszPlayerName), wszPlayerName);
   }
 
   unsigned __int8 type[2] = {17, 10};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 0x1Au);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
   this->SendData_PartyMemberEffect(0, wEffectCode, byLv);
 }
 
@@ -2341,12 +2363,16 @@ void CPlayer::SendMsg_DelEffect(unsigned __int8 byEffectCode, unsigned __int16 w
   const unsigned __int16 effectBit =
     static_cast<unsigned __int16>(this->CalcEffectBit(byEffectCode, wEffectIndex));
 
-  char payload[6]{};
-  *reinterpret_cast<unsigned __int16 *>(payload) = effectBit;
-  *reinterpret_cast<unsigned int *>(payload + 2) = this->m_dwObjSerial;
+  _effect_remove_inform_zocl payload{};
+  payload.wEffectCode = effectBit;
+  payload.dwPlayerSerial = this->m_dwObjSerial;
 
   unsigned __int8 type[2] = {17, 11};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 6u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
   this->SendData_PartyMemberEffect(1, effectBit, byLv);
 }
 
@@ -2478,7 +2504,11 @@ void CPlayer::SendMsg_SFDelayRequest()
   }
 
   unsigned __int8 type[2] = {3, 56};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0x82u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CPlayer::SendMsg_PotionDelayTime(unsigned int *pdwPotionNextUseTime, unsigned int dwCurTime)
@@ -2493,7 +2523,11 @@ void CPlayer::SendMsg_PotionDelayTime(unsigned int *pdwPotionNextUseTime, unsign
   }
 
   unsigned __int8 type[2] = {3, 60};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0x9Cu);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CPlayer::_set_db_sf_effect(_SFCONT_DB_BASE *pDBBase)
@@ -2593,35 +2627,35 @@ void CPlayer::SendMsg_Circle_DelEffect(
 
 void CPlayer::SendMsg_Die()
 {
-  char payload[6]{};
-  *reinterpret_cast<unsigned __int16 *>(payload) = this->m_ObjID.m_wIndex;
-  *reinterpret_cast<unsigned int *>(payload + 2) = this->m_dwObjSerial;
+  _player_die_zocl payload{};
+  payload.wIndex = this->m_ObjID.m_wIndex;
+  payload.dwSerial = this->m_dwObjSerial;
 
   unsigned __int8 type[2] = {3, 23};
-  this->CircleReport(type, payload, 6, true);
+  this->CircleReport(type, reinterpret_cast<char *>(&payload), static_cast<unsigned __int16>(sizeof(payload)), true);
 }
 
 void CPlayer::SendMsg_BreakdownEquipItem(unsigned __int8 byPartIndex, unsigned __int16 wSerial)
 {
-  char payload[0x0B]{};
-  *reinterpret_cast<unsigned __int16 *>(payload) = this->m_ObjID.m_wIndex;
-  *reinterpret_cast<unsigned int *>(payload + 2) = this->m_dwObjSerial;
-  *reinterpret_cast<unsigned __int16 *>(payload + 6) = this->GetVisualVer();
-  payload[8] = static_cast<char>(byPartIndex);
-  *reinterpret_cast<unsigned __int16 *>(payload + 9) = wSerial;
+  _breakdown_equip_item_zocl payload{};
+  payload.wPlayerIndex = this->m_ObjID.m_wIndex;
+  payload.dwPlayerSerial = this->m_dwObjSerial;
+  payload.dwEquipVer = this->GetVisualVer();
+  payload.byPartIndex = static_cast<char>(byPartIndex);
+  payload.wItemSerial = wSerial;
 
   unsigned __int8 type[2] = {5, 19};
-  this->CircleReport(type, payload, 11, true);
+  this->CircleReport(type, reinterpret_cast<char *>(&payload), static_cast<unsigned __int16>(sizeof(payload)), true);
 }
 
 void CPlayer::SendMsg_Notify_Gravity_Stone_Owner_Die()
 {
-  char payload[5]{};
-  payload[0] = static_cast<char>(this->m_ObjID.m_byID);
-  *reinterpret_cast<unsigned int *>(payload + 1) = this->m_dwObjSerial;
+  _guild_battle_notify_gravity_stone_owner_die_zocl payload{};
+  payload.byObjID = static_cast<char>(this->m_ObjID.m_byID);
+  payload.dwObjSerial = this->m_dwObjSerial;
 
   unsigned __int8 type[2] = {27, 86};
-  this->CircleReport(type, payload, 5, true);
+  this->CircleReport(type, reinterpret_cast<char *>(&payload), static_cast<unsigned __int16>(sizeof(payload)), true);
 }
 
 void CPlayer::SendMsg_FixPosition(int n)
@@ -3470,11 +3504,15 @@ void CPlayer::CalPvpTempCash(CPlayer *pDier, unsigned __int8 byKillerObjID)
 
 void CPlayer::SendMsg_MaxPvpPointInform(int nMax)
 {
-  char payload[4]{};
-  *reinterpret_cast<int *>(payload) = nMax;
+  _notify_max_pvp_point_zocl payload{};
+  payload.nMaxPoint = nMax;
 
   unsigned __int8 type[2] = {59, 15};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 4u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&payload),
+    static_cast<unsigned __int16>(sizeof(payload)));
 }
 
 void CPlayer::IncCriEffKillPoint()
@@ -3507,15 +3545,16 @@ void CPlayer::IncCriEffPvPCashBag(double dAlter)
 
 void CPlayer::SendMsg_FcitemInform(unsigned __int16 wItemSerial, unsigned int dwNewStat)
 {
-  char szMsg[2]; // [rsp+34h] [rbp-44h] BYREF
-  unsigned int v7; // [rsp+36h] [rbp-42h]
-  unsigned __int8 pbyType[36]; // [rsp+54h] [rbp-24h] BYREF
+  _fcitem_inform_zocl msg{};
+  msg.wItemSerial = wItemSerial;
+  msg.dwNewStat = dwNewStat;
 
-  *(_WORD *)szMsg = wItemSerial;
-  v7 = dwNewStat;
-  pbyType[0] = 3;
-  pbyType[1] = 44;
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, szMsg, 6u);
+  unsigned __int8 pbyType[2]{3, 44};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CPlayer::AlterPvPCashBag(long double dAlter, int IOCode)

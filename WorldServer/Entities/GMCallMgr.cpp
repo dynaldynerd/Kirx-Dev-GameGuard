@@ -10,6 +10,7 @@
 #include "CUserDB.h"
 #include "GlobalObjects.h"
 #include "gm_msg_gmcall_list_response_zocl.h"
+#include "Packet/ZoneClientPacket.h"
 
 GMRequestData::GMRequestData() : m_dwPlayerSerial(0), m_dwCallTimer(0), m_wszUserName{}
 {
@@ -198,13 +199,17 @@ char GMCallMgr::SendResponseGMCall(CPlayer *pOne, int bCallState)
     return 0;
   }
 
-  char msg[4]{};
-  *reinterpret_cast<int *>(msg) = bCallState;
+  _gm_msg_gmcall_response_zocl msg{};
+  msg.m_bCall = bCallState;
 
   unsigned __int8 type[2]{};
   type[0] = 55;
   type[1] = 4;
-  g_Network.m_pProcess[0]->LoadSendMsg(pOne->m_ObjID.m_wIndex, type, msg, 4u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    pOne->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
   return 1;
 }
 
@@ -267,12 +272,16 @@ void GMCallMgr::SendResponseAcceptResult(CPlayer *pOneGM, CPlayer *pOneUser, int
 {
   (void)pOneUser;
 
-  char msg[4]{};
-  *reinterpret_cast<int *>(msg) = nErrorCode;
+  _gm_msg_gm_accept_response_zocl msg{};
+  msg.m_nResultCode = nErrorCode;
 
   unsigned __int8 type[2]{};
   type[0] = 55;
   type[1] = 6;
-  g_Network.m_pProcess[0]->LoadSendMsg(pOneGM->m_ObjID.m_wIndex, type, msg, 4u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    pOneGM->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 

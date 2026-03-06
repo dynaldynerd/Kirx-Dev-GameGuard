@@ -7,7 +7,7 @@
 #include "CLogFile.h"
 #include "CPvpUserAndGuildRankingSystem.h"
 #include "CPlayer.h"
-#include "WeaponItem_fld.h"
+#include "UnitPart_fld.h"
 #include "force_fld.h"
 #include "skill_fld.h"
 #include "GlobalObjects.h"
@@ -351,13 +351,13 @@ void CPlayerAttack::AttackUnit(_attack_param *pParam)
   m_nDamagedObjNum = 0;
   m_bIsCrtAtt = false;
   m_pp = pParam;
-  _WeaponItem_fld *weaponField = reinterpret_cast<_WeaponItem_fld *>(m_pp->pFld);
+  _UnitPart_fld *weaponField = reinterpret_cast<_UnitPart_fld *>(m_pp->pFld);
   bool canHit = true;
   m_pAttChar->BreakStealth();
 
   if (m_pp->pDst)
   {
-    const int effectGroup = weaponField->m_nKindClt;
+    const int effectGroup = weaponField->m_nEffectGroup;
     if (effectGroup != 4)
     {
       bool isAvoided = false;

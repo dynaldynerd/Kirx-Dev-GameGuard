@@ -1,31 +1,5 @@
 #pragma once
 
-#pragma pack(push, 1)
-struct  _unmannedtrader_sell_wait_item_inform_zocl
-{
-  #pragma pack(push, 1)
-  struct  __list
-  {
-    unsigned __int16 wItemSerial;
-    unsigned int dwSellDalant;
-    unsigned int dwTax;
-  };
-  #pragma pack(pop)
+#include "Packet/ZoneClientPacket.h"
 
-  unsigned __int8 byNum;
-  unsigned int dwTotalSellDalant;
-  unsigned int dwTotalTaxDalant;
-  unsigned int dwCurInvenDalant;
-  __list List[10];
-
-  __int64 size() const
-  {
-    unsigned __int8 clamped = byNum;
-    if (clamped > 10)
-    {
-      clamped = 0;
-    }
-    return 116 - 10LL * (10 - clamped);
-  }
-};
-#pragma pack(pop)
+using _unmannedtrader_sell_wait_item_inform_zocl = _unmannedtrader_Sell_Wait_item_inform_zocl;

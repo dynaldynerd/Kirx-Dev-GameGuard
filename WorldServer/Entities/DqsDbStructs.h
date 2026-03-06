@@ -4,6 +4,8 @@
 #include "InvenKey.h"
 #include "StoragePos.h"
 
+#pragma pack(push, 8)
+
 struct _AVATOR_DATA;
 
 struct _worlddb_character_base_info
@@ -1082,4 +1084,6 @@ inline _rege_char_data::_rege_char_data()
 {
   memset_0(this, 0, sizeof(*this));
 }
+
+#pragma pack(pop)
 

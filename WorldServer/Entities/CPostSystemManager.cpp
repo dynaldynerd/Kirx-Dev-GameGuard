@@ -5,7 +5,6 @@
 #include <cstdarg>
 #include <ctime>
 #include <cstring>
-#include <vector>
 
 #include "CMgrAvatorItemHistory.h"
 #include "CMainThread.h"
@@ -17,7 +16,9 @@
 #include "GlobalObjects.h"
 #include "KorLocalTime.h"
 #include "WorldServerUtil.h"
+#include "qry_case_post_list_regi.h"
 #include "qry_case_post_send.h"
+#include "qry_case_post_serial_check.h"
 
 #include <cstdio>
 #include <atltime.h>
@@ -130,81 +131,61 @@ void CPostSystemManager::Loop()
 
   if (m_tmrRegiTime.CountingTimer())
   {
-      const int pendingRegistCount = m_listRegist.size();
-      if (pendingRegistCount > 0)
-      {
-        const int sendCount = pendingRegistCount < 20 ? pendingRegistCount : 20;
-      constexpr int kRecordSize = 304;
-      constexpr int kHeaderSize = 8;
-      std::vector<char> payload(kHeaderSize + sendCount * kRecordSize, 0);
-      *reinterpret_cast<unsigned int *>(&payload[0]) = static_cast<unsigned int>(sendCount);
-
-      for (int recordIndex = 0; recordIndex < sendCount; ++recordIndex)
+    const int pendingRegistCount = m_listRegist.size();
+    if (pendingRegistCount > 0)
+    {
+      _qry_case_post_list_regi query;
+      for (int recordIndex = 0; recordIndex < pendingRegistCount && recordIndex < 20; ++recordIndex)
       {
         unsigned int outIndex[5]{};
         m_listRegist.PopNode_Front(outIndex);
 
         CPostData *postData = &m_PostData[outIndex[0]];
-        char *entry = payload.data() + kHeaderSize + recordIndex * kRecordSize;
-        *reinterpret_cast<unsigned int *>(entry) = outIndex[0];
-        entry[5] = static_cast<char>(postData->m_bySendRace);
-        entry[6] = static_cast<char>(postData->m_bySenderDgr);
-        *reinterpret_cast<unsigned int *>(entry + 8) = postData->m_dwSenderSerial;
-        *reinterpret_cast<_INVENKEY *>(entry + 268) = postData->m_Key;
-        *reinterpret_cast<unsigned __int64 *>(entry + 272) = postData->m_dwDur;
-        *reinterpret_cast<unsigned int *>(entry + 280) = postData->m_dwUpt;
-        *reinterpret_cast<unsigned __int64 *>(entry + 288) = postData->m_lnUID;
-        *reinterpret_cast<unsigned int *>(entry + 296) = postData->m_dwGold;
-        strcpy_s(entry + 12, 17, postData->m_wszSendName);
-        strcpy_s(entry + 29, 17, postData->m_wszRecvName);
-        strcpy_s(entry + 46, 21, postData->m_wszTitle);
-        strcpy_s(entry + 67, 201, postData->m_wszContent);
+        query.List[recordIndex].dwIndex = outIndex[0];
+        query.List[recordIndex].bySendRace = postData->m_bySendRace;
+        query.List[recordIndex].bySenderDgr = postData->m_bySenderDgr;
+        query.List[recordIndex].dwSenderSerial = postData->m_dwSenderSerial;
+        query.List[recordIndex].key = postData->m_Key;
+        query.List[recordIndex].dwDur = postData->m_dwDur;
+        query.List[recordIndex].dwUpt = postData->m_dwUpt;
+        query.List[recordIndex].lnUID = postData->m_lnUID;
+        query.List[recordIndex].dwGold = postData->m_dwGold;
+        strcpy_s(query.List[recordIndex].wszSendName, 17, postData->m_wszSendName);
+        strcpy_s(query.List[recordIndex].wszRecvName, 17, postData->m_wszRecvName);
+        strcpy_s(query.List[recordIndex].wszTitle, 21, postData->m_wszTitle);
+        strcpy_s(query.List[recordIndex].wszContent, 201, postData->m_wszContent);
+        ++query.dwCount;
       }
 
-      g_Main.PushDQSData(
-        0xFFFFFFFF,
-        nullptr,
-        0x4Du,
-        payload.data(),
-        static_cast<int>(payload.size()));
+      g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x4Du, reinterpret_cast<char *>(&query), static_cast<int>(query.size()));
     }
   }
 
   if (m_tmrProcTime.CountingTimer())
   {
-      const int pendingProcCount = m_listProc.size();
-      if (pendingProcCount > 0)
-      {
-        const int sendCount = pendingProcCount < 15 ? pendingProcCount : 15;
-      constexpr int kRecordSize = 32;
-      constexpr int kHeaderSize = 4;
-      std::vector<char> payload(kHeaderSize + sendCount * kRecordSize, 0);
-      *reinterpret_cast<unsigned int *>(&payload[0]) = static_cast<unsigned int>(sendCount);
-
-      for (int recordIndex = 0; recordIndex < sendCount; ++recordIndex)
+    const int pendingProcCount = m_listProc.size();
+    if (pendingProcCount > 0)
+    {
+      _qry_case_post_serial_check query;
+      for (int recordIndex = 0; recordIndex < pendingProcCount && recordIndex < 15; ++recordIndex)
       {
         unsigned int outIndex[5]{};
         m_listProc.PopNode_Front(outIndex);
 
         CPostData *postData = &m_PostData[outIndex[0]];
-        char *entry = payload.data() + kHeaderSize + recordIndex * kRecordSize;
-        *reinterpret_cast<unsigned int *>(entry) = outIndex[0];
-        entry[4] = static_cast<char>(postData->m_bySenderDgr);
-        entry[5] = static_cast<char>(postData->m_bySendRace);
-        strcpy_s(entry + 7, 17, postData->m_wszRecvName);
+        query.List[recordIndex].dwIndex = outIndex[0];
+        query.List[recordIndex].bySenderDgr = postData->m_bySenderDgr;
+        query.List[recordIndex].bySenderRace = postData->m_bySendRace;
+        strcpy_s(query.List[recordIndex].wszRecvName, 17, postData->m_wszRecvName);
         if (postData->m_Key.IsFilled() || postData->m_dwGold || postData->m_bySenderDgr >= 2u)
         {
-          entry[6] = 1;
+          query.List[recordIndex].bCheckDgr = true;
         }
+        ++query.dwCount;
       }
 
-      m_nPostProcCountPerDay += sendCount;
-      g_Main.PushDQSData(
-        0xFFFFFFFF,
-        nullptr,
-        0x81u,
-        payload.data(),
-        static_cast<int>(payload.size()));
+      m_nPostProcCountPerDay += query.dwCount;
+      g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x81u, reinterpret_cast<char *>(&query), static_cast<int>(query.size()));
     }
   }
 
@@ -328,56 +309,55 @@ void CPostSystemManager::Log(const wchar_t *fmt, ...)
 }
 
 
-unsigned __int8 CPostSystemManager::UpdateRegist(char *pData)
+unsigned __int8 CPostSystemManager::UpdateRegist(_qry_case_post_list_regi *pData)
 {
-  for (unsigned int j = 0; j < *reinterpret_cast<unsigned int *>(pData); ++j)
+  for (unsigned int j = 0; j < pData->dwCount; ++j)
   {
-    char *entry = &pData[304 * j + 8];
-    int nK = static_cast<int>(reinterpret_cast<_INVENKEY *>(pData + 304 * j + 276)->CovDBKey());
-    bool updated = g_Main.m_pWorldDB->Update_PostRegistry(
-      *reinterpret_cast<unsigned int *>(entry),
-      *reinterpret_cast<unsigned int *>(entry + 8),
-      entry + 12,
-      entry + 29,
-      entry + 46,
-      entry + 67,
+    _qry_case_post_list_regi::__list &entry = pData->List[j];
+    const int nK = static_cast<int>(entry.key.CovDBKey());
+    entry.bRet = g_Main.m_pWorldDB->Update_PostRegistry(
+      entry.dwIndex,
+      entry.dwSenderSerial,
+      entry.wszSendName,
+      entry.wszRecvName,
+      entry.wszTitle,
+      entry.wszContent,
       nK,
-      *reinterpret_cast<unsigned long long *>(entry + 272),
-      *reinterpret_cast<unsigned int *>(entry + 280),
-      *reinterpret_cast<unsigned int *>(entry + 296),
-      static_cast<unsigned __int8>(entry[5]),
-      static_cast<unsigned __int8>(entry[6]),
-      *reinterpret_cast<unsigned long long *>(entry + 288));
-    entry[4] = updated ? 1 : 0;
+      entry.dwDur,
+      entry.dwUpt,
+      entry.dwGold,
+      entry.bySendRace,
+      entry.bySenderDgr,
+      entry.lnUID);
   }
   return 0;
 }
 
-unsigned __int8 CPostSystemManager::PostSend(char *pData)
+unsigned __int8 CPostSystemManager::PostSend(_qry_case_post_send *pData)
 {
-  for (unsigned int j = 0; j < *reinterpret_cast<unsigned int *>(pData); ++j)
+  for (unsigned int j = 0; j < pData->dwCount; ++j)
   {
-    char *entry = &pData[312 * j + 8];
-    if (!entry[0])
+    _qry_case_post_send::__list &entry = pData->List[j];
+    if (!entry.byErr)
     {
-      int recvCount = g_Main.m_pWorldDB->Select_PostRecvStorageCheck(*reinterpret_cast<unsigned int *>(entry + 12));
+      const int recvCount = g_Main.m_pWorldDB->Select_PostRecvStorageCheck(entry.dwReceiverSerial);
       if (recvCount >= 50)
       {
-        entry[0] = 10;
+        entry.byErr = 10;
       }
     }
 
     unsigned __int8 errCode = 0;
     unsigned int ownerSerial = 0;
-    if (entry[0])
+    if (entry.byErr)
     {
       errCode = 100;
-      ownerSerial = *reinterpret_cast<unsigned int *>(entry + 16);
+      ownerSerial = entry.dwSenderSerial;
     }
     else
     {
       errCode = 0;
-      ownerSerial = *reinterpret_cast<unsigned int *>(entry + 12);
+      ownerSerial = entry.dwReceiverSerial;
     }
 
     if (!g_Main.m_pWorldDB->Select_PostStorageRecordCheck())
@@ -386,52 +366,52 @@ unsigned __int8 CPostSystemManager::PostSend(char *pData)
     }
 
     unsigned __int8 number[36]{};
-    if (g_Main.m_pWorldDB->Select_PostStorageEmptyRecordSerial(reinterpret_cast<unsigned int *>(entry + 8)))
+    if (g_Main.m_pWorldDB->Select_PostStorageEmptyRecordSerial(&entry.dwPSSerial))
     {
-      int nK = static_cast<int>(reinterpret_cast<_INVENKEY *>(entry + 276)->CovDBKey());
+      const int nK = static_cast<int>(entry.key.CovDBKey());
       g_Main.m_pWorldDB->Update_PostStorageSendToRecver(
         ownerSerial,
-        *reinterpret_cast<unsigned int *>(entry + 8),
+        entry.dwPSSerial,
         errCode,
-        entry + 20,
-        entry + 37,
-        entry + 54,
-        entry + 75,
+        entry.wszSendName,
+        entry.wszRecvName,
+        entry.wszTitle,
+        entry.wszContent,
         nK,
-        *reinterpret_cast<unsigned long long *>(entry + 280),
-        *reinterpret_cast<unsigned int *>(entry + 288),
-        *reinterpret_cast<unsigned int *>(entry + 304),
-        static_cast<unsigned __int8>(entry[0]),
+        entry.dwDur,
+        entry.dwUpt,
+        entry.dwGold,
+        entry.byErr,
         0xFFu,
         number,
         true,
-        *reinterpret_cast<unsigned long long *>(entry + 296));
+        entry.lnUID);
     }
   }
 
   return 0;
 }
 
-unsigned __int8 CPostSystemManager::PostReceiverCheck(char *pData)
+unsigned __int8 CPostSystemManager::PostReceiverCheck(_qry_case_post_serial_check *pData)
 {
   unsigned int outSerial[8]{};
   unsigned int accSerial[8]{};
   unsigned int fatigue[8]{};
   unsigned __int8 status[16]{};
 
-  for (unsigned int j = 0; j < *reinterpret_cast<unsigned int *>(pData); ++j)
+  for (unsigned int j = 0; j < pData->dwCount; ++j)
   {
     unsigned int race[5]{};
-    char *entry = &pData[32 * j + 4];
-    g_Main.m_pWorldDB->Update_PostRegistryDisable(*reinterpret_cast<unsigned int *>(entry));
+    _qry_case_post_serial_check::__list &entry = pData->List[j];
+    g_Main.m_pWorldDB->Update_PostRegistryDisable(entry.dwIndex);
     unsigned __int8 dbRet = g_Main.m_pWorldDB->Select_PostRecvSerialFromName(
-      entry + 7,
+      entry.wszRecvName,
       outSerial,
       accSerial,
       race);
     if (dbRet)
     {
-      entry[28] = (dbRet == 2) ? 9 : 8;
+      entry.byErr = (dbRet == 2) ? 9 : 8;
     }
     else
     {
@@ -439,9 +419,9 @@ unsigned __int8 CPostSystemManager::PostReceiverCheck(char *pData)
       if (!dbRet || dbRet == 2)
       {
         bool invalid = false;
-        if (entry[6])
+        if (entry.bCheckDgr)
         {
-          if (static_cast<unsigned __int8>(entry[4]) >= 2u)
+          if (entry.bySenderDgr >= 2u)
           {
             invalid = accSerial[0] < 0x77359400;
           }
@@ -452,27 +432,27 @@ unsigned __int8 CPostSystemManager::PostReceiverCheck(char *pData)
         }
         if (invalid)
         {
-          entry[28] = 8;
+          entry.byErr = 8;
         }
         else if (status[0] == 99)
         {
-          entry[28] = 18;
+          entry.byErr = 18;
         }
         else
         {
-          if (static_cast<unsigned __int8>(entry[5]) == race[0] / 2)
+          if (entry.bySenderRace == race[0] / 2)
           {
-            *reinterpret_cast<unsigned int *>(entry + 24) = outSerial[0];
+            entry.dwReceiverSerial = outSerial[0];
           }
           else
           {
-            entry[28] = 13;
+            entry.byErr = 13;
           }
         }
       }
       else
       {
-        entry[28] = 8;
+        entry.byErr = 8;
       }
     }
   }
@@ -715,46 +695,46 @@ char CPostSystemManager::PostSendRequest(
 }
 
 
-void CPostSystemManager::CompleteRegist(char *pData)
+void CPostSystemManager::CompleteRegist(_qry_case_post_list_regi *pData)
 {
-  for (unsigned int j = 0; j < *reinterpret_cast<unsigned int *>(pData); ++j)
+  for (unsigned int j = 0; j < pData->dwCount; ++j)
   {
-    char *entry = &pData[304 * j + 8];
-    if (pData[304 * j + 12])
+    _qry_case_post_list_regi::__list &entry = pData->List[j];
+    if (entry.bRet)
     {
-      m_listProc.PushNode_Back(*reinterpret_cast<unsigned int *>(entry));
+      m_listProc.PushNode_Back(entry.dwIndex);
     }
     else
     {
-      int nK = static_cast<int>(reinterpret_cast<_INVENKEY *>(entry + 268)->CovDBKey());
+      const int nK = static_cast<int>(entry.key.CovDBKey());
       Log(
         "CPostSystemManager::CompleteRegist() Serial(%d),PostInx(%d),K(%d),D(%d),U(%d),Gold(%d)",
-        *reinterpret_cast<unsigned int *>(entry + 8),
-        *reinterpret_cast<unsigned int *>(entry),
+        entry.dwSenderSerial,
+        entry.dwIndex,
         nK,
-        *reinterpret_cast<unsigned long long *>(entry + 272),
-        *reinterpret_cast<unsigned int *>(entry + 280),
-        *reinterpret_cast<unsigned int *>(entry + 296));
-      m_listEmpty.PushNode_Back(*reinterpret_cast<unsigned int *>(entry));
+        entry.dwDur,
+        entry.dwUpt,
+        entry.dwGold);
+      m_listEmpty.PushNode_Back(entry.dwIndex);
     }
   }
 }
 
-void CPostSystemManager::CompleteSend(char *pData)
+void CPostSystemManager::CompleteSend(_qry_case_post_send *pData)
 {
-  for (unsigned int j = 0; j < *reinterpret_cast<unsigned int *>(pData); ++j)
+  for (unsigned int j = 0; j < pData->dwCount; ++j)
   {
-    char *entry = &pData[312 * j + 8];
-    if (entry[0])
+    _qry_case_post_send::__list &entry = pData->List[j];
+    if (entry.byErr)
     {
       ++m_nPostReturnCountPerDay;
-      CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, *reinterpret_cast<unsigned int *>(entry + 16));
+      CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, entry.dwSenderSerial);
       if (player && player->m_bOper && player->m_bPostLoad)
       {
-        CPostData *postData = &m_PostData[*reinterpret_cast<unsigned int *>(entry + 4)];
+        CPostData *postData = &m_PostData[entry.dwIndex];
         CPostData *post = player->m_Param.m_ReturnPostStorage.AddReturnPost(
-          static_cast<unsigned __int8>(entry[0]),
-          *reinterpret_cast<unsigned int *>(entry + 8),
+          entry.byErr,
+          entry.dwPSSerial,
           0x64u,
           postData->m_wszRecvName,
           postData->m_wszTitle,
@@ -787,29 +767,29 @@ void CPostSystemManager::CompleteSend(char *pData)
           int size = player->m_Param.m_ReturnPostStorage.GetSize();
           Log(
             "CPostSystemManager::CompletePostReturn() :AddReturnPost: SenderSerial(%d),PSSize(%d)",
-            *reinterpret_cast<unsigned int *>(entry + 16),
+            entry.dwSenderSerial,
             size);
         }
       }
     }
-    m_listEmpty.PushNode_Back(*reinterpret_cast<unsigned int *>(entry + 4));
+    m_listEmpty.PushNode_Back(entry.dwIndex);
   }
 }
 
-void CPostSystemManager::CompletePostReceiverCheck(char *pData)
+void CPostSystemManager::CompletePostReceiverCheck(_qry_case_post_serial_check *pData)
 {
   _qry_case_post_send qry;
   int nNumber[5]{};
 
-  for (unsigned int j = 0; j < *reinterpret_cast<unsigned int *>(pData); ++j)
+  for (unsigned int j = 0; j < pData->dwCount; ++j)
   {
-    char *entry = &pData[32 * j + 4];
-    CPostData *postData = &m_PostData[*reinterpret_cast<unsigned int *>(entry)];
+    _qry_case_post_serial_check::__list &entry = pData->List[j];
+    CPostData *postData = &m_PostData[entry.dwIndex];
     bool handled = false;
 
-    if (!pData[32 * j + 32])
+    if (!entry.byErr)
     {
-      CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, *reinterpret_cast<unsigned int *>(entry + 24));
+      CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, entry.dwReceiverSerial);
       if (player)
       {
         if (player->m_bPostLoad && player->m_bOper)
@@ -863,17 +843,17 @@ void CPostSystemManager::CompletePostReceiverCheck(char *pData)
               hasItem,
               hasGold,
               0);
-            m_listEmpty.PushNode_Back(*reinterpret_cast<unsigned int *>(entry));
+            m_listEmpty.PushNode_Back(entry.dwIndex);
             handled = true;
           }
           else
           {
-            entry[28] = 10;
+            entry.byErr = 10;
           }
         }
         else
         {
-          entry[28] = 8;
+          entry.byErr = 8;
         }
       }
     }
@@ -881,9 +861,9 @@ void CPostSystemManager::CompletePostReceiverCheck(char *pData)
     if (!handled)
     {
       qry.pushdata(
-        *reinterpret_cast<unsigned int *>(entry),
-        static_cast<unsigned __int8>(entry[28]),
-        *reinterpret_cast<unsigned int *>(entry + 24),
+        entry.dwIndex,
+        entry.byErr,
+        entry.dwReceiverSerial,
         postData->m_dwSenderSerial,
         postData->m_wszSendName,
         postData->m_wszRecvName,

@@ -8,9 +8,11 @@
 
 #include <mmsystem.h>
 #include <process.h>
+#include <cstdarg>
 #include <cstdlib>
 #include <new>
 #include <limits>
+#include <string>
 
 #include "FireGuard.h"
 #include "NetCheckPackets.h"
@@ -67,6 +69,77 @@ namespace
 
   _check_query sQry{};
   unsigned __int8 sbyQryType[2] = {101, 1};
+
+  void WritePacketLogLine(CLogFile &logFile, const char *format, ...)
+  {
+    va_list args;
+    va_start(args, format);
+    logFile.WriteFromArg(format, args);
+    va_end(args);
+  }
+
+  void BuildPacketHex(std::string &out, const char *payload, unsigned int length)
+  {
+    out.clear();
+    if (!payload || !length)
+    {
+      out = "-";
+      return;
+    }
+
+    out.reserve(static_cast<size_t>(length) * 3u);
+    static const char kHex[] = "0123456789ABCDEF";
+    for (unsigned int i = 0; i < length; ++i)
+    {
+      const unsigned char value = static_cast<unsigned char>(payload[i]);
+      out.push_back(kHex[value >> 4]);
+      out.push_back(kHex[value & 0x0F]);
+      if (i + 1 < length)
+      {
+        out.push_back(' ');
+      }
+    }
+  }
+
+  void AppendPacketSnifferLogSend(
+    CNetProcess *process,
+    unsigned int socketIndex,
+    unsigned __int8 processIndex,
+    unsigned __int8 type0,
+    unsigned __int8 type1,
+    unsigned __int16 payloadLen,
+    const char *payload)
+  {
+    if (!process || !process->m_pNetwork || processIndex != 0 || type0 >= 100u)
+    {
+      return;
+    }
+
+    if (!payload || !payloadLen)
+    {
+      WritePacketLogLine(
+        process->m_pNetwork->m_LogFile,
+        "PKT SEND prc(%u) idx(%u) type(%u,%u) len(%u) packet(-)",
+        static_cast<unsigned int>(processIndex),
+        socketIndex,
+        static_cast<unsigned int>(type0),
+        static_cast<unsigned int>(type1),
+        static_cast<unsigned int>(payloadLen));
+      return;
+    }
+
+    std::string packetHex;
+    BuildPacketHex(packetHex, payload, static_cast<unsigned int>(payloadLen));
+    WritePacketLogLine(
+      process->m_pNetwork->m_LogFile,
+      "PKT SEND prc(%u) idx(%u) type(%u,%u) len(%u) packet(%s)",
+      static_cast<unsigned int>(processIndex),
+      socketIndex,
+      static_cast<unsigned int>(type0),
+      static_cast<unsigned int>(type1),
+      static_cast<unsigned int>(payloadLen),
+      packetHex.c_str());
+  }
 }
 
 _SOCK_TYPE_PARAM::_SOCK_TYPE_PARAM()
@@ -930,6 +1003,18 @@ int CNetProcess::LoadSendMsg(
   unsigned __int16 Src[8]{};
   Src[1] = *reinterpret_cast<unsigned __int16 *>(pbyType);
   Src[0] = static_cast<unsigned __int16>(nLen + 4);
+
+  if (m_nIndex == 0 && m_pNetwork && m_pNetwork->m_pProcess[0] == this)
+  {
+    AppendPacketSnifferLogSend(
+      this,
+      dwClientIndex,
+      static_cast<unsigned __int8>(m_nIndex),
+      pbyType[0],
+      pbyType[1],
+      nLen,
+      szMsg);
+  }
 
   if (m_Type.m_bSendLogFile && m_nIndex == 0)
   {

@@ -10,11 +10,12 @@
 #include "CNetProcess.h"
 #include "CPlayer.h"
 #include "CUserDB.h"
+#include "CChiNetworkEXLocalStructs.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 #include "apex_id.h"
 #include "apex_send_trans.h"
-#include "wrac_packets.h"
+#include "Packet/ZoneAccountPacket.h"
 
 CChiNetworkEX *CChiNetworkEX::ms_pInstance;
 
@@ -93,20 +94,19 @@ __int64 CChiNetworkEX::Send(
 
 bool __fastcall CChiNetworkEX::s_DataAnalysis(unsigned int dwProID, unsigned int dwClientIndex, _MSG_HEADER *pMsgHeader, char *pMsg)
 {
-  const unsigned __int8 packetType = *(reinterpret_cast<unsigned __int8 *>(pMsgHeader) + 4);
+  const ApexMessageHeader *header = reinterpret_cast<const ApexMessageHeader *>(pMsgHeader);
+  const unsigned __int8 packetType = header->byType;
   CAsyncLogger::Instance()->FormatLog(12, "s_DataAnalysis - %c", packetType);
 
   if (packetType == 'D')
   {
-    const unsigned int dwRecvSize = (*reinterpret_cast<unsigned int *>(pMsgHeader)) - 9;
-    const unsigned int dwSid = *reinterpret_cast<unsigned int *>(reinterpret_cast<unsigned __int8 *>(pMsgHeader) + 5);
-    Instance()->Recv_ApexInform(dwSid, dwRecvSize, pMsg);
+    const unsigned int payloadSize = header->dwSize - sizeof(ApexMessageHeader);
+    Instance()->Recv_ApexInform(header->dwSID, payloadSize, pMsg);
   }
   else if (packetType == 'K')
   {
-    const unsigned int dwRecvSize = (*reinterpret_cast<unsigned int *>(pMsgHeader)) - 9;
-    const unsigned int dwSid = *reinterpret_cast<unsigned int *>(reinterpret_cast<unsigned __int8 *>(pMsgHeader) + 5);
-    Instance()->Recv_ApexKill(dwSid, dwRecvSize, pMsg);
+    const unsigned int payloadSize = header->dwSize - sizeof(ApexMessageHeader);
+    Instance()->Recv_ApexKill(header->dwSID, payloadSize, pMsg);
   }
 
   return true;

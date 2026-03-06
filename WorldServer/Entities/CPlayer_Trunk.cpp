@@ -205,13 +205,13 @@ bool IsEconomyFeeLevel(int level)
 
 void CPlayer::SendMsg_ExtTrunkExtendResult(char byRetCode, unsigned __int8 bySlotNum, unsigned __int8 byLackSlotNum)
 {
-  char payload[3]{};
-  payload[0] = byRetCode;
-  payload[1] = static_cast<char>(bySlotNum / 20);
-  payload[2] = static_cast<char>(byLackSlotNum / 20);
+  _Exttrunk_extend_result_zocl payload{};
+  payload.byRetCode = byRetCode;
+  payload.byPackNum = static_cast<char>(bySlotNum / 20);
+  payload.byExtendNum = static_cast<char>(byLackSlotNum / 20);
 
   unsigned __int8 type[2] = {34, 26};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, payload, 3u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&payload), sizeof(payload));
 }
 
 void CPlayer::pc_TrunkEstRequest(char *pwszPassword, unsigned __int8 byHintIndex, char *pwszHintAnswer)

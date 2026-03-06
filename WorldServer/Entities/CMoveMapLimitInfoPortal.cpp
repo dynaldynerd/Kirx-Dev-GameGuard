@@ -17,6 +17,7 @@
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 #include "notice_move_limit_map_msg_zocl.h"
+#include "Packet/ZoneClientPacket.h"
 
 CMoveMapLimitInfoPortal::CMoveMapLimitInfoPortal(unsigned int uiInx, int iType)
   : CMoveMapLimitInfo(uiInx, static_cast<OBJ_TYPE>(iType)),
@@ -135,7 +136,7 @@ void CMoveMapLimitInfoPortal::SubProcNotifyForceMoveHQ()
         g_Player[index].m_ObjID.m_wIndex,
         type,
         reinterpret_cast<char *>(&msg),
-        1u);
+        static_cast<unsigned __int16>(sizeof(msg)));
       if (++sentCount >= 0x64)
       {
         m_uiProcNotifyInx = index + 1;
@@ -181,7 +182,7 @@ void CMoveMapLimitInfoPortal::SubProcForceMoveHQ()
           g_Player[index].m_ObjID.m_wIndex,
           type,
           reinterpret_cast<char *>(&msg),
-          1u);
+          static_cast<unsigned __int16>(sizeof(msg)));
         if (++sentCount >= 0x64)
         {
           m_uiProcNotifyInx = index + 1;
@@ -275,9 +276,13 @@ unsigned __int8 CMoveMapLimitInfoPortal::ProcGotoLimitZone(
     unsigned __int8 type[2]{};
     type[0] = 4;
     type[1] = 40;
-    char msg[1]{};
-    msg[0] = static_cast<char>(err);
-    g_Network.m_pProcess[0]->LoadSendMsg(iUserInx, type, msg, 1u);
+    _move_limit_map_zone_result_zocl msg{};
+    msg.byRet = static_cast<char>(err);
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      iUserInx,
+      type,
+      reinterpret_cast<char *>(&msg),
+      static_cast<unsigned __int16>(sizeof(msg)));
   }
   return 0;
 }

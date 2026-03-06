@@ -9,6 +9,8 @@
 #include "CPlayer.h"
 #include "CUserDB.h"
 #include "GlobalObjects.h"
+#include "Packet/BillingZonePacket.h"
+#include "Packet/ZoneBillingPacket.h"
 
 CBilling::CBilling()
 {
@@ -32,11 +34,15 @@ void CBilling::SendMsg_StartBilling()
     return;
   }
 
-  char szMsg[60]{};
-  memcpy_0(szMsg, g_Main.m_szWorldName, 0x21u);
+  _billing_start_request_zobi request{};
+  memcpy_0(request.szWorldName, g_Main.m_szWorldName, sizeof(request.szWorldName));
 
   unsigned __int8 pbyType[2]{29, 1};
-  g_Network.m_pProcess[3]->LoadSendMsg(0, pbyType, szMsg, 0x21u);
+  g_Network.m_pProcess[3]->LoadSendMsg(
+    0,
+    pbyType,
+    reinterpret_cast<char *>(&request),
+    static_cast<unsigned __int16>(sizeof(request)));
 }
 
 void CBilling::SendMsg_CurAllUserLogin()
@@ -86,17 +92,21 @@ void CBilling::Alive(CUserDB *pUserDB)
       && pUserDB->m_BillingInfo.iType <= 100
       && (pUserDB->m_BillingInfo.iType == 6 || pUserDB->m_BillingInfo.iType == 7))
   {
-    char msg[0x27]{};
-    memcpy_0(msg, pUserDB->m_szAccountID, 13);
+    _billing_alive_request_zobi request{};
+    memcpy_0(request.szID, pUserDB->m_szAccountID, sizeof(request.szID));
     in_addr addr{};
     addr.S_un.S_addr = pUserDB->m_dwIP;
     char *ip = inet_ntoa(addr);
-    memcpy_0(msg + 13, ip, 16);
-    memcpy_0(msg + 29, pUserDB->m_BillingInfo.szCMS, 7);
-    *reinterpret_cast<__int16 *>(msg + 36) = pUserDB->m_BillingInfo.iType;
+    memcpy_0(request.szIP, ip, sizeof(request.szIP));
+    memcpy_0(request.szCMS, pUserDB->m_BillingInfo.szCMS, sizeof(request.szCMS));
+    request.iType = pUserDB->m_BillingInfo.iType;
 
     unsigned __int8 pbyType[2]{29, 5};
-    g_Network.m_pProcess[3]->LoadSendMsg(0, pbyType, msg, 0x27u);
+    g_Network.m_pProcess[3]->LoadSendMsg(
+      0,
+      pbyType,
+      reinterpret_cast<char *>(&request),
+      static_cast<unsigned __int16>(sizeof(request)));
   }
 }
 
@@ -106,17 +116,21 @@ void CBilling::Logout(CUserDB *pUserDB)
       && pUserDB->m_BillingInfo.iType <= 100
       && (pUserDB->m_BillingInfo.iType == 6 || pUserDB->m_BillingInfo.iType == 7))
   {
-    char msg[0x26]{};
-    memcpy_0(msg, pUserDB->m_szAccountID, 13);
+    _billing_logout_request_zobi request{};
+    memcpy_0(request.szID, pUserDB->m_szAccountID, sizeof(request.szID));
     in_addr addr{};
     addr.S_un.S_addr = pUserDB->m_dwIP;
     char *ip = inet_ntoa(addr);
-    memcpy_0(msg + 13, ip, 16);
-    memcpy_0(msg + 29, pUserDB->m_BillingInfo.szCMS, 7);
-    *reinterpret_cast<__int16 *>(msg + 36) = pUserDB->m_BillingInfo.iType;
+    memcpy_0(request.szIP, ip, sizeof(request.szIP));
+    memcpy_0(request.szCMS, pUserDB->m_BillingInfo.szCMS, sizeof(request.szCMS));
+    request.iType = pUserDB->m_BillingInfo.iType;
 
     unsigned __int8 pbyType[2]{29, 6};
-    g_Network.m_pProcess[3]->LoadSendMsg(0, pbyType, msg, 0x26u);
+    g_Network.m_pProcess[3]->LoadSendMsg(
+      0,
+      pbyType,
+      reinterpret_cast<char *>(&request),
+      static_cast<unsigned __int16>(sizeof(request)));
   }
 }
 
@@ -158,22 +172,26 @@ bool CBilling::SendMsg_Login(
     return false;
   }
 
-  char msg[0x3A]{};
-  memcpy_0(msg, szID, 13);
-  memcpy_0(msg + 13, szIP, 16);
+  _billing_login_request_zobi request{};
+  memcpy_0(request.szID, szID, sizeof(request.szID));
+  memcpy_0(request.szIP, szIP, sizeof(request.szIP));
   if (szCMS)
   {
-    memcpy_0(msg + 29, szCMS, 7);
+    memcpy_0(request.szCMS, szCMS, sizeof(request.szCMS));
   }
-  *reinterpret_cast<__int16 *>(msg + 36) = iType;
-  *reinterpret_cast<int *>(msg + 38) = lRemainTime;
+  request.iType = iType;
+  request.lRemainTime = lRemainTime;
   if (pstEndDate)
   {
-    memcpy_0(msg + 42, pstEndDate, 0x10u);
+    memcpy_0(&request.stEndDate, pstEndDate, sizeof(request.stEndDate));
   }
 
   unsigned __int8 pbyType[2]{29, 4};
-  g_Network.m_pProcess[3]->LoadSendMsg(0, pbyType, msg, 0x3Au);
+  g_Network.m_pProcess[3]->LoadSendMsg(
+    0,
+    pbyType,
+    reinterpret_cast<char *>(&request),
+    static_cast<unsigned __int16>(sizeof(request)));
   return true;
 }
 
@@ -285,8 +303,12 @@ void CBilling::Change_Primium(char *szID, bool bResult)
 
 void CBilling::SendMsg_ZoneAliveCheck(unsigned int dwData)
 {
-  char szMsg[4]{};
-  *reinterpret_cast<unsigned int *>(szMsg) = dwData;
+  _zone_alive_check_request_bizo request{};
+  request.dwTick = dwData;
   unsigned __int8 pbyType[2]{29, 91};
-  g_Network.m_pProcess[3]->LoadSendMsg(0, pbyType, szMsg, 4u);
+  g_Network.m_pProcess[3]->LoadSendMsg(
+    0,
+    pbyType,
+    reinterpret_cast<char *>(&request),
+    static_cast<unsigned __int16>(sizeof(request)));
 }
