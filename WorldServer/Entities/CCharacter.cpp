@@ -924,9 +924,13 @@ return static_cast<unsigned int>(damage);
 
 __int64 CCharacter::GetAttackRandomPart()
 {
-  if (!m_ObjID.m_byID && static_cast<unsigned __int8>(this[25].m_SFCont[0][5].m_wszPlayerName[16]) != 255)
+  if (!m_ObjID.m_byID)
   {
-    return static_cast<unsigned __int8>(this[25].m_SFCont[0][5].m_wszPlayerName[16]);
+    const CPlayer *player = static_cast<const CPlayer *>(this);
+    if (player->m_byDamagePart != static_cast<unsigned __int8>(-1))
+    {
+      return player->m_byDamagePart;
+    }
   }
 
   int threshold[5]{};
@@ -1598,7 +1602,7 @@ char CCharacter::AssistSkill(
     pSkillFld->m_strActableDst,
     targets));
 
-  unsigned __int8 upFlags[64]{};
+  bool upFlags[64]{};
   unsigned __int8 retCodes[48]{};
   std::memset(upFlags, 0, 0x1Eu);
   std::memset(retCodes, 0, 0x1Eu);
@@ -1615,7 +1619,7 @@ char CCharacter::AssistSkill(
         pSkillFld->m_dwIndex,
         contDur,
         static_cast<unsigned __int8>(nSkillLv),
-        reinterpret_cast<bool *>(&upFlags[j]),
+        &upFlags[j],
         static_cast<CPlayer *>(this));
 
       if (!m_ObjID.m_byID && !retCodes[j])
@@ -1739,7 +1743,7 @@ char CCharacter::AssistForce(
     pForceFld->m_strActableDst,
     targets));
 
-  unsigned __int8 upFlags[64]{};
+  bool upFlags[64]{};
   unsigned __int8 retCodes[48]{};
   std::memset(upFlags, 0, 0x1Eu);
   std::memset(retCodes, 0, 0x1Eu);
@@ -1756,7 +1760,7 @@ char CCharacter::AssistForce(
         pForceFld->m_dwIndex,
         contDur,
         static_cast<unsigned __int8>(nForceLv),
-        reinterpret_cast<bool *>(&upFlags[j]),
+        &upFlags[j],
         static_cast<CPlayer *>(this));
 
       if (!m_ObjID.m_byID && !retCodes[j])

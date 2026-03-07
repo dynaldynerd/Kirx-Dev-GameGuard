@@ -20,13 +20,20 @@ struct  _ItemUpgrade_fld : _base_fld
   int m_nUnitUp;
   int m_nClockUp;
   int m_nDataEffect;
-  int m_nEffectUnit;
-  float m_fUp1;
-  float m_fUp2;
-  float m_fUp3;
-  float m_fUp4;
-  float m_fUp5;
-  float m_fUp6;
-  float m_fUp7;
+  union
+  {
+    struct
+    {
+      int m_nEffectUnit;
+      float m_fUp1;
+      float m_fUp2;
+      float m_fUp3;
+      float m_fUp4;
+      float m_fUp5;
+      float m_fUp6;
+      float m_fUp7;
+    };
+    float m_fEffectUnitList[8];
+  };
 };
 #pragma pack(pop)

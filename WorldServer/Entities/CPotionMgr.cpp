@@ -1016,10 +1016,8 @@ void CPotionMgr::InsertMovePotionStoneEffect(CPlayer *pApplyPlayer)
 
 bool CPotionMgr::InsertRenamePotion(CRFWorldDatabase *pkWorldDB, char *pData)
 {
-  return pkWorldDB->Insert_RenamePotionLog(
-    *reinterpret_cast<unsigned int *>(pData),
-    pData + 4,
-    pData + 21);
+  auto *query = reinterpret_cast<_qry_case_character_rename *>(pData);
+  return pkWorldDB->Insert_RenamePotionLog(query->dwCharSerial, query->wszCharName, query->wszOldName);
 }
 
 bool CPotionMgr::IsPotionDelayUseIndex(unsigned int nIndex)
@@ -1029,17 +1027,21 @@ bool CPotionMgr::IsPotionDelayUseIndex(unsigned int nIndex)
 
 void CPotionMgr::Complete_RenameChar_DB_Select(unsigned __int8 byRet, char *p)
 {
-  CPlayer *player = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, *reinterpret_cast<unsigned int *>(p));
+  const auto *query = reinterpret_cast<const _qry_case_character_rename *>(p);
+  CPlayer *player = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, query->dwCharSerial);
   if (player && player->m_bOper)
   {
     if (byRet)
     {
       player->SendMsg_CharacterRenameCashResult(0, 0x1Au);
     }
-    else if (*reinterpret_cast<unsigned int *>(p + 4) == static_cast<unsigned int>(-1))
+    else if (query->dwAlreadySerial == static_cast<unsigned int>(-1))
     {
-      memcpy_s(&player->m_ReNamePotionUseInfo, 4u, p + 8, 4u);
-      strcpy_s(player->m_ReNamePotionUseInfo.wszChangeName, 0x11u, p + 12);
+      player->m_ReNamePotionUseInfo.ItemInfo = query->ItemInfo;
+      strcpy_s(
+        player->m_ReNamePotionUseInfo.wszChangeName,
+        sizeof(player->m_ReNamePotionUseInfo.wszChangeName),
+        query->wszCharName);
       player->SendMsg_CharacterRenameCashResult(0, 0);
     }
     else
@@ -1051,16 +1053,17 @@ void CPotionMgr::Complete_RenameChar_DB_Select(unsigned __int8 byRet, char *p)
 
 void CPotionMgr::Complete_RenameChar_DB_Update(unsigned __int8 byRet, char *p)
 {
+  const auto *query = reinterpret_cast<const _qry_case_character_rename *>(p);
   unsigned __int8 resultCode = 0;
-  CPlayer *player = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, *reinterpret_cast<unsigned int *>(p));
+  CPlayer *player = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, query->dwCharSerial);
 
   if (byRet)
   {
     if (player && player->m_bOper)
     {
-      _STORAGE_LIST *storageList = player->m_Param.m_pStoragePtr[static_cast<unsigned __int8>(p[8])];
+      _STORAGE_LIST *storageList = player->m_Param.m_pStoragePtr[query->ItemInfo.byStorageCode];
       _STORAGE_LIST::_storage_con *storage = storageList
-        ? storageList->GetPtrFromSerial(*reinterpret_cast<unsigned __int16 *>(p + 9))
+        ? storageList->GetPtrFromSerial(query->ItemInfo.wItemSerial)
         : nullptr;
       if (storage)
       {
@@ -1073,9 +1076,9 @@ void CPotionMgr::Complete_RenameChar_DB_Update(unsigned __int8 byRet, char *p)
   {
     if (player && player->m_bOper)
     {
-      _STORAGE_LIST *storageList = player->m_Param.m_pStoragePtr[static_cast<unsigned __int8>(p[8])];
+      _STORAGE_LIST *storageList = player->m_Param.m_pStoragePtr[query->ItemInfo.byStorageCode];
       _STORAGE_LIST::_db_con *useItem =
-        storageList ? storageList->GetPtrFromSerial(*reinterpret_cast<unsigned __int16 *>(p + 9)) : nullptr;
+        storageList ? storageList->GetPtrFromSerial(query->ItemInfo.wItemSerial) : nullptr;
 
       if (!useItem)
       {
@@ -1117,8 +1120,8 @@ void CPotionMgr::Complete_RenameChar_DB_Update(unsigned __int8 byRet, char *p)
         player->SetPotionActDelay(record->m_nDelayType, now / 1000, actDelay);
       }
 
-      strcpy_0(player->m_Param.m_dbChar.m_wszCharID, p + 12);
-      strcpy_0(player->m_pUserDB->m_wszAvatorName, p + 12);
+      strcpy_0(player->m_Param.m_dbChar.m_wszCharID, query->wszCharName);
+      strcpy_0(player->m_pUserDB->m_wszAvatorName, query->wszCharName);
       CPlayer::CashChangeStateFlag changeFlag(1);
       player->UpdateVisualVer(changeFlag);
 
@@ -1159,10 +1162,11 @@ void CPotionMgr::Complete_RenameChar_DB_Update(unsigned __int8 byRet, char *p)
 
 void CPotionMgr::PushRenamePotionDBLog(char *pInfo)
 {
+  const auto *query = reinterpret_cast<const _qry_case_character_rename *>(pInfo);
   char data[40]{};
-  *reinterpret_cast<unsigned int *>(data) = *reinterpret_cast<unsigned int *>(pInfo);
-  strcpy_s(data + 4, 0x11u, pInfo + 29);
-  strcpy_s(data + 21, 0x11u, pInfo + 12);
+  *reinterpret_cast<unsigned int *>(data) = query->dwCharSerial;
+  strcpy_s(data + 4, 0x11u, query->wszOldName);
+  strcpy_s(data + 21, 0x11u, query->wszCharName);
 
   CLogTypeDBTaskManager *mgr = CLogTypeDBTaskManager::Instance();
   mgr->Push(2, data, 0x28u);
@@ -1823,8 +1827,9 @@ bool __fastcall DE_Potion_RemoveAfterEffect(
     return false;
   }
 
-  unsigned __int8 *afterEffectMark = reinterpret_cast<unsigned __int8 *>(&pTargetChar->m_SFContAura[0][5].m_wDurSec) + 1;
-  if (*afterEffectMark == 0)
+  const unsigned __int8 afterEffectMark =
+    static_cast<unsigned __int8>(pTargetChar->m_SFContAura[0][5].m_wDurSec >> 8);
+  if (afterEffectMark == 0)
   {
     return false;
   }
@@ -1836,7 +1841,8 @@ bool __fastcall DE_Potion_RemoveAfterEffect(
     if (effect17 && contEffect->m_byEffectCode == 3 && contEffect->m_wEffectIndex == effect17->m_dwIndex)
     {
       pTargetChar->RemoveSFContEffect(0, static_cast<unsigned __int16>(index), false, false);
-      *afterEffectMark = 0;
+      pTargetChar->m_SFContAura[0][5].m_wDurSec =
+        static_cast<unsigned __int16>(pTargetChar->m_SFContAura[0][5].m_wDurSec & 0x00FFu);
       return true;
     }
   }

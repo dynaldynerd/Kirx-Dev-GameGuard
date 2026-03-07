@@ -6,6 +6,7 @@
 #include "CMyTimer.h"
 #include "CPlayer.h"
 #include "CRecordData.h"
+#include "qry_case_disable_instance_store.h"
 
 struct _limit_item_db_data
 {
@@ -61,9 +62,9 @@ public:
   bool InitLogger();
   void SetNextEnforceInitTime();
   unsigned __int8 UpdateStoreLimitItem();
-  unsigned __int8 UpdateDisableInstanceStore(char *pData);
+  unsigned __int8 UpdateDisableInstanceStore(_qry_case_disable_instance_store *pData);
   void CompleteStoreLimitItem();
-  void CompleteDisableInstanceStore(char *pData);
+  void CompleteDisableInstanceStore(_qry_case_disable_instance_store *pData);
   void Log(const char *fmt, ...);
 
   void MakeLimitItemUpdateQuery(

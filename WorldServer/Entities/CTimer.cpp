@@ -16,9 +16,14 @@ void CTimer::CalculateTime()
   if (!m_bTimerInitialized)
   {
     m_bTimerInitialized = 1;
-    if (!QueryPerformanceFrequency(reinterpret_cast<LARGE_INTEGER *>(&m_qwTicksPerSec)))
+    LARGE_INTEGER frequency{};
+    if (!QueryPerformanceFrequency(&frequency))
     {
       m_qwTicksPerSec = 1000;
+    }
+    else
+    {
+      m_qwTicksPerSec = static_cast<unsigned __int64>(frequency.QuadPart);
     }
 
     m_fSecsPerFrame = 0.001f;

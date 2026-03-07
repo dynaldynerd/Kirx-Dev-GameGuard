@@ -94,6 +94,7 @@
 #include "UnitBullet_fld.h"
 #include "BulletItem_fld.h"
 #include "ItemCombine_exp_fld.h"
+#include "ItemCombine_link_fld.h"
 #include "combine_ex_item_result_zocl.h"
 #include "combine_ex_item_accept_request_clzo.h"
 #include "combine_ex_item_accept_result_zocl.h"
@@ -146,7 +147,7 @@ if (!linkItemCode || !dstItemCode)
     linkTable = &ItemCombineMgr::ms_tbl_ItemCombine_Link_Result;
   }
 
-  _base_fld *linkRecord = linkTable->GetRecord(linkItemCode);
+  const auto *linkRecord = reinterpret_cast<const _ItemCombine_link_fld *>(linkTable->GetRecord(linkItemCode));
   if (!linkRecord)
   {
     return false;
@@ -154,7 +155,7 @@ if (!linkItemCode || !dstItemCode)
 
   for (unsigned __int8 index = 0; index < 100; ++index)
   {
-    const char *entryCode = reinterpret_cast<const char *>(&linkRecord[1]) + 64u * index;
+    const char *entryCode = linkRecord->m_list[index].m_itmPdCode;
     if (strncmp(entryCode, "-", 1u) == 0 || strncmp(entryCode, "-1", 2u) == 0)
     {
       return false;
@@ -189,12 +190,13 @@ unsigned __int8 MakeCombineItem(
 
   if (strncmp(outputCode, "LR", 2u) == 0)
   {
-    _base_fld *linkRecord = ItemCombineMgr::ms_tbl_ItemCombine_Link_Result.GetRecord(outputCode);
+    const auto *linkRecord = reinterpret_cast<const _ItemCombine_link_fld *>(
+      ItemCombineMgr::ms_tbl_ItemCombine_Link_Result.GetRecord(outputCode));
     if (!linkRecord || linkTableIndex >= 100u)
     {
       return 12;
     }
-    outputCode = reinterpret_cast<const char *>(&linkRecord[1]) + 64u * linkTableIndex;
+    outputCode = linkRecord->m_list[linkTableIndex].m_itmPdCode;
   }
 
   const int tableCode = GetItemTableCode(outputCode);
@@ -482,8 +484,8 @@ unsigned __int8 ItemCombineMgr::RequestCombineProcess(
     {
       if (combineRecord->m_dwCommit <= m_pMaster->m_Param.GetDalant())
       {
-        char linkMaterialBuffer[80];
-        std::memcpy(linkMaterialBuffer, combineRecord->m_Material, sizeof(linkMaterialBuffer));
+        _ItemCombine_exp_fld::_material requiredMaterial[5]{};
+        std::memcpy(requiredMaterial, combineRecord->m_Material, sizeof(requiredMaterial));
 
         for (int slotIndex = 0; slotIndex < materialSlotCount; ++slotIndex)
         {
@@ -538,15 +540,15 @@ unsigned __int8 ItemCombineMgr::RequestCombineProcess(
           bool matched = false;
           for (int materialIndex = 0; materialIndex < 5; ++materialIndex)
           {
-            char *materialInfo = &linkMaterialBuffer[16 * materialIndex];
-            if (CheckSameItem(materialInfo, materialRecord->m_strCode, &selectedLinkIndex, true)
-                && *reinterpret_cast<int *>(materialInfo + 12) > 0)
+            _ItemCombine_exp_fld::_material *materialInfo = &requiredMaterial[materialIndex];
+            if (CheckSameItem(materialInfo->m_itmPdMat, materialRecord->m_strCode, &selectedLinkIndex, true)
+                && materialInfo->m_nDur > 0)
             {
-              *reinterpret_cast<int *>(materialInfo + 12) -= materialRequest[slotIndex].byAmount;
-              if (*reinterpret_cast<int *>(materialInfo + 8) != -1
-                  && *reinterpret_cast<unsigned int *>(materialInfo + 8) == materialStorage[slotIndex]->m_dwLv)
+              materialInfo->m_nDur -= materialRequest[slotIndex].byAmount;
+              if (materialInfo->m_dwUpt != static_cast<unsigned int>(-1)
+                  && materialInfo->m_dwUpt == materialStorage[slotIndex]->m_dwLv)
               {
-                *reinterpret_cast<int *>(materialInfo + 8) = -1;
+                materialInfo->m_dwUpt = static_cast<unsigned int>(-1);
               }
               matched = true;
               break;
@@ -564,9 +566,9 @@ unsigned __int8 ItemCombineMgr::RequestCombineProcess(
         {
           for (int materialIndex = 0; materialIndex < 5; ++materialIndex)
           {
-            const char *materialInfo = &linkMaterialBuffer[16 * materialIndex];
-            if (*reinterpret_cast<const int *>(materialInfo + 12) > 0
-                || *reinterpret_cast<const int *>(materialInfo + 8) != -1)
+            const _ItemCombine_exp_fld::_material *materialInfo = &requiredMaterial[materialIndex];
+            if (materialInfo->m_nDur > 0
+                || materialInfo->m_dwUpt != static_cast<unsigned int>(-1))
             {
               resultCode = 9;
               break;

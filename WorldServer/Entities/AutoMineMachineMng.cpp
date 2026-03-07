@@ -541,9 +541,10 @@ void AutoMineMachine::Charge(int n, int nCharge, int nGold)
     {
       SendMsg_ResultCode(n, 0x18u, 7u);
       const long double totalDalant = m_pOwnerGuild->GetTotalDalant();
+      const unsigned int totalDalantValue = static_cast<unsigned int>(totalDalant);
       m_sysLog.Write(
         "[ERR-Charge]:automine_not_enough_gold(T:%u, Cost:%d)",
-        LODWORD(totalDalant),
+        totalDalantValue,
         nGold);
     }
   }

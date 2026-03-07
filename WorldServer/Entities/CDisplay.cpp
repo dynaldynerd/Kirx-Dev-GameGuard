@@ -218,8 +218,14 @@ HRESULT CDisplay::UpdateBounds()
   if (m_bWindowed)
   {
     GetClientRect(m_hWnd, &m_rcWindow);
-    ClientToScreen(m_hWnd, reinterpret_cast<POINT *>(&m_rcWindow));
-    ClientToScreen(m_hWnd, reinterpret_cast<POINT *>(&m_rcWindow) + 1);
+    POINT topLeft = {m_rcWindow.left, m_rcWindow.top};
+    POINT bottomRight = {m_rcWindow.right, m_rcWindow.bottom};
+    ClientToScreen(m_hWnd, &topLeft);
+    ClientToScreen(m_hWnd, &bottomRight);
+    m_rcWindow.left = topLeft.x;
+    m_rcWindow.top = topLeft.y;
+    m_rcWindow.right = bottomRight.x;
+    m_rcWindow.bottom = bottomRight.y;
   }
   else
   {

@@ -6255,14 +6255,14 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
       return 0;
     }
 
+    const auto *rankList = reinterpret_cast<const _worlddb_guild_battle_rank_list *>(pLoadData);
     unsigned __int16 pageInx = 0;
     unsigned __int16 listInx = 0;
-    auto *loadData = pLoadData;
 
     Clear(byRace);
     ++m_dwVer[byRace];
 
-    for (unsigned __int16 j = 0; j < *reinterpret_cast<unsigned __int16 *>(loadData); ++j)
+    for (unsigned __int16 j = 0; j < rankList->wCount; ++j)
     {
       if (pageInx >= 0xAu)
       {
@@ -6272,15 +6272,16 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
         ++listInx;
       }
 
+      const _worlddb_guild_battle_rank_list::__list &src = rankList->list[j];
       auto *entry = &m_ppkList[byRace][listInx].list[pageInx];
-      entry->nRank = *reinterpret_cast<unsigned int *>(&loadData[44 * j + 4]);
-      entry->byGrade = loadData[44 * j + 8];
-      strcpy_0(entry->wszName, reinterpret_cast<const char *>(&loadData[44 * j + 9]));
-      entry->dwWin = *reinterpret_cast<unsigned int *>(&loadData[44 * j + 28]);
-      entry->dwLose = *reinterpret_cast<unsigned int *>(&loadData[44 * j + 32]);
-      entry->dwDraw = *reinterpret_cast<unsigned int *>(&loadData[44 * j + 36]);
-      entry->dwScore = *reinterpret_cast<unsigned int *>(&loadData[44 * j + 40]);
-      m_dwGuildSerial[byRace][listInx][pageInx++] = *reinterpret_cast<unsigned int *>(&loadData[44 * j + 44]);
+      entry->nRank = src.nRank;
+      entry->byGrade = src.byGrade;
+      strcpy_0(entry->wszName, src.wszName);
+      entry->dwWin = src.dwWin;
+      entry->dwLose = src.dwLose;
+      entry->dwDraw = src.dwDraw;
+      entry->dwScore = src.dwScore;
+      m_dwGuildSerial[byRace][listInx][pageInx++] = src.dwSerial;
     }
 
     m_ppkList[byRace][listInx].byCnt = static_cast<unsigned __int8>(pageInx);
@@ -6420,15 +6421,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
       }
       else
       {
-        const char *src = pkSelfInfoPage->m_pkList->List[pkSelfInfoPage->m_pkList->bySelfScheduleInx].wsz1PName;
-        strcpy_0(m_pkList->List[4].wsz1PName, src);
-        m_pkList->List[4].by1PRace = static_cast<unsigned __int8>(src[17]);
-        strcpy_0(m_pkList->List[4].wsz2PName, src + 18);
-        m_pkList->List[4].by2PRace = static_cast<unsigned __int8>(src[35]);
-        m_pkList->List[4].byStartHour = static_cast<unsigned __int8>(src[36]);
-        m_pkList->List[4].byStartMin = static_cast<unsigned __int8>(src[37]);
-        m_pkList->List[4].byEndHour = static_cast<unsigned __int8>(src[38]);
-        m_pkList->List[4].byEndMin = static_cast<unsigned __int8>(src[39]);
+        m_pkList->List[4] = pkSelfInfoPage->m_pkList->List[pkSelfInfoPage->m_pkList->bySelfScheduleInx];
         m_pkList->bySelfScheduleInx = 1;
       }
     }
@@ -6526,8 +6519,6 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
     }
 
     unsigned __int16 listIndex = 0;
-    char *dest = nullptr;
-    _worlddb_guild_battle_reserved_schedule_info::__list *src = nullptr;
     unsigned __int8 page = 0;
 
     for (page = 0; page < m_byMaxPage; ++page)
@@ -6535,18 +6526,18 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
       unsigned __int8 slot = 0;
       while (slot < 4u)
       {
-        dest = m_kList[page].m_pkList->List[slot].wsz1PName;
-        src = &kInfo->list[listIndex];
-        m_kList[page].m_dw1PGuildSerial[slot] = src->dw1PGuildSerial;
-        strcpy_0(dest, src->wsz1PName);
-        dest[17] = src->by1PRace;
-        m_kList[page].m_dw2PGuildSerial[slot] = kInfo->list[listIndex].dw2PGuildSerial;
-        strcpy_0(dest + 18, src->wsz2PName);
-        dest[35] = src->by2PRace;
-        dest[36] = src->byStartHour;
-        dest[37] = src->byStartMin;
-        dest[38] = src->byEndHour;
-        dest[39] = src->byEndMin;
+        _guild_battle_reserved_schedule_result_zocl::__list &dest = m_kList[page].m_pkList->List[slot];
+        const _worlddb_guild_battle_reserved_schedule_info::__list &src = kInfo->list[listIndex];
+        m_kList[page].m_dw1PGuildSerial[slot] = src.dw1PGuildSerial;
+        strcpy_0(dest.wsz1PName, src.wsz1PName);
+        dest.by1PRace = src.by1PRace;
+        m_kList[page].m_dw2PGuildSerial[slot] = src.dw2PGuildSerial;
+        strcpy_0(dest.wsz2PName, src.wsz2PName);
+        dest.by2PRace = src.by2PRace;
+        dest.byStartHour = src.byStartHour;
+        dest.byStartMin = src.byStartMin;
+        dest.byEndHour = src.byEndHour;
+        dest.byEndMin = src.byEndMin;
         if (kInfo->wCount <= listIndex)
         {
           break;
@@ -6570,18 +6561,18 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
     unsigned __int8 tailSlot = 0;
     while (tailSlot < remain)
     {
-      dest = m_kList[page].m_pkList->List[tailSlot].wsz1PName;
-      src = &kInfo->list[listIndex];
-      m_kList[page].m_dw1PGuildSerial[tailSlot] = src->dw1PGuildSerial;
-      strcpy_0(dest, src->wsz1PName);
-      dest[17] = src->by1PRace;
-      m_kList[page].m_dw2PGuildSerial[tailSlot] = kInfo->list[listIndex].dw2PGuildSerial;
-      strcpy_0(dest + 18, src->wsz2PName);
-      dest[35] = src->by2PRace;
-      dest[36] = src->byStartHour;
-      dest[37] = src->byStartMin;
-      dest[38] = src->byEndHour;
-      dest[39] = src->byEndMin;
+      _guild_battle_reserved_schedule_result_zocl::__list &dest = m_kList[page].m_pkList->List[tailSlot];
+      const _worlddb_guild_battle_reserved_schedule_info::__list &src = kInfo->list[listIndex];
+      m_kList[page].m_dw1PGuildSerial[tailSlot] = src.dw1PGuildSerial;
+      strcpy_0(dest.wsz1PName, src.wsz1PName);
+      dest.by1PRace = src.by1PRace;
+      m_kList[page].m_dw2PGuildSerial[tailSlot] = src.dw2PGuildSerial;
+      strcpy_0(dest.wsz2PName, src.wsz2PName);
+      dest.by2PRace = src.by2PRace;
+      dest.byStartHour = src.byStartHour;
+      dest.byStartMin = src.byStartMin;
+      dest.byEndHour = src.byEndHour;
+      dest.byEndMin = src.byEndMin;
       if (kInfo->wCount <= listIndex)
       {
         break;

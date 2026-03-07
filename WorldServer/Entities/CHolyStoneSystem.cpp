@@ -25,6 +25,7 @@
 #include "holy_quest_report_wrac.h"
 #include "holy_keeper_attackable_inform_zocl.h"
 #include "CNetworkEX.h"
+#include "DqsDbStructs.h"
 #include "Packet/ZoneWebPacket.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
@@ -1123,17 +1124,17 @@ void CHolyStoneSystem::SendIsArriveDestroyer(char byArrive)
 
 void CHolyStoneSystem::SendMsg_to_webagent_about_last_attacker_for_keeper(CPlayer *pPlayer, int bByAnimus)
 {
-  char msg[0x1E]{};
-  *reinterpret_cast<unsigned int *>(msg) = g_Main.m_byWorldCode;
-  msg[4] = static_cast<char>(GetNumOfTime());
-  *reinterpret_cast<unsigned __int16 *>(msg + 5) = GetStartYear();
-  msg[7] = static_cast<char>(GetStartMonth());
-  msg[8] = static_cast<char>(GetStartDay());
+  _last_attacker_for_the_keeper_inform_zowb msg{};
+  msg.nWorldCode = g_Main.m_byWorldCode;
+  msg.byNumOfTime = static_cast<char>(GetNumOfTime());
+  msg.wStartYear = GetStartYear();
+  msg.byStartMonth = static_cast<char>(GetStartMonth());
+  msg.byStartDay = static_cast<char>(GetStartDay());
 
   if (pPlayer)
   {
-    strcpy_0(msg + 9, pPlayer->m_Param.GetCharNameW());
-    *reinterpret_cast<int *>(msg + 26) = bByAnimus;
+    strcpy_0(msg.uszKeeperHitter, pPlayer->m_Param.GetCharNameW());
+    msg.bByAnimus = bByAnimus;
 
     unsigned __int8 type[2]{};
     type[0] = 51;
@@ -1143,8 +1144,8 @@ void CHolyStoneSystem::SendMsg_to_webagent_about_last_attacker_for_keeper(CPlaye
       g_Network.m_pProcess[2]->LoadSendMsg(
         g_Main.m_byWebAgentServerNetInx,
         type,
-        reinterpret_cast<char *>(msg),
-        0x1Eu);
+        reinterpret_cast<char *>(&msg),
+        sizeof(msg));
     }
 
     return;
@@ -2076,18 +2077,15 @@ char CHolyStoneSystem::CheckHolyMaster(CPlayer *pAtter, unsigned __int8 byDestro
 
   CRaceBossWinRate::Instance()->UpdateWinCnt(pAtter->m_Param.GetRaceCode());
 
-  char qryData[24]{};
-  qryData[0] = static_cast<char>(m_SaveData.m_byNumOfTime);
-  *reinterpret_cast<unsigned int *>(qryData + 4) = GetKorLocalTime();
-  qryData[8] = static_cast<char>(pAtter->m_Param.GetRaceCode());
-  qryData[9] = static_cast<char>(byDestroyStoneRaceCode);
-  *reinterpret_cast<unsigned int *>(qryData + 12) =
-    CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(0, 0);
-  *reinterpret_cast<unsigned int *>(qryData + 16) =
-    CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(1, 0);
-  *reinterpret_cast<unsigned int *>(qryData + 20) =
-    CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(2, 0);
-  g_Main.PushDQSData(0xFFFFFFFFu, nullptr, 0x89u, qryData, 24);
+  _race_battle_log_info qryData{};
+  qryData.byNth = static_cast<unsigned __int8>(m_SaveData.m_byNumOfTime);
+  qryData.dwEndTime = GetKorLocalTime();
+  qryData.byWinRace = static_cast<unsigned __int8>(pAtter->m_Param.GetRaceCode());
+  qryData.byLoseRace = byDestroyStoneRaceCode;
+  qryData.dwBossSerilal0 = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(0, 0);
+  qryData.dwBossSerilal1 = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(1, 0);
+  qryData.dwBossSerilal2 = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(2, 0);
+  g_Main.PushDQSData(0xFFFFFFFFu, nullptr, 0x89u, reinterpret_cast<char *>(&qryData), sizeof(qryData));
 
   if (g_Main.IsReleaseServiceMode())
   {

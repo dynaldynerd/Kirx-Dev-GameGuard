@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "WorldServerUtil.h"
+#include "CEntity.h"
 #include "R3EngineGlobals.h"
 #include "CMainThread.h"
 
@@ -857,63 +858,60 @@ void ConvAniObject(int a1, unsigned __int8 *a2, _READ_ANI_OBJECT *a3, _ANI_OBJEC
     if (a1 <= 0)
         return;
 
-    int *p_frames = &a4->frames;
-    char *v6 = reinterpret_cast<char *>(a3) + 4;
-    float *v7 = a4->s_matrix[0];
-    unsigned int v8 = static_cast<unsigned int>(a1);
-
-    do
+    const _READ_ANI_OBJECT *srcObject = a3;
+    _ANI_OBJECT *dstObject = a4;
+    for (int objectIndex = 0; objectIndex < a1; ++objectIndex, ++srcObject, ++dstObject)
     {
-        *reinterpret_cast<unsigned short *>(p_frames - 2) = *reinterpret_cast<unsigned short *>(v6 - 2);
-        *p_frames = *reinterpret_cast<int *>(v6);
-        *reinterpret_cast<unsigned short *>(p_frames - 1) = *reinterpret_cast<unsigned short *>(v6 - 1);
-        p_frames[1] = *reinterpret_cast<int *>(v6 + 4);
-        p_frames[2] = *reinterpret_cast<int *>(v6 + 8);
-        int v9 = *reinterpret_cast<int *>(v6 + 12);
-        *reinterpret_cast<int *>(reinterpret_cast<char *>(p_frames) + 161) = 0;
-        p_frames[3] = v9;
-        _mm_prefetch(v6 + 556, 0);
-        p_frames[7] = *reinterpret_cast<int *>(v6 + 28);
-        p_frames[8] = *reinterpret_cast<int *>(v6 + 32);
-        p_frames[9] = *reinterpret_cast<int *>(v6 + 36);
-        p_frames[10] = *reinterpret_cast<int *>(v6 + 40);
-        p_frames[4] = *reinterpret_cast<int *>(v6 + 16);
-        p_frames[5] = *reinterpret_cast<int *>(v6 + 20);
-        p_frames[6] = *reinterpret_cast<int *>(v6 + 24);
-        p_frames[11] = *reinterpret_cast<int *>(v6 + 44);
-        p_frames[12] = *reinterpret_cast<int *>(v6 + 48);
-        p_frames[13] = *reinterpret_cast<int *>(v6 + 52);
-        p_frames[14] = *reinterpret_cast<int *>(v6 + 56);
-        p_frames[15] = *reinterpret_cast<int *>(v6 + 60);
-        p_frames[16] = *reinterpret_cast<int *>(v6 + 64);
-        p_frames[17] = *reinterpret_cast<int *>(v6 + 68);
-        *reinterpret_cast<unsigned long long *>(p_frames + 18) = reinterpret_cast<unsigned long long>(&a2[*reinterpret_cast<int *>(v6 + 80)]);
-        *reinterpret_cast<unsigned long long *>(p_frames + 20) = reinterpret_cast<unsigned long long>(&a2[*reinterpret_cast<int *>(v6 + 72)]);
-        *reinterpret_cast<unsigned long long *>(p_frames + 22) = reinterpret_cast<unsigned long long>(&a2[*reinterpret_cast<int *>(v6 + 76)]);
+        dstObject->flag = srcObject->flag;
+        dstObject->parent = srcObject->parent;
+        dstObject->frames = srcObject->frames;
+        dstObject->Pos_cnt = srcObject->Pos_cnt;
+        dstObject->Rot_cnt = srcObject->Rot_cnt;
+        dstObject->Scale_cnt = srcObject->Scale_cnt;
 
-        float v16[16]{};
-        float v17[16]{};
-        float v18[16]{};
-        float v19[16]{};
+        dstObject->scale[0] = srcObject->scale[0];
+        dstObject->scale[1] = srcObject->scale[1];
+        dstObject->scale[2] = srcObject->scale[2];
 
-        MatrixIdentity(reinterpret_cast<float (*)[4]>(v16));
-        float v10 = *reinterpret_cast<float *>(v6 + 24);
-        float v11 = *reinterpret_cast<float *>(v6 + 16);
-        float v12 = *reinterpret_cast<float *>(v6 + 36);
-        float v13 = *reinterpret_cast<float *>(v6 + 32);
-        v16[5] = *reinterpret_cast<float *>(v6 + 20);
-        float v14 = *reinterpret_cast<float *>(v6 + 40);
-        v16[10] = v10;
-        float v15 = *reinterpret_cast<float *>(v6 + 28);
-        v16[0] = v11;
-        MatrixFromQuaternion(reinterpret_cast<float (*)[4]>(v17), v15, v13, v12, v14);
-        MatrixInvert(reinterpret_cast<float (*)[4]>(v18), reinterpret_cast<float (*)[4]>(v17));
-        MatrixMultiply(reinterpret_cast<float (*)[4]>(v19), reinterpret_cast<float (*)[4]>(v16), reinterpret_cast<float (*)[4]>(v18));
-        MatrixMultiply(reinterpret_cast<float (*)[4]>(v7), reinterpret_cast<float (*)[4]>(v17), reinterpret_cast<float (*)[4]>(v19));
+        dstObject->scale_quat[0] = srcObject->scale_quat[0];
+        dstObject->scale_quat[1] = srcObject->scale_quat[1];
+        dstObject->scale_quat[2] = srcObject->scale_quat[2];
+        dstObject->scale_quat[3] = srcObject->scale_quat[3];
 
-        v7 = reinterpret_cast<float *>(reinterpret_cast<char *>(v7) + 361);
-        p_frames = reinterpret_cast<int *>(reinterpret_cast<char *>(p_frames) + 361);
-        v6 += 88;
-        --v8;
-    } while (v8);
+        dstObject->pos[0] = srcObject->pos[0];
+        dstObject->pos[1] = srcObject->pos[1];
+        dstObject->pos[2] = srcObject->pos[2];
+
+        dstObject->quat[0] = srcObject->quat[0];
+        dstObject->quat[1] = srcObject->quat[1];
+        dstObject->quat[2] = srcObject->quat[2];
+        dstObject->quat[3] = srcObject->quat[3];
+
+        dstObject->Scale = reinterpret_cast<_SCALE_TRACK *>(a2 + srcObject->scale_offset);
+        dstObject->Pos = reinterpret_cast<_POS_TRACK *>(a2 + srcObject->pos_offset);
+        dstObject->Rot = reinterpret_cast<_ROT_TRACK *>(a2 + srcObject->rot_offset);
+        dstObject->AniFrameCache = 0;
+
+        _mm_prefetch(reinterpret_cast<const char *>(srcObject) + 560, 0);
+
+        float scaleMatrix[4][4]{};
+        float scaleQuatMatrix[4][4]{};
+        float inverseScaleQuatMatrix[4][4]{};
+        float composedScaleMatrix[4][4]{};
+
+        MatrixIdentity(scaleMatrix);
+        scaleMatrix[0][0] = srcObject->scale[0];
+        scaleMatrix[1][1] = srcObject->scale[1];
+        scaleMatrix[2][2] = srcObject->scale[2];
+
+        MatrixFromQuaternion(
+            scaleQuatMatrix,
+            srcObject->scale_quat[0],
+            srcObject->scale_quat[1],
+            srcObject->scale_quat[2],
+            srcObject->scale_quat[3]);
+        MatrixInvert(inverseScaleQuatMatrix, scaleQuatMatrix);
+        MatrixMultiply(composedScaleMatrix, scaleMatrix, inverseScaleQuatMatrix);
+        MatrixMultiply(dstObject->s_matrix, scaleQuatMatrix, composedScaleMatrix);
+    }
 }

@@ -68,7 +68,7 @@ __int64 CMergeFile::LoadMergeFileHeader(char *a2)
       unsigned int *v8 = static_cast<unsigned int *>(Dmalloc(v7));
       mIndex = v8;
       mOffset = &v8[mCnt];
-      mMergeFNF = reinterpret_cast<_MERGE_FILE *>(&v8[2 * mCnt]);
+      mMergeFNF = reinterpret_cast<_MERGE_FILE *>(mOffset + mCnt);
       fread(v8, 4 * mCnt, 1, v6);
       fread(mOffset, 4ULL * mCnt, 1, v6);
       fread(mMergeFNF, static_cast<unsigned long long>(mCnt) << 6, 1, v6);
@@ -114,33 +114,18 @@ unsigned int CMergeFile::GetFileOffset(unsigned int a2, char *a3)
   int v19 = static_cast<int>(GetOneNameFromPath(v22, a3, v20));
   _MERGE_FILE *mMerge = mMergeFNF;
   unsigned int v7 = 0;
-  if (mMerge[a2].cnt)
+  const _MERGE_FILE &parentEntry = mMerge[a2];
+  if (parentEntry.cnt)
   {
-    __int64 v9 = static_cast<__int64>(static_cast<int>(a2)) << 6;
+    const unsigned int compareDwordCount = (static_cast<unsigned int>(v19) + 3) >> 2;
     do
     {
-      _MERGE_FILE *v10 = mMergeFNF;
-      int v11 = static_cast<int>(mIndex[v7 + *reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(&v10->start_index) + v9)]);
-      if (v10[v11].name_cnt == v19)
+      const int v11 = static_cast<int>(mIndex[v7 + parentEntry.start_index]);
+      if (mMerge[v11].name_cnt == v19)
       {
-        unsigned int v13 = 0;
-        unsigned int v14 = static_cast<unsigned int>(v19 + 3) >> 2;
-        if (v14)
+        if (compareDwordCount == 0
+            || memcmp_0(mMerge[v11].___u0.name_cmp, v22, sizeof(unsigned int) * compareDwordCount) == 0)
         {
-          char *v15 = v22;
-          unsigned int *v16 = reinterpret_cast<unsigned int *>(&mMerge[v11]);
-          while (*v16 == *reinterpret_cast<unsigned int *>(v15))
-          {
-            ++v13;
-            ++v16;
-            v15 += 4;
-            if (v13 >= v14)
-              goto LABEL_11;
-          }
-        }
-        else
-        {
-LABEL_11:
           if (mOffset[v11] != static_cast<unsigned int>(-1))
             return mOffset[v11];
           unsigned int result = GetFileOffset(v11, &a3[v20[0] + 1]);
@@ -149,7 +134,7 @@ LABEL_11:
         }
       }
       ++v7;
-    } while (v7 < *reinterpret_cast<unsigned short *>(reinterpret_cast<char *>(&mMerge->cnt) + v9));
+    } while (v7 < parentEntry.cnt);
   }
   return static_cast<unsigned int>(-1);
 }
@@ -164,42 +149,28 @@ unsigned int CMergeFile::GetFileSize(unsigned int a2, char *a3)
   int v9 = static_cast<int>(GetOneNameFromPath(v19, a3, v18));
   _MERGE_FILE *mMerge = mMergeFNF;
   unsigned int v8 = 0;
-  if (mMerge[a2].cnt)
+  const _MERGE_FILE &parentEntry = mMerge[a2];
+  if (parentEntry.cnt)
   {
     unsigned int v10 = v18[0];
-    __int64 v11 = static_cast<__int64>(static_cast<int>(a2)) << 6;
+    const unsigned int compareDwordCount = (static_cast<unsigned int>(v9) + 3) >> 2;
     do
     {
-      _MERGE_FILE *v12 = mMergeFNF;
-      int v13 = static_cast<int>(mIndex[v8 + *reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(&v12->start_index) + v11)]);
-      if (v12[v13].name_cnt == v9)
+      const int v13 = static_cast<int>(mIndex[v8 + parentEntry.start_index]);
+      if (mMerge[v13].name_cnt == v9)
       {
-        unsigned int v14 = 0;
-        if (static_cast<unsigned int>(v9 + 3) >> 2)
+        if (compareDwordCount == 0
+            || memcmp_0(mMerge[v13].___u0.name_cmp, v19, sizeof(unsigned int) * compareDwordCount) == 0)
         {
-          char *v15 = v19;
-          unsigned int *v16 = reinterpret_cast<unsigned int *>(&mMerge[v13]);
-          while (*v16 == *reinterpret_cast<unsigned int *>(v15))
-          {
-            ++v14;
-            ++v16;
-            v15 += 4;
-            if (v14 >= (static_cast<unsigned int>(v9 + 3) >> 2))
-              goto LABEL_10;
-          }
-        }
-        else
-        {
-LABEL_10:
           if (mOffset[v13] != static_cast<unsigned int>(-1))
-            return v12[v13].file_length;
+            return mMerge[v13].file_length;
           unsigned int result = GetFileOffset(v13, &a3[v10 + 1]);
           if (result != static_cast<unsigned int>(-1))
             return result;
         }
       }
       ++v8;
-    } while (v8 < *reinterpret_cast<unsigned short *>(reinterpret_cast<char *>(&mMerge->cnt) + v11));
+    } while (v8 < parentEntry.cnt);
   }
   return 0;
 }

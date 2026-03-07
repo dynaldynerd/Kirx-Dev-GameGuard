@@ -43,7 +43,7 @@ namespace
     auto *raw = static_cast<unsigned int *>(::operator new(total));
     raw[0] = static_cast<unsigned int>(count);
     raw[1] = 0;
-    auto *data = reinterpret_cast<T *>(raw + 2);
+    auto *data = static_cast<T *>(static_cast<void *>(&raw[2]));
     for (size_t i = 0; i < count; ++i)
     {
       new (data + i) T();
@@ -360,16 +360,10 @@ char *_NET_BUFFER::GetPopPoint(bool *pbMiss)
 
   if (static_cast<unsigned int>(left) >= 4)
   {
-    unsigned __int16 size = 0;
-    if (static_cast<unsigned int>(popPoint) + 2 > m_nMaxSize)
-    {
-      reinterpret_cast<unsigned char *>(&size)[0] = m_sMainBuffer[popPoint];
-      reinterpret_cast<unsigned char *>(&size)[1] = m_sMainBuffer[(popPoint + 1) % m_nMaxSize];
-    }
-    else
-    {
-      size = *reinterpret_cast<unsigned __int16 *>(&m_sMainBuffer[popPoint]);
-    }
+    const unsigned __int8 sizeLow = static_cast<unsigned __int8>(m_sMainBuffer[popPoint]);
+    const unsigned __int8 sizeHigh = static_cast<unsigned __int8>(m_sMainBuffer[(popPoint + 1) % m_nMaxSize]);
+    const unsigned __int16 size =
+      static_cast<unsigned __int16>(sizeLow | (static_cast<unsigned __int16>(sizeHigh) << 8));
 
     if (static_cast<unsigned __int64>(size) >= 4)
     {
@@ -542,7 +536,7 @@ bool CNetSocket::SetSocket(_SOCK_TYPE_PARAM *pType, char *pszErrMsg)
   const size_t count = pType->m_wSocketMaxNum;
   m_Socket = AllocateVector<_socket>(count);
 
-  m_Event = static_cast<void **>(operator new(saturated_mul(count, 8uLL)));
+  m_Event = static_cast<HANDLE *>(operator new(saturated_mul(count, sizeof(HANDLE))));
   for (unsigned int index = 0; index < m_SockType.m_wSocketMaxNum; ++index)
   {
     m_Event[index] = WSACreateEvent();
@@ -1868,9 +1862,10 @@ void CNetProcess::_PopRecvMsg(unsigned __int16 wSocketIndex)
     }
     else
     {
+      auto *fgHeader = reinterpret_cast<_FG_MSG_HEADER *>(popPoint);
       g_FGRecvData.pRecvBuffer = popPoint;
-      g_FGRecvData.wMsgSize = reinterpret_cast<unsigned __int16 *>(popPoint)[1] + 2;
-      const unsigned __int16 fgSize = *reinterpret_cast<unsigned __int16 *>(popPoint);
+      g_FGRecvData.wMsgSize = fgHeader->m_MsgHeader.m_wSize + 2;
+      const unsigned __int16 fgSize = fgHeader->m_wFGSize;
       const int decrypted = _CcrFG_rs_DecryptPacket(
         socket->m_hFGContext,
         reinterpret_cast<unsigned __int8 *>(popPoint),
@@ -1883,8 +1878,8 @@ void CNetProcess::_PopRecvMsg(unsigned __int16 wSocketIndex)
           decrypted,
           lastError);
       }
-      msgHeader = reinterpret_cast<_MSG_HEADER *>(popPoint + 2);
-      popPoint += 2;
+      msgHeader = &fgHeader->m_MsgHeader;
+      popPoint = reinterpret_cast<char *>(msgHeader);
       msgSize = fgSize;
     }
 
@@ -2256,7 +2251,7 @@ void CNetProcess::AcceptThread(void *pv)
 {
   auto *param = static_cast<_thread_parameter *>(pv);
   auto *process = static_cast<CNetProcess *>(param->m_pParam);
-  HANDLE *events = reinterpret_cast<HANDLE *>(&process->m_NetSocket.m_AcceptEvent);
+  HANDLE *events = &process->m_NetSocket.m_AcceptEvent;
 
   while (param->m_bStart)
   {
@@ -2283,7 +2278,7 @@ void CNetProcess::NetEventThread(void *pv)
   auto *param = static_cast<_thread_parameter *>(pv);
   const int threadIndex = param->m_nIndex;
   auto *process = static_cast<CNetProcess *>(param->m_pParam);
-  HANDLE *events = reinterpret_cast<HANDLE *>(&process->m_NetSocket.m_Event[64 * threadIndex]);
+  HANDLE *events = process->m_NetSocket.m_Event + 64 * threadIndex;
   CNetSocket *netSocket = &process->m_NetSocket;
   DWORD eventCount = 64;
   if ((threadIndex << 6) + 64 > process->m_Type.m_wSocketMaxNum)

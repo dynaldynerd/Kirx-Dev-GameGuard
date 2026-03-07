@@ -5,6 +5,8 @@
 #include "starting_vote_inform_zocl.h"
 #include "Packet/ZoneClientPacket.h"
 
+struct _qry_case_select_charserial;
+
 class  CVoteSystem
 {
 public:
@@ -18,7 +20,7 @@ public:
     char *pwszContent,
     char *pwszName,
     unsigned int dwSerial);
-  void CompleteSelectCharSerial(char *pData);
+  void CompleteSelectCharSerial(const _qry_case_select_charserial *query);
   char ActVote(unsigned int dwAvatorSerial, unsigned __int8 byPoint);
   void Loop();
   char StopVote();

@@ -101,24 +101,26 @@ void CWeeklyGuildRankManager::SetNextRankDate()
 
 bool CWeeklyGuildRankManager::InsertSettlementOwner(CRFWorldDatabase *pkWorldDB, char *pData)
 {
+  const auto *ownerList = reinterpret_cast<const _weeklyguildrank_owner_info::_list *>(pData);
   bool success = true;
   for (int j = 0; j < 3; ++j)
   {
     for (int k = 0; k < 2; ++k)
     {
       const int index = k + 2 * j;
-      if (*reinterpret_cast<unsigned int *>(&pData[56 * index]))
+      const _weeklyguildrank_owner_info::_list &entry = ownerList[index];
+      if (entry.dwSerial)
       {
         if (!pkWorldDB->Insert_SettlementOwnerLog(
               static_cast<unsigned __int8>(k),
-              static_cast<unsigned __int8>(pData[56 * index + 21]),
-              *reinterpret_cast<unsigned int *>(&pData[56 * index]),
-              &pData[56 * index + 4],
-              *reinterpret_cast<unsigned short *>(&pData[56 * index + 22]),
-              static_cast<unsigned __int8>(pData[56 * index + 24]),
-              *reinterpret_cast<long double *>(&pData[56 * index + 32]),
-              *reinterpret_cast<long double *>(&pData[56 * index + 40]),
-              *reinterpret_cast<unsigned int *>(&pData[56 * index + 48])))
+              entry.byRace,
+              entry.dwSerial,
+              entry.wszGuildName,
+              entry.wRank,
+              entry.byGrade,
+              entry.dKillPvpPoint,
+              entry.dGuildBattlePvpPoint,
+              entry.dwSumLv))
         {
           success = false;
         }
@@ -311,28 +313,18 @@ bool CWeeklyGuildRankManager::SaveINI()
 
 void CWeeklyGuildRankManager::PushSettlementOwnerDBLog(char *pInfo)
 {
-  char data[0x150]{};
+  const auto *ownerInfo = reinterpret_cast<const _weeklyguildrank_owner_info *>(pInfo);
+  _weeklyguildrank_owner_info::_list data[6]{};
   for (int index = 0; index < 6; ++index)
   {
-    if (*reinterpret_cast<unsigned int *>(pInfo + 56 * index + 16))
+    const _weeklyguildrank_owner_info::_list &entry = ownerInfo->list[index];
+    if (entry.dwSerial)
     {
-      *reinterpret_cast<unsigned int *>(data + 56 * index) =
-        *reinterpret_cast<unsigned int *>(pInfo + 56 * index + 16);
-      strcpy_s(data + 56 * index + 4, 0x11u, pInfo + 56 * index + 20);
-      data[56 * index + 37] = pInfo[56 * index + 37];
-      *reinterpret_cast<unsigned __int16 *>(data + 56 * index + 38) =
-        *reinterpret_cast<unsigned __int16 *>(pInfo + 56 * index + 38);
-      data[56 * index + 40] = pInfo[56 * index + 40];
-      *reinterpret_cast<unsigned long long *>(data + 56 * index + 44) =
-        *reinterpret_cast<unsigned long long *>(pInfo + 56 * index + 48);
-      *reinterpret_cast<unsigned long long *>(data + 56 * index + 52) =
-        *reinterpret_cast<unsigned long long *>(pInfo + 56 * index + 56);
-      *reinterpret_cast<unsigned int *>(data + 56 * index + 60) =
-        *reinterpret_cast<unsigned int *>(pInfo + 56 * index + 64);
+      data[index] = entry;
     }
   }
 
-  CLogTypeDBTaskManager::Instance()->Push(0, data, 0x150u);
+  CLogTypeDBTaskManager::Instance()->Push(0, reinterpret_cast<char *>(data), sizeof(data));
   CPvpUserAndGuildRankingSystem::Instance()->Log(
     "CWeeklyGuildRankManager::PushSettlementOwnerDBLog()!");
 }

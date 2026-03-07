@@ -8,7 +8,9 @@
 #include "CNetProcess.h"
 #include "CPlayer.h"
 #include "CPlayerDB.h"
+#include "CUserDB.h"
 #include "CPvpUserAndGuildRankingSystem.h"
+#include "DqsDbStructs.h"
 #include "GlobalObjects.h"
 #include "PatriarchElectProcessor.h"
 #include "pt_result_punishment_zocl.h"
@@ -166,13 +168,13 @@ char CVoteSystem::StartVote(
   return 1;
 }
 
-void CVoteSystem::CompleteSelectCharSerial(char *pData)
+void CVoteSystem::CompleteSelectCharSerial(const _qry_case_select_charserial *query)
 {
   CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
-  const unsigned int bossSerial = ranking->GetCurrentRaceBossSerial(static_cast<unsigned __int8>(pData[0]), 0);
+  const unsigned int bossSerial = ranking->GetCurrentRaceBossSerial(query->byRace, 0);
   CPlayer *boss = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, bossSerial);
 
-  if (*reinterpret_cast<unsigned int *>(pData + 4) == static_cast<unsigned int>(-1))
+  if (query->dwAvatorSerial == static_cast<unsigned int>(-1))
   {
     if (boss)
     {
@@ -180,11 +182,11 @@ void CVoteSystem::CompleteSelectCharSerial(char *pData)
     }
   }
   else if (!StartVote(
-             static_cast<unsigned __int8>(pData[0]),
-             static_cast<unsigned __int8>(pData[1]),
-             pData + 25,
-             pData + 8,
-             *reinterpret_cast<unsigned int *>(pData + 4)))
+             query->byRace,
+             query->byType,
+             const_cast<char *>(query->wszContent),
+             const_cast<char *>(query->wszCharName),
+             query->dwAvatorSerial))
   {
     if (boss)
     {
@@ -327,18 +329,13 @@ void CVoteSystem::ProcessPunishment()
   const std::time_t now = std::time(nullptr);
   const unsigned int value = static_cast<unsigned int>(now / 60);
 
-  CGameObject *charObject = g_Main.GetCharW(m_wszCharName);
-  if (charObject)
+  CPlayer *player = static_cast<CPlayer *>(g_Main.GetCharW(m_wszCharName));
+  if (player && player->m_pUserDB)
   {
-    const unsigned __int64 playerData =
-      *reinterpret_cast<unsigned __int64 *>(&charObject[10].m_ObjID.m_byKind);
-    if (playerData)
-    {
-      *reinterpret_cast<unsigned int *>(playerData + 4LL * m_byPunishType + 1321) = value;
-      PatriarchElectProcessor *processor = PatriarchElectProcessor::Instance();
-      const unsigned int electSerial = processor->GetCurrPatriarchElectSerial();
-      *reinterpret_cast<unsigned int *>(playerData + 4LL * m_byPunishType + 1333) = electSerial;
-    }
+    player->m_pUserDB->m_AvatorData.dbAvator.m_dwPunishment[m_byPunishType] = value;
+    PatriarchElectProcessor *processor = PatriarchElectProcessor::Instance();
+    const unsigned int electSerial = processor->GetCurrPatriarchElectSerial();
+    player->m_pUserDB->m_AvatorData.dbAvator.m_dwElectSerial[m_byPunishType] = electSerial;
   }
 
   unsigned __int8 type[36]{};

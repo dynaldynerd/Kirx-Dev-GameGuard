@@ -244,7 +244,7 @@ unsigned __int8 AutominePersonalMgr::request_query(const _qry_case_make_storage 
     if (query->bySubQry == 1)
     {
       const auto *updateQuery = reinterpret_cast<const _qry_case_make_storage_update_header *>(query);
-      const auto *entries = reinterpret_cast<const _qry_case_make_storage_update_entry *>(updateQuery + 1);
+      const auto *entries = updateQuery->entries();
       char buffer[10244]{};
       std::memset(buffer, 0, 10240);
       sprintf(buffer, "update [dbo].[tbl_aminepersonal_inven] set ");

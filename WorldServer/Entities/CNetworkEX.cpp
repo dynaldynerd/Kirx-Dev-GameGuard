@@ -152,7 +152,9 @@ CNetWorking::CNetWorking()
   {
     exit(0);
   }
-  if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion))
+  const unsigned __int8 wsaMajor = static_cast<unsigned __int8>(wsaData.wVersion & 0x00FFu);
+  const unsigned __int8 wsaMinor = static_cast<unsigned __int8>((wsaData.wVersion >> 8) & 0x00FFu);
+  if (wsaMajor != 2 || wsaMinor != 0)
   {
     WSACleanup();
     exit(0);
@@ -603,7 +605,8 @@ void CNetworkEX::AcceptClientCheck(unsigned int dwProID, unsigned int dwIndex, u
       else
       {
         _socket *socket = GetSocket(0, dwIndex);
-        user->SetWorldCLID(dwSerial, reinterpret_cast<unsigned int *>(&socket->m_Addr.sin_addr.S_un.S_addr));
+        unsigned int ipAddress = static_cast<unsigned int>(socket->m_Addr.sin_addr.S_un.S_addr);
+        user->SetWorldCLID(dwSerial, &ipAddress);
       }
     }
     ++CUserDB::s_nLoginNum;

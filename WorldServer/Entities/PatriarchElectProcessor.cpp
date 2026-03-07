@@ -20,6 +20,7 @@
 #include "pt_inform_appoint_zocl.h"
 #include "pt_result_appoint_zocl.h"
 #include "pt_result_code_zocl.h"
+#include "qry_case_insert_candidate.h"
 #include "qry_case_request_refund.h"
 #include "qry_case_candidate_scalar_payloads.h"
 #include "sel_patriarch_elect_state.h"
@@ -679,25 +680,27 @@ char PatriarchElectProcessor::LoadElectState()
 
 __int64 PatriarchElectProcessor::Request_Refund(char *pData)
 {
+  const auto *query = reinterpret_cast<const _qry_case_request_refund *>(pData);
   char buffer[272]{};
   sprintf(
     buffer,
     "{ CALL pUpdate_Patriarch_PayRefund ( %d, %d ) }",
-    static_cast<unsigned __int8>(*pData),
-    *reinterpret_cast<unsigned int *>(pData + 4));
+    query->byRace,
+    query->dwAvatorSerial);
 
   return g_Main.m_pWorldDB->ExecUpdateQuery(buffer, true) ? 0 : 24;
 }
 
 __int64 PatriarchElectProcessor::Insert_PatrirchItemChargeRefund(char *pData)
 {
+  const auto *query = reinterpret_cast<const _qry_case_request_refund *>(pData);
   char buffer[272]{};
   sprintf(
     buffer,
     "insert [dbo].[tbl_itemcharge] (nAvatorSerial, nItemCode_K, nItemCode_D, nItemCode_U, dtGiveDate, dtTakeDate, Type) "
     "values (%d, 0, %d, default, default, default, 1)",
-    *reinterpret_cast<unsigned int *>(pData + 4),
-    *reinterpret_cast<unsigned long long *>(pData + 8));
+    query->dwAvatorSerial,
+    query->dwRefund);
 
   return g_Main.m_pWorldDB->ExecUpdateQuery(buffer, true) ? 0 : 24;
 }
@@ -921,26 +924,25 @@ void PatriarchElectProcessor::CompleteItemChargeRefund(_DB_QRY_SYN_DATA *pData)
 {
   if (pData->m_byResult)
   {
-    char *data = pData->m_sData;
+    auto *query = reinterpret_cast<_qry_case_request_refund *>(pData->m_sData);
     _kSysLog.Write(
       "FAILED DB_RET(%s_%d):%d-Cost:%d",
       "Item Cahrge for Refund",
       _dwElectSerial,
-      *reinterpret_cast<unsigned int *>(data + 4),
-      *reinterpret_cast<unsigned long long *>(data + 8));
+      query->dwAvatorSerial,
+      query->dwRefund);
   }
 }
 
 void PatriarchElectProcessor::CompleteInsertPatriarch(_DB_QRY_SYN_DATA *pData)
 {
-  char *data = pData->m_sData;
+  auto *query = reinterpret_cast<_qry_case_insert_candidate *>(pData->m_sData);
   CandidateMgr *candidateMgr = CandidateMgr::Instance();
   CandidateMgr::_candidate_info *candidate =
-    candidateMgr->GetPatriarchGroupBySerial(static_cast<unsigned __int8>(*data), *reinterpret_cast<unsigned int *>(data + 8));
+    candidateMgr->GetPatriarchGroupBySerial(query->byRace, query->dwAvatorSerial);
 
   CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
-  const unsigned int raceBossSerial =
-    ranking->GetCurrentRaceBossSerial(static_cast<unsigned __int8>(*data), 0);
+  const unsigned int raceBossSerial = ranking->GetCurrentRaceBossSerial(query->byRace, 0);
   CPlayer *bossPlayer = GetPtrPlayerFromSerial(g_Player, 2532, raceBossSerial);
 
   if (pData->m_byResult)
@@ -949,8 +951,8 @@ void PatriarchElectProcessor::CompleteInsertPatriarch(_DB_QRY_SYN_DATA *pData)
       "FAILED DB_RET(%s_%d):%d-Cost:%d",
       "Appoint Patriarch Insert",
       _dwElectSerial,
-      *reinterpret_cast<unsigned int *>(data + 8),
-      static_cast<unsigned __int8>(*data));
+      query->dwAvatorSerial,
+      query->byRace);
 
     if (candidate && bossPlayer && bossPlayer->m_bOper)
     {

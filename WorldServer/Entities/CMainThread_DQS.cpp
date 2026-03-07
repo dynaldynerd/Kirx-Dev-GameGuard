@@ -911,9 +911,9 @@ void CMainThread::OnDQSRun()
         break;
       case 113:
       {
-        auto *disableInstanceStoreData = reinterpret_cast<unsigned __int64 *>(queryEntry->m_sData);
+        auto *disableInstanceStoreData = reinterpret_cast<_qry_case_disable_instance_store *>(queryEntry->m_sData);
         CItemStoreManager *manager = CItemStoreManager::Instance();
-        queryEntry->m_byResult = manager->UpdateDisableInstanceStore(reinterpret_cast<char *>(disableInstanceStoreData));
+        queryEntry->m_byResult = manager->UpdateDisableInstanceStore(disableInstanceStoreData);
         break;
       }
       case 114:
@@ -1778,9 +1778,9 @@ void CMainThread::DQSCompleteProcess()
       }
       case 113:
       {
-        auto *disableInstanceStoreData = reinterpret_cast<unsigned __int64 *>(pData->m_sData);
+        auto *disableInstanceStoreData = reinterpret_cast<_qry_case_disable_instance_store *>(pData->m_sData);
         CItemStoreManager *manager = CItemStoreManager::Instance();
-        manager->CompleteDisableInstanceStore(reinterpret_cast<char *>(disableInstanceStoreData));
+        manager->CompleteDisableInstanceStore(disableInstanceStoreData);
         break;
       }
       case 117:
@@ -1826,7 +1826,7 @@ void CMainThread::DQSCompleteProcess()
       case 128:
       {
         auto *selectCharSerialQuery = reinterpret_cast<_qry_case_select_charserial *>(pData->m_sData);
-        g_VoteSys[selectCharSerialQuery->byRace].CompleteSelectCharSerial(reinterpret_cast<char *>(selectCharSerialQuery));
+        g_VoteSys[selectCharSerialQuery->byRace].CompleteSelectCharSerial(selectCharSerialQuery);
         break;
       }
       case 129:

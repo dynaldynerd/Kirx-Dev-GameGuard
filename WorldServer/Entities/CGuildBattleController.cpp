@@ -6,6 +6,7 @@
 #include "CPvpUserAndGuildRankingSystem.h"
 #include "CMapData.h"
 #include "GuildBattle.h"
+#include "GuildBattleTypes.h"
 #include "WorldServerUtil.h"
 #include "GlobalObjects.h"
 #include "guild_battle_get_gravity_stone_result_zocl.h"
@@ -422,19 +423,20 @@ void CGuildBattleController::AddComplete(
 
 unsigned __int8 CGuildBattleController::AddSchedule(char *szData)
 {
+  const auto *query = reinterpret_cast<const _qry_case_addguildbattleschedule *>(szData);
   g_Main.m_pWorldDB->SetAutoCommitMode(0);
   if (g_Main.m_pWorldDB->UpdateGuildBattleInfo(
-        *reinterpret_cast<unsigned int *>(szData),
-        *reinterpret_cast<unsigned int *>(szData + 4),
-        *reinterpret_cast<unsigned int *>(szData + 8),
-        *reinterpret_cast<unsigned int *>(szData + 12),
-        static_cast<unsigned __int8>(szData[16]))
+        query->dwID,
+        query->dw1PGuildSerial,
+        query->dw2PGuildSerial,
+        query->dwMapID,
+        query->byBattleNumber)
       && g_Main.m_pWorldDB->UpdateGuildBattleScheduleInfo(
-        *reinterpret_cast<unsigned int *>(szData),
-        *reinterpret_cast<unsigned int *>(szData + 20),
-        static_cast<unsigned __int8>(szData[24]),
-        *reinterpret_cast<unsigned __int64 *>(szData + 32),
-        *reinterpret_cast<unsigned __int16 *>(szData + 40)))
+        query->dwID,
+        query->dwSLID,
+        query->byState,
+        query->tStartTime,
+        query->wTurmMin))
   {
     g_Main.m_pWorldDB->CommitTransaction();
     g_Main.m_pWorldDB->SetAutoCommitMode(1);

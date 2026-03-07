@@ -2089,41 +2089,43 @@ char CMainThread::_db_update_inven_AMP(
 
   for (int index = 0; index < 40; ++index)
   {
-    if (reinterpret_cast<_INVENKEY *>(&pNewData->dbPersonalAmineInven.m_List[index])->IsFilled())
+    const _PERSONALAMINE_INVEN_DB_BASE::_LIST &newItem = pNewData->dbPersonalAmineInven.m_List[index];
+    const _PERSONALAMINE_INVEN_DB_BASE::_LIST &oldItem = pOldData->dbPersonalAmineInven.m_List[index];
+
+    if (newItem.Key.IsFilled())
     {
-      if (reinterpret_cast<_INVENKEY *>(&pOldData->dbPersonalAmineInven.m_List[index])->IsFilled())
+      if (oldItem.Key.IsFilled())
       {
-        int newKey = reinterpret_cast<_INVENKEY *>(&pNewData->dbPersonalAmineInven.m_List[index])->CovDBKey();
-        int oldKey = reinterpret_cast<_INVENKEY *>(&pOldData->dbPersonalAmineInven.m_List[index])->CovDBKey();
+        int newKey = static_cast<int>(newItem.Key.CovDBKey());
+        int oldKey = static_cast<int>(oldItem.Key.CovDBKey());
         if (newKey != oldKey)
         {
-          int dbKey = reinterpret_cast<_INVENKEY *>(&pNewData->dbPersonalAmineInven.m_List[index])->CovDBKey();
+          int dbKey = static_cast<int>(newItem.Key.CovDBKey());
           sprintf(source, "K%d=%d,", index, dbKey);
           strcat_0(buffer, source);
         }
-        if (pNewData->dbPersonalAmineInven.m_List[index].dwDur
-            != pOldData->dbPersonalAmineInven.m_List[index].dwDur)
+        if (newItem.dwDur != oldItem.dwDur)
         {
-          sprintf(source, "N%d=%d,", index, pNewData->dbPersonalAmineInven.m_List[index].dwDur);
+          sprintf(source, "N%d=%d,", index, newItem.dwDur);
           strcat_0(buffer, source);
         }
       }
       else
       {
-        int dbKey = reinterpret_cast<_INVENKEY *>(&pNewData->dbPersonalAmineInven.m_List[index])->CovDBKey();
+        int dbKey = static_cast<int>(newItem.Key.CovDBKey());
         sprintf(
           source,
           "K%d=%d,N%d=%d,",
           index,
           dbKey,
           index,
-          pNewData->dbPersonalAmineInven.m_List[index].dwDur);
+          newItem.dwDur);
         strcat_0(buffer, source);
       }
     }
-    else if (reinterpret_cast<_INVENKEY *>(&pOldData->dbPersonalAmineInven.m_List[index])->IsFilled())
+    else if (oldItem.Key.IsFilled())
     {
-      int dbKey = reinterpret_cast<_INVENKEY *>(&pNewData->dbPersonalAmineInven.m_List[index])->CovDBKey();
+      int dbKey = static_cast<int>(newItem.Key.CovDBKey());
       sprintf(source, "K%d=%d,", index, dbKey);
       strcat_0(buffer, source);
     }
@@ -2467,15 +2469,18 @@ char CMainThread::_db_Update_OreCutting(
 
   for (int index = 0; index < 20; ++index)
   {
-    int newKey = reinterpret_cast<_INVENKEY *>(&pNewData->dbCutting.m_List[index])->CovDBKey();
-    int oldKey = reinterpret_cast<_INVENKEY *>(&pOldData->dbCutting.m_List[index])->CovDBKey();
+    const _CUTTING_DB_BASE::_LIST &newItem = pNewData->dbCutting.m_List[index];
+    const _CUTTING_DB_BASE::_LIST &oldItem = pOldData->dbCutting.m_List[index];
+
+    int newKey = static_cast<int>(newItem.Key.CovDBKey());
+    int oldKey = static_cast<int>(oldItem.Key.CovDBKey());
     if (newKey != oldKey)
     {
       sprintf_s(buffer, 0x80u, "K%d=%d,", index, newKey);
       strcat_s(pSzQuery, nBufferSize, buffer);
     }
-    unsigned int newDur = pNewData->dbCutting.m_List[index].dwDur;
-    if (newDur != pOldData->dbCutting.m_List[index].dwDur)
+    unsigned int newDur = newItem.dwDur;
+    if (newDur != oldItem.dwDur)
     {
       sprintf_s(buffer, 0x80u, "D%d=%d,", index, newDur);
       strcat_s(pSzQuery, nBufferSize, buffer);

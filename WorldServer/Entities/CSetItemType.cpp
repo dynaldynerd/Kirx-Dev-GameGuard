@@ -41,12 +41,14 @@ bool si_interpret::set_effect_interpret(_SetItemEff_fld *pFld)
     for (; j < groupCount; ++j)
     {
       std::memset(buffer, 0, 3);
-      std::memcpy(buffer, &pFld->m_strEffrule[4 * j], 2);
+      buffer[0] = pFld->m_strEffrule[4 * j];
+      buffer[1] = pFld->m_strEffrule[4 * j + 1];
       buffer[2] = 0;
       itemCount = static_cast<unsigned __int8>(std::atoi(buffer));
 
       std::memset(buffer, 0, 3);
-      std::memcpy(buffer, &pFld->m_strEffrule[4 * j + 2], 2);
+      buffer[0] = pFld->m_strEffrule[4 * j + 2];
+      buffer[1] = pFld->m_strEffrule[4 * j + 3];
       buffer[2] = 0;
       effectCount = static_cast<unsigned __int8>(std::atoi(buffer));
 

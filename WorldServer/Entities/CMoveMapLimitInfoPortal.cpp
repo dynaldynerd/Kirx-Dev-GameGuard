@@ -298,15 +298,18 @@ unsigned __int8 CMoveMapLimitInfoPortal::SubProcGotoLimitZone(
   }
 
   CPlayer *player = &g_Player[iUserInx];
+  const unsigned int requestedStoreIndex = *reinterpret_cast<const unsigned int *>(pRequest);
+  CMapData *currentMap = player->m_pCurMap;
+
   if (!m_pStoreNPC || !m_pkDestDummy)
   {
     return 5;
   }
-  if (m_iMapInx != player->m_pCurMap->m_nMapCode)
+  if (m_iMapInx != currentMap->m_nMapCode)
   {
     return 21;
   }
-  if (m_pStoreNPC->m_pItemStore->m_pRec->m_dwIndex != *reinterpret_cast<unsigned int *>(pRequest))
+  if (m_pStoreNPC->m_pItemStore->m_pRec->m_dwIndex != requestedStoreIndex)
   {
     return 22;
   }
@@ -318,15 +321,11 @@ unsigned __int8 CMoveMapLimitInfoPortal::SubProcGotoLimitZone(
   {
     return 24;
   }
-  if (player->m_pCurMap->m_pMapSet->m_nMapType)
+  if (currentMap->m_pMapSet->m_nMapType)
   {
     return 25;
   }
-
-  const unsigned char mapLayerFlag = *reinterpret_cast<unsigned char *>(
-    reinterpret_cast<char *>(player) + (sizeof(CGameObject) * 226)
-    + (reinterpret_cast<char *>(&player->m_wMapLayerIndex) - reinterpret_cast<char *>(player)));
-  if (mapLayerFlag == 1)
+  if (player->m_byStandType == 1)
   {
     return 26;
   }
@@ -338,7 +337,11 @@ unsigned __int8 CMoveMapLimitInfoPortal::SubProcGotoLimitZone(
   {
     return 28;
   }
-  if (player->m_EP.GetEff_State(20) || player->m_EP.GetEff_State(28))
+  if (player->m_EP.GetEff_State(20))
+  {
+    return 29;
+  }
+  if (player->m_EP.GetEff_State(28))
   {
     return 29;
   }
@@ -346,18 +349,19 @@ unsigned __int8 CMoveMapLimitInfoPortal::SubProcGotoLimitZone(
   {
     return 30;
   }
-  if (!pkRight->IsHaveRight(GetType()))
+  const int limitType = GetType();
+  if (!pkRight->IsHaveRight(limitType))
   {
     return 31;
   }
 
   float newPos[3]{};
-  if (!player->m_pCurMap->GetRandPosInDummy(m_pkDestDummy, newPos, true))
+  if (!currentMap->GetRandPosInDummy(m_pkDestDummy, newPos, true))
   {
     return 32;
   }
 
-  player->OutOfMap(player->m_pCurMap, 0, 3u, newPos);
+  player->OutOfMap(currentMap, 0, 3u, newPos);
   player->SendMsg_GotoBasePortalResult(0);
   return 0;
 }

@@ -24,6 +24,7 @@
 #include "unit_pack_fill_request_clzo.h"
 #include "tuning_data.h"
 #include "combine_ex_item_request_clzo.h"
+#include "unit_bullet_param.h"
 #include <vector>
 
 
@@ -271,8 +272,16 @@ struct  _UNIT_DB_BASE
     unsigned __int8 byFrame;
     unsigned int dwGauge;
     unsigned __int8 byPart[6];
-    unsigned int dwBullet[2];
-    unsigned int dwSpare[8];
+    union
+    {
+      unsigned int dwBullet[2];
+      _unit_bullet_param m_BulletParam[2];
+    };
+    union
+    {
+      unsigned int dwSpare[8];
+      _unit_bullet_param m_SpareBulletParam[8];
+    };
     int nPullingFee;
     unsigned int dwCutTime;
     unsigned __int16 wBooster;

@@ -346,35 +346,35 @@ void TRC_AutoTrade::SendMsg_UserLogInNotifyTaxRate(unsigned int n)
 
 void TRC_AutoTrade::AddGDalant(char *pdata)
 {
-  char *data = pdata;
-  if (m_pOwnerGuild && m_pOwnerGuild->m_dwSerial == *reinterpret_cast<unsigned int *>(data + 4))
+  const auto *query = reinterpret_cast<const _qry_case_in_atrade_tax *>(pdata);
+  if (m_pOwnerGuild && m_pOwnerGuild->m_dwSerial == query->dwGuildSerial)
   {
-    m_pOwnerGuild->m_dTotalDalant = *reinterpret_cast<long double *>(data + 16);
+    m_pOwnerGuild->m_dTotalDalant = query->out_totaldalant;
     m_pOwnerGuild->MakeDownMemberPacket();
     m_pOwnerGuild->m_byMoneyOutputKind = 6;
     m_pOwnerGuild->SendMsg_IOMoney(
-      *reinterpret_cast<unsigned int *>(data + 8),
-      static_cast<double>(*reinterpret_cast<int *>(data + 12)),
+      query->in_seller,
+      static_cast<double>(query->in_dalant),
       0.0,
       true,
-      reinterpret_cast<unsigned __int8 *>(data + 32));
+      const_cast<unsigned __int8 *>(query->byDate));
     CGuild::s_MgrHistory.push_money(
       "Auto Trade Tax",
-      *reinterpret_cast<unsigned int *>(data + 8),
-      *reinterpret_cast<unsigned int *>(data + 12),
+      query->in_seller,
+      query->in_dalant,
       0,
-      *reinterpret_cast<long double *>(data + 16),
-      *reinterpret_cast<long double *>(data + 24),
+      query->out_totaldalant,
+      query->out_totalgold,
       m_pOwnerGuild->m_szHistoryFileName);
   }
   else
   {
     m_sysLog.Write(
       "Failed TRC_AutoTrade::AddGDalant(GuildSerial:%d,seller:%d,in:@%d,total:@%.0f)",
-      *reinterpret_cast<unsigned int *>(data + 4),
-      *reinterpret_cast<unsigned int *>(data + 8),
-      *reinterpret_cast<unsigned int *>(data + 12),
-      *reinterpret_cast<double *>(data + 16));
+      query->dwGuildSerial,
+      query->in_seller,
+      query->in_dalant,
+      static_cast<double>(query->out_totaldalant));
   }
 }
 
@@ -477,14 +477,15 @@ char TRC_AutoTrade::_db_load(unsigned __int8 byRace)
 
 unsigned __int8 TRC_AutoTrade::_insert_info(char *pdata)
 {
+  const auto *info = reinterpret_cast<const _insert_trc_info *>(pdata);
   if (g_Main.m_pWorldDB->insert_atrade_taxrate(
-        *pdata,
-        *reinterpret_cast<unsigned int *>(pdata + 1),
-        pdata + 5,
-        *reinterpret_cast<unsigned int *>(pdata + 23),
-        pdata + 27,
-        pdata[95],
-        *reinterpret_cast<unsigned int *>(pdata + 91)))
+        info->byRace,
+        info->dwGSerial,
+        const_cast<char *>(info->szGuildName),
+        info->dwMatterDst,
+        const_cast<char *>(info->wszMatterDst),
+        info->byCurrTax,
+        info->dwNext))
   {
     return 0;
   }

@@ -22,9 +22,11 @@
 #include "DummyPosition.h"
 #include "CUserDB.h"
 #include "GlobalObjects.h"
+#include "WeaponItem_fld.h"
 #include "WorldServerUtil.h"
 #include "monster_fld.h"
 #include "resource.h"
+#include "skill_fld.h"
 
 namespace
 {
@@ -638,8 +640,9 @@ void CObjectTab::UpdateTab()
 
     if (player->m_pmWpn.pFixWp)
     {
-      _base_fld *record = g_Main.m_tblItemData[6].GetRecord(player->m_pmWpn.pFixWp->m_wItemIndex);
-      line.Format(_T("FixWeapon : %S"), record ? record[2].m_strCode : "NULL");
+      _WeaponItem_fld *weaponRecord =
+        reinterpret_cast<_WeaponItem_fld *>(g_Main.m_tblItemData[6].GetRecord(player->m_pmWpn.pFixWp->m_wItemIndex));
+      line.Format(_T("FixWeapon : %S"), weaponRecord ? weaponRecord->m_strName : "NULL");
     }
     else if (player->m_pmWpn.pFixUnit)
     {
@@ -849,15 +852,16 @@ void CObjectTab::UpdateTab()
         {
           continue;
         }
-        _base_fld *effectRecord = nullptr;
+        _skill_fld *effectRecord = nullptr;
         if (cont->m_byEffectCode < 4)
         {
-          effectRecord = g_Main.m_tblEffectData[cont->m_byEffectCode].GetRecord(cont->m_wEffectIndex);
+          effectRecord =
+            reinterpret_cast<_skill_fld *>(g_Main.m_tblEffectData[cont->m_byEffectCode].GetRecord(cont->m_wEffectIndex));
         }
         const unsigned int passed = sfContCurTime - cont->m_dwStartSec;
         if (effectRecord)
         {
-          line.Format(_T("%S : pass:%d, dur:%d"), effectRecord[3].m_strCode, passed, cont->m_wDurSec);
+          line.Format(_T("%S : pass:%d, dur:%d"), effectRecord->m_strKorName, passed, cont->m_wDurSec);
         }
         else
         {

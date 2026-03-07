@@ -488,26 +488,27 @@ void CHonorGuild::SetGuildMaintainMoney(unsigned __int8 byRace, unsigned int dwT
 
 void CHonorGuild::DQSCompleteInAtradTaxMoney(char *pdata)
 {
-  CGuild *guild = GetGuildDataFromSerial(g_Guild, MAX_GUILD, *reinterpret_cast<unsigned int *>(pdata + 4));
+  const auto *query = reinterpret_cast<const _qry_case_in_atrade_tax *>(pdata);
+  CGuild *guild = GetGuildDataFromSerial(g_Guild, MAX_GUILD, query->dwGuildSerial);
   if (guild)
   {
-    guild->m_dTotalDalant = *reinterpret_cast<long double *>(pdata + 16);
+    guild->m_dTotalDalant = query->out_totaldalant;
     guild->MakeDownMemberPacket();
     guild->m_byMoneyOutputKind = 6;
     guild->SendMsg_IOMoney(
-      *reinterpret_cast<unsigned int *>(pdata + 8),
-      static_cast<double>(*reinterpret_cast<int *>(pdata + 12)),
+      query->in_seller,
+      static_cast<double>(query->in_dalant),
       0.0,
       true,
-      reinterpret_cast<unsigned __int8 *>(pdata + 32));
+      const_cast<unsigned __int8 *>(query->byDate));
 
     CGuild::s_MgrHistory.push_money(
       "Auto Trade Tax",
-      *reinterpret_cast<unsigned int *>(pdata + 8),
-      *reinterpret_cast<unsigned int *>(pdata + 12),
+      query->in_seller,
+      query->in_dalant,
       0,
-      *reinterpret_cast<long double *>(pdata + 16),
-      *reinterpret_cast<long double *>(pdata + 24),
+      query->out_totaldalant,
+      query->out_totalgold,
       guild->m_szHistoryFileName);
   }
   else
@@ -516,9 +517,9 @@ void CHonorGuild::DQSCompleteInAtradTaxMoney(char *pdata)
     logger->FormatLog(
       8,
       "Faild CHonorGuild::DQSCompleteInAtradTaxMoney(GuildSerial:%d,seller:%d,in:@%d,total:@%.0f)",
-      *reinterpret_cast<unsigned int *>(pdata + 4),
-      *reinterpret_cast<unsigned int *>(pdata + 8),
-      *reinterpret_cast<unsigned int *>(pdata + 12),
-      *reinterpret_cast<double *>(pdata + 16));
+      query->dwGuildSerial,
+      query->in_seller,
+      query->in_dalant,
+      static_cast<double>(query->out_totaldalant));
   }
 }

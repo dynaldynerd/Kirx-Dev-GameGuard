@@ -660,8 +660,7 @@ char CItemStoreManager::ResetInstanceItemStore(unsigned __int8 byStoreType, int 
     return 0;
   }
 
-  unsigned int itemCount = 0;
-  void *serialBuffer = nullptr;
+  _qry_case_disable_instance_store query{};
 
   for (int j = 0; j < m_nInstanceItemStoreListNum; ++j)
   {
@@ -671,9 +670,10 @@ char CItemStoreManager::ResetInstanceItemStore(unsigned __int8 byStoreType, int 
       list->m_bUse = false;
       if (list->m_nItemStoreNum > 0)
       {
-        itemCount = list->m_nItemStoreNum;
-        serialBuffer = operator new[](saturated_mul(itemCount, 8uLL));
-        memset_0(serialBuffer, 0, 8ULL * list->m_nItemStoreNum);
+        query.dwCount = list->m_nItemStoreNum;
+        query.pEntry = static_cast<_qry_case_disable_instance_store_entry *>(
+          operator new[](saturated_mul(query.dwCount, sizeof(_qry_case_disable_instance_store_entry))));
+        memset_0(query.pEntry, 0, sizeof(_qry_case_disable_instance_store_entry) * list->m_nItemStoreNum);
       }
 
       int removed = 0;
@@ -683,9 +683,9 @@ char CItemStoreManager::ResetInstanceItemStore(unsigned __int8 byStoreType, int 
         operator delete[](list->m_ItemStore[k].m_pLimitStorageItem);
         list->m_ItemStore[k].m_pStorageItem = nullptr;
         list->m_ItemStore[k].m_pLimitStorageItem = nullptr;
-        if (serialBuffer)
+        if (query.pEntry)
         {
-          reinterpret_cast<unsigned int *>(serialBuffer)[2 * k + 1] = list->m_ItemStore->m_dwDBSerial;
+          query.pEntry[k].dwDBSerial = list->m_ItemStore->m_dwDBSerial;
         }
         ++removed;
       }
@@ -705,12 +705,12 @@ char CItemStoreManager::ResetInstanceItemStore(unsigned __int8 byStoreType, int 
     }
   }
 
-  if (static_cast<int>(itemCount) <= 0)
+  if (static_cast<int>(query.dwCount) <= 0)
   {
     return 0;
   }
 
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x71u, reinterpret_cast<char *>(&itemCount), 16);
+  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x71u, reinterpret_cast<char *>(&query), sizeof(query));
   return 1;
 }
 
@@ -790,15 +790,15 @@ unsigned __int8 CItemStoreManager::UpdateStoreLimitItem()
   return 0;
 }
 
-unsigned __int8 CItemStoreManager::UpdateDisableInstanceStore(char *pData)
+unsigned __int8 CItemStoreManager::UpdateDisableInstanceStore(_qry_case_disable_instance_store *pData)
 {
-  for (int j = 0; j < *reinterpret_cast<unsigned int *>(pData); ++j)
+  for (unsigned int j = 0; j < pData->dwCount; ++j)
   {
-    char *entry = reinterpret_cast<char *>(*reinterpret_cast<unsigned long long *>(pData + 8) + 8LL * j);
-    if (*reinterpret_cast<unsigned int *>(entry + 4))
+    _qry_case_disable_instance_store_entry *entry = &pData->pEntry[j];
+    if (entry->dwDBSerial)
     {
-      bool updated = g_Main.m_pWorldDB->Update_DisableInstanceStore(*reinterpret_cast<unsigned int *>(entry + 4));
-      entry[0] = updated ? 1 : 0;
+      const bool updated = g_Main.m_pWorldDB->Update_DisableInstanceStore(entry->dwDBSerial);
+      entry->byResult = updated ? 1 : 0;
     }
   }
 
@@ -861,21 +861,21 @@ void CItemStoreManager::CompleteStoreLimitItem()
   m_Sheet.DataInit();
 }
 
-void CItemStoreManager::CompleteDisableInstanceStore(char *pData)
+void CItemStoreManager::CompleteDisableInstanceStore(_qry_case_disable_instance_store *pData)
 {
-  for (int j = 0; j < *reinterpret_cast<unsigned int *>(pData); ++j)
+  for (unsigned int j = 0; j < pData->dwCount; ++j)
   {
-    char *entry = reinterpret_cast<char *>(*reinterpret_cast<unsigned long long *>(pData + 8) + 8LL * j);
-    if (!entry[0])
+    _qry_case_disable_instance_store_entry *entry = &pData->pEntry[j];
+    if (!entry->byResult)
     {
       Log(
         "CItemStoreManager::CompleteDisableInstanceStore\r\n\t\tInstanceStore Disable Fail! (DBSerial:%d)\r\n",
-        *reinterpret_cast<unsigned int *>(entry + 4));
+        entry->dwDBSerial);
     }
   }
 
-  if (*reinterpret_cast<int *>(pData) > 0)
+  if (static_cast<int>(pData->dwCount) > 0)
   {
-    operator delete[](*reinterpret_cast<void **>(pData + 8));
+    operator delete[](pData->pEntry);
   }
 }

@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "CAggroNode.h"
+#include "CAnimus.h"
 #include "CCharacter.h"
 #include "GlobalObjects.h"
 #include "CRecordData.h"
@@ -72,11 +73,10 @@ void CAggroNode::SetAggro(
     if (m_pCharacter->m_ObjID.m_byID == 3)
     {
       defaultValue = g_AggroCaculateData.GetDefault(7u);
-      CCharacter *character = m_pCharacter;
-      if (character)
+      CAnimus *animus = static_cast<CAnimus *>(m_pCharacter);
+      if (animus)
       {
-        const unsigned char extraKind =
-          reinterpret_cast<unsigned char *>(&character[1].m_nScreenPos[1])[2];
+        const unsigned char extraKind = animus->m_byRoleCode;
         switch (extraKind)
         {
           case 1:

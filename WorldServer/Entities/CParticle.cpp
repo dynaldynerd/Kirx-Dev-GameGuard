@@ -352,7 +352,8 @@ void CParticle::GetFlickerARGB(int i, unsigned int *dwArgb)
 
   if (static_cast<unsigned int>(mElement[i].mNowFrame * 32768.0f) % flickerTime < (flickerTime >> 1))
   {
-    if (HIBYTE(*dwArgb) > mFlickerAlpha)
+    const unsigned __int8 alpha = static_cast<unsigned __int8>((*dwArgb >> 24) & 0xFF);
+    if (alpha > mFlickerAlpha)
     {
       *dwArgb = (*dwArgb & 0xFFFFFF) | (mFlickerAlpha << 24);
     }

@@ -192,6 +192,15 @@ int CPlayer::s_nMonDefPoint = 12;
 CRecordData CPlayer::s_tblLimMastery[3][4];
 CRecordData CPlayer::s_tblLimMasteryContinue[3][4];
 
+namespace
+{
+int GetSkillAttackTypeForLevel(const _skill_fld *skillField, int skillLevel)
+{
+  const int *attackTypeByLevel = &skillField->m_nAttackable;
+  return attackTypeByLevel[skillLevel];
+}
+}
+
 bool CheckSameItemFromString_CodeIndex(char *psItemCode, unsigned __int8 byTableCode, unsigned __int16 wIndex)
 {
   if (!psItemCode)
@@ -4860,10 +4869,9 @@ void CPlayer::NetClose(bool bMoveOutLobby)
 {
   if (m_byPatriarchAppointPropose != 255)
   {
-    char pdata[16];
-    pdata[0] = 1;
+    char responseData = 1;
     PatriarchElectProcessor *processor = PatriarchElectProcessor::Instance();
-    processor->Doit(_eRespAppoint, this, pdata);
+    processor->Doit(_eRespAppoint, this, &responseData);
   }
 
   if (m_Param.m_pAPM)
@@ -8178,37 +8186,37 @@ _ITEM_EFFECT *CPlayer::_GetItemEffect(_STORAGE_LIST::_db_con *pItem)
       {
         _DfnEquipItem_fld *record = reinterpret_cast<_DfnEquipItem_fld *>(
           g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex));
-        return record ? reinterpret_cast<_ITEM_EFFECT *>(&record->m_nEff1Code) : nullptr;
+        return record ? record->m_Effect : nullptr;
       }
       case 1:
       {
         _WeaponItem_fld *record = reinterpret_cast<_WeaponItem_fld *>(
           g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex));
-        return record ? reinterpret_cast<_ITEM_EFFECT *>(&record->m_nEff1Code) : nullptr;
+        return record ? record->m_Effect : nullptr;
       }
       case 2:
       {
         _CloakItem_fld *record = reinterpret_cast<_CloakItem_fld *>(
           g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex));
-        return record ? reinterpret_cast<_ITEM_EFFECT *>(&record->m_nEff1Code) : nullptr;
+        return record ? record->m_Effect : nullptr;
       }
       case 3:
       {
         _RingItem_fld *record = reinterpret_cast<_RingItem_fld *>(
           g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex));
-        return record ? reinterpret_cast<_ITEM_EFFECT *>(&record->m_nEff1Code) : nullptr;
+        return record ? record->m_Effect : nullptr;
       }
       case 4:
       {
         _AmuletItem_fld *record = reinterpret_cast<_AmuletItem_fld *>(
           g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex));
-        return record ? reinterpret_cast<_ITEM_EFFECT *>(&record->m_nEff1Code) : nullptr;
+        return record ? record->m_Effect : nullptr;
       }
       case 22:
       {
         _SiegeKitItem_fld *record = reinterpret_cast<_SiegeKitItem_fld *>(
           g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex));
-        return record ? reinterpret_cast<_ITEM_EFFECT *>(&record->m_nEff1Code) : nullptr;
+        return record ? record->m_Effect : nullptr;
       }
       default:
         return nullptr;
@@ -8217,7 +8225,7 @@ _ITEM_EFFECT *CPlayer::_GetItemEffect(_STORAGE_LIST::_db_con *pItem)
 
   _DfnEquipItem_fld *record = reinterpret_cast<_DfnEquipItem_fld *>(
     g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex));
-  return record ? reinterpret_cast<_ITEM_EFFECT *>(&record->m_nEff1Code) : nullptr;
+  return record ? record->m_Effect : nullptr;
 }
 
 void CPlayer::apply_normal_item_std_effect(int nEffCode, float fVal, bool bEquip)
@@ -8386,7 +8394,7 @@ void CPlayer::apply_case_equip_upgrade_effect(_STORAGE_LIST::_db_con *pItem, boo
       if (have80 > 0.0f && have80 < 5.0f && pItem->m_byTableCode <= 5u)
       {
         _ItemUpgrade_fld *record = g_Main.m_tblItemUpgrade.GetRecord(5u);
-        effectValue = reinterpret_cast<float *>(&record->m_nEffectUnit)[static_cast<int>(have80)];
+        effectValue = record->m_fEffectUnitList[static_cast<int>(have80)];
         m_EP.SetEff_Rate(6, effectValue, bEquip);
         if (bEquip)
         {
@@ -8430,7 +8438,7 @@ void CPlayer::apply_case_equip_upgrade_effect(_STORAGE_LIST::_db_con *pItem, boo
       continue;
     }
 
-    float talikValue = reinterpret_cast<float *>(&record->m_nEffectUnit)[talikCount];
+    float talikValue = record->m_fEffectUnitList[talikCount];
     switch (talik)
     {
       case 0:
@@ -8444,7 +8452,7 @@ void CPlayer::apply_case_equip_upgrade_effect(_STORAGE_LIST::_db_con *pItem, boo
             && GetItemGrade(pItem->m_byTableCode, pItem->m_wItemIndex) < 3u
             && pItem->m_byTableCode == 6)
         {
-          talikValue = reinterpret_cast<float *>(&record->m_nEffectUnit)[effHave79];
+          talikValue = record->m_fEffectUnitList[effHave79];
         }
 
         for (int paramIndex = 0; paramIndex < 2; ++paramIndex)
@@ -8484,7 +8492,7 @@ void CPlayer::apply_case_equip_upgrade_effect(_STORAGE_LIST::_db_con *pItem, boo
         }
         if (talikCount < effHave80 && pItem->m_byTableCode <= 5u)
         {
-          talikValue = reinterpret_cast<float *>(&record->m_nEffectUnit)[effHave80];
+          talikValue = record->m_fEffectUnitList[effHave80];
         }
         m_EP.SetEff_Rate(6, talikValue, bEquip);
         if (bEquip)
@@ -9360,7 +9368,7 @@ for (int slotIndex = 0; slotIndex < 7; ++slotIndex)
             _ItemUpgrade_fld *record = g_Main.m_tblItemUpgrade.GetRecord(talikType);
             if (record && sameCount >= 1 && sameCount <= 7)
             {
-              const float baseValue = reinterpret_cast<float *>(&record->m_nEffectUnit)[sameCount];
+              const float baseValue = record->m_fEffectUnitList[sameCount];
               float deltaValue = 0.0f;
               if (talikType)
               {
@@ -9368,8 +9376,7 @@ for (int slotIndex = 0; slotIndex < 7; ++slotIndex)
                 {
                   if (fCurVal > 0.0f && sameCount < static_cast<int>(fCurVal))
                   {
-                    deltaValue =
-                      reinterpret_cast<float *>(&record->m_nEffectUnit)[static_cast<int>(fCurVal)] - baseValue;
+                    deltaValue = record->m_fEffectUnitList[static_cast<int>(fCurVal)] - baseValue;
                   }
                   m_EP.SetEff_Rate(6, deltaValue, bAdd);
                   m_fTalik_DefencePoint = m_fTalik_DefencePoint + deltaValue;
@@ -9379,8 +9386,7 @@ for (int slotIndex = 0; slotIndex < 7; ++slotIndex)
               {
                 if (fCurVal > 0.0f && sameCount < static_cast<int>(fCurVal))
                 {
-                  deltaValue =
-                    reinterpret_cast<float *>(&record->m_nEffectUnit)[static_cast<int>(fCurVal)] - baseValue;
+                  deltaValue = record->m_fEffectUnitList[static_cast<int>(fCurVal)] - baseValue;
                 }
                 for (int paramIndex = 0; paramIndex < 2; ++paramIndex)
                 {
@@ -9403,7 +9409,7 @@ for (int slotIndex = 0; slotIndex < 7; ++slotIndex)
             && GetItemGrade(item->m_byTableCode, item->m_wItemIndex) < 3u)
         {
           _ItemUpgrade_fld *record = g_Main.m_tblItemUpgrade.GetRecord(0);
-          effectValue = reinterpret_cast<float *>(&record->m_nEffectUnit)[static_cast<int>(fCurVal)];
+          effectValue = record->m_fEffectUnitList[static_cast<int>(fCurVal)];
           for (int paramIndex = 0; paramIndex < 2; ++paramIndex)
           {
             m_EP.SetEff_Rate(paramIndex, effectValue, bAdd);
@@ -9415,7 +9421,7 @@ for (int slotIndex = 0; slotIndex < 7; ++slotIndex)
         else if (fCurVal > 0.0f && fCurVal < 5.0f && item->m_byTableCode <= 5u)
         {
           _ItemUpgrade_fld *record = g_Main.m_tblItemUpgrade.GetRecord(5u);
-          effectValue = reinterpret_cast<float *>(&record->m_nEffectUnit)[static_cast<int>(fCurVal)];
+          effectValue = record->m_fEffectUnitList[static_cast<int>(fCurVal)];
           m_EP.SetEff_Rate(6, effectValue, bAdd);
           m_fTalik_DefencePoint = bAdd ? (m_fTalik_DefencePoint + effectValue)
                                        : (m_fTalik_DefencePoint - effectValue);
@@ -17906,7 +17912,7 @@ char CPlayer::_pre_check_unit_attack(
     return static_cast<char>(-37);
   }
 
-  bulletParam = reinterpret_cast<_unit_bullet_param *>(&m_pUsingUnit->dwBullet[byWeaponPart]);
+  bulletParam = &m_pUsingUnit->m_BulletParam[byWeaponPart];
   if (!bulletParam->wLeftNum || bulletParam->wLeftNum == 0xFFFF)
   {
     return static_cast<char>(-17);
@@ -18271,11 +18277,11 @@ int CPlayer::_pre_check_in_guild_battle(CPlayer *pDst)
     {
       if (pDst->m_ObjID.m_byID == 3)
       {
-        battleOwner = *reinterpret_cast<CPlayer **>(&pDst->m_bBaseDownload);
+        battleOwner = reinterpret_cast<CAnimus *>(pDst)->m_pMaster;
       }
       else if (pDst->m_ObjID.m_byID == 4)
       {
-        battleOwner = *reinterpret_cast<CPlayer **>(&pDst->m_byMoveDirect);
+        battleOwner = reinterpret_cast<CGuardTower *>(pDst)->m_pMasterTwr;
       }
     }
     else
@@ -18299,7 +18305,7 @@ int CPlayer::_pre_check_in_guild_battle(CPlayer *pDst)
     {
       if (pDst->m_ObjID.m_byID == 3)
       {
-        CPlayer *master = *reinterpret_cast<CPlayer **>(&pDst->m_bBaseDownload);
+        CPlayer *master = reinterpret_cast<CAnimus *>(pDst)->m_pMaster;
         if (master && master->m_bInGuildBattle)
         {
           return -6;
@@ -18323,7 +18329,7 @@ int CPlayer::_pre_check_in_guild_battle(CPlayer *pDst)
     {
       if (pDst->m_ObjID.m_byID == 3)
       {
-        CPlayer *master = *reinterpret_cast<CPlayer **>(&pDst->m_bBaseDownload);
+        CPlayer *master = reinterpret_cast<CAnimus *>(pDst)->m_pMaster;
         if (master && master->IsPunished(1u, 0))
         {
           return 0;
@@ -18385,7 +18391,7 @@ bool CPlayer::_pre_check_in_guild_battle_race(CPlayer *pDst, bool bEqueal)
     }
     else
     {
-      CPlayer *master = *reinterpret_cast<CPlayer **>(&pDst->m_bBaseDownload);
+      CPlayer *master = reinterpret_cast<CAnimus *>(pDst)->m_pMaster;
       if (master)
       {
         if (master->m_bInGuildBattle && m_bInGuildBattle)
@@ -19328,7 +19334,7 @@ char CPlayer::pc_WPActiveAttack_Skill(
   }
   else
   {
-    attackType = *reinterpret_cast<int *>(&pSkillFld->m_strEffectCode[4 * m_pmWpn.nActiveEffLvl + 64]);
+    attackType = GetSkillAttackTypeForLevel(pSkillFld, m_pmWpn.nActiveEffLvl);
   }
 
   if (!_pre_check_wpactive_skill_attack(byEffectCode, pSkillFld, wBulletSerial, &bulletItem, &bulletField))
@@ -19892,7 +19898,7 @@ void CPlayer::pc_PlayAttack_Skill(
   else
   {
     const int skillLv = m_pmMst.GetSkillLv(pSkillFld->m_dwIndex);
-    nAttType = *reinterpret_cast<int *>(&pSkillFld->m_strEffectCode[4 * skillLv + 64]);
+    nAttType = GetSkillAttackTypeForLevel(pSkillFld, skillLv);
   }
 
   CCharacter *pTarget = pDst;
@@ -20795,10 +20801,10 @@ void CPlayer::pc_PlayAttack_Test(
     return;
   }
 
-  unsigned __int16 *unitBullet = reinterpret_cast<unsigned __int16 *>(&m_pUsingUnit->dwBullet[byWeaponPart]);
-  if (unitBullet[1] && unitBullet[1] != 0xFFFF)
+  _unit_bullet_param &unitBullet = m_pUsingUnit->m_BulletParam[byWeaponPart];
+  if (unitBullet.wLeftNum && unitBullet.wLeftNum != 0xFFFF)
   {
-    bulletIndex = *unitBullet;
+    bulletIndex = unitBullet.wBulletIndex;
     _UnitPart_fld *unitRecord = nullptr;
     if (byWeaponPart)
     {
@@ -20810,19 +20816,20 @@ void CPlayer::pc_PlayAttack_Test(
     }
     if (unitRecord)
     {
-      if (unitBullet[1] >= unitRecord->m_nDurUnit)
+      if (unitBullet.wLeftNum >= unitRecord->m_nDurUnit)
       {
-        unitBullet[1] = static_cast<unsigned __int16>(unitBullet[1] - unitRecord->m_nDurUnit);
+        unitBullet.wLeftNum = static_cast<unsigned __int16>(unitBullet.wLeftNum - unitRecord->m_nDurUnit);
       }
       else
       {
-        unitBullet[1] = 0;
+        unitBullet.wLeftNum = 0;
       }
-      const unsigned __int16 leftNum = unitBullet[1];
+      const unsigned __int16 leftNum = unitBullet.wLeftNum;
       SendMsg_AlterUnitBulletInform(byWeaponPart, leftNum);
-      if (!unitBullet[1])
+      if (!unitBullet.wLeftNum)
       {
-        *reinterpret_cast<unsigned int *>(unitBullet) = static_cast<unsigned int>(-1);
+        unitBullet.wBulletIndex = static_cast<unsigned __int16>(-1);
+        unitBullet.wLeftNum = static_cast<unsigned __int16>(-1);
       }
 
       if (m_EP.GetEff_State(14))

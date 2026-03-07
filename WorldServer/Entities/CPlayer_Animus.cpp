@@ -114,6 +114,26 @@
 namespace
 {
 constexpr int kAnimusRecallConsumeFP = 60;
+
+unsigned __int16 GetPackedLowWord(unsigned int value)
+{
+  return static_cast<unsigned __int16>(value & 0xFFFFu);
+}
+
+unsigned __int16 GetPackedHighWord(unsigned int value)
+{
+  return static_cast<unsigned __int16>((value >> 16) & 0xFFFFu);
+}
+
+void SetPackedLowWord(unsigned int &value, unsigned __int16 lowWord)
+{
+  value = (value & 0xFFFF0000u) | static_cast<unsigned int>(lowWord);
+}
+
+void SetPackedHighWord(unsigned int &value, unsigned __int16 highWord)
+{
+  value = (value & 0x0000FFFFu) | (static_cast<unsigned int>(highWord) << 16);
+}
 }
 
 _animus_create_setdata::_animus_create_setdata()
@@ -795,8 +815,8 @@ void CPlayer::pc_AnimusRecallRequest(
               return;
             }
 
-            adjustedHP = static_cast<unsigned __int16>(LOWORD(animusItem->m_dwLv));
-            adjustedFP = static_cast<unsigned __int16>(HIWORD(animusItem->m_dwLv));
+            adjustedHP = GetPackedLowWord(animusItem->m_dwLv);
+            adjustedFP = GetPackedHighWord(animusItem->m_dwLv);
 
             if (this->m_wTimeFreeRecallSerial != animusItem->m_wSerial)
             {
@@ -980,28 +1000,39 @@ void CPlayer::AutoRecover_Animus()
     }
 
     const unsigned int previousLv = animus->m_dwLv;
-    unsigned int *packedStatus = &animus->m_dwLv;
-    if (LOWORD(animus->m_dwLv) < animusFld->m_nMaxHP)
+    unsigned int packedStatus = animus->m_dwLv;
+    unsigned __int16 currentHP = GetPackedLowWord(packedStatus);
+    unsigned __int16 currentFP = GetPackedHighWord(packedStatus);
+    if (currentHP < animusFld->m_nMaxHP)
     {
-      *reinterpret_cast<unsigned __int16 *>(packedStatus) += LOWORD(animusFld->m_nHPRecUnit);
-      if (*reinterpret_cast<unsigned __int16 *>(packedStatus) > animusFld->m_nMaxHP)
+      currentHP = static_cast<unsigned __int16>(
+        currentHP + static_cast<unsigned __int16>(static_cast<unsigned int>(animusFld->m_nHPRecUnit) & 0xFFFFu));
+      if (currentHP > animusFld->m_nMaxHP)
       {
-        *reinterpret_cast<unsigned __int16 *>(packedStatus) = static_cast<unsigned __int16>(animusFld->m_nMaxHP);
+        currentHP = static_cast<unsigned __int16>(animusFld->m_nMaxHP);
       }
+      SetPackedLowWord(packedStatus, currentHP);
     }
 
-    if (HIWORD(animus->m_dwLv) < animusFld->m_nMaxFP)
+    if (currentFP < animusFld->m_nMaxFP)
     {
-      reinterpret_cast<unsigned __int16 *>(packedStatus)[1] += LOWORD(animusFld->m_nFPRecUnit);
-      if (reinterpret_cast<unsigned __int16 *>(packedStatus)[1] > animusFld->m_nMaxFP)
+      currentFP = static_cast<unsigned __int16>(
+        currentFP + static_cast<unsigned __int16>(static_cast<unsigned int>(animusFld->m_nFPRecUnit) & 0xFFFFu));
+      if (currentFP > animusFld->m_nMaxFP)
       {
-        reinterpret_cast<unsigned __int16 *>(packedStatus)[1] = static_cast<unsigned __int16>(animusFld->m_nMaxFP);
+        currentFP = static_cast<unsigned __int16>(animusFld->m_nMaxFP);
       }
+      SetPackedHighWord(packedStatus, currentFP);
     }
 
-    if (previousLv != animus->m_dwLv && m_pUserDB)
+    if (previousLv != packedStatus && m_pUserDB)
     {
+      animus->m_dwLv = packedStatus;
       m_pUserDB->Update_ItemUpgrade(4u, static_cast<unsigned __int8>(animusIndex), animus->m_dwLv, false);
+    }
+    else
+    {
+      animus->m_dwLv = packedStatus;
     }
   }
 }

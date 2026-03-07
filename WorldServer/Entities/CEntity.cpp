@@ -10,6 +10,19 @@
 #include "R3EngineGlobals.h"
 #include "GlobalObjects.h"
 
+namespace
+{
+unsigned __int8 GetPackedColorByte(unsigned int value, unsigned int shift)
+{
+  return static_cast<unsigned __int8>((value >> shift) & 0xFF);
+}
+
+float GetPackedColorFloat(unsigned int value, unsigned int shift)
+{
+  return static_cast<float>(GetPackedColorByte(value, shift)) / 255.0f;
+}
+} // namespace
+
 CEntity::CEntity()
 {
   mVetexBufferSize = 0;
@@ -336,8 +349,8 @@ __int64 CEntity::LoadEntity(char *a2, unsigned int a3)
   mObjectNum = static_cast<int>(mHeader.Object.size / sizeof(_READ_ANI_OBJECT));
 
   mMatGroup = reinterpret_cast<_ENTITY_M_GROUP *>(
-    Dmalloc(mHeader.Track.size + 52 * mMatGroupNum + sizeof(_ANI_OBJECT) * mObjectNum + 8 * staticVertNum));
-  mObject = reinterpret_cast<_ANI_OBJECT *>(reinterpret_cast<unsigned char *>(mMatGroup) + 52 * mMatGroupNum);
+    Dmalloc(mHeader.Track.size + sizeof(_ENTITY_M_GROUP) * mMatGroupNum + sizeof(_ANI_OBJECT) * mObjectNum + 8 * staticVertNum));
+  mObject = reinterpret_cast<_ANI_OBJECT *>(mMatGroup + mMatGroupNum);
   mTrack = reinterpret_cast<unsigned char *>(mObject) + sizeof(_ANI_OBJECT) * mObjectNum;
   mOrgUV = reinterpret_cast<float (*)[2]>(mTrack + mHeader.Track.size);
 
@@ -785,7 +798,7 @@ void CEntity::SetMaterialAndLight(unsigned int a2)
     material.Ambient.g += 0.1f;
     material.Ambient.b += 0.1f;
 
-    material.Diffuse.a = static_cast<float>(HIBYTE(a2)) / 255.0f;
+    material.Diffuse.a = GetPackedColorFloat(a2, 24);
     material.Diffuse.r += 0.25f;
     material.Diffuse.g += 0.2f;
     material.Diffuse.b += 0.2f;
@@ -808,7 +821,7 @@ void CEntity::SetMaterialAndLight(unsigned int a2)
     d3dDevice->SetTextureStageState(d3dDevice, 0, D3DTSS_COLORARG1, 4u);
     d3dDevice->SetRenderState(d3dDevice, D3DRS_COLORVERTEX, 0);
 
-    material.Emissive.a = static_cast<float>(HIBYTE(a2)) / 255.0f;
+    material.Emissive.a = GetPackedColorFloat(a2, 24);
     material.Emissive.r = 0.0f;
     material.Emissive.g = 0.0f;
     material.Emissive.b = 0.0f;
@@ -817,11 +830,14 @@ void CEntity::SetMaterialAndLight(unsigned int a2)
   }
   else
   {
-    const float alpha = static_cast<float>(HIBYTE(a2)) / 255.0f;
+    const float alpha = GetPackedColorFloat(a2, 24);
     material.Diffuse.a = alpha;
-    material.Diffuse.r = (static_cast<float>(BYTE2(a2)) / 255.0f) / (static_cast<float>(BYTE2(a2)) / 255.0f);
-    material.Diffuse.g = (static_cast<float>(BYTE1(a2)) / 255.0f) / (static_cast<float>(BYTE1(a2)) / 255.0f);
-    material.Diffuse.b = (static_cast<float>(LOBYTE(a2)) / 255.0f) / (static_cast<float>(LOBYTE(a2)) / 255.0f);
+    const float diffuseRed = GetPackedColorFloat(a2, 16);
+    const float diffuseGreen = GetPackedColorFloat(a2, 8);
+    const float diffuseBlue = GetPackedColorFloat(a2, 0);
+    material.Diffuse.r = diffuseRed / diffuseRed;
+    material.Diffuse.g = diffuseGreen / diffuseGreen;
+    material.Diffuse.b = diffuseBlue / diffuseBlue;
 
     if ((a2 & 0xFFFFFF) == 0xFFFFFF)
     {
@@ -831,9 +847,9 @@ void CEntity::SetMaterialAndLight(unsigned int a2)
     else
     {
       material.Emissive.a = alpha;
-      material.Emissive.r = static_cast<float>(BYTE2(a2)) / 255.0f;
-      material.Emissive.g = static_cast<float>(BYTE1(a2)) / 255.0f;
-      material.Emissive.b = static_cast<float>(LOBYTE(a2)) / 255.0f;
+      material.Emissive.r = GetPackedColorFloat(a2, 16);
+      material.Emissive.g = GetPackedColorFloat(a2, 8);
+      material.Emissive.b = GetPackedColorFloat(a2, 0);
       d3dDevice->SetRenderState(d3dDevice, D3DRS_EMISSIVEMATERIALSOURCE, 0);
       d3dDevice->LightEnable(d3dDevice, 0, 1);
     }
@@ -925,7 +941,7 @@ __int64 CEntity::DrawEntity(float (*const a2)[4], unsigned int a3, double a4)
     MatrixMultiply(reinterpret_cast<float (*)[4]>(objectMatrix), a2, reinterpret_cast<float (*)[4]>(objectMatrix));
     d3dDevice->SetTransform(d3dDevice, static_cast<_D3DTRANSFORMSTATETYPE>(256), reinterpret_cast<const _D3DMATRIX *>(objectMatrix));
 
-    if ((static_cast<float>(HIBYTE(a3)) / 255.0f) != 1.0f)
+    if (GetPackedColorFloat(a3, 24) != 1.0f)
       BlendOn(13);
 
     const unsigned int alphaType = mMat[mMatGroup[i].MtlId].m_Layer[0].m_dwAlphaType;

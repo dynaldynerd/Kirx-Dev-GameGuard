@@ -288,22 +288,21 @@ void CPlayer::pc_SelectQuestReward(
     return;
   }
 
-  const int hasSelectReward = (questRecord->m_bSelectConsITMenual || questRecord->m_bSelectQuestMenual) ? 1 : 0;
   if (bySelectItemSlotIndex == 0xFF)
   {
-    if (hasSelectReward)
+    if (questRecord->m_bSelectConsITMenual)
     {
       return;
     }
   }
-  else if (!hasSelectReward)
+  else if (!questRecord->m_bSelectConsITMenual)
   {
     return;
   }
 
   if (bySelectItemSlotIndex != 0xFF)
   {
-    const char *rewardCode = reinterpret_cast<const char *>(&questRecord[14]) + 72 * bySelectItemSlotIndex;
+    const char *rewardCode = questRecord->m_RewardItem[bySelectItemSlotIndex].m_strConsITCode;
     if (!strncmp(rewardCode, "-1", 2u))
     {
       return;
@@ -415,14 +414,14 @@ bool CPlayer::Emb_CreateNPCQuest(char *pszEventCode, unsigned int dwNPCQuestInde
   }
 
   char skipStartHistoryInsert = 0;
-  _base_fld *questRecord = CQuestMgr::s_tblQuest->GetRecord(static_cast<int>(dwNPCQuestIndex));
+  _Quest_fld *questRecord = static_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(static_cast<int>(dwNPCQuestIndex)));
   if (m_pUserDB->m_AvatorData.dbQuest.dwListCnt)
   {
     for (unsigned int index = 0; index < m_pUserDB->m_AvatorData.dbQuest.dwListCnt; ++index)
     {
       if (!strcmp_0(m_pUserDB->m_AvatorData.dbQuest.m_StartHistory[index].szQuestCode, questRecord->m_strCode))
       {
-        if (*reinterpret_cast<int *>(&questRecord[1].m_strCode[4]))
+        if (questRecord->m_bQuestRepeat)
         {
           break;
         }
@@ -440,7 +439,7 @@ bool CPlayer::Emb_CreateNPCQuest(char *pszEventCode, unsigned int dwNPCQuestInde
     {
       return true;
     }
-    if (*reinterpret_cast<int *>(&questRecord[1].m_strCode[4]))
+    if (questRecord->m_bQuestRepeat)
     {
       return true;
     }
@@ -450,8 +449,8 @@ bool CPlayer::Emb_CreateNPCQuest(char *pszEventCode, unsigned int dwNPCQuestInde
     history.byLevel = static_cast<unsigned __int8>(m_Param.GetLevel());
     __time64_t now = 0;
     _time64(&now);
-    history.nEndTime = static_cast<unsigned int>(
-      static_cast<int>(static_cast<double>(static_cast<int>(now)) + *reinterpret_cast<double *>(&questRecord[1].m_strCode[8])));
+    history.nEndTime = static_cast<unsigned int>(static_cast<int>(
+      static_cast<double>(static_cast<int>(now)) + static_cast<double>(questRecord->m_dRepeatTime)));
     return m_pUserDB->Update_StartNPCQuestHistory(
              static_cast<unsigned __int8>(m_pUserDB->m_AvatorData.dbQuest.dwListCnt),
              &history)

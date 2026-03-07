@@ -1301,7 +1301,8 @@ static float vTargetPos_0[3];
 
 char DfAIMgr::SearchCharacterPath(CMonsterAI *pAI, CMonster *pMon, CCharacter *pTarget)
 {
-  float v14[21];
+  unsigned __int8 canGoState = 0;
+  float canGoScratch[3]{};
   CPathMgr *pathFinder = pAI->GetPathFinder();
   if (pathFinder->GetPathSize())
   {
@@ -1316,7 +1317,7 @@ char DfAIMgr::SearchCharacterPath(CMonsterAI *pAI, CMonster *pMon, CCharacter *p
     }
   }
 
-  reinterpret_cast<unsigned char *>(&v14[8])[0] = 0;
+  (void)canGoState;
   static float vTargetPos[3];
   if (pTarget->m_bMove)
   {
@@ -1335,7 +1336,7 @@ char DfAIMgr::SearchCharacterPath(CMonsterAI *pAI, CMonster *pMon, CCharacter *p
   if (pMon->m_pCurMap->m_Level.mBsp->CanYouGoThere(
         pMon->m_fCurPos,
         vTargetPos,
-        reinterpret_cast<float (*)[3]>(&v14[14])))
+        &canGoScratch))
   {
     DfAIMgr::ChangeTargetPos(pMon, vTargetPos);
     CPathMgr *resetFinder = pAI->GetPathFinder();

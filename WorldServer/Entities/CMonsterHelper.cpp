@@ -4,6 +4,7 @@
 
 #include "CMonster.h"
 #include "CMonsterHierarchy.h"
+#include "CPlayer.h"
 #include "CMapData.h"
 #include "CObjectList.h"
 #include "CBsp.h"
@@ -362,11 +363,11 @@ CPlayer *CMonsterHelper::SearchNearPlayer(CMonster *pMon, int nType)
       {
         CCharacter *candidate = reinterpret_cast<CCharacter *>(node->m_pItem);
         node = node->m_pNext;
-        _object_id *objId = &candidate->m_ObjID;
+        CPlayer *candidatePlayer = static_cast<CPlayer *>(candidate);
 
         if (!candidate->m_bCorpse && !candidate->GetStealth(true) && !candidate->m_ObjID.m_byID
             && !candidate->m_ObjID.m_byKind
-            && reinterpret_cast<unsigned char *>(&candidate[1].m_fCurPos[2])[2] == 0)
+            && !candidatePlayer->m_bInGuildBattle)
         {
           if (candidate->IsBeAttackedAble(true))
           {
@@ -386,7 +387,7 @@ CPlayer *CMonsterHelper::SearchNearPlayer(CMonster *pMon, int nType)
                 switch (type)
                 {
                   case 1:
-                    if (candidate[23].m_SFCont[0][3].m_wszPlayerName[14])
+                    if (candidatePlayer->m_byMoveType)
                     {
                       distanceValue = distanceValue - 100.0f;
                     }
@@ -396,7 +397,7 @@ CPlayer *CMonsterHelper::SearchNearPlayer(CMonster *pMon, int nType)
                     }
                     break;
                   case 2:
-                    if (candidate[23].m_SFCont[0][3].m_wszPlayerName[15] == 1)
+                    if (candidatePlayer->m_byModeType == 1)
                     {
                       distanceValue = distanceValue - 100.0f;
                     }
@@ -412,10 +413,7 @@ CPlayer *CMonsterHelper::SearchNearPlayer(CMonster *pMon, int nType)
                     distanceValue = -static_cast<float>(candidate->GetHP());
                     break;
                   case 5:
-                    distanceValue = -0.0f
-                                    - static_cast<float>(10
-                                                         * *reinterpret_cast<int *>(
-                                                           &candidate[23].m_SFCont[1][2].m_wszPlayerName[8]));
+                    distanceValue = -static_cast<float>(10 * candidatePlayer->m_pmWpn.nGaMaxAF);
                     break;
                   case 6:
                     distanceValue = -static_cast<float>(candidate->GetLevel());

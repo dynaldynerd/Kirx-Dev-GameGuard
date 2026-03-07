@@ -1,6 +1,9 @@
 #include "pch.h"
 
 #include "WorldServerUtil.h"
+#include "R3EngineStateOverlay.h"
+#include "R3TextureSlot.h"
+#include "R3XLoadData.h"
 
 #include <cstdarg>
 #include <cstdio>
@@ -86,9 +89,9 @@ static __int64 sub_1404FFFB0(__int64 a1);
 static __int64 sub_1404FFF30(unsigned int *a1);
 static unsigned __int16 sub_1405005A0(unsigned __int16 a1);
 static int sub_140501380(char *a1, const char *a2, const char *a3);
-static void sub_140502610(char *a1);
-static int sub_140502690(FILE *Stream, __int64 a2, int a3);
-static void sub_140503190(char *a1, unsigned int *a2);
+static void sub_140502610(_R3MATERIAL *material);
+static int sub_140502690(FILE *Stream, _R3MATERIAL *material, int layerIndex);
+static void sub_140503190(char *a1, _R3MATERIAL *material);
 static void LoadR3X(char *a1);
 static _LIGHTMAP **LoadR3TLightMap(struct R3Texture *a1, D3DFORMAT a2);
 static void RestoreSystemTexture();
@@ -96,6 +99,33 @@ static IDirect3DTexture8 *GetD3DTextureFromBuffer(unsigned __int8 *a1, unsigned 
 static int GetMipMapSkipSize(IDA_DDSURFACEDESC2 *a1, unsigned int a2, unsigned int a3, unsigned int a4);
 static void MakeMipMap(unsigned short a1, unsigned short a2, unsigned short *a3, unsigned short *a4);
 static void MakeMipMap(unsigned short a1, unsigned short a2, unsigned short *a3, unsigned char *a4);
+
+namespace
+{
+  static_assert(sizeof(R3Texture) == 144);
+  static_assert(sizeof(_R3MATERIAL) == 470);
+  static_assert(sizeof(_ONE_LAYER) == 46);
+
+  R3Texture *GetTextureTable()
+  {
+    return static_cast<R3Texture *>(qword_184A79D70);
+  }
+
+  R3TextureSlot *GetTextureSlots()
+  {
+    return static_cast<R3TextureSlot *>(qword_184A79D68);
+  }
+
+  unsigned int ReadDwordAt(const unsigned int *data, size_t index)
+  {
+    return data[index];
+  }
+
+  unsigned short ReadWordAt(const unsigned int *data, size_t index)
+  {
+    return static_cast<const unsigned short *>(static_cast<const void *>(data))[index];
+  }
+}
 
 unsigned int GetLoopTime()
 {
@@ -1581,7 +1611,7 @@ _EQUIP_MASTERY_LIM *GetItemEquipMastery(int nTableCode, int nItemIndex, int *pnL
       if (record)
       {
         *pnLimNum = 2;
-        return reinterpret_cast<_EQUIP_MASTERY_LIM *>(&record->m_nExpertID1);
+        return record->m_MasteryLimit;
       }
     }
     else if (nTableCode == 6)
@@ -1590,7 +1620,7 @@ _EQUIP_MASTERY_LIM *GetItemEquipMastery(int nTableCode, int nItemIndex, int *pnL
       if (record)
       {
         *pnLimNum = 2;
-        return reinterpret_cast<_EQUIP_MASTERY_LIM *>(&record->m_nExpertID1);
+        return record->m_MasteryLimit;
       }
     }
   }
@@ -4641,42 +4671,38 @@ _R3MATERIAL *LoadIndependenceR3M(char *szFileName)
 
   int matNum = 0;
   fread(&matNum, 4, 1, fp);
-  auto *mat = static_cast<unsigned int *>(Dmalloc(470 * matNum));
-  memset_0(mat, 0, 470LL * matNum);
+  auto *mat = static_cast<_R3MATERIAL *>(Dmalloc(sizeof(_R3MATERIAL) * matNum));
+  memset_0(mat, 0, sizeof(_R3MATERIAL) * matNum);
 
   int startId = static_cast<int>(GetNowR3D3DTexCnt()) - 1;
-  *mat = matNum;
-  if (matNum > 0)
+  mat[0].m_iMatNum = matNum;
+  if (mat[0].m_iMatNum > 0)
   {
-    unsigned int *v9 = mat + 34;
-    for (int i = 0; i < *mat; ++i)
+    for (int i = 0; i < mat[0].m_iMatNum; ++i)
     {
-      const __int64 base = 470LL * i;
-      fread(reinterpret_cast<char *>(mat) + base + 144, 4, 1, fp);
-      fread(reinterpret_cast<char *>(mat) + base + 132, 4, 1, fp);
-      fread(reinterpret_cast<char *>(mat) + base + 136, 4, 1, fp);
-      fread(reinterpret_cast<char *>(mat) + base + 140, 4, 1, fp);
-      fread(reinterpret_cast<char *>(mat) + base + 4, 0x80, 1, fp);
-      if (*v9 != 0xFFFFFFFFu)
-        *v9 += startId;
-      if (static_cast<int>(v9[2]) > 0)
+      _R3MATERIAL *const material = &mat[i];
+      fread(&material->m_dwLayerNum, 4, 1, fp);
+      fread(&material->m_dwFlag, 4, 1, fp);
+      fread(&material->m_iDetailSurface, 4, 1, fp);
+      fread(&material->m_fDetailScale, 4, 1, fp);
+      fread(material->m_name, sizeof(material->m_name), 1, fp);
+      if (material->m_iDetailSurface != -1)
+        material->m_iDetailSurface += startId;
+      if (static_cast<int>(material->m_dwLayerNum) > 0)
       {
-        unsigned int *v12 = reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(v9) + 14);
-        for (int j = 0; j < static_cast<int>(v9[2]); ++j)
+        for (int j = 0; j < static_cast<int>(material->m_dwLayerNum); ++j)
         {
-          fread(reinterpret_cast<char *>(mat) + 46LL * j + base + 148, 0x2E, 1, fp);
-          *v12 += startId;
-          v12 = reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(v12) + 46);
+          fread(&material->m_Layer[j], sizeof(_ONE_LAYER), 1, fp);
+          material->m_Layer[j].m_iSurface += startId;
         }
       }
-      if (*v9 != 0xFFFFFFFFu)
-        *(v9 - 1) |= 2u;
-      v9 = reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(v9) + 470);
+      if (material->m_iDetailSurface != -1)
+        material->m_dwFlag |= 2u;
     }
   }
 
   fclose(fp);
-  return reinterpret_cast<_R3MATERIAL *>(mat);
+  return mat;
 }
 
 _R3MATERIAL *LoadSubMaterial(char *szFileName)
@@ -4698,7 +4724,7 @@ _R3MATERIAL *LoadSubMaterial(char *szFileName)
     return nullptr;
   }
 
-  unsigned int *mat = nullptr;
+  _R3MATERIAL *mat = nullptr;
   int matNum = 0;
   if (fscanf(fp, "%s", String) != -1)
   {
@@ -4714,27 +4740,25 @@ _R3MATERIAL *LoadSubMaterial(char *szFileName)
         matNum = atoi(String);
         if (matNum >= 1024)
           Error(aAo_2, byte_140883769);
-        mat = static_cast<unsigned int *>(Dmalloc(470 * matNum));
-        memset_0(mat, 0, 470LL * matNum);
+        mat = static_cast<_R3MATERIAL *>(Dmalloc(sizeof(_R3MATERIAL) * matNum));
+        memset_0(mat, 0, sizeof(_R3MATERIAL) * matNum);
         fscanf(fp, "%s", String);
         if (matNum > 0)
         {
-          char *block = reinterpret_cast<char *>(mat);
           for (int i = 0; i < matNum; ++i)
           {
-            sub_140502610(block);
-            block += 470;
+            sub_140502610(&mat[i]);
           }
           for (int i = 0; i < matNum; ++i)
           {
             strcpy_s(v62, szFileName);
             fscanf(fp, "%s", String);
             strcat(v62, String);
-            strcpy_s(reinterpret_cast<char *>(mat) + 470LL * i + 4, 256, String);
+            strcpy_s(mat[i].m_name, sizeof(mat[i].m_name), String);
             strcat(v62, ".mst");
             fscanf(fp, "%s", String);
             int matIdx = atoi(String);
-            sub_140503190(v62, reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(mat) + 470LL * matIdx));
+            sub_140503190(v62, &mat[matIdx]);
           }
         }
       }
@@ -4944,46 +4968,42 @@ void AdjustIndependenceR3M(struct _R3MATERIAL *mat, int startId, int newStartId)
 {
   if (!mat)
     return;
-  int matNum = *reinterpret_cast<int *>(mat);
+  int matNum = mat->m_iMatNum;
   if (matNum <= 0)
     return;
-  char *base = reinterpret_cast<char *>(mat) + 136;
   for (int i = 0; i < matNum; ++i)
   {
-    int *detail = reinterpret_cast<int *>(base);
-    if (*detail != -1)
-      *detail = newStartId + *detail - startId;
-    if (detail[2] > 0)
+    _R3MATERIAL *const material = &mat[i];
+    if (material->m_iDetailSurface != -1)
+      material->m_iDetailSurface = newStartId + material->m_iDetailSurface - startId;
+    if (static_cast<int>(material->m_dwLayerNum) > 0)
     {
-      char *layer = base + 14;
-      for (int j = 0; j < detail[2]; ++j)
+      for (int j = 0; j < static_cast<int>(material->m_dwLayerNum); ++j)
       {
-        *reinterpret_cast<int *>(layer - 46) += (newStartId - startId);
-        layer += 46;
+        material->m_Layer[j].m_iSurface += newStartId - startId;
       }
     }
-    base += 470;
   }
 }
 struct R3Texture *R3GetTexInfoR3T(char *szFileName, int a2)
 {
-  unsigned int *v2 = static_cast<unsigned int *>(qword_184A79D70);
+  R3Texture *v2 = GetTextureTable();
   if (!qword_184A79D70)
   {
     qword_184A79D70 = Dmalloc(144 * dword_140978968);
     memset_0(qword_184A79D70, 0, 144LL * dword_140978968);
     qword_184A79D68 = Dmalloc(16 * dword_140978960);
     memset_0(qword_184A79D68, 0, 16LL * dword_140978960);
-    v2 = static_cast<unsigned int *>(qword_184A79D70);
+    v2 = GetTextureTable();
   }
 
   int v5 = dword_140978964;
   if (dword_140978964 >= dword_140978968)
   {
-    v2 = static_cast<unsigned int *>(ReAlloc(v2, 144 * dword_140978968, 16 * (9 * dword_140978968 + 144)));
+    v2 = static_cast<R3Texture *>(ReAlloc(v2, 144 * dword_140978968, 16 * (9 * dword_140978968 + 144)));
     int v7 = dword_140978968;
     qword_184A79D70 = v2;
-    memset_0(&v2[36 * dword_140978968], 0, 0x900uLL);
+    memset_0(&v2[dword_140978968], 0, 144uLL * 16);
     v5 = dword_140978964;
     dword_140978968 = v7 + 16;
   }
@@ -5001,11 +5021,11 @@ struct R3Texture *R3GetTexInfoR3T(char *szFileName, int a2)
         fread(&texNum, 4, 1, fp);
         fclose(fp);
 
-        unsigned int *entry = v2 + 36 * dword_140978964;
-        entry[34] = static_cast<unsigned int>(a2);
-        entry[32] = dword_14097895C;
-        entry[33] = static_cast<unsigned int>(texNum);
-        char *dst = reinterpret_cast<char *>(entry);
+        R3Texture *const entry = &v2[dword_140978964];
+        entry->mFlag = static_cast<unsigned int>(a2);
+        entry->mStartID = dword_14097895C;
+        entry->mTexNum = static_cast<unsigned int>(texNum);
+        char *dst = entry->mName;
         while ((*dst++ = *szFileName++) != '\0')
           ;
 
@@ -5020,7 +5040,7 @@ struct R3Texture *R3GetTexInfoR3T(char *szFileName, int a2)
         }
         dword_14097895C += texNum;
         ++dword_140978964;
-        return reinterpret_cast<R3Texture *>(entry);
+        return entry;
       }
 
       char String[256]{};
@@ -5038,11 +5058,10 @@ struct R3Texture *R3GetTexInfoR3T(char *szFileName, int a2)
 
   for (int idx = 1; idx < v5; ++idx)
   {
-    char *name = reinterpret_cast<char *>(&v2[36 * idx]);
-    if (std::strcmp(name, szFileName) == 0)
+    if (std::strcmp(v2[idx].mName, szFileName) == 0)
     {
-      ++reinterpret_cast<unsigned int *>(name)[35];
-      return reinterpret_cast<R3Texture *>(name);
+      ++v2[idx].mSameCnt;
+      return &v2[idx];
     }
   }
 
@@ -5057,11 +5076,11 @@ struct R3Texture *R3GetTexInfoR3T(char *szFileName, int a2)
       fread(&texNum, 4, 1, fp);
       fclose(fp);
 
-      unsigned int *entry = v2 + 36 * dword_140978964;
-      entry[34] = static_cast<unsigned int>(a2);
-      entry[32] = dword_14097895C;
-      entry[33] = static_cast<unsigned int>(texNum);
-      char *dst = reinterpret_cast<char *>(entry);
+      R3Texture *const entry = &v2[dword_140978964];
+      entry->mFlag = static_cast<unsigned int>(a2);
+      entry->mStartID = dword_14097895C;
+      entry->mTexNum = static_cast<unsigned int>(texNum);
+      char *dst = entry->mName;
       while ((*dst++ = *szFileName++) != '\0')
         ;
 
@@ -5076,7 +5095,7 @@ struct R3Texture *R3GetTexInfoR3T(char *szFileName, int a2)
       }
       dword_14097895C += texNum;
       ++dword_140978964;
-      return reinterpret_cast<R3Texture *>(entry);
+      return entry;
     }
 
     char String[256]{};
@@ -5094,34 +5113,34 @@ struct R3Texture *R3GetTexInfoR3T(char *szFileName, int a2)
 
 int R3GetPreTextureId(char *szFileName)
 {
-  unsigned int *v1 = static_cast<unsigned int *>(qword_184A79D70);
-  unsigned int *v5 = nullptr;
+  R3Texture *v1 = GetTextureTable();
+  R3TextureSlot *v5 = nullptr;
   int v4 = 0;
 
   if (qword_184A79D70)
   {
-    v5 = static_cast<unsigned int *>(qword_184A79D68);
+    v5 = GetTextureSlots();
     v4 = dword_140978960;
   }
   else
   {
     qword_184A79D70 = Dmalloc(144 * dword_140978968);
     memset_0(qword_184A79D70, 0, 144LL * dword_140978968);
-    v5 = static_cast<unsigned int *>(Dmalloc(16 * dword_140978960));
+    v5 = static_cast<R3TextureSlot *>(Dmalloc(16 * dword_140978960));
     qword_184A79D68 = v5;
     memset_0(v5, 0, 16LL * dword_140978960);
-    v1 = static_cast<unsigned int *>(qword_184A79D70);
+    v1 = GetTextureTable();
     v4 = dword_140978960;
   }
 
   int v6 = dword_140978964;
   if (dword_140978964 >= dword_140978968)
   {
-    v1 = static_cast<unsigned int *>(ReAlloc(v1, 144 * dword_140978968, 16 * (9 * dword_140978968 + 144)));
+    v1 = static_cast<R3Texture *>(ReAlloc(v1, 144 * dword_140978968, 16 * (9 * dword_140978968 + 144)));
     int v8 = dword_140978968;
     qword_184A79D70 = v1;
-    memset_0(&v1[36 * dword_140978968], 0, 0x900uLL);
-    v5 = static_cast<unsigned int *>(qword_184A79D68);
+    memset_0(&v1[dword_140978968], 0, 144uLL * 16);
+    v5 = GetTextureSlots();
     v4 = dword_140978960;
     v6 = dword_140978964;
     dword_140978968 = v8 + 16;
@@ -5137,32 +5156,31 @@ int R3GetPreTextureId(char *szFileName)
   {
     for (int i = 1; i < v6; ++i)
     {
-      char *name = reinterpret_cast<char *>(&v1[36 * i]);
-      if (std::strcmp(name, szFileName) == 0)
+      if (std::strcmp(v1[i].mName, szFileName) == 0)
       {
-        ++reinterpret_cast<unsigned int *>(name)[35];
-        return reinterpret_cast<unsigned int *>(name)[32];
+        ++v1[i].mSameCnt;
+        return static_cast<int>(v1[i].mStartID);
       }
     }
   }
 
-  char *dst = reinterpret_cast<char *>(v1) + 144LL * v6;
+  char *dst = v1[v6].mName;
   while ((*dst++ = *szFileName++) != '\0')
     ;
 
   if ((stR3TexManageFlag & 1) != 0 || v6 <= 1)
   {
-    v1[36 * v6 + 34] = 40960;
-    v1[36 * v6 + 32] = dword_14097895C;
-    v1[36 * v6 + 33] = 1;
+    v1[v6].mFlag = 40960;
+    v1[v6].mStartID = dword_14097895C;
+    v1[v6].mTexNum = 1;
     int id = dword_14097895C + 1;
     dword_14097895C = id;
     dword_140978964 = v6 + 1;
     if (id >= v4)
     {
-      unsigned int *v20 = static_cast<unsigned int *>(ReAlloc(v5, 16 * v4, 16 * (v4 + 16)));
+      R3TextureSlot *v20 = static_cast<R3TextureSlot *>(ReAlloc(v5, 16 * v4, 16 * (v4 + 16)));
       qword_184A79D68 = v20;
-      memset_0(&v20[4 * dword_140978960], 0, 0x100uLL);
+      memset_0(&v20[dword_140978960], 0, sizeof(R3TextureSlot) * 16);
       dword_140978960 += 16;
       id = dword_14097895C;
     }
@@ -5170,37 +5188,37 @@ int R3GetPreTextureId(char *szFileName)
   }
 
   int v16 = 1;
-  unsigned int *v17 = v1 + 36;
-  while (v17[33] || *reinterpret_cast<unsigned char *>(v17))
+  R3Texture *v17 = &v1[1];
+  while (v17->mTexNum || v17->mName[0])
   {
     ++v16;
-    v17 += 36;
+    ++v17;
     if (v16 >= v6)
       break;
   }
   if (v16 >= v6)
   {
-    v1[36 * v6 + 34] = 40960;
-    v1[36 * v6 + 32] = dword_14097895C;
-    v1[36 * v6 + 33] = 1;
+    v1[v6].mFlag = 40960;
+    v1[v6].mStartID = dword_14097895C;
+    v1[v6].mTexNum = 1;
     int id = dword_14097895C + 1;
     dword_14097895C = id;
     dword_140978964 = v6 + 1;
     if (id >= v4)
     {
-      unsigned int *v20 = static_cast<unsigned int *>(ReAlloc(v5, 16 * v4, 16 * (v4 + 16)));
+      R3TextureSlot *v20 = static_cast<R3TextureSlot *>(ReAlloc(v5, 16 * v4, 16 * (v4 + 16)));
       qword_184A79D68 = v20;
-      memset_0(&v20[4 * dword_140978960], 0, 0x100uLL);
+      memset_0(&v20[dword_140978960], 0, sizeof(R3TextureSlot) * 16);
       dword_140978960 += 16;
       id = dword_14097895C;
     }
     return id - 1;
   }
 
-  unsigned int *entry = v1 + 36 * v16;
-  entry[34] = 40960;
-  entry[32] = v16;
-  entry[33] = 1;
+  R3Texture *const entry = &v1[v16];
+  entry->mFlag = 40960;
+  entry->mStartID = static_cast<unsigned int>(v16);
+  entry->mTexNum = 1;
   return v16;
 }
 
@@ -5277,40 +5295,27 @@ void SetNoLodTextere()
 {
   if (!dword_184A79DB0)
     return;
-  unsigned int v0 = 0;
-  char *v1 = reinterpret_cast<char *>(qword_184A79DA8);
-  __int64 v2 = 0;
-  do
+  for (unsigned int i = 0; i < dword_184A79DB0; ++i)
   {
-    if ((v1[v2 + 132] & 2) != 0)
+    _R3MATERIAL *const material = &qword_184A79DA8[i];
+    if ((material->m_dwFlag & 2) != 0)
     {
-      SetR3D3DTexture(*reinterpret_cast<unsigned int *>(&v1[v2 + 136]), 0x80000000);
-      v1 = reinterpret_cast<char *>(qword_184A79DA8);
-      if (*reinterpret_cast<unsigned int *>(v1 + v2 + 144))
+      SetR3D3DTexture(static_cast<unsigned int>(material->m_iDetailSurface), 0x80000000);
+      for (unsigned int layerIndex = 0; layerIndex < material->m_dwLayerNum; ++layerIndex)
       {
-        unsigned int v3 = 0;
-        __int64 v4 = v2;
-        do
-        {
-          SetR3D3DTexture(*reinterpret_cast<unsigned int *>(&v1[v4 + 150]), 0x80000000);
-          v1 = reinterpret_cast<char *>(qword_184A79DA8);
-          ++v3;
-          v4 += 46;
-        } while (v3 < *reinterpret_cast<unsigned int *>(v1 + v2 + 144));
+        SetR3D3DTexture(static_cast<unsigned int>(material->m_Layer[layerIndex].m_iSurface), 0x80000000);
       }
     }
-    ++v0;
-    v2 += 470;
-  } while (v0 < dword_184A79DB0);
+  }
 }
 void LoadR3T(struct R3Texture *pTex)
 {
   if (!pTex)
     return;
-  FILE *fp = fopenMFM(reinterpret_cast<char *>(pTex), "rb");
+  FILE *fp = fopenMFM(pTex->mName, "rb");
   if (!fp)
   {
-    Warning(reinterpret_cast<char *>(pTex), aAiAaiai);
+    Warning(pTex->mName, aAiAaiai);
     return;
   }
   float version = 0.0f;
@@ -5324,19 +5329,17 @@ void LoadR3T(struct R3Texture *pTex)
     {
       size_t size = 0;
       fread(&size, 4, 1, fp);
-      unsigned int *flags = static_cast<unsigned int *>(qword_184A79D68);
-      if (_bittest(reinterpret_cast<const long *>(flags + 4 * i + 4 * pTex->mStartID + 2), 0x1F))
-        reinterpret_cast<unsigned long long *>(qword_184A79D68)[2 * i + 2 * pTex->mStartID] =
-          reinterpret_cast<unsigned long long>(R3LoadDDSFromFP(fp, size, 0, 0x800, 0x800));
+      R3TextureSlot *const slots = GetTextureSlots();
+      if (_bittest(reinterpret_cast<const long *>(&slots[i + pTex->mStartID].mFlag), 0x1F))
+        slots[i + pTex->mStartID].mTexture = R3LoadDDSFromFP(fp, size, 0, 0x800, 0x800);
       else
-        reinterpret_cast<unsigned long long *>(qword_184A79D68)[2 * i + 2 * pTex->mStartID] =
-          reinterpret_cast<unsigned long long>(R3LoadDDSFromFP(fp, size, dword_184A797D0, 0x800, 0x800));
+        slots[i + pTex->mStartID].mTexture = R3LoadDDSFromFP(fp, size, dword_184A797D0, 0x800, 0x800);
     }
     fclose(fp);
   }
   else
   {
-    Warning(reinterpret_cast<char *>(pTex), aAiAaiaiAiau);
+    Warning(pTex->mName, aAiAaiaiAiau);
   }
 }
 unsigned int GetNowTexMemSize()
@@ -5351,7 +5354,7 @@ __int64 GetNowR3D3DTexCnt()
 void SetNowR3D3DTexCnt(int cnt)
 {
   if (cnt < dword_14097895C)
-    memset_0(reinterpret_cast<char *>(qword_184A79D68) + 16 * cnt, 0, 16LL * (dword_14097895C - cnt));
+    memset_0(&GetTextureSlots()[cnt], 0, sizeof(R3TextureSlot) * (dword_14097895C - cnt));
   dword_14097895C = cnt;
 }
 
@@ -5364,16 +5367,13 @@ void SetNowR3TexCnt(int cnt)
 {
   if (cnt < dword_140978964)
   {
-    char *v1 = reinterpret_cast<char *>(qword_184A79D70) + 144 * cnt;
+    R3Texture *v1 = &GetTextureTable()[cnt];
     __int64 v2 = dword_140978964 - cnt;
     do
     {
-      v1 += 144;
+      ++v1;
       --v2;
-      reinterpret_cast<unsigned int *>(v1)[-36] = 0;
-      reinterpret_cast<unsigned int *>(v1)[-35] = 0;
-      reinterpret_cast<unsigned int *>(v1)[-34] = 0;
-      reinterpret_cast<unsigned int *>(v1)[-33] = 0;
+      std::memset(v1 - 1, 0, sizeof(R3Texture));
     } while (v2);
   }
   dword_140978964 = cnt;
@@ -5391,28 +5391,28 @@ __int64 GetR3TexManageFlag()
 
 void R3LoadTextureMem(int id)
 {
-  if (!reinterpret_cast<unsigned long long *>(qword_184A79D68)[2 * id] && dword_140978964 > 1)
+  R3TextureSlot *const slots = GetTextureSlots();
+  R3Texture *const textures = GetTextureTable();
+  if (!slots[id].mTexture && dword_140978964 > 1)
   {
     int v2 = 1;
-    unsigned int *v3 = reinterpret_cast<unsigned int *>(qword_184A79D70) + 68;
+    R3Texture *v3 = &textures[1];
     do
     {
-      if (*v3 > static_cast<unsigned int>(id))
+      if (v3->mStartID > static_cast<unsigned int>(id))
         break;
       ++v2;
-      v3 += 36;
+      ++v3;
     } while (v2 < dword_140978964);
 
-    if (_bittest(reinterpret_cast<const long *>(qword_184A79D70) + 36 * v2 - 2, 0xF))
+    if (_bittest(reinterpret_cast<const long *>(&textures[v2].mFlag), 0xF))
     {
-      if (!reinterpret_cast<unsigned int *>(qword_184A79D70)[36 * v2 - 1])
+      if (!textures[v2].mSameCnt)
       {
-        char *name = reinterpret_cast<char *>(qword_184A79D70) + 144 * v2 - 144;
-        unsigned int mip = _bittest(reinterpret_cast<const long *>(qword_184A79D68) + 4 * (2 * id) + 2, 0x1F)
+        unsigned int mip = _bittest(reinterpret_cast<const long *>(&slots[id].mFlag), 0x1F)
                              ? 0
                              : dword_184A797D0;
-        reinterpret_cast<unsigned long long *>(qword_184A79D68)[2 * id] =
-          reinterpret_cast<unsigned long long>(R3LoadDDS(name, mip, 0x800, 0x800));
+        slots[id].mTexture = R3LoadDDS(textures[v2].mName, mip, 0x800, 0x800);
       }
     }
     else
@@ -5424,45 +5424,44 @@ void R3LoadTextureMem(int id)
 
 void R3ReleaseTextureMem(int id)
 {
-  if (!qword_184A79D68 || id == -1)
+  R3TextureSlot *const slots = GetTextureSlots();
+  R3Texture *const textures = GetTextureTable();
+  if (!slots || id == -1)
     return;
-  if (!reinterpret_cast<unsigned long long *>(qword_184A79D68)[2 * id])
+  if (!slots[id].mTexture)
     return;
 
-  char *v4 = reinterpret_cast<char *>(qword_184A79D70);
   int v5 = 1;
   if (dword_140978964 > 1)
   {
-    unsigned int *v6 = reinterpret_cast<unsigned int *>(qword_184A79D70) + 68;
+    R3Texture *v6 = &textures[1];
     do
     {
-      if (*v6 > static_cast<unsigned int>(id))
+      if (v6->mStartID > static_cast<unsigned int>(id))
         break;
       ++v5;
-      v6 += 36;
+      ++v6;
     } while (v5 < dword_140978964);
   }
 
-  __int64 v7 = 18LL * v5;
-  int refCnt = reinterpret_cast<unsigned int *>(qword_184A79D70)[36 * v5 - 1];
+  int refCnt = static_cast<int>(textures[v5].mSameCnt);
   if (refCnt)
   {
-    reinterpret_cast<unsigned int *>(qword_184A79D70)[36 * v5 - 1] = refCnt - 1;
+    textures[v5].mSameCnt = static_cast<unsigned int>(refCnt - 1);
   }
   else
   {
-    if (!_bittest(reinterpret_cast<const long *>(qword_184A79D70) + 36 * v5 - 2, 0xF))
+    if (!_bittest(reinterpret_cast<const long *>(&textures[v5].mFlag), 0xF))
     {
       Warning(aR3tAaia, byte_140883769);
-      v4 = reinterpret_cast<char *>(qword_184A79D70);
     }
-    v4[8 * v7 - 144] = 0;
-    if (reinterpret_cast<unsigned long long *>(qword_184A79D68)[2 * id])
+    textures[v5].mName[0] = '\0';
+    if (slots[id].mTexture)
     {
-      auto *tex = reinterpret_cast<IDirect3DTexture8 *>(reinterpret_cast<unsigned long long *>(qword_184A79D68)[2 * id]);
+      IDirect3DTexture8 *const tex = slots[id].mTexture;
       if (tex && tex->__vftable && tex->__vftable->Release)
         tex->__vftable->Release(reinterpret_cast<IDA_IUnknown *>(tex));
-      reinterpret_cast<unsigned long long *>(qword_184A79D68)[2 * id] = 0;
+      slots[id].mTexture = nullptr;
     }
   }
 }
@@ -5471,13 +5470,13 @@ struct IDirect3DTexture8 *R3GetSurface(int id)
 {
   if (id <= 0 || id > static_cast<int>(dword_14097895C))
     return nullptr;
-  return reinterpret_cast<IDirect3DTexture8 *>(reinterpret_cast<unsigned long long *>(qword_184A79D68)[2 * id]);
+  return GetTextureSlots()[id].mTexture;
 }
 
 void SetR3D3DTexture(unsigned int id, int flag)
 {
   if (id && dword_14097895C > id)
-    reinterpret_cast<unsigned int *>(qword_184A79D68)[4 * id + 2] = static_cast<unsigned int>(flag);
+    GetTextureSlots()[id].mFlag = static_cast<unsigned int>(flag);
 }
 
 struct IDirect3DTexture8 *R3LoadDDS(char *name, unsigned int mipmap, unsigned int maxX, unsigned int maxY)
@@ -5511,15 +5510,20 @@ struct IDirect3DTexture8 *R3LoadDDSFromFP(FILE *fp, size_t size, unsigned int mi
     }
   }
 
-  if (buf[8])
+  unsigned int *ddsWord = buf;
+  ddsWord += 2;
+  auto *ddsDesc = static_cast<IDA_DDSURFACEDESC2 *>(static_cast<void *>(ddsWord));
+  if (ddsDesc->dwMipMapCount)
   {
-    skip = static_cast<unsigned int>(GetMipMapSkipSize(reinterpret_cast<IDA_DDSURFACEDESC2 *>(buf + 2), mipmap, maxX, maxY));
+    skip = static_cast<unsigned int>(GetMipMapSkipSize(ddsDesc, mipmap, maxX, maxY));
     if (skip)
       fseek(fp, skip, SEEK_CUR);
   }
 
   int dataSize = static_cast<int>(size) - static_cast<int>(skip) - 144;
-  fread(buf + 36, dataSize, 1, fp);
+  unsigned char *payload = reinterpret_cast<unsigned char *>(buf);
+  payload += 144;
+  fread(payload, dataSize, 1, fp);
   sub_1404FFF30(buf);
 
   IDirect3DDevice8 *dev = GetD3dDevice();
@@ -5552,7 +5556,7 @@ _R3MATERIAL *LoadMainMaterial(char *szFileName)
     ReleaseMainMaterial();
   _R3MATERIAL *result = LoadSubMaterial(szFileName);
   qword_184A79DA8 = result;
-  dword_184A79DB0 = result ? *reinterpret_cast<unsigned int *>(result) : 0;
+  dword_184A79DB0 = result ? static_cast<unsigned int>(result->m_iMatNum) : 0;
   return result;
 }
 
@@ -5581,14 +5585,15 @@ void LoadLightMap(char *szFileName)
   stLightmap = LoadR3TLightMap(reinterpret_cast<R3Texture *>(qword_184A79DA0), static_cast<D3DFORMAT>(D3DFMT_R5G6B5));
   if (stLightmap)
   {
-    dword_184A79D88 = *reinterpret_cast<unsigned int *>(qword_184A79DA0 + 132);
+    const R3Texture *const lightmapTexture = reinterpret_cast<R3Texture *>(qword_184A79DA0);
+    dword_184A79D88 = lightmapTexture->mTexNum;
     LightmapTexID = static_cast<int *>(Dmalloc(4 * dword_184A79D88));
     if (dword_184A79D88 > 0)
     {
       int v5 = 0;
       for (int i = 0; i < static_cast<int>(dword_184A79D88); ++i)
       {
-        LightmapTexID[i] = v5 + *reinterpret_cast<unsigned int *>(qword_184A79DA0 + 128);
+        LightmapTexID[i] = v5 + static_cast<int>(lightmapTexture->mStartID);
         ++v5;
       }
     }
@@ -5663,30 +5668,29 @@ void R3RestoreAllTextures()
   int v0 = 1;
   if (dword_140978964 > 1)
   {
-    char *v1 = reinterpret_cast<char *>(qword_184A79D70);
-    __int64 v2 = 144;
+    R3Texture *v1 = GetTextureTable();
     do
     {
-      if (_bittest(reinterpret_cast<const long *>(&v1[v2 + 136]), 0xF))
+      if (_bittest(reinterpret_cast<const long *>(&v1[v0].mFlag), 0xF))
       {
-        if (*reinterpret_cast<unsigned int *>(&v1[v2 + 132]) != 1)
+        if (v1[v0].mTexNum != 1)
         {
           Error(aAo_1, byte_140883769);
-          v1 = reinterpret_cast<char *>(qword_184A79D70);
+          v1 = GetTextureTable();
         }
-        unsigned int id = *reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(qword_184A79D70) + v2 + 128);
-        if (!reinterpret_cast<unsigned long long *>(qword_184A79D68)[2 * id])
+        const unsigned int id = v1[v0].mStartID;
+        R3TextureSlot *const slots = GetTextureSlots();
+        if (!slots[id].mTexture)
         {
           IDirect3DTexture8 *dds =
-            _bittest(reinterpret_cast<const long *>(qword_184A79D68) + 4 * id + 2, 0x1F)
-              ? R3LoadDDS(&v1[144 * v0], 0, 0x800, 0x800)
-              : R3LoadDDS(&v1[144 * v0], dword_184A797D0, 0x800, 0x800);
-          v1 = reinterpret_cast<char *>(qword_184A79D70);
-          reinterpret_cast<unsigned long long *>(qword_184A79D68)[2 * id] = reinterpret_cast<unsigned long long>(dds);
+            _bittest(reinterpret_cast<const long *>(&slots[id].mFlag), 0x1F)
+              ? R3LoadDDS(v1[v0].mName, 0, 0x800, 0x800)
+              : R3LoadDDS(v1[v0].mName, dword_184A797D0, 0x800, 0x800);
+          v1 = GetTextureTable();
+          slots[id].mTexture = dds;
         }
       }
       ++v0;
-      v2 += 144;
     } while (v0 < dword_140978964);
   }
   RestoreSystemTexture();
@@ -5739,11 +5743,9 @@ void Error(char *source, char *msg)
     exit(1);
   }
 
-  static const unsigned char asc_140884708[4] = { 0x3C, 0x2D, 0xBF, 0xA1 }; // "<-에"
+  static const unsigned char asc_140884708[7] = {0x3C, 0x2D, 0xBF, 0xA1, 0xB7, 0xAF, 0x00}; // "<-에서"
   char *v11 = &Text[std::strlen(Text) + 1];
   memcpy_0(v11 - 1, asc_140884708, sizeof(asc_140884708));
-  *reinterpret_cast<unsigned short *>(v11 + 3) = static_cast<unsigned short>(-20553);
-  v11[5] = 0;
   v10(Text);
 }
 
@@ -5842,7 +5844,7 @@ bool IsParticle(char *a1)
 {
   _strlwr(a1);
   const size_t len = std::strlen(a1);
-  return len >= 3 && *reinterpret_cast<unsigned short *>(&a1[len - 2]) == 29808 && a1[len - 3] == 's';
+  return len >= 3 && a1[len - 3] == 's' && a1[len - 2] == 'p' && a1[len - 1] == 't';
 }
 
 CMergeFileManager *GetMergeFileManager()
@@ -5930,7 +5932,7 @@ __int64 GetRandOrNum(FILE *Stream, float *a2, float *a3)
   char v17[256]{};
 
   fscanf(Stream, "%s", String);
-  if (String[0] == 'r' && *reinterpret_cast<unsigned short *>(&String[1]) == 0x6E61 && String[3] == 'd')
+  if (String[0] == 'r' && String[1] == 'a' && String[2] == 'n' && String[3] == 'd')
   {
     int v6 = static_cast<int>(std::strlen(String));
     int v7 = 0;
@@ -6066,24 +6068,17 @@ if (!outTex)
 
 static __int64 sub_1404FFFB0(__int64 a1)
 {
-  int *v1 = reinterpret_cast<int *>(&pass_word);
-  char *v2 = reinterpret_cast<char *>(&unk_1409788D4) - a1;
-  __int64 v3 = a1 + 4;
-  char *v4 = reinterpret_cast<char *>(&pass_word) - a1;
-  char *v5 = reinterpret_cast<char *>(&unk_1409788D8) - a1;
+  auto *data = reinterpret_cast<unsigned int *>(a1);
   __int64 v6 = 8;
-  int v7 = 0;
   __int64 result = 0;
   do
   {
-    v7 = *v1;
-    v3 += 16;
-    v1 += 4;
-    *reinterpret_cast<unsigned int *>(v3 - 20) ^= v7;
-    *reinterpret_cast<unsigned int *>(v3 - 16) ^= *reinterpret_cast<unsigned int *>(&v4[v3 - 16]);
-    *reinterpret_cast<unsigned int *>(v3 - 12) ^= *reinterpret_cast<unsigned int *>(&v2[v3 - 16]);
-    result = *reinterpret_cast<unsigned int *>(&v5[v3 - 16]);
-    *reinterpret_cast<unsigned int *>(v3 - 8) ^= static_cast<unsigned int>(result);
+    const unsigned int baseIndex = static_cast<unsigned int>(8 - v6) * 4;
+    data[baseIndex] ^= pass_word[baseIndex];
+    data[baseIndex + 1] ^= pass_word[baseIndex + 1];
+    data[baseIndex + 2] ^= unk_1409788D4[baseIndex];
+    result = unk_1409788D8[baseIndex];
+    data[baseIndex + 3] ^= static_cast<unsigned int>(result);
     --v6;
   } while (v6);
   return result;
@@ -6153,30 +6148,26 @@ static int sub_140501380(char *a1, const char *a2, const char *a3)
   return v6 - 1;
 }
 
-static void sub_140502610(char *a1)
+static void sub_140502610(_R3MATERIAL *material)
 {
-  if (a1)
+  if (!material)
+    return;
+
+  memset_0(material, 0, sizeof(_R3MATERIAL));
+  for (int i = 0; i < 7; ++i)
   {
-    memset_0(a1, 0, 0x1D6u);
-    auto *v2 = reinterpret_cast<int *>(a1 + 154);
-    __int64 v3 = 7;
-    do
-    {
-      *(v2 - 1) = 0;
-      *v2 = 0;
-      v2[1] = -1;
-      v2[2] = 0;
-      v2 = reinterpret_cast<int *>(reinterpret_cast<char *>(v2) + 46);
-      --v3;
-    } while (v3);
+    _ONE_LAYER *const layer = &material->m_Layer[i];
+    layer->m_iSurface = 0;
+    layer->m_dwAlphaType = 0;
+    layer->m_ARGB = static_cast<unsigned int>(-1);
+    layer->m_dwFlag = 0;
   }
 }
 
-static int sub_140502690(FILE *Stream, __int64 a2, int a3)
+static int sub_140502690(FILE *Stream, _R3MATERIAL *material, int layerIndex)
 {
-  __int64 v3 = a3;
-  __int64 v6 = 46LL * a3;
-  *reinterpret_cast<unsigned int *>(v6 + a2 + 158) = static_cast<unsigned int>(-1);
+  _ONE_LAYER *const layer = &material->m_Layer[layerIndex];
+  layer->m_ARGB = static_cast<unsigned int>(-1);
 
   char String[256]{};
   char v55[256]{};
@@ -6192,198 +6183,175 @@ static int sub_140502690(FILE *Stream, __int64 a2, int a3)
       strcat_s(v55, String);
       if (!String[0] || !strcmp(String, "NULL"))
       {
-        *reinterpret_cast<unsigned int *>(46 * v3 + a2 + 150) = 0;
+        layer->m_iSurface = 0;
       }
       else if (IsAniTex(String))
       {
-        *reinterpret_cast<unsigned int *>(46 * v3 + a2 + 162) |= 0x1000u;
-        R3GetPreAniTextureId(aTexture, String, reinterpret_cast<int *>(v6 + a2 + 150), v53);
-        *reinterpret_cast<unsigned short *>(46 * v3 + a2 + 148) = static_cast<unsigned short>(v53[0]);
+        layer->m_dwFlag |= 0x1000u;
+        R3GetPreAniTextureId(aTexture, String, &layer->m_iSurface, v53);
+        layer->m_iTileAniTexNum = static_cast<unsigned short>(v53[0]);
       }
       else
       {
-        *reinterpret_cast<unsigned int *>(46 * v3 + a2 + 150) = R3GetPreTextureId(v55);
+        layer->m_iSurface = R3GetPreTextureId(v55);
       }
     }
     if (!strcmp(String, "uv_scroll_u"))
     {
       fscanf(Stream, "%s", String);
-      __int64 v13 = 46 * v3;
-      float v14 = static_cast<float>(atof(String));
-      *reinterpret_cast<unsigned int *>(v13 + a2 + 162) |= 0x10u;
-      *reinterpret_cast<unsigned short *>(v13 + a2 + 170) = static_cast<unsigned short>(v14 * 256.0f);
+      layer->m_dwFlag |= 0x10u;
+      layer->m_sUVScrollU = static_cast<unsigned short>(static_cast<float>(atof(String)) * 256.0f);
     }
     if (!strcmp(String, "uv_scroll_v"))
     {
       fscanf(Stream, "%s", String);
-      __int64 v16 = 46 * v3;
-      float v17 = static_cast<float>(atof(String));
-      *reinterpret_cast<unsigned int *>(v16 + a2 + 162) |= 0x20u;
-      *reinterpret_cast<unsigned short *>(v16 + a2 + 172) = static_cast<unsigned short>(v17 * 256.0f);
+      layer->m_dwFlag |= 0x20u;
+      layer->m_sUVScrollV = static_cast<unsigned short>(static_cast<float>(atof(String)) * 256.0f);
     }
     if (!strcmp(String, "uv_scale"))
     {
       fscanf(Stream, "%s", String);
-      float v19 = static_cast<float>(atof(String));
-      __int64 v20 = 46 * v3;
-      *reinterpret_cast<unsigned int *>(v20 + a2 + 162) |= 0x80u;
-      *reinterpret_cast<unsigned short *>(v20 + a2 + 180) = 256;
-      unsigned short v22 = static_cast<unsigned short>(v19 * 256.0f);
-      *reinterpret_cast<unsigned short *>(v20 + a2 + 176) = v22;
-      *reinterpret_cast<unsigned short *>(v20 + a2 + 178) = v22;
+      layer->m_dwFlag |= 0x80u;
+      layer->m_sUVScaleSpeed = 256;
+      const unsigned short scale = static_cast<unsigned short>(static_cast<float>(atof(String)) * 256.0f);
+      layer->m_sUVScaleStart = scale;
+      layer->m_sUVScaleEnd = scale;
     }
     if (!strcmp(String, "uv_scale_speed"))
     {
       fscanf(Stream, "%s", String);
-      float v23 = static_cast<float>(atof(String));
-      *reinterpret_cast<unsigned short *>(46 * v3 + a2 + 180) = static_cast<unsigned short>(v23 * 256.0f);
+      layer->m_sUVScaleSpeed = static_cast<unsigned short>(static_cast<float>(atof(String)) * 256.0f);
     }
     if (!strcmp(String, "uv_scale_end"))
     {
       fscanf(Stream, "%s", String);
-      float v24 = static_cast<float>(atof(String));
-      *reinterpret_cast<unsigned short *>(46 * v3 + a2 + 178) = static_cast<unsigned short>(v24 * 256.0f);
+      layer->m_sUVScaleEnd = static_cast<unsigned short>(static_cast<float>(atof(String)) * 256.0f);
     }
     if (!strcmp(String, "uv_rotate"))
     {
       fscanf(Stream, "%s", String);
-      __int64 v25 = 46 * v3;
-      float v26 = static_cast<float>(atof(String));
-      *reinterpret_cast<unsigned int *>(v25 + a2 + 162) |= 0x40u;
-      *reinterpret_cast<unsigned short *>(v25 + a2 + 174) = static_cast<unsigned short>(v26 * 256.0f);
+      layer->m_dwFlag |= 0x40u;
+      layer->m_sUVRotate = static_cast<unsigned short>(static_cast<float>(atof(String)) * 256.0f);
     }
     if (!strcmp(String, "uv_lava"))
     {
       fscanf(Stream, "%s", String);
-      __int64 v28 = 46 * v3;
-      if (!*reinterpret_cast<unsigned short *>(46 * v3 + a2 + 166))
-        *reinterpret_cast<unsigned short *>(v28 + a2 + 166) = 256;
-      float v29 = static_cast<float>(atof(String));
-      *reinterpret_cast<unsigned int *>(v28 + a2 + 162) |= 4u;
-      *reinterpret_cast<unsigned short *>(v28 + a2 + 168) = static_cast<unsigned short>(v29 * 256.0f);
+      if (!layer->m_sUVLavaWave)
+        layer->m_sUVLavaWave = 256;
+      layer->m_dwFlag |= 4u;
+      layer->m_sUVLavaSpeed = static_cast<unsigned short>(static_cast<float>(atof(String)) * 256.0f);
     }
     if (!strcmp(String, "uv_lava_wave"))
     {
       fscanf(Stream, "%s", String);
-      float v31 = static_cast<float>(atof(String));
-      *reinterpret_cast<unsigned short *>(46 * v3 + a2 + 166) = static_cast<unsigned short>(v31 * 256.0f);
+      layer->m_sUVLavaWave = static_cast<unsigned short>(static_cast<float>(atof(String)) * 256.0f);
     }
     if (!strcmp(String, "uv_gradient_alpha_u"))
     {
       fscanf(Stream, "%s", String);
-      __int64 v32 = 46 * v3;
-      float v33 = static_cast<float>(atof(String));
-      *reinterpret_cast<unsigned short *>(v32 + a2 + 192) |= static_cast<unsigned short>(static_cast<int>((v33 * 25.0f) + 100.0f)) << 8;
-      *reinterpret_cast<unsigned int *>(v32 + a2 + 162) |= 0x100u;
+      layer->m_sGradientAlpha |=
+        static_cast<unsigned short>(static_cast<int>((static_cast<float>(atof(String)) * 25.0f) + 100.0f)) << 8;
+      layer->m_dwFlag |= 0x100u;
     }
     if (!strcmp(String, "uv_gradient_alpha_v"))
     {
       fscanf(Stream, "%s", String);
-      __int64 v34 = 46 * v3;
-      float v35 = static_cast<float>(atof(String));
-      *reinterpret_cast<unsigned short *>(v34 + a2 + 192) |= static_cast<unsigned short>(static_cast<int>((v35 * 25.0f) + 100.0f));
-      *reinterpret_cast<unsigned int *>(v34 + a2 + 162) |= 0x200u;
+      layer->m_sGradientAlpha |=
+        static_cast<unsigned short>(static_cast<int>((static_cast<float>(atof(String)) * 25.0f) + 100.0f));
+      layer->m_dwFlag |= 0x200u;
     }
     if (!strcmp(String, "uv_metal_floor"))
     {
       fscanf(Stream, "%s", String);
-      __int64 v36 = 46 * v3;
-      float v37 = static_cast<float>(atof(String));
-      *reinterpret_cast<unsigned int *>(v36 + a2 + 162) |= 2u;
-      *reinterpret_cast<unsigned short *>(v36 + a2 + 182) = static_cast<unsigned short>(v37 * 256.0f);
+      layer->m_dwFlag |= 2u;
+      layer->m_sUVMetal = static_cast<unsigned short>(static_cast<float>(atof(String)) * 256.0f);
     }
     if (!strcmp(String, "uv_metal_wall"))
     {
       fscanf(Stream, "%s", String);
-      __int64 v39 = 46 * v3;
-      float v40 = static_cast<float>(atof(String));
-      *reinterpret_cast<unsigned int *>(v39 + a2 + 162) |= 8u;
-      *reinterpret_cast<unsigned short *>(v39 + a2 + 182) = static_cast<unsigned short>(v40 * 256.0f);
+      layer->m_dwFlag |= 8u;
+      layer->m_sUVMetal = static_cast<unsigned short>(static_cast<float>(atof(String)) * 256.0f);
     }
     if (!strcmp(String, "ani_alpha_flicker"))
     {
       fscanf(Stream, "%s", String);
-      float v42 = static_cast<float>(atof(String));
-      *reinterpret_cast<unsigned short *>(46 * (v3 + 4) + a2) = static_cast<unsigned short>(v42 * 256.0f);
-      *reinterpret_cast<unsigned int *>(46 * v3 + a2 + 162) |= 0x400u;
+      layer->m_sANIAlphaFlicker = static_cast<unsigned short>(static_cast<float>(atof(String)) * 256.0f);
+      layer->m_dwFlag |= 0x400u;
     }
     if (!strcmp(String, "ani_alpha_flicker_start"))
     {
       fscanf(Stream, "%s", String);
-      float v43 = static_cast<float>(atof(String));
-      *reinterpret_cast<unsigned short *>(46 * v3 + a2 + 186) |= static_cast<unsigned short>(static_cast<int>(v43 * 255.0f)) << 8;
+      layer->m_sANIAlphaFlickerAni |=
+        static_cast<unsigned short>(static_cast<int>(static_cast<float>(atof(String)) * 255.0f)) << 8;
     }
     if (!strcmp(String, "ani_alpha_flicker_end"))
     {
       fscanf(Stream, "%s", String);
-      float v44 = static_cast<float>(atof(String));
-      *reinterpret_cast<unsigned short *>(46 * v3 + a2 + 186) |= static_cast<unsigned short>(static_cast<int>(v44 * 255.0f));
+      layer->m_sANIAlphaFlickerAni |=
+        static_cast<unsigned short>(static_cast<int>(static_cast<float>(atof(String)) * 255.0f));
     }
     if (!strcmp(String, "ani_tex_speed"))
     {
       fscanf(Stream, "%s", String);
-      float v45 = static_cast<float>(atof(String));
-      *reinterpret_cast<unsigned short *>(46 * v3 + a2 + 190) = static_cast<unsigned short>(v45 * 256.0f);
+      layer->m_sANITexSpeed = static_cast<unsigned short>(static_cast<float>(atof(String)) * 256.0f);
     }
     if (!strcmp(String, "ani_tex_frame"))
     {
       fscanf(Stream, "%s", String);
-      *reinterpret_cast<unsigned int *>(46 * v3 + a2 + 162) |= 0x800u;
-      float v46 = static_cast<float>(atof(String));
-      *reinterpret_cast<unsigned short *>(46 * v3 + a2 + 188) = static_cast<unsigned short>(v46 * 256.0f);
-      if (!*reinterpret_cast<unsigned short *>(46 * v3 + a2 + 190))
-        *reinterpret_cast<unsigned short *>(46 * v3 + a2 + 190) = 256;
+      layer->m_dwFlag |= 0x800u;
+      layer->m_sANITexFrame = static_cast<unsigned short>(static_cast<float>(atof(String)) * 256.0f);
+      if (!layer->m_sANITexSpeed)
+        layer->m_sANITexSpeed = 256;
     }
     if (!strcmp(String, "uv_env"))
-      *reinterpret_cast<unsigned int *>(46 * v3 + a2 + 162) |= 1u;
+      layer->m_dwFlag |= 1u;
     if (!strcmp(String, "alpha_sort"))
     {
       fscanf(Stream, "%s", String);
       if (!strcmp(_strupr(String), "TRUE"))
       {
-        if (a3)
+        if (layerIndex)
           Warning(aAlphaSortTrue, byte_140883769);
         else
-          *reinterpret_cast<unsigned int *>(46 * v3 + a2 + 154) |= 0x80000000;
+          layer->m_dwAlphaType |= 0x80000000u;
       }
     }
     if (!strcmp(String, "tex_clamp"))
-      *reinterpret_cast<unsigned int *>(46 * v3 + a2 + 162) |= 0x10000u;
+      layer->m_dwFlag |= 0x10000u;
     if (!strcmp(String, "zwrite"))
-      *reinterpret_cast<unsigned int *>(46 * v3 + a2 + 154) |= 0x2000u;
+      layer->m_dwAlphaType |= 0x2000u;
     if (!strcmp(String, "bump_env"))
-      *reinterpret_cast<unsigned int *>(46 * v3 + a2 + 162) |= 0x8000u;
+      layer->m_dwFlag |= 0x8000u;
     if (!strcmp(String, "type"))
     {
       fscanf(Stream, "%s", String);
-      *reinterpret_cast<unsigned int *>(46 * v3 + a2 + 154) = atoi(String);
+      layer->m_dwAlphaType = static_cast<unsigned int>(atoi(String));
     }
     if (!strcmp(String, "alpha"))
     {
       fscanf(Stream, "%s", String);
-      *reinterpret_cast<unsigned char *>(46 * v3 + a2 + 161) = 0;
-      *reinterpret_cast<unsigned int *>(46 * v3 + a2 + 158) |= static_cast<unsigned int>(atoi(String)) << 24;
+      layer->m_ARGB &= 0x00FFFFFFu;
+      layer->m_ARGB |= static_cast<unsigned int>(atoi(String)) << 24;
     }
     if (!strcmp(String, "color"))
     {
       fscanf(Stream, "%s", String);
-      int r = atoi(String);
+      const int r = atoi(String);
       fscanf(Stream, "%s", String);
-      int g = atoi(String);
+      const int g = atoi(String);
       fscanf(Stream, "%s", String);
-      int b = atoi(String);
-      __int64 v52 = 46 * v3;
-      *reinterpret_cast<unsigned int *>(v52 + a2 + 158) &= 0xFF000000;
-      *reinterpret_cast<unsigned int *>(v52 + a2 + 158) |= b | ((g | (r << 8)) << 8);
+      const int b = atoi(String);
+      layer->m_ARGB &= 0xFF000000u;
+      layer->m_ARGB |= b | ((g | (r << 8)) << 8);
     }
     result = fscanf(Stream, "%s", String);
   }
-  if (!*reinterpret_cast<unsigned short *>(v6 + a2 + 186))
-    *reinterpret_cast<unsigned short *>(v6 + a2 + 186) = 255;
+  if (!layer->m_sANIAlphaFlickerAni)
+    layer->m_sANIAlphaFlickerAni = 255;
   return result;
 }
 
-static void sub_140503190(char *a1, unsigned int *a2)
+static void sub_140503190(char *a1, _R3MATERIAL *material)
 {
   char v4 = 0;
   FILE *fp = fopenMFM(a1, "rt");
@@ -6391,14 +6359,10 @@ static void sub_140503190(char *a1, unsigned int *a2)
   {
     if (!dword_184A79DB4)
     {
-      unsigned int *v6 = reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(a2) + 150);
       for (int i = 0; i < 7; ++i)
-      {
-        *v6 = static_cast<unsigned int>(-1);
-        v6 = reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(v6) + 46);
-      }
-      a2[34] = static_cast<unsigned int>(-1);
-      a2[33] = 0;
+        material->m_Layer[i].m_iSurface = -1;
+      material->m_iDetailSurface = -1;
+      material->m_dwFlag = 0;
     }
 
     unsigned int v8 = dword_184A797D0;
@@ -6420,24 +6384,24 @@ static void sub_140503190(char *a1, unsigned int *a2)
         {
           fscanf(fp, "%s", String);
           if (!strcmp(_strupr(String), "TRUE"))
-            a2[33] |= 1u;
+            material->m_dwFlag |= 1u;
         }
         if (!strcmp(String, "sky_sun_light"))
-          a2[33] |= 4u;
+          material->m_dwFlag |= 4u;
         if (!strcmp(String, "sky_night"))
-          a2[33] |= 8u;
+          material->m_dwFlag |= 8u;
         if (!strcmp(String, "sky_day"))
-          a2[33] |= 0x10u;
+          material->m_dwFlag |= 0x10u;
         if (!strcmp(String, "texture_splatting"))
-          a2[33] |= 0x20u;
+          material->m_dwFlag |= 0x20u;
         if (!strcmp(String, "layer_num"))
         {
           fscanf(fp, "%s", String);
-          a2[36] = atoi(String);
+          material->m_dwLayerNum = static_cast<unsigned int>(atoi(String));
         }
         if (!strcmp(String, "no_lod_texture"))
         {
-          a2[33] |= 2u;
+          material->m_dwFlag |= 2u;
           dword_184A797D0 = 0;
         }
         if (!strcmp(String, "detail_texture"))
@@ -6445,29 +6409,28 @@ static void sub_140503190(char *a1, unsigned int *a2)
           fscanf(fp, "%s", String);
           strcpy_s(a1, 256, aTexture);
           strcat_s(a1, 256, String);
-          a2[33] |= 2u;
+          material->m_dwFlag |= 2u;
           dword_184A797D0 = 0;
           if (!String[0] || !strcmp(String, "NULL"))
-            a2[34] = 0;
+            material->m_iDetailSurface = 0;
           else
-            a2[34] = R3GetPreTextureId(a1);
-          a2[35] = 1065353216;
+            material->m_iDetailSurface = R3GetPreTextureId(a1);
+          material->m_fDetailScale = 1.0f;
         }
         if (!strcmp(String, "no_collision"))
-          *reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(a2) + 162) |= 0x20000u;
+          material->m_Layer[0].m_dwFlag |= 0x20000u;
         if (!strcmp(String, "water"))
-          *reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(a2) + 162) |= 0x60000u;
+          material->m_Layer[0].m_dwFlag |= 0x60000u;
         if (!strcmp(String, "detail_texture_scale"))
         {
           fscanf(fp, "%s", String);
-          float v14 = static_cast<float>(atof(String));
-          reinterpret_cast<float *>(a2)[35] = v14;
+          material->m_fDetailScale = static_cast<float>(atof(String));
         }
         if (!strcmp(String, "layer"))
         {
           fscanf(fp, "%s", String);
-          int v15 = atoi(String);
-          sub_140502690(fp, reinterpret_cast<__int64>(a2), v15);
+          const int layerIndex = atoi(String);
+          sub_140502690(fp, material, layerIndex);
           v4 = 1;
         }
       } while (fscanf(fp, "%s", String) != -1);
@@ -6497,106 +6460,61 @@ static void LoadR3X(char *a1)
     return;
   }
 
-  unsigned char raw[0x408]{};
-  fread(raw, sizeof(raw), 1, fp);
+  _R3X_LOAD_DATA loadData{};
+  fread(&loadData, sizeof(loadData), 1, fp);
   fclose(fp);
 
-  int v17 = *reinterpret_cast<int *>(raw);
-  int v18 = *reinterpret_cast<int *>(raw + 4);
-  __int64 v19 = *reinterpret_cast<__int64 *>(raw + 8);
-  int v20 = *reinterpret_cast<int *>(raw + 16);
-  int v21 = *reinterpret_cast<int *>(raw + 20);
-  unsigned int *v22 = reinterpret_cast<unsigned int *>(raw + 24);
-
-  if ((v17 & 4) != 0)
+  if ((loadData.mFlag & 4) != 0)
   {
-    dword_184A7983C = static_cast<unsigned int>(v19 >> 32);
-    dword_184A79814 = v18;
-    qword_184A79818 = static_cast<unsigned long long>(v19);
-    dword_184A79778 = static_cast<unsigned int>(v19);
+    dword_184A7983C = static_cast<unsigned int>(loadData.mValue8 >> 32);
+    dword_184A79814 = static_cast<unsigned int>(loadData.mValue4);
+    qword_184A79818 = static_cast<unsigned long long>(loadData.mValue8);
+    dword_184A79778 = static_cast<unsigned int>(loadData.mValue8);
     dword_184A79808 = 1;
-    dword_184A79844 = v18;
-    qword_184A79848 = static_cast<unsigned long long>(v19);
-    dword_184A7982C = v18;
-    dword_184A79834 = static_cast<unsigned int>(v19);
+    dword_184A79844 = static_cast<unsigned int>(loadData.mValue4);
+    qword_184A79848 = static_cast<unsigned long long>(loadData.mValue8);
+    dword_184A7982C = static_cast<unsigned int>(loadData.mValue4);
+    dword_184A79834 = static_cast<unsigned int>(loadData.mValue8);
   }
 
-  dword_184A79824 = v22[125];
-  if ((v17 & 8) != 0)
+  dword_184A79824 = loadData.mData[125];
+  if ((loadData.mFlag & 8) != 0)
   {
-    dword_184A79840 = v22[0];
+    dword_184A79840 = loadData.mData[0];
     dword_184A79828 = 1;
-    dword_184A79830 = v20;
-    dword_184A79838 = v21;
+    dword_184A79830 = static_cast<unsigned int>(loadData.mValue16);
+    dword_184A79838 = static_cast<unsigned int>(loadData.mValue20);
   }
 
-  if ((v17 & 0x10) != 0)
+  auto *state = reinterpret_cast<R3EngineStateOverlay *>(static_cast<void *>(&stState));
+  if ((loadData.mFlag & 0x10) != 0)
   {
-    char *state = reinterpret_cast<char *>(&stState);
-    size_t idx = 0;
-    do
-    {
-      char v7 = reinterpret_cast<char *>(&v22[23])[idx];
-      state[idx + 2144] = v7;
-      byte_184A79850[idx] = v7;
-      ++idx;
-      if (!v7)
-        break;
-    } while (true);
-
+    const char *skyTexture = reinterpret_cast<const char *>(&loadData.mData[23]);
+    strcpy_s(state->mSkyTextureName, sizeof(state->mSkyTextureName), skyTexture);
+    strcpy_s(byte_184A79850, sizeof(byte_184A79850), skyTexture);
     dword_184A798D0 = R3GetPreTextureId(byte_184A79850);
-    *reinterpret_cast<float *>(&dword_184A79914) = *reinterpret_cast<float *>(&v22[55]);
-    dword_184A79918 = v22[56];
-    dword_184A7991C = v22[57];
-    __int64 v9 = 0;
-    do
-    {
-      int v10 = v22[v9 + 7];
-      v9 += 8;
-      *reinterpret_cast<unsigned int *>(&state[v9 * 4 + 2244]) = v10;
-      *reinterpret_cast<unsigned int *>(&state[v9 * 4 + 2248]) = v22[v9];
-      *reinterpret_cast<unsigned int *>(&state[v9 * 4 + 2252]) = v22[v9 + 1];
-      *reinterpret_cast<unsigned int *>(&state[v9 * 4 + 2256]) = v22[v9 + 2];
-      *reinterpret_cast<unsigned int *>(&state[v9 * 4 + 2260]) = v22[v9 + 3];
-      *reinterpret_cast<unsigned int *>(&state[v9 * 4 + 2264]) = v22[v9 + 4];
-      *reinterpret_cast<unsigned int *>(&state[v9 * 4 + 2268]) = v22[v9 + 5];
-      *reinterpret_cast<unsigned int *>(&state[v9 * 4 + 2272]) = v22[v9 + 6];
-    } while (v9 < 16);
+    dword_184A79914 = loadData.mData[55];
+    dword_184A79918 = loadData.mData[56];
+    dword_184A7991C = loadData.mData[57];
+    for (int i = 0; i < 16; ++i)
+      state->mSkyLayerData[i] = loadData.mData[7 + i];
   }
 
-  if ((v17 & 0x20) != 0)
+  if ((loadData.mFlag & 0x20) != 0)
   {
-    dword_184A79A24 = v22[90];
-    char *state = reinterpret_cast<char *>(&stState);
-    size_t idx = 0;
-    do
-    {
-      char v12 = reinterpret_cast<char *>(&v22[58])[idx];
-      state[idx + 2356] = v12;
-      ++idx;
-      if (!v12)
-        break;
-    } while (true);
+    dword_184A79A24 = loadData.mData[90];
+    strcpy_s(state->mSecondaryTextureName, sizeof(state->mSecondaryTextureName), reinterpret_cast<const char *>(&loadData.mData[58]));
   }
 
-  if ((v17 & 0x20) != 0)
+  if ((loadData.mFlag & 0x20) != 0)
   {
-    dword_184A79A28 = v22[124];
-    char *state = reinterpret_cast<char *>(&stState);
-    size_t idx = 0;
-    do
-    {
-      char v13 = reinterpret_cast<char *>(&v22[92])[idx];
-      state[idx + 2484] = v13;
-      ++idx;
-      if (!v13)
-        break;
-    } while (true);
+    dword_184A79A28 = loadData.mData[124];
+    strcpy_s(state->mTertiaryTextureName, sizeof(state->mTertiaryTextureName), reinterpret_cast<const char *>(&loadData.mData[92]));
   }
 
-  if ((v17 & 1) != 0)
+  if ((loadData.mFlag & 1) != 0)
     dword_184A7980C = 1;
-  if ((v17 & 2) != 0)
+  if ((loadData.mFlag & 2) != 0)
     dword_184A79810 = 1;
 }
 
@@ -6608,7 +6526,7 @@ unsigned int v2 = 0;
   if (!a1)
     return nullptr;
 
-  FILE *fp = fopen(reinterpret_cast<const char *>(a1), "rb");
+  FILE *fp = fopen(a1->mName, "rb");
   if (!fp)
     return nullptr;
 
@@ -6617,12 +6535,12 @@ unsigned int v2 = 0;
   fread(&v19, 4, 1, fp);
   if (version != 1.1f && version != 1.2f)
   {
-    Warning(reinterpret_cast<char *>(a1), aAiAaiaiAiau);
+    Warning(a1->mName, aAiAaiaiAiau);
     fclose(fp);
     return nullptr;
   }
 
-  auto **list = reinterpret_cast<unsigned short **>(Dmalloc(8 * v19));
+  auto **list = static_cast<_LIGHTMAP **>(Dmalloc(sizeof(_LIGHTMAP *) * v19));
   if (!list)
   {
     fclose(fp);
@@ -6640,21 +6558,21 @@ unsigned int v2 = 0;
       fread(buf, static_cast<unsigned int>(elementSize), 1, fp);
       if (*buf != 542327876)
       {
-        Error(reinterpret_cast<char *>(a1), aAiR3tAai);
+        Error(a1->mName, aAiR3tAai);
         Dfree(buf);
         fclose(fp);
         return nullptr;
       }
-      unsigned short v10 = reinterpret_cast<unsigned short *>(buf)[10];
-      unsigned short v11 = reinterpret_cast<unsigned short *>(buf)[8];
-      if (buf[24])
+      const unsigned short v10 = ReadWordAt(buf, 10);
+      const unsigned short v11 = ReadWordAt(buf, 8);
+      if (ReadDwordAt(buf, 24))
       {
-        Error(reinterpret_cast<char *>(a1), aAi);
+        Error(a1->mName, aAi);
         Dfree(buf);
         fclose(fp);
         return nullptr;
       }
-      int v12 = buf[25];
+      const int v12 = static_cast<int>(ReadDwordAt(buf, 25));
       int v13 = 0;
       if (v12 == 16)
       {
@@ -6664,7 +6582,7 @@ unsigned int v2 = 0;
       {
         if (v12 != 32)
         {
-          Error(reinterpret_cast<char *>(a1), aAi);
+          Error(a1->mName, aAi);
           Dfree(buf);
           fclose(fp);
           return nullptr;
@@ -6673,25 +6591,24 @@ unsigned int v2 = 0;
       }
       if (v10 > 0x800u || v11 > 0x800u)
         Error(byte_140883FF8, byte_140883769);
-      dword_184A79C54 += v10 * v11 * (buf[25] >> 3);
+      dword_184A79C54 += v10 * v11 * (static_cast<unsigned int>(v12) >> 3);
       int v14 = sub_1405005A0(v10);
       int v15 = sub_1405005A0(v11);
-      auto *lm = static_cast<unsigned short *>(Dmalloc(16));
+      auto *lm = static_cast<_LIGHTMAP *>(Dmalloc(sizeof(_LIGHTMAP)));
       *cur = lm;
-      lm[0] = static_cast<unsigned short>(v14);
-      lm[1] = static_cast<unsigned short>(v15);
-      *reinterpret_cast<unsigned short **>(reinterpret_cast<char *>(lm) + 8) =
-        static_cast<unsigned short *>(Dmalloc(2 * v14 * v15));
+      lm->xl = static_cast<unsigned short>(v14);
+      lm->yl = static_cast<unsigned short>(v15);
+      lm->buf = static_cast<unsigned short *>(Dmalloc(2 * v14 * v15));
       dword_184A79D60 += static_cast<unsigned int>(elementSize);
       if (v13 == 21)
-        MakeMipMap(lm[0], lm[1], *reinterpret_cast<unsigned short **>(reinterpret_cast<char *>(lm) + 8),
+        MakeMipMap(lm->xl, lm->yl, lm->buf,
                    reinterpret_cast<unsigned char *>(buf) + 144);
       else
-        MakeMipMap(lm[0], lm[1], *reinterpret_cast<unsigned short **>(reinterpret_cast<char *>(lm) + 8),
+        MakeMipMap(lm->xl, lm->yl, lm->buf,
                    reinterpret_cast<unsigned short *>(reinterpret_cast<unsigned char *>(buf) + 72));
 
-      reinterpret_cast<unsigned long long *>(qword_184A79D68)[2 * v2 + 2 * reinterpret_cast<unsigned int *>(a1)[32]] =
-        reinterpret_cast<unsigned long long>(GetD3DTextureFromBuffer(reinterpret_cast<unsigned char *>(buf), elementSize));
+      GetTextureSlots()[v2 + a1->mStartID].mTexture =
+        GetD3DTextureFromBuffer(reinterpret_cast<unsigned char *>(buf), elementSize);
       Dfree(buf);
       ++v2;
       ++cur;
@@ -6701,7 +6618,7 @@ unsigned int v2 = 0;
   }
 
   fclose(fp);
-  return reinterpret_cast<_LIGHTMAP **>(list);
+  return list;
 }
 
 static void RestoreSystemTexture()
@@ -7513,15 +7430,15 @@ void R3ReleaseAllTextures()
   {
     while (index < static_cast<int>(dword_14097895C))
     {
-      auto *textures = reinterpret_cast<unsigned long long *>(qword_184A79D68);
-      if (textures && textures[2 * index])
+      R3TextureSlot *const textures = GetTextureSlots();
+      if (textures && textures[index].mTexture)
       {
-        IDirect3DTexture8 *const texture = reinterpret_cast<IDirect3DTexture8 *>(textures[2 * index]);
+        IDirect3DTexture8 *const texture = textures[index].mTexture;
         if (texture && texture->__vftable && texture->__vftable->Release)
         {
           texture->__vftable->Release(reinterpret_cast<IDA_IUnknown *>(texture));
         }
-        textures[2 * index] = 0;
+        textures[index].mTexture = nullptr;
       }
       ++index;
     }
@@ -7531,6 +7448,6 @@ void R3ReleaseAllTextures()
 
 unsigned __int16 GetExcelIndexFromCombineExCheckKey(unsigned int dwCombineExCheckKey)
 {
-  return static_cast<unsigned __int16>(HIWORD(dwCombineExCheckKey));
+  return static_cast<unsigned __int16>(dwCombineExCheckKey >> 16);
 }
 

@@ -14,6 +14,16 @@ struct _MSG_HEADER
   unsigned __int8 m_byType[2];
 };
 
+#pragma pack(push, 1)
+struct _FG_MSG_HEADER
+{
+  unsigned __int16 m_wFGSize;
+  _MSG_HEADER m_MsgHeader;
+};
+#pragma pack(pop)
+
+static_assert(sizeof(_FG_MSG_HEADER) == 6);
+
 struct _SOCK_TYPE_PARAM
 {
   unsigned __int8 m_byProtocolID;
@@ -235,9 +245,9 @@ public:
   bool PushIPCheckList(unsigned int dwIP);
 
   unsigned __int64 m_sAccept;
-  void *m_AcceptEvent;
+  HANDLE m_AcceptEvent;
   _socket *m_Socket;
-  void **m_Event;
+  HANDLE *m_Event;
   _SOCK_TYPE_PARAM m_SockType;
   _total_count m_TotalCount;
   bool m_bSetSocket;

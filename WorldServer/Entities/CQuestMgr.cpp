@@ -839,9 +839,9 @@ char CQuestMgr::IsCompleteNpcQuest(char *pszCode, int bQuestRepeat)
 {
   for (int j = 0; j < 70; ++j)
   {
-    char *entry = m_pQuestData->m_History[j].szQuestCode;
-    if (static_cast<unsigned __int8>(entry[12]) != 0xFF
-      && std::strncmp(entry, pszCode, 7) == 0
+    _QUEST_DB_BASE::_NPC_QUEST_HISTORY &history = m_pQuestData->m_History[j];
+    if (history.byLevel != 0xFF
+      && std::strncmp(history.szQuestCode, pszCode, 7) == 0
       && bQuestRepeat != 1)
     {
       return 1;
@@ -926,27 +926,25 @@ unsigned __int8 CQuestMgr::InsertNpcQuestHistory(char *pszQuestCode, char byLeve
 
   for (int j = 0; j < 70; ++j)
   {
-    char *entry = m_pQuestData->m_History[j].szQuestCode;
-    if (static_cast<unsigned __int8>(entry[12]) == 0xFF)
+    _QUEST_DB_BASE::_NPC_QUEST_HISTORY &history = m_pQuestData->m_History[j];
+    if (history.byLevel == 0xFF)
     {
-      strcpy_0(entry, pszQuestCode);
-      entry[12] = byLevel;
-      *reinterpret_cast<unsigned int *>(entry + 13) =
-        static_cast<unsigned int>(GetConnectTime_AddBySec(static_cast<int>(dRepeatTime)));
+      strcpy_0(history.szQuestCode, pszQuestCode);
+      history.byLevel = byLevel;
+      history.dwEventEndTime = static_cast<unsigned int>(GetConnectTime_AddBySec(static_cast<int>(dRepeatTime)));
       return static_cast<unsigned __int8>(j);
     }
-    if (static_cast<unsigned __int8>(entry[12]) < minLevel)
+    if (history.byLevel < minLevel)
     {
-      minLevel = static_cast<unsigned __int8>(entry[12]);
+      minLevel = history.byLevel;
       bestIndex = j;
     }
   }
 
-  char *entry = m_pQuestData->m_History[bestIndex].szQuestCode;
-  strcpy_0(entry, pszQuestCode);
-  entry[12] = byLevel;
-  *reinterpret_cast<unsigned int *>(entry + 13) =
-    static_cast<unsigned int>(GetConnectTime_AddBySec(static_cast<int>(dRepeatTime)));
+  _QUEST_DB_BASE::_NPC_QUEST_HISTORY &history = m_pQuestData->m_History[bestIndex];
+  strcpy_0(history.szQuestCode, pszQuestCode);
+  history.byLevel = byLevel;
+  history.dwEventEndTime = static_cast<unsigned int>(GetConnectTime_AddBySec(static_cast<int>(dRepeatTime)));
   return static_cast<unsigned __int8>(bestIndex);
 }
 _happen_event_cont *CQuestMgr::CheckQuestHappenEvent(
@@ -1330,12 +1328,12 @@ char CQuestMgr::__CheckCond_Class(char *pszClassCode)
 {
   for (int j = 0; j < 4; ++j)
   {
-    const __int64 effectPtr = reinterpret_cast<__int64>(*this->m_pMaster->m_Param.m_ppHistoryEffect[j]);
-    if (!effectPtr)
+    _class_fld *effectRecord = *m_pMaster->m_Param.m_ppHistoryEffect[j];
+    if (!effectRecord)
     {
       break;
     }
-    if (!strcmp_0(reinterpret_cast<const char *>(effectPtr + 4), pszClassCode))
+    if (!strcmp_0(effectRecord->m_strCode, pszClassCode))
     {
       return 1;
     }

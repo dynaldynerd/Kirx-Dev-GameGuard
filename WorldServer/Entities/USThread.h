@@ -69,7 +69,7 @@ namespace US
     HANDLE m_hThread;
     HANDLE m_hStartupEvent;
     HANDLE m_hDestroyEvent;
-    unsigned int m_dwThreadID;
+    DWORD m_dwThreadID;
   };
 
   template <typename TOwner, typename TThreadPool>
@@ -96,7 +96,7 @@ namespace US
       m_hThread(nullptr),
       m_hStartupEvent(nullptr),
       m_hDestroyEvent(nullptr),
-      m_dwThreadID(static_cast<unsigned int>(-1))
+      m_dwThreadID(static_cast<DWORD>(-1))
   {
   }
 
@@ -126,7 +126,7 @@ namespace US
       reinterpret_cast<LPTHREAD_START_ROUTINE>(pDefaultThread),
       this,
       0,
-      reinterpret_cast<LPDWORD>(&m_dwThreadID));
+      &m_dwThreadID);
     if (!m_hThread)
     {
       return false;
@@ -159,7 +159,7 @@ namespace US
     }
     CloseHandle(m_hThread);
     m_hThread = nullptr;
-    m_dwThreadID = static_cast<unsigned int>(-1);
+    m_dwThreadID = static_cast<DWORD>(-1);
     CloseHandle(m_hStartupEvent);
     m_hStartupEvent = nullptr;
     CloseHandle(m_hDestroyEvent);

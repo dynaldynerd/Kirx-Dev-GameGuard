@@ -14,6 +14,7 @@
 #include "GlobalObjects.h"
 #include "KorLocalTime.h"
 #include "PatriarchElectProcessor.h"
+#include "update_candidate_wincount_packing.h"
 
 static_assert(sizeof(_pt_result_fcandidacy_list_zocl::__candi_info) == 47, "Candidacy packet entry size mismatch");
 static_assert(sizeof(_pt_result_fcandidacy_list_zocl) == 23501, "Candidate list packet size mismatch");
@@ -66,8 +67,12 @@ int CandidateRegister::Doit(Cmd eCmd, CPlayer *pOne, char *pdata)
   switch (eCmd)
   {
     case _eReqUpdateWinCount:
-      _UpdatePacketWin(static_cast<unsigned __int8>(pdata[0]), pdata + 8, *reinterpret_cast<unsigned int *>(pdata + 4));
+    {
+      _update_candidate_wincount_packing *updateInfo =
+        reinterpret_cast<_update_candidate_wincount_packing *>(pdata);
+      _UpdatePacketWin(updateInfo->byRace, updateInfo->wszdName, updateInfo->dwWinCnt);
       return 0;
+    }
 
     case _eRequestCandidateList:
       if (m_bInitCandidate)

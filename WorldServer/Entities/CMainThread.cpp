@@ -48,6 +48,7 @@ bool _TRADE_DB_BASE::_LIST::IsEmpty()
 #include "CWeeklyGuildRankManager.h"
 #include "CashItemRemoteStore.h"
 #include "DqsDbStructs.h"
+#include "qry_case_addpvppoint.h"
 #include "AmuletItem_fld.h"
 #include "TimeItem.h"
 #include "UIDGenerator.h"
@@ -701,11 +702,11 @@ void CMainThread::pc_UserChatBlockResult(char byBlockResult, _CLID *pcidTarget, 
 
 void CMainThread::QryCaseAddpvppoint(_DB_QRY_SYN_DATA *pData)
 {
-  char *loadData = pData->m_sData;
-  CPlayer *player = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, *reinterpret_cast<unsigned int *>(loadData));
+  auto *query = reinterpret_cast<_qry_case_addpvppoint *>(pData->m_sData);
+  CPlayer *player = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, query->dwSerial);
   if (player && player->m_bLoad)
   {
-    player->AlterPvPPoint(static_cast<double>(*reinterpret_cast<int *>(loadData + 4)), logoff_inc, 0xFFFFFFFFu);
+    player->AlterPvPPoint(static_cast<double>(static_cast<int>(query->dwPoint)), logoff_inc, 0xFFFFFFFFu);
   }
 }
 

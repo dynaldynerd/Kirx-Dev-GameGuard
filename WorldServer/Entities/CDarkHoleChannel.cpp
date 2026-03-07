@@ -120,9 +120,11 @@ void CDarkHoleChannel::AddMonster()
     }
     else if (addMonster->ReactArea.AreaDefType == at_block)
     {
-      _dummy_position *block = addMonster->ReactArea.obj.dummy.pPos;
-      dummyPos = *reinterpret_cast<_dummy_position **>(
-        &block->m_szCode[8 * (rand() % *reinterpret_cast<int *>(&block->m_szCode[8])) + 16]);
+      __dummy_block *block = addMonster->ReactArea.obj.block.pBlk;
+      if (block && block->nSubDummyNum > 0)
+      {
+        dummyPos = block->pSubDummy[rand() % block->nSubDummyNum];
+      }
     }
 
     if (!dummyPos)
@@ -1563,12 +1565,11 @@ void CDarkHoleChannel::CheckInnerEventDummy()
       }
       else if (innerCheck->ReactArea_Evt.AreaDefType == at_block)
       {
-        _dummy_position *block = innerCheck->ReactArea_Evt.obj.dummy.pPos;
-        const int blockCount = *reinterpret_cast<int *>(&block->m_szCode[8]);
+        __dummy_block *block = innerCheck->ReactArea_Evt.obj.block.pBlk;
+        const int blockCount = block ? block->nSubDummyNum : 0;
         for (int blockIndex = 0; blockIndex < blockCount; ++blockIndex)
         {
-          _dummy_position *dummy =
-            *reinterpret_cast<_dummy_position **>(&block->m_szCode[8 * blockIndex + 16]);
+          _dummy_position *dummy = block->pSubDummy[blockIndex];
           if (m_pQuestSetup->pUseMap->m_Dummy.IsInBBox(dummy->m_wLineIndex, entry->pOne->m_fCurPos))
           {
             triggered = true;
@@ -1619,9 +1620,11 @@ void CDarkHoleChannel::CheckInnerEventDummy()
     }
     else if (innerCheck->ReactArea_Aft.AreaDefType == at_block)
     {
-      _dummy_position *block = innerCheck->ReactArea_Aft.obj.dummy.pPos;
-      spawnDummy = *reinterpret_cast<_dummy_position **>(
-        &block->m_szCode[8 * (rand() % *reinterpret_cast<int *>(&block->m_szCode[8])) + 16]);
+      __dummy_block *block = innerCheck->ReactArea_Aft.obj.block.pBlk;
+      if (block && block->nSubDummyNum > 0)
+      {
+        spawnDummy = block->pSubDummy[rand() % block->nSubDummyNum];
+      }
     }
 
     if (!spawnDummy)
@@ -1738,9 +1741,11 @@ void CDarkHoleChannel::CheckRespawnMonster()
       }
       else if (respawnData->ReactArea.AreaDefType == at_block)
       {
-        _dummy_position *block = respawnData->ReactArea.obj.dummy.pPos;
-        spawnDummy = *reinterpret_cast<_dummy_position **>(
-          &block->m_szCode[8 * (rand() % *reinterpret_cast<int *>(&block->m_szCode[8])) + 16]);
+        __dummy_block *block = respawnData->ReactArea.obj.block.pBlk;
+        if (block && block->nSubDummyNum > 0)
+        {
+          spawnDummy = block->pSubDummy[rand() % block->nSubDummyNum];
+        }
       }
 
       float spawnPos[3]{};

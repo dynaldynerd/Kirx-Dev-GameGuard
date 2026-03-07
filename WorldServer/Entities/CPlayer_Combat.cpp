@@ -1263,7 +1263,7 @@ void CPlayer::pc_ThrowUnitRequest(_CHRID *pidDst, unsigned __int16 *pConsumeSeri
   _UnitPart_fld *weaponRecord = nullptr;
   _skill_fld *skillFld = nullptr;
   CCharacter *target = nullptr;
-  unsigned int *bulletParam = nullptr;
+  _unit_bullet_param *bulletParam = nullptr;
   _STORAGE_LIST::_db_con *consumeItems[3]{};
   int consumeCounts[3]{};
   bool consumeOverlap[3]{};
@@ -1275,9 +1275,9 @@ void CPlayer::pc_ThrowUnitRequest(_CHRID *pidDst, unsigned __int16 *pConsumeSeri
   }
   else
   {
-    bulletParam = &m_pUsingUnit->dwBullet[1];
-    const unsigned __int16 bulletLeft = HIWORD(*bulletParam);
-    const unsigned __int16 bulletItemIndex = LOWORD(*bulletParam);
+    bulletParam = &m_pUsingUnit->m_BulletParam[1];
+    const unsigned __int16 bulletLeft = bulletParam->wLeftNum;
+    const unsigned __int16 bulletItemIndex = bulletParam->wBulletIndex;
     if (!bulletLeft || bulletLeft == 0xFFFF)
     {
       byErrCode = 19;
@@ -1380,7 +1380,7 @@ void CPlayer::pc_ThrowUnitRequest(_CHRID *pidDst, unsigned __int16 *pConsumeSeri
 
     if (success)
     {
-      unsigned __int16 bulletLeft = HIWORD(*bulletParam);
+      unsigned __int16 bulletLeft = bulletParam->wLeftNum;
       if (bulletLeft > 0)
       {
         --bulletLeft;
@@ -1388,7 +1388,12 @@ void CPlayer::pc_ThrowUnitRequest(_CHRID *pidDst, unsigned __int16 *pConsumeSeri
       SendMsg_AlterUnitBulletInform(1u, bulletLeft);
       if (!bulletLeft)
       {
-        *bulletParam = static_cast<unsigned int>(-1);
+        bulletParam->wBulletIndex = static_cast<unsigned __int16>(-1);
+        bulletParam->wLeftNum = static_cast<unsigned __int16>(-1);
+      }
+      else
+      {
+        bulletParam->wLeftNum = bulletLeft;
       }
 
       DeleteUseConsumeItem(consumeItems, consumeCounts, consumeOverlap);
@@ -2442,18 +2447,19 @@ void CPlayer::SendTargetPlayerDamageContInfo()
   currentInfo.dwSerial = targetObject->m_dwObjSerial;
 
   unsigned __int8 contCount = 0;
+  CPlayer *targetPlayer = static_cast<CPlayer *>(targetObject);
   for (int index = 0; index < 8; ++index)
   {
-    char *contData = reinterpret_cast<char *>(&targetObject[1].m_fAbsPos[12 * index + 2]);
-    if (!contData[0])
+    _sf_continous *cont = &targetPlayer->m_SFCont[0][index];
+    if (!cont->m_bExist)
     {
       continue;
     }
 
     currentInfo.m_PlayerContSf[contCount].wSfcode = static_cast<unsigned __int16>(this->CalcEffectBit(
-      static_cast<unsigned __int8>(contData[1]),
-      *reinterpret_cast<unsigned __int16 *>(contData + 2)));
-    currentInfo.m_PlayerContSf[contCount].byContCount = static_cast<unsigned __int8>(contData[20]);
+      cont->m_byEffectCode,
+      cont->m_wEffectIndex));
+    currentInfo.m_PlayerContSf[contCount].byContCount = static_cast<unsigned __int8>(cont->m_nCumulCounter);
     ++contCount;
     currentInfo.byContCount = contCount;
   }

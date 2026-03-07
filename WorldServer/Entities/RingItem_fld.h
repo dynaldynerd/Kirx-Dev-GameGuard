@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 #include "base_fld.h"
+#include "ITEM_EFFECT.h"
 
 #pragma pack(push, 1)
 
@@ -31,14 +32,21 @@ struct  _RingItem_fld : _base_fld
   float m_fWaterTol;
   float m_fSoilTol;
   float m_fWindTol;
-  int m_nEff1Code;
-  float m_fEff1Unit;
-  int m_nEff2Code;
-  float m_fEff2Unit;
-  int m_nEff3Code;
-  float m_fEff3Unit;
-  int m_nEff4Code;
-  float m_fEff4Unit;
+  union
+  {
+    struct
+    {
+      int m_nEff1Code;
+      float m_fEff1Unit;
+      int m_nEff2Code;
+      float m_fEff2Unit;
+      int m_nEff3Code;
+      float m_fEff3Unit;
+      int m_nEff4Code;
+      float m_fEff4Unit;
+    };
+    _ITEM_EFFECT m_Effect[4];
+  };
   int m_bSell;
   int m_bExchange;
   int m_bGround;

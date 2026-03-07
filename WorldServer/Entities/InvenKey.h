@@ -16,7 +16,7 @@ struct  _INVENKEY
   bool IsOverlapItem() const;
 
   void LoadDBKey(int pl_nKey);
-  bool IsFilled();
+  bool IsFilled() const;
   void SetRelease();
-  __int64 CovDBKey();
+  int CovDBKey() const;
 };

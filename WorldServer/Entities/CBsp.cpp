@@ -18,6 +18,12 @@ namespace
 
     using GetVertexFromCompressFn = void (*)(float *, char *, _BSP_READ_M_GROUP *);
 
+    template <typename T>
+    T *ByteOffsetPtr(unsigned char *base, unsigned int offset)
+    {
+        return static_cast<T *>(static_cast<void *>(base + offset));
+    }
+
     void GetVertexFromBVertexWrap(float *dst, char *src, _BSP_READ_M_GROUP *mg)
     {
         GetVertexFromBVertex(dst, src, mg);
@@ -2867,41 +2873,41 @@ void CBsp::LoadBsp(char *a2)
     mTotalAllocSize += v15;
     mStaticAlloc = static_cast<unsigned char *>(Dmalloc(v15));
 
-    mCVertex = reinterpret_cast<float (*)[3]>(mStaticAlloc);
-    mCVertexId = reinterpret_cast<unsigned int *>(&mStaticAlloc[v10]);
-    mCFace = reinterpret_cast<_BSP_C_FACE *>(&mStaticAlloc[v13]);
+    mCVertex = static_cast<float (*)[3]>(static_cast<void *>(mStaticAlloc));
+    mCVertexId = ByteOffsetPtr<unsigned int>(mStaticAlloc, v10);
+    mCFace = ByteOffsetPtr<_BSP_C_FACE>(mStaticAlloc, v13);
 
     unsigned int v17 = v12 + v13;
-    mCNNormal = reinterpret_cast<float (*)[3]>(&mStaticAlloc[v17]);
+    mCNNormal = ByteOffsetPtr<float[3]>(mStaticAlloc, v17);
     fread(mCNNormal, mBSPHeader.CPlanes.size, 1, fp);
 
     unsigned int v19 = mBSPHeader.CPlanes.size + v17;
-    mCFaceId = reinterpret_cast<unsigned int *>(&mStaticAlloc[v19]);
+    mCFaceId = ByteOffsetPtr<unsigned int>(mStaticAlloc, v19);
     fread(mCFaceId, mBSPHeader.CFaceId.size, 1, fp);
 
     unsigned int v21 = mBSPHeader.CFaceId.size + v19;
-    mNode = reinterpret_cast<_BSP_NODE *>(&mStaticAlloc[v21]);
+    mNode = ByteOffsetPtr<_BSP_NODE>(mStaticAlloc, v21);
     fread(mNode, mBSPHeader.Node.size, 1, fp);
 
     unsigned int v23 = mBSPHeader.Node.size + v21;
-    mLeaf = reinterpret_cast<_BSP_LEAF *>(&mStaticAlloc[v23]);
+    mLeaf = ByteOffsetPtr<_BSP_LEAF>(mStaticAlloc, v23);
     fread(mLeaf, mBSPHeader.Leaf.size, 1, fp);
 
     unsigned int v25 = mBSPHeader.Leaf.size + v23;
-    MatListInLeafId = reinterpret_cast<unsigned short *>(&mStaticAlloc[v25]);
+    MatListInLeafId = ByteOffsetPtr<unsigned short>(mStaticAlloc, v25);
     fread(MatListInLeafId, mBSPHeader.MatListInLeaf.size, 1, fp);
 
     unsigned int v27 = mBSPHeader.MatListInLeaf.size + v25;
     auto *v28 = static_cast<unsigned int *>(Dmalloc(mBSPHeader.Object.size));
-    mObject = reinterpret_cast<_ANI_OBJECT *>(&mStaticAlloc[v27]);
+    mObject = ByteOffsetPtr<_ANI_OBJECT>(mStaticAlloc, v27);
     fread(v28, mBSPHeader.Object.size, 1, fp);
 
     unsigned int v29 = 361 * (mBSPHeader.Object.size / 0x58) + v27;
-    unsigned char *v30 = &mStaticAlloc[v29];
+    unsigned char *v30 = mStaticAlloc + v29;
     fread(v30, mBSPHeader.Track.size, 1, fp);
 
     unsigned int v31 = mBSPHeader.Track.size + v29;
-    mEventObjectID = reinterpret_cast<unsigned short *>(&mStaticAlloc[v31]);
+    mEventObjectID = ByteOffsetPtr<unsigned short>(mStaticAlloc, v31);
     fread(mEventObjectID, mBSPHeader.EventObjectID.size, 1, fp);
 
     unsigned int v33 = v31 + 2 * mObjectNum;
@@ -2919,11 +2925,11 @@ void CBsp::LoadBsp(char *a2)
     ConvAniObject(static_cast<int>(mBSPHeader.Object.size / 0x58), v30, reinterpret_cast<_READ_ANI_OBJECT *>(v28), mObject);
     Dfree(v28);
 
-    mMatGroup = reinterpret_cast<_BSP_MAT_GROUP *>(&mStaticAlloc[v33]);
+    mMatGroup = ByteOffsetPtr<_BSP_MAT_GROUP>(mStaticAlloc, v33);
     unsigned int v38 = mBSPHeader.ReadMatGroup.size / 42;
     unsigned int v39 = 86 * v38 + v33;
-    mLgtUV = reinterpret_cast<__int16 (*)[2]>(&mStaticAlloc[v39]);
-    mVertexColor = reinterpret_cast<unsigned int *>(&mStaticAlloc[mBSPHeader.LgtUV.size + v39]);
+    mLgtUV = ByteOffsetPtr<__int16[2]>(mStaticAlloc, v39);
+    mVertexColor = ByteOffsetPtr<unsigned int>(mStaticAlloc, mBSPHeader.LgtUV.size + v39);
 
     ReadDynamicDataFillVertexBuffer(fp);
     fclose(fp);
@@ -3611,7 +3617,9 @@ void CBsp::OnlyStoreCollisionStructure(_BSP_READ_M_GROUP *pRM, char (*pBV)[3], s
             {
                 unsigned int vId = pRF[faceIdx].v_start_id + k;
                 float pos[3];
-                GetVertexFromCompress[function_id](pos, reinterpret_cast<char *>(vertex) + 3 * function_id * pVI[vId], &mGroup);
+                char *vertexData = reinterpret_cast<char *>(vertex);
+                vertexData += 3 * function_id * pVI[vId];
+                GetVertexFromCompress[function_id](pos, vertexData, &mGroup);
                 unsigned int c_v_id = baseIndex + pVI[vId];
 
                 if (mGroup.object_id)
@@ -3652,7 +3660,7 @@ void CBsp::OnlyStoreCollisionStructure(_BSP_READ_M_GROUP *pRM, char (*pBV)[3], s
 
             if (mGroup.mtl_id != -1 && mat)
             {
-                if (_bittest(reinterpret_cast<const LONG *>(&mat[mGroup.mtl_id].m_Layer[0].m_dwFlag), 0x11u))
+                if ((mat[mGroup.mtl_id].m_Layer[0].m_dwFlag & 0x00020000u) != 0)
                     mCFace[faceIdx].Attr |= 0x40u;
             }
         }
@@ -3962,9 +3970,9 @@ void CBsp::ReadDynamicDataFillVertexBuffer(FILE *Stream)
 
                     if (group.mtl_id != -1)
                     {
-                        if (_bittest(reinterpret_cast<const LONG *>(&MainMaterial[group.mtl_id].m_Layer[0].m_dwFlag), 0x11u))
+                        if ((MainMaterial[group.mtl_id].m_Layer[0].m_dwFlag & 0x00020000u) != 0)
                             mCFace[faceIdx].Attr |= 0x40u;
-                        if (_bittest(reinterpret_cast<const LONG *>(&MainMaterial[group.mtl_id].m_Layer[0].m_dwFlag), 0x12u))
+                        if ((MainMaterial[group.mtl_id].m_Layer[0].m_dwFlag & 0x00040000u) != 0)
                             mCFace[faceIdx].Attr |= 0x20u;
                         if (MainMaterial[group.mtl_id].m_Layer[1].m_dwFlag & 0x8000)
                             mCFace[faceIdx].Attr |= 0x20u;
@@ -4130,7 +4138,8 @@ LABEL_GRAD_DONE:
 
                 if (metalFlag)
                     mMatGroup[i].MultiSourceST = multiSTBytes + 12 * st_used;
-                mMatGroup[i].MultiSourceUV = reinterpret_cast<unsigned int *>(mMultiLayerUV) + 2 * uv_used;
+                auto *multiUVWords = static_cast<unsigned int *>(mMultiLayerUV);
+                mMatGroup[i].MultiSourceUV = multiUVWords + 2 * uv_used;
 
                 for (unsigned int j = 0; j < group.face_num; ++j)
                 {
@@ -4396,24 +4405,24 @@ void CBsp::LoadEntities(_READ_MAP_ENTITIES_LIST *a2)
     if (mMapEntitiesListNum)
     {
         __int64 listIdx = 0;
-        float *posPtr = &a2->Pos[1];
+        const _READ_MAP_ENTITIES_LIST *readEntity = a2;
         do
         {
-            if (mEntityList[*reinterpret_cast<unsigned __int16 *>(posPtr - 5)].IsFileExist)
+            if (mEntityList[readEntity->ID].IsFileExist)
             {
-                mMapEntitiesList[listIdx].ID = *reinterpret_cast<unsigned __int16 *>(posPtr - 5);
-                mMapEntitiesList[listIdx].Pos[0] = *(posPtr - 1);
-                mMapEntitiesList[listIdx].Pos[1] = *posPtr;
-                mMapEntitiesList[listIdx].Pos[2] = posPtr[1];
-                mMapEntitiesList[listIdx].RotX = posPtr[2];
-                mMapEntitiesList[listIdx].RotY = posPtr[3];
-                mMapEntitiesList[listIdx].Scale = *(posPtr - 2);
-                mMapEntitiesList[listIdx].BBMin[0] = *reinterpret_cast<unsigned __int16 *>(posPtr + 8);
-                mMapEntitiesList[listIdx].BBMin[1] = *reinterpret_cast<unsigned __int16 *>(posPtr + 9);
-                mMapEntitiesList[listIdx].BBMin[2] = *reinterpret_cast<unsigned __int16 *>(posPtr + 10);
-                mMapEntitiesList[listIdx].BBMax[0] = *reinterpret_cast<unsigned __int16 *>(posPtr + 11);
-                mMapEntitiesList[listIdx].BBMax[1] = *reinterpret_cast<unsigned __int16 *>(posPtr + 12);
-                mMapEntitiesList[listIdx].BBMax[2] = *reinterpret_cast<unsigned __int16 *>(posPtr + 13);
+                mMapEntitiesList[listIdx].ID = readEntity->ID;
+                mMapEntitiesList[listIdx].Pos[0] = readEntity->Pos[0];
+                mMapEntitiesList[listIdx].Pos[1] = readEntity->Pos[1];
+                mMapEntitiesList[listIdx].Pos[2] = readEntity->Pos[2];
+                mMapEntitiesList[listIdx].RotX = readEntity->RotX;
+                mMapEntitiesList[listIdx].RotY = readEntity->RotY;
+                mMapEntitiesList[listIdx].Scale = readEntity->Scale;
+                mMapEntitiesList[listIdx].BBMin[0] = readEntity->BBmin[0];
+                mMapEntitiesList[listIdx].BBMin[1] = readEntity->BBmin[1];
+                mMapEntitiesList[listIdx].BBMin[2] = readEntity->BBmin[2];
+                mMapEntitiesList[listIdx].BBMax[0] = readEntity->BBmax[0];
+                mMapEntitiesList[listIdx].BBMax[1] = readEntity->BBmax[1];
+                mMapEntitiesList[listIdx].BBMax[2] = readEntity->BBmax[2];
                 mMapEntitiesList[listIdx].AddFrame = static_cast<float>(rand() % 256) * 0.25f;
                 mMapEntitiesList[listIdx].Particle = nullptr;
                 if (mEntityList[mMapEntitiesList[listIdx].ID].IsParticle)
@@ -4438,7 +4447,7 @@ void CBsp::LoadEntities(_READ_MAP_ENTITIES_LIST *a2)
                 reinterpret_cast<unsigned short *>(&dst->mMapColor)[1] = 0;
             }
             ++i;
-            posPtr = reinterpret_cast<float *>(reinterpret_cast<char *>(posPtr) + 38);
+            ++readEntity;
             ++listIdx;
         } while (i < mMapEntitiesListNum);
     }
@@ -5210,7 +5219,7 @@ void CBsp::RenderIndepentMatGroup(unsigned __int16 a2)
         D3DXMatrixMultiply_0(&temp1, &temp2, &view);
         d3dDevice->SetTransform(d3dDevice, D3DTS_VIEW, reinterpret_cast<const _D3DMATRIX *>(&temp1));
     }
-    else if ((*reinterpret_cast<const unsigned short *>(&mMatGroup[index]) & (1u << 11)) != 0)
+    else if ((mMatGroup[index].Type & (1u << 11)) != 0)
     {
         float src[3]{stState.mInvMatView[3][0], stState.mInvMatView[3][1], stState.mInvMatView[3][2]};
         D3DXMATRIX calMat{};
@@ -5246,7 +5255,7 @@ void CBsp::RenderIndepentMatGroup(unsigned __int16 a2)
         d3dDevice->SetRenderState(d3dDevice, D3DRS_ZWRITEENABLE, 1);
     }
 
-    if ((*reinterpret_cast<const unsigned short *>(&mMatGroup[index]) & (1u << 11)) != 0)
+    if ((mMatGroup[index].Type & (1u << 11)) != 0)
     {
         D3DXMATRIX view = *reinterpret_cast<D3DXMATRIX *>(&stState.mMatView[0][0]);
         d3dDevice->SetTransform(d3dDevice, D3DTS_VIEW, reinterpret_cast<const _D3DMATRIX *>(&view));
@@ -5274,7 +5283,7 @@ void CBsp::RenderMatGroup(unsigned __int16 a2)
     IDirect3DDevice8 *const d3dDevice = GetD3dDevice();
     d3dDevice->SetTransform(d3dDevice, static_cast<_D3DTRANSFORMSTATETYPE>(256), reinterpret_cast<const _D3DMATRIX *>(world));
 
-    const bool isYBillboard = ((*reinterpret_cast<const unsigned short *>(&mMatGroup[index]) & (1u << 11)) != 0);
+    const bool isYBillboard = (mMatGroup[index].Type & (1u << 11)) != 0;
     if (isYBillboard)
     {
         float pos[3]{};

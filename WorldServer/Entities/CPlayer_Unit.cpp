@@ -1254,10 +1254,11 @@ void CPlayer::pc_UnitPartTuningRequest(
         if (bulletSlot != -1)
         {
           unsigned int &bulletData = unitData->dwBullet[bulletSlot];
-          if (HIWORD(bulletData) && HIWORD(bulletData) != 0xFFFF)
+          const unsigned __int16 bulletItemIndex = static_cast<unsigned __int16>((bulletData >> 16) & 0xFFFF);
+          if (bulletItemIndex && bulletItemIndex != 0xFFFF)
           {
             _UnitBullet_fld *bulletRecord =
-              reinterpret_cast<_UnitBullet_fld *>(g_Main.m_tblUnitBullet.GetRecord(static_cast<unsigned __int16>(bulletData)));
+              reinterpret_cast<_UnitBullet_fld *>(g_Main.m_tblUnitBullet.GetRecord(bulletItemIndex));
             _UnitPart_fld *partRecord =
               reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[partCode].GetRecord(partIndex));
             if (bulletRecord

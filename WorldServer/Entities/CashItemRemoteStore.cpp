@@ -2299,7 +2299,8 @@ void CashItemRemoteStore::GetEvnetTime(_cash_event_time *pETime, int itime)
   std::tm *tmValue = _localtime32(now);
   tmValue->tm_min += 5;
   pETime->m_EventTime[0] = _mktime32(tmValue);
-  tmValue = _localtime32(reinterpret_cast<const __time32_t *>(pETime->m_EventTime));
+  __time32_t firstEventTime = static_cast<__time32_t>(pETime->m_EventTime[0]);
+  tmValue = _localtime32(&firstEventTime);
   pETime->m_nYear[0] = tmValue->tm_year;
   pETime->m_nMonth[0] = tmValue->tm_mon;
   pETime->m_nDay[0] = tmValue->tm_mday;
@@ -2307,7 +2308,8 @@ void CashItemRemoteStore::GetEvnetTime(_cash_event_time *pETime, int itime)
   pETime->m_nMinute[0] = tmValue->tm_min;
   tmValue->tm_min += itime;
   pETime->m_EventTime[1] = _mktime32(tmValue);
-  tmValue = _localtime32(reinterpret_cast<const __time32_t *>(&pETime->m_EventTime[1]));
+  __time32_t secondEventTime = static_cast<__time32_t>(pETime->m_EventTime[1]);
+  tmValue = _localtime32(&secondEventTime);
   pETime->m_nYear[1] = tmValue->tm_year;
   pETime->m_nMonth[1] = tmValue->tm_mon;
   pETime->m_nDay[1] = tmValue->tm_mday;

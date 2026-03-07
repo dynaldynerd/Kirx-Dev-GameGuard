@@ -277,7 +277,8 @@ char *CRusiaBillingMgr::dhExtractSubString(char *szSub, char *szFull, char cToke
   {
     memcpy_0(szSub, szFull, static_cast<size_t>(pos - szFull));
   }
-  return pos + 1;
+  ++pos;
+  return pos;
 }
 
 void CRusiaBillingMgr::dhRExtractSubString(char *szSub, char *szFull, char cToken)
@@ -298,7 +299,8 @@ void CRusiaBillingMgr::dhRExtractSubString(char *szSub, char *szFull, char cToke
     }
     if (pos != szFull)
     {
-      memcpy_0(szSub, pos + 1, count - 1);
+      ++pos;
+      memcpy_0(szSub, pos, count - 1);
     }
   }
 }

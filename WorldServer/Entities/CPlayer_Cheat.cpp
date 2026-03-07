@@ -2386,7 +2386,8 @@ char CPlayer::mgr_kick(char *pwszCharName)
         else if ( this->m_TargetObject.byKind == this->m_TargetObject.pObject->m_ObjID.m_byKind
                && this->m_TargetObject.byID == this->m_TargetObject.pObject->m_ObjID.m_byID )
         {
-          CUserDB *targetUser = *reinterpret_cast<CUserDB **>(&this->m_TargetObject.pObject[10].m_ObjID.m_byKind);
+          CPlayer *targetPlayer = static_cast<CPlayer *>(this->m_TargetObject.pObject);
+          CUserDB *targetUser = targetPlayer->m_pUserDB;
           if (targetUser)
           {
             targetUser->ForceCloseCommand(0, 0, true, "Kick By GM");

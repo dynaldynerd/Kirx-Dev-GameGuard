@@ -9,6 +9,7 @@
 
 #include "DB_LOAD_AUTOMINE_MACHINE.h"
 #include "CNationSettingManager.h"
+#include "DqsDbStructs.h"
 #include "pvppoint_guild_rank_info.h"
 #include "total_guild_rank_info.h"
 #include "unmannedtrader_buy_item_info.h"
@@ -2476,10 +2477,9 @@ __int64 CRFWorldDatabase::Select_PunishmentCount(unsigned __int8 byType, unsigne
 
 bool CRFWorldDatabase::Update_Punishment(char *szData)
 {
+  const auto *query = reinterpret_cast<const _qry_case_update_punishment *>(szData);
   unsigned int count = 0;
-  const unsigned __int8 byType = static_cast<unsigned __int8>(szData[0]);
-  const unsigned int avatorSerial = *reinterpret_cast<unsigned int *>(szData + 28);
-  const int result = static_cast<int>(Select_PunishmentCount(byType, avatorSerial, &count));
+  const int result = static_cast<int>(Select_PunishmentCount(query->byType, query->dwAvatorSerial, &count));
   if (result == 2 || result == 1)
   {
     return false;
@@ -2491,20 +2491,20 @@ bool CRFWorldDatabase::Update_Punishment(char *szData)
     sprintf(
       buffer,
       "{ CALL pUpdate_Punishment( %d, %d, %d, %d ) }",
-      *reinterpret_cast<unsigned int *>(szData + 28),
-      *reinterpret_cast<unsigned int *>(szData + 32),
-      byType,
-      *reinterpret_cast<unsigned int *>(szData + 4));
+      query->dwAvatorSerial,
+      query->dwElectSerial,
+      query->byType,
+      query->dwValue);
   }
   else
   {
     sprintf(
       buffer,
       "{ CALL pInsert_Punishment( %d, %d, %d, %d ) }",
-      *reinterpret_cast<unsigned int *>(szData + 28),
-      *reinterpret_cast<unsigned int *>(szData + 32),
-      byType,
-      *reinterpret_cast<unsigned int *>(szData + 4));
+      query->dwAvatorSerial,
+      query->dwElectSerial,
+      query->byType,
+      query->dwValue);
   }
   return ExecUpdateQuery(buffer, true);
 }

@@ -213,14 +213,16 @@ char eInitEconomySystem(
   e_EconomySystem.m_byCurHour = static_cast<unsigned __int8>(GetCurrentHour());
 
   _economy_calc_data now{};
+  const int latestHistoryIndex = 11;
+  const _economy_history_data &latestHistory = pData[latestHistoryIndex];
   for (int j = 0; j < 3; ++j)
   {
-    now.dTradeDalant[j] = pData[11].dTradeDalant[j];
+    now.dTradeDalant[j] = latestHistory.dTradeDalant[j];
     now.dTradeGold[j] = DOUBLE_1_0;
     for (int ii = 0; ii < 3; ++ii)
     {
-      now.dOreMineCount[j][ii] = pData[11].dOreMineCount[j][ii];
-      now.dOreCutCount[j][ii] = pData[11].dOreCutCount[j][ii];
+      now.dOreMineCount[j][ii] = latestHistory.dOreMineCount[j][ii];
+      now.dOreCutCount[j][ii] = latestHistory.dOreCutCount[j][ii];
     }
   }
 

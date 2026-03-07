@@ -9,6 +9,8 @@ struct _qry_case_make_storage_update_header
   _qry_case_make_storage base;
   unsigned __int8 byChangeCount;
   unsigned __int8 byReserved[3];
+
+  const struct _qry_case_make_storage_update_entry *entries() const;
 };
 
 struct _qry_case_make_storage_update_entry
@@ -23,3 +25,9 @@ struct _qry_case_make_storage_update_entry
 
 static_assert(sizeof(_qry_case_make_storage_update_header) == 16);
 static_assert(sizeof(_qry_case_make_storage_update_entry) == 12);
+
+inline const _qry_case_make_storage_update_entry *_qry_case_make_storage_update_header::entries() const
+{
+  const auto *headerEnd = reinterpret_cast<const unsigned __int8 *>(this) + sizeof(*this);
+  return reinterpret_cast<const _qry_case_make_storage_update_entry *>(headerEnd);
+}

@@ -19,12 +19,14 @@
 #include "CNetworkEX.h"
 #include "add_char_result_zone.h"
 #include "alive_char_result_zocl.h"
+#include "Packet/ClientZonePacket.h"
 #include "enter_world_result_zone.h"
 #include "chat_lock_inform_zocl.h"
 #include "del_char_result_zone.h"
 #include "moveout_user_result_zone.h"
 #include "not_arranged_char_inform_zocl.h"
 #include "qry_case_alive_char.h"
+#include "qry_case_contsave.h"
 #include "qry_sheet_delete.h"
 #include "qry_sheet_insert.h"
 #include "qry_sheet_load.h"
@@ -1131,12 +1133,12 @@ void _INVENKEY::LoadDBKey(int pl_nKey)
   *reinterpret_cast<int *>(this) = pl_nKey;
 }
 
-__int64 _INVENKEY::CovDBKey()
+int _INVENKEY::CovDBKey() const
 {
-  return static_cast<__int64>(*reinterpret_cast<unsigned int *>(this));
+  return *reinterpret_cast<const int *>(this);
 }
 
-bool _INVENKEY::IsFilled()
+bool _INVENKEY::IsFilled() const
 {
   return bySlotIndex != 0xFF || byTableCode != 0xFF || wItemIndex != 0xFFFF;
 }
@@ -2728,10 +2730,10 @@ _AVATOR_DATA *CUserDB::IsContPushBefore()
 
   if (!memcmp_0(&m_idWorld, &m_pDBPushData->m_idWorld, sizeof(_CLID)))
   {
-    char *data = m_pDBPushData->m_sData;
-    if (*reinterpret_cast<unsigned int *>(data) == m_dwSerial)
+    auto *query = reinterpret_cast<_qry_case_contsave *>(m_pDBPushData->m_sData);
+    if (query->dwAvatorSerial == m_dwSerial)
     {
-      return reinterpret_cast<_AVATOR_DATA *>(data + 4);
+      return &query->NewData;
     }
 
     g_Main.m_logSave.Write(
@@ -3444,14 +3446,15 @@ char CUserDB::Update_WindowInfo(
 
 char CUserDB::Update_Macro(char *pBuf)
 {
+  const auto *request = reinterpret_cast<const _player_macro_update_request_clzo *>(pBuf);
   _AIOC_A_MACRODATA *macro = &m_AvatorData.dbMacro;
 
   for (int belt = 0; belt < 1; ++belt)
   {
     for (int slot = 0; slot < 3; ++slot)
     {
-      macro->mcr_Potion[belt].Potion[slot] = *reinterpret_cast<unsigned int *>(&pBuf[4 * slot]);
-      macro->mcr_Potion[belt].PotionValue[slot] = *reinterpret_cast<unsigned int *>(&pBuf[4 * slot + 12]);
+      macro->mcr_Potion[belt].Potion[slot] = request->potion[slot];
+      macro->mcr_Potion[belt].PotionValue[slot] = request->potionvalue[slot];
     }
   }
 
@@ -3459,7 +3462,7 @@ char CUserDB::Update_Macro(char *pBuf)
   {
     for (int slot = 0; slot < 10; ++slot)
     {
-      macro->mcr_Action[belt].Action[slot] = *reinterpret_cast<unsigned int *>(&pBuf[40 * belt + 24 + 4 * slot]);
+      macro->mcr_Action[belt].Action[slot] = request->behavior[10 * belt + slot];
     }
   }
 
@@ -3467,7 +3470,7 @@ char CUserDB::Update_Macro(char *pBuf)
   {
     for (int slot = 0; slot < 5; ++slot)
     {
-      char *chat = &pBuf[405 * belt + 144 + 81 * slot];
+      char *chat = const_cast<char *>(request->chatting[belt][slot]);
       if (!IsSQLValidString(chat))
       {
         g_Main.m_logSystemError.Write(

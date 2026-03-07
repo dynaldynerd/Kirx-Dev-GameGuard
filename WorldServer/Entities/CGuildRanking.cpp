@@ -5,6 +5,7 @@
 #include "CLogFile.h"
 #include "CCheckSumGuildData.h"
 #include "GlobalObjects.h"
+#include "qry_case_rank_racerank_guildrank.h"
 #include "WorldServerUtil.h"
 #include "worlddb_guild_info.h"
 #include "worlddb_guild_member_info.h"
@@ -549,9 +550,10 @@ unsigned __int8 CGuildRanking::UpdateGuildRankStep3(char *szData)
 
 unsigned __int8 CGuildRanking::UpdateGuildRankStep4(char *szData)
 {
+  auto *query = reinterpret_cast<_qry_case_rank_racerank_guildrank *>(szData);
   if (m_vecAllGuildSerial.empty())
   {
-    szData[9] = 3;
+    query->scProcRet = 3;
     return 0;
   }
 
@@ -566,10 +568,11 @@ unsigned __int8 CGuildRanking::UpdateGuildRankStep4(char *szData)
 
 unsigned __int8 CGuildRanking::UpdateRankinGuildStep1(char *szData)
 {
-  unsigned __int8 updated = g_Main.m_pWorldDB->Update_RankInGuild_Step1(*reinterpret_cast<unsigned int *>(szData + 12));
+  auto *query = reinterpret_cast<_qry_case_rank_racerank_guildrank *>(szData);
+  unsigned __int8 updated = g_Main.m_pWorldDB->Update_RankInGuild_Step1(query->dwParam1);
   if (updated == 2)
   {
-    szData[9] = 4;
+    query->scProcRet = 4;
     return 0;
   }
 
@@ -583,7 +586,8 @@ unsigned __int8 CGuildRanking::UpdateRankinGuildStep1(char *szData)
 
 unsigned __int8 CGuildRanking::UpdateRankinGuildStep2(char *szData)
 {
-  if (g_Main.m_pWorldDB->Update_RankInGuild_Step2(*reinterpret_cast<unsigned int *>(szData + 12)))
+  auto *query = reinterpret_cast<_qry_case_rank_racerank_guildrank *>(szData);
+  if (g_Main.m_pWorldDB->Update_RankInGuild_Step2(query->dwParam1))
   {
     return 0;
   }
@@ -593,7 +597,8 @@ unsigned __int8 CGuildRanking::UpdateRankinGuildStep2(char *szData)
 
 unsigned __int8 CGuildRanking::UpdateRankinGuildStep3(char *szData)
 {
-  if (g_Main.m_pWorldDB->Update_RankInGuild_Step3(*reinterpret_cast<unsigned int *>(szData + 12)))
+  auto *query = reinterpret_cast<_qry_case_rank_racerank_guildrank *>(szData);
+  if (g_Main.m_pWorldDB->Update_RankInGuild_Step3(query->dwParam1))
   {
     return 0;
   }
@@ -603,7 +608,8 @@ unsigned __int8 CGuildRanking::UpdateRankinGuildStep3(char *szData)
 
 unsigned __int8 CGuildRanking::UpdateRankinGuildStep4(char *szData)
 {
-  if (g_Main.m_pWorldDB->Update_RankInGuild_Step4(*reinterpret_cast<unsigned int *>(szData + 12)))
+  auto *query = reinterpret_cast<_qry_case_rank_racerank_guildrank *>(szData);
+  if (g_Main.m_pWorldDB->Update_RankInGuild_Step4(query->dwParam1))
   {
     return 0;
   }
@@ -613,12 +619,13 @@ unsigned __int8 CGuildRanking::UpdateRankinGuildStep4(char *szData)
 
 unsigned __int8 CGuildRanking::UpdateRankinGuildStep5(char *szData)
 {
+  auto *query = reinterpret_cast<_qry_case_rank_racerank_guildrank *>(szData);
   if (m_vecAllGuildSerial.size() > m_dwCurProcIndex
       && m_vecGuildMemberRefresh.size() > m_dwCurProcIndex
       && m_dwAllGuildCount > m_dwCurProcIndex)
   {
     unsigned int guildSerial = m_vecAllGuildSerial[m_dwCurProcIndex];
-    if (*reinterpret_cast<unsigned int *>(szData + 12) == guildSerial)
+    if (query->dwParam1 == guildSerial)
     {
       _worlddb_rankinguild_info rankData{};
       rankData.wRecordCount = 0;
@@ -638,11 +645,11 @@ unsigned __int8 CGuildRanking::UpdateRankinGuildStep5(char *szData)
       return 0;
     }
 
-    szData[9] = 6;
+    query->scProcRet = 6;
     return 0;
   }
 
-  szData[9] = 5;
+  query->scProcRet = 5;
   return 0;
 }
 
@@ -658,6 +665,7 @@ unsigned __int8 CGuildRanking::UpdateRankinGuildStep6(char *szData)
 
 unsigned __int8 CGuildRanking::UpdateAndSelectGuildGrade(char *szData)
 {
+  auto *query = reinterpret_cast<_qry_case_rank_racerank_guildrank *>(szData);
   if (g_Main.m_pWorldDB->Update_GuildGrade() || g_Main.m_pWorldDB->Update_GuildGrade())
   {
     unsigned __int8 *grades = m_vecAllGuildGrade.data();
@@ -674,10 +682,10 @@ unsigned __int8 CGuildRanking::UpdateAndSelectGuildGrade(char *szData)
       return 0;
     }
 
-    szData[9] = 8;
+    query->scProcRet = 8;
     return 0;
   }
 
-  szData[9] = 7;
+  query->scProcRet = 7;
   return 0;
 }
