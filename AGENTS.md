@@ -37,3 +37,5 @@
 22. for any static/global default value (including timer delays, counters, const strings, and class static members), always check `ida_static_data.tsv` first and use the IDA value when available; do not keep guessed zero/default values if a static reference exists in the CSV.
 23. pointer to function could be found on "function list.txt" if you ever find ida_static_data refer to a function pointer address
 24. when referencing files in chat output, always use clickable markdown links with direct absolute path format: `[label](/d:/repo/path/to/file)`; do not use `http/https`, `file+.vscode-resource`, or plain non-clickable paths when a file link is intended.
+25. ida parity is a must but keep only the logic and result so keep using sane variable name and modern C++ without breaking parity
+26. if you create script for helper put it inside folder and report/list/build report//output under _reports folder
